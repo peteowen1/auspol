@@ -146,7 +146,9 @@ fundamentals agree closely and independently (47.1 vs 46.5), which is
 corroboration rather than confirmation: they share no inputs, but both could
 be wrong in the same direction if 2026 repeats 2018's polling miss.
 
-Still needed before this is a full forecast: a seat model.
+**Seat forecast** (added 2026-08-15): ALP **33 of 88** seats (50%: 27–39,
+90%: 19–47), P(ALP majority) **9.4%**, a median loss of 23 seats from the 56
+won in 2022.
 
 ## Findings from the Victorian build worth keeping
 
@@ -171,6 +173,31 @@ Still needed before this is a full forecast: a seat model.
   party-cycle reported, rather than the model inheriting false precision.
 
 ## Done
+
+- 2026-08-15 (stage 7): **Seat model — the pipeline is end to end.**
+  `R/seats.R` reads the anchor's authored per-seat configuration (
+  `analysis/seats/2026vic.txt`: redistribution-adjusted margins, incumbent,
+  challenger, region) and simulates. Each run draws a statewide result from
+  the projection's own uncertainty, then gives each seat an independent
+  deviation. Statewide error moves all seats together and sets the range;
+  seat-level noise decides the close ones. Seat-level swing spread is
+  measured, not assumed: sd 4.41 at the 2022 election and 3.99 at 2018.
+  All four pre-registered checks passed, and S1 is the one that matters —
+  **at zero swing the model returns a median of exactly 56 classic seats,
+  against an actual 2022 result of 56 of 88.** That single number tests the
+  margins, the sign convention and the simulation together.
+  It also caught a real error: `fTppMargin` is **Labor's** margin in every
+  seat, not the incumbent's, which is why Coalition seats carry negative
+  values. Reading it the obvious way gave Labor 82 of 83 seats at zero swing.
+  Stated assumptions, not modelled: the five non-classic seats (three
+  Green-held plus Prahran and South-West Coast) are held by their current
+  incumbents, since a two-party number cannot decide a Labor-versus-Green or
+  independent contest; and seat deviations are independent, whereas real ones
+  cluster by region, so the spread of seat counts here is if anything too
+  narrow.
+  Not implemented from the anchor's stage 4: regional swing structure,
+  per-seat elasticity, candidate effects (retirement, sophomore surge), and
+  proper modelling of minor-party and independent contests.
 
 - 2026-08-15 (stage 6): **Fundamentals + projection — it is a forecast now.**
   `R/fundamentals.R` predicts a result from history alone (previous result,
