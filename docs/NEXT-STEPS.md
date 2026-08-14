@@ -139,9 +139,14 @@ live 2026 cycle.
 LNP 28.6, ALP 25.4, ONP 20.9, GRN 12.9, OTH 10.5; derived ALP TPP 47.3
 (95%: 45.1–49.5), against 55.0 at the 2022 election.
 
-Still needed before this is a forecast rather than a trend: fundamentals +
-projection (so it says something about November rather than today), and a
-seat model.
+**Projection to election day** (added 2026-08-15, 105 days out):
+ALP two-party **46.3 (95%: 41.4–51.2)**, trend weight 0.57 — an 8.7-point
+swing against a Labor government seeking a fourth term. Trend and
+fundamentals agree closely and independently (47.1 vs 46.5), which is
+corroboration rather than confirmation: they share no inputs, but both could
+be wrong in the same direction if 2026 repeats 2018's polling miss.
+
+Still needed before this is a full forecast: a seat model.
 
 ## Findings from the Victorian build worth keeping
 
@@ -166,6 +171,43 @@ seat model.
   party-cycle reported, rather than the model inheriting false precision.
 
 ## Done
+
+- 2026-08-15 (stage 6): **Fundamentals + projection — it is a forecast now.**
+  `R/fundamentals.R` predicts a result from history alone (previous result,
+  six-election average, incumbency, years in office, and for state elections
+  whether the party's federal counterpart governs), by ridge regression with
+  the penalty chosen leave-one-election-out. On two-party vote it scores MAE
+  **3.05** against 4.93 for "assume the last result" and 4.08 for the
+  long-run average, over 62 elections. The coefficients carry the right
+  politics without being told to: `govt_years` negative (the "it's time"
+  effect) and `fed_aligned` negative (a state party is punished when its
+  federal cousins govern).
+  `R/projection.R` mixes trend and fundamentals by horizon, refitting the
+  trend at each horizon from only the polls available then — reading a
+  whole-cycle trend at an earlier date would leak later polls backwards and
+  flatter the long horizons badly.
+  All three pre-registered checks passed, and two of them were genuinely
+  falsifiable: the trend weight RISES toward the election (0.29 at two years
+  out, 0.58 at three months) and the error spread FALLS (2.98 to 2.41).
+  Held-out accuracy on ALP two-party, 42 elections:
+
+  | horizon | mix (held out) | trend only | fundamentals only |
+  |---|---|---|---|
+  | 30 days | 1.97 | 2.31 | 2.70 |
+  | 90 days | 1.97 | 2.40 | 2.70 |
+  | 365 days | 2.35 | 3.27 | 2.57 |
+  | 730 days | 2.21 | 3.67 | 2.55 |
+
+  For comparison the anchor reports 2.87 for its projection at one year out
+  against 3.68 fundamentals-only and 3.77 trend-only — a different, federal-
+  only sample, so not directly comparable, but the same shape and magnitude.
+  Two silent-data bugs found: `fread` **stops early** on the first ragged row
+  in eventual-results.csv, so the model was training on 263 of 421 lines
+  until the loader was rewritten; and `build_fundamentals_data()` started
+  from results rather than priors, which excluded every election that has not
+  happened yet — i.e. exactly the one being forecast.
+  Not yet implemented from the anchor's stage 3: per-horizon bias correction
+  and an asymmetric, fat-tailed error distribution. Ours is symmetric.
 
 - 2026-08-14 (session 2, stage 5): **Parties folded into "Others" corrected.**
   Pollsters that do not name One Nation still count its voters — into the
