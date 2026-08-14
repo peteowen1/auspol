@@ -10,6 +10,7 @@ simulate_seats(
   tpp_sd,
   prev_tpp,
   seat_sd,
+  region_sd = 0,
   n_sims = 20000,
   seed = NULL
 )
@@ -22,7 +23,11 @@ simulate_seats(
 \item{prev_tpp}{The previous election's statewide ALP two-party share, from
 which the swing is measured.}
 
-\item{seat_sd}{Spread of seat-level deviations, from \code{\link[=seat_swing_spread]{seat_swing_spread()}}.}
+\item{seat_sd}{Spread of seat-specific deviations — the WITHIN-region
+figure from \code{\link[=seat_swing_spread]{seat_swing_spread()}} when \code{region_sd} is also supplied.}
+
+\item{region_sd}{Spread of regional effects. Zero reproduces the earlier
+independent-seats behaviour.}
 
 \item{n_sims}{Number of simulations.}
 
@@ -33,8 +38,15 @@ List: \code{seats_won} (vector of ALP classic-seat wins per simulation),
 \code{by_seat} (win probability per seat), \code{n_classic}, \code{n_nonclassic}.
 }
 \description{
-Each simulation draws a statewide result from the projection's own
-uncertainty, then gives every seat an independent deviation from it. Both
-matter: statewide error moves all seats together and sets the spread of
-plausible outcomes, while seat-level noise decides the close ones.
+Three sources of variation, in descending order of how much they move the
+seat total: the statewide result itself, drawn from the projection's own
+uncertainty and shifting every seat together; a regional effect shared by
+the seats in each region; and a residual specific to each seat, which
+decides the close ones.
+}
+\details{
+Leaving out the regional layer does not change any single seat's
+probability much, but it makes the SEAT COUNT look more certain than it is,
+because independent deviations average out across 83 seats while correlated
+ones do not.
 }

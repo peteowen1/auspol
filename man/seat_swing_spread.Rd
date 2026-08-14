@@ -12,14 +12,23 @@ seat_swing_spread(seats, statewide_swing)
 \item{statewide_swing}{The statewide two-party swing at that election.}
 }
 \value{
-List: \code{sd}, \code{mean_dev}, \code{n}.
+List: \code{sd} (total), \code{sd_between}, \code{sd_within}, \code{mean_dev}, \code{n},
+\code{region_means}.
 }
 \description{
-Seats do not move as one. This measures by how much they differ, which is
-what turns a single projected vote share into a distribution of seat
-counts rather than a single number.
+Seats do not move as one, and they do not move independently either: they
+move in regional blocks. This splits the deviation from the statewide swing
+into a component shared within a region and a component specific to the
+seat. Measured on Victoria, the regional share is 37\% of the variance at
+the 2022 election and 29\% at 2018.
 }
 \details{
-Uses the previous election's per-seat swing, which the seat files record,
-against the statewide swing implied by the two elections' results.
+The split matters for the seat COUNT rather than for any single seat. Total
+per-seat variance is the same either way, but correlated deviations flip
+neighbouring seats together, which widens the distribution of seat totals.
+Treating them as independent understates how uncertain the result is.
+
+Region effects are barely persistent between elections (correlation 0.27
+across Victoria's 13 regions), so they belong in a simulation as a random
+block effect drawn fresh each time, not as a predictable offset.
 }

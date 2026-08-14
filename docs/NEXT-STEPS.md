@@ -146,8 +146,8 @@ fundamentals agree closely and independently (47.1 vs 46.5), which is
 corroboration rather than confirmation: they share no inputs, but both could
 be wrong in the same direction if 2026 repeats 2018's polling miss.
 
-**Seat forecast** (added 2026-08-15): ALP **33 of 88** seats (50%: 27–39,
-90%: 19–47), P(ALP majority) **9.4%**, a median loss of 23 seats from the 56
+**Seat forecast** (added 2026-08-15): ALP **33 of 88** seats (50%: 27–40,
+90%: 18–47), P(ALP majority) **10.6%**, a median loss of 23 seats from the 56
 won in 2022.
 
 ## Findings from the Victorian build worth keeping
@@ -172,8 +172,52 @@ won in 2022.
   herding signature. The noise is now floored at the binomial bound and the
   party-cycle reported, rather than the model inheriting false precision.
 
+## Where seat-count uncertainty actually comes from (measured 2026-08-15)
+
+Three separate simulations at the projected Victorian vote, sd in seats:
+
+| source | sd |
+|---|---|
+| statewide projection error alone | 10.87 |
+| seat and regional variation alone | 3.96 |
+| both together | 8.69 |
+
+**Do not read these as a variance decomposition** — they do not add, because
+the seat count is a step function of the vote and the components interact.
+An earlier version divided them and reported "156% of the variance", which is
+how the non-additivity was caught.
+
+Two things follow.
+
+1. **The statewide vote dominates.** Accuracy in the PROJECTION is worth far
+   more than further seat-model refinement. That reorders the remaining work:
+   fat-tailed observation noise and per-horizon bias correction beat per-seat
+   elasticity and candidate effects.
+2. **Per-seat randomness makes the seat total LESS volatile, not more** (8.69
+   against 10.87 with no seat noise at all). Victorian Labor seats bunch
+   tightly on the pendulum — a dense cluster between 54 and 60 — so a uniform
+   swing sweeping through them flips many at once. Per-seat noise smooths that
+   step and damps the amplification. Counterintuitive, and it means the
+   pendulum's SHAPE matters as much as the swing.
+
 ## Done
 
+- 2026-08-15 (stage 8): **Regional swing structure in the seat model.**
+  Seats do not move independently, they move in regional blocks: 36% of
+  seat-swing variance at the 2022 Victorian election and 29% at 2018 is
+  shared within a region. `simulate_seats()` now draws a regional effect per
+  region per simulation on top of the statewide draw, with the seat-specific
+  spread reduced so total per-seat variance is unchanged (2.40 and 3.42
+  recombine to 4.17 against a pooled 4.20).
+  Region effects are drawn fresh rather than predicted: across Victoria's 13
+  regions they correlate only **0.27** between 2018 and 2022, so which region
+  swings hardest is not forecastable from the last election, though that
+  seats move in blocks at all clearly is.
+  Honest sizing: this widens the seat-count spread by only **5%** (sd 8.33 to
+  8.73), because statewide projection error already dominates — see the
+  section above. Correct to include, but it does not change the picture, and
+  the earlier claim that the 90% range was "too narrow" was directionally
+  right and materially small: 27 seats wide to 29.
 - 2026-08-15 (stage 7): **Seat model — the pipeline is end to end.**
   `R/seats.R` reads the anchor's authored per-seat configuration (
   `analysis/seats/2026vic.txt`: redistribution-adjusted margins, incumbent,

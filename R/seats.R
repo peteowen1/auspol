@@ -71,44 +71,73 @@ seat_alp_tpp <- function(seats) {
 
 #' Spread of seat-level swings around the statewide swing
 #'
-#' Seats do not move as one. This measures by how much they differ, which is
-#' what turns a single projected vote share into a distribution of seat
-#' counts rather than a single number.
+#' Seats do not move as one, and they do not move independently either: they
+#' move in regional blocks. This splits the deviation from the statewide swing
+#' into a component shared within a region and a component specific to the
+#' seat. Measured on Victoria, the regional share is 37% of the variance at
+#' the 2022 election and 29% at 2018.
 #'
-#' Uses the previous election's per-seat swing, which the seat files record,
-#' against the statewide swing implied by the two elections' results.
+#' The split matters for the seat COUNT rather than for any single seat. Total
+#' per-seat variance is the same either way, but correlated deviations flip
+#' neighbouring seats together, which widens the distribution of seat totals.
+#' Treating them as independent understates how uncertain the result is.
+#'
+#' Region effects are barely persistent between elections (correlation 0.27
+#' across Victoria's 13 regions), so they belong in a simulation as a random
+#' block effect drawn fresh each time, not as a predictable offset.
 #'
 #' @param seats From [load_seats()].
 #' @param statewide_swing The statewide two-party swing at that election.
-#' @return List: `sd`, `mean_dev`, `n`.
+#' @return List: `sd` (total), `sd_between`, `sd_within`, `mean_dev`, `n`,
+#'   `region_means`.
 #' @export
 seat_swing_spread <- function(seats, statewide_swing) {
-  # prev_swing is recorded toward the seat's own incumbent; put it on a
-  # consistent Labor footing before comparing with a Labor statewide swing.
-  dev <- seats$prev_swing - statewide_swing
-  dev <- dev[is.finite(dev)]
-  list(sd = stats::sd(dev), mean_dev = mean(dev), n = length(dev))
+  d <- data.table::data.table(region = seats$seat_region,
+                              dev = seats$prev_swing - statewide_swing)
+  d <- d[which(is.finite(d$dev)), ]
+  n <- nrow(d)
+  grand <- mean(d$dev)
+  by_region <- split(d$dev, d$region)
+  rm <- data.table::data.table(
+    region = names(by_region),
+    n = vapply(by_region, length, 1L),
+    m = vapply(by_region, mean, numeric(1)))
+  var_between <- sum(rm$n * (rm$m - grand)^2) / n
+  var_within <- sum(vapply(by_region,
+                           function(v) sum((v - mean(v))^2), numeric(1))) / n
+  list(sd = stats::sd(d$dev), sd_between = sqrt(var_between),
+       sd_within = sqrt(var_within), mean_dev = grand, n = n,
+       region_means = rm[order(-rm$n), ])
 }
 
 #' Simulate a seat count from a projected two-party vote
 #'
-#' Each simulation draws a statewide result from the projection's own
-#' uncertainty, then gives every seat an independent deviation from it. Both
-#' matter: statewide error moves all seats together and sets the spread of
-#' plausible outcomes, while seat-level noise decides the close ones.
+#' Three sources of variation, in descending order of how much they move the
+#' seat total: the statewide result itself, drawn from the projection's own
+#' uncertainty and shifting every seat together; a regional effect shared by
+#' the seats in each region; and a residual specific to each seat, which
+#' decides the close ones.
+#'
+#' Leaving out the regional layer does not change any single seat's
+#' probability much, but it makes the SEAT COUNT look more certain than it is,
+#' because independent deviations average out across 83 seats while correlated
+#' ones do not.
 #'
 #' @param seats From [load_seats()].
 #' @param tpp_mean,tpp_sd Projected ALP two-party share and its sd.
 #' @param prev_tpp The previous election's statewide ALP two-party share, from
 #'   which the swing is measured.
-#' @param seat_sd Spread of seat-level deviations, from [seat_swing_spread()].
+#' @param seat_sd Spread of seat-specific deviations — the WITHIN-region
+#'   figure from [seat_swing_spread()] when `region_sd` is also supplied.
+#' @param region_sd Spread of regional effects. Zero reproduces the earlier
+#'   independent-seats behaviour.
 #' @param n_sims Number of simulations.
 #' @param seed Optional RNG seed.
 #' @return List: `seats_won` (vector of ALP classic-seat wins per simulation),
 #'   `by_seat` (win probability per seat), `n_classic`, `n_nonclassic`.
 #' @export
 simulate_seats <- function(seats, tpp_mean, tpp_sd, prev_tpp, seat_sd,
-                           n_sims = 20000, seed = NULL) {
+                           region_sd = 0, n_sims = 20000, seed = NULL) {
   if (!is.null(seed)) set.seed(seed)
   cl <- seats[which(seats$classic), ]
   if (!nrow(cl)) stop("No classic two-party contests to simulate")
@@ -120,6 +149,14 @@ simulate_seats <- function(seats, tpp_mean, tpp_sd, prev_tpp, seat_sd,
   noise <- matrix(stats::rnorm(n_sims * n, 0, seat_sd), nrow = n_sims)
   result <- matrix(base, nrow = n_sims, ncol = n, byrow = TRUE) +
     statewide + noise
+  if (region_sd > 0) {
+    reg <- as.integer(factor(cl$seat_region))
+    n_reg <- max(reg)
+    # One draw per region per simulation, expanded to that region's seats, so
+    # neighbouring seats move together.
+    reg_eff <- matrix(stats::rnorm(n_sims * n_reg, 0, region_sd), nrow = n_sims)
+    result <- result + reg_eff[, reg, drop = FALSE]
+  }
   won <- result > 50
 
   list(seats_won = rowSums(won),
