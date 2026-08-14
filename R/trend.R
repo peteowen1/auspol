@@ -134,17 +134,26 @@ fit_trend <- function(polls, party,
 #' @param polls From [cycle_polls()].
 #' @param parties Party columns to fit; default: all with >= 30 polls in cycle.
 #' @param priors Named vector of previous-election results (percent).
-#' @param ... Passed to [fit_trend()].
+#' @param overrides Named list of per-party argument lists passed to
+#'   [fit_trend()], e.g. `list(ONP = list(sigma_rw = 0.25))` to let a volatile
+#'   populist party's latent walk move faster.
+#' @param ... Passed to [fit_trend()] for every party.
 #' @return Named list of [fit_trend()] results.
 #' @export
-fit_cycle_trends <- function(polls, parties = NULL, priors = NULL, ...) {
+fit_cycle_trends <- function(polls, parties = NULL, priors = NULL,
+                             overrides = list(), ...) {
   all_parties <- attr(polls, "parties")
   if (is.null(parties)) {
     counts <- vapply(all_parties, function(p) sum(!is.na(polls[[p]])), 1L)
     parties <- all_parties[counts >= 30]
   }
   out <- lapply(parties, function(p) {
-    fit_trend(polls, p, prior_result = priors[p] %||% NA_real_, ...)
+    args <- c(
+      list(polls = polls, party = p, prior_result = priors[p] %||% NA_real_),
+      list(...)
+    )
+    for (nm in names(overrides[[p]])) args[[nm]] <- overrides[[p]][[nm]]
+    do.call(fit_trend, args)
   })
   names(out) <- parties
   out

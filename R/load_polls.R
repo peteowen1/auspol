@@ -98,18 +98,25 @@ load_prior_results <- function() {
 
 #' Load preference flow estimates (share of each party's preferences to ALP)
 #'
-#' @return data.table: `year`, `region`, `party`, `flow_alp` (percent).
+#' A second numeric column, where present, is the exhaust rate (share of the
+#' party's ballots that express no major-party preference) - nonzero under
+#' optional preferential voting (NSW, and Qld before 2016).
+#'
+#' @return data.table: `year`, `region`, `party`, `flow_alp`, `exhaust`
+#'   (percent).
 #' @export
 load_preference_flows <- function() {
   lines <- readLines(anchor_data_path("preference-estimates.csv"), warn = FALSE)
   parts <- strsplit(lines, ",")
   parts <- parts[vapply(parts, length, 1L) >= 4]
   dt <- data.table::rbindlist(lapply(parts, function(p) {
+    exh <- if (length(p) >= 5) suppressWarnings(as.numeric(p[5])) else NA_real_
     data.table::data.table(
       year = as.integer(p[1]),
       region = p[2],
       party = sub(" FP$", "", p[3]),
-      flow_alp = suppressWarnings(as.numeric(p[4]))
+      flow_alp = suppressWarnings(as.numeric(p[4])),
+      exhaust = data.table::fifelse(is.na(exh), 0, exh)
     )
   }))
   dt[!is.na(flow_alp)]
