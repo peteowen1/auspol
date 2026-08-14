@@ -42,6 +42,9 @@ Updated 2026-08-14 (session 2, after a laptop restart mid-session).
   candidates → drag into a ballot order" tool by Project Planet Inc. A
   possible companion product to the forecast, not a modelling input.
 
+Feature comparison of all four sites and the proposed build order:
+[plans/product-features.md](plans/product-features.md).
+
 ## Next build steps (in rough order)
 
 1. ~~Estimate model hyperparameters instead of fixing them~~ — **done**
