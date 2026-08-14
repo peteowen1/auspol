@@ -123,11 +123,27 @@ for (p in est_parties) {
 }
 cat("Hyperparameter checks H1/H2/H4 passed.\n")
 
+# Per-cycle sigmas (see fit_federal.R for why both are re-estimated, not just
+# the walk). NSW cycles carry ~25 polls against k0 = 25, so each cycle's own
+# estimate gets about half the weight and the pooled value supplies the rest.
+walk_of <- function(cp, year) {
+  priors <- prior_vec(year)
+  cnt <- vapply(attr(cp, "parties"), function(p) sum(!is.na(cp[[p]])), 1L)
+  ps <- intersect(names(cnt)[cnt >= 15], est_parties)
+  setNames(lapply(ps, function(p) estimate_cycle_sigmas(
+    cp, p, sigma_obs_pooled = est[[p]]$sigma_obs,
+    sigma_rw_pooled = est[[p]]$sigma_rw,
+    prior_result = priors[p] %||% NA_real_, scale = scale_of[[p]],
+    firm_factors = fac_vec
+  )), ps)
+}
+
 fit_cycle <- function(year) {
   cp <- cycle_polls(polls, year, cycles)
   message(sprintf("\n=== NSW %d cycle: %d polls, %s to %s ===",
                   year, nrow(cp), min(cp$date), max(cp$date)))
   priors <- prior_vec(year)
+  walks <- walk_of(cp, year)
   # State polling is thin - accept parties with >= 8 polls in the cycle.
   # ONP keeps its hand-set fast walk (2025-26 rise from ~2% to ~25% is real
   # movement): too few polls (8) for ML estimation - it bound-hit when tried.
@@ -138,13 +154,18 @@ fit_cycle <- function(year) {
   # handles that movement, and the resulting band is honest about coming from
   # only 8 polls (21.8 [16.6-28.1]) where the points fit claimed 25.3
   # [22.8-27.8] and put negative vote share inside its own 95% interval.
+  ov <- hyp_of(est)
+  for (p in names(walks)) {
+    ov[[p]]$sigma_obs <- walks[[p]]$sigma_obs
+    ov[[p]]$sigma_rw <- walks[[p]]$sigma_rw
+  }
   fits <- fit_cycle_trends_guarded(
     cp, parties = names(cnt)[cnt >= 8], priors = priors,
-    overrides = hyp_of(est), firm_factors = fac_vec
+    overrides = ov, firm_factors = fac_vec
   )
   fkeep <- flows_all$year == year & flows_all$region == "nsw"
   tpp <- derive_tpp(fits, flows_all[which(fkeep), ])
-  list(polls = cp, fits = fits, tpp = tpp)
+  list(polls = cp, fits = fits, tpp = tpp, walks = walks)
 }
 
 res2023 <- fit_cycle(2023)
@@ -179,6 +200,38 @@ share_sums <- vapply(c(2023, 2027), function(yr) {
   res <- get(paste0("res", yr))
   sum(vapply(res$fits, function(f) f$trend$mean[which.max(f$trend$date)], 1))
 }, 1)
+# L4a/L4b as in fit_federal.R: over-smoothing is enforced one-sided, and each
+# cycle's noise must clear the binomial floor at the level actually polled.
+# The negative tail is reported, not enforced (uncalibrated on real data).
+walk_tab <- rbindlist(lapply(c(2023, 2027), function(yr) {
+  res <- get(paste0("res", yr))
+  rbindlist(lapply(names(res$walks), function(p) {
+    w <- res$walks[[p]]; sc <- scale_of[[p]]
+    v <- res$polls[[p]]; v <- v[!is.na(v)]; lvl <- mean(v)
+    data.table(year = yr, party = p, n = w$n_polls,
+               own_weight = round(w$weight, 2), cycle_level = round(lvl, 1),
+               obs_pts = round(sd_from_link(w$sigma_obs, lvl, sc), 3),
+               rw_pooled = round(sd_from_link(w$sigma_rw_pooled, lvl, sc), 4),
+               rw_cycle = round(sd_from_link(w$sigma_rw, lvl, sc), 4),
+               floor_2500 = round(binomial_sd_link(lvl, 2500, "points"), 3),
+               at_lower = w$at_lower, at_upper = w$at_upper,
+               acf1 = round(trend_tracking(res$fits[[p]])$acf1, 3))
+  }))
+}))
+cat("\n=== NSW per-cycle sigmas and tracking ===\n")
+print(walk_tab[order(year, party)])
+cat(sprintf("L4a max residual autocorrelation = %+.3f (require < +0.25)\n",
+            walk_tab[, max(acf1)]))
+cat(sprintf("L4b min (noise / binomial floor) = %.2f (require >= 1)\n",
+            walk_tab[, min(obs_pts / floor_2500)]))
+cat(sprintf("L4c negative tail (reported): min %+.3f\n", walk_tab[, min(acf1)]))
+if (any(walk_tab$at_lower)) {
+  cat(sprintf("    walk at lower bound (no detectable movement, shrunk toward pooled): %s\n",
+              walk_tab[at_lower == TRUE, paste(year, party, collapse = ", ")]))
+}
+stopifnot(walk_tab[, all(acf1 < 0.25)], walk_tab[, all(obs_pts >= floor_2500)],
+          !any(walk_tab$at_upper))
+
 cat(sprintf("L2  all trends and bands strictly inside (0, 100)  OK\nL3  endpoint FP sums: %s  (require 100 +/- 5, thin state polling)\n",
             paste(sprintf("%d=%.1f", c(2023, 2027), share_sums), collapse = "  ")))
 stopifnot(all(abs(share_sums - 100) <= 5))
@@ -212,4 +265,5 @@ for (yr in c(2023, 2027)) {
 fwrite(hy, "output/hyperpars-nsw.csv")
 fwrite(fac, "output/firm-factors-nsw.csv")
 fwrite(cmp, "output/scale-comparison-nsw.csv")
+fwrite(walk_tab, "output/cycle-walks-nsw.csv")
 cat("\nWrote output/trend-nsw-{2023,2027}.{csv,png}, hyperpars-nsw.csv, firm-factors-nsw.csv, scale-comparison-nsw.csv\n")

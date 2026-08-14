@@ -76,6 +76,135 @@ estimate_trend_sigmas <- function(polls_list, party, prior_results = NULL,
   )
 }
 
+#' Estimate one cycle's random-walk size, shrunk toward a pooled value
+#'
+#' A party's volatility is a fact about how it is behaving in a given cycle,
+#' not a constant of nature. Pooling it across cycles fails badly when a party
+#' changes character: federally, ONP's walk was learned from 2022 and 2025,
+#' where it sat at 2-10% and barely moved, giving a prior expectation of about
+#' a third of a point of movement per month. It then moved about a point and a
+#' half a month for over a year. The pooled walk acts as a speed limit, so the
+#' fit lags the rise and clips the peak — enough to erase ONP's June 2026 lead
+#' over ALP, which the raw polls show.
+#'
+#' BOTH sigmas are re-estimated, not just the walk. Holding `sigma_obs` at the
+#' pooled value looks safer — it avoids the noise-versus-movement trade-off —
+#' but it is worse when a party's level has moved, because the pooled value is
+#' then simply wrong and the walk inflates to absorb the mismatch. Measured:
+#' pinning ONP's 2028 noise at the 0.78 points learned while it polled 2-10%,
+#' which is BELOW the binomial sampling floor for a party at 26%, drove its
+#' fitted walk to 6.7x the pooled value and left residual autocorrelation at
+#' -0.30, i.e. visibly chasing individual polls. With ~150 polls the
+#' likelihood separates the two perfectly well: noise is high-frequency
+#' scatter, the walk is low-frequency movement.
+#'
+#' Shrinkage is on the log scale with weight `k0` in pseudo-polls, so a thin
+#' cycle stays close to the pooled values and a well-observed one is free to
+#' depart from them.
+#'
+#' @param polls One cycle from [cycle_polls()].
+#' @param party Party column name.
+#' @param sigma_obs_pooled,sigma_rw_pooled Pooled values to shrink toward
+#'   (model-scale units).
+#' @param prior_result Day-0 anchor in percent, or NA.
+#' @param scale,sigma_house_pts,min_firm_polls,firm_factors As in [fit_trend()].
+#' @param k0 Shrinkage prior weight in pseudo-polls.
+#' @param lower,upper Box bounds c(sigma_obs, sigma_rw); `NULL` uses
+#'   [default_sigma_bounds()].
+#' @return List: `sigma_obs`, `sigma_rw` (shrunk — use these), `*_raw`
+#'   (unshrunk), `*_pooled`, `n_polls`, `weight`, `at_bound`, `convergence`.
+#' @export
+estimate_cycle_sigmas <- function(polls, party, sigma_obs_pooled,
+                                  sigma_rw_pooled, prior_result = NA_real_,
+                                  scale = c("logit", "points"),
+                                  sigma_house_pts = 3, min_firm_polls = 3,
+                                  firm_factors = NULL, k0 = 25,
+                                  lower = NULL, upper = NULL) {
+  scale <- match.arg(scale)
+  bnd <- default_sigma_bounds(scale)
+  if (is.null(lower)) lower <- bnd$lower
+  if (is.null(upper)) upper <- bnd$upper
+
+  prep <- prep_trend_obs(polls, party, min_firm_polls, scale, prior_result)
+  anchor <- trend_anchor(prep, prior_result)
+  n <- nrow(prep$obs)
+
+  neg_ml <- function(lp) {
+    -trend_solve(prep, exp(lp[1]), exp(lp[2]), sigma_house_pts, anchor,
+                 firm_factors = firm_factors, want_var = FALSE)$logml
+  }
+  start <- log(c(sigma_obs_pooled, sigma_rw_pooled))
+  opt <- stats::optim(start, neg_ml, method = "L-BFGS-B",
+                      lower = log(lower), upper = log(upper))
+  raw <- exp(opt$par)
+  tol <- 1e-3
+  # The two bounds mean different things and are reported separately. Hitting
+  # the UPPER bound is a real failure: the walk is running away, absorbing
+  # scatter that belongs to observation noise. Hitting the LOWER bound just
+  # says the party did not detectably move in this cycle — a legitimate answer
+  # for a stable party on thin data, and one the shrinkage already handles,
+  # since the returned value is pulled back toward the pooled estimate.
+  at_lower <- any(raw <= lower * (1 + tol))
+  at_upper <- any(raw >= upper * (1 - tol))
+
+  w <- n / (n + k0)
+  shrink <- function(r, pooled) exp(w * log(r) + (1 - w) * log(pooled))
+  list(
+    sigma_obs = shrink(raw[1], sigma_obs_pooled),
+    sigma_rw = shrink(raw[2], sigma_rw_pooled),
+    sigma_obs_raw = raw[1], sigma_rw_raw = raw[2],
+    sigma_obs_pooled = sigma_obs_pooled, sigma_rw_pooled = sigma_rw_pooled,
+    n_polls = n, weight = w,
+    at_lower = at_lower, at_upper = at_upper, at_bound = at_lower || at_upper,
+    convergence = opt$convergence
+  )
+}
+
+#' Does the fitted trend actually track its polls?
+#'
+#' An over-smoothing detector, and a general one: it needs no knowledge of any
+#' particular party. Under a correctly specified model the per-poll residuals
+#' are independent noise, so consecutive residuals in date order are
+#' uncorrelated. A walk that is too slow cannot bend to follow the data, so it
+#' runs below the polls for a long stretch and then above them, making
+#' consecutive residuals strongly POSITIVELY correlated. A walk that is too
+#' fast chases individual polls and leaves negative correlation.
+#'
+#' Note this measures flattening, not phase lag. An over-smoothed fit does not
+#' trail a rising truth by some number of days — it fails to rise at all, so
+#' its slope carries no information and any lag-style regression on that slope
+#' is uninformative (which is how the first version of this check failed).
+#'
+#' @param fit A [fit_trend()] result.
+#' @return List: `acf1` (lag-1 residual autocorrelation, ~0 when well
+#'   specified), `se` (approx. 1/sqrt(n) null standard error), `n`,
+#'   `peak_fitted`, `peak_polled` (highest fitted level and highest local poll
+#'   average, in percent — their gap is how much of the peak was clipped).
+#' @export
+trend_tracking <- function(fit) {
+  res <- fit$residuals[order(fit$residuals$date)]
+  r <- res$resid[is.finite(res$resid)]
+  n <- length(r)
+  if (n < 10) {
+    return(list(acf1 = NA_real_, se = NA_real_, n = n,
+                peak_fitted = NA_real_, peak_polled = NA_real_))
+  }
+  acf1 <- stats::cor(r[-n], r[-1])
+
+  # Peak clipping: highest fitted level vs the highest local (28-day) average
+  # of house-effect-corrected poll values, both in percent.
+  # Removing the house effect from an observation is `y - h_j`, and since
+  # fitted = x_t + h_j, that is just resid + x_t.
+  t_idx <- as.integer(res$date - fit$meta$cycle_start) + 1L
+  corrected <- from_link(res$resid + fit$trend$mean_link[t_idx], fit$meta$scale)
+  d <- as.integer(res$date - min(res$date))
+  local_avg <- vapply(d, function(x) mean(corrected[abs(d - x) <= 14]), numeric(1))
+
+  list(acf1 = acf1, se = 1 / sqrt(n), n = n,
+       peak_fitted = max(fit$trend$mean),
+       peak_polled = max(local_avg))
+}
+
 #' Default optimiser box bounds for each model scale
 #'
 #' Points-scale bounds are in percentage points. Logit-scale bounds are wide

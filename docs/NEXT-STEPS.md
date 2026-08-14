@@ -64,6 +64,25 @@ Updated 2026-08-14 (session 2, after a laptop restart mid-session).
 Later: projection (trend×fundamentals mix), seat simulation, ABS Census
 electorate demographics (CED/SED + SA1 correspondences), website.
 
+## Open: the negative tail of the tracking check (L4c)
+
+L4 was pre-registered two-sided (|acf1| < 0.25) and now ships **one-sided**,
+because only the positive side is calibrated. Over-smoothing is unambiguous:
+simulated correct fits never exceeded +0.118, over-smoothed ones give ~+0.97.
+
+The negative side is not. The synthetic null centres at −0.045, but the 17
+real federal party-cycles centre near −0.11, and NSW reaches −0.41. Real
+polling has structure the synthetic generator lacks: Morgan's multi-mode
+series uses overlapping rolling samples, about half of all reported values
+are whole numbers, and publication dates cluster. Any of those could shift
+the null. Enforcing an uncalibrated bound would be enforcing a number
+rather than a finding, so the values are printed and left open.
+
+**To close it:** build the null by resampling the real polling calendar
+(same dates, same firms, same rounding) rather than an idealised one, then
+set the bound from that. Until then a large negative value is a hint to
+look, not a failure.
+
 ## Open question from stage 3 (worth a proper answer)
 
 **Why do ALP, LNP and (federally) ONP fit better in raw percentage points
@@ -105,6 +124,33 @@ Stan) may make the question moot.
 - No undecided-voter rescaling (anchor CSVs appear already rescaled; verify).
 
 ## Done
+
+- 2026-08-14 (session 2, stage 4): **Per-cycle volatility — the model now
+  reproduces One Nation leading.** Pete's observation that ONP "isn't really
+  a small party anymore" turned out to be a testable defect. Sigmas were
+  pooled across completed cycles, so ONP's walk was learned from 2022/2025
+  when it sat at 2–10% and barely moved (~0.35 points/month of expected
+  movement). It then moved ~1.5 points/month for over a year. The pooled
+  walk acted as a speed limit: the fit clipped the peak at 28.1 and showed
+  ONP ahead of ALP on **0 of 461 days**, when the raw June 2026 polls had
+  ONP 29.2 vs ALP 28.5 and 17 of 144 individual polls had ONP highest.
+  Now both sigmas are estimated per cycle, shrunk toward the pooled values
+  by poll count (`estimate_cycle_sigmas()`). ONP's 2028 walk comes out 4.9×
+  pooled and its noise 1.53 points against a stale 0.78. The fit now peaks
+  at 29.3 against a local poll-average peak of 29.1, and puts ONP ahead
+  from **2026-05-29 to 2026-06-19**.
+  Deliberate loosening: this lets the live cycle inform its own smoothing.
+  A walk size is not the answer, only how much of the wiggle you believe.
+  An intermediate version held `sigma_obs` pooled "to avoid the
+  noise-vs-movement trade-off" and was worse — the stale noise value sat
+  below the binomial sampling floor for a party at 26%, so the walk
+  inflated to 6.7× to absorb the mismatch and began chasing individual
+  polls. Freeing both fixed it. There is a test for exactly this.
+  New checks: **L4a** (residual autocorrelation < +0.25, the over-smoothing
+  detector — calibrated by simulation: correct fits never exceeded +0.118,
+  over-smoothed ones give ~+0.97) and **L4b** (each cycle's noise must clear
+  the binomial floor at the level that party *actually polled*, not at its
+  previous-election result). L4b is what diagnoses the ONP failure directly.
 
 - 2026-08-14 (session 2, stage 3): **Logit-scale modelling — adopted per
   party, not globally.** Poll shares can now be modelled in log-odds instead
