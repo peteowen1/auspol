@@ -7,6 +7,9 @@
 trend_anchor(prep, prior_result)
 }
 \description{
-Day-0 anchor rule (previous election result, or loosely the first poll)
+The prior is specified in percentage points and translated onto the model
+scale at the party's own reference share, so "5 points of uncertainty about
+a 35\% party" and "5 points about a 4\% party" keep their intended (very
+different) relative strengths.
 }
 \keyword{internal}

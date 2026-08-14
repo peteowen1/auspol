@@ -4,7 +4,13 @@
 \alias{trend_prior_system}
 \title{Prior precision matrix P and linear term b0 (everything except the polls)}
 \usage{
-trend_prior_system(prep, sigma_rw, sigma_house, anchor)
+trend_prior_system(prep, sigma_rw, sigma_house, anchor, szc_sd)
+}
+\arguments{
+\item{sigma_rw, sigma_house, szc_sd}{All in model-scale units. \code{szc_sd} is
+the tolerance of the sum-to-zero constraint; it must be translated by the
+caller like every other prior, or the constraint silently changes strength
+with the scale and the house effects stop being centred.}
 }
 \description{
 Random walk + day-0 anchor + house-effect priors + soft poll-count-weighted

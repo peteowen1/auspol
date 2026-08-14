@@ -8,13 +8,19 @@ trend_solve(
   prep,
   sigma_obs,
   sigma_rw,
-  sigma_house,
+  sigma_house_pts,
   anchor,
   firm_factors = NULL,
-  want_var = TRUE
+  want_var = TRUE,
+  szc_sd_pts = 0.3
 )
 }
 \arguments{
+\item{sigma_obs, sigma_rw}{In model-scale units (see \code{\link[=to_link]{to_link()}}).}
+
+\item{sigma_house_pts}{House-effect prior sd in percentage points,
+translated onto the model scale at the party's reference share.}
+
 \item{want_var}{If FALSE, skip the posterior-variance solve (the expensive
 part) — used inside the hyperparameter optimiser.}
 }
@@ -23,5 +29,10 @@ Everything is Gaussian, so both the posterior and the evidence are exact:
 log p(y) = 1/2 log|P| - 1/2 log|A| - n/2 log(2 pi) + 1/2 sum(log w)
 - 1/2 ( sum(w y^2) + b0' P^-1 b0 - b' A^-1 b )
 with A = P + H'WH, b = b0 + H'Wy. Two sparse Cholesky factorisations.
+}
+\details{
+\code{logml} is the evidence for the TRANSFORMED data; \code{logml_y} adds the
+transform's log Jacobian and is therefore in the units of the original
+percentages, which is the only version comparable across model scales.
 }
 \keyword{internal}

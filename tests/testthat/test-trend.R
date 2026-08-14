@@ -4,7 +4,7 @@
 
 test_that("fit_trend recovers latent path and house effects from synthetic data", {
   syn <- make_synthetic()
-  fit <- fit_trend(syn$polls, "ALP", prior_result = 35)
+  fit <- fit_trend(syn$polls, "ALP", prior_result = 35, scale = "points")
 
   # Latent path recovered within half a point on average
   est <- fit$trend$mean[match(syn$dates, fit$trend$date)]
@@ -26,5 +26,5 @@ test_that("fit_trend recovers latent path and house effects from synthetic data"
 
 test_that("fit_trend errors on too few polls", {
   syn <- make_synthetic(n_polls = 4)
-  expect_error(fit_trend(syn$polls, "ALP"), "not enough")
+  expect_error(fit_trend(syn$polls, "ALP", scale = "points"), "not enough")
 })

@@ -4,10 +4,18 @@
 \alias{prep_trend_obs}
 \title{Prepare one party's observations for a cycle}
 \usage{
-prep_trend_obs(polls, party, min_firm_polls = 3)
+prep_trend_obs(
+  polls,
+  party,
+  min_firm_polls = 3,
+  scale = c("logit", "points"),
+  prior_result = NA_real_
+)
 }
 \description{
 Shared by \code{\link[=fit_trend]{fit_trend()}} and \code{\link[=estimate_trend_sigmas]{estimate_trend_sigmas()}} so the (identical)
 data prep is done once per optimisation, not once per objective evaluation.
+Poll shares are transformed to the model scale here (see \code{\link[=to_link]{to_link()}}), so
+everything downstream is plain linear-Gaussian algebra on \code{obs$y}.
 }
 \keyword{internal}

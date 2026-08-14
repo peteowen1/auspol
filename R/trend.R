@@ -4,12 +4,23 @@
 #'
 #' Shared by [fit_trend()] and [estimate_trend_sigmas()] so the (identical)
 #' data prep is done once per optimisation, not once per objective evaluation.
+#' Poll shares are transformed to the model scale here (see [to_link()]), so
+#' everything downstream is plain linear-Gaussian algebra on `obs$y`.
 #'
 #' @keywords internal
-prep_trend_obs <- function(polls, party, min_firm_polls = 3) {
+prep_trend_obs <- function(polls, party, min_firm_polls = 3,
+                           scale = c("logit", "points"), prior_result = NA_real_) {
+  scale <- match.arg(scale)
   obs <- polls[!is.na(polls[[party]]), c("date", "firm", party), with = FALSE]
-  data.table::setnames(obs, party, "y")
+  data.table::setnames(obs, party, "y_pct")
   if (nrow(obs) < 5) stop("Only ", nrow(obs), " polls with ", party, " FP - not enough")
+
+  tr <- to_link(obs$y_pct, scale)
+  obs[, y := tr$z]
+  if (tr$n_clamped > 0.05 * nrow(obs)) {
+    warning(sprintf("%s: %d/%d polls clamped to [%.2f, %.2f]%% before transform",
+                    party, tr$n_clamped, nrow(obs), SHARE_CLAMP[1], SHARE_CLAMP[2]))
+  }
 
   start <- attr(polls, "cycle_start")
   end <- attr(polls, "cycle_end")
@@ -24,18 +35,31 @@ prep_trend_obs <- function(polls, party, min_firm_polls = 3) {
   firms <- sort(unique(obs$firm_eff))
   obs[, j := match(firm_eff, firms)]
 
+  # Reference share for translating point-scale priors onto the model scale
+  p_ref <- if (is.na(prior_result)) mean(obs$y_pct, na.rm = TRUE) else prior_result
+
   list(obs = obs, T_ = T_, J = length(firms), days = days, firms = firms,
-       start = start, end = end,
+       start = start, end = end, scale = scale, p_ref = p_ref,
+       n_clamped = tr$n_clamped,
+       log_jac = log_jacobian(obs$y_pct, scale),
        cycle_year = attr(polls, "cycle_year"))
 }
 
 #' Day-0 anchor rule (previous election result, or loosely the first poll)
+#'
+#' The prior is specified in percentage points and translated onto the model
+#' scale at the party's own reference share, so "5 points of uncertainty about
+#' a 35% party" and "5 points about a 4% party" keep their intended (very
+#' different) relative strengths.
+#'
 #' @keywords internal
 trend_anchor <- function(prep, prior_result) {
   if (is.na(prior_result)) {
-    list(val = prep$obs$y[which.min(prep$obs$t)], sd = 10)
+    list(val = prep$obs$y[which.min(prep$obs$t)],
+         sd = sd_to_link(10, prep$p_ref, prep$scale))
   } else {
-    list(val = prior_result, sd = 5)
+    list(val = to_link(prior_result, prep$scale)$z,
+         sd = sd_to_link(5, prep$p_ref, prep$scale))
   }
 }
 
@@ -45,8 +69,12 @@ trend_anchor <- function(prep, prior_result) {
 #' sum-to-zero constraint on house effects. P is positive definite (the walk
 #' alone is rank T-1; the anchor pins the level, the priors pin the houses).
 #'
+#' @param sigma_rw,sigma_house,szc_sd All in model-scale units. `szc_sd` is
+#'   the tolerance of the sum-to-zero constraint; it must be translated by the
+#'   caller like every other prior, or the constraint silently changes strength
+#'   with the scale and the house effects stop being centred.
 #' @keywords internal
-trend_prior_system <- function(prep, sigma_rw, sigma_house, anchor) {
+trend_prior_system <- function(prep, sigma_rw, sigma_house, anchor, szc_sd) {
   T_ <- prep$T_; J <- prep$J
   n_par <- T_ + J
   ijx <- list()
@@ -69,7 +97,7 @@ trend_prior_system <- function(prep, sigma_rw, sigma_house, anchor) {
   hj <- T_ + seq_len(J)
   add(hj, hj, rep(1 / sigma_house^2, J))
   wj <- prep$obs[, .N, by = j][order(j), N] / nrow(prep$obs)
-  w_szc <- 1 / 0.3^2
+  w_szc <- 1 / szc_sd^2
   add(rep(hj, each = J), rep(hj, times = J), as.vector(outer(wj, wj)) * w_szc)
 
   ijx <- do.call(rbind, ijx)
@@ -109,12 +137,22 @@ obs_noise_factors <- function(prep, firm_factors) {
 #'              - 1/2 ( sum(w y^2) + b0' P^-1 b0 - b' A^-1 b )
 #' with A = P + H'WH, b = b0 + H'Wy. Two sparse Cholesky factorisations.
 #'
+#' `logml` is the evidence for the TRANSFORMED data; `logml_y` adds the
+#' transform's log Jacobian and is therefore in the units of the original
+#' percentages, which is the only version comparable across model scales.
+#'
+#' @param sigma_obs,sigma_rw In model-scale units (see [to_link()]).
+#' @param sigma_house_pts House-effect prior sd in percentage points,
+#'   translated onto the model scale at the party's reference share.
 #' @param want_var If FALSE, skip the posterior-variance solve (the expensive
 #'   part) — used inside the hyperparameter optimiser.
 #' @keywords internal
-trend_solve <- function(prep, sigma_obs, sigma_rw, sigma_house, anchor,
-                        firm_factors = NULL, want_var = TRUE) {
-  prior <- trend_prior_system(prep, sigma_rw, sigma_house, anchor)
+trend_solve <- function(prep, sigma_obs, sigma_rw, sigma_house_pts, anchor,
+                        firm_factors = NULL, want_var = TRUE,
+                        szc_sd_pts = 0.3) {
+  sigma_house <- sd_to_link(sigma_house_pts, prep$p_ref, prep$scale)
+  szc_sd <- sd_to_link(szc_sd_pts, prep$p_ref, prep$scale)
+  prior <- trend_prior_system(prep, sigma_rw, sigma_house, anchor, szc_sd)
   H <- trend_obs_matrix(prep)
   y <- prep$obs$y
   n <- length(y)
@@ -139,7 +177,24 @@ trend_solve <- function(prep, sigma_obs, sigma_rw, sigma_house, anchor,
     Sigma_diag <- Matrix::diag(Matrix::solve(ch, Matrix::Diagonal(n_par)))
     sds <- sqrt(pmax(Sigma_diag, 0))
   }
-  list(theta = theta, sds = sds, logml = logml)
+  list(theta = theta, sds = sds, logml = logml,
+       logml_y = logml + prep$log_jac)
+}
+
+#' Default (sigma_obs, sigma_rw) for a model scale
+#'
+#' The logit defaults are the points defaults translated at a 35% share, so
+#' the two scales start from the same implied behaviour for a major party.
+#' Scale-dependent defaults matter: passing the points-scale 1.7 as a
+#' logit-scale sd would be a noise prior of 1.7 log-odds, which is silently
+#' catastrophic rather than obviously wrong.
+#'
+#' @keywords internal
+default_sigmas <- function(scale = c("logit", "points")) {
+  scale <- match.arg(scale)
+  if (scale == "points") c(sigma_obs = 1.7, sigma_rw = 0.10)
+  else c(sigma_obs = sd_to_link(1.7, 35, "logit"),
+         sigma_rw = sd_to_link(0.10, 35, "logit"))
 }
 
 # Public API --------------------------------------------------------------
@@ -159,49 +214,91 @@ trend_solve <- function(prep, sigma_obs, sigma_rw, sigma_house, anchor,
 #' choice; the anchor model weights by bias-consistency instead, a planned
 #' refinement).
 #'
+#' By default the latent walk runs on the LOGIT of vote share rather than raw
+#' percentage points, which keeps the trend inside (0, 100), lets a minor
+#' party's noise and movement scale with its own size, and makes house effects
+#' proportional rather than additive. Returned trends and bands are always
+#' back-transformed to percent, so callers see shares either way. See
+#' `R/scales.R` for why.
+#'
 #' @param polls A cycle's polls from [cycle_polls()].
 #' @param party Column name, e.g. "ALP".
 #' @param prior_result Previous-election vote share for day-0 anchor (percent).
 #'   `NA` means anchor loosely to the first poll.
-#' @param sigma_obs Poll noise sd in points (sampling + design effects).
-#'   Estimate it with [estimate_trend_sigmas()] rather than guessing.
-#' @param sigma_rw Daily random-walk sd in points. Ditto.
-#' @param sigma_house House-effect prior sd in points.
+#' @param scale Model scale: "logit" (default) or "points" (the stage-1
+#'   behaviour, kept for comparison and for reproducing older fits).
+#' @param sigma_obs Poll noise sd (sampling + design effects) in MODEL-SCALE
+#'   units, so its meaning depends on `scale`. Estimate it with
+#'   [estimate_trend_sigmas()] rather than guessing; `NULL` takes the
+#'   scale-appropriate default from [default_sigmas()].
+#' @param sigma_rw Daily random-walk sd, likewise in model-scale units.
+#' @param sigma_house_pts House-effect prior sd in percentage points
+#'   (translated onto the model scale internally).
 #' @param min_firm_polls Firms with fewer polls than this share one pooled
 #'   "(other firms)" house effect.
 #' @param firm_factors Named vector of per-firm noise sd multipliers from
 #'   [estimate_firm_factors()]; unnamed firms get 1.
-#' @return List: `trend` (data.table date/mean/sd/lo95/hi95), `house_effects`
-#'   (firm/effect/sd/n_polls), `residuals` (per poll), `meta` (includes
-#'   `logml`, the exact log marginal likelihood).
+#' @return List: `trend` (date/mean/sd/lo95/hi95 in percent, plus the
+#'   model-scale `mean_link`/`sd_link`), `house_effects` (model-scale `effect`
+#'   plus `effect_pts`, its size in points at the party's own level),
+#'   `residuals` (model scale), `meta` (includes `logml_y`, the evidence in
+#'   the units of the original percentages).
 #' @export
 fit_trend <- function(polls, party,
                       prior_result = NA_real_,
-                      sigma_obs = 1.7,
-                      sigma_rw = 0.10,
-                      sigma_house = 3,
+                      scale = c("logit", "points"),
+                      sigma_obs = NULL,
+                      sigma_rw = NULL,
+                      sigma_house_pts = 3,
                       min_firm_polls = 3,
                       firm_factors = NULL) {
-  prep <- prep_trend_obs(polls, party, min_firm_polls)
+  scale <- match.arg(scale)
+  defs <- default_sigmas(scale)
+  if (is.null(sigma_obs)) sigma_obs <- defs[["sigma_obs"]]
+  if (is.null(sigma_rw)) sigma_rw <- defs[["sigma_rw"]]
+
+  prep <- prep_trend_obs(polls, party, min_firm_polls, scale, prior_result)
   anchor <- trend_anchor(prep, prior_result)
-  sol <- trend_solve(prep, sigma_obs, sigma_rw, sigma_house, anchor,
+  sol <- trend_solve(prep, sigma_obs, sigma_rw, sigma_house_pts, anchor,
                      firm_factors = firm_factors, want_var = TRUE)
 
   T_ <- prep$T_
+  mu <- sol$theta[seq_len(T_)]
+  s <- sol$sds[seq_len(T_)]
+  # The band back-transforms exactly (the link is monotone, so quantiles are
+  # preserved) and is asymmetric in percent, correctly so for small shares.
+  # `mean` is the back-transformed posterior mean, i.e. strictly the median of
+  # the share; the Jensen gap is ~0.002 points at realistic posterior sds, far
+  # below anything that matters here.
   trend <- data.table::data.table(
     date = prep$start + prep$days,
-    mean = sol$theta[seq_len(T_)],
-    sd = sol$sds[seq_len(T_)]
+    mean = from_link(mu, scale),
+    lo95 = from_link(mu - 1.96 * s, scale),
+    hi95 = from_link(mu + 1.96 * s, scale),
+    mean_link = mu, sd_link = s
   )
-  trend[, `:=`(lo95 = mean - 1.96 * sd, hi95 = mean + 1.96 * sd)]
+  trend[, sd := sd_from_link(sd_link, mean, scale)]
+  data.table::setcolorder(trend, c("date", "mean", "sd", "lo95", "hi95"))
 
   hj <- T_ + seq_len(prep$J)
+  obs_t_by_firm <- split(prep$obs$t, prep$obs$j)[as.character(seq_len(prep$J))]
   house <- data.table::data.table(
     firm = prep$firms,
     effect = sol$theta[hj],
     sd = sol$sds[hj],
     n_polls = prep$obs[, .N, by = j][order(j), N]
   )
+  # Points-equivalent: the average number of percentage points this firm's
+  # polls sit above or below the trend, computed exactly at the levels its own
+  # polls were taken at. Deliberately NOT a delta-method conversion at the
+  # party's prior result — for a party that has moved a long way since the last
+  # election (OTH, 14.7% then vs ~8% now) linearising at the stale level
+  # overstates the effect by half again, which is exactly the case the logit
+  # scale exists to handle. On the points scale this reduces to `effect`.
+  house[, effect_pts := vapply(seq_len(.N), function(k) {
+    mu_k <- mu[obs_t_by_firm[[k]]]
+    mean(from_link(mu_k + effect[k], scale) - from_link(mu_k, scale))
+  }, numeric(1))]
 
   obs <- prep$obs
   residuals <- data.table::data.table(
@@ -218,9 +315,10 @@ fit_trend <- function(polls, party,
       party = party, n_polls = nrow(obs),
       cycle_year = prep$cycle_year,
       cycle_start = prep$start, cycle_end = prep$end,
+      scale = scale, p_ref = prep$p_ref, n_clamped = prep$n_clamped,
       sigma_obs = sigma_obs, sigma_rw = sigma_rw,
       prior_result = prior_result,
-      logml = sol$logml
+      logml = sol$logml, logml_y = sol$logml_y
     )
   )
 }
@@ -253,6 +351,48 @@ fit_cycle_trends <- function(polls, parties = NULL, priors = NULL,
   })
   names(out) <- parties
   out
+}
+
+#' Fit a cycle, forcing any structurally invalid fit onto the logit scale
+#'
+#' Wraps [fit_cycle_trends()] with the [scale_breaches()] guard. Evidence
+#' chooses the scale per party, but a fit whose 95% band includes a negative
+#' vote share is invalid regardless of its likelihood, so it is refitted on the
+#' logit scale, which cannot leave (0, 100).
+#'
+#' Escalation DROPS that party's estimated sigmas as well as its scale: they
+#' were estimated in points and are meaningless as log-odds (a `sigma_obs` of
+#' 1.9 points is a plausible poll noise; 1.9 log-odds is not), so the refit
+#' falls back to [default_sigmas()] for the new scale.
+#'
+#' @inheritParams fit_cycle_trends
+#' @param verbose Report escalations (default TRUE) — a silent scale switch
+#'   would hide a real modelling problem.
+#' @return As [fit_cycle_trends()], with an `escalated` attribute naming any
+#'   parties moved to logit.
+#' @export
+fit_cycle_trends_guarded <- function(polls, parties = NULL, priors = NULL,
+                                     overrides = list(), verbose = TRUE, ...) {
+  fits <- fit_cycle_trends(polls, parties, priors, overrides, ...)
+  breach <- scale_breaches(fits)
+  if (!length(breach)) return(fits)
+
+  if (verbose) {
+    message("  L2 escalation to logit (points fit left (0, 100)): ",
+            paste(breach, collapse = ", "))
+  }
+  for (p in breach) {
+    keep <- setdiff(names(overrides[[p]]), c("scale", "sigma_obs", "sigma_rw"))
+    overrides[[p]] <- c(list(scale = "logit"), overrides[[p]][keep])
+  }
+  fits <- fit_cycle_trends(polls, parties, priors, overrides, ...)
+  still <- scale_breaches(fits)
+  if (length(still)) {
+    stop("Fitted band still leaves (0, 100) after escalating to logit: ",
+         paste(still, collapse = ", "))
+  }
+  data.table::setattr(fits, "escalated", breach)
+  fits
 }
 
 `%||%` <- function(a, b) if (is.null(a) || length(a) == 0 || is.na(a)) b else a

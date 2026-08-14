@@ -8,13 +8,14 @@ estimate_trend_sigmas(
   polls_list,
   party,
   prior_results = NULL,
-  sigma_house = 3,
+  scale = c("logit", "points"),
+  sigma_house_pts = 3,
   min_firm_polls = 3,
   firm_factors = NULL,
   min_polls = 25,
-  start = c(1.7, 0.1),
-  lower = c(0.5, 0.015),
-  upper = c(4, 0.6)
+  start = NULL,
+  lower = NULL,
+  upper = NULL
 )
 }
 \arguments{
@@ -25,20 +26,25 @@ estimate_trend_sigmas(
 \item{prior_results}{Numeric vector of day-0 anchors, one per cycle
 (NA = anchor loosely to first poll).}
 
-\item{sigma_house, min_firm_polls, firm_factors}{As in \code{\link[=fit_trend]{fit_trend()}}.}
+\item{scale}{Model scale, as in \code{\link[=fit_trend]{fit_trend()}}. The estimated sigmas are in
+that scale's units, and the box bounds default accordingly.}
+
+\item{sigma_house_pts, min_firm_polls, firm_factors}{As in \code{\link[=fit_trend]{fit_trend()}}.}
 
 \item{min_polls}{Cycles where the party has fewer polls than this are
 dropped (too little data to inform the sigmas).}
 
-\item{start}{Starting values c(sigma_obs, sigma_rw); also the reference
-point for \code{logml0}.}
+\item{start}{Starting values c(sigma_obs, sigma_rw) in model-scale units;
+also the reference point for \code{logml0}. \code{NULL} uses \code{\link[=default_sigmas]{default_sigmas()}}.}
 
-\item{lower, upper}{Box bounds c(sigma_obs, sigma_rw), in points.}
+\item{lower, upper}{Box bounds c(sigma_obs, sigma_rw) in model-scale units;
+\code{NULL} uses \code{\link[=default_sigma_bounds]{default_sigma_bounds()}}.}
 }
 \value{
-List: \code{sigma_obs}, \code{sigma_rw}, \code{logml} (at optimum), \code{logml0}
-(at the starting values, for a monotonicity sanity check), \code{n_cycles},
-\code{n_polls}, \code{at_bound}, \code{convergence} (0 = optim converged).
+List: \code{sigma_obs}, \code{sigma_rw}, \code{logml} (at optimum), \code{logml_y}
+(same but in the units of the original percentages, so comparable across
+scales), \code{logml0} (at the starting values, for a monotonicity sanity
+check), \code{n_cycles}, \code{n_polls}, \code{at_bound}, \code{convergence} (0 = converged).
 }
 \description{
 The Gaussian-exact trend model has an exact evidence (see \code{\link[=fit_trend]{fit_trend()}}'s

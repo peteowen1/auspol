@@ -14,22 +14,30 @@
 #' @param party Party column name.
 #' @param prior_results Numeric vector of day-0 anchors, one per cycle
 #'   (NA = anchor loosely to first poll).
-#' @param sigma_house,min_firm_polls,firm_factors As in [fit_trend()].
+#' @param scale Model scale, as in [fit_trend()]. The estimated sigmas are in
+#'   that scale's units, and the box bounds default accordingly.
+#' @param sigma_house_pts,min_firm_polls,firm_factors As in [fit_trend()].
 #' @param min_polls Cycles where the party has fewer polls than this are
 #'   dropped (too little data to inform the sigmas).
-#' @param start Starting values c(sigma_obs, sigma_rw); also the reference
-#'   point for `logml0`.
-#' @param lower,upper Box bounds c(sigma_obs, sigma_rw), in points.
-#' @return List: `sigma_obs`, `sigma_rw`, `logml` (at optimum), `logml0`
-#'   (at the starting values, for a monotonicity sanity check), `n_cycles`,
-#'   `n_polls`, `at_bound`, `convergence` (0 = optim converged).
+#' @param start Starting values c(sigma_obs, sigma_rw) in model-scale units;
+#'   also the reference point for `logml0`. `NULL` uses [default_sigmas()].
+#' @param lower,upper Box bounds c(sigma_obs, sigma_rw) in model-scale units;
+#'   `NULL` uses [default_sigma_bounds()].
+#' @return List: `sigma_obs`, `sigma_rw`, `logml` (at optimum), `logml_y`
+#'   (same but in the units of the original percentages, so comparable across
+#'   scales), `logml0` (at the starting values, for a monotonicity sanity
+#'   check), `n_cycles`, `n_polls`, `at_bound`, `convergence` (0 = converged).
 #' @export
 estimate_trend_sigmas <- function(polls_list, party, prior_results = NULL,
-                                  sigma_house = 3, min_firm_polls = 3,
+                                  scale = c("logit", "points"),
+                                  sigma_house_pts = 3, min_firm_polls = 3,
                                   firm_factors = NULL, min_polls = 25,
-                                  start = c(1.7, 0.10),
-                                  lower = c(0.5, 0.015),
-                                  upper = c(4.0, 0.60)) {
+                                  start = NULL, lower = NULL, upper = NULL) {
+  scale <- match.arg(scale)
+  if (is.null(start)) start <- unname(default_sigmas(scale))
+  bnd <- default_sigma_bounds(scale)
+  if (is.null(lower)) lower <- bnd$lower
+  if (is.null(upper)) upper <- bnd$upper
   if (is.null(prior_results)) prior_results <- rep(NA_real_, length(polls_list))
   stopifnot(length(prior_results) == length(polls_list))
 
@@ -37,34 +45,49 @@ estimate_trend_sigmas <- function(polls_list, party, prior_results = NULL,
   for (i in seq_along(polls_list)) {
     n_avail <- sum(!is.na(polls_list[[i]][[party]]))
     if (n_avail < min_polls) next
-    prep <- prep_trend_obs(polls_list[[i]], party, min_firm_polls)
+    prep <- prep_trend_obs(polls_list[[i]], party, min_firm_polls, scale,
+                           prior_results[i])
     preps[[length(preps) + 1L]] <- prep
     anchors[[length(preps)]] <- trend_anchor(prep, prior_results[i])
   }
   if (!length(preps)) stop("No cycle has >= ", min_polls, " polls for ", party)
 
-  total_logml <- function(log_par) {
+  total <- function(log_par, field = "logml") {
     s_obs <- exp(log_par[1]); s_rw <- exp(log_par[2])
     sum(vapply(seq_along(preps), function(i) {
-      trend_solve(preps[[i]], s_obs, s_rw, sigma_house, anchors[[i]],
-                  firm_factors = firm_factors, want_var = FALSE)$logml
+      trend_solve(preps[[i]], s_obs, s_rw, sigma_house_pts, anchors[[i]],
+                  firm_factors = firm_factors, want_var = FALSE)[[field]]
     }, numeric(1)))
   }
 
-  logml0 <- total_logml(log(start))
-  opt <- stats::optim(log(start), function(p) -total_logml(p),
+  logml0 <- total(log(start))
+  opt <- stats::optim(log(start), function(p) -total(p),
                       method = "L-BFGS-B", lower = log(lower), upper = log(upper))
   est <- exp(opt$par)
   tol <- 1e-3
   at_bound <- any(est <= lower * (1 + tol)) || any(est >= upper * (1 - tol))
 
   list(
-    sigma_obs = est[1], sigma_rw = est[2],
-    logml = -opt$value, logml0 = logml0,
+    sigma_obs = est[1], sigma_rw = est[2], scale = scale,
+    logml = -opt$value, logml_y = total(opt$par, "logml_y"), logml0 = logml0,
     n_cycles = length(preps),
     n_polls = sum(vapply(preps, function(p) nrow(p$obs), 1L)),
     at_bound = at_bound, convergence = opt$convergence
   )
+}
+
+#' Default optimiser box bounds for each model scale
+#'
+#' Points-scale bounds are in percentage points. Logit-scale bounds are wide
+#' enough to cover both a major party (whose noise translates to ~0.04 log
+#' odds) and a small one (~0.25), since on the logit scale a smaller party
+#' legitimately needs MORE noise, not less.
+#'
+#' @keywords internal
+default_sigma_bounds <- function(scale = c("logit", "points")) {
+  scale <- match.arg(scale)
+  if (scale == "points") list(lower = c(0.5, 0.015), upper = c(4.0, 0.60))
+  else list(lower = c(0.01, 0.0005), upper = c(0.80, 0.25))
 }
 
 #' Per-pollster noise factors from pooled standardised residuals

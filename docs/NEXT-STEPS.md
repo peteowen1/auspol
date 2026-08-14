@@ -23,7 +23,21 @@ Updated 2026-08-14 (session 2, after a laptop restart mid-session).
   who remains, with a confidence score per rule tier) is genuinely better
   than a fixed flow rate and worth stealing for the seat stage. Its poll
   aggregation is weaker than ours: a Gaussian kernel rolling average that
-  explicitly does **not** remove systematic house effects.
+  explicitly does **not** remove systematic house effects, and an outlier
+  rule that penalises polls for disagreeing with the local consensus —
+  herding by construction.
+- **demosau.com MRP** (Aug 2026) — 9,343 respondents May–Jul 2026, MRP to
+  all 150 seats, 20,000-simulation Monte Carlo, preferences from a mix of
+  previous-election and respondent-allocated flows. Reports a hung
+  parliament: ALP 60–72, ONP 53–66, Coalition 11–22, GRN 1–5, OTH 3–7.
+  Two things matter for us. (1) It independently corroborates ONP at
+  historic highs, the single most surprising number in our own 2028 fit.
+  (2) DemosAU is also a **pollster in our input data**, and our federal
+  2028 fit gives their polls a −2.1 point house effect on ALP FP, the
+  second largest of any firm — worth stating plainly if we ever cite them.
+  No backtesting is published and the MRP specification (levels,
+  poststratification frame) is not disclosed, so the seat ranges cannot be
+  independently assessed.
 - **buildaballot.org.au** — non-partisan "answer questions → match to
   candidates → drag into a ballot order" tool by Project Planet Inc. A
   possible companion product to the forecast, not a modelling input.
@@ -33,8 +47,10 @@ Updated 2026-08-14 (session 2, after a laptop restart mid-session).
 1. ~~Estimate model hyperparameters instead of fixing them~~ — **done**
    (session 2): exact log marginal likelihood, L-BFGS-B, plus a per-pollster
    noise-factor stage. See "Done".
-2. **Poll-share transformation** — model on logit scale (or the anchor's
-   transformed scale) so low shares behave; currently raw percentage points.
+2. ~~Poll-share transformation~~ — **done** (session 2, stage 3), but not as
+   planned: a global switch to logit was REJECTED by its own pre-registered
+   test. The scale is now chosen per party by comparable log evidence. See
+   "Done" and the open question below.
 3. **Handle "modelled party folded into OTH"** — some polls (e.g. ResolvePM
    Jan 2026 NSW) report ONP inside OTH; anchor imputes from trend and
    subtracts. We currently over-count OTH in those polls.
@@ -48,14 +64,41 @@ Updated 2026-08-14 (session 2, after a laptop restart mid-session).
 Later: projection (trend×fundamentals mix), seat simulation, ABS Census
 electorate demographics (CED/SED + SA1 correspondences), website.
 
+## Open question from stage 3 (worth a proper answer)
+
+**Why do ALP, LNP and (federally) ONP fit better in raw percentage points
+than in logit?** The logit scale wins decisively for OTH (+50 log points),
+UAP (+10) and GRN (+2), and loses for ALP (−3), LNP (−5) and ONP (−9). The
+majors losing is unsurprising — near 35% the transform is nearly linear, so
+there is little to gain and a Jacobian to pay for. ONP is the real puzzle.
+
+Best current guess, NOT established: the federal sigmas are estimated only
+on completed cycles, where ONP sits at 2–10%; its 6%→32% climb is entirely
+inside the live 2028 cycle the estimator never sees. Including the live
+cycle flips ONP to logit by +70 log points, which is consistent with that
+story — but we deliberately do not select on the live cycle, because
+tuning the live forecast on itself is exactly what the separation prevents.
+
+Two candidates worth testing before trusting either scale for minor
+parties: reported-value discretisation (about half of all poll values are
+whole numbers, which is a much coarser grid in log-odds at 3% than at 35%)
+and the fact that a party polling near zero has a genuinely skewed, not
+just bounded, sampling distribution. A Student-t observation model (stage 5,
+Stan) may make the question moot.
+
 ## Known limitations of the current skeleton (documented, accepted for now)
 
 - Sigmas are estimated from COMPLETED cycles and held fixed for the live one
   (no propagation of hyperparameter uncertainty into the bands).
 - Firm noise factors are an empirical-Bayes approximation on pooled
   standardised residuals, not per-firm sigmas inside the marginal likelihood.
-- NSW ONP still uses a hand-set `sigma_rw = 0.25` — 8 polls is too few to
-  estimate, and it bound-hit when tried.
+- Party trends are still fitted INDEPENDENTLY, so fitted shares only sum to
+  ~100 by luck (checked: 98.9–101.2 federally, 95.5 for NSW 2027). A proper
+  multinomial-logit / softmax model would couple them, at the cost of the
+  per-party independent solve. This is the largest remaining structural
+  approximation.
+- Scale selection is per-party and post-hoc (see the open question above);
+  it should be revalidated on the next completed cycle.
 - House effects constant within a cycle (anchor uses new/old split).
 - TPP error bands assume independent party trends (mildly conservative).
 - OTH double-counts a modelled party when a poll folds it in (see #3 above).
@@ -63,6 +106,29 @@ electorate demographics (CED/SED + SA1 correspondences), website.
 
 ## Done
 
+- 2026-08-14 (session 2, stage 3): **Logit-scale modelling — adopted per
+  party, not globally.** Poll shares can now be modelled in log-odds instead
+  of raw points, which keeps trends inside (0, 100), lets noise and movement
+  scale with a party's own size, and makes house effects proportional. The
+  pre-registered test (L1: logit must beat points on Jacobian-corrected log
+  evidence for most parties, and for ONP) **FAILED**, so the global switch
+  was rejected; the scale is now selected per party by that same comparable
+  evidence, with a hard structural override — any fit whose 95% band leaves
+  (0, 100) is escalated to logit regardless of likelihood.
+  That override fired on two real cases, both catching genuine
+  overconfidence: NSW SFF 2023 and NSW ONP 2027, where the points fit
+  claimed 25.3 [22.8–27.8] from 8 polls spanning 4–30% AND put negative
+  vote share inside its own interval; logit gives 20.8 [15.8–26.9].
+  The hand-set NSW ONP override (`sigma_rw = 0.25`) is **retired** — it had
+  been compensating for the wrong scale all along.
+  Two bugs found by the pre-registered checks, not by review: the
+  sum-to-zero constraint had a hard-coded 0.3-point tolerance that was never
+  translated (≈20× too weak in log-odds, so house effects stopped being
+  centred — caught by A3b at 1.89 vs the required <1), and the
+  points-equivalent house-effect column linearised at a party's stale prior
+  result rather than its fitted level, overstating OTH's by half again.
+  All A1–A4 / N1–N3 anchor checks pass; NSW 2023 validation endpoint 54.33
+  vs actual 54.3. `R CMD check` clean; 59 tests.
 - 2026-08-14 (session 2): **Hyperparameters estimated, not fixed.** The
   Gaussian model has an exact evidence, so `sigma_obs`/`sigma_rw` come from
   maximising log marginal likelihood (L-BFGS-B on the log scale) over the
