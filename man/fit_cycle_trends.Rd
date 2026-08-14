@@ -4,7 +4,7 @@
 \alias{fit_cycle_trends}
 \title{Fit trends for all viable parties in a cycle}
 \usage{
-fit_cycle_trends(polls, parties = NULL, priors = NULL, ...)
+fit_cycle_trends(polls, parties = NULL, priors = NULL, overrides = list(), ...)
 }
 \arguments{
 \item{polls}{From \code{\link[=cycle_polls]{cycle_polls()}}.}
@@ -13,7 +13,11 @@ fit_cycle_trends(polls, parties = NULL, priors = NULL, ...)
 
 \item{priors}{Named vector of previous-election results (percent).}
 
-\item{...}{Passed to \code{\link[=fit_trend]{fit_trend()}}.}
+\item{overrides}{Named list of per-party argument lists passed to
+\code{\link[=fit_trend]{fit_trend()}}, e.g. \code{list(ONP = list(sigma_rw = 0.25))} to let a volatile
+populist party's latent walk move faster.}
+
+\item{...}{Passed to \code{\link[=fit_trend]{fit_trend()}} for every party.}
 }
 \value{
 Named list of \code{\link[=fit_trend]{fit_trend()}} results.

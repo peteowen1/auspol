@@ -1,0 +1,9 @@
+^external$
+^output$
+^docs$
+^scripts$
+^\.git$
+^\.Rproj\.user$
+^.*\.Rproj$
+^\.Rbuildignore$
+^LICENSE\.md$

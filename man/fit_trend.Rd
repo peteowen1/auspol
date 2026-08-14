@@ -11,7 +11,8 @@ fit_trend(
   sigma_obs = 1.7,
   sigma_rw = 0.1,
   sigma_house = 3,
-  min_firm_polls = 3
+  min_firm_polls = 3,
+  firm_factors = NULL
 )
 }
 \arguments{
@@ -22,18 +23,23 @@ fit_trend(
 \item{prior_result}{Previous-election vote share for day-0 anchor (percent).
 \code{NA} means anchor loosely to the first poll.}
 
-\item{sigma_obs}{Poll noise sd in points (sampling + design effects).}
+\item{sigma_obs}{Poll noise sd in points (sampling + design effects).
+Estimate it with \code{\link[=estimate_trend_sigmas]{estimate_trend_sigmas()}} rather than guessing.}
 
-\item{sigma_rw}{Daily random-walk sd in points.}
+\item{sigma_rw}{Daily random-walk sd in points. Ditto.}
 
 \item{sigma_house}{House-effect prior sd in points.}
 
 \item{min_firm_polls}{Firms with fewer polls than this share one pooled
 "(other firms)" house effect.}
+
+\item{firm_factors}{Named vector of per-firm noise sd multipliers from
+\code{\link[=estimate_firm_factors]{estimate_firm_factors()}}; unnamed firms get 1.}
 }
 \value{
 List: \code{trend} (data.table date/mean/sd/lo95/hi95), \code{house_effects}
-(firm/effect/sd/n_polls), \code{meta}.
+(firm/effect/sd/n_polls), \code{residuals} (per poll), \code{meta} (includes
+\code{logml}, the exact log marginal likelihood).
 }
 \description{
 Gaussian-exact version of the Jackman (2005) latent-intention model used by

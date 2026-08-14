@@ -14,7 +14,8 @@ Depends: R (>= 4.3)
 Imports:
     data.table,
     Matrix,
-    stats
+    stats,
+    utils
 Suggests:
     ggplot2,
     testthat (>= 3.0.0),
