@@ -159,13 +159,17 @@ fit_cycle <- function(year) {
     ov[[p]]$sigma_obs <- walks[[p]]$sigma_obs
     ov[[p]]$sigma_rw <- walks[[p]]$sigma_rw
   }
-  fits <- fit_cycle_trends_guarded(
+  # Correct parties folded into OTH (see R/fold.R). NSW matters more than
+  # federal here: ResolvePM reports ONP inside OTH on many NSW polls.
+  fits <- fit_cycle_unfolded(
     cp, parties = names(cnt)[cnt >= 8], priors = priors,
-    overrides = ov, firm_factors = fac_vec
+    overrides = ov, firm_factors = fac_vec, verbose = FALSE
   )
   fkeep <- flows_all$year == year & flows_all$region == "nsw"
   tpp <- derive_tpp(fits, flows_all[which(fkeep), ])
-  list(polls = cp, fits = fits, tpp = tpp, walks = walks)
+  list(polls = cp, polls_corrected = attr(fits, "polls_corrected"),
+       fits = fits, tpp = tpp, walks = walks, folded = attr(fits, "folded"),
+       fold_skipped = attr(fits, "fold_skipped"))
 }
 
 res2023 <- fit_cycle(2023)
@@ -200,6 +204,36 @@ share_sums <- vapply(c(2023, 2027), function(yr) {
   res <- get(paste0("res", yr))
   sum(vapply(res$fits, function(f) f$trend$mean[which.max(f$trend$date)], 1))
 }, 1)
+# ---- F1: fold correction (same metric as fit_federal.R) ----
+n_folded_nsw <- sum(vapply(c(2023, 2027), function(yr) {
+  f <- get(paste0("res", yr))$folded
+  if (is.null(f)) 0L else nrow(f)
+}, 1L))
+n_skipped_nsw <- sum(vapply(c(2023, 2027), function(yr) {
+  f <- get(paste0("res", yr))$fold_skipped
+  if (is.null(f)) 0L else nrow(f)
+}, 1L))
+cat(sprintf("\nF1  corrected %d NSW polls with a party folded into OTH\n",
+            n_folded_nsw))
+cat(sprintf("F1  left %d alone: the folded party was never measured near those dates,\n    so the trend there carries no information (see R/fold.R)\n",
+            n_skipped_nsw))
+if (n_folded_nsw) {
+  fold_tab <- rbindlist(lapply(c(2023, 2027), function(yr) {
+    f <- get(paste0("res", yr))$folded
+    if (is.null(f) || !nrow(f)) return(NULL)
+    data.table(year = yr, f)[, .(n = .N, mean_imputed = round(mean(imputed), 2),
+                                 mean_oth_before = round(mean(oth_before), 1),
+                                 mean_oth_after = round(mean(oth_after), 1)),
+                             by = .(year, party)]
+  }))
+  print(fold_tab)
+  stopifnot(all(rbindlist(lapply(c(2023, 2027), function(yr) {
+    f <- get(paste0("res", yr))$folded
+    if (is.null(f) || !nrow(f)) return(data.table(ok = TRUE))
+    data.table(ok = f$oth_after > 0)
+  }))$ok))
+}
+
 # L4a/L4b as in fit_federal.R: over-smoothing is enforced one-sided, and each
 # cycle's noise must clear the binomial floor at the level actually polled.
 # The negative tail is reported, not enforced (uncalibrated on real data).

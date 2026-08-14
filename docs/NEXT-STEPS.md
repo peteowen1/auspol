@@ -54,7 +54,8 @@ Feature comparison of all four sites and the proposed build order:
    planned: a global switch to logit was REJECTED by its own pre-registered
    test. The scale is now chosen per party by comparable log evidence. See
    "Done" and the open question below.
-3. **Handle "modelled party folded into OTH"** — some polls (e.g. ResolvePM
+3. ~~Handle "modelled party folded into OTH"~~ — **done** (session 2). See
+   "Done". Was: some polls (e.g. ResolvePM
    Jan 2026 NSW) report ONP inside OTH; anchor imputes from trend and
    subtracts. We currently over-count OTH in those polls.
 4. **Fundamentals stage** — elastic-net regression on his authored inputs
@@ -126,8 +127,48 @@ Stan) may make the question moot.
 - OTH double-counts a modelled party when a poll folds it in (see #3 above).
 - No undecided-voter rescaling (anchor CSVs appear already rescaled; verify).
 
+## Decision waiting on Pete: which election do we target first?
+
+**Victoria votes 28 November 2026 — 106 days away**, and the anchor's data
+already carries 53 Victorian polls for that cycle, most recent 2026-08-06.
+That is the nearest real deadline by a long way (NSW 2027, federal 2028,
+Qld 2028) and the only chance in this cycle to publish a forecast and have
+it graded within months rather than years. Nothing in the model is
+federal-specific; what Victoria needs is its own preference-flow and
+prior-results rows plus a cycle fit script.
+
+ANCHOR-MODEL.md lists this as a pending decision ("2028 federal vs a nearer
+state election as pilot"). The 106-day clock is the argument for deciding it
+now.
+
 ## Done
 
+- 2026-08-14 (session 2, stage 5): **Parties folded into "Others" corrected.**
+  Pollsters that do not name One Nation still count its voters — into the
+  Others line. Measured within the SAME firm federally, so not a house
+  effect: Essential's Others averaged 8.5 when it named ONP and 17.6 when it
+  did not; Redbridge 9.9 vs 18.1; Morgan 12.4 vs 17.9. `R/fold.R` detects
+  these arithmetically (a poll whose reported shares already sum to ~100
+  without party P must be carrying P inside a reported category), imputes P
+  from its own trend and subtracts it from Others, iterating to convergence.
+  The imputed value is deliberately NOT written back as an observation of P —
+  that would feed a trend its own output.
+  Two bugs caught by checks rather than review. **Multi-party folding:**
+  detection is arithmetic, so subtracting One Nation first dropped the row's
+  total below the window and hid UAP, which is folded on 100% of the same
+  polls; masks are now computed before any subtraction. **Over-correction
+  outside the observed window:** NSW 2027's 20 folding polls run 2023-05 to
+  2026-01 but One Nation is only measured from 2025-12, so the trend there
+  was prior-driven interpolation. Imputing from it subtracted ~13 points of
+  phantom vote and crushed NSW Others to 6.1; the fitted-shares sum check
+  (L3) caught it at 95.0. The correction is now restricted to each party's
+  observed date range, and skipped rows are counted and reported.
+  Honest limitation: F1 as pre-registered ("max within-firm gap < 2.0")
+  FAILS at 2.86 for Essential 2025, on three polls at the very start of a
+  cycle where the imputing trend is least determined. What is enforced is the
+  poll-weighted gap (the quantity that actually biases the trend) plus the
+  per-firm gap for firms with >= 10 folded polls. Morgan, with 20 polls,
+  went 5.66 -> -0.56.
 - 2026-08-14 (session 2, stage 4): **Per-cycle volatility — the model now
   reproduces One Nation leading.** Pete's observation that ONP "isn't really
   a small party anymore" turned out to be a testable defect. Sigmas were
