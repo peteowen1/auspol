@@ -90,6 +90,43 @@ test_that("a stale sigma_obs would push the error into the walk", {
   expect_lt(abs(trend_tracking(f_both)$acf1), 0.25)
 })
 
+test_that("optim_boxed respects the box and beats a deliberately bad start", {
+  # Quadratic with its unconstrained minimum outside the box: the answer must
+  # be the boundary, not the free optimum.
+  fn <- function(p) sum((p - c(5, 5))^2)
+  o <- optim_boxed(c(0, 0), fn, lower = c(-1, -1), upper = c(1, 1))
+  expect_true(all(o$par <= 1 + 1e-6) && all(o$par >= -1 - 1e-6))
+  expect_lt(abs(o$value - fn(c(1, 1))), 1e-4)
+})
+
+test_that("optim_boxed falls back when L-BFGS-B cannot make progress", {
+  # A flat plateau with a narrow well: L-BFGS-B's line search stalls on the
+  # plateau, which is the shape that produced convergence code 52 on real
+  # federal data.
+  fn <- function(p) if (max(abs(p)) > 0.5) 10 else sum(p^2)
+  o <- optim_boxed(c(2, 2), fn, lower = c(-3, -3), upper = c(3, 3))
+  expect_lte(o$value, 10)
+  expect_true(is.finite(o$value))
+  expect_true(o$method %in% c("L-BFGS-B", "L-BFGS-B(restart)", "Nelder-Mead"))
+})
+
+test_that("estimate_cycle_sigmas floors noise at the binomial bound", {
+  syn <- make_synthetic_logit(seed = 121, n_polls = 200, T_days = 400,
+                              start_pct = 20, sigma_obs = 0.01, sigma_rw = 0.004)
+  floor_val <- binomial_sd_link(20, 2500, "logit")
+  est <- estimate_cycle_sigmas(syn$polls, "ALP", sigma_obs_pooled = 0.05,
+                               sigma_rw_pooled = 0.004, prior_result = 20,
+                               sigma_obs_floor = floor_val)
+  expect_true(est$floored)
+  expect_equal(est$sigma_obs, floor_val)
+
+  # Without a floor the sub-binomial estimate comes through untouched
+  est2 <- estimate_cycle_sigmas(syn$polls, "ALP", sigma_obs_pooled = 0.05,
+                                sigma_rw_pooled = 0.004, prior_result = 20)
+  expect_false(est2$floored)
+  expect_lt(est2$sigma_obs, floor_val)
+})
+
 test_that("per-cycle walk removes the tracking failure a stale walk creates", {
   # The end-to-end claim: estimating the walk on the cycle in question fixes
   # the flattening that a stale pooled walk produces, and recovers the peak.

@@ -414,7 +414,11 @@ if (any(walk_tab$at_lower)) {
   cat(sprintf("    walk at lower bound (no detectable movement, shrunk toward pooled): %s\n",
               walk_tab[at_lower == TRUE, paste(year, party, collapse = ", ")]))
 }
-stopifnot(!any(walk_tab$at_upper), all(walk_tab$conv == 0))
+bad_conv <- walk_tab[conv != 0 | at_upper == TRUE]
+if (nrow(bad_conv)) {
+  cat("Per-cycle sigma estimation FAILED for:\n"); print(bad_conv)
+}
+stopifnot(nrow(bad_conv) == 0)
 
 # L4 was pre-registered as two-sided |acf1| < 0.25 and is SPLIT here, on the
 # record, because only one side of it is calibrated.

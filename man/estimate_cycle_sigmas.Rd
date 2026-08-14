@@ -15,6 +15,7 @@ estimate_cycle_sigmas(
   min_firm_polls = 3,
   firm_factors = NULL,
   k0 = 25,
+  sigma_obs_floor = NULL,
   lower = NULL,
   upper = NULL
 )
@@ -33,12 +34,22 @@ estimate_cycle_sigmas(
 
 \item{k0}{Shrinkage prior weight in pseudo-polls.}
 
+\item{sigma_obs_floor}{Physical lower bound on poll noise, in model-scale
+units — normally \code{\link[=binomial_sd_link]{binomial_sd_link()}} at the level the party actually
+polled. A fitted noise below pure sampling error at the largest plausible
+sample size is not a measurement of a very precise pollster, it is
+evidence that the polls agree with each other more than sampling theory
+allows (herding). Left unfloored it makes the trend over-confident and
+sets it chasing individual polls, so the floor is applied and reported
+via \code{floored}. \code{NULL} disables it.}
+
 \item{lower, upper}{Box bounds c(sigma_obs, sigma_rw); \code{NULL} uses
 \code{\link[=default_sigma_bounds]{default_sigma_bounds()}}.}
 }
 \value{
 List: \code{sigma_obs}, \code{sigma_rw} (shrunk — use these), \verb{*_raw}
-(unshrunk), \verb{*_pooled}, \code{n_polls}, \code{weight}, \code{at_bound}, \code{convergence}.
+(unshrunk), \verb{*_pooled}, \code{n_polls}, \code{weight}, \code{at_lower}, \code{at_upper},
+\code{floored}, \code{convergence}.
 }
 \description{
 A party's volatility is a fact about how it is behaving in a given cycle,

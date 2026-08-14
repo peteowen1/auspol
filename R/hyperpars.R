@@ -61,9 +61,9 @@ estimate_trend_sigmas <- function(polls_list, party, prior_results = NULL,
   }
 
   logml0 <- total(log(start))
-  opt <- stats::optim(log(start), function(p) -total(p),
-                      method = "L-BFGS-B", lower = log(lower), upper = log(upper))
-  est <- exp(opt$par)
+  opt <- optim_boxed(log(start), function(p) -total(p),
+                     log(lower), log(upper))
+  est <- exp(pmin(pmax(opt$par, log(lower)), log(upper)))
   tol <- 1e-3
   at_bound <- any(est <= lower * (1 + tol)) || any(est >= upper * (1 - tol))
 
@@ -109,16 +109,26 @@ estimate_trend_sigmas <- function(polls_list, party, prior_results = NULL,
 #' @param prior_result Day-0 anchor in percent, or NA.
 #' @param scale,sigma_house_pts,min_firm_polls,firm_factors As in [fit_trend()].
 #' @param k0 Shrinkage prior weight in pseudo-polls.
+#' @param sigma_obs_floor Physical lower bound on poll noise, in model-scale
+#'   units — normally [binomial_sd_link()] at the level the party actually
+#'   polled. A fitted noise below pure sampling error at the largest plausible
+#'   sample size is not a measurement of a very precise pollster, it is
+#'   evidence that the polls agree with each other more than sampling theory
+#'   allows (herding). Left unfloored it makes the trend over-confident and
+#'   sets it chasing individual polls, so the floor is applied and reported
+#'   via `floored`. `NULL` disables it.
 #' @param lower,upper Box bounds c(sigma_obs, sigma_rw); `NULL` uses
 #'   [default_sigma_bounds()].
 #' @return List: `sigma_obs`, `sigma_rw` (shrunk — use these), `*_raw`
-#'   (unshrunk), `*_pooled`, `n_polls`, `weight`, `at_bound`, `convergence`.
+#'   (unshrunk), `*_pooled`, `n_polls`, `weight`, `at_lower`, `at_upper`,
+#'   `floored`, `convergence`.
 #' @export
 estimate_cycle_sigmas <- function(polls, party, sigma_obs_pooled,
                                   sigma_rw_pooled, prior_result = NA_real_,
                                   scale = c("logit", "points"),
                                   sigma_house_pts = 3, min_firm_polls = 3,
                                   firm_factors = NULL, k0 = 25,
+                                  sigma_obs_floor = NULL,
                                   lower = NULL, upper = NULL) {
   scale <- match.arg(scale)
   bnd <- default_sigma_bounds(scale)
@@ -134,9 +144,8 @@ estimate_cycle_sigmas <- function(polls, party, sigma_obs_pooled,
                  firm_factors = firm_factors, want_var = FALSE)$logml
   }
   start <- log(c(sigma_obs_pooled, sigma_rw_pooled))
-  opt <- stats::optim(start, neg_ml, method = "L-BFGS-B",
-                      lower = log(lower), upper = log(upper))
-  raw <- exp(opt$par)
+  opt <- optim_boxed(start, neg_ml, log(lower), log(upper))
+  raw <- exp(pmin(pmax(opt$par, log(lower)), log(upper)))
   tol <- 1e-3
   # The two bounds mean different things and are reported separately. Hitting
   # the UPPER bound is a real failure: the walk is running away, absorbing
@@ -149,8 +158,15 @@ estimate_cycle_sigmas <- function(polls, party, sigma_obs_pooled,
 
   w <- n / (n + k0)
   shrink <- function(r, pooled) exp(w * log(r) + (1 - w) * log(pooled))
+  s_obs <- shrink(raw[1], sigma_obs_pooled)
+  floored <- FALSE
+  if (!is.null(sigma_obs_floor) && is.finite(sigma_obs_floor) &&
+      s_obs < sigma_obs_floor) {
+    floored <- TRUE
+    s_obs <- sigma_obs_floor
+  }
   list(
-    sigma_obs = shrink(raw[1], sigma_obs_pooled),
+    sigma_obs = s_obs, floored = floored,
     sigma_rw = shrink(raw[2], sigma_rw_pooled),
     sigma_obs_raw = raw[1], sigma_rw_raw = raw[2],
     sigma_obs_pooled = sigma_obs_pooled, sigma_rw_pooled = sigma_rw_pooled,
@@ -203,6 +219,55 @@ trend_tracking <- function(fit) {
   list(acf1 = acf1, se = 1 / sqrt(n), n = n,
        peak_fitted = max(fit$trend$mean),
        peak_polled = max(local_avg))
+}
+
+#' Box-constrained minimisation that does not give up on a line-search failure
+#'
+#' L-BFGS-B returns code 52 ("abnormal termination in line search") on
+#' objectives that are locally flat or slightly noisy, which the marginal
+#' likelihood can be near its optimum. The parameters it returns are usually
+#' fine but are not certified, and treating 52 as success would mean trusting
+#' an uncertified optimum. So: retry from a perturbed start, then fall back to
+#' Nelder-Mead on a boxed objective, and keep whichever candidate achieves the
+#' lowest value.
+#'
+#' @param start,fn,lower,upper As for [stats::optim()], all on the log scale.
+#' @return List: `par`, `value`, `convergence`, `method`.
+#' @keywords internal
+optim_boxed <- function(start, fn, lower, upper) {
+  best <- NULL
+  consider <- function(o, method) {
+    if (is.null(o) || !is.finite(o$value)) return(invisible(NULL))
+    if (is.null(best) || o$value < best$value) {
+      best <<- list(par = o$par, value = o$value,
+                    convergence = o$convergence, method = method)
+    }
+    invisible(NULL)
+  }
+  try_lbfgs <- function(s) tryCatch(
+    stats::optim(s, fn, method = "L-BFGS-B", lower = lower, upper = upper),
+    error = function(e) NULL)
+
+  o <- try_lbfgs(start)
+  consider(o, "L-BFGS-B")
+  if (!is.null(best) && best$convergence == 0) return(best)
+
+  # Perturbed restart: a different starting point often clears a line-search
+  # failure outright.
+  o2 <- try_lbfgs(pmin(pmax(start + 0.25, lower), upper))
+  consider(o2, "L-BFGS-B(restart)")
+  if (!is.null(best) && best$convergence == 0) return(best)
+
+  # Derivative-free fallback, with the box enforced by penalty.
+  boxed <- function(p) {
+    if (any(p < lower) || any(p > upper)) return(1e12)
+    fn(p)
+  }
+  o3 <- tryCatch(stats::optim(start, boxed, method = "Nelder-Mead"),
+                 error = function(e) NULL)
+  consider(o3, "Nelder-Mead")
+  if (is.null(best)) stop("all optimisers failed")
+  best
 }
 
 #' Default optimiser box bounds for each model scale

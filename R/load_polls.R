@@ -122,6 +122,56 @@ load_preference_flows <- function() {
   dt[!is.na(flow_alp)]
 }
 
+#' Preference flows for a cycle, carrying forward when a year is missing
+#'
+#' The anchor's flow file is hand-maintained and incomplete: Victoria, for
+#' instance, has estimates only for 2018, nothing for 2022 or 2026. Selecting
+#' on year alone returns zero rows, and [derive_tpp()] then falls back to a
+#' 50-50 split for every party — badly wrong for the Greens, who send about
+#' 82% of their preferences to Labor. A silent 50-50 would move Victorian TPP
+#' by several points with nothing failing.
+#'
+#' This carries each party's most recent estimate for that region forward to
+#' the requested year, and says so. It never reaches across regions:
+#' preference behaviour differs by state, and optional preferential voting
+#' makes exhaust rates region-specific.
+#'
+#' @param flows From [load_preference_flows()].
+#' @param year,region The cycle wanted.
+#' @param quiet Suppress the carry-forward message.
+#' @return data.table of the same shape, with a `flow_year` column recording
+#'   which election each estimate actually came from.
+#' @export
+flows_for <- function(flows, year, region, quiet = FALSE) {
+  # NB: masks and orderings are computed OUTSIDE the data.table [ ] so that
+  # the bare argument names `year` and `region` bind to this function's
+  # parameters rather than to the same-named columns. Written the obvious way,
+  # `flows[flows$region == region & flows$year <= year, ]` becomes
+  # `region == region` — always TRUE — and silently returns every row for
+  # every region, which handed Victoria the federal 2028 flows (Greens 88.19
+  # instead of 81.94) and pushed its 2022 validation TPP 3 points high.
+  keep <- flows$region == region & flows$year <= year
+  avail <- flows[which(keep), ]
+  if (!nrow(avail)) {
+    stop("No preference flows at all for region '", region, "' up to ", year)
+  }
+  # Most recent estimate per party, at or before the requested year
+  ord <- order(avail$party, -avail$year)
+  avail <- avail[ord, ]
+  out <- avail[which(!duplicated(avail$party)), ]
+  data.table::setnames(out, "year", "flow_year")
+  out$year <- year
+  carried <- out[which(out$flow_year != year), ]
+  if (nrow(carried) && !quiet) {
+    message(sprintf(
+      "  preference flows for %s %d: carried forward %s",
+      region, year,
+      paste(sprintf("%s (from %d)", carried$party, carried$flow_year),
+            collapse = ", ")))
+  }
+  out[]
+}
+
 #' Restrict polls to one election cycle
 #'
 #' @param polls From [load_polls()].

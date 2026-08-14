@@ -35,8 +35,20 @@ prep_trend_obs <- function(polls, party, min_firm_polls = 3,
   firms <- sort(unique(obs$firm_eff))
   obs[, j := match(firm_eff, firms)]
 
-  # Reference share for translating point-scale priors onto the model scale
-  p_ref <- if (is.na(prior_result)) mean(obs$y_pct, na.rm = TRUE) else prior_result
+  # Reference share for translating point-scale priors onto the model scale.
+  #
+  # This is the party's OBSERVED level in this cycle, not its previous-election
+  # result. The translation divides by p(1-p), so linearising at a stale result
+  # can inflate a prior by orders of magnitude: Victorian One Nation polled
+  # 0.28% in 2022 and 22% now, and translating "5 points" at 0.28% gives a
+  # day-0 prior sd of 17.9 log-odds — no prior at all. The level was then
+  # identified only by the soft sum-to-zero, and the 2026 band came out as
+  # 3.5%-68.9%. Evaluated at the observed level it is 0.39, which is a prior.
+  #
+  # Only the WIDTH of the priors uses this; the day-0 anchor VALUE is still
+  # the previous result, which is a fact about that election.
+  p_ref <- mean(obs$y_pct, na.rm = TRUE)
+  if (!is.finite(p_ref) || p_ref <= 0) p_ref <- prior_result
 
   list(obs = obs, T_ = T_, J = length(firms), days = days, firms = firms,
        start = start, end = end, scale = scale, p_ref = p_ref,

@@ -127,19 +127,43 @@ Stan) may make the question moot.
 - OTH double-counts a modelled party when a poll folds it in (see #3 above).
 - No undecided-voter rescaling (anchor CSVs appear already rescaled; verify).
 
-## Decision waiting on Pete: which election do we target first?
+## Victoria 2026 is the target — 106 days out as of 2026-08-14
 
-**Victoria votes 28 November 2026 — 106 days away**, and the anchor's data
-already carries 53 Victorian polls for that cycle, most recent 2026-08-06.
-That is the nearest real deadline by a long way (NSW 2027, federal 2028,
-Qld 2028) and the only chance in this cycle to publish a forecast and have
-it graded within months rather than years. Nothing in the model is
-federal-specific; what Victoria needs is its own preference-flow and
-prior-results rows plus a cycle fit script.
+Settled 2026-08-14. Victoria votes **28 November 2026**, the nearest real
+deadline by a long way (NSW 2027, federal 2028, Qld 2028) and the only
+chance this cycle to publish a forecast and have it graded in months rather
+than years. `scripts/fit_vic.R` fits 2018 and 2022 as validation plus the
+live 2026 cycle.
 
-ANCHOR-MODEL.md lists this as a pending decision ("2028 federal vs a nearer
-state election as pilot"). The 106-day clock is the argument for deciding it
-now.
+**Current standing (trend only — no fundamentals or seat model yet):**
+LNP 28.6, ALP 25.4, ONP 20.9, GRN 12.9, OTH 10.5; derived ALP TPP 47.3
+(95%: 45.1–49.5), against 55.0 at the 2022 election.
+
+Still needed before this is a forecast rather than a trend: fundamentals +
+projection (so it says something about November rather than today), and a
+seat model.
+
+## Findings from the Victorian build worth keeping
+
+- **The polls, not the model, missed 2018.** Our 2018 Victorian trend ends at
+  ALP TPP 54.17 against a final-30-day published-poll mean of 53.93 — the
+  trend tracks the polls to a quarter of a point. The actual result was
+  57.60. That "Danslide" 3.67-point polling error is exactly what the
+  projection stage exists to correct, and Victoria supplies two clean
+  measurements of it (2018: +3.67, 2022: +0.33).
+- **House-effect correction hurt in Victoria 2022, by about 2.4 points.**
+  Our LNP endpoint is 32.07 against a final-poll mean of 34.11 and an actual
+  of 34.48. The correction is behaving correctly — the last month's polls
+  over-represent firms with positive Coalition house effects (Newspoll2
+  +3.31, Redbridge +1.87), so the raw mean is the biased quantity — but here
+  the bias happened to point at the truth. One election is one data point,
+  and it is an argument for the anchor's bias-consistency weighting over our
+  poll-count weighting of the sum-to-zero constraint. Worth revisiting when
+  the seat model needs accurate majors.
+- **Victorian One Nation polls are sub-binomial**, i.e. they agree with each
+  other more closely than pure sampling error permits at n=2500. That is the
+  herding signature. The noise is now floored at the binomial bound and the
+  party-cycle reported, rather than the model inheriting false precision.
 
 ## Done
 
