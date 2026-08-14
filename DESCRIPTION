@@ -1,0 +1,22 @@
+Package: auspol
+Title: Australian Election Forecasting
+Version: 0.0.1
+Authors@R: person("Pete", "O", email = "fptpost@gmail.com", role = c("aut", "cre"))
+Description: Poll trend estimation, projection and seat simulation for Australian
+    federal and state elections. Anchored on the AE Forecasts methodology
+    (see docs/ANCHOR-MODEL.md) with planned extensions using ABS Census
+    demographics at electorate level.
+License: MIT + file LICENSE
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.3
+Depends: R (>= 4.3)
+Imports:
+    data.table,
+    Matrix,
+    stats
+Suggests:
+    ggplot2,
+    testthat (>= 3.0.0),
+    arrow
+Config/testthat/edition: 3

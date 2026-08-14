@@ -1,0 +1,16 @@
+# Third-party clones — disposable, never committed (and unlicensed data stays out of our repo)
+external/
+
+# Generated data and model outputs (release-as-data-bus later if needed)
+output/
+*.parquet
+*.rds
+
+# R
+.Rproj.user/
+.Rhistory
+.RData
+*.Rcheck/
+
+# OS
+Thumbs.db
