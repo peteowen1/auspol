@@ -9,25 +9,21 @@ open state, not the narrative of how it got here.
 
 ## Awaiting Pete
 
-- **Merge PR #2** — github.com/peteowen1/auspol/pull/2, version 0.2.0. The
-  forecast page, `run_all.R` + freshness, CI, `ARCHITECTURE.md`, and the
-  seven fixes from the second review gate. PR #1 is merged, so `main` exists.
-  CI green on the current head.
-  It has since grown well past that: **16 commits, 20 files, +2143/−208**,
-  adding the scheduled refresh, the leadership caveat, the page test and the
-  check-code registry.
+- ~~Merge PR #2~~ — **merged 2026-08-15.** Version 0.2.0: the forecast page,
+  `run_all.R` + freshness, CI, `ARCHITECTURE.md`, the scheduled refresh, the
+  leadership caveat, the page test and the check-code registry. 22 commits,
+  five review passes.
 
-  **Reviewed in three passes, all before merge**, because the PR kept growing
-  after each one — work pushed to `dev` joins the open PR automatically, which
-  is the shape the review gate is least able to catch on its own. Pass 1: the
-  modelling commits, before the PR existed. Pass 2: the workflow and version
-  bump, which found that this bullet claimed the whole PR was pre-reviewed.
-  Pass 3: the page test, which found three real defects (see below).
-
-  **In hindsight this should have been a stack.** A 20-file PR is past the
-  size where one review can be thorough, and `gh-stack` exists here precisely
-  so a mechanical layer gets a cheap pass while a logic layer gets a real one.
-  Worth doing next time the work runs this long before merging.
+  **In hindsight it should have been a stack.** A 20-file PR is past the size
+  where one review can be thorough, and it kept growing after each pass —
+  work pushed to `dev` joins an open PR automatically, which is the shape the
+  review gate is least able to catch on its own. `gh-stack` exists here
+  precisely so a mechanical layer gets a cheap pass while a logic layer gets a
+  real one. Worth doing for the next long run of work.
+- **Open the next PR** — `dev` is 3 commits ahead of `main` at version 0.3.0:
+  estimated preference flows, the G3 estimator check, and the review fixes.
+  This one **changes the published two-party figure from 46.8 to 47.8**, so it
+  wants a careful look rather than a rubber stamp. Reviewed once already.
 - **Repo is still private and `dev` is still the default branch**, both by
   choice. Going public remains a separate decision (see below).
 - **Decide whether the repo goes public.** It was created private on purpose.
@@ -509,14 +505,16 @@ elections, pooled across regions, moving as elections are held.
 **The estimator was chosen by strict temporal backtest** — each election
 predicted from only earlier ones, 103 elections, eleven candidates:
 
-| | MAE |
-|---|---:|
-| **mean of last 5** | **4.815** |
-| last in region | 4.863 |
-| mean of last 3 | 5.027 |
-| linear trend | 5.282 |
-| exp decay, 4-yr half-life | 5.669 |
-| exp decay, 8-yr + region bonus | 6.544 |
+| Rank | | MAE |
+|---:|---|---:|
+| 1 | **mean of last 5** | **4.815** |
+| 2 | last in region | 4.863 |
+| 3 | mean of last 3 | 5.027 |
+| 6 | linear trend | 5.282 |
+| 7 | exp decay, 4-yr half-life | 5.669 |
+| 11 | exp decay, 8-yr + region bonus | 6.544 |
+
+(Abridged; `scripts/backtest_flows.R` prints all eleven and is the authority.)
 
 Two results worth keeping:
 

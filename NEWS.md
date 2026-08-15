@@ -14,8 +14,8 @@ as given.
 - **The estimator was chosen by strict temporal backtest**, every election
   predicted using only elections held strictly earlier, across 103 elections.
   Eleven candidates. A linear trend — the obvious choice, and the one this was
-  first built around — came fifth. Leave-one-out had endorsed it, wrongly:
-  it lets a later election inform an earlier prediction. Every recency-weighted
+  first built around — came sixth (MAE 5.282 against 4.815). Leave-one-out had
+  endorsed it, wrongly: it lets a later election inform an earlier prediction. Every recency-weighted
   scheme also lost, and monotonically in the half-life, because exponential
   decay never fully discards a 1998 flow of 54% while behaviour has drifted to
   26%.

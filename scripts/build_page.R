@@ -114,8 +114,7 @@ stopifnot(is.finite(pj$mean), is.finite(pj$sd),
 # the page cannot drift from the model. Evidence:
 # docs/reviews/onp-preference-flows-2026-08-15.md
 onp_flow <- fl[fl$party == "ONP", ]$flow_alp[1]
-onp_est <- estimate_flow(flows_all_raw <- load_preference_flows(), "ONP", 2026,
-                         cycles)
+onp_est <- estimate_flow(load_preference_flows(), "ONP", 2026, cycles)
 stopifnot(!is.null(onp_est), is.finite(onp_est$flow))
 onp_fp <- tr[party == "ONP"][which.max(date)]$mean
 flows_all <- load_preference_flows()

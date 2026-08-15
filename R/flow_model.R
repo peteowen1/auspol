@@ -18,31 +18,45 @@
 # it move when the record moves.
 #
 # WHICH estimator was decided by a strict temporal backtest -- every election
-# predicted using only elections held strictly EARLIER -- across 102 elections
-# from 2004. Seven candidates, mean absolute error:
+# predicted using only elections held strictly EARLIER -- across 103 elections
+# from 2004. Eleven candidates, mean absolute error:
 #
-#   mean of last 5      4.769   <- adopted
-#   last in region      4.911
-#   mean of last 3      5.087
-#   half trend          5.258
-#   linear trend        5.348
-#   carry last forward  5.726
-#   last plus drift     5.915
+#   mean of last 5        4.815   <- adopted
+#   last in region        4.863
+#   mean of last 3        5.027
+#   mean of last 8        5.174
+#   half trend            5.198
+#   linear trend          5.282
+#   exp decay, 4y half    5.669
+#   carry last forward    5.700
+#   exp decay + size      6.314
+#   exp decay, 8y half    6.541
+#   exp decay + region    6.544
 #
-# The linear trend came FIFTH. It was the obvious idea and the one this file
+# These numbers are not frozen here: scripts/backtest_flows.R re-runs the whole
+# comparison on every pipeline run and fails as check G3 if the adopted method
+# stops winning. Read that script, not this comment, for the current ranking.
+#
+# The linear trend came SIXTH. It was the obvious idea and the one this file
 # was first written around: the trends are real and strong (Greens +1.10
 # points a year over 53 elections, One Nation -0.605 over 21, both p < 0.001)
 # and leave-one-out endorsed them. Leave-one-out was wrong, because it lets
 # later elections inform an earlier prediction; under honest temporal
 # validation a straight line extrapolated off the end of the record misses
-# every turning point. Averaging the five most recent estimates keeps the drift
-# without betting on its continuing.
+# every turning point.
+#
+# Every recency-weighted scheme lost too, and monotonically in the half-life.
+# A hard window beats soft decay because decay never fully discards anything:
+# a 1998 flow of 54% keeps a small vote forever while behaviour has drifted to
+# 26%. Weighting same-region elections double had no effect whatsoever (6.544
+# against 6.541 unweighted).
 #
 # The winner is chosen on the POOLED backtest, not per party. Per party the
 # ranking shuffles -- One Nation prefers the mean of 3, the Greens prefer last
 # in region -- but those are 16 and 38 elections, and picking a different
 # estimator for each party from the same backtest that measures them is how you
-# fit noise and call it insight.
+# fit noise and call it insight. G3 reports the per-party split without acting
+# on it.
 #
 # A state-versus-federal term was tested and rejected: +1.10 points, se 1.90,
 # p = 0.57, and worse out of sample. It is a plausible idea -- One Nation's
