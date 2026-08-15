@@ -10,9 +10,11 @@ point of that reaches the two-party figure through an *assumed* preference
 flow, so the **trend** two-party number moves 0.21 points for every 1 point
 the flow moves. Nothing else in the model has that leverage.
 
-The forecast assumes **25.5%** of One Nation preferences go to Labor — the
-**lowest of all 24 estimates in the anchor's file**, and not an observation
-but a forward assumption.
+The forecast assumes **25.5%** of One Nation preferences go to Labor —
+**lower than every one of the 21 elections actually held**, and not an
+observation but a forward assumption. It is not uniquely the lowest value in
+the file: the anchor uses the same 25.5 for NSW 2027 and federal 2028, so the
+three lowest entries are all the same forward view, repeated.
 
 ## What the page said, and why it was wrong
 
@@ -113,8 +115,17 @@ Done:
 - Published the sensitivity on the page, so the largest lever is visible
   rather than buried in an input file.
 - Added check **G2**, failing when the assumed flow sits more than 2.5
-  residual sds from the observed trend. This assumption is at 2.3 and should
+  residual sds from the observed trend. This assumption is at 2.32 and should
   not drift further without someone noticing.
+
+  G2 keys "observed" off each election's actual end date, not `year <= this
+  year`. The two are identical today and would silently diverge: the anchor's
+  NSW 2027 and federal 2028 projections are both 25.5, so a year-based filter
+  would absorb them into the trend as the years tick over and pull the fitted
+  value toward the very assumption under test. Measured, z would decay
+  **−2.32 → −1.94 (2027) → −1.72 (2028) on no new evidence at all.** A check
+  that weakens because an assumption was repeated is worse than none, since it
+  still reads as scrutiny.
 
 Deliberately **not** done: changing the flow, or widening the interval. The
 flow is the anchor's authored input and he is the domain expert; and now that

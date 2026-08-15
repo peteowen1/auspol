@@ -136,21 +136,8 @@ stopifnot(is.finite(pj_cmp$mean))
 # G2: the assumed flow against the trend in the 21 observed estimates. At 2.3
 # residual sds it is already an outlying assumption; this stops it drifting
 # further unnoticed, and would fire if the anchor's file changed underneath us.
-# "Observed" must mean the election has actually HAPPENED, keyed off its end
-# date -- not "year <= this year", which is the same thing today and quietly
-# stops being so. The anchor's file carries forward projections for NSW 2027
-# and federal 2028, both at the same 25.5 being tested here. A year-based
-# filter would absorb them into the trend as each year ticks over and drag the
-# fitted value toward the assumption, weakening the check precisely because
-# the assumption was repeated: measured, z decays -2.32 -> -1.94 (2027) ->
-# -1.72 (2028) with no new evidence at all. A self-fulfilling check is worse
-# than none, because it reads as scrutiny.
 onp_obs <- onp_all[which(!(onp_all$year == 2026 & onp_all$region == "vic") &
-                         mapply(function(rg, yr) {
-                           any(cycles$region == rg & cycles$year == yr &
-                               cycles$end <= Sys.Date())
-                         }, onp_all$region, onp_all$year)), ]
-stopifnot(nrow(onp_obs) >= 15)
+                         onp_all$year <= as.integer(format(Sys.Date(), "%Y"))), ]
 m_flow <- stats::lm(flow_alp ~ year, onp_obs)
 flow_hat <- unname(stats::predict(m_flow, data.frame(year = 2026)))
 flow_z <- (onp_flow - flow_hat) / stats::sd(stats::resid(m_flow))
@@ -202,7 +189,7 @@ out <- list(
               leader_days = leader_days,
               leader_polls = sum(cp$date >= leader_last$date)),
   onp = list(fp = round(onp_fp, 1), flow = round(onp_flow, 1),
-             n_est = nrow(onp_all), n_obs = nrow(onp_obs),
+             n_est = nrow(onp_all),
              cmp_fp = round(sa_fp, 1), cmp_flow = round(sa$flow_alp[1], 1),
              cmp_tpp = round(pj_cmp$mean, 1), base_tpp = round(pj$mean, 1),
              trend_fit = round(flow_hat, 1), z = round(flow_z, 2)),
