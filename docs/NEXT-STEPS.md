@@ -13,14 +13,21 @@ open state, not the narrative of how it got here.
   forecast page, `run_all.R` + freshness, CI, `ARCHITECTURE.md`, and the
   seven fixes from the second review gate. PR #1 is merged, so `main` exists.
   CI green on the current head.
-  **Reviewed in two passes, both before merge.** The modelling commits went
-  through the gate before the PR was opened. Three later commits — the
-  scheduled workflow, the version bump, and this queue edit — were pushed to
-  `dev` afterwards and so joined the open PR without review; they got their
-  own scoped pass, which found exactly one thing: this bullet used to claim
-  the whole PR was pre-reviewed. Recorded rather than quietly corrected,
-  because "commits added to an already-reviewed PR" is the shape the review
-  gate is least likely to catch on its own.
+  It has since grown well past that: **16 commits, 20 files, +2143/−208**,
+  adding the scheduled refresh, the leadership caveat, the page test and the
+  check-code registry.
+
+  **Reviewed in three passes, all before merge**, because the PR kept growing
+  after each one — work pushed to `dev` joins the open PR automatically, which
+  is the shape the review gate is least able to catch on its own. Pass 1: the
+  modelling commits, before the PR existed. Pass 2: the workflow and version
+  bump, which found that this bullet claimed the whole PR was pre-reviewed.
+  Pass 3: the page test, which found three real defects (see below).
+
+  **In hindsight this should have been a stack.** A 20-file PR is past the
+  size where one review can be thorough, and `gh-stack` exists here precisely
+  so a mechanical layer gets a cheap pass while a logic layer gets a real one.
+  Worth doing next time the work runs this long before merging.
 - **Repo is still private and `dev` is still the default branch**, both by
   choice. Going public remains a separate decision (see below).
 - **Decide whether the repo goes public.** It was created private on purpose.
@@ -481,6 +488,38 @@ Not built. Worth recording because the raw comparison was persuasive and
 pointed the wrong way on the variance — the confound was `govt_years`, which
 correlates with leader change (0.12) and is already a predictor. Fifteen
 minutes of sizing replaced building a feature and then discovering this.
+
+## The published page is now executed, not just generated (2026-08-15)
+
+`tools/check-page.js` runs the page's own JavaScript against a stub DOM and
+fails the build if any block did not draw, reported as check **G1**. Nothing
+else covered it: `R CMD check` never looks at HTML, `node --check` parses
+without running, and a browser shows a page missing three of four charts as
+merely quiet.
+
+The instructive part is that the check was wrong three times before it was
+right, and every wrong version *passed*:
+
+1. Counting only `innerHTML`/`textContent` called the three SVG charts
+   missing on a healthy page — they are built with `appendChild`.
+2. "Was anything written" then passed a page whose pendulum had failed,
+   because the block appends its axes before it touches the data. The real
+   signal is the template's own `draw()` guard, which logs the failure.
+3. Conditional blocks (`datawarn`, `leadcav`) were exempted from the
+   must-render rule outright, so a caveat that silently failed still read as
+   OK — and `leadcav`'s condition holds right now. Each conditional now
+   carries a predicate over the page's own embedded data.
+
+Plus a fourth found while fixing the third: the regex extracting that data
+required `};\n` and R on Windows writes `};\r\n`, so it never matched.
+
+**The rule, now in ARCHITECTURE.md: prove a check fails on a deliberately
+broken input before trusting it to pass.** Every guard in the file has been
+run against a page corrupted in the specific way it claims to detect.
+
+Related: check codes are hand-maintained across seven scripts and nothing
+enforced uniqueness. `B1` was claimed by both `fit_projection.R` and the page
+check; the page check is now `G1` and `run_all.R` stops on any clash.
 
 ## The forecast refreshes daily, and deliberately does not publish itself
 
