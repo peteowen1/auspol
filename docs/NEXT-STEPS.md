@@ -5,6 +5,13 @@ branch `dev`, no `main` until the review gate has run).
 
 ## Awaiting Pete
 
+- **Merge the four post-PR commits.** `dev` is four ahead of `main`: the
+  forecast page, `run_all.R` + freshness, CI, and ARCHITECTURE.md. CI passes
+  on `dev`. They have NOT been through the review gate — that ran on PR #1's
+  content only — so run it before the next PR.
+- **Repo is still private and `dev` is still the default branch**, both by
+  choice. Going public remains a separate decision (see below).
+
 - **Run the review gate, then open the first PR to `main`.** The remote now
   exists (github.com/peteowen1/auspol, **private**, default branch `dev`) and
   all 15 commits are pushed, so the work is backed up. There is deliberately
@@ -193,6 +200,40 @@ P(ALP majority) **14.2%**, a median loss of 21 seats from the 56 won in 2022.
   other more closely than pure sampling error permits at n=2500. That is the
   herding signature. The noise is now floored at the binomial bound and the
   party-cycle reported, rather than the model inheriting false precision.
+
+## After the merge, 2026-08-15 — publishing and plumbing
+
+- **The forecast is published.** `scripts/build_page.R` + `page-template.html`
+  produce a self-contained `output/victoria-2026.html` with no external
+  requests. It leads with the pendulum, and publishes the calibration table,
+  the four rejected improvements and five caveats alongside the numbers.
+- **One command runs everything.** `scripts/run_all.R`, ~5 minutes, freshness
+  checked before any computing, each stage in its own R process, every
+  pre-registered check echoed, stops on first failure.
+- **CI runs `R CMD check` and the tests on every push.** 217 assertions run
+  with the anchor clone absent (15 skip); the workflow asserts a floor so an
+  "everything skipped" run cannot pass silently.
+- **ARCHITECTURE.md** records the load-bearing decisions and the five hazard
+  classes that have actually bitten.
+
+Three bugs found by checking rather than assuming:
+
+1. **Half the page was not drawing.** jsonlite emits a data.table as an array
+   of ROW objects; three chart blocks read them as column arrays. The seat
+   histogram threw, which — same script, sequential — also killed the trend
+   chart, its legend and both tables. `node --check` passed (valid syntax) and
+   the browser showed the top of the page fine. Caught by running the page's
+   own script against a DOM stub in Node and asserting every target populates.
+   Blocks are now isolated and a failed chart says so visibly.
+2. **A test guard was answering about the wrong directory.** `skip_if_no_anchor()`
+   rebuilt the data path by hand instead of asking `anchor_data_path()`, so a
+   CI dry-run reported 217 passed / 0 skipped / 0 failed — green, and
+   meaningless.
+3. **The freshness message asserted a cause it could not know** ("pull the
+   clone"). NSW was flagged at 45 days; the clone was three commits behind,
+   pulling changed no poll data at all. Nobody is polling NSW 19 months out.
+   It now distinguishes "our copy is old" from "no new polls" using the source
+   file's own mtime.
 
 ## Review gate, 2026-08-15 — one real leak, and what it moved
 
