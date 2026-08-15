@@ -126,7 +126,17 @@ build_projection_data <- function(horizons = c(30, 90, 180, 365, 730),
       # every horizon, which biases the fitted mix weight toward the trend and
       # understates the error spread: precisely the two quantities this
       # function exists to estimate honestly.
-      fl <- tryCatch(flows_for(flows_all, y - 1L, rg, quiet = TRUE),
+      # `as_of` matters as much as the year. flows_for() now estimates an
+      # unknown flow from elections that have already happened, and "already"
+      # defaults to TODAY — which would let elections held AFTER the one being
+      # backtested inform its flows. That is the same leakage this comment
+      # warns about, arriving through a new door: it moved the fitted mix
+      # weight w(30) from 0.60 to 0.54 and the error spread with it, which is
+      # exactly the corruption described above. Pin it to the start of the
+      # cycle, i.e. the previous election, so only genuinely prior evidence is
+      # ever used.
+      fl <- tryCatch(flows_for(flows_all, y - 1L, rg, quiet = TRUE,
+                               cycles = cycles, as_of = cyc$start[1]),
                      error = function(e) NULL)
       if (is.null(fl)) next
 

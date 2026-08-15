@@ -9,25 +9,21 @@ open state, not the narrative of how it got here.
 
 ## Awaiting Pete
 
-- **Merge PR #2** — github.com/peteowen1/auspol/pull/2, version 0.2.0. The
-  forecast page, `run_all.R` + freshness, CI, `ARCHITECTURE.md`, and the
-  seven fixes from the second review gate. PR #1 is merged, so `main` exists.
-  CI green on the current head.
-  It has since grown well past that: **16 commits, 20 files, +2143/−208**,
-  adding the scheduled refresh, the leadership caveat, the page test and the
-  check-code registry.
+- ~~Merge PR #2~~ — **merged 2026-08-15.** Version 0.2.0: the forecast page,
+  `run_all.R` + freshness, CI, `ARCHITECTURE.md`, the scheduled refresh, the
+  leadership caveat, the page test and the check-code registry. 22 commits,
+  five review passes.
 
-  **Reviewed in three passes, all before merge**, because the PR kept growing
-  after each one — work pushed to `dev` joins the open PR automatically, which
-  is the shape the review gate is least able to catch on its own. Pass 1: the
-  modelling commits, before the PR existed. Pass 2: the workflow and version
-  bump, which found that this bullet claimed the whole PR was pre-reviewed.
-  Pass 3: the page test, which found three real defects (see below).
-
-  **In hindsight this should have been a stack.** A 20-file PR is past the
-  size where one review can be thorough, and `gh-stack` exists here precisely
-  so a mechanical layer gets a cheap pass while a logic layer gets a real one.
-  Worth doing next time the work runs this long before merging.
+  **In hindsight it should have been a stack.** A 20-file PR is past the size
+  where one review can be thorough, and it kept growing after each pass —
+  work pushed to `dev` joins an open PR automatically, which is the shape the
+  review gate is least able to catch on its own. `gh-stack` exists here
+  precisely so a mechanical layer gets a cheap pass while a logic layer gets a
+  real one. Worth doing for the next long run of work.
+- **Open the next PR** — `dev` is 3 commits ahead of `main` at version 0.3.0:
+  estimated preference flows, the G3 estimator check, and the review fixes.
+  This one **changes the published two-party figure from 46.8 to 47.8**, so it
+  wants a careful look rather than a rubber stamp. Reviewed once already.
 - **Repo is still private and `dev` is still the default branch**, both by
   choice. Going public remains a separate decision (see below).
 - **Decide whether the repo goes public.** It was created private on purpose.
@@ -488,6 +484,62 @@ Not built. Worth recording because the raw comparison was persuasive and
 pointed the wrong way on the variance — the confound was `govt_years`, which
 correlates with leader change (0.12) and is already a predictor. Fifteen
 minutes of sizing replaced building a feature and then discovering this.
+
+## Preference flows are now estimated, not assumed (2026-08-16)
+
+Pete's direction, and it reframed the whole question: **never hand-code an
+assumption — derive it from data so it moves as data arrives.** And more
+broadly, auspol is *inspired by* AE Forecasts and theswingison rather than a
+reimplementation of either; where both do something poorly we skip it or do it
+better. This is the first place that bites.
+
+Both references hand-set preference flows. AE Forecasts authors the value and
+borrows across regions (`2026,vic,ONP FP,25.5,#Use federal pref flow
+estimate`), so the same borrowed number stands for three future elections as
+though it were three estimates. theswingison uses a twelve-rule hierarchy —
+better than one rate, still hand-authored rules no election can update.
+
+**Ours is estimated**: the mean of a party's five most recent observed
+elections, pooled across regions, moving as elections are held.
+
+**The estimator was chosen by strict temporal backtest** — each election
+predicted from only earlier ones, 103 elections, eleven candidates:
+
+| Rank | | MAE |
+|---:|---|---:|
+| 1 | **mean of last 5** | **4.815** |
+| 2 | last in region | 4.863 |
+| 3 | mean of last 3 | 5.027 |
+| 6 | linear trend | 5.282 |
+| 7 | exp decay, 4-yr half-life | 5.669 |
+| 11 | exp decay, 8-yr + region bonus | 6.544 |
+
+(Abridged; `scripts/backtest_flows.R` prints all eleven and is the authority.)
+
+Two results worth keeping:
+
+- **The linear trend came fifth**, though the trends are real and strong
+  (Greens +1.10 points/year over 53 elections, One Nation −0.605 over 21, both
+  p < 0.001). Leave-one-out endorsed it and leave-one-out was wrong: it lets a
+  later election inform an earlier prediction.
+- **Every weighting scheme lost, monotonically in the half-life.** A hard
+  window beats soft decay because decay never fully discards anything, so a
+  1998 flow of 54% keeps a vote forever while behaviour has drifted to 26%.
+  Same-region weighting had *no effect at all* (6.544 vs 6.541).
+
+Victoria: ONP 25.5 → 33.7, GRN 81.9 → 83.5, OTH 49.3 → 48.9. **Published
+two-party 46.8 → 47.8.**
+
+`scripts/backtest_flows.R` re-runs the comparison every pipeline run and fails
+as **G3** if the adopted estimator stops winning, with a 0.15 MAE tolerance so
+ordinary jitter does not cause churn. The choice is itself made from data and
+would otherwise have been correct once and unexamined forever.
+
+**Still open:** per party the ranking differs — One Nation prefers the mean of
+3 (3.155 vs 3.744), the Greens prefer last-in-region. Reported by G3, not
+acted on: 16 and 38 elections cannot support choosing an estimator each.
+Revisit if a principled grouping appears (say, by party size or by how much
+history exists) rather than per-party cherry-picking.
 
 ## One Nation preferences: measured, and smaller than it looks (2026-08-15)
 

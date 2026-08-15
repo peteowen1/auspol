@@ -153,7 +153,16 @@ load_preference_flows <- function() {
 #' @return data.table of the same shape, with a `flow_year` column recording
 #'   which election each estimate actually came from.
 #' @export
-flows_for <- function(flows, year, region, quiet = FALSE) {
+#' @param estimate Replace assumed flows with estimates from the observed
+#'   record ([estimate_flows_for()]). A no-op for an election already held,
+#'   where the file records what happened; for one still ahead, every value is
+#'   an assumption and gets estimated. Defaults to TRUE because a hand-set or
+#'   carried-forward number cannot respond to a new election, and this project
+#'   estimates its assumptions rather than freezing them.
+#' @param cycles From [load_election_cycles()]; loaded if missing.
+#' @param as_of Date defining which elections count as already held.
+flows_for <- function(flows, year, region, quiet = FALSE, estimate = TRUE,
+                      cycles = NULL, as_of = Sys.Date()) {
   # NB: masks and orderings are computed OUTSIDE the data.table [ ] so that
   # the bare argument names `year` and `region` bind to this function's
   # parameters rather than to the same-named columns. Written the obvious way,
@@ -179,6 +188,24 @@ flows_for <- function(flows, year, region, quiet = FALSE) {
       region, year,
       paste(sprintf("%s (from %d)", carried$party, carried$flow_year),
             collapse = ", ")))
+  }
+  if (estimate) {
+    # Estimation needs the election calendar to know which elections have
+    # actually been held. That is a real dependency, but the failure it
+    # produced was "Anchor data not found at .../election-cycles.csv" from two
+    # calls down, which says nothing about why flows_for wanted it -- and it
+    # appeared the moment estimation became the default, in tests that had
+    # never touched the anchor before. Name the cause and the way out.
+    if (is.null(cycles)) {
+      cycles <- tryCatch(load_election_cycles(), error = function(e) {
+        stop("flows_for(estimate = TRUE) needs the election calendar to tell ",
+             "which elections have been held, and it could not be loaded: ",
+             conditionMessage(e), "\n  Pass cycles = , or estimate = FALSE to ",
+             "select a recorded flow without estimating.", call. = FALSE)
+      })
+    }
+    out <- estimate_flows_for(out, flows, year, cycles = cycles,
+                              as_of = as_of, quiet = quiet)
   }
   out[]
 }

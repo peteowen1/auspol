@@ -26,6 +26,10 @@ cat("\nChecking poll data freshness:\n")
 check_poll_freshness(c("vic", "fed", "nsw"), strict = !stale_ok)
 
 STAGES <- list(
+  # Before anything that consumes a flow. Three seconds, and it is the only
+  # thing standing between us and quietly running yesterday's winner after a
+  # new election changes the ranking.
+  list(f = "scripts/backtest_flows.R",  what = "preference-flow estimator", slow = FALSE),
   list(f = "scripts/fit_vic.R",        what = "Victoria (live target)",  slow = FALSE),
   list(f = "scripts/fit_federal.R",    what = "federal cycles",          slow = TRUE),
   list(f = "scripts/fit_nsw.R",        what = "NSW cycles",              slow = TRUE),

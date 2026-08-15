@@ -4,7 +4,15 @@
 \alias{flows_for}
 \title{Preference flows for a cycle, carrying forward when a year is missing}
 \usage{
-flows_for(flows, year, region, quiet = FALSE)
+flows_for(
+  flows,
+  year,
+  region,
+  quiet = FALSE,
+  estimate = TRUE,
+  cycles = NULL,
+  as_of = Sys.Date()
+)
 }
 \arguments{
 \item{flows}{From \code{\link[=load_preference_flows]{load_preference_flows()}}.}
@@ -12,6 +20,17 @@ flows_for(flows, year, region, quiet = FALSE)
 \item{year, region}{The cycle wanted.}
 
 \item{quiet}{Suppress the carry-forward message.}
+
+\item{estimate}{Replace assumed flows with estimates from the observed
+record (\code{\link[=estimate_flows_for]{estimate_flows_for()}}). A no-op for an election already held,
+where the file records what happened; for one still ahead, every value is
+an assumption and gets estimated. Defaults to TRUE because a hand-set or
+carried-forward number cannot respond to a new election, and this project
+estimates its assumptions rather than freezing them.}
+
+\item{cycles}{From \code{\link[=load_election_cycles]{load_election_cycles()}}; loaded if missing.}
+
+\item{as_of}{Date defining which elections count as already held.}
 }
 \value{
 data.table of the same shape, with a \code{flow_year} column recording
