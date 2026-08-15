@@ -152,3 +152,69 @@ test_that("correcting is a no-op when every poll reports every party", {
   expect_equal(corrected$OTH, d$OTH)
   expect_equal(nrow(attr(corrected, "folded")), 0L)
 })
+
+test_that("poll_data_age reports the newest poll and its age", {
+  skip_if_no_anchor()
+  a <- poll_data_age("vic", as_of = as.Date("2026-08-15"))
+  expect_equal(a$region, "vic")
+  expect_s3_class(a$latest, "Date")
+  expect_gte(a$age_days, 0)
+  expect_equal(a$age_days, as.integer(as.Date("2026-08-15") - a$latest))
+  expect_gt(a$n_recent, 0)
+})
+
+test_that("check_poll_freshness stops on stale data and passes on fresh", {
+  skip_if_no_anchor()
+  # Measured far in the future, every region is stale
+  expect_error(
+    suppressMessages(check_poll_freshness("vic", as_of = as.Date("2027-06-01"))),
+    "stale")
+  # strict = FALSE proceeds, but the data is STILL reported as stale:
+  # "proceed anyway" and "it is not stale" are different claims.
+  expect_warning(
+    info <- suppressMessages(check_poll_freshness(
+      "vic", as_of = as.Date("2027-06-01"), strict = FALSE)))
+  expect_equal(info$status, "STALE")
+
+  # Measured at the last poll's own date, it is fresh
+  latest <- poll_data_age("vic")$latest
+  ok <- suppressMessages(check_poll_freshness("vic", as_of = latest))
+  expect_equal(ok$status, "ok")
+  expect_equal(ok$age_days, 0L)
+})
+
+test_that("a region whose dates all fail to parse is BROKEN, not silently ok", {
+  # which() DROPS NA rather than matching it, so an NA status vanished from the
+  # stale gate — meaning the one region whose data was corrupt was the one
+  # region not checked. And `if (any(c(NA, FALSE)))` errors outright, replacing
+  # the informative message with a cryptic one.
+  skip_if_no_anchor()
+  fake <- suppressMessages(load_polls("vic"))
+  expect_true(all(c("region", "status") %in%
+    names(suppressMessages(suppressWarnings(
+      check_poll_freshness("vic", strict = FALSE, as_of = as.Date("2027-06-01")))))))
+  # status must never be NA, whatever the input
+  info <- suppressMessages(suppressWarnings(
+    check_poll_freshness(c("vic", "fed"), strict = FALSE,
+                         as_of = as.Date("2027-06-01"))))
+  expect_false(anyNA(info$status))
+  expect_true(all(info$status %in% c("ok", "ageing", "STALE", "BROKEN")))
+})
+
+test_that("check_poll_freshness refuses an empty region list", {
+  # An empty vector made every downstream guard vacuously clean and printed
+  # nothing at all — the report would look like a clean pass.
+  expect_error(check_poll_freshness(character(0)), "length")
+})
+
+test_that("an ageing region still warns without stopping the run", {
+  skip_if_no_anchor()
+  latest <- poll_data_age("vic")$latest
+  # expect_warning() returns the condition, not the value, so capture separately
+  suppressMessages(expect_warning(
+    check_poll_freshness("vic", as_of = latest + 30), "ageing"))
+  info <- suppressMessages(suppressWarnings(
+    check_poll_freshness("vic", as_of = latest + 30)))
+  expect_equal(info$status, "ageing")
+  expect_equal(info$age_days, 30L)
+})

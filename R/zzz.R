@@ -9,7 +9,8 @@ NULL
 # built by plot_trends(). Declared so R CMD check does not read them as
 # undefined globals.
 globalVariables(c(
-  ".", ".SD", "N", "actual", "alp_win_prob", "base_sd_pts", "binomial_floor",
+  ".", ".SD", "N", "actual", "age_days", "alp_win_prob", "base_sd_pts",
+  "binomial_floor", "cause", "file_age_days", "status",
   "challenger", "classic", "detail", "effect", "effect_pts", "end", "err_use",
   "error",
   "exhaust", "implied_sd_pts", "lean_pts", "margin", "ratio",

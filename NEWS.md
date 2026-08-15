@@ -1,3 +1,80 @@
+# auspol (development version)
+
+## Publishing
+
+- The page now names a recent change of government leader, the date, and how
+  many polls have been taken since — computed from the data, so it cannot go
+  stale, and shown only while the change is recent enough to be
+  under-observed. Victoria changed premier on 2026-07-28, four months out,
+  and the forecast had three polls covering it while saying nothing about
+  that. The model has no leader term by measurement, not oversight: one
+  tested as a fundamentals predictor across 56 elections came back at
+  p = 0.52.
+- `tools/check-page.js` runs the published page's own JavaScript against a
+  stub DOM and fails the build if any block did not draw, reported as check
+  `B1`. The page had no test at all, having once shipped with three of four
+  charts silently missing; the per-block guards added afterwards stopped one
+  failure cascading and thereby made a single missing chart quieter still.
+  Validated against a page corrupted into the exact shape that caused the
+  original incident.
+
+## Running it
+
+- The forecast refreshes daily on a schedule and deliberately does not
+  publish: it runs, checks, reports the numbers and every pre-registered
+  check, and uploads the page for a human to look at.
+
+# auspol 0.2.0
+
+The forecast is published, the pipeline runs in one command, and both are
+checked on every push.
+
+## Publishing
+
+- `scripts/build_page.R` + `scripts/page-template.html` produce a
+  self-contained `output/victoria-2026.html`: no external requests, so it
+  renders offline and under a strict content-security policy. It leads with
+  the pendulum and publishes the calibration record, the four rejected
+  improvements, the pollster scorecard and five caveats alongside the
+  headline numbers.
+
+## Running it
+
+- `scripts/run_all.R` runs every stage in the one order that works, each in
+  its own R process, echoing every pre-registered check and stopping on the
+  first failure. `--quick` skips the two slowest cycles; `--stale-ok`
+  proceeds on old data. About five minutes.
+- `check_poll_freshness()` / `poll_data_age()` — every poll comes from a
+  third party's hand-maintained CSVs, and nothing previously noticed if that
+  clone stopped being updated. Warns past 21 days, stops past 60, and
+  distinguishes "our copy is old" from "no new polls published" using the
+  source file's own modification time.
+
+## Checking it
+
+- CI runs `R CMD check` (`--as-cran`, warnings are errors) and the tests on
+  every push, with a floor on assertions executed so an all-skipped run
+  cannot pass silently.
+- `ARCHITECTURE.md` records the load-bearing decisions and the five hazard
+  classes that have bitten this codebase.
+
+## Fixes
+
+- The page shipped with three of four charts silently not drawing: jsonlite
+  serialises a data.table as an array of row objects and the template read
+  them as column arrays, so one throw took out the rest. Drawing blocks are
+  now isolated and a failed one says so visibly.
+- A missing projection would have rendered a fabricated "0% chance of a Labor
+  majority", because JavaScript coerces `null` to `0` in arithmetic. Missing
+  values now render as an em dash, and the build asserts finiteness first.
+- A region whose poll dates fail to parse was silently exempt from the
+  stale-data gate, since `which()` drops `NA` rather than matching it.
+- `run_all.R` dropped every stage `warning()` — the mechanism this package
+  uses for "a human should look".
+- `skip_if_no_anchor()` rebuilt a path by hand instead of resolving through
+  `anchor_data_path()`, so a CI dry-run reported green while checking a
+  different directory.
+
 # auspol 0.1.0
 
 First release with a complete forecast pipeline: **polls → trend → projection

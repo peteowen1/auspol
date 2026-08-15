@@ -5,6 +5,9 @@ journalistic, interactive presentation. Anchored on the
 [AE Forecasts](https://www.aeforecasts.com/) methodology
 ([d-j-hirst/aus-polling-analyser](https://github.com/d-j-hirst/aus-polling-analyser)).
 
+How the pieces fit, the load-bearing decisions, and the hazards that have
+actually bitten: [`ARCHITECTURE.md`](ARCHITECTURE.md).
+
 Full analysis of the anchor model (methodology, data sources, improvement
 targets): [`docs/ANCHOR-MODEL.md`](docs/ANCHOR-MODEL.md). Work queue, measured
 findings and negative results: [`docs/NEXT-STEPS.md`](docs/NEXT-STEPS.md).
@@ -28,8 +31,13 @@ Current live target is **Victoria, 28 November 2026**.
 | Seats | Simulates a seat count: statewide draw, regional block effect, per-seat residual. | `simulate_seats()` |
 | Scorecard | Per-pollster lean, noise against the binomial sampling floor, and final-poll accuracy. | `pollster_scorecard()` |
 
-Not yet built: a website, and the anchor's per-seat elasticity and candidate
-effects (retirement, sophomore surge).
+The forecast is published as a self-contained page — see `build_page.R`.
+
+Not yet built: the anchor's per-seat elasticity and candidate effects
+(retirement, sophomore surge), and an elimination-aware preference simulator.
+None is likely to move the headline much: seat mechanics contribute a standard
+deviation of about 4 seats against 11 from the statewide vote, so accuracy in
+the projection is worth more than refinement below it.
 
 ## Discipline
 
@@ -64,20 +72,37 @@ The anchor's poll and reference CSVs are read from that local clone under
 `external/` (gitignored). The data has no formal licence, so it is never
 committed here; licensing contact with the author is on the queue.
 
-Run a pipeline (PowerShell, not Git Bash — arrow segfaults there):
+Run everything, in the one order that works (PowerShell, not Git Bash — arrow
+segfaults there):
 
 ```powershell
-Rscript "scripts/fit_vic.R"          # Victoria: 2018 and 2022 validation + live 2026
-Rscript "scripts/fit_federal.R"      # federal 2022, 2025, 2028
-Rscript "scripts/fit_nsw.R"          # NSW 2023, 2027
-Rscript "scripts/fit_projection.R"   # fundamentals + trend-vs-fundamentals mix
-Rscript "scripts/fit_seats.R"        # seat simulation (reads projection output)
-Rscript "scripts/fit_scorecard.R"    # pollster scorecard
+Rscript "scripts/run_all.R"              # ~5 minutes
+Rscript "scripts/run_all.R" --quick      # skip the federal and NSW cycles
+Rscript "scripts/run_all.R" --stale-ok   # proceed on old data (historical runs)
 ```
 
-`fit_projection.R` must run before `fit_seats.R`. Outputs land in `output/`
-(gitignored): trend CSVs and plots per cycle, hyperparameters, seat
-simulations and the scorecard.
+It checks poll freshness *before* computing anything, runs each stage in its
+own R process, echoes every pre-registered check, and stops on the first
+failure. The stages are not independent — `fit_projection.R` writes the mix
+table that both `fit_seats.R` and `build_page.R` read — so running them by
+hand in the wrong order silently uses whatever was left in `output/` from last
+time.
+
+Individual stages, if you want one: `fit_vic.R`, `fit_federal.R`, `fit_nsw.R`,
+`fit_projection.R`, `fit_seats.R`, `fit_scorecard.R`, `build_page.R`.
+
+Outputs land in `output/` (gitignored): trend CSVs and plots per cycle,
+hyperparameters, seat simulations, the scorecard, and
+`victoria-2026.html` — a self-contained forecast page with no external
+requests.
+
+### Staleness
+
+Every poll comes from a third party's hand-maintained CSVs in the `external/`
+clone. Nothing else in the pipeline notices if that clone stops being updated:
+the fit still runs, every check still passes, and the forecast quietly
+describes the world as it was weeks ago. `check_poll_freshness()` warns past
+21 days and stops past 60.
 
 ## Conventions
 

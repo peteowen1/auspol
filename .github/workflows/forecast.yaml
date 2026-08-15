@@ -1,0 +1,120 @@
+name: Forecast refresh
+
+# Runs the whole pipeline against fresh poll data and reports what it found.
+#
+# It deliberately does NOT publish. A forecast that republishes unattended is
+# one bad input away from putting a confident wrong number in front of people,
+# and this page has already shipped broken once (three charts silently not
+# drawing) and could once have rendered a fabricated "0% chance of a majority".
+# So: run it, check it, show the numbers and the diff, and leave publishing to
+# a human. Revisit once it has proven itself over a few cycles.
+
+on:
+  schedule:
+    - cron: "0 20 * * *"     # 06:00 Melbourne (AEST, UTC+10) daily
+  workflow_dispatch:
+    inputs:
+      quick:
+        description: "Skip the federal and NSW cycles"
+        type: boolean
+        default: false
+
+permissions: read-all
+
+concurrency:
+  group: forecast-refresh
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: release
+          use-public-rspm: true
+
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          extra-packages: any::devtools, any::jsonlite
+          needs: check
+
+      # The anchor's poll data is a separate public repository and is never
+      # committed here. A shallow, sparse clone of analysis/ pulls the CSVs and
+      # seat files without the bitmaps, downloads and maps directories.
+      - name: Fetch the anchor's poll data
+        run: |
+          git clone --depth 1 --filter=blob:none --sparse \
+            https://github.com/d-j-hirst/aus-polling-analyser \
+            external/aus-polling-analyser
+          git -C external/aus-polling-analyser sparse-checkout set analysis
+          echo "anchor at $(git -C external/aus-polling-analyser rev-parse --short HEAD)"
+          ls external/aus-polling-analyser/analysis/Data/poll-data-*.csv
+
+      - name: Run the pipeline
+        id: run
+        run: |
+          if [ "${{ inputs.quick }}" = "true" ]; then
+            Rscript scripts/run_all.R --quick 2>&1 | tee run.log
+          else
+            Rscript scripts/run_all.R 2>&1 | tee run.log
+          fi
+        shell: bash
+
+      # The point of the schedule is to notice CHANGE, so put the numbers and
+      # every pre-registered check in the run summary rather than burying them
+      # in a log nobody opens.
+      - name: Summarise
+        if: always()
+        shell: bash
+        run: |
+          {
+            echo "## Forecast refresh"
+            echo
+            if [ -f output/vic-page-data.json ]; then
+              python3 - <<'PY'
+          import json
+          d = json.load(open("output/vic-page-data.json"))
+          p, s, m = d["proj"], d["seats"], d["meta"]
+          print(f"**Labor two-party {p['mean']}%** ({p['lo']}–{p['hi']}) · "
+                f"**{s['median']} of {s['total']} seats** ({s['q05']}–{s['q95']}) · "
+                f"P(majority) **{s['p_majority']*100:.0f}%**")
+          print()
+          print(f"- {m['days_out']} days to the election · latest poll {m['latest_poll']} "
+                f"· {m['n_polls_cycle']} polls this term")
+          print(f"- data status: **{d.get('data_status','?')}**")
+          PY
+            else
+              echo "_No forecast produced — the pipeline did not reach the page stage._"
+            fi
+            echo
+            echo "### Checks"
+            echo '```'
+            grep -E "^(A[0-9]|N[0-9]|V[0-9]|H[0-9]|L[0-9]|P[0-9]|B[0-9]|C[0-9]|S[0-9]|R[0-9]|G[0-9]|F1|O1)" run.log | head -40 || echo "(none captured)"
+            echo '```'
+            if grep -q "WARNINGS from this stage" run.log; then
+              echo "### Warnings"
+              echo '```'
+              grep -A3 "WARNINGS from this stage" run.log | head -30
+              echo '```'
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      # Kept so a human can download and eyeball the page before publishing it.
+      - name: Upload outputs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: forecast-${{ github.run_number }}
+          path: |
+            output/victoria-2026.html
+            output/vic-page-data.json
+            output/projection-mix.csv
+            output/seats-vic-2026.csv
+            run.log
+          retention-days: 30
+          if-no-files-found: warn

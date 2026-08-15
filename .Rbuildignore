@@ -7,3 +7,6 @@
 ^.*\.Rproj$
 ^\.Rbuildignore$
 ^LICENSE\.md$
+^\.claude$
+^\.github$
+^ARCHITECTURE\.md$
