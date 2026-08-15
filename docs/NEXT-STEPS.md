@@ -1,20 +1,37 @@
 # auspol — work queue
 
-Updated 2026-08-14 (session 2, after a laptop restart mid-session).
+Updated 2026-08-15. Remote: github.com/peteowen1/auspol (private, default
+branch `dev`, no `main` until the review gate has run).
 
 ## Awaiting Pete
+
+- **Run the review gate, then open the first PR to `main`.** The remote now
+  exists (github.com/peteowen1/auspol, **private**, default branch `dev`) and
+  all 15 commits are pushed, so the work is backed up. There is deliberately
+  no `main` yet: per the global rule, `main` is reached only through a
+  reviewed PR, and none of this session's code has been through the
+  `review-gate` skill. Creating `main` from the `dev` tip would be exactly
+  the silent skip that rule exists to prevent.
+- **Decide whether the repo goes public.** It was created private on purpose.
+  Two things in it are outward-facing and should be a deliberate choice, not
+  a side effect: `docs/plans/product-features.md` contains critical
+  commentary on named competitors (theswingison, DemosAU — the latter also a
+  pollster in our own data), and the pollster scorecard publishes named
+  firms' house effects and accuracy. Both are defensible; neither should
+  appear publicly by accident.
+- **Poll data licensing** — unchanged and now more pressing if the repo goes
+  public. The anchor's data is gitignored and not committed (verified before
+  the first push: no `external/`, no CSVs, no outputs are tracked), so
+  nothing of his is republished. Formal permission is still worth having.
 
 - **Answer the four improvement-quiz questions** (from session chat; context in
   [ANCHOR-MODEL.md](ANCHOR-MODEL.md) "Honest assessment"): demographics in the
   seat model, seat-level preference flows, the 2019 herding problem, and the
   trend-vs-simulator scope call. #4 was pre-empted: trend built first — confirm
   or redirect.
-- **Poll data licensing**: the anchor repo (d-j-hirst/aus-polling-analyser) has
-  no LICENSE. We read his hand-maintained poll CSVs from a gitignored clone and
-  never commit them. Recommend emailing the author (site invites use of the
-  files, but formal permission is worth having for a public-facing site).
-- **Create GitHub remote** for this repo (queued; outward-facing, not done
-  autonomously).
+  The anchor repo (d-j-hirst/aus-polling-analyser) has no LICENSE; his site
+  invites use of the files, but formal permission is worth having.
+- ~~Create GitHub remote~~ — **done 2026-08-15**, private, see above.
 
 ## Also worth a look (Pete found, 2026-08-14)
 
