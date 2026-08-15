@@ -5,20 +5,12 @@ branch `dev`, no `main` until the review gate has run).
 
 ## Awaiting Pete
 
-- **Merge the four post-PR commits.** `dev` is four ahead of `main`: the
-  forecast page, `run_all.R` + freshness, CI, and ARCHITECTURE.md. CI passes
-  on `dev`. They have NOT been through the review gate — that ran on PR #1's
-  content only — so run it before the next PR.
+- **Merge PR #2** — github.com/peteowen1/auspol/pull/2, version 0.2.0. The
+  forecast page, `run_all.R` + freshness, CI, `ARCHITECTURE.md`, and the
+  seven fixes from the second review gate. Reviewed before the PR was opened;
+  CI green. PR #1 is merged, so `main` exists.
 - **Repo is still private and `dev` is still the default branch**, both by
   choice. Going public remains a separate decision (see below).
-
-- **Run the review gate, then open the first PR to `main`.** The remote now
-  exists (github.com/peteowen1/auspol, **private**, default branch `dev`) and
-  all 15 commits are pushed, so the work is backed up. There is deliberately
-  no `main` yet: per the global rule, `main` is reached only through a
-  reviewed PR, and none of this session's code has been through the
-  `review-gate` skill. Creating `main` from the `dev` tip would be exactly
-  the silent skip that rule exists to prevent.
 - **Decide whether the repo goes public.** It was created private on purpose.
   Two things in it are outward-facing and should be a deliberate choice, not
   a side effect: `docs/plans/product-features.md` contains critical
@@ -82,15 +74,23 @@ Feature comparison of all four sites and the proposed build order:
    "Done". Was: some polls (e.g. ResolvePM
    Jan 2026 NSW) report ONP inside OTH; anchor imputes from trend and
    subtracts. We currently over-count OTH in those polls.
-4. **Fundamentals stage** — elastic-net regression on his authored inputs
-   (prior-results, incumbency, federal-situation CSVs), leave-one-out
-   validated.
-5. **Stan version of the trend** (rstan is installed) — fat tails,
-   campaign-varying walk, new/old house effects; validate against the
-   Gaussian-exact version.
+4. ~~Fundamentals stage~~ — **done** (2026-08-15), as ridge rather than
+   elastic net, penalty chosen leave-one-election-out. Two-party MAE 3.05
+   against 4.93 for "assume the last result". See "Done".
+5. ~~Stan version of the trend~~ — **not needed, and the interesting half was
+   tested without it.** Fat tails were the main reason to want Stan, and they
+   were built instead as Student-t observation noise by IRLS, measured, and
+   rejected on their own numbers (MAE 2.791 against 2.779 — see the negative
+   result below). What Stan would still add is honest uncertainty in the
+   hyperparameters themselves, which we currently treat as known. That is a
+   real gap but a second-order one, and it costs the exact sparse solve —
+   seconds per cycle becomes minutes. Revisit only if the intervals start
+   failing calibration.
 
-Later: projection (trend×fundamentals mix), seat simulation, ABS Census
-electorate demographics (CED/SED + SA1 correspondences), website.
+Still ahead: ABS Census electorate demographics (CED/SED + SA1
+correspondences) for a seat model that knows something about each seat, and
+theswingison's preference-simulator idea (see below) in place of a fixed
+flow rate.
 
 ## Open: the negative tail of the tracking check (L4c)
 
@@ -410,6 +410,32 @@ Two things follow.
    swing sweeping through them flips many at once. Per-seat noise smooths that
    step and damps the amplification. Counterintuitive, and it means the
    pendulum's SHAPE matters as much as the swing.
+
+## The forecast refreshes daily, and deliberately does not publish itself
+
+`.github/workflows/forecast.yaml` runs at 06:00 Melbourne: shallow sparse
+clone of the anchor's `analysis/` directory, then the whole pipeline, then
+the headline numbers and every pre-registered check into the run summary.
+The page is uploaded as a downloadable artifact.
+
+**It does not publish**, and that is the decision rather than an unfinished
+step. This page has already shipped once with three of four charts silently
+not drawing, and could once have rendered a fabricated "0% chance of a Labor
+majority" — both from failures that produced plausible-looking output rather
+than an error. Unattended republishing turns exactly that class of bug into
+a confident wrong number in front of readers. Revisit once the job has run
+clean for a few cycles and the checks have proven they catch what they claim.
+
+Validated by dispatch rather than assumed: `quick=true` and full mode both
+green on a clean runner. Since `output/` is gitignored, the runner built the
+forecast from nothing but source and the anchor's CSVs — which makes this
+also the first real proof the pipeline reproduces off this laptop.
+
+Open: the freshness gate stops the run past 60 days, so if the anchor's repo
+goes quiet the job fails daily until someone looks. That is the intended
+behaviour. GitHub does email the owner when a scheduled workflow fails, so
+there is a notification path, but it is the kind that gets filtered — worth
+confirming it actually arrives before treating the job as self-monitoring.
 
 ## Done
 
