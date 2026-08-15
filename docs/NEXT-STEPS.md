@@ -7,8 +7,16 @@ branch `dev`, no `main` until the review gate has run).
 
 - **Merge PR #2** — github.com/peteowen1/auspol/pull/2, version 0.2.0. The
   forecast page, `run_all.R` + freshness, CI, `ARCHITECTURE.md`, and the
-  seven fixes from the second review gate. Reviewed before the PR was opened;
-  CI green. PR #1 is merged, so `main` exists.
+  seven fixes from the second review gate. PR #1 is merged, so `main` exists.
+  CI green on the current head.
+  **Reviewed in two passes, both before merge.** The modelling commits went
+  through the gate before the PR was opened. Three later commits — the
+  scheduled workflow, the version bump, and this queue edit — were pushed to
+  `dev` afterwards and so joined the open PR without review; they got their
+  own scoped pass, which found exactly one thing: this bullet used to claim
+  the whole PR was pre-reviewed. Recorded rather than quietly corrected,
+  because "commits added to an already-reviewed PR" is the shape the review
+  gate is least likely to catch on its own.
 - **Repo is still private and `dev` is still the default branch**, both by
   choice. Going public remains a separate decision (see below).
 - **Decide whether the repo goes public.** It was created private on purpose.
@@ -410,6 +418,42 @@ Two things follow.
    swing sweeping through them flips many at once. Per-seat noise smooths that
    step and damps the amplification. Counterintuitive, and it means the
    pendulum's SHAPE matters as much as the swing.
+
+## Negative result: a leader-change term does not belong in fundamentals (2026-08-15)
+
+Leader *approval* is not in the anchor's data, but `government-leaders.csv`
+is, and it dates every change of government leader back to 1938 — so "did the
+governing party change leader during this term" is free. Australian politics
+says it should matter. It does not, and the way it fails is instructive.
+
+There is plenty of variation to work with: **31 of 56 elections** in the
+fundamentals set had a mid-term leader change, so this is not a small-cell
+problem.
+
+The raw split looks like a finding. Mean swing to Labor +0.51 where the leader
+changed against +1.12 where it did not, and — more interestingly — a swing sd
+of **7.28 against 5.31**, suggesting a leader change makes the result more
+volatile even if it does not move the mean. Per the "prefer the variance to
+the mean" rule that is the more promising half.
+
+**Both halves evaporate once conditioned on the features already in the
+model.** Regressing swing on `prev1 + govt_years + opp_years + is_incumbent +
+fed_aligned` and adding the leader-change indicator:
+
+- **Mean effect: 0.83 points, se 1.27, p = 0.52.** Indistinguishable from zero.
+- **Variance effect reverses.** Residuals are *smaller* when the leader
+  changed (mean |resid| 2.59 against 3.11), F = 0.65, p = 0.26, ratio CI
+  [0.29, 1.38]. The raw sd gap was the other predictors, not the leader.
+- Sizing: `s²/2σ²` with s = 0.83 and σ = 3.57 is **2.7% of error** — about
+  0.08 points on a fundamentals MAE of 3.05, and fundamentals carry roughly
+  0.45 weight in the projection, so ~0.04 points on the published number.
+  That is the *optimistic* reading, taking a p = 0.52 coefficient at face
+  value.
+
+Not built. Worth recording because the raw comparison was persuasive and
+pointed the wrong way on the variance — the confound was `govt_years`, which
+correlates with leader change (0.12) and is already a predictor. Fifteen
+minutes of sizing replaced building a feature and then discovering this.
 
 ## The forecast refreshes daily, and deliberately does not publish itself
 
