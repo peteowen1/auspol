@@ -172,6 +172,46 @@ won in 2022.
   herding signature. The noise is now floored at the binomial bound and the
   party-cycle reported, rather than the model inheriting false precision.
 
+## Negative result: fat-tailed poll noise does not help (2026-08-15)
+
+Student-t observation noise was the last big item on the trend side and the
+principled fix for outlier handling. It is **built, tested and NOT enabled by
+default**, because it was tested against the eventual result and did not help.
+
+Across the same 195 (election, horizon) pairs, only the observation model
+changing:
+
+| | MAE vs actual |
+|---|---|
+| Gaussian | **2.779** |
+| Student-t, nu = 4 | 2.791 |
+
+Better at 3 of 5 horizons, better on 107 of 195 individual rows, sign test
+p = 0.197. Statistically indistinguishable, point estimate marginally worse.
+
+**The interesting part is why.** It is not that the reweighting does nothing:
+10% of real polls fall below weight 0.5, against the ~1.4% clean Gaussian
+data would produce, so the residuals genuinely do have fat tails. Discounting
+those polls just does not improve the forecast — which means they carry
+signal, not error.
+
+That fits the herding finding exactly. Australian poll noise is often BELOW
+the binomial sampling floor (see the Victorian One Nation result), i.e.
+pollsters agree with each other more than sampling theory permits. In a
+herded field the poll that disagrees is the informative one, and
+down-weighting it discards the very observation worth most.
+
+This sharpens the criticism of theswingison's outlier rule beyond what was
+argued before. Penalising a poll for deviating from local consensus is not
+merely "herding by construction" — on this evidence it actively discards the
+most informative polls. Our own version, discounting by residual size through
+the likelihood, is the principled form of the same idea and still does not
+pay. Neither should be used.
+
+Available via `fit_trend(..., nu = 4)` for anyone who wants it; the machinery
+(a scale-mixture reweighting of the exact solve, so no MCMC) is sound and has
+tests showing it beats the Gaussian fit under genuine contamination.
+
 ## Where seat-count uncertainty actually comes from (measured 2026-08-15)
 
 Three separate simulations at the projected Victorian vote, sd in seats:

@@ -158,10 +158,14 @@ obs_noise_factors <- function(prep, firm_factors) {
 #'   translated onto the model scale at the party's reference share.
 #' @param want_var If FALSE, skip the posterior-variance solve (the expensive
 #'   part) — used inside the hyperparameter optimiser.
+#' @param obs_weight Per-observation precision multipliers, or `NULL` for all
+#'   ones. This is the hook the Student-t fit uses: a t likelihood is a scale
+#'   mixture of normals, so robustness is obtained by reweighting rather than
+#'   by changing the solve (see [fit_trend()]'s `nu`).
 #' @keywords internal
 trend_solve <- function(prep, sigma_obs, sigma_rw, sigma_house_pts, anchor,
                         firm_factors = NULL, want_var = TRUE,
-                        szc_sd_pts = 0.3) {
+                        szc_sd_pts = 0.3, obs_weight = NULL) {
   sigma_house <- sd_to_link(sigma_house_pts, prep$p_ref, prep$scale)
   szc_sd <- sd_to_link(szc_sd_pts, prep$p_ref, prep$scale)
   prior <- trend_prior_system(prep, sigma_rw, sigma_house, anchor, szc_sd)
@@ -169,6 +173,7 @@ trend_solve <- function(prep, sigma_obs, sigma_rw, sigma_house_pts, anchor,
   y <- prep$obs$y
   n <- length(y)
   w <- 1 / (sigma_obs * obs_noise_factors(prep, firm_factors))^2
+  if (!is.null(obs_weight)) w <- w * obs_weight
 
   A <- Matrix::forceSymmetric(prior$P + Matrix::crossprod(H, Matrix::Diagonal(x = w) %*% H))
   b <- prior$b0 + as.numeric(Matrix::crossprod(H, w * y))
@@ -191,6 +196,33 @@ trend_solve <- function(prep, sigma_obs, sigma_rw, sigma_house_pts, anchor,
   }
   list(theta = theta, sds = sds, logml = logml,
        logml_y = logml + prep$log_jac)
+}
+
+#' Robust weights for a Student-t observation model
+#'
+#' A t likelihood with `nu` degrees of freedom is a scale mixture of normals:
+#' each observation gets its own precision multiplier, and the conditional
+#' expectation of that multiplier given the current fit is
+#' `(nu + 1) / (nu + z^2)` with `z` the standardised residual. Iterating
+#' "solve, reweight, solve" is the EM algorithm for t regression, and it
+#' converges in a handful of passes.
+#'
+#' This is why the model does not need MCMC. Fat tails are the one refinement
+#' that genuinely wants a sampler in the anchor's Stan implementation, which
+#' takes one to four hours per election; as a reweighting of an exact solve it
+#' takes about as long as the Gaussian fit.
+#'
+#' A poll two standard deviations out keeps most of its weight; one five out
+#' is discounted heavily. Crucially the discount depends on the size of the
+#' residual, not on disagreeing with other pollsters — the distinction between
+#' fat tails and the outlier-penalty rules that manufacture herding.
+#'
+#' @param z Standardised residuals.
+#' @param nu Degrees of freedom; `Inf` returns all ones (Gaussian).
+#' @keywords internal
+robust_weights <- function(z, nu) {
+  if (!is.finite(nu)) return(rep(1, length(z)))
+  (nu + 1) / (nu + z^2)
 }
 
 #' Default (sigma_obs, sigma_rw) for a model scale
@@ -250,6 +282,24 @@ default_sigmas <- function(scale = c("logit", "points")) {
 #'   "(other firms)" house effect.
 #' @param firm_factors Named vector of per-firm noise sd multipliers from
 #'   [estimate_firm_factors()]; unnamed firms get 1.
+#' @param nu Degrees of freedom for a Student-t observation model. `Inf`
+#'   (the default) is the Gaussian fit and is bit-for-bit unchanged. A finite
+#'   value — 4 is the usual choice — lets a rogue poll be discounted by the
+#'   likelihood in proportion to how far out it is, rather than by a rule that
+#'   penalises polls for disagreeing with their neighbours. Fitted by
+#'   iteratively reweighted least squares (see [robust_weights()]), so it
+#'   costs a few extra sparse solves rather than an MCMC run.
+#'
+#'   **The default is Gaussian because `nu = 4` was tested and did not help.**
+#'   Across 195 (election, horizon) pairs it scored MAE 2.791 against the
+#'   eventual result versus 2.779 for the Gaussian fit — indistinguishable,
+#'   and marginally worse (better on 107 of 195, sign test p = 0.197). It does
+#'   down-weight plenty: 10% of real polls fall below weight 0.5, far above
+#'   the ~1.4% clean Gaussian data would produce. Discounting them simply does
+#'   not improve the forecast, which suggests those polls carry signal rather
+#'   than error. See docs/NEXT-STEPS.md.
+#' @param nu_iter Maximum reweighting passes.
+#' @param nu_tol Convergence threshold on the largest weight change.
 #' @return List: `trend` (date/mean/sd/lo95/hi95 in percent, plus the
 #'   model-scale `mean_link`/`sd_link`), `house_effects` (model-scale `effect`
 #'   plus `effect_pts`, its size in points at the party's own level),
@@ -263,7 +313,8 @@ fit_trend <- function(polls, party,
                       sigma_rw = NULL,
                       sigma_house_pts = 3,
                       min_firm_polls = 3,
-                      firm_factors = NULL) {
+                      firm_factors = NULL,
+                      nu = Inf, nu_iter = 25L, nu_tol = 1e-4) {
   scale <- match.arg(scale)
   defs <- default_sigmas(scale)
   if (is.null(sigma_obs)) sigma_obs <- defs[["sigma_obs"]]
@@ -271,8 +322,28 @@ fit_trend <- function(polls, party,
 
   prep <- prep_trend_obs(polls, party, min_firm_polls, scale, prior_result)
   anchor <- trend_anchor(prep, prior_result)
+
+  # Gaussian pass first; with nu = Inf this is the whole fit and the weights
+  # stay exactly one, so the default path is unchanged.
   sol <- trend_solve(prep, sigma_obs, sigma_rw, sigma_house_pts, anchor,
                      firm_factors = firm_factors, want_var = TRUE)
+  obs_w <- rep(1, nrow(prep$obs))
+  nu_iters <- 0L
+  if (is.finite(nu)) {
+    scale_i <- sigma_obs * obs_noise_factors(prep, firm_factors)
+    for (it in seq_len(nu_iter)) {
+      nu_iters <- it
+      fitted_i <- sol$theta[prep$obs$t] + sol$theta[prep$T_ + prep$obs$j]
+      z <- (prep$obs$y - fitted_i) / scale_i
+      w_new <- robust_weights(z, nu)
+      delta <- max(abs(w_new - obs_w))
+      obs_w <- w_new
+      sol <- trend_solve(prep, sigma_obs, sigma_rw, sigma_house_pts, anchor,
+                         firm_factors = firm_factors, want_var = TRUE,
+                         obs_weight = obs_w)
+      if (delta < nu_tol) break
+    }
+  }
 
   T_ <- prep$T_
   mu <- sol$theta[seq_len(T_)]
@@ -315,7 +386,8 @@ fit_trend <- function(polls, party,
   obs <- prep$obs
   residuals <- data.table::data.table(
     date = obs$date, firm = obs$firm, y = obs$y,
-    fitted = sol$theta[obs$t] + sol$theta[T_ + obs$j]
+    fitted = sol$theta[obs$t] + sol$theta[T_ + obs$j],
+    weight = obs_w
   )
   residuals[, resid := y - fitted]
 
@@ -330,6 +402,8 @@ fit_trend <- function(polls, party,
       scale = scale, p_ref = prep$p_ref, n_clamped = prep$n_clamped,
       sigma_obs = sigma_obs, sigma_rw = sigma_rw,
       prior_result = prior_result,
+      nu = nu, nu_iters = nu_iters,
+      n_downweighted = sum(obs_w < 0.5),
       logml = sol$logml, logml_y = sol$logml_y
     )
   )

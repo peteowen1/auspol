@@ -12,7 +12,8 @@ trend_solve(
   anchor,
   firm_factors = NULL,
   want_var = TRUE,
-  szc_sd_pts = 0.3
+  szc_sd_pts = 0.3,
+  obs_weight = NULL
 )
 }
 \arguments{
@@ -23,6 +24,11 @@ translated onto the model scale at the party's reference share.}
 
 \item{want_var}{If FALSE, skip the posterior-variance solve (the expensive
 part) — used inside the hyperparameter optimiser.}
+
+\item{obs_weight}{Per-observation precision multipliers, or \code{NULL} for all
+ones. This is the hook the Student-t fit uses: a t likelihood is a scale
+mixture of normals, so robustness is obtained by reweighting rather than
+by changing the solve (see \code{\link[=fit_trend]{fit_trend()}}'s \code{nu}).}
 }
 \description{
 Everything is Gaussian, so both the posterior and the evidence are exact:

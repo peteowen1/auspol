@@ -170,6 +170,16 @@ it well, different audience), upper houses, and betting-odds ingestion.
 
 theswingison's **outlier down-weighting** — penalising a poll for disagreeing
 with the local consensus is herding by construction, and it is the mechanism
-that made the 2019 polls all agree and all be wrong. The right version is
-fat-tailed observation noise, which discounts a genuine outlier through the
-likelihood rather than by rule. That is already queued as the Stan stage.
+that made the 2019 polls all agree and all be wrong.
+
+Since writing that we built the principled version — fat-tailed observation
+noise, which discounts by residual size through the likelihood rather than by
+rule — and **tested it: it does not help.** MAE against the eventual result
+2.791 versus 2.779 for the plain Gaussian fit over 195 election-horizon
+pairs. It down-weights plenty (10% of polls below weight 0.5), so the effect
+is real; discounting those polls just does not improve the forecast, meaning
+they carry signal rather than error. In a field where poll noise often sits
+BELOW the binomial sampling floor, the poll that disagrees is the informative
+one. So the criticism is stronger than first argued: outlier penalties do not
+merely encode herding, they discard the most useful observations. Details in
+[NEXT-STEPS.md](../NEXT-STEPS.md).

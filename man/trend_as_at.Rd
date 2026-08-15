@@ -4,7 +4,7 @@
 \alias{trend_as_at}
 \title{Trend-derived ALP two-party share as it would have looked on a given date}
 \usage{
-trend_as_at(polls, year, cycles, as_at, priors, flows, min_polls = 8)
+trend_as_at(polls, year, cycles, as_at, priors, flows, min_polls = 8, nu = Inf)
 }
 \arguments{
 \item{polls}{All polls for a region, from \code{\link[=load_polls]{load_polls()}}.}
@@ -18,6 +18,9 @@ trend_as_at(polls, year, cycles, as_at, priors, flows, min_polls = 8)
 \item{flows}{Preference flows for the cycle, from \code{\link[=flows_for]{flows_for()}}.}
 
 \item{min_polls}{Minimum polls for a party to be fitted.}
+
+\item{nu}{Student-t degrees of freedom for the observation model, passed to
+\code{\link[=fit_trend]{fit_trend()}}; \code{Inf} is the Gaussian fit.}
 }
 \value{
 List: \code{tpp}, \code{fp} (named vector), \code{n_polls}; or NULL if too thin.

@@ -9,6 +9,7 @@ build_projection_data(
   regions = c("fed", "nsw", "vic", "qld"),
   min_year = 1990,
   min_polls = 8,
+  nu = Inf,
   verbose = TRUE
 )
 }
@@ -20,6 +21,8 @@ build_projection_data(
 \item{min_year}{Earliest election year.}
 
 \item{min_polls}{Minimum polls needed at a horizon.}
+
+\item{nu}{Student-t degrees of freedom, passed through to \code{\link[=trend_as_at]{trend_as_at()}}.}
 
 \item{verbose}{Print progress (this is the slow step).}
 }

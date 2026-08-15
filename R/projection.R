@@ -25,10 +25,12 @@
 #' @param priors Named vector of previous-election results.
 #' @param flows Preference flows for the cycle, from [flows_for()].
 #' @param min_polls Minimum polls for a party to be fitted.
+#' @param nu Student-t degrees of freedom for the observation model, passed to
+#'   [fit_trend()]; `Inf` is the Gaussian fit.
 #' @return List: `tpp`, `fp` (named vector), `n_polls`; or NULL if too thin.
 #' @export
 trend_as_at <- function(polls, year, cycles, as_at, priors, flows,
-                        min_polls = 8) {
+                        min_polls = 8, nu = Inf) {
   cp <- cycle_polls(polls, year, cycles)
   keep <- cp$date <= as_at
   cp2 <- cp[which(keep), ]
@@ -46,7 +48,8 @@ trend_as_at <- function(polls, year, cycles, as_at, priors, flows,
 
   fits <- tryCatch(
     fit_cycle_trends(cp2, parties = ps,
-                     priors = priors[intersect(names(priors), ps)]),
+                     priors = priors[intersect(names(priors), ps)],
+                     nu = nu),
     error = function(e) NULL)
   if (is.null(fits)) return(NULL)
   if (any(vapply(fits, function(f) !all(is.finite(f$trend$mean)), TRUE))) {
@@ -67,6 +70,7 @@ trend_as_at <- function(polls, year, cycles, as_at, priors, flows,
 #' @param regions Regions to include.
 #' @param min_year Earliest election year.
 #' @param min_polls Minimum polls needed at a horizon.
+#' @param nu Student-t degrees of freedom, passed through to [trend_as_at()].
 #' @param verbose Print progress (this is the slow step).
 #' @return data.table: `year`, `region`, `horizon`, `trend_tpp`, `actual_tpp`,
 #'   `n_polls`.
@@ -74,7 +78,7 @@ trend_as_at <- function(polls, year, cycles, as_at, priors, flows,
 build_projection_data <- function(horizons = c(30, 90, 180, 365, 730),
                                   regions = c("fed", "nsw", "vic", "qld"),
                                   min_year = 1990, min_polls = 8,
-                                  verbose = TRUE) {
+                                  nu = Inf, verbose = TRUE) {
   cycles <- load_election_cycles()
   ev <- load_eventual_results()
   pol <- load_polled_elections()
@@ -106,7 +110,7 @@ build_projection_data <- function(horizons = c(30, 90, 180, 365, 730),
         as_at <- cyc$end[1] - h
         if (as_at <= cyc$start[1]) next
         r <- tryCatch(trend_as_at(polls, y, cycles, as_at, priors, fl,
-                                  min_polls = min_polls),
+                                  min_polls = min_polls, nu = nu),
                       error = function(e) NULL)
         if (is.null(r)) next
         out[[length(out) + 1L]] <- data.table::data.table(
