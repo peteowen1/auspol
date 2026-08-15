@@ -104,6 +104,51 @@ pj <- project_result(now$tpp, fund, mix, days_out)
 stopifnot(is.finite(pj$mean), is.finite(pj$sd),
           is.finite(pj$lo95), is.finite(pj$hi95))
 
+# --- One Nation preference sensitivity ------------------------------------
+#
+# The largest single lever on the two-party figure: ONP polls ~21%, so every
+# point of assumed flow moves the trend TPP by ~0.21, and the published number
+# by about half that once mixed with flow-independent fundamentals. It was
+# previously invisible -- an assumed value in an input file, described by a
+# caveat that named the wrong source. Recomputed here rather than hardcoded so
+# the page cannot drift from the model. Evidence:
+# docs/reviews/onp-preference-flows-2026-08-15.md
+onp_flow <- fl[fl$party == "ONP", ]$flow_alp[1]
+onp_fp <- tr[party == "ONP"][which.max(date)]$mean
+flows_all <- load_preference_flows()
+onp_all <- flows_all[which(flows_all$party == "ONP"), ]
+# South Australia, March 2026: the closest comparator available -- same year,
+# ONP on a comparable share, and an observed flow rather than an assumption.
+sa <- onp_all[which(onp_all$region == "sa" & onp_all$year == 2026), ]
+er_all <- read_anchor_csv("eventual-results.csv",
+                          c("year", "region", "party", "result"))
+sa_fp <- suppressWarnings(as.numeric(
+  er_all$result[er_all$year == 2026 & er_all$region == "sa" &
+                grepl("^ONP", er_all$party)]))[1]
+stopifnot(nrow(sa) == 1, is.finite(sa$flow_alp[1]), is.finite(sa_fp),
+          is.finite(onp_flow), is.finite(onp_fp))
+fl_cmp <- copy(fl)
+fl_cmp[party == "ONP", flow_alp := sa$flow_alp[1]]
+now_cmp <- trend_as_at(polls, 2026, cycles, Sys.Date(), priors, fl_cmp)
+pj_cmp <- project_result(now_cmp$tpp, fund, mix, days_out)
+stopifnot(is.finite(pj_cmp$mean))
+
+# G2: the assumed flow against the trend in the 21 observed estimates. At 2.3
+# residual sds it is already an outlying assumption; this stops it drifting
+# further unnoticed, and would fire if the anchor's file changed underneath us.
+onp_obs <- onp_all[which(!(onp_all$year == 2026 & onp_all$region == "vic") &
+                         onp_all$year <= as.integer(format(Sys.Date(), "%Y"))), ]
+m_flow <- stats::lm(flow_alp ~ year, onp_obs)
+flow_hat <- unname(stats::predict(m_flow, data.frame(year = 2026)))
+flow_z <- (onp_flow - flow_hat) / stats::sd(stats::resid(m_flow))
+cat(sprintf("G2  ONP flow %.1f vs %.1f fitted from %d observed elections = %.2f sd  %s\n",
+            onp_flow, flow_hat, nrow(onp_obs), flow_z,
+            if (abs(flow_z) < 2.5) "PASS" else "FAIL"))
+if (!is.finite(flow_z) || abs(flow_z) >= 2.5) {
+  stop(sprintf("The assumed ONP preference flow (%.1f) is %.2f residual sds from the trend in observed elections (%.1f). It moves the two-party figure ~%.1f points per 10 points of flow; do not publish without checking it.",
+               onp_flow, flow_z, flow_hat, 10 * onp_fp / 100 * pj$w))
+}
+
 seats26 <- load_seats(2026, "vic")
 sp22 <- seat_swing_spread(seats26, 55.00 - 57.60)
 sp18 <- seat_swing_spread(load_seats(2022, "vic"), 57.60 - 51.99)
@@ -143,6 +188,11 @@ out <- list(
               leader_since = as.character(leader_last$date),
               leader_days = leader_days,
               leader_polls = sum(cp$date >= leader_last$date)),
+  onp = list(fp = round(onp_fp, 1), flow = round(onp_flow, 1),
+             n_est = nrow(onp_all),
+             cmp_fp = round(sa_fp, 1), cmp_flow = round(sa$flow_alp[1], 1),
+             cmp_tpp = round(pj_cmp$mean, 1), base_tpp = round(pj$mean, 1),
+             trend_fit = round(flow_hat, 1), z = round(flow_z, 2)),
   trend = series, polls = pl,
   fp_now = lapply(c("LNP", "ALP", "ONP", "GRN", "OTH"), function(p) {
     d <- tr[party == p][which.max(date)]

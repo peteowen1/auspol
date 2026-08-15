@@ -291,9 +291,8 @@ footer{padding:2.5rem 0 0;border-top:1px solid var(--rule);font-size:.8rem;
       <li><strong>No local factors.</strong> Retirements, candidate quality,
       redistribution beyond the published margins, and campaign events are all
       absent.</li>
-      <li><strong>One Nation at 21% is unprecedented in Victoria</strong> and its
-      preference behaviour is estimated from federal elections, not Victorian
-      ones. If those flows are wrong, the two-party figure moves.</li>
+      <li id="onpcav"><strong>One Nation's preferences are the biggest
+      assumption here.</strong></li>
       <li><strong>Upper house not modelled at all.</strong></li>
     </ul>
   </div>
@@ -372,6 +371,26 @@ if (D.meta.leader && D.meta.leader_days != null && D.meta.leader_days <= 180) {
                `poll${n === 1 ? ' shows' : 's show'} is not in these numbers.`);
   document.getElementById('leadcav').hidden = false;
 }
+});
+/* The single largest lever on the two-party figure, and until now it was
+   invisible: an assumed number in an input file, described by a caveat that
+   named the wrong source entirely. State the assumption, name the closest
+   real comparator, and show what the headline does under it — the honest
+   answer being that it moves less than a reader would fear. */
+draw('onp caveat','onpcav',function(){
+  const o = D.onp;
+  if (!o) return;
+  document.getElementById('onpcav').innerHTML =
+    `<strong>One Nation's preferences are the biggest assumption here.</strong> `+
+    `At <span class="num">${o.fp.toFixed(1)}%</span> of the vote, One Nation decides the `+
+    `two-party figure through preferences rather than seats. This forecast assumes `+
+    `<span class="num">${o.flow.toFixed(1)}%</span> of them go to Labor — a Victorian estimate for `+
+    `this election, not a federal one, and the most Coalition-favourable of the `+
+    `${o.n_est} on record. South Australia voted in March with One Nation on `+
+    `<span class="num">${o.cmp_fp.toFixed(1)}%</span> and sent <span class="num">${o.cmp_flow.toFixed(1)}%</span> `+
+    `to Labor. On that assumption instead, Labor's two-party vote here would be `+
+    `<span class="num">${o.cmp_tpp.toFixed(1)}</span> rather than <span class="num">${o.base_tpp.toFixed(1)}</span> `+
+    `— enough to matter, not enough to change the answer.`;
 });
 document.getElementById('foot').textContent =
   `Generated ${fmtD(D.meta.as_of)} from ${D.meta.n_polls_cycle} Victorian polls `+

@@ -489,6 +489,51 @@ pointed the wrong way on the variance — the confound was `govt_years`, which
 correlates with leader change (0.12) and is already a predictor. Fifteen
 minutes of sizing replaced building a feature and then discovering this.
 
+## One Nation preferences: measured, and smaller than it looks (2026-08-15)
+
+Full evidence:
+[reviews/onp-preference-flows-2026-08-15.md](reviews/onp-preference-flows-2026-08-15.md).
+
+The forecast assumes **25.5%** of One Nation preferences go to Labor — the
+lowest of the 24 estimates in the anchor's file, and an assumption rather than
+an observation. With ONP on 20.9% of the vote this is the largest single lever
+on the two-party number.
+
+Three findings:
+
+1. **The page's caveat was factually wrong.** It said the flow came from
+   federal elections; `flows_for()` deliberately never reaches across regions,
+   and the anchor authored a Victorian 2026 row. Fixed, and the sensitivity is
+   now published rather than buried in an input file.
+2. **Pooled spread overstates the uncertainty twofold.** The 8.70 sd across
+   all estimates is mostly a thirty-year trend (−0.605 points/year, R² = 0.74);
+   residual scatter is **3.73**. The trend predicts 34.1 for 2026, so the
+   assumption sits **2.3 sds low**. New check **G2** fails past 2.5 sds.
+3. **It does not change the answer.** Recomputing the whole projection:
+
+   | Flow | Source | Published ALP TPP |
+   |---:|---|---:|
+   | 25.5 | current | **46.8** |
+   | 34.1 | fitted trend | 47.8 |
+   | 36.15 | SA 2026 observed, ONP 22.9% | 48.0 |
+   | 42.0 | Victoria 2018 | 48.7 |
+
+   Labor never reaches 50 under any plausible flow. The mix weight is 0.52 and
+   fundamentals (46.47) are flow-independent, so the headline moves about half
+   the trend shift — +1.2 points for the best comparator, half a standard
+   error.
+
+A first-pass linear estimate gave +2.2 points and "line-ball" — nearly double,
+and the wrong qualitative conclusion. The mix weight is exactly what a
+back-of-envelope drops.
+
+**Awaiting Pete — the flow was deliberately not changed.** It is the anchor's
+authored input, he is the domain expert, and now that the effect is measured
+it shifts nothing a reader would conclude. Three options: keep 25.5 and
+publish the sensitivity (done); adopt the trend value 34.1; or ask the anchor
+directly why 25.5, given SA 2026 delivered 36.15 on a comparable ONP vote.
+The third is the cheapest and would settle it.
+
 ## The published page is now executed, not just generated (2026-08-15)
 
 `tools/check-page.js` runs the page's own JavaScript against a stub DOM and
