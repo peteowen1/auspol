@@ -44,7 +44,9 @@ also the reference point for \code{logml0}. \code{NULL} uses \code{\link[=defaul
 List: \code{sigma_obs}, \code{sigma_rw}, \code{logml} (at optimum), \code{logml_y}
 (same but in the units of the original percentages, so comparable across
 scales), \code{logml0} (at the starting values, for a monotonicity sanity
-check), \code{n_cycles}, \code{n_polls}, \code{at_bound}, \code{convergence} (0 = converged).
+check), \code{scale} (the model scale the sigmas are in — they are not
+comparable across scales), \code{n_cycles}, \code{n_polls}, \code{at_bound},
+\code{convergence} (0 = converged).
 }
 \description{
 The Gaussian-exact trend model has an exact evidence (see \code{\link[=fit_trend]{fit_trend()}}'s

@@ -34,25 +34,41 @@ REGIONS <- c("fed", "nsw", "vic", "qld")
 
 # ---- Fit every polled cycle so house effects can be pooled ----
 fits_by_cycle <- list()
+n_eligible <- 0L
+fit_errors <- character(0)
 for (rg in REGIONS) {
-  polls <- tryCatch(suppressMessages(load_polls(rg)), error = function(e) NULL)
-  if (is.null(polls)) next
+  # Not a blanket tryCatch: load_polls() carries a deliberate hard stop against
+  # data corruption, and swallowing it would drop a whole region from the
+  # scorecard while every check below still printed PASS.
+  polls <- suppressMessages(load_polls(rg))
   keep <- cycles$region == rg & cycles$year >= 1990
   cyc <- cycles[which(keep), ]
   for (i in seq_len(nrow(cyc))) {
     y <- cyc$year[i]
-    cp <- tryCatch(cycle_polls(polls, y, cycles), error = function(e) NULL)
-    if (is.null(cp) || sum(!is.na(cp$ALP)) < 20) next
+    cp <- cycle_polls(polls, y, cycles)
+    if (sum(!is.na(cp$ALP)) < 20) next        # genuinely too thin: expected
+    n_eligible <- n_eligible + 1L
     kp <- pri_all$region == rg & pri_all$year == y
     pr <- pri_all[which(kp), ]
     priors <- setNames(pr$prev1, pr$party)
     f <- tryCatch(fit_cycle_trends(cp, parties = "ALP", priors = priors),
-                  error = function(e) NULL)
+                  error = function(e) {
+                    fit_errors <<- c(fit_errors,
+                                     sprintf("%s %d: %s", rg, y, conditionMessage(e)))
+                    NULL
+                  })
     if (!is.null(f)) fits_by_cycle[[length(fits_by_cycle) + 1L]] <- f
   }
 }
-cat(sprintf("=== fitted %d cycles across %s ===\n", length(fits_by_cycle),
-            paste(REGIONS, collapse = "/")))
+cat(sprintf("=== fitted %d of %d eligible cycles across %s ===\n",
+            length(fits_by_cycle), n_eligible, paste(REGIONS, collapse = "/")))
+# An eligible cycle that fails to fit is a bug, not a data shortage. Counting
+# only successes would hide it: the scorecard would quietly be built on a
+# subset and every check below would still pass.
+if (length(fit_errors)) {
+  cat("FAILED to fit:\n"); cat(paste0("  ", fit_errors, collapse = "\n"), "\n")
+}
+stopifnot(length(fits_by_cycle) == n_eligible)
 
 lean <- pollster_lean(fits_by_cycle, "ALP")
 factors <- estimate_firm_factors(fits_by_cycle)

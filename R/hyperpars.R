@@ -26,7 +26,9 @@
 #' @return List: `sigma_obs`, `sigma_rw`, `logml` (at optimum), `logml_y`
 #'   (same but in the units of the original percentages, so comparable across
 #'   scales), `logml0` (at the starting values, for a monotonicity sanity
-#'   check), `n_cycles`, `n_polls`, `at_bound`, `convergence` (0 = converged).
+#'   check), `scale` (the model scale the sigmas are in — they are not
+#'   comparable across scales), `n_cycles`, `n_polls`, `at_bound`,
+#'   `convergence` (0 = converged).
 #' @export
 estimate_trend_sigmas <- function(polls_list, party, prior_results = NULL,
                                   scale = c("logit", "points"),
@@ -121,7 +123,7 @@ estimate_trend_sigmas <- function(polls_list, party, prior_results = NULL,
 #'   [default_sigma_bounds()].
 #' @return List: `sigma_obs`, `sigma_rw` (shrunk — use these), `*_raw`
 #'   (unshrunk), `*_pooled`, `n_polls`, `weight`, `at_lower`, `at_upper`,
-#'   `floored`, `convergence`.
+#'   `at_bound` (either bound hit), `floored`, `convergence`.
 #' @export
 estimate_cycle_sigmas <- function(polls, party, sigma_obs_pooled,
                                   sigma_rw_pooled, prior_result = NA_real_,

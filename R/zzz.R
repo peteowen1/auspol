@@ -10,7 +10,8 @@ NULL
 # undefined globals.
 globalVariables(c(
   ".", ".SD", "N", "actual", "alp_win_prob", "base_sd_pts", "binomial_floor",
-  "challenger", "classic", "effect", "effect_pts", "end", "err_use", "error",
+  "challenger", "classic", "detail", "effect", "effect_pts", "end", "err_use",
+  "error",
   "exhaust", "implied_sd_pts", "lean_pts", "margin", "ratio",
   "fed_aligned", "fed_govt", "fed_opp", "firm", "firm_eff", "fitted",
   "flow_alp", "hi95", "incumbent", "is_incumbent", "is_opposition", "j",

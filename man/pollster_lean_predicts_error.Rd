@@ -27,7 +27,8 @@ lean. Comparing raw errors gives r = +0.08 (p = 0.75) on Australian data,
 which says nothing either way.}
 }
 \value{
-List: \code{n} (firms compared), \code{cor}, \code{p_value}, \code{data}.
+List: \code{n} (firms compared), \code{cor}, \code{p_value}, \code{within_election}
+(which comparison was used), \code{data}.
 }
 \description{
 Lean comes from the latent-trend fit; final-poll error comes from comparing

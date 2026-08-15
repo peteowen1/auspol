@@ -49,7 +49,7 @@ via \code{floored}. \code{NULL} disables it.}
 \value{
 List: \code{sigma_obs}, \code{sigma_rw} (shrunk — use these), \verb{*_raw}
 (unshrunk), \verb{*_pooled}, \code{n_polls}, \code{weight}, \code{at_lower}, \code{at_upper},
-\code{floored}, \code{convergence}.
+\code{at_bound} (either bound hit), \code{floored}, \code{convergence}.
 }
 \description{
 A party's volatility is a fact about how it is behaving in a given cycle,

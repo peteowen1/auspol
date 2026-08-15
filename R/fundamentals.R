@@ -183,14 +183,20 @@ FUNDAMENTALS_FEATURES <- c("prev1", "prev_avg", "is_incumbent", "is_opposition",
 #'
 #' @param X Numeric matrix of predictors. @param y Response.
 #' @param lambdas Penalty path.
-#' @return List: `beta`, `intercept`, `lambda`, `loo_mae`, `centre`, `scale`.
+#' @return List: `beta`, `intercept`, `lambda`, `loo_mae`, `loo_errors`
+#'   (per-election held-out errors, for paired comparisons), `centre`,
+#'   `scale`, and `features` (the retained predictor names, which
+#'   [predict_fundamentals()] reads).
 #' @keywords internal
 ridge_loo <- function(X, y, lambdas = 10^seq(-6, 3, length.out = 40)) {
   n <- nrow(X)
-  sdev <- apply(X, 2, stats::sd)
-  sdev[sdev < 1e-10] <- 1
-  centre <- colMeans(X)
-  Xs <- scale(X, center = centre, scale = sdev)
+  standardise <- function(rows) {
+    s <- apply(X[rows, , drop = FALSE], 2, stats::sd)
+    s[!is.finite(s) | s < 1e-10] <- 1
+    list(centre = colMeans(X[rows, , drop = FALSE]), scale = s)
+  }
+  full <- standardise(seq_len(n))
+  Xs <- scale(X, center = full$centre, scale = full$scale)
 
   fit_one <- function(Xs, y, lam) {
     p <- ncol(Xs)
@@ -198,9 +204,20 @@ ridge_loo <- function(X, y, lambdas = 10^seq(-6, 3, length.out = 40)) {
     b <- solve(A, crossprod(Xs, y - mean(y)))
     list(beta = as.numeric(b), intercept = mean(y))
   }
+  # Each fold is standardised on its OWN training rows. Centring and scaling
+  # once on the full sample lets the held-out election influence the scale of
+  # the model that predicts it — narrower than a full leave-one-out violation,
+  # since the response is already re-centred per fold, but it still flatters
+  # `loo_mae`, and most where it matters least: `fit_fundamentals()` accepts
+  # categories with as few as 10 elections, where one row moves the mean and
+  # sd appreciably.
   errs_for <- function(lam) vapply(seq_len(n), function(i) {
-    m <- fit_one(Xs[-i, , drop = FALSE], y[-i], lam)
-    y[i] - (m$intercept + sum(Xs[i, ] * m$beta))
+    rows <- setdiff(seq_len(n), i)
+    st <- standardise(rows)
+    Xtr <- scale(X[rows, , drop = FALSE], center = st$centre, scale = st$scale)
+    m <- fit_one(Xtr, y[rows], lam)
+    xi <- (X[i, ] - st$centre) / st$scale
+    y[i] - (m$intercept + sum(xi * m$beta))
   }, numeric(1))
   all_errs <- lapply(lambdas, errs_for)
   loo <- vapply(all_errs, function(e) mean(abs(e)), numeric(1))
@@ -212,7 +229,7 @@ ridge_loo <- function(X, y, lambdas = 10^seq(-6, 3, length.out = 40)) {
        # Per-election held-out errors, so an improvement over a baseline can be
        # tested as a paired comparison rather than eyeballed from two means.
        loo_errors = all_errs[[k]],
-       centre = centre, scale = sdev, features = colnames(X))
+       centre = full$centre, scale = full$scale, features = colnames(X))
 }
 
 #' Fit the fundamentals model for one party category

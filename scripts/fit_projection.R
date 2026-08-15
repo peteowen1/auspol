@@ -76,6 +76,18 @@ pdat <- build_projection_data(horizons = HORIZONS, verbose = FALSE)
 cat(sprintf("built %d (election, horizon) rows in %.0f s\n", nrow(pdat),
             as.numeric(difftime(Sys.time(), t0, units = "secs"))))
 
+# Account for every pair that did NOT produce a row. A thin cycle is expected;
+# an ERROR is a bug, and counting only successes would let the mix weight and
+# error spread be refitted on a shrunken, non-random subset with no symptom.
+skipped <- attr(pdat, "skipped")
+if (!is.null(skipped) && nrow(skipped)) {
+  cat("skipped pairs by reason:\n")
+  print(skipped[, .N, by = reason][order(-N)])
+  n_err <- skipped[reason == "error", .N]
+  if (n_err) print(skipped[reason == "error"][1:min(5, n_err)])
+  stopifnot(n_err == 0)
+}
+
 pdat <- merge(pdat, fund_loo, by = c("year", "region"), all.x = TRUE)
 cat(sprintf("of which %d have a fundamentals prediction\n", sum(!is.na(pdat$fund_tpp))))
 print(pdat[!is.na(fund_tpp), .(n = .N, elections = uniqueN(paste(year, region))),

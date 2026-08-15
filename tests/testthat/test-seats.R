@@ -117,3 +117,16 @@ test_that("simulate_seats is reproducible and refuses an all-nonclassic set", {
   s2[, classic := FALSE]
   expect_error(simulate_seats(s2, 50, 1, 50, 2), "No classic")
 })
+
+test_that("a classic seat with no region fails with a message naming it", {
+  # factor() DROPS NA rather than giving it a level, so max(reg) was NA and
+  # rnorm(n_sims * NA) died with "invalid arguments" — nothing pointing at the
+  # missing sRegion field.
+  s <- fake_seats(margins = c(6, -2, 3, -5))
+  s[, seat_region := c("A", "A", NA, "B")]
+  expect_error(simulate_seats(s, 50, 1, 50, seat_sd = 2, region_sd = 2,
+                              n_sims = 100), "Seat3")
+  # With no regional layer the region label is unused, so it must still run
+  expect_silent(simulate_seats(s, 50, 1, 50, seat_sd = 2, region_sd = 0,
+                               n_sims = 100))
+})

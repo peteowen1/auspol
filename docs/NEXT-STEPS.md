@@ -194,6 +194,51 @@ P(ALP majority) **14.2%**, a median loss of 21 seats from the 56 won in 2022.
   herding signature. The noise is now floored at the binomial bound and the
   party-cycle reported, rather than the model inheriting false precision.
 
+## Review gate, 2026-08-15 — one real leak, and what it moved
+
+Five scoped Sonnet reviewers over the whole package before the first PR.
+Seven findings, all verified against the code before acting. The three that
+mattered:
+
+**Preference-flow leakage in the backtest.** `build_projection_data()` looked
+up flows for the election year being backtested, so `derive_tpp()` converted
+every horizon's first preferences using the flows observed AT that election —
+the realised distribution, published only after the count. Two years out, the
+trend was being scored with a number nobody could have had. Now keyed to
+`y - 1`. The fix moved the trend weight at 30 days from **0.57 to 0.52**,
+exactly the predicted direction: the leak had been inflating measured trend
+accuracy and buying the trend more weight than it earned.
+
+**The published intervals were not the ones validated.** Coverage was checked
+with `projection_loo()`'s held-out spread, but `project_result()` shipped
+`sd_err` from the in-sample fit, which is smaller by construction — so the
+bands quoted were narrower than the bands certified. `fit_projection_mix()`
+now returns `sd_err_loo` and that is what `projection_params()` uses.
+
+**Fold-wise standardisation in `ridge_loo()`.** Centre and scale were computed
+once on all rows, letting the held-out election influence the scale of the
+model predicting it. Narrower than a full leave-one-out violation, since the
+response was already re-centred per fold, but it flattered `loo_mae` most for
+the categories with as few as 10 elections.
+
+Four more, all guards rather than wrong numbers: a party polling 0.0
+everywhere with no prior result produced `NaN` priors and an opaque Cholesky
+failure; a seat missing `sRegion` killed the simulation with "invalid
+arguments"; blanket `tryCatch` around `load_polls()` would have let a corrupt
+region vanish while every check still printed PASS; and
+`load_election_cycles()` was the last loader still using `fread`, which stops
+early on a ragged row — the bug that once cost 38% of the fundamentals
+training data.
+
+`build_projection_data()` now returns a `skipped` attribute distinguishing
+"too thin" from "errored", and `fit_projection.R` fails on any error skip.
+`fit_scorecard.R` asserts it fitted every eligible cycle, not merely some.
+
+Also corrected: `load_seats()`'s roxygen still described `margin` as the
+INCUMBENT's, the buggy reading that gave Labor 82 of 83 seats at zero swing,
+contradicting `seat_alp_tpp()` five functions below. A maintainer reading only
+the loader's docs would have reintroduced it.
+
 ## Pollster scorecard (2026-08-15) — `scripts/fit_scorecard.R`
 
 The differentiator identified in the feature review: nobody in Australia

@@ -12,7 +12,10 @@ ridge_loo(X, y, lambdas = 10^seq(-6, 3, length.out = 40))
 \item{lambdas}{Penalty path.}
 }
 \value{
-List: \code{beta}, \code{intercept}, \code{lambda}, \code{loo_mae}, \code{centre}, \code{scale}.
+List: \code{beta}, \code{intercept}, \code{lambda}, \code{loo_mae}, \code{loo_errors}
+(per-election held-out errors, for paired comparisons), \code{centre},
+\code{scale}, and \code{features} (the retained predictor names, which
+\code{\link[=predict_fundamentals]{predict_fundamentals()}} reads).
 }
 \description{
 glmnet is the obvious tool but is not a hard dependency of this package, so

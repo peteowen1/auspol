@@ -18,9 +18,12 @@
 #' Format is a flat text file: `#SeatName` then `key=value` lines.
 #'
 #' @param year,region Election identifiers, e.g. 2026 and "vic".
-#' @return data.table: `seat`, `incumbent`, `challenger`, `seat_region`,
-#'   `margin` (incumbent's two-party margin over 50), `prev_swing`,
-#'   `classic` (TRUE when the contest is ALP versus Coalition).
+#' @return data.table: `seat`, `incumbent`, `challenger`, `seat_region`
+#'   (`NA` if the block omits `sRegion`), `margin` (**ALP's** two-party margin
+#'   over 50 in every seat, negative where the Coalition leads — NOT the
+#'   incumbent's; see [seat_alp_tpp()] for why that distinction matters and
+#'   how reading it the other way was caught), `prev_swing`, `classic` (TRUE
+#'   when the contest is ALP versus Coalition).
 #' @export
 load_seats <- function(year, region) {
   path <- anchor_data_path(file.path("..", "..", "analysis", "seats",
@@ -150,6 +153,16 @@ simulate_seats <- function(seats, tpp_mean, tpp_sd, prev_tpp, seat_sd,
   result <- matrix(base, nrow = n_sims, ncol = n, byrow = TRUE) +
     statewide + noise
   if (region_sd > 0) {
+    # A seat whose block omits sRegion arrives as NA. factor() DROPS NA rather
+    # than giving it a level, so reg carries an NA, max(reg) is NA, and
+    # rnorm(n_sims * NA) dies with "invalid arguments" — nothing pointing at a
+    # missing region field. Every shipped seat file currently labels every
+    # seat, so this is dormant, but the key is otherwise optional and one
+    # omission in a future redistribution would take down the whole forecast.
+    if (anyNA(cl$seat_region)) {
+      stop("Seats missing sRegion, needed when region_sd > 0: ",
+           paste(cl$seat[is.na(cl$seat_region)], collapse = ", "))
+    }
     reg <- as.integer(factor(cl$seat_region))
     n_reg <- max(reg)
     # One draw per region per simulation, expanded to that region's seats, so

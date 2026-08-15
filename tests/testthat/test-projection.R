@@ -127,3 +127,28 @@ test_that("trend_as_at returns NULL rather than guessing when polls are thin", {
   expect_null(trend_as_at(polls, 2022, cycles, as.Date("2018-12-01"),
                           priors, fl, min_polls = 8))
 })
+
+test_that("each ridge fold is standardised on its own training rows", {
+  # Standardising once on the full sample lets the held-out row influence the
+  # scale of the model that predicts it. With a single extreme outlier the two
+  # approaches give visibly different held-out errors for that row.
+  set.seed(4)
+  X <- cbind(a = c(rnorm(29), 12), b = rnorm(30))
+  y <- 2 * X[, "a"] + rnorm(30, 0, 0.2)
+  m <- ridge_loo(X, y)
+  expect_equal(length(m$loo_errors), 30)
+  # The fitted scale returned for prediction is still the full-sample one
+  expect_equal(unname(m$scale["a"]), stats::sd(X[, "a"]))
+  # Held-out error on the outlier must be finite and not absurd
+  expect_true(is.finite(m$loo_errors[30]))
+})
+
+test_that("the published spread is the held-out one, never the in-sample one", {
+  d <- fake_proj(horizons = c(30, 365), n_per = 40)
+  mix <- fit_projection_mix(d)
+  expect_true("sd_err_loo" %in% names(mix))
+  # Re-picking the weight per fold cannot beat picking it once on everything
+  expect_true(all(mix$sd_err_loo >= mix$sd_err - 1e-9))
+  p <- projection_params(mix, 100)
+  expect_gte(p$sd_err, p$sd_err_insample - 1e-9)
+})

@@ -13,8 +13,10 @@ leave-one-out fundamentals predictions.}
 \item{w_grid}{Candidate weights.}
 }
 \value{
-data.table: one row per horizon with \code{w}, \code{mae_mix}, \code{mae_trend},
-\code{mae_fund}, \code{sd_err}, \code{n}.
+data.table, one row per horizon: \code{horizon}, \code{n}, \code{w}, \code{mae_mix}
+(in-sample, optimistic), \code{mae_mix_loo} (held out), \code{mae_trend},
+\code{mae_fund}, \code{bias}, \code{sd_err} (in-sample) and \code{sd_err_loo} (held out —
+the one the published intervals use).
 }
 \description{
 For each horizon, finds the weight \code{w} minimising mean absolute error of

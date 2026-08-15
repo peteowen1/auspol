@@ -6,14 +6,19 @@
 #' to this repository.
 #'
 #' @param subpath Path relative to the clone's `analysis/Data` directory.
+#' @param must_exist Stop if the path is absent. Set FALSE to test for an
+#'   optional file — the alternative is wrapping the call in a blanket
+#'   `tryCatch`, which also swallows the deliberate data-corruption stop in
+#'   [load_polls()] and lets a bad region disappear silently.
 #' @return Absolute path.
 #' @export
-anchor_data_path <- function(subpath = "") {
+anchor_data_path <- function(subpath = "", must_exist = TRUE) {
   root <- getOption(
     "auspol.anchor_dir",
     file.path(pkg_root(), "external", "aus-polling-analyser")
   )
   path <- file.path(root, "analysis", "Data", subpath)
+  if (!must_exist) return(path)
   if (!file.exists(path)) {
     stop(
       "Anchor data not found at ", path,

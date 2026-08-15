@@ -41,8 +41,12 @@ pollster_accuracy <- function(regions = c("fed", "nsw", "vic", "qld"),
   ev <- load_eventual_results()
   out <- list()
   for (rg in regions) {
-    polls <- tryCatch(suppressMessages(load_polls(rg)), error = function(e) NULL)
-    if (is.null(polls)) next
+    # Deliberately not a blanket tryCatch — see build_projection_data(). A
+    # corrupt region must stop the run, not vanish from the scorecard while
+    # every printed check still says PASS.
+    if (!file.exists(anchor_data_path(sprintf("poll-data-%s.csv", rg),
+                                      must_exist = FALSE))) next
+    polls <- suppressMessages(load_polls(rg))
     keep_c <- cycles$region == rg & cycles$year >= min_year
     cyc <- cycles[which(keep_c), ]
     for (i in seq_len(nrow(cyc))) {
@@ -114,7 +118,8 @@ pollster_lean <- function(fits_by_cycle, party = "ALP") {
 #' @param lean From [pollster_lean()].
 #' @param accuracy From [pollster_accuracy()].
 #' @param min_polls Firms with fewer pooled polls than this are excluded.
-#' @return List: `n` (firms compared), `cor`, `p_value`, `data`.
+#' @return List: `n` (firms compared), `cor`, `p_value`, `within_election`
+#'   (which comparison was used), `data`.
 #' @export
 #' @param within_election Compare each firm's error with the average error of
 #'   the firms polling the SAME election, rather than with zero. This is the

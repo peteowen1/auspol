@@ -4,10 +4,15 @@
 \alias{anchor_data_path}
 \title{Locate the anchor-model data directory}
 \usage{
-anchor_data_path(subpath = "")
+anchor_data_path(subpath = "", must_exist = TRUE)
 }
 \arguments{
 \item{subpath}{Path relative to the clone's \code{analysis/Data} directory.}
+
+\item{must_exist}{Stop if the path is absent. Set FALSE to test for an
+optional file — the alternative is wrapping the call in a blanket
+\code{tryCatch}, which also swallows the deliberate data-corruption stop in
+\code{\link[=load_polls]{load_polls()}} and lets a bad region disappear silently.}
 }
 \value{
 Absolute path.

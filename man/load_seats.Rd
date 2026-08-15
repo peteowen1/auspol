@@ -10,9 +10,12 @@ load_seats(year, region)
 \item{year, region}{Election identifiers, e.g. 2026 and "vic".}
 }
 \value{
-data.table: \code{seat}, \code{incumbent}, \code{challenger}, \code{seat_region},
-\code{margin} (incumbent's two-party margin over 50), \code{prev_swing},
-\code{classic} (TRUE when the contest is ALP versus Coalition).
+data.table: \code{seat}, \code{incumbent}, \code{challenger}, \code{seat_region}
+(\code{NA} if the block omits \code{sRegion}), \code{margin} (\strong{ALP's} two-party margin
+over 50 in every seat, negative where the Coalition leads — NOT the
+incumbent's; see \code{\link[=seat_alp_tpp]{seat_alp_tpp()}} for why that distinction matters and
+how reading it the other way was caught), \code{prev_swing}, \code{classic} (TRUE
+when the contest is ALP versus Coalition).
 }
 \description{
 Format is a flat text file: \verb{#SeatName} then \code{key=value} lines.

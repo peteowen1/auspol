@@ -7,9 +7,10 @@
 #' TPP from first preferences, matching the anchor methodology.
 #'
 #' @param region One of "fed", "nsw", "vic", "qld", "wa", "sa".
-#' @return data.table with columns `date`, `firm`, `tpp_published`,
-#'   `gl_approve`, `gl_disapprove`, one numeric column per party, and
-#'   attribute `parties`.
+#' @return data.table with columns `date`, `firm`, `tpp_published`, one
+#'   numeric column per party, and — only when the source file carries them —
+#'   `gl_approve` and `gl_disapprove`. Sets attributes `parties` AND `region`;
+#'   the latter is relied on by [cycle_polls()] and [unfold_others()].
 #' @export
 load_polls <- function(region = "fed") {
   path <- anchor_data_path(sprintf("poll-data-%s.csv", region))
@@ -63,12 +64,22 @@ sanity_check_polls <- function(polls, region) {
 #' @return data.table: `year`, `region`, `start`, `end` (election day).
 #' @export
 load_election_cycles <- function() {
-  raw <- data.table::fread(
-    anchor_data_path("election-cycles.csv"),
-    header = FALSE, col.names = c("year", "region", "start", "end")
-  )
-  raw[, `:=`(start = as.Date(start), end = as.Date(end))]
-  raw[]
+  # Read via read_anchor_csv(), not fread(). This is a hand-maintained file in
+  # the same directory as preference-estimates.csv, which already carries
+  # trailing "#comment" fields on some rows — and fread STOPS EARLY on the
+  # first such row without erroring. That is the bug that once trained the
+  # fundamentals model on 62% of its data. The file is uniform today; this
+  # stops a future annotation silently truncating the cycle table.
+  raw <- read_anchor_csv("election-cycles.csv",
+                         c("year", "region", "start", "end"))
+  raw[, `:=`(year = as.integer(year), region = as.character(region),
+             start = as.Date(start), end = as.Date(end))]
+  out <- raw[!is.na(year) & !is.na(start) & !is.na(end)]
+  if (nrow(out) < 60) {
+    warning(sprintf("election-cycles.csv parsed only %d rows - expected ~77",
+                    nrow(out)))
+  }
+  out[]
 }
 
 #' Load prior (previous-election) results

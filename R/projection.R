@@ -86,9 +86,24 @@ build_projection_data <- function(horizons = c(30, 90, 180, 365, 730),
   flows_all <- load_preference_flows()
 
   out <- list()
+  skipped <- list()
+  note <- function(rg, y, h, reason, detail = NA_character_) {
+    skipped[[length(skipped) + 1L]] <<- data.table::data.table(
+      region = rg, year = y, horizon = h, reason = reason, detail = detail)
+  }
   for (rg in regions) {
-    polls <- tryCatch(suppressMessages(load_polls(rg)), error = function(e) NULL)
-    if (is.null(polls)) next
+    # NOT wrapped in a blanket tryCatch. load_polls() runs sanity_check_polls(),
+    # a deliberate hard stop against data corruption; catching every error here
+    # would let one corrupt region vanish from the training set while every
+    # downstream check still reported PASS, because those checks only see the
+    # data that survived. A genuinely absent file is a different thing and is
+    # skipped explicitly.
+    if (!file.exists(anchor_data_path(sprintf("poll-data-%s.csv", rg),
+                                      must_exist = FALSE))) {
+      note(rg, NA_integer_, NA_real_, "no poll file")
+      next
+    }
+    polls <- suppressMessages(load_polls(rg))
     keep <- pol$region == rg & pol$year >= min_year
     years <- sort(pol$year[which(keep)])
     for (y in years) {
@@ -102,17 +117,43 @@ build_projection_data <- function(horizons = c(30, 90, 180, 365, 730),
       kp <- pri_all$region == rg & pri_all$year == y
       pr <- pri_all[which(kp), ]
       priors <- stats::setNames(pr$prev1, pr$party)
-      fl <- tryCatch(flows_for(flows_all, y, rg, quiet = TRUE),
+      # LEAKAGE: preference flows must come from an election STRICTLY BEFORE
+      # the one being backtested. Asking for year `y` returns the flows
+      # observed AT that election — the realised distribution of preferences,
+      # published only after the count — and derive_tpp() would then convert
+      # every horizon's first-preference trend using a number nobody could
+      # have known two years out. That inflates measured trend accuracy at
+      # every horizon, which biases the fitted mix weight toward the trend and
+      # understates the error spread: precisely the two quantities this
+      # function exists to estimate honestly.
+      fl <- tryCatch(flows_for(flows_all, y - 1L, rg, quiet = TRUE),
                      error = function(e) NULL)
       if (is.null(fl)) next
 
       for (h in horizons) {
         as_at <- cyc$end[1] - h
-        if (as_at <= cyc$start[1]) next
+        if (as_at <= cyc$start[1]) {
+          note(rg, y, h, "horizon precedes cycle start")
+          next
+        }
+        # "Too thin to fit" and "the fit blew up" are different things and were
+        # previously indistinguishable — both became a silent `next`. A bug
+        # that started failing some elections would have quietly re-fitted the
+        # mix weight and error spread on a shrunken, non-random subset, with no
+        # symptom except a row count nothing compared against an expectation.
         r <- tryCatch(trend_as_at(polls, y, cycles, as_at, priors, fl,
                                   min_polls = min_polls, nu = nu),
-                      error = function(e) NULL)
-        if (is.null(r)) next
+                      error = function(e) {
+                        note(rg, y, h, "error", conditionMessage(e))
+                        NULL
+                      })
+        if (is.null(r)) {
+          if (!length(skipped) ||
+              !identical(skipped[[length(skipped)]]$reason, "error")) {
+            note(rg, y, h, "too few polls")
+          }
+          next
+        }
         out[[length(out) + 1L]] <- data.table::data.table(
           year = y, region = rg, horizon = h, trend_tpp = r$tpp,
           actual_tpp = actual, n_polls = r$n_polls)
@@ -120,7 +161,17 @@ build_projection_data <- function(horizons = c(30, 90, 180, 365, 730),
       if (verbose) message(sprintf("  %s %d done", rg, y))
     }
   }
-  data.table::rbindlist(out)
+  res <- data.table::rbindlist(out)
+  skip <- data.table::rbindlist(skipped)
+  data.table::setattr(res, "skipped", skip)
+  n_err <- if (nrow(skip)) sum(skip$reason == "error") else 0L
+  if (n_err > 0) {
+    warning(sprintf(
+      "%d (election, horizon) pairs failed with an ERROR, not for want of polls: %s",
+      n_err, paste(utils::head(skip[which(skip$reason == "error"), detail], 3),
+                   collapse = "; ")))
+  }
+  res
 }
 
 #' Optimal trend-versus-fundamentals weight at each horizon
@@ -136,8 +187,10 @@ build_projection_data <- function(horizons = c(30, 90, 180, 365, 730),
 #' @param dat From [build_projection_data()], with a `fund_tpp` column of
 #'   leave-one-out fundamentals predictions.
 #' @param w_grid Candidate weights.
-#' @return data.table: one row per horizon with `w`, `mae_mix`, `mae_trend`,
-#'   `mae_fund`, `sd_err`, `n`.
+#' @return data.table, one row per horizon: `horizon`, `n`, `w`, `mae_mix`
+#'   (in-sample, optimistic), `mae_mix_loo` (held out), `mae_trend`,
+#'   `mae_fund`, `bias`, `sd_err` (in-sample) and `sd_err_loo` (held out —
+#'   the one the published intervals use).
 #' @export
 fit_projection_mix <- function(dat, w_grid = seq(0, 1, by = 0.01)) {
   stopifnot("fund_tpp" %in% names(dat))
@@ -167,7 +220,13 @@ fit_projection_mix <- function(dat, w_grid = seq(0, 1, by = 0.01)) {
       mae_mix_loo = mean(abs(loo_err)),
       mae_trend = mean(abs(d$trend_tpp - d$actual_tpp)),
       mae_fund = mean(abs(d$fund_tpp - d$actual_tpp)),
-      bias = mean(err), sd_err = stats::sd(err))
+      bias = mean(err), sd_err = stats::sd(err),
+      # The spread the published intervals must use. `sd_err` is measured on
+      # errors whose own weight was chosen to minimise them, so it is too
+      # small; `sd_err_loo` re-picks the weight with each election held out.
+      # Validating coverage with one and shipping the other would mean
+      # certifying a wider interval than the model actually emits.
+      sd_err_loo = stats::sd(loo_err))
   }))
 }
 
@@ -257,7 +316,11 @@ projection_params <- function(mix, horizon) {
     if (nrow(m) == 1) return(v[1])
     stats::approx(grid, v, xout = lh, rule = 2)$y
   }
-  list(w = interp(m$w), sd_err = interp(m$sd_err), bias = interp(m$bias))
+  # Prefer the held-out spread; fall back to the in-sample one only if an
+  # older mix table predates that column.
+  sd_col <- if ("sd_err_loo" %in% names(m)) m$sd_err_loo else m$sd_err
+  list(w = interp(m$w), sd_err = interp(sd_col), bias = interp(m$bias),
+       sd_err_insample = interp(m$sd_err))
 }
 
 #' Project an election-day result from a trend value and fundamentals

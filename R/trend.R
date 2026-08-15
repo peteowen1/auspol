@@ -49,6 +49,17 @@ prep_trend_obs <- function(polls, party, min_firm_polls = 3,
   # the previous result, which is a fact about that election.
   p_ref <- mean(obs$y_pct, na.rm = TRUE)
   if (!is.finite(p_ref) || p_ref <= 0) p_ref <- prior_result
+  if (!is.finite(p_ref) || p_ref <= 0) {
+    # Reachable: a fringe party reported as 0.0 in every poll, called without a
+    # previous-election result. p_ref would stay NA, and since max(NA, 0.25) is
+    # NA the clamp inside sd_to_link() does not rescue it — every translated
+    # prior becomes NaN, lands in the precision matrix, and surfaces as an
+    # opaque Cholesky failure with no hint of the cause. Fail here instead.
+    stop(sprintf(
+      "%s: cannot set a reference share (mean polled %.3f, prior result %s). Supply prior_result.",
+      party, mean(obs$y_pct, na.rm = TRUE),
+      if (is.na(prior_result)) "NA" else format(prior_result)))
+  }
 
   list(obs = obs, T_ = T_, J = length(firms), days = days, firms = firms,
        start = start, end = end, scale = scale, p_ref = p_ref,

@@ -85,3 +85,25 @@ test_that("the reweighting converges quickly and reports how far it went", {
   expect_true(all(f$residuals$weight > 0))
   expect_identical(f$meta$nu, 4)
 })
+
+test_that("a party with no usable reference share fails clearly, not cryptically", {
+  # A fringe party reported as 0.0 in every poll, with no previous-election
+  # result: p_ref would stay NA, max(NA, 0.25) does not rescue it, and every
+  # translated prior became NaN inside the precision matrix — surfacing as an
+  # opaque Cholesky error with no hint of the cause.
+  d <- data.table::data.table(
+    date = as.Date("2025-01-01") + seq(0, 300, by = 20),
+    firm = rep(c("A", "B", "C"), length.out = 16),
+    tpp_published = NA_real_, ALP = 0)
+  for (a in c("parties", "region", "cycle_year")) {
+    data.table::setattr(d, a, list(parties = "ALP", region = "test",
+                                   cycle_year = 2026)[[a]])
+  }
+  data.table::setattr(d, "cycle_start", min(d$date))
+  data.table::setattr(d, "cycle_end", max(d$date))
+
+  expect_error(suppressWarnings(fit_trend(d, "ALP")), "reference share")
+  # Supplying a prior result makes it fit normally
+  f <- suppressWarnings(fit_trend(d, "ALP", prior_result = 1.0))
+  expect_true(all(is.finite(f$trend$mean)))
+})
