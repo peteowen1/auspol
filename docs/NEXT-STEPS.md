@@ -489,6 +489,60 @@ pointed the wrong way on the variance — the confound was `govt_years`, which
 correlates with leader change (0.12) and is already a predictor. Fifteen
 minutes of sizing replaced building a feature and then discovering this.
 
+## Preference flows are now estimated, not assumed (2026-08-16)
+
+Pete's direction, and it reframed the whole question: **never hand-code an
+assumption — derive it from data so it moves as data arrives.** And more
+broadly, auspol is *inspired by* AE Forecasts and theswingison rather than a
+reimplementation of either; where both do something poorly we skip it or do it
+better. This is the first place that bites.
+
+Both references hand-set preference flows. AE Forecasts authors the value and
+borrows across regions (`2026,vic,ONP FP,25.5,#Use federal pref flow
+estimate`), so the same borrowed number stands for three future elections as
+though it were three estimates. theswingison uses a twelve-rule hierarchy —
+better than one rate, still hand-authored rules no election can update.
+
+**Ours is estimated**: the mean of a party's five most recent observed
+elections, pooled across regions, moving as elections are held.
+
+**The estimator was chosen by strict temporal backtest** — each election
+predicted from only earlier ones, 103 elections, eleven candidates:
+
+| | MAE |
+|---|---:|
+| **mean of last 5** | **4.815** |
+| last in region | 4.863 |
+| mean of last 3 | 5.027 |
+| linear trend | 5.282 |
+| exp decay, 4-yr half-life | 5.669 |
+| exp decay, 8-yr + region bonus | 6.544 |
+
+Two results worth keeping:
+
+- **The linear trend came fifth**, though the trends are real and strong
+  (Greens +1.10 points/year over 53 elections, One Nation −0.605 over 21, both
+  p < 0.001). Leave-one-out endorsed it and leave-one-out was wrong: it lets a
+  later election inform an earlier prediction.
+- **Every weighting scheme lost, monotonically in the half-life.** A hard
+  window beats soft decay because decay never fully discards anything, so a
+  1998 flow of 54% keeps a vote forever while behaviour has drifted to 26%.
+  Same-region weighting had *no effect at all* (6.544 vs 6.541).
+
+Victoria: ONP 25.5 → 33.7, GRN 81.9 → 83.5, OTH 49.3 → 48.9. **Published
+two-party 46.8 → 47.8.**
+
+`scripts/backtest_flows.R` re-runs the comparison every pipeline run and fails
+as **G3** if the adopted estimator stops winning, with a 0.15 MAE tolerance so
+ordinary jitter does not cause churn. The choice is itself made from data and
+would otherwise have been correct once and unexamined forever.
+
+**Still open:** per party the ranking differs — One Nation prefers the mean of
+3 (3.155 vs 3.744), the Greens prefer last-in-region. Reported by G3, not
+acted on: 16 and 38 elections cannot support choosing an estimator each.
+Revisit if a principled grouping appears (say, by party size or by how much
+history exists) rather than per-party cherry-picking.
+
 ## One Nation preferences: measured, and smaller than it looks (2026-08-15)
 
 Full evidence:

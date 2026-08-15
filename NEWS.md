@@ -1,4 +1,45 @@
-# auspol (development version)
+# auspol 0.3.0
+
+The forecast's assumptions are now estimated from the record rather than taken
+as given.
+
+## Preference flows are estimated, not assumed
+
+- `estimate_flow()` / `estimate_flows_for()` / `is_observed_election()` —
+  where a minor party's preferences go is the largest lever on a two-party
+  figure (at 21% of the vote, one point of flow moves it 0.21), and it was a
+  constant read from a hand-maintained file. It is now the mean of the party's
+  five most recent observed elections, pooled across regions, and it moves as
+  elections are held.
+- **The estimator was chosen by strict temporal backtest**, every election
+  predicted using only elections held strictly earlier, across 103 elections.
+  Eleven candidates. A linear trend — the obvious choice, and the one this was
+  first built around — came fifth. Leave-one-out had endorsed it, wrongly:
+  it lets a later election inform an earlier prediction. Every recency-weighted
+  scheme also lost, and monotonically in the half-life, because exponential
+  decay never fully discards a 1998 flow of 54% while behaviour has drifted to
+  26%.
+- `scripts/backtest_flows.R` re-runs that comparison on every pipeline run and
+  fails as check **G3** if the adopted estimator stops winning. The choice is
+  itself made from data, so it needs re-testing as new elections land rather
+  than being correct once and unexamined after.
+- Victoria: One Nation 25.5 → 33.7, Greens 81.9 → 83.5, Others 49.3 → 48.9.
+  Labor's published two-party moves 46.8 → 47.8.
+- A state-versus-federal difference in One Nation flows was tested and
+  rejected: +1.10 points, se 1.90, p = 0.57, and worse out of sample.
+
+## Fixes
+
+- Preference-flow leakage in the historical backtest, arriving through a new
+  door: estimation counts elections that have "already happened", which
+  defaulted to *today*, so backtesting 2018 used flows informed by 2022 and
+  2025. Caught because the fitted mix weight moved when recorded historical
+  flows cannot. `as_of` is now pinned to each cycle's start.
+- data.table NSE shadowing, for the third time here: a filter written
+  `flows[flows$party == party, ]` binds the bare name to the column, matches
+  every row, and hands every party the pooled mean of all 202 estimates.
+
+# auspol 0.2.1
 
 ## Publishing
 
