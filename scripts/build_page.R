@@ -193,11 +193,24 @@ cat(sprintf("wrote output/victoria-2026.html (%.0f KB)\n",
 # anything — so the only way to know the page actually rendered is to run it.
 # This is the check that would have caught the three-charts-missing release.
 if (nzchar(Sys.which("node"))) {
-  st <- system2("node", c("tools/check-page.js", "output/victoria-2026.html"))
-  if (!identical(as.integer(st), 0L)) {
+  res <- system2("node", c("tools/check-page.js", "output/victoria-2026.html"),
+                 stdout = TRUE, stderr = TRUE)
+  st <- attr(res, "status")
+  if (!is.null(st) && !identical(as.integer(st), 0L)) {
+    cat(paste(res, collapse = "\n"), "\n")
     stop("The published page did not draw correctly (tools/check-page.js ",
          "exited ", st, "). Output above names the blocks that failed.")
   }
+  # Report as a numbered check like every other stage, so it appears in
+  # run_all.R's summary and the scheduled run's step summary. run_all.R keeps
+  # only lines starting with a check code and discards the rest, so without
+  # this the one test of the published page is invisible when it passes.
+  drew <- sub(".*written: ([0-9]+).*", "\\1",
+              grep("written:", res, value = TRUE)[1])
+  addr <- sub(".*addressed: ([0-9]+).*", "\\1",
+              grep("addressed:", res, value = TRUE)[1])
+  cat(sprintf("B1  page blocks drawn: %s of %s addressed elements (rest are conditional)  PASS\n",
+              drew, addr))
 } else {
   # Not fatal — node is not an R dependency and a machine without it should
   # still be able to produce the page. But it IS the only check on the page's
