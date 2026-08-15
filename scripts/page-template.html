@@ -1,0 +1,466 @@
+<title>Can Labor Hold Victoria?</title>
+<style>
+:root{
+  --ink:#14181C; --ink-2:#41474F; --ink-3:#6E757E; --ink-4:#9AA1A9;
+  --paper:#F6F7F9; --surface:#FFFFFF; --rule:#D9DDE3; --rule-2:#EBEEF2;
+  --alp:#D5342F; --lib:#1B4F9C; --grn:#1E9E57; --onp:#E8730C; --oth:#7A8291;
+  --band:#C9CFD7; --shadow:0 1px 2px rgba(20,24,28,.06);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --ink:#E8EBEF; --ink-2:#B4BBC4; --ink-3:#868E98; --ink-4:#5E666F;
+    --paper:#101317; --surface:#171B20; --rule:#2A3037; --rule-2:#22272D;
+    --alp:#F0605A; --lib:#5B90DC; --grn:#3FC77C; --onp:#FF9540; --oth:#8F98A2;
+    --band:#333B44; --shadow:0 1px 2px rgba(0,0,0,.4);
+  }
+}
+:root[data-theme="dark"]{
+  --ink:#E8EBEF; --ink-2:#B4BBC4; --ink-3:#868E98; --ink-4:#5E666F;
+  --paper:#101317; --surface:#171B20; --rule:#2A3037; --rule-2:#22272D;
+  --alp:#F0605A; --lib:#5B90DC; --grn:#3FC77C; --onp:#FF9540; --oth:#8F98A2;
+  --band:#333B44; --shadow:0 1px 2px rgba(0,0,0,.4);
+}
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--paper); color:var(--ink);
+  font:16px/1.6 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:74rem;margin:0 auto;padding:0 1.5rem 6rem}
+.col{max-width:38rem}
+h1,h2,h3{font-family:Georgia,"Times New Roman",serif;font-weight:600;
+  text-wrap:balance;margin:0}
+h1{font-size:clamp(2.1rem,5.2vw,3.4rem);line-height:1.05;letter-spacing:-.02em}
+h2{font-size:1.45rem;line-height:1.2;letter-spacing:-.01em}
+h3{font-size:1.02rem;line-height:1.3}
+p{margin:0}
+a{color:inherit}
+.num{font-family:ui-monospace,"SF Mono",Consolas,"Liberation Mono",monospace;
+  font-variant-numeric:tabular-nums;font-feature-settings:"tnum"}
+.eyebrow{font-size:.7rem;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--ink-3);font-weight:600}
+.rule{height:1px;background:var(--rule);border:0;margin:0}
+
+header{padding:3.5rem 0 2rem;display:flex;flex-direction:column;gap:1.25rem}
+.masthead{display:flex;flex-wrap:wrap;gap:1rem;justify-content:space-between;
+  align-items:baseline;border-bottom:2px solid var(--ink);padding-bottom:.6rem}
+.masthead .id{font-family:Georgia,serif;font-size:.95rem;font-weight:600;
+  letter-spacing:.01em}
+.stamp{display:flex;gap:1.4rem;flex-wrap:wrap;font-size:.75rem;color:var(--ink-3)}
+.stamp b{color:var(--ink);font-weight:600}
+
+section{padding:3rem 0;display:flex;flex-direction:column;gap:1.4rem}
+section+section{border-top:1px solid var(--rule-2)}
+.lede{font-size:1.12rem;line-height:1.62;color:var(--ink-2)}
+.lede strong{color:var(--ink);font-weight:600}
+.note{font-size:.85rem;line-height:1.55;color:var(--ink-3)}
+
+.headline{display:grid;gap:1.5rem;
+  grid-template-columns:repeat(auto-fit,minmax(15rem,1fr))}
+.stat{background:var(--surface);border:1px solid var(--rule);border-radius:2px;
+  padding:1.15rem 1.25rem 1.25rem;display:flex;flex-direction:column;gap:.5rem;
+  box-shadow:var(--shadow)}
+.stat .k{font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--ink-3);font-weight:600}
+.stat .v{font-size:2.5rem;line-height:1;font-weight:600;letter-spacing:-.02em}
+.stat .sub{font-size:.82rem;color:var(--ink-3);line-height:1.45}
+.stat .band{height:6px;background:var(--band);border-radius:1px;position:relative}
+.stat .band i{position:absolute;top:-3px;width:2px;height:12px;background:var(--ink)}
+
+figure{margin:0;display:flex;flex-direction:column;gap:.7rem}
+figcaption{font-size:.82rem;color:var(--ink-3);line-height:1.5;max-width:44rem}
+.chart{background:var(--surface);border:1px solid var(--rule);border-radius:2px;
+  padding:1rem;box-shadow:var(--shadow);overflow-x:auto}
+svg{display:block;width:100%;height:auto}
+.legend{display:flex;flex-wrap:wrap;gap:.35rem 1.1rem;font-size:.8rem}
+.legend span{display:inline-flex;align-items:center;gap:.4rem;color:var(--ink-2)}
+.legend i{width:11px;height:3px;border-radius:2px;display:inline-block}
+
+table{border-collapse:collapse;width:100%;font-size:.86rem}
+.tbl{overflow-x:auto;background:var(--surface);border:1px solid var(--rule);
+  border-radius:2px;box-shadow:var(--shadow)}
+th,td{text-align:right;padding:.5rem .7rem;border-bottom:1px solid var(--rule-2);
+  white-space:nowrap}
+th{font-size:.68rem;letter-spacing:.09em;text-transform:uppercase;
+  color:var(--ink-3);font-weight:600;position:sticky;top:0;
+  background:var(--surface)}
+th:first-child,td:first-child{text-align:left}
+tbody tr:last-child td{border-bottom:0}
+td.pos{color:var(--alp)} td.neg{color:var(--lib)}
+
+.tried{display:grid;gap:.9rem;grid-template-columns:repeat(auto-fit,minmax(16rem,1fr))}
+.card{background:var(--surface);border:1px solid var(--rule);border-radius:2px;
+  padding:1rem 1.05rem;display:flex;flex-direction:column;gap:.45rem;
+  box-shadow:var(--shadow)}
+.card .verdict{font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;
+  font-weight:700;color:var(--ink-3)}
+.card p{font-size:.86rem;line-height:1.5;color:var(--ink-2)}
+.card .fig{font-size:.8rem;color:var(--ink-3)}
+
+ul.plain{margin:0;padding-left:1.1rem;display:flex;flex-direction:column;gap:.55rem}
+ul.plain li{font-size:.92rem;line-height:1.55;color:var(--ink-2)}
+footer{padding:2.5rem 0 0;border-top:1px solid var(--rule);font-size:.8rem;
+  color:var(--ink-3);line-height:1.6}
+:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+
+<div class="wrap">
+<header>
+  <div class="masthead">
+    <div class="id">auspol &middot; independent election modelling</div>
+    <div class="eyebrow" id="asof"></div>
+  </div>
+  <h1>Can Labor hold Victoria?</h1>
+  <p class="lede col">A statistical forecast of the Victorian state election, built
+  from every published poll of this term and the results of the last nine
+  elections. <strong>It currently says no</strong> &mdash; but it also shows you
+  how often forecasts like it have been wrong, and what it got wrong along the way.</p>
+  <div class="stamp" id="stamp"></div>
+</header>
+
+<section>
+  <div class="headline" id="headline"></div>
+  <p class="note col">Ranges are 95% intervals. They are not decoration: over 195
+  historical election-and-horizon pairs, intervals built this way contained the
+  true result 93% of the time when 95% was claimed. See <em>How wrong is this
+  usually?</em> below.</p>
+</section>
+
+<section>
+  <div class="col">
+    <span class="eyebrow">The pendulum</span>
+    <h2 style="margin-top:.5rem">Where the swing lands</h2>
+  </div>
+  <figure>
+    <div class="chart"><svg id="pend" viewBox="0 0 900 470" role="img"
+      aria-label="Victorian seats ordered by Labor two-party vote, shaded by win probability"></svg></div>
+    <figcaption>Each row is one of the 83 seats decided between Labor and the
+    Coalition, ordered by Labor's two-party vote in 2022. Shading is the
+    probability Labor holds it. The dark line is the projected result; everything
+    left of it is where the election is actually decided. Five further seats are
+    Labor-versus-Green or independent contests and are not decided by a two-party
+    number, so they are excluded.</figcaption>
+  </figure>
+</section>
+
+<section>
+  <div class="col">
+    <span class="eyebrow">Seats</span>
+    <h2 style="margin-top:.5rem">How many Labor ends up with</h2>
+  </div>
+  <figure>
+    <div class="chart"><svg id="hist" viewBox="0 0 900 260" role="img"
+      aria-label="Distribution of simulated Labor seat counts"></svg></div>
+    <figcaption>50,000 simulations. Each draws a statewide result from the
+    projection's own uncertainty, then gives every region and every seat its own
+    deviation. Governing requires 45 of 88.</figcaption>
+  </figure>
+</section>
+
+<section>
+  <div class="col">
+    <span class="eyebrow">The polls</span>
+    <h2 style="margin-top:.5rem">What has happened this term</h2>
+  </div>
+  <figure>
+    <div class="chart"><svg id="trend" viewBox="0 0 900 380" role="img"
+      aria-label="Primary vote trend for each party across the term"></svg></div>
+    <div class="legend" id="legend"></div>
+    <figcaption>Dots are individual polls; lines are the fitted trend after
+    removing each pollster's house effect. One Nation, which took 0.3% in
+    Victoria in 2022, is the largest single change in the term.</figcaption>
+  </figure>
+</section>
+
+<section>
+  <div class="col">
+    <span class="eyebrow">Method</span>
+    <h2 style="margin-top:.5rem">Polls alone are not a forecast</h2>
+    <p class="lede" style="margin-top:.9rem">Two years from an election, polls
+    carry little information about the result; two months out they carry most of
+    it. So the forecast mixes the poll trend with <em>fundamentals</em> &mdash;
+    what history says happens to a government of this age, in this position, with
+    its federal counterpart in office &mdash; and the weight on each is fitted
+    from past elections rather than chosen.</p>
+  </div>
+  <figure>
+    <div class="tbl"><table id="mixtbl"></table></div>
+    <figcaption>Accuracy is mean absolute error in two-party points, measured
+    with each election held out of everything used to predict it. The mix beats
+    both of its own ingredients at every horizon, and the trend earns more weight
+    as the election approaches &mdash; which is the premise, tested rather than
+    assumed.</figcaption>
+  </figure>
+</section>
+
+<section>
+  <div class="col">
+    <span class="eyebrow">Track record</span>
+    <h2 style="margin-top:.5rem">What we tried that didn't work</h2>
+    <p class="lede" style="margin-top:.9rem">Four sensible-sounding improvements
+    were built, measured honestly, and rejected. They are listed because a
+    forecast that only reports its wins is telling you half the story.</p>
+  </div>
+  <div class="tried">
+    <div class="card">
+      <span class="verdict">Rejected</span>
+      <h3>Fat-tailed poll noise</h3>
+      <p>Discount a rogue poll in proportion to how far out it is. It does fire
+      &mdash; 10% of polls get halved &mdash; but the forecast got no better.</p>
+      <p class="fig num">2.791 vs 2.779 error &middot; not enabled</p>
+    </div>
+    <div class="card">
+      <span class="verdict">Rejected</span>
+      <h3>Correcting for bias</h3>
+      <p>Subtract the average error of past forecasts at the same horizon. It was
+      never distinguishable from zero, and subtracting noise made things worse at
+      every horizon.</p>
+      <p class="fig num">2.173 vs 2.126 error &middot; removed</p>
+    </div>
+    <div class="card">
+      <span class="verdict">Not warranted</span>
+      <h3>Skewed error bands</h3>
+      <p>Allow the forecast to be more wrong in one direction than the other.
+      Measured, the errors are close to symmetric and slightly thin-tailed.</p>
+      <p class="fig num">excess kurtosis &minus;0.23</p>
+    </div>
+    <div class="card">
+      <span class="verdict">Kept, but small</span>
+      <h3>Regional swings</h3>
+      <p>Seats in a region move together, and they genuinely do &mdash; a third of
+      seat-level variation is regional. It widens the seat range by only 5%,
+      because the statewide vote dominates.</p>
+      <p class="fig num">+5% on seat spread</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="col">
+    <span class="eyebrow">Calibration</span>
+    <h2 style="margin-top:.5rem">How wrong is this usually?</h2>
+    <p class="lede" style="margin-top:.9rem">The most important number on this
+    page is not the forecast, it is whether the uncertainty around it is honest.
+    Refitting everything with each election held out, across 195
+    election-and-horizon pairs:</p>
+  </div>
+  <div class="tbl" style="max-width:34rem"><table>
+    <thead><tr><th>Interval claimed</th><th>Contained the result</th></tr></thead>
+    <tbody>
+      <tr><td>50%</td><td class="num">52.3%</td></tr>
+      <tr><td>80%</td><td class="num">75.9%</td></tr>
+      <tr><td>95%</td><td class="num">93.3%</td></tr>
+    </tbody></table></div>
+  <p class="note col">Slightly narrow at the top end, close enough that the
+  published intervals are used as they are. This is measured on the same
+  held-out basis the forecast itself is scored on &mdash; not on the elections
+  the model was fitted to.</p>
+</section>
+
+<section>
+  <div class="col">
+    <span class="eyebrow">Pollsters</span>
+    <h2 style="margin-top:.5rem">Who leans which way</h2>
+    <p class="lede" style="margin-top:.9rem">The model estimates each pollster's
+    house effect as a byproduct. <em>Lean</em> is how far a firm sits from the
+    average pollster of its day, in Labor primary points. <em>Final error</em> is
+    how far its last poll of a campaign sat from the actual result &mdash; no
+    model involved.</p>
+  </div>
+  <div class="tbl"><table id="cardtbl"></table></div>
+  <p class="note col">Lean is a relative position within a polling period, not a
+  prediction of who will be right on the day. Whether it predicts final-poll
+  error is suggestive but unproven on this data (r = 0.35, p = 0.14, 19 firms).</p>
+</section>
+
+<section>
+  <div class="col">
+    <span class="eyebrow">Caveats</span>
+    <h2 style="margin-top:.5rem">What this does not know</h2>
+    <ul class="plain">
+      <li><strong>The polls could be wrong together.</strong> In 2018 Victorian
+      polls put Labor near 54 and it won 57.6. Nothing here detects a field-wide
+      miss, and the 2018 error was larger than this forecast's entire 95% band is
+      wide on one side.</li>
+      <li><strong>Five seats are set aside.</strong> Three Green-held seats,
+      Prahran and South-West Coast are not Labor-versus-Coalition contests, so a
+      two-party number cannot decide them. They are assumed to stay put.</li>
+      <li><strong>No local factors.</strong> Retirements, candidate quality,
+      redistribution beyond the published margins, and campaign events are all
+      absent.</li>
+      <li><strong>One Nation at 21% is unprecedented in Victoria</strong> and its
+      preference behaviour is estimated from federal elections, not Victorian
+      ones. If those flows are wrong, the two-party figure moves.</li>
+      <li><strong>Upper house not modelled at all.</strong></li>
+    </ul>
+  </div>
+</section>
+
+<footer class="col">
+  <p>Built with <span class="num">auspol</span>, an open R implementation
+  anchored on the AE Forecasts methodology. Poll data is collated by
+  d&#8209;j&#8209;hirst. Every figure on this page is produced by the model and
+  regenerated with it; the pre-registered checks that guard it are described in
+  the repository.</p>
+  <p style="margin-top:.8rem" id="foot"></p>
+</footer>
+</div>
+
+<script>
+const D = /*__DATA__*/;
+const PC = {ALP:'--alp',LNP:'--lib',GRN:'--grn',ONP:'--onp',OTH:'--oth'};
+const PN = {ALP:'Labor',LNP:'Coalition',GRN:'Greens',ONP:'One Nation',OTH:'Others'};
+const cv = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const el = (t,a={},h='') => {const e=document.createElementNS('http://www.w3.org/2000/svg',t);
+  for(const k in a) e.setAttribute(k,a[k]); if(h) e.textContent=h; return e;};
+
+/* ---- header ---- */
+const fmtD = s => new Date(s+'T00:00:00').toLocaleDateString('en-AU',
+  {day:'numeric',month:'long',year:'numeric'});
+document.getElementById('asof').textContent = D.meta.days_out+' days to go';
+document.getElementById('stamp').innerHTML =
+  `<span>Election <b>${fmtD(D.meta.election)}</b></span>`+
+  `<span>Updated <b>${fmtD(D.meta.as_of)}</b></span>`+
+  `<span>Latest poll <b>${fmtD(D.meta.latest_poll)}</b></span>`+
+  `<span><b>${D.meta.n_polls_cycle}</b> polls this term</span>`;
+document.getElementById('foot').textContent =
+  `Generated ${fmtD(D.meta.as_of)} from ${D.meta.n_polls_cycle} Victorian polls `+
+  `and 62 past elections. Figures will move as new polls arrive.`;
+
+/* ---- headline stats ---- */
+const swing = (D.proj.mean - D.proj.prev);
+document.getElementById('headline').innerHTML = `
+  <div class="stat">
+    <span class="k">Labor two-party vote</span>
+    <span class="v num">${D.proj.mean.toFixed(1)}%</span>
+    <div class="band"><i style="left:${((D.proj.mean-D.proj.lo)/(D.proj.hi-D.proj.lo)*100).toFixed(1)}%"></i></div>
+    <span class="sub num">${D.proj.lo.toFixed(1)} – ${D.proj.hi.toFixed(1)} &middot; ${swing>0?'+':''}${swing.toFixed(1)} on 2022</span>
+  </div>
+  <div class="stat">
+    <span class="k">Labor seats</span>
+    <span class="v num">${D.seats.median}</span>
+    <span class="sub num">${D.seats.q05}–${D.seats.q95} likely &middot; was ${D.seats.prev} of ${D.seats.total}</span>
+  </div>
+  <div class="stat">
+    <span class="k">Chance of a Labor majority</span>
+    <span class="v num">${(D.seats.p_majority*100).toFixed(0)}%</span>
+    <span class="sub">Needs ${D.seats.majority} seats. A hung parliament is the single most likely outcome.</span>
+  </div>`;
+
+/* ---- pendulum ---- */
+(function(){
+  const s=document.getElementById('pend'), W=900,H=470,L=118,R=26,T=26,B=30;
+  const rows=D.seat_rows, n=rows.length, ih=(H-T-B)/n;
+  const lo=25, hi=85, x=v=>L+(v-lo)/(hi-lo)*(W-L-R);
+  const mix=(p)=>{const a=cv('--alp'),b=cv('--lib');
+    const h=c=>[1,3,5].map(i=>parseInt(c.slice(i,i+2)||c[i]+c[i],16));
+    const A=h(a),Bc=h(b); const t=Math.max(0,Math.min(1,p));
+    return `rgb(${A.map((v,i)=>Math.round(Bc[i]+(v-Bc[i])*t)).join(',')})`;};
+  for(let g=30;g<=80;g+=10){
+    s.appendChild(el('line',{x1:x(g),x2:x(g),y1:T-6,y2:H-B,stroke:cv('--rule-2'),'stroke-width':1}));
+    s.appendChild(el('text',{x:x(g),y:H-B+16,'text-anchor':'middle','font-size':11,
+      fill:cv('--ink-4'),'font-family':'ui-monospace,Consolas,monospace'},g+'%'));
+  }
+  rows.forEach((r,i)=>{
+    const y=T+i*ih;
+    s.appendChild(el('rect',{x:x(lo),y:y,width:Math.max(1,x(r.tpp)-x(lo)),
+      height:Math.max(1.2,ih-0.7),fill:mix(r.p),opacity:.92}));
+  });
+  const half=x(50);
+  s.appendChild(el('line',{x1:half,x2:half,y1:T-6,y2:H-B,stroke:cv('--ink-3'),
+    'stroke-width':1,'stroke-dasharray':'3 3'}));
+  s.appendChild(el('text',{x:half,y:T-12,'text-anchor':'middle','font-size':11,
+    fill:cv('--ink-3'),'font-weight':600},'50%'));
+  /* projected statewide position */
+  const sw=D.proj.mean-D.proj.prev, px=x(50-sw);
+  s.appendChild(el('line',{x1:px,x2:px,y1:T-6,y2:H-B,stroke:cv('--ink'),'stroke-width':2}));
+  s.appendChild(el('text',{x:px,y:T-12,'text-anchor':'middle','font-size':11,
+    fill:cv('--ink'),'font-weight':700},'projected'));
+  /* label a handful of seats */
+  const marks=[0,20,40,55,70,82];
+  marks.forEach(i=>{const r=rows[i]; if(!r) return;
+    s.appendChild(el('text',{x:L-8,y:T+i*ih+ih/2+3.5,'text-anchor':'end','font-size':10.5,
+      fill:cv('--ink-3'),'font-family':'system-ui'},r.seat));});
+})();
+
+/* ---- seat histogram ---- */
+(function(){
+  const s=document.getElementById('hist'), W=900,H=260,L=44,R=20,T=18,B=34;
+  const h=D.seats.hist, xs=h.seats, mx=Math.max(...h.p);
+  const lo=Math.min(...xs), hi=Math.max(...xs);
+  const x=v=>L+(v-lo)/(hi-lo)*(W-L-R), y=p=>H-B-(p/mx)*(H-T-B);
+  const bw=Math.max(2,(W-L-R)/(hi-lo)-1);
+  h.seats.forEach((sv,i)=>{
+    const p=h.p[i], maj=sv>=D.seats.majority;
+    s.appendChild(el('rect',{x:x(sv)-bw/2,y:y(p),width:bw,height:H-B-y(p),
+      fill:maj?cv('--alp'):cv('--ink-4'),opacity:maj?.85:.5}));
+  });
+  const mj=x(D.seats.majority);
+  s.appendChild(el('line',{x1:mj,x2:mj,y1:T-4,y2:H-B,stroke:cv('--ink'),'stroke-width':1.5}));
+  s.appendChild(el('text',{x:mj+6,y:T+8,'font-size':11,fill:cv('--ink'),'font-weight':600},
+    'majority — '+(D.seats.p_majority*100).toFixed(0)+'% of simulations'));
+  [20,30,40,50,60].forEach(v=>{ if(v<lo||v>hi) return;
+    s.appendChild(el('text',{x:x(v),y:H-B+18,'text-anchor':'middle','font-size':11,
+      fill:cv('--ink-4'),'font-family':'ui-monospace,Consolas,monospace'},v));});
+  s.appendChild(el('text',{x:L-8,y:T+10,'text-anchor':'end','font-size':10.5,
+    fill:cv('--ink-4')},'likelihood'));
+})();
+
+/* ---- trend chart ---- */
+(function(){
+  const s=document.getElementById('trend'), W=900,H=380,L=40,R=110,T=18,B=30;
+  const all=D.trend.filter(t=>t.party!=='TPP_ALP');
+  const dates=all[0].d.map(d=>+new Date(d));
+  const x0=Math.min(...dates), x1=Math.max(...dates);
+  const x=t=>L+((+new Date(t))-x0)/(x1-x0)*(W-L-R);
+  const ymax=45, y=v=>H-B-(v/ymax)*(H-T-B);
+  for(let g=10;g<=40;g+=10){
+    s.appendChild(el('line',{x1:L,x2:W-R,y1:y(g),y2:y(g),stroke:cv('--rule-2')}));
+    s.appendChild(el('text',{x:L-6,y:y(g)+4,'text-anchor':'end','font-size':11,
+      fill:cv('--ink-4'),'font-family':'ui-monospace,Consolas,monospace'},g+'%'));
+  }
+  D.polls.forEach(p=>{ if(!PC[p.party]) return;
+    s.appendChild(el('circle',{cx:x(p.date),cy:y(p.v),r:2.2,
+      fill:cv(PC[p.party]),opacity:.3}));});
+  all.forEach(t=>{ if(!PC[t.party]) return;
+    const d=t.d.map((dd,i)=>`${i?'L':'M'}${x(dd).toFixed(1)},${y(t.m[i]).toFixed(1)}`).join('');
+    s.appendChild(el('path',{d:d,fill:'none',stroke:cv(PC[t.party]),'stroke-width':2.2,
+      'stroke-linejoin':'round'}));
+    const last=t.m.length-1;
+    s.appendChild(el('text',{x:W-R+8,y:y(t.m[last])+4,'font-size':12,
+      fill:cv(PC[t.party]),'font-weight':600},`${PN[t.party]} ${t.m[last].toFixed(1)}`));
+  });
+  const yr=[2023,2024,2025,2026];
+  yr.forEach(v=>{const t=+new Date(v+'-01-01'); if(t<x0||t>x1) return;
+    s.appendChild(el('text',{x:x(v+'-01-01'),y:H-B+18,'text-anchor':'middle',
+      'font-size':11,fill:cv('--ink-4'),'font-family':'ui-monospace,Consolas,monospace'},v));});
+  document.getElementById('legend').innerHTML = all.filter(t=>PC[t.party])
+    .map(t=>`<span><i style="background:${cv(PC[t.party])}"></i>${PN[t.party]}</span>`).join('');
+})();
+
+/* ---- tables ---- */
+(function(){
+  const m=D.mix, rows=m.horizon.map((h,i)=>({h,w:m.w[i],mix:m.mae_mix[i],
+    tr:m.mae_trend[i],fu:m.mae_fund[i]})).sort((a,b)=>a.h-b.h);
+  const lbl=h=>h<40?'1 month':h<100?'3 months':h<200?'6 months':h<400?'1 year':'2 years';
+  document.getElementById('mixtbl').innerHTML =
+    `<thead><tr><th>Out from the election</th><th>Weight on polls</th>
+     <th>Forecast error</th><th>Polls alone</th><th>History alone</th></tr></thead><tbody>`+
+    rows.map(r=>`<tr><td>${lbl(r.h)}</td><td class="num">${(r.w*100).toFixed(0)}%</td>
+      <td class="num"><b>${r.mix.toFixed(2)}</b></td><td class="num">${r.tr.toFixed(2)}</td>
+      <td class="num">${r.fu.toFixed(2)}</td></tr>`).join('')+`</tbody>`;
+
+  const c=D.scorecard;
+  document.getElementById('cardtbl').innerHTML =
+    `<thead><tr><th>Pollster</th><th>Polls</th><th>Lean</th><th>Variability</th>
+     <th>Elections</th><th>Final error</th></tr></thead><tbody>`+
+    c.firm.map((f,i)=>{
+      const ln=c.lean[i];
+      return `<tr><td>${f}</td><td class="num">${c.polls[i]}</td>
+        <td class="num ${ln>0?'pos':'neg'}">${ln>0?'+':''}${ln.toFixed(2)}</td>
+        <td class="num">${c.noise[i]==null?'—':c.noise[i].toFixed(2)}</td>
+        <td class="num">${c.elections[i]==null?'—':c.elections[i]}</td>
+        <td class="num">${c.mae[i]==null?'—':c.mae[i].toFixed(2)}</td></tr>`;}).join('')+`</tbody>`;
+})();
+</script>

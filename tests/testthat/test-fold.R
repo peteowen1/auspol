@@ -152,3 +152,33 @@ test_that("correcting is a no-op when every poll reports every party", {
   expect_equal(corrected$OTH, d$OTH)
   expect_equal(nrow(attr(corrected, "folded")), 0L)
 })
+
+test_that("poll_data_age reports the newest poll and its age", {
+  skip_if_no_anchor()
+  a <- poll_data_age("vic", as_of = as.Date("2026-08-15"))
+  expect_equal(a$region, "vic")
+  expect_s3_class(a$latest, "Date")
+  expect_gte(a$age_days, 0)
+  expect_equal(a$age_days, as.integer(as.Date("2026-08-15") - a$latest))
+  expect_gt(a$n_recent, 0)
+})
+
+test_that("check_poll_freshness stops on stale data and passes on fresh", {
+  skip_if_no_anchor()
+  # Measured far in the future, every region is stale
+  expect_error(
+    suppressMessages(check_poll_freshness("vic", as_of = as.Date("2027-06-01"))),
+    "stale")
+  # strict = FALSE proceeds, but the data is STILL reported as stale:
+  # "proceed anyway" and "it is not stale" are different claims.
+  expect_warning(
+    info <- suppressMessages(check_poll_freshness(
+      "vic", as_of = as.Date("2027-06-01"), strict = FALSE)))
+  expect_equal(info$status, "STALE")
+
+  # Measured at the last poll's own date, it is fresh
+  latest <- poll_data_age("vic")$latest
+  ok <- suppressMessages(check_poll_freshness("vic", as_of = latest))
+  expect_equal(ok$status, "ok")
+  expect_equal(ok$age_days, 0L)
+})
