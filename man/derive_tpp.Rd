@@ -23,6 +23,10 @@ first rescaled so the day's FP total is 100 (trends are fitted
 independently, so their sum drifts slightly from 100).
 }
 \details{
+Under optional preferential voting (NSW), a share of each minor party's
+ballots exhausts; TPP is then computed on the non-exhausted total, matching
+the official two-party count.
+
 Uncertainty is propagated assuming independence across party trends —
 an approximation (shares are negatively correlated by construction), so
 the TPP band is mildly conservative.

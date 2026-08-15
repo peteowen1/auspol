@@ -7,9 +7,10 @@
 #' TPP from first preferences, matching the anchor methodology.
 #'
 #' @param region One of "fed", "nsw", "vic", "qld", "wa", "sa".
-#' @return data.table with columns `date`, `firm`, `tpp_published`,
-#'   `gl_approve`, `gl_disapprove`, one numeric column per party, and
-#'   attribute `parties`.
+#' @return data.table with columns `date`, `firm`, `tpp_published`, one
+#'   numeric column per party, and — only when the source file carries them —
+#'   `gl_approve` and `gl_disapprove`. Sets attributes `parties` AND `region`;
+#'   the latter is relied on by [cycle_polls()] and [unfold_others()].
 #' @export
 load_polls <- function(region = "fed") {
   path <- anchor_data_path(sprintf("poll-data-%s.csv", region))
@@ -63,12 +64,22 @@ sanity_check_polls <- function(polls, region) {
 #' @return data.table: `year`, `region`, `start`, `end` (election day).
 #' @export
 load_election_cycles <- function() {
-  raw <- data.table::fread(
-    anchor_data_path("election-cycles.csv"),
-    header = FALSE, col.names = c("year", "region", "start", "end")
-  )
-  raw[, `:=`(start = as.Date(start), end = as.Date(end))]
-  raw[]
+  # Read via read_anchor_csv(), not fread(). This is a hand-maintained file in
+  # the same directory as preference-estimates.csv, which already carries
+  # trailing "#comment" fields on some rows — and fread STOPS EARLY on the
+  # first such row without erroring. That is the bug that once trained the
+  # fundamentals model on 62% of its data. The file is uniform today; this
+  # stops a future annotation silently truncating the cycle table.
+  raw <- read_anchor_csv("election-cycles.csv",
+                         c("year", "region", "start", "end"))
+  raw[, `:=`(year = as.integer(year), region = as.character(region),
+             start = as.Date(start), end = as.Date(end))]
+  out <- raw[!is.na(year) & !is.na(start) & !is.na(end)]
+  if (nrow(out) < 60) {
+    warning(sprintf("election-cycles.csv parsed only %d rows - expected ~77",
+                    nrow(out)))
+  }
+  out[]
 }
 
 #' Load prior (previous-election) results
@@ -98,21 +109,78 @@ load_prior_results <- function() {
 
 #' Load preference flow estimates (share of each party's preferences to ALP)
 #'
-#' @return data.table: `year`, `region`, `party`, `flow_alp` (percent).
+#' A second numeric column, where present, is the exhaust rate (share of the
+#' party's ballots that express no major-party preference) - nonzero under
+#' optional preferential voting (NSW, and Qld before 2016).
+#'
+#' @return data.table: `year`, `region`, `party`, `flow_alp`, `exhaust`
+#'   (percent).
 #' @export
 load_preference_flows <- function() {
   lines <- readLines(anchor_data_path("preference-estimates.csv"), warn = FALSE)
   parts <- strsplit(lines, ",")
   parts <- parts[vapply(parts, length, 1L) >= 4]
   dt <- data.table::rbindlist(lapply(parts, function(p) {
+    exh <- if (length(p) >= 5) suppressWarnings(as.numeric(p[5])) else NA_real_
     data.table::data.table(
       year = as.integer(p[1]),
       region = p[2],
       party = sub(" FP$", "", p[3]),
-      flow_alp = suppressWarnings(as.numeric(p[4]))
+      flow_alp = suppressWarnings(as.numeric(p[4])),
+      exhaust = data.table::fifelse(is.na(exh), 0, exh)
     )
   }))
   dt[!is.na(flow_alp)]
+}
+
+#' Preference flows for a cycle, carrying forward when a year is missing
+#'
+#' The anchor's flow file is hand-maintained and incomplete: Victoria, for
+#' instance, has estimates only for 2018, nothing for 2022 or 2026. Selecting
+#' on year alone returns zero rows, and [derive_tpp()] then falls back to a
+#' 50-50 split for every party — badly wrong for the Greens, who send about
+#' 82% of their preferences to Labor. A silent 50-50 would move Victorian TPP
+#' by several points with nothing failing.
+#'
+#' This carries each party's most recent estimate for that region forward to
+#' the requested year, and says so. It never reaches across regions:
+#' preference behaviour differs by state, and optional preferential voting
+#' makes exhaust rates region-specific.
+#'
+#' @param flows From [load_preference_flows()].
+#' @param year,region The cycle wanted.
+#' @param quiet Suppress the carry-forward message.
+#' @return data.table of the same shape, with a `flow_year` column recording
+#'   which election each estimate actually came from.
+#' @export
+flows_for <- function(flows, year, region, quiet = FALSE) {
+  # NB: masks and orderings are computed OUTSIDE the data.table [ ] so that
+  # the bare argument names `year` and `region` bind to this function's
+  # parameters rather than to the same-named columns. Written the obvious way,
+  # `flows[flows$region == region & flows$year <= year, ]` becomes
+  # `region == region` — always TRUE — and silently returns every row for
+  # every region, which handed Victoria the federal 2028 flows (Greens 88.19
+  # instead of 81.94) and pushed its 2022 validation TPP 3 points high.
+  keep <- flows$region == region & flows$year <= year
+  avail <- flows[which(keep), ]
+  if (!nrow(avail)) {
+    stop("No preference flows at all for region '", region, "' up to ", year)
+  }
+  # Most recent estimate per party, at or before the requested year
+  ord <- order(avail$party, -avail$year)
+  avail <- avail[ord, ]
+  out <- avail[which(!duplicated(avail$party)), ]
+  data.table::setnames(out, "year", "flow_year")
+  out$year <- year
+  carried <- out[which(out$flow_year != year), ]
+  if (nrow(carried) && !quiet) {
+    message(sprintf(
+      "  preference flows for %s %d: carried forward %s",
+      region, year,
+      paste(sprintf("%s (from %d)", carried$party, carried$flow_year),
+            collapse = ", ")))
+  }
+  out[]
 }
 
 #' Restrict polls to one election cycle

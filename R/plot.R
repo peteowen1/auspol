@@ -9,8 +9,11 @@
 plot_trends <- function(fits, polls, tpp = NULL, title = NULL) {
   if (!requireNamespace("ggplot2", quietly = TRUE)) stop("ggplot2 needed for plotting")
 
+  # Only the share-scale columns; fits also carry model-scale diagnostics that
+  # a derived series like TPP has no equivalent of.
+  cols <- c("date", "mean", "sd", "lo95", "hi95")
   trend_dt <- data.table::rbindlist(lapply(names(fits), function(p) {
-    data.table::data.table(series = p, fits[[p]]$trend)
+    data.table::data.table(series = p, fits[[p]]$trend[, cols, with = FALSE])
   }))
   poll_dt <- data.table::rbindlist(lapply(names(fits), function(p) {
     d <- polls[!is.na(polls[[p]]), c("date", p), with = FALSE]
@@ -18,7 +21,9 @@ plot_trends <- function(fits, polls, tpp = NULL, title = NULL) {
     data.table::data.table(series = p, d)
   }))
   if (!is.null(tpp)) {
-    trend_dt <- rbind(trend_dt, data.table::data.table(series = "TPP (ALP)", tpp))
+    trend_dt <- rbind(trend_dt,
+                      data.table::data.table(series = "TPP (ALP)",
+                                             tpp[, cols, with = FALSE]))
     tpp_polls <- polls[!is.na(polls$tpp_published), c("date", "tpp_published"), with = FALSE]
     data.table::setnames(tpp_polls, "tpp_published", "value")
     poll_dt <- rbind(poll_dt, data.table::data.table(series = "TPP (ALP)", tpp_polls))

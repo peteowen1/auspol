@@ -10,9 +10,10 @@ load_polls(region = "fed")
 \item{region}{One of "fed", "nsw", "vic", "qld", "wa", "sa".}
 }
 \value{
-data.table with columns \code{date}, \code{firm}, \code{tpp_published},
-\code{gl_approve}, \code{gl_disapprove}, one numeric column per party, and
-attribute \code{parties}.
+data.table with columns \code{date}, \code{firm}, \code{tpp_published}, one
+numeric column per party, and — only when the source file carries them —
+\code{gl_approve} and \code{gl_disapprove}. Sets attributes \code{parties} AND \code{region};
+the latter is relied on by \code{\link[=cycle_polls]{cycle_polls()}} and \code{\link[=unfold_others]{unfold_others()}}.
 }
 \description{
 Reads the anchor project's hand-maintained poll file

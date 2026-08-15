@@ -8,10 +8,15 @@ fit_trend(
   polls,
   party,
   prior_result = NA_real_,
-  sigma_obs = 1.7,
-  sigma_rw = 0.1,
-  sigma_house = 3,
-  min_firm_polls = 3
+  scale = c("logit", "points"),
+  sigma_obs = NULL,
+  sigma_rw = NULL,
+  sigma_house_pts = 3,
+  min_firm_polls = 3,
+  firm_factors = NULL,
+  nu = Inf,
+  nu_iter = 25L,
+  nu_tol = 1e-04
 )
 }
 \arguments{
@@ -22,18 +27,52 @@ fit_trend(
 \item{prior_result}{Previous-election vote share for day-0 anchor (percent).
 \code{NA} means anchor loosely to the first poll.}
 
-\item{sigma_obs}{Poll noise sd in points (sampling + design effects).}
+\item{scale}{Model scale: "logit" (default) or "points" (the stage-1
+behaviour, kept for comparison and for reproducing older fits).}
 
-\item{sigma_rw}{Daily random-walk sd in points.}
+\item{sigma_obs}{Poll noise sd (sampling + design effects) in MODEL-SCALE
+units, so its meaning depends on \code{scale}. Estimate it with
+\code{\link[=estimate_trend_sigmas]{estimate_trend_sigmas()}} rather than guessing; \code{NULL} takes the
+scale-appropriate default from \code{\link[=default_sigmas]{default_sigmas()}}.}
 
-\item{sigma_house}{House-effect prior sd in points.}
+\item{sigma_rw}{Daily random-walk sd, likewise in model-scale units.}
+
+\item{sigma_house_pts}{House-effect prior sd in percentage points
+(translated onto the model scale internally).}
 
 \item{min_firm_polls}{Firms with fewer polls than this share one pooled
 "(other firms)" house effect.}
+
+\item{firm_factors}{Named vector of per-firm noise sd multipliers from
+\code{\link[=estimate_firm_factors]{estimate_firm_factors()}}; unnamed firms get 1.}
+
+\item{nu}{Degrees of freedom for a Student-t observation model. \code{Inf}
+(the default) is the Gaussian fit and is bit-for-bit unchanged. A finite
+value — 4 is the usual choice — lets a rogue poll be discounted by the
+likelihood in proportion to how far out it is, rather than by a rule that
+penalises polls for disagreeing with their neighbours. Fitted by
+iteratively reweighted least squares (see \code{\link[=robust_weights]{robust_weights()}}), so it
+costs a few extra sparse solves rather than an MCMC run.
+
+\strong{The default is Gaussian because \code{nu = 4} was tested and did not help.}
+Across 195 (election, horizon) pairs it scored MAE 2.791 against the
+eventual result versus 2.779 for the Gaussian fit — indistinguishable,
+and marginally worse (better on 107 of 195, sign test p = 0.197). It does
+down-weight plenty: 10\% of real polls fall below weight 0.5, far above
+the ~1.4\% clean Gaussian data would produce. Discounting them simply does
+not improve the forecast, which suggests those polls carry signal rather
+than error. See docs/NEXT-STEPS.md.}
+
+\item{nu_iter}{Maximum reweighting passes.}
+
+\item{nu_tol}{Convergence threshold on the largest weight change.}
 }
 \value{
-List: \code{trend} (data.table date/mean/sd/lo95/hi95), \code{house_effects}
-(firm/effect/sd/n_polls), \code{meta}.
+List: \code{trend} (date/mean/sd/lo95/hi95 in percent, plus the
+model-scale \code{mean_link}/\code{sd_link}), \code{house_effects} (model-scale \code{effect}
+plus \code{effect_pts}, its size in points at the party's own level),
+\code{residuals} (model scale), \code{meta} (includes \code{logml_y}, the evidence in
+the units of the original percentages).
 }
 \description{
 Gaussian-exact version of the Jackman (2005) latent-intention model used by
@@ -49,4 +88,11 @@ prior anchoring day 0 at the previous election result, and (b) a soft
 poll-count-weighted sum-to-zero constraint on house effects (the standard
 choice; the anchor model weights by bias-consistency instead, a planned
 refinement).
+
+By default the latent walk runs on the LOGIT of vote share rather than raw
+percentage points, which keeps the trend inside (0, 100), lets a minor
+party's noise and movement scale with its own size, and makes house effects
+proportional rather than additive. Returned trends and bands are always
+back-transformed to percent, so callers see shares either way. See
+\code{R/scales.R} for why.
 }

@@ -6,6 +6,10 @@
 #' first rescaled so the day's FP total is 100 (trends are fitted
 #' independently, so their sum drifts slightly from 100).
 #'
+#' Under optional preferential voting (NSW), a share of each minor party's
+#' ballots exhausts; TPP is then computed on the non-exhausted total, matching
+#' the official two-party count.
+#'
 #' Uncertainty is propagated assuming independence across party trends —
 #' an approximation (shares are negatively correlated by construction), so
 #' the TPP band is mildly conservative.
@@ -18,9 +22,11 @@
 derive_tpp <- function(fits, flows) {
   stopifnot("ALP" %in% names(fits))
   parties <- names(fits)
-  minors <- setdiff(parties, c("ALP", "LNP", "LIB", "NAT"))
+  majors <- intersect(parties, c("ALP", "LNP", "LIB", "NAT"))
+  minors <- setdiff(parties, majors)
   oth_flow <- flows[flows$party == "OTH", flow_alp]
-  if (length(oth_flow) == 0) oth_flow <- 50
+  oth_exh <- flows[flows$party == "OTH", exhaust]
+  if (length(oth_flow) == 0) { oth_flow <- 50; oth_exh <- 0 }
 
   # Align all trends on common dates
   dates <- Reduce(intersect, lapply(fits, function(f) f$trend$date))
@@ -38,13 +44,25 @@ derive_tpp <- function(fits, flows) {
     fl <- flows[flows$party == p, flow_alp]
     if (length(fl) == 0) oth_flow[1] else fl[1]
   }
-  tpp_mean <- fp_mat[, "ALP"]
+  exhaust_of <- function(p) {
+    ex <- flows[flows$party == p, exhaust]
+    if (length(ex) == 0) oth_exh[1] else ex[1]
+  }
+  # TPP on the non-exhausted total: ALP + distributed minor preferences,
+  # over majors + non-exhausted minor votes. With zero exhaust (full
+  # preferential) the denominator is 100 and this reduces to a simple sum.
+  alp_to <- fp_mat[, "ALP"]
+  denom <- rowSums(fp_mat[, majors, drop = FALSE])
   var_tpp <- get_on("ALP", "sd")^2
   for (p in minors) {
     w <- flow_of(p) / 100
-    tpp_mean <- tpp_mean + w * fp_mat[, p]
-    var_tpp <- var_tpp + (w * get_on(p, "sd"))^2
+    live <- 1 - exhaust_of(p) / 100
+    alp_to <- alp_to + w * live * fp_mat[, p]
+    denom <- denom + live * fp_mat[, p]
+    var_tpp <- var_tpp + (w * live * get_on(p, "sd"))^2
   }
+  tpp_mean <- 100 * alp_to / denom
+  var_tpp <- var_tpp * (100 / denom)^2
   out <- data.table::data.table(
     date = dates, mean = tpp_mean, sd = sqrt(var_tpp)
   )

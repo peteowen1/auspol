@@ -7,8 +7,11 @@
 load_preference_flows()
 }
 \value{
-data.table: \code{year}, \code{region}, \code{party}, \code{flow_alp} (percent).
+data.table: \code{year}, \code{region}, \code{party}, \code{flow_alp}, \code{exhaust}
+(percent).
 }
 \description{
-Load preference flow estimates (share of each party's preferences to ALP)
+A second numeric column, where present, is the exhaust rate (share of the
+party's ballots that express no major-party preference) - nonzero under
+optional preferential voting (NSW, and Qld before 2016).
 }
