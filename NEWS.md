@@ -1,3 +1,29 @@
+# auspol (development version)
+
+## Publishing
+
+- The page now names a recent change of government leader, the date, and how
+  many polls have been taken since — computed from the data, so it cannot go
+  stale, and shown only while the change is recent enough to be
+  under-observed. Victoria changed premier on 2026-07-28, four months out,
+  and the forecast had three polls covering it while saying nothing about
+  that. The model has no leader term by measurement, not oversight: one
+  tested as a fundamentals predictor across 56 elections came back at
+  p = 0.52.
+- `tools/check-page.js` runs the published page's own JavaScript against a
+  stub DOM and fails the build if any block did not draw, reported as check
+  `B1`. The page had no test at all, having once shipped with three of four
+  charts silently missing; the per-block guards added afterwards stopped one
+  failure cascading and thereby made a single missing chart quieter still.
+  Validated against a page corrupted into the exact shape that caused the
+  original incident.
+
+## Running it
+
+- The forecast refreshes daily on a schedule and deliberately does not
+  publish: it runs, checks, reports the numbers and every pre-registered
+  check, and uploads the page for a human to look at.
+
 # auspol 0.2.0
 
 The forecast is published, the pipeline runs in one command, and both are
