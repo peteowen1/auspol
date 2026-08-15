@@ -13,7 +13,8 @@ check_poll_freshness(
 )
 }
 \arguments{
-\item{regions}{Regions to check.}
+\item{regions}{Regions to check; must be non-empty. An empty vector would
+make every check below vacuously clean and report nothing at all.}
 
 \item{warn_days}{Age at which data counts as ageing.}
 
@@ -22,13 +23,15 @@ check_poll_freshness(
 \item{strict}{Whether stale data stops the run. Set FALSE for a historical
 or validation run where old data is the point — the data is still
 REPORTED as stale, because "proceed anyway" and "it is not stale" are
-different claims and only one of them is true.}
+different claims and only one of them is true. A BROKEN region (no
+parseable dates) stops the run either way: that is corruption, not age.}
 
 \item{as_of}{Date to measure against.}
 }
 \value{
-data.table of \code{region}, \code{latest}, \code{age_days}, \code{n_recent}, \code{status},
-invisibly.
+data.table of \code{region}, \code{latest}, \code{age_days}, \code{file_age_days},
+\code{n_recent}, \code{status}, \code{cause}, invisibly. \code{status} is one of "ok",
+"ageing", "STALE", "BROKEN" — never \code{NA}.
 }
 \description{
 Deliberately noisy. A stale forecast is not a degraded forecast — it is a

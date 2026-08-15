@@ -14,8 +14,27 @@ suppressMessages(devtools::load_all(quiet = TRUE))
 suppressMessages(library(data.table))
 suppressMessages(library(jsonlite))
 
-stopifnot(file.exists("output/projection-mix.csv"))
 stopifnot(file.exists("scripts/page-template.html"))
+
+# The page is assembled from files earlier stages wrote. Checking only that
+# they EXIST lets a leftover from a previous run be published under today's
+# date: the header stamp is computed live, so it would read as current while
+# the trend chart, the mix table and the scorecard came from old numbers.
+# Requiring each input to be newer than the poll data it was derived from
+# catches that without needing a run-id system.
+INPUTS <- c("output/projection-mix.csv", "output/trend-vic-2026.csv",
+            "output/pollster-scorecard.csv")
+missing <- INPUTS[!file.exists(INPUTS)]
+if (length(missing)) {
+  stop("Missing pipeline output: ", paste(missing, collapse = ", "),
+       ". Run scripts/run_all.R (fit_projection.R must precede this).")
+}
+poll_mtime <- file.info(anchor_data_path("poll-data-vic.csv"))$mtime
+stale_inputs <- INPUTS[file.info(INPUTS)$mtime < poll_mtime]
+if (length(stale_inputs)) {
+  stop("These outputs predate the poll data and would publish old numbers under today's date: ",
+       paste(stale_inputs, collapse = ", "), ". Re-run scripts/run_all.R.")
+}
 
 cycles <- load_election_cycles()
 end_date <- cycles[region == "vic" & year == 2026, end]
@@ -51,7 +70,14 @@ pri <- load_prior_results(); kp <- pri$region == "vic" & pri$year == 2026
 priors <- setNames(pri$prev1[which(kp)], pri$party[which(kp)])
 fl <- flows_for(load_preference_flows(), 2026, "vic", quiet = TRUE)
 now <- trend_as_at(polls, 2026, cycles, Sys.Date(), priors, fl)
+# Every headline figure on the page descends from these three. A non-finite
+# value here propagates to NA, serialises to null, and JS then coerces null to
+# 0 in arithmetic — so a broken fundamentals prediction would publish "0%
+# chance of a Labor majority" rather than failing. Stop here instead.
+stopifnot(is.finite(fund), !is.null(now), is.finite(now$tpp))
 pj <- project_result(now$tpp, fund, mix, days_out)
+stopifnot(is.finite(pj$mean), is.finite(pj$sd),
+          is.finite(pj$lo95), is.finite(pj$hi95))
 
 seats26 <- load_seats(2026, "vic")
 sp22 <- seat_swing_spread(seats26, 55.00 - 57.60)
@@ -74,6 +100,13 @@ card <- fread("output/pollster-scorecard.csv")
 card <- card[order(-n_polls)][1:12]
 
 out <- list(
+  # The freshness verdict travels WITH the page. A run told to proceed on old
+  # data must not produce something indistinguishable from a clean run.
+  data_status = {
+    fr <- suppressWarnings(tryCatch(
+      check_poll_freshness("vic", strict = FALSE), error = function(e) NULL))
+    if (is.null(fr)) "unknown" else as.character(fr$status[1])
+  },
   meta = list(as_of = as.character(Sys.Date()),
               election = as.character(end_date), days_out = days_out,
               latest_poll = as.character(max(cp$date)),

@@ -41,19 +41,69 @@ run <- function(stage) {
   # Each stage runs in a fresh R process. They set options and load data
   # globally, and a stage inheriting a previous one's environment would make
   # results depend on run order in ways nothing would surface.
-  res <- system2("Rscript", stage$f, stdout = TRUE, stderr = TRUE)
-  ok <- is.null(attr(res, "status")) || attr(res, "status") == 0
+  #
+  # stdout and stderr are captured SEPARATELY, and the stage runs under
+  # options(warn = 1). Merging the streams (system2's stdout = TRUE, stderr =
+  # TRUE) interleaves them unpredictably, and R's default deferred warnings
+  # print "Warning message:" on one line with the text on the next — so any
+  # attempt to pick warnings out of the merged text either finds the header
+  # with no message, or swallows unrelated output that happened to follow it.
+  # warn = 1 emits each warning complete on its own line as it happens.
+  wrapper <- tempfile(fileext = ".R")
+  # Forward slashes: on Windows normalizePath() returns backslashes, and
+  # "C:\dev\..." inside an R string is read as the escape sequence \d.
+  writeLines(c("options(warn = 1)",
+               sprintf("source(%s)",
+                       shQuote(normalizePath(stage$f, winslash = "/")))), wrapper)
+  out_f <- tempfile(); err_f <- tempfile()
+  status <- system2("Rscript", shQuote(wrapper), stdout = out_f, stderr = err_f)
+  res <- if (file.exists(out_f)) readLines(out_f, warn = FALSE) else character(0)
+  err <- if (file.exists(err_f)) readLines(err_f, warn = FALSE) else character(0)
+  unlink(c(wrapper, out_f, err_f))
+  ok <- identical(as.integer(status), 0L)
   secs <- as.numeric(difftime(Sys.time(), t0, units = "secs"))
   if (!ok) {
-    cat(paste(utils::tail(res, 25), collapse = "\n"), "\n")
-    stop(sprintf("STAGE FAILED: %s after %.0f s", stage$f, secs))
+    cat(paste(utils::tail(c(res, err), 25), collapse = "\n"), "\n")
+    stop(sprintf("STAGE FAILED: %s (exit %s) after %.0f s", stage$f, status, secs))
   }
   # Surface each stage's own checks rather than hiding them: these lines are
   # the whole point of the pre-registered discipline.
   keep <- grep("^(A[0-9]|N[0-9]|V[0-9]|H[0-9]|L[0-9]|P[0-9]|B[0-9]|C[0-9]|S[0-9]|R[0-9]|F1|O1)",
                res, value = TRUE)
   if (length(keep)) cat(paste(keep, collapse = "\n"), "\n")
-  cat(sprintf("    ok (%.0f s)\n", secs))
+
+  # WARNINGS TOO. A warning() exits 0, so `ok` stays TRUE, and its text does not
+  # start with a check code — so filtering to check lines alone silently drops
+  # every "parsed only N rows", "FP sums far from 100", "did not converge" and
+  # "imputed share exceeds the OTH line" this package emits. Those are exactly
+  # the messages that mean a human should look, and this was the one place they
+  # went dark.
+  # Under warn = 1 each warning is a complete "Warning in f(x) : text" line on
+  # stderr, so this needs no block reassembly and cannot swallow neighbouring
+  # output. The data.table build-version notice fires on every stage and means
+  # nothing; reporting it six times would train the reader to ignore the one
+  # column that exists to be noticed.
+  # When the call is long R still breaks after "Warning in f(a, b) :" and puts
+  # the message on the following indented line — so take that continuation,
+  # otherwise the report names the function but never says what it complained
+  # about, which is the half-useful version of not reporting at all.
+  idx <- grep("^Warning", err)
+  warns <- vapply(idx, function(i) {
+    line <- trimws(err[i])
+    if (grepl(":$", line) && i < length(err)) {
+      line <- paste(line, trimws(err[i + 1]))
+    }
+    line
+  }, character(1))
+  warns <- unique(warns)
+  warns <- warns[nzchar(warns) & !grepl("built under R version", warns)]
+  if (length(warns)) {
+    cat("    WARNINGS from this stage:\n")
+    cat(paste0("      ", utils::head(warns, 12), collapse = "\n"), "\n")
+    if (length(warns) > 12) cat(sprintf("      ...and %d more\n", length(warns) - 12))
+  }
+  cat(sprintf("    ok (%.0f s)%s\n", secs,
+              if (length(warns)) sprintf("  [%d warnings]", length(warns)) else ""))
   invisible(secs)
 }
 

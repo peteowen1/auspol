@@ -117,6 +117,7 @@ footer{padding:2.5rem 0 0;border-top:1px solid var(--rule);font-size:.8rem;
   elections. <strong>It currently says no</strong> &mdash; but it also shows you
   how often forecasts like it have been wrong, and what it got wrong along the way.</p>
   <div class="stamp" id="stamp"></div>
+  <div id="datawarn"></div>
 </header>
 
 <section>
@@ -324,40 +325,63 @@ document.getElementById('stamp').innerHTML =
   `<span>Updated <b>${fmtD(D.meta.as_of)}</b></span>`+
   `<span>Latest poll <b>${fmtD(D.meta.latest_poll)}</b></span>`+
   `<span><b>${D.meta.n_polls_cycle}</b> polls this term</span>`;
+/* If the run proceeded on ageing or stale polling, say so on the page. A
+   forecast built on old numbers is not a slightly worse forecast — it is a
+   confident statement about a world that has moved on, and without this it
+   looks exactly like a current one. */
+if (D.data_status && D.data_status !== 'ok') {
+  document.getElementById('datawarn').innerHTML =
+    '<p style="margin-top:.4rem;padding:.6rem .8rem;border-left:3px solid var(--onp);'+
+    'background:var(--surface);font-size:.82rem;color:var(--ink-2)">'+
+    'Built on <strong>'+(D.data_status==='STALE'?'stale':'ageing')+'</strong> polling: '+
+    'the newest Victorian poll is '+D.meta.latest_poll+'. Treat these figures as '+
+    'describing that date, not today.</p>';
+}
 document.getElementById('foot').textContent =
   `Generated ${fmtD(D.meta.as_of)} from ${D.meta.n_polls_cycle} Victorian polls `+
   `and 62 past elections. Figures will move as new polls arrive.`;
 
-/* ---- headline stats ---- */
-const swing = (D.proj.mean - D.proj.prev);
-document.getElementById('headline').innerHTML = `
-  <div class="stat">
-    <span class="k">Labor two-party vote</span>
-    <span class="v num">${D.proj.mean.toFixed(1)}%</span>
-    <div class="band"><i style="left:${((D.proj.mean-D.proj.lo)/(D.proj.hi-D.proj.lo)*100).toFixed(1)}%"></i></div>
-    <span class="sub num">${D.proj.lo.toFixed(1)} – ${D.proj.hi.toFixed(1)} &middot; ${swing>0?'+':''}${swing.toFixed(1)} on 2022</span>
-  </div>
-  <div class="stat">
-    <span class="k">Labor seats</span>
-    <span class="v num">${D.seats.median}</span>
-    <span class="sub num">${D.seats.q05}–${D.seats.q95} likely &middot; was ${D.seats.prev} of ${D.seats.total}</span>
-  </div>
-  <div class="stat">
-    <span class="k">Chance of a Labor majority</span>
-    <span class="v num">${(D.seats.p_majority*100).toFixed(0)}%</span>
-    <span class="sub">Needs ${D.seats.majority} seats. A hung parliament is the single most likely outcome.</span>
-  </div>`;
-
 /* Each block draws independently. Without this, one chart throwing takes
    out every chart and table after it — which is exactly what a row-vs-column
    JSON mistake did — and the page still looks half-finished rather than
-   broken. A failure now says so, in place. */
+   broken. A failure now says so, in place.
+   Defined BEFORE the headline block, not after: the headline was the one
+   piece the guard did not cover, so a null there took down the whole page. */
 const draw=(name,target,fn)=>{try{fn();}catch(e){
   console.error(name+' failed',e);
   const t=document.getElementById(target);
   if(t) t.innerHTML='<p style="padding:1rem;color:var(--ink-3);font-size:.85rem">'+
-    'This chart could not be drawn ('+name+'). The figures above are unaffected.</p>';
+    'This could not be drawn ('+name+'). The rest of the page is unaffected.</p>';
 }};
+/* Renders a missing value as an obvious gap. JS coerces null to 0 in
+   arithmetic, so (null*100).toFixed(0) silently prints "0%" — which on this
+   page would read as "0% chance of a Labor majority": a plausible, dramatic,
+   entirely fabricated number. An em dash is the honest output. */
+const has=v=>v!==null&&v!==undefined&&!Number.isNaN(v);
+const fx=(v,d,suf)=>has(v)?v.toFixed(d)+(suf||''):'—';
+const pc=(v,d)=>has(v)?(v*100).toFixed(d===undefined?0:d)+'%':'—';
+
+/* ---- headline stats ---- */
+draw('headline figures','headline',function(){
+const swing = has(D.proj.mean)&&has(D.proj.prev) ? (D.proj.mean - D.proj.prev) : null;
+document.getElementById('headline').innerHTML = `
+  <div class="stat">
+    <span class="k">Labor two-party vote</span>
+    <span class="v num">${fx(D.proj.mean,1,'%')}</span>
+    ${has(D.proj.mean)&&has(D.proj.lo)&&has(D.proj.hi)&&D.proj.hi>D.proj.lo?`<div class="band"><i style="left:${((D.proj.mean-D.proj.lo)/(D.proj.hi-D.proj.lo)*100).toFixed(1)}%"></i></div>`:``}
+    <span class="sub num">${fx(D.proj.lo,1)} – ${fx(D.proj.hi,1)} &middot; ${has(swing)?(swing>0?'+':'')+swing.toFixed(1):'—'} on 2022</span>
+  </div>
+  <div class="stat">
+    <span class="k">Labor seats</span>
+    <span class="v num">${has(D.seats.median)?D.seats.median:'—'}</span>
+    <span class="sub num">${has(D.seats.q05)?D.seats.q05:'—'}–${has(D.seats.q95)?D.seats.q95:'—'} likely &middot; was ${D.seats.prev} of ${D.seats.total}</span>
+  </div>
+  <div class="stat">
+    <span class="k">Chance of a Labor majority</span>
+    <span class="v num">${pc(D.seats.p_majority)}</span>
+    <span class="sub">Needs ${D.seats.majority} seats. A hung parliament is the single most likely outcome.</span>
+  </div>`;
+});
 
 /* ---- pendulum ---- */
 draw('pendulum','pend',function(){
@@ -456,25 +480,27 @@ draw('poll trend','trend',function(){
 });
 
 /* ---- tables ---- */
-draw('tables','mixtbl',function(){
+draw('accuracy table','mixtbl',function(){
   const rows=[...D.mix].sort((a,b)=>a.horizon-b.horizon);
   const lbl=h=>h<40?'1 month':h<100?'3 months':h<200?'6 months':h<400?'1 year':'2 years';
   document.getElementById('mixtbl').innerHTML =
     `<thead><tr><th>Out from the election</th><th>Weight on polls</th>
      <th>Forecast error</th><th>Polls alone</th><th>History alone</th></tr></thead><tbody>`+
-    rows.map(r=>`<tr><td>${lbl(r.horizon)}</td><td class="num">${(r.w*100).toFixed(0)}%</td>
-      <td class="num"><b>${r.mae_mix.toFixed(2)}</b></td><td class="num">${r.mae_trend.toFixed(2)}</td>
-      <td class="num">${r.mae_fund.toFixed(2)}</td></tr>`).join('')+`</tbody>`;
+    rows.map(r=>`<tr><td>${lbl(r.horizon)}</td><td class="num">${pc(r.w)}</td>
+      <td class="num"><b>${fx(r.mae_mix,2)}</b></td><td class="num">${fx(r.mae_trend,2)}</td>
+      <td class="num">${fx(r.mae_fund,2)}</td></tr>`).join('')+`</tbody>`;
 
-  const num=(v,d)=>(v===null||v===undefined)?'—':v.toFixed(d);
+});
+
+draw('pollster table','cardtbl',function(){
   document.getElementById('cardtbl').innerHTML =
     `<thead><tr><th>Pollster</th><th>Polls</th><th>Lean</th><th>Variability</th>
      <th>Elections</th><th>Final error</th></tr></thead><tbody>`+
     D.scorecard.map(r=>
       `<tr><td>${r.firm}</td><td class="num">${r.polls}</td>
-        <td class="num ${r.lean>0?'pos':'neg'}">${r.lean>0?'+':''}${r.lean.toFixed(2)}</td>
-        <td class="num">${num(r.noise,2)}</td>
-        <td class="num">${r.elections==null?'—':r.elections}</td>
-        <td class="num">${num(r.mae,2)}</td></tr>`).join('')+`</tbody>`;
+        <td class="num ${r.lean>0?'pos':'neg'}">${has(r.lean)?(r.lean>0?'+':'')+r.lean.toFixed(2):'—'}</td>
+        <td class="num">${fx(r.noise,2)}</td>
+        <td class="num">${has(r.elections)?r.elections:'—'}</td>
+        <td class="num">${fx(r.mae,2)}</td></tr>`).join('')+`</tbody>`;
 });
 </script>

@@ -12,9 +12,9 @@ poll_data_age(region, as_of = Sys.Date())
 \item{as_of}{Date to measure against.}
 }
 \value{
-List: \code{latest} (date of the most recent poll), \code{age_days},
-\code{file_age_days} (how long since the source file was written),
-\code{n_recent} (polls in the last 60 days), \code{region}.
+List: \code{latest} (date of the most recent poll, \code{NA} if none parse),
+\code{age_days}, \code{file_age_days}, \code{n_recent} (polls in the last 60 days),
+\code{region}.
 }
 \description{
 Two different things look identical from the newest poll's date alone: our
