@@ -1,3 +1,54 @@
+# auspol 0.2.0
+
+The forecast is published, the pipeline runs in one command, and both are
+checked on every push.
+
+## Publishing
+
+- `scripts/build_page.R` + `scripts/page-template.html` produce a
+  self-contained `output/victoria-2026.html`: no external requests, so it
+  renders offline and under a strict content-security policy. It leads with
+  the pendulum and publishes the calibration record, the four rejected
+  improvements, the pollster scorecard and five caveats alongside the
+  headline numbers.
+
+## Running it
+
+- `scripts/run_all.R` runs every stage in the one order that works, each in
+  its own R process, echoing every pre-registered check and stopping on the
+  first failure. `--quick` skips the two slowest cycles; `--stale-ok`
+  proceeds on old data. About five minutes.
+- `check_poll_freshness()` / `poll_data_age()` — every poll comes from a
+  third party's hand-maintained CSVs, and nothing previously noticed if that
+  clone stopped being updated. Warns past 21 days, stops past 60, and
+  distinguishes "our copy is old" from "no new polls published" using the
+  source file's own modification time.
+
+## Checking it
+
+- CI runs `R CMD check` (`--as-cran`, warnings are errors) and the tests on
+  every push, with a floor on assertions executed so an all-skipped run
+  cannot pass silently.
+- `ARCHITECTURE.md` records the load-bearing decisions and the five hazard
+  classes that have bitten this codebase.
+
+## Fixes
+
+- The page shipped with three of four charts silently not drawing: jsonlite
+  serialises a data.table as an array of row objects and the template read
+  them as column arrays, so one throw took out the rest. Drawing blocks are
+  now isolated and a failed one says so visibly.
+- A missing projection would have rendered a fabricated "0% chance of a Labor
+  majority", because JavaScript coerces `null` to `0` in arithmetic. Missing
+  values now render as an em dash, and the build asserts finiteness first.
+- A region whose poll dates fail to parse was silently exempt from the
+  stale-data gate, since `which()` drops `NA` rather than matching it.
+- `run_all.R` dropped every stage `warning()` — the mechanism this package
+  uses for "a human should look".
+- `skip_if_no_anchor()` rebuilt a path by hand instead of resolving through
+  `anchor_data_path()`, so a CI dry-run reported green while checking a
+  different directory.
+
 # auspol 0.1.0
 
 First release with a complete forecast pipeline: **polls → trend → projection
