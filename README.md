@@ -5,6 +5,9 @@ journalistic, interactive presentation. Anchored on the
 [AE Forecasts](https://www.aeforecasts.com/) methodology
 ([d-j-hirst/aus-polling-analyser](https://github.com/d-j-hirst/aus-polling-analyser)).
 
+How the pieces fit, the load-bearing decisions, and the hazards that have
+actually bitten: [`ARCHITECTURE.md`](ARCHITECTURE.md).
+
 Full analysis of the anchor model (methodology, data sources, improvement
 targets): [`docs/ANCHOR-MODEL.md`](docs/ANCHOR-MODEL.md). Work queue, measured
 findings and negative results: [`docs/NEXT-STEPS.md`](docs/NEXT-STEPS.md).
@@ -28,8 +31,13 @@ Current live target is **Victoria, 28 November 2026**.
 | Seats | Simulates a seat count: statewide draw, regional block effect, per-seat residual. | `simulate_seats()` |
 | Scorecard | Per-pollster lean, noise against the binomial sampling floor, and final-poll accuracy. | `pollster_scorecard()` |
 
-Not yet built: a website, and the anchor's per-seat elasticity and candidate
-effects (retirement, sophomore surge).
+The forecast is published as a self-contained page — see `build_page.R`.
+
+Not yet built: the anchor's per-seat elasticity and candidate effects
+(retirement, sophomore surge), and an elimination-aware preference simulator.
+None is likely to move the headline much: seat mechanics contribute a standard
+deviation of about 4 seats against 11 from the statewide vote, so accuracy in
+the projection is worth more than refinement below it.
 
 ## Discipline
 
