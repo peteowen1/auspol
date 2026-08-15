@@ -13,8 +13,14 @@ poll_data_age(region, as_of = Sys.Date())
 }
 \value{
 List: \code{latest} (date of the most recent poll), \code{age_days},
+\code{file_age_days} (how long since the source file was written),
 \code{n_recent} (polls in the last 60 days), \code{region}.
 }
 \description{
-How old is a region's most recent poll?
+Two different things look identical from the newest poll's date alone: our
+copy of the data being out of date, and nobody having published a poll. The
+source file's own modification time separates them, so \code{file_age_days} is
+reported alongside. A recently-written file whose newest poll is old means
+the field simply is not polling — which is normal for a state 19 months from
+an election, and not a problem to fix.
 }
