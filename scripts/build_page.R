@@ -40,6 +40,31 @@ cycles <- load_election_cycles()
 end_date <- cycles[region == "vic" & year == 2026, end]
 days_out <- as.integer(end_date - Sys.Date())
 
+# --- most recent change of government leader, and how much polling has seen it
+#
+# The model has no leader term: a change reaches the forecast only through the
+# polls taken after it. That is defensible — a leader-change indicator was
+# tested as a fundamentals predictor on 56 elections and came back at p = 0.52
+# (see docs/NEXT-STEPS.md) — but it means a change days before the forecast is
+# essentially invisible to it, and a reader who knows the premier just changed
+# deserves to be told that rather than left to assume it was modelled.
+#
+# Computed rather than hardcoded so the caveat cannot go stale: it names
+# whoever the anchor's file last recorded and counts the polls itself.
+leaders <- read_anchor_csv("government-leaders.csv",
+                           c("region", "date", "party", "leader"))
+setDT(leaders)
+leaders[, date := as.Date(date)]
+vl <- leaders[region == "vic" & date <= Sys.Date()][order(date)]
+if (!nrow(vl)) {
+  stop("government-leaders.csv has no Victorian leader on or before today. ",
+       "The leadership caveat cannot be built, and silently dropping it would ",
+       "publish a page that looks complete.")
+}
+leader_last <- vl[.N]
+leader_days <- as.integer(Sys.Date() - leader_last$date)
+# n_polls is filled in below, once the cycle's polls are loaded.
+
 # --- trend series (weekly) + polls ---
 tr <- fread("output/trend-vic-2026.csv")
 tr[, date := as.Date(date)]
@@ -110,7 +135,14 @@ out <- list(
   meta = list(as_of = as.character(Sys.Date()),
               election = as.character(end_date), days_out = days_out,
               latest_poll = as.character(max(cp$date)),
-              n_polls_cycle = nrow(cp)),
+              n_polls_cycle = nrow(cp),
+              # How much polling has actually seen the current leader. The
+              # model has no leader term, so this is the whole of what it
+              # knows about a change, and the page says so.
+              leader = leader_last$leader,
+              leader_since = as.character(leader_last$date),
+              leader_days = leader_days,
+              leader_polls = sum(cp$date >= leader_last$date)),
   trend = series, polls = pl,
   fp_now = lapply(c("LNP", "ALP", "ONP", "GRN", "OTH"), function(p) {
     d <- tr[party == p][which.max(date)]
@@ -154,5 +186,25 @@ stopifnot(!grepl("__DATA__", html, fixed = TRUE),
 
 cat(sprintf("wrote output/victoria-2026.html (%.0f KB)\n",
             file.size("output/victoria-2026.html") / 1024))
+
+# Run the page's own JavaScript against a stub DOM and fail if any block did
+# not draw. The guards in the template stop one bad block taking out the
+# others, which also means a single missing chart no longer looks like
+# anything — so the only way to know the page actually rendered is to run it.
+# This is the check that would have caught the three-charts-missing release.
+if (nzchar(Sys.which("node"))) {
+  st <- system2("node", c("tools/check-page.js", "output/victoria-2026.html"))
+  if (!identical(as.integer(st), 0L)) {
+    stop("The published page did not draw correctly (tools/check-page.js ",
+         "exited ", st, "). Output above names the blocks that failed.")
+  }
+} else {
+  # Not fatal — node is not an R dependency and a machine without it should
+  # still be able to produce the page. But it IS the only check on the page's
+  # JavaScript, so its absence must be noisy rather than a silent pass.
+  warning("node not found: the page's JavaScript was NOT checked. ",
+          "output/victoria-2026.html may contain blocks that do not draw.",
+          call. = FALSE)
+}
 cat(sprintf("proj %.2f [%.2f-%.2f]; seats median %d; P(maj) %.1f%%\n",
             pj$mean, pj$lo95, pj$hi95, median(tot), 100 * mean(tot >= 45)))

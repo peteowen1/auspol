@@ -279,7 +279,8 @@ footer{padding:2.5rem 0 0;border-top:1px solid var(--rule);font-size:.8rem;
   <div class="col">
     <span class="eyebrow">Caveats</span>
     <h2 style="margin-top:.5rem">What this does not know</h2>
-    <ul class="plain">
+    <ul class="plain" id="cavlist">
+      <li id="leadcav" hidden></li>
       <li><strong>The polls could be wrong together.</strong> In 2018 Victorian
       polls put Labor near 54 and it won 57.6. Nothing here detects a field-wide
       miss, and the 2018 error was larger than this forecast's entire 95% band is
@@ -336,6 +337,26 @@ if (D.data_status && D.data_status !== 'ok') {
     'Built on <strong>'+(D.data_status==='STALE'?'stale':'ageing')+'</strong> polling: '+
     'the newest Victorian poll is '+D.meta.latest_poll+'. Treat these figures as '+
     'describing that date, not today.</p>';
+}
+/* A change of premier reaches this forecast ONLY through the polls taken
+   after it — there is no leader term in the model, because one tested as a
+   fundamentals predictor across 56 elections came back indistinguishable from
+   zero. That is a defensible modelling choice and an indefensible thing to
+   leave unsaid while the change is still barely polled: a reader who knows
+   the premier changed last month would otherwise reasonably assume the
+   forecast accounts for it. Shown only while the change is recent enough to
+   be under-observed; a leader a year in has been polled through. */
+if (D.meta.leader && D.meta.leader_days != null && D.meta.leader_days <= 180) {
+  const n = D.meta.leader_polls;
+  document.getElementById('leadcav').innerHTML =
+    `<strong>${D.meta.leader} became premier on ${fmtD(D.meta.leader_since)}</strong>, `+
+    `${D.meta.leader_days} days ago. The model has no leader term: the change `+
+    `reaches this forecast only through the `+
+    (n === 0 ? `polls taken since — and there are none yet.`
+             : `${n} poll${n === 1 ? '' : 's'} taken since. `+
+               `Any honeymoon or backlash beyond what those ${n} `+
+               `poll${n === 1 ? ' shows' : 's show'} is not in these numbers.`);
+  document.getElementById('leadcav').hidden = false;
 }
 document.getElementById('foot').textContent =
   `Generated ${fmtD(D.meta.as_of)} from ${D.meta.n_polls_cycle} Victorian polls `+
