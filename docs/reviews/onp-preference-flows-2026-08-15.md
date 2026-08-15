@@ -40,15 +40,17 @@ Regressing the **21 observed** flows (excluding the three forward projections)
 on year:
 
 - slope **−0.605 points per year**, p < 0.001, **R² = 0.738**
-- residual sd around the trend **3.73 points**, against a pooled sd of 7.28
+- residual standard error **3.82 points** (n − 2, two parameters fitted),
+  against a pooled sd of 7.28
 
-The honest year-on-year uncertainty is about **3.7 points**, half what pooling
+The honest year-on-year uncertainty is about **3.8 points**, half what pooling
 suggests. Reading a trended series as noise would have overstated it twofold.
 
 ## Where the assumption sits, and the comparator that argues against it
 
 The fitted trend predicts **34.1** for 2026. The forecast uses **25.5** —
-**2.3 residual standard deviations below the trend line.**
+**2.26 residual standard deviations below the trend line**, measured against
+the regression's residual standard error.
 
 The anchor applies the same 25.5 to Victoria 2026, NSW 2027 and federal 2028,
 so it is a deliberate, consistent forward view, not a Victoria-specific claim.
@@ -84,7 +86,9 @@ Recomputing the full projection under each assumption:
 | 36.15 | SA 2026 observed, comparable ONP | 49.41 | **47.99** | +1.21 |
 | 42.0 | Victoria's own 2018 estimate | 50.71 | **48.66** | +1.88 |
 
-Held-out standard error at this horizon: **2.42**.
+Held-out standard error at this horizon: **2.50** (the 90-day grid row in
+`projection-mix.csv` reads 2.42; the pipeline interpolates to 2.50 at the
+actual 105 days out).
 
 **The headline finding is that this does not flip the result.** Across the
 entire plausible range of flow assumptions — from the anchor's forward view to
@@ -103,9 +107,9 @@ A first-pass linear estimate on the trend figure alone gave +2.2 points and
 The mix weight is exactly the kind of factor a back-of-envelope drops.
 
 **This is a point-estimate question, not an uncertainty one.** The residual
-scatter around the flow trend (3.73 points) contributes only
-`0.209 × 0.52 × 3.73 = 0.41` points of extra two-party spread; in quadrature
-with 2.42 that widens the interval by under 2%. Not worth changing.
+scatter around the flow trend (3.82 points) contributes only
+`0.209 × 0.52 × 3.82 = 0.42` points of extra two-party spread; in quadrature
+with 2.50 that widens the interval by about 1.3%. Not worth changing.
 
 ## What was done, and what was not
 
@@ -115,7 +119,7 @@ Done:
 - Published the sensitivity on the page, so the largest lever is visible
   rather than buried in an input file.
 - Added check **G2**, failing when the assumed flow sits more than 2.5
-  residual sds from the observed trend. This assumption is at 2.32 and should
+  residual sds from the observed trend. This assumption is at 2.26 and should
   not drift further without someone noticing.
 
   G2 keys "observed" off each election's actual end date, not `year <= this
@@ -123,7 +127,7 @@ Done:
   NSW 2027 and federal 2028 projections are both 25.5, so a year-based filter
   would absorb them into the trend as the years tick over and pull the fitted
   value toward the very assumption under test. Measured, z would decay
-  **−2.32 → −1.94 (2027) → −1.72 (2028) on no new evidence at all.** A check
+  **−2.26 → −1.89 (2027) → −1.68 (2028) on no new evidence at all.** A check
   that weakens because an assumption was repeated is worse than none, since it
   still reads as scrutiny.
 

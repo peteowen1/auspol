@@ -122,11 +122,18 @@ onp_all <- flows_all[which(flows_all$party == "ONP"), ]
 sa <- onp_all[which(onp_all$region == "sa" & onp_all$year == 2026), ]
 er_all <- read_anchor_csv("eventual-results.csv",
                           c("year", "region", "party", "result"))
-sa_fp <- suppressWarnings(as.numeric(
+sa_fp_raw <- suppressWarnings(as.numeric(
   er_all$result[er_all$year == 2026 & er_all$region == "sa" &
-                grepl("^ONP", er_all$party)]))[1]
-stopifnot(nrow(sa) == 1, is.finite(sa$flow_alp[1]), is.finite(sa_fp),
+                grepl("^ONP", er_all$party)]))
+# Match the multiplicity guard on `sa` above. Taking [1] off an unchecked
+# filter is the "guard that passes wrongly" hazard in miniature: a duplicate
+# row, a joint-ticket code that also matches ^ONP, or a correction that leaves
+# the old row behind would silently pick whichever sorts first and publish it
+# as the comparator with nothing failing.
+stopifnot(nrow(sa) == 1, length(sa_fp_raw) == 1,
+          is.finite(sa$flow_alp[1]), is.finite(sa_fp_raw),
           is.finite(onp_flow), is.finite(onp_fp))
+sa_fp <- sa_fp_raw[1]
 fl_cmp <- copy(fl)
 fl_cmp[party == "ONP", flow_alp := sa$flow_alp[1]]
 now_cmp <- trend_as_at(polls, 2026, cycles, Sys.Date(), priors, fl_cmp)
@@ -153,7 +160,13 @@ onp_obs <- onp_all[which(!(onp_all$year == 2026 & onp_all$region == "vic") &
 stopifnot(nrow(onp_obs) >= 15)
 m_flow <- stats::lm(flow_alp ~ year, onp_obs)
 flow_hat <- unname(stats::predict(m_flow, data.frame(year = 2026)))
-flow_z <- (onp_flow - flow_hat) / stats::sd(stats::resid(m_flow))
+# summary()$sigma, not sd(resid()): two parameters are fitted, so the residual
+# standard error divides by n - 2. sd() uses n - 1 and understates the spread,
+# which inflates the z-score -- here 2.32 rather than the correct 2.26. It errs
+# toward firing early so it was never a false-negative risk, but a check whose
+# threshold is compared against a slightly wrong statistic invites arguments
+# about the statistic instead of the assumption.
+flow_z <- (onp_flow - flow_hat) / summary(m_flow)$sigma
 cat(sprintf("G2  ONP flow %.1f vs %.1f fitted from %d observed elections = %.2f sd  %s\n",
             onp_flow, flow_hat, nrow(onp_obs), flow_z,
             if (abs(flow_z) < 2.5) "PASS" else "FAIL"))

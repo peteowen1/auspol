@@ -494,9 +494,11 @@ minutes of sizing replaced building a feature and then discovering this.
 Full evidence:
 [reviews/onp-preference-flows-2026-08-15.md](reviews/onp-preference-flows-2026-08-15.md).
 
-The forecast assumes **25.5%** of One Nation preferences go to Labor — the
-lowest of the 24 estimates in the anchor's file, and an assumption rather than
-an observation. With ONP on 20.9% of the vote this is the largest single lever
+The forecast assumes **25.5%** of One Nation preferences go to Labor — lower
+than every one of the 21 elections actually held, and an assumption rather
+than an observation. It is not uniquely lowest: the same 25.5 is used for NSW
+2027 and federal 2028, so the three lowest entries are one forward view
+repeated. With ONP on 20.9% of the vote this is the largest single lever
 on the two-party number.
 
 Three findings:
