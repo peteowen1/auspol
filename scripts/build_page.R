@@ -114,6 +114,9 @@ stopifnot(is.finite(pj$mean), is.finite(pj$sd),
 # the page cannot drift from the model. Evidence:
 # docs/reviews/onp-preference-flows-2026-08-15.md
 onp_flow <- fl[fl$party == "ONP", ]$flow_alp[1]
+onp_est <- estimate_flow(flows_all_raw <- load_preference_flows(), "ONP", 2026,
+                         cycles)
+stopifnot(!is.null(onp_est), is.finite(onp_est$flow))
 onp_fp <- tr[party == "ONP"][which.max(date)]$mean
 flows_all <- load_preference_flows()
 onp_all <- flows_all[which(flows_all$party == "ONP"), ]
@@ -167,8 +170,15 @@ flow_hat <- unname(stats::predict(m_flow, data.frame(year = 2026)))
 # threshold is compared against a slightly wrong statistic invites arguments
 # about the statistic instead of the assumption.
 flow_z <- (onp_flow - flow_hat) / summary(m_flow)$sigma
-cat(sprintf("G2  ONP flow %.1f vs %.1f fitted from %d observed elections = %.2f sd  %s\n",
-            onp_flow, flow_hat, nrow(onp_obs), flow_z,
+# G2's job changed when the flow stopped being hand-set. It used to police an
+# authored constant against the record; now the flow is itself estimated, so
+# this is a two-methods-agree check: the adopted estimator (mean of the last
+# five) against an independent linear trend on the same 21 elections. They
+# rest on different assumptions -- a window that discards old data versus a
+# line through all of it -- so a large gap means the record has a shape
+# neither handles, and someone should look before publishing.
+cat(sprintf("G2  ONP flow %.1f (%s) vs %.1f from a trend on %d elections = %.2f sd  %s\n",
+            onp_flow, onp_est$model, flow_hat, nrow(onp_obs), flow_z,
             if (abs(flow_z) < 2.5) "PASS" else "FAIL"))
 if (!is.finite(flow_z) || abs(flow_z) >= 2.5) {
   stop(sprintf("The assumed ONP preference flow (%.1f) is %.2f residual sds from the trend in observed elections (%.1f). It moves the two-party figure ~%.1f points per 10 points of flow; do not publish without checking it.",
@@ -218,7 +228,9 @@ out <- list(
              n_est = nrow(onp_all), n_obs = nrow(onp_obs),
              cmp_fp = round(sa_fp, 1), cmp_flow = round(sa$flow_alp[1], 1),
              cmp_tpp = round(pj_cmp$mean, 1), base_tpp = round(pj$mean, 1),
-             trend_fit = round(flow_hat, 1), z = round(flow_z, 2)),
+             trend_fit = round(flow_hat, 1), z = round(flow_z, 2),
+             method = onp_est$model, years = onp_est$years,
+             se = round(onp_est$se, 2)),
   trend = series, polls = pl,
   fp_now = lapply(c("LNP", "ALP", "ONP", "GRN", "OTH"), function(p) {
     d <- tr[party == p][which.max(date)]

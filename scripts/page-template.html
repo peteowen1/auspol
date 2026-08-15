@@ -381,16 +381,18 @@ draw('onp caveat','onpcav',function(){
   const o = D.onp;
   if (!o) return;
   document.getElementById('onpcav').innerHTML =
-    `<strong>One Nation's preferences are the biggest assumption here.</strong> `+
-    `At <span class="num">${o.fp.toFixed(1)}%</span> of the vote, One Nation decides the `+
-    `two-party figure through preferences rather than seats. This forecast assumes `+
-    `<span class="num">${o.flow.toFixed(1)}%</span> of them go to Labor — a Victorian estimate for `+
-    `this election, not a federal one, and lower than every one of the `+
-    `${o.n_obs} elections actually held. South Australia voted in March with One Nation on `+
+    `<strong>One Nation's preferences carry more weight than its seats.</strong> `+
+    `At <span class="num">${o.fp.toFixed(1)}%</span> of the vote, One Nation shapes the `+
+    `two-party figure mainly through where its voters put Labor and the Coalition. `+
+    `We estimate <span class="num">${o.flow.toFixed(1)}%</span> go to Labor, as the `+
+    `${o.method} such elections (${o.years.split(',').join(', ')}), `+
+    `±<span class="num">${o.se.toFixed(1)}</span>. That is a figure derived from the record `+
+    `rather than assumed, and it moves as elections are held — the method was chosen by `+
+    `backtesting eleven alternatives, each election predicted only from earlier ones. `+
+    `Nearest comparison: South Australia voted in March with One Nation on `+
     `<span class="num">${o.cmp_fp.toFixed(1)}%</span> and sent <span class="num">${o.cmp_flow.toFixed(1)}%</span> `+
-    `to Labor. On that assumption instead, Labor's two-party vote here would be `+
-    `<span class="num">${o.cmp_tpp.toFixed(1)}</span> rather than <span class="num">${o.base_tpp.toFixed(1)}</span> `+
-    `— enough to matter, not enough to change the answer.`;
+    `to Labor; on that figure Labor's two-party vote here would be `+
+    `<span class="num">${o.cmp_tpp.toFixed(1)}</span> rather than <span class="num">${o.base_tpp.toFixed(1)}</span>.`;
 });
 document.getElementById('foot').textContent =
   `Generated ${fmtD(D.meta.as_of)} from ${D.meta.n_polls_cycle} Victorian polls `+
