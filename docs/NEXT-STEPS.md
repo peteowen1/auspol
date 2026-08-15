@@ -177,6 +177,51 @@ P(ALP majority) **14.2%**, a median loss of 21 seats from the 56 won in 2022.
   herding signature. The noise is now floored at the binomial bound and the
   party-cycle reported, rather than the model inheriting false precision.
 
+## Pollster scorecard (2026-08-15) — `scripts/fit_scorecard.R`
+
+The differentiator identified in the feature review: nobody in Australia
+publishes pollster house effects, noise and accuracy as a maintained,
+comparable table, and we compute all three as a byproduct. Built over 41
+cycles across federal, NSW, Victoria and Queensland; 163 final-poll
+observations across 39 elections.
+
+**Final-poll accuracy** is the solid column and needs no model — each firm's
+last published two-party figure inside 30 days, against the actual result.
+ReachTEL 0.81 mean absolute error (6 elections), Newspoll 1.53 over 25,
+Essential 1.51 over 11, face-to-face Morgan 3.07 over 8.
+
+**Lean is published as a within-cycle relative position, NOT as a claim about
+who will be right.** The check that would have licensed the stronger claim —
+does a firm's fitted lean predict which way it misses? — is suggestive but
+not established: r = +0.35, p = 0.14 across 19 firms.
+
+That number came from fixing a bad test. As pre-registered, C3 required only
+`cor > 0`, which any noise passes half the time, and it returned r = +0.08.
+The fault was comparing raw final-poll errors, which are dominated by how
+wrong the WHOLE FIELD was — 2019 missed by about three points for everyone —
+swamping any single firm's relative lean. Comparing each firm against the
+others polling the SAME election lifts it to +0.35, the right size and
+direction, but 19 firms is not enough to confirm it.
+
+One result does line up with something already known: face-to-face Morgan
+shows the largest Labor lean (+1.24) AND the largest relative final-poll
+overstatement of Labor (+1.70). Morgan's face-to-face series was famously
+Labor-leaning, and the two independent routes both find it.
+
+**Herding is weaker than the Victorian result suggested.** Only 2 of 19 firms
+sit below the binomial sampling floor on Labor first preferences, both
+Newspoll variants and both marginal (ratios 0.92 and 0.98). The earlier
+sub-binomial finding was Victorian One Nation — a small party in one cycle —
+and does not generalise to the majors.
+
+That check also had to be rewritten. The first version read the per-firm
+noise FACTORS as a herding measure, but those are relative, normalised so the
+average pollster sits at 1. A factor of 0.7 means "quieter than other
+Australian pollsters", which says nothing about sampling theory if the whole
+field is quiet. `pollster_noise_vs_binomial()` now compares each firm's
+implied ABSOLUTE poll-to-poll sd with the binomial floor at the level the
+party actually polled.
+
 ## Negative result: the bias correction was making things worse (2026-08-15)
 
 The projection subtracted a per-horizon bias, fitted on past elections, from
