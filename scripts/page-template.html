@@ -348,8 +348,19 @@ document.getElementById('headline').innerHTML = `
     <span class="sub">Needs ${D.seats.majority} seats. A hung parliament is the single most likely outcome.</span>
   </div>`;
 
+/* Each block draws independently. Without this, one chart throwing takes
+   out every chart and table after it — which is exactly what a row-vs-column
+   JSON mistake did — and the page still looks half-finished rather than
+   broken. A failure now says so, in place. */
+const draw=(name,target,fn)=>{try{fn();}catch(e){
+  console.error(name+' failed',e);
+  const t=document.getElementById(target);
+  if(t) t.innerHTML='<p style="padding:1rem;color:var(--ink-3);font-size:.85rem">'+
+    'This chart could not be drawn ('+name+'). The figures above are unaffected.</p>';
+}};
+
 /* ---- pendulum ---- */
-(function(){
+draw('pendulum','pend',function(){
   const s=document.getElementById('pend'), W=900,H=470,L=118,R=26,T=26,B=30;
   const rows=D.seat_rows, n=rows.length, ih=(H-T-B)/n;
   const lo=25, hi=85, x=v=>L+(v-lo)/(hi-lo)*(W-L-R);
@@ -382,17 +393,22 @@ document.getElementById('headline').innerHTML = `
   marks.forEach(i=>{const r=rows[i]; if(!r) return;
     s.appendChild(el('text',{x:L-8,y:T+i*ih+ih/2+3.5,'text-anchor':'end','font-size':10.5,
       fill:cv('--ink-3'),'font-family':'system-ui'},r.seat));});
-})();
+});
 
 /* ---- seat histogram ---- */
-(function(){
+draw('seat distribution','hist',function(){
   const s=document.getElementById('hist'), W=900,H=260,L=44,R=20,T=18,B=34;
-  const h=D.seats.hist, xs=h.seats, mx=Math.max(...h.p);
-  const lo=Math.min(...xs), hi=Math.max(...xs);
+  // jsonlite serialises a data.table as an ARRAY OF ROW OBJECTS, not as
+  // parallel column arrays. Reading it the other way threw here and, because
+  // the charts run in sequence, silently took the trend chart, the legend and
+  // both tables down with it while the page still looked half-built.
+  const h=D.seats.hist;
+  const xs=h.map(r=>r.seats), ps=h.map(r=>r.p);
+  const mx=Math.max(...ps), lo=Math.min(...xs), hi=Math.max(...xs);
   const x=v=>L+(v-lo)/(hi-lo)*(W-L-R), y=p=>H-B-(p/mx)*(H-T-B);
   const bw=Math.max(2,(W-L-R)/(hi-lo)-1);
-  h.seats.forEach((sv,i)=>{
-    const p=h.p[i], maj=sv>=D.seats.majority;
+  h.forEach(r=>{
+    const sv=r.seats, p=r.p, maj=sv>=D.seats.majority;
     s.appendChild(el('rect',{x:x(sv)-bw/2,y:y(p),width:bw,height:H-B-y(p),
       fill:maj?cv('--alp'):cv('--ink-4'),opacity:maj?.85:.5}));
   });
@@ -405,10 +421,10 @@ document.getElementById('headline').innerHTML = `
       fill:cv('--ink-4'),'font-family':'ui-monospace,Consolas,monospace'},v));});
   s.appendChild(el('text',{x:L-8,y:T+10,'text-anchor':'end','font-size':10.5,
     fill:cv('--ink-4')},'likelihood'));
-})();
+});
 
 /* ---- trend chart ---- */
-(function(){
+draw('poll trend','trend',function(){
   const s=document.getElementById('trend'), W=900,H=380,L=40,R=110,T=18,B=30;
   const all=D.trend.filter(t=>t.party!=='TPP_ALP');
   const dates=all[0].d.map(d=>+new Date(d));
@@ -437,30 +453,28 @@ document.getElementById('headline').innerHTML = `
       'font-size':11,fill:cv('--ink-4'),'font-family':'ui-monospace,Consolas,monospace'},v));});
   document.getElementById('legend').innerHTML = all.filter(t=>PC[t.party])
     .map(t=>`<span><i style="background:${cv(PC[t.party])}"></i>${PN[t.party]}</span>`).join('');
-})();
+});
 
 /* ---- tables ---- */
-(function(){
-  const m=D.mix, rows=m.horizon.map((h,i)=>({h,w:m.w[i],mix:m.mae_mix[i],
-    tr:m.mae_trend[i],fu:m.mae_fund[i]})).sort((a,b)=>a.h-b.h);
+draw('tables','mixtbl',function(){
+  const rows=[...D.mix].sort((a,b)=>a.horizon-b.horizon);
   const lbl=h=>h<40?'1 month':h<100?'3 months':h<200?'6 months':h<400?'1 year':'2 years';
   document.getElementById('mixtbl').innerHTML =
     `<thead><tr><th>Out from the election</th><th>Weight on polls</th>
      <th>Forecast error</th><th>Polls alone</th><th>History alone</th></tr></thead><tbody>`+
-    rows.map(r=>`<tr><td>${lbl(r.h)}</td><td class="num">${(r.w*100).toFixed(0)}%</td>
-      <td class="num"><b>${r.mix.toFixed(2)}</b></td><td class="num">${r.tr.toFixed(2)}</td>
-      <td class="num">${r.fu.toFixed(2)}</td></tr>`).join('')+`</tbody>`;
+    rows.map(r=>`<tr><td>${lbl(r.horizon)}</td><td class="num">${(r.w*100).toFixed(0)}%</td>
+      <td class="num"><b>${r.mae_mix.toFixed(2)}</b></td><td class="num">${r.mae_trend.toFixed(2)}</td>
+      <td class="num">${r.mae_fund.toFixed(2)}</td></tr>`).join('')+`</tbody>`;
 
-  const c=D.scorecard;
+  const num=(v,d)=>(v===null||v===undefined)?'—':v.toFixed(d);
   document.getElementById('cardtbl').innerHTML =
     `<thead><tr><th>Pollster</th><th>Polls</th><th>Lean</th><th>Variability</th>
      <th>Elections</th><th>Final error</th></tr></thead><tbody>`+
-    c.firm.map((f,i)=>{
-      const ln=c.lean[i];
-      return `<tr><td>${f}</td><td class="num">${c.polls[i]}</td>
-        <td class="num ${ln>0?'pos':'neg'}">${ln>0?'+':''}${ln.toFixed(2)}</td>
-        <td class="num">${c.noise[i]==null?'—':c.noise[i].toFixed(2)}</td>
-        <td class="num">${c.elections[i]==null?'—':c.elections[i]}</td>
-        <td class="num">${c.mae[i]==null?'—':c.mae[i].toFixed(2)}</td></tr>`;}).join('')+`</tbody>`;
-})();
+    D.scorecard.map(r=>
+      `<tr><td>${r.firm}</td><td class="num">${r.polls}</td>
+        <td class="num ${r.lean>0?'pos':'neg'}">${r.lean>0?'+':''}${r.lean.toFixed(2)}</td>
+        <td class="num">${num(r.noise,2)}</td>
+        <td class="num">${r.elections==null?'—':r.elections}</td>
+        <td class="num">${num(r.mae,2)}</td></tr>`).join('')+`</tbody>`;
+});
 </script>
