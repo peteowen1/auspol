@@ -94,7 +94,7 @@ jobs:
             echo
             echo "### Checks"
             echo '```'
-            grep -E "^(A[0-9]|N[0-9]|V[0-9]|H[0-9]|L[0-9]|P[0-9]|B[0-9]|C[0-9]|S[0-9]|R[0-9]|F1|O1)" run.log | head -40 || echo "(none captured)"
+            grep -E "^(A[0-9]|N[0-9]|V[0-9]|H[0-9]|L[0-9]|P[0-9]|B[0-9]|C[0-9]|S[0-9]|R[0-9]|G[0-9]|F1|O1)" run.log | head -40 || echo "(none captured)"
             echo '```'
             if grep -q "WARNINGS from this stage" run.log; then
               echo "### Warnings"

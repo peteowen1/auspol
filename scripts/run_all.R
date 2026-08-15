@@ -68,9 +68,29 @@ run <- function(stage) {
   }
   # Surface each stage's own checks rather than hiding them: these lines are
   # the whole point of the pre-registered discipline.
-  keep <- grep("^(A[0-9]|N[0-9]|V[0-9]|H[0-9]|L[0-9]|P[0-9]|B[0-9]|C[0-9]|S[0-9]|R[0-9]|F1|O1)",
+  keep <- grep("^(A[0-9]|N[0-9]|V[0-9]|H[0-9]|L[0-9]|P[0-9]|B[0-9]|C[0-9]|S[0-9]|R[0-9]|G[0-9]|F1|O1)",
                res, value = TRUE)
   if (length(keep)) cat(paste(keep, collapse = "\n"), "\n")
+
+  # Check codes are hand-maintained identifiers spread across seven scripts,
+  # and nothing was stopping two stages from claiming the same one. That is
+  # not hypothetical: the page check shipped as B1, which fit_projection.R
+  # already used for the bias-correction result, so the run summary carried
+  # two different "B1" lines meaning different things. Record which stage
+  # emits each code and report any code claimed twice.
+  # Environments are reference objects, so assigning into them from inside
+  # this function needs no <<- and mutates the one the caller checks.
+  codes <- unique(sub("^([A-Z][0-9]+[a-c]?).*$", "\\1", keep))
+  for (cd in codes) {
+    prev <- if (exists(cd, envir = CODE_OWNER, inherits = FALSE)) {
+      get(cd, envir = CODE_OWNER)
+    } else NULL
+    if (!is.null(prev) && !identical(prev, stage$f)) {
+      assign(cd, sprintf("%s (%s and %s)", cd, prev, stage$f),
+             envir = CODE_CLASHES)
+    }
+    assign(cd, stage$f, envir = CODE_OWNER)
+  }
 
   # WARNINGS TOO. A warning() exits 0, so `ok` stays TRUE, and its text does not
   # start with a check code — so filtering to check lines alone silently drops
@@ -107,6 +127,11 @@ run <- function(stage) {
   invisible(secs)
 }
 
+# Which stage emitted each check code, so a code claimed by two stages is
+# reported rather than left ambiguous in the summary.
+CODE_OWNER <- new.env(parent = emptyenv())
+CODE_CLASHES <- new.env(parent = emptyenv())
+
 t_start <- Sys.time()
 for (s in STAGES) {
   if (quick && s$slow) {
@@ -114,6 +139,13 @@ for (s in STAGES) {
     next
   }
   run(s)
+}
+
+clashes <- ls(CODE_CLASHES)
+if (length(clashes)) {
+  cat("\nDUPLICATE CHECK CODES -- the summary cannot say which is which:\n")
+  for (cd in clashes) cat("   ", get(cd, envir = CODE_CLASHES), "\n")
+  stop(length(clashes), " check code(s) claimed by two stages. Renumber one of each pair.")
 }
 
 cat(sprintf("\n=== pipeline complete in %.0f s ===\n",

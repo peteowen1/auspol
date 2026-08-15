@@ -209,7 +209,7 @@ if (nzchar(Sys.which("node"))) {
               grep("written:", res, value = TRUE)[1])
   addr <- sub(".*addressed: ([0-9]+).*", "\\1",
               grep("addressed:", res, value = TRUE)[1])
-  cat(sprintf("B1  page blocks drawn: %s of %s addressed elements (rest are conditional)  PASS\n",
+  cat(sprintf("G1  page blocks drawn: %s of %s addressed elements (rest are conditional)  PASS\n",
               drew, addr))
 } else {
   # Not fatal — node is not an R dependency and a machine without it should
