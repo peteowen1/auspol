@@ -317,6 +317,19 @@ const cv = n => getComputedStyle(document.documentElement).getPropertyValue(n).t
 const el = (t,a={},h='') => {const e=document.createElementNS('http://www.w3.org/2000/svg',t);
   for(const k in a) e.setAttribute(k,a[k]); if(h) e.textContent=h; return e;};
 
+/* Each block draws independently. Without this, one chart throwing takes
+   out every chart and table after it — which is exactly what a row-vs-column
+   JSON mistake did — and the page still looks half-finished rather than
+   broken. A failure now says so, in place.
+   Defined BEFORE the headline block, not after: the headline was the one
+   piece the guard did not cover, so a null there took down the whole page. */
+const draw=(name,target,fn)=>{try{fn();}catch(e){
+  console.error(name+' failed',e);
+  const t=document.getElementById(target);
+  if(t) t.innerHTML='<p style="padding:1rem;color:var(--ink-3);font-size:.85rem">'+
+    'This could not be drawn ('+name+'). The rest of the page is unaffected.</p>';
+}};
+
 /* ---- header ---- */
 const fmtD = s => new Date(s+'T00:00:00').toLocaleDateString('en-AU',
   {day:'numeric',month:'long',year:'numeric'});
@@ -346,6 +359,7 @@ if (D.data_status && D.data_status !== 'ok') {
    the premier changed last month would otherwise reasonably assume the
    forecast accounts for it. Shown only while the change is recent enough to
    be under-observed; a leader a year in has been polled through. */
+draw('leadership','leadcav',function(){
 if (D.meta.leader && D.meta.leader_days != null && D.meta.leader_days <= 180) {
   const n = D.meta.leader_polls;
   document.getElementById('leadcav').innerHTML =
@@ -358,22 +372,11 @@ if (D.meta.leader && D.meta.leader_days != null && D.meta.leader_days <= 180) {
                `poll${n === 1 ? ' shows' : 's show'} is not in these numbers.`);
   document.getElementById('leadcav').hidden = false;
 }
+});
 document.getElementById('foot').textContent =
   `Generated ${fmtD(D.meta.as_of)} from ${D.meta.n_polls_cycle} Victorian polls `+
   `and 62 past elections. Figures will move as new polls arrive.`;
 
-/* Each block draws independently. Without this, one chart throwing takes
-   out every chart and table after it — which is exactly what a row-vs-column
-   JSON mistake did — and the page still looks half-finished rather than
-   broken. A failure now says so, in place.
-   Defined BEFORE the headline block, not after: the headline was the one
-   piece the guard did not cover, so a null there took down the whole page. */
-const draw=(name,target,fn)=>{try{fn();}catch(e){
-  console.error(name+' failed',e);
-  const t=document.getElementById(target);
-  if(t) t.innerHTML='<p style="padding:1rem;color:var(--ink-3);font-size:.85rem">'+
-    'This could not be drawn ('+name+'). The rest of the page is unaffected.</p>';
-}};
 /* Renders a missing value as an obvious gap. JS coerces null to 0 in
    arithmetic, so (null*100).toFixed(0) silently prints "0%" — which on this
    page would read as "0% chance of a Labor majority": a plausible, dramatic,

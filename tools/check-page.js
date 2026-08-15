@@ -38,12 +38,41 @@ const addressed = new Set(
     .map(m => m[1])
 );
 
-// Ids that legitimately stay empty in some runs, with the condition named.
-// Anything not listed here MUST be written to.
+// Ids that stay empty in SOME runs — but not in all of them, so exempting
+// them outright would hide the very failure this file exists to catch, one
+// level removed: "did the block draw" becomes "did the block draw when it was
+// supposed to". Each carries a predicate over the page's own embedded data, so
+// a conditional block that should have fired and did not is a failure, and one
+// that correctly stayed quiet is not.
 const conditional = {
-  datawarn: 'only when the poll data is ageing or stale',
-  leadcav:  'only when a leader change is within 180 days'
+  datawarn: {
+    why: 'only when the poll data is ageing or stale',
+    required: D => Boolean(D.data_status && D.data_status !== 'ok')
+  },
+  leadcav: {
+    why: 'only when a leader change is within 180 days',
+    required: D => Boolean(D.meta && D.meta.leader &&
+                           D.meta.leader_days != null &&
+                           D.meta.leader_days <= 180)
+  }
 };
+
+// The data the page was built with, needed to evaluate those predicates.
+// Parsed from the page itself rather than taken on faith from a sibling file,
+// so the check is always about the artifact that would actually be published.
+let PAGE_DATA = null;
+// \r?\n, not \n: the page is written from R on Windows, where the file
+// connection translates line endings, so the data line ends "};\r\n". A
+// \n-only pattern silently fails to match and the whole check aborts.
+const dm = html.match(/const D = (\{[\s\S]*?\});\r?\n/);
+if (dm) {
+  try { PAGE_DATA = JSON.parse(dm[1]); } catch (e) { PAGE_DATA = null; }
+}
+if (!PAGE_DATA) {
+  console.error('FAIL: could not parse the page\'s embedded data (const D = ...).');
+  console.error('Without it the conditional blocks cannot be told apart from missing ones.');
+  process.exit(1);
+}
 
 // "Written to" has to cover BOTH ways this template fills an element: the
 // tables and text set .innerHTML/.textContent, while every chart is an <svg>
@@ -116,12 +145,20 @@ try {
   threw = e;
 }
 
-const missing = [...addressed].filter(id => !written.has(id) && !(id in conditional));
-const skipped = [...addressed].filter(id => !written.has(id) && (id in conditional));
+// A conditional block counts as missing when its own predicate says it should
+// have rendered. Only a block whose condition is genuinely false is skipped.
+const unwritten = [...addressed].filter(id => !written.has(id));
+const missing = unwritten.filter(id =>
+  !(id in conditional) || conditional[id].required(PAGE_DATA));
+const skipped = unwritten.filter(id =>
+  (id in conditional) && !conditional[id].required(PAGE_DATA));
 
 console.log(`page: ${file}`);
 console.log(`elements addressed: ${addressed.size}   written: ${written.size}`);
-for (const id of skipped) console.log(`  - ${id}: empty (${conditional[id]})`);
+for (const id of skipped) console.log(`  - ${id}: empty (${conditional[id].why})`);
+for (const id of Object.keys(conditional)) {
+  if (written.has(id)) console.log(`  - ${id}: rendered (${conditional[id].why})`);
+}
 
 if (threw) {
   console.error('\nFAIL: the page script threw:\n' + (threw.stack || threw));
@@ -136,6 +173,11 @@ if (drawFailures.length) {
 }
 if (missing.length) {
   console.error('\nFAIL: addressed but never written to: ' + missing.join(', '));
+  for (const id of missing) {
+    if (id in conditional) {
+      console.error(`  ${id}: its condition HOLDS for this build (${conditional[id].why}), so it should have rendered.`);
+    }
+  }
   console.error('Each of these is a block of the page that silently did not draw.');
   process.exit(1);
 }

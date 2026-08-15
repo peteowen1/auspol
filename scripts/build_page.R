@@ -209,6 +209,17 @@ if (nzchar(Sys.which("node"))) {
               grep("written:", res, value = TRUE)[1])
   addr <- sub(".*addressed: ([0-9]+).*", "\\1",
               grep("addressed:", res, value = TRUE)[1])
+  # grep(...)[1] gives NA when nothing matches, and sub() on NA returns NA, so
+  # a reworded harness log would print "G1 ... NA of NA ... PASS" — a line that
+  # still starts with a check code and still says PASS, and would sail through
+  # run_all.R's filter. The whole point of G1 is that the page test is visible
+  # when it passes; a fabricated pass is worse than no line at all.
+  if (is.na(drew) || is.na(addr) || !grepl("^[0-9]+$", drew) ||
+      !grepl("^[0-9]+$", addr)) {
+    cat(paste(res, collapse = "\n"), "\n")
+    stop("Could not read the element counts out of tools/check-page.js output. ",
+         "Its log format changed and G1 would otherwise report a fabricated pass.")
+  }
   cat(sprintf("G1  page blocks drawn: %s of %s addressed elements (rest are conditional)  PASS\n",
               drew, addr))
 } else {
