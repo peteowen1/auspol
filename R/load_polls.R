@@ -190,6 +190,20 @@ flows_for <- function(flows, year, region, quiet = FALSE, estimate = TRUE,
             collapse = ", ")))
   }
   if (estimate) {
+    # Estimation needs the election calendar to know which elections have
+    # actually been held. That is a real dependency, but the failure it
+    # produced was "Anchor data not found at .../election-cycles.csv" from two
+    # calls down, which says nothing about why flows_for wanted it -- and it
+    # appeared the moment estimation became the default, in tests that had
+    # never touched the anchor before. Name the cause and the way out.
+    if (is.null(cycles)) {
+      cycles <- tryCatch(load_election_cycles(), error = function(e) {
+        stop("flows_for(estimate = TRUE) needs the election calendar to tell ",
+             "which elections have been held, and it could not be loaded: ",
+             conditionMessage(e), "\n  Pass cycles = , or estimate = FALSE to ",
+             "select a recorded flow without estimating.", call. = FALSE)
+      })
+    }
     out <- estimate_flows_for(out, flows, year, cycles = cycles,
                               as_of = as_of, quiet = quiet)
   }

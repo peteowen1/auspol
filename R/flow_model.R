@@ -199,8 +199,8 @@ estimate_flows_for <- function(used, flows, year, cycles = NULL,
     used$flow_se[i] <- est$se
     used$flow_n[i] <- est$n
     if (!quiet) {
-      message(sprintf("  %s flow %s %.2f -> %.2f (%s, n=%d, se %.2f)",
-                      used$party[i], "→", old, used$flow_alp[i],
+      message(sprintf("  %s flow %.2f -> %.2f (%s, n=%d, se %.2f)",
+                      used$party[i], old, used$flow_alp[i],
                       est$model, est$n, est$se))
     }
   }
