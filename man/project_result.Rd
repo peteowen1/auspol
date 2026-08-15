@@ -4,7 +4,7 @@
 \alias{project_result}
 \title{Project an election-day result from a trend value and fundamentals}
 \usage{
-project_result(trend_value, fund_value, mix, horizon)
+project_result(trend_value, fund_value, mix, horizon, debias = FALSE)
 }
 \arguments{
 \item{trend_value, fund_value}{Current trend estimate and fundamentals
@@ -13,6 +13,15 @@ prediction, in percent.}
 \item{mix}{From \code{\link[=fit_projection_mix]{fit_projection_mix()}}.}
 
 \item{horizon}{Days until the election.}
+
+\item{debias}{Subtract the fitted per-horizon bias. \strong{Defaults to FALSE
+because correcting for bias was tested and made the forecast worse.}
+Held out, mean absolute error rose from 2.126 to 2.173 and was worse at
+every one of the five horizons. The in-sample bias is +0.3 to +0.5 points
+against a standard error near 0.37, so it was never distinguishable from
+zero, and subtracting a noisy estimate of roughly nothing just adds
+variance. The value is still reported by \code{\link[=fit_projection_mix]{fit_projection_mix()}} as a
+diagnostic.}
 }
 \value{
 List: \code{mean}, \code{sd}, \code{lo95}, \code{hi95}, \code{w}.

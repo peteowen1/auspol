@@ -139,16 +139,21 @@ live 2026 cycle.
 LNP 28.6, ALP 25.4, ONP 20.9, GRN 12.9, OTH 10.5; derived ALP TPP 47.3
 (95%: 45.1–49.5), against 55.0 at the 2022 election.
 
-**Projection to election day** (added 2026-08-15, 105 days out):
-ALP two-party **46.3 (95%: 41.4–51.2)**, trend weight 0.57 — an 8.7-point
-swing against a Labor government seeking a fourth term. Trend and
-fundamentals agree closely and independently (47.1 vs 46.5), which is
-corroboration rather than confirmation: they share no inputs, but both could
-be wrong in the same direction if 2026 repeats 2018's polling miss.
+**Projection to election day** (105 days out): ALP two-party
+**46.8 (95%: 41.9–51.7)**, trend weight 0.57 — an 8.2-point swing against a
+Labor government seeking a fourth term. Trend and fundamentals agree closely
+and independently (47.1 vs 46.5), which is corroboration rather than
+confirmation: they share no inputs, but both could be wrong in the same
+direction if 2026 repeats 2018's polling miss.
 
-**Seat forecast** (added 2026-08-15): ALP **33 of 88** seats (50%: 27–40,
-90%: 18–47), P(ALP majority) **10.6%**, a median loss of 23 seats from the 56
-won in 2022.
+**The published intervals are calibrated.** Refitting mix weight, bias and
+spread with each election held out, over 195 election-horizon pairs: nominal
+95% intervals contain the truth 92.8% of the time, nominal 80% 76.4%, nominal
+50% 54.9%. Excess kurtosis −0.17, essentially normal, so no fat-tailed or
+asymmetric error model is warranted — measured rather than assumed.
+
+**Seat forecast**: ALP **35 of 88** seats (50%: 29–41, 90%: 19–49),
+P(ALP majority) **14.2%**, a median loss of 21 seats from the 56 won in 2022.
 
 ## Findings from the Victorian build worth keeping
 
@@ -171,6 +176,24 @@ won in 2022.
   other more closely than pure sampling error permits at n=2500. That is the
   herding signature. The noise is now floored at the binomial bound and the
   party-cycle reported, rather than the model inheriting false precision.
+
+## Negative result: the bias correction was making things worse (2026-08-15)
+
+The projection subtracted a per-horizon bias, fitted on past elections, from
+every forecast. Held out, that made it **worse at every one of the five
+horizons** — MAE 2.173 with the correction against 2.126 without.
+
+The in-sample bias is +0.3 to +0.5 points with a standard error near 0.37, so
+it was never distinguishable from zero. Subtracting a noisy estimate of
+roughly nothing adds variance and removes none. `project_result()` now
+defaults to `debias = FALSE`; the value is still reported as a diagnostic,
+and `fit_projection.R` asserts that the correction does not help, so if it
+ever starts to the check fails and we look again.
+
+Worth noting the direction: this MOVED the Victorian forecast, from 46.3 to
+46.8 two-party and from 33 seats to 35. A correction that could not be
+distinguished from noise was shifting the headline by half a point of vote
+and two seats.
 
 ## Negative result: fat-tailed poll noise does not help (2026-08-15)
 

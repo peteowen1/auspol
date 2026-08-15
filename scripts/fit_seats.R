@@ -101,9 +101,26 @@ cat(sprintf("S4  median seats at ALP TPP 44/47/50/53/56: %s\n",
 stopifnot(all(diff(probe) >= 0))
 cat("Seat-model checks S1-S4 passed.\n")
 
+# ---- The projected vote, needed from here on ----
+mix <- fread("output/projection-mix.csv")
+cycles <- load_election_cycles()
+days_out <- as.integer(cycles[region == "vic" & year == 2026, end] - Sys.Date())
+fdat <- build_fundamentals_data()
+m_tpp <- fit_fundamentals(fdat, "@TPP")
+live <- build_fundamentals_data(polled_only = FALSE, require_actual = FALSE)
+kf <- live$region == "vic" & live$year == 2026 & live$party == "@TPP"
+fund_vic <- predict_fundamentals(m_tpp, live[which(kf), ])
+polls <- load_polls("vic")
+pri <- load_prior_results()
+kp <- pri$region == "vic" & pri$year == 2026
+priors <- setNames(pri$prev1[which(kp)], pri$party[which(kp)])
+fl <- flows_for(load_preference_flows(), 2026, "vic", quiet = TRUE)
+now <- trend_as_at(polls, 2026, cycles, Sys.Date(), priors, fl)
+pj <- project_result(now$tpp, fund_vic, mix, days_out)
+
 # ---- R2/R3: what does the regional layer actually change? ----
 cmp <- function(rsd, ssd, label) {
-  s <- simulate_seats(seats26, 46.32, 2.42, PREV_TPP, ssd, region_sd = rsd,
+  s <- simulate_seats(seats26, pj$mean, pj$sd, PREV_TPP, ssd, region_sd = rsd,
                       n_sims = 50000, seed = 99)
   q <- stats::quantile(s$seats_won, c(0.05, 0.5, 0.95))
   cat(sprintf("    %-22s median %2d, 90%% range %2d-%2d (width %2d), sd %.2f\n",
@@ -126,10 +143,10 @@ stopifnot(reg$sd > iid$sd, abs(reg$med - iid$med) <= 2)
 # add. An earlier version divided them and produced "156% of the variance",
 # which is how the non-additivity was noticed.
 sd_of <- function(tsd, rsd, ssd) stats::sd(simulate_seats(
-  seats26, 46.32, tsd, PREV_TPP, ssd, region_sd = rsd,
+  seats26, pj$mean, tsd, PREV_TPP, ssd, region_sd = rsd,
   n_sims = 50000, seed = 7)$seats_won)
-full <- sd_of(2.42, region_sd, within_sd)
-state_only <- sd_of(2.42, 0, 0.001)
+full <- sd_of(pj$sd, region_sd, within_sd)
+state_only <- sd_of(pj$sd, 0, 0.001)
 seat_only <- sd_of(0.001, region_sd, within_sd)
 cat(sprintf("
 Seat-count uncertainty (sd in seats, three separate simulations):
@@ -147,25 +164,6 @@ once. Per-seat noise smooths that step, damping the amplification.
 ", state_only, seat_only, full, state_only, seat_only))
 
 # ---- Apply the Victoria 2026 projection ----
-mix <- fread("output/projection-mix.csv")
-cycles <- load_election_cycles()
-days_out <- as.integer(cycles[region == "vic" & year == 2026, end] - Sys.Date())
-
-# Rebuild the projected two-party vote (same route as fit_projection.R)
-fdat <- build_fundamentals_data()
-m_tpp <- fit_fundamentals(fdat, "@TPP")
-live <- build_fundamentals_data(polled_only = FALSE, require_actual = FALSE)
-kf <- live$region == "vic" & live$year == 2026 & live$party == "@TPP"
-fund_vic <- predict_fundamentals(m_tpp, live[which(kf), ])
-
-polls <- load_polls("vic")
-pri <- load_prior_results()
-kp <- pri$region == "vic" & pri$year == 2026
-priors <- setNames(pri$prev1[which(kp)], pri$party[which(kp)])
-fl <- flows_for(load_preference_flows(), 2026, "vic", quiet = TRUE)
-now <- trend_as_at(polls, 2026, cycles, Sys.Date(), priors, fl)
-pj <- project_result(now$tpp, fund_vic, mix, days_out)
-
 cat(sprintf("\n=== VICTORIA 2026 SEAT FORECAST — %d days out ===\n", days_out))
 cat(sprintf("projected ALP two-party: %.2f (95%%: %.2f - %.2f)\n",
             pj$mean, pj$lo95, pj$hi95))

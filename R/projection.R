@@ -171,6 +171,73 @@ fit_projection_mix <- function(dat, w_grid = seq(0, 1, by = 0.01)) {
   }))
 }
 
+#' Honest out-of-sample evaluation of the whole projection
+#'
+#' Everything the projection needs — the mix weight, the bias correction and
+#' the error spread — is estimated from past elections, so scoring it on those
+#' same elections flatters it. This refits all three with each election held
+#' out and scores the prediction that results.
+#'
+#' It answers the question the headline seat probability actually depends on:
+#' are the intervals honest? A 95% band that contains the truth 70% of the
+#' time makes every downstream probability wrong.
+#'
+#' @param dat From [build_projection_data()], with `fund_tpp`.
+#' @param w_grid Candidate mix weights.
+#' @param debias Whether to apply the held-out bias correction. Set FALSE to
+#'   test whether correcting for bias helps at all.
+#' @return data.table, one row per (election, horizon): `pred`, `err`,
+#'   `z` (error over the held-out sd), plus the fitted `w`, `bias`, `sd_err`.
+#' @export
+projection_loo <- function(dat, w_grid = seq(0, 1, by = 0.01), debias = TRUE) {
+  stopifnot("fund_tpp" %in% names(dat))
+  d0 <- dat[which(!is.na(dat$fund_tpp)), ]
+  hs <- sort(unique(d0$horizon))
+  data.table::rbindlist(lapply(hs, function(h) {
+    d <- d0[which(d0$horizon == h), ]
+    if (nrow(d) < 6) return(NULL)
+    data.table::rbindlist(lapply(seq_len(nrow(d)), function(i) {
+      rest <- setdiff(seq_len(nrow(d)), i)
+      mae_at <- function(w) mean(abs(
+        w * d$trend_tpp[rest] + (1 - w) * d$fund_tpp[rest] - d$actual_tpp[rest]))
+      w <- w_grid[which.min(vapply(w_grid, mae_at, numeric(1)))]
+      e_rest <- w * d$trend_tpp[rest] + (1 - w) * d$fund_tpp[rest] -
+        d$actual_tpp[rest]
+      b <- if (debias) mean(e_rest) else 0
+      s <- stats::sd(e_rest - b)
+      pred <- w * d$trend_tpp[i] + (1 - w) * d$fund_tpp[i] - b
+      data.table::data.table(
+        year = d$year[i], region = d$region[i], horizon = h,
+        pred = pred, actual = d$actual_tpp[i], err = pred - d$actual_tpp[i],
+        z = (pred - d$actual_tpp[i]) / s, w = w, bias = b, sd_err = s)
+    }))
+  }))
+}
+
+#' Empirical shape of the projection's error distribution
+#'
+#' Rather than assume the errors are normal, this pools the standardised
+#' held-out errors across horizons and reads their quantiles directly. That
+#' captures asymmetry and fat tails without committing to a parametric family,
+#' which matters because the seat forecast reads the tails of this
+#' distribution, not its middle.
+#'
+#' Scale stays horizon-specific; only the SHAPE is pooled, so the ~200 rows
+#' are all available to estimate quantiles that 30-42 per horizon could not.
+#'
+#' @param loo From [projection_loo()].
+#' @param probs Quantiles to record.
+#' @return List: `q` (named quantiles of the standardised error), `n`,
+#'   `skew` (mean minus median, in sd units).
+#' @export
+fit_projection_error <- function(loo, probs = c(0.025, 0.05, 0.1, 0.25, 0.5,
+                                                0.75, 0.9, 0.95, 0.975)) {
+  z <- loo$z[is.finite(loo$z)]
+  q <- stats::quantile(z, probs)
+  list(q = q, n = length(z), probs = probs,
+       skew = mean(z) - stats::median(z))
+}
+
 #' Interpolate the fitted mix weight and error spread to any horizon
 #'
 #' Linear in log-horizon, clamped at the ends of the fitted range. The anchor
@@ -199,11 +266,21 @@ projection_params <- function(mix, horizon) {
 #'   prediction, in percent.
 #' @param mix From [fit_projection_mix()].
 #' @param horizon Days until the election.
+#' @param debias Subtract the fitted per-horizon bias. **Defaults to FALSE
+#'   because correcting for bias was tested and made the forecast worse.**
+#'   Held out, mean absolute error rose from 2.126 to 2.173 and was worse at
+#'   every one of the five horizons. The in-sample bias is +0.3 to +0.5 points
+#'   against a standard error near 0.37, so it was never distinguishable from
+#'   zero, and subtracting a noisy estimate of roughly nothing just adds
+#'   variance. The value is still reported by [fit_projection_mix()] as a
+#'   diagnostic.
 #' @return List: `mean`, `sd`, `lo95`, `hi95`, `w`.
 #' @export
-project_result <- function(trend_value, fund_value, mix, horizon) {
+project_result <- function(trend_value, fund_value, mix, horizon,
+                           debias = FALSE) {
   p <- projection_params(mix, horizon)
-  mu <- p$w * trend_value + (1 - p$w) * fund_value - p$bias
+  mu <- p$w * trend_value + (1 - p$w) * fund_value
+  if (debias) mu <- mu - p$bias
   list(mean = mu, sd = p$sd_err, w = p$w,
        lo95 = mu - 1.96 * p$sd_err, hi95 = mu + 1.96 * p$sd_err)
 }

@@ -53,12 +53,49 @@ test_that("projection_params interpolates in log-horizon and clamps outside", {
   expect_equal(projection_params(mix, 2000)$w, 0.2)
 })
 
-test_that("project_result combines, de-biases and widens correctly", {
+test_that("project_result combines and widens correctly, without de-biasing", {
   mix <- data.table::data.table(horizon = 100, w = 0.6, sd_err = 2.5, bias = 0.5)
   p <- project_result(trend_value = 48, fund_value = 53, mix, horizon = 100)
-  expect_equal(p$mean, 0.6 * 48 + 0.4 * 53 - 0.5)
+  # Bias is NOT subtracted by default: correcting for it was measured and made
+  # the held-out forecast worse at every horizon.
+  expect_equal(p$mean, 0.6 * 48 + 0.4 * 53)
   expect_equal(p$w, 0.6)
   expect_equal(p$hi95 - p$lo95, 2 * 1.96 * 2.5)
+
+  pd <- project_result(48, 53, mix, horizon = 100, debias = TRUE)
+  expect_equal(pd$mean, p$mean - 0.5)
+})
+
+test_that("projection_loo holds each election out of everything it fits", {
+  d <- fake_proj(horizons = c(30, 365), n_per = 25)
+  lo <- projection_loo(d)
+  expect_equal(nrow(lo), nrow(d))
+  expect_true(all(c("pred", "err", "z", "w", "bias", "sd_err") %in% names(lo)))
+  # Held-out error must be no better than the in-sample fit
+  mix <- fit_projection_mix(d)
+  for (h in unique(d$horizon)) {
+    ins <- mix$mae_mix[mix$horizon == h]
+    oos <- mean(abs(lo$err[lo$horizon == h]))
+    expect_gte(oos, ins - 1e-9)
+  }
+})
+
+test_that("projection_loo z-scores are calibrated on data built to be normal", {
+  # Errors are Gaussian by construction here, so the standardised held-out
+  # errors should have sd near 1 and roughly nominal coverage.
+  d <- fake_proj(horizons = 30, n_per = 200, trend_sd = 2, fund_sd = 3)
+  lo <- projection_loo(d)
+  expect_gt(stats::sd(lo$z), 0.75); expect_lt(stats::sd(lo$z), 1.3)
+  expect_gt(mean(abs(lo$z) <= 1.96), 0.88)
+})
+
+test_that("fit_projection_error reads the error shape without assuming one", {
+  d <- fake_proj(horizons = c(30, 365), n_per = 60)
+  ef <- fit_projection_error(projection_loo(d))
+  expect_equal(length(ef$q), length(ef$probs))
+  expect_false(is.unsorted(ef$q))
+  expect_lt(abs(ef$skew), 0.5)      # symmetric data gives little skew
+  expect_gt(ef$n, 100)
 })
 
 test_that("trend_as_at uses only polls up to the cutoff", {
