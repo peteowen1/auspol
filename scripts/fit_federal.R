@@ -12,7 +12,7 @@
 # Pre-registered checks (chosen before running). H1/H2 are stated in
 # points-equivalent units at each party's own share, so they mean the same
 # thing on either scale:
-#   H1  sigma_obs >= binomial sampling sd at that share for n = 2500, and
+#   H1  sigma_obs >= binomial sampling sd at that share for n = BINOMIAL_REF_N
 #       <= 3.0 points-equivalent. No honest poll beats pure sampling error at
 #       the largest common sample size.
 #   H2  sigma_rw in [0.02, 0.40] points-equivalent per day
@@ -172,13 +172,13 @@ print(hy[, lapply(.SD, function(x) if (is.numeric(x)) round(x, 4) else x)])
 # H1/H2/H4 + optimiser sanity. The H1 floor was revised once (before accepting
 # any results): a flat 0.6-point floor for "minors" was calibrated at a ~12%
 # share and wrongly rejected UAP at ~4%. The principled floor is the binomial
-# sampling sd at the party's OWN share for n = 2500 (the largest common
+# sampling sd at the party's OWN share for n = BINOMIAL_REF_N (the largest common
 # sample). Sub-binomial noise is itself evidence of herding (see the
 # NEXT-STEPS herding item), not of a broken estimator.
 for (p in est_parties) {
   e <- est[[p]]; sc <- scale_of[[p]]; share <- ref_share(p)
   stopifnot(e$convergence == 0, !e$at_bound,
-            e$sigma_obs >= binomial_sd_link(share, 2500, sc),
+            e$sigma_obs >= binomial_sd_link(share, BINOMIAL_REF_N, sc),
             sd_from_link(e$sigma_obs, share, sc) <= 3.0,
             sd_from_link(e$sigma_rw, share, sc) >= 0.02,
             sd_from_link(e$sigma_rw, share, sc) <= 0.40,
@@ -460,19 +460,20 @@ floor_tab <- rbindlist(lapply(c(2022, 2025, 2028), function(yr) {
     sc <- scale_of[[p]]
     data.table(year = yr, party = p, cycle_level = round(lvl, 1),
                obs_pts = sd_from_link(res$walks[[p]]$sigma_obs, lvl, sc),
-               floor_2500 = binomial_sd_link(lvl, 2500, "points"),
-               floor_1500 = binomial_sd_link(lvl, 1500, "points"))
+               floor_ref = binomial_sd_link(lvl, BINOMIAL_REF_N, "points"),
+               floor_sens = binomial_sd_link(lvl, BINOMIAL_SENSITIVE_N, "points"))
   }))
 }))
-floor_tab[, `:=`(obs_pts = round(obs_pts, 3), floor_2500 = round(floor_2500, 3),
-                 floor_1500 = round(floor_1500, 3))]
-floor_tab[, ratio_1500 := round(obs_pts / floor_1500, 2)]
+floor_tab[, `:=`(obs_pts = round(obs_pts, 3), floor_ref = round(floor_ref, 3),
+                 floor_sens = round(floor_sens, 3))]
+floor_tab[, ratio_sens := round(obs_pts / floor_sens, 2)]
 cat("\n=== L4b: per-cycle noise vs the binomial sampling floor ===\n")
-print(floor_tab[order(ratio_1500)])
-cat(sprintf("L4b min (noise / binomial floor at n=2500) = %.2f (require >= 1)\n",
-            floor_tab[, min(obs_pts / floor_2500)]))
-cat("    ratio_1500 < 1 means quieter than a typical n=1500 poll's own sampling error -> herding signal.\n")
-stopifnot(floor_tab[, all(obs_pts >= floor_2500)])
+print(floor_tab[order(ratio_sens)])
+cat(sprintf("L4b min (noise / binomial floor at n=%d) = %.2f (require >= 1)\n",
+            BINOMIAL_REF_N, floor_tab[, min(obs_pts / floor_ref)]))
+cat(sprintf("    ratio_sens < 1 means quieter than a typical n=%d poll's own sampling error -> herding signal (reported, not enforced).\n",
+            BINOMIAL_SENSITIVE_N))
+stopifnot(floor_tab[, all(obs_pts >= floor_ref)])
 
 cat(sprintf("L2  all trends and bands strictly inside (0, 100)             OK\n"))
 cat(sprintf("L3  endpoint FP sums: %s  (require 100 +/- 4)\n",

@@ -263,13 +263,21 @@ footer{padding:2.5rem 0 0;border-top:1px solid var(--rule);font-size:.8rem;
   <div class="col">
     <span class="eyebrow">Pollsters</span>
     <h2 style="margin-top:.5rem">Who leans which way</h2>
-    <p class="lede" style="margin-top:.9rem">The model estimates each pollster's
-    house effect as a byproduct. <em>Lean</em> is how far a firm sits from the
-    average pollster of its day, in Labor primary points. <em>Final error</em> is
-    how far its last poll of a campaign sat from the actual result &mdash; no
-    model involved.</p>
+    <p class="lede" style="margin-top:.9rem"><em>Lean</em> is how far a firm sits
+    from the average pollster of its day, in Labor primary points. <em>Variability</em>
+    is its poll-to-poll scatter against what sampling alone would produce.
+    <em>Final error</em> is how far its last poll of a campaign sat from the actual
+    result &mdash; no model involved.</p>
   </div>
   <div class="tbl"><table id="cardtbl"></table></div>
+  <p class="note col"><strong>What the forecast above does and does not use.</strong>
+  It does separate pollster lean from the underlying trend &mdash; that is the whole
+  point of the model &mdash; but the lean figures here come from a separate fit
+  across several elections, so they are comparable between firms rather than being
+  the exact values inside today's Victorian numbers. <strong>Variability is measured
+  and then not used:</strong> the forecast weights every pollster equally. Down-weighting
+  the noisier ones is an obvious idea that has not been tested here, and an untested
+  idea is not in the model.</p>
   <p class="note col">Lean is a relative position within a polling period, not a
   prediction of who will be right on the day. Whether it predicts final-poll
   error is suggestive but unproven on this data (r = 0.35, p = 0.14, 19 firms).</p>

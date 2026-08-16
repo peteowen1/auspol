@@ -165,12 +165,14 @@ pollster_lean_predicts_error <- function(lean, accuracy, min_polls = 20,
 #' @param fits_by_cycle List of [fit_cycle_trends()] results.
 #' @param factors From [estimate_firm_factors()].
 #' @param party Party to measure on.
-#' @param n_ref Reference sample size for the binomial floor.
+#' @param n_ref Reference sample size for the binomial floor. Defaults to
+#'   [BINOMIAL_REF_N], shared with the `H1`/`L4b` pipeline checks so the
+#'   published figure and the halting check describe the same quantity.
 #' @return data.table: `firm`, `implied_sd_pts`, `binomial_floor`, `ratio`,
 #'   `n_polls`. A ratio below 1 is the herding signal.
 #' @export
 pollster_noise_vs_binomial <- function(fits_by_cycle, factors, party = "ALP",
-                                       n_ref = 1500) {
+                                       n_ref = BINOMIAL_REF_N) {
   rows <- list()
   for (fits in fits_by_cycle) {
     f <- fits[[party]]
