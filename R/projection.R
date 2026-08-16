@@ -27,6 +27,11 @@
 #' @param min_polls Minimum polls for a party to be fitted.
 #' @param nu Student-t degrees of freedom for the observation model, passed to
 #'   [fit_trend()]; `Inf` is the Gaussian fit.
+#' @param sigmas `"default"` uses [fit_trend()]'s default volatility for every
+#'   cycle -- what the published forecast does today. `"per_cycle"` estimates
+#'   it from each cycle's own polls up to the cutoff, shrunk toward those
+#'   defaults. Which forecasts better has never been measured; see
+#'   docs/plans/prereg-backtest-model.md.
 #' @param with_series Also return the full fitted series (`series`), in the
 #'   same long shape `fit_vic.R` writes: `party`, `date`, `mean`, `lo95`,
 #'   `hi95`, including `TPP_ALP`. The page needs this so its chart and its
@@ -35,7 +40,9 @@
 #'   requested; or NULL if too thin.
 #' @export
 trend_as_at <- function(polls, year, cycles, as_at, priors, flows,
-                        min_polls = 8, nu = Inf, with_series = FALSE, ...) {
+                        min_polls = 8, nu = Inf, with_series = FALSE,
+                        sigmas = c("default", "per_cycle"), ...) {
+  sigmas <- match.arg(sigmas)
   cp <- cycle_polls(polls, year, cycles)
   keep <- cp$date <= as_at
   cp2 <- cp[which(keep), ]
@@ -51,10 +58,47 @@ trend_as_at <- function(polls, year, cycles, as_at, priors, flows,
   ps <- names(cnt)[cnt >= min_polls]
   if (!("ALP" %in% ps)) return(NULL)
 
+  # Per-cycle volatility, estimated from THIS cycle's own polls up to the
+  # cutoff and shrunk toward the defaults.
+  #
+  # Shrinking toward the defaults rather than a cross-cycle pooled value is
+  # the whole point: fit_vic.R pools across validation cycles, which in a
+  # backtest would mean a 2010 forecast borrowing volatility from 2022. That
+  # is the leakage already recorded twice in this file for preference flows,
+  # arriving through the hyperparameters instead. Self-contained by
+  # construction here -- nothing outside the cycle, and nothing after the
+  # cutoff, can reach the estimate.
+  overrides <- list()
+  if (identical(sigmas, "per_cycle")) {
+    defs <- default_sigmas("logit")
+    overrides <- stats::setNames(lapply(ps, function(p) {
+      est <- tryCatch(
+        estimate_cycle_sigmas(cp2, p,
+                              sigma_obs_pooled = defs[["sigma_obs"]],
+                              sigma_rw_pooled  = defs[["sigma_rw"]],
+                              prior_result = priors[[p]] %||% NA_real_),
+        error = function(e) NULL)
+      # A party whose sigma estimation fails keeps the defaults rather than
+      # dropping the whole cycle. Losing cycles would shrink the training set
+      # non-randomly and make the arm look better by being fitted on easier
+      # elections -- the failure this function's skip-accounting exists for.
+      if (is.null(est) || !is.finite(est$sigma_obs) || !is.finite(est$sigma_rw)) {
+        return(NULL)
+      }
+      list(sigma_obs = est$sigma_obs, sigma_rw = est$sigma_rw)
+    }), ps)
+    overrides <- overrides[!vapply(overrides, is.null, TRUE)]
+  }
+
+  # Skip the posterior-variance solve unless the caller wants the bands. The
+  # backtest refits ~200 times and reads endpoint MEANS only; profiling put
+  # Matrix::solve() + diag() for the variance at 31% of the run, and dropping
+  # it measured 40% faster with results identical to machine precision.
   fits <- tryCatch(
     fit_cycle_trends(cp2, parties = ps,
                      priors = priors[intersect(names(priors), ps)],
-                     nu = nu, ...),
+                     overrides = overrides,
+                     nu = nu, want_var = with_series, ...),
     error = function(e) NULL)
   if (is.null(fits)) return(NULL)
   if (any(vapply(fits, function(f) !all(is.finite(f$trend$mean)), TRUE))) {
@@ -100,6 +144,7 @@ trend_as_at <- function(polls, year, cycles, as_at, priors, flows,
 #'   own defaults: every default repeated here is a second copy that can drift
 #'   from the one in [fit_trend()], which is the hazard docs/CONSTANTS.md
 #'   exists to track. One default, in one place.
+#' @param sigmas Passed to [trend_as_at()]: `"default"` or `"per_cycle"`.
 #' @param verbose Print progress (this is the slow step).
 #' @return data.table: `year`, `region`, `horizon`, `trend_tpp`, `actual_tpp`,
 #'   `n_polls`.
@@ -107,7 +152,9 @@ trend_as_at <- function(polls, year, cycles, as_at, priors, flows,
 build_projection_data <- function(horizons = c(30, 90, 180, 365, 730),
                                   regions = c("fed", "nsw", "vic", "qld"),
                                   min_year = 1990, min_polls = 8,
-                                  nu = Inf, verbose = TRUE, ...) {
+                                  nu = Inf, verbose = TRUE,
+                                  sigmas = c("default", "per_cycle"), ...) {
+  sigmas <- match.arg(sigmas)
   cycles <- load_election_cycles()
   ev <- load_eventual_results()
   pol <- load_polled_elections()
@@ -181,7 +228,8 @@ build_projection_data <- function(horizons = c(30, 90, 180, 365, 730),
         # mix weight and error spread on a shrunken, non-random subset, with no
         # symptom except a row count nothing compared against an expectation.
         r <- tryCatch(trend_as_at(polls, y, cycles, as_at, priors, fl,
-                                  min_polls = min_polls, nu = nu, ...),
+                                  min_polls = min_polls, nu = nu,
+                                  sigmas = sigmas, ...),
                       error = function(e) {
                         note(rg, y, h, "error", conditionMessage(e))
                         NULL

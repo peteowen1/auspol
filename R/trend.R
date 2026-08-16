@@ -303,6 +303,12 @@ default_sigmas <- function(scale = c("logit", "points")) {
 #'   be varied and tested at all. Translated to the fitted scale by
 #'   [sd_to_link()] -- passing a points value straight through as log-odds is
 #'   about 20x too weak, which has happened. See docs/CONSTANTS.md.
+#' @param want_var Compute the posterior VARIANCE, and so the credible bands.
+#'   `TRUE` for anything that plots or publishes a band. `FALSE` when only the
+#'   mean is read -- the backtest refits ~200 times and uses endpoint means
+#'   only, and profiling puts `Matrix::solve()` + `diag()` for the variance at
+#'   31% of the run. The means are unaffected: it is the same solve either way,
+#'   with one extra step skipped.
 #' @param nu Degrees of freedom for a Student-t observation model. `Inf`
 #'   (the default) is the Gaussian fit and is bit-for-bit unchanged. A finite
 #'   value — 4 is the usual choice — lets a rogue poll be discounted by the
@@ -335,7 +341,7 @@ fit_trend <- function(polls, party,
                       sigma_house_pts = 3,
                       min_firm_polls = 3,
                       firm_factors = NULL,
-                      szc_sd_pts = 1.5,
+                      szc_sd_pts = 1.5, want_var = TRUE,
                       nu = Inf, nu_iter = 25L, nu_tol = 1e-4) {
   scale <- match.arg(scale)
   defs <- default_sigmas(scale)
@@ -348,7 +354,7 @@ fit_trend <- function(polls, party,
   # Gaussian pass first; with nu = Inf this is the whole fit and the weights
   # stay exactly one, so the default path is unchanged.
   sol <- trend_solve(prep, sigma_obs, sigma_rw, sigma_house_pts, anchor,
-                     firm_factors = firm_factors, want_var = TRUE,
+                     firm_factors = firm_factors, want_var = want_var,
                      szc_sd_pts = szc_sd_pts)
   obs_w <- rep(1, nrow(prep$obs))
   nu_iters <- 0L
@@ -362,7 +368,7 @@ fit_trend <- function(polls, party,
       delta <- max(abs(w_new - obs_w))
       obs_w <- w_new
       sol <- trend_solve(prep, sigma_obs, sigma_rw, sigma_house_pts, anchor,
-                         firm_factors = firm_factors, want_var = TRUE,
+                         firm_factors = firm_factors, want_var = want_var,
                          szc_sd_pts = szc_sd_pts, obs_weight = obs_w)
       if (delta < nu_tol) break
     }
@@ -370,7 +376,11 @@ fit_trend <- function(polls, party,
 
   T_ <- prep$T_
   mu <- sol$theta[seq_len(T_)]
-  s <- sol$sds[seq_len(T_)]
+  # With want_var = FALSE there are no posterior sds, so the bands are NA
+  # rather than absent: a caller that plots them gets a visible gap instead of
+  # a silently narrow band, and one that only reads `mean` is unaffected.
+  # NA_real_ (not 0) because a zero-width band is a confident claim.
+  s <- if (is.null(sol$sds)) rep(NA_real_, T_) else sol$sds[seq_len(T_)]
   # The band back-transforms exactly (the link is monotone, so quantiles are
   # preserved) and is asymmetric in percent, correctly so for small shares.
   # `mean` is the back-transformed posterior mean, i.e. strictly the median of

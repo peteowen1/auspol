@@ -15,6 +15,7 @@ fit_trend(
   min_firm_polls = 3,
   firm_factors = NULL,
   szc_sd_pts = 1.5,
+  want_var = TRUE,
   nu = Inf,
   nu_iter = 25L,
   nu_tol = 1e-04
@@ -57,6 +58,13 @@ drift together. Hand-set at 0.3 and never measured; exposed here so it can
 be varied and tested at all. Translated to the fitted scale by
 \code{\link[=sd_to_link]{sd_to_link()}} -- passing a points value straight through as log-odds is
 about 20x too weak, which has happened. See docs/CONSTANTS.md.}
+
+\item{want_var}{Compute the posterior VARIANCE, and so the credible bands.
+\code{TRUE} for anything that plots or publishes a band. \code{FALSE} when only the
+mean is read -- the backtest refits ~200 times and uses endpoint means
+only, and profiling puts \code{Matrix::solve()} + \code{diag()} for the variance at
+31\% of the run. The means are unaffected: it is the same solve either way,
+with one extra step skipped.}
 
 \item{nu}{Degrees of freedom for a Student-t observation model. \code{Inf}
 (the default) is the Gaussian fit and is bit-for-bit unchanged. A finite
