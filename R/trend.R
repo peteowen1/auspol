@@ -176,7 +176,7 @@ obs_noise_factors <- function(prep, firm_factors) {
 #' @keywords internal
 trend_solve <- function(prep, sigma_obs, sigma_rw, sigma_house_pts, anchor,
                         firm_factors = NULL, want_var = TRUE,
-                        szc_sd_pts = 0.3, obs_weight = NULL) {
+                        szc_sd_pts = 1.5, obs_weight = NULL) {
   sigma_house <- sd_to_link(sigma_house_pts, prep$p_ref, prep$scale)
   szc_sd <- sd_to_link(szc_sd_pts, prep$p_ref, prep$scale)
   prior <- trend_prior_system(prep, sigma_rw, sigma_house, anchor, szc_sd)
@@ -335,7 +335,7 @@ fit_trend <- function(polls, party,
                       sigma_house_pts = 3,
                       min_firm_polls = 3,
                       firm_factors = NULL,
-                      szc_sd_pts = 0.3,
+                      szc_sd_pts = 1.5,
                       nu = Inf, nu_iter = 25L, nu_tol = 1e-4) {
   scale <- match.arg(scale)
   defs <- default_sigmas(scale)

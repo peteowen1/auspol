@@ -30,7 +30,7 @@
 #' @return List: `tpp`, `fp` (named vector), `n_polls`; or NULL if too thin.
 #' @export
 trend_as_at <- function(polls, year, cycles, as_at, priors, flows,
-                        min_polls = 8, nu = Inf) {
+                        min_polls = 8, nu = Inf, szc_sd_pts = 1.5) {
   cp <- cycle_polls(polls, year, cycles)
   keep <- cp$date <= as_at
   cp2 <- cp[which(keep), ]
@@ -49,7 +49,7 @@ trend_as_at <- function(polls, year, cycles, as_at, priors, flows,
   fits <- tryCatch(
     fit_cycle_trends(cp2, parties = ps,
                      priors = priors[intersect(names(priors), ps)],
-                     nu = nu),
+                     nu = nu, szc_sd_pts = szc_sd_pts),
     error = function(e) NULL)
   if (is.null(fits)) return(NULL)
   if (any(vapply(fits, function(f) !all(is.finite(f$trend$mean)), TRUE))) {
@@ -71,6 +71,10 @@ trend_as_at <- function(polls, year, cycles, as_at, priors, flows,
 #' @param min_year Earliest election year.
 #' @param min_polls Minimum polls needed at a horizon.
 #' @param nu Student-t degrees of freedom, passed through to [trend_as_at()].
+#' @param szc_sd_pts Sum-to-zero prior on house effects, passed through to
+#'   [fit_trend()]. Exposed here so the prior can be CHOSEN by held-out error
+#'   like every other hyperparameter in this model, rather than asserted. See
+#'   docs/plans/prereg-szc-v2.md.
 #' @param verbose Print progress (this is the slow step).
 #' @return data.table: `year`, `region`, `horizon`, `trend_tpp`, `actual_tpp`,
 #'   `n_polls`.
@@ -78,7 +82,7 @@ trend_as_at <- function(polls, year, cycles, as_at, priors, flows,
 build_projection_data <- function(horizons = c(30, 90, 180, 365, 730),
                                   regions = c("fed", "nsw", "vic", "qld"),
                                   min_year = 1990, min_polls = 8,
-                                  nu = Inf, verbose = TRUE) {
+                                  nu = Inf, szc_sd_pts = 1.5, verbose = TRUE) {
   cycles <- load_election_cycles()
   ev <- load_eventual_results()
   pol <- load_polled_elections()
@@ -152,7 +156,8 @@ build_projection_data <- function(horizons = c(30, 90, 180, 365, 730),
         # mix weight and error spread on a shrunken, non-random subset, with no
         # symptom except a row count nothing compared against an expectation.
         r <- tryCatch(trend_as_at(polls, y, cycles, as_at, priors, fl,
-                                  min_polls = min_polls, nu = nu),
+                                  min_polls = min_polls, nu = nu,
+                                  szc_sd_pts = szc_sd_pts),
                       error = function(e) {
                         note(rg, y, h, "error", conditionMessage(e))
                         NULL

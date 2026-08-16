@@ -33,7 +33,7 @@ number without anything failing.
 | scale (logit/points) | `trend.R` | Which scale each party is fitted on | **ESTIMATED** — per party by comparable log evidence |
 | trend/fundamentals mix | `projection.R` | Weight by horizon | **ESTIMATED** — leave-one-election-out |
 | ridge penalty | `fundamentals.R` | Fundamentals shrinkage | **ESTIMATED** — leave-one-election-out |
-| **`szc_sd_pts = 0.3`** | `trend.R` | Strength of the soft sum-to-zero constraint on house effects — i.e. how far the polling industry as a *whole* may sit from the truth | **MEASURED 2026-08-16: should be ~1.5, not 0.3.** Now exposed on `fit_trend()`; change not yet made. See §6. |
+| `szc_sd_pts` | `trend.R` | Strength of the soft sum-to-zero constraint on house effects — how far the polling industry as a *whole* may sit from the truth | **ESTIMATED 2026-08-16 — now 1.5.** Chosen by held-out error over a pre-registered grid (`scripts/tune_szc.R`, check `G4`). See §6. |
 | **`sigma_house_pts = 3`** | `trend.R:325`, `hyperpars.R:35,131` | Prior sd on a single pollster's house effect | **ESTIMABLE, NOT DONE.** The fitted house effects across 17+ party-cycles are exactly the data that should set this. |
 | **`k0 = 25`** | `hyperpars.R:132` | Shrinkage of per-cycle sigmas toward pooled | **ESTIMABLE, NOT DONE.** An empirical-Bayes quantity, currently guessed. |
 | **`k0 = 12`** | `hyperpars.R:308` | Shrinkage of firm noise factors | **ESTIMABLE, NOT DONE.** Same. |
@@ -88,70 +88,105 @@ They are assertions written *before* results were seen; estimating them from
 the results they police would make them unfalsifiable, which is the entire
 point of pre-registering them. They are listed in `ARCHITECTURE.md`, not here.
 
-## 6. Measured: the sum-to-zero prior is 4-5x too tight
+## 6. Estimated: the sum-to-zero prior, 0.3 -> 1.5
 
-`szc_sd_pts` says how far the polling industry as a whole may sit from the
-truth. It is measurable, and it was measured on 2026-08-16.
+Resolved 2026-08-16 after one false start. Two independent lines of evidence,
+and they agree.
 
-Take the consensus of the final polls at each completed election since 1990
-and compare it to the result. Excluding `OTH`, whose −5.3 average miss is the
-known fold-into-Others parsing artefact this codebase already corrects and not
-pollster bias:
+### Line 1: what the record says the industry actually does
 
-| Window | n party-elections | sd of the miss | majors only |
-|---|---:|---:|---:|
-| final 14 days | 147 | **1.61** | 1.71 |
-| final 30 days | 187 | 1.94 | 2.03 |
-| final 60 days | 209 | 2.14 | 2.34 |
+Consensus of the final polls at every completed election since 1990, against
+the result. `OTH` excluded -- its −5.3 average miss is the known
+fold-into-Others parsing artefact, not pollster bias.
 
-The spread shrinks as the window narrows, so the wider figures partly measure
-opinion genuinely moving rather than pollsters being wrong. The 14-day figure
-is the cleanest available bound, and even it contains two weeks of movement.
-**Industry-wide bias is therefore about 1.5 points, against a prior of 0.3.**
+| Window | n party-elections | sd of miss |
+|---|---:|---:|
+| final 14 days | 147 | **1.61** |
+| final 30 days | 187 | 1.94 |
+| final 60 days | 209 | 2.14 |
 
-The mean miss is +0.09 — near zero, which is the point. The field is not
-biased in a consistent direction; it misses *together*, by roughly a point and
-a half, in a direction that varies by election.
+The spread shrinks as the window narrows, so wider figures partly measure
+opinion moving rather than pollsters erring. **About 1.5.** Mean miss +0.09:
+the field is not biased in a direction, it misses *together*, in a direction
+that varies by election.
 
-**Why it matters.** Forcing house effects to cancel more tightly than reality
-supports pushes genuine industry-wide error into the latent trend, where it is
-treated as truth. The page's own leading caveat says "the polls could be wrong
-together... nothing here detects a field-wide miss" — and the model is
-structurally assuming it away rather than merely failing to detect it.
+### Line 2: held-out error, over a pre-registered grid
 
-**What it would move**, from the sensitivity sweep (`fit_cycle_trends`,
-Victoria 2026, other settings held):
+`scripts/tune_szc.R`, criterion and grid and decision rule all fixed in
+[plans/prereg-szc-v2.md](plans/prereg-szc-v2.md) and committed before running.
+Leave-one-election-out, 195 election-horizon pairs:
 
-| `szc_sd_pts` | ALP two-party | ONP first preference | max house effect |
-|---:|---:|---:|---:|
-| 0.3 (current) | 49.04 | 21.97 | 3.24 |
-| 1.0 | 49.16 | 20.74 | 4.13 |
-| 2.0 | 49.29 | 19.52 | 5.31 |
+| `szc_sd_pts` | held-out MAE |
+|---:|---:|
+| 0.30 (incumbent) | 2.0850 |
+| 0.75 | 2.0852 |
+| **1.50** | **2.0588** |
+| 3.00 | 2.0593 |
 
-The **two-party figure barely moves** — 0.14 points across 0.1–1.0, about
-0.15% of the held-out error, which by the usual sizing rule is nothing. The
-**first preferences move materially**: One Nation shifts more than a point,
-and the page prints that number prominently.
+**Adopted 1.5**: beats the incumbent by 0.0262, clearing the pre-registered
+0.02 materiality bar; both 1.5 and 3.0 qualified and rule 5 takes the smaller.
 
-So this is not a headline-accuracy fix. It is a correctness fix for the
-first-preference levels and for the honesty of the house-effect estimates,
-and it should be made for that reason rather than sold as an accuracy gain.
+Two things about the shape matter more than the winner. It is a **step, not a
+slope** -- 0.3 and 0.75 are identical to four figures, and so are 1.5 and 3.0
+-- so the gain comes from loosening the prior *at all*, not from landing on a
+finely-tuned value. And the two lines of evidence were computed from entirely
+different quantities and still agree on ~1.5.
 
-**Not yet changed.** It alters published first preferences, so it wants its
-own pre-registered checks: that the two-party figure stays within ~0.3 of
-today's, that house effects widen rather than explode, and that the L4b
-herding floor still holds.
+**Honest caveat: the gain clears the bar by 0.006.** Had the threshold been
+0.03 this would have failed. The rule is satisfied because it was fixed in
+advance, but 1.3% on 195 pairs is not decisive.
+
+### Why it matters beyond the number
+
+Forcing house effects to cancel more tightly than reality supports pushes
+genuine industry-wide error into the latent trend, where it is treated as
+truth. The page's own leading caveat says the polls could be wrong together
+and nothing here detects it -- at 0.3 the model was *assuming it away*, not
+merely failing to notice.
+
+### The false start, kept because the lesson is the expensive part
+
+A first attempt picked 1.5 by judgement and tested it against four checks
+written beforehand. Three passed; the fourth (SZ2: "house effects must grow")
+failed, and the change was reverted as committed. SZ2 was watching the wrong
+quantity -- `szc` constrains the weighted *mean* of house effects, which does
+respond correctly (0.13 → 3.17 across the grid), not their individual size.
+
+Held-out error had improved in that run too, but it was **not** a
+pre-registered criterion, and adopting the change on it afterwards is exactly
+what pre-registration exists to prevent. Hence v2: stop picking the value,
+estimate it, and fix the criterion first. Full record in
+[reviews/szc-prior-2026-08-16.md](reviews/szc-prior-2026-08-16.md).
+
+Also recorded there: the sensitivity sweep used to justify v1 **predicted the
+wrong sign** on the check it was most worried about, because it ran
+`fit_cycle_trends` bare while the pipeline has firm factors, the fold
+correction and estimated per-cycle sigmas. A stripped-down harness is not the
+model.
+
+### When to re-run
+
+`scripts/tune_szc.R` takes about four minutes, too slow for every pipeline
+run. Re-run it when the election record grows -- a new completed election is
+new evidence about how far the industry misses -- and commit the result.
 
 ## 7. What to do next
 
 In priority order, by how much each touches the published number:
 
-1. ~~**`szc_sd_pts`** — expose, then size~~ — **done 2026-08-16.** Exposed on
-   `fit_trend()`, sized, and measured at ~1.5 against a prior of 0.3 (§6).
-   Remaining: make the change, with the checks named there.
-2. **`sigma_house_pts`** — the fitted house effects are the data for it.
-3. **`n_ref` vs `n = 2500`** — reconcile to one reference sample size.
-4. **`k0` (both) and `clip`** — empirical-Bayes quantities that are guessed.
+1. ~~**`szc_sd_pts`**~~ — **done 2026-08-16**, now estimated at 1.5 (§6).
+2. **`sigma_house_pts = 3`** — the prior sd on one pollster's house effect,
+   and the natural next one: the fitted house effects across 17+ party-cycles
+   are exactly the data for it, and `tune_szc.R` is a template that generalises
+   with the grid swapped. Expect it to matter more than `szc` did, since it
+   governs individual effects rather than their mean.
+3. **`n_ref = 1500` vs `n = 2500`** — reconcile to one reference sample size.
+   Neither can be estimated (no sample-size column in the source), so this is
+   a consistency fix, not an estimation one: pick one, justify it once, use it
+   in both places.
+4. **`k0 = 25`, `k0 = 12`, `clip = c(0.6, 2.0)`** — empirical-Bayes shrinkage
+   strengths and a clip, all guessed. Size before building: shrinkage
+   constants often turn out not to matter across a wide range.
 
 Sizing comes before building in each case: if varying the constant across a
 plausible range barely moves the forecast, it is a correctness matter and gets
