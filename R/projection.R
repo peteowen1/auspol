@@ -35,6 +35,11 @@
 #'   runtime, with no consistent pattern by horizon. Kept as a non-default,
 #'   re-runnable comparison arm, not as a recommendation. See
 #'   docs/reviews/backtest-model-comparison-2026-08-16.md.
+#' @param ... Passed through to [fit_trend()] via [fit_cycle_trends()], which
+#'   is how a prior is varied when tuning it by held-out error. Names this
+#'   function binds itself -- `parties`, `overrides`, `polls`, `party`,
+#'   `priors` -- are refused rather than silently swallowed; see the guard at
+#'   the top of the body.
 #' @param with_series Also return the full fitted series (`series`), in the
 #'   same long shape `fit_vic.R` writes: `party`, `date`, `mean`, `lo95`,
 #'   `hi95`, including `TPP_ALP`. The page needs this so its chart and its

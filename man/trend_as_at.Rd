@@ -47,6 +47,12 @@ defaults. \strong{Measured 2026-08-16 and the default won}: per-cycle gained
 runtime, with no consistent pattern by horizon. Kept as a non-default,
 re-runnable comparison arm, not as a recommendation. See
 docs/reviews/backtest-model-comparison-2026-08-16.md.}
+
+\item{...}{Passed through to \code{\link[=fit_trend]{fit_trend()}} via \code{\link[=fit_cycle_trends]{fit_cycle_trends()}}, which
+is how a prior is varied when tuning it by held-out error. Names this
+function binds itself -- \code{parties}, \code{overrides}, \code{polls}, \code{party},
+\code{priors} -- are refused rather than silently swallowed; see the guard at
+the top of the body.}
 }
 \value{
 List: \code{tpp}, \code{fp} (named vector), \code{n_polls}, and \code{series} if

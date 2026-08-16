@@ -10,6 +10,7 @@ NULL
 # undefined globals.
 globalVariables(c(
   ".", ".SD", "N", "actual", "age_days", "alp_win_prob", "base_sd_pts",
+  "mae", "value",
   "binomial_floor", "cause", "file_age_days", "status",
   "challenger", "classic", "detail", "effect", "effect_pts", "end", "err_use",
   "error",
