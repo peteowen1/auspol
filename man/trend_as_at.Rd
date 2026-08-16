@@ -14,6 +14,7 @@ trend_as_at(
   min_polls = 8,
   nu = Inf,
   with_series = FALSE,
+  sigmas = c("default", "per_cycle"),
   ...
 )
 }
@@ -37,6 +38,12 @@ trend_as_at(
 same long shape \code{fit_vic.R} writes: \code{party}, \code{date}, \code{mean}, \code{lo95},
 \code{hi95}, including \code{TPP_ALP}. The page needs this so its chart and its
 headline come from the same fit.}
+
+\item{sigmas}{\code{"default"} uses \code{\link[=fit_trend]{fit_trend()}}'s default volatility for every
+cycle -- what the published forecast does today. \code{"per_cycle"} estimates
+it from each cycle's own polls up to the cutoff, shrunk toward those
+defaults. Which forecasts better has never been measured; see
+docs/plans/prereg-backtest-model.md.}
 }
 \value{
 List: \code{tpp}, \code{fp} (named vector), \code{n_polls}, and \code{series} if
