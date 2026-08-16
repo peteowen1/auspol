@@ -83,7 +83,6 @@ leader_days <- as.integer(Sys.Date() - leader_last$date)
 # See docs/reviews/two-model-paths-2026-08-16.md -- the deeper question, which
 # of the two models SHOULD be published, is separate work.
 polls <- load_polls("vic")
-cycles_v <- cycles
 pri <- load_prior_results(); kp <- pri$region == "vic" & pri$year == 2026
 priors <- setNames(pri$prev1[which(kp)], pri$party[which(kp)])
 fl <- flows_for(load_preference_flows(), 2026, "vic", quiet = TRUE)

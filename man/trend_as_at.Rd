@@ -42,8 +42,11 @@ headline come from the same fit.}
 \item{sigmas}{\code{"default"} uses \code{\link[=fit_trend]{fit_trend()}}'s default volatility for every
 cycle -- what the published forecast does today. \code{"per_cycle"} estimates
 it from each cycle's own polls up to the cutoff, shrunk toward those
-defaults. Which forecasts better has never been measured; see
-docs/plans/prereg-backtest-model.md.}
+defaults. \strong{Measured 2026-08-16 and the default won}: per-cycle gained
+0.0041 held-out MAE against a pre-registered 0.02 bar, for 33x the
+runtime, with no consistent pattern by horizon. Kept as a non-default,
+re-runnable comparison arm, not as a recommendation. See
+docs/reviews/backtest-model-comparison-2026-08-16.md.}
 }
 \value{
 List: \code{tpp}, \code{fp} (named vector), \code{n_polls}, and \code{series} if

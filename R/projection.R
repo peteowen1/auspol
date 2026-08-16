@@ -30,8 +30,11 @@
 #' @param sigmas `"default"` uses [fit_trend()]'s default volatility for every
 #'   cycle -- what the published forecast does today. `"per_cycle"` estimates
 #'   it from each cycle's own polls up to the cutoff, shrunk toward those
-#'   defaults. Which forecasts better has never been measured; see
-#'   docs/plans/prereg-backtest-model.md.
+#'   defaults. **Measured 2026-08-16 and the default won**: per-cycle gained
+#'   0.0041 held-out MAE against a pre-registered 0.02 bar, for 33x the
+#'   runtime, with no consistent pattern by horizon. Kept as a non-default,
+#'   re-runnable comparison arm, not as a recommendation. See
+#'   docs/reviews/backtest-model-comparison-2026-08-16.md.
 #' @param with_series Also return the full fitted series (`series`), in the
 #'   same long shape `fit_vic.R` writes: `party`, `date`, `mean`, `lo95`,
 #'   `hi95`, including `TPP_ALP`. The page needs this so its chart and its
@@ -43,6 +46,23 @@ trend_as_at <- function(polls, year, cycles, as_at, priors, flows,
                         min_polls = 8, nu = Inf, with_series = FALSE,
                         sigmas = c("default", "per_cycle"), ...) {
   sigmas <- match.arg(sigmas)
+
+  # `...` reaches fit_cycle_trends(), which this function also calls with
+  # `parties` and `overrides` of its own. Passing either through `...` --
+  # exactly what fit_cycle_trends()'s docs advertise for per-party priors --
+  # makes R raise "formal argument matched by multiple actual arguments". That
+  # error would then be swallowed by the tryCatch below and returned as NULL,
+  # which build_projection_data() records as a THIN CYCLE rather than a bug:
+  # every affected election-horizon pair would vanish from the backtest with a
+  # reassuring reason attached. Refuse it here, loudly, instead.
+  reserved <- intersect(names(list(...)),
+                        c("parties", "overrides", "polls", "party", "priors"))
+  if (length(reserved)) {
+    stop("trend_as_at() sets ", paste(sQuote(reserved), collapse = ", "),
+         " itself; passing it through `...` would be swallowed as a thin ",
+         "cycle. Vary a fit_trend() prior instead, or extend this function.",
+         call. = FALSE)
+  }
   cp <- cycle_polls(polls, year, cycles)
   keep <- cp$date <= as_at
   cp2 <- cp[which(keep), ]

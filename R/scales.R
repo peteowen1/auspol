@@ -94,9 +94,21 @@ sd_from_link <- function(sd_link, p, scale = c("logit", "points")) {
 #' @return Character vector of offending party names (empty if all valid).
 #' @export
 scale_breaches <- function(fits) {
-  bad <- vapply(fits, function(f)
-    any(f$trend$lo95 <= 0 | f$trend$hi95 >= 100 | !is.finite(f$trend$mean)),
-    logical(1))
+  bad <- vapply(fits, function(f) {
+    # A fit made with want_var = FALSE has NA bands. `NA <= 0` is NA, so the
+    # whole expression collapses to NA, `any()` returns NA, and
+    # `names(fits)[NA]` yields NA_character_ -- a length-1 vector, so the
+    # caller's `if (!length(breach))` short-circuit does NOT fire and it goes
+    # on to "fix" a party called NA. The guard would be silently disabled by
+    # an optimisation made elsewhere, which is precisely the failure this
+    # function exists to prevent in the fits it inspects.
+    if (anyNA(f$trend$lo95) || anyNA(f$trend$hi95)) {
+      stop("scale_breaches() needs credible bands, and this fit has none ",
+           "(fitted with want_var = FALSE). Refit with want_var = TRUE, or ",
+           "do not run this guard on that fit.", call. = FALSE)
+    }
+    any(f$trend$lo95 <= 0 | f$trend$hi95 >= 100 | !is.finite(f$trend$mean))
+  }, logical(1))
   names(fits)[bad]
 }
 

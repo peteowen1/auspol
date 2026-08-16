@@ -33,7 +33,31 @@ tune_prior <- function(param, grid, incumbent, material = 0.02,
                        horizons = c(30, 90, 180, 365, 730)) {
   stopifnot(is.character(param), length(param) == 1L,
             is.numeric(grid), length(grid) >= 2L,
-            incumbent %in% grid, is.numeric(material), material >= 0)
+            is.numeric(incumbent), length(incumbent) == 1L,
+            is.numeric(material), material >= 0)
+
+  # `param` MUST name a fit_trend() argument. args[[param]] is handed to
+  # build_projection_data(), so a name that happens to belong to IT instead --
+  # min_polls, verbose, horizons -- would quietly tune a different quantity,
+  # run to completion, and report a plausible verdict about the wrong
+  # experiment. A typo does the same thing more obviously but just as quietly.
+  if (!param %in% names(formals(fit_trend))) {
+    stop("'", param, "' is not an argument of fit_trend(). tune_prior() varies ",
+         "a MODEL prior; a name belonging to build_projection_data() would ",
+         "silently tune something else. Available: ",
+         paste(setdiff(names(formals(fit_trend)), c("polls", "party", "...")),
+               collapse = ", "), call. = FALSE)
+  }
+  # Exact == on doubles: 0.3 %in% c(0.3, ...) is safe for identical literals
+  # but not for a computed incumbent, and the failure is an assertion with no
+  # hint of why. Match on tolerance and report the values when it fails.
+  hit <- which(abs(grid - incumbent) < 1e-9)
+  if (!length(hit)) {
+    stop("incumbent ", format(incumbent), " is not in the grid (",
+         paste(format(grid), collapse = ", "),
+         "). It must be, so the comparison has a baseline.", call. = FALSE)
+  }
+  incumbent <- grid[hit[1]]   # use the grid's own value from here on
 
   m_tpp <- fit_fundamentals(build_fundamentals_data(), "@TPP")
   fund_loo <- data.table::data.table(
@@ -67,7 +91,8 @@ tune_prior <- function(param, grid, incumbent, material = 0.02,
   stopifnot(nrow(tab) == length(grid), all(is.finite(tab$mae)))
   data.table::setorder(tab, mae)
 
-  inc_mae <- tab$mae[tab$value == incumbent]
+  inc_mae <- tab$mae[which(abs(tab$value - incumbent) < 1e-9)][1]
+  stopifnot(length(inc_mae) == 1L, is.finite(inc_mae))
   gain <- inc_mae - tab$mae[1]
   qual <- tab[inc_mae - tab$mae > material]
 
@@ -80,7 +105,8 @@ tune_prior <- function(param, grid, incumbent, material = 0.02,
     # governs, so it is the conservative choice among equals.
     chosen <- min(qual$value)
     verdict <- sprintf("ADOPT %s (beats incumbent by %.4f; smallest of %d qualifying)",
-                       format(chosen), inc_mae - tab$mae[tab$value == chosen],
+                       format(chosen),
+                       inc_mae - tab$mae[which(abs(tab$value - chosen) < 1e-9)][1],
                        nrow(qual))
   }
   list(table = tab, chosen = chosen, incumbent = incumbent,
@@ -101,7 +127,18 @@ report_tuning <- function(res, code = "G4") {
   print(res$table[, .(value, mae = round(mae, 4), n)])
   cat(sprintf("\n%s  %s: %s\n", code, res$param, res$verdict))
   current <- formals(fit_trend)[[res$param]]
-  agree <- isTRUE(all.equal(as.numeric(current), as.numeric(res$chosen)))
+  # tune_prior() already refuses a param that is not a fit_trend formal, so
+  # this cannot be NULL by that route -- but a formal whose default is an
+  # unevaluated call (scale = c("logit","points")) would make as.numeric()
+  # hard-error, and a NULL would print "shipped default NULL ... DISAGREE",
+  # which reads like a finding rather than a broken comparison.
+  current_num <- suppressWarnings(tryCatch(as.numeric(current),
+                                           error = function(e) NA_real_))
+  if (length(current_num) != 1L || !is.finite(current_num)) {
+    stop("fit_trend()'s default for '", res$param, "' is not a single number, ",
+         "so it cannot be compared with the tuned value.", call. = FALSE)
+  }
+  agree <- isTRUE(all.equal(current_num, as.numeric(res$chosen)))
   cat(sprintf("%s  shipped default %s; this run chose %s  %s\n",
               code, format(current), format(res$chosen),
               if (agree) "AGREE" else

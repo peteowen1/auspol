@@ -401,7 +401,12 @@ fit_trend <- function(polls, party,
   house <- data.table::data.table(
     firm = prep$firms,
     effect = sol$theta[hj],
-    sd = sol$sds[hj],
+    # NULL, not NA, when want_var = FALSE -- and data.table DROPS a column
+    # assigned NULL rather than filling it. The sibling trend columns two
+    # blocks up are deliberately NA for exactly this reason: a caller reading
+    # a missing band should see a gap, not a "column not found" from code that
+    # worked yesterday. Same treatment here.
+    sd = if (is.null(sol$sds)) NA_real_ else sol$sds[hj],
     n_polls = prep$obs[, .N, by = j][order(j), N]
   )
   # Points-equivalent: the average number of percentage points this firm's
