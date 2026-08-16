@@ -35,9 +35,9 @@ number without anything failing.
 | ridge penalty | `fundamentals.R` | Fundamentals shrinkage | **ESTIMATED** — leave-one-election-out |
 | `szc_sd_pts` | `trend.R` | Strength of the soft sum-to-zero constraint on house effects — how far the polling industry as a *whole* may sit from the truth | **ESTIMATED 2026-08-16 — now 1.5.** Chosen by held-out error over a pre-registered grid (`scripts/tune_szc.R`, check `G4`). See §6. |
 | `sigma_house_pts = 3` | `trend.R`, `hyperpars.R` | Prior sd on a single pollster's house effect | **TESTED 2026-08-16, KEPT.** Held-out error over a pre-registered grid is a smooth U with its minimum at exactly 3 (`scripts/tune_sigma_house.R`, check `G5`). See §6b. |
-| **`k0 = 25`** | `hyperpars.R:132` | Shrinkage of per-cycle sigmas toward pooled | **ESTIMABLE, NOT DONE.** An empirical-Bayes quantity, currently guessed. |
-| **`k0 = 12`** | `hyperpars.R:308` | Shrinkage of firm noise factors | **ESTIMABLE, NOT DONE.** Same. |
-| **`clip = c(0.6, 2.0)`** | `hyperpars.R:308` | Bounds on a firm's noise multiplier | **ESTIMABLE, NOT DONE.** Arbitrary; the observed spread of firm factors could set it. |
+| `k0 = 25` | `hyperpars.R` | Shrinkage of per-cycle sigmas toward pooled | **CANNOT BE TUNED ON FORECAST ERROR — it does not reach the forecast.** See §6c. |
+| `k0 = 12` | `hyperpars.R` | Shrinkage of firm noise factors | **Affects the published scorecard, not the forecast.** See §6c. |
+| `clip = c(0.6, 2.0)` | `hyperpars.R` | Bounds on a firm's noise multiplier | **Affects the published scorecard, not the forecast.** See §6c. |
 
 ## 2. Reference sample sizes
 
@@ -201,6 +201,45 @@ put through the same procedure and they came back differently: one was wrong
 and moved, one is right and stays, one turned out not to matter. Auditing a
 constant is not the same as changing it.
 
+## 6c. Three constants that cannot be tuned the way the others were
+
+Checked 2026-08-16 before running their grids, and the check is the result.
+
+Held-out forecast error is the criterion used for `szc_sd_pts`,
+`sigma_house_pts`, the mix weight, the ridge penalty and the flow estimator.
+**It is the wrong criterion for these three, because none of them reaches the
+forecast.**
+
+Tracing what the published page actually depends on:
+
+- The headline and the chart both come from `trend_as_at()`, which calls
+  `fit_trend()` with `firm_factors = NULL` and default volatility.
+- `output/projection-mix.csv` comes from `build_projection_data()`, same path.
+- `output/trend-vic-2026.csv` is required but **no longer read**.
+
+So:
+
+| Constant | Reaches the forecast? | What it does reach |
+|---|---|---|
+| `k0 = 25` (cycle-sigma shrinkage) | **No** | The V/A/N validation checks in the fit scripts |
+| `k0 = 12` (firm-factor shrinkage) | **No** | The published pollster scorecard |
+| `clip = c(0.6, 2.0)` | **No** | The published pollster scorecard |
+
+Running a held-out-MAE grid on any of them would have produced a flat line and
+an authoritative-looking "KEEP", which is worse than not running it: a
+meaningless number wearing the same format as three meaningful ones.
+
+**What they would need instead.** For the firm factors, the honest question is
+whether an estimated factor predicts a pollster's *future* accuracy out of
+sample — a different and harder test than forecast MAE, and one the scorecard
+half-implements already (`pollster_lean_predicts_error`). For `k0 = 25`, the
+question is whether per-cycle shrinkage improves the validation fits, which
+matters for confidence in the model rather than for the number it produces.
+
+**Worth a decision separately:** the page publishes per-pollster noise factors
+that play no part in the forecast. That is not wrong, but a reader could
+reasonably assume otherwise, and the scorecard does not say so.
+
 ## 7. What to do next
 
 In priority order, by how much each touches the published number:
@@ -208,13 +247,19 @@ In priority order, by how much each touches the published number:
 1. ~~**`szc_sd_pts`**~~ — **done 2026-08-16**, now estimated at 1.5 (§6).
 2. ~~**`sigma_house_pts`**~~ — **tested 2026-08-16, kept at 3** (§6b). It is
    the outright minimum of a smooth U, so the hand-set value was right.
-3. **`n_ref = 1500` vs `n = 2500`** — reconcile to one reference sample size.
+3. ~~**`k0` and `clip`**~~ — **checked 2026-08-16**: none of them reaches the
+   forecast, so held-out error cannot judge them (§6c). What they need instead
+   is written there.
+4. **`n_ref = 1500` vs `n = 2500`** — reconcile to one reference sample size.
    Neither can be estimated (no sample-size column in the source), so this is
    a consistency fix, not an estimation one: pick one, justify it once, use it
    in both places.
-4. **`k0 = 25`, `k0 = 12`, `clip = c(0.6, 2.0)`** — empirical-Bayes shrinkage
-   strengths and a clip, all guessed. Size before building: shrinkage
-   constants often turn out not to matter across a wide range.
+
+The one lesson worth carrying: **check what a constant reaches before
+measuring how much it matters.** Item 3 was queued as three tuning grids and
+resolved by ten minutes of tracing, because none of the three touches the
+forecast at all. Running them would have produced flat lines wearing the same
+format as three meaningful results.
 
 Sizing comes before building in each case: if varying the constant across a
 plausible range barely moves the forecast, it is a correctness matter and gets
