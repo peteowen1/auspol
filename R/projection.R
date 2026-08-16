@@ -40,6 +40,10 @@
 #'   function binds itself -- `parties`, `overrides`, `polls`, `party`,
 #'   `priors` -- are refused rather than silently swallowed; see the guard at
 #'   the top of the body.
+#' @param weights `"equal"` weights every poll the same -- what the published
+#'   forecast does. `"firm_factors"` estimates each pollster's noise from this
+#'   cycle's own residuals in a first pass and refits with those weights.
+#'   Untested as of writing; see docs/plans/prereg-firm-factors.md.
 #' @param with_series Also return the full fitted series (`series`), in the
 #'   same long shape `fit_vic.R` writes: `party`, `date`, `mean`, `lo95`,
 #'   `hi95`, including `TPP_ALP`. The page needs this so its chart and its
@@ -49,8 +53,11 @@
 #' @export
 trend_as_at <- function(polls, year, cycles, as_at, priors, flows,
                         min_polls = 8, nu = Inf, with_series = FALSE,
-                        sigmas = c("default", "per_cycle"), ...) {
+                        sigmas = c("default", "per_cycle"),
+                        weights = c("equal", "firm_factors"), ...) {
   sigmas <- match.arg(sigmas)
+  weights <- match.arg(weights)
+  firm_w <- NULL
 
   # `...` reaches fit_cycle_trends(), which this function also calls with
   # `parties` and `overrides` of its own. Passing either through `...` --
@@ -115,6 +122,39 @@ trend_as_at <- function(polls, year, cycles, as_at, priors, flows,
     overrides <- overrides[!vapply(overrides, is.null, TRUE)]
   }
 
+  # Per-pollster noise factors, estimated from THIS cycle's own residuals.
+  #
+  # Two-pass and self-contained: fit once with equal weights, read the
+  # residuals, estimate each firm's noise from them, refit with those weights.
+  # Nothing outside the cycle and nothing after the cutoff can reach it.
+  #
+  # That is deliberately a weaker claim than the live forecast's version, which
+  # learns firm factors from fits of PAST elections. In a backtest that would
+  # mean a 2010 forecast knowing which pollsters turned out to be noisy in
+  # 2022 -- the leakage this file already carries two warnings about. Doing it
+  # honestly needs per-fold refitting of every prior cycle, which costs what
+  # the per-cycle volatility arm cost (33x) and is out of scope here.
+  #
+  # So this tests "is a firm's noise detectable WITHIN a cycle and worth
+  # acting on", not "are some firms reliably noisier across elections".
+  # See docs/plans/prereg-firm-factors.md.
+  if (identical(weights, "firm_factors")) {
+    pass1 <- tryCatch(
+      fit_cycle_trends(cp2, parties = ps,
+                       priors = priors[intersect(names(priors), ps)],
+                       nu = nu, want_var = FALSE, ...),
+      error = function(e) NULL)
+    if (!is.null(pass1)) {
+      fac <- tryCatch(estimate_firm_factors(pass1), error = function(e) NULL)
+      # A failed estimate keeps equal weights rather than dropping the cycle:
+      # losing elections here would shrink the training set non-randomly and
+      # flatter this arm by fitting it on easier ones.
+      if (!is.null(fac) && nrow(fac) && all(is.finite(fac$factor))) {
+        firm_w <- stats::setNames(fac$factor, fac$firm)
+      }
+    }
+  }
+
   # Skip the posterior-variance solve unless the caller wants the bands. The
   # backtest refits ~200 times and reads endpoint MEANS only; profiling put
   # Matrix::solve() + diag() for the variance at 31% of the run, and dropping
@@ -122,7 +162,7 @@ trend_as_at <- function(polls, year, cycles, as_at, priors, flows,
   fits <- tryCatch(
     fit_cycle_trends(cp2, parties = ps,
                      priors = priors[intersect(names(priors), ps)],
-                     overrides = overrides,
+                     overrides = overrides, firm_factors = firm_w,
                      nu = nu, want_var = with_series, ...),
     error = function(e) NULL)
   if (is.null(fits)) return(NULL)
@@ -170,6 +210,7 @@ trend_as_at <- function(polls, year, cycles, as_at, priors, flows,
 #'   from the one in [fit_trend()], which is the hazard docs/CONSTANTS.md
 #'   exists to track. One default, in one place.
 #' @param sigmas Passed to [trend_as_at()]: `"default"` or `"per_cycle"`.
+#' @param weights Passed to [trend_as_at()]: `"equal"` or `"firm_factors"`.
 #' @param verbose Print progress (this is the slow step).
 #' @return data.table: `year`, `region`, `horizon`, `trend_tpp`, `actual_tpp`,
 #'   `n_polls`.
@@ -178,8 +219,10 @@ build_projection_data <- function(horizons = c(30, 90, 180, 365, 730),
                                   regions = c("fed", "nsw", "vic", "qld"),
                                   min_year = 1990, min_polls = 8,
                                   nu = Inf, verbose = TRUE,
-                                  sigmas = c("default", "per_cycle"), ...) {
+                                  sigmas = c("default", "per_cycle"),
+                                  weights = c("equal", "firm_factors"), ...) {
   sigmas <- match.arg(sigmas)
+  weights <- match.arg(weights)
   cycles <- load_election_cycles()
   ev <- load_eventual_results()
   pol <- load_polled_elections()
@@ -254,7 +297,7 @@ build_projection_data <- function(horizons = c(30, 90, 180, 365, 730),
         # symptom except a row count nothing compared against an expectation.
         r <- tryCatch(trend_as_at(polls, y, cycles, as_at, priors, fl,
                                   min_polls = min_polls, nu = nu,
-                                  sigmas = sigmas, ...),
+                                  sigmas = sigmas, weights = weights, ...),
                       error = function(e) {
                         note(rg, y, h, "error", conditionMessage(e))
                         NULL
