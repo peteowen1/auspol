@@ -103,8 +103,18 @@ tr[, date := as.Date(date)]
 # structurally wrong -- a band below zero, first preferences summing to 80 --
 # and every L-check would still report PASS on the other model.
 fp_parties <- setdiff(unique(tr$party), "TPP_ALP")
-bands_ok <- tr[, all(is.finite(mean)) &&
-                 all(lo95 > 0 | is.na(lo95)) && all(hi95 < 100 | is.na(hi95))]
+# No NA escape hatch. The first version wrote `all(lo95 > 0 | is.na(lo95))`,
+# defensively, because want_var = FALSE can legitimately produce NA bands --
+# and that made this check PASS on a fit whose bands could not be verified at
+# all. fit_vic.R's L2 has no such clause: `stopifnot(all(tr$lo95 > 0))` on an
+# NA errors loudly, which is the correct behaviour for a structural guard.
+#
+# So a check written specifically because L2 was guarding the wrong model
+# arrived unable to fail on the case it exists for. Bands must be present and
+# valid: this fit is always made with with_series = TRUE, so want_var is TRUE
+# and NA here means something went wrong upstream rather than a mode we chose.
+bands_ok <- tr[, all(is.finite(mean)) && all(is.finite(lo95)) &&
+                 all(is.finite(hi95)) && all(lo95 > 0) && all(hi95 < 100)]
 fp_sum <- tr[party %in% fp_parties, sum(mean[which.max(date)]), by = party][, sum(V1)]
 cat(sprintf("G7  published fit: bands inside (0,100) %s; endpoint FP sum %.1f (require 100 +/- 5)  %s\n",
             if (bands_ok) "OK" else "BREACHED", fp_sum,
