@@ -34,7 +34,7 @@ number without anything failing.
 | trend/fundamentals mix | `projection.R` | Weight by horizon | **ESTIMATED** — leave-one-election-out |
 | ridge penalty | `fundamentals.R` | Fundamentals shrinkage | **ESTIMATED** — leave-one-election-out |
 | `szc_sd_pts` | `trend.R` | Strength of the soft sum-to-zero constraint on house effects — how far the polling industry as a *whole* may sit from the truth | **ESTIMATED 2026-08-16 — now 1.5.** Chosen by held-out error over a pre-registered grid (`scripts/tune_szc.R`, check `G4`). See §6. |
-| **`sigma_house_pts = 3`** | `trend.R:325`, `hyperpars.R:35,131` | Prior sd on a single pollster's house effect | **ESTIMABLE, NOT DONE.** The fitted house effects across 17+ party-cycles are exactly the data that should set this. |
+| `sigma_house_pts = 3` | `trend.R`, `hyperpars.R` | Prior sd on a single pollster's house effect | **TESTED 2026-08-16, KEPT.** Held-out error over a pre-registered grid is a smooth U with its minimum at exactly 3 (`scripts/tune_sigma_house.R`, check `G5`). See §6b. |
 | **`k0 = 25`** | `hyperpars.R:132` | Shrinkage of per-cycle sigmas toward pooled | **ESTIMABLE, NOT DONE.** An empirical-Bayes quantity, currently guessed. |
 | **`k0 = 12`** | `hyperpars.R:308` | Shrinkage of firm noise factors | **ESTIMABLE, NOT DONE.** Same. |
 | **`clip = c(0.6, 2.0)`** | `hyperpars.R:308` | Bounds on a firm's noise multiplier | **ESTIMABLE, NOT DONE.** Arbitrary; the observed spread of firm factors could set it. |
@@ -170,16 +170,44 @@ model.
 run. Re-run it when the election record grows -- a new completed election is
 new evidence about how far the industry misses -- and commit the result.
 
+## 6b. Tested and kept: the house-effect prior
+
+`sigma_house_pts` is the prior sd on ONE pollster's house effect, where
+`szc_sd_pts` governs how far they may all sit from the truth together. Grid,
+criterion and rule fixed in
+[plans/prereg-sigma-house.md](plans/prereg-sigma-house.md) before running.
+
+| `sigma_house_pts` | held-out MAE |
+|---:|---:|
+| 1 | 2.0689 |
+| 2 | 2.0599 |
+| **3 (incumbent)** | **2.0588** |
+| 5 | 2.0725 |
+| 8 | 2.0763 |
+
+**Kept at 3**, which is the minimum of the grid outright rather than surviving
+on the tie-break.
+
+The shape matters as much as the winner. This is a **smooth U with an interior
+minimum**, unlike the two constants tested before it: `szc_sd_pts` was a step
+function where everything below 1 behaved identically and everything above did
+too, and the default-versus-per-cycle model comparison was pure noise with
+alternating signs. Here both directions are genuinely worse — too tight (1)
+costs 0.010, too loose (8) costs 0.018 — so 3 is a real optimum and the
+hand-set value was well chosen.
+
+That is worth recording as a positive result. Three constants have now been
+put through the same procedure and they came back differently: one was wrong
+and moved, one is right and stays, one turned out not to matter. Auditing a
+constant is not the same as changing it.
+
 ## 7. What to do next
 
 In priority order, by how much each touches the published number:
 
 1. ~~**`szc_sd_pts`**~~ — **done 2026-08-16**, now estimated at 1.5 (§6).
-2. **`sigma_house_pts = 3`** — the prior sd on one pollster's house effect,
-   and the natural next one: the fitted house effects across 17+ party-cycles
-   are exactly the data for it, and `tune_szc.R` is a template that generalises
-   with the grid swapped. Expect it to matter more than `szc` did, since it
-   governs individual effects rather than their mean.
+2. ~~**`sigma_house_pts`**~~ — **tested 2026-08-16, kept at 3** (§6b). It is
+   the outright minimum of a smooth U, so the hand-set value was right.
 3. **`n_ref = 1500` vs `n = 2500`** — reconcile to one reference sample size.
    Neither can be estimated (no sample-size column in the source), so this is
    a consistency fix, not an estimation one: pick one, justify it once, use it
