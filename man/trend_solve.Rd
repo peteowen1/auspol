@@ -12,7 +12,7 @@ trend_solve(
   anchor,
   firm_factors = NULL,
   want_var = TRUE,
-  szc_sd_pts = 0.3,
+  szc_sd_pts = 1.5,
   obs_weight = NULL
 )
 }

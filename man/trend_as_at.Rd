@@ -4,7 +4,18 @@
 \alias{trend_as_at}
 \title{Trend-derived ALP two-party share as it would have looked on a given date}
 \usage{
-trend_as_at(polls, year, cycles, as_at, priors, flows, min_polls = 8, nu = Inf)
+trend_as_at(
+  polls,
+  year,
+  cycles,
+  as_at,
+  priors,
+  flows,
+  min_polls = 8,
+  nu = Inf,
+  with_series = FALSE,
+  ...
+)
 }
 \arguments{
 \item{polls}{All polls for a region, from \code{\link[=load_polls]{load_polls()}}.}
@@ -21,9 +32,15 @@ trend_as_at(polls, year, cycles, as_at, priors, flows, min_polls = 8, nu = Inf)
 
 \item{nu}{Student-t degrees of freedom for the observation model, passed to
 \code{\link[=fit_trend]{fit_trend()}}; \code{Inf} is the Gaussian fit.}
+
+\item{with_series}{Also return the full fitted series (\code{series}), in the
+same long shape \code{fit_vic.R} writes: \code{party}, \code{date}, \code{mean}, \code{lo95},
+\code{hi95}, including \code{TPP_ALP}. The page needs this so its chart and its
+headline come from the same fit.}
 }
 \value{
-List: \code{tpp}, \code{fp} (named vector), \code{n_polls}; or NULL if too thin.
+List: \code{tpp}, \code{fp} (named vector), \code{n_polls}, and \code{series} if
+requested; or NULL if too thin.
 }
 \description{
 Refits from scratch on polls up to \code{as_at} only.

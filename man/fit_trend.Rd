@@ -14,7 +14,7 @@ fit_trend(
   sigma_house_pts = 3,
   min_firm_polls = 3,
   firm_factors = NULL,
-  szc_sd_pts = 0.3,
+  szc_sd_pts = 1.5,
   nu = Inf,
   nu_iter = 25L,
   nu_tol = 1e-04

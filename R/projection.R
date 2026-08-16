@@ -27,10 +27,15 @@
 #' @param min_polls Minimum polls for a party to be fitted.
 #' @param nu Student-t degrees of freedom for the observation model, passed to
 #'   [fit_trend()]; `Inf` is the Gaussian fit.
-#' @return List: `tpp`, `fp` (named vector), `n_polls`; or NULL if too thin.
+#' @param with_series Also return the full fitted series (`series`), in the
+#'   same long shape `fit_vic.R` writes: `party`, `date`, `mean`, `lo95`,
+#'   `hi95`, including `TPP_ALP`. The page needs this so its chart and its
+#'   headline come from the same fit.
+#' @return List: `tpp`, `fp` (named vector), `n_polls`, and `series` if
+#'   requested; or NULL if too thin.
 #' @export
 trend_as_at <- function(polls, year, cycles, as_at, priors, flows,
-                        min_polls = 8, nu = Inf, ...) {
+                        min_polls = 8, nu = Inf, with_series = FALSE, ...) {
   cp <- cycle_polls(polls, year, cycles)
   keep <- cp$date <= as_at
   cp2 <- cp[which(keep), ]
@@ -59,9 +64,27 @@ trend_as_at <- function(polls, year, cycles, as_at, priors, flows,
   tpp <- tryCatch(derive_tpp(fits, flows), error = function(e) NULL)
   if (is.null(tpp)) return(NULL)
   end_of <- function(tr) tr$mean[which.max(tr$date)]
-  list(tpp = end_of(tpp),
-       fp = vapply(fits, function(f) end_of(f$trend), numeric(1)),
-       n_polls = nrow(cp2))
+  out <- list(tpp = end_of(tpp),
+              fp = vapply(fits, function(f) end_of(f$trend), numeric(1)),
+              n_polls = nrow(cp2))
+
+  # The whole fitted series, on request, in the same long shape fit_vic.R
+  # writes. The published page needs it: its headline comes from this fit,
+  # and drawing the chart from a DIFFERENT fit -- fit_vic.R's, which estimates
+  # per-cycle sigmas and per-pollster noise this one does not -- put first
+  # preferences on the page that do not add up to the headline beside them,
+  # by as much as 0.54 points on Others. One number, one fit.
+  if (with_series) {
+    out$series <- data.table::rbindlist(c(
+      lapply(names(fits), function(p) {
+        d <- data.table::as.data.table(fits[[p]]$trend)
+        d[, party := p][, .(party, date, mean, lo95, hi95)]
+      }),
+      list(data.table::as.data.table(tpp)[, party := "TPP_ALP"][
+             , .(party, date, mean, lo95, hi95)])
+    ))
+  }
+  out
 }
 
 #' Assemble trend-at-horizon against eventual result, across past elections
