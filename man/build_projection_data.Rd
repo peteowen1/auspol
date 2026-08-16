@@ -12,6 +12,7 @@ build_projection_data(
   nu = Inf,
   verbose = TRUE,
   sigmas = c("default", "per_cycle"),
+  weights = c("equal", "firm_factors"),
   ...
 )
 }
@@ -29,6 +30,8 @@ build_projection_data(
 \item{verbose}{Print progress (this is the slow step).}
 
 \item{sigmas}{Passed to \code{\link[=trend_as_at]{trend_as_at()}}: \code{"default"} or \code{"per_cycle"}.}
+
+\item{weights}{Passed to \code{\link[=trend_as_at]{trend_as_at()}}: \code{"equal"} or \code{"firm_factors"}.}
 
 \item{...}{Passed through to \code{\link[=fit_trend]{fit_trend()}} via \code{\link[=fit_cycle_trends]{fit_cycle_trends()}}. This
 is how a prior is varied when tuning it by held-out error -- see

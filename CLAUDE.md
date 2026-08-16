@@ -20,7 +20,12 @@ Two PRs have already opened red for want of this: once because a change gave
 `.Rd` still documented a default the code had moved to a constant. The second
 time the script existed and was skipped.
 
-`--tests-only` skips the slow half while iterating. Never before a PR.
+`--tests-only` skips the slow half while iterating. **Never before any push
+to a branch that has an open PR** — not just before opening one. Three CI
+failures so far were `.Rd` files stale against a changed signature, and the
+third came from using `--tests-only` on a commit that went straight onto a
+branch with PR #5 already open. "Before opening a PR" felt satisfied because
+the PR was opened hours earlier; the rule has to be about the push.
 
 ## Changing an exported function's signature
 

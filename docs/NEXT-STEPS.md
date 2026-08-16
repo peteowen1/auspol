@@ -1,6 +1,6 @@
 # auspol — work queue
 
-Updated 2026-08-15. Remote: github.com/peteowen1/auspol (private, default
+Updated 2026-08-16. Remote: github.com/peteowen1/auspol (private, default
 branch `dev`; `main` exists and is reached only through a reviewed PR).
 
 Completed stage write-ups live in
@@ -9,43 +9,132 @@ open state, not the narrative of how it got here.
 
 ## Awaiting Pete
 
-- ~~Merge PR #2~~ — **merged 2026-08-15.** Version 0.2.0: the forecast page,
-  `run_all.R` + freshness, CI, `ARCHITECTURE.md`, the scheduled refresh, the
-  leadership caveat, the page test and the check-code registry. 22 commits,
-  five review passes.
+- **Merge PR #5** — github.com/peteowen1/auspol/pull/5, version 0.4.1, 13
+  commits. No forecast numbers change: it is checks, constants and prose. CI
+  was red three times on stale `.Rd` files and is now green. Reviewed twice.
 
-  **In hindsight it should have been a stack.** A 20-file PR is past the size
-  where one review can be thorough, and it kept growing after each pass —
-  work pushed to `dev` joins an open PR automatically, which is the shape the
-  review gate is least able to catch on its own. `gh-stack` exists here
-  precisely so a mechanical layer gets a cheap pass while a logic layer gets a
-  real one. Worth doing for the next long run of work.
-- **Open the next PR** — `dev` is 3 commits ahead of `main` at version 0.3.0:
-  estimated preference flows, the G3 estimator check, and the review fixes.
-  This one **changes the published two-party figure from 46.8 to 47.8**, so it
-  wants a careful look rather than a rubber stamp. Reviewed once already.
-- **Repo is still private and `dev` is still the default branch**, both by
-  choice. Going public remains a separate decision (see below).
-- **Decide whether the repo goes public.** It was created private on purpose.
-  Two things in it are outward-facing and should be a deliberate choice, not
-  a side effect: `docs/plans/product-features.md` contains critical
-  commentary on named competitors (theswingison, DemosAU — the latter also a
-  pollster in our own data), and the pollster scorecard publishes named
-  firms' house effects and accuracy. Both are defensible; neither should
+  **This one should have been a stack too**, for the same reason PR #2 should
+  have been. It was opened at 6 commits and is now 13, because work pushed to
+  `dev` joins an open PR automatically. The lesson has now been learned twice
+  and acted on zero times: use `gh-stack` for the next long run.
+- **Decide whether the repo goes public.** Private on purpose. Two things are
+  outward-facing and should be deliberate: `docs/plans/product-features.md`
+  carries critical commentary on named competitors (theswingison, DemosAU —
+  the latter also a pollster in our own data), and the scorecard publishes
+  named firms' house effects and accuracy. Both defensible; neither should
   appear publicly by accident.
-- **Poll data licensing** — unchanged and now more pressing if the repo goes
-  public. The anchor's data is gitignored and not committed (verified before
-  the first push: no `external/`, no CSVs, no outputs are tracked), so
-  nothing of his is republished. Formal permission is still worth having.
-
-- **Answer the four improvement-quiz questions** (from session chat; context in
-  [ANCHOR-MODEL.md](ANCHOR-MODEL.md) "Honest assessment"): demographics in the
+- **Poll data licensing.** The anchor's data is gitignored and not committed —
+  verified: no `external/`, no CSVs, no outputs are tracked — so nothing of
+  his is republished. His repo has no LICENCE and his site invites use of the
+  files, but formal permission is worth having before going public.
+- **Answer the four improvement-quiz questions** (context in
+  [ANCHOR-MODEL.md](ANCHOR-MODEL.md), "Honest assessment"): demographics in the
   seat model, seat-level preference flows, the 2019 herding problem, and the
-  trend-vs-simulator scope call. #4 was pre-empted: trend built first — confirm
-  or redirect.
-  The anchor repo (d-j-hirst/aus-polling-analyser) has no LICENSE; his site
-  invites use of the files, but formal permission is worth having.
-- ~~Create GitHub remote~~ — **done 2026-08-15**, private, see above.
+  trend-versus-simulator scope call. Two of the four now have measured answers
+  — see the seat-type and methodology reviews below — so this is smaller than
+  it was.
+
+## Next session starts here (2026-08-16)
+
+**One acquisition job, and it is the only route left to the seat-level work.**
+
+Booth-level results from the VEC: first preferences and two-candidate figures
+for every polling booth, which map onto census geography. That is how
+theswingison does seat composition (booth regression plus Australian Election
+Study), and it is the one thing that would let this model represent an outcome
+it currently cannot — a One Nation or independent seat win. See
+[reviews/seat-methodology-critique-2026-08-16.md](reviews/seat-methodology-critique-2026-08-16.md).
+
+**Scope it before downloading anything:** what the VEC actually publishes, what
+licence it carries, how booths map to 2026 boundaries after redistribution, and
+what the smallest useful version looks like. That scoping is the first task,
+not the acquisition.
+
+**And go in with the sizing already known**, because it changes what success
+means. Per-seat swing is not forecastable from anything tried: seat type fails
+out of sample, region fails out of sample, and region effects correlate 0.27
+between elections. The statewide vote dominates the seat count (sd 10.87
+against 3.96). So booth data will **not** sharpen the seat range. Its value is
+representational — fewer ways to be wrong, not a better number. If that is not
+worth the acquisition cost, the honest answer is to stop here and say so on the
+page, which already carries the caveat.
+
+**Smaller, still open:**
+
+- The five non-classic seats are frozen with no uncertainty. Prahran on an 11.1
+  margin is treated as certain. Simulating them is cheap and independent of
+  booth data.
+- `load_seats()` reads 5 of the 11 fields available. `bRetirement` (20 seats),
+  `bSophomoreCandidate` (22) and `fTransposedFederalSwing` (89) are unread.
+  Size them the way seat type was sized — expect the same answer.
+- L4c's negative tail is still uncalibrated (below).
+
+**Do not start with:** anything that makes the backtest slower. Arm B of the
+volatility comparison took 33x and bought nothing; a backtest that takes an
+hour makes every constant expensive to re-examine, and constants that are
+expensive to re-examine stop being re-examined.
+
+## What 2026-08-16 measured
+
+Five things were tested against held-out error under a criterion fixed before
+the run. **One helped.** That ratio is the point: a procedure that only
+produced adoptions would be evidence it was finding what it went looking for.
+
+| Change | Result |
+|---|---|
+| `szc_sd_pts` 0.3 → 1.5 | **adopted** — 1.3% better, and two independent lines agree on 1.5 |
+| `sigma_house_pts` | already the outright optimum of a smooth U; kept at 3 |
+| per-cycle volatility | irrelevant — 0.2% for **33×** the runtime |
+| per-firm poll weighting | **harmful** — −0.6%, and consistently worse at every horizon past 30 days |
+| seat type as a swing predictor | **worthless** — 0.06%, and region is worse than nothing |
+
+Full write-ups in `reviews/`. Three general lessons, all of which cost
+something today:
+
+1. **Held-out error overturned an in-sample result twice.** Leave-one-out
+   endorsed a linear trend for preference flows that a temporal backtest ranked
+   sixth of eleven; an F-test at p = 0.006 endorsed seat type that a
+   leave-one-election-out test found worthless. Both in-sample statistics were
+   real and both conclusions were wrong.
+2. **Per-seat swing looks genuinely unforecastable.** Seat type fails, region
+   fails, region effects correlate 0.27 between elections. `simulate_seats()`
+   already draws its regional effect fresh rather than predicting one, and that
+   now has three independent lines of evidence behind it.
+3. **A sensitivity sweep on a simplified harness predicted the wrong sign.**
+   It ran `fit_cycle_trends` bare while the pipeline has firm factors, the fold
+   correction and estimated sigmas. A stripped-down harness is not the model.
+
+## What 2026-08-16 fixed, none of which changed a number
+
+Every one was a gap between what the model does and what the machinery around
+it claimed:
+
+- The page drew its **chart from one fit and its headline from another** — up
+  to 0.54 points apart on Others, so a reader adding up the published first
+  preferences could not reproduce the published result.
+- `fit_vic.R`'s L2/L3 structural checks were **validating a fit nobody
+  publishes**. `G7` now checks the published one.
+- `G7` itself **shipped unable to fail**: an `| is.na(lo95)` clause made an
+  unverifiable band count as a pass.
+- The scorecard used the **sensitive** binomial reference for a published claim
+  about named polling firms — the aggressive setting on the one output where a
+  false positive costs someone else.
+- The page described **the wrong metric entirely** for Variability, and
+  `R/scorecard.R`'s own docstring warns against that exact conflation.
+- `overrides` through the new `...` raised an argument error that `tryCatch`
+  swallowed into a `NULL`, which the backtest recorded as **"too few polls"**.
+
+The through-line: not wrong numbers, but **checks pointed at the wrong object,
+labels describing the wrong quantity, and guards that could not fail.** Those
+look identical to working ones until someone traces them.
+
+## Closed session write-ups
+
+Moved to [backlog/journal-2026-08.md](backlog/journal-2026-08.md): the
+2026-08-15 review gate, the pollster scorecard build, the post-merge
+publishing work, and two negative results (fat-tailed poll noise, per-horizon
+bias correction). Their conclusions live in the code, `CONSTANTS.md` or
+`reviews/`; the narrative does not need reloading every session.
 
 ## Also worth a look (Pete found, 2026-08-14)
 
@@ -166,7 +255,7 @@ Stan) may make the question moot.
 - OTH double-counts a modelled party when a poll folds it in (see #3 above).
 - No undecided-voter rescaling (anchor CSVs appear already rescaled; verify).
 
-## Victoria 2026 is the target — 106 days out as of 2026-08-14
+## Victoria 2026 is the target — 104 days out as of 2026-08-16
 
 Settled 2026-08-14. Victoria votes **28 November 2026**, the nearest real
 deadline by a long way (NSW 2027, federal 2028, Qld 2028) and the only
@@ -215,188 +304,6 @@ P(ALP majority) **14.2%**, a median loss of 21 seats from the 56 won in 2022.
   other more closely than pure sampling error permits at n=2500. That is the
   herding signature. The noise is now floored at the binomial bound and the
   party-cycle reported, rather than the model inheriting false precision.
-
-## After the merge, 2026-08-15 — publishing and plumbing
-
-- **The forecast is published.** `scripts/build_page.R` + `page-template.html`
-  produce a self-contained `output/victoria-2026.html` with no external
-  requests. It leads with the pendulum, and publishes the calibration table,
-  the four rejected improvements and five caveats alongside the numbers.
-- **One command runs everything.** `scripts/run_all.R`, ~5 minutes, freshness
-  checked before any computing, each stage in its own R process, every
-  pre-registered check echoed, stops on first failure.
-- **CI runs `R CMD check` and the tests on every push.** 217 assertions run
-  with the anchor clone absent (15 skip); the workflow asserts a floor so an
-  "everything skipped" run cannot pass silently.
-- **ARCHITECTURE.md** records the load-bearing decisions and the five hazard
-  classes that have actually bitten.
-
-Three bugs found by checking rather than assuming:
-
-1. **Half the page was not drawing.** jsonlite emits a data.table as an array
-   of ROW objects; three chart blocks read them as column arrays. The seat
-   histogram threw, which — same script, sequential — also killed the trend
-   chart, its legend and both tables. `node --check` passed (valid syntax) and
-   the browser showed the top of the page fine. Caught by running the page's
-   own script against a DOM stub in Node and asserting every target populates.
-   Blocks are now isolated and a failed chart says so visibly.
-2. **A test guard was answering about the wrong directory.** `skip_if_no_anchor()`
-   rebuilt the data path by hand instead of asking `anchor_data_path()`, so a
-   CI dry-run reported 217 passed / 0 skipped / 0 failed — green, and
-   meaningless.
-3. **The freshness message asserted a cause it could not know** ("pull the
-   clone"). NSW was flagged at 45 days; the clone was three commits behind,
-   pulling changed no poll data at all. Nobody is polling NSW 19 months out.
-   It now distinguishes "our copy is old" from "no new polls" using the source
-   file's own mtime.
-
-## Review gate, 2026-08-15 — one real leak, and what it moved
-
-Five scoped Sonnet reviewers over the whole package before the first PR.
-Seven findings, all verified against the code before acting. The three that
-mattered:
-
-**Preference-flow leakage in the backtest.** `build_projection_data()` looked
-up flows for the election year being backtested, so `derive_tpp()` converted
-every horizon's first preferences using the flows observed AT that election —
-the realised distribution, published only after the count. Two years out, the
-trend was being scored with a number nobody could have had. Now keyed to
-`y - 1`. The fix moved the trend weight at 30 days from **0.57 to 0.52**,
-exactly the predicted direction: the leak had been inflating measured trend
-accuracy and buying the trend more weight than it earned.
-
-**The published intervals were not the ones validated.** Coverage was checked
-with `projection_loo()`'s held-out spread, but `project_result()` shipped
-`sd_err` from the in-sample fit, which is smaller by construction — so the
-bands quoted were narrower than the bands certified. `fit_projection_mix()`
-now returns `sd_err_loo` and that is what `projection_params()` uses.
-
-**Fold-wise standardisation in `ridge_loo()`.** Centre and scale were computed
-once on all rows, letting the held-out election influence the scale of the
-model predicting it. Narrower than a full leave-one-out violation, since the
-response was already re-centred per fold, but it flattered `loo_mae` most for
-the categories with as few as 10 elections.
-
-Four more, all guards rather than wrong numbers: a party polling 0.0
-everywhere with no prior result produced `NaN` priors and an opaque Cholesky
-failure; a seat missing `sRegion` killed the simulation with "invalid
-arguments"; blanket `tryCatch` around `load_polls()` would have let a corrupt
-region vanish while every check still printed PASS; and
-`load_election_cycles()` was the last loader still using `fread`, which stops
-early on a ragged row — the bug that once cost 38% of the fundamentals
-training data.
-
-`build_projection_data()` now returns a `skipped` attribute distinguishing
-"too thin" from "errored", and `fit_projection.R` fails on any error skip.
-`fit_scorecard.R` asserts it fitted every eligible cycle, not merely some.
-
-Also corrected: `load_seats()`'s roxygen still described `margin` as the
-INCUMBENT's, the buggy reading that gave Labor 82 of 83 seats at zero swing,
-contradicting `seat_alp_tpp()` five functions below. A maintainer reading only
-the loader's docs would have reintroduced it.
-
-## Pollster scorecard (2026-08-15) — `scripts/fit_scorecard.R`
-
-The differentiator identified in the feature review: nobody in Australia
-publishes pollster house effects, noise and accuracy as a maintained,
-comparable table, and we compute all three as a byproduct. Built over 41
-cycles across federal, NSW, Victoria and Queensland; 163 final-poll
-observations across 39 elections.
-
-**Final-poll accuracy** is the solid column and needs no model — each firm's
-last published two-party figure inside 30 days, against the actual result.
-ReachTEL 0.81 mean absolute error (6 elections), Newspoll 1.53 over 25,
-Essential 1.51 over 11, face-to-face Morgan 3.07 over 8.
-
-**Lean is published as a within-cycle relative position, NOT as a claim about
-who will be right.** The check that would have licensed the stronger claim —
-does a firm's fitted lean predict which way it misses? — is suggestive but
-not established: r = +0.35, p = 0.14 across 19 firms.
-
-That number came from fixing a bad test. As pre-registered, C3 required only
-`cor > 0`, which any noise passes half the time, and it returned r = +0.08.
-The fault was comparing raw final-poll errors, which are dominated by how
-wrong the WHOLE FIELD was — 2019 missed by about three points for everyone —
-swamping any single firm's relative lean. Comparing each firm against the
-others polling the SAME election lifts it to +0.35, the right size and
-direction, but 19 firms is not enough to confirm it.
-
-One result does line up with something already known: face-to-face Morgan
-shows the largest Labor lean (+1.24) AND the largest relative final-poll
-overstatement of Labor (+1.70). Morgan's face-to-face series was famously
-Labor-leaning, and the two independent routes both find it.
-
-**Herding is weaker than the Victorian result suggested.** Only 2 of 19 firms
-sit below the binomial sampling floor on Labor first preferences, both
-Newspoll variants and both marginal (ratios 0.92 and 0.98). The earlier
-sub-binomial finding was Victorian One Nation — a small party in one cycle —
-and does not generalise to the majors.
-
-That check also had to be rewritten. The first version read the per-firm
-noise FACTORS as a herding measure, but those are relative, normalised so the
-average pollster sits at 1. A factor of 0.7 means "quieter than other
-Australian pollsters", which says nothing about sampling theory if the whole
-field is quiet. `pollster_noise_vs_binomial()` now compares each firm's
-implied ABSOLUTE poll-to-poll sd with the binomial floor at the level the
-party actually polled.
-
-## Negative result: the bias correction was making things worse (2026-08-15)
-
-The projection subtracted a per-horizon bias, fitted on past elections, from
-every forecast. Held out, that made it **worse at every one of the five
-horizons** — MAE 2.173 with the correction against 2.126 without.
-
-The in-sample bias is +0.3 to +0.5 points with a standard error near 0.37, so
-it was never distinguishable from zero. Subtracting a noisy estimate of
-roughly nothing adds variance and removes none. `project_result()` now
-defaults to `debias = FALSE`; the value is still reported as a diagnostic,
-and `fit_projection.R` asserts that the correction does not help, so if it
-ever starts to the check fails and we look again.
-
-Worth noting the direction: this MOVED the Victorian forecast, from 46.3 to
-46.8 two-party and from 33 seats to 35. A correction that could not be
-distinguished from noise was shifting the headline by half a point of vote
-and two seats.
-
-## Negative result: fat-tailed poll noise does not help (2026-08-15)
-
-Student-t observation noise was the last big item on the trend side and the
-principled fix for outlier handling. It is **built, tested and NOT enabled by
-default**, because it was tested against the eventual result and did not help.
-
-Across the same 195 (election, horizon) pairs, only the observation model
-changing:
-
-| | MAE vs actual |
-|---|---|
-| Gaussian | **2.779** |
-| Student-t, nu = 4 | 2.791 |
-
-Better at 3 of 5 horizons, better on 107 of 195 individual rows, sign test
-p = 0.197. Statistically indistinguishable, point estimate marginally worse.
-
-**The interesting part is why.** It is not that the reweighting does nothing:
-10% of real polls fall below weight 0.5, against the ~1.4% clean Gaussian
-data would produce, so the residuals genuinely do have fat tails. Discounting
-those polls just does not improve the forecast — which means they carry
-signal, not error.
-
-That fits the herding finding exactly. Australian poll noise is often BELOW
-the binomial sampling floor (see the Victorian One Nation result), i.e.
-pollsters agree with each other more than sampling theory permits. In a
-herded field the poll that disagrees is the informative one, and
-down-weighting it discards the very observation worth most.
-
-This sharpens the criticism of theswingison's outlier rule beyond what was
-argued before. Penalising a poll for deviating from local consensus is not
-merely "herding by construction" — on this evidence it actively discards the
-most informative polls. Our own version, discounting by residual size through
-the likelihood, is the principled form of the same idea and still does not
-pay. Neither should be used.
-
-Available via `fit_trend(..., nu = 4)` for anyone who wants it; the machinery
-(a scale-mixture reweighting of the exact solve, so no MCMC) is sound and has
-tests showing it beats the Gaussian fit under genuine contamination.
 
 ## Where seat-count uncertainty actually comes from (measured 2026-08-15)
 
