@@ -22,6 +22,11 @@ stopifnot(file.exists("scripts/page-template.html"))
 # the trend chart, the mix table and the scorecard came from old numbers.
 # Requiring each input to be newer than the poll data it was derived from
 # catches that without needing a run-id system.
+# trend-vic-2026.csv is no longer READ -- the chart is drawn from this
+# script's own fit -- but it is still required, deliberately. Its presence and
+# freshness are how we know fit_vic.R ran and its V1-V5 validation checks
+# passed on this poll data. Publishing without that having happened is exactly
+# what the ordering guard exists to prevent.
 INPUTS <- c("output/projection-mix.csv", "output/trend-vic-2026.csv",
             "output/pollster-scorecard.csv")
 missing <- INPUTS[!file.exists(INPUTS)]
@@ -66,7 +71,25 @@ leader_days <- as.integer(Sys.Date() - leader_last$date)
 # n_polls is filled in below, once the cycle's polls are loaded.
 
 # --- trend series (weekly) + polls ---
-tr <- fread("output/trend-vic-2026.csv")
+#
+# ONE fit for the chart, the first preferences and the headline.
+#
+# The chart used to be read from output/trend-vic-2026.csv, which fit_vic.R
+# writes using estimated per-cycle sigmas and per-pollster noise factors, while
+# the headline came from trend_as_at() below, which uses neither. Same page,
+# two models: first preferences that differed by up to 0.54 points on Others
+# and 0.37 on One Nation from the fit the headline was built on, so a reader
+# adding up the published numbers could not reproduce the published result.
+# See docs/reviews/two-model-paths-2026-08-16.md -- the deeper question, which
+# of the two models SHOULD be published, is separate work.
+polls <- load_polls("vic")
+pri <- load_prior_results(); kp <- pri$region == "vic" & pri$year == 2026
+priors <- setNames(pri$prev1[which(kp)], pri$party[which(kp)])
+fl <- flows_for(load_preference_flows(), 2026, "vic", quiet = TRUE)
+now <- trend_as_at(polls, 2026, cycles, Sys.Date(), priors, fl,
+                   with_series = TRUE)
+stopifnot(!is.null(now), !is.null(now$series), nrow(now$series) > 0)
+tr <- data.table::copy(now$series)
 tr[, date := as.Date(date)]
 wk <- tr[format(date, "%w") == "0" | date == max(date)]
 series <- lapply(split(wk, wk$party), function(d)
@@ -75,7 +98,6 @@ series <- lapply(split(wk, wk$party), function(d)
        lo = round(d$lo95, 2), hi = round(d$hi95, 2)))
 names(series) <- NULL
 
-polls <- load_polls("vic")
 cp <- cycle_polls(polls, 2026, cycles)
 pl <- rbindlist(lapply(c("ALP", "LNP", "GRN", "ONP", "OTH"), function(p) {
   v <- cp[!is.na(get(p)), .(date, firm, v = get(p))]
@@ -91,10 +113,6 @@ m_tpp <- fit_fundamentals(fdat, "@TPP")
 live <- build_fundamentals_data(polled_only = FALSE, require_actual = FALSE)
 kf <- live$region == "vic" & live$year == 2026 & live$party == "@TPP"
 fund <- predict_fundamentals(m_tpp, live[which(kf), ])
-pri <- load_prior_results(); kp <- pri$region == "vic" & pri$year == 2026
-priors <- setNames(pri$prev1[which(kp)], pri$party[which(kp)])
-fl <- flows_for(load_preference_flows(), 2026, "vic", quiet = TRUE)
-now <- trend_as_at(polls, 2026, cycles, Sys.Date(), priors, fl)
 # Every headline figure on the page descends from these three. A non-finite
 # value here propagates to NA, serialises to null, and JS then coerces null to
 # 0 in arithmetic — so a broken fundamentals prediction would publish "0%

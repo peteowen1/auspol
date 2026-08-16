@@ -4,7 +4,19 @@
 \alias{trend_as_at}
 \title{Trend-derived ALP two-party share as it would have looked on a given date}
 \usage{
-trend_as_at(polls, year, cycles, as_at, priors, flows, min_polls = 8, nu = Inf)
+trend_as_at(
+  polls,
+  year,
+  cycles,
+  as_at,
+  priors,
+  flows,
+  min_polls = 8,
+  nu = Inf,
+  with_series = FALSE,
+  sigmas = c("default", "per_cycle"),
+  ...
+)
 }
 \arguments{
 \item{polls}{All polls for a region, from \code{\link[=load_polls]{load_polls()}}.}
@@ -21,9 +33,30 @@ trend_as_at(polls, year, cycles, as_at, priors, flows, min_polls = 8, nu = Inf)
 
 \item{nu}{Student-t degrees of freedom for the observation model, passed to
 \code{\link[=fit_trend]{fit_trend()}}; \code{Inf} is the Gaussian fit.}
+
+\item{with_series}{Also return the full fitted series (\code{series}), in the
+same long shape \code{fit_vic.R} writes: \code{party}, \code{date}, \code{mean}, \code{lo95},
+\code{hi95}, including \code{TPP_ALP}. The page needs this so its chart and its
+headline come from the same fit.}
+
+\item{sigmas}{\code{"default"} uses \code{\link[=fit_trend]{fit_trend()}}'s default volatility for every
+cycle -- what the published forecast does today. \code{"per_cycle"} estimates
+it from each cycle's own polls up to the cutoff, shrunk toward those
+defaults. \strong{Measured 2026-08-16 and the default won}: per-cycle gained
+0.0041 held-out MAE against a pre-registered 0.02 bar, for 33x the
+runtime, with no consistent pattern by horizon. Kept as a non-default,
+re-runnable comparison arm, not as a recommendation. See
+docs/reviews/backtest-model-comparison-2026-08-16.md.}
+
+\item{...}{Passed through to \code{\link[=fit_trend]{fit_trend()}} via \code{\link[=fit_cycle_trends]{fit_cycle_trends()}}, which
+is how a prior is varied when tuning it by held-out error. Names this
+function binds itself -- \code{parties}, \code{overrides}, \code{polls}, \code{party},
+\code{priors} -- are refused rather than silently swallowed; see the guard at
+the top of the body.}
 }
 \value{
-List: \code{tpp}, \code{fp} (named vector), \code{n_polls}; or NULL if too thin.
+List: \code{tpp}, \code{fp} (named vector), \code{n_polls}, and \code{series} if
+requested; or NULL if too thin.
 }
 \description{
 Refits from scratch on polls up to \code{as_at} only.

@@ -10,7 +10,9 @@ build_projection_data(
   min_year = 1990,
   min_polls = 8,
   nu = Inf,
-  verbose = TRUE
+  verbose = TRUE,
+  sigmas = c("default", "per_cycle"),
+  ...
 )
 }
 \arguments{
@@ -25,6 +27,15 @@ build_projection_data(
 \item{nu}{Student-t degrees of freedom, passed through to \code{\link[=trend_as_at]{trend_as_at()}}.}
 
 \item{verbose}{Print progress (this is the slow step).}
+
+\item{sigmas}{Passed to \code{\link[=trend_as_at]{trend_as_at()}}: \code{"default"} or \code{"per_cycle"}.}
+
+\item{...}{Passed through to \code{\link[=fit_trend]{fit_trend()}} via \code{\link[=fit_cycle_trends]{fit_cycle_trends()}}. This
+is how a prior is varied when tuning it by held-out error -- see
+\code{scripts/tune_szc.R}. Deliberately NOT a list of named priors with their
+own defaults: every default repeated here is a second copy that can drift
+from the one in \code{\link[=fit_trend]{fit_trend()}}, which is the hazard docs/CONSTANTS.md
+exists to track. One default, in one place.}
 }
 \value{
 data.table: \code{year}, \code{region}, \code{horizon}, \code{trend_tpp}, \code{actual_tpp},

@@ -14,6 +14,8 @@ fit_trend(
   sigma_house_pts = 3,
   min_firm_polls = 3,
   firm_factors = NULL,
+  szc_sd_pts = 1.5,
+  want_var = TRUE,
   nu = Inf,
   nu_iter = 25L,
   nu_tol = 1e-04
@@ -45,6 +47,24 @@ scale-appropriate default from \code{\link[=default_sigmas]{default_sigmas()}}.}
 
 \item{firm_factors}{Named vector of per-firm noise sd multipliers from
 \code{\link[=estimate_firm_factors]{estimate_firm_factors()}}; unnamed firms get 1.}
+
+\item{szc_sd_pts}{Strength of the soft sum-to-zero constraint on house
+effects, in percentage points. House effects are identified only up to a
+constant -- lifting every pollster a point and dropping the latent trend a
+point fits identically -- so something must pin the level, and this is it.
+It encodes how far the polling industry as a WHOLE may sit from the truth:
+small values assert the field is collectively unbiased, large values let it
+drift together. Hand-set at 0.3 and never measured; exposed here so it can
+be varied and tested at all. Translated to the fitted scale by
+\code{\link[=sd_to_link]{sd_to_link()}} -- passing a points value straight through as log-odds is
+about 20x too weak, which has happened. See docs/CONSTANTS.md.}
+
+\item{want_var}{Compute the posterior VARIANCE, and so the credible bands.
+\code{TRUE} for anything that plots or publishes a band. \code{FALSE} when only the
+mean is read -- the backtest refits ~200 times and uses endpoint means
+only, and profiling puts \code{Matrix::solve()} + \code{diag()} for the variance at
+31\% of the run. The means are unaffected: it is the same solve either way,
+with one extra step skipped.}
 
 \item{nu}{Degrees of freedom for a Student-t observation model. \code{Inf}
 (the default) is the Gaussian fit and is bit-for-bit unchanged. A finite
