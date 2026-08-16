@@ -293,6 +293,16 @@ default_sigmas <- function(scale = c("logit", "points")) {
 #'   "(other firms)" house effect.
 #' @param firm_factors Named vector of per-firm noise sd multipliers from
 #'   [estimate_firm_factors()]; unnamed firms get 1.
+#' @param szc_sd_pts Strength of the soft sum-to-zero constraint on house
+#'   effects, in percentage points. House effects are identified only up to a
+#'   constant -- lifting every pollster a point and dropping the latent trend a
+#'   point fits identically -- so something must pin the level, and this is it.
+#'   It encodes how far the polling industry as a WHOLE may sit from the truth:
+#'   small values assert the field is collectively unbiased, large values let it
+#'   drift together. Hand-set at 0.3 and never measured; exposed here so it can
+#'   be varied and tested at all. Translated to the fitted scale by
+#'   [sd_to_link()] -- passing a points value straight through as log-odds is
+#'   about 20x too weak, which has happened. See docs/CONSTANTS.md.
 #' @param nu Degrees of freedom for a Student-t observation model. `Inf`
 #'   (the default) is the Gaussian fit and is bit-for-bit unchanged. A finite
 #'   value — 4 is the usual choice — lets a rogue poll be discounted by the
@@ -325,6 +335,7 @@ fit_trend <- function(polls, party,
                       sigma_house_pts = 3,
                       min_firm_polls = 3,
                       firm_factors = NULL,
+                      szc_sd_pts = 0.3,
                       nu = Inf, nu_iter = 25L, nu_tol = 1e-4) {
   scale <- match.arg(scale)
   defs <- default_sigmas(scale)
@@ -337,7 +348,8 @@ fit_trend <- function(polls, party,
   # Gaussian pass first; with nu = Inf this is the whole fit and the weights
   # stay exactly one, so the default path is unchanged.
   sol <- trend_solve(prep, sigma_obs, sigma_rw, sigma_house_pts, anchor,
-                     firm_factors = firm_factors, want_var = TRUE)
+                     firm_factors = firm_factors, want_var = TRUE,
+                     szc_sd_pts = szc_sd_pts)
   obs_w <- rep(1, nrow(prep$obs))
   nu_iters <- 0L
   if (is.finite(nu)) {
@@ -351,7 +363,7 @@ fit_trend <- function(polls, party,
       obs_w <- w_new
       sol <- trend_solve(prep, sigma_obs, sigma_rw, sigma_house_pts, anchor,
                          firm_factors = firm_factors, want_var = TRUE,
-                         obs_weight = obs_w)
+                         szc_sd_pts = szc_sd_pts, obs_weight = obs_w)
       if (delta < nu_tol) break
     }
   }
