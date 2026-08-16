@@ -1,3 +1,57 @@
+# auspol 0.4.0
+
+Every hard-coded number in the model is now inventoried, and the ones that
+could be estimated have been.
+
+## Constants
+
+- `docs/CONSTANTS.md` -- the complete inventory: every constant in `R/` and
+  `scripts/`, what it does, whether it *can* come from data, and its status.
+  A constant missing from that file is a bug in that file.
+- **`szc_sd_pts` 0.3 -> 1.5** -- how far the polling industry as a whole may
+  sit from the truth. Two independent lines agree: the consensus of final
+  polls against the result across 147 party-elections gives sd 1.61, and
+  held-out error over a pre-registered grid falls 2.0850 to 2.0588.
+- **`sigma_house_pts` stays at 3** -- the outright minimum of a smooth U, so
+  the hand-set value was right. Tested rather than assumed.
+- `tune_prior()` / `report_tuning()` -- shared machinery for moving a constant
+  from asserted to estimated, so each new one costs a grid and a
+  pre-registration rather than a copied script.
+- Three constants (`k0` twice, `clip`) **cannot** be judged by forecast error,
+  because none of them reaches the forecast. Recorded with what they need
+  instead.
+
+## Measured negative results
+
+- **The fuller trend model does not forecast better.** Per-cycle volatility
+  gained 0.0041 held-out MAE against a 0.02 bar, for 33x the runtime, with
+  alternating signs by horizon. The published forecast loses nothing by using
+  the simpler model.
+
+## Performance
+
+- The backtest computed the full posterior variance ~200 times and read only
+  the means. `fit_trend(want_var = )` makes that optional: **40% faster on the
+  hot path, identical to machine precision**; the pipeline drops 122 s to 96 s.
+
+## Fixes
+
+- The page drew its chart from one model fit and its headline from another --
+  first preferences up to 0.54 points from the fit the headline was built on,
+  so a reader adding them up could not reproduce the result. One fit now feeds
+  the chart, the first preferences and the headline.
+- `overrides` passed through the new `...` plumbing raised an argument-matching
+  error that `tryCatch` swallowed into a `NULL`, which the backtest recorded as
+  "too few polls" -- a bug removing election-horizon pairs with a reassuring
+  reason attached.
+- `house_effects$sd` was silently dropped rather than set to `NA` when the
+  variance solve was skipped; `data.table` removes a column assigned `NULL`.
+- `scale_breaches()` returned `NA` on a band-less fit, so its caller's length
+  check did not short-circuit and the validity guard was silently disabled.
+- `tune_prior()` accepted a parameter name belonging to a different function,
+  which would have tuned the wrong quantity and reported a confident verdict
+  about an unintended experiment.
+
 # auspol 0.3.0
 
 The forecast's assumptions are now estimated from the record rather than taken
