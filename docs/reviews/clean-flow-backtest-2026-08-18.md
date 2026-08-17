@@ -64,8 +64,13 @@ The estimator is vindicated. **The input record is not.**
 the actual 2022 count gives **79.2** across 29 districts and 211,842 ballots
 ([vic-preference-flows-2026-08-18.md](vic-preference-flows-2026-08-18.md)).
 That is a wrong observation feeding a correct estimator, and correcting it
-would move the 2026 Victorian Greens estimate and therefore the published
-two-party figure — sized at **0.564 points**.
+would move the 2026 Victorian Greens estimate — except that it does **not**.
+
+**Sizing corrected 2026-08-18: the effect is zero.** Victoria 2022 is the
+seventh most recent Greens observation and is not among the five the estimate
+averages (SA 2026, FED 2025, WA 2025, QLD 2024, NSW 2023). The earlier figure
+of 0.564 points assumed the flow itself became 79.2, which is not how
+`estimate_flow()` works. The record error is verified and inert.
 
 Twenty-eight other duplicates remain unverified. Only the Victorian 2022 Greens
 figure has been checked against a real count. Western Australian Nationals at

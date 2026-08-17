@@ -47,17 +47,37 @@ and over 211,000 ballots — and it is the exact configuration the model's
 scalar describes: a Greens candidate excluded in a Labor-versus-Coalition
 contest.
 
-**Sized on the published two-party figure**, holding everything else fixed:
+> ### ⚠ SIZING CORRECTED 2026-08-18 — the effect on the published number is ZERO
+>
+> This section first sized the discrepancy at **−0.564 points** of published
+> two-party vote. **That was wrong, on two counts**, and the corrected answer
+> changes whether the finding is worth acting on.
+>
+> 1. It assumed the model's flow *becomes* 79.2. It does not. `estimate_flow()`
+>    returns the **mean of the five most recent observed elections for that
+>    party, pooled across regions**, so one changed input moves the estimate by
+>    at most a fifth of its own change.
+> 2. **Victorian 2022 is not among those five.** Asking the function directly,
+>    the 2026 Victorian Greens estimate of 83.461 is built from
+>    **SA 2026, FED 2025, WA 2025, QLD 2024, NSW 2023**. Victoria 2022 is the
+>    seventh most recent Greens observation and fell out of the window when
+>    South Australia voted in March.
+>
+> **Correcting the Victorian 2022 record therefore moves the published forecast
+> by exactly nothing.** The record error is real and verified; it is also inert.
+>
+> What the check did surface is more interesting than the error: **the
+> Victorian Greens flow is estimated with no Victorian data in it at all.** The
+> pooled estimate is 83.461 against a measured Victorian value of 79.2 — a
+> 4.26-point gap between what the model assumes for Victoria and what Victoria
+> actually did. Whether that argues for region-awareness is answered below, and
+> the answer is no: `last_in_region` was the method most flattered by
+> carried-forward targets and fell from 2nd to 6th once they were removed
+> ([clean-flow-backtest-2026-08-18.md](clean-flow-backtest-2026-08-18.md)).
 
-| GRN flow | published ALP two-party |
-|---:|---:|
-| 83.5 (current) | 49.185 |
-| 79.2 (measured) | 48.621 |
-| | **−0.564** |
-
-For comparison, the One Nation flow question that occupied 2026-08-15 was worth
-+1.0, and the `szc_sd_pts` change adopted on 2026-08-16 was worth 1.3% of
-held-out error. This is over half the former.
+For reference, the arithmetic that produced the withdrawn figure: at a
+renormalised Greens share of 13.12%, a flow moving 83.5 → 79.2 would be worth
+0.564 points **if the flow itself moved**, which it does not.
 
 **Caveat, and it is not small.** 79.2 is measured across the 29 districts where
 the Greens were excluded with exactly Labor and the Coalition remaining. That is

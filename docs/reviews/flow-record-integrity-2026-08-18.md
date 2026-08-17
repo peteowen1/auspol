@@ -49,8 +49,10 @@ our own target state. Nobody had checked.
 
 The estimator was chosen by a strict temporal backtest over 103 elections
 (`scripts/backtest_flows.R`), scoring each candidate method against the
-recorded value. **Of the 118 backtest targets from 2004 on, 22 (19%) are
-identical to the immediately preceding value in their own series.**
+recorded value. **Of the 121 observed rows from 2004 on, 20 (17%) are identical to the
+immediately preceding value in their own series.** (First reported here as
+19% of 118, by counting rows the backtest's `is_observed_election()` filter
+never uses. Corrected against the package's own filter.)
 
 A target that is a *copy of a prior input* is free money for any method that
 predicts persistence, and a penalty for any method that moves away from the
@@ -64,18 +66,19 @@ last value. The ranking that resulted:
 | 6 | linear trend | 5.282 |
 
 The top three are all persistence estimators, separated by 0.2 MAE, on a
-target set where 19% of cases reward persistence by construction.
+target set where 17% of cases reward persistence by construction.
 
-**This may also resolve a puzzle already recorded in `NEXT-STEPS.md`:** that
-the linear trend came sixth *"though the trends are real and strong — Greens
-+1.10 points/year over 53 elections, One Nation −0.605 over 21, both
-p < 0.001."* A trend method is penalised on exactly the contaminated cases,
-because a carried-forward target has by definition zero trend.
+~~**This may also resolve a puzzle already recorded in `NEXT-STEPS.md`:** that
+the linear trend came sixth despite the trends being real and strongly
+significant.~~ **Withdrawn 2026-08-18 — tested and false.** The trend ranks
+6, 5, 7 across the three cleaning variants and is no better on clean targets.
+The existing leave-one-out explanation stands. See
+[clean-flow-backtest-2026-08-18.md](clean-flow-backtest-2026-08-18.md).
 
 ## What is established and what is not
 
 **Established:**
-- 14% of the record duplicates earlier values; 19% of backtest targets do.
+- 14% of the record duplicates earlier values; 17% of rows from 2004 on do.
 - At least one duplicate is demonstrably wrong: Victorian 2022 Greens is
   recorded as 81.94 and measured at 79.2.
 - The contamination mechanically favours persistence estimators.
@@ -95,5 +98,13 @@ Check `G3` re-runs this backtest every pipeline run and fails if the adopted
 estimator stops winning. It has been passing against a contaminated target set,
 so it has been confirming a choice rather than testing it.
 
-The published two-party figure depends on these flows. The Victorian Greens
-error alone is worth **0.564 points** of published ALP two-party vote.
+The published two-party figure depends on these flows.
+
+> **Sizing corrected 2026-08-18.** This section first said the Victorian Greens
+> error was worth **0.564 points** of published two-party vote. It is worth
+> **zero**. `estimate_flow()` averages the five most recent observed elections
+> for a party pooled across regions, and Victoria 2022 is the *seventh* most
+> recent Greens observation — the 2026 Victorian estimate is built from SA 2026,
+> FED 2025, WA 2025, QLD 2024 and NSW 2023. The record error is real and
+> verified; it is also inert. Details in
+> [vic-preference-flows-2026-08-18.md](vic-preference-flows-2026-08-18.md).
