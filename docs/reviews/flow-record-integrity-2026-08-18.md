@@ -11,8 +11,14 @@ should update the estimator.
 of a party's five most recent observed elections". Auditing every region-party
 series in that file:
 
-**29 of 211 rows (14%) are exact repeats of an earlier value in the same
-series.** Not similar — identical, to every decimal place.
+**27 of the 202 observed rows (13.4%) are exact repeats of an earlier value
+in the same series** — 29 of the 211 rows in the file, before the
+observed-election filter. Not similar: identical, to every decimal place.
+
+Reproducible via `scripts/audit_flow_record.R`, added 2026-08-18 because the
+first audit was ad hoc and a later run of the same logic disagreed with the
+figures already written here. An audit whose answer depends on when it ran is
+not an audit.
 
 | region | party | value | times | years |
 |---|---|---:|---:|---|
@@ -49,10 +55,14 @@ our own target state. Nobody had checked.
 
 The estimator was chosen by a strict temporal backtest over 103 elections
 (`scripts/backtest_flows.R`), scoring each candidate method against the
-recorded value. **Of the 121 observed rows from 2004 on, 20 (17%) are identical to the
-immediately preceding value in their own series.** (First reported here as
-19% of 118, by counting rows the backtest's `is_observed_election()` filter
-never uses. Corrected against the package's own filter.)
+recorded value. **Of the 121 observed rows from 2004 on, 20 (16.5%) are identical to the
+immediately preceding value in their own series**; 21 (17.4%) repeat some
+earlier value. The immediate measure is the one that matters here, since that
+is what a persistence estimator gets for free.
+
+(Reported first as "19% of 118", which counted rows `is_observed_election()`
+never uses, and then as "20 of 121 (17%)" alongside a wrong total of 205
+observed rows. Both superseded by `scripts/audit_flow_record.R`.)
 
 A target that is a *copy of a prior input* is free money for any method that
 predicts persistence, and a penalty for any method that moves away from the
@@ -66,7 +76,7 @@ last value. The ranking that resulted:
 | 6 | linear trend | 5.282 |
 
 The top three are all persistence estimators, separated by 0.2 MAE, on a
-target set where 17% of cases reward persistence by construction.
+target set where 16.5% of cases reward persistence by construction.
 
 ~~**This may also resolve a puzzle already recorded in `NEXT-STEPS.md`:** that
 the linear trend came sixth despite the trends being real and strongly
@@ -78,7 +88,8 @@ The existing leave-one-out explanation stands. See
 ## What is established and what is not
 
 **Established:**
-- 14% of the record duplicates earlier values; 17% of rows from 2004 on do.
+- 13.4% of the observed record duplicates an earlier value; 16.5% of rows
+  from 2004 on duplicate the immediately preceding one.
 - At least one duplicate is demonstrably wrong: Victorian 2022 Greens is
   recorded as 81.94 and measured at 79.2.
 - The contamination mechanically favours persistence estimators.

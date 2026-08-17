@@ -22,10 +22,15 @@ Every MAE rises on the clean set, which is the expected direction: a
 carried-forward target is trivially predictable, so removing those makes the
 task harder for every method at once.
 
-Corrected contamination figures, using the package's own
-`is_observed_election()` filter rather than the raw file: **29 of 205 observed
-rows (14%)**, and **20 of 121 rows from 2004 on (17%)**. The earlier audit said
-19% of 118 by counting unobserved rows the backtest never uses.
+Contamination figures, from `scripts/audit_flow_record.R` (added 2026-08-18 so
+these are reproducible): of **202 observed rows**, 27 (13.4%) repeat an earlier
+value and 26 (12.9%) repeat the immediately preceding one. Of the **121 rows
+from 2004 on**, 21 (17.4%) and **20 (16.5%)** respectively.
+
+Two earlier statements of this were wrong and are superseded: "19% of 118"
+counted rows the observed-election filter never uses, and "29 of 205 observed
+rows" wrongly counted the 2026 Victorian rows — the election being forecast —
+as observed.
 
 ## The mechanism was real, and it was hitting a different method
 
