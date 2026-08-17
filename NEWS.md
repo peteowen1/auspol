@@ -1,3 +1,67 @@
+# auspol 0.4.5
+
+Measurement and corrections. No model behaviour changes, no forecast number
+moves. One new script.
+
+## Added
+
+- **`scripts/audit_flow_record.R`** — reports carried-forward duplicates in the
+  observed preference-flow record, under two explicit definitions, with the
+  `as_of` date printed. Exists because the first audit of this was ad hoc and a
+  later run of the same logic disagreed with figures already written into
+  `docs/reviews/`. An audit whose answer depends on when it ran is not an audit.
+
+## Measured
+
+All 88 VEC districts fetched and parsed: **452 exclusion events across 76
+districts, every one reconciling exactly** against the excluded candidate's
+pile. Candidate-level, so each minor party and independent is excluded
+separately. The data is **not committed** — the VEC publishes no licence and
+its copyright page 404s, and `R/paths.R` already states this convention for the
+anchor's data.
+
+- **The model's Greens preference flow is 4.3 points too generous to Labor**:
+  79.2 measured across 29 districts and 211,842 ballots, against 83.5 used.
+  Not changed — the estimator producing 83.5 was chosen by pre-registered
+  temporal backtest, and substituting one election's observation after the fact
+  is what that pre-registration prevents.
+- **13.4% of the observed flow record is carried-forward duplicates.** Western
+  Australian Nationals sit at exactly 5.0 for ten consecutive elections.
+  Victorian Others is 49.25 three times. One is demonstrably wrong: Victorian
+  2022 Greens, recorded 81.94, measured 79.2.
+- **The estimator survives cleaning.** `mean_last5` wins all three
+  pre-registered variants. But `last_in_region` sat 0.048 MAE off the winner on
+  the raw target set and fell to 0.727 behind — second place to sixth — once
+  carried-forward targets were removed. Its second place was substantially an
+  artefact of duplicated data.
+- **The OTH bucket blends opposite behaviours**: independents flow to Labor at
+  61.1%, minor-right at 35.4%, against a single assumed 48.872. Per-seat implied
+  flow ranges 37.1–58.7. This affects nothing published — `simulate_seats()`
+  reads the anchor's notional margins, which come from the actual count — but it
+  is a prerequisite for any primary-vote rebuild.
+
+## Corrected
+
+Three sizing errors, all found and fixed this cycle:
+
+1. **"Correcting the Victorian flow record is worth 0.564 points of published
+   two-party vote."** It is worth **zero**. `estimate_flow()` averages the five
+   most recent observed elections pooled across regions, and Victoria 2022 is
+   the *seventh* most recent Greens observation — the estimate is built from
+   SA 2026, FED 2025, WA 2025, QLD 2024 and NSW 2023.
+2. **"Contamination explains why the linear trend ranks sixth."** Tested and
+   false: it ranks 6, 5, 7 across the three variants.
+3. **The contamination figures themselves, twice** — first counting rows the
+   observed-election filter never uses, then counting the 2026 Victorian rows
+   (the election being forecast) as observed.
+
+## Withdrawn earlier, recorded here
+
+The claim that this project's preference handling beats AE Forecasts and
+theswingison. The comparison was made on the wrong axis: ours estimates a
+scalar share to Labor, theirs is keyed on who has been excluded and who
+remains. Measured flows swing by tens of points with that configuration.
+
 # auspol 0.4.4
 
 Corrections only. No code behaviour changes, no forecast number moves.
