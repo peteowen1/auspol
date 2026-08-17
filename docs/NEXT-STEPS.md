@@ -123,7 +123,7 @@ Four lessons, each of which cost something:
    surge did come out of the Liberal vote statewide — LNP fell 17 points while
    ONP rose 20 — and prior LNP share still predicts nothing at seat level.
 4. **The stripped-down-harness trap again.** The seat sweep gives Labor 47–52
-   seats against a published 35, because its implied two-party is 49.19 against
+   seats against a published 39, because its implied two-party is 49.19 against
    47.8. Same failure as 2026-08-16's sensitivity sweep. Shape usable, level
    not.
 
@@ -338,8 +338,15 @@ spread with each election held out, over 195 election-horizon pairs: nominal
 50% 54.9%. Excess kurtosis −0.17, essentially normal, so no fat-tailed or
 asymmetric error model is warranted — measured rather than assumed.
 
-**Seat forecast**: ALP **35 of 88** seats (50%: 29–41, 90%: 19–49),
-P(ALP majority) **14.2%**, a median loss of 21 seats from the 56 won in 2022.
+**Seat forecast**: ALP **39 of 88** seats (50%: 33–45, 90%: 23–51),
+P(ALP majority) **26%**, a median loss of 17 seats from the 56 won in 2022.
+
+These four figures were stale until 2026-08-17 — they read 35, 29–41, 19–49
+and 14.2%, the values from before the preference-flow estimator moved the
+published two-party from 46.8 to 47.8. The TPP line above was updated at the
+time and the seat line was not, so this file spent a day describing a
+materially more pessimistic forecast than the model produced. Source of truth
+is `output/vic-page-data.json`, and `scripts/fit_seats.R` reproduces it.
 
 ## Findings from the Victorian build worth keeping
 

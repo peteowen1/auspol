@@ -291,8 +291,14 @@ than "ONP contends in 44 seats" suggested.
 
 ## The harness does not reproduce the published baseline, so trust the shape and not the level
 
-**ALP wins 47–52 seats here against a published figure of 35.** That gap is
+**ALP wins 47–52 seats here against a published figure of 39.** That gap is
 the anchor check failing, and it is reported rather than explained away.
+
+(This section first said 35, taken from `NEXT-STEPS.md`, which was itself
+stale — the published median is 39, with 50% 33–45, 90% 23–51 and P(majority)
+26%, per `output/vic-page-data.json`. Caught in review on 2026-08-17 and
+corrected in both places. Quoting a hub instead of the artefact is how a stale
+number propagates.)
 
 Measured cause, in part: the implied statewide ALP two-party from these
 primaries and flows is **49.19** against the published **47.8** — the harness
