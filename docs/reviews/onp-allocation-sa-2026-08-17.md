@@ -238,10 +238,19 @@ they win 0 seats or 15.
 - **The SA slope is transferred**, per the flaw noted above.
 - **Narracan's 2022 election failed** — the National candidate died and a
   supplementary election was held on 28 January 2023, which Labor did not
-  contest. Its row therefore shows ALP 0.0 and an unusual minor field, and it
-  sits at the top of the Victorian minor-right list at 18.58. Excluding it
-  moves the per-seat minor-right sd from 3.54 to 3.29 and the max to 15.67
-  (Ovens Valley). Immaterial to the conclusion, but the seat needs handling.
+  contest. In the Wikipedia-sourced data used for this sizing its row therefore
+  shows ALP 0.0 and an unusual minor field, and it sits at the top of the
+  Victorian minor-right list at 18.58. Excluding it moves the per-seat
+  minor-right sd from 3.54 to 3.29 and the max to 15.67 (Ovens Valley).
+
+  **This affects this analysis only, not the model** — checked 2026-08-17
+  after an earlier draft of this file wrongly implied the repo needed a fix.
+  The anchor already resolved Narracan: `2026vic.txt` carries `fTppMargin=-13.0`
+  and `fPreviousTppSwing=-3.0`, reconciling exactly against 2022's `-10`. Its
+  deviation from the statewide swing is −0.40, **ranked 83rd of 88**, and
+  dropping it moves `sd_within` only 3.4894 → 3.5081. What it will affect is
+  any future rebuild that sources seat-level first preferences from actual
+  results, because Narracan has no ordinary 2022 first-preference count.
 
 ## The preference stage cannot be built from the data in this repo
 
@@ -354,17 +363,33 @@ non-Labor transfers reconcile **exactly** to the excluded candidate's running
 total (Elizabeth 281 + 880 = 1161; Croydon 488 + 612 = 1100; Florey
 141 + 664 = 805). **Passes.**
 
+> ## ⚠ WITHDRAWN 2026-08-18 — the conclusion in this section is unsafe
+>
+> Everything from here to the end of this section rested on a sweep that
+> **invented a 50/50 split** of Liberal preferences between One Nation and
+> Labor. That transfer decides every ONP-vs-ALP seat, and it was never
+> measured. Measured, it is **62.7% to One Nation** (see the flow matrix
+> section added below).
+>
+> The seat-count effect is therefore **unknown**, not "close to nothing". The
+> theta figure of 0.348 below is real and correctly measured — it is simply the
+> wrong lever to have hung a conclusion on.
+>
+> Recorded plainly because the withdrawn conclusion was the convenient one: it
+> made a large rebuild unnecessary, and it received less scepticism for that
+> rather than more.
+
 **The sweep put the threshold for One Nation winning any seat at theta ≈ 0.5.
 The measured value is 0.348, and the single highest observation across 27
-exclusions is 0.526.** On this evidence One Nation wins **approximately zero
-seats** — it reaches the final two in roughly half the chamber and then loses
+exclusions is 0.526.** ~~On this evidence One Nation wins **approximately zero
+seats**~~ — it reaches the final two in roughly half the chamber and then loses
 those contests on preferences.
 
-That is the answer to the question this whole line of work was asking. Building
-the primary-and-preferences model changes the **contest structure** in ~44
-seats and the **seat count** by close to nothing, because Liberal-leaning minor
-party voters do not preference One Nation heavily enough to get it over the
-line.
+~~That is the answer to the question this whole line of work was asking.
+Building the primary-and-preferences model changes the **contest structure** in
+~44 seats and the **seat count** by close to nothing, because Liberal-leaning
+minor party voters do not preference One Nation heavily enough to get it over
+the line.~~
 
 "Approximately" rather than "exactly": theta's sd of 0.155 puts the threshold
 about one standard deviation above the mean, so individual seats can and do
@@ -384,3 +409,72 @@ minors are left-leaning, far too high where they are not.
 This affects the **published two-party number today**, not just the seat model,
 and it does not depend on any of the primary-simulation work landing. It should
 be sized on its own.
+
+## The preference flow matrix, estimated (added 2026-08-18)
+
+Pete's question — *"what if it's a One Nation vs Labor final two? what ratio of
+Liberal goes to ONP instead of Labor?"* — exposed that the sweep above never
+measured the transfer that decides those seats. It used 50/50. This section is
+the evidence for the figures quoted in `docs/NEXT-STEPS.md` and at the top of
+`R/flow_model.R`, which were previously asserted there with no computation
+recorded anywhere.
+
+**Source:** all 97 exclusion events parsed from the 16 SA 2026
+distribution-of-preferences tables. Script:
+`scratchpad/sa/flow_matrix.R` (not committed — data is public, derivation is
+here).
+
+### Pooled by excluded party, ignoring who remains
+
+| Excluded | events | votes | → ALP | → LNP | → GRN | → ONP |
+|---|---:|---:|---:|---:|---:|---:|
+| GRN | 16 | 51,861 | 75.2 | 12.3 | — | 8.3 |
+| OTH | 36 | 30,639 | 21.9 | 26.7 | 18.2 | 23.8 |
+| **LNP** | **10** | **23,833** | **31.9** | — | 10.4 | **53.5** |
+| ONP | 5 | 16,820 | 38.1 | 55.2 | 6.7 | — |
+| OTH_RIGHT | 27 | 10,415 | 20.4 | 16.8 | 14.5 | 27.7 |
+| ALP | 3 | 10,552 | — | 66.2 | — | 17.8 |
+
+**The answer to the question:** of Liberal preferences going to one of Labor or
+One Nation, **62.7% go to One Nation** (53.5 / (53.5 + 31.9)). The sweep
+assumed 50%.
+
+### Conditioned on who is still standing — which is the point
+
+| Excluded → survivors | n | → ALP | → ONP |
+|---|---:|---:|---:|
+| GRN → {ALP, LNP} | 4 | 74.5 | — |
+| GRN → {ALP, ONP} | 4 | **81.5** | 18.5 |
+| GRN → {ALP, LNP, ONP} | 4 | 74.2 | 9.2 |
+| LNP → {ALP, GRN, ONP} | 5 | 30.2 | **52.4** |
+| LNP → {ALP, ONP} | 2 | 40.5 | **59.5** |
+| ONP → {ALP, LNP} | 2 | **57.0** | — |
+| ONP → {ALP, GRN, LNP} | 3 | **19.3** | — |
+
+Greens preference Labor *harder* when the alternative is One Nation than when
+it is the Liberals. One Nation's own flow to Labor swings from 19.3 to 57.0 by
+configuration, against the model's single fixed **33.7**. A scalar
+share-to-Labor cannot express any of this, which is why the claim that our
+estimated scalar beats theswingison's configuration-keyed rules was withdrawn.
+
+### Why this does not yet settle the seat count
+
+**16 districts is not enough.** 97 events spread across **28 distinct cells**,
+most with n ≤ 2. Rerunning the 88-seat Victorian count off this matrix left
+**49 transfers with no observed cell at all**, falling back to a pooled
+estimate. That run returned Labor 56 and One Nation 0 — Labor *higher* than the
+previous harness, after correcting a transfer that runs *against* Labor.
+Incoherent. **Do not quote it.**
+
+Two structural gaps remain beyond sample size:
+
+1. **Party classes, not candidates.** OTH is one bucket here. A Victorian
+   ballot carries Legalise Cannabis, Animal Justice, Family First, Freedom,
+   Victorian Socialists and independents as separate candidates, excluded one
+   at a time, preferencing in opposite directions. Collapsing them is the same
+   class of error as the invented 50/50.
+2. **One state, one election.** Estimated entirely from SA 2026.
+
+Settling the seat count needs full distribution-of-preferences tables across
+many elections — a materially larger acquisition than the first-preference
+data, and the real blocker on the rebuild.

@@ -52,11 +52,12 @@ we have not acquired it.
 2. **Uniform swing, despite having the demographics.** It does the hard work of
    booth regression and then applies a statewide swing to every seat. The
    demographic model informs the composition, not the movement.
-3. **Its poll aggregation is materially weaker than ours** and this is not a
-   close call: a Gaussian kernel average that **deliberately does not remove
-   house effects**, plus an outlier rule that penalises a poll for disagreeing
-   with local consensus — herding by construction, in a model whose own output
-   is then used to judge pollsters.
+3. ~~**Its poll aggregation is materially weaker than ours** and this is not a
+   close call:~~ **verdict withdrawn 2026-08-18 — see the correction below.**
+   Its aggregation is a Gaussian kernel average that **deliberately does not
+   remove house effects**, plus an outlier rule that penalises a poll for
+   disagreeing with local consensus — herding by construction, in a model whose
+   own output is then used to judge pollsters.
 4. **Confidence tiers, not probabilities.** It is a swing explorer answering
    "what if the vote moved like this", not "what will happen".
 
@@ -69,7 +70,25 @@ The two weaknesses are complementary, and the same fix addresses both:
 | Who contests | authored per seat | implied by booth data | **derived, and updating** |
 | Preference distribution | one national flow per party | 12 authored rules | **fitted from booth results** |
 | Seat composition | 3-level type | booth regression + AES | booth regression, validated |
-| Poll aggregation | Bayesian latent state | kernel, no house effects | **already the strongest** |
+| Poll aggregation | Bayesian latent state | kernel, no house effects | ~~already the strongest~~ never measured |
+
+> **Correction, 2026-08-18.** The "materially weaker than ours, not a close
+> call" verdict above and the "already the strongest" cell in this table are
+> both withdrawn. They are mechanism arguments promoted to verdicts without any
+> measurement in between.
+>
+> - *Holds:* we do remove systematic house effects, via a poll-count-weighted
+>   soft sum-to-zero prior (`R/trend.R:119-124`). Real and shipped.
+> - *Not independently checked:* that their aggregation does not. It rests on
+>   Pete's reading of their published method (2026-08-14), never verified
+>   against their site by whoever wrote this.
+> - *Never measured:* **our accuracy has never been compared against either
+>   reference, on any output.** Not once. Sound reasoning for why ours should
+>   track better is not evidence that it does.
+>
+> The same error — a true statement about mechanism promoted to a verdict about
+> quality — is corrected for preference flows in `docs/NEXT-STEPS.md` and at the
+> top of `R/flow_model.R`.
 
 **The unlock is booth-level results**, and they are public: the VEC publishes
 first preferences and two-candidate-preferred for every polling booth, and

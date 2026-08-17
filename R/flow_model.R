@@ -5,17 +5,30 @@
 # assumed flow moves the two-party number by 0.2. It deserves a model, not a
 # constant.
 #
-# Neither reference implementation does this. AE Forecasts hand-authors the
-# value and borrows across regions when a state has no recent data -- its file
-# literally carries `2026,vic,ONP FP,25.5,#Use federal pref flow estimate`, so
-# an assumption made once sits frozen while the world moves, and the same
-# borrowed number appears for three different future elections as though it
-# were three estimates. theswingison uses a twelve-rule hierarchy keyed on who
-# has been eliminated, with a confidence tier per rule: better than one fixed
-# rate, but still hand-authored rules that no new election can update.
+# Neither reference implementation estimates this value. AE Forecasts
+# hand-authors it and borrows across regions when a state has no recent data --
+# its file literally carries `2026,vic,ONP FP,25.5,#Use federal pref flow
+# estimate`, so an assumption made once sits frozen while the world moves, and
+# the same borrowed number appears for three different future elections as
+# though it were three estimates. theswingison uses a twelve-rule hierarchy
+# keyed on who has been eliminated, with a confidence tier per rule -- still
+# hand-authored rules that no new election can update.
 #
 # So: estimate the flow from the elections that have actually happened, and let
 # it move when the record moves.
+#
+# BUT DO NOT READ THAT AS "BETTER THAN EITHER REFERENCE" (corrected
+# 2026-08-18). What we estimate is a SCALAR per party -- its share to Labor,
+# a two-party quantity. theswingison's rules are keyed on who has been excluded
+# and who remains, which is how a seat is actually decided. Measured from SA
+# 2026 distributions, the flow depends heavily on that configuration: Greens to
+# Labor is 74.5% when the Liberals are the alternative and 81.5% when One
+# Nation is; One Nation to Labor runs from 19.3% to 57.0%. A scalar cannot
+# express any of it. Estimating the wrong quantity carefully does not beat
+# approximating the right one crudely, and this file previously implied it did.
+#
+# What is defensible: this is the best estimator OF THE SCALAR, chosen by the
+# temporal backtest below. The scalar itself is the approximation.
 #
 # WHICH estimator was decided by a strict temporal backtest -- every election
 # predicted using only elections held strictly EARLIER -- across 103 elections
