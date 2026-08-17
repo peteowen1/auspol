@@ -57,17 +57,45 @@ seat-level work". Measuring it changed the answer on every count. Full evidence:
    first-pass primary simulation, One Nation reaches the final two in **39–44
    of 88 seats** and Labor fails to in **23–24** — against a model that assumes
    Labor is in the final two everywhere.
-3. **And it changes the seat count by almost nothing.** Measured from SA 2026
-   distribution tables, minor-right voters send **0.348** of their non-Labor
-   preferences to One Nation; the threshold for it winning any seat is about
-   0.5. It contends in half the chamber and loses on preferences. So this is
-   **correctness work, not accuracy work** — worth doing to stop the model
-   asserting something false, not because it moves the number.
+3. ~~And it changes the seat count by almost nothing.~~ **WITHDRAWN 2026-08-18
+   — do not act on this.** The claim rested on a sweep that invented a 50/50
+   split for Liberal preferences between One Nation and Labor. Measured, it is
+   **62.7% to One Nation**, in the transfer that decides every ONP-vs-ALP seat.
+   The "correctness work, not accuracy work" framing followed from that number
+   and is withdrawn with it — note that the convenient conclusion was the one
+   that made a large job unnecessary.
 
-**So the honest next job is small and bounded:** simulate primaries from 2022
-seat-level first preferences, distribute preferences, and let the seat model
-represent contests it currently cannot. Expect the median seat count not to
-move. Do not buy booth data for it.
+   The seat-count effect is currently **unknown**, and cannot be settled
+   without the preference matrix below.
+
+**The next job is neither small nor bounded, and calling it so was wrong.**
+Pete's direction, 2026-08-18: estimate **every party-to-party flow** and
+simulate each seat the way the count actually runs — candidate by candidate,
+lowest excluded, preferences distributed, until two remain.
+
+What that needs, and what is missing:
+
+| Step | Status |
+|---|---|
+| per-seat candidate lists by party | VEC publishes for all 88 seats — not yet fetched |
+| 2026 primary vote per party per seat | method validated (SA 2026), not built |
+| **party-to-party flow matrix, conditional on survivors** | **the blocker** |
+| candidate-by-candidate elimination | code, straightforward |
+| thousands of simulations carrying flow uncertainty | code, straightforward |
+
+The matrix is the blocker and it is a **much larger data job than first
+preferences**: it needs full distribution-of-preferences tables across many
+elections. A first attempt from the 16 SA districts Wikipedia carries produced
+28 cells, most with n ≤ 2, and **49 transfers in an 88-seat run had no
+observed cell at all**. That run returned One Nation 0 seats and Labor 56 —
+Labor *higher* than the previous harness, after correcting a transfer that runs
+*against* Labor. Incoherent, and the fallbacks are why. **Do not quote it.**
+
+Also note the collapsing that remains: OTH is treated as one bloc, when a real
+Victorian ballot carries Legalise Cannabis, Animal Justice, Family First,
+Freedom, Victorian Socialists and independents as separate candidates,
+excluded separately, preferencing very differently. That is the same class of
+error as the invented 50/50.
 
 **Before any of that**, two independent items are worth more per hour:
 
@@ -479,10 +507,37 @@ Both references hand-set preference flows. AE Forecasts authors the value and
 borrows across regions (`2026,vic,ONP FP,25.5,#Use federal pref flow
 estimate`), so the same borrowed number stands for three future elections as
 though it were three estimates. theswingison uses a twelve-rule hierarchy —
-better than one rate, still hand-authored rules no election can update.
+hand-authored rules no election can update.
 
 **Ours is estimated**: the mean of a party's five most recent observed
 elections, pooled across regions, moving as elections are held.
+
+> **Correction, 2026-08-18. This section claimed the estimated flow beat both
+> references. It does not, and the comparison was made on the wrong axis.**
+>
+> Our estimate is a **single scalar per party — its share to Labor**. That is a
+> two-party quantity. theswingison's twelve rules are keyed on *who has been
+> eliminated and who remains*, which is how a seat is actually decided, and a
+> hand-authored rule that models the right mechanism beats a well-estimated
+> number for the wrong one. Estimation quality does not substitute for
+> modelling the correct quantity, and "estimated" was allowed to stand in for
+> "better" here without the axis being named.
+>
+> Measured 2026-08-18 from SA 2026 distributions, the flow a party sends
+> depends heavily on who is still standing — exactly what a scalar cannot
+> express and what theswingison's rules are built to capture:
+>
+> | transfer | to Labor |
+> |---|---:|
+> | GRN excluded, ALP vs LNP remain | 74.5% |
+> | GRN excluded, ALP vs ONP remain | 81.5% |
+> | ONP excluded, ALP vs LNP remain | 57.0% |
+> | ONP excluded, ALP/GRN/LNP remain | 19.3% |
+>
+> Against the model's single fixed values of 83.5 for GRN and 33.7 for ONP.
+> The estimator below is still the best available *for the quantity it
+> estimates*; the claim that it makes us better than the references at
+> preferences is withdrawn.
 
 **The estimator was chosen by strict temporal backtest** — each election
 predicted from only earlier ones, 103 elections, eleven candidates:
