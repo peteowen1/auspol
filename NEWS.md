@@ -1,3 +1,62 @@
+# auspol 0.4.4
+
+Corrections only. No code behaviour changes, no forecast number moves.
+
+## Claims withdrawn
+
+Prompted by Pete, 2026-08-18: this project claimed to beat its two reference
+implementations while not simulating seats at all.
+
+- **"Our preference flows beat AE Forecasts and theswingison."** Withdrawn from
+  `docs/NEXT-STEPS.md`, `docs/reviews/seat-methodology-critique-2026-08-16.md`
+  and the package source at the top of `R/flow_model.R`. The comparison was
+  made on the wrong axis: what we estimate is a **scalar per party, its share
+  to Labor** — a two-party quantity — while theswingison's twelve rules are
+  keyed on who has been excluded and who remains, which is how a seat is
+  decided. A hand-authored rule modelling the right mechanism beats a
+  well-estimated number for the wrong one. What survives is narrower and true:
+  ours is the best estimator *of the scalar*, and the scalar is the
+  approximation.
+
+- **"Simulating every seat changes the seat count by almost nothing."**
+  Withdrawn, along with the "correctness work, not accuracy work" framing that
+  followed from it. It rested on an invented 50/50 split of Liberal preferences
+  between One Nation and Labor — the transfer deciding every ONP-vs-ALP seat,
+  and never measured. Measured from SA 2026 distributions it is **62.7% to One
+  Nation**. The seat-count effect is now recorded as **unknown**.
+
+- **"Their poll aggregation is weaker than ours."** Downgraded to its parts.
+  We do remove systematic house effects, via a poll-count-weighted soft
+  sum-to-zero prior (`R/trend.R:119-124`) — real and shipped. That theirs does
+  not remove them rests on a reading of their published method that was never
+  independently verified. And **our accuracy has never been compared against
+  either reference, on any output.** Every comparison in these docs was a
+  mechanism argument promoted to a verdict with no measurement in between.
+
+## Evidence added
+
+The estimated preference flow matrix now lives in
+`docs/reviews/onp-allocation-sa-2026-08-17.md` with provenance: 97 exclusion
+events from 16 SA 2026 districts, 28 conditional cells with event counts and
+vote totals, and the arithmetic behind the 62.7% figure. Those numbers had been
+quoted in two files with the derivation recorded in neither.
+
+Measured conditional flows, against the model's fixed values:
+
+| transfer | to Labor | model's fixed value |
+|---|---:|---:|
+| GRN excluded, ALP vs LNP remain | 74.5% | 83.5 |
+| GRN excluded, ALP vs ONP remain | 81.5% | 83.5 |
+| ONP excluded, ALP vs LNP remain | 57.0% | 33.7 |
+| ONP excluded, ALP/GRN/LNP remain | 19.3% | 33.7 |
+
+The same section records what the matrix cannot settle: most cells are n ≤ 2,
+49 transfers in an 88-seat trial run resolved to no observed cell at all, OTH
+is still collapsed to one bucket rather than the separate candidates a real
+ballot carries, and everything is estimated from a single state and a single
+election. Settling the seat count needs distribution-of-preferences data across
+many elections — the real blocker on the rebuild.
+
 # auspol 0.4.3
 
 One fix. No forecast number moves — the defect was latent, not active.
