@@ -75,9 +75,19 @@ move. Do not buy booth data for it.
   `scripts/build_page.R:242-244` does not. They agree only because it is
   currently 0. A one-line divergence that would silently under-count the
   published page by one seat.
-- Narracan needs handling: its 2022 election failed after a candidate died, and
-  Labor did not contest the January 2023 supplementary, so its row carries
-  ALP 0.0 and an unusable minor field.
+- ~~Narracan needs handling~~ — **checked 2026-08-17, there is nothing to fix
+  in the current model.** Its 2022 election failed after a candidate died and
+  Labor did not contest the January 2023 supplementary, but the anchor has
+  already resolved it: `2026vic.txt` carries `fTppMargin=-13.0` and
+  `fPreviousTppSwing=-3.0`, which reconciles exactly against 2022's `-10`. Its
+  deviation from the statewide swing is **−0.40, ranked 83rd of 88** — one of
+  the least unusual seats in the file — and dropping it moves `sd_within` only
+  3.4894 → 3.5081.
+
+  **It will bite the primary-vote rebuild, though.** Narracan has no ordinary
+  2022 first-preference result to swing from, so anything sourcing seat-level
+  primaries from actual results needs a substitute for that one seat. The
+  problem is in the *future* data path, not the current one.
 
 **Still open, unchanged:**
 

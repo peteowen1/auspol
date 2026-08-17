@@ -238,10 +238,19 @@ they win 0 seats or 15.
 - **The SA slope is transferred**, per the flaw noted above.
 - **Narracan's 2022 election failed** — the National candidate died and a
   supplementary election was held on 28 January 2023, which Labor did not
-  contest. Its row therefore shows ALP 0.0 and an unusual minor field, and it
-  sits at the top of the Victorian minor-right list at 18.58. Excluding it
-  moves the per-seat minor-right sd from 3.54 to 3.29 and the max to 15.67
-  (Ovens Valley). Immaterial to the conclusion, but the seat needs handling.
+  contest. In the Wikipedia-sourced data used for this sizing its row therefore
+  shows ALP 0.0 and an unusual minor field, and it sits at the top of the
+  Victorian minor-right list at 18.58. Excluding it moves the per-seat
+  minor-right sd from 3.54 to 3.29 and the max to 15.67 (Ovens Valley).
+
+  **This affects this analysis only, not the model** — checked 2026-08-17
+  after an earlier draft of this file wrongly implied the repo needed a fix.
+  The anchor already resolved Narracan: `2026vic.txt` carries `fTppMargin=-13.0`
+  and `fPreviousTppSwing=-3.0`, reconciling exactly against 2022's `-10`. Its
+  deviation from the statewide swing is −0.40, **ranked 83rd of 88**, and
+  dropping it moves `sd_within` only 3.4894 → 3.5081. What it will affect is
+  any future rebuild that sources seat-level first preferences from actual
+  results, because Narracan has no ordinary 2022 first-preference count.
 
 ## The preference stage cannot be built from the data in this repo
 
