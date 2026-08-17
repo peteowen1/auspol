@@ -313,3 +313,68 @@ So: the **shape** — flat at zero below theta ≈ 0.5, rising after — is wort
 acting on. The **counts** are not. And because the harness is hot for Labor it
 is correspondingly cold for LNP and ONP, which means 0–9 is more likely a floor
 than a ceiling.
+
+## Theta measured: 0.348, which is below the threshold
+
+**Two corrections to the plan as stated above, both of which changed the
+target.**
+
+First, Victorian distribution data cannot answer this question. **One Nation
+contested 5 of 88 Victorian districts in 2022**, averaging 4.96% where it ran.
+When a minor-right party was excluded in a Victorian seat, One Nation was
+almost never standing to receive anything. SA 2026 is the only Australian
+election with One Nation live in the count at scale.
+
+Second, the 17 Wikipedia distribution tables are **not** a close-seats
+selection as claimed above. They are **alphabetical** — Adelaide, Badcoe,
+Black, Bragg, Chaffey, Cheltenham, Colton, Croydon, Davenport, Dunstan, Elder,
+Elizabeth, Enfield, Finniss, Flinders, Florey — an editor working the list and
+stopping at F. Alphabetical order is arbitrary with respect to politics, so the
+subset is usable.
+
+**Estimated from 27 qualifying exclusions across 16 districts** — a minor-right
+party excluded with both LNP and ONP still standing:
+
+| | value |
+|---|---:|
+| vote-weighted theta | **0.348** |
+| unweighted mean | 0.298 |
+| median | 0.286 |
+| sd | 0.155 |
+| range | 0.066 – 0.526 |
+
+Anchor check on the parse: in every exclusion, Labor's transfer plus the
+non-Labor transfers reconcile **exactly** to the excluded candidate's running
+total (Elizabeth 281 + 880 = 1161; Croydon 488 + 612 = 1100; Florey
+141 + 664 = 805). **Passes.**
+
+**The sweep put the threshold for One Nation winning any seat at theta ≈ 0.5.
+The measured value is 0.348, and the single highest observation across 27
+exclusions is 0.526.** On this evidence One Nation wins **approximately zero
+seats** — it reaches the final two in roughly half the chamber and then loses
+those contests on preferences.
+
+That is the answer to the question this whole line of work was asking. Building
+the primary-and-preferences model changes the **contest structure** in ~44
+seats and the **seat count** by close to nothing, because Liberal-leaning minor
+party voters do not preference One Nation heavily enough to get it over the
+line.
+
+"Approximately" rather than "exactly": theta's sd of 0.155 puts the threshold
+about one standard deviation above the mean, so individual seats can and do
+exceed it. A simulation with per-seat variation would give One Nation a small
+non-zero seat expectation rather than a flat zero — which is still an
+improvement on a model where the number is zero by construction and carries no
+uncertainty at all.
+
+## A separate finding worth acting on regardless
+
+**Labor's share of these minor-right transfers is 0.203.** The model gives the
+whole OTH bucket a flow of **48.9%** to Labor. Minor-right voters are inside
+that bucket flowing at about 20%, which means the blended figure is wrong in
+both directions depending on a seat's minor composition — too low where the
+minors are left-leaning, far too high where they are not.
+
+This affects the **published two-party number today**, not just the seat model,
+and it does not depend on any of the primary-simulation work landing. It should
+be sized on its own.
