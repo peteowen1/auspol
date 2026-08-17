@@ -9,14 +9,12 @@ open state, not the narrative of how it got here.
 
 ## Awaiting Pete
 
-- **Merge PR #5** — github.com/peteowen1/auspol/pull/5, version 0.4.1, 13
-  commits. No forecast numbers change: it is checks, constants and prose. CI
-  was red three times on stale `.Rd` files and is now green. Reviewed twice.
-
-  **This one should have been a stack too**, for the same reason PR #2 should
-  have been. It was opened at 6 commits and is now 13, because work pushed to
-  `dev` joins an open PR automatically. The lesson has now been learned twice
-  and acted on zero times: use `gh-stack` for the next long run.
+- **PR #5 is merged** (2026-08-17, `2d556bc`). `dev` and `main` are level.
+  It should have been a stack, for the same reason PR #2 should have been: it
+  opened at 6 commits and merged at 13, because work pushed to `dev` joins an
+  open PR automatically. **The lesson is now recorded three times and acted on
+  zero. Use `gh-stack` for the next long run** — the 2026-08-17 work below is
+  already 7 commits on `dev` with no PR open.
 - **Decide whether the repo goes public.** Private on purpose. Two things are
   outward-facing and should be deliberate: `docs/plans/product-features.md`
   carries critical commentary on named competitors (theswingison, DemosAU —
@@ -33,46 +31,106 @@ open state, not the narrative of how it got here.
   trend-versus-simulator scope call. Two of the four now have measured answers
   — see the seat-type and methodology reviews below — so this is smaller than
   it was.
+- **Decide whether to transfer South Australia's allocation slope.** The form
+  that allocates a One Nation surge across seats was validated on SA 2026 and
+  wins there (2026-08-17, below). Applying it to Victoria means borrowing one
+  number — the slope, 1.21 — from another state's party system, because
+  Victoria has no 2026 outcome to estimate from. The level would come from our
+  own forecast. Defensible, but it is an assumption of exactly the kind this
+  project avoids, so it should be a decision rather than an implementation
+  detail.
 
-## Next session starts here (2026-08-16)
+## Next session starts here (2026-08-17)
 
-**One acquisition job, and it is the only route left to the seat-level work.**
+**The booth-data recommendation below is superseded. Read this first.**
 
-Booth-level results from the VEC: first preferences and two-candidate figures
-for every polling booth, which map onto census geography. That is how
-theswingison does seat composition (booth regression plus Australian Election
-Study), and it is the one thing that would let this model represent an outcome
-it currently cannot — a One Nation or independent seat win. See
-[reviews/seat-methodology-critique-2026-08-16.md](reviews/seat-methodology-critique-2026-08-16.md).
+The 2026-08-16 plan said booth-level VEC data was "the only route left to the
+seat-level work". Measuring it changed the answer on every count. Full evidence:
+[reviews/onp-allocation-sa-2026-08-17.md](reviews/onp-allocation-sa-2026-08-17.md).
 
-**Scope it before downloading anything:** what the VEC actually publishes, what
-licence it carries, how booths map to 2026 boundaries after redistribution, and
-what the smallest useful version looks like. That scoping is the first task,
-not the acquisition.
+1. **Booth data is not needed for the One Nation question.** Seat-level first
+   preferences are enough, and Victoria's are free — **Victoria did not
+   redistribute**, so all 88 district names in `2026vic.txt` match the 2022
+   results exactly and 2022 seat primaries apply directly.
+2. **The real defect is bigger than the five non-classic seats.** The `classic`
+   flag (`R/seats.R:55-56`) reads 2022's final-two pairs forward. On a
+   first-pass primary simulation, One Nation reaches the final two in **39–44
+   of 88 seats** and Labor fails to in **23–24** — against a model that assumes
+   Labor is in the final two everywhere.
+3. **And it changes the seat count by almost nothing.** Measured from SA 2026
+   distribution tables, minor-right voters send **0.348** of their non-Labor
+   preferences to One Nation; the threshold for it winning any seat is about
+   0.5. It contends in half the chamber and loses on preferences. So this is
+   **correctness work, not accuracy work** — worth doing to stop the model
+   asserting something false, not because it moves the number.
 
-**And go in with the sizing already known**, because it changes what success
-means. Per-seat swing is not forecastable from anything tried: seat type fails
-out of sample, region fails out of sample, and region effects correlate 0.27
-between elections. The statewide vote dominates the seat count (sd 10.87
-against 3.96). So booth data will **not** sharpen the seat range. Its value is
-representational — fewer ways to be wrong, not a better number. If that is not
-worth the acquisition cost, the honest answer is to stop here and say so on the
-page, which already carries the caveat.
+**So the honest next job is small and bounded:** simulate primaries from 2022
+seat-level first preferences, distribute preferences, and let the seat model
+represent contests it currently cannot. Expect the median seat count not to
+move. Do not buy booth data for it.
 
-**Smaller, still open:**
+**Before any of that**, two independent items are worth more per hour:
 
-- The five non-classic seats are frozen with no uncertainty. Prahran on an 11.1
-  margin is treated as certain. Simulating them is cheap and independent of
-  booth data.
+- `scripts/fit_seats.R:173-175` adds `alp_extra` to the seat total;
+  `scripts/build_page.R:242-244` does not. They agree only because it is
+  currently 0. A one-line divergence that would silently under-count the
+  published page by one seat.
+- Narracan needs handling: its 2022 election failed after a candidate died, and
+  Labor did not contest the January 2023 supplementary, so its row carries
+  ALP 0.0 and an unusable minor field.
+
+**Still open, unchanged:**
+
 - `load_seats()` reads 5 of the 11 fields available. `bRetirement` (20 seats),
   `bSophomoreCandidate` (22) and `fTransposedFederalSwing` (89) are unread.
   Size them the way seat type was sized — expect the same answer.
 - L4c's negative tail is still uncalibrated (below).
+- Whether the OTH flow of 48.9% suits a bucket One Nation has been pulled out
+  of. Tested and **not** answerable from transfer tables (below); the concern
+  stands.
 
 **Do not start with:** anything that makes the backtest slower. Arm B of the
 volatility comparison took 33x and bought nothing; a backtest that takes an
 hour makes every constant expensive to re-examine, and constants that are
 expensive to re-examine stop being re-examined.
+
+## What 2026-08-17 measured
+
+Five pre-registered tests, committed before each run. **Two adopted, one
+negative, one void, one inconclusive.** Reviews:
+[onp-allocation-sa-2026-08-17.md](reviews/onp-allocation-sa-2026-08-17.md),
+[oth-flow-composition-2026-08-17.md](reviews/oth-flow-composition-2026-08-17.md).
+
+| Question | Result |
+|---|---|
+| allocate an ONP surge by rescaled 2022 minor-right vote | **failed** — MAE 9.298 against uniform's 6.306 |
+| same predictor, linear instead of proportional | **adopted** — LOO MAE 4.171 against 6.306 |
+| prior LNP share as a seat-level predictor | **worthless** — LOO correlation −0.006 |
+| does allocation move the seat count? | **almost not at all** — ONP wins ~0 either way |
+| is the OTH flow wrong now ONP is modelled separately? | **inconclusive** — not measurable from transfer tables |
+
+Four lessons, each of which cost something:
+
+1. **A predictor can be good and its link function fatal.** The rescaled proxy
+   correlated 0.735 with the truth and still lost to a flat allocation, because
+   proportional scaling turns "no candidate stood" into "predicted zero" and
+   multiplies a 6.6% base by 3.4.
+2. **Registering two estimands is what stopped a wrong number shipping.** The
+   OTH test's two measures disagreed by 4.2 points *in opposite directions*;
+   either alone would have cleared the threshold to change the published
+   two-party figure.
+3. **A mechanism true in aggregate can be worth zero per unit.** The One Nation
+   surge did come out of the Liberal vote statewide — LNP fell 17 points while
+   ONP rose 20 — and prior LNP share still predicts nothing at seat level.
+4. **The stripped-down-harness trap again.** The seat sweep gives Labor 47–52
+   seats against a published 39, because its implied two-party is 49.19 against
+   47.8. Same failure as 2026-08-16's sensitivity sweep. Shape usable, level
+   not.
+
+**Free result:** the void OTH estimand accidentally validated two flows the
+model estimates, from a different state and a separate data path — GRN 86.7%
+against the model's 83.5%, ONP 32.4% against 33.7%. First independent check
+either has had.
 
 ## What 2026-08-16 measured
 
@@ -280,8 +338,15 @@ spread with each election held out, over 195 election-horizon pairs: nominal
 50% 54.9%. Excess kurtosis −0.17, essentially normal, so no fat-tailed or
 asymmetric error model is warranted — measured rather than assumed.
 
-**Seat forecast**: ALP **35 of 88** seats (50%: 29–41, 90%: 19–49),
-P(ALP majority) **14.2%**, a median loss of 21 seats from the 56 won in 2022.
+**Seat forecast**: ALP **39 of 88** seats (50%: 33–45, 90%: 23–51),
+P(ALP majority) **26%**, a median loss of 17 seats from the 56 won in 2022.
+
+These four figures were stale until 2026-08-17 — they read 35, 29–41, 19–49
+and 14.2%, the values from before the preference-flow estimator moved the
+published two-party from 46.8 to 47.8. The TPP line above was updated at the
+time and the seat line was not, so this file spent a day describing a
+materially more pessimistic forecast than the model produced. Source of truth
+is `output/vic-page-data.json`, and `scripts/fit_seats.R` reproduces it.
 
 ## Findings from the Victorian build worth keeping
 

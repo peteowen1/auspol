@@ -1,3 +1,60 @@
+# auspol 0.4.2
+
+Docs only. No code changes, no forecast recomputed — but one published figure
+was already wrong and is corrected.
+
+## Corrections
+
+- **Four stale seat figures in `docs/NEXT-STEPS.md`.** It read ALP 35 of 88,
+  50% 29–41, 90% 19–49, P(majority) 14.2%. The published values are **39,
+  33–45, 23–51 and 26%** (`output/vic-page-data.json`, reproducible from
+  `scripts/fit_seats.R`). These were the pre-flow-update numbers: when the
+  preference-flow estimator moved published two-party 46.8 → 47.8, the TPP line
+  was updated and the seat line was not. The queue therefore described a
+  materially more pessimistic forecast than the model produces, with
+  P(majority) at roughly half its true value. Caught by the pre-PR review gate
+  — after the stale figure had already propagated into two new documents,
+  because they cited the hub rather than `output/`.
+
+## Measurements recorded
+
+Five pre-registered tests on whether the seat model should simulate every seat
+from primary votes, each committed before its run: two adopted, one negative,
+one void, one inconclusive. Full evidence in
+`docs/reviews/onp-allocation-sa-2026-08-17.md` and
+`docs/reviews/oth-flow-composition-2026-08-17.md`.
+
+- **Adopted:** a One Nation surge is allocated across seats by a *linear* form
+  on the prior minor-right vote (leave-one-seat-out MAE 4.171 against uniform
+  allocation's 6.306, validated on SA 2026). The *proportional* form
+  pre-registered first failed outright at 9.298 — the predictor correlates
+  0.735 with the truth and the link function destroyed it.
+- **Negative:** prior LNP share predicts nothing at seat level (LOO correlation
+  −0.006), despite the One Nation surge genuinely coming out of the Liberal
+  vote statewide.
+- **Sized:** the `classic` flag (`R/seats.R:55-56`) reads 2022's final-two
+  pairs forward. On a first-pass simulation One Nation reaches the final two in
+  39–44 of 88 seats and Labor fails to in 23–24. But minor-right voters send
+  only 0.348 of their non-Labor preferences to One Nation against a threshold
+  near 0.5, so it contends in half the chamber and loses on preferences. The
+  rebuild is **correctness work, not accuracy work**.
+- **Inconclusive:** whether the single OTH flow suits a bucket One Nation has
+  been pulled out of. Both registered estimands proved void and disagreed by
+  4.2 points in opposite directions; aggregate distribution tables carry no
+  vote provenance, so the quantity is not recoverable from them at all. The
+  concern stands, unevaluated.
+
+## Incidental
+
+- Victoria did not redistribute — all 88 district names in `2026vic.txt` match
+  the 2022 results — so seat-level first preferences apply directly and the
+  previously queued booth-level acquisition is not needed for this work.
+- First independent check of two preference flows, from a different state and
+  data path: GRN 86.7% against the model's 83.5%, ONP 32.4% against 33.7%.
+- Recorded unfixed: `scripts/fit_seats.R:173-175` adds `alp_extra` to the seat
+  total while `scripts/build_page.R:242-244` does not. They agree only because
+  it currently evaluates to 0.
+
 # auspol 0.4.1
 
 No forecast numbers change. Every fix here closes a gap between what the model
