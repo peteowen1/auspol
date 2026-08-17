@@ -126,6 +126,12 @@ seat_swing_spread <- function(seats, statewide_swing) {
 #' because independent deviations average out across 83 seats while correlated
 #' ones do not.
 #'
+#' Non-classic seats are not simulated — the model holds no two-candidate
+#' margin for a contest that is not Labor against a major — so they are assumed
+#' held by their incumbent. `alp_total` adds the ones Labor already holds to
+#' the simulated count, and **that is the figure to publish**. `seats_won`
+#' counts classic seats only and is kept for diagnostics.
+#'
 #' @param seats From [load_seats()].
 #' @param tpp_mean,tpp_sd Projected ALP two-party share and its sd.
 #' @param prev_tpp The previous election's statewide ALP two-party share, from
@@ -136,8 +142,10 @@ seat_swing_spread <- function(seats, statewide_swing) {
 #'   independent-seats behaviour.
 #' @param n_sims Number of simulations.
 #' @param seed Optional RNG seed.
-#' @return List: `seats_won` (vector of ALP classic-seat wins per simulation),
-#'   `by_seat` (win probability per seat), `n_classic`, `n_nonclassic`.
+#' @return List: `seats_won` (ALP classic-seat wins per simulation),
+#'   `alp_total` (`seats_won` plus non-classic seats Labor holds — the
+#'   publishable total), `alp_nonclassic` (that constant), `by_seat` (win
+#'   probability per seat), `n_classic`, `n_nonclassic`.
 #' @export
 simulate_seats <- function(seats, tpp_mean, tpp_sd, prev_tpp, seat_sd,
                            region_sd = 0, n_sims = 20000, seed = NULL) {
@@ -171,8 +179,19 @@ simulate_seats <- function(seats, tpp_mean, tpp_sd, prev_tpp, seat_sd,
     result <- result + reg_eff[, reg, drop = FALSE]
   }
   won <- result > 50
+  classic_won <- rowSums(won)
 
-  list(seats_won = rowSums(won),
+  # Added here rather than left to callers. scripts/fit_seats.R computed this
+  # and scripts/build_page.R did not, so the published page would have
+  # under-counted Labor by one for every non-classic seat it held. The two
+  # agreed only because no non-classic seat is Labor-held in 2026 and the
+  # constant happened to be zero — a divergence that could not show up until
+  # the arithmetic mattered.
+  alp_nonclassic <- sum(seats$incumbent == "ALP" & !seats$classic)
+
+  list(seats_won = classic_won,
+       alp_nonclassic = alp_nonclassic,
+       alp_total = classic_won + alp_nonclassic,
        by_seat = data.table::data.table(
          seat = cl$seat, seat_region = cl$seat_region,
          incumbent = cl$incumbent, margin = cl$margin,

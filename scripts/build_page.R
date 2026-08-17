@@ -241,7 +241,9 @@ region_sd <- mean(c(sp22$sd_between, sp18$sd_between))
 within_sd <- mean(c(sp22$sd_within, sp18$sd_within))
 sim <- simulate_seats(seats26, pj$mean, pj$sd, 55.00, within_sd,
                       region_sd = region_sd, n_sims = 50000, seed = 42)
-tot <- sim$seats_won
+# alp_total, not seats_won: the latter counts classic seats only, so publishing
+# it under-counts Labor by every non-classic seat it holds.
+tot <- sim$alp_total
 h <- as.data.table(table(tot))
 setnames(h, c("seats", "n"))
 h[, seats := as.integer(as.character(seats))]

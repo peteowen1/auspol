@@ -34,8 +34,10 @@ independent-seats behaviour.}
 \item{seed}{Optional RNG seed.}
 }
 \value{
-List: \code{seats_won} (vector of ALP classic-seat wins per simulation),
-\code{by_seat} (win probability per seat), \code{n_classic}, \code{n_nonclassic}.
+List: \code{seats_won} (ALP classic-seat wins per simulation),
+\code{alp_total} (\code{seats_won} plus non-classic seats Labor holds — the
+publishable total), \code{alp_nonclassic} (that constant), \code{by_seat} (win
+probability per seat), \code{n_classic}, \code{n_nonclassic}.
 }
 \description{
 Three sources of variation, in descending order of how much they move the
@@ -49,4 +51,10 @@ Leaving out the regional layer does not change any single seat's
 probability much, but it makes the SEAT COUNT look more certain than it is,
 because independent deviations average out across 83 seats while correlated
 ones do not.
+
+Non-classic seats are not simulated — the model holds no two-candidate
+margin for a contest that is not Labor against a major — so they are assumed
+held by their incumbent. \code{alp_total} adds the ones Labor already holds to
+the simulated count, and \strong{that is the figure to publish}. \code{seats_won}
+counts classic seats only and is kept for diagnostics.
 }

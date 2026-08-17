@@ -1,3 +1,39 @@
+# auspol 0.4.3
+
+One fix. No forecast number moves — the defect was latent, not active.
+
+## Fixes
+
+- **The published seat total and the diagnostic seat total could diverge.**
+  `scripts/fit_seats.R` added a non-classic Labor-held term to the seat count
+  and `scripts/build_page.R` did not, so the published page would have
+  under-counted Labor by one for every non-classic seat it held. The two
+  agreed only because no non-classic seat is Labor-held in 2026 and the
+  constant evaluates to zero.
+
+  Fixed by moving the arithmetic into `simulate_seats()` rather than adding
+  the missing line to the second caller — duplicating it across sister scripts
+  is what allowed the drift. The function now returns **`alp_total`** (the
+  publishable figure) and `alp_nonclassic` alongside `seats_won`, which keeps
+  its old meaning of classic seats only and is retained for the S1/S4
+  calibration and R2/R3 regional-layer diagnostics that genuinely want it.
+
+  The regression test was verified to **fail on the pre-fix code** — 4
+  failures, confined to the new test — and asserts the reverse case as well,
+  so the correction cannot inflate a seat count where no non-classic seat is
+  Labor-held.
+
+  `fit_seats.R` output is unchanged: median 39, 50% 33–45, 90% 23–51,
+  P(majority) 26.0%.
+
+- **`?simulate_seats` documented the new field under the wrong argument.** The
+  roxygen paragraph saying which of the two totals to publish sat directly
+  under `@param region_sd` with no separating tag, so roxygen folded it into
+  that argument's description. `R CMD check` cannot detect this — it is not a
+  signature or default mismatch — so it would have shipped as documentation
+  describing `alp_total` as though it explained regional effects. Caught by the
+  pre-PR review gate.
+
 # auspol 0.4.2
 
 Docs only. No code changes, no forecast recomputed — but one published figure

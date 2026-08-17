@@ -170,9 +170,9 @@ cat(sprintf("projected ALP two-party: %.2f (95%%: %.2f - %.2f)\n",
 
 sim <- simulate_seats(seats26, pj$mean, pj$sd, PREV_TPP, within_sd,
                       region_sd = region_sd, n_sims = 50000, seed = 42)
-# Non-classic seats are assumed held; none is Labor-held in 2026.
-alp_extra <- sum(seats26$incumbent == "ALP" & !seats26$classic)
-total_alp <- sim$seats_won + alp_extra
+# Non-classic seats are assumed held by their incumbent; simulate_seats()
+# folds the Labor-held ones into alp_total so both callers cannot drift.
+total_alp <- sim$alp_total
 q <- stats::quantile(total_alp, c(0.05, 0.25, 0.5, 0.75, 0.95))
 
 cat(sprintf("ALP seats: median %d  (50%%: %d-%d, 90%%: %d-%d)  of %d\n",
