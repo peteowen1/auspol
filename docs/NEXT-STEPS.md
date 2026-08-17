@@ -238,10 +238,23 @@ bias correction). Their conclusions live in the code, `CONSTANTS.md` or
   *preference simulator* (12-rule hierarchy keyed on who is eliminated and
   who remains, with a confidence score per rule tier) is genuinely better
   than a fixed flow rate and worth stealing for the seat stage. Its poll
-  aggregation is weaker than ours: a Gaussian kernel rolling average that
-  explicitly does **not** remove systematic house effects, and an outlier
-  rule that penalises polls for disagreeing with the local consensus —
-  herding by construction.
+  aggregation uses a Gaussian kernel rolling average that explicitly does
+  **not** remove systematic house effects, and an outlier rule that penalises
+  polls for disagreeing with the local consensus — herding by construction.
+
+  **Audited 2026-08-18.** This previously read "weaker than ours". Half of
+  that is substantiated and half is not, so the verdict is withdrawn and the
+  mechanism left to speak for itself:
+  - *Substantiated:* we do remove systematic house effects — estimated with a
+    soft weighted sum-to-zero constraint (`R/trend.R:119`). That is real and
+    it is in the shipped code.
+  - *Not independently checked:* that their aggregation does not. It rests on
+    Pete's reading of their published method (2026-08-14), which I have not
+    verified against their site.
+  - *Never measured:* **we have never compared our accuracy against either
+    reference, on any output.** Every comparison in these docs is a mechanism
+    argument, not a result. Removing house effects is sound reasoning for why
+    ours should track better, and reasoning is not evidence.
 - **demosau.com MRP** (Aug 2026) — 9,343 respondents May–Jul 2026, MRP to
   all 150 seats, 20,000-simulation Monte Carlo, preferences from a mix of
   previous-election and respondent-allocated flows. Reports a hung
