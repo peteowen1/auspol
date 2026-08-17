@@ -180,11 +180,65 @@ number — the slope — from a different state's party system.
 That is a real assumption and it should be an explicit decision, not something
 absorbed silently while implementing. Flagged for Pete.
 
-## Not yet sized: whether any of this moves the published number
+## Sizing: the allocation is the small half. The structure is the big half.
 
-The improvement measured here is on **ONP first preference per seat**. The
-published output is the **ALP seat count**. Better ONP allocation only matters
-if it changes who reaches the final two in enough seats to move that count, and
-that has not been computed. Per the sizing rule, the mechanism being real does
-not establish that it is worth building — the seat-count effect must be
-measured before this goes near the page.
+The improvement above is on ONP first preference per seat; the published output
+is the ALP seat count. Sizing that, first-pass and deterministic — 2022
+Victorian seat primaries, uniform statewide swings to the current forecast
+(ALP 25.4, LNP 28.6, ONP 20.9, GRN 12.9, OTH 10.5), ONP set two ways, no
+simulation noise and no preferences distributed.
+
+**A free result found while doing it: Victoria did not redistribute.** All 88
+district names in `2026vic.txt` match the 2022 results exactly — no seat added,
+renamed or dropped. So 2022 seat primaries apply directly, with none of the
+notional-boundary reconstruction that cost SA a district and added error to
+every estimate there. This is the single biggest practical difference between
+the Victorian job and the SA one.
+
+**Seats where each party reaches the final two** (of 88; `OTH` excluded from
+the contender set because it is a bucket of many separate candidates, not one
+contender):
+
+| Party | ONP uniform | ONP allocated |
+|---|---:|---:|
+| ALP | 64 | 65 |
+| LNP | 66 | 59 |
+| **ONP** | **39** | **44** |
+| GRN | 7 | 8 |
+
+Three things follow, and the order matters.
+
+1. **The current model's central assumption fails in about a quarter of the
+   chamber.** The TPP seat model assumes Labor is in the final two everywhere.
+   Here it is not, in **23–24 of 88 seats**.
+2. **One Nation is a final-two contender in roughly half the chamber** — 39 to
+   44 seats — a contest the model cannot currently represent anywhere.
+3. **Allocation is the second-order part.** The final-two pair differs between
+   the uniform and allocated scenarios in **15 of 88** seats. Real, but the
+   structural change — simulating primaries at all — is two and a half times
+   larger. Round 2's 2.1-point MAE gain buys those 15 seats; it does not buy
+   the other ~40.
+
+So the answer to "is this correctness work or accuracy work" is: **the
+structure is accuracy work, and larger than expected.** The allocation refines
+it.
+
+**One Nation leads on primaries in zero seats under either scenario.** Every
+potential ONP seat win therefore depends entirely on preferences, which makes
+the preference stage — not the allocation — the thing that decides whether
+they win 0 seats or 15.
+
+## Caveats on the sizing, none of which are small
+
+- **Deterministic.** No simulation noise and no preferences distributed. This
+  counts who is in the final two, not who wins. It cannot be read as a seat
+  count.
+- **Uniform swing on 2022 seat primaries.** Real per-seat swings vary, and
+  that variation is the part already measured as unforecastable.
+- **The SA slope is transferred**, per the flaw noted above.
+- **Narracan's 2022 election failed** — the National candidate died and a
+  supplementary election was held on 28 January 2023, which Labor did not
+  contest. Its row therefore shows ALP 0.0 and an unusual minor field, and it
+  sits at the top of the Victorian minor-right list at 18.58. Excluding it
+  moves the per-seat minor-right sd from 3.54 to 3.29 and the max to 15.67
+  (Ovens Valley). Immaterial to the conclusion, but the seat needs handling.
