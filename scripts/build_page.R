@@ -91,6 +91,38 @@ now <- trend_as_at(polls, 2026, cycles, Sys.Date(), priors, fl,
 stopifnot(!is.null(now), !is.null(now$series), nrow(now$series) > 0)
 tr <- data.table::copy(now$series)
 tr[, date := as.Date(date)]
+
+# G7: the same structural sanity fit_vic.R applies as L2/L3 -- but on THIS
+# fit, the one that is published.
+#
+# fit_vic.R checks bands inside (0, 100) and first preferences summing near
+# 100, and it does so on its own fit, which uses per-cycle sigmas and
+# per-pollster noise factors this one does not. Those checks were the only
+# structural guard on any Victorian trend, and after the page moved to its own
+# fit they were guarding a model nobody publishes. A published fit could go
+# structurally wrong -- a band below zero, first preferences summing to 80 --
+# and every L-check would still report PASS on the other model.
+fp_parties <- setdiff(unique(tr$party), "TPP_ALP")
+# No NA escape hatch. The first version wrote `all(lo95 > 0 | is.na(lo95))`,
+# defensively, because want_var = FALSE can legitimately produce NA bands --
+# and that made this check PASS on a fit whose bands could not be verified at
+# all. fit_vic.R's L2 has no such clause: `stopifnot(all(tr$lo95 > 0))` on an
+# NA errors loudly, which is the correct behaviour for a structural guard.
+#
+# So a check written specifically because L2 was guarding the wrong model
+# arrived unable to fail on the case it exists for. Bands must be present and
+# valid: this fit is always made with with_series = TRUE, so want_var is TRUE
+# and NA here means something went wrong upstream rather than a mode we chose.
+bands_ok <- tr[, all(is.finite(mean)) && all(is.finite(lo95)) &&
+                 all(is.finite(hi95)) && all(lo95 > 0) && all(hi95 < 100)]
+fp_sum <- tr[party %in% fp_parties, sum(mean[which.max(date)]), by = party][, sum(V1)]
+cat(sprintf("G7  published fit: bands inside (0,100) %s; endpoint FP sum %.1f (require 100 +/- 5)  %s\n",
+            if (bands_ok) "OK" else "BREACHED", fp_sum,
+            if (bands_ok && abs(fp_sum - 100) <= 5) "PASS" else "FAIL"))
+if (!bands_ok || abs(fp_sum - 100) > 5) {
+  stop(sprintf("The fit being published is structurally invalid: bands %s, first preferences sum to %.1f. fit_vic.R's L2/L3 pass on a DIFFERENT fit and would not have caught this.",
+               if (bands_ok) "OK" else "outside (0,100)", fp_sum))
+}
 wk <- tr[format(date, "%w") == "0" | date == max(date)]
 series <- lapply(split(wk, wk$party), function(d)
   list(party = d$party[1],

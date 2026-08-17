@@ -164,7 +164,7 @@ walk_of <- function(cp, year) {
       cp, p, sigma_obs_pooled = pooled_obs, sigma_rw_pooled = pooled_rw,
       prior_result = priors[p] %||% NA_real_, scale = sc,
       firm_factors = fac_vec,
-      sigma_obs_floor = binomial_sd_link(lvl, 2500, sc))
+      sigma_obs_floor = binomial_sd_link(lvl, BINOMIAL_REF_N, sc))
   }), ps)
 }
 
@@ -284,7 +284,7 @@ walk_tab <- rbindlist(lapply(ALL_CYCLES, function(y) {
                own_weight = round(w$weight, 2), cycle_level = round(lvl, 1),
                obs_pts = round(sd_from_link(w$sigma_obs, lvl, sc), 3),
                rw_pts = round(sd_from_link(w$sigma_rw, lvl, sc), 4),
-               floor_2500 = round(binomial_sd_link(lvl, 2500, "points"), 3),
+               floor_ref = round(binomial_sd_link(lvl, BINOMIAL_REF_N, "points"), 3),
                at_upper = w$at_upper, floored = w$floored,
                acf1 = round(trend_tracking(r$fits[[p]])$acf1, 3))
   }))
@@ -303,7 +303,7 @@ share_sums <- vapply(ALL_CYCLES, function(y) sum(vapply(
   function(f) f$trend$mean[which.max(f$trend$date)], 1)), 1)
 cat(sprintf("L2  all trends and bands strictly inside (0, 100)  OK\nL3  endpoint FP sums: %s  (require 100 +/- 5)\nL4a max residual autocorrelation = %+.3f (require < +0.25)\nL4b min (noise / binomial floor) = %.2f (require >= 1)\nL4c negative tail (reported): min %+.3f\n",
             paste(sprintf("%d=%.1f", ALL_CYCLES, share_sums), collapse = "  "),
-            walk_tab[, max(acf1)], walk_tab[, min(obs_pts / floor_2500)],
+            walk_tab[, max(acf1)], walk_tab[, min(obs_pts / floor_ref)],
             walk_tab[, min(acf1)]))
 # L4b is now enforced by construction: noise below the binomial floor is
 # clamped to it rather than used, since the true noise cannot be lower. Which

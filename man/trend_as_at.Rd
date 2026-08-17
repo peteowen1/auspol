@@ -15,6 +15,7 @@ trend_as_at(
   nu = Inf,
   with_series = FALSE,
   sigmas = c("default", "per_cycle"),
+  weights = c("equal", "firm_factors"),
   ...
 )
 }
@@ -47,6 +48,11 @@ defaults. \strong{Measured 2026-08-16 and the default won}: per-cycle gained
 runtime, with no consistent pattern by horizon. Kept as a non-default,
 re-runnable comparison arm, not as a recommendation. See
 docs/reviews/backtest-model-comparison-2026-08-16.md.}
+
+\item{weights}{\code{"equal"} weights every poll the same -- what the published
+forecast does. \code{"firm_factors"} estimates each pollster's noise from this
+cycle's own residuals in a first pass and refits with those weights.
+Untested as of writing; see docs/plans/prereg-firm-factors.md.}
 
 \item{...}{Passed through to \code{\link[=fit_trend]{fit_trend()}} via \code{\link[=fit_cycle_trends]{fit_cycle_trends()}}, which
 is how a prior is varied when tuning it by held-out error. Names this

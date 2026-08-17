@@ -81,9 +81,28 @@ was caught only against a number someone already knew.
 - **Pre-registered checks live in the fit scripts**, not the package, and halt
   the pipeline. They are stated before results are seen: `fit_vic.R` V1–V5,
   `fit_federal.R` A1–A4/H1–H4/L1–L4, `fit_seats.R` S1–S4/R1–R3,
-  `fit_projection.R` P1–P4/B1–B3, `fit_scorecard.R` C1–C3, `build_page.R` G1.
-  Codes are unique across stages and `run_all.R` stops if two claim the same
-  one.
+  `fit_projection.R` P1–P4/B1–B3, `fit_scorecard.R` C1–C3.
+
+  The **G codes are the registry worth writing down**, because they are spread
+  across scripts that are not all pipeline stages, and `run_all.R`'s clash
+  detector only sees the stages:
+
+  | Code | Where | In the pipeline? |
+  |---|---|---|
+  | G1 | `build_page.R` — the page's blocks all drew | yes |
+  | G2 | `build_page.R` — ONP flow against an independent trend fit | yes |
+  | G3 | `backtest_flows.R` — the adopted flow estimator still wins | yes |
+  | G4 | `tune_szc.R` — sum-to-zero prior by held-out error | no, run on demand |
+  | G5 | `tune_sigma_house.R` — house-effect prior | no, run on demand |
+  | G6 | `compare_backtest_model.R` — default vs per-cycle volatility | no, run on demand |
+  | G7 | `build_page.R` — the **published** fit is structurally valid | yes |
+
+  Codes must be unique and `run_all.R` stops if two stages claim the same one
+  — but only for stages. Adding a code to a standalone script means checking
+  this table by hand, and **grepping for it is not enough**: three separate
+  greps for these codes have come back incomplete because the pattern assumed
+  a quote adjacent to the code, and `cat(sprintf("\nG3 ...` does not have one.
+  That is how `B1` came to mean two different things.
 - **Structural guards live in the package**, where they can be unit-tested:
   `scale_breaches()`, `trend_tracking()`, `binomial_sd_link()`,
   `check_poll_freshness()`.

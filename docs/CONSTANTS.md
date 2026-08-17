@@ -43,8 +43,8 @@ number without anything failing.
 
 | Constant | Where | What it is | Status |
 |---|---|---|---|
-| `n = 2500` | `fit_federal.R`, `fit_nsw.R` | Sample size for the binomial noise floor (check `H1`/`L4b`) | **FIXED — cannot be estimated.** The anchor's poll CSVs carry no sample-size column, so there is nothing to derive it from. 2500 is deliberately the *largest* common sample, giving the smallest binomial sd and therefore the weakest floor: it under-calls herding rather than over-calls it. |
-| `n_ref = 1500` | `scorecard.R:173` | Reference sample for the pollster herding comparison | **FIXED, same reason** — but note it disagrees with the 2500 above. Both are defensible in isolation; using two different reference sizes for the same physical quantity is not. **Open: reconcile.** |
+| `BINOMIAL_REF_N = 2500` | `scales.R` | Sample size for the binomial noise floor, wherever it **halts a run or makes a published claim about a named firm** (`H1`, `L4b`, the scorecard's *Variability*) | **FIXED — cannot be estimated**, no sample-size column exists. Deliberately the *largest* common sample: smallest binomial sd, weakest floor, so it under-calls herding rather than over-calling it. |
+| `BINOMIAL_SENSITIVE_N = 1500` | `scales.R` | The same floor where it only **reports** a signal (`ratio_sens` in the fit scripts) | **FIXED, deliberately different.** Smaller sample means a higher floor and a more sensitive test — right for "look here", wrong for "stop the run". Resolved 2026-08-16: this was previously mistaken for drift, and the real defect was the scorecard using the sensitive value for a published claim about named companies. |
 
 ## 3. Data-quality thresholds
 
@@ -250,10 +250,11 @@ In priority order, by how much each touches the published number:
 3. ~~**`k0` and `clip`**~~ — **checked 2026-08-16**: none of them reaches the
    forecast, so held-out error cannot judge them (§6c). What they need instead
    is written there.
-4. **`n_ref = 1500` vs `n = 2500`** — reconcile to one reference sample size.
-   Neither can be estimated (no sample-size column in the source), so this is
-   a consistency fix, not an estimation one: pick one, justify it once, use it
-   in both places.
+4. ~~**`n_ref` vs `n = 2500`**~~ — **resolved 2026-08-16**, and not as
+   described: the fit scripts deliberately use both, one to halt and one to
+   report. Now two named constants with their jobs written down. The real
+   defect was the scorecard using the sensitive value for a published claim
+   about named companies; it now uses the conservative one.
 
 The one lesson worth carrying: **check what a constant reaches before
 measuring how much it matters.** Item 3 was queued as three tuning grids and

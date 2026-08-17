@@ -11,7 +11,7 @@
 #
 # Pre-registered checks (chosen before running):
 #   N1-N3 as before (2023 TPP/FP endpoints, house effect cap)
-#   H1  sigma_obs >= binomial sd at the party's prior share (n = 2500), <= 3.0
+#   H1  sigma_obs >= binomial sd at the party's prior share (n = BINOMIAL_REF_N), <= 3.0
 #   H2  sigma_rw in [0.02, 0.40]; ONP allowed [0.02, 0.55] (its 20+ pt rise is
 #       known real movement, stated before estimation)
 #   H4  logml at optimum >= logml at old fixed values; no bound hits.
@@ -115,7 +115,7 @@ for (p in est_parties) {
   e <- est[[p]]; sc <- scale_of[[p]]; share <- ref_share(p)
   hi_rw <- if (p == "ONP") 0.55 else 0.40
   stopifnot(e$convergence == 0, !e$at_bound,
-            e$sigma_obs >= binomial_sd_link(share, 2500, sc),
+            e$sigma_obs >= binomial_sd_link(share, BINOMIAL_REF_N, sc),
             sd_from_link(e$sigma_obs, share, sc) <= 3.0,
             sd_from_link(e$sigma_rw, share, sc) >= 0.02,
             sd_from_link(e$sigma_rw, share, sc) <= hi_rw,
@@ -247,7 +247,7 @@ walk_tab <- rbindlist(lapply(c(2023, 2027), function(yr) {
                obs_pts = round(sd_from_link(w$sigma_obs, lvl, sc), 3),
                rw_pooled = round(sd_from_link(w$sigma_rw_pooled, lvl, sc), 4),
                rw_cycle = round(sd_from_link(w$sigma_rw, lvl, sc), 4),
-               floor_2500 = round(binomial_sd_link(lvl, 2500, "points"), 3),
+               floor_ref = round(binomial_sd_link(lvl, BINOMIAL_REF_N, "points"), 3),
                at_lower = w$at_lower, at_upper = w$at_upper,
                acf1 = round(trend_tracking(res$fits[[p]])$acf1, 3))
   }))
@@ -257,13 +257,13 @@ print(walk_tab[order(year, party)])
 cat(sprintf("L4a max residual autocorrelation = %+.3f (require < +0.25)\n",
             walk_tab[, max(acf1)]))
 cat(sprintf("L4b min (noise / binomial floor) = %.2f (require >= 1)\n",
-            walk_tab[, min(obs_pts / floor_2500)]))
+            walk_tab[, min(obs_pts / floor_ref)]))
 cat(sprintf("L4c negative tail (reported): min %+.3f\n", walk_tab[, min(acf1)]))
 if (any(walk_tab$at_lower)) {
   cat(sprintf("    walk at lower bound (no detectable movement, shrunk toward pooled): %s\n",
               walk_tab[at_lower == TRUE, paste(year, party, collapse = ", ")]))
 }
-stopifnot(walk_tab[, all(acf1 < 0.25)], walk_tab[, all(obs_pts >= floor_2500)],
+stopifnot(walk_tab[, all(acf1 < 0.25)], walk_tab[, all(obs_pts >= floor_ref)],
           !any(walk_tab$at_upper))
 
 cat(sprintf("L2  all trends and bands strictly inside (0, 100)  OK\nL3  endpoint FP sums: %s  (require 100 +/- 5, thin state polling)\n",

@@ -145,7 +145,8 @@ stopifnot(is.finite(chk$cor))
 # version of this script did exactly that.
 herd <- pollster_noise_vs_binomial(fits_by_cycle, factors, "ALP")
 cat("\n=== Herding: implied poll-to-poll noise vs the binomial floor ===\n")
-cat(sprintf("Floor is the sampling sd of a poll of n=%d at each cycle's own level.\n", 1500))
+cat(sprintf("Floor is the sampling sd of a poll of n=%d at each cycle's own level.\n",
+            BINOMIAL_REF_N))
 cat("ratio < 1 means a firm's polls agree with each other more closely than\n")
 cat("random sampling permits - the herding signature.\n\n")
 print(herd[n_polls >= 20][, .(firm, polls = n_polls,

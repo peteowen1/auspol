@@ -4,7 +4,12 @@
 \alias{pollster_noise_vs_binomial}
 \title{Each firm's implied poll-to-poll noise against the binomial floor}
 \usage{
-pollster_noise_vs_binomial(fits_by_cycle, factors, party = "ALP", n_ref = 1500)
+pollster_noise_vs_binomial(
+  fits_by_cycle,
+  factors,
+  party = "ALP",
+  n_ref = BINOMIAL_REF_N
+)
 }
 \arguments{
 \item{fits_by_cycle}{List of \code{\link[=fit_cycle_trends]{fit_cycle_trends()}} results.}
@@ -13,7 +18,9 @@ pollster_noise_vs_binomial(fits_by_cycle, factors, party = "ALP", n_ref = 1500)
 
 \item{party}{Party to measure on.}
 
-\item{n_ref}{Reference sample size for the binomial floor.}
+\item{n_ref}{Reference sample size for the binomial floor. Defaults to
+\link{BINOMIAL_REF_N}, shared with the \code{H1}/\code{L4b} pipeline checks so the
+published figure and the halting check describe the same quantity.}
 }
 \value{
 data.table: \code{firm}, \code{implied_sd_pts}, \code{binomial_floor}, \code{ratio},

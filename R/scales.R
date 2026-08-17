@@ -18,6 +18,45 @@
 #' @keywords internal
 SHARE_CLAMP <- c(0.25, 99.75)
 
+#' Reference sample size for the binomial noise floor
+#'
+#' "A poll cannot be less variable than random sampling makes it" underpins two
+#' things: the `H1`/`L4b` checks that halt the pipeline, and the *Variability*
+#' column the page publishes against named polling companies. Both need an
+#' assumed sample size, because the source poll files carry no sample-size
+#' column and there is nothing to estimate one from.
+#'
+#' They used to disagree -- 2500 in the fit scripts, 1500 in the scorecard --
+#' and each was defensible alone. Two values for one physical quantity is not:
+#' a reader comparing the published Variability figure against the pipeline's
+#' herding check would get different answers about the same firm.
+#'
+#' Unified on the LARGER, which is deliberately the conservative direction. A
+#' bigger assumed sample means a smaller binomial sd, a weaker floor, and so
+#' fewer firms flagged as less variable than sampling allows. That claim is an
+#' accusation of herding against a named company, and the asymmetry matters:
+#' failing to flag a herder costs us a note in a table, wrongly flagging an
+#' honest pollster costs them.
+#'
+#' @keywords internal
+BINOMIAL_REF_N <- 2500
+
+#' Sensitive reference sample size, for reporting rather than halting
+#'
+#' The fit scripts deliberately carry a second, smaller reference alongside
+#' [BINOMIAL_REF_N], and on inspection that is a design rather than the
+#' accident it first looked like. A smaller assumed sample means a higher
+#' floor and a more sensitive test, which is right for a diagnostic that
+#' PRINTS a herding signal and wrong for one that HALTS the pipeline.
+#'
+#' So: `BINOMIAL_REF_N` for anything that stops a run or makes a published
+#' claim about a named firm, this for anything that merely says "look here".
+#' Two values, deliberately, each with its job written down -- as opposed to
+#' two values because two files were edited on different days.
+#'
+#' @keywords internal
+BINOMIAL_SENSITIVE_N <- 1500
+
 #' Transform poll shares (percent) to the model scale
 #'
 #' @param y Shares in percent.

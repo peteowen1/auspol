@@ -1,3 +1,36 @@
+# auspol 0.4.1
+
+No forecast numbers change. Every fix here closes a gap between what the model
+does and what the machinery around it claimed it does.
+
+## Fixes
+
+- **`G7`: the published fit is now checked.** `fit_vic.R`'s `L2`/`L3`
+  structural checks run on `fit_vic.R`'s own fit, which uses per-cycle sigmas
+  and per-pollster noise factors the published one does not. Since the page
+  moved to its own fit, those checks were guarding a model nobody publishes:
+  the published fit could have had a band below zero or first preferences
+  summing to 80 with every L-check still reporting PASS. `G7` applies the same
+  test where the published fit is made, and is verified to fail on both.
+- `G7` itself shipped unable to fail, and was fixed: an `| is.na(lo95)` clause
+  meant an *unverifiable* band counted as a pass.
+- **Two binomial reference sample sizes, deliberately.** `BINOMIAL_REF_N`
+  (2500) wherever a check halts a run or the page makes a claim about a named
+  firm; `BINOMIAL_SENSITIVE_N` (1500) where a signal is only reported. The
+  scorecard previously used the sensitive value for a **published** claim about
+  named polling companies, which is the aggressive setting on the one output
+  where a false positive costs someone else. No literal survives outside the
+  definitions, including in printed messages — one said "n=1500" while
+  computing with 2500.
+- **Scorecard prose.** *Variability* was described as scatter against sampling
+  error; it is a relative peer comparison where 1.00 is the average firm. The
+  absolute measure exists but writes to a file the page never reads.
+- The page now states which pollster figures the forecast uses: it separates
+  lean from the trend, and does **not** weight polls by variability.
+- `ARCHITECTURE.md` records the `G`-code registry, since three separate greps
+  for those codes came back incomplete and one of those misses is why `B1`
+  meant two different things.
+
 # auspol 0.4.0
 
 Every hard-coded number in the model is now inventoried, and the ones that
