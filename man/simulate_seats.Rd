@@ -27,12 +27,7 @@ which the swing is measured.}
 figure from \code{\link[=seat_swing_spread]{seat_swing_spread()}} when \code{region_sd} is also supplied.}
 
 \item{region_sd}{Spread of regional effects. Zero reproduces the earlier
-independent-seats behaviour.
-Non-classic seats are not simulated — the model holds no two-candidate
-margin for a contest that is not Labor against a major — so they are assumed
-held by their incumbent. \code{alp_total} adds the ones Labor already holds to
-the simulated count, and \strong{that is the figure to publish}. \code{seats_won}
-counts classic seats only and is kept for diagnostics.}
+independent-seats behaviour.}
 
 \item{n_sims}{Number of simulations.}
 
@@ -56,4 +51,10 @@ Leaving out the regional layer does not change any single seat's
 probability much, but it makes the SEAT COUNT look more certain than it is,
 because independent deviations average out across 83 seats while correlated
 ones do not.
+
+Non-classic seats are not simulated — the model holds no two-candidate
+margin for a contest that is not Labor against a major — so they are assumed
+held by their incumbent. \code{alp_total} adds the ones Labor already holds to
+the simulated count, and \strong{that is the figure to publish}. \code{seats_won}
+counts classic seats only and is kept for diagnostics.
 }

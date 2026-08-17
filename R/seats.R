@@ -126,6 +126,12 @@ seat_swing_spread <- function(seats, statewide_swing) {
 #' because independent deviations average out across 83 seats while correlated
 #' ones do not.
 #'
+#' Non-classic seats are not simulated — the model holds no two-candidate
+#' margin for a contest that is not Labor against a major — so they are assumed
+#' held by their incumbent. `alp_total` adds the ones Labor already holds to
+#' the simulated count, and **that is the figure to publish**. `seats_won`
+#' counts classic seats only and is kept for diagnostics.
+#'
 #' @param seats From [load_seats()].
 #' @param tpp_mean,tpp_sd Projected ALP two-party share and its sd.
 #' @param prev_tpp The previous election's statewide ALP two-party share, from
@@ -134,12 +140,6 @@ seat_swing_spread <- function(seats, statewide_swing) {
 #'   figure from [seat_swing_spread()] when `region_sd` is also supplied.
 #' @param region_sd Spread of regional effects. Zero reproduces the earlier
 #'   independent-seats behaviour.
-#' Non-classic seats are not simulated — the model holds no two-candidate
-#' margin for a contest that is not Labor against a major — so they are assumed
-#' held by their incumbent. `alp_total` adds the ones Labor already holds to
-#' the simulated count, and **that is the figure to publish**. `seats_won`
-#' counts classic seats only and is kept for diagnostics.
-#'
 #' @param n_sims Number of simulations.
 #' @param seed Optional RNG seed.
 #' @return List: `seats_won` (ALP classic-seat wins per simulation),
