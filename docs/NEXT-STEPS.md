@@ -1,6 +1,6 @@
 # auspol — work queue
 
-Updated 2026-08-16. Remote: github.com/peteowen1/auspol (private, default
+Updated 2026-08-18. Remote: github.com/peteowen1/auspol (private, default
 branch `dev`; `main` exists and is reached only through a reviewed PR).
 
 Completed stage write-ups live in
@@ -9,12 +9,26 @@ open state, not the narrative of how it got here.
 
 ## Awaiting Pete
 
-- **PR #5 is merged** (2026-08-17, `2d556bc`). `dev` and `main` are level.
-  It should have been a stack, for the same reason PR #2 should have been: it
-  opened at 6 commits and merged at 13, because work pushed to `dev` joins an
-  open PR automatically. **The lesson is now recorded three times and acted on
-  zero. Use `gh-stack` for the next long run** — the 2026-08-17 work below is
-  already 7 commits on `dev` with no PR open.
+- **PRs #5–#8 merged** (2026-08-17/18). Each was reviewed before opening and
+  each review caught a real defect the tests could not: four stale published
+  seat figures, roxygen documenting a field under the wrong argument, and a
+  correction pass that had missed two of its own targets. **The review gate is
+  earning its cost — do not skip it, least of all on docs-only diffs, which is
+  where skipping feels most defensible.**
+
+  The stacking lesson is now recorded four times and acted on zero. `gh-stack`
+  is installed (v0.1.0). The seat rebuild has three separable layers and is
+  exactly what it is for.
+- **VEC data licensing — now blocking, not theoretical.** The Victorian
+  distribution data fetched 2026-08-18 sits in the session scratchpad. The VEC
+  publishes **no** copyright, Creative Commons or terms-of-use statement on any
+  results page, and `vec.vic.gov.au/copyright` returns 404. Fetching for
+  analysis is unproblematic; **committing it is redistribution**, and the
+  approved plan is to commit. `R/paths.R` already states the convention for the
+  anchor's data — "carries no formal license, so it is never committed" — and
+  the same reasoning applies here. Derived aggregates (a measured flow rate with
+  provenance) are arguably facts rather than a copy of their dataset; raw tables
+  are not. Needs a decision before the rebuild lands.
 - **Decide whether the repo goes public.** Private on purpose. Two things are
   outward-facing and should be deliberate: `docs/plans/product-features.md`
   carries critical commentary on named competitors (theswingison, DemosAU —
@@ -40,82 +54,57 @@ open state, not the narrative of how it got here.
   project avoids, so it should be a decision rather than an implementation
   detail.
 
-## Next session starts here (2026-08-17)
+## Next session starts here (2026-08-18)
 
-**The booth-data recommendation below is superseded. Read this first.**
+**The seat rebuild is unblocked on data. It is blocked on One Nation.**
 
-The 2026-08-16 plan said booth-level VEC data was "the only route left to the
-seat-level work". Measuring it changed the answer on every count. Full evidence:
-[reviews/onp-allocation-sa-2026-08-17.md](reviews/onp-allocation-sa-2026-08-17.md).
+Full evidence: [reviews/vic-preference-flows-2026-08-18.md](reviews/vic-preference-flows-2026-08-18.md),
+[reviews/flow-record-integrity-2026-08-18.md](reviews/flow-record-integrity-2026-08-18.md),
+[reviews/clean-flow-backtest-2026-08-18.md](reviews/clean-flow-backtest-2026-08-18.md),
+[reviews/oth-composition-2026-08-18.md](reviews/oth-composition-2026-08-18.md).
 
-1. **Booth data is not needed for the One Nation question.** Seat-level first
-   preferences are enough, and Victoria's are free — **Victoria did not
-   redistribute**, so all 88 district names in `2026vic.txt` match the 2022
-   results exactly and 2022 seat primaries apply directly.
-2. **The real defect is bigger than the five non-classic seats.** The `classic`
-   flag (`R/seats.R:55-56`) reads 2022's final-two pairs forward. On a
-   first-pass primary simulation, One Nation reaches the final two in **39–44
-   of 88 seats** and Labor fails to in **23–24** — against a model that assumes
-   Labor is in the final two everywhere.
-3. ~~And it changes the seat count by almost nothing.~~ **WITHDRAWN 2026-08-18
-   — do not act on this.** The claim rested on a sweep that invented a 50/50
-   split for Liberal preferences between One Nation and Labor. Measured, it is
-   **62.7% to One Nation**, in the transfer that decides every ONP-vs-ALP seat.
-   The "correctness work, not accuracy work" framing followed from that number
-   and is withdrawn with it — note that the convenient conclusion was the one
-   that made a large job unnecessary.
+**Acquired 2026-08-18.** All 88 VEC districts, candidate-level: **452 exclusion
+events across 76 districts, every one reconciling exactly**. 11 seats were won
+on first preferences so no distribution was held; Narracan 404s on both pages,
+independently confirming its 2022 election never completed. Files are in the
+session scratchpad and **not committed** — see the licence item under Awaiting
+Pete. Fetch is ~1 hour to repeat: `{district}-district-results/{district}-results-distribution`,
+static server-rendered HTML, no JavaScript.
 
-   The seat-count effect is currently **unknown**, and cannot be settled
-   without the preference matrix below.
+**What that settled:**
 
-**The next job is neither small nor bounded, and calling it so was wrong.**
-Pete's direction, 2026-08-18: estimate **every party-to-party flow** and
-simulate each seat the way the count actually runs — candidate by candidate,
-lowest excluded, preferences distributed, until two remain.
+1. **The `classic` flag is the real defect**, not the five non-classic seats.
+   `R/seats.R:55-56` reads 2022's final-two pairs forward; on a first-pass
+   simulation One Nation reaches the final two in **39–44 of 88** seats and
+   Labor fails to in **23–24**.
+2. **Victoria did not redistribute** — all 88 district names match 2022, so
+   seat primaries apply directly with no notional reconstruction.
+3. **Victoria cannot answer the One Nation question.** ONP contested 5 of 88
+   districts in 2022 and appears in **2** exclusion events. The two-party cell
+   has n = 1. Every ONP claim still rests on the thin 16-district SA sample.
 
-What that needs, and what is missing:
+**So the blocker is now narrow and specific: One Nation preference data.**
+ECSA's results site is an Angular app whose every path returns the same
+1,566-byte shell, so SA needs browser automation or a reverse-engineered
+endpoint. That is the next acquisition, and it is the only thing standing
+between here and a seat count anyone should believe.
 
-| Step | Status |
-|---|---|
-| per-seat candidate lists by party | VEC publishes for all 88 seats — not yet fetched |
-| 2026 primary vote per party per seat | method validated (SA 2026), not built |
-| **party-to-party flow matrix, conditional on survivors** | **the blocker** |
-| candidate-by-candidate elimination | code, straightforward |
-| thousands of simulations carrying flow uncertainty | code, straightforward |
+**Do not start the rebuild before it.** A first attempt with 49 of 88 transfers
+falling back to a pooled estimate returned Labor 56 and One Nation 0 — Labor
+*higher* after correcting a transfer that runs *against* Labor. Incoherent.
+**Do not quote that run.**
 
-The matrix is the blocker and it is a **much larger data job than first
-preferences**: it needs full distribution-of-preferences tables across many
-elections. A first attempt from the 16 SA districts Wikipedia carries produced
-28 cells, most with n ≤ 2, and **49 transfers in an 88-seat run had no
-observed cell at all**. That run returned One Nation 0 seats and Labor 56 —
-Labor *higher* than the previous harness, after correcting a transfer that runs
-*against* Labor. Incoherent, and the fallbacks are why. **Do not quote it.**
+**Prerequisites the rebuild needs, now known:**
 
-Also note the collapsing that remains: OTH is treated as one bloc, when a real
-Victorian ballot carries Legalise Cannabis, Animal Justice, Family First,
-Freedom, Victorian Socialists and independents as separate candidates,
-excluded separately, preferencing very differently. That is the same class of
-error as the invented 50/50.
-
-**Before any of that**, two independent items are worth more per hour:
-
-- `scripts/fit_seats.R:173-175` adds `alp_extra` to the seat total;
-  `scripts/build_page.R:242-244` does not. They agree only because it is
-  currently 0. A one-line divergence that would silently under-count the
-  published page by one seat.
-- ~~Narracan needs handling~~ — **checked 2026-08-17, there is nothing to fix
-  in the current model.** Its 2022 election failed after a candidate died and
-  Labor did not contest the January 2023 supplementary, but the anchor has
-  already resolved it: `2026vic.txt` carries `fTppMargin=-13.0` and
-  `fPreviousTppSwing=-3.0`, which reconciles exactly against 2022's `-10`. Its
-  deviation from the statewide swing is **−0.40, ranked 83rd of 88** — one of
-  the least unusual seats in the file — and dropping it moves `sd_within` only
-  3.4894 → 3.5081.
-
-  **It will bite the primary-vote rebuild, though.** Narracan has no ordinary
-  2022 first-preference result to swing from, so anything sourcing seat-level
-  primaries from actual results needs a substitute for that one seat. The
-  problem is in the *future* data path, not the current one.
+- **An independent class.** The model has none; independents are inside OTH and
+  flow to Labor at **61.1%** against minor-right's **35.4%**. Per-seat implied
+  flow ranges 37.1–58.7 against a single assumed 48.872. This does *not* affect
+  anything published today — `simulate_seats()` reads the anchor's notional
+  margins, which come from the actual count — but it breaks any model computing
+  a seat's two-party figure from primaries.
+- **Narracan has no ordinary 2022 first preferences** (failed election, Labor
+  did not contest the January 2023 supplementary). Needs a substitute in any
+  primary-sourced rebuild. Nothing to fix in the current model — checked.
 
 **Still open, unchanged:**
 
@@ -123,14 +112,38 @@ error as the invented 50/50.
   `bSophomoreCandidate` (22) and `fTransposedFederalSwing` (89) are unread.
   Size them the way seat type was sized — expect the same answer.
 - L4c's negative tail is still uncalibrated (below).
-- Whether the OTH flow of 48.9% suits a bucket One Nation has been pulled out
-  of. Tested and **not** answerable from transfer tables (below); the concern
-  stands.
 
 **Do not start with:** anything that makes the backtest slower. Arm B of the
 volatility comparison took 33x and bought nothing; a backtest that takes an
 hour makes every constant expensive to re-examine, and constants that are
 expensive to re-examine stop being re-examined.
+
+## What 2026-08-18 measured
+
+| Question | Result |
+|---|---|
+| are Victorian distributions fetchable at scale? | **yes** — 452 exclusions, all reconciling |
+| is the model's Greens flow right? | **no** — 79.2 measured against 83.5 used |
+| does correcting the flow record move the forecast? | **no — zero.** Vic 2022 is 7th most recent; the estimate averages the last 5 |
+| is the observed flow record sound? | **no** — 14% of rows are carried-forward duplicates |
+| does the estimator survive cleaning them out? | **yes** — `mean_last5` wins all three variants |
+| does the OTH bucket need splitting? | **for the rebuild, yes; for what is published, no** |
+
+Three lessons, all expensive:
+
+1. **Two of three sizings tonight were wrong, both in the direction that made
+   the finding look important.** The Greens record error was sized at 0.564
+   points of published two-party vote and is worth **zero** — Victoria 2022 is
+   not among the five elections the estimate averages. Check *which inputs a
+   function actually reads* before sizing a change to one of them.
+2. **A contaminated benchmark flatters the method that shares its bias.**
+   `last_in_region` sat 0.048 MAE off the winner on the raw target set and fell
+   to 0.727 behind — second to sixth — once carried-forward targets were
+   removed. Had the 2026-08-16 ranking gone one notch differently, the project
+   would have adopted a method whose strength was duplicated data.
+3. **A speculation offered as explanation was tested and false.** Contamination
+   does *not* explain why the linear trend ranks sixth; it ranks 6, 5, 7 across
+   variants. Withdrawn where it was made.
 
 ## What 2026-08-17 measured
 
@@ -508,88 +521,37 @@ pointed the wrong way on the variance — the confound was `govt_years`, which
 correlates with leader change (0.12) and is already a predictor. Fifteen
 minutes of sizing replaced building a feature and then discovering this.
 
-## Preference flows are now estimated, not assumed (2026-08-16)
+## Preference flows are estimated, not assumed (2026-08-16)
 
-Pete's direction, and it reframed the whole question: **never hand-code an
-assumption — derive it from data so it moves as data arrives.** And more
-broadly, auspol is *inspired by* AE Forecasts and theswingison rather than a
-reimplementation of either; where both do something poorly we skip it or do it
-better. This is the first place that bites.
+Pete's direction, and it reframed the question: **never hand-code an assumption
+— derive it from data so it moves as data arrives.**
 
-Both references hand-set preference flows. AE Forecasts authors the value and
-borrows across regions (`2026,vic,ONP FP,25.5,#Use federal pref flow
-estimate`), so the same borrowed number stands for three future elections as
-though it were three estimates. theswingison uses a twelve-rule hierarchy —
-hand-authored rules no election can update.
-
-**Ours is estimated**: the mean of a party's five most recent observed
-elections, pooled across regions, moving as elections are held.
-
-> **Correction, 2026-08-18. This section claimed the estimated flow beat both
-> references. It does not, and the comparison was made on the wrong axis.**
->
-> Our estimate is a **single scalar per party — its share to Labor**. That is a
-> two-party quantity. theswingison's twelve rules are keyed on *who has been
-> eliminated and who remains*, which is how a seat is actually decided, and a
-> hand-authored rule that models the right mechanism beats a well-estimated
-> number for the wrong one. Estimation quality does not substitute for
-> modelling the correct quantity, and "estimated" was allowed to stand in for
-> "better" here without the axis being named.
->
-> Measured 2026-08-18 from SA 2026 distributions, the flow a party sends
-> depends heavily on who is still standing — exactly what a scalar cannot
-> express and what theswingison's rules are built to capture:
->
-> | transfer | to Labor |
-> |---|---:|
-> | GRN excluded, ALP vs LNP remain | 74.5% |
-> | GRN excluded, ALP vs ONP remain | 81.5% |
-> | ONP excluded, ALP vs LNP remain | 57.0% |
-> | ONP excluded, ALP/GRN/LNP remain | 19.3% |
->
-> Against the model's single fixed values of 83.5 for GRN and 33.7 for ONP.
-> The estimator below is still the best available *for the quantity it
-> estimates*; the claim that it makes us better than the references at
-> preferences is withdrawn.
-
-**The estimator was chosen by strict temporal backtest** — each election
-predicted from only earlier ones, 103 elections, eleven candidates:
-
-| Rank | | MAE |
-|---:|---|---:|
-| 1 | **mean of last 5** | **4.815** |
-| 2 | last in region | 4.863 |
-| 3 | mean of last 3 | 5.027 |
-| 6 | linear trend | 5.282 |
-| 7 | exp decay, 4-yr half-life | 5.669 |
-| 11 | exp decay, 8-yr + region bonus | 6.544 |
-
-(Abridged; `scripts/backtest_flows.R` prints all eleven and is the authority.)
-
-Two results worth keeping:
-
-- **The linear trend came fifth**, though the trends are real and strong
-  (Greens +1.10 points/year over 53 elections, One Nation −0.605 over 21, both
-  p < 0.001). Leave-one-out endorsed it and leave-one-out was wrong: it lets a
-  later election inform an earlier prediction.
-- **Every weighting scheme lost, monotonically in the half-life.** A hard
-  window beats soft decay because decay never fully discards anything, so a
-  1998 flow of 54% keeps a vote forever while behaviour has drifted to 26%.
-  Same-region weighting had *no effect at all* (6.544 vs 6.541).
+`flows_for()` estimates each party's flow as the mean of its five most recent
+observed elections, pooled across regions. The estimator was chosen by strict
+temporal backtest over 103 elections against eleven candidates;
+`scripts/backtest_flows.R` prints all eleven and is the authority, and
+`R/flow_model.R`'s header carries the ranking. `G3` re-runs it every pipeline
+run with a 0.15 MAE tolerance and fails if the adopted method stops winning.
 
 Victoria: ONP 25.5 → 33.7, GRN 81.9 → 83.5, OTH 49.3 → 48.9. **Published
 two-party 46.8 → 47.8.**
 
-`scripts/backtest_flows.R` re-runs the comparison every pipeline run and fails
-as **G3** if the adopted estimator stops winning, with a 0.15 MAE tolerance so
-ordinary jitter does not cause churn. The choice is itself made from data and
-would otherwise have been correct once and unexamined forever.
+**The claim that this beat both references is WITHDRAWN (2026-08-18)** — the
+comparison was made on the wrong axis. Ours estimates a *scalar share to
+Labor*; theswingison's twelve rules are keyed on who has been excluded and who
+remains, which is how a seat is decided, and measured flows swing by tens of
+points with that configuration (GRN→ALP 74.5 vs 81.5; ONP→ALP 19.3 vs 57.0).
+Full correction in `R/flow_model.R` and
+[reviews/clean-flow-backtest-2026-08-18.md](reviews/clean-flow-backtest-2026-08-18.md).
 
-**Still open:** per party the ranking differs — One Nation prefers the mean of
-3 (3.155 vs 3.744), the Greens prefer last-in-region. Reported by G3, not
-acted on: 16 and 38 elections cannot support choosing an estimator each.
-Revisit if a principled grouping appears (say, by party size or by how much
-history exists) rather than per-party cherry-picking.
+**Still open, and genuinely open:** per party the ranking differs — One Nation
+prefers the mean of 3 (3.155 vs 3.744), the Greens prefer last-in-region.
+Reported by `G3`, not acted on: 16 and 38 elections cannot support choosing an
+estimator each. Revisit only if a principled grouping appears (party size, or
+how much history exists) rather than per-party cherry-picking. **Note that
+`last_in_region`'s apparent strength was substantially a contamination
+artefact** — it fell from 2nd to 6th on a clean target set — so the Greens half
+of this is weaker than it looks.
 
 ## One Nation preferences: measured, and smaller than it looks (2026-08-15)
 
