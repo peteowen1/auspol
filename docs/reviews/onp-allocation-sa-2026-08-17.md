@@ -242,3 +242,74 @@ they win 0 seats or 15.
   sits at the top of the Victorian minor-right list at 18.58. Excluding it
   moves the per-seat minor-right sd from 3.54 to 3.29 and the max to 15.67
   (Ovens Valley). Immaterial to the conclusion, but the seat needs handling.
+
+## The preference stage cannot be built from the data in this repo
+
+`preference-estimates.csv` records **one number per party per election: the
+share flowing to ALP** (`R/load_polls.R:119-134`). `derive_tpp()`
+(`R/tpp.R:23-71`) uses it in a single step, which is all a two-party model
+needs.
+
+A sequential elimination needs more than that. When a minor-right party is
+excluded in a seat where **both LNP and ONP are still standing**, the file is
+silent on how its preferences split between them — and that is precisely the
+quantity that decides whether One Nation converts final-two placings into
+seats. The data we hold cannot answer the question the seat model exists to
+ask.
+
+**Available sources, both partial:**
+
+- Wikipedia carries full round-by-round distribution tables for **17 of 47**
+  SA 2026 districts and **0 of 88** Victorian 2022 ones. The 17 are likely the
+  close and interesting seats, so estimating a flow matrix from them would be
+  selection-biased in exactly the seats where preference behaviour is least
+  typical.
+- ECSA and the VEC both publish complete distributions per seat — the VEC's
+  district pages carry a "Distributions" link. That is the real source, and a
+  separate scrape from the first-preference one.
+
+## Sizing whether the matrix matters, before recommending that acquisition
+
+Parameterise the unknown as **theta**: the share of an excluded party's
+non-Labor preferences going to ONP when ONP survives, with the remainder split
+among other survivors in proportion to their tallies. Sweep it, using the
+Victorian flows the model already estimates (GRN 83.5, ONP 33.7, OTH 48.9).
+
+| theta | ALP | LNP | GRN | ONP |
+|---:|---:|---:|---:|---:|
+| 0.0 | 47 | 34 | 5 | **0** |
+| 0.3 | 49 | 32 | 5 | **0** |
+| 0.5 | 49 | 32 | 5 | **0** |
+| 0.6 | 51 | 29 | 5 | **2** |
+| 0.7 | 52 | 25 | 5 | **5** |
+| 1.0 | 52 | 22 | 4 | **9** |
+
+**One Nation wins nothing until minor-right preferences favour it over the
+Liberals by better than about 55/45, then rises to 9 seats at the extreme.**
+That is a genuinely useful bound: the matrix matters, but over a narrower range
+than "ONP contends in 44 seats" suggested.
+
+## The harness does not reproduce the published baseline, so trust the shape and not the level
+
+**ALP wins 47–52 seats here against a published figure of 35.** That gap is
+the anchor check failing, and it is reported rather than explained away.
+
+Measured cause, in part: the implied statewide ALP two-party from these
+primaries and flows is **49.19** against the published **47.8** — the harness
+runs **1.39 points hot for Labor**. On a pendulum where Victorian Labor seats
+bunch between 54 and 60, a point and a half of two-party vote moves a great
+many seats at once. The rest of the gap is that this sweep is deterministic
+with no seat noise, no regional effects and no projection uncertainty, and
+applies uniform swings to 2022 primaries rather than using the notional
+margins the real model uses.
+
+**This repo has been bitten by exactly this before** — recorded under the
+2026-08-16 lessons: *"A sensitivity sweep on a simplified harness predicted the
+wrong sign. It ran `fit_cycle_trends` bare while the pipeline has firm factors,
+the fold correction and estimated sigmas. A stripped-down harness is not the
+model."* The same caution applies here and for the same reason.
+
+So: the **shape** — flat at zero below theta ≈ 0.5, rising after — is worth
+acting on. The **counts** are not. And because the harness is hot for Labor it
+is correspondingly cold for LNP and ONP, which means 0–9 is more likely a floor
+than a ceiling.
