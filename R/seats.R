@@ -145,7 +145,9 @@ seat_swing_spread <- function(seats, statewide_swing) {
 #' @return List: `seats_won` (ALP classic-seat wins per simulation),
 #'   `alp_total` (`seats_won` plus non-classic seats Labor holds — the
 #'   publishable total), `alp_nonclassic` (that constant), `by_seat` (win
-#'   probability per seat), `n_classic`, `n_nonclassic`.
+#'   probability per seat, with `alp_tpp_now` the 2022 two-party share and
+#'   `alp_tpp_proj` that share plus the projected statewide swing),
+#'   `n_classic`, `n_nonclassic`.
 #' @export
 simulate_seats <- function(seats, tpp_mean, tpp_sd, prev_tpp, seat_sd,
                            region_sd = 0, n_sims = 20000, seed = NULL) {
@@ -195,7 +197,14 @@ simulate_seats <- function(seats, tpp_mean, tpp_sd, prev_tpp, seat_sd,
        by_seat = data.table::data.table(
          seat = cl$seat, seat_region = cl$seat_region,
          incumbent = cl$incumbent, margin = cl$margin,
-         alp_tpp_now = base, alp_win_prob = colMeans(won))[order(-alp_win_prob)],
+         alp_tpp_now = base,
+         # The seat's CENTRAL projected position, i.e. its 2022 two-party share
+         # plus the projected statewide swing. Reported because `alp_tpp_now`
+         # alone reads as absurd next to the win probability: on a -7 point
+         # swing a seat Labor held 57-43 is a coin flip, and a table showing
+         # "57.2" beside "50.2%" looks like a bug until you supply the swing.
+         alp_tpp_proj = base + (tpp_mean - prev_tpp),
+         alp_win_prob = colMeans(won))[order(-alp_win_prob)],
        n_classic = n,
        n_nonclassic = sum(!seats$classic))
 }
