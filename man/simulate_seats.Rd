@@ -27,15 +27,22 @@ which the swing is measured.}
 figure from \code{\link[=seat_swing_spread]{seat_swing_spread()}} when \code{region_sd} is also supplied.}
 
 \item{region_sd}{Spread of regional effects. Zero reproduces the earlier
-independent-seats behaviour.}
+independent-seats behaviour.
+Non-classic seats are not simulated — the model holds no two-candidate
+margin for a contest that is not Labor against a major — so they are assumed
+held by their incumbent. \code{alp_total} adds the ones Labor already holds to
+the simulated count, and \strong{that is the figure to publish}. \code{seats_won}
+counts classic seats only and is kept for diagnostics.}
 
 \item{n_sims}{Number of simulations.}
 
 \item{seed}{Optional RNG seed.}
 }
 \value{
-List: \code{seats_won} (vector of ALP classic-seat wins per simulation),
-\code{by_seat} (win probability per seat), \code{n_classic}, \code{n_nonclassic}.
+List: \code{seats_won} (ALP classic-seat wins per simulation),
+\code{alp_total} (\code{seats_won} plus non-classic seats Labor holds — the
+publishable total), \code{alp_nonclassic} (that constant), \code{by_seat} (win
+probability per seat), \code{n_classic}, \code{n_nonclassic}.
 }
 \description{
 Three sources of variation, in descending order of how much they move the

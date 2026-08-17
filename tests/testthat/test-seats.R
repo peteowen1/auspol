@@ -130,3 +130,31 @@ test_that("a classic seat with no region fails with a message naming it", {
   expect_silent(simulate_seats(s, 50, 1, 50, seat_sd = 2, region_sd = 0,
                                n_sims = 100))
 })
+
+test_that("alp_total counts non-classic seats Labor holds, seats_won does not", {
+  # scripts/fit_seats.R added this and scripts/build_page.R did not, so the
+  # published page would have under-counted Labor by one per non-classic seat
+  # it held. They agreed only because the constant is zero in 2026, which is
+  # exactly the shape of divergence that cannot surface until it matters.
+  s <- fake_seats(margins = c(8, -6, 4, -3))
+  s[, classic := c(TRUE, TRUE, FALSE, FALSE)]
+  # Seat3 is Labor-held and non-classic; Seat4 is not Labor-held.
+  s[, incumbent := c("ALP", "LNP", "ALP", "GRN")]
+
+  sim <- simulate_seats(s, 50, 1, 50, 2, n_sims = 500, seed = 7)
+
+  expect_equal(sim$alp_nonclassic, 1L)
+  expect_equal(sim$n_classic, 2L)
+  expect_equal(sim$n_nonclassic, 2L)
+  # the publishable total is strictly the simulated count plus the held seat
+  expect_equal(sim$alp_total, sim$seats_won + 1L)
+  expect_true(all(sim$alp_total > sim$seats_won))
+
+  # and with no Labor-held non-classic seat the two must agree exactly, so the
+  # correction cannot quietly inflate the ordinary case
+  s2 <- data.table::copy(s)
+  s2[, incumbent := c("ALP", "LNP", "GRN", "GRN")]
+  sim2 <- simulate_seats(s2, 50, 1, 50, 2, n_sims = 500, seed = 7)
+  expect_equal(sim2$alp_nonclassic, 0L)
+  expect_equal(sim2$alp_total, sim2$seats_won)
+})
