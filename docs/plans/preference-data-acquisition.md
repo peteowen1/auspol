@@ -65,18 +65,33 @@ Every URL variant tried returns 404:
 (`analysis/fetch_election_data_vic.py`) needing Selenium and an iframe for the
 2018 URL. Needs separate investigation; **not** a blocker for a first matrix.
 
-## South Australia — harder than Victoria, and mostly redundant
+## South Australia — SOLVED 2026-08-18, and no browser was needed
 
-ECSA's results site (`result.ecsa.sa.gov.au`) is an Angular single-page app.
-Every path probed — `/results/ha`, `/api/results`, and two others — returns the
-**identical 1,566-byte shell**, so the 200 status is client-side routing rather
-than data. Extracting it means either driving a browser or reverse-engineering
-the JS bundle to find the real endpoint.
+The results site is an Angular app whose every path returns the same
+1,566-byte shell, so this was written up as needing browser automation. It does
+not. **Reading the app's own JS bundle gives a clean public JSON API**, no key,
+no auth:
 
-Given Victoria 2022 delivers 88 candidate-level districts in the actual target
-jurisdiction, SA is no longer the priority it was when it was the only source.
-The 16 Wikipedia districts already parsed remain useful as an out-of-state
-check on whatever Victoria yields.
+```
+base   https://apim-ecsa-production.azure-api.net/results-display/
+routes ElectionDates
+       HAStatic/{electionDate}          e.g. HAStatic/2026-03-21   (157 KB)
+       HAChange/{electionDate}/{n}      e.g. HAChange/2026-03-21/0 (2.3 MB)
+```
+
+`HAChange` carries **`finalDistribution` for all 47 districts** — every round,
+the named excluded candidate, and the exact `voteChange` to each remaining
+candidate. `HAStatic` carries candidate→party. The two use different
+`candidateId` numbering, so join on normalised name within district.
+
+Yield: **294 exclusion events across all 47 districts**, against 97 across 16
+from the Wikipedia sample this work had been stuck on.
+
+**Lesson worth keeping: "the site is a JavaScript app" is not the same as "the
+data is unreachable".** Reading the bundle for its API base took minutes; the
+plan written before doing so budgeted for browser automation and treated South
+Australia as deprioritised because of it. Check the bundle before concluding a
+SPA needs a browser.
 
 ## Licence — still unresolved, and now it matters more
 
