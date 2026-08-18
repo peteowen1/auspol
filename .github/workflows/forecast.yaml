@@ -55,6 +55,27 @@ jobs:
           echo "anchor at $(git -C external/aus-polling-analyser rev-parse --short HEAD)"
           ls external/aus-polling-analyser/analysis/Data/poll-data-*.csv
 
+      # Election-commission results for the candidate-level seat model. Both
+      # sources are public and unauthenticated, and neither is committed --
+      # neither commission publishes a licence. The 2022 Victorian and 2026
+      # South Australian results are HISTORICAL and immutable, so this is
+      # cached rather than refetched daily: 176 VEC page requests every morning
+      # for data that cannot change would be rude as well as slow, and it would
+      # make the forecast fail whenever the VEC has an outage.
+      - name: Cache fetched election results
+        id: elections-cache
+        uses: actions/cache@v4
+        with:
+          path: external/elections
+          key: elections-v1-${{ hashFiles('scripts/fetch_preferences_*.R') }}
+
+      - name: Fetch election results
+        if: steps.elections-cache.outputs.cache-hit != 'true'
+        run: |
+          Rscript scripts/fetch_preferences_sa.R
+          Rscript scripts/fetch_preferences_vic.R
+          cat external/elections/MANIFEST.csv
+
       - name: Run the pipeline
         id: run
         run: |

@@ -34,7 +34,12 @@ STAGES <- list(
   list(f = "scripts/fit_federal.R",    what = "federal cycles",          slow = TRUE),
   list(f = "scripts/fit_nsw.R",        what = "NSW cycles",              slow = TRUE),
   list(f = "scripts/fit_projection.R", what = "fundamentals + mix",      slow = FALSE),
-  list(f = "scripts/fit_seats.R",      what = "seat simulation",         slow = FALSE),
+  list(f = "scripts/fit_seats.R",      what = "seat simulation (two-party)", slow = FALSE),
+  # Candidate-level seats. Runs AFTER fit_seats.R because its S5 check compares
+  # the two, and needs the election data fetched into external/elections --
+  # it exits cleanly with instructions when that is absent, so a developer
+  # without it still gets the rest of the pipeline.
+  list(f = "scripts/fit_seats_full.R", what = "seat simulation (per seat)", slow = TRUE),
   list(f = "scripts/fit_scorecard.R",  what = "pollster scorecard",      slow = FALSE),
   list(f = "scripts/build_page.R",     what = "public page",             slow = FALSE)
 )
