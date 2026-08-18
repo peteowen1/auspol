@@ -168,29 +168,17 @@ run <- function(stage) {
   # stage that fails was invisible to the duplicate-code guard.
   if (!ok) {
     cat(paste(utils::tail(c(res, err), 25), collapse = "\n"), "\n")
-    # A stage that exited non-zero having emitted NO check line never
-    # reached its checks at all -- a missing anchor clone, a parse error,
-    # an OOM kill. That needs a different reaction from "the model failed
-    # a check we wrote down in advance", so do not let the summary call
-    # the two the same thing.
-    # Classify on the ERROR TEXT, not on whether any check line printed.
-    #
-    # The first version keyed on `length(keep)`: any stage that had emitted a
-    # check line before dying was reported as CHECK FAILED. fit_federal.R then
-    # printed FL1, hit an undefined variable, and was reported as a failed
-    # pre-registered check -- which reads as routine, is triaged as "the model
-    # needs attention", and hid a script that could not run at all. It took a
-    # reviewer running the script to find it.
-    #
-    # A pre-registered check failing is a stopifnot: "... is not TRUE". Anything
-    # else -- object not found, could not find function, subscript out of
-    # bounds -- is the script being broken, which is a different problem needing
-    # a different reaction.
+    # Classify on the error text, via classify_stage_failure() in the package
+    # so it can be tested -- CI has no anchor clone and cannot run a stage.
+    # Two earlier versions of this logic were wrong in OPPOSITE directions:
+    # keying on "did any check line print" called a crashed fit_federal.R a
+    # failed check, and keying on "is not TRUE" would have called S5, G2, G3
+    # and G7 -- bare stop() calls, this repo's most substantive checks --
+    # crashes. It now needs positive evidence either way and says
+    # "unclassified" rather than guessing a third time.
     err_lines <- grep("^Error", c(res, err), value = TRUE)
     last_err <- if (length(err_lines)) utils::tail(err_lines, 1) else ""
-    is_check <- grepl("is not TRUE|are not all TRUE", last_err)
-    kind <- if (!nzchar(last_err)) "FAILED (no error text)" else
-      if (is_check) "CHECK FAILED" else "CRASHED"
+    kind <- stage_failure_label(classify_stage_failure(last_err))
     stop(sprintf("%s: %s (exit %s) after %.0f s%s",
                  kind, stage$f, status, secs,
                  if (nzchar(last_err)) paste0(" -- ", last_err) else ""))
