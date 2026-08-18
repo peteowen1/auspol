@@ -81,6 +81,11 @@ remains, until two are left.
 Pascoe Vale at 55%; One Nation's best is Melton at 86%. Yan Yean is the
 tossup, a genuine three-way at LNP 44 / ALP 31 / ONP 25.
 
+> **Superseded.** These probabilities came from a run that rebuilt the
+> statewide distribution instead of inheriting the projection, making it about
+> 40% too confident. Corrected figures are in
+> `docs/reviews/seat-sim-working-2026-08-18.md`; Melton is 57%, not 86%.
+
 **Not published**, and not a replacement for the two-party model. It runs from
 data fetched into a scratchpad and the VEC licence question is unresolved.
 

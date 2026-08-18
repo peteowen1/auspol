@@ -44,58 +44,39 @@ composition rather than sliding every seat along one statewide swing.
 | One Nation does not win inner-city Green seats | **PASS** — its best are outer-suburban |
 | One Nation's strength sits in plausible geography | **PASS** — Melton, Greenvale, Sydenham, Cranbourne |
 
-## Seats where a minor party has >=10% chance — 25 of 87
+## Seats where a minor party has >=10% chance — 14 of 87
 
-All figures from the final run, after per-party uncertainty was taken from the
-model. An earlier draft of this file carried figures from the previous run and
-quoted Pascoe Vale at two different values; caught in review.
-
-**Likely minor wins**
-
-| seat | party | prob |
-|---|---|---:|
-| Brunswick | GRN | 100% |
-| Melbourne | GRN | 100% |
-| Richmond | GRN | 98% |
-| Prahran | GRN | 92% |
-| Melton | ONP | 86% |
-| Greenvale | ONP | 61% |
-| Sydenham | ONP | 56% |
-| **Pascoe Vale** | **GRN** | **55%** |
-
-Pascoe Vale is the one seat where a minor party is favoured that does not
-already hold it — a Greens gain from Labor.
-
-**Live contests**
+Regenerated from `output/seat-probs-vic-2026.csv` after the projection-anchoring
+fix. **Every probability here is lower than first published**, because the
+uncorrected run was about 40% too confident.
 
 | seat | party | prob | favourite |
 |---|---|---:|---|
-| Cranbourne | ONP | 44% | ALP 55% |
-| Ripon | ONP | 34% | LNP 60% |
-| Northcote | GRN | 30% | ALP 70% |
-| Point Cook | ONP | 29% | ALP 67% |
-| Footscray | GRN | 28% | ALP 72% |
-| Pakenham | ONP | 28% | LNP 61% |
-| St Albans | ONP | 26% | ALP 71% |
-| Yan Yean | ONP | 25% | LNP 44% |
-| Kororoit | ONP | 23% | ALP 76% |
-| Albert Park | GRN | 19% | ALP 52% |
-
-**Longer shots (10–17%)** Sunbury ONP 17%, Morwell ONP 17%, Benambra ONP 14%,
-Mulgrave ONP 13%, Mildura ONP 13%, Werribee ONP 10%, Narre Warren North ONP 10%.
+| Brunswick | GRN | 100% | GRN 100% |
+| Melbourne | GRN | 99% | GRN 99% |
+| Richmond | GRN | 95% | GRN 95% |
+| Prahran | GRN | 72% | GRN 72% |
+| Melton | ONP | 57% | ONP 57% |
+| Pascoe Vale | GRN | 49% | GRN 49% |
+| Northcote | GRN | 43% | ALP 57% |
+| Greenvale | ONP | 36% | ALP 48% |
+| Footscray | GRN | 30% | ALP 69% |
+| Sydenham | ONP | 25% | ALP 44% |
+| Cranbourne | ONP | 21% | ALP 60% |
+| Point Cook | ONP | 18% | ALP 65% |
+| Pakenham | ONP | 18% | LNP 73% |
+| Ripon | ONP | 16% | LNP 75% |
 
 ## Closest seats
 
-| seat | | | |
-|---|---|---|---|
-| **Yan Yean** | LNP 44% | ALP 31% | ONP 25% |
-| Albert Park | ALP 52% | LNP 29% | GRN 19% |
-| Ashwood | ALP 54% | LNP 46% | |
-| Pascoe Vale | GRN 55% | ALP 43% | |
-| Cranbourne | ALP 55% | ONP 44% | |
-| Sydenham | ONP 56% | ALP 39% | |
-
-**Yan Yean is the tossup**, and it is a genuine three-way.
+| seat | favourite | prob |
+|---|---|---:|
+| Sydenham | ALP | 44% |
+| Greenvale | ALP | 48% |
+| Niddrie | ALP | 49% |
+| Pascoe Vale | GRN | 49% |
+| Sunbury | ALP | 53% |
+| Albert Park | ALP | 55% |
 
 ## How the One Nation allocation was fixed
 
