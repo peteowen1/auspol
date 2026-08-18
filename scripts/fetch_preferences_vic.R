@@ -93,7 +93,11 @@ for (i in seq_along(slug)) {
       v <- num(c4[3]); if (is.na(v)) next
       party_rows[[length(party_rows) + 1L]] <- data.table(
         seat = seats[i], cand = c4[1],
-        party = classify_party(c4[2]))
+        party = classify_party(c4[2]),
+        # First preferences are kept, not just the party label: projecting a
+        # seat needs its 2022 vote by class, and rebuilding that from anywhere
+        # else means a second source that can disagree with this one.
+        fp_votes = v)
     }
     break
   }
@@ -155,3 +159,9 @@ if (nrow(bad)) cat(sprintf("!! %d transfer rows dropped for an unmatched candida
 f <- file.path(OUT, "transfers-vic2022.csv")
 fwrite(tx, f); cat("wrote", f, "\n")
 fwrite(pm, file.path(OUT, "candidates-vic2022.csv"))
+
+fp <- pm[, list(votes = sum(fp_votes)), by = c("seat", "party")]
+fwrite(fp, file.path(OUT, "firstprefs-vic2022.csv"))
+cat(sprintf("first preferences: %d seat-party rows across %d seats
+",
+            nrow(fp), uniqueN(fp$seat)))

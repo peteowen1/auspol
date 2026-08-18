@@ -102,3 +102,34 @@ if (length(unmatched)) {
 f <- file.path(OUT, "transfers-sa2026.csv")
 fwrite(tx, f)
 cat("wrote", f, "\n")
+
+# Per-seat One Nation first-preference shares. Not used for preference flows:
+# this is the only measurement of how widely a party polling around 23% varies
+# BETWEEN seats, and the Victorian seat model borrows that spread because
+# Victoria has never had a large One Nation vote to measure its own.
+fp_rows <- list()
+for (d in chg$districts) {
+  seat <- d$districtId
+  fd <- d$finalDistribution
+  if (!length(fd)) next
+  first <- Filter(function(r) identical(r$roundType, "FirstPreference"), fd)
+  if (!length(first)) next
+  keep <- which(party_map$seat == seat)
+  look <- setNames(party_map$party[keep], party_map$cand_key[keep])
+  tot <- 0; onp <- 0
+  for (cr in first[[1]]$candidateResults) {
+    v <- cr$progressiveTotal %||% 0
+    if (!is.numeric(v) || v <= 0) next
+    tot <- tot + v
+    cls <- look[[norm(cr$candidateName %||% "")]]
+    if (!is.null(cls) && identical(cls, "ONP")) onp <- onp + v
+  }
+  if (tot > 0 && onp > 0) {
+    fp_rows[[length(fp_rows) + 1L]] <- data.table(seat = seat, pct = 100 * onp / tot)
+  }
+}
+onp_fp <- rbindlist(fp_rows)
+stopifnot(nrow(onp_fp) > 0)
+fwrite(onp_fp, file.path(OUT, "sa2026-onp-shares.csv"))
+cat(sprintf("One Nation seat shares: %d seats, %.1f%% to %.1f%%, mean %.1f%%\n",
+            nrow(onp_fp), min(onp_fp$pct), max(onp_fp$pct), mean(onp_fp$pct)))
