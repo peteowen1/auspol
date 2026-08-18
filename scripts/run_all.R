@@ -89,8 +89,16 @@ run <- function(stage) {
   }
   # Surface each stage's own checks rather than hiding them: these lines are
   # the whole point of the pre-registered discipline.
-  keep <- grep("^(A[0-9]|N[0-9]|V[0-9]|H[0-9]|L[0-9]|P[0-9]|B[0-9]|C[0-9]|S[0-9]|R[0-9]|G[0-9]|F1|O1)",
-               res, value = TRUE)
+  # {1,2} letters, because codes carry a REGION prefix: L3 is Victoria's
+  # endpoint-sum check, FL3 the federal one, NL3 the NSW one. The first
+  # version of this listed each family as a single letter followed by a
+  # digit, so EVERY renamed code was dropped here -- before the extractor
+  # below ever saw it. The summary lost them and, worse, the duplicate-code
+  # guard could not see them either, so the guard the rename exists to serve
+  # passed vacuously. That is the "incomplete grep for check codes" hazard
+  # this repo has now hit four times; see CLAUDE.md.
+  keep <- grep("^[A-Z]{1,2}[0-9]+[a-c]?[ ]", res, value = TRUE)
+
   if (length(keep)) cat(paste(keep, collapse = "\n"), "\n")
 
   # Check codes are hand-maintained identifiers spread across seven scripts,
@@ -183,15 +191,23 @@ if (length(FAILED_VALIDATION)) {
   cat("The Victorian forecast above was built and is publishable. These",
       "stages validate the model on cycles nobody publishes, and one of",
       "them is broken.\n")
-  stop(length(FAILED_VALIDATION), " validation stage(s) failed: ",
-       paste(FAILED_VALIDATION, collapse = ", "))
 }
 
 clashes <- ls(CODE_CLASHES)
 if (length(clashes)) {
   cat("\nDUPLICATE CHECK CODES -- the summary cannot say which is which:\n")
   for (cd in clashes) cat("   ", get(cd, envir = CODE_CLASHES), "\n")
-  stop(length(clashes), " check code(s) claimed by two stages. Renumber one of each pair.")
+  cat("   -> ", length(clashes),
+      " check code(s) claimed by two stages. Renumber one of each pair.\n")
+}
+
+if (length(FAILED_VALIDATION) || length(clashes)) {
+  stop("Run finished with problems: ",
+       if (length(FAILED_VALIDATION))
+         paste0(length(FAILED_VALIDATION), " validation stage(s) [",
+                paste(FAILED_VALIDATION, collapse = ", "), "] ") else "",
+       if (length(clashes))
+         paste0(length(clashes), " duplicate check code(s)") else "")
 }
 
 cat(sprintf("\n=== pipeline complete in %.0f s ===\n",

@@ -109,7 +109,8 @@ was caught only against a number someone already knew.
 
 - **Pre-registered checks live in the fit scripts**, not the package, and halt
   the pipeline. They are stated before results are seen: `fit_vic.R` V1–V5,
-  `fit_federal.R` A1–A4/H1–H4/L1–L4, `fit_seats.R` S1–S4/R1–R3,
+  `fit_federal.R` A1–A4/H1–H4/FL1–FL4, `fit_nsw.R` NF1/NL2–NL4,
+  `fit_seats.R` S1–S4/R1–R3/S5,
   `fit_projection.R` P1–P4/B1–B3, `fit_scorecard.R` C1–C3.
 
   The **G codes are the registry worth writing down**, because they are spread
