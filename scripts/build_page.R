@@ -294,7 +294,13 @@ if (all(present)) {
     # at least one seat in the top 5% of runs.
     if (as.integer(sort(v)[pmax(1, round(0.95 * length(v)))]) < 1) return(NULL)
     data.table(party = p, med = q(v, .5), lo = q(v, .05), hi = q(v, .95))
-  }))[order(-med)]
+  }))
+  # rbindlist on an all-NULL list returns a table with no COLUMNS, and ordering
+  # by a column that does not exist is a hard crash rather than an empty chart.
+  # It cannot happen while two majors dominate -- both win seats in effectively
+  # every run -- but the daily job should not fall over on a model where that
+  # stops being true.
+  seats_by_party <- if (nrow(seats_by_party)) seats_by_party[order(-med)] else NULL
   # Seats worth naming: those where the favourite is not near-certain, or where
   # a non-major has a real chance. Sorted by how close the contest is.
   fav <- wp[, .SD[which.max(prob)], by = seat]
