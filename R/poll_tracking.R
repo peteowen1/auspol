@@ -157,7 +157,17 @@ report_poll_tracking <- function(x, code) {
   if (any(x$dropped)) {
     d <- x[dropped == TRUE]
     for (i in seq_len(nrow(d))) {
-      cat(sprintf("%s  BREACH %s is polled (%d in window, mean %.2f) but NOT FITTED\n",
+      # Deliberately not "its vote is missing". It is not: an unfitted party's
+      # support stays inside OTH, and where the recorded result has no separate
+      # line for that party either, OTH is the correct target. What IS wrong is
+      # that OTH then mixes firms that break the party out with firms that fold
+      # it in, and unfold_others() cannot reconcile them without a fitted trend
+      # to impute from. Measured on NSW 2023: OTH fitted at 15.30 against an
+      # actual of 17.96, with the definitional gap showing up as a Morgan house
+      # effect of -0.28 rather than as the ~5 points it really is.
+      cat(sprintf(paste0("%s  BREACH %s polled (%d in window, mean %.2f) but not ",
+                         "fitted:\n           OTH absorbs it, and no fold ",
+                         "correction can run on it\n"),
                   code, d$party[i], d$n[i], d$poll_mean[i]))
     }
   }

@@ -209,6 +209,32 @@ breaches the same check and `run_all.R` exits non-zero — so nothing is hidden.
 The page carries a One Nation caveat beside the trend chart. If you want a
 breach to stop publication instead, it is one line in `fit_vic.R`.
 
+### The inclusion floor was tested and stays at 8 (2026-08-19)
+
+[reviews/inclusion-floor-2026-08-19.md](reviews/inclusion-floor-2026-08-19.md),
+against [plans/prereg-party-inclusion-floor.md](plans/prereg-party-inclusion-floor.md).
+**Nothing changed**, and both directions were wrong.
+
+Lowering the floor to fit One Nation in NSW 2023 makes the forecast worse:
+monotonically worse on total first preferences AND on `OTH`, the party the
+mechanism was supposed to help. Raising it to 15 beats the status quo by 0.061
+(three times the 0.02 bar) and is **refused on an anchor** — it would drop One
+Nation from NSW 2027, where it polls 21.0% on 8 polls.
+
+The criterion could not see that: the recorded results rarely break out minor
+parties, so a model that lumps them together scores better against history while
+being worse for the live cycles. Two lessons recorded in the plan — a
+pre-registered criterion can be honest and still inadequate, and arms that
+differ in what they attempt cannot be compared on an average over what they
+attempted (the first run's arms fit 149 vs 125 rows).
+
+**Still wrong and not fixed:** NSW 2023's `OTH` is fitted across two
+definitions. Morgan breaks One Nation out in all 7 of its polls, everyone else
+folds it in, the model reads the difference as a −0.28 house effect, and `OTH`
+comes out 15.30 against an actual of 17.96. Fitting One Nation is not the
+remedy — floor 7 is worse. Reconciling the two `OTH` definitions directly is
+unqueued work.
+
 ### Still open
 
 - **One Nation's Victorian level.** 20.4 fitted against 23.2 polled. Not shown

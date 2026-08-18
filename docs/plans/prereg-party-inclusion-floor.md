@@ -95,3 +95,39 @@ Reported alongside, not decided on:
   a lower floor may add fits that the criterion is blind to. Count them.
 - The federal `25` is untested by this and stays untested. Say so rather than
   implying the whole family was checked.
+
+---
+
+## Result, 2026-08-19
+
+Run by `scripts/test_inclusion_floor.R`. Write-up:
+[../reviews/inclusion-floor-2026-08-19.md](../reviews/inclusion-floor-2026-08-19.md).
+
+**Floor stays at 8.** Both directions were wrong.
+
+- **Lowering it is worse**, monotonically, on total first preferences and on
+  `OTH` alike. Floor 5 is +0.069 MAE against floor 8; floor 7, which would fit
+  One Nation in NSW 2023, is +0.023. The mechanism argument that motivated this
+  plan does not survive measurement.
+- **Raising it clears the adoption bar and is refused on an anchor.** Floor 15
+  beats 8 by 0.061 — three times the 0.02 bar, monotonic, not a spike — but it
+  would drop One Nation from the NSW 2027 cycle, where it polls **21.0% on 8
+  polls**. A model that cannot represent a party polling in the low twenties is
+  broken whatever its historical error says.
+
+**The criterion this plan fixed in advance was inadequate.** The recorded
+results mostly do not break out minor parties, so `OTH` in the targets means
+"everything minor, lumped", and a model that also lumps them scores better.
+Floor 15 wins by matching the granularity of the historical record rather than
+by forecasting better — which is invisible to first-preference MAE and points
+the wrong way for the live cycles. Chosen honestly and in advance, and still
+could not see the thing that decides the answer.
+
+**A confound this plan half-caught.** It warned that scoring `OTH` alone would
+reward a floor for moving vote out of `OTH`. The same trap in a larger form was
+missed: each arm fits a different number of rows (149 at floor 5, 125 at floor
+15), because a higher floor declines to fit the hardest parties. The first
+analysis compared raw means across arms and produced a clean monotonic result
+that was substantially an artefact. Fixed by scoring every arm on the rows all
+arms fit. **The general lesson: when arms differ in what they attempt, they
+cannot be compared on an average over what they attempted.**

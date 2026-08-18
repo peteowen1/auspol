@@ -123,7 +123,7 @@ test_that("report names a dropped party distinctly from a drifted one", {
   p <- mk_polls(n = 10, onp = 23)
   fits <- mk_fits(); fits$ONP <- NULL
   x <- poll_tracking_check(p, fits, bound = 2.5)
-  expect_output(report_poll_tracking(x, "T9"), "NOT FITTED")
+  expect_output(report_poll_tracking(x, "T9"), "polled .* but not fitted")
 })
 
 test_that("report prints the gap for a drifted party", {
