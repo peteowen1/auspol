@@ -37,7 +37,9 @@ independent-seats behaviour.}
 List: \code{seats_won} (ALP classic-seat wins per simulation),
 \code{alp_total} (\code{seats_won} plus non-classic seats Labor holds — the
 publishable total), \code{alp_nonclassic} (that constant), \code{by_seat} (win
-probability per seat), \code{n_classic}, \code{n_nonclassic}.
+probability per seat, with \code{alp_tpp_now} the 2022 two-party share and
+\code{alp_tpp_proj} that share plus the projected statewide swing),
+\code{n_classic}, \code{n_nonclassic}.
 }
 \description{
 Three sources of variation, in descending order of how much they move the

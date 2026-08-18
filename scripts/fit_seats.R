@@ -184,10 +184,26 @@ cat(sprintf("P(ALP largest bloc vs Coalition) = %.1f%%\n",
 cat(sprintf("2022 actual was %d seats, so a median loss of %d\n",
             PREV_SEATS, PREV_SEATS - as.integer(q[3])))
 
-cat("\n=== Most marginal classic seats (Labor win probability) ===\n")
+# Both two-party columns are printed, and labelled by YEAR, because the 2022
+# figure alone reads as a bug next to the probability: on this swing a seat
+# Labor held 57-43 is a coin flip, so "57.2" beside "50.2%" looks wrong until
+# the swing is supplied. Give the reader the projected number too.
+cat(sprintf(paste0(
+  "
+=== Most marginal classic seats ===
+",
+  "alp_2022 = the seat's two-party share at the 2022 election.
+",
+  "alp_proj = that share plus the projected statewide swing of %+.1f points,
+",
+  "           which is what the win probability is built on.
+"),
+  pj$mean - PREV_TPP))
 bs <- sim$by_seat
 print(bs[alp_win_prob < 0.95 & alp_win_prob > 0.05][order(-alp_win_prob)][
-  , .(seat, seat_region, incumbent, alp_tpp_now = round(alp_tpp_now, 1),
+  , .(seat, seat_region, incumbent,
+      alp_2022 = round(alp_tpp_now, 1),
+      alp_proj = round(alp_tpp_proj, 1),
       alp_win_prob = round(alp_win_prob, 3))])
 
 fwrite(sim$by_seat, "output/seats-vic-2026.csv")
