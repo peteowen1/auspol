@@ -15,7 +15,7 @@ on:
   workflow_dispatch:
     inputs:
       quick:
-        description: "Skip the federal and NSW cycles"
+        description: "Skip the slow stages: federal and NSW cycles, and the candidate-level seat model with its S5 check"
         type: boolean
         default: false
 
@@ -62,19 +62,33 @@ jobs:
       # cached rather than refetched daily: 176 VEC page requests every morning
       # for data that cannot change would be rude as well as slow, and it would
       # make the forecast fail whenever the VEC has an outage.
-      - name: Cache fetched election results
+      # restore/save split rather than the combined action, whose save runs in
+      # a POST step that executes even when an earlier step failed. A fetch
+      # dying partway through 176 VEC requests would otherwise cache the
+      # partial directory under a key that does not change until the fetch
+      # scripts do, and every later run would restore it, skip the fetch, and
+      # quietly produce no candidate-level forecast behind a green build.
+      - name: Restore cached election results
         id: elections-cache
-        uses: actions/cache@v4
+        uses: actions/cache/restore@v4
         with:
           path: external/elections
           key: elections-v1-${{ hashFiles('scripts/fetch_preferences_*.R') }}
 
       - name: Fetch election results
+        id: fetch-elections
         if: steps.elections-cache.outputs.cache-hit != 'true'
         run: |
           Rscript scripts/fetch_preferences_sa.R
           Rscript scripts/fetch_preferences_vic.R
           cat external/elections/MANIFEST.csv
+
+      - name: Cache election results
+        if: steps.fetch-elections.outcome == 'success'
+        uses: actions/cache/save@v4
+        with:
+          path: external/elections
+          key: elections-v1-${{ hashFiles('scripts/fetch_preferences_*.R') }}
 
       - name: Run the pipeline
         id: run

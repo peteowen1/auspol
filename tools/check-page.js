@@ -54,6 +54,19 @@ const conditional = {
     required: D => Boolean(D.meta && D.meta.leader &&
                            D.meta.leader_days != null &&
                            D.meta.leader_days <= 180)
+  },
+  // The candidate-level seat forecast needs election data fetched into
+  // external/elections and is skipped by --quick, so the page is built without
+  // it often enough that its absence must not be an error. But when the data
+  // IS there and the block still does not draw, that is exactly the silent
+  // failure this file exists to catch.
+  seatparty: {
+    why: 'only when the candidate-level seat forecast ran',
+    required: D => Array.isArray(D.seats_by_party) && D.seats_by_party.length > 0
+  },
+  seatplay: {
+    why: 'only when the candidate-level seat forecast ran',
+    required: D => Array.isArray(D.seats_in_play) && D.seats_in_play.length > 0
   }
 };
 

@@ -30,8 +30,13 @@ need <- file.path(PREF, c("vec-2022-vic-transfers.csv",
                           "vec-2022-vic-firstprefs.csv",
                           "ecsa-2026-sa-onp-shares.csv"))
 if (!all(file.exists(need))) {
-  cat("Preference data not found; run the fetchers first. Missing:",
-      paste(basename(need[!file.exists(need)]), collapse = ", "), "\n")
+  # Emitted WITH the check code so run_all.R's summary shows it. Without the
+  # prefix the line is filtered out, and a poisoned cache or a failed fetch
+  # would leave the candidate model and S5 silently not running behind a green
+  # build -- exactly the silent failure this project keeps meeting.
+  cat("S5  SKIPPED: preference data absent, candidate-level model did not run.",
+      "Missing:", paste(basename(need[!file.exists(need)]), collapse = ", "), "
+")
   quit(save = "no", status = 0)
 }
 
@@ -203,7 +208,20 @@ print(minor[order(-prob)], nrows = 40)
 # statewide distribution instead of inheriting the projection, the two medians
 # still agreed while the RANGES did not, and that mismatch is what exposed the
 # bug. A check on the median alone would have missed it, so this checks both.
-seats26 <- load_seats(2026, "vic")
+# Restricted to the seats the candidate model actually covers. It has 87:
+# Narracan has no ordinary 2022 first preferences, its election having failed
+# after a candidate died and the January 2023 supplementary going uncontested
+# by Labor. simulate_seats() has all 88 and counts Narracan as a classic seat,
+# so comparing the totals unrestricted compares different populations and lets
+# a real divergence hide behind a one-seat offset.
+seats_all <- load_seats(2026, "vic")
+seats26 <- seats_all[seats_all$seat %in% rownames(mat22), ]
+if (nrow(seats26) != nrow(seats_all)) {
+  cat(sprintf("S5  comparing on %d seats; absent from the candidate model: %s
+",
+              nrow(seats26),
+              paste(setdiff(seats_all$seat, rownames(mat22)), collapse = ", ")))
+}
 sp22 <- seat_swing_spread(seats26, 55.00 - 57.60)
 sp18 <- seat_swing_spread(load_seats(2022, "vic"), 57.60 - 51.99)
 tp <- simulate_seats(seats26, pj$mean, pj$sd, 55.00,

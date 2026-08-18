@@ -253,6 +253,34 @@ bs <- sim$by_seat[order(-alp_tpp_now)]
 seat_rows <- bs[, .(seat, region = seat_region, tpp = round(alp_tpp_now, 1),
                     p = round(alp_win_prob, 3))]
 
+# ---- candidate-level seat forecast, if the pipeline produced one ------------
+# fit_seats_full.R needs election data fetched into external/elections and is
+# skipped by --quick, so this is optional. It is read rather than recomputed:
+# a second simulation here would drift from the one S5 checked.
+seats_by_party <- NULL; seats_in_play <- NULL
+sp_f <- "output/seat-probs-vic-2026.csv"; ss_f <- "output/seat-sims-full-vic-2026.csv"
+if (file.exists(sp_f) && file.exists(ss_f)) {
+  wp <- fread(sp_f); tot <- fread(ss_f)
+  q <- function(v, p) as.integer(sort(v)[pmax(1, round(p * length(v)))])
+  seats_by_party <- rbindlist(lapply(names(tot), function(p) {
+    v <- tot[[p]]
+    if (max(v) == 0) return(NULL)
+    data.table(party = p, med = q(v, .5), lo = q(v, .05), hi = q(v, .95))
+  }))[order(-med)]
+  # Seats worth naming: those where the favourite is not near-certain, or where
+  # a non-major has a real chance. Sorted by how close the contest is.
+  fav <- wp[, .SD[which.max(prob)], by = seat]
+  minor <- wp[party %in% c("GRN","ONP","IND","OTH","OTH_RIGHT") & prob >= 0.10, unique(seat)]
+  keep <- union(fav[prob < 0.85, seat], minor)
+  seats_in_play <- wp[seat %in% keep & prob >= 0.02][order(seat, -prob)]
+  seats_in_play <- merge(seats_in_play, fav[, .(seat, fav_prob = prob)], by = "seat")
+  setorder(seats_in_play, fav_prob, seat, -prob)
+  seats_in_play[, fav_prob := NULL]
+  cat(sprintf("candidate-level seats: %d parties, %d seats in play
+",
+              nrow(seats_by_party), uniqueN(seats_in_play$seat)))
+}
+
 card <- fread("output/pollster-scorecard.csv")
 card <- card[order(-n_polls)][1:12]
 
@@ -301,6 +329,8 @@ out <- list(
                prev = 56, total = 88, majority = 45,
                hist = h[, .(seats, p = round(p, 5))]),
   seat_rows = seat_rows,
+  seats_by_party = seats_by_party,
+  seats_in_play = seats_in_play,
   mix = mix[, .(horizon, w = round(w, 2), mae_mix = round(mae_mix_loo, 2),
                 mae_trend = round(mae_trend, 2), mae_fund = round(mae_fund, 2),
                 sd = round(sd_err_loo, 2))],

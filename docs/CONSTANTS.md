@@ -95,6 +95,21 @@ constant absent from this file is a bug in this file.
 | One Nation spread | SA 2026 observed | `fit_seats_full.R` | **ESTIMATED, transferred** |
 | per-party statewide sd | from the trend | `fit_seats_full.R` | **ESTIMATED** |
 | `N_SIMS` | 20000 | `fit_seats_full.R` | FIXED, no modelling content |
+| S5 median-gap bound | 5 seats | `fit_seats_full.R` | **FIXED** — pre-registered |
+| S5 width-ratio bounds | 0.7 – 1.4 | `fit_seats_full.R` | **FIXED** — pre-registered |
+| `PREV_TPP` (Victoria 2022) | 55.00 | `fit_seats_full.R`, `fit_seats.R` | **FIXED** — a recorded result |
+| 2018/2014 Victorian TPP | 57.60 / 51.99 | `fit_seats_full.R`, `fit_seats.R` | **FIXED** — recorded results |
+
+**S5's two bounds are pre-registered check bounds** and belong to the family in
+§5: assertions written before the result was seen, so estimating them from the
+results they police would make them unfailable. They were chosen against a
+known-bad case — the pre-anchoring run had a width ratio of 0.57 and must fail,
+the corrected one 0.96 and must pass — and verified to do both.
+
+**The three Victorian two-party figures are recorded election results**, not
+assumptions: 55.00 in 2022, 57.60 in 2018, 51.99 in 2014. They cannot be
+estimated because they already happened. They appear in two scripts, which is
+duplication worth removing if a third ever wants them.
 
 **`SMOOTH` is not presentation.** A flow row carries 0% for a destination that
 never co-occurred in the source data; renormalising that row over the survivors
