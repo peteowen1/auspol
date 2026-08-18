@@ -54,64 +54,48 @@ open state, not the narrative of how it got here.
   project avoids, so it should be a decision rather than an implementation
   detail.
 
-## Next session starts here (2026-08-18)
+## Next session starts here (2026-08-18, late)
 
-**The seat rebuild is unblocked on data. It is blocked on One Nation.**
+**The seat rebuild is built and in the package. What remains is data hosting
+and a decision.**
 
-Full evidence: [reviews/vic-preference-flows-2026-08-18.md](reviews/vic-preference-flows-2026-08-18.md),
-[reviews/flow-record-integrity-2026-08-18.md](reviews/flow-record-integrity-2026-08-18.md),
-[reviews/clean-flow-backtest-2026-08-18.md](reviews/clean-flow-backtest-2026-08-18.md),
-[reviews/oth-composition-2026-08-18.md](reviews/oth-composition-2026-08-18.md).
+Evidence: [reviews/seat-sim-working-2026-08-18.md](reviews/seat-sim-working-2026-08-18.md)
+(result), [reviews/seat-sim-prototype-2026-08-18.md](reviews/seat-sim-prototype-2026-08-18.md)
+(the failed first attempt, do not quote its numbers),
+[plans/preference-data-acquisition.md](plans/preference-data-acquisition.md) (how to
+refetch).
 
-**Acquired 2026-08-18.** All 88 VEC districts, candidate-level: **452 exclusion
-events across 76 districts, every one reconciling exactly**. 11 seats were won
-on first preferences so no distribution was held; Narracan 404s on both pages,
-independently confirming its 2022 election never completed. Files are in the
-session scratchpad and **not committed** — see the licence item under Awaiting
-Pete. Fetch is ~1 hour to repeat: `{district}-district-results/{district}-results-distribution`,
-static server-rendered HTML, no JavaScript.
+**Three exported functions, 52 tests, none needing external data:**
 
-**What that settled:**
+| function | does |
+|---|---|
+| `build_flow_matrix()` | observed transfers → rates keyed on excluded party AND survivor set, withholding thin cells and reporting coverage |
+| `distribute_preferences()` | runs a single seat's count to a final two |
+| `simulate_seat_contests()` | every seat, n simulations, per-seat win probability by party |
 
-1. **The `classic` flag is the real defect**, not the five non-classic seats.
-   `R/seats.R:55-56` reads 2022's final-two pairs forward; on a first-pass
-   simulation One Nation reaches the final two in **39–44 of 88** seats and
-   Labor fails to in **23–24**.
-2. **Victoria did not redistribute** — all 88 district names match 2022, so
-   seat primaries apply directly with no notional reconstruction.
-3. **Victoria cannot answer the One Nation question.** ONP contested 5 of 88
-   districts in 2022 and appears in **2** exclusion events. The two-party cell
-   has n = 1. Every ONP claim still rests on the thin 16-district SA sample.
+Measured cost: 87 seats × 2,000 sims in **9.7 seconds**; a 20,000-sim run is
+about 100 seconds.
 
-**So the blocker is now narrow and specific: One Nation preference data.**
-ECSA's results site is an Angular app whose every path returns the same
-1,566-byte shell, so SA needs browser automation or a reverse-engineered
-endpoint. That is the next acquisition, and it is the only thing standing
-between here and a seat count anyone should believe.
+**The prototype result** (from scratchpad data, not reproducible in CI yet):
+ALP 41 (90%: 32–48), LNP 35, GRN 5, ONP 5. Greens hold their four and gain
+Pascoe Vale; One Nation's best is Melton at 86%. **25 seats have a minor party
+above 10%.** Yan Yean is the tossup at LNP 44 / ALP 31 / ONP 25.
 
-**Do not start the rebuild before it.** A first attempt with 49 of 88 transfers
-falling back to a pooled estimate returned Labor 56 and One Nation 0 — Labor
-*higher* after correcting a transfer that runs *against* Labor. Incoherent.
-**Do not quote that run.**
+**What is left, in order:**
 
-**Prerequisites the rebuild needs, now known:**
-
-- **An independent class.** The model has none; independents are inside OTH and
-  flow to Labor at **61.1%** against minor-right's **35.4%**. Per-seat implied
-  flow ranges 37.1–58.7 against a single assumed 48.872. This does *not* affect
-  anything published today — `simulate_seats()` reads the anchor's notional
-  margins, which come from the actual count — but it breaks any model computing
-  a seat's two-party figure from primaries.
-- **Narracan has no ordinary 2022 first preferences** (failed election, Labor
-  did not contest the January 2023 supplementary). Needs a substitute in any
-  primary-sourced rebuild. Nothing to fix in the current model — checked.
-
-**Still open, unchanged:**
-
-- `load_seats()` reads 5 of the 11 fields available. `bRetirement` (20 seats),
-  `bSophomoreCandidate` (22) and `fTransposedFederalSwing` (89) are unread.
-  Size them the way seat type was sized — expect the same answer.
-- L4c's negative tail is still uncalibrated (below).
+1. **The VEC/ECSA data has nowhere to live** (see Awaiting Pete). Everything
+   above runs from a session scratchpad. Until that is settled the simulation
+   cannot run in CI or feed the page.
+2. **A fetch script** turning the two sources into the plain transfers table
+   `build_flow_matrix()` takes. Both paths are documented and both were run
+   successfully; neither is committed.
+3. **The One Nation allocation** is the weakest link and is not in the package.
+   Ordering from Victorian federal 2025 beats uniform by only 0.12 MAE, and
+   magnitude is borrowed from SA's observed spread. It deserves its own
+   pre-registered treatment before anything publishes.
+4. **Then decide** whether this replaces the two-party seat model or runs
+   beside it as a check. Pete chose replace; that was before the prototype
+   showed how much rests on item 3.
 
 **Do not start with:** anything that makes the backtest slower. Arm B of the
 volatility comparison took 33x and bought nothing; a backtest that takes an
