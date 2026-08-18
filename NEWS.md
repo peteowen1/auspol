@@ -1,3 +1,26 @@
+# auspol 0.4.10
+
+**The "Others" bias is a fifth the size it was reported to be.** The −3.60 that
+motivated `docs/plans/prereg-others-bias.md` does not reproduce: on the 33 past
+cycles whose recorded results actually sum to 100 it is **−1.02**. The rest
+came from cycles averaging 111, which double-count parties into the listed
+Others row. `scripts/test_others_bias.R` checks this reproduction FIRST and
+refuses to read T1-T3 as answers when it fails, which is what caught it.
+
+Of the three pre-registered causes, only the shared-pollster-miss test points
+anywhere: the fit lands 0.87 points from the final month of polling while that
+polling is 2.11 points from the result. Its 0.5 firing bar was not
+pre-registered and the measured 0.41 clears it narrowly, so the ratio is the
+result rather than the verdict -- but both branches of the decision rule leave
+the trend model untouched, so the action does not depend on it. The page gains
+a caveat beside the Others figure; the model is unchanged.
+
+`load_eventual_results()` now drops identical duplicate rows and refuses rows
+that share a key while disagreeing. `eventual-results.csv` carried WA 1993
+twice, all six rows duplicated verbatim, double-counting that cycle in every
+mean over the table -- something the loader's row-count floor could never
+catch, since duplicates push the count up.
+
 # auspol 0.4.9
 
 **The duplicate-check-code guard was passing vacuously.** Codes were given

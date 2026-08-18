@@ -117,6 +117,54 @@ volatility comparison took 33x and bought nothing; a backtest that takes an
 hour makes every constant expensive to re-examine, and constants that are
 expensive to re-examine stop being re-examined.
 
+## The "Others" bias, and why the daily job is red (2026-08-18, late)
+
+Full write-up: [reviews/others-bias-2026-08-18.md](reviews/others-bias-2026-08-18.md).
+Run by `scripts/test_others_bias.R` against
+[plans/prereg-others-bias.md](plans/prereg-others-bias.md).
+
+| Question | Result |
+|---|---|
+| does the published −3.60 Others bias reproduce? | **no** — it is **−1.02** over 33 clean cycles |
+| where did the rest come from? | cycles whose actuals sum to **111 on average**, double-counting parties into the Others row |
+| T1, sticky prior? | no — slope +0.026, p=0.80 |
+| T2, all pollsters miss alike? | **ratio 0.41** — fit is 0.87 from the polls, polls are 2.11 from the result. The 0.5 bar was NOT pre-registered; read the ratio, not the verdict |
+| T3, walk too slow? | no — p=0.14, though the sign is right |
+
+Per the decision rule fixed in advance this means **do not change the trend
+model**; publish the caveat instead. The plan's "nothing fired" branch says the
+same, so the action does not depend on where T2's un-pre-registered bar sits. Done — it sits under the poll-trend
+chart on the page.
+
+**Two things worth carrying forward:**
+
+- **The anchor check is what saved this.** The script's first act is to
+  reproduce the published table, and it failed. Without that, T1–T3 would have
+  reported a cause for a quantity that does not exist as stated. The earlier
+  review described its 54 cycles as complete; they were not, and its own plan
+  named that confound as the reason the filter existed.
+- **The result is not stable at n=33.** Four regions instead of six gives −0.63
+  and fires T3 (p=0.008) rather than T2. Six is correct — four was an unstated
+  narrowing copied from `build_projection_data()` — but treat T3 as open.
+
+**Data bug found on the way:** `eventual-results.csv` carries WA 1993 twice,
+all six rows duplicated verbatim. `load_eventual_results()` now drops identical
+duplicates with a warning and refuses rows that share a key while disagreeing.
+The loader's `nrow < 380` floor could never have caught it — duplicates push
+the count up.
+
+### Still open, and it keeps CI red
+
+**`NL3` fails: NSW 2027 fitted first preferences sum to 94.1, needs 100 ± 5.**
+The Others bias explains about 2 of the 5.9 points (−1.02 Others, −0.88 LNP).
+**The rest is unexplained.** `run_all.R` exits non-zero, and the scheduled
+forecast job sets `pipefail`, so it goes red every day until this is answered.
+The Victorian forecast builds and publishes regardless — NSW is a validation
+cycle nobody publishes.
+
+Do **not** widen the ±5 threshold to clear it. That is the check working.
+
+
 ## What 2026-08-18 measured
 
 | Question | Result |

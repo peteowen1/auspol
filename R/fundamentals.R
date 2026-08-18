@@ -41,6 +41,53 @@ read_anchor_csv <- function(file, col_names) {
   out[]
 }
 
+# Drop duplicated rows from a hand-maintained reference table, and refuse
+# contradictory ones.
+#
+# eventual-results.csv carried WA 1993 TWICE, all six of its rows duplicated
+# verbatim, which silently double-counted that cycle in every mean taken over
+# the table. Nothing caught it, and in particular the loader's row-count FLOOR
+# could not: duplicates push the count UP, so they make a truncated file look
+# healthier. That is this repo's "a size floor is not a completeness check"
+# hazard arriving from the other side.
+#
+# Identical duplicates are dropped and reported -- keeping one is obviously
+# right. Rows sharing a key while DISAGREEING are a different thing: there is
+# no basis for choosing between them, so refuse rather than keep whichever
+# happened to sort first, which would turn a data conflict into a number
+# nobody can trace back.
+#
+# Separate from the loader so it can be tested without the anchor clone, which
+# CI does not have.
+#
+# @param x data.table to check.
+# @param key_cols Columns that jointly identify a row.
+# @param what Name of the source, for the messages.
+# @param label Function turning offending rows into a short description.
+# @return `x` with identical duplicates removed.
+# @noRd
+dedupe_reference_rows <- function(x, key_cols, what, label) {
+  stopifnot(data.table::is.data.table(x), all(key_cols %in% names(x)))
+  if (!anyDuplicated(x, by = key_cols)) return(x)
+  val_cols <- setdiff(names(x), key_cols)
+  # Contradictory means differing on ANY non-key column, not just the one that
+  # looks like the value: checking a single column would pass a row that
+  # disagreed about something else.
+  n_vals <- x[, .(n_distinct = nrow(unique(.SD)), n_rows = .N),
+              by = key_cols, .SDcols = val_cols]
+  bad <- n_vals[n_distinct > 1L]
+  if (nrow(bad)) {
+    stop(what, " has rows sharing (", paste(key_cols, collapse = ", "),
+         ") but disagreeing on the value: ",
+         paste(label(bad), collapse = "; "), call. = FALSE)
+  }
+  dups <- n_vals[n_rows > 1L]
+  warning(sprintf("%s: dropped %d duplicate row(s), affecting %s",
+                  what, sum(dups$n_rows - 1L),
+                  paste(unique(label(dups)), collapse = ", ")), call. = FALSE)
+  unique(x, by = key_cols)
+}
+
 #' Actual election results (the training target)
 #'
 #' @return data.table: `year`, `region`, `party` ("@TPP" or a party code),
@@ -52,7 +99,12 @@ load_eventual_results <- function() {
   x[, party := sub(" FP$", "", party)]
   x[, actual := suppressWarnings(as.numeric(actual))]
   out <- x[!is.na(actual) & !is.na(year)]
+  out <- dedupe_reference_rows(out, c("year", "region", "party"),
+                               "eventual-results.csv",
+                               function(d) sprintf("%s %s", d$region, d$year))
   # Guard against the ragged-row truncation this loader exists to avoid.
+  # NOTE this cannot see a duplicate, which is why the call above exists:
+  # duplicates push the count UP, so they make a truncated file look healthier.
   if (nrow(out) < 380) {
     warning(sprintf("eventual-results.csv parsed only %d rows - expected ~415",
                     nrow(out)))
