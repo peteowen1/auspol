@@ -12,12 +12,22 @@ POLL_TRACKING_BOUND
 }
 \description{
 The 99th percentile of |fitted - mean of the final 90 days of polls| over
-the historical record of cycles with complete actuals (138 party-cycles over
-33 cycles), rounded up to the nearest 0.5. Measured 2026-08-18: the
-percentile is 2.478 and two historical rows breach 2.5 (SA 2010 ALP at 2.67,
-WA 2017 ONP at 2.50).
+the historical record of cycles with complete actuals, rounded up to the
+nearest 0.5. Computed by \code{scripts/calibrate_poll_tracking.R}: 154
+party-cycles over 33 cycles, percentile 2.429, one historical row breaching
+(Victoria 1992 ALP at 5.05).
 }
 \details{
+Calibrated on the SAME model path the checks assert on -- per-cycle sigmas
+and per-pollster noise factors -- after review caught that the first
+derivation used \code{trend_as_at()} defaults instead, which is a different model
+path this repo's CLAUDE.md says must be distinguished. Correcting it moved
+the percentile from 2.478 to 2.429 and left the bound unchanged at 2.5. That
+the answer did not move is not a reason the mismatch was harmless: it was
+found by review, not by the plan, and three cycles compared by hand had
+suggested a ratio of 1.6-3.1x. Those were maxima of very small deviations,
+where a ratio is noise.
+
 The RULE that produced this number was committed in
 \code{docs/plans/prereg-per-party-poll-check.md} before the number was computed,
 so it could not be chosen to make a failing build pass. The plan also fixed

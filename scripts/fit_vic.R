@@ -326,25 +326,49 @@ if (any(walk_tab$floored)) {
 } else {
   cat("L4b no party-cycle fell below the binomial sampling floor\n")
 }
-# L3 REPORTS on this cycle rather than halting, and that is not a weakening.
+# L3 REPORTS on this cycle rather than halting, and records the breach to a
+# file that run_all.R fails on. Both halves matter.
 #
 # fit_vic.R is the TARGET stage: a stopifnot here stops the pipeline, so the
-# Victorian forecast would not be published at all. The pre-registration
-# (docs/plans/prereg-per-party-poll-check.md) required that a failing live
-# cycle be adopted and the build left red -- it is: fit_nsw.R breaches the
-# same check on the same party and run_all.R still exits non-zero. Nothing is
-# hidden. What changes is only that a measured, documented gap in ONE party
-# does not suppress the whole forecast.
+# Victorian forecast would never be published. But simply printing the breach
+# made the run red only BY COINCIDENCE -- fit_nsw.R happened to breach the
+# same check on the same party, and that is what turned the build red. NSW is
+# accruing polls; the moment its own gap drops under the bound, Victoria could
+# breach on the published forecast with nothing anywhere going red. A guard
+# whose alarm depends on an unrelated guard also firing is not a guard.
 #
-# It should not, because the gap has not been shown to be an error. Federal
-# 2028 fits One Nation to within 0.85 of its polls on 45 polls; Victoria is
-# 2.78 off on 10 and NSW 5.15 off on 3. The gap tracks how thin the party is
-# in that cycle, so the honest response is to say the level is under-informed
-# -- which the page now does beside the chart -- not to publish nothing.
+# So the breach is written to output/L3-BREACH.txt and run_all.R stops on it
+# AFTER every stage has run and the page has been built. Red build, published
+# forecast, and the signal no longer borrowed from another cycle.
+#
+# Why not halt: the gap has not been shown to be an error. Federal 2028 fits
+# One Nation to within 0.85 of its polls on 45 polls; Victoria is 2.78 off on
+# 10 and NSW 5.15 off on 3. The gap tracks how thin the party is in that
+# cycle, so the honest response is to say the level is under-informed -- which
+# the page does beside the chart -- not to publish nothing.
+# The live cycle's tracking table, written for the page. The caveat beside the
+# trend chart used to be hand-authored prose with the numbers typed in, so it
+# would have gone quietly stale the moment the gap moved or a different party
+# breached. The page now renders it from this file.
+live_track <- vic_track[[which(ALL_CYCLES == LIVE)[1]]]
+data.table::fwrite(live_track, file.path("output", "poll-tracking-vic.csv"))
+
 vic_breach <- vapply(vic_track, function(x) any(x$breach), TRUE)
+l3_marker <- file.path("output", "L3-BREACH.txt")
+dir.create("output", showWarnings = FALSE)
+# ALWAYS clear it first. A stale marker from a previous run would fail every
+# future run forever, which is the same disease as never failing.
+if (file.exists(l3_marker)) unlink(l3_marker)
 if (any(vic_breach)) {
-  cat(sprintf("L3  !! BREACHED on %d cycle(s) and NOT halted: this stage publishes.\n    See the note beside the trend chart.\n",
-              sum(vic_breach)))
+  det <- do.call(rbind, lapply(which(vic_breach), function(i) {
+    b <- vic_track[[i]][breach == TRUE]
+    sprintf("%d %s fitted %.2f against %.2f from %d polls (bound %.1f)",
+            ALL_CYCLES[i], b$party, b$fitted, b$poll_mean, b$n,
+            POLL_TRACKING_BOUND)
+  }))
+  writeLines(as.character(det), l3_marker)
+  cat(sprintf("L3  !! BREACHED on %d cycle(s), NOT halted so the forecast still publishes.\n    Recorded in %s; run_all.R fails on it at the end.\n",
+              sum(vic_breach), l3_marker))
 }
 stopifnot(walk_tab[, all(acf1 < 0.25)], !any(walk_tab$at_upper))
 cat("Structural checks passed.\n")

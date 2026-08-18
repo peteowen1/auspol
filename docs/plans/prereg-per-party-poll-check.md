@@ -99,3 +99,95 @@ the point of writing it down now.
   If the computed bound lands just above 3.15 the check will look tuned even
   though the rule was fixed first. If that happens, say so plainly in the
   write-up rather than presenting it as a clean pass.
+
+---
+
+## Amendment, 2026-08-18: the first execution used the wrong fits
+
+Found in review, after the check was written and run.
+
+This plan says the historical record for the threshold is the rows emitted by
+`scripts/test_others_bias.R`, and asserts that "those fits are endpoint fits
+produced the same way the checks' fits are". **That is false.**
+`test_others_bias.R` calls `trend_as_at()` with its defaults —
+`sigmas = "default"`, `weights = "equal"`. The checks run on fits from
+`fit_cycle_unfolded()` with **per-cycle sigmas and per-pollster noise factors**.
+`CLAUDE.md` is explicit that these are two different model paths and that which
+one is in play must be stated whenever either is touched. The plan asserted the
+question away instead of checking it.
+
+It is not a small difference. On the three cycles where both paths can be
+compared, the fuller path's worst per-party deviation is **1.64× to 3.12×** the
+default path's:
+
+| cycle | fuller path | default path | ratio |
+|---|---:|---:|---:|
+| NSW 2023 | 0.81 | 0.26 | 3.12 |
+| Victoria 2018 | 0.60 | 0.29 | 2.10 |
+| Victoria 2022 | 1.50 | 0.91 | 1.64 |
+
+So `BOUND = 2.5`, derived from default-path deviations, is far stricter than
+this plan intended once applied to fuller-path fits — and both live "breaches"
+it reported may be artefacts of that mismatch rather than real gaps.
+
+**The rule is unchanged and stays as fixed above**: 99th percentile of
+|fitted − mean of the final 90 days of polls|, rounded up to 0.5, refuse above
+5.0. Only the data it is computed over is corrected, by
+`scripts/calibrate_poll_tracking.R`, which refits the historical record with
+`sigmas = "per_cycle"`, `weights = "firm_factors"`. This is fixing an execution
+error, not choosing a new criterion.
+
+**Read the corrected bound sceptically anyway.** A recalibration that loosens a
+threshold and thereby clears a breach on the published forecast is exactly the
+shape of a result that should not be taken at face value, however sound the
+reasoning. The ratios above were measured before the recalibration ran and are
+recorded here so the direction of the correction was on the record in advance.
+
+## Amendment: two blind spots this check has, stated plainly
+
+Neither was in the plan's original threats section. Both were found in review.
+
+1. **Correlated small drift across every party.** The old sum check would catch
+   five parties each off by a point in the same direction, because the sum
+   would move 5. The per-party check cannot: each party is compared only to its
+   own polls, and nothing looks at any cross-party quantity. The sum is still
+   printed (`L3a`/`FL3a`/`NL3a`) but asserted on nothing, so this failure mode
+   is now **reported and not guarded**. That is a genuine trade, not a strict
+   improvement, and the original framing of this plan was wrong to imply
+   otherwise.
+2. **A party dropped from the fit entirely.** Both checks iterated only over
+   fitted parties, so a party falling under a script's `n >= 8` / `n >= 25`
+   inclusion floor was invisible to both. **Fixed**: `poll_tracking_check()` now
+   iterates the union of fitted and polled parties and treats a polled party
+   missing from the fit as a breach in its own right. This matters immediately —
+   One Nation has exactly 8 polls in the NSW 2027 cycle against a floor of 8.
+
+## Amendment: the recalibration ran, and the bound did not move
+
+`scripts/calibrate_poll_tracking.R`, refitting the historical record with
+`sigmas = "per_cycle"` and `weights = "firm_factors"` — the path the checks
+actually assert on:
+
+| | rows | cycles | 99th pct | BOUND |
+|---|---:|---:|---:|---:|
+| original (wrong path) | 138 | 33 | 2.478 | 2.5 |
+| **corrected** | **154** | **33** | **2.429** | **2.5** |
+
+**Unchanged at 2.5.** One historical row breaches (Victoria 1992 ALP, 5.05),
+0.6% of the record. Victoria 2026 (2.78) and NSW 2027 (5.15) both still breach.
+
+So the concern recorded above — that the live breaches might be artefacts of the
+calibration mismatch — **was wrong, and is retracted**. The three-cycle ratio
+that suggested it was computed on the *maxima of very small deviations* (0.26
+against 0.81, and so on), where a ratio is noise rather than signal. The
+99th percentile over 154 rows is the stable quantity and it barely moved.
+
+Two things worth keeping from this anyway:
+
+- The mismatch was real and was found by **review, not by this plan**. The plan
+  asserted the two paths were the same instead of checking, and that assertion
+  was false. It happened not to matter; the next one might.
+- Sizing a discrepancy from three hand-picked comparisons produced a confidently
+  wrong estimate of its direction and magnitude. The cheap check would have been
+  to note that all three had deviations under 1.5, far below the percentile the
+  bound is drawn from.

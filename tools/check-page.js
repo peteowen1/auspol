@@ -67,6 +67,14 @@ const conditional = {
   seatplay: {
     why: 'only when the candidate-level seat forecast ran',
     required: D => Array.isArray(D.seats_in_play) && D.seats_in_play.length > 0
+  },
+  // Renders only when a party actually breaches the L3 poll-tracking check.
+  // Required WHEN it breaches, because this note is what justifies fit_vic.R
+  // reporting the breach instead of halting -- if the check fires and the page
+  // stays silent, the forecast publishes with the justification missing.
+  trackcav: {
+    why: 'only when a party breaches the L3 poll-tracking check',
+    required: D => Array.isArray(D.track) && D.track.some(r => r.breach)
   }
 };
 

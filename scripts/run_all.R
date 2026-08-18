@@ -222,6 +222,27 @@ if (length(FAILED_VALIDATION)) {
       "them is broken.\n")
 }
 
+# A breach recorded by fit_vic.R. That stage deliberately does NOT halt -- it
+# is the target, and halting means the Victorian forecast never publishes --
+# so it writes the breach here instead and the run fails on it AFTER the page
+# has been built.
+#
+# Without this the run went red only because fit_nsw.R happened to breach the
+# same check on the same party. NSW is accruing polls; when its gap closes,
+# a live breach on the PUBLISHED forecast would have gone green with nothing
+# to notice. A guard whose alarm depends on an unrelated guard also firing is
+# not a guard.
+L3_MARKER <- file.path("output", "L3-BREACH.txt")
+l3_breach <- if (file.exists(L3_MARKER)) readLines(L3_MARKER, warn = FALSE) else character(0)
+l3_breach <- l3_breach[nzchar(trimws(l3_breach))]
+if (length(l3_breach)) {
+  cat("\n=== L3 BREACH ON THE PUBLISHED CYCLE ===\n")
+  for (b in l3_breach) cat("   ", b, "\n")
+  cat("The forecast above was still built and published: the gap is recorded\n",
+      "   and explained beside the trend chart, not hidden. This run exits\n",
+      "   non-zero so it cannot pass unnoticed.\n")
+}
+
 clashes <- ls(CODE_CLASHES)
 if (length(clashes)) {
   cat("\nDUPLICATE CHECK CODES -- the summary cannot say which is which:\n")
@@ -230,13 +251,15 @@ if (length(clashes)) {
       " check code(s) claimed by two stages. Renumber one of each pair.\n")
 }
 
-if (length(FAILED_VALIDATION) || length(clashes)) {
+if (length(FAILED_VALIDATION) || length(clashes) || length(l3_breach)) {
   stop("Run finished with problems: ",
        if (length(FAILED_VALIDATION))
          paste0(length(FAILED_VALIDATION), " validation stage(s) [",
                 paste(names(FAILED_VALIDATION), collapse = ", "), "] ") else "",
        if (length(clashes))
-         paste0(length(clashes), " duplicate check code(s)") else "")
+         paste0(length(clashes), " duplicate check code(s)") else "",
+       if (length(l3_breach))
+         paste0(" ", length(l3_breach), " L3 breach(es) on the published cycle") else "")
 }
 
 cat(sprintf("\n=== pipeline complete in %.0f s ===\n",

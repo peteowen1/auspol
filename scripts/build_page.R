@@ -28,7 +28,13 @@ stopifnot(file.exists("scripts/page-template.html"))
 # passed on this poll data. Publishing without that having happened is exactly
 # what the ordering guard exists to prevent.
 INPUTS <- c("output/projection-mix.csv", "output/trend-vic-2026.csv",
-            "output/pollster-scorecard.csv")
+            "output/pollster-scorecard.csv",
+            # The L3 poll-tracking table. Required, not optional: the note
+            # beside the trend chart is rendered FROM it, and the note is
+            # what justifies fit_vic.R reporting a breach instead of
+            # halting. Hand-authored prose with the numbers typed in went
+            # stale the moment the gap moved, and nothing would have said so.
+            "output/poll-tracking-vic.csv")
 missing <- INPUTS[!file.exists(INPUTS)]
 if (length(missing)) {
   stop("Missing pipeline output: ", paste(missing, collapse = ", "),
@@ -348,6 +354,16 @@ out <- list(
              method = onp_est$model, years = onp_est$years,
              se = round(onp_est$se, 2)),
   trend = series, polls = pl,
+  # Every party's fit against its own recent polls, so the page can say which
+  # party is worst-tracked and by how much without anyone retyping it.
+  track = {
+    tk <- fread("output/poll-tracking-vic.csv")
+    lapply(seq_len(nrow(tk)), function(i) list(
+      party = tk$party[i], fitted = round(tk$fitted[i], 1),
+      polls = round(tk$poll_mean[i], 1), n = tk$n[i],
+      dev = round(tk$dev[i], 1), breach = isTRUE(tk$breach[i])))
+  },
+  track_bound = POLL_TRACKING_BOUND,
   fp_now = lapply(c("LNP", "ALP", "ONP", "GRN", "OTH"), function(p) {
     d <- tr[party == p][which.max(date)]
     list(party = p, m = round(d$mean, 1), lo = round(d$lo95, 1),
