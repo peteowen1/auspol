@@ -24,7 +24,14 @@
 #' @param matrix From [build_flow_matrix()].
 #' @param party_sd Named numeric: statewide uncertainty per party, in points.
 #'   Applied once per simulation and shared by every seat, so parties move
-#'   together across the state as they actually do.
+#'   together across the state as they actually do. Ignored when
+#'   `statewide_draws` is supplied.
+#' @param statewide_draws Optional `n_sims` x parties matrix of statewide
+#'   shares, one row per simulation. Supply this when the statewide
+#'   distribution is already known and calibrated — drawing each party
+#'   independently here and renormalising destroys the Labor-versus-Coalition
+#'   covariance, which measured at **60% of the projection's own two-party
+#'   spread** and made the seat range roughly 40% too tight.
 #' @param seat_sd Per-seat idiosyncratic deviation, in points.
 #' @param n_sims Number of simulations.
 #' @param smooth Passed to the transfer step; see [distribute_preferences()].
@@ -34,7 +41,8 @@
 #'   `fallback_rate` (share of transfers with no conditional cell).
 #' @export
 simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
-                                   n_sims = 2000, smooth = 0.15, seed = NULL) {
+                                   n_sims = 2000, smooth = 0.15, seed = NULL,
+                                   statewide_draws = NULL) {
   if (!is.null(seed)) set.seed(seed)
   if (is.data.frame(shares) && "seat" %in% names(shares)) {
     seat_names <- as.character(shares$seat)
@@ -92,8 +100,27 @@ simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
                        dimnames = list(seat_names, parties))
   n_tx <- 0L; n_fb <- 0L
 
+  if (!is.null(statewide_draws)) {
+    statewide_draws <- as.matrix(statewide_draws)
+    if (nrow(statewide_draws) != n_sims) {
+      stop("statewide_draws must have n_sims rows, got ", nrow(statewide_draws))
+    }
+    miss <- setdiff(parties, colnames(statewide_draws))
+    if (length(miss)) {
+      stop("statewide_draws is missing column(s): ", paste(miss, collapse = ", "))
+    }
+    statewide_draws <- statewide_draws[, parties, drop = FALSE]
+    centre <- colMeans(statewide_draws)
+  }
+
   for (s in seq_len(n_sims)) {
-    shift <- stats::rnorm(K, 0, sd_vec)
+    shift <- if (is.null(statewide_draws)) {
+      stats::rnorm(K, 0, sd_vec)
+    } else {
+      # Deviation of this simulation's statewide result from the central one.
+      # Seat shares are already centred, so only the departure is applied.
+      statewide_draws[s, ] - centre
+    }
     for (i in seq_len(nseat)) {
       v <- shares[i, ] + shift + stats::rnorm(K, 0, seat_sd)
       v[v < 0] <- 0

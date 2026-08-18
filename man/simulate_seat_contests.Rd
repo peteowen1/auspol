@@ -11,7 +11,8 @@ simulate_seat_contests(
   seat_sd = 3.5,
   n_sims = 2000,
   smooth = 0.15,
-  seed = NULL
+  seed = NULL,
+  statewide_draws = NULL
 )
 }
 \arguments{
@@ -23,7 +24,8 @@ holding each seat's CENTRAL projected first-preference share. Row names
 
 \item{party_sd}{Named numeric: statewide uncertainty per party, in points.
 Applied once per simulation and shared by every seat, so parties move
-together across the state as they actually do.}
+together across the state as they actually do. Ignored when
+\code{statewide_draws} is supplied.}
 
 \item{seat_sd}{Per-seat idiosyncratic deviation, in points.}
 
@@ -32,6 +34,13 @@ together across the state as they actually do.}
 \item{smooth}{Passed to the transfer step; see \code{\link[=distribute_preferences]{distribute_preferences()}}.}
 
 \item{seed}{Optional RNG seed.}
+
+\item{statewide_draws}{Optional \code{n_sims} x parties matrix of statewide
+shares, one row per simulation. Supply this when the statewide
+distribution is already known and calibrated — drawing each party
+independently here and renormalising destroys the Labor-versus-Coalition
+covariance, which measured at \strong{60\% of the projection's own two-party
+spread} and made the seat range roughly 40\% too tight.}
 }
 \value{
 List: \code{win_prob} (data.frame, one row per seat and party with a

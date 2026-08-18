@@ -105,3 +105,45 @@ test_that("a flow cell for a party absent from these seats is skipped, not fatal
                                 seat_sd = 0, n_sims = 5, seed = 1))
   expect_equal(sum(r$totals), 5L)
 })
+
+test_that("supplied statewide draws drive the result instead of party_sd", {
+  # Drawing each party independently inside the simulator and renormalising
+  # destroys the Labor-versus-Coalition covariance: measured against the real
+  # projection it reproduced only 60% of the two-party spread and centred 1.2
+  # points too favourable to Labor, making the seat range about 40% too tight.
+  # A caller with a calibrated statewide distribution must be able to hand it
+  # over whole.
+  #
+  # Draws are applied as a DEVIATION from their own centre, because `shares`
+  # already carries each seat's central projection. So the test moves the state
+  # in opposite directions across two halves of the run and checks the seats
+  # follow.
+  sh <- matrix(rep(c(40, 38, 22), 2), nrow = 2, byrow = TRUE,
+               dimnames = list(c("s1","s2"), c("ALP","LNP","GRN")))
+  n <- 50
+  half <- c(rep(10, n/2), rep(-10, n/2))       # ALP up, then ALP down
+  d <- cbind(ALP = 40 + half, LNP = 38 - half, GRN = rep(22, n))
+
+  r <- simulate_seat_contests(sh, fake_matrix(),
+                              party_sd = c(ALP = 9, LNP = 9, GRN = 9),
+                              seat_sd = 0, n_sims = n, seed = 3,
+                              statewide_draws = d)
+  alp <- r$totals[, "ALP"]
+  expect_true(all(alp[1:(n/2)] == 2L))          # Labor ahead: wins both
+  expect_true(all(alp[(n/2 + 1):n] == 0L))      # Labor behind: wins neither
+  # party_sd is 9 points and would swamp this if it were still being applied
+  expect_equal(sum(r$totals), 2L * n)
+})
+
+test_that("malformed statewide draws are refused", {
+  sh <- matrix(c(40, 38, 22), nrow = 1,
+               dimnames = list("s", c("ALP","LNP","GRN")))
+  expect_error(
+    simulate_seat_contests(sh, fake_matrix(), c(ALP=1,LNP=1,GRN=1), n_sims = 10,
+                           statewide_draws = cbind(ALP=1:5, LNP=1:5, GRN=1:5)),
+    "n_sims rows")
+  expect_error(
+    simulate_seat_contests(sh, fake_matrix(), c(ALP=1,LNP=1,GRN=1), n_sims = 5,
+                           statewide_draws = cbind(ALP=1:5, LNP=1:5)),
+    "missing column")
+})

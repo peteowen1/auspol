@@ -129,12 +129,55 @@ if (length(unmodelled) && !is.na(state_mean["OTH"])) {
 shares[, "ONP"] <- pmax(0, state_mean[["ONP"]] * onp_ratio[rownames(mat22)])
 shares <- 100 * shares / rowSums(shares)
 
-# ---- 5. simulate ------------------------------------------------------------
+# ---- 5. statewide draws, ANCHORED to the projection -------------------------
+# Drawing each party independently and renormalising destroys the
+# Labor-versus-Coalition covariance: measured, it reproduced only 60% of the
+# projection's two-party spread (sd 1.52 against 2.52) and centred 1.2 points
+# too favourable to Labor, because the party trends are today's while the
+# projection is election day's. Both errors make the seat range too tight and
+# too Labor-friendly.
+#
+# The projection is the calibrated object here -- its 95% intervals contain the
+# truth 92.8% of the time over 195 election-horizon pairs -- so the seat model
+# inherits it rather than rebuilding it. Each simulation draws a two-party
+# figure from the projection, then moves the Labor/Coalition split by exactly
+# the gap needed to hit it. Moving d points from LNP to ALP moves the two-party
+# figure by d, so the correction is exact rather than iterative.
+set.seed(42)
 psd <- vapply(parties, function(p) if (is.na(state_sd[p])) 1.5 else state_sd[[p]],
               numeric(1))
+sw_draws <- vapply(parties, function(p) {
+  m <- if (is.na(state_mean[p])) mean(shares[, p]) else state_mean[[p]]
+  pmax(0.1, stats::rnorm(N_SIMS, m, psd[[p]]))
+}, numeric(N_SIMS))
+colnames(sw_draws) <- parties
+sw_draws <- sw_draws / rowSums(sw_draws) * 100
+
+flow_of <- function(p) {
+  f <- fl$flow_alp[fl$party == p]
+  if (length(f)) f[1] / 100 else 0.489
+}
+minors <- setdiff(parties, c("ALP", "LNP"))
+implied <- sw_draws[, "ALP"] +
+  rowSums(vapply(minors, function(p) sw_draws[, p] * flow_of(p), numeric(N_SIMS)))
+target <- stats::rnorm(N_SIMS, pj$mean, pj$sd)
+d <- target - implied
+sw_draws[, "ALP"] <- pmax(0.1, sw_draws[, "ALP"] + d)
+sw_draws[, "LNP"] <- pmax(0.1, sw_draws[, "LNP"] - d)
+sw_draws <- sw_draws / rowSums(sw_draws) * 100
+
+chk <- sw_draws[, "ALP"] +
+  rowSums(vapply(minors, function(p) sw_draws[, p] * flow_of(p), numeric(N_SIMS)))
+cat(sprintf("
+statewide draws anchored: two-party mean %.2f sd %.3f (projection %.2f / %.3f)
+",
+            mean(chk), sd(chk), pj$mean, pj$sd))
+stopifnot(abs(mean(chk) - pj$mean) < 0.3, abs(sd(chk) - pj$sd) < 0.3)
+
 t0 <- Sys.time()
 sim <- simulate_seat_contests(shares, fm, party_sd = psd, seat_sd = SEAT_SD,
-                              n_sims = N_SIMS, smooth = SMOOTH, seed = 42)
+                              n_sims = N_SIMS, smooth = SMOOTH, seed = 42,
+                              statewide_draws = sw_draws)
 cat(sprintf("\nsimulated %d seats x %d runs in %.0fs | pooled fallback %.1f%%\n",
             nrow(shares), N_SIMS,
             as.numeric(difftime(Sys.time(), t0, units = "secs")),
