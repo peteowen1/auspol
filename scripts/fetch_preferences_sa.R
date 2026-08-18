@@ -11,9 +11,9 @@
 # supply ONP preference behaviour. Victoria cannot -- One Nation contested 5 of
 # 88 seats in 2022 and appears in two exclusion events.
 #
-# Writes to output/, which is gitignored. The data is public but carries no
-# licence statement, so it is fetched rather than committed -- the same rule
-# R/paths.R states for the anchor's data.
+# Writes to external/elections/, gitignored alongside the anchor clone. The data
+# is public but carries no licence statement, so none of it is committed --
+# see election_data_path().
 #
 # Run from repo root:  powershell.exe -Command 'Rscript "scripts/fetch_preferences_sa.R"'
 
@@ -22,7 +22,7 @@ suppressMessages(library(data.table))
 
 API <- "https://apim-ecsa-production.azure-api.net/results-display"
 ELECTION <- "2026-03-21"
-OUT <- file.path("output", "preferences")
+OUT <- election_data_path()   # external/elections
 dir.create(OUT, showWarnings = FALSE, recursive = TRUE)
 
 get_json <- function(path) {
@@ -99,9 +99,10 @@ if (length(unmatched)) {
   cat(sprintf("!! %d candidate(s) could not be matched to a party\n", length(unmatched)))
   print(utils::head(unique(unmatched), 5))
 }
-f <- file.path(OUT, "transfers-sa2026.csv")
+f <- file.path(OUT, "ecsa-2026-sa-transfers.csv")
 fwrite(tx, f)
 cat("wrote", f, "\n")
+record_fetch("ecsa", "ecsa-2026-sa-transfers.csv", API, nrow(tx))
 
 # Per-seat One Nation first-preference shares. Not used for preference flows:
 # this is the only measurement of how widely a party polling around 23% varies
@@ -130,6 +131,7 @@ for (d in chg$districts) {
 }
 onp_fp <- rbindlist(fp_rows)
 stopifnot(nrow(onp_fp) > 0)
-fwrite(onp_fp, file.path(OUT, "sa2026-onp-shares.csv"))
+fwrite(onp_fp, file.path(OUT, "ecsa-2026-sa-onp-shares.csv"))
+record_fetch("ecsa", "ecsa-2026-sa-onp-shares.csv", API, nrow(onp_fp))
 cat(sprintf("One Nation seat shares: %d seats, %.1f%% to %.1f%%, mean %.1f%%\n",
             nrow(onp_fp), min(onp_fp$pct), max(onp_fp$pct), mean(onp_fp$pct)))

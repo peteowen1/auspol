@@ -9,8 +9,9 @@
 # Needs data that is NOT in the repo. Run both fetchers first:
 #   Rscript scripts/fetch_preferences_vic.R
 #   Rscript scripts/fetch_preferences_sa.R
-# Both write to output/, gitignored, because neither commission publishes a
-# licence -- the same rule R/paths.R states for the anchor's data.
+# Both write to external/elections/, gitignored alongside the anchor clone,
+# because neither commission publishes a licence. Nothing of theirs is
+# committed; see election_data_path().
 #
 # Run from repo root:  powershell.exe -Command 'Rscript "scripts/fit_seats_full.R"'
 
@@ -23,9 +24,11 @@ SEAT_SD <- 3.5      # within-region seat deviation, from seat_swing_spread()
 SMOOTH  <- 0.15     # see distribute_preferences(); NOT optional, see its docs
 ONP_B1  <- -0.0968  # Greens-share coefficient, fitted on Victorian federal 2025
 
-PREF <- file.path("output", "preferences")
-need <- file.path(PREF, c("transfers-vic2022.csv", "transfers-sa2026.csv",
-                          "firstprefs-vic2022.csv"))
+PREF <- election_data_path()          # external/elections, gitignored
+need <- file.path(PREF, c("vec-2022-vic-transfers.csv",
+                          "ecsa-2026-sa-transfers.csv",
+                          "vec-2022-vic-firstprefs.csv",
+                          "ecsa-2026-sa-onp-shares.csv"))
 if (!all(file.exists(need))) {
   cat("Preference data not found; run the fetchers first. Missing:",
       paste(basename(need[!file.exists(need)]), collapse = ", "), "\n")
@@ -36,15 +39,15 @@ if (!all(file.exists(need))) {
 # Victoria is the right jurisdiction and supplies Greens, independent and
 # minor-right behaviour from 452 exclusions. It cannot speak to One Nation --
 # 5 of 88 seats contested in 2022 -- which is the only reason SA is here.
-tx <- rbind(fread(file.path(PREF, "transfers-vic2022.csv")),
-            fread(file.path(PREF, "transfers-sa2026.csv")))
+tx <- rbind(fread(file.path(PREF, "vec-2022-vic-transfers.csv")),
+            fread(file.path(PREF, "ecsa-2026-sa-transfers.csv")))
 fm <- build_flow_matrix(tx, min_n = 3L)
 cat(sprintf("flow matrix: %d exclusions, %d cells at n>=3 of %d observed\n",
             uniqueN(tx[, .(election, seat, round)]), length(fm$conditional),
             nrow(fm$coverage)))
 
 # ---- 2. each seat's 2022 first preferences, as class shares ----------------
-fp <- fread(file.path(PREF, "firstprefs-vic2022.csv"))
+fp <- fread(file.path(PREF, "vec-2022-vic-firstprefs.csv"))
 w <- dcast(fp, seat ~ party, value.var = "votes", fill = 0)
 mat22 <- as.matrix(w[, -1]); rownames(mat22) <- w$seat
 mat22 <- 100 * mat22 / rowSums(mat22)
@@ -86,7 +89,7 @@ state_sd   <- setNames(sw$sd_proj, sw$party)
 # observed spread, within 1.41x. See docs/plans/prereg-onp-allocation-vic.md
 # and docs/reviews/onp-allocation-checks-2026-08-18.md. Its ordering beats a
 # uniform allocation by only 0.122 MAE: trust the ONP TOTAL, not any one seat.
-sa_fp <- fread(file.path(PREF, "sa2026-onp-shares.csv"), showProgress = FALSE)
+sa_fp <- fread(file.path(PREF, "ecsa-2026-sa-onp-shares.csv"), showProgress = FALSE)
 sa_ratio <- sort(sa_fp$pct / mean(sa_fp$pct))
 idx <- ONP_B1 * mat22[, "GRN"]
 ord <- order(idx)                 # lowest index (strongest Greens) first

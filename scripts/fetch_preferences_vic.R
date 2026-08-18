@@ -15,9 +15,9 @@
 # Narracan has neither page -- its 2022 election failed after a candidate died
 # and the January 2023 supplementary was not contested by Labor.
 #
-# Writes to output/, which is gitignored. The VEC publishes no copyright or
-# terms statement and vec.vic.gov.au/copyright is a dead link, so the data is
-# fetched rather than committed, per the rule R/paths.R states for the anchor.
+# Writes to external/elections/, gitignored alongside the anchor clone. The VEC
+# publishes no copyright or terms statement and vec.vic.gov.au/copyright is a
+# dead link, so none of it is committed -- see election_data_path().
 #
 # Run from repo root:  powershell.exe -Command 'Rscript "scripts/fetch_preferences_vic.R"'
 
@@ -27,8 +27,8 @@ suppressMessages(library(data.table))
 BASE <- paste0("https://www.vec.vic.gov.au/results/state-election-results/",
                "2022-state-election-results/results-by-district")
 UA   <- "auspol-research/0.1 (+https://github.com/peteowen1/auspol)"
-OUT  <- file.path("output", "preferences")
-CACHE <- file.path(OUT, "vic-html")
+OUT   <- election_data_path()                     # external/elections
+CACHE <- file.path(OUT, "cache", "vec-2022-vic")  # raw HTML, deletable
 dir.create(CACHE, showWarnings = FALSE, recursive = TRUE)
 
 seats <- load_seats(2022, "vic")$seat
@@ -156,12 +156,14 @@ cat(sprintf("won on first preferences, no distribution held: %d\n", length(no_di
 if (length(missing)) cat("no results page at all:", paste(missing, collapse = ", "), "\n")
 if (nrow(bad)) cat(sprintf("!! %d transfer rows dropped for an unmatched candidate\n", nrow(bad)))
 
-f <- file.path(OUT, "transfers-vic2022.csv")
+f <- file.path(OUT, "vec-2022-vic-transfers.csv")
 fwrite(tx, f); cat("wrote", f, "\n")
-fwrite(pm, file.path(OUT, "candidates-vic2022.csv"))
+record_fetch("vec", "vec-2022-vic-transfers.csv", BASE, nrow(tx))
+fwrite(pm, file.path(OUT, "vec-2022-vic-candidates.csv"))
 
 fp <- pm[, list(votes = sum(fp_votes)), by = c("seat", "party")]
-fwrite(fp, file.path(OUT, "firstprefs-vic2022.csv"))
+fwrite(fp, file.path(OUT, "vec-2022-vic-firstprefs.csv"))
+record_fetch("vec", "vec-2022-vic-firstprefs.csv", BASE, nrow(fp))
 cat(sprintf("first preferences: %d seat-party rows across %d seats
 ",
             nrow(fp), uniqueN(fp$seat)))
