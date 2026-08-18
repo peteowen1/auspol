@@ -33,10 +33,39 @@ model this is built on, [docs/ANCHOR-MODEL.md](docs/ANCHOR-MODEL.md).
          ▼
   ┌─────────────┐   statewide draw + regional block + per-seat residual
   │   seats     │   → distribution of seat counts
-  └──────┬──────┘
+  └──────┬──────┘   (two-party only: cannot produce a non-major winner)
          ▼
    build_page.R  →  a self-contained HTML forecast
 ```
+
+**A second seat path exists and does not feed the page.** The two-party model
+above applies a statewide swing to each seat's margin, so a Green, an
+independent or One Nation wins with probability exactly zero — not because it
+is unlikely but because a two-party margin is the only thing that model knows
+about a seat. The candidate-level path runs the count instead:
+
+```
+  VEC 2022 per-district pages          ECSA 2026 JSON API
+  fetch_preferences_vic.R              fetch_preferences_sa.R
+        │  452 exclusions, 76 seats          │  294 exclusions, 47 seats
+        │  Greens / independents /           │  the ONLY source of One Nation
+        │  minor-right behaviour             │  behaviour — it contested 5 of
+        │                                    │  88 Victorian seats in 2022
+        └───────────────┬────────────────────┘
+                        ▼
+              build_flow_matrix()      transfer rates keyed on the excluded
+                        │              party AND who is still standing
+                        ▼
+            simulate_seat_contests()   per seat: exclude lowest, distribute,
+                        │              repeat to a final two
+                        ▼
+              fit_seats_full.R  →  per-seat win probability by party
+```
+
+Both fetchers write to `output/`, which is gitignored: neither commission
+publishes a licence. So this path **runs locally and not in CI**, and
+`fit_seats_full.R` exits with instructions when the data is absent. The three
+functions take a plain transfers table and are fully tested without it.
 
 `scripts/run_all.R` runs that whole chain in one command. The stages are *not*
 independent: `fit_projection.R` writes the mix table both `fit_seats.R` and
