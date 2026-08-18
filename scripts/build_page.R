@@ -259,7 +259,29 @@ seat_rows <- bs[, .(seat, region = seat_region, tpp = round(alp_tpp_now, 1),
 # a second simulation here would drift from the one S5 checked.
 seats_by_party <- NULL; seats_in_play <- NULL
 sp_f <- "output/seat-probs-vic-2026.csv"; ss_f <- "output/seat-sims-full-vic-2026.csv"
-if (file.exists(sp_f) && file.exists(ss_f)) {
+# These are OPTIONAL -- the candidate model needs fetched election data and is
+# skipped by --quick -- so they are not in INPUTS, whose members must exist.
+# But optional is not the same as exempt from the staleness rule above. Left
+# over from an older run they would publish yesterday's seat probabilities
+# under today's date, silently, which is the exact failure that guard exists to
+# prevent. Present-but-stale is therefore an ERROR, not a quiet skip: a run
+# that cannot produce current seat numbers must say so rather than serve old
+# ones.
+present <- file.exists(c(sp_f, ss_f))
+if (any(present) && !all(present)) {
+  stop("Only one of the candidate-level seat outputs exists (",
+       paste(c(sp_f, ss_f)[present], collapse = ", "),
+       "). Re-run scripts/fit_seats_full.R.")
+}
+if (all(present)) {
+  stale_seats <- c(sp_f, ss_f)[file.info(c(sp_f, ss_f))$mtime < poll_mtime]
+  if (length(stale_seats)) {
+    stop("These candidate-level seat outputs predate the poll data and would ",
+         "publish old seat probabilities under today's date: ",
+         paste(stale_seats, collapse = ", "), ". Re-run scripts/fit_seats_full.R.")
+  }
+}
+if (all(present)) {
   # NOT `tot`: this script already uses that for the two-party seat totals, and
   # shadowing it made median(tot) fail on a data.table further down. Same trap
   # as the data.table column collisions, one scope out.
