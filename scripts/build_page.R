@@ -260,10 +260,13 @@ seat_rows <- bs[, .(seat, region = seat_region, tpp = round(alp_tpp_now, 1),
 seats_by_party <- NULL; seats_in_play <- NULL
 sp_f <- "output/seat-probs-vic-2026.csv"; ss_f <- "output/seat-sims-full-vic-2026.csv"
 if (file.exists(sp_f) && file.exists(ss_f)) {
-  wp <- fread(sp_f); tot <- fread(ss_f)
+  # NOT `tot`: this script already uses that for the two-party seat totals, and
+  # shadowing it made median(tot) fail on a data.table further down. Same trap
+  # as the data.table column collisions, one scope out.
+  wp <- fread(sp_f); full_tot <- fread(ss_f)
   q <- function(v, p) as.integer(sort(v)[pmax(1, round(p * length(v)))])
-  seats_by_party <- rbindlist(lapply(names(tot), function(p) {
-    v <- tot[[p]]
+  seats_by_party <- rbindlist(lapply(names(full_tot), function(p) {
+    v <- full_tot[[p]]
     if (max(v) == 0) return(NULL)
     data.table(party = p, med = q(v, .5), lo = q(v, .05), hi = q(v, .95))
   }))[order(-med)]
@@ -271,7 +274,10 @@ if (file.exists(sp_f) && file.exists(ss_f)) {
   # a non-major has a real chance. Sorted by how close the contest is.
   fav <- wp[, .SD[which.max(prob)], by = seat]
   minor <- wp[party %in% c("GRN","ONP","IND","OTH","OTH_RIGHT") & prob >= 0.10, unique(seat)]
-  keep <- union(fav[prob < 0.85, seat], minor)
+  # A seat is "in play" when its favourite is under 80%, or when a minor party
+  # has a real chance. At 85% the list ran to 34 seats, which is a wall rather
+  # than a chart and buries the seats that are genuinely close.
+  keep <- union(fav[prob < 0.80, seat], minor)
   seats_in_play <- wp[seat %in% keep & prob >= 0.02][order(seat, -prob)]
   seats_in_play <- merge(seats_in_play, fav[, .(seat, fav_prob = prob)], by = "seat")
   setorder(seats_in_play, fav_prob, seat, -prob)
