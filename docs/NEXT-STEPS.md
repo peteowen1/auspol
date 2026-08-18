@@ -294,6 +294,9 @@ personal and seat-specific, which is the whole point of it. Worse, the number
 displacing them is the one the script's own comment says to distrust seat by
 seat ("trust the ONP TOTAL, not any one seat").
 
+Precisely: independents win in **6 draws of 20,000** (Hawthorn 4, Melton 1,
+Monbulk 1), across 3 of the 87 seats the model covers.
+
 **Zero independents is a defensible forecast for 2026** — the Mildura and
 Shepparton members both lost in 2022. Zero *by construction* is not.
 
