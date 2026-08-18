@@ -266,9 +266,24 @@ if (any(walk_tab$at_lower)) {
 stopifnot(walk_tab[, all(acf1 < 0.25)], walk_tab[, all(obs_pts >= floor_ref)],
           !any(walk_tab$at_upper))
 
-cat(sprintf("NL2  all trends and bands strictly inside (0, 100)  OK\nNL3  endpoint FP sums: %s  (require 100 +/- 5, thin state polling)\n",
-            paste(sprintf("%d=%.1f", c(2023, 2027), share_sums), collapse = "  ")))
-stopifnot(all(abs(share_sums - 100) <= 5))
+cat("NL2  all trends and bands strictly inside (0, 100)  OK\n")
+# The endpoint SUM is still printed, because it is worth seeing -- but it is
+# no longer asserted on. It required 100 +/- 5 and failed at 94.1 while every
+# party but One Nation tracked its own polls within a point: a sum cannot say
+# WHICH party is off, by how much, or in which direction, and it stays silent
+# when two parties err in opposite directions. Replaced per
+# docs/plans/prereg-per-party-poll-check.md, committed before the new
+# threshold was computed.
+cat(sprintf("NL3a endpoint FP sums (reported, not asserted): %s\n",
+            paste(sprintf("%d=%.1f", c(2023, 2027), share_sums),
+                  collapse = "  ")))
+nsw_track <- lapply(c(2023, 2027), function(yr) {
+  r <- get(paste0("res", yr))
+  x <- poll_tracking_check(r$polls, r$fits)
+  report_poll_tracking(x, sprintf("NL3  %d", yr))
+  x
+})
+stopifnot(!any(vapply(nsw_track, function(x) any(x$breach), TRUE)))
 cat("Structural checks NL2/NL3 passed.\n\n")
 
 cat("=== NSW 2027 cycle trend endpoints ===\n")

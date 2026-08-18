@@ -115,9 +115,9 @@ was caught only against a number someone already knew.
 
   | Script | Emits |
   |---|---|
-  | `fit_vic.R` | `F1`, `L2`, `L3`, `L4a`–`L4c`, `V5` |
-  | `fit_federal.R` | `A1`–`A4` (plus `A2b`, `A3b`), `FF1`, `FL1`–`FL3`, `FL4a`–`FL4c`, `FO1` |
-  | `fit_nsw.R` | `N1`–`N3`, `NF1`, `NL2`, `NL3`, `NL4a`–`NL4c` |
+  | `fit_vic.R` | `F1`, `L2`, `L3`, `L3a`, `L4a`–`L4c`, `V5` |
+  | `fit_federal.R` | `A1`–`A4` (plus `A2b`, `A3b`), `FF1`, `FL1`–`FL3`, `FL3a`, `FL4a`–`FL4c`, `FO1` |
+  | `fit_nsw.R` | `N1`–`N3`, `NF1`, `NL2`, `NL3`, `NL3a`, `NL4a`–`NL4c` |
   | `fit_projection.R` | `P1`–`P4`, `B1` |
   | `fit_seats.R` | `S1`–`S4`, `R1`–`R3` |
   | `fit_seats_full.R` | `S5` |

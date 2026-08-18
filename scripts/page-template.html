@@ -215,6 +215,7 @@ footer{padding:2.5rem 0 0;border-top:1px solid var(--rule);font-size:.8rem;
     tracks its inputs faithfully cannot correct a miss its inputs share, so the
     trend is published as fitted. See
     <em>docs/reviews/others-bias-2026-08-18.md</em>.</p>
+    <div id="trackcav"></div>
   </figure>
 </section>
 
@@ -632,6 +633,32 @@ draw('seat distribution','hist',function(){
 });
 
 /* ---- trend chart ---- */
+/* ---- how well the fit tracks its own polls ----
+   Rendered from output/poll-tracking-vic.csv, NOT typed in. This note is what
+   justifies fit_vic.R reporting an L3 breach rather than halting, so it must
+   say what the check actually found. The previous version was hand-authored
+   prose with the numbers in the text: it would have gone stale the moment the
+   gap moved or a different party breached, and nothing would have flagged it. */
+draw('tracking caveat','trackcav',function(){
+  const rows = D.track;
+  if(!Array.isArray(rows) || !rows.length) return;
+  const bad = rows.filter(r=>r.breach).sort((a,b)=>b.dev-a.dev);
+  if(!bad.length) return;
+  const r = bad[0];
+  const nm = PN[r.party] || r.party;
+  document.getElementById('trackcav').innerHTML =
+    `<p class="note">Read the <strong>${nm}</strong> line as under-informed. The
+     fitted line sits <strong>${r.dev.toFixed(1)} points</strong>
+     ${r.fitted<r.polls?'below':'above'} the average of its last ${r.n} polls
+     (${r.fitted.toFixed(1)} against ${r.polls.toFixed(1)}), and a pre-registered
+     check flags any party more than ${D.track_bound} points from its own recent
+     polling. That check is reported here rather than halting the forecast,
+     because a thinly-polled party is under-informed rather than wrong: where a
+     party is polled often the same model tracks it closely. The forecast is
+     published as fitted.</p>`;
+});
+
+
 draw('poll trend','trend',function(){
   const s=document.getElementById('trend'), W=900,H=380,L=40,R=110,T=18,B=30;
   const all=D.trend.filter(t=>t.party!=='TPP_ALP');

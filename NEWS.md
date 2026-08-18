@@ -1,3 +1,32 @@
+# auspol 0.4.11
+
+**The endpoint-sum check is replaced by a per-party one.** `L3`/`FL3`/`NL3`
+required each cycle's fitted first preferences to sum to 100 +/- 5; NSW failed
+at 94.1 and kept the scheduled job red. The sum was the wrong question -- the
+model fits parties independently with shrinkage, forcing the shares to sum was
+measured at 0.33 MAE, and a sum cannot say which party is off or by how much.
+They now assert each party's fitted endpoint sits within 2.5 points of its own
+last 90 days of polling, a bound derived by a rule committed before it was
+computed (`docs/plans/prereg-per-party-poll-check.md`).
+
+Every breach is One Nation, and the size orders by how many polls name the
+party: federal passes at 0.85 on 45 polls, Victoria breaches at 2.78 on 10, NSW
+at 5.15 on 3. Federal is the control -- the model tracks the party fine when it
+has data.
+
+The check also caught something that had been true all along with nothing
+reporting it: **NSW 2023 polls One Nation at 5.67 and never fits it.** A party
+under a script's inclusion floor used to have no row in either check, so it was
+absent rather than flagged. `poll_tracking_check()` now iterates the union of
+fitted and polled parties.
+
+`fit_vic.R` reports its breach rather than halting, because it is the target
+stage and halting publishes nothing -- but it now records the breach to
+`output/L3-BREACH.txt` and `run_all.R` fails on that after the page is built.
+Previously the run went red only because NSW happened to breach the same check;
+that dependency is gone. The page's One Nation note is rendered from the check's
+own output rather than hand-typed.
+
 # auspol 0.4.10
 
 **The "Others" bias is a fifth the size it was reported to be.** The −3.60 that
