@@ -1,3 +1,61 @@
+# auspol 0.4.7
+
+The candidate-level seat simulation moves from a session scratchpad into the
+package. **No published number changes**: `simulate_seats()` and the page are
+untouched.
+
+## New exported functions
+
+- **`build_flow_matrix()`** — turns observed transfers into preference rates
+  keyed on the excluded party **and the set of survivors**, because where a
+  party's preferences go depends on who is still standing. Cells below `min_n`
+  are withheld rather than returned, and every cell appears in a coverage
+  table with its event count, so a rate resting on two exclusions is
+  distinguishable from one resting on fifty.
+- **`distribute_preferences()`** — runs a single seat's count: exclude the
+  lowest, transfer at the estimated rate, repeat to a final two.
+- **`simulate_seat_contests()`** — simulates every seat many times and returns
+  a per-seat win probability by party.
+
+Together these let a Green, an independent or One Nation win a seat. The
+published two-party model gives those outcomes probability exactly zero, not
+because they are unlikely but because a two-party margin is the only thing it
+knows about a seat.
+
+**None of the three needs external data.** The VEC and ECSA election data
+cannot be committed pending the licence question, so the functions were
+designed to take a plain transfers table and be fully testable without it.
+55 tests across the three files; 300 in the suite.
+
+Performance: 87 seats × 2,000 simulations in **9.7 seconds**, so a
+20,000-simulation run is about 100 seconds. Parties are held as integer indices
+and the survivor set as a bitmask; seven million named-vector lookups would
+have made this slow enough that nobody re-runs it.
+
+## Fixes
+
+Two defects found by the pre-PR review of this same code, both reproduced
+before fixing and both covered by tests verified to fail against the pre-fix
+version:
+
+- **`simulate_seat_contests()` crashed** on any flow cell naming a party that
+  does not contest the seats being projected. `pidx` is an atomic vector, so
+  `pidx[["missing"]]` throws rather than returning `NULL`, which made the
+  adjacent `is.null()` guard dead code. Historical transfer data routinely
+  contains exclusions of parties absent from a given seat set.
+- **`distribute_preferences()` silently lost votes** when `shares` carried a
+  duplicate name. Exclusion removes by name, so two entries labelled `IND` were
+  deleted in one pass while only the smaller was redistributed — 15 of 100
+  votes vanished and the count terminated a round early. Duplicates are now
+  refused with the offending names reported.
+
+## Deliberately not included
+
+The One Nation seat allocation. Its ordering beats a uniform allocation by only
+0.12 MAE and its magnitude is borrowed from South Australia's observed spread,
+making it the weakest link in the prototype result. It needs its own
+pre-registered treatment before anything publishes.
+
 # auspol 0.4.6
 
 A working seat-by-seat simulation in which minor parties can win, plus a

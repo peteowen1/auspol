@@ -3,9 +3,27 @@ name: R-CMD-check
 on:
   push:
     branches: [dev, main]
-  pull_request:
-    branches: [dev, main]
   workflow_dispatch:
+
+# NO pull_request trigger, deliberately. Every PR in this repo is dev -> main,
+# and `push` already covers dev, so the two triggers fired on the same commit
+# three seconds apart and checked the identical tree. Worse than wasteful: on
+# 2026-08-18 the push run succeeded 4 times out of 4 in about four minutes
+# while the pull_request run hung 4 times out of 4, once for 37 minutes,
+# blocking merges until cancelled by hand. The push run's check attaches to the
+# same SHA, so it still reports on the PR.
+#
+# Restore the pull_request trigger if PRs ever arrive from a branch that is not
+# pushed here -- a fork, or a contributor branch -- because then nothing else
+# would check them.
+
+# A newer push to the same ref cancels the run it supersedes, so a stalled run
+# clears itself rather than needing to be cancelled by hand. Kept even after
+# the duplicate trigger was removed above: it is what makes a rapid series of
+# pushes cost one run instead of five.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 permissions: read-all
 

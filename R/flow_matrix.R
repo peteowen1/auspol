@@ -1,0 +1,80 @@
+# Preference flow matrices ---------------------------------------------------
+#
+# [distribute_preferences()] needs a table of transfer rates keyed on the
+# excluded party AND the set of survivors. This builds one from observed
+# counts: for every exclusion in a real election, where did that candidate's
+# ballots actually go?
+#
+# The input is deliberately plain -- one row per (election, seat, round,
+# excluded party, destination party, votes) -- so that any source that can be
+# reduced to "these votes moved from here to there" can feed it, whether the
+# origin was a VEC HTML table or an ECSA JSON endpoint.
+#
+# Cells are NOT filled in where nothing was observed. A count is returned with
+# every row so a caller can see which rates rest on two exclusions and which
+# rest on fifty, rather than being handed a table that looks uniformly
+# authoritative.
+
+#' Build a preference flow matrix from observed transfers
+#'
+#' @param transfers data.frame with columns `seat`, `round`, `from` (excluded
+#'   party), `to` (receiving party), `votes`, and optionally `election`.
+#' @param min_n Minimum number of distinct exclusion events for a
+#'   survivor-conditional cell to be reported in `conditional`. Cells below
+#'   this are still counted in `coverage` but withheld, so a caller falls back
+#'   to the pooled rate rather than trusting a rate built from one seat.
+#' @return List with `conditional` (named list keyed `"FROM|A+B+C"`), `pooled`
+#'   (named list keyed by excluded party), and `coverage`, a data.frame of
+#'   every cell with its event count and total votes — including the withheld
+#'   ones, which is the point.
+#' @export
+build_flow_matrix <- function(transfers, min_n = 3L) {
+  need <- c("seat", "round", "from", "to", "votes")
+  miss <- setdiff(need, names(transfers))
+  if (length(miss)) {
+    stop("transfers is missing column(s): ", paste(miss, collapse = ", "))
+  }
+  d <- data.table::as.data.table(transfers)
+  if (!"election" %in% names(d)) d[, "election" := "unknown"]
+  d <- d[which(is.finite(d$votes) & d$votes > 0), ]
+  if (!nrow(d)) stop("No positive transfers to build a matrix from")
+
+  # An exclusion EVENT is one (election, seat, round). The survivor set is
+  # every party that received votes in it -- which is why a party receiving
+  # zero in a round is indistinguishable here from one not standing, and why
+  # smoothing in distribute_preferences() is not optional.
+  ev <- d[, list(surv = paste(sort(unique(get("to"))), collapse = "+")),
+          by = c("election", "seat", "round", "from")]
+  d <- merge(d, ev, by = c("election", "seat", "round", "from"))
+  d[, "cell" := paste0(get("from"), "|", get("surv"))]
+
+  cell_tot <- d[, list(votes = sum(get("votes"))),
+                by = c("cell", "from", "surv", "to")]
+  cell_n <- d[, list(n = data.table::uniqueN(
+                paste(get("election"), get("seat"), get("round")))),
+              by = c("cell", "from", "surv")]
+  cell_tot <- merge(cell_tot, cell_n, by = c("cell", "from", "surv"))
+  cell_tot[, "share" := 100 * get("votes") / sum(get("votes")), by = "cell"]
+
+  mk <- function(dt, keycol) {
+    keys <- unique(dt[[keycol]])
+    stats::setNames(lapply(keys, function(k) {
+      s <- dt[dt[[keycol]] == k, ]
+      stats::setNames(s$share, s$to)
+    }), keys)
+  }
+  conditional <- mk(cell_tot[cell_tot$n >= min_n, ], "cell")
+
+  pool <- d[, list(votes = sum(get("votes"))), by = c("from", "to")]
+  pool[, "share" := 100 * get("votes") / sum(get("votes")), by = "from"]
+  pooled <- mk(pool, "from")
+
+  coverage <- unique(cell_tot[, c("cell", "from", "surv", "n"), with = FALSE])
+  cov_votes <- cell_tot[, list(votes = sum(get("votes"))), by = "cell"]
+  coverage <- merge(coverage, cov_votes, by = "cell")
+  coverage[, "used" := get("n") >= min_n]
+  data.table::setorderv(coverage, "votes", -1L)
+
+  list(conditional = conditional, pooled = pooled,
+       coverage = as.data.frame(coverage), min_n = min_n)
+}

@@ -14,7 +14,7 @@ Status key: **ESTIMATED** — derived from data, moves as data arrives ·
 **ESTIMABLE** — could be, currently is not · **FIXED** — cannot or should not
 be estimated, with the reason given.
 
-Last audited 2026-08-16.
+Last audited 2026-08-18.
 
 ---
 
@@ -79,6 +79,51 @@ Two of these are closer to judgement than the rest and are worth revisiting if
 they ever look load-bearing: `window = 30` decides which poll counts as a
 firm's last, and the `G3` tolerance decides how far the adopted estimator may
 fall behind before someone is told.
+
+## 4b. The candidate-level seat path (added 2026-08-18)
+
+These live in `scripts/fit_seats_full.R` and the three functions it calls. The
+path does not feed the published page, but the rule applies the same: a
+constant absent from this file is a bug in this file.
+
+| constant | value | where | status |
+|---|---:|---|---|
+| `SMOOTH` | 0.15 | `distribute_preferences()` | **FIXED, and load-bearing** |
+| `min_n` | 3 | `build_flow_matrix()` | **FIXED** — judgement |
+| `SEAT_SD` | 3.5 | `fit_seats_full.R` | **ESTIMATED** |
+| `ONP_B1` | −0.0968 | `fit_seats_full.R` | **ESTIMATED** |
+| One Nation spread | SA 2026 observed | `fit_seats_full.R` | **ESTIMATED, transferred** |
+| per-party statewide sd | from the trend | `fit_seats_full.R` | **ESTIMATED** |
+| `N_SIMS` | 20000 | `fit_seats_full.R` | FIXED, no modelling content |
+
+**`SMOOTH` is not presentation.** A flow row carries 0% for a destination that
+never co-occurred in the source data; renormalising that row over the survivors
+hands them the entire transfer. At `SMOOTH = 0` One Nation wins Richmond. It
+mixes every row with a uniform over the survivors so absence of evidence is not
+read as certainty. It is **FIXED rather than estimated because there is nothing
+to estimate it against** — the quantity it guards is precisely the one never
+observed. Its own test asserts that a wide enough value flips the winner, so it
+cannot silently become inert.
+
+**`min_n = 3`** decides when a survivor-conditional rate is trusted over the
+pooled one. Judgement, not measurement: below it a rate can rest on a single
+seat. Cells below the bar are still reported in `coverage`, so what was
+withheld is visible.
+
+**`SEAT_SD = 3.5`** is the within-region seat deviation from
+`seat_swing_spread()`, the same figure the two-party seat model uses.
+
+**`ONP_B1 = −0.0968`** orders seats by Greens share, fitted on the 38 Victorian
+federal 2025 divisions by leave-one-division-out over five pre-named forms.
+Checked on 2026-08-18: the coefficient is negative in NSW, Queensland and WA
+too, so the relationship replicates. **It beats a uniform allocation by only
+0.122 MAE** — real and small. Trust the One Nation *total*, not any one seat.
+
+**The One Nation spread** is taken from SA 2026's observed relative
+distribution, measured at 22.97% statewide against Victoria's forecast 20.9%.
+Estimated, but from a different state, because Victoria has never had a large
+One Nation vote to measure its own. Checked within 1.41× against a 1.5 bar.
+See `docs/plans/prereg-onp-allocation-vic.md`.
 
 ## 5. Pre-registered check bounds
 
