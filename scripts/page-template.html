@@ -1,3 +1,12 @@
+<meta charset="utf-8">
+<!-- FIRST LINE, deliberately. A charset declaration is only honoured
+     within the first 1024 bytes, and this document has no <head> -- it
+     opens straight into <title>. Placed further down it is ignored and
+     every en-dash renders as mojibake, which is how it shipped until
+     someone opened the built page and looked at it. No automated check
+     sees this: G1 verifies blocks drew, R CMD check never reads HTML,
+     and a parser accepts mojibake happily. The page is distributed AS A
+     FILE, so there is no server to send the header instead. -->
 <title>Can Labor Hold Victoria?</title>
 <style>
 :root{
@@ -144,6 +153,32 @@ footer{padding:2.5rem 0 0;border-top:1px solid var(--rule);font-size:.8rem;
     number, so they are excluded.</figcaption>
   </figure>
 </section>
+
+<section>
+  <div class="col">
+    <span class="eyebrow">Every seat</span>
+    <h2 style="margin-top:.5rem">Who wins what</h2>
+    <p>The pendulum above only knows Labor against the Coalition. This runs the
+    actual count in every seat &mdash; exclude the lowest, distribute their
+    preferences, repeat &mdash; so a Green, an independent or One Nation can
+    win, and the model can be wrong about it rather than silent.</p>
+  </div>
+  <figure>
+    <div class="chart"><svg id="seatparty" viewBox="0 0 900 240" role="img"
+      aria-label="Seats won by each party: median and 90 per cent range"></svg></div>
+    <figcaption>Bars are the median seat count; the thin line is the 90% range.
+    Every bar is labelled, so nothing here depends on telling the colours
+    apart.</figcaption>
+  </figure>
+  <figure>
+    <div class="chart"><svg id="seatplay" viewBox="0 0 900 560" role="img"
+      aria-label="Seats in play, showing the probability each party wins"></svg></div>
+    <figcaption>Seats where no party is a near-certainty, or where a minor party
+    has a real chance. Each row totals 100%: the width of a block is that
+    party's probability of winning the seat.</figcaption>
+  </figure>
+</section>
+
 
 <section>
   <div class="col">
@@ -445,6 +480,82 @@ document.getElementById('headline').innerHTML = `
     <span class="v num">${pc(D.seats.p_majority)}</span>
     <span class="sub">Needs ${D.seats.majority} seats. A hung parliament is the single most likely outcome.</span>
   </div>`;
+});
+
+/* ---- seats by party ----
+   Four to five categories with an interval each: magnitude plus identity, so
+   horizontal bars with the 90% range drawn over them. EVERY bar is directly
+   labelled with its party and numbers, which is not decoration: the palette
+   validator puts One Nation orange and Greens green at dE 6.1 under
+   protanopia, inside the band that is legal only with secondary encoding, and
+   One Nation's contrast against the surface is 2.97:1. Labels discharge both.
+   Nothing on this chart may depend on distinguishing two hues. */
+draw('seats by party','seatparty',function(){
+  const rows = D.seats_by_party;
+  if(!Array.isArray(rows) || !rows.length) return;
+  const s=document.getElementById('seatparty'), W=900,H=240,L=150,R=90,T=22,B=34;
+  const total = D.seats.total || 88, maj = D.seats.majority || 45;
+  const hi = Math.max(total, ...rows.map(r=>r.hi));
+  const x = v => L + v/hi*(W-L-R);
+  const rh = (H-T-B)/rows.length, bh = Math.min(26, rh-10);
+  for(let g=0; g<=hi; g+=10){
+    s.appendChild(el('line',{x1:x(g),x2:x(g),y1:T-6,y2:H-B,
+      stroke:cv('--rule-2'),'stroke-width':1}));
+    s.appendChild(el('text',{x:x(g),y:H-B+16,'text-anchor':'middle','font-size':11,
+      fill:cv('--ink-4'),'font-family':'ui-monospace,Consolas,monospace'},g));
+  }
+  rows.forEach((r,i)=>{
+    const y=T+i*rh+(rh-bh)/2, c=cv(PC[r.party]||'--oth');
+    s.appendChild(el('rect',{x:x(0),y:y,width:Math.max(2,x(r.med)-x(0)),height:bh,
+      fill:c,opacity:.9,rx:4}));
+    // 90% range: a thin line with end caps, drawn over the bar
+    s.appendChild(el('line',{x1:x(r.lo),x2:x(r.hi),y1:y+bh/2,y2:y+bh/2,
+      stroke:cv('--ink'),'stroke-width':2,opacity:.55}));
+    [r.lo,r.hi].forEach(v=>s.appendChild(el('line',{x1:x(v),x2:x(v),
+      y1:y+bh/2-5,y2:y+bh/2+5,stroke:cv('--ink'),'stroke-width':2,opacity:.55})));
+    s.appendChild(el('text',{x:L-12,y:y+bh/2+4,'text-anchor':'end','font-size':13,
+      'font-weight':600,fill:cv('--ink')}, r.party));
+    s.appendChild(el('text',{x:x(Math.max(r.hi,r.med))+10,y:y+bh/2+4,'font-size':12,
+      fill:cv('--ink-2'),'font-family':'ui-monospace,Consolas,monospace'},
+      r.med+'  ('+r.lo+'–'+r.hi+')'));
+  });
+  const mx=x(maj);
+  s.appendChild(el('line',{x1:mx,x2:mx,y1:T-6,y2:H-B,stroke:cv('--ink-3'),
+    'stroke-width':1,'stroke-dasharray':'3 3'}));
+  s.appendChild(el('text',{x:mx,y:T-10,'text-anchor':'middle','font-size':11,
+    fill:cv('--ink-3'),'font-weight':600},'majority '+maj));
+});
+
+/* ---- seats in play ----
+   One row per seat, each a 100% stacked probability bar. A 2px surface gap
+   separates segments so adjacent parties never touch, and any segment wide
+   enough carries its party name, again so identity is never colour alone. */
+draw('seats in play','seatplay',function(){
+  const rows = D.seats_in_play;
+  if(!Array.isArray(rows) || !rows.length) return;
+  const bySeat = new Map();
+  rows.forEach(r=>{ if(!bySeat.has(r.seat)) bySeat.set(r.seat,[]);
+                    bySeat.get(r.seat).push(r); });
+  const seats=[...bySeat.keys()];
+  const s=document.getElementById('seatplay'), W=900,L=170,R=20,T=16,B=10;
+  const rh=Math.min(26,(560-T-B)/Math.max(seats.length,1)), bh=Math.max(9,rh-8);
+  s.setAttribute('viewBox','0 0 900 '+(T+B+rh*seats.length));
+  seats.forEach((seat,i)=>{
+    const y=T+i*rh, parts=bySeat.get(seat).slice().sort((a,b)=>b.prob-a.prob);
+    let cx=L;
+    s.appendChild(el('text',{x:L-12,y:y+bh/2+4,'text-anchor':'end','font-size':12,
+      fill:cv('--ink')}, seat));
+    parts.forEach(pt=>{
+      const w=pt.prob*(W-L-R);
+      if(w<=0) return;
+      s.appendChild(el('rect',{x:cx,y:y,width:Math.max(1,w-2),height:bh,
+        fill:cv(PC[pt.party]||'--oth'),opacity:.9,rx:3}));
+      if(w>78) s.appendChild(el('text',{x:cx+6,y:y+bh/2+4,'font-size':11,
+        fill:'#fff','font-weight':600},
+        pt.party+' '+Math.round(pt.prob*100)+'%'));
+      cx+=w;
+    });
+  });
 });
 
 /* ---- pendulum ---- */

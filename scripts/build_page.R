@@ -253,6 +253,71 @@ bs <- sim$by_seat[order(-alp_tpp_now)]
 seat_rows <- bs[, .(seat, region = seat_region, tpp = round(alp_tpp_now, 1),
                     p = round(alp_win_prob, 3))]
 
+# ---- candidate-level seat forecast, if the pipeline produced one ------------
+# fit_seats_full.R needs election data fetched into external/elections and is
+# skipped by --quick, so this is optional. It is read rather than recomputed:
+# a second simulation here would drift from the one S5 checked.
+seats_by_party <- NULL; seats_in_play <- NULL
+sp_f <- "output/seat-probs-vic-2026.csv"; ss_f <- "output/seat-sims-full-vic-2026.csv"
+# These are OPTIONAL -- the candidate model needs fetched election data and is
+# skipped by --quick -- so they are not in INPUTS, whose members must exist.
+# But optional is not the same as exempt from the staleness rule above. Left
+# over from an older run they would publish yesterday's seat probabilities
+# under today's date, silently, which is the exact failure that guard exists to
+# prevent. Present-but-stale is therefore an ERROR, not a quiet skip: a run
+# that cannot produce current seat numbers must say so rather than serve old
+# ones.
+present <- file.exists(c(sp_f, ss_f))
+if (any(present) && !all(present)) {
+  stop("Only one of the candidate-level seat outputs exists (",
+       paste(c(sp_f, ss_f)[present], collapse = ", "),
+       "). Re-run scripts/fit_seats_full.R.")
+}
+if (all(present)) {
+  stale_seats <- c(sp_f, ss_f)[file.info(c(sp_f, ss_f))$mtime < poll_mtime]
+  if (length(stale_seats)) {
+    stop("These candidate-level seat outputs predate the poll data and would ",
+         "publish old seat probabilities under today's date: ",
+         paste(stale_seats, collapse = ", "), ". Re-run scripts/fit_seats_full.R.")
+  }
+}
+if (all(present)) {
+  # NOT `tot`: this script already uses that for the two-party seat totals, and
+  # shadowing it made median(tot) fail on a data.table further down. Same trap
+  # as the data.table column collisions, one scope out.
+  wp <- fread(sp_f); full_tot <- fread(ss_f)
+  q <- function(v, p) as.integer(sort(v)[pmax(1, round(p * length(v)))])
+  seats_by_party <- rbindlist(lapply(names(full_tot), function(p) {
+    v <- full_tot[[p]]
+    # A party that never wins a seat in any simulation is not a finding, and a
+    # row reading "0 (0-0)" with a zero-width bar is clutter. Require it to win
+    # at least one seat in the top 5% of runs.
+    if (as.integer(sort(v)[pmax(1, round(0.95 * length(v)))]) < 1) return(NULL)
+    data.table(party = p, med = q(v, .5), lo = q(v, .05), hi = q(v, .95))
+  }))
+  # rbindlist on an all-NULL list returns a table with no COLUMNS, and ordering
+  # by a column that does not exist is a hard crash rather than an empty chart.
+  # It cannot happen while two majors dominate -- both win seats in effectively
+  # every run -- but the daily job should not fall over on a model where that
+  # stops being true.
+  seats_by_party <- if (nrow(seats_by_party)) seats_by_party[order(-med)] else NULL
+  # Seats worth naming: those where the favourite is not near-certain, or where
+  # a non-major has a real chance. Sorted by how close the contest is.
+  fav <- wp[, .SD[which.max(prob)], by = seat]
+  minor <- wp[party %in% c("GRN","ONP","IND","OTH","OTH_RIGHT") & prob >= 0.10, unique(seat)]
+  # A seat is "in play" when its favourite is under 80%, or when a minor party
+  # has a real chance. At 85% the list ran to 34 seats, which is a wall rather
+  # than a chart and buries the seats that are genuinely close.
+  keep <- union(fav[prob < 0.80, seat], minor)
+  seats_in_play <- wp[seat %in% keep & prob >= 0.02][order(seat, -prob)]
+  seats_in_play <- merge(seats_in_play, fav[, .(seat, fav_prob = prob)], by = "seat")
+  setorder(seats_in_play, fav_prob, seat, -prob)
+  seats_in_play[, fav_prob := NULL]
+  cat(sprintf("candidate-level seats: %d parties, %d seats in play
+",
+              nrow(seats_by_party), uniqueN(seats_in_play$seat)))
+}
+
 card <- fread("output/pollster-scorecard.csv")
 card <- card[order(-n_polls)][1:12]
 
@@ -301,6 +366,8 @@ out <- list(
                prev = 56, total = 88, majority = 45,
                hist = h[, .(seats, p = round(p, 5))]),
   seat_rows = seat_rows,
+  seats_by_party = seats_by_party,
+  seats_in_play = seats_in_play,
   mix = mix[, .(horizon, w = round(w, 2), mae_mix = round(mae_mix_loo, 2),
                 mae_trend = round(mae_trend, 2), mae_fund = round(mae_fund, 2),
                 sd = round(sd_err_loo, 2))],

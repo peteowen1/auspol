@@ -82,10 +82,24 @@ the election data cannot be committed. A full run is 87 seats × 20,000 sims in
 about 200 seconds. Architecture diagram in `ARCHITECTURE.md`; every constant is
 inventoried in `docs/CONSTANTS.md` §4b.
 
-**Latest result** (local, from fetched data): ALP 41 (90%: 32–48), LNP 38,
+**Latest result** (local, from fetched data): **ALP 41 (90%: 24–51)**, LNP 38,
 GRN 5, ONP 3. Greens hold their four — Brunswick 100%, Melbourne 99.6%,
-Richmond 96%, Prahran 72% — and One Nation's strength is Melton 62%,
-Greenvale 39%, Sydenham 27%. Sixteen seats have a minor party above 10%.
+Richmond 96%, Prahran 72% — and One Nation's best is Melton at 57%.
+
+**That range is after the anchoring fix and the earlier one was wrong.** The
+simulation was rebuilding the statewide distribution instead of inheriting the
+projection, giving an implied two-party of 49.23 ± 1.52 against the
+projection's 48.00 ± 2.52 — centred 1.2 points too favourable to Labor and
+about 40% too tight. Corrected, the two methods now agree:
+
+| | two-party model | candidate-level |
+|---|---|---|
+| ALP median | 39 | 41 |
+| ALP 90% | 23–51 | 24–51 |
+
+Two very different methods landing in the same place is the cross-validation
+that was missing while the ranges disagreed. See
+[reviews/seat-sim-working-2026-08-18.md](reviews/seat-sim-working-2026-08-18.md).
 
 **What is left, in order:**
 
