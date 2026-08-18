@@ -267,7 +267,10 @@ if (file.exists(sp_f) && file.exists(ss_f)) {
   q <- function(v, p) as.integer(sort(v)[pmax(1, round(p * length(v)))])
   seats_by_party <- rbindlist(lapply(names(full_tot), function(p) {
     v <- full_tot[[p]]
-    if (max(v) == 0) return(NULL)
+    # A party that never wins a seat in any simulation is not a finding, and a
+    # row reading "0 (0-0)" with a zero-width bar is clutter. Require it to win
+    # at least one seat in the top 5% of runs.
+    if (as.integer(sort(v)[pmax(1, round(0.95 * length(v)))]) < 1) return(NULL)
     data.table(party = p, med = q(v, .5), lo = q(v, .05), hi = q(v, .95))
   }))[order(-med)]
   # Seats worth naming: those where the favourite is not near-certain, or where

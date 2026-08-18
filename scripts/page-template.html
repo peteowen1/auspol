@@ -1,3 +1,12 @@
+<meta charset="utf-8">
+<!-- FIRST LINE, deliberately. A charset declaration is only honoured
+     within the first 1024 bytes, and this document has no <head> -- it
+     opens straight into <title>. Placed further down it is ignored and
+     every en-dash renders as mojibake, which is how it shipped until
+     someone opened the built page and looked at it. No automated check
+     sees this: G1 verifies blocks drew, R CMD check never reads HTML,
+     and a parser accepts mojibake happily. The page is distributed AS A
+     FILE, so there is no server to send the header instead. -->
 <title>Can Labor Hold Victoria?</title>
 <style>
 :root{
