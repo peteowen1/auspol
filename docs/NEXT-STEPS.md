@@ -65,21 +65,27 @@ Evidence: [reviews/seat-sim-working-2026-08-18.md](reviews/seat-sim-working-2026
 [plans/preference-data-acquisition.md](plans/preference-data-acquisition.md) (how to
 refetch).
 
-**Three exported functions, 52 tests, none needing external data:**
+**The whole path is now in the repo.** Nothing below runs from a scratchpad.
 
-| function | does |
+| piece | file |
 |---|---|
-| `build_flow_matrix()` | observed transfers → rates keyed on excluded party AND survivor set, withholding thin cells and reporting coverage |
-| `distribute_preferences()` | runs a single seat's count to a final two |
-| `simulate_seat_contests()` | every seat, n simulations, per-seat win probability by party |
+| fetch Victorian distributions | `scripts/fetch_preferences_vic.R` |
+| fetch South Australian distributions | `scripts/fetch_preferences_sa.R` |
+| party name → modelling class | `classify_party()` |
+| transfers → rates by excluded party and survivors | `build_flow_matrix()` |
+| one seat's count to a final two | `distribute_preferences()` |
+| every seat, n simulations | `simulate_seat_contests()` |
+| the runner joining all of it | `scripts/fit_seats_full.R` |
 
-Measured cost: 87 seats × 2,000 sims in **9.7 seconds**; a 20,000-sim run is
-about 100 seconds.
+**78 tests**, none needing external data, so the logic is checked in CI while
+the election data cannot be committed. A full run is 87 seats × 20,000 sims in
+about 200 seconds. Architecture diagram in `ARCHITECTURE.md`; every constant is
+inventoried in `docs/CONSTANTS.md` §4b.
 
-**The prototype result** (from scratchpad data, not reproducible in CI yet):
-ALP 41 (90%: 32–48), LNP 35, GRN 5, ONP 5. Greens hold their four and gain
-Pascoe Vale; One Nation's best is Melton at 86%. **25 seats have a minor party
-above 10%.** Yan Yean is the tossup at LNP 44 / ALP 31 / ONP 25.
+**Latest result** (local, from fetched data): ALP 41 (90%: 32–48), LNP 38,
+GRN 5, ONP 3. Greens hold their four — Brunswick 100%, Melbourne 99.6%,
+Richmond 96%, Prahran 72% — and One Nation's strength is Melton 62%,
+Greenvale 39%, Sydenham 27%. Sixteen seats have a minor party above 10%.
 
 **What is left, in order:**
 
