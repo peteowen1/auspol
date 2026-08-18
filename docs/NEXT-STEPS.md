@@ -153,6 +153,35 @@ duplicates with a warning and refuses rows that share a key while disagreeing.
 The loader's `nrow < 380` floor could never have caught it — duplicates push
 the count up.
 
+### NL3 diagnosed: it is One Nation, not Others
+
+Full write-up:
+[reviews/nl3-sum-is-one-nation-2026-08-18.md](reviews/nl3-sum-is-one-nation-2026-08-18.md).
+**Nothing changed** — the obvious fix is not supported by the record.
+
+The sum shortfall is one party. In both cycles the polls sum to ~100 and every
+party tracks its polling within about a point except One Nation:
+
+| cycle | ONP fitted | ONP polls (90d) | gap | ONP prior | fitted sum |
+|---|---:|---:|---:|---:|---:|
+| **Victoria 2026 (published)** | 20.00 | 23.15 | **−3.15** | 0.28 | 97.31 |
+| NSW 2027 (fails NL3) | 20.26 | 24.67 | **−4.41** | 1.80 | 97.23 |
+
+Others is +0.15 in Victoria and +1.01 in NSW, so the earlier "the sum is an
+Others bias" reading is wrong — though its own measurement stands, because it
+compared fits to *results* across history while this compares fits to the
+*polls* in the live cycles.
+
+**Do not raise One Nation to meet its polling.** Where the prior-to-polls gap
+is largest the shrinkage has earned its keep (mean |fit − actual| 2.43 against
+|polls − actual| 2.79), and the one precedent for a surging One Nation is WA
+2017: polled 9.2, fitted 7.8, **got 4.9**.
+
+Cause: One Nation is named in no Victorian poll before 2026-01-28, so its
+series runs three years anchored near 0.28 with seven months of data at the
+end. Tested and refuted along the way: the fold imputation, which gives an
+identical 20.00 when the fit uses only the 18 polls that name the party.
+
 ### Still open, and it keeps CI red
 
 **`NL3` fails: NSW 2027 fitted first preferences sum to 94.1, needs 100 ± 5.**
