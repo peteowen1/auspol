@@ -114,7 +114,15 @@ poll_tracking_check <- function(cp, fits, window = 90L, min_polls = 3L,
   # A party polled often enough to be checked but MISSING from the fit is a
   # breach in its own right, not an unasserted row. Something the polls measure
   # is not in the model, and every downstream number is computed without it.
-  out[, dropped := n >= min_polls & !fitted_ok]
+  # A party that refold_unfitted() has already folded back into OTH is NOT a
+  # breach. The breach exists to say "the polls measure something the model does
+  # not account for", and refolding accounts for it: OTH now means one thing
+  # across the cycle and carries that party's vote coherently. Still reported,
+  # because a party absent from the model matters for anything seat-level.
+  refolded <- attr(cp, "refolded")
+  handled <- if (!is.null(refolded) && nrow(refolded)) unique(refolded$party) else character(0)
+  out[, refolded_in := party %in% handled]
+  out[, dropped := n >= min_polls & !fitted_ok & !refolded_in]
   out[, asserted := n >= min_polls & is.finite(dev)]
   # NOT `dev > bound` alone. A party with no polls in the window has dev = NA,
   # and NA > bound is NA, which `any()` would swallow and `which()` would drop
@@ -153,6 +161,14 @@ report_poll_tracking <- function(x, code) {
     cat(sprintf("%s  not asserted on %d of %d parties (too few polls): %s\n",
                 code, n_skip, nrow(x), paste(x$party[!x$asserted],
                                              collapse = ", ")))
+  }
+  if (any(x$refolded_in & !x$fitted_ok)) {
+    r <- x[refolded_in == TRUE & fitted_ok == FALSE]
+    for (i in seq_len(nrow(r))) {
+      cat(sprintf("%s  %s not fitted, but folded back into OTH -- accounted for
+",
+                  code, r$party[i]))
+    }
   }
   if (any(x$dropped)) {
     d <- x[dropped == TRUE]

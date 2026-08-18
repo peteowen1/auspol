@@ -193,3 +193,93 @@ fit_cycle_unfolded <- function(polls, parties = NULL, priors = NULL,
   data.table::setattr(fits, "iterations", iter)
   fits
 }
+
+#' Rows where a party is reported separately and "Others" excludes it
+#'
+#' The mirror of [folded_rows()]. That one finds rows where a party is missing
+#' because its votes sit inside `oth`; this finds rows where the party IS
+#' reported and `oth` therefore does not contain it.
+#'
+#' Identified the same way, arithmetically: a row whose reported first
+#' preferences already sum to ~100 **with** `party` present must have an `oth`
+#' that excludes it. A row that only reaches ~100 once `party` is removed is
+#' already folded and is left alone.
+#'
+#' @param polls A cycle's polls from [cycle_polls()].
+#' @param party The party that may be reported separately.
+#' @param sum_range Reported-FP total that counts as "already complete".
+#' @param oth Name of the residual column.
+#' @return Logical vector, one per poll row.
+#' @export
+broken_out_rows <- function(polls, party, sum_range = c(97, 103), oth = "OTH") {
+  parties <- attr(polls, "parties")
+  stopifnot(party %in% parties, oth %in% names(polls))
+  fp <- as.matrix(polls[, parties, with = FALSE])
+  totals <- rowSums(fp, na.rm = TRUE)
+  !is.na(polls[[party]]) & !is.na(polls[[oth]]) &
+    totals >= sum_range[1] & totals <= sum_range[2]
+}
+
+#' Fold an unfitted party back into "Others"
+#'
+#' When a party is polled but NOT fitted -- it fell under a script's inclusion
+#' floor -- `oth` means two different things within one cycle: firms that break
+#' the party out report `oth` excluding it, firms that fold it in report `oth`
+#' including it. The model fits a single column across both and cannot see the
+#' difference; on NSW 2023 it read a ~5-point definitional gap as a Morgan house
+#' effect of -0.28, and fitted `oth` at 15.30 against an actual of 17.96.
+#'
+#' [unfold_others()] handles the opposite case and cannot help here: imputing a
+#' party out of `oth` needs a fitted trend, and an unfitted party has none.
+#' This goes the other way and needs no model at all -- the party's share is
+#' reported on exactly the rows being corrected.
+#'
+#' Only parties absent from `fits` are touched. A fitted party is
+#' [unfold_others()]'s business, and doing both to one party would undo itself.
+#'
+#' @param polls A cycle's polls from [cycle_polls()].
+#' @param fits Named list from [fit_cycle_trends()]; used only to determine
+#'   which parties are fitted.
+#' @param parties Parties to consider; default every polled party that is
+#'   neither a major nor the residual category.
+#' @param oth Name of the residual column.
+#' @return A copy of `polls` with `oth` raised on the affected rows, carrying
+#'   attribute `refolded`: what was added where.
+#' @export
+refold_unfitted <- function(polls, fits, parties = NULL, oth = "OTH") {
+  out <- data.table::copy(polls)
+  majors <- c("ALP", "LNP", "LIB", "NAT")
+  declared <- attr(polls, "parties")
+  if (is.null(parties)) {
+    parties <- setdiff(declared, c(majors, oth))
+  }
+  # Only UNFITTED parties. A fitted one is unfold_others()'s job, and applying
+  # both to the same party would add its share into oth and then impute it back
+  # out again.
+  parties <- setdiff(parties, names(fits))
+
+  # Masks computed against the ORIGINAL polls, before any addition, for the
+  # same reason unfold_others() does it: detection is arithmetic, so correcting
+  # one party first would push the total out of the window and hide a second.
+  hits <- lapply(parties, function(p) broken_out_rows(polls, p, oth = oth))
+  names(hits) <- parties
+
+  log <- list()
+  for (p in parties) {
+    hit <- hits[[p]]
+    if (!any(hit)) next
+    add <- polls[[p]][hit]
+    log[[p]] <- data.table::data.table(
+      party = p, date = polls$date[hit], firm = polls$firm[hit],
+      oth_before = out[[oth]][hit], added = add,
+      oth_after = out[[oth]][hit] + add)
+    data.table::set(out, which(hit), oth, out[[oth]][hit] + add)
+  }
+
+  data.table::setattr(out, "refolded",
+                      if (length(log)) data.table::rbindlist(log) else NULL)
+  for (a in c("parties", "region", "cycle_year", "cycle_start", "cycle_end")) {
+    data.table::setattr(out, a, attr(polls, a))
+  }
+  out
+}

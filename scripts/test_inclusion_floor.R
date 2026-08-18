@@ -136,9 +136,15 @@ cat(sprintf("\nIF5  best floor %d at MAE %.4f; status quo %d at %.4f; gain %.4f\
 # A floor is a rule about which parties exist in the forecast, so before
 # believing any error metric, check what the winning floor does to a party we
 # already know must be in the model. One Nation polls 24.67 in the NSW 2027
-# cycle on 8 polls. A floor that excludes a party polling 24.67 is wrong
-# whatever it does to historical MAE, and this repo's own rule is that an anchor
-# failing means the METHOD is wrong rather than the anchor being an exception.
+# cycle on 8 polls -- the CYCLE mean. (24.67 appears elsewhere for the same
+# party and is a different quantity: the 90-day-window mean used by NL3. Do not
+# read one for the other.) A floor that excludes a party polling 21 is wrong
+# whatever it does to historical MAE.
+#
+# BE CLEAR ABOUT WHAT THIS IS: this anchor was written AFTER the MAE result was
+# known, in the same commit, and was NOT in the pre-registration. By the letter
+# of that plan floor 15 should have been adopted. The refusal is a deviation,
+# not a rule being applied -- see the write-up, which names it as such.
 LIVE <- list(list(rg = "vic", yr = 2026L), list(rg = "nsw", yr = 2027L),
              list(rg = "fed", yr = 2028L))
 anchor <- rbindlist(lapply(LIVE, function(z) {

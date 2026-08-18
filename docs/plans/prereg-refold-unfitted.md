@@ -99,3 +99,29 @@ each cycle; and the fitted house effect for the affected firms before and after.
   the effect on the published Victorian forecast is expected to be **zero**,
   because One Nation is fitted there. Do not present a historical-only fix as an
   improvement to the live forecast.
+
+---
+
+## Result, 2026-08-19: ADOPTED
+
+[../reviews/refold-unfitted-2026-08-19.md](../reviews/refold-unfitted-2026-08-19.md).
+
+Total FP MAE **1.8617 → 1.8246**, gain **0.0371** against the 0.02 bar. 46 rows
+refolded in 12 cycles; both arms verified to score identical (cycle, party)
+sets.
+
+The `OTH`-only-evidence REJECT condition did not fire, because the total moved
+too. The whole gain is nevertheless `OTH`, arithmetically exactly (0.1562 × 33 =
+5.15 against 0.0371 × 139 = 5.16), since nothing else is touched.
+
+**The discriminating check the plan did not ask for, and should have.**
+Refolding always raises fitted `OTH`, and `OTH` is known to be fitted low, so
+"it helps because inflation happens to cancel a low bias" was a live
+alternative. Split by whether the fit was already below or above the actual:
+where below (n=9) it helped by −0.630; where **above** (n=2) it **hurt** by
++0.257. Inflation would have helped everywhere. Eleven rows is thin evidence and
+two of them carry the falsifying case, but the direction is right.
+
+Wired into all three fit scripts. `poll_tracking_check()` now treats a refolded
+party as accounted for rather than a breach — the check exists to say the model
+does not account for something the polls measure, and after refolding it does.

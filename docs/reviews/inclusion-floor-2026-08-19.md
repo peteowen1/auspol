@@ -33,6 +33,20 @@ Monotonic. Fitting *more* thinly-polled parties is worse on total first
 preferences **and** worse on `OTH` — the party the mechanism was supposed to
 help. Paired against floor 8, floor 5 is +0.069 worse (sd 0.405, p=0.06).
 
+## The refusal was not pre-registered
+
+The anchor below was written **after** the result was known, in the same commit
+that reports it, and was not part of
+[the plan](../plans/prereg-party-inclusion-floor.md). By the letter of that
+plan's decision rule, floor 15 cleared the bar and should have been adopted.
+
+That is a deviation, and naming it is not the same as curing it. The reasoning
+is sound and the analysis did honestly report a winner it then declined to take
+— but a criterion invented after seeing the result is exactly what
+pre-registration exists to prevent, and nothing here would have stopped a worse
+anchor being invented the same way. **The outcome is provisional and Pete's
+call.**
+
 ## Raising it clears the bar and is still refused
 
 Floor 15 beats 8 by 0.061, three times the 0.02 adoption bar the plan fixed in

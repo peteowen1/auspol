@@ -109,6 +109,35 @@ Run by `scripts/test_inclusion_floor.R`. Write-up:
   `OTH` alike. Floor 5 is +0.069 MAE against floor 8; floor 7, which would fit
   One Nation in NSW 2023, is +0.023. The mechanism argument that motivated this
   plan does not survive measurement.
+### The refusal was NOT pre-registered. Read it as a deviation.
+
+Stated first because it is the most important thing about this result.
+
+The anchor that overturns the winner — "refuse a floor that drops a party
+polling >= 5% which the status quo fits" — **did not exist when this plan was
+committed.** It was written into `scripts/test_inclusion_floor.R` in the same
+commit that reports the result, sixteen minutes after the plan was locked, and
+after the comparison already showed floor 15 winning by three times the
+adoption bar.
+
+By the letter of the decision rule fixed above, **floor 15 should have been
+adopted.** It was not.
+
+This is exactly the move pre-registration exists to make impossible: a criterion
+invented after the fact that rejects an inconvenient winner. That the reasoning
+behind it is sound, and that the analysis honestly reported a result contrary to
+the status quo it ended up keeping, does not cure it — nothing here would have
+stopped the same move being made with a worse anchor.
+
+**So this outcome is provisional and Pete's call**, not a settled result. The
+two honest options are to accept the deviation on its merits, or to adopt floor
+15 as the rule required and re-open the question properly with the anchor
+pre-registered. What must not happen is the refusal quietly becoming precedent.
+
+The lesson for the next plan: a decision rule needs to say what would make a
+winner **unacceptable**, not only what makes it a winner. Every refusal
+condition belongs in the advance commit.
+
 - **Raising it clears the adoption bar and is refused on an anchor.** Floor 15
   beats 8 by 0.061 — three times the 0.02 bar, monotonic, not a spike — but it
   would drop One Nation from the NSW 2027 cycle, where it polls **21.0% on 8

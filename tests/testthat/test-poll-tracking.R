@@ -130,3 +130,28 @@ test_that("report prints the gap for a drifted party", {
   x <- poll_tracking_check(mk_polls(onp = 23), mk_fits(onp = 20), bound = 2.5)
   expect_output(report_poll_tracking(x, "T9"), "BREACH ONP fitted 20.00 against 23.00")
 })
+
+test_that("a party already refolded into OTH is reported, not breached", {
+  # refold_unfitted() accounts for an unfitted party's vote by folding it back
+  # into OTH. The breach exists to say the model does not account for something
+  # the polls measure; once it does, breaching would be a false alarm.
+  p <- mk_polls(n = 10, onp = 23)
+  data.table::setattr(p, "refolded",
+                      data.table::data.table(party = "ONP", added = 23))
+  fits <- mk_fits(); fits$ONP <- NULL
+  x <- poll_tracking_check(p, fits, bound = 2.5)
+  expect_true(x[party == "ONP", refolded_in])
+  expect_false(x[party == "ONP", dropped])
+  expect_false(x[party == "ONP", breach])
+  expect_output(report_poll_tracking(x, "T9"), "folded back into OTH")
+})
+
+test_that("a party refolded for a DIFFERENT cycle does not excuse this one", {
+  p <- mk_polls(n = 10, onp = 23)
+  data.table::setattr(p, "refolded",
+                      data.table::data.table(party = "UAP", added = 3))
+  fits <- mk_fits(); fits$ONP <- NULL
+  x <- poll_tracking_check(p, fits, bound = 2.5)
+  expect_false(x[party == "ONP", refolded_in])
+  expect_true(x[party == "ONP", breach])
+})
