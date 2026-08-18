@@ -180,6 +180,18 @@ fit_cycle <- function(year) {
                     sigma_rw = walks[[p]]$sigma_rw)
   }
   cnt <- vapply(attr(cp, "parties"), function(p) sum(!is.na(cp[[p]])), 1L)
+  SEL <- names(cnt)[cnt >= 8]
+  # Make OTH mean ONE thing across the cycle before fitting it. A party that
+  # is polled but falls under the inclusion floor is reported separately by
+  # some firms and folded into OTH by others, so the OTH column mixes two
+  # definitions and the model reads part of the gap as a house effect. Adding
+  # the unfitted party back in where it is broken out is worth 0.0371 total
+  # FP MAE against a 0.02 adoption bar; see docs/reviews/refold-unfitted-2026-08-19.md.
+  #
+  # Before fit_cycle_unfolded(), which handles the opposite case for parties
+  # that ARE fitted. The two never touch the same party.
+  cp <- refold_unfitted(cp, fits = stats::setNames(
+    vector("list", length(SEL)), SEL))
   fits <- fit_cycle_unfolded(cp, parties = names(cnt)[cnt >= 8],
                              priors = priors, overrides = ov,
                              firm_factors = fac_vec, verbose = FALSE)

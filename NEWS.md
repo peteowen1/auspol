@@ -1,3 +1,30 @@
+# auspol 0.4.12
+
+**"Others" now means one thing per cycle.** When a party is polled but not
+fitted, `refold_unfitted()` adds its reported share back into `OTH` on the rows
+that break it out, so the column stops mixing two definitions within a cycle.
+Total first-preference MAE 1.8617 -> 1.8246 against a pre-registered 0.02 bar.
+Not just inflation: where the fit was already above the actual it made things
+worse, which is what a definition fix does and an artefact does not. The
+published Victorian forecast is unchanged.
+
+**The party-inclusion floor was tested and stays at 8.** Lowering it is
+monotonically worse. Raising it to 15 beat the bar and was refused because it
+would drop One Nation from NSW 2027 at 21.0% -- a refusal criterion added AFTER
+the result and NOT pre-registered, so that outcome is flagged as provisional
+rather than settled.
+
+**`fit_federal.R` could not run at all**, and the pipeline reported the crash as
+a routine check failure. Stage failures are now classified by
+`classify_stage_failure()` on positive evidence, returning "unclassified" rather
+than guessing -- the two previous versions guessed and were wrong in opposite
+directions, the second of which would have labelled S5, G2, G3 and G7 as
+crashes.
+
+Victoria 2026's One Nation poll-tracking gap has fallen to 2.39 against a bound
+of 2.5 on fresher polling, so the published cycle no longer breaches. NSW 2027
+still does, at 5.15.
+
 # auspol 0.4.11
 
 **The endpoint-sum check is replaced by a per-party one.** `L3`/`FL3`/`NL3`

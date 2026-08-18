@@ -11,7 +11,7 @@ NULL
 globalVariables(c(
   ".", ".SD", "N", "actual", "age_days", "alp_win_prob", "asserted",
   "base_sd_pts", "breach", "dev", "dropped", "fitted_ok", "n_distinct",
-  "n_rows", "poll_mean",
+  "n_rows", "poll_mean", "refolded_in",
   "mae", "value",
   "binomial_floor", "cause", "file_age_days", "status",
   "challenger", "classic", "detail", "effect", "effect_pts", "end", "err_use",

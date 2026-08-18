@@ -248,6 +248,28 @@ fit_cycle <- function(year) {
   # vs 15.8, Morgan 12.4 vs 17.9). After correction that within-firm gap must
   # fall below 2.0 points. It is a within-firm comparison, so a house effect
   # cannot produce it.
+  # The floor fit_cycle_unfolded() will actually apply. It is called below
+  # WITHOUT `parties =`, so it falls back to fit_cycle_trends()'s own default of
+  # 30 in-cycle polls (R/trend.R). The first version of this line said `ps`,
+  # which (a) does not exist in this scope -- it is local to walk_of() -- and
+  # (b) is a different threshold (25, further intersected with est_parties).
+  # Using it would have left a party with 25-29 in-cycle polls neither refolded
+  # nor unfolded: the exact mixed-OTH state this is here to close, for a party
+  # that looks covered.
+  cyc_cnt <- vapply(attr(cp, "parties"),
+                    function(q) sum(!is.na(cp[[q]])), 1L)
+  SEL <- names(cyc_cnt)[cyc_cnt >= 30]
+  # Make OTH mean ONE thing across the cycle before fitting it. A party that
+  # is polled but falls under the inclusion floor is reported separately by
+  # some firms and folded into OTH by others, so the OTH column mixes two
+  # definitions and the model reads part of the gap as a house effect. Adding
+  # the unfitted party back in where it is broken out is worth 0.0371 total
+  # FP MAE against a 0.02 adoption bar; see docs/reviews/refold-unfitted-2026-08-19.md.
+  #
+  # Before fit_cycle_unfolded(), which handles the opposite case for parties
+  # that ARE fitted. The two never touch the same party.
+  cp <- refold_unfitted(cp, fits = stats::setNames(
+    vector("list", length(SEL)), SEL))
   fits <- fit_cycle_unfolded(cp, priors = priors, overrides = ov,
                              firm_factors = fac_vec, verbose = FALSE)
   attr(fits, "walks") <- walks
