@@ -476,9 +476,18 @@ cat(sprintf("    ratio_sens < 1 means quieter than a typical n=%d poll's own sam
 stopifnot(floor_tab[, all(obs_pts >= floor_ref)])
 
 cat(sprintf("FL2  all trends and bands strictly inside (0, 100)             OK\n"))
-cat(sprintf("FL3  endpoint FP sums: %s  (require 100 +/- 4)\n",
-            paste(sprintf("%d=%.1f", c(2022, 2025, 2028), share_sums), collapse = "  ")))
-stopifnot(all(abs(share_sums - 100) <= 4))
+# Sum reported, not asserted -- see fit_nsw.R and
+# docs/plans/prereg-per-party-poll-check.md for why it was replaced.
+cat(sprintf("FL3a endpoint FP sums (reported, not asserted): %s\n",
+            paste(sprintf("%d=%.1f", c(2022, 2025, 2028), share_sums),
+                  collapse = "  ")))
+fed_track <- lapply(c(2022, 2025, 2028), function(yr) {
+  r <- get(paste0("res", yr))
+  x <- poll_tracking_check(r$polls, r$fits)
+  report_poll_tracking(x, sprintf("FL3  %d", yr))
+  x
+})
+stopifnot(!any(vapply(fed_track, function(x) any(x$breach), TRUE)))
 cat("Structural checks FL2/FL3 passed.\n\n")
 
 # ---- Current cycle summary ----

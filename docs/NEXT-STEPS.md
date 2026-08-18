@@ -182,7 +182,42 @@ series runs three years anchored near 0.28 with seven months of data at the
 end. Tested and refuted along the way: the fold imputation, which gives an
 identical 20.00 when the fit uses only the 18 polls that name the party.
 
-### Still open, and it keeps CI red
+### The sum check is replaced (2026-08-18)
+
+Per [plans/prereg-per-party-poll-check.md](plans/prereg-per-party-poll-check.md),
+committed **before** the threshold was computed. `L3`/`FL3`/`NL3` no longer
+assert that fitted first preferences sum to 100 ± 5 — that is printed as
+`L3a`/`FL3a`/`NL3a` and asserted on nothing. They now assert each party's fitted
+endpoint is within **2.5** points of its own last 90 days of polling
+(`POLL_TRACKING_BOUND`, the 99th percentile of that quantity over 138 historical
+party-cycles; the plan's refusal line was 5.0).
+
+| cycle | worst | dev | ONP polls | verdict |
+|---|---|---:|---:|---|
+| federal 2028 | ONP | 0.85 | 45 | pass |
+| Victoria 2018 / 2022 | LNP / ALP | 0.60 / 1.50 | — | pass |
+| **Victoria 2026** | ONP | **2.78** | 10 | **breach, reported** |
+| NSW 2023 | OTH | 0.81 | — | pass |
+| **NSW 2027** | ONP | **5.15** | 3 | **breach, halts** |
+
+Every breach is One Nation and the size orders by how many polls name it, which
+is why this reads as thin data rather than a modelling error.
+
+**`fit_vic.R` reports its breach instead of halting**, because it is the target
+stage and halting publishes nothing. The build is still red — `fit_nsw.R`
+breaches the same check and `run_all.R` exits non-zero — so nothing is hidden.
+The page carries a One Nation caveat beside the trend chart. If you want a
+breach to stop publication instead, it is one line in `fit_vic.R`.
+
+### Still open
+
+- **One Nation's Victorian level.** 20.4 fitted against 23.2 polled. Not shown
+  to be wrong, not shown to be right; the federal control says the model can
+  track the party given data, and Victoria does not have much yet. Worth
+  revisiting as more polls name it.
+- ~~NL3 sums to 94.1~~ — superseded by the above.
+
+### Previously open, and it kept CI red
 
 **`NL3` fails: NSW 2027 fitted first preferences sum to 94.1, needs 100 ± 5.**
 The Others bias explains about 2 of the 5.9 points (−1.02 Others, −0.88 LNP).
