@@ -1,3 +1,70 @@
+# auspol 0.4.6
+
+A working seat-by-seat simulation in which minor parties can win, plus a
+labelling fix to the marginal-seats output.
+
+## The headline
+
+The published model cannot represent a minor party winning a seat: it
+simulates 83 of 88 as Labor-versus-Coalition and assumes the other five are
+held, with no uncertainty. A prototype simulation now covers **87 districts
+candidate-level**, distributing preferences the way the count runs — lowest
+excluded, transferred at rates measured from real counts conditional on who
+remains, until two are left.
+
+| party | median seats | 90% range |
+|---|---:|---|
+| ALP | 41 | 32–48 |
+| LNP | 35 | 29–42 |
+| GRN | 5 | 4–7 |
+| ONP | 5 | 1–12 |
+
+25 seats have a minor party above 10%. The Greens hold their four and gain
+Pascoe Vale at 55%; One Nation's best is Melton at 86%. Yan Yean is the
+tossup, a genuine three-way at LNP 44 / ALP 31 / ONP 25.
+
+**Not published**, and not a replacement for the two-party model. It runs from
+data fetched into a scratchpad and the VEC licence question is unresolved.
+
+## Data
+
+**ECSA has a public JSON API** — no key, no browser. The acquisition plan
+written before checking had assumed the Angular results site required browser
+automation and deprioritised South Australia for it. Reading the app's own JS
+bundle found the endpoint in minutes; `HAChange/2026-03-21/0` returns 2.3 MB
+carrying `finalDistribution` for all 47 districts. **294 exclusion events**,
+against 97 across 16 districts from the Wikipedia sample the work had been
+stuck on.
+
+## Fixes
+
+- **`simulate_seats()` now returns `alp_tpp_proj`**, the seat's 2022 two-party
+  share plus the projected statewide swing, and `scripts/fit_seats.R` prints
+  `alp_2022` and `alp_proj` with the swing stated above the table. The single
+  unlabelled column made a seat on 57.2 beside a 50.2% win probability look
+  like a bug; on a −7.0 point swing it is exactly right.
+- **Per-party statewide uncertainty is taken from the fitted trend** rather
+  than a flat assumed 2.0 points, scaled by the factor the two-party sd grows
+  by to election day (×1.89 at 102 days out), with draws renormalised so the
+  parties trade against each other. The answer barely moved, which says the
+  assumption had been fair but underived.
+
+## Two bugs worth recording
+
+- **A sparse fallback row invented an answer.** With no observed cell for Labor
+  excluded while the Greens and One Nation stand, the pooled Labor row was used
+  — and it shows Greens 0.0%, because that configuration never arose in South
+  Australia. Renormalising over the survivors handed every Labor ballot to One
+  Nation, which is why the first run had One Nation winning Richmond. Absence
+  of evidence had become certainty of zero. Every row is now smoothed toward
+  uniform.
+- **The SA-fitted One Nation allocation does not transfer to Victoria**, which
+  settles a question that had been left open for Pete. Its intercept could not
+  put One Nation below about 15% in any seat, and South Australia contains no
+  seat resembling Brunswick to fit against. Replaced with ordering from
+  Victorian federal 2025 divisions and magnitude from SA's observed spread at a
+  comparable statewide level.
+
 # auspol 0.4.5
 
 Measurement and corrections. No model behaviour changes, no forecast number
