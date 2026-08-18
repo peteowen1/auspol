@@ -11,10 +11,22 @@ conditional on who remains, until two are left.
 
 | party | median seats | 90% range |
 |---|---:|---|
-| ALP | **41** | 32–48 |
-| LNP | **35** | 29–42 |
-| GRN | **5** | 4–7 |
-| ONP | **5** | 1–12 |
+| ALP | **41** | 24–51 |
+| LNP | **38** | 29–54 |
+| GRN | **5** | 3–7 |
+| ONP | **3** | 0–7 |
+
+**Superseding the ranges first published here (ALP 32–48).** The simulation was
+rebuilding the statewide distribution rather than inheriting the projection,
+producing an implied two-party of 49.23 ± 1.52 against the projection's
+48.00 ± 2.52 — centred 1.2 points too favourable to Labor and roughly 40% too
+tight, because drawing each party independently and renormalising cancels the
+Labor-versus-Coalition movement that seats actually respond to. The statewide
+draw is now anchored to the projection and lands at 47.97 ± 2.519.
+
+The correction is what makes the two seat models comparable: the two-party
+model gives ALP 39 with a 90% range of 23–51 against this 41 and 24–51. While
+the ranges disagreed, one of them was simply wrong.
 
 *(Updated after per-party uncertainty was taken from the model rather than
 assumed — see "Statewide uncertainty" below. The figures moved barely at all,
