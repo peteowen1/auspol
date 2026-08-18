@@ -235,6 +235,44 @@ comes out 15.30 against an actual of 17.96. Fitting One Nation is not the
 remedy — floor 7 is worse. Reconciling the two `OTH` definitions directly is
 unqueued work.
 
+### Others now means one thing per cycle (2026-08-19, ADOPTED)
+
+[reviews/refold-unfitted-2026-08-19.md](reviews/refold-unfitted-2026-08-19.md),
+against [plans/prereg-refold-unfitted.md](plans/prereg-refold-unfitted.md).
+
+This is the remedy the inclusion-floor work said was unqueued. When a party is
+polled but not fitted, `refold_unfitted()` adds its reported share back into
+`OTH` on the rows that break it out, so `OTH` stops meaning two different things
+within one cycle.
+
+**Total FP MAE 1.8617 -> 1.8246, gain 0.0371** against a 0.02 bar. 46 rows in 12
+cycles. NSW 2023 `OTH` moves 15.30 -> 16.90 against an actual of 17.96 — better,
+still short.
+
+The gain is entirely `OTH`, so the obvious objection is that it just inflates a
+number known to be fitted low. It does not: where the fit was already ABOVE the
+actual (n=2) refolding made it **worse** (+0.257), while below (n=9) it helped
+(-0.630). Inflation would help everywhere. Two rows is thin evidence for the
+falsifying case and the write-up says so.
+
+**The published Victorian forecast is unchanged** — One Nation is fitted there,
+so nothing in the live cycle is refolded. Victoria's validation cycles are
+touched.
+
+### Awaiting Pete: a process violation to rule on
+
+The anchor that refused floor 15 in the inclusion-floor experiment
+was **written after the result was known and was not pre-registered**. By the
+letter of that plan, floor 15 cleared the adoption bar three times over and
+should have been adopted; I refused it on a criterion invented afterwards
+because floor 15 would drop One Nation from NSW 2027 at 21.0%.
+
+The reasoning is sound and the analysis reported the inconvenient result
+honestly, but neither cures the deviation. **Two honest options:** accept it on
+its merits, or adopt floor 15 as the rule required and re-open the question with
+the anchor pre-registered. What must not happen is the refusal quietly becoming
+precedent.
+
 ### Still open
 
 - **One Nation's Victorian level.** 20.4 fitted against 23.2 polled. Not shown

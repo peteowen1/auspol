@@ -39,7 +39,12 @@ because nothing else is touched.
 
 ## The check that matters: is this a definition fix or just inflation?
 
-Refolding always **raises** fitted `OTH`. `OTH` is also known to be fitted low
+Refolding always raises the `OTH` *inputs*, and usually the fitted endpoint with
+them — though not always: `vic 2006` (7.26 → 6.98) and `vic 2018` (10.19 →
+10.14) both move **down**, presumably a knock-on through the house-effect
+estimates, and both got slightly worse. They sit inside the "below actual"
+bucket below, whose mean does not surface them. `OTH` is also known to be fitted
+low
 (−1.02 on average, see [others-bias](others-bias-2026-08-18.md)). So an obvious
 alternative explanation is that this helps for no better reason than pushing a
 low number up, which would stop working the moment the bias reversed.
@@ -52,7 +57,8 @@ It is not that. Split by whether the fit was already below or above the actual:
 | fit was **above** actual | 2 | 10.74 | 9.25 | +0.26 | **+0.257** |
 
 **Where the fit was already too high, refolding made it worse.** Blanket
-inflation would have helped everywhere. It helps where the definition mismatch
+inflation would have helped everywhere. (Two rows inside the "below" bucket also
+got worse, noted above — the bucket means are not unanimous.) It helps where the definition mismatch
 was pushing `OTH` down and hurts where something else was pushing it up, which
 is what a definition fix looks like and not what an artefact looks like.
 

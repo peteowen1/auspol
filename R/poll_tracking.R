@@ -165,8 +165,7 @@ report_poll_tracking <- function(x, code) {
   if (any(x$refolded_in & !x$fitted_ok)) {
     r <- x[refolded_in == TRUE & fitted_ok == FALSE]
     for (i in seq_len(nrow(r))) {
-      cat(sprintf("%s  %s not fitted, but folded back into OTH -- accounted for
-",
+      cat(sprintf("%s  %s not fitted, but folded back into OTH -- accounted for\n",
                   code, r$party[i]))
     }
   }

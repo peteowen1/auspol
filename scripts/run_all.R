@@ -173,9 +173,27 @@ run <- function(stage) {
     # an OOM kill. That needs a different reaction from "the model failed
     # a check we wrote down in advance", so do not let the summary call
     # the two the same thing.
-    kind <- if (length(keep)) "CHECK FAILED" else "CRASHED before any check ran"
-    stop(sprintf("%s: %s (exit %s) after %.0f s",
-                 kind, stage$f, status, secs))
+    # Classify on the ERROR TEXT, not on whether any check line printed.
+    #
+    # The first version keyed on `length(keep)`: any stage that had emitted a
+    # check line before dying was reported as CHECK FAILED. fit_federal.R then
+    # printed FL1, hit an undefined variable, and was reported as a failed
+    # pre-registered check -- which reads as routine, is triaged as "the model
+    # needs attention", and hid a script that could not run at all. It took a
+    # reviewer running the script to find it.
+    #
+    # A pre-registered check failing is a stopifnot: "... is not TRUE". Anything
+    # else -- object not found, could not find function, subscript out of
+    # bounds -- is the script being broken, which is a different problem needing
+    # a different reaction.
+    err_lines <- grep("^Error", c(res, err), value = TRUE)
+    last_err <- if (length(err_lines)) utils::tail(err_lines, 1) else ""
+    is_check <- grepl("is not TRUE|are not all TRUE", last_err)
+    kind <- if (!nzchar(last_err)) "FAILED (no error text)" else
+      if (is_check) "CHECK FAILED" else "CRASHED"
+    stop(sprintf("%s: %s (exit %s) after %.0f s%s",
+                 kind, stage$f, status, secs,
+                 if (nzchar(last_err)) paste0(" -- ", last_err) else ""))
   }
   cat(sprintf("    ok (%.0f s)%s\n", secs,
               if (length(warns)) sprintf("  [%d warnings]", length(warns)) else ""))
