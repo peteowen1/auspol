@@ -128,11 +128,12 @@ Run by `scripts/test_others_bias.R` against
 | does the published −3.60 Others bias reproduce? | **no** — it is **−1.02** over 33 clean cycles |
 | where did the rest come from? | cycles whose actuals sum to **111 on average**, double-counting parties into the Others row |
 | T1, sticky prior? | no — slope +0.026, p=0.80 |
-| T2, all pollsters miss alike? | **yes** — fit is 0.87 from the polls, polls are 2.11 from the result |
+| T2, all pollsters miss alike? | **ratio 0.41** — fit is 0.87 from the polls, polls are 2.11 from the result. The 0.5 bar was NOT pre-registered; read the ratio, not the verdict |
 | T3, walk too slow? | no — p=0.14, though the sign is right |
 
-Per the decision rule fixed in advance, T2 firing means **do not change the
-trend model**; publish the caveat instead. Done — it sits under the poll-trend
+Per the decision rule fixed in advance this means **do not change the trend
+model**; publish the caveat instead. The plan's "nothing fired" branch says the
+same, so the action does not depend on where T2's un-pre-registered bar sits. Done — it sits under the poll-trend
 chart on the page.
 
 **Two things worth carrying forward:**

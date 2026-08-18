@@ -181,6 +181,16 @@ cat(sprintf("\nT2  n=%d  mean(model - polls)=%+.3f  mean(polls - actual)=%+.3f\n
             nrow(t2), mean(t2$mdl_vs_polls), mean(t2$polls_vs_act)))
 cat(sprintf("T2  mean|model - polls|=%.3f   mean|polls - actual|=%.3f\n",
             mean(abs(t2$mdl_vs_polls)), mean(abs(t2$polls_vs_act))))
+# THIS BAR IS NOT PRE-REGISTERED. The plan says |model - polls| should be
+# "much smaller" than |polls - actual| and never puts a number on it; 0.5 was
+# written here with the script, in the same commit that ran it. The measured
+# ratio is 0.41, close enough that a bar of 0.4 would report "nothing fired".
+# So the RATIO is the result and the verdict below is a judgement call.
+#
+# It matters less than it looks: the plan's "nothing fires" branch also leaves
+# the trend model untouched, so the ACTION is identical either way. The two
+# branches differ only in whether the miss is attributed to the polls, and the
+# numbers behind that attribution are descriptive, not threshold-dependent.
 T2_FIRES <- mean(abs(t2$mdl_vs_polls)) < 0.5 * mean(abs(t2$polls_vs_act))
 cat(sprintf("T2  %s\n",
             if (T2_FIRES) "FIRES: the polls carry the miss, not the model"

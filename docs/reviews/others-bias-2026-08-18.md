@@ -9,16 +9,41 @@ before the run.
 
 Two findings, and the first changes how to read the second.
 
-1. **The −3.60 that motivated the pre-registration is mostly an artefact.**
-   About four fifths of it comes from cycles whose recorded actuals do not sum
-   to 100. On the cycles that do, the bias is **−1.02** points over 33 cycles.
-2. **On that clean set, T2 fires and nothing else does.** The fit sits within
-   0.87 points of the final month of polling while the polling sits 2.11 points
-   from the result. The miss is in the inputs, not the trend model.
+1. **The −3.60 that motivated the pre-registration is mostly an artefact of
+   cycles whose recorded actuals do not sum to 100.** On the cycles that do,
+   the bias is **−1.02** points over 33 cycles.
 
-Per the decision rule fixed in advance, T2 firing means: record it as a limit
-of poll-based forecasting, publish the caveat beside the Others figure, and
-**do not change the trend model**. That is what was done.
+   Two comparisons, because they are different and only one of them is
+   like-for-like. Within this script's own pipeline, dropping the completeness
+   filter moves the bias from −1.02 to −5.03, so **80%** of the unfiltered
+   figure is contamination. Against the published −3.60, the drop to −1.02 is
+   **72%** — but that comparison is not clean, because this pipeline does not
+   reproduce −3.60 under any filter setting (it gets −5.03 on 58 cycles where
+   the published run reported −3.60 on 54). The 80% is the defensible number;
+   the exact composition of the published 54-cycle set is unrecoverable.
+
+2. **On the clean set, the fit sits within 0.87 points of the final month of
+   polling while that polling sits 2.11 points from the result** — a ratio of
+   0.41. T1 and T3 do not fire.
+
+Per the decision rule fixed in advance, that means: record it as a limit of
+poll-based forecasting, publish the caveat beside the Others figure, and **do
+not change the trend model**. That is what was done.
+
+**One honest caveat about T2's verdict.** The plan said T2 fires when
+|model − polls| is "much smaller" than |polls − actual|, and never put a number
+on it. The `0.5` bar in `test_others_bias.R:184` was written with the script,
+in the same commit that ran it — it is **not pre-registered**, and the measured
+0.41 clears it narrowly enough that a bar of 0.4 would have reported "nothing
+fired". So read the ratio, not the verdict.
+
+What saves this from mattering much: **the action is the same either way.** The
+plan's "nothing fires" branch says record the bias as measured and unexplained,
+which — like the T2 branch — leaves the trend model untouched. The two branches
+differ only in whether the miss is *attributed* to the polls, and the numbers
+supporting that attribution (0.87 against 2.11) are descriptive and hold
+regardless of where the bar sits. The page caveat quotes those numbers rather
+than announcing a fired test.
 
 ## The anchor check failed first, and that was the useful part
 
