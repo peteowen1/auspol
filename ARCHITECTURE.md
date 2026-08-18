@@ -108,9 +108,30 @@ Nearly every real bug found while building it produced *plausible output* and
 was caught only against a number someone already knew.
 
 - **Pre-registered checks live in the fit scripts**, not the package, and halt
-  the pipeline. They are stated before results are seen: `fit_vic.R` V1–V5,
-  `fit_federal.R` A1–A4/H1–H4/L1–L4, `fit_seats.R` S1–S4/R1–R3,
-  `fit_projection.R` P1–P4/B1–B3, `fit_scorecard.R` C1–C3.
+  the pipeline. **This list is the codes each script actually EMITS**, which
+  is what `run_all.R`'s uniqueness guard can see — not the codes its header
+  comment pre-registered, which in several scripts were later restated under
+  different labels:
+
+  | Script | Emits |
+  |---|---|
+  | `fit_vic.R` | `F1`, `L2`, `L3`, `L4a`–`L4c`, `V5` |
+  | `fit_federal.R` | `A1`–`A4` (plus `A2b`, `A3b`), `FF1`, `FL1`–`FL3`, `FL4a`–`FL4c`, `FO1` |
+  | `fit_nsw.R` | `N1`–`N3`, `NF1`, `NL2`, `NL3`, `NL4a`–`NL4c` |
+  | `fit_projection.R` | `P1`–`P4`, `B1` |
+  | `fit_seats.R` | `S1`–`S4`, `R1`–`R3` |
+  | `fit_seats_full.R` | `S5` |
+  | `fit_scorecard.R` | `C1`–`C3` |
+
+  The version of this table before 2026-08-18 listed `fit_vic.R` as `V1`–`V5`,
+  `fit_federal.R` as including `H1`–`H4`, and `fit_projection.R` as `B1`–`B3`.
+  **None of `V1`–`V4`, `H1`–`H4`, `B2` or `B3` is emitted by any script.** They
+  are pre-registrations recorded in the script headers, and the header of
+  `fit_vic.R` explains why `V1`/`V3` were restated. A registry listing codes
+  that do not exist, while omitting `FF1`, `FO1` and `N1`–`N3` that do, cannot
+  serve as the hand-check backstop it exists to be. Open question, not settled
+  here: whether the `V`/`H`/`B` pre-registrations still run under other names
+  or were dropped.
 
   The **G codes are the registry worth writing down**, because they are spread
   across scripts that are not all pipeline stages, and `run_all.R`'s clash

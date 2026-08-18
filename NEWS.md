@@ -1,3 +1,27 @@
+# auspol 0.4.9
+
+**The duplicate-check-code guard was passing vacuously.** Codes were given
+region prefixes (`L3` Victoria, `FL3` federal, `NL3` NSW) so no two scripts
+claim the same one, but `run_all.R`'s filter still matched a single letter and
+a digit, dropping every renamed code before the extractor and the registry saw
+it. A failing stage also returned before registration, so its codes never
+registered at all -- which is why NSW's `N1`-`N3` and `NF1` were invisible.
+Both fixed, and proven by injecting a real collision rather than assumed.
+
+A validation stage that fails no longer halts the run, so a broken 2027 NSW
+cycle does not block the 2026 Victorian forecast. The run still exits
+non-zero, the failure now carries its cause into the summary, and a stage that
+crashes before reaching its checks is labelled differently from one whose
+pre-registered check failed on the merits.
+
+`ARCHITECTURE.md`'s check registry listed `V1`-`V4`, `H1`-`H4`, `B2` and `B3`,
+which no script emits, and omitted `FF1`, `FO1` and `N1`-`N3`, which do.
+Replaced with a per-script table of codes actually emitted.
+
+`docs/plans/prereg-others-bias.md` replaces the planned trend-coupling work:
+the sum-to-100 failure was measured to be an Others bias, not a coupling
+problem.
+
 # auspol 0.4.8
 
 **The candidate-level model is now the published seat forecast.** The two-party

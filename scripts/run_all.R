@@ -25,14 +25,27 @@ cat("=== auspol pipeline ===\n")
 cat("\nChecking poll data freshness:\n")
 check_poll_freshness(c("vic", "fed", "nsw"), strict = !stale_ok)
 
+# `target = FALSE` marks a stage that VALIDATES the model on a cycle nobody
+# publishes. Those must not stop the live Victorian forecast: on 2026-08-17 the
+# NSW 2027 cycle failed its L3 structural check -- first preferences summing to
+# 94.1 against a 100 +/- 5 bound, because party trends are fitted independently
+# and only sum to 100 by luck -- and that halted the whole run, so the Victoria
+# page stopped refreshing for an election 102 days away over a validation cycle
+# for one in 2027.
+#
+# A validation failure is still a FAILURE. It is reported prominently, and the
+# run exits non-zero at the end so CI goes red and somebody looks. What changes
+# is that a failure here no longer HALTS the run: the stages after it still run,
+# so the Victorian forecast is still built and published. The order below is
+# unchanged.
 STAGES <- list(
   # Before anything that consumes a flow. Three seconds, and it is the only
   # thing standing between us and quietly running yesterday's winner after a
   # new election changes the ranking.
   list(f = "scripts/backtest_flows.R",  what = "preference-flow estimator", slow = FALSE),
   list(f = "scripts/fit_vic.R",        what = "Victoria (live target)",  slow = FALSE),
-  list(f = "scripts/fit_federal.R",    what = "federal cycles",          slow = TRUE),
-  list(f = "scripts/fit_nsw.R",        what = "NSW cycles",              slow = TRUE),
+  list(f = "scripts/fit_federal.R",    what = "federal cycles",          slow = TRUE,  target = FALSE),
+  list(f = "scripts/fit_nsw.R",        what = "NSW cycles",              slow = TRUE,  target = FALSE),
   list(f = "scripts/fit_projection.R", what = "fundamentals + mix",      slow = FALSE),
   list(f = "scripts/fit_seats.R",      what = "seat simulation (two-party)", slow = FALSE),
   # Candidate-level seats. Runs AFTER fit_seats.R because its S5 check compares
@@ -71,14 +84,18 @@ run <- function(stage) {
   unlink(c(wrapper, out_f, err_f))
   ok <- identical(as.integer(status), 0L)
   secs <- as.numeric(difftime(Sys.time(), t0, units = "secs"))
-  if (!ok) {
-    cat(paste(utils::tail(c(res, err), 25), collapse = "\n"), "\n")
-    stop(sprintf("STAGE FAILED: %s (exit %s) after %.0f s", stage$f, status, secs))
-  }
   # Surface each stage's own checks rather than hiding them: these lines are
   # the whole point of the pre-registered discipline.
-  keep <- grep("^(A[0-9]|N[0-9]|V[0-9]|H[0-9]|L[0-9]|P[0-9]|B[0-9]|C[0-9]|S[0-9]|R[0-9]|G[0-9]|F1|O1)",
-               res, value = TRUE)
+  # {1,2} letters, because codes carry a REGION prefix: L3 is Victoria's
+  # endpoint-sum check, FL3 the federal one, NL3 the NSW one. The first
+  # version of this listed each family as a single letter followed by a
+  # digit, so EVERY renamed code was dropped here -- before the extractor
+  # below ever saw it. The summary lost them and, worse, the duplicate-code
+  # guard could not see them either, so the guard the rename exists to serve
+  # passed vacuously. That is the "incomplete grep for check codes" hazard
+  # this repo has now hit four times; see CLAUDE.md.
+  keep <- grep("^[A-Z]{1,2}[0-9]+[a-c]?[ ]", res, value = TRUE)
+
   if (length(keep)) cat(paste(keep, collapse = "\n"), "\n")
 
   # Check codes are hand-maintained identifiers spread across seven scripts,
@@ -89,16 +106,30 @@ run <- function(stage) {
   # emits each code and report any code claimed twice.
   # Environments are reference objects, so assigning into them from inside
   # this function needs no <<- and mutates the one the caller checks.
-  codes <- unique(sub("^([A-Z][0-9]+[a-c]?).*$", "\\1", keep))
+  # [A-Z]+ not [A-Z]: codes carry a REGION prefix where the same structural
+  # check runs on more than one cycle -- FL3 is the federal endpoint-sum
+  # check, NL3 the NSW one, L3 Victoria's. Without the plus these parse to
+  # nothing and the summary silently loses them.
+  # NOTE the coupling: this pattern allows a longer letter run than the
+  # filter above does, but it only ever sees lines the filter already let
+  # through, so the FILTER is the binding constraint. A future three-letter
+  # prefix would be dropped up there and never reach this line -- widen
+  # both together or not at all.
+  codes <- unique(sub("^([A-Z]+[0-9]+[a-c]?).*$", "\\1", keep))
   for (cd in codes) {
+    # CODE_OWNER holds every stage that has claimed this code, not just the
+    # most recent one. Storing a single owner made a three-way collision
+    # report only the last pair, dropping the first stage from the message
+    # that exists to say where to look.
     prev <- if (exists(cd, envir = CODE_OWNER, inherits = FALSE)) {
       get(cd, envir = CODE_OWNER)
-    } else NULL
-    if (!is.null(prev) && !identical(prev, stage$f)) {
-      assign(cd, sprintf("%s (%s and %s)", cd, prev, stage$f),
+    } else character(0)
+    owners <- unique(c(prev, stage$f))
+    if (length(owners) > 1L) {
+      assign(cd, sprintf("%s (%s)", cd, paste(owners, collapse = " and ")),
              envir = CODE_CLASHES)
     }
-    assign(cd, stage$f, envir = CODE_OWNER)
+    assign(cd, owners, envir = CODE_OWNER)
   }
 
   # WARNINGS TOO. A warning() exits 0, so `ok` stays TRUE, and its text does not
@@ -131,6 +162,21 @@ run <- function(stage) {
     cat(paste0("      ", utils::head(warns, 12), collapse = "\n"), "\n")
     if (length(warns) > 12) cat(sprintf("      ...and %d more\n", length(warns) - 12))
   }
+  # Failure is reported HERE rather than straight after the exit status, so a
+  # failing stage still gets its check codes registered and its warnings shown.
+  # The old placement returned early, which is why a collision involving a
+  # stage that fails was invisible to the duplicate-code guard.
+  if (!ok) {
+    cat(paste(utils::tail(c(res, err), 25), collapse = "\n"), "\n")
+    # A stage that exited non-zero having emitted NO check line never
+    # reached its checks at all -- a missing anchor clone, a parse error,
+    # an OOM kill. That needs a different reaction from "the model failed
+    # a check we wrote down in advance", so do not let the summary call
+    # the two the same thing.
+    kind <- if (length(keep)) "CHECK FAILED" else "CRASHED before any check ran"
+    stop(sprintf("%s: %s (exit %s) after %.0f s",
+                 kind, stage$f, status, secs))
+  }
   cat(sprintf("    ok (%.0f s)%s\n", secs,
               if (length(warns)) sprintf("  [%d warnings]", length(warns)) else ""))
   invisible(secs)
@@ -142,21 +188,58 @@ CODE_OWNER <- new.env(parent = emptyenv())
 CODE_CLASHES <- new.env(parent = emptyenv())
 
 t_start <- Sys.time()
+FAILED_VALIDATION <- character(0)
 for (s in STAGES) {
   if (quick && s$slow) {
     cat(sprintf("\n--- %s: SKIPPED (--quick) ---\n", s$what))
     next
   }
-  run(s)
+  if (is.null(s$target) || isTRUE(s$target)) {
+    run(s)                     # a target failure still halts, as before
+  } else {
+    ok_msg <- ""
+    ok <- tryCatch({ run(s); TRUE }, error = function(e) {
+      ok_msg <<- conditionMessage(e)
+      cat(sprintf("\n!! VALIDATION STAGE FAILED: %s\n   %s\n",
+                  s$what, ok_msg))
+      cat("   The live forecast continues; this run still exits non-zero.\n")
+      FALSE
+    })
+    if (!isTRUE(ok)) FAILED_VALIDATION <- c(FAILED_VALIDATION, stats::setNames(ok_msg, s$what))
+  }
+}
+
+if (length(FAILED_VALIDATION)) {
+  cat("\n=== VALIDATION FAILURES ===\n")
+  # The cause, not just the stage name: a reader who sees only this block
+  # otherwise cannot tell a crash from a check that failed on the merits.
+  for (i in seq_along(FAILED_VALIDATION)) {
+    cat("   ", names(FAILED_VALIDATION)[i], "--", FAILED_VALIDATION[[i]],
+        "\n")
+  }
+  cat("The Victorian forecast above was built and is publishable. These",
+      "stages validate the model on cycles nobody publishes, and one of",
+      "them is broken.\n")
 }
 
 clashes <- ls(CODE_CLASHES)
 if (length(clashes)) {
   cat("\nDUPLICATE CHECK CODES -- the summary cannot say which is which:\n")
   for (cd in clashes) cat("   ", get(cd, envir = CODE_CLASHES), "\n")
-  stop(length(clashes), " check code(s) claimed by two stages. Renumber one of each pair.")
+  cat("   -> ", length(clashes),
+      " check code(s) claimed by two stages. Renumber one of each pair.\n")
+}
+
+if (length(FAILED_VALIDATION) || length(clashes)) {
+  stop("Run finished with problems: ",
+       if (length(FAILED_VALIDATION))
+         paste0(length(FAILED_VALIDATION), " validation stage(s) [",
+                paste(names(FAILED_VALIDATION), collapse = ", "), "] ") else "",
+       if (length(clashes))
+         paste0(length(clashes), " duplicate check code(s)") else "")
 }
 
 cat(sprintf("\n=== pipeline complete in %.0f s ===\n",
             as.numeric(difftime(Sys.time(), t_start, units = "secs"))))
 cat("Outputs in output/. Publish output/victoria-2026.html.\n")
+

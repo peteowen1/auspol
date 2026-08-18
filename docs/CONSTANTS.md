@@ -43,7 +43,7 @@ number without anything failing.
 
 | Constant | Where | What it is | Status |
 |---|---|---|---|
-| `BINOMIAL_REF_N = 2500` | `scales.R` | Sample size for the binomial noise floor, wherever it **halts a run or makes a published claim about a named firm** (`H1`, `L4b`, the scorecard's *Variability*) | **FIXED — cannot be estimated**, no sample-size column exists. Deliberately the *largest* common sample: smallest binomial sd, weakest floor, so it under-calls herding rather than over-calling it. |
+| `BINOMIAL_REF_N = 2500` | `scales.R` | Sample size for the binomial noise floor, wherever it **halts a run or makes a published claim about a named firm** (`H1`, `L4b`/`FL4b`/`NL4b`, the scorecard's *Variability*) | **FIXED — cannot be estimated**, no sample-size column exists. Deliberately the *largest* common sample: smallest binomial sd, weakest floor, so it under-calls herding rather than over-calling it. |
 | `BINOMIAL_SENSITIVE_N = 1500` | `scales.R` | The same floor where it only **reports** a signal (`ratio_sens` in the fit scripts) | **FIXED, deliberately different.** Smaller sample means a higher floor and a more sensitive test — right for "look here", wrong for "stop the run". Resolved 2026-08-16: this was previously mistaken for drift, and the real defect was the scorecard using the sensitive value for a published claim about named companies. |
 
 ## 3. Data-quality thresholds

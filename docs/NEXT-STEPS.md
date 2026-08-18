@@ -9,26 +9,17 @@ open state, not the narrative of how it got here.
 
 ## Awaiting Pete
 
-- **PRs #5–#8 merged** (2026-08-17/18). Each was reviewed before opening and
-  each review caught a real defect the tests could not: four stale published
-  seat figures, roxygen documenting a field under the wrong argument, and a
-  correction pass that had missed two of its own targets. **The review gate is
-  earning its cost — do not skip it, least of all on docs-only diffs, which is
-  where skipping feels most defensible.**
-
-  The stacking lesson is now recorded four times and acted on zero. `gh-stack`
-  is installed (v0.1.0). The seat rebuild has three separable layers and is
-  exactly what it is for.
-- **VEC data licensing — now blocking, not theoretical.** The Victorian
-  distribution data fetched 2026-08-18 sits in the session scratchpad. The VEC
-  publishes **no** copyright, Creative Commons or terms-of-use statement on any
-  results page, and `vec.vic.gov.au/copyright` returns 404. Fetching for
-  analysis is unproblematic; **committing it is redistribution**, and the
-  approved plan is to commit. `R/paths.R` already states the convention for the
-  anchor's data — "carries no formal license, so it is never committed" — and
-  the same reasoning applies here. Derived aggregates (a measured flow rate with
-  provenance) are arguably facts rather than a copy of their dataset; raw tables
-  are not. Needs a decision before the rebuild lands.
+- **PRs #5–#12 merged** (2026-08-17/18). Every one reviewed before opening,
+  and every review caught something the tests could not: stale published
+  figures, roxygen under the wrong argument, a correction pass that missed its
+  own targets, a crash on a party absent from a seat, and a CI cache that could
+  have switched the seat model off behind a green build. **Do not skip the
+  gate, least of all on docs-only diffs.**
+- ~~VEC data licensing~~ — **resolved 2026-08-18.** The fetched results live in
+  `external/elections/`, gitignored beside the anchor clone, and nothing of
+  either commission's is committed (verified: git reports the directory
+  ignored and tracks none of it). The daily job refetches behind a cache. No
+  decision needed; the question only existed while the data had no home.
 - **Decide whether the repo goes public.** Private on purpose. Two things are
   outward-facing and should be deliberate: `docs/plans/product-features.md`
   carries critical commentary on named competitors (theswingison, DemosAU —
@@ -45,14 +36,13 @@ open state, not the narrative of how it got here.
   trend-versus-simulator scope call. Two of the four now have measured answers
   — see the seat-type and methodology reviews below — so this is smaller than
   it was.
-- **Decide whether to transfer South Australia's allocation slope.** The form
-  that allocates a One Nation surge across seats was validated on SA 2026 and
-  wins there (2026-08-17, below). Applying it to Victoria means borrowing one
-  number — the slope, 1.21 — from another state's party system, because
-  Victoria has no 2026 outcome to estimate from. The level would come from our
-  own forecast. Defensible, but it is an assumption of exactly the kind this
-  project avoids, so it should be a decision rather than an implementation
-  detail.
+- ~~Decide whether to transfer South Australia's allocation slope~~ —
+  **resolved 2026-08-18, it survives.** Both pre-registered checks pass: the
+  Greens-share ordering replicates with a negative coefficient in NSW,
+  Queensland and WA, and the magnitude transfer sits at 1.41x against a 1.5
+  bar. It beats a uniform allocation by only 0.122 MAE, so trust the One
+  Nation **total** rather than any individual One Nation seat. See
+  [reviews/onp-allocation-checks-2026-08-18.md](reviews/onp-allocation-checks-2026-08-18.md).
 
 ## Next session starts here (2026-08-18, late)
 
