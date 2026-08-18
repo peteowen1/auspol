@@ -42,9 +42,26 @@ not apply. Recorded with worked examples under "Recurring hazards" in
 
 Specific traps, all of which have bitten:
 
-- **data.table NSE**: a function argument sharing a name with a column, used
-  bare inside `dt[...]`, matches every row. Three times. Compute masks outside
-  the brackets and give the argument a different name.
+- **data.table NSE**: a function argument or local variable sharing a name with
+  a column, used bare inside `dt[...]`, binds to the column. **Five times.**
+  Compute masks outside the brackets and name the variable differently. The
+  fourth was `party[party$seat == seat, ]` where `party` was both the table and
+  a column — `$` then fails on an atomic vector. Related: a column named `key`
+  collides with `data.table()`'s own `key=` argument and errors naming your
+  data.
+- **Absence of evidence read as certainty**: a lookup row carries `0%` for a
+  destination that never co-occurred, and renormalising that row over whoever
+  is left assigns them the *entire* transfer. One Nation won Richmond that way.
+  Smooth toward uniform; a zero from a sparse table is not a measurement.
+- **A size floor is not a completeness check**: a truncated download of exactly
+  65536 bytes sailed past a `> 2000` guard, parsed to zero rows and dropped a
+  seat from the dataset silently. Check for the closing tag, not the length.
+- **`[[` on a missing name in an atomic vector THROWS**, so an `is.null()`
+  guard beside it is dead code that can never fire. Use single-bracket
+  indexing and test for `NA`.
+- **Removing by name removes every duplicate**: `v[setdiff(names(v), x)]` drops
+  all entries called `x` while only one was accounted for. 15 of 100 votes
+  vanished with nothing reported. Validate names are unique at the boundary.
 - **Leakage**: anything in the backtest must use only what was knowable before
   the election being predicted — flows, hyperparameters, `as_of` dates. Three
   instances, one introduced while fixing another.
