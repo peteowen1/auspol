@@ -101,7 +101,11 @@ run <- function(stage) {
   # emits each code and report any code claimed twice.
   # Environments are reference objects, so assigning into them from inside
   # this function needs no <<- and mutates the one the caller checks.
-  codes <- unique(sub("^([A-Z][0-9]+[a-c]?).*$", "\\1", keep))
+  # [A-Z]+ not [A-Z]: codes carry a REGION prefix where the same structural
+  # check runs on more than one cycle -- FL3 is the federal endpoint-sum
+  # check, NL3 the NSW one, L3 Victoria's. Without the plus these parse to
+  # nothing and the summary silently loses them.
+  codes <- unique(sub("^([A-Z]+[0-9]+[a-c]?).*$", "\\1", keep))
   for (cd in codes) {
     prev <- if (exists(cd, envir = CODE_OWNER, inherits = FALSE)) {
       get(cd, envir = CODE_OWNER)

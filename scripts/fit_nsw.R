@@ -213,9 +213,9 @@ n_skipped_nsw <- sum(vapply(c(2023, 2027), function(yr) {
   f <- get(paste0("res", yr))$fold_skipped
   if (is.null(f)) 0L else nrow(f)
 }, 1L))
-cat(sprintf("\nF1  corrected %d NSW polls with a party folded into OTH\n",
+cat(sprintf("\nNF1  corrected %d NSW polls with a party folded into OTH\n",
             n_folded_nsw))
-cat(sprintf("F1  left %d alone: the folded party was never measured near those dates,\n    so the trend there carries no information (see R/fold.R)\n",
+cat(sprintf("NF1  left %d alone: the folded party was never measured near those dates,\n    so the trend there carries no information (see R/fold.R)\n",
             n_skipped_nsw))
 if (n_folded_nsw) {
   fold_tab <- rbindlist(lapply(c(2023, 2027), function(yr) {
@@ -254,11 +254,11 @@ walk_tab <- rbindlist(lapply(c(2023, 2027), function(yr) {
 }))
 cat("\n=== NSW per-cycle sigmas and tracking ===\n")
 print(walk_tab[order(year, party)])
-cat(sprintf("L4a max residual autocorrelation = %+.3f (require < +0.25)\n",
+cat(sprintf("NL4a max residual autocorrelation = %+.3f (require < +0.25)\n",
             walk_tab[, max(acf1)]))
-cat(sprintf("L4b min (noise / binomial floor) = %.2f (require >= 1)\n",
+cat(sprintf("NL4b min (noise / binomial floor) = %.2f (require >= 1)\n",
             walk_tab[, min(obs_pts / floor_ref)]))
-cat(sprintf("L4c negative tail (reported): min %+.3f\n", walk_tab[, min(acf1)]))
+cat(sprintf("NL4c negative tail (reported): min %+.3f\n", walk_tab[, min(acf1)]))
 if (any(walk_tab$at_lower)) {
   cat(sprintf("    walk at lower bound (no detectable movement, shrunk toward pooled): %s\n",
               walk_tab[at_lower == TRUE, paste(year, party, collapse = ", ")]))
@@ -266,7 +266,7 @@ if (any(walk_tab$at_lower)) {
 stopifnot(walk_tab[, all(acf1 < 0.25)], walk_tab[, all(obs_pts >= floor_ref)],
           !any(walk_tab$at_upper))
 
-cat(sprintf("L2  all trends and bands strictly inside (0, 100)  OK\nL3  endpoint FP sums: %s  (require 100 +/- 5, thin state polling)\n",
+cat(sprintf("NL2  all trends and bands strictly inside (0, 100)  OK\nNL3  endpoint FP sums: %s  (require 100 +/- 5, thin state polling)\n",
             paste(sprintf("%d=%.1f", c(2023, 2027), share_sums), collapse = "  ")))
 stopifnot(all(abs(share_sums - 100) <= 5))
 cat("Structural checks L2/L3 passed.\n\n")

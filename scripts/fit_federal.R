@@ -94,9 +94,9 @@ cat("=== L1: logit vs points, log evidence in original percentage units ===\n")
 print(cmp[order(-gain)])
 l1_share <- mean(cmp$gain > 0)
 l1_onp <- cmp[party == "ONP", gain]
-cat(sprintf("L1  logit wins for %.0f%% of parties (needed > 50%%); ONP gain = %+.1f (needed > 0)\n",
+cat(sprintf("FL1  logit wins for %.0f%% of parties (needed > 50%%); ONP gain = %+.1f (needed > 0)\n",
             100 * l1_share, l1_onp))
-cat(sprintf("L1  VERDICT: %s -> scale selected per party by evidence, not globally.\n",
+cat(sprintf("FL1  VERDICT: %s -> scale selected per party by evidence, not globally.\n",
             if (l1_share > 0.5 && l1_onp > 0) "passed" else "FAILED as pre-registered"))
 
 scale_of <- setNames(cmp$scale, cmp$party)
@@ -342,10 +342,10 @@ n_folded_total <- sum(vapply(c(2022, 2025, 2028), function(yr) {
 }, 1L))
 agg_before <- cmp_gap[, sum(gap_before * n_folded) / sum(n_folded)]
 agg_after <- cmp_gap[, sum(gap_after * n_folded) / sum(n_folded)]
-cat(sprintf("F1  corrected %d polls across all cycles\n", n_folded_total))
-cat(sprintf("F1  poll-weighted gap  %+.2f -> %+.2f (require |.| < 1.0)\n",
+cat(sprintf("FF1  corrected %d polls across all cycles\n", n_folded_total))
+cat(sprintf("FF1  poll-weighted gap  %+.2f -> %+.2f (require |.| < 1.0)\n",
             agg_before, agg_after))
-cat(sprintf("F1  max per-firm gap    %.2f -> %.2f  (pre-registered < 2.0)\n",
+cat(sprintf("FF1  max per-firm gap    %.2f -> %.2f  (pre-registered < 2.0)\n",
             cmp_gap[, max(abs(gap_before))], cmp_gap[, max(abs(gap_after))]))
 
 # F1 was pre-registered as "max within-firm gap < 2.0" and, stated that way,
@@ -366,7 +366,7 @@ cat(sprintf("F1  max per-firm gap    %.2f -> %.2f  (pre-registered < 2.0)\n",
 big <- cmp_gap[n_folded >= 10]
 small <- cmp_gap[n_folded < 10]
 if (nrow(small)) {
-  cat(sprintf("F1  reported only (fewer than 10 folded polls): %s\n",
+  cat(sprintf("FF1  reported only (fewer than 10 folded polls): %s\n",
               small[, paste0(firm, " ", year, " n=", n_folded,
                              " gap=", sprintf("%+.2f", gap_after),
                              collapse = "; ")]))
@@ -436,15 +436,15 @@ stopifnot(nrow(bad_conv) == 0)
 # chasing-polls signature. Enforcing an uncalibrated bound would be enforcing
 # a number, not a finding — so it is printed and left open in NEXT-STEPS.
 l4a_bad <- walk_tab[acf1 >= 0.25]
-cat(sprintf("\nL4a max residual autocorrelation = %+.3f over %d party-cycles (require < +0.25, over-smoothing)\n",
+cat(sprintf("\nFL4a max residual autocorrelation = %+.3f over %d party-cycles (require < +0.25, over-smoothing)\n",
             walk_tab[, max(acf1)], nrow(walk_tab)))
 if (nrow(l4a_bad)) {
-  cat("L4a FAILING party-cycles (fit too smooth to track its polls):\n")
+  cat("FL4a FAILING party-cycles (fit too smooth to track its polls):\n")
   print(l4a_bad)
 }
 stopifnot(nrow(l4a_bad) == 0)
 
-cat(sprintf("L4c negative tail (uncalibrated, reported): min %+.3f, median %+.3f; %d cycles below -0.25\n",
+cat(sprintf("FL4c negative tail (uncalibrated, reported): min %+.3f, median %+.3f; %d cycles below -0.25\n",
             walk_tab[, min(acf1)], walk_tab[, median(acf1)],
             walk_tab[acf1 <= -0.25, .N]))
 
@@ -469,14 +469,14 @@ floor_tab[, `:=`(obs_pts = round(obs_pts, 3), floor_ref = round(floor_ref, 3),
 floor_tab[, ratio_sens := round(obs_pts / floor_sens, 2)]
 cat("\n=== L4b: per-cycle noise vs the binomial sampling floor ===\n")
 print(floor_tab[order(ratio_sens)])
-cat(sprintf("L4b min (noise / binomial floor at n=%d) = %.2f (require >= 1)\n",
+cat(sprintf("FL4b min (noise / binomial floor at n=%d) = %.2f (require >= 1)\n",
             BINOMIAL_REF_N, floor_tab[, min(obs_pts / floor_ref)]))
 cat(sprintf("    ratio_sens < 1 means quieter than a typical n=%d poll's own sampling error -> herding signal (reported, not enforced).\n",
             BINOMIAL_SENSITIVE_N))
 stopifnot(floor_tab[, all(obs_pts >= floor_ref)])
 
-cat(sprintf("L2  all trends and bands strictly inside (0, 100)             OK\n"))
-cat(sprintf("L3  endpoint FP sums: %s  (require 100 +/- 4)\n",
+cat(sprintf("FL2  all trends and bands strictly inside (0, 100)             OK\n"))
+cat(sprintf("FL3  endpoint FP sums: %s  (require 100 +/- 4)\n",
             paste(sprintf("%d=%.1f", c(2022, 2025, 2028), share_sums), collapse = "  ")))
 stopifnot(all(abs(share_sums - 100) <= 4))
 cat("Structural checks L2/L3 passed.\n\n")
@@ -501,14 +501,14 @@ if (all(c("ONP", "ALP") %in% names(f28))) {
   alp <- f28$ALP$trend$mean[match(d, f28$ALP$trend$date)]
   lead <- onp > alp
   tk <- trend_tracking(f28$ONP)
-  cat(sprintf("\nO1  ONP leads ALP on %d of %d fitted days; ONP peak %.1f (local poll avg peak %.1f)\n",
+  cat(sprintf("\nFO1  ONP leads ALP on %d of %d fitted days; ONP peak %.1f (local poll avg peak %.1f)\n",
               sum(lead), length(d), max(onp), tk$peak_polled))
   if (any(lead)) {
-    cat(sprintf("O1  ONP-ahead window: %s to %s\n",
+    cat(sprintf("FO1  ONP-ahead window: %s to %s\n",
                 as.Date(min(d[lead]), origin = "1970-01-01"),
                 as.Date(max(d[lead]), origin = "1970-01-01")))
   } else {
-    cat(sprintf("O1  never ahead; closest gap %.2f pts on %s\n",
+    cat(sprintf("FO1  never ahead; closest gap %.2f pts on %s\n",
                 min(alp - onp),
                 as.Date(d[which.min(alp - onp)], origin = "1970-01-01")))
   }
