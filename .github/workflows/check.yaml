@@ -7,6 +7,21 @@ on:
     branches: [dev, main]
   workflow_dispatch:
 
+# Two runs of this workflow hung for over half an hour each on 2026-08-18,
+# blocking merges until they were cancelled by hand. This does not stop that,
+# but it bounds the damage: a newer push to the same ref cancels the run it
+# supersedes, so a hung run clears itself the next time anything is pushed.
+#
+# Note what this does NOT do. A push to `dev` while a PR is open still runs the
+# workflow twice, because `github.ref` is `refs/heads/dev` for the push and
+# `refs/pull/N/merge` for the pull_request -- different groups. Keying on
+# `head_ref || ref_name` would collapse them, but then a push could cancel the
+# PR's own required check and leave the PR unmergeable, which is worse than
+# paying for a duplicate run.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions: read-all
 
 jobs:
