@@ -11,10 +11,14 @@ conditional on who remains, until two are left.
 
 | party | median seats | 90% range |
 |---|---:|---|
-| ALP | **41** | 30–48 |
-| LNP | **34** | 29–43 |
+| ALP | **41** | 32–48 |
+| LNP | **35** | 29–42 |
 | GRN | **5** | 4–7 |
-| ONP | **6** | 1–14 |
+| ONP | **5** | 1–12 |
+
+*(Updated after per-party uncertainty was taken from the model rather than
+assumed — see "Statewide uncertainty" below. The figures moved barely at all,
+which says the flat ±2 it replaced was a fair guess.)*
 
 The published two-party model gives ALP 39 (90%: 23–51). This gives 41 with a
 much narrower range, which is expected: it resolves each seat on its own
@@ -97,8 +101,18 @@ Seats are ranked by the Victorian index and quantile-mapped onto the SA spread.
   everything else this project has found about seat-level prediction.
 - **The magnitude transfer assumes Victoria's spread resembles SA's** at a
   similar statewide level. Untestable until Victoria votes.
-- **Statewide party uncertainty is a flat 2.0 points per party**, not
-  propagated from the trend model's own covariance.
+- ~~Statewide party uncertainty is a flat 2.0 points per party.~~ **Fixed
+  2026-08-18.** Each party's sd now comes from the fitted trend and is scaled
+  by the factor the two-party sd grows by between now and election day
+  (1.336 → 2.521, ×1.89 at 102 days out), giving ALP 1.81, LNP 1.89, GRN 1.80,
+  ONP 1.92, OTH 1.34. Draws are then renormalised to the forecast total so the
+  parties push against each other — an independent draw per party lets them all
+  rise at once, which cannot happen to vote shares. The per-party *means* also
+  now come from the live trend rather than hardcoded figures.
+
+  The remaining assumption is the scaling itself: the pipeline projects a
+  two-party figure but not per-party ones, so the growth factor is borrowed
+  from the two-party projection. Stated, not hidden.
 - **The minor field keeps its 2022 shape**, scaled to the forecast OTH total.
 - **Narracan is excluded** — its 2022 election failed, so it has no first
   preferences to project from.
