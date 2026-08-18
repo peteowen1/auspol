@@ -25,14 +25,26 @@ cat("=== auspol pipeline ===\n")
 cat("\nChecking poll data freshness:\n")
 check_poll_freshness(c("vic", "fed", "nsw"), strict = !stale_ok)
 
+# `target = FALSE` marks a stage that VALIDATES the model on a cycle nobody
+# publishes. Those must not stop the live Victorian forecast: on 2026-08-17 the
+# NSW 2027 cycle failed its L3 structural check -- first preferences summing to
+# 94.1 against a 100 +/- 5 bound, because party trends are fitted independently
+# and only sum to 100 by luck -- and that halted the whole run, so the Victoria
+# page stopped refreshing for an election 102 days away over a validation cycle
+# for one in 2027.
+#
+# A validation failure is still a FAILURE. It is reported prominently, and the
+# run exits non-zero at the end so CI goes red and somebody looks. What changes
+# is only the ORDER: the target stages finish first, so the thing with a
+# deadline is published and the problem is still visible.
 STAGES <- list(
   # Before anything that consumes a flow. Three seconds, and it is the only
   # thing standing between us and quietly running yesterday's winner after a
   # new election changes the ranking.
   list(f = "scripts/backtest_flows.R",  what = "preference-flow estimator", slow = FALSE),
   list(f = "scripts/fit_vic.R",        what = "Victoria (live target)",  slow = FALSE),
-  list(f = "scripts/fit_federal.R",    what = "federal cycles",          slow = TRUE),
-  list(f = "scripts/fit_nsw.R",        what = "NSW cycles",              slow = TRUE),
+  list(f = "scripts/fit_federal.R",    what = "federal cycles",          slow = TRUE,  target = FALSE),
+  list(f = "scripts/fit_nsw.R",        what = "NSW cycles",              slow = TRUE,  target = FALSE),
   list(f = "scripts/fit_projection.R", what = "fundamentals + mix",      slow = FALSE),
   list(f = "scripts/fit_seats.R",      what = "seat simulation (two-party)", slow = FALSE),
   # Candidate-level seats. Runs AFTER fit_seats.R because its S5 check compares
@@ -142,12 +154,33 @@ CODE_OWNER <- new.env(parent = emptyenv())
 CODE_CLASHES <- new.env(parent = emptyenv())
 
 t_start <- Sys.time()
+FAILED_VALIDATION <- character(0)
 for (s in STAGES) {
   if (quick && s$slow) {
     cat(sprintf("\n--- %s: SKIPPED (--quick) ---\n", s$what))
     next
   }
-  run(s)
+  if (is.null(s$target) || isTRUE(s$target)) {
+    run(s)                     # a target failure still halts, as before
+  } else {
+    ok <- tryCatch({ run(s); TRUE }, error = function(e) {
+      cat(sprintf("\n!! VALIDATION STAGE FAILED: %s\n   %s\n",
+                  s$what, conditionMessage(e)))
+      cat("   The live forecast continues; this run still exits non-zero.\n")
+      FALSE
+    })
+    if (!ok) FAILED_VALIDATION <- c(FAILED_VALIDATION, s$what)
+  }
+}
+
+if (length(FAILED_VALIDATION)) {
+  cat("\n=== VALIDATION FAILURES ===\n")
+  for (v in FAILED_VALIDATION) cat("   ", v, "\n")
+  cat("The Victorian forecast above was built and is publishable. These",
+      "stages validate the model on cycles nobody publishes, and one of",
+      "them is broken.\n")
+  stop(length(FAILED_VALIDATION), " validation stage(s) failed: ",
+       paste(FAILED_VALIDATION, collapse = ", "))
 }
 
 clashes <- ls(CODE_CLASHES)
@@ -160,3 +193,4 @@ if (length(clashes)) {
 cat(sprintf("\n=== pipeline complete in %.0f s ===\n",
             as.numeric(difftime(Sys.time(), t_start, units = "secs"))))
 cat("Outputs in output/. Publish output/victoria-2026.html.\n")
+
