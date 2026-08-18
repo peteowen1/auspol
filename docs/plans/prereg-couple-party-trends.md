@@ -36,28 +36,61 @@ them — which now includes the candidate-level one.
 | **C** | additive log-ratio: model K−1 log-ratios against a reference party | yes |
 | **D** | multinomial-logit / softmax | **no** — costs the exact solve |
 
-B is listed because the machinery already exists: `R/trend.R:119-124` builds a
-soft weighted sum-to-zero prior on house effects by adding `outer(w, w)/szc_sd²`
-into the precision matrix. A sum-to-100 constraint across parties on the same
-day is the same shape.
+B is listed because the constraint has the same *shape* as machinery that
+already exists: `R/trend.R:119-124` builds a soft weighted sum-to-zero prior on
+house effects by adding `outer(w, w)/szc_sd²` into the precision matrix.
+
+**But it is not a bolt-on, and the first draft of this file implied it was.**
+`fit_cycle_trends()` calls `fit_trend()` once per party via `lapply`
+(`R/trend.R:468-475`) — each party is a separate solve. A sum-to-100 constraint
+couples them, so B needs ONE joint system across parties × days, which is a
+rewrite of `trend_prior_system()` rather than an addition to it. That is why
+this is the largest remaining approximation and not an oversight.
 
 D is named so that not testing it is a recorded decision rather than an
 oversight: it is the textbook answer and it forfeits the property that makes
 this model seconds rather than minutes per cycle. It is tested only if B and C
 both fail.
 
-## Criterion
+## Criterion — AMENDED 2026-08-18, before anything was run
 
-**Held-out two-party MAE**, on the same strict temporal backtest the other
-constants were chosen with (`scripts/compare_backtest_model.R`) — every
-election predicted using only elections held strictly earlier.
+**The criterion as first written could not discriminate, and the amendment is
+recorded rather than quietly substituted.**
 
-Reported alongside, and **not** decisive on its own: the endpoint FP sum per
-cycle, and runtime per cycle.
+It was held-out **two-party** MAE. But `derive_tpp()` renormalises shares to
+100 before computing the two-party figure (`R/tpp.R`), so a uniform drift in
+the total **cancels exactly**. Demonstrated on the NSW-like case: the same
+share vector scaled to sums of 94.1, 100.0 and 101.2 gives a two-party figure
+of 50.7910 in all three. A test on that criterion would have returned "no
+difference" for every candidate and been mistaken for evidence that coupling
+does not matter.
 
-The sum is deliberately *not* the criterion. Optimising a model to make its
-shares sum to 100 while forecasting worse would be fitting the diagnostic
-rather than the outcome — the sum is what alerted us, not what we care about.
+What a drifting sum can actually distort is the **shape** of the share vector,
+not its total — and the total is what every consumer already renormalises away.
+
+**Amended criterion: held-out per-party FIRST-PREFERENCE MAE**, averaged across
+parties, on the same strict temporal backtest. That is the quantity coupling
+could plausibly improve and the quantity the page publishes directly.
+
+Reported alongside, and not decisive: two-party MAE (expected to be flat, and a
+red flag if it is not), the endpoint FP sum per cycle, and runtime.
+
+The sum is still deliberately **not** the criterion. Optimising a model to make
+its shares sum to 100 while forecasting worse would be fitting the diagnostic
+rather than the outcome.
+
+## What this amendment implies about the value of the work
+
+Every consumer of the fitted shares already renormalises: `derive_tpp()` for
+the two-party figure, and `fit_seats_full.R` for each seat's primaries. So if
+coupling turns out to change only the TOTAL and not the shape, it buys
+tidiness and a passing structural check — nothing a reader would notice — and
+decision rule 2 below becomes the operative one.
+
+**That is a real possible outcome and should not be treated as failure.** It
+would mean the honest fix is to renormalise the PUBLISHED first preferences
+too, so a reader adding up the numbers on the page gets 100, and to record that
+the fit itself does not produce shares that sum.
 
 ## Decision rule, fixed now
 
