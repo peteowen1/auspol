@@ -87,3 +87,21 @@ test_that("it is reproducible and refuses unnamed input", {
   bad <- matrix(c(40,38,22), nrow = 1)
   expect_error(simulate_seat_contests(bad, fake_matrix(), c(a=1)), "party names")
 })
+
+test_that("a flow cell for a party absent from these seats is skipped, not fatal", {
+  # Historical transfer data contains exclusions of parties that do not
+  # contest every seat being projected. Looking that party up with [[ threw
+  # "subscript out of bounds" and killed the entire run rather than skipping
+  # one unusable cell. Caught in review.
+  m <- build_flow_matrix(data.table::data.table(
+    election = "x", seat = rep(c("a","b","c"), each = 2), round = 1L,
+    from = "FF",                       # a party none of the seats below field
+    to = rep(c("ALP","LNP"), 3),
+    votes = c(900,100, 850,150, 800,200)), min_n = 2L)
+  sh <- matrix(c(38, 40, 22), nrow = 1,
+               dimnames = list("seat1", c("ALP","LNP","GRN")))
+  expect_no_error(
+    r <- simulate_seat_contests(sh, m, party_sd = c(ALP=0, LNP=0, GRN=0),
+                                seat_sd = 0, n_sims = 5, seed = 1))
+  expect_equal(sum(r$totals), 5L)
+})

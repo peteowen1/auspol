@@ -94,3 +94,12 @@ test_that("smooth must be a proportion", {
   expect_error(distribute_preferences(c(A = 1, B = 2, C = 3), smooth = 1))
   expect_error(distribute_preferences(c(A = 1, B = 2, C = 3), smooth = -0.1))
 })
+
+test_that("duplicate party names are refused rather than losing votes", {
+  # Exclusion removes by NAME, so two entries called "IND" are deleted in one
+  # pass while only the smaller is redistributed -- 15 of 100 votes vanished
+  # and the count logged one exclusion for two removals. Caught in review.
+  expect_error(
+    distribute_preferences(c(ALP = 40, LNP = 35, IND = 10, IND = 15)),
+    "duplicate name")
+})

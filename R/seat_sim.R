@@ -59,8 +59,13 @@ simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
   put <- function(k, v) assign(as.character(k), v, envir = cells)
   for (nm in names(matrix$conditional)) {
     bits <- strsplit(nm, "|", fixed = TRUE)[[1]]
-    from <- pidx[[bits[1]]]
-    if (is.null(from) || is.na(from)) next
+    # SINGLE bracket. `pidx` is an atomic vector, so `pidx[["missing"]]`
+    # THROWS rather than returning NULL -- the is.null() guard that was here
+    # could never fire, and any historical exclusion of a party not contesting
+    # the current seats killed the whole run with "subscript out of bounds".
+    # The survivor side two lines down was always safe because it uses %in%.
+    from <- unname(pidx[bits[1]])
+    if (is.na(from)) next
     surv <- strsplit(bits[2], "+", fixed = TRUE)[[1]]
     if (!all(surv %in% parties)) next
     mask <- sum(bitwShiftL(1L, pidx[surv] - 1L))

@@ -41,6 +41,16 @@ distribute_preferences <- function(shares, conditional = list(),
                                    pooled = list(), smooth = 0.15) {
   stopifnot(is.numeric(shares), !is.null(names(shares)),
             smooth >= 0, smooth < 1)
+  # Names must be unique. Exclusion removes BY NAME, so two entries sharing one
+  # -- two independents both bucketed as "IND", say -- are deleted together
+  # while only the smaller one's votes are redistributed. The rest vanish and
+  # the count silently runs a round short. Refused rather than quietly summed,
+  # because a caller that produced duplicates has a bug worth seeing.
+  dup <- unique(names(shares)[duplicated(names(shares))])
+  if (length(dup)) {
+    stop("shares has duplicate name(s): ", paste(dup, collapse = ", "),
+         ". Aggregate to one entry per party before distributing.")
+  }
   v <- shares[which(shares > 0)]
   if (!length(v)) stop("No candidate has a positive share")
   excluded <- character(0)
