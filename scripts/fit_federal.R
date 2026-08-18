@@ -479,7 +479,7 @@ cat(sprintf("FL2  all trends and bands strictly inside (0, 100)             OK\n
 cat(sprintf("FL3  endpoint FP sums: %s  (require 100 +/- 4)\n",
             paste(sprintf("%d=%.1f", c(2022, 2025, 2028), share_sums), collapse = "  ")))
 stopifnot(all(abs(share_sums - 100) <= 4))
-cat("Structural checks L2/L3 passed.\n\n")
+cat("Structural checks FL2/FL3 passed.\n\n")
 
 # ---- Current cycle summary ----
 cat("=== Current (2028) cycle trend endpoints ===\n")

@@ -269,7 +269,7 @@ stopifnot(walk_tab[, all(acf1 < 0.25)], walk_tab[, all(obs_pts >= floor_ref)],
 cat(sprintf("NL2  all trends and bands strictly inside (0, 100)  OK\nNL3  endpoint FP sums: %s  (require 100 +/- 5, thin state polling)\n",
             paste(sprintf("%d=%.1f", c(2023, 2027), share_sums), collapse = "  ")))
 stopifnot(all(abs(share_sums - 100) <= 5))
-cat("Structural checks L2/L3 passed.\n\n")
+cat("Structural checks NL2/NL3 passed.\n\n")
 
 cat("=== NSW 2027 cycle trend endpoints ===\n")
 for (p in names(res2027$fits)) {
