@@ -83,19 +83,24 @@ above 10%.** Yan Yean is the tossup at LNP 44 / ALP 31 / ONP 25.
 
 **What is left, in order:**
 
-1. **The VEC/ECSA data has nowhere to live** (see Awaiting Pete). Everything
-   above runs from a session scratchpad. Until that is settled the simulation
-   cannot run in CI or feed the page.
-2. **A fetch script** turning the two sources into the plain transfers table
-   `build_flow_matrix()` takes. Both paths are documented and both were run
-   successfully; neither is committed.
-3. **The One Nation allocation** is the weakest link and is not in the package.
-   Ordering from Victorian federal 2025 beats uniform by only 0.12 MAE, and
-   magnitude is borrowed from SA's observed spread. It deserves its own
-   pre-registered treatment before anything publishes.
-4. **Then decide** whether this replaces the two-party seat model or runs
-   beside it as a check. Pete chose replace; that was before the prototype
-   showed how much rests on item 3.
+1. **Where the VEC data lives** (see Awaiting Pete). `scripts/fetch_preferences_vic.R`
+   and `scripts/fetch_preferences_sa.R` both work and write to gitignored
+   `output/`, so a developer can reproduce everything locally — but CI has no
+   data and the page cannot use the new path until this is settled.
+2. **A runner script** joining the pieces: fetch → `build_flow_matrix()` →
+   per-seat projected primaries → `simulate_seat_contests()` → output. The
+   parts all exist and are tested; nothing yet calls them in sequence.
+3. **Decide whether this replaces the two-party seat model or runs beside it.**
+   Pete chose replace. Worth revisiting now the One Nation allocation has been
+   checked: it survives (below), but its ordering beats uniform by only
+   0.122 MAE, so individual ONP seat probabilities are soft even though the
+   total is sound.
+
+**Settled 2026-08-18, no longer open:** the One Nation allocation passed both
+pre-registered checks — the Greens-share ordering replicates with a negative
+coefficient in NSW, Queensland and WA, and the magnitude transfer is within
+1.41x of SA's spread against a 1.5 bar. See
+[reviews/onp-allocation-checks-2026-08-18.md](reviews/onp-allocation-checks-2026-08-18.md).
 
 **Do not start with:** anything that makes the backtest slower. Arm B of the
 volatility comparison took 33x and bought nothing; a backtest that takes an
