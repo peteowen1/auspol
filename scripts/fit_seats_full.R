@@ -193,6 +193,47 @@ wp <- as.data.table(sim$win_prob)
 cat("\n=== seats where a non-major has >=10% ===\n")
 minor <- wp[party %in% c("GRN","ONP","IND","OTH","OTH_RIGHT") & prob >= 0.10]
 print(minor[order(-prob)], nrows = 40)
+# ---- 6. S5: cross-check against the two-party seat model --------------------
+# The two-party model cannot represent a non-major winner, which is why it is
+# no longer the published seat forecast. It is kept as a CHECK because it is
+# the only independent estimate of Labor's seat count, built from the anchor's
+# notional margins rather than from primaries and flows, and it costs seconds.
+#
+# It has already earned its place: when the candidate model was rebuilding the
+# statewide distribution instead of inheriting the projection, the two medians
+# still agreed while the RANGES did not, and that mismatch is what exposed the
+# bug. A check on the median alone would have missed it, so this checks both.
+seats26 <- load_seats(2026, "vic")
+sp22 <- seat_swing_spread(seats26, 55.00 - 57.60)
+sp18 <- seat_swing_spread(load_seats(2022, "vic"), 57.60 - 51.99)
+tp <- simulate_seats(seats26, pj$mean, pj$sd, 55.00,
+                     mean(c(sp22$sd_within, sp18$sd_within)),
+                     region_sd = mean(c(sp22$sd_between, sp18$sd_between)),
+                     n_sims = 50000, seed = 42)
+tp_q <- stats::quantile(tp$alp_total, c(0.05, 0.5, 0.95))
+cl_alp <- sort(sim$totals[, "ALP"])
+cl_q <- cl_alp[pmax(1, round(c(0.05, 0.5, 0.95) * length(cl_alp)))]
+
+med_gap <- abs(cl_q[2] - tp_q[2])
+wid_ratio <- (cl_q[3] - cl_q[1]) / (tp_q[3] - tp_q[1])
+cat(sprintf("
+S5  two-party seat model : ALP median %2d (90%%: %2d-%2d)
+",
+            tp_q[2], tp_q[1], tp_q[3]))
+cat(sprintf("    candidate-level model: ALP median %2d (90%%: %2d-%2d)
+",
+            cl_q[2], cl_q[1], cl_q[3]))
+cat(sprintf("    median gap %d seats (max 5), 90%%-width ratio %.2f (0.7-1.4)  %s
+",
+            med_gap, wid_ratio,
+            if (med_gap <= 5 && wid_ratio >= 0.7 && wid_ratio <= 1.4) "PASS" else "FAIL"))
+if (med_gap > 5 || wid_ratio < 0.7 || wid_ratio > 1.4) {
+  stop(sprintf(paste0("S5 FAILED: the two seat models disagree. Median gap %d ",
+                      "seats, 90%%-width ratio %.2f. One of them is wrong and ",
+                      "the published figure cannot be trusted until it is known ",
+                      "which."), med_gap, wid_ratio))
+}
+
 fwrite(wp, "output/seat-probs-vic-2026.csv")
 fwrite(as.data.table(sim$totals), "output/seat-sims-full-vic-2026.csv")
 cat("\nwrote output/seat-probs-vic-2026.csv\n")
