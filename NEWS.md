@@ -1,3 +1,60 @@
+# auspol 0.4.8
+
+**The candidate-level model is now the published seat forecast.** The two-party
+seat step is kept as a running cross-check rather than archived.
+
+## The page
+
+Two new blocks:
+
+- **Seats by party** — bars with 90% ranges and a majority line. ALP 41
+  (24–51), LNP 38 (29–54), GRN 5 (3–7), ONP 3 (0–7).
+- **Seats in play** — 29 seats where the favourite is under 80% or a minor
+  party has a real chance.
+
+Every bar is directly labelled. The palette validator puts One Nation orange
+against Greens green at ΔE 6.1 under protanopia — inside the band legal only
+with secondary encoding — and One Nation's contrast against the surface at
+2.97:1. Labels discharge both, so nothing on either chart depends on telling
+two hues apart. Red against green is fine; orange against green is the risky
+pair, which is the opposite of the intuition.
+
+## S5, a check that is proven to fail
+
+The two-party model cannot represent a non-major winner, which is why it no
+longer publishes, but it is the only independent estimate of Labor's seat
+count and costs seconds. S5 compares the two every run: median gap at most 5
+seats, ratio of 90% widths between 0.7 and 1.4.
+
+Verified against the real before-and-after: the pre-fix run gives a width ratio
+of 0.57 and FAILS; the corrected run gives 0.96 and PASSES. The medians agreed
+in both, so a median-only check would have passed the broken run.
+
+## Fixes
+
+- **The page had been shipping mojibake.** Every en-dash rendered as `â€"`
+  because the document declared no character set. The declaration must be the
+  **first line** — it is only honoured within the first 1024 bytes and this
+  document has no `<head>`. Placed at line 116 it was ignored, the page rebuilt
+  and `G1` passed with the mojibake unchanged. Nothing automated catches this:
+  `G1` verifies blocks drew, `R CMD check` never reads HTML, and a parser
+  accepts mojibake happily. Found by opening the built page and reading it.
+- **A poisoned CI cache could have disabled the candidate model and S5
+  silently.** The combined `actions/cache` saves in a post step that runs even
+  after an earlier step fails, so a partway fetch failure would cache the
+  partial directory under a key that does not change until the fetch scripts
+  do. Split into restore and save gated on success, and the skip message now
+  carries its check code so it reaches the run summary.
+- **S5 was comparing different seat universes**, 87 against 88 — Narracan has
+  no ordinary 2022 first preferences. A real divergence could have hidden
+  behind the offset.
+- **The new seat outputs bypassed `build_page.R`'s staleness guard**, so a
+  leftover from an earlier run could have published old probabilities under
+  today's date. Present-but-stale is now an error.
+- The duplicate `pull_request` CI trigger is removed. It fired on the same
+  commit as `push` three seconds apart and hung 4 times out of 4, once for 37
+  minutes, while `push` succeeded 4 times out of 4.
+
 # auspol 0.4.7
 
 The candidate-level seat simulation moves from a session scratchpad into the
