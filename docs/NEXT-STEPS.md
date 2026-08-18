@@ -273,6 +273,23 @@ its merits, or adopt floor 15 as the rule required and re-open the question with
 the anchor pre-registered. What must not happen is the refusal quietly becoming
 precedent.
 
+### Observation, not yet investigated: independents effectively cannot win
+
+Noticed 2026-08-19 while reading the current seat sim. Across 20,000 draws the
+candidate-level model returns **IND median 0, 90% interval 0-0**. Independents
+appear in only **3 of 88 seats** at all, with a best win probability of
+**2e-04** (Hawthorn).
+
+This is the same *shape* as the defect Pete caught in the two-party seat model —
+a party that cannot win by construction — but it is **not obviously wrong**:
+Victoria's Legislative Assembly has had few independents, and the two who held
+Mildura and Shepparton both lost in 2022. Zero is a plausible forecast.
+
+What makes it worth a look is the coverage, not the probability: an independent
+is represented in 3 seats out of 88. Before concluding anything, check whether
+that reflects the 2022 record or a gap in how candidates are loaded. Do not
+assume it is a bug, and do not assume it is fine.
+
 ### Still open
 
 - **One Nation's Victorian level.** 20.4 fitted against 23.2 polled. Not shown
