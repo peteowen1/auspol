@@ -1,97 +1,91 @@
-# The seat model may be under-calling One Nation by about half, not over-calling it
+# South Australia cannot tell us whether the One Nation seat count is right
 
-Measured 2026-08-19. **Nothing changed.** This is the first external check on
-the seat model's minor-party output, and it points the opposite way from the
-three experiments that preceded it.
+Measured 2026-08-19. **Nothing changed.**
 
-## The check
+**This document originally claimed the seat model under-calls One Nation by
+about half. That claim is retracted.** It rested on a comparison that ignored
+rank, and once South Australia's own rates are given honest intervals, the
+model's answer sits comfortably inside them. The retraction is kept in place
+rather than the document rewritten to look right from the start.
 
-South Australia voted in March 2026. It is the only observation of One Nation
-contesting at the level Victoria is forecasting, and it is complete — so the
-relationship between a district's One Nation first-preference share and whether
-it won the seat is *measurable*.
+## What South Australia actually shows
 
-Derived from first preferences plus the full transfer record (a party never
-excluded keeps everything transferred to it):
+SA voted in March 2026 — the only completed election where One Nation contested
+at the level Victoria is forecasting. Derived from first preferences plus the
+full transfer record:
 
-**One Nation won 7 of 47 SA districts on 22.9% of the statewide first
-preference vote.** An independent won one.
+**One Nation won 7 of 47 districts on 22.9% of the statewide vote.** An
+independent won one.
 
-Win rate by first-preference band:
+Split by where it started, which is the part that matters:
 
-| ONP first prefs | districts | won | rate |
-|---|---:|---:|---:|
-| under 20% | 18 | 0 | 0.00 |
-| 20–25% | 9 | 0 | 0.00 |
-| 25–27.5% | 6 | 2 | 0.33 |
-| 27.5–30% | 5 | 1 | 0.20 |
-| 30–32.5% | 1 | 0 | 0.00 |
-| over 32.5% | 8 | 4 | 0.50 |
+| One Nation's rank on first preferences | districts | won | mean primary | mean preferences gained |
+|---|---:|---:|---:|---:|
+| **1st** | 4 | **4** | 33.8% | +19.5 |
+| **2nd** | 30 | **3** | 25.3% | +11.4 |
+| 3rd | 5 | 0 | 16.4% | +1.9 |
+| 4th | 8 | 0 | 13.0% | +1.2 |
 
-A logistic fit puts the 50% point at **33.5%** of first preferences.
+Leading on primaries converted every time; running second converted **3 times in
+30**.
 
-## Applied to Victoria
+## The first comparison was wrong
 
-Victoria's projected One Nation shares, rebuilt exactly as `fit_seats_full.R`
-builds them (mean 20.2, sd 6.6, max 33.0), run through SA's own share-to-win
-curve:
+I fitted a logistic curve of win probability on One Nation's first-preference
+*share alone*, applied it to Victoria's projected shares, and got 6.2 expected
+seats against the model's 2.96.
+
+**That is confounded by rank.** SA's high-share districts were mostly ones where
+One Nation *led*; Victoria's high-share seats are ones where it runs **second**
+behind the Coalition. The share-only curve reads Victoria's 31% seats as if they
+were SA's 31% seats, which were a different situation.
+
+## The rank-aware comparison, and why it still cannot settle anything
+
+Victoria's projected ranks across 87 seats: One Nation **1st in 2**, **2nd in
+36**, lower in 49. Applying SA's observed rates:
 
 | | expected One Nation seats |
 |---|---:|
-| **SA's curve applied to Victoria's projected shares** | **6.2** |
-| **What the Victorian seat model expects** | **2.96** |
+| point estimate (2 × 1.00 + 36 × 0.10) | **5.6** |
+| **95% range from SA's own rates** | **1.6 to 11.6** |
+| what the Victorian model expects | **2.96** |
 
-The model expects **about half** what the only comparable election implies.
+The rates are 4 of 4 and 3 of 30. Their binomial intervals are 0.398–1.000 and
+0.021–0.265 — wide enough that **the model's 2.96 is not distinguishable from
+the SA-implied estimate.** The point estimate is about double; the evidence
+cannot support that at any useful confidence.
 
-## Why this matters more than the number
+## What this does and does not change
 
-Three experiments in a row — share-level uncertainty, ordering uncertainty, and
-the independents fix before them — were all concerned with **preventing One
-Nation's seat count from rising**. Two were refused specifically because the
-change lifted its win probability in most seats.
+- **It does not show the model is wrong.** 2.96 is inside the range.
+- **It does not reframe the three refused experiments.** I wrote that they had
+  been "guarding against movement in the direction the evidence supports."
+  There is no such evidence. That sentence is withdrawn; the refusals stand on
+  their own pre-registered terms and nothing external contradicts them.
+- **It does establish something narrower and useful.** One Nation wins these
+  seats from second place about a tenth of the time, and Victoria has 36 seats
+  where it is projected second. That is the quantity to watch, and it is now
+  measured rather than assumed.
+- **The `sPolls` idea is dead as a shortcut.** Nothing here substitutes for
+  Victorian evidence, of which there is none: One Nation has never contested a
+  Victorian state election at this level.
 
-The only external evidence available says the count should be roughly twice as
-high to begin with. **I spent three experiments guarding against a movement in
-the direction the evidence supports.**
+## What I got wrong, and why
 
-That does not make those refusals wrong: each failed its own pre-registered
-terms, and a change that happens to move a number toward where you later decide
-it should be is not thereby validated. But the framing was wrong, and it was
-wrong because there was no external anchor — exactly the omission this check
-fills.
+Two failures of the same kind in one document.
 
-## What would make this comparison invalid
+1. **Comparing on a variable that was not the operative one.** Share, not rank.
+   The confound was visible in SA's own table the moment it was split.
+2. **Quoting a point estimate from tiny samples without an interval.** 4 of 4
+   and 3 of 30 cannot distinguish 2.96 from 5.6, and I published "under-calls by
+   about half" from exactly those numbers.
 
-Stated plainly, because it is a cross-state comparison and those are easy to
-oversell:
+The second is the one to watch: this is the second retraction of the session
+after a `+0.108` seat-count figure that turned out to be Monte Carlo noise. Both
+were point estimates from thin evidence, presented as findings. The habit to
+break is quoting a difference before asking what range the data actually
+supports.
 
-- **The logistic fit is in-sample.** It reproduces SA's 7 wins from SA's own 47
-  districts, which is not validation — a two-parameter fit on 47 points should
-  do that. "7.0 against 7 actual" is arithmetic, not evidence.
-- **The band table is not monotonic.** One district sits in 30–32.5% and lost,
-  giving that band a rate of 0.00 between bands of 0.20 and 0.50. With eight
-  wins spread over 47 districts, the shape of the curve is poorly determined.
-- **The party landscape differs.** SA's Labor won 35 of 47; Victoria's contest
-  is far closer, and the Nationals hold the kind of regional seats where One
-  Nation polls best in Victoria but which have no SA equivalent. A three-way
-  regional contest converts differently from a two-way one.
-- **Preference flows differ**, and One Nation wins these seats on preferences —
-  the SA winners polled 27–38% primary and finished above 40%.
-- **One election.** Everything here rests on a single state's single result.
-
-## What this changes about the next step
-
-The queued next step was a fourth attempt at bounding the upward lean from
-adding uncertainty. **That is now the wrong question to ask first.**
-
-Before tuning how uncertainty moves the count, establish whether the count is
-right: 2.96 against an external estimate of 6.2 is a bigger discrepancy than
-anything the three experiments were arguing about, and it has a plausible
-mechanical cause — the model's projected maximum is 33.0%, which is exactly the
-point where SA's curve reaches even odds. **No Victorian seat is projected past
-the level at which One Nation was more likely than not to win in SA.** If the
-projected spread is too narrow, every downstream question about uncertainty is
-being asked about the wrong distribution.
-
-That is the thing to pre-register next, and the criterion should be this
-comparison rather than an internal symmetry rule.
+`scripts/compare_onp_seats_sa.R` now reports the interval alongside the point
+estimate, so the number cannot be quoted without it.
