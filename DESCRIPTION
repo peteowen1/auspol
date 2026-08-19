@@ -1,6 +1,6 @@
 Package: auspol
 Title: Australian Election Forecasting
-Version: 0.4.12
+Version: 0.4.13
 Authors@R: person("Pete", "O", email = "fptpost@gmail.com", role = c("aut", "cre"))
 Description: Poll trend estimation, projection and seat simulation for Australian
     federal and state elections. Anchored on the AE Forecasts methodology
