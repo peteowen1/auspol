@@ -123,3 +123,67 @@ should be treated as marginal, not as a pass.
   is most doubted are exactly the ones 2022 cannot test.
 - **Nothing about YouGov.** Their 17 seats are not a target and agreement with
   them is not a criterion.
+
+---
+
+## BLOCKED, 2026-08-20: the data does not exist yet
+
+Investigated before running anything. **The backtest cannot be built at all**,
+for a reason narrower than the plan above assumed.
+
+The plan assumed Victoria 2022 was testable because we hold its results. It is
+not. The candidate model projects each seat's primaries by swinging them off
+**that seat's first preferences at the previous election**
+(`shares[, p] <- mat22[, p] + (state_mean[[p]] - a22[[p]])`). To predict
+Victoria 2022 it needs **Victoria 2018 seat-level first preferences.**
+
+What the repo actually holds:
+
+| dataset | have it? |
+|---|---|
+| Victoria 2022 seat-level first preferences | yes — but this is the *input* to the live 2026 forecast, not a target |
+| Victoria 2022 transfers | yes |
+| SA 2026 first preferences / transfers / ONP shares | yes — no SA 2022 priors, so not testable either |
+| **Victoria 2018 seat-level first preferences** | **no** |
+| **Any NSW candidate or transfer data** | **no** |
+
+So we hold exactly one election's seat-level first preferences, and it is the
+one the live forecast swings off. **There is nothing to score.**
+
+Searched and ruled out:
+
+- `external/aus-polling-analyser/` — the anchor carries `booths-2018vic.txt`,
+  archived adjustments and fundamentals for 2018vic, but **no seat-level first
+  preferences**. Its `analysis/seats/` holds `2019nsw.txt`, `2022vic.txt`,
+  `2023nsw.txt` (margins and predictors, not first preferences).
+- The VEC's 2018 results pages are JavaScript-driven; the documented URL
+  patterns 404, as
+  [preference-data-acquisition.md](preference-data-acquisition.md) already
+  recorded.
+
+## What unblocks it, in preference order
+
+1. **NSW 2019 + 2023 from the NSWEC.** Enables a genuine out-of-sample backtest
+   — different state, different year, a change-of-government election rather
+   than a landslide hold — and the seat files (`2019nsw.txt`, `2023nsw.txt`)
+   are already present, so only the first preferences and transfers are
+   missing. It also yields a **second transfer matrix**, which is the other
+   thing this repo needs: `fm` currently rests on one election, and the
+   flow-uncertainty question could not be answered for the same reason.
+2. **Victoria 2018 from the VEC.** Cheaper in principle — one state, one
+   election — but the site is JS-driven and the obvious URLs are already known
+   to 404, so the effort is unbounded.
+
+## What must NOT happen meanwhile
+
+The seat-swing adjustment stays **out** of the candidate model until it can be
+measured there. It helps the two-party model by 0.0371 MAE, but the two models
+put the same predictors through different machinery, and this plan's own
+decision rule requires a measured improvement. Shipping it unmeasured because
+it helped a different model is precisely the reasoning this repo's discipline
+exists to refuse.
+
+The live gap is recorded and real: `seat_swing_adjustment()` reaches only the
+two-party cross-check, so **four predictors worth a measured improvement do not
+touch a single published number.** That is an argument for getting the data, not
+for skipping the measurement.
