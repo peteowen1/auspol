@@ -247,17 +247,20 @@ region_sd <- mean(c(sp22$sd_between, sp18$sd_between))
 within_sd <- mean(c(sp22$sd_within, sp18$sd_within))
 sim <- simulate_seats(seats26, pj$mean, pj$sd, 55.00, within_sd,
                       region_sd = region_sd, n_sims = 50000, seed = 42)
-# alp_total, not seats_won: the latter counts classic seats only, so publishing
-# it under-counts Labor by every non-classic seat it holds.
-tot <- sim$alp_total
-h <- as.data.table(table(tot))
-setnames(h, c("seats", "n"))
-h[, seats := as.integer(as.character(seats))]
-h[, p := n / sum(n)]
+# The two-party simulation above is now a CROSS-CHECK ONLY (S5 compares the two
+# and the pendulum used to come from it). Nothing published is taken from it:
+# it cannot elect a minor party, which is the whole reason the candidate-level
+# model exists. `sim` is kept because S5 and the histogram-free sense checks
+# still read it.
+#
+# `tot` is assigned further down from the candidate model, after its outputs are
+# read and the missing seat is accounted for.
+tpp_model_total <- sim$alp_total
 
+# Pendulum positions (each seat's 2022 two-party share) still come from the seat
+# file, which is just data. The PROBABILITY on each row now comes from the
+# candidate-level model, assigned below once its output is read.
 bs <- sim$by_seat[order(-alp_tpp_now)]
-seat_rows <- bs[, .(seat, region = seat_region, tpp = round(alp_tpp_now, 1),
-                    p = round(alp_win_prob, 3))]
 
 # ---- candidate-level seat forecast, if the pipeline produced one ------------
 # fit_seats_full.R needs election data fetched into external/elections and is
@@ -265,6 +268,18 @@ seat_rows <- bs[, .(seat, region = seat_region, tpp = round(alp_tpp_now, 1),
 # a second simulation here would drift from the one S5 checked.
 seats_by_party <- NULL; seats_in_play <- NULL
 sp_f <- "output/seat-probs-vic-2026.csv"; ss_f <- "output/seat-sims-full-vic-2026.csv"
+# REQUIRED since 2026-08-19. The published seat forecast is the candidate-level
+# model, so these are no longer optional extras: without them there is no
+# headline to publish, and falling back to the two-party model would put a
+# different model's number under the same label. A --quick run that skips
+# fit_seats_full.R must fail here rather than publish something else.
+missing_seat <- c(sp_f, ss_f)[!file.exists(c(sp_f, ss_f))]
+if (length(missing_seat)) {
+  stop("The published seat forecast comes from the candidate-level model and ",
+       "these are missing: ", paste(missing_seat, collapse = ", "),
+       ". Run scripts/fit_seats_full.R. Do NOT fall back to the two-party ",
+       "model -- it is kept as a cross-check only.")
+}
 # These are OPTIONAL -- the candidate model needs fetched election data and is
 # skipped by --quick -- so they are not in INPUTS, whose members must exist.
 # But optional is not the same as exempt from the staleness rule above. Left
@@ -312,6 +327,68 @@ if (all(present)) {
   # shadowing it made median(tot) fail on a data.table further down. Same trap
   # as the data.table column collisions, one scope out.
   wp <- fread(sp_f); full_tot <- fread(ss_f)
+
+  # ---- the PUBLISHED seat forecast, from the candidate-level model --------
+  #
+  # The candidate model covers 87 seats. Narracan is absent: its 2022 election
+  # failed after a candidate died and the January 2023 supplementary went
+  # uncontested by Labor, so it has no ordinary first preferences to swing.
+  # The seat file records it LNP-held on a -13.0 two-party margin with the
+  # projection moving further against Labor, and both external forecasts have
+  # it Coalition-held, so it is assigned to the Coalition -- i.e. it adds ZERO
+  # to Labor's total.
+  #
+  # Stated here, checked below, and reported on the page rather than buried:
+  # publishing a seat total that silently omits a seat is exactly the class of
+  # error this repo keeps finding.
+  NARRACAN_ALP <- 0L
+  covered <- length(unique(wp$seat))
+  n_missing <- 88L - covered
+  if (n_missing != 1L) {
+    stop("The candidate model covers ", covered, " of 88 seats; the Narracan ",
+         "adjustment assumes exactly one is missing. Re-check before publishing.")
+  }
+  tot <- full_tot$ALP + NARRACAN_ALP
+  cat(sprintf("published seat forecast: candidate-level model, %d seats + %s
+",
+              covered, "Narracan assigned to the Coalition"))
+  cat(sprintf("  ALP median %d (90%% %d-%d); two-party model says %d -- cross-check only
+",
+              as.integer(stats::median(tot)),
+              as.integer(stats::quantile(tot, 0.05)),
+              as.integer(stats::quantile(tot, 0.95)),
+              as.integer(stats::median(tpp_model_total))))
+
+  # Pendulum probabilities from the candidate model. A seat where Labor never
+  # wins has no row in `wp` at all, so absence means zero -- not missing.
+  alp_p <- wp[party == "ALP", .(seat, p = prob)]
+  seat_rows <- merge(bs[, .(seat, region = seat_region,
+                            tpp = round(alp_tpp_now, 1))],
+                     alp_p, by = "seat", all.x = TRUE)
+  # `wp` stores only parties with a NON-ZERO probability, so a seat with no ALP
+  # row is a genuine zero -- Labor won none of the draws. Ten safe Coalition
+  # seats are legitimately in that position.
+  #
+  # What must NOT be read as zero is a seat whose NAME failed to match, which
+  # looks identical after the join. The two are told apart by seat coverage,
+  # not by the ALP row: every seat the model ran must appear in `wp` under some
+  # party. Narracan is the one seat it never ran.
+  unseen <- setdiff(seat_rows$seat, unique(wp$seat))
+  if (!identical(sort(unseen), "Narracan")) {
+    stop("These pendulum seats appear nowhere in ", sp_f, ": ",
+         paste(sort(unseen), collapse = ", "),
+         ". Only Narracan may be absent; anything else means the seat names do ",
+         "not match, and their probabilities would silently publish as zero.")
+  }
+  seat_rows[is.na(p), p := 0]
+  seat_rows[, p := round(p, 3)]
+  seat_rows <- seat_rows[order(-tpp)]
+
+  # The seat-count histogram, from the published (candidate) model.
+  h <- as.data.table(table(tot))
+  setnames(h, c("seats", "n"))
+  h[, seats := as.integer(as.character(seats))]
+  h[, p := n / sum(n)]
   q <- function(v, p) as.integer(sort(v)[pmax(1, round(p * length(v)))])
   seats_by_party <- rbindlist(lapply(names(full_tot), function(p) {
     v <- full_tot[[p]]
