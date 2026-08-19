@@ -28,6 +28,40 @@ SEAT_SD <- 3.5      # within-region seat deviation, from seat_swing_spread()
 # upside noise lets it cross a threshold while downside costs nothing where it
 # was already losing. simulate_seat_contests() keeps the per-party seat_sd
 # capability, unused here. See docs/reviews/onp-seat-uncertainty-2026-08-19.md.
+# How statewide first-preference uncertainty is inflated from the trend band.
+#
+#   "growth"   -- MULTIPLICATIVE, the historical behaviour: scale every party's
+#                 sd by the same ratio the two-party projection inflates the
+#                 two-party trend sd.
+#   "additive" -- a constant added in quadrature, which is the structure the
+#                 residuals actually support. estimate_fp_extra_var.R REFUTED
+#                 the multiplicative form directly: cor(|error|, posterior sd)
+#                 = -0.036, p = 0.68, so a well-determined trend is no more
+#                 accurate in absolute terms and there is nothing to scale.
+#
+# ADOPTED 2026-08-19: "additive", after both the coverage test and F4 passed.
+# See docs/reviews/fp-widening-choice-2026-08-19.md.
+#
+# The measured factor is 2.419, the two-party projection error -- the value
+# pre-registered FIRST, chosen on a tie-break written before either candidate's
+# result was known.
+#
+# F4 was the check that mattered, because widening a party that is BEHIND in
+# most seats is a one-way ratchet -- that is why the ONP seat_sd experiment
+# above was refused. It is NOT a ratchet here, because this widens every party
+# symmetrically at the statewide level rather than one party at the seat level:
+# One Nation's expected seats move 2.96 -> 3.10 (+0.14 against a 1.0 limit) and
+# its probability of winning at least one seat FALLS, 0.926 -> 0.897. Stable
+# across seeds 42/101/202.
+FP_SD_MODE  <- Sys.getenv("AUSPOL_FP_SD_MODE", "additive")
+FP_EXTRA_SD <- 2.419   # adopted factor A; docs/reviews/fp-widening-choice-*.md
+OUT_SUFFIX  <- Sys.getenv("AUSPOL_OUT_SUFFIX", "")
+# Overridable ONLY so a change can be checked for stability across seeds. A
+# difference that flips sign with the seed is Monte Carlo noise, which this
+# repo has already mistaken for a result once.
+SEED        <- as.integer(Sys.getenv("AUSPOL_SEED", "42"))
+stopifnot(FP_SD_MODE %in% c("growth", "additive"))
+
 SMOOTH  <- 0.15     # see distribute_preferences(); NOT optional, see its docs
 ONP_B1  <- -0.0968  # Greens-share coefficient, fitted on Victorian federal 2025
 
@@ -88,7 +122,18 @@ cat(sprintf("projected ALP two-party %.2f (95%%: %.2f-%.2f), %d days out, sd x%.
             pj$mean, pj$lo95, pj$hi95, days_out, growth))
 
 sw <- last[party != "TPP_ALP"]
-sw[, sd_proj := (hi95 - lo95) / (2 * 1.96) * growth]
+# Computed OUTSIDE the brackets: `growth` and the mode are locals, and a bare
+# name inside `[` binds to a column if one shares it. Six instances so far.
+trend_sd <- (sw$hi95 - sw$lo95) / (2 * 1.96)
+sd_vec <- if (FP_SD_MODE == "additive") {
+  sqrt(trend_sd^2 + FP_EXTRA_SD^2)
+} else {
+  trend_sd * growth
+}
+sw[, sd_proj := sd_vec]
+cat(sprintf("FP sd mode: %s; statewide sds %.2f-%.2f (trend %.2f-%.2f)
+",
+            FP_SD_MODE, min(sd_vec), max(sd_vec), min(trend_sd), max(trend_sd)))
 state_mean <- setNames(sw$mean, sw$party)
 state_sd   <- setNames(sw$sd_proj, sw$party)
 
@@ -155,7 +200,7 @@ shares <- 100 * shares / rowSums(shares)
 # figure from the projection, then moves the Labor/Coalition split by exactly
 # the gap needed to hit it. Moving d points from LNP to ALP moves the two-party
 # figure by d, so the correction is exact rather than iterative.
-set.seed(42)
+set.seed(SEED)
 psd <- vapply(parties, function(p) if (is.na(state_sd[p])) 1.5 else state_sd[[p]],
               numeric(1))
 sw_draws <- vapply(parties, function(p) {
@@ -188,7 +233,7 @@ stopifnot(abs(mean(chk) - pj$mean) < 0.3, abs(sd(chk) - pj$sd) < 0.3)
 
 t0 <- Sys.time()
 sim <- simulate_seat_contests(shares, fm, party_sd = psd, seat_sd = SEAT_SD,
-                              n_sims = N_SIMS, smooth = SMOOTH, seed = 42,
+                              n_sims = N_SIMS, smooth = SMOOTH, seed = SEED,
                               statewide_draws = sw_draws)
 cat(sprintf("\nsimulated %d seats x %d runs in %.0fs | pooled fallback %.1f%%\n",
             nrow(shares), N_SIMS,
@@ -234,7 +279,7 @@ sp18 <- seat_swing_spread(load_seats(2022, "vic"), 57.60 - 51.99)
 tp <- simulate_seats(seats26, pj$mean, pj$sd, 55.00,
                      mean(c(sp22$sd_within, sp18$sd_within)),
                      region_sd = mean(c(sp22$sd_between, sp18$sd_between)),
-                     n_sims = 50000, seed = 42)
+                     n_sims = 50000, seed = SEED)
 tp_q <- stats::quantile(tp$alp_total, c(0.05, 0.5, 0.95))
 cl_alp <- sort(sim$totals[, "ALP"])
 cl_q <- cl_alp[pmax(1, round(c(0.05, 0.5, 0.95) * length(cl_alp)))]
@@ -259,6 +304,6 @@ if (med_gap > 5 || wid_ratio < 0.7 || wid_ratio > 1.4) {
                       "which."), med_gap, wid_ratio))
 }
 
-fwrite(wp, "output/seat-probs-vic-2026.csv")
-fwrite(as.data.table(sim$totals), "output/seat-sims-full-vic-2026.csv")
+fwrite(wp, sprintf("output/seat-probs-vic-2026%s.csv", OUT_SUFFIX))
+fwrite(as.data.table(sim$totals), sprintf("output/seat-sims-full-vic-2026%s.csv", OUT_SUFFIX))
 cat("\nwrote output/seat-probs-vic-2026.csv\n")

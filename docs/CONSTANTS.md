@@ -36,6 +36,8 @@ number without anything failing.
 | `szc_sd_pts` | `trend.R` | Strength of the soft sum-to-zero constraint on house effects — how far the polling industry as a *whole* may sit from the truth | **ESTIMATED 2026-08-16 — now 1.5.** Chosen by held-out error over a pre-registered grid (`scripts/tune_szc.R`, check `G4`). See §6. |
 | `sigma_house_pts = 3` | `trend.R`, `hyperpars.R` | Prior sd on a single pollster's house effect | **TESTED 2026-08-16, KEPT.** Held-out error over a pre-registered grid is a smooth U with its minimum at exactly 3 (`scripts/tune_sigma_house.R`, check `G5`). See §6b. |
 | `k0 = 25` | `hyperpars.R` | Shrinkage of per-cycle sigmas toward pooled | **CANNOT BE TUNED ON FORECAST ERROR — it does not reach the forecast.** See §6c. |
+| `FP_EXTRA_SD = 2.419` | `fit_seats_full.R` | Statewide first-preference error the trend posterior does not contain, added in quadrature | **ESTIMATED, ADOPTED 2026-08-19.** Coverage of the raw band is 69.8% at a nominal 95%; the structure (additive in points, not multiplicative) was chosen by testing alternatives against the residuals, and the value is the two-party projection error pre-registered in `prereg-fp-widening-choice.md`. See `reviews/fp-widening-choice-2026-08-19.md`. |
+| `SEED = 42` | `fit_seats_full.R` | Simulation seed | **FIXED.** Overridable via `AUSPOL_SEED` only so a change can be checked for stability across seeds. |
 | `k0 = 12` | `hyperpars.R` | Shrinkage of firm noise factors | **Affects the published scorecard, not the forecast.** See §6c. |
 | `clip = c(0.6, 2.0)` | `hyperpars.R` | Bounds on a firm's noise multiplier | **Affects the published scorecard, not the forecast.** See §6c. |
 

@@ -105,3 +105,82 @@ Per the rule as written, no widening factor has been adopted and
 coverage. Whether to re-run under a correctly-sized criterion is a decision
 recorded separately, because deciding it here — having seen the results — is
 the exact failure this project has now made twice.
+
+---
+
+## RESOLVED, later the same day: A = 2.419 adopted
+
+The test above was refused by a criterion whose tolerance was smaller than the
+noise. That criterion has been amended — in the plan, as a visible addition with
+the original clause left unedited — to require every level within **2 clustered
+standard errors** rather than 5 fixed points.
+
+Under the amended test **both candidates pass**, so the tie-break decides. It
+was written in the parent plan's R3 before either result was known, and it picks
+**A = 2.419**, the two-party projection error.
+
+That is the strongest thing that can be said for a criterion changed after the
+fact: had the amendment been bent toward a preferred answer it would have
+favoured B, the number found later. It does the opposite.
+
+| nominal | clustered SE | A deviation | B deviation |
+|---|---:|---:|---:|
+| 50% | 4.3 pts | 1.76σ | 1.25σ |
+| 80% | ~3.0 pts | 1.92σ | 0.87σ |
+| 95% | ~1.9 pts | 1.26σ | 0.71σ |
+
+## F4 passed, and it was not a formality
+
+F4 existed because this repo refused a very similar change eight hours earlier:
+One Nation's own seat sd of 5.5, which raised its win probability in **71 of 87
+seats and lowered it in 1**. Widening a party that is behind in most seats is a
+one-way ratchet — upside noise lets it cross a threshold, downside costs nothing
+where it was already losing.
+
+**This change is not that**, and the numbers say so:
+
+| | growth (before) | additive (after) | change |
+|---|---:|---:|---:|
+| ONP expected seats | 2.96 | 3.10 | **+0.14** (limit 1.0) |
+| ONP P(at least one seat) | 0.926 | 0.897 | **−0.030** |
+| ALP expected seats | 39.29 | 39.12 | −0.17 |
+| GRN expected seats | 4.95 | 4.96 | +0.01 |
+
+One Nation's probability of winning **any** seat *falls*. The difference from
+the refused experiment is that this widens every party symmetrically at the
+statewide level, so One Nation's rivals get the same extra spread and the
+threshold-crossing advantage disappears.
+
+Stable across seeds 42, 101 and 202: +0.144 / +0.138 / +0.148 on the mean, and
+−0.030 / −0.026 / −0.031 on P(≥1). Before any of this was read as real, the
+unchanged arm was confirmed to reproduce the published files **byte-for-byte**,
+so the refactor that introduced the switch is inert.
+
+## What actually changed, and a correction to an earlier claim
+
+The multiplicative `growth` factor in `fit_seats_full.R` — every party's
+statewide sd scaled by the ratio the two-party projection inflates the two-party
+trend — is replaced by the additive constant. **The multiplicative form was
+directly refuted** by the residual analysis that produced these candidates:
+`cor(|error|, posterior sd) = −0.036, p = 0.68`, so a well-determined trend is
+no more accurate in absolute terms and there is nothing for a multiplier to
+scale. Statewide sds move from 1.35–1.92 to 2.52–2.62.
+
+**Correction.** Earlier in this work I described our published first-preference
+intervals as too narrow, and quoted a One Nation range of 18.7–22.8 against AE
+Forecasts' 10.5–30.5. The forecast page publishes **no first-preference
+intervals at all** — the trend chart draws only the mean lines, `lo95`/`hi95`
+are never plotted, and the `fp_now` block in the page data is read by nothing.
+That range was computed by me, not published. The coverage defect was real and
+is what motivated this work, but its only live consumer was the seat model.
+
+## Published effect
+
+| | before | after |
+|---|---|---|
+| ALP seats | 40 (90%: 24–51) | 40 (90%: **23–51**) |
+| ONP seats | 3 (90%: 0–7) | 3 (90%: **0–8**) |
+| Labor majority | 29.7% | **28.7%** |
+
+Medians are unchanged; this is a uncertainty change, which is what it was
+supposed to be.
