@@ -21,6 +21,13 @@ suppressMessages(library(data.table))
 
 N_SIMS  <- 20000
 SEAT_SD <- 3.5      # within-region seat deviation, from seat_swing_spread()
+# NOT adopted: One Nation was given its own, larger seat sd here (5.5, the
+# measured RMSE of its allocation against SA 2026) and it failed its
+# pre-registration. Widening a party that is BEHIND in most seats is a one-way
+# ratchet: its win probability rose in 71 of 87 seats and fell in 1, because
+# upside noise lets it cross a threshold while downside costs nothing where it
+# was already losing. simulate_seat_contests() keeps the per-party seat_sd
+# capability, unused here. See docs/reviews/onp-seat-uncertainty-2026-08-19.md.
 SMOOTH  <- 0.15     # see distribute_preferences(); NOT optional, see its docs
 ONP_B1  <- -0.0968  # Greens-share coefficient, fitted on Victorian federal 2025
 

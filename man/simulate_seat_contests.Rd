@@ -27,7 +27,15 @@ Applied once per simulation and shared by every seat, so parties move
 together across the state as they actually do. Ignored when
 \code{statewide_draws} is supplied.}
 
-\item{seat_sd}{Per-seat idiosyncratic deviation, in points.}
+\item{seat_sd}{Per-seat idiosyncratic deviation, in points. A single number
+applies to every party; a named vector gives each party its own, which
+matters when one party's seat share is ALLOCATED rather than measured. One
+Nation polled 0.22\% in Victoria in 2022, so its seat shares are constructed
+by ordering on Greens share and quantile-mapping onto South Australia --
+an estimate with a measured RMSE of 5.0 points against SA's actual result,
+against 3.5 for a party projected from its own prior seat vote. Giving both
+the same figure claims the constructed number is as reliable as the
+measured one. See docs/plans/prereg-onp-seat-uncertainty.md.}
 
 \item{n_sims}{Number of simulations.}
 

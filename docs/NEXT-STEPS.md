@@ -375,6 +375,34 @@ hit both optimiser bounds) and widening the default walk for a party far from
 its prior (which needs a threshold that must not be chosen after seeing NSW
 breach at 5.15).
 
+### One Nation seat uncertainty: measured, and NOT adopted (2026-08-19)
+
+[reviews/onp-seat-uncertainty-2026-08-19.md](reviews/onp-seat-uncertainty-2026-08-19.md),
+against [plans/prereg-onp-seat-uncertainty.md](plans/prereg-onp-seat-uncertainty.md).
+**Code reverted.**
+
+First real measurement of how good the One Nation seat allocation is: scored
+against SA 2026's 47 districts it has an **RMSE of 5.045** points (r = +0.779,
+beating a flat allocation by 2.5). It carries information and is far less precise
+than a measured share — exactly what the code's own comment says, now with a
+number.
+
+Giving it a matching seat sd of 5.5 **failed**. B3 was the wrong criterion (the
+seat-COUNT interval does not widen when per-seat uncertainty does; it shifted
+0–7 to 1–8). But the real reason is worse and no criterion caught it: One
+Nation's win probability **rose in 71 of 87 seats and fell in 1**. Widening a
+party that is behind almost everywhere is a one-way ratchet — upside crosses the
+threshold, downside costs nothing where it was already losing.
+
+**Next on this thread:** add the uncertainty *without moving the expected seat
+count* — widen the ordering rather than the level, or recentre after widening.
+Needs its own pre-registration with a criterion that can see a level shift, since
+that is what this attempt produced and what B3 missed.
+
+Kept: the per-party `seat_sd` capability (inert by default, tested),
+`scripts/calibrate_onp_seat_sd.R`, and a new all-party SA first-preference
+extract.
+
 ### Still open
 
 - **One Nation's Victorian level.** 20.4 fitted against 23.2 polled. Not shown
