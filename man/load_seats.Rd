@@ -15,7 +15,9 @@ data.table: \code{seat}, \code{incumbent}, \code{challenger}, \code{seat_region}
 over 50 in every seat, negative where the Coalition leads — NOT the
 incumbent's; see \code{\link[=seat_alp_tpp]{seat_alp_tpp()}} for why that distinction matters and
 how reading it the other way was caught), \code{prev_swing}, \code{classic} (TRUE
-when the contest is ALP versus Coalition).
+when the contest is ALP versus Coalition), \code{fed_swing} (the federal swing
+in that area transposed onto state boundaries, \code{NA} where absent), and
+the presence flags \code{retirement}, \code{soph_cand} and \code{soph_party}.
 }
 \description{
 Format is a flat text file: \verb{#SeatName} then \code{key=value} lines.

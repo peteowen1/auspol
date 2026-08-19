@@ -482,6 +482,35 @@ figure that was Monte Carlo noise: quoting a difference between point estimates
 before asking what range the data supports. The script now prints the interval
 beside the number so it cannot be quoted alone.
 
+### ADOPTED: four ignored seat-file fields predict seat swing (2026-08-19)
+
+[reviews/seat-swing-predictors-2026-08-19.md](reviews/seat-swing-predictors-2026-08-19.md),
+against [plans/prereg-seat-swing-predictors.md](plans/prereg-seat-swing-predictors.md).
+**First adopted improvement in a while.**
+
+`load_seats()` read 5 of 11 fields. Four of the ignored ones -- transposed
+federal swing, retirement, sophomore candidate, sophomore party -- were sitting
+in a file already being read, and they predict a seat's departure from the
+statewide swing.
+
+Out-of-sample MAE **3.948 -> 3.425** (gain 0.523, bar was 0.10), positive in
+BOTH held-out elections, every coefficient sign as psephology expects, residual
+spread 5.089 -> 3.996.
+
+**Published headline: Labor seats 39 -> 40**, 90% range 23-51 -> 25-52, majority
+chance 29.7% -> 27.7%. The median rises while the majority chance falls because
+the distribution narrowed -- which is the point.
+
+The anchor that mattered: after wiring it in, `S1` still gives 56 classic seats
+at zero swing against 2022's actual 56. The adjustment sums to zero, so it
+redistributes rather than adds.
+
+**Does NOT reach the candidate-level model.** `fit_seats_full.R` never calls
+`simulate_seats()` -- it works in primary-vote space -- so every by-party number
+(Greens 5, One Nation 3, independents 0) is unchanged. Converting a two-party
+swing into primary shares is a real modelling question, queued not attempted.
+And this does nothing for the One Nation or independents threads.
+
 ### Still open
 
 - **One Nation's Victorian level.** 20.4 fitted against 23.2 polled. Not shown

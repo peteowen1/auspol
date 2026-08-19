@@ -23,7 +23,9 @@
 #'   over 50 in every seat, negative where the Coalition leads — NOT the
 #'   incumbent's; see [seat_alp_tpp()] for why that distinction matters and
 #'   how reading it the other way was caught), `prev_swing`, `classic` (TRUE
-#'   when the contest is ALP versus Coalition).
+#'   when the contest is ALP versus Coalition), `fed_swing` (the federal swing
+#'   in that area transposed onto state boundaries, `NA` where absent), and
+#'   the presence flags `retirement`, `soph_cand` and `soph_party`.
 #' @export
 load_seats <- function(year, region) {
   path <- anchor_data_path(file.path("..", "..", "analysis", "seats",
@@ -48,6 +50,20 @@ load_seats <- function(year, region) {
       incumbent = get(block, "sIncumbent"),
       challenger = get(block, "sChallenger"),
       seat_region = get(block, "sRegion"),
+      # Four fields this loader ignored until 2026-08-19. Measured across
+      # Victoria 2022 and NSW 2023 (180 seats) they cut out-of-sample
+      # seat-swing MAE from 3.948 to 3.425 -- a gain of 0.523 against a
+      # pre-registered bar of 0.10, positive in BOTH held-out elections, with
+      # every coefficient sign as psephology expects. They were sitting in a
+      # file this function already reads. See
+      # docs/plans/prereg-seat-swing-predictors.md.
+      #
+      # A missing b-flag means FALSE, not NA: these are presence flags and the
+      # anchor writes the line only when it applies.
+      fed_swing = suppressWarnings(as.numeric(get(block, "fTransposedFederalSwing"))),
+      retirement = !is.na(get(block, "bRetirement")),
+      soph_cand = !is.na(get(block, "bSophomoreCandidate")),
+      soph_party = !is.na(get(block, "bSophomoreParty")),
       margin = suppressWarnings(as.numeric(get(block, "fTppMargin"))),
       prev_swing = suppressWarnings(as.numeric(get(block, "fPreviousTppSwing")))
     )
@@ -158,9 +174,25 @@ simulate_seats <- function(seats, tpp_mean, tpp_sd, prev_tpp, seat_sd,
   n <- nrow(cl)
 
   statewide <- stats::rnorm(n_sims, tpp_mean, tpp_sd) - prev_tpp
+  # Part of a seat's departure from the statewide swing is predictable rather
+  # than noise -- a retiring member, a first-term member defending, and above
+  # all how the area swung federally. Measured on 180 seats across Victoria
+  # 2022 and NSW 2023 this cuts out-of-sample seat-swing MAE from 3.948 to
+  # 3.425. It sums to zero across seats by construction, so it redistributes
+  # the statewide swing rather than adding to it.
+  adj <- if (all(c("fed_swing", "retirement") %in% names(cl))) {
+    seat_swing_adjustment(cl)
+  } else {
+    # An older load_seats() table. Fall back rather than fail, but SAY SO --
+    # the seat model quietly losing its predictors is the kind of degradation
+    # that would never surface in a number.
+    warning("seats has no fed_swing/retirement columns; seat-swing prediction ",
+            "is OFF and every seat gets the uniform swing", call. = FALSE)
+    rep(0, n)
+  }
   # n_sims x n matrix of seat results
   noise <- matrix(stats::rnorm(n_sims * n, 0, seat_sd), nrow = n_sims)
-  result <- matrix(base, nrow = n_sims, ncol = n, byrow = TRUE) +
+  result <- matrix(base + adj, nrow = n_sims, ncol = n, byrow = TRUE) +
     statewide + noise
   if (region_sd > 0) {
     # A seat whose block omits sRegion arrives as NA. factor() DROPS NA rather
@@ -203,7 +235,8 @@ simulate_seats <- function(seats, tpp_mean, tpp_sd, prev_tpp, seat_sd,
          # alone reads as absurd next to the win probability: on a -7 point
          # swing a seat Labor held 57-43 is a coin flip, and a table showing
          # "57.2" beside "50.2%" looks like a bug until you supply the swing.
-         alp_tpp_proj = base + (tpp_mean - prev_tpp),
+         alp_tpp_proj = base + adj + (tpp_mean - prev_tpp),
+         seat_swing_adj = adj,
          alp_win_prob = colMeans(won))[order(-alp_win_prob)],
        n_classic = n,
        n_nonclassic = sum(!seats$classic))

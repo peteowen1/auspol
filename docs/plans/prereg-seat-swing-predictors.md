@@ -87,3 +87,22 @@ every seat**, i.e. a per-seat deviation of zero.
   anyway.
 - **The transposed federal swing is itself a modelled quantity** computed by the
   anchor, not a measurement. If it is wrong, this inherits that.
+
+---
+
+## Result, 2026-08-19: ADOPTED
+
+[../reviews/seat-swing-predictors-2026-08-19.md](../reviews/seat-swing-predictors-2026-08-19.md).
+
+Pooled out-of-sample MAE **3.948 → 3.425**, a gain of **0.523** against the 0.10
+bar. All four refusals clear: positive in **both** held-out elections (+0.213
+Victoria, +0.819 NSW), every coefficient sign as required in advance, residual
+spread 5.089 → 3.996, and Labor's median seat count moving +1 against a bar of 3.
+
+Published headline: Labor seats 39 → **40**, 90% range 23–51 → 25–52, majority
+chance 29.7% → **27.7%** — the median rises while the majority chance falls,
+because the distribution narrowed.
+
+**The candidate-level model is untouched**, because `fit_seats_full.R` does not
+call `simulate_seats()`. Extending this to primary-vote space is queued, not
+attempted, and this does nothing for the One Nation or independent threads.
