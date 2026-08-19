@@ -107,6 +107,25 @@ cycles <- load_election_cycles(); polls <- load_polls("vic")
 pri <- load_prior_results(); kp <- pri$region == "vic" & pri$year == 2026
 priors <- setNames(pri$prev1[which(kp)], pri$party[which(kp)])
 fl <- flows_for(load_preference_flows(), 2026, "vic", quiet = TRUE)
+# DIAGNOSTIC ONLY, default 0. Shifts every party's flow-to-Labor by a fixed
+# number of POINTS, to size what getting the flows wrong is worth before
+# deciding whether to model flow uncertainty properly. Flows currently enter as
+# CONSTANTS, identical in all draws -- a known unknown treated as known.
+#
+# APPLIED HERE, AT THE SOURCE, and the placement is the point. Shifting only
+# `flow_of()` further down reaches just the statewide two-party anchoring, and
+# that path is INERT by construction: the anchoring moves the MEAN of the
+# statewide draws, while simulate_seat_contests() applies only
+# `statewide_draws[s, ] - centre` (R/seat_sim.R), so a shift in the mean is
+# subtracted straight back out. Shifting `fl` here also reaches trend_as_at()
+# below, which is the live path.
+FLOW_SHIFT <- as.numeric(Sys.getenv("AUSPOL_FLOW_SHIFT", "0"))
+if (FLOW_SHIFT != 0) {
+  fl$flow_alp <- pmin(95, pmax(5, fl$flow_alp + FLOW_SHIFT))
+  cat(sprintf("DIAGNOSTIC: flows shifted %+.2f pts -> %s
+", FLOW_SHIFT,
+              paste(sprintf("%s %.1f", fl$party, fl$flow_alp), collapse = ", ")))
+}
 now <- trend_as_at(polls, 2026, cycles, Sys.Date(), priors, fl, with_series = TRUE)
 last <- as.data.table(now$series)[, .SD[which.max(date)], by = party]
 tppr <- last[party == "TPP_ALP"]
