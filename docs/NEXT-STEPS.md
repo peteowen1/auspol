@@ -418,6 +418,15 @@ statewide mean preserved to six decimals, rank correlation 0.781 against the
 (4.4x, bar was 3x). Huge improvement on the previous 71:1, so the diagnosis was
 right — ordering noise is far more two-sided than share noise — but not enough.
 
+**Confirmed by review, with evidence:** seats where One Nation's probability
+FELL had a mean central win probability of 0.154 and share 28.6%; seats where it
+ROSE had 0.017 and 19.1%. The gains are long shots deep in the convex region,
+the losses are the competitive seats. That is the Jensen signature.
+
+**Withdrawn:** I also reported the mean seat count rising +0.108. It does not
+reproduce (review got −0.065, range −0.095 to +0.498) and is Monte Carlo noise.
+R1's ratio held at 4.38x-4.83x, so the refusal is unaffected.
+
 **The lesson worth keeping:** preserving the statewide total does not make the
 effect neutral. A seat outcome is a threshold event and the share-to-probability
 map is convex, so moving a high share INTO a competitive seat gains more than

@@ -194,8 +194,12 @@ simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
       statewide_draws[s, ] - centre
     }
     for (i in seq_len(nseat)) {
-      # NOT `base`: this file calls base::matrix(), and a local of that name is
-      # the sort of shadowing this repo has been bitten by repeatedly.
+      # Named `base_v` for readability, not for safety. An earlier version of
+      # this comment claimed a local called `base` would endanger this file's
+      # base::matrix() calls -- that is wrong. `pkg::name` resolves the literal
+      # symbol without an environment lookup, so a local `base` cannot shadow
+      # it. Kept the name, corrected the reason: a wrong rationale in a comment
+      # is worse than none, because the next editor believes it.
       base_v <- shares[i, ]
       # A per-draw base share for parties whose allocation is uncertain. `shift`
       # still applies on top: the statewide level comes from the draw, this only

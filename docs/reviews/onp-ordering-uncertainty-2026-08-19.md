@@ -28,12 +28,16 @@ Verified, not assumed:
 
 | | criterion | control | perturbed | |
 |---|---|---:|---:|:--:|
-| C1 | ONP median ≤1, mean ≤0.5 | 3 / 3.349 | 3 / 3.457 | pass |
+| C1 | ONP median ≤1, mean ≤0.5 | 3 / 3.349 | 3 / 3.457* | pass |
 | C2 | ALP, LNP medians ≤2 | 40, 38 | 40, 38 | pass |
 | C3 | ONP 90% interval must widen | 0–7 | **0–8** | pass |
 | C4 | primaries sum to 100 | — | holds | pass |
 
 Every acceptance criterion passed, including the one the last attempt failed.
+
+\* The mean is not stable — see the R3 withdrawal below. C1 passes on the
+median under any reconstruction, and on the mean under all of them too, but the
+mean's *value* should not be quoted as measured.
 
 ## R1 refuses it
 
@@ -49,9 +53,16 @@ The diagnosis was right and the improvement is large — a 71:1 split became
 57:13, so ordering noise really is far more two-sided than share noise, exactly
 as the plan argued. It is still not two-sided enough.
 
-R3 also fired as a *report-prominently* condition rather than a refusal: One
-Nation's mean seat count rose by **+0.108** despite an exactly preserved
-statewide vote. Small, within C1's bound, and in the same direction as before.
+**R3's figure does not reproduce, and I am withdrawing it.** I reported One
+Nation's mean seat count rising by +0.108 on an exactly preserved statewide
+vote. Review re-derived the experiment at production scale and got **−0.065** —
+the opposite sign. Across three plausible reconstructions the mean-seat change
+ranged from −0.095 to +0.498, so it is a first-moment statistic dominated by
+Monte Carlo noise, not the stable measurement I presented it as.
+
+R1's ratio, by contrast, reproduced at **4.38×–4.83×** across all three — always
+well clear of the 3× bar. **The refusal rests on R1 alone and is unaffected.**
+But the write-up leaned on R3 as corroboration it could not bear.
 
 ## Why preserving the total is not enough
 
@@ -67,6 +78,20 @@ concentrate where the curve is steep; the losses fall where it is flat.
 So the ratchet is not caused by adding vote — no vote is added — it is caused by
 redistributing it across a nonlinearity. Any scheme that reassigns shares
 without correcting for that convexity will lean the same way, just less.
+
+**Tested, rather than left as a plausible story.** Splitting seats by which way
+they moved:
+
+| | mean central win probability | mean central ONP share |
+|---|---:|---:|
+| seats where probability **fell** | 0.154 | 28.6% |
+| seats where probability **rose** | 0.017 | 19.1% |
+
+Clean separation, reproduced across all three reconstructions. The seats that
+gained were long shots deep in the convex region; the seats that lost were the
+competitive ones on the concave part of the curve. That is the Jensen signature,
+and it means the effect is a property of the curve rather than of this
+particular perturbation.
 
 ## Refused rather than tuned
 

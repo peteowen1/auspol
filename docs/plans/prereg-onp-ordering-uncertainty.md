@@ -132,8 +132,11 @@ attempt failed.
 attempt is large (71:1 → 57:13), so the diagnosis was right; it is still not
 two-sided enough.
 
-R3 fired as its report-prominently condition: the mean seat count rose by
-**+0.108** on an exactly preserved statewide vote.
+**R3's figure is withdrawn.** I reported the mean seat count rising +0.108;
+review re-derived it at production scale and got **−0.065**, and across three
+plausible reconstructions it ranged −0.095 to +0.498. It is Monte Carlo noise,
+not a measurement. R1's ratio reproduced at 4.38×–4.83× across the same three,
+so **the refusal rests on R1 alone and is unaffected**.
 
 **Why preserving the total is not enough.** A seat outcome is a threshold event
 and the map from share to win probability is convex over the relevant range, so
