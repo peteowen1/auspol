@@ -1,3 +1,27 @@
+# auspol 0.4.14
+
+Two pre-registered experiments, both ending in **do not adopt**, and a guard
+that could not fail.
+
+**The independents fix failed its own acceptance criterion and was reverted.**
+Exempting a live independent's seat from the `OTH` scaling lifted South-West
+Coast's independent from 16.3% to 23.1% -- the category error is real -- but
+One Nation is projected at 26.7% in that seat, so the independent is still third
+and still excluded. A1 required 10% win probability and got 0.06%. The binding
+constraint is the One Nation seat allocation, not the scaling.
+
+**NSW's red build is diagnosed.** `fit_nsw.R:132` gives per-cycle volatility
+only to parties with 15+ polls in the cycle; One Nation has 8, so it is fitted
+with the generic default random walk while every other party gets its own. Its
+fitted 19.52 sits below every poll since February. Victoria's One Nation has 19
+polls, clears the floor, and its gap closed on its own to 2.39 -- same party,
+same surge, opposite outcomes, decided by a threshold. `NL3` is not relaxed.
+
+**`build_page.R`'s staleness guard now checks the producing script**, not just
+the poll data. A reverted experiment left a seat-probability CSV that was newer
+than the polls and so passed the old guard, and publishing it would have shown a
+0.06% independent chance the code cannot produce.
+
 # auspol 0.4.13
 
 Documentation only; no model change.
