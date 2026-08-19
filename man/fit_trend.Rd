@@ -8,6 +8,7 @@ fit_trend(
   polls,
   party,
   prior_result = NA_real_,
+  anchor_k = ANCHOR_K,
   scale = c("logit", "points"),
   sigma_obs = NULL,
   sigma_rw = NULL,
@@ -26,7 +27,11 @@ fit_trend(
 
 \item{party}{Column name, e.g. "ALP".}
 
-\item{prior_result}{Previous-election vote share for day-0 anchor (percent).
+\item{prior_result}{Previous-election vote share for day-0 anchor (percent).}
+
+\item{anchor_k}{Previous-election share below which the day-0 anchor is
+weakened, because a near-zero previous result says little about where a
+party starts. Defaults to \link{ANCHOR_K}.
 \code{NA} means anchor loosely to the first poll.}
 
 \item{scale}{Model scale: "logit" (default) or "points" (the stage-1
