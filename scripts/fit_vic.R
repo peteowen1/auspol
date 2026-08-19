@@ -147,7 +147,8 @@ stopifnot(!any(hy$at_bound), all(hy$conv == 0))
 # ---- Fit every cycle ----
 # A party with enough polls in THIS cycle gets its own sigmas even if the
 # completed cycles had too few to pool from — which is exactly One Nation's
-# situation in Victoria (9 polls across 2018+2022, 18 in 2026). Without this
+# situation in Victoria (9 polls across 2018+2022, 19 in 2026 and rising --
+# a count that moves as polls arrive, so treat it as illustrative). Without this
 # it would fall back to generic defaults for the party that has moved most.
 scale_for <- function(p) if (p %in% names(scale_of)) scale_of[[p]] else "logit"
 walk_of <- function(cp, year) {

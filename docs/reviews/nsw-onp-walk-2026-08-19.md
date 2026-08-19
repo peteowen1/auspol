@@ -52,9 +52,14 @@ The per-cycle sigma table confirms it. ALP, GRN, LNP and OTH each get their own
 | 2027 | OTH | 28 | 0.2935 | 0.3217 |
 | 2027 | **ONP** | **8** | — | **absent** |
 
-**The party whose trend most needs a fast walk is the only one that cannot have
-one**, because the test for "can we estimate this" is poll count, and a new
-party is by definition thinly polled.
+**The party whose trend most needs a fast walk is denied one**, because the test
+for "can we estimate this" is poll count, and a new party is by definition
+thinly polled.
+
+To be exact: SFF and DEM also lack a per-cycle walk in this cycle. One Nation is
+not uniquely denied — it is the only party denied one that is large enough and
+volatile enough for it to matter, and the only one that is both asserted on and
+breaching.
 
 ## Why Victoria's equivalent gap closed and this one did not
 
@@ -64,7 +69,10 @@ party is by definition thinly polled.
 > completed cycles had too few to pool from — which is exactly One Nation's
 > situation in Victoria (9 polls across 2018+2022, 18 in 2026).
 
-Victoria's One Nation has **18** polls, clears the 15 floor, and gets a
+(That comment says 18; a poll has arrived since it was written and the count is
+now 19. Quoted as-is, with the drift noted, rather than silently corrected.)
+
+Victoria's One Nation has **19** polls, clears the 15 floor, and gets a
 per-cycle walk fitted to its own movement. Its gap fell from 2.78 to **2.39** as
 polls accumulated and it no longer breaches. NSW's has **8**, gets the default,
 and sits 5.15 out.

@@ -180,7 +180,8 @@ is largest the shrinkage has earned its keep (mean |fit − actual| 2.43 against
 Cause: One Nation is named in no Victorian poll before 2026-01-28, so its
 series runs three years anchored near 0.28 with seven months of data at the
 end. Tested and refuted along the way: the fold imputation, which gives an
-identical 20.00 when the fit uses only the 18 polls that name the party.
+identical 20.00 when the fit uses only the 18 polls that named the party at
+the time (19 now).
 
 ### The sum check is replaced (2026-08-18)
 
@@ -360,7 +361,7 @@ points in a quarter. It has no row at all in the per-cycle sigma table.
 one**, because the test for "can we estimate this" is poll count and a new party
 is by definition thinly polled.
 
-This is also why Victoria's equivalent gap closed on its own (18 polls, clears
+This is also why Victoria's equivalent gap closed on its own (19 polls, clears
 the floor, gets a per-cycle walk, 2.78 -> 2.39) and NSW's did not (8 polls).
 Same party, same surge, opposite outcomes, decided by a threshold.
 

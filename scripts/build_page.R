@@ -280,11 +280,31 @@ if (any(present) && !all(present)) {
        "). Re-run scripts/fit_seats_full.R.")
 }
 if (all(present)) {
-  stale_seats <- c(sp_f, ss_f)[file.info(c(sp_f, ss_f))$mtime < poll_mtime]
+  # Against the poll data AND against the script that produces these files.
+  #
+  # Poll mtime alone cannot see an output left behind by CODE that has since
+  # changed. On 2026-08-19 an experimental change to fit_seats_full.R was run
+  # and then reverted; its seat-probability CSV survived, newer than the polls,
+  # and this guard passed it. Building the page at that moment would have
+  # published a 0.06% independent win chance in South-West Coast that the code
+  # in the repo cannot produce -- a number with no source.
+  #
+  # An output older than its own producer is stale whatever the poll dates say.
+  producer <- "scripts/fit_seats_full.R"
+  ref_mtime <- poll_mtime
+  ref_what <- "the poll data"
+  if (file.exists(producer)) {
+    pm <- file.info(producer)$mtime
+    if (is.finite(pm) && pm > ref_mtime) {
+      ref_mtime <- pm
+      ref_what <- paste0(producer, ", which has changed since they were written")
+    }
+  }
+  stale_seats <- c(sp_f, ss_f)[file.info(c(sp_f, ss_f))$mtime < ref_mtime]
   if (length(stale_seats)) {
-    stop("These candidate-level seat outputs predate the poll data and would ",
-         "publish old seat probabilities under today's date: ",
-         paste(stale_seats, collapse = ", "), ". Re-run scripts/fit_seats_full.R.")
+    stop("These candidate-level seat outputs predate ", ref_what,
+         " and would publish old seat probabilities under today's date: ",
+         paste(stale_seats, collapse = ", "), ". Re-run ", producer, ".")
   }
 }
 if (all(present)) {
