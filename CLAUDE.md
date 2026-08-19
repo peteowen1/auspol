@@ -81,6 +81,28 @@ can be estimated are chosen by held-out error over a pre-registered grid —
 write the grid, criterion and decision rule to `docs/plans/` and **commit it
 before running**, so the criterion cannot be chosen to fit the answer.
 
+**A decision rule must also say what would make an apparent WIN unacceptable.**
+Committing the criterion first is not enough on its own, and this has now gone
+wrong twice in three experiments:
+
+- the inclusion floor (2026-08-19): floor 15 cleared the pre-registered bar
+  three times over and was refused on an anchor written after the result.
+- One Nation seat uncertainty (2026-08-19): every relevant criterion passed or
+  was mis-specified, and the change was refused on a directional side effect —
+  the party's win probability rose in 71 of 87 seats and fell in 1 — that no
+  criterion covered.
+
+Both refusals look right on the merits and both were reported honestly. That is
+not the point: in each case the real decision came from something invented after
+seeing the results, which is what pre-registration exists to prevent. The lesson
+was written down after the first and **not applied to the second**, so it is
+here rather than in a plan file.
+
+So every plan needs a refusal section naming, in advance: the directional side
+effects that would disqualify a winner, and what the criterion cannot see. If
+that section is hard to write, the criterion is probably measuring the wrong
+thing — which was true both times.
+
 ## Two model paths — know which one you are looking at
 
 `trend_as_at()` fits with default volatility and equal pollster weights, and

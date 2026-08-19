@@ -83,3 +83,23 @@ test_that("a per-party sd is matched by NAME, not by position", {
   # would be identical.
   expect_false(isTRUE(all.equal(onp_wide, onp_tight)))
 })
+
+test_that("a length-1 NAMED seat_sd is refused, not broadcast to everyone", {
+  # `c(ONP = 5.5)` reads as "One Nation gets its own, everyone else default".
+  # There is no per-party default, so half-applying it is wrong -- and the first
+  # version broadcast the 5.5 to every party with the name discarded, which is
+  # invisible in the output. Refuse.
+  expect_error(
+    simulate_seat_contests(mk_shares(), mk_fm(),
+                           party_sd = c(ALP = 1, LNP = 1, ONP = 1),
+                           seat_sd = c(ONP = 5.5), n_sims = 10, seed = 1),
+    "missing an entry for")
+})
+
+test_that("an unnamed scalar is still accepted and applies to every party", {
+  # The guard above must not break the ordinary call fit_seats_full.R makes.
+  expect_silent(
+    simulate_seat_contests(mk_shares(), mk_fm(),
+                           party_sd = c(ALP = 1, LNP = 1, ONP = 1),
+                           seat_sd = 3.5, n_sims = 10, seed = 1))
+})

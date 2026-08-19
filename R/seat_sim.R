@@ -68,7 +68,14 @@ simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
   # vector is matched BY NAME to the share columns, never by position: the
   # two orderings have no reason to agree, and silently pairing One Nation's
   # sd with Labor's column would be undetectable in the output.
-  if (length(seat_sd) == 1L) {
+  # length == 1 AND unnamed. A named length-1 vector -- `c(ONP = 5.5)`, the
+  # natural way to write "give One Nation its own and leave the rest alone" --
+  # went through this branch and was broadcast to EVERY party, name discarded,
+  # silently. That is the same undetectable mispairing the comment above warns
+  # about, arriving through the length check instead of the ordering. There is
+  # no per-party default to fall back on, so a named vector that does not cover
+  # every party is refused below rather than half-applied.
+  if (length(seat_sd) == 1L && is.null(names(seat_sd))) {
     seat_sd_vec <- rep(as.numeric(seat_sd), K)
   } else {
     if (is.null(names(seat_sd))) {
