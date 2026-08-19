@@ -147,6 +147,18 @@ was caught only against a number someone already knew.
   | G6 | `compare_backtest_model.R` — default vs per-cycle volatility | no, run on demand |
   | G7 | `build_page.R` — the **published** fit is structurally valid | yes |
 
+  One-off analysis scripts carry their own prefixes. They are **not** pipeline
+  stages, so `run_all.R`'s clash detector never sees them and nothing but this
+  list stops a future script reusing a prefix — which is exactly how `B1` came
+  to mean two different things:
+
+  | Prefix | Script | What it measures |
+  |---|---|---|
+  | `SC` | `test_seat_probability_calibration.R` | are per-seat win probabilities calibrated |
+  | `EV` | `estimate_fp_extra_var.R` | the first-preference variance the posterior lacks |
+  | `FW` | `compare_fp_widening.R` | which widening factor, against the pre-registered rule |
+  | `PL` | `test_poll_lag.R` | does the trend's lag behind recent polls hurt |
+
   Codes must be unique and `run_all.R` stops if two stages claim the same one
   — but only for stages. Adding a code to a standalone script means checking
   this table by hand, and **grepping for it is not enough**: three separate
