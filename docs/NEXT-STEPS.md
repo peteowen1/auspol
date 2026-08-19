@@ -440,6 +440,40 @@ some upward lean is the honest consequence of real uncertainty and bound it
 instead of requiring symmetry. The third is most likely right and hardest to
 argue without it sounding like a rationalisation of three failures.
 
+### EXTERNAL check: the model may UNDER-call One Nation by half (2026-08-19)
+
+[reviews/onp-seats-vs-sa-2026-08-19.md](reviews/onp-seats-vs-sa-2026-08-19.md),
+`scripts/compare_onp_seats_sa.R`. **Nothing changed**, and this reframes the
+whole thread.
+
+South Australia 2026 is the only completed election where One Nation contested
+at this level. **It won 7 of 47 districts on 22.9% statewide.** Applying SA's
+own share-to-win curve to Victoria's projected One Nation shares gives **6.2
+expected seats**. The Victorian model expects **2.96**.
+
+A plausible mechanical cause: Victoria's projected maximum is **33.0%**, which is
+exactly where SA's curve reaches even odds. **No Victorian seat is projected past
+the level at which One Nation was more likely than not to win in SA** — the
+projected spread may simply be too narrow.
+
+**Why this matters more than the number.** Three experiments in a row were about
+preventing One Nation's seat count from RISING, and two were refused precisely
+because the change lifted its probability in most seats. The only external
+evidence available says the count should be roughly twice as high. Those
+refusals were still correct on their own pre-registered terms — a change is not
+validated by happening to move a number the way you later decide it should go —
+but the framing was wrong, and it was wrong because there was no external anchor.
+
+**Caveats, and they are real:** the logistic fit is in-sample on 47 districts,
+the band table is non-monotonic, SA's Labor won 35 of 47 against a far closer
+Victorian contest, the Nationals hold the regional seats where Victorian One
+Nation polls best and SA has no equivalent, and it is one election.
+
+**Next**, replacing the queued fourth uncertainty attempt: establish whether the
+projected SPREAD is right before tuning how uncertainty moves the count. The
+criterion should be this external comparison rather than another internal
+symmetry rule.
+
 ### Still open
 
 - **One Nation's Victorian level.** 20.4 fitted against 23.2 polled. Not shown
