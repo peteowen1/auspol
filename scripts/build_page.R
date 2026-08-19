@@ -305,16 +305,28 @@ if (all(present)) {
   # in the repo cannot produce -- a number with no source.
   #
   # An output older than its own producer is stale whatever the poll dates say.
-  producer <- "scripts/fit_seats_full.R"
+  # The producer is the SCRIPT PLUS THE LIBRARY IT LOADS. fit_seats_full.R calls
+  # devtools::load_all(), so its behaviour depends on every file in R/ -- the
+  # seat-swing adjustment, the trend anchor, the simulator itself. Checking the
+  # driver script alone would let a library change that alters the model pass a
+  # stale CSV through, as long as nobody happened to touch the driver. That the
+  # driver is currently the newest of them is an accident of today's editing
+  # order, not something the guard was arranging.
+  producer_files <- c("scripts/fit_seats_full.R",
+                      list.files("R", pattern = "[.]R$", full.names = TRUE))
+  producer_files <- producer_files[file.exists(producer_files)]
+  stopifnot(length(producer_files) > 1L)   # R/ must not be empty or unreadable
+  pinfo <- file.info(producer_files)
+  newest <- which.max(pinfo$mtime)
   ref_mtime <- poll_mtime
   ref_what <- "the poll data"
-  if (file.exists(producer)) {
-    pm <- file.info(producer)$mtime
-    if (is.finite(pm) && pm > ref_mtime) {
-      ref_mtime <- pm
-      ref_what <- paste0(producer, ", which has changed since they were written")
-    }
+  if (length(newest) && is.finite(pinfo$mtime[newest]) &&
+      pinfo$mtime[newest] > ref_mtime) {
+    ref_mtime <- pinfo$mtime[newest]
+    ref_what <- paste0(producer_files[newest],
+                       ", which has changed since they were written")
   }
+  producer <- "scripts/fit_seats_full.R"
   stale_seats <- c(sp_f, ss_f)[file.info(c(sp_f, ss_f))$mtime < ref_mtime]
   if (length(stale_seats)) {
     stop("These candidate-level seat outputs predate ", ref_what,

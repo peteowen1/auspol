@@ -28,6 +28,8 @@ d[, err := fitted - actual]
 d[, cyc := paste(region, year)]
 
 A_VALUE <- fread("output/projection-mix.csv")[horizon == 30, sd_err_loo][1]
+stopifnot("no horizon-30 row in projection-mix.csv, so A has no value" =
+          is.finite(A_VALUE))
 
 # B is re-estimated leave-one-cycle-out so its coverage is held out, exactly as
 # in estimate_fp_extra_var.R. A needs no such treatment: it is measured on
@@ -103,6 +105,16 @@ cls[, `:=`(A_over = round((A - 0.95) * 100, 1), B_over = round((B - 0.95) * 100,
 cat("\nFW4  by party class at nominal 95% ('over' = points above nominal)\n")
 print(cls)
 big <- cls[n >= 20]
+# `all()` over an empty set is TRUE, so with no class reaching n = 20 this test
+# would report PASS having checked nothing, and feed that straight into an ADOPT
+# verdict. Named in CLAUDE.md as a guard that cannot fail; it is not firing on
+# the current data (ALP 33, OTH 33, LNP 28, GRN 28) but the script's whole job
+# is to gate a decision, so it refuses rather than passes vacuously.
+if (!nrow(big)) {
+  stop("Test 2 has nothing to check: no party class reaches n = 20 party-cycles. ",
+       "Largest is ", cls[which.max(n), party], " at ", max(cls$n),
+       ". A PASS here would mean the check did not run, not that it succeeded.")
+}
 t2_A <- all(big$A_over <= 5); t2_B <- all(big$B_over <= 5)
 cat(sprintf("FW5  test 2 (no class with n>=20 over nominal by >5): A %s | B %s\n",
             if (t2_A) "PASS" else "FAIL", if (t2_B) "PASS" else "FAIL"))

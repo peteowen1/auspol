@@ -61,6 +61,7 @@ OUT_SUFFIX  <- Sys.getenv("AUSPOL_OUT_SUFFIX", "")
 # repo has already mistaken for a result once.
 SEED        <- as.integer(Sys.getenv("AUSPOL_SEED", "42"))
 stopifnot(FP_SD_MODE %in% c("growth", "additive"))
+stopifnot(is.finite(SEED))
 
 SMOOTH  <- 0.15     # see distribute_preferences(); NOT optional, see its docs
 ONP_B1  <- -0.0968  # Greens-share coefficient, fitted on Victorian federal 2025
@@ -126,6 +127,22 @@ if (FLOW_SHIFT != 0) {
 ", FLOW_SHIFT,
               paste(sprintf("%s %.1f", fl$party, fl$flow_alp), collapse = ", ")))
 }
+
+# Emitted as a CHECK CODE, not a plain cat, and this is the point of it.
+# run_all.R keeps only lines matching ^[A-Z]{1,2}[0-9]+[a-c]?[ ] from each
+# stage and DISCARDS the rest, so a plain message never reaches the pipeline
+# log, the Actions step summary or the uploaded artifacts. A leftover
+# AUSPOL_FP_SD_MODE=growth -- a mode this repo measured and REFUTED -- would
+# otherwise change the published seat forecast with nothing anywhere to show
+# it. Reported rather than fatal, because the diagnostic runs are legitimate;
+# what must never happen is one going unnoticed.
+default_run <- SEED == 42L && OUT_SUFFIX == "" && FLOW_SHIFT == 0 &&
+  FP_SD_MODE == "additive"
+cat(sprintf("S6  run config: seed %d, FP sd %s, flow shift %+.2f, suffix %s  %s
+",
+            SEED, FP_SD_MODE, FLOW_SHIFT,
+            if (OUT_SUFFIX == "") "(none)" else OUT_SUFFIX,
+            if (default_run) "PASS" else "FAIL -- NOT A DEFAULT PUBLISH RUN"))
 now <- trend_as_at(polls, 2026, cycles, Sys.Date(), priors, fl, with_series = TRUE)
 last <- as.data.table(now$series)[, .SD[which.max(date)], by = party]
 tppr <- last[party == "TPP_ALP"]
@@ -325,4 +342,6 @@ if (med_gap > 5 || wid_ratio < 0.7 || wid_ratio > 1.4) {
 
 fwrite(wp, sprintf("output/seat-probs-vic-2026%s.csv", OUT_SUFFIX))
 fwrite(as.data.table(sim$totals), sprintf("output/seat-sims-full-vic-2026%s.csv", OUT_SUFFIX))
-cat("\nwrote output/seat-probs-vic-2026.csv\n")
+cat(sprintf("
+wrote output/seat-probs-vic-2026%s.csv
+", OUT_SUFFIX))
