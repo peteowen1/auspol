@@ -273,7 +273,39 @@ its merits, or adopt floor 15 as the rule required and re-open the question with
 the anchor pre-registered. What must not happen is the refusal quietly becoming
 precedent.
 
-### Observation, not yet investigated: independents effectively cannot win
+### Independents cannot win, and it is a defect (2026-08-19, INVESTIGATED)
+
+Full write-up:
+[reviews/independents-cannot-win-2026-08-19.md](reviews/independents-cannot-win-2026-08-19.md).
+**Nothing changed** — a fix needs a pre-registration first.
+
+Not a data gap: independents are loaded in 69 of 87 seats, nine at 15%+, and
+out-polled One Nation in 68 of 87. The model discards them downstream.
+
+`fit_seats_full.R` scales `IND` to the forecast `OTH` total (x0.65) because it
+is one of the two classes the trend does not model, while One Nation is
+projected separately from 0.22% to ~20%. In Mildura that turns **IND 41.2% into
+25.2%** and **ONP ~0 into 31.1%**: the independent drops to third, is excluded
+during the count, and the seat reads LNP 0.991 / ONP 0.009 with **no IND entry
+at all**. Same in Shepparton (IND 29.4% -> LNP 1.000).
+
+A strong local independent is not a statewide minor bucket — the vote is
+personal and seat-specific, which is the whole point of it. Worse, the number
+displacing them is the one the script's own comment says to distrust seat by
+seat ("trust the ONP TOTAL, not any one seat").
+
+Precisely: independents win in **6 draws of 20,000** (Hawthorn 4, Melton 1,
+Monbulk 1), across 3 of the 87 seats the model covers.
+
+**Zero independents is a defensible forecast for 2026** — the Mildura and
+Shepparton members both lost in 2022. Zero *by construction* is not.
+
+Also found: primaries use a uniform ADDITIVE swing with `pmax(0, ...)`, so a
+~12-point Labor fall projects **exactly 0.0%** in any seat where Labor polled
+under 12% in 2022 — Mildura and Shepparton. Two seats, so small, but a major
+party on a projected 0.0% is not a plausible number and nothing reports it.
+
+### Superseded observation
 
 Noticed 2026-08-19 while reading the current seat sim. Across 20,000 draws the
 candidate-level model returns **IND median 0, 90% interval 0-0**. Independents

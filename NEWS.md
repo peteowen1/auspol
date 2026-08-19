@@ -1,3 +1,25 @@
+# auspol 0.4.13
+
+Documentation only; no model change.
+
+**Independents cannot win a seat, and it is a construction defect.** Across
+20,000 draws they win in 6, across 3 of the 87 seats the model covers.
+`fit_seats_full.R` scales `IND` to the forecast `OTH` total because it is one of
+the two classes the trend does not model, while One Nation is projected
+separately from 0.22% to ~20%. In Mildura that turns an independent's 41.2% into
+25.2% and One Nation's nothing into 31.1%, so the independent falls to third and
+is excluded during the count -- the seat reads LNP 0.991 / ONP 0.009 with no
+`IND` entry. A personal, seat-specific vote is not a statewide minor-party
+bucket.
+
+Zero independents is a defensible forecast for 2026, since the Mildura and
+Shepparton members both lost in 2022. Zero by construction is not. A fix needs
+pre-registering, and the obvious repair -- carrying the vote forward unscaled --
+would over-call seats where the independent has retired.
+
+Also recorded: primaries use a uniform additive swing under `pmax(0, ...)`, so
+Labor's ~12-point fall projects exactly 0.0% in Mildura and Shepparton.
+
 # auspol 0.4.12
 
 **"Others" now means one thing per cycle.** When a party is polled but not
