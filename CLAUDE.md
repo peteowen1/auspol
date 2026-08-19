@@ -103,6 +103,31 @@ effects that would disqualify a winner, and what the criterion cannot see. If
 that section is hard to write, the criterion is probably measuring the wrong
 thing — which was true both times.
 
+**And write every tolerance in standard errors, or compute its size in standard
+errors when you write it.** Two criteria have now failed the same way, four days
+apart, and both failures were computable from `n` before the experiment ran:
+
+- the reliability-bin rule (2026-08-19): "no bin off by more than 15 points",
+  set without checking that a decile could hold five seats, where one seat moves
+  the bin by 20.
+- the first-preference widening rule (2026-08-19): "within 5 points of nominal"
+  at the 50%, 80% and 95% levels. Copied from a 95% rule where 5 points is 2.6
+  SE; at the 50% level the same 5 points is **1.16 SE**, so it rejected a
+  perfectly calibrated interval about a quarter of the time. Both candidates
+  were refused by a test with no power to accept either.
+
+**Cluster the standard error on the right unit.** In that case the 139
+party-cycles were 33 independent cycles, because first preferences sum to 100
+within a cycle — treating them as 139 understates the SE. Ask what the
+independent observation actually is before dividing by `sqrt(n)`.
+
+A criterion changed after seeing results is worth almost nothing, so the only
+defence is to get the size right in advance. Where an amendment is unavoidable,
+make it a **visible addition with the original clause left unedited**, and check
+whether it favours the answer found later — if it does, it is not an amendment,
+it is a rationalisation. The one amendment made so far picked the value
+pre-registered *first*, which is the only reason it was allowed to stand.
+
 ## Two model paths — know which one you are looking at
 
 `trend_as_at()` fits with default volatility and equal pollster weights, and
