@@ -181,3 +181,44 @@ cat(sprintf("NT3  wrote %s\n", f))
 fm <- build_flow_matrix(tx, min_n = 3L)
 cat(sprintf("NT4  flow matrix: %d conditional cells, %d pooled rows\n",
             length(fm$conditional), length(fm$pooled)))
+
+# ---- the DECLARED winner of each district ----------------------------------
+# Truth for a backtest must not come from our own exclusion machinery. Running
+# the actual votes through distribute_preferences() to decide who won means any
+# systematic flaw in the flow matrix cancels between truth and prediction, and
+# the model scores better than it deserves. The NSWEC marks the winner ELECTED
+# in the distribution table; that is the commission's declaration and is
+# independent of anything this package computes.
+elected <- rbindlist(lapply(ELECTIONS, function(E) {
+  rbindlist(lapply(districts_of(E$code), function(dn) {
+    f <- file.path(RAW, sprintf("%s-%s.html", E$code, dn))
+    if (!file.exists(f)) return(NULL)
+    h <- paste(readLines(f, warn = FALSE), collapse = "
+")
+    tb <- regmatches(h, regexpr("(?s)<table.*?</table>", h, perl = TRUE))
+    if (!length(tb)) return(NULL)
+    for (tr in regmatches(tb, gregexpr("(?s)<tr.*?</tr>", tb, perl = TRUE))[[1]]) {
+      cs <- strip(regmatches(tr, gregexpr("(?s)<t[hd].*?</t[hd]>", tr, perl = TRUE))[[1]])
+      if (!length(cs)) next
+      if (grepl("^(Candidates|Total|Exhausted|Informal|Absolute)", cs[1])) next
+      if (!any(grepl("ELECTED", cs[-1]))) next
+      hit <- CODES[vapply(CODES, function(k) endsWith(cs[1], k), logical(1))]
+      if (!length(hit)) next
+      code <- hit[which.max(nchar(hit))]
+      return(data.table(election = sprintf("nsw%d", E$year), slug = dn,
+                        code = code,
+                        winner = classify_party(unname(name_of[code]), code)))
+    }
+    NULL
+  }))
+}))
+elected[, seat := unname(name_by_slug[slug])]
+stopifnot(nrow(elected) == 186L, !any(is.na(elected$seat)))
+cat(sprintf("NT5  declared winners: %d districts across %d elections
+",
+            uniqueN(elected$seat), uniqueN(elected$election)))
+print(elected[, .N, by = .(election, winner)][order(election, -N)])
+fwrite(elected[, .(election, seat, code, winner)],
+       file.path(OUT, "nswec-nsw-winners.csv"))
+cat(sprintf("NT5  wrote %s
+", file.path(OUT, "nswec-nsw-winners.csv")))
