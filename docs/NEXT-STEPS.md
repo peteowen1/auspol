@@ -511,6 +511,43 @@ redistributes rather than adds.
 swing into primary shares is a real modelling question, queued not attempted.
 And this does nothing for the One Nation or independents threads.
 
+### CALIBRATION: the pendulum is honest; the primary intervals were not (2026-08-19)
+
+Two calibration tests, both firsts, both against actual results rather than
+against another forecaster.
+
+**First preferences were badly miscalibrated and are now fixed in measurement.**
+Published intervals covered **69.8%** at a nominal 95% over 139 party-cycles
+(50% nominal -> 28.1%, 80% -> 51.1%). The missing piece is poll-to-result error;
+the trend already runs to election day so walk propagation is inside the
+posterior. Structure chosen by testing, not assumption: multiplicative refuted
+(cor(|err|, posterior sd) = -0.04), level-proportional refuted (error flat in
+points from 6% to 40%), additive-in-quadrature supported. **tau = 2.127 points
+by maximum likelihood**, method-of-moments agreeing at 2.079, leave-one-cycle-out
+range 2.044-2.170. Held-out coverage becomes **55.4 / 82.7 / 93.5** against
+nominal 50 / 80 / 95. NOT YET WIRED IN.
+
+**Per-seat win probabilities are calibrated.** 161 seats across Victoria 2022 and
+NSW 2023: slope **1.113** (band was 0.8-1.25), Brier **0.0583** against 0.2382
+for the base rate. The extreme deciles, carrying 117 of 161 seats, are nearly
+exact. Seat-count intervals covered in both elections. Nothing changed.
+
+**Caveat that matters:** the calibrated probabilities come from the TWO-PARTY
+seat model. The candidate-level model -- Greens 5, One Nation 3, independents
+0 -- is untested and this vindicates none of it.
+
+**Still untested and worth doing**, in order: preference flows (`flows_for()`
+returns point estimates with NO uncertainty at all, feeding a model that reports
+probabilities to three decimals); house effects (does a fitted house effect
+predict a firm's error at the NEXT election?); and the One Nation seat
+allocation, whose RMSE of 5.045 was measured but never turned into a calibrated
+distribution -- which is what the three failed uncertainty attempts were groping
+at without a calibration target.
+
+**Structural next step:** a `scripts/calibration_report.R` running every check
+into one table, wired into `run_all.R` so a claim drifting out of calibration
+fails the build the way `L3` does.
+
 ### Still open
 
 - **One Nation's Victorian level.** 20.4 fitted against 23.2 polled. Not shown

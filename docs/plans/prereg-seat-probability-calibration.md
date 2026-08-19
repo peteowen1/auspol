@@ -100,3 +100,24 @@ decision rule uses.**
 - **The 2026 forecast is 101 days out; this is scored at 30.** A model
   calibrated at short range can be overconfident at long range, and this cannot
   detect that.
+
+---
+
+## Result, 2026-08-19: CALIBRATED, nothing changed
+
+[../reviews/seat-probability-calibration-2026-08-19.md](../reviews/seat-probability-calibration-2026-08-19.md).
+
+161 classic seats, Victoria 2022 and NSW 2023, forecast arm. **Calibration slope
+1.113**, inside the [0.8, 1.25] band and underconfident if anything. Brier
+**0.0583** against 0.2382 for the base rate and 0.0994 for incumbent-certain.
+Predicted mean 0.623 against an observed 0.609. Seat-count intervals covered in
+both elections.
+
+Per R1, no recalibration was looked for.
+
+**One threshold of mine was mis-specified.** The rule required no reliability bin
+off by more than 15 points; the worst bin with n ≥ 5 is off by 15.5 — a fail by
+half a point on a bin of five seats, where one seat is worth 20. I set that
+threshold without checking how many seats a decile could hold. Called calibrated
+on the slope, which is the measure built for this, and the bin rule recorded as
+inadequate rather than ignored.
