@@ -91,6 +91,40 @@ the original clause left unedited. **Write tolerances in standard errors, or
 compute and record their size in SE at the time of writing.** Two of this
 project's criteria have now failed the same way.
 
+**4. IN FLIGHT: what preference flows are worth.** Flows enter the seat
+simulation as **constants** — one number per party, identical in all 20,000
+draws — so a forecast quantity is treated as known. One Nation's flow to Labor
+has fallen from 54.4% (1998) to the 25–35% range, and the one-step-ahead error
+of "mean of the last five" is **sd 3.65 points** over 19 observations.
+
+Sizing run: shifting every party's flow down by that 1 sd moves Labor's
+projected two-party from **47.95 to 47.07 — 0.88 points**. Against the
+projection's own sd of 2.546 that is roughly **12% of its variance, currently
+unmodelled**. Seat totals were still simulating at the end of the session; the
+run writes to `output/*-flowlo.csv` and the comparison is a two-minute job.
+
+**Adoption is pre-committed as BLOCKED** regardless of the number
+([plans/prereg-flow-uncertainty.md](plans/prereg-flow-uncertainty.md)). There is
+no out-of-sample test for it — the candidate-level seat model has never been
+backtested, and the calibration we have scores the two-party model, which does
+not use flows. A large sensitivity is a reason to build that backtest, not to
+skip it.
+
+**Two ways this nearly went wrong, both recorded in `CLAUDE.md`:**
+
+- The first diagnostic shifted `flow_of()`, which feeds only the statewide
+  two-party anchoring — **an inert path**. The anchoring moves the *mean* of the
+  statewide draws, and `simulate_seat_contests()` applies only
+  `statewide_draws[s, ] - centre`, so a shift in the mean is subtracted straight
+  back out.
+- Worse: that edit ran inside a *backgrounded* command, died on an
+  `AssertionError`, and the two runs launched behind it used the **unmodified
+  script**. The output came back byte-identical and read as "flows do not
+  matter" — a false conclusion from an experiment that never ran, catchable only
+  by checking whether the variable reached the code. **An edit and the runs that
+  depend on it must not share a backgrounded command, and a diagnostic must
+  print what it applied.**
+
 ### Blocked on Pete
 
 - **The YouGov seat-by-seat comparison cannot be done.** Their full 88-seat MRP
