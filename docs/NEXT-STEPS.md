@@ -44,6 +44,66 @@ open state, not the narrative of how it got here.
   Nation **total** rather than any individual One Nation seat. See
   [reviews/onp-allocation-checks-2026-08-18.md](reviews/onp-allocation-checks-2026-08-18.md).
 
+## Session of 2026-08-19 (overnight) — what changed
+
+Three things shipped, one queue item closed as a non-defect, and one task is
+blocked on Pete.
+
+**1. The published forecast is now the candidate-level seat model.** Every seat
+number on the page comes from it; the two-party model is a cross-check only.
+It covers **87 seats** — Narracan has no ordinary first preferences to swing
+(2022 failed on a candidate's death, the 2023 supplementary went uncontested by
+Labor) and is assigned to the Coalition, stated on the page and guarded. The
+pendulum's shading now comes from the candidate model, so its *position* (2022
+two-party vote) and its *shading* (probability against the real opponent) answer
+different questions — Northcote is safest on two-party numbers and near a
+coin-flip against the Greens. The caption says so.
+
+**2. ADOPTED: a measured first-preference variance correction**, `FP_EXTRA_SD =
+2.419`, added in quadrature in `fit_seats_full.R`. It replaces a *multiplicative*
+inflation that the residuals directly refuted (`cor(|error|, posterior sd) =
+−0.036, p = 0.68`). Published effect: ALP 90% range 24–51 → **23–51**, One Nation
+0–7 → **0–8**, Labor majority 29.7% → **28.7%**; medians unchanged.
+[reviews/fp-widening-choice-2026-08-19.md](reviews/fp-widening-choice-2026-08-19.md).
+
+**3. CLOSED, and it was never a defect: the One Nation lag.**
+[reviews/poll-lag-2026-08-19.md](reviews/poll-lag-2026-08-19.md). The trend sits
+below recent polls in 88 of 139 party-cycles, but following the polls instead
+would have been *worse or equal* (MAE 1.755 vs 1.862, a 1.03 clustered-SE
+difference; RMSE 2.376 vs 2.387). The one case in the whole record shaped like
+Victoria 2026 — **WA 2017 One Nation, prior 0.00, polls 10.3, fitted 7.8, actual
+4.9** — had the trend lag the polls by 2.5 points and still finish 2.9 too high.
+Across all three completed One Nation cycles we **over**-state the party by
++1.42 on average.
+
+Two earlier claims are corrected by that: the day-0 anchor was never the
+mechanism (WA 2017 started from a 0.00 prior and reached 7.8), so `ANCHOR_K` was
+built and refused on a wrong theory; and "the One Nation lag" was the wrong name
+— it is a general minor-party effect (OTH −1.19 over 33 cycles against ONP's
+−1.40 over 3), and naming it after one party invited exactly the party-specific
+fix that was refused.
+
+**A third mis-specified criterion, and a rule that follows.** The FP widening
+test refused both candidates on a tolerance of 5 fixed points, which at the 50%
+level is **1.16 clustered SE** — a rule that rejects a perfectly calibrated
+interval about a quarter of the time. Amended to 2 clustered SE, visibly, with
+the original clause left unedited. **Write tolerances in standard errors, or
+compute and record their size in SE at the time of writing.** Two of this
+project's criteria have now failed the same way.
+
+### Blocked on Pete
+
+- **The YouGov seat-by-seat comparison cannot be done.** Their full 88-seat MRP
+  table was pasted into a chat session and never saved to the repo, and the
+  session context that held it has been compacted away. **Re-paste it, or point
+  at a URL, and it takes about 20 minutes.** Nothing was guessed in its place.
+- **Publishing the repo** — the gate Pete set was "fix the One Nation lag
+  first". That is now resolved *as a non-defect* rather than fixed, which is a
+  different answer to the one he expected and worth an explicit nod before the
+  security review runs.
+- **One PR for the day's commits.** Not opened: the review gate has to run
+  first, and the session instruction in force forbids launching agents.
+
 ## Next session starts here (2026-08-18, late)
 
 **The seat rebuild is built and in the package. What remains is data hosting
@@ -550,10 +610,13 @@ fails the build the way `L3` does.
 
 ### Still open
 
-- **One Nation's Victorian level.** 20.4 fitted against 23.2 polled. Not shown
-  to be wrong, not shown to be right; the federal control says the model can
-  track the party given data, and Victoria does not have much yet. Worth
-  revisiting as more polls name it.
+- ~~**One Nation's Victorian level.**~~ — **CLOSED 2026-08-19 as a
+  non-defect.** 20.66 fitted against a 23.05 mean of the last 11 polls. The lag
+  is real, general to minor parties, and *helps*: see
+  [reviews/poll-lag-2026-08-19.md](reviews/poll-lag-2026-08-19.md). The open
+  question that remains is not ours — it is whether Victorian pollsters are
+  over-stating One Nation, as they did in both near-zero-prior cases on record
+  (by 4–5 points at the endpoint). Nothing in this repo can currently tell.
 - ~~NL3 sums to 94.1~~ — superseded by the above.
 
 ### Previously open, and it kept CI red
