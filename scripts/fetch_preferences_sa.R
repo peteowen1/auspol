@@ -129,6 +129,38 @@ for (d in chg$districts) {
     fp_rows[[length(fp_rows) + 1L]] <- data.table(seat = seat, pct = 100 * onp / tot)
   }
 }
+
+# The SAME first-preference round, kept for EVERY party class rather than One
+# Nation alone. Needed to score the Victorian One Nation seat allocation: that
+# allocation orders seats by GREENS share, so measuring how well the ordering
+# works against South Australia needs SA's Greens share per district, which
+# the One Nation-only extract above cannot give. See
+# docs/plans/prereg-onp-seat-uncertainty.md.
+all_rows <- list()
+for (d in chg$districts) {
+  seat <- d$districtId
+  fd <- d$finalDistribution
+  if (!length(fd)) next
+  first <- Filter(function(r) identical(r$roundType, "FirstPreference"), fd)
+  if (!length(first)) next
+  keep <- which(party_map$seat == seat)
+  look <- setNames(party_map$party[keep], party_map$cand_key[keep])
+  for (cr in first[[1]]$candidateResults) {
+    v <- cr$progressiveTotal %||% 0
+    if (!is.numeric(v) || v <= 0) next
+    cls <- look[[norm(cr$candidateName %||% "")]]
+    if (is.null(cls)) next
+    all_rows[[length(all_rows) + 1L]] <- data.table(
+      seat = seat, party = cls, votes = as.numeric(v))
+  }
+}
+sa_fp <- rbindlist(all_rows)[, list(votes = sum(votes)), by = c("seat", "party")]
+stopifnot(nrow(sa_fp) > 0)
+fwrite(sa_fp, file.path(OUT, "ecsa-2026-sa-firstprefs.csv"))
+record_fetch("ecsa", "ecsa-2026-sa-firstprefs.csv", API, nrow(sa_fp))
+cat(sprintf("SA first preferences: %d seat-party rows across %d seats\n",
+            nrow(sa_fp), uniqueN(sa_fp$seat)))
+
 onp_fp <- rbindlist(fp_rows)
 stopifnot(nrow(onp_fp) > 0)
 fwrite(onp_fp, file.path(OUT, "ecsa-2026-sa-onp-shares.csv"))

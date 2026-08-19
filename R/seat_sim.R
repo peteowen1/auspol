@@ -32,7 +32,15 @@
 #'   independently here and renormalising destroys the Labor-versus-Coalition
 #'   covariance, which measured at **60% of the projection's own two-party
 #'   spread** and made the seat range roughly 40% too tight.
-#' @param seat_sd Per-seat idiosyncratic deviation, in points.
+#' @param seat_sd Per-seat idiosyncratic deviation, in points. A single number
+#'   applies to every party; a named vector gives each party its own, which
+#'   matters when one party's seat share is ALLOCATED rather than measured. One
+#'   Nation polled 0.22% in Victoria in 2022, so its seat shares are constructed
+#'   by ordering on Greens share and quantile-mapping onto South Australia --
+#'   an estimate with a measured RMSE of 5.0 points against SA's actual result,
+#'   against 3.5 for a party projected from its own prior seat vote. Giving both
+#'   the same figure claims the constructed number is as reliable as the
+#'   measured one. See docs/plans/prereg-onp-seat-uncertainty.md.
 #' @param n_sims Number of simulations.
 #' @param smooth Passed to the transfer step; see [distribute_preferences()].
 #' @param seed Optional RNG seed.
@@ -55,6 +63,29 @@ simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
   parties <- colnames(shares)
   if (is.null(parties)) stop("shares must have party names as column names")
   K <- length(parties)
+
+  # seat_sd may be one number for every party, or one per party. A named
+  # vector is matched BY NAME to the share columns, never by position: the
+  # two orderings have no reason to agree, and silently pairing One Nation's
+  # sd with Labor's column would be undetectable in the output.
+  if (length(seat_sd) == 1L) {
+    seat_sd_vec <- rep(as.numeric(seat_sd), K)
+  } else {
+    if (is.null(names(seat_sd))) {
+      stop("seat_sd has ", length(seat_sd), " values but no names; it must ",
+           "be a single number or a NAMED vector of per-party sds",
+           call. = FALSE)
+    }
+    miss <- setdiff(parties, names(seat_sd))
+    if (length(miss)) {
+      stop("seat_sd is missing an entry for: ", paste(miss, collapse = ", "),
+           call. = FALSE)
+    }
+    seat_sd_vec <- as.numeric(seat_sd[parties])
+  }
+  if (anyNA(seat_sd_vec) || any(seat_sd_vec < 0)) {
+    stop("seat_sd must be finite and non-negative", call. = FALSE)
+  }
   if (K > 20L) stop("More than 20 parties is not supported by the bitmask key")
   nseat <- nrow(shares)
   sd_vec <- vapply(parties, function(p) {
@@ -122,7 +153,7 @@ simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
       statewide_draws[s, ] - centre
     }
     for (i in seq_len(nseat)) {
-      v <- shares[i, ] + shift + stats::rnorm(K, 0, seat_sd)
+      v <- shares[i, ] + shift + stats::rnorm(K, 0, seat_sd_vec)
       v[v < 0] <- 0
       alive <- which(v > 0)
       while (length(alive) > 2L) {

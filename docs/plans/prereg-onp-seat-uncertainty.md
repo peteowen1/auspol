@@ -119,3 +119,35 @@ change. It is **reported** and not decided on.
   not knowing. A genuinely better allocation — Victorian federal 2025 seat
   results mapped to state districts, say — is a different and larger piece of
   work, and this change should not be mistaken for it.
+
+---
+
+## Result, 2026-08-19: NOT ADOPTED, and reverted
+
+[../reviews/onp-seat-uncertainty-2026-08-19.md](../reviews/onp-seat-uncertainty-2026-08-19.md).
+
+The constant came out as the plan expected: RMSE **5.045** against SA's 47
+districts → `ONP_SEAT_SD` **5.5**, clear of the 3.5 refusal floor. The ordering
+beats a flat allocation by 2.5 RMSE (r = +0.779), so it carries real information
+and is still far less precise than a measured share.
+
+B1, B2 and B4 passed. **B3 failed** — and it was the wrong criterion. It assumed
+the seat-COUNT interval widens when per-seat share uncertainty does. Across 88
+seats the extra noise averages out of the total, so the interval shifted (0–7 →
+1–8) rather than widening. The wiring is correct and tested.
+
+**The reason not to adopt is one no criterion covered.** One Nation's win
+probability rose in **71 of 87 seats and fell in 1**. Adding symmetric noise to a
+party that is behind almost everywhere is a one-way ratchet: upside lets it cross
+the threshold, downside costs nothing where it was already losing. "More honest
+about uncertainty" came out as a systematic increase in its seat prospects, and
+B2 passed only because that shift happened to be +1.
+
+This plan half-anticipated it — it required the write-up to report that widening
+"will let it win seats it currently cannot, as well as lose ones it currently
+wins". **It does not lose them.** The plan assumed a symmetry that a
+threshold-crossing quantity does not have.
+
+Kept: the per-party `seat_sd` capability in `simulate_seat_contests()` with its
+tests (a scalar behaves exactly as before, so the model is unchanged), the
+calibration script, and the new all-party SA first-preference extract.
