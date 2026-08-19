@@ -69,6 +69,13 @@ Specific traps, all of which have bitten:
   drops `NA`, `NA <= 0` is `NA`, and `data.table` silently drops a column
   assigned `NULL`. A check with an `| is.na(x)` escape hatch passes on exactly
   the input it exists to catch.
+- **An experiment that never ran looks exactly like an experiment with no
+  effect.** A file edit and the runs that depend on it must not share one
+  backgrounded command: on 2026-08-19 the edit died on an `AssertionError` and
+  the two runs launched behind it used the unmodified script, returning
+  byte-identical output that read as "this input does not matter". Nothing in
+  the output could have revealed it. **Every diagnostic must print what it
+  applied**, and the value printed must be read before the result is.
 - **Grepping for check codes**: patterns anchored on an adjacent quote miss
   `cat(sprintf("\nG3 ...`. Three incomplete greps, one of which let `B1` mean
   two different things. The registry is a table in `ARCHITECTURE.md`.
