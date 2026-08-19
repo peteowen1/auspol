@@ -6,8 +6,14 @@ direction, not a fix.
 ## What the model says
 
 Across 20,000 draws of the candidate-level Victorian simulation, independents
-win **0 seats**, 90% interval **0–0**. They carry a win probability above zero
-in **3 of 88 seats**, the largest being Hawthorn at **2e-04**.
+win a seat in **6 draws out of 20,000** — Hawthorn 4, Melton 1, Monbulk 1.
+Median 0, 90% interval **0–0**. They carry a win probability above zero in
+**3 of the 87 seats the model covers**, the largest being Hawthorn at **2e-04**.
+
+(An earlier draft said "win 0 seats", which its own next sentence contradicted:
+three seats with nonzero probability cannot produce zero wins in every draw. Six
+is the number. It does not change the argument, and it is exactly the figure
+this document should not have been loose about.)
 
 The seats where that is hardest to believe:
 
@@ -96,11 +102,13 @@ is not obviously right:
   over-call the seats where they have gone. That is a real effect and the fix
   must not assume it away.
 - **The criterion cannot be statewide first-preference MAE**, which is what the
-  last two experiments used. Independents are 5.5% of the statewide vote and the
+  last two experiments used. Independents are 5.4% of the statewide vote and the
   question is entirely about *which seats they win*. Scoring this on a statewide
   aggregate would repeat the mistake the inclusion-floor experiment made, where
   the criterion could not see the thing that decided the answer.
 
 Whether Victoria elects any independents in 2026 is genuinely uncertain — the
 two who held Mildura and Shepparton both lost in 2022. **Zero is a defensible
-forecast. Zero by construction is not**, and that is what this is.
+forecast. Zero by construction is not**, and that is effectively what this is:
+not literally impossible, but a 0.03% chance across the whole state, arrived at
+by scaling rather than by anything anyone decided about independents.
