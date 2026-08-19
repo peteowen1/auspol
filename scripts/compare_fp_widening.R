@@ -6,6 +6,17 @@
 # candidate A (2.419, pre-registered) is the default and wins ties; B (2.127)
 # only gets considered if A fails, and adopting B is a recorded deviation.
 #
+# Test 1 was AMENDED after the first run -- see the amendment at the foot of the
+# plan. It required coverage within 5 fixed points of nominal, which at the 50%
+# level is 1.16 clustered standard errors: a rule that rejects a perfectly
+# calibrated interval about a quarter of the time. It now sizes itself to the
+# data, at 2 clustered SE.
+#
+# THE CLUSTER IS THE CYCLE, NOT THE PARTY-CYCLE. Within a cycle the shares sum
+# to 100, so a party over-estimated forces another under; the 139 rows are 33
+# independent observations. Treating them as 139 understates the SE by enough
+# to matter, which is the whole reason the first version of this test was wrong.
+#
 # Emits FW* codes.
 
 options(auspol.root = normalizePath("."))
@@ -45,10 +56,43 @@ lvl_tab[, `:=`(A_gap = round(abs(A - nominal) * 100, 1),
                B_gap = round(abs(B - nominal) * 100, 1))]
 cat("\nFW2  coverage by level (gaps in points)\n"); print(lvl_tab)
 
-# Test 1: every level within 5 points of nominal.
-t1_A <- all(lvl_tab$A_gap <= 5); t1_B <- all(lvl_tab$B_gap <= 5)
-cat(sprintf("FW3  test 1 (all levels within 5 pts): A %s | B %s\n",
+# Test 1 (amended): every level within 2 CLUSTERED standard errors of nominal.
+#
+# `hit_col` is passed as a STRING and the helper's arguments are deliberately
+# not named after any column in `d`. A local called `sd` or `party` here would
+# bind to the column inside the data.table brackets -- the shadowing trap this
+# repo has hit six times.
+clustered_se <- function(dd, hit_col) {
+  pbar <- mean(dd[[hit_col]])
+  per <- dd[, .(m = mean(.SD[[1]]), n = .N), by = cyc, .SDcols = hit_col]
+  w <- per$n / sum(per$n)
+  # Between-cluster variance of the weighted mean, with the usual (k-1) scaling.
+  sqrt(sum(w^2 * (per$m - pbar)^2) * nrow(per) / (nrow(per) - 1))
+}
+
+se_rows <- rbindlist(lapply(LV, function(l) {
+  zc <- stats::qnorm(1 - (1 - l) / 2)
+  d[, `:=`(hit_A = as.integer(abs(err) <= zc * sd_A),
+           hit_B = as.integer(abs(err) <= zc * sd_B))]
+  seA <- clustered_se(d, "hit_A"); seB <- clustered_se(d, "hit_B")
+  data.table(nominal = l,
+             se_A_pts = round(seA * 100, 1), se_B_pts = round(seB * 100, 1),
+             sig_A = round(abs(mean(d$hit_A) - l) / seA, 2),
+             sig_B = round(abs(mean(d$hit_B) - l) / seB, 2))
+}))
+cat(sprintf("
+FW3  test 1 sizes itself: %d party-cycles are %d independent cycles
+",
+            nrow(d), uniqueN(d$cyc)))
+print(se_rows)
+t1_A <- all(se_rows$sig_A <= 2); t1_B <- all(se_rows$sig_B <= 2)
+cat(sprintf("FW3  test 1 (every level within 2 clustered SE): A %s | B %s
+",
             if (t1_A) "PASS" else "FAIL", if (t1_B) "PASS" else "FAIL"))
+cat(sprintf("FW3  the ORIGINAL 5-point rule, for the record: A %s | B %s
+",
+            if (all(lvl_tab$A_gap <= 5)) "PASS" else "FAIL",
+            if (all(lvl_tab$B_gap <= 5)) "PASS" else "FAIL"))
 
 # Test 2: R2 restricted to classes with n >= 20, per the addendum -- a class of
 # 3 sitting at 100% says nothing, and the original R2 did not exclude it.
@@ -82,7 +126,7 @@ cat(sprintf("FW8  F2 end-to-end skew (>10 pts disqualifies a constant): A %.1f |
 pass_A <- t1_A && t2_A && skew_A <= 10
 pass_B <- t1_B && t2_B && skew_B <= 10
 verdict <- if (pass_A) {
-  sprintf("ADOPT A = %.3f (pre-registered; wins ties)", A_VALUE)
+  sprintf("ADOPT A = %.3f (pre-registered; wins ties). F4 STILL OWED.", A_VALUE)
 } else if (pass_B) {
   "ADOPT B -- a DEVIATION from R3; record why A failed, in numbers"
 } else {

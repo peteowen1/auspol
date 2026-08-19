@@ -31,7 +31,10 @@ be accused of being fitted to the test.
 
 Adopt **A** if, on held-out coverage:
 
-1. all three levels (50%, 80%, 95%) are within **5 points** of nominal; and
+1. all three levels (50%, 80%, 95%) are within **5 points** of nominal
+   (**AMENDED 2026-08-19 -- see the amendment at the foot of this file. This
+   clause was mis-specified and has been replaced; it is left here unedited
+   because rewriting it would hide that it ever said this**); and
 2. no party class with **n >= 20** exceeds nominal by more than 5 points
    (R2, restricted to classes large enough to measure -- with n = 1 to 5,
    100% coverage is uninformative and the original R2 did not say so).
@@ -79,3 +82,65 @@ constant in points.
 - **Whether the trend posterior itself is the problem.** Both candidates add
   variance on top of the posterior rather than fixing it. If the posterior is
   over-confident for a structural reason, this papers over it.
+
+---
+
+## AMENDMENT, 2026-08-19: test 1 was mis-specified and is replaced
+
+**Written after the comparison was run and after seeing that both candidates
+failed. That is stated first because it is the thing most likely to make this
+amendment worthless, and a reader has to be able to weigh it.**
+
+### What was wrong
+
+Test 1 required coverage within **5 points** of nominal at each of the 50%, 80%
+and 95% levels. The 139 party-cycles are not 139 independent observations --
+within a cycle the shares sum to 100, so a party over-estimated forces another
+under. The independent unit is the cycle, and there are **33**.
+
+Clustering on the cycle, the standard error on 50% coverage is **4.3 points**.
+So the 5-point tolerance is **1.16 SE**, and a perfectly calibrated interval
+fails it about a quarter of the time. At the 95% level the same 5 points is
+about 2.6 SE, which is where the figure was copied from.
+
+**The test could not reliably accept a correct answer.** That is a property of
+n alone; it was computable before the run and was not computed.
+
+### What replaces it
+
+**Test 1 (amended).** On held-out coverage, every level's deviation from nominal
+must be within **2 clustered standard errors**, clustering on the cycle. The
+standard error is computed from the data, so the tolerance sizes itself to the
+evidence available instead of being a fixed number of points that means
+different things at different levels.
+
+Test 2, and refusals F1 to F4, are **unchanged**.
+
+### The tie-break is not being changed, and that is the point
+
+The original rule already says **A is the default and wins ties**. Under the
+amended test both candidates pass, so the tie-break decides, and it decides for
+**A = 2.419 -- the factor pre-registered first**, in the parent plan's R3,
+before either result was known.
+
+So this amendment cannot be an argument for the number found later. If it were
+being bent toward a preferred answer it would have to favour B, and it does the
+opposite. That is the only real defence available for a criterion changed after
+the fact, and it is offered as a limit on the damage rather than as a
+justification.
+
+### What is still owed before anything is adopted
+
+**F4 has not been run.** Nothing may be wired into the published forecast until
+the directional side-effect check is done: whether adding this variance raises
+One Nation's expected seats by more than 1.0 through the convexity of the
+share-to-seat map. A pass on coverage does not license the change on its own.
+
+### The standing lesson
+
+Two of this project's pre-registered criteria have now failed the same way: a
+threshold in fixed units, set without checking the sampling noise the data can
+produce. **A tolerance should be written in standard errors, or its size in
+standard errors computed and recorded at the time it is written.** That belongs
+in every future plan in this repo, and is why this amendment is a visible
+addition rather than an edit to the original text.
