@@ -340,6 +340,11 @@ if (med_gap > 5 || wid_ratio < 0.7 || wid_ratio > 1.4) {
                       "which."), med_gap, wid_ratio))
 }
 
+# The projected per-seat primaries the simulation runs on. Written out because
+# nothing else can reconstruct them without duplicating the projection above,
+# and a second copy of that logic would drift from this one.
+fwrite(data.table(seat = rownames(shares), as.data.table(shares)),
+       sprintf("output/seat-shares-vic-2026%s.csv", OUT_SUFFIX))
 fwrite(wp, sprintf("output/seat-probs-vic-2026%s.csv", OUT_SUFFIX))
 fwrite(as.data.table(sim$totals), sprintf("output/seat-sims-full-vic-2026%s.csv", OUT_SUFFIX))
 cat(sprintf("

@@ -34,8 +34,10 @@
 #' @param smooth Weight given to a uniform distribution over the survivors,
 #'   in `[0, 1)`. **Do not set this to zero** without reading the note above:
 #'   it is what stops an unobserved destination being treated as impossible.
-#' @return List: `winner`, `final_two`, `order` (exclusion order), and
-#'   `fallbacks` (how many transfers had no conditional row).
+#' @return List: `winner`, `final_two`, `final_shares` (the two-candidate-
+#'   preferred count for those two, in the units `shares` was given in),
+#'   `order` (exclusion order), and `fallbacks` (how many transfers had no
+#'   conditional row).
 #' @export
 distribute_preferences <- function(shares, conditional = list(),
                                    pooled = list(), smooth = 0.15) {
@@ -89,8 +91,15 @@ distribute_preferences <- function(shares, conditional = list(),
     excluded <- c(excluded, from)
   }
 
+  # `final_shares` is the two-candidate-preferred count -- the number every
+  # commission and every other forecaster publishes as "the two-party result in
+  # this seat", and which this package could not previously state at all. It is
+  # returned in the SAME UNITS the caller passed in, so shares given as
+  # percentages come back as percentages of the formal vote. The pair sums to
+  # the original total, since exclusion moves votes without destroying them.
   list(winner = names(v)[which.max(v)],
        final_two = names(v),
+       final_shares = v,
        order = excluded,
        fallbacks = fallbacks)
 }

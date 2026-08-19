@@ -27,8 +27,10 @@ in \verb{[0, 1)}. \strong{Do not set this to zero} without reading the note abov
 it is what stops an unobserved destination being treated as impossible.}
 }
 \value{
-List: \code{winner}, \code{final_two}, \code{order} (exclusion order), and
-\code{fallbacks} (how many transfers had no conditional row).
+List: \code{winner}, \code{final_two}, \code{final_shares} (the two-candidate-
+preferred count for those two, in the units \code{shares} was given in),
+\code{order} (exclusion order), and \code{fallbacks} (how many transfers had no
+conditional row).
 }
 \description{
 Distribute preferences to a final two
