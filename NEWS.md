@@ -1,3 +1,26 @@
+# auspol 0.4.15
+
+**One Nation's seat allocation is measured for the first time.** Scored against
+South Australia 2026's 47 districts it has an RMSE of 5.045 points (r = +0.779,
+beating a flat allocation by 2.5). The code has always said "trust the ONP
+TOTAL, not any one seat"; now there is a number.
+
+**Giving it a matching seat sd was NOT adopted.** One Nation's win probability
+rose in 71 of 87 seats and fell in 1: adding symmetric noise to a party that is
+behind almost everywhere is a one-way ratchet, since upside crosses the winning
+threshold and downside costs nothing where it was already losing. The
+pre-registered criteria did not catch this -- B3 measured seat-count width,
+which does not track per-seat share uncertainty across 88 seats.
+
+`simulate_seat_contests()` gains a per-party `seat_sd`, inert by default and
+byte-identical for scalar callers. A named vector that does not cover every
+party is refused rather than broadcast -- the first version silently applied
+`c(ONP = 5.5)` to all parties with the name discarded.
+
+`CLAUDE.md` now requires every pre-registration to name, in advance, the
+directional side effects that would disqualify an apparent win. Twice in three
+experiments the real decision came from something found after the results.
+
 # auspol 0.4.14
 
 Two pre-registered experiments, both ending in **do not adopt**, and a guard
