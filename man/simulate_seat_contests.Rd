@@ -12,7 +12,8 @@ simulate_seat_contests(
   n_sims = 2000,
   smooth = 0.15,
   seed = NULL,
-  statewide_draws = NULL
+  statewide_draws = NULL,
+  party_draws = NULL
 )
 }
 \arguments{
@@ -49,6 +50,17 @@ distribution is already known and calibrated — drawing each party
 independently here and renormalising destroys the Labor-versus-Coalition
 covariance, which measured at \strong{60\% of the projection's own two-party
 spread} and made the seat range roughly 40\% too tight.}
+
+\item{party_draws}{Optional named list of \code{n_sims} x \code{nseat} matrices,
+one per party, replacing that party's BASE seat share on each draw.
+For a party whose seat shares are allocated rather than measured, the
+uncertainty is in WHICH seat gets which share, not in the shares
+themselves -- so each row should carry the same multiset of values in
+a different order. Adding independent noise to each share instead is
+a one-way ratchet for a party that is behind in most seats: upside
+crosses the winning threshold, downside costs nothing where it was
+already losing. Measured at 71 seats up against 1 down; see
+docs/reviews/onp-seat-uncertainty-2026-08-19.md.}
 }
 \value{
 List: \code{win_prob} (data.frame, one row per seat and party with a

@@ -114,3 +114,36 @@ Stated in advance, since the last two plans were caught out here.
   before judging anything else — and unlike last time, verify by inspecting
   per-seat probabilities rather than the seat-count interval, which is not
   sensitive enough to serve as a wiring check.
+
+---
+
+## Result, 2026-08-19: REFUSED on R1
+
+[../reviews/onp-ordering-uncertainty-2026-08-19.md](../reviews/onp-ordering-uncertainty-2026-08-19.md).
+
+The design worked as specified. `ONP_ORDER_SD = 0.3575` reproduces a rank
+correlation of 0.781 against the 0.779 target; the multiset of shares is
+identical in 200 of 200 draws and the statewide mean ratio is preserved to six
+decimals. **C1, C2, C3 and C4 all passed** — including C3, which the previous
+attempt failed.
+
+**R1 refuses it.** One Nation's win probability rose in **57** seats and fell in
+**13** — a ratio of 4.4×, against a bar of 3×. The improvement over the previous
+attempt is large (71:1 → 57:13), so the diagnosis was right; it is still not
+two-sided enough.
+
+R3 fired as its report-prominently condition: the mean seat count rose by
+**+0.108** on an exactly preserved statewide vote.
+
+**Why preserving the total is not enough.** A seat outcome is a threshold event
+and the map from share to win probability is convex over the relevant range, so
+moving a high share INTO a seat where One Nation is competitive gains more than
+moving it OUT of a safe one loses. The lean survives any reassignment that does
+not correct for that curvature.
+
+Refused rather than tuned, per this plan's own rule. R1's 3× is a number I
+chose and 4.4× is close to it — which is exactly the reasoning the refusal
+section exists to stop.
+
+Kept: `party_draws` in `simulate_seat_contests()` (inert unless passed) and
+`scripts/calibrate_onp_ordering.R`.
