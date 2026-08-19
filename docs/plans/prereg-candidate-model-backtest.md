@@ -187,3 +187,70 @@ The live gap is recorded and real: `seat_swing_adjustment()` reaches only the
 two-party cross-check, so **four predictors worth a measured improvement do not
 touch a single published number.** That is an argument for getting the data, not
 for skipping the measurement.
+
+---
+
+## UNBLOCKED and REDESIGNED, 2026-08-20, before anything was measured
+
+NSW 2019 and 2023 were acquired
+([nsw-data-acquisition](../reviews/nsw-data-acquisition-2026-08-20.md)) and the
+design above is replaced. **Nothing had been run under the old design** — it was
+recorded as blocked and no arm was ever scored — so this is a redesign, not an
+amendment after seeing a result.
+
+The new design is strictly stronger on every axis the old one conceded:
+
+| | old (Victoria 2022) | **new (NSW 2023)** |
+|---|---|---|
+| transfer matrix | from the election being predicted — **a leak** | from **2019**, before it |
+| election type | landslide hold | **change of government** |
+| state | same as the live forecast | **different** |
+| coefficients | fitted on the scored election | fitted **excluding** it |
+
+The prohibition on quoting absolute accuracy is **lifted**, because the leak
+that motivated it is gone. Everything else — the decision rule, the metrics, and
+refusals C1 to C5 — carries over unchanged.
+
+### Inputs, all knowable before 25 March 2023
+
+- `load_seats(2023, "nsw")` — margins from 2019, incumbency, region, and the
+  four swing predictors.
+- `nswec-2019-nsw-firstprefs.csv` — each seat's 2019 first preferences, which is
+  what the model swings off.
+- The flow matrix built from **`nsw2019` transfers only**. `nsw2023` rows must be
+  filtered out and the filter asserted, not assumed.
+
+### Truth
+
+Each seat's actual 2023 winner, from `nswec-2023-nsw-firstprefs.csv` put through
+the same exclusion, cross-checked against the incumbent recorded in the 2027
+seat file. **If those two disagree for any seat, stop** — one of them is wrong
+and scoring against either would be scoring against a mistake.
+
+### Both arms of the statewide input, as the two-party calibration did
+
+- **conditional** — hand the model the actual 2023 statewide primaries. Isolates
+  the seat layer, which is the layer being changed.
+- **forecast** — the projection the model would have made. The honest
+  end-to-end claim.
+
+Both reported; **the conditional arm is the one the decision rule uses**, because
+the seat-swing adjustment is a seat-layer change and a statewide error common to
+both arms would only add noise to the comparison.
+
+### The two model arms
+
+- **A** — the candidate model as published today.
+- **B** — plus `seat_swing_adjustment()`, with coefficients **refitted on
+  Victoria 2022 alone**, excluding NSW 2023. The shipped `SEAT_SWING_COEF` is
+  fitted on all 180 seats of Victoria 2022 *and* NSW 2023 — its own
+  documentation says those "use every seat, which is the right choice for a
+  forecast and the wrong one for scoring it" — so using it here would be exactly
+  the leak C2 refuses.
+
+### One addition to the refusal list
+
+- **C6 — the held-out coefficients must be reported alongside the shipped ones.**
+  If refitting on Victoria alone moves a coefficient's sign, or changes one by
+  more than half its value, the predictor is not stable across two elections and
+  a gain measured with it is not evidence about the third. Report and refuse.
