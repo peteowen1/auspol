@@ -342,6 +342,38 @@ is represented in 3 seats out of 88. Before concluding anything, check whether
 that reflects the 2022 record or a gap in how candidates are loaded. Do not
 assume it is a bug, and do not assume it is fine.
 
+### Why NSW keeps the build red, diagnosed (2026-08-19)
+
+[reviews/nsw-onp-walk-2026-08-19.md](reviews/nsw-onp-walk-2026-08-19.md).
+**Nothing changed.**
+
+NSW 2027 fits One Nation at 19.52 against 24.67 — below **every poll taken since
+February**, on a series that went 4 -> 30 in eleven weeks then sat in the low
+twenties for five months.
+
+Cause: `fit_nsw.R:132` gives per-cycle volatility only to parties with 15+ polls
+in the cycle. One Nation has 8, so it is the one party fitted with the **generic
+default random walk**, which is calibrated on parties that do not move twenty
+points in a quarter. It has no row at all in the per-cycle sigma table.
+
+**The party whose trend most needs a fast walk is the only one that cannot have
+one**, because the test for "can we estimate this" is poll count and a new party
+is by definition thinly polled.
+
+This is also why Victoria's equivalent gap closed on its own (18 polls, clears
+the floor, gets a per-cycle walk, 2.78 -> 2.39) and NSW's did not (8 polls).
+Same party, same surge, opposite outcomes, decided by a threshold.
+
+It is the **T3 mechanism** the Others work left open as "never tested on a party
+moving this far". This is that test case.
+
+**Do not relax NL3 to clear the build** — the check is right and the reason is
+now known. A fix must choose between lowering the 15-poll floor (which is there
+because estimating variance from 8 points made the federal ONP hyperparameters
+hit both optimiser bounds) and widening the default walk for a party far from
+its prior (which needs a threshold that must not be chosen after seeing NSW
+breach at 5.15).
+
 ### Still open
 
 - **One Nation's Victorian level.** 20.4 fitted against 23.2 polled. Not shown
