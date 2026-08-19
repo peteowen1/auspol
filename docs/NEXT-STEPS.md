@@ -180,7 +180,8 @@ is largest the shrinkage has earned its keep (mean |fit − actual| 2.43 against
 Cause: One Nation is named in no Victorian poll before 2026-01-28, so its
 series runs three years anchored near 0.28 with seven months of data at the
 end. Tested and refuted along the way: the fold imputation, which gives an
-identical 20.00 when the fit uses only the 18 polls that name the party.
+identical 20.00 when the fit uses only the 18 polls that named the party at
+the time (19 now).
 
 ### The sum check is replaced (2026-08-18)
 
@@ -305,6 +306,26 @@ Also found: primaries use a uniform ADDITIVE swing with `pmax(0, ...)`, so a
 under 12% in 2022 — Mildura and Shepparton. Two seats, so small, but a major
 party on a projected 0.0% is not a plausible number and nothing reports it.
 
+### The independents fix was tried and NOT adopted (2026-08-19)
+
+[reviews/independent-projection-2026-08-19.md](reviews/independent-projection-2026-08-19.md),
+against [plans/prereg-independent-projection.md](plans/prereg-independent-projection.md).
+**Code reverted.**
+
+Exempting the anchor-designated independent seat from the `OTH` scaling lifted
+South-West Coast's independent from 16.3% to **23.1%** and gave it a win
+probability where it had none. A2, A3 and A4 passed. **A1 failed at 0.06%
+against a required 10%**, so per the rule it is reverted rather than tuned.
+
+**The real constraint is One Nation's seat allocation.** It projects 26.7% in
+that seat — above the independent's 23.1% — so the independent is still excluded
+third. That allocation is the part `fit_seats_full.R` itself says not to trust
+seat by seat, and it is outranking a candidate whose local vote was measured.
+
+**Next on this thread:** a pre-registration for the One Nation seat allocation,
+not another attempt at the independent side. The `OTH`-scaling half is correct
+and should be folded into that combined fix rather than adopted alone.
+
 ### Superseded observation
 
 Noticed 2026-08-19 while reading the current seat sim. Across 20,000 draws the
@@ -321,6 +342,38 @@ What makes it worth a look is the coverage, not the probability: an independent
 is represented in 3 seats out of 88. Before concluding anything, check whether
 that reflects the 2022 record or a gap in how candidates are loaded. Do not
 assume it is a bug, and do not assume it is fine.
+
+### Why NSW keeps the build red, diagnosed (2026-08-19)
+
+[reviews/nsw-onp-walk-2026-08-19.md](reviews/nsw-onp-walk-2026-08-19.md).
+**Nothing changed.**
+
+NSW 2027 fits One Nation at 19.52 against 24.67 — below **every poll taken since
+February**, on a series that went 4 -> 30 in eleven weeks then sat in the low
+twenties for five months.
+
+Cause: `fit_nsw.R:132` gives per-cycle volatility only to parties with 15+ polls
+in the cycle. One Nation has 8, so it is the one party fitted with the **generic
+default random walk**, which is calibrated on parties that do not move twenty
+points in a quarter. It has no row at all in the per-cycle sigma table.
+
+**The party whose trend most needs a fast walk is the only one that cannot have
+one**, because the test for "can we estimate this" is poll count and a new party
+is by definition thinly polled.
+
+This is also why Victoria's equivalent gap closed on its own (19 polls, clears
+the floor, gets a per-cycle walk, 2.78 -> 2.39) and NSW's did not (8 polls).
+Same party, same surge, opposite outcomes, decided by a threshold.
+
+It is the **T3 mechanism** the Others work left open as "never tested on a party
+moving this far". This is that test case.
+
+**Do not relax NL3 to clear the build** — the check is right and the reason is
+now known. A fix must choose between lowering the 15-poll floor (which is there
+because estimating variance from 8 points made the federal ONP hyperparameters
+hit both optimiser bounds) and widening the default walk for a party far from
+its prior (which needs a threshold that must not be chosen after seeing NSW
+breach at 5.15).
 
 ### Still open
 
