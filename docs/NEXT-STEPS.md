@@ -305,6 +305,26 @@ Also found: primaries use a uniform ADDITIVE swing with `pmax(0, ...)`, so a
 under 12% in 2022 — Mildura and Shepparton. Two seats, so small, but a major
 party on a projected 0.0% is not a plausible number and nothing reports it.
 
+### The independents fix was tried and NOT adopted (2026-08-19)
+
+[reviews/independent-projection-2026-08-19.md](reviews/independent-projection-2026-08-19.md),
+against [plans/prereg-independent-projection.md](plans/prereg-independent-projection.md).
+**Code reverted.**
+
+Exempting the anchor-designated independent seat from the `OTH` scaling lifted
+South-West Coast's independent from 16.3% to **23.1%** and gave it a win
+probability where it had none. A2, A3 and A4 passed. **A1 failed at 0.06%
+against a required 10%**, so per the rule it is reverted rather than tuned.
+
+**The real constraint is One Nation's seat allocation.** It projects 26.7% in
+that seat — above the independent's 23.1% — so the independent is still excluded
+third. That allocation is the part `fit_seats_full.R` itself says not to trust
+seat by seat, and it is outranking a candidate whose local vote was measured.
+
+**Next on this thread:** a pre-registration for the One Nation seat allocation,
+not another attempt at the independent side. The `OTH`-scaling half is correct
+and should be folded into that combined fix rather than adopted alone.
+
 ### Superseded observation
 
 Noticed 2026-08-19 while reading the current seat sim. Across 20,000 draws the

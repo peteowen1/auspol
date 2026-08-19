@@ -115,3 +115,34 @@ not fixing it.
 - **A3 fails** → the change is doing something beyond what it claims. Do not
   adopt until that is explained.
 - **A4 fails** → an arithmetic bug. Fix and re-run before judging anything else.
+
+---
+
+## Result, 2026-08-19: NOT ADOPTED, and reverted
+
+[../reviews/independent-projection-2026-08-19.md](../reviews/independent-projection-2026-08-19.md).
+
+| | criterion | result | |
+|---|---|---|:--:|
+| **A1** | South-West Coast IND ≥ 10% win probability | **0.06%** | **FAIL** |
+| A2 | IND under 10% in 2022 stays under 2% | 0 of 54 breach | pass |
+| A3 | ALP/LNP medians move ≤ 2 | 40→40, 38→38 | pass |
+| A4 | primaries sum to 100, none negative | holds | pass |
+
+The design worked and was not enough. Exempting the seat from the `OTH` scaling
+lifted its independent from a projected 16.3% to **23.1%** and gave it a win
+probability where it had no row at all — but **One Nation is projected at 26.7%
+in that seat**, so the independent is still third, still excluded, still cannot
+win.
+
+**The binding constraint is the One Nation seat allocation, not the scaling.**
+That allocation is the part of the model its own comment says not to trust seat
+by seat, and it is out-ranking a candidate whose local vote was actually
+measured. Two weak estimates decide the seat and the weaker one wins.
+
+Per the decision rule fixed above, the change is reverted rather than tuned
+until A1 passes — tuning against a single seat is precisely what that rule
+exists to prevent. The `OTH`-scaling half is correct and should be kept for a
+future combined fix; the One Nation half needs its own pre-registration, because
+"the change that finally made A1 pass" is the shape of a result fitted to one
+case.
