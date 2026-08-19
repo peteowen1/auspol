@@ -403,6 +403,43 @@ Kept: the per-party `seat_sd` capability (inert by default, tested),
 `scripts/calibrate_onp_seat_sd.R`, and a new all-party SA first-preference
 extract.
 
+### Ordering uncertainty: better, still refused (2026-08-19)
+
+[reviews/onp-ordering-uncertainty-2026-08-19.md](reviews/onp-ordering-uncertainty-2026-08-19.md),
+against [plans/prereg-onp-ordering-uncertainty.md](plans/prereg-onp-ordering-uncertainty.md).
+**Code reverted.** Third refusal in a row.
+
+Putting the uncertainty in WHICH seat gets which share, rather than in the
+shares, works exactly as designed: identical multiset in 200 of 200 draws,
+statewide mean preserved to six decimals, rank correlation 0.781 against the
+0.779 target. **All four acceptance criteria passed.**
+
+**R1 refused it**: One Nation's probability rose in 57 seats and fell in 13
+(4.4x, bar was 3x). Huge improvement on the previous 71:1, so the diagnosis was
+right — ordering noise is far more two-sided than share noise — but not enough.
+
+**Confirmed by review, with evidence:** seats where One Nation's probability
+FELL had a mean central win probability of 0.154 and share 28.6%; seats where it
+ROSE had 0.017 and 19.1%. The gains are long shots deep in the convex region,
+the losses are the competitive seats. That is the Jensen signature.
+
+**Withdrawn:** I also reported the mean seat count rising +0.108. It does not
+reproduce (review got −0.065, range −0.095 to +0.498) and is Monte Carlo noise.
+R1's ratio held at 4.38x-4.83x, so the refusal is unaffected.
+
+**The lesson worth keeping:** preserving the statewide total does not make the
+effect neutral. A seat outcome is a threshold event and the share-to-probability
+map is convex, so moving a high share INTO a competitive seat gains more than
+moving it OUT of a safe one loses. Any reassignment that ignores the curvature
+leans the same way.
+
+**Next on this thread**, and it needs its own pre-registration written first:
+either correct for the convexity (recentre on expected SEATS, not expected
+vote), swap shares pairwise between similarly competitive seats, or argue that
+some upward lean is the honest consequence of real uncertainty and bound it
+instead of requiring symmetry. The third is most likely right and hardest to
+argue without it sounding like a rationalisation of three failures.
+
 ### Still open
 
 - **One Nation's Victorian level.** 20.4 fitted against 23.2 polled. Not shown

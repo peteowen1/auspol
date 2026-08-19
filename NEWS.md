@@ -1,3 +1,29 @@
+# auspol 0.4.16
+
+Documentation and tooling; no model change.
+
+**Third attempt at One Nation's seat-allocation uncertainty, refused.** Putting
+the noise in WHICH seat gets which share -- rather than in the shares -- keeps
+the multiset identical in 200 of 200 draws and the statewide total exact. All
+four acceptance criteria passed. It was refused on the pre-registered
+one-sidedness bar: the party's win probability rose in 57 seats and fell in 13
+(4.4x against a 3x bar), a large improvement on the previous 71:1 and still not
+symmetric.
+
+**Why, confirmed empirically rather than argued:** seats that lost probability
+had a mean central win probability of 0.154 and share 28.6%; seats that gained
+had 0.017 and 19.1%. Gains land on long shots in the convex region of the
+win-probability curve, losses on the competitive seats. Preserving the statewide
+total does not make a reassignment neutral, because the curve is not linear.
+
+`simulate_seat_contests()` gains `party_draws`, per-draw seat shares for one
+party. Inert unless passed; byte-identical output when omitted.
+
+Withdrawn from the previous write-up: a reported +0.108 rise in One Nation's
+mean seat count does not reproduce (-0.065 on re-derivation, ranging -0.095 to
++0.498). It was Monte Carlo noise. The refusal rested on the one-sidedness
+ratio, which is robust.
+
 # auspol 0.4.15
 
 **One Nation's seat allocation is measured for the first time.** Scored against
