@@ -59,6 +59,15 @@ options(auspol.root = normalizePath("."))
 suppressMessages(devtools::load_all(quiet = TRUE))
 suppressMessages(library(data.table))
 
+# ARM B of docs/plans/prereg-calibration.md. A multiplier on the per-seat
+# spread, so the simulation carries more genuine seat-level uncertainty. Default
+# 1 reproduces the published behaviour exactly; the run prints what it applied,
+# because CLAUDE.md records an experiment whose edit never ran and whose
+# byte-identical output read as "this input does not matter".
+SEAT_SD_MULT <- as.numeric(Sys.getenv("AUSPOL_SEAT_SD_MULT", "1"))
+if (SEAT_SD_MULT != 1) cat(sprintf("CAL  seat_sd multiplier %.2f applied
+", SEAT_SD_MULT))
+
 N_SIMS <- 20000; SEED <- 42; SMOOTH <- 0.15; eps <- 1e-6
 P <- election_data_path()
 FLOW_FROM <- "fed2025"
@@ -174,7 +183,7 @@ sp <- seat_swing_spread(as.data.table(load_seats(2026L, "sa")),
                         unname(st_b[["ALP"]] - st_a[["ALP"]]))
 psd <- setNames(rep(1.5, length(parties)), parties)
 set.seed(SEED)
-sim <- simulate_seat_contests(shares, fm, party_sd = psd, seat_sd = sp$sd_within,
+sim <- simulate_seat_contests(shares, fm, party_sd = psd, seat_sd = sp$sd_within * SEAT_SD_MULT,
                               n_sims = N_SIMS, smooth = SMOOTH, seed = SEED)
 wp <- as.data.table(sim$win_prob)
 
