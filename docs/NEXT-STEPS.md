@@ -44,6 +44,69 @@ open state, not the narrative of how it got here.
   Nation **total** rather than any individual One Nation seat. See
   [reviews/onp-allocation-checks-2026-08-18.md](reviews/onp-allocation-checks-2026-08-18.md).
 
+## Session of 2026-08-20 — data acquisition changed what is knowable
+
+**The day's real lesson: three of the conclusions reached on two elections
+reversed or collapsed once there were six.** Detail in the reviews; the short
+version is that two elections establishes nothing, and this repo had been
+validating seat-level work on two.
+
+### Acquired
+
+| source | what |
+|---|---|
+| **AEC 2007–2025** | 1,052 division-elections, first preferences, distributions, declared winners, **7 flow matrices** |
+| **NSWEC 2019, 2023** | 186 district-elections, first preferences, distributions, winners |
+| **VEC 2014, 2018** | recovered from an Azure blob archive after being recorded as unavailable |
+| **federal→state transposition** | 455 state districts, each with its federal first-preference profile |
+
+Every one validates to **0.00 points** on the major parties against the
+anchor's independent record.
+
+### Changed in the published model
+
+- **`SEAT_SWING_COEF` cut from four terms to one.** `retirement`, `soph_cand`
+  and `soph_party` are worth **−0.0008** pooled over five elections — worse than
+  uniform swing. `fed_swing` alone beats all four.
+  [reviews/seat-swing-revalidation](reviews/seat-swing-revalidation-2026-08-20.md)
+- **One Nation allocation ordering replaced.** The Greens-share rule scored
+  **worse than a uniform allocation** on NSW 2023 (MAE 3.287 vs 2.595). The
+  transposed federal One Nation vote scores 1.594.
+  [reviews/onp-allocation-federal](reviews/onp-allocation-federal-2026-08-20.md)
+- **A 13.7% spread compression fixed** — renormalisation was undoing the
+  quantile map. Target CV 0.327, delivered 0.327.
+
+Published now: **ALP 41, Coalition 38, One Nation 4, Greens 4.**
+
+### Refused, each on its own pre-registered criterion
+
+- **Independent emergence**, three model structures and four pre-registrations.
+  Looked like +1.46 SE on 88 NSW seats; came out **−2.52 SE on 886 federal**
+  division-pairs. The 2 SE bar prevented shipping something measurably worse.
+  [reviews/independent-federal](reviews/independent-federal-2026-08-20.md)
+- **The seat-swing port into the candidate model** — built and measured at
+  **−0.04 SE**. Cannot be tested on more data: `fed_swing` does not exist
+  federally. [reviews/seat-swing-port](reviews/seat-swing-port-2026-08-20.md)
+
+### Open, in rough priority order
+
+1. **The candidate model's calibration slope is 0.260 on federal data.** It
+   still cannot elect a new independent. The endogenous fix is ruled out; the
+   next attempt is the exogenous one refusal E4 excluded — a named list of
+   confirmed independents, seat polls, and possibly market odds. **Odds need
+   Pete's call**: it is a different kind of input.
+2. **Victoria 2014→2018→2022 backtests are now possible and have not been run.**
+   Two elections in the state actually being forecast.
+3. **The One Nation tail.** Ordering and spread now match YouGov; the remaining
+   gap is tail shape — our max 33.0 against their 44.0, because magnitudes are
+   mapped onto South Australia's spread. Whether SA is the right template for
+   Victoria is untested.
+4. **Contest selection is unmodelled** (N5). Every One Nation observation is a
+   district the party chose to contest; the model gives them a vote in all 88.
+5. **`classify_party()` is the highest-risk function in the repo.** Three silent
+   misclassifications found today — SFF→IND, CLP→OTH, and the seat file's
+   NAT/IND convention. Every new data source finds a new hole.
+
 ## Session of 2026-08-19 (overnight) — what changed
 
 Three things shipped, one queue item closed as a non-defect, and one task is
