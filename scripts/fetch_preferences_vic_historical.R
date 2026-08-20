@@ -115,10 +115,24 @@ for (YR in YEARS) {
     cand[, party := classify_party(party_raw, NULL)]
     fp_all[[length(fp_all) + 1L]] <- cand[, .(seat = dname, party, votes)]
 
-    elected <- strip_tags(regmatches(h, regexpr("Elected member[^<]*<[^>]*>[^<]*", h)))
-    win_all[[length(win_all) + 1L]] <- data.table(
-      seat = dname,
-      winner = cand[which.max(votes), party])   # provisional; corrected below
+    # The DECLARED winner, from the table the VEC titles "Elected member".
+    # Not the first-preference leader: in Prahran 2018 the Greens won from
+    # third on primaries, so taking the leader would record the wrong party
+    # in exactly the seats a backtest most needs to get right.
+    em <- regmatches(h, regexpr(
+      '(?s)<table title="Elected member".*?</table>', h, perl = TRUE))
+    wparty <- NA_character_
+    if (length(em)) {
+      sp <- regmatches(em, gregexpr("(?s)<span[^>]*>.*?</span>", em, perl = TRUE))[[1]]
+      sp <- strip_tags(sp)
+      if (length(sp) >= 2L) wparty <- classify_party(sp[2], NULL)
+    }
+    if (is.na(wparty)) {
+      stop(dname, " ", YR, ": no \"Elected member\" table could be parsed. ",
+           "Falling back to the first-preference leader would be wrong in every ",
+           "seat won from behind, which is the interesting kind.")
+    }
+    win_all[[length(win_all) + 1L]] <- data.table(seat = dname, winner = wparty)
 
     # ---- distribution of preferences ----
     dh <- grab(sprintf("%s/distribution%s.html", B, sg),
@@ -175,6 +189,13 @@ for (YR in YEARS) {
     cat(sprintf("VH3  %d: Greens preferences to Labor %.1f%% (anchor: 70-92%%)\n", YR, pg))
     if (pg < 70 || pg > 92) stop(YR, ": Greens flow of ", round(pg, 1), "% is implausible.")
   }
+  win <- rbindlist(win_all)
+  stopifnot(nrow(win) == 88L, uniqueN(win$seat) == 88L)
+  cat(sprintf("VH3b %d declared winners: %s
+", YR,
+              paste(sprintf("%s %d", names(table(win$winner)),
+                            as.integer(table(win$winner))), collapse = ", ")))
+  fwrite(win, file.path(OUT, sprintf("vec-%d-vic-winners.csv", YR)))
   fwrite(fp, file.path(OUT, sprintf("vec-%d-vic-firstprefs.csv", YR)))
   fwrite(tx, file.path(OUT, sprintf("vec-%d-vic-transfers.csv", YR)))
   cat(sprintf("VH4  wrote vec-%d-vic-firstprefs.csv and -transfers.csv\n", YR))

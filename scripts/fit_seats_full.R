@@ -60,6 +60,13 @@ OUT_SUFFIX  <- Sys.getenv("AUSPOL_OUT_SUFFIX", "")
 # difference that flips sign with the seed is Monte Carlo noise, which this
 # repo has already mistaken for a result once.
 SEED        <- as.integer(Sys.getenv("AUSPOL_SEED", "42"))
+# Diagnostic arms for the One Nation allocation, declared HERE beside the other
+# overrides so the S6 default-run check below can see them. Defined only
+# further down, a toggle would change the published allocation with nothing in
+# the run log -- which is exactly what S6 exists to prevent.
+ONP_ORDER   <- Sys.getenv("AUSPOL_ONP_ORDER", "federal")   # federal | greens
+ONP_FIX     <- Sys.getenv("AUSPOL_ONP_FIX", "1")           # 1 = compression fixed
+stopifnot(ONP_ORDER %in% c("federal", "greens"), ONP_FIX %in% c("0", "1"))
 stopifnot(FP_SD_MODE %in% c("growth", "additive"))
 stopifnot(is.finite(SEED))
 
@@ -137,10 +144,12 @@ if (FLOW_SHIFT != 0) {
 # it. Reported rather than fatal, because the diagnostic runs are legitimate;
 # what must never happen is one going unnoticed.
 default_run <- SEED == 42L && OUT_SUFFIX == "" && FLOW_SHIFT == 0 &&
-  FP_SD_MODE == "additive"
-cat(sprintf("S6  run config: seed %d, FP sd %s, flow shift %+.2f, suffix %s  %s
-",
-            SEED, FP_SD_MODE, FLOW_SHIFT,
+  FP_SD_MODE == "additive" &&
+  ONP_ORDER == "federal" && ONP_FIX == "1"
+cat(sprintf(paste0("S6  run config: seed %d, FP sd %s, flow %+.2f, ",
+                   "ONP %s/fix%s, suffix %s  %s
+"),
+            SEED, FP_SD_MODE, FLOW_SHIFT, ONP_ORDER, ONP_FIX,
             if (OUT_SUFFIX == "") "(none)" else OUT_SUFFIX,
             if (default_run) "PASS" else "FAIL -- NOT A DEFAULT PUBLISH RUN"))
 now <- trend_as_at(polls, 2026, cycles, Sys.Date(), priors, fl, with_series = TRUE)
@@ -260,7 +269,11 @@ ONP_FIX   <- Sys.getenv("AUSPOL_ONP_FIX", "1")           # 1 = compression fixed
 stopifnot(ONP_ORDER %in% c("federal", "greens"))
 cat(sprintf("ONP arms: ordering %s, compression fix %s
 ", ONP_ORDER, ONP_FIX))
-onp_target <- pmin(pmax(0, state_mean[["ONP"]] * onp_ratio[rownames(mat22)]), 80)
+# A sanity bound, not a modelling choice: no district comes near it (the
+# maximum allocation is 33.0). It exists so a future statewide forecast times
+# the largest quantile ratio cannot exceed 100 and drive the fill negative.
+ONP_CAP <- 80
+onp_target <- pmin(pmax(0, state_mean[["ONP"]] * onp_ratio[rownames(mat22)]), ONP_CAP)
 if (ONP_FIX == "1") {
   other_cols <- setdiff(colnames(shares), "ONP")
   rest <- rowSums(shares[, other_cols, drop = FALSE])

@@ -106,3 +106,51 @@ four in 2022.
 Whether One Nation's Victorian statewide level is right. This is entirely about
 distributing a given total across districts, and a better distribution of a
 wrong total is still wrong.
+
+---
+
+## DEVIATION, recorded 2026-08-20 after the fact
+
+**The decision rule said "beats A in both NSW elections." Only one election
+could be scored, and the rule was not amended before running.**
+
+`scripts/test_onp_ordering_federal.R` contains a `nrow(m) < 5` skip that was
+written into the test script, not committed as a plan amendment. NSW 2019 turned
+out to have exactly **one** district where One Nation both contested the state
+election and had a matched federal 2016 vote — Maitland. So `all()` ran over a
+single row and the script printed "wins on rank in **every** election", which is
+true only because half the pre-registered test had been dropped.
+
+This is the failure `CLAUDE.md` names twice: **the operative criterion was
+settled during the run rather than before it.** The review disclosed "one
+election, 17 districts" as a data limitation, which is not the same admission
+and did not substitute for this one.
+
+### Why the change is not being reverted
+
+The plan has a third clause that this does not touch: *"If both A and B fail to
+beat C, adopt C."*
+
+**A fails to beat C.** The shipped Greens-share ordering scores MAE 3.287
+against 2.595 for a uniform allocation. So by the plan's own terms, as written
+before anything was run, **A could not stand** — whatever happens to B.
+
+That leaves B versus C, and B beats C by a wide margin (1.594 against 2.595) on
+the one election that could be scored. Reverting would restore an ordering the
+pre-registration already disqualifies.
+
+### What this costs, honestly
+
+The adoption of **B specifically** rests on one election, and the rule that was
+supposed to require two was relaxed mid-run rather than in advance. Had NSW 2019
+been scorable and gone the other way, the honest outcome would have been C — a
+uniform allocation — not B.
+
+**That is the residual risk and it is not hedged.** If a second scorable
+election ever contradicts NSW 2023, this must be revisited rather than defended.
+
+### What was changed as a result
+
+- This deviation is recorded here rather than left in the test script.
+- The skip now **reports how many elections were scorable** and refuses to claim
+  "every election" when only one was.

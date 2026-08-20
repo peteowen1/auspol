@@ -85,10 +85,23 @@ cat("\nOF4  summary\n"); print(R)
 b_wins_rho <- all(R$rho_B > R$rho_A)
 b_no_worse_mae <- all(R$mae_B <= R$mae_A)
 both_beat_uniform <- all(pmin(R$mae_A, R$mae_B) < R$mae_C)
+# The pre-registration required BOTH NSW elections. Only one is ever scorable
+# (NSW 2019 has a single district where One Nation contested the state election
+# and had a matched federal vote), so `all()` over one row must not be reported
+# as "every election" -- that is a claim about a test half of which was dropped.
+if (nrow(R) < 2L) {
+  cat(sprintf("
+OF4b WARNING: the plan required 2 elections; %d was scorable.
+", nrow(R)))
+  cat("OF4b Any verdict below rests on that one, and the deviation is recorded in
+")
+  cat("OF4b docs/plans/prereg-onp-allocation-federal.md rather than only here.
+")
+}
 verdict <- if (!both_beat_uniform) {
   "ADOPT C -- neither ordering beats a uniform allocation"
 } else if (b_wins_rho && b_no_worse_mae) {
-  "ADOPT B -- the federal ordering wins on rank in every election and is no worse on MAE"
+  sprintf("ADOPT B -- wins on rank in %d of %d scorable election(s), no worse on MAE", nrow(R), nrow(R))
 } else "KEEP A"
 cat(sprintf("\nOF5  verdict: %s\n", verdict))
 cat(sprintf("OF5  B beats A on rank in %d of %d; B no worse on MAE in %d of %d\n",
