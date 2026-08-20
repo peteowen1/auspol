@@ -69,6 +69,28 @@ Specific traps, all of which have bitten:
   drops `NA`, `NA <= 0` is `NA`, and `data.table` silently drops a column
   assigned `NULL`. A check with an `| is.na(x)` escape hatch passes on exactly
   the input it exists to catch.
+- **`load_seats(Y)$incumbent` is who holds the seat NOW, not who won election
+  Y-1, and its party labels are not ours.** Two distinct traps, found together
+  on 2026-08-20 while scoring the NSW backtest:
+  - **By-elections contaminate it.** Bega, Kiama and Pittwater all record a
+    later winner than the election that produced them. Anything asking "who won
+    last time" must use declared results, not this field.
+  - **The anchor's party classes differ from `classify_party()`.** It files the
+    Shooters, Fishers and Farmers as `IND`; we map them to `OTH_RIGHT`. So
+    Barwon, Murray and Orange read as independent-held from the seat file and as
+    minor-right from the first preferences. That inconsistency silently
+    corrupted a check on "seats an independent held and won".
+  **One source of truth per question**: party classification comes from our own
+  `classify_party()` over primary vote data, never from a field someone else
+  classified. Victoria is unaffected — it has zero independent-held seats — but
+  the trap is in the shape of the data, not in NSW.
+- **An experiment that never ran looks exactly like an experiment with no
+  effect.** A file edit and the runs that depend on it must not share one
+  backgrounded command: on 2026-08-19 the edit died on an `AssertionError` and
+  the two runs launched behind it used the unmodified script, returning
+  byte-identical output that read as "this input does not matter". Nothing in
+  the output could have revealed it. **Every diagnostic must print what it
+  applied**, and the value printed must be read before the result is.
 - **Grepping for check codes**: patterns anchored on an adjacent quote miss
   `cat(sprintf("\nG3 ...`. Three incomplete greps, one of which let `B1` mean
   two different things. The registry is a table in `ARCHITECTURE.md`.
@@ -102,6 +124,31 @@ So every plan needs a refusal section naming, in advance: the directional side
 effects that would disqualify a winner, and what the criterion cannot see. If
 that section is hard to write, the criterion is probably measuring the wrong
 thing — which was true both times.
+
+**And write every tolerance in standard errors, or compute its size in standard
+errors when you write it.** Two criteria have now failed the same way, four days
+apart, and both failures were computable from `n` before the experiment ran:
+
+- the reliability-bin rule (2026-08-19): "no bin off by more than 15 points",
+  set without checking that a decile could hold five seats, where one seat moves
+  the bin by 20.
+- the first-preference widening rule (2026-08-19): "within 5 points of nominal"
+  at the 50%, 80% and 95% levels. Copied from a 95% rule where 5 points is 2.6
+  SE; at the 50% level the same 5 points is **1.16 SE**, so it rejected a
+  perfectly calibrated interval about a quarter of the time. Both candidates
+  were refused by a test with no power to accept either.
+
+**Cluster the standard error on the right unit.** In that case the 139
+party-cycles were 33 independent cycles, because first preferences sum to 100
+within a cycle — treating them as 139 understates the SE. Ask what the
+independent observation actually is before dividing by `sqrt(n)`.
+
+A criterion changed after seeing results is worth almost nothing, so the only
+defence is to get the size right in advance. Where an amendment is unavoidable,
+make it a **visible addition with the original clause left unedited**, and check
+whether it favours the answer found later — if it does, it is not an amendment,
+it is a rationalisation. The one amendment made so far picked the value
+pre-registered *first*, which is the only reason it was allowed to stand.
 
 ## Two model paths — know which one you are looking at
 

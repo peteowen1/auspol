@@ -144,13 +144,16 @@ footer{padding:2.5rem 0 0;border-top:1px solid var(--rule);font-size:.8rem;
   </div>
   <figure>
     <div class="chart"><svg id="pend" viewBox="0 0 900 470" role="img"
-      aria-label="Victorian seats ordered by Labor two-party vote, shaded by win probability"></svg></div>
-    <figcaption>Each row is one of the 83 seats decided between Labor and the
-    Coalition, ordered by Labor's two-party vote in 2022. Shading is the
-    probability Labor holds it. The dark line is the projected result; everything
-    left of it is where the election is actually decided. Five further seats are
-    Labor-versus-Green or independent contests and are not decided by a two-party
-    number, so they are excluded.</figcaption>
+      aria-label="Victorian seats ordered by Labor two-party vote in 2022, shaded by the probability Labor wins the seat against whoever its real opponent is"></svg></div>
+    <figcaption><strong>Position</strong> is Labor's two-party vote in 2022 &mdash;
+    how safe the seat looks against the Coalition. <strong>Shading</strong> is the
+    probability Labor wins it against whoever actually runs second, which is not
+    always the Coalition. Those are two different questions, so the shading does
+    not have to get darker as you move right: Northcote sits at the safe end on
+    81.7% two-party and is shaded near a coin-flip, because the seat Labor has to
+    defend there is against the Greens. The dark line is the projected two-party
+    result. Five seats with no Labor-versus-Coalition contest at all are excluded;
+    they appear in the chart below.</figcaption>
   </figure>
 </section>
 
@@ -158,10 +161,11 @@ footer{padding:2.5rem 0 0;border-top:1px solid var(--rule);font-size:.8rem;
   <div class="col">
     <span class="eyebrow">Every seat</span>
     <h2 style="margin-top:.5rem">Who wins what</h2>
-    <p>The pendulum above only knows Labor against the Coalition. This runs the
-    actual count in every seat &mdash; exclude the lowest, distribute their
-    preferences, repeat &mdash; so a Green, an independent or One Nation can
-    win, and the model can be wrong about it rather than silent.</p>
+    <p>This runs the actual count in every seat &mdash; exclude the lowest,
+    distribute their preferences, repeat &mdash; so a Green, an independent or
+    One Nation can win, and the model can be wrong about it rather than silent.
+    It is the model behind every number on this page, including the shading on
+    the pendulum above; the two-party version is kept only as a cross-check.</p>
   </div>
   <figure>
     <div class="chart"><svg id="seatparty" viewBox="0 0 900 240" role="img"

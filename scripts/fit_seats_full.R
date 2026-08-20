@@ -28,6 +28,48 @@ SEAT_SD <- 3.5      # within-region seat deviation, from seat_swing_spread()
 # upside noise lets it cross a threshold while downside costs nothing where it
 # was already losing. simulate_seat_contests() keeps the per-party seat_sd
 # capability, unused here. See docs/reviews/onp-seat-uncertainty-2026-08-19.md.
+# How statewide first-preference uncertainty is inflated from the trend band.
+#
+#   "growth"   -- MULTIPLICATIVE, the historical behaviour: scale every party's
+#                 sd by the same ratio the two-party projection inflates the
+#                 two-party trend sd.
+#   "additive" -- a constant added in quadrature, which is the structure the
+#                 residuals actually support. estimate_fp_extra_var.R REFUTED
+#                 the multiplicative form directly: cor(|error|, posterior sd)
+#                 = -0.036, p = 0.68, so a well-determined trend is no more
+#                 accurate in absolute terms and there is nothing to scale.
+#
+# ADOPTED 2026-08-19: "additive", after both the coverage test and F4 passed.
+# See docs/reviews/fp-widening-choice-2026-08-19.md.
+#
+# The measured factor is 2.419, the two-party projection error -- the value
+# pre-registered FIRST, chosen on a tie-break written before either candidate's
+# result was known.
+#
+# F4 was the check that mattered, because widening a party that is BEHIND in
+# most seats is a one-way ratchet -- that is why the ONP seat_sd experiment
+# above was refused. It is NOT a ratchet here, because this widens every party
+# symmetrically at the statewide level rather than one party at the seat level:
+# One Nation's expected seats move 2.96 -> 3.10 (+0.14 against a 1.0 limit) and
+# its probability of winning at least one seat FALLS, 0.926 -> 0.897. Stable
+# across seeds 42/101/202.
+FP_SD_MODE  <- Sys.getenv("AUSPOL_FP_SD_MODE", "additive")
+FP_EXTRA_SD <- 2.419   # adopted factor A; docs/reviews/fp-widening-choice-*.md
+OUT_SUFFIX  <- Sys.getenv("AUSPOL_OUT_SUFFIX", "")
+# Overridable ONLY so a change can be checked for stability across seeds. A
+# difference that flips sign with the seed is Monte Carlo noise, which this
+# repo has already mistaken for a result once.
+SEED        <- as.integer(Sys.getenv("AUSPOL_SEED", "42"))
+# Diagnostic arms for the One Nation allocation, declared HERE beside the other
+# overrides so the S6 default-run check below can see them. Defined only
+# further down, a toggle would change the published allocation with nothing in
+# the run log -- which is exactly what S6 exists to prevent.
+ONP_ORDER   <- Sys.getenv("AUSPOL_ONP_ORDER", "federal")   # federal | greens
+ONP_FIX     <- Sys.getenv("AUSPOL_ONP_FIX", "1")           # 1 = compression fixed
+stopifnot(ONP_ORDER %in% c("federal", "greens"), ONP_FIX %in% c("0", "1"))
+stopifnot(FP_SD_MODE %in% c("growth", "additive"))
+stopifnot(is.finite(SEED))
+
 SMOOTH  <- 0.15     # see distribute_preferences(); NOT optional, see its docs
 ONP_B1  <- -0.0968  # Greens-share coefficient, fitted on Victorian federal 2025
 
@@ -73,6 +115,43 @@ cycles <- load_election_cycles(); polls <- load_polls("vic")
 pri <- load_prior_results(); kp <- pri$region == "vic" & pri$year == 2026
 priors <- setNames(pri$prev1[which(kp)], pri$party[which(kp)])
 fl <- flows_for(load_preference_flows(), 2026, "vic", quiet = TRUE)
+# DIAGNOSTIC ONLY, default 0. Shifts every party's flow-to-Labor by a fixed
+# number of POINTS, to size what getting the flows wrong is worth before
+# deciding whether to model flow uncertainty properly. Flows currently enter as
+# CONSTANTS, identical in all draws -- a known unknown treated as known.
+#
+# APPLIED HERE, AT THE SOURCE, and the placement is the point. Shifting only
+# `flow_of()` further down reaches just the statewide two-party anchoring, and
+# that path is INERT by construction: the anchoring moves the MEAN of the
+# statewide draws, while simulate_seat_contests() applies only
+# `statewide_draws[s, ] - centre` (R/seat_sim.R), so a shift in the mean is
+# subtracted straight back out. Shifting `fl` here also reaches trend_as_at()
+# below, which is the live path.
+FLOW_SHIFT <- as.numeric(Sys.getenv("AUSPOL_FLOW_SHIFT", "0"))
+if (FLOW_SHIFT != 0) {
+  fl$flow_alp <- pmin(95, pmax(5, fl$flow_alp + FLOW_SHIFT))
+  cat(sprintf("DIAGNOSTIC: flows shifted %+.2f pts -> %s
+", FLOW_SHIFT,
+              paste(sprintf("%s %.1f", fl$party, fl$flow_alp), collapse = ", ")))
+}
+
+# Emitted as a CHECK CODE, not a plain cat, and this is the point of it.
+# run_all.R keeps only lines matching ^[A-Z]{1,2}[0-9]+[a-c]?[ ] from each
+# stage and DISCARDS the rest, so a plain message never reaches the pipeline
+# log, the Actions step summary or the uploaded artifacts. A leftover
+# AUSPOL_FP_SD_MODE=growth -- a mode this repo measured and REFUTED -- would
+# otherwise change the published seat forecast with nothing anywhere to show
+# it. Reported rather than fatal, because the diagnostic runs are legitimate;
+# what must never happen is one going unnoticed.
+default_run <- SEED == 42L && OUT_SUFFIX == "" && FLOW_SHIFT == 0 &&
+  FP_SD_MODE == "additive" &&
+  ONP_ORDER == "federal" && ONP_FIX == "1"
+cat(sprintf(paste0("S6  run config: seed %d, FP sd %s, flow %+.2f, ",
+                   "ONP %s/fix%s, suffix %s  %s
+"),
+            SEED, FP_SD_MODE, FLOW_SHIFT, ONP_ORDER, ONP_FIX,
+            if (OUT_SUFFIX == "") "(none)" else OUT_SUFFIX,
+            if (default_run) "PASS" else "FAIL -- NOT A DEFAULT PUBLISH RUN"))
 now <- trend_as_at(polls, 2026, cycles, Sys.Date(), priors, fl, with_series = TRUE)
 last <- as.data.table(now$series)[, .SD[which.max(date)], by = party]
 tppr <- last[party == "TPP_ALP"]
@@ -88,7 +167,18 @@ cat(sprintf("projected ALP two-party %.2f (95%%: %.2f-%.2f), %d days out, sd x%.
             pj$mean, pj$lo95, pj$hi95, days_out, growth))
 
 sw <- last[party != "TPP_ALP"]
-sw[, sd_proj := (hi95 - lo95) / (2 * 1.96) * growth]
+# Computed OUTSIDE the brackets: `growth` and the mode are locals, and a bare
+# name inside `[` binds to a column if one shares it. Six instances so far.
+trend_sd <- (sw$hi95 - sw$lo95) / (2 * 1.96)
+sd_vec <- if (FP_SD_MODE == "additive") {
+  sqrt(trend_sd^2 + FP_EXTRA_SD^2)
+} else {
+  trend_sd * growth
+}
+sw[, sd_proj := sd_vec]
+cat(sprintf("FP sd mode: %s; statewide sds %.2f-%.2f (trend %.2f-%.2f)
+",
+            FP_SD_MODE, min(sd_vec), max(sd_vec), min(trend_sd), max(trend_sd)))
 state_mean <- setNames(sw$mean, sw$party)
 state_sd   <- setNames(sw$sd_proj, sw$party)
 
@@ -103,8 +193,31 @@ state_sd   <- setNames(sw$sd_proj, sw$party)
 # uniform allocation by only 0.122 MAE: trust the ONP TOTAL, not any one seat.
 sa_fp <- fread(file.path(PREF, "ecsa-2026-sa-onp-shares.csv"), showProgress = FALSE)
 sa_ratio <- sort(sa_fp$pct / mean(sa_fp$pct))
-idx <- ONP_B1 * mat22[, "GRN"]
-ord <- order(idx)                 # lowest index (strongest Greens) first
+# ORDERING, replaced 2026-08-20. Was the GREENS share, a proxy; is now each
+# district's FEDERAL One Nation vote, measured in its own booths by
+# scripts/transpose_federal_to_state.R.
+#
+# On NSW 2023 the federal ordering reaches a Spearman of +0.814 against the
+# actual One Nation ordering where the Greens-share rule reaches +0.331, and
+# cuts allocation MAE from 3.287 to 1.594. The old rule is WORSE than a uniform
+# allocation (2.595), so it was subtracting value rather than adding it.
+#
+# The geography it relies on is stable: federal One Nation ordering persists at
+# Spearman +0.876 from 2019 to 2022 (58 divisions) and +0.772 from 2022 to 2025
+# (145). See docs/plans/prereg-onp-allocation-federal.md.
+#
+# Only the ORDERING changes. Federal One Nation polled 5.3% in Victoria against
+# a state forecast near 20%, so nothing but shape transfers.
+fed_tr <- fread(file.path(PREF, "federal-transposed-to-state.csv"),
+                showProgress = FALSE)
+fed_onp <- fed_tr[region == "vic" & cycle == 2026 & party == "ONP", .(seat, pct)]
+idx_v <- fed_onp$pct[match(rownames(mat22), fed_onp$seat)]
+if (anyNA(idx_v)) {
+  stop("No transposed federal One Nation vote for: ",
+       paste(rownames(mat22)[is.na(idx_v)], collapse = ", "),
+       ". Run scripts/transpose_federal_to_state.R.")
+}
+ord <- if (Sys.getenv("AUSPOL_ONP_ORDER", "federal") == "greens") order(ONP_B1 * mat22[, "GRN"]) else order(idx_v)
 onp_ratio <- numeric(nrow(mat22)); names(onp_ratio) <- rownames(mat22)
 for (r in seq_along(ord)) {
   q <- (r - 1) / (length(ord) - 1)
@@ -138,8 +251,41 @@ if (length(unmodelled) && !is.na(state_mean["OTH"])) {
               scale_to, paste(c(unmodelled, "OTH"), collapse = "+"),
               base_share, state_mean[["OTH"]]))
 }
-shares[, "ONP"] <- pmax(0, state_mean[["ONP"]] * onp_ratio[rownames(mat22)])
+# COMPRESSION FIX, separate from the ordering change and reported separately.
+# Setting One Nation and then dividing the whole row by its total shrank the
+# spread by 13.7%: a district allocated a high share has a larger row total, so
+# renormalising cut it hardest. The quantile map produced a CV of 0.327 --
+# matching South Australia's 0.334 as intended -- and normalisation reduced it
+# to 0.283.
+#
+# Instead the other parties are scaled to fill exactly what One Nation leaves,
+# so the row already sums to 100 and the intended share survives.
+# Toggles exist ONLY so the two changes can be attributed separately, which the
+# pre-registration requires: without them a spread increase from the
+# compression fix would be credited to the new ordering. Both default to the
+# adopted behaviour.
+ONP_ORDER <- Sys.getenv("AUSPOL_ONP_ORDER", "federal")   # federal | greens
+ONP_FIX   <- Sys.getenv("AUSPOL_ONP_FIX", "1")           # 1 = compression fixed
+stopifnot(ONP_ORDER %in% c("federal", "greens"))
+cat(sprintf("ONP arms: ordering %s, compression fix %s
+", ONP_ORDER, ONP_FIX))
+# A sanity bound, not a modelling choice: no district comes near it (the
+# maximum allocation is 33.0). It exists so a future statewide forecast times
+# the largest quantile ratio cannot exceed 100 and drive the fill negative.
+ONP_CAP <- 80
+onp_target <- pmin(pmax(0, state_mean[["ONP"]] * onp_ratio[rownames(mat22)]), ONP_CAP)
+if (ONP_FIX == "1") {
+  other_cols <- setdiff(colnames(shares), "ONP")
+  rest <- rowSums(shares[, other_cols, drop = FALSE])
+  fill <- pmax(0, 100 - onp_target) / pmax(rest, 1e-9)
+  for (p in other_cols) shares[, p] <- shares[, p] * fill
+}
+shares[, "ONP"] <- onp_target
 shares <- 100 * shares / rowSums(shares)
+cvf <- function(x) stats::sd(x) / mean(x)
+cat(sprintf("ONP allocation: target CV %.3f, delivered %.3f (previously compressed to 0.283)
+",
+            cvf(onp_target), cvf(shares[, "ONP"])))
 
 # ---- 5. statewide draws, ANCHORED to the projection -------------------------
 # Drawing each party independently and renormalising destroys the
@@ -155,7 +301,7 @@ shares <- 100 * shares / rowSums(shares)
 # figure from the projection, then moves the Labor/Coalition split by exactly
 # the gap needed to hit it. Moving d points from LNP to ALP moves the two-party
 # figure by d, so the correction is exact rather than iterative.
-set.seed(42)
+set.seed(SEED)
 psd <- vapply(parties, function(p) if (is.na(state_sd[p])) 1.5 else state_sd[[p]],
               numeric(1))
 sw_draws <- vapply(parties, function(p) {
@@ -188,7 +334,7 @@ stopifnot(abs(mean(chk) - pj$mean) < 0.3, abs(sd(chk) - pj$sd) < 0.3)
 
 t0 <- Sys.time()
 sim <- simulate_seat_contests(shares, fm, party_sd = psd, seat_sd = SEAT_SD,
-                              n_sims = N_SIMS, smooth = SMOOTH, seed = 42,
+                              n_sims = N_SIMS, smooth = SMOOTH, seed = SEED,
                               statewide_draws = sw_draws)
 cat(sprintf("\nsimulated %d seats x %d runs in %.0fs | pooled fallback %.1f%%\n",
             nrow(shares), N_SIMS,
@@ -234,7 +380,7 @@ sp18 <- seat_swing_spread(load_seats(2022, "vic"), 57.60 - 51.99)
 tp <- simulate_seats(seats26, pj$mean, pj$sd, 55.00,
                      mean(c(sp22$sd_within, sp18$sd_within)),
                      region_sd = mean(c(sp22$sd_between, sp18$sd_between)),
-                     n_sims = 50000, seed = 42)
+                     n_sims = 50000, seed = SEED)
 tp_q <- stats::quantile(tp$alp_total, c(0.05, 0.5, 0.95))
 cl_alp <- sort(sim$totals[, "ALP"])
 cl_q <- cl_alp[pmax(1, round(c(0.05, 0.5, 0.95) * length(cl_alp)))]
@@ -259,6 +405,13 @@ if (med_gap > 5 || wid_ratio < 0.7 || wid_ratio > 1.4) {
                       "which."), med_gap, wid_ratio))
 }
 
-fwrite(wp, "output/seat-probs-vic-2026.csv")
-fwrite(as.data.table(sim$totals), "output/seat-sims-full-vic-2026.csv")
-cat("\nwrote output/seat-probs-vic-2026.csv\n")
+# The projected per-seat primaries the simulation runs on. Written out because
+# nothing else can reconstruct them without duplicating the projection above,
+# and a second copy of that logic would drift from this one.
+fwrite(data.table(seat = rownames(shares), as.data.table(shares)),
+       sprintf("output/seat-shares-vic-2026%s.csv", OUT_SUFFIX))
+fwrite(wp, sprintf("output/seat-probs-vic-2026%s.csv", OUT_SUFFIX))
+fwrite(as.data.table(sim$totals), sprintf("output/seat-sims-full-vic-2026%s.csv", OUT_SUFFIX))
+cat(sprintf("
+wrote output/seat-probs-vic-2026%s.csv
+", OUT_SUFFIX))

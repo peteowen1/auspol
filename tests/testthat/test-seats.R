@@ -8,7 +8,12 @@ fake_seats <- function(margins = seq(-20, 20, by = 2), incumbent = NULL) {
     incumbent = incumbent,
     challenger = ifelse(incumbent == "ALP", "LNP", "ALP"),
     seat_region = "R", margin = margins,
-    prev_swing = rep(0, n), classic = TRUE)
+    prev_swing = rep(0, n), classic = TRUE,
+    # Mirrors what load_seats() returns since 2026-08-19. Without these,
+    # simulate_seats() falls back to a uniform swing and warns -- which is the
+    # right behaviour and made an expect_silent() here fail, correctly.
+    fed_swing = rep(0, n), retirement = rep(FALSE, n),
+    soph_cand = rep(FALSE, n), soph_party = rep(FALSE, n))
 }
 
 test_that("margins are Labor's, not the incumbent's", {
@@ -157,4 +162,24 @@ test_that("alp_total counts non-classic seats Labor holds, seats_won does not", 
   sim2 <- simulate_seats(s2, 50, 1, 50, 2, n_sims = 500, seed = 7)
   expect_equal(sim2$alp_nonclassic, 0L)
   expect_equal(sim2$alp_total, sim2$seats_won)
+})
+
+test_that("a seats table without the swing predictors warns, and still runs", {
+  # The fallback must be loud. A seat model quietly losing its predictors would
+  # change every published number with nothing to show it had happened.
+  s <- fake_seats(margins = c(6, -2, 3, -5))
+  s[, c("fed_swing", "retirement", "soph_cand", "soph_party") := NULL]
+  expect_warning(simulate_seats(s, 50, 1, 50, seat_sd = 2, region_sd = 0,
+                                n_sims = 50), "seat-swing prediction is OFF")
+})
+
+test_that("the swing adjustment moves seats but not the statewide total", {
+  # It is a DEPARTURE from the uniform swing, so a seat gaining must be matched
+  # by others losing -- otherwise it is silently shifting the whole forecast.
+  s <- fake_seats(margins = c(6, -2, 3, -5))
+  s[, fed_swing := c(4, 0, -4, 0)]
+  r <- simulate_seats(s, 50, 1, 50, seat_sd = 2, region_sd = 0, n_sims = 50,
+                      seed = 1)
+  expect_equal(sum(r$by_seat$seat_swing_adj), 0, tolerance = 1e-9)
+  expect_gt(r$by_seat[seat == "Seat1", seat_swing_adj], 0)
 })

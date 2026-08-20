@@ -53,7 +53,35 @@ verified in earlier scoping:
 
 **Cost: 88 districts x 2 pages = 176 fetches**, plus a parser. Roughly an hour.
 
-## Victoria 2018 — not available at that pattern
+## Victoria 2018 — RESOLVED 2026-08-20, and 2014 with it
+
+**The section below is superseded.** Both elections are now fetched by
+`scripts/fetch_preferences_vic_historical.R`.
+
+The URLs below were never going to work, because the results are not on the
+main VEC site at all. They live in an **Azure blob archive**, linked from a
+single line of markup on the 2018 page:
+
+```
+itsitecoreblobvecprd01.blob.core.windows.net/public-files/historical-results/state2018/
+```
+
+`state2014` is in the same archive; `state2010`, `state2006` and `state2022`
+are not (checked). Each district has a results page and a
+`distribution{slug}district.html` page, so first preferences, parties, the
+elected member and the exclusion sequence are all available.
+
+Validated to **0.00 points** on every major party against the anchor's own
+`prior-results.csv`, both years, with Greens preference flows of 79.8% (2014)
+and 81.0% (2018).
+
+The lesson worth keeping: **"every URL variant 404s" meant the wrong site was
+being searched, not that the data was gone.** The original investigation tried
+patterns under `vec.vic.gov.au` and concluded unavailability; the answer was a
+`blob.core.windows.net` link in the page source.
+
+### Superseded: the original note
+
 
 Every URL variant tried returns 404:
 

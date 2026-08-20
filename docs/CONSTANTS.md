@@ -36,6 +36,8 @@ number without anything failing.
 | `szc_sd_pts` | `trend.R` | Strength of the soft sum-to-zero constraint on house effects — how far the polling industry as a *whole* may sit from the truth | **ESTIMATED 2026-08-16 — now 1.5.** Chosen by held-out error over a pre-registered grid (`scripts/tune_szc.R`, check `G4`). See §6. |
 | `sigma_house_pts = 3` | `trend.R`, `hyperpars.R` | Prior sd on a single pollster's house effect | **TESTED 2026-08-16, KEPT.** Held-out error over a pre-registered grid is a smooth U with its minimum at exactly 3 (`scripts/tune_sigma_house.R`, check `G5`). See §6b. |
 | `k0 = 25` | `hyperpars.R` | Shrinkage of per-cycle sigmas toward pooled | **CANNOT BE TUNED ON FORECAST ERROR — it does not reach the forecast.** See §6c. |
+| `FP_EXTRA_SD = 2.419` | `fit_seats_full.R` | Statewide first-preference error the trend posterior does not contain, added in quadrature | **ESTIMATED, ADOPTED 2026-08-19.** Coverage of the raw band is 69.8% at a nominal 95%; the structure (additive in points, not multiplicative) was chosen by testing alternatives against the residuals, and the value is the two-party projection error pre-registered in `prereg-fp-widening-choice.md`. See `reviews/fp-widening-choice-2026-08-19.md`. |
+| `SEED = 42` | `fit_seats_full.R` | Simulation seed | **FIXED.** Overridable via `AUSPOL_SEED` only so a change can be checked for stability across seeds. |
 | `k0 = 12` | `hyperpars.R` | Shrinkage of firm noise factors | **Affects the published scorecard, not the forecast.** See §6c. |
 | `clip = c(0.6, 2.0)` | `hyperpars.R` | Bounds on a firm's noise multiplier | **Affects the published scorecard, not the forecast.** See §6c. |
 
@@ -43,6 +45,7 @@ number without anything failing.
 
 | Constant | Where | What it is | Status |
 |---|---|---|---|
+| `SEAT_SWING_COEF = c(fed = 0.7452)` | `seat_swing.R` | How far a seat departs from the statewide swing | **RE-VALIDATED AND CUT 2026-08-20.** Was four terms; re-validation on five elections and 629 seats found `retirement`, `soph_cand` and `soph_party` worth **-0.0008** pooled against uniform swing, and `fed_swing` alone beats all four on held-out MAE (3.3655 vs 3.4249). See `reviews/seat-swing-revalidation-2026-08-20.md`. `fed_swing` itself is still validated on two elections only. |
 | `POLL_TRACKING_BOUND = 2.5` | `poll_tracking.R` | Maximum permitted |fitted endpoint − mean of the final 90 days of polls|, asserted by `L3`/`FL3`/`NL3` | **ESTIMATED from data.** The 99th percentile of that quantity over 154 party-cycles with complete actuals, rounded up to 0.5 (percentile 2.429), by `scripts/calibrate_poll_tracking.R`. Calibrated on the same model path the checks assert on — per-cycle sigmas and firm factors — after review caught the first derivation using `trend_as_at()` defaults (percentile 2.478 over 138 rows; the bound was 2.5 either way). The *rule* was committed in `plans/prereg-per-party-poll-check.md` before the number was computed, with a refusal condition above 5.0. Replaced a `sum = 100 ± 5` check the model does not promise. |
 | `window = 90`, `min_polls = 3` | `poll_tracking.R` | The poll window `POLL_TRACKING_BOUND` is measured over, and the floor below which a party is reported but not asserted on | **FIXED.** 90 days matches the window already used in `test_others_bias.R` rather than being tuned here. The floor exists so a party with no recent polls cannot pass vacuously — `NA > bound` is `NA`. |
 | `BINOMIAL_REF_N = 2500` | `scales.R` | Sample size for the binomial noise floor, wherever it **halts a run or makes a published claim about a named firm** (`H1`, `L4b`/`FL4b`/`NL4b`, the scorecard's *Variability*) | **FIXED — cannot be estimated**, no sample-size column exists. Deliberately the *largest* common sample: smallest binomial sd, weakest floor, so it under-calls herding rather than over-calling it. |
@@ -94,7 +97,8 @@ constant absent from this file is a bug in this file.
 | `SMOOTH` | 0.15 | `distribute_preferences()` | **FIXED, and load-bearing** |
 | `min_n` | 3 | `build_flow_matrix()` | **FIXED** — judgement |
 | `SEAT_SD` | 3.5 | `fit_seats_full.R` | **ESTIMATED** |
-| `ONP_B1` | −0.0968 | `fit_seats_full.R` | **ESTIMATED** |
+| `ONP_B1 = -0.0968` | `fit_seats_full.R` | Greens-share coefficient for the One Nation ordering | **RETIRED 2026-08-20 as the ordering rule.** On NSW 2023 it reached Spearman +0.331 against the actual One Nation ordering and MAE 3.287 -- *worse* than a uniform allocation's 2.595. Replaced by each district's transposed federal One Nation vote (+0.814, MAE 1.594). See `reviews/onp-allocation-federal-2026-08-20.md`. |
+| `ONP_CAP = 80` | `fit_seats_full.R` | Ceiling on any district's One Nation share | **SANITY BOUND, not a modelling choice.** Inert on real data (the maximum allocation is 33.0). It exists so a future statewide forecast times the largest quantile ratio cannot exceed 100 and drive the fill negative. |
 | One Nation spread | SA 2026 observed | `fit_seats_full.R` | **ESTIMATED, transferred** |
 | per-party statewide sd | from the trend | `fit_seats_full.R` | **ESTIMATED** |
 | `N_SIMS` | 20000 | `fit_seats_full.R` | FIXED, no modelling content |

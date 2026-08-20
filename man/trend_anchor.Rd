@@ -4,12 +4,26 @@
 \alias{trend_anchor}
 \title{Day-0 anchor rule (previous election result, or loosely the first poll)}
 \usage{
-trend_anchor(prep, prior_result)
+trend_anchor(prep, prior_result, anchor_k = ANCHOR_K)
+}
+\arguments{
+\item{anchor_k}{Previous-election share below which the weak anchor is used.}
 }
 \description{
 The prior is specified in percentage points and translated onto the model
 scale at the party's own reference share, so "5 points of uncertainty about
 a 35\% party" and "5 points about a 4\% party" keep their intended (very
 different) relative strengths.
+}
+\details{
+A previous result near zero is anchored WEAKLY, because it is barely
+informative. One Nation took 0.28\% in Victoria in 2022 and polls around 23\%
+now; anchoring day 0 to 0.28 at the tight sd told the fit something the
+previous result does not actually say. A party on 37\% last time is a strong
+statement about where it starts; a party on 0.28\% is not, because almost
+anything can follow it.
+
+Both sd values are unchanged from before this rule existed -- only which one
+applies to a low prior. See docs/plans/prereg-anchor-informativeness.md.
 }
 \keyword{internal}

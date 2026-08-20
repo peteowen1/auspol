@@ -1,3 +1,44 @@
+# auspol 0.4.17
+
+**The published seat forecast is now the candidate-level model.** The two-party
+model becomes a cross-check only: it cannot elect a minor party, which is the
+whole reason the candidate model exists, yet it was still driving the headline
+seat total and the pendulum. Its outputs are now required rather than optional,
+so a run without them stops instead of publishing a different model's number
+under the same label.
+
+The candidate model covers **87 seats, not 88**. Narracan has no ordinary first
+preferences to swing -- its 2022 election failed when a candidate died and the
+January 2023 supplementary went uncontested by Labor -- so it is assigned to the
+Coalition, stated on the page, and guarded so a second missing seat stops the
+build. The pendulum's position (2022 two-party vote) and its shading
+(probability against whoever actually runs second) now answer different
+questions, which the caption says rather than leaving the chart looking broken.
+
+**ADOPTED: `FP_EXTRA_SD = 2.419`**, a first-preference variance correction added
+in quadrature, replacing a multiplicative inflation the residuals directly
+refuted (`cor(|error|, posterior sd) = -0.036, p = 0.68`). Published effect:
+ALP 90% range 24-51 to **23-51**, One Nation 0-7 to **0-8**, Labor majority
+29.7% to **28.7%**; medians unchanged. The directional check was not a
+formality -- a similar change was refused hours earlier for raising One Nation's
+win probability in 71 of 87 seats, and this one *lowers* its probability of
+winning any seat, 0.926 to 0.897.
+
+**CLOSED as a non-defect: the One Nation lag.** Following recent polls instead
+of the trend would have been no better (MAE 1.755 against 1.862, a 1.03
+clustered-SE difference). The one case in the record shaped like Victoria 2026 --
+WA 2017, prior 0.00, polls 10.3, fitted 7.8, actual 4.9 -- had the trend lag the
+polls and still finish 2.9 too high. This also retires the theory `ANCHOR_K` was
+built and refused on: the day-0 anchor was never the mechanism.
+
+**Fixed, from review.** `run_all.R` keeps only check-code lines from each stage
+and discards the rest, so the env-var switches on `fit_seats_full.R` were
+invisible in the pipeline log, the Actions summary and the artifacts -- a
+leftover `AUSPOL_FP_SD_MODE=growth` would have changed the published forecast
+silently. Now emitted as check code `S6`. Also closed: a vacuous `all()` over an
+empty class set, and a staleness guard that watched only the driver script and
+not the `R/` library it loads.
+
 # auspol 0.4.16
 
 Documentation and tooling; no model change.

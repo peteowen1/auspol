@@ -68,6 +68,19 @@ prep_trend_obs <- function(polls, party, min_firm_polls = 3,
        cycle_year = attr(polls, "cycle_year"))
 }
 
+#' Previous-election share below which the day-0 anchor is weakened
+#'
+#' A previous result carries information about where a party starts only if the
+#' party was there to be measured. Below this share it is treated as
+#' uninformative and the anchor takes the same width used when there is no
+#' previous result at all.
+#'
+#' Chosen by held-out first-preference MAE over a pre-registered grid; see
+#' docs/plans/prereg-anchor-informativeness.md and
+#' docs/reviews/anchor-informativeness-2026-08-19.md.
+#' @export
+ANCHOR_K <- 0
+
 #' Day-0 anchor rule (previous election result, or loosely the first poll)
 #'
 #' The prior is specified in percentage points and translated onto the model
@@ -75,14 +88,28 @@ prep_trend_obs <- function(polls, party, min_firm_polls = 3,
 #' a 35% party" and "5 points about a 4% party" keep their intended (very
 #' different) relative strengths.
 #'
+#' A previous result near zero is anchored WEAKLY, because it is barely
+#' informative. One Nation took 0.28% in Victoria in 2022 and polls around 23%
+#' now; anchoring day 0 to 0.28 at the tight sd told the fit something the
+#' previous result does not actually say. A party on 37% last time is a strong
+#' statement about where it starts; a party on 0.28% is not, because almost
+#' anything can follow it.
+#'
+#' Both sd values are unchanged from before this rule existed -- only which one
+#' applies to a low prior. See docs/plans/prereg-anchor-informativeness.md.
+#'
+#' @param anchor_k Previous-election share below which the weak anchor is used.
 #' @keywords internal
-trend_anchor <- function(prep, prior_result) {
+trend_anchor <- function(prep, prior_result, anchor_k = ANCHOR_K) {
+  weak <- sd_to_link(10, prep$p_ref, prep$scale)
+  strong <- sd_to_link(5, prep$p_ref, prep$scale)
   if (is.na(prior_result)) {
-    list(val = prep$obs$y[which.min(prep$obs$t)],
-         sd = sd_to_link(10, prep$p_ref, prep$scale))
+    list(val = prep$obs$y[which.min(prep$obs$t)], sd = weak)
   } else {
     list(val = to_link(prior_result, prep$scale)$z,
-         sd = sd_to_link(5, prep$p_ref, prep$scale))
+         # `<` not `<=`, so anchor_k = 0 reproduces the old behaviour exactly
+         # for every party -- which is what the control arm of the grid needs.
+         sd = if (isTRUE(prior_result < anchor_k)) weak else strong)
   }
 }
 
@@ -279,6 +306,9 @@ default_sigmas <- function(scale = c("logit", "points")) {
 #' @param polls A cycle's polls from [cycle_polls()].
 #' @param party Column name, e.g. "ALP".
 #' @param prior_result Previous-election vote share for day-0 anchor (percent).
+#' @param anchor_k Previous-election share below which the day-0 anchor is
+#'   weakened, because a near-zero previous result says little about where a
+#'   party starts. Defaults to [ANCHOR_K].
 #'   `NA` means anchor loosely to the first poll.
 #' @param scale Model scale: "logit" (default) or "points" (the stage-1
 #'   behaviour, kept for comparison and for reproducing older fits).
@@ -335,6 +365,7 @@ default_sigmas <- function(scale = c("logit", "points")) {
 #' @export
 fit_trend <- function(polls, party,
                       prior_result = NA_real_,
+                      anchor_k = ANCHOR_K,
                       scale = c("logit", "points"),
                       sigma_obs = NULL,
                       sigma_rw = NULL,
@@ -349,7 +380,7 @@ fit_trend <- function(polls, party,
   if (is.null(sigma_rw)) sigma_rw <- defs[["sigma_rw"]]
 
   prep <- prep_trend_obs(polls, party, min_firm_polls, scale, prior_result)
-  anchor <- trend_anchor(prep, prior_result)
+  anchor <- trend_anchor(prep, prior_result, anchor_k)
 
   # Gaussian pass first; with nu = Inf this is the whole fit and the weights
   # stay exactly one, so the default path is unchanged.
