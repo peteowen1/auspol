@@ -181,6 +181,11 @@ simulate_seats <- function(seats, tpp_mean, tpp_sd, prev_tpp, seat_sd,
   # 3.425. It sums to zero across seats by construction, so it redistributes
   # the statewide swing rather than adding to it.
   adj <- if (all(c("fed_swing", "retirement") %in% names(cl))) {
+    # Gated on both columns although the default coefficient vector now needs
+    # only `fed_swing`. Deliberately conservative: load_seats() populates the
+    # two together, so this cannot reject a table that would have worked, and a
+    # future seats source supplying one without the other is exactly the case
+    # worth failing loudly on rather than silently adjusting on half the flags.
     seat_swing_adjustment(cl)
   } else {
     # An older load_seats() table. Fall back rather than fail, but SAY SO --

@@ -7,8 +7,16 @@
 seat_swing_adjustment(seats, coef = SEAT_SWING_COEF)
 }
 \arguments{
-\item{seats}{A \code{load_seats()} table, carrying \code{incumbent}, \code{fed_swing},
-\code{retirement}, \code{soph_cand} and \code{soph_party}.}
+\item{seats}{A \code{load_seats()} table. \code{incumbent} and \code{fed_swing} are always
+required; \code{retirement}, \code{soph_cand} and \code{soph_party} are required only if
+\code{coef} names them, which the default no longer does.
+
+Note on centring: seats with a non-finite \code{fed_swing} are set to zero
+\emph{before} the mean is taken, so they pull the mean toward zero and shift
+every other seat's departure by a constant. That is pre-existing behaviour
+and is harmless while every seat has a transposed federal swing -- true for
+Victoria 2026, where all 88 do -- but it would bias the centring in a
+region where some seats lack one.}
 
 \item{coef}{Named coefficient vector; defaults to \link{SEAT_SWING_COEF}.}
 }

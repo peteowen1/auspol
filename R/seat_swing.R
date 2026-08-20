@@ -42,8 +42,16 @@ SEAT_SWING_COEF <- c(fed = 0.7452)
 
 #' Predicted departure from the statewide swing, per seat
 #'
-#' @param seats A `load_seats()` table, carrying `incumbent`, `fed_swing`,
-#'   `retirement`, `soph_cand` and `soph_party`.
+#' @param seats A `load_seats()` table. `incumbent` and `fed_swing` are always
+#'   required; `retirement`, `soph_cand` and `soph_party` are required only if
+#'   `coef` names them, which the default no longer does.
+#'
+#'   Note on centring: seats with a non-finite `fed_swing` are set to zero
+#'   *before* the mean is taken, so they pull the mean toward zero and shift
+#'   every other seat's departure by a constant. That is pre-existing behaviour
+#'   and is harmless while every seat has a transposed federal swing -- true for
+#'   Victoria 2026, where all 88 do -- but it would bias the centring in a
+#'   region where some seats lack one.
 #' @param coef Named coefficient vector; defaults to [SEAT_SWING_COEF].
 #' @return Numeric vector, one per row, in points of two-party swing TOWARD
 #'   LABOR. Seats with no transposed federal swing get the flags only.
