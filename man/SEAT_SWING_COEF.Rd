@@ -3,34 +3,38 @@
 \docType{data}
 \name{SEAT_SWING_COEF}
 \alias{SEAT_SWING_COEF}
-\title{Coefficients for the seat-swing adjustment}
+\title{Coefficient for the seat-swing adjustment}
 \format{
-An object of class \code{numeric} of length 4.
+An object of class \code{numeric} of length 1.
 }
 \usage{
 SEAT_SWING_COEF
 }
 \description{
-Fitted by \code{scripts/test_seat_swing_predictors.R} on all 180 seats of Victoria
-2022 and NSW 2023. The leave-one-election-out fits validate the model; these
-use every seat, which is the right choice for a forecast and the wrong one
-for scoring it.
+\strong{One term, since 2026-08-20.} This was four until re-validation on five
+elections and 629 seats showed the other three were worth less than nothing:
+\code{retirement}, \code{soph_cand} and \code{soph_party} together give a pooled
+leave-one-election-out gain of \strong{-0.0008} against uniform swing, and on the
+two state elections where all four coefficients exist, \code{fed_swing} \strong{alone}
+beats all four on held-out MAE (3.3655 against 3.4249). The adopted model was
+being beaten by one of its own predictors. See
+\verb{docs/reviews/seat-swing-revalidation-2026-08-20.md}.
 }
 \details{
-Signs are all as Australian psephology expects, which was a pre-registered
-refusal condition rather than an observation made afterwards:
 \itemize{
-\item \code{fed} \strong{+0.708} (t = 8.5) — a seat swinging federally swings the same way
-at state level. Much the strongest of the four.
-\item \code{retirement} \strong{−1.396} (t = −2.1) — a departing member takes a personal
-vote with them.
-\item \code{soph_cand} \strong{+2.559} (t = 3.0) — a first-term member defending for the
-first time gains on their debut margin.
-\item \code{soph_party} \strong{+1.609} (t = 1.2) — same effect at party level, and the
-only one not statistically distinguishable from zero. Kept because the
-pre-registration fixed the model before fitting, and dropping a term for
-failing a significance test it was never required to pass is exactly the
-selection this repo's discipline exists to prevent.
+\item \code{fed} \strong{+0.745} (t = 8.56) -- a seat swinging federally swings the same way
+at state level. Refitted alone; it was 0.708 alongside the other three.
 }
+
+The removed terms all had the sign Australian psephology expects and two were
+significant. They were not wrong about direction -- they simply did not pay
+for the variance they added, which only a five-election sample could show.
+
+\strong{\code{fed_swing} itself is still validated on two elections only.} It is the
+strongest term in the seat model and the least verified; removing its
+companions does not change that.
+
+\code{seat_swing_adjustment()} still accepts a four-term vector, so the previous
+behaviour is reproducible by passing the old coefficients explicitly.
 }
 \keyword{datasets}

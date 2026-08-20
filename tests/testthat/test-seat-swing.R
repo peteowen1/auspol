@@ -1,7 +1,16 @@
-# seat_swing_adjustment() turns four seat-file flags into a predicted departure
-# from the statewide swing. Its main hazard is sign: every flag acts on the
+# seat_swing_adjustment() turns seat-file flags into a predicted departure from
+# the statewide swing. Its main hazard is sign: every flag acts on the
 # INCUMBENT, and the output is expressed toward Labor, so the same retirement
 # helps Labor in one seat and hurts it in another.
+#
+# SINCE 2026-08-20 the default coefficient vector has ONE term. The other three
+# were removed after re-validation on five elections found them worth less than
+# nothing. The side-flipping mechanism is retained and still tested here, by
+# passing the historical four-term vector explicitly -- so a caller who supplies
+# their own flags still gets correct behaviour, and a regression in that
+# machinery is still caught.
+OLD4 <- c(fed = 0.7077, retirement = -1.3955,
+          soph_cand = 2.5587, soph_party = 1.6090)
 
 mk <- function(incumbent = c("ALP", "LNP"), fed = c(0, 0),
                ret = c(FALSE, FALSE), sc = c(FALSE, FALSE),
@@ -18,17 +27,17 @@ test_that("no flags and no federal swing means no adjustment", {
 test_that("a retirement hurts whoever holds the seat", {
   # The decisive sign test. The same event moves the Labor-facing swing in
   # OPPOSITE directions depending on who is retiring.
-  a <- seat_swing_adjustment(mk(ret = c(TRUE, FALSE)))
+  a <- seat_swing_adjustment(mk(ret = c(TRUE, FALSE)), OLD4)
   expect_lt(a[1], 0)          # ALP retires -> swing away from Labor
-  b <- seat_swing_adjustment(mk(incumbent = c("LNP", "LNP"), ret = c(TRUE, FALSE)))
+  b <- seat_swing_adjustment(mk(incumbent = c("LNP", "LNP"), ret = c(TRUE, FALSE)), OLD4)
   expect_gt(b[1], 0)          # Coalition retires -> swing toward Labor
   expect_equal(abs(a[1]), abs(b[1]))
 })
 
 test_that("a sophomore candidate helps whoever holds the seat", {
-  a <- seat_swing_adjustment(mk(sc = c(TRUE, FALSE)))
+  a <- seat_swing_adjustment(mk(sc = c(TRUE, FALSE)), OLD4)
   expect_gt(a[1], 0)
-  b <- seat_swing_adjustment(mk(incumbent = c("LNP", "LNP"), sc = c(TRUE, FALSE)))
+  b <- seat_swing_adjustment(mk(incumbent = c("LNP", "LNP"), sc = c(TRUE, FALSE)), OLD4)
   expect_lt(b[1], 0)
 })
 
@@ -44,7 +53,7 @@ test_that("the federal swing is CENTRED, so a uniform one adds nothing", {
 })
 
 test_that("a missing federal swing costs the seat only that term", {
-  adj <- seat_swing_adjustment(mk(fed = c(NA, 0), ret = c(TRUE, FALSE)))
+  adj <- seat_swing_adjustment(mk(fed = c(NA, 0), ret = c(TRUE, FALSE)), OLD4)
   expect_true(is.finite(adj[1]))
   expect_lt(adj[1], 0)        # the retirement still applies
 })
@@ -63,9 +72,17 @@ test_that("a table from an older load_seats() is refused, not silently zeroed", 
   expect_error(seat_swing_adjustment(old), "missing column")
 })
 
-test_that("coefficient signs match what the pre-registration required", {
+test_that("the default is ONE term, and it is the federal swing", {
+  # Guards the 2026-08-20 removal. If a future change re-adds the flags without
+  # re-validating them, this fails and points at the review that removed them.
+  expect_named(SEAT_SWING_COEF, "fed")
   expect_gt(SEAT_SWING_COEF[["fed"]], 0)
-  expect_lt(SEAT_SWING_COEF[["retirement"]], 0)
-  expect_gt(SEAT_SWING_COEF[["soph_cand"]], 0)
-  expect_gt(SEAT_SWING_COEF[["soph_party"]], 0)
+})
+
+test_that("a caller supplying only some flags is not silently given zeros", {
+  # The required columns follow the COEFFICIENTS, so a four-term vector against
+  # a table lacking the flags must error rather than treat them as absent.
+  bare <- data.table::data.table(seat = "S1", incumbent = "ALP", fed_swing = 0)
+  expect_equal(seat_swing_adjustment(bare), 0)
+  expect_error(seat_swing_adjustment(bare, OLD4), "missing column")
 })

@@ -13,30 +13,32 @@
 # Pre-registered in docs/plans/prereg-seat-swing-predictors.md, with the bar and
 # all four refusal conditions fixed before anything was measured.
 
-#' Coefficients for the seat-swing adjustment
+#' Coefficient for the seat-swing adjustment
 #'
-#' Fitted by `scripts/test_seat_swing_predictors.R` on all 180 seats of Victoria
-#' 2022 and NSW 2023. The leave-one-election-out fits validate the model; these
-#' use every seat, which is the right choice for a forecast and the wrong one
-#' for scoring it.
+#' **One term, since 2026-08-20.** This was four until re-validation on five
+#' elections and 629 seats showed the other three were worth less than nothing:
+#' `retirement`, `soph_cand` and `soph_party` together give a pooled
+#' leave-one-election-out gain of **-0.0008** against uniform swing, and on the
+#' two state elections where all four coefficients exist, `fed_swing` **alone**
+#' beats all four on held-out MAE (3.3655 against 3.4249). The adopted model was
+#' being beaten by one of its own predictors. See
+#' `docs/reviews/seat-swing-revalidation-2026-08-20.md`.
 #'
-#' Signs are all as Australian psephology expects, which was a pre-registered
-#' refusal condition rather than an observation made afterwards:
+#' - `fed` **+0.745** (t = 8.56) -- a seat swinging federally swings the same way
+#'   at state level. Refitted alone; it was 0.708 alongside the other three.
 #'
-#' - `fed` **+0.708** (t = 8.5) — a seat swinging federally swings the same way
-#'   at state level. Much the strongest of the four.
-#' - `retirement` **−1.396** (t = −2.1) — a departing member takes a personal
-#'   vote with them.
-#' - `soph_cand` **+2.559** (t = 3.0) — a first-term member defending for the
-#'   first time gains on their debut margin.
-#' - `soph_party` **+1.609** (t = 1.2) — same effect at party level, and the
-#'   only one not statistically distinguishable from zero. Kept because the
-#'   pre-registration fixed the model before fitting, and dropping a term for
-#'   failing a significance test it was never required to pass is exactly the
-#'   selection this repo's discipline exists to prevent.
+#' The removed terms all had the sign Australian psephology expects and two were
+#' significant. They were not wrong about direction -- they simply did not pay
+#' for the variance they added, which only a five-election sample could show.
+#'
+#' **`fed_swing` itself is still validated on two elections only.** It is the
+#' strongest term in the seat model and the least verified; removing its
+#' companions does not change that.
+#'
+#' `seat_swing_adjustment()` still accepts a four-term vector, so the previous
+#' behaviour is reproducible by passing the old coefficients explicitly.
 #' @export
-SEAT_SWING_COEF <- c(fed = 0.7077, retirement = -1.3955,
-                     soph_cand = 2.5587, soph_party = 1.6090)
+SEAT_SWING_COEF <- c(fed = 0.7452)
 
 #' Predicted departure from the statewide swing, per seat
 #'
@@ -47,7 +49,8 @@ SEAT_SWING_COEF <- c(fed = 0.7077, retirement = -1.3955,
 #'   LABOR. Seats with no transposed federal swing get the flags only.
 #' @export
 seat_swing_adjustment <- function(seats, coef = SEAT_SWING_COEF) {
-  need <- c("incumbent", "fed_swing", "retirement", "soph_cand", "soph_party")
+  need <- c("incumbent", "fed_swing")
+  need <- c(need, intersect(c("retirement", "soph_cand", "soph_party"), names(coef)))
   miss <- setdiff(need, names(seats))
   if (length(miss)) {
     stop("seats is missing column(s): ", paste(miss, collapse = ", "),
@@ -71,8 +74,13 @@ seat_swing_adjustment <- function(seats, coef = SEAT_SWING_COEF) {
   # the mean federal swing to every seat and shift the whole forecast.
   fed <- fed - mean(fed)
 
-  unname(coef[["fed"]] * fed +
-         side * (coef[["retirement"]] * as.numeric(seats$retirement) +
-                 coef[["soph_cand"]]  * as.numeric(seats$soph_cand) +
-                 coef[["soph_party"]] * as.numeric(seats$soph_party)))
+  # `side` is retained because a caller may supply the old four-term coefficient
+  # vector, and the flags only mean anything relative to whoever holds the seat.
+  out <- coef[["fed"]] * fed
+  for (k in c("retirement", "soph_cand", "soph_party")) {
+    if (k %in% names(coef)) {
+      out <- out + side * coef[[k]] * as.numeric(seats[[k]])
+    }
+  }
+  unname(out)
 }
