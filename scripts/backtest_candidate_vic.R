@@ -47,7 +47,20 @@ for (K in PAIRS) {
     # changed hands -- Mulgrave, Warrandyte and Narracan all went to one. Those
     # are named and excluded rather than scored against the wrong party.
     s <- as.data.table(load_seats(2026, "vic"))[, .(seat, winner = incumbent)]
-    byelections <- c("Mulgrave", "Warrandyte", "Narracan", "Prahran", "Werribee")
+    # Only a by-election that CHANGED THE PARTY corrupts truth. One that
+    # returned the same party leaves the incumbent field equal to the 2022
+    # winner, so excluding it throws away a valid observation for nothing --
+    # which a first pass did to Werribee.
+    #
+    # Victoria has had six Legislative Assembly contests since 2022: the
+    # Narracan supplementary (Jan 2023), Warrandyte (Aug 2023), Mulgrave (Nov
+    # 2023), Werribee and Prahran (Feb 2025), and Nepean (May 2026). Only
+    # PRAHRAN changed hands -- the Greens won it in 2022 and the Liberals won
+    # the by-election.
+    byelections_changed <- c("Prahran")
+    byelections_retained <- c("Mulgrave", "Warrandyte", "Narracan",
+                              "Werribee", "Nepean")
+    byelections <- byelections_changed
     win <- s[!seat %in% byelections]
     truth_src <- sprintf("the 2026 seat file, excluding %d by-election seats",
                          length(byelections))
@@ -68,7 +81,8 @@ for (K in PAIRS) {
     cf <- function(x) fifelse(x %in% c("NAT", "LIB", "LNP", "CLP"), "LNP", x)
     chk[, `:=`(fp_leader = cf(fp_leader), winner = cf(winner))]
     won_from_behind <- c("Bass", "Hastings", "Nepean")
-    odd <- chk[fp_leader != winner & !seat %in% c(won_from_behind, byelections)]
+    odd <- chk[fp_leader != winner &
+                 !seat %in% c(won_from_behind, byelections, byelections_retained)]
     if (nrow(odd)) {
       stop("These seats' recorded incumbent differs from the 2022 first-preference ",
            "leader and are neither a known won-from-behind seat nor a listed ",
@@ -101,10 +115,14 @@ for (K in PAIRS) {
     cat(sprintf("BV1  %d districts have no %d baseline and are not scored: %s\n",
                 length(dropped), K$from, paste(sort(dropped), collapse = ", ")))
   }
-  # The 2021 Victorian redistribution created NINE districts that did not exist
-  # in 2018 -- Ashwood, Berwick, Eureka, Glen Waverley, Greenvale, Kalkallo,
-  # Laverton, Pakenham, Point Cook -- so 2018 -> 2022 legitimately scores 76 of
-  # 88 once the three by-election seats are also set aside. The floor is set
+  # The 2021 Victorian redistribution left NINE districts with no 2018 baseline
+  # to swing from -- Ashwood, Berwick, Glen Waverley, Greenvale, Kalkallo,
+  # Laverton, Pakenham, Point Cook and Eureka. Eight are genuinely new;
+  # **Eureka is a renamed Buninyong**, with the sitting member recontesting
+  # under the new name, so "did not exist" would be wrong for it. It is still
+  # excluded because its boundaries changed materially -- it gained Bacchus
+  # Marsh and lost Scarsdale and Sebastopol -- but the distinction is recorded
+  # so nobody concludes there is no lineage to check. The floor is set
   # against the pair with the most churn rather than at a number that assumes
   # boundaries never move, and it names what it dropped either way.
   if (length(keep) < 70L) {
