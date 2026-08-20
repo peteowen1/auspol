@@ -79,9 +79,9 @@ fit <- readRDS("output/independent-emergence-fit.rds")
 prev_pct <- f19[, .(v = sum(votes)), by = .(seat, party)]
 prev_pct[, pct := 100 * v / sum(v), by = seat]
 prev <- dcast(prev_pct, seat ~ party, value.var = "pct", fill = 0)
-prev[, nonmajor_prev := IND + OTH + OTH_RIGHT]
-stopifnot(max(prev$nonmajor_prev) <= 100, max(prev$IND) <= 100)
-feat <- merge(prev[, .(seat, nonmajor_prev, ind_prev = IND)], seats, by = "seat")
+prev[, other_nonmajor_prev := OTH + OTH_RIGHT]   # v2: disjoint from ind_prev
+stopifnot(max(prev$other_nonmajor_prev) <= 100, max(prev$IND) <= 100)
+feat <- merge(prev[, .(seat, other_nonmajor_prev, ind_prev = IND)], seats, by = "seat")
 feat[, `:=`(abs_margin = abs(margin),
             coalition_held = as.integer(incumbent %in% c("LNP", "LIB", "NAT")), y = 0)]
 feat <- feat[match(common, seat)]

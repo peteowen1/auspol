@@ -37,7 +37,12 @@ seats <- as.data.table(load_seats(2023, "nsw"))[, .(seat, margin, incumbent)]
 d <- merge(d, seats, by = "seat")
 
 # ---- the four pre-registered features --------------------------------------
-d[, nonmajor_prev := IND_prev + OTH_prev + OTH_RIGHT_prev]
+# v2: DISJOINT. In v1 this aggregate contained IND_prev, so the two features
+# were collinear and the fit put all the location weight on the aggregate --
+# leaving the model unable to tell "20% spread across minor parties" from "20%
+# to a sitting independent", and overwriting incumbent independents as a result.
+# See docs/plans/prereg-independent-emergence-v2.md.
+d[, other_nonmajor_prev := OTH_prev + OTH_RIGHT_prev]
 d[, ind_prev      := IND_prev]
 d[, abs_margin    := abs(margin)]
 d[, coalition_held := as.integer(incumbent %in% c("LNP", "LIB", "NAT"))]
@@ -47,8 +52,13 @@ cat(sprintf("\nIE1  %d NSW seats with both elections\n", nrow(d)))
 cat(sprintf("IE1  independent share now: mean %.2f, median %.2f, max %.2f; zero in %d seats\n",
             mean(d$ind_now), stats::median(d$ind_now), max(d$ind_now),
             sum(d$ind_now < 0.5)))
-cat(sprintf("IE1  previous non-major vote: mean %.2f, range %.1f-%.1f\n",
-            mean(d$nonmajor_prev), min(d$nonmajor_prev), max(d$nonmajor_prev)))
+# Reported BEFORE the fit is read, as evidence the collinearity is gone rather
+# than assumed gone. In v1 the pair correlated by construction.
+cat(sprintf("IE1  correlation(other_nonmajor_prev, ind_prev) = %+.3f  <- v1 had these overlapping
+",
+            stats::cor(d$other_nonmajor_prev, d$ind_prev)))
+cat(sprintf("IE1  previous other non-major vote: mean %.2f, range %.1f-%.1f\n",
+            mean(d$other_nonmajor_prev), min(d$other_nonmajor_prev), max(d$other_nonmajor_prev)))
 
 # ---- structure --------------------------------------------------------------
 # The outcome is heavily zero-inflated and right-skewed: most seats have almost
@@ -56,7 +66,7 @@ cat(sprintf("IE1  previous non-major vote: mean %.2f, range %.1f-%.1f\n",
 # the fit is not dominated by the handful of very large values, with the SPREAD
 # allowed to grow with the same features as the location -- that growth is what
 # creates the possibility of a large independent vote in a seat that has none.
-FEAT <- c("nonmajor_prev", "ind_prev", "abs_margin", "coalition_held")
+FEAT <- c("other_nonmajor_prev", "ind_prev", "abs_margin", "coalition_held")
 FORM_MU <- stats::as.formula(paste("y ~", paste(FEAT, collapse = " + ")))
 d[, y := log1p(ind_now)]
 
@@ -118,12 +128,12 @@ cat(sprintf("IE3  Kolmogorov-Smirnov against uniform: p = %.3f (high = calibrate
 q <- c(0.5, 0.75, 0.9, 0.95, 0.99)
 cat("\nIE4  implied independent vote for a seat with no independent last time\n")
 for (nmv in c(3, 8, 15, 25)) {
-  nd <- data.table(nonmajor_prev = nmv, ind_prev = 0, abs_margin = 10,
+  nd <- data.table(other_nonmajor_prev = nmv, ind_prev = 0, abs_margin = 10,
                    coalition_held = 1L, y = 0)
   xi <- stats::model.matrix(FORM_MU, data = nd)
   mu <- as.vector(xi %*% full$b); s <- exp(min(as.vector(xi %*% full$g), 5))
   vals <- expm1(mu + s * stats::qt(q, df = full$nu))
-  cat(sprintf("     previous non-major %2d%%:  median %4.1f%%  p75 %4.1f%%  p90 %5.1f%%  p95 %5.1f%%  p99 %5.1f%%\n",
+  cat(sprintf("     previous other non-major %2d%%:  median %4.1f%%  p75 %4.1f%%  p90 %5.1f%%  p95 %5.1f%%  p99 %5.1f%%\n",
               nmv, vals[1], vals[2], vals[3], vals[4], vals[5]))
 }
 
