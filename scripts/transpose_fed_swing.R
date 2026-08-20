@@ -72,13 +72,50 @@ tpp_booths <- function(year) {
     stop("TPP booth file for ", year, " lacks a Swing or TotalVotes column. ",
          "Columns: ", paste(names(d), collapse = ", "))
   }
-  # SIGN. The AEC's Swing column in the two-party file runs the opposite way to
-  # this repo's convention, which is always "toward Labor" -- the validation
-  # against the published fed_swing returned a correlation of -0.952, near
-  # perfect in magnitude and inverted. Left unflipped this would have silently
-  # reversed the strongest predictor in the seat model.
-  d[, `:=`(swing = -as.numeric(get(swing_col[1])),
+  # SIGN, AND IT IS NOT A CONSTANT. The AEC's Swing column refers to whichever
+  # party its columns list FIRST, and the AEC CHANGED THAT ORDER in 2025:
+  #
+  #   2016, 2022:  ...,Liberal/National Coalition Votes,...,Australian Labor Party Votes,...,Swing
+  #   2025:        ...,Australian Labor Party Votes,...,Liberal/National Coalition Votes,...,Swing
+  #
+  # This repo's convention is always "toward Labor". A fixed negation was
+  # correct for 2016 and 2022 -- and it validated, because the only two cycles
+  # with a published fed_swing to check against both draw on those elections.
+  # Applied to 2025 it inverted every booth, which showed up as a mean swing of
+  # -6.76 toward the Coalition at an election Labor won with a 3-point swing,
+  # and as a -55 point booth that cannot exist.
+  #
+  # So the reference party is read from the column order rather than assumed.
+  # setnames(make.names()) above has already turned the spaces into dots, so
+  # these patterns must tolerate either form.
+  lab_at <- grep("Australian.Labor.Party.Votes", names(d))[1]
+  lnp_at <- grep("Coalition.Votes", names(d))[1]
+  if (is.na(lab_at) || is.na(lnp_at)) {
+    stop("TPP booth file for ", year, " has neither a Labor nor a Coalition ",
+         "votes column, so the Swing column's reference party is unknowable. ",
+         "Columns: ", paste(names(d), collapse = ", "))
+  }
+  swing_is_labor <- lab_at < lnp_at
+  d[, `:=`(swing = if (swing_is_labor) as.numeric(get(swing_col[1]))
+                   else -as.numeric(get(swing_col[1])),
            tot = as.numeric(get(tot_col[1])))]
+  cat(sprintf("FSWS fed%d: Swing column is toward %s (%s listed first)
+",
+              year, if (swing_is_labor) "LABOR" else "the COALITION",
+              if (swing_is_labor) "Labor" else "Coalition"))
+
+  # A national mean this far from zero means the sign is still wrong, whichever
+  # way it was read. Federal two-party swings do not average 8 points.
+  chk <- d[is.finite(swing) & is.finite(tot) & tot > 0]
+  natl <- sum(chk$swing * chk$tot) / sum(chk$tot)
+  cat(sprintf("FSWS fed%d: national vote-weighted swing to Labor %+.2f
+",
+              year, natl))
+  if (abs(natl) > 8) {
+    stop("fed", year, ": national swing of ", round(natl, 2), " points is not ",
+         "a real federal swing. The Swing column's reference party is being ",
+         "read wrong.")
+  }
   d[is.finite(swing) & is.finite(tot) & tot > 0]
 }
 
