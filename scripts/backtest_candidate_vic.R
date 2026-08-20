@@ -77,9 +77,17 @@ for (K in PAIRS) {
     cat(sprintf("BV1  %d districts have no %d baseline and are not scored: %s\n",
                 length(dropped), K$from, paste(sort(dropped), collapse = ", ")))
   }
-  if (length(keep) < 80L) {
-    stop("Only ", length(keep), " districts could be scored; a redistribution ",
-         "accounts for a handful, not this many.")
+  # The 2021 Victorian redistribution created NINE districts that did not exist
+  # in 2018 -- Ashwood, Berwick, Eureka, Glen Waverley, Greenvale, Kalkallo,
+  # Laverton, Pakenham, Point Cook -- so 2018 -> 2022 legitimately scores 76 of
+  # 88 once the three by-election seats are also set aside. The floor is set
+  # against the pair with the most churn rather than at a number that assumes
+  # boundaries never move, and it names what it dropped either way.
+  if (length(keep) < 70L) {
+    stop("Only ", length(keep), " districts could be scored. Even the 2021 ",
+         "redistribution plus the by-election exclusions leaves 76, so this ",
+         "means the district names stopped matching, not that the chamber ",
+         "changed.")
   }
 
   sp <- seat_swing_spread(as.data.table(load_seats(2026, "vic")),
