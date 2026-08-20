@@ -141,6 +141,34 @@ if (length(keep) != 47L) {
        paste(setdiff(win$seat, rownames(shares)), collapse = ", "))
 }
 
+# ---- seat-swing port, third testable election ------------------------------
+# Against docs/plans/prereg-seat-swing-port-round2.md, which had TWO elections
+# and a clustered standard error on one degree of freedom. South Australia is
+# the third: 2026sa.txt carries fed_swing for all 47 seats. The federal corpus
+# cannot help -- its seat files carry fed_swing for zero seats, because "how
+# this seat swung at the preceding federal election" has no federal analogue.
+#
+# Same block as the Victorian and NSW harnesses, unchanged in substance
+# (refusal P4).
+PORT <- identical(Sys.getenv("AUSPOL_SEAT_SWING_PORT", "0"), "1")
+if (PORT) {
+  sf_to <- as.data.table(load_seats(2026L, "sa"))
+  idx_p <- match(rownames(shares), sf_to$seat)
+  adj <- rep(0, nrow(shares))
+  adj[!is.na(idx_p)] <- seat_swing_adjustment(sf_to[idx_p[!is.na(idx_p)]])
+  if (anyNA(idx_p)) {
+    cat(sprintf("BS1c %d seats have no match in the seat file and get no adjustment: %s\n",
+                sum(is.na(idx_p)), paste(rownames(shares)[is.na(idx_p)], collapse = ", ")))
+  }
+  adj <- adj - mean(adj)
+  stopifnot(all(is.finite(adj)))
+  cat(sprintf("BS1c seat-swing port ON: adjustment mean %+.3f sd %.3f range %+.2f..%+.2f\n",
+              mean(adj), stats::sd(adj), min(adj), max(adj)))
+  shares[, "ALP"] <- pmax(0, shares[, "ALP"] + adj)
+  shares[, "LNP"] <- pmax(0, shares[, "LNP"] - adj)
+  shares <- 100 * shares / rowSums(shares)
+}
+
 # Per-seat spread from the seat file of the election being predicted.
 sp <- seat_swing_spread(as.data.table(load_seats(2026L, "sa")),
                         unname(st_b[["ALP"]] - st_a[["ALP"]]))
