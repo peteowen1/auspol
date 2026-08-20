@@ -47,10 +47,34 @@ for (K in PAIRS) {
     # changed hands -- Mulgrave, Warrandyte and Narracan all went to one. Those
     # are named and excluded rather than scored against the wrong party.
     s <- as.data.table(load_seats(2026, "vic"))[, .(seat, winner = incumbent)]
-    byelections <- c("Mulgrave", "Warrandyte", "Narracan")
+    byelections <- c("Mulgrave", "Warrandyte", "Narracan", "Prahran", "Werribee")
     win <- s[!seat %in% byelections]
     truth_src <- sprintf("the 2026 seat file, excluding %d by-election seats",
                          length(byelections))
+    # A hand-written by-election list is exactly the kind of thing that is wrong
+    # and looks right: the first version of it missed Prahran, where the Greens
+    # won in 2022 and the Liberals won the February 2025 by-election, so the
+    # model was scored against a party that did not win the election being
+    # predicted. So the list is CHECKED rather than trusted.
+    #
+    # Any seat whose recorded incumbent differs from its 2022 first-preference
+    # leader is either a seat won from behind on preferences -- legitimate -- or
+    # a by-election the list has missed. Both are surfaced; the known
+    # won-from-behind seats are named so a NEW one stands out.
+    lead22 <- fb[, .(v = sum(votes)), by = .(seat, party)]
+    lead22[, pct := 100 * v / sum(v), by = seat]
+    lead22 <- lead22[, .SD[which.max(pct)], by = seat][, .(seat, fp_leader = party)]
+    chk <- merge(lead22, s, by = "seat")
+    cf <- function(x) fifelse(x %in% c("NAT", "LIB", "LNP", "CLP"), "LNP", x)
+    chk[, `:=`(fp_leader = cf(fp_leader), winner = cf(winner))]
+    won_from_behind <- c("Bass", "Hastings", "Nepean")
+    odd <- chk[fp_leader != winner & !seat %in% c(won_from_behind, byelections)]
+    if (nrow(odd)) {
+      stop("These seats' recorded incumbent differs from the 2022 first-preference ",
+           "leader and are neither a known won-from-behind seat nor a listed ",
+           "by-election: ", paste(odd$seat, collapse = ", "),
+           ". Confirm which before scoring against them.")
+    }
   }
   coal <- function(x) fifelse(x %in% c("NAT", "LIB", "LNP", "CLP"), "LNP", x)
   win[, winner := coal(winner)]

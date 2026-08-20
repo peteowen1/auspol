@@ -12,11 +12,11 @@ Victorian seat number had never been scored in Victoria.
 | | districts | accuracy | Brier | log score | slope |
 |---|---:|---:|---:|---:|---:|
 | **VIC 2014 → 2018** | 88 | **80 (90.9%)** | **0.0840** | 0.397 | 0.512 |
-| **VIC 2018 → 2022** | 76 | 63 (82.9%) | 0.0981 | 0.270 | 2.128 |
-| **pooled** | **164** | **87.2%** | **0.0906** | — | — |
+| **VIC 2018 → 2022** | 74 | 61 (82.4%) | 0.0993 | 0.272 | 2.546 |
+| **pooled** | **162** | **87.0%** | **0.0910** | — | — |
 | NSW 2023, for comparison | 88 | 80.7% | 0.1468 | 0.856 | 0.541 |
 
-**Victoria scores considerably better than NSW** — 87.2% against 80.7%, and a
+**Victoria scores considerably better than NSW** — 87.0% against 80.7%, and a
 Brier 38% lower. Some of that is real (Victoria's 2018 was a landslide with
 fewer close contests) and some is that NSW 2023 elected nine independents to
 Victoria's three.
@@ -28,11 +28,11 @@ the VEC's own declared winners.
 ## The two pairs disagree about confidence, which is worth noting
 
 - 2014 → 2018: slope **0.512** — overconfident.
-- 2018 → 2022: slope **2.128** — *under*confident.
+- 2018 → 2022: slope **2.546** — *under*confident.
 
 Opposite errors on adjacent elections. Pooled they cancel, which is exactly why
 a single-election calibration figure should not be trusted — and this repo has
-now produced calibration slopes of 0.260, 0.512, 0.541, 0.974 and 2.128
+now produced calibration slopes of 0.260, 0.512, 0.541, 0.974 and 2.546
 depending on which election it looked at.
 
 ## Independents again, and the same shape as NSW
@@ -54,9 +54,19 @@ first preferences**, and the model gave them 0.053.
 
 ## Caveats
 
-- **2018 → 2022 truth is weaker.** No archived winners file exists for 2022, so
-  the 2026 seat file's incumbent is used, with Mulgrave, Warrandyte and Narracan
-  excluded because by-elections have since changed them.
+- **2018 → 2022 truth is weaker, and my first version of it was wrong.** No
+  archived winners file exists for 2022, so the 2026 seat file's incumbent is
+  used. That field records the CURRENT holder, so every seat with a by-election
+  since 2022 must be excluded — and the hand-written list missed **Prahran**,
+  where the Greens won in 2022 and the Liberals won the February 2025
+  by-election. The model was scored against a party that did not win the
+  election being predicted.
+
+  The list is now **checked rather than trusted**: any seat whose recorded
+  incumbent differs from its 2022 first-preference leader must be either a known
+  won-from-behind seat (Bass, Hastings, Nepean) or a listed by-election, and the
+  script stops on anything else. Five seats are now excluded (adding Prahran and
+  Werribee), which is why this pair scores 74 rather than 76.
 - **Nine districts are unscorable in 2018 → 2022** — Ashwood, Berwick, Eureka,
   Glen Waverley, Greenvale, Kalkallo, Laverton, Pakenham, Point Cook — created
   by the 2021 redistribution with no 2018 baseline to swing from. Named in the
