@@ -69,6 +69,21 @@ Specific traps, all of which have bitten:
   drops `NA`, `NA <= 0` is `NA`, and `data.table` silently drops a column
   assigned `NULL`. A check with an `| is.na(x)` escape hatch passes on exactly
   the input it exists to catch.
+- **`load_seats(Y)$incumbent` is who holds the seat NOW, not who won election
+  Y-1, and its party labels are not ours.** Two distinct traps, found together
+  on 2026-08-20 while scoring the NSW backtest:
+  - **By-elections contaminate it.** Bega, Kiama and Pittwater all record a
+    later winner than the election that produced them. Anything asking "who won
+    last time" must use declared results, not this field.
+  - **The anchor's party classes differ from `classify_party()`.** It files the
+    Shooters, Fishers and Farmers as `IND`; we map them to `OTH_RIGHT`. So
+    Barwon, Murray and Orange read as independent-held from the seat file and as
+    minor-right from the first preferences. That inconsistency silently
+    corrupted a check on "seats an independent held and won".
+  **One source of truth per question**: party classification comes from our own
+  `classify_party()` over primary vote data, never from a field someone else
+  classified. Victoria is unaffected — it has zero independent-held seats — but
+  the trap is in the shape of the data, not in NSW.
 - **An experiment that never ran looks exactly like an experiment with no
   effect.** A file edit and the runs that depend on it must not share one
   backgrounded command: on 2026-08-19 the edit died on an `AssertionError` and
