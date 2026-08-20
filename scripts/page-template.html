@@ -360,18 +360,30 @@ footer{padding:2.5rem 0 0;border-top:1px solid var(--rule);font-size:.8rem;
       is an assumption. They contested <span class="num">4</span> of 88 Victorian
       seats in 2022 and <strong>none at all</strong> in 2014 or 2018. If they stand
       in far fewer seats than expected, their seat range here is too high.</li>
-      <li><strong>Their preference flow is treated as a fixed number.</strong> The
-      forecast uses <span class="num">33.7%</span> of One Nation preferences going to
-      Labor, the average of the last five elections. Across ten elections that figure
-      has ranged from <span class="num">20%</span> to <span class="num">50%</span>.
-      Nothing in the range above reflects that spread, and no past Victorian election
-      can measure it, because One Nation transferred almost no votes in any of
-      them.</li>
-      <li><strong>Few local factors.</strong> How each seat swung at the last
-      federal election is used, and it is the strongest seat-level signal here.
-      Candidate quality, retirements and campaign events are not &mdash; three
-      predictors built on them were tested across five elections and found to be
-      worth less than nothing, so they were removed.</li>
+      <li><strong>Their preference flow is estimated, and then treated as
+      certain.</strong> Seats here are decided by transfer rates measured from
+      real counts &mdash; <span class="num">746</span> exclusions across federal,
+      New South Wales, Victorian and South Australian elections &mdash; and those
+      rates depend on who is still standing when the transfer happens. In South
+      Australia in 2026, One Nation preferences ran
+      <span class="num">31%</span> to Labor when Labor and the Liberals were the
+      last two, and <span class="num">18%</span> when the Greens were also still
+      in. Across ten elections that figure has ranged from
+      <span class="num">20%</span> to <span class="num">50%</span>.
+      <strong>Nothing in the range above reflects that spread</strong>: the rates
+      go in as fixed numbers, and no past Victorian election can measure them,
+      because One Nation transferred almost no votes in any of them.</li>
+      <li><strong>Few local factors, and fewer than an earlier version of this
+      page claimed.</strong> Each seat starts from its own past first
+      preferences and moves with the statewide swing; One Nation's vote is
+      spread across seats in the order of its federal vote in those same booths,
+      which on South Australia 2026 ranked its four winning seats
+      <span class="num">6th</span>, <span class="num">15th</span>,
+      <span class="num">1st</span> and <span class="num">10th</span> of 47.
+      Beyond that there is nothing local. How a seat swung at the last federal
+      election is <em>not</em> used: it was tested three times against this
+      model and never cleared the bar to be adopted. Candidate quality,
+      retirements and campaign events are not used either.</li>
       <li id="onpcav"><strong>One Nation's preferences are the biggest
       assumption here.</strong></li>
       <li><strong>Upper house not modelled at all.</strong></li>
