@@ -110,6 +110,49 @@ for (p in parties) {
 }
 shares <- 100 * shares / rowSums(shares)
 
+# ---- the seat-swing adjustment, ported from the two-party model -------------
+# Against docs/plans/prereg-seat-swing-port-to-candidate.md. Applied as a
+# transfer between the two majors in this seat, which is the mechanism the
+# statewide anchoring already uses.
+#
+# The conversion is ONE-FOR-ONE and not a free parameter. A vote moved from the
+# LNP primary to the ALP primary was an LNP first preference contributing 1 to
+# the Coalition two-party total and is now an ALP first preference contributing
+# 1 to Labor's, so shifting x points of primary shifts Labor's two-party share
+# by exactly x. fit_seats_full.R already relies on this: its anchoring moves
+# `d` points from LNP to ALP and then asserts the two-party mean equals the
+# projection to within 0.3.
+PORT <- identical(Sys.getenv("AUSPOL_SEAT_SWING_PORT", "0"), "1")
+if (PORT) {
+  # `shares` is indexed by 2019 district names; the 2023 seat file uses the
+  # post-redistribution ones, so five do not match. Those get an adjustment of
+  # ZERO rather than being dropped -- dropping them would change which seats the
+  # two arms are scored on and make the comparison meaningless.
+  sa <- as.data.table(load_seats(2023, "nsw"))
+  idx <- match(rownames(shares), sa$seat)
+  adj <- rep(0, nrow(shares))
+  adj[!is.na(idx)] <- seat_swing_adjustment(sa[idx[!is.na(idx)]])
+  if (anyNA(idx)) {
+    cat(sprintf("BT3c %d seats have no post-redistribution match and get no adjustment: %s
+",
+                sum(is.na(idx)), paste(rownames(shares)[is.na(idx)], collapse = ", ")))
+  }
+  # Re-centre: seat_swing_adjustment() centres over the seats it was given, and
+  # zeroing five of them reintroduces a mean. An uncentred adjustment would
+  # shift the whole forecast, which is what the centring exists to prevent.
+  adj <- adj - mean(adj)
+  stopifnot(all(is.finite(adj)))
+  cat(sprintf("BT3c seat-swing port ON: adjustment mean %+.3f sd %.3f range %+.2f..%+.2f
+",
+              mean(adj), stats::sd(adj), min(adj), max(adj)))
+  shares[, "ALP"] <- pmax(0, shares[, "ALP"] + adj)
+  shares[, "LNP"] <- pmax(0, shares[, "LNP"] - adj)
+  shares <- 100 * shares / rowSums(shares)
+} else {
+  cat("BT3c seat-swing port OFF (arm A)
+")
+}
+
 sp <- seat_swing_spread(seats, unname(state23[["ALP"]] - state19[["ALP"]]))
 cat(sprintf("\nBT3  seat spread: within %.2f, between %.2f\n", sp$sd_within, sp$sd_between))
 
