@@ -33,6 +33,20 @@ SEAT_SD_MULT <- as.numeric(Sys.getenv("AUSPOL_SEAT_SD_MULT", "1"))
 if (SEAT_SD_MULT != 1) cat(sprintf("CAL  seat_sd multiplier %.2f applied
 ", SEAT_SD_MULT))
 
+# OUTPUT FILENAME CARRIES THE CONFIG, and it must. These harnesses used to write
+# to one fixed name, so running an experimental arm SILENTLY OVERWROTE the
+# baseline it was meant to be compared against. That happened on 2026-08-21: a
+# seat_sd sweep overwrote backtest-fed.csv and backtest-vic.csv, and the
+# resulting comparison showed a difference of EXACTLY +0.0000 for all six
+# federal elections because both arms were the same file. It read as "this
+# input does not matter", which is the failure mode CLAUDE.md already records
+# for an experiment that never ran.
+#
+# A default run still writes the plain name, so nothing downstream changes.
+CAL_TAG <- paste0(
+  if (SEAT_SD_MULT != 1) sprintf("-m%s", format(SEAT_SD_MULT, nsmall = 1)) else "",
+  if (identical(Sys.getenv("AUSPOL_SEAT_SWING_PORT", "0"), "1")) "-port" else "")
+
 N_SIMS <- 20000
 SEED   <- 42
 SMOOTH <- 0.15
@@ -244,5 +258,5 @@ cat(sprintf("BT8  independents won %d of %d scored seats; we gave them a mean %.
             sum(res$actual == "IND"), nrow(res),
             mean(res[actual == "IND", p])))
 
-fwrite(res[order(seat)], file.path("output", "backtest-nsw2023.csv"))
+fwrite(res[order(seat)], file.path("output", sprintf("backtest-nsw2023%s.csv", CAL_TAG)))
 cat("\nWrote output/backtest-nsw2023.csv\n")
