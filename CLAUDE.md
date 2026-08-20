@@ -150,7 +150,31 @@ whether it favours the answer found later — if it does, it is not an amendment
 it is a rationalisation. The one amendment made so far picked the value
 pre-registered *first*, which is the only reason it was allowed to stand.
 
-## Two model paths — know which one you are looking at
+## The seat model is the candidate model. There is no second seat model.
+
+**`fit_seats_full.R` / `simulate_seat_contests()` is the forecast.** The
+two-party path — `simulate_seats()` in `R/seats.R`, `fit_seats.R`,
+`test_seat_probability_calibration.R` — is **retired**. It cannot elect a minor
+party, and South Australia elected four One Nation members in March 2026.
+
+So:
+
+- **Never improve, tune, measure or reason about the two-party seat model.** A
+  finding that only moves it is not a finding.
+- **Anything it can still do that the candidate model cannot gets PORTED, then
+  the two-party version is deleted.** Not kept as a cross-check.
+- **Check which model a constant reaches before working on it.** `fed_swing`
+  and `SEAT_SWING_COEF` live in `simulate_seats()` and `fit_seats_full.R` never
+  reads them; `AUSPOL_FLOW_SHIFT` moves `fl$flow_alp`, which only reaches the
+  statewide two-party anchoring and leaves the published seat output
+  byte-identical.
+
+This rule was given three times in conversation and drifted from three times on
+2026-08-20 — a coefficient refit, a seat-type test and an exposure analysis were
+all built on the retired path before anyone noticed. It is written here because
+`CLAUDE.md` reloads every turn and a conversation does not.
+
+## Two trend-model paths — know which one you are looking at
 
 `trend_as_at()` fits with default volatility and equal pollster weights, and
 **this is what gets published**. `fit_vic.R` fits with per-cycle volatility and
