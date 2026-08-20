@@ -36,6 +36,20 @@ classify_party <- function(name, code = NULL) {
   set(cd %in% c("GRN", "GVIC", "TG"), "GRN")
   set(cd %in% c("ON", "PHON", "ONP"), "ONP")
 
+  # The NT Coalition party is spelled three ways by the AEC across seven
+  # elections -- "Country Liberals (NT)", "NT CLP" and "C.L.P." -- and only the
+  # first contains the word "liberal". The other two fell through to OTH, so
+  # Lingiari and Solomon recorded the Coalition's entire vote as "other" in
+  # 2007, 2022 and 2025.
+  #
+  # The CODE cannot be used to fix this. "CLP" is the Country LIBERAL Party in
+  # the Northern Territory and the Country LABOR Party in New South Wales --
+  # opposite sides of politics under one acronym. So this matches on the name,
+  # and it must come BEFORE the "labor" rule below, which would otherwise be
+  # reached first by nothing here but would be by a future variant.
+  set(grepl("country liberal", n), "LNP")
+  set(n %in% c("nt clp", "c.l.p.", "clp"), "LNP")
+
   # "Labor DLP" is a different party from Labor and belongs on the right.
   set(grepl("democratic labour|labour dlp|\bdlp\b", n), "OTH_RIGHT")
   set(grepl("labor|labour", n), "ALP")

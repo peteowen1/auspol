@@ -45,6 +45,16 @@ for (E in raw) {
   # two negatives would mean the file is not the shape this parser expects.
   ev <- d[CountNumber > 1]
   nneg <- ev[val < 0, .N, by = .(DivisionNm, CountNumber)]
+  # A count with NO negative row is as broken as one with two: the recipients
+  # would survive the merge with no `from`, and every transfer in that count
+  # would silently vanish. Never seen in 2007-2025, but nothing distinguished
+  # "no exclusion here" from "the exclusion disappeared".
+  counts <- unique(ev[, .(DivisionNm, CountNumber)])
+  noneg <- nrow(counts) - nrow(nneg)
+  if (noneg > 0L) {
+    stop(el, ": ", noneg, " division-counts have NO negative transfer. Their ",
+         "recipient rows would be dropped by the merge without a trace.")
+  }
   if (nrow(nneg) && max(nneg$N) > 1L) {
     bad <- nneg[N > 1][1]
     stop(el, ": ", bad$DivisionNm, " count ", bad$CountNumber, " has ", bad$N,

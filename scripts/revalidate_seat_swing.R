@@ -31,7 +31,19 @@ build <- function(E) {
   a <- as.data.table(load_seats(E[[3]], E[[4]]))
   d <- merge(b[, .(seat, incumbent, fed_swing, retirement, soph_cand, soph_party)],
              a[, .(seat, actual_swing = prev_swing)], by = "seat")
+  # Seats present in one file and not the other vanish through this inner join.
+  # Reported per election, because a pooled seat count hides a one-to-three seat
+  # loss -- North Sydney and Higgins both drop from the 2022->2025 pair.
+  lost <- setdiff(b$seat, a$seat)
+  n_before <- nrow(d)
   d <- d[is.finite(actual_swing)]
+  if (length(lost) || nrow(d) < n_before) {
+    cat(sprintf("     %-8s %d seats: %d unmatched (%s), %d with no recorded swing
+",
+                E[[5]], nrow(d), length(lost),
+                if (length(lost)) paste(sort(lost), collapse = ", ") else "none",
+                n_before - nrow(d)))
+  }
   d[, `:=`(alp_inc = incumbent == "ALP", election = E[[5]], federal = E[[6]])]
   d[]
 }

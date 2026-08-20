@@ -44,3 +44,18 @@ test_that("it is vectorised and length-checked", {
                c("LNP", "GRN", "IND"))
   expect_error(classify_party(c("a","b"), code = "X"), "same length")
 })
+
+test_that("the NT Country Liberals are Coalition however the AEC spells them", {
+  # Three spellings across seven federal elections; only one contains "liberal".
+  # The other two fell through to OTH, so Lingiari and Solomon recorded the
+  # Coalition's whole vote as "other" in 2007, 2022 and 2025.
+  expect_equal(classify_party("Country Liberals (NT)", "CLP"), "LNP")
+  expect_equal(classify_party("NT CLP", "CLP"), "LNP")
+  expect_equal(classify_party("C.L.P.", "CLP"), "LNP")
+})
+
+test_that("CLP means the opposite thing in New South Wales", {
+  # The same acronym is the Country LABOR Party in NSW. This is why the fix
+  # above matches on the NAME and never on the code.
+  expect_equal(classify_party("Country Labor Party", "CLP"), "ALP")
+})

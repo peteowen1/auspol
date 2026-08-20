@@ -36,8 +36,14 @@ tx   <- fread(file.path(PREF, "nswec-nsw-transfers.csv"))
 # LEAKAGE GUARD. The whole point of using NSW is that the flow matrix predates
 # the election being scored. Asserted, not assumed -- three leaks have entered
 # this repo before, one while fixing another.
+# Asserted on the SOURCE, not on the filtered result. Checking that a table
+# filtered to nsw2019 contains no nsw2023 rows is true by construction and
+# proves only that `==` works -- the "guard that cannot fail" shape CLAUDE.md
+# warns about, in the one place this script claims leakage safety.
+stopifnot("the transfer file must contain both elections to be filterable" =
+            all(c("nsw2019", "nsw2023") %in% tx$election))
 tx19 <- tx[election == "nsw2019"]
-stopifnot(nrow(tx19) > 0, !any(tx19$election == "nsw2023"))
+stopifnot(nrow(tx19) > 0, nrow(tx19) < nrow(tx))
 cat(sprintf("\nBT0  flow matrix from %d transfers, elections: %s\n",
             nrow(tx19), paste(unique(tx19$election), collapse = ", ")))
 fm <- build_flow_matrix(tx19, min_n = 3L)
@@ -121,7 +127,24 @@ allseats <- data.table(seat = keep)
 p_actual <- merge(allseats, p_actual, by = "seat", all.x = TRUE)
 p_actual[is.na(p), p := 0]
 pred <- wp[, .SD[which.max(prob)], by = seat][, .(seat, pred = party, pred_p = prob)]
+# COVERAGE, ASSERTED. This merge is an inner join, and the 2019 baseline matrix
+# has no row for a seat that did not exist in 2019 -- the 2021 redistribution
+# created five. Without this check the script prints "scored 88 seats" with
+# nothing to compare it to, and every metric below is computed on 94.6% of the
+# chamber with no note of which seats went or why.
 res <- merge(p_actual, pred, by = "seat")
+missing_seats <- setdiff(names(truth), res$seat)
+if (length(missing_seats)) {
+  cat(sprintf("BT3b %d of %d seats have no 2019 baseline and are NOT scored: %s
+",
+              length(missing_seats), length(truth),
+              paste(sort(missing_seats), collapse = ", ")))
+}
+if (length(missing_seats) > 6L) {
+  stop("Only ", nrow(res), " of ", length(truth), " seats could be scored. The ",
+       "2021 redistribution accounts for five; more than that means the seat ",
+       "names stopped matching, not that the chamber changed.")
+}
 res <- merge(res, data.table(seat = names(truth), actual = unname(truth)), by = "seat")
 
 cat(sprintf("\nBT4  scored %d seats\n", nrow(res)))

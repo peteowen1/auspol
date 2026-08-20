@@ -109,7 +109,10 @@ lut <- rbindlist(lapply(c(2019, 2023), function(y) {
   unique(d[, .(code = toupper(trimws(Party.Acronym)),
                name = trimws(Party.Name))])
 }))
-lut <- unique(lut[nzchar(code) & !is.na(name)], by = "code")
+# nzchar AND !is.na. The comment above describes a bug caused by an EMPTY name
+# reaching classify_party()'s !nzchar branch, so filtering only NA would leave
+# the exact hole this lookup exists to close.
+lut <- unique(lut[nzchar(code) & !is.na(name) & nzchar(name)], by = "code")
 name_of <- setNames(lut$name, lut$code)
 CODES <- lut$code[order(-nchar(lut$code))]
 
