@@ -48,7 +48,17 @@ JOBS <- list(
   list(corr = "booths-2022vic.txt", region = "vic", cycle = 2022, fed = 2022, id = 27966),
   list(corr = "booths-2023nsw.txt", region = "nsw", cycle = 2023, fed = 2022, id = 27966),
   list(corr = "booths-2026vic.txt", region = "vic", cycle = 2026, fed = 2025, id = 31496),
-  list(corr = "booths-2027nsw.txt", region = "nsw", cycle = 2027, fed = 2025, id = 31496))
+  list(corr = "booths-2027nsw.txt", region = "nsw", cycle = 2027, fed = 2025, id = 31496),
+  # SOUTH AUSTRALIA VOTES IN MARCH, so its 2022 poll is preceded by federal
+  # 2019 -- not 2022, which came two months AFTER it and would leak. Its 2026
+  # poll is preceded by federal 2025 (May 2025).
+  #
+  # sa2026 is here because the One Nation ORDERING rule can be tested on it
+  # without circularity: the ordering uses only federal booth data, whereas the
+  # allocation's SHAPE (`sa_ratio` in fit_seats_full.R) is fitted on SA 2026
+  # itself and therefore cannot be.
+  list(corr = "booths-2022sa.txt",  region = "sa",  cycle = 2022, fed = 2019, id = 24310),
+  list(corr = "booths-2026sa.txt",  region = "sa",  cycle = 2026, fed = 2025, id = 31496))
 
 read_corr <- function(f) {
   ln <- readLines(file.path(CORR, f), warn = FALSE)
