@@ -97,7 +97,7 @@ constant absent from this file is a bug in this file.
 | `SMOOTH` | 0.15 | `distribute_preferences()` | **FIXED, and load-bearing** |
 | `min_n` | 3 | `build_flow_matrix()` | **FIXED** — judgement |
 | `SEAT_SD` | 3.5 | `fit_seats_full.R` | **ESTIMATED** |
-| `ONP_B1` | −0.0968 | `fit_seats_full.R` | **ESTIMATED** |
+| `ONP_B1 = -0.0968` | `fit_seats_full.R` | Greens-share coefficient for the One Nation ordering | **RETIRED 2026-08-20 as the ordering rule.** On NSW 2023 it reached Spearman +0.331 against the actual One Nation ordering and MAE 3.287 -- *worse* than a uniform allocation's 2.595. Replaced by each district's transposed federal One Nation vote (+0.814, MAE 1.594). See `reviews/onp-allocation-federal-2026-08-20.md`. |
 | One Nation spread | SA 2026 observed | `fit_seats_full.R` | **ESTIMATED, transferred** |
 | per-party statewide sd | from the trend | `fit_seats_full.R` | **ESTIMATED** |
 | `N_SIMS` | 20000 | `fit_seats_full.R` | FIXED, no modelling content |

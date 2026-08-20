@@ -184,8 +184,31 @@ state_sd   <- setNames(sw$sd_proj, sw$party)
 # uniform allocation by only 0.122 MAE: trust the ONP TOTAL, not any one seat.
 sa_fp <- fread(file.path(PREF, "ecsa-2026-sa-onp-shares.csv"), showProgress = FALSE)
 sa_ratio <- sort(sa_fp$pct / mean(sa_fp$pct))
-idx <- ONP_B1 * mat22[, "GRN"]
-ord <- order(idx)                 # lowest index (strongest Greens) first
+# ORDERING, replaced 2026-08-20. Was the GREENS share, a proxy; is now each
+# district's FEDERAL One Nation vote, measured in its own booths by
+# scripts/transpose_federal_to_state.R.
+#
+# On NSW 2023 the federal ordering reaches a Spearman of +0.814 against the
+# actual One Nation ordering where the Greens-share rule reaches +0.331, and
+# cuts allocation MAE from 3.287 to 1.594. The old rule is WORSE than a uniform
+# allocation (2.595), so it was subtracting value rather than adding it.
+#
+# The geography it relies on is stable: federal One Nation ordering persists at
+# Spearman +0.876 from 2019 to 2022 (58 divisions) and +0.772 from 2022 to 2025
+# (145). See docs/plans/prereg-onp-allocation-federal.md.
+#
+# Only the ORDERING changes. Federal One Nation polled 5.3% in Victoria against
+# a state forecast near 20%, so nothing but shape transfers.
+fed_tr <- fread(file.path(PREF, "federal-transposed-to-state.csv"),
+                showProgress = FALSE)
+fed_onp <- fed_tr[region == "vic" & cycle == 2026 & party == "ONP", .(seat, pct)]
+idx_v <- fed_onp$pct[match(rownames(mat22), fed_onp$seat)]
+if (anyNA(idx_v)) {
+  stop("No transposed federal One Nation vote for: ",
+       paste(rownames(mat22)[is.na(idx_v)], collapse = ", "),
+       ". Run scripts/transpose_federal_to_state.R.")
+}
+ord <- if (Sys.getenv("AUSPOL_ONP_ORDER", "federal") == "greens") order(ONP_B1 * mat22[, "GRN"]) else order(idx_v)
 onp_ratio <- numeric(nrow(mat22)); names(onp_ratio) <- rownames(mat22)
 for (r in seq_along(ord)) {
   q <- (r - 1) / (length(ord) - 1)
@@ -219,8 +242,37 @@ if (length(unmodelled) && !is.na(state_mean["OTH"])) {
               scale_to, paste(c(unmodelled, "OTH"), collapse = "+"),
               base_share, state_mean[["OTH"]]))
 }
-shares[, "ONP"] <- pmax(0, state_mean[["ONP"]] * onp_ratio[rownames(mat22)])
+# COMPRESSION FIX, separate from the ordering change and reported separately.
+# Setting One Nation and then dividing the whole row by its total shrank the
+# spread by 13.7%: a district allocated a high share has a larger row total, so
+# renormalising cut it hardest. The quantile map produced a CV of 0.327 --
+# matching South Australia's 0.334 as intended -- and normalisation reduced it
+# to 0.283.
+#
+# Instead the other parties are scaled to fill exactly what One Nation leaves,
+# so the row already sums to 100 and the intended share survives.
+# Toggles exist ONLY so the two changes can be attributed separately, which the
+# pre-registration requires: without them a spread increase from the
+# compression fix would be credited to the new ordering. Both default to the
+# adopted behaviour.
+ONP_ORDER <- Sys.getenv("AUSPOL_ONP_ORDER", "federal")   # federal | greens
+ONP_FIX   <- Sys.getenv("AUSPOL_ONP_FIX", "1")           # 1 = compression fixed
+stopifnot(ONP_ORDER %in% c("federal", "greens"))
+cat(sprintf("ONP arms: ordering %s, compression fix %s
+", ONP_ORDER, ONP_FIX))
+onp_target <- pmin(pmax(0, state_mean[["ONP"]] * onp_ratio[rownames(mat22)]), 80)
+if (ONP_FIX == "1") {
+  other_cols <- setdiff(colnames(shares), "ONP")
+  rest <- rowSums(shares[, other_cols, drop = FALSE])
+  fill <- pmax(0, 100 - onp_target) / pmax(rest, 1e-9)
+  for (p in other_cols) shares[, p] <- shares[, p] * fill
+}
+shares[, "ONP"] <- onp_target
 shares <- 100 * shares / rowSums(shares)
+cvf <- function(x) stats::sd(x) / mean(x)
+cat(sprintf("ONP allocation: target CV %.3f, delivered %.3f (previously compressed to 0.283)
+",
+            cvf(onp_target), cvf(shares[, "ONP"])))
 
 # ---- 5. statewide draws, ANCHORED to the projection -------------------------
 # Drawing each party independently and renormalising destroys the
