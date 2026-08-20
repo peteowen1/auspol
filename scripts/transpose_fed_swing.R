@@ -35,11 +35,27 @@ FED_ID <- c("2013" = 17496, "2016" = 20499, "2019" = 24310,
             "2022" = 27966, "2025" = 31496)
 
 # (correspondence, region, state cycle, the federal election that PRECEDED it)
+# Two kinds of correspondence, and they are joined differently.
+#
+# The six the anchor ships map a booth to a district by federal division NAME,
+# and those names carry whichever redistribution was current when the file was
+# written -- so they need the rename map and the booth-name fallback below.
+#
+# The Queensland ones are built by scripts/build_correspondence.R from polling
+# place coordinates and carry PollingPlaceID, so they join exactly and need
+# neither. That script validates the method by reproducing two of the shipped
+# files from coordinates alone, at 97.8% and 97.7% booth agreement.
+#
+# Queensland votes in October, so the federal election preceding its 2020 poll
+# is 2019 and the one preceding 2024 is 2022.
+BUILT <- file.path("external", "reference", "correspondences")
 JOBS <- list(
   list(corr = "booths-2018vic.txt", region = "vic", cycle = 2018, fed = 2016),
   list(corr = "booths-2019nsw.txt", region = "nsw", cycle = 2019, fed = 2016),
   list(corr = "booths-2022vic.txt", region = "vic", cycle = 2022, fed = 2022),
   list(corr = "booths-2023nsw.txt", region = "nsw", cycle = 2023, fed = 2022),
+  list(corr = "booths-2020qld.csv", region = "qld", cycle = 2020, fed = 2019),
+  list(corr = "booths-2024qld.csv", region = "qld", cycle = 2024, fed = 2022),
   list(corr = "booths-2026vic.txt", region = "vic", cycle = 2026, fed = 2025),
   list(corr = "booths-2027nsw.txt", region = "nsw", cycle = 2027, fed = 2025))
 
@@ -121,8 +137,28 @@ tpp_booths <- function(year) {
 
 res <- list()
 for (J in JOBS) {
-  corr <- read_corr(J$corr)
   bo <- tpp_booths(J$fed)
+  built <- endsWith(J$corr, ".csv")
+  if (built) {
+    # Built from coordinates, so the join is on PollingPlaceID and is exact.
+    # An ID present in the correspondence but missing from the two-party file
+    # is a real gap -- a booth whose TPP was not published -- and is counted
+    # rather than dropped, because a district losing half its booths silently
+    # is precisely what the name-matching path used to do.
+    corr <- fread(file.path(BUILT, J$corr), showProgress = FALSE)
+    m <- merge(corr[, .(district, place_id)], bo,
+               by.x = "place_id", by.y = "PollingPlaceID")
+    lost <- nrow(corr) - nrow(m)
+    cat(sprintf("FSW0 %s: joined on PollingPlaceID, %d of %d booths matched%s\n",
+                J$corr, nrow(m), nrow(corr),
+                if (lost) sprintf(" (%d had no two-party result)", lost) else ""))
+    if (nrow(m) < 0.9 * nrow(corr)) {
+      stop(J$corr, ": only ", nrow(m), " of ", nrow(corr), " booths have a ",
+           "two-party result. The correspondence and the federal file do not ",
+           "describe the same election.")
+    }
+  } else {
+  corr <- read_corr(J$corr)
   # The correspondence files are keyed to the federal boundaries CURRENT when
   # they were written, not to the boundaries at the election being transposed.
   # booths-2018vic.txt names Macnamara, Monash, Cooper, Nicholls and Fraser --
@@ -150,10 +186,10 @@ for (J in JOBS) {
                 by.x = "booth", by.y = "PollingPlace")
     if (nrow(fb)) {
       m <- rbind(m, fb, fill = TRUE)
-      cat(sprintf("FSW0 %s: %d booths matched by name after a division rename
-",
+      cat(sprintf("FSW0 %s: %d booths matched by name after a division rename\n",
                   J$corr, nrow(fb)))
     }
+  }
   }
   # Vote-weighted, because a district's swing is its voters' swing and booths
   # differ hugely in size. The AEC's own per-booth swing is used rather than
@@ -165,7 +201,7 @@ for (J in JOBS) {
   cat(sprintf("\nFSW1 %s %d <- federal %d swing: %d districts, %d booths, %s votes\n",
               toupper(J$region), J$cycle, J$fed, nrow(agg), sum(agg$booths),
               format(sum(agg$votes), big.mark = ",")))
-  want <- uniqueN(corr$district)
+  want <- uniqueN(corr[["district"]])
   if (nrow(agg) < want) {
     stop(J$corr, ": only ", nrow(agg), " of ", want, " districts matched a booth.")
   }
@@ -206,5 +242,7 @@ cat(sprintf("\nFSW3 wrote %s: %d district-cycles across %d state cycles\n",
             file.path(OUT, "fed-swing-transposed.csv"), nrow(R),
             uniqueN(R[, .(region, cycle)])))
 cat(sprintf("FSW3 seats now available to test a feature against fed_swing: %d\n",
-            nrow(R[cycle %in% c(2018, 2019, 2022, 2023)])))
+            nrow(R[paste(region, cycle) %in%
+                     c("vic 2018", "nsw 2019", "vic 2022", "nsw 2023",
+                       "qld 2020", "qld 2024")])))
 cat("FSW3 before this, that number was 180.\n")

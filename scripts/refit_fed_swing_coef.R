@@ -17,7 +17,13 @@ suppressMessages(library(data.table))
 P <- election_data_path()
 fs <- fread(file.path(P, "fed-swing-transposed.csv"), showProgress = FALSE)
 
+# (state cycle being predicted, region, the seat file holding its actual swing)
+# Queensland 2020 is new: its correspondence did not exist until
+# scripts/build_correspondence.R built it from polling place coordinates. QLD
+# 2024 is deliberately absent -- 2028qld.txt does not exist, so there is no
+# recorded swing to score it against.
 CYCLES <- list(list(2018, "vic", 2022), list(2019, "nsw", 2023),
+               list(2020, "qld", 2024),
                list(2022, "vic", 2026), list(2023, "nsw", 2027))
 
 d <- rbindlist(lapply(CYCLES, function(k) {
