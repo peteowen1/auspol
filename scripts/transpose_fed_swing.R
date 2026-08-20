@@ -92,10 +92,19 @@ BUILT_JOBS <- list(
 # Queensland exists only as a built file, and the two forecast cycles only as
 # shipped ones -- there is no ABS boundary vintage for the 2026 Victorian or
 # 2027 NSW districts yet.
+#
+# SOUTH AUSTRALIA VOTES IN MARCH, so the federal election preceding its 2022
+# poll is 2019 -- NOT 2022, which came two months AFTER it. Victoria (November)
+# and NSW (March, on the other half of the cycle) each pair differently, so this
+# is the line a copy-paste gets wrong, and getting it wrong would take the
+# predictor from an election that had not happened yet.
 JOBS <- c(if (CORR_SOURCE == "built") BUILT_JOBS else SHIPPED_JOBS,
-          list(list(corr = "booths-2020qld.csv", region = "qld", cycle = 2020, fed = 2019),
+          list(list(corr = "booths-2018sa.txt",  region = "sa",  cycle = 2018, fed = 2016),
+               list(corr = "booths-2022sa.txt",  region = "sa",  cycle = 2022, fed = 2019),
+               list(corr = "booths-2020qld.csv", region = "qld", cycle = 2020, fed = 2019),
                list(corr = "booths-2024qld.csv", region = "qld", cycle = 2024, fed = 2022),
                list(corr = "booths-2026vic.txt", region = "vic", cycle = 2026, fed = 2025),
+               list(corr = "booths-2026sa.txt",  region = "sa",  cycle = 2026, fed = 2025),
                list(corr = "booths-2027nsw.txt", region = "nsw", cycle = 2027, fed = 2025)))
 cat(sprintf("FSWC correspondence source for the four historical cycles: %s\n",
             toupper(CORR_SOURCE)))
@@ -256,7 +265,11 @@ R <- rbindlist(res)
 # ---- validation: reproduce the two cycles that already have fed_swing -------
 cat("\nFSW2 validation -- does this reproduce the seat files' own fed_swing?\n")
 ok <- TRUE
-for (K in list(c(2022, "vic"), c(2023, "nsw"))) {
+# sa2026 is the THIRD cycle with a published fed_swing, and the only one drawing
+# on federal 2025 -- the election whose Swing-column sign convention was found
+# reversed earlier today. It is an independent check on that fix: had the sign
+# still been wrong, this correlation would come back strongly NEGATIVE.
+for (K in list(c(2022, "vic"), c(2023, "nsw"), c(2026, "sa"))) {
   yr <- as.integer(K[1]); rg <- K[2]
   sf <- as.data.table(load_seats(yr, rg))[, .(seat, published = fed_swing)]
   m <- merge(R[region == rg & cycle == yr, .(seat, computed = fed_swing)],
