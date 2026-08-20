@@ -136,10 +136,48 @@ for (K in PAIRS) {
                           unname(sb[["ALP"]] - sa[["ALP"]]))
   psd <- setNames(rep(1.5, length(parties)), parties)
   set.seed(SEED)
-  sim <- simulate_seat_contests(shares, fm, party_sd = psd,
-                                seat_sd = sp$sd_within, n_sims = N_SIMS,
-                                smooth = SMOOTH, seed = SEED)
-  wp <- as.data.table(sim$win_prob)
+  # FLOW UNCERTAINTY, arm B. Against docs/plans/prereg-flow-uncertainty-v2.md.
+  # Each replicate perturbs every source party's flow by an offset drawn from
+  # N(0, sd) with the sd MEASURED from between-election variation across 10
+  # full-preferential elections -- not fitted, not tuned. One Nation's is 10.38
+  # points; the Greens' is 2.00, which is why treating the Greens flow as a
+  # constant costs almost nothing and treating One Nation's as one does not.
+  FLOW_UNC <- identical(Sys.getenv("AUSPOL_FLOW_UNC", "0"), "1")
+  if (FLOW_UNC) {
+    sds <- readRDS("output/flow-uncertainty-sd.rds")
+    R_ENS <- 40L; per <- N_SIMS %/% R_ENS
+    set.seed(SEED)
+    acc <- NULL
+    for (r in seq_len(R_ENS)) {
+      tx2 <- copy(tx)
+      off <- stats::rnorm(length(sds), 0, sds); names(off) <- names(sds)
+      # The offset moves votes between ALP and LNP within each exclusion,
+      # leaving the total transferred unchanged -- a flow is a split, not a
+      # size.
+      for (fp in names(off)) {
+        idx <- tx2$from == fp & tx2$to %in% c("ALP", "LNP")
+        if (!any(idx)) next
+        sh <- off[[fp]] / 100
+        tx2[idx & to == "ALP", votes := pmax(0, votes * (1 + sh))]
+        tx2[idx & to == "LNP", votes := pmax(0, votes * (1 - sh))]
+      }
+      fmr <- build_flow_matrix(tx2, min_n = 3L)
+      s1 <- simulate_seat_contests(shares, fmr, party_sd = psd,
+                                   seat_sd = sp$sd_within, n_sims = per,
+                                   smooth = SMOOTH, seed = SEED + r)
+      w1 <- as.data.table(s1$win_prob)[, .(seat, party, n = prob * per)]
+      acc <- if (is.null(acc)) w1 else rbind(acc, w1)
+    }
+    wp <- acc[, .(prob = sum(n) / (R_ENS * per)), by = .(seat, party)]
+    cat("BV1b flow uncertainty ON
+")
+  } else {
+    set.seed(SEED)
+    sim <- simulate_seat_contests(shares, fm, party_sd = psd,
+                                  seat_sd = sp$sd_within, n_sims = N_SIMS,
+                                  smooth = SMOOTH, seed = SEED)
+    wp <- as.data.table(sim$win_prob)
+  }
 
   pa <- merge(data.table(seat = keep, actual = unname(truth)),
               wp[, .(seat, party, prob)],
