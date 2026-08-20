@@ -13,7 +13,8 @@ simulate_seat_contests(
   smooth = 0.15,
   seed = NULL,
   statewide_draws = NULL,
-  party_draws = NULL
+  party_draws = NULL,
+  shrink = 0
 )
 }
 \arguments{
@@ -61,6 +62,24 @@ a one-way ratchet for a party that is behind in most seats: upside
 crosses the winning threshold, downside costs nothing where it was
 already losing. Measured at 71 seats up against 1 down; see
 docs/reviews/onp-seat-uncertainty-2026-08-19.md.}
+
+\item{shrink}{Probability that a simulated seat is decided by a coin toss
+between its final two rather than by the count. Zero reproduces the
+previous behaviour exactly.
+
+THIS IS A CALIBRATION FIX, NOT A MODELLING FLOURISH. Scored on 1,187 seats
+across 10 elections, this model's calibration slope was below 1 in nine of
+them: a seat it called at 95\% won about 70\% of the time. A shrink of 0.10,
+fitted leave-one-election-out and identical in all ten folds, cuts the
+held-out log score by more than a post-hoc temperature on the output does
+(+3.36 SE), and unlike a temperature it applies PER DRAW -- so the
+seat-count histogram and the per-seat probabilities stay consistent with
+each other, which was the condition blocking the temperature from shipping.
+
+It works mainly by putting a floor under catastrophic misses. A seat given
+a near-zero probability that is then won costs log(0.05) rather than
+log(0.016), and the log score is dominated by exactly those seats.
+See docs/reviews/calibration-2026-08-21.md.}
 }
 \value{
 List: \code{win_prob} (data.frame, one row per seat and party with a

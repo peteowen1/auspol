@@ -52,6 +52,23 @@
 #'   the same figure claims the constructed number is as reliable as the
 #'   measured one. See docs/plans/prereg-onp-seat-uncertainty.md.
 #' @param n_sims Number of simulations.
+#' @param shrink Probability that a simulated seat is decided by a coin toss
+#'   between its final two rather than by the count. Zero reproduces the
+#'   previous behaviour exactly.
+#'
+#'   THIS IS A CALIBRATION FIX, NOT A MODELLING FLOURISH. Scored on 1,187 seats
+#'   across 10 elections, this model's calibration slope was below 1 in nine of
+#'   them: a seat it called at 95% won about 70% of the time. A shrink of 0.10,
+#'   fitted leave-one-election-out and identical in all ten folds, cuts the
+#'   held-out log score by more than a post-hoc temperature on the output does
+#'   (+3.36 SE), and unlike a temperature it applies PER DRAW -- so the
+#'   seat-count histogram and the per-seat probabilities stay consistent with
+#'   each other, which was the condition blocking the temperature from shipping.
+#'
+#'   It works mainly by putting a floor under catastrophic misses. A seat given
+#'   a near-zero probability that is then won costs log(0.05) rather than
+#'   log(0.016), and the log score is dominated by exactly those seats.
+#'   See docs/reviews/calibration-2026-08-21.md.
 #' @param smooth Passed to the transfer step; see [distribute_preferences()].
 #' @param seed Optional RNG seed.
 #' @return List: `win_prob` (data.frame, one row per seat and party with a
@@ -61,7 +78,10 @@
 simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
                                    n_sims = 2000, smooth = 0.15, seed = NULL,
                                    statewide_draws = NULL,
-                                   party_draws = NULL) {
+                                   party_draws = NULL, shrink = 0) {
+  if (!is.finite(shrink) || shrink < 0 || shrink >= 1) {
+    stop("shrink must be in [0, 1); got ", shrink)
+  }
   if (!is.null(seed)) set.seed(seed)
   if (is.data.frame(shares) && "seat" %in% names(shares)) {
     seat_names <- as.character(shares$seat)
@@ -230,6 +250,15 @@ simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
         v[from] <- 0
       }
       w <- alive[which.max(v[alive])]
+      # The per-draw calibration shrink. `alive` holds exactly the final two at
+      # this point, so tossing between them gives a marginal of
+      # (1 - shrink) * p + shrink * 0.5 -- and because it happens HERE, inside
+      # the draw, `totals` and `wins` move together. A temperature applied to
+      # `wins` afterwards would recalibrate the per-seat probabilities and leave
+      # the seat-count histogram describing a different model.
+      if (shrink > 0 && length(alive) > 1L && stats::runif(1) < shrink) {
+        w <- alive[sample.int(length(alive), 1L)]
+      }
       wins[i, w] <- wins[i, w] + 1L
       totals[s, w] <- totals[s, w] + 1L
     }

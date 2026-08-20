@@ -333,7 +333,29 @@ statewide draws anchored: two-party mean %.2f sd %.3f (projection %.2f / %.3f)
 stopifnot(abs(mean(chk) - pj$mean) < 0.3, abs(sd(chk) - pj$sd) < 0.3)
 
 t0 <- Sys.time()
-sim <- simulate_seat_contests(shares, fm, party_sd = psd, seat_sd = SEAT_SD,
+# CALIBRATION SHRINK. Measured on 1,187 seats across 10 elections in
+# docs/reviews/calibration-2026-08-21.md: this model's calibration slope was
+# below 1 in nine of them, so a seat called at 95% won about 70% of the time. A
+# per-draw shrink of 0.10 -- fitted leave-one-election-out and identical in all
+# ten folds -- beats both the status quo (+3.04 SE) and a post-hoc temperature
+# on the output (+3.36 SE) on held-out log score.
+#
+# ON BY DEFAULT, and K5 is why it is allowed to be. That refusal required the
+# effect on the Victorian seat medians to be reported before shipping, with a
+# 2-seat move on any party stopping it. Measured:
+#
+#   ALP 41 -> 40   LNP 38 -> 37   GRN 4 -> 4   ONP 4 -> 5   IND 0 -> 0
+#
+# No party moves by more than one. The centres barely shift while the intervals
+# widen, which is what a calibration fix should do and what a fix that had
+# quietly become a forecast change would not. One Nation's 90% interval moves
+# from 0-9 to 1-11.
+#
+# Set AUSPOL_SHRINK=0 to reproduce the pre-2026-08-21 forecast exactly.
+SHRINK <- as.numeric(Sys.getenv("AUSPOL_SHRINK", "0.10"))
+if (SHRINK > 0) cat(sprintf("CAL  calibration shrink %.2f applied
+", SHRINK))
+sim <- simulate_seat_contests(shares, fm, party_sd = psd, seat_sd = SEAT_SD, shrink = SHRINK,
                               n_sims = N_SIMS, smooth = SMOOTH, seed = SEED,
                               statewide_draws = sw_draws)
 cat(sprintf("\nsimulated %d seats x %d runs in %.0fs | pooled fallback %.1f%%\n",
