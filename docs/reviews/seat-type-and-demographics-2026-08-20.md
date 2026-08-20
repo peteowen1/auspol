@@ -49,10 +49,40 @@ label.
 Power caveat: this comparison has 180 seats, because `fed_swing` is empty for
 federal elections. But F = 0.36 is not a borderline miss.
 
+## CORRECTION, same day: this does not test demographics
+
+**The section below overreached and is corrected here rather than rewritten.**
+
+What was tested is **one four-level categorical variable** on **180 seats** —
+the only seats with a `fed_swing` to test against, since it is empty federally.
+Three extra degrees of freedom on 180 observations is weak, and F = 0.36 is not
+evidence of absence.
+
+Real demographic data is dozens of **continuous** variables: median income,
+education, age profile, occupation mix, country of birth, housing tenure,
+mortgage stress. Any of them can carry signal a four-way rural/metro label
+cannot. Generalising from one coarse proxy to an entire data source is not
+supported by this test.
+
+**What stands:** seat type specifically is redundant to `fed_swing` on the
+evidence available, and the *hypothesis* that a direct measurement beats a
+correlate is worth taking seriously — the One Nation result (+0.814 against
++0.331) is real evidence for it.
+
+**What does not stand:** the claim that demographics are therefore low-value.
+That was asserted, not shown.
+
+**The real constraint this exposes** is not about demographics at all: **only
+180 seats have a `fed_swing` to test anything against.** Any feature proposed as
+an addition to it faces the same weak test, seat type included. That is the
+binding limit, and transposing `fed_swing` onto more state cycles — which
+`transpose_federal_to_state.R` can now do — would lift it for every future
+feature test, not just this one.
+
 ## Why this matters more than the result itself
 
-**It undercuts the ABS Census demographics plan, which I recommended earlier
-today as the highest-value next acquisition.**
+**It raises a question about the ABS Census demographics plan — it does not
+settle it.** (See the correction above.)
 
 The argument for demographics was that they identify where a party is strong
 before anyone announces — the "teal profile", One Nation's regional base. But
@@ -65,10 +95,11 @@ it: the transposed federal One Nation vote beat the Greens-share proxy
 correlating with it**. Demographics correlate with voting; transposed federal
 results *are* voting, in the same booths, from the same people.
 
-So the honest expectation for demographics is lower than I gave it. They would
-plausibly still help where no federal measurement exists — a **brand-new party**
-with no federal vote to transpose, or a candidate-level effect no vote captures
-— but not for swing, and probably not for One Nation.
+So the honest expectation for demographics is **uncertain**, where I had given
+it as high this morning and then as low an hour later. Neither was earned. What
+is earned: a direct measurement beat a correlate once, decisively, and that is a
+reason to test demographics against the transposed federal data rather than
+against the old proxy.
 
 **This does not mean demographics are worthless.** It means the case for them
 should be made against the transposed federal data as the baseline, not against
