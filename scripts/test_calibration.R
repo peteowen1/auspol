@@ -20,7 +20,7 @@ suppressMessages(devtools::load_all(quiet = TRUE))
 suppressMessages(library(data.table))
 
 EPS <- 1e-6
-MULTS <- c(1.5, 2.5, 4.0)
+MULTS <- c(1.0, 1.5, 2.5, 4.0)
 
 # The NSW harness names its probability column `p`; the others use `prob`.
 read_bt <- function(path, pair = NULL) {
@@ -32,11 +32,19 @@ read_bt <- function(path, pair = NULL) {
   out[]
 }
 
+# Arm A is read from the EXPLICIT m1.0 files, not the plain backtest-*.csv
+# names. Those plain names were overwritten by experimental arms earlier today,
+# which produced a comparison of one arm against itself reading exactly +0.0000
+# on six elections. Every arm now has its own file, including the baseline.
+#
+# The federal arms all run at 5,000 simulations and the state arms at 20,000.
+# That is fine and deliberate: the comparison is between arms WITHIN an
+# election, never across elections, and each election's arms share a setting.
 arm_a <- rbindlist(list(
-  read_bt("output/backtest-fed.csv"),
-  read_bt("output/backtest-vic.csv"),
-  read_bt("output/backtest-nsw-OFF.csv", "nsw2023"),
-  read_bt("output/backtest-sa-OFF.csv", "sa2026")))
+  read_bt("output/cal-fed-m1.0.csv"),
+  read_bt("output/cal-vic-m1.0.csv"),
+  read_bt("output/cal-nsw-m1.0.csv", "nsw2023"),
+  read_bt("output/cal-sa-m1.0.csv", "sa2026")))
 els <- sort(unique(arm_a$pair))
 cat(sprintf("\nCL1  arm A: %d seats across %d elections\n", nrow(arm_a), length(els)))
 
@@ -65,6 +73,27 @@ b_files <- CJ(m = MULTS, h = c("fed", "vic", "nsw", "sa"))
 # run rather than a naming bug.
 b_files[, path := sprintf("output/cal-%s-m%s.csv", h, format(m, nsmall = 1))]
 have <- b_files[file.exists(path)]
+
+# TWO GRID POINTS MUST NEVER BE THE SAME FILE. Twice today a sweep produced
+# byte-identical arms -- once because an experimental run overwrote the
+# baseline filename, once because the filename guard changed where runs wrote
+# and the copy commands still fetched the old name. Both times the comparison
+# reported a difference of exactly 0.0000 and read as "this input does not
+# matter", which is indistinguishable from a real null.
+#
+# Digests are compared rather than log scores: two arms could coincide on a
+# summary statistic by chance, but not byte for byte.
+if (nrow(have) > 1L) {
+  have[, digest := vapply(path, function(f)
+    paste(tools::md5sum(f)), character(1))]
+  dup <- have[, .N, by = .(h, digest)][N > 1L]
+  if (nrow(dup)) {
+    print(merge(have, dup[, .(h, digest)], by = c("h", "digest"))[, .(h, m, path)])
+    stop("Grid points above are BYTE-IDENTICAL, so at least one arm did not ",
+         "run or was copied from the wrong file. A comparison against them ",
+         "would report a null that is really a plumbing failure.")
+  }
+}
 if (nrow(have) < nrow(b_files)) {
   cat(sprintf("\nCL3  arm B INCOMPLETE: %d of %d runs present. Missing: %s\n",
               nrow(have), nrow(b_files),

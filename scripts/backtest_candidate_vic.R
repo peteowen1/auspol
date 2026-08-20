@@ -34,11 +34,22 @@ if (SEAT_SD_MULT != 1) cat(sprintf("CAL  seat_sd multiplier %.2f applied
 # for an experiment that never ran.
 #
 # A default run still writes the plain name, so nothing downstream changes.
+# N_SIMS is settable so the federal harness -- six pairs at ~150 divisions --
+# can be swept across arms in minutes rather than an hour. Monte Carlo error at
+# 5,000 draws is far below the log-score differences under test.
+#
+# THE ARMS OF ONE ELECTION MUST SHARE IT. A paired comparison between arms is
+# valid at any n_sims, but only if both arms of the SAME election used the same
+# one; the tag below records it in the filename so a mismatched pair cannot be
+# compared by accident.
+N_SIMS <- as.integer(Sys.getenv("AUSPOL_N_SIMS", "20000"))
+
 CAL_TAG <- paste0(
   if (SEAT_SD_MULT != 1) sprintf("-m%s", format(SEAT_SD_MULT, nsmall = 1)) else "",
-  if (identical(Sys.getenv("AUSPOL_SEAT_SWING_PORT", "0"), "1")) "-port" else "")
+  if (identical(Sys.getenv("AUSPOL_SEAT_SWING_PORT", "0"), "1")) "-port" else "",
+  if (N_SIMS != 20000L) sprintf("-n%d", N_SIMS) else "")
 
-N_SIMS <- 20000; SEED <- 42; SMOOTH <- 0.15; eps <- 1e-6
+SEED <- 42; SMOOTH <- 0.15; eps <- 1e-6
 P <- election_data_path()
 
 PAIRS <- list(
