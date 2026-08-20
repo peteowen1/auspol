@@ -33,7 +33,15 @@ suppressMessages(devtools::load_all(quiet = TRUE))
 suppressMessages(library(sf))
 suppressMessages(library(data.table))
 
-SHP <- "external/reference/boundaries/SED_2021_AUST_GDA2020.shp"
+# Which ABS vintage holds which election's boundaries. These are snapshots, so
+# the mapping is not "the year in the filename": SED_2021 is a mid-2021 snapshot
+# and therefore predates the redistributions that took effect at the November
+# 2022 Victorian and March 2023 NSW elections, which is why it carries Victoria
+# on 2018 boundaries and NSW on 2019 boundaries. Verified by exact name match
+# against each seat file rather than assumed.
+SHP_2021 <- "external/reference/boundaries/SED_2021_AUST_GDA2020.shp"
+SHP_2022 <- "external/reference/boundaries/SED_2022_AUST_GDA2020.shp"
+SHP <- SHP_2021
 RAW <- file.path("external", "reference", "aec", "booths")
 CORR <- file.path("external", "aus-polling-analyser", "analysis", "Federal-State")
 OUT <- file.path("external", "reference", "correspondences")
@@ -42,10 +50,27 @@ dir.create(OUT, showWarnings = FALSE, recursive = TRUE)
 STATE <- c(qld = "Queensland", vic = "Victoria", nsw = "New South Wales",
            wa = "Western Australia", sa = "South Australia")
 
-districts <- function(region) {
-  s <- st_read(SHP, quiet = TRUE)
-  s <- s[s$STE_NAME21 == STATE[[region]], ]
-  s <- s[!grepl("Migratory|No usual address", s$SED_NAME21), ]
+districts <- function(region, shp = SHP) {
+  s <- st_read(shp, quiet = TRUE)
+  # The ABS suffixes its column names with the vintage year, so SED_2021 has
+  # SED_NAME21 and SED_2022 has SED_NAME22 while both keep STE_NAME21. Reading
+  # a fixed name silently selected ZERO districts from SED_2022, and the
+  # completeness check below was written as got < want -- which is 1 < 0, and
+  # therefore FALSE -- so three empty correspondence files were written and
+  # reported as successes. Hence both the pattern lookup and the floor.
+  nc <- grep("^SED_NAME", names(s), value = TRUE)[1]
+  sc <- grep("^STE_NAME", names(s), value = TRUE)[1]
+  if (is.na(nc) || is.na(sc)) {
+    stop(basename(shp), " has no SED_NAME or STE_NAME column. Columns: ",
+         paste(names(s), collapse = ", "))
+  }
+  s <- s[s[[sc]] == STATE[[region]], ]
+  s <- s[!grepl("Migratory|No usual address", s[[nc]]), ]
+  if (nrow(s) < 20) {
+    stop(basename(shp), ": ", STATE[[region]], " resolved to ", nrow(s),
+         " districts. No Australian state has fewer than 20.")
+  }
+  s$SED_NAME21 <- s[[nc]]
   # The ABS district names for WA carry an upper-house region in parentheses
   # that the seat files do not use; every other state is unaffected by the strip.
   s$district <- trimws(sub("[ ]*[(][^)]*[)]$", "", s$SED_NAME21))
@@ -92,8 +117,8 @@ vote_coverage <- function(fed_year, region, place_ids) {
   list(kept = tot[id %in% place_ids, sum(v)], all = tot[, sum(v)])
 }
 
-assign_booths <- function(fed_year, region) {
-  dis <- districts(region)
+assign_booths <- function(fed_year, region, shp = SHP) {
+  dis <- districts(region, shp)
   bo <- booths(fed_year, region)
   j <- st_join(bo, dis, join = st_within)
   a <- as.data.table(st_drop_geometry(j))
@@ -192,17 +217,34 @@ cat("BC2  the method recovers both hand-built correspondences.\n")
 # Queensland votes in October, so the federal election preceding its 2020 poll
 # is 2019. QLD has had no redistribution since 2017, so SED_2021 is the right
 # vintage for both the 2020 and the 2024 state election.
-cat("\nBC3  building correspondences that did not exist\n")
-for (J in list(list(region = "qld", cycle = 2020L, fed = 2019L),
-               list(region = "qld", cycle = 2024L, fed = 2022L))) {
-  a <- assign_booths(J$fed, J$region)
-  want <- nrow(districts(J$region))
+cat("\nBC3  building correspondences\n")
+# Every cycle the anchor ships a correspondence for is rebuilt here too, not
+# just the Queensland ones that were missing. The shipped files need 192 and 224
+# name-fallback matches respectively for Victoria; these need none, because a
+# coordinate does not care what a federal division was called.
+#
+# Western Australia is ABSENT and cannot be added. Its 2023 redistribution
+# postdates every ABS vintage published so far -- SED_2021 and SED_2022 both
+# carry the pre-redistribution 59 districts, six of which (Bibra Lake,
+# Girrawheen, Mid-West, Mindarie, Oakford, Secret Harbour) do not exist in them
+# at all. Building it needs a WAEC shapefile, not another ABS download.
+for (J in list(list(region = "vic", cycle = 2018L, fed = 2016L, shp = SHP_2021),
+               list(region = "nsw", cycle = 2019L, fed = 2016L, shp = SHP_2021),
+               list(region = "qld", cycle = 2020L, fed = 2019L, shp = SHP_2021),
+               list(region = "vic", cycle = 2022L, fed = 2022L, shp = SHP_2022),
+               list(region = "nsw", cycle = 2023L, fed = 2022L, shp = SHP_2022),
+               list(region = "qld", cycle = 2024L, fed = 2022L, shp = SHP_2022))) {
+  a <- assign_booths(J$fed, J$region, J$shp)
+  want <- nrow(districts(J$region, J$shp))
   got <- uniqueN(a$district)
   cat(sprintf("BC3  %s %d <- fed%d: %d booths across %d of %d districts\n",
               toupper(J$region), J$cycle, J$fed, nrow(a), got, want))
-  if (got < want) {
-    stop(J$region, J$cycle, ": ", want - got, " districts contain no polling ",
-         "place, which cannot be true of a real electorate.")
+  # Written as != rather than < deliberately. The < form cannot fire when the
+  # district set comes back empty, which is exactly the case it needed to catch.
+  if (got != want || anyNA(a$district)) {
+    stop(J$region, J$cycle, ": ", got, " districts received a booth against ",
+         want, " in the boundary file", if (anyNA(a$district))
+           ", and some booths were assigned no district" else "", ".")
   }
   # Two outputs on purpose. The .txt matches the anchor's format so the file can
   # be read and eyeballed beside the six shipped ones. The .csv carries

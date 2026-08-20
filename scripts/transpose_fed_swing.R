@@ -48,16 +48,57 @@ FED_ID <- c("2013" = 17496, "2016" = 20499, "2019" = 24310,
 #
 # Queensland votes in October, so the federal election preceding its 2020 poll
 # is 2019 and the one preceding 2024 is 2022.
+
+#
+# CORR_SOURCE picks which to use, so the two can be compared on the FSW2
+# validation rather than argued about. The shipped files reproduce the published
+# fed_swing at r = 0.952 for Victoria 2022 and 0.949 for NSW 2023; whether
+# coordinates beat that is the question, and it has an answer.
+# DEFAULT IS SHIPPED, AND THAT IS NOT THE ANSWER THIS EXPECTED. Rebuilding the
+# four historical cycles from coordinates was meant to remove the name-matching
+# defect at its root. Measured against the only reference available it does not:
+#
+#   VIC 2022   shipped r = 0.952, MAD 1.97   coordinates r = 0.862, MAD 2.15
+#   NSW 2023   shipped r = 0.949, MAD 3.11   coordinates r = 0.951, MAD 3.07
+#
+# Worse for Victoria, a wash for NSW. The reference is not independent -- the
+# published fed_swing comes from the same repository that ships the
+# correspondences, so agreement partly rewards shared method -- which means this
+# test cannot VINDICATE coordinates. But it also leaves no evidence for them and
+# one number against, so the shipped files keep the four cycles they cover.
+#
+# Queensland is unaffected: it has no shipped correspondence, so coordinates are
+# not competing with anything there. What supports it is the 97.8% and 97.7%
+# booth-level agreement with the hand-built files in
+# scripts/build_correspondence.R, and the statewide anchor check -- transposed
+# mean -4.14 for 2020 against an actual Queensland federal-2019 swing of about
+# -4.3, and +4.67 for 2024 against about +4.3.
+#
+# Why Victoria degrades is NOT explained. The correlation falls a long way while
+# the mean absolute difference barely moves, which is the signature of a few
+# large outliers rather than a uniform loss, and those have not been identified.
+CORR_SOURCE <- Sys.getenv("CORR_SOURCE", "shipped")
 BUILT <- file.path("external", "reference", "correspondences")
-JOBS <- list(
+SHIPPED_JOBS <- list(
   list(corr = "booths-2018vic.txt", region = "vic", cycle = 2018, fed = 2016),
   list(corr = "booths-2019nsw.txt", region = "nsw", cycle = 2019, fed = 2016),
   list(corr = "booths-2022vic.txt", region = "vic", cycle = 2022, fed = 2022),
-  list(corr = "booths-2023nsw.txt", region = "nsw", cycle = 2023, fed = 2022),
-  list(corr = "booths-2020qld.csv", region = "qld", cycle = 2020, fed = 2019),
-  list(corr = "booths-2024qld.csv", region = "qld", cycle = 2024, fed = 2022),
-  list(corr = "booths-2026vic.txt", region = "vic", cycle = 2026, fed = 2025),
-  list(corr = "booths-2027nsw.txt", region = "nsw", cycle = 2027, fed = 2025))
+  list(corr = "booths-2023nsw.txt", region = "nsw", cycle = 2023, fed = 2022))
+BUILT_JOBS <- list(
+  list(corr = "booths-2018vic.csv", region = "vic", cycle = 2018, fed = 2016),
+  list(corr = "booths-2019nsw.csv", region = "nsw", cycle = 2019, fed = 2016),
+  list(corr = "booths-2022vic.csv", region = "vic", cycle = 2022, fed = 2022),
+  list(corr = "booths-2023nsw.csv", region = "nsw", cycle = 2023, fed = 2022))
+# Queensland exists only as a built file, and the two forecast cycles only as
+# shipped ones -- there is no ABS boundary vintage for the 2026 Victorian or
+# 2027 NSW districts yet.
+JOBS <- c(if (CORR_SOURCE == "built") BUILT_JOBS else SHIPPED_JOBS,
+          list(list(corr = "booths-2020qld.csv", region = "qld", cycle = 2020, fed = 2019),
+               list(corr = "booths-2024qld.csv", region = "qld", cycle = 2024, fed = 2022),
+               list(corr = "booths-2026vic.txt", region = "vic", cycle = 2026, fed = 2025),
+               list(corr = "booths-2027nsw.txt", region = "nsw", cycle = 2027, fed = 2025)))
+cat(sprintf("FSWC correspondence source for the four historical cycles: %s\n",
+            toupper(CORR_SOURCE)))
 
 read_corr <- function(f) {
   ln <- readLines(file.path(CORR, f), warn = FALSE); ln <- ln[nzchar(ln)]
