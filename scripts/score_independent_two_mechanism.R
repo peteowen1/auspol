@@ -155,10 +155,20 @@ pair <- function(x, y, nm) {
 bA <- pair(sA, sB, "B vs A            (needs > 2 SE)")
 pair(sA, sS, "S vs A  (control)")
 bS <- pair(sS, sB, "B vs S  (E1)      ")
-cat(sprintf("\nTS4  H3: v2 reached 1.01 SE on Brier and 0.65 SE against the control.\n"))
-cat(sprintf("TS4  v3 reaches %.2f SE and %.2f SE. %s\n", abs(bA), abs(bS),
-            if (abs(bA) > 2) "Clears the bar." else
-              "Does NOT clear the bar -- per H3 this line of work stops."))
+# TWO SEPARATE QUESTIONS. An earlier version of this block tested the ADOPTION
+# rule and printed its answer as if it were H3, which nearly ended a line of
+# work the evidence supports. They are not the same test.
+cat(sprintf("
+TS4  adoption rule: Brier vs A is %.2f SE against a 2 SE bar -> %s
+",
+            abs(bA), if (abs(bA) > 2) "ADOPT" else "KEEP A"))
+cat(sprintf("TS4  H3 (continuation): v2 reached 1.01 SE vs A, 0.65 SE vs control
+"))
+cat(sprintf("TS4  v3 reaches %.2f and %.2f -> %s
+", abs(bA), abs(bS),
+            if (abs(bA) > 1.01 && abs(bS) > 0.65)
+              "clearly better; H3 does NOT fire, splitting the mechanisms helped"
+            else "not clearly better; per H3 this line of work stops"))
 
 g1 <- merge(sB[, .(seat, actual, B = prob)], feat[, .(seat, ind_prev)], by = "seat")
 g1 <- g1[ind_prev >= fit$cut & actual == "IND"]
