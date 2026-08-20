@@ -108,6 +108,47 @@ for (K in PAIRS) {
   shares <- shares[keep, , drop = FALSE]
   truth <- setNames(win$winner, win$seat)[keep]
 
+  # ---- seat-swing port, ported from backtest_candidate_nsw.R ---------------
+  # Against docs/plans/prereg-seat-swing-port-round2.md. The block is copied
+  # unchanged in substance (refusal P4) with ONE mechanical rename: the NSW
+  # version calls the seat file `sa`, and this script already uses `sa` for the
+  # statewide 'from' shares at line 99 and reads it again at line 136. Pasting
+  # the block verbatim would rebind `sa` to a data.table and silently break that
+  # later read -- the shadowing hazard CLAUDE.md records five times. It is
+  # `sf_to` here.
+  #
+  # NOT EVERY CYCLE CAN BE TESTED. seat_swing_adjustment() needs the seat file
+  # for the election being predicted, and 2018vic.txt DOES NOT EXIST -- so the
+  # 2014->2018 cycle gets no adjustment and is reported as untestable rather
+  # than silently scored as if the port were off. Only 2018->2022 contributes.
+  PORT <- identical(Sys.getenv("AUSPOL_SEAT_SWING_PORT", "0"), "1")
+  if (PORT) {
+    sf_to <- tryCatch(as.data.table(load_seats(K$to, "vic")),
+                      error = function(e) NULL)
+    if (is.null(sf_to)) {
+      cat(sprintf("BV3c seat-swing port REQUESTED but %dvic.txt does not exist; this cycle is NOT testable and runs unported\n",
+                  K$to))
+    } else {
+      idx <- match(rownames(shares), sf_to$seat)
+      adj <- rep(0, nrow(shares))
+      adj[!is.na(idx)] <- seat_swing_adjustment(sf_to[idx[!is.na(idx)]])
+      if (anyNA(idx)) {
+        cat(sprintf("BV3c %d seats have no match in the seat file and get no adjustment: %s\n",
+                    sum(is.na(idx)), paste(rownames(shares)[is.na(idx)], collapse = ", ")))
+      }
+      # Re-centre: seat_swing_adjustment() centres over the seats it was given,
+      # and zeroing the unmatched ones reintroduces a mean. An uncentred
+      # adjustment would shift the whole forecast.
+      adj <- adj - mean(adj)
+      stopifnot(all(is.finite(adj)))
+      cat(sprintf("BV3c seat-swing port ON: adjustment mean %+.3f sd %.3f range %+.2f..%+.2f\n",
+                  mean(adj), stats::sd(adj), min(adj), max(adj)))
+      shares[, "ALP"] <- pmax(0, shares[, "ALP"] + adj)
+      shares[, "LNP"] <- pmax(0, shares[, "LNP"] - adj)
+      shares <- 100 * shares / rowSums(shares)
+    }
+  }
+
   cat(sprintf("\nBV1  Victoria %d -> %d: %d districts scored, truth from %s\n",
               K$from, K$to, length(keep), truth_src))
   dropped <- setdiff(win$seat, rownames(mat))
