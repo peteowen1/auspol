@@ -1,12 +1,11 @@
-# The full preference distributions exist after all, and they move two of the numbers
+# I rebuilt something the repo already had. What survives is a correction to two numbers.
 
-Run 2026-08-20. Data acquisition plus a correction to
-[onp-allocation-sa-2026-08-17.md](onp-allocation-sa-2026-08-17.md), whose
-closing section named this as the blocker on the rebuild.
+Run 2026-08-20. **This file replaces an earlier version of itself that claimed
+to remove a blocker. It did not; the blocker was already gone.**
 
-## The blocker, quoted and removed
+## What I did wrong
 
-That review ends:
+[onp-allocation-sa-2026-08-17.md](onp-allocation-sa-2026-08-17.md) says:
 
 > "16 districts is not enough. 97 events spread across 28 distinct cells, most
 > with n ≤ 2."
@@ -15,89 +14,78 @@ That review ends:
 > many elections — a materially larger acquisition than the first-preference
 > data, and the real blocker on the rebuild."
 
-It had 16 districts because Wikipedia publishes a full distribution for only
-some seats. **The ECSA API carries `finalDistribution` for all 47**, with every
-exclusion round, every candidate's vote change, and which candidates were still
-standing.
+I read that as an open task, found the undocumented ECSA API behind the results
+site, extracted 294 exclusion events across all 47 districts, and wrote it up as
+removing the blocker.
 
-| | review | this |
-|---|---:|---:|
-| districts | 16 | **47** |
-| exclusion events | 97 | **294** |
-| cells (model party classes) | 28 | 26 |
+**`scripts/fetch_preferences_sa.R` had already done it on 2026-08-19** — the
+same API, the same `HAStatic`/`HAChange` endpoints, the same
+`finalDistribution` — into `external/elections/ecsa-2026-sa-transfers.csv` with
+**47 districts and 294 exclusion events**, in a **finer** party taxonomy than
+mine, keeping `IND` and `OTH_RIGHT` separate where I collapsed both into `OTH`.
 
-Same granularity, **three times the events per cell**. Ten cells now carry five
-or more events; seven are singletons.
+My extractor was an exact duplicate producing a worse result. It has been
+deleted. `scripts/summarise_sa_transfers.R` now reads the canonical file.
 
-**Raw, it is worse, and that is worth knowing.** Conditioned on the literal
-survivor set the 294 events land in **119** cells, 66 of them singletons —
-poorer per-cell coverage than the review's 97-in-28. The gain comes entirely
-from collapsing the ballot's minor parties into the model's classes with
-`classify_party()`. More events did not by itself buy more power.
+The repo also already holds `vec-2014/2018/2022-vic-transfers.csv`,
+`nswec-nsw-transfers.csv` and `aec-fed-transfers.csv`. **The "one state, one
+election" gap the review names as its other structural limit is also already
+closed**, and I proposed closing it as the next step.
 
-## Anchor check
+## What survives
 
-The review reports that of Liberal preferences reaching Labor or One Nation,
-**62.7%** went to One Nation. On 47 districts: **66.2%**. Consistent, and the
-extraction is wired to abort if the two disagree by more than 8 points.
+The review's matrix section is dated **2026-08-18**. The 47-district file landed
+**2026-08-19**. So its published rates come from the 16-district sample and were
+never recomputed. Recomputing them from the canonical file moves two of them.
 
-## Two of the review's conditional claims reverse
-
-| cell | review (16 districts) | this (47 districts) |
+| cell | review (16 districts) | canonical (47 districts) |
 |---|---:|---:|
 | **ONP → ALP, survivors {ALP, LNP}** | **57.0%** (n = 2) | **31.1%** (n = 7) |
-| GRN → ALP, survivors {ALP, ONP} | 81.5% | 80.4% (n = 12) |
+| ONP → ALP, survivors {ALP, GRN, LNP} | 19.3% (n = 3) | 17.7% (n = 6) |
 | GRN → ALP, survivors {ALP, LNP} | 74.5% | **84.5%** (n = 6) |
+| GRN → ALP, survivors {ALP, ONP} | 81.5% | 80.4% (n = 12) |
 
-The review concluded *"Greens preference Labor harder when the alternative is
-One Nation than when it is the Liberals"*. On 47 districts the ordering is the
-other way — 84.5% against Liberals, 80.4% against One Nation. Both samples are
-small and this is not significant either way, but the claim as stated is not
-supported by the fuller data.
+**Anchor check passes**: of Liberal preferences reaching Labor or One Nation,
+66.2% went to One Nation here against the review's 62.7%.
 
-**The One Nation cell matters more.** The review used a 19.3–57.0 range to argue
-the model's single fixed **33.7%** flow-to-Labor could not express reality. On
-47 districts that range collapses:
+### The One Nation cell is the one that matters
 
-| survivors | events | ONP → ALP |
-|---|---:|---:|
-| {ALP, LNP} | 7 | **31.1%** |
-| {ALP, GRN, LNP} | 6 | **17.7%** |
+The review uses a **19.3–57.0** range to argue the model's single fixed **33.7%**
+flow-to-Labor "cannot express any of this". On the full sample that range is
+**17.7–31.1**, and the model's 33.7 sits just above the top of it rather than in
+the middle of a 38-point spread.
 
-**31.1% against a model constant of 33.7% is close.** The configuration where
-the constant is clearly wrong is the one with the Greens still standing, at
-17.7%. That is a narrower and more actionable finding than "a scalar cannot
-express any of this", and it rests on 7 and 6 events rather than 2.
+That changes the argument's shape. The constant is not failing to span a huge
+range; it is **too high across the board**, most severely where the Greens
+remain (17.7%). Whether that is worth acting on is a separate question needing
+its own pre-registration — but the case for it is different from the one the
+review makes, and rests on 7 and 6 events rather than 2 and 3.
 
-## What has and has not changed
+### The Greens claim is not supported
 
-**Changed:** the acquisition the review called the real blocker is done for
-South Australia, and it cost one afternoon rather than the "materially larger"
-effort anticipated — because the data was behind an undocumented API rather
-than genuinely unpublished.
+The review concludes *"Greens preference Labor harder when the alternative is
+One Nation than when it is the Liberals"*. On 47 districts the ordering reverses
+— 84.5% against Liberals, 80.4% against One Nation. Neither sample can resolve a
+4-point difference. **The claim should be withdrawn rather than inverted.**
 
-**Not changed:** the review's second structural gap, *"one state, one
-election"*. Every number here is still SA 2026. Nothing about a state where One
-Nation polls 3% is measured by an election where it polled 22.9%.
+## The process failure, which is the more useful part
 
-**Also not changed:** its first gap, party classes rather than candidates. The
-collapse to `classify_party()` classes is what made the cells usable, and it is
-the same simplification the review warned about — a Victorian ballot carries
-Legalise Cannabis, Animal Justice, Family First, Freedom and Victorian
-Socialists as separate candidates excluded one at a time. Here they are all
-`OTH`, and `OTH` is the largest source of transfers by far, at 148 of 294
-events.
+Three times today I proposed a next step and began building before checking
+whether the repo already had it:
 
-## What this does not license
+1. the SA 2026 One Nation result — already in
+   [onp-allocation-sa-2026-08-17.md](onp-allocation-sa-2026-08-17.md);
+2. Victoria's exposure to the classic-contest assumption — sized against
+   `simulate_seats()`, which `build_page.R` says in a comment does not publish;
+3. this acquisition — already done, better, the day before.
 
-Rerunning the Victorian seat count off this matrix. The review already tried
-that off the 16-district version, got Labor 56 and One Nation 0, called it
-incoherent and said not to quote it. Three times the events does not make a
-single-election, single-state, class-collapsed matrix into a basis for a
-published seat count, and no criterion for adopting one has been
-pre-registered.
+Each time the work was real and the framing was wrong, and each was caught only
+after committing. The common cause is not carelessness about the code, it is
+**treating a review's "what should happen next" section as a description of the
+present**. Those sections are written before the work they propose, and this
+repo moves fast enough that several were already stale.
 
-**The next honest step is another election, not another analysis of this one.**
-Victoria and NSW publish distribution-of-preferences data; whether they publish
-it per district in a form this reachable is unknown and is a fetch, not a
-modelling question.
+**The check that would have caught all three costs about thirty seconds:
+`ls external/elections/`, `git log --oneline -15`, and grep the scripts
+directory for the thing about to be built.** Doing it before proposing, not
+before committing.

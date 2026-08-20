@@ -1,21 +1,18 @@
-# Preference transfer rates from all 47 SA districts, in the model's party classes.
+# Conditional preference transfer rates for SA 2026, on all 47 districts.
 #
-# scripts/extract_sa_transfers.py pulls 294 exclusion events from the ECSA API,
-# against the 97 that docs/reviews/onp-allocation-sa-2026-08-17.md could get
-# from Wikipedia. But raw, those 294 land in 119 distinct (excluded party,
-# survivor set) cells -- 66 of them singletons -- which is WORSE per-cell
-# coverage than the review's 97-in-28, because the full district set carries
-# more varied ballots.
+# THIS SCRIPT IS A CORRECTION, NOT AN ACQUISITION, and the distinction cost me
+# an afternoon. docs/reviews/onp-allocation-sa-2026-08-17.md reports its
+# transfer matrix from 16 districts and 97 exclusion events, and names getting
+# more as "the real blocker on the rebuild". I went and got it -- and
+# scripts/fetch_preferences_sa.R had already got it on 2026-08-19, from the
+# same undocumented ECSA API, into external/elections/ecsa-2026-sa-transfers.csv
+# with 47 districts, 294 events, and a FINER party taxonomy than mine (it keeps
+# IND and OTH_RIGHT separate where I collapsed both into OTH).
 #
-# So the events only pay off once the ballot's many minor parties are collapsed
-# into the classes the model actually uses. That is done with classify_party(),
-# the repo's own mapping, rather than a bespoke one -- CLAUDE.md: one source of
-# truth per question.
-#
-# ANCHOR CHECK. The review reports, from its 16 districts, that of Liberal
-# preferences going to one of Labor or One Nation, 62.7% went to One Nation.
-# The same quantity is computed here on 47 districts. It should be close. If it
-# is not, one of the two extractions is wrong and neither should be used.
+# What survives is narrow: that review's matrix section is dated 2026-08-18 and
+# the 47-district file landed 2026-08-19, so its published rates are computed
+# from the smaller sample and were never recomputed. This recomputes them from
+# the canonical file.
 #
 # Emits TR* codes.
 
@@ -23,35 +20,26 @@ options(auspol.root = normalizePath("."))
 suppressMessages(devtools::load_all(quiet = TRUE))
 suppressMessages(library(data.table))
 
-f <- file.path("external", "reference", "ecsa", "sa2026-transfers.csv")
-if (!file.exists(f)) stop("Run scripts/extract_sa_transfers.py first.")
+f <- file.path(election_data_path(), "ecsa-2026-sa-transfers.csv")
+if (!file.exists(f)) stop("Run scripts/fetch_preferences_sa.R first.")
 tr <- fread(f, showProgress = FALSE)
+# The canonical file is already in this repo's party classes and is long, one
+# row per (seat, round, from, to). No id mapping and no collapse is needed --
+# both of which I wrote before finding this file.
+cat(sprintf("
+TR0  %s: %d districts, %d exclusion events
+", basename(f),
+            uniqueN(tr$seat), uniqueN(tr[, paste(seat, round)])))
 
-# ECSA party ids -> this repo's classes. classify_party() takes a name and an
-# abbreviation; the ids here are abbreviations, so the name is passed as the id
-# too and the abbreviation carries the match.
-ids <- unique(c(tr$excluded_party,
-                unlist(strsplit(paste(tr$survivors, collapse = "|"), "|", fixed = TRUE)),
-                sub("^to_", "", grep("^to_", names(tr), value = TRUE))))
-ids <- sort(unique(ids[nzchar(ids)]))
-cls <- setNames(classify_party(ids, ids), ids)
-cat("\nTR1  ECSA party ids mapped to model classes\n")
-print(data.table(id = names(cls), class = unname(cls))[order(class, id)])
-
-to_cols <- grep("^to_", names(tr), value = TRUE)
-long <- melt(tr, id.vars = c("seat", "round", "excluded_party", "survivors", "pile"),
-             measure.vars = to_cols, variable.name = "to_id", value.name = "votes")
-long[, to_id := sub("^to_", "", as.character(to_id))]
-long <- long[votes > 0]
-long[, `:=`(from_class = cls[excluded_party], to_class = cls[to_id])]
-
-# The survivor set, also in model classes, so the conditioning has enough
-# events per cell to mean something.
-surv_class <- function(s) {
-  vapply(strsplit(s, "|", fixed = TRUE), function(v)
-    paste(sort(unique(cls[v])), collapse = "|"), character(1))
-}
-long[, surv := surv_class(survivors)]
+# Survivors: who was still standing for that transfer, which is the whole
+# point -- the review's own numbers move by 30 points across configurations.
+# Reconstructed from the file itself: a party still receiving votes in a later
+# round of the same seat was still in the count.
+tr[, from_class := from][, to_class := to]
+still <- tr[, .(surv = paste(sort(unique(to)), collapse = "|")),
+            by = .(seat, round)]
+long <- merge(tr, still, by = c("seat", "round"))
+long[, votes := as.numeric(votes)]
 
 ev <- long[, .(votes = sum(votes)), by = .(seat, round, from_class, surv, to_class)]
 cells <- ev[, .(events = uniqueN(paste(seat, round))), by = .(from_class, surv)]
