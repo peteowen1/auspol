@@ -135,7 +135,7 @@ wa_class <- function(codes, election) {
 
 
 all_fp <- list(); all_tx <- list(); all_win <- list(); exh <- list()
-unmatched <- character(0); no_excl <- 0L; multi_excl <- 0L; no_to <- 0L; seats_by_party <- list(); codes_seen <- list(); n_dist <- list()
+unmatched <- character(0); no_excl <- 0L; multi_excl <- 0L; no_to <- 0L; no_recip <- 0L; seats_by_party <- list(); codes_seen <- list(); n_dist <- list()
 for (E in WANT) {
   mem <- get_json(sprintf("/sgElections/%s/LAElectedMembers", E),
                   sprintf("%s-members.json", E))
@@ -206,12 +206,17 @@ for (E in WANT) {
         # comment that used to sit here made, and unlike it, a true one.
         from <- unname(look[norm_key(nm[out], "")])
         got <- which(val > 0)
-        if (!length(got) || is.na(from)) {
-          unmatched <<- c(unmatched, nm[out]); next
-        }
+        # TWO conditions, counted apart. An unmatched name is a parse failure;
+        # a round with no positive recipient is every remaining vote in the
+        # pile exhausting at once, which full-preferential voting makes rare
+        # but not impossible. Reporting both as "unmatched name" would send a
+        # future reader after the wrong cause -- the same misdiagnosis this
+        # file just fixed in score_wa_flows.R.
+        if (is.na(from)) { unmatched <- c(unmatched, nm[out]); next }
+        if (!length(got)) { no_recip <- no_recip + 1L; next }
         exh[[length(exh) + 1L]] <- data.table(
           election = sub("^sg", "wa", E), pile = abs(val[out]), exhausted = ex)
-        to = unname(look[norm_key(nm[got], "")])
+        to <- unname(look[norm_key(nm[got], "")])
         # An unmatched RECIPIENT was dropped by the !is.na(to) filter below with
         # nothing to show for it, which is how the ifelse() truncation above
         # survived a run. Counted here and aborted on at WF1b.
@@ -248,15 +253,16 @@ EX[, rate := exhausted / pile]
 # pool and the WF4 row count still read as complete. That is the exact failure
 # this repo keeps meeting, occurring inside the code written to avoid it.
 #
-# All three counts are ZERO across the eight elections as of 2026-08-21, which
+# All FIVE counts are ZERO across the eight elections as of 2026-08-21, which
 # is why they abort rather than warn: there is no known-good nonzero value, so
 # any of them appearing means the parse has changed.
-cat(sprintf("\nWF1b skipped: %d unmatched excluded name, %d unmatched recipient, %d rounds\nwith no exclusion, %d with several\n",
-            length(unmatched), no_to, no_excl, multi_excl))
-if (length(unmatched) || no_to || no_excl || multi_excl) {
+cat(sprintf("\nWF1b skipped: %d unmatched excluded name, %d unmatched recipient,\n%d rounds with no recipient, %d with no exclusion, %d with several\n",
+            length(unmatched), no_to, no_recip, no_excl, multi_excl))
+if (length(unmatched) || no_to || no_recip || no_excl || multi_excl) {
   stop("Rounds were dropped from the transfer pool. Unmatched name(s): ",
        if (length(unmatched)) paste(unique(unmatched), collapse = ", ") else "none",
        "; unmatched recipients: ", no_to,
+       "; rounds where the whole pile exhausted: ", no_recip,
        "; rounds with no negative row: ", no_excl,
        "; rounds with more than one: ", multi_excl,
        ". Each silently shrinks the matrix, and all three were zero when this ",
