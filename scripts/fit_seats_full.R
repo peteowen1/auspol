@@ -93,8 +93,40 @@ if (!all(file.exists(need))) {
 # Victoria is the right jurisdiction and supplies Greens, independent and
 # minor-right behaviour from 452 exclusions. It cannot speak to One Nation --
 # 5 of 88 seats contested in 2022 -- which is the only reason SA is here.
+# QUEENSLAND, ADDED 2026-08-21. Against docs/plans/prereg-qld-flows.md: the
+# matrix was 746 exclusions with just 18 One Nation exclusions behind every One
+# Nation preference rate the forecast publishes. Queensland 2020 and 2024 make
+# that 1,496 and 198.
+#
+# Both precede the November 2026 Victorian election, so neither leaks, and both
+# are Compulsory Preferential -- Queensland's pre-2016 optional-preferential
+# elections are excluded by the fetcher and must stay excluded, because
+# exhausting ballots make those rates mean something else.
+#
+# Measured at +1.55 SE across the four backtest elections it can reach, with
+# every election predating it byte-identical.
+#
+# DEFAULT IS OFF, AND REFUSAL Q4 IS WHY. That clause said to stop and report if
+# any party's Victoria 2026 median moved by more than 2 seats. Measured:
+#
+#   ALP 40 -> 37   ONP 5 -> 9   LNP 37 -> 36   GRN 4 -> 5
+#
+# Labor moves 3 and One Nation 4, so the rule stops it. Set AUSPOL_QLD_FLOWS=1
+# to run with the fuller matrix.
+#
+# The judgement Q4 exists to force is genuinely open here. It was written with a
+# COVARIANCE change in mind, where a moved centre means something went wrong.
+# This is a DATA change, and better data moving the answer is not a defect --
+# One Nation preference rates that rested on 18 exclusion events now rest on
+# 198. But a 4-seat move in a published forecast is a decision for Pete rather
+# than a consequence of a script, which is exactly what the clause is for.
 tx <- rbind(fread(file.path(PREF, "vec-2022-vic-transfers.csv")),
             fread(file.path(PREF, "ecsa-2026-sa-transfers.csv")))
+if (identical(Sys.getenv("AUSPOL_QLD_FLOWS", "0"), "1")) {
+  qf <- file.path(PREF, "ecq-qld-transfers.csv")
+  if (!file.exists(qf)) stop("Run scripts/fetch_preferences_qld.R first.")
+  tx <- rbind(tx, fread(qf), fill = TRUE)
+}
 fm <- build_flow_matrix(tx, min_n = 3L)
 cat(sprintf("flow matrix: %d exclusions, %d cells at n>=3 of %d observed\n",
             uniqueN(tx[, .(election, seat, round)]), length(fm$conditional),
