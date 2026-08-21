@@ -106,23 +106,23 @@ if (!all(file.exists(need))) {
 # Measured at +1.55 SE across the four backtest elections it can reach, with
 # every election predating it byte-identical.
 #
-# DEFAULT IS OFF, AND REFUSAL Q4 IS WHY. That clause said to stop and report if
-# any party's Victoria 2026 median moved by more than 2 seats. Measured:
+# ON, BY PETE'S DECISION, 2026-08-21. Refusal Q4 said to stop and report if any
+# party's Victoria 2026 median moved by more than 2 seats. It did:
 #
 #   ALP 40 -> 37   ONP 5 -> 9   LNP 37 -> 36   GRN 4 -> 5
 #
-# Labor moves 3 and One Nation 4, so the rule stops it. Set AUSPOL_QLD_FLOWS=1
-# to run with the fuller matrix.
+# So the change was measured, held, and put to him rather than shipped. He took
+# it. Q4 did its job -- it is not a veto, it is a stop sign that forces the
+# judgement onto a person.
 #
-# The judgement Q4 exists to force is genuinely open here. It was written with a
-# COVARIANCE change in mind, where a moved centre means something went wrong.
-# This is a DATA change, and better data moving the answer is not a defect --
-# One Nation preference rates that rested on 18 exclusion events now rest on
-# 198. But a 4-seat move in a published forecast is a decision for Pete rather
-# than a consequence of a script, which is exactly what the clause is for.
+# The reasoning for taking it: this is a DATA change, not a parameter tweak.
+# The same One Nation preference rates are now estimated from 198 exclusion
+# events instead of 18. Better data moving the answer is the system working.
+#
+# Set AUSPOL_QLD_FLOWS=0 to reproduce the pre-2026-08-21 forecast exactly.
 tx <- rbind(fread(file.path(PREF, "vec-2022-vic-transfers.csv")),
             fread(file.path(PREF, "ecsa-2026-sa-transfers.csv")))
-if (identical(Sys.getenv("AUSPOL_QLD_FLOWS", "0"), "1")) {
+if (!identical(Sys.getenv("AUSPOL_QLD_FLOWS", "1"), "0")) {
   qf <- file.path(PREF, "ecq-qld-transfers.csv")
   if (!file.exists(qf)) stop("Run scripts/fetch_preferences_qld.R first.")
   tx <- rbind(tx, fread(qf), fill = TRUE)
