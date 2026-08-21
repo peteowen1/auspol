@@ -100,6 +100,24 @@ WA_PARTY <- c(
   # of the flow matrix, so it is left for a measured one rather than taken here.
   NMV    = "NO MANDATORY VACCINATION", WAXIT = "WAxit")
 
+# One spelling for both sides of the join. The distribution writes an
+# independent as a bare surname and upper-cases every party code; the candidate
+# list keeps the code's own case and stores the party separately. Comparing
+# them raw silently loses whoever differs.
+# NOT ifelse(). `ifelse(test, yes, no)` returns a vector shaped like TEST, so
+# with a scalar `party` it returned ONE element regardless of how many names it
+# was given -- truncating every distribution round to its first recipient and
+# taking the WA transfer file from 5,770 rows to 1,658. It was caught by the
+# row count moving, not by any check, which is why WF1b now guards `to` as well.
+norm_key <- function(name, party) {
+  nm <- toupper(trimws(name))
+  p  <- toupper(trimws(ifelse(is.na(party), "", party)))
+  if (length(p) == 1L) p <- rep(p, length(nm))
+  has <- nzchar(p)
+  nm[has] <- sprintf("%s - %s", nm[has], p[has])
+  nm
+}
+
 # Expand, then classify. An UNKNOWN CODE ABORTS rather than becoming OTH --
 # that is the entire point, since the failure being prevented is a silent OTH.
 wa_class <- function(codes, election) {
@@ -117,7 +135,7 @@ wa_class <- function(codes, election) {
 
 
 all_fp <- list(); all_tx <- list(); all_win <- list(); exh <- list()
-unmatched <- character(0); seats_by_party <- list(); codes_seen <- list(); n_dist <- list()
+unmatched <- character(0); no_excl <- 0L; multi_excl <- 0L; no_to <- 0L; seats_by_party <- list(); codes_seen <- list(); n_dist <- list()
 for (E in WANT) {
   mem <- get_json(sprintf("/sgElections/%s/LAElectedMembers", E),
                   sprintf("%s-members.json", E))
@@ -147,8 +165,14 @@ for (E in WANT) {
     if (!length(cands)) next
     # BALLOT_PAPER_NAME in the distribution is "SURNAME - CODE"; the candidate
     # list splits the two, so the key is rebuilt rather than parsed back out.
+    # Rebuilt through norm_key(), because the two sides do not agree on form:
+    # an INDEPENDENT has no party suffix at all in the distribution ("BELL",
+    # not "BELL - "), and the distribution upper-cases the code ("LING - SPPK"
+    # against the candidate list's "SPPk"). Those two differences dropped 42
+    # exclusion rounds, silently, until WF1b was made to abort on them.
     key <- vapply(cands, function(c)
-      sprintf("%s - %s", c$BALLOT_PAPER_NAME, c$PARTY_AFFILIATION), character(1))
+      norm_key(c$BALLOT_PAPER_NAME %||% "", c$PARTY_AFFILIATION %||% ""),
+      character(1))
     raw <- vapply(cands, function(c) c$PARTY_AFFILIATION %||% "", character(1))
     codes_seen[[length(codes_seen) + 1L]] <- data.table(election = E, code = raw)
     cls <- wa_class(raw, E)
@@ -168,22 +192,34 @@ for (E in WANT) {
         nm  <- vapply(rows, function(x) x$BALLOT_PAPER_NAME %||% "", character(1))
         ex  <- max(vapply(rows, function(x) as.numeric(x$EXHAUSTED_LAST_PUBLISHED_NUMBER_ENTERED %||% 0), numeric(1)))
         out <- which(val < 0)
-        if (length(out) != 1L) next        # not a clean single exclusion
+        # Two silent skips used to live here. Every Distribution round should
+        # carry exactly ONE negative row -- the excluded candidate's pile
+        # leaving -- so neither zero nor two is expected, and a round dropped
+        # for either reason shrinks the transfer pool with nothing to show it.
+        # Counted, and both counts are asserted at WF1b.
+        if (length(out) == 0L) { no_excl <- no_excl + 1L; next }
+        if (length(out) > 1L)  { multi_excl <- multi_excl + 1L; next }
         # SINGLE bracket. `look[["missing"]]` THROWS on an atomic vector, so a
         # name the candidate list does not carry kills the run rather than
         # skipping a round -- the trap CLAUDE.md records. Unmatched names are
-        # collected and reported at the end instead.
-        from <- unname(look[nm[out]])
+        # collected and ABORTED ON at WF1b below -- a stronger claim than the
+        # comment that used to sit here made, and unlike it, a true one.
+        from <- unname(look[norm_key(nm[out], "")])
         got <- which(val > 0)
         if (!length(got) || is.na(from)) {
           unmatched <<- c(unmatched, nm[out]); next
         }
         exh[[length(exh) + 1L]] <- data.table(
           election = sub("^sg", "wa", E), pile = abs(val[out]), exhausted = ex)
+        to = unname(look[norm_key(nm[got], "")])
+        # An unmatched RECIPIENT was dropped by the !is.na(to) filter below with
+        # nothing to show for it, which is how the ifelse() truncation above
+        # survived a run. Counted here and aborted on at WF1b.
+        no_to <- no_to + sum(is.na(to))
         all_tx[[length(all_tx) + 1L]] <- data.table(
           election = sub("^sg", "wa", E), seat = seat,
           round = as.integer(sub("Distribution ", "", L)),
-          from = from, to = unname(look[nm[got]]), votes = val[got])
+          from = from, to = to, votes = val[got])
       }
     }
 
@@ -191,7 +227,7 @@ for (E in WANT) {
     if (length(tcp) >= 2L) {
       v <- vapply(tcp, function(x) as.numeric(x$Votes_Counted %||% 0), numeric(1))
       n <- vapply(tcp, function(x) x$Ballot_Paper_Name %||% "", character(1))
-      w <- unname(look[n[which.max(v)]])
+      w <- unname(look[norm_key(n[which.max(v)], "")])
       if (!is.na(w)) all_win[[length(all_win) + 1L]] <- data.table(
         election = sub("^sg", "wa", E), seat = seat, winner = w)
     }
@@ -205,6 +241,27 @@ WIN <- rbindlist(all_win)
 CODES <- rbindlist(codes_seen)
 EX <- rbindlist(exh)[, .(pile = sum(pile), exhausted = sum(exhausted)), by = election]
 EX[, rate := exhausted / pile]
+
+# WF1b  THE SKIPS, REPORTED. `unmatched` was collected and never printed, while
+# the comment beside it claimed it was reported at the end -- so a round whose
+# excluded candidate could not be matched to a party vanished from the transfer
+# pool and the WF4 row count still read as complete. That is the exact failure
+# this repo keeps meeting, occurring inside the code written to avoid it.
+#
+# All three counts are ZERO across the eight elections as of 2026-08-21, which
+# is why they abort rather than warn: there is no known-good nonzero value, so
+# any of them appearing means the parse has changed.
+cat(sprintf("\nWF1b skipped: %d unmatched excluded name, %d unmatched recipient, %d rounds\nwith no exclusion, %d with several\n",
+            length(unmatched), no_to, no_excl, multi_excl))
+if (length(unmatched) || no_to || no_excl || multi_excl) {
+  stop("Rounds were dropped from the transfer pool. Unmatched name(s): ",
+       if (length(unmatched)) paste(unique(unmatched), collapse = ", ") else "none",
+       "; unmatched recipients: ", no_to,
+       "; rounds with no negative row: ", no_excl,
+       "; rounds with more than one: ", multi_excl,
+       ". Each silently shrinks the matrix, and all three were zero when this ",
+       "check was written.")
+}
 
 cat("\nWF2  exhaustion, which decides whether these may be pooled at all\n")
 print(EX[, .(election, pile = format(pile, big.mark = ","),

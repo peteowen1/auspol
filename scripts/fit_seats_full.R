@@ -154,6 +154,16 @@ a22 <- 100 * colSums(as.matrix(dcast(fp, seat ~ party, value.var = "votes",
                                      fill = 0)[, -1])) /
        sum(fp$votes)
 cat(sprintf("seats with 2022 first preferences: %d\n", nrow(mat22)))
+# A FLOOR, not just a printed number. The seat count reached the simulation as
+# a cat() line nobody is obliged to read, so a join or a missing first-
+# preference row that dropped a seat would print a different, equally
+# plausible figure and quietly simulate a smaller chamber. 87 is Victoria's
+# 88 districts less Narracan, whose 2022 poll was deferred by a candidate's
+# death.
+if (nrow(mat22) < 87L) {
+  stop("Only ", nrow(mat22), " seats have 2022 first preferences; 87 expected ",
+       "(88 districts less Narracan). A seat has been lost upstream.")
+}
 
 # ---- 3. statewide 2026, from the model rather than assumed -----------------
 cycles <- load_election_cycles(); polls <- load_polls("vic")

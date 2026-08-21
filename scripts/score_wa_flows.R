@@ -45,6 +45,16 @@ read_arm <- function(tag) {
 # most recently a filename guard that changed where runs wrote while the
 # comparison still read the old name. The md5 is the check; the score is not.
 md5_of <- function(tag) tools::md5sum(arm_files(tag))
+# tools::md5sum() returns NA for a file that does not exist, and
+# identical(NA, NA) is TRUE -- so with NEITHER arm run, the byte-identity check
+# below fired and reported "the same run scored twice", which is the wrong
+# diagnosis for "nothing has been run yet" and sends the reader hunting a
+# duplicate-run bug that is not there.
+.want <- c(arm_files("-qld"), arm_files("-qld-wa"))
+if (!all(file.exists(.want))) {
+  stop("Arms have not been run. Missing: ",
+       paste(basename(.want[!file.exists(.want)]), collapse = ", "))
+}
 base_h <- md5_of("-qld"); wa_h <- md5_of("-qld-wa")
 if (identical(unname(base_h), unname(wa_h))) {
   stop("The baseline and Western Australia arms are byte-identical. That is ",

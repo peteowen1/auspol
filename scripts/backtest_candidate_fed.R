@@ -92,7 +92,14 @@ CAL_TAG <- paste0(
   if (SEAT_SD_MULT != 1) sprintf("-m%s", format(SEAT_SD_MULT, nsmall = 1)) else "",
   if (identical(Sys.getenv("AUSPOL_SEAT_SWING_PORT", "0"), "1")) "-port" else "",
   if (N_SIMS != 20000L) sprintf("-n%d", N_SIMS) else "",
-  if (!is.null(PARTY_COR)) "-cor" else "",
+  # "-corraw" and "-cor" are DIFFERENT correlation matrices. Both used to tag
+  # "-cor", so running the raw arm and then the shrunk one wrote the second over
+  # the first and a before/after comparison compared an arm with itself. Fixed
+  # in nsw/sa/vic and missed here, which is the sister-script trap: patch one
+  # copy, grep for the rest.
+  if (!is.null(PARTY_COR))
+    (if (identical(Sys.getenv("AUSPOL_PARTY_COR"), "raw")) "-corraw" else "-cor")
+  else "",
   if (identical(Sys.getenv("AUSPOL_QLD_FLOWS", "0"), "1")) "-qld" else "",
   if (identical(Sys.getenv("AUSPOL_WA_FLOWS", "0"), "1")) "-wa" else "",
   # The control arm of refusal W1 runs with the flows switched ON and a cutoff
