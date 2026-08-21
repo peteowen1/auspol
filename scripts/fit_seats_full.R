@@ -19,7 +19,7 @@ options(auspol.root = normalizePath("."))
 suppressMessages(devtools::load_all(quiet = TRUE))
 suppressMessages(library(data.table))
 
-N_SIMS  <- 20000
+N_SIMS  <- as.integer(Sys.getenv("AUSPOL_N_SIMS", "20000"))
 SEAT_SD <- 3.5      # within-region seat deviation, from seat_swing_spread()
 # NOT adopted: One Nation was given its own, larger seat sd here (5.5, the
 # measured RMSE of its allocation against SA 2026) and it failed its
@@ -181,6 +181,48 @@ cat(sprintf("FP sd mode: %s; statewide sds %.2f-%.2f (trend %.2f-%.2f)
             FP_SD_MODE, min(sd_vec), max(sd_vec), min(trend_sd), max(trend_sd)))
 state_mean <- setNames(sw$mean, sw$party)
 state_sd   <- setNames(sw$sd_proj, sw$party)
+
+# ---- where a party's extra votes come from ----------------------------------
+# South Australia, March 2026, is the only completed election where One Nation
+# moved on the scale Victoria is forecasting, and it says where the votes came
+# from: One Nation +20.24, Liberal -17.12, Labor -2.48, independents -1.74,
+# other-right -1.49, Greens +1.27, other +1.32.
+#
+# So a point of One Nation costs the Coalition 0.85 and Labor only 0.12, and the
+# Greens RISE slightly. That is not what proportional renormalisation does, and
+# the difference matters because One Nation's winnable seats are the ones where
+# it fights the Coalition.
+SA_RESPONSE <- c(LNP = -0.846, ALP = -0.123, IND = -0.086,
+                 OTH_RIGHT = -0.074, GRN = 0.063, OTH = 0.065)
+
+# AUSPOL_FORCE_FP="ONP=30" moves one party's statewide first preference to a
+# stated level and rebalances the rest on that response, so the seat count can
+# be read as a FUNCTION of the primary vote rather than only at today's point.
+# Nothing is forced by default.
+FORCE_FP <- Sys.getenv("AUSPOL_FORCE_FP", "")
+if (nzchar(FORCE_FP)) {
+  for (x in strsplit(strsplit(FORCE_FP, ",", fixed = TRUE)[[1]], "=", fixed = TRUE)) {
+    fp_party <- trimws(x[1]); fp_target <- as.numeric(x[2])
+    if (!fp_party %in% names(state_mean)) {
+      stop("AUSPOL_FORCE_FP names a party the model does not carry: ", fp_party,
+           ". Known: ", paste(names(state_mean), collapse = ", "))
+    }
+    fp_delta <- fp_target - state_mean[[fp_party]]
+    resp <- SA_RESPONSE[intersect(names(SA_RESPONSE), names(state_mean))]
+    resp <- resp[setdiff(names(resp), fp_party)]
+    # Renormalised so the rebalance is exactly -delta and the total stays 100.
+    resp <- resp / sum(abs(resp))
+    state_mean[[fp_party]] <- fp_target
+    for (q in names(resp)) {
+      state_mean[[q]] <- max(0.1, state_mean[[q]] + fp_delta * resp[[q]])
+    }
+    cat(sprintf("FP1  forced %s to %.1f (was %.1f, %+.1f), rebalanced on the SA response\n",
+                fp_party, fp_target, fp_target - fp_delta, fp_delta))
+  }
+  cat(sprintf("FP1  statewide primaries now: %s (sum %.1f)\n",
+              paste(sprintf("%s %.1f", names(state_mean), state_mean),
+                    collapse = ", "), sum(state_mean)))
+}
 
 # ---- 4. project each seat's primaries --------------------------------------
 # Every party swings uniformly off its own 2022 seat share -- EXCEPT One
