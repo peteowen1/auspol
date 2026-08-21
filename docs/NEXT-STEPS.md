@@ -44,6 +44,75 @@ open state, not the narrative of how it got here.
   Nation **total** rather than any individual One Nation seat. See
   [reviews/onp-allocation-checks-2026-08-18.md](reviews/onp-allocation-checks-2026-08-18.md).
 
+## Session of 2026-08-21 (later) — Western Australia, fetched and refused
+
+**Refused on the pre-registered rule**, and this is the first experiment here
+where nothing had to be invented afterwards: the criterion fired at −1.60 SE,
+refusal W2 fired at 36.4% against a 30% bar written in advance, and the
+pre-specified fallback was run despite being expected to lose. It lost harder
+(−2.39 SE). Full write-up:
+[reviews/wa-flows-2026-08-21.md](reviews/wa-flows-2026-08-21.md).
+
+The mechanism is worth carrying: WA runs Liberal **against** National in rural
+seats, so the pair surviving the late rounds is often two Coalition candidates
+and nearly every transfer resolves to LNP by construction — `ALP → LNP` is 68%
+in WA against 23.8% in Victoria. **A difference in the shape of the contest,
+not in voter behaviour.** Queensland passed the same test at +1.55 SE; this is
+the first time the matrix's cross-jurisdiction assumption has been measured and
+found to cost something.
+
+### Kept, and still worth having
+
+Eight WA elections are fetched and validated against the WAEC's own declared
+seat counts (all 20 election-class pairs agree exactly). First preferences and
+winners for all eight, transfers for seven — 2001 is out on exhaustion at
+2.27%, named rather than admitted by moving the threshold. `AUSPOL_WA_FLOWS`
+defaults off, so nothing published changed.
+
+### Awaiting Pete
+
+- **Centre Alliance / Nick Xenophon Team / SA-BEST are classified `OTH`, and
+  Mayo's winner reads as "OTH" in 2016, 2019, 2022 and 2025.** That is a
+  genuine modelling judgement, not a bug — the party is deliberately centrist
+  and fits none of ALP/LNP/GRN/ONP/OTH_RIGHT cleanly. The alternative is `IND`,
+  since Sharkie functions as a community independent. **Left unchanged
+  deliberately**: classification is a modelling decision and this one should be
+  yours, not a default nobody chose.
+- **Should WA's three-cornered SEATS be dropped rather than its LNP-origin
+  rows?** The survivor-set diagnosis suggests it. It was conceived *after*
+  seeing the result, so it needs its own pre-registration before it is run, and
+  it must not be presented as something the WA experiment established.
+
+### Fixed, from three audits of one bug class
+
+The Western Australian bug was "a bare party code reaches no name rule and
+lands in OTH, which is a real class, so nothing fails". Three audits looked for
+the same shape elsewhere:
+
+- **Palmer United Party classified `OTH` while "United Australia Party" — the
+  same movement under the same man — classified `OTH_RIGHT`.** Word order was
+  the only difference. 5.56% of the 2013 federal vote, and Fairfax is a seat
+  whose winner read as "OTH". fed2013's OTH share falls 6.86% → 0.99%. Rise Up
+  Australia fixed with it.
+- **`fit_seats_full.R` could overwrite the published forecast from a diagnostic
+  run while printing PASS.** Its guard listed six flags by hand and missed six,
+  including `AUSPOL_SHRINK`. A non-default run now refuses to write the
+  published filenames at all.
+- **The NSW harness defined a Queensland gate it never called** while still
+  writing under a `-qld` filename, so that arm was byte-identical to its
+  baseline and read as "Queensland makes no difference to NSW".
+- Four copies of the date gate are now one tested function, proven by
+  reproducing the pre-refactor federal run byte-for-byte.
+- `AUSPOL_PARTY_COR=raw` and `=shrunk` both tagged `-cor`, so one arm
+  overwrote the other; `AUSPOL_FLOW_UNC=1` could never complete.
+- Seven constants were missing from `docs/CONSTANTS.md`, two on the published
+  path, one added the same morning the file was stamped "audited".
+
+**A trap worth knowing: `Rscript` re-reads a script WHILE it runs**, so editing
+one mid-run corrupts it in flight. A 25-minute backtest computed all six pairs
+and then died on the final write. Recorded in the shared R gotchas rules file.
+
+
 ## Session of 2026-08-21 — the model was over-confident, and now it is not
 
 **The day's lesson: every decision this repo had made about the seat model
