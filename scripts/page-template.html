@@ -345,20 +345,78 @@ footer{padding:2.5rem 0 0;border-top:1px solid var(--rule);font-size:.8rem;
       polls put Labor near 54 and it won 57.6. Nothing here detects a field-wide
       miss, and the 2018 error was larger than this forecast's entire 95% band is
       wide on one side.</li>
-      <li><strong>One Nation cannot win a seat in this model &mdash; by construction,
-      not by estimate.</strong> Every seat is simulated as a Labor-versus-Coalition
-      contest, because that is what the seat file records, and across every seat of
-      every election in it One Nation has never once been listed as a contender.
-      That is historically accurate: they have won almost no lower-house seats
-      anywhere in Australia. It may not survive a party polling <span class="num">20%</span>.
-      If One Nation makes the final two anywhere, the seat count above is wrong in a
-      way the range around it does not cover.</li>
-      <li><strong>Five seats are set aside.</strong> Three Green-held seats,
-      Prahran and South-West Coast are not Labor-versus-Coalition contests, so a
-      two-party number cannot decide them. They are assumed to stay put.</li>
-      <li><strong>No local factors.</strong> Retirements, candidate quality,
-      redistribution beyond the published margins, and campaign events are all
-      absent.</li>
+      <li><strong>The model cannot elect an independent who did not stand last
+      time.</strong> Every party's vote in a seat starts from its own vote there at
+      the last election and moves with the statewide swing, so a candidate with no
+      previous vote cannot acquire one. Measured, not suspected: backtested against
+      New South Wales 2023 it gave the eventual winner under
+      <span class="num">0.3%</span> in five seats an independent won, while being
+      64&ndash;100% confident in somebody else. Any seat where a serious independent
+      is running who did not run in 2022 is one this forecast will get wrong
+      confidently rather than uncertainly.</li>
+      <li><strong>One Nation is assumed to contest every seat.</strong> They are
+      polling near <span class="num">20%</span> and stood in 98&ndash;99% of seats at
+      the last two federal elections, so it is a reasonable assumption &mdash; but it
+      is an assumption. They contested <span class="num">4</span> of 88 Victorian
+      seats in 2022 and <strong>none at all</strong> in 2014 or 2018. If they stand
+      in far fewer seats than expected, their seat range here is too high.</li>
+      <li><strong>Their seat count is a forecast of how many seats they
+      LEAD.</strong> South Australia voted in March 2026 with One Nation on
+      <span class="num">22.9%</span> &mdash; the only completed election where
+      they contested at this level &mdash; and it settled something that had been
+      argued rather than measured. Of 47 districts,
+      <span class="num">45</span> were won by whoever led on first preferences.
+      One Nation led in <span class="num">4</span> and won
+      <strong>all four</strong> &mdash; though four seats is four seats, and that
+      is consistent with a true conversion rate anywhere from
+      <span class="num">40%</span> upwards. All four were comfortable leads,
+      averaging <span class="num">33.8%</span> of the vote, which says little
+      about the narrow leads where preferences actually decide the seat.
+      <br><br>
+      What South Australia does pin down, across all 47 districts rather than
+      four, is how <em>concentrated</em> the vote was. In South Australia they led in
+      <span class="num">8.5%</span> of districts on 22.9% of the vote. On the
+      same statewide share this model has them leading in about
+      <span class="num">15%</span> of Victorian seats &mdash; higher, and for a
+      reason that is at least sensible: leading depends on who else is in the
+      seat, and South Australian Labor polled 37.5% where Labor here is forecast
+      near 25%. <strong>Whether twice is the right amount is not
+      established</strong>, and it is the weakest link between their vote and
+      their seats.
+      <br><br>
+      So it is worth saying what that uncertainty is worth. Running the whole
+      model across the full defensible range of concentration &mdash; from the
+      least the federal record supports to the most &mdash; moves One
+      Nation&rsquo;s median from <span class="num">4</span> seats to
+      <span class="num">13</span>, and Labor&rsquo;s from
+      <span class="num">39</span> to <span class="num">35</span>. The figure
+      above sits in the middle of that. <strong>It is the single widest piece of
+      unmeasured uncertainty in this forecast</strong>, and it is not inside the
+      ranges shown.</li>
+      <li><strong>Their preference flow is estimated, and then treated as
+      certain.</strong> Seats here are decided by transfer rates measured from
+      real counts &mdash; <span class="num">746</span> exclusions across federal,
+      New South Wales, Victorian and South Australian elections &mdash; and those
+      rates depend on who is still standing when the transfer happens. In South
+      Australia in 2026, One Nation preferences ran
+      <span class="num">31%</span> to Labor when Labor and the Liberals were the
+      last two, and <span class="num">18%</span> when the Greens were also still
+      in. Across ten elections that figure has ranged from
+      <span class="num">20%</span> to <span class="num">50%</span>.
+      <strong>Nothing in the range above reflects that spread</strong>: the rates
+      go in as fixed numbers, and no past Victorian election can measure them,
+      because One Nation transferred almost no votes in any of them.</li>
+      <li><strong>Few local factors, and fewer than an earlier version of this
+      page claimed.</strong> Each seat starts from its own past first
+      preferences and moves with the statewide swing; One Nation's vote is
+      spread across seats in the order of its federal vote in those same booths,
+      which on South Australia 2026 ranked its four winning seats
+      <span class="num">6th</span>, <span class="num">15th</span>,
+      <span class="num">1st</span> and <span class="num">10th</span> of 47.
+      Beyond that there is nothing local. How a seat swung at the last federal
+      election is <em>not</em> used: it was tested three times against this
+      model and never cleared the bar to be adopted. Candidate quality,
+      retirements and campaign events are not used either.</li>
       <li id="onpcav"><strong>One Nation's preferences are the biggest
       assumption here.</strong></li>
       <li><strong>Upper house not modelled at all.</strong></li>

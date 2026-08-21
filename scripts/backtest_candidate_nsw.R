@@ -24,6 +24,67 @@ options(auspol.root = normalizePath("."))
 suppressMessages(devtools::load_all(quiet = TRUE))
 suppressMessages(library(data.table))
 
+# ---- no other jurisdiction's flows reach New South Wales --------------------
+# There WAS a Queensland gate here. It was defined and never called, while the
+# harness still wrote its output under a "-qld" filename -- so an arm run with
+# Queensland on came out byte-identical to the baseline and would have read as
+# "Queensland makes no difference to New South Wales" rather than "Queensland
+# was never added". That is the same shape as the four identical-output
+# incidents CLAUDE.md records, so both the dead function and the misleading
+# suffix are gone.
+#
+# Not calling it was CORRECT, and the reason is restated at the flow matrix
+# below: NSW is optional preferential and roughly 12% of its ballots exhaust,
+# while Queensland's and Western Australia's are full preferential and exhaust
+# almost nothing. Pooling either into NSW estimates a rate describing neither,
+# measured at 0.194 of log score worse. Refusal Q2 of prereg-qld-flows.md
+# covered only the reverse direction; prereg-wa-flows.md is amended to say so.
+
+# ARM B of docs/plans/prereg-calibration.md. A multiplier on the per-seat
+# spread, so the simulation carries more genuine seat-level uncertainty. Default
+# 1 reproduces the published behaviour exactly; the run prints what it applied,
+# because CLAUDE.md records an experiment whose edit never ran and whose
+# byte-identical output read as "this input does not matter".
+SEAT_SD_MULT <- as.numeric(Sys.getenv("AUSPOL_SEAT_SD_MULT", "1"))
+if (SEAT_SD_MULT != 1) cat(sprintf("CAL  seat_sd multiplier %.2f applied
+", SEAT_SD_MULT))
+
+# OUTPUT FILENAME CARRIES THE CONFIG, and it must. These harnesses used to write
+# to one fixed name, so running an experimental arm SILENTLY OVERWROTE the
+# baseline it was meant to be compared against. That happened on 2026-08-21: a
+# seat_sd sweep overwrote backtest-fed.csv and backtest-vic.csv, and the
+# resulting comparison showed a difference of EXACTLY +0.0000 for all six
+# federal elections because both arms were the same file. It read as "this
+# input does not matter", which is the failure mode CLAUDE.md already records
+# for an experiment that never ran.
+#
+# A default run still writes the plain name, so nothing downstream changes.
+
+# ARM B/C of docs/plans/prereg-statewide-covariance.md. AUSPOL_PARTY_COR=shrunk
+# correlates the parties' statewide deviations instead of drawing them
+# independently. Empty (the default) reproduces the previous behaviour exactly.
+PARTY_COR <- NULL
+if (nzchar(Sys.getenv("AUSPOL_PARTY_COR", ""))) {
+  .co <- readRDS("output/statewide-cov.rds")
+  PARTY_COR <- if (identical(Sys.getenv("AUSPOL_PARTY_COR"), "raw")) .co$cor else .co$cor_shrunk
+  cat(sprintf("COV  party correlation ON (%s): cor(ONP,LNP) = %+.2f
+",
+              Sys.getenv("AUSPOL_PARTY_COR"), PARTY_COR["ONP", "LNP"]))
+}
+
+CAL_TAG <- paste0(
+  if (SEAT_SD_MULT != 1) sprintf("-m%s", format(SEAT_SD_MULT, nsmall = 1)) else "",
+  if (identical(Sys.getenv("AUSPOL_SEAT_SWING_PORT", "0"), "1")) "-port" else "",
+  # "-corraw" and "-cor" are DIFFERENT correlation matrices. Both used to tag
+  # "-cor", so running the raw arm and then the shrunk one wrote the second
+  # over the first and a before/after comparison compared an arm with itself.
+  if (!is.null(PARTY_COR))
+    (if (identical(Sys.getenv("AUSPOL_PARTY_COR"), "raw")) "-corraw" else "-cor")
+  else "",
+  # No -qld or -wa suffix: neither is admissible here, so an arm carrying
+  # one would be a filename promising a difference the run cannot make.
+  "")
+
 N_SIMS <- 20000
 SEED   <- 42
 SMOOTH <- 0.15
@@ -46,6 +107,16 @@ tx19 <- tx[election == "nsw2019"]
 stopifnot(nrow(tx19) > 0, nrow(tx19) < nrow(tx))
 cat(sprintf("\nBT0  flow matrix from %d transfers, elections: %s\n",
             nrow(tx19), paste(unique(tx19$election), collapse = ", ")))
+# NEW SOUTH WALES IS OPTIONAL PREFERENTIAL AND MUST NOT TAKE QUEENSLAND'S
+# TRANSFERS. About 12% of NSW ballots exhaust; Queensland's are compulsory
+# preferential and effectively none do, so pooling them estimates a rate that
+# describes neither. CLAUDE.md states the rule and refusal Q2 of
+# docs/plans/prereg-qld-flows.md covered only the reverse case -- Queensland's
+# own pre-2016 optional-preferential elections.
+#
+# Measured before it was noticed: adding Queensland here made NSW 2023 WORSE by
+# 0.194 of log score, the largest single degradation in the run. That is not a
+# finding about Queensland, it is this mistake showing up as data.
 fm <- build_flow_matrix(tx19, min_n = 3L)
 
 seats <- as.data.table(load_seats(2023, "nsw"))
@@ -158,8 +229,8 @@ cat(sprintf("\nBT3  seat spread: within %.2f, between %.2f\n", sp$sd_within, sp$
 
 set.seed(SEED)
 psd <- setNames(rep(1.5, length(parties)), parties)
-sim <- simulate_seat_contests(shares, fm, party_sd = psd, seat_sd = sp$sd_within,
-                              n_sims = N_SIMS, smooth = SMOOTH, seed = SEED)
+sim <- simulate_seat_contests(shares, fm, party_sd = psd, seat_sd = sp$sd_within * SEAT_SD_MULT,
+                              n_sims = N_SIMS, smooth = SMOOTH, seed = SEED, party_cor = PARTY_COR)
 wp <- as.data.table(sim$win_prob)
 
 sc <- merge(data.table(seat = names(truth), actual = unname(truth))[seat %in% keep],
@@ -235,5 +306,6 @@ cat(sprintf("BT8  independents won %d of %d scored seats; we gave them a mean %.
             sum(res$actual == "IND"), nrow(res),
             mean(res[actual == "IND", p])))
 
-fwrite(res[order(seat)], file.path("output", "backtest-nsw2023.csv"))
+fwrite(res[order(seat)], file.path("output", sprintf("backtest-nsw2023%s.csv", CAL_TAG)))
+fwrite(data.table(pair = "nsw2023", as.data.table(sim$totals)), file.path("output", sprintf("backtest-nsw2023-totals%s.csv", CAL_TAG)))
 cat("\nWrote output/backtest-nsw2023.csv\n")

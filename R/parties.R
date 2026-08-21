@@ -32,9 +32,16 @@ classify_party <- function(name, code = NULL) {
 
   # Codes first where they are unambiguous.
   set(cd %in% c("ALP", "ALP1"), "ALP")
-  set(cd %in% c("LP", "LNP", "NP", "LNQ", "NAT", "LIB"), "LNP")
+  set(cd %in% c("LP", "LNP", "NP", "LNQ", "NAT", "NATS", "LIB"), "LNP")
   set(cd %in% c("GRN", "GVIC", "TG"), "GRN")
   set(cd %in% c("ON", "PHON", "ONP"), "ONP")
+  # Western Australia publishes a CODE and no party name at all, so these two
+  # arrive as the literal strings "IND" and "SFF". Both previously fell through
+  # every name rule to OTH: 27 independents and the Shooters in 26 districts,
+  # silently. A code is only usable here where it means the same thing in every
+  # jurisdiction, which is why "CLP" above is deliberately excluded.
+  set(cd == "IND", "IND")
+  set(cd == "SFF", "OTH_RIGHT")
 
   # The NT Coalition party is spelled three ways by the AEC across seven
   # elections -- "Country Liberals (NT)", "NT CLP" and "C.L.P." -- and only the
@@ -51,16 +58,29 @@ classify_party <- function(name, code = NULL) {
   set(n %in% c("nt clp", "c.l.p.", "clp"), "LNP")
 
   # "Labor DLP" is a different party from Labor and belongs on the right.
-  set(grepl("democratic labour|labour dlp|\bdlp\b", n), "OTH_RIGHT")
+  # Two backslashes and not one: "\b" in an R STRING is the backspace
+  # character, so this alternative matched a control code and never fired.
+  set(grepl("democratic labour|labour dlp|\\bdlp\\b", n), "OTH_RIGHT")
   set(grepl("labor|labour", n), "ALP")
+  # "Liberals For Climate" is a micro-party that ran against the Liberals in
+  # two WA seats in 2021, and the "liberal" rule below would file it as LNP.
+  # Same shape as the Liberal Democrats line that follows.
+  set(grepl("liberals for climate", n), "OTH")
   # Liberal Democrats are not the Liberal Party; checked before "liberal".
   set(grepl("liberal democrat|libertarian", n), "OTH_RIGHT")
   set(grepl("liberal|national", n), "LNP")
   set(grepl("green", n), "GRN")
   set(grepl("one nation|hanson", n), "ONP")
+  # "Palmer United Party" and "United Australia Party" are the same movement
+  # under the same man, and only the second matched. Palmer United took 5.56%
+  # of the 2013 federal vote and WON Fairfax, so one of the largest minor
+  # parties in the corpus sat in OTH with a seat beside it. Word order was the
+  # entire difference. "Rise Up Australia" is the same shape: an explicitly
+  # Christian-nationalist party whose name contains none of the tokens below.
+  set(grepl("palmer united|rise up australia", n), "OTH_RIGHT")
   set(grepl(paste0("family|freedom|christian|conservative|liberty|shooters|",
                    "fishers|farmers|united australia|katter|country|citizens|",
-                   "trumpet|australia first"), n), "OTH_RIGHT")
+                   "trumpet|australia first|call to australia"), n), "OTH_RIGHT")
   set(!nzchar(n) | grepl("independent", n), "IND")
   out[is.na(out)] <- "OTH"
   out

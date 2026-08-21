@@ -15,7 +15,64 @@ options(auspol.root = normalizePath("."))
 suppressMessages(devtools::load_all(quiet = TRUE))
 suppressMessages(library(data.table))
 
-N_SIMS <- 20000; SEED <- 42; SMOOTH <- 0.15; eps <- 1e-6
+# ---- other jurisdictions' flows, date-filtered ------------------------------
+# Against docs/plans/prereg-qld-flows.md and docs/plans/prereg-wa-flows.md.
+# Queensland 2020 and 2024 add 750 exclusion events; Western Australia's seven
+# admissible elections add 1,634 and take One Nation's from 198 to 359.
+#
+# Either may only be used to predict an election held AFTER it. That rule lives
+# in pool_configured_flows() rather than in a copy per harness -- there were
+# four byte-identical copies, one of which had rotted into a gate that was
+# defined and never called, and it is the one rule here that must never be
+# wrong. Both sources default OFF.
+
+# ARM B of docs/plans/prereg-calibration.md. A multiplier on the per-seat
+# spread. Default 1 reproduces the published behaviour exactly.
+SEAT_SD_MULT <- as.numeric(Sys.getenv("AUSPOL_SEAT_SD_MULT", "1"))
+if (SEAT_SD_MULT != 1) cat(sprintf("CAL  seat_sd multiplier %.2f applied
+", SEAT_SD_MULT))
+
+N_SIMS <- as.integer(Sys.getenv("AUSPOL_N_SIMS", "20000"))
+
+
+# ARM B/C of docs/plans/prereg-statewide-covariance.md. AUSPOL_PARTY_COR=shrunk
+# correlates the parties' statewide deviations instead of drawing them
+# independently. Empty (the default) reproduces the previous behaviour exactly.
+PARTY_COR <- NULL
+if (nzchar(Sys.getenv("AUSPOL_PARTY_COR", ""))) {
+  .co <- readRDS("output/statewide-cov.rds")
+  PARTY_COR <- if (identical(Sys.getenv("AUSPOL_PARTY_COR"), "raw")) .co$cor else .co$cor_shrunk
+  cat(sprintf("COV  party correlation ON (%s): cor(ONP,LNP) = %+.2f
+",
+              Sys.getenv("AUSPOL_PARTY_COR"), PARTY_COR["ONP", "LNP"]))
+}
+
+CAL_TAG <- paste0(
+  if (SEAT_SD_MULT != 1) sprintf("-m%s", format(SEAT_SD_MULT, nsmall = 1)) else "",
+  if (identical(Sys.getenv("AUSPOL_SEAT_SWING_PORT", "0"), "1")) "-port" else "",
+  if (N_SIMS != 20000L) sprintf("-n%d", N_SIMS) else "",
+  # "-corraw" and "-cor" are DIFFERENT correlation matrices. Both used to tag
+  # "-cor", so running the raw arm and then the shrunk one wrote the second
+  # over the first and a before/after comparison compared an arm with itself.
+  if (!is.null(PARTY_COR))
+    (if (identical(Sys.getenv("AUSPOL_PARTY_COR"), "raw")) "-corraw" else "-cor")
+  else "",
+  if (identical(Sys.getenv("AUSPOL_QLD_FLOWS", "0"), "1")) "-qld" else "",
+  if (identical(Sys.getenv("AUSPOL_WA_FLOWS", "0"), "1")) "-wa" else "",
+  # The control arm of refusal W1 runs with the flows switched ON and a cutoff
+  # that admits nothing. Without this it would write to the same "-wa" name as
+  # the real arm and overwrite it -- the baseline-clobbering that has already
+  # produced four byte-identical comparisons here.
+  if (nzchar(Sys.getenv("AUSPOL_WA_CUTOFF", "")) ||
+      nzchar(Sys.getenv("AUSPOL_QLD_CUTOFF", ""))) "-cut" else "",
+  if (identical(Sys.getenv("AUSPOL_WA_DROP_LNP", "0"), "1")) "-nolnp" else "",
+  # AUSPOL_FLOW_UNC swaps the simulation for a 40-replicate ensemble that
+  # perturbs every flow, which is as large a change as any flag here, and it
+  # reached no filename at all -- so the ensemble arm overwrote the very
+  # baseline it exists to be compared against.
+  if (identical(Sys.getenv("AUSPOL_FLOW_UNC", "0"), "1")) "-unc" else "")
+
+SEED <- 42; SMOOTH <- 0.15; eps <- 1e-6
 P <- election_data_path()
 
 PAIRS <- list(
@@ -27,7 +84,7 @@ share_of <- function(f) {
   d[, .(votes = sum(votes)), by = .(seat, party)]
 }
 
-out_all <- list()
+out_all <- list(); tot_all <- list()
 for (K in PAIRS) {
   fa <- share_of(sprintf("vec-%d-vic-firstprefs.csv", K$from))
   fb <- share_of(sprintf("vec-%d-vic-firstprefs.csv", K$to))
@@ -36,6 +93,7 @@ for (K in PAIRS) {
   # LEAKAGE GUARD, asserted on the source rather than on a filtered copy: a
   # table filtered to one election trivially contains only that election.
   stopifnot(all(tx$election == sprintf("vic%d", K$from)))
+  tx <- pool_configured_flows(tx, if (K$to == 2018L) "2018-11-24" else "2022-11-26")
   fm <- build_flow_matrix(tx, min_n = 3L)
 
   wf <- file.path(P, sprintf("vec-%d-vic-winners.csv", K$to))
@@ -108,6 +166,47 @@ for (K in PAIRS) {
   shares <- shares[keep, , drop = FALSE]
   truth <- setNames(win$winner, win$seat)[keep]
 
+  # ---- seat-swing port, ported from backtest_candidate_nsw.R ---------------
+  # Against docs/plans/prereg-seat-swing-port-round2.md. The block is copied
+  # unchanged in substance (refusal P4) with ONE mechanical rename: the NSW
+  # version calls the seat file `sa`, and this script already uses `sa` for the
+  # statewide 'from' shares at line 99 and reads it again at line 136. Pasting
+  # the block verbatim would rebind `sa` to a data.table and silently break that
+  # later read -- the shadowing hazard CLAUDE.md records five times. It is
+  # `sf_to` here.
+  #
+  # NOT EVERY CYCLE CAN BE TESTED. seat_swing_adjustment() needs the seat file
+  # for the election being predicted, and 2018vic.txt DOES NOT EXIST -- so the
+  # 2014->2018 cycle gets no adjustment and is reported as untestable rather
+  # than silently scored as if the port were off. Only 2018->2022 contributes.
+  PORT <- identical(Sys.getenv("AUSPOL_SEAT_SWING_PORT", "0"), "1")
+  if (PORT) {
+    sf_to <- tryCatch(as.data.table(load_seats(K$to, "vic")),
+                      error = function(e) NULL)
+    if (is.null(sf_to)) {
+      cat(sprintf("BV3c seat-swing port REQUESTED but %dvic.txt does not exist; this cycle is NOT testable and runs unported\n",
+                  K$to))
+    } else {
+      idx <- match(rownames(shares), sf_to$seat)
+      adj <- rep(0, nrow(shares))
+      adj[!is.na(idx)] <- seat_swing_adjustment(sf_to[idx[!is.na(idx)]])
+      if (anyNA(idx)) {
+        cat(sprintf("BV3c %d seats have no match in the seat file and get no adjustment: %s\n",
+                    sum(is.na(idx)), paste(rownames(shares)[is.na(idx)], collapse = ", ")))
+      }
+      # Re-centre: seat_swing_adjustment() centres over the seats it was given,
+      # and zeroing the unmatched ones reintroduces a mean. An uncentred
+      # adjustment would shift the whole forecast.
+      adj <- adj - mean(adj)
+      stopifnot(all(is.finite(adj)))
+      cat(sprintf("BV3c seat-swing port ON: adjustment mean %+.3f sd %.3f range %+.2f..%+.2f\n",
+                  mean(adj), stats::sd(adj), min(adj), max(adj)))
+      shares[, "ALP"] <- pmax(0, shares[, "ALP"] + adj)
+      shares[, "LNP"] <- pmax(0, shares[, "LNP"] - adj)
+      shares <- 100 * shares / rowSums(shares)
+    }
+  }
+
   cat(sprintf("\nBV1  Victoria %d -> %d: %d districts scored, truth from %s\n",
               K$from, K$to, length(keep), truth_src))
   dropped <- setdiff(win$seat, rownames(mat))
@@ -136,10 +235,48 @@ for (K in PAIRS) {
                           unname(sb[["ALP"]] - sa[["ALP"]]))
   psd <- setNames(rep(1.5, length(parties)), parties)
   set.seed(SEED)
-  sim <- simulate_seat_contests(shares, fm, party_sd = psd,
-                                seat_sd = sp$sd_within, n_sims = N_SIMS,
-                                smooth = SMOOTH, seed = SEED)
-  wp <- as.data.table(sim$win_prob)
+  # FLOW UNCERTAINTY, arm B. Against docs/plans/prereg-flow-uncertainty-v2.md.
+  # Each replicate perturbs every source party's flow by an offset drawn from
+  # N(0, sd) with the sd MEASURED from between-election variation across 10
+  # full-preferential elections -- not fitted, not tuned. One Nation's is 10.38
+  # points; the Greens' is 2.00, which is why treating the Greens flow as a
+  # constant costs almost nothing and treating One Nation's as one does not.
+  FLOW_UNC <- identical(Sys.getenv("AUSPOL_FLOW_UNC", "0"), "1")
+  if (FLOW_UNC) {
+    sds <- readRDS("output/flow-uncertainty-sd.rds")
+    R_ENS <- 40L; per <- N_SIMS %/% R_ENS
+    set.seed(SEED)
+    acc <- NULL
+    for (r in seq_len(R_ENS)) {
+      tx2 <- copy(tx)
+      off <- stats::rnorm(length(sds), 0, sds); names(off) <- names(sds)
+      # The offset moves votes between ALP and LNP within each exclusion,
+      # leaving the total transferred unchanged -- a flow is a split, not a
+      # size.
+      for (fp in names(off)) {
+        idx <- tx2$from == fp & tx2$to %in% c("ALP", "LNP")
+        if (!any(idx)) next
+        sh <- off[[fp]] / 100
+        tx2[idx & to == "ALP", votes := pmax(0, votes * (1 + sh))]
+        tx2[idx & to == "LNP", votes := pmax(0, votes * (1 - sh))]
+      }
+      fmr <- build_flow_matrix(tx2, min_n = 3L)
+      s1 <- simulate_seat_contests(shares, fmr, party_sd = psd,
+                                   seat_sd = sp$sd_within * SEAT_SD_MULT, n_sims = per,
+                                   smooth = SMOOTH, seed = SEED + r)
+      w1 <- as.data.table(s1$win_prob)[, .(seat, party, n = prob * per)]
+      acc <- if (is.null(acc)) w1 else rbind(acc, w1)
+    }
+    wp <- acc[, .(prob = sum(n) / (R_ENS * per)), by = .(seat, party)]
+    cat("BV1b flow uncertainty ON
+")
+  } else {
+    set.seed(SEED)
+    sim <- simulate_seat_contests(shares, fm, party_sd = psd,
+                                  seat_sd = sp$sd_within * SEAT_SD_MULT, n_sims = N_SIMS,
+                                  smooth = SMOOTH, seed = SEED, party_cor = PARTY_COR)
+    wp <- as.data.table(sim$win_prob)
+  }
 
   pa <- merge(data.table(seat = keep, actual = unname(truth)),
               wp[, .(seat, party, prob)],
@@ -164,11 +301,25 @@ for (K in PAIRS) {
   print(head(res[pred != actual][order(prob),
                                  .(seat, we_said = pred, our_p = round(pred_p, 3),
                                    actual, gave_winner = round(prob, 3))], 8))
+  # `sim` exists only on the non-FLOW_UNC branch: the ensemble path builds win
+  # probabilities by accumulating counts and never produces a totals matrix. It
+  # was referenced here unconditionally, so AUSPOL_FLOW_UNC=1 died with
+  # "object 'sim' not found" partway through the first pair -- meaning the
+  # flow-uncertainty comparison this script describes could not have been
+  # produced by running it. Skipped and SAID, rather than skipped silently.
+  if (FLOW_UNC) {
+    cat("BV3b no seat-totals matrix under flow uncertainty; totals not written.
+")
+  } else {
+    tot_all[[length(tot_all) + 1L]] <- data.table::data.table(
+      pair = sprintf("vic%d", K$to), as.data.table(sim$totals))
+  }
   out_all[[length(out_all) + 1L]] <- res
 }
 
 R <- rbindlist(out_all)
-fwrite(R, file.path("output", "backtest-vic.csv"))
+fwrite(R, file.path("output", sprintf("backtest-vic%s.csv", CAL_TAG)))
+fwrite(rbindlist(tot_all, fill = TRUE), file.path("output", sprintf("backtest-vic-totals%s.csv", CAL_TAG)))
 cat(sprintf("\nBV4  pooled over %d district-elections: accuracy %.1f%%, Brier %.4f\n",
             nrow(R), 100 * mean(R$pred == R$actual), mean((1 - R$prob)^2)))
 cat("BV4  for comparison, NSW 2023 gave 80.7% and 0.1468\n")

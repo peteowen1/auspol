@@ -59,3 +59,54 @@ test_that("CLP means the opposite thing in New South Wales", {
   # above matches on the NAME and never on the code.
   expect_equal(classify_party("Country Labor Party", "CLP"), "ALP")
 })
+
+test_that("codes that no name rule can reach are classified", {
+  # Western Australia publishes a party CODE and no name, so these arrive as
+  # bare abbreviations. Every one below previously fell through to OTH: in
+  # 2025 alone that was 27 independents, the Shooters in 26 districts and the
+  # Nationals' six won seats.
+  expect_equal(classify_party("IND", "IND"), "IND")
+  expect_equal(classify_party("SFF", "SFF"), "OTH_RIGHT")
+  expect_equal(classify_party("NATS", "NATS"), "LNP")
+  expect_equal(classify_party("", "NATS"), "LNP")
+  # And the full names the same commission publishes must agree with them.
+  expect_equal(classify_party("The Nationals WA"), "LNP")
+  expect_equal(classify_party("WA Labor"), "ALP")
+  expect_equal(classify_party("The Greens (WA)"), "GRN")
+  expect_equal(classify_party("Australian Christians"), "OTH_RIGHT")
+  expect_equal(classify_party("Legalise Cannabis Party WA"), "OTH")
+})
+
+test_that("a bare DLP is not read as Labor", {
+  # The rule for this spelled the word boundary "\b", which in an R string is
+  # the BACKSPACE character rather than a regex escape, so the alternative
+  # matched a control code and could never fire.
+  expect_equal(classify_party("DLP"), "OTH_RIGHT")
+  expect_equal(classify_party("Labour DLP"), "OTH_RIGHT")
+  expect_equal(classify_party("Democratic Labour Party"), "OTH_RIGHT")
+  # A word CONTAINING dlp is not the DLP; that is what the boundary is for.
+  expect_equal(classify_party("Australian Labor Party"), "ALP")
+})
+
+test_that("a party is not made Coalition by the word liberal in its name", {
+  # Liberals For Climate ran against the Liberals in two WA seats in 2021.
+  expect_equal(classify_party("Liberals For Climate"), "OTH")
+  expect_equal(classify_party("Liberal Party"), "LNP")
+  expect_equal(classify_party("Liberal Democrats"), "OTH_RIGHT")
+  # Call to Australia is Fred Nile's party, which became the Christian
+  # Democrats; nothing in its name said so, so it read as OTH.
+  expect_equal(classify_party("Call To Australia (WA)"), "OTH_RIGHT")
+})
+
+test_that("a minor party is not filed as OTH because of word order", {
+  # These two are the same movement under the same man. Only the second used to
+  # match, and Palmer United took 5.56% of the 2013 federal vote and won
+  # Fairfax -- a seat whose winner therefore read as "OTH".
+  expect_equal(classify_party("Palmer United Party"), "OTH_RIGHT")
+  expect_equal(classify_party("United Australia Party"), "OTH_RIGHT")
+  expect_equal(classify_party("Clive Palmer's United Australia Party"), "OTH_RIGHT")
+  expect_equal(classify_party("Rise Up Australia Party"), "OTH_RIGHT")
+  # Not a licence to catch anything with "united" or "australia" in it.
+  expect_equal(classify_party("Australian Democrats"), "OTH")
+  expect_equal(classify_party("Sustainable Australia Party"), "OTH")
+})

@@ -1,3 +1,74 @@
+# auspol 0.4.18
+
+**Western Australia is fetched, measured against a pre-registration, and
+REFUSED.** Eight Legislative Assembly elections now sit in `external/elections/`,
+validated against the WAEC's own declared seat counts -- all 20 election-class
+pairs agree exactly. Their transfers were then measured into the flow matrix and
+turned down: **-1.57 SE** across nine elections, with the pre-registered
+fallback worse still at **-2.23 SE**, and refusal W2 firing at 36.4% against a
+30% bar written in advance. `AUSPOL_WA_FLOWS` defaults off, so the published
+forecast is unchanged.
+
+The reason is worth more than the data. Western Australia runs Liberal *against*
+National in rural seats, so the pair surviving the late rounds is frequently two
+Coalition candidates and almost every transfer resolves to LNP by construction:
+`ALP -> LNP` is 68.0% there against Victoria's 23.8%. **A difference in the
+shape of the contest, not in voter behaviour** -- which is precisely what
+pooling flows across jurisdictions assumes away. Queensland passed the same test
+at +1.55 SE, so this is the first time that assumption has been measured and
+found to cost something.
+
+The first pass ran on a transfer pool missing 42 exclusion rounds and on federal
+data predating the classification fix below; all twelve arms were re-run on one
+vintage and the conclusion held. Both sets of numbers are recorded in
+`docs/reviews/wa-flows-2026-08-21.md` rather than tidied away.
+
+**A bare party code no longer means OTH.** The WAEC publishes a code and no
+party name, and `classify_party()` works mostly on names, so bare codes reached
+no rule and landed in OTH -- a real class, so nothing failed. The first run
+reported "OTH won 6 seats" for what were the Nationals. Codes are now expanded
+to names before classification, an unknown code aborts, and three checks make a
+repeat visible: names must be the commission's own, our winners must reproduce
+its declared seat counts, and the code-to-class table prints every run.
+
+**`Palmer United Party` was classified OTH while `United Australia Party` -- the
+same movement under the same man -- was classified OTH_RIGHT.** Word order was
+the only difference. That is 5.56% of the 2013 federal vote, and Fairfax is a
+seat whose winner read as "OTH". Fixed with Rise Up Australia; fed2013's OTH
+share falls **6.86% to 0.99%**. Three further classifier gaps went with it:
+codes `IND`/`SFF`/`NATS` reached no name rule, "Liberals For Climate" matched
+the `liberal` rule and became Coalition, and the DLP word boundary was written
+``, which in an R string is the BACKSPACE character -- an alternative that
+could never fire.
+
+**A diagnostic run can no longer overwrite the published forecast.**
+`fit_seats_full.R`'s publish guard listed six environment flags by hand and
+missed six, so `AUSPOL_SHRINK=0` wrote over `output/seat-probs-vic-2026.csv`
+with a materially different, over-confident forecast while the check printed
+PASS. `AUSPOL_PARTY_COR=off` was worse: the only line that would have revealed
+it sits inside a branch skipped exactly when the flag is off. The list is now
+derived from a table, the run prints which flags differ, and a non-default run
+**refuses to write the published filenames** rather than reporting after the
+fact.
+
+**One date filter, tested, instead of four copies.** The rule that a backtest
+may only use data that existed before the election it predicts lived in four
+byte-identical copies across the harnesses; one had rotted into a gate that was
+defined and never called while still writing under a `-qld` filename, so that
+arm was byte-identical to its baseline and would have read as "Queensland makes
+no difference to New South Wales". Now `pool_external_flows()` and
+`pool_configured_flows()` in `R/external_flows.R`, with tests, proven by
+reproducing the pre-refactor federal run byte-for-byte.
+
+Also fixed: `AUSPOL_PARTY_COR=raw` and `=shrunk` both tagged `-cor` so one arm
+overwrote the other; `AUSPOL_FLOW_UNC` reached no filename at all and could
+never complete; the WA fetcher dropped 42 exclusion rounds behind a collector
+variable whose comment claimed it was reported; `score_wa_flows.R` reported
+"the same run scored twice" when neither arm existed; and the seat count
+reaching the simulation is now a floor rather than a printed line. Seven
+constants missing from `docs/CONSTANTS.md` are inventoried, two of them on the
+published path.
+
 # auspol 0.4.17
 
 **The published seat forecast is now the candidate-level model.** The two-party

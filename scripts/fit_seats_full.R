@@ -19,7 +19,7 @@ options(auspol.root = normalizePath("."))
 suppressMessages(devtools::load_all(quiet = TRUE))
 suppressMessages(library(data.table))
 
-N_SIMS  <- 20000
+N_SIMS  <- as.integer(Sys.getenv("AUSPOL_N_SIMS", "20000"))
 SEAT_SD <- 3.5      # within-region seat deviation, from seat_swing_spread()
 # NOT adopted: One Nation was given its own, larger seat sd here (5.5, the
 # measured RMSE of its allocation against SA 2026) and it failed its
@@ -93,8 +93,53 @@ if (!all(file.exists(need))) {
 # Victoria is the right jurisdiction and supplies Greens, independent and
 # minor-right behaviour from 452 exclusions. It cannot speak to One Nation --
 # 5 of 88 seats contested in 2022 -- which is the only reason SA is here.
+# QUEENSLAND, ADDED 2026-08-21. Against docs/plans/prereg-qld-flows.md: the
+# matrix was 746 exclusions with just 18 One Nation exclusions behind every One
+# Nation preference rate the forecast publishes. Queensland 2020 and 2024 make
+# that 1,496 and 198.
+#
+# Both precede the November 2026 Victorian election, so neither leaks, and both
+# are Compulsory Preferential -- Queensland's pre-2016 optional-preferential
+# elections are excluded by the fetcher and must stay excluded, because
+# exhausting ballots make those rates mean something else.
+#
+# Measured at +1.55 SE across the four backtest elections it can reach, with
+# every election predating it byte-identical.
+#
+# ON, BY PETE'S DECISION, 2026-08-21. Refusal Q4 said to stop and report if any
+# party's Victoria 2026 median moved by more than 2 seats. It did:
+#
+#   ALP 40 -> 37   ONP 5 -> 9   LNP 37 -> 36   GRN 4 -> 5
+#
+# So the change was measured, held, and put to him rather than shipped. He took
+# it. Q4 did its job -- it is not a veto, it is a stop sign that forces the
+# judgement onto a person.
+#
+# The reasoning for taking it: this is a DATA change, not a parameter tweak.
+# The same One Nation preference rates are now estimated from 198 exclusion
+# events instead of 18. Better data moving the answer is the system working.
+#
+# Set AUSPOL_QLD_FLOWS=0 to reproduce the pre-2026-08-21 forecast exactly.
 tx <- rbind(fread(file.path(PREF, "vec-2022-vic-transfers.csv")),
             fread(file.path(PREF, "ecsa-2026-sa-transfers.csv")))
+if (!identical(Sys.getenv("AUSPOL_QLD_FLOWS", "1"), "0")) {
+  qf <- file.path(PREF, "ecq-qld-transfers.csv")
+  if (!file.exists(qf)) stop("Run scripts/fetch_preferences_qld.R first.")
+  tx <- rbind(tx, fread(qf), fill = TRUE)
+}
+# WESTERN AUSTRALIA, OFF BY DEFAULT. Against docs/plans/prereg-wa-flows.md,
+# which requires the backtest measurement before this ships. Seven admissible
+# elections, 1,634 exclusion events, taking One Nation's from 198 to 359.
+#
+# Routed through pool_external_flows() with the Victorian polling day, so the
+# same date guard the backtests use applies here rather than being assumed
+# unnecessary. The Queensland line above predates the helper and is left as it
+# is deliberately: it is on the published path, and the smallest diff that adds
+# Western Australia is the one least able to move the current forecast.
+VIC_2026 <- "2026-11-28"
+if (identical(Sys.getenv("AUSPOL_WA_FLOWS", "0"), "1")) {
+  tx <- pool_external_flows(tx, VIC_2026, "wa")
+}
 fm <- build_flow_matrix(tx, min_n = 3L)
 cat(sprintf("flow matrix: %d exclusions, %d cells at n>=3 of %d observed\n",
             uniqueN(tx[, .(election, seat, round)]), length(fm$conditional),
@@ -109,6 +154,16 @@ a22 <- 100 * colSums(as.matrix(dcast(fp, seat ~ party, value.var = "votes",
                                      fill = 0)[, -1])) /
        sum(fp$votes)
 cat(sprintf("seats with 2022 first preferences: %d\n", nrow(mat22)))
+# A FLOOR, not just a printed number. The seat count reached the simulation as
+# a cat() line nobody is obliged to read, so a join or a missing first-
+# preference row that dropped a seat would print a different, equally
+# plausible figure and quietly simulate a smaller chamber. 87 is Victoria's
+# 88 districts less Narracan, whose 2022 poll was deferred by a candidate's
+# death.
+if (nrow(mat22) < 87L) {
+  stop("Only ", nrow(mat22), " seats have 2022 first preferences; 87 expected ",
+       "(88 districts less Narracan). A seat has been lost upstream.")
+}
 
 # ---- 3. statewide 2026, from the model rather than assumed -----------------
 cycles <- load_election_cycles(); polls <- load_polls("vic")
@@ -143,15 +198,51 @@ if (FLOW_SHIFT != 0) {
 # otherwise change the published seat forecast with nothing anywhere to show
 # it. Reported rather than fatal, because the diagnostic runs are legitimate;
 # what must never happen is one going unnoticed.
-default_run <- SEED == 42L && OUT_SUFFIX == "" && FLOW_SHIFT == 0 &&
-  FP_SD_MODE == "additive" &&
-  ONP_ORDER == "federal" && ONP_FIX == "1"
+# EVERY environment variable that changes what this script COMPUTES, with the
+# value a default publish run carries. The previous version of this check
+# listed six by hand and missed six more -- AUSPOL_SHRINK, AUSPOL_PARTY_COR,
+# AUSPOL_QLD_FLOWS, AUSPOL_WA_FLOWS, AUSPOL_FORCE_FP, AUSPOL_ONP_CV and
+# AUSPOL_N_SIMS -- so a run with the calibration shrink switched off would
+# write over output/seat-probs-vic-2026.csv with a materially different,
+# over-confident forecast while S6 printed PASS.
+#
+# AUSPOL_PARTY_COR=off was the worst of them: the one line that would have
+# revealed it sits inside `if (!is.null(sw_cor))`, which is NULL exactly when
+# the flag is off. A silent divergence, certified as the default run.
+#
+# Derived from the list rather than restated, so adding a flag without adding
+# it here is the only remaining way to reopen the hole -- and S6 now prints
+# what actually differs, which a hand-maintained boolean could not.
+RUN_FLAGS <- c(AUSPOL_N_SIMS = "20000", AUSPOL_FP_SD_MODE = "additive",
+               AUSPOL_SEED = "42", AUSPOL_ONP_ORDER = "federal",
+               AUSPOL_ONP_FIX = "1", AUSPOL_QLD_FLOWS = "1",
+               AUSPOL_WA_FLOWS = "0", AUSPOL_FLOW_SHIFT = "0",
+               AUSPOL_FORCE_FP = "", AUSPOL_ONP_CV = "0",
+               AUSPOL_PARTY_COR = "shrunk", AUSPOL_SHRINK = "0.10")
+.now <- vapply(names(RUN_FLAGS), function(k) Sys.getenv(k, RUN_FLAGS[[k]]),
+               character(1))
+changed <- names(RUN_FLAGS)[.now != RUN_FLAGS]
+default_run <- length(changed) == 0L && OUT_SUFFIX == ""
+
+# AND REFUSE TO WRITE THE PUBLISHED FILENAME FROM A NON-DEFAULT RUN. Reporting
+# was not enough: S6 is one line in a long log, and by the time it prints the
+# overwrite has already happened. A diagnostic run stays legitimate -- it just
+# has to name its own output.
+if (length(changed) && OUT_SUFFIX == "") {
+  stop("This run changes ", paste(changed, collapse = ", "),
+       " but would write to the PUBLISHED filenames. Set AUSPOL_OUT_SUFFIX to ",
+       "something naming the arm, or unset those variables. Overwriting ",
+       "output/seat-probs-vic-2026.csv from a diagnostic run is how a ",
+       "forecast nobody chose gets published.")
+}
 cat(sprintf(paste0("S6  run config: seed %d, FP sd %s, flow %+.2f, ",
                    "ONP %s/fix%s, suffix %s  %s
 "),
             SEED, FP_SD_MODE, FLOW_SHIFT, ONP_ORDER, ONP_FIX,
             if (OUT_SUFFIX == "") "(none)" else OUT_SUFFIX,
-            if (default_run) "PASS" else "FAIL -- NOT A DEFAULT PUBLISH RUN"))
+            if (default_run) "PASS" else
+              paste("FAIL -- NOT A DEFAULT PUBLISH RUN; changed:",
+                    paste(changed, collapse = ", "))))
 now <- trend_as_at(polls, 2026, cycles, Sys.Date(), priors, fl, with_series = TRUE)
 last <- as.data.table(now$series)[, .SD[which.max(date)], by = party]
 tppr <- last[party == "TPP_ALP"]
@@ -181,6 +272,48 @@ cat(sprintf("FP sd mode: %s; statewide sds %.2f-%.2f (trend %.2f-%.2f)
             FP_SD_MODE, min(sd_vec), max(sd_vec), min(trend_sd), max(trend_sd)))
 state_mean <- setNames(sw$mean, sw$party)
 state_sd   <- setNames(sw$sd_proj, sw$party)
+
+# ---- where a party's extra votes come from ----------------------------------
+# South Australia, March 2026, is the only completed election where One Nation
+# moved on the scale Victoria is forecasting, and it says where the votes came
+# from: One Nation +20.24, Liberal -17.12, Labor -2.48, independents -1.74,
+# other-right -1.49, Greens +1.27, other +1.32.
+#
+# So a point of One Nation costs the Coalition 0.85 and Labor only 0.12, and the
+# Greens RISE slightly. That is not what proportional renormalisation does, and
+# the difference matters because One Nation's winnable seats are the ones where
+# it fights the Coalition.
+SA_RESPONSE <- c(LNP = -0.846, ALP = -0.123, IND = -0.086,
+                 OTH_RIGHT = -0.074, GRN = 0.063, OTH = 0.065)
+
+# AUSPOL_FORCE_FP="ONP=30" moves one party's statewide first preference to a
+# stated level and rebalances the rest on that response, so the seat count can
+# be read as a FUNCTION of the primary vote rather than only at today's point.
+# Nothing is forced by default.
+FORCE_FP <- Sys.getenv("AUSPOL_FORCE_FP", "")
+if (nzchar(FORCE_FP)) {
+  for (x in strsplit(strsplit(FORCE_FP, ",", fixed = TRUE)[[1]], "=", fixed = TRUE)) {
+    fp_party <- trimws(x[1]); fp_target <- as.numeric(x[2])
+    if (!fp_party %in% names(state_mean)) {
+      stop("AUSPOL_FORCE_FP names a party the model does not carry: ", fp_party,
+           ". Known: ", paste(names(state_mean), collapse = ", "))
+    }
+    fp_delta <- fp_target - state_mean[[fp_party]]
+    resp <- SA_RESPONSE[intersect(names(SA_RESPONSE), names(state_mean))]
+    resp <- resp[setdiff(names(resp), fp_party)]
+    # Renormalised so the rebalance is exactly -delta and the total stays 100.
+    resp <- resp / sum(abs(resp))
+    state_mean[[fp_party]] <- fp_target
+    for (q in names(resp)) {
+      state_mean[[q]] <- max(0.1, state_mean[[q]] + fp_delta * resp[[q]])
+    }
+    cat(sprintf("FP1  forced %s to %.1f (was %.1f, %+.1f), rebalanced on the SA response\n",
+                fp_party, fp_target, fp_target - fp_delta, fp_delta))
+  }
+  cat(sprintf("FP1  statewide primaries now: %s (sum %.1f)\n",
+              paste(sprintf("%s %.1f", names(state_mean), state_mean),
+                    collapse = ", "), sum(state_mean)))
+}
 
 # ---- 4. project each seat's primaries --------------------------------------
 # Every party swings uniformly off its own 2022 seat share -- EXCEPT One
@@ -225,6 +358,32 @@ for (r in seq_along(ord)) {
   lo <- floor(pos) + 1; hi <- min(lo + 1, length(sa_ratio))
   onp_ratio[rownames(mat22)[ord[r]]] <-
     sa_ratio[lo] + (pos - (lo - 1)) * (sa_ratio[hi] - sa_ratio[lo])
+}
+
+# SENSITIVITY HANDLE on the single most load-bearing unvalidated number here.
+# `sa_ratio` sets how CONCENTRATED One Nation's vote is across seats, and
+# concentration decides how many seats it LEADS -- which, on South Australian
+# evidence, is most of winning. It is fitted on one election.
+#
+# docs/reviews/onp-concentration-2026-08-21.md bounds it. Federal One Nation
+# polls 4-9% against Victoria's forecast ~20%, and the two ways of carrying a
+# concentration across that gap disagree by a factor of 4.4: holding the SD in
+# points fixed implies a CV of 0.110 at 22.9%, holding the CV fixed implies
+# 0.482. South Australia actually delivered 0.334, between them.
+#
+# AUSPOL_ONP_CV rescales the ratio about 1 to hit a stated CV, so the seat range
+# can be reported at both ends of that bound instead of at one unvalidated
+# point. Unset leaves the shape exactly as measured.
+ONP_CV <- as.numeric(Sys.getenv("AUSPOL_ONP_CV", "0"))
+if (is.finite(ONP_CV) && ONP_CV > 0) {
+  cur <- stats::sd(onp_ratio) / mean(onp_ratio)
+  # VECTOR FIRST. pmax(0.02, x) drops x's NAMES, exactly as pmax(0.1, m) drops a
+  # matrix's dim -- and onp_ratio is looked up BY SEAT NAME immediately after,
+  # so the whole allocation silently became NA. Second time this argument order
+  # has bitten today.
+  onp_ratio <- pmax(1 + (ONP_CV / cur) * (onp_ratio - 1), 0.02)
+  cat(sprintf("CN1  One Nation concentration forced: CV %.3f -> %.3f (delivered %.3f)\n",
+              cur, ONP_CV, stats::sd(onp_ratio) / mean(onp_ratio)))
 }
 
 parties <- colnames(mat22)
@@ -304,12 +463,66 @@ cat(sprintf("ONP allocation: target CV %.3f, delivered %.3f (previously compress
 set.seed(SEED)
 psd <- vapply(parties, function(p) if (is.na(state_sd[p])) 1.5 else state_sd[[p]],
               numeric(1))
-sw_draws <- vapply(parties, function(p) {
-  m <- if (is.na(state_mean[p])) mean(shares[, p]) else state_mean[[p]]
-  pmax(0.1, stats::rnorm(N_SIMS, m, psd[[p]]))
-}, numeric(N_SIMS))
+# CORRELATED ACROSS PARTIES, not independent. Drawing each party on its own and
+# renormalising means a simulation where One Nation runs five points hot takes
+# those votes evenly from Labor, the Greens and the Coalition alike. Measured
+# across the ten election pairs this repo holds, the statewide change in One
+# Nation's vote correlates with the Coalition's at -0.83 and with Labor's at
+# -0.12: it takes Coalition votes and almost nothing else.
+#
+# That biases in a knowable direction. One Nation's winnable seats are the ones
+# it takes from the Coalition, so under independence its good simulations are
+# not systematically the Coalition's bad ones and it crosses the line less often
+# than it should.
+#
+# AUSPOL_PARTY_COR=off restores independent draws exactly. The value is "off"
+# rather than an empty string because PowerShell REMOVES an environment
+# variable when it is set to '', so R falls back to the default and the arm
+# silently runs the opposite way -- which is how the first attempt at this
+# comparison ran the correlated branch while claiming to be the baseline.
+# See docs/plans/prereg-statewide-covariance.md and
+# scripts/estimate_statewide_cov.R.
+COR_MODE <- Sys.getenv("AUSPOL_PARTY_COR", "shrunk")
+sw_cor <- NULL
+if (!identical(COR_MODE, "off") && nzchar(COR_MODE)) {
+  .co <- readRDS("output/statewide-cov.rds")
+  cm <- if (identical(COR_MODE, "raw")) .co$cor else .co$cor_shrunk
+  miss <- setdiff(parties, colnames(cm))
+  if (length(miss)) {
+    stop("The statewide correlation has no entry for: ",
+         paste(miss, collapse = ", "),
+         ". Re-run scripts/estimate_statewide_cov.R.")
+  }
+  sw_cor <- cm[parties, parties, drop = FALSE]
+}
+mu <- vapply(parties, function(p) {
+  if (is.na(state_mean[p])) mean(shares[, p]) else state_mean[[p]]
+}, numeric(1))
+if (is.null(sw_cor)) {
+  sw_draws <- vapply(parties, function(p)
+    pmax(0.1, stats::rnorm(N_SIMS, mu[[p]], psd[[p]])), numeric(N_SIMS))
+} else {
+  Z <- matrix(stats::rnorm(N_SIMS * length(parties)), nrow = N_SIMS)
+  sw_draws <- Z %*% chol(sw_cor)
+  sw_draws <- sweep(sweep(sw_draws, 2, psd[parties], "*"), 2, mu, "+")
+  # pmax(0.1, m) DROPS the dim attribute, so the matrix arrives first.
+  sw_draws <- pmax(sw_draws, 0.1)
+}
 colnames(sw_draws) <- parties
 sw_draws <- sw_draws / rowSums(sw_draws) * 100
+# VERIFY the correlation SURVIVED renormalisation, rather than assuming it. The
+# rescale to 100 is itself a transformation and could undo what was imposed; if
+# One Nation and the Coalition come out uncorrelated here, the draws going into
+# the simulation are not the ones that were measured.
+if (!is.null(sw_cor) && all(c("ONP", "LNP") %in% parties)) {
+  realised <- stats::cor(sw_draws[, "ONP"], sw_draws[, "LNP"])
+  cat(sprintf("COV  statewide draws correlated (%s): cor(ONP,LNP) target %+.2f, realised %+.2f\n",
+              COR_MODE, sw_cor["ONP", "LNP"], realised))
+  if (realised > -0.10) {
+    stop("The imposed correlation did not survive renormalisation: target ",
+         round(sw_cor["ONP", "LNP"], 2), ", realised ", round(realised, 2), ".")
+  }
+}
 
 flow_of <- function(p) {
   f <- fl$flow_alp[fl$party == p]
@@ -333,7 +546,29 @@ statewide draws anchored: two-party mean %.2f sd %.3f (projection %.2f / %.3f)
 stopifnot(abs(mean(chk) - pj$mean) < 0.3, abs(sd(chk) - pj$sd) < 0.3)
 
 t0 <- Sys.time()
-sim <- simulate_seat_contests(shares, fm, party_sd = psd, seat_sd = SEAT_SD,
+# CALIBRATION SHRINK. Measured on 1,187 seats across 10 elections in
+# docs/reviews/calibration-2026-08-21.md: this model's calibration slope was
+# below 1 in nine of them, so a seat called at 95% won about 70% of the time. A
+# per-draw shrink of 0.10 -- fitted leave-one-election-out and identical in all
+# ten folds -- beats both the status quo (+3.04 SE) and a post-hoc temperature
+# on the output (+3.36 SE) on held-out log score.
+#
+# ON BY DEFAULT, and K5 is why it is allowed to be. That refusal required the
+# effect on the Victorian seat medians to be reported before shipping, with a
+# 2-seat move on any party stopping it. Measured:
+#
+#   ALP 41 -> 40   LNP 38 -> 37   GRN 4 -> 4   ONP 4 -> 5   IND 0 -> 0
+#
+# No party moves by more than one. The centres barely shift while the intervals
+# widen, which is what a calibration fix should do and what a fix that had
+# quietly become a forecast change would not. One Nation's 90% interval moves
+# from 0-9 to 1-11.
+#
+# Set AUSPOL_SHRINK=0 to reproduce the pre-2026-08-21 forecast exactly.
+SHRINK <- as.numeric(Sys.getenv("AUSPOL_SHRINK", "0.10"))
+if (SHRINK > 0) cat(sprintf("CAL  calibration shrink %.2f applied
+", SHRINK))
+sim <- simulate_seat_contests(shares, fm, party_sd = psd, seat_sd = SEAT_SD, shrink = SHRINK,
                               n_sims = N_SIMS, smooth = SMOOTH, seed = SEED,
                               statewide_draws = sw_draws)
 cat(sprintf("\nsimulated %d seats x %d runs in %.0fs | pooled fallback %.1f%%\n",

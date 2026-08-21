@@ -14,7 +14,7 @@ Status key: **ESTIMATED** — derived from data, moves as data arrives ·
 **ESTIMABLE** — could be, currently is not · **FIXED** — cannot or should not
 be estimated, with the reason given.
 
-Last audited 2026-08-18.
+Last audited 2026-08-21.
 
 ---
 
@@ -61,12 +61,18 @@ trust a file, not what the forecast says.
 | `sum_range = c(97, 103)` | `fold.R:40` | First preferences summing near 100 → a party was folded into OTH |
 | `95`–`105` | `load_polls.R:51` | Sanity bound on reported FP sums |
 | `> 0.02` | `load_polls.R:56` | Share of malformed rows tolerated before erroring |
-| `n > 100`, `< 60`, `< 380` | `load_polls.R:45,78`, `fundamentals.R:56` | Row-count floors that catch `fread` stopping early on a ragged row — the bug that once trained the fundamentals on 62% of the data |
+| `n > 100`, `< 60`, `< 380` | `load_polls.R:45,78`, `fundamentals.R:108` | Row-count floors that catch `fread` stopping early on a ragged row — the bug that once trained the fundamentals on 62% of the data |
 | `min_year = 1990` | several | Start of the modern polling record |
 | `min_polls`, `min_firm_polls` | several | Minimum data before fitting |
-| `parties_in(n = 8)` / `cnt >= 8` | `fit_vic.R:115,183`, `fit_nsw.R:84,165`; `>= 25` federal | **Which parties exist in the forecast at all** — not an input-sanity guard, which is how it was filed here until 2026-08-19 and why nobody looked at it. A party under the floor is not fitted, so its vote stays inside `OTH`. **Tested 2026-08-19 and kept at 8** (`plans/prereg-party-inclusion-floor.md`): lowering it is monotonically worse, and floor 15 beat it by 0.061 but was refused because it would drop One Nation from NSW 2027 at 21.0% — a refusal criterion added AFTER the result, which the write-up flags as a deviation. |
+| `parties_in(n = 8)` / `cnt >= 8` | `fit_vic.R:184,196`, `fit_nsw.R:164,177`; `>= 25` federal | **Which parties exist in the forecast at all** — not an input-sanity guard, which is how it was filed here until 2026-08-19 and why nobody looked at it. A party under the floor is not fitted, so its vote stays inside `OTH`. **Tested 2026-08-19 and kept at 8** (`plans/prereg-party-inclusion-floor.md`): lowering it is monotonically worse, and floor 15 beat it by 0.061 but was refused because it would drop One Nation from NSW 2027 at 21.0% — a refusal criterion added AFTER the result, which the write-up flags as a deviation. |
 | `warn_days = 21`, `stale_days = 60` | `freshness.R:60` | When our copy of the poll data is old enough to warn, then stop |
 | `SHARE_CLAMP = c(0.25, 99.75)` | `scales.R:19` | Keeps logit finite at the boundary |
+| `EXHAUST_LIMIT = 0.02` | `fetch_preferences_wa.R` | Exhaustion rate above which an election's transfers may not be pooled with full-preferential ones. NSW runs ~12% and is excluded outright; the seven admitted WA elections run 0.15–0.88%. **FIXED, and deliberately not raised**: WA 2001 measured 2.27% and was named in `TRANSFERS_EXCLUDED` instead, because moving a threshold to admit the one election that failed it is choosing the number after seeing the answer. |
+| `TRANSFERS_EXCLUDED = "wa2001"` | `fetch_preferences_wa.R` | The named consequence of the line above. Its first preferences and winners are still used — exhaustion cannot affect either. |
+| `WA_PARTY` (39 codes) | `fetch_preferences_wa.R` | Party code → name, because the WAEC publishes a code and no name and a bare code classifies as OTH. **FIXED, and machine-checked**: WF1c requires every name to be one the WAEC itself publishes, WF5 requires our winners to reproduce its declared seat counts, and an unknown code aborts. |
+| `EXTERNAL_FLOWS$*$dates` (9 dates) | `external_flows.R` | Polling days for the Queensland and Western Australian elections, deciding what a backtest may see. **FIXED and hand-entered** — neither commission publishes a machine-readable polling day with its results — so each is checked against the year in its own election key, which catches the mistyped year that hand-entered tables actually suffer. |
+| `87` seat floor | `fit_seats_full.R:163` | The number of Victorian seats that must reach the simulation: 88 districts less Narracan, whose 2022 poll was deferred by a candidate's death. **FIXED**, and it is a floor rather than a printed number because the count used to reach the simulation only as a `cat()` line — a lost seat would have printed a different, equally plausible figure. |
+| `VIC_2026 = "2026-11-28"` | `fit_seats_full.R` | The Victorian polling day, used only to date-guard pooled flows on the published path. **FIXED**: it is a legislated date, not an estimate. |
 
 These are **FIXED by intent.** They encode "does this input look like what we
 expect", and a threshold estimated from the same data it is meant to police
@@ -146,6 +152,38 @@ distribution, measured at 22.97% statewide against Victoria's forecast 20.9%.
 Estimated, but from a different state, because Victoria has never had a large
 One Nation vote to measure its own. Checked within 1.41× against a 1.5 bar.
 See `docs/plans/prereg-onp-allocation-vic.md`.
+
+## 4c. Missing until 2026-08-21, and why that matters
+
+Found by a sweep of `R/` and `scripts/` against this file, prompted by the
+inventory's own rule. **Two of these reach the published seat counts and one
+was added the same morning the file was stamped "audited"** -- the audit line
+and the code diverged inside a single day, which is precisely the silent
+staleness this file exists to prevent. That is the finding, more than any
+individual number below.
+
+| Constant | Where | What it does | Status |
+|---|---|---|---|
+| `SHRINK = 0.10` | `fit_seats_full.R:522` | Per-draw calibration shrink toward a coin toss in close seats. Added 2026-08-21 after measuring over-confidence on 1,187 seats across 10 elections. **On by default and it moves published seat counts**: ALP 41→40, LNP 38→37, ONP 4→5, and One Nation's 90% interval 0–9→1–11. | **ESTIMATED** — chosen by held-out calibration slope over a pre-registered grid. |
+| `LAMBDA = 0.5` | `estimate_statewide_cov.R:95` | Shrinks the statewide party-correlation matrix toward independence. Written to `cor_shrunk`, which `fit_seats_full.R:439` uses **by default**, so it shapes the published joint distribution over party votes. | **FIXED, pre-registered.** Half weight on a correlation estimated from few cycles; the alternative was to estimate the shrinkage from the same small sample that produced the correlation. |
+| `1.96` | `trend.R:423,424`, `projection.R:503`, `fit_seats_full.R:210,217` | The Gaussian 95% quantile, used to build the published bands and to turn a band back into a simulation sd. | **FIXED, and worth flagging**: §6c records that the model deliberately does *not* assume the error distribution is normal, yet this constant assumes it at five sites. A correctness matter, sized before it is worth changing. |
+| `SA_RESPONSE` (6 coefficients) | `fit_seats_full.R:240` | Where a party's statewide gain or loss comes from, fitted on South Australia 2026. `LNP −0.846, ALP −0.123, IND −0.086, OTH_RIGHT −0.074, GRN 0.063, OTH 0.065`. Reached only under `AUSPOL_FORCE_FP`, so **not on the default publish path**. | **ESTIMATED** from one election, which is its weakness. |
+| `ANCHOR_K = 0` | `trend.R:82` | Weight on the previous election result as an anchor for the trend, defaulting `trend_anchor()` and `fit_trend()` — both on the published path. | **FIXED at 0.** Built and refused on a wrong theory; see `reviews/poll-lag-2026-08-19.md`. Same tested-and-kept shape as `sigma_house_pts` in §6b. |
+| `1.5` party-sd fallback | `fit_seats_full.R:418` | Used when a party has no estimated statewide sd. | **FIXED**, and it should be visible when it fires: a fallback nobody sees is a number nobody checks. |
+| `0.489` flow fallback | `fit_seats_full.R:483` | Preference rate used when the matrix has no cell for a pair. | **FIXED**, same caveat. |
+
+Also absent and lower priority, none on the default publish path: `TARGET`,
+`TOL`, `N_REP`, `FLOOR_R` in `calibrate_onp_ordering.R:17`; `VIC_MEAN = 20.2`
+and the `tgt` vector in `compare_onp_seats_sa.R:68,105`, which are frozen
+snapshots of the model's own output and so carry their own staleness risk;
+`MATERIAL`/`COVER` in the `compare_*` scripts; `SITTING_CUT = 15` in the two
+`fit_independent_*` scripts; `LIVE = 2026` in `fit_vic.R:59`; and the
+`nrow(d) < 3L` floor inside `estimate_flow()` (`flow_model.R:137`), which is
+distinct from `build_flow_matrix()`'s documented `min_n = 3`.
+
+Deliberately not listed: `CHAMBER = 88`, `MAJORITY = 45` and `PREV_SEATS = 56`
+in `fit_seats.R`. That is the retired two-party path — see the top of
+`CLAUDE.md` — and inventorying a dead file would imply it is live.
 
 ## 5. Pre-registered check bounds
 
