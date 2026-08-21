@@ -98,7 +98,7 @@ Pointing it there immediately exposed a defect no two-election test could see.
    against +0.814 on NSW 2023), but `sa_ratio` is fitted on SA 2026 itself, so
    no election can test it. Victoria 2026 is its first out-of-sample exposure,
    and it carries the difference between One Nation winning four seats and
-   forty. [reviews/onp-ordering-sa-2026-08-20.md](reviews/onp-ordering-sa-2026-08-21.md)
+   forty. [reviews/onp-ordering-sa-2026-08-20.md](reviews/onp-ordering-sa-2026-08-20.md)
 2. **Our One Nation primary is 20.2% against YouGov 24 and Morgan 23.5.** That
    3–4 point gap is most of the seat disagreement, through threshold
    amplification — the curve runs 0 seats at 12%, 5 at 20.2%, 16 at 26%, 26 at
