@@ -41,16 +41,35 @@ statistic, at a near-identical statewide vote:
 **YouGov is four times the only real observation.** We are about twice it, and
 sit between.
 
-## YouGov's numbers disagree with South Australia twice over
+## CORRECTION: only ONE of the two comparisons survives
 
-They report One Nation leading on primaries in roughly 30 of 88 seats and
-winning **17** — a **57%** conversion, with the Coalition taking four of its
-leads and Labor nine, "as One Nation struggles to attract preferences".
+**This section originally read "YouGov's numbers disagree with South Australia
+twice over". That was wrong on the conversion half and is withdrawn.**
 
-South Australia says leads convert at **100%**. So on that election's evidence,
-either their 30 leads is too high, or their 57% conversion is too low. **Both
-cannot be right, and their combination is not what the one comparable election
-produced.**
+Four seats is four observations, and the interval around them is enormous:
+
+| statistic | SA 2026 | 95% interval | YouGov |
+|---|---:|---|---:|
+| **conversion** of a primary lead | 4/4 = 100% | **40% – 100%** | 57% — **inside** |
+| **concentration**, share of seats led | 4/47 = 8.5% | **2.4% – 20.4%** | 34.1% — **outside** |
+
+**The conversion comparison establishes nothing.** A rate of 57% is entirely
+consistent with observing four wins from four leads. Claiming otherwise was
+reading a point estimate as though it were a measurement.
+
+It is worse than the interval alone suggests, because conversion is not one
+number. It depends on **who else is in the seat** and on **how big the lead
+is** — a party leading on 34% against a split field is in a different position
+from one leading on 28% against a consolidated major. South Australia's four
+leads averaged **33.8%**, all comfortable. They say close to nothing about the
+marginal leads that decide a seat count, which is exactly where flows do the
+work.
+
+**The concentration comparison does survive.** It rests on 47 districts rather
+than 4, and 34.1% falls outside its interval. That is the claim to keep.
+
+Our own 14.6% sits **inside** the South Australian interval, which is a better
+statement than "closer than YouGov" and is the one that should be made.
 
 ## Where our own number is honestly uncomfortable
 
@@ -72,10 +91,12 @@ election.
 
 ## What can be said on the page
 
-Our lower One Nation seat count is **not timidity**. It follows from a
-concentration closer to the only completed election at this level than the
-alternative on offer, and from a conversion rate that election measured at
-100%, which we and YouGov both have to answer to.
+Our lower One Nation seat count is **not timidity**: our concentration sits
+inside the interval South Australia measured, and the alternative on offer sits
+outside it.
+
+**Not** that a 100% conversion rate proves anything. It rests on four seats, all
+with comfortable leads, and cannot distinguish 57% from 100%.
 
 That is a claim with evidence behind it. It was not available yesterday, and it
 is the honest version of "we do not have to match YouGov".
