@@ -59,6 +59,35 @@ options(auspol.root = normalizePath("."))
 suppressMessages(devtools::load_all(quiet = TRUE))
 suppressMessages(library(data.table))
 
+# ---- Queensland flows, date-filtered ---------------------------------------
+# Against docs/plans/prereg-qld-flows.md. Queensland 2020 and 2024 add 750
+# exclusion events and take One Nation's from 18 to 198. They may only be used
+# to predict an election held AFTER them, so the filter takes the predicted
+# election's own date and admits nothing later.
+#
+# Q1 makes the five elections that predate both a CONTROL: their arms must come
+# out byte-identical. Silently admitting a later election there would be the
+# leak this whole design exists to make visible.
+QLD_DATES <- c(qld2020 = "2020-10-31", qld2024 = "2024-10-26")
+add_qld <- function(tx, before) {
+  if (!identical(Sys.getenv("AUSPOL_QLD_FLOWS", "0"), "1")) return(tx)
+  f <- file.path(election_data_path(), "ecq-qld-transfers.csv")
+  if (!file.exists(f)) stop("Run scripts/fetch_preferences_qld.R first.")
+  ok <- names(QLD_DATES)[as.Date(QLD_DATES) < as.Date(before)]
+  if (!length(ok)) {
+    cat(sprintf("QF5  no Queensland election precedes %s; unchanged (control)
+",
+                as.character(before)))
+    return(tx)
+  }
+  q <- data.table::fread(f, showProgress = FALSE)[election %in% ok]
+  cat(sprintf("QF5  +%s for %s: %d exclusion events added
+",
+              paste(ok, collapse = "+"), as.character(before),
+              data.table::uniqueN(q[, paste(election, seat, round)])))
+  data.table::rbindlist(list(tx, q), fill = TRUE)
+}
+
 # ARM B of docs/plans/prereg-calibration.md. A multiplier on the per-seat
 # spread, so the simulation carries more genuine seat-level uncertainty. Default
 # 1 reproduces the published behaviour exactly; the run prints what it applied,
@@ -94,7 +123,8 @@ if (nzchar(Sys.getenv("AUSPOL_PARTY_COR", ""))) {
 CAL_TAG <- paste0(
   if (SEAT_SD_MULT != 1) sprintf("-m%s", format(SEAT_SD_MULT, nsmall = 1)) else "",
   if (identical(Sys.getenv("AUSPOL_SEAT_SWING_PORT", "0"), "1")) "-port" else "",
-  if (!is.null(PARTY_COR)) "-cor" else "")
+  if (!is.null(PARTY_COR)) "-cor" else "",
+  if (identical(Sys.getenv("AUSPOL_QLD_FLOWS", "0"), "1")) "-qld" else "")
 
 N_SIMS <- 20000; SEED <- 42; SMOOTH <- 0.15; eps <- 1e-6
 P <- election_data_path()
@@ -117,6 +147,7 @@ tx <- fread(file.path(P, "aec-fed-transfers.csv"),
 # Guard on the row count as well as the id: all() over an empty table is TRUE,
 # which is the guard-that-cannot-fail pattern CLAUDE.md records.
 stopifnot(nrow(tx) > 100L, all(tx$election == FLOW_FROM))
+tx <- add_qld(tx, "2026-03-21")
 fm <- build_flow_matrix(tx, min_n = 3L)
 cat(sprintf("\nBS1  flow matrix from %s: %d exclusions\n",
             FLOW_FROM, uniqueN(tx[, paste(seat, round)])))

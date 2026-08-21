@@ -15,33 +15,40 @@ options(auspol.root = normalizePath("."))
 suppressMessages(devtools::load_all(quiet = TRUE))
 suppressMessages(library(data.table))
 
+# ---- Queensland flows, date-filtered ---------------------------------------
+# Against docs/plans/prereg-qld-flows.md. Queensland 2020 and 2024 add 750
+# exclusion events and take One Nation's from 18 to 198. They may only be used
+# to predict an election held AFTER them, so the filter takes the predicted
+# election's own date and admits nothing later.
+#
+# Q1 makes the elections predating both a CONTROL: their arms must come out
+# byte-identical.
+QLD_DATES <- c(qld2020 = "2020-10-31", qld2024 = "2024-10-26")
+add_qld <- function(tx, before) {
+  if (!identical(Sys.getenv("AUSPOL_QLD_FLOWS", "0"), "1")) return(tx)
+  f <- file.path(election_data_path(), "ecq-qld-transfers.csv")
+  if (!file.exists(f)) stop("Run scripts/fetch_preferences_qld.R first.")
+  ok <- names(QLD_DATES)[as.Date(QLD_DATES) < as.Date(before)]
+  if (!length(ok)) {
+    cat(sprintf("QF5  no Queensland election precedes %s; unchanged (control)
+",
+                as.character(before)))
+    return(tx)
+  }
+  q <- data.table::fread(f, showProgress = FALSE)[election %in% ok]
+  cat(sprintf("QF5  +%s for %s: %d exclusion events added
+",
+              paste(ok, collapse = "+"), as.character(before),
+              data.table::uniqueN(q[, paste(election, seat, round)])))
+  data.table::rbindlist(list(tx, q), fill = TRUE)
+}
+
 # ARM B of docs/plans/prereg-calibration.md. A multiplier on the per-seat
-# spread, so the simulation carries more genuine seat-level uncertainty. Default
-# 1 reproduces the published behaviour exactly; the run prints what it applied,
-# because CLAUDE.md records an experiment whose edit never ran and whose
-# byte-identical output read as "this input does not matter".
+# spread. Default 1 reproduces the published behaviour exactly.
 SEAT_SD_MULT <- as.numeric(Sys.getenv("AUSPOL_SEAT_SD_MULT", "1"))
 if (SEAT_SD_MULT != 1) cat(sprintf("CAL  seat_sd multiplier %.2f applied
 ", SEAT_SD_MULT))
 
-# OUTPUT FILENAME CARRIES THE CONFIG, and it must. These harnesses used to write
-# to one fixed name, so running an experimental arm SILENTLY OVERWROTE the
-# baseline it was meant to be compared against. That happened on 2026-08-21: a
-# seat_sd sweep overwrote backtest-fed.csv and backtest-vic.csv, and the
-# resulting comparison showed a difference of EXACTLY +0.0000 for all six
-# federal elections because both arms were the same file. It read as "this
-# input does not matter", which is the failure mode CLAUDE.md already records
-# for an experiment that never ran.
-#
-# A default run still writes the plain name, so nothing downstream changes.
-# N_SIMS is settable so the federal harness -- six pairs at ~150 divisions --
-# can be swept across arms in minutes rather than an hour. Monte Carlo error at
-# 5,000 draws is far below the log-score differences under test.
-#
-# THE ARMS OF ONE ELECTION MUST SHARE IT. A paired comparison between arms is
-# valid at any n_sims, but only if both arms of the SAME election used the same
-# one; the tag below records it in the filename so a mismatched pair cannot be
-# compared by accident.
 N_SIMS <- as.integer(Sys.getenv("AUSPOL_N_SIMS", "20000"))
 
 
@@ -61,7 +68,8 @@ CAL_TAG <- paste0(
   if (SEAT_SD_MULT != 1) sprintf("-m%s", format(SEAT_SD_MULT, nsmall = 1)) else "",
   if (identical(Sys.getenv("AUSPOL_SEAT_SWING_PORT", "0"), "1")) "-port" else "",
   if (N_SIMS != 20000L) sprintf("-n%d", N_SIMS) else "",
-  if (!is.null(PARTY_COR)) "-cor" else "")
+  if (!is.null(PARTY_COR)) "-cor" else "",
+  if (identical(Sys.getenv("AUSPOL_QLD_FLOWS", "0"), "1")) "-qld" else "")
 
 SEED <- 42; SMOOTH <- 0.15; eps <- 1e-6
 P <- election_data_path()
@@ -84,6 +92,7 @@ for (K in PAIRS) {
   # LEAKAGE GUARD, asserted on the source rather than on a filtered copy: a
   # table filtered to one election trivially contains only that election.
   stopifnot(all(tx$election == sprintf("vic%d", K$from)))
+  tx <- add_qld(tx, if (K$to == 2018L) "2018-11-24" else "2022-11-26")
   fm <- build_flow_matrix(tx, min_n = 3L)
 
   wf <- file.path(P, sprintf("vec-%d-vic-winners.csv", K$to))

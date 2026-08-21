@@ -24,6 +24,34 @@ options(auspol.root = normalizePath("."))
 suppressMessages(devtools::load_all(quiet = TRUE))
 suppressMessages(library(data.table))
 
+# ---- Queensland flows, date-filtered ---------------------------------------
+# Against docs/plans/prereg-qld-flows.md. Queensland 2020 and 2024 add 750
+# exclusion events and take One Nation's from 18 to 198. They may only be used
+# to predict an election held AFTER them, so the filter takes the predicted
+# election's own date and admits nothing later.
+#
+# Q1 makes the elections predating both a CONTROL: their arms must come out
+# byte-identical.
+QLD_DATES <- c(qld2020 = "2020-10-31", qld2024 = "2024-10-26")
+add_qld <- function(tx, before) {
+  if (!identical(Sys.getenv("AUSPOL_QLD_FLOWS", "0"), "1")) return(tx)
+  f <- file.path(election_data_path(), "ecq-qld-transfers.csv")
+  if (!file.exists(f)) stop("Run scripts/fetch_preferences_qld.R first.")
+  ok <- names(QLD_DATES)[as.Date(QLD_DATES) < as.Date(before)]
+  if (!length(ok)) {
+    cat(sprintf("QF5  no Queensland election precedes %s; unchanged (control)
+",
+                as.character(before)))
+    return(tx)
+  }
+  q <- data.table::fread(f, showProgress = FALSE)[election %in% ok]
+  cat(sprintf("QF5  +%s for %s: %d exclusion events added
+",
+              paste(ok, collapse = "+"), as.character(before),
+              data.table::uniqueN(q[, paste(election, seat, round)])))
+  data.table::rbindlist(list(tx, q), fill = TRUE)
+}
+
 # ARM B of docs/plans/prereg-calibration.md. A multiplier on the per-seat
 # spread, so the simulation carries more genuine seat-level uncertainty. Default
 # 1 reproduces the published behaviour exactly; the run prints what it applied,
@@ -59,7 +87,8 @@ if (nzchar(Sys.getenv("AUSPOL_PARTY_COR", ""))) {
 CAL_TAG <- paste0(
   if (SEAT_SD_MULT != 1) sprintf("-m%s", format(SEAT_SD_MULT, nsmall = 1)) else "",
   if (identical(Sys.getenv("AUSPOL_SEAT_SWING_PORT", "0"), "1")) "-port" else "",
-  if (!is.null(PARTY_COR)) "-cor" else "")
+  if (!is.null(PARTY_COR)) "-cor" else "",
+  if (identical(Sys.getenv("AUSPOL_QLD_FLOWS", "0"), "1")) "-qld" else "")
 
 N_SIMS <- 20000
 SEED   <- 42
@@ -83,6 +112,16 @@ tx19 <- tx[election == "nsw2019"]
 stopifnot(nrow(tx19) > 0, nrow(tx19) < nrow(tx))
 cat(sprintf("\nBT0  flow matrix from %d transfers, elections: %s\n",
             nrow(tx19), paste(unique(tx19$election), collapse = ", ")))
+# NEW SOUTH WALES IS OPTIONAL PREFERENTIAL AND MUST NOT TAKE QUEENSLAND'S
+# TRANSFERS. About 12% of NSW ballots exhaust; Queensland's are compulsory
+# preferential and effectively none do, so pooling them estimates a rate that
+# describes neither. CLAUDE.md states the rule and refusal Q2 of
+# docs/plans/prereg-qld-flows.md covered only the reverse case -- Queensland's
+# own pre-2016 optional-preferential elections.
+#
+# Measured before it was noticed: adding Queensland here made NSW 2023 WORSE by
+# 0.194 of log score, the largest single degradation in the run. That is not a
+# finding about Queensland, it is this mistake showing up as data.
 fm <- build_flow_matrix(tx19, min_n = 3L)
 
 seats <- as.data.table(load_seats(2023, "nsw"))
