@@ -71,6 +71,13 @@ classify_party <- function(name, code = NULL) {
   set(grepl("liberal|national", n), "LNP")
   set(grepl("green", n), "GRN")
   set(grepl("one nation|hanson", n), "ONP")
+  # "Palmer United Party" and "United Australia Party" are the same movement
+  # under the same man, and only the second matched. Palmer United took 5.56%
+  # of the 2013 federal vote and WON Fairfax, so one of the largest minor
+  # parties in the corpus sat in OTH with a seat beside it. Word order was the
+  # entire difference. "Rise Up Australia" is the same shape: an explicitly
+  # Christian-nationalist party whose name contains none of the tokens below.
+  set(grepl("palmer united|rise up australia", n), "OTH_RIGHT")
   set(grepl(paste0("family|freedom|christian|conservative|liberty|shooters|",
                    "fishers|farmers|united australia|katter|country|citizens|",
                    "trumpet|australia first|call to australia"), n), "OTH_RIGHT")

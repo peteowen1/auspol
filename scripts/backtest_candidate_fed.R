@@ -28,36 +28,23 @@ options(auspol.root = normalizePath("."))
 suppressMessages(devtools::load_all(quiet = TRUE))
 suppressMessages(library(data.table))
 
-# ---- Queensland flows, date-filtered ---------------------------------------
-# Against docs/plans/prereg-qld-flows.md. Queensland 2020 and 2024 add 750
-# exclusion events and take One Nation's from 18 to 198. They may only be used
-# to predict an election held AFTER them, so the filter takes the predicted
-# election's own date and admits nothing later.
+# ---- other jurisdictions' flows, date-filtered ------------------------------
+# Against docs/plans/prereg-qld-flows.md and docs/plans/prereg-wa-flows.md.
+# Queensland 2020 and 2024 add 750 exclusion events; Western Australia's seven
+# admissible elections add 1,634 and take One Nation's from 198 to 359.
 #
-# Q1 makes the five elections that predate both a CONTROL: their arms must come
-# out byte-identical. Silently admitting a later election there would be the
-# leak this whole design exists to make visible.
+# Either may only be used to predict an election held AFTER it. That rule lives
+# in pool_configured_flows() rather than in a copy per harness -- there were
+# four byte-identical copies, one of which had rotted into a gate that was
+# defined and never called, and it is the one rule here that must never be
+# wrong. Both sources default OFF.
+
+# Polling day for each federal election, which is what decides what a backtest
+# may see. Hand-entered, and the only ones here not covered by the year check
+# in EXTERNAL_FLOWS, so they are asserted against their own keys below.
 FED_DATE <- c("2010"="2010-08-21","2013"="2013-09-07","2016"="2016-07-02",
               "2019"="2019-05-18","2022"="2022-05-21","2025"="2025-05-03")
-QLD_DATES <- c(qld2020 = "2020-10-31", qld2024 = "2024-10-26")
-add_qld <- function(tx, before) {
-  if (!identical(Sys.getenv("AUSPOL_QLD_FLOWS", "0"), "1")) return(tx)
-  f <- file.path(election_data_path(), "ecq-qld-transfers.csv")
-  if (!file.exists(f)) stop("Run scripts/fetch_preferences_qld.R first.")
-  ok <- names(QLD_DATES)[as.Date(QLD_DATES) < as.Date(before)]
-  if (!length(ok)) {
-    cat(sprintf("QF5  no Queensland election precedes %s; unchanged (control)
-",
-                as.character(before)))
-    return(tx)
-  }
-  q <- data.table::fread(f, showProgress = FALSE)[election %in% ok]
-  cat(sprintf("QF5  +%s for %s: %d exclusion events added
-",
-              paste(ok, collapse = "+"), as.character(before),
-              data.table::uniqueN(q[, paste(election, seat, round)])))
-  data.table::rbindlist(list(tx, q), fill = TRUE)
-}
+stopifnot(names(FED_DATE) == format(as.Date(FED_DATE), "%Y"))
 
 # ARM B of docs/plans/prereg-calibration.md. A multiplier on the per-seat
 # spread, so the simulation carries more genuine seat-level uncertainty. Default
@@ -106,7 +93,15 @@ CAL_TAG <- paste0(
   if (identical(Sys.getenv("AUSPOL_SEAT_SWING_PORT", "0"), "1")) "-port" else "",
   if (N_SIMS != 20000L) sprintf("-n%d", N_SIMS) else "",
   if (!is.null(PARTY_COR)) "-cor" else "",
-  if (identical(Sys.getenv("AUSPOL_QLD_FLOWS", "0"), "1")) "-qld" else "")
+  if (identical(Sys.getenv("AUSPOL_QLD_FLOWS", "0"), "1")) "-qld" else "",
+  if (identical(Sys.getenv("AUSPOL_WA_FLOWS", "0"), "1")) "-wa" else "",
+  # The control arm of refusal W1 runs with the flows switched ON and a cutoff
+  # that admits nothing. Without this it would write to the same "-wa" name as
+  # the real arm and overwrite it -- the baseline-clobbering that has already
+  # produced four byte-identical comparisons here.
+  if (nzchar(Sys.getenv("AUSPOL_WA_CUTOFF", "")) ||
+      nzchar(Sys.getenv("AUSPOL_QLD_CUTOFF", ""))) "-cut" else "",
+  if (identical(Sys.getenv("AUSPOL_WA_DROP_LNP", "0"), "1")) "-nolnp" else "")
 
 SEED <- 42; SMOOTH <- 0.15; eps <- 1e-6
 P <- election_data_path()
@@ -148,7 +143,7 @@ for (K in PAIRS) {
   # table trivially satisfies an all() check, which is the guard-that-cannot-
   # fail pattern CLAUDE.md records.
   stopifnot(nrow(tx) > 100L, all(tx$election == ea))
-  tx <- add_qld(tx, FED_DATE[[as.character(K$to)]])
+  tx <- pool_configured_flows(tx, FED_DATE[[as.character(K$to)]])
   fm <- build_flow_matrix(tx, min_n = 3L)
 
   win <- WIN[election == eb, .(seat, winner = coal(winner))]

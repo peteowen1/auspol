@@ -127,6 +127,19 @@ if (!identical(Sys.getenv("AUSPOL_QLD_FLOWS", "1"), "0")) {
   if (!file.exists(qf)) stop("Run scripts/fetch_preferences_qld.R first.")
   tx <- rbind(tx, fread(qf), fill = TRUE)
 }
+# WESTERN AUSTRALIA, OFF BY DEFAULT. Against docs/plans/prereg-wa-flows.md,
+# which requires the backtest measurement before this ships. Seven admissible
+# elections, 1,634 exclusion events, taking One Nation's from 198 to 359.
+#
+# Routed through pool_external_flows() with the Victorian polling day, so the
+# same date guard the backtests use applies here rather than being assumed
+# unnecessary. The Queensland line above predates the helper and is left as it
+# is deliberately: it is on the published path, and the smallest diff that adds
+# Western Australia is the one least able to move the current forecast.
+VIC_2026 <- "2026-11-28"
+if (identical(Sys.getenv("AUSPOL_WA_FLOWS", "0"), "1")) {
+  tx <- pool_external_flows(tx, VIC_2026, "wa")
+}
 fm <- build_flow_matrix(tx, min_n = 3L)
 cat(sprintf("flow matrix: %d exclusions, %d cells at n>=3 of %d observed\n",
             uniqueN(tx[, .(election, seat, round)]), length(fm$conditional),
@@ -175,15 +188,51 @@ if (FLOW_SHIFT != 0) {
 # otherwise change the published seat forecast with nothing anywhere to show
 # it. Reported rather than fatal, because the diagnostic runs are legitimate;
 # what must never happen is one going unnoticed.
-default_run <- SEED == 42L && OUT_SUFFIX == "" && FLOW_SHIFT == 0 &&
-  FP_SD_MODE == "additive" &&
-  ONP_ORDER == "federal" && ONP_FIX == "1"
+# EVERY environment variable that changes what this script COMPUTES, with the
+# value a default publish run carries. The previous version of this check
+# listed six by hand and missed six more -- AUSPOL_SHRINK, AUSPOL_PARTY_COR,
+# AUSPOL_QLD_FLOWS, AUSPOL_WA_FLOWS, AUSPOL_FORCE_FP, AUSPOL_ONP_CV and
+# AUSPOL_N_SIMS -- so a run with the calibration shrink switched off would
+# write over output/seat-probs-vic-2026.csv with a materially different,
+# over-confident forecast while S6 printed PASS.
+#
+# AUSPOL_PARTY_COR=off was the worst of them: the one line that would have
+# revealed it sits inside `if (!is.null(sw_cor))`, which is NULL exactly when
+# the flag is off. A silent divergence, certified as the default run.
+#
+# Derived from the list rather than restated, so adding a flag without adding
+# it here is the only remaining way to reopen the hole -- and S6 now prints
+# what actually differs, which a hand-maintained boolean could not.
+RUN_FLAGS <- c(AUSPOL_N_SIMS = "20000", AUSPOL_FP_SD_MODE = "additive",
+               AUSPOL_SEED = "42", AUSPOL_ONP_ORDER = "federal",
+               AUSPOL_ONP_FIX = "1", AUSPOL_QLD_FLOWS = "1",
+               AUSPOL_WA_FLOWS = "0", AUSPOL_FLOW_SHIFT = "0",
+               AUSPOL_FORCE_FP = "", AUSPOL_ONP_CV = "0",
+               AUSPOL_PARTY_COR = "shrunk", AUSPOL_SHRINK = "0.10")
+.now <- vapply(names(RUN_FLAGS), function(k) Sys.getenv(k, RUN_FLAGS[[k]]),
+               character(1))
+changed <- names(RUN_FLAGS)[.now != RUN_FLAGS]
+default_run <- length(changed) == 0L && OUT_SUFFIX == ""
+
+# AND REFUSE TO WRITE THE PUBLISHED FILENAME FROM A NON-DEFAULT RUN. Reporting
+# was not enough: S6 is one line in a long log, and by the time it prints the
+# overwrite has already happened. A diagnostic run stays legitimate -- it just
+# has to name its own output.
+if (length(changed) && OUT_SUFFIX == "") {
+  stop("This run changes ", paste(changed, collapse = ", "),
+       " but would write to the PUBLISHED filenames. Set AUSPOL_OUT_SUFFIX to ",
+       "something naming the arm, or unset those variables. Overwriting ",
+       "output/seat-probs-vic-2026.csv from a diagnostic run is how a ",
+       "forecast nobody chose gets published.")
+}
 cat(sprintf(paste0("S6  run config: seed %d, FP sd %s, flow %+.2f, ",
                    "ONP %s/fix%s, suffix %s  %s
 "),
             SEED, FP_SD_MODE, FLOW_SHIFT, ONP_ORDER, ONP_FIX,
             if (OUT_SUFFIX == "") "(none)" else OUT_SUFFIX,
-            if (default_run) "PASS" else "FAIL -- NOT A DEFAULT PUBLISH RUN"))
+            if (default_run) "PASS" else
+              paste("FAIL -- NOT A DEFAULT PUBLISH RUN; changed:",
+                    paste(changed, collapse = ", "))))
 now <- trend_as_at(polls, 2026, cycles, Sys.Date(), priors, fl, with_series = TRUE)
 last <- as.data.table(now$series)[, .SD[which.max(date)], by = party]
 tppr <- last[party == "TPP_ALP"]

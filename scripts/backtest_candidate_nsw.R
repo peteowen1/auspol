@@ -24,33 +24,21 @@ options(auspol.root = normalizePath("."))
 suppressMessages(devtools::load_all(quiet = TRUE))
 suppressMessages(library(data.table))
 
-# ---- Queensland flows, date-filtered ---------------------------------------
-# Against docs/plans/prereg-qld-flows.md. Queensland 2020 and 2024 add 750
-# exclusion events and take One Nation's from 18 to 198. They may only be used
-# to predict an election held AFTER them, so the filter takes the predicted
-# election's own date and admits nothing later.
+# ---- no other jurisdiction's flows reach New South Wales --------------------
+# There WAS a Queensland gate here. It was defined and never called, while the
+# harness still wrote its output under a "-qld" filename -- so an arm run with
+# Queensland on came out byte-identical to the baseline and would have read as
+# "Queensland makes no difference to New South Wales" rather than "Queensland
+# was never added". That is the same shape as the four identical-output
+# incidents CLAUDE.md records, so both the dead function and the misleading
+# suffix are gone.
 #
-# Q1 makes the elections predating both a CONTROL: their arms must come out
-# byte-identical.
-QLD_DATES <- c(qld2020 = "2020-10-31", qld2024 = "2024-10-26")
-add_qld <- function(tx, before) {
-  if (!identical(Sys.getenv("AUSPOL_QLD_FLOWS", "0"), "1")) return(tx)
-  f <- file.path(election_data_path(), "ecq-qld-transfers.csv")
-  if (!file.exists(f)) stop("Run scripts/fetch_preferences_qld.R first.")
-  ok <- names(QLD_DATES)[as.Date(QLD_DATES) < as.Date(before)]
-  if (!length(ok)) {
-    cat(sprintf("QF5  no Queensland election precedes %s; unchanged (control)
-",
-                as.character(before)))
-    return(tx)
-  }
-  q <- data.table::fread(f, showProgress = FALSE)[election %in% ok]
-  cat(sprintf("QF5  +%s for %s: %d exclusion events added
-",
-              paste(ok, collapse = "+"), as.character(before),
-              data.table::uniqueN(q[, paste(election, seat, round)])))
-  data.table::rbindlist(list(tx, q), fill = TRUE)
-}
+# Not calling it was CORRECT, and the reason is restated at the flow matrix
+# below: NSW is optional preferential and roughly 12% of its ballots exhaust,
+# while Queensland's and Western Australia's are full preferential and exhaust
+# almost nothing. Pooling either into NSW estimates a rate describing neither,
+# measured at 0.194 of log score worse. Refusal Q2 of prereg-qld-flows.md
+# covered only the reverse direction; prereg-wa-flows.md is amended to say so.
 
 # ARM B of docs/plans/prereg-calibration.md. A multiplier on the per-seat
 # spread, so the simulation carries more genuine seat-level uncertainty. Default
@@ -87,8 +75,15 @@ if (nzchar(Sys.getenv("AUSPOL_PARTY_COR", ""))) {
 CAL_TAG <- paste0(
   if (SEAT_SD_MULT != 1) sprintf("-m%s", format(SEAT_SD_MULT, nsmall = 1)) else "",
   if (identical(Sys.getenv("AUSPOL_SEAT_SWING_PORT", "0"), "1")) "-port" else "",
-  if (!is.null(PARTY_COR)) "-cor" else "",
-  if (identical(Sys.getenv("AUSPOL_QLD_FLOWS", "0"), "1")) "-qld" else "")
+  # "-corraw" and "-cor" are DIFFERENT correlation matrices. Both used to tag
+  # "-cor", so running the raw arm and then the shrunk one wrote the second
+  # over the first and a before/after comparison compared an arm with itself.
+  if (!is.null(PARTY_COR))
+    (if (identical(Sys.getenv("AUSPOL_PARTY_COR"), "raw")) "-corraw" else "-cor")
+  else "",
+  # No -qld or -wa suffix: neither is admissible here, so an arm carrying
+  # one would be a filename promising a difference the run cannot make.
+  "")
 
 N_SIMS <- 20000
 SEED   <- 42

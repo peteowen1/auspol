@@ -15,33 +15,16 @@ options(auspol.root = normalizePath("."))
 suppressMessages(devtools::load_all(quiet = TRUE))
 suppressMessages(library(data.table))
 
-# ---- Queensland flows, date-filtered ---------------------------------------
-# Against docs/plans/prereg-qld-flows.md. Queensland 2020 and 2024 add 750
-# exclusion events and take One Nation's from 18 to 198. They may only be used
-# to predict an election held AFTER them, so the filter takes the predicted
-# election's own date and admits nothing later.
+# ---- other jurisdictions' flows, date-filtered ------------------------------
+# Against docs/plans/prereg-qld-flows.md and docs/plans/prereg-wa-flows.md.
+# Queensland 2020 and 2024 add 750 exclusion events; Western Australia's seven
+# admissible elections add 1,634 and take One Nation's from 198 to 359.
 #
-# Q1 makes the elections predating both a CONTROL: their arms must come out
-# byte-identical.
-QLD_DATES <- c(qld2020 = "2020-10-31", qld2024 = "2024-10-26")
-add_qld <- function(tx, before) {
-  if (!identical(Sys.getenv("AUSPOL_QLD_FLOWS", "0"), "1")) return(tx)
-  f <- file.path(election_data_path(), "ecq-qld-transfers.csv")
-  if (!file.exists(f)) stop("Run scripts/fetch_preferences_qld.R first.")
-  ok <- names(QLD_DATES)[as.Date(QLD_DATES) < as.Date(before)]
-  if (!length(ok)) {
-    cat(sprintf("QF5  no Queensland election precedes %s; unchanged (control)
-",
-                as.character(before)))
-    return(tx)
-  }
-  q <- data.table::fread(f, showProgress = FALSE)[election %in% ok]
-  cat(sprintf("QF5  +%s for %s: %d exclusion events added
-",
-              paste(ok, collapse = "+"), as.character(before),
-              data.table::uniqueN(q[, paste(election, seat, round)])))
-  data.table::rbindlist(list(tx, q), fill = TRUE)
-}
+# Either may only be used to predict an election held AFTER it. That rule lives
+# in pool_configured_flows() rather than in a copy per harness -- there were
+# four byte-identical copies, one of which had rotted into a gate that was
+# defined and never called, and it is the one rule here that must never be
+# wrong. Both sources default OFF.
 
 # ARM B of docs/plans/prereg-calibration.md. A multiplier on the per-seat
 # spread. Default 1 reproduces the published behaviour exactly.
@@ -68,8 +51,21 @@ CAL_TAG <- paste0(
   if (SEAT_SD_MULT != 1) sprintf("-m%s", format(SEAT_SD_MULT, nsmall = 1)) else "",
   if (identical(Sys.getenv("AUSPOL_SEAT_SWING_PORT", "0"), "1")) "-port" else "",
   if (N_SIMS != 20000L) sprintf("-n%d", N_SIMS) else "",
-  if (!is.null(PARTY_COR)) "-cor" else "",
-  if (identical(Sys.getenv("AUSPOL_QLD_FLOWS", "0"), "1")) "-qld" else "")
+  # "-corraw" and "-cor" are DIFFERENT correlation matrices. Both used to tag
+  # "-cor", so running the raw arm and then the shrunk one wrote the second
+  # over the first and a before/after comparison compared an arm with itself.
+  if (!is.null(PARTY_COR))
+    (if (identical(Sys.getenv("AUSPOL_PARTY_COR"), "raw")) "-corraw" else "-cor")
+  else "",
+  if (identical(Sys.getenv("AUSPOL_QLD_FLOWS", "0"), "1")) "-qld" else "",
+  if (identical(Sys.getenv("AUSPOL_WA_FLOWS", "0"), "1")) "-wa" else "",
+  # The control arm of refusal W1 runs with the flows switched ON and a cutoff
+  # that admits nothing. Without this it would write to the same "-wa" name as
+  # the real arm and overwrite it -- the baseline-clobbering that has already
+  # produced four byte-identical comparisons here.
+  if (nzchar(Sys.getenv("AUSPOL_WA_CUTOFF", "")) ||
+      nzchar(Sys.getenv("AUSPOL_QLD_CUTOFF", ""))) "-cut" else "",
+  if (identical(Sys.getenv("AUSPOL_WA_DROP_LNP", "0"), "1")) "-nolnp" else "")
 
 SEED <- 42; SMOOTH <- 0.15; eps <- 1e-6
 P <- election_data_path()
@@ -92,7 +88,7 @@ for (K in PAIRS) {
   # LEAKAGE GUARD, asserted on the source rather than on a filtered copy: a
   # table filtered to one election trivially contains only that election.
   stopifnot(all(tx$election == sprintf("vic%d", K$from)))
-  tx <- add_qld(tx, if (K$to == 2018L) "2018-11-24" else "2022-11-26")
+  tx <- pool_configured_flows(tx, if (K$to == 2018L) "2018-11-24" else "2022-11-26")
   fm <- build_flow_matrix(tx, min_n = 3L)
 
   wf <- file.path(P, sprintf("vec-%d-vic-winners.csv", K$to))
@@ -300,8 +296,19 @@ for (K in PAIRS) {
   print(head(res[pred != actual][order(prob),
                                  .(seat, we_said = pred, our_p = round(pred_p, 3),
                                    actual, gave_winner = round(prob, 3))], 8))
-  tot_all[[length(tot_all) + 1L]] <- data.table::data.table(
-    pair = sprintf("vic%d", K$to), as.data.table(sim$totals))
+  # `sim` exists only on the non-FLOW_UNC branch: the ensemble path builds win
+  # probabilities by accumulating counts and never produces a totals matrix. It
+  # was referenced here unconditionally, so AUSPOL_FLOW_UNC=1 died with
+  # "object 'sim' not found" partway through the first pair -- meaning the
+  # flow-uncertainty comparison this script describes could not have been
+  # produced by running it. Skipped and SAID, rather than skipped silently.
+  if (FLOW_UNC) {
+    cat("BV3b no seat-totals matrix under flow uncertainty; totals not written.
+")
+  } else {
+    tot_all[[length(tot_all) + 1L]] <- data.table::data.table(
+      pair = sprintf("vic%d", K$to), as.data.table(sim$totals))
+  }
   out_all[[length(out_all) + 1L]] <- res
 }
 

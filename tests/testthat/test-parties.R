@@ -97,3 +97,16 @@ test_that("a party is not made Coalition by the word liberal in its name", {
   # Democrats; nothing in its name said so, so it read as OTH.
   expect_equal(classify_party("Call To Australia (WA)"), "OTH_RIGHT")
 })
+
+test_that("a minor party is not filed as OTH because of word order", {
+  # These two are the same movement under the same man. Only the second used to
+  # match, and Palmer United took 5.56% of the 2013 federal vote and won
+  # Fairfax -- a seat whose winner therefore read as "OTH".
+  expect_equal(classify_party("Palmer United Party"), "OTH_RIGHT")
+  expect_equal(classify_party("United Australia Party"), "OTH_RIGHT")
+  expect_equal(classify_party("Clive Palmer's United Australia Party"), "OTH_RIGHT")
+  expect_equal(classify_party("Rise Up Australia Party"), "OTH_RIGHT")
+  # Not a licence to catch anything with "united" or "australia" in it.
+  expect_equal(classify_party("Australian Democrats"), "OTH")
+  expect_equal(classify_party("Sustainable Australia Party"), "OTH")
+})
