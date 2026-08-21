@@ -14,7 +14,8 @@ simulate_seat_contests(
   seed = NULL,
   statewide_draws = NULL,
   party_draws = NULL,
-  shrink = 0
+  shrink = 0,
+  party_cor = NULL
 )
 }
 \arguments{
@@ -80,6 +81,13 @@ It works mainly by putting a floor under catastrophic misses. A seat given
 a near-zero probability that is then won costs log(0.05) rather than
 log(0.016), and the log score is dominated by exactly those seats.
 See docs/reviews/calibration-2026-08-21.md.}
+
+\item{party_cor}{Optional correlation matrix between parties' statewide
+deviations, with parties as dimnames and a unit diagonal. NULL draws them
+independently, which is what this did before and is not defensible: a
+simulation where one party runs hot has to take those votes from someone.
+Estimated across ten election pairs by
+\code{scripts/estimate_statewide_cov.R}. Scale still comes from \code{party_sd}.}
 }
 \value{
 List: \code{win_prob} (data.frame, one row per seat and party with a

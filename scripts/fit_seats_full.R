@@ -346,12 +346,66 @@ cat(sprintf("ONP allocation: target CV %.3f, delivered %.3f (previously compress
 set.seed(SEED)
 psd <- vapply(parties, function(p) if (is.na(state_sd[p])) 1.5 else state_sd[[p]],
               numeric(1))
-sw_draws <- vapply(parties, function(p) {
-  m <- if (is.na(state_mean[p])) mean(shares[, p]) else state_mean[[p]]
-  pmax(0.1, stats::rnorm(N_SIMS, m, psd[[p]]))
-}, numeric(N_SIMS))
+# CORRELATED ACROSS PARTIES, not independent. Drawing each party on its own and
+# renormalising means a simulation where One Nation runs five points hot takes
+# those votes evenly from Labor, the Greens and the Coalition alike. Measured
+# across the ten election pairs this repo holds, the statewide change in One
+# Nation's vote correlates with the Coalition's at -0.83 and with Labor's at
+# -0.12: it takes Coalition votes and almost nothing else.
+#
+# That biases in a knowable direction. One Nation's winnable seats are the ones
+# it takes from the Coalition, so under independence its good simulations are
+# not systematically the Coalition's bad ones and it crosses the line less often
+# than it should.
+#
+# AUSPOL_PARTY_COR=off restores independent draws exactly. The value is "off"
+# rather than an empty string because PowerShell REMOVES an environment
+# variable when it is set to '', so R falls back to the default and the arm
+# silently runs the opposite way -- which is how the first attempt at this
+# comparison ran the correlated branch while claiming to be the baseline.
+# See docs/plans/prereg-statewide-covariance.md and
+# scripts/estimate_statewide_cov.R.
+COR_MODE <- Sys.getenv("AUSPOL_PARTY_COR", "shrunk")
+sw_cor <- NULL
+if (!identical(COR_MODE, "off") && nzchar(COR_MODE)) {
+  .co <- readRDS("output/statewide-cov.rds")
+  cm <- if (identical(COR_MODE, "raw")) .co$cor else .co$cor_shrunk
+  miss <- setdiff(parties, colnames(cm))
+  if (length(miss)) {
+    stop("The statewide correlation has no entry for: ",
+         paste(miss, collapse = ", "),
+         ". Re-run scripts/estimate_statewide_cov.R.")
+  }
+  sw_cor <- cm[parties, parties, drop = FALSE]
+}
+mu <- vapply(parties, function(p) {
+  if (is.na(state_mean[p])) mean(shares[, p]) else state_mean[[p]]
+}, numeric(1))
+if (is.null(sw_cor)) {
+  sw_draws <- vapply(parties, function(p)
+    pmax(0.1, stats::rnorm(N_SIMS, mu[[p]], psd[[p]])), numeric(N_SIMS))
+} else {
+  Z <- matrix(stats::rnorm(N_SIMS * length(parties)), nrow = N_SIMS)
+  sw_draws <- Z %*% chol(sw_cor)
+  sw_draws <- sweep(sweep(sw_draws, 2, psd[parties], "*"), 2, mu, "+")
+  # pmax(0.1, m) DROPS the dim attribute, so the matrix arrives first.
+  sw_draws <- pmax(sw_draws, 0.1)
+}
 colnames(sw_draws) <- parties
 sw_draws <- sw_draws / rowSums(sw_draws) * 100
+# VERIFY the correlation SURVIVED renormalisation, rather than assuming it. The
+# rescale to 100 is itself a transformation and could undo what was imposed; if
+# One Nation and the Coalition come out uncorrelated here, the draws going into
+# the simulation are not the ones that were measured.
+if (!is.null(sw_cor) && all(c("ONP", "LNP") %in% parties)) {
+  realised <- stats::cor(sw_draws[, "ONP"], sw_draws[, "LNP"])
+  cat(sprintf("COV  statewide draws correlated (%s): cor(ONP,LNP) target %+.2f, realised %+.2f\n",
+              COR_MODE, sw_cor["ONP", "LNP"], realised))
+  if (realised > -0.10) {
+    stop("The imposed correlation did not survive renormalisation: target ",
+         round(sw_cor["ONP", "LNP"], 2), ", realised ", round(realised, 2), ".")
+  }
+}
 
 flow_of <- function(p) {
   f <- fl$flow_alp[fl$party == p]
