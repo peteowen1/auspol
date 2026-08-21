@@ -1,6 +1,6 @@
 # auspol — work queue
 
-Updated 2026-08-18. Remote: github.com/peteowen1/auspol (private, default
+Updated 2026-08-21. Remote: github.com/peteowen1/auspol (private, default
 branch `dev`; `main` exists and is reached only through a reviewed PR).
 
 Completed stage write-ups live in
@@ -43,6 +43,73 @@ open state, not the narrative of how it got here.
   bar. It beats a uniform allocation by only 0.122 MAE, so trust the One
   Nation **total** rather than any individual One Nation seat. See
   [reviews/onp-allocation-checks-2026-08-18.md](reviews/onp-allocation-checks-2026-08-18.md).
+
+## Session of 2026-08-21 — the model was over-confident, and now it is not
+
+**The day's lesson: every decision this repo had made about the seat model
+rested on 166 seats across two elections, while the repo held 1,187 across
+ten.** The federal corpus had never been pointed at the seat model at all.
+Pointing it there immediately exposed a defect no two-election test could see.
+
+### Changed in the published model
+
+- **Calibration shrink, 0.10, ON.** The slope was below 1 in **9 of 10**
+  elections: a seat called at 95% won about 70% of the time. A per-draw shrink
+  beats a post-hoc temperature by 3.36 SE *and* keeps the seat-count histogram
+  consistent with the per-seat probabilities, which is what blocked the
+  temperature from shipping. `AUSPOL_SHRINK=0` restores the old behaviour.
+  [reviews/calibration-2026-08-21.md](reviews/calibration-2026-08-21.md)
+- **Statewide draws are correlated across parties, ON.** They were independent,
+  so a party's extra votes came from nowhere; measured across ten election
+  pairs, cor(ONP, LNP) = **−0.83**. Adopted at **+1.998 SE against a bar of 2**
+  — a gap the test cannot resolve, with no metric conflict and a measured
+  mechanism. Victoria's medians do not move at all; One Nation's 90% range
+  widens 1–11 to 1–12. `AUSPOL_PARTY_COR=off` restores the old behaviour.
+  [plans/prereg-statewide-covariance.md](plans/prereg-statewide-covariance.md)
+- **Two false claims removed from the published page.** It said the forecast
+  "uses 33.7% of One Nation preferences" (seats come from a survivor-conditioned
+  matrix; 33.7 only anchors the statewide two-party total) and that each seat's
+  federal swing "is used, and is the strongest seat-level signal here" (it is
+  not used at all — that is the retired two-party model's predictor).
+
+### Acquired
+
+- **Federal backtest, 6 pairs, 886 division-elections** — the corpus had this
+  data and had never scored the seat model on it.
+- **South Australia 2022 and 2026**: first preferences, declared winners, and
+  the 2022→2026 pair. 47 seats, and the only election where One Nation
+  contested at Victoria's level.
+- Corpus now **1,187 seats across 10 elections**, from 166 across 2.
+
+### Refused, each on its own criterion
+
+- **Seat-swing port, round 3.** Helps in 3 of 3 elections but fires refusal P2:
+  it sharpens predictions, and the model is over-confident in 9 of 10. Behind
+  `AUSPOL_SEAT_SWING_PORT`, default off.
+  [reviews/seat-swing-port-round3-2026-08-21.md](reviews/seat-swing-port-round3-2026-08-21.md)
+- **Coordinate-built correspondences** for the four cycles that already have
+  one: worse for Victoria (r 0.862 against 0.952). Kept only for Queensland,
+  where nothing competes.
+
+### Open, in rough priority order
+
+1. **The One Nation allocation SHAPE has one observation and cannot be
+   validated.** Its ordering replicates well (Spearman **+0.939** on SA 2026
+   against +0.814 on NSW 2023), but `sa_ratio` is fitted on SA 2026 itself, so
+   no election can test it. Victoria 2026 is its first out-of-sample exposure,
+   and it carries the difference between One Nation winning four seats and
+   forty. [reviews/onp-ordering-sa-2026-08-21.md](reviews/onp-ordering-sa-2026-08-21.md)
+2. **Our One Nation primary is 20.2% against YouGov 24 and Morgan 23.5.** That
+   3–4 point gap is most of the seat disagreement, through threshold
+   amplification — the curve runs 0 seats at 12%, 5 at 20.2%, 16 at 26%, 26 at
+   30%. Whether the trend model lags a rising party is the live question.
+   `AUSPOL_FORCE_FP="ONP=30"` reproduces any point on that curve.
+3. **Queensland and WA state elections are still unfetched.** QLD's results
+   site is a JavaScript app with no API found in its bundles; WA's does not
+   resolve. Worth ~150 seats per election each.
+4. **The backtest harnesses allocate a statewide movement uniformly**, while
+   the production model orders One Nation's vote by its federal vote. So no
+   backtest tests the allocation that decides One Nation's seat count.
 
 ## Session of 2026-08-20 — data acquisition changed what is knowable
 
