@@ -269,6 +269,32 @@ for (r in seq_along(ord)) {
     sa_ratio[lo] + (pos - (lo - 1)) * (sa_ratio[hi] - sa_ratio[lo])
 }
 
+# SENSITIVITY HANDLE on the single most load-bearing unvalidated number here.
+# `sa_ratio` sets how CONCENTRATED One Nation's vote is across seats, and
+# concentration decides how many seats it LEADS -- which, on South Australian
+# evidence, is most of winning. It is fitted on one election.
+#
+# docs/reviews/onp-concentration-2026-08-21.md bounds it. Federal One Nation
+# polls 4-9% against Victoria's forecast ~20%, and the two ways of carrying a
+# concentration across that gap disagree by a factor of 4.4: holding the SD in
+# points fixed implies a CV of 0.110 at 22.9%, holding the CV fixed implies
+# 0.482. South Australia actually delivered 0.334, between them.
+#
+# AUSPOL_ONP_CV rescales the ratio about 1 to hit a stated CV, so the seat range
+# can be reported at both ends of that bound instead of at one unvalidated
+# point. Unset leaves the shape exactly as measured.
+ONP_CV <- as.numeric(Sys.getenv("AUSPOL_ONP_CV", "0"))
+if (is.finite(ONP_CV) && ONP_CV > 0) {
+  cur <- stats::sd(onp_ratio) / mean(onp_ratio)
+  # VECTOR FIRST. pmax(0.02, x) drops x's NAMES, exactly as pmax(0.1, m) drops a
+  # matrix's dim -- and onp_ratio is looked up BY SEAT NAME immediately after,
+  # so the whole allocation silently became NA. Second time this argument order
+  # has bitten today.
+  onp_ratio <- pmax(1 + (ONP_CV / cur) * (onp_ratio - 1), 0.02)
+  cat(sprintf("CN1  One Nation concentration forced: CV %.3f -> %.3f (delivered %.3f)\n",
+              cur, ONP_CV, stats::sd(onp_ratio) / mean(onp_ratio)))
+}
+
 parties <- colnames(mat22)
 shares <- mat22
 modelled <- intersect(parties, names(state_mean))
