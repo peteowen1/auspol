@@ -123,3 +123,36 @@ were refused on grounds invented after the result.
   to not matter.
 - **Anything about the One Nation allocation**, a separate input still fitted on
   one election.
+
+---
+
+## Amendment, 2026-08-21, before any result was seen
+
+**The original text above is left unedited.** This is an addition, and the
+check `CLAUDE.md` demands is whether it favours the answer found later. It does
+not: it makes the test harder to pass and shrinks the evidence base.
+
+**New South Wales cannot take Western Australian transfers, so the two NSW
+elections are out.** NSW is optional preferential and about 12% of its ballots
+exhaust; Western Australia is full preferential and exhausts under 1%. Pooling
+them estimates a rate describing neither -- the mistake that cost 0.194 of log
+score when Queensland was added to NSW, discovered *after* `prereg-qld-flows.md`
+was written, whose refusal Q2 covered only the reverse direction.
+
+I wrote the leakage table above from the Queensland pre-registration without
+re-deriving it, and it inherited that error. Corrections:
+
+- **Eight backtest elections, not ten**: six federal, vic2018, vic2022, sa2026.
+  That is nine minus one -- sa2026 makes nine. Precisely: fed2010, fed2013,
+  fed2016, fed2019, fed2022, fed2025, vic2018, vic2022, sa2026 = **nine**.
+- **Degrees of freedom fall from 9 to 8**, so the 2 SE bar in the decision rule
+  is marginally wider. The rule itself is unchanged.
+- **nsw2019 and nsw2023 are neither improvable nor control.** They are not run.
+
+**A second, unrelated defect this surfaced**, fixed in the same change: the NSW
+harness *defined* the Queensland gate and never called it, while still writing
+its output under a `-qld` filename. An arm run with Queensland on was therefore
+byte-identical to the baseline and would have read as "Queensland makes no
+difference to New South Wales" rather than "Queensland was never added". Dead
+code and a misleading filename, which is the exact shape of the four
+identical-output incidents already recorded. Both are removed.
