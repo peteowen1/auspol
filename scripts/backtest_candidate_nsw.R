@@ -43,9 +43,23 @@ if (SEAT_SD_MULT != 1) cat(sprintf("CAL  seat_sd multiplier %.2f applied
 # for an experiment that never ran.
 #
 # A default run still writes the plain name, so nothing downstream changes.
+
+# ARM B/C of docs/plans/prereg-statewide-covariance.md. AUSPOL_PARTY_COR=shrunk
+# correlates the parties' statewide deviations instead of drawing them
+# independently. Empty (the default) reproduces the previous behaviour exactly.
+PARTY_COR <- NULL
+if (nzchar(Sys.getenv("AUSPOL_PARTY_COR", ""))) {
+  .co <- readRDS("output/statewide-cov.rds")
+  PARTY_COR <- if (identical(Sys.getenv("AUSPOL_PARTY_COR"), "raw")) .co$cor else .co$cor_shrunk
+  cat(sprintf("COV  party correlation ON (%s): cor(ONP,LNP) = %+.2f
+",
+              Sys.getenv("AUSPOL_PARTY_COR"), PARTY_COR["ONP", "LNP"]))
+}
+
 CAL_TAG <- paste0(
   if (SEAT_SD_MULT != 1) sprintf("-m%s", format(SEAT_SD_MULT, nsmall = 1)) else "",
-  if (identical(Sys.getenv("AUSPOL_SEAT_SWING_PORT", "0"), "1")) "-port" else "")
+  if (identical(Sys.getenv("AUSPOL_SEAT_SWING_PORT", "0"), "1")) "-port" else "",
+  if (!is.null(PARTY_COR)) "-cor" else "")
 
 N_SIMS <- 20000
 SEED   <- 42
@@ -182,7 +196,7 @@ cat(sprintf("\nBT3  seat spread: within %.2f, between %.2f\n", sp$sd_within, sp$
 set.seed(SEED)
 psd <- setNames(rep(1.5, length(parties)), parties)
 sim <- simulate_seat_contests(shares, fm, party_sd = psd, seat_sd = sp$sd_within * SEAT_SD_MULT,
-                              n_sims = N_SIMS, smooth = SMOOTH, seed = SEED)
+                              n_sims = N_SIMS, smooth = SMOOTH, seed = SEED, party_cor = PARTY_COR)
 wp <- as.data.table(sim$win_prob)
 
 sc <- merge(data.table(seat = names(truth), actual = unname(truth))[seat %in% keep],
@@ -259,4 +273,5 @@ cat(sprintf("BT8  independents won %d of %d scored seats; we gave them a mean %.
             mean(res[actual == "IND", p])))
 
 fwrite(res[order(seat)], file.path("output", sprintf("backtest-nsw2023%s.csv", CAL_TAG)))
+fwrite(data.table(pair = "nsw2023", as.data.table(sim$totals)), file.path("output", sprintf("backtest-nsw2023-totals%s.csv", CAL_TAG)))
 cat("\nWrote output/backtest-nsw2023.csv\n")

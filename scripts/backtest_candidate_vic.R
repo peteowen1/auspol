@@ -44,10 +44,24 @@ if (SEAT_SD_MULT != 1) cat(sprintf("CAL  seat_sd multiplier %.2f applied
 # compared by accident.
 N_SIMS <- as.integer(Sys.getenv("AUSPOL_N_SIMS", "20000"))
 
+
+# ARM B/C of docs/plans/prereg-statewide-covariance.md. AUSPOL_PARTY_COR=shrunk
+# correlates the parties' statewide deviations instead of drawing them
+# independently. Empty (the default) reproduces the previous behaviour exactly.
+PARTY_COR <- NULL
+if (nzchar(Sys.getenv("AUSPOL_PARTY_COR", ""))) {
+  .co <- readRDS("output/statewide-cov.rds")
+  PARTY_COR <- if (identical(Sys.getenv("AUSPOL_PARTY_COR"), "raw")) .co$cor else .co$cor_shrunk
+  cat(sprintf("COV  party correlation ON (%s): cor(ONP,LNP) = %+.2f
+",
+              Sys.getenv("AUSPOL_PARTY_COR"), PARTY_COR["ONP", "LNP"]))
+}
+
 CAL_TAG <- paste0(
   if (SEAT_SD_MULT != 1) sprintf("-m%s", format(SEAT_SD_MULT, nsmall = 1)) else "",
   if (identical(Sys.getenv("AUSPOL_SEAT_SWING_PORT", "0"), "1")) "-port" else "",
-  if (N_SIMS != 20000L) sprintf("-n%d", N_SIMS) else "")
+  if (N_SIMS != 20000L) sprintf("-n%d", N_SIMS) else "",
+  if (!is.null(PARTY_COR)) "-cor" else "")
 
 SEED <- 42; SMOOTH <- 0.15; eps <- 1e-6
 P <- election_data_path()
@@ -61,7 +75,7 @@ share_of <- function(f) {
   d[, .(votes = sum(votes)), by = .(seat, party)]
 }
 
-out_all <- list()
+out_all <- list(); tot_all <- list()
 for (K in PAIRS) {
   fa <- share_of(sprintf("vec-%d-vic-firstprefs.csv", K$from))
   fb <- share_of(sprintf("vec-%d-vic-firstprefs.csv", K$to))
@@ -250,7 +264,7 @@ for (K in PAIRS) {
     set.seed(SEED)
     sim <- simulate_seat_contests(shares, fm, party_sd = psd,
                                   seat_sd = sp$sd_within * SEAT_SD_MULT, n_sims = N_SIMS,
-                                  smooth = SMOOTH, seed = SEED)
+                                  smooth = SMOOTH, seed = SEED, party_cor = PARTY_COR)
     wp <- as.data.table(sim$win_prob)
   }
 
@@ -277,11 +291,14 @@ for (K in PAIRS) {
   print(head(res[pred != actual][order(prob),
                                  .(seat, we_said = pred, our_p = round(pred_p, 3),
                                    actual, gave_winner = round(prob, 3))], 8))
+  tot_all[[length(tot_all) + 1L]] <- data.table::data.table(
+    pair = sprintf("vic%d", K$to), as.data.table(sim$totals))
   out_all[[length(out_all) + 1L]] <- res
 }
 
 R <- rbindlist(out_all)
 fwrite(R, file.path("output", sprintf("backtest-vic%s.csv", CAL_TAG)))
+fwrite(rbindlist(tot_all, fill = TRUE), file.path("output", sprintf("backtest-vic-totals%s.csv", CAL_TAG)))
 cat(sprintf("\nBV4  pooled over %d district-elections: accuracy %.1f%%, Brier %.4f\n",
             nrow(R), 100 * mean(R$pred == R$actual), mean((1 - R$prob)^2)))
 cat("BV4  for comparison, NSW 2023 gave 80.7% and 0.1468\n")

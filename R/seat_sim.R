@@ -69,6 +69,12 @@
 #'   a near-zero probability that is then won costs log(0.05) rather than
 #'   log(0.016), and the log score is dominated by exactly those seats.
 #'   See docs/reviews/calibration-2026-08-21.md.
+#' @param party_cor Optional correlation matrix between parties' statewide
+#'   deviations, with parties as dimnames and a unit diagonal. NULL draws them
+#'   independently, which is what this did before and is not defensible: a
+#'   simulation where one party runs hot has to take those votes from someone.
+#'   Estimated across ten election pairs by
+#'   `scripts/estimate_statewide_cov.R`. Scale still comes from `party_sd`.
 #' @param smooth Passed to the transfer step; see [distribute_preferences()].
 #' @param seed Optional RNG seed.
 #' @return List: `win_prob` (data.frame, one row per seat and party with a
@@ -78,7 +84,8 @@
 simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
                                    n_sims = 2000, smooth = 0.15, seed = NULL,
                                    statewide_draws = NULL,
-                                   party_draws = NULL, shrink = 0) {
+                                   party_draws = NULL, shrink = 0,
+                                   party_cor = NULL) {
   if (!is.finite(shrink) || shrink < 0 || shrink >= 1) {
     stop("shrink must be in [0, 1); got ", shrink)
   }
@@ -129,6 +136,46 @@ simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
   sd_vec <- vapply(parties, function(p) {
     v <- party_sd[[p]]; if (is.null(v) || !is.finite(v)) 0 else v
   }, numeric(1))
+
+  # Correlation between parties' statewide deviations. NULL keeps the previous
+  # behaviour -- independent draws -- exactly.
+  #
+  # WHY IT IS NOT DEFENSIBLE TO LEAVE THEM INDEPENDENT. A simulation where One
+  # Nation runs five points above forecast is, under independence, equally
+  # likely to pair with a strong Coalition as a weak one. Votes come from
+  # somewhere: measured across ten election pairs, the correlation between the
+  # statewide change in One Nation's vote and the Coalition's is -0.83, against
+  # -0.12 for Labor.
+  #
+  # It biases in a knowable direction. One Nation's winnable seats are the ones
+  # it takes from the Coalition, so under independence its good simulations are
+  # not systematically the Coalition's bad ones and it crosses the line less
+  # often than it should.
+  chol_t <- NULL
+  if (!is.null(party_cor)) {
+    party_cor <- as.matrix(party_cor)
+    miss <- setdiff(parties, colnames(party_cor))
+    if (length(miss)) {
+      stop("party_cor is missing party/parties: ", paste(miss, collapse = ", "),
+           call. = FALSE)
+    }
+    party_cor <- party_cor[parties, parties, drop = FALSE]
+    if (any(abs(diag(party_cor) - 1) > 1e-8)) {
+      stop("party_cor must be a CORRELATION matrix (unit diagonal); the ",
+           "per-party scale comes from party_sd.", call. = FALSE)
+    }
+    # A correlation matrix estimated from few observations need not be positive
+    # definite, and chol() would fail with a message about the leading minor
+    # rather than about the statistics. Say which.
+    ev <- min(eigen(party_cor, symmetric = TRUE, only.values = TRUE)$values)
+    if (ev <= 1e-8) {
+      stop("party_cor is not positive definite (smallest eigenvalue ",
+           signif(ev, 3), "), so it does not describe any joint distribution. ",
+           "With ", ncol(party_cor), " parties it needs more election pairs ",
+           "than that, or more shrinkage toward the diagonal.", call. = FALSE)
+    }
+    chol_t <- t(chol(party_cor))
+  }
 
   # Flow lookup, keyed by from-index and survivor bitmask.
   pidx <- stats::setNames(seq_len(K), parties)
@@ -207,7 +254,8 @@ simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
 
   for (s in seq_len(n_sims)) {
     shift <- if (is.null(statewide_draws)) {
-      stats::rnorm(K, 0, sd_vec)
+      if (is.null(chol_t)) stats::rnorm(K, 0, sd_vec)
+      else as.vector(chol_t %*% stats::rnorm(K)) * sd_vec
     } else {
       # Deviation of this simulation's statewide result from the central one.
       # Seat shares are already centred, so only the departure is applied.

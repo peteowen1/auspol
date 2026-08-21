@@ -57,10 +57,24 @@ if (SEAT_SD_MULT != 1) cat(sprintf("CAL  seat_sd multiplier %.2f applied
 # compared by accident.
 N_SIMS <- as.integer(Sys.getenv("AUSPOL_N_SIMS", "20000"))
 
+
+# ARM B/C of docs/plans/prereg-statewide-covariance.md. AUSPOL_PARTY_COR=shrunk
+# correlates the parties' statewide deviations instead of drawing them
+# independently. Empty (the default) reproduces the previous behaviour exactly.
+PARTY_COR <- NULL
+if (nzchar(Sys.getenv("AUSPOL_PARTY_COR", ""))) {
+  .co <- readRDS("output/statewide-cov.rds")
+  PARTY_COR <- if (identical(Sys.getenv("AUSPOL_PARTY_COR"), "raw")) .co$cor else .co$cor_shrunk
+  cat(sprintf("COV  party correlation ON (%s): cor(ONP,LNP) = %+.2f
+",
+              Sys.getenv("AUSPOL_PARTY_COR"), PARTY_COR["ONP", "LNP"]))
+}
+
 CAL_TAG <- paste0(
   if (SEAT_SD_MULT != 1) sprintf("-m%s", format(SEAT_SD_MULT, nsmall = 1)) else "",
   if (identical(Sys.getenv("AUSPOL_SEAT_SWING_PORT", "0"), "1")) "-port" else "",
-  if (N_SIMS != 20000L) sprintf("-n%d", N_SIMS) else "")
+  if (N_SIMS != 20000L) sprintf("-n%d", N_SIMS) else "",
+  if (!is.null(PARTY_COR)) "-cor" else "")
 
 SEED <- 42; SMOOTH <- 0.15; eps <- 1e-6
 P <- election_data_path()
@@ -155,14 +169,14 @@ if (!is.finite(fallback)) {
 cat(sprintf("\nBF2  seat_sd per pair: %s | fallback (median) %.3f\n",
             paste(sprintf("%.2f", seat_sds), collapse = ", "), fallback))
 
-res_all <- list()
+res_all <- list(); tot_all <- list()
 for (X in out_all) {
   K <- X$K
   sd_w <- if (is.finite(X$sd_w)) X$sd_w else fallback
   psd <- setNames(rep(1.5, length(X$parties)), X$parties)
   set.seed(SEED)
   sim <- simulate_seat_contests(X$shares, X$fm, party_sd = psd, seat_sd = sd_w * SEAT_SD_MULT,
-                                n_sims = N_SIMS, smooth = SMOOTH, seed = SEED)
+                                n_sims = N_SIMS, smooth = SMOOTH, seed = SEED, party_cor = PARTY_COR)
   wp <- as.data.table(sim$win_prob)
 
   pa <- merge(data.table(seat = X$keep, actual = unname(X$truth)),
@@ -183,6 +197,13 @@ for (X in out_all) {
               100 * mean(res$pred == res$actual), mean((1 - res$prob)^2),
               -mean(log(pmax(res$prob, eps))), sl,
               if (is.finite(X$sd_w)) "" else "  [seat_sd fallback]"))
+  # Seat TOTALS, not just per-seat probabilities. A covariance between
+  # parties' statewide votes moves the joint distribution far more than any
+  # single seat's marginal, so the criterion in
+  # docs/plans/prereg-statewide-covariance.md is the total and it needs the
+  # simulation's own totals matrix.
+  tot_all[[length(tot_all) + 1L]] <- data.table::data.table(
+    pair = sprintf("fed%d", K$to), as.data.table(sim$totals))
   res_all[[length(res_all) + 1L]] <- res
 }
 
@@ -195,4 +216,5 @@ per <- R[, .(n = .N, accuracy = round(100 * mean(pred == actual), 1),
              brier = round(mean((1 - prob)^2), 4)), by = pair]
 print(per)
 fwrite(R, file.path("output", sprintf("backtest-fed%s.csv", CAL_TAG)))
+fwrite(rbindlist(tot_all, fill = TRUE), file.path("output", sprintf("backtest-fed-totals%s.csv", CAL_TAG)))
 cat(sprintf("BF5  wrote output/backtest-fed.csv\n"))
