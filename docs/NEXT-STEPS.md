@@ -44,6 +44,48 @@ open state, not the narrative of how it got here.
   Nation **total** rather than any individual One Nation seat. See
   [reviews/onp-allocation-checks-2026-08-18.md](reviews/onp-allocation-checks-2026-08-18.md).
 
+## Refusal M2 fires: the multiplicity split is refused on coverage
+
+`reviews/m2-cell-thinning-2026-08-22.md`. **Stopped before any arm was scored.**
+
+| | cells | at n>=3 | events in usable cells |
+|---|---:|---:|---:|
+| current key | 115 | 78 | **97%** |
+| with multiplicity | 265 | 102 | **86%** |
+
+M2's floor was 90%, fixed before measuring. Splitting more than doubles the
+cells and scatters the evidence: 161 more exclusion events drop below `min_n`
+and get answered by the pooled rate. The matrix becomes more precise where it
+still has data and less informed everywhere else, and one log score cannot tell
+those apart — which is why M2 was a coverage floor rather than left to the
+criterion.
+
+**`min_n` was NOT lowered to rescue it.** Changing a pre-registered constant
+after seeing it block a result is the rationalisation pattern `CLAUDE.md`
+records twice. Nor was the arm scored "just to see".
+
+### The exposure finding survives, and the remedies look different now
+
+44.5% of Victorian rounds still have a class fielding more than one candidate,
+dominated by the catch-all buckets. M2 says this remedy costs too much coverage,
+not that the problem is imaginary. Two candidates, each needing its own plan:
+
+- **narrow the buckets** so `OTH_RIGHT` is not one class doing the work of six —
+  addresses the cause rather than conditioning around it;
+- **weight by candidate count inside the existing cell** instead of splitting
+  it — costs no coverage at all.
+
+### Awaiting Pete
+
+- **`output/seat-probs-vic-2026.csv` changed and I could not attribute it.**
+  Ruled out: the new `to_n` column (flow matrix unchanged, every pooled rate
+  identical to the decimal, `seat-shares` byte-identical, run deterministic).
+  `output/` is gitignored so no previous copy survives to diff. Likeliest is
+  that the published artefact had drifted behind the code and this run refreshed
+  it — the published-vs-deployed hazard — but that is a guess and it is flagged
+  rather than assumed benign.
+
+
 ## Gate 1 passed, and the mechanism is our own classification
 
 `reviews/gate1-survivor-multiplicity-2026-08-22.md`. Exclusion rounds where a

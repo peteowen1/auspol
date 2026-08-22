@@ -4,7 +4,7 @@
 \alias{build_flow_matrix}
 \title{Build a preference flow matrix from observed transfers}
 \usage{
-build_flow_matrix(transfers, min_n = 3L)
+build_flow_matrix(transfers, min_n = 3L, multiplicity = FALSE)
 }
 \arguments{
 \item{transfers}{data.frame with columns \code{seat}, \code{round}, \code{from} (excluded
@@ -14,6 +14,18 @@ party), \code{to} (receiving party), \code{votes}, and optionally \code{election
 survivor-conditional cell to be reported in \code{conditional}. Cells below
 this are still counted in \code{coverage} but withheld, so a caller falls back
 to the pooled rate rather than trusting a rate built from one seat.}
+
+\item{multiplicity}{Condition each cell on how many CANDIDATES of a class
+survived the round, not merely on which classes did. Requires a \code{to_n}
+column giving that count. Default \code{FALSE} reproduces the previous key
+exactly, which is refusal M1 of \code{docs/plans/prereg-survivor-multiplicity.md}.
+
+Why it might matter: our classes are deliberately coarse, and \code{OTH_RIGHT},
+\code{OTH} and \code{IND} are buckets. A seat with three minor-right candidates gives
+\code{OTH_RIGHT} a multiplicity of three and keys identically to a seat with one,
+so the bucket collects three candidates' worth of preferences and the matrix
+reads that as the bucket being popular. Measured at 44.5\% of Victorian
+exclusion rounds -- see \verb{reviews/gate1-survivor-multiplicity-2026-08-22.md}.}
 }
 \value{
 List with \code{conditional} (named list keyed \code{"FROM|A+B+C"}), \code{pooled}
