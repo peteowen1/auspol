@@ -80,6 +80,25 @@ cannot be confounded by anything above.
 That prediction is written here before it is run, so a later result can be
 checked against it.
 
+**Corrected 2026-08-22, before it was run.** Reading `R/flow_matrix.R` rather
+than an earlier plan's summary of it shows the multiset framing above is wrong
+in its specifics, and the version of it I expected to matter is refuted
+outright:
+
+- **Rounds where only one class could receive votes are 22 of 1,658 in Western
+  Australia and ZERO elsewhere**, and removing them moves every pooled rate by
+  0.0 points. The pooled fallback is barely used at all — 97% of exclusion
+  events sit in conditional cells.
+- **A multiset is not representable in the current data.** Transfers are
+  aggregated to `(election, seat, round, from, to)` before the matrix sees
+  them, so two Coalition candidates were summed into one `LNP` row upstream.
+
+The mechanism that survives is narrower: when two candidates of one class
+survive a round, that class captures the sum of two candidates' shares, and the
+cell key cannot tell that round from an ordinary one. `docs/plans/prereg-
+survivor-multiplicity.md` tests it, on Victoria, South Australia and Queensland
+only, with Western Australia excluded from every arm.
+
 ## One defect found reviewing this change
 
 `WF3b` counted exclusion events **before** wa2001 is dropped for exhaustion, so
