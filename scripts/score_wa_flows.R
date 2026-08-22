@@ -156,4 +156,56 @@ SW6  fallback arm NOT RUN. W2 fired, so the pre-registration requires it.
 ")
 }
 
+
+# ---- the three-cornered arm -------------------------------------------------
+# Against docs/plans/prereg-wa-three-cornered.md, which sets a STRICTER bar than
+# the earlier plan because this is the third look at the same data for the same
+# decision: over 2.5 SE, and positive in at least 6 of the 9 elections. The
+# "adopt anyway under 2 SE" clause deliberately does not carry over -- it rested
+# on more One Nation evidence being better than less, and this arm cuts One
+# Nation exclusions from 161 to 102.
+if (all(file.exists(arm_files("-qld-wa-no3c")))) {
+  D <- read_arm("-qld-wa-no3c")
+  if (identical(unname(md5_of("-qld-wa")), unname(md5_of("-qld-wa-no3c")))) {
+    stop("The three-cornered arm is byte-identical to the full WA arm; the ",
+         "filter did not apply.")
+  }
+  M3 <- merge(A, D, by = c("pair", "seat"), suffixes = c("_a", "_d"))
+  stopifnot(nrow(M3) == nrow(A))
+  M3[, `:=`(ls_a = -log(pmax(prob_a, EPS)), ls_d = -log(pmax(prob_d, EPS)))]
+  p3 <- M3[, .(gain = mean(ls_a) - mean(ls_d)), by = pair][order(pair)]
+  g3 <- p3$gain; se3 <- stats::sd(g3) / sqrt(length(g3)); t3 <- mean(g3) / se3
+  cat("\nSW7  three-cornered arm: WA without seats a Liberal and a National both contested\n")
+  print(p3[, .(pair, gain = round(gain, 4))])
+  cat(sprintf("SW7  mean gain %+.4f, SE %.4f, %+.2f SE on %d df, improved in %d of %d\n",
+              mean(g3), se3, t3, length(g3) - 1L, sum(g3 > 0), length(g3)))
+  cat(sprintf("SW7  arms so far: WA whole %+.2f SE, minus Coalition-origin %+.2f SE, this %+.2f SE\n",
+              t, if (exists("g2")) mean(g2) / se2 else NA_real_, t3))
+  pass <- t3 > 2.5 && sum(g3 > 0) >= 6L
+  cat(sprintf("SW7  decision rule (over 2.5 SE AND positive in 6+ of 9): %s\n",
+              if (pass) "MET" else "NOT MET -- refuse and close the question"))
+
+  # T3, the directional side effect named in advance and expected to fire: the
+  # ALP -> GRN row must not end further from Victoria than the baseline leaves
+  # it. A winning score does not excuse it.
+  P <- election_data_path()
+  rate <- function(t) 100 * t[from == "ALP" & to == "GRN", sum(votes)] /
+                      t[from == "ALP", sum(votes)]
+  vicx <- fread(file.path(P, "vec-2022-vic-transfers.csv"), showProgress = FALSE)
+  pool <- rbind(vicx,
+                fread(file.path(P, "ecsa-2026-sa-transfers.csv"), showProgress = FALSE),
+                fread(file.path(P, "ecq-qld-transfers.csv"), showProgress = FALSE),
+                fill = TRUE)
+  wax <- fread(file.path(P, "waec-wa-transfers.csv"), showProgress = FALSE)
+  wa3 <- wax[three_cornered %in% FALSE]
+  v <- rate(vicx); b <- rate(pool); a3 <- rate(rbind(pool, wa3, fill = TRUE))
+  cat(sprintf("\nSW8  T3, ALP -> GRN: Victoria %.1f, baseline pool %.1f, with this arm %.1f\n",
+              v, b, a3))
+  cat(sprintf("SW8  distance from Victoria: baseline %.1f, arm %.1f -> %s\n",
+              abs(v - b), abs(v - a3),
+              if (abs(v - a3) > abs(v - b)) "T3 FIRES" else "T3 does not fire"))
+} else {
+  cat("\nSW7  three-cornered arm NOT RUN.\n")
+}
+
 fwrite(per, file.path("output", "wa-flows-per-election.csv"))

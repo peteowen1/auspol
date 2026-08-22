@@ -135,7 +135,7 @@ wa_class <- function(codes, election) {
 
 
 all_fp <- list(); all_tx <- list(); all_win <- list(); exh <- list()
-unmatched <- character(0); no_excl <- 0L; multi_excl <- 0L; no_to <- 0L; no_recip <- 0L; seats_by_party <- list(); codes_seen <- list(); n_dist <- list()
+unmatched <- character(0); no_excl <- 0L; multi_excl <- 0L; no_to <- 0L; no_recip <- 0L; seats_by_party <- list(); codes_seen <- list(); three_c <- list(); n_dist <- list()
 for (E in WANT) {
   mem <- get_json(sprintf("/sgElections/%s/LAElectedMembers", E),
                   sprintf("%s-members.json", E))
@@ -175,6 +175,17 @@ for (E in WANT) {
       character(1))
     raw <- vapply(cands, function(c) c$PARTY_AFFILIATION %||% "", character(1))
     codes_seen[[length(codes_seen) + 1L]] <- data.table(election = E, code = raw)
+    # THREE-CORNERED SEATS, against docs/plans/prereg-wa-three-cornered.md.
+    # A seat where both a Liberal and a National contested. WA runs them
+    # against each other in rural seats, so the pair surviving the late rounds
+    # is often two Coalition candidates and nearly every transfer resolves to
+    # LNP by construction -- which is what refusal W2 measured and what the
+    # refused WA arm was diagnosed on. Marked per SEAT here so the filter can
+    # be applied downstream without re-deriving it from raw payloads.
+    three_c[[length(three_c) + 1L]] <- data.table(
+      election = sub("^sg", "wa", E), seat = seat,
+      three_cornered = any(raw %in% "LIB") &&
+                       any(raw %in% c("NAT", "NATS", "NP")))
     cls <- wa_class(raw, E)
     look <- setNames(cls, key)
 
@@ -242,6 +253,27 @@ for (E in WANT) {
 FP <- rbindlist(all_fp)[!is.na(party), .(votes = sum(votes)), by = .(election, seat, party)]
 TX <- rbindlist(all_tx)[!is.na(from) & !is.na(to) & votes > 0,
                         .(votes = sum(votes)), by = .(election, seat, round, from, to)]
+
+# T2 of the pre-registration: the marker is EMITTED and PRINTED. A flag that
+# silently marked nothing would make the filtered arm identical to the already-
+# refused whole-WA arm, and their scores alone could not tell the two apart.
+TC <- rbindlist(three_c)
+TX <- merge(TX, TC, by = c("election", "seat"), all.x = TRUE)
+if (anyNA(TX$three_cornered)) {
+  stop("Transfers exist for seats with no three-cornered marker, so the 
+       filter would drop or keep them by accident.")
+}
+cat("\nWF3b three-cornered seats: both a Liberal and a National contested\n")
+print(TC[, .(seats = .N, three_cornered = sum(three_cornered),
+             pct = round(100 * mean(three_cornered))), by = election][order(election)])
+cat(sprintf("WF3b %d of %d seats (%.0f%%); %d of %d exclusion events sit in one\n",
+            sum(TC$three_cornered), nrow(TC), 100 * mean(TC$three_cornered),
+            uniqueN(TX[three_cornered == TRUE, paste(election, seat, round)]),
+            uniqueN(TX[, paste(election, seat, round)])))
+if (!any(TC$three_cornered)) {
+  stop("No seat is marked three-cornered, which cannot be true of Western 
+       Australia and would make the filtered arm a copy of the unfiltered one.")
+}
 WIN <- rbindlist(all_win)
 CODES <- rbindlist(codes_seen)
 EX <- rbindlist(exh)[, .(pile = sum(pile), exhausted = sum(exhausted)), by = election]

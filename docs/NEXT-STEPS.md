@@ -44,6 +44,39 @@ open state, not the narrative of how it got here.
   Nation **total** rather than any individual One Nation seat. See
   [reviews/onp-allocation-checks-2026-08-18.md](reviews/onp-allocation-checks-2026-08-18.md).
 
+## Session of 2026-08-22 — the WA question is CLOSED
+
+Third arm, third refusal, and the ladder is the finding:
+
+| arm | t | improved in |
+|---|---:|---:|
+| WA minus Coalition-origin exclusions | −2.23 SE | 1 of 9 |
+| WA whole | −1.57 SE | 3 of 9 |
+| WA minus three-cornered seats | **−0.49 SE** | 4 of 9 |
+
+Dropping the three-cornered seats recovered **1.08 SE of the 1.57**, so the
+Liberal-versus-National diagnosis was substantially right — and still not
+enough against a pre-registered bar of 2.5 SE. Refusal T3 also fired: `ALP →
+GRN` moves from 9.3 to 12.7 points away from Victoria. Write-up:
+[reviews/wa-three-cornered-2026-08-22.md](reviews/wa-three-cornered-2026-08-22.md).
+
+**No fourth filter.** Three arms scored against a pre-registered criterion is
+enough; a fourth cut of the same data for the same decision is multiplicity,
+not an experiment. `AUSPOL_WA_FLOWS` stays off by default and the WA data stays
+fetched — eight elections of district-level One Nation vote is worth having on
+its own terms.
+
+### The next question, predicted in advance
+
+Every finding is consistent with the fault being in the MATRIX rather than in
+Western Australia: it is keyed on party class and survivor set, and a contest
+whose survivors are two LNP candidates should occupy its own cell instead of
+contaminating others. The testable version, written down before it is run:
+condition on the **multiset** of surviving classes rather than the set, and it
+should improve the forecast **with Western Australia excluded entirely** — the
+one form of the test nothing above can confound. Needs its own plan.
+
+
 ## Session of 2026-08-21 (later) — Western Australia, fetched and refused
 
 **Refused on the pre-registered rule**, and this is the first experiment here

@@ -133,3 +133,48 @@ test_that("both sources default off and the env switches them on", {
   withr::local_envvar(AUSPOL_QLD_CUTOFF = "1990-01-01")
   expect_identical(pool_configured_flows(base, "2026-11-28", quiet = TRUE), base)
 })
+
+test_that("the three-cornered filter drops only marked seats, and says so", {
+  d <- withr::local_tempdir()
+  withr::local_options(auspol.elections_dir = d)
+  dt <- data.table::data.table(
+    election = "wa2017", seat = c("A", "A", "B", "B"), round = 1L,
+    from = "ONP", to = "LNP", votes = 100,
+    three_cornered = c(TRUE, TRUE, FALSE, FALSE))
+  data.table::fwrite(dt, file.path(d, "waec-wa-transfers.csv"))
+  base <- data.table::data.table(election = "vic2022", seat = "X", round = 1L,
+                                 from = "GRN", to = "ALP", votes = 5)
+  withr::local_envvar(AUSPOL_QLD_FLOWS = "", AUSPOL_WA_FLOWS = "1",
+                      AUSPOL_WA_CUTOFF = "", AUSPOL_QLD_CUTOFF = "",
+                      AUSPOL_WA_DROP_LNP = "0", AUSPOL_WA_DROP_3C = "1")
+  got <- pool_configured_flows(base, "2026-11-28", quiet = TRUE)
+  expect_setequal(got[election == "wa2017", seat], "B")
+  # The marker belongs to one source only, so it must not survive into a table
+  # the flow matrix reads.
+  expect_false("three_cornered" %in% names(got))
+})
+
+test_that("the three-cornered arm refuses to be a copy of the unfiltered one", {
+  # Both failures are silent by nature: the arm would run, score, and differ
+  # from its comparator by nothing at all.
+  d <- withr::local_tempdir()
+  withr::local_options(auspol.elections_dir = d)
+  base <- data.table::data.table(election = "vic2022", seat = "X", round = 1L,
+                                 from = "GRN", to = "ALP", votes = 5)
+  withr::local_envvar(AUSPOL_QLD_FLOWS = "", AUSPOL_WA_FLOWS = "1",
+                      AUSPOL_WA_CUTOFF = "", AUSPOL_WA_DROP_LNP = "0",
+                      AUSPOL_WA_DROP_3C = "1")
+
+  # No marker column at all -- an old transfers file.
+  fake_pool(d, "waec-wa-transfers.csv", c("wa2017"))
+  expect_error(pool_configured_flows(base, "2026-11-28", quiet = TRUE),
+               "no.*three_cornered marker")
+
+  # Marker present but nothing marked.
+  dt <- data.table::data.table(election = "wa2017", seat = "A", round = 1L,
+                               from = "ONP", to = "LNP", votes = 100,
+                               three_cornered = FALSE)
+  data.table::fwrite(dt, file.path(d, "waec-wa-transfers.csv"))
+  expect_error(pool_configured_flows(base, "2026-11-28", quiet = TRUE),
+               "byte-identical copy")
+})

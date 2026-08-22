@@ -143,6 +143,28 @@ pool_configured_flows <- function(tx, before, quiet = FALSE) {
       # Liberal against National in rural seats, so its LNP-origin piles go to
       # another LNP candidate 55.8% of the time against 16.3% in the current
       # pool. Pre-specified so it could not be invented after the result.
+      # The three-cornered-seat arm of docs/plans/prereg-wa-three-cornered.md.
+      # Drops every exclusion in a seat where both a Liberal and a National
+      # contested, which is where the LNP-by-construction artefact lives. The
+      # marker is computed by the fetcher, not re-derived here, so one
+      # definition governs both the printed counts and the filter.
+      if (s == "wa" && identical(Sys.getenv("AUSPOL_WA_DROP_3C", "0"), "1")) {
+        if (!"three_cornered" %in% names(tx)) {
+          stop("AUSPOL_WA_DROP_3C is set but the transfer pool carries no ",
+               "three_cornered marker. Re-run scripts/fetch_preferences_wa.R. ",
+               "Without it this arm would silently be the unfiltered one.")
+        }
+        drop <- tx$three_cornered %in% TRUE
+        if (!any(drop)) {
+          stop("AUSPOL_WA_DROP_3C is set and nothing is marked three-cornered, ",
+               "so this arm would be a byte-identical copy of the arm it is ",
+               "meant to be compared against.")
+        }
+        if (!quiet) {
+          cat(sprintf("WF9  three-cornered filter: %d rows dropped\n", sum(drop)))
+        }
+        tx <- tx[!drop]
+      }
       if (s == "wa" && identical(Sys.getenv("AUSPOL_WA_DROP_LNP", "0"), "1")) {
         drop <- tx$election %in% names(EXTERNAL_FLOWS$wa$dates) & tx$from == "LNP"
         if (!quiet) {
@@ -153,5 +175,8 @@ pool_configured_flows <- function(tx, before, quiet = FALSE) {
       }
     }
   }
+  # The marker is Western Australia's alone, so it would arrive as NA on every
+  # other source's rows and become a column the flow matrix never asked for.
+  if ("three_cornered" %in% names(tx)) tx[, three_cornered := NULL]
   tx
 }
