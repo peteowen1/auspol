@@ -34,10 +34,21 @@
 #' @param n_sims Number of draws.
 #' @param party_cor Optional correlation matrix over `parties`. Supply the same
 #'   one the published path uses; `NULL` draws independently.
-#' @param tpp_target Optional `list(mean=, sd=)` two-party anchor. When given,
-#'   the Labor/Coalition split is moved to hit it, exactly as the published path
-#'   does. When `NULL` the trend's own two-party figure is used with the spread
-#'   implied by the trend band.
+#' @param tpp_target Two-party anchor. `scripts/fit_seats_full.R` moves the
+#'   Labor/Coalition split to hit the PROJECTION's two-party figure rather than
+#'   the trend's own, because the projection is the calibrated object -- its 95%
+#'   intervals contain the truth 92.8% of the time over 195 election-horizon
+#'   pairs -- and the seat model inherits that calibration instead of rebuilding
+#'   it. Omitting it means the draws carry the raw first-preference trend's
+#'   two-party implication, which is a different and less calibrated quantity.
+#'
+#'   Either a `list(mean=, sd=)`, or a FUNCTION of the trend's own two-party
+#'   value returning such a list. The function form exists because the
+#'   projection blends the trend with fundamentals, so it cannot be computed
+#'   until the trend has been fitted -- which happens inside here.
+#'
+#'   `NULL` leaves the split unanchored. That is NOT the published construction
+#'   and should only be used deliberately.
 #' @param fallback_sd Per-party spread used when the trend gives no band for a
 #'   party. Not a modelling choice made here: it is the published path's own
 #'   fallback, kept identical so this measures what we ship.
@@ -158,7 +169,15 @@ statewide_draws_as_at <- function(region, year, as_at, election_date, parties,
   colnames(draws) <- parties
   draws <- draws / rowSums(draws) * 100
 
+  if (is.function(tpp_target)) tpp_target <- tpp_target(tr$tpp)
   if (!is.null(tpp_target)) {
+    if (!all(c("mean", "sd") %in% names(tpp_target)) ||
+        !is.finite(tpp_target$mean) || !is.finite(tpp_target$sd) ||
+        tpp_target$sd <= 0) {
+      stop("tpp_target must supply a finite `mean` and a positive `sd`. A ",
+           "zero or missing sd would anchor every draw to one two-party value ",
+           "and remove the uncertainty this function exists to carry.")
+    }
     flow_of <- function(p) {
       f <- fl$flow_alp[fl$party == p]
       if (length(f)) f[1] / 100 else 0.489
@@ -174,8 +193,21 @@ statewide_draws_as_at <- function(region, year, as_at, election_date, parties,
     draws <- draws / rowSums(draws) * 100
   }
 
+  # The realised two-party value of the draws, computed with the SAME flows the
+  # anchoring used. Reported so a caller can verify the anchor landed rather
+  # than recomputing it with a flat rate and reading a wrong number -- which is
+  # exactly what a first diagnostic here did.
+  flow_out <- function(q) {
+    f <- fl$flow_alp[fl$party == q]
+    if (length(f)) f[1] / 100 else 0.489
+  }
+  mnr <- setdiff(parties, c("ALP", "LNP"))
+  implied_tpp <- mean(draws[, "ALP"] +
+    rowSums(vapply(mnr, function(q) draws[, q] * flow_out(q), numeric(n_sims))))
+
   list(draws = draws, folded = folded, n_polls = tr$n_polls, fp = tr$fp,
-       tpp = tr$tpp, mu = mu, sd = sd)
+       tpp = tr$tpp, mu = mu, sd = sd, implied_tpp = implied_tpp,
+       anchor = tpp_target)
 }
 
 #' Check seat totals against the per-seat probabilities that produced them

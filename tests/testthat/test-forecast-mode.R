@@ -115,3 +115,31 @@ test_that("the seat-total check fails on each thing it exists to catch", {
   expect_error(check_seat_totals(numeric(0), tot), "empty input")
   expect_error(check_seat_totals(c(0.5, 1.4), tot), "probabilities must lie")
 })
+
+test_that("the two-party anchor is applied and a degenerate one is refused", {
+  skip_if_no_anchor()
+  P <- c("ALP", "LNP", "GRN", "OTH")
+  args <- list(region = "vic", year = 2022, as_at = "2022-11-25",
+               election_date = "2022-11-26", parties = P,
+               n_sims = 3000L, seed = 11L)
+  free <- do.call(statewide_draws_as_at, args)
+  skip_if(is.null(free), "trend not fittable")
+  # Anchored five points below the trend's own two-party value, the ALP share
+  # must move down. The anchor is the published construction; without it the
+  # draws carry the raw first-preference trend's two-party implication.
+  low <- do.call(statewide_draws_as_at,
+                 c(args, list(tpp_target = function(t) list(mean = t - 5, sd = 1))))
+  expect_lt(mean(low$draws[, "ALP"]), mean(free$draws[, "ALP"]))
+  expect_gt(mean(low$draws[, "LNP"]), mean(free$draws[, "LNP"]))
+
+  # the function form is handed the trend's own two-party value
+  seen <- NULL
+  invisible(do.call(statewide_draws_as_at,
+    c(args, list(tpp_target = function(t) { seen <<- t; list(mean = t, sd = 1) }))))
+  expect_equal(seen, free$tpp)
+
+  # An sd of zero would anchor every draw to one value and delete the
+  # uncertainty this whole exercise exists to restore.
+  expect_error(do.call(statewide_draws_as_at,
+    c(args, list(tpp_target = list(mean = 52, sd = 0)))), "positive `sd`")
+})

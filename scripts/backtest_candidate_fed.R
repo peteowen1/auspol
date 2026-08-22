@@ -76,6 +76,18 @@ if (SEAT_SD_MULT != 1) cat(sprintf("CAL  seat_sd multiplier %.2f applied
 N_SIMS <- as.integer(Sys.getenv("AUSPOL_N_SIMS", "20000"))
 # Forecast mode: statewide vote from the poll trend rather than from the result.
 FORECAST_MODE <- identical(Sys.getenv("AUSPOL_FORECAST_MODE", "0"), "1")
+# The projection the statewide draws are anchored to, built once. The
+# fundamentals prediction is LEAVE-ONE-OUT: fitting on every election and then
+# predicting one of them would leak that election's own result into its
+# forecast through the prior, which is the same leak as using its polls.
+# `actual - loo_errors` is the held-out prediction, and is the pattern
+# scripts/compare_backtest_model.R already uses.
+if (FORECAST_MODE) {
+  .mix <- fread("output/projection-mix.csv", showProgress = FALSE)
+  .m   <- fit_fundamentals(build_fundamentals_data(), "@TPP")
+  FUND_LOO <- data.table(year = .m$data$year, region = .m$data$region,
+                         fund = .m$data$actual - .m$loo_errors)
+}
 
 
 # ARM B/C of docs/plans/prereg-statewide-covariance.md. AUSPOL_PARTY_COR=shrunk
@@ -179,8 +191,21 @@ for (K in PAIRS) {
   sw_draws <- NULL
   if (FORECAST_MODE) {
     ed <- as.Date(FED_DATE[[as.character(K$to)]])
+    fr <- FUND_LOO[year == K$to & region == "fed", fund]
+    if (length(fr) != 1L || !is.finite(fr)) {
+      stop("No leave-one-out fundamentals prediction for fed", K$to,
+           ". Anchoring to a projection built on this election's own result ",
+           "would be the same leak as using its polls.")
+    }
+    # One day out. project_result() blends trend and fundamentals by horizon,
+    # so the horizon must be the real one rather than a convenient default.
+    tpp_fn <- function(trend_tpp) {
+      pj <- project_result(trend_tpp, fr, .mix, horizon = 1L)
+      list(mean = pj$mean, sd = pj$sd)
+    }
     FC <- statewide_draws_as_at("fed", K$to, as_at = ed - 1, election_date = ed,
-                                parties = parties, n_sims = N_SIMS, seed = SEED)
+                                parties = parties, n_sims = N_SIMS, seed = SEED,
+                                tpp_target = tpp_fn)
     if (is.null(FC)) {
       stop("No trend could be fitted for fed", K$to, " at ", as.character(ed - 1),
            ". A thin cycle must be reported, not silently scored as if the ",
@@ -207,6 +232,8 @@ for (K in PAIRS) {
     cat(sprintf("BF0  fed%d forecast mode: %d polls to %s; folded into OTH: %s\n",
                 K$to, FC$n_polls, as.character(ed - 1),
                 if (length(FC$folded)) paste(FC$folded, collapse = ", ") else "none"))
+    cat(sprintf("BF0  trend TPP %.2f, fundamentals (LOO) %.2f, projection %.2f, draws realise %.2f\n",
+                FC$tpp, fr, FC$anchor$mean, FC$implied_tpp))
     for (p in parties) {
       prev <- if (p %in% names(st_a)) st_a[[p]] else 0
       shares[, p] <- pmax(0, mat[, p] + (st_fc[[p]] - prev))

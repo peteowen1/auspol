@@ -36,10 +36,21 @@ assertion, which refuses a cutoff on or after it.}
 \item{party_cor}{Optional correlation matrix over \code{parties}. Supply the same
 one the published path uses; \code{NULL} draws independently.}
 
-\item{tpp_target}{Optional \code{list(mean=, sd=)} two-party anchor. When given,
-the Labor/Coalition split is moved to hit it, exactly as the published path
-does. When \code{NULL} the trend's own two-party figure is used with the spread
-implied by the trend band.}
+\item{tpp_target}{Two-party anchor. \code{scripts/fit_seats_full.R} moves the
+Labor/Coalition split to hit the PROJECTION's two-party figure rather than
+the trend's own, because the projection is the calibrated object -- its 95\%
+intervals contain the truth 92.8\% of the time over 195 election-horizon
+pairs -- and the seat model inherits that calibration instead of rebuilding
+it. Omitting it means the draws carry the raw first-preference trend's
+two-party implication, which is a different and less calibrated quantity.
+
+Either a \code{list(mean=, sd=)}, or a FUNCTION of the trend's own two-party
+value returning such a list. The function form exists because the
+projection blends the trend with fundamentals, so it cannot be computed
+until the trend has been fitted -- which happens inside here.
+
+\code{NULL} leaves the split unanchored. That is NOT the published construction
+and should only be used deliberately.}
 
 \item{fallback_sd}{Per-party spread used when the trend gives no band for a
 party. Not a modelling choice made here: it is the published path's own

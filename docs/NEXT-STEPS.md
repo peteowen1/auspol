@@ -44,6 +44,46 @@ open state, not the narrative of how it got here.
   Nation **total** rather than any individual One Nation seat. See
   [reviews/onp-allocation-checks-2026-08-18.md](reviews/onp-allocation-checks-2026-08-18.md).
 
+## Forecast mode REFUSED, and it rules out the obvious explanation
+
+`reviews/forecast-mode-2026-08-22.md`. Six federal elections, pooled:
+
+| arm | slope | log | accuracy |
+|---|---:|---:|---:|
+| current harness (knows the answer) | 0.286 | 0.494 | 87.6% |
+| forecast mode (polls only) | **0.204** | 0.846 | 84.3% |
+| AE Forecasts, for scale | 1.140 | 0.280 | 88.5% |
+
+Rule was: adopt if the slope is closer to 1.0. It is further. **Refused.**
+
+### The investigation is the finding
+
+The obvious suspect — the projection understating its own error at one day out,
+a horizon never scored here before — is **measured and false**:
+
+**claimed sd 2.42, realised RMSE 2.42, ratio 1.00.**
+
+The statewide input is honestly sized. Feeding that honest uncertainty into the
+seat model makes calibration WORSE. **So the over-confidence is in the seat
+model**, which turns a 3-point statewide miss into confidently wrong seat calls.
+
+That rules out the explanation everyone would reach for first — "we are
+over-confident because the backtest hands us the answer" — which was the
+motivation for the whole experiment and is wrong.
+
+### Next, and F3 deliberately forbade doing it here
+
+`seat_sd`, `shrink`, and how sharply the flow matrix turns statewide shares into
+seat outcomes — re-tuned against AE Forecasts' 1.14 slope, measured in forecast
+mode because that is the configuration a rival can be compared on. Needs its own
+plan.
+
+**Forecast mode stays wired** behind `AUSPOL_FORECAST_MODE=1` though not
+adopted: it is the only way to measure on equal terms, and the construction now
+matches the published path exactly (draws realise the projection mean to two
+decimals in all six elections).
+
+
 ## WE HAVE A BENCHMARK, and it found a measurement gap in us first
 
 `reviews/aeforecasts-benchmark-2026-08-22.md`. AE Forecasts publishes eight
