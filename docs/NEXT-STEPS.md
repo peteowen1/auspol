@@ -44,6 +44,34 @@ open state, not the narrative of how it got here.
   Nation **total** rather than any individual One Nation seat. See
   [reviews/onp-allocation-checks-2026-08-18.md](reviews/onp-allocation-checks-2026-08-18.md).
 
+## Narrowing the catch-all buckets is INFEASIBLE
+
+`reviews/bucket-narrowing-infeasible-2026-08-22.md`. Checked while starting the
+pre-registration for it; no plan was written.
+
+The seat model needs a statewide share per class, and that comes from polls.
+Victorian polls in the live cycle report exactly five series: ALP, LNP, GRN,
+OTH (54 each) and ONP (19). UAP and DEM are at **zero**. Nobody reports Family
+First, Australian Christians, Legalise Cannabis or the Shooters separately, so a
+narrower class cannot be given a statewide share and cannot be simulated.
+
+**The classification is coarse because the INPUTS are coarse.** The party
+inclusion floor is not the obstacle — the obstacle is upstream of it, and
+lowering the floor would not create a series nobody collects. `IND` is the same
+problem in another shape, which is why independent emergence is a separate line
+of work.
+
+### What survives: weighting by candidate count
+
+The one remaining remedy needs no new class, no new polling and costs no
+coverage. **Its hard part is the application side, recorded before any plan is
+written**: estimating a rate per candidate is easy because the transfers already
+carry `to_n`, but *applying* it needs to know how many candidates each class
+will field per Victorian seat in 2026, and nominations have not closed. The
+available predictor is the seat's own 2022 count — a real assumption with a
+measurable error, not a free lunch.
+
+
 ## Refusal M2 fires: the multiplicity split is refused on coverage
 
 `reviews/m2-cell-thinning-2026-08-22.md`. **Stopped before any arm was scored.**
