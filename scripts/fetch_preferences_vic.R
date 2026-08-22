@@ -155,6 +155,13 @@ tx <- tx[!is.na(from) & !is.na(to)]
 # minor-right candidates gives OTH_RIGHT three candidates' worth of
 # preferences while keying identically to a seat with one. Counted HERE,
 # before the aggregation below destroys the candidate rows.
+# The count below groups WITHOUT `from`, which is only equivalent to the
+# aggregation key if a round number identifies one excluded candidate within a
+# seat. True of every VEC distribution table read so far, and asserted rather
+# than assumed: two simultaneous exclusions sharing a round label would pool
+# candidates from unrelated exclusions into one count, silently.
+stopifnot("a Victorian round must have exactly one excluded candidate" =
+            tx[, data.table::uniqueN(from_cand), by = c("seat","round")][, all(V1 == 1L)])
 tx[, to_n := data.table::uniqueN(to_cand),
    by = c("election","seat","round","to")]
 tx <- tx[, list(votes = sum(votes), to_n = to_n[1]),

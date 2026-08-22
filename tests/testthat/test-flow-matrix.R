@@ -72,3 +72,51 @@ test_that("bad input is refused rather than half-processed", {
   z <- fake_transfers(); z$votes <- 0
   expect_error(build_flow_matrix(z), "No positive transfers")
 })
+
+test_that("a multiplicity matrix is stamped and refused by what cannot read it", {
+  # The failure this prevents is silent and total: survivor labels carry a
+  # candidate count ("LNP2"), the consumers test membership against bare class
+  # names, so EVERY conditional cell is skipped and every exclusion quietly
+  # uses the pooled rate. An experiment that never ran, looking exactly like an
+  # experiment with no effect.
+  tx <- data.frame(
+    election = "e", seat = rep(c("A", "B", "C"), each = 3), round = 1L,
+    from = "ONP", to = c("ALP", "LNP", "LNP"), votes = c(10, 20, 30),
+    to_n = c(1L, 2L, 2L))
+  plain <- build_flow_matrix(tx, min_n = 1L)
+  mult  <- build_flow_matrix(tx, min_n = 1L, multiplicity = TRUE)
+
+  expect_false(plain$multiplicity)
+  expect_true(mult$multiplicity)
+  expect_true(any(grepl("[0-9]", names(mult$conditional))))
+  expect_false(any(grepl("[0-9]", names(plain$conditional))))
+
+  # simulate_seat_contests() sees the whole object and refuses on the stamp.
+  shares <- matrix(c(40, 35, 25), nrow = 1,
+                   dimnames = list("A", c("ALP", "LNP", "ONP")))
+  expect_error(
+    simulate_seat_contests(shares, mult, party_sd = c(ALP = 1, LNP = 1, ONP = 1),
+                           seat_sd = 1, n_sims = 5L, seed = 1L),
+    "multiplicity")
+  # and the plain one is accepted, so the guard is not refusing everything
+  expect_no_error(
+    simulate_seat_contests(shares, plain, party_sd = c(ALP = 1, LNP = 1, ONP = 1),
+                           seat_sd = 1, n_sims = 5L, seed = 1L))
+
+  # distribute_preferences() sees only the list, so it checks the key shape.
+  expect_error(distribute_preferences(c(ALP = 50, LNP = 50), mult$conditional),
+               "multiplicity")
+})
+
+test_that("multiplicity = TRUE refuses to guess when to_n is unusable", {
+  tx <- data.frame(election = "e", seat = "A", round = 1L, from = "ONP",
+                   to = c("ALP", "LNP"), votes = c(10, 20))
+  expect_error(build_flow_matrix(tx, min_n = 1L, multiplicity = TRUE), "to_n")
+  tx$to_n <- c(1L, NA_integer_)
+  expect_error(build_flow_matrix(tx, min_n = 1L, multiplicity = TRUE), "missing")
+  tx$to_n <- c(1L, 0L)
+  expect_error(build_flow_matrix(tx, min_n = 1L, multiplicity = TRUE), "missing")
+  # and it works when the column is sound
+  tx$to_n <- c(1L, 1L)
+  expect_true(build_flow_matrix(tx, min_n = 1L, multiplicity = TRUE)$multiplicity)
+})

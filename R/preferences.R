@@ -41,6 +41,19 @@
 #' @export
 distribute_preferences <- function(shares, conditional = list(),
                                    pooled = list(), smooth = 0.15) {
+  # This receives only the conditional LIST, so it cannot see the matrix's
+  # multiplicity stamp. It checks the key shape instead: a survivor label
+  # ending in a digit is a multiplicity key ("LNP2"), which the lookup below
+  # would never match -- every cell missed, no error, pooled rates used
+  # throughout. Refused rather than silently ignored.
+  if (length(conditional)) {
+    sv <- unlist(strsplit(sub("^[^|]*[|]", "", names(conditional)), "+", fixed = TRUE))
+    if (any(grepl("[0-9]$", sv))) {
+      stop("Conditional flow keys carry a survivor multiplicity (e.g. ",
+           "\"LNP2\"), which this function cannot match. Build the matrix ",
+           "with multiplicity = FALSE.")
+    }
+  }
   stopifnot(is.numeric(shares), !is.null(names(shares)),
             smooth >= 0, smooth < 1)
   # Names must be unique. Exclusion removes BY NAME, so two entries sharing one

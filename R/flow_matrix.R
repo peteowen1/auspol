@@ -102,6 +102,9 @@ build_flow_matrix <- function(transfers, min_n = 3L, multiplicity = FALSE) {
   coverage[, "used" := get("n") >= min_n]
   data.table::setorderv(coverage, "votes", -1L)
 
+  # STAMPED, so a consumer can refuse a matrix it cannot read rather than
+  # silently skipping every cell in it. See simulate_seat_contests().
   list(conditional = conditional, pooled = pooled,
-       coverage = as.data.frame(coverage), min_n = min_n)
+       coverage = as.data.frame(coverage), min_n = min_n,
+       multiplicity = multiplicity)
 }

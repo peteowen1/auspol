@@ -79,6 +79,41 @@ The three fetchers now emit `to_n`, the per-round per-class candidate count, and
 Keeping the column costs nothing and means the next plan in this area does not
 have to redo three parsers to ask its question.
 
+## What the code review then found, which makes M2's early stop worth more
+
+**A multiplicity matrix could not have been read by anything downstream.**
+
+`simulate_seat_contests()` — the published path — parses each conditional key's
+survivor labels and skips any cell whose labels are not party classes. A
+multiplicity key reads `ALP|GRN1+LNP1`, so `GRN1` and `LNP1` fail that test and
+**every one of the 102 usable cells would have been skipped**, with the
+simulation quietly falling back to the pooled rate for 100% of exclusions.
+
+Had M2 not fired first, the arm would have been scored, come back flat or
+negative, and been recorded as "multiplicity does not help". It would have been
+a false negative from unwired plumbing — the `CLAUDE.md` hazard verbatim: **an
+experiment that never ran looks exactly like an experiment with no effect.**
+
+So the refusal stopped the work for a reason (coverage) that turned out not to
+be the only reason it should have stopped.
+
+Fixed so it cannot happen to whoever picks this up:
+
+- `build_flow_matrix()` stamps `multiplicity` on the object it returns;
+- `simulate_seat_contests()` **aborts** on a stamped matrix rather than skipping
+  its cells;
+- `distribute_preferences()` sees only the conditional list and so cannot read
+  the stamp — it checks the key shape instead and aborts on a survivor label
+  ending in a digit;
+- all three guards have tests that prove they fail on the input they exist to
+  catch, and that they accept a plain matrix, so they are not refusing
+  everything.
+
+One further defect from the same review: the Victorian `to_n` count groups
+without `from`, which is only equivalent to the aggregation key because a round
+number identifies one excluded candidate within a seat. True of every VEC table
+read so far, and now **asserted** rather than assumed.
+
 ## One thing I could not attribute, stated rather than glossed
 
 `output/seat-probs-vic-2026.csv` changed on this run. It is **not** the column:
@@ -91,3 +126,7 @@ The likeliest reading is that the published artefact had drifted behind the
 code — the published-vs-deployed hazard `C:\dev\CLAUDE.md` records — and this
 run refreshed it. **Stated as an open question rather than assumed benign**,
 because "probably stale" is exactly the sort of thing that turns out not to be.
+
+**Follow-up:** re-running the publish after the guard work above reproduces
+`seat-probs-vic-2026.csv` **byte-identically**, so whatever the one-off change
+was, the output is now stable run to run.
