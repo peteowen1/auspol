@@ -1,3 +1,44 @@
+# auspol 0.4.21
+
+Documentation only. **Both remedies for the catch-all-bucket finding were
+investigated and closed by measurement, before either got a plan written.**
+
+The finding: 44.5% of Victorian exclusion rounds have a class fielding more than
+one candidate, dominated by `OTH_RIGHT`, `OTH` and `IND`.
+
+**Narrowing the buckets is infeasible.** The seat model needs a statewide share
+for every class it simulates and that share comes from polls, and Victorian
+polls in the live cycle report exactly five series: ALP, LNP, GRN and OTH at 54
+each, ONP at 19, with UAP and DEM at zero. Nobody reports Family First,
+Australian Christians, Legalise Cannabis or the Shooters separately, so a
+narrower class cannot be given a share and cannot be simulated. The
+classification is coarse because the INPUTS are coarse; the party inclusion floor
+is not the obstacle and lowering it would not create a series nobody collects.
+
+**Weighting by candidate count is blocked, and the reason is a date.** It needs
+how many candidates each class will field per seat in 2026, and the only
+available predictor -- the seat's own previous count -- is WORSE than assuming
+one candidate: across six consecutive federal pairs, MAE 0.56 against 0.42
+overall, and worst in the three buckets where the mechanism lives (OTH_RIGHT
+1.27 against 1.11, IND 1.06 against 0.59). Victorian nominations close on
+9 November 2026, 19 days before polling day, and at that point the count is a
+fact rather than a prediction. **Revisit after nominations close and before the
+election.**
+
+Recorded plainly because it is a live approximation: `simulate_seat_contests()`
+has no concept of a candidate -- it simulates classes. A seat's `OTH_RIGHT` share
+is the combined vote of every minor-right candidate who stood, and the
+elimination treats it as one competitor. No votes are dropped; FRAGMENTATION is.
+Three minor-right candidates on 4% each are simulated as one competitor on 12%,
+surviving eliminations it would really have lost.
+
+Every number in both documents was re-derived from source during review rather
+than read, since these documents are load-bearing and nothing ever fails to
+reveal a wrong sentence. Two corrections came out of it: the nomination date is
+pinned and flagged as writ-dependent, and a characterisation that could have been
+read as "the model drops the other candidates' votes" is replaced with what the
+code actually does.
+
 # auspol 0.4.20
 
 **A pre-registered experiment on the flow matrix, gated, run and refused** --
