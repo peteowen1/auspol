@@ -102,6 +102,22 @@ if (nzchar(Sys.getenv("AUSPOL_PARTY_COR", ""))) {
               Sys.getenv("AUSPOL_PARTY_COR"), PARTY_COR["ONP", "LNP"]))
 }
 
+# THE HARNESS HAS NEVER PASSED `shrink`. fit_seats_full.R passes SHRINK = 0.10 --
+# the per-draw calibration shrink adopted after measuring over-confidence on
+# 1,187 seats -- and simulate_seat_contests() defaults it to 0, so every backtest
+# figure this repo has quoted was computed WITHOUT it. That is the same
+# divergence as statewide_draws, in a second place.
+#
+# Defaulted to 0 here so nothing changes silently and past runs stay comparable.
+# The published value is in the grid of docs/plans/prereg-seat-calibration.md and
+# gets measured rather than assumed.
+SHRINK <- as.numeric(Sys.getenv("AUSPOL_SHRINK", "0"))
+SMOOTH <- as.numeric(Sys.getenv("AUSPOL_SMOOTH", "0.15"))
+stopifnot(is.finite(SHRINK), SHRINK >= 0, SHRINK < 1,
+          is.finite(SMOOTH), SMOOTH >= 0, SMOOTH <= 1)
+cat(sprintf("CAL  shrink %.2f (published model uses 0.10), smooth %.2f\n",
+            SHRINK, SMOOTH))
+
 CAL_TAG <- paste0(
   if (SEAT_SD_MULT != 1) sprintf("-m%s", format(SEAT_SD_MULT, nsmall = 1)) else "",
   if (identical(Sys.getenv("AUSPOL_SEAT_SWING_PORT", "0"), "1")) "-port" else "",
@@ -124,9 +140,11 @@ CAL_TAG <- paste0(
       nzchar(Sys.getenv("AUSPOL_QLD_CUTOFF", ""))) "-cut" else "",
   if (identical(Sys.getenv("AUSPOL_WA_DROP_3C", "0"), "1")) "-no3c" else "",
   if (identical(Sys.getenv("AUSPOL_WA_DROP_LNP", "0"), "1")) "-nolnp" else "",
-  if (FORECAST_MODE) "-fc" else "")
+  if (FORECAST_MODE) "-fc" else "",
+  if (SHRINK != 0) sprintf("-sh%s", sub("0[.]", "", format(SHRINK, nsmall = 2))) else "",
+  if (SMOOTH != 0.15) sprintf("-sm%s", sub("0[.]", "", format(SMOOTH, nsmall = 2))) else "")
 
-SEED <- 42; SMOOTH <- 0.15; eps <- 1e-6
+SEED <- 42; eps <- 1e-6
 P <- election_data_path()
 
 PAIRS <- list(
@@ -290,6 +308,7 @@ for (X in out_all) {
   set.seed(SEED)
   sim <- simulate_seat_contests(X$shares, X$fm, party_sd = psd, seat_sd = sd_w * SEAT_SD_MULT,
                                 n_sims = N_SIMS, smooth = SMOOTH, seed = SEED,
+                                shrink = SHRINK,
                                 party_cor = PARTY_COR, statewide_draws = X$sw_draws)
   wp <- as.data.table(sim$win_prob)
 
@@ -331,4 +350,4 @@ per <- R[, .(n = .N, accuracy = round(100 * mean(pred == actual), 1),
 print(per)
 fwrite(R, file.path("output", sprintf("backtest-fed%s.csv", CAL_TAG)))
 fwrite(rbindlist(tot_all, fill = TRUE), file.path("output", sprintf("backtest-fed-totals%s.csv", CAL_TAG)))
-cat(sprintf("BF5  wrote output/backtest-fed.csv\n"))
+cat(sprintf("BF5  wrote output/backtest-fed%s.csv and its totals\n", CAL_TAG))

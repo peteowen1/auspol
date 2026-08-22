@@ -44,6 +44,50 @@ open state, not the narrative of how it got here.
   Nation **total** rather than any individual One Nation seat. See
   [reviews/onp-allocation-checks-2026-08-18.md](reviews/onp-allocation-checks-2026-08-18.md).
 
+## Calibration knobs REFUSED — and the model was better than we knew
+
+`reviews/seat-calibration-2026-08-22.md`. 24 grid points, six federal
+elections, forecast mode. Best point beats the incumbent by **0.09 SE** against
+a 1 SE bar. **Refused; knobs stay.** The held-out set was NOT spent.
+
+### The correction that matters more
+
+**Incumbent slope in forecast mode: 0.980.** Essentially calibrated.
+
+Every over-confidence figure this repo has quoted — slope 0.23–0.52, "58% of
+seats at 99–100%", reliability gaps of 10–14 points — came from a harness that
+passed **neither `shrink` nor `statewide_draws`** while `fit_seats_full.R`
+passes both. Wired up, no seat sits in the 99–100% band at all, and claimed
+versus actual tracks within 3 points across every band.
+
+**So "our seat probabilities are wildly off" was wrong.** It described a
+configuration we do not ship.
+
+Also established: the published `shrink = 0.10` is near-optimal. At 0.20 the
+slope overshoots to 1.34 and at 0.30 to 1.64, with log score worsening
+monotonically. `seat_sd` barely matters from 1.0–2.0.
+
+### The real gap is SHARPNESS
+
+On the two elections both models cover, both forecasting from polls:
+
+| | AE Forecasts | ours |
+|---|---:|---:|
+| pooled log | **0.268** | **1.244** |
+| pooled slope | 1.15 | 0.76 |
+
+We are calibrated but blunt. They are slightly under-confident and four times
+more informative per seat. **Their information advantage does not explain it**:
+four of their eight finals are seat-betting updates, but not these two — their
+2022 and 2025 federal finals are poll-based like ours.
+
+### Next
+
+Not calibration. **Discrimination** — what lets them separate seats we cannot:
+candidate-level incumbency and sophomore effects, seat history, or how they
+resolve a contest. A different investigation from any knob in this grid.
+
+
 ## Forecast mode REFUSED, and it rules out the obvious explanation
 
 `reviews/forecast-mode-2026-08-22.md`. Six federal elections, pooled:
