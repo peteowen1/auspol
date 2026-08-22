@@ -55,9 +55,12 @@ to the next.
 Nothing here says weighting by candidate count is a bad idea. It says the input
 it needs does not exist **yet**.
 
-**Nominations for the Victorian election close before polling day on 28 November
-2026.** Once they do, the candidate count per class per seat is not a prediction
-at all — it is a fact, known exactly, for every seat.
+**Nominations for the Victorian election close on 9 November 2026** — six days
+after the writ, 19 days before polling day on 28 November. (Confirmed against
+the VEC's own legislation page during review; it is writ-dependent, so worth
+re-checking nearer the time rather than treated as fixed.) Once they close, the
+candidate count per class per seat is not a prediction at all — it is a fact,
+known exactly, for every seat.
 
 At that point the application side becomes free and only the estimation side
 remains, which the transfers already support. The remedy is worth revisiting
@@ -92,6 +95,12 @@ files, which carry one row per candidate with a party name and code. Counts are
 distinct `CandidateID` per division per class. Divisions appearing in only one
 election of a pair are counted as zero in the other, which is right: a class
 that stopped standing is a prediction error, not a missing value.
+
+**That choice was checked rather than asserted.** Restricting to divisions
+present in *both* elections of a pair drops 811 of 5,630 cases and gives MAE
+0.425 from the previous count against **0.393** assuming one — the naive
+predictor still wins, by a similar margin. The conclusion does not rest on the
+zero-filling.
 
 No fetcher, model or plan was modified. **Three remedies have now been closed by
 measurement rather than by argument** — the multiplicity split on coverage,
