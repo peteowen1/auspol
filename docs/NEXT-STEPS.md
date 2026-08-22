@@ -44,6 +44,36 @@ open state, not the narrative of how it got here.
   Nation **total** rather than any individual One Nation seat. See
   [reviews/onp-allocation-checks-2026-08-18.md](reviews/onp-allocation-checks-2026-08-18.md).
 
+## Candidate-count weighting is blocked too, and the reason is a DATE
+
+`reviews/candidate-count-weighting-blocked-2026-08-22.md`. Measured while
+starting its pre-registration; no plan was written.
+
+The remedy needs to know how many candidates each class will field per Victorian
+seat in 2026. The only available predictor is the seat's own previous count, and
+on six consecutive federal pairs it is **worse than assuming one candidate**:
+
+| class | exact | MAE from previous | MAE assuming one |
+|---|---:|---:|---:|
+| OTH_RIGHT | 26.6% | 1.27 | **1.11** |
+| OTH | 33.1% | 0.97 | **0.89** |
+| IND | 20.2% | 1.06 | **0.59** |
+
+Overall 0.56 against 0.42. Worst exactly where the mechanism lives.
+
+**The remedy is not wrong, it is early.** Victorian nominations close before
+polling day on 28 November 2026, and once they do the count is a FACT for every
+seat, not a prediction — the application side becomes free and only the
+estimation side remains, which the transfers already support via `to_n`.
+
+**Revisit after nominations close and before the election. Worth nothing before
+then.**
+
+Meanwhile the model implicitly assumes one candidate per class per seat, which
+carries an MAE of 1.11 candidates for `OTH_RIGHT`. A known, sized, unfixed
+approximation rather than an oversight.
+
+
 ## Narrowing the catch-all buckets is INFEASIBLE
 
 `reviews/bucket-narrowing-infeasible-2026-08-22.md`. Checked while starting the
