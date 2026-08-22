@@ -44,6 +44,53 @@ open state, not the narrative of how it got here.
   Nation **total** rather than any individual One Nation seat. See
   [reviews/onp-allocation-checks-2026-08-18.md](reviews/onp-allocation-checks-2026-08-18.md).
 
+## WE HAVE A BENCHMARK, and it found a measurement gap in us first
+
+`reviews/aeforecasts-benchmark-2026-08-22.md`. AE Forecasts publishes eight
+archived elections through a REST API — final forecast plus official result.
+`scripts/fetch_aeforecasts.R` acquires them; `scripts/score_aeforecasts.R`
+scores them.
+
+**Their bar**, 728 seat-elections: accuracy 87.9%, Brier 0.0908, log loss
+**0.2802**, calibration slope **1.14**. Seat-level TCP over 722 seats: MAE
+**3.69pp**, 90% band coverage 83.2% — so they are mildly over-confident too, and
+2025 federal is 68.7%. A real forecaster, not an oracle.
+
+**Us**, on the four overlapping elections: log loss **0.524** against their
+0.276, accuracy within 1.5 points. Our picks are comparable; our probabilities
+cost nearly twice as much. **We produce no seat-level TCP at all**, so on the
+high-N metric we cannot yet be scored.
+
+### The correction that matters more than the comparison
+
+Those calibration figures were reported as though they described our forecast.
+**They do not.**
+
+| | passes `statewide_draws`? |
+|---|---|
+| published model, `fit_seats_full.R:573` | **yes** |
+| all four backtest harnesses | **no** |
+
+The backtests inject the ACTUAL statewide result as the centre with only
+per-seat noise; the published model draws it from the projection with party
+correlation, and `simulate_seat_contests()` documents that dropping that
+covariance made the seat range "roughly 40% too tight".
+
+So the backtest measures a tighter variant than we ship, and **nothing measures
+the calibration of the model we publish**. Same trap as the two seat models,
+new guise: what is measured is not what is shipped.
+
+### Next: forecast mode, which fixes both at once
+
+Taking the statewide vote from `trend_as_at()` instead of from the answer
+removes the unfair advantage AND restores the uncertainty the published model
+already has. Assessed as **feasible, closer to plumbing than modelling** —
+`trend_as_at()` exists and is leakage-tested (`test-projection.R:101-117`), and
+the `statewide_draws` slot is already wired. Two decisions to pre-register: the
+poll-inclusion-floor fallback (ONP has 3–7 polls in the Vic and NSW cycles
+against a floor of 8) and which error distribution the draws come from.
+
+
 ## Candidate-count weighting is blocked too, and the reason is a DATE
 
 `reviews/candidate-count-weighting-blocked-2026-08-22.md`. Measured while
