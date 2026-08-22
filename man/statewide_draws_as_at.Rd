@@ -14,6 +14,7 @@ statewide_draws_as_at(
   party_cor = NULL,
   tpp_target = NULL,
   fallback_sd = 1.5,
+  fp_extra_sd = 2.419,
   seed = NULL
 )
 }
@@ -43,6 +44,18 @@ implied by the trend band.}
 \item{fallback_sd}{Per-party spread used when the trend gives no band for a
 party. Not a modelling choice made here: it is the published path's own
 fallback, kept identical so this measures what we ship.}
+
+\item{fp_extra_sd}{First-preference variance correction, added in quadrature
+to each party's trend band. \strong{This is not optional and not a tuning knob}:
+\code{scripts/fit_seats_full.R} applies exactly this
+(\code{sd_vec <- sqrt(trend_sd^2 + FP_EXTRA_SD^2)}, \code{FP_EXTRA_SD = 2.419},
+adopted in \verb{docs/reviews/fp-widening-choice-*.md}), so omitting it here
+would mean this function measures something the repo does not publish.
+
+Omitting it is not hypothetical -- the first version of this function did,
+understating statewide spread by roughly 2.6x, and the resulting backtest
+came out MORE over-confident rather than less. That looked like a finding
+about the seat model and was a missing constant.}
 
 \item{seed}{Optional seed.}
 }

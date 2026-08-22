@@ -67,3 +67,23 @@ test_that("a party the trend cannot fit is reported, not silently dropped", {
   skip_if(is.null(r), "trend could not be fitted at this cutoff")
   expect_true("ONP" %in% r$folded)
 })
+
+test_that("the published first-preference widening is applied", {
+  # fit_seats_full.R uses sqrt(trend_sd^2 + 2.419^2). The first version of this
+  # function used trend_sd alone, understating statewide spread ~2.6x, and the
+  # backtest then came out MORE over-confident -- which looked like a finding
+  # about the seat model and was a missing constant.
+  skip_if_no_anchor()
+  P <- c("ALP", "LNP", "GRN", "OTH")
+  wide <- statewide_draws_as_at("vic", 2022, "2022-11-25", "2022-11-26",
+                                parties = P, n_sims = 4000L, seed = 7L)
+  narrow <- statewide_draws_as_at("vic", 2022, "2022-11-25", "2022-11-26",
+                                  parties = P, n_sims = 4000L, seed = 7L,
+                                  fp_extra_sd = 0)
+  skip_if(is.null(wide) || is.null(narrow), "trend not fittable")
+  expect_true(all(apply(wide$draws, 2, stats::sd) >
+                  apply(narrow$draws, 2, stats::sd)))
+  # and the widening is of the documented size, not merely nonzero
+  expect_gt(mean(apply(wide$draws, 2, stats::sd)) /
+            mean(apply(narrow$draws, 2, stats::sd)), 1.8)
+})

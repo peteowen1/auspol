@@ -41,6 +41,17 @@
 #' @param fallback_sd Per-party spread used when the trend gives no band for a
 #'   party. Not a modelling choice made here: it is the published path's own
 #'   fallback, kept identical so this measures what we ship.
+#' @param fp_extra_sd First-preference variance correction, added in quadrature
+#'   to each party's trend band. **This is not optional and not a tuning knob**:
+#'   `scripts/fit_seats_full.R` applies exactly this
+#'   (`sd_vec <- sqrt(trend_sd^2 + FP_EXTRA_SD^2)`, `FP_EXTRA_SD = 2.419`,
+#'   adopted in `docs/reviews/fp-widening-choice-*.md`), so omitting it here
+#'   would mean this function measures something the repo does not publish.
+#'
+#'   Omitting it is not hypothetical -- the first version of this function did,
+#'   understating statewide spread by roughly 2.6x, and the resulting backtest
+#'   came out MORE over-confident rather than less. That looked like a finding
+#'   about the seat model and was a missing constant.
 #' @param seed Optional seed.
 #' @return A list with `draws` (`n_sims` x `parties` matrix, rows summing to
 #'   100), `folded` (parties the trend could not fit, folded into `OTH`),
@@ -50,7 +61,7 @@
 statewide_draws_as_at <- function(region, year, as_at, election_date, parties,
                                   n_sims = 20000L, party_cor = NULL,
                                   tpp_target = NULL, fallback_sd = 1.5,
-                                  seed = NULL) {
+                                  fp_extra_sd = 2.419, seed = NULL) {
   # as.Date() THROWS on an unparseable string rather than returning NA, so the
   # is.finite() check below could never fire on the input it was written for --
   # a guard that cannot fail, which is the hazard CLAUDE.md catalogues. Parsing
@@ -123,6 +134,11 @@ statewide_draws_as_at <- function(region, year, as_at, election_date, parties,
   if ("OTH" %in% parties) {
     # everything unfitted lands here, so its mean absorbs the remainder
     mu[["OTH"]] <- max(0.1, 100 - sum(mu[setdiff(parties, "OTH")]))
+  }
+
+  # The published first-preference widening, in quadrature. See fp_extra_sd.
+  if (is.finite(fp_extra_sd) && fp_extra_sd > 0) {
+    sd <- sqrt(sd^2 + fp_extra_sd^2)
   }
 
   if (!is.null(seed)) set.seed(seed)

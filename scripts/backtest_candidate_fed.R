@@ -74,6 +74,8 @@ if (SEAT_SD_MULT != 1) cat(sprintf("CAL  seat_sd multiplier %.2f applied
 # one; the tag below records it in the filename so a mismatched pair cannot be
 # compared by accident.
 N_SIMS <- as.integer(Sys.getenv("AUSPOL_N_SIMS", "20000"))
+# Forecast mode: statewide vote from the poll trend rather than from the result.
+FORECAST_MODE <- identical(Sys.getenv("AUSPOL_FORECAST_MODE", "0"), "1")
 
 
 # ARM B/C of docs/plans/prereg-statewide-covariance.md. AUSPOL_PARTY_COR=shrunk
@@ -109,7 +111,8 @@ CAL_TAG <- paste0(
   if (nzchar(Sys.getenv("AUSPOL_WA_CUTOFF", "")) ||
       nzchar(Sys.getenv("AUSPOL_QLD_CUTOFF", ""))) "-cut" else "",
   if (identical(Sys.getenv("AUSPOL_WA_DROP_3C", "0"), "1")) "-no3c" else "",
-  if (identical(Sys.getenv("AUSPOL_WA_DROP_LNP", "0"), "1")) "-nolnp" else "")
+  if (identical(Sys.getenv("AUSPOL_WA_DROP_LNP", "0"), "1")) "-nolnp" else "",
+  if (FORECAST_MODE) "-fc" else "")
 
 SEED <- 42; SMOOTH <- 0.15; eps <- 1e-6
 P <- election_data_path()
@@ -163,9 +166,55 @@ for (K in PAIRS) {
   st_a <- fa[, .(v = sum(votes)), by = party][, setNames(100 * v / sum(v), party)]
   st_b <- fb[, .(v = sum(votes)), by = party][, setNames(100 * v / sum(v), party)]
 
+  # ---- FORECAST MODE, against docs/plans/prereg-forecast-mode.md -----------
+  # Default OFF, in which case the block below is the original: shift each
+  # seat by the actual statewide swing, which is the answer.
+  #
+  # ON, the statewide vector comes from the poll trend as at the day before the
+  # election and its uncertainty is carried into the simulation through
+  # statewide_draws -- which is what fit_seats_full.R does and what no harness
+  # has ever done. That is the point: every calibration figure this repo has
+  # quoted describes a tighter variant than the model it ships.
   parties <- colnames(mat); shares <- mat
-  for (p in parties) if (p %in% names(st_b) && p %in% names(st_a)) {
-    shares[, p] <- pmax(0, mat[, p] + (st_b[[p]] - st_a[[p]]))
+  sw_draws <- NULL
+  if (FORECAST_MODE) {
+    ed <- as.Date(FED_DATE[[as.character(K$to)]])
+    FC <- statewide_draws_as_at("fed", K$to, as_at = ed - 1, election_date = ed,
+                                parties = parties, n_sims = N_SIMS, seed = SEED)
+    if (is.null(FC)) {
+      stop("No trend could be fitted for fed", K$to, " at ", as.character(ed - 1),
+           ". A thin cycle must be reported, not silently scored as if the ",
+           "forecast had succeeded.")
+    }
+    # THE SEATS MUST FOLD THE SAME WAY. A party under the poll-inclusion floor
+    # has no separate series -- its votes sit inside the fitted OTH -- so its
+    # per-seat column has to be folded into OTH too, or the classes the
+    # simulation reads do not match the classes the draws describe.
+    if (length(FC$folded) && "OTH" %in% parties) {
+      shares[, "OTH"] <- shares[, "OTH"] + rowSums(shares[, FC$folded, drop = FALSE])
+      keepc <- setdiff(parties, FC$folded)
+      shares <- shares[, keepc, drop = FALSE]
+      mat <- mat[, keepc, drop = FALSE]
+      parties <- keepc
+      st_a <- st_a[intersect(names(st_a), keepc)]
+      sw_draws <- FC$draws[, keepc, drop = FALSE]
+      sw_draws <- sw_draws / rowSums(sw_draws) * 100
+    } else {
+      sw_draws <- FC$draws
+    }
+    st_fc <- colMeans(sw_draws)
+    # F4: folded parties are REPORTED, never silently absorbed.
+    cat(sprintf("BF0  fed%d forecast mode: %d polls to %s; folded into OTH: %s\n",
+                K$to, FC$n_polls, as.character(ed - 1),
+                if (length(FC$folded)) paste(FC$folded, collapse = ", ") else "none"))
+    for (p in parties) {
+      prev <- if (p %in% names(st_a)) st_a[[p]] else 0
+      shares[, p] <- pmax(0, mat[, p] + (st_fc[[p]] - prev))
+    }
+  } else {
+    for (p in parties) if (p %in% names(st_b) && p %in% names(st_a)) {
+      shares[, p] <- pmax(0, mat[, p] + (st_b[[p]] - st_a[[p]]))
+    }
   }
   shares <- 100 * shares / rowSums(shares)
   keep <- intersect(rownames(shares), win$seat)
@@ -193,7 +242,8 @@ for (K in PAIRS) {
   seat_sds <- c(seat_sds, sd_w)
   out_all[[length(out_all) + 1L]] <- list(K = K, shares = shares, fm = fm,
                                           truth = truth, keep = keep,
-                                          parties = parties, sd_w = sd_w)
+                                          parties = parties, sd_w = sd_w,
+                                          sw_draws = sw_draws)
 }
 
 fallback <- stats::median(seat_sds, na.rm = TRUE)
@@ -212,7 +262,8 @@ for (X in out_all) {
   psd <- setNames(rep(1.5, length(X$parties)), X$parties)
   set.seed(SEED)
   sim <- simulate_seat_contests(X$shares, X$fm, party_sd = psd, seat_sd = sd_w * SEAT_SD_MULT,
-                                n_sims = N_SIMS, smooth = SMOOTH, seed = SEED, party_cor = PARTY_COR)
+                                n_sims = N_SIMS, smooth = SMOOTH, seed = SEED,
+                                party_cor = PARTY_COR, statewide_draws = X$sw_draws)
   wp <- as.data.table(sim$win_prob)
 
   pa <- merge(data.table(seat = X$keep, actual = unname(X$truth)),
