@@ -90,7 +90,18 @@ for (d in chg$districts) {
 }
 tx <- rbindlist(rows)
 # Transfers to the same class from one exclusion are one edge, not several.
-tx <- tx[, list(votes = sum(votes)), by = c("election","seat","round","from","to")]
+# But HOW MANY candidates made that edge is information, and it is destroyed
+# by this aggregation, so it is counted first.
+# PER-ROUND CLASS MULTIPLICITY, against docs/plans/prereg-survivor-
+# multiplicity.md. `to_n` is how many CANDIDATES of that class received
+# votes in this round. Our classes are buckets -- OTH_RIGHT holds every
+# minor-right party and IND every independent -- so a seat with three
+# minor-right candidates gives OTH_RIGHT three candidates' worth of
+# preferences while keying identically to a seat with one. Counted HERE,
+# before the aggregation below destroys the candidate rows.
+tx[, to_n := .N, by = c("election","seat","round","from","to")]
+tx <- tx[, list(votes = sum(votes), to_n = to_n[1]),
+         by = c("election","seat","round","from","to")]
 
 stopifnot(nrow(tx) > 0)
 cat(sprintf("\nexclusion events : %d\nseats            : %d\ntransfer rows    : %d\n",

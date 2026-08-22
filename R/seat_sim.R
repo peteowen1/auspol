@@ -181,6 +181,22 @@ simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
   pidx <- stats::setNames(seq_len(K), parties)
   cells <- new.env(parent = emptyenv())
   put <- function(k, v) assign(as.character(k), v, envir = cells)
+  # A MULTIPLICITY MATRIX IS NOT READABLE HERE, and must not be accepted
+  # quietly. Its survivor labels carry a candidate count -- "LNP2" rather than
+  # "LNP" -- and the membership test below would reject every one of them, so
+  # every conditional cell would be skipped and the simulation would fall back
+  # to the pooled rate for 100% of exclusions while reporting nothing.
+  #
+  # That is the CLAUDE.md hazard exactly: an experiment that never ran looks
+  # identical to one with no effect. Wiring these keys through is the work
+  # docs/plans/prereg-survivor-multiplicity.md describes, and it was refused on
+  # coverage before it was done -- so until it is done, this stops.
+  if (isTRUE(matrix$multiplicity)) {
+    stop("This flow matrix is keyed on survivor MULTIPLICITY, which this ",
+         "function cannot read: every cell would be skipped and every ",
+         "exclusion would silently use the pooled rate. Rebuild with ",
+         "multiplicity = FALSE, or teach this function the keys first.")
+  }
   for (nm in names(matrix$conditional)) {
     bits <- strsplit(nm, "|", fixed = TRUE)[[1]]
     # SINGLE bracket. `pidx` is an atomic vector, so `pidx[["missing"]]`

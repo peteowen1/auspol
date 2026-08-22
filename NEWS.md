@@ -1,3 +1,59 @@
+# auspol 0.4.20
+
+**A pre-registered experiment on the flow matrix, gated, run and refused** --
+and the defect the refusal turned out to be hiding.
+
+The matrix keys each cell on the excluded party plus the SET of surviving party
+classes. Our classes are coarse buckets, so a round where three minor-right
+candidates receive votes keys identically to one where a single candidate does:
+the bucket collects three candidates' worth of preferences and the matrix reads
+that as the bucket being popular.
+
+**Gate 1 measured the exposure at 20.4% of rounds** across Victoria, South
+Australia and Queensland, against a 10% floor fixed before measuring -- and
+**44.5% in Victoria alone**, the jurisdiction being forecast. It is not the
+Coalition, which is the road that led here: the classes that double up are
+`OTH_RIGHT` (133 Victorian rounds), `OTH` (67), `IND` (47), and only then `LNP`
+(34). Queensland alone would have stopped the work at 5.9%, because its
+Coalition is a single merged party and structurally cannot show the contest this
+started from.
+
+**Refusal M2 then fired before any arm was scored.** Conditioning on candidate
+multiplicity more than doubles the cell count (115 to 265) and scatters the
+evidence: 161 more exclusion events fall below `min_n` and are answered by the
+pooled rate, so the share of events in usable cells drops from 97% to 86%
+against a 90% floor. The matrix becomes more precise where it still has data and
+less informed everywhere else, and a single log score cannot separate those.
+`min_n` was NOT lowered to rescue it, and the arm was NOT scored anyway.
+
+**The review of that refusal found the more serious problem.** A multiplicity
+matrix could not have been read by anything downstream:
+`simulate_seat_contests()` skips any cell whose survivor labels are not party
+classes, and a multiplicity key reads `ALP|GRN1+LNP1`. All 102 usable cells
+would have been skipped and the simulation would have used the pooled rate for
+100% of exclusions while reporting nothing -- so the arm would have scored flat
+and been recorded as "multiplicity does not help". A false negative from unwired
+plumbing, which is this repo's own recorded hazard: an experiment that never ran
+looks exactly like an experiment with no effect.
+
+It now fails loudly. `build_flow_matrix()` stamps `multiplicity` on the object
+it returns, `simulate_seat_contests()` aborts on a stamped matrix, and
+`distribute_preferences()` -- which sees only the conditional list and cannot
+read the stamp -- checks the key shape and aborts on a survivor label ending in
+a digit. Every guard has a test proving it fails on the input it exists to catch
+and accepts a plain matrix.
+
+The exposure finding survives the refusal: M2 says this remedy costs too much
+coverage, not that the problem is imaginary. The remedies now look different --
+narrow the buckets so `OTH_RIGHT` is not one class doing the work of six, or
+weight by candidate count inside the existing cell, which costs no coverage at
+all. Both need their own plans.
+
+Kept in the code: the three fetchers emit `to_n`, the per-round per-class
+candidate count, so the next plan here need not redo three parsers to ask its
+question. `build_flow_matrix()`'s `multiplicity` argument defaults to `FALSE`
+and the published forecast is byte-identical.
+
 # auspol 0.4.19
 
 **The Western Australian flow question is closed after a third refusal**, and

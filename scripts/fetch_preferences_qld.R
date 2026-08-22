@@ -137,8 +137,20 @@ for (E in EVENTS) {
 # different elections cannot have the same first preferences to two decimals.
 FP <- rbindlist(all_fp)[!is.na(party),
                         .(votes = sum(votes)), by = .(election, seat, party)]
-TX <- rbindlist(all_tx)[!is.na(from) & !is.na(to) & votes > 0,
-                        .(votes = sum(votes)), by = .(election, seat, round, from, to)]
+# PER-ROUND CLASS MULTIPLICITY, against docs/plans/prereg-survivor-
+# multiplicity.md. `to_n` is how many CANDIDATES of that class received votes in
+# this round. Our classes are buckets, so a round where three minor-right
+# candidates receive gives OTH_RIGHT three candidates' worth of preferences
+# while keying identically to a round with one. Counted before the aggregation
+# below destroys the candidate rows.
+#
+# Queensland is the LEAST exposed jurisdiction at 5.9% of rounds, because its
+# Coalition is a single merged party -- measured alone it would have stopped
+# this work at the gate. It is included so the arm is not a Victoria-only claim.
+TXc <- rbindlist(all_tx)[!is.na(from) & !is.na(to) & votes > 0]
+TXc[, to_n := .N, by = .(election, seat, round, from, to)]
+TX <- TXc[, .(votes = sum(votes), to_n = to_n[1]),
+          by = .(election, seat, round, from, to)]
 WIN <- rbindlist(all_win)
 
 for (E in EVENTS) {

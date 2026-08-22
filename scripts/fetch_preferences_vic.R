@@ -148,7 +148,24 @@ tx[, from := look[paste(seat, from_cand)]]
 tx[, to   := look[paste(seat, to_cand)]]
 bad <- tx[is.na(from) | is.na(to)]
 tx <- tx[!is.na(from) & !is.na(to)]
-tx <- tx[, list(votes = sum(votes)), by = c("election","seat","round","from","to")]
+# PER-ROUND CLASS MULTIPLICITY, against docs/plans/prereg-survivor-
+# multiplicity.md. `to_n` is how many CANDIDATES of that class received
+# votes in this round. Our classes are buckets -- OTH_RIGHT holds every
+# minor-right party and IND every independent -- so a seat with three
+# minor-right candidates gives OTH_RIGHT three candidates' worth of
+# preferences while keying identically to a seat with one. Counted HERE,
+# before the aggregation below destroys the candidate rows.
+# The count below groups WITHOUT `from`, which is only equivalent to the
+# aggregation key if a round number identifies one excluded candidate within a
+# seat. True of every VEC distribution table read so far, and asserted rather
+# than assumed: two simultaneous exclusions sharing a round label would pool
+# candidates from unrelated exclusions into one count, silently.
+stopifnot("a Victorian round must have exactly one excluded candidate" =
+            tx[, data.table::uniqueN(from_cand), by = c("seat","round")][, all(V1 == 1L)])
+tx[, to_n := data.table::uniqueN(to_cand),
+   by = c("election","seat","round","to")]
+tx <- tx[, list(votes = sum(votes), to_n = to_n[1]),
+         by = c("election","seat","round","from","to")]
 
 cat(sprintf("\nseats with a distribution : %d\nexclusion events          : %d\ntransfer rows             : %d\n",
             uniqueN(tx$seat), uniqueN(tx[, list(seat, round)]), nrow(tx)))
