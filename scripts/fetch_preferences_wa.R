@@ -259,6 +259,11 @@ TX <- rbindlist(all_tx)[!is.na(from) & !is.na(to) & votes > 0,
 # refused whole-WA arm, and their scores alone could not tell the two apart.
 TC <- rbindlist(three_c)
 TX <- merge(TX, TC, by = c("election", "seat"), all.x = TRUE)
+# A TRIP-WIRE, not a live check: TC and TX are built in the same loop behind
+# the same guard, so every seat with transfers necessarily has a marker and
+# this cannot currently fire. It is here so a future refactor that breaks
+# that invariant fails loudly, and it must not be read as evidence the
+# coverage logic was tested.
 if (anyNA(TX$three_cornered)) {
   stop("Transfers exist for seats with no three-cornered marker, so the 
        filter would drop or keep them by accident.")
@@ -266,10 +271,8 @@ if (anyNA(TX$three_cornered)) {
 cat("\nWF3b three-cornered seats: both a Liberal and a National contested\n")
 print(TC[, .(seats = .N, three_cornered = sum(three_cornered),
              pct = round(100 * mean(three_cornered))), by = election][order(election)])
-cat(sprintf("WF3b %d of %d seats (%.0f%%); %d of %d exclusion events sit in one\n",
-            sum(TC$three_cornered), nrow(TC), 100 * mean(TC$three_cornered),
-            uniqueN(TX[three_cornered == TRUE, paste(election, seat, round)]),
-            uniqueN(TX[, paste(election, seat, round)])))
+cat(sprintf("WF3b %d of %d seats are three-cornered (%.0f%%)\n",
+            sum(TC$three_cornered), nrow(TC), 100 * mean(TC$three_cornered)))
 if (!any(TC$three_cornered)) {
   stop("No seat is marked three-cornered, which cannot be true of Western 
        Australia and would make the filtered arm a copy of the unfiltered one.")
@@ -346,6 +349,14 @@ if (length(drop)) {
 cat(sprintf("WF2  %d election(s) under %.0f%%: full preferential, safe to pool.\n",
             nrow(EX) - length(drop), 100 * EXHAUST_LIMIT))
 TX <- TX[!election %in% TRANSFERS_EXCLUDED]
+
+# COUNTED HERE, after wa2001 is dropped, because this is the table that gets
+# written and filtered downstream. Counted before, it described a pool that
+# never ships -- a diagnostic reporting something other than what ran, which
+# is the failure T2 of the pre-registration exists to prevent.
+cat(sprintf("WF3c %d of %d exclusion events sit in a three-cornered seat\n",
+            uniqueN(TX[three_cornered == TRUE, paste(election, seat, round)]),
+            uniqueN(TX[, paste(election, seat, round)])))
 
 for (E in unique(FP$election)) {
   st <- FP[election == E, .(v = sum(votes)), by = party][, .(party, pct = round(100 * v / sum(v), 2))]

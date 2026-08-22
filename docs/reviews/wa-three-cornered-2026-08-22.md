@@ -80,6 +80,15 @@ cannot be confounded by anything above.
 That prediction is written here before it is run, so a later result can be
 checked against it.
 
+## One defect found reviewing this change
+
+`WF3b` counted exclusion events **before** wa2001 is dropped for exhaustion, so
+it printed 558 of 1,910 where the shipped file holds 517 of 1,658. The filter
+itself reads the file, not the log, so no result was affected — but a diagnostic
+that reports something other than what ran is the exact failure refusal T2 was
+written to prevent, and it appeared in the code written to satisfy T2. The count
+now sits after the exclusion, where it describes the table that ships.
+
 ## Process note
 
 Three experiments, three pre-registrations, three refusals, and nothing
