@@ -87,3 +87,31 @@ test_that("the published first-preference widening is applied", {
   expect_gt(mean(apply(wide$draws, 2, stats::sd)) /
             mean(apply(narrow$draws, 2, stats::sd)), 1.8)
 })
+
+test_that("the seat-total check fails on each thing it exists to catch", {
+  set.seed(1)
+  p <- runif(88, 0.02, 0.98)
+  # A correlated simulation: one shared statewide shock per draw, which is what
+  # the seat model actually does. It must PASS.
+  draw <- function(shift) sum(stats::runif(88) < pmin(1, pmax(0, p + shift)))
+  tot <- vapply(stats::rnorm(4000, 0, 0.12), draw, numeric(1))
+  good <- check_seat_totals(p, tot)
+  expect_true(good$ok)
+  expect_gte(good$sd_ratio, 1)
+
+  # BROKEN 1: totals centred somewhere the probabilities do not imply. This is
+  # the identity failing, and it means the totals and the probabilities came
+  # from different simulations.
+  expect_false(check_seat_totals(p, tot + 3)$ok)
+
+  # BROKEN 2: a total tighter than the independence floor -- arithmetically
+  # impossible for positively correlated seats, and the "range too narrow" bug
+  # the retired cross-check caught by accident.
+  tight <- rep(round(sum(p)), 4000)
+  expect_false(check_seat_totals(p, tight)$ok)
+  expect_lt(check_seat_totals(p, tight)$sd_ratio, 1)
+
+  # and empty input is refused rather than passing vacuously
+  expect_error(check_seat_totals(numeric(0), tot), "empty input")
+  expect_error(check_seat_totals(c(0.5, 1.4), tot), "probabilities must lie")
+})

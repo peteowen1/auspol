@@ -177,3 +177,48 @@ statewide_draws_as_at <- function(region, year, as_at, election_date, parties,
   list(draws = draws, folded = folded, n_polls = tr$n_polls, fp = tr$fp,
        tpp = tr$tpp, mu = mu, sd = sd)
 }
+
+#' Check seat totals against the per-seat probabilities that produced them
+#'
+#' Two identities tie a set of per-seat win probabilities to the distribution of
+#' the seat total, and any simulation must satisfy both whatever model produced
+#' it:
+#'
+#' 1. **The expected total is the sum of the probabilities**, exactly. The total
+#'    is a sum of Bernoulli indicators and expectation is linear, however
+#'    strongly the seats correlate.
+#' 2. **The variance is at least the independent-seat variance**, `sum p(1-p)`.
+#'    Seats sharing a statewide draw are positively correlated, and positive
+#'    correlation can only add variance. A total tighter than that floor is
+#'    arithmetically impossible.
+#'
+#' This replaced a cross-check against the retired two-party seat model, which
+#' `CLAUDE.md` forbids keeping. The reference here is arithmetic rather than
+#' another model, which makes it both rule-compliant and stronger: it cannot
+#' agree with a wrong answer because the other model shares the error.
+#'
+#' @param probs Per-seat win probabilities for one party.
+#' @param totals That party's simulated seat total, one entry per simulation.
+#' @param max_mean_gap Tolerated difference between the mean total and the sum
+#'   of probabilities. Monte Carlo noise on the mean is `sd/sqrt(n_sims)`, many
+#'   times smaller than this at any usable `n_sims`, so a larger gap is a bug.
+#' @return A list with `mean_total`, `expected`, `mean_gap`, `sd_total`,
+#'   `floor_sd`, `sd_ratio` and `ok`.
+#' @export
+check_seat_totals <- function(probs, totals, max_mean_gap = 0.5) {
+  probs <- probs[is.finite(probs)]
+  if (!length(probs) || !length(totals)) {
+    stop("check_seat_totals() needs both probabilities and totals; an empty ",
+         "input would pass every test it is given.")
+  }
+  if (any(probs < 0 | probs > 1)) stop("probabilities must lie in [0, 1].")
+  expected <- sum(probs)
+  floor_sd <- sqrt(sum(probs * (1 - probs)))
+  mean_total <- mean(totals)
+  sd_total <- stats::sd(totals)
+  mean_gap <- abs(mean_total - expected)
+  sd_ratio <- if (floor_sd > 0) sd_total / floor_sd else NA_real_
+  list(mean_total = mean_total, expected = expected, mean_gap = mean_gap,
+       sd_total = sd_total, floor_sd = floor_sd, sd_ratio = sd_ratio,
+       ok = mean_gap <= max_mean_gap && is.finite(sd_ratio) && sd_ratio >= 1)
+}

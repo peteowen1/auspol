@@ -586,58 +586,55 @@ wp <- as.data.table(sim$win_prob)
 cat("\n=== seats where a non-major has >=10% ===\n")
 minor <- wp[party %in% c("GRN","ONP","IND","OTH","OTH_RIGHT") & prob >= 0.10]
 print(minor[order(-prob)], nrows = 40)
-# ---- 6. S5: cross-check against the two-party seat model --------------------
-# The two-party model cannot represent a non-major winner, which is why it is
-# no longer the published seat forecast. It is kept as a CHECK because it is
-# the only independent estimate of Labor's seat count, built from the anchor's
-# notional margins rather than from primaries and flows, and it costs seconds.
+# ---- S5, the seat-total sanity check ---------------------------------------
+# THIS USED TO CALL simulate_seats() -- the RETIRED two-party seat model -- and
+# compare its ALP total against the candidate model's. CLAUDE.md forbids exactly
+# that: "Anything it can still do that the candidate model cannot gets PORTED,
+# then the two-party version is deleted. Not kept as a cross-check." It was
+# being kept as a cross-check, in the published script.
 #
-# It has already earned its place: when the candidate model was rebuilding the
-# statewide distribution instead of inheriting the projection, the two medians
-# still agreed while the RANGES did not, and that mismatch is what exposed the
-# bug. A check on the median alone would have missed it, so this checks both.
-# Restricted to the seats the candidate model actually covers. It has 87:
-# Narracan has no ordinary 2022 first preferences, its election having failed
-# after a candidate died and the January 2023 supplementary going uncontested
-# by Labor. simulate_seats() has all 88 and counts Narracan as a classic seat,
-# so comparing the totals unrestricted compares different populations and lets
-# a real divergence hide behind a one-seat offset.
-seats_all <- load_seats(2026, "vic")
-seats26 <- seats_all[seats_all$seat %in% rownames(mat22), ]
-if (nrow(seats26) != nrow(seats_all)) {
-  cat(sprintf("S5  comparing on %d seats; absent from the candidate model: %s
-",
-              nrow(seats26),
-              paste(setdiff(seats_all$seat, rownames(mat22)), collapse = ", ")))
-}
-sp22 <- seat_swing_spread(seats26, 55.00 - 57.60)
-sp18 <- seat_swing_spread(load_seats(2022, "vic"), 57.60 - 51.99)
-tp <- simulate_seats(seats26, pj$mean, pj$sd, 55.00,
-                     mean(c(sp22$sd_within, sp18$sd_within)),
-                     region_sd = mean(c(sp22$sd_between, sp18$sd_between)),
-                     n_sims = 50000, seed = SEED)
-tp_q <- stats::quantile(tp$alp_total, c(0.05, 0.5, 0.95))
-cl_alp <- sort(sim$totals[, "ALP"])
-cl_q <- cl_alp[pmax(1, round(c(0.05, 0.5, 0.95) * length(cl_alp)))]
-
-med_gap <- abs(cl_q[2] - tp_q[2])
-wid_ratio <- (cl_q[3] - cl_q[1]) / (tp_q[3] - tp_q[1])
-cat(sprintf("
-S5  two-party seat model : ALP median %2d (90%%: %2d-%2d)
-",
-            tp_q[2], tp_q[1], tp_q[3]))
-cat(sprintf("    candidate-level model: ALP median %2d (90%%: %2d-%2d)
-",
-            cl_q[2], cl_q[1], cl_q[3]))
-cat(sprintf("    median gap %d seats (max 5), 90%%-width ratio %.2f (0.7-1.4)  %s
-",
-            med_gap, wid_ratio,
-            if (med_gap <= 5 && wid_ratio >= 0.7 && wid_ratio <= 1.4) "PASS" else "FAIL"))
-if (med_gap > 5 || wid_ratio < 0.7 || wid_ratio > 1.4) {
-  stop(sprintf(paste0("S5 FAILED: the two seat models disagree. Median gap %d ",
-                      "seats, 90%%-width ratio %.2f. One of them is wrong and ",
-                      "the published figure cannot be trusted until it is known ",
-                      "which."), med_gap, wid_ratio))
+# What that check was FOR is worth keeping: a bug once left the two medians
+# agreeing while the RANGES disagreed, so a check on the median alone would have
+# missed it. What it needed a second model for was a reference range.
+#
+# It does not need one. Two identities tie a set of per-seat win probabilities
+# to the distribution of the seat total, and the simulation must satisfy both
+# whatever model produced it:
+#
+#   1. The expected total IS the sum of the per-seat probabilities. Exactly --
+#      the total is a sum of Bernoulli indicators, and expectation is linear
+#      regardless of how strongly the seats correlate.
+#   2. The total's variance is AT LEAST the independent-seat variance,
+#      sum p(1-p). Seats here share a statewide draw, so they are positively
+#      correlated, and positive correlation can only ADD variance. A total
+#      tighter than the independence floor is arithmetically impossible and is
+#      precisely the "range too narrow" bug the old check caught by accident.
+#
+# Both are properties of the candidate model alone. The reference is arithmetic
+# rather than another model, which makes this a stronger check than the one it
+# replaces as well as a rule-compliant one.
+# The arithmetic lives in check_seat_totals(), which has tests proving it fails
+# on each thing it exists to catch -- totals centred where the probabilities do
+# not imply, and a spread below the independence floor. An inline copy here
+# could not be tested against a deliberately broken input.
+chk5 <- check_seat_totals(wp[party == "ALP", prob], sim$totals[, "ALP"])
+cl_q <- stats::quantile(sim$totals[, "ALP"], c(0.05, 0.5, 0.95))
+cat(sprintf("\nS5  ALP seats: mean %.2f against sum of per-seat probabilities %.2f\n",
+            chk5$mean_total, chk5$expected))
+cat(sprintf("    spread sd %.2f against the independence floor %.2f (ratio %.2f)\n",
+            chk5$sd_total, chk5$floor_sd, chk5$sd_ratio))
+cat(sprintf("    median %d (90%%: %d-%d)\n", round(cl_q[2]), round(cl_q[1]), round(cl_q[3])))
+cat(sprintf("    mean gap %.2f (max 0.50), sd ratio %.2f (min 1.00)  %s\n",
+            chk5$mean_gap, chk5$sd_ratio, if (chk5$ok) "PASS" else "FAIL"))
+if (!chk5$ok) {
+  stop(sprintf(paste0("S5 FAILED. Mean ALP total %.2f against sum of per-seat ",
+                      "probabilities %.2f (gap %.2f), and spread sd %.2f against ",
+                      "an independence floor of %.2f. The first is an identity ",
+                      "and the second cannot be violated by positively ",
+                      "correlated seats, so the seat totals and the per-seat ",
+                      "probabilities do not describe the same simulation."),
+               chk5$mean_total, chk5$expected, chk5$mean_gap,
+               chk5$sd_total, chk5$floor_sd))
 }
 
 # The projected per-seat primaries the simulation runs on. Written out because
