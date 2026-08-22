@@ -44,6 +44,67 @@ open state, not the narrative of how it got here.
   Nation **total** rather than any individual One Nation seat. See
   [reviews/onp-allocation-checks-2026-08-18.md](reviews/onp-allocation-checks-2026-08-18.md).
 
+## Candidate-count weighting is blocked too, and the reason is a DATE
+
+`reviews/candidate-count-weighting-blocked-2026-08-22.md`. Measured while
+starting its pre-registration; no plan was written.
+
+The remedy needs to know how many candidates each class will field per Victorian
+seat in 2026. The only available predictor is the seat's own previous count, and
+on six consecutive federal pairs it is **worse than assuming one candidate**:
+
+| class | exact | MAE from previous | MAE assuming one |
+|---|---:|---:|---:|
+| OTH_RIGHT | 26.6% | 1.27 | **1.11** |
+| OTH | 33.1% | 0.97 | **0.89** |
+| IND | 20.2% | 1.06 | **0.59** |
+
+Overall 0.56 against 0.42. Worst exactly where the mechanism lives.
+
+**The remedy is not wrong, it is early.** Victorian nominations close before
+polling day on 28 November 2026, and once they do the count is a FACT for every
+seat, not a prediction — the application side becomes free and only the
+estimation side remains, which the transfers already support via `to_n`.
+
+**Revisit after nominations close and before the election. Worth nothing before
+then.**
+
+Meanwhile `simulate_seat_contests()` has no concept of a candidate — it
+simulates classes, so three minor-right candidates on 4% each become one
+competitor on 12%, surviving eliminations it would really have lost. No votes
+are dropped; **fragmentation** is. Expressed as a candidate count the implied
+assumption of one carries an MAE of 1.11 for `OTH_RIGHT`. A known, sized,
+unfixed approximation rather than an oversight.
+
+
+## Narrowing the catch-all buckets is INFEASIBLE
+
+`reviews/bucket-narrowing-infeasible-2026-08-22.md`. Checked while starting the
+pre-registration for it; no plan was written.
+
+The seat model needs a statewide share per class, and that comes from polls.
+Victorian polls in the live cycle report exactly five series: ALP, LNP, GRN,
+OTH (54 each) and ONP (19). UAP and DEM are at **zero**. Nobody reports Family
+First, Australian Christians, Legalise Cannabis or the Shooters separately, so a
+narrower class cannot be given a statewide share and cannot be simulated.
+
+**The classification is coarse because the INPUTS are coarse.** The party
+inclusion floor is not the obstacle — the obstacle is upstream of it, and
+lowering the floor would not create a series nobody collects. `IND` is the same
+problem in another shape, which is why independent emergence is a separate line
+of work.
+
+### What survives: weighting by candidate count
+
+The one remaining remedy needs no new class, no new polling and costs no
+coverage. **Its hard part is the application side, recorded before any plan is
+written**: estimating a rate per candidate is easy because the transfers already
+carry `to_n`, but *applying* it needs to know how many candidates each class
+will field per Victorian seat in 2026, and nominations have not closed. The
+available predictor is the seat's own 2022 count — a real assumption with a
+measurable error, not a free lunch.
+
+
 ## Refusal M2 fires: the multiplicity split is refused on coverage
 
 `reviews/m2-cell-thinning-2026-08-22.md`. **Stopped before any arm was scored.**
