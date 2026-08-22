@@ -44,6 +44,36 @@ open state, not the narrative of how it got here.
   Nation **total** rather than any individual One Nation seat. See
   [reviews/onp-allocation-checks-2026-08-18.md](reviews/onp-allocation-checks-2026-08-18.md).
 
+## The four independent refusals were scored against a baseline we do not ship
+
+`reviews/independent-refusals-reread-2026-08-23.md`. Independent emergence was
+built and refused four times. Re-reading them turns up what none could know:
+
+`score_independent_federal.R:62` calls `simulate_seat_contests()` with **no
+`shrink`, no `statewide_draws`, no `party_cor`** — `fit_seats_full.R` passes all
+three. Arm A's slope across the rounds was 0.586, 0.586, 0.586, **0.260**. The
+published model is **0.980**.
+
+Two consequences:
+
+- **The temperature control loses its force.** It existed to test whether arm
+  B's gain was "an over-confident model made less confident" — decisive against
+  a baseline at 0.26, meaningless against one already at 0.980.
+- **v4 refused on Brier, the least sensitive proper score for this defect.** Its
+  own table has arm B ahead on log score (0.478 vs 0.544). A seat moved 0.000 →
+  0.30 that then wins gains at most 0.09 on Brier and 1.2 on log — and log is
+  where the entire measured gap sits.
+
+**This does not vindicate the model.** v1 and v2 broke incumbent independents,
+and the federal reversal may survive the correction. It means the verdicts rest
+on a comparison that was not what it claimed to be — the fourth harness today
+found with that defect.
+
+**Next is a re-measurement, not a fifth model**: v3 exactly as fitted, arm A as
+the published configuration, log score pre-registered as the criterion, control
+arm and incumbent-independent guard both retained.
+
+
 ## Calibration knobs REFUSED — and the model was better than we knew
 
 `reviews/seat-calibration-2026-08-22.md`. 24 grid points, six federal
