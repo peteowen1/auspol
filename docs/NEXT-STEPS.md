@@ -81,11 +81,25 @@ more informative per seat. **Their information advantage does not explain it**:
 four of their eight finals are seat-betting updates, but not these two — their
 2022 and 2025 federal finals are poll-based like ours.
 
-### Next
+### Next — and the answer arrived: it is ONE hole, not general bluntness
 
-Not calibration. **Discrimination** — what lets them separate seats we cannot:
-candidate-level incumbency and sophomore effects, seat history, or how they
-resolve a contest. A different investigation from any knob in this grid.
+`reviews/discrimination-gap-2026-08-22.md`. **Excluding seats an independent
+won, our log score is 0.255 against their 0.247** — level on 266 of 286 seats.
+**97% of the gap is twenty independent-won seats**, and within those we hold
+incumbent independents fine (better than them in four) and score **0.000 on an
+independent winning for the FIRST time**.
+
+The "calibrated but blunt" conclusion above was an artefact of forecast mode
+folding `IND` into `OTH`, which makes independents unwinnable by construction.
+
+**This reopens independent emergence**, refused four times here — always against
+our own metrics with no external reference. What none of those refusals could
+know is what the hole is worth: 97% of the gap to a real forecaster, and AE
+Forecasts put 0.28–0.51 on the 2022 teal seats before they fell, so they are
+forecastable without betting markets.
+
+Note it may cost nothing in Victoria 2026, which has zero independent-held
+seats.
 
 
 ## Forecast mode REFUSED, and it rules out the obvious explanation

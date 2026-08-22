@@ -68,6 +68,15 @@ and **no seat sits in the 99–100% band at all**, against 58% before.
 off" — was wrong.** It described a configuration we do not ship. The published
 model is close to calibrated.
 
+> **CORRECTED 2026-08-22 by `discrimination-gap-2026-08-22.md`.** The section
+> below concludes we are "calibrated but blunt". That is wrong, and wrong in a
+> way I introduced: it is measured in forecast mode, where `IND` falls under the
+> poll-inclusion floor and is folded into `OTH`, so independents cannot win any
+> seat at all. Measured where `IND` exists as a class, **we are level with AE
+> Forecasts on 266 of 286 seats (log 0.255 against 0.247)** and 97% of the gap
+> sits in twenty independent-won seats. The refusal and the calibration findings
+> above are unaffected; only this section's diagnosis is.
+
 ## The real gap is sharpness, not honesty
 
 That is not a clean win, because the log score says something else. On the two
