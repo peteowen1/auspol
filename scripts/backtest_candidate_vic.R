@@ -65,6 +65,7 @@ CAL_TAG <- paste0(
   # produced four byte-identical comparisons here.
   if (nzchar(Sys.getenv("AUSPOL_WA_CUTOFF", "")) ||
       nzchar(Sys.getenv("AUSPOL_QLD_CUTOFF", ""))) "-cut" else "",
+  if (identical(Sys.getenv("AUSPOL_WA_DROP_3C", "0"), "1")) "-no3c" else "",
   if (identical(Sys.getenv("AUSPOL_WA_DROP_LNP", "0"), "1")) "-nolnp" else "",
   # AUSPOL_FLOW_UNC swaps the simulation for a 40-replicate ensemble that
   # perturbs every flow, which is as large a change as any flag here, and it

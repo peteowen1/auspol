@@ -126,6 +126,7 @@ CAL_TAG <- paste0(
   # produced four byte-identical comparisons here.
   if (nzchar(Sys.getenv("AUSPOL_WA_CUTOFF", "")) ||
       nzchar(Sys.getenv("AUSPOL_QLD_CUTOFF", ""))) "-cut" else "",
+  if (identical(Sys.getenv("AUSPOL_WA_DROP_3C", "0"), "1")) "-no3c" else "",
   if (identical(Sys.getenv("AUSPOL_WA_DROP_LNP", "0"), "1")) "-nolnp" else "")
 
 SEED <- 42; SMOOTH <- 0.15; eps <- 1e-6

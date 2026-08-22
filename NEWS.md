@@ -1,3 +1,48 @@
+# auspol 0.4.19
+
+**The Western Australian flow question is closed after a third refusal**, and
+the three results together say more than any one of them.
+
+| arm | t | improved in |
+|---|---:|---:|
+| WA minus Coalition-origin exclusions | -2.23 SE | 1 of 9 |
+| WA whole | -1.57 SE | 3 of 9 |
+| WA minus three-cornered seats | **-0.49 SE** | 4 of 9 |
+
+Dropping the seats where a Liberal and a National both contested recovered about
+**1.08 SE of the 1.57**, so the Liberal-versus-National diagnosis was
+substantially right: WA runs the two against each other, the pair surviving the
+late rounds is often two Coalition candidates, and nearly every transfer
+resolves to LNP by construction. It was not the whole story, and the pre-
+registered bar -- deliberately raised to 2.5 SE on multiplicity grounds, with
+the earlier plan's "adopt anyway under 2 SE" clause dropped -- was not met.
+
+Refusal T3 fired as its plan said it expected to: `ALP -> GRN` moves from 9.3 to
+12.7 points away from Victoria, because Labor is rarely excluded in WA and the
+Greens are usually already out when it is. Another fact about **which candidates
+survive**, not about how anyone preferences.
+
+**No fourth filter.** Three arms scored against a pre-registered criterion is
+enough; a fourth cut of the same data for the same decision is multiplicity.
+`AUSPOL_WA_FLOWS` stays off by default and nothing published changes. The eight
+Western Australian elections stay fetched and validated -- district-level One
+Nation vote across a fourth jurisdiction is worth having on its own terms.
+
+**The next question is on record before it runs.** The matrix is keyed on party
+class and survivor SET, so a contest whose survivors are two LNP candidates
+should occupy its own cell rather than contaminating others. Every finding here
+fits that reading and not "West Australians are unusual". Its testable form:
+condition on the survivor MULTISET, and it should improve the forecast **with
+Western Australia excluded entirely** -- the one version of the test nothing
+above can confound.
+
+Mechanically, the fetcher now emits a `three_cornered` marker per seat and
+prints the counts, which the pre-registration required: a flag that silently
+marked nothing would have made this arm a copy of the already-refused whole-WA
+arm, indistinguishable by score alone. The filter aborts if the marker is
+missing or marks nothing, both guards are proven to fail on deliberately broken
+input, and the marker is stripped before the pool reaches the flow matrix.
+
 # auspol 0.4.18
 
 **Western Australia is fetched, measured against a pre-registration, and
