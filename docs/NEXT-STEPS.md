@@ -69,9 +69,12 @@ estimation side remains, which the transfers already support via `to_n`.
 **Revisit after nominations close and before the election. Worth nothing before
 then.**
 
-Meanwhile the model implicitly assumes one candidate per class per seat, which
-carries an MAE of 1.11 candidates for `OTH_RIGHT`. A known, sized, unfixed
-approximation rather than an oversight.
+Meanwhile `simulate_seat_contests()` has no concept of a candidate — it
+simulates classes, so three minor-right candidates on 4% each become one
+competitor on 12%, surviving eliminations it would really have lost. No votes
+are dropped; **fragmentation** is. Expressed as a candidate count the implied
+assumption of one carries an MAE of 1.11 for `OTH_RIGHT`. A known, sized,
+unfixed approximation rather than an oversight.
 
 
 ## Narrowing the catch-all buckets is INFEASIBLE

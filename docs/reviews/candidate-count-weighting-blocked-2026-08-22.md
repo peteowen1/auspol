@@ -66,10 +66,21 @@ then.
 
 ## What the model assumes in the meantime, stated plainly
 
-`simulate_seat_contests()` implicitly treats each class as fielding one
-candidate per seat. Against the federal record that assumption carries an MAE of
-**1.11 candidates for `OTH_RIGHT`** and 0.89 for `OTH` — it is not accurate, it
-is merely *less inaccurate* than the alternative available today.
+`simulate_seat_contests()` has **no concept of a candidate at all** — it
+simulates classes. A seat's `OTH_RIGHT` share is the combined vote of every
+minor-right candidate who stood there, and the elimination treats that combined
+vote as one competitor.
+
+**So no votes are dropped; what is lost is fragmentation.** Three minor-right
+candidates on 4% each are simulated as a single competitor on 12%, which
+survives eliminations it would really have lost and collects preferences it
+would really have split. That is the same artefact the flow matrix shows from
+the other side.
+
+Expressed as the quantity a weighting scheme would need — the candidate count —
+the implied assumption of one carries an MAE of **1.11 for `OTH_RIGHT`** and
+0.89 for `OTH` against the federal record. Not accurate; merely *less
+inaccurate* than anything available today.
 
 So this is a known, sized, unfixed approximation rather than an oversight, and
 it is recorded here as one.
