@@ -44,6 +44,33 @@ open state, not the narrative of how it got here.
   Nation **total** rather than any individual One Nation seat. See
   [reviews/onp-allocation-checks-2026-08-18.md](reviews/onp-allocation-checks-2026-08-18.md).
 
+## Two more things computed and thrown away, and the VEC path
+
+**The full per-seat per-party probability table is never saved.**
+`simulate_seat_contests()` returns `seat, party, prob` for every party in every
+seat; every harness collapses it to the actual winner plus the argmax before
+writing (`backtest_candidate_fed.R:321`). So we cannot answer "does the model
+give independents probability in seats where none is nominated" without a fresh
+25-minute run. Same shape as the seat-TCP finding: the quantity exists in memory
+and is discarded at the last step.
+
+**Victorian candidate-level data already exists.**
+`external/elections/vec-2022-vic-candidates.csv` — `seat, cand, party, fp_votes`,
+119 rows classified `IND`. The 2014/2018 historical fetcher parses candidate
+names too but discards them before writing; persisting them is a small change to
+a parser already proven correct.
+
+**VEC acquisition path**, checked live: `vec.vic.gov.au` resolves from here on
+both the bare and `www.` forms, through both PowerShell and R's downloader — the
+apex-domain problem that hit AE Forecasts does not apply. **Nominations close 12
+noon Monday 9 November 2026**, confirmed from the VEC's own 2026 page, matching
+what was already recorded. The pre-election *nomination list* URL is not yet
+discoverable — it does not exist for 2026 yet, and web.archive.org is blocked
+here, so a 2022 snapshot cannot be recovered. The plan is to probe VEC directly
+shortly after 9 November and reuse the working HTML-table parser from
+`fetch_preferences_vic.R`.
+
+
 ## Seat-level TCP: we already compute it and throw it away
 
 The one metric AE Forecasts can be scored on that we cannot — **their seat TCP
