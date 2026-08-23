@@ -156,6 +156,57 @@ filters strictly by date. Fifty lines calling `gtrendsR`, not a fork to
 maintain. If the package were unmaintained, vendoring the part we need would
 beat forking, since there would be no upstream worth tracking.
 
+## The gate ran, and measured the wrong thing
+
+20 candidacies sampled (10 breakout, 10 not), 18 retrieved. Nominal result:
+breakout ratio median 8.83, non-breakout 0.88, **AUC 0.669 — inconclusive**.
+
+**That number is not evidence of anything, and the tell is in the raw values.**
+
+| candidate | challenger | incumbent | ratio | actual |
+|---|---:|---:|---:|---:|
+| Ben SMITH | 20.61 | **0.00** | 206.1 | 20.5% |
+| Caz HEISE | **1.408** | 0.00 | 14.09 | 26.4% |
+| Barry SMITH | **1.408** | 0.00 | 14.09 | 1.3% |
+| Mick GALLAGHER | **1.408** | 0.00 | 14.09 | 2.1% |
+| David William SHELDON | **1.408** | 0.00 | 14.09 | 2.1% |
+
+**1.408 is 100/71** — a 71-point weekly series where exactly one point is 100 and
+the rest are 0. Google Trends scales the **maximum within each query to 100**, so
+a candidate with almost no search volume still hits 100 at their single blip. Six
+queries produced that same artefact. And the incumbent anchor returned **0.000 in
+7 of 18 cases**, which is impossible for a sitting MP and means the challenger's
+spike dominated the scaling and pushed the incumbent under the reporting floor.
+
+**The anchor design was wrong.** I used the sitting member, but the sitting member
+varies enormously between queries — Josh Frydenberg is nationally famous, Pat
+Conaghan is not — so each query carries its own scale and the ratios do not
+compare across seats. The Kooyong probe worked because both names had real
+volume there; it does not generalise, and I made exactly the error I had warned
+about one document earlier.
+
+Two further contaminants, worth naming for the next attempt:
+
+- **Official name forms.** The AEC gives "Stewart Gordon BROOKER" and "Robert
+  OAKESHOTT"; people search "Rob Oakeshott". Three challengers returned exactly
+  zero, including a nationally known former MP.
+- **Common-name collisions.** "Ben Smith", "Barry Smith", "Peter George" pick up
+  search volume that has nothing to do with the election.
+
+### What the next attempt needs
+
+- **One constant high-volume anchor term in every query** — the same word
+  everywhere — so all queries share a scale, with candidate and incumbent both
+  measured against it. This is the whole fix for the scaling problem.
+- **Search-form names**, not AEC official forms.
+- **A disambiguation check** for common names, or their exclusion.
+- **A guard that refuses a query whose anchor returns zero**, since that is
+  proof the scale collapsed rather than a measurement of anything.
+
+The gate is therefore **not yet run**. What was run measured normalisation
+artefacts, and reporting 0.669 as a near-miss would be treating a broken
+instrument as a weak signal.
+
 ## What must be true before a plan is written
 
 - **A signal must be visible at all** — a serious independent must be
