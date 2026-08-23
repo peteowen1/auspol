@@ -218,6 +218,24 @@ model.
   check, and a grep for existing keys must match every format they are written
   in — the one run before choosing `B1` matched only some, and so came back
   clean when it was not.
+- **A fetch loop dropped failures with `next` and no counter, then scored the
+  survivors as the full sample.** 2026-08-23: a Google Trends batch-fetch loop
+  hit `widget$status_code == 200 is not TRUE` (an assertion with no status
+  code in it, indistinguishable from a real bug) on every NSW batch, `next`ed
+  past it silently, and reported "AUC national 0.850 vs state-level 0.775"
+  from 9 of 22 candidates — Allegra Spender (34.9% in Wentworth) simply absent
+  from the table. Caught by Pete reading the output, not by any check: *"There's
+  no way Allegra Spender would be absent from NSW Google Trends, she was
+  everywhere."* Same species as the guard-reports-success-for-the-wrong-reason
+  bullet above, but the failure mode is an absent guard rather than a wrong
+  one. Fixed in `scripts/trends_fetch.R`: every batch outcome is logged, and
+  `trends_require_complete()` **aborts** rather than let a caller compute a
+  statistic over a subset — proven against a 9-of-22 input before being
+  trusted. Re-run complete (22 of 22, both geographies): the real AUCs are
+  0.854 national vs 0.846 state-level, materially different from the withdrawn
+  numbers. **The general rule this keeps re-teaching: any loop that can skip
+  an item needs a counter that a downstream consumer is forced to check —
+  "most of it worked" must never look identical to "all of it worked."**
 
 ## Data boundary
 

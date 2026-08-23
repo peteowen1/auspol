@@ -1,6 +1,6 @@
 # auspol — work queue
 
-Updated 2026-08-21. Remote: github.com/peteowen1/auspol (private, default
+Updated 2026-08-23. Remote: github.com/peteowen1/auspol (private, default
 branch `dev`; `main` exists and is reached only through a reviewed PR).
 
 Completed stage write-ups live in
@@ -43,6 +43,58 @@ open state, not the narrative of how it got here.
   bar. It beats a uniform allocation by only 0.122 MAE, so trust the One
   Nation **total** rather than any individual One Nation seat. See
   [reviews/onp-allocation-checks-2026-08-18.md](reviews/onp-allocation-checks-2026-08-18.md).
+- **Find a signal for a first-time regional independent breakout** (Priestly
+  in Nicholls, 23.5%, our worst-scoring miss). Search-interest salience is
+  confirmed strong for teal-type candidates but does not move Priestly, Boele
+  or Heise at either national or state geography — see below. News-article
+  mention counts (GDELT) were the other candidate mechanism raised earlier
+  this session and are untried.
+
+## PR #26 merged, and the salience signal is confirmed (2026-08-23)
+
+Everything under "WE HAVE A BENCHMARK" below is now on `main` — the AEF
+benchmark, the five harness fixes, and the forecast-mode overturn. `R CMD
+check` notes down to the two that cannot be removed (new-submission,
+`CLAUDE.md` at top level; `three_cornered` was the fixable one, declared in
+`R/zzz.R`).
+
+### The salience signal is confirmed
+
+Three elections, same design, national search interest for the anchored
+candidate name against "Anthony Albanese": **AUC 0.823 (2019, n=4 breakouts)
+/ 0.854 (2022, n=10) / 0.964 (2025, n=7).** Fixing AEC legal names to search
+form ("Kylea Tink" not "Kylea Jane Tink") lifted 2022 alone from 0.830 to
+0.854. Errors run in useful directions: false positives are common-name
+collisions (a UK comedian named Will Anderson, not the method failing on a
+genuine unknown), and misses are regional (Boele, Priestly, Heise all read
+near zero on 20–25% of the vote). Full write-up:
+[reviews/independent-signal-2026-08-23.md](reviews/independent-signal-2026-08-23.md).
+
+**State-level geography does not fix the regional misses.** Tested complete
+(22 of 22 candidates, both geographies): AUC national 0.854 vs state-level
+0.846 — tied within noise, and combining the two with a simple max buys almost
+nothing (0.858). The wave-candidate in-state lift is real and large (Monique
+Ryan 0.147 national → 0.363 in Victoria; Kate Chaney 0.033 → 0.237 in WA), but
+it does not rescue Priestly (stays at exactly 0.0000), and Tim Bohm's
+common-name false positive gets *worse* at state level — third overall, on
+5.1% of the vote, because the ACT is a small search population. So "regional
+candidates are invisible nationally but visible in-state" is **rejected**:
+the three misses look like genuinely low local search interest, not a
+geography problem with the query.
+
+**The first version of this comparison was wrong and withdrawn.** A partial
+sample (9 of 22 candidates — every NSW batch had been silently dropped by a
+`next` with no counter) produced a plausible-looking "AUC national 0.850 vs
+state 0.775". Pete caught it from the table: *"There's no way Allegra Spender
+would be absent from NSW Google Trends, she was everywhere."* She was in the
+sample; the batch fetching her was rejected by Google and the loop swallowed
+it. Fixed properly, not patched: `scripts/trends_fetch.R` logs every batch
+outcome and `trends_require_complete()` **aborts** rather than let a caller
+compute a statistic over a subset, proven against the exact 9-of-22 failure
+before being trusted. Recorded as a new hazard in `ARCHITECTURE.md` — the
+fifth silent failure in this repo caught by a person reading output rather
+than a check, and the tell was the same every time: a plausible number with a
+name missing from it.
 
 ## Wasted independent probability: negligible in aggregate, one bad seat
 
@@ -176,6 +228,10 @@ absence of evidence dressed as measurement.
 
 Next: query slowly from a cold start, or try `gtrendsR`, which is a different
 service with a different limit. No plan until a signal is shown to exist.
+
+**Resolved 2026-08-23 — the signal exists and is strong.** See "The salience
+signal is confirmed" below for the measured result and what still doesn't
+work (the three regional misses).
 
 
 ## Independent emergence: CLOSED after five attempts
@@ -1400,36 +1456,17 @@ bias correction). Their conclusions live in the code, `CONSTANTS.md` or
 Feature comparison of all four sites and the proposed build order:
 [plans/product-features.md](plans/product-features.md).
 
-## Next build steps (in rough order)
+## Still ahead from the original build-step list
 
-1. ~~Estimate model hyperparameters instead of fixing them~~ — **done**
-   (session 2): exact log marginal likelihood, L-BFGS-B, plus a per-pollster
-   noise-factor stage. See "Done".
-2. ~~Poll-share transformation~~ — **done** (session 2, stage 3), but not as
-   planned: a global switch to logit was REJECTED by its own pre-registered
-   test. The scale is now chosen per party by comparable log evidence. See
-   "Done" and the open question below.
-3. ~~Handle "modelled party folded into OTH"~~ — **done** (session 2). See
-   "Done". Was: some polls (e.g. ResolvePM
-   Jan 2026 NSW) report ONP inside OTH; anchor imputes from trend and
-   subtracts. We currently over-count OTH in those polls.
-4. ~~Fundamentals stage~~ — **done** (2026-08-15), as ridge rather than
-   elastic net, penalty chosen leave-one-election-out. Two-party MAE 3.05
-   against 4.93 for "assume the last result". See "Done".
-5. ~~Stan version of the trend~~ — **not needed, and the interesting half was
-   tested without it.** Fat tails were the main reason to want Stan, and they
-   were built instead as Student-t observation noise by IRLS, measured, and
-   rejected on their own numbers (MAE 2.791 against 2.779 — see the negative
-   result below). What Stan would still add is honest uncertainty in the
-   hyperparameters themselves, which we currently treat as known. That is a
-   real gap but a second-order one, and it costs the exact sparse solve —
-   seconds per cycle becomes minutes. Revisit only if the intervals start
-   failing calibration.
+The other four items (hyperparameter estimation, poll-share transform, OTH
+folding, fundamentals) are done — full history in
+[backlog/journal-2026-08.md](backlog/journal-2026-08.md). Two remain:
 
-Still ahead: ABS Census electorate demographics (CED/SED + SA1
-correspondences) for a seat model that knows something about each seat, and
-theswingison's preference-simulator idea (see below) in place of a fixed
-flow rate.
+- ABS Census electorate demographics (CED/SED + SA1 correspondences), for a
+  seat model that knows something about each seat beyond its swing.
+- theswingison's preference-simulator idea (12-rule hierarchy keyed on who is
+  eliminated and who remains — see "Also worth a look" below) in place of a
+  fixed flow rate.
 
 ## Open: the negative tail of the tracking check (L4c)
 
@@ -1490,40 +1527,50 @@ Stan) may make the question moot.
 - OTH double-counts a modelled party when a poll folds it in (see #3 above).
 - No undecided-voter rescaling (anchor CSVs appear already rescaled; verify).
 
-## Victoria 2026 is the target — 104 days out as of 2026-08-16
+## Victoria 2026 is the target — 97 days out as of 2026-08-23
 
 Settled 2026-08-14. Victoria votes **28 November 2026**, the nearest real
 deadline by a long way (NSW 2027, federal 2028, Qld 2028) and the only
 chance this cycle to publish a forecast and have it graded in months rather
-than years. `scripts/fit_vic.R` fits 2018 and 2022 as validation plus the
-live 2026 cycle.
+than years.
 
-**Current standing (trend only — no fundamentals or seat model yet):**
-LNP 28.6, ALP 25.4, ONP 20.9, GRN 12.9, OTH 10.5; derived ALP TPP 47.3
-(95%: 45.1–49.5), against 55.0 at the 2022 election.
+**These figures were wrong from 2026-08-16 to 2026-08-23** — not stale,
+*wrong*: they were `fit_seats.R` / `simulate_seats()` output, the **retired**
+two-party model that cannot elect a minor party by construction (see "The seat
+model is the candidate model" in `CLAUDE.md`). One Nation polling 21% could not
+win a single seat under that model regardless of the swing. Replaced below with
+`output/vic-page-data.json` as of **2026-08-21**, which is the published
+candidate-model (`fit_seats_full.R` / `simulate_seat_contests()`) output —
+verify freshness against a rerun before quoting these past a few more days.
 
-**Projection to election day** (105 days out): ALP two-party
-**46.8 (95%: 41.9–51.7)**, trend weight 0.57 — an 8.2-point swing against a
-Labor government seeking a fourth term. Trend and fundamentals agree closely
-and independently (47.1 vs 46.5), which is corroboration rather than
-confirmation: they share no inputs, but both could be wrong in the same
-direction if 2026 repeats 2018's polling miss.
+**Trend and projection**: trend TPP 49.04, fundamentals 46.72, blended
+**47.95 (95%: 42.98–52.92)**, trend weight 0.53 — against 55.0 at the 2022
+election. 54 polls in the current cycle, latest 2026-08-08.
 
-**The published intervals are calibrated.** Refitting mix weight, bias and
-spread with each election held out, over 195 election-horizon pairs: nominal
-95% intervals contain the truth 92.8% of the time, nominal 80% 76.4%, nominal
-50% 54.9%. Excess kurtosis −0.17, essentially normal, so no fat-tailed or
-asymmetric error model is warranted — measured rather than assumed.
+**Seat forecast** (candidate-level, so minor parties can win):
 
-**Seat forecast**: ALP **39 of 88** seats (50%: 33–45, 90%: 23–51),
-P(ALP majority) **26%**, a median loss of 17 seats from the 56 won in 2022.
+| party | median | 90% range |
+|---|---:|---:|
+| ALP | 37 | 20–48 |
+| LNP | 36 | 27–52 |
+| ONP | 9 | 3–17 |
+| GRN | 5 | 3–8 |
+| IND | 0 | 0–1 |
 
-These four figures were stale until 2026-08-17 — they read 35, 29–41, 19–49
-and 14.2%, the values from before the preference-flow estimator moved the
-published two-party from 46.8 to 47.8. The TPP line above was updated at the
-time and the seat line was not, so this file spent a day describing a
-materially more pessimistic forecast than the model produced. Source of truth
-is `output/vic-page-data.json`, and `scripts/fit_seats.R` reproduces it.
+P(ALP majority) **14.6%**, a median loss of 19 seats from the 56 won in 2022.
+Expected-value check (`sum(prob)` per party against the independent-seat
+variance floor): ALP 35.68 seats, sd 3.12 — consistent with the median/range
+above, and the gap between the naive floor and the true simulated sd (8.53,
+per PR #26) is the measured correlation across seats from a shared statewide
+swing.
+
+**The published intervals are calibrated** (this check is about the trend/
+projection stage and is unaffected by the seat-model correction above).
+Refitting mix weight, bias and spread with each election held out, over 195
+election-horizon pairs: nominal 95% intervals contain the truth 92.8% of the
+time, nominal 80% 76.4%, nominal 50% 54.9%. Excess kurtosis −0.17, essentially
+normal, so no fat-tailed or asymmetric error model is warranted — measured
+rather than assumed.
 
 ## Findings from the Victorian build worth keeping
 
@@ -1548,6 +1595,13 @@ is `output/vic-page-data.json`, and `scripts/fit_seats.R` reproduces it.
   party-cycle reported, rather than the model inheriting false precision.
 
 ## Where seat-count uncertainty actually comes from (measured 2026-08-15)
+
+**Measured on the retired two-party model** (`fit_seats.R`, predates the
+candidate model). The qualitative shape (statewide error dominates; per-seat
+noise damps rather than amplifies volatility) is a claim about how a swing
+propagates through a pendulum and plausibly still holds, but it has not been
+re-measured on `simulate_seat_contests()` and the specific sd figures below
+should not be quoted as current.
 
 Three separate simulations at the projected Victorian vote, sd in seats:
 
@@ -1695,37 +1749,16 @@ survivor-conditioned transfer matrix, and shifting every flow by 15 points
 leaves the published seat output byte-identical — 33.7 reaches only the
 statewide two-party anchoring. See the 2026-08-21 session entry.
 
-## The published page is now executed, not just generated (2026-08-15)
+## The published page is executed, not just generated (2026-08-15)
 
 `tools/check-page.js` runs the page's own JavaScript against a stub DOM and
-fails the build if any block did not draw, reported as check **G1**. Nothing
-else covered it: `R CMD check` never looks at HTML, `node --check` parses
-without running, and a browser shows a page missing three of four charts as
-merely quiet.
-
-The instructive part is that the check was wrong three times before it was
-right, and every wrong version *passed*:
-
-1. Counting only `innerHTML`/`textContent` called the three SVG charts
-   missing on a healthy page — they are built with `appendChild`.
-2. "Was anything written" then passed a page whose pendulum had failed,
-   because the block appends its axes before it touches the data. The real
-   signal is the template's own `draw()` guard, which logs the failure.
-3. Conditional blocks (`datawarn`, `leadcav`) were exempted from the
-   must-render rule outright, so a caveat that silently failed still read as
-   OK — and `leadcav`'s condition holds right now. Each conditional now
-   carries a predicate over the page's own embedded data.
-
-Plus a fourth found while fixing the third: the regex extracting that data
-required `};\n` and R on Windows writes `};\r\n`, so it never matched.
-
-**The rule, now in ARCHITECTURE.md: prove a check fails on a deliberately
-broken input before trusting it to pass.** Every guard in the file has been
-run against a page corrupted in the specific way it claims to detect.
-
-Related: check codes are hand-maintained across seven scripts and nothing
-enforced uniqueness. `B1` was claimed by both `fit_projection.R` and the page
-check; the page check is now `G1` and `run_all.R` stops on any clash.
+fails the build if any block did not draw (check **G1**) — full history of
+the three false-pass iterations it took to get there moved to
+[backlog/journal-2026-08.md](backlog/journal-2026-08.md). **The rule this
+produced is in `ARCHITECTURE.md`** ("Where the guards are" and "Recurring
+hazards"): prove a check fails on a deliberately broken input before trusting
+it to pass. That rule is why the 2026-08-23 Trends-loop failure below has its
+own proof table rather than a fix taken on faith.
 
 ## The forecast refreshes daily, and deliberately does not publish itself
 

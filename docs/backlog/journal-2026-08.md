@@ -565,3 +565,65 @@ volatility comparison took 33x and bought nothing; a backtest that takes an
 hour makes every constant expensive to re-examine, and constants that are
 expensive to re-examine stop being re-examined.
 
+---
+
+Moved from `docs/NEXT-STEPS.md` on 2026-08-23 (housekeeping pass, hub past
+90k characters). Both fully superseded — their content lives on as compact
+pointers in the hub and, for the first one, duplicated into `ARCHITECTURE.md`.
+
+## Next build steps (in rough order) — as it read up to 2026-08-23
+
+1. ~~Estimate model hyperparameters instead of fixing them~~ — **done**
+   (session 2): exact log marginal likelihood, L-BFGS-B, plus a per-pollster
+   noise-factor stage.
+2. ~~Poll-share transformation~~ — **done** (session 2, stage 3), but not as
+   planned: a global switch to logit was REJECTED by its own pre-registered
+   test. The scale is now chosen per party by comparable log evidence.
+3. ~~Handle "modelled party folded into OTH"~~ — **done** (session 2). Was:
+   some polls (e.g. ResolvePM Jan 2026 NSW) report ONP inside OTH; anchor
+   imputes from trend and subtracts. We currently over-count OTH in those
+   polls.
+4. ~~Fundamentals stage~~ — **done** (2026-08-15), as ridge rather than
+   elastic net, penalty chosen leave-one-election-out. Two-party MAE 3.05
+   against 4.93 for "assume the last result".
+5. ~~Stan version of the trend~~ — **not needed, and the interesting half was
+   tested without it.** Fat tails were the main reason to want Stan, and they
+   were built instead as Student-t observation noise by IRLS, measured, and
+   rejected on their own numbers (MAE 2.791 against 2.779). What Stan would
+   still add is honest uncertainty in the hyperparameters themselves, which
+   we currently treat as known. That is a real gap but a second-order one,
+   and it costs the exact sparse solve — seconds per cycle becomes minutes.
+   Revisit only if the intervals start failing calibration.
+
+## The published page is now executed, not just generated (2026-08-15)
+
+`tools/check-page.js` runs the page's own JavaScript against a stub DOM and
+fails the build if any block did not draw, reported as check **G1**. Nothing
+else covered it: `R CMD check` never looks at HTML, `node --check` parses
+without running, and a browser shows a page missing three of four charts as
+merely quiet.
+
+The instructive part is that the check was wrong three times before it was
+right, and every wrong version *passed*:
+
+1. Counting only `innerHTML`/`textContent` called the three SVG charts
+   missing on a healthy page — they are built with `appendChild`.
+2. "Was anything written" then passed a page whose pendulum had failed,
+   because the block appends its axes before it touches the data. The real
+   signal is the template's own `draw()` guard, which logs the failure.
+3. Conditional blocks (`datawarn`, `leadcav`) were exempted from the
+   must-render rule outright, so a caveat that silently failed still read as
+   OK — and `leadcav`'s condition holds right now. Each conditional now
+   carries a predicate over the page's own embedded data.
+
+Plus a fourth found while fixing the third: the regex extracting that data
+required `};\n` and R on Windows writes `};\r\n`, so it never matched.
+
+**The rule, now in ARCHITECTURE.md: prove a check fails on a deliberately
+broken input before trusting it to pass.** Every guard in the file has been
+run against a page corrupted in the specific way it claims to detect.
+
+Related: check codes are hand-maintained across seven scripts and nothing
+enforced uniqueness. `B1` was claimed by both `fit_projection.R` and the page
+check; the page check is now `G1` and `run_all.R` stops on any clash.
+
