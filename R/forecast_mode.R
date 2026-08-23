@@ -115,13 +115,21 @@ statewide_draws_as_at <- function(region, year, as_at, election_date, parties,
   tr <- trend_as_at(polls, year, cycles, as_at, priors, fl, with_series = TRUE)
   if (is.null(tr)) return(NULL)
 
-  # SECOND LEAKAGE ASSERTION, on the result rather than the filter. Checking
-  # that a table filtered to <= as_at contains nothing later is true by
-  # construction; this checks the polls the trend actually saw.
+  # SECOND LEAKAGE ASSERTION -- and the first version of this could not fail.
+  # It re-applied `cp$date <= as_at`, the identical filter trend_as_at() uses
+  # internally, so it could never catch a leak originating INSIDE that function:
+  # the thing it claimed to check. The comment said it checked "the polls the
+  # trend actually saw" and it checked the input filter a second time.
+  #
+  # This compares the trend's OWN reported poll count against an independently
+  # derived one. If trend_as_at() ever admitted a poll past the cutoff, it would
+  # report more polls than exist at or before it, and this fires.
   cp <- cycle_polls(polls, year, cycles)
-  used <- cp$date[cp$date <= as_at]
-  if (length(used) && max(used) >= election_date) {
-    stop("A poll dated on or after the election reached the trend.")
+  n_eligible <- sum(cp$date <= as_at)
+  if (tr$n_polls > n_eligible) {
+    stop("trend_as_at() used ", tr$n_polls, " polls but only ", n_eligible,
+         " are dated on or before ", as.character(as_at),
+         ". A poll from after the cutoff reached the trend.")
   }
 
   s <- data.table::as.data.table(tr$series)

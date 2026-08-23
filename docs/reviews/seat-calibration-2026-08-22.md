@@ -1,5 +1,15 @@
 # The knobs stay — and the model was better calibrated than we knew
 
+> **RE-CHECKED 2026-08-23 after a fold bug was found in the forecast-mode
+> harness. The headline survives and improves.** The incumbent configuration's
+> calibration slope goes **0.980 → 1.090** with the bug fixed — still calibrated,
+> now slightly under-confident, which is where AE Forecasts sits at 1.14. The
+> refusal (best grid point 0.09 SE) and the finding that `shrink = 0.10` is
+> near-optimal are unaffected; every arm carried the same bug, so the comparison
+> between them held.
+
+
+
 Against `docs/plans/prereg-seat-calibration.md`. **Refused on the decision
 rule**, and the refusal comes with a correction that matters more than the
 experiment.

@@ -234,10 +234,18 @@ for (K in PAIRS) {
     # per-seat column has to be folded into OTH too, or the classes the
     # simulation reads do not match the classes the draws describe.
     if (length(FC$folded) && "OTH" %in% parties) {
-      shares[, "OTH"] <- shares[, "OTH"] + rowSums(shares[, FC$folded, drop = FALSE])
+      # FOLD `mat` AND `st_a`, NOT `shares`. The swing loop below rebuilds every
+      # column of `shares` from `mat`, so folding `shares` here was dead code:
+      # the folded party's per-seat votes were DELETED rather than moved into
+      # OTH, and renormalising then spread the missing mass across every
+      # remaining party. `st_a` has the same problem one level up -- dropping
+      # the folded party's earlier statewide share leaves the swing baseline
+      # short by exactly that amount.
       keepc <- setdiff(parties, FC$folded)
-      shares <- shares[, keepc, drop = FALSE]
+      mat[, "OTH"] <- mat[, "OTH"] + rowSums(mat[, FC$folded, drop = FALSE])
+      st_a[["OTH"]] <- st_a[["OTH"]] + sum(st_a[FC$folded], na.rm = TRUE)
       mat <- mat[, keepc, drop = FALSE]
+      shares <- shares[, keepc, drop = FALSE]
       parties <- keepc
       st_a <- st_a[intersect(names(st_a), keepc)]
       sw_draws <- FC$draws[, keepc, drop = FALSE]

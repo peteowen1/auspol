@@ -1,5 +1,26 @@
 # Forecast mode refused — and it rules out the explanation everyone would have reached for
 
+> **OVERTURNED 2026-08-23. The refusal below was caused by a bug in the harness,
+> not by the model.** `scripts/backtest_candidate_fed.R` folded parties into
+> `OTH` in the `shares` matrix and then rebuilt every column of `shares` from
+> `mat`, which had only been column-subsetted — so a folded party's per-seat
+> votes were **deleted rather than merged**, and renormalising spread the
+> missing mass across every remaining party. Found by code review.
+>
+> With the fold fixed, the pooled calibration slope goes **0.204 → 0.340**,
+> against the current harness's 0.286. Distance from 1.0: **0.660 versus
+> 0.714**, so the pre-registered rule now says **ADOPT**, not refuse.
+>
+> **What survives**: the projection is honestly sized at one day out (claimed sd
+> 2.42, realised RMSE 2.42) — that measurement never touched the fold.
+>
+> **What does not**: the conclusion that "statewide uncertainty is not what makes
+> us over-confident, so the fault is in the seat model". Adding honest statewide
+> uncertainty *does* improve calibration. That inference was drawn from corrupted
+> numbers and is withdrawn.
+
+
+
 Against `docs/plans/prereg-forecast-mode.md`. **Refused on the pre-registered
 rule**, and the investigation the rule demanded produced a sharper answer than
 the experiment itself.
