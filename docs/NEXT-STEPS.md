@@ -44,6 +44,34 @@ open state, not the narrative of how it got here.
   Nation **total** rather than any individual One Nation seat. See
   [reviews/onp-allocation-checks-2026-08-18.md](reviews/onp-allocation-checks-2026-08-18.md).
 
+## Wasted independent probability: negligible in aggregate, one bad seat
+
+Measured across 886 federal division-elections, keeping the full per-seat
+per-party table the harnesses normally discard.
+
+| | |
+|---|---:|
+| division-elections with NO independent nominated | 476 |
+| of those, model gives `IND` a non-zero probability | **4 (0.8%)** |
+| total wasted probability mass | 0.2775 |
+| share of all `IND` mass sitting in no-independent seats | **1.62%** |
+
+**475 of 476 get exactly zero, so the model is not systematically confused.**
+But the tail is real: **Nicholls fed2025 carries 19.5% win probability for a
+class that was not on the ballot**, plus Hughes at 8.2%.
+
+All four are fed2025 and all are the **same mechanism as Dubbo** already
+diagnosed for the emergence work — the model swings the previous election's
+independent vote forward without knowing whether anyone recontests. A strong
+2022 independent who did not stand again still carries their share into the
+simulation.
+
+**Nomination data fixes exactly this, cheaply**: zero `IND` wherever nobody is
+nominated, before simulating. One join against data the model does not currently
+touch. It does not help the teal problem — every teal seat had an independent
+standing — but it removes four wrong seats, one of them badly wrong.
+
+
 ## Two more things computed and thrown away, and the VEC path
 
 **The full per-seat per-party probability table is never saved.**
