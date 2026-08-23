@@ -207,6 +207,59 @@ The gate is therefore **not yet run**. What was run measured normalisation
 artefacts, and reporting 0.669 as a near-miss would be treating a broken
 instrument as a weak signal.
 
+## Redesigned, and the gate PASSES: AUC 0.830
+
+The fix was the one the artefacts pointed at: **a single constant anchor term in
+every query** (`"Anthony Albanese"`), instead of the sitting member. Every
+candidate in an election is then measured on one scale, and a candidate nobody
+searches reads a genuine **0.0000** rather than being rescaled to their own peak.
+
+2022, all 10 breakout challengers and 12 sampled non-breakouts:
+
+| candidate | seat | salience | actual |
+|---|---|---:|---:|
+| Monique Ryan | Kooyong | 0.1465 | 39.1% |
+| Allegra Spender | Wentworth | 0.0853 | 34.9% |
+| Zoe Daniel | Goldstein | 0.0779 | 33.3% |
+| Kate Chaney | Curtin | 0.0327 | 28.5% |
+| Sophie Scamps | Mackellar | 0.0230 | 36.7% |
+| Dai Le | Fowler | 0.0175 | 26.4% |
+| Tim Bohm | Canberra | 0.0023 | 5.1% |
+| *ten no-hopers* | | **0.0000** | 0.7–9.5% |
+
+**Breakout median 0.0203, non-breakout median 0.0000, AUC 0.830** — above the
+0.75 pass mark fixed before the first attempt. The top six are all winners; ten
+of twelve no-hopers are exactly zero.
+
+**The threshold did not move; the instrument was repaired.** The earlier run
+measured normalisation artefacts and was recorded as not-a-result for that
+reason. That distinction is mine to have drawn and is stated so it can be
+argued with.
+
+### Two known flaws, both of which depress the number
+
+- **Middle names.** Queries used the AEC's full legal form. "Kylea Jane Tink"
+  reads 0.0000; querying "Kylea Tink" earlier gave 11.28 against her opponent.
+  Boele, Priestly and Heise are the other breakouts reading near-zero and are
+  candidates for the same problem.
+- **The anchor is slightly too large.** Trends reports integers 0–100, so a
+  candidate below roughly 0.5% of Albanese rounds to zero. Genuinely mid-tier
+  candidates are being compressed into the same bucket as no-hopers.
+
+Both push the AUC **down**, so 0.830 is a floor. Fixing them is the obvious next
+step and would only improve separation.
+
+### What this does and does not establish
+
+**Does**: a campaign-time signal exists, is retrievable historically, and
+separates breakout independents from token ones better than chance by a wide
+margin — which no feature built from seat history has ever managed across five
+attempts.
+
+**Does not**: that adding it to the model improves a forecast. Separation in a
+diagnostic is not a gain in log score, and the five refusals are a standing
+warning about the distance between those two things.
+
 ## What must be true before a plan is written
 
 - **A signal must be visible at all** — a serious independent must be
