@@ -277,25 +277,68 @@ went from 0.0000 to 0.0198** once queried as "Kylea Tink" rather than the AEC's
   cannot see a Cowper campaign, so this currently looks more like a **teal
   detector** than an independent detector.
 
-### National versus state: TESTED, INCOMPLETE, no verdict
+### National versus state: WITHDRAWN, and how it was caught
 
-Every figure above is national (`geo = "AU"`). A state-level run was attempted
-and **returned only 9 of 22 candidates**, with all of NSW missing — throttling,
-not absence — so the nominal "AUC national 0.850 vs state 0.775" is on a small,
-mostly-Victorian subset and settles nothing.
+Every figure above is national (`geo = "AU"`). A state-level run reported **"AUC
+national 0.850 vs state-level 0.775"**. **That number is withdrawn.** It was
+computed over 9 of 22 candidates.
 
-What the partial data does show, in both directions:
+Pete caught it from the table alone: *"There's no way Allegra Spender would be
+absent from NSW Google Trends, she was everywhere."* She polled **34.9%** in
+Wentworth. Checking:
 
-- **In-state is much stronger for real candidates**: Monique Ryan 0.147 national
-  → **0.363** in Victoria; Kate Chaney 0.033 → **0.237** in WA.
-- **Small jurisdictions inflate**: Tim Bohm in Canberra rose to 0.180 — third
+- She **was** in the sample. The seat→state merge lost nothing — 94 of 94 rows,
+  0 unmatched seats, 10 NSW candidates picked including Scamps, Tink, Boele,
+  Heise and Le.
+- Every NSW batch was **rejected by Google**. `gtrendsR` raises this as
+  `widget$status_code == 200 is not TRUE` — an assertion failure carrying no
+  status code, so a rejection looks exactly like a bug.
+- The loop caught it and hit `next` **with no counter and no message**, then
+  computed an AUC over the survivors, which were almost all Victorian.
+
+Re-testing the same keywords against `AU-VIC`, `AU-NSW` and `AU` an hour later:
+**all three failed**, including the national query that had worked. So it was
+global rate limiting, and NSW's absence was where the throttle happened to land
+— not anything about NSW. `AU-NSW` is a valid code (`gtrendsR::countries`).
+
+The two figures that survive are single measurements from batches that did
+return, and they point opposite ways, which is why the comparison is worth
+redoing rather than abandoning:
+
+- **In-state was much stronger for real candidates**: Monique Ryan 0.147
+  national → **0.363** in Victoria; Kate Chaney 0.033 → **0.237** in WA.
+- **A small jurisdiction inflated**: Tim Bohm in Canberra rose to 0.180 — third
   overall — on 5.1% of the vote, because any candidate is a larger share of a
   small search population.
 
 The likely design is **both as separate features** rather than a choice: national
 catches wave candidates, state catches locally-strong ones, and the ratio
 between them distinguishes a nationally-famous challenger from a purely local
-one. Untested.
+one. Untested — the run is queued for when the throttle lifts.
+
+### The fix, which matters more than the result
+
+`scripts/trends_fetch.R` replaces the ad-hoc fetching. Two rules:
+
+1. **Every batch outcome is recorded** — ok, cached or FAILED with the reason —
+   and `trends_report()` prints the failures by keyword.
+2. **`trends_require_complete()` aborts** rather than let a caller compute any
+   statistic over a subset. Batches also retry with exponential backoff, since
+   a rejection is usually transient.
+
+Proven to fail on deliberately broken input before being trusted, per the rule
+in `CLAUDE.md`:
+
+| check | input | result |
+|---|---|---|
+| G1 | 9 of 22 present — the exact 2026-08-23 failure | aborts, names the count |
+| G2 | 21 of 22 present | aborts, names the absentee |
+| G3 | 22 of 22 | passes through |
+| G4 | a rejected NSW batch | reported by keyword, not swallowed |
+
+**This is the fifth silent failure in this repo caught by a person reading
+output rather than by a check.** The tell was the same each time: a plausible
+number with a name missing from it.
 
 ### What this does and does not establish
 
