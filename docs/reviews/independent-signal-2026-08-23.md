@@ -249,6 +249,54 @@ argued with.
 Both push the AUC **down**, so 0.830 is a floor. Fixing them is the obvious next
 step and would only improve separation.
 
+### It holds across three elections
+
+Same design, per election so the anchor's own changing profile cannot distort
+the comparison:
+
+| election | breakouts | others | AUC |
+|---|---:|---:|---:|
+| 2019 | 4 | 12 | 0.823 |
+| 2022 | 10 | 12 | 0.854 |
+| **2025** | 7 | 12 | **0.964** |
+
+2025 is near-clean — the top five by search interest are all breakouts (Ben
+Smith, Boele, Dyson, Hulett, George). 2019's top two are Steggall and Phelps.
+
+Fixing the name form lifted 2022 from 0.830 to 0.854 on its own: **Kylea Tink
+went from 0.0000 to 0.0198** once queried as "Kylea Tink" rather than the AEC's
+"Kylea Jane Tink".
+
+### Remaining errors, and they run in useful directions
+
+- **False positives are common-name collisions**, not the method firing on
+  genuine unknowns. Will Anderson (Kooyong, 0.3%) scores 0.0129 because a UK
+  comedian shares the name; David Norman (Hinkler, 1.3%) is the 2019 equivalent.
+- **Misses are regional.** Boele (Bradfield), Priestly (Nicholls) and Heise
+  (Cowper) all read near zero on 20–25% of the vote. A national search index
+  cannot see a Cowper campaign, so this currently looks more like a **teal
+  detector** than an independent detector.
+
+### National versus state: TESTED, INCOMPLETE, no verdict
+
+Every figure above is national (`geo = "AU"`). A state-level run was attempted
+and **returned only 9 of 22 candidates**, with all of NSW missing — throttling,
+not absence — so the nominal "AUC national 0.850 vs state 0.775" is on a small,
+mostly-Victorian subset and settles nothing.
+
+What the partial data does show, in both directions:
+
+- **In-state is much stronger for real candidates**: Monique Ryan 0.147 national
+  → **0.363** in Victoria; Kate Chaney 0.033 → **0.237** in WA.
+- **Small jurisdictions inflate**: Tim Bohm in Canberra rose to 0.180 — third
+  overall — on 5.1% of the vote, because any candidate is a larger share of a
+  small search population.
+
+The likely design is **both as separate features** rather than a choice: national
+catches wave candidates, state catches locally-strong ones, and the ratio
+between them distinguishes a nationally-famous challenger from a purely local
+one. Untested.
+
 ### What this does and does not establish
 
 **Does**: a campaign-time signal exists, is retrievable historically, and
