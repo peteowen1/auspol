@@ -44,6 +44,45 @@ open state, not the narrative of how it got here.
   Nation **total** rather than any individual One Nation seat. See
   [reviews/onp-allocation-checks-2026-08-18.md](reviews/onp-allocation-checks-2026-08-18.md).
 
+## Independent emergence: CLOSED after five attempts
+
+`reviews/independent-remeasure-2026-08-23.md`. Re-measured against the
+**published configuration**, 886 federal division-pairs.
+
+| arm | log | Brier | acc | slope |
+|---|---:|---:|---:|---:|
+| A — as published | 0.4374 | **0.0930** | 87.5% | **1.189** |
+| B — three mechanisms | **0.3902** | 0.0989 | 86.5% | 1.345 |
+| S — temperature | 0.4282 | 0.0980 | 87.5% | 1.550 |
+
+Log: B beats A by **+1.49 SE** against a 2 SE bar. Brier non-inferiority fails
+at 1.96 SE (limit 1). **Refused, and the rule closes the line for good.**
+
+The re-read was right and it still did not rescue the model: correcting the
+baseline moved B from 2.52 SE WORSE on Brier to 1.49 SE BETTER on log. Two
+threads are now settled — **the temperature control was measuring the broken
+baseline** (B now beats S by 2.23 SE, so the gain is real and not
+recalibration), and **Brier really was the wrong criterion**, but requiring both
+rather than switching to the favourable one is what makes this refusal
+trustworthy.
+
+**What survives is the diagnosis**: the cause is structural. A seat's baseline
+is the previous election's first preferences BY CLASS, so a seat where no
+independent stood has no `IND` vote to swing. Fixing it needs the baseline to
+represent a candidate who did not exist last time — a different design, not a
+further feature. Five attempts say a better emergence model on top of this
+baseline is not the answer.
+
+Standing caveat: **Victoria 2026 has zero independent-held seats.** None of this
+changes the published forecast.
+
+### Outstanding
+
+`output/independent-federal-scores.csv` (historical v4 scores) was overwritten
+by this run and needs regenerating with the historical defaults — the filename
+tag edit failed silently because the check was piped through `tail -1`.
+
+
 ## The four independent refusals were scored against a baseline we do not ship
 
 `reviews/independent-refusals-reread-2026-08-23.md`. Independent emergence was
