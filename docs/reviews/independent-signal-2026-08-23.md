@@ -119,6 +119,43 @@ a teal from a token independent, which is the entire question.
 Next attempt should query slowly from a cold start, or use `gtrendsR` against
 Google Trends, which is a different service with a different rate limit.
 
+## The signal exists — n = 2
+
+GDELT stayed hard-429 through a cold-start retry, so the probe moved to Google
+Trends via `gtrendsR`, which is a different service with its own limit.
+
+**Anchored on the sitting member**, because Trends returns 0-100 normalised
+*within each query*: "Monique Ryan" scoring 100 in one query and "Oliver Yates"
+scoring 100 in another would mean nothing. Putting Josh Frydenberg in both makes
+them comparable.
+
+| Kooyong | challenger | Frydenberg | ratio |
+|---|---:|---:|---:|
+| **2022** — Ryan **won** on 41.4% | 10.2 | 17.9 | **0.57** |
+| **2019** — Yates stood on 8.9% | 0.4 | 6.9 | **0.058** |
+
+**A ten-fold difference between a winner and an 8.9% candidate, in the same seat
+against the same incumbent.**
+
+**This is a probe, not a result.** One seat, two cycles, both chosen because the
+answer was already known. The question that decides feasibility is the one not
+yet asked: **do independents who stood and did NOT break out look like Yates?**
+If some look like Ryan, the signal does not separate and this dies here.
+
+### On forking gtrendsR
+
+Considered and rejected. The package is a thin wrapper over Google's unofficial
+widget endpoint, and neither hard problem lives in it: **rate limiting is
+server-side** and a fork can only be politer, while **relative scaling** is a
+study-design issue — the anchor term above is what made the probe work, and that
+is a query choice rather than a package feature.
+
+What is worth building, once and only once a gate passes: a repo-local wrapper
+that always injects an anchor, caches to disk so a re-run costs no requests, and
+filters strictly by date. Fifty lines calling `gtrendsR`, not a fork to
+maintain. If the package were unmaintained, vendoring the part we need would
+beat forking, since there would be no upstream worth tracking.
+
 ## What must be true before a plan is written
 
 - **A signal must be visible at all** — a serious independent must be
