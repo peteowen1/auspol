@@ -44,6 +44,45 @@ open state, not the narrative of how it got here.
   Nation **total** rather than any individual One Nation seat. See
   [reviews/onp-allocation-checks-2026-08-18.md](reviews/onp-allocation-checks-2026-08-18.md).
 
+## Seat-level TCP: we already compute it and throw it away
+
+The one metric AE Forecasts can be scored on that we cannot — **their seat TCP
+MAE is 3.69pp over 722 seats** — turns out to be almost free.
+
+`R/seat_sim.R:316` is `w <- alive[which.max(v[alive])]`. At that line `alive`
+holds **exactly the final two** and `v[alive]` holds their vote totals — the
+file's own comment says so. Only the winner's index is kept. The split is
+discarded 87 × 20,000 = **1.74 million times per production run**.
+
+Retaining it costs about **21 MB** (pair identity plus one share per seat per
+draw) against a `totals` matrix that is already 560 KB. One function, two writes
+inside an existing loop.
+
+**The "is a seat TCP even well-defined" question is answered by the benchmark's
+own data.** In a three-way seat the final pair differs between draws, so a
+single unconditional number is wrong — and AEF does not publish one. Their
+`seatTcpScenarios` gives P(pair) and `seatTcpBands` gives quantiles
+*conditional on that pair*. Tabulating our realised `alive` pairs across draws
+produces exactly that structure. No new modelling idea, just retention plus a
+group-by.
+
+### Ground truth: federal is ready, Victoria is free, the rest is a fetch
+
+- **Federal**: `external/elections/aec-fed-tcp.csv` already exists, 2,105 rows.
+- **Victoria 2022**: raw HTML already cached at
+  `external/elections/cache/vec-2022-vic/*-results.html`, 87 files, **unparsed**.
+  Two table shapes: 77 seats have "Results after distribution of preferences"
+  and 10 simple seats have only "Two candidate preferred vote", which VEC marks
+  stale in the first case. A parser must branch on the heading.
+- **SA, QLD, WA, NSW**: no cache, no fetch script. New scraping if wanted.
+
+### Known limitation
+
+`simulate_seat_contests()` works in party **classes**, so "IND vs IND" cannot be
+represented — a narrow comparability gap against AEF's per-candidate TCP in
+multi-independent seats.
+
+
 ## Reopened on a different input: the signal is SALIENCE, not nomination
 
 `reviews/independent-signal-2026-08-23.md`. Two corrections to my own reasoning,
