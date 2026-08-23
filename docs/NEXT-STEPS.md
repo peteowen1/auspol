@@ -44,6 +44,354 @@ open state, not the narrative of how it got here.
   Nation **total** rather than any individual One Nation seat. See
   [reviews/onp-allocation-checks-2026-08-18.md](reviews/onp-allocation-checks-2026-08-18.md).
 
+## Wasted independent probability: negligible in aggregate, one bad seat
+
+Measured across 886 federal division-elections, keeping the full per-seat
+per-party table the harnesses normally discard.
+
+| | |
+|---|---:|
+| division-elections with NO independent nominated | 476 |
+| of those, model gives `IND` a non-zero probability | **4 (0.8%)** |
+| total wasted probability mass | 0.2775 |
+| share of all `IND` mass sitting in no-independent seats | **1.62%** |
+
+**475 of 476 get exactly zero, so the model is not systematically confused.**
+But the tail is real: **Nicholls fed2025 carries 19.5% win probability for a
+class that was not on the ballot**, plus Hughes at 8.2%.
+
+All four are fed2025 and all are the **same mechanism as Dubbo** already
+diagnosed for the emergence work — the model swings the previous election's
+independent vote forward without knowing whether anyone recontests. A strong
+2022 independent who did not stand again still carries their share into the
+simulation.
+
+**Nomination data fixes exactly this, cheaply**: zero `IND` wherever nobody is
+nominated, before simulating. One join against data the model does not currently
+touch. It does not help the teal problem — every teal seat had an independent
+standing — but it removes four wrong seats, one of them badly wrong.
+
+
+## Two more things computed and thrown away, and the VEC path
+
+**The full per-seat per-party probability table is never saved.**
+`simulate_seat_contests()` returns `seat, party, prob` for every party in every
+seat; every harness collapses it to the actual winner plus the argmax before
+writing (`backtest_candidate_fed.R:321`). So we cannot answer "does the model
+give independents probability in seats where none is nominated" without a fresh
+25-minute run. Same shape as the seat-TCP finding: the quantity exists in memory
+and is discarded at the last step.
+
+**Victorian candidate-level data already exists.**
+`external/elections/vec-2022-vic-candidates.csv` — `seat, cand, party, fp_votes`,
+119 rows classified `IND`. The 2014/2018 historical fetcher parses candidate
+names too but discards them before writing; persisting them is a small change to
+a parser already proven correct.
+
+**VEC acquisition path**, checked live: `vec.vic.gov.au` resolves from here on
+both the bare and `www.` forms, through both PowerShell and R's downloader — the
+apex-domain problem that hit AE Forecasts does not apply. **Nominations close 12
+noon Monday 9 November 2026**, confirmed from the VEC's own 2026 page, matching
+what was already recorded. The pre-election *nomination list* URL is not yet
+discoverable — it does not exist for 2026 yet, and web.archive.org is blocked
+here, so a 2022 snapshot cannot be recovered. The plan is to probe VEC directly
+shortly after 9 November and reuse the working HTML-table parser from
+`fetch_preferences_vic.R`.
+
+
+## Seat-level TCP: we already compute it and throw it away
+
+The one metric AE Forecasts can be scored on that we cannot — **their seat TCP
+MAE is 3.69pp over 722 seats** — turns out to be almost free.
+
+`R/seat_sim.R:316` is `w <- alive[which.max(v[alive])]`. At that line `alive`
+holds **exactly the final two** and `v[alive]` holds their vote totals — the
+file's own comment says so. Only the winner's index is kept. The split is
+discarded 87 × 20,000 = **1.74 million times per production run**.
+
+Retaining it costs about **21 MB** (pair identity plus one share per seat per
+draw) against a `totals` matrix that is already 560 KB. One function, two writes
+inside an existing loop.
+
+**The "is a seat TCP even well-defined" question is answered by the benchmark's
+own data.** In a three-way seat the final pair differs between draws, so a
+single unconditional number is wrong — and AEF does not publish one. Their
+`seatTcpScenarios` gives P(pair) and `seatTcpBands` gives quantiles
+*conditional on that pair*. Tabulating our realised `alive` pairs across draws
+produces exactly that structure. No new modelling idea, just retention plus a
+group-by.
+
+### Ground truth: federal is ready, Victoria is free, the rest is a fetch
+
+- **Federal**: `external/elections/aec-fed-tcp.csv` already exists, 2,105 rows.
+- **Victoria 2022**: raw HTML already cached at
+  `external/elections/cache/vec-2022-vic/*-results.html`, 87 files, **unparsed**.
+  Two table shapes: 77 seats have "Results after distribution of preferences"
+  and 10 simple seats have only "Two candidate preferred vote", which VEC marks
+  stale in the first case. A parser must branch on the heading.
+- **SA, QLD, WA, NSW**: no cache, no fetch script. New scraping if wanted.
+
+### Known limitation
+
+`simulate_seat_contests()` works in party **classes**, so "IND vs IND" cannot be
+represented — a narrow comparability gap against AEF's per-candidate TCP in
+multi-independent seats.
+
+
+## Reopened on a different input: the signal is SALIENCE, not nomination
+
+`reviews/independent-signal-2026-08-23.md`. Two corrections to my own reasoning,
+in order.
+
+**Nomination data eliminates 53% of seats** (558 division-elections with no
+independent standing, zero wins) and is free and leakage-free. Real, worth
+having, and **it does not touch the seats that matter** — I claimed it did
+without checking.
+
+**Every teal seat already had an independent standing**: Goldstein 1.3% → 35.3%,
+North Sydney 4.3% → 24.7%, Curtin 7.8% → 30.2%, Kooyong 10.6% → 41.4%. The
+failure is not an absent candidate class. It is that the previous independent
+polled 1.3% and the next polled 35.3%.
+
+**That explains all five refusals.** Every version predicted the independent vote
+from seat characteristics, and Goldstein 2022 is identical on all of them to a
+seat where a 1.3% independent stays at 1.3%. The difference is not in the seat.
+
+So the only remaining mechanism is **contemporaneous salience** — search interest
+or news coverage of the named candidate. Pete raised this; `ANCHOR-MODEL.md:131`
+had dismissed Google Trends as "probably noise", but that was about general seat
+modelling, not this.
+
+**Reopening a line closed this morning**, explicitly: the closure rule barred
+another configuration of the same model on the same inputs. A new information
+source is not that.
+
+### Feasibility: UNRESOLVED, not negative
+
+`trends.google.com`, `news.google.com`, `api.gdeltproject.org` and CRAN are all
+reachable. But the first GDELT probe was **rate-limited (429)** on four of six
+queries and on both of a slower retry. **The "no data" returns are throttling,
+not absence** — reading them as "this candidate had no coverage" would be
+absence of evidence dressed as measurement.
+
+Next: query slowly from a cold start, or try `gtrendsR`, which is a different
+service with a different limit. No plan until a signal is shown to exist.
+
+
+## Independent emergence: CLOSED after five attempts
+
+`reviews/independent-remeasure-2026-08-23.md`. Re-measured against the
+**published configuration**, 886 federal division-pairs.
+
+| arm | log | Brier | acc | slope |
+|---|---:|---:|---:|---:|
+| A — as published | 0.4374 | **0.0930** | 87.5% | **1.189** |
+| B — three mechanisms | **0.3902** | 0.0989 | 86.5% | 1.345 |
+| S — temperature | 0.4282 | 0.0980 | 87.5% | 1.550 |
+
+Log: B beats A by **+1.49 SE** against a 2 SE bar. Brier non-inferiority fails
+at 1.96 SE (limit 1). **Refused, and the rule closes the line for good.**
+
+The re-read was right and it still did not rescue the model: correcting the
+baseline moved B from 2.52 SE WORSE on Brier to 1.49 SE BETTER on log. Two
+threads are now settled — **the temperature control was measuring the broken
+baseline** (B now beats S by 2.23 SE, so the gain is real and not
+recalibration), and **Brier really was the wrong criterion**, but requiring both
+rather than switching to the favourable one is what makes this refusal
+trustworthy.
+
+**What survives is the diagnosis**: the cause is structural. A seat's baseline
+is the previous election's first preferences BY CLASS, so a seat where no
+independent stood has no `IND` vote to swing. Fixing it needs the baseline to
+represent a candidate who did not exist last time — a different design, not a
+further feature. Five attempts say a better emergence model on top of this
+baseline is not the answer.
+
+Standing caveat: **Victoria 2026 has zero independent-held seats.** None of this
+changes the published forecast.
+
+### Outstanding
+
+`output/independent-federal-scores.csv` (historical v4 scores) was overwritten
+by this run and needs regenerating with the historical defaults — the filename
+tag edit failed silently because the check was piped through `tail -1`.
+
+
+## The four independent refusals were scored against a baseline we do not ship
+
+`reviews/independent-refusals-reread-2026-08-23.md`. Independent emergence was
+built and refused four times. Re-reading them turns up what none could know:
+
+`score_independent_federal.R:62` calls `simulate_seat_contests()` with **no
+`shrink`, no `statewide_draws`, no `party_cor`** — `fit_seats_full.R` passes all
+three. Arm A's slope across the rounds was 0.586, 0.586, 0.586, **0.260**. The
+published model is **0.980**.
+
+Two consequences:
+
+- **The temperature control loses its force.** It existed to test whether arm
+  B's gain was "an over-confident model made less confident" — decisive against
+  a baseline at 0.26, meaningless against one already at 0.980.
+- **v4 refused on Brier, the least sensitive proper score for this defect.** Its
+  own table has arm B ahead on log score (0.478 vs 0.544). A seat moved 0.000 →
+  0.30 that then wins gains at most 0.09 on Brier and 1.2 on log — and log is
+  where the entire measured gap sits.
+
+**This does not vindicate the model.** v1 and v2 broke incumbent independents,
+and the federal reversal may survive the correction. It means the verdicts rest
+on a comparison that was not what it claimed to be — the fourth harness today
+found with that defect.
+
+**Next is a re-measurement, not a fifth model**: v3 exactly as fitted, arm A as
+the published configuration, log score pre-registered as the criterion, control
+arm and incumbent-independent guard both retained.
+
+
+## Calibration knobs REFUSED — and the model was better than we knew
+
+`reviews/seat-calibration-2026-08-22.md`. 24 grid points, six federal
+elections, forecast mode. Best point beats the incumbent by **0.09 SE** against
+a 1 SE bar. **Refused; knobs stay.** The held-out set was NOT spent.
+
+### The correction that matters more
+
+**Incumbent slope in forecast mode: 0.980.** Essentially calibrated.
+
+Every over-confidence figure this repo has quoted — slope 0.23–0.52, "58% of
+seats at 99–100%", reliability gaps of 10–14 points — came from a harness that
+passed **neither `shrink` nor `statewide_draws`** while `fit_seats_full.R`
+passes both. Wired up, no seat sits in the 99–100% band at all, and claimed
+versus actual tracks within 3 points across every band.
+
+**So "our seat probabilities are wildly off" was wrong.** It described a
+configuration we do not ship.
+
+Also established: the published `shrink = 0.10` is near-optimal. At 0.20 the
+slope overshoots to 1.34 and at 0.30 to 1.64, with log score worsening
+monotonically. `seat_sd` barely matters from 1.0–2.0.
+
+### The real gap is SHARPNESS
+
+On the two elections both models cover, both forecasting from polls:
+
+| | AE Forecasts | ours |
+|---|---:|---:|
+| pooled log | **0.268** | **1.244** |
+| pooled slope | 1.15 | 0.76 |
+
+We are calibrated but blunt. They are slightly under-confident and four times
+more informative per seat. **Their information advantage does not explain it**:
+four of their eight finals are seat-betting updates, but not these two — their
+2022 and 2025 federal finals are poll-based like ours.
+
+### Next — and the answer arrived: it is ONE hole, not general bluntness
+
+`reviews/discrimination-gap-2026-08-22.md`. **Excluding seats an independent
+won, our log score is 0.255 against their 0.247** — level on 266 of 286 seats.
+**97% of the gap is twenty independent-won seats**, and within those we hold
+incumbent independents fine (better than them in four) and score **0.000 on an
+independent winning for the FIRST time**.
+
+The "calibrated but blunt" conclusion above was an artefact of forecast mode
+folding `IND` into `OTH`, which makes independents unwinnable by construction.
+
+**This reopens independent emergence**, refused four times here — always against
+our own metrics with no external reference. What none of those refusals could
+know is what the hole is worth: 97% of the gap to a real forecaster, and AE
+Forecasts put 0.28–0.51 on the 2022 teal seats before they fell, so they are
+forecastable without betting markets.
+
+Note it may cost nothing in Victoria 2026, which has zero independent-held
+seats.
+
+
+## Forecast mode REFUSED, and it rules out the obvious explanation
+
+`reviews/forecast-mode-2026-08-22.md`. Six federal elections, pooled:
+
+| arm | slope | log | accuracy |
+|---|---:|---:|---:|
+| current harness (knows the answer) | 0.286 | 0.494 | 87.6% |
+| forecast mode (polls only) | **0.204** | 0.846 | 84.3% |
+| AE Forecasts, for scale | 1.140 | 0.280 | 88.5% |
+
+Rule was: adopt if the slope is closer to 1.0. It is further. **Refused.**
+
+### The investigation is the finding
+
+The obvious suspect — the projection understating its own error at one day out,
+a horizon never scored here before — is **measured and false**:
+
+**claimed sd 2.42, realised RMSE 2.42, ratio 1.00.**
+
+The statewide input is honestly sized. Feeding that honest uncertainty into the
+seat model makes calibration WORSE. **So the over-confidence is in the seat
+model**, which turns a 3-point statewide miss into confidently wrong seat calls.
+
+That rules out the explanation everyone would reach for first — "we are
+over-confident because the backtest hands us the answer" — which was the
+motivation for the whole experiment and is wrong.
+
+### Next, and F3 deliberately forbade doing it here
+
+`seat_sd`, `shrink`, and how sharply the flow matrix turns statewide shares into
+seat outcomes — re-tuned against AE Forecasts' 1.14 slope, measured in forecast
+mode because that is the configuration a rival can be compared on. Needs its own
+plan.
+
+**Forecast mode stays wired** behind `AUSPOL_FORECAST_MODE=1` though not
+adopted: it is the only way to measure on equal terms, and the construction now
+matches the published path exactly (draws realise the projection mean to two
+decimals in all six elections).
+
+
+## WE HAVE A BENCHMARK, and it found a measurement gap in us first
+
+`reviews/aeforecasts-benchmark-2026-08-22.md`. AE Forecasts publishes eight
+archived elections through a REST API — final forecast plus official result.
+`scripts/fetch_aeforecasts.R` acquires them; `scripts/score_aeforecasts.R`
+scores them.
+
+**Their bar**, 728 seat-elections: accuracy 87.9%, Brier 0.0908, log loss
+**0.2802**, calibration slope **1.14**. Seat-level TCP over 722 seats: MAE
+**3.69pp**, 90% band coverage 83.2% — so they are mildly over-confident too, and
+2025 federal is 68.7%. A real forecaster, not an oracle.
+
+**Us**, on the four overlapping elections: log loss **0.524** against their
+0.276, accuracy within 1.5 points. Our picks are comparable; our probabilities
+cost nearly twice as much. **We produce no seat-level TCP at all**, so on the
+high-N metric we cannot yet be scored.
+
+### The correction that matters more than the comparison
+
+Those calibration figures were reported as though they described our forecast.
+**They do not.**
+
+| | passes `statewide_draws`? |
+|---|---|
+| published model, `fit_seats_full.R:573` | **yes** |
+| all four backtest harnesses | **no** |
+
+The backtests inject the ACTUAL statewide result as the centre with only
+per-seat noise; the published model draws it from the projection with party
+correlation, and `simulate_seat_contests()` documents that dropping that
+covariance made the seat range "roughly 40% too tight".
+
+So the backtest measures a tighter variant than we ship, and **nothing measures
+the calibration of the model we publish**. Same trap as the two seat models,
+new guise: what is measured is not what is shipped.
+
+### Next: forecast mode, which fixes both at once
+
+Taking the statewide vote from `trend_as_at()` instead of from the answer
+removes the unfair advantage AND restores the uncertainty the published model
+already has. Assessed as **feasible, closer to plumbing than modelling** —
+`trend_as_at()` exists and is leakage-tested (`test-projection.R:101-117`), and
+the `statewide_draws` slot is already wired. Two decisions to pre-register: the
+poll-inclusion-floor fallback (ONP has 3–7 polls in the Vic and NSW cycles
+against a floor of 8) and which error distribution the draws come from.
+
+
 ## Candidate-count weighting is blocked too, and the reason is a DATE
 
 `reviews/candidate-count-weighting-blocked-2026-08-22.md`. Measured while

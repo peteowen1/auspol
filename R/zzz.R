@@ -21,5 +21,6 @@ globalVariables(c(
   "flow_alp", "hi95", "incumbent", "is_incumbent", "is_opposition", "j",
   "lo95", "n", "opposition", "party", "prev1", "prev_avg", "raw_ratio",
   "ref_party", "region", "resid", "sd", "sd_link", "series", "start",
+  "three_cornered",
   "value", "y", "year", "years", "z2"
 ))

@@ -14,6 +14,27 @@ suppressMessages(devtools::load_all(quiet = TRUE))
 suppressMessages(library(data.table))
 
 N_SIMS <- 4000; SEED <- 42; SMOOTH <- 0.15; eps <- 1e-6
+# ---- the published configuration, against prereg-independent-remeasure.md ----
+# This harness scored arm A with NO shrink, NO party correlation and NO
+# statewide draws, while fit_seats_full.R passes all three. Arm A's calibration
+# slope came out at 0.260 against the published model's 0.980, so all four
+# refusals of the independent model compared it against something we do not
+# ship.
+#
+# Both arms go through simulate_one(), so setting these applies to A and B
+# alike and the comparison stays like-for-like. Defaulted OFF so the historical
+# runs stay reproducible; the re-measurement sets them.
+IND_SHRINK <- as.numeric(Sys.getenv("AUSPOL_IND_SHRINK", "0"))
+IND_COR <- NULL
+if (nzchar(Sys.getenv("AUSPOL_IND_COR", ""))) {
+  .co <- readRDS("output/statewide-cov.rds")
+  IND_COR <- if (identical(Sys.getenv("AUSPOL_IND_COR"), "raw")) .co$cor else .co$cor_shrunk
+}
+TAG <- paste0(if (IND_SHRINK != 0) sprintf("-sh%02d", round(100 * IND_SHRINK)) else "",
+              if (!is.null(IND_COR)) "-cor" else "")
+cat(sprintf("FS0  arm A configuration: shrink %.2f, correlation %s%s\n",
+            IND_SHRINK, if (is.null(IND_COR)) "off" else Sys.getenv("AUSPOL_IND_COR"),
+            if (TAG == "") "  (HISTORICAL, not the published model)" else "  (published)"))
 R_ENS <- 40; PER <- N_SIMS %/% R_ENS
 P <- election_data_path()
 FIT <- readRDS("output/independent-federal-fit.rds")
@@ -59,9 +80,18 @@ for (i in seq_len(length(YRS) - 1L)) {
   psd <- setNames(rep(1.5, length(parties)), parties)
 
   simulate_one <- function(sh, n, seed) {
+    cm <- if (is.null(IND_COR)) NULL else {
+      pp <- intersect(colnames(sh), rownames(IND_COR))
+      if (length(pp) == ncol(sh)) IND_COR[colnames(sh), colnames(sh), drop = FALSE] else {
+        stop("statewide-cov.rds does not cover every party in this seat matrix: ",
+             paste(setdiff(colnames(sh), rownames(IND_COR)), collapse = ", "),
+             ". Correlating a subset silently would leave the rest independent.")
+      }
+    }
     as.data.table(simulate_seat_contests(sh, fm, party_sd = psd, seat_sd = 3.5,
                                          n_sims = n, smooth = SMOOTH,
-                                         seed = seed)$win_prob)
+                                         seed = seed, shrink = IND_SHRINK,
+                                         party_cor = cm)$win_prob)
   }
   A <- simulate_one(shares, N_SIMS, SEED)
 
@@ -169,5 +199,10 @@ cat(sprintf("FS5  E1: B vs the temperature is %+.2f SE (negative = B better)
 cat("\nFS6  J2 -- by election, so 2022 cannot carry the result alone\n")
 print(S[, .(brier = round(mean((1 - prob)^2), 4),
             acc = round(mean(pred == actual), 3)), by = .(target, arm)][order(target, arm)])
-fwrite(S, file.path("output", "independent-federal-scores.csv"))
-cat("\nWrote output/independent-federal-scores.csv\n")
+# The filename carries the configuration. Without this the re-measurement
+# OVERWROTE the historical v4 scores it was meant to be compared against --
+# which is exactly the baseline-clobbering CLAUDE.md records, and it happened
+# because a failed edit was hidden by piping the check through `tail -1`.
+f_out <- file.path("output", sprintf("independent-federal-scores%s.csv", TAG))
+fwrite(S, f_out)
+cat(sprintf("\nWrote %s\n", f_out))
