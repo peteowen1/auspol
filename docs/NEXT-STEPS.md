@@ -44,6 +44,46 @@ open state, not the narrative of how it got here.
   Nation **total** rather than any individual One Nation seat. See
   [reviews/onp-allocation-checks-2026-08-18.md](reviews/onp-allocation-checks-2026-08-18.md).
 
+## Reopened on a different input: the signal is SALIENCE, not nomination
+
+`reviews/independent-signal-2026-08-23.md`. Two corrections to my own reasoning,
+in order.
+
+**Nomination data eliminates 53% of seats** (558 division-elections with no
+independent standing, zero wins) and is free and leakage-free. Real, worth
+having, and **it does not touch the seats that matter** — I claimed it did
+without checking.
+
+**Every teal seat already had an independent standing**: Goldstein 1.3% → 35.3%,
+North Sydney 4.3% → 24.7%, Curtin 7.8% → 30.2%, Kooyong 10.6% → 41.4%. The
+failure is not an absent candidate class. It is that the previous independent
+polled 1.3% and the next polled 35.3%.
+
+**That explains all five refusals.** Every version predicted the independent vote
+from seat characteristics, and Goldstein 2022 is identical on all of them to a
+seat where a 1.3% independent stays at 1.3%. The difference is not in the seat.
+
+So the only remaining mechanism is **contemporaneous salience** — search interest
+or news coverage of the named candidate. Pete raised this; `ANCHOR-MODEL.md:131`
+had dismissed Google Trends as "probably noise", but that was about general seat
+modelling, not this.
+
+**Reopening a line closed this morning**, explicitly: the closure rule barred
+another configuration of the same model on the same inputs. A new information
+source is not that.
+
+### Feasibility: UNRESOLVED, not negative
+
+`trends.google.com`, `news.google.com`, `api.gdeltproject.org` and CRAN are all
+reachable. But the first GDELT probe was **rate-limited (429)** on four of six
+queries and on both of a slower retry. **The "no data" returns are throttling,
+not absence** — reading them as "this candidate had no coverage" would be
+absence of evidence dressed as measurement.
+
+Next: query slowly from a cold start, or try `gtrendsR`, which is a different
+service with a different limit. No plan until a signal is shown to exist.
+
+
 ## Independent emergence: CLOSED after five attempts
 
 `reviews/independent-remeasure-2026-08-23.md`. Re-measured against the
