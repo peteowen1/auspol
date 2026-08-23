@@ -1,3 +1,56 @@
+# auspol 0.4.22
+
+**We can now measure ourselves against a real forecaster, and doing so found
+that most of what this repo believed about its own accuracy was measured on a
+configuration it does not ship.**
+
+Australian Election Forecasts publishes eight archived elections -- final
+forecast and official result -- through a REST API. `scripts/fetch_aeforecasts.R`
+acquires them. Their bar over 728 seat-elections: accuracy 87.9%, Brier 0.0908,
+log loss 0.2802, calibration slope 1.14; seat-level TCP MAE 3.69pp over 722
+seats.
+
+**FIVE MEASUREMENTS OF THE WRONG THING**, every one a harness disagreeing with
+the model it claimed to measure, none of which announced itself. The backtest
+harnesses passed neither `statewide_draws` nor `shrink` while `fit_seats_full.R`
+passes both; the independent-model scoring passed neither either; and the new
+forecast mode folded parties into OTH in a matrix it then rebuilt, deleting
+their votes instead of merging them.
+
+The consequences run both ways. **"Our seat probabilities are wildly off" was
+wrong** -- in the shipping configuration the calibration slope is 1.090, against
+AE Forecasts' 1.14, and no seat sits in the 99-100% band at all where 58% did
+before. The forecast-mode refusal is **overturned** by the fold fix and now
+passes its pre-registered rule. And all four historical independent-emergence
+refusals were scored against a baseline at slope 0.260; re-measured properly,
+that model moved from 2.52 SE worse to 1.49 SE better and still failed a 2 SE
+bar -- a cleaner refusal than the four before it.
+
+**Where we stand**: excluding seats an independent won, our log score is 0.255
+against their 0.247 -- level on 266 of 286 seats. **97% of the gap is twenty
+independent-won seats.** We hold incumbent independents fine, better than them in
+four, and score 0.000 on an independent winning for the first time. The cause is
+structural and not the obvious one: every teal seat already had an independent
+standing (Goldstein 1.3% to 35.3%), so the failure is not an absent candidate
+class but a previous independent on 1.3% and a next one on 35.3%.
+
+Six pre-registrations, six refusals, nothing invented afterwards: Western
+Australia (fetched, eight elections, -1.57 SE), its three-cornered arm (-0.49
+SE), survivor multiplicity (refused on a coverage floor before scoring), bucket
+narrowing (infeasible -- no pollster reports the sub-parties), candidate-count
+weighting (blocked until Victorian nominations close on 9 November 2026), and
+the independent re-measurement.
+
+Also fixed: Palmer United was classified OTH while "United Australia Party" --
+same man, same movement -- was OTH_RIGHT, worth 5.56% of the 2013 federal vote
+and a seat whose winner read as "OTH"; a diagnostic run could overwrite the
+published forecast while printing PASS; the retired two-party model is gone from
+the published script, its S5 check ported onto two identities that need no
+second model; four copies of the leakage date-filter became one tested function;
+and two guards that could not fire were made real or removed.
+
+Nothing published changes -- verified byte-identical throughout.
+
 # auspol 0.4.21
 
 Documentation only. **Both remedies for the catch-all-bucket finding were
