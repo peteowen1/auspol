@@ -184,3 +184,84 @@ two of seven do, criterion 2 fails and nothing is adopted.
 
 Expect R5 to be genuinely at risk: the strongest cycles (SA, WA) are the ones
 without three-cornered Coalition contests.
+
+---
+
+## Result, 2026-08-25: REFUSED, and the confound control flipped the sign
+
+Run by `scripts/test_onp_vote_sourcing.R`. 157 districts, 7 cycle-pairs, as
+scoped. **Nothing adopted.**
+
+| test | value | bar | verdict |
+|---|---:|---:|---|
+| criterion 1 — excess_LNP, clustered | **+1.72 SE** | 2.45 | **FAIL** |
+| criterion 2 — sign consistency | **3 of 6** usable | 5 of 7 | **FAIL** |
+| R1 — not Labor-symmetric | \|ALP\| 0.169 > \|LNP\| 0.094 | — | **REFUSE** |
+| R2 — survives dropping SA | sign holds, 1.37 SE | — | pass |
+
+### The hypothesis is not merely unsupported. The sign is the other way.
+
+Pete's directional hypothesis, recorded before the test, was **LIB → ONP
+exceeds ALP → ONP**. The pre-registered quantity says the opposite:
+
+| per point of ONP deviation | coefficient | clustered ratio |
+|---|---:|---:|
+| excess **Coalition** loss | **+0.094** | +1.72 |
+| excess **Labor** loss | **−0.169** | **−4.09** |
+
+Positive excess means losing *less* than proportional. So within a cycle,
+where One Nation gains more, **Labor loses more than proportional and the
+Coalition loses less** — and the Labor effect is the one that clears
+significance comfortably, at 4.09 SE.
+
+### The confound was real and it was decisive
+
+This is why the deviation adjustment was pre-registered rather than added later:
+
+| specification | excess_LNP coefficient |
+|---|---:|
+| raw changes | **−0.309** |
+| within-cycle deviations | **+0.094** |
+
+**The raw version supports the hypothesis and the corrected version reverses
+it.** Had the confound not been named in advance, this run would have
+"confirmed" the prior — and the thing it was actually measuring is that the
+Coalition lost the elections in which One Nation surged, which is not the same
+claim.
+
+### What this does NOT refute
+
+**The seat-type asymmetry in
+[../reviews/onp-seat-type-asymmetry-2026-08-25.md](../reviews/onp-seat-type-asymmetry-2026-08-25.md)
+still stands as an observation.** SA 2026's five One Nation wins were all
+Coalition-leaning; our six Victorian ONP seats are all Labor-leaning. That fact
+is unchanged. What is refuted is **one proposed explanation for it** — that ONP
+takes Coalition votes disproportionately at the district level.
+
+The two are reconcilable, and the reconciliation is the next hypothesis rather
+than a conclusion: in SA the Coalition fell **roughly uniformly** (a
+cycle-level collapse, which deviations remove by construction), while One
+Nation's district-level variation ate into Labor. A uniform Coalition collapse
+from a high rural base, plus One Nation concentrated in rural seats, elects One
+Nation in Coalition seats **without** any district-level Coalition-sourcing
+effect.
+
+**That cycle-level story cannot be identified from this corpus**: separating
+"One Nation took Coalition votes" from "the Coalition lost that election"
+requires between-cycle variation, and there are 7 cycles. Deviations were the
+right control for the question asked and they structurally cannot answer this
+one. Anyone attempting it should say so before starting.
+
+### For the vote-sourcing matrix generally
+
+The one cell tested came out significant in the **unexpected direction**
+(ALP → ONP at 4.09 SE, not LIB → ONP). That is a reason to build the matrix
+**from data rather than from priors about which flows are plausible** — the
+prior here was confidently held, is the intuitive one, and does not survive the
+confound control.
+
+It is not a reason to adopt "ONP takes Labor votes" into the model either: one
+cell, 7 clusters, and the level-versus-gradient ambiguity above all argue for
+leaving the proportional assumption in place until a design exists that can
+separate the two.
+
