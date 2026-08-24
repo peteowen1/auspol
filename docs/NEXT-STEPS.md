@@ -900,10 +900,17 @@ skip it.
 
 ### Blocked on Pete
 
-- **The YouGov seat-by-seat comparison cannot be done.** Their full 88-seat MRP
-  table was pasted into a chat session and never saved to the repo, and the
-  session context that held it has been compacted away. **Re-paste it, or point
-  at a URL, and it takes about 20 minutes.** Nothing was guessed in its place.
+- ~~The YouGov seat-by-seat comparison cannot be done~~ — **DONE 2026-08-20,
+  the day after this was written.** Pete supplied the PDF; it lives at
+  `external/reference/yougov-vic-mrp-2026.pdf` (gitignored, nothing of theirs
+  committed). `scripts/parse_yougov.py` extracts all 88 seats and the parse is
+  validated against the totals YouGov state in prose (39/29/17/3, plus the
+  31/8 Liberal/National split — all match). Write-up:
+  [reviews/yougov-seat-by-seat-2026-08-20.md](reviews/yougov-seat-by-seat-2026-08-20.md).
+  **This entry sat here stale for five days and was re-reported to Pete as
+  "blocked on you" during triage on 2026-08-25** — a closed item in a
+  "Blocked on Pete" list costs a real ask. Closed items go struck-through or
+  get deleted, on the day they close.
 - **Publishing the repo** — the gate Pete set was "fix the One Nation lag
   first". That is now resolved *as a non-defect* rather than fixed, which is a
   different answer to the one he expected and worth an explicit nod before the
