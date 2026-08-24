@@ -97,6 +97,13 @@ the final two survivors in each draw, \code{NA} for a seat uncontested down to
 one party), \code{tcp_share} (n_sims x nseat, \code{tcp_winner}'s share of their
 two-candidate-preferred total), \code{fallback_rate} (share of transfers with
 no conditional cell).
+
+\code{tcp_winner} is the COUNT winner, taken before the \code{shrink} coin toss
+below can overrule which party is credited in \code{wins}/\code{totals} for that
+same draw -- so when \code{shrink > 0} the two can legitimately disagree.
+That is intentional (TCP describes the simulated vote split; \code{shrink} is
+a calibration overlay on the recorded winner, not a property of the
+count) but matters to anyone joining TCP data against \code{wins}.
 }
 \description{
 Simulate every seat from first preferences

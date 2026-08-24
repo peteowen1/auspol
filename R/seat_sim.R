@@ -84,6 +84,13 @@
 #'   one party), `tcp_share` (n_sims x nseat, `tcp_winner`'s share of their
 #'   two-candidate-preferred total), `fallback_rate` (share of transfers with
 #'   no conditional cell).
+#'
+#'   `tcp_winner` is the COUNT winner, taken before the `shrink` coin toss
+#'   below can overrule which party is credited in `wins`/`totals` for that
+#'   same draw -- so when `shrink > 0` the two can legitimately disagree.
+#'   That is intentional (TCP describes the simulated vote split; `shrink` is
+#'   a calibration overlay on the recorded winner, not a property of the
+#'   count) but matters to anyone joining TCP data against `wins`.
 #' @export
 simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
                                    n_sims = 2000, smooth = 0.15, seed = NULL,

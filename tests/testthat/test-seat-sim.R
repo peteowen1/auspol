@@ -99,6 +99,19 @@ test_that("an uncontested seat has no TCP pair to report", {
   expect_true(all(is.na(r$tcp_share)))
 })
 
+test_that("tcp_winner reflects the vote count, not the shrink coin toss", {
+  # ALP leads the count in every draw (60 vs 40, no noise), so tcp_winner
+  # must be ALP throughout -- but shrink = 0.99 coin-tosses the party
+  # CREDITED as winner in wins/totals almost every draw, so that should land
+  # close to 50/50. If a future edit reordered the shrink toss ahead of the
+  # TCP write, tcp_winner would track the coin toss instead and this fails.
+  sh <- matrix(c(60, 40), nrow = 1, dimnames = list("s", c("ALP","LNP")))
+  r <- simulate_seat_contests(sh, fake_matrix(), party_sd = c(ALP=0, LNP=0),
+                              seat_sd = 0, n_sims = 200, seed = 20, shrink = 0.99)
+  expect_true(all(r$tcp_winner[, "s"] == "ALP"))
+  expect_gt(sum(r$totals[, "LNP"]), 60)
+})
+
 test_that("it is reproducible and refuses unnamed input", {
   sh <- matrix(c(40,38,22), nrow = 1,
                dimnames = list("s", c("ALP","LNP","GRN")))
