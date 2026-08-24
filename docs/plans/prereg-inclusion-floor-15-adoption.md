@@ -94,9 +94,14 @@ affected.
 scope, not silently expanding it.
 
 Implementation: introduce a single named constant (`PARTY_INCLUSION_FLOOR`)
-rather than the four independent hardcoded `8`s this repo's own
-`docs/CONSTANTS.md` already flagged as a sister-copy risk
-(`fit_vic.R:115,184`, `fit_nsw.R:84,164`).
+at the two sites per script that decide which parties are FITTED in a cycle
+(`fit_vic.R:184,196`, `fit_nsw.R:164,177`) — the ones `docs/CONSTANTS.md`
+already flagged as a sister-copy risk. `fit_vic.R:115` and `fit_nsw.R:84`
+each carry a *separate* `parties_in(cp, n = 8)` default, used only to select
+which parties enter the validation-cycle noise-factor estimation
+(`estimate_firm_factors()`), not the live fitted set. Deliberately left at 8
+in BOTH scripts, not just Victoria's — see the addendum below for why that is
+currently safe rather than merely assumed to be.
 
 ## What would still refuse this, stated now so it can't be invented later
 
@@ -118,3 +123,33 @@ Implemented 2026-08-24. `PARTY_INCLUSION_FLOOR <- 15L` added to `R/scales.R`
 beside `BINOMIAL_REF_N`; all four `fit_vic.R`/`fit_nsw.R` call sites now read
 it instead of a hardcoded `8`. `docs/CONSTANTS.md` updated to record the
 adoption and point here instead of at the 2026-08-19 refusal.
+
+## Addendum, post-commit review (2026-08-24)
+
+Reviewed against the actual running scripts, not just the diff — original
+clause above left unedited; this adds to it rather than replacing it.
+
+**"Victoria 2026 is unaffected" is true for the LIVE forecast and verified the
+strongest way available**: `fit_vic.R` run at floor 8 and floor 15 produces a
+byte-identical `output/trend-vic-2026.csv`. But **the 2022 VALIDATION cycle
+does move**: UAP (8 polls in that cycle) is fitted separately at floor 8 and
+folds into `OTH` at floor 15, which shifts `OTH`'s 2022 cycle level
+(14.7→14.3) and, because `derive_tpp()` no longer needs UAP's own trend
+(which stopped 13 days early), extends the derived 2022 TPP series to the
+full campaign. The reported V3 anchor check moves 56.57→56.39, comfortably
+inside its `[52, 58]` bound — nothing breaks — but this plan's live-cycle-only
+table structurally could not see it, because it only examines vic 2026, nsw
+2027 and fed 2028. Recorded so "unaffected" isn't read more broadly than the
+live number it actually means.
+
+**The `parties_in(n = 8)` twin exists in BOTH scripts, not just Victoria's**,
+and NSW's copy (`fit_nsw.R:84`) is called directly on the live 2027 cycle —
+which looks, on the surface, exactly like the Q3 risk this plan worried about
+(a party excluded from the live fit but still feeding the pooled noise-factor
+estimate off a different threshold). Traced and confirmed currently inert:
+`parties_in()` only subsets `est_parties`, itself gated by `counts >= 20`
+total polls across BOTH cycles combined — and NSW's ONP never reaches that
+(7 + 8 = 15), so it is never in `est_parties` in either script regardless of
+which inclusion floor applies to it. Safe today, but the safety rests on
+`est_parties`'s current composition, not on anything enforced — worth knowing
+if a minor party's total poll count ever climbs past 20.
