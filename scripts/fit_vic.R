@@ -181,7 +181,7 @@ fit_cycle <- function(year) {
                     sigma_rw = walks[[p]]$sigma_rw)
   }
   cnt <- vapply(attr(cp, "parties"), function(p) sum(!is.na(cp[[p]])), 1L)
-  SEL <- names(cnt)[cnt >= 8]
+  SEL <- names(cnt)[cnt >= PARTY_INCLUSION_FLOOR]
   # Make OTH mean ONE thing across the cycle before fitting it. A party that
   # is polled but falls under the inclusion floor is reported separately by
   # some firms and folded into OTH by others, so the OTH column mixes two
@@ -193,7 +193,7 @@ fit_cycle <- function(year) {
   # that ARE fitted. The two never touch the same party.
   cp <- refold_unfitted(cp, fits = stats::setNames(
     vector("list", length(SEL)), SEL))
-  fits <- fit_cycle_unfolded(cp, parties = names(cnt)[cnt >= 8],
+  fits <- fit_cycle_unfolded(cp, parties = names(cnt)[cnt >= PARTY_INCLUSION_FLOOR],
                              priors = priors, overrides = ov,
                              firm_factors = fac_vec, verbose = FALSE)
   fl <- flows_for(flows_all, year, "vic")

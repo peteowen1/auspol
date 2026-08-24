@@ -57,6 +57,31 @@ BINOMIAL_REF_N <- 2500
 #' @keywords internal
 BINOMIAL_SENSITIVE_N <- 1500
 
+#' Minimum polls in a cycle before a party is fitted at all
+#'
+#' This decides which parties EXIST in the forecast -- a party under the
+#' floor is not fitted, its vote stays inside `OTH`, and `unfold_others()`
+#' cannot run on it. It is not an input-sanity guard, which is how it was
+#' filed until 2026-08-19 and why nobody looked at it.
+#'
+#' **15, adopted 2026-08-24** after
+#' `docs/plans/prereg-inclusion-floor-15-adoption.md` re-opened the
+#' 2026-08-19 experiment (`docs/plans/prereg-party-inclusion-floor.md`,
+#' `docs/reviews/inclusion-floor-2026-08-19.md`). 15 beats 8 by 0.061 MAE --
+#' three times the adoption bar, monotonic across the whole grid -- but drops
+#' One Nation from the NSW 2027 cycle (21.0% on 8 polls). That anchor failure
+#' is a DISCLOSED, one-time exception, not a loosened rule: Victoria 2026, the
+#' only forecast this repo publishes, is unaffected (ONP clears 15 by 4
+#' polls), and `scripts/test_inclusion_floor.R`'s own anchor check (`IF6`)
+#' stays wired in to refuse any future floor change that drops a live-cycle
+#' party.
+#'
+#' Applies to the state scripts (`fit_vic.R`, `fit_nsw.R`) only. Federal's
+#' separate, denser-polling floor (25) is untouched and untested by this.
+#'
+#' @keywords internal
+PARTY_INCLUSION_FLOOR <- 15L
+
 #' Transform poll shares (percent) to the model scale
 #'
 #' @param y Shares in percent.

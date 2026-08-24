@@ -160,3 +160,14 @@ analysis compared raw means across arms and produced a clean monotonic result
 that was substantially an artefact. Fixed by scoring every arm on the rows all
 arms fit. **The general lesson: when arms differ in what they attempt, they
 cannot be compared on an average over what they attempted.**
+
+---
+
+## Re-opened and adopted, 2026-08-24
+
+Per [prereg-inclusion-floor-15-adoption.md](prereg-inclusion-floor-15-adoption.md).
+Floor is now **15**. The anchor above is not weakened — it stays wired into
+`scripts/test_inclusion_floor.R` and still fires on NSW 2027's One Nation —
+but this time the failure was examined and disclosed in advance rather than
+taken automatically: Victoria 2026, the only forecast this repo publishes, is
+unaffected.
