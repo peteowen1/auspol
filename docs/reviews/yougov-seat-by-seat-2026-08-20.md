@@ -20,12 +20,34 @@
 > worry us" section is therefore **the argument that was acted on**, not an open
 > problem. The 0.000-versus-50.3% rows it identified are gone.
 >
-> **What still stands:** the *shape* of the disagreement. Our One Nation seats
-> remain a subset of YouGov's, so it is still a conversion question rather than
-> a different theory about where the party is strong — but the gap is now 6-v-17,
-> not 3-v-17. The comparison in `output/yougov-comparison.csv` was computed
-> 2026-08-20 and has **not** been re-run against the current model; anything
-> quoting it needs a fresh run first.
+> **Re-run 2026-08-25** against the current model
+> (`scripts/compare_yougov_seats.R`; extraction anchor check YG0 passes, so the
+> parse is unchanged). Full current figures:
+>
+> | | this review (08-20) | re-run (08-25) |
+> |---|---:|---:|
+> | same winner | 62/88 (70%) | 62/88 (70%) |
+> | mean P for their winner | 0.664 | 0.638 |
+> | — agreeing seats | 0.887 | 0.831 |
+> | — disagreeing seats | 0.131 | 0.178 |
+> | we give ONP the win, of their 17 | 1 | **4** |
+> | our expected seats across those 17 | 1.89 | **4.20** |
+> | seats **we** give ONP that they do not | **0** | **2** |
+>
+> **The review's central structural claim no longer holds.** It says *"there is
+> no seat we give One Nation that YouGov does not… our seats are a subset of
+> their 17, so the disagreement is purely about how far the party's support
+> converts, not about where it is strongest."* That is now **false**: we give
+> One Nation **Sunbury** (0.639; they say ALP) and **Niddrie** (0.488; they say
+> LNP), neither of which is in their 17. The two models now disagree about
+> *where* One Nation is strong, not only about conversion.
+>
+> Note the headline agreement is unchanged at 62/88 while its composition moved
+> underneath — an identical top-line number is not evidence nothing changed.
+>
+> *(An earlier version of this banner repeated the subset claim from the body
+> without re-running the comparison — the same error the banner exists to warn
+> about. Corrected once the numbers above were actually computed.)*
 
 Run 2026-08-20. `scripts/parse_yougov.py`, `scripts/compare_yougov_seats.R`.
 Output `output/yougov-comparison.csv`.
