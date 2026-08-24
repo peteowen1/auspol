@@ -127,3 +127,19 @@ NSW 2019. That is a real corpus, unlike the two aborted experiments of
 **Pre-register before running**, including: what would make a win unacceptable
 (a change that improves ONP seats while degrading the majors is not a win), and
 the direction the criterion cannot see.
+
+> ### CORRECTION, same day, before anything was run
+>
+> **The paragraph immediately above is wrong and is left standing so the error
+> is visible.** Scoping the corpus while writing
+> [../plans/prereg-onp-vote-sourcing.md](../plans/prereg-onp-vote-sourcing.md)
+> showed that a test whose outcome is *seat wins* has **4 wins in 1 election**
+> — one cluster. It would have aborted exactly like the two experiments this
+> paragraph claims it is unlike. Asserting "that is a real corpus" without
+> counting first was the same mistake this session had already made twice.
+>
+> The test is therefore re-aimed at the **mechanism** (whose votes One Nation
+> takes), which needs only ONP's vote to move: **157 districts across 7
+> cycle-pairs**. And on Pete's point, the object worth building is general —
+> a **vote-sourcing matrix**, the primary-vote analogue of the existing
+> preference-flow matrix — with this One Nation cell as its first test.
