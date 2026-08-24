@@ -32,6 +32,16 @@ test_that("the minor right is separated from the general minor field", {
   expect_equal(classify_party("Victorian Socialists"), "OTH")
 })
 
+test_that("Centre Alliance / NXT / SA-BEST classify as IND, not OTH", {
+  # Mayo has returned Rebekha Sharkie under this banner since 2016. It fits
+  # none of ALP/LNP/GRN/ONP/OTH_RIGHT and would otherwise fall through to the
+  # OTH wastebasket alongside genuinely unaligned minor parties.
+  expect_equal(classify_party("Centre Alliance"), "IND")
+  expect_equal(classify_party("Nick Xenophon Team"), "IND")
+  expect_equal(classify_party("SA-BEST"), "IND")
+  expect_equal(classify_party("SA Best"), "IND")
+})
+
 test_that("codes are used in preference to names where supplied", {
   expect_equal(classify_party("Something Unrecognised", code = "ON"), "ONP")
   expect_equal(classify_party("Something Unrecognised", code = "LP"), "LNP")
