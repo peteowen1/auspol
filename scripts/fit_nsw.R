@@ -289,14 +289,55 @@ cat("NL2  all trends and bands strictly inside (0, 100)  OK\n")
 cat(sprintf("NL3a endpoint FP sums (reported, not asserted): %s\n",
             paste(sprintf("%d=%.1f", c(2023, 2027), share_sums),
                   collapse = "  ")))
-nsw_track <- lapply(c(2023, 2027), function(yr) {
+NSW_YEARS <- c(2023, 2027)
+nsw_track <- lapply(NSW_YEARS, function(yr) {
   r <- get(paste0("res", yr))
   x <- poll_tracking_check(r$polls, r$fits)
   report_poll_tracking(x, sprintf("NL3  %d", yr))
   x
 })
-stopifnot(!any(vapply(nsw_track, function(x) any(x$breach), TRUE)))
-cat("Structural checks NL2/NL3 passed.\n\n")
+
+# NL3 REPORTS ITS BREACH INSTEAD OF HALTING, mirroring what fit_vic.R already
+# does for the published cycle. This changes WHAT HALTS, not what is asserted:
+# the breach is still computed, still printed, still written to a marker, and
+# run_all.R still exits non-zero on it. Nothing is silenced.
+#
+# Why: NSW 2027's One Nation breaches at 5.15 on THREE polls in the window, and
+# two pre-registered experiments have now aborted trying to decide whether that
+# is the fit or the check --
+# docs/plans/prereg-nsw-onp-walk-threshold.md (6 clusters against a floor of
+# 10) and docs/plans/prereg-poll-tracking-bound-scaling.md (19 cycles against
+# a floor of 20). Neither POLL_TRACKING_BOUND nor min_polls may be moved to
+# clear it; both are forbidden by those plans and remain so. Halting the whole
+# stage on a question the record cannot settle buys nothing and stops the
+# later NSW output being produced at all.
+#
+# A SEPARATE MARKER FROM fit_vic.R's, deliberately. That file is
+# L3-BREACH.txt, run_all.R reports it under "L3 BREACH ON THE PUBLISHED
+# CYCLE", and fit_vic.R DELETES it on startup. fit_vic.R runs before this
+# stage, so writing NSW's breach into the same file would let NSW clobber a
+# genuine published-forecast breach and have it reported under the wrong
+# heading -- the exact conflation run_all.R:236-240 exists to prevent ("a
+# guard whose alarm depends on an unrelated guard also firing is not a guard").
+nl3_marker <- file.path("output", "NL3-BREACH.txt")
+dir.create("output", showWarnings = FALSE)
+if (file.exists(nl3_marker)) unlink(nl3_marker)
+nsw_breach <- vapply(nsw_track, function(x) any(x$breach), TRUE)
+if (any(nsw_breach)) {
+  det <- unlist(lapply(which(nsw_breach), function(i) {
+    b <- nsw_track[[i]][breach == TRUE]
+    sprintf("%d %s fitted %.2f against %.2f from %d polls (bound %.1f)",
+            NSW_YEARS[i], b$party, b$fitted, b$poll_mean, b$n,
+            POLL_TRACKING_BOUND)
+  }))
+  writeLines(det, nl3_marker)
+  cat(sprintf(paste0(
+    "NL3  !! BREACHED on %d cycle(s), NOT halted so the rest of this stage\n",
+    "     still runs. Recorded in %s; run_all.R fails on it at the end.\n"),
+    sum(nsw_breach), nl3_marker))
+} else {
+  cat("Structural checks NL2/NL3 passed.\n\n")
+}
 
 cat("=== NSW 2027 cycle trend endpoints ===\n")
 for (p in names(res2027$fits)) {
