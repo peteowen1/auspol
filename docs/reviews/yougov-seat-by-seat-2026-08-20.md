@@ -1,5 +1,32 @@
 # Seat by seat against YouGov: we agree on 70%, and where we differ we are certain
 
+> ## STALE ON EVERY NUMBER BELOW THAT DESCRIBES OUR MODEL. Read this first.
+>
+> Added 2026-08-25. **The body is left exactly as written** — reviews here are
+> immutable — but two changes landed on **2026-08-21, the day after this ran**,
+> and both hit the things this review concluded. Pete caught it being quoted as
+> current in conversation on 2026-08-25; nothing in the file itself said not to.
+>
+> | this review says | as at 2026-08-22 output |
+> |---|---|
+> | One Nation wins **3** seats | **6** by argmax (5 above 50%), **9.25** expected |
+> | Lowan / Ovens Valley / Bendigo West at **0.000** | **0.050 / 0.047 / 0.016** |
+> | Thomastown 0.006, Bass 0.005, Macedon 0.002 | 0.057, 0.046, **0.169** |
+> | "the candidate-level model **has never been backtested**" | backtested 2026-08-21 on **886 federal division-elections** across 6 elections |
+>
+> **What changed:** the per-draw calibration shrink (0.10) was adopted
+> 2026-08-21 and exists precisely to floor catastrophic near-zeros — see
+> `docs/reviews/calibration-2026-08-21.md`. This review's "the part that should
+> worry us" section is therefore **the argument that was acted on**, not an open
+> problem. The 0.000-versus-50.3% rows it identified are gone.
+>
+> **What still stands:** the *shape* of the disagreement. Our One Nation seats
+> remain a subset of YouGov's, so it is still a conversion question rather than
+> a different theory about where the party is strong — but the gap is now 6-v-17,
+> not 3-v-17. The comparison in `output/yougov-comparison.csv` was computed
+> 2026-08-20 and has **not** been re-run against the current model; anything
+> quoting it needs a fresh run first.
+
 Run 2026-08-20. `scripts/parse_yougov.py`, `scripts/compare_yougov_seats.R`.
 Output `output/yougov-comparison.csv`.
 
