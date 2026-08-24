@@ -175,3 +175,95 @@ large even against a `1/sqrt(3)`-scaled bound unless the fitted scale is
 implausibly wide, and the repo's own record says this party is the one it
 already over-states. **If NSW 2027 passes comfortably, be suspicious of the
 derivation rather than relieved.**
+
+---
+
+## Result, 2026-08-25: ABORTED at the separability gate, by one cycle
+
+Run by `scripts/test_bound_scaling.R`. **No coefficient was estimated, no
+bound was derived, and NSW 2027 was never examined.** The gate is the first
+thing the script does and it stopped there.
+
+| | |
+|---|---:|
+| rows | 154 |
+| cycles | 33 |
+| cycles containing >= 2 distinct values of `n` | **19** |
+| pre-registered floor | **20** |
+
+Nineteen against twenty. The data was regenerated first and reproduces the
+original calibration exactly (99th percentile 2.429 → bound 2.5, one breaching
+row: Victoria 1992 ALP at 5.05 on n=10), so this is not a data problem.
+
+### The floor was NOT lowered to 19, and that is the whole point
+
+One cycle short is the single most tempting moment to move a threshold, and
+moving it is the rationalisation pattern this repo records twice already:
+`min_n` was not lowered to rescue refusal M2, and `EXHAUST_LIMIT` was not
+raised to admit WA 2001 — *"moving a threshold to admit the one election that
+failed it is choosing the number after seeing the answer."*
+
+Everything downstream of that gate would be worthless if the gate were moved
+now, because the criterion would have been chosen to admit this data.
+
+### Where this plan was genuinely weak, recorded rather than acted on
+
+**The floor of 20 was not derived from a power calculation.** It was chosen as
+a round number that felt sufficient. That is a real weakness — the same class
+of weakness as the row-versus-cluster mix-up in the preceding plan — and the
+correct response is to write better floors in future plans, **not** to treat
+this one as soft because it was arbitrary. An arbitrary floor still binds; it
+just should not have been arbitrary.
+
+For a future attempt: derive the floor from the power to detect a `1/sqrt(n)`
+coefficient of the size the mechanism predicts, and do it before looking at
+how many cycles qualify.
+
+### Two consecutive aborts is itself the finding
+
+[prereg-nsw-onp-walk-threshold.md](prereg-nsw-onp-walk-threshold.md) aborted on
+6 clusters against a floor of 10. This one aborts on 19 cycles against 20.
+**Both were well-posed questions and neither can be answered from this
+corpus.**
+
+That is worth stating plainly rather than treating as two pieces of bad luck:
+
+- The **model-side** question (should a thin, fast-moving party estimate its
+  own volatility?) has **one usable historical observation**, and it points
+  against the change.
+- The **check-side** question (should the bound scale with poll count?) needs
+  within-cycle variation in `n` that this record barely has, because most
+  cycles poll every party on the same polls.
+
+So **`NL3`'s breach on NSW 2027 cannot be resolved by measurement on the
+available record**, from either direction. Anyone who tries a third variant of
+either question should expect the same and should say so in advance.
+
+### What must NOT happen next
+
+- **`POLL_TRACKING_BOUND` must not be raised** to clear NSW. It was derived by
+  a rule fixed in advance and re-derives to the same 2.5 today.
+- **`min_polls` must not be raised from 3 to 4.** NSW 2027's One Nation is
+  asserted on by exactly one poll's margin; raising the floor makes the breach
+  vanish by declining to look. Forbidden by this plan (R5) and still forbidden
+  now that the plan has aborted.
+- **The gate floor of 20 must not be quietly lowered** in a later run of the
+  same script.
+
+### What is left, and it is a judgement rather than a measurement
+
+`fit_nsw.R` halts, the scheduled job stays red, and the honest position is that
+**One Nation may well be fitted too low in NSW 2027 and this record cannot
+settle it.** The remaining options are decisions, not experiments, and belong
+to Pete:
+
+1. **Leave it red.** The breach is information; a red build that means
+   something is better than a green one that does not.
+2. **Let `fit_nsw.R` report the breach instead of halting**, as `fit_vic.R`
+   already does for the live target cycle (`fit_vic.R` writes `L3-BREACH.txt`
+   and continues, so the forecast still publishes and `run_all.R` fails at the
+   end). This changes *what halts*, not *what is asserted* — the breach stays
+   visible and nothing is silenced. It is the only option here that does not
+   touch a calibrated threshold.
+3. **Accept that NSW 2027's One Nation trend is unreliable** and mark it as
+   such wherever it is used, rather than trying to fix the fit or the check.
