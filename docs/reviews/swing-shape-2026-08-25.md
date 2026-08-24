@@ -128,3 +128,56 @@ The remaining candidates, in the order they should be tried:
    correctly is untested; `CLAUDE.md` already records that `OTH_RIGHT` is a
    catch-all doing the work of six parties, and rural Victoria is where
    three-cornered contests live.
+
+## A THIRD swing model, and we already measure the input for it
+
+Added after Pete asked whether "proportional" accounts for One Nation voters
+being closer to the Coalition and Greens voters closer to Labor. **It does
+not**, and neither does uniform. Both are about *size* only:
+
+| model | a party's seat-level change is… | knows about ideology? |
+|---|---|---|
+| **uniform** (shipped) | the same **points** everywhere | no |
+| **proportional** (tested, worse) | the same **fraction of its own base** | no |
+| **proximity-weighted** | drawn from **ideologically adjacent** parties | **yes — untested** |
+
+The third is a genuinely different hypothesis and **this repo already measures
+its input**. `load_preference_flows()` is a proximity matrix built from real
+behaviour:
+
+| party | mean flow to ALP | n |
+|---|---:|---:|
+| NAT | 5.0 | 10 |
+| **ONP** | **39.6** (Victoria 2026: **25.5**) | 24 |
+| UAP / DLP / FF / SFF | 40–42 | 16 |
+| OTH | 50.4 | 77 |
+| **GRN** | **71.3** (Victoria: **81.9**) | 56 |
+
+So roughly **three-quarters of One Nation preferences go to the Coalition** and
+**four-fifths of Greens preferences go to Labor**. We use this to distribute
+preferences *after* a candidate is excluded and ignore it completely when the
+*primary* vote moves — which is the inconsistency worth testing.
+
+**The testable form:** does a party's primary gain come out of other parties in
+proportion to their preference-flow proximity? If yes, One Nation's rise should
+draw ~75% from Coalition-side voters in Victoria, and the fix is to weight the
+statewide swing's seat-level distribution by the existing flow matrix rather
+than to invent a new one.
+
+**Why this is not simply contradicted by the refused sourcing test.** That test
+([../plans/prereg-onp-vote-sourcing.md](../plans/prereg-onp-vote-sourcing.md))
+found Labor losing *more* than proportional where One Nation gained more — the
+opposite sign. Two reasons it may not settle this:
+
+- It measured a **within-cycle gradient**, having removed the cycle mean by
+  construction. Proximity plausibly lives in the **levels**, which is exactly
+  what the deviation adjustment strips out.
+- It **conditioned on One Nation rising >= 5 points**, which selects rural
+  districts — and rural districts have very little Labor vote to take (Lowan's
+  Labor base is 19.8%). Selecting on the treatment can invert a relationship
+  when the available base differs systematically across the selected set.
+
+Neither is a reason to dismiss that result; both are reasons the proximity
+question is **not yet answered**, and any plan for it must state up front
+whether it is testing levels or gradient, because those two tests have now
+given opposite answers on the same corpus.
