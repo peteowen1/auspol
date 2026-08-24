@@ -37,9 +37,10 @@ Bold marks where a site is notably ahead or notably behind the field.
   simulator is the best-designed piece of machinery any of these have. Its
   four tools are catalogued below — it is a much bigger product than the
   methodology page suggests.
-- **DemosAU** is a pollster publishing an occasional MRP as content. Note they
-  are also an input to our own model, where our 2028 fit gives their polls a
-  −2.1 point house effect on ALP FP.
+- **DemosAU** is a pollster publishing an occasional MRP as content. They are
+  also one of the firms in our own polling data — their house effect, like
+  every other firm's, is on the public pollster scorecard rather than singled
+  out here.
 - **buildaballot** is a different product for a different audience — helping
   someone fill in a ballot, not predicting the result.
 
@@ -117,8 +118,10 @@ engine and no car around it.
 
 ## What we should build, and why
 
-The temptation is to copy AE Forecasts feature-for-feature and lose. Having
-now browsed theswingison properly, two things are genuinely ours:
+AE Forecasts is the strongest of the four on the metrics that matter most, so
+matching it feature-for-feature would mean competing on its own strongest
+ground rather than building where we can differentiate. Having now browsed
+theswingison properly, two things are genuinely ours:
 
 1. **Transparency as a product, not a methodology page.** Nobody in Australia
    publishes pollster house effects as a live feature — theswingison
@@ -169,8 +172,9 @@ it well, different audience), upper houses, and betting-odds ingestion.
 ### Worth avoiding
 
 theswingison's **outlier down-weighting** — penalising a poll for disagreeing
-with the local consensus is herding by construction, and it is the mechanism
-that made the 2019 polls all agree and all be wrong.
+with the local consensus is herding by construction, the same mechanism widely
+blamed for every Australian pollster converging on the same wrong number in
+2019.
 
 Since writing that we built the principled version — fat-tailed observation
 noise, which discounts by residual size through the likelihood rather than by
