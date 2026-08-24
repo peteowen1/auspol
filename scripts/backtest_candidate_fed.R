@@ -269,6 +269,25 @@ for (K in PAIRS) {
       shares[, p] <- pmax(0, mat[, p] + (st_b[[p]] - st_a[[p]]))
     }
   }
+  # Zero IND wherever nobody actually stood at the TARGET election. This is
+  # nomination data, not the result being predicted: which classes contest a
+  # seat is knowable from the ballot before polling day (nominations close
+  # weeks in advance), unlike the vote SHARE those classes go on to get, which
+  # stays the forecast's job -- so reading it from `fb` here is not the same
+  # leak the harness guards against elsewhere. Without this, the model swings
+  # the PRIOR election's independent vote forward with no check that anyone
+  # recontested: Nicholls fed2025 carried 19.5% IND win probability for a
+  # class that was not on the ballot, Hughes 8.2%.
+  if ("IND" %in% colnames(shares)) {
+    ind_seats <- fb[party == "IND" & votes > 0, unique(seat)]
+    no_ind <- setdiff(rownames(shares), ind_seats)
+    zeroed <- no_ind[shares[no_ind, "IND"] > 0]
+    shares[no_ind, "IND"] <- 0
+    if (length(zeroed)) {
+      cat(sprintf("BF0  fed%d: zeroed IND in %d seat(s) with no independent nominated: %s\n",
+                  K$to, length(zeroed), paste(sort(zeroed), collapse = ", ")))
+    }
+  }
   shares <- 100 * shares / rowSums(shares)
   keep <- intersect(rownames(shares), win$seat)
   shares <- shares[keep, , drop = FALSE]
