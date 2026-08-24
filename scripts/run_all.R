@@ -257,9 +257,27 @@ if (length(l3_breach)) {
 # Kept separate from L3_MARKER on purpose. NSW's breach must never be able to
 # stand in for -- or overwrite -- one on the published cycle, which is the
 # failure the block above was written to prevent.
+#
+# GATED ON WHETHER fit_nsw.R ACTUALLY RAN. It is a `slow` stage, so --quick
+# skips it -- and the marker is only refreshed (unlinked and rewritten) by the
+# stage itself. Reading it after a skip reports a PREVIOUS run's verdict for a
+# stage this run never checked, which is a stale-state bug in the same family
+# as the one the separation above prevents. It can only ever add a failure,
+# never remove one, but "cried wolf about a fixed problem" and "looks like NSW
+# was checked when it wasn't" are both wrong.
+#
+# fit_vic.R needs no such gate: it is not `slow`, so it runs on every
+# invocation and always freshens L3-BREACH.txt.
 NL3_MARKER <- file.path("output", "NL3-BREACH.txt")
-nl3_breach <- if (file.exists(NL3_MARKER)) readLines(NL3_MARKER, warn = FALSE) else character(0)
+nsw_ran <- !quick
+nl3_breach <- if (nsw_ran && file.exists(NL3_MARKER)) {
+  readLines(NL3_MARKER, warn = FALSE)
+} else character(0)
 nl3_breach <- nl3_breach[nzchar(trimws(nl3_breach))]
+if (!nsw_ran && file.exists(NL3_MARKER)) {
+  cat("\nNL3  not checked this run (--quick skipped fit_nsw.R); a marker from\n",
+      "     an earlier run is present and is deliberately NOT being read.\n")
+}
 if (length(nl3_breach)) {
   cat("\n=== NL3 BREACH ON AN NSW CYCLE (not the published forecast) ===\n")
   for (b in nl3_breach) cat("   ", b, "\n")

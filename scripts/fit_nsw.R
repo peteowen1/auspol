@@ -369,3 +369,24 @@ fwrite(fac, "output/firm-factors-nsw.csv")
 fwrite(cmp, "output/scale-comparison-nsw.csv")
 fwrite(walk_tab, "output/cycle-walks-nsw.csv")
 cat("\nWrote output/trend-nsw-{2023,2027}.{csv,png}, hyperpars-nsw.csv, firm-factors-nsw.csv, scale-comparison-nsw.csv\n")
+
+# THE STAGE STILL FAILS, it just fails LAST. Everything above has been written
+# by this point, which was the entire purpose of not halting at the check --
+# but the process must still signal failure on its own exit code.
+#
+# Without this the documented standalone invocation (`Rscript
+# "scripts/fit_nsw.R"`, README.md:91) exits 0 on a real breach, so any caller
+# using the ordinary exit-code convention -- a wrapper, a CI step, a person
+# typing `echo $?` -- gets a false green. Enforcement would live only inside
+# run_all.R, which is a mechanism nothing else invokes.
+#
+# Caught in review of 244682a. The first verification of that commit read
+# exit=1 and accepted it; that 1 came from PowerShell's stream redirection,
+# not from R. An exit code observed through `*>` is not the script's own.
+if (any(nsw_breach)) {
+  stop(sprintf(paste0(
+    "NL3 breached on %d NSW cycle(s) -- details above and in %s. ",
+    "The stage completed and wrote its output; this non-zero exit exists so ",
+    "the breach cannot pass unnoticed by a caller that only checks status."),
+    sum(nsw_breach), nl3_marker), call. = FALSE)
+}

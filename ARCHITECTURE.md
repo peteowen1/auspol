@@ -117,11 +117,21 @@ was caught only against a number someone already knew.
   |---|---|
   | `fit_vic.R` | `F1`, `L2`, `L3`, `L3a`, `L4a`–`L4c`, `V5` |
   | `fit_federal.R` | `A1`–`A4` (plus `A2b`, `A3b`), `FF1`, `FL1`–`FL3`, `FL3a`, `FL4a`–`FL4c`, `FO1` |
-  | `fit_nsw.R` | `N1`–`N3`, `NF1`, `NL2`, `NL3`, `NL3a`, `NL4a`–`NL4c` |
+  | `fit_nsw.R` | `N1`–`N3`, `NF1`, `NL2`, `NL3`†, `NL3a`, `NL4a`–`NL4c` |
   | `fit_projection.R` | `P1`–`P4`, `B1` |
   | `fit_seats.R` | `S1`–`S4`, `R1`–`R3` |
   | `fit_seats_full.R` | `S5` |
   | `fit_scorecard.R` | `C1`–`C3` |
+
+  † **`NL3` reports rather than halting at the check**, like `fit_vic.R`'s
+  `L3`. Both write a marker (`output/NL3-BREACH.txt`,
+  `output/L3-BREACH.txt` — deliberately separate files) and `run_all.R` exits
+  non-zero on either; `fit_nsw.R` also exits non-zero itself, at the very end,
+  after its output is written. NSW 2027's One Nation breaches at 5.15 on three
+  polls, and two pre-registered experiments aborted on whether that is the fit
+  or the check — see `docs/plans/prereg-poll-tracking-bound-scaling.md`.
+  Neither `POLL_TRACKING_BOUND` nor `min_polls` may be moved to clear it.
+  Every other check in both scripts still halts where it fires.
 
   The version of this table before 2026-08-18 listed `fit_vic.R` as `V1`–`V5`,
   `fit_federal.R` as including `H1`–`H4`, and `fit_projection.R` as `B1`–`B3`.
