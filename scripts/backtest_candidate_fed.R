@@ -16,6 +16,18 @@
 # preferences, uses the EARLIER election's flow matrix, and is scored against
 # the AEC's declared winners for the later one.
 #
+# ONE DELIBERATE EXCEPTION, gated to !FORECAST_MODE. The default ("oracle")
+# path already reads the LATER election's statewide result (`st_b`) as the
+# true swing to apply -- that is this harness's whole design, not a leak of
+# its own. It also reads the later election's first preferences (`fb`) for
+# one further fact: whether ANY independent stood, to zero IND's win
+# probability in seats where none did. Nomination is knowable before polling
+# day in a real forecast, unlike vote share, so this is a narrower fact than
+# the oracle swing already uses -- but there is no actual pre-election
+# nomination list in this pipeline, only "IND received a nonzero recorded
+# vote in `fb`" as a proxy for it, so it is still target-year data and is
+# switched OFF under FORECAST_MODE, whose entire point is not seeing eb yet.
+#
 # WHAT THIS CANNOT TEST. `seat_swing_adjustment()` needs `fed_swing` -- how a
 # seat swung at the preceding FEDERAL election -- which is a state-model
 # predictor with no federal analogue. The federal seat files carry it for ZERO
@@ -273,12 +285,17 @@ for (K in PAIRS) {
   # nomination data, not the result being predicted: which classes contest a
   # seat is knowable from the ballot before polling day (nominations close
   # weeks in advance), unlike the vote SHARE those classes go on to get, which
-  # stays the forecast's job -- so reading it from `fb` here is not the same
-  # leak the harness guards against elsewhere. Without this, the model swings
-  # the PRIOR election's independent vote forward with no check that anyone
+  # stays the forecast's job. Without this, the model swings the PRIOR
+  # election's independent vote forward with no check that anyone
   # recontested: Nicholls fed2025 carried 19.5% IND win probability for a
   # class that was not on the ballot, Hughes 8.2%.
-  if ("IND" %in% colnames(shares)) {
+  #
+  # !FORECAST_MODE ONLY -- see the file banner. There is no real pre-election
+  # nomination list here, only "IND has a nonzero vote in `fb`" as a proxy for
+  # it, and `fb` is the target election's own result. That is an accepted
+  # oracle input in the default path (which already reads `st_b` the same
+  # way) but is exactly what FORECAST_MODE exists to avoid.
+  if (!FORECAST_MODE && "IND" %in% colnames(shares)) {
     ind_seats <- fb[party == "IND" & votes > 0, unique(seat)]
     no_ind <- setdiff(rownames(shares), ind_seats)
     zeroed <- no_ind[shares[no_ind, "IND"] > 0]
