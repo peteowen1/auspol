@@ -134,3 +134,79 @@ Expect **R1 to be the real threat**: ALP and LNP are simultaneously the largest
 pair and the most distant pair, which is exactly the configuration that can
 manufacture the predicted sign from size alone. If the effect dies under the
 size control, that is the finding.
+
+---
+
+## Result, 2026-08-25: REFUSED. The size control was decisive, as predicted.
+
+`scripts/test_proximity_substitution.R`. 54 party-pair observations, 12
+cycle-pairs, gate passed. **Nothing adopted.**
+
+| specification | coefficient | clustered ratio |
+|---|---:|---:|
+| proximity alone | +0.00100 | +1.35 |
+| **proximity, controlling size** | **−0.00220** | **−1.16** |
+| proximity, no ONP pairs | −0.00290 | −1.85 |
+| proximity, no GRN–ALP pair | −0.00515 | −2.51 |
+
+| criterion | required | got | verdict |
+|---|---|---|---|
+| size-controlled coefficient | >= +2.20 SE | −1.16 | **FAIL** |
+| sign consistency | 8 of 12 | **5** | **FAIL** |
+| survives dropping ONP | positive | −1.85 | **FAIL** |
+
+**Raw proximity is in the predicted direction and does not clear the bar
+(+1.35 SE). Controlling for size flips the sign.** That is R1 firing exactly as
+written in the prediction above: ALP and LNP being simultaneously the largest
+and most distant pair manufactures the expected pattern out of size alone.
+
+### The Greens and Labor are not reliably substitutes
+
+The most striking single result, because it contradicts the strongest form of
+the intuition. GRN–ALP district-level correlations across 12 cycle-pairs:
+
+`+0.125, −0.335, +0.005, +0.197, +0.225, −0.003, −0.031, +0.342, −0.165,
+−0.222, −0.353, −0.146`
+
+**Five of twelve are positive.** Greens and Labor frequently rise and fall
+*together* across districts rather than trading votes — consistent with shared
+demographic tides moving both, which a substitution model has no way to
+represent.
+
+ONP–LNP is the one pair that behaves as the intuition predicts (−0.245 and
+−0.171, both negative), but that is **two observations** and it does not
+generalise to the structure being tested.
+
+### The proximity gradient is flat
+
+Mean correlation by distance band, description only:
+
+| band | pairs | mean r |
+|---|---:|---:|
+| close | 20 | −0.057 |
+| far | 8 | −0.043 |
+| very far | 26 | −0.046 |
+
+No gradient. If proximity drove substitution, close pairs would sit well below
+distant ones.
+
+### What this means for the thread
+
+**Third refusal in a row on the same question.** In order: district-level vote
+sourcing (refused, sign reversed by the confound control), proportional swing
+(measurably worse than uniform, MAE 3.970 vs 3.724), and now proximity
+substitution (refused, sign reversed by the size control).
+
+The consistent finding across all three is that **the shipped uniform swing
+survives every alternative tried**, and that each intuitive improvement fails
+once its obvious confound is controlled. Two of the three reversed sign at
+exactly the control the plan named in advance — which is the argument for
+naming them in advance.
+
+**This does not explain the ONP seat-type asymmetry**, which remains open. The
+remaining candidates from
+[../reviews/swing-shape-2026-08-25.md](../reviews/swing-shape-2026-08-25.md)
+are the statewide Coalition level (a trend question, cheap), mean reversion
+(needs the artefact test first), and the count itself. **None of them is
+another version of "whose votes move where" — that line is now exhausted and
+should not be re-run in a fourth form.**
