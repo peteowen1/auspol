@@ -1,11 +1,45 @@
 # auspol — work queue
 
-Updated 2026-08-23. Remote: github.com/peteowen1/auspol (private, default
+Updated 2026-08-25. Remote: github.com/peteowen1/auspol (private, default
 branch `dev`; `main` exists and is reached only through a reviewed PR).
 
 Completed stage write-ups live in
 [backlog/journal-2026-08.md](backlog/journal-2026-08.md) — this file holds
 open state, not the narrative of how it got here.
+
+## One Nation wins the WRONG SEAT TYPE in our model (2026-08-25)
+
+[reviews/onp-seat-type-asymmetry-2026-08-25.md](reviews/onp-seat-type-asymmetry-2026-08-25.md).
+**Nothing changed; this needs a pre-registered test.** Found by asking why our
+ONP seats differ from YouGov's — YouGov raised the question, SA 2026 answers
+it, and YouGov is not treated as truth anywhere in the review.
+
+Our model gives One Nation **6 of 6 seats in ALP-leaning territory and 0 of 6
+in LNP-leaning**. SA 2026 — the only election where the party won at this
+scale — was **0 of 5 and 5 of 5**, the exact opposite.
+
+The innocent explanation is ruled out. Among the 20 Victorian seats with the
+highest federal ONP vote (our own ordering input) the split is exactly 10/10
+by lean, yet mean ONP probability is **0.143 in ALP-leaning seats against
+0.036 in LNP-leaning ones**. Gippsland East carries more federal ONP vote than
+any seat we give the party except Morwell and scores **0.048**; Melton carries
+less than all of them and scores **0.561**.
+
+Mechanism: `shares` adds each party's statewide swing and renormalises, which
+takes One Nation's gain **proportionally from everyone**. Where the Coalition
+holds 58.9% it stays dominant. SA says otherwise — in the top decile of ONP
+gain the Coalition fell **17.69** against Labor's **4.96**, and MacKillop's
+Liberal vote collapsed 67.0 → 26.8 as One Nation took the seat.
+
+**Why it matters even if the TOTAL is right**: the same 9.25 expected seats
+taken from the Coalition rather than from Labor is a different parliament, and
+a total that is right for the wrong reason will not stay right.
+
+Caveats are in the review and are real (n=5, one state, no Nationals in SA, and
+the marginal gradient is weaker than the group means). Next step is a
+pre-registered test of source-weighted allocation against SA 2026 / WA 2017 /
+QLD 2020+2024 / NSW 2019 — a real corpus, unlike the two experiments that
+aborted for lack of power on 2026-08-25.
 
 ## Awaiting Pete
 
