@@ -5,6 +5,51 @@ Pete asking where One Nation's South Australian gains actually came from.
 
 This is the finding the previous three experiments were circling and missing.
 
+> ## THE TITLE AND THE HEADLINE FINDING BELOW ARE WRONG. Corrected same day.
+>
+> The Victorian half of the comparison was checked against the polls within the
+> hour and does not survive. **Everything about SA is unaffected**; the error is
+> in reading Victoria's 2022→2026 *total* change as a single event.
+>
+> **The trend model is faithful to its polls.** Recent Victorian polling against
+> the fit: Labor −12.0 in polls vs −11.4 fitted; Coalition −6.2 vs −5.2; One
+> Nation +22.8 vs +20.5. It is not imposing anything.
+>
+> **But the change decomposes into two separate phases, and collapsing them is
+> what produced the wrong conclusion:**
+>
+> | period | polls | ALP | LNP | ONP |
+> |---|---:|---:|---:|---:|
+> | 2023–24 | 20 | 34.7 | 34.8 | not polled |
+> | 2025 | 14 | 28.6 | **37.6** | not polled |
+> | early 2026 | 8 | 26.8 | **29.3** | 20.9 |
+> | recent | 12 | 24.7 | **27.9** | 23.2 |
+>
+> Labor fell from 34.7 to 28.6 **before One Nation was polled at all**, while
+> the Coalition *rose* to 37.6. Then One Nation enters at ~21 and the Coalition
+> drops **37.6 → 27.9, nearly 10 points**, while Labor's decline continues far
+> more gently.
+>
+> **So the Coalition is paying for One Nation in Victoria too.** Labor's fall is
+> a separate, earlier anti-incumbent swing after governing since 2014 — exactly
+> the counter-argument this review raised and then failed to apply to its own
+> headline.
+>
+> Supporting, from the 19 polls that name One Nation:
+> `cor(ONP, LNP) = −0.609` against `cor(ONP, ALP) = −0.366`; and Coalition
+> support is 8.2 points lower in polls that offer One Nation versus those that
+> do not, against Labor's 6.8.
+>
+> **What this means:** Victoria and SA are **not** contradictory, the trend
+> model is vindicated rather than suspect, and the recommendation below to
+> freeze the seat model pending this check has been discharged — the statewide
+> attribution is sound. **The ONP seat-type asymmetry therefore remains
+> unexplained**, and none of the four hypotheses tried today accounts for it.
+>
+> The lesson, which is the same one this session has now hit repeatedly:
+> comparing two elections on a total change assumes the change had one cause.
+> Victoria's did not, and the sequencing was one query away.
+
 ## Pete's hypothesis, in levels: confirmed
 
 Mean district-level change, SA 2022 → 2026, split by who led the seat in 2022:
