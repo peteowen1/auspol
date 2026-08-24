@@ -153,3 +153,39 @@ total polls across BOTH cycles combined — and NSW's ONP never reaches that
 which inclusion floor applies to it. Safe today, but the safety rests on
 `est_parties`'s current composition, not on anything enforced — worth knowing
 if a minor party's total poll count ever climbs past 20.
+
+## REVERTED, 2026-08-24, same day
+
+Pete's re-examination, on seeing the actual mechanism in plain terms: a
+party polling in the twenties folding into `OTH`, where it cannot be told
+apart from the rest, is not acceptable — even confined to an unpublished
+cycle, even as a disclosed, bounded, self-resolving cost. **Floor reverts to
+8.** The adoption above is left unedited, not deleted: it was a real,
+considered decision, correctly disclosed, and still overturned once its
+concrete consequence was put plainly rather than summarised as "NSW 2027 is
+unaffected [as a live forecast]."
+
+What survives from this round: `PARTY_INCLUSION_FLOOR` as a single named
+constant (`R/scales.R`) replacing four independent hardcoded `8`s, which
+`docs/CONSTANTS.md` had already flagged as a sister-copy risk — kept at its
+reverted value, 8. `scripts/test_inclusion_floor.R`'s `IF6` anchor stays
+wired in and unweakened, exactly as it was before this round started: it is
+what surfaced this cost in the first place (2026-08-19) and would surface it
+again for any future attempt at this floor.
+
+**The lesson, stated plainly rather than left implicit**: an anchor that
+"only" costs an unpublished validation cycle is still a real cost, and
+disclosing it in advance makes the decision honest, not automatically right.
+Pre-registration answers "was this decided fairly," not "was this the
+correct call" — those are different questions, and this plan confused having
+answered the first for having answered the second.
+
+**One side effect of the revert, not caused by it**: `fit_nsw.R` now halts
+again on NSW 2027's pre-existing `NL3` breach (`ONP fitted 19.52 against
+24.67`) — already documented in `docs/NEXT-STEPS.md` as "NSW 2027 keeps CI
+red," caused by a different, untouched constant (`fit_nsw.R:132`'s per-cycle
+walk threshold, `cnt >= 15`, unrelated to `PARTY_INCLUSION_FLOOR`). Floor 15
+incidentally silenced this by not fitting ONP in that cycle at all; floor 8
+restores the original, already-known-red behaviour. Not a new problem and
+not fixed here — it already had its own line in `NEXT-STEPS.md`: "needs a
+threshold decision made before, not after, seeing NSW breach."

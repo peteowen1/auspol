@@ -163,11 +163,14 @@ cannot be compared on an average over what they attempted.**
 
 ---
 
-## Re-opened and adopted, 2026-08-24
+## Re-opened, adopted, then reverted — all 2026-08-24
 
 Per [prereg-inclusion-floor-15-adoption.md](prereg-inclusion-floor-15-adoption.md).
-Floor is now **15**. The anchor above is not weakened — it stays wired into
-`scripts/test_inclusion_floor.R` and still fires on NSW 2027's One Nation —
-but this time the failure was examined and disclosed in advance rather than
-taken automatically: Victoria 2026, the only forecast this repo publishes, is
-unaffected.
+Floor is **8**, unchanged from this plan's original result. It was raised to
+15 with the anchor examined and disclosed in advance this time (Victoria
+2026, the only forecast this repo publishes, verified unaffected), then
+reverted the same day: folding a party polling in the twenties into `OTH`,
+where it cannot be told apart from the rest, was judged not acceptable even
+confined to an unpublished cycle. The anchor above was never weakened — it
+stayed wired into `scripts/test_inclusion_floor.R` throughout and is what
+surfaced the cost both times.

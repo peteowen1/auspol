@@ -64,23 +64,24 @@ BINOMIAL_SENSITIVE_N <- 1500
 #' cannot run on it. It is not an input-sanity guard, which is how it was
 #' filed until 2026-08-19 and why nobody looked at it.
 #'
-#' **15, adopted 2026-08-24** after
-#' `docs/plans/prereg-inclusion-floor-15-adoption.md` re-opened the
-#' 2026-08-19 experiment (`docs/plans/prereg-party-inclusion-floor.md`,
-#' `docs/reviews/inclusion-floor-2026-08-19.md`). 15 beats 8 by 0.061 MAE --
-#' three times the adoption bar, monotonic across the whole grid -- but drops
-#' One Nation from the NSW 2027 cycle (21.0% on 8 polls). That anchor failure
-#' is a DISCLOSED, one-time exception, not a loosened rule: Victoria 2026, the
-#' only forecast this repo publishes, is unaffected (ONP clears 15 by 4
-#' polls), and `scripts/test_inclusion_floor.R`'s own anchor check (`IF6`)
-#' stays wired in to refuse any future floor change that drops a live-cycle
-#' party.
+#' **8. Tried at 15 and reverted, both 2026-08-24** -- see
+#' `docs/plans/prereg-inclusion-floor-15-adoption.md`. 15 beats 8 by 0.061
+#' MAE, three times the adoption bar, monotonic across the whole grid -- but
+#' drops One Nation from the NSW 2027 cycle (21.0% on 8 polls), folding a
+#' party polling in the twenties into `OTH` where it cannot be told apart
+#' from the rest. Adopted first with that cost disclosed and accepted
+#' (Victoria 2026, the only forecast this repo publishes, is unaffected), then
+#' reverted on Pete's re-examination: a live-cycle party going invisible is
+#' not acceptable even in an unpublished cycle, whatever the historical MAE
+#' says. `scripts/test_inclusion_floor.R`'s anchor check (`IF6`) is what
+#' caught this the first time (2026-08-19, informally) and would catch it
+#' again for any future floor experiment.
 #'
 #' Applies to the state scripts (`fit_vic.R`, `fit_nsw.R`) only. Federal's
 #' separate, denser-polling floor (25) is untouched and untested by this.
 #'
 #' @keywords internal
-PARTY_INCLUSION_FLOOR <- 15L
+PARTY_INCLUSION_FLOOR <- 8L
 
 #' Transform poll shares (percent) to the model scale
 #'
