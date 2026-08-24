@@ -92,7 +92,11 @@ Estimated across ten election pairs by
 \value{
 List: \code{win_prob} (data.frame, one row per seat and party with a
 probability), \code{totals} (matrix of seats won per party per simulation),
-\code{fallback_rate} (share of transfers with no conditional cell).
+\code{tcp_winner}, \code{tcp_runnerup} (n_sims x nseat character matrices naming
+the final two survivors in each draw, \code{NA} for a seat uncontested down to
+one party), \code{tcp_share} (n_sims x nseat, \code{tcp_winner}'s share of their
+two-candidate-preferred total), \code{fallback_rate} (share of transfers with
+no conditional cell).
 }
 \description{
 Simulate every seat from first preferences

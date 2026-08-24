@@ -76,6 +76,29 @@ test_that("the fallback rate is reported, not hidden", {
   expect_lte(r$fallback_rate, 1)
 })
 
+test_that("seat TCP is retained: winner, runner-up and share", {
+  sh <- matrix(c(40, 38, 22), nrow = 1,
+               dimnames = list("s", c("ALP","LNP","GRN")))
+  r <- simulate_seat_contests(sh, fake_matrix(), c(ALP=2,LNP=2,GRN=2),
+                              seat_sd = 2, n_sims = 100, seed = 11)
+  expect_false(anyNA(r$tcp_winner))
+  expect_false(anyNA(r$tcp_runnerup))
+  # the winner's share of the two-candidate-preferred total is, by
+  # definition of "winner", never below half
+  expect_true(all(r$tcp_share >= 0.5 & r$tcp_share <= 1))
+  expect_true(all(r$tcp_winner[, "s"] != r$tcp_runnerup[, "s"]))
+})
+
+test_that("an uncontested seat has no TCP pair to report", {
+  sh <- matrix(c(100, 0, 0), nrow = 1,
+               dimnames = list("safe", c("ALP","LNP","GRN")))
+  r <- simulate_seat_contests(sh, fake_matrix(), c(ALP=0,LNP=0,GRN=0),
+                              seat_sd = 0, n_sims = 20, seed = 12)
+  expect_true(all(is.na(r$tcp_winner)))
+  expect_true(all(is.na(r$tcp_runnerup)))
+  expect_true(all(is.na(r$tcp_share)))
+})
+
 test_that("it is reproducible and refuses unnamed input", {
   sh <- matrix(c(40,38,22), nrow = 1,
                dimnames = list("s", c("ALP","LNP","GRN")))

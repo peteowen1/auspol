@@ -79,7 +79,11 @@
 #' @param seed Optional RNG seed.
 #' @return List: `win_prob` (data.frame, one row per seat and party with a
 #'   probability), `totals` (matrix of seats won per party per simulation),
-#'   `fallback_rate` (share of transfers with no conditional cell).
+#'   `tcp_winner`, `tcp_runnerup` (n_sims x nseat character matrices naming
+#'   the final two survivors in each draw, `NA` for a seat uncontested down to
+#'   one party), `tcp_share` (n_sims x nseat, `tcp_winner`'s share of their
+#'   two-candidate-preferred total), `fallback_rate` (share of transfers with
+#'   no conditional cell).
 #' @export
 simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
                                    n_sims = 2000, smooth = 0.15, seed = NULL,
@@ -230,6 +234,17 @@ simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
                          dimnames = list(NULL, parties))
   wins <- base::matrix(0L, nrow = nseat, ncol = K,
                        dimnames = list(seat_names, parties))
+  # Seat TCP, retained rather than thrown away. `alive` holds exactly the
+  # final two survivors right where this is written (or one, for a seat
+  # uncontested down to a single party, which leaves all three NA here since
+  # there is no split to report). AE Forecasts publishes a seat TCP MAE of
+  # 3.69pp over 722 seats -- the one metric this model could not be scored on.
+  tcp_winner <- base::matrix(NA_character_, nrow = n_sims, ncol = nseat,
+                             dimnames = list(NULL, seat_names))
+  tcp_runnerup <- base::matrix(NA_character_, nrow = n_sims, ncol = nseat,
+                               dimnames = list(NULL, seat_names))
+  tcp_share <- base::matrix(NA_real_, nrow = n_sims, ncol = nseat,
+                            dimnames = list(NULL, seat_names))
   n_tx <- 0L; n_fb <- 0L
 
   if (!is.null(party_draws)) {
@@ -314,6 +329,14 @@ simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
         v[from] <- 0
       }
       w <- alive[which.max(v[alive])]
+      # Computed from the COUNT, before the shrink coin toss below can
+      # overrule which index `w` holds -- shrink is a calibration overlay on
+      # the recorded winner, not a property of the simulated vote split.
+      if (length(alive) == 2L) {
+        tcp_winner[s, i] <- parties[w]
+        tcp_runnerup[s, i] <- parties[alive[alive != w]]
+        tcp_share[s, i] <- v[w] / sum(v[alive])
+      }
       # The per-draw calibration shrink. `alive` holds exactly the final two at
       # this point, so tossing between them gives a marginal of
       # (1 - shrink) * p + shrink * 0.5 -- and because it happens HERE, inside
@@ -333,5 +356,8 @@ simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
   wp$prob <- as.vector(wins) / n_sims
   list(win_prob = wp[wp$prob > 0, ],
        totals = totals,
+       tcp_winner = tcp_winner,
+       tcp_runnerup = tcp_runnerup,
+       tcp_share = tcp_share,
        fallback_rate = if (n_tx) n_fb / n_tx else NA_real_)
 }
