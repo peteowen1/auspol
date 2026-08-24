@@ -46,9 +46,12 @@ classify_party <- function(name, code = NULL) {
   # Centre Alliance / Nick Xenophon Team / SA-BEST function as a community
   # independent rather than a bloc party -- Mayo has returned Rebekha Sharkie
   # under this banner in 2016, 2019, 2022 and 2025, and it fits none of
-  # ALP/LNP/GRN/ONP/OTH_RIGHT. Classed IND here for the SIMULATION only; the
-  # party's own name is a separate, unhandled concern for display/reporting.
-  set(grepl("centre alliance|nick xenophon|\\bnxt\\b|sa[- ]best", n), "IND")
+  # ALP/LNP/GRN/ONP/OTH_RIGHT. Matched on the bare surname, not "nick
+  # xenophon", because some sources render it as e.g. "Xenophon Team" with
+  # "Nick" dropped -- same shape as the Palmer United/UAP word-order miss
+  # below. Classed IND here for the SIMULATION only; the party's own name is
+  # a separate, unhandled concern for display/reporting.
+  set(grepl("centre alliance|xenophon|\\bnxt\\b|sa[- ]best", n), "IND")
 
   # The NT Coalition party is spelled three ways by the AEC across seven
   # elections -- "Country Liberals (NT)", "NT CLP" and "C.L.P." -- and only the

@@ -40,6 +40,9 @@ test_that("Centre Alliance / NXT / SA-BEST classify as IND, not OTH", {
   expect_equal(classify_party("Nick Xenophon Team"), "IND")
   expect_equal(classify_party("SA-BEST"), "IND")
   expect_equal(classify_party("SA Best"), "IND")
+  # Matched on the bare surname, not "nick xenophon" -- some sources drop
+  # "Nick" (e.g. "Xenophon Team").
+  expect_equal(classify_party("Xenophon Team"), "IND")
 })
 
 test_that("codes are used in preference to names where supplied", {
