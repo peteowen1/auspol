@@ -187,10 +187,23 @@ pre-registered *first*, which is the only reason it was allowed to stand.
 
 ## A fix to one harness is a fix to ALL of them. Apply and test everywhere.
 
-There are four candidate-seat backtest harnesses — `backtest_candidate_fed.R`,
-`_vic.R`, `_nsw.R`, `_sa.R` — and they share a structure but not a file. **Any
-improvement, parameter or bug fix applied to one MUST be applied to all four
-and measured on all four in the same session.** Not "noted for later".
+There are **five** candidate-seat backtest harnesses — `backtest_candidate_fed.R`,
+`_vic.R`, `_nsw.R`, `_sa.R`, `_wa.R` — and they share a structure but not a file.
+**Any improvement, parameter or bug fix applied to one MUST be applied to all
+five and measured on all five in the same session.** Not "noted for later".
+
+`_wa.R` was added 2026-08-25 and carries seven pairs at ~58 seats, which is more
+election clusters than the other four combined. It is the harness with power;
+prefer it and `_fed.R` when a criterion needs to resolve anything. A Queensland
+harness is buildable from data already on disk and does not exist yet — when it
+is built, this count becomes six.
+
+**Two WA-specific facts that change how its numbers read.** The `wa2001` pair
+has no transfers of its own (excluded upstream) so its flows fall back to
+pooled; and WA redistributes hard, so seat names do not survive between
+elections — 2005→2008 scores only 67% of the chamber. Both are printed per pair
+and coverage is written into the output, because a pair scored on two thirds of
+its seats is not comparable with one scored on all of them.
 
 This has now gone wrong twice on the same parameter:
 
