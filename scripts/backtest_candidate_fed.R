@@ -131,6 +131,15 @@ RISK_FILE <- "output/fed-insurgency-risk.csv"
 RISK <- if (identical(Sys.getenv("AUSPOL_INSURGENCY_SHRINK", "0"), "1") &&
             file.exists(RISK_FILE))
   data.table::fread(RISK_FILE, showProgress = FALSE) else NULL
+# INSURGENCY SURGE, against docs/plans/prereg-insurgency-surge.md. A fat tail
+# rather than a wider bell: with probability SURGE_H the strongest eligible
+# non-major gains N(15.6, 6.1) and the count then decides, so a surge that falls
+# short loses and no ceiling is imposed. Default 0 leaves every past run
+# reproducible.
+SURGE_H <- as.numeric(Sys.getenv("AUSPOL_SURGE_H", "0"))
+if (SURGE_H > 0)
+  cat(sprintf("BF0s surge hazard %.4f, size N(15.6, 6.1), floor 2%%
+", SURGE_H))
 SMOOTH <- as.numeric(Sys.getenv("AUSPOL_SMOOTH", "0.15"))
 stopifnot(is.finite(SHRINK), SHRINK >= 0, SHRINK < 1,
           is.finite(SMOOTH), SMOOTH >= 0, SMOOTH <= 1)
@@ -150,6 +159,9 @@ cat(sprintf("BS1f fallback_smooth %.2f | flow_sd %.2f
 ", FB_SMOOTH, FLOW_SD))
 
 CAL_TAG <- paste0(
+  if (as.numeric(Sys.getenv("AUSPOL_SURGE_H", "0")) > 0)
+    sprintf("-surge%s", sub("0[.]", "", format(as.numeric(Sys.getenv("AUSPOL_SURGE_H")), nsmall = 4)))
+  else "",
   if (identical(Sys.getenv("AUSPOL_INSURGENCY_SHRINK", "0"), "1")) "-insurg" else "",
   # NO shrink clause here: this file already has one further down, keyed on the
   # SHRINK variable. Adding a second produced "-sh10-...-sh10" in the filename.
@@ -429,7 +441,7 @@ for (X in out_all) {
   set.seed(SEED)
   sim <- simulate_seat_contests(X$shares, X$fm, party_sd = psd, seat_sd = sd_w * SEAT_SD_MULT,
                                 n_sims = N_SIMS, smooth = SMOOTH, seed = SEED,
-                                shrink = shrink_arg,
+                                shrink = shrink_arg, surge_h = SURGE_H,
                                 party_cor = PARTY_COR, statewide_draws = X$sw_draws,
                                 fallback_smooth = FB_SMOOTH, flow_sd = FLOW_SD)
   wp <- as.data.table(sim$win_prob)

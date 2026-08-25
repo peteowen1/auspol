@@ -138,7 +138,9 @@ simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
                                    statewide_draws = NULL,
                                    party_draws = NULL, shrink = 0,
                                    party_cor = NULL, fallback_smooth = 0,
-                                   flow_sd = 0) {
+                                   flow_sd = 0,
+                                   surge_h = 0, surge_mu = 15.6, surge_sd = 6.1,
+                                   surge_parties = NULL, surge_floor = 2) {
   # SHRINK MAY BE PER-SEAT. A scalar applies the same rate everywhere and caps
   # EVERY seat at 1 - shrink/2 -- 0.9598 at shrink = 0.10, with no seat above
   # 0.99. That absorbs one specific risk (a non-major taking a seat called safe
@@ -158,6 +160,15 @@ simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
   if (!is.finite(flow_sd) || flow_sd < 0) {
     stop("flow_sd must be finite and non-negative; got ", flow_sd)
   }
+  if (!is.finite(surge_h) || surge_h < 0 || surge_h > 1) {
+    stop("surge_h must be in [0, 1]; got ", surge_h)
+  }
+  if (!is.finite(surge_mu) || !is.finite(surge_sd) || surge_sd < 0) {
+    stop("surge_mu must be finite and surge_sd finite and non-negative")
+  }
+  if (!is.finite(surge_floor) || surge_floor < 0) {
+    stop("surge_floor must be finite and non-negative; got ", surge_floor)
+  }
   if (!is.null(seed)) set.seed(seed)
   if (is.data.frame(shares) && "seat" %in% names(shares)) {
     seat_names <- as.character(shares$seat)
@@ -170,6 +181,26 @@ simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
   parties <- colnames(shares)
   if (is.null(parties)) stop("shares must have party names as column names")
   K <- length(parties)
+
+  # Which columns may surge. Named parties are matched BY NAME against the share
+  # columns; NULL means "every party that is not a major", which is the shape
+  # the federal measurement was made on. A name that is not a share column is an
+  # error rather than a silent no-op -- a typo'd "IND " would otherwise turn the
+  # whole mechanism off and the run would look like the surge simply did not
+  # matter, which is the failure mode CLAUDE.md records for experiments that
+  # never ran.
+  surge_idx <- if (surge_h <= 0) integer(0) else if (is.null(surge_parties)) {
+    which(!parties %in% c("ALP", "LNP", "NAT"))
+  } else {
+    miss <- setdiff(surge_parties, parties)
+    if (length(miss))
+      stop("surge_parties not among the share columns: ",
+           paste(miss, collapse = ", "))
+    which(parties %in% surge_parties)
+  }
+  if (surge_h > 0 && !length(surge_idx))
+    stop("surge_h > 0 but no eligible surge party among: ",
+         paste(parties, collapse = ", "))
 
   # Resolve shrink to one value per seat. A NAMED vector is matched BY NAME,
   # never by position -- the same rule seat_sd follows two blocks below, and for
@@ -393,6 +424,36 @@ simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
       }
       v <- base_v + shift + stats::rnorm(K, 0, seat_sd_vec)
       v[v < 0] <- 0
+      # INSURGENCY SURGE. A fat tail, not a wider bell. Symmetric widening of
+      # seat_sd was measured across 1.0-2.0 and "barely matters" -- no plausible
+      # Gaussian flips a seat a major leads by 30 points, yet that is exactly
+      # where the over-confidence lived (federal seats called at 99.9% won
+      # 95.7%). Eight of the nine misses above pred_p 0.9999 were a non-major
+      # taking a seat called safe for a major.
+      #
+      # So with probability surge_h the strongest eligible non-major gains
+      # N(surge_mu, surge_sd), and everyone else scales down to keep the seat at
+      # 100. The count then decides: a surge that falls short LOSES, which is
+      # why this is generative rather than an override like `shrink`, and why it
+      # imposes no ceiling.
+      if (surge_h > 0 && length(surge_idx)) {
+        cand <- surge_idx[v[surge_idx] >= surge_floor]
+        if (length(cand) && stats::runif(1) < surge_h) {
+          j <- cand[which.max(v[cand])]
+          add <- stats::rnorm(1, surge_mu, surge_sd)
+          if (add > 0) {
+            others <- setdiff(seq_len(K), j)
+            pool_v <- sum(v[others])
+            # Scale the others down by the same factor rather than subtracting a
+            # flat amount: a flat subtraction would drive small parties negative
+            # and silently redistribute their vote.
+            if (pool_v > add) {
+              v[others] <- v[others] * (pool_v - add) / pool_v
+              v[j] <- v[j] + add
+            }
+          }
+        }
+      }
       alive <- which(v > 0)
       while (length(alive) > 2L) {
         from <- alive[which.min(v[alive])]
