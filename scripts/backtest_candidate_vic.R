@@ -54,12 +54,23 @@ if (nzchar(Sys.getenv("AUSPOL_PARTY_COR", ""))) {
 # matter. That is the failure CLAUDE.md records under "A fix to one harness is
 # a fix to ALL of them", and it recurred in the same session the rule was
 # written. Both default to 0, which reproduces the previous behaviour exactly.
+# INSURGENCY SURGE, against docs/plans/prereg-insurgency-surge.md. Wired here on
+# 2026-08-26 after a four-arm comparison produced BYTE-IDENTICAL results for the
+# surge arm and the do-nothing arm in this harness -- the "this input does not
+# matter" signature. It was implemented in seat_sim.R and wired into the federal
+# and WA harnesses only, so three of five harnesses compared the surge against
+# itself. Third breach of the fix-everywhere rule in one day.
+SURGE_H <- as.numeric(Sys.getenv("AUSPOL_SURGE_H", "0"))
+if (SURGE_H > 0)
+  cat(sprintf("BS0s surge hazard %.4f, size N(15.6, 6.1), floor 2%%
+", SURGE_H))
 FB_SMOOTH <- as.numeric(Sys.getenv("AUSPOL_FALLBACK_SMOOTH", "0"))
 FLOW_SD   <- as.numeric(Sys.getenv("AUSPOL_FLOW_SD", "0"))
 cat(sprintf("BS1f fallback_smooth %.2f | flow_sd %.2f
 ", FB_SMOOTH, FLOW_SD))
 
 CAL_TAG <- paste0(
+  if (as.numeric(Sys.getenv("AUSPOL_SURGE_H", "0")) > 0) "-surge" else "",
   if (as.numeric(Sys.getenv("AUSPOL_SHRINK", "0")) != 0)
     sprintf("-sh%s", sub("0[.]", "", format(as.numeric(Sys.getenv("AUSPOL_SHRINK")), nsmall = 2)))
   else "",
@@ -341,7 +352,8 @@ for (K in PAIRS) {
       s1 <- simulate_seat_contests(shares, fmr, party_sd = psd,
                                    seat_sd = sp$sd_within * SEAT_SD_MULT, n_sims = per,
                                    smooth = SMOOTH, seed = SEED + r, shrink = SHRINK,
-                                   fallback_smooth = FB_SMOOTH, flow_sd = FLOW_SD)
+                                   fallback_smooth = FB_SMOOTH, flow_sd = FLOW_SD,
+                                surge_h = SURGE_H)
       w1 <- as.data.table(s1$win_prob)[, .(seat, party, n = prob * per)]
       acc <- if (is.null(acc)) w1 else rbind(acc, w1)
     }
@@ -354,7 +366,8 @@ for (K in PAIRS) {
                                   seat_sd = sp$sd_within * SEAT_SD_MULT, n_sims = N_SIMS,
                                   smooth = SMOOTH, seed = SEED, party_cor = PARTY_COR,
                                   shrink = SHRINK,
-                                  fallback_smooth = FB_SMOOTH, flow_sd = FLOW_SD)
+                                  fallback_smooth = FB_SMOOTH, flow_sd = FLOW_SD,
+                                surge_h = SURGE_H)
     wp <- as.data.table(sim$win_prob)
   }
 

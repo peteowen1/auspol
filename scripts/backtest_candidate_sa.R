@@ -109,6 +109,7 @@ if (nzchar(Sys.getenv("AUSPOL_PARTY_COR", ""))) {
 N_SIMS <- as.integer(Sys.getenv("AUSPOL_N_SIMS", "20000"))
 
 CAL_TAG <- paste0(
+  if (as.numeric(Sys.getenv("AUSPOL_SURGE_H", "0")) > 0) "-surge" else "",
   if (SEAT_SD_MULT != 1) sprintf("-m%s", format(SEAT_SD_MULT, nsmall = 1)) else "",
   # The concentration arm MUST be in the tag. Without it the arm overwrites
   # backtest-sa.csv and a before/after comparison compares an arm with itself
@@ -151,7 +152,17 @@ CAL_TAG <- paste0(
   if (identical(Sys.getenv("AUSPOL_WA_DROP_3C", "0"), "1")) "-no3c" else "",
   if (identical(Sys.getenv("AUSPOL_WA_DROP_LNP", "0"), "1")) "-nolnp" else "")
 
-SEED <- 42; SMOOTH <- 0.15; eps <- 1e-6
+SEED <- 42; # INSURGENCY SURGE, against docs/plans/prereg-insurgency-surge.md. Wired here on
+# 2026-08-26 after a four-arm comparison produced BYTE-IDENTICAL results for the
+# surge arm and the do-nothing arm in this harness -- the "this input does not
+# matter" signature. It was implemented in seat_sim.R and wired into the federal
+# and WA harnesses only, so three of five compared the surge against itself.
+# Third breach of the fix-everywhere rule in one day.
+SURGE_H <- as.numeric(Sys.getenv("AUSPOL_SURGE_H", "0"))
+if (SURGE_H > 0)
+  cat(sprintf("BS0s surge hazard %.4f, size N(15.6, 6.1), floor 2%%
+", SURGE_H))
+SMOOTH <- 0.15; eps <- 1e-6
 P <- election_data_path()
 FLOW_FROM <- "fed2025"
 
@@ -453,7 +464,8 @@ cat(sprintf("BS1f fallback_smooth %.2f | flow_sd %.2f\n", FB_SMOOTH, FLOW_SD))
 sim <- simulate_seat_contests(shares, fm, party_sd = psd, seat_sd = sp$sd_within * SEAT_SD_MULT,
                               n_sims = N_SIMS, smooth = SMOOTH, seed = SEED,
                               shrink = SHRINK, party_cor = PARTY_COR,
-                              fallback_smooth = FB_SMOOTH, flow_sd = FLOW_SD)
+                              fallback_smooth = FB_SMOOTH, flow_sd = FLOW_SD,
+                                surge_h = SURGE_H)
 wp <- as.data.table(sim$win_prob)
 
 pa <- merge(data.table(seat = keep, actual = unname(truth)),
