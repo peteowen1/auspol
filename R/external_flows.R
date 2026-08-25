@@ -25,7 +25,26 @@ EXTERNAL_FLOWS <- list(
     dates = c(wa1996 = "1996-12-14", wa2005 = "2005-02-26",
               wa2008 = "2008-09-06", wa2013 = "2013-03-09",
               wa2017 = "2017-03-11", wa2021 = "2021-03-13",
-              wa2025 = "2025-03-08")))
+              wa2025 = "2025-03-08")),
+  # SOUTH AUSTRALIA 2026 IS THE ONLY ELECTION WHERE ONE NATION REACHED THE
+  # FINAL TWO AT SCALE, AND IT IS THE ONE THE MATRIX MOST NEEDS.
+  #
+  # Every other source here is a two-major contest. Built from federal 2025
+  # alone, the matrix has NO conditional cell for `ALP|LNP+ONP`,
+  # `LNP|ALP+ONP` or `GRN|LNP+ONP` -- the exact contests Victoria 2026 is
+  # forecasting -- so those exclusions fall back to a pooled rate that sends
+  # One Nation 2.9% of Labor preferences and 4.5% of Coalition preferences.
+  # South Australia 2026 measured 22.1% and 54.0%. See
+  # docs/reviews/flow-matrix-is-the-defect-2026-08-25.md.
+  #
+  # THE DATE GATE IS WHAT MAKES THIS SAFE. SA polled 2026-03-21, so it is
+  # admissible for Victoria (2026-11-28) and NSW (2027) and is refused for
+  # any backtest of SA 2026 itself -- which would be straight leakage, since
+  # it would be predicting an election from its own distribution.
+  sa = list(
+    label = "South Australian", file = "ecsa-2026-sa-transfers.csv", code = "SF1",
+    script = "scripts/fetch_preferences_sa.R",
+    dates = c(sa2026 = "2026-03-21")))
 
 #' Pool another jurisdiction's transfers into a backtest, filtered by date
 #'
@@ -127,7 +146,7 @@ pool_external_flows <- function(tx, before, source, not_after = NULL,
 #' @return `tx` with any switched-on, date-admissible transfers appended.
 #' @export
 pool_configured_flows <- function(tx, before, quiet = FALSE) {
-  for (s in c("qld", "wa")) {
+  for (s in c("qld", "wa", "sa")) {
     on <- identical(Sys.getenv(sprintf("AUSPOL_%s_FLOWS", toupper(s)), "0"), "1")
     # PER SOURCE, not global. A single AUSPOL_FLOW_CUTOFF capped every source
     # at once, so the control arm meant to hold Western Australia out held

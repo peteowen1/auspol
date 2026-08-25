@@ -76,6 +76,34 @@
 #'   Estimated across ten election pairs by
 #'   `scripts/estimate_statewide_cov.R`. Scale still comes from `party_sd`.
 #' @param smooth Passed to the transfer step; see [distribute_preferences()].
+#' @param fallback_smooth Extra blend toward uniform applied ONLY when an
+#'   exclusion has no conditional cell and falls back to the pooled rate. The
+#'   effective smoothing becomes `max(smooth, fallback_smooth)`.
+#'
+#'   A pooled rate is not a measurement of the contest in front of it, and
+#'   renormalising it across the survivors treats it as one. Measured on South
+#'   Australia 2026: the matrix built from federal 2025 has **no cell at all**
+#'   for `ALP|LNP+ONP`, `LNP|ALP+ONP` or `GRN|LNP+ONP` -- the exact contests a
+#'   One Nation surge produces -- and the pooled Labor rate sends 59.9% to
+#'   independents. In a seat with no independent that mass is redistributed
+#'   over whoever remains, leaving One Nation on 2.9% of Labor preferences
+#'   where the election itself gave 22.1%, and 4.5% of Coalition preferences
+#'   where it gave 54.0%.
+#'
+#'   Zero reproduces the previous behaviour exactly.
+#'   See `docs/reviews/flow-matrix-is-the-defect-2026-08-25.md`.
+#' @param flow_sd Per-draw standard deviation, in percentage points, applied to
+#'   each transfer proportion before it is used.
+#'
+#'   Flows are a FORECAST quantity that this model has always treated as known:
+#'   one fixed matrix applied identically in every draw, so a wrong rate yields
+#'   the same wrong answer `n_sims` times and the simulation has no way to be
+#'   uncertain about it. That is a direct contributor to over-confidence -- a
+#'   seat can be called at 0.95 on a preference assumption carrying no error
+#'   bars. The one-step-ahead error of "mean of the last five" was measured at
+#'   **sd 3.65 points** over 19 observations.
+#'
+#'   Zero reproduces the previous behaviour exactly.
 #' @param seed Optional RNG seed.
 #' @return List: `win_prob` (data.frame, one row per seat and party with a
 #'   probability), `totals` (matrix of seats won per party per simulation),
@@ -96,9 +124,16 @@ simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
                                    n_sims = 2000, smooth = 0.15, seed = NULL,
                                    statewide_draws = NULL,
                                    party_draws = NULL, shrink = 0,
-                                   party_cor = NULL) {
+                                   party_cor = NULL, fallback_smooth = 0,
+                                   flow_sd = 0) {
   if (!is.finite(shrink) || shrink < 0 || shrink >= 1) {
     stop("shrink must be in [0, 1); got ", shrink)
+  }
+  if (!is.finite(fallback_smooth) || fallback_smooth < 0 || fallback_smooth > 1) {
+    stop("fallback_smooth must be in [0, 1]; got ", fallback_smooth)
+  }
+  if (!is.finite(flow_sd) || flow_sd < 0) {
+    stop("flow_sd must be finite and non-negative; got ", flow_sd)
   }
   if (!is.null(seed)) set.seed(seed)
   if (is.data.frame(shares) && "seat" %in% names(shares)) {
@@ -322,7 +357,8 @@ simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
         alive <- alive[alive != from]
         mask <- sum(bitwShiftL(1L, alive - 1L))
         key <- as.character(from * 2^K + mask)
-        row <- if (exists(key, envir = cells, inherits = FALSE)) {
+        got_cell <- exists(key, envir = cells, inherits = FALSE)
+        row <- if (got_cell) {
           get(key, envir = cells, inherits = FALSE)
         } else {
           n_fb <- n_fb + 1L
@@ -331,7 +367,31 @@ simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
         n_tx <- n_tx + 1L
         w <- row[alive]; tot <- sum(w)
         u <- 1 / length(alive)
-        p <- if (tot <= 0) rep(u, length(alive)) else (1 - smooth) * (w / tot) + smooth * u
+        # FALLBACK SMOOTHING. A pooled rate is not a measurement of THIS
+        # contest, and renormalising it over the survivors treats it as one.
+        # Measured on the SA 2026 case: the pooled ALP rate sends 59.9% to
+        # independents, so in a seat with no independent that mass is
+        # redistributed across whoever remains as though it described them --
+        # and One Nation ends up on 2.9% of Labor preferences where the actual
+        # election gave 22.1%.
+        #
+        # `smooth` already blends toward uniform, but at one fixed weight
+        # whether the cell was measured or invented. This applies a HEAVIER
+        # blend when there was no conditional cell at all. Default 0 keeps the
+        # previous behaviour exactly.
+        sm <- if (!got_cell) max(smooth, fallback_smooth) else smooth
+        p <- if (tot <= 0) rep(u, length(alive)) else (1 - sm) * (w / tot) + sm * u
+        # FLOW UNCERTAINTY, per draw. Flows are a FORECAST quantity and the
+        # model has always treated them as known: one fixed matrix applied
+        # identically in all n_sims draws, so a wrong rate produces the same
+        # wrong answer every time and the simulation cannot be uncertain about
+        # it. The one-step-ahead error of "mean of the last five" was measured
+        # at sd 3.65 points. Default 0 keeps the previous behaviour exactly.
+        if (flow_sd > 0 && length(alive) > 1L) {
+          p <- pmax(0, p + stats::rnorm(length(p), 0, flow_sd / 100))
+          ps <- sum(p)
+          p <- if (ps > 0) p / ps else rep(u, length(alive))
+        }
         v[alive] <- v[alive] + pot * p
         v[from] <- 0
       }

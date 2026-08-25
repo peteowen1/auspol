@@ -120,6 +120,12 @@ CAL_TAG <- paste0(
   if (as.numeric(Sys.getenv("AUSPOL_SHRINK", "0")) != 0)
     sprintf("-sh%s", sub("0[.]", "", format(as.numeric(Sys.getenv("AUSPOL_SHRINK")), nsmall = 2)))
   else "",
+  if (as.numeric(Sys.getenv("AUSPOL_FALLBACK_SMOOTH", "0")) != 0)
+    sprintf("-fb%s", sub("0[.]", "", format(as.numeric(Sys.getenv("AUSPOL_FALLBACK_SMOOTH")), nsmall = 2)))
+  else "",
+  if (as.numeric(Sys.getenv("AUSPOL_FLOW_SD", "0")) != 0)
+    sprintf("-fsd%s", sub("[.]", "", format(as.numeric(Sys.getenv("AUSPOL_FLOW_SD")), nsmall = 1)))
+  else "",
   if (identical(Sys.getenv("AUSPOL_SEAT_SWING_PORT", "0"), "1")) "-port" else "",
   # "-corraw" and "-cor" are DIFFERENT correlation matrices. Both used to tag
   # "-cor", so running the raw arm and then the shrunk one wrote the second
@@ -322,9 +328,19 @@ stopifnot(is.finite(SHRINK), SHRINK >= 0, SHRINK < 1)
 cat(sprintf("BS1s shrink %.2f (fit_seats_full.R publishes with 0.10)\n", SHRINK))
 
 set.seed(SEED)
+# The two flow fixes, both default OFF so a plain run is unchanged.
+# docs/reviews/flow-matrix-is-the-defect-2026-08-25.md: this matrix has NO
+# conditional cell for ALP|LNP+ONP, LNP|ALP+ONP or GRN|LNP+ONP, so every
+# One Nation contest falls back to a pooled rate that gives ONP 2.9% of Labor
+# preferences (actual 22.1%) and 4.5% of Coalition preferences (actual 54.0%).
+FB_SMOOTH <- as.numeric(Sys.getenv("AUSPOL_FALLBACK_SMOOTH", "0"))
+FLOW_SD   <- as.numeric(Sys.getenv("AUSPOL_FLOW_SD", "0"))
+cat(sprintf("BS1f fallback_smooth %.2f | flow_sd %.2f\n", FB_SMOOTH, FLOW_SD))
+
 sim <- simulate_seat_contests(shares, fm, party_sd = psd, seat_sd = sp$sd_within * SEAT_SD_MULT,
                               n_sims = N_SIMS, smooth = SMOOTH, seed = SEED,
-                              shrink = SHRINK, party_cor = PARTY_COR)
+                              shrink = SHRINK, party_cor = PARTY_COR,
+                              fallback_smooth = FB_SMOOTH, flow_sd = FLOW_SD)
 wp <- as.data.table(sim$win_prob)
 
 pa <- merge(data.table(seat = keep, actual = unname(truth)),

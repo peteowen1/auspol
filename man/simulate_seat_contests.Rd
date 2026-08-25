@@ -15,7 +15,9 @@ simulate_seat_contests(
   statewide_draws = NULL,
   party_draws = NULL,
   shrink = 0,
-  party_cor = NULL
+  party_cor = NULL,
+  fallback_smooth = 0,
+  flow_sd = 0
 )
 }
 \arguments{
@@ -88,6 +90,36 @@ independently, which is what this did before and is not defensible: a
 simulation where one party runs hot has to take those votes from someone.
 Estimated across ten election pairs by
 \code{scripts/estimate_statewide_cov.R}. Scale still comes from \code{party_sd}.}
+
+\item{fallback_smooth}{Extra blend toward uniform applied ONLY when an
+exclusion has no conditional cell and falls back to the pooled rate. The
+effective smoothing becomes \code{max(smooth, fallback_smooth)}.
+
+A pooled rate is not a measurement of the contest in front of it, and
+renormalising it across the survivors treats it as one. Measured on South
+Australia 2026: the matrix built from federal 2025 has \strong{no cell at all}
+for \code{ALP|LNP+ONP}, \code{LNP|ALP+ONP} or \code{GRN|LNP+ONP} -- the exact contests a
+One Nation surge produces -- and the pooled Labor rate sends 59.9\% to
+independents. In a seat with no independent that mass is redistributed
+over whoever remains, leaving One Nation on 2.9\% of Labor preferences
+where the election itself gave 22.1\%, and 4.5\% of Coalition preferences
+where it gave 54.0\%.
+
+Zero reproduces the previous behaviour exactly.
+See \verb{docs/reviews/flow-matrix-is-the-defect-2026-08-25.md}.}
+
+\item{flow_sd}{Per-draw standard deviation, in percentage points, applied to
+each transfer proportion before it is used.
+
+Flows are a FORECAST quantity that this model has always treated as known:
+one fixed matrix applied identically in every draw, so a wrong rate yields
+the same wrong answer \code{n_sims} times and the simulation has no way to be
+uncertain about it. That is a direct contributor to over-confidence -- a
+seat can be called at 0.95 on a preference assumption carrying no error
+bars. The one-step-ahead error of "mean of the last five" was measured at
+\strong{sd 3.65 points} over 19 observations.
+
+Zero reproduces the previous behaviour exactly.}
 }
 \value{
 List: \code{win_prob} (data.frame, one row per seat and party with a
