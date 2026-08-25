@@ -126,6 +126,9 @@ CAL_TAG <- paste0(
   if (as.numeric(Sys.getenv("AUSPOL_FLOW_SD", "0")) != 0)
     sprintf("-fsd%s", sub("[.]", "", format(as.numeric(Sys.getenv("AUSPOL_FLOW_SD")), nsmall = 1)))
   else "",
+  if (as.numeric(Sys.getenv("AUSPOL_PARTY_SD", "1.5")) != 1.5)
+    sprintf("-psd%s", sub("[.]", "", format(as.numeric(Sys.getenv("AUSPOL_PARTY_SD")), nsmall = 2)))
+  else "",
   if (as.numeric(Sys.getenv("AUSPOL_ELASTIC_OVER", "0")) != 0)
     sprintf("-el%s", sub("[.]", "", format(as.numeric(Sys.getenv("AUSPOL_ELASTIC_OVER")), nsmall = 1)))
   else "",
@@ -407,7 +410,16 @@ if (PORT) {
 # Per-seat spread from the seat file of the election being predicted.
 sp <- seat_swing_spread(as.data.table(load_seats(2026L, "sa")),
                         unname(st_b[["ALP"]] - st_a[["ALP"]]))
-psd <- setNames(rep(1.5, length(parties)), parties)
+# STATEWIDE UNCERTAINTY. 1.5 was hardcoded in all four harnesses; the realised
+# statewide first-preference error over 139 party-cycles is sd 2.33, so the
+# harnesses were 1.6x over-confident BEFORE any seat-level modelling. That is
+# upstream of `shrink`, which is a post-hoc patch for uncertainty that should
+# have been present. fit_seats_full.R already uses a per-party state_sd and
+# falls back to 1.5 only when it is NA.
+PARTY_SD <- as.numeric(Sys.getenv("AUSPOL_PARTY_SD", "1.5"))
+psd <- setNames(rep(PARTY_SD, length(parties)), parties)
+cat(sprintf("BS1p party_sd %.2f (realised statewide sd is 2.33)
+", PARTY_SD))
 
 # THIS HARNESS HAS NEVER PASSED `shrink`, which is the same defect
 # docs/reviews/calibration-2026-08-21.md found in the federal, Victorian and

@@ -131,6 +131,9 @@ cat(sprintf("CAL  shrink %.2f (published model uses 0.10), smooth %.2f\n",
             SHRINK, SMOOTH))
 
 CAL_TAG <- paste0(
+  if (as.numeric(Sys.getenv("AUSPOL_PARTY_SD", "1.5")) != 1.5)
+    sprintf("-psd%s", sub("[.]", "", format(as.numeric(Sys.getenv("AUSPOL_PARTY_SD")), nsmall = 2)))
+  else "",
   if (SEAT_SD_MULT != 1) sprintf("-m%s", format(SEAT_SD_MULT, nsmall = 1)) else "",
   if (identical(Sys.getenv("AUSPOL_SEAT_SWING_PORT", "0"), "1")) "-port" else "",
   if (N_SIMS != 20000L) sprintf("-n%d", N_SIMS) else "",
@@ -348,7 +351,17 @@ res_all <- list(); tot_all <- list()
 for (X in out_all) {
   K <- X$K
   sd_w <- if (is.finite(X$sd_w)) X$sd_w else fallback
-  psd <- setNames(rep(1.5, length(X$parties)), X$parties)
+  # STATEWIDE UNCERTAINTY, MEASURED. All four harnesses hardcoded 1.5 with no
+  # derivation. The realised statewide first-preference error over 139
+  # party-cycles (33 independent cycles) is sd 2.33, so the harnesses were 1.6x
+  # over-confident BEFORE any seat-level modelling. That is upstream of `shrink`,
+  # which is a post-hoc patch for uncertainty that should have been present.
+  # fit_seats_full.R already uses a per-party state_sd and falls back to 1.5 only
+  # when it is NA. See docs/plans/prereg-party-sd-from-data.md.
+  PARTY_SD <- as.numeric(Sys.getenv("AUSPOL_PARTY_SD", "1.5"))
+  psd <- setNames(rep(PARTY_SD, length(X$parties)), X$parties)
+  cat(sprintf("BS1p party_sd %.2f (realised statewide sd is 2.33)
+", PARTY_SD))
   set.seed(SEED)
   sim <- simulate_seat_contests(X$shares, X$fm, party_sd = psd, seat_sd = sd_w * SEAT_SD_MULT,
                                 n_sims = N_SIMS, smooth = SMOOTH, seed = SEED,
