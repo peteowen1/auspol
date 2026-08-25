@@ -117,6 +117,9 @@ CAL_TAG <- paste0(
   if (as.numeric(Sys.getenv("AUSPOL_ONP_CONC_SD", "0")) > 0)
     sprintf("-conc%s", sub("[.]", "", format(as.numeric(Sys.getenv("AUSPOL_ONP_CONC_SD")), nsmall = 2)))
   else "",
+  if (as.numeric(Sys.getenv("AUSPOL_SHRINK", "0")) != 0)
+    sprintf("-sh%s", sub("0[.]", "", format(as.numeric(Sys.getenv("AUSPOL_SHRINK")), nsmall = 2)))
+  else "",
   if (identical(Sys.getenv("AUSPOL_SEAT_SWING_PORT", "0"), "1")) "-port" else "",
   # "-corraw" and "-cor" are DIFFERENT correlation matrices. Both used to tag
   # "-cor", so running the raw arm and then the shrunk one wrote the second
@@ -298,9 +301,30 @@ if (PORT) {
 sp <- seat_swing_spread(as.data.table(load_seats(2026L, "sa")),
                         unname(st_b[["ALP"]] - st_a[["ALP"]]))
 psd <- setNames(rep(1.5, length(parties)), parties)
+
+# THIS HARNESS HAS NEVER PASSED `shrink`, which is the same defect
+# docs/reviews/calibration-2026-08-21.md found in the federal, Victorian and
+# NSW harnesses and which was never fixed here.
+#
+# fit_seats_full.R -- the model that PUBLISHES -- passes shrink = 0.10, the
+# per-draw calibration shrink adopted after measuring over-confidence on 1,187
+# seats. simulate_seat_contests() defaults it to 0. So every calibration figure
+# this harness has produced, including the slope of 0.299 and the four One
+# Nation seats at 0.000, describes a configuration we DO NOT SHIP.
+#
+# It matters most in exactly the seats that fail here. Shrink is a coin toss
+# between the FINAL TWO, so where One Nation makes the final pair and loses, it
+# still collects roughly shrink/2 of the draws instead of nothing.
+#
+# Defaulted to 0 so past runs stay comparable and nothing changes silently.
+SHRINK <- as.numeric(Sys.getenv("AUSPOL_SHRINK", "0"))
+stopifnot(is.finite(SHRINK), SHRINK >= 0, SHRINK < 1)
+cat(sprintf("BS1s shrink %.2f (fit_seats_full.R publishes with 0.10)\n", SHRINK))
+
 set.seed(SEED)
 sim <- simulate_seat_contests(shares, fm, party_sd = psd, seat_sd = sp$sd_within * SEAT_SD_MULT,
-                              n_sims = N_SIMS, smooth = SMOOTH, seed = SEED, party_cor = PARTY_COR)
+                              n_sims = N_SIMS, smooth = SMOOTH, seed = SEED,
+                              shrink = SHRINK, party_cor = PARTY_COR)
 wp <- as.data.table(sim$win_prob)
 
 pa <- merge(data.table(seat = keep, actual = unname(truth)),
