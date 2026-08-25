@@ -100,3 +100,70 @@ here.
 Expect criterion 3 to pass or be near-neutral: this adds a seat-level term
 with mean zero by construction, so it should not move the pooled MAE much in
 either direction.
+
+---
+
+## Result, 2026-08-25: REFUSED. R2 killed it, as predicted.
+
+1,508 (district, major) observations, 12 cycle-pairs.
+
+| | coefficient | ratio |
+|---|---:|---:|
+| other major's base, raw | +0.141 | +1.74 |
+| **other major's base, controlling own base** | **−0.101** | **−1.61** |
+| **own base** | **−0.343** | **−4.56** |
+
+| criterion | required | got | verdict |
+|---|---|---|---|
+| controlled coefficient | >= +2.20 SE | −1.61 | **FAIL** |
+| sign consistency | 8 of 12 | 7 | **FAIL** |
+| no MAE degradation | <= 8.642 | **9.122** | **FAIL** |
+| R1 — survives dropping SA | — | −1.65 | sign stays negative |
+
+The raw specification points the right way and misses the bar. Controlling for
+the party's own base **reverses the sign** — the two majors' bases are near
+mirror images within a seat, so the cross-party term was largely proxying for
+own base, which is what R2 was written to catch.
+
+### It would have made Hammond worse
+
+The R4 diagnostic, reported after the fact as the plan required:
+
+| seat | party | other's over-index | **actual deviation** | **what this rule would apply** |
+|---|---|---:|---:|---:|
+| Hammond | ALP | 43.7 | **+3.8** | **−4.4** |
+
+Labor actually beat its statewide swing by 3.8 points in Hammond. This rule
+would have pushed Labor **down** 4.4 — the wrong direction, and it would have
+entrenched the exclusion order rather than fixing it. **The seats were never
+going to flip**, and R4 existed precisely so that could not be discovered after
+adopting on a failed criterion.
+
+### The real signal is the one this plan avoided
+
+`own_base` at **−0.343, 4.56 SE** is the strongest and most consistent effect
+found in this entire session. It says a party over-indexed in a seat falls back
+toward the statewide swing — **mean reversion**, and at a size that matters:
+
+MacKillop's Coalition over-indexes by **+30.85** points (67.0 against 36.15
+statewide). Times −0.343 that is **−10.6 points** of extra decline, putting the
+model at **39.3** against the uniform 49.9 and an actual of **26.9**. Still 12
+points high, but it closes nearly half of a 23-point error.
+
+**And it is exactly the coefficient this plan deliberately refused to use**,
+because regressing a change on its own baseline produces a negative slope from
+measurement noise alone. The −0.343 here and the −0.193 in
+[../reviews/swing-shape-2026-08-25.md](../reviews/swing-shape-2026-08-25.md)
+are the same quantity, found twice, and **neither can be believed until the
+artefact is ruled out.**
+
+**That is now the bottleneck, and it is resolvable.** The standard fix is an
+instrument: use a party's base from *two* elections back, or a multi-election
+average, so the noise in the measured baseline is not shared with the change
+being predicted. If a substantial negative slope survives that, it is real and
+it is worth roughly half of MacKillop's error. If it collapses, then two of
+this session's findings dissolve together and the search moves to `seat_sd`.
+
+**Do not adopt mean reversion before that test.** It is the single most
+promising number found today and it is also the one most likely to be an
+artefact — which is exactly the combination that gets a wrong fix shipped.
