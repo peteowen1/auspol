@@ -104,6 +104,33 @@ refused on grounds invented after the results were seen.
 - Nothing here touches (b) seat-level or (c) flow-rate uncertainty, which were
   the other two channels asked about.
 
+## NOTE ON CLAUSE 2's POWER — recorded 2026-08-25, NOT BINDING on this experiment
+
+Written after seeing the South Australian arms and **before** the Victorian and
+NSW arms had run, so it is timestamped against incomplete results. The original
+clauses above are left unedited.
+
+Clause 2 says accuracy must not fall by more than 1 seat in any harness and the
+four-harness total must not fall at all. **That tolerance was not written in
+standard errors, which is the failure CLAUDE.md already records twice.**
+
+Sizing it now: the arms are paired — the same seats, the same draws, one
+parameter changed — so the relevant test is McNemar on the discordant seats, not
+a two-sample binomial. With a single seat flipping, the discordant count is 1
+and no test can distinguish that from zero. **Clause 2 can therefore refuse on a
+one-seat flip that is pure noise, and it has no power to accept anything.** It is
+the reliability-bin and first-preference-widening mistake a third time.
+
+**This observation would favour adoption**, because South Australia lost exactly
+one seat. Per CLAUDE.md, an amendment that favours the answer found later is not
+an amendment, it is a rationalisation. **So clause 2 stands as written and
+binds this decision.** If it refuses, the change is refused.
+
+What this note is for: the *next* pre-registration must size accuracy clauses on
+discordant pairs, and should lead on log score and Brier — which are continuous,
+use every seat, and had power here — with accuracy as a guard rail rather than a
+primary criterion.
+
 ## Arms to run
 
 | tag | party_sd | shrink |
