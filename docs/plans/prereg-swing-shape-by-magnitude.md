@@ -111,3 +111,63 @@ MacKillop.
 Expect **R2 to be the live threat**, as it was for the proximity test: the
 floor/ceiling mechanism in "what cannot see" is a real alternative explanation
 and the size control is where it would show up.
+
+---
+
+## Result, 2026-08-25: REFUSED, with the sign REVERSED
+
+`scripts/test_swing_shape_by_magnitude.R`. 2,878 observations, 12 cycle-pairs.
+
+| criterion | required | got | verdict |
+|---|---|---|---|
+| coefficient, base-controlled | >= +2.20 SE | **−1.18** | **FAIL** |
+| sign consistency | 8 of 12 | 6 | **FAIL** |
+| crossover in range | yes | yes | pass |
+| R1 — survives dropping SA | >= 1 SE | **+0.32** | **REFUSE** |
+
+**The coefficient is negative.** Proportional does not gain as swings grow — it
+gets **worse**, and worst of all exactly where the hypothesis said it should
+win:
+
+| decile | \|d_state\| | uniform MAE | proportional MAE | advantage |
+|---:|---|---:|---:|---:|
+| 1 | 0.1–0.4 | 2.706 | 2.735 | −0.029 |
+| 5 | 2.5–3.7 | 4.427 | 4.322 | +0.105 |
+| 9 | 7.9–11.0 | 4.465 | 4.348 | +0.117 |
+| **10** | **11.3–20.3** | **4.776** | **6.591** | **−1.815** |
+
+The top decile — the large swings this plan was built around — is where
+proportional is beaten most heavily.
+
+### I generalised from one seat, and one seat was not representative
+
+The case that motivated this was MacKillop: Coalition 67.0 → 26.9, where
+uniform is out by 23 points and proportional by 8. That is real. But South
+Australia's own coefficient is **−0.503**, the most negative of all twelve
+cycle-pairs, and dropping SA removes the effect entirely (+0.32).
+
+**So proportional is worse on large swings even within the election containing
+the seat that suggested otherwise.** MacKillop is an outlier inside its own
+cycle, and reasoning from one worked example is what produced this hypothesis —
+the failure mode `CLAUDE.md` records for exactly this reason.
+
+### Where this leaves the SA anchor, and it is a better place
+
+**No global swing rule captures MacKillop.** Uniform misses by 23, proportional
+by 8, and even proportional is 8 points short of a 40-point collapse. The seat
+is genuinely idiosyncratic.
+
+That reframes the failure. Our model gives the Coalition **1.000** there. A
+seat-specific collapse the central prediction cannot see is precisely what
+**per-seat uncertainty** exists to cover — and SA's calibration slope is
+**0.299**, badly over-confident. The model is not just wrong about MacKillop's
+central value; it is far too sure of it.
+
+**The next candidate is `seat_sd`, not the swing shape.** That is a different
+part of the model from everything tried today, and it is consistent with the
+one measurement that has been staring at this all along: a slope of 0.299 says
+the seat-level distribution is much too tight, whatever the centre is doing.
+
+**Do not test another swing rule.** Uniform has now survived proportional,
+proximity-weighted, and magnitude-dependent variants. The central prediction is
+not where the remaining error lives.
