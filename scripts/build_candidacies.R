@@ -240,6 +240,118 @@ for (y in wa_years) {
   cat(sprintf("BC5  wa%d: %d candidates in %d seats\n", y, nrow(w), uniqueN(w$seat)))
 }
 
+# ---- QUEENSLAND 2020, 2024 --------------------------------------------------
+# One XML per election. Candidate identity lives under
+# district/candidates/candidate (ballotName, party, partyCode); the vote counts
+# live in a separate countRound. Joined on ballotName within a district.
+#
+# TAKE THE OFFICIAL FIRST PREFERENCE COUNT, NOT THE FIRST ROUND. Each district
+# carries several countRound nodes and the first is "Unofficial Preliminary
+# Count". Reading whichever comes first would silently score the model against
+# preliminary numbers, so the round is selected by name and its absence is an
+# error rather than a fallback.
+ECQ <- file.path("external", "reference", "ecq")
+qld_files <- list(list(year = 2020, f = "qld2020.xml"), list(year = 2024, f = "qld2024.xml"))
+for (E in qld_files) {
+  fp <- file.path(ECQ, E$f)
+  if (!file.exists(fp) || file.info(fp)$size < 1000) {
+    cat(sprintf("BC6  qld%d: MISSING or empty %s\n", E$year, E$f)); next
+  }
+  if (!requireNamespace("xml2", quietly = TRUE)) {
+    cat("BC6  qld: xml2 not installed; skipped\n"); break
+  }
+  x <- xml2::read_xml(fp)
+  ds <- xml2::xml_find_all(x, "//districts/district")
+  rows <- list()
+  for (dd in ds) {
+    sname <- xml2::xml_attr(dd, "districtName")
+    cn <- xml2::xml_find_all(dd, "./candidates/candidate")
+    if (!length(cn)) next
+    ci <- data.table(
+      seat = sname,
+      name = xml2::xml_attr(cn, "ballotName"),
+      party_raw = xml2::xml_attr(cn, "party"),
+      party_ab = xml2::xml_attr(cn, "partyCode"))
+    cr <- xml2::xml_find_all(
+      dd, "./countRound[@countName='Official First Preference Count']")
+    if (!length(cr)) next
+    vn <- xml2::xml_find_all(cr[[1]], "./primaryVoteResults/candidate")
+    if (!length(vn)) next
+    vi <- data.table(
+      name = xml2::xml_attr(vn, "ballotName"),
+      votes = as.numeric(xml2::xml_text(xml2::xml_find_first(vn, "./count"))))
+    if (anyDuplicated(vi$name)) next   # a repeated ballot name cannot be joined
+    rows[[sname]] <- merge(ci, vi, by = "name", all.x = TRUE)
+  }
+  if (!length(rows)) { cat(sprintf("BC6  qld%d: no districts parsed\n", E$year)); next }
+  q <- rbindlist(rows, fill = TRUE)
+  hit <- sum(!is.na(q$votes))
+  if (hit < 0.98 * nrow(q))
+    cat(sprintf("BC6  qld%d: WARNING only %d of %d candidates got a vote count\n",
+                E$year, hit, nrow(q)))
+  q <- q[!is.na(votes)]
+  q[is.na(party_raw) | party_raw == "", party_raw := "Independent"]
+  q[, `:=`(party = classify_party(party_raw, party_ab), surname = NA_character_,
+           given = NA_character_, elected = NA,
+           election = sprintf("qld%d", E$year), region = "qld", year = E$year)]
+  parts[[sprintf("qld%d", E$year)]] <- q[, .(seat, name, party_raw, votes, party,
+                                             surname, given, elected, election,
+                                             region, year)]
+  cat(sprintf("BC6  qld%d: %d candidates in %d seats\n", E$year, nrow(q), uniqueN(q$seat)))
+}
+
+# ---- VICTORIA 2014, 2018 ----------------------------------------------------
+# One HTML page per district, already on disk. Each carries several tables; the
+# one wanted has columns Candidate / Party / 1st pref votes.
+#
+# SELECT THE TABLE BY ITS COLUMN NAMES, NOT BY POSITION. The first-preference
+# table sits at index 3 on the pages checked, but a page with an extra banner
+# table would shift it, and the neighbouring table is the two-candidate-preferred
+# result -- which has the same shape and would parse cleanly as if it were first
+# preferences, turning a 63% two-party result into a "63% primary". Position
+# indexing would fail silently and plausibly.
+VECD <- file.path("external", "reference", "vec")
+for (y in c(2014, 2018)) {
+  dir_y <- file.path(VECD, as.character(y))
+  if (!dir.exists(dir_y)) { cat(sprintf("BC7  vic%d: no directory\n", y)); next }
+  if (!requireNamespace("rvest", quietly = TRUE) ||
+      !requireNamespace("xml2", quietly = TRUE)) {
+    cat("BC7  vic: rvest/xml2 not installed; skipped\n"); break
+  }
+  ff <- list.files(dir_y, pattern = "district\\.html$")
+  rows <- list(); skipped <- 0L
+  for (f in ff) {
+    p <- file.path(dir_y, f)
+    h <- tryCatch(xml2::read_html(p), error = function(e) NULL)
+    if (is.null(h)) { skipped <- skipped + 1L; next }
+    tb <- tryCatch(rvest::html_table(h, fill = TRUE), error = function(e) list())
+    hit <- Filter(function(t) all(c("Candidate", "Party") %in% names(t)) &&
+                    any(grepl("1st pref votes", names(t), fixed = TRUE)), tb)
+    if (!length(hit)) { skipped <- skipped + 1L; next }
+    t <- as.data.table(hit[[1]])
+    vcol <- grep("1st pref votes", names(t), fixed = TRUE, value = TRUE)[1]
+    t <- t[, .(name = Candidate, party_raw = Party,
+               votes = suppressWarnings(as.numeric(gsub("[^0-9]", "", get(vcol)))))]
+    t <- t[!is.na(votes) & votes > 0 & name != "" & !is.na(name)]
+    if (!nrow(t)) { skipped <- skipped + 1L; next }
+    # Seat name from the filename: "albertparkdistrict.html" -> "albertpark".
+    # Kept lowercase and unspaced; the corpus is keyed on (election, seat) and
+    # nothing here joins to the VEC results files, so inventing a spacing rule
+    # would add a matching problem rather than solve one.
+    t[, seat := sub("district\\.html$", "", f)]
+    rows[[f]] <- t
+  }
+  if (!length(rows)) { cat(sprintf("BC7  vic%d: no district tables parsed\n", y)); next }
+  v <- rbindlist(rows, fill = TRUE)
+  v[is.na(party_raw) | party_raw == "", party_raw := "Independent"]
+  v[, `:=`(party = classify_party(party_raw, NULL), surname = NA_character_,
+           given = NA_character_, elected = NA,
+           election = sprintf("vic%d", y), region = "vic", year = y)]
+  parts[[sprintf("vic%d", y)]] <- v
+  cat(sprintf("BC7  vic%d: %d candidates in %d seats (%d pages skipped)\n",
+              y, nrow(v), uniqueN(v$seat), skipped))
+}
+
 # ---- assemble ---------------------------------------------------------------
 if (!length(parts)) stop("no candidacy source produced rows")
 C <- rbindlist(parts, fill = TRUE)
