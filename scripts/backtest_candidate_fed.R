@@ -143,9 +143,9 @@ cat(sprintf("BS1f fallback_smooth %.2f | flow_sd %.2f
 ", FB_SMOOTH, FLOW_SD))
 
 CAL_TAG <- paste0(
-  if (as.numeric(Sys.getenv("AUSPOL_SHRINK", "0")) != 0)
-    sprintf("-sh%s", sub("0[.]", "", format(as.numeric(Sys.getenv("AUSPOL_SHRINK")), nsmall = 2)))
-  else "",
+  # NO shrink clause here: this file already has one further down, keyed on the
+  # SHRINK variable. Adding a second produced "-sh10-...-sh10" in the filename.
+  # Victoria and NSW genuinely had none, which is why they needed one added.
   if (as.numeric(Sys.getenv("AUSPOL_ELASTIC_OVER", "0")) != 0)
     sprintf("-el%s", sub("[.]", "", format(as.numeric(Sys.getenv("AUSPOL_ELASTIC_OVER")), nsmall = 1)))
   else "",
