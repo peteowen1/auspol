@@ -290,6 +290,32 @@ if (ONP_CONC > 0) {
   shares[, "ONP"] <- newonp
 }
 
+# ZERO IND WHERE NO INDEPENDENT STOOD. Ported from backtest_candidate_fed.R,
+# which got this fix today; this harness never had it.
+#
+# Six South Australian seats had an independent in 2022 and none in 2026, and
+# the model swings the departed candidate's vote forward regardless. Frome --
+# renamed Ngadjuri, and one of the four seats One Nation won -- carried a
+# 16.6% independent in 2022 who did not recontest, so roughly 15 points of the
+# seat is assigned to a candidate who does not exist and every real party is
+# dragged down when the seat renormalises.
+#
+# This is NOMINATION data, not the result: which classes contest a seat is
+# knowable before polling day. There is no pre-election nomination list here,
+# only "IND received a nonzero vote in the target election" as a proxy, so it
+# is the same oracle input this harness already uses for `st_b` -- consistent
+# with the default path, and it is why the federal version is gated OFF under
+# FORECAST_MODE.
+if ("IND" %in% colnames(shares)) {
+  ind_seats <- fb[party == "IND" & votes > 0, unique(seat)]
+  no_ind <- setdiff(rownames(shares), ind_seats)
+  zeroed <- no_ind[shares[no_ind, "IND"] > 0.5]
+  shares[no_ind, "IND"] <- 0
+  cat(sprintf("BS1i zeroed IND in %d seat(s) with no independent nominated%s\n",
+              length(zeroed),
+              if (length(zeroed)) paste0(": ", paste(sort(zeroed), collapse = ", ")) else ""))
+}
+
 # CONSTRAINED RENORMALISATION. Plain renormalisation scales every party in the
 # seat, including one the elasticity rule just cut -- so the cut party receives
 # back a share of its own removed vote. Measured on MacKillop: elasticity takes
