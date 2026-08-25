@@ -95,7 +95,21 @@ Specific traps, all of which have bitten:
   `cat(sprintf("\nG3 ...`. Three incomplete greps, one of which let `B1` mean
   two different things. The registry is a table in `ARCHITECTURE.md`.
 
-## Before saying we don't have data, READ `docs/DATA-REGISTRY.md`
+## Before saying we don't have data, READ `docs/DATA-REGISTRY.md` and `docs/DATA-DICTIONARY.md`
+
+Both are **generated from disk** — `scripts/build_data_registry.R` and
+`scripts/build_data_dictionary.R`. Never hand-edit either; rerun the script.
+
+- **Registry** answers *do we have this file*.
+- **Dictionary** answers *do we have this field*, and carries a
+  "Columns we download and DROP" section that diffs each raw source against the
+  processed extract.
+
+**The second question is the one that keeps going wrong**, because the file is
+in the registry, so the registry says yes, and the field is gone anyway. Two of
+the four failures below were exactly that. **Never aggregate a source down to
+the columns you happen to need** — write every column through and select later.
+
 
 It is **generated from disk** by `scripts/build_data_registry.R` — never
 hand-edit it, rerun the script. It lists every election, every raw commission

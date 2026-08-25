@@ -51,10 +51,33 @@ for (y in fed_years) {
   # One row per candidate: the AEC file is already one row per candidate per
   # division, but guard rather than assume -- a vote-type-split file would
   # silently double every candidate and halve every computed share.
-  d <- d[, .(votes = sum(as.numeric(TotalVotes)),
-             elected = any(toupper(as.character(Elected)) %in% c("Y", "TRUE"))),
+  # CARRY EVERY COLUMN THROUGH. The previous version kept seat, party and a
+  # vote total, and dropped the rest -- which is how candidate NAMES and the
+  # AEC's own seat-level `Swing` came to be "unavailable" while sitting on disk
+  # for months. Vote-type splits matter too: postal and pre-poll electorates
+  # behave differently from ordinary booths, and none of that is recoverable
+  # once summed away.
+  #
+  # Vote-type columns are SUMMED with the total; per-candidate facts (swing,
+  # ballot position, elected) are taken as the first value, since the AEC file
+  # is already one row per candidate per division.
+  vt <- intersect(c("OrdinaryVotes", "AbsentVotes", "ProvisionalVotes",
+                    "PrePollVotes", "PostalVotes"), names(d))
+  for (v in vt) d[, (v) := as.numeric(get(v))]
+  d <- d[, c(list(votes = sum(as.numeric(TotalVotes)),
+                  elected = any(toupper(as.character(Elected)) %in% c("Y", "TRUE")),
+                  historic_elected = if ("HistoricElected" %in% names(.SD))
+                    any(toupper(as.character(.SD$HistoricElected)) %in% c("Y", "TRUE")) else NA,
+                  swing = if ("Swing" %in% names(.SD))
+                    suppressWarnings(as.numeric(.SD$Swing))[1] else NA_real_,
+                  ballot_position = if ("BallotPosition" %in% names(.SD))
+                    suppressWarnings(as.integer(.SD$BallotPosition))[1] else NA_integer_,
+                  party_ab = if ("PartyAb" %in% names(.SD))
+                    as.character(.SD$PartyAb)[1] else NA_character_),
+             lapply(setNames(vt, tolower(sub("Votes$", "", vt))),
+                    function(v) sum(.SD[[v]]))),
          by = .(seat = DivisionNm, surname = Surname, given = GivenNm,
-                party_raw = PartyNm)]
+                party_raw = PartyNm), .SDcols = names(d)]
   d[, `:=`(party = classify_party(party_raw, NULL),
            election = sprintf("fed%d", y), region = "fed", year = y)]
   parts[[sprintf("fed%d", y)]] <- d
@@ -367,8 +390,16 @@ C[, pcv := 100 * votes / tot]
 C[, breakout := pcv >= 20]
 
 setorder(C, election, seat, -pcv)
-fwrite(C[, .(election, region, year, seat, name, surname, given,
-             party, party_raw, votes, pcv, elected, breakout)], OUT)
+# WRITE EVERY COLUMN. Selecting a subset here is the same mistake one layer
+# down: whatever is not written cannot be found later, and "we don't have it"
+# then gets written into a plan and reasoned from.
+setcolorder(C, intersect(c("election", "region", "year", "seat", "name",
+                           "surname", "given", "party", "party_raw", "party_ab",
+                           "votes", "pcv", "elected", "historic_elected",
+                           "breakout", "swing", "ballot_position",
+                           "ordinary", "absent", "provisional", "prepoll",
+                           "postal"), names(C)))
+fwrite(C, OUT)
 
 cat(sprintf("\nBC9  %d candidacies across %d elections -> %s\n",
             nrow(C), uniqueN(C$election), OUT))
