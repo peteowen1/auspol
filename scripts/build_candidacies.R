@@ -194,6 +194,52 @@ if (file.exists(vf)) {
   } else cat("BC4  vic2022: unexpected columns; skipped\n")
 } else cat(sprintf("BC4  vic2022: MISSING %s\n", vf))
 
+# ---- WESTERN AUSTRALIA 1996-2025 --------------------------------------------
+# One JSON per seat per election, already on disk: sg{YEAR}-{CODE}.json, with
+# `resultsCandidates` carrying BALLOT_PAPER_NAME, PARTY_AFFILIATION and
+# Votes_Counted. Eight elections at ~60 seats each.
+#
+# Pre-2010 elections are kept even though Google Trends only reaches back to
+# 2004 and is thin before ~2008. Whether a candidacy is USABLE for the salience
+# signal is a separate filter applied where that signal is built; silently
+# dropping elections here would recreate the exact problem this corpus exists to
+# fix -- a truncated corpus whose cutoff nobody recorded.
+WAEC <- file.path("external", "reference", "waec")
+wa_files <- list.files(WAEC, pattern = "^sg[0-9]{4}-[A-Z]+\\.json$")
+wa_years <- sort(unique(as.integer(sub("^sg([0-9]{4}).*$", "\\1", wa_files))))
+for (y in wa_years) {
+  ff <- wa_files[grepl(sprintf("^sg%d-", y), wa_files)]
+  rows <- list()
+  for (f in ff) {
+    p <- file.path(WAEC, f)
+    if (file.info(p)$size < 500) next
+    j <- tryCatch(fromJSON(p, simplifyVector = FALSE), error = function(e) NULL)
+    if (is.null(j) || !length(j$resultsCandidates)) next
+    sname <- j$toptotals$ELECTORATE_NAME %||% j$currentElectorate$ElectorateName %||% NA_character_
+    rows[[f]] <- rbindlist(lapply(j$resultsCandidates, function(c) data.table(
+      seat = sname,
+      name = c$BALLOT_PAPER_NAME %||% NA_character_,
+      party_raw = c$PARTY_AFFILIATION %||% "Independent",
+      votes = as.numeric(c$Votes_Counted %||% NA))), fill = TRUE)
+  }
+  if (!length(rows)) { cat(sprintf("BC5  wa%d: no parsable seat files\n", y)); next }
+  w <- rbindlist(rows, fill = TRUE)
+  w <- w[!is.na(votes) & !is.na(seat)]
+  if (!nrow(w)) { cat(sprintf("BC5  wa%d: parsed but no vote rows\n", y)); next }
+  w[is.na(party_raw) | party_raw == "", party_raw := "Independent"]
+  # WA SUPPLIES ABBREVIATIONS, NOT NAMES: "ALP", "LIB", "GRN", "NAT", "PHON".
+  # Passing those as classify_party()'s NAME argument sent every one of them to
+  # OTH, which read as ~115 "non-major breakouts" per 57-seat election -- about
+  # two per seat, i.e. both majors counted as minor. Nothing errored; the only
+  # tell was that the count was impossible. Pass them as the ABBREVIATION, which
+  # is what fetch_preferences_fed.R does with PartyAb.
+  w[, `:=`(party = classify_party(party_raw, party_raw), surname = NA_character_,
+           given = NA_character_, elected = NA,
+           election = sprintf("wa%d", y), region = "wa", year = y)]
+  parts[[sprintf("wa%d", y)]] <- w
+  cat(sprintf("BC5  wa%d: %d candidates in %d seats\n", y, nrow(w), uniqueN(w$seat)))
+}
+
 # ---- assemble ---------------------------------------------------------------
 if (!length(parts)) stop("no candidacy source produced rows")
 C <- rbindlist(parts, fill = TRUE)

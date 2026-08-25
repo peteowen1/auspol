@@ -96,8 +96,16 @@ NAMES live -- the per-seat results files carry `seat, party, votes` only.
 | sa2022 | 47 | 240 | 20 | 6 |
 | sa2026 | 47 | 388 | 34 | 31 |
 | vic2022 | 87 | 731 | 119 | 13 |
+| wa1996 | 57 | 232 | 36 | 7 |
+| wa2001 | 57 | 366 | 89 | 12 |
+| wa2005 | 57 | 375 | 42 | 3 |
+| wa2008 | 59 | 302 | 25 | 6 |
+| wa2013 | 59 | 291 | 39 | 2 |
+| wa2017 | 59 | 415 | 34 | 2 |
+| wa2021 | 59 | 463 | 17 | 0 |
+| wa2025 | 59 | 398 | 29 | 6 |
 
-**Total: 9937 candidacies, 12 elections, 251 non-major breakouts.**
+**Total: 12779 candidacies, 20 elections, 289 non-major breakouts.**
 
 ## Known gaps
 
