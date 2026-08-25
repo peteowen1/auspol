@@ -129,3 +129,82 @@ elects Narungga and MacKillop may also elect Chaffey, Flinders and Stuart,
 which One Nation did not win. If expected seats land near 8, the concentration
 is doing too much and the honest conclusion is that ordering-plus-spread is not
 sufficient on its own.
+
+---
+
+## Result, 2026-08-25: the anchor FAILS, and it exonerates concentration
+
+The prediction above was wrong in an informative way. R1 was never reached;
+the **anchor** failed instead.
+
+### The transport itself works well
+
+Fitting `SD = a * statewide^k` on the **14 other elections**, holding SA out:
+
+| | |
+|---|---:|
+| **k** | **0.380** (0 = SD-constant, 1 = CV-constant) |
+| R² | 0.337 |
+| **predicted SD for SA 2026** | **7.00** |
+| **actual SA 2026 SD** | **7.67** |
+| ratio | **0.91** |
+
+A 9% under-prediction from data that never saw the election. **Concentration is
+transportable**, and `k = 0.380` confirms the scoping: neither endpoint is
+right. (R2 passes — `k` is inside [0,1]. R3 fires: SA's 22.88% is above the
+fitted range's 9.58% maximum, so this is an extrapolation and provisional.)
+
+**A bug was fixed to get there.** The first fit gave `k = 0.154`, R² **0.046**,
+and a predicted SD of 3.79 — because `aec-fed-firstprefs.csv` pools seven
+federal elections and treating a file as an election collapsed 2007–2025 into
+one row with statewide 16.47 and SD 0.96, which is impossible for real
+division-level data. Splitting by election took R² from 0.046 to 0.337.
+
+### Applied to the model, it changes almost nothing
+
+Arm run with SD 7.00. It applied correctly — delivered SD 6.98, One Nation
+ranging **6.8% to 39.0%** across districts against an actual maximum of 37.5%.
+
+| seat | our call | our P(ONP) before | after |
+|---|---|---:|---:|
+| MacKillop | LNP **1.000** | 0.000 | **0.000** |
+| Narungga | IND 0.913 | 0.000 | **0.000** |
+| Hammond | LNP 0.716 | 0.000 | **0.000** |
+| Ngadjuri | LNP 0.717 | 0.000 | **0.007** |
+
+**Mean probability 0.002 against a bar of 0.20. Anchor FAILED.** Expected One
+Nation seats: still 0.0 against an actual 4.
+
+### The diagnosis, and it moves the target
+
+Giving One Nation a realistic 30–39% in the right seats **still does not elect
+it**, because the Coalition is left far too high. MacKillop:
+
+| | LNP share |
+|---|---:|
+| 2022 actual | 67.0 |
+| **our uniform swing** (statewide −17.1) | **49.9** |
+| a proportional swing (× 19.03/36.15) | 35.3 |
+| **2026 actual** | **26.9** |
+
+One Nation cannot beat 49.9 with 35. **The binding constraint is the
+Coalition's swing in its own strongholds, not One Nation's concentration.**
+
+This does **not** simply reinstate proportional swing, which was measured worse
+overall (MAE 3.724 uniform against 3.970 proportional, 2,878 observations). But
+that test pooled mostly *small* swings. Here the statewide move is −17 points
+and uniform is out by 23 in a single seat while proportional is out by 8.
+
+**The refined, testable question — and note it is NOT a fourth version of
+"whose votes move where":** does the right swing shape depend on the *size* of
+the statewide move? A rule that is uniform for small swings and proportional
+for large ones is a different hypothesis from either, and the corpus that
+answered the first question can answer this one.
+
+### Housekeeping
+
+`BS5` prints `wrote output/backtest-sa.csv` regardless of the actual tagged
+filename. The write itself is correctly tagged (`backtest-sa-conc700.csv` was
+created; the baseline was not touched) but the **message misreports what the
+run did**, which is the class of diagnostic bug this repo records repeatedly.
+Worth fixing before it misleads someone.

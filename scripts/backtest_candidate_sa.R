@@ -110,6 +110,13 @@ N_SIMS <- as.integer(Sys.getenv("AUSPOL_N_SIMS", "20000"))
 
 CAL_TAG <- paste0(
   if (SEAT_SD_MULT != 1) sprintf("-m%s", format(SEAT_SD_MULT, nsmall = 1)) else "",
+  # The concentration arm MUST be in the tag. Without it the arm overwrites
+  # backtest-sa.csv and a before/after comparison compares an arm with itself
+  # -- the baseline-clobbering that has already produced four byte-identical
+  # comparisons in this repo.
+  if (as.numeric(Sys.getenv("AUSPOL_ONP_CONC_SD", "0")) > 0)
+    sprintf("-conc%s", sub("[.]", "", format(as.numeric(Sys.getenv("AUSPOL_ONP_CONC_SD")), nsmall = 2)))
+  else "",
   if (identical(Sys.getenv("AUSPOL_SEAT_SWING_PORT", "0"), "1")) "-port" else "",
   # "-corraw" and "-cor" are DIFFERENT correlation matrices. Both used to tag
   # "-cor", so running the raw arm and then the shrunk one wrote the second
@@ -180,6 +187,53 @@ if (length(absent22)) {
   cat(sprintf("BS1  parties polling >1%% in 2026 but not 2022: %s\n",
               paste(absent22, collapse = ", ")))
 }
+# ---- ARM: transported One Nation concentration -----------------------------
+# Against docs/plans/prereg-onp-concentration-transport.md. Default OFF, so a
+# plain run reproduces the uniform-allocation figures exactly.
+#
+# The uniform path above gives every district the statewide One Nation figure,
+# which is why the party finishes second nearly everywhere and first nowhere.
+# This arm orders districts by the transposed federal One Nation vote -- the
+# step already validated out of sample here at Spearman +0.939 -- and spreads
+# the same statewide total to a target SD.
+#
+# THE TARGET SD IS NOT FITTED ON THIS ELECTION. It comes from
+# SD = a * statewide^k estimated on the OTHER elections only. sa_ratio, the
+# published curve, IS fitted on SA 2026 (its CV 0.327 against SA's actual
+# 0.334) and is deliberately not used here -- that would be fitting and
+# testing on one election.
+ONP_CONC <- as.numeric(Sys.getenv("AUSPOL_ONP_CONC_SD", "0"))
+if (ONP_CONC > 0) {
+  ftr <- fread(file.path(P, "federal-transposed-to-state.csv"), showProgress = FALSE)
+  fo <- ftr[region == "sa" & party == "ONP" & cycle == 2026L, .(seat, pct)]
+  stopifnot(!any(duplicated(fo$seat)))
+  # Frome -> Ngadjuri, the 2025 redistribution rename. That mapping is applied
+  # further down (RENAMES) but AFTER this block, and the transposition file
+  # already uses the new name -- so the lookup has to translate here or it
+  # fails on exactly the seat One Nation won. Applied to the lookup key only;
+  # `shares` is left alone so the rename below still does its job.
+  lookup_names <- rownames(shares)
+  lookup_names[lookup_names == "Frome"] <- "Ngadjuri"
+  ix <- fo$pct[match(lookup_names, fo$seat)]
+  if (anyNA(ix)) {
+    stop("No transposed federal One Nation vote for: ",
+         paste(lookup_names[is.na(ix)], collapse = ", "))
+  }
+  lvl <- mean(shares[, "ONP"])
+  # Normal quantile map: rank by federal ONP, assign z-scores, scale to the
+  # target SD. Minimal choice -- it hits the SD without importing any shape
+  # information from the election being predicted.
+  rk <- rank(ix, ties.method = "first")
+  z <- stats::qnorm((rk - 0.5) / length(rk))
+  newonp <- pmax(0, lvl + ONP_CONC * z)
+  newonp <- newonp * (lvl / mean(newonp))     # preserve the statewide total
+  cat(sprintf("BS1c ONP concentration ARM ON: target SD %.2f, delivered %.2f, mean %.2f -> %.2f\n",
+              ONP_CONC, sd(newonp), lvl, mean(newonp)))
+  cat(sprintf("BS1c ONP range across districts: %.1f to %.1f\n",
+              min(newonp), max(newonp)))
+  shares[, "ONP"] <- newonp
+}
+
 shares <- 100 * shares / rowSums(shares)
 
 # FROME WAS RENAMED NGADJURI at the 2025 South Australian redistribution, and
