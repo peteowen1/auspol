@@ -126,6 +126,10 @@ times on 2026-08-25 alone**, each time while sitting on disk:
   downloading the AEC's `HouseFirstPrefsByCandidateByVoteType` files all along
   and aggregating the names away. A whole plan was written around acquiring
   data that was already there.
+- **seat-level swing** — the AEC ships a `Swing` column in that *same file*,
+  for every candidate in every division across all seven elections.
+  `backtest_candidate_fed.R` still records that it "cannot test" the seat-swing
+  port for want of a swing predictor. Same file, same fetcher, same loss.
 
 The third one produced a wrong recommendation, not just wasted time. **The cost
 is not the lookup — it is that "we don't have X" gets written into a plan and
