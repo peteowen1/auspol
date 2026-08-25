@@ -61,6 +61,25 @@ doing exactly what that review said it would: fixing the scoring damage without
 fixing the prediction. A model that says 0.95 and is wrong is strictly better,
 on every proper scoring rule, than one that says 1.000 and is wrong.
 
+## A silent crash found while trying to finish the job
+
+`AUSPOL_PARTY_COR=shrunk` on this harness **exits 1 with no error message**,
+stopping immediately after `BS1s` and before `BS2`. Confirmed by capturing
+stderr separately: it contains only the routine `data.table` version warning.
+So `simulate_seat_contests()` is dying hard rather than raising an R condition.
+
+Ruled out: the covariance matrix covers all seven parties
+(`ALP LNP GRN ONP IND OTH OTH_RIGHT`), so it is not the missing-party guard.
+The positive-definiteness guard raises a proper `stop()` with a message, so it
+is not that either.
+
+**A silent non-zero exit is the worst available failure mode** — it looks
+identical to a run that was interrupted, and in a batch sweep it would be
+indistinguishable from an arm that produced no output. Recorded here rather
+than left for someone to rediscover; not chased further because the
+correlation arm is a refinement and the shrink fix above is the substantive
+one.
+
 ## Still outstanding in this harness
 
 `statewide_draws` is **still not passed**. The federal harness gained it
