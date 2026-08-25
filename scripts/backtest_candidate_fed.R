@@ -124,6 +124,13 @@ if (nzchar(Sys.getenv("AUSPOL_PARTY_COR", ""))) {
 # The published value is in the grid of docs/plans/prereg-seat-calibration.md and
 # gets measured rather than assumed.
 SHRINK <- as.numeric(Sys.getenv("AUSPOL_SHRINK", "0"))
+
+# Per-seat insurgency risk, loaded once. Default OFF, so nothing moves unless
+# AUSPOL_INSURGENCY_SHRINK=1 is set.
+RISK_FILE <- "output/fed-insurgency-risk.csv"
+RISK <- if (identical(Sys.getenv("AUSPOL_INSURGENCY_SHRINK", "0"), "1") &&
+            file.exists(RISK_FILE))
+  data.table::fread(RISK_FILE, showProgress = FALSE) else NULL
 SMOOTH <- as.numeric(Sys.getenv("AUSPOL_SMOOTH", "0.15"))
 stopifnot(is.finite(SHRINK), SHRINK >= 0, SHRINK < 1,
           is.finite(SMOOTH), SMOOTH >= 0, SMOOTH <= 1)
@@ -143,6 +150,7 @@ cat(sprintf("BS1f fallback_smooth %.2f | flow_sd %.2f
 ", FB_SMOOTH, FLOW_SD))
 
 CAL_TAG <- paste0(
+  if (identical(Sys.getenv("AUSPOL_INSURGENCY_SHRINK", "0"), "1")) "-insurg" else "",
   # NO shrink clause here: this file already has one further down, keyed on the
   # SHRINK variable. Adding a second produced "-sh10-...-sh10" in the filename.
   # Victoria and NSW genuinely had none, which is why they needed one added.
@@ -386,10 +394,42 @@ for (X in out_all) {
   psd <- setNames(rep(PARTY_SD, length(X$parties)), X$parties)
   cat(sprintf("BS1p party_sd %.2f (realised statewide sd is 2.33)
 ", PARTY_SD))
+  # PER-SEAT SHRINK, against docs/plans/prereg-insurgency-conditional-shrink.md.
+  # A flat SHRINK caps every seat at 1 - SHRINK/2, charging 672 seats whose
+  # measured non-major win rate is under 1.5% for a risk carried by a few dozen.
+  # The risk comes from scripts/fit_insurgency_risk.R, fitted LEAVE-ONE-
+  # ELECTION-OUT, so the fold being scored here never contributed to it.
+  shrink_arg <- SHRINK
+  if (identical(Sys.getenv("AUSPOL_INSURGENCY_SHRINK", "0"), "1")) {
+    if (!file.exists(RISK_FILE))
+      stop("AUSPOL_INSURGENCY_SHRINK=1 but ", RISK_FILE,
+           " is missing; run scripts/fit_insurgency_risk.R")
+    # X$K$to is the bare year (2010); the risk file keys on "fed2010".
+    want <- paste0("fed", X$K$to)
+    rk <- RISK[pair == want]
+    if (!nrow(rk))
+      stop("no insurgency risk rows for ", want, "; risk file has: ",
+           paste(sort(unique(RISK$pair)), collapse = ", "))
+    sn <- rownames(X$shares)
+    if (is.null(sn) && is.data.frame(X$shares)) sn <- as.character(X$shares$seat)
+    miss <- setdiff(sn, rk$seat)
+    # A silent recycle here would give the wrong seat's ceiling to the wrong
+    # seat and nothing downstream would show it, so this aborts rather than
+    # falling back to the flat rate.
+    if (length(miss))
+      stop(want, ": insurgency risk missing for ", length(miss), " seat(s): ",
+           paste(utils::head(miss, 5), collapse = ", "))
+    shrink_arg <- setNames(rk$shrink_i, rk$seat)[sn]
+    cat(sprintf("BF2i %s per-seat shrink: median %.3f | mean %.3f | max %.3f | seats above the flat %.2f: %d\n",
+                want, median(shrink_arg), mean(shrink_arg), max(shrink_arg),
+                SHRINK, sum(shrink_arg > SHRINK)))
+    cat(sprintf("BF2i %s seats whose ceiling now exceeds 0.99: %d of %d\n",
+                want, sum(shrink_arg < 0.02), length(shrink_arg)))
+  }
   set.seed(SEED)
   sim <- simulate_seat_contests(X$shares, X$fm, party_sd = psd, seat_sd = sd_w * SEAT_SD_MULT,
                                 n_sims = N_SIMS, smooth = SMOOTH, seed = SEED,
-                                shrink = SHRINK,
+                                shrink = shrink_arg,
                                 party_cor = PARTY_COR, statewide_draws = X$sw_draws,
                                 fallback_smooth = FB_SMOOTH, flow_sd = FLOW_SD)
   wp <- as.data.table(sim$win_prob)

@@ -54,7 +54,20 @@
 #' @param n_sims Number of simulations.
 #' @param shrink Probability that a simulated seat is decided by a coin toss
 #'   between its final two rather than by the count. Zero reproduces the
-#'   previous behaviour exactly.
+#'   previous behaviour exactly. May be a single number applied to every seat,
+#'   or ONE VALUE PER SEAT -- either in seat order, or named by seat, in which
+#'   case it is matched by name and a missing seat is an error rather than a
+#'   silent recycle.
+#'
+#'   PREFER THE PER-SEAT FORM. A scalar caps every seat at `1 - shrink/2`:
+#'   at 0.10 the highest probability the model can emit is 0.9598, and on the
+#'   federal corpus no seat sits above 0.99 where the unshrunk model had 529.
+#'   The risk that cap absorbs is not spread evenly. Eight of the nine federal
+#'   misses above `pred_p` 0.9999 were a non-major taking a seat called safe for
+#'   a major, and the measured non-major win rate runs from 0.0% where the best
+#'   non-major polled under 5% last time to 77.8% where it polled over 30%. So a
+#'   flat rate charges 672 low-risk seats for a risk carried by a few dozen.
+#'   See `scripts/fit_insurgency_risk.R`.
 #'
 #'   THIS IS A CALIBRATION FIX, NOT A MODELLING FLOURISH. Scored on 1,187 seats
 #'   across 10 elections, this model's calibration slope was below 1 in nine of
@@ -126,9 +139,19 @@ simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
                                    party_draws = NULL, shrink = 0,
                                    party_cor = NULL, fallback_smooth = 0,
                                    flow_sd = 0) {
-  if (!is.finite(shrink) || shrink < 0 || shrink >= 1) {
-    stop("shrink must be in [0, 1); got ", shrink)
+  # SHRINK MAY BE PER-SEAT. A scalar applies the same rate everywhere and caps
+  # EVERY seat at 1 - shrink/2 -- 0.9598 at shrink = 0.10, with no seat above
+  # 0.99. That absorbs one specific risk (a non-major taking a seat called safe
+  # for a major, which is 8 of the 9 federal misses above pred_p 0.9999) by
+  # charging it to all 886 seats, including the 672 whose measured risk is under
+  # 1.5%. A vector lets each seat carry its own ceiling. Length is checked
+  # against the seat count AFTER seat_names is resolved, below.
+  if (!is.numeric(shrink) || anyNA(shrink) || !all(is.finite(shrink)) ||
+      any(shrink < 0) || any(shrink >= 1)) {
+    stop("shrink must be finite and in [0, 1); got ",
+         paste(utils::head(shrink, 5), collapse = ", "))
   }
+  if (length(shrink) == 0L) stop("shrink must have length >= 1")
   if (!is.finite(fallback_smooth) || fallback_smooth < 0 || fallback_smooth > 1) {
     stop("fallback_smooth must be in [0, 1]; got ", fallback_smooth)
   }
@@ -147,6 +170,26 @@ simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
   parties <- colnames(shares)
   if (is.null(parties)) stop("shares must have party names as column names")
   K <- length(parties)
+
+  # Resolve shrink to one value per seat. A NAMED vector is matched BY NAME,
+  # never by position -- the same rule seat_sd follows two blocks below, and for
+  # the same reason: an unnoticed reordering would give the wrong seat's ceiling
+  # to the wrong seat and nothing in the output would show it. An unnamed vector
+  # must already be in seat order and is length-checked.
+  if (length(shrink) == 1L) {
+    shrink <- rep(unname(shrink), length(seat_names))
+  } else if (!is.null(names(shrink))) {
+    miss <- setdiff(seat_names, names(shrink))
+    if (length(miss))
+      stop("shrink is named but has no entry for ", length(miss), " seat(s): ",
+           paste(utils::head(miss, 5), collapse = ", "))
+    if (anyDuplicated(names(shrink)))
+      stop("shrink has duplicate seat names; cannot match unambiguously")
+    shrink <- unname(shrink[seat_names])
+  } else if (length(shrink) != length(seat_names)) {
+    stop("shrink must be length 1, length ", length(seat_names),
+         " (one per seat), or a named vector; got ", length(shrink))
+  }
 
   # seat_sd may be one number for every party, or one per party. A named
   # vector is matched BY NAME to the share columns, never by position: the
@@ -410,7 +453,7 @@ simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
       # the draw, `totals` and `wins` move together. A temperature applied to
       # `wins` afterwards would recalibrate the per-seat probabilities and leave
       # the seat-count histogram describing a different model.
-      if (shrink > 0 && length(alive) > 1L && stats::runif(1) < shrink) {
+      if (shrink[i] > 0 && length(alive) > 1L && stats::runif(1) < shrink[i]) {
         w <- alive[sample.int(length(alive), 1L)]
       }
       wins[i, w] <- wins[i, w] + 1L

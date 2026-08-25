@@ -68,7 +68,20 @@ docs/reviews/onp-seat-uncertainty-2026-08-19.md.}
 
 \item{shrink}{Probability that a simulated seat is decided by a coin toss
 between its final two rather than by the count. Zero reproduces the
-previous behaviour exactly.
+previous behaviour exactly. May be a single number applied to every seat,
+or ONE VALUE PER SEAT -- either in seat order, or named by seat, in which
+case it is matched by name and a missing seat is an error rather than a
+silent recycle.
+
+PREFER THE PER-SEAT FORM. A scalar caps every seat at \code{1 - shrink/2}:
+at 0.10 the highest probability the model can emit is 0.9598, and on the
+federal corpus no seat sits above 0.99 where the unshrunk model had 529.
+The risk that cap absorbs is not spread evenly. Eight of the nine federal
+misses above \code{pred_p} 0.9999 were a non-major taking a seat called safe for
+a major, and the measured non-major win rate runs from 0.0\% where the best
+non-major polled under 5\% last time to 77.8\% where it polled over 30\%. So a
+flat rate charges 672 low-risk seats for a risk carried by a few dozen.
+See \code{scripts/fit_insurgency_risk.R}.
 
 THIS IS A CALIBRATION FIX, NOT A MODELLING FLOURISH. Scored on 1,187 seats
 across 10 elections, this model's calibration slope was below 1 in nine of
