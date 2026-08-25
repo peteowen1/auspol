@@ -150,6 +150,40 @@ whether it favours the answer found later — if it does, it is not an amendment
 it is a rationalisation. The one amendment made so far picked the value
 pre-registered *first*, which is the only reason it was allowed to stand.
 
+## A fix to one harness is a fix to ALL of them. Apply and test everywhere.
+
+There are four candidate-seat backtest harnesses — `backtest_candidate_fed.R`,
+`_vic.R`, `_nsw.R`, `_sa.R` — and they share a structure but not a file. **Any
+improvement, parameter or bug fix applied to one MUST be applied to all four
+and measured on all four in the same session.** Not "noted for later".
+
+This has now gone wrong twice on the same parameter:
+
+- **2026-08-21**: `shrink` was wired into the federal, Victorian and NSW
+  harnesses and **missed in South Australia**. For four days every SA
+  calibration figure described a model we do not publish — slope 0.299 against
+  a published 0.980 — and a full day was spent investigating four seats at
+  0.000 probability that were partly an artefact of the missing parameter.
+- **2026-08-25**: the flow fixes, the IND-nomination fix and stronghold
+  elasticity all went into the SA harness first and **were not in Victoria or
+  NSW**, so the pre-registered criteria could not be evaluated until they were
+  ported.
+
+The cost is not just the rework. **A harness missing a parameter produces
+numbers that look like findings**, and they get investigated, written up and
+reasoned from — which is exactly what happened to the four SA seats.
+
+So, concretely, when changing a harness:
+
+1. `grep` the other three for the thing you are adding. If it is absent there,
+   it is part of this change, not a follow-up.
+2. Run all four and report the metric before and after for each. A change that
+   helps one election and hurts another is a finding, and you cannot see it
+   from one run.
+3. If a fix genuinely cannot apply somewhere, **say why in the commit** rather
+   than leaving the gap silent — a silent gap is indistinguishable from an
+   oversight the next time someone reads those numbers.
+
 ## The seat model is the candidate model. There is no second seat model.
 
 **`fit_seats_full.R` / `simulate_seat_contests()` is the forecast.** The

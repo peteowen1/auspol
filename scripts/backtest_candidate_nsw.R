@@ -175,11 +175,43 @@ keep <- names(truth)
 # ---- project each seat's 2023 primaries: uniform swing off its 2019 share ----
 parties <- colnames(mat)
 shares <- mat
+# STRONGHOLD ELASTICITY, against docs/plans/prereg-stronghold-elasticity.md.
+# Default OFF. Criteria 1 and 3 require this arm on NSW and Victoria as well as
+# SA before adoption.
+ELASTIC   <- as.numeric(Sys.getenv("AUSPOL_ELASTIC_OVER", "0"))
+ELASTIC_D <- as.numeric(Sys.getenv("AUSPOL_ELASTIC_FALL", "2"))
+pinned <- matrix(FALSE, nrow(mat), ncol(mat), dimnames = dimnames(mat))
 for (p in parties) {
   if (!p %in% names(state23)) next
-  shares[, p] <- pmax(0, mat[, p] + (state23[[p]] - state19[[p]]))
+  d_state <- state23[[p]] - state19[[p]]
+  val <- pmax(0, mat[, p] + d_state)
+  if (ELASTIC > 0 && d_state < -ELASTIC_D && state19[[p]] > 0) {
+    over <- mat[, p] / state19[[p]]
+    hit <- is.finite(over) & over > ELASTIC
+    if (any(hit)) {
+      val[hit] <- pmax(0, mat[hit, p] * state23[[p]] / state19[[p]])
+      pinned[hit, p] <- TRUE
+    }
+  }
+  shares[, p] <- val
 }
-shares <- 100 * shares / rowSums(shares)
+if (ELASTIC > 0) {
+  cat(sprintf("NB1e elasticity ON (over %.2f, fall %.1f): %d cells\n",
+              ELASTIC, ELASTIC_D, sum(pinned)))
+}
+# Constrained renormalisation -- a cut cell must not get back a share of the
+# vote just removed from it.
+if (ELASTIC > 0 && any(pinned)) {
+  for (i in which(rowSums(pinned) > 0)) {
+    keepc <- pinned[i, ]
+    room <- 100 - sum(shares[i, keepc]); rest <- sum(shares[i, !keepc])
+    if (rest > 0 && room > 0) shares[i, !keepc] <- shares[i, !keepc] * room / rest
+  }
+  oth <- which(rowSums(pinned) == 0)
+  if (length(oth)) shares[oth, ] <- 100 * shares[oth, , drop = FALSE] / rowSums(shares[oth, , drop = FALSE])
+} else {
+  shares <- 100 * shares / rowSums(shares)
+}
 
 # ---- the seat-swing adjustment, ported from the two-party model -------------
 # Against docs/plans/prereg-seat-swing-port-to-candidate.md. Applied as a
@@ -229,8 +261,13 @@ cat(sprintf("\nBT3  seat spread: within %.2f, between %.2f\n", sp$sd_within, sp$
 
 set.seed(SEED)
 psd <- setNames(rep(1.5, length(parties)), parties)
+# THIS HARNESS HAS NEVER PASSED `shrink` -- the same defect fixed in the SA
+# harness today. fit_seats_full.R publishes with 0.10; the default here is 0 so
+# past runs stay comparable.
+SHRINK <- as.numeric(Sys.getenv("AUSPOL_SHRINK", "0"))
 sim <- simulate_seat_contests(shares, fm, party_sd = psd, seat_sd = sp$sd_within * SEAT_SD_MULT,
-                              n_sims = N_SIMS, smooth = SMOOTH, seed = SEED, party_cor = PARTY_COR)
+                              n_sims = N_SIMS, smooth = SMOOTH, seed = SEED, party_cor = PARTY_COR,
+                              shrink = SHRINK)
 wp <- as.data.table(sim$win_prob)
 
 sc <- merge(data.table(seat = names(truth), actual = unname(truth))[seat %in% keep],

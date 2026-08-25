@@ -159,10 +159,49 @@ for (K in PAIRS) {
   sb <- fb[, .(v = sum(votes)), by = party][, setNames(100 * v / sum(v), party)]
 
   parties <- colnames(mat); shares <- mat
+  # THIS HARNESS HAS NEVER PASSED `shrink`, the same defect
+  # docs/reviews/calibration-2026-08-21.md found and that was fixed in the SA
+  # harness today. fit_seats_full.R PUBLISHES with shrink = 0.10 and
+  # simulate_seat_contests() defaults it to 0, so every calibration figure this
+  # harness has produced describes a model we do not ship. Default 0 keeps past
+  # runs comparable.
+  SHRINK <- as.numeric(Sys.getenv("AUSPOL_SHRINK", "0"))
+  # STRONGHOLD ELASTICITY, against docs/plans/prereg-stronghold-elasticity.md.
+  # Default OFF. Criteria 1 and 3 of that plan require this arm on Victoria and
+  # NSW as well as SA before adoption, which is why it is here.
+  ELASTIC   <- as.numeric(Sys.getenv("AUSPOL_ELASTIC_OVER", "0"))
+  ELASTIC_D <- as.numeric(Sys.getenv("AUSPOL_ELASTIC_FALL", "2"))
+  pinned <- matrix(FALSE, nrow(mat), ncol(mat), dimnames = dimnames(mat))
   for (p in parties) if (p %in% names(sb) && p %in% names(sa)) {
-    shares[, p] <- pmax(0, mat[, p] + (sb[[p]] - sa[[p]]))
+    d_state <- sb[[p]] - sa[[p]]
+    val <- pmax(0, mat[, p] + d_state)
+    if (ELASTIC > 0 && d_state < -ELASTIC_D && sa[[p]] > 0) {
+      over <- mat[, p] / sa[[p]]
+      hit <- is.finite(over) & over > ELASTIC
+      if (any(hit)) {
+        val[hit] <- pmax(0, mat[hit, p] * sb[[p]] / sa[[p]])
+        pinned[hit, p] <- TRUE
+      }
+    }
+    shares[, p] <- val
   }
-  shares <- 100 * shares / rowSums(shares)
+  if (ELASTIC > 0) {
+    cat(sprintf("BV1e elasticity ON (over %.2f, fall %.1f): %d cells\n",
+                ELASTIC, ELASTIC_D, sum(pinned)))
+  }
+  # Constrained renormalisation: a cut cell must not receive back a share of
+  # the vote just taken off it. See the SA harness for the measured effect.
+  if (ELASTIC > 0 && any(pinned)) {
+    for (i in which(rowSums(pinned) > 0)) {
+      keepc <- pinned[i, ]
+      room <- 100 - sum(shares[i, keepc]); rest <- sum(shares[i, !keepc])
+      if (rest > 0 && room > 0) shares[i, !keepc] <- shares[i, !keepc] * room / rest
+    }
+    oth <- which(rowSums(pinned) == 0)
+    if (length(oth)) shares[oth, ] <- 100 * shares[oth, , drop = FALSE] / rowSums(shares[oth, , drop = FALSE])
+  } else {
+    shares <- 100 * shares / rowSums(shares)
+  }
   keep <- intersect(rownames(shares), win$seat)
   shares <- shares[keep, , drop = FALSE]
   truth <- setNames(win$winner, win$seat)[keep]
@@ -264,7 +303,7 @@ for (K in PAIRS) {
       fmr <- build_flow_matrix(tx2, min_n = 3L)
       s1 <- simulate_seat_contests(shares, fmr, party_sd = psd,
                                    seat_sd = sp$sd_within * SEAT_SD_MULT, n_sims = per,
-                                   smooth = SMOOTH, seed = SEED + r)
+                                   smooth = SMOOTH, seed = SEED + r, shrink = SHRINK)
       w1 <- as.data.table(s1$win_prob)[, .(seat, party, n = prob * per)]
       acc <- if (is.null(acc)) w1 else rbind(acc, w1)
     }
@@ -275,7 +314,8 @@ for (K in PAIRS) {
     set.seed(SEED)
     sim <- simulate_seat_contests(shares, fm, party_sd = psd,
                                   seat_sd = sp$sd_within * SEAT_SD_MULT, n_sims = N_SIMS,
-                                  smooth = SMOOTH, seed = SEED, party_cor = PARTY_COR)
+                                  smooth = SMOOTH, seed = SEED, party_cor = PARTY_COR,
+                                  shrink = SHRINK)
     wp <- as.data.table(sim$win_prob)
   }
 
