@@ -126,6 +126,9 @@ CAL_TAG <- paste0(
   if (as.numeric(Sys.getenv("AUSPOL_FLOW_SD", "0")) != 0)
     sprintf("-fsd%s", sub("[.]", "", format(as.numeric(Sys.getenv("AUSPOL_FLOW_SD")), nsmall = 1)))
   else "",
+  if (as.numeric(Sys.getenv("AUSPOL_ELASTIC_OVER", "0")) != 0)
+    sprintf("-el%s", sub("[.]", "", format(as.numeric(Sys.getenv("AUSPOL_ELASTIC_OVER")), nsmall = 1)))
+  else "",
   if (identical(Sys.getenv("AUSPOL_SEAT_SWING_PORT", "0"), "1")) "-port" else "",
   # "-corraw" and "-cor" are DIFFERENT correlation matrices. Both used to tag
   # "-cor", so running the raw arm and then the shrunk one wrote the second
@@ -178,8 +181,52 @@ st_a <- fa[, .(v = sum(votes)), by = party][, setNames(100 * v / sum(v), party)]
 st_b <- fb[, .(v = sum(votes)), by = party][, setNames(100 * v / sum(v), party)]
 
 parties <- colnames(mat); shares <- mat
+
+# STRONGHOLD ELASTICITY, against docs/plans/prereg-stronghold-elasticity.md.
+# Default OFF; a plain run is byte-identical.
+#
+# A uniform swing takes the same POINTS from a seat holding 67% as from one
+# holding 30%. Measured across 2,878 observations, that is right on average and
+# badly wrong in one specific place: a STRONGHOLD of a party FALLING statewide,
+# where proportional nearly halves the error (MAE 6.964 -> 3.848 at >1.5x
+# over-index, n=102). For all parties regardless of direction the same band has
+# uniform better by 1.155, so the effect is conditional on falling.
+#
+# Both thresholds are FIXED by the plan and are not tuned here.
+ELASTIC   <- as.numeric(Sys.getenv("AUSPOL_ELASTIC_OVER", "0"))   # 0 = off; 1.5 = on
+ELASTIC_D <- as.numeric(Sys.getenv("AUSPOL_ELASTIC_FALL", "2"))   # min statewide fall
+n_elastic <- 0L; elastic_seats <- character(0)
+# Which (seat, party) cells the rule cut. Renormalisation must NOT hand a
+# stronghold back a share of the vote just taken off it -- measured on
+# MacKillop, plain renormalisation undid 38% of the cut (35.3 -> 40.6).
+pinned <- matrix(FALSE, nrow(mat), ncol(mat), dimnames = dimnames(mat))
+
 for (p in parties) if (p %in% names(st_b) && p %in% names(st_a)) {
-  shares[, p] <- pmax(0, mat[, p] + (st_b[[p]] - st_a[[p]]))
+  d_state <- st_b[[p]] - st_a[[p]]
+  val <- pmax(0, mat[, p] + d_state)
+  if (ELASTIC > 0 && d_state < -ELASTIC_D && st_a[[p]] > 0) {
+    over <- mat[, p] / st_a[[p]]
+    hit  <- is.finite(over) & over > ELASTIC
+    if (any(hit)) {
+      val[hit] <- pmax(0, mat[hit, p] * st_b[[p]] / st_a[[p]])
+      pinned[hit, p] <- TRUE
+      n_elastic <- n_elastic + sum(hit)
+      elastic_seats <- c(elastic_seats, sprintf("%s:%s", p, rownames(mat)[hit]))
+    }
+  }
+  shares[, p] <- val
+}
+# PRINT WHAT IT APPLIED. CLAUDE.md records an experiment whose edit never ran
+# and whose byte-identical output read as "this input does not matter".
+if (ELASTIC > 0) {
+  cat(sprintf("BS1e elasticity ON (over-index > %.2f, statewide fall > %.1f): %d (seat, party) cells\n",
+              ELASTIC, ELASTIC_D, n_elastic))
+  if (n_elastic) {
+    cat(sprintf("BS1e fired on: %s\n",
+                paste(utils::head(sort(elastic_seats), 12), collapse = ", ")))
+  }
+} else {
+  cat("BS1e elasticity OFF (uniform swing)\n")
 }
 # One Nation stood in 19 of 47 districts in 2022 and all 47 in 2026, so 28
 # districts have a ZERO baseline for the party that went on to make the final
@@ -243,7 +290,35 @@ if (ONP_CONC > 0) {
   shares[, "ONP"] <- newonp
 }
 
-shares <- 100 * shares / rowSums(shares)
+# CONSTRAINED RENORMALISATION. Plain renormalisation scales every party in the
+# seat, including one the elasticity rule just cut -- so the cut party receives
+# back a share of its own removed vote. Measured on MacKillop: elasticity takes
+# the Coalition to 35.3 (AEF forecast 35.0, actual 26.9) and renormalising puts
+# it straight back to 40.6, undoing 38% of the correction.
+#
+# Where a cell was cut, it is PINNED at its elastic value and only the other
+# parties in that seat are scaled to fill the remainder.
+if (ELASTIC > 0 && any(pinned)) {
+  for (i in which(rowSums(pinned) > 0)) {
+    keep <- pinned[i, ]
+    fixed_tot <- sum(shares[i, keep])
+    rest <- shares[i, !keep]
+    rest_tot <- sum(rest)
+    room <- 100 - fixed_tot
+    if (rest_tot > 0 && room > 0) {
+      shares[i, !keep] <- rest * room / rest_tot
+    }
+  }
+  # every other seat renormalises as before
+  other <- which(rowSums(pinned) == 0)
+  if (length(other)) {
+    shares[other, ] <- 100 * shares[other, , drop = FALSE] / rowSums(shares[other, , drop = FALSE])
+  }
+  cat(sprintf("BS1e constrained renormalisation applied to %d seat(s)\n",
+              sum(rowSums(pinned) > 0)))
+} else {
+  shares <- 100 * shares / rowSums(shares)
+}
 
 # FROME WAS RENAMED NGADJURI at the 2025 South Australian redistribution, and
 # it is the only name that differs between the two polls. It is MAPPED rather
