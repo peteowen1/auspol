@@ -456,5 +456,35 @@ print(head(res[pred != actual][order(prob),
                                .(seat, we_said = pred, our_p = round(pred_p, 3),
                                  actual, gave_winner = round(prob, 3))], 10))
 fwrite(res, file.path("output", sprintf("backtest-sa%s.csv", CAL_TAG)))
+
+# RETAIN THE FULL PER-SEAT PER-PARTY PROBABILITY TABLE.
+#
+# `res` above keeps only two rows' worth of information per seat -- the
+# predicted winner and the actual winner -- so the probabilities for every
+# other party are computed and thrown away. That is why a printed comparison
+# does not sum to 1, and why "did we give anyone else a chance?" could not be
+# answered without a fresh 25-minute run.
+#
+# Same shape as the seat-TCP finding earlier today: the quantity exists in
+# memory and is discarded at the last step. docs/NEXT-STEPS.md records the
+# federal version of this ("The full per-seat per-party probability table is
+# never saved").
+full <- merge(wp[, .(seat, party, prob)],
+              data.table(seat = names(truth), actual = unname(truth)),
+              by = "seat", all.x = TRUE)
+full[, is_actual := party == actual]
+setorder(full, seat, -prob)
+fwrite(full, file.path("output", sprintf("backtest-sa-allprobs%s.csv", CAL_TAG)))
+cat(sprintf("BS5  wrote the full probability table: %d rows, %d seats, %d parties\n",
+            nrow(full), uniqueN(full$seat), uniqueN(full$party)))
+# A seat's probabilities must sum to 1. If they do not, the simulation dropped
+# a draw somewhere and every number above is suspect.
+chk <- full[, .(s = sum(prob)), by = seat]
+if (any(abs(chk$s - 1) > 0.01)) {
+  stop("Per-seat probabilities do not sum to 1 in ",
+       sum(abs(chk$s - 1) > 0.01), " seat(s); worst ",
+       round(max(abs(chk$s - 1)), 4))
+}
+cat("BS5  every seat's probabilities sum to 1 (max deviation checked)\n")
 fwrite(data.table(pair = "sa2026", as.data.table(sim$totals)), file.path("output", sprintf("backtest-sa-totals%s.csv", CAL_TAG)))
 cat("\nBS5  wrote output/backtest-sa.csv\n")
