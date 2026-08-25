@@ -85,6 +85,14 @@ cat(sprintf("BS1f fallback_smooth %.2f | flow_sd %.2f
 ", FB_SMOOTH, FLOW_SD))
 
 CAL_TAG <- paste0(
+  # THE SIM COUNT MUST BE IN THE NAME. It reads Sys.getenv rather than N_SIMS
+  # because CAL_TAG is built before N_SIMS is defined in this file. Without
+  # this clause a 100-sim diagnostic run overwrote the 20000-sim baseline it
+  # was meant to be checked against, which is the baseline-clobbering this tag
+  # exists to prevent.
+  if (as.integer(Sys.getenv("AUSPOL_N_SIMS", "20000")) != 20000L)
+    sprintf("-n%d", as.integer(Sys.getenv("AUSPOL_N_SIMS")))
+  else "",
   if (as.numeric(Sys.getenv("AUSPOL_SHRINK", "0")) != 0)
     sprintf("-sh%s", sub("0[.]", "", format(as.numeric(Sys.getenv("AUSPOL_SHRINK")), nsmall = 2)))
   else "",
@@ -112,7 +120,25 @@ CAL_TAG <- paste0(
   # one would be a filename promising a difference the run cannot make.
   "")
 
-N_SIMS <- 20000
+# READ FROM THE ENVIRONMENT like the other three harnesses. This was hardcoded
+# to 20000 while backtest_candidate_sa.R, _vic.R and _fed.R all read
+# AUSPOL_N_SIMS, so setting that variable for a cross-harness comparison ran
+# NSW at 20000 and everything else at whatever was asked for. Two consequences,
+# both seen on 2026-08-25:
+#
+#   - A "paired comparison at 5000 sims" across the four harnesses was not
+#     paired. NSW alone ran at 4x the sims.
+#   - Asking for 100 sims to make a quick diagnostic run returned metrics
+#     IDENTICAL to four decimal places -- accuracy 71/88, Brier 0.1455, slope
+#     0.568 -- because the request did nothing. That is the byte-identical
+#     output that reads as "this input does not matter", which CLAUDE.md
+#     already records once. It is also why every NSW arm was being killed: at
+#     20000 sims over 88 independent-heavy seats with per-draw flow noise, a
+#     single arm does not finish.
+#
+# The default is unchanged at 20000, so nothing downstream moves.
+N_SIMS <- as.integer(Sys.getenv("AUSPOL_N_SIMS", "20000"))
+cat(sprintf("NB0  n_sims %d\n", N_SIMS))
 SEED   <- 42
 SMOOTH <- 0.15
 PREF   <- election_data_path()
