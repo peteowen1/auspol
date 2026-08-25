@@ -47,7 +47,31 @@ if (nzchar(Sys.getenv("AUSPOL_PARTY_COR", ""))) {
               Sys.getenv("AUSPOL_PARTY_COR"), PARTY_COR["ONP", "LNP"]))
 }
 
+# THE FLOW FIXES, PORTED. `fallback_smooth` and `flow_sd` were added to the
+# South Australian harness on 2026-08-25 and existed NOWHERE ELSE, so setting
+# them in the environment for a cross-harness comparison silently did nothing
+# here -- an experiment that never ran, reading as an input that does not
+# matter. That is the failure CLAUDE.md records under "A fix to one harness is
+# a fix to ALL of them", and it recurred in the same session the rule was
+# written. Both default to 0, which reproduces the previous behaviour exactly.
+FB_SMOOTH <- as.numeric(Sys.getenv("AUSPOL_FALLBACK_SMOOTH", "0"))
+FLOW_SD   <- as.numeric(Sys.getenv("AUSPOL_FLOW_SD", "0"))
+cat(sprintf("BS1f fallback_smooth %.2f | flow_sd %.2f
+", FB_SMOOTH, FLOW_SD))
+
 CAL_TAG <- paste0(
+  if (as.numeric(Sys.getenv("AUSPOL_SHRINK", "0")) != 0)
+    sprintf("-sh%s", sub("0[.]", "", format(as.numeric(Sys.getenv("AUSPOL_SHRINK")), nsmall = 2)))
+  else "",
+  if (as.numeric(Sys.getenv("AUSPOL_ELASTIC_OVER", "0")) != 0)
+    sprintf("-el%s", sub("[.]", "", format(as.numeric(Sys.getenv("AUSPOL_ELASTIC_OVER")), nsmall = 1)))
+  else "",
+  if (as.numeric(Sys.getenv("AUSPOL_FALLBACK_SMOOTH", "0")) != 0)
+    sprintf("-fb%s", sub("0[.]", "", format(as.numeric(Sys.getenv("AUSPOL_FALLBACK_SMOOTH")), nsmall = 2)))
+  else "",
+  if (as.numeric(Sys.getenv("AUSPOL_FLOW_SD", "0")) != 0)
+    sprintf("-fsd%s", sub("[.]", "", format(as.numeric(Sys.getenv("AUSPOL_FLOW_SD")), nsmall = 1)))
+  else "",
   if (as.numeric(Sys.getenv("AUSPOL_PARTY_SD", "1.5")) != 1.5)
     sprintf("-psd%s", sub("[.]", "", format(as.numeric(Sys.getenv("AUSPOL_PARTY_SD")), nsmall = 2)))
   else "",
@@ -316,7 +340,8 @@ for (K in PAIRS) {
       fmr <- build_flow_matrix(tx2, min_n = 3L)
       s1 <- simulate_seat_contests(shares, fmr, party_sd = psd,
                                    seat_sd = sp$sd_within * SEAT_SD_MULT, n_sims = per,
-                                   smooth = SMOOTH, seed = SEED + r, shrink = SHRINK)
+                                   smooth = SMOOTH, seed = SEED + r, shrink = SHRINK,
+                                   fallback_smooth = FB_SMOOTH, flow_sd = FLOW_SD)
       w1 <- as.data.table(s1$win_prob)[, .(seat, party, n = prob * per)]
       acc <- if (is.null(acc)) w1 else rbind(acc, w1)
     }
@@ -328,7 +353,8 @@ for (K in PAIRS) {
     sim <- simulate_seat_contests(shares, fm, party_sd = psd,
                                   seat_sd = sp$sd_within * SEAT_SD_MULT, n_sims = N_SIMS,
                                   smooth = SMOOTH, seed = SEED, party_cor = PARTY_COR,
-                                  shrink = SHRINK)
+                                  shrink = SHRINK,
+                                  fallback_smooth = FB_SMOOTH, flow_sd = FLOW_SD)
     wp <- as.data.table(sim$win_prob)
   }
 

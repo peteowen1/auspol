@@ -525,4 +525,10 @@ if (any(abs(chk$s - 1) > 0.01)) {
 }
 cat("BS5  every seat's probabilities sum to 1 (max deviation checked)\n")
 fwrite(data.table(pair = "sa2026", as.data.table(sim$totals)), file.path("output", sprintf("backtest-sa-totals%s.csv", CAL_TAG)))
-cat("\nBS5  wrote output/backtest-sa.csv\n")
+
+# NAME THE FILE ACTUALLY WRITTEN. This line was a hardcoded string and printed
+# "backtest-sa.csv" for every arm, including arms that correctly wrote a tagged
+# name. The tag mechanism exists because an untagged arm once overwrote the
+# baseline it was being compared against; a log line that reports the untagged
+# name recreates that confusion at the point where someone reads the result.
+cat(sprintf("\nBS5  wrote output/backtest-sa%s.csv and its totals\n", CAL_TAG))

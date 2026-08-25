@@ -72,7 +72,31 @@ if (nzchar(Sys.getenv("AUSPOL_PARTY_COR", ""))) {
               Sys.getenv("AUSPOL_PARTY_COR"), PARTY_COR["ONP", "LNP"]))
 }
 
+# THE FLOW FIXES, PORTED. `fallback_smooth` and `flow_sd` were added to the
+# South Australian harness on 2026-08-25 and existed NOWHERE ELSE, so setting
+# them in the environment for a cross-harness comparison silently did nothing
+# here -- an experiment that never ran, reading as an input that does not
+# matter. That is the failure CLAUDE.md records under "A fix to one harness is
+# a fix to ALL of them", and it recurred in the same session the rule was
+# written. Both default to 0, which reproduces the previous behaviour exactly.
+FB_SMOOTH <- as.numeric(Sys.getenv("AUSPOL_FALLBACK_SMOOTH", "0"))
+FLOW_SD   <- as.numeric(Sys.getenv("AUSPOL_FLOW_SD", "0"))
+cat(sprintf("BS1f fallback_smooth %.2f | flow_sd %.2f
+", FB_SMOOTH, FLOW_SD))
+
 CAL_TAG <- paste0(
+  if (as.numeric(Sys.getenv("AUSPOL_SHRINK", "0")) != 0)
+    sprintf("-sh%s", sub("0[.]", "", format(as.numeric(Sys.getenv("AUSPOL_SHRINK")), nsmall = 2)))
+  else "",
+  if (as.numeric(Sys.getenv("AUSPOL_ELASTIC_OVER", "0")) != 0)
+    sprintf("-el%s", sub("[.]", "", format(as.numeric(Sys.getenv("AUSPOL_ELASTIC_OVER")), nsmall = 1)))
+  else "",
+  if (as.numeric(Sys.getenv("AUSPOL_FALLBACK_SMOOTH", "0")) != 0)
+    sprintf("-fb%s", sub("0[.]", "", format(as.numeric(Sys.getenv("AUSPOL_FALLBACK_SMOOTH")), nsmall = 2)))
+  else "",
+  if (as.numeric(Sys.getenv("AUSPOL_FLOW_SD", "0")) != 0)
+    sprintf("-fsd%s", sub("[.]", "", format(as.numeric(Sys.getenv("AUSPOL_FLOW_SD")), nsmall = 1)))
+  else "",
   if (as.numeric(Sys.getenv("AUSPOL_PARTY_SD", "1.5")) != 1.5)
     sprintf("-psd%s", sub("[.]", "", format(as.numeric(Sys.getenv("AUSPOL_PARTY_SD")), nsmall = 2)))
   else "",
@@ -280,7 +304,8 @@ cat(sprintf("BS1p party_sd %.2f (realised statewide sd is 2.33)
 SHRINK <- as.numeric(Sys.getenv("AUSPOL_SHRINK", "0"))
 sim <- simulate_seat_contests(shares, fm, party_sd = psd, seat_sd = sp$sd_within * SEAT_SD_MULT,
                               n_sims = N_SIMS, smooth = SMOOTH, seed = SEED, party_cor = PARTY_COR,
-                              shrink = SHRINK)
+                              shrink = SHRINK,
+                              fallback_smooth = FB_SMOOTH, flow_sd = FLOW_SD)
 wp <- as.data.table(sim$win_prob)
 
 sc <- merge(data.table(seat = names(truth), actual = unname(truth))[seat %in% keep],
@@ -358,4 +383,7 @@ cat(sprintf("BT8  independents won %d of %d scored seats; we gave them a mean %.
 
 fwrite(res[order(seat)], file.path("output", sprintf("backtest-nsw2023%s.csv", CAL_TAG)))
 fwrite(data.table(pair = "nsw2023", as.data.table(sim$totals)), file.path("output", sprintf("backtest-nsw2023-totals%s.csv", CAL_TAG)))
-cat("\nWrote output/backtest-nsw2023.csv\n")
+# NAME THE FILE ACTUALLY WRITTEN, not the untagged name. Same fix as in
+# backtest_candidate_sa.R: a hardcoded filename in the log defeats the tag that
+# exists to stop an arm overwriting the baseline it is compared against.
+cat(sprintf("\nWrote output/backtest-nsw2023%s.csv and its totals\n", CAL_TAG))
