@@ -28,11 +28,31 @@
 # vote in `fb`" as a proxy for it, so it is still target-year data and is
 # switched OFF under FORECAST_MODE, whose entire point is not seeing eb yet.
 #
-# WHAT THIS CANNOT TEST. `seat_swing_adjustment()` needs `fed_swing` -- how a
-# seat swung at the preceding FEDERAL election -- which is a state-model
-# predictor with no federal analogue. The federal seat files carry it for ZERO
-# seats, confirmed. So this harness does not test the seat-swing port; it tests
-# the model the port would be added to.
+# WHAT THIS CANNOT TEST, CORRECTED 2026-08-26. `seat_swing_adjustment()` needs
+# `fed_swing` -- how a seat swung at the preceding FEDERAL election -- and the
+# federal seat files carry it for ZERO seats. That much is still true.
+#
+# But "no federal analogue" was wrong twice over. The AEC ships a per-candidate
+# `Swing` column in the same first-preferences file this pipeline already
+# downloads, for all seven elections; it was being aggregated away, and is now
+# carried through by scripts/build_candidacies.R. So the analogue -- a seat's
+# own swing at the PREVIOUS federal election, knowable on the night and
+# therefore leak-free -- is available.
+#
+# MEASURED, AND DELIBERATELY NOT WIRED IN. Over 882 seat-elections the prior
+# departure predicts the next one with slope **-0.264** (SE 0.033, t = -8.0),
+# negative in all six elections: seats REVERT rather than persist.
+# SEAT_SWING_COEF is +0.7452, so importing the state-fitted coefficient here
+# would apply it with the wrong sign and make the federal forecast worse.
+#
+# It is also too small to matter: R2 0.068, cutting seat-level error 4.560 ->
+# 4.402 points, a 3.5% reduction. And it is concentrated in two elections
+# (2013 R2 0.33, 2019 R2 0.24) against near-zero in three others, so the pooled
+# slope describes no individual election well. Part of it is regression to the
+# mean rather than behaviour, which needs a t-2 baseline to separate.
+#
+# So this harness still does not test the seat-swing port -- not for want of
+# data, but because the predictor has the opposite sign and 3.5% of the error.
 #
 # Emits BF* codes.
 
