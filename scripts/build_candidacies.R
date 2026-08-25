@@ -138,6 +138,62 @@ for (E in sa_files) {
   cat(sprintf("BC2  sa%d: %d candidates in %d seats\n", E$year, nrow(m), uniqueN(m$seat)))
 }
 
+# ---- NEW SOUTH WALES 2019, 2023 ---------------------------------------------
+# The NSWEC workbook's "Data" sheet is one row per candidate PER VENUE, so it
+# must be aggregated to candidate level. Informal rows carry no candidate and
+# are dropped before aggregating -- leaving them in would inflate every seat's
+# denominator and understate every share.
+NSWD <- file.path("external", "reference", "nsw")
+nsw_files <- list(list(year = 2019, f = "sge2019-la-final-votes.xlsx"),
+                  list(year = 2023, f = "sge2023-la-final-votes.xlsx"))
+for (E in nsw_files) {
+  fp <- file.path(NSWD, E$f)
+  if (!file.exists(fp) || file.info(fp)$size < 1000) {
+    cat(sprintf("BC3  nsw%d: MISSING or empty %s\n", E$year, E$f)); next
+  }
+  if (!requireNamespace("readxl", quietly = TRUE)) {
+    cat("BC3  nsw: readxl not installed; skipped\n"); break
+  }
+  d <- as.data.table(readxl::read_excel(fp, sheet = "Data"))
+  setnames(d, trimws(names(d)))
+  need <- c("District", "Candidate Ballot Name", "Party Name", "Final FP Votes")
+  miss <- setdiff(need, names(d))
+  if (length(miss)) {
+    cat(sprintf("BC3  nsw%d: lacks %s\n", E$year, paste(miss, collapse = ", "))); next
+  }
+  if ("Formal/Informal" %in% names(d)) d <- d[grepl("^Formal", `Formal/Informal`)]
+  d <- d[!is.na(`Candidate Ballot Name`) & `Candidate Ballot Name` != ""]
+  agg <- d[, .(votes = sum(as.numeric(`Final FP Votes`), na.rm = TRUE)),
+           by = .(seat = District, name = `Candidate Ballot Name`,
+                  party_raw = `Party Name`)]
+  # An unaffiliated candidate has an empty party in this file, which
+  # classify_party() would not read as independent.
+  agg[is.na(party_raw) | party_raw == "", party_raw := "Independent"]
+  agg[, `:=`(party = classify_party(party_raw, NULL), surname = NA_character_,
+             given = NA_character_, elected = NA,
+             election = sprintf("nsw%d", E$year), region = "nsw", year = E$year)]
+  parts[[sprintf("nsw%d", E$year)]] <- agg
+  cat(sprintf("BC3  nsw%d: %d candidates in %d seats\n", E$year, nrow(agg),
+              uniqueN(agg$seat)))
+}
+
+# ---- VICTORIA 2022 ----------------------------------------------------------
+# Already extracted to candidate level by an earlier fetch.
+vf <- file.path(election_data_path(), "vec-2022-vic-candidates.csv")
+if (file.exists(vf)) {
+  v <- fread(vf, showProgress = FALSE)
+  if (all(c("seat", "cand", "party", "fp_votes") %in% names(v))) {
+    # `party` here is ALREADY a classify_party() class, not a raw party name.
+    # Re-classifying it would be a second pass over its own output; harmless for
+    # most values but not something to rely on silently.
+    v <- v[, .(seat, name = cand, party_raw = party, votes = as.numeric(fp_votes),
+               party = party, surname = NA_character_, given = NA_character_,
+               elected = NA, election = "vic2022", region = "vic", year = 2022)]
+    parts[["vic2022"]] <- v
+    cat(sprintf("BC4  vic2022: %d candidates in %d seats\n", nrow(v), uniqueN(v$seat)))
+  } else cat("BC4  vic2022: unexpected columns; skipped\n")
+} else cat(sprintf("BC4  vic2022: MISSING %s\n", vf))
+
 # ---- assemble ---------------------------------------------------------------
 if (!length(parts)) stop("no candidacy source produced rows")
 C <- rbindlist(parts, fill = TRUE)

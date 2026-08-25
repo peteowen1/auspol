@@ -95,6 +95,41 @@ Specific traps, all of which have bitten:
   `cat(sprintf("\nG3 ...`. Three incomplete greps, one of which let `B1` mean
   two different things. The registry is a table in `ARCHITECTURE.md`.
 
+## Before saying we don't have data, READ `docs/DATA-REGISTRY.md`
+
+It is **generated from disk** by `scripts/build_data_registry.R` — never
+hand-edit it, rerun the script. It lists every election, every raw commission
+download, the candidate-level corpus, and the known gaps, with file sizes so a
+zero-byte file cannot pass as a working one.
+
+This exists because the same data has been declared missing **three separate
+times on 2026-08-25 alone**, each time while sitting on disk:
+
+- **booth results and electoral boundaries** — both in `external/reference/`;
+  only the anchor archive had been searched.
+- **candidate-level federal first preferences for all seven elections** — in
+  `external/reference/aec/` since August. `fetch_preferences_fed.R` has been
+  downloading the AEC's `HouseFirstPrefsByCandidateByVoteType` files all along
+  and aggregating the names away. A whole plan was written around acquiring
+  data that was already there.
+
+The third one produced a wrong recommendation, not just wasted time. **The cost
+is not the lookup — it is that "we don't have X" gets written into a plan and
+then reasoned from.**
+
+Two habits follow:
+
+1. **Check the registry first**, then the filesystem, then conclude. `ls` on one
+   directory is not a search.
+2. **Regenerate the registry whenever you fetch or build data**, in the same
+   commit. A stale registry is worse than none, which is the same rule
+   `~/.claude/CLAUDE.md` applies to hand-maintained reference data.
+
+Candidate NAMES live only in `output/candidacies.csv`
+(`scripts/build_candidacies.R`). Every per-seat results file carries
+`seat, party, votes` and nothing else, so any candidate-level question starts
+from the corpus, not from the election files.
+
 ## Constants
 
 Every one is inventoried in `docs/CONSTANTS.md` with whether it can come from
