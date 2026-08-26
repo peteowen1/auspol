@@ -1,5 +1,18 @@
 # auspol — work queue
 
+## ACTIVE PLAN: candidate-level seat model
+
+[plans/plan-candidate-level-model.md](plans/plan-candidate-level-model.md) —
+opened 2026-08-27, and it is the working checklist. The seat model is party-class
+based, so "IND" is a residual bucket and a returning independent is
+indistinguishable from a stranger. Measured across 17 election pairs, that one
+fact moves a 30% seat to 30.3% or to 12.1%.
+
+Next up: **A1** (conditional variance by candidate continuity — suspected the
+largest calibration gain available, and cheap) and **A2** (joint slope + spread
+retune, stage 1, pre-registered at `5acaff1`).
+
+
 Updated 2026-08-26. Remote: github.com/peteowen1/auspol (private, default
 branch `dev`; `main` exists and is reached only through a reviewed PR).
 
