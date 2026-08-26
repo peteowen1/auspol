@@ -160,9 +160,16 @@ simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
   if (!is.finite(flow_sd) || flow_sd < 0) {
     stop("flow_sd must be finite and non-negative; got ", flow_sd)
   }
-  if (!is.finite(surge_h) || surge_h < 0 || surge_h > 1) {
-    stop("surge_h must be in [0, 1]; got ", surge_h)
+  # SURGE_H MAY BE PER-SEAT, exactly as `shrink` may. `shrink` was made a vector
+  # and surge_h was not, so wiring a 150-element salience hazard into it passed
+  # a vector to a scalar parameter -- the same fix applied in one place and not
+  # its sibling, inside one function.
+  if (!is.numeric(surge_h) || anyNA(surge_h) || !all(is.finite(surge_h)) ||
+      any(surge_h < 0) || any(surge_h > 1)) {
+    stop("surge_h must be finite and in [0, 1]; got ",
+         paste(utils::head(surge_h, 5), collapse = ", "))
   }
+  if (length(surge_h) == 0L) stop("surge_h must have length >= 1")
   if (!is.finite(surge_mu) || !is.finite(surge_sd) || surge_sd < 0) {
     stop("surge_mu must be finite and surge_sd finite and non-negative")
   }
@@ -182,6 +189,27 @@ simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
   if (is.null(parties)) stop("shares must have party names as column names")
   K <- length(parties)
 
+  # Resolve surge_h to one value per seat, by NAME where named -- the same rule
+  # and the same reason as `shrink` above: an unnoticed reordering would give
+  # the wrong seat's hazard to the wrong seat and nothing in the output would
+  # show it.
+  .fix_surge <- function(sh, seat_names) {
+    if (length(sh) == 1L) return(rep(unname(sh), length(seat_names)))
+    if (!is.null(names(sh))) {
+      miss <- setdiff(seat_names, names(sh))
+      if (length(miss))
+        stop("surge_h is named but has no entry for ", length(miss), " seat(s): ",
+             paste(utils::head(miss, 5), collapse = ", "))
+      if (anyDuplicated(names(sh)))
+        stop("surge_h has duplicate seat names; cannot match unambiguously")
+      return(unname(sh[seat_names]))
+    }
+    if (length(sh) != length(seat_names))
+      stop("surge_h must be length 1, length ", length(seat_names),
+           " (one per seat), or a named vector; got ", length(sh))
+    unname(sh)
+  }
+
   # Which columns may surge. Named parties are matched BY NAME against the share
   # columns; NULL means "every party that is not a major", which is the shape
   # the federal measurement was made on. A name that is not a share column is an
@@ -189,7 +217,7 @@ simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
   # whole mechanism off and the run would look like the surge simply did not
   # matter, which is the failure mode CLAUDE.md records for experiments that
   # never ran.
-  surge_idx <- if (surge_h <= 0) integer(0) else if (is.null(surge_parties)) {
+  surge_idx <- if (all(surge_h <= 0)) integer(0) else if (is.null(surge_parties)) {
     which(!parties %in% c("ALP", "LNP", "NAT"))
   } else {
     miss <- setdiff(surge_parties, parties)
@@ -198,7 +226,7 @@ simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
            paste(miss, collapse = ", "))
     which(parties %in% surge_parties)
   }
-  if (surge_h > 0 && !length(surge_idx))
+  if (any(surge_h > 0) && !length(surge_idx))
     stop("surge_h > 0 but no eligible surge party among: ",
          paste(parties, collapse = ", "))
 
@@ -221,6 +249,9 @@ simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
     stop("shrink must be length 1, length ", length(seat_names),
          " (one per seat), or a named vector; got ", length(shrink))
   }
+
+  # Resolve the surge hazard to one value per seat, by the same rule.
+  surge_h <- .fix_surge(surge_h, seat_names)
 
   # seat_sd may be one number for every party, or one per party. A named
   # vector is matched BY NAME to the share columns, never by position: the
@@ -436,9 +467,9 @@ simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
       # 100. The count then decides: a surge that falls short LOSES, which is
       # why this is generative rather than an override like `shrink`, and why it
       # imposes no ceiling.
-      if (surge_h > 0 && length(surge_idx)) {
+      if (surge_h[i] > 0 && length(surge_idx)) {
         cand <- surge_idx[v[surge_idx] >= surge_floor]
-        if (length(cand) && stats::runif(1) < surge_h) {
+        if (length(cand) && stats::runif(1) < surge_h[i]) {
           j <- cand[which.max(v[cand])]
           add <- stats::rnorm(1, surge_mu, surge_sd)
           if (add > 0) {

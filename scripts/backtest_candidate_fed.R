@@ -205,6 +205,7 @@ cat(sprintf("BS1f fallback_smooth %.2f | flow_sd %.2f
 ", FB_SMOOTH, FLOW_SD))
 
 CAL_TAG <- paste0(
+  if (nzchar(Sys.getenv("AUSPOL_FED_PAIRS", ""))) sprintf("-p%s", gsub("[^0-9]", "", Sys.getenv("AUSPOL_FED_PAIRS"))) else "",
   if (identical(Sys.getenv("AUSPOL_SALIENCE_SURGE", "0"), "1")) "-salsurge" else "",
   if (as.numeric(Sys.getenv("AUSPOL_SURGE_H", "0")) > 0)
     sprintf("-surge%s", sub("0[.]", "", format(as.numeric(Sys.getenv("AUSPOL_SURGE_H")), nsmall = 4)))
@@ -281,6 +282,19 @@ spread_for <- function(yr, swing) {
 }
 
 out_all <- list(); seat_sds <- c()
+# RESTRICT TO CHOSEN PAIRS. Salience currently exists for fed2022 only, so a
+# full six-election run spends ten minutes recomputing five unchanged controls.
+# AUSPOL_FED_PAIRS=2022 runs just that pair. Default is every pair, so nothing
+# changes unless asked.
+.want <- Sys.getenv("AUSPOL_FED_PAIRS", "")
+if (nzchar(.want)) {
+  .keep <- as.integer(trimws(strsplit(.want, ",")[[1]]))
+  PAIRS <- Filter(function(k) k$to %in% .keep, PAIRS)
+  cat(sprintf("BF0p restricted to %d pair(s): %s
+", length(PAIRS),
+              paste(vapply(PAIRS, function(k) k$to, numeric(1)), collapse = ", ")))
+  if (!length(PAIRS)) stop("AUSPOL_FED_PAIRS matched no pair")
+}
 for (K in PAIRS) {
   ea <- sprintf("fed%d", K$from); eb <- sprintf("fed%d", K$to)
   fa <- FP[election == ea, .(votes = sum(votes)), by = .(seat, party)]
