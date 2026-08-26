@@ -46,7 +46,34 @@ reflects the sampling. It is recalibrated by the standard offset
 winning a seat, which is **to be computed from `output/candidacies.csv` and
 stated in the result** — not assumed at 5% as in the exploratory run.
 
-Implied hazards at 5% (illustrative, to be refitted):
+### The base rate, MEASURED 2026-08-26 — and it is not stationary
+
+Computed from `output/candidacies.csv` as the pre-registration required, before
+the hazard was fitted:
+
+| population | wins / candidacies | rate |
+|---|---|---:|
+| all non-majors, federal | 70 / 5,259 | 1.33% |
+| **non-majors polling ≥5%** | **70 / 1,635** | **4.28%** |
+| independents only | 37 / 709 | 5.22% |
+
+**4.28% is the matching rate**, because Group B was drawn from non-majors
+polling at least 5%. The exploratory assumption of 5% was close but is now
+replaced by a measurement.
+
+**The trend is the more important finding, and this pre-registration did not
+anticipate it.** By election: 0.27% (2007), 0.94% (2010), 0.57% (2013), 0.73%
+(2016), 0.87% (2019), **2.00% (2022), 3.43% (2025)** — a twelvefold rise.
+
+A single fixed intercept would therefore **understate the hazard in exactly the
+elections that matter** and overstate it in the older ones. **Amendment, made
+before fitting and visible as an addition:** the recalibration offset uses the
+base rate of the election being predicted, not a pooled constant. This favours
+neither direction of the criterion — it raises the hazard in 2022 and lowers it
+in 2007–2016 — and the pooled-constant version will be reported alongside so
+the choice can be checked.
+
+Implied hazards at 5% (illustrative only, superseded by the above):
 
 | ratio | P(non-major wins) |
 |---:|---:|

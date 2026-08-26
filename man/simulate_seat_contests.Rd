@@ -17,7 +17,12 @@ simulate_seat_contests(
   shrink = 0,
   party_cor = NULL,
   fallback_smooth = 0,
-  flow_sd = 0
+  flow_sd = 0,
+  surge_h = 0,
+  surge_mu = 15.6,
+  surge_sd = 6.1,
+  surge_parties = NULL,
+  surge_floor = 2
 )
 }
 \arguments{

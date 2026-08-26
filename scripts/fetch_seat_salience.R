@@ -32,6 +32,10 @@ options(auspol.root = normalizePath("."))
 suppressMessages(devtools::load_all(quiet = TRUE))
 suppressMessages(library(data.table))
 suppressMessages(library(gtrendsR))
+# normalise_name() and search_form() come from R/names.R, loaded by load_all()
+# above. They were duplicated in this file and its sibling, the fix was applied
+# to one and not the other, and Kylea Tink came back 0.0 for a second time.
+# One definition, one place.
 
 SPAN  <- 300L
 WEEKS <- 8L
@@ -40,19 +44,6 @@ MAXKW <- 5L
 CACHE <- file.path("external", "reference", "trends")
 dir.create(CACHE, showWarnings = FALSE, recursive = TRUE)
 
-TITLES  <- "^(dr|mr|mrs|ms|miss|prof|professor|hon|the hon|sen|senator|rev)[.]? "
-POSTNOM <- " (am|ao|oam|mp|qc|sc|kc|jr|snr|sr|ii|iii)$"
-normalise_name <- function(x) {
-  x <- tolower(trimws(gsub("[[:space:]]+", " ", x)))
-  x <- gsub(TITLES, "", x)
-  for (i in 1:3) x <- gsub(POSTNOM, "", x)
-  x <- gsub("-", " ", x); x <- gsub("[.']", "", x)
-  x <- gsub(intToUtf8(8217), "", x)
-  x <- gsub("[[:space:]]+", " ", trimws(x))
-  vapply(strsplit(x, " "), function(p)
-    paste(toupper(substring(p, 1, 1)), substring(p, 2), sep = "", collapse = " "),
-    character(1))
-}
 
 # One batch of <= 5 keywords, cached. Returns mean hits per keyword over the
 # final WEEKS weeks.
@@ -82,17 +73,6 @@ batch <- function(kw, geo, to) {
   out
 }
 
-# A whole seat, chained across batches of five.
-# MIDDLE NAMES MUST BE DROPPED HERE TOO. The first version called
-# normalise_name(name), which title-cases but keeps the middle name, so Kylea
-# Tink was queried as "Kylea Jane Tink" and came back 0.0 -- the SAME bug Pete
-# caught on the paired fetcher two hours earlier, reintroduced because the fix
-# lived in search_form() in the other script and was not carried over.
-search_form <- function(given, surname, fallback) {
-  first <- sub(" .*$", "", trimws(given))
-  normalise_name(ifelse(is.na(given) | is.na(surname) | first == "",
-                        fallback, paste(first, surname)))
-}
 seat_salience <- function(names_in, geo, poll) {
   kw <- unique(names_in)
   to <- as.Date(poll) - 1
@@ -134,7 +114,23 @@ C <- fread("output/candidacies.csv", showProgress = FALSE)
 POLL <- c(fed2019 = "2019-05-18", fed2022 = "2022-05-21", fed2025 = "2025-05-03")
 GEO_OF <- c(NSW = "AU-NSW", VIC = "AU-VIC", QLD = "AU-QLD", SA = "AU-SA",
             WA = "AU-WA", TAS = "AU-TAS", NT = "AU-NT", ACT = "AU-ACT")
-WANT <- fread(text = "election,seat
+# WHICH SEATS. Default is the nine known cases, for validating the pipeline.
+# AUSPOL_SALIENCE_ELECTION=fed2022 runs EVERY seat in that election, which is
+# what the pre-registration requires: the nine were chosen because something
+# happened in them, so fitting or scoring on them is selection on the outcome.
+#
+# AUSPOL_SALIENCE_MAX bounds how many NEW seats one invocation fetches. Long
+# runs were being killed mid-flight; the cache makes each invocation resume.
+EL_ALL <- Sys.getenv("AUSPOL_SALIENCE_ELECTION", "")
+MAX_SEATS <- as.integer(Sys.getenv("AUSPOL_SALIENCE_MAX", "12"))
+if (nzchar(EL_ALL)) {
+  yr <- as.integer(sub("^fed", "", EL_ALL))
+  WANT <- unique(C[region == "fed" & year == yr, .(election = EL_ALL, seat)])
+  cat(sprintf("SS0  %s: all %d seats | max %d new per run
+",
+              EL_ALL, nrow(WANT), MAX_SEATS))
+} else {
+  WANT <- fread(text = "election,seat
 fed2022,Wentworth
 fed2022,North Sydney
 fed2022,Goldstein
@@ -145,7 +141,9 @@ fed2022,Fowler
 fed2019,Warringah
 fed2022,Griffith
 ")
-out <- list()
+  MAX_SEATS <- nrow(WANT)
+}
+out <- list(); new_seats <- 0L
 for (i in seq_len(nrow(WANT))) {
   el <- WANT$election[i]; sn <- WANT$seat[i]
   yr <- as.integer(sub("^fed", "", el))
@@ -153,6 +151,11 @@ for (i in seq_len(nrow(WANT))) {
   if (!nrow(d)) { cat(sprintf("SS!  %s %s: no candidates\n", el, sn)); next }
   geo <- GEO_OF[[as.character(d$state[1])]]
   d[, kw := search_form(given, surname, name)]
+  probe <- gsub("[^A-Za-z0-9]", "_",
+                sprintf("ss-%s-%s-%s", geo, as.Date(POLL[[el]]) - 1,
+                        paste(utils::head(d$kw, MAXKW), collapse = "-")))
+  seen <- file.exists(file.path(CACHE, paste0(substr(probe, 1, 150), ".rds")))
+  if (!seen) { if (new_seats >= MAX_SEATS) next; new_seats <- new_seats + 1L }
   v <- seat_salience(d$kw, geo, POLL[[el]])
   if (is.null(v)) { cat(sprintf("SS!  %s %s: no data\n", el, sn)); next }
   d[, sal := as.numeric(v[kw])]

@@ -31,6 +31,10 @@ options(auspol.root = normalizePath("."))
 suppressMessages(devtools::load_all(quiet = TRUE))
 suppressMessages(library(data.table))
 suppressMessages(library(gtrendsR))
+# normalise_name() and search_form() come from R/names.R, loaded by load_all()
+# above. They were duplicated in this file and its sibling, the fix was applied
+# to one and not the other, and Kylea Tink came back 0.0 for a second time.
+# One definition, one place.
 
 SLEEP <- as.numeric(Sys.getenv("AUSPOL_SALIENCE_SLEEP", "8"))
 SPAN  <- 300L   # days: forces 7-day buckets
@@ -53,27 +57,6 @@ PM <- function(d) {
 GEO_OF <- c(NSW = "AU-NSW", VIC = "AU-VIC", QLD = "AU-QLD", SA = "AU-SA",
             WA = "AU-WA", TAS = "AU-TAS", NT = "AU-NT", ACT = "AU-ACT")
 
-TITLES  <- "^(dr|mr|mrs|ms|miss|prof|professor|hon|the hon|sen|senator|rev)[.]? "
-POSTNOM <- " (am|ao|oam|mp|qc|sc|kc|jr|snr|sr|ii|iii)$"
-normalise_name <- function(x) {
-  x <- tolower(trimws(gsub("[[:space:]]+", " ", x)))
-  x <- gsub(TITLES, "", x)
-  for (i in 1:3) x <- gsub(POSTNOM, "", x)
-  x <- gsub("-", " ", x)
-  x <- gsub("[.']", "", x)
-  x <- gsub(intToUtf8(8217), "", x)
-  x <- gsub("[[:space:]]+", " ", trimws(x))
-  vapply(strsplit(x, " "), function(p)
-    paste(toupper(substring(p, 1, 1)), substring(p, 2), sep = "", collapse = " "),
-    character(1))
-}
-# From the FIELDS, never by stripping the middle word -- that turns
-# "Dominic WY KANAK" into "Dominic Kanak".
-search_form <- function(given, surname, fallback) {
-  first <- sub(" .*$", "", trimws(given))
-  normalise_name(ifelse(is.na(given) | is.na(surname) | first == "",
-                        fallback, paste(first, surname)))
-}
 
 fetch_pair <- function(cand, anchor, geo, poll) {
   to <- as.Date(poll) - 1; from <- to - SPAN
