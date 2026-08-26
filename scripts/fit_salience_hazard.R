@@ -67,13 +67,18 @@ prev[, inc_kw := normalise_name(inc_name)]
 S <- merge(S, prev[, .(year, seat, inc_kw)], by = c("year", "seat"), all.x = TRUE)
 S[, is_inc := !is.na(inc_kw) & name == inc_kw]
 
+# is_inc is NA where the seat has no prior-election winner (a new or renamed
+# division). NA in an `if` is an error, not FALSE -- the trap CLAUDE.md records
+# under "guards that cannot fail" -- so it is resolved to FALSE explicitly.
+S[is.na(is_inc), is_inc := FALSE]
+S[!is.finite(sal_share), sal_share := 0]
 den <- S[, {
   i <- .SD[is_inc == TRUE]
-  if (nrow(i) && i$sal_share[1] > 0) {
+  if (nrow(i) && isTRUE(i$sal_share[1] > 0)) {
     .(den = i$sal_share[1], den_src = "incumbent")
   } else {
     m <- .SD[party %in% MAJ][order(-sal_share)]
-    if (nrow(m) && m$sal_share[1] > 0) .(den = m$sal_share[1], den_src = "top major")
+    if (nrow(m) && isTRUE(m$sal_share[1] > 0)) .(den = m$sal_share[1], den_src = "top major")
     else .(den = NA_real_, den_src = "none")
   }
 }, by = .(election, seat)]

@@ -165,6 +165,12 @@ for (i in seq_len(nrow(S))) {
     hand_added = if ("hand_added" %in% names(S)) S$hand_added[i] else FALSE,
     cand_hits = if (is.null(r)) NA_real_ else r$cand,
     anchor_hits = if (is.null(r)) NA_real_ else r$anchor,
+    # The BASELINES, without which `jump` cannot be computed. fetch_pair()
+    # returned these and the written row silently dropped them -- the same
+    # aggregate-versus-raw mistake one layer up, which is why the first refetch
+    # produced a file that still could not score Pete's statistic.
+    cand_base = if (is.null(r) || is.null(r$cand_base)) NA_real_ else r$cand_base,
+    anchor_base = if (is.null(r) || is.null(r$anchor_base)) NA_real_ else r$anchor_base,
     step_days = if (is.null(r)) NA_real_ else r$step, ratio = ratio)
   cat(sprintf("ET2  %-8s %-14s %-20s vs %-18s %-7s ratio %s\n",
               S$election[i], substr(S$seat[i], 1, 14), substr(S$cand[i], 1, 20),

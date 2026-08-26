@@ -109,6 +109,12 @@ seat_salience <- function(kw, geo, poll) {
   if (!is.finite(m1[keyword == loudest, camp]) || m1[keyword == loudest, camp] <= 0) {
     m1[, scale := NA_real_]; return(m1[])
   }
+  # CALIBRATION REMOVED -- it was the source of the cross-seat gap, not the fix.
+  # Kept behind a flag only so the finding can be re-checked, never on by
+  # default.
+  if (!identical(Sys.getenv("AUSPOL_SALIENCE_CALIBRATE", "0"), "1")) {
+    m1[, scale := 1]; return(m1[])
+  }
   Sys.sleep(SLEEP)
   s2 <- qry(c(PM(poll), loudest), geo, to)
   if (is.null(s2)) { m1[, scale := NA_real_]; return(m1[]) }
@@ -144,8 +150,14 @@ cat(sprintf("S3-1 %s: %d seats, non-majors only | 2 queries per seat\n", EL, len
 out <- list(); done <- 0L
 for (s in seats) {
   d <- D[seat == s][order(prio)]
-  geo <- GEO_OF[[as.character(d$state[1])]]
-  if (is.null(geo) || is.na(geo)) next
+  # NATIONAL geo. The state-size confound I built the calibration to fix was
+  # CAUSED by the calibration: on raw jump, Chaney reads 25.85 in AU-WA and
+  # 26.18 in AU, Tink 25.15 in AU-NSW and 25.22 in AU -- level in both, and
+  # level with each other. The PM's own volume differs by state, so the scale
+  # factor differed by state and imported exactly the distortion it was meant
+  # to remove. Quiet candidates survive national geo on WEEKLY buckets:
+  # Chandler-Mather 9.99, Dai Le 8.25.
+  geo <- "AU"
   probe <- gsub("[^A-Za-z0-9]", "_",
                 sprintf("v3-%s-%s-%s", geo, as.Date(POLL[[EL]]) - 1,
                         paste(utils::head(d$kw, MAXKW), collapse = "-")))

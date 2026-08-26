@@ -1,5 +1,13 @@
 # Pre-registration: predict a non-major's first preferences directly
 
+> **OUTCOME 2026-08-26: REFUSED.** Failed criteria 1 and 2 on fed2025 (winners
+> RMSE 2.99 base against 8.55 with salience) and the refusal clause on declining
+> incumbents fired — Bandt predicted 66.2% on an actual 39.5%. Not a scale
+> artefact: refitting inside fed2025 still adds nothing. **The attribution fix
+> (`prev_party` over `prev_seat`) is separable, holds on both elections, and is
+> what proceeds.** Scored in `docs/reviews/salience-regression-refused-2026-08-26.md`.
+> Nothing below this line was edited after seeing the result.
+
 Written 2026-08-26, **after** the fed2022 feature search and **before** any
 other election has been fetched. That ordering is stated plainly because it
 matters: the model form below was *selected* on fed2022, so fed2022 cannot also
