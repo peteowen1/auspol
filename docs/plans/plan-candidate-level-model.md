@@ -165,6 +165,27 @@ fought. Add the model's projection per row for "performance vs expected".
 
 ---
 
+## Which tickets are TARGETED and which are GENERAL
+
+Added 2026-08-27 on Pete's rule: the metric and the window follow the question.
+A targeted fix is validated on its named targets with the election-wide number
+as a do-no-harm guard; a general change is validated election-wide. Getting this
+backwards is why the salience gate's 18.29-point fix on six seats read as a
+0.85-point aggregate move and its precision criterion had to be thrown away.
+
+| ticket | kind | primary metric |
+|---|---|---|
+| A1 level-dependent variance | **general** | election-wide calibration |
+| A2/A3 slope + spread retune | **general** | election-wide Brier and calibration |
+| B1 candidate-level rows | **general** (structural) | no-op proof, then election-wide |
+| B2 compositional shares | **targeted** | the 2022 teal seats — does the LIBERAL lose the vote, not Labor and the Greens equally |
+| B3 open-seat effect | **targeted** | seats where the sitting member retired, named in advance |
+| C1/C2 salience | **targeted** | the named emergences; election-wide is the guard |
+
+**Name the cases before proposing the fix.** For B2 that is Kooyong, Goldstein,
+Wentworth, Mackellar, North Sydney and Curtin in 2022, and the check is which
+party's vote falls — a question no aggregate RMSE can answer.
+
 ## Standing rules for this plan
 
 - **Every change goes through all five harnesses**, in the same session, with

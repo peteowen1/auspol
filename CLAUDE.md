@@ -195,6 +195,37 @@ effects that would disqualify a winner, and what the criterion cannot see. If
 that section is hard to write, the criterion is probably measuring the wrong
 thing — which was true both times.
 
+**Scope the metric to the change. A targeted fix is validated on its targets;
+only a general change is validated election-wide.**
+
+Name the broken cases BEFORE proposing the fix, make those the primary
+criterion, and demote the election-wide metric to a do-no-harm guard. Reverse
+that and a real fix cannot be seen:
+
+- The salience gate moved the six fed2022 emergences by **18.29 points**.
+  Diluted across all 368 rows that is **0.85** — a large fix wearing the
+  disguise of a marginal one, because 6 cases in 151 seats barely move an
+  aggregate. The pre-registration made the aggregate primary and the emergences
+  secondary, which is backwards.
+- Its precision criterion then failed for the same reason: an election-wide
+  count of "false firings" for a change aimed at six seats scored 14 candidates
+  polling 15–26% as errors, when raising them was correct.
+
+So, before writing a criterion, ask **what question the change answers**:
+
+| the change is… | primary metric | secondary |
+|---|---|---|
+| targeted (these seats/candidates are wrong) | those cases, named in advance | election-wide, as a do-no-harm guard |
+| general (a decay, a variance form, a flow rate) | election-wide | slices that could hide a reversal |
+
+The window follows the same logic. A fix for emergence is tested on elections
+that CONTAIN emergences — fed2025 has none, so it can only ever be a negative
+control there, never evidence the fix works.
+
+And size it: a change affecting `k` of `n` seats needs roughly `n/k` times the
+effect to clear the same aggregate bar. At 6 of 151 that is a factor of 25, so
+an aggregate criterion will almost always refuse a targeted fix that works.
+
 **Dry-run every criterion on cases whose answer you already know, BEFORE
 committing the pre-registration.** Same rule as "prove a check fails on a
 deliberately broken input", applied to the criterion instead of the code. A
