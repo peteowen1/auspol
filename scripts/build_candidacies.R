@@ -73,7 +73,14 @@ for (y in fed_years) {
                   ballot_position = if ("BallotPosition" %in% names(.SD))
                     suppressWarnings(as.integer(.SD$BallotPosition))[1] else NA_integer_,
                   party_ab = if ("PartyAb" %in% names(.SD))
-                    as.character(.SD$PartyAb)[1] else NA_character_),
+                    as.character(.SD$PartyAb)[1] else NA_character_,
+                  # STATE. Needed to scope a Google Trends query to the seat's
+                  # own state -- a local candidate's volume divided by national
+                  # traffic falls under Google's publishing threshold. Dropped
+                  # in the first version of this file; the FIFTH column today
+                  # whose loss cost something.
+                  state = if ("StateAb" %in% names(.SD))
+                    as.character(.SD$StateAb)[1] else NA_character_),
              lapply(setNames(vt, tolower(sub("Votes$", "", vt))),
                     function(v) sum(.SD[[v]]))),
          by = .(seat = DivisionNm, surname = Surname, given = GivenNm,
@@ -395,7 +402,7 @@ setorder(C, election, seat, -pcv)
 # then gets written into a plan and reasoned from.
 setcolorder(C, intersect(c("election", "region", "year", "seat", "name",
                            "surname", "given", "party", "party_raw", "party_ab",
-                           "votes", "pcv", "elected", "historic_elected",
+                           "state", "votes", "pcv", "elected", "historic_elected",
                            "breakout", "swing", "ballot_position",
                            "ordinary", "absent", "provisional", "prepoll",
                            "postal"), names(C)))
