@@ -245,6 +245,13 @@ shares <- mat
 ELASTIC   <- as.numeric(Sys.getenv("AUSPOL_ELASTIC_OVER", "0"))
 ELASTIC_D <- as.numeric(Sys.getenv("AUSPOL_ELASTIC_FALL", "2"))
 DEV_SLOPE <- dev_slopes_for(union(parties, names(state23)))
+cat(sprintf("BN1d  dev slopes: %s%s
+",
+            if (all(DEV_SLOPE == 1)) "all 1.000 (uniform swing)" else
+              paste(sprintf("%s=%.3f", names(DEV_SLOPE), DEV_SLOPE), collapse=" "),
+            if (length(attr(DEV_SLOPE, "absent")))
+              paste0(" | not contested here: ",
+                     paste(attr(DEV_SLOPE, "absent"), collapse=",")) else ""))
 pinned <- matrix(FALSE, nrow(mat), ncol(mat), dimnames = dimnames(mat))
 for (p in parties) {
   if (!p %in% names(state23)) next

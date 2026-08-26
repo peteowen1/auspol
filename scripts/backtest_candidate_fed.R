@@ -326,6 +326,13 @@ for (K in PAIRS) {
   # has ever done. That is the point: every calibration figure this repo has
   # quoted describes a tighter variant than the model it ships.
   DEV_SLOPE <- dev_slopes_for(union(colnames(mat), names(st_b)))
+  cat(sprintf("BF1d  dev slopes: %s%s
+",
+              if (all(DEV_SLOPE == 1)) "all 1.000 (uniform swing)" else
+                paste(sprintf("%s=%.3f", names(DEV_SLOPE), DEV_SLOPE), collapse=" "),
+              if (length(attr(DEV_SLOPE, "absent")))
+                paste0(" | not contested here: ",
+                       paste(attr(DEV_SLOPE, "absent"), collapse=",")) else ""))
   parties <- colnames(mat); shares <- mat
   sw_draws <- NULL
   if (FORECAST_MODE) {

@@ -121,6 +121,13 @@ for (K in PAIRS) {
                 dimnames = list(rownames(A), parties))
   mat[, colnames(A)] <- A
   DEV_SLOPE <- dev_slopes_for(parties)
+  cat(sprintf("BW1d  dev slopes: %s%s
+",
+              if (all(DEV_SLOPE == 1)) "all 1.000 (uniform swing)" else
+                paste(sprintf("%s=%.3f", names(DEV_SLOPE), DEV_SLOPE), collapse=" "),
+              if (length(attr(DEV_SLOPE, "absent")))
+                paste0(" | not contested here: ",
+                       paste(attr(DEV_SLOPE, "absent"), collapse=",")) else ""))
   for (p in parties) {
     from_pc <- if (p %in% names(sa)) sa[[p]] else 0
     to_pc   <- if (p %in% names(sb)) sb[[p]] else 0

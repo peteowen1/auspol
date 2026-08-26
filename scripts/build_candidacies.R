@@ -409,6 +409,64 @@ C[, pcv := 100 * votes / tot]
 # comparable; changing it here would silently change what the AUC means.
 C[, breakout := pcv >= 20]
 
+# ---- FILL `elected` FOR STATE ROWS ------------------------------------------
+# Only the AEC path sets `elected`; every state section hardcoded NA, so all
+# 5,511 state candidate rows carried no winner at all. That is not a cosmetic
+# gap: it made every state election report ZERO non-major winners, which read as
+# a real answer rather than an empty column, and it is what an emergence count
+# across NSW, QLD, SA, VIC and WA silently returned on 2026-08-26. Victoria is
+# the live target, so a state corpus that cannot say who won is not usable.
+#
+# The data was on disk the whole time -- one winners file per commission, listed
+# in DATA-REGISTRY.md -- carrying seat and an already-classified winning party.
+#
+# A winner file names a PARTY, not a person, so `elected` goes to the highest-
+# polling candidate of the winning class in that seat. That is right except
+# where two candidates of one class both stand and the runner-up won, which
+# cannot happen under this data: the winning class's top scorer is the one who
+# reached the final count. Every seat that does NOT resolve is reported.
+WINF <- list(
+  sa  = "ecsa-sa-winners.csv", nsw = "nswec-nsw-winners.csv",
+  qld = "ecq-qld-winners.csv", wa  = "waec-wa-winners.csv")
+WV <- list()
+for (rg in names(WINF)) {
+  f <- file.path(election_data_path(), WINF[[rg]])
+  if (!file.exists(f)) { cat(sprintf("BC7! %s missing, %s winners unfilled\n", WINF[[rg]], rg)); next }
+  w <- fread(f, showProgress = FALSE)
+  WV[[length(WV) + 1L]] <- w[, .(election, seat, winner)]
+}
+# Victoria publishes per-election files rather than one combined file.
+for (y in c(2014L, 2018L)) {
+  f <- file.path(election_data_path(), sprintf("vec-%d-vic-winners.csv", y))
+  if (!file.exists(f)) next
+  w <- fread(f, showProgress = FALSE)
+  WV[[length(WV) + 1L]] <- w[, .(election = sprintf("vic%d", y), seat, winner)]
+}
+if (length(WV)) {
+  W <- unique(rbindlist(WV, fill = TRUE))
+  C <- merge(C, W, by = c("election", "seat"), all.x = TRUE)
+  # Rank within (election, seat, class) so only the top scorer of the winning
+  # class is flagged. NOT a bare `party` inside `[` -- data.table NSE has bitten
+  # this repo five times on exactly that shape.
+  C[, .rk := frank(-pcv, ties.method = "first"), by = .(election, seat, party)]
+  fillable <- !is.na(C$winner) & is.na(C$elected)
+  C[fillable & party == winner & .rk == 1L, elected := TRUE]
+  C[fillable & is.na(elected), elected := FALSE]
+  # A seat whose winning class fielded nobody is a CLASSIFICATION mismatch, the
+  # trap CLAUDE.md records for NSW: the commission files the Shooters as IND and
+  # classify_party() calls them OTH_RIGHT, so the seat resolves to nobody.
+  chk <- C[!is.na(winner), .(won = sum(elected %in% TRUE)), by = .(election, seat)]
+  bad <- chk[won != 1L]
+  cat(sprintf("BC7  state winners filled: %d rows across %d elections | %d seats unresolved\n",
+              sum(fillable), uniqueN(C[fillable]$election), nrow(bad)))
+  if (nrow(bad)) {
+    cat("BC7! seats where the winning class fielded no candidate (classification mismatch):\n")
+    print(head(merge(bad, unique(C[, .(election, seat, winner)]),
+                     by = c("election", "seat")), 20), row.names = FALSE)
+  }
+  C[, `:=`(winner = NULL, .rk = NULL)]
+}
+
 setorder(C, election, seat, -pcv)
 # WRITE EVERY COLUMN. Selecting a subset here is the same mistake one layer
 # down: whatever is not written cannot be found later, and "we don't have it"

@@ -214,6 +214,13 @@ n_elastic <- 0L; elastic_seats <- character(0)
 # stronghold back a share of the vote just taken off it -- measured on
 # MacKillop, plain renormalisation undid 38% of the cut (35.3 -> 40.6).
 DEV_SLOPE <- dev_slopes_for(union(parties, names(st_b)))
+cat(sprintf("BS1d  dev slopes: %s%s
+",
+            if (all(DEV_SLOPE == 1)) "all 1.000 (uniform swing)" else
+              paste(sprintf("%s=%.3f", names(DEV_SLOPE), DEV_SLOPE), collapse=" "),
+            if (length(attr(DEV_SLOPE, "absent")))
+              paste0(" | not contested here: ",
+                     paste(attr(DEV_SLOPE, "absent"), collapse=",")) else ""))
 pinned <- matrix(FALSE, nrow(mat), ncol(mat), dimnames = dimnames(mat))
 
 for (p in parties) if (p %in% names(st_b) && p %in% names(st_a)) {
