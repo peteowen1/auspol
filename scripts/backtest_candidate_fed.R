@@ -157,6 +157,32 @@ RISK <- if (identical(Sys.getenv("AUSPOL_INSURGENCY_SHRINK", "0"), "1") &&
 # short loses and no ceiling is imposed. Default 0 leaves every past run
 # reproducible.
 SURGE_H <- as.numeric(Sys.getenv("AUSPOL_SURGE_H", "0"))
+
+# PER-SEAT SURGE HAZARD FROM SALIENCE, against
+# docs/plans/prereg-salience-surge-hazard.md.
+#
+# A FLAT hazard is the wrong shape, and that is measured rather than assumed:
+# docs/reviews/shrink-vs-surge-2026-08-26.md shows the surge helping where
+# non-majors emerged (SA's four One Nation seats, NSW's nine independents) and
+# costing Brier in WA and Victoria, where they did not. Applying a 5.08% chance
+# to every seat adds probability where nothing is happening.
+#
+# Salience conditions it: high in Curtin and North Sydney, zero in the ~130
+# seats where nobody is being searched for. Seats with no salience row fall back
+# to SURGE_H, so setting AUSPOL_SURGE_H=0 alongside this means "surge ONLY where
+# there is a signal" -- which is the arm worth testing.
+SALIENCE_HAZ <- NULL
+if (identical(Sys.getenv("AUSPOL_SALIENCE_SURGE", "0"), "1")) {
+  hf <- "output/salience-hazard.csv"
+  if (!file.exists(hf))
+    stop("AUSPOL_SALIENCE_SURGE=1 but ", hf, " is missing; ",
+         "run scripts/fit_salience_hazard.R")
+  SALIENCE_HAZ <- data.table::fread(hf, showProgress = FALSE)
+  cat(sprintf("BF0h salience hazard loaded: %d seats | median %.4f | max %.4f
+",
+              nrow(SALIENCE_HAZ), stats::median(SALIENCE_HAZ$surge_h),
+              max(SALIENCE_HAZ$surge_h)))
+}
 if (SURGE_H > 0)
   cat(sprintf("BF0s surge hazard %.4f, size N(15.6, 6.1), floor 2%%
 ", SURGE_H))
@@ -179,6 +205,7 @@ cat(sprintf("BS1f fallback_smooth %.2f | flow_sd %.2f
 ", FB_SMOOTH, FLOW_SD))
 
 CAL_TAG <- paste0(
+  if (identical(Sys.getenv("AUSPOL_SALIENCE_SURGE", "0"), "1")) "-salsurge" else "",
   if (as.numeric(Sys.getenv("AUSPOL_SURGE_H", "0")) > 0)
     sprintf("-surge%s", sub("0[.]", "", format(as.numeric(Sys.getenv("AUSPOL_SURGE_H")), nsmall = 4)))
   else "",
@@ -458,10 +485,26 @@ for (X in out_all) {
     cat(sprintf("BF2i %s seats whose ceiling now exceeds 0.99: %d of %d\n",
                 want, sum(shrink_arg < 0.02), length(shrink_arg)))
   }
+  # Resolve the per-seat hazard. Seats absent from the salience table keep the
+  # flat SURGE_H, and a missing seat is REPORTED -- a silent fallback to the flat
+  # rate would make a partial salience corpus look like a complete one.
+  surge_arg <- SURGE_H
+  if (!is.null(SALIENCE_HAZ)) {
+    sn <- rownames(X$shares)
+    if (is.null(sn) && is.data.frame(X$shares)) sn <- as.character(X$shares$seat)
+    h <- SALIENCE_HAZ[election == paste0("fed", X$K$to)]
+    v <- setNames(h$surge_h, h$seat)[sn]
+    miss <- sum(is.na(v))
+    v[is.na(v)] <- SURGE_H
+    surge_arg <- unname(v)
+    cat(sprintf("BF0h fed%d: salience hazard for %d of %d seats (%d fell back to %.4f) | mean %.4f
+",
+                X$K$to, length(sn) - miss, length(sn), miss, SURGE_H, mean(surge_arg)))
+  }
   set.seed(SEED)
   sim <- simulate_seat_contests(X$shares, X$fm, party_sd = psd, seat_sd = sd_w * SEAT_SD_MULT,
                                 n_sims = N_SIMS, smooth = SMOOTH, seed = SEED,
-                                shrink = shrink_arg, surge_h = SURGE_H,
+                                shrink = shrink_arg, surge_h = surge_arg,
                                 party_cor = PARTY_COR, statewide_draws = X$sw_draws,
                                 fallback_smooth = FB_SMOOTH, flow_sd = FLOW_SD)
   wp <- as.data.table(sim$win_prob)
