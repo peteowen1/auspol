@@ -15,7 +15,7 @@ shippable on its own.
 
 | | ticket | depends on | status |
 |---|---|---|---|
-| **A1** | Conditional variance by candidate continuity | — | open |
+| **A1** | ~~Conditional variance by continuity~~ REFUTED; replaced by level-dependent variance | — | pre-registered |
 | **A2** | Joint slope + spread retune, stage 1 | — | pre-registered |
 | **A3** | Joint retune, stage 2 (spread) | A2 passes | blocked |
 | **B1** | Candidate-level rows through the projection | — | open |
@@ -31,24 +31,33 @@ shippable on its own.
 
 ## A — calibration, without restructuring anything
 
-### A1. Conditional variance by candidate continuity
+### A1. ~~Conditional variance by candidate continuity~~ → level-dependent variance
 
-**Why.** The persistence split is not only about the mean. Same-candidate R² is
-**0.79**; new-candidate R² is **0.09**. We are far more uncertain about a new
-candidate and the model uses one `party_sd` for both. Federal calibration slopes
-of 0.18–0.38 say the model is overconfident nearly everywhere, and this is the
-most likely cause.
+**REFUTED as first written**, before it was pre-registered. See
+`reviews/conditional-variance-2026-08-27.md`. The claim was that a new candidate
+is far more uncertain, from R² 0.79 against 0.09. Measured, the multiplier is
+**0.87** — a new candidate has *lower* residual spread. R² is explained over
+total variance, and a new candidate's prior vote is mostly zeros, so there was
+almost nothing to explain. The ALP/LNP control reads 7.87 against 7.80, a
+multiplier of 1, which is what it must be.
 
-**Do.** Let `party_sd` take a per-candidate multiplier: 1.0 where the same
-person stands again, higher where they do not. Estimate the multiplier from the
-residual spread in each group rather than choosing it.
+**The replacement, which the same data does support.** Residual spread scales
+with the LEVEL of the share, and the model uses one number for every level:
 
-**Accept.** Calibration improves by more than the MDE (0.419, clustered on 5
-harnesses) without Brier worsening by more than 0.0089. Pre-register first —
-this is a new arm, so it needs its own criterion or an amendment to
-`prereg-joint-slope-spread-retune.md`.
+```
+sd(share) = 2.01 + 7.04 * sqrt(p(1-p))        (9,015 obs, 17 pairs, b SE 0.15)
+```
 
-**Note.** Suspected to be worth more than any slope change, and cheaper.
+Today's flat 3.81 is too wide below ~7% and too narrow above ~15%. Too narrow at
+the top is overconfidence about who wins, which is what federal calibration
+slopes of 0.18–0.38 look like — the first measured mechanism for that symptom.
+
+**Pre-registered** in `prereg-level-dependent-variance.md`. Calibration is the
+primary criterion; this moves uncertainty, not point estimates.
+
+**Expected cost, accepted in advance:** it makes emergence seats *worse*, since
+a narrower band at 1.8% puts Dai Le's 29.5% further out of reach. Salience is
+the intended fix for those and is unshipped, so the cost is current.
 
 ### A2. Joint retune, stage 1 — slopes
 
