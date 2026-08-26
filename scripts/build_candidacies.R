@@ -85,7 +85,20 @@ for (y in fed_years) {
                     function(v) sum(.SD[[v]]))),
          by = .(seat = DivisionNm, surname = Surname, given = GivenNm,
                 party_raw = PartyNm), .SDcols = names(d)]
-  d[, `:=`(party = classify_party(party_raw, NULL),
+  # PASS THE CODE, not just the name. The AEC ships PartyNm as a full name in
+  # most years and as a bare abbreviation in some -- "LNP" and "A.L.P." both
+  # appear -- and no NAME rule in classify_party() matches a bare abbreviation,
+  # so both fell through to OTH. That put 16 Queensland LNP winners and Marion
+  # Scrymgour into the minor-party bucket, and any question of the form "what
+  # did the non-majors poll here last time" then read the Coalition's or
+  # Labor's vote as a minor's. Lingiari 2022 is the worked example: Scrymgour's
+  # 36.6% became a prior non-major vote, and a genuine minor candidate on 2.9%
+  # inherited it in 2025 -- a 33.7-point error that dominated a calibration
+  # band and was read as a modelling failure.
+  #
+  # The code path already classified both correctly. This is the same fault the
+  # WA builder carries a comment about at line ~261, in a different builder.
+  d[, `:=`(party = classify_party(party_raw, party_ab),
            election = sprintf("fed%d", y), region = "fed", year = y)]
   parts[[sprintf("fed%d", y)]] <- d
   cat(sprintf("BC1  fed%d: %d candidates in %d seats\n", y, nrow(d), uniqueN(d$seat)))
