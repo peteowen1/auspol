@@ -386,11 +386,45 @@ if (is.finite(ONP_CV) && ONP_CV > 0) {
               cur, ONP_CV, stats::sd(onp_ratio) / mean(onp_ratio)))
 }
 
+# PER-CLASS DEVIATION SLOPE. Uniform swing moves every seat by the same number
+# of points, which is the same as asserting that a seat's DEVIATION from the
+# statewide mean persists intact -- a slope of exactly 1.000. Estimated across
+# the 17 election pairs in output/candidacies.csv, that is rejected for every
+# class, hardest for the minor ones:
+#
+#   OTH 0.215 (t -29.9) | ONP 0.551 | OTH_RIGHT 0.580 | IND 0.618 (t -17.8)
+#   LNP 0.863 (t -11.2) | ALP 0.901 (t -8.9) | GRN 0.926 (t -6.1)
+#
+# THE DEFAULT HERE IS 1.000 FOR EVERY CLASS, which reproduces uniform swing
+# byte-for-byte. The slopes above are NOT wired in by this commit: changing them
+# changes the published forecast, and that needs measuring across all five
+# backtest harnesses first. This commit is the plumbing and its no-op proof.
+#
+# The statewide level still comes from the trend model, not from the fit. Only
+# the seat's deviation around that level is shrunk, so poll information is
+# preserved -- a naive `pcv ~ prev` regression would absorb the statewide shift
+# into its intercept and throw the polls away.
+SLOPE_DEFAULT <- 1.0
+SLOPE <- setNames(rep(SLOPE_DEFAULT, length(colnames(mat22))), colnames(mat22))
+if (nzchar(Sys.getenv("AUSPOL_DEV_SLOPE"))) {
+  kv <- strsplit(strsplit(Sys.getenv("AUSPOL_DEV_SLOPE"), ",")[[1]], "=")
+  for (e in kv) if (length(e) == 2L && e[1] %in% names(SLOPE))
+    SLOPE[[e[1]]] <- as.numeric(e[2])
+}
+# PRINT WHAT WAS APPLIED, and print it before any result is read. An experiment
+# that never ran looks exactly like an experiment with no effect; on 2026-08-19
+# a file edit died and two runs behind it used the unmodified script, returning
+# byte-identical output that read as "this input does not matter".
+cat(sprintf("DS1  deviation slopes: %s\n",
+            paste(sprintf("%s=%.3f", names(SLOPE), SLOPE), collapse = " ")))
+if (all(SLOPE == 1)) cat("DS1  all 1.000 -- uniform swing, output must be unchanged\n")
+
 parties <- colnames(mat22)
 shares <- mat22
 modelled <- intersect(parties, names(state_mean))
 for (p in setdiff(modelled, "ONP")) {
-  shares[, p] <- pmax(0, mat22[, p] + (state_mean[[p]] - a22[[p]]))
+  # At SLOPE 1 this is mat22 + (state_mean - a22), the previous expression.
+  shares[, p] <- pmax(0, state_mean[[p]] + SLOPE[[p]] * (mat22[, p] - a22[[p]]))
 }
 # The trend models five classes; the seat data carries seven, splitting OTH
 # into OTH, OTH_RIGHT and IND. Those three must be SCALED to the forecast OTH
@@ -403,8 +437,19 @@ unmodelled <- setdiff(parties, modelled)
 if (length(unmodelled) && !is.na(state_mean["OTH"])) {
   base_share <- sum(a22[unmodelled], a22[["OTH"]], na.rm = TRUE)
   scale_to <- state_mean[["OTH"]] / base_share
-  for (p in unmodelled) shares[, p] <- pmax(0, mat22[, p] * scale_to)
-  if ("OTH" %in% modelled) shares[, "OTH"] <- pmax(0, mat22[, "OTH"] * scale_to)
+  # THE MULTIPLICATIVE PATH NEEDS THE SLOPE TOO, and it is the one that carries
+  # IND -- the class with the worst seat-level error in the corpus (RMSE ~7.2,
+  # double every other class) and the second-lowest slope. Applying the slope to
+  # the additive path alone would have left independents on uniform swing while
+  # claiming the model had been changed, which is the "fix one harness, miss the
+  # others" failure in a single file.
+  #
+  # Shrink toward the class's own scaled statewide level, so at SLOPE 1 this is
+  # exactly mat22[, p] * scale_to as before.
+  for (p in c(unmodelled, if ("OTH" %in% modelled) "OTH")) {
+    tgt <- a22[[p]] * scale_to
+    shares[, p] <- pmax(0, tgt + SLOPE[[p]] * (mat22[, p] * scale_to - tgt))
+  }
   cat(sprintf("minor field scaled x%.2f: %s at 2022 %.1f%% -> forecast %.1f%%
 ",
               scale_to, paste(c(unmodelled, "OTH"), collapse = "+"),
