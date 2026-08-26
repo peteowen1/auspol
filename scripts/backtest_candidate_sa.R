@@ -59,6 +59,24 @@ options(auspol.root = normalizePath("."))
 suppressMessages(devtools::load_all(quiet = TRUE))
 suppressMessages(library(data.table))
 
+# LEVEL-DEPENDENT SEAT VARIANCE, off by default. AUSPOL_LEVEL_SD="1.10,8.67"
+# makes the per-seat deviation sd = a + b*sqrt(p(1-p)) instead of a flat
+# seat_sd. Pre-registered in docs/plans/prereg-level-dependent-variance.md;
+# unset reproduces the published model exactly.
+.level_sd <- local({
+  raw <- Sys.getenv("AUSPOL_LEVEL_SD", "")
+  if (!nzchar(raw)) NULL else {
+    v <- suppressWarnings(as.numeric(strsplit(raw, ",")[[1]]))
+    if (length(v) != 2L || !all(is.finite(v)))
+      stop("AUSPOL_LEVEL_SD must be two finite numbers, e.g. 1.10,8.67")
+    v
+  }
+})
+cat(sprintf("LV1  level_sd: %s
+", if (is.null(.level_sd)) "OFF (flat seat_sd)" else
+            sprintf("a=%.2f b=%.2f", .level_sd[1], .level_sd[2])))
+
+
 # ---- other jurisdictions' flows, date-filtered ------------------------------
 # Against docs/plans/prereg-qld-flows.md and docs/plans/prereg-wa-flows.md.
 # Queensland 2020 and 2024 add 750 exclusion events; Western Australia's seven
@@ -469,7 +487,7 @@ FB_SMOOTH <- as.numeric(Sys.getenv("AUSPOL_FALLBACK_SMOOTH", "0"))
 FLOW_SD   <- as.numeric(Sys.getenv("AUSPOL_FLOW_SD", "0"))
 cat(sprintf("BS1f fallback_smooth %.2f | flow_sd %.2f\n", FB_SMOOTH, FLOW_SD))
 
-sim <- simulate_seat_contests(shares, fm, party_sd = psd, seat_sd = sp$sd_within * SEAT_SD_MULT,
+sim <- simulate_seat_contests(level_sd = .level_sd, shares, fm, party_sd = psd, seat_sd = sp$sd_within * SEAT_SD_MULT,
                               n_sims = N_SIMS, smooth = SMOOTH, seed = SEED,
                               shrink = SHRINK, party_cor = PARTY_COR,
                               fallback_smooth = FB_SMOOTH, flow_sd = FLOW_SD,

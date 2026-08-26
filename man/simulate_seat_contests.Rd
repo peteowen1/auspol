@@ -9,6 +9,7 @@ simulate_seat_contests(
   matrix,
   party_sd,
   seat_sd = 3.5,
+  level_sd = NULL,
   n_sims = 2000,
   smooth = 0.15,
   seed = NULL,
@@ -46,6 +47,29 @@ an estimate with a measured RMSE of 5.0 points against SA's actual result,
 against 3.5 for a party projected from its own prior seat vote. Giving both
 the same figure claims the constructed number is as reliable as the
 measured one. See docs/plans/prereg-onp-seat-uncertainty.md.}
+
+\item{level_sd}{Optional \code{c(a, b)} making the per-seat deviation depend on the
+LEVEL of a party's share: \code{sd = a + b * sqrt(p * (1 - p))}, with \code{p} the
+party's projected share in that seat. \code{NULL}, the default, keeps the flat
+\code{seat_sd} and is byte-identical to the previous behaviour.
+
+Why it exists: a flat 3.5 points is one number for every level, and
+measured over 9,015 seat-party observations across 17 election pairs the
+real spread runs 2.3 at 2\% to 5.4 at 50\%. Flat is therefore too WIDE at the
+bottom, giving no-hopers more chance than they have, and too NARROW at the
+top, making the leader more certain than they are. Too narrow at high
+shares is overconfidence about who wins, which is what federal calibration
+slopes of 0.18-0.38 look like.
+
+The fitted seat-level form is \code{1.10 + 8.67 * sqrt(p(1-p))}. That is the
+TOTAL residual (\code{1.68 + 7.85 * sqrt(p(1-p))}) with the statewide component
+removed in variance, because \code{party_sd} is added separately here and
+feeding the total in would count it twice.
+
+It is much flatter than binomial -- \code{sqrt(p(1-p))} alone would predict 9.8
+at 50\% against 6.4 observed -- because a seat's vote is not a random sample.
+
+Not adopted by default: see \code{docs/plans/prereg-level-dependent-variance.md}.}
 
 \item{n_sims}{Number of simulations.}
 

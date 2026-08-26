@@ -82,3 +82,31 @@ for (s in c(TRUE, FALSE)) {
               if (s) "same person" else "person gone", nrow(J[same == s]),
               stats::sd(stats::residuals(m))))
 }
+
+# ---- SEAT-LEVEL component, which is what simulate_seat_contests() draws ------
+# The fit above is TOTAL residual sd: it contains the statewide party movement
+# AND the seat's own deviation. simulate_seat_contests() adds those separately --
+# party_sd at the statewide level, seat_sd per seat -- so feeding the total into
+# the seat draw would count the statewide part twice.
+#
+# Subtract it in variance: seat_sd(p) = sqrt(total(p)^2 - party_sd^2).
+PARTY_SD <- 1.5   # the published value in fit_seats_full.R
+cat("\nCV5  decomposing total residual sd into its seat-level part\n")
+B <- rbindlist(rows)
+B[, sw := mean(now) - mean(prev), by = .(pair, class)]
+B[, pred := pmax(0, prev + sw)][, resid := now - pred]
+B[, s := sqrt(pmin(pmax(pred, 0), 100) / 100 * (1 - pmin(pmax(pred, 0), 100) / 100))]
+K <- sqrt(pi / 2)
+tot <- stats::lm(abs(resid) ~ s, B)
+ta <- coef(tot)[1] * K; tb <- coef(tot)[2] * K
+cat(sprintf("     TOTAL      sd = %.2f + %.2f * sqrt(p(1-p))\n", ta, tb))
+grid <- seq(0, 0.5, by = 0.01)
+tot_sd <- ta + tb * sqrt(grid * (1 - grid))
+seat_sd <- sqrt(pmax(tot_sd^2 - PARTY_SD^2, 0.01))
+fit2 <- stats::lm(seat_sd ~ sqrt(grid * (1 - grid)))
+cat(sprintf("     SEAT-LEVEL sd = %.2f + %.2f * sqrt(p(1-p))   (after removing party_sd %.1f)\n",
+            coef(fit2)[1], coef(fit2)[2], PARTY_SD))
+cat(sprintf("     check: at p=0.50 total %.2f -> seat %.2f | at p=0.02 total %.2f -> seat %.2f\n",
+            ta + tb * 0.5, sqrt((ta + tb * 0.5)^2 - PARTY_SD^2),
+            ta + tb * sqrt(.02 * .98), sqrt((ta + tb * sqrt(.02 * .98))^2 - PARTY_SD^2)))
+cat(sprintf("     today's flat seat_sd is 3.50 for every level\n"))

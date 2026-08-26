@@ -42,6 +42,28 @@
 #'   crosses the winning threshold, downside costs nothing where it was
 #'   already losing. Measured at 71 seats up against 1 down; see
 #'   docs/reviews/onp-seat-uncertainty-2026-08-19.md.
+#' @param level_sd Optional `c(a, b)` making the per-seat deviation depend on the
+#'   LEVEL of a party's share: `sd = a + b * sqrt(p * (1 - p))`, with `p` the
+#'   party's projected share in that seat. `NULL`, the default, keeps the flat
+#'   `seat_sd` and is byte-identical to the previous behaviour.
+#'
+#'   Why it exists: a flat 3.5 points is one number for every level, and
+#'   measured over 9,015 seat-party observations across 17 election pairs the
+#'   real spread runs 2.3 at 2% to 5.4 at 50%. Flat is therefore too WIDE at the
+#'   bottom, giving no-hopers more chance than they have, and too NARROW at the
+#'   top, making the leader more certain than they are. Too narrow at high
+#'   shares is overconfidence about who wins, which is what federal calibration
+#'   slopes of 0.18-0.38 look like.
+#'
+#'   The fitted seat-level form is `1.10 + 8.67 * sqrt(p(1-p))`. That is the
+#'   TOTAL residual (`1.68 + 7.85 * sqrt(p(1-p))`) with the statewide component
+#'   removed in variance, because `party_sd` is added separately here and
+#'   feeding the total in would count it twice.
+#'
+#'   It is much flatter than binomial -- `sqrt(p(1-p))` alone would predict 9.8
+#'   at 50% against 6.4 observed -- because a seat's vote is not a random sample.
+#'
+#'   Not adopted by default: see `docs/plans/prereg-level-dependent-variance.md`.
 #' @param seat_sd Per-seat idiosyncratic deviation, in points. A single number
 #'   applies to every party; a named vector gives each party its own, which
 #'   matters when one party's seat share is ALLOCATED rather than measured. One
@@ -134,6 +156,7 @@
 #'   count) but matters to anyone joining TCP data against `wins`.
 #' @export
 simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
+                                   level_sd = NULL,
                                    n_sims = 2000, smooth = 0.15, seed = NULL,
                                    statewide_draws = NULL,
                                    party_draws = NULL, shrink = 0,
@@ -278,6 +301,12 @@ simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
            call. = FALSE)
     }
     seat_sd_vec <- as.numeric(seat_sd[parties])
+  }
+  if (!is.null(level_sd)) {
+    if (length(level_sd) != 2L || !all(is.finite(level_sd)) || any(level_sd < 0)) {
+      stop("level_sd must be c(a, b), both finite and non-negative", call. = FALSE)
+    }
+    level_sd <- as.numeric(level_sd)
   }
   if (anyNA(seat_sd_vec) || any(seat_sd_vec < 0)) {
     stop("seat_sd must be finite and non-negative", call. = FALSE)
@@ -453,7 +482,15 @@ simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
       if (!is.null(party_draws)) {
         for (nm in names(party_draws)) base_v[[nm]] <- party_draws[[nm]][s, i]
       }
-      v <- base_v + shift + stats::rnorm(K, 0, seat_sd_vec)
+      # PER-CELL sd when level_sd is given: a party at 2% and one at 50% do not
+      # deviate by the same number of points. `base_v` is this draw's projected
+      # share, so the width tracks the level actually being simulated rather
+      # than a fixed prior. NULL keeps seat_sd_vec exactly.
+      sd_cell <- if (is.null(level_sd)) seat_sd_vec else {
+        pp <- pmin(pmax(base_v, 0), 100) / 100
+        level_sd[1L] + level_sd[2L] * sqrt(pp * (1 - pp))
+      }
+      v <- base_v + shift + stats::rnorm(K, 0, sd_cell)
       v[v < 0] <- 0
       # INSURGENCY SURGE. A fat tail, not a wider bell. Symmetric widening of
       # seat_sd was measured across 1.0-2.0 and "barely matters" -- no plausible

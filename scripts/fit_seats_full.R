@@ -19,6 +19,24 @@ options(auspol.root = normalizePath("."))
 suppressMessages(devtools::load_all(quiet = TRUE))
 suppressMessages(library(data.table))
 
+# LEVEL-DEPENDENT SEAT VARIANCE, off by default. AUSPOL_LEVEL_SD="1.10,8.67"
+# makes the per-seat deviation sd = a + b*sqrt(p(1-p)) instead of a flat
+# seat_sd. Pre-registered in docs/plans/prereg-level-dependent-variance.md;
+# unset reproduces the published model exactly.
+.level_sd <- local({
+  raw <- Sys.getenv("AUSPOL_LEVEL_SD", "")
+  if (!nzchar(raw)) NULL else {
+    v <- suppressWarnings(as.numeric(strsplit(raw, ",")[[1]]))
+    if (length(v) != 2L || !all(is.finite(v)))
+      stop("AUSPOL_LEVEL_SD must be two finite numbers, e.g. 1.10,8.67")
+    v
+  }
+})
+cat(sprintf("LV1  level_sd: %s
+", if (is.null(.level_sd)) "OFF (flat seat_sd)" else
+            sprintf("a=%.2f b=%.2f", .level_sd[1], .level_sd[2])))
+
+
 N_SIMS  <- as.integer(Sys.getenv("AUSPOL_N_SIMS", "20000"))
 SEAT_SD <- 3.5      # within-region seat deviation, from seat_swing_spread()
 # NOT adopted: One Nation was given its own, larger seat sd here (5.5, the
@@ -607,7 +625,7 @@ t0 <- Sys.time()
 SHRINK <- as.numeric(Sys.getenv("AUSPOL_SHRINK", "0.10"))
 if (SHRINK > 0) cat(sprintf("CAL  calibration shrink %.2f applied
 ", SHRINK))
-sim <- simulate_seat_contests(shares, fm, party_sd = psd, seat_sd = SEAT_SD, shrink = SHRINK,
+sim <- simulate_seat_contests(level_sd = .level_sd, shares, fm, party_sd = psd, seat_sd = SEAT_SD, shrink = SHRINK,
                               n_sims = N_SIMS, smooth = SMOOTH, seed = SEED,
                               statewide_draws = sw_draws)
 cat(sprintf("\nsimulated %d seats x %d runs in %.0fs | pooled fallback %.1f%%\n",

@@ -24,6 +24,24 @@ options(auspol.root = normalizePath("."))
 suppressMessages(devtools::load_all(quiet = TRUE))
 suppressMessages(library(data.table))
 
+# LEVEL-DEPENDENT SEAT VARIANCE, off by default. AUSPOL_LEVEL_SD="1.10,8.67"
+# makes the per-seat deviation sd = a + b*sqrt(p(1-p)) instead of a flat
+# seat_sd. Pre-registered in docs/plans/prereg-level-dependent-variance.md;
+# unset reproduces the published model exactly.
+.level_sd <- local({
+  raw <- Sys.getenv("AUSPOL_LEVEL_SD", "")
+  if (!nzchar(raw)) NULL else {
+    v <- suppressWarnings(as.numeric(strsplit(raw, ",")[[1]]))
+    if (length(v) != 2L || !all(is.finite(v)))
+      stop("AUSPOL_LEVEL_SD must be two finite numbers, e.g. 1.10,8.67")
+    v
+  }
+})
+cat(sprintf("LV1  level_sd: %s
+", if (is.null(.level_sd)) "OFF (flat seat_sd)" else
+            sprintf("a=%.2f b=%.2f", .level_sd[1], .level_sd[2])))
+
+
 # ---- no other jurisdiction's flows reach New South Wales --------------------
 # There WAS a Queensland gate here. It was defined and never called, while the
 # harness still wrote its output under a "-qld" filename -- so an arm run with
@@ -347,7 +365,7 @@ cat(sprintf("BS1p party_sd %.2f (realised statewide sd is 2.33)
 # harness today. fit_seats_full.R publishes with 0.10; the default here is 0 so
 # past runs stay comparable.
 SHRINK <- as.numeric(Sys.getenv("AUSPOL_SHRINK", "0"))
-sim <- simulate_seat_contests(shares, fm, party_sd = psd, seat_sd = sp$sd_within * SEAT_SD_MULT,
+sim <- simulate_seat_contests(level_sd = .level_sd, shares, fm, party_sd = psd, seat_sd = sp$sd_within * SEAT_SD_MULT,
                               n_sims = N_SIMS, smooth = SMOOTH, seed = SEED, party_cor = PARTY_COR,
                               shrink = SHRINK,
                               fallback_smooth = FB_SMOOTH, flow_sd = FLOW_SD,

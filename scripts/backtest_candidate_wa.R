@@ -29,6 +29,24 @@ options(auspol.root = normalizePath("."))
 suppressMessages(devtools::load_all(quiet = TRUE))
 suppressMessages(library(data.table))
 
+# LEVEL-DEPENDENT SEAT VARIANCE, off by default. AUSPOL_LEVEL_SD="1.10,8.67"
+# makes the per-seat deviation sd = a + b*sqrt(p(1-p)) instead of a flat
+# seat_sd. Pre-registered in docs/plans/prereg-level-dependent-variance.md;
+# unset reproduces the published model exactly.
+.level_sd <- local({
+  raw <- Sys.getenv("AUSPOL_LEVEL_SD", "")
+  if (!nzchar(raw)) NULL else {
+    v <- suppressWarnings(as.numeric(strsplit(raw, ",")[[1]]))
+    if (length(v) != 2L || !all(is.finite(v)))
+      stop("AUSPOL_LEVEL_SD must be two finite numbers, e.g. 1.10,8.67")
+    v
+  }
+})
+cat(sprintf("LV1  level_sd: %s
+", if (is.null(.level_sd)) "OFF (flat seat_sd)" else
+            sprintf("a=%.2f b=%.2f", .level_sd[1], .level_sd[2])))
+
+
 P <- election_data_path()
 eps <- 1e-6
 
@@ -164,7 +182,7 @@ for (K in PAIRS) {
   sd_used <- if (is.na(prev_spread)) 3.5 else prev_spread
   psd <- setNames(rep(PARTY_SD, ncol(shares)), colnames(shares))
 
-  sim <- simulate_seat_contests(shares, fm, party_sd = psd,
+  sim <- simulate_seat_contests(level_sd = .level_sd, shares, fm, party_sd = psd,
                                 seat_sd = sd_used * SEAT_SD_MULT,
                                 n_sims = N_SIMS, smooth = SMOOTH, seed = SEED,
                                 shrink = SHRINK, fallback_smooth = FB_SMOOTH,
