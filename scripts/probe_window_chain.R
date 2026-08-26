@@ -40,7 +40,12 @@ qry <- function(kw, from, to) {
     if (!is.null(r) && !is.null(r$interest_over_time)) break
     Sys.sleep(12 * att)
   }
-  if (is.null(r) || is.null(r$interest_over_time)) { saveRDS(list(empty=TRUE), f); return(NULL) }
+  # A FAILED REQUEST IS NOT "NO DATA". `r` is NULL when every attempt errored,
+  # and caching that as empty makes a transient throttle permanent and
+  # indistinguishable from a genuine zero. Only a request that SUCCEEDED and
+  # returned no series is a real empty.
+  if (is.null(r)) { cat("WC!  request failed -- NOT cached, will retry\n"); return(NULL) }
+  if (is.null(r$interest_over_time)) { saveRDS(list(empty=TRUE), f); return(NULL) }
   d <- as.data.table(r$interest_over_time)
   d[, hits := suppressWarnings(as.numeric(gsub("<", "", hits)))][is.na(hits), hits := 0]
   d[, date := as.Date(date)]

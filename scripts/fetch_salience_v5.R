@@ -63,7 +63,19 @@ qry <- function(kw) {
     if (!is.null(r) && !is.null(r$interest_over_time)) break
     Sys.sleep(12 * att)
   }
-  if (is.null(r) || is.null(r$interest_over_time)) { saveRDS(list(empty = TRUE), f); return(NULL) }
+  # A FAILED REQUEST IS NOT "NO DATA". `r` is NULL when every attempt errored --
+  # a throttle, a network blip -- and caching that as empty makes a transient
+  # failure permanent and indistinguishable from a genuine zero. 21 entries were
+  # poisoned this way, including a batch holding Bandt, Steggall, Katter,
+  # Sharkie and Wilkie. Only a request that SUCCEEDED and returned no series is
+  # a real empty, and only that is cached.
+  if (is.null(r)) {
+    cat(sprintf("S5!  request failed for %s -- NOT cached, will retry
+",
+                paste(kw, collapse = ", ")))
+    return(NULL)
+  }
+  if (is.null(r$interest_over_time)) { saveRDS(list(empty = TRUE), f); return(NULL) }
   d <- as.data.table(r$interest_over_time)
   d[, hits := suppressWarnings(as.numeric(gsub("<", "", hits)))][is.na(hits), hits := 0]
   d[, date := as.Date(date)]
