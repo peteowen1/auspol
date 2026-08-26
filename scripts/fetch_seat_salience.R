@@ -52,7 +52,16 @@ batch <- function(kw, geo, to) {
   key <- gsub("[^A-Za-z0-9]", "_",
               sprintf("ss-%s-%s-%s", geo, to, paste(kw, collapse = "-")))
   f <- file.path(CACHE, paste0(substr(key, 1, 150), ".rds"))
-  if (file.exists(f)) { z <- readRDS(f); return(if (isTRUE(z$empty)) NULL else z$m) }
+  if (file.exists(f)) {
+    z <- readRDS(f)
+    if (isTRUE(z$empty)) return(NULL)
+    # Legacy entries hold only the aggregate; new ones hold the series. Both are
+    # readable, and a legacy entry is flagged so a refetch can target it.
+    if (!is.null(z$series)) return(series_stats(z$series))
+    o <- z$m
+    attr(o, "legacy") <- TRUE
+    return(o)
+  }
   r <- NULL
   for (att in 1:3) {
     r <- tryCatch(gtrends(keyword = kw, geo = geo, time = paste(from, to),
@@ -67,9 +76,37 @@ batch <- function(kw, geo, to) {
   d[, hits := suppressWarnings(as.numeric(gsub("<", "", hits)))][is.na(hits), hits := 0]
   d[, date := as.Date(date)]
   cutoff <- max(d$date) - WEEKS * 7L
-  m <- d[date > cutoff, .(hits = mean(hits)), by = keyword]
-  out <- setNames(m$hits, m$keyword)
-  saveRDS(list(m = out, empty = FALSE), f)
+  # KEEP THE WHOLE SERIES. NEVER THE AGGREGATE ALONE.
+  # The first version cached only an 8-week mean, so when the campaign RISE
+  # turned out to be the statistic that separates a real emergence from a
+  # namesake -- Cameron Smith the rugby league captain outscored Bill Shorten in
+  # Maribyrnong on 3.8% of the vote -- every one of 259 cached batches had to be
+  # refetched, and by then Google had throttled us out.
+  #
+  # A scrape is expensive and rate-limited; a disk write is not. Store the raw
+  # weekly series and derive whatever is needed later: level, rise, peak, slope,
+  # volatility, time-to-peak. None of those need another query if the series is
+  # on disk. Same rule as never aggregating a source down to the columns you
+  # happen to need today.
+  keep <- d[, .(keyword, date, hits)]
+  saveRDS(list(series = keep, empty = FALSE, fetched = Sys.Date()), f)
+  series_stats(keep)
+}
+
+# Derive the summary statistics from a stored series. Adding a new statistic
+# here costs nothing -- no refetch, because the series is on disk.
+series_stats <- function(d) {
+  d <- as.data.table(d)
+  cutoff <- max(d$date) - WEEKS * 7L
+  m <- d[date >  cutoff, .(camp = mean(hits)), by = keyword]
+  b <- d[date <= cutoff, .(base = mean(hits)), by = keyword]
+  pk <- d[, .(peak = max(hits)), by = keyword]
+  x <- merge(merge(m, b, by = "keyword", all.x = TRUE), pk, by = "keyword", all.x = TRUE)
+  x[!is.finite(base), base := 0]
+  out <- setNames(x$camp, x$keyword)
+  attr(out, "rise") <- setNames(x$camp / pmax(x$base, 0.5), x$keyword)
+  attr(out, "peak") <- setNames(x$peak, x$keyword)
+  attr(out, "base") <- setNames(x$base, x$keyword)
   out
 }
 
@@ -126,7 +163,19 @@ MAX_SEATS <- as.integer(Sys.getenv("AUSPOL_SALIENCE_MAX", "12"))
 if (nzchar(EL_ALL)) {
   yr <- as.integer(sub("^fed", "", EL_ALL))
   WANT <- unique(C[region == "fed" & year == yr, .(election = EL_ALL, seat)])
-  cat(sprintf("SS0  %s: all %d seats | max %d new per run
+  # RANDOM ORDER, SEEDED. Google throttled the fetch after ~40 seats, and the
+  # set fetched by then was biased 2:1 toward seats a non-major won -- the nine
+  # hand-picked known cases came first, and alphabetical order after them is
+  # not random with respect to anything but it is not random with respect to
+  # WHEN we stop either. Scoring on a truncated alphabetical run would be
+  # selection on the outcome by the back door.
+  #
+  # A seeded shuffle makes any prefix an unbiased sample of the election, so a
+  # partial fetch is scoreable and a longer one is simply more precise. The
+  # nine hand-picked seats are excluded from scoring separately.
+  set.seed(20260826L)
+  WANT <- WANT[sample(.N)]
+  cat(sprintf("SS0  %s: %d seats in SEEDED RANDOM order | max %d new per run
 ",
               EL_ALL, nrow(WANT), MAX_SEATS))
 } else {
@@ -143,6 +192,12 @@ fed2022,Griffith
 ")
   MAX_SEATS <- nrow(WANT)
 }
+# Previous election's winner per seat, for the priority rule above.
+.W <- C[region == "fed" & elected == TRUE, .(year, seat, wn = name)]
+.Y <- sort(unique(C[region == "fed", year]))
+.N <- data.table(year = .Y[-length(.Y)], to = .Y[-1])
+INC <- merge(.W, .N, by = "year")[, .(year = to, seat, kw_inc = normalise_name(wn))]
+
 out <- list(); new_seats <- 0L
 for (i in seq_len(nrow(WANT))) {
   el <- WANT$election[i]; sn <- WANT$seat[i]
@@ -151,6 +206,25 @@ for (i in seq_len(nrow(WANT))) {
   if (!nrow(d)) { cat(sprintf("SS!  %s %s: no candidates\n", el, sn)); next }
   geo <- GEO_OF[[as.character(d$state[1])]]
   d[, kw := search_form(given, surname, name)]
+  # SELECT THE <=5 CANDIDATES THAT MATTER, so most seats need ONE batch and no
+  # stitch. Fetching every micro-party candidate costs a second query plus a 10s
+  # stitch sleep to learn they are all zero, and the hazard only ever needs the
+  # challenger, the incumbent and the top major.
+  #
+  # LEAK-FREE PRIORITY: incumbent first, then IND, then the majors, then GRN,
+  # ONP, OTH. Every one of those is knowable from a nomination list. Ordering by
+  # THIS election's vote would be leakage; ordering by party class is not.
+  PRIO <- c(IND = 2, ALP = 3, LNP = 4, NAT = 5, GRN = 6, ONP = 7,
+            OTH_RIGHT = 8, OTH = 9)
+  inc_kw <- INC[year == yr & seat == sn, kw_inc]
+  d[, prio := fifelse(kw %in% inc_kw, 1L, as.integer(PRIO[party]))]
+  d[is.na(prio), prio := 9L]
+  setorder(d, prio)
+  dropped <- max(0L, nrow(d) - MAXKW)
+  d <- utils::head(d, MAXKW)
+  if (dropped > 0L)
+    cat(sprintf("SS1  %s: %d low-priority candidate(s) not queried
+", sn, dropped))
   probe <- gsub("[^A-Za-z0-9]", "_",
                 sprintf("ss-%s-%s-%s", geo, as.Date(POLL[[el]]) - 1,
                         paste(utils::head(d$kw, MAXKW), collapse = "-")))

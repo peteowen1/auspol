@@ -110,6 +110,23 @@ in the registry, so the registry says yes, and the field is gone anyway. Two of
 the four failures below were exactly that. **Never aggregate a source down to
 the columns you happen to need** — write every column through and select later.
 
+### The same rule applies to anything SCRAPED, and it is more expensive there
+
+**Store the raw response, never the summary you happen to want today.** A
+re-fetch is rate-limited and may simply be unavailable; a disk write is free.
+
+Cost of learning this on 2026-08-26: `fetch_seat_salience.R` cached an 8-week
+mean of each Google Trends series and discarded the weekly points. When the
+**campaign rise** turned out to be the statistic that separates a real
+emergence from a namesake — Cameron Smith the rugby league captain outscored
+Bill Shorten in Maribyrnong on 3.8% of the vote — all **259 cached batches**
+needed refetching, and by then Google had throttled us out entirely. The
+information had been on disk and was thrown away.
+
+So: cache the series, derive the statistic. Level, rise, peak, slope,
+volatility and time-to-peak all come free from a stored series and all cost a
+fresh scrape from a stored mean.
+
 
 It is **generated from disk** by `scripts/build_data_registry.R` — never
 hand-edit it, rerun the script. It lists every election, every raw commission
