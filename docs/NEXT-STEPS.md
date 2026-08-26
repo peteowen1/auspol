@@ -1,11 +1,75 @@
 # auspol — work queue
 
-Updated 2026-08-25. Remote: github.com/peteowen1/auspol (private, default
+Updated 2026-08-26. Remote: github.com/peteowen1/auspol (private, default
 branch `dev`; `main` exists and is reached only through a reviewed PR).
 
 Completed stage write-ups live in
 [backlog/journal-2026-08.md](backlog/journal-2026-08.md) — this file holds
 open state, not the narrative of how it got here.
+
+## Google Trends separates an emergence from a token candidacy (2026-08-26)
+
+[reviews/salience-emergence-2026-08-26.md](reviews/salience-emergence-2026-08-26.md).
+**AUC 0.841, p = 0.005** on the strictest cut, and it supersedes every earlier
+salience number here.
+
+The anchor check that produced it matters as much as the number. The model
+handles sitting independents WELL — 0.75 to 0.95 across Warringah, Indi, Clark,
+Kooyong, Mackellar, Wentworth and Curtin in 2025. It fails only on
+**transitions**, in both directions: North Sydney, Goldstein and Fowler 2022 all
+came in at **0.0000**, and it also missed Bandt LOSING Melbourne (ALP 0.049) and
+Daniel losing Goldstein (LNP 0.187).
+
+And it does not "spot" an emergence even when it looks like it. Wentworth 2022
+scored 0.396 only because Kerryn Phelps had polled 32.4% there as an IND in
+2019 — the model inherits the previous independent's vote regardless of whether
+it is the same person. Kooyong had a LARGER non-major vote (21.2%) and scored
+0.0026, because that vote was Green.
+
+**Where it stands:** signal measured, mapping fitted, nothing adopted.
+`docs/plans/prereg-salience-surge-hazard.md` is committed and the fed2022
+whole-seat fetch is in progress — all 151 seats, because the nine already held
+were chosen because something happened in them.
+
+**Refused in advance, with numbers**: salience share as a projected first
+preference. Slope 0.34 for independents, residual sd 11.7 points, Chaney
+overstated by 52. Rank is reliable, magnitude is not.
+
+**Hard date:** Victorian nominations close 12 noon 9 November 2026. The signal
+is candidate-level so it cannot run before then.
+`scripts/victoria_salience_dryrun.R` tests everything downstream against
+Victoria 2022 — two lines change on the day.
+
+## Four "we don't have it" claims that were wrong (2026-08-25/26)
+
+Booth results, electoral boundaries, candidate-level federal first preferences
+for all seven elections, and the AEC's own seat-level `Swing` column. All four
+were on disk. The last two were being downloaded and **aggregated away** by
+`fetch_preferences_fed.R`, and a whole plan was written around acquiring data
+we already had.
+
+Now: `docs/DATA-REGISTRY.md` (does the file exist) and
+`docs/DATA-DICTIONARY.md` (does the field exist), both **generated from disk**.
+`build_candidacies.R` carries every column through — 23 against 13. The rule is
+in CLAUDE.md: never aggregate a source down to the columns you happen to need.
+
+## Resolved this session
+
+- **`party_sd`: TIE**, 11 of 17 pairs, p = 0.332
+  ([reviews/party-sd-tie-2026-08-26.md](reviews/party-sd-tie-2026-08-26.md)).
+  Stays at 1.50 — not because 1.50 is right, but because changing it buys
+  nothing measurable. **It caught a false positive**: 4-of-4 on federal alone,
+  a coin flip across seventeen.
+- **WA harness added** — seven pairs, 361 seat-elections, from data already on
+  disk. Took the repo from 10 election clusters to 17, which is what made the
+  `party_sd` question decidable at all. CLAUDE.md now says five harnesses.
+- **Federal seat-swing analogue: measured and NOT wired.** The prior
+  departure predicts the next at slope **−0.264** (t = −8.0), negative in all
+  six elections, where `SEAT_SWING_COEF` is **+0.7452**. Importing the
+  state-fitted coefficient would have applied it with the wrong sign. Worth
+  3.5% of seat-level error even correctly signed.
+- **Candidate corpus**: 24 elections, 14,959 candidacies, 338 non-major
+  breakouts, tracked and reproducible (was 21, untracked, no builder).
 
 ## One Nation wins the WRONG SEAT TYPE in our model (2026-08-25)
 
