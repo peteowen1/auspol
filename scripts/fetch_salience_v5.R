@@ -47,9 +47,15 @@ dir.create(CACHE, showWarnings = FALSE, recursive = TRUE)
 
 # The pair of elections sharing one window, and the window itself. FROM sits a
 # year before the earlier campaign so its 300-day baseline is fully covered.
-ELS  <- c(fed2022 = "2022-05-21", fed2025 = "2025-05-03")
+# FOUR elections in ONE window, per docs/plans/prereg-salience-c3-amended.md.
+# 2021-06 to 2026-06 returns 262 WEEKLY buckets and spans fed2022 (the fitting
+# election), nsw2023, fed2025 and sa2026. One normalisation, so no chaining
+# across windows, no rescale and no drift -- the risk the original C3 was told
+# to abandon itself over.
+ELS  <- c(fed2022 = "2022-05-21", nsw2023 = "2023-03-25",
+          fed2025 = "2025-05-03", sa2026  = "2026-03-21")
 FROM <- "2021-06-01"
-TO   <- "2025-06-01"
+TO   <- "2026-06-01"
 
 qry <- function(kw) {
   key <- gsub("[^A-Za-z0-9]", "_",

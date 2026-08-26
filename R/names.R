@@ -53,3 +53,102 @@ search_form <- function(given, surname, fallback) {
   normalise_name(ifelse(is.na(given) | is.na(surname) | first == "",
                         fallback, paste(first, surname)))
 }
+
+#' A candidate's surname, from either field layout
+#'
+#' The AEC supplies `surname` and `given` separately; state commissions supply a
+#' single `name` field, and in two different shapes -- `"ROYLANCE, Robert"` with
+#' a comma, and `"GREENWICH Alex"` without. Both put the surname FIRST, so the
+#' comma is a separator rather than the signal.
+#'
+#' @param surname Character vector, possibly `NA` for state rows.
+#' @param name Character vector fallback carrying the whole name.
+#' @return Lower-case surname with punctuation and spacing removed, `""` where
+#'   nothing usable is present.
+#' @export
+surname_of <- function(surname, name) {
+  s <- trimws(ifelse(is.na(surname), "", surname))
+  fb <- trimws(ifelse(is.na(name), "", name))
+  # comma first: everything before it. otherwise the leading token.
+  from_name <- ifelse(grepl(",", fb, fixed = TRUE),
+                      sub(",.*$", "", fb),
+                      sub("[[:space:]].*$", "", fb))
+  tolower(gsub("[^A-Za-z]", "", ifelse(nzchar(s), s, from_name)))
+}
+
+#' Did the same person contest this seat at the previous election?
+#'
+#' Compares SURNAMES ONLY, and exactly. A prefix or whole-name match is not safe
+#' here: matching six characters of `"DANIEL, Zoe"` against the Goldstein 2019
+#' field hit `Daniel POLLOCK`, a given name colliding with a surname, and
+#' recorded Zoe Daniel as a returning candidate when 2022 was her first contest.
+#'
+#' This decides whether a win counts as an EMERGENCE, so a false match removes a
+#' real case from a test set and a missed one admits an incumbent. Surname alone
+#' will occasionally join two different people who share one in the same seat;
+#' that direction is the safe one, because it only ever discards a case.
+#'
+#' @param sur Character vector of surnames for the candidates in question.
+#' @param prev_sur Character vector of surnames that contested that seat last
+#'   time.
+#' @return Logical vector, `TRUE` where the surname appears in `prev_sur`.
+#' @export
+stood_before <- function(sur, prev_sur) {
+  sur <- tolower(gsub("[^A-Za-z]", "", sur))
+  prev_sur <- tolower(gsub("[^A-Za-z]", "", prev_sur))
+  nzchar(sur) & sur %in% prev_sur[nzchar(prev_sur)]
+}
+
+#' A candidate's first given name, from either field layout
+#'
+#' Mirrors [surname_of()]. The AEC supplies `given` separately; state
+#' commissions put the whole name in one field, surname first, either
+#' `"ROYLANCE, Robert"` or `"GREENWICH Alex"`.
+#'
+#' @param given Character vector, possibly `NA` for state rows.
+#' @param name Character vector fallback carrying the whole name.
+#' @return Lower-case first given name, `""` where nothing usable is present.
+#' @export
+given_of <- function(given, name) {
+  g <- trimws(ifelse(is.na(given), "", given))
+  fb <- trimws(ifelse(is.na(name), "", name))
+  rest <- ifelse(grepl(",", fb, fixed = TRUE),
+                 sub("^[^,]*,[[:space:]]*", "", fb),
+                 sub("^[^[:space:]]+[[:space:]]*", "", fb))
+  out <- ifelse(nzchar(g), g, rest)
+  tolower(gsub("[^A-Za-z]", "", sub("[[:space:]].*$", "", trimws(out))))
+}
+
+#' Match key for one candidate, at a chosen strictness
+#'
+#' Which rule is right is an empirical question, so all three are available and
+#' `scripts/estimate_candidate_persistence.R` reports the answer under each.
+#'
+#' * `"surname"` — surname alone. Joins two different people who share a surname
+#'   in one seat, which inflates the "same person" group.
+#' * `"initial"` — surname plus first initial. The electoral-research default.
+#'   It survives Kate/Katherine and Mike/Michael, but NOT the nicknames that
+#'   change the initial — Bob/Robert, Bill/William, Dick/Richard — all common in
+#'   Australian politics. Those split into two people under this rule.
+#' * `"full"` — surname plus whole first name. Strictest, and splits every
+#'   nickname case including Kate/Katherine.
+#'
+#' No rule is safe in both directions. Surname-only wrongly JOINS two people
+#' sharing a surname; the other two wrongly SPLIT one person recorded under two
+#' first names. Splitting is the more dangerous error here, because it turns a
+#' returning member into a fabricated emergence.
+#'
+#' @param sur Character vector of surnames, from [surname_of()].
+#' @param giv Character vector of first given names, from [given_of()].
+#' @param rule One of `"surname"`, `"initial"`, `"full"`.
+#' @return Character vector of match keys.
+#' @export
+match_key <- function(sur, giv, rule = c("initial", "surname", "full")) {
+  rule <- match.arg(rule)
+  sur <- tolower(gsub("[^A-Za-z]", "", sur))
+  giv <- tolower(gsub("[^A-Za-z]", "", giv))
+  switch(rule,
+         surname = sur,
+         initial = ifelse(nzchar(giv), paste0(sur, "|", substr(giv, 1, 1)), sur),
+         full    = ifelse(nzchar(giv), paste0(sur, "|", giv), sur))
+}
