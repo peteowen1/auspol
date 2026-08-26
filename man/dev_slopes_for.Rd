@@ -7,17 +7,26 @@
 dev_slopes_for(parties, default = 1)
 }
 \arguments{
-\item{parties}{Character vector of class names in play.}
+\item{parties}{Character vector of class names in play for this election.}
 
 \item{default}{Slope for any class not named in the variable.}
 }
 \value{
-Named numeric vector over \code{parties}.
+Named numeric vector over \code{parties}, with an \code{absent} attribute
+naming any valid class that was specified but does not appear here.
 }
 \description{
 Reads the \code{AUSPOL_DEV_SLOPE} environment variable, formatted as
-\code{"IND=0.618,ONP=0.551"}. Classes not named keep \code{default}. Unknown class
-names are an ERROR rather than a silent no-op: a typo that quietly leaves
+\code{"IND=0.618,ONP=0.551"}. Classes not named keep \code{default}.
+}
+\details{
+A name that is not a real party class is an ERROR: a typo that quietly leaves
 every slope at 1 produces a run that looks like "this parameter does not
 matter", which is the failure mode this repo has already recorded once.
+
+A name that IS a real class but is absent from this particular election is
+NOT an error -- One Nation did not contest Western Australia in 2001, and one
+spec has to run across every harness. Those are reported in the returned
+vector's "absent" attribute so the caller can print them. Distinguishing the
+two cases is the whole point: the first is a mistake, the second is data.
 }

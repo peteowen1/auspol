@@ -42,11 +42,28 @@ test_that("dev_slopes_for parses only the classes named", {
   })
 })
 
-test_that("an unknown class is an ERROR, never a silent no-op", {
+test_that("a name that is not a party class is an ERROR, never a silent no-op", {
   # A typo that leaves every slope at 1 produces a run indistinguishable from
   # "this parameter does not matter" -- the failure this repo already recorded.
   withr::with_envvar(c(AUSPOL_DEV_SLOPE = "INDD=0.5"), {
-    expect_error(dev_slopes_for(c("ALP", "IND")), "not present")
+    expect_error(dev_slopes_for(c("ALP", "IND")), "not a party class")
+  })
+})
+
+test_that("a real class absent from THIS election is reported, not an error", {
+  # One Nation did not contest WA 2001, and one spec must run across every
+  # harness. This is data, not a mistake, and the two must not be conflated.
+  withr::with_envvar(c(AUSPOL_DEV_SLOPE = "ONP=0.551,IND=0.618"), {
+    s <- dev_slopes_for(c("ALP", "LNP", "IND"))
+    expect_equal(s[["IND"]], 0.618)
+    expect_equal(attr(s, "absent"), "ONP")
+    expect_false("ONP" %in% names(s))
+  })
+})
+
+test_that("no absences means an empty attribute, not NULL surprises", {
+  withr::with_envvar(c(AUSPOL_DEV_SLOPE = "IND=0.6"), {
+    expect_length(attr(dev_slopes_for(c("IND", "ALP")), "absent"), 0L)
   })
 })
 

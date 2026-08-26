@@ -47,28 +47,40 @@ dev_slope <- function(x, level_prev, level_now, slope = 1) {
 #' Per-class deviation slopes, defaulting to uniform swing
 #'
 #' Reads the `AUSPOL_DEV_SLOPE` environment variable, formatted as
-#' `"IND=0.618,ONP=0.551"`. Classes not named keep `default`. Unknown class
-#' names are an ERROR rather than a silent no-op: a typo that quietly leaves
+#' `"IND=0.618,ONP=0.551"`. Classes not named keep `default`.
+#'
+#' A name that is not a real party class is an ERROR: a typo that quietly leaves
 #' every slope at 1 produces a run that looks like "this parameter does not
 #' matter", which is the failure mode this repo has already recorded once.
 #'
-#' @param parties Character vector of class names in play.
+#' A name that IS a real class but is absent from this particular election is
+#' NOT an error -- One Nation did not contest Western Australia in 2001, and one
+#' spec has to run across every harness. Those are reported in the returned
+#' vector's "absent" attribute so the caller can print them. Distinguishing the
+#' two cases is the whole point: the first is a mistake, the second is data.
+#'
+#' @param parties Character vector of class names in play for this election.
 #' @param default Slope for any class not named in the variable.
-#' @return Named numeric vector over `parties`.
+#' @return Named numeric vector over `parties`, with an `absent` attribute
+#'   naming any valid class that was specified but does not appear here.
 #' @export
 dev_slopes_for <- function(parties, default = 1) {
+  known <- c("ALP", "LNP", "GRN", "ONP", "IND", "OTH", "OTH_RIGHT")
   s <- stats::setNames(rep(as.numeric(default), length(parties)), parties)
   raw <- Sys.getenv("AUSPOL_DEV_SLOPE", "")
   if (!nzchar(raw)) return(s)
+  absent <- character(0)
   for (e in strsplit(strsplit(raw, ",")[[1]], "=")) {
     if (length(e) != 2L) stop("AUSPOL_DEV_SLOPE entry must be CLASS=value: ", paste(e, collapse = "="))
     cls <- trimws(e[1]); val <- suppressWarnings(as.numeric(e[2]))
     if (!is.finite(val)) stop("AUSPOL_DEV_SLOPE value for ", cls, " is not a number")
-    if (!cls %in% parties)
-      stop("AUSPOL_DEV_SLOPE names class '", cls, "', which is not present. ",
-           "Classes here: ", paste(parties, collapse = ", "),
+    if (!cls %in% known)
+      stop("AUSPOL_DEV_SLOPE names '", cls, "', which is not a party class. ",
+           "Known classes: ", paste(known, collapse = ", "),
            ". Silently ignoring it would read as 'this parameter has no effect'.")
+    if (!cls %in% parties) { absent <- c(absent, cls); next }
     s[[cls]] <- val
   }
+  attr(s, "absent") <- absent
   s
 }

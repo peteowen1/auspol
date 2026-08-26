@@ -195,6 +195,36 @@ effects that would disqualify a winner, and what the criterion cannot see. If
 that section is hard to write, the criterion is probably measuring the wrong
 thing — which was true both times.
 
+**Dry-run every criterion on cases whose answer you already know, BEFORE
+committing the pre-registration.** Same rule as "prove a check fails on a
+deliberately broken input", applied to the criterion instead of the code. A
+criterion is a measuring instrument and gets tested like one.
+
+C2 of `prereg-salience-emergence-gate.md` (2026-08-27) failed this twice over,
+and both faults were visible without running anything:
+
+- It counted a "false positive" as **any flagged candidate who did not WIN**,
+  while the model it tested predicts **vote share**. So Nicolette Boele rising
+  from 0% to 20.9% in Bradfield scored as a mistake — the very behaviour wanted,
+  and she won the seat at the next election. 14 of the 73 "false positives"
+  polled 15–26% against a base prediction of 6.9%, and salience cut their error
+  by 5.1 points.
+- It said "the gate fires" about a **continuous** coefficient with no trigger,
+  so the threshold had to be invented at scoring time. The value used meant
+  "salience moved the prediction by 1.25 points", which is noise. At any bar a
+  forecast would notice, the same model passes.
+
+Ten seconds against two known candidates would have caught both. So: **name two
+or three cases whose verdict you already know, state what the criterion should
+say about each, and check that it does.** If it cannot be dry-run because the
+quantity is undefined — as "fires" was — that is the finding, and the criterion
+is not ready to commit.
+
+The cost is not just the wasted test. A criterion that fails for the wrong
+reason forces a real choice between shipping on a rewritten rule and withholding
+a change that works, and both are bad. Neither is recoverable after the fact,
+which is why this belongs before the commit.
+
 **And write every tolerance in standard errors, or compute its size in standard
 errors when you write it.** Two criteria have now failed the same way, four days
 apart, and both failures were computable from `n` before the experiment ran:
