@@ -89,10 +89,19 @@ fetch_pair <- function(cand, anchor, geo, poll) {
   d[, date := as.Date(date)]
   step <- as.numeric(stats::median(diff(sort(unique(d$date)))))
   cutoff <- max(d$date) - WEEKS * 7L
+  # KEEP THE WHOLE SERIES, NOT THE AGGREGATE. Same rule, same file family:
+  # fetch_seat_salience.R cached an 8-week mean, the campaign RISE later turned
+  # out to be the statistic that separates a real emergence from a namesake, and
+  # 259 batches had to be refetched from a Google that had by then throttled us
+  # out. A scrape is rate-limited and may become unavailable; a disk write is
+  # free. See CLAUDE.md.
   m <- d[date > cutoff, .(m = mean(hits)), by = keyword]
-  gv <- function(k) { v <- m[keyword == k, m]; if (length(v)) v else NA_real_ }
-  out <- list(cand = gv(cand), anchor = gv(anchor), step = step,
-              npts = uniqueN(d$date))
+  b <- d[date <= cutoff, .(b = mean(hits)), by = keyword]
+  gv <- function(t, k, col) { v <- t[keyword == k][[col]]; if (length(v)) v else NA_real_ }
+  out <- list(cand = gv(m, cand, "m"), anchor = gv(m, anchor, "m"),
+              cand_base = gv(b, cand, "b"), anchor_base = gv(b, anchor, "b"),
+              step = step, npts = uniqueN(d$date),
+              series = d[, .(keyword, date, hits)])
   saveRDS(out, f)
   out
 }
