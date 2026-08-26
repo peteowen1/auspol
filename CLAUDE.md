@@ -257,9 +257,15 @@ There are **five** candidate-seat backtest harnesses — `backtest_candidate_fed
 **Any improvement, parameter or bug fix applied to one MUST be applied to all
 five and measured on all five in the same session.** Not "noted for later".
 
-`_wa.R` was added 2026-08-25 and carries seven pairs at ~58 seats, which is more
-election clusters than the other four combined. It is the harness with power;
-prefer it and `_fed.R` when a criterion needs to resolve anything. A Queensland
+`_wa.R` was added 2026-08-25 and carries seven pairs at ~58 seats. **`_fed.R` is
+now the larger harness** — 6 pairs over ~880 seat-elections against WA's 361 —
+so prefer federal first and WA second when a criterion needs to resolve
+anything. (Corrected 2026-08-27; the earlier claim that WA held more clusters
+than the other four combined predates the federal harness reaching 6 pairs.)
+
+**Both exceed the 10-minute background-task cap when run as two arms in one
+command.** Run one arm per launch, and use `AUSPOL_FED_PAIRS` to take federal a
+pair at a time; a killed run loses every arm behind it. A Queensland
 harness is buildable from data already on disk and does not exist yet — when it
 is built, this count becomes six.
 
