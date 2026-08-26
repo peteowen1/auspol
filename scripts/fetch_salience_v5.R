@@ -100,7 +100,42 @@ pick <- function(el) {
   D[!is.finite(prev_pcv), prev_pcv := 0]
   D[, prio := as.integer(PRIO[party])][is.na(prio), prio := 5L]
   setorder(D, seat, -prev_pcv, prio)
-  S <- D[, .SD[1], by = seat][!is.na(kw) & nzchar(kw)]
+  D[, rk := seq_len(.N), by = seat]
+  # TOP TWO PER SEAT, PLUS EVERY INDEPENDENT.
+  #
+  # One-per-seat cannot work, and BOTH one-per-seat rules tried so far failed in
+  # opposite directions. Ranking IND above GRN unconditionally (v4) queried a
+  # no-hope independent instead of Adam Bandt in Melbourne and missed four of
+  # eighteen fed2022 winners. Ranking by the largest PRIOR non-major vote (v5's
+  # first pass) picks the established minor party in exactly the seats where an
+  # independent emerges -- Kooyong's Greens polled ~21% in 2019 against Monique
+  # Ryan's 9%, so the teal seats were queried for the wrong person and the
+  # corpus contained ONE of fed2022's six emergences.
+  #
+  # That is not a tuning problem. An emergent candidate is BY DEFINITION the one
+  # with no prior vote, so any rule that ranks on prior vote excludes them, and
+  # ranking on anything about the outcome is leakage.
+  #
+  # Measured coverage of non-major winners:
+  #             fed2022        fed2025
+  #   top-1     11 of 16       13 of 13
+  #   top-2     14 of 16       13 of 13
+  #   top-4     15 of 16       13 of 13
+  #   top-2+IND 16 of 16       13 of 13     <- this rule
+  #
+  # LEAK-FREE: nomination lists are public before polling day, so "every
+  # independent who nominated" is knowable in advance. It costs ~95 batches an
+  # election against 38, which is the price of being able to see an emergence
+  # at all.
+  S <- D[rk <= 2L | party == "IND"][!is.na(kw) & nzchar(kw)]
+  # A name shared by two candidates in one election would fan out the join
+  # below; keep the stronger and count what was dropped rather than silently
+  # duplicating a series across seats.
+  setorder(S, kw, -prev_pcv)
+  ndup <- nrow(S) - uniqueN(S$kw)
+  if (ndup > 0L) cat(sprintf("S5-0 %d duplicate search form(s) in %s, keeping the stronger\n",
+                             ndup, el))
+  S <- S[, .SD[1], by = kw]
   PB <- C[region == rg & year == py & !party %in% MAJ,
           .(prev_nm = max(pcv, na.rm = TRUE)), by = seat]
   S <- merge(S, PB, by = "seat", all.x = TRUE)[!is.finite(prev_nm), prev_nm := 0]

@@ -66,7 +66,7 @@ cannot pass as a working one.
   - e.g. elections.json, publicResults_SGE2024_ICCDiv4_Final.zip, publicResults_State2020_aurukun2020_Final.zip, qld2020.xml
 - **waec/** -- 481 files, 19.4 MB
   - e.g. app.html, app.min.js, config-loader.js, config.json
-- **trends/** -- 194 files, 33 KB
+- **trends/** -- 964 files, 391 KB
   - e.g. 2019_anch2_Adrian_Wone_Susie_Beveridge_Will_Landers_Ammar_Khan.rds, 2019_anch2_Bill_Chandler_Susan_Moylan_Dave_Blake_Tim_Bohm.rds, 2019_anch2_Robert_Oakeshott_Helen_Haines_Zali_Steggall_Kerryn_Phelps.rds, 2019_anch2_Trevor_Jones_Colin_Butland_David_Norman_Thor_Prohaska.rds
 - **boundaries/** -- 20 files, 157.6 MB
   - e.g. SED_2021.zip, SED_2021_AUST_GDA2020.CPG, SED_2021_AUST_GDA2020.dbf, SED_2021_AUST_GDA2020.prj
@@ -89,8 +89,8 @@ NAMES live -- the per-seat results files carry `seat, party, votes` only.
 | fed2013 | 150 | 1184 | 74 | 9 |
 | fed2016 | 150 | 992 | 126 | 20 |
 | fed2019 | 151 | 1054 | 98 | 21 |
-| fed2022 | 151 | 1202 | 98 | 35 |
-| fed2025 | 150 | 1122 | 129 | 64 |
+| fed2022 | 151 | 1202 | 98 | 33 |
+| fed2025 | 150 | 1122 | 129 | 35 |
 | nsw2019 | 93 | 568 | 52 | 15 |
 | nsw2023 | 93 | 562 | 68 | 19 |
 | qld2020 | 94 | 599 | 71 | 15 |
@@ -109,7 +109,7 @@ NAMES live -- the per-seat results files carry `seat, party, votes` only.
 | wa2021 | 59 | 463 | 17 | 0 |
 | wa2025 | 59 | 398 | 29 | 6 |
 
-**Total: 14959 candidacies, 24 elections, 338 non-major breakouts.**
+**Total: 14959 candidacies, 24 elections, 307 non-major breakouts.**
 
 ## Known gaps
 

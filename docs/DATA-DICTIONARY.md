@@ -135,17 +135,17 @@ processed extract. Every one is recoverable without a new fetch.
 | `cal-vic-m2.5.csv` | 166 | `seat`, `actual`, `prob`, `pred`, `pred_p`, `pair` |
 | `cal-vic-m4.0.csv` | 166 | `seat`, `actual`, `prob`, `pred`, `pred_p`, `pair` |
 | `calibration-arms.csv` | 10 | `pair`, `n`, `mult`, `logB`, `acc`, `T`, `logA`, `logC`, `B_vs_A`, `B_vs_C` |
-| `candidacies.csv` | 14,959 | `election`, `region`, `year`, `seat`, `name`, `surname`, `given`, `party`, `party_raw`, `party_ab`, `votes`, `pcv`, `elected`, `historic_elected`, `breakout`, `swing`, `ballot_position`, `ordinary`, `absent`, `provisional`, `prepoll`, `postal`, `tot` |
+| `candidacies.csv` | 14,959 | `election`, `region`, `year`, `seat`, `name`, `surname`, `given`, `party`, `party_raw`, `party_ab`, `state`, `votes`, `pcv`, `elected`, `historic_elected`, `breakout`, `swing`, `ballot_position`, `ordinary`, `absent`, `provisional`, `prepoll`, `postal`, `tot` |
 | `cross-party-swing.csv` | 1,508 | `cycle`, `region`, `seat`, `party`, `y`, `x`, `own_base`, `pred_uniform`, `pred_cross` |
 | `cycle-walks-fed.csv` | 17 | `year`, `party`, `n`, `own_weight`, `obs_pooled`, `obs_cycle`, `rw_pooled_pts`, `rw_cycle_pts`, `at_lower`, `at_upper`, `conv`, `acf1`, `speedup` |
 | `cycle-walks-nsw.csv` | 8 | `year`, `party`, `n`, `own_weight`, `cycle_level`, `obs_pts`, `rw_pooled`, `rw_cycle`, `floor_ref`, `at_lower`, `at_upper`, `acf1` |
 | `cycle-walks-vic.csv` | 13 | `year`, `party`, `n`, `own_weight`, `cycle_level`, `obs_pts`, `rw_pts`, `floor_ref`, `at_upper`, `floored`, `acf1` |
 | `demographic-swing-loo.csv` | 12 | `party`, `pair`, `n`, `mae_uniform`, `mae_demog`, `improvement` |
+| `emergence-test.csv` | 55 | `V1`, `V2`, `V3`, `V4`, `V5`, `V6`, `V7`, `V8`, `V9`, `V10`, `V11`, `V12`, `V13`, `V14`, `V15`, `V16` |
+| `emergence-trends.csv` | 53 | `V1`, `V2`, `V3`, `V4`, `V5`, `V6`, `V7`, `V8`, `V9`, `V10`, `V11`, `V12`, `V13`, `V14`, `V15`, `V16`, `V17`, `V18` |
 | `fed-insurgency-risk.csv` | 886 | `pair`, `seat`, `nm_best`, `nm_held`, `risk_loeo`, `shrink_i`, `nm_win` |
 | `fed-insurgency-surge.csv` | 886 | `pair`, `seat`, `nm_party`, `nm_from`, `nm_held`, `q_loeo`, `gain`, `surge` |
 | `fed-swing-coef-refit.csv` | 2 | `election`, `n`, `mae_A`, `mae_B`, `mae_C` |
-| `fed-swing-gain-by-gap.csv` | 5 | `election`, `n`, `mae`, `uniform`, `gap_months`, `fed`, `gain` |
-| `fed-upset-features.csv` | 886 | `seat`, `nm_prior`, `nm_best`, `n_parties`, `top1`, `top2`, `margin_prior`, `prev_winner`, `nm_held`, `won_by`, `nm_win`, `pair` |
 
-_(185 `backtest-*.csv` arm outputs omitted; they share one shape.)_
+_(232 `backtest-*.csv` arm outputs omitted; they share one shape.)_
 
