@@ -209,10 +209,11 @@ for (K in PAIRS) {
   # NSW as well as SA before adoption, which is why it is here.
   ELASTIC   <- as.numeric(Sys.getenv("AUSPOL_ELASTIC_OVER", "0"))
   ELASTIC_D <- as.numeric(Sys.getenv("AUSPOL_ELASTIC_FALL", "2"))
+  DEV_SLOPE <- dev_slopes_for(union(colnames(mat), names(sb)))
   pinned <- matrix(FALSE, nrow(mat), ncol(mat), dimnames = dimnames(mat))
   for (p in parties) if (p %in% names(sb) && p %in% names(sa)) {
     d_state <- sb[[p]] - sa[[p]]
-    val <- pmax(0, mat[, p] + d_state)
+    val <- dev_slope(mat[, p], sa[[p]], sb[[p]], DEV_SLOPE[[p]])
     if (ELASTIC > 0 && d_state < -ELASTIC_D && sa[[p]] > 0) {
       over <- mat[, p] / sa[[p]]
       hit <- is.finite(over) & over > ELASTIC

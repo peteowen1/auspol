@@ -120,10 +120,11 @@ for (K in PAIRS) {
   mat <- matrix(0, nrow = nrow(A), ncol = length(parties),
                 dimnames = list(rownames(A), parties))
   mat[, colnames(A)] <- A
+  DEV_SLOPE <- dev_slopes_for(parties)
   for (p in parties) {
     from_pc <- if (p %in% names(sa)) sa[[p]] else 0
     to_pc   <- if (p %in% names(sb)) sb[[p]] else 0
-    mat[, p] <- pmax(0, mat[, p] + (to_pc - from_pc))
+    mat[, p] <- dev_slope(mat[, p], from_pc, to_pc, DEV_SLOPE[[p]])
   }
   shares <- 100 * mat / rowSums(mat)
 

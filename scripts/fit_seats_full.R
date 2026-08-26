@@ -404,13 +404,7 @@ if (is.finite(ONP_CV) && ONP_CV > 0) {
 # the seat's deviation around that level is shrunk, so poll information is
 # preserved -- a naive `pcv ~ prev` regression would absorb the statewide shift
 # into its intercept and throw the polls away.
-SLOPE_DEFAULT <- 1.0
-SLOPE <- setNames(rep(SLOPE_DEFAULT, length(colnames(mat22))), colnames(mat22))
-if (nzchar(Sys.getenv("AUSPOL_DEV_SLOPE"))) {
-  kv <- strsplit(strsplit(Sys.getenv("AUSPOL_DEV_SLOPE"), ",")[[1]], "=")
-  for (e in kv) if (length(e) == 2L && e[1] %in% names(SLOPE))
-    SLOPE[[e[1]]] <- as.numeric(e[2])
-}
+SLOPE <- dev_slopes_for(colnames(mat22), default = 1.0)
 # PRINT WHAT WAS APPLIED, and print it before any result is read. An experiment
 # that never ran looks exactly like an experiment with no effect; on 2026-08-19
 # a file edit died and two runs behind it used the unmodified script, returning
@@ -424,7 +418,7 @@ shares <- mat22
 modelled <- intersect(parties, names(state_mean))
 for (p in setdiff(modelled, "ONP")) {
   # At SLOPE 1 this is mat22 + (state_mean - a22), the previous expression.
-  shares[, p] <- pmax(0, state_mean[[p]] + SLOPE[[p]] * (mat22[, p] - a22[[p]]))
+  shares[, p] <- dev_slope(mat22[, p], a22[[p]], state_mean[[p]], SLOPE[[p]])
 }
 # The trend models five classes; the seat data carries seven, splitting OTH
 # into OTH, OTH_RIGHT and IND. Those three must be SCALED to the forecast OTH
@@ -448,7 +442,7 @@ if (length(unmodelled) && !is.na(state_mean["OTH"])) {
   # exactly mat22[, p] * scale_to as before.
   for (p in c(unmodelled, if ("OTH" %in% modelled) "OTH")) {
     tgt <- a22[[p]] * scale_to
-    shares[, p] <- pmax(0, tgt + SLOPE[[p]] * (mat22[, p] * scale_to - tgt))
+    shares[, p] <- dev_slope(mat22[, p] * scale_to, tgt, tgt, SLOPE[[p]])
   }
   cat(sprintf("minor field scaled x%.2f: %s at 2022 %.1f%% -> forecast %.1f%%
 ",

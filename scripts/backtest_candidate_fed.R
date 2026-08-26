@@ -325,6 +325,7 @@ for (K in PAIRS) {
   # statewide_draws -- which is what fit_seats_full.R does and what no harness
   # has ever done. That is the point: every calibration figure this repo has
   # quoted describes a tighter variant than the model it ships.
+  DEV_SLOPE <- dev_slopes_for(union(colnames(mat), names(st_b)))
   parties <- colnames(mat); shares <- mat
   sw_draws <- NULL
   if (FORECAST_MODE) {
@@ -382,11 +383,11 @@ for (K in PAIRS) {
                 FC$tpp, fr, FC$anchor$mean, FC$implied_tpp))
     for (p in parties) {
       prev <- if (p %in% names(st_a)) st_a[[p]] else 0
-      shares[, p] <- pmax(0, mat[, p] + (st_fc[[p]] - prev))
+      shares[, p] <- dev_slope(mat[, p], prev, st_fc[[p]], DEV_SLOPE[[p]])
     }
   } else {
     for (p in parties) if (p %in% names(st_b) && p %in% names(st_a)) {
-      shares[, p] <- pmax(0, mat[, p] + (st_b[[p]] - st_a[[p]]))
+      shares[, p] <- dev_slope(mat[, p], st_a[[p]], st_b[[p]], DEV_SLOPE[[p]])
     }
   }
   # Zero IND wherever nobody actually stood at the TARGET election. This is

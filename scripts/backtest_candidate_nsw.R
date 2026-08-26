@@ -244,11 +244,12 @@ shares <- mat
 # SA before adoption.
 ELASTIC   <- as.numeric(Sys.getenv("AUSPOL_ELASTIC_OVER", "0"))
 ELASTIC_D <- as.numeric(Sys.getenv("AUSPOL_ELASTIC_FALL", "2"))
+DEV_SLOPE <- dev_slopes_for(union(parties, names(state23)))
 pinned <- matrix(FALSE, nrow(mat), ncol(mat), dimnames = dimnames(mat))
 for (p in parties) {
   if (!p %in% names(state23)) next
   d_state <- state23[[p]] - state19[[p]]
-  val <- pmax(0, mat[, p] + d_state)
+  val <- dev_slope(mat[, p], state19[[p]], state23[[p]], DEV_SLOPE[[p]])
   if (ELASTIC > 0 && d_state < -ELASTIC_D && state19[[p]] > 0) {
     over <- mat[, p] / state19[[p]]
     hit <- is.finite(over) & over > ELASTIC

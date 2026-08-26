@@ -213,11 +213,12 @@ n_elastic <- 0L; elastic_seats <- character(0)
 # Which (seat, party) cells the rule cut. Renormalisation must NOT hand a
 # stronghold back a share of the vote just taken off it -- measured on
 # MacKillop, plain renormalisation undid 38% of the cut (35.3 -> 40.6).
+DEV_SLOPE <- dev_slopes_for(union(parties, names(st_b)))
 pinned <- matrix(FALSE, nrow(mat), ncol(mat), dimnames = dimnames(mat))
 
 for (p in parties) if (p %in% names(st_b) && p %in% names(st_a)) {
   d_state <- st_b[[p]] - st_a[[p]]
-  val <- pmax(0, mat[, p] + d_state)
+  val <- dev_slope(mat[, p], st_a[[p]], st_b[[p]], DEV_SLOPE[[p]])
   if (ELASTIC > 0 && d_state < -ELASTIC_D && st_a[[p]] > 0) {
     over <- mat[, p] / st_a[[p]]
     hit  <- is.finite(over) & over > ELASTIC
