@@ -444,7 +444,20 @@ for (y in c(2014L, 2018L)) {
 }
 if (length(WV)) {
   W <- unique(rbindlist(WV, fill = TRUE))
-  C <- merge(C, W, by = c("election", "seat"), all.x = TRUE)
+  # JOIN ON A NORMALISED KEY, not on the raw seat string. Victoria stores seats
+  # stripped and lowercased ("albertpark") while the VEC winners file spells
+  # them "Albert Park", so an exact join matched 0 of 88 and left every
+  # Victorian row unfilled -- and it did so SILENTLY, reporting "0 seats
+  # unresolved" because a seat with no winner row is not an unresolved seat.
+  # Caught only by an anchor check asserting vic2018 elects 88 members.
+  nk <- function(s) gsub("[^a-z0-9]", "", tolower(s))
+  C[, .k := nk(seat)]; W[, .k := nk(seat)]
+  # A normalisation that merges two distinct seats would silently mis-assign a
+  # winner, so refuse rather than guess.
+  dupW <- W[, .N, by = .(election, .k)][N > 1L]
+  if (nrow(dupW)) stop("Seat normalisation collides in the winners files: ",
+                       paste(dupW$.k, collapse = ", "))
+  C <- merge(C, W[, .(election, .k, winner)], by = c("election", ".k"), all.x = TRUE)
   # Rank within (election, seat, class) so only the top scorer of the winning
   # class is flagged. NOT a bare `party` inside `[` -- data.table NSE has bitten
   # this repo five times on exactly that shape.
@@ -464,7 +477,22 @@ if (length(WV)) {
     print(head(merge(bad, unique(C[, .(election, seat, winner)]),
                      by = c("election", "seat")), 20), row.names = FALSE)
   }
-  C[, `:=`(winner = NULL, .rk = NULL)]
+  C[, `:=`(winner = NULL, .rk = NULL, .k = NULL)]
+}
+
+# LOCAL COUNCIL ROWS DO NOT BELONG IN A STATE CORPUS. Queensland's feed carries
+# a handful of council divisions -- "Aurukun Shire Division 1", "Ipswich City
+# Division 4" -- which are not Legislative Assembly districts. They surfaced
+# only because they were the sole state rows left without a winner after the
+# fill above, i.e. the fill worked as a contamination detector. Left in, they
+# would count as seats in any per-seat rate and as unresolved seats in any
+# coverage check.
+council <- grepl(" (Shire|City|Regional|Council) Division ", C$seat)
+if (any(council)) {
+  cat(sprintf("BC8  dropping %d local-council rows in %d pseudo-seats: %s\n",
+              sum(council), uniqueN(C$seat[council]),
+              paste(unique(C$seat[council]), collapse = ", ")))
+  C <- C[!council]
 }
 
 setorder(C, election, seat, -pcv)
