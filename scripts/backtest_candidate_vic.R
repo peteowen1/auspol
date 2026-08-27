@@ -312,6 +312,24 @@ for (K in PAIRS) {
   } else {
     shares <- 100 * shares / rowSums(shares)
   }
+  # ZERO IND WHEREVER NOBODY ACTUALLY STOOD AT THE TARGET ELECTION. Ported from
+  # backtest_candidate_fed.R and backtest_candidate_sa.R; was missing here and
+  # in NSW and WA. Which classes contest a seat is nomination data, knowable
+  # before polling day, unlike the vote share those classes go on to get.
+  # Without it the model swings the PRIOR election's independent vote forward
+  # with no check that anyone recontested -- found investigating NSW's Dubbo,
+  # which carried a retired independent's 28.4% forward with nobody to hold it.
+  if ("IND" %in% colnames(shares)) {
+    ind_seats <- fb[party == "IND" & votes > 0, unique(seat)]
+    no_ind <- setdiff(rownames(shares), ind_seats)
+    zeroed <- no_ind[shares[no_ind, "IND"] > 0]
+    shares[no_ind, "IND"] <- 0
+    if (length(zeroed)) {
+      cat(sprintf("BV0  vic%d: zeroed IND in %d seat(s) with no independent nominated: %s\n",
+                  K$to, length(zeroed), paste(sort(zeroed), collapse = ", ")))
+    }
+    shares <- 100 * shares / rowSums(shares)
+  }
   keep <- intersect(rownames(shares), win$seat)
   shares <- shares[keep, , drop = FALSE]
   truth <- setNames(win$winner, win$seat)[keep]

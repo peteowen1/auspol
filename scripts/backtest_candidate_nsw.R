@@ -367,6 +367,36 @@ if (ELASTIC > 0 && any(pinned)) {
   shares <- 100 * shares / rowSums(shares)
 }
 
+# ZERO IND WHEREVER NOBODY ACTUALLY STOOD AT THE TARGET ELECTION. Ported from
+# backtest_candidate_fed.R (present there and in SA; missing here and in vic and
+# WA). Which classes contest a seat is nomination data, knowable before polling
+# day, unlike the vote share those classes go on to get.
+#
+# Without this, the model swings the PRIOR election's independent vote forward
+# with no check that anyone recontested. Caught investigating why arm CS's
+# 90-99% band got worse on NSW 2023: Dubbo carried Mathew Dickerson's 2019 IND
+# vote (28.4%) forward into 2023, though he did not stand again and Saunders
+# (LNP) won 54.3% unopposed by any independent. Both arms already called Dubbo
+# wrong -- base at 87.1% confidence, a pre-existing bug this masked rather than
+# caused. Arm C's harsh shrinkage of "new" candidates happened to dampen it
+# by accident; the screen correctly stops shrinking an UNGOVERNED candidate
+# (Dubbo's IND prior, 28.4%, is above the 15% governed threshold), which
+# removed that accidental damping and pushed the wrong call to 93.6%.
+#
+# fp23 is this harness's analogue of fed's `fb`: the TARGET election's own
+# first preferences, read only to answer "did anyone stand", not for vote share.
+if ("IND" %in% colnames(shares)) {
+  ind_seats <- fp23[party == "IND" & votes > 0, unique(seat)]
+  no_ind <- setdiff(rownames(shares), ind_seats)
+  zeroed <- no_ind[shares[no_ind, "IND"] > 0]
+  shares[no_ind, "IND"] <- 0
+  if (length(zeroed)) {
+    cat(sprintf("BT0  nsw2023: zeroed IND in %d seat(s) with no independent nominated: %s\n",
+                length(zeroed), paste(sort(zeroed), collapse = ", ")))
+  }
+  shares <- 100 * shares / rowSums(shares)
+}
+
 # ---- the seat-swing adjustment, ported from the two-party model -------------
 # Against docs/plans/prereg-seat-swing-port-to-candidate.md. Applied as a
 # transfer between the two majors in this seat, which is the mechanism the

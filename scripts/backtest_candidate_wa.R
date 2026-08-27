@@ -182,6 +182,22 @@ for (K in PAIRS) {
     .sl <- if (.cond && !is.null(.returns)) conditional_slopes(p, rownames(mat), .returns) else DEV_SLOPE[[p]]
     mat[, p] <- dev_slope(mat[, p], from_pc, to_pc, .sl)
   }
+  # ZERO IND WHEREVER NOBODY ACTUALLY STOOD AT THE TARGET ELECTION. Ported from
+  # backtest_candidate_fed.R and backtest_candidate_sa.R; was missing here and
+  # in vic and NSW. Without it the model swings the PRIOR election's
+  # independent vote forward with no check anyone recontested -- found
+  # investigating NSW's Dubbo, which carried a retired independent's 28.4%
+  # forward though nobody stood to hold it.
+  if ("IND" %in% colnames(mat)) {
+    ind_seats <- fb[party == "IND" & votes > 0, unique(seat)]
+    no_ind <- setdiff(rownames(mat), ind_seats)
+    zeroed <- no_ind[mat[no_ind, "IND"] > 0]
+    mat[no_ind, "IND"] <- 0
+    if (length(zeroed)) {
+      cat(sprintf("BW0  %s: zeroed IND in %d seat(s) with no independent nominated: %s\n",
+                  el_to, length(zeroed), paste(sort(zeroed), collapse = ", ")))
+    }
+  }
   shares <- 100 * mat / rowSums(mat)
 
   truth <- WIN[election == el_to, setNames(winner, seat)]
