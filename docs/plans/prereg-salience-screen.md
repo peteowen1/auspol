@@ -100,3 +100,48 @@ If the code disagrees with any row, the code is wrong.
 - **A single Trends pull per candidate.** No replicates.
 - **WA is excluded entirely**: it publishes bare surnames, so its search terms
   are unusable and the screen cannot be evaluated there.
+
+---
+
+# AMENDMENT, 2026-08-27: the governed population, corrected before scoring
+
+Added before the screen was scored anywhere. The section above is left unedited.
+
+## What changes
+
+The document defines the governed population as **prior party vote < 15%**. That
+definition is wrong in two ways, both demonstrated after it was written and
+neither dependent on any result of the screen:
+
+1. **A returning candidate can read as new.** Philip Donato held Orange with
+   49.1% as a Shooter in 2019 and 53.1% as an independent in 2023.
+   `candidate_returns()` matched within (seat, party), so a five-year sitting
+   member counted as a new independent.
+2. **A party surge is not a candidate emergence.** One Nation went from 2.63% to
+   22.50% of the South Australian vote, contesting 47 seats instead of 19, with
+   19 of 47 candidates above 25%. Its winners had no prior seat vote because the
+   PARTY had none. Uniform swing predicts Hammond exactly and the rest within 7
+   to 15 points.
+
+**Governed** now means: prior party vote < 15%, **and** not the same person who
+contested that seat last time, **and** not a class whose statewide vote moved by
+5 points or more.
+
+## Why this is not a rescue
+
+Both faults are demonstrable without reference to the screen's performance — one
+from an electoral record, one from a statewide vote share — which is the test
+`CLAUDE.md` requires before a committed criterion may be changed.
+
+And the amendment makes the test **harder**, not easier. It removes 289
+candidates from the population, including every one of the four South Australian
+One Nation winners, which were the screen's only remaining misses. A rescue would
+add cases the screen gets right; this removes cases it was being blamed for and
+shrinks the sample it must succeed on.
+
+## The criteria are otherwise unchanged
+
+Primary, secondary, guard, registration threshold, dry-run and refusals all
+stand. The dry-run rows for Chantelle Thomas and Geoff Brock are now doubly
+covered: sa2026 fails the registration test AND both are outside the governed
+population.
