@@ -250,6 +250,14 @@ for (K in PAIRS) {
   ELASTIC   <- as.numeric(Sys.getenv("AUSPOL_ELASTIC_OVER", "0"))
   ELASTIC_D <- as.numeric(Sys.getenv("AUSPOL_ELASTIC_FALL", "2"))
   DEV_SLOPE <- dev_slopes_for(union(colnames(mat), names(sb)))
+  .cond <- identical(Sys.getenv("AUSPOL_DEV_SLOPE_MODE", ""), "conditional")
+  .returns <- if (.cond) tryCatch(candidate_returns(sprintf("vic%d", K$from), sprintf("vic%d", K$to)), error = function(e) {
+    cat(sprintf("BV1c! conditional slopes unavailable: %s
+", conditionMessage(e))); NULL }) else NULL
+  if (.cond && !is.null(.returns))
+    cat(sprintf("BV1c conditional slopes ON: %d of %d seat-classes returning
+",
+                sum(.returns$same), nrow(.returns)))
   cat(sprintf("BV1d  dev slopes: %s%s
 ",
               if (all(DEV_SLOPE == 1)) "all 1.000 (uniform swing)" else
@@ -260,7 +268,8 @@ for (K in PAIRS) {
   pinned <- matrix(FALSE, nrow(mat), ncol(mat), dimnames = dimnames(mat))
   for (p in parties) if (p %in% names(sb) && p %in% names(sa)) {
     d_state <- sb[[p]] - sa[[p]]
-    val <- dev_slope(mat[, p], sa[[p]], sb[[p]], DEV_SLOPE[[p]])
+    .sl <- if (.cond && !is.null(.returns)) conditional_slopes(p, rownames(mat), .returns) else DEV_SLOPE[[p]]
+    val <- dev_slope(mat[, p], sa[[p]], sb[[p]], .sl)
     if (ELASTIC > 0 && d_state < -ELASTIC_D && sa[[p]] > 0) {
       over <- mat[, p] / sa[[p]]
       hit <- is.finite(over) & over > ELASTIC

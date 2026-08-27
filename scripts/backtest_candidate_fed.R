@@ -366,6 +366,18 @@ for (K in PAIRS) {
   # has ever done. That is the point: every calibration figure this repo has
   # quoted describes a tighter variant than the model it ships.
   DEV_SLOPE <- dev_slopes_for(union(colnames(mat), names(st_b)))
+  # ARM C: slopes conditional on whether the SAME candidate stands again. A
+  # single per-class slope averages two populations that behave nothing alike --
+  # IND 0.907 returning against 0.326 new -- so it is wrong for every seat.
+  .cond <- identical(Sys.getenv("AUSPOL_DEV_SLOPE_MODE", ""), "conditional")
+  .returns <- if (.cond) tryCatch(candidate_returns(ea, eb), error = function(e) {
+    cat(sprintf("BF1c! conditional slopes unavailable for %s->%s: %s
+", ea, eb,
+                conditionMessage(e))); NULL }) else NULL
+  if (.cond && !is.null(.returns))
+    cat(sprintf("BF1c conditional slopes ON %s->%s: %d of %d seat-classes returning
+",
+                ea, eb, sum(.returns$same), nrow(.returns)))
   cat(sprintf("BF1d  dev slopes: %s%s
 ",
               if (all(DEV_SLOPE == 1)) "all 1.000 (uniform swing)" else
@@ -430,11 +442,13 @@ for (K in PAIRS) {
                 FC$tpp, fr, FC$anchor$mean, FC$implied_tpp))
     for (p in parties) {
       prev <- if (p %in% names(st_a)) st_a[[p]] else 0
-      shares[, p] <- dev_slope(mat[, p], prev, st_fc[[p]], DEV_SLOPE[[p]])
+      .sl <- if (.cond && !is.null(.returns)) conditional_slopes(p, rownames(mat), .returns) else DEV_SLOPE[[p]]
+      shares[, p] <- dev_slope(mat[, p], prev, st_fc[[p]], .sl)
     }
   } else {
     for (p in parties) if (p %in% names(st_b) && p %in% names(st_a)) {
-      shares[, p] <- dev_slope(mat[, p], st_a[[p]], st_b[[p]], DEV_SLOPE[[p]])
+      .sl <- if (.cond && !is.null(.returns)) conditional_slopes(p, rownames(mat), .returns) else DEV_SLOPE[[p]]
+      shares[, p] <- dev_slope(mat[, p], st_a[[p]], st_b[[p]], .sl)
     }
   }
   # Zero IND wherever nobody actually stood at the TARGET election. This is

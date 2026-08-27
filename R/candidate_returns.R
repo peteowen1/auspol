@@ -64,12 +64,24 @@ candidate_returns <- function(election_from, election_to, corpus = NULL) {
   NOWT  <- data.table::copy(NOWT)[,  .k := kf(.SD), .SDcols = names(NOWT)]
   PREVT <- data.table::copy(PREVT)[, .k := kf(.SD), .SDcols = names(PREVT)]
 
-  prev_keys <- PREVT[nzchar(PREVT$.k), list(seat, party, .k)]
-  out <- unique(NOWT[nzchar(NOWT$.k), list(seat, party, .k)])
+  # JOIN ON A NORMALISED SEAT KEY. The corpus is not internally consistent:
+  # vic2014 and vic2018 store seats as "albertpark" while vic2022 stores
+  # "Albert Park", so an exact join between them matched ZERO of 508 seat-classes
+  # and reported that no Victorian candidate had ever re-stood. That reads as a
+  # real answer -- some elections genuinely have few returners -- and Victoria is
+  # the live target. Caught only because every other pair ran 15-26%.
+  #
+  # Normalising here rather than in the corpus keeps this fix at the point of
+  # use; the corpus inconsistency is a separate defect and is recorded as one.
+  ns <- function(x) gsub("[^a-z0-9]", "", tolower(x))
+  NOWT[,  .s := ns(seat)]
+  PREVT[, .s := ns(seat)]
+  prev_keys <- PREVT[nzchar(PREVT$.k), list(.s, party, .k)]
+  out <- unique(NOWT[nzchar(NOWT$.k), list(seat, .s, party, .k)])
   out <- merge(out, prev_keys[, `:=`(hit = TRUE)],
-               by = c("seat", "party", ".k"), all.x = TRUE)
+               by = c(".s", "party", ".k"), all.x = TRUE)
   out[is.na(hit), hit := FALSE]
-  res <- out[, list(same = any(hit)), by = list(seat, party)]
+  res <- out[, list(same = any(hit)), by = list(seat, party)]  # target's own names
   # Every seat/class at the target election, so a caller can index without
   # worrying about which ones had a match at all.
   full <- unique(NOWT[, list(seat, party)])

@@ -161,6 +161,14 @@ for (K in PAIRS) {
                 dimnames = list(rownames(A), parties))
   mat[, colnames(A)] <- A
   DEV_SLOPE <- dev_slopes_for(parties)
+  .cond <- identical(Sys.getenv("AUSPOL_DEV_SLOPE_MODE", ""), "conditional")
+  .returns <- if (.cond) tryCatch(candidate_returns(el_from, el_to), error = function(e) {
+    cat(sprintf("BW1c! conditional slopes unavailable: %s
+", conditionMessage(e))); NULL }) else NULL
+  if (.cond && !is.null(.returns))
+    cat(sprintf("BW1c conditional slopes ON: %d of %d seat-classes returning
+",
+                sum(.returns$same), nrow(.returns)))
   cat(sprintf("BW1d  dev slopes: %s%s
 ",
               if (all(DEV_SLOPE == 1)) "all 1.000 (uniform swing)" else
@@ -171,7 +179,8 @@ for (K in PAIRS) {
   for (p in parties) {
     from_pc <- if (p %in% names(sa)) sa[[p]] else 0
     to_pc   <- if (p %in% names(sb)) sb[[p]] else 0
-    mat[, p] <- dev_slope(mat[, p], from_pc, to_pc, DEV_SLOPE[[p]])
+    .sl <- if (.cond && !is.null(.returns)) conditional_slopes(p, rownames(mat), .returns) else DEV_SLOPE[[p]]
+    mat[, p] <- dev_slope(mat[, p], from_pc, to_pc, .sl)
   }
   shares <- 100 * mat / rowSums(mat)
 

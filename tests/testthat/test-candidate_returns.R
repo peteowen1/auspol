@@ -43,3 +43,16 @@ test_that("a missing corpus column is an error rather than a silent FALSE", {
 test_that("an unknown election label is an error, not an empty result", {
   expect_error(candidate_returns("nope", "e2", mk()), "no rows for election nope")
 })
+
+test_that("seat names are matched across differing conventions", {
+  # The corpus stores vic2018 as "albertpark" and vic2022 as "Albert Park".
+  # An exact join matched ZERO of 508 seat-classes and read as "nobody
+  # re-stands in Victoria", which is false and would make arm C a silent no-op
+  # in the live target state.
+  d <- data.table::data.table(
+    election = c("e1", "e2"), seat = c("albertpark", "Albert Park"),
+    party = "IND", surname = "SMITH", given = "Jane", name = NA_character_)
+  r <- candidate_returns("e1", "e2", d)
+  expect_true(r$same)
+  expect_equal(r$seat, "Albert Park")   # the TARGET election's spelling
+})
