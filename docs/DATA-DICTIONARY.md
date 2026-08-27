@@ -1,6 +1,6 @@
 # Data dictionary
 
-**Generated 2026-08-26 by `scripts/build_data_dictionary.R`. Do not hand-edit.**
+**Generated 2026-08-27 by `scripts/build_data_dictionary.R`. Do not hand-edit.**
 
 Companion to `docs/DATA-REGISTRY.md`. The registry answers *do we have this
 file*; this answers *do we have this field*. Four wrong "we don't have it"
@@ -41,6 +41,7 @@ column does not exist.**
 | `vec-2022-vic-candidates.csv` | 731 | `seat`, `cand`, `party`, `fp_votes` |
 | `vec-2022-vic-firstprefs.csv` | 508 | `seat`, `party`, `votes` |
 | `vec-2022-vic-transfers.csv` | 1,956 | `election`, `seat`, `round`, `from`, `to`, `votes`, `to_n` |
+| `vec-2022-vic-winners.csv` | 87 | `seat`, `winner` |
 | `waec-1996-wa-firstprefs.csv` | 208 | `seat`, `party`, `votes` |
 | `waec-2001-wa-firstprefs.csv` | 315 | `seat`, `party`, `votes` |
 | `waec-2005-wa-firstprefs.csv` | 303 | `seat`, `party`, `votes` |
@@ -135,17 +136,17 @@ processed extract. Every one is recoverable without a new fetch.
 | `cal-vic-m2.5.csv` | 166 | `seat`, `actual`, `prob`, `pred`, `pred_p`, `pair` |
 | `cal-vic-m4.0.csv` | 166 | `seat`, `actual`, `prob`, `pred`, `pred_p`, `pair` |
 | `calibration-arms.csv` | 10 | `pair`, `n`, `mult`, `logB`, `acc`, `T`, `logA`, `logC`, `B_vs_A`, `B_vs_C` |
-| `candidacies.csv` | 14,959 | `election`, `region`, `year`, `seat`, `name`, `surname`, `given`, `party`, `party_raw`, `party_ab`, `state`, `votes`, `pcv`, `elected`, `historic_elected`, `breakout`, `swing`, `ballot_position`, `ordinary`, `absent`, `provisional`, `prepoll`, `postal`, `tot` |
+| `candidacies.csv` | 14,953 | `election`, `region`, `year`, `seat`, `name`, `surname`, `given`, `party`, `party_raw`, `party_ab`, `state`, `votes`, `pcv`, `elected`, `historic_elected`, `breakout`, `swing`, `ballot_position`, `ordinary`, `absent`, `provisional`, `prepoll`, `postal`, `tot` |
+| `candidate-contests.csv` | 14,953 | `V1`, `V2`, `V3`, `V4`, `V5`, `V6`, `V7`, `V8` |
+| `candidate-ids.csv` | 11,225 | `V1`, `V2`, `V3`, `V4`, `V5`, `V6`, `V7`, `V8`, `V9`, `V10`, `V11`, `V12` |
+| `candidate-review.csv` | 145 | `V1`, `V2`, `V3`, `V4`, `V5`, `V6`, `V7`, `V8`, `V9`, `V10`, `V11`, `V12`, `V13`, `V14`, `V15` |
 | `cross-party-swing.csv` | 1,508 | `cycle`, `region`, `seat`, `party`, `y`, `x`, `own_base`, `pred_uniform`, `pred_cross` |
 | `cycle-walks-fed.csv` | 17 | `year`, `party`, `n`, `own_weight`, `obs_pooled`, `obs_cycle`, `rw_pooled_pts`, `rw_cycle_pts`, `at_lower`, `at_upper`, `conv`, `acf1`, `speedup` |
 | `cycle-walks-nsw.csv` | 8 | `year`, `party`, `n`, `own_weight`, `cycle_level`, `obs_pts`, `rw_pooled`, `rw_cycle`, `floor_ref`, `at_lower`, `at_upper`, `acf1` |
 | `cycle-walks-vic.csv` | 13 | `year`, `party`, `n`, `own_weight`, `cycle_level`, `obs_pts`, `rw_pts`, `floor_ref`, `at_upper`, `floored`, `acf1` |
 | `demographic-swing-loo.csv` | 12 | `party`, `pair`, `n`, `mae_uniform`, `mae_demog`, `improvement` |
+| `dev-slopes-heldout.csv` | 42 | `party`, `slope`, `se`, `n`, `pairs`, `held_out`, `t_vs_1` |
 | `emergence-test.csv` | 55 | `V1`, `V2`, `V3`, `V4`, `V5`, `V6`, `V7`, `V8`, `V9`, `V10`, `V11`, `V12`, `V13`, `V14`, `V15`, `V16` |
-| `emergence-trends.csv` | 53 | `V1`, `V2`, `V3`, `V4`, `V5`, `V6`, `V7`, `V8`, `V9`, `V10`, `V11`, `V12`, `V13`, `V14`, `V15`, `V16`, `V17`, `V18` |
-| `fed-insurgency-risk.csv` | 886 | `pair`, `seat`, `nm_best`, `nm_held`, `risk_loeo`, `shrink_i`, `nm_win` |
-| `fed-insurgency-surge.csv` | 886 | `pair`, `seat`, `nm_party`, `nm_from`, `nm_held`, `q_loeo`, `gain`, `surge` |
-| `fed-swing-coef-refit.csv` | 2 | `election`, `n`, `mae_A`, `mae_B`, `mae_C` |
 
-_(232 `backtest-*.csv` arm outputs omitted; they share one shape.)_
+_(311 `backtest-*.csv` arm outputs omitted; they share one shape.)_
 

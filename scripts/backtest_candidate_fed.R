@@ -206,6 +206,19 @@ if (identical(Sys.getenv("AUSPOL_SALIENCE_SURGE", "0"), "1")) {
               nrow(SALIENCE_HAZ), stats::median(SALIENCE_HAZ$surge_h),
               max(SALIENCE_HAZ$surge_h)))
 }
+
+# ARM SURGE-V2: multi-feature, governed-population-gated hazard replacing
+# fit_salience_hazard.R's single-feature (`ratio`), ungated, stale-instrument
+# fit. See R/salience_surge.R and docs/plans/prereg-salience-surge-v2.md.
+# Computed FRESH per target election below (not loaded from a file), fit on
+# every OTHER available election so the target never leaks into its own fit.
+SURGE_V2 <- identical(Sys.getenv("AUSPOL_SALIENCE_SURGE_V2", "0"), "1")
+SURGE_V2_PAIRS <- list(
+  list(election = "fed2019", prev = "fed2016", region = "fed"),
+  list(election = "fed2022", prev = "fed2019", region = "fed"),
+  list(election = "vic2022", prev = "vic2018", region = "vic"),
+  list(election = "nsw2023", prev = "nsw2019", region = "nsw"),
+  list(election = "sa2026",  prev = "sa2022",  region = "sa"))
 if (SURGE_H > 0)
   cat(sprintf("BF0s surge hazard %.4f, size N(15.6, 6.1), floor 2%%
 ", SURGE_H))
@@ -585,7 +598,26 @@ for (X in out_all) {
   # flat SURGE_H, and a missing seat is REPORTED -- a silent fallback to the flat
   # rate would make a partial salience corpus look like a complete one.
   surge_arg <- SURGE_H
-  if (!is.null(SALIENCE_HAZ)) {
+  surge_mu_arg <- 15.6; surge_sd_arg <- 6.1
+  if (SURGE_V2) {
+    target_el <- paste0("fed", X$K$to)
+    train_pairs <- Filter(function(p) p$election != target_el, SURGE_V2_PAIRS)
+    hz <- tryCatch(
+      surge_hazard_for(target_el, paste0("fed", X$K$from), "fed", train_pairs),
+      error = function(e) { cat(sprintf("BF0v! surge-v2 failed for %s: %s\n", target_el, conditionMessage(e))); NULL })
+    if (!is.null(hz)) {
+      sn <- rownames(X$shares)
+      if (is.null(sn) && is.data.frame(X$shares)) sn <- as.character(X$shares$seat)
+      v <- setNames(hz$seat_hazard$surge_h, hz$seat_hazard$seat)[sn]
+      miss <- sum(is.na(v))
+      v[is.na(v)] <- 0
+      surge_arg <- unname(v)
+      surge_mu_arg <- hz$surge_mu; surge_sd_arg <- hz$surge_sd
+      cat(sprintf("BF0v %s: surge-v2 hazard for %d of %d seats (%d absent -> 0) | mean %.4f | mu %.2f sd %.2f | lambda %.1f | train winners %d\n",
+                  target_el, length(sn) - miss, length(sn), miss, mean(surge_arg),
+                  surge_mu_arg, surge_sd_arg, hz$lambda, hz$n_train_winners))
+    }
+  } else if (!is.null(SALIENCE_HAZ)) {
     sn <- rownames(X$shares)
     if (is.null(sn) && is.data.frame(X$shares)) sn <- as.character(X$shares$seat)
     h <- SALIENCE_HAZ[election == paste0("fed", X$K$to)]
@@ -601,6 +633,7 @@ for (X in out_all) {
   sim <- simulate_seat_contests(level_sd = .level_sd, X$shares, X$fm, party_sd = psd, seat_sd = sd_w * SEAT_SD_MULT,
                                 n_sims = N_SIMS, smooth = SMOOTH, seed = SEED,
                                 shrink = shrink_arg, surge_h = surge_arg,
+                                surge_mu = surge_mu_arg, surge_sd = surge_sd_arg,
                                 party_cor = PARTY_COR, statewide_draws = X$sw_draws,
                                 fallback_smooth = FB_SMOOTH, flow_sd = FLOW_SD)
   wp <- as.data.table(sim$win_prob)

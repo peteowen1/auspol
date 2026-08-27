@@ -464,6 +464,38 @@ if (.cond && is.null(.returns)) {
               sum(.returns$same), nrow(.returns),
               if (.screened && !is.null(.permit)) "" else " | screen: no salience data, arm C only"))
 }
+# ARM SURGE-V2, off by default (AUSPOL_SALIENCE_SURGE_V2=1). Not yet reviewed
+# for shipping -- see R/salience_surge.R, docs/plans/prereg-salience-surge-v2.md,
+# and the fed2022/nsw2023/sa2026 backtest wins (~26-30% log-loss reduction) vs
+# vic2022's own held-out result (a small, non-accuracy-affecting wash). SAME
+# candidate-list gating as arm CS above: vic2026 has no salience corpus until
+# nominations close, so this falls back to flat SURGE_H (default 0) until then,
+# printed rather than silent.
+.surge_v2_on <- identical(Sys.getenv("AUSPOL_SALIENCE_SURGE_V2", "0"), "1")
+surge_arg <- as.numeric(Sys.getenv("AUSPOL_SURGE_H", "0"))
+surge_mu_arg <- 15.6; surge_sd_arg <- 6.1
+if (.surge_v2_on) {
+  .v2_train_pairs <- list(
+    list(election = "fed2019", prev = "fed2016", region = "fed"),
+    list(election = "fed2022", prev = "fed2019", region = "fed"),
+    list(election = "vic2022", prev = "vic2018", region = "vic"),
+    list(election = "nsw2023", prev = "nsw2019", region = "nsw"),
+    list(election = "sa2026",  prev = "sa2022",  region = "sa"))
+  .hz <- tryCatch(surge_hazard_for("vic2026", "vic2022", "vic", .v2_train_pairs),
+                  error = function(e) NULL)
+  if (is.null(.hz)) {
+    cat("DS3  surge-v2 requested but vic2026 has no salience corpus yet -- FALLING BACK to flat surge_h\n")
+  } else {
+    sn <- rownames(shares)
+    if (is.null(sn) && is.data.frame(shares)) sn <- as.character(shares$seat)
+    v <- setNames(.hz$seat_hazard$surge_h, .hz$seat_hazard$seat)[sn]
+    miss <- sum(is.na(v)); v[is.na(v)] <- 0
+    surge_arg <- unname(v); surge_mu_arg <- .hz$surge_mu; surge_sd_arg <- .hz$surge_sd
+    cat(sprintf("DS3  surge-v2 hazard for %d of %d seats (%d absent -> 0) | mean %.4f | mu %.2f sd %.2f | lambda %.1f | train winners %d\n",
+                length(sn) - miss, length(sn), miss, mean(surge_arg),
+                surge_mu_arg, surge_sd_arg, .hz$lambda, .hz$n_train_winners))
+  }
+}
 .vic_slope <- function(p, seats) {
   if (.screened && !is.null(.permit) && !is.null(.returns)) {
     pv <- .permit[.permit$party == p, ]
@@ -671,7 +703,8 @@ if (SHRINK > 0) cat(sprintf("CAL  calibration shrink %.2f applied
 ", SHRINK))
 sim <- simulate_seat_contests(level_sd = .level_sd, shares, fm, party_sd = psd, seat_sd = SEAT_SD, shrink = SHRINK,
                               n_sims = N_SIMS, smooth = SMOOTH, seed = SEED,
-                              statewide_draws = sw_draws)
+                              statewide_draws = sw_draws,
+                              surge_h = surge_arg, surge_mu = surge_mu_arg, surge_sd = surge_sd_arg)
 cat(sprintf("\nsimulated %d seats x %d runs in %.0fs | pooled fallback %.1f%%\n",
             nrow(shares), N_SIMS,
             as.numeric(difftime(Sys.time(), t0, units = "secs")),

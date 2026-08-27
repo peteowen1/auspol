@@ -55,15 +55,20 @@ salience_registration <- function(jump) {
   mean(jump > 0)
 }
 
-#' The screen's permit vector for one election, built once and shared
+#' The governed population for one election, built once and shared
 #'
-#' Wraps [candidate_returns()], [surging_parties()] and [salience_screen()]
-#' into the single lookup every backtest harness needs: for each seat and party
-#' class, may this candidate be treated as a potential emergence?
+#' Wraps [candidate_returns()] (by way of a per-candidate name match) and
+#' [surging_parties()] into the single population lookup every consumer of
+#' the salience screen needs: for each named candidate, is this someone the
+#' screen (or any other salience-based mechanism) is entitled to make a claim
+#' about? A sitting member returning under their own name, or a candidate of
+#' a class whose statewide vote surged, is not -- see the `governed` parameter
+#' of [salience_screen()].
 #'
-#' One implementation because five harnesses build shares five different ways,
-#' and a governed-population definition assembled slightly differently in each
-#' is how a bug like the Donato mismatch survives in one harness after being
+#' One implementation because five harnesses (and now more than one
+#' salience-based mechanism) build this population five different ways, and a
+#' governed-population definition assembled slightly differently in each is
+#' how a bug like the Donato mismatch survives in one harness after being
 #' fixed in another.
 #'
 #' @param election,prev_election Election labels as used in
@@ -71,10 +76,17 @@ salience_registration <- function(jump) {
 #' @param region The region code (`"fed"`, `"vic"`, `"sa"`, `"nsw"`), for
 #'   [surging_parties()].
 #' @param surge_threshold Passed to [surging_parties()].
-#' @return A `data.table` of `seat`, `party`, `permit`, or `NULL` if
-#'   `output/salience-v6.csv` has no rows for `election`.
+#' @return A `data.table` of `seat`, `party`, `keyword`, `jump`, `prev_party`,
+#'   `elected`, `pcv`, `governed`, or `NULL` if `output/salience-v6.csv` has no
+#'   rows for `election`.
+#' @section Seat renames: seat-name matching between elections only strips
+#'   case and punctuation, not genuine redistribution renames (Denison ->
+#'   Clark, Batman -> Cooper, Melbourne Ports -> Macnamara are corrected via a
+#'   small explicit lookup; others are not). An unmapped rename makes a
+#'   returning member look like a fresh governed candidate with `prev_party`
+#'   near zero -- known, disclosed gap, not silently assumed complete.
 #' @export
-salience_permit_for <- function(election, prev_election, region,
+governed_population <- function(election, prev_election, region,
                                 surge_threshold = 5) {
   sf <- file.path("output", "salience-v6.csv")
   if (!file.exists(sf)) return(NULL)
@@ -102,6 +114,29 @@ salience_permit_for <- function(election, prev_election, region,
   # scores: 54 seat-class instances where the class-level flag disagreed with
   # the actual leading candidate, none of them affecting a seat that was won --
   # but SAL already carries names, so the correct match uses them directly.
+  # SEAT RENAMES ACROSS REDISTRIBUTIONS. A seat can change name between
+  # consecutive elections while a sitting member's electorate does not
+  # meaningfully change -- Andrew Wilkie held Denison (2016) continuously
+  # into its 2019 rename to Clark, 44.1% -> 50.0%, but `ns()` only strips case
+  # and punctuation, so "denison" and "clark" never match and he was scored
+  # as a FRESH governed candidate with prev_party landing near 0. That
+  # directly contaminated a fitted surge-size estimate (his 50.0% dragged the
+  # mean of "what a governed winner gets" up alongside the six genuine
+  # teal-wave emergences). Only the high-confidence, independently-verifiable
+  # renames are listed -- diffing seat-name sets between election pairs
+  # surfaced 1-10 unmatched names per pair (fed2016->fed2019 alone had 7-8),
+  # most of which are genuine seat creation/abolition from population growth,
+  # not renames, and guessing which is which from name similarity alone would
+  # repeat the exact error this map exists to fix. Unmapped renames are a
+  # known, documented gap -- see governed_population()'s docs -- not a silent
+  # one.
+  SEAT_RENAMES <- c(denison = "clark", batman = "cooper",
+                    melbourneports = "macnamara")
+  apply_renames <- function(x) {
+    hit <- x %in% names(SEAT_RENAMES)
+    x[hit] <- SEAT_RENAMES[x[hit]]
+    x
+  }
   C <- tryCatch(data.table::fread("output/candidacies.csv", showProgress = FALSE),
                error = function(e) NULL)
   if (!is.null(C)) {
@@ -118,9 +153,26 @@ salience_permit_for <- function(election, prev_election, region,
     # guess a second time.
     pk <- search_form(PREVT$given, PREVT$surname, PREVT$name)
     ns <- function(x) gsub("[^a-z0-9]", "", tolower(x))
-    pseat <- ns(PREVT$seat)
+    pseat <- apply_renames(ns(PREVT$seat))
     sk <- SAL$keyword
     sseat <- ns(SAL$seat)
+    # prev_party OVERRIDDEN ONLY FOR RENAMED SEATS. salience-v6.csv's own
+    # prev_party column was built by fetch_salience_v6.R with the SAME
+    # unrename-aware seat match, so it carries the identical Wilkie-style
+    # error for a seat in SEAT_RENAMES. Everywhere else, prev_party is left
+    # exactly as the column already had it -- this stays a scoped rename fix,
+    # not a general recomputation, so the class-level (seat, party) semantics
+    # already used throughout the codebase (fetch_salience_v6.R computes
+    # prev_party the same way) are unchanged for every seat this bug doesn't
+    # touch.
+    renamed_target_seats <- unname(SEAT_RENAMES)
+    if (any(sseat %in% renamed_target_seats)) {
+      prevp <- PREVT[, .(prev_party = max(pcv, na.rm = TRUE)), by = .(seat = ns(seat), party)]
+      prevp[, seat := apply_renames(seat)]
+      fresh <- prevp[data.table::data.table(seat = sseat, party = SAL$party), on = c("seat", "party")]
+      hit <- sseat %in% renamed_target_seats & is.finite(fresh$prev_party)
+      SAL[hit, prev_party := fresh$prev_party[hit]]
+    }
     # %in%, not `any(sk[i] == pk & ...)`: pk/pseat can hold NA for a candidate
     # with no usable name, and `any()` over a vector that is all FALSE/NA with
     # no TRUE returns NA, not FALSE -- that NA then corrupted `governed`
@@ -130,6 +182,27 @@ salience_permit_for <- function(election, prev_election, region,
     ret <- nzchar(sk) & !is.na(sk) & paste(sseat, sk) %in% prev_keys
   } else ret <- rep(FALSE, nrow(SAL))
   SAL[, governed := prev_party < 15 & !(party %in% surging) & !ret]
+  # setattr(), not `attr<-`: the latter triggers data.table's shallow-copy-on-
+  # `:=` warning on every subsequent `[, := ]` against this table (CI runs
+  # R CMD check --as-cran with warnings as errors, so this is not cosmetic).
+  data.table::setattr(SAL, "surging", surging)
+  SAL
+}
+
+#' The screen's permit vector for one election, built once and shared
+#'
+#' Thin wrapper over [governed_population()] and [salience_screen()] -- see
+#' [governed_population()] for how the population itself is built.
+#'
+#' @inheritParams governed_population
+#' @return A `data.table` of `seat`, `party`, `permit`, or `NULL` if
+#'   `output/salience-v6.csv` has no rows for `election`.
+#' @export
+salience_permit_for <- function(election, prev_election, region,
+                                surge_threshold = 5) {
+  SAL <- governed_population(election, prev_election, region, surge_threshold)
+  if (is.null(SAL)) return(NULL)
+  surging <- attr(SAL, "surging")
   SAL[, permit := salience_screen(jump, governed)]
   cat(sprintf("SP1  %s screen: registration %.0f%% | governed %d | permitted %d of governed | surging: %s\n",
               election, 100 * salience_registration(SAL$jump), sum(SAL$governed),

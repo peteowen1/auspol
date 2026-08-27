@@ -83,7 +83,7 @@ test_that("returning is matched PER CANDIDATE, not broadcast to the whole class"
   dir.create("output")
   data.table::fwrite(data.table::data.table(
     election = "x0", seat = "A", party = "IND",
-    name = "Smith, John", surname = "Smith", given = "John"),
+    name = "Smith, John", surname = "Smith", given = "John", pcv = 50),
     "output/candidacies.csv")
   data.table::fwrite(data.table::data.table(
     election = "x", seat = c("A", "A", "Z"), party = c("IND", "IND", "OTH"),
@@ -110,7 +110,7 @@ test_that("a candidacies row with a missing seat name does not poison other rows
   data.table::fwrite(data.table::data.table(
     election = "x0", seat = c(NA_character_, "B"), party = c("IND", "IND"),
     name = c("Unknown, Person", "Baker, Tom"), surname = c("Unknown", "Baker"),
-    given = c("Person", "Tom")),
+    given = c("Person", "Tom"), pcv = c(10, 20)),
     "output/candidacies.csv")
   data.table::fwrite(data.table::data.table(
     election = "x", seat = "C", party = "IND",
@@ -118,4 +118,28 @@ test_that("a candidacies row with a missing seat name does not poison other rows
     "output/salience-v6.csv")
   r <- salience_permit_for("x", "x0", "xx")
   expect_false(anyNA(r$permit))
+})
+
+test_that("a renamed seat does not turn a landslide incumbent into a fresh emergence", {
+  # Andrew Wilkie held Denison (2016, 44.1%) continuously into its 2019 rename
+  # to Clark (50.0%) -- ns() only strips case/punctuation, so "denison" and
+  # "clark" never matched, and he was scored as a brand-new governed
+  # candidate with prev_party near zero. That directly overstated a fitted
+  # surge-size estimate (his 50% pulled the mean of "what a governed winner
+  # gets" up alongside genuine emergences in the 25-44% range). Regression
+  # test using the exact real-world case, via the SEAT_RENAMES lookup.
+  td <- withr::local_tempdir()
+  withr::local_dir(td)
+  dir.create("output")
+  data.table::fwrite(data.table::data.table(
+    election = "x0", seat = "Denison", party = "IND",
+    name = "Wilkie, Andrew", surname = "Wilkie", given = "Andrew", pcv = 44.1),
+    "output/candidacies.csv")
+  data.table::fwrite(data.table::data.table(
+    election = "x", seat = "Clark", party = "IND",
+    keyword = "Andrew Wilkie", jump = 3, prev_party = 0, elected = TRUE, pcv = 50.0),
+    "output/salience-v6.csv")
+  g <- governed_population("x", "x0", "xx")
+  expect_equal(g$prev_party, 44.1)
+  expect_false(g$governed)   # high prior vote alone should already exclude him
 })

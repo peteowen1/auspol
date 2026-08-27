@@ -41,6 +41,29 @@ SPAN  <- 400L          # above ~269 days keeps weekly buckets, and short enough
 BASE_DAYS <- 300L
 SLEEP <- as.numeric(Sys.getenv("AUSPOL_SALIENCE_SLEEP", "4"))
 MAX_BATCH <- as.integer(Sys.getenv("AUSPOL_SALIENCE_MAXBATCH", "200"))
+
+# ADAPTIVE THROTTLE BACKOFF. Any error other than the specific "No data
+# returned by the query" (a genuine all-silent batch) used to get 3 quick
+# retries at 10/20/30s and then be silently dropped -- indistinguishable in
+# the log from a one-off network blip, and the same code path a real rate
+# limit hits. That conflation is exactly how "by then Google had throttled us
+# out entirely" happened before (docs/DATA-DICTIONARY.md-adjacent incident,
+# CLAUDE.md). THROTTLE_STATE tracks a rolling count of suspected-throttle
+# errors across the WHOLE run (not just one call's retries) and both backs off
+# per-call and slows every subsequent call down when the rate climbs.
+THROTTLE_STATE <- new.env()
+THROTTLE_STATE$consecutive <- 0L
+THROTTLE_STATE$total_throttled <- 0L
+is_throttle_error <- function(msg) {
+  grepl("429|too many requests|quota|rate.?limit|temporarily blocked|403",
+        msg, ignore.case = TRUE)
+}
+current_sleep <- function() {
+  # Escalate the BASE between-batch sleep as consecutive suspected-throttle
+  # events climb, so the run slows itself down before every batch starts
+  # failing, rather than only reacting after the fact.
+  SLEEP * (2 ^ min(THROTTLE_STATE$consecutive, 5))
+}
 CACHE <- file.path("external", "reference", "trends")
 dir.create(CACHE, showWarnings = FALSE, recursive = TRUE)
 
@@ -64,6 +87,8 @@ dir.create(CACHE, showWarnings = FALSE, recursive = TRUE)
 # The anchor is a head of government: high and stable volume in that geography,
 # and never a candidate in the seats being ranked.
 ELS <- list(
+  fed2019 = list(poll = "2019-05-18", geo = "AU",     prev = "fed2016",
+                 anchor = "Scott Morrison"),
   fed2022 = list(poll = "2022-05-21", geo = "AU",     prev = "fed2019",
                  anchor = "Anthony Albanese"),
   fed2025 = list(poll = "2025-05-03", geo = "AU",     prev = "fed2022",
@@ -80,7 +105,56 @@ ELS <- list(
   vic2022 = list(poll = "2022-11-26", geo = "AU-VIC", prev = "vic2018",
                  anchor = "Daniel Andrews"),
   vic2018 = list(poll = "2018-11-24", geo = "AU-VIC", prev = "vic2014",
-                 anchor = "Daniel Andrews"))
+                 anchor = "Daniel Andrews"),
+
+  # EVERYTHING BELOW: added 2026-08-27 to scrape the remaining elections
+  # output/candidacies.csv already has results for, so the raw series is
+  # cached even where it isn't yet used by any model (keep-raw-data rule,
+  # CLAUDE.md). Anchors verified against Wikipedia/ABC/parlinfo/SBS, not
+  # assumed from memory -- a wrong incumbent silently corrupts the whole
+  # election's normalisation. `prev` election in comments marked (missing)
+  # where candidacies.csv has no prior election on record: prev_pcv then comes
+  # back 0 for every candidate, which degrades the top-2-per-seat SELECTION
+  # (independents are still always included regardless -- `rk <= 2L | party ==
+  # "IND"` -- so this mainly affects which single GRN/ONP/OTH_RIGHT candidate
+  # gets picked in a seat with more than one) and makes that election's
+  # `prev_party` column unusable as a feature. The raw jump series is still
+  # valid and cached regardless; this is a downstream-usability note, not a
+  # fetch-quality one.
+  fed2007 = list(poll = "2007-11-24", geo = "AU", prev = "fed2004", # (missing)
+                 anchor = "John Howard"),
+  fed2010 = list(poll = "2010-08-21", geo = "AU", prev = "fed2007",
+                 anchor = "Julia Gillard"),
+  fed2013 = list(poll = "2013-09-07", geo = "AU", prev = "fed2010",
+                 anchor = "Kevin Rudd"),
+  fed2016 = list(poll = "2016-07-02", geo = "AU", prev = "fed2013",
+                 anchor = "Malcolm Turnbull"),
+  nsw2019 = list(poll = "2019-03-23", geo = "AU-NSW", prev = "nsw2015", # (missing)
+                 anchor = "Gladys Berejiklian"),
+  sa2022  = list(poll = "2022-03-19", geo = "AU-SA", prev = "sa2018", # (missing)
+                 anchor = "Steven Marshall"),
+  vic2014 = list(poll = "2014-11-29", geo = "AU-VIC", prev = "vic2010", # (missing)
+                 anchor = "Denis Napthine"),
+  qld2020 = list(poll = "2020-10-31", geo = "AU-QLD", prev = "qld2017", # (missing)
+                 anchor = "Annastacia Palaszczuk"),
+  qld2024 = list(poll = "2024-10-26", geo = "AU-QLD", prev = "qld2020",
+                 anchor = "Steven Miles"),
+  wa1996  = list(poll = "1996-12-14", geo = "AU-WA", prev = "wa1993", # (missing)
+                 anchor = "Richard Court"),
+  wa2001  = list(poll = "2001-02-10", geo = "AU-WA", prev = "wa1996",
+                 anchor = "Richard Court"),
+  wa2005  = list(poll = "2005-02-26", geo = "AU-WA", prev = "wa2001",
+                 anchor = "Geoff Gallop"),
+  wa2008  = list(poll = "2008-09-06", geo = "AU-WA", prev = "wa2005",
+                 anchor = "Alan Carpenter"),
+  wa2013  = list(poll = "2013-03-09", geo = "AU-WA", prev = "wa2008",
+                 anchor = "Colin Barnett"),
+  wa2017  = list(poll = "2017-03-11", geo = "AU-WA", prev = "wa2013",
+                 anchor = "Colin Barnett"),
+  wa2021  = list(poll = "2021-03-13", geo = "AU-WA", prev = "wa2017",
+                 anchor = "Mark McGowan"),
+  wa2025  = list(poll = "2025-03-08", geo = "AU-WA", prev = "wa2021",
+                 anchor = "Roger Cook"))
 WANT <- Sys.getenv("AUSPOL_SALIENCE_ELECTION", "")
 if (nzchar(WANT)) ELS <- ELS[intersect(strsplit(WANT, ",")[[1]], names(ELS))]
 
@@ -101,18 +175,39 @@ qry <- function(kw, geo, from, to) {
   # everyone else -- Geoff Brock reads 96 unanchored and 7 alongside
   # Malinauskas, Chantelle Thomas 100 and 8. The anchor was solving what was
   # really an error-handling bug, at the cost of most of the signal.
-  r <- NULL; allzero <- FALSE
+  r <- NULL; allzero <- FALSE; throttled <- FALSE
   for (att in 1:3) {
     r <- tryCatch(gtrends(keyword = kw, geo = geo, time = paste(from, to),
                           onlyInterest = TRUE),
                   error = function(e) {
-                    if (grepl("No data returned", conditionMessage(e), fixed = TRUE))
+                    msg <- conditionMessage(e)
+                    if (grepl("No data returned", msg, fixed = TRUE)) {
                       allzero <<- TRUE
+                    } else if (is_throttle_error(msg)) {
+                      throttled <<- TRUE
+                    }
                     NULL
                   })
     if (allzero || (!is.null(r) && !is.null(r$interest_over_time))) break
+    if (throttled) {
+      # A REAL rate-limit signal, not a generic blip: back off far longer than
+      # the ordinary 10/20/30s retry, and record it so every SUBSEQUENT call
+      # (not just this one) slows down too.
+      THROTTLE_STATE$consecutive <- THROTTLE_STATE$consecutive + 1L
+      THROTTLE_STATE$total_throttled <- THROTTLE_STATE$total_throttled + 1L
+      wait <- 30 * (2 ^ min(THROTTLE_STATE$consecutive, 5))
+      cat(sprintf("S6T  throttle signal (consecutive %d, total %d this run) -- backing off %ds\n",
+                  THROTTLE_STATE$consecutive, THROTTLE_STATE$total_throttled, wait))
+      Sys.sleep(wait)
+      throttled <- FALSE
+      next
+    }
     Sys.sleep(10 * att)
   }
+  # A request that got here without hitting `throttled` succeeded (or hit the
+  # genuine-zero path) -- relax the adaptive slowdown so a past bad patch
+  # doesn't keep every later, healthy batch artificially slow.
+  THROTTLE_STATE$consecutive <- 0L
   if (allzero) {
     # Every term silent across the window. Recorded as zeros rather than
     # dropped, so the candidates are ZERO instead of missing.
@@ -199,7 +294,7 @@ for (el in names(ELS)) {
     batches[[length(batches) + 1L]] <- jump_of(s, E$poll)
     if (nb %% 20 == 0) cat(sprintf("S6-3 stage 1: %d batches | %d of %d done\n",
                                    nb, i, length(kws)))
-    Sys.sleep(SLEEP)
+    Sys.sleep(current_sleep())
   }
   if (!length(batches)) { cat(sprintf("S6!  %s: nothing measured, skipped\n", el)); next }
   cat(sprintf("S6-2 stage 1: %d batches | granularity %s | %d dropped\n", nb,
@@ -221,7 +316,7 @@ for (el in names(ELS)) {
       a <- m[keyword == E$anchor, jump]
       if (!length(a) || !is.finite(a) || a <= 0) next
       link <- rbind(link, m[keyword != E$anchor][, jump := jump / a])
-      Sys.sleep(SLEEP)
+      Sys.sleep(current_sleep())
     }
     if (!is.null(link)) {
       link <- link[, .(jump = max(jump)), by = keyword]

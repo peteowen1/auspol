@@ -530,11 +530,34 @@ FB_SMOOTH <- as.numeric(Sys.getenv("AUSPOL_FALLBACK_SMOOTH", "0"))
 FLOW_SD   <- as.numeric(Sys.getenv("AUSPOL_FLOW_SD", "0"))
 cat(sprintf("BS1f fallback_smooth %.2f | flow_sd %.2f\n", FB_SMOOTH, FLOW_SD))
 
+# ARM SURGE-V2: see R/salience_surge.R and scripts/backtest_candidate_fed.R.
+surge_arg <- SURGE_H; surge_mu_arg <- 15.6; surge_sd_arg <- 6.1
+if (identical(Sys.getenv("AUSPOL_SALIENCE_SURGE_V2", "0"), "1")) {
+  v2_pairs <- list(
+    list(election = "fed2019", prev = "fed2016", region = "fed"),
+    list(election = "fed2022", prev = "fed2019", region = "fed"),
+    list(election = "vic2022", prev = "vic2018", region = "vic"),
+    list(election = "nsw2023", prev = "nsw2019", region = "nsw"),
+    list(election = "sa2026",  prev = "sa2022",  region = "sa"))
+  train_pairs <- Filter(function(p) p$election != "sa2026", v2_pairs)
+  hz <- tryCatch(surge_hazard_for("sa2026", "sa2022", "sa", train_pairs),
+                 error = function(e) { cat(sprintf("BS0v! surge-v2 failed: %s\n", conditionMessage(e))); NULL })
+  if (!is.null(hz)) {
+    sn <- rownames(shares)
+    if (is.null(sn) && is.data.frame(shares)) sn <- as.character(shares$seat)
+    v <- setNames(hz$seat_hazard$surge_h, hz$seat_hazard$seat)[sn]
+    miss <- sum(is.na(v)); v[is.na(v)] <- 0
+    surge_arg <- unname(v); surge_mu_arg <- hz$surge_mu; surge_sd_arg <- hz$surge_sd
+    cat(sprintf("BS0v sa2026: surge-v2 hazard for %d of %d seats (%d absent -> 0) | mean %.4f | mu %.2f sd %.2f | lambda %.1f | train winners %d\n",
+                length(sn) - miss, length(sn), miss, mean(surge_arg),
+                surge_mu_arg, surge_sd_arg, hz$lambda, hz$n_train_winners))
+  }
+}
 sim <- simulate_seat_contests(level_sd = .level_sd, shares, fm, party_sd = psd, seat_sd = sp$sd_within * SEAT_SD_MULT,
                               n_sims = N_SIMS, smooth = SMOOTH, seed = SEED,
                               shrink = SHRINK, party_cor = PARTY_COR,
                               fallback_smooth = FB_SMOOTH, flow_sd = FLOW_SD,
-                                surge_h = SURGE_H)
+                              surge_h = surge_arg, surge_mu = surge_mu_arg, surge_sd = surge_sd_arg)
 wp <- as.data.table(sim$win_prob)
 
 pa <- merge(data.table(seat = keep, actual = unname(truth)),

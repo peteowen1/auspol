@@ -20,13 +20,6 @@ A \code{data.table} of \code{seat}, \code{party}, \code{permit}, or \code{NULL} 
 \code{output/salience-v6.csv} has no rows for \code{election}.
 }
 \description{
-Wraps \code{\link[=candidate_returns]{candidate_returns()}}, \code{\link[=surging_parties]{surging_parties()}} and \code{\link[=salience_screen]{salience_screen()}}
-into the single lookup every backtest harness needs: for each seat and party
-class, may this candidate be treated as a potential emergence?
-}
-\details{
-One implementation because five harnesses build shares five different ways,
-and a governed-population definition assembled slightly differently in each
-is how a bug like the Donato mismatch survives in one harness after being
-fixed in another.
+Thin wrapper over \code{\link[=governed_population]{governed_population()}} and \code{\link[=salience_screen]{salience_screen()}} -- see
+\code{\link[=governed_population]{governed_population()}} for how the population itself is built.
 }

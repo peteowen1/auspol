@@ -419,6 +419,31 @@ for (K in PAIRS) {
   # full-preferential elections -- not fitted, not tuned. One Nation's is 10.38
   # points; the Greens' is 2.00, which is why treating the Greens flow as a
   # constant costs almost nothing and treating One Nation's as one does not.
+  # ARM SURGE-V2: see R/salience_surge.R and scripts/backtest_candidate_fed.R
+  # for the full rationale. Computed fresh per pair, fit on every OTHER
+  # available election so the target never leaks into its own fit.
+  surge_arg <- SURGE_H; surge_mu_arg <- 15.6; surge_sd_arg <- 6.1
+  if (identical(Sys.getenv("AUSPOL_SALIENCE_SURGE_V2", "0"), "1")) {
+    v2_pairs <- list(
+      list(election = "fed2019", prev = "fed2016", region = "fed"),
+      list(election = "fed2022", prev = "fed2019", region = "fed"),
+      list(election = "vic2022", prev = "vic2018", region = "vic"),
+      list(election = "nsw2023", prev = "nsw2019", region = "nsw"),
+      list(election = "sa2026",  prev = "sa2022",  region = "sa"))
+    train_pairs <- Filter(function(p) p$election != .eb, v2_pairs)
+    hz <- tryCatch(surge_hazard_for(.eb, .ea, "vic", train_pairs),
+                   error = function(e) { cat(sprintf("BV0v! surge-v2 failed for %s: %s\n", .eb, conditionMessage(e))); NULL })
+    if (!is.null(hz)) {
+      sn <- rownames(shares)
+      if (is.null(sn) && is.data.frame(shares)) sn <- as.character(shares$seat)
+      v <- setNames(hz$seat_hazard$surge_h, hz$seat_hazard$seat)[sn]
+      miss <- sum(is.na(v)); v[is.na(v)] <- 0
+      surge_arg <- unname(v); surge_mu_arg <- hz$surge_mu; surge_sd_arg <- hz$surge_sd
+      cat(sprintf("BV0v %s: surge-v2 hazard for %d of %d seats (%d absent -> 0) | mean %.4f | mu %.2f sd %.2f | lambda %.1f | train winners %d\n",
+                  .eb, length(sn) - miss, length(sn), miss, mean(surge_arg),
+                  surge_mu_arg, surge_sd_arg, hz$lambda, hz$n_train_winners))
+    }
+  }
   FLOW_UNC <- identical(Sys.getenv("AUSPOL_FLOW_UNC", "0"), "1")
   if (FLOW_UNC) {
     sds <- readRDS("output/flow-uncertainty-sd.rds")
@@ -443,7 +468,7 @@ for (K in PAIRS) {
                                    seat_sd = sp$sd_within * SEAT_SD_MULT, n_sims = per,
                                    smooth = SMOOTH, seed = SEED + r, shrink = SHRINK,
                                    fallback_smooth = FB_SMOOTH, flow_sd = FLOW_SD,
-                                surge_h = SURGE_H)
+                                surge_h = surge_arg, surge_mu = surge_mu_arg, surge_sd = surge_sd_arg)
       w1 <- as.data.table(s1$win_prob)[, .(seat, party, n = prob * per)]
       acc <- if (is.null(acc)) w1 else rbind(acc, w1)
     }
@@ -457,7 +482,7 @@ for (K in PAIRS) {
                                   smooth = SMOOTH, seed = SEED, party_cor = PARTY_COR,
                                   shrink = SHRINK,
                                   fallback_smooth = FB_SMOOTH, flow_sd = FLOW_SD,
-                                surge_h = SURGE_H)
+                                surge_h = surge_arg, surge_mu = surge_mu_arg, surge_sd = surge_sd_arg)
     wp <- as.data.table(sim$win_prob)
   }
 
