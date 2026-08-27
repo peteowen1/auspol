@@ -436,12 +436,51 @@ cat(sprintf("DS1  deviation slopes: %s\n",
             paste(sprintf("%s=%.3f", names(SLOPE), SLOPE), collapse = " ")))
 if (all(SLOPE == 1)) cat("DS1  all 1.000 -- uniform swing, output must be unchanged\n")
 
+# ARM CS: slopes conditional on candidate identity, gated by the salience
+# screen. ADOPTED 2026-08-27 -- see docs/reviews/arm-c-conditional-slopes-2026-08-27.md
+# and the fed2022/vic2022/sa2026/nsw2023 backtest results in the commits around
+# afb7fef and 203610e. Default ON; AUSPOL_DEV_SLOPE_MODE=off reproduces uniform
+# swing exactly.
+#
+# CANNOT RUN YET FOR VICTORIA 2026: candidate_returns() and
+# salience_permit_for() both need the TARGET election's own candidate list, and
+# vic2026 nominations do not close until shortly before polling day, 28
+# November 2026. Until then this falls back to plain uniform swing (SLOPE
+# above) -- not silently: printed, and reported as a fallback rather than a
+# result. Re-running this script after nominations close activates arm CS with
+# no further code change.
+.mode <- Sys.getenv("AUSPOL_DEV_SLOPE_MODE", "screened")
+.cond <- .mode %in% c("conditional", "screened")
+.screened <- identical(.mode, "screened")
+.returns <- if (.cond) tryCatch(candidate_returns("vic2022", "vic2026"),
+                                error = function(e) NULL) else NULL
+.permit  <- if (.screened && !is.null(.returns))
+              tryCatch(salience_permit_for("vic2026", "vic2022", "vic", .returns),
+                       error = function(e) NULL) else NULL
+if (.cond && is.null(.returns)) {
+  cat("DS2  arm CS requested but vic2026 has no candidate list yet -- FALLING BACK to uniform swing\n")
+} else if (.cond) {
+  cat(sprintf("DS2  arm C ON: %d of %d seat-classes have the same candidate returning%s\n",
+              sum(.returns$same), nrow(.returns),
+              if (.screened && !is.null(.permit)) "" else " | screen: no salience data, arm C only"))
+}
+.vic_slope <- function(p, seats) {
+  if (.screened && !is.null(.permit) && !is.null(.returns)) {
+    pv <- .permit[.permit$party == p, ]
+    lut <- stats::setNames(as.logical(pv$permit), pv$seat)
+    pm <- unname(lut[seats]); pm[is.na(pm)] <- TRUE
+    return(screened_slopes(p, seats, .returns, pm))
+  }
+  if (.cond && !is.null(.returns)) return(conditional_slopes(p, seats, .returns))
+  SLOPE[[p]]
+}
+
 parties <- colnames(mat22)
 shares <- mat22
 modelled <- intersect(parties, names(state_mean))
 for (p in setdiff(modelled, "ONP")) {
-  # At SLOPE 1 this is mat22 + (state_mean - a22), the previous expression.
-  shares[, p] <- dev_slope(mat22[, p], a22[[p]], state_mean[[p]], SLOPE[[p]])
+  # At SLOPE 1 (the fallback) this is mat22 + (state_mean - a22), unchanged.
+  shares[, p] <- dev_slope(mat22[, p], a22[[p]], state_mean[[p]], .vic_slope(p, rownames(mat22)))
 }
 # The trend models five classes; the seat data carries seven, splitting OTH
 # into OTH, OTH_RIGHT and IND. Those three must be SCALED to the forecast OTH
@@ -465,7 +504,7 @@ if (length(unmodelled) && !is.na(state_mean["OTH"])) {
   # exactly mat22[, p] * scale_to as before.
   for (p in c(unmodelled, if ("OTH" %in% modelled) "OTH")) {
     tgt <- a22[[p]] * scale_to
-    shares[, p] <- dev_slope(mat22[, p] * scale_to, tgt, tgt, SLOPE[[p]])
+    shares[, p] <- dev_slope(mat22[, p] * scale_to, tgt, tgt, .vic_slope(p, rownames(mat22)))
   }
   cat(sprintf("minor field scaled x%.2f: %s at 2022 %.1f%% -> forecast %.1f%%
 ",

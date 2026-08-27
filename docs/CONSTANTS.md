@@ -392,3 +392,21 @@ stop-and-report threshold of 3.
 already calibrated at 0.959 and this overshoots it to 1.272, so the
 miscalibration it fixes is concentrated in IND seats while the correction is
 applied to every class. A class-specific form is the open follow-up.
+
+## Candidate-conditional slopes + salience screen (arm CS)
+
+Default ON in `fit_seats_full.R` since 2026-08-27. `AUSPOL_DEV_SLOPE_MODE=off`
+reproduces uniform swing exactly (proven byte-identical, not asserted).
+
+**Cannot run yet for Victoria 2026**: `candidate_returns()` and
+`salience_permit_for()` need vic2026's own candidate list, which does not exist
+until nominations close before the 28 November 2026 election. Until then the
+run prints `DS2 arm CS requested but vic2026 has no candidate list yet --
+FALLING BACK to uniform swing` and behaves exactly as before this change.
+Re-running after nominations close activates it with no code change.
+
+**Measured on backtests before shipping** (fed2022, vic2022, sa2026, nsw2023;
+see `docs/reviews/arm-c-conditional-slopes-2026-08-27.md` and the commits around
+`afb7fef`/`203610e`): rescues nearly all of arm C's damage on fed2022 (log loss
+1.0161 → 0.8780, vs unscreened 0.8727), and beats the unscreened baseline
+outright on sa2026, vic2022 and nsw2023.
