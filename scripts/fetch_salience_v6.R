@@ -184,7 +184,23 @@ for (el in names(ELS)) {
 }
 if (length(all_rows)) {
   OUT <- rbindlist(all_rows, fill = TRUE)
-  fwrite(OUT, "output/salience-v6.csv")
+  # MERGE, never overwrite. Running one election at a time via
+  # AUSPOL_SALIENCE_ELECTION and writing the whole file each time destroyed the
+  # previous election's results: the Victorian run wiped South Australia's, and
+  # a figure quoted afterwards silently came from the older, broken-terms
+  # corpus. Same class as the CAL_TAG collisions -- two runs, one filename.
+  f <- "output/salience-v6.csv"
+  if (file.exists(f)) {
+    prev <- fread(f, showProgress = FALSE)
+    keep <- prev[!election %in% unique(OUT$election)]
+    if (nrow(keep)) {
+      cat(sprintf("S6-8 keeping %d rows from %s already on disk
+",
+                  nrow(keep), paste(sort(unique(keep$election)), collapse = ", ")))
+      OUT <- rbindlist(list(keep, OUT), fill = TRUE)
+    }
+  }
+  fwrite(OUT, f)
   cat(sprintf("\nS6-9 wrote output/salience-v6.csv (%d rows, %d elections)\n",
               nrow(OUT), uniqueN(OUT$election)))
 }
