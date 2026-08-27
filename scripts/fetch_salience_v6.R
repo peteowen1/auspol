@@ -71,7 +71,16 @@ ELS <- list(
   nsw2023 = list(poll = "2023-03-25", geo = "AU-NSW", prev = "nsw2019",
                  anchor = "Chris Minns"),
   sa2026  = list(poll = "2026-03-21", geo = "AU-SA",  prev = "sa2022",
-                 anchor = "Peter Malinauskas"))
+                 anchor = "Peter Malinauskas"),
+  # VICTORIA is the live target. 88 districts of ~50,000 voters sits between
+  # South Australia's ~25,000, where 104 of 111 candidates never registered, and
+  # a federal division's ~110,000, where the signal is strong. Whether Victoria
+  # falls on the working side of that boundary is decidable from the FIELD
+  # alone, with no outcome data: what share of candidates register at all.
+  vic2022 = list(poll = "2022-11-26", geo = "AU-VIC", prev = "vic2018",
+                 anchor = "Daniel Andrews"),
+  vic2018 = list(poll = "2018-11-24", geo = "AU-VIC", prev = "vic2014",
+                 anchor = "Daniel Andrews"))
 WANT <- Sys.getenv("AUSPOL_SALIENCE_ELECTION", "")
 if (nzchar(WANT)) ELS <- ELS[intersect(strsplit(WANT, ",")[[1]], names(ELS))]
 
