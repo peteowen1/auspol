@@ -265,8 +265,9 @@ for (K in PAIRS) {
   .permit <- if (.screened) salience_permit_for(.eb, .ea, "vic", .returns) else NULL
   .vic_slope <- function(p, seats) {
     if (.screened && !is.null(.permit)) {
-      pm <- .permit[.permit$party == p][match(seats, seat), permit]
-      pm[is.na(pm)] <- TRUE
+      pv <- .permit[.permit$party == p, ]
+      lut <- stats::setNames(as.logical(pv$permit), pv$seat)
+      pm <- unname(lut[seats]); pm[is.na(pm)] <- TRUE
       return(screened_slopes(p, seats, .returns, pm))
     }
     if (.cond && !is.null(.returns)) return(conditional_slopes(p, seats, .returns))

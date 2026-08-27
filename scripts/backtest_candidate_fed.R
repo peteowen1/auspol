@@ -382,10 +382,17 @@ for (K in PAIRS) {
   # ARM CS: arm C plus the salience screen, protecting the rare emergent that
   # arm C's harsh new-candidate slope crushed. See screened_slopes().
   .permit <- if (.screened) salience_permit_for(eb, ea, "fed", .returns) else NULL
-  .fed_slope <- function(p, seats, cond, screened, returns, permit) {
-    if (screened && !is.null(permit)) {
-      pm <- permit[permit$party == p][match(seats, seat), permit]
-      pm[is.na(pm)] <- TRUE   # no row for this seat/class: screen is silent, ungoverned
+  # `permit_tbl`, not `permit`: a parameter whose NAME is literally identical to
+  # one of its own data.table columns ("permit") triggers a data.table $-typo
+  # check that throws "$ operator is invalid for atomic vectors" -- not an NSE
+  # miscompute this time, an outright crash. Confirmed by isolated repro: same
+  # body, only the parameter name changed, and the collision is what breaks it.
+  .fed_slope <- function(p, seats, cond, screened, returns, permit_tbl) {
+    if (screened && !is.null(permit_tbl)) {
+      pv <- permit_tbl[permit_tbl$party == p, ]
+      lut <- stats::setNames(as.logical(pv$permit), pv$seat)
+      pm <- unname(lut[seats])
+      pm[is.na(pm)] <- TRUE
       return(screened_slopes(p, seats, returns, pm))
     }
     if (cond && !is.null(returns)) return(conditional_slopes(p, seats, returns))

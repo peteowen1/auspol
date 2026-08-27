@@ -333,8 +333,9 @@ for (p in parties) {
   if (!p %in% names(state23)) next
   d_state <- state23[[p]] - state19[[p]]
   sl <- if (.screened) {
-    pm <- .permit[.permit$party == p][match(rownames(mat), seat), permit]
-    pm[is.na(pm)] <- TRUE   # a seat/class .permit has no row for is ungoverned
+    pv <- .permit[.permit$party == p, ]
+    lut <- stats::setNames(as.logical(pv$permit), pv$seat)
+    pm <- unname(lut[rownames(mat)]); pm[is.na(pm)] <- TRUE
     screened_slopes(p, rownames(mat), .returns, pm)
   } else if (.cond) conditional_slopes(p, rownames(mat), .returns) else DEV_SLOPE[[p]]
   val <- dev_slope(mat[, p], state19[[p]], state23[[p]], sl)
