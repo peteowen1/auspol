@@ -103,10 +103,13 @@ surge_training_population <- function(pairs) {
 #' @param train_pairs Other elections to fit on -- must NOT include the
 #'   target, or the target leaks into its own training data.
 #' @param lambda_grid Candidate L2 penalties.
-#' @return A list: `seat_hazard` (`data.table` of `seat`, `surge_h`),
-#'   `surge_mu`, `surge_sd` (pooled from training-pair governed winners'
-#'   actual `pcv`), `lambda`, `n_train_winners`. `NULL` if there is no
-#'   training population to fit on.
+#' @return A list: `seat_hazard` (`data.table` of `seat`, `surge_h`, party
+#'   collapsed -- for the stochastic hazard in [simulate_seat_contests()]),
+#'   `seat_party_hazard` (`data.table` of `seat`, `party`, `p_hat` -- for
+#'   [surge_blend_estimate()]'s point-estimate shift, which needs to land on
+#'   the right column), `surge_mu`, `surge_sd` (pooled from training-pair
+#'   governed winners' actual `pcv`), `lambda`, `n_train_winners`. `NULL` if
+#'   there is no training population to fit on.
 #' @export
 surge_hazard_for <- function(target_election, target_prev, target_region,
                              train_pairs, lambda_grid = c(0.5, 1, 2, 5, 10, 20, 50)) {
@@ -149,10 +152,47 @@ surge_hazard_for <- function(target_election, target_prev, target_region,
   fit <- fit_one(TRAIN, lambda)
   target$p_hat <- predict_ridge(fit$beta, .surge_build_X(target, party_levels), fit$center, fit$scale)
 
+  # SEAT-LEVEL (party collapsed) for the stochastic surge_h hazard in
+  # simulate_seat_contests() -- when that hazard fires, the mechanism itself
+  # picks the strongest eligible candidate in the draw, so collapsing party
+  # here is fine.
   seat_hazard <- target[, .(surge_h = max(p_hat)), by = seat]
+  # SEAT x PARTY, kept separate for the POINT-ESTIMATE blend below: a
+  # deterministic shift has to land on the right party's column, and a seat
+  # can have governed candidates in more than one class (e.g. IND and GRN).
+  seat_party_hazard <- target[, .(p_hat = max(p_hat)), by = .(seat, party)]
   winners <- TRAIN[TRAIN$elected == TRUE]
   list(seat_hazard = seat_hazard,
+      seat_party_hazard = seat_party_hazard,
       surge_mu = if (nrow(winners) >= 3) mean(winners$pcv) else 15.6,
       surge_sd = if (nrow(winners) >= 3) stats::sd(winners$pcv) else 6.1,
       lambda = lambda, n_train_winners = nrow(winners))
+}
+
+#' Blend a uniform-swing point estimate toward the surge magnitude
+#'
+#' `surge_hazard_for()` widens the SIMULATED tail via `surge_h`, but the
+#' deterministic point estimate that feeds it (`dev_slope()`'s output) is
+#' otherwise blind to salience entirely -- correlation(jump, projected share)
+#' measured at 0.050 on fed2022, essentially zero. Governed winners with real
+#' salience were projected at 7-37% of their actual result (Zoe Daniel: 3.2%
+#' projected vs 34.5% actual). This closes that gap directly: a probability-
+#' weighted blend between the uniform-swing estimate and the fitted surge
+#' size, using the SAME `p_hat` already fitted for the hazard -- no second
+#' model, no new failure surface. At `p_hat` near 0 (the overwhelming
+#' majority of governed candidates -- no-hopers), the estimate is
+#' unchanged. At `p_hat` near 1, it moves toward `surge_mu`.
+#'
+#' @param uniform_share Numeric vector: the pre-blend point estimate.
+#' @param p_hat Numeric vector, same length: this seat/party's fitted hazard.
+#' @param surge_mu Target magnitude to blend toward.
+#' @return Numeric vector, same length as `uniform_share`.
+#' @export
+surge_blend_estimate <- function(uniform_share, p_hat, surge_mu) {
+  if (length(uniform_share) != length(p_hat)) {
+    stop("uniform_share and p_hat must be the same length: ",
+         length(uniform_share), " vs ", length(p_hat), call. = FALSE)
+  }
+  p_hat[!is.finite(p_hat)] <- 0
+  (1 - p_hat) * uniform_share + p_hat * surge_mu
 }

@@ -263,6 +263,17 @@ if (.cond && !is.null(.returns))
   cat(sprintf("BS1c conditional slopes ON: %d of %d seat-classes returning
 ",
               sum(.returns$same), nrow(.returns)))
+# THE BASE VALUE, not just the slope -- see personal_prior_vote()'s docs.
+.own_prev <- if (.cond) tryCatch(personal_prior_vote("sa2022", "sa2026"), error = function(e) NULL) else NULL
+.own_x <- function(p, seats, x) {
+  if (is.null(.own_prev)) return(x)
+  ov <- .own_prev[.own_prev$party == p, ]
+  v <- stats::setNames(ov$own_prev_pcv, ov$seat)[seats]
+  out <- x
+  hit <- !is.na(v)
+  out[hit] <- unname(v[hit])
+  out
+}
 .permit <- if (.screened) salience_permit_for("sa2026", "sa2022", "sa") else NULL
 .sa_slope <- function(p, seats) {
   if (.screened && !is.null(.permit)) {
@@ -286,12 +297,13 @@ pinned <- matrix(FALSE, nrow(mat), ncol(mat), dimnames = dimnames(mat))
 for (p in parties) if (p %in% names(st_b) && p %in% names(st_a)) {
   d_state <- st_b[[p]] - st_a[[p]]
   .sl <- .sa_slope(p, rownames(mat))
-  val <- dev_slope(mat[, p], st_a[[p]], st_b[[p]], .sl)
+  x_p <- .own_x(p, rownames(mat), mat[, p])
+  val <- dev_slope(x_p, st_a[[p]], st_b[[p]], .sl)
   if (ELASTIC > 0 && d_state < -ELASTIC_D && st_a[[p]] > 0) {
-    over <- mat[, p] / st_a[[p]]
+    over <- x_p / st_a[[p]]
     hit  <- is.finite(over) & over > ELASTIC
     if (any(hit)) {
-      val[hit] <- pmax(0, mat[hit, p] * st_b[[p]] / st_a[[p]])
+      val[hit] <- pmax(0, x_p[hit] * st_b[[p]] / st_a[[p]])
       pinned[hit, p] <- TRUE
       n_elastic <- n_elastic + sum(hit)
       elastic_seats <- c(elastic_seats, sprintf("%s:%s", p, rownames(mat)[hit]))

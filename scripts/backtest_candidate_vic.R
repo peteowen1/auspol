@@ -260,6 +260,17 @@ for (K in PAIRS) {
     cat(sprintf("BV1c conditional slopes ON: %d of %d seat-classes returning
 ",
                 sum(.returns$same), nrow(.returns)))
+  # THE BASE VALUE, not just the slope -- see personal_prior_vote()'s docs.
+  .own_prev <- if (.cond) tryCatch(personal_prior_vote(.ea, .eb), error = function(e) NULL) else NULL
+  .own_x <- function(p, seats, x) {
+    if (is.null(.own_prev)) return(x)
+    ov <- .own_prev[.own_prev$party == p, ]
+    v <- stats::setNames(ov$own_prev_pcv, ov$seat)[seats]
+    out <- x
+    hit <- !is.na(v)
+    out[hit] <- unname(v[hit])
+    out
+  }
   # ARM CS: only vic2022 has salience data (see docs/DATA-REGISTRY.md); for
   # vic2018 this returns NULL and the code below falls back to arm C plain.
   .permit <- if (.screened) salience_permit_for(.eb, .ea, "vic") else NULL
@@ -284,12 +295,13 @@ for (K in PAIRS) {
   for (p in parties) if (p %in% names(sb) && p %in% names(sa)) {
     d_state <- sb[[p]] - sa[[p]]
     .sl <- .vic_slope(p, rownames(mat))
-    val <- dev_slope(mat[, p], sa[[p]], sb[[p]], .sl)
+    x_p <- .own_x(p, rownames(mat), mat[, p])
+    val <- dev_slope(x_p, sa[[p]], sb[[p]], .sl)
     if (ELASTIC > 0 && d_state < -ELASTIC_D && sa[[p]] > 0) {
-      over <- mat[, p] / sa[[p]]
+      over <- x_p / sa[[p]]
       hit <- is.finite(over) & over > ELASTIC
       if (any(hit)) {
-        val[hit] <- pmax(0, mat[hit, p] * sb[[p]] / sa[[p]])
+        val[hit] <- pmax(0, x_p[hit] * sb[[p]] / sa[[p]])
         pinned[hit, p] <- TRUE
       }
     }

@@ -392,6 +392,24 @@ for (K in PAIRS) {
     cat(sprintf("BF1c conditional slopes ON %s->%s: %d of %d seat-classes returning
 ",
                 ea, eb, sum(.returns$same), nrow(.returns)))
+  # THE BASE VALUE, not just the slope. A returning candidate correctly gets
+  # the gentler "same" slope, but that slope was still multiplying the seat's
+  # CLASS-level prior vote -- 0% for Orange/IND in 2019, since Philip Donato
+  # was registered OTH_RIGHT (Shooters) then, not IND. A five-year sitting
+  # member with 49.1% projected near zero because the slope had nothing
+  # correct to act on. See personal_prior_vote()'s docs -- this gap was
+  # already named in candidate_returns()'s own docstring ("which label they
+  # stand under ... belongs to the party swing") and never actually built.
+  .own_prev <- if (.cond) tryCatch(personal_prior_vote(ea, eb), error = function(e) NULL) else NULL
+  .own_x <- function(p, seats, x) {
+    if (is.null(.own_prev)) return(x)
+    ov <- .own_prev[.own_prev$party == p, ]
+    v <- stats::setNames(ov$own_prev_pcv, ov$seat)[seats]
+    out <- x
+    hit <- !is.na(v)
+    out[hit] <- unname(v[hit])
+    out
+  }
   # ARM CS: arm C plus the salience screen, protecting the rare emergent that
   # arm C's harsh new-candidate slope crushed. See screened_slopes().
   .permit <- if (.screened) salience_permit_for(eb, ea, "fed") else NULL
@@ -476,12 +494,12 @@ for (K in PAIRS) {
     for (p in parties) {
       prev <- if (p %in% names(st_a)) st_a[[p]] else 0
       .sl <- .fed_slope(p, rownames(mat), .cond, .screened, .returns, .permit)
-      shares[, p] <- dev_slope(mat[, p], prev, st_fc[[p]], .sl)
+      shares[, p] <- dev_slope(.own_x(p, rownames(mat), mat[, p]), prev, st_fc[[p]], .sl)
     }
   } else {
     for (p in parties) if (p %in% names(st_b) && p %in% names(st_a)) {
       .sl <- .fed_slope(p, rownames(mat), .cond, .screened, .returns, .permit)
-      shares[, p] <- dev_slope(mat[, p], st_a[[p]], st_b[[p]], .sl)
+      shares[, p] <- dev_slope(.own_x(p, rownames(mat), mat[, p]), st_a[[p]], st_b[[p]], .sl)
     }
   }
   # Zero IND wherever nobody actually stood at the TARGET election. This is
@@ -512,6 +530,18 @@ for (K in PAIRS) {
   keep <- intersect(rownames(shares), win$seat)
   shares <- shares[keep, , drop = FALSE]
   truth <- setNames(win$winner, win$seat)[keep]
+
+  # DIAGNOSTIC DUMP: the POINT ESTIMATE (before any Monte Carlo/surge draw)
+  # that actually feeds simulate_seat_contests(), so it can be compared
+  # directly against salience jump and the actual result. AUSPOL_DUMP_SHARES=1.
+  if (identical(Sys.getenv("AUSPOL_DUMP_SHARES", "0"), "1")) {
+    sdt <- data.table::as.data.table(shares, keep.rownames = "seat")
+    sdt <- data.table::melt(sdt, id.vars = "seat", variable.name = "party", value.name = "projected_share")
+    sdt[, election := paste0("fed", K$to)]
+    dump_f <- sprintf("output/dump-shares-fed%d.csv", K$to)
+    data.table::fwrite(sdt, dump_f)
+    cat(sprintf("DUMP wrote %s: %d rows\n", dump_f, nrow(sdt)))
+  }
 
   cat(sprintf("\nBF1  federal %d -> %d: %d divisions scored\n",
               K$from, K$to, length(keep)))
@@ -616,6 +646,33 @@ for (X in out_all) {
       cat(sprintf("BF0v %s: surge-v2 hazard for %d of %d seats (%d absent -> 0) | mean %.4f | mu %.2f sd %.2f | lambda %.1f | train winners %d\n",
                   target_el, length(sn) - miss, length(sn), miss, mean(surge_arg),
                   surge_mu_arg, surge_sd_arg, hz$lambda, hz$n_train_winners))
+      # THE POINT ESTIMATE ITSELF, not just the simulated tail. surge_h above
+      # only widens the Monte Carlo draw -- the deterministic estimate that
+      # feeds it (dev_slope()'s output) was otherwise blind to salience
+      # entirely (correlation(jump, projected share) measured at 0.050 on
+      # fed2022 -- essentially zero). Governed winners with real salience were
+      # projected at 7-37% of their actual result: Zoe Daniel 3.2% projected
+      # vs 34.5% actual. Blend toward surge_mu using the SAME p_hat already
+      # fitted for the hazard, landed on the right (seat, party) column via
+      # seat_party_hazard rather than the party-collapsed seat_hazard.
+      for (pp in unique(hz$seat_party_hazard$party)) {
+        if (!pp %in% colnames(X$shares)) next
+        ph <- hz$seat_party_hazard[hz$seat_party_hazard$party == pp]
+        w <- setNames(ph$p_hat, ph$seat)[sn]
+        w[is.na(w)] <- 0
+        X$shares[, pp] <- surge_blend_estimate(X$shares[, pp], unname(w), surge_mu_arg)
+      }
+      X$shares <- 100 * X$shares / rowSums(X$shares)
+      cat(sprintf("BF0v %s: point estimate blended toward surge_mu for %d (seat,party) cells\n",
+                  target_el, sum(hz$seat_party_hazard$p_hat > 0.001)))
+      if (identical(Sys.getenv("AUSPOL_DUMP_SHARES", "0"), "1")) {
+        sdt <- data.table::as.data.table(X$shares, keep.rownames = "seat")
+        sdt <- data.table::melt(sdt, id.vars = "seat", variable.name = "party", value.name = "projected_share")
+        sdt[, election := target_el]
+        dump_f <- sprintf("output/dump-shares-blended-%s.csv", target_el)
+        data.table::fwrite(sdt, dump_f)
+        cat(sprintf("DUMP wrote %s: %d rows\n", dump_f, nrow(sdt)))
+      }
     }
   } else if (!is.null(SALIENCE_HAZ)) {
     sn <- rownames(X$shares)

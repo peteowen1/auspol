@@ -464,6 +464,18 @@ if (.cond && is.null(.returns)) {
               sum(.returns$same), nrow(.returns),
               if (.screened && !is.null(.permit)) "" else " | screen: no salience data, arm C only"))
 }
+# THE BASE VALUE, not just the slope -- see personal_prior_vote()'s docs. Same
+# candidate-list gating as .returns above: NULL until vic2026 nominations close.
+.own_prev <- if (.cond && !is.null(.returns)) tryCatch(personal_prior_vote("vic2022", "vic2026"), error = function(e) NULL) else NULL
+.own_x <- function(p, seats, x) {
+  if (is.null(.own_prev)) return(x)
+  ov <- .own_prev[.own_prev$party == p, ]
+  v <- stats::setNames(ov$own_prev_pcv, ov$seat)[seats]
+  out <- x
+  hit <- !is.na(v)
+  out[hit] <- unname(v[hit])
+  out
+}
 # ARM SURGE-V2, off by default (AUSPOL_SALIENCE_SURGE_V2=1). Not yet reviewed
 # for shipping -- see R/salience_surge.R, docs/plans/prereg-salience-surge-v2.md,
 # and the fed2022/nsw2023/sa2026 backtest wins (~26-30% log-loss reduction) vs
@@ -512,7 +524,7 @@ shares <- mat22
 modelled <- intersect(parties, names(state_mean))
 for (p in setdiff(modelled, "ONP")) {
   # At SLOPE 1 (the fallback) this is mat22 + (state_mean - a22), unchanged.
-  shares[, p] <- dev_slope(mat22[, p], a22[[p]], state_mean[[p]], .vic_slope(p, rownames(mat22)))
+  shares[, p] <- dev_slope(.own_x(p, rownames(mat22), mat22[, p]), a22[[p]], state_mean[[p]], .vic_slope(p, rownames(mat22)))
 }
 # The trend models five classes; the seat data carries seven, splitting OTH
 # into OTH, OTH_RIGHT and IND. Those three must be SCALED to the forecast OTH
@@ -536,7 +548,7 @@ if (length(unmodelled) && !is.na(state_mean["OTH"])) {
   # exactly mat22[, p] * scale_to as before.
   for (p in c(unmodelled, if ("OTH" %in% modelled) "OTH")) {
     tgt <- a22[[p]] * scale_to
-    shares[, p] <- dev_slope(mat22[, p] * scale_to, tgt, tgt, .vic_slope(p, rownames(mat22)))
+    shares[, p] <- dev_slope(.own_x(p, rownames(mat22), mat22[, p]) * scale_to, tgt, tgt, .vic_slope(p, rownames(mat22)))
   }
   cat(sprintf("minor field scaled x%.2f: %s at 2022 %.1f%% -> forecast %.1f%%
 ",

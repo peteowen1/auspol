@@ -295,6 +295,29 @@ DEV_SLOPE <- dev_slopes_for(union(parties, names(state23)))
 if (.cond) cat(sprintf("BN1c conditional slopes ON: %d of %d seat-classes have the same candidate returning
 ",
                        sum(.returns$same), nrow(.returns)))
+# THE BASE VALUE, not just the slope -- see personal_prior_vote()'s docs.
+# Philip Donato (Orange), Helen Dalton (Murray) and Roy Butler (Barwon) are
+# sitting members who switched from Shooters-Fishers-Farmers to Independent
+# between nsw2019 and nsw2023. candidate_returns() correctly flags them as
+# the same returning person, but the slope that fact selects still
+# multiplied the IND class's seat-level prior vote -- 0% in every one of
+# these seats, since none of them were registered IND in 2019.
+# Gareth Ward (Kiama, Liberal -> Independent) is NOT covered here --
+# personal_prior_vote() deliberately excludes a prior MAJOR-party
+# registration, since the one other example of that transition in this
+# corpus (McBride, MacKillop, LNP 62.3% -> IND 14.8%) shows it can badly
+# overestimate a defector who loses the party's machine, not just his own
+# vote. This is what makes the base itself carry their real prior vote.
+.own_prev <- if (.cond) tryCatch(personal_prior_vote("nsw2019", "nsw2023"), error = function(e) NULL) else NULL
+.own_x <- function(p, seats, x) {
+  if (is.null(.own_prev)) return(x)
+  ov <- .own_prev[.own_prev$party == p, ]
+  v <- stats::setNames(ov$own_prev_pcv, ov$seat)[seats]
+  out <- x
+  hit <- !is.na(v)
+  out[hit] <- unname(v[hit])
+  out
+}
 # ARM CS: arm C plus the salience screen. Arm C alone was refused -- its harsh
 # new-candidate slope (~0.33) is fitted on ~300 candidates who are overwhelmingly
 # no-hopers, so it crushed the rare emergent toward the mean. The screen
@@ -319,12 +342,13 @@ for (p in parties) {
     pm <- unname(lut[rownames(mat)]); pm[is.na(pm)] <- TRUE
     screened_slopes(p, rownames(mat), .returns, pm)
   } else if (.cond) conditional_slopes(p, rownames(mat), .returns) else DEV_SLOPE[[p]]
-  val <- dev_slope(mat[, p], state19[[p]], state23[[p]], sl)
+  x_p <- .own_x(p, rownames(mat), mat[, p])
+  val <- dev_slope(x_p, state19[[p]], state23[[p]], sl)
   if (ELASTIC > 0 && d_state < -ELASTIC_D && state19[[p]] > 0) {
-    over <- mat[, p] / state19[[p]]
+    over <- x_p / state19[[p]]
     hit <- is.finite(over) & over > ELASTIC
     if (any(hit)) {
-      val[hit] <- pmax(0, mat[hit, p] * state23[[p]] / state19[[p]])
+      val[hit] <- pmax(0, x_p[hit] * state23[[p]] / state19[[p]])
       pinned[hit, p] <- TRUE
     }
   }

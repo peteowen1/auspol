@@ -21,10 +21,13 @@ target, or the target leaks into its own training data.}
 \item{lambda_grid}{Candidate L2 penalties.}
 }
 \value{
-A list: \code{seat_hazard} (\code{data.table} of \code{seat}, \code{surge_h}),
-\code{surge_mu}, \code{surge_sd} (pooled from training-pair governed winners'
-actual \code{pcv}), \code{lambda}, \code{n_train_winners}. \code{NULL} if there is no
-training population to fit on.
+A list: \code{seat_hazard} (\code{data.table} of \code{seat}, \code{surge_h}, party
+collapsed -- for the stochastic hazard in \code{\link[=simulate_seat_contests]{simulate_seat_contests()}}),
+\code{seat_party_hazard} (\code{data.table} of \code{seat}, \code{party}, \code{p_hat} -- for
+\code{\link[=surge_blend_estimate]{surge_blend_estimate()}}'s point-estimate shift, which needs to land on
+the right column), \code{surge_mu}, \code{surge_sd} (pooled from training-pair
+governed winners' actual \code{pcv}), \code{lambda}, \code{n_train_winners}. \code{NULL} if
+there is no training population to fit on.
 }
 \description{
 Extends the existing \code{surge_h} mechanism in \code{\link[=simulate_seat_contests]{simulate_seat_contests()}} --

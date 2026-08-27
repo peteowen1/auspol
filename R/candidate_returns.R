@@ -168,3 +168,94 @@ leading_candidate_returns <- function(election_from, election_to, corpus = NULL)
   out[is.na(hit), hit := FALSE]
   out[, list(seat, party, leader_same = hit)]
 }
+
+#' A personally-returning leading candidate's OWN prior vote, under whatever
+#' party they ran as then
+#'
+#' [candidate_returns()] and [screened_slopes()] correctly identify a
+#' returning candidate regardless of party -- Philip Donato held Orange with
+#' 49.1% as a Shooter in 2019 and 53.1% as an independent in 2023 -- and use
+#' that to pick a gentler SLOPE. But the slope multiplies the seat's
+#' CLASS-level prior vote (`mat[, "IND"]`), which is 0% for Orange in 2019
+#' since Donato was registered OTH_RIGHT then. A correct slope applied to a
+#' near-zero base still projects him near zero: Dalton (Murray) and Butler
+#' (Barwon) show the identical fault, all sitting members whose entire
+#' personal incumbency vanished because their registered party changed
+#' between elections. `candidate_returns()`'s own docs anticipated only half
+#' of this -- "which label they stand under ... belongs to the party swing" --
+#' and the party swing never picked it up, because it has no path from a
+#' person's identity to their own history under a different label.
+#'
+#' This closes that gap directly: for each seat/class where the LEADING
+#' candidate personally returns (same matching as
+#' [leading_candidate_returns()]) AND their prior registration was NOT a
+#' major party, their own `pcv` from whichever (non-major) party they
+#' contested under at the prior election -- to be used as `x` in
+#' [dev_slope()] in place of the class's seat-level prior vote. The
+#' major-party exclusion is deliberate, not an oversight -- see the inline
+#' comment above `MAJ` for the Ward/McBride case that motivates it.
+#'
+#' @inheritParams candidate_returns
+#' @return A `data.table` of `seat`, `party`, `own_prev_pcv` (`NA_real_` where
+#'   the leading candidate does not personally return).
+#' @export
+personal_prior_vote <- function(election_from, election_to, corpus = NULL) {
+  C <- corpus
+  if (is.null(C)) {
+    f <- file.path("output", "candidacies.csv")
+    if (!file.exists(f)) {
+      stop("personal_prior_vote() needs output/candidacies.csv; run ",
+           "scripts/build_candidacies.R", call. = FALSE)
+    }
+    C <- data.table::fread(f, showProgress = FALSE)
+  }
+  C <- data.table::as.data.table(C)
+  need <- c("election", "seat", "party", "pcv")
+  miss <- setdiff(need, names(C))
+  if (length(miss)) stop("corpus lacks: ", paste(miss, collapse = ", "), call. = FALSE)
+
+  NOWT  <- C[C$election == election_to]
+  PREVT <- C[C$election == election_from]
+  if (!nrow(NOWT))  stop("no rows for election ", election_to, call. = FALSE)
+  if (!nrow(PREVT)) stop("no rows for election ", election_from, call. = FALSE)
+
+  kf <- function(d) {
+    sur <- surname_of(if ("surname" %in% names(d)) d$surname else NA_character_,
+                      if ("name" %in% names(d)) d$name else NA_character_)
+    giv <- given_of(if ("given" %in% names(d)) d$given else NA_character_,
+                    if ("name" %in% names(d)) d$name else NA_character_)
+    match_key(sur, giv, "initial")
+  }
+  NOWT  <- data.table::copy(NOWT)[,  .k := kf(.SD), .SDcols = names(NOWT)]
+  PREVT <- data.table::copy(PREVT)[, .k := kf(.SD), .SDcols = names(PREVT)]
+  ns <- function(x) gsub("[^a-z0-9]", "", tolower(x))
+  NOWT[,  .s := ns(seat)]
+  PREVT[, .s := ns(seat)]
+
+  # The LEADING row per (seat, party) at the TARGET election: the one whose
+  # personal history actually drives this class's swing.
+  data.table::setorder(NOWT, seat, party, -pcv)
+  lead <- NOWT[nzchar(.k), .SD[1], by = .(seat, party)]
+
+  # EXCLUDE A PRIOR MAJOR-PARTY REGISTRATION. Nick McBride won MacKillop as
+  # LNP with 62.3% in 2022, then re-contested as IND in 2026 and got 14.8% --
+  # using his LNP-era vote as the base badly overestimated him, because most
+  # of it was the party's machine, not personal support. Gareth Ward (Kiama)
+  # is the counter-case: LNP 53.6% -> IND 38.8%, still won, and the override
+  # would have been correct there. With only these two examples of a
+  # major-party defector, there is no basis to fit how much to discount --
+  # so this stays conservative and excludes ALP/LNP/NAT prior registrations
+  # entirely, falling back to the class-level base exactly as before this
+  # function existed. Switching FROM an already-minor label (Shooters,
+  # Fishers and Farmers, One Nation, Green, other independent) is a much
+  # smaller behavioural jump for voters and is not excluded.
+  MAJ <- c("ALP", "LNP", "NAT")
+  # if (.N) guards max(): when the ONLY prior row for a (.s, .k) group is a
+  # major party, filtering it out can leave that group with zero rows, and
+  # max() over nothing warns "no non-missing arguments" and returns -Inf.
+  prev_best <- PREVT[nzchar(PREVT$.k) & !PREVT$party %in% MAJ,
+                     .(own_prev_pcv = if (.N) max(pcv, na.rm = TRUE) else NA_real_),
+                     by = .(.s, .k)]
+  out <- merge(lead[, list(seat, .s, party, .k)], prev_best, by = c(".s", ".k"), all.x = TRUE)
+  out[, list(seat, party, own_prev_pcv)]
+}

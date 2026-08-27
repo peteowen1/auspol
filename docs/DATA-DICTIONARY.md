@@ -1,6 +1,6 @@
 # Data dictionary
 
-**Generated 2026-08-27 by `scripts/build_data_dictionary.R`. Do not hand-edit.**
+**Generated 2026-08-28 by `scripts/build_data_dictionary.R`. Do not hand-edit.**
 
 Companion to `docs/DATA-REGISTRY.md`. The registry answers *do we have this
 file*; this answers *do we have this field*. Four wrong "we don't have it"
@@ -146,7 +146,7 @@ processed extract. Every one is recoverable without a new fetch.
 | `cycle-walks-vic.csv` | 13 | `year`, `party`, `n`, `own_weight`, `cycle_level`, `obs_pts`, `rw_pts`, `floor_ref`, `at_upper`, `floored`, `acf1` |
 | `demographic-swing-loo.csv` | 12 | `party`, `pair`, `n`, `mae_uniform`, `mae_demog`, `improvement` |
 | `dev-slopes-heldout.csv` | 42 | `party`, `slope`, `se`, `n`, `pairs`, `held_out`, `t_vs_1` |
-| `emergence-test.csv` | 55 | `V1`, `V2`, `V3`, `V4`, `V5`, `V6`, `V7`, `V8`, `V9`, `V10`, `V11`, `V12`, `V13`, `V14`, `V15`, `V16` |
+| `dump-shares-blended-fed2022.csv` | 1,050 | `seat`, `party`, `projected_share`, `election` |
 
-_(311 `backtest-*.csv` arm outputs omitted; they share one shape.)_
+_(313 `backtest-*.csv` arm outputs omitted; they share one shape.)_
 

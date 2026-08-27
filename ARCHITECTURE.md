@@ -71,6 +71,75 @@ functions take a plain transfers table and are fully tested without it.
 independent: `fit_projection.R` writes the mix table both `fit_seats.R` and
 `build_page.R` read, so out-of-order runs silently use last time's numbers.
 
+### How one party's seat share actually gets projected
+
+Four steps, run in this order, for one party in one seat:
+
+**1. Pick the starting point (`x`).** Normally `x` is that party's own prior
+vote in that seat last time. Exception: if the leading candidate is personally
+the same person as last time (`personal_prior_vote()`), and they were not
+previously registered for a major party (ALP/LNP/NAT), `x` is *their own*
+prior vote instead — even under a different party label then. Philip Donato
+held Orange at 49.1% as a Shooter in 2019 and 53.1% as an independent in 2023;
+without this, the seat's IND-class prior vote in 2019 is 0%, since nobody was
+registered IND there, and his entire personal incumbency would vanish. The
+major-party exclusion is deliberate: the one example of a major-party
+defector in this data (McBride, MacKillop, LNP 62.3% → IND 14.8%) shows a
+defector can lose most of a major party's vote along with the party label,
+where a minor-to-minor relabelling (Donato's case) does not behave that way.
+
+**2. Swing it by the statewide trend** (`dev_slope()`):
+```
+base = level_now + slope × (x − level_prev)
+```
+`level_prev`/`level_now` are that party's statewide vote last time / this
+time. `slope` controls how much of the seat's individual deviation from the
+statewide figure is assumed to persist — near 1 keeps the seat's quirk intact,
+near 0 shrinks it to the statewide average. `slope` is 0.907 when the same
+candidate is personally returning, 0.326 for a fresh face, or 1.0 (uniform
+swing, no penalty) when the salience screen (`salience_permit_for()`,
+`screened_slopes()`) judges a fresh face as a plausible emergence rather than
+a no-hoper.
+
+**3. Pull toward a typical emergence, weighted by how likely one looks**
+(`surge_blend_estimate()`):
+```
+final = (1 − p_hat) × base + p_hat × surge_mu
+```
+`p_hat` comes from a SEPARATE model (`surge_hazard_for()`) — a ridge-penalised
+logistic regression on salience (search-interest jump, percentile-ranked
+within its own election), prior vote and party class, fitted only on the
+GOVERNED population (`governed_population()`: low prior vote, not a surging
+class, not personally returning — which excludes a declining incumbent like
+Adam Bandt by construction, not by tuning). `surge_mu` is the mean share of
+past governed candidates who *did* emerge (~35%, from 9 known cases across 5
+elections). At `p_hat` near 0 this step does nothing; the closer to 1, the
+more the estimate is pulled toward that ~35%.
+
+**4. Renormalise every party in the seat to sum to 100%.**
+
+**This is a patchwork, not one framework, and it shows.** Step 2's slope is a
+multiplier bolted onto a linear vote-share formula; step 1 is a hard override
+of that formula's input in raw percentage points; step 3 is a linear blend
+using the OUTPUT of a genuinely different model (a logistic regression, which
+is properly additive on the logit scale) as a blend weight applied back in raw
+percentage-point space. Three signals — personal incumbency, defection type,
+salience — arrived as three separate bespoke mechanisms discovered one at a
+time (2026-08-27/28), not as three terms in one coherent model. That is
+mechanically why fixing the salience gap did not also fix the party-defection
+gap: they live in structurally different code, and any new signal needs its
+own bespoke wiring rather than one more coefficient in an existing sum.
+
+**The actual fix is B2 (compositional/softmax shares)**, already named as the
+next structural priority once B1 (full candidate-level rows) was sized and
+found not to justify its cost
+(`docs/reviews/b1-sizing-2026-08-27.md`). A proper multinomial/softmax model
+would put every party's seat share on one additive-logit scale, the way
+`surge_hazard_for()` already does for its own probability — at which point
+personal incumbency, defection type and salience are each just a coefficient
+in the same linear predictor, and a new signal is "add a term" rather than
+"invent a new mechanism."
+
 ## Load-bearing decisions
 
 **The posterior is exact, not sampled.** Every term in the trend model is
