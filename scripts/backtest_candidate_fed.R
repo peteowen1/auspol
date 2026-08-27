@@ -460,31 +460,70 @@ for (K in PAIRS) {
            ". A thin cycle must be reported, not silently scored as if the ",
            "forecast had succeeded.")
     }
-    # THE SEATS MUST FOLD THE SAME WAY. A party under the poll-inclusion floor
-    # has no separate series -- its votes sit inside the fitted OTH -- so its
-    # per-seat column has to be folded into OTH too, or the classes the
-    # simulation reads do not match the classes the draws describe.
-    if (length(FC$folded) && "OTH" %in% parties) {
-      # FOLD `mat` AND `st_a`, NOT `shares`. The swing loop below rebuilds every
-      # column of `shares` from `mat`, so folding `shares` here was dead code:
-      # the folded party's per-seat votes were DELETED rather than moved into
-      # OTH, and renormalising then spread the missing mass across every
-      # remaining party. `st_a` has the same problem one level up -- dropping
-      # the folded party's earlier statewide share leaves the swing baseline
-      # short by exactly that amount.
-      keepc <- setdiff(parties, FC$folded)
-      mat[, "OTH"] <- mat[, "OTH"] + rowSums(mat[, FC$folded, drop = FALSE])
-      st_a[["OTH"]] <- st_a[["OTH"]] + sum(st_a[FC$folded], na.rm = TRUE)
-      mat <- mat[, keepc, drop = FALSE]
-      shares <- shares[, keepc, drop = FALSE]
-      parties <- keepc
-      st_a <- st_a[intersect(names(st_a), keepc)]
-      sw_draws <- FC$draws[, keepc, drop = FALSE]
-      sw_draws <- sw_draws / rowSums(sw_draws) * 100
-    } else {
-      sw_draws <- FC$draws
-    }
+    # A party under the poll-inclusion floor (no national series -- true for
+    # IND always, since no pollster publishes an independent voting-intention
+    # figure) has no forecast level OF ITS OWN, only inside the fitted OTH.
+    # DELETING that party's column, as this used to do, does not just fold its
+    # VOTE into OTH -- it removes the class from the simulation entirely, so
+    # the model can never output "IND wins" for any seat, no matter how safe.
+    # Measured: fed2025 forecast-mode log loss 1.2914, with 71.8% of it coming
+    # from 10 sitting independent MPs (Ryan, Chaney, Daniel, Scamps, Tink,
+    # Steggall, Spender, Wilkie, Haines, Katter) simply being re-elected and
+    # scoring EXACTLY zero probability -- not unlikely, structurally
+    # impossible, since IND was not a column to win.
+    #
+    # fit_seats_full.R (the PUBLISHED model) never had this bug: it RESCALES
+    # an unmodelled class to the forecast's aggregate OTH total instead of
+    # deleting it, keeping IND as its own simulateable column
+    # (scripts/fit_seats_full.R:522-557). Ported here, so the backtest this
+    # repo measures itself against AE Forecasts with is the same mechanism as
+    # what actually ships.
+    sw_draws <- FC$draws
     st_fc <- colMeans(sw_draws)
+    unmodelled <- character(0)
+    if (length(FC$folded) && "OTH" %in% parties) {
+      unmodelled <- FC$folded
+      bucket <- c(unmodelled, "OTH")
+      base_share <- sum(st_a[unmodelled], st_a[["OTH"]], na.rm = TRUE)
+      scale_to <- if (isTRUE(base_share > 0)) st_fc[["OTH"]] / base_share else 1
+      ratio <- stats::setNames(
+        if (isTRUE(base_share > 0)) unlist(st_a[bucket]) / base_share
+        else rep(1 / length(bucket), length(bucket)),
+        bucket)
+      # EVERY DRAW, not just the point estimate. simulate_seat_contests()
+      # requires statewide_draws to cover every column in `parties` or it
+      # errors, so an unmodelled class needs its own draw column, not just a
+      # target level. There is no genuine trend-model draw for it -- no
+      # pollster publishes an independent series -- so each simulated OTH
+      # draw is SPLIT by the PRIOR election's ratio within this bucket,
+      # preserving that draw's total (the ratios sum to 1) and giving
+      # IND/OTH_RIGHT variation correlated with, not independent of, OTH's
+      # own uncertainty -- the most this data supports. oth_draw is already
+      # on the CURRENT (forecast) scale, so it is split by ratio only, not
+      # multiplied by scale_to again -- scale_to converts a PRIOR-election
+      # level to a forecast one, and oth_draw already is one.
+      oth_draw <- sw_draws[, "OTH"]
+      new_cols <- matrix(0, nrow(sw_draws), length(unmodelled),
+                         dimnames = list(NULL, unmodelled))
+      for (p in unmodelled) new_cols[, p] <- oth_draw * ratio[[p]]
+      sw_draws[, "OTH"] <- oth_draw * ratio[["OTH"]]
+      sw_draws <- cbind(sw_draws, new_cols)
+      # THE LEVEL, separately from the draws' spread. simulate_seat_contests()
+      # centres statewide_draws on ITS OWN column means internally (each
+      # draw's contribution is `draw - colMeans(draws)`), so the draws above
+      # only need to supply a reasonable SHAPE of uncertainty -- the actual
+      # level for dev_slope()'s `prev`/`level_now` is set explicitly here,
+      # matching fit_seats_full.R's own choice for an unmodelled class: no
+      # separately-implied statewide movement beyond the rescale itself,
+      # i.e. level_prev == level_now (mirrors `tgt <- a22[[p]] * scale_to`
+      # used for both arguments at fit_seats_full.R:550-551).
+      for (p in unmodelled) { mat[, p] <- mat[, p] * scale_to; st_a[[p]] <- st_a[[p]] * scale_to }
+      st_a[["OTH"]] <- st_a[["OTH"]] * scale_to
+      for (p in bucket) st_fc[[p]] <- st_a[[p]]
+      cat(sprintf("BF0  fed%d minor field scaled x%.2f: %s at prior %.1f%% -> forecast %.1f%%\n",
+                  K$to, scale_to, paste(bucket, collapse = "+"),
+                  base_share, st_a[["OTH"]] + sum(unlist(st_a[unmodelled]))))
+    }
     # F4: folded parties are REPORTED, never silently absorbed.
     cat(sprintf("BF0  fed%d forecast mode: %d polls to %s; folded into OTH: %s\n",
                 K$to, FC$n_polls, as.character(ed - 1),
