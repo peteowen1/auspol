@@ -226,6 +226,29 @@ And size it: a change affecting `k` of `n` seats needs roughly `n/k` times the
 effect to clear the same aggregate bar. At 6 of 151 that is a factor of 25, so
 an aggregate criterion will almost always refuse a targeted fix that works.
 
+**The metric order for seat probabilities is LOG LOSS, then Brier, then
+reliability by band. The calibration slope is reported and never decisive.**
+
+Log loss is the only one that matches the failure this repo actually has. A seat
+called 0.9997 and lost costs ~8 under log loss and ~1.0 under Brier — the same
+as a seat called 0.90 and lost. Brier CAPS exactly the error that keeps hurting
+us. Measured on the same change, same data, 886 federal seat-elections:
+
+| metric | base → level_sd | move |
+|---|---|---|
+| log loss | 0.5398 → 0.3839 | **−29%** |
+| Brier | 0.0922 → 0.0906 | −1.7% |
+| calibration slope | — | ~0 |
+
+One change; log loss saw it, Brier barely registered it, the slope missed it
+entirely, because the gain sat in the overconfident tail. Both of today's bad
+refusals would have been avoided by this ordering alone.
+
+Report reliability with **tail-focused bands** (0.9, 0.95, 0.99, 0.999) and
+their COUNTS, never equal-width bins — 60% of seats land in one bucket and the
+only region where decisions live disappears. An empty bin is not evidence.
+`scripts/compare_arms.R` does this, plus ECE and the per-subset breakdown.
+
 **And size the PRIMARY metric's own noise against the expected effect. If its
 MDE exceeds any plausible effect, it cannot be the primary.**
 

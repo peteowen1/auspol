@@ -285,6 +285,15 @@ shares <- mat
 ELASTIC   <- as.numeric(Sys.getenv("AUSPOL_ELASTIC_OVER", "0"))
 ELASTIC_D <- as.numeric(Sys.getenv("AUSPOL_ELASTIC_FALL", "2"))
 DEV_SLOPE <- dev_slopes_for(union(parties, names(state23)))
+# ARM C: slopes conditional on whether the SAME candidate is standing again.
+# A single per-class slope averages two populations that behave nothing alike --
+# IND 0.907 when the person returns against 0.326 when they do not -- so it is
+# wrong for every individual seat. Off unless AUSPOL_DEV_SLOPE_MODE=conditional.
+.cond <- identical(Sys.getenv("AUSPOL_DEV_SLOPE_MODE", ""), "conditional")
+.returns <- if (.cond) candidate_returns("nsw2019", "nsw2023") else NULL
+if (.cond) cat(sprintf("BN1c conditional slopes ON: %d of %d seat-classes have the same candidate returning
+",
+                       sum(.returns$same), nrow(.returns)))
 cat(sprintf("BN1d  dev slopes: %s%s
 ",
             if (all(DEV_SLOPE == 1)) "all 1.000 (uniform swing)" else
@@ -296,7 +305,8 @@ pinned <- matrix(FALSE, nrow(mat), ncol(mat), dimnames = dimnames(mat))
 for (p in parties) {
   if (!p %in% names(state23)) next
   d_state <- state23[[p]] - state19[[p]]
-  val <- dev_slope(mat[, p], state19[[p]], state23[[p]], DEV_SLOPE[[p]])
+  sl <- if (.cond) conditional_slopes(p, rownames(mat), .returns) else DEV_SLOPE[[p]]
+  val <- dev_slope(mat[, p], state19[[p]], state23[[p]], sl)
   if (ELASTIC > 0 && d_state < -ELASTIC_D && state19[[p]] > 0) {
     over <- mat[, p] / state19[[p]]
     hit <- is.finite(over) & over > ELASTIC

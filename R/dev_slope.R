@@ -92,3 +92,54 @@ dev_slopes_for <- function(parties, default = 1) {
   attr(s, "absent") <- absent
   s
 }
+
+#' Per-seat conditional slopes, from whether the same candidate stands again
+#'
+#' Builds the slope vector arm C needs: for each seat in `seats`, the
+#' same-candidate slope where that class's candidate is returning and the
+#' new-candidate slope where they are not.
+#'
+#' Fitted across 17 election pairs. A single per-class slope averages two
+#' populations that behave nothing alike, and is therefore wrong for every
+#' individual seat:
+#'
+#' \tabular{lrr}{
+#'   class \tab same \tab new \cr
+#'   IND \tab 0.907 \tab 0.326 \cr
+#'   OTH_RIGHT \tab 0.891 \tab 0.325 \cr
+#'   GRN \tab 0.994 \tab 0.880 \cr
+#'   ONP \tab 0.610 \tab 0.545
+#' }
+#'
+#' Classes with no entry in either table keep `default`, so a class the fit
+#' never saw is left on uniform swing rather than given someone else's number.
+#'
+#' @param cls The party class being projected.
+#' @param seats Character vector of seat names, in the order the shares matrix
+#'   uses. The returned vector matches it element for element.
+#' @param returns A `data.table` from [candidate_returns()], or `NULL` to leave
+#'   every seat on `default`.
+#' @param same,new Named numeric vectors of slopes by class.
+#' @param default Slope for a class absent from `same`/`new`.
+#' @return Numeric vector the length of `seats`.
+#' @export
+conditional_slopes <- function(cls, seats, returns,
+                               same = c(IND = 0.907, OTH_RIGHT = 0.891,
+                                        GRN = 0.994, ONP = 0.610),
+                               new  = c(IND = 0.326, OTH_RIGHT = 0.325,
+                                        GRN = 0.880, ONP = 0.545),
+                               default = 1) {
+  if (is.null(returns) || !cls %in% names(same) || !cls %in% names(new)) {
+    return(rep(as.numeric(default), length(seats)))
+  }
+  R <- data.table::as.data.table(returns)
+  hit <- R[R$party == cls]
+  # Match BY NAME, never by position -- the shares matrix and the corpus are
+  # ordered differently and a positional join would assign another seat's
+  # candidate history. Seats absent from `returns` get FALSE, meaning nobody of
+  # this class stood before, which is the correct reading.
+  idx <- match(seats, hit$seat)
+  is_same <- !is.na(idx) & hit$same[idx]
+  is_same[is.na(is_same)] <- FALSE
+  ifelse(is_same, as.numeric(same[[cls]]), as.numeric(new[[cls]]))
+}

@@ -50,6 +50,31 @@ row(quote(pred_p >= 0.99), "we said 99%+ certain")
 row(quote(pred_p >= 0.90 & pred_p < 0.99), "we said 90-99%")
 row(quote(pred_p < 0.75), "genuinely close (<75%)")
 
+# ECE with TAIL-FOCUSED bands. Equal-width bins put most seats in one bucket and
+# hide the only region where decisions live. Counts are printed because an empty
+# bin is not evidence.
+cat("
+
+RELIABILITY by band, with counts -- an empty bin is not evidence
+")
+EDGES <- c(0, 0.5, 0.75, 0.9, 0.95, 0.99, 0.999, 1)
+for (a in c("base", lab)) {
+  x <- D[arm == a & !is.na(pred_p)]
+  x[, band := cut(pred_p, EDGES, include.lowest = TRUE)]
+  t <- x[, list(n = .N, said = mean(pred_p), got = mean(won)), by = band][order(band)]
+  cat(sprintf("
+   %s
+", a))
+  for (i in seq_len(nrow(t))) {
+    cat(sprintf("     %-14s n %4d | said %6.2f%% | got %6.2f%% | gap %+6.2f
+",
+                as.character(t$band[i]), t$n[i], 100 * t$said[i], 100 * t$got[i],
+                100 * (t$got[i] - t$said[i])))
+  }
+  cat(sprintf("     ECE %.4f
+", sum(t$n * abs(t$said - t$got)) / nrow(x)))
+}
+
 cat("\n\nRELIABILITY at the top end -- the documented failure mode\n")
 for (a in c("base", lab)) {
   x <- D[arm == a & pred_p >= 0.99]
