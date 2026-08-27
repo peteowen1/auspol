@@ -63,6 +63,7 @@ stopifnot(is.finite(SHRINK), SHRINK >= 0, SHRINK < 1)
 
 CAL_TAG <- paste0(
   if (N_SIMS != 20000L) sprintf("-n%d", N_SIMS) else "",
+  if (!is.null(.level_sd)) sprintf("-lv%s", gsub("[.]", "", paste(format(.level_sd, nsmall=2), collapse="_"))) else "",
   if (SHRINK != 0) sprintf("-sh%s", sub("0[.]", "", format(SHRINK, nsmall = 2))) else "",
   if (PARTY_SD != 1.5) sprintf("-psd%s", sub("[.]", "", format(PARTY_SD, nsmall = 2))) else "",
   if (FB_SMOOTH != 0) sprintf("-fb%s", sub("0[.]", "", format(FB_SMOOTH, nsmall = 2))) else "",

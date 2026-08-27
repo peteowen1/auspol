@@ -113,6 +113,7 @@ cat(sprintf("BS1f fallback_smooth %.2f | flow_sd %.2f
 ", FB_SMOOTH, FLOW_SD))
 
 CAL_TAG <- paste0(
+  if (!is.null(.level_sd)) sprintf("-lv%s", gsub("[.]", "", paste(format(.level_sd, nsmall=2), collapse="_"))) else "",
   if (as.numeric(Sys.getenv("AUSPOL_SURGE_H", "0")) > 0) "-surge" else "",
   # THE SIM COUNT MUST BE IN THE NAME. It reads Sys.getenv rather than N_SIMS
   # because CAL_TAG is built before N_SIMS is defined in this file. Without
