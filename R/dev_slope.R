@@ -143,3 +143,54 @@ conditional_slopes <- function(cls, seats, returns,
   is_same[is.na(is_same)] <- FALSE
   ifelse(is_same, as.numeric(same[[cls]]), as.numeric(new[[cls]]))
 }
+
+#' Per-seat slopes conditioned on candidate identity AND the salience screen
+#'
+#' Arm C (`conditional_slopes()`) split a class into two: a returning candidate
+#' (slope 0.907) and a new one (slope ~0.33). Measured across five harnesses it
+#' was refused -- the new-candidate slope is fitted on ~300 candidates who are
+#' overwhelmingly no-hopers, so it crushed the rare emergent toward the mean and
+#' hurt every emergence election it touched: vic2018 +0.191 log loss, fed2022
+#' +0.143, sa2026 +0.114.
+#'
+#' Salience separates exactly that rare group. `salience_screen()` refuses a
+#' governed candidate who never registers -- 709 of them across five elections,
+#' zero winners -- and permits one who does, or one the screen makes no claim
+#' about. This adds a THIRD slope for that permitted-but-new group: uniform swing
+#' (1.0), because there is no fitted value for "new candidate who fires" and
+#' shrinking them is precisely the failure being fixed.
+#'
+#' \tabular{lll}{
+#'   group \tab condition \tab slope \cr
+#'   returning \tab same person stood here before \tab 0.907 etc, per class \cr
+#'   screened out \tab new, governed, screen refuses \tab ~0.33, per class \cr
+#'   screen-permitted \tab new, and either ungoverned or fired \tab 1.0 (uniform)
+#' }
+#'
+#' @inheritParams conditional_slopes
+#' @param permit Logical vector the length of `seats`, from
+#'   [salience_screen()]: does the screen allow this seat's candidate of `cls`
+#'   to emerge?
+#' @return Numeric vector the length of `seats`.
+#' @export
+screened_slopes <- function(cls, seats, returns, permit,
+                            same = c(IND = 0.907, OTH_RIGHT = 0.891,
+                                     GRN = 0.994, ONP = 0.610),
+                            new  = c(IND = 0.326, OTH_RIGHT = 0.325,
+                                     GRN = 0.880, ONP = 0.545),
+                            default = 1) {
+  if (length(permit) != length(seats)) {
+    stop("permit must be the same length as seats: ", length(permit),
+         " vs ", length(seats), call. = FALSE)
+  }
+  base <- conditional_slopes(cls, seats, returns, same, new, default)
+  if (is.null(returns) || !cls %in% names(same) || !cls %in% names(new)) {
+    return(base)   # class never fitted: conditional_slopes already left it at default
+  }
+  R <- data.table::as.data.table(returns)
+  hit <- R[R$party == cls]
+  idx <- match(seats, hit$seat)
+  is_same <- !is.na(idx) & hit$same[idx]; is_same[is.na(is_same)] <- FALSE
+  # new AND screen-permitted -> uniform swing, overriding the harsh new-slope.
+  ifelse(!is_same & permit, 1.0, base)
+}

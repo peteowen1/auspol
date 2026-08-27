@@ -289,11 +289,38 @@ DEV_SLOPE <- dev_slopes_for(union(parties, names(state23)))
 # A single per-class slope averages two populations that behave nothing alike --
 # IND 0.907 when the person returns against 0.326 when they do not -- so it is
 # wrong for every individual seat. Off unless AUSPOL_DEV_SLOPE_MODE=conditional.
-.cond <- identical(Sys.getenv("AUSPOL_DEV_SLOPE_MODE", ""), "conditional")
+.cond <- Sys.getenv("AUSPOL_DEV_SLOPE_MODE", "") %in% c("conditional", "screened")
+.screened <- identical(Sys.getenv("AUSPOL_DEV_SLOPE_MODE", ""), "screened")
 .returns <- if (.cond) candidate_returns("nsw2019", "nsw2023") else NULL
 if (.cond) cat(sprintf("BN1c conditional slopes ON: %d of %d seat-classes have the same candidate returning
 ",
                        sum(.returns$same), nrow(.returns)))
+# ARM CS: arm C plus the salience screen. Arm C alone was refused -- its harsh
+# new-candidate slope (~0.33) is fitted on ~300 candidates who are overwhelmingly
+# no-hopers, so it crushed the rare emergent toward the mean. The screen
+# identifies that rare group (709 governed-silent candidates across five
+# elections, zero winners) and protects anyone it permits by leaving them on
+# uniform swing instead. See screened_slopes() and prereg-salience-screen.md.
+.permit <- NULL
+if (.screened) {
+  sf <- file.path("output", "salience-v6.csv")
+  if (!file.exists(sf)) stop("AUSPOL_DEV_SLOPE_MODE=screened needs output/salience-v6.csv")
+  SAL <- fread(sf, showProgress = FALSE)[election == "nsw2023"]
+  surging <- tryCatch(surging_parties("nsw", 2019L, 2023L, 5), error = function(e) character(0))
+  rk <- paste(gsub("[^a-z0-9]", "", tolower(.returns$seat)), .returns$party)
+  sk <- paste(gsub("[^a-z0-9]", "", tolower(SAL$seat)), SAL$party)
+  ret <- .returns$same[match(sk, rk)]; ret[is.na(ret)] <- FALSE
+  SAL[, governed := prev_party < 15 & !(party %in% surging) & !ret]
+  SAL[, permit := salience_screen(jump, governed)]
+  cat(sprintf("BN1s screen ON: registration %.0f%% | governed %d | permitted %d of governed\n",
+              100 * salience_registration(SAL$jump), sum(SAL$governed),
+              sum(SAL$permit[SAL$governed])))
+  # KEYED BY SEAT + PARTY. simulate_seat_contests() reads shares by seat name
+  # from `mat`, but the permit vector must be looked up for the CLASS being
+  # projected in THIS loop iteration -- a stale merge here would apply another
+  # party's screen decision to the wrong candidate.
+  .permit <- SAL[, .(seat, party, permit)]
+}
 cat(sprintf("BN1d  dev slopes: %s%s
 ",
             if (all(DEV_SLOPE == 1)) "all 1.000 (uniform swing)" else
@@ -305,7 +332,11 @@ pinned <- matrix(FALSE, nrow(mat), ncol(mat), dimnames = dimnames(mat))
 for (p in parties) {
   if (!p %in% names(state23)) next
   d_state <- state23[[p]] - state19[[p]]
-  sl <- if (.cond) conditional_slopes(p, rownames(mat), .returns) else DEV_SLOPE[[p]]
+  sl <- if (.screened) {
+    pm <- .permit[.permit$party == p][match(rownames(mat), seat), permit]
+    pm[is.na(pm)] <- TRUE   # a seat/class .permit has no row for is ungoverned
+    screened_slopes(p, rownames(mat), .returns, pm)
+  } else if (.cond) conditional_slopes(p, rownames(mat), .returns) else DEV_SLOPE[[p]]
   val <- dev_slope(mat[, p], state19[[p]], state23[[p]], sl)
   if (ELASTIC > 0 && d_state < -ELASTIC_D && state19[[p]] > 0) {
     over <- mat[, p] / state19[[p]]
