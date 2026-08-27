@@ -89,15 +89,39 @@ qry <- function(kw, geo, from, to) {
               sprintf("v6-%s-%s-%s-%s", geo, from, to, paste(kw, collapse = "-")))
   f <- file.path(CACHE, paste0(substr(key, 1, 150), ".rds"))
   if (file.exists(f)) { z <- readRDS(f); return(if (isTRUE(z$empty)) NULL else z$series) }
-  r <- NULL
+  # THREE OUTCOMES, and conflating the last two cost 92% of the resolution.
+  #   - request succeeds with a series      -> data
+  #   - request succeeds with no series     -> genuine zeros
+  #   - gtrends THROWS "No data returned by the query" when EVERY term in the
+  #     batch is silent                     -> ALSO genuine zeros, not a failure
+  #
+  # Treating the third as a failed request is why an anchor looked mandatory: a
+  # batch of five quiet candidates could not be queried at all. With an anchor
+  # present the batch always returns, and the anchor then takes 100 and crushes
+  # everyone else -- Geoff Brock reads 96 unanchored and 7 alongside
+  # Malinauskas, Chantelle Thomas 100 and 8. The anchor was solving what was
+  # really an error-handling bug, at the cost of most of the signal.
+  r <- NULL; allzero <- FALSE
   for (att in 1:3) {
     r <- tryCatch(gtrends(keyword = kw, geo = geo, time = paste(from, to),
-                          onlyInterest = TRUE), error = function(e) NULL)
-    if (!is.null(r) && !is.null(r$interest_over_time)) break
+                          onlyInterest = TRUE),
+                  error = function(e) {
+                    if (grepl("No data returned", conditionMessage(e), fixed = TRUE))
+                      allzero <<- TRUE
+                    NULL
+                  })
+    if (allzero || (!is.null(r) && !is.null(r$interest_over_time))) break
     Sys.sleep(10 * att)
   }
-  # A FAILED REQUEST IS NOT "NO DATA". Caching a throttle as empty makes a
-  # transient failure permanent and indistinguishable from a genuine zero.
+  if (allzero) {
+    # Every term silent across the window. Recorded as zeros rather than
+    # dropped, so the candidates are ZERO instead of missing.
+    out <- data.table::CJ(keyword = kw,
+                          date = seq(as.Date(from), as.Date(to), by = "week"))
+    out[, hits := 0]
+    saveRDS(list(series = out, empty = FALSE, allzero = TRUE, fetched = Sys.Date()), f)
+    return(out[])
+  }
   if (is.null(r)) { cat("S6!  request failed, NOT cached\n"); return(NULL) }
   if (is.null(r$interest_over_time)) { saveRDS(list(empty = TRUE), f); return(NULL) }
   d <- as.data.table(r$interest_over_time)
@@ -149,32 +173,71 @@ for (el in names(ELS)) {
   cat(sprintf("\nS6-1 %s | geo %s | %s to %s | %d candidates\n",
               el, E$geo, as.character(from), as.character(to), nrow(S)))
 
-  kws <- setdiff(unique(S$kw), E$anchor)
-  acc <- NULL; nb <- 0L; gran <- NA_integer_; failed <- 0L
-  for (i in seq(1L, length(kws), by = MAXKW - 1L)) {
-    take <- kws[i:min(i + MAXKW - 2L, length(kws))]
-    s <- qry(c(E$anchor, take), E$geo, as.character(from), as.character(to))
+  # TWO STAGES, now that an all-silent batch is data rather than an error.
+  #
+  #   1. Batches of five candidates, NO anchor. Each is normalised on its own
+  #      loudest member, so a quiet field keeps its full range instead of being
+  #      crushed against a head of government.
+  #   2. One extra pass over each batch's loudest member, putting the
+  #      representatives on a single scale. Each batch is then multiplied by its
+  #      own representative's value in that pass.
+  #
+  # A batch that is silent throughout contributes zeros and needs no link. The
+  # anchor is retained ONLY for the linking pass, where every member is a
+  # batch's loudest candidate and a zero would otherwise break the scale.
+  kws <- unique(S$kw)
+  nb <- 0L; gran <- NA_integer_; failed <- 0L; batches <- list()
+  for (i in seq(1L, length(kws), by = MAXKW)) {
+    take <- kws[i:min(i + MAXKW - 1L, length(kws))]
+    s <- qry(take, E$geo, as.character(from), as.character(to))
     nb <- nb + 1L
     if (is.null(s)) { failed <- failed + length(take); next }
-    if (is.na(gran)) gran <- as.integer(stats::median(diff(sort(unique(s$date)))))
-    m <- jump_of(s, E$poll)
-    a <- m[keyword == E$anchor, jump]
-    # The anchor is the SAME term in every batch, so its own value is the scale.
-    # Guard anyway: an anchor returning zero would divide by nothing, which is
-    # exactly how the chain broke in South Australia.
-    if (!length(a) || !is.finite(a) || a <= 0) {
-      cat(sprintf("S6!  anchor '%s' returned %s in batch %d, %d dropped\n",
-                  E$anchor, if (length(a)) sprintf("%.2f", a) else "NA", nb, length(take)))
-      failed <- failed + length(take); next
+    if (is.na(gran)) {
+      d <- sort(unique(s$date))
+      if (length(d) > 1L) gran <- as.integer(stats::median(diff(d)))
     }
-    acc <- rbind(acc, m[keyword != E$anchor][, jump := jump / a])
-    if (nb %% 20 == 0) cat(sprintf("S6-3 %d batches | %d done\n", nb, i))
+    batches[[length(batches) + 1L]] <- jump_of(s, E$poll)
+    if (nb %% 20 == 0) cat(sprintf("S6-3 stage 1: %d batches | %d of %d done\n",
+                                   nb, i, length(kws)))
     Sys.sleep(SLEEP)
   }
-  if (is.null(acc)) { cat(sprintf("S6!  %s: nothing scaled, skipped\n", el)); next }
-  cat(sprintf("S6-2 %d batches | granularity %s | %d candidates dropped\n", nb,
+  if (!length(batches)) { cat(sprintf("S6!  %s: nothing measured, skipped\n", el)); next }
+  cat(sprintf("S6-2 stage 1: %d batches | granularity %s | %d dropped\n", nb,
               if (is.na(gran)) "?" else if (gran >= 26) "MONTHLY -- UNUSABLE"
               else if (gran >= 6) "weekly" else "daily", failed))
+
+  reps <- vapply(batches, function(b) b[which.max(jump), keyword], "")
+  live <- vapply(batches, function(b) max(b$jump) > 0, TRUE)
+  cat(sprintf("S6-5 stage 2: linking %d live batches (%d silent throughout)\n",
+              sum(live), sum(!live)))
+  scale <- rep(1, length(batches))
+  if (sum(live) > 1L) {
+    rl <- unique(reps[live]); link <- NULL
+    for (i in seq(1L, length(rl), by = MAXKW - 1L)) {
+      take <- rl[i:min(i + MAXKW - 2L, length(rl))]
+      s <- qry(c(E$anchor, take), E$geo, as.character(from), as.character(to))
+      if (is.null(s)) next
+      m <- jump_of(s, E$poll)
+      a <- m[keyword == E$anchor, jump]
+      if (!length(a) || !is.finite(a) || a <= 0) next
+      link <- rbind(link, m[keyword != E$anchor][, jump := jump / a])
+      Sys.sleep(SLEEP)
+    }
+    if (!is.null(link)) {
+      link <- link[, .(jump = max(jump)), by = keyword]
+      for (j in seq_along(batches)) {
+        if (!live[j]) next
+        v <- link[keyword == reps[j], jump]
+        own <- batches[[j]][keyword == reps[j], jump]
+        if (!length(v) || !length(own) || own <= 0) {
+          cat(sprintf("S6!  no link for batch %d (rep '%s')\n", j, reps[j])); next
+        }
+        scale[j] <- v / own
+      }
+    }
+  }
+  acc <- rbindlist(lapply(seq_along(batches), function(j)
+    batches[[j]][, .(keyword, jump = jump * scale[j])]))
   R <- merge(S[, .(election = el, seat, keyword = kw, party, pcv, elected,
                    prev_party = prev_pcv)], acc, by = "keyword")
   cat(sprintf("S6-4 %s: %d scaled | %d distinct jump values | %d%% zero | max %.2f\n",
