@@ -1,6 +1,6 @@
 # Data registry
 
-**Generated 2026-08-26 by `scripts/build_data_registry.R`. Do not hand-edit** --
+**Generated 2026-08-27 by `scripts/build_data_registry.R`. Do not hand-edit** --
 rerun the script instead. Regenerate it whenever you add or fetch data.
 
 This file exists because the same data has been declared missing three
@@ -41,6 +41,7 @@ cannot pass as a working one.
 | `vec-2022-vic-candidates.csv` | 28 KB |
 | `vec-2022-vic-firstprefs.csv` | 10 KB |
 | `vec-2022-vic-transfers.csv` | 71 KB |
+| `vec-2022-vic-winners.csv` | 1 KB |
 | `waec-1996-wa-firstprefs.csv` | 4 KB |
 | `waec-2001-wa-firstprefs.csv` | 6 KB |
 | `waec-2005-wa-firstprefs.csv` | 6 KB |
@@ -66,7 +67,7 @@ cannot pass as a working one.
   - e.g. elections.json, publicResults_SGE2024_ICCDiv4_Final.zip, publicResults_State2020_aurukun2020_Final.zip, qld2020.xml
 - **waec/** -- 481 files, 19.4 MB
   - e.g. app.html, app.min.js, config-loader.js, config.json
-- **trends/** -- 964 files, 391 KB
+- **trends/** -- 1299 files, 872 KB
   - e.g. 2019_anch2_Adrian_Wone_Susie_Beveridge_Will_Landers_Ammar_Khan.rds, 2019_anch2_Bill_Chandler_Susan_Moylan_Dave_Blake_Tim_Bohm.rds, 2019_anch2_Robert_Oakeshott_Helen_Haines_Zali_Steggall_Kerryn_Phelps.rds, 2019_anch2_Trevor_Jones_Colin_Butland_David_Norman_Thor_Prohaska.rds
 - **boundaries/** -- 20 files, 157.6 MB
   - e.g. SED_2021.zip, SED_2021_AUST_GDA2020.CPG, SED_2021_AUST_GDA2020.dbf, SED_2021_AUST_GDA2020.prj
@@ -93,8 +94,8 @@ NAMES live -- the per-seat results files carry `seat, party, votes` only.
 | fed2025 | 150 | 1122 | 129 | 35 |
 | nsw2019 | 93 | 568 | 52 | 15 |
 | nsw2023 | 93 | 562 | 68 | 19 |
-| qld2020 | 94 | 599 | 71 | 15 |
-| qld2024 | 94 | 529 | 42 | 16 |
+| qld2020 | 93 | 597 | 69 | 13 |
+| qld2024 | 93 | 525 | 38 | 14 |
 | sa2022 | 47 | 240 | 20 | 6 |
 | sa2026 | 47 | 388 | 34 | 31 |
 | vic2014 | 88 | 545 | 91 | 9 |
@@ -109,7 +110,7 @@ NAMES live -- the per-seat results files carry `seat, party, votes` only.
 | wa2021 | 59 | 463 | 17 | 0 |
 | wa2025 | 59 | 398 | 29 | 6 |
 
-**Total: 14959 candidacies, 24 elections, 307 non-major breakouts.**
+**Total: 14953 candidacies, 24 elections, 303 non-major breakouts.**
 
 ## Known gaps
 

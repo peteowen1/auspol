@@ -436,7 +436,10 @@ for (rg in names(WINF)) {
   WV[[length(WV) + 1L]] <- w[, .(election, seat, winner)]
 }
 # Victoria publishes per-election files rather than one combined file.
-for (y in c(2014L, 2018L)) {
+# 2022 included since 2026-08-27: derived from the VEC's own transfer file by
+# scripts/derive_vic2022_winners.R, replacing the 2026-seat-file proxy the
+# Victorian harness had been using. Victoria is the live target.
+for (y in c(2014L, 2018L, 2022L)) {
   f <- file.path(election_data_path(), sprintf("vec-%d-vic-winners.csv", y))
   if (!file.exists(f)) next
   w <- fread(f, showProgress = FALSE)
