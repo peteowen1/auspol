@@ -132,3 +132,71 @@ Not as a ranking fed into a slope. As a **screen**:
 
 That is a different design from every arm tried so far, and it is the one the
 data actually supports.
+
+---
+
+# CORRECTION: both "failures" were population-definition bugs
+
+Pete read the SA winners and asked two questions that overturn the conclusion
+above.
+
+**"These are ONP, not IND — wasn't One Nation polling 20%+? That isn't an
+emergence, the party baseline moved."** It is:
+
+| | statewide | seats contested |
+|---|--:|--:|
+| sa2022 | **2.63%** | 19 of 47 |
+| sa2026 | **22.50%** | 47 of 47 |
+
+A 19.9-point party-wide surge, with 19 of 47 One Nation candidates polling above
+25%. Their winners had little prior vote in their seats because the PARTY had
+none, not because the candidates were personally emerging. The uniform swing
+already carries most of it — Hammond is predicted exactly, the rest within 7 to
+15 points.
+
+A **candidate** emergence is a person outrunning their party. A **party**
+emergence is the party moving and taking its candidates with it. Asking a
+name-search signal to explain the second is a category error, and it is what
+made South Australia look like a failure of the signal.
+
+**"Donato sat as a Shooter the election before — he doesn't need to emerge."**
+Also right. 49.1% as OTH_RIGHT in 2019, 53.1% as IND in 2023.
+`candidate_returns()` matched within (seat, party), so a five-year sitting member
+read as a new independent, and became the screen's only failure in an election
+where it otherwise had none.
+
+## Both fixed, and the result
+
+`candidate_returns()` now matches the same PERSON in the same SEAT whatever label
+they stand under. `surging_parties()` flags classes whose statewide vote moved
+more than 5 points, and those candidates are excluded from the population the
+screen governs.
+
+| election | governed | silent | misses | caught |
+|---|--:|--:|--:|--:|
+| fed2022 | 276 | 190 | **0** | 6 |
+| fed2025 | 277 | 204 | **0** | 0 |
+| nsw2023 | 155 | 135 | **0** | 1 |
+| vic2022 | 150 | 121 | **0** | 1 |
+| sa2026 | 60 | 59 | **0** | 0 |
+
+**709 governed silent candidates across all five elections, zero winners among
+them** — South Australia included.
+
+The eight it catches are the genuine candidate emergences: all six fed2022
+teals, Regan in Wakehurst, De Vietri in Richmond.
+
+The surge detector validates itself on the side: LNP in fed2022 and nsw2023, ALP
+in vic2022, ONP and LNP in sa2026, and **nothing in fed2025**, the stable cycle.
+
+## What this changes above
+
+**The central claim of this review is wrong.** South Australia did not fail
+because its search volume is too low. It failed because a party surge was fed to
+a candidate-attention signal. The low-volume finding is real — 104 of 111 SA
+candidates never register, and the registration test remains worth having — but
+it was not the cause of the misses.
+
+The lesson is the one Pete has now supplied twice: **check what population a
+metric is being asked about before believing what it says.** The first time it
+was sitting members counted as emergences; the second, a whole party.

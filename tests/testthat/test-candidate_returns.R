@@ -26,12 +26,20 @@ test_that("every seat/class at the target election is present", {
   expect_equal(nrow(r), 5L)
 })
 
-test_that("a candidate switching CLASS in the same seat does not count", {
-  # Party class is the unit the slope applies to, so a person who moves from
-  # IND to ALP has not returned FOR THAT CLASS.
+test_that("a candidate switching PARTY in the same seat still counts as returning", {
+  # Philip Donato held Orange with 49.1% as a Shooter in 2019 and 53.1% as an
+  # independent in 2023. Matching within (seat, party) made a five-year sitting
+  # member read as a NEW independent -- and as the only failure of the salience
+  # screen in an election where it otherwise had none.
   d <- mk()
-  d[election == "e2" & seat == "A" & party == "ALP", `:=`(surname = "SMITH", given = "Jane")]
-  d[election == "e2" & seat == "A" & party == "IND", `:=`(surname = "OTHER", given = "Pat")]
+  d[election == "e2" & seat == "A" & party == "IND", `:=`(surname = "JONES", given = "Bob")]
+  r <- candidate_returns("e1", "e2", d)
+  expect_true(r[seat == "A" & party == "IND"]$same)   # Bob Jones stood in A as ALP at e1
+})
+
+test_that("a DIFFERENT person in the same seat is still new", {
+  d <- mk()
+  d[election == "e2" & seat == "A" & party == "IND", `:=`(surname = "NOBODY", given = "Zed")]
   r <- candidate_returns("e1", "e2", d)
   expect_false(r[seat == "A" & party == "IND"]$same)
 })

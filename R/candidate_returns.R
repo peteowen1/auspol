@@ -76,10 +76,22 @@ candidate_returns <- function(election_from, election_to, corpus = NULL) {
   ns <- function(x) gsub("[^a-z0-9]", "", tolower(x))
   NOWT[,  .s := ns(seat)]
   PREVT[, .s := ns(seat)]
-  prev_keys <- PREVT[nzchar(PREVT$.k), list(.s, party, .k)]
+  # MATCH THE PERSON ACROSS THE SEAT, NOT WITHIN THE PARTY CLASS.
+  #
+  # Philip Donato held Orange with 49.1% as a Shooter in 2019 and 53.1% as an
+  # independent in 2023. Matching within (seat, party) called him a NEW
+  # independent, so a sitting member with a five-year incumbency counted as an
+  # emergence -- and as the single failure of the salience screen in an election
+  # where it otherwise had none. Every party-switcher had the same fault, which
+  # is the NSW Shooters-to-independent trap CLAUDE.md already records in another
+  # form.
+  #
+  # A returning candidate is the same PERSON in the same SEAT. Which label they
+  # stand under is a separate question and belongs to the party swing.
+  prev_keys <- PREVT[nzchar(PREVT$.k), list(.s, .k)]
   out <- unique(NOWT[nzchar(NOWT$.k), list(seat, .s, party, .k)])
-  out <- merge(out, prev_keys[, `:=`(hit = TRUE)],
-               by = c(".s", "party", ".k"), all.x = TRUE)
+  out <- merge(out, unique(prev_keys)[, `:=`(hit = TRUE)],
+               by = c(".s", ".k"), all.x = TRUE)
   out[is.na(hit), hit := FALSE]
   res <- out[, list(same = any(hit)), by = list(seat, party)]  # target's own names
   # Every seat/class at the target election, so a caller can index without
