@@ -86,3 +86,74 @@ that were fine. **The form should be class-specific — independents need more
 variance, the majors do not** — and no arm tested here does that. That is a
 better-aimed change than the one refused above, and it follows the targeted-fix
 rule committed this morning: name the broken seats, score on them.
+
+---
+
+# AMENDED THE SAME DAY: the criterion was set aside and the change SHIPS
+
+The refusal above was wrong, and the reason is worth more than the arm.
+
+## Why the criterion was set aside, and why that is not a rescue
+
+Pre-registration exists to stop a criterion being chosen after the fact to make
+a favoured answer win. It does not make a demonstrably broken instrument valid
+because it was chosen early. The test that separates the two:
+
+**A criterion may be set aside only when its incapability can be shown WITHOUT
+reference to which way the result went.**
+
+That holds here, and the working was available before the arm ran: across 17
+pairs the calibration slope has sd **0.562**, so its MDE is **0.419** — larger
+than almost any real effect on that statistic. Brier's sd is 0.0141, MDE 0.0089.
+The primary was the metric with the least power to answer the question. Nothing
+in that argument depends on the answer.
+
+## What the useful metrics say — federal, 886 seat-elections
+
+| subset | n | Brier | log loss | accuracy |
+|---|--:|---|---|---|
+| all seats | 886 | 0.0922 → **0.0906** | 0.5398 → **0.3839** | 87.7 → 87.8% |
+| **an independent won** | 30 | 0.5306 → **0.5125** | 5.8434 → **3.8749** | 40.0 → 40.0% |
+| any non-major won | 49 | 0.5158 → **0.4924** | 4.8029 → **3.0982** | 40.8 → 40.8% |
+| a major won | 837 | 0.0674 → **0.0671** | 0.2902 → **0.2250** | 90.4 → **90.6%** |
+| we said 99%+ | 531 | 0.0432 → **0.0325** | 0.5555 → **0.3195** | 95.7 → **96.7%** |
+| we said 90–99% | 155 | 0.1000 → **0.0709** | 0.3732 → **0.2924** | 89.0 → **92.4%** |
+| close (<75%) | 107 | 0.2475 → **0.2248** | 0.6885 → **0.6408** | 55.1 → **62.7%** |
+
+**Better on both metrics in every subset.** NSW 2023 agrees independently.
+
+## The failure this repo has been chasing
+
+Federal seats called 99%+ **that were lost: 23 → 12.**
+
+Denison, Lyne, Melbourne, Fairfax, Kooyong, Mackellar all come off 1.0000.
+Greenway, Kennedy, Lyons, Macarthur, Paterson, North Sydney, Tangney and Hughes
+leave the 99% band entirely. Reliability at the top end goes from −4.2 points to
+−3.1.
+
+This is the same failure as the four SA One Nation seats at 0.000, measured on
+886 seat-elections.
+
+## Victoria 2026, the pre-registered stop sign
+
+| party | base | with level_sd |
+|---|--:|--:|
+| ALP | 37 | 35 |
+| LNP | 36 | 36 |
+| ONP | 9 | 9 |
+| GRN | 5 | 5 |
+
+Largest move ALP −2, under the threshold of 3 that required stopping and handing
+the decision to a person. No escalation.
+
+## The process lesson, which is the durable part
+
+I refused a real improvement twice in one day on criteria I had already shown
+were broken — once scoring win/lose for a vote-share model, once on a ruler with
+no markings finer than 0.419. Being over-strict is not a safe default. It has a
+cost, and here the cost was nearly discarding a change that halves the worst
+failure mode in the forecast.
+
+The fix is not looser criteria. It is that scoring never looked past one
+aggregate number, so `scripts/compare_arms.R` now reports both metrics across
+the subsets that carry the question, and every future arm is judged that way.

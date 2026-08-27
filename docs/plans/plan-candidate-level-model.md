@@ -15,7 +15,7 @@ shippable on its own.
 
 | | ticket | depends on | status |
 |---|---|---|---|
-| **A1** | ~~Conditional variance by continuity~~ REFUTED; replaced by level-dependent variance | — | pre-registered |
+| **A1** | ~~Continuity variance~~ refuted → **level-dependent variance SHIPPED** | — | **done** |
 | **A2** | Joint slope + spread retune, stage 1 | — | pre-registered |
 | **A3** | Joint retune, stage 2 (spread) | A2 passes | blocked |
 | **B1** | Candidate-level rows through the projection | — | open |

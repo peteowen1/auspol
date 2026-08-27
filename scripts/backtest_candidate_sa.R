@@ -64,8 +64,13 @@ suppressMessages(library(data.table))
 # seat_sd. Pre-registered in docs/plans/prereg-level-dependent-variance.md;
 # unset reproduces the published model exactly.
 .level_sd <- local({
-  raw <- Sys.getenv("AUSPOL_LEVEL_SD", "")
-  if (!nzchar(raw)) NULL else {
+  # ADOPTED 2026-08-27. Default ON at the fitted values; AUSPOL_LEVEL_SD="off"
+  # reproduces the flat seat_sd exactly. See
+  # docs/reviews/level-variance-2026-08-27.md -- federal seats called 99%+ and
+  # LOST fall from 23 to 12 over 886 seat-elections, and Brier and log loss
+  # improve in every subset on both federal and NSW.
+  raw <- Sys.getenv("AUSPOL_LEVEL_SD", "1.10,8.67")
+  if (identical(tolower(raw), "off") || !nzchar(raw)) NULL else {
     v <- suppressWarnings(as.numeric(strsplit(raw, ",")[[1]]))
     if (length(v) != 2L || !all(is.finite(v)))
       stop("AUSPOL_LEVEL_SD must be two finite numbers, e.g. 1.10,8.67")

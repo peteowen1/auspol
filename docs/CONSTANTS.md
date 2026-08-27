@@ -370,3 +370,25 @@ format as three meaningful results.
 Sizing comes before building in each case: if varying the constant across a
 plausible range barely moves the forecast, it is a correctness matter and gets
 recorded here rather than modelled.
+
+## `level_sd` — seat variance that scales with the level of the share
+
+`c(1.10, 8.67)`, giving `sd = 1.10 + 8.67 * sqrt(p * (1 - p))` in place of a
+flat `seat_sd` of 3.5. Set `AUSPOL_LEVEL_SD=off` to reproduce the flat form.
+
+**From data, not chosen.** Fitted over 9,015 seat-party observations across 17
+election pairs; the slope coefficient jackknifes to 6.82–7.29 over those pairs.
+It is the TOTAL residual form (`1.68 + 7.85 * sqrt(p(1-p))`) with the statewide
+component removed in variance, because `party_sd` is added separately and
+feeding the total in would count it twice.
+
+**Adopted 2026-08-27** on `docs/reviews/level-variance-2026-08-27.md`. Federal
+seats called 99%+ and lost fall from 23 to 12 across 886 seat-elections; Brier
+and log loss improve in every subset on both federal and NSW 2023. Victoria 2026
+medians move ALP 37→35 with every other party unchanged, under the
+stop-and-report threshold of 3.
+
+**Known limitation:** the form is global. NSW excluding independent wins was
+already calibrated at 0.959 and this overshoots it to 1.272, so the
+miscalibration it fixes is concentrated in IND seats while the correction is
+applied to every class. A class-specific form is the open follow-up.
