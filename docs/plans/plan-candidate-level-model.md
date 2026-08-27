@@ -18,8 +18,8 @@ shippable on its own.
 | **A1** | ~~Continuity variance~~ refuted → **level-dependent variance SHIPPED** | — | **done** |
 | **A2** | Joint retune stage 1 — arms P and C both **REFUSED** | — | **done** |
 | **A3** | ~~Joint retune stage 2~~ — does not run, A2 failed | A2 | **closed** |
-| **B1** | Candidate-level rows through the projection | — | open |
-| **B2** | Compositional (softmax) shares within a seat | B1 | open |
+| **B1** | ~~Full candidate-level rows~~ SIZED, not justified -- see review | — | **descoped** |
+| **B2** | Compositional (softmax) shares within a seat | — | **now next priority** |
 | **B3** | Open-seat / retirement effect | B1 | open |
 | **C1** | Salience precision criterion re-specified — **now the critical path** | — | open |
 | **C2** | Salience C3 on held-out emergences | C1 | open |
@@ -80,20 +80,24 @@ the stage-1 winner.
 
 ## B — the structural change
 
-### B1. Candidate-level rows through the projection
+### B1. ~~Candidate-level rows through the projection~~ SIZED, descoped
 
-**Why.** Two independents in a seat are currently summed; a new independent
-inherits a stranger's vote; a "uniform IND swing" is close to meaningless.
+**Sized 2026-08-27 before building**, per `docs/reviews/b1-sizing-2026-08-27.md`.
+27.5% of non-major seat-class rows are multi-candidate, which looked alarming,
+but only 8 of 1,992 instances are a genuine two-way split (second candidate
+>10%) and only 3 seats across 24 elections saw the class win where it mattered.
+The value already captured by arm CS (candidate identity → slope) did not need
+candidate-level columns; it only needed `candidate_returns()`'s same/new
+distinction, matched within (seat, class).
 
-**Do.** Replace the seat × class matrix with seat × candidate, party as an
-attribute. `output/candidate-contests.csv` already carries the history.
-`simulate_seat_contests()` runs a candidate-level count already, so the change
-is upstream of it.
+A full seat × candidate rewrite would still need a redesigned flow matrix (raw
+transfer files record `from`/`to` as party classes, not names), a no-op proof
+and re-measurement on all five harnesses — the cost this ticket already flagged
+as "the largest here." Not worth it for 3 historical seats.
 
-**Accept.** Byte-identical output when every seat has one candidate per class —
-the no-op proof — then measured on all five harnesses.
-
-**Cost.** The largest ticket here. Everything in B depends on it.
+**Not deleted, re-scoped**: revisit only if a future measured problem
+specifically needs candidate-level columns, rather than building it speculatively
+now. B2 is the next structural priority instead.
 
 ### B2. Compositional shares within a seat
 
