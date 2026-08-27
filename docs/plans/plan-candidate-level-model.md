@@ -16,12 +16,12 @@ shippable on its own.
 | | ticket | depends on | status |
 |---|---|---|---|
 | **A1** | ~~Continuity variance~~ refuted → **level-dependent variance SHIPPED** | — | **done** |
-| **A2** | Joint slope + spread retune, stage 1 | — | pre-registered |
-| **A3** | Joint retune, stage 2 (spread) | A2 passes | blocked |
+| **A2** | Joint retune stage 1 — arms P and C both **REFUSED** | — | **done** |
+| **A3** | ~~Joint retune stage 2~~ — does not run, A2 failed | A2 | **closed** |
 | **B1** | Candidate-level rows through the projection | — | open |
 | **B2** | Compositional (softmax) shares within a seat | B1 | open |
 | **B3** | Open-seat / retirement effect | B1 | open |
-| **C1** | Salience gate, precision criterion re-specified | — | open |
+| **C1** | Salience precision criterion re-specified — **now the critical path** | — | open |
 | **C2** | Salience C3 on held-out emergences | C1 | open |
 | **D1** | `vic2022` winners file | — | open |
 | **D2** | WA given names | — | open |
