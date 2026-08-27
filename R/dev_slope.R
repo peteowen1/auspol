@@ -34,11 +34,19 @@
 #'   election -- an actual result when backtesting, a poll-trend draw when
 #'   forecasting.
 #' @param slope Deviation slope. 1 reproduces uniform swing exactly; below 1
-#'   shrinks each seat toward the statewide level.
+#'   shrinks each seat toward the statewide level. Either one number for every
+#'   seat, or one PER SEAT the same length as `x` — the latter is what a
+#'   conditional slope needs, since whether the same candidate is standing again
+#'   is a property of the seat, not of the class. Measured, that distinction is
+#'   worth more than the class: IND carries 0.907 when the person returns and
+#'   0.326 when they do not.
 #' @return Numeric vector of projected shares, floored at zero.
 #' @export
 dev_slope <- function(x, level_prev, level_now, slope = 1) {
-  if (length(slope) != 1L || !is.finite(slope)) stop("slope must be one finite number")
+  if (!length(slope) %in% c(1L, length(x)) || !all(is.finite(slope))) {
+    stop("slope must be one finite number, or one per seat matching x (",
+         length(x), "); got ", length(slope), call. = FALSE)
+  }
   if (!is.finite(level_prev) || !is.finite(level_now))
     stop("level_prev and level_now must both be finite")
   pmax(0, level_now + slope * (x - level_prev))

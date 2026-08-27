@@ -66,6 +66,22 @@ SURGE_H   <- as.numeric(Sys.getenv("AUSPOL_SURGE_H", "0"))
 SEED <- 20260825L
 stopifnot(is.finite(SHRINK), SHRINK >= 0, SHRINK < 1)
 
+# ARM FINGERPRINT. CAL_TAG names the parameters someone remembered to add, and
+# twice now a new one was not: AUSPOL_LEVEL_SD and AUSPOL_DEV_SLOPE both wrote
+# over another arm's per-seat output, silently, so a comparison read two copies
+# of the same run. This appends a short hash of every AUSPOL_* variable that is
+# set, so a NEW parameter cannot repeat that without anyone touching this line.
+.arm_fingerprint <- local({
+  e <- Sys.getenv()
+  e <- e[grepl("^AUSPOL_", names(e)) & nzchar(e)]
+  e <- e[!names(e) %in% c("AUSPOL_OUT_SUFFIX")]
+  if (!length(e)) "" else {
+    s <- paste(sort(paste0(names(e), "=", e)), collapse = ";")
+    sprintf("-a%s", substr(tolower(paste0(as.hexmode(
+      sum(utils::head(utf8ToInt(s), 4000) * seq_along(utils::head(utf8ToInt(s), 4000)))
+    ))), 1, 6))
+  }
+})
 CAL_TAG <- paste0(
   if (N_SIMS != 20000L) sprintf("-n%d", N_SIMS) else "",
   if (!is.null(.level_sd)) sprintf("-lv%s", gsub("[.]", "", paste(format(.level_sd, nsmall=2), collapse="_"))) else "",
@@ -73,7 +89,7 @@ CAL_TAG <- paste0(
   if (PARTY_SD != 1.5) sprintf("-psd%s", sub("[.]", "", format(PARTY_SD, nsmall = 2))) else "",
   if (FB_SMOOTH != 0) sprintf("-fb%s", sub("0[.]", "", format(FB_SMOOTH, nsmall = 2))) else "",
   if (FLOW_SD != 0) sprintf("-fsd%s", sub("[.]", "", format(FLOW_SD, nsmall = 1))) else "",
-  if (SURGE_H > 0) "-surge" else "")
+  if (SURGE_H > 0) "-surge" else "", .arm_fingerprint)
 
 cat(sprintf("BW0  n_sims %d | shrink %.2f | party_sd %.2f | fb %.2f | flow_sd %.2f | surge %.4f\n",
             N_SIMS, SHRINK, PARTY_SD, FB_SMOOTH, FLOW_SD, SURGE_H))

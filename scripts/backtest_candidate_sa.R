@@ -131,6 +131,22 @@ if (nzchar(Sys.getenv("AUSPOL_PARTY_COR", ""))) {
 # comparison across jurisdictions at different sim counts is not paired.
 N_SIMS <- as.integer(Sys.getenv("AUSPOL_N_SIMS", "20000"))
 
+# ARM FINGERPRINT. CAL_TAG names the parameters someone remembered to add, and
+# twice now a new one was not: AUSPOL_LEVEL_SD and AUSPOL_DEV_SLOPE both wrote
+# over another arm's per-seat output, silently, so a comparison read two copies
+# of the same run. This appends a short hash of every AUSPOL_* variable that is
+# set, so a NEW parameter cannot repeat that without anyone touching this line.
+.arm_fingerprint <- local({
+  e <- Sys.getenv()
+  e <- e[grepl("^AUSPOL_", names(e)) & nzchar(e)]
+  e <- e[!names(e) %in% c("AUSPOL_OUT_SUFFIX")]
+  if (!length(e)) "" else {
+    s <- paste(sort(paste0(names(e), "=", e)), collapse = ";")
+    sprintf("-a%s", substr(tolower(paste0(as.hexmode(
+      sum(utils::head(utf8ToInt(s), 4000) * seq_along(utils::head(utf8ToInt(s), 4000)))
+    ))), 1, 6))
+  }
+})
 CAL_TAG <- paste0(
   if (as.numeric(Sys.getenv("AUSPOL_SURGE_H", "0")) > 0) "-surge" else "",
   if (SEAT_SD_MULT != 1) sprintf("-m%s", format(SEAT_SD_MULT, nsmall = 1)) else "",
@@ -174,7 +190,7 @@ CAL_TAG <- paste0(
   if (nzchar(Sys.getenv("AUSPOL_WA_CUTOFF", "")) ||
       nzchar(Sys.getenv("AUSPOL_QLD_CUTOFF", ""))) "-cut" else "",
   if (identical(Sys.getenv("AUSPOL_WA_DROP_3C", "0"), "1")) "-no3c" else "",
-  if (identical(Sys.getenv("AUSPOL_WA_DROP_LNP", "0"), "1")) "-nolnp" else "")
+  if (identical(Sys.getenv("AUSPOL_WA_DROP_LNP", "0"), "1")) "-nolnp" else "", .arm_fingerprint)
 
 SEED <- 42; # INSURGENCY SURGE, against docs/plans/prereg-insurgency-surge.md. Wired here on
 # 2026-08-26 after a four-arm comparison produced BYTE-IDENTICAL results for the

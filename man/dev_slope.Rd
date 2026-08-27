@@ -17,7 +17,12 @@ election -- an actual result when backtesting, a poll-trend draw when
 forecasting.}
 
 \item{slope}{Deviation slope. 1 reproduces uniform swing exactly; below 1
-shrinks each seat toward the statewide level.}
+shrinks each seat toward the statewide level. Either one number for every
+seat, or one PER SEAT the same length as \code{x} — the latter is what a
+conditional slope needs, since whether the same candidate is standing again
+is a property of the seat, not of the class. Measured, that distinction is
+worth more than the class: IND carries 0.907 when the person returns and
+0.326 when they do not.}
 }
 \value{
 Numeric vector of projected shares, floored at zero.

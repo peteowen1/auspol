@@ -75,3 +75,20 @@ test_that("a malformed entry is an error", {
     expect_error(dev_slopes_for(c("IND")), "not a number")
   })
 })
+
+test_that("a per-seat slope vector is accepted and applied elementwise", {
+  x <- c(10, 30, 5)
+  s <- c(0.9, 0.3, 0.9)
+  expect_equal(dev_slope(x, 12, 15, s),
+               pmax(0, 15 + s * (x - 12)))
+})
+
+test_that("a per-seat vector of the wrong length is an error, not recycled", {
+  # Silent recycling would apply the WRONG seat's slope to every third seat and
+  # produce plausible output, which is this repo's characteristic failure.
+  expect_error(dev_slope(1:6, 5, 5, c(0.9, 0.3)), "one per seat")
+})
+
+test_that("a scalar still works, so the shipped path is unchanged", {
+  expect_equal(dev_slope(c(10, 30), 12, 15, 1), pmax(0, c(10, 30) + 3))
+})

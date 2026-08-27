@@ -92,6 +92,22 @@ FLOW_SD   <- as.numeric(Sys.getenv("AUSPOL_FLOW_SD", "0"))
 cat(sprintf("BS1f fallback_smooth %.2f | flow_sd %.2f
 ", FB_SMOOTH, FLOW_SD))
 
+# ARM FINGERPRINT. CAL_TAG names the parameters someone remembered to add, and
+# twice now a new one was not: AUSPOL_LEVEL_SD and AUSPOL_DEV_SLOPE both wrote
+# over another arm's per-seat output, silently, so a comparison read two copies
+# of the same run. This appends a short hash of every AUSPOL_* variable that is
+# set, so a NEW parameter cannot repeat that without anyone touching this line.
+.arm_fingerprint <- local({
+  e <- Sys.getenv()
+  e <- e[grepl("^AUSPOL_", names(e)) & nzchar(e)]
+  e <- e[!names(e) %in% c("AUSPOL_OUT_SUFFIX")]
+  if (!length(e)) "" else {
+    s <- paste(sort(paste0(names(e), "=", e)), collapse = ";")
+    sprintf("-a%s", substr(tolower(paste0(as.hexmode(
+      sum(utils::head(utf8ToInt(s), 4000) * seq_along(utils::head(utf8ToInt(s), 4000)))
+    ))), 1, 6))
+  }
+})
 CAL_TAG <- paste0(
   if (as.numeric(Sys.getenv("AUSPOL_SURGE_H", "0")) > 0) "-surge" else "",
   if (as.numeric(Sys.getenv("AUSPOL_SHRINK", "0")) != 0)
@@ -133,7 +149,7 @@ CAL_TAG <- paste0(
   # perturbs every flow, which is as large a change as any flag here, and it
   # reached no filename at all -- so the ensemble arm overwrote the very
   # baseline it exists to be compared against.
-  if (identical(Sys.getenv("AUSPOL_FLOW_UNC", "0"), "1")) "-unc" else "")
+  if (identical(Sys.getenv("AUSPOL_FLOW_UNC", "0"), "1")) "-unc" else "", .arm_fingerprint)
 
 SEED <- 42; SMOOTH <- 0.15; eps <- 1e-6
 P <- election_data_path()
