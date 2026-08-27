@@ -81,3 +81,54 @@ The finding is narrower: **the signal exists, and its coverage is limited by
 search volume**, so any use of it must degrade gracefully to "no information"
 rather than to "no emergence". A gate that reads zero as evidence of absence
 would be wrong in exactly the four SA seats above.
+
+---
+
+# The finding that matters is not the AUC
+
+Measured after the above, on the same corpora: what happens to candidates
+salience is SILENT on?
+
+| election | silent | winners among them | fired | winners among those |
+|---|--:|--:|--:|--:|
+| fed2022 | 243 | **0** | 121 | 16 |
+| fed2025 | 258 | **0** | 130 | 13 |
+| nsw2023 | 175 | **1** | 31 | 11 |
+| sa2026 | 104 | 6 | 7 | 2 |
+
+**Across two federal elections, 501 candidates registered zero salience and not
+one of them won.** In New South Wales, 1 of 175.
+
+That is a stronger and more usable statement than any AUC, because it says where
+the model is entitled to be confident rather than how well it ranks. The rule:
+
+> **A non-zero campaign jump is necessary for a non-major to win, wherever
+> search volume is measurable at all.**
+
+South Australia is exactly where it is not measurable — 6 of its 7 winners came
+from the silent group — which breaks the premise rather than the rule, and is
+why any implementation must treat zero as *no information* in a low-volume
+election and as *evidence against* only where the field as a whole registers.
+
+A workable test of "measurable at all" is available from the field itself and
+needs no outcome data: fed2022 had 121 of 364 candidates fire, nsw2023 31 of
+206, sa2026 **7 of 111**. An election where under ~10% of the field registers
+cannot support the necessity rule.
+
+Within South Australia the direction still holds even so: candidates salience
+fired on averaged **17.9%** of the vote against **10.6%** for the silent ones
+(Wilcoxon p = 0.072, n = 7 — suggestive, not significant).
+
+## What this changes about how salience should be used
+
+Not as a ranking fed into a slope. As a **screen**:
+
+- **Silent, in a measurable election** → this candidate does not win. Worth more
+  than it sounds: arm C showed the seat model's real damage is applying an
+  emergent's slope to the 300 candidates who will poll nothing.
+- **Fires** → cannot be dismissed; the model must not shrink them toward the
+  mean. Chantelle Thomas at the 99th percentile is the case.
+- **Whole field silent** → no information, fall back to the class-based model.
+
+That is a different design from every arm tried so far, and it is the one the
+data actually supports.
