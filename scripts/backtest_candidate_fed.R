@@ -369,7 +369,8 @@ for (K in PAIRS) {
   # ARM C: slopes conditional on whether the SAME candidate stands again. A
   # single per-class slope averages two populations that behave nothing alike --
   # IND 0.907 returning against 0.326 new -- so it is wrong for every seat.
-  .cond <- identical(Sys.getenv("AUSPOL_DEV_SLOPE_MODE", ""), "conditional")
+  .cond <- Sys.getenv("AUSPOL_DEV_SLOPE_MODE", "") %in% c("conditional", "screened")
+  .screened <- identical(Sys.getenv("AUSPOL_DEV_SLOPE_MODE", ""), "screened")
   .returns <- if (.cond) tryCatch(candidate_returns(ea, eb), error = function(e) {
     cat(sprintf("BF1c! conditional slopes unavailable for %s->%s: %s
 ", ea, eb,
@@ -378,6 +379,18 @@ for (K in PAIRS) {
     cat(sprintf("BF1c conditional slopes ON %s->%s: %d of %d seat-classes returning
 ",
                 ea, eb, sum(.returns$same), nrow(.returns)))
+  # ARM CS: arm C plus the salience screen, protecting the rare emergent that
+  # arm C's harsh new-candidate slope crushed. See screened_slopes().
+  .permit <- if (.screened) salience_permit_for(eb, ea, "fed", .returns) else NULL
+  .fed_slope <- function(p, seats, cond, screened, returns, permit) {
+    if (screened && !is.null(permit)) {
+      pm <- permit[permit$party == p][match(seats, seat), permit]
+      pm[is.na(pm)] <- TRUE   # no row for this seat/class: screen is silent, ungoverned
+      return(screened_slopes(p, seats, returns, pm))
+    }
+    if (cond && !is.null(returns)) return(conditional_slopes(p, seats, returns))
+    DEV_SLOPE[[p]]
+  }
   cat(sprintf("BF1d  dev slopes: %s%s
 ",
               if (all(DEV_SLOPE == 1)) "all 1.000 (uniform swing)" else
@@ -442,12 +455,12 @@ for (K in PAIRS) {
                 FC$tpp, fr, FC$anchor$mean, FC$implied_tpp))
     for (p in parties) {
       prev <- if (p %in% names(st_a)) st_a[[p]] else 0
-      .sl <- if (.cond && !is.null(.returns)) conditional_slopes(p, rownames(mat), .returns) else DEV_SLOPE[[p]]
+      .sl <- .fed_slope(p, rownames(mat), .cond, .screened, .returns, .permit)
       shares[, p] <- dev_slope(mat[, p], prev, st_fc[[p]], .sl)
     }
   } else {
     for (p in parties) if (p %in% names(st_b) && p %in% names(st_a)) {
-      .sl <- if (.cond && !is.null(.returns)) conditional_slopes(p, rownames(mat), .returns) else DEV_SLOPE[[p]]
+      .sl <- .fed_slope(p, rownames(mat), .cond, .screened, .returns, .permit)
       shares[, p] <- dev_slope(mat[, p], st_a[[p]], st_b[[p]], .sl)
     }
   }

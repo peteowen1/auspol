@@ -54,3 +54,60 @@ salience_registration <- function(jump) {
   jump[!is.finite(jump)] <- 0
   mean(jump > 0)
 }
+
+#' The screen's permit vector for one election, built once and shared
+#'
+#' Wraps [candidate_returns()], [surging_parties()] and [salience_screen()]
+#' into the single lookup every backtest harness needs: for each seat and party
+#' class, may this candidate be treated as a potential emergence?
+#'
+#' One implementation because five harnesses build shares five different ways,
+#' and a governed-population definition assembled slightly differently in each
+#' is how a bug like the Donato mismatch survives in one harness after being
+#' fixed in another.
+#'
+#' @param election,prev_election Election labels as used in
+#'   `output/candidacies.csv` and `output/salience-v6.csv`.
+#' @param region The region code (`"fed"`, `"vic"`, `"sa"`, `"nsw"`), for
+#'   [surging_parties()].
+#' @param returns Optional pre-computed [candidate_returns()] result; computed
+#'   if `NULL`.
+#' @param surge_threshold Passed to [surging_parties()].
+#' @return A `data.table` of `seat`, `party`, `permit`, or `NULL` if
+#'   `output/salience-v6.csv` has no rows for `election`.
+#' @export
+salience_permit_for <- function(election, prev_election, region, returns = NULL,
+                                surge_threshold = 5) {
+  sf <- file.path("output", "salience-v6.csv")
+  if (!file.exists(sf)) return(NULL)
+  # NOT a bare `election` inside `[`: `raw` has a column of that name, and
+  # data.table scopes columns into the `i` expression's evaluation, so
+  # `raw$election == election` silently resolved to `raw$election ==
+  # raw$election` -- always TRUE, matching every row regardless of the
+  # argument. The sixth instance of the NSE trap CLAUDE.md already records five
+  # times. Renamed to a value with no column-name collision.
+  raw <- data.table::fread(sf, showProgress = FALSE)
+  target_election <- election
+  SAL <- raw[raw$election == target_election]
+  if (!nrow(SAL)) return(NULL)
+  if (is.null(returns)) {
+    returns <- tryCatch(candidate_returns(prev_election, election),
+                        error = function(e) NULL)
+  }
+  yr <- as.integer(sub("^[a-z]+", "", election))
+  py <- as.integer(sub("^[a-z]+", "", prev_election))
+  surging <- tryCatch(surging_parties(region, py, yr, surge_threshold),
+                      error = function(e) character(0))
+  nk <- function(a, b) paste(gsub("[^a-z0-9]", "", tolower(a)), b)
+  if (!is.null(returns)) {
+    ret <- returns$same[match(nk(SAL$seat, SAL$party), nk(returns$seat, returns$party))]
+  } else ret <- rep(FALSE, nrow(SAL))
+  ret[is.na(ret)] <- FALSE
+  SAL[, governed := prev_party < 15 & !(party %in% surging) & !ret]
+  SAL[, permit := salience_screen(jump, governed)]
+  cat(sprintf("SP1  %s screen: registration %.0f%% | governed %d | permitted %d of governed | surging: %s\n",
+              election, 100 * salience_registration(SAL$jump), sum(SAL$governed),
+              sum(SAL$permit[SAL$governed]),
+              if (length(surging)) paste(surging, collapse = ",") else "none"))
+  SAL[, .(seat, party, permit)]
+}

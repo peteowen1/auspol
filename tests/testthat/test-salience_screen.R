@@ -45,3 +45,26 @@ test_that("registration is reported as a share and survives NA", {
   expect_equal(salience_registration(c(NA, NA, 1, 1)), 0.5)
   expect_equal(salience_registration(numeric(0)), 0)
 })
+
+test_that("salience_permit_for returns NULL when the file has no such election", {
+  # Isolated in its own temp dir so this never touches the real
+  # output/salience-v6.csv, which case 21ddafb onward this test suite must not
+  # clobber.
+  td <- withr::local_tempdir()
+  withr::local_dir(td)
+  dir.create("output")
+  data.table::fwrite(data.table::data.table(election = "x", seat = "A", party = "IND",
+    jump = 1, prev_party = 0), "output/salience-v6.csv")
+  expect_null(salience_permit_for("nope", "nope0", "xx"))
+})
+
+test_that("salience_permit_for finds a matching election", {
+  td <- withr::local_tempdir()
+  withr::local_dir(td)
+  dir.create("output")
+  data.table::fwrite(data.table::data.table(election = "x", seat = "A", party = "IND",
+    jump = 1, prev_party = 0), "output/salience-v6.csv")
+  r <- salience_permit_for("x", "x0", "xx")
+  expect_equal(nrow(r), 1L)
+  expect_true(r$permit)   # governed (no returns/surge data) and fired
+})

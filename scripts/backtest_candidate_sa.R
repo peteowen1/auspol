@@ -254,7 +254,8 @@ n_elastic <- 0L; elastic_seats <- character(0)
 # stronghold back a share of the vote just taken off it -- measured on
 # MacKillop, plain renormalisation undid 38% of the cut (35.3 -> 40.6).
 DEV_SLOPE <- dev_slopes_for(union(parties, names(st_b)))
-  .cond <- identical(Sys.getenv("AUSPOL_DEV_SLOPE_MODE", ""), "conditional")
+  .cond <- Sys.getenv("AUSPOL_DEV_SLOPE_MODE", "") %in% c("conditional", "screened")
+  .screened <- identical(Sys.getenv("AUSPOL_DEV_SLOPE_MODE", ""), "screened")
 .returns <- if (.cond) tryCatch(candidate_returns("sa2022", "sa2026"), error = function(e) {
   cat(sprintf("BS1c! conditional slopes unavailable: %s
 ", conditionMessage(e))); NULL }) else NULL
@@ -262,6 +263,16 @@ if (.cond && !is.null(.returns))
   cat(sprintf("BS1c conditional slopes ON: %d of %d seat-classes returning
 ",
               sum(.returns$same), nrow(.returns)))
+.permit <- if (.screened) salience_permit_for("sa2026", "sa2022", "sa", .returns) else NULL
+.sa_slope <- function(p, seats) {
+  if (.screened && !is.null(.permit)) {
+    pm <- .permit[.permit$party == p][match(seats, seat), permit]
+    pm[is.na(pm)] <- TRUE
+    return(screened_slopes(p, seats, .returns, pm))
+  }
+  if (.cond && !is.null(.returns)) return(conditional_slopes(p, seats, .returns))
+  DEV_SLOPE[[p]]
+}
 cat(sprintf("BS1d  dev slopes: %s%s
 ",
             if (all(DEV_SLOPE == 1)) "all 1.000 (uniform swing)" else
@@ -273,7 +284,7 @@ pinned <- matrix(FALSE, nrow(mat), ncol(mat), dimnames = dimnames(mat))
 
 for (p in parties) if (p %in% names(st_b) && p %in% names(st_a)) {
   d_state <- st_b[[p]] - st_a[[p]]
-  .sl <- if (.cond && !is.null(.returns)) conditional_slopes(p, rownames(mat), .returns) else DEV_SLOPE[[p]]
+  .sl <- .sa_slope(p, rownames(mat))
   val <- dev_slope(mat[, p], st_a[[p]], st_b[[p]], .sl)
   if (ELASTIC > 0 && d_state < -ELASTIC_D && st_a[[p]] > 0) {
     over <- mat[, p] / st_a[[p]]

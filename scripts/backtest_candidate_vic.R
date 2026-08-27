@@ -250,14 +250,28 @@ for (K in PAIRS) {
   ELASTIC   <- as.numeric(Sys.getenv("AUSPOL_ELASTIC_OVER", "0"))
   ELASTIC_D <- as.numeric(Sys.getenv("AUSPOL_ELASTIC_FALL", "2"))
   DEV_SLOPE <- dev_slopes_for(union(colnames(mat), names(sb)))
-  .cond <- identical(Sys.getenv("AUSPOL_DEV_SLOPE_MODE", ""), "conditional")
-  .returns <- if (.cond) tryCatch(candidate_returns(sprintf("vic%d", K$from), sprintf("vic%d", K$to)), error = function(e) {
+  .cond <- Sys.getenv("AUSPOL_DEV_SLOPE_MODE", "") %in% c("conditional", "screened")
+  .screened <- identical(Sys.getenv("AUSPOL_DEV_SLOPE_MODE", ""), "screened")
+  .ea <- sprintf("vic%d", K$from); .eb <- sprintf("vic%d", K$to)
+  .returns <- if (.cond) tryCatch(candidate_returns(.ea, .eb), error = function(e) {
     cat(sprintf("BV1c! conditional slopes unavailable: %s
 ", conditionMessage(e))); NULL }) else NULL
   if (.cond && !is.null(.returns))
     cat(sprintf("BV1c conditional slopes ON: %d of %d seat-classes returning
 ",
                 sum(.returns$same), nrow(.returns)))
+  # ARM CS: only vic2022 has salience data (see docs/DATA-REGISTRY.md); for
+  # vic2018 this returns NULL and the code below falls back to arm C plain.
+  .permit <- if (.screened) salience_permit_for(.eb, .ea, "vic", .returns) else NULL
+  .vic_slope <- function(p, seats) {
+    if (.screened && !is.null(.permit)) {
+      pm <- .permit[.permit$party == p][match(seats, seat), permit]
+      pm[is.na(pm)] <- TRUE
+      return(screened_slopes(p, seats, .returns, pm))
+    }
+    if (.cond && !is.null(.returns)) return(conditional_slopes(p, seats, .returns))
+    DEV_SLOPE[[p]]
+  }
   cat(sprintf("BV1d  dev slopes: %s%s
 ",
               if (all(DEV_SLOPE == 1)) "all 1.000 (uniform swing)" else
@@ -268,7 +282,7 @@ for (K in PAIRS) {
   pinned <- matrix(FALSE, nrow(mat), ncol(mat), dimnames = dimnames(mat))
   for (p in parties) if (p %in% names(sb) && p %in% names(sa)) {
     d_state <- sb[[p]] - sa[[p]]
-    .sl <- if (.cond && !is.null(.returns)) conditional_slopes(p, rownames(mat), .returns) else DEV_SLOPE[[p]]
+    .sl <- .vic_slope(p, rownames(mat))
     val <- dev_slope(mat[, p], sa[[p]], sb[[p]], .sl)
     if (ELASTIC > 0 && d_state < -ELASTIC_D && sa[[p]] > 0) {
       over <- mat[, p] / sa[[p]]

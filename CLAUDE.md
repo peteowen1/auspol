@@ -43,7 +43,16 @@ not apply. Recorded with worked examples under "Recurring hazards" in
 Specific traps, all of which have bitten:
 
 - **data.table NSE**: a function argument or local variable sharing a name with
-  a column, used bare inside `dt[...]`, binds to the column. **Five times.**
+  a column, used bare inside `dt[...]`, binds to the column. **Six times.** The
+  sixth: `salience_permit_for(election, ...)` wrote `raw[raw$election ==
+  election]` -- `raw$election` on the left made no difference, because
+  data.table scopes `raw`'s columns into the WHOLE `i` expression, so the bare
+  `election` on the right resolved to the column and the filter became
+  `raw$election == raw$election`, always TRUE. It would have silently merged
+  every election's rows on the first real call. Caught only because a test
+  queried a label that cannot exist ("nope") and got data back anyway. Fix:
+  never a bare column-name symbol inside `[`, even qualified with `$` on one
+  side only -- copy the argument to a differently-named local first.
   Compute masks outside the brackets and name the variable differently. The
   fourth was `party[party$seat == seat, ]` where `party` was both the table and
   a column — `$` then fails on an atomic vector. Related: a column named `key`
