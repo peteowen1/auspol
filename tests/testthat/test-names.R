@@ -35,3 +35,39 @@ test_that("search_form falls back when the fields are missing", {
   # State commissions supply one `name` column, not given/surname.
   expect_equal(search_form(NA_character_, NA_character_, "Zoe DANIEL"), "Zoe Daniel")
 })
+
+test_that("state layouts are turned round into a searchable name", {
+  # Every state commission supplies one combined field, and the previous version
+  # fell through to it raw -- sending Google "Hood, Lucy" and "Clancy Justin".
+  # 7,505 of 14,953 rows. South Australia returned 104 of 109 candidates at
+  # exactly zero as a result.
+  expect_equal(search_form(NA, NA, "HOOD, Lucy"), "Lucy Hood")
+  expect_equal(search_form(NA, NA, "GREENWICH Alex"), "Alex Greenwich")
+  expect_equal(search_form(NA, NA, "ENOCH, Leeanne"), "Leeanne Enoch")
+})
+
+test_that("the federal path is unchanged", {
+  expect_equal(search_form("Kate", "ELLIS", "Kate Ellis"), "Kate Ellis")
+  expect_equal(search_form("Adam", "BANDT", "Adam Bandt"), "Adam Bandt")
+})
+
+test_that("only a first given name is used, never a middle one", {
+  expect_equal(search_form("Kylea Jane", "TINK", NA), "Kylea Tink")
+  expect_equal(search_form(NA, NA, "SMITH, Mary Jane"), "Mary Smith")
+})
+
+test_that("a surname-only record returns the surname, not an empty string", {
+  # Western Australia publishes bare surnames. Best available is still usable.
+  expect_equal(search_form(NA, NA, "PRINCE"), "Prince")
+})
+
+test_that("a two-word surname survives", {
+  expect_equal(search_form("Dominic", "WY KANAK", NA), "Dominic Wy Kanak")
+})
+
+test_that("all three combined-name layouts are read correctly", {
+  expect_equal(search_form(NA, NA, "HOOD, Lucy"), "Lucy Hood")        # comma
+  expect_equal(search_form(NA, NA, "GREENWICH Alex"), "Alex Greenwich") # surname first
+  expect_equal(search_form(NA, NA, "Zoe DANIEL"), "Zoe Daniel")       # surname last
+  expect_equal(search_form(NA, NA, "Kate Ellis"), "Kate Ellis")       # no case signal
+})

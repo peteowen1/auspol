@@ -49,9 +49,63 @@ normalise_name <- function(x) {
 #' @return Character vector, normalised by [normalise_name()].
 #' @export
 search_form <- function(given, surname, fallback) {
-  first <- sub(" .*$", "", trimws(given))
-  normalise_name(ifelse(is.na(given) | is.na(surname) | first == "",
-                        fallback, paste(first, surname)))
+  # BUILD FROM THE PARSED PARTS, always. The previous version fell back to the
+  # raw `fallback` string whenever `given` or `surname` was missing, and every
+  # state commission supplies ONE combined name field -- so half the corpus went
+  # to Google surname-first:
+  #
+  #   sent            should have been
+  #   "Hood, Lucy"    "Lucy Hood"
+  #   "Clancy Justin" "Justin Clancy"
+  #   "Enoch, Leeanne" "Leeanne Enoch"
+  #
+  # 7,505 of 14,953 rows. Nobody searches a name that way, so South Australia
+  # returned 104 of 109 candidates at exactly zero and could not be ranked at
+  # all. surname_of() and given_of() already parse both state layouts; this now
+  # uses them instead of guessing from field presence.
+  # Use the RAW fields where a commission supplies them: surname_of() strips
+  # spaces because matching wants "wykanak", but a search term does not --
+  # Dominic Wy Kanak's surname is two words and "Wykanak" finds nothing. Only
+  # the combined single-field layouts get parsed.
+  sur_raw <- trimws(ifelse(is.na(surname), "", surname))
+  giv_raw <- trimws(ifelse(is.na(given), "", given))
+  # Combined single-field names come in THREE layouts and the reliable signal is
+  # which token is ALL CAPS, not where it sits:
+  #     "HOOD, Lucy"     comma, surname first
+  #     "GREENWICH Alex" no comma, surname first
+  #     "Zoe DANIEL"     surname LAST
+  # Guessing by position gets one of them wrong, and the previous version sent
+  # 7,505 of 14,953 rows to Google surname-first.
+  split_one <- function(fb) {
+    fb <- trimws(ifelse(is.na(fb), "", fb))
+    if (!nzchar(fb)) return(c("", ""))
+    if (grepl(",", fb, fixed = TRUE)) {
+      return(c(trimws(sub(",.*$", "", fb)), trimws(sub("^[^,]*,[[:space:]]*", "", fb))))
+    }
+    tk <- strsplit(fb, "[[:space:]]+")[[1]]
+    caps <- grepl("^[^a-z]+$", tk) & grepl("[A-Z]", tk)
+    if (any(caps) && !all(caps)) {
+      return(c(paste(tk[caps], collapse = " "), paste(tk[!caps], collapse = " ")))
+    }
+    # No case signal: assume the natural order, given then surname.
+    c(tk[length(tk)], paste(tk[-length(tk)], collapse = " "))
+  }
+  parsed <- vapply(fallback, split_one, c("", ""), USE.NAMES = FALSE)
+  sur <- ifelse(nzchar(sur_raw), tolower(sur_raw), tolower(parsed[1, ]))
+  giv <- ifelse(nzchar(giv_raw), tolower(sub("[[:space:]].*$", "", giv_raw)),
+                tolower(sub("[[:space:]].*$", "", parsed[2, ])))
+  # Preserve the original capitalisation where the fields carry it; the parsed
+  # forms are lower-case and Trends is case-insensitive, so title-case here is
+  # for readability in logs rather than for matching.
+  # Title-case each word, so a two-word surname reads "Wy Kanak" not "Wy kanak".
+  tc <- function(x) vapply(x, function(z) {
+    if (!nzchar(z)) return(z)
+    paste(vapply(strsplit(z, "[[:space:]]+")[[1]], function(w)
+      paste0(toupper(substr(w, 1, 1)), substr(w, 2, nchar(w))), ""), collapse = " ")
+  }, "", USE.NAMES = FALSE)
+  out <- ifelse(nzchar(giv) & nzchar(sur), paste(tc(giv), tc(sur)),
+         ifelse(nzchar(sur), tc(sur), tc(giv)))
+  normalise_name(out)
 }
 
 #' A candidate's surname, from either field layout
