@@ -226,6 +226,21 @@ And size it: a change affecting `k` of `n` seats needs roughly `n/k` times the
 effect to clear the same aggregate bar. At 6 of 151 that is a factor of 25, so
 an aggregate criterion will almost always refuse a targeted fix that works.
 
+**And size the PRIMARY metric's own noise against the expected effect. If its
+MDE exceeds any plausible effect, it cannot be the primary.**
+
+Chosen twice now for what a metric appears to measure rather than for whether it
+can measure it. The level-dependent variance arm (2026-08-27) made the
+calibration slope primary: across 17 pairs that statistic has sd 0.562, giving
+an MDE of 0.419 — larger than almost any real effect on it. Brier's sd is
+0.0141, MDE 0.0089, and Brier improved in 10 of 17 pairs at p = 0.028 while
+calibration showed nothing. The change was refused on the metric that could not
+see it, and the significant result sat in the guard.
+
+So compute both numbers when writing the criterion: the metric's spread across
+the units you will cluster on, and the effect you expect. A primary whose MDE
+is larger than the effect is a criterion that can only ever refuse.
+
 **Dry-run every criterion on cases whose answer you already know, BEFORE
 committing the pre-registration.** Same rule as "prove a check fails on a
 deliberately broken input", applied to the criterion instead of the code. A
