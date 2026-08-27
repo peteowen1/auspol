@@ -70,13 +70,11 @@ salience_registration <- function(jump) {
 #'   `output/candidacies.csv` and `output/salience-v6.csv`.
 #' @param region The region code (`"fed"`, `"vic"`, `"sa"`, `"nsw"`), for
 #'   [surging_parties()].
-#' @param returns Optional pre-computed [candidate_returns()] result; computed
-#'   if `NULL`.
 #' @param surge_threshold Passed to [surging_parties()].
 #' @return A `data.table` of `seat`, `party`, `permit`, or `NULL` if
 #'   `output/salience-v6.csv` has no rows for `election`.
 #' @export
-salience_permit_for <- function(election, prev_election, region, returns = NULL,
+salience_permit_for <- function(election, prev_election, region,
                                 surge_threshold = 5) {
   sf <- file.path("output", "salience-v6.csv")
   if (!file.exists(sf)) return(NULL)
@@ -90,19 +88,47 @@ salience_permit_for <- function(election, prev_election, region, returns = NULL,
   target_election <- election
   SAL <- raw[raw$election == target_election]
   if (!nrow(SAL)) return(NULL)
-  if (is.null(returns)) {
-    returns <- tryCatch(candidate_returns(prev_election, election),
-                        error = function(e) NULL)
-  }
   yr <- as.integer(sub("^[a-z]+", "", election))
   py <- as.integer(sub("^[a-z]+", "", prev_election))
   surging <- tryCatch(surging_parties(region, py, yr, surge_threshold),
                       error = function(e) character(0))
-  nk <- function(a, b) paste(gsub("[^a-z0-9]", "", tolower(a)), b)
-  if (!is.null(returns)) {
-    ret <- returns$same[match(nk(SAL$seat, SAL$party), nk(returns$seat, returns$party))]
+  # MATCH EACH CANDIDATE PERSONALLY, not their class. output/salience-v6.csv is
+  # already one row per NAMED candidate -- unlike a class-level `returns` table,
+  # which has one row per (seat, party) and answers "did ANYONE of this class
+  # return here". Joining that in by (seat, party) broadcasts one class-level
+  # verdict to every candidate sharing it: a genuinely new minor candidate in a
+  # multi-independent seat inherited "returning" from an unrelated person who
+  # happened to share the class. Measured across the five elections this screen
+  # scores: 54 seat-class instances where the class-level flag disagreed with
+  # the actual leading candidate, none of them affecting a seat that was won --
+  # but SAL already carries names, so the correct match uses them directly.
+  C <- tryCatch(data.table::fread("output/candidacies.csv", showProgress = FALSE),
+               error = function(e) NULL)
+  if (!is.null(C)) {
+    PREVT <- C[C$election == prev_election]
+    # search_form(), not surname_of()/given_of(): SAL$keyword is already this
+    # function's own output ("Aaron Kelly", given-name first -- confirmed
+    # against output/salience-v6.csv), while surname_of()/given_of() assume
+    # the OPPOSITE, surname-first convention used by raw commission name
+    # fields. Applying them to `keyword` silently took the first token as the
+    # surname, which is the given name here -- the match key would have
+    # compared the wrong pieces even after the (seat, party) join was fixed.
+    # Reusing search_form() on PREVT's own given/surname/name compares two
+    # values built the same way, rather than reimplementing its name-order
+    # guess a second time.
+    pk <- search_form(PREVT$given, PREVT$surname, PREVT$name)
+    ns <- function(x) gsub("[^a-z0-9]", "", tolower(x))
+    pseat <- ns(PREVT$seat)
+    sk <- SAL$keyword
+    sseat <- ns(SAL$seat)
+    # %in%, not `any(sk[i] == pk & ...)`: pk/pseat can hold NA for a candidate
+    # with no usable name, and `any()` over a vector that is all FALSE/NA with
+    # no TRUE returns NA, not FALSE -- that NA then corrupted `governed`
+    # downstream (observed: sum(SAL$governed) printed NA on a real run).
+    .valid <- !is.na(pk) & nzchar(pk) & !is.na(pseat)
+    prev_keys <- unique(paste(pseat[.valid], pk[.valid]))
+    ret <- nzchar(sk) & !is.na(sk) & paste(sseat, sk) %in% prev_keys
   } else ret <- rep(FALSE, nrow(SAL))
-  ret[is.na(ret)] <- FALSE
   SAL[, governed := prev_party < 15 & !(party %in% surging) & !ret]
   SAL[, permit := salience_screen(jump, governed)]
   cat(sprintf("SP1  %s screen: registration %.0f%% | governed %d | permitted %d of governed | surging: %s\n",

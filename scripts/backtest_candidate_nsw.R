@@ -301,26 +301,7 @@ if (.cond) cat(sprintf("BN1c conditional slopes ON: %d of %d seat-classes have t
 # identifies that rare group (709 governed-silent candidates across five
 # elections, zero winners) and protects anyone it permits by leaving them on
 # uniform swing instead. See screened_slopes() and prereg-salience-screen.md.
-.permit <- NULL
-if (.screened) {
-  sf <- file.path("output", "salience-v6.csv")
-  if (!file.exists(sf)) stop("AUSPOL_DEV_SLOPE_MODE=screened needs output/salience-v6.csv")
-  SAL <- fread(sf, showProgress = FALSE)[election == "nsw2023"]
-  surging <- tryCatch(surging_parties("nsw", 2019L, 2023L, 5), error = function(e) character(0))
-  rk <- paste(gsub("[^a-z0-9]", "", tolower(.returns$seat)), .returns$party)
-  sk <- paste(gsub("[^a-z0-9]", "", tolower(SAL$seat)), SAL$party)
-  ret <- .returns$same[match(sk, rk)]; ret[is.na(ret)] <- FALSE
-  SAL[, governed := prev_party < 15 & !(party %in% surging) & !ret]
-  SAL[, permit := salience_screen(jump, governed)]
-  cat(sprintf("BN1s screen ON: registration %.0f%% | governed %d | permitted %d of governed\n",
-              100 * salience_registration(SAL$jump), sum(SAL$governed),
-              sum(SAL$permit[SAL$governed])))
-  # KEYED BY SEAT + PARTY. simulate_seat_contests() reads shares by seat name
-  # from `mat`, but the permit vector must be looked up for the CLASS being
-  # projected in THIS loop iteration -- a stale merge here would apply another
-  # party's screen decision to the wrong candidate.
-  .permit <- SAL[, .(seat, party, permit)]
-}
+.permit <- if (.screened) salience_permit_for("nsw2023", "nsw2019", "nsw") else NULL
 cat(sprintf("BN1d  dev slopes: %s%s
 ",
             if (all(DEV_SLOPE == 1)) "all 1.000 (uniform swing)" else

@@ -64,3 +64,38 @@ test_that("seat names are matched across differing conventions", {
   expect_true(r$same)
   expect_equal(r$seat, "Albert Park")   # the TARGET election's spelling
 })
+
+test_that("leading_candidate_returns follows the TOP candidate, not any candidate", {
+  # A minor candidate matches a prior name; the actual front-runner is new.
+  # Class-level candidate_returns() would say TRUE; the leader-level fact is
+  # what a slope should key on.
+  d <- data.table::data.table(
+    election = c(rep("e1", 2), rep("e2", 2)),
+    seat = "A", party = "IND",
+    surname = c("MINOR", "OTHER", "FRONTRUNNER", "MINOR"),
+    given = c("Pat", "Sam", "Alex", "Pat"),
+    pcv = c(3, 20, 40, 2), name = NA_character_)
+  cr <- candidate_returns("e1", "e2", d)
+  expect_true(cr[seat == "A" & party == "IND"]$same)   # class-level: TRUE (Pat Minor matches)
+  lr <- leading_candidate_returns("e1", "e2", d)
+  expect_false(lr[seat == "A" & party == "IND"]$leader_same)  # leader Frontrunner is new
+})
+
+test_that("leading_candidate_returns matches candidate_returns when there is one candidate", {
+  d <- data.table::data.table(
+    election = c("e1", "e2"), seat = "A", party = "IND",
+    surname = "SMITH", given = "Jane", pcv = c(30, 32), name = NA_character_)
+  expect_equal(leading_candidate_returns("e1", "e2", d)$leader_same,
+               candidate_returns("e1", "e2", d)$same)
+})
+
+test_that("leading_candidate_returns is robust to the seat-naming mismatch that broke a debug script", {
+  # vic2018 stores "mildura" lower-case, vic2022 "Mildura" -- the fault
+  # candidate_returns() already normalises. An ad-hoc verification script that
+  # skipped this normalisation produced a false misattribution for Ali Cupper,
+  # who genuinely stood in both elections.
+  d <- data.table::data.table(
+    election = c("e1", "e2"), seat = c("mildura", "Mildura"), party = "IND",
+    surname = "CUPPER", given = "Ali", pcv = c(32.7, 33.9), name = NA_character_)
+  expect_true(leading_candidate_returns("e1", "e2", d)$leader_same)
+})

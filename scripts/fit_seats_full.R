@@ -455,7 +455,7 @@ if (all(SLOPE == 1)) cat("DS1  all 1.000 -- uniform swing, output must be unchan
 .returns <- if (.cond) tryCatch(candidate_returns("vic2022", "vic2026"),
                                 error = function(e) NULL) else NULL
 .permit  <- if (.screened && !is.null(.returns))
-              tryCatch(salience_permit_for("vic2026", "vic2022", "vic", .returns),
+              tryCatch(salience_permit_for("vic2026", "vic2022", "vic"),
                        error = function(e) NULL) else NULL
 if (.cond && is.null(.returns)) {
   cat("DS2  arm CS requested but vic2026 has no candidate list yet -- FALLING BACK to uniform swing\n")

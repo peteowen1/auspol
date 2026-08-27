@@ -263,7 +263,7 @@ if (.cond && !is.null(.returns))
   cat(sprintf("BS1c conditional slopes ON: %d of %d seat-classes returning
 ",
               sum(.returns$same), nrow(.returns)))
-.permit <- if (.screened) salience_permit_for("sa2026", "sa2022", "sa", .returns) else NULL
+.permit <- if (.screened) salience_permit_for("sa2026", "sa2022", "sa") else NULL
 .sa_slope <- function(p, seats) {
   if (.screened && !is.null(.permit)) {
     pv <- .permit[.permit$party == p, ]

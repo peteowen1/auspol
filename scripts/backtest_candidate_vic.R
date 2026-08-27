@@ -262,7 +262,7 @@ for (K in PAIRS) {
                 sum(.returns$same), nrow(.returns)))
   # ARM CS: only vic2022 has salience data (see docs/DATA-REGISTRY.md); for
   # vic2018 this returns NULL and the code below falls back to arm C plain.
-  .permit <- if (.screened) salience_permit_for(.eb, .ea, "vic", .returns) else NULL
+  .permit <- if (.screened) salience_permit_for(.eb, .ea, "vic") else NULL
   .vic_slope <- function(p, seats) {
     if (.screened && !is.null(.permit)) {
       pv <- .permit[.permit$party == p, ]

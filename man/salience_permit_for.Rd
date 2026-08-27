@@ -4,13 +4,7 @@
 \alias{salience_permit_for}
 \title{The screen's permit vector for one election, built once and shared}
 \usage{
-salience_permit_for(
-  election,
-  prev_election,
-  region,
-  returns = NULL,
-  surge_threshold = 5
-)
+salience_permit_for(election, prev_election, region, surge_threshold = 5)
 }
 \arguments{
 \item{election, prev_election}{Election labels as used in
@@ -18,9 +12,6 @@ salience_permit_for(
 
 \item{region}{The region code (\code{"fed"}, \code{"vic"}, \code{"sa"}, \code{"nsw"}), for
 \code{\link[=surging_parties]{surging_parties()}}.}
-
-\item{returns}{Optional pre-computed \code{\link[=candidate_returns]{candidate_returns()}} result; computed
-if \code{NULL}.}
 
 \item{surge_threshold}{Passed to \code{\link[=surging_parties]{surging_parties()}}.}
 }

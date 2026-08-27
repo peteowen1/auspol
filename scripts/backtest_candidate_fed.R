@@ -381,7 +381,7 @@ for (K in PAIRS) {
                 ea, eb, sum(.returns$same), nrow(.returns)))
   # ARM CS: arm C plus the salience screen, protecting the rare emergent that
   # arm C's harsh new-candidate slope crushed. See screened_slopes().
-  .permit <- if (.screened) salience_permit_for(eb, ea, "fed", .returns) else NULL
+  .permit <- if (.screened) salience_permit_for(eb, ea, "fed") else NULL
   # `permit_tbl`, not `permit`: a parameter whose NAME is literally identical to
   # one of its own data.table columns ("permit") triggers a data.table $-typo
   # check that throws "$ operator is invalid for atomic vectors" -- not an NSE

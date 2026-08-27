@@ -100,3 +100,71 @@ candidate_returns <- function(election_from, election_to, corpus = NULL) {
   res <- merge(full, res, by = c("seat", "party"), all.x = TRUE)
   res[is.na(same), same := FALSE][]
 }
+
+#' Does the LEADING candidate of a class personally return, not just anyone in it?
+#'
+#' `candidate_returns()` answers "does ANY candidate of this class in this seat
+#' match a prior one" -- a class-level fact. In a multi-candidate seat that can
+#' misattribute identity: if a minor candidate happens to match a prior name
+#' while the actual front-runner is new, the class reads "returning" and a
+#' slope meant for a specific person's history gets applied to a swing that is
+#' mostly driven by someone else entirely.
+#'
+#' Measured across the five elections arm CS was scored on: 111 multi-candidate
+#' class instances read "returning" at the class level; correcting for a seat-
+#' naming mismatch in the FIRST attempt at this check (vic2018 stores seats
+#' lower-case, vic2022 titlecase -- the exact fault [[candidate_returns]] was
+#' built to fix, reintroduced by a verification script that did not reuse it)
+#' found the true count. No misattributed leader won the seat in any of the
+#' five, so nothing shipped changes -- but the leader-level fact is more
+#' correct and is what a future slope-selection step should key on.
+#'
+#' @inheritParams candidate_returns
+#' @return A `data.table` of `seat`, `party`, `leader_same` -- TRUE only when
+#'   the candidate with the LARGEST current share of that class personally
+#'   stood before, using the same seat-normalisation and name-matching as
+#'   [candidate_returns()].
+#' @export
+leading_candidate_returns <- function(election_from, election_to, corpus = NULL) {
+  C <- corpus
+  if (is.null(C)) {
+    f <- file.path("output", "candidacies.csv")
+    if (!file.exists(f)) {
+      stop("leading_candidate_returns() needs output/candidacies.csv; run ",
+           "scripts/build_candidacies.R", call. = FALSE)
+    }
+    C <- data.table::fread(f, showProgress = FALSE)
+  }
+  C <- data.table::as.data.table(C)
+  need <- c("election", "seat", "party", "pcv")
+  miss <- setdiff(need, names(C))
+  if (length(miss)) stop("corpus lacks: ", paste(miss, collapse = ", "), call. = FALSE)
+
+  NOWT  <- C[C$election == election_to]
+  PREVT <- C[C$election == election_from]
+  if (!nrow(NOWT))  stop("no rows for election ", election_to, call. = FALSE)
+  if (!nrow(PREVT)) stop("no rows for election ", election_from, call. = FALSE)
+
+  kf <- function(d) {
+    sur <- surname_of(if ("surname" %in% names(d)) d$surname else NA_character_,
+                      if ("name" %in% names(d)) d$name else NA_character_)
+    giv <- given_of(if ("given" %in% names(d)) d$given else NA_character_,
+                    if ("name" %in% names(d)) d$name else NA_character_)
+    match_key(sur, giv, "initial")
+  }
+  NOWT  <- data.table::copy(NOWT)[,  .k := kf(.SD), .SDcols = names(NOWT)]
+  PREVT <- data.table::copy(PREVT)[, .k := kf(.SD), .SDcols = names(PREVT)]
+  ns <- function(x) gsub("[^a-z0-9]", "", tolower(x))
+  NOWT[,  .s := ns(seat)]
+  PREVT[, .s := ns(seat)]
+
+  # The LEADING row per (seat, party): highest current pcv.
+  data.table::setorder(NOWT, seat, party, -pcv)
+  lead <- NOWT[nzchar(.k), .SD[1], by = .(seat, party)]
+
+  prev_keys <- unique(PREVT[nzchar(PREVT$.k), list(.s, .k)])
+  out <- merge(lead[, list(seat, .s, party, .k)], prev_keys[, `:=`(hit = TRUE)],
+               by = c(".s", ".k"), all.x = TRUE)
+  out[is.na(hit), hit := FALSE]
+  out[, list(seat, party, leader_same = hit)]
+}

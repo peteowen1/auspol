@@ -68,3 +68,54 @@ test_that("salience_permit_for finds a matching election", {
   expect_equal(nrow(r), 1L)
   expect_true(r$permit)   # governed (no returns/surge data) and fired
 })
+
+test_that("returning is matched PER CANDIDATE, not broadcast to the whole class", {
+  # Two IND candidates share (seat, party) at the target election. One of them
+  # personally stood at the prior election and should be treated as returning
+  # (governed = FALSE, so silence says nothing); the other is genuinely new
+  # and should not inherit that verdict just because they share a class with
+  # someone who returns. This is the bug fixed 2026-08-27: a (seat, party)
+  # join broadcast one class-level "returning" flag to every candidate sharing
+  # it. A third, unrelated firing candidate lifts registration above the 10%
+  # floor so the screen is not inert and the distinction is observable.
+  td <- withr::local_tempdir()
+  withr::local_dir(td)
+  dir.create("output")
+  data.table::fwrite(data.table::data.table(
+    election = "x0", seat = "A", party = "IND",
+    name = "Smith, John", surname = "Smith", given = "John"),
+    "output/candidacies.csv")
+  data.table::fwrite(data.table::data.table(
+    election = "x", seat = c("A", "A", "Z"), party = c("IND", "IND", "OTH"),
+    keyword = c("John Smith", "Amy Jones", "Someone Else"),
+    jump = c(0, 0, 5), prev_party = c(0, 0, 0)),
+    "output/salience-v6.csv")
+  r <- salience_permit_for("x", "x0", "xx")
+  expect_equal(nrow(r), 3L)
+  # John Smith personally returns -> ungoverned -> permitted even though silent
+  expect_true(r$permit[r$seat == "A"][1])
+  # Amy Jones is genuinely new -> governed, silent, and registration is 33% ->
+  # refused, which is exactly the distinction the class-level bug erased
+  expect_false(r$permit[r$seat == "A"][2])
+})
+
+test_that("a candidacies row with a missing seat name does not poison other rows to NA", {
+  # ns(NA) is NA, which used to flow into `any(sk[i] == pk & sseat[i] == pseat)`
+  # and return NA rather than FALSE whenever no TRUE match existed -- corrupting
+  # `governed` (and therefore `permit`) for candidates with no relation to the
+  # NA row at all. Regression test for that specific failure.
+  td <- withr::local_tempdir()
+  withr::local_dir(td)
+  dir.create("output")
+  data.table::fwrite(data.table::data.table(
+    election = "x0", seat = c(NA_character_, "B"), party = c("IND", "IND"),
+    name = c("Unknown, Person", "Baker, Tom"), surname = c("Unknown", "Baker"),
+    given = c("Person", "Tom")),
+    "output/candidacies.csv")
+  data.table::fwrite(data.table::data.table(
+    election = "x", seat = "C", party = "IND",
+    keyword = "New Person", jump = 5, prev_party = 0),
+    "output/salience-v6.csv")
+  r <- salience_permit_for("x", "x0", "xx")
+  expect_false(anyNA(r$permit))
+})
