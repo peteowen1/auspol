@@ -13,12 +13,148 @@ largest calibration gain available, and cheap) and **A2** (joint slope + spread
 retune, stage 1, pre-registered at `5acaff1`).
 
 
-Updated 2026-08-26. Remote: github.com/peteowen1/auspol (private, default
+Updated 2026-08-28. Remote: github.com/peteowen1/auspol (private, default
 branch `dev`; `main` exists and is reached only through a reviewed PR).
 
 Completed stage write-ups live in
 [backlog/journal-2026-08.md](backlog/journal-2026-08.md) — this file holds
 open state, not the narrative of how it got here.
+
+**This file is now 1,900+ lines and reloads every session. Worth a
+hub-slimming pass — per the `hub-slimming` skill, not a bulk line-range cut —
+next time there's a quiet moment.**
+
+## Session of 2026-08-28 — incumbent transfer, a browse artifact, and the
+salience fetch now covers majors
+
+**The ACTIVE PLAN above (A1/A2) was not touched this session** — the whole day
+went on diagnostics and tooling Pete asked for mid-stream. Still next up.
+
+### Incumbent primary-vote transfer: a real regression, two bugs found in it
+
+`scripts/analyse_incumbent_transfer.R` (new, uncommitted pending review) fits
+`delta ~ own_prev_pcv + tpp_swing + party_swing [+ switched_party + jump_pctile
++ jump_delta]` for minor/IND incumbents, and the major-party analogue.
+
+Two bugs found and fixed while building it:
+- **`party_swing_of()` summed `pcv` across every seat a party contested**
+  instead of averaging — values in the thousands, sign/significance
+  unaffected but magnitude meaningless. Fixed to `mean()`. This had been
+  quietly absorbing variance that should have gone to `party_swing`, which is
+  why `jump_pctile` (salience) looked significant (p=0.007) before the fix and
+  didn't (p=0.108) after it.
+- **The salience feature matched by SEAT, not by PERSON** — "loudest candidate
+  in the seat's percentile" rather than the specific incumbent's own value, so
+  it couldn't support "salience delta from last time" at all (no stable
+  per-person identity across two elections). Replaced with
+  `person_jump_pctile()`, matched via `search_form()` keys against the same
+  keyword the salience fetch already builds. `jump_pctile` came back
+  significant a third time (3.53, p=0.005) with both fixes in.
+
+**`jump_pctile`'s significance has now flipped three times across three bug
+states and needs one more independent check before it's trusted.**
+**`switched_party` is strongly negative (~−6.5 to −7.2, p<2e-16) in the full
+n=599/n=587 samples but not significant and sign-flipped in the n=311
+both-years-salience subsample (p=0.244)** — not yet investigated whether
+that's sample composition or noise.
+
+**A genuine negative result, reported straight**: minor-party/IND incumbent
+vote change does NOT correlate with national or local TPP/party swing
+(r≈0.02–0.05, both ways). Implies wider seat-level uncertainty for these
+candidates is the right response, not a swing-elasticity term.
+
+### Scrutineer: a full candidate-level browse artifact for fed2025
+
+Built at Pete's request — every fed2025 candidate, sortable/filterable by
+seat or party, our projection vs AEF's vs the actual result, prior-vote
+history, and (eventually) salience. `scripts/build_fed2025_browse_table.R`
+(new, uncommitted). Hit a **seventh instance of the data.table NSE
+column-collision trap** in this repo (`CLAUDE.md` had six): a local scalar
+named `tot` was silently shadowed by `candidacies.csv`'s own `tot` column
+inside `C[...]`, producing 1122 rows instead of 7 from a groupby. Renamed to
+`total_votes_all`.
+
+Published, then caught two real problems by having Pete actually look at it:
+
+1. **A mislabelled column.** "Seat pctile" was `rank(jump)/.N` with no
+   `by=seat` — a rank against the whole ~390-candidate fetched pool for the
+   election, not the seat. Relabelled `Jump pctile*` with an honest footnote.
+2. **ALP/LNP/NAT have ZERO salience data — not a display bug, a scoping
+   decision.** `fetch_salience_v6.R` line 247 filters `!party %in% MAJ`
+   before Trends is ever queried, so majors were never fetched, cached or
+   otherwise. Fine for the emergence gate (the only consumer this was ever
+   built for); not fine for "compare the IND against the seat's LNP
+   candidate", which is what Pete actually wants the table for.
+
+### Salience fetch now covers every candidate, not just non-majors — IN PROGRESS
+
+Design settled with Pete: no PM-relative denominator needed. Since majors
+(including the PM/Premier themselves) now get fetched onto the same
+per-election scale as everyone else, both wanted metrics are just "ratio to
+the loudest candidate in scope": **`seat_salience = 100 × jump / max(jump in
+that seat)`**, **`election_salience = 100 × jump / max(jump in that
+election)`**. The PM/Premier's only remaining role is as the anchor that
+makes different Trends batches comparable at all, not as a literal
+denominator. Not yet computed/wired into the browse table — waiting on the
+fetch below.
+
+`scripts/fetch_salience_v6.R` modified (uncommitted pending review):
+- **`AUSPOL_SALIENCE_MAJORS=TRUE`** adds a second candidate pool per election
+  (all ALP/LNP/NAT, no top-2 screening — majors don't need it) run through
+  the identical batching/linking machinery as the non-major pool, refactored
+  into a shared `run_pool()` so nothing is duplicated.
+- **Fixed a self-referential-anchor edge case**, found on the sa2026
+  validation run: when the PM/Premier is their own batch's loudest
+  representative (the majors pool always includes them as an ordinary
+  candidate), the old linking pass queried their name twice in one gtrends
+  call and failed outright. `scale=1` is already the correct answer there
+  (a value divided by itself) — now detected and skipped rather than retried.
+- **Fixed a durability gap before letting this run unattended for hours.**
+  The script used to accumulate every election in memory and write
+  `salience-v6.csv` once, at the very end. This session has already seen
+  background R jobs killed externally and unexplainedly, mid-run, more than
+  once — under the old design a kill at election 15 of 23 would have lost
+  every one of the first 14 elections' fetches from the CSV, even though the
+  underlying Trends cache (which is what's actually rate-limited and slow to
+  rebuild) survived untouched. Now writes after every completed election.
+
+Validated on sa2026 (smallest election) before running the rest: 0% dropped,
+self-anchor case handled cleanly, majors linked correctly (max jump 17.62,
+25 distinct values).
+
+**Running now, in the background, across the remaining 23 elections** (fed
+2007/10/13/16/19/22/25, nsw2019/2023, sa2022, vic2014/2018/2022,
+qld2020/2024, wa1996/2001/2005/2008/2013/2017/2021/2025). Launched as a
+genuinely detached Windows process (PowerShell `Start-Process`, hidden
+window, `output/salience-majors-fetch.log`/`-err.log`) rather than a
+session-bound background task, specifically so it survives the terminal
+closing — confirmed independent (PIDs, no parent tie to the Claude Code
+process) before relying on it. Real network fetch, no cache to lean on for
+majors, so this is genuinely hours, with the same throttle risk that has
+throttled this pipeline out entirely before. **Check
+`output/salience-majors-fetch.log` and `uniqueN(fread("output/salience-v6.csv")$election)`
+next session** — should read 24 once done (was 21 before this session, 20
+in the file plus sa2026 added first as the validation run).
+
+### Next session starts here
+
+1. **Confirm the majors fetch finished** (or resume it — safe to just
+   re-run `AUSPOL_SALIENCE_MAJORS=TRUE Rscript scripts/fetch_salience_v6.R`,
+   the qry() cache makes any already-fetched batch free).
+2. **Compute `seat_salience`/`election_salience`** from the completed
+   `salience-v6.csv` and wire them into `build_fed2025_browse_table.R` in
+   place of the placeholder `salience_pctile`/`salience_pm_relative`
+   columns, then republish the Scrutineer artifact
+   (https://claude.ai/code/artifact/660a3507-3383-42a4-9c76-39030383a5e4).
+3. **Regenerate `docs/DATA-REGISTRY.md`/`docs/DATA-DICTIONARY.md`** once the
+   fetch is done — not run this session since the dataset was still moving.
+4. **Code-review and commit** `scripts/fetch_salience_v6.R`,
+   `scripts/analyse_incumbent_transfer.R`,
+   `scripts/build_fed2025_browse_table.R` — all three are still uncommitted
+   as of this write-up (tested and run successfully, not yet reviewed).
+5. Independently re-verify `jump_pctile`'s significance (three flips) and
+   look into the `switched_party` n=311-subsample discrepancy above.
+6. Then back to A1/A2 on the active plan.
 
 ## Google Trends separates an emergence from a token candidacy (2026-08-26)
 

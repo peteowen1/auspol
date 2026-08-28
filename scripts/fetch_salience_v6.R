@@ -240,33 +240,28 @@ C <- fread("output/candidacies.csv", showProgress = FALSE)
 PRIO <- c(IND = 1, GRN = 2, ONP = 3, OTH_RIGHT = 4, OTH = 5)
 all_rows <- list()
 
+# MAJORS were never queried at all -- `!party %in% MAJ` excluded them from
+# the candidate pool outright, so ALP/LNP/NAT have zero rows in
+# salience-v6.csv, cached or otherwise. That was fine while the only consumer
+# was the emergence gate (which only ever needed the non-major population),
+# but a browse table that wants to compare an IND against the seat's ALP/LNP
+# candidates needs their numbers fetched too. Gated behind an env var because
+# it roughly doubles fetch volume across every election in ELS.
+#
+# Majors get NO top-2/prior-vote screening -- every seat has at most two or
+# three of them, so the screen that protects the non-major pool from being
+# swamped by high-prior-vote candidates has nothing to do here. They run
+# through the SAME batching/linking machinery (`run_pool()` below) so their
+# jump values land on the identical per-election scale as everyone else's,
+# which is what makes an election-wide or seat-wide ratio between a major and
+# a minor meaningful at all.
+INCLUDE_MAJORS <- as.logical(Sys.getenv("AUSPOL_SALIENCE_MAJORS", "FALSE"))
+
 for (el in names(ELS)) {
   E <- ELS[[el]]
   yr <- as.integer(sub("^[a-z]+", "", el)); rg <- sub("[0-9]+$", "", el)
   to <- as.Date(E$poll) - 1; from <- to - SPAN
-  D <- C[region == rg & year == yr & !party %in% MAJ]
-  if (!nrow(D)) { cat(sprintf("S6!  no candidates for %s\n", el)); next }
-  D[, kw := search_form(given, surname, name)]
   py <- as.integer(sub("^[a-z]+", "", E$prev))
-  P <- C[region == rg & year == py & !party %in% MAJ,
-         .(prev_pcv = max(pcv, na.rm = TRUE)), by = .(seat, party)]
-  D <- merge(D, P, by = c("seat", "party"), all.x = TRUE)
-  D[!is.finite(prev_pcv), prev_pcv := 0]
-  D[, prio := as.integer(PRIO[party])][is.na(prio), prio := 5L]
-  setorder(D, seat, -prev_pcv, prio)
-  D[, rk := seq_len(.N), by = seat]
-  # TOP TWO PER SEAT PLUS EVERY INDEPENDENT: 16 of 16 fed2022 non-major winners
-  # against 11 for one-per-seat. An emergent candidate is by definition the one
-  # with no prior vote, so any rule ranking on prior vote excludes them.
-  S <- D[rk <= 2L | party == "IND"][!is.na(kw) & nzchar(kw)]
-  setorder(S, kw, -prev_pcv)
-  S <- S[, .SD[1], by = kw]
-  PB <- C[region == rg & year == py & !party %in% MAJ,
-          .(prev_nm = max(pcv, na.rm = TRUE)), by = seat]
-  S <- merge(S, PB, by = "seat", all.x = TRUE)[!is.finite(prev_nm), prev_nm := 0]
-  setorder(S, -prev_nm)
-  cat(sprintf("\nS6-1 %s | geo %s | %s to %s | %d candidates\n",
-              el, E$geo, as.character(from), as.character(to), nrow(S)))
 
   # TWO STAGES, now that an all-silent batch is data rather than an error.
   #
@@ -280,85 +275,155 @@ for (el in names(ELS)) {
   # A batch that is silent throughout contributes zeros and needs no link. The
   # anchor is retained ONLY for the linking pass, where every member is a
   # batch's loudest candidate and a zero would otherwise break the scale.
-  kws <- unique(S$kw)
-  nb <- 0L; gran <- NA_integer_; failed <- 0L; batches <- list()
-  for (i in seq(1L, length(kws), by = MAXKW)) {
-    take <- kws[i:min(i + MAXKW - 1L, length(kws))]
-    s <- qry(take, E$geo, as.character(from), as.character(to))
-    nb <- nb + 1L
-    if (is.null(s)) { failed <- failed + length(take); next }
-    if (is.na(gran)) {
-      d <- sort(unique(s$date))
-      if (length(d) > 1L) gran <- as.integer(stats::median(diff(d)))
-    }
-    batches[[length(batches) + 1L]] <- jump_of(s, E$poll)
-    if (nb %% 20 == 0) cat(sprintf("S6-3 stage 1: %d batches | %d of %d done\n",
-                                   nb, i, length(kws)))
-    Sys.sleep(current_sleep())
-  }
-  if (!length(batches)) { cat(sprintf("S6!  %s: nothing measured, skipped\n", el)); next }
-  cat(sprintf("S6-2 stage 1: %d batches | granularity %s | %d dropped\n", nb,
-              if (is.na(gran)) "?" else if (gran >= 26) "MONTHLY -- UNUSABLE"
-              else if (gran >= 6) "weekly" else "daily", failed))
-
-  reps <- vapply(batches, function(b) b[which.max(jump), keyword], "")
-  live <- vapply(batches, function(b) max(b$jump) > 0, TRUE)
-  cat(sprintf("S6-5 stage 2: linking %d live batches (%d silent throughout)\n",
-              sum(live), sum(!live)))
-  scale <- rep(1, length(batches))
-  if (sum(live) > 1L) {
-    rl <- unique(reps[live]); link <- NULL
-    for (i in seq(1L, length(rl), by = MAXKW - 1L)) {
-      take <- rl[i:min(i + MAXKW - 2L, length(rl))]
-      s <- qry(c(E$anchor, take), E$geo, as.character(from), as.character(to))
-      if (is.null(s)) next
-      m <- jump_of(s, E$poll)
-      a <- m[keyword == E$anchor, jump]
-      if (!length(a) || !is.finite(a) || a <= 0) next
-      link <- rbind(link, m[keyword != E$anchor][, jump := jump / a])
+  #
+  # Shared by both the non-major and majors pools -- SAME batching, SAME
+  # linking, so both land on one common per-election scale. `Sx` needs
+  # columns seat, kw, party, pcv, elected, prev_pcv.
+  run_pool <- function(Sx, label) {
+    kws <- unique(Sx$kw)
+    if (!length(kws)) return(NULL)
+    nb <- 0L; gran <- NA_integer_; failed <- 0L; batches <- list()
+    for (i in seq(1L, length(kws), by = MAXKW)) {
+      take <- kws[i:min(i + MAXKW - 1L, length(kws))]
+      s <- qry(take, E$geo, as.character(from), as.character(to))
+      nb <- nb + 1L
+      if (is.null(s)) { failed <- failed + length(take); next }
+      if (is.na(gran)) {
+        d <- sort(unique(s$date))
+        if (length(d) > 1L) gran <- as.integer(stats::median(diff(d)))
+      }
+      batches[[length(batches) + 1L]] <- jump_of(s, E$poll)
+      if (nb %% 20 == 0) cat(sprintf("S6-3 [%s] stage 1: %d batches | %d of %d done\n",
+                                     label, nb, i, length(kws)))
       Sys.sleep(current_sleep())
     }
-    if (!is.null(link)) {
-      link <- link[, .(jump = max(jump)), by = keyword]
-      for (j in seq_along(batches)) {
-        if (!live[j]) next
-        v <- link[keyword == reps[j], jump]
-        own <- batches[[j]][keyword == reps[j], jump]
-        if (!length(v) || !length(own) || own <= 0) {
-          cat(sprintf("S6!  no link for batch %d (rep '%s')\n", j, reps[j])); next
+    if (!length(batches)) { cat(sprintf("S6!  %s [%s]: nothing measured, skipped\n", el, label)); return(NULL) }
+    cat(sprintf("S6-2 [%s] stage 1: %d batches | granularity %s | %d dropped\n", label, nb,
+                if (is.na(gran)) "?" else if (gran >= 26) "MONTHLY -- UNUSABLE"
+                else if (gran >= 6) "weekly" else "daily", failed))
+
+    reps <- vapply(batches, function(b) b[which.max(jump), keyword], "")
+    live <- vapply(batches, function(b) max(b$jump) > 0, TRUE)
+    cat(sprintf("S6-5 [%s] stage 2: linking %d live batches (%d silent throughout)\n",
+                label, sum(live), sum(!live)))
+    scale <- rep(1, length(batches))
+    if (sum(live) > 1L) {
+      rl <- unique(reps[live]); link <- NULL
+      # A batch's own representative can BE the anchor -- the majors pool
+      # always includes the PM/Premier as an ordinary candidate, and they are
+      # almost always the loudest term in their own batch. Linking that batch
+      # to itself means querying the same name twice in one gtrends call,
+      # which fails outright rather than returning something usable. scale=1
+      # is already the mathematically correct answer there (a value divided
+      # by itself), so skip the query and set it directly instead of retrying
+      # a request that cannot succeed.
+      self_anchor <- rl == E$anchor
+      if (any(self_anchor)) {
+        cat(sprintf("S6-6 [%s] anchor is its own batch's representative -- scale fixed at 1, no query\n", label))
+      }
+      rl <- rl[!self_anchor]
+      for (i in seq(1L, length(rl), by = MAXKW - 1L)) {
+        take <- rl[i:min(i + MAXKW - 2L, length(rl))]
+        s <- qry(c(E$anchor, take), E$geo, as.character(from), as.character(to))
+        if (is.null(s)) next
+        m <- jump_of(s, E$poll)
+        a <- m[keyword == E$anchor, jump]
+        if (!length(a) || !is.finite(a) || a <= 0) next
+        link <- rbind(link, m[keyword != E$anchor][, jump := jump / a])
+        Sys.sleep(current_sleep())
+      }
+      if (!is.null(link)) {
+        link <- link[, .(jump = max(jump)), by = keyword]
+        for (j in seq_along(batches)) {
+          if (!live[j] || reps[j] == E$anchor) next  # anchor's own batch: scale already 1
+          v <- link[keyword == reps[j], jump]
+          own <- batches[[j]][keyword == reps[j], jump]
+          if (!length(v) || !length(own) || own <= 0) {
+            cat(sprintf("S6!  [%s] no link for batch %d (rep '%s')\n", label, j, reps[j])); next
+          }
+          scale[j] <- v / own
         }
-        scale[j] <- v / own
       }
     }
+    acc <- rbindlist(lapply(seq_along(batches), function(j)
+      batches[[j]][, .(keyword, jump = jump * scale[j])]))
+    Rx <- merge(Sx[, .(election = el, seat, keyword = kw, party, pcv, elected,
+                       prev_party = prev_pcv)], acc, by = "keyword")
+    cat(sprintf("S6-4 [%s] %s: %d scaled | %d distinct jump values | %d%% zero | max %.2f\n",
+                label, el, nrow(Rx), uniqueN(round(Rx$jump, 3)),
+                round(100 * mean(Rx$jump <= 0)), max(Rx$jump)))
+    Rx
   }
-  acc <- rbindlist(lapply(seq_along(batches), function(j)
-    batches[[j]][, .(keyword, jump = jump * scale[j])]))
-  R <- merge(S[, .(election = el, seat, keyword = kw, party, pcv, elected,
-                   prev_party = prev_pcv)], acc, by = "keyword")
-  cat(sprintf("S6-4 %s: %d scaled | %d distinct jump values | %d%% zero | max %.2f\n",
-              el, nrow(R), uniqueN(round(R$jump, 3)),
-              round(100 * mean(R$jump <= 0)), max(R$jump)))
-  all_rows[[el]] <- R
-}
-if (length(all_rows)) {
-  OUT <- rbindlist(all_rows, fill = TRUE)
-  # MERGE, never overwrite. Running one election at a time via
-  # AUSPOL_SALIENCE_ELECTION and writing the whole file each time destroyed the
-  # previous election's results: the Victorian run wiped South Australia's, and
-  # a figure quoted afterwards silently came from the older, broken-terms
-  # corpus. Same class as the CAL_TAG collisions -- two runs, one filename.
-  f <- "output/salience-v6.csv"
-  if (file.exists(f)) {
-    prev <- fread(f, showProgress = FALSE)
-    keep <- prev[!election %in% unique(OUT$election)]
-    if (nrow(keep)) {
-      cat(sprintf("S6-8 keeping %d rows from %s already on disk
-",
-                  nrow(keep), paste(sort(unique(keep$election)), collapse = ", ")))
-      OUT <- rbindlist(list(keep, OUT), fill = TRUE)
+
+  D <- C[region == rg & year == yr & !party %in% MAJ]
+  R_list <- list()
+  if (nrow(D)) {
+    D[, kw := search_form(given, surname, name)]
+    P <- C[region == rg & year == py & !party %in% MAJ,
+           .(prev_pcv = max(pcv, na.rm = TRUE)), by = .(seat, party)]
+    D <- merge(D, P, by = c("seat", "party"), all.x = TRUE)
+    D[!is.finite(prev_pcv), prev_pcv := 0]
+    D[, prio := as.integer(PRIO[party])][is.na(prio), prio := 5L]
+    setorder(D, seat, -prev_pcv, prio)
+    D[, rk := seq_len(.N), by = seat]
+    # TOP TWO PER SEAT PLUS EVERY INDEPENDENT: 16 of 16 fed2022 non-major winners
+    # against 11 for one-per-seat. An emergent candidate is by definition the one
+    # with no prior vote, so any rule ranking on prior vote excludes them.
+    S <- D[rk <= 2L | party == "IND"][!is.na(kw) & nzchar(kw)]
+    setorder(S, kw, -prev_pcv)
+    S <- S[, .SD[1], by = kw]
+    PB <- C[region == rg & year == py & !party %in% MAJ,
+            .(prev_nm = max(pcv, na.rm = TRUE)), by = seat]
+    S <- merge(S, PB, by = "seat", all.x = TRUE)[!is.finite(prev_nm), prev_nm := 0]
+    setorder(S, -prev_nm)
+    cat(sprintf("\nS6-1 %s | geo %s | %s to %s | %d candidates\n",
+                el, E$geo, as.character(from), as.character(to), nrow(S)))
+    Rnm <- run_pool(S, "nonmajor")
+    if (!is.null(Rnm)) R_list$nonmajor <- Rnm
+  } else {
+    cat(sprintf("S6!  no non-major candidates for %s\n", el))
+  }
+
+  if (INCLUDE_MAJORS) {
+    Dm <- C[region == rg & year == yr & party %in% MAJ]
+    if (nrow(Dm)) {
+      Dm[, kw := search_form(given, surname, name)]
+      Dm <- Dm[!is.na(kw) & nzchar(kw)]
+      Pm <- C[region == rg & year == py, .(prev_pcv = max(pcv, na.rm = TRUE)),
+              by = .(seat, party)]
+      Dm <- merge(Dm, Pm, by = c("seat", "party"), all.x = TRUE)
+      Dm[!is.finite(prev_pcv), prev_pcv := 0]
+      setorder(Dm, kw, -pcv)
+      Sm <- Dm[, .SD[1], by = kw]
+      cat(sprintf("\nS6-1M %s | majors | %d candidates\n", el, nrow(Sm)))
+      Rm <- run_pool(Sm, "majors")
+      if (!is.null(Rm)) R_list$majors <- Rm
+    } else {
+      cat(sprintf("S6!  no major candidates for %s\n", el))
     }
   }
+
+  if (!length(R_list)) next
+  all_rows[[el]] <- rbindlist(R_list, fill = TRUE)
+
+  # WRITE AFTER EVERY ELECTION, not once at the end. A run across 20+
+  # elections takes hours, and this session has already seen background R
+  # jobs killed externally and unexplainedly, mid-run, more than once. The
+  # old write-once-at-the-end design meant a kill at election 15 of 23 lost
+  # every one of the first 14 elections' fetches from the CSV -- even though
+  # the underlying qry() cache still had them on disk, so nothing was
+  # actually re-fetched, but nothing was recorded either until a full,
+  # uninterrupted run finally completed. Same "MERGE, never overwrite"
+  # safety as before (running one election at a time via
+  # AUSPOL_SALIENCE_ELECTION and writing the whole file each time destroyed
+  # the previous election's results -- the Victorian run wiped South
+  # Australia's), just applied after each election instead of after all of
+  # them.
+  f <- "output/salience-v6.csv"
+  prev <- if (file.exists(f)) fread(f, showProgress = FALSE) else NULL
+  keep <- if (!is.null(prev)) prev[election != el] else NULL
+  OUT <- if (!is.null(keep) && nrow(keep)) rbindlist(list(keep, all_rows[[el]]), fill = TRUE) else all_rows[[el]]
   fwrite(OUT, f)
-  cat(sprintf("\nS6-9 wrote output/salience-v6.csv (%d rows, %d elections)\n",
-              nrow(OUT), uniqueN(OUT$election)))
+  cat(sprintf("S6-9 wrote output/salience-v6.csv (%d rows, %d elections) after %s\n",
+              nrow(OUT), uniqueN(OUT$election), el))
 }
