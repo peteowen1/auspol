@@ -158,7 +158,7 @@ added nothing — but that was against a class-based baseline.
 
 ## C — salience
 
-### C1. Re-specify the precision criterion
+### C1. ~~Re-specify the precision criterion~~ DONE 2026-09-04
 
 **Why.** C2 of `prereg-salience-emergence-gate.md` scored win/lose for a
 vote-share model and counted 14 candidates who polled 15–26% as false positives.
@@ -168,6 +168,25 @@ wrong.
 **Do.** New pre-registration, phrased in vote-share error, dry-run on known
 cases before committing. State plainly that the 5-point bar was chosen knowing
 where the old one passed.
+
+**Done.** `docs/plans/prereg-salience-precision-v2.md`, scored in
+`docs/reviews/salience-precision-v2-2026-09-04.md`. No threshold anywhere:
+gated-subset RMSE on fed2025 (zero true emergences, 331 rows, 141 seats) must
+not worsen by more than 0.37 points, sized from the measured clustered SE —
+and it **improves by 0.410**. Both dry-run cases (Boele stays untouched, Dai
+Le moves toward her actual result) pass.
+
+**This re-specifies the criterion; it does not ship the gate.** C1 of the
+*original* document already passed on 2026-08-27. What still stands between
+here and shipping is **C3** — the original document's real positive test, mean
+absolute error on 8 held-out federal emergences from 2010–2019 — which has
+never run because the salience data needs its own fetch (Google Trends drops
+to monthly buckets past ~5 years, so 2010–2019 needs separate windows chained
+in time on candidates appearing across them, the same trick already used
+across seats, applied across dates here instead — and per the original
+document, "if it proves unreliable C3 must be abandoned rather than run on
+incomparable scales"). **That fetch is C2 below, and it is now the only thing
+left in this thread.**
 
 ### C2. C3 on held-out emergences
 
