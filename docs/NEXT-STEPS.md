@@ -8,9 +8,21 @@ based, so "IND" is a residual bucket and a returning independent is
 indistinguishable from a stranger. Measured across 17 election pairs, that one
 fact moves a 30% seat to 30.3% or to 12.1%.
 
-Next up: **A1** (conditional variance by candidate continuity — suspected the
-largest calibration gain available, and cheap) and **A2** (joint slope + spread
-retune, stage 1, pre-registered at `5acaff1`).
+**Section A is CLOSED.** Both tickets resolved 2026-08-27, the day before this
+line first claimed they were next:
+
+- **A1 SHIPPED** as level-dependent variance, on by default at `1.10,8.67`.
+  `reviews/level-variance-2026-08-27.md` refuses it on calibration and then
+  **amends the same day to ship it** on log loss — read that file to its end,
+  because the headline says the opposite of the verdict.
+- **A2 REFUSED** — arm C does not ship, and by its own terms **A3 never runs**
+  (`reviews/arm-c-conditional-slopes-2026-08-27.md`).
+
+Next up: **class-specific variance**, pre-registered in
+`plans/prereg-class-specific-variance.md`. A1 widened every class, but the
+majors were already calibrated (NSW excluding IND wins: 0.959 → 1.272, past 1
+and out the other side), so the widening overshoots exactly the seats that were
+fine. The review named this as the better-aimed change and did not build it.
 
 
 Updated 2026-08-28. Remote: github.com/peteowen1/auspol (private, default

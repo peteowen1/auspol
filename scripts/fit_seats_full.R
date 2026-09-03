@@ -19,10 +19,17 @@ options(auspol.root = normalizePath("."))
 suppressMessages(devtools::load_all(quiet = TRUE))
 suppressMessages(library(data.table))
 
-# LEVEL-DEPENDENT SEAT VARIANCE, off by default. AUSPOL_LEVEL_SD="1.10,8.67"
-# makes the per-seat deviation sd = a + b*sqrt(p(1-p)) instead of a flat
-# seat_sd. Pre-registered in docs/plans/prereg-level-dependent-variance.md;
-# unset reproduces the published model exactly.
+# LEVEL-DEPENDENT SEAT VARIANCE, ON BY DEFAULT since 2026-08-27. The per-seat
+# deviation sd is a + b*sqrt(p(1-p)) instead of a flat seat_sd, with a and b
+# from AUSPOL_LEVEL_SD (default "1.10,8.67"). AUSPOL_LEVEL_SD="off" reproduces
+# the pre-2026-08-27 published model exactly.
+#
+# This comment said "off by default" until 2026-09-03, contradicting the line
+# five below it that has said ADOPTED since the day it shipped. It cost a
+# recommendation to re-run an experiment that had already shipped.
+# Pre-registered in docs/plans/prereg-level-dependent-variance.md and scored in
+# docs/reviews/level-variance-2026-08-27.md -- READ THAT FILE TO ITS END: it
+# refuses the change and then amends the same day to ship it.
 .level_sd <- local({
   # ADOPTED 2026-08-27. Default ON at the fitted values; AUSPOL_LEVEL_SD="off"
   # reproduces the flat seat_sd exactly. See
