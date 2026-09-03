@@ -187,12 +187,39 @@ in the file plus sa2026 added first as the validation run).
    look into the `switched_party` n=311-subsample discrepancy above.
 6. Then back to A1/A2 on the active plan.
 
-## BACKLOG: the seat simulator's hot loop, profiled 2026-09-03
+## DONE 2026-09-04: the seat simulator's hot loop, profiled 2026-09-03
 
-**Not done, deliberately — sized and refused for now.** Worth ~25-30% of
-`simulate_seat_contests()`, which was a poor trade against the 4x already won by
-dropping the backtest to `n_sims = 5000`, and it edits the published forecast's
-own code path so it needs a byte-identity proof.
+**Shipped.** Measured 36-38% faster in fresh-process wall clock (204→132 us
+per seat-sim at n_sims=500, 217→136 at n_sims=4000) — better than the ~25-30%
+Rprof self-time estimate below predicted. `as.character`, `mostattributes<-`
+and `exists` all disappeared from the post-fix profile.
+
+The string-keyed environment (`key <- as.character(from * 2^K + mask)`,
+`exists()` then `get()`) is now a preallocated list indexed by the integer key
+directly, for any party count where that stays cheap (`CELLS_DENSE_CAP =
+2^18` slots, ~262k — every real dataset here uses K≤8, giving ~2,300 slots).
+Past the cap it falls back to the original environment, so K up to the
+function's own hard limit of 20 stays correct without a ~1.2GB preallocation.
+`base_v` drops its party names once, right after the one place that still
+needs them (`party_draws` substitution), removing the attribute-copying cost
+from everything downstream.
+
+**Proof, not argument.** `output/seat-probs-vic-2026.csv` and
+`-sims-full-vic-2026.csv` are BYTE-IDENTICAL before and after, same seed —
+expected, since no RNG call changed, but proven rather than assumed. All 145
+seat-sim/flow tests pass, including two new ones added because the sparse
+(large-K) fallback had never been exercised: a K=17 contest forcing that path,
+and a deterministic K=17-vs-K=3 same-outcome check (padded with zero-share,
+zero-variance parties so the real 3-party contest is unaffected).
+
+One dead end recorded rather than hidden: the first version of the K=17
+cross-check tried to compare a padded 17-party run against the unpadded
+3-party baseline for numeric equality. Both failed — `win_prob` lists only
+parties that actually won at least once (not all K), and `rnorm(K, ...)`
+consumes a different number of draws per seat at different K, so the two runs
+are not RNG-comparable even with the same seed. Neither was a code bug; both
+were wrong assumptions about what the test was allowed to expect, caught by
+running it rather than trusting the design on paper.
 
 **There is no O(n^2).** Measured in FRESH processes at 88 seats x 8 parties:
 

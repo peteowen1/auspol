@@ -442,9 +442,30 @@ simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
   }
 
   # Flow lookup, keyed by from-index and survivor bitmask.
+  #
+  # DENSE path: for realistic party counts this indexes a preallocated LIST by
+  # the INTEGER key itself, avoiding the string-keyed environment profiling
+  # found costing ~20% of simulate_seat_contests()'s runtime -- as.character()
+  # building the key, then TWO lookups (exists() then get()) for one read.
+  # Every class classify_party() emits today puts K at 8; CELLS_DENSE_CAP is
+  # generous well past any real dataset.
+  #
+  # Guarded by SIZE, not by K directly, because K is capped at 20 above and
+  # 20 * 2^20 slots would be roughly 1.2GB of list overhead for an address
+  # space that stays almost entirely empty -- past the cap this falls back to
+  # the original environment, which is correct for any K and was always the
+  # only path before this change.
   pidx <- stats::setNames(seq_len(K), parties)
-  cells <- new.env(parent = emptyenv())
-  put <- function(k, v) assign(as.character(k), v, envir = cells)
+  CELLS_DENSE_CAP <- 2^18  # ~262k slots, a few MB
+  n_slots <- (K + 1L) * 2^K
+  dense_cells <- n_slots <= CELLS_DENSE_CAP
+  if (dense_cells) {
+    cell_list <- vector("list", n_slots)
+    put <- function(k, v) cell_list[[k + 1L]] <<- v  # 1-based
+  } else {
+    cells <- new.env(parent = emptyenv())
+    put <- function(k, v) assign(as.character(k), v, envir = cells)
+  }
   # A MULTIPLICITY MATRIX IS NOT READABLE HERE, and must not be accepted
   # quietly. Its survivor labels carry a candidate count -- "LNP2" rather than
   # "LNP" -- and the membership test below would reject every one of them, so
@@ -566,6 +587,14 @@ simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
       if (!is.null(party_draws)) {
         for (nm in names(party_draws)) base_v[[nm]] <- party_draws[[nm]][s, i]
       }
+      # Names dropped HERE, after the by-name substitution above is done with
+      # them and before anything downstream (`pp`, `sd_cell`, `v`, ...) uses
+      # base_v purely positionally. Profiling found mostattributes<- costing
+      # real time in pmin()/pmax() on a NAMED vector, because R re-copies the
+      # names attribute through every arithmetic step that follows. Nothing
+      # below indexes by party name -- all of it is positional, matched to
+      # `parties`/`pidx` at the top of the function.
+      base_v <- unname(base_v)
       # PER-CELL sd when level_sd is given: a party at 2% and one at 50% do not
       # deviate by the same number of points. `base_v` is this draw's projected
       # share, so the width tracks the level actually being simulated rather
@@ -612,10 +641,12 @@ simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
         pot <- v[from]
         alive <- alive[alive != from]
         mask <- sum(bitwShiftL(1L, alive - 1L))
-        key <- as.character(from * 2^K + mask)
-        got_cell <- exists(key, envir = cells, inherits = FALSE)
+        key <- from * 2^K + mask
+        row <- if (dense_cells) cell_list[[key + 1L]] else
+          get0(as.character(key), envir = cells, inherits = FALSE, ifnotfound = NULL)
+        got_cell <- !is.null(row)
         row <- if (got_cell) {
-          get(key, envir = cells, inherits = FALSE)
+          row
         } else {
           n_fb <- n_fb + 1L
           pool[[from]]

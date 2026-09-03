@@ -183,3 +183,63 @@ test_that("malformed statewide draws are refused", {
                            statewide_draws = cbind(ALP=1:5, LNP=1:5)),
     "missing column")
 })
+
+# ---- the flow-lookup fix: dense integer-indexed list vs the environment ----
+# fallback for large K. Pre-registered in docs/NEXT-STEPS.md's simulator
+# backlog note; done 2026-09-04. Every real dataset this repo has ever seen
+# uses the dense path (K <= 8), so the sparse fallback for K > ~14 had no
+# test coverage until now.
+
+test_that("the sparse (large-K) flow-lookup fallback runs and gives valid output", {
+  # 17 parties: (17+1) * 2^17 = 2,359,296 slots, well past CELLS_DENSE_CAP
+  # (2^18), so this exercises the environment fallback rather than the dense
+  # preallocated list every other test in this file uses.
+  P <- paste0("P", 1:17)
+  sh <- matrix(rep(100 / 17, 17), nrow = 1, dimnames = list("s", P))
+  # A flow matrix with SOME conditional cells, not just the pooled fallback,
+  # so both put() and the got_cell/pool[[from]] branches actually run.
+  tx <- data.table::data.table(
+    election = "x", seat = "s", round = 1L,
+    from = c("P17", "P16", "P17"), to = c("P1", "P1", "P2"),
+    votes = c(50, 40, 30))
+  fm <- build_flow_matrix(tx, min_n = 1L)
+  r <- simulate_seat_contests(sh, fm, party_sd = stats::setNames(rep(1, 17), P),
+                              seat_sd = 2, n_sims = 30, seed = 5)
+  # win_prob lists only parties that won at least once, so its row count is
+  # bounded by nrow(shares) * K, not equal to it -- the real invariant is
+  # that every draw produced exactly one winner per seat.
+  expect_true(nrow(r$win_prob) >= 1 && nrow(r$win_prob) <= 17)
+  expect_equal(sum(r$win_prob$prob), 1, tolerance = 1e-9)
+  expect_true(all(r$win_prob$prob >= 0 & r$win_prob$prob <= 1))
+  expect_equal(sum(r$totals), 30L)  # one winner, every one of the 30 sims
+})
+
+test_that("the sparse lookup path resolves the SAME contest a small K does", {
+  # Mirrors the first test in this file (LNP leads primaries, GRN preferences
+  # carry Labor past it) but at K=17: the real contest lives in the first
+  # three parties, the other 14 are padded at exactly 0 share with zero
+  # variance everywhere (seat_sd = 0, party_sd = 0), so they are excluded
+  # from `alive` before the elimination loop ever starts and the dynamics are
+  # identical to the K=3 case -- except the lookup KEY SPACE is sized off the
+  # full K = 17, which is what forces the sparse fallback
+  # ((17+1) * 2^17 = 2,359,296 slots, past CELLS_DENSE_CAP). If get0() on the
+  # environment ever returned the wrong conditional row, or fell through to
+  # the pooled rate when a real cell exists, this deterministic contest would
+  # not resolve to ALP.
+  P <- c("ALP", "LNP", "GRN", paste0("PAD", 1:14))
+  sh <- matrix(c(38, 40, 22, rep(0, 14)), nrow = 1, dimnames = list("seat1", P))
+  tx <- data.table::data.table(
+    election = "x", seat = rep(c("a","b","c"), each = 2), round = 1L,
+    from = "GRN", to = rep(c("ALP","LNP"), 3),
+    votes = c(900,100, 850,150, 800,200))
+  fm <- build_flow_matrix(tx, min_n = 2L)
+  r <- simulate_seat_contests(sh, fm, party_sd = stats::setNames(rep(0, 17), P),
+                              seat_sd = 0, n_sims = 20, seed = 1)
+  expect_equal(r$win_prob$party[which.max(r$win_prob$prob)], "ALP")
+  expect_equal(r$win_prob$prob[r$win_prob$party == "ALP"], 1)
+  # Fully deterministic (all sd = 0), so every one of the 20 simulations
+  # resolves the same way -- ALP wins the seat in all of them, not just the
+  # one `totals` row this checks.
+  expect_equal(unname(r$totals[1, "ALP"]), 1L)
+  expect_true(all(r$totals[, "ALP"] == 1L))
+})
