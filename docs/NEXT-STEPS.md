@@ -75,12 +75,19 @@ Two bugs found and fixed while building it:
   keyword the salience fetch already builds. `jump_pctile` came back
   significant a third time (3.53, p=0.005) with both fixes in.
 
-**`jump_pctile`'s significance has now flipped three times across three bug
-states and needs one more independent check before it's trusted.**
-**`switched_party` is strongly negative (~−6.5 to −7.2, p<2e-16) in the full
-n=599/n=587 samples but not significant and sign-flipped in the n=311
-both-years-salience subsample (p=0.244)** — not yet investigated whether
-that's sample composition or noise.
+**RESOLVED 2026-09-04**, in
+[reviews/incumbent-transfer-rerun-2026-09-04.md](reviews/incumbent-transfer-rerun-2026-09-04.md).
+Rerun against `salience-v6.csv` now that the majors fetch finished (coverage
+311→486/366, a materially different population, not a repeat measurement):
+**`jump_pctile` significant a fourth time and an order of magnitude stronger**
+(t=4.32, p=1.93e-05 level model; t=4.97, p=1.02e-06 delta model). The n=311
+**`switched_party` discrepancy was sample composition, not a real reversal** —
+at n=366 it comes back −10.69, p<2e-16, correctly signed and larger than the
+full-sample estimate. One new weak signal not chased further: `jump_delta` is
+negative (t=−2.16, p=0.032) — a candidate whose relative salience *rose* since
+last time gains *less*, plausibly regression to the mean in percentile terms.
+Next step if pursued: its own pre-registration under
+[plans/plan-wire-salience-into-forecast.md](plans/plan-wire-salience-into-forecast.md).
 
 **A genuine negative result, reported straight**: minor-party/IND incumbent
 vote change does NOT correlate with national or local TPP/party swing
