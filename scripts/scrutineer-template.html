@@ -1,0 +1,739 @@
+<title>Scrutineer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Narrow:wght@500;600;700&family=Public+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #F5F6F0;
+    --paper-raised: #FFFFFF;
+    --ink: #171A16;
+    --ink-soft: #565C52;
+    --ink-faint: #8B9084;
+    --line: #DBDED2;
+    --line-strong: #C2C6B7;
+    --accent: #1B4D3E;
+    --accent-ink: #0F332A;
+    --accent-soft: #E2EBE2;
+    --gold: #97701C;
+    --gold-soft: #F2E6C4;
+    --miss: #A6321F;
+    --miss-soft: #F6E2DC;
+    --good: #2E7D4F;
+    --good-soft: #E1EFE3;
+    --shadow: 0 1px 2px rgba(23, 26, 22, 0.06), 0 6px 20px rgba(23, 26, 22, 0.05);
+
+    --p-ALP: #B8433A;
+    --p-LNP: #2E5C86;
+    --p-NAT: #5C7A3D;
+    --p-GRN: #3F8F4F;
+    --p-ONP: #C97A2B;
+    --p-IND: #5B6B8C;
+    --p-OTH_RIGHT: #8A6A4B;
+    --p-OTH: #797E75;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper: #14170F;
+      --paper-raised: #1B1F17;
+      --ink: #E8EAE1;
+      --ink-soft: #ABB09F;
+      --ink-faint: #767C6C;
+      --line: #2C3225;
+      --line-strong: #3C4432;
+      --accent: #52A481;
+      --accent-ink: #BFE9D2;
+      --accent-soft: #1E2E25;
+      --gold: #D8B25E;
+      --gold-soft: #362B18;
+      --miss: #E17E63;
+      --miss-soft: #3B221B;
+      --good: #52C288;
+      --good-soft: #1C3123;
+      --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 24px rgba(0, 0, 0, 0.35);
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --paper: #14170F;
+    --paper-raised: #1B1F17;
+    --ink: #E8EAE1;
+    --ink-soft: #ABB09F;
+    --ink-faint: #767C6C;
+    --line: #2C3225;
+    --line-strong: #3C4432;
+    --accent: #52A481;
+    --accent-ink: #BFE9D2;
+    --accent-soft: #1E2E25;
+    --gold: #D8B25E;
+    --gold-soft: #362B18;
+    --miss: #E17E63;
+    --miss-soft: #3B221B;
+    --good: #52C288;
+    --good-soft: #1C3123;
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 24px rgba(0, 0, 0, 0.35);
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: "Public Sans", -apple-system, "Segoe UI", sans-serif;
+    font-size: 14px;
+    line-height: 1.45;
+    overflow-x: hidden;
+  }
+
+  .wrap { max-width: 1400px; margin: 0 auto; padding: 28px 24px 56px; }
+
+  header.page {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 20px;
+    padding-bottom: 20px;
+    border-bottom: 2px solid var(--ink);
+    margin-bottom: 18px;
+  }
+  .titleblock .eyebrow {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 6px;
+  }
+  .titleblock h1 {
+    font-family: "Archivo Narrow", sans-serif;
+    font-weight: 700;
+    font-size: 40px;
+    letter-spacing: -0.01em;
+    margin: 0 0 6px;
+    text-wrap: balance;
+  }
+  .titleblock p {
+    margin: 0;
+    max-width: 62ch;
+    color: var(--ink-soft);
+    font-size: 14px;
+  }
+  .titleblock p code {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 12.5px;
+    background: var(--accent-soft);
+    color: var(--accent-ink);
+    padding: 1px 5px;
+    border-radius: 3px;
+  }
+
+  .stats { display: flex; gap: 10px; flex-wrap: wrap; }
+  .stat {
+    background: var(--paper-raised);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 9px 14px;
+    min-width: 92px;
+    box-shadow: var(--shadow);
+  }
+  .stat .n {
+    font-family: "JetBrains Mono", monospace;
+    font-weight: 600;
+    font-size: 19px;
+    font-variant-numeric: tabular-nums;
+    display: block;
+  }
+  .stat .l {
+    font-size: 10.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--ink-faint);
+  }
+
+  .controls {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    background: var(--paper);
+    padding: 14px 0 12px;
+    border-bottom: 1px solid var(--line);
+    margin-bottom: 2px;
+  }
+  .controls-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+  }
+  .search-box {
+    position: relative;
+    flex: 1 1 240px;
+    min-width: 180px;
+  }
+  .search-box input {
+    width: 100%;
+    padding: 9px 12px 9px 32px;
+    border: 1px solid var(--line-strong);
+    border-radius: 7px;
+    background: var(--paper-raised);
+    color: var(--ink);
+    font-family: "Public Sans", sans-serif;
+    font-size: 13.5px;
+  }
+  .search-box input:focus {
+    outline: 2px solid var(--accent);
+    outline-offset: -1px;
+  }
+  .search-box svg {
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 14px;
+    height: 14px;
+    stroke: var(--ink-faint);
+    pointer-events: none;
+  }
+  .chip-toggle {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 12px;
+    font-weight: 500;
+    padding: 7px 11px;
+    border-radius: 6px;
+    border: 1px solid var(--line-strong);
+    background: var(--paper-raised);
+    color: var(--ink-soft);
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.12s, color 0.12s, border-color 0.12s;
+  }
+  .chip-toggle .dot {
+    display: inline-block;
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    margin-right: 6px;
+  }
+  .chip-toggle[aria-pressed="true"] {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+  }
+  .chip-toggle[aria-pressed="true"] .dot { background: #fff !important; }
+  .chip-toggle:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+  .chip-toggle.wide { padding: 7px 13px; }
+
+  .party-filters { display: flex; gap: 6px; flex-wrap: wrap; }
+  .divider-v { width: 1px; align-self: stretch; background: var(--line); margin: 0 2px; }
+
+  .controls-row2 {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 10px;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 12px;
+    color: var(--ink-faint);
+  }
+  .controls-row2 button.reset {
+    font-family: "Public Sans", sans-serif;
+    font-size: 12.5px;
+    color: var(--accent);
+    background: none;
+    border: none;
+    cursor: pointer;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    padding: 0;
+  }
+  #liveMeanLL { font-weight: 600; color: var(--ink); }
+
+  .table-scroll {
+    overflow-x: auto;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    margin-top: 14px;
+    box-shadow: var(--shadow);
+  }
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    min-width: 1500px;
+    background: var(--paper-raised);
+  }
+  thead th {
+    position: sticky;
+    top: 0;
+    background: var(--paper-raised);
+    z-index: 5;
+  }
+  thead tr.groups th {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 10px;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    padding: 8px 10px 4px;
+    text-align: left;
+    border-bottom: 1px solid var(--line);
+    top: 0;
+  }
+  thead tr.cols th {
+    top: 21px;
+    padding: 4px 10px 8px;
+    text-align: right;
+    font-family: "Public Sans", sans-serif;
+    font-weight: 600;
+    font-size: 12px;
+    color: var(--ink);
+    border-bottom: 2px solid var(--ink);
+    white-space: nowrap;
+    cursor: pointer;
+  }
+  thead tr.cols th.left { text-align: left; }
+  thead tr.cols th:hover { color: var(--accent); }
+  thead tr.cols th .arrow { font-size: 10px; margin-left: 3px; opacity: 0.5; }
+  thead tr.cols th.sorted .arrow { opacity: 1; color: var(--accent); }
+  thead tr.groups th.grp-candidate { border-left: none; }
+  thead tr.groups th[data-g] { border-left: 1px solid var(--line); }
+
+  tbody td {
+    padding: 6px 10px;
+    border-bottom: 1px solid var(--line);
+    text-align: right;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 12.5px;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+    color: var(--ink);
+  }
+  tbody td.left {
+    text-align: left;
+    font-family: "Public Sans", sans-serif;
+    font-size: 13px;
+  }
+  tbody tr:hover td { background: var(--accent-soft); }
+  tbody tr.elected td { background: var(--gold-soft); }
+  tbody tr.elected:hover td { background: var(--gold-soft); filter: brightness(0.96); }
+  tbody td.muted { color: var(--ink-faint); }
+
+  .seatname { font-weight: 600; }
+  .cand-name { display: flex; align-items: center; gap: 6px; }
+  .win-mark {
+    display: inline-block;
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--gold);
+    flex: none;
+  }
+  .party-dot {
+    display: inline-block;
+    width: 8px; height: 8px;
+    border-radius: 2px;
+    margin-right: 6px;
+    flex: none;
+  }
+  .party-chip { display: inline-flex; align-items: center; font-family: "JetBrains Mono", monospace; font-size: 11.5px; font-weight: 500; }
+  .winner-cell { display: flex; align-items: center; color: var(--ink-soft); font-size: 12px; }
+
+  td.heat {
+    color: #fff;
+    font-weight: 600;
+    border-radius: 3px;
+  }
+  td.delta-pos { color: var(--good); }
+  td.delta-neg { color: var(--miss); }
+
+  tbody tr[hidden] { display: none; }
+
+  footer.page {
+    margin-top: 22px;
+    padding-top: 16px;
+    border-top: 1px solid var(--line);
+    color: var(--ink-faint);
+    font-size: 12px;
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  footer.page a { color: var(--ink-faint); }
+  .footnote-star { color: var(--gold); }
+
+  ::selection { background: var(--accent); color: #fff; }
+</style>
+
+<div class="wrap">
+  <header class="page">
+    <div class="titleblock">
+      <div class="eyebrow">Fed2025 &middot; candidate-level ledger</div>
+      <h1>Scrutineer</h1>
+      <p>Every candidate on the fed2025 ballot, our projection and AEF's beside the actual result, and the history and salience behind each call. Search, filter by party, sort any column &mdash; built to find where <code>auspol</code> is wrong before the next election does.</p>
+    </div>
+    <div class="stats">
+      <div class="stat"><span class="n" id="statSeats">&ndash;</span><span class="l">Seats</span></div>
+      <div class="stat"><span class="n" id="statCands">&ndash;</span><span class="l">Candidates</span></div>
+      <div class="stat"><span class="n" id="statLL">&ndash;</span><span class="l">Mean log loss</span></div>
+      <div class="stat"><span class="n" id="statMiss">&ndash;</span><span class="l">Seats &gt; 1.61 LL</span></div>
+    </div>
+  </header>
+
+  <div class="controls">
+    <div class="controls-row">
+      <div class="search-box">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+        <input type="text" id="searchInput" placeholder="Search seat, candidate or party&hellip;" autocomplete="off">
+      </div>
+      <div class="divider-v"></div>
+      <div class="party-filters" id="partyFilters"></div>
+      <div class="divider-v"></div>
+      <button class="chip-toggle wide" id="toggleElected" aria-pressed="false">Elected only</button>
+      <button class="chip-toggle wide" id="toggleMiss" aria-pressed="false">Big misses (LL&gt;1.61)</button>
+    </div>
+    <div class="controls-row2">
+      <span>Showing <strong id="rowCount" style="color:var(--ink)">&ndash;</strong> of <span id="rowTotal">&ndash;</span> candidates &middot; seats shown avg log loss <span id="liveMeanLL">&ndash;</span></span>
+      <button class="reset" id="resetBtn">Reset filters</button>
+    </div>
+  </div>
+
+  <div class="table-scroll">
+    <table id="dataTable">
+      <thead>
+        <tr class="groups">
+          <th colspan="4" class="grp-candidate">Candidate</th>
+          <th colspan="4" data-g>This election</th>
+          <th colspan="3" data-g>Our model</th>
+          <th colspan="2" data-g>Personal history</th>
+          <th colspan="1" data-g>Party history (seat)</th>
+          <th colspan="2" data-g>Party (national)</th>
+          <th colspan="4" data-g>Salience</th>
+        </tr>
+        <tr class="cols" id="headRow"></tr>
+      </thead>
+      <tbody id="tbody"></tbody>
+    </table>
+  </div>
+
+  <footer class="page">
+    <span><span class="footnote-star">*</span> <strong>Seat salience</strong> is 100 &times; this candidate's search-interest jump over the loudest candidate <em>in their own seat</em>; <strong>election salience</strong> is the same against the loudest in the whole election, which is the PM, so most candidates sit near zero on it. <strong>Basis</strong> is that seat's denominator &mdash; Grayndler's 100 rests on 18.03 and Burt's on 0.00097, so a 100 is only as meaningful as the number under it. Negative jumps (search interest <em>fell</em>) are floored at zero, and 10 of 150 seats where nothing measurable moved read blank rather than zero. &ldquo;Big miss&rdquo; = our probability on the actual seat winner was below ~20% (log loss &gt; 1.61).</span>
+    <span>auspol &middot; generated from output/fed2025-browse-table.csv</span>
+  </footer>
+</div>
+
+
+<!--CSV_DATA_GOES_HERE-->
+
+<script>
+(function () {
+  "use strict";
+
+  var PARTY_COLOR = {
+    ALP: "var(--p-ALP)", LNP: "var(--p-LNP)", NAT: "var(--p-NAT)", GRN: "var(--p-GRN)",
+    ONP: "var(--p-ONP)", IND: "var(--p-IND)", OTH_RIGHT: "var(--p-OTH_RIGHT)", OTH: "var(--p-OTH)"
+  };
+  var PARTY_ORDER = ["ALP", "LNP", "NAT", "GRN", "ONP", "IND", "OTH_RIGHT", "OTH"];
+  var MISS_THRESHOLD = 1.61;
+
+  function parseCSV(text) {
+    var rows = [], field = "", row = [], inQuotes = false;
+    for (var i = 0; i < text.length; i++) {
+      var c = text[i];
+      if (inQuotes) {
+        if (c === '"') {
+          if (text[i + 1] === '"') { field += '"'; i++; } else { inQuotes = false; }
+        } else field += c;
+      } else {
+        if (c === '"') inQuotes = true;
+        else if (c === ",") { row.push(field); field = ""; }
+        else if (c === "\n") { row.push(field); field = ""; rows.push(row); row = []; }
+        else if (c === "\r") { /* skip */ }
+        else field += c;
+      }
+    }
+    if (field.length || row.length) { row.push(field); rows.push(row); }
+    return rows;
+  }
+
+  function num(v) { return v === "" || v === undefined ? null : Number(v); }
+
+  var raw = document.getElementById("csv-data").textContent.trim();
+  var parsed = parseCSV(raw);
+  var header = parsed[0];
+  var DATA = parsed.slice(1).filter(function (r) { return r.length === header.length; }).map(function (r) {
+    var o = {};
+    header.forEach(function (h, i) { o[h] = r[i]; });
+    return {
+      seat: o.seat, party: o.party, name: o.name,
+      actual_pcv: num(o.actual_pcv), elected: o.elected === "TRUE",
+      projected_share: num(o.projected_share), aef_primary_median: num(o.aef_primary_median),
+      own_prev_pcv: num(o.own_prev_pcv), own_prev_party: o.own_prev_party || null,
+      class_prev_pcv: num(o.class_prev_pcv),
+      party_national_prev: num(o.party_national_prev), party_national_now: num(o.party_national_now),
+      salience_pctile: num(o.salience_pctile), salience_jump: num(o.salience_jump),
+      seat_salience: num(o.seat_salience), seat_salience_basis: num(o.seat_salience_basis),
+      election_salience: num(o.election_salience),
+      actual_winner_party: o.actual_winner_party, actual_winner_name: o.actual_winner_name,
+      our_pred_party: o.our_pred_party || null,
+      our_prob_on_actual: num(o.our_prob_on_actual), our_ll: num(o.our_ll)
+    };
+  });
+
+  // ---- column definitions -------------------------------------------------
+  var COLS = [
+    { key: "seat", label: "Seat", type: "text", left: true },
+    { key: "party", label: "Party", type: "party", left: true },
+    { key: "name", label: "Candidate", type: "name", left: true },
+    { key: "winner", label: "Seat winner", type: "winner", left: true, nosort: true },
+
+    { key: "actual_pcv", label: "Actual %", type: "pct1" },
+    { key: "projected_share", label: "Our proj %", type: "pct1" },
+    { key: "delta", label: "Δ", type: "delta", nosort: false },
+    { key: "aef_primary_median", label: "AEF proj %", type: "pct1" },
+
+    { key: "our_pred_party", label: "Called", type: "text" },
+    { key: "our_prob_on_actual", label: "P(actual)", type: "prob" },
+    { key: "our_ll", label: "Log loss", type: "heat" },
+
+    { key: "own_prev_pcv", label: "Own prior %", type: "pct2" },
+    { key: "own_prev_party", label: "Prior party", type: "text" },
+
+    { key: "class_prev_pcv", label: "Party prior % (seat)", type: "pct1" },
+
+    { key: "party_national_prev", label: "Nat'l prior %", type: "pct1" },
+    { key: "party_national_now", label: "Nat'l now %", type: "pct1" },
+
+    { key: "seat_salience", label: "Seat salience*", type: "sal" },
+    { key: "election_salience", label: "Election salience*", type: "sal" },
+    { key: "seat_salience_basis", label: "Basis*", type: "basis" },
+    { key: "salience_jump", label: "Jump idx", type: "num3" }
+  ];
+
+  DATA.forEach(function (d) {
+    d.delta = (d.actual_pcv != null && d.projected_share != null) ? +(d.actual_pcv - d.projected_share).toFixed(2) : null;
+    d.winner = d.actual_winner_name;
+  });
+
+  // ---- header row -----------------------------------------------------------
+  var headRow = document.getElementById("headRow");
+  headRow.innerHTML = COLS.map(function (c) {
+    return '<th class="' + (c.left ? "left " : "") + (c.nosort ? "" : "sortable") + '" data-key="' + c.key + '">' +
+      c.label + (c.nosort ? "" : '<span class="arrow">↕</span>') + "</th>";
+  }).join("");
+
+  // ---- formatting -------------------------------------------------------
+  function fmt(v, type) {
+    if (v === null || v === undefined || Number.isNaN(v)) return "";
+    switch (type) {
+      case "pct1": return v.toFixed(1);
+      case "pct2": return v.toFixed(1);
+      case "prob": return (v * 100).toFixed(1) + "%";
+      case "pctile": return (v * 100).toFixed(0) + "%";
+      case "num3": return v.toFixed(3);
+      // Salience is a share of a maximum, so it is a percentage of the loudest
+      // in scope, not a percentile. 100 means "is the loudest".
+      case "sal": return v.toFixed(1);
+      // The denominator, in the units the Trends jump is measured in. Spans
+      // four orders of magnitude across seats, so it needs a log-ish format
+      // rather than a fixed number of decimals.
+      case "basis": return v >= 1 ? v.toFixed(2) : v.toPrecision(2);
+      case "heat": return v.toFixed(3);
+      default: return String(v);
+    }
+  }
+
+  function heatColor(v) {
+    // 0 (good, green) -> ~2.5+ (bad, red), via the accent->miss ramp
+    var t = Math.max(0, Math.min(1, v / 2.5));
+    // interpolate in a simple RGB space between good and miss tokens
+    var good = [46, 125, 79], bad = [166, 50, 31];
+    var mid = [201, 122, 43]; // gold midpoint keeps the ramp from muddying through brown
+    var rgb;
+    if (t < 0.5) {
+      var t2 = t / 0.5;
+      rgb = good.map(function (g, i) { return Math.round(g + (mid[i] - g) * t2); });
+    } else {
+      var t3 = (t - 0.5) / 0.5;
+      rgb = mid.map(function (m, i) { return Math.round(m + (bad[i] - m) * t3); });
+    }
+    return "rgb(" + rgb.join(",") + ")";
+  }
+
+  function partyChip(code) {
+    if (!code) return "";
+    var c = PARTY_COLOR[code] || "var(--ink-faint)";
+    return '<span class="party-chip"><span class="party-dot" style="background:' + c + '"></span>' + code + "</span>";
+  }
+
+  // ---- render -------------------------------------------------------------
+  var tbody = document.getElementById("tbody");
+
+  function renderRow(d) {
+    var cells = COLS.map(function (c) {
+      var cls = c.left ? "left" : "";
+      var content = "";
+      switch (c.type) {
+        case "text":
+          content = d[c.key] || '<span class="muted">&mdash;</span>';
+          break;
+        case "party":
+          content = partyChip(d.party);
+          break;
+        case "name":
+          content = '<span class="cand-name">' + (d.elected ? '<span class="win-mark" title="Elected"></span>' : "") + escapeHtml(d.name) + "</span>";
+          break;
+        case "winner":
+          content = '<span class="winner-cell">' + partyChip(d.actual_winner_party) + "&nbsp;" + escapeHtml(d.winner || "") + "</span>";
+          break;
+        case "delta":
+          if (d.delta == null) { content = '<span class="muted">&mdash;</span>'; }
+          else {
+            cls += d.delta > 0 ? " delta-pos" : d.delta < 0 ? " delta-neg" : "";
+            content = (d.delta > 0 ? "+" : "") + d.delta.toFixed(1);
+          }
+          break;
+        case "heat":
+          if (d.our_ll == null) { content = '<span class="muted">&mdash;</span>'; }
+          else { cls += " heat"; }
+          break;
+        default:
+          var v = d[c.key];
+          content = (v === null || v === undefined) ? '<span class="muted">&mdash;</span>' : fmt(v, c.type);
+      }
+      var style = (c.type === "heat" && d.our_ll != null) ? ' style="background:' + heatColor(d.our_ll) + '"' : "";
+      return '<td class="' + cls + '"' + style + ">" + content + "</td>";
+    }).join("");
+    return '<tr class="' + (d.elected ? "elected" : "") + '" data-seat="' + escapeHtml(d.seat) + '" data-party="' + d.party + '">' + cells + "</tr>";
+  }
+
+  function escapeHtml(s) {
+    if (s == null) return "";
+    return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  }
+
+  var rowsHtml = DATA.map(renderRow);
+  tbody.innerHTML = rowsHtml.join("");
+  var trs = Array.prototype.slice.call(tbody.children);
+
+  // ---- summary stats (full dataset) ---------------------------------------
+  var seatSet = {}, seatLL = {};
+  DATA.forEach(function (d) {
+    seatSet[d.seat] = true;
+    if (d.our_ll != null) seatLL[d.seat] = d.our_ll;
+  });
+  var seatNames = Object.keys(seatSet);
+  var llVals = Object.keys(seatLL).map(function (s) { return seatLL[s]; });
+  var meanLL = llVals.reduce(function (a, b) { return a + b; }, 0) / llVals.length;
+  var bigMisses = llVals.filter(function (v) { return v > MISS_THRESHOLD; }).length;
+
+  document.getElementById("statSeats").textContent = seatNames.length;
+  document.getElementById("statCands").textContent = DATA.length;
+  document.getElementById("statLL").textContent = meanLL.toFixed(3);
+  document.getElementById("statMiss").textContent = bigMisses;
+  document.getElementById("rowTotal").textContent = DATA.length;
+
+  // ---- party filter chips --------------------------------------------------
+  var partyFilters = document.getElementById("partyFilters");
+  var activeParties = {};
+  PARTY_ORDER.forEach(function (p) { activeParties[p] = true; });
+  partyFilters.innerHTML = PARTY_ORDER.map(function (p) {
+    return '<button class="chip-toggle" data-party="' + p + '" aria-pressed="true"><span class="dot" style="background:' + PARTY_COLOR[p] + '"></span>' + p + "</button>";
+  }).join("");
+  partyFilters.addEventListener("click", function (e) {
+    var btn = e.target.closest("button.chip-toggle");
+    if (!btn) return;
+    var p = btn.dataset.party;
+    activeParties[p] = !activeParties[p];
+    btn.setAttribute("aria-pressed", String(activeParties[p]));
+    applyFilters();
+  });
+
+  // ---- filters --------------------------------------------------------------
+  var state = { search: "", electedOnly: false, missOnly: false };
+  var searchInput = document.getElementById("searchInput");
+  var toggleElected = document.getElementById("toggleElected");
+  var toggleMiss = document.getElementById("toggleMiss");
+
+  searchInput.addEventListener("input", function () {
+    state.search = searchInput.value.trim().toLowerCase();
+    applyFilters();
+  });
+  toggleElected.addEventListener("click", function () {
+    state.electedOnly = !state.electedOnly;
+    toggleElected.setAttribute("aria-pressed", String(state.electedOnly));
+    applyFilters();
+  });
+  toggleMiss.addEventListener("click", function () {
+    state.missOnly = !state.missOnly;
+    toggleMiss.setAttribute("aria-pressed", String(state.missOnly));
+    applyFilters();
+  });
+  document.getElementById("resetBtn").addEventListener("click", function () {
+    state = { search: "", electedOnly: false, missOnly: false };
+    searchInput.value = "";
+    toggleElected.setAttribute("aria-pressed", "false");
+    toggleMiss.setAttribute("aria-pressed", "false");
+    PARTY_ORDER.forEach(function (p) { activeParties[p] = true; });
+    partyFilters.querySelectorAll("button").forEach(function (b) { b.setAttribute("aria-pressed", "true"); });
+    applyFilters();
+  });
+
+  function applyFilters() {
+    var shownSeatLL = {};
+    var shown = 0;
+    for (var i = 0; i < trs.length; i++) {
+      var d = DATA[i], tr = trs[i];
+      var ok = activeParties[d.party];
+      if (ok && state.electedOnly && !d.elected) ok = false;
+      if (ok && state.missOnly && !(d.our_ll != null && d.our_ll > MISS_THRESHOLD)) ok = false;
+      if (ok && state.search) {
+        var hay = (d.seat + " " + d.name + " " + d.party).toLowerCase();
+        if (hay.indexOf(state.search) === -1) ok = false;
+      }
+      tr.hidden = !ok;
+      if (ok) {
+        shown++;
+        if (d.our_ll != null) shownSeatLL[d.seat] = d.our_ll;
+      }
+    }
+    document.getElementById("rowCount").textContent = shown;
+    var vals = Object.keys(shownSeatLL).map(function (s) { return shownSeatLL[s]; });
+    var m = vals.length ? (vals.reduce(function (a, b) { return a + b; }, 0) / vals.length) : null;
+    document.getElementById("liveMeanLL").textContent = m == null ? "–" : m.toFixed(3) + " (" + vals.length + " seats)";
+  }
+  applyFilters();
+
+  // ---- sorting ---------------------------------------------------------------
+  var sortState = { key: null, dir: 1 };
+  headRow.addEventListener("click", function (e) {
+    var th = e.target.closest("th.sortable");
+    if (!th) return;
+    var key = th.dataset.key;
+    if (sortState.key === key) sortState.dir *= -1; else { sortState.key = key; sortState.dir = 1; }
+    Array.prototype.forEach.call(headRow.children, function (h) {
+      h.classList.remove("sorted");
+      var a = h.querySelector(".arrow");
+      if (a) a.textContent = "↕";
+    });
+    th.classList.add("sorted");
+    var arrow = th.querySelector(".arrow");
+    if (arrow) arrow.textContent = sortState.dir === 1 ? "↑" : "↓";
+
+    var idx = DATA.map(function (d, i) { return i; });
+    idx.sort(function (ia, ib) {
+      var a = DATA[ia][key], b = DATA[ib][key];
+      var an = a === null || a === undefined, bn = b === null || b === undefined;
+      if (an && bn) return 0;
+      if (an) return 1;
+      if (bn) return -1;
+      if (typeof a === "string") return a.localeCompare(b) * sortState.dir;
+      if (a === b) return 0;
+      return (a < b ? -1 : 1) * sortState.dir;
+    });
+    var frag = document.createDocumentFragment();
+    idx.forEach(function (i) { frag.appendChild(trs[i]); });
+    tbody.innerHTML = "";
+    tbody.appendChild(frag);
+  });
+})();
+</script>
