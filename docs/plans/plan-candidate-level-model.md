@@ -99,7 +99,7 @@ as "the largest here." Not worth it for 3 historical seats.
 specifically needs candidate-level columns, rather than building it speculatively
 now. B2 is the next structural priority instead.
 
-### B2. Compositional shares within a seat
+### B2. Compositional shares within a seat — DEPRIORITISED 2026-09-04, not closed
 
 **Why.** Shares are forced to 100 by renormalising, which spreads a new
 candidate's gain evenly across everyone else. That is wrong: **a teal takes from
@@ -111,6 +111,40 @@ substitution is explicit and estimable.
 
 **Accept.** Correct party loses vote where a strong non-major enters —
 checkable directly on the 2022 teal seats.
+
+**Picked up 2026-09-04 and set aside before building, on evidence this entry
+never referenced.** Two things, neither fatal to the idea, both reasons not to
+build it as scoped right now:
+
+1. **`docs/plans/prereg-proximity-substitution.md` (2026-08-25, two days before
+   this plan doc) already tested the general form of this claim** — "when a
+   party's vote moves, the offsetting movement concentrates on ideologically
+   adjacent parties" — across 12 cycles, 54 party-pair observations, and
+   refused it on all three pre-registered criteria. Raw effect was in the
+   predicted direction but under-bar (+1.35 SE vs required +2.20), and
+   **controlling for party size flipped the sign** (−1.16 SE): the apparent
+   substitution was mostly "big parties trade more votes because they're big."
+   Even GRN↔ALP moved together in 5 of 12 cycles. That document's own words:
+   *"This line is now exhausted and should not be re-run in a fourth form."*
+2. **A direct look at the six flagship teal seats (fed2019→fed2022) shows the
+   same noise, not a clean rule.** LNP is the single biggest loser in 4 of 6
+   (Curtin, Wentworth, Mackellar, North Sydney) — but in Kooyong, GRN (−14.9)
+   and ALP (−9.9) both fell more than LNP (−6.7); in Goldstein, ALP (−17.3)
+   fell more than LNP (−12.3). The two most famous teal upsets are exactly the
+   two where the stated premise does not hold.
+
+**Not closed, because Pete wants to look into it properly rather than drop it.**
+What would make it worth reopening: a claim NARROWER than the one already
+refused. The statewide test measured whether party CLASSES trade votes with
+each other on average, everywhere. It never tested "does the specific
+incumbent a strong independent is contesting against lose disproportionately
+in THAT seat" — a seat-and-candidate-specific claim, not a general
+cross-party one, and untested by either the prereg or the quick look above
+(which reports totals per seat, not a within-seat regression controlling for
+size). That narrower version would need its own pre-registration, sized
+against its own noise before it is run — the exact rule C1 exists to enforce
+for a different ticket, and the one this repo's constants doctrine names for
+every criterion in `CLAUDE.md`.
 
 ### B3. Open-seat / retirement effect
 
