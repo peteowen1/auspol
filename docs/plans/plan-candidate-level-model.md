@@ -188,12 +188,35 @@ document, "if it proves unreliable C3 must be abandoned rather than run on
 incomparable scales"). **That fetch is C2 below, and it is now the only thing
 left in this thread.**
 
-### C2. C3 on held-out emergences
+### C2. C3 on held-out emergences — BLOCKED 2026-09-04, no runnable population
 
-Amended in `prereg-salience-c3-amended.md`. **Recount first**: the corrected
-person-based definition leaves **5** held-out emergences, not 9, and 4 of the 5
-are One Nation in one state — which trips that document's own refusal clause.
-Decide whether to widen to earlier federal elections before running.
+Amended in `prereg-salience-c3-amended.md`. The recount this entry called for
+is now done and sourced, in
+`docs/reviews/c3-amended-recount-2026-09-04.md`: **5** held-out emergences, not
+9. Four of the five (sa2026's One Nation winners) are genuine; nsw2023's other
+four are the SAME sitting members re-elected under a reclassified party label
+(the party-switching-incumbent trap this session already fixed once, in
+`analyse_incumbent_transfer.R`), leaving nsw2023 with exactly **one** real
+emergence (Wakehurst).
+
+**This trips the amendment's own refusal clauses before it runs**: one
+observation cannot show anything about NSW independently, and four-of-five
+being one party in one state leaves no second subset to compare against. Not
+run, because a test that cannot pass its own pre-registered gates is not worth
+scoring.
+
+**Two live paths, neither started:**
+
+1. The original fed2010–2019 design. Its salience data already exists in
+   `salience-v6.csv` (fetched with a fixed per-era anchor rather than the
+   chained windows the original document flagged as untested) — but whether
+   that fixed-anchor design gives comparable scale across eras is itself
+   unverified and needs its own check first.
+2. Widen the amended pool: vic2022 now has a winners file (resolved
+   2026-08-27, listed as a limitation the amendment didn't have yet), and
+   qld2020/2024 plus the WA cycles are on disk and untried. Needs the same
+   by-name recount as above applied to each before trusting any count from
+   them.
 
 ---
 
