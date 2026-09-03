@@ -1,6 +1,6 @@
 # Data registry
 
-**Generated 2026-08-28 by `scripts/build_data_registry.R`. Do not hand-edit** --
+**Generated 2026-09-03 by `scripts/build_data_registry.R`. Do not hand-edit** --
 rerun the script instead. Regenerate it whenever you add or fetch data.
 
 This file exists because the same data has been declared missing three
@@ -67,7 +67,7 @@ cannot pass as a working one.
   - e.g. elections.json, publicResults_SGE2024_ICCDiv4_Final.zip, publicResults_State2020_aurukun2020_Final.zip, qld2020.xml
 - **waec/** -- 481 files, 19.4 MB
   - e.g. app.html, app.min.js, config-loader.js, config.json
-- **trends/** -- 2491 files, 1.6 MB
+- **trends/** -- 3727 files, 2.3 MB
   - e.g. 2019_anch2_Adrian_Wone_Susie_Beveridge_Will_Landers_Ammar_Khan.rds, 2019_anch2_Bill_Chandler_Susan_Moylan_Dave_Blake_Tim_Bohm.rds, 2019_anch2_Robert_Oakeshott_Helen_Haines_Zali_Steggall_Kerryn_Phelps.rds, 2019_anch2_Trevor_Jones_Colin_Butland_David_Norman_Thor_Prohaska.rds
 - **boundaries/** -- 20 files, 157.6 MB
   - e.g. SED_2021.zip, SED_2021_AUST_GDA2020.CPG, SED_2021_AUST_GDA2020.dbf, SED_2021_AUST_GDA2020.prj

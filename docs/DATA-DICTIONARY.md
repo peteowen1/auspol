@@ -1,6 +1,6 @@
 # Data dictionary
 
-**Generated 2026-08-28 by `scripts/build_data_dictionary.R`. Do not hand-edit.**
+**Generated 2026-09-03 by `scripts/build_data_dictionary.R`. Do not hand-edit.**
 
 Companion to `docs/DATA-REGISTRY.md`. The registry answers *do we have this
 file*; this answers *do we have this field*. Four wrong "we don't have it"
@@ -14,7 +14,7 @@ column does not exist.**
 |---|---:|---|
 | `aec-fed-firstprefs.csv` | 5,697 | `seat`, `party`, `votes`, `election` |
 | `aec-fed-tcp.csv` | 2,104 | `election`, `seat`, `party`, `votes` |
-| `aec-fed-transfers.csv` | 15,815 | `election`, `seat`, `round`, `from`, `to`, `votes` |
+| `aec-fed-transfers.csv` | 15,816 | `election`, `seat`, `round`, `from`, `to`, `votes` |
 | `aec-fed-winners.csv` | 1,052 | `election`, `seat`, `winner` |
 | `ecq-2020-qld-firstprefs.csv` | 545 | `seat`, `party`, `votes` |
 | `ecq-2024-qld-firstprefs.csv` | 507 | `seat`, `party`, `votes` |
@@ -148,5 +148,5 @@ processed extract. Every one is recoverable without a new fetch.
 | `dev-slopes-heldout.csv` | 42 | `party`, `slope`, `se`, `n`, `pairs`, `held_out`, `t_vs_1` |
 | `dump-shares-blended-fed2022.csv` | 1,050 | `seat`, `party`, `projected_share`, `election` |
 
-_(313 `backtest-*.csv` arm outputs omitted; they share one shape.)_
+_(432 `backtest-*.csv` arm outputs omitted; they share one shape.)_
 
