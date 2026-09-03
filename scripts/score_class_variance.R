@@ -189,10 +189,16 @@ for (mm in setdiff(GRID, "1")) {
   cat(sprintf("  m_IND = %-5s %s\n", mm, if (pass) "** PASSES **" else "fails"))
   if (V2) {
     for (.s in c("primary", "co_ind")) {
-      cat(sprintf("     %-8s %+8.4f  t %5.2f (>= %.2f)  |eff| %.4f (>= %.2f)  %s\n",
-                  .s, g(.s)$mean, abs(g(.s)$mean) / g(.s)$se, T_BAR,
-                  abs(g(.s)$mean), MAT_BAR,
-                  if (if (.s == "primary") c1 else c2) "pass" else "FAIL"))
+      .t <- abs(g(.s)$mean) / g(.s)$se; .e <- abs(g(.s)$mean)
+      # Printed as two SEPARATE verdicts -- v1 printed one combined
+      # pass/FAIL for the whole compound condition, which read as if
+      # materiality had failed when only significance had (or vice
+      # versa). Both bars must pass, but which one did not is the
+      # useful part of the message.
+      cat(sprintf("     %-8s %+8.4f  t %5.2f (>= %.2f) %s  |eff| %.4f (>= %.2f) %s
+",
+                  .s, g(.s)$mean, .t, T_BAR, if (.t >= T_BAR) "pass" else "FAIL",
+                  .e, MAT_BAR, if (.e >= MAT_BAR) "pass" else "FAIL"))
     }
   } else {
   cat(sprintf("     primary  %+8.4f  vs bar <= %+.4f   %s\n",

@@ -18,11 +18,23 @@ line first claimed they were next:
 - **A2 REFUSED** — arm C does not ship, and by its own terms **A3 never runs**
   (`reviews/arm-c-conditional-slopes-2026-08-27.md`).
 
-Next up: **class-specific variance**, pre-registered in
-`plans/prereg-class-specific-variance.md`. A1 widened every class, but the
-majors were already calibrated (NSW excluding IND wins: 0.959 → 1.272, past 1
-and out the other side), so the widening overshoots exactly the seats that were
-fine. The review named this as the better-aimed change and did not build it.
+**Class-specific variance: CLOSED, refused twice, and section A is now fully
+done.** Pre-registered in `plans/prereg-class-specific-variance.md`, scored in
+`reviews/class-variance-stage1-2026-09-03.md` (refused on a bar mis-sized 10x
+too high, borrowed from a differently-scaled experiment), re-registered in
+`plans/prereg-class-specific-variance-v2.md` with a t-statistic/materiality
+split instead, scored in `reviews/class-variance-v2-2026-09-03.md`.
+
+**v2 refused too, on stronger grounds than v1.** The effect is real and
+negative in all 20 harness x arm cells (p < 0.02 throughout), but too small
+relative to its own noise, and pushing the multiplier higher makes it WORSE:
+the t-statistic peaks at m_IND 2-3 (2.98) then falls to 2.60-2.65 at m_IND 4-5
+even as the raw effect keeps growing, because variance outpaces the mean past
+that point. That is a reason NOT to re-register a wider grid -- the mechanism
+argues against an undiscovered sweet spot past the edge, not for one.
+
+Honest summary: per-class variance is a real but minor refinement, nowhere
+near the 29% log-loss gain A1 already delivered. Not worth its own parameter.
 
 
 Updated 2026-08-28. Remote: github.com/peteowen1/auspol (private, default
