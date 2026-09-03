@@ -73,7 +73,7 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           path: external/elections
-          key: elections-v4-${{ hashFiles('scripts/fetch_preferences_*.R', 'scripts/transpose_federal_to_state.R', 'scripts/fetch_sa2022_and_winners.R') }}
+          key: elections-v5-${{ hashFiles('scripts/fetch_preferences_*.R', 'scripts/transpose_federal_to_state.R') }}
 
       - name: Fetch election results
         id: fetch-elections
@@ -82,15 +82,28 @@ jobs:
           Rscript scripts/fetch_preferences_sa.R
           Rscript scripts/fetch_preferences_vic.R
           Rscript scripts/fetch_preferences_qld.R
-          # Needed by scripts/estimate_statewide_cov.R, which fits the party
-          # covariance from ten election PAIRS -- so it wants each state's
-          # PREVIOUS election too, not just the most recent one. All immutable
-          # historical results, so the cache carries them and the nightly cost
-          # after the first run is nothing.
-          Rscript scripts/fetch_preferences_fed.R
-          Rscript scripts/fetch_preferences_nsw.R
-          Rscript scripts/fetch_preferences_vic_historical.R
-          Rscript scripts/fetch_sa2022_and_winners.R
+          # NOT HERE, and it blocks the seat model: the four fetchers
+          # scripts/estimate_statewide_cov.R needs for its ten election pairs
+          # -- fetch_preferences_fed.R, _nsw.R, _vic_historical.R and
+          # fetch_sa2022_and_winners.R. Added 2026-09-03 and reverted the same
+          # hour, because _nsw.R cannot run on a GitHub runner:
+          #
+          #   Error: Download for 2019 is not a readable workbook with a Data
+          #   sheet (found: )
+          #
+          # pastvtr.elections.nsw.gov.au serves that workbook fine from a
+          # developer machine (HTTP 200, 1,186,469 bytes, correct xlsx content
+          # type, same User-Agent) and serves the runner something that is not
+          # a zip. download.file() does not raise on it; the workbook guard
+          # does, which is that guard doing exactly its job.
+          #
+          # It has to be all four or none. Dropping just the NSW pair would
+          # change the fitted covariance and therefore the published forecast,
+          # silently, which is worse than not running.
+          #
+          # Leaving them in made things WORSE than leaving them out: the fetch
+          # step failed, so the cache never saved, and every run refetched
+          # everything from cold and still failed.
           Rscript scripts/transpose_federal_to_state.R
           cat external/elections/MANIFEST.csv
 
@@ -99,7 +112,7 @@ jobs:
         uses: actions/cache/save@v4
         with:
           path: external/elections
-          key: elections-v4-${{ hashFiles('scripts/fetch_preferences_*.R', 'scripts/transpose_federal_to_state.R', 'scripts/fetch_sa2022_and_winners.R') }}
+          key: elections-v5-${{ hashFiles('scripts/fetch_preferences_*.R', 'scripts/transpose_federal_to_state.R') }}
 
       - name: Run the pipeline
         id: run
