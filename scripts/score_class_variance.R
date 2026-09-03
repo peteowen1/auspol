@@ -15,11 +15,20 @@ options(auspol.root = normalizePath("."))
 suppressMessages(library(data.table))
 
 MAJ <- c("ALP", "LNP", "NAT")
-GRID <- c("1", "1.25", "1.5", "1.75", "2")
+GRID <- strsplit(Sys.getenv("AUSPOL_CV_GRID", "1,1.25,1.5,1.75,2"), ",")[[1]]
 
 # The pre-registered bars. Hard-coded from the committed document rather than
 # recomputed here, so a change to either has to be a visible edit to a file
 # under version control.
+# v2 (docs/plans/prereg-class-specific-variance-v2.md) splits the one bar that
+# was doing two jobs. AUSPOL_CV_V2=1 selects it. v1 set an ABSOLUTE bar from
+# the level_sd experiment's paired sd -- a property of THE CHANGE tested, not
+# of the metric -- so it imported the wrong reference class and came out ~10x
+# too high. A t-threshold cannot be mis-sized in advance; a materiality floor
+# stops a t-threshold accepting an effect too small to be worth a parameter.
+V2      <- identical(Sys.getenv("AUSPOL_CV_V2", "0"), "1")
+T_BAR   <- 2.80   # v2 statistical: effect / its OWN se
+MAT_BAR <- 0.25   # v2 materiality: ~15% of what A1 gave on this subset
 BAR_PRIMARY   <- 1.171   # non-major wins, pooled n 87
 BAR_CO_IND    <- 1.649   # IND wins, pooled n 55
 GUARD_ALL     <- 0.096   # all seats, must not WORSEN by more than this
@@ -168,17 +177,29 @@ cat("\nCX5  VERDICT, per arm. ALL FOUR must hold.\n\n")
 ok_any <- FALSE
 for (mm in setdiff(GRID, "1")) {
   g <- function(s) res[m == mm & subset == s]
-  c1 <- g("primary")$mean <= -bar
-  c2 <- g("co_ind")$mean  <= -BAR_CO_IND
+  tstat <- function(s) abs(g(s)$mean) / g(s)$se
+  c1 <- if (V2) (g("primary")$mean < 0 && tstat("primary") >= T_BAR &&
+                 abs(g("primary")$mean) >= MAT_BAR) else g("primary")$mean <= -bar
+  c2 <- if (V2) (g("co_ind")$mean < 0 && tstat("co_ind") >= T_BAR &&
+                 abs(g("co_ind")$mean) >= MAT_BAR) else g("co_ind")$mean <= -BAR_CO_IND
   c3 <- g("all")$mean     <=  GUARD_ALL
   c4 <- g("majors")$mean  <=  GUARD_MAJOR
   pass <- c1 && c2 && c3 && c4
   ok_any <- ok_any || pass
   cat(sprintf("  m_IND = %-5s %s\n", mm, if (pass) "** PASSES **" else "fails"))
+  if (V2) {
+    for (.s in c("primary", "co_ind")) {
+      cat(sprintf("     %-8s %+8.4f  t %5.2f (>= %.2f)  |eff| %.4f (>= %.2f)  %s\n",
+                  .s, g(.s)$mean, abs(g(.s)$mean) / g(.s)$se, T_BAR,
+                  abs(g(.s)$mean), MAT_BAR,
+                  if (if (.s == "primary") c1 else c2) "pass" else "FAIL"))
+    }
+  } else {
   cat(sprintf("     primary  %+8.4f  vs bar <= %+.4f   %s\n",
               g("primary")$mean, -bar, if (c1) "pass" else "FAIL"))
   cat(sprintf("     co-IND   %+8.4f  vs bar <= %+.4f   %s\n",
               g("co_ind")$mean, -BAR_CO_IND, if (c2) "pass" else "FAIL"))
+  }
   cat(sprintf("     all-seat %+8.4f  vs guard <= %+.4f  %s\n",
               g("all")$mean, GUARD_ALL, if (c3) "pass" else "FAIL"))
   cat(sprintf("     majors   %+8.4f  vs guard <= %+.4f  %s\n",
