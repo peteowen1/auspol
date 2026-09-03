@@ -182,6 +182,35 @@ bigger number.
 - **The paired sd is federal and assumed to transfer.** Guarded by the one-way
   ratchet above, but a badly wrong assumption still costs a wasted run.
 
+## Run settings, added 2026-09-03 before any arm was scored
+
+**The grid runs at `AUSPOL_N_SIMS=5000`, not the harness default of 20000.**
+
+A visible addition, not an edit: nothing above is changed, and no arm had been
+scored when this was decided. `n_sims` is a harness setting rather than a model
+parameter, and the arms on disk already run at 300, 2500, 3000 and 5000.
+
+Measured on South Australia, same seed, same arm, 5000 against 20000:
+
+| | |
+|---|--:|
+| mean change in `pred_p` | 0.00186 |
+| max change in `pred_p` | 0.01415 |
+| change in log loss on the non-major subset | −0.0066 (sd 0.0105) |
+| worst move among the 20 seats above `pred_p` 0.999 | 0.0005 |
+| **effect the primary must detect** | **1.171** |
+
+Simulation noise is about **1/180th** of the effect, and the extreme tail — the
+region log loss punishes hardest and the reason log loss is the primary at all —
+barely moves. Stage 1 goes from roughly 9 hours to 2.4.
+
+**Does this favour the answer found later?** No, and it cannot: it was fixed
+before any arm was scored, it applies identically to the base and to every arm,
+and the paired design uses one seed so what noise remains largely cancels.
+
+**The winning setting is re-verified at `n_sims = 20000` before anything ships.**
+The published forecast keeps 20000 regardless; this governs the backtest only.
+
 ## Amendments
 
 None. Any change to this document must be a visible addition with the original

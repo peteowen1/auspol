@@ -168,6 +168,49 @@ in the file plus sa2026 added first as the validation run).
    look into the `switched_party` n=311-subsample discrepancy above.
 6. Then back to A1/A2 on the active plan.
 
+## BACKLOG: the seat simulator's hot loop, profiled 2026-09-03
+
+**Not done, deliberately — sized and refused for now.** Worth ~25-30% of
+`simulate_seat_contests()`, which was a poor trade against the 4x already won by
+dropping the backtest to `n_sims = 5000`, and it edits the published forecast's
+own code path so it needs a byte-identity proof.
+
+**There is no O(n^2).** Measured in FRESH processes at 88 seats x 8 parties:
+
+| n_sims | time | us per seat-sim |
+|--:|--:|--:|
+| 500 | 8.99s | 204.4 |
+| 1000 | 17.85s | 202.9 |
+| 2000 | 37.19s | 211.3 |
+| 4000 | 76.40s | 217.0 |
+
+Clean linear scaling; the target is the ~210 us constant, not the complexity.
+**Measure in a fresh process.** Reusing one R session made 4000 sims look 1.04x
+the cost of 2000 — a warm-heap artefact that reads exactly like sublinear
+scaling, and it nearly became a finding.
+
+Rprof self-time on that unit, ranked:
+
+| | self % | what |
+|---|--:|---|
+| `simulate_seat_contests` | 49.2 | the loop body itself |
+| `as.character` | 13.3 | **builds a string hash key per elimination round, per seat, per sim** |
+| `mostattributes<-` | 6.3 | attribute copying, because `pmin`/`pmax` run on NAMED vectors |
+| `vapply` | 5.3 | |
+| `exists` | 4.0 | **then a second `get()` looks up the same key again** |
+| `bitwShiftL` | 3.4 | the bitmask feeding that key |
+
+The fix is `key <- as.character(from * 2^K + mask)` plus `exists()` plus `get()`
+replaced by one integer index into a preallocated list. With K around 8, `K * 2^K`
+is about 2,048 slots, so the table is trivially small. Dropping names in the hot
+path removes `mostattributes<-`. Note `[[` on a missing name in an environment
+THROWS rather than returning NULL — the CLAUDE.md trap — which is why a list
+indexed by integer is the right shape, not an environment.
+
+Also observed: runtime RISES with `m_IND` (137s at 1.00 to 175s at 1.75 on South
+Australia), because a wider non-major keeps more parties alive through more
+elimination rounds. Arm cost is not flat across a grid.
+
 ## Google Trends separates an emergence from a token candidacy (2026-08-26)
 
 [reviews/salience-emergence-2026-08-26.md](reviews/salience-emergence-2026-08-26.md).
