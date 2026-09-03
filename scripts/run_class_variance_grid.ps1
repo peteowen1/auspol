@@ -15,7 +15,8 @@ $env:AUSPOL_LEVEL_MULT_OTH = "1"
 $env:AUSPOL_N_SIMS = "5000"
 $log = "output/grid-$Harness.log"
 "=== stage 1 grid, harness $Harness, started $(Get-Date -Format s) ===" | Out-File -FilePath $log -Encoding utf8
-foreach ($m in @("1", "1.25", "1.5", "1.75", "2")) {
+$grid = if ($env:AUSPOL_CV_GRID) { $env:AUSPOL_CV_GRID -split "," } else { @("1","1.25","1.5","1.75","2") }
+foreach ($m in $grid) {
   $env:AUSPOL_LEVEL_MULT_IND = $m
   $t0 = Get-Date
   "--- m_IND = $m  started $(Get-Date -Format s) ---" | Out-File -FilePath $log -Append -Encoding utf8
