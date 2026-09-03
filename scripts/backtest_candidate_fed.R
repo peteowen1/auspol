@@ -82,6 +82,37 @@ cat(sprintf("LV1  level_sd: %s
 ", if (is.null(.level_sd)) "OFF (flat seat_sd)" else
             sprintf("a=%.2f b=%.2f", .level_sd[1], .level_sd[2])))
 
+# PER-CLASS SLOPE MULTIPLIER, both 1 by default so this is a no-op until an arm
+# sets it. AUSPOL_LEVEL_MULT_IND and AUSPOL_LEVEL_MULT_OTH scale level_sd's
+# slope for independents and for every other non-major; majors are never
+# touched. Pre-registered in docs/plans/prereg-class-specific-variance.md.
+#
+# WHY IT EXISTS. level_sd above ships ONE curve for every party, and the review
+# that adopted it measured that the seats it fixed were not the seats it
+# widened: on NSW the calibration slope went 0.565 -> 0.720 across all seats but
+# 0.959 -> 1.272 EXCLUDING seats an independent won. The majors were already
+# almost right and got widened past 1 anyway.
+.level_mult <- local({
+  g <- function(v) {
+    x <- suppressWarnings(as.numeric(Sys.getenv(v, "1")))
+    if (!is.finite(x) || x < 0) stop(v, " must be a finite, non-negative number")
+    x
+  }
+  c(ind = g("AUSPOL_LEVEL_MULT_IND"), oth = g("AUSPOL_LEVEL_MULT_OTH"))
+})
+# Printed unconditionally, including when it is off. An arm that silently did
+# not apply is indistinguishable from an arm that made no difference -- the
+# failure CLAUDE.md records under "an experiment that never ran".
+cat(sprintf("LV2  level_mult: %s
+",
+            if (all(.level_mult == 1)) "OFF (one curve for every class)" else
+              sprintf("IND x%.2f, other non-major x%.2f",
+                      .level_mult[["ind"]], .level_mult[["oth"]])))
+# Built per call site from that seat file's own columns, because
+# simulate_seat_contests() rejects a name that is not a share column.
+.lm <- function(sh) level_mult_for(colnames(sh), .level_mult[["ind"]],
+                                   .level_mult[["oth"]])
+
 
 # ---- other jurisdictions' flows, date-filtered ------------------------------
 # Against docs/plans/prereg-qld-flows.md and docs/plans/prereg-wa-flows.md.
@@ -726,7 +757,7 @@ for (X in out_all) {
                 X$K$to, length(sn) - miss, length(sn), miss, SURGE_H, mean(surge_arg)))
   }
   set.seed(SEED)
-  sim <- simulate_seat_contests(level_sd = .level_sd, X$shares, X$fm, party_sd = psd, seat_sd = sd_w * SEAT_SD_MULT,
+  sim <- simulate_seat_contests(level_sd = .level_sd, level_mult = .lm(X$shares), X$shares, X$fm, party_sd = psd, seat_sd = sd_w * SEAT_SD_MULT,
                                 n_sims = N_SIMS, smooth = SMOOTH, seed = SEED,
                                 shrink = shrink_arg, surge_h = surge_arg,
                                 surge_mu = surge_mu_arg, surge_sd = surge_sd_arg,

@@ -171,6 +171,25 @@
 #' @param surge_floor Minimum share, in percentage points, a candidate must
 #'   already hold in the seat before it can surge there. Stops the mechanism
 #'   handing a double-digit gain to a party polling near zero in that seat.
+#' @param level_mult Optional NAMED numeric vector giving a per-party multiplier
+#'   on `level_sd`'s slope `b`, so a party's width becomes
+#'   `a + b * m * sqrt(p * (1 - p))`. Any party absent from the vector takes
+#'   `m = 1`, so `NULL` (the default) and a vector of ones are both exactly the
+#'   published model. Requires `level_sd`; passing it alone is an error rather
+#'   than a silent no-op.
+#'
+#'   Why it exists: `level_sd` shipped ONE curve for every party, and the review
+#'   that adopted it measured that the seats it fixed were not the seats it
+#'   widened. On NSW the calibration slope went 0.565 to 0.720 across all seats
+#'   but 0.959 to 1.272 EXCLUDING seats an independent won -- the majors were
+#'   already almost perfectly calibrated and got widened past 1 anyway. The
+#'   miscalibration lives in the non-major seats.
+#'
+#'   Matched by NAME, and a name that is not a share column is an error. An
+#'   unnamed vector could reorder onto the wrong party, and a typo aimed at a
+#'   party the seat file does not carry would look exactly like an arm that made
+#'   no difference -- which is indistinguishable from an experiment that never
+#'   ran. See `docs/plans/prereg-class-specific-variance.md`.
 #' @param seed Optional RNG seed.
 #' @return List: `win_prob` (data.frame, one row per seat and party with a
 #'   probability), `totals` (matrix of seats won per party per simulation),
@@ -194,6 +213,7 @@ simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
                                    party_draws = NULL, shrink = 0,
                                    party_cor = NULL, fallback_smooth = 0,
                                    flow_sd = 0,
+                                   level_mult = NULL,
                                    surge_h = 0, surge_mu = 15.6, surge_sd = 6.1,
                                    surge_parties = NULL, surge_floor = 2) {
   # SHRINK MAY BE PER-SEAT. A scalar applies the same rate everywhere and caps
@@ -339,6 +359,38 @@ simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
       stop("level_sd must be c(a, b), both finite and non-negative", call. = FALSE)
     }
     level_sd <- as.numeric(level_sd)
+  }
+  # PER-CLASS SLOPE MULTIPLIER. Resolved to one number per party HERE, once,
+  # rather than inside the draw loop: the loop runs n_sims x nseat times and a
+  # name lookup in there would be the whole cost of the feature.
+  #
+  # Matched BY NAME and defaulting to 1 for any party absent, which is what
+  # makes the no-op exact -- an unnamed or partial vector must not silently
+  # reorder onto the wrong party. Same rule and same reason as `shrink` and
+  # `surge_h`; see docs/plans/prereg-class-specific-variance.md.
+  level_mult_vec <- rep(1, K)
+  if (!is.null(level_mult)) {
+    if (is.null(level_sd)) {
+      stop("level_mult has no effect without level_sd; pass both or neither",
+           call. = FALSE)
+    }
+    if (is.null(names(level_mult)) || anyDuplicated(names(level_mult))) {
+      stop("level_mult must be a named vector with unique names", call. = FALSE)
+    }
+    if (!all(is.finite(level_mult)) || any(level_mult < 0)) {
+      stop("level_mult must be finite and non-negative", call. = FALSE)
+    }
+    # Silence here would be the failure: a multiplier aimed at a party the seat
+    # file does not carry is a typo, and it would look exactly like an arm that
+    # made no difference -- the "experiment that never ran" hazard in CLAUDE.md.
+    unused <- setdiff(names(level_mult), parties)
+    if (length(unused)) {
+      stop("level_mult names no such party: ", paste(unused, collapse = ", "),
+           ". Share columns are: ", paste(parties, collapse = ", "),
+           call. = FALSE)
+    }
+    hit <- match(parties, names(level_mult))
+    level_mult_vec[!is.na(hit)] <- as.numeric(level_mult)[hit[!is.na(hit)]]
   }
   if (anyNA(seat_sd_vec) || any(seat_sd_vec < 0)) {
     stop("seat_sd must be finite and non-negative", call. = FALSE)
@@ -520,7 +572,7 @@ simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
       # than a fixed prior. NULL keeps seat_sd_vec exactly.
       sd_cell <- if (is.null(level_sd)) seat_sd_vec else {
         pp <- pmin(pmax(base_v, 0), 100) / 100
-        level_sd[1L] + level_sd[2L] * sqrt(pp * (1 - pp))
+        level_sd[1L] + level_sd[2L] * level_mult_vec * sqrt(pp * (1 - pp))
       }
       v <- base_v + shift + stats::rnorm(K, 0, sd_cell)
       v[v < 0] <- 0
@@ -631,4 +683,41 @@ simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
        tcp_runnerup = tcp_runnerup,
        tcp_share = tcp_share,
        fallback_rate = if (n_tx) n_fb / n_tx else NA_real_)
+}
+
+#' Per-class slope multipliers for [simulate_seat_contests()]
+#'
+#' Builds the named vector `level_mult` expects, for exactly the parties a seat
+#' file carries, from two numbers: one for independents and one for every other
+#' non-major. Majors always take 1.
+#'
+#' Exists so the class definition lives in ONE place. Six callers need it --
+#' `fit_seats_full.R` and the five candidate backtest harnesses -- and
+#' `CLAUDE.md` records that a parameter wired into four harnesses and missed in
+#' the fifth produced numbers that were read as findings for four days. A
+#' hand-written class list in six files is six chances to disagree.
+#'
+#' @param parties Character vector of the share columns, i.e. `colnames(shares)`.
+#' @param m_ind Slope multiplier for `IND`.
+#' @param m_oth Slope multiplier for every non-major that is not `IND` -- `GRN`,
+#'   `ONP`, `OTH`, `OTH_RIGHT` and anything else `classify_party()` emits.
+#' @return A named numeric vector over `parties`, or `NULL` when both
+#'   multipliers are 1, so the no-op reaches `simulate_seat_contests()` as
+#'   `NULL` rather than as a vector of ones.
+#' @export
+level_mult_for <- function(parties, m_ind = 1, m_oth = 1) {
+  if (!length(parties) || anyNA(parties)) {
+    stop("parties must be a non-empty character vector", call. = FALSE)
+  }
+  if (!all(is.finite(c(m_ind, m_oth))) || any(c(m_ind, m_oth) < 0)) {
+    stop("m_ind and m_oth must be finite and non-negative", call. = FALSE)
+  }
+  if (m_ind == 1 && m_oth == 1) return(NULL)
+  # MAJORS ARE THE ONLY HARD-CODED LIST, and it matches the one
+  # simulate_seat_contests() already uses for surge eligibility. Everything else
+  # is whatever the seat file carries, so a new minor party gets m_oth without
+  # anyone remembering to add it.
+  out <- ifelse(parties == "IND", m_ind,
+                ifelse(parties %in% c("ALP", "LNP", "NAT"), 1, m_oth))
+  stats::setNames(as.numeric(out), parties)
 }

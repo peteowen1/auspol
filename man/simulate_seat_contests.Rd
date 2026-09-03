@@ -19,6 +19,7 @@ simulate_seat_contests(
   party_cor = NULL,
   fallback_smooth = 0,
   flow_sd = 0,
+  level_mult = NULL,
   surge_h = 0,
   surge_mu = 15.6,
   surge_sd = 6.1,
@@ -162,6 +163,26 @@ bars. The one-step-ahead error of "mean of the last five" was measured at
 \strong{sd 3.65 points} over 19 observations.
 
 Zero reproduces the previous behaviour exactly.}
+
+\item{level_mult}{Optional NAMED numeric vector giving a per-party multiplier
+on \code{level_sd}'s slope \code{b}, so a party's width becomes
+\code{a + b * m * sqrt(p * (1 - p))}. Any party absent from the vector takes
+\code{m = 1}, so \code{NULL} (the default) and a vector of ones are both exactly the
+published model. Requires \code{level_sd}; passing it alone is an error rather
+than a silent no-op.
+
+Why it exists: \code{level_sd} shipped ONE curve for every party, and the review
+that adopted it measured that the seats it fixed were not the seats it
+widened. On NSW the calibration slope went 0.565 to 0.720 across all seats
+but 0.959 to 1.272 EXCLUDING seats an independent won -- the majors were
+already almost perfectly calibrated and got widened past 1 anyway. The
+miscalibration lives in the non-major seats.
+
+Matched by NAME, and a name that is not a share column is an error. An
+unnamed vector could reorder onto the wrong party, and a typo aimed at a
+party the seat file does not carry would look exactly like an arm that made
+no difference -- which is indistinguishable from an experiment that never
+ran. See \code{docs/plans/prereg-class-specific-variance.md}.}
 
 \item{surge_h}{Per-draw probability, in \verb{[0, 1]}, that an insurgent
 non-major candidate surges in a seat. Length 1 (the same hazard

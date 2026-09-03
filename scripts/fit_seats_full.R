@@ -48,6 +48,37 @@ cat(sprintf("LV1  level_sd: %s
 ", if (is.null(.level_sd)) "OFF (flat seat_sd)" else
             sprintf("a=%.2f b=%.2f", .level_sd[1], .level_sd[2])))
 
+# PER-CLASS SLOPE MULTIPLIER, both 1 by default so this is a no-op until an arm
+# sets it. AUSPOL_LEVEL_MULT_IND and AUSPOL_LEVEL_MULT_OTH scale level_sd's
+# slope for independents and for every other non-major; majors are never
+# touched. Pre-registered in docs/plans/prereg-class-specific-variance.md.
+#
+# WHY IT EXISTS. level_sd above ships ONE curve for every party, and the review
+# that adopted it measured that the seats it fixed were not the seats it
+# widened: on NSW the calibration slope went 0.565 -> 0.720 across all seats but
+# 0.959 -> 1.272 EXCLUDING seats an independent won. The majors were already
+# almost right and got widened past 1 anyway.
+.level_mult <- local({
+  g <- function(v) {
+    x <- suppressWarnings(as.numeric(Sys.getenv(v, "1")))
+    if (!is.finite(x) || x < 0) stop(v, " must be a finite, non-negative number")
+    x
+  }
+  c(ind = g("AUSPOL_LEVEL_MULT_IND"), oth = g("AUSPOL_LEVEL_MULT_OTH"))
+})
+# Printed unconditionally, including when it is off. An arm that silently did
+# not apply is indistinguishable from an arm that made no difference -- the
+# failure CLAUDE.md records under "an experiment that never ran".
+cat(sprintf("LV2  level_mult: %s
+",
+            if (all(.level_mult == 1)) "OFF (one curve for every class)" else
+              sprintf("IND x%.2f, other non-major x%.2f",
+                      .level_mult[["ind"]], .level_mult[["oth"]])))
+# Built per call site from that seat file's own columns, because
+# simulate_seat_contests() rejects a name that is not a share column.
+.lm <- function(sh) level_mult_for(colnames(sh), .level_mult[["ind"]],
+                                   .level_mult[["oth"]])
+
 
 N_SIMS  <- as.integer(Sys.getenv("AUSPOL_N_SIMS", "20000"))
 SEAT_SD <- 3.5      # within-region seat deviation, from seat_swing_spread()
@@ -758,7 +789,7 @@ t0 <- Sys.time()
 SHRINK <- as.numeric(Sys.getenv("AUSPOL_SHRINK", "0.10"))
 if (SHRINK > 0) cat(sprintf("CAL  calibration shrink %.2f applied
 ", SHRINK))
-sim <- simulate_seat_contests(level_sd = .level_sd, shares, fm, party_sd = psd, seat_sd = SEAT_SD, shrink = SHRINK,
+sim <- simulate_seat_contests(level_sd = .level_sd, level_mult = .lm(shares), shares, fm, party_sd = psd, seat_sd = SEAT_SD, shrink = SHRINK,
                               n_sims = N_SIMS, smooth = SMOOTH, seed = SEED,
                               statewide_draws = sw_draws,
                               surge_h = surge_arg, surge_mu = surge_mu_arg, surge_sd = surge_sd_arg)
