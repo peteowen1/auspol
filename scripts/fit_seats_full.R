@@ -112,6 +112,29 @@ if (!all(file.exists(need))) {
   quit(save = "no", status = 0)
 }
 
+# The files above degrade to a clean S5 SKIP. These two do NOT -- they are
+# hard requirements of the published path, and a missing one is a broken
+# pipeline rather than absent data. Checked HERE, together, rather than at
+# their read sites 50 and 267 lines below.
+#
+# The reason is a cost paid twice on 2026-09-03. The nightly run had been red
+# since 2026-08-21 on the Queensland file; fixing that got the run three
+# seconds further, to a cryptic fread() error on the transposed federal file,
+# which was missing for the identical reason -- its producing script was never
+# added to the workflow either. Checking one file at a time turns one report
+# into one round trip per missing file, and each round trip here is a
+# thirteen-minute CI run.
+hard <- c("ecq-qld-transfers.csv"          = "scripts/fetch_preferences_qld.R",
+          "federal-transposed-to-state.csv" = "scripts/transpose_federal_to_state.R")
+if (identical(Sys.getenv("AUSPOL_QLD_FLOWS", "1"), "0")) {
+  hard <- hard[names(hard) != "ecq-qld-transfers.csv"]
+}
+absent <- hard[!file.exists(file.path(PREF, names(hard)))]
+if (length(absent)) {
+  stop("S5 missing ", length(absent), " required file(s) under ", PREF, ":\n",
+       paste0("  ", names(absent), "  <- run ", absent, collapse = "\n"))
+}
+
 # ---- 1. flow matrix, from both elections -----------------------------------
 # Victoria is the right jurisdiction and supplies Greens, independent and
 # minor-right behaviour from 452 exclusions. It cannot speak to One Nation --
