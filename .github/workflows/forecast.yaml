@@ -73,7 +73,7 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           path: external/elections
-          key: elections-v1-${{ hashFiles('scripts/fetch_preferences_*.R') }}
+          key: elections-v2-${{ hashFiles('scripts/fetch_preferences_*.R') }}
 
       - name: Fetch election results
         id: fetch-elections
@@ -81,6 +81,7 @@ jobs:
         run: |
           Rscript scripts/fetch_preferences_sa.R
           Rscript scripts/fetch_preferences_vic.R
+          Rscript scripts/fetch_preferences_qld.R
           cat external/elections/MANIFEST.csv
 
       - name: Cache election results
@@ -88,7 +89,7 @@ jobs:
         uses: actions/cache/save@v4
         with:
           path: external/elections
-          key: elections-v1-${{ hashFiles('scripts/fetch_preferences_*.R') }}
+          key: elections-v2-${{ hashFiles('scripts/fetch_preferences_*.R') }}
 
       - name: Run the pipeline
         id: run

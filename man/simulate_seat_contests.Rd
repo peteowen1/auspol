@@ -162,6 +162,42 @@ bars. The one-step-ahead error of "mean of the last five" was measured at
 \strong{sd 3.65 points} over 19 observations.
 
 Zero reproduces the previous behaviour exactly.}
+
+\item{surge_h}{Per-draw probability, in \verb{[0, 1]}, that an insurgent
+non-major candidate surges in a seat. Length 1 (the same hazard
+everywhere), one entry per seat, or a NAMED vector matched by seat name --
+in which case every seat must have an entry, for the same reason \code{shrink}
+is matched by name: an unnoticed reordering would give the wrong seat's
+hazard to the wrong seat and nothing in the output would show it.
+
+Zero reproduces the previous behaviour exactly.
+
+This is a FAT TAIL, not a wider bell. Symmetric widening of \code{seat_sd} was
+measured across 1.0-2.0 and barely matters, because no plausible Gaussian
+flips a seat a major leads by 30 points -- yet that is exactly where the
+over-confidence lived. Federal seats called at 99.9\% won 95.7\%, and eight
+of the nine misses above \code{pred_p} 0.9999 were a non-major taking a seat
+called safe for a major.}
+
+\item{surge_mu, surge_sd}{Mean and standard deviation, in percentage points,
+of the \code{N(surge_mu, surge_sd)} gain drawn for the surging candidate.
+Everyone else in the seat scales down by a common factor -- not a flat
+subtraction, which would drive small parties negative and silently
+redistribute their vote -- so the seat still sums to 100.
+
+The count then decides the seat as usual, so a surge that falls short
+LOSES. That is why the mechanism is generative rather than an override
+like \code{shrink}, and why it imposes no ceiling. \code{surge_sd} must be finite
+and non-negative.}
+
+\item{surge_parties}{Character vector naming the share columns eligible to
+surge. \code{NULL} (default) makes every column other than \code{ALP}, \code{LNP} and
+\code{NAT} eligible. Any name not among the share columns is an error rather
+than a silent no-op.}
+
+\item{surge_floor}{Minimum share, in percentage points, a candidate must
+already hold in the seat before it can surge there. Stops the mechanism
+handing a double-digit gain to a party polling near zero in that seat.}
 }
 \value{
 List: \code{win_prob} (data.frame, one row per seat and party with a
