@@ -146,10 +146,20 @@ Decide whether to widen to earlier federal elections before running.
 
 ## D — data gaps
 
-### D1. `vic2022` winners file
+### D1. ~~`vic2022` winners file~~ DONE 2026-08-27, verified 2026-09-04
 
-731 rows with `elected` still NA, and **Victoria is the live target**. Every
-other commission's winners file is on disk; the VEC's 2022 one is not.
+Was already resolved the same day A1/A2 closed, in `e65156f`:
+`scripts/derive_vic2022_winners.R` derives `vec-2022-vic-winners.csv` from the
+VEC's own transfer counts, and `build_candidacies.R` has been joining it in
+since. This entry sat here stale for eight days claiming open work that was
+already shipped — caught only by checking disk before starting, per the rule
+`CLAUDE.md` names for exactly this trap.
+
+Re-verified today rather than trusted from the comment: `output/candidacies.csv`
+carries 731 vic2022 rows, **zero** NA on `elected`, and all **87 of 87** seats
+resolve to exactly one winner (Narracan is the 88th seat and is absent from
+the corpus for the separately-documented reason — no results/distribution page
+was ever published for it).
 
 ### D2. WA given names
 
