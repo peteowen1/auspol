@@ -60,7 +60,76 @@ SAL_T[, jp := rank(jump, ties.method = "average") / .N]
 SAL_T[, .k := keyword]; SAL_T[, .s := ns(seat)]
 cand <- merge(cand, SAL_T[, .(.s, party, .k = .k, salience_jump = jump, salience_pctile = jp)],
              by.x = c(".s", "party", ".k"), by.y = c(".s", "party", ".k"), all.x = TRUE)
-cand[, salience_pm_relative := NA_real_]  # not yet built -- see chat: needs raw-batch re-derivation
+
+# ---- seat_salience and election_salience ------------------------------------
+# Both are "how loud is this candidate against the loudest in scope", now that
+# fetch_salience_v6.R covers MAJORS too (2026-08-28). Before that the majors
+# were filtered out before Trends was ever queried, so a seat had no denominator
+# worth the name -- the loudest candidate in scope was whoever the emergence
+# gate happened to fetch.
+#
+#   seat_salience     = 100 * jump / max(jump in that seat)
+#   election_salience = 100 * jump / max(jump in that election)
+#
+# The PM/Premier is no longer a denominator, only the anchor that makes separate
+# Trends batches comparable at all. Design settled with Pete on 2026-08-28.
+#
+# Denominators are computed OUTSIDE the brackets and given names that match no
+# column. That is the data.table NSE collision this repo has now hit SEVEN
+# times, most recently in this very script (a local `tot` shadowed
+# candidacies.csv's own `tot` column and turned a 7-row groupby into 1122).
+#
+# TWO THINGS A RATIO TO THE MAXIMUM GETS WRONG, both found by an anchor check
+# that asked for the range before anyone looked at a value. The first draft of
+# this block produced seat_salience down to -182,224.
+#
+#   1. `jump` GOES NEGATIVE -- 9.2% of fed2025 and up to 38% of WA 2017. A
+#      negative jump means search interest FELL over the campaign. That is "no
+#      surge", which is 0 salience, not negative salience. Floored, not dropped.
+#   2. A seat whose loudest candidate scored 0.0032 (Dobell) had another
+#      candidate's -2.94 divided by it, giving -91,300. Flooring at 0 fixes that
+#      arithmetically: a ratio of non-negatives to their own maximum is in
+#      [0, 100] at ANY positive denominator.
+#
+# NO MINIMUM-DENOMINATOR CONSTANT. The first attempt required the seat maximum
+# to reach 1% of the ELECTION maximum, and the coverage guard below caught it
+# immediately: seat_salience fell to 3% populated. Albanese's 18.03 is a
+# thousandfold outlier against a seat-max median of 0.019, so the election
+# maximum is a useless yardstick for a seat, and any absolute floor would be a
+# number picked off a scale with no anchor -- the thing docs/CONSTANTS.md exists
+# to stop.
+#
+# Instead the DENOMINATOR IS PUBLISHED, as seat_salience_basis. Grayndler's 100
+# rests on 18.03 and Burt's on 0.00097, and a reader can now see which is which
+# rather than having the distinction silently thrown away or silently kept.
+SAL_T[, jump_pos := pmax(jump, 0)]
+seat_den <- SAL_T[, .(seat_jump_max = max(jump_pos)), by = .s]
+election_jump_max <- max(SAL_T$jump_pos)
+cand <- merge(cand, seat_den, by = ".s", all.x = TRUE)
+cand[, salience_jump_pos := pmax(salience_jump, 0)]
+
+# A seat where NOTHING was measured has no denominator, and 0/0 must not become
+# a number. NA means "not measured", which is a different claim from 0, and this
+# repo has already lost a seat to a zero from a sparse table being read as a
+# measurement.
+cand[, seat_salience := fifelse(!is.na(seat_jump_max) & seat_jump_max > 0,
+                                100 * salience_jump_pos / seat_jump_max, NA_real_)]
+cand[, seat_salience_basis := fifelse(!is.na(seat_jump_max) & seat_jump_max > 0,
+                                      seat_jump_max, NA_real_)]
+cand[, election_salience := if (election_jump_max > 0)
+       100 * salience_jump_pos / election_jump_max else NA_real_]
+
+# Both are shares of a maximum over non-negative values, so [0, 100] holds BY
+# CONSTRUCTION. Asserted anyway: the first draft violated it by five orders of
+# magnitude and every row count, type and coverage check still passed.
+for (.c in c("seat_salience", "election_salience")) {
+  .v <- cand[[.c]]; .v <- .v[!is.na(.v)]
+  if (length(.v) && (min(.v) < -1e-9 || max(.v) > 100 + 1e-9)) {
+    stop("FBT! ", .c, " outside [0, 100]: min ", signif(min(.v), 6),
+         " max ", signif(max(.v), 6), ". A ratio to a maximum cannot leave ",
+         "that range unless the numerator is negative or the denominator is noise.")
+  }
+}
 
 # ---- actual winner, per seat -------------------------------------------------
 seat_winner <- cand[elected == TRUE, .(seat, actual_winner_party = party, actual_winner_name = name)]
@@ -108,7 +177,9 @@ OUT <- cand[, .(
   party_national_now = round(party_national_now, 2),
   salience_pctile = round(salience_pctile, 3),
   salience_jump = round(salience_jump, 3),
-  salience_pm_relative,
+  seat_salience = round(seat_salience, 1),
+  seat_salience_basis = signif(seat_salience_basis, 3),
+  election_salience = round(election_salience, 1),
   actual_winner_party, actual_winner_name,
   our_pred_party, our_prob_on_actual = round(our_prob_on_actual, 4),
   our_ll = round(our_ll, 3)
@@ -117,6 +188,20 @@ setorder(OUT, seat, -actual_pcv)
 fwrite(OUT, "output/fed2025-browse-table.csv")
 cat(sprintf("FBT1  wrote output/fed2025-browse-table.csv: %d rows, %d seats\n",
             nrow(OUT), uniqueN(OUT$seat)))
+# COVERAGE, not presence. A column can be present, correctly typed and 0%
+# populated while every row-count check passes -- the rule in ~/.claude/CLAUDE.md
+# after 4,978,201 names were silently discarded in citiusverse.
+cat(sprintf("FBT3  salience denominators: %d seats with a positive max, %d without; election max %.2f
+",
+            uniqueN(cand[seat_jump_max > 0]$.s), uniqueN(cand[is.na(seat_jump_max) | seat_jump_max <= 0]$.s),
+            election_jump_max))
+cat(sprintf("FBT3  seat_salience %.0f%% populated | election_salience %.0f%%
+",
+            100*mean(!is.na(OUT$seat_salience)), 100*mean(!is.na(OUT$election_salience))))
+if (mean(!is.na(OUT$seat_salience)) < 0.10) {
+  stop("FBT! seat_salience is under 10% populated -- the join or the denominator ",
+       "is wrong. A column that lands empty must fail the build, not ship.")
+}
 cat(sprintf("FBT2  coverage: projected %.0f%% | AEF %.0f%% | own_prev %.0f%% | salience %.0f%%\n",
             100*mean(!is.na(OUT$projected_share)), 100*mean(!is.na(OUT$aef_primary_median)),
             100*mean(!is.na(OUT$own_prev_pcv)), 100*mean(!is.na(OUT$salience_pctile))))
