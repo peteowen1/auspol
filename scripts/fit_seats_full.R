@@ -112,26 +112,41 @@ if (!all(file.exists(need))) {
   quit(save = "no", status = 0)
 }
 
-# The files above degrade to a clean S5 SKIP. These two do NOT -- they are
+# The files above degrade to a clean S5 SKIP. The ones below do NOT -- they are
 # hard requirements of the published path, and a missing one is a broken
 # pipeline rather than absent data. Checked HERE, together, rather than at
-# their read sites 50 and 267 lines below.
+# their read sites 50, 267 and 533 lines down.
 #
-# The reason is a cost paid twice on 2026-09-03. The nightly run had been red
-# since 2026-08-21 on the Queensland file; fixing that got the run three
-# seconds further, to a cryptic fread() error on the transposed federal file,
-# which was missing for the identical reason -- its producing script was never
-# added to the workflow either. Checking one file at a time turns one report
-# into one round trip per missing file, and each round trip here is a
-# thirteen-minute CI run.
-hard <- c("ecq-qld-transfers.csv"          = "scripts/fetch_preferences_qld.R",
-          "federal-transposed-to-state.csv" = "scripts/transpose_federal_to_state.R")
+# The reason is a cost paid three times on 2026-09-03. The nightly run had been
+# red since 2026-08-21 on the Queensland file; fixing that got it three seconds
+# further, to a cryptic fread() on the transposed federal file; fixing THAT got
+# it three seconds further still, to a bare `gzfile(file, "rb"): cannot open
+# the connection` on the statewide covariance. All three had the same cause --
+# the script that produces the file was never added to the workflow -- and each
+# one cost a separate thirteen-minute CI run to discover, because the checks
+# sat at the read sites instead of together at the top.
+#
+# The third slipped past the first version of this guard, which checked only
+# PREF. statewide-cov.rds lives under output/, and that difference is the
+# entire reason it was missed. So this list is keyed on FULL PATHS: a new hard
+# input belongs here whatever directory it lives in.
+hard <- c(
+  "ecq-qld-transfers.csv"           = "scripts/fetch_preferences_qld.R",
+  "federal-transposed-to-state.csv" = "scripts/transpose_federal_to_state.R")
+names(hard) <- file.path(PREF, names(hard))
 if (identical(Sys.getenv("AUSPOL_QLD_FLOWS", "1"), "0")) {
-  hard <- hard[names(hard) != "ecq-qld-transfers.csv"]
+  hard <- hard[names(hard) != file.path(PREF, "ecq-qld-transfers.csv")]
 }
-absent <- hard[!file.exists(file.path(PREF, names(hard)))]
+# Same condition as the read site far below, deliberately duplicated rather
+# than hoisted: AUSPOL_PARTY_COR=off is a real arm of
+# docs/plans/prereg-statewide-covariance.md and must not require the file.
+.cor_mode <- Sys.getenv("AUSPOL_PARTY_COR", "shrunk")
+if (!identical(.cor_mode, "off") && nzchar(.cor_mode)) {
+  hard["output/statewide-cov.rds"] <- "scripts/estimate_statewide_cov.R"
+}
+absent <- hard[!file.exists(names(hard))]
 if (length(absent)) {
-  stop("S5 missing ", length(absent), " required file(s) under ", PREF, ":\n",
+  stop("S5 missing ", length(absent), " required file(s):\n",
        paste0("  ", names(absent), "  <- run ", absent, collapse = "\n"))
 }
 

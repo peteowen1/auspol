@@ -48,6 +48,13 @@ STAGES <- list(
   list(f = "scripts/fit_nsw.R",        what = "NSW cycles",              slow = TRUE,  target = FALSE),
   list(f = "scripts/fit_projection.R", what = "fundamentals + mix",      slow = FALSE),
   list(f = "scripts/fit_seats.R",      what = "seat simulation (two-party)", slow = FALSE),
+  # The statewide party covariance fit_seats_full.R draws from. It writes to
+  # output/, which is NOT cached between CI runs the way external/elections is,
+  # so it has to be a pipeline stage rather than a fetch step -- and it was
+  # neither, which is why the nightly run died on a bare gzfile() error for
+  # output/statewide-cov.rds. Reads ten election pairs' first preferences and
+  # nothing else; seconds, not minutes.
+  list(f = "scripts/estimate_statewide_cov.R", what = "statewide covariance", slow = FALSE),
   # Candidate-level seats. Runs AFTER fit_seats.R because its S5 check compares
   # the two, and needs the election data fetched into external/elections --
   # it exits cleanly with instructions when that is absent, so a developer

@@ -73,7 +73,7 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           path: external/elections
-          key: elections-v3-${{ hashFiles('scripts/fetch_preferences_*.R', 'scripts/transpose_federal_to_state.R') }}
+          key: elections-v4-${{ hashFiles('scripts/fetch_preferences_*.R', 'scripts/transpose_federal_to_state.R', 'scripts/fetch_sa2022_and_winners.R') }}
 
       - name: Fetch election results
         id: fetch-elections
@@ -82,6 +82,15 @@ jobs:
           Rscript scripts/fetch_preferences_sa.R
           Rscript scripts/fetch_preferences_vic.R
           Rscript scripts/fetch_preferences_qld.R
+          # Needed by scripts/estimate_statewide_cov.R, which fits the party
+          # covariance from ten election PAIRS -- so it wants each state's
+          # PREVIOUS election too, not just the most recent one. All immutable
+          # historical results, so the cache carries them and the nightly cost
+          # after the first run is nothing.
+          Rscript scripts/fetch_preferences_fed.R
+          Rscript scripts/fetch_preferences_nsw.R
+          Rscript scripts/fetch_preferences_vic_historical.R
+          Rscript scripts/fetch_sa2022_and_winners.R
           Rscript scripts/transpose_federal_to_state.R
           cat external/elections/MANIFEST.csv
 
@@ -90,7 +99,7 @@ jobs:
         uses: actions/cache/save@v4
         with:
           path: external/elections
-          key: elections-v3-${{ hashFiles('scripts/fetch_preferences_*.R', 'scripts/transpose_federal_to_state.R') }}
+          key: elections-v4-${{ hashFiles('scripts/fetch_preferences_*.R', 'scripts/transpose_federal_to_state.R', 'scripts/fetch_sa2022_and_winners.R') }}
 
       - name: Run the pipeline
         id: run
