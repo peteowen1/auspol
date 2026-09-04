@@ -188,35 +188,42 @@ document, "if it proves unreliable C3 must be abandoned rather than run on
 incomparable scales"). **That fetch is C2 below, and it is now the only thing
 left in this thread.**
 
-### C2. C3 on held-out emergences — BLOCKED 2026-09-04, no runnable population
+### C2. ~~C3 on held-out emergences~~ DONE 2026-09-04 — C3 PASSES for the first time
 
-Amended in `prereg-salience-c3-amended.md`. The recount this entry called for
-is now done and sourced, in
-`docs/reviews/c3-amended-recount-2026-09-04.md`: **5** held-out emergences, not
-9. Four of the five (sa2026's One Nation winners) are genuine; nsw2023's other
-four are the SAME sitting members re-elected under a reclassified party label
-(the party-switching-incumbent trap this session already fixed once, in
-`analyse_incumbent_transfer.R`), leaving nsw2023 with exactly **one** real
-emergence (Wakehurst).
+Blocked earlier the same day (`docs/reviews/c3-amended-recount-2026-09-04.md`
+— the amendment's population was 5 emergences, not 9, four of five One
+Nation in one state, tripping its own refusal clauses). Both live paths named
+there turned out to be one fix: `docs/plans/prereg-salience-c3-v3.md`, scored
+in `docs/reviews/salience-c3-v3-2026-09-04.md`.
 
-**This trips the amendment's own refusal clauses before it runs**: one
-observation cannot show anything about NSW independently, and four-of-five
-being one party in one state leaves no second subset to compare against. Not
-run, because a test that cannot pass its own pre-registered gates is not worth
-scoring.
+**Fix 1**: the salience feature switched from raw `log1p(jump)` to a
+within-election percentile — `fetch_salience_v6.R`'s own header already said
+the design "never needed cross-election scale... a rank statistic is
+invariant to it," but the gate model used raw jump anyway, which is not
+invariant to a different anchor (a different PM/Premier) per era. Checked
+against the already-trusted do-no-harm test before use: still passes, still
+significant, honestly weaker per case (Kooyong-type moves shrink from ~13
+points to ~2-4).
 
-**Two live paths, neither started:**
+**Fix 2**: the emergence population recomputed by PERSON across every
+election with salience-v6 coverage, not just nsw2023/sa2026 — the same
+party-switching-incumbent trap, fixed a second time in
+`build_c3_widened_population.R`, which asserts every merge is row-count-
+preserving after two separate join fan-outs inflated an early pass to 22 and
+then 24 before being caught.
 
-1. The original fed2010–2019 design. Its salience data already exists in
-   `salience-v6.csv` (fetched with a fixed per-era anchor rather than the
-   chained windows the original document flagged as untested) — but whether
-   that fixed-anchor design gives comparable scale across eras is itself
-   unverified and needs its own check first.
-2. Widen the amended pool: vic2022 now has a winners file (resolved
-   2026-08-27, listed as a limitation the amendment didn't have yet), and
-   qld2020/2024 plus the WA cycles are on disk and untried. Needs the same
-   by-name recount as above applied to each before trusting any count from
-   them.
+**Result: 8 election clusters, 17 usable emergences, One Nation down to
+18% of the pool. Criterion 1 passes at clustered mean improvement 3.226
+against a bar of 0.924 — roughly 9.8x — with all 8 clusters positive, and the
+result gets STRONGER excluding sa2026 entirely (3.377), not weaker. Do-no-harm
+holds in every one of the 8 test elections individually.**
+
+**Settles**: salience genuinely detects first-time seat winners the model
+has never seen, across every region and era tested, not just the federal
+cases it was fitted on. **Does not settle**: whether to ship the
+percentile-based gate — that trades real predictive punch (raw jump's larger,
+more useful individual corrections) for structural cross-era comparability,
+and is its own decision, not authorised by this result alone.
 
 ---
 
