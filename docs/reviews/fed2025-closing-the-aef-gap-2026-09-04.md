@@ -163,3 +163,37 @@ information this model does not carry.
 That is the answer to "optimise until seat log loss beats AEF for fed2025":
 it cannot be done by optimising, and the bound above is how we know rather
 than assume.
+
+## Final tally (2026-09-05)
+
+Best honest configuration: **0.3588** on 150 seats, against **AEF 0.3025**.
+Not beaten. Everything tried, in order:
+
+| # | idea | result |
+|---|---|---|
+| 1 | **Sitting-member slope tier** | **SHIPPED.** 0.3663 → 0.3597 |
+| 2 | **Notional baselines for new seats** | **SHIPPED.** 149 → 150 seats scored, 0.3597 → 0.3588 |
+| 3 | Missing teal flow cells | dead — cells exist and are correct |
+| 4 | Compositional per-seat noise | dead — provably a no-op |
+| 5 | `seat_sd` narrowing | dead — monotonically worse (0.3607 → 0.3817) |
+| 6 | Displaced-major bias | dead — t = 1.20 |
+| 7 | Per-seat elasticity | dead — persistence r = −0.068 |
+| 8 | IND trend level (generic) | dead — 0.3627, hurts OTH_RIGHT which is not trending |
+| 9 | `shrink` retune under screened slopes | no gain — 0.10 already near-optimal |
+| 10 | surge-v2 stacked on 1+2 | accuracy 84.7% but log loss 0.3630 — not adopted |
+
+**The bound that closes it.** Handed the TRUE national independent vote —
+an oracle no forecaster has — this model scores ~0.322. Still worse than
+AEF's 0.3025. The deficit is not any parameter in this model.
+
+**What the two shipped fixes are actually worth**, beyond the 0.0075 of log
+loss: new seats are no longer silently dropped from the forecast, and
+entrenched independents are no longer shrunk toward a 5% statewide average
+every cycle. Both bite directly on Victoria 2026, which redistributes and
+which has sitting independents.
+
+**The goal as stated is not reachable by optimisation.** Closing the last
+0.056 needs seat-level information this model does not carry — AEF has seat
+polling and a ten-component swing decomposition. That is a data-acquisition
+question, not a modelling one, and it should be decided as such rather than
+approximated by tuning on a single 149-seat election.
