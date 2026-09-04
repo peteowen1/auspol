@@ -468,11 +468,15 @@ for (K in PAIRS) {
   surge_arg <- SURGE_H; surge_mu_arg <- 15.6; surge_sd_arg <- 6.1
   if (identical(Sys.getenv("AUSPOL_SALIENCE_SURGE_V2", "0"), "1")) {
     v2_pairs <- list(
+      list(election = "fed2010", prev = "fed2007", region = "fed"),
+      list(election = "fed2013", prev = "fed2010", region = "fed"),
+      list(election = "fed2016", prev = "fed2013", region = "fed"),
       list(election = "fed2019", prev = "fed2016", region = "fed"),
       list(election = "fed2022", prev = "fed2019", region = "fed"),
       list(election = "vic2022", prev = "vic2018", region = "vic"),
       list(election = "nsw2023", prev = "nsw2019", region = "nsw"),
-      list(election = "sa2026",  prev = "sa2022",  region = "sa"))
+      list(election = "sa2026",  prev = "sa2022",  region = "sa"),
+      list(election = "wa2008",  prev = "wa2005",  region = "wa"))
     train_pairs <- Filter(function(p) p$election != .eb, v2_pairs)
     hz <- tryCatch(surge_hazard_for(.eb, .ea, "vic", train_pairs),
                    error = function(e) { cat(sprintf("BV0v! surge-v2 failed for %s: %s\n", .eb, conditionMessage(e))); NULL })

@@ -577,11 +577,15 @@ cat(sprintf("BS1f fallback_smooth %.2f | flow_sd %.2f\n", FB_SMOOTH, FLOW_SD))
 surge_arg <- SURGE_H; surge_mu_arg <- 15.6; surge_sd_arg <- 6.1
 if (identical(Sys.getenv("AUSPOL_SALIENCE_SURGE_V2", "0"), "1")) {
   v2_pairs <- list(
+    list(election = "fed2010", prev = "fed2007", region = "fed"),
+    list(election = "fed2013", prev = "fed2010", region = "fed"),
+    list(election = "fed2016", prev = "fed2013", region = "fed"),
     list(election = "fed2019", prev = "fed2016", region = "fed"),
     list(election = "fed2022", prev = "fed2019", region = "fed"),
     list(election = "vic2022", prev = "vic2018", region = "vic"),
     list(election = "nsw2023", prev = "nsw2019", region = "nsw"),
-    list(election = "sa2026",  prev = "sa2022",  region = "sa"))
+    list(election = "sa2026",  prev = "sa2022",  region = "sa"),
+    list(election = "wa2008",  prev = "wa2005",  region = "wa"))
   train_pairs <- Filter(function(p) p$election != "sa2026", v2_pairs)
   hz <- tryCatch(surge_hazard_for("sa2026", "sa2022", "sa", train_pairs),
                  error = function(e) { cat(sprintf("BS0v! surge-v2 failed: %s\n", conditionMessage(e))); NULL })

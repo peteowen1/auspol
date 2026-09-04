@@ -245,11 +245,15 @@ if (identical(Sys.getenv("AUSPOL_SALIENCE_SURGE", "0"), "1")) {
 # every OTHER available election so the target never leaks into its own fit.
 SURGE_V2 <- identical(Sys.getenv("AUSPOL_SALIENCE_SURGE_V2", "0"), "1")
 SURGE_V2_PAIRS <- list(
+  list(election = "fed2010", prev = "fed2007", region = "fed"),
+  list(election = "fed2013", prev = "fed2010", region = "fed"),
+  list(election = "fed2016", prev = "fed2013", region = "fed"),
   list(election = "fed2019", prev = "fed2016", region = "fed"),
   list(election = "fed2022", prev = "fed2019", region = "fed"),
   list(election = "vic2022", prev = "vic2018", region = "vic"),
   list(election = "nsw2023", prev = "nsw2019", region = "nsw"),
-  list(election = "sa2026",  prev = "sa2022",  region = "sa"))
+  list(election = "sa2026",  prev = "sa2022",  region = "sa"),
+  list(election = "wa2008",  prev = "wa2005",  region = "wa"))
 if (SURGE_H > 0)
   cat(sprintf("BF0s surge hazard %.4f, size N(15.6, 6.1), floor 2%%
 ", SURGE_H))
