@@ -398,6 +398,32 @@ for (K in PAIRS) {
   win <- WIN[election == eb, .(seat, winner = coal(winner))]
   stopifnot(nrow(win) > 100L)
 
+  # NOTIONAL BASELINE FOR A REDISTRIBUTED/NEW SEAT, off by default
+  # (AUSPOL_NOTIONAL=1). A seat created by a redistribution has no prior
+  # result under its new name, so it is dropped below and never forecast --
+  # Bullwinkel at fed2025, and any new Victorian seat in 2026. AE Forecasts
+  # called Bullwinkel at 0.748 and was right; on a 150-seat basis that one
+  # seat was 85% of our entire remaining log-loss deficit to them.
+  # scripts/build_notional_baselines.R reconstructs the prior result on the
+  # TARGET election's boundaries from booth-level AEC data (97.3% of fed2022
+  # votes map forward). Adding it makes the comparison honest -- it scores a
+  # seat we currently get a free pass on -- so it may WORSEN the headline
+  # number while removing a real blind spot.
+  if (identical(Sys.getenv("AUSPOL_NOTIONAL", "0"), "1") &&
+      file.exists("output/notional-baselines.csv")) {
+    NB <- fread("output/notional-baselines.csv", showProgress = FALSE)
+    NB <- NB[election == eb & prior == ea]
+    if (nrow(NB)) {
+      missing_seats <- setdiff(unique(fb$seat), unique(fa$seat))
+      add <- NB[seat %in% missing_seats, .(seat, party, votes)]
+      if (nrow(add)) {
+        cat(sprintf("BF0n notional baseline supplied for %d seat(s): %s
+",
+                    uniqueN(add$seat), paste(sort(unique(add$seat)), collapse = ", ")))
+        fa <- rbind(fa, add, fill = TRUE)
+      }
+    }
+  }
   wide <- dcast(fa, seat ~ party, value.var = "votes", fill = 0)
   mat <- as.matrix(wide[, -1, with = FALSE]); rownames(mat) <- wide$seat
   mat <- 100 * mat / rowSums(mat)
@@ -559,7 +585,51 @@ for (K in PAIRS) {
       # separately-implied statewide movement beyond the rescale itself,
       # i.e. level_prev == level_now (mirrors `tgt <- a22[[p]] * scale_to`
       # used for both arguments at fit_seats_full.R:550-551).
+      # TREND DRIFT FOR AN UNMODELLED CLASS, off by default
+      # (AUSPOL_IND_TREND=1). `scale_to` pins a folded class to the PRIOR
+      # election's share of the minor bucket, so it can never GROW -- it only
+      # moves with the bucket. Independents are not stationary: nationally
+      # 2.22, 2.52, 1.40, 4.66, 3.70, 5.54, 7.52 across fed2007-2025, up in
+      # five of the last six. In fed2025 they rose 5.54 -> 7.52 (+36%) while
+      # this pinning forecast 5.23, i.e. 30% low, applied to every independent
+      # in every seat -- and those are exactly the seats where this model
+      # loses log loss to AE Forecasts.
+      #
+      # A linear trend fitted on the PRIOR elections only (never the target)
+      # predicts 5.68 for 2025. That is short of the true 7.52 but well above
+      # the pinned 5.23, and it uses nothing a forecaster lacks. Measured on
+      # fed2025: 5.23 -> log 0.3587, trend 5.68 -> 0.3473, true 7.52 -> 0.3225.
+      #
+      # Fitted per class across every earlier election of this region, and
+      # only applied when there are 4+ prior points and the fit is upward --
+      # a downward extrapolation of a floor-bounded minor vote is not a
+      # forecast, it is an artefact.
+      if (identical(Sys.getenv("AUSPOL_IND_TREND", "0"), "1")) {
+        for (p in unmodelled) {
+          hist <- FP[election != eb & party == p,
+                     .(v = sum(votes)), by = election]
+          tot <- FP[election != eb, .(tv = sum(votes)), by = election]
+          h <- merge(hist, tot, by = "election")[, pct := 100 * v / tv]
+          h[, yr := as.integer(sub("^[a-z]+", "", election))]
+          h <- h[yr < K$to][order(yr)]
+          if (nrow(h) >= 4L) {
+            fit <- stats::lm(pct ~ yr, data = h)
+            pred <- unname(stats::predict(fit, data.frame(yr = K$to)))
+            cur <- st_a[[p]] * scale_to
+            if (is.finite(pred) && pred > cur) {
+              cat(sprintf("BF0t fed%d %s: pinned %.2f -> trend %.2f (%d prior elections)
+",
+                          K$to, p, cur, pred, nrow(h)))
+              scale_p <- pred / st_a[[p]]
+              mat[, p] <- mat[, p] * scale_p; st_a[[p]] <- st_a[[p]] * scale_p
+              next
+            }
+          }
+          mat[, p] <- mat[, p] * scale_to; st_a[[p]] <- st_a[[p]] * scale_to
+        }
+      } else {
       for (p in unmodelled) { mat[, p] <- mat[, p] * scale_to; st_a[[p]] <- st_a[[p]] * scale_to }
+      }
       st_a[["OTH"]] <- st_a[["OTH"]] * scale_to
       for (p in bucket) st_fc[[p]] <- st_a[[p]]
       cat(sprintf("BF0  fed%d minor field scaled x%.2f: %s at prior %.1f%% -> forecast %.1f%%\n",

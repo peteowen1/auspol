@@ -11,7 +11,8 @@ screened_slopes(
   permit,
   same = c(IND = 0.907, OTH_RIGHT = 0.891, GRN = 0.994, ONP = 0.61),
   new = c(IND = 0.326, OTH_RIGHT = 0.325, GRN = 0.88, ONP = 0.545),
-  default = 1
+  default = 1,
+  same_mp = NULL
 )
 }
 \arguments{
@@ -30,6 +31,8 @@ to emerge?}
 \item{same, new}{Named numeric vectors of slopes by class.}
 
 \item{default}{Slope for a class absent from \code{same}/\code{new}.}
+
+\item{same_mp}{Passed through to \code{\link[=conditional_slopes]{conditional_slopes()}}; see there.}
 }
 \value{
 Numeric vector the length of \code{seats}.

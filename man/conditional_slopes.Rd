@@ -10,7 +10,8 @@ conditional_slopes(
   returns,
   same = c(IND = 0.907, OTH_RIGHT = 0.891, GRN = 0.994, ONP = 0.61),
   new = c(IND = 0.326, OTH_RIGHT = 0.325, GRN = 0.88, ONP = 0.545),
-  default = 1
+  default = 1,
+  same_mp = NULL
 )
 }
 \arguments{
@@ -25,6 +26,18 @@ every seat on \code{default}.}
 \item{same, new}{Named numeric vectors of slopes by class.}
 
 \item{default}{Slope for a class absent from \code{same}/\code{new}.}
+
+\item{same_mp}{Optional named numeric vector of slopes by class, applied
+where the returning candidate was the SITTING MEMBER. \code{NULL} (the
+default) keeps the two-tier \code{same}/\code{new} behaviour byte-identical.
+
+\code{same} pools a returning member with a returning also-ran. Measured
+separately over 531 returning non-major candidacies across 10 election
+pairs, they are 0.954 (se 0.026) and 0.800 (se 0.046) -- about 2.9 SE
+apart. Pooling shrinks an entrenched independent toward a ~5\% statewide
+IND average every cycle, which is where most of this model's fed2025 seat
+log-loss gap to AE Forecasts sits. Requires \code{returns} to carry a
+\code{same_mp} column, which \code{\link[=candidate_returns]{candidate_returns()}} now supplies.}
 }
 \value{
 Numeric vector the length of \code{seats}.

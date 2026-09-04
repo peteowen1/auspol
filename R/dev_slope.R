@@ -121,6 +121,17 @@ dev_slopes_for <- function(parties, default = 1) {
 #'   every seat on `default`.
 #' @param same,new Named numeric vectors of slopes by class.
 #' @param default Slope for a class absent from `same`/`new`.
+#' @param same_mp Optional named numeric vector of slopes by class, applied
+#'   where the returning candidate was the SITTING MEMBER. `NULL` (the
+#'   default) keeps the two-tier `same`/`new` behaviour byte-identical.
+#'
+#'   `same` pools a returning member with a returning also-ran. Measured
+#'   separately over 531 returning non-major candidacies across 10 election
+#'   pairs, they are 0.954 (se 0.026) and 0.800 (se 0.046) -- about 2.9 SE
+#'   apart. Pooling shrinks an entrenched independent toward a ~5% statewide
+#'   IND average every cycle, which is where most of this model's fed2025 seat
+#'   log-loss gap to AE Forecasts sits. Requires `returns` to carry a
+#'   `same_mp` column, which [candidate_returns()] now supplies.
 #' @return Numeric vector the length of `seats`.
 #' @export
 conditional_slopes <- function(cls, seats, returns,
@@ -186,6 +197,7 @@ conditional_slopes <- function(cls, seats, returns,
 #'   [salience_screen()]: does the screen allow this seat's candidate of `cls`
 #'   to emerge?
 #' @return Numeric vector the length of `seats`.
+#' @param same_mp Passed through to [conditional_slopes()]; see there.
 #' @export
 screened_slopes <- function(cls, seats, returns, permit,
                             same = c(IND = 0.907, OTH_RIGHT = 0.891,
