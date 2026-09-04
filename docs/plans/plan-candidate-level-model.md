@@ -146,13 +146,47 @@ against its own noise before it is run — the exact rule C1 exists to enforce
 for a different ticket, and the one this repo's constants doctrine names for
 every criterion in `CLAUDE.md`.
 
-### B3. Open-seat / retirement effect
+### B3. ~~Open-seat / retirement effect~~ ALREADY DONE, found 2026-09-04
 
-**Why.** A personal vote leaves with the person. Currently invisible.
+**Why this line was wrong.** "Currently invisible" was true when this ticket
+was written, and stopped being true before it was — B1's own resolution above
+already says so ("The value already captured by arm CS... did not need
+candidate-level columns; it only needed `candidate_returns()`'s same/new
+distinction"), and this entry was never updated to match.
 
-**Do.** Flag seats where the sitting member is not recontesting, from
-`candidate-ids.csv`. Note `inc_retiring` was tested as a salience feature and
-added nothing — but that was against a class-based baseline.
+**What already exists.** `candidate_returns()` / `leading_candidate_returns()`
+(`R/candidate_returns.R`) match a candidate PERSONALLY across the seat,
+regardless of party-label changes (the Katter/Dalton/Donato trap —
+`CLAUDE.md`'s NSW Shooters-to-independent case, in another form). Measured
+across 17 election pairs: retention when the same person stands again vs when
+they don't —
+
+| class | same person | person gone | t |
+|---|--:|--:|--:|
+| IND | 0.907 | 0.326 | 12.3 |
+| OTH_RIGHT | 0.891 | 0.325 | 15.4 |
+| GRN | 0.994 | 0.880 | 4.5 |
+| ONP | 0.610 | 0.545 | 0.7 |
+
+`conditional_slopes()` (arm C) applied that discount directly and was
+REFUSED (A2 above) — the new-candidate slope, fitted on ~300 mostly-no-hoper
+candidates, crushed rare real emergences: vic2018 +0.191 log loss, fed2022
++0.143, sa2026 +0.114. `screened_slopes()` (arm CS) fixed it by splitting
+"new" into screened-out (gets the ~0.33 discount) vs salience-permitted
+(uniform 1.0, no discount) — **this is the live default**:
+`AUSPOL_DEV_SLOPE_MODE` defaults to `"screened"` in `fit_seats_full.R`, so
+every Victoria 2026 seat where the incumbent doesn't personally return
+already gets exactly the discount this ticket asked to build, gated so a real
+emergence isn't crushed by it.
+
+**Caught before duplicating it.** Independently re-measured the raw effect
+via `candidacies.csv` before finding this (76 seat/class groups, same-person
+retention 1.01 vs different-"person" 0.33, t=-9.1) — then found roughly a
+quarter of the "different person" cases were actually party-switchers
+(Katter/Kennedy, Dalton/Murray) that `candidate_returns()`'s seat-level (not
+seat+party) matching already handles correctly and my crude version didn't.
+The existing, better-matched numbers above are the ones to trust; the
+ad-hoc script was discarded rather than committed.
 
 ---
 
