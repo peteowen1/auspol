@@ -453,15 +453,22 @@ for (K in PAIRS) {
   # check that throws "$ operator is invalid for atomic vectors" -- not an NSE
   # miscompute this time, an outright crash. Confirmed by isolated repro: same
   # body, only the parameter name changed, and the collision is what breaks it.
+  # SITTING-MEMBER SLOPE TIER, off by default (AUSPOL_MP_SLOPE=1). See
+  # conditional_slopes()'s own comment: a returning MEMBER (0.954) and a
+  # returning also-ran (0.800) are 2.9 SE apart and the shipped value pools
+  # them at 0.907, systematically shrinking entrenched independents.
+  .MP_SLOPE <- if (identical(Sys.getenv("AUSPOL_MP_SLOPE", "0"), "1"))
+    c(IND = 0.954, OTH_RIGHT = 0.954, GRN = 0.994, ONP = 0.610) else NULL
   .fed_slope <- function(p, seats, cond, screened, returns, permit_tbl) {
     if (screened && !is.null(permit_tbl)) {
       pv <- permit_tbl[permit_tbl$party == p, ]
       lut <- stats::setNames(as.logical(pv$permit), pv$seat)
       pm <- unname(lut[seats])
       pm[is.na(pm)] <- TRUE
-      return(screened_slopes(p, seats, returns, pm))
+      return(screened_slopes(p, seats, returns, pm, same_mp = .MP_SLOPE))
     }
-    if (cond && !is.null(returns)) return(conditional_slopes(p, seats, returns))
+    if (cond && !is.null(returns))
+      return(conditional_slopes(p, seats, returns, same_mp = .MP_SLOPE))
     DEV_SLOPE[[p]]
   }
   cat(sprintf("BF1d  dev slopes: %s%s

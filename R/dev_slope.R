@@ -128,7 +128,15 @@ conditional_slopes <- function(cls, seats, returns,
                                         GRN = 0.994, ONP = 0.610),
                                new  = c(IND = 0.326, OTH_RIGHT = 0.325,
                                         GRN = 0.880, ONP = 0.545),
-                               default = 1) {
+                               default = 1,
+                               same_mp = NULL) {
+  # SITTING-MEMBER TIER, opt-in via `same_mp` (AUSPOL_MP_SLOPE=1 in the
+  # harnesses). `same` above pools a returning MEMBER with a returning
+  # also-ran; measured separately over 531 returning non-major candidacies
+  # across 10 election pairs they are 0.954 (se 0.026) and 0.800 (se 0.046),
+  # about 2.9 SE apart. See candidate_returns()'s own comment for why the
+  # pooled value systematically understates an entrenched independent.
+  # NULL keeps the previous two-tier behaviour byte-identical.
   if (is.null(returns) || !cls %in% names(same) || !cls %in% names(new)) {
     return(rep(as.numeric(default), length(seats)))
   }
@@ -141,7 +149,13 @@ conditional_slopes <- function(cls, seats, returns,
   idx <- match(seats, hit$seat)
   is_same <- !is.na(idx) & hit$same[idx]
   is_same[is.na(is_same)] <- FALSE
-  ifelse(is_same, as.numeric(same[[cls]]), as.numeric(new[[cls]]))
+  out <- ifelse(is_same, as.numeric(same[[cls]]), as.numeric(new[[cls]]))
+  if (!is.null(same_mp) && cls %in% names(same_mp) && "same_mp" %in% names(hit)) {
+    is_mp <- !is.na(idx) & hit$same_mp[idx]
+    is_mp[is.na(is_mp)] <- FALSE
+    out[is_mp] <- as.numeric(same_mp[[cls]])
+  }
+  out
 }
 
 #' Per-seat slopes conditioned on candidate identity AND the salience screen
@@ -178,12 +192,12 @@ screened_slopes <- function(cls, seats, returns, permit,
                                      GRN = 0.994, ONP = 0.610),
                             new  = c(IND = 0.326, OTH_RIGHT = 0.325,
                                      GRN = 0.880, ONP = 0.545),
-                            default = 1) {
+                            default = 1, same_mp = NULL) {
   if (length(permit) != length(seats)) {
     stop("permit must be the same length as seats: ", length(permit),
          " vs ", length(seats), call. = FALSE)
   }
-  base <- conditional_slopes(cls, seats, returns, same, new, default)
+  base <- conditional_slopes(cls, seats, returns, same, new, default, same_mp)
   if (is.null(returns) || !cls %in% names(same) || !cls %in% names(new)) {
     return(base)   # class never fitted: conditional_slopes already left it at default
   }

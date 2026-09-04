@@ -111,12 +111,44 @@ candidate_returns <- function(election_from, election_to, corpus = NULL) {
   out <- merge(out, unique(prev_keys)[, `:=`(hit = TRUE)],
                by = c(".s", ".k"), all.x = TRUE)
   out[is.na(hit), hit := FALSE]
-  res <- out[, list(same = any(hit)), by = list(seat, party)]  # target's own names
+  # WAS THAT RETURNING PERSON THE SITTING MEMBER? A returning candidate and a
+  # returning MEMBER behave measurably differently, and pooling them costs
+  # real accuracy on exactly the seats this model is worst at. Regressing the
+  # seat's deviation-from-statewide at the target election on the same
+  # deviation at the previous one, over 531 returning non-major candidacies
+  # across 10 election pairs:
+  #
+  #   returning, WAS the sitting MP   n= 52  slope 0.954 (se 0.026)
+  #   returning, was NOT the MP       n=479  slope 0.800 (se 0.046)
+  #   pooled (what conditional_slopes() used)  0.924
+  #
+  # The two differ by 0.154, about 2.9 SE. Pooling shrinks an entrenched
+  # independent toward a ~5% statewide IND average every cycle: a teal on 36%
+  # is projected at 5 + 0.907*(36-5) = 33.1 when the measured expectation is
+  # flat (mean vote change -0.13 points across 52 sitting non-major MPs, who
+  # hold their seat 82.7% of the time). That understatement is where nearly
+  # all of the fed2025 seat log-loss gap to AE Forecasts sits.
+  #
+  # `elected` is optional in the corpus, so its absence degrades to same_mp =
+  # FALSE (i.e. exactly the previous behaviour) rather than erroring.
+  if ("elected" %in% names(PREVT)) {
+    mp_keys <- unique(rbind(
+      PREVT[nzchar(PREVT$.k) & PREVT$elected %in% TRUE, list(.s = .s,         .k)],
+      PREVT[nzchar(PREVT$.k) & PREVT$elected %in% TRUE, list(.s = .s_renamed, .k)]))
+    out <- merge(out, unique(mp_keys)[, `:=`(mp_hit = TRUE)],
+                 by = c(".s", ".k"), all.x = TRUE)
+    out[is.na(mp_hit), mp_hit := FALSE]
+  } else {
+    out[, mp_hit := FALSE]
+  }
+  res <- out[, list(same = any(hit), same_mp = any(mp_hit)),
+             by = list(seat, party)]  # target's own names
   # Every seat/class at the target election, so a caller can index without
   # worrying about which ones had a match at all.
   full <- unique(NOWT[, list(seat, party)])
   res <- merge(full, res, by = c("seat", "party"), all.x = TRUE)
-  res[is.na(same), same := FALSE][]
+  res[is.na(same), same := FALSE]
+  res[is.na(same_mp), same_mp := FALSE][]
 }
 
 #' Does the LEADING candidate of a class personally return, not just anyone in it?
