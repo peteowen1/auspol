@@ -552,23 +552,30 @@ if (.cond && is.null(.returns)) {
   out[hit] <- unname(v[hit])
   out
 }
-# ARM SURGE-V2, off by default (AUSPOL_SALIENCE_SURGE_V2=1). Not yet reviewed
-# for shipping -- see R/salience_surge.R, docs/plans/prereg-salience-surge-v2.md,
-# and the fed2022/nsw2023/sa2026 backtest wins (~26-30% log-loss reduction) vs
-# vic2022's own held-out result (a small, non-accuracy-affecting wash). SAME
+# ARM SURGE-V2, ON by default since 2026-09-04 -- see R/salience_surge.R,
+# docs/plans/prereg-salience-surge-v2.md, docs/reviews/surge-v2-widened-and-majors-bug-2026-09-04.md.
+# Widened to 9 election pairs / 14 governed winners after fixing a
+# governed_population() majors-contamination bug (2026-09-04); nested LOO log
+# loss 0.0329 vs base-rate 0.0418, beats baseline in 7 of 9 elections. SAME
 # candidate-list gating as arm CS above: vic2026 has no salience corpus until
 # nominations close, so this falls back to flat SURGE_H (default 0) until then,
-# printed rather than silent.
-.surge_v2_on <- identical(Sys.getenv("AUSPOL_SALIENCE_SURGE_V2", "0"), "1")
+# printed rather than silent -- so this flip is a no-op on the published
+# Victoria forecast today and activates automatically once vic2026 candidate
+# salience is fetched (nominations close 12 noon, 9 Nov 2026).
+.surge_v2_on <- identical(Sys.getenv("AUSPOL_SALIENCE_SURGE_V2", "1"), "1")
 surge_arg <- as.numeric(Sys.getenv("AUSPOL_SURGE_H", "0"))
 surge_mu_arg <- 15.6; surge_sd_arg <- 6.1
 if (.surge_v2_on) {
   .v2_train_pairs <- list(
+    list(election = "fed2010", prev = "fed2007", region = "fed"),
+    list(election = "fed2013", prev = "fed2010", region = "fed"),
+    list(election = "fed2016", prev = "fed2013", region = "fed"),
     list(election = "fed2019", prev = "fed2016", region = "fed"),
     list(election = "fed2022", prev = "fed2019", region = "fed"),
     list(election = "vic2022", prev = "vic2018", region = "vic"),
     list(election = "nsw2023", prev = "nsw2019", region = "nsw"),
-    list(election = "sa2026",  prev = "sa2022",  region = "sa"))
+    list(election = "sa2026",  prev = "sa2022",  region = "sa"),
+    list(election = "wa2008",  prev = "wa2005",  region = "wa"))
   .hz <- tryCatch(surge_hazard_for("vic2026", "vic2022", "vic", .v2_train_pairs),
                   error = function(e) NULL)
   if (is.null(.hz)) {
