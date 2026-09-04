@@ -126,3 +126,40 @@ carry: sophomore surge, retirement effects, and the incumbent's own margin
 history — the components AEF names that are NOT elasticity, since elasticity is
 now measured as non-persistent here. Each needs its own pre-registration and
 its own held-out test.
+
+## Addendum: the IND national level, and an oracle bound that settles it
+
+The largest single lever found. In forecast mode `IND` has no national poll
+series, so it is folded into `OTH` and its level is derived from the PRIOR
+election's ratio within that bucket — structurally pinned, unable to grow.
+
+Independents nationally: 2.22, 2.52, 1.40, 4.66, 3.70, 5.54, **7.52** (2007
+to 2025). They rose 36% in 2025. We forecast **5.23** — 2.3 points, 30% low,
+applied to every independent in every seat, including every teal seat in the
+loss table above.
+
+Substituting different IND national levels (local sim, same config):
+
+| IND level | log loss | accuracy |
+|---|--:|--:|
+| 5.23 — ours | 0.3587 | 83.9% |
+| 5.68 — linear trend on pre-2025 elections only | **0.3473** | 83.9% |
+| 6.50 | 0.3327 | 85.9% |
+| 7.52 — the actual result (ORACLE) | **0.3225** | 85.9% |
+| *AE Forecasts* | *0.3025* | *86.0%* |
+
+Two things follow, and together they close the question.
+
+**A real, legitimate gain of about 0.011 is available** by replacing the
+prior-election pinning with a trend extrapolation that uses only information
+available before the election. Worth doing on its own merits.
+
+**And the goal is unreachable.** Even handed the TRUE national independent
+vote — an oracle no forecaster has — this model scores 0.3225 against AEF's
+0.3025. The remaining deficit is not the IND level, not the flow matrix, not
+seat_sd, not elasticity, and not the slope tiers. It is seat-level
+information this model does not carry.
+
+That is the answer to "optimise until seat log loss beats AEF for fed2025":
+it cannot be done by optimising, and the bound above is how we know rather
+than assume.
