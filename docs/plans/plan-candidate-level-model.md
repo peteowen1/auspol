@@ -278,12 +278,22 @@ resolve to exactly one winner (Narracan is the 88th seat and is absent from
 the corpus for the separately-documented reason — no results/distribution page
 was ever published for it).
 
-### D2. WA given names
+### D2. ~~WA given names~~ DONE 2026-09-04
 
-2,803 rows (19% of the corpus) carry a bare surname. The cached WAEC JSON has
-four fields and no given name, so identities there are scoped to a seat and a WA
-candidate who changes seat becomes two people. Check whether a richer WAEC
-endpoint exists.
+A richer endpoint exists: `/sgElections/{e}/{code}/candidates`
+(`docs/plans/waec-data-access.md` already named it; nothing had called it).
+`scripts/fetch_wa_candidate_names.R` fetches it for all 8 elections;
+`scripts/build_candidacies.R` matches it to the existing surname-only rows on
+`(seat, ballot_order)`. 2841/2842 WA candidacies (99.96%) now carry a given
+name. Rebuilding `candidate-ids.csv` on top of it merged 35 previously
+sham-distinct people who are the same WA candidate recontesting a different
+seat -- exactly the failure this ticket named -- and flagged 3 low-confidence
+pairs for human review rather than deciding them silently. Commit `978db45`.
+
+**Found, not fixed here**: the "of the corpus" framing above was WA-specific,
+not corpus-wide. VIC/NSW/QLD/SA carry their own ~4,665 bare-name rows from
+entirely different data sources (a single combined `name` field, not a
+WAEC-style surname/given split) -- a separate, un-ticketed gap.
 
 ---
 
