@@ -181,7 +181,23 @@ governed_population <- function(election, prev_election, region,
     prev_keys <- unique(paste(pseat[.valid], pk[.valid]))
     ret <- nzchar(sk) & !is.na(sk) & paste(sseat, sk) %in% prev_keys
   } else ret <- rep(FALSE, nrow(SAL))
-  SAL[, governed := prev_party < 15 & !(party %in% surging) & !ret]
+  # EXCLUDES MAJOR PARTIES, added 2026-09-04. This function had no such
+  # filter, and it was never needed while output/salience-v6.csv held only
+  # non-major candidates -- there was nothing else IN the corpus to match. The
+  # 2026-08-28 majors fetch changed that silently: a brand-new ALP/LNP/NAT
+  # candidate replacing a retiring MP in a seat safe for their OWN party reads
+  # `prev_party` (THIS PERSON's own prior vote in this seat, by design) near
+  # zero, so every safe-seat succession in the corpus started scoring as a
+  # "governed emergence". Found widening the surge-v2 training pairs on
+  # 2026-09-04: vic2022's population went from 1 real emergence to 11, ten of
+  # them new-candidate LNP holds of already-safe LNP seats, and the widened
+  # model's LOO log loss on vic2022 went from a small +1.9% wash to a 3x
+  # regression against base rate. Reproduced on the ORIGINAL 5-pair set too,
+  # unrelated to the widening -- a week-old silent regression from a fetch
+  # that landed one day after this file's own logic did, never re-validated
+  # against it since.
+  MAJ <- c("ALP", "LNP", "NAT")
+  SAL[, governed := prev_party < 15 & !(party %in% surging) & !(party %in% MAJ) & !ret]
   # setattr(), not `attr<-`: the latter triggers data.table's shallow-copy-on-
   # `:=` warning on every subsequent `[, := ]` against this table (CI runs
   # R CMD check --as-cran with warnings as errors, so this is not cosmetic).

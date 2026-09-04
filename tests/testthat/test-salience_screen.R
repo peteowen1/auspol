@@ -143,3 +143,28 @@ test_that("a renamed seat does not turn a landslide incumbent into a fresh emerg
   expect_equal(g$prev_party, 44.1)
   expect_false(g$governed)   # high prior vote alone should already exclude him
 })
+
+test_that("a new major-party candidate in their own party's safe seat is not governed", {
+  # Found widening the surge-v2 training pairs 2026-09-04: with majors in
+  # output/salience-v6.csv (added 2026-08-28, one day after this file's own
+  # logic), a brand-new LNP candidate replacing a retiring MP in a seat safe
+  # for LNP reads prev_party (THIS PERSON's own prior vote here) near zero --
+  # exactly like a genuine emergence, by construction, for every safe-seat
+  # succession in the corpus. governed_population() had no filter to stop it.
+  # Reproduced on the pre-existing 5-pair surge-v2 training set too, not
+  # introduced by the widening: a week-old silent regression nothing had
+  # re-validated against since the majors fetch landed.
+  td <- withr::local_tempdir()
+  withr::local_dir(td)
+  dir.create("output")
+  data.table::fwrite(data.table::data.table(
+    election = "x0", seat = "Safeseat", party = "LNP",
+    name = "Retiring, Member", surname = "Retiring", given = "Member", pcv = 60.0),
+    "output/candidacies.csv")
+  data.table::fwrite(data.table::data.table(
+    election = "x", seat = "Safeseat", party = "LNP",
+    keyword = "New Candidate", jump = 8, prev_party = 0, elected = TRUE, pcv = 55.0),
+    "output/salience-v6.csv")
+  g <- governed_population("x", "x0", "xx")
+  expect_false(g$governed)   # a new candidate in their own party's held seat, not an emergence
+})

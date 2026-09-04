@@ -45,12 +45,26 @@ options(auspol.root = normalizePath("."))
 suppressMessages(devtools::load_all(quiet = TRUE))
 suppressMessages(library(data.table))
 
+# WIDENED 2026-09-04, from the original 5 pairs to 9. Per
+# docs/plans/prereg-salience-c3-v3.md's independent census (built with its own,
+# cruder person-matching before this file's SEAT_RENAMES-aware
+# governed_population() was found and reused instead): fed2010, fed2013 and
+# fed2016 each carry at least one genuine governed emergence and already have
+# output/salience-v6.csv coverage; so does wa2008, the one WA election with a
+# non-major winner in the whole corpus. qld2020/2024 and every other WA cycle
+# were checked directly and confirmed to add nothing (WA elected zero
+# non-major Assembly members 2013-2025; QLD's 2024 non-major winners were all
+# returning incumbents) -- not silently omitted, ruled out.
 PAIRS <- list(
+  list(election = "fed2010", prev = "fed2007", region = "fed"),
+  list(election = "fed2013", prev = "fed2010", region = "fed"),
+  list(election = "fed2016", prev = "fed2013", region = "fed"),
   list(election = "fed2019", prev = "fed2016", region = "fed"),
   list(election = "fed2022", prev = "fed2019", region = "fed"),
   list(election = "vic2022", prev = "vic2018", region = "vic"),
   list(election = "nsw2023", prev = "nsw2019", region = "nsw"),
-  list(election = "sa2026",  prev = "sa2022",  region = "sa")
+  list(election = "sa2026",  prev = "sa2022",  region = "sa"),
+  list(election = "wa2008",  prev = "wa2005",  region = "wa")
 )
 
 POP <- surge_training_population(PAIRS)
