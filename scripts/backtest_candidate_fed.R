@@ -409,7 +409,11 @@ for (K in PAIRS) {
   # votes map forward). Adding it makes the comparison honest -- it scores a
   # seat we currently get a free pass on -- so it may WORSEN the headline
   # number while removing a real blind spot.
-  if (identical(Sys.getenv("AUSPOL_NOTIONAL", "0"), "1") &&
+  # ON BY DEFAULT since 2026-09-05 (Pete's call): without it a seat created by
+  # a redistribution is silently DROPPED from the forecast, which is a wrong
+  # answer rather than a missing one. Set AUSPOL_NOTIONAL=0 to restore the
+  # previous drop-the-seat behaviour.
+  if (identical(Sys.getenv("AUSPOL_NOTIONAL", "1"), "1") &&
       file.exists("output/notional-baselines.csv")) {
     NB <- fread("output/notional-baselines.csv", showProgress = FALSE)
     NB <- NB[election == eb & prior == ea]
