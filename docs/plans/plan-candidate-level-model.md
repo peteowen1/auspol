@@ -289,10 +289,22 @@ endpoint exists.
 
 ## E — website
 
-### E1. Candidate profile data
+### E1. ~~Candidate profile data~~ DONE 2026-09-04
 
-**Ready now.** `output/candidate-contests.csv` gives every contest a person has
-fought. Add the model's projection per row for "performance vs expected".
+`scripts/build_candidate_performance.R` adds `expected_pcv` and
+`performance_vs_expected` to `output/candidate-contests.csv` for 78.4% of
+rows (the rest are each region's first election, no prior to compare
+against). Top overperformers are genuine, recognisable breakthroughs
+(Oakeshott, Steggall, Sharkie, Ryan, Ward).
+
+Cost more than the ticket implied: building it found and fixed a seat-rename
+bug already fixed once that day in a sibling function and not carried over,
+a redistricted-seat majors artifact, a class-vs-person base-value gap for
+party-switching incumbents, and a data.table double-subset NSE trap that
+silently dropped 82% of one pair's rows before a coverage print caught it.
+Full writeup in the commit message (`77a466b`) rather than a separate review
+doc -- this was execution of an already-scoped, already-"ready now" ticket,
+not a decision that needed pre-registration.
 
 ---
 
