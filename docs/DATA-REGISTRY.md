@@ -65,7 +65,7 @@ cannot pass as a working one.
   - e.g. ha-2018-03-17.json, ha-2022-03-19.json, ha-2026-03-21.json, ha-change-2022-03-19.json
 - **ecq/** -- 7 files, 47.4 MB
   - e.g. elections.json, publicResults_SGE2024_ICCDiv4_Final.zip, publicResults_State2020_aurukun2020_Final.zip, qld2020.xml
-- **waec/** -- 481 files, 19.4 MB
+- **waec/** -- 947 files, 27.1 MB
   - e.g. app.html, app.min.js, config-loader.js, config.json
 - **trends/** -- 3727 files, 2.3 MB
   - e.g. 2019_anch2_Adrian_Wone_Susie_Beveridge_Will_Landers_Ammar_Khan.rds, 2019_anch2_Bill_Chandler_Susan_Moylan_Dave_Blake_Tim_Bohm.rds, 2019_anch2_Robert_Oakeshott_Helen_Haines_Zali_Steggall_Kerryn_Phelps.rds, 2019_anch2_Trevor_Jones_Colin_Butland_David_Norman_Thor_Prohaska.rds

@@ -262,6 +262,7 @@ for (y in wa_years) {
     rows[[f]] <- rbindlist(lapply(j$resultsCandidates, function(c) data.table(
       seat = sname,
       name = c$BALLOT_PAPER_NAME %||% NA_character_,
+      ballot_order = as.integer(c$Ballot_Paper_Order %||% NA),
       party_raw = c$PARTY_AFFILIATION %||% "Independent",
       votes = as.numeric(c$Votes_Counted %||% NA))), fill = TRUE)
   }
@@ -279,6 +280,50 @@ for (y in wa_years) {
   w[, `:=`(party = classify_party(party_raw, party_raw), surname = NA_character_,
            given = NA_character_, elected = NA,
            election = sprintf("wa%d", y), region = "wa", year = y)]
+
+  # GIVEN NAMES, from the SEPARATE /candidates endpoint (fetch_wa_candidate_names.R
+  # -- docs/plans/plan-candidate-level-model.md, D2). /results' resultsCandidates
+  # carries BALLOT_PAPER_NAME as surname only ("MOIR"); /candidates' own
+  # districtCandidates carries the same field as "SURNAME, Given" for the same
+  # seat and ballot position. Matched on (seat, ballot_order), not surname text
+  # -- surname alone collides whenever two candidates in one seat share one,
+  # which this corpus already treats as a known WA limitation elsewhere
+  # (candidate_returns()'s own docs). Ballot order is assigned once per seat per
+  # election by the commission and identical across both endpoints.
+  cand_files <- list.files(WAEC, pattern = sprintf("^sg%d-[A-Z]+-candidates\\.json$", y))
+  gn <- list()
+  for (f in cand_files) {
+    p <- file.path(WAEC, f)
+    if (file.info(p)$size < 200) next
+    j <- tryCatch(fromJSON(p, simplifyVector = FALSE), error = function(e) NULL)
+    if (is.null(j) || !length(j$districtCandidates)) next
+    sname <- j$currentElectorate$ElectorateName %||% NA_character_
+    gn[[f]] <- rbindlist(lapply(j$districtCandidates, function(c) {
+      bp <- c$BALLOT_PAPER_NAME %||% NA_character_
+      parts2 <- if (!is.na(bp) && grepl(",", bp)) trimws(strsplit(bp, ",")[[1]]) else c(bp, NA_character_)
+      data.table(seat = sname, ballot_order = as.integer(c$BALLOT_PAPER_ORDER %||% NA),
+                surname_cand = parts2[1], given_cand = parts2[2])
+    }), fill = TRUE)
+  }
+  if (length(gn)) {
+    G <- rbindlist(gn, fill = TRUE)
+    G <- unique(G[!is.na(seat) & !is.na(ballot_order)], by = c("seat", "ballot_order"))
+    w <- merge(w, G, by = c("seat", "ballot_order"), all.x = TRUE)
+    # Sanity check, not blind trust: only fill given/surname where the two
+    # endpoints agree on the surname at that (seat, ballot_order) position --
+    # a mismatch means the join key found the wrong candidate, and NA is the
+    # correct, honest result there, not a silently wrong name.
+    agree <- !is.na(w$surname_cand) & toupper(trimws(w$name)) == toupper(trimws(w$surname_cand))
+    w[agree, `:=`(surname = surname_cand, given = given_cand)]
+    n_filled <- sum(agree)
+    n_mismatch <- sum(!is.na(w$surname_cand) & !agree)
+    w[, c("surname_cand", "given_cand") := NULL]
+    cat(sprintf("BC5b wa%d: %d/%d candidates matched to a given name (%d ballot-order mismatches, left NA)\n",
+                y, n_filled, nrow(w), n_mismatch))
+  } else {
+    cat(sprintf("BC5b wa%d: no /candidates files found -- run scripts/fetch_wa_candidate_names.R\n", y))
+  }
+
   parts[[sprintf("wa%d", y)]] <- w
   cat(sprintf("BC5  wa%d: %d candidates in %d seats\n", y, nrow(w), uniqueN(w$seat)))
 }
