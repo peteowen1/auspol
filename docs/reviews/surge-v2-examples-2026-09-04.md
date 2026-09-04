@@ -1,5 +1,11 @@
 # Surge-v2 by name: who it predicted and who it correctly didn't
 
+**SUPERSEDED same day** by `surge-v2-person-level-prevparty-2026-09-04.md` —
+this table's population was missing 4 real winners (Haines, Spender, Schultz,
+Fatchen) due to two further bugs found right after this was written. Left
+as-is as an honest record of that population; see the later doc for the
+corrected 18-winner numbers and table.
+
 2026-09-04. Ad-hoc reporting against the widened, majors-bug-fixed governed
 population (`output/salience-surge-v2-population.csv`, 9 election pairs, 1871
 candidates, 14 winners — see `surge-v2-widened-and-majors-bug-2026-09-04.md`).

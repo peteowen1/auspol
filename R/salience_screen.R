@@ -153,7 +153,20 @@ governed_population <- function(election, prev_election, region,
     # guess a second time.
     pk <- search_form(PREVT$given, PREVT$surname, PREVT$name)
     ns <- function(x) gsub("[^a-z0-9]", "", tolower(x))
-    pseat <- apply_renames(ns(PREVT$seat))
+    # BOTH spellings, not just the renamed one. apply_renames() maps
+    # denison->clark unconditionally, but the rename only actually happened
+    # for fed2019+ -- for a pair entirely BEFORE it (fed2013, prev fed2010),
+    # both elections still call it Denison, so renaming PREVT's seat to
+    # "clark" makes it fail to match SAL's own still-"denison" spelling. That
+    # silently broke Wilkie's `ret` check for fed2013 and fed2016 -- he read
+    # as a FRESH governed candidate in his own seat, previously masked only
+    # because the (now-fixed) class-level prev_party threshold excluded him
+    # anyway for an unrelated reason. Found 2026-09-04 chasing why he
+    # reappeared as a "new" IND winner once prev_party became person-level.
+    # Matching against both forms is correct regardless of which side of the
+    # rename either election falls on, with no need to special-case eras.
+    pseat_pre  <- ns(PREVT$seat)
+    pseat_post <- apply_renames(pseat_pre)
     sk <- SAL$keyword
     sseat <- ns(SAL$seat)
     # prev_party OVERRIDDEN ONLY FOR RENAMED SEATS. salience-v6.csv's own
@@ -177,9 +190,35 @@ governed_population <- function(election, prev_election, region,
     # with no usable name, and `any()` over a vector that is all FALSE/NA with
     # no TRUE returns NA, not FALSE -- that NA then corrupted `governed`
     # downstream (observed: sum(SAL$governed) printed NA on a real run).
-    .valid <- !is.na(pk) & nzchar(pk) & !is.na(pseat)
-    prev_keys <- unique(paste(pseat[.valid], pk[.valid]))
+    .valid <- !is.na(pk) & nzchar(pk) & !is.na(pseat_pre)
+    prev_keys <- unique(c(paste(pseat_pre[.valid], pk[.valid]),
+                          paste(pseat_post[.valid], pk[.valid])))
     ret <- nzchar(sk) & !is.na(sk) & paste(sseat, sk) %in% prev_keys
+    # PERSON-LEVEL prev_party FOR IND/OTH, added 2026-09-04. Everywhere else
+    # in this function, `prev_party` is the CLASS's own max(pcv) in the seat
+    # (fetch_salience_v6.R), which is a reasonable "does this party already
+    # have a foothold here" signal for ALP/LNP/NAT/GRN/ONP -- those labels
+    # denote one continuous organisation. IND (and the OTH catch-all) carry
+    # no such continuity: "IND" is just "not a party," so the class max
+    # attributes one independent's result to a completely unrelated one who
+    # merely shares the label. Found asking why Allegra Spender (Wentworth,
+    # fed2022, jump_pctile 0.982 -- the same signature as Ryan/Chaney/Scamps/
+    # Tink, all governed winners) was excluded from the governed population
+    # entirely: her recorded prev_party was 32.4%, which is Kerryn Phelps'
+    # 2019 result, not Spender's -- Spender had never contested Wentworth (or
+    # any seat) before. Any candidate who genuinely returns in their own name
+    # is already excluded via `ret` above (same person-match), so a governed
+    # IND/OTH candidate is by construction a first-timer in this seat under
+    # this identity, and their own prior vote is correctly 0 unless the name
+    # match finds their own earlier row -- which would already have made
+    # `ret` TRUE and excluded them regardless of this override.
+    own_prevp <- data.table::data.table(
+      pkey = c(paste(pseat_pre[.valid], pk[.valid]), paste(pseat_post[.valid], pk[.valid])),
+      own_pcv = rep(PREVT$pcv[.valid], 2))[, .(own_pcv = max(own_pcv, na.rm = TRUE)), by = pkey]
+    own_v <- stats::setNames(own_prevp$own_pcv, own_prevp$pkey)[paste(sseat, sk)]
+    own_v <- unname(own_v); own_v[is.na(own_v)] <- 0
+    .indoth <- SAL$party %in% c("IND", "OTH")
+    SAL[.indoth, prev_party := own_v[.indoth]]
   } else ret <- rep(FALSE, nrow(SAL))
   # EXCLUDES MAJOR PARTIES, added 2026-09-04. This function had no such
   # filter, and it was never needed while output/salience-v6.csv held only

@@ -553,10 +553,16 @@ if (.cond && is.null(.returns)) {
   out
 }
 # ARM SURGE-V2, ON by default since 2026-09-04 -- see R/salience_surge.R,
-# docs/plans/prereg-salience-surge-v2.md, docs/reviews/surge-v2-widened-and-majors-bug-2026-09-04.md.
-# Widened to 9 election pairs / 14 governed winners after fixing a
-# governed_population() majors-contamination bug (2026-09-04); nested LOO log
-# loss 0.0329 vs base-rate 0.0418, beats baseline in 7 of 9 elections. SAME
+# docs/plans/prereg-salience-surge-v2.md, docs/reviews/surge-v2-widened-and-majors-bug-2026-09-04.md,
+# docs/reviews/surge-v2-person-level-prevparty-2026-09-04.md,
+# docs/reviews/surge-v2-examples-corrected-2026-09-04.md.
+# Widened to 9 election pairs / 18 governed winners after fixing three
+# governed_population() bugs found in sequence on 2026-09-04: a majors-
+# contamination bug, prev_party read as the IND/OTH CLASS's prior vote
+# instead of this candidate's own, and a seat-rename bug that unmasked once
+# the second fix was applied. Nested LOO log loss 0.0404 vs base-rate 0.0595,
+# beats baseline in 7 of 9 elections (fed2013 and vic2022 are each a small
+# wash on a single governed winner). SAME
 # candidate-list gating as arm CS above: vic2026 has no salience corpus until
 # nominations close, so this falls back to flat SURGE_H (default 0) until then,
 # printed rather than silent -- so this flip is a no-op on the published
