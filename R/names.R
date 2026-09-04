@@ -206,3 +206,48 @@ match_key <- function(sur, giv, rule = c("initial", "surname", "full")) {
          initial = ifelse(nzchar(giv), paste0(sur, "|", substr(giv, 1, 1)), sur),
          full    = ifelse(nzchar(giv), paste0(sur, "|", giv), sur))
 }
+
+#' Normalise a seat name for cross-election joins, case/punctuation only
+#'
+#' Strips case and punctuation so `"Albert Park"` and `"albertpark"` join --
+#' the fix for the vic2014/vic2018 mismatch that once matched ZERO Victorian
+#' seat-classes and read as "Victoria has few returners" (see
+#' `candidate_returns()`). Does NOT resolve a genuine redistribution rename;
+#' that needs [seat_rename_map()] as well, matched against both spellings.
+#'
+#' @param x Character vector of seat names.
+#' @return Character vector, lower-case with only `[a-z0-9]` retained.
+#' @export
+normalise_seat <- function(x) gsub("[^a-z0-9]", "", tolower(x))
+
+#' Known cross-election seat renames not captured by case/punctuation alone
+#'
+#' `THIS LIVES IN R/` because it was fixed once inside `governed_population()`
+#' (`R/salience_screen.R`) and, being local to that function, was not carried
+#' into `candidate_returns()` / `personal_prior_vote()` (`R/candidate_returns.R`)
+#' -- the exact "fixed once, not in its sibling" failure [[normalise_name]]'s
+#' own docs record for candidate names. Found 2026-09-04 building a
+#' candidate-performance feature: Andrew Wilkie's continuous Denison (2016,
+#' 44.1%) -> Clark (2019, 50.0%) hold read as a brand-new IND candidate
+#' massively "overperforming" a 2.2% expectation, because `candidate_returns()`
+#' only strips case/punctuation and Denison/Clark share neither.
+#'
+#' A caller must match against BOTH the pre- and post-rename spelling, never
+#' just the renamed one -- applying the rename unconditionally is wrong for
+#' any election pair entirely BEFORE it took effect (both elections still
+#' call a seat by its old name), which was a second, separate bug found the
+#' same day (see `R/salience_screen.R`'s `governed_population()`).
+#'
+#' Only high-confidence, independently-verifiable renames are listed. Diffing
+#' seat-name sets between election pairs surfaces 1-10 unmatched names per
+#' pair, most of them genuine seat creation/abolition from population growth,
+#' not renames -- guessing which is which from name similarity alone would
+#' repeat the exact error this map exists to prevent. An unmapped rename is a
+#' known, disclosed gap, not a silently-assumed-complete one.
+#'
+#' @return A named character vector, pre-rename [[normalise_seat]] key ->
+#'   post-rename key.
+#' @export
+seat_rename_map <- function() {
+  c(denison = "clark", batman = "cooper", melbourneports = "macnamara")
+}

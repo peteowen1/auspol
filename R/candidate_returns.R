@@ -73,9 +73,8 @@ candidate_returns <- function(election_from, election_to, corpus = NULL) {
   #
   # Normalising here rather than in the corpus keeps this fix at the point of
   # use; the corpus inconsistency is a separate defect and is recorded as one.
-  ns <- function(x) gsub("[^a-z0-9]", "", tolower(x))
-  NOWT[,  .s := ns(seat)]
-  PREVT[, .s := ns(seat)]
+  NOWT[,  .s := normalise_seat(seat)]
+  PREVT[, .s := normalise_seat(seat)]
   # MATCH THE PERSON ACROSS THE SEAT, NOT WITHIN THE PARTY CLASS.
   #
   # Philip Donato held Orange with 49.1% as a Shooter in 2019 and 53.1% as an
@@ -88,7 +87,26 @@ candidate_returns <- function(election_from, election_to, corpus = NULL) {
   #
   # A returning candidate is the same PERSON in the same SEAT. Which label they
   # stand under is a separate question and belongs to the party swing.
-  prev_keys <- PREVT[nzchar(PREVT$.k), list(.s, .k)]
+  #
+  # MATCH BOTH PRE- AND POST-RENAME SPELLING of PREVT's seat, not just the
+  # renamed one -- found 2026-09-04 building a candidate-performance feature:
+  # Andrew Wilkie's continuous Denison (2016) -> Clark (2019) hold read as a
+  # brand-new candidate because `normalise_seat()` alone doesn't equate them.
+  # seat_rename_map() was fixed for this exact fault in governed_population()
+  # (R/salience_screen.R) five commits earlier the same day and not carried
+  # here -- the identical "fixed once, not in its sibling" failure
+  # [[normalise_name]]'s own docs record. Matching only the renamed spelling
+  # would be wrong the other way, for any pair entirely BEFORE the rename (see
+  # governed_population()'s own history of that exact second bug) -- both
+  # PREVT keys are kept, matched against NOWT's own (already-current-era) seat
+  # spelling, correct regardless of which side of a rename either election
+  # falls on.
+  rn <- seat_rename_map()
+  PREVT[, .s_renamed := .s]
+  PREVT[.s %in% names(rn), .s_renamed := rn[.s]]
+  prev_keys <- unique(rbind(
+    PREVT[nzchar(PREVT$.k), list(.s = .s,         .k)],
+    PREVT[nzchar(PREVT$.k), list(.s = .s_renamed, .k)]))
   out <- unique(NOWT[nzchar(NOWT$.k), list(seat, .s, party, .k)])
   out <- merge(out, unique(prev_keys)[, `:=`(hit = TRUE)],
                by = c(".s", ".k"), all.x = TRUE)
@@ -154,15 +172,22 @@ leading_candidate_returns <- function(election_from, election_to, corpus = NULL)
   }
   NOWT  <- data.table::copy(NOWT)[,  .k := kf(.SD), .SDcols = names(NOWT)]
   PREVT <- data.table::copy(PREVT)[, .k := kf(.SD), .SDcols = names(PREVT)]
-  ns <- function(x) gsub("[^a-z0-9]", "", tolower(x))
-  NOWT[,  .s := ns(seat)]
-  PREVT[, .s := ns(seat)]
+  NOWT[,  .s := normalise_seat(seat)]
+  PREVT[, .s := normalise_seat(seat)]
 
   # The LEADING row per (seat, party): highest current pcv.
   data.table::setorder(NOWT, seat, party, -pcv)
   lead <- NOWT[nzchar(.k), .SD[1], by = .(seat, party)]
 
-  prev_keys <- unique(PREVT[nzchar(PREVT$.k), list(.s, .k)])
+  # Match both spellings of a renamed seat -- see the matching comment in
+  # candidate_returns() above; same fault, same fix, kept in sync because
+  # both read the identical PREVT$seat/NOWT$seat shape.
+  rn <- seat_rename_map()
+  PREVT[, .s_renamed := .s]
+  PREVT[.s %in% names(rn), .s_renamed := rn[.s]]
+  prev_keys <- unique(rbind(
+    PREVT[nzchar(PREVT$.k), list(.s = .s,         .k)],
+    PREVT[nzchar(PREVT$.k), list(.s = .s_renamed, .k)]))
   out <- merge(lead[, list(seat, .s, party, .k)], prev_keys[, `:=`(hit = TRUE)],
                by = c(".s", ".k"), all.x = TRUE)
   out[is.na(hit), hit := FALSE]
@@ -228,9 +253,8 @@ personal_prior_vote <- function(election_from, election_to, corpus = NULL) {
   }
   NOWT  <- data.table::copy(NOWT)[,  .k := kf(.SD), .SDcols = names(NOWT)]
   PREVT <- data.table::copy(PREVT)[, .k := kf(.SD), .SDcols = names(PREVT)]
-  ns <- function(x) gsub("[^a-z0-9]", "", tolower(x))
-  NOWT[,  .s := ns(seat)]
-  PREVT[, .s := ns(seat)]
+  NOWT[,  .s := normalise_seat(seat)]
+  PREVT[, .s := normalise_seat(seat)]
 
   # The LEADING row per (seat, party) at the TARGET election: the one whose
   # personal history actually drives this class's swing.
@@ -250,12 +274,24 @@ personal_prior_vote <- function(election_from, election_to, corpus = NULL) {
   # Fishers and Farmers, One Nation, Green, other independent) is a much
   # smaller behavioural jump for voters and is not excluded.
   MAJ <- c("ALP", "LNP", "NAT")
+  # BOTH SPELLINGS of a renamed seat, unioned onto PREVT before grouping --
+  # not an unconditional rename. An unconditional rename reproduces the exact
+  # bug governed_population() had BEFORE its own 2026-09-04 fix: Wilkie's
+  # Denison -> Clark rename is applied even to a pair entirely BEFORE it took
+  # effect (e.g. fed2010 -> fed2013, both still "Denison"), which then fails
+  # to match `lead`'s own still-"denison" spelling and silently loses his
+  # continuity. Every eligible PREVT row is duplicated under its renamed key
+  # too, and `lead` matches whichever spelling its own era actually uses.
+  rn <- seat_rename_map()
+  PT <- PREVT[nzchar(PREVT$.k) & !PREVT$party %in% MAJ]
+  PT[, .s_renamed := .s]
+  PT[.s %in% names(rn), .s_renamed := rn[.s]]
+  PTx <- rbind(PT[, .(.s, .k, pcv)], PT[.s != .s_renamed, .(.s = .s_renamed, .k, pcv)])
   # if (.N) guards max(): when the ONLY prior row for a (.s, .k) group is a
   # major party, filtering it out can leave that group with zero rows, and
   # max() over nothing warns "no non-missing arguments" and returns -Inf.
-  prev_best <- PREVT[nzchar(PREVT$.k) & !PREVT$party %in% MAJ,
-                     .(own_prev_pcv = if (.N) max(pcv, na.rm = TRUE) else NA_real_),
-                     by = .(.s, .k)]
+  prev_best <- PTx[, .(own_prev_pcv = if (.N) max(pcv, na.rm = TRUE) else NA_real_),
+                   by = .(.s, .k)]
   out <- merge(lead[, list(seat, .s, party, .k)], prev_best, by = c(".s", ".k"), all.x = TRUE)
   out[, list(seat, party, own_prev_pcv)]
 }

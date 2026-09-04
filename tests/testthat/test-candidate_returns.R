@@ -163,3 +163,41 @@ test_that("personal_prior_vote is NA, not an error, when the leader is not on th
   r <- personal_prior_vote("e1", "e2", d)
   expect_true(is.na(r[seat == "Wakehurst" & party == "IND"]$own_prev_pcv))
 })
+
+test_that("candidate_returns matches a person across a genuine seat rename", {
+  # Andrew Wilkie held Denison (2016, 44.1%) continuously into its 2019
+  # rename to Clark (50.0%). Found 2026-09-04 building a candidate-
+  # performance feature: normalise_seat() alone doesn't equate "denison" and
+  # "clark", so he read as a brand-new IND candidate -- the same fault
+  # governed_population() (R/salience_screen.R) was fixed for the same day,
+  # not carried into this sibling function until now.
+  d <- data.table::data.table(
+    election = c("e1", "e2"), seat = c("Denison", "Clark"), party = "IND",
+    surname = "WILKIE", given = "Andrew", pcv = c(44.1, 50.0), name = NA_character_)
+  r <- candidate_returns("e1", "e2", d)
+  expect_true(r[seat == "Clark" & party == "IND"]$same)
+})
+
+test_that("personal_prior_vote follows a person's own vote across a genuine seat rename", {
+  d <- data.table::data.table(
+    election = c("e1", "e2"), seat = c("Denison", "Clark"), party = "IND",
+    surname = "WILKIE", given = "Andrew", pcv = c(44.1, 50.0), name = NA_character_)
+  r <- personal_prior_vote("e1", "e2", d)
+  expect_equal(r[seat == "Clark" & party == "IND"]$own_prev_pcv, 44.1)
+})
+
+test_that("candidate_returns and personal_prior_vote are unaffected by a rename that HASN'T happened yet", {
+  # A pair entirely BEFORE Denison -> Clark took effect (both elections still
+  # call it Denison). An unconditional rename of PREVT's seat key would map
+  # "denison" to "clark" here too, failing to match NOWT's own still-
+  # "denison" spelling -- the exact bug governed_population() had before its
+  # 2026-09-04 fix, reproduced here and fixed the same way: match against
+  # BOTH spellings, never rename unconditionally.
+  d <- data.table::data.table(
+    election = c("e0", "e1"), seat = "Denison", party = "IND",
+    surname = "WILKIE", given = "Andrew", pcv = c(21.3, 38.1), name = NA_character_)
+  ret <- candidate_returns("e0", "e1", d)
+  expect_true(ret[seat == "Denison" & party == "IND"]$same)
+  ppv <- personal_prior_vote("e0", "e1", d)
+  expect_equal(ppv[seat == "Denison" & party == "IND"]$own_prev_pcv, 21.3)
+})

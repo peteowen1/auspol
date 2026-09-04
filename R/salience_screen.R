@@ -130,8 +130,12 @@ governed_population <- function(election, prev_election, region,
   # repeat the exact error this map exists to fix. Unmapped renames are a
   # known, documented gap -- see governed_population()'s docs -- not a silent
   # one.
-  SEAT_RENAMES <- c(denison = "clark", batman = "cooper",
-                    melbourneports = "macnamara")
+  # seat_rename_map()/normalise_seat(), not a local copy: this exact map was
+  # local here first and NOT carried into candidate_returns() /
+  # personal_prior_vote() (R/candidate_returns.R), which duplicated the same
+  # Denison/Clark failure for `screened_slopes()`'s live "same person"
+  # returning check. Shared 2026-09-04 so it can only be fixed once.
+  SEAT_RENAMES <- seat_rename_map()
   apply_renames <- function(x) {
     hit <- x %in% names(SEAT_RENAMES)
     x[hit] <- SEAT_RENAMES[x[hit]]
