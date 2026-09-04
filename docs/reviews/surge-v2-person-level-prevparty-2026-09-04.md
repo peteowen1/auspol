@@ -112,8 +112,19 @@ and is superseded by this one.
 this fix deliberately preserves rather than discards) is weighted correctly
 relative to `prev_party` and `jump_pctile` in the fitted hazard -- that's a
 question about the ridge fit's own coefficients, unexamined here. Also
-unexamined: whether ONP's now-major-scale national primary (per Pete's own
-observation, SA 2026) means it should eventually be treated more like
-IND/OTH for `prev_party` purposes in some seats and not others, rather than
-uniformly as continuous-brand. Not acted on here -- ONP stays on class-level
-`prev_party`, unchanged, pending a real look at whether that's still right.
+**Checked, not left open**: whether ONP's SA 2026 breakthrough needed the
+same person-vs-class fix. It doesn't, and the reason is already load-bearing
+elsewhere in this function. `surging_parties("sa", 2022, 2026, 5)` flags
+`c("ONP", "LNP")` for that pair -- SA ONP's statewide mean primary jumped
+6.6% (2022, 19 candidates) to 22.5% (2026, 47 candidates, contesting nearly
+every seat, now above LNP's own 2026 mean of 18.1%) -- and `governed` is
+FALSE for every ONP candidate in sa2026 regardless of `prev_party`,
+including the four who won (Thomas/Narungga, Virgo/MacKillop, Paton/Ngadjuri,
+Roylance/Hammond). A genuine statewide swing is already routed away from the
+candidate-level salience mechanism entirely, correctly, by the pre-existing
+surge-threshold check -- so `prev_party`'s person-vs-class distinction, which
+only matters for candidates the function treats as individually governed,
+never comes into play for them. Federally ONP's mean primary has stayed in
+the 5-13% band since 2016 with no comparable structural jump, so it does not
+trip `surging_parties()` there and stays candidate-scale. No change made;
+none was needed.
