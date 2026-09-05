@@ -339,7 +339,11 @@ CAL_TAG <- paste0(
   if (SHRINK != 0) sprintf("-sh%s", sub("0[.]", "", format(SHRINK, nsmall = 2))) else "",
   if (SMOOTH != 0.15) sprintf("-sm%s", sub("0[.]", "", format(SMOOTH, nsmall = 2))) else "", .arm_fingerprint)
 
-SEED <- 42; eps <- 1e-6
+# SEED settable so the Monte Carlo error on a reported figure can be measured
+# rather than assumed. At 20,000 sims over ~150 divisions the standard error
+# on mean log loss is a few thousandths -- enough to matter when comparing
+# against an external benchmark at that precision. Default unchanged.
+SEED <- as.integer(Sys.getenv("AUSPOL_SEED", "42")); eps <- 1e-6
 P <- election_data_path()
 
 PAIRS <- list(

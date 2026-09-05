@@ -158,8 +158,13 @@ build_flow_matrix <- function(transfers, min_n = 3L, multiplicity = FALSE) {
                       function(z) sort(unique(sub("[0-9]+$", "", z))))
   names(surv_sets) <- unique(d$surv)
   all_cls <- sort(unique(unlist(surv_sets)))
-  subsets <- unlist(lapply(2:min(length(all_cls), 7L), function(k)
-    utils::combn(all_cls, k, simplify = FALSE)), recursive = FALSE)
+  # seq() from 2, NOT `2:n` -- with a single observed class `2:1` counts DOWN
+  # to c(2, 1) and combn() is then asked for pairs from one element. Caught by
+  # the sparse-flow test, which builds a matrix with one destination class.
+  k_max <- min(length(all_cls), 7L)
+  subsets <- if (k_max < 2L) list() else
+    unlist(lapply(seq.int(2L, k_max), function(k)
+      utils::combn(all_cls, k, simplify = FALSE)), recursive = FALSE)
   d_sets <- surv_sets[d$surv]
   superset <- list()
   for (sub in subsets) {
