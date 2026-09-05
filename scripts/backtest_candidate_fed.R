@@ -423,6 +423,56 @@ for (K in PAIRS) {
   stopifnot(nrow(tx) > 100L, all(.yrq(tx$election) < K$to))
   tx <- pool_configured_flows(tx, FED_DATE[[as.character(K$to)]])
   fm <- build_flow_matrix(tx, min_n = 3L)
+  # PER-CLASS FLOW POOLING, off by default (AUSPOL_FLOW_POOL_VOLATILE=1).
+  # Pooling every class across two prior elections cuts raw flow error
+  # (7.66 -> 7.35 points) but WORSENS the seat forecast, because it smooths
+  # classes whose flows are stable and where recency is what matters.
+  # Volatility differs enormously between classes, and it is measurable from
+  # PRIOR elections only -- fed2013-2022, nothing from the target:
+  #
+  #   ONP 13.59 | ALP 12.82 | LNP 7.92 | OTH_RIGHT 4.88 | OTH 3.55 | IND 3.47 | GRN 0.61
+  #   (vote-weighted sd of destination shares across those elections)
+  #
+  # So average more where the estimate is unstable and stay recent where it
+  # is not -- ordinary shrinkage, and the ranking that decides which classes
+  # get it uses no information from the election being forecast.
+  if (identical(Sys.getenv("AUSPOL_FLOW_POOL_VOLATILE", "0"), "1")) {
+    .yv <- function(e) suppressWarnings(as.integer(sub("^[a-z]+", "", e)))
+    pri <- unique(TX$election)[grepl("^fed", unique(TX$election))]
+    pri <- pri[.yv(pri) < K$to]
+    if (length(pri) >= 3L) {
+      hist <- TX[election %in% pri, .(v = sum(votes)), by = .(election, from, to)]
+      hist[, pct := 100 * v / sum(v), by = .(election, from)]
+      vv <- hist[, .(n_el = .N, sd = stats::sd(pct), mean = mean(pct)), by = .(from, to)]
+      vv <- vv[n_el >= 3L]
+      cls_v <- vv[, .(vol = sum(sd * mean) / sum(mean)), by = from]
+      thr <- as.numeric(Sys.getenv("AUSPOL_FLOW_VOL_THRESHOLD", "10"))
+      hot <- cls_v[is.finite(vol) & vol > thr, from]
+      recent2 <- pri[order(-.yv(pri))][seq_len(min(2L, length(pri)))]
+      stopifnot(all(.yv(recent2) < K$to))
+      if (length(hot)) {
+        fm2 <- build_flow_matrix(TX[election %in% recent2], min_n = 3L)
+        swap <- function(a, b) {
+          if (is.null(b)) return(a)
+          for (nm in names(b)) {
+            f <- sub("[|].*$", "", nm)
+            if (f %in% hot) a[[nm]] <- b[[nm]]
+          }
+          a
+        }
+        fm$conditional <- swap(fm$conditional, fm2$conditional)
+        fm$superset    <- swap(fm$superset,    fm2$superset)
+        for (f in hot) {
+          if (!is.null(fm2$pooled[[f]]))   fm$pooled[[f]]   <- fm2$pooled[[f]]
+          if (!is.null(fm2$pairwise[[f]])) fm$pairwise[[f]] <- fm2$pairwise[[f]]
+        }
+        cat(sprintf("BF0v flows pooled over %s for volatile class(es): %s (threshold %.1f)
+",
+                    paste(sort(recent2), collapse = "+"),
+                    paste(sort(hot), collapse = ", "), thr))
+      }
+    }
+  }
 
   win <- WIN[election == eb, .(seat, winner = coal(winner))]
   stopifnot(nrow(win) > 100L)
