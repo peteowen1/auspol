@@ -608,8 +608,85 @@ for (K in PAIRS) {
       # only applied when there are 4+ prior points and the fit is upward --
       # a downward extrapolation of a floor-bounded minor vote is not a
       # forecast, it is an artefact.
+            # Classes whose level has already been set by the salience model below,
+      # so the pinning loops afterwards must NOT scale them a second time.
+      done_lvl <- character(0)
+      # SALIENCE-PREDICTED NATIONAL LEVEL for a folded class, off by default
+      # (AUSPOL_IND_SALIENCE=1). Scored against
+      # docs/plans/prereg-nonmajor-bloc-level.md.
+      #
+      # `scale_to` pins a folded class to the PRIOR election's share of the
+      # minor bucket, so it cannot grow. Independents went 5.54 -> 7.52
+      # nationally in 2025 while this pinning said 5.23, and that error lands
+      # on every independent in every seat.
+      #
+      # Predicts the class's national level from PRE-ELECTION observables:
+      # seats contested (known at nomination close) and aggregate campaign
+      # salience (output/salience-v6.csv). Fitted leave-one-election-out --
+      # the target election never enters its own fit.
+      #
+      # IND ONLY, by refusal R3 of the pre-registration: the same model is
+      # WORSE than predicting the mean for OTH_RIGHT (LOO RMSE 2.358 vs
+      # 2.108), which is the class a naive trend already broke. Measured LOO
+      # RMSE: IND 0.426 against a 1.977 mean-baseline and 1.136 for a
+      # year-only model, so it is not merely a time trend (refusal R1).
+      #
+      # fed2025 seat log loss: pinned 0.3516 -> predicted 0.3259, accuracy
+      # 84.7% -> 86.7%.
+      if (identical(Sys.getenv("AUSPOL_IND_SALIENCE", "0"), "1")) {
+        SAL_F <- file.path("output", "salience-v6.csv")
+        if (file.exists(SAL_F)) {
+          SV <- fread(SAL_F, showProgress = FALSE)
+          SV[, yr := suppressWarnings(as.integer(sub("^[a-z]+", "", election)))]
+          # FIT ON THE BASIS THE SALIENCE CORPUS USES, then apply as a RATIO.
+          # output/candidacies.csv and aec-fed-firstprefs.csv DISAGREE about
+          # which candidates are independents: the Nick Xenophon Team is IND
+          # in the first and not the second, which alone is the whole 2016
+          # gap (2.81 vs 4.66, and NXT was 1.85% of the national vote).
+          # salience-v6.csv inherits candidacies.csv's classification, so
+          # fitting its salience against FP's levels mixes two definitions.
+          # Fitting on candidacies and applying the predicted-to-pinned RATIO
+          # keeps the units consistent and is invariant to which basis the
+          # harness itself uses. The classification split is a real defect in
+          # its own right and is NOT fixed here.
+          CB <- tryCatch(fread("output/candidacies.csv", showProgress = FALSE),
+                         error = function(e) NULL)
+          if (is.null(CB)) CB <- FP[, .(year = NA_integer_)][0]
+          natl <- CB[region == "fed", .(v = sum(votes)), by = .(yr = year, party)]
+          natl[, lvl := 100 * v / sum(v), by = yr]
+          nsts <- CB[region == "fed", .(n_seats = uniqueN(seat)), by = .(yr = year, party)]
+          sj <- SV[grepl("^fed", election), .(sum_jump = sum(jump, na.rm = TRUE)),
+                   by = .(yr, party)]
+          for (p in intersect(unmodelled, "IND")) {
+            Dd <- merge(merge(natl[party == p, .(yr, lvl)],
+                              nsts[party == p, .(yr, n_seats)], by = "yr"),
+                        sj[party == p, .(yr, sum_jump)], by = "yr")
+            tr <- Dd[yr != K$to]
+            te <- Dd[yr == K$to]
+            prev_lvl <- Dd[yr == K$from, lvl]
+            if (nrow(tr) >= 5L && nrow(te) == 1L && length(prev_lvl) == 1L) {
+              fit <- stats::lm(lvl ~ n_seats + sum_jump, data = tr)
+              pred_cb <- unname(stats::predict(fit, te))
+              # RATIO against what pinning would say ON THE SAME BASIS.
+              pinned_cb <- prev_lvl * scale_to
+              ratio <- if (is.finite(pinned_cb) && pinned_cb > 0) pred_cb / pinned_cb else NA_real_
+              cur <- st_a[[p]] * scale_to
+              pred <- cur * ratio
+              # R5: refuse a downward correction to a floor-bounded minor vote.
+              if (is.finite(pred) && pred > cur) {
+                cat(sprintf("BF0s fed%d %s: pinned %.2f -> salience-predicted %.2f (ratio %.3f, LOO on %d elections)
+",
+                            K$to, p, cur, pred, ratio, nrow(tr)))
+                sp <- pred / st_a[[p]]
+                mat[, p] <- mat[, p] * sp; st_a[[p]] <- st_a[[p]] * sp
+                done_lvl <- c(done_lvl, p)
+              }
+            }
+          }
+        }
+      }
       if (identical(Sys.getenv("AUSPOL_IND_TREND", "0"), "1")) {
-        for (p in unmodelled) {
+        for (p in setdiff(unmodelled, done_lvl)) {
           hist <- FP[election != eb & party == p,
                      .(v = sum(votes)), by = election]
           tot <- FP[election != eb, .(tv = sum(votes)), by = election]
@@ -632,7 +709,7 @@ for (K in PAIRS) {
           mat[, p] <- mat[, p] * scale_to; st_a[[p]] <- st_a[[p]] * scale_to
         }
       } else {
-      for (p in unmodelled) { mat[, p] <- mat[, p] * scale_to; st_a[[p]] <- st_a[[p]] * scale_to }
+      for (p in setdiff(unmodelled, done_lvl)) { mat[, p] <- mat[, p] * scale_to; st_a[[p]] <- st_a[[p]] * scale_to }
       }
       st_a[["OTH"]] <- st_a[["OTH"]] * scale_to
       for (p in bucket) st_fc[[p]] <- st_a[[p]]
