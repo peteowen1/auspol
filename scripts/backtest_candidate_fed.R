@@ -691,7 +691,31 @@ for (K in PAIRS) {
                 # moves to the re-forecast level while its uncertainty stays
                 # scaled to the pinned one -- the same class described two
                 # different ways in the same object.
-                if (p %in% colnames(sw_draws)) sw_draws[, p] <- sw_draws[, p] * sp
+                # OWN UNCERTAINTY, not OTH's. sw_draws[, p] is built as
+                # oth_draw * ratio, i.e. a deterministic multiple of OTH --
+                # so a class re-forecast by a DIFFERENT model still carried
+                # OTH's poll spread, perfectly correlated, and none of its
+                # own. The salience model's error is measured (leave-one-
+                # election-out RMSE, computed here from the same fit), so use
+                # that, centred on the prediction. Falls back to the old
+                # rescale if the LOO residuals cannot be formed.
+                if (p %in% colnames(sw_draws)) {
+                  loo_res <- tryCatch(sapply(tr$yr, function(yy) {
+                    f2 <- stats::lm(lvl ~ n_seats + sum_jump, data = tr[yr != yy])
+                    unname(stats::predict(f2, tr[yr == yy])) - tr[yr == yy, lvl]
+                  }), error = function(e) NULL)
+                  sd_lvl <- if (!is.null(loo_res) && length(loo_res) >= 3L &&
+                                is.finite(stats::sd(loo_res)))
+                    sqrt(mean(loo_res^2)) else NA_real_
+                  if (is.finite(sd_lvl) && sd_lvl > 0) {
+                    cat(sprintf("BF0s fed%d %s: statewide draws from the level model's own LOO RMSE %.3f (was OTH-locked)
+",
+                                K$to, p, sd_lvl))
+                    sw_draws[, p] <- pmax(0, stats::rnorm(nrow(sw_draws), pred, sd_lvl))
+                  } else {
+                    sw_draws[, p] <- sw_draws[, p] * sp
+                  }
+                }
                 if (p %in% names(lvl_scale)) lvl_scale[[p]] <- sp
                 done_lvl <- c(done_lvl, p)
               }
