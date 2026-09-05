@@ -885,6 +885,67 @@ for (K in PAIRS) {
                 if (length(FC$folded)) paste(FC$folded, collapse = ", ") else "none"))
     cat(sprintf("BF0  trend TPP %.2f, fundamentals (LOO) %.2f, projection %.2f, draws realise %.2f\n",
                 FC$tpp, fr, FC$anchor$mean, FC$implied_tpp))
+  # FLOW AS A FUNCTION OF THE PARTY'S OWN PRIMARY, off by default
+  # (AUSPOL_FLOW_ON_PRIMARY=1). Pete's idea, and the measurements back it.
+  #
+  # Flows are taken as constants from the prior election, but One Nation's
+  # share to the Coalition has moved with its own vote:
+  #
+  #   ONP primary  0.26  0.22  0.17  1.29  3.08  4.96  6.41
+  #   ONP -> LNP   28.3  33.9  22.5  47.4  60.4  47.6  61.6
+  #
+  # Fitted on pre-2025 elections ONLY: slope +5.31 per point of primary
+  # (t = 2.17, R2 0.54), predicting 65.2% for 2025 against an actual 61.6%
+  # and the 47.6% a fed2022-constant gives. Leave-one-out over all seven
+  # elections, RMSE 10.6 points against 14.8 for "carry the last election
+  # forward" -- so this is better out of sample, not just on the target.
+  #
+  # Uses the FORECAST primary (st_fc), never the realised one, so nothing
+  # from the election being predicted enters. The fit excludes the target
+  # election explicitly.
+  if (identical(Sys.getenv("AUSPOL_FLOW_ON_PRIMARY", "0"), "1")) {
+    .yp <- function(e) suppressWarnings(as.integer(sub("^[a-z]+", "", e)))
+    flh <- TX[, .(v = sum(votes)), by = .(election, from, to)]
+    flh[, pct := 100 * v / sum(v), by = .(election, from)]
+    flh[, yr := .yp(election)]
+    CBp <- fread("output/candidacies.csv", showProgress = FALSE)
+    prm <- CBp[region == "fed", .(v = sum(votes)), by = .(yr = year, party)]
+    prm[, pr := 100 * v / sum(v), by = yr]
+    adj_pairs <- list(c("ONP", "LNP"))
+    for (ap in adj_pairs) {
+      fc <- ap[1]; tc <- ap[2]
+      Dp <- merge(flh[from == fc & to == tc, .(yr, flow = pct)],
+                  prm[party == fc, .(yr, pr)], by = "yr")
+      Dp <- Dp[yr < K$to]
+      fcast <- if (fc %in% names(st_fc)) st_fc[[fc]] else NA_real_
+      if (nrow(Dp) >= 5L && is.finite(fcast)) {
+        ff <- stats::lm(flow ~ pr, data = Dp)
+        tgt <- unname(stats::predict(ff, data.frame(pr = fcast)))
+        tgt <- max(5, min(90, tgt))
+        cur <- Dp[which.max(yr), flow]
+        cat(sprintf("BF0p %s->%s: flow %.1f -> %.1f (forecast %s primary %.2f, fit on %d prior elections)
+",
+                    fc, tc, cur, tgt, fc, fcast, nrow(Dp)))
+        rescale_row <- function(r) {
+          if (is.null(r) || !(tc %in% names(r)) || sum(r) <= 0) return(r)
+          rr <- 100 * r / sum(r)
+          othr <- setdiff(names(rr), tc)
+          rem <- 100 - tgt
+          if (sum(rr[othr]) > 0) rr[othr] <- rr[othr] * rem / sum(rr[othr])
+          rr[tc] <- tgt
+          rr
+        }
+        for (nm in names(fm$conditional))
+          if (sub("[|].*$", "", nm) == fc) fm$conditional[[nm]] <- rescale_row(fm$conditional[[nm]])
+        if (!is.null(fm$superset)) for (nm in names(fm$superset))
+          if (sub("[|].*$", "", nm) == fc) fm$superset[[nm]] <- rescale_row(fm$superset[[nm]])
+        if (!is.null(fm$pooled[[fc]]))   fm$pooled[[fc]]   <- rescale_row(fm$pooled[[fc]])
+        if (!is.null(fm$pairwise[[fc]])) fm$pairwise[[fc]] <- rescale_row(fm$pairwise[[fc]])
+      }
+    }
+  }
+
+
     for (p in parties) {
       prev <- if (p %in% names(st_a)) st_a[[p]] else 0
       .sl <- .fed_slope(p, rownames(mat), .cond, .screened, .returns, .permit)
