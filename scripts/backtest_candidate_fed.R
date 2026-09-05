@@ -509,6 +509,13 @@ for (K in PAIRS) {
                 paste0(" | not contested here: ",
                        paste(attr(DEV_SLOPE, "absent"), collapse=",")) else ""))
   parties <- colnames(mat); shares <- mat
+  # Per-class national LEVEL rescale, so a class whose level was re-forecast
+  # (AUSPOL_IND_SALIENCE) also reaches the seats where .own_x() substitutes a
+  # returning candidate's OWN prior vote. Without this the uplift is applied
+  # to mat[, p] and then discarded in exactly the sitting-independent seats it
+  # exists to help -- which is why the harness gain (0.3588 -> 0.3567) was far
+  # smaller than the same national level scored in isolation (-> 0.3259).
+  lvl_scale <- stats::setNames(rep(1, length(parties)), parties)
   sw_draws <- NULL
   if (FORECAST_MODE) {
     ed <- as.Date(FED_DATE[[as.character(K$to)]])
@@ -679,6 +686,13 @@ for (K in PAIRS) {
                             K$to, p, cur, pred, ratio, nrow(tr)))
                 sp <- pred / st_a[[p]]
                 mat[, p] <- mat[, p] * sp; st_a[[p]] <- st_a[[p]] * sp
+                # AND THE DRAWS. sw_draws[, p] was built as oth_draw * the
+                # PRIOR election's ratio, so without this the point estimate
+                # moves to the re-forecast level while its uncertainty stays
+                # scaled to the pinned one -- the same class described two
+                # different ways in the same object.
+                if (p %in% colnames(sw_draws)) sw_draws[, p] <- sw_draws[, p] * sp
+                if (p %in% names(lvl_scale)) lvl_scale[[p]] <- sp
                 done_lvl <- c(done_lvl, p)
               }
             }
@@ -726,12 +740,16 @@ for (K in PAIRS) {
     for (p in parties) {
       prev <- if (p %in% names(st_a)) st_a[[p]] else 0
       .sl <- .fed_slope(p, rownames(mat), .cond, .screened, .returns, .permit)
-      shares[, p] <- dev_slope(.own_x(p, rownames(mat), mat[, p]), prev, st_fc[[p]], .sl)
+      .s_p <- if (p %in% names(lvl_scale)) lvl_scale[[p]] else 1
+      shares[, p] <- dev_slope(.own_x(p, rownames(mat), mat[, p] / .s_p) * .s_p,
+                               prev, st_fc[[p]], .sl)
     }
   } else {
     for (p in parties) if (p %in% names(st_b) && p %in% names(st_a)) {
       .sl <- .fed_slope(p, rownames(mat), .cond, .screened, .returns, .permit)
-      shares[, p] <- dev_slope(.own_x(p, rownames(mat), mat[, p]), st_a[[p]], st_b[[p]], .sl)
+      .s_p <- if (p %in% names(lvl_scale)) lvl_scale[[p]] else 1
+      shares[, p] <- dev_slope(.own_x(p, rownames(mat), mat[, p] / .s_p) * .s_p,
+                               st_a[[p]], st_b[[p]], .sl)
     }
   }
   # Zero IND wherever nobody actually stood at the TARGET election. This is
