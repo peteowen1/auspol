@@ -96,6 +96,57 @@ build_flow_matrix <- function(transfers, min_n = 3L, multiplicity = FALSE) {
   pool[, "share" := 100 * get("votes") / sum(get("votes")), by = "from"]
   pooled <- mk(pool, "from")
 
+  # AVAILABILITY-CONDITIONED BACKOFF, between the exact cell and the pooled
+  # row. Cells key on the EXACT survivor set, so they fragment and most never
+  # reach min_n; the consumer then falls back to `pooled` and renormalises it
+  # over whoever is actually alive. That is the renormalisation trap
+  # CLAUDE.md records, and it is not a small error:
+  #
+  #   LNP excluded, ALP and IND both surviving
+  #     pooled row renormalised over {ALP, IND} :  IND 22.2%   ALP 77.8%
+  #     what actually happened (39 rounds, 18 seat-elections)
+  #                                             :  IND 69.9%   ALP 26.3%
+  #
+  # Backwards by three times, on the transfer that decides Fowler, Mayo,
+  # Clark, Indi, Bean, Calwell, Franklin, Fremantle, Watson and Kennedy. The
+  # pooled row is diluted by every round where no independent was available
+  # to receive anything, so renormalising it onto a contest that HAS one
+  # asserts a rate measured on a different contest.
+  #
+  # `pairwise[[from]][[to]]` is instead the share of `from`'s votes going to
+  # `to` among only those rounds where `to` was actually a survivor. Shares
+  # across destinations do not sum to 100 (each has its own denominator), so
+  # a consumer renormalises over the alive set -- which is now legitimate,
+  # because every rate in it was measured on rounds where that destination
+  # could receive.
+  avail <- d[, list(votes = sum(get("votes")),
+                    denom = sum(get("votes"))), by = c("from", "to")]
+  rd <- unique(d[, c("election", "seat", "round", "from", "surv"), with = FALSE])
+  tot_round <- d[, list(rv = sum(get("votes"))),
+                 by = c("election", "seat", "round", "from")]
+  rd <- merge(rd, tot_round, by = c("election", "seat", "round", "from"))
+  classes <- unique(d$to)
+  pw <- data.table::rbindlist(lapply(classes, function(cl) {
+    hit <- rd[vapply(strsplit(rd$surv, "+", fixed = TRUE),
+                     function(z) cl %in% sub("[0-9]+$", "", z), logical(1))]
+    if (!nrow(hit)) return(NULL)
+    got <- merge(d[d$to == cl, ], hit[, c("election", "seat", "round", "from"), with = FALSE],
+                 by = c("election", "seat", "round", "from"))
+    if (!nrow(got)) return(NULL)
+    data.table::data.table(
+      from = got[, list(v = sum(get("votes"))), by = "from"]$from,
+      to = cl,
+      share = 100 * got[, list(v = sum(get("votes"))), by = "from"]$v /
+        hit[, list(rv = sum(get("rv"))), by = "from"][
+          match(got[, list(v = sum(get("votes"))), by = "from"]$from,
+                hit[, list(rv = sum(get("rv"))), by = "from"]$from)]$rv)
+  }), fill = TRUE)
+  pairwise <- if (is.null(pw) || !nrow(pw)) list() else
+    stats::setNames(lapply(unique(pw$from), function(f) {
+      s <- pw[pw$from == f, ]
+      stats::setNames(s$share, s$to)
+    }), unique(pw$from))
+
   coverage <- unique(cell_tot[, c("cell", "from", "surv", "n"), with = FALSE])
   cov_votes <- cell_tot[, list(votes = sum(get("votes"))), by = "cell"]
   coverage <- merge(coverage, cov_votes, by = "cell")
@@ -104,7 +155,7 @@ build_flow_matrix <- function(transfers, min_n = 3L, multiplicity = FALSE) {
 
   # STAMPED, so a consumer can refuse a matrix it cannot read rather than
   # silently skipping every cell in it. See simulate_seat_contests().
-  list(conditional = conditional, pooled = pooled,
+  list(conditional = conditional, pooled = pooled, pairwise = pairwise,
        coverage = as.data.frame(coverage), min_n = min_n,
        multiplicity = multiplicity)
 }

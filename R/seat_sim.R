@@ -510,6 +510,30 @@ simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
     }
     pool[[pidx[[p]]]] <- row
   }
+  # AVAILABILITY-CONDITIONED FALLBACK, preferred over the pooled row when
+  # build_flow_matrix() supplies it. The pooled row is diluted by every round
+  # where a destination was not on the ballot to receive anything, so
+  # renormalising it onto a contest that HAS that destination asserts a rate
+  # measured on a different contest. Measured: LNP excluded with ALP and IND
+  # surviving sends 69.9% to the independent in the real counts (39 rounds,
+  # 18 seat-elections); the pooled row renormalised says 22.2%. Backwards by
+  # three times, on the transfer that decides Fowler, Mayo, Clark, Indi,
+  # Bean, Calwell, Franklin, Fremantle, Watson and Kennedy.
+  # `pairwise` conditions each rate on rounds where that destination actually
+  # survived, so renormalising over the alive set is legitimate.
+  pool_pw <- NULL
+  if (!is.null(matrix$pairwise) && length(matrix$pairwise)) {
+    pool_pw <- vector("list", K)
+    for (p in parties) {
+      r <- matrix$pairwise[[p]]
+      row <- numeric(K)
+      if (!is.null(r)) {
+        keep <- intersect(names(r), parties)
+        row[pidx[keep]] <- pmax(0, r[keep])
+      }
+      pool_pw[[pidx[[p]]]] <- if (sum(row) > 0) row else pool[[pidx[[p]]]]
+    }
+  }
 
   totals <- base::matrix(0L, nrow = n_sims, ncol = K,
                          dimnames = list(NULL, parties))
@@ -649,7 +673,7 @@ simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
           row
         } else {
           n_fb <- n_fb + 1L
-          pool[[from]]
+          if (!is.null(pool_pw)) pool_pw[[from]] else pool[[from]]
         }
         n_tx <- n_tx + 1L
         w <- row[alive]; tot <- sum(w)
