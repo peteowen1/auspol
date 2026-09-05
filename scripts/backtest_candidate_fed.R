@@ -465,7 +465,52 @@ for (K in PAIRS) {
   # correct to act on. See personal_prior_vote()'s docs -- this gap was
   # already named in candidate_returns()'s own docstring ("which label they
   # stand under ... belongs to the party swing") and never actually built.
-  .own_prev <- if (.cond) tryCatch(personal_prior_vote(ea, eb), error = function(e) NULL) else NULL
+  # MAJOR-PARTY DEFECTOR DISCOUNT, off by default (AUSPOL_DEFECT_DISCOUNT=1).
+  # personal_prior_vote() excludes a prior ALP/LNP/NAT registration entirely,
+  # so a sitting member who goes independent keeps NO history and is projected
+  # off the class-level base -- near zero in a seat with no prior independent.
+  # Calare 2025 is the case: Andrew Gee held it for the Nationals, took 39.5%
+  # as an independent, and the model gave the seat 0.122 against AE Forecasts'
+  # 0.411. Measured over 12 sitting members who did this, retention is 0.284
+  # of their major-party vote (sd 0.191); the 5 non-members are unusable
+  # (mean 2.32, sd 4.38), so this is restricted to members inside
+  # personal_prior_vote(). Estimated leave-one-election-out so the target
+  # election never sets its own discount.
+  .defect <- NULL
+  if (identical(Sys.getenv("AUSPOL_DEFECT_DISCOUNT", "0"), "1")) {
+    .defect <- tryCatch({
+      MJ <- c("ALP", "LNP", "NAT")
+      kk <- function(d) match_key(surname_of(d$surname, d$name),
+                                  given_of(d$given, d$name), "initial")
+      CB <- fread("output/candidacies.csv", showProgress = FALSE)
+      els <- unique(CB$election)
+      rr <- rbindlist(lapply(els, function(e1) {
+        yr1 <- suppressWarnings(as.integer(sub("^[a-z]+", "", e1)))
+        rg  <- sub("[0-9]+$", "", e1)
+        nxt <- els[sub("[0-9]+$", "", els) == rg &
+                   suppressWarnings(as.integer(sub("^[a-z]+", "", els))) > yr1]
+        if (!length(nxt)) return(NULL)
+        e2 <- nxt[which.min(suppressWarnings(as.integer(sub("^[a-z]+", "", nxt))))]
+        if (identical(e2, eb)) return(NULL)   # never the target election
+        A <- copy(CB[election == e1])[, `:=`(.k = kk(.SD), .s = normalise_seat(seat))]
+        B <- copy(CB[election == e2])[, `:=`(.k = kk(.SD), .s = normalise_seat(seat))]
+        a <- A[nzchar(.k) & party %in% MJ & elected %in% TRUE,
+               .(.s, .k, prev = pcv)][, .SD[which.max(prev)], by = .(.s, .k)]
+        b <- B[nzchar(.k) & !party %in% MJ, .(.s, .k, now = pcv)]
+        m <- merge(a, b, by = c(".s", ".k"))
+        if (!nrow(m)) NULL else m[, .(ratio = now / prev)]
+      }), fill = TRUE)
+      if (is.null(rr) || nrow(rr) < 5L) NULL else {
+        v <- stats::median(rr$ratio, na.rm = TRUE)
+        cat(sprintf("BF0d defector discount %.3f from %d cases (target excluded)
+",
+                    v, nrow(rr)))
+        v
+      }
+    }, error = function(e) NULL)
+  }
+  .own_prev <- if (.cond) tryCatch(personal_prior_vote(ea, eb, major_discount = .defect),
+                                   error = function(e) NULL) else NULL
   .own_x <- function(p, seats, x) {
     if (is.null(.own_prev)) return(x)
     ov <- .own_prev[.own_prev$party == p, ]

@@ -255,8 +255,22 @@ leading_candidate_returns <- function(election_from, election_to, corpus = NULL)
 #' @inheritParams candidate_returns
 #' @return A `data.table` of `seat`, `party`, `own_prev_pcv` (`NA_real_` where
 #'   the leading candidate does not personally return).
+#' @param major_discount Optional numeric. When set, a candidate who was the
+#'   SITTING MEMBER for a major party and now stands for a non-major class
+#'   carries that fraction of their major-party vote as a FLOOR on the
+#'   class's seat base. `NULL` (the default) excludes prior major-party
+#'   registrations entirely, which is the previous behaviour.
+#'
+#'   Measured over 12 sitting members who did this, retention is 0.284 of
+#'   their major-party vote (sd 0.191); the 5 non-members are unusable
+#'   (mean 2.32, sd 4.38), which is why this is restricted to members. It is
+#'   a floor rather than a replacement because the class may already have a
+#'   better base in that seat from a different candidate -- overwriting Kate
+#'   Hook's 20% in Calare with Andrew Gee's discounted Nationals vote moved
+#'   the seat the wrong way, 0.122 -> 0.040.
 #' @export
-personal_prior_vote <- function(election_from, election_to, corpus = NULL) {
+personal_prior_vote <- function(election_from, election_to, corpus = NULL,
+                               major_discount = NULL) {
   C <- corpus
   if (is.null(C)) {
     f <- file.path("output", "candidacies.csv")
@@ -306,6 +320,27 @@ personal_prior_vote <- function(election_from, election_to, corpus = NULL) {
   # Fishers and Farmers, One Nation, Green, other independent) is a much
   # smaller behavioural jump for voters and is not excluded.
   MAJ <- c("ALP", "LNP", "NAT")
+  # MAJOR-PARTY DEFECTORS, opt-in via `major_discount` (NULL = excluded, the
+  # previous behaviour, byte-identical).
+  #
+  # The exclusion above was written when there were TWO examples and "no
+  # basis to fit how much to discount". There are now 12 sitting members who
+  # re-contested their own seat under a non-major label, and their retention
+  # is estimable: mean 0.284 of their major-party vote, sd 0.191 (against
+  # n=5 non-members at mean 2.32, sd 4.38 -- unusable, so this is restricted
+  # to sitting members).
+  #
+  # Discarding the history entirely is not the safe choice it looks like. It
+  # leaves a defector with the CLASS-level base, which in a seat with no
+  # prior independent is near zero: Andrew Gee held Calare for the Nationals
+  # and took 39.5% as an independent in 2025, and the model gave that seat
+  # 0.122 against AE Forecasts' 0.411. A discount that is merely
+  # approximately right beats a base of zero.
+  #
+  # The spread is real and is not hidden: McBride collapsed (62.3 -> 14.8,
+  # ratio 0.24) while Ward held (53.6 -> 38.8, 0.72). What separates them --
+  # disendorsement and scandal versus a principled resignation -- is not in
+  # any column this repo has.
   # BOTH SPELLINGS of a renamed seat, unioned onto PREVT before grouping --
   # not an unconditional rename. An unconditional rename reproduces the exact
   # bug governed_population() had BEFORE its own 2026-09-04 fix: Wilkie's
@@ -325,5 +360,34 @@ personal_prior_vote <- function(election_from, election_to, corpus = NULL) {
   prev_best <- PTx[, .(own_prev_pcv = if (.N) max(pcv, na.rm = TRUE) else NA_real_),
                    by = .(.s, .k)]
   out <- merge(lead[, list(seat, .s, party, .k)], prev_best, by = c(".s", ".k"), all.x = TRUE)
+  # DEFECTOR FALLBACK, applied only where this candidate now stands for a
+  # NON-major class and has no non-major history to draw on. Adding the
+  # discounted rows to `prev_best` instead would match a returning ALP member
+  # against THEMSELVES and crush every major-party incumbent to a fraction of
+  # its own prior vote -- measured, that took fed2025 accuracy to 25.3%.
+  if (!is.null(major_discount) && is.finite(major_discount) && major_discount > 0 &&
+      "elected" %in% names(PREVT)) {
+    DEF <- PREVT[nzchar(PREVT$.k) & PREVT$party %in% MAJ & PREVT$elected %in% TRUE,
+                 .(def_pcv = if (.N) max(pcv, na.rm = TRUE) else NA_real_),
+                 by = .(.s, .k)]
+    if (nrow(DEF)) {
+      # A FLOOR, NOT A REPLACEMENT. The class may already have a real base in
+      # that seat from a DIFFERENT candidate, and it can be the better
+      # number: Kate Hook took about 20% as an independent in Calare in 2022,
+      # so overwriting that with Andrew Gee's discounted Nationals vote (~13)
+      # moved the seat the wrong way -- measured, 0.122 -> 0.040. Only apply
+      # the defector estimate where it EXCEEDS what that class already polled
+      # in the seat.
+      cls_base <- PREVT[, .(cls_pcv = if (.N) max(pcv, na.rm = TRUE) else NA_real_),
+                        by = .(.s, party)]
+      out <- merge(out, DEF, by = c(".s", ".k"), all.x = TRUE)
+      out <- merge(out, cls_base, by = c(".s", "party"), all.x = TRUE)
+      out[is.na(cls_pcv), cls_pcv := 0]
+      out[is.na(own_prev_pcv) & !party %in% MAJ & !is.na(def_pcv) &
+            def_pcv * major_discount > cls_pcv,
+          own_prev_pcv := def_pcv * major_discount]
+      out[, c("def_pcv", "cls_pcv") := NULL]
+    }
+  }
   out[, list(seat, party, own_prev_pcv)]
 }

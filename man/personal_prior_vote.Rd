@@ -5,7 +5,12 @@
 \title{A personally-returning leading candidate's OWN prior vote, under whatever
 party they ran as then}
 \usage{
-personal_prior_vote(election_from, election_to, corpus = NULL)
+personal_prior_vote(
+  election_from,
+  election_to,
+  corpus = NULL,
+  major_discount = NULL
+)
 }
 \arguments{
 \item{election_from, election_to}{Election labels as they appear in the
@@ -13,6 +18,20 @@ corpus, e.g. \code{"fed2019"} and \code{"fed2022"}.}
 
 \item{corpus}{Optional pre-read candidacy table; read from
 \code{output/candidacies.csv} when \code{NULL}.}
+
+\item{major_discount}{Optional numeric. When set, a candidate who was the
+SITTING MEMBER for a major party and now stands for a non-major class
+carries that fraction of their major-party vote as a FLOOR on the
+class's seat base. \code{NULL} (the default) excludes prior major-party
+registrations entirely, which is the previous behaviour.
+
+Measured over 12 sitting members who did this, retention is 0.284 of
+their major-party vote (sd 0.191); the 5 non-members are unusable
+(mean 2.32, sd 4.38), which is why this is restricted to members. It is
+a floor rather than a replacement because the class may already have a
+better base in that seat from a different candidate -- overwriting Kate
+Hook's 20\% in Calare with Andrew Gee's discounted Nationals vote moved
+the seat the wrong way, 0.122 -> 0.040.}
 }
 \value{
 A \code{data.table} of \code{seat}, \code{party}, \code{own_prev_pcv} (\code{NA_real_} where
