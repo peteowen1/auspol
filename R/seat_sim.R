@@ -232,9 +232,28 @@ simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
   if (!is.finite(fallback_smooth) || fallback_smooth < 0 || fallback_smooth > 1) {
     stop("fallback_smooth must be in [0, 1]; got ", fallback_smooth)
   }
-  if (!is.finite(flow_sd) || flow_sd < 0) {
-    stop("flow_sd must be finite and non-negative; got ", flow_sd)
+  # FLOW_SD MAY BE PER-SOURCE. A scalar says every excluded party's transfer
+  # rate is equally uncertain, which the data contradicts: measured one-step-
+  # ahead across federal elections, One Nation's share to the Coalition
+  # oscillates 47.4 / 60.4 / 47.6 / 61.6 -- sd about 7 points -- while a stable
+  # source barely moves. Charging the stable sources ONP's uncertainty is as
+  # wrong as charging ONP the stable ones', and the second is what a scalar
+  # does whenever it is tuned on the average. A named vector, keyed by the
+  # EXCLUDED party's class, lets each source carry its own measured spread;
+  # unnamed classes fall back to the scalar (or to 0 when there is none).
+  #
+  # This does NOT try to predict the direction of the drift, which is a
+  # published how-to-vote-card decision this repo does not hold. It says only
+  # that the rate is not known, which is true, and lets log loss stop paying
+  # full confidence for a number that swings 14 points between elections.
+  if (!is.numeric(flow_sd) || anyNA(flow_sd) || !all(is.finite(flow_sd)) ||
+      any(flow_sd < 0)) {
+    stop("flow_sd must be finite and non-negative; got ",
+         paste(utils::head(flow_sd, 5), collapse = ", "))
   }
+  if (length(flow_sd) == 0L) stop("flow_sd must have length >= 1")
+  if (length(flow_sd) > 1L && is.null(names(flow_sd)))
+    stop("a per-source flow_sd must be a NAMED vector keyed by party class")
   # SURGE_H MAY BE PER-SEAT, exactly as `shrink` may. `shrink` was made a vector
   # and surge_h was not, so wiring a 150-element salience hazard into it passed
   # a vector to a scalar parameter -- the same fix applied in one place and not
@@ -261,6 +280,19 @@ simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
     if (is.null(seat_names)) seat_names <- paste0("seat", seq_len(nrow(shares)))
   }
   parties <- colnames(shares)
+  # Resolve the per-source flow uncertainty ONCE, into a plain vector indexed
+  # the same way `parties` is, rather than looking a name up inside the innermost
+  # draw loop (n_sims x seats x exclusion rounds). An unnamed element, if the
+  # caller supplied one, is the default for any class the vector does not name.
+  .fsd_default <- if (is.null(names(flow_sd))) flow_sd[1] else {
+    .u <- flow_sd[!nzchar(names(flow_sd))]
+    if (length(.u)) .u[1] else 0
+  }
+  FLOW_SD_BY <- if (length(flow_sd) == 1L && is.null(names(flow_sd)))
+    rep(as.numeric(flow_sd), length(parties)) else {
+      .v <- unname(flow_sd[parties]); .v[is.na(.v)] <- .fsd_default; as.numeric(.v)
+    }
+  names(FLOW_SD_BY) <- parties
   if (is.null(parties)) stop("shares must have party names as column names")
   K <- length(parties)
 
@@ -724,8 +756,14 @@ simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
         # wrong answer every time and the simulation cannot be uncertain about
         # it. The one-step-ahead error of "mean of the last five" was measured
         # at sd 3.65 points. Default 0 keeps the previous behaviour exactly.
-        if (flow_sd > 0 && length(alive) > 1L) {
-          p <- pmax(0, p + stats::rnorm(length(p), 0, flow_sd / 100))
+        # Per-source lookup. `parties[from]` is the class being excluded; a
+        # scalar flow_sd has no names and applies to every source. Single-
+        # bracket indexing, never `[[`, because `[[` on a missing name in an
+        # atomic vector THROWS -- the trap CLAUDE.md records where an
+        # is.null() guard beside it is dead code that can never fire.
+        .fsd <- FLOW_SD_BY[[from]]
+        if (.fsd > 0 && length(alive) > 1L) {
+          p <- pmax(0, p + stats::rnorm(length(p), 0, .fsd / 100))
           ps <- sum(p)
           p <- if (ps > 0) p / ps else rep(u, length(alive))
         }

@@ -326,6 +326,44 @@ DEV_SLOPE <- dev_slopes_for(union(parties, names(state23)))
 if (.cond) cat(sprintf("BN1c conditional slopes ON: %d of %d seat-classes have the same candidate returning
 ",
                        sum(.returns$same), nrow(.returns)))
+# PORTED FROM THE FEDERAL HARNESS 2026-09-05, per this repo's rule that a fix
+# to one harness is a fix to all of them. Both default OFF, so the default path
+# is byte-identical until an arm sets them.
+#   AUSPOL_MP_SLOPE        -- returning MEMBER (0.954) vs returning also-ran
+#                             (0.800); the shipped slope pooled them at 0.907.
+#   AUSPOL_DEFECT_DISCOUNT -- the measured form of the very exclusion the
+#                             comment below argues for: a sitting major-party
+#                             member re-contesting under a non-major label
+#                             brings 0.282 of their major vote, ADDED to that
+#                             class's base rather than replacing it. Fitted
+#                             federally; MacKillop (62.3 -> 14.8) is the case
+#                             that sets the discount low.
+.MP_SLOPE <- NULL
+if (identical(Sys.getenv("AUSPOL_MP_SLOPE", "0"), "1")) {
+  # Values are READ FROM DISK, per target election, never hard-coded. The first
+  # version of this tier carried c(IND = 0.954, OTH_RIGHT = 0.954, GRN = 0.994,
+  # ONP = 0.610) from an uncommitted fit that had seen the elections it was then
+  # scored on. Refitted leave-one-election-out (scripts/fit_mp_slope.R) the tier
+  # is real -- the member/also-ran gap is positive in 18 of 18 folds -- but three
+  # of those four numbers were wrong, and ONP's was the also-ran slope written
+  # into the member row over ZERO member observations.
+  .mpf <- "output/mp-slope-by-target.csv"
+  if (!file.exists(.mpf))
+    stop("AUSPOL_MP_SLOPE=1 needs ", .mpf, " -- run scripts/fit_mp_slope.R")
+  .mpt <- data.table::fread(.mpf, showProgress = FALSE)
+  .tgt <- "nsw2023"                       # copied to a differently-named local: a bare
+  .row <- .mpt[.mpt$target == .tgt & is.finite(.mpt$member), ]  # `target` inside
+  if (!nrow(.row))                                              # `[` would bind
+    stop("no leave-one-out MP slopes for ", .tgt, " in ", .mpf) # to the column
+  if (!identical(Sys.getenv("AUSPOL_MP_SLOPE_GRN", "0"), "1"))
+    .row <- .row[.row$party != "GRN", ]   # GRN's member/also-ran gap is ~0
+  .MP_SLOPE <- stats::setNames(as.numeric(.row$member), .row$party)
+}
+cat(sprintf("BT1m  MP tier: %s
+",
+            if (is.null(.MP_SLOPE)) "OFF" else
+              paste(sprintf("%s=%.4f", names(.MP_SLOPE), .MP_SLOPE), collapse = " ")))
+.defect <- if (identical(Sys.getenv("AUSPOL_DEFECT_DISCOUNT", "0"), "1")) 0.282 else NULL
 # THE BASE VALUE, not just the slope -- see personal_prior_vote()'s docs.
 # Philip Donato (Orange), Helen Dalton (Murray) and Roy Butler (Barwon) are
 # sitting members who switched from Shooters-Fishers-Farmers to Independent
@@ -339,7 +377,7 @@ if (.cond) cat(sprintf("BN1c conditional slopes ON: %d of %d seat-classes have t
 # corpus (McBride, MacKillop, LNP 62.3% -> IND 14.8%) shows it can badly
 # overestimate a defector who loses the party's machine, not just his own
 # vote. This is what makes the base itself carry their real prior vote.
-.own_prev <- if (.cond) tryCatch(personal_prior_vote("nsw2019", "nsw2023"), error = function(e) NULL) else NULL
+.own_prev <- if (.cond) tryCatch(personal_prior_vote("nsw2019", "nsw2023", major_discount = .defect), error = function(e) NULL) else NULL
 .own_x <- function(p, seats, x) {
   if (is.null(.own_prev)) return(x)
   ov <- .own_prev[.own_prev$party == p, ]
@@ -371,8 +409,8 @@ for (p in parties) {
     pv <- .permit[.permit$party == p, ]
     lut <- stats::setNames(as.logical(pv$permit), pv$seat)
     pm <- unname(lut[rownames(mat)]); pm[is.na(pm)] <- TRUE
-    screened_slopes(p, rownames(mat), .returns, pm)
-  } else if (.cond) conditional_slopes(p, rownames(mat), .returns) else DEV_SLOPE[[p]]
+    screened_slopes(p, rownames(mat), .returns, pm, same_mp = .MP_SLOPE)
+  } else if (.cond) conditional_slopes(p, rownames(mat), .returns, same_mp = .MP_SLOPE) else DEV_SLOPE[[p]]
   x_p <- .own_x(p, rownames(mat), mat[, p])
   val <- dev_slope(x_p, state19[[p]], state23[[p]], sl)
   if (ELASTIC > 0 && d_state < -ELASTIC_D && state19[[p]] > 0) {

@@ -137,9 +137,32 @@ stopifnot(names(FED_DATE) == format(as.Date(FED_DATE), "%Y"))
 # 1 reproduces the published behaviour exactly; the run prints what it applied,
 # because CLAUDE.md records an experiment whose edit never ran and whose
 # byte-identical output read as "this input does not matter".
+# ARM B of docs/plans/prereg-calibration.md, and a LIE until 2026-09-06: this
+# printed "seat_sd multiplier applied" while applying nothing. simulate_seat_
+# contests() computes sd_cell from `level_sd` and IGNORES seat_sd entirely
+# whenever level_sd is given (R/seat_sim.R, "PER-CELL sd when level_sd is
+# given") -- and level_sd has been ON BY DEFAULT at c(1.10, 8.67) since
+# 2026-08-27. So every sweep of AUSPOL_SEAT_SD_MULT run since then measured a
+# parameter with no path to the output: mult 1.15 returned log 0.3042 and
+# calibration slope 1.781, identical to the baseline in every digit.
+#
+# The multiplier now scales whichever spread is actually in force, and the
+# message says which. Applied to level_sd it scales BOTH terms, keeping the
+# shape of the curve and changing only its width.
 SEAT_SD_MULT <- as.numeric(Sys.getenv("AUSPOL_SEAT_SD_MULT", "1"))
-if (SEAT_SD_MULT != 1) cat(sprintf("CAL  seat_sd multiplier %.2f applied
+if (!is.finite(SEAT_SD_MULT) || SEAT_SD_MULT <= 0)
+  stop("AUSPOL_SEAT_SD_MULT must be a positive number; got ", SEAT_SD_MULT)
+if (SEAT_SD_MULT != 1) {
+  if (is.null(.level_sd)) {
+    cat(sprintf("CAL  seat_sd multiplier %.2f applied (flat seat_sd path)
 ", SEAT_SD_MULT))
+  } else {
+    .level_sd <- .level_sd * SEAT_SD_MULT
+    cat(sprintf("CAL  spread multiplier %.2f applied to LEVEL_SD -> a=%.3f b=%.3f (seat_sd is inert here)
+",
+                SEAT_SD_MULT, .level_sd[1], .level_sd[2]))
+  }
+}
 
 # OUTPUT FILENAME CARRIES THE CONFIG, and it must. These harnesses used to write
 # to one fixed name, so running an experimental arm SILENTLY OVERWROTE the
@@ -271,7 +294,7 @@ cat(sprintf("CAL  shrink %.2f (published model uses 0.10), smooth %.2f\n",
 # a fix to ALL of them", and it recurred in the same session the rule was
 # written. Both default to 0, which reproduces the previous behaviour exactly.
 FB_SMOOTH <- as.numeric(Sys.getenv("AUSPOL_FALLBACK_SMOOTH", "0"))
-FLOW_SD   <- as.numeric(Sys.getenv("AUSPOL_FLOW_SD", "0"))
+FLOW_SD   <- as.numeric(Sys.getenv("AUSPOL_FLOW_SD", "0"))  # may be REPLACED per pair by AUSPOL_FLOW_SD_BY_SOURCE
 cat(sprintf("BS1f fallback_smooth %.2f | flow_sd %.2f
 ", FB_SMOOTH, FLOW_SD))
 
@@ -436,6 +459,78 @@ for (K in PAIRS) {
   # So average more where the estimate is unstable and stay recent where it
   # is not -- ordinary shrinkage, and the ranking that decides which classes
   # get it uses no information from the election being forecast.
+  # TREND-EXTRAPOLATED FLOW CELLS (AUSPOL_FLOW_TREND=w, default 0 = off).
+  # build_flow_matrix() averages the elections it is given, so a rate that is
+  # MOVING is estimated at the middle of its history and applied at the end of
+  # it. Within the exact cell ONP|ALP+GRN+LNP the Coalition share ran 35.5,
+  # 45.4, 52.3, 49.7 and then 61.1; OTH_RIGHT to the Coalition ran the other
+  # way. Both are trends, which is why this is a general mechanism.
+  #
+  # Preferred over widening the draw, which was tried first and is monotonically
+  # worse (k=0.25 -> 0.3043, k=0.50 -> 0.3051, baseline 0.3042): the residual is
+  # a BIAS and symmetric noise around a biased centre only blurs it.
+  .ftw <- as.numeric(Sys.getenv("AUSPOL_FLOW_TREND", "0"))
+  if (is.finite(.ftw) && .ftw > 0) {
+    # NOT `tx`: that is the single most recent prior election, so a trend cannot
+    # be fitted from it at all -- the first attempt printed "over 1 prior
+    # elections" and returned the matrix unchanged, which is precisely the
+    # silent no-op this diagnostic exists to expose. The SLOPE needs the long
+    # history even though the LEVEL comes from one election, so the full
+    # federal transfer record before K$to is used, and the blend then carries
+    # both the slope and the level correction it implies.
+    .tprior <- TX[grepl("^fed", TX$election) & .yrq(TX$election) < K$to]
+    stopifnot(nrow(.tprior) > 100L, all(.yrq(.tprior$election) < K$to),
+              data.table::uniqueN(.tprior$election) >= 3L)
+    .before <- fm$conditional[["ONP|ALP+LNP"]]
+    .ftc <- Sys.getenv("AUSPOL_FLOW_TREND_CLASSES", "")
+    .ftc <- if (nzchar(.ftc)) trimws(strsplit(.ftc, ",")[[1]]) else NULL
+    fm <- trend_flow_matrix(fm, .tprior, K$to, weight = .ftw, classes = .ftc)
+    .after <- fm$conditional[["ONP|ALP+LNP"]]
+    # Print a cell BEFORE and AFTER, unconditionally. An arm that silently did
+    # not apply reads exactly like an arm that made no difference.
+    cat(sprintf("BF0w flow trend w=%.2f classes=%s over %d prior elections | ONP|ALP+LNP LNP %.1f -> %.1f
+",
+                .ftw, if (is.null(.ftc)) "ALL" else paste(.ftc, collapse = "+"),
+                data.table::uniqueN(.tprior$election),
+                if (is.null(.before)) NA_real_ else .before[["LNP"]],
+                if (is.null(.after))  NA_real_ else .after[["LNP"]]))
+  }
+
+  # PER-SOURCE FLOW UNCERTAINTY (AUSPOL_FLOW_SD_BY_SOURCE=k, default 0 = off).
+  # Deliberately NOT nested inside AUSPOL_FLOW_POOL_VOLATILE: that arm moves the
+  # point ESTIMATE for a volatile class, was measured at 0.3045 and refused, and
+  # this must be testable without it. Same measurement, opposite treatment --
+  # leave the estimate alone and widen the DRAW.
+  #
+  # The claim being made is only that the rate is not known. One Nation's share
+  # to the Coalition went 47.4 / 60.4 / 47.6 / 61.6 across federal elections and
+  # the direction turns on how-to-vote cards this repo does not hold, so the
+  # matrix cannot predict it -- but a fixed matrix asserts full confidence in a
+  # number that swings 14 points, and log loss charges for exactly that.
+  # flow_sd = k * (vote-weighted sd of that class's destination shares).
+  # Measured on fed2013-2022, nothing from the target:
+  #   ONP 13.59 | ALP 12.82 | LNP 7.92 | OTH_RIGHT 4.88 | OTH 3.55 | IND 3.47 | GRN 0.61
+  .fsd_k <- as.numeric(Sys.getenv("AUSPOL_FLOW_SD_BY_SOURCE", "0"))
+  if (is.finite(.fsd_k) && .fsd_k > 0) {
+    .yvs <- function(e) suppressWarnings(as.integer(sub("^[a-z]+", "", e)))
+    .pri <- unique(TX$election)[grepl("^fed", unique(TX$election))]
+    .pri <- .pri[.yvs(.pri) < K$to]          # nothing from the election predicted
+    stopifnot(length(.pri) >= 3L, all(.yvs(.pri) < K$to))
+    .h <- TX[election %in% .pri, .(v = sum(votes)), by = .(election, from, to)]
+    .h[, pct := 100 * v / sum(v), by = .(election, from)]
+    .vv <- .h[, .(n_el = .N, sd = stats::sd(pct), mean = mean(pct)), by = .(from, to)]
+    .vv <- .vv[n_el >= 3L]
+    .cv <- .vv[, .(vol = sum(sd * mean) / sum(mean)), by = from][is.finite(vol)]
+    stopifnot(nrow(.cv) > 0L)
+    FLOW_SD <- stats::setNames(pmax(0, .fsd_k * .cv$vol), .cv$from)
+    # Printed unconditionally and read before the score, per CLAUDE.md: an arm
+    # that silently did not apply is indistinguishable from one that did not
+    # matter, and that has already cost this repo a full experiment.
+    cat(sprintf("BF0u per-source flow_sd (k=%.2f, from %s): %s
+", .fsd_k,
+                paste(sort(.pri), collapse = "+"),
+                paste(sprintf("%s=%.1f", names(FLOW_SD), FLOW_SD), collapse = " ")))
+  }
   if (identical(Sys.getenv("AUSPOL_FLOW_POOL_VOLATILE", "0"), "1")) {
     .yv <- function(e) suppressWarnings(as.integer(sub("^[a-z]+", "", e)))
     pri <- unique(TX$election)[grepl("^fed", unique(TX$election))]
@@ -607,12 +702,53 @@ for (K in PAIRS) {
   # check that throws "$ operator is invalid for atomic vectors" -- not an NSE
   # miscompute this time, an outright crash. Confirmed by isolated repro: same
   # body, only the parameter name changed, and the collision is what breaks it.
-  # SITTING-MEMBER SLOPE TIER, off by default (AUSPOL_MP_SLOPE=1). See
-  # conditional_slopes()'s own comment: a returning MEMBER (0.954) and a
-  # returning also-ran (0.800) are 2.9 SE apart and the shipped value pools
-  # them at 0.907, systematically shrinking entrenched independents.
-  .MP_SLOPE <- if (identical(Sys.getenv("AUSPOL_MP_SLOPE", "0"), "1"))
-    c(IND = 0.954, OTH_RIGHT = 0.954, GRN = 0.994, ONP = 0.610) else NULL
+  # SITTING-MEMBER SLOPE TIER, off by default (AUSPOL_MP_SLOPE=1). A returning
+  # MEMBER and a returning also-ran behave differently -- refitted
+  # leave-one-election-out over 18 pairs and 6 jurisdictions the gap is 0.122
+  # and positive in 18 of 18 folds, so the tier itself is not in doubt.
+  #
+  # THE VALUES ARE READ FROM DISK, PER TARGET ELECTION, AND THAT IS THE POINT.
+  # The first version hard-coded c(IND = 0.954, OTH_RIGHT = 0.954, GRN = 0.994,
+  # ONP = 0.610) from an uncommitted fit that had used fed2025's own pair, then
+  # scored the result on fed2025 -- a hyperparameter fitted on the election it
+  # predicts, which is the leakage hazard CLAUDE.md lists. Re-derived properly
+  # (scripts/fit_mp_slope.R), three of those four numbers were wrong:
+  #   IND        0.954 shipped vs 0.896 fitted without fed2025 (~2.7 LOO sd high)
+  #   GRN        0.994 shipped, but GRN's member slope (1.000) and also-ran
+  #              slope (1.023) are indistinguishable -- there is no tier here
+  #   ONP        0.610 shipped from ZERO member observations; it is the ONP
+  #              also-ran slope (0.617) transcribed into the member row. No One
+  #              Nation member has ever personally re-contested in this corpus.
+  # output/mp-slope-by-target.csv carries the slopes fitted with each target's
+  # own pair removed, and writes NA where there are too few members to fit, so
+  # a class with no evidence falls back to the pooled slope instead of being
+  # filled with a number that was never measured.
+  .MP_SLOPE <- NULL
+  if (identical(Sys.getenv("AUSPOL_MP_SLOPE", "0"), "1")) {
+    .mpf <- "output/mp-slope-by-target.csv"
+    if (!file.exists(.mpf))
+      stop("AUSPOL_MP_SLOPE=1 needs ", .mpf, " -- run scripts/fit_mp_slope.R")
+    .mpt <- fread(.mpf, showProgress = FALSE)
+    # Bare column symbols inside `[` would bind to .mpt's own columns; eb is
+    # copied to a differently-named local first. Same trap as everywhere else.
+    .tgt <- eb
+    .row <- .mpt[.mpt$target == .tgt & is.finite(.mpt$member), ]
+    if (!nrow(.row))
+      stop("no leave-one-out MP slopes for ", .tgt, " in ", .mpf)
+    # GRN is excluded by default: its measured member/also-ran gap is ~0, so a
+    # separate member value asserts a distinction the data does not contain.
+    # AUSPOL_MP_SLOPE_GRN=1 puts it back for anyone who wants to measure that.
+    if (!identical(Sys.getenv("AUSPOL_MP_SLOPE_GRN", "0"), "1"))
+      .row <- .row[.row$party != "GRN", ]
+    .MP_SLOPE <- stats::setNames(as.numeric(.row$member), .row$party)
+  }
+  cat(sprintf("BF1m  MP tier: %s
+",
+              if (is.null(.MP_SLOPE)) "OFF" else
+                sprintf("%s | applied to %d seat-classes",
+                        paste(sprintf("%s=%.4f", names(.MP_SLOPE), .MP_SLOPE), collapse=" "),
+                        if (!is.null(.returns) && "same_mp" %in% names(.returns))
+                          sum(.returns$same_mp & .returns$party %in% names(.MP_SLOPE)) else 0L)))
   .fed_slope <- function(p, seats, cond, screened, returns, permit_tbl) {
     if (screened && !is.null(permit_tbl)) {
       pv <- permit_tbl[permit_tbl$party == p, ]

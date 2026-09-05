@@ -798,8 +798,33 @@ t0 <- Sys.time()
 # quietly become a forecast change would not. One Nation's 90% interval moves
 # from 0-9 to 1-11.
 #
-# Set AUSPOL_SHRINK=0 to reproduce the pre-2026-08-21 forecast exactly.
-SHRINK <- as.numeric(Sys.getenv("AUSPOL_SHRINK", "0.10"))
+# Set AUSPOL_SHRINK=0 to reproduce the pre-2026-08-21 forecast exactly, and
+# AUSPOL_SHRINK=0.10 for the 2026-08-21..2026-09-06 published value.
+#
+# LOWERED 0.10 -> 0.02 ON 2026-09-06. A scalar shrink caps EVERY seat at
+# 1 - shrink/2, so 0.10 meant no seat could be called above 0.95. Measured on
+# the federal output: max p was 0.9505 and 19 of 150 seats sat against that
+# ceiling, each paying -log(0.95) = 0.051 where -log(0.99) = 0.010 was
+# available -- about 0.006 of mean log loss spent on the cap alone.
+#
+# Swept on fed2025 (forecast mode, screened slopes): 0.10 -> 0.3042,
+# 0.05 -> 0.2933, 0.02 -> 0.2891, 0.00 -> 0.2914. Three seeds at 0.02 give
+# 0.2891 / 0.2899 / 0.2867, mean 0.2886 against AE Forecasts' 0.3025.
+#
+# Validated election-wide before shipping, because shrink is a GENERAL
+# parameter and was tuned on one election:
+#   federal, 6 pairs   mean log 0.4154 -> 0.4047, better in 5 of 6, Brier in 6 of 6
+#   Victoria           mean log 0.3020 -> 0.2997, Brier 0.0789 -> 0.0761
+#   NSW                0.4062 -> 0.3822, Brier 0.0947 -> 0.0936
+#   SA                 0.3976 -> 0.3857, Brier 0.1272 -> 0.1255
+#   WA                 accuracy 87.0% -> 87.3%, Brier 0.0984 -> 0.0986 (flat)
+# fed2013 is the one log-loss regression (+0.0359) and its Brier still improves,
+# so it is a confidence effect rather than a loss of correctness.
+#
+# Why it stays non-zero: shrink exists to absorb a non-major taking a seat
+# called safe for a major, and 0.00 scores worse than 0.02 on fed2025
+# (0.2914 vs 0.2891) even though its calibration slope is nearer 1.
+SHRINK <- as.numeric(Sys.getenv("AUSPOL_SHRINK", "0.02"))
 if (SHRINK > 0) cat(sprintf("CAL  calibration shrink %.2f applied
 ", SHRINK))
 sim <- simulate_seat_contests(level_sd = .level_sd, level_mult = .lm(shares), shares, fm, party_sd = psd, seat_sd = SEAT_SD, shrink = SHRINK,

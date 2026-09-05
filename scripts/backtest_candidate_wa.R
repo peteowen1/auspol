@@ -88,6 +88,17 @@ eps <- 1e-6
 
 SEAT_SD_MULT <- as.numeric(Sys.getenv("AUSPOL_SEAT_SD_MULT", "1"))
 N_SIMS  <- as.integer(Sys.getenv("AUSPOL_N_SIMS", "20000"))
+
+# PORTED FROM THE FEDERAL HARNESS 2026-09-05, per this repo's rule that a fix
+# to one harness is a fix to all of them. Both default OFF, so the default path
+# is byte-identical until an arm sets them.
+#   AUSPOL_MP_SLOPE        -- returning MEMBER (0.954) vs returning also-ran
+#                             (0.800); the shipped slope pooled them at 0.907.
+# AUSPOL_DEFECT_DISCOUNT is deliberately NOT wired here: this harness makes no
+# personal_prior_vote() call, so there is no per-seat base for a discounted
+# major vote to be added to. Said out loud rather than left as a silent gap,
+# which CLAUDE.md notes is indistinguishable from an oversight later.
+
 SHRINK  <- as.numeric(Sys.getenv("AUSPOL_SHRINK", "0"))
 SMOOTH  <- as.numeric(Sys.getenv("AUSPOL_SMOOTH", "0.15"))
 FB_SMOOTH <- as.numeric(Sys.getenv("AUSPOL_FALLBACK_SMOOTH", "0"))
@@ -165,6 +176,31 @@ for (K in PAIRS) {
     cat(sprintf("BW1  wa%d->%d: missing first preferences; skipped\n", K$from, K$to)); next
   }
   el_from <- sprintf("wa%d", K$from); el_to <- sprintf("wa%d", K$to)
+  .MP_SLOPE <- NULL
+  if (identical(Sys.getenv("AUSPOL_MP_SLOPE", "0"), "1")) {
+    # Values are READ FROM DISK, per target election, never hard-coded. The first
+    # version of this tier carried c(IND = 0.954, OTH_RIGHT = 0.954, GRN = 0.994,
+    # ONP = 0.610) from an uncommitted fit that had seen the elections it was then
+    # scored on. Refitted leave-one-election-out (scripts/fit_mp_slope.R) the tier
+    # is real -- the member/also-ran gap is positive in 18 of 18 folds -- but three
+    # of those four numbers were wrong, and ONP's was the also-ran slope written
+    # into the member row over ZERO member observations.
+    .mpf <- "output/mp-slope-by-target.csv"
+    if (!file.exists(.mpf))
+      stop("AUSPOL_MP_SLOPE=1 needs ", .mpf, " -- run scripts/fit_mp_slope.R")
+    .mpt <- data.table::fread(.mpf, showProgress = FALSE)
+    .tgt <- el_to                       # copied to a differently-named local: a bare
+    .row <- .mpt[.mpt$target == .tgt & is.finite(.mpt$member), ]  # `target` inside
+    if (!nrow(.row))                                              # `[` would bind
+      stop("no leave-one-out MP slopes for ", .tgt, " in ", .mpf) # to the column
+    if (!identical(Sys.getenv("AUSPOL_MP_SLOPE_GRN", "0"), "1"))
+      .row <- .row[.row$party != "GRN", ]   # GRN's member/also-ran gap is ~0
+    .MP_SLOPE <- stats::setNames(as.numeric(.row$member), .row$party)
+  }
+  cat(sprintf("BW1m  MP tier: %s
+  ",
+              if (is.null(.MP_SLOPE)) "OFF" else
+                paste(sprintf("%s=%.4f", names(.MP_SLOPE), .MP_SLOPE), collapse = " ")))
 
   tx <- TX[election == el_from]
   # LEAKAGE GUARD asserted on the SOURCE, not on the filtered copy: a table
@@ -210,7 +246,7 @@ for (K in PAIRS) {
   for (p in parties) {
     from_pc <- if (p %in% names(sa)) sa[[p]] else 0
     to_pc   <- if (p %in% names(sb)) sb[[p]] else 0
-    .sl <- if (.cond && !is.null(.returns)) conditional_slopes(p, rownames(mat), .returns) else DEV_SLOPE[[p]]
+    .sl <- if (.cond && !is.null(.returns)) conditional_slopes(p, rownames(mat), .returns, same_mp = .MP_SLOPE) else DEV_SLOPE[[p]]
     mat[, p] <- dev_slope(mat[, p], from_pc, to_pc, .sl)
   }
   # ZERO IND WHEREVER NOBODY ACTUALLY STOOD AT THE TARGET ELECTION. Ported from
