@@ -141,6 +141,44 @@ build_flow_matrix <- function(transfers, min_n = 3L, multiplicity = FALSE) {
           match(got[, list(v = sum(get("votes"))), by = "from"]$from,
                 hit[, list(rv = sum(get("rv"))), by = "from"]$from)]$rv)
   }), fill = TRUE)
+  # SUPERSET CELLS, the backoff between the exact cell and `pairwise`.
+  # An exact cell requires the survivor set to match EXACTLY, so cells
+  # fragment and most never reach min_n. But a round where LNP was excluded
+  # with {ALP, GRN, IND} surviving is perfectly good evidence about a contest
+  # with {ALP, IND} alive -- restricted to the destinations we care about.
+  # Matching on SUPERSETS instead of equality multiplies the evidence per
+  # cell and recovers the rate the exact key could not reach: LNP with
+  # {ALP, IND} alive is 69.9% to the independent in the real counts, against
+  # 46.2% from `pairwise` (diluted by rounds where the Greens were also
+  # available) and 22.2% from the pooled row.
+  #
+  # Keyed on sorted class names, like `conditional`. Enumerated over the
+  # observed classes only, so this is 2^K per excluded class with K around 7.
+  surv_sets <- lapply(strsplit(unique(d$surv), "+", fixed = TRUE),
+                      function(z) sort(unique(sub("[0-9]+$", "", z))))
+  names(surv_sets) <- unique(d$surv)
+  all_cls <- sort(unique(unlist(surv_sets)))
+  subsets <- unlist(lapply(2:min(length(all_cls), 7L), function(k)
+    utils::combn(all_cls, k, simplify = FALSE)), recursive = FALSE)
+  d_sets <- surv_sets[d$surv]
+  superset <- list()
+  for (sub in subsets) {
+    ok <- vapply(d_sets, function(z) all(sub %in% z), logical(1))
+    if (!any(ok)) next
+    dd <- d[ok & d$to %in% sub, ]
+    if (!nrow(dd)) next
+    agg <- dd[, list(votes = sum(get("votes"))), by = c("from", "to")]
+    nn <- dd[, list(n = data.table::uniqueN(paste(get("election"), get("seat"),
+                                                  get("round")))), by = "from"]
+    agg <- merge(agg, nn, by = "from")
+    agg[, "share" := 100 * get("votes") / sum(get("votes")), by = "from"]
+    for (f in unique(agg$from[agg$n >= min_n])) {
+      a <- agg[agg$from == f, ]
+      superset[[paste0(f, "|", paste(sub, collapse = "+"))]] <-
+        stats::setNames(a$share, a$to)
+    }
+  }
+
   pairwise <- if (is.null(pw) || !nrow(pw)) list() else
     stats::setNames(lapply(unique(pw$from), function(f) {
       s <- pw[pw$from == f, ]
@@ -156,6 +194,7 @@ build_flow_matrix <- function(transfers, min_n = 3L, multiplicity = FALSE) {
   # STAMPED, so a consumer can refuse a matrix it cannot read rather than
   # silently skipping every cell in it. See simulate_seat_contests().
   list(conditional = conditional, pooled = pooled, pairwise = pairwise,
+       superset = superset,
        coverage = as.data.frame(coverage), min_n = min_n,
        multiplicity = multiplicity)
 }

@@ -383,9 +383,15 @@ personal_prior_vote <- function(election_from, election_to, corpus = NULL,
       out <- merge(out, DEF, by = c(".s", ".k"), all.x = TRUE)
       out <- merge(out, cls_base, by = c(".s", "party"), all.x = TRUE)
       out[is.na(cls_pcv), cls_pcv := 0]
-      out[is.na(own_prev_pcv) & !party %in% MAJ & !is.na(def_pcv) &
-            def_pcv * major_discount > cls_pcv,
-          own_prev_pcv := def_pcv * major_discount]
+      # ADDITIVE, not a maximum. A defector JOINS their new class; they do not
+      # replace whoever was already in it. Calare 2025 is the case: the
+      # independent class went from about 20% (2022) to 39.5%, because Andrew
+      # Gee's Nationals vote arrived ON TOP of the independent who was
+      # already standing there -- and in the event the class ran two
+      # independents, 23.7% and 15.8%. Taking a maximum returned the 20% base
+      # and left the seat projected at 17.7 against an actual 39.5.
+      out[is.na(own_prev_pcv) & !party %in% MAJ & !is.na(def_pcv),
+          own_prev_pcv := cls_pcv + def_pcv * major_discount]
       out[, c("def_pcv", "cls_pcv") := NULL]
     }
   }

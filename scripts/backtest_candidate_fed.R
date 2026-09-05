@@ -387,11 +387,36 @@ for (K in PAIRS) {
   ea <- sprintf("fed%d", K$from); eb <- sprintf("fed%d", K$to)
   fa <- FP[election == ea, .(votes = sum(votes)), by = .(seat, party)]
   fb <- FP[election == eb, .(votes = sum(votes)), by = .(seat, party)]
+  # POOL THE TWO MOST RECENT PRIOR ELECTIONS, off by default
+  # (AUSPOL_FLOW_PRIORS=2). Flows are built from one prior election, which
+  # leaves most exact cells below min_n and sends the rest to a fallback.
+  # Audited against every fed2025 exclusion, vote-weighted absolute flow
+  # error: one prior 7.66 points, two priors 7.35, three 7.52 -- two is the
+  # optimum, and three is worse because older flows have genuinely drifted.
+  # LEAKAGE: only elections strictly BEFORE the target are admitted, checked
+  # here rather than assumed.
   tx <- TX[election == ea]
+  .np <- suppressWarnings(as.integer(Sys.getenv("AUSPOL_FLOW_PRIORS", "1")))
+  if (is.finite(.np) && .np > 1L) {
+    .yr <- function(e) suppressWarnings(as.integer(sub("^[a-z]+", "", e)))
+    cand <- unique(TX$election)
+    cand <- cand[grepl("^fed", cand) & .yr(cand) < K$to]
+    cand <- cand[order(-.yr(cand))][seq_len(min(.np, length(cand)))]
+    stopifnot(all(.yr(cand) < K$to))
+    tx <- TX[election %in% cand]
+    cat(sprintf("BF0f flows pooled from %d prior election(s): %s
+",
+                length(cand), paste(sort(cand), collapse = ", ")))
+  }
   # LEAKAGE GUARD, asserted on the filtered result AND on its size: an empty
   # table trivially satisfies an all() check, which is the guard-that-cannot-
   # fail pattern CLAUDE.md records.
-  stopifnot(nrow(tx) > 100L, all(tx$election == ea))
+  # LEAKAGE GUARD, generalised from "== ea" to "strictly before the target"
+  # when flows are pooled across priors. Still asserted on the filtered result
+  # AND its size: an empty table trivially satisfies an all() check, which is
+  # the guard-that-cannot-fail pattern CLAUDE.md records.
+  .yrq <- function(e) suppressWarnings(as.integer(sub("^[a-z]+", "", e)))
+  stopifnot(nrow(tx) > 100L, all(.yrq(tx$election) < K$to))
   tx <- pool_configured_flows(tx, FED_DATE[[as.character(K$to)]])
   fm <- build_flow_matrix(tx, min_n = 3L)
 

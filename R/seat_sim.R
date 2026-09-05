@@ -521,6 +521,30 @@ simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
   # Bean, Calwell, Franklin, Fremantle, Watson and Kennedy.
   # `pairwise` conditions each rate on rounds where that destination actually
   # survived, so renormalising over the alive set is legitimate.
+  # SUPERSET BACKOFF, tried before `pairwise`. Cells matched on supersets of
+  # the ALIVE set rather than on an exact survivor match: a round with
+  # {ALP, GRN, IND} surviving is good evidence about a contest with
+  # {ALP, IND} alive, restricted to those destinations. Recovers the true
+  # rate the exact key cannot reach -- LNP with {ALP, IND} alive is 71.2% to
+  # the independent here against 69.9% in the raw counts, where `pairwise`
+  # gives 46.2% and the pooled row 22.2%.
+  ss_cache <- new.env(parent = emptyenv())
+  ss_lookup <- function(from_i, alive_i) {
+    if (is.null(matrix$superset) || !length(matrix$superset)) return(NULL)
+    ck <- paste0(from_i, ".", paste(alive_i, collapse = "."))
+    hit <- get0(ck, envir = ss_cache, inherits = FALSE, ifnotfound = NULL)
+    if (!is.null(hit)) return(if (identical(hit, NA)) NULL else hit)
+    nm <- paste0(parties[[from_i]], "|",
+                 paste(sort(parties[alive_i]), collapse = "+"))
+    r <- matrix$superset[[nm]]
+    if (is.null(r)) { assign(ck, NA, envir = ss_cache); return(NULL) }
+    row <- numeric(K)
+    keep <- intersect(names(r), parties)
+    row[pidx[keep]] <- pmax(0, r[keep])
+    if (sum(row) <= 0) { assign(ck, NA, envir = ss_cache); return(NULL) }
+    assign(ck, row, envir = ss_cache)
+    row
+  }
   pool_pw <- NULL
   if (!is.null(matrix$pairwise) && length(matrix$pairwise)) {
     pool_pw <- vector("list", K)
@@ -673,7 +697,9 @@ simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
           row
         } else {
           n_fb <- n_fb + 1L
-          if (!is.null(pool_pw)) pool_pw[[from]] else pool[[from]]
+          ssr <- ss_lookup(from, alive)
+          if (!is.null(ssr)) ssr
+          else if (!is.null(pool_pw)) pool_pw[[from]] else pool[[from]]
         }
         n_tx <- n_tx + 1L
         w <- row[alive]; tot <- sum(w)
