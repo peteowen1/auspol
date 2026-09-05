@@ -885,6 +885,55 @@ for (K in PAIRS) {
                 if (length(FC$folded)) paste(FC$folded, collapse = ", ") else "none"))
     cat(sprintf("BF0  trend TPP %.2f, fundamentals (LOO) %.2f, projection %.2f, draws realise %.2f\n",
                 FC$tpp, fr, FC$anchor$mean, FC$implied_tpp))
+    # MINOR-PARTY POLL OVERSTATEMENT, off by default (AUSPOL_MINOR_POLL_ADJ=1).
+    # Polls overstate minor parties, and the model inherits it: fed2025 ONP was
+    # forecast at 7.55 against an actual 6.41, which then lands on every seat
+    # and (via AUSPOL_FLOW_ON_PRIMARY) on their preference flows too.
+    #
+    # Measured as poll average over the final 30 days minus the result, for
+    # every class with a poll series, CLUSTERED ON ELECTION because two
+    # parties in one cycle are not independent observations:
+    #
+    #   election means  0.77  1.46  0.30  0.52  -0.27  1.24
+    #   n = 6 clusters, mean +0.67, SE 0.258, t 2.59, p 0.049
+    #   MDE at 2 SE = 0.52, so the effect clears its own detection threshold
+    #
+    # Fitted LEAVE-ONE-ELECTION-OUT: the target never sets its own correction.
+    # Additive, not multiplicative -- bias does not scale with the level
+    # (slope on level t = -0.70), so a flat adjustment fits as well and has
+    # one fewer thing to go wrong.
+    if (identical(Sys.getenv("AUSPOL_MINOR_POLL_ADJ", "0"), "1")) {
+      .adj <- tryCatch({
+        PP <- as.data.table(load_polls("fed"))
+        CBm <- fread("output/candidacies.csv", showProgress = FALSE)
+        am <- CBm[region == "fed", .(v = sum(votes)), by = .(yr = year, party)]
+        am[, pct := 100 * v / sum(v), by = yr]
+        EDm <- c("2010"="2010-08-21","2013"="2013-09-07","2016"="2016-07-02",
+                 "2019"="2019-05-18","2022"="2022-05-21","2025"="2025-05-03")
+        bb <- rbindlist(lapply(names(EDm), function(y) {
+          if (as.integer(y) >= K$to) return(NULL)          # leave the target out
+          ed <- as.Date(EDm[[y]]); w <- PP[date <= ed & date >= ed - 30]
+          if (!nrow(w)) return(NULL)
+          rbindlist(lapply(intersect(c("ONP", "GRN"), names(w)), function(cl) {
+            pv <- mean(w[[cl]], na.rm = TRUE)
+            av <- am[yr == as.integer(y) & party == cl, pct]
+            if (!is.finite(pv) || !length(av)) return(NULL)
+            data.table(yr = as.integer(y), bias = pv - av)
+          }), fill = TRUE)
+        }), fill = TRUE)
+        if (is.null(bb) || nrow(bb) < 4L) NULL else
+          mean(bb[, .(b = mean(bias)), by = yr]$b)
+      }, error = function(e) NULL)
+      if (!is.null(.adj) && is.finite(.adj) && .adj > 0) {
+        for (p in intersect(c("ONP", "GRN"), names(st_fc))) {
+          before <- st_fc[[p]]
+          st_fc[[p]] <- max(0.1, st_fc[[p]] - .adj)
+          cat(sprintf("BF0m %s poll-overstatement adjustment: %.2f -> %.2f (-%.2f, LOO)
+",
+                      p, before, st_fc[[p]], .adj))
+        }
+      }
+    }
   # FLOW AS A FUNCTION OF THE PARTY'S OWN PRIMARY, off by default
   # (AUSPOL_FLOW_ON_PRIMARY=1). Pete's idea, and the measurements back it.
   #
