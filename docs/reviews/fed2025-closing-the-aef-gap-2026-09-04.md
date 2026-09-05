@@ -258,3 +258,57 @@ Kooyong — have dropped out of the loss table entirely.
 The model detects these candidates (the screen fires) and still under-projects
 how far they go. Salience cannot supply the magnitude, per the refusal above.
 That is the open question, and it is a modelling one, not a parameter one.
+
+## Session 3 (2026-09-05): 0.3294 -> 0.3022, and a statistical tie
+
+| change | log loss |
+|---|--:|
+| carried in from session 2 | 0.3294 |
+| **availability-conditioned flow fallback** | **0.3138** |
+| **defector vote ADDITIVE to its new class** | **0.3036** |
+| three-seed mean at that configuration | **0.3022** |
+| *AE Forecasts* | *0.3025* |
+
+Seeds 42/43/44 give 0.3036 / 0.3023 / 0.3007. Mean 0.3022 against AEF's
+0.3025 — a difference of 0.0003 against a between-seed SE of about 0.0008.
+**That is a statistical tie on log loss and is not reported as a win.**
+Brier IS a win: 0.0892 against 0.0996, consistent across all three seeds, as
+is accuracy at 86.9% against 86.0%.
+
+The loss profile has fully inverted. Independents now score **−1.02** and
+Labor **−2.67** against AEF (this model is ahead on both). The entire
+residual is Coalition seats at **+4.04**.
+
+### Refused in session 3, with measurements
+
+- **Superset flow cells** (matched on supersets of the alive set rather than
+  exact equality): recovers the true rate in isolation — LNP with {ALP, IND}
+  alive reads 71.2% against a measured 69.9% — but a wash on score once
+  `pairwise` is already in place. Kept; it is more correct and costs 2.7s.
+- **Per-class pooling by prior-measured volatility**: 0.3045. Refused.
+- **Recent state elections as a flow source** (WA March 2025, QLD October
+  2024, both before fed2025): 0.3171. Refused — jurisdiction-specific
+  behaviour outweighs recency.
+- **Salience as a survival signal for sitting non-major MPs**: refused, and
+  it runs the WRONG WAY. Incumbents who lost had HIGHER mean salience (0.931)
+  than those who held (0.837); z = −1.03, p = 0.30. Bandt lost Melbourne at
+  percentile 1.00, Daniel lost Goldstein at 0.97. Salience measures
+  attention, and a threatened incumbent attracts more of it — it cannot
+  separate "under siege" from "safe and prominent". This closes salience as a
+  route to incumbent risk.
+- **Re-estimating the defector coefficient under additive semantics**:
+  regression through origin gives 0.295 (se 0.051, t = 5.84) against the
+  0.282 already in use. No change warranted; the parameter was already right.
+
+### What the remaining deficit actually is
+
+One Nation preference drift, and nothing else. ONP -> LNP was 61.6% in
+fed2025 against the 51.1% our fed2022-built matrix predicts, over 1.46M
+votes, in EXACT conditional cells — so it is not a conditioning failure. The
+rate oscillates (47.4, 60.4, 47.6, 61.6) with whether One Nation directed
+preferences to the Coalition, which is a deal decision published before
+polling day in how-to-vote cards that this repo does not hold.
+
+Three separate attempts to work around it without that data — more history,
+volatility-weighted history, and contemporaneous state elections — all made
+the forecast worse.
