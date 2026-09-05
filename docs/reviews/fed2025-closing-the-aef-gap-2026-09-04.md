@@ -197,3 +197,64 @@ which has sitting independents.
 polling and a ten-component swing decomposition. That is a data-acquisition
 question, not a modelling one, and it should be decided as such rather than
 approximated by tuning on a single 149-seat election.
+
+## Session 2 (2026-09-05): 0.3663 -> 0.3294
+
+Pete's redirect — *"a floor and shrink sound like rubbish hacks when we can
+just model it better"*, and later *"I just want consistency and mapping and
+traceable logic"* — was correct, and produced every gain below. The hacks
+(uniform floor, shrink retune) all failed; the modelling and consistency work
+all paid.
+
+| change | log loss |
+|---|--:|
+| starting point | 0.3663 |
+| sitting-member slope tier | 0.3597 |
+| notional baselines for new seats (150 seats scored, not 149) | 0.3588 |
+| salience-predicted national IND level | 0.3567 |
+| **fix: level rescale did not survive `.own_x()`** | **0.3371** |
+| draws scaled with the level (consistency; score-neutral) | 0.3370 |
+| **fix: regenerate the stale `aec-fed-firstprefs.csv`** | **0.3294** |
+| major-party defector floor | 0.3294 (no-op here) |
+
+Accuracy 83.2% -> **86.0%**, level with AE Forecasts. Brier 0.1000 against
+their 0.0996. AEF log loss 0.3025.
+
+**The two biggest gains were both bugs, not models.** A re-forecast national
+level was silently discarded in exactly the seats it existed to help, and the
+seat model was reading a party classification the rest of the repo had
+abandoned. Neither was visible in an aggregate metric; both were obvious once
+the transformation chain was written out in order
+(`party-level-pipeline-map-2026-09-05.md`).
+
+### Also refused, with measurements
+
+- **Blanket upset-hedging floor**: monotonically worse (0.3516 -> 0.4085).
+  AEF hedges SELECTIVELY, which needs seat-level information.
+- **shrink below 0.10**: 0.02 gives 0.3573, 0.05 gives 0.3520, 0.10 gives
+  0.3502. Lowering it hurts; the 2026-08-22 value stands.
+- **Raw-jump magnitude hybrid** (named as unevaluated in
+  `salience-c3-v3-2026-09-04.md`): refused. For predicting WHO wins, jump
+  percentile has z = 4.19 and raw jump z = 0.88. Among the 18 governed
+  winners raw jump explains no more than noise (t = 1.62, n = 18): Oakeshott
+  won 47.1% on jump 0.014, Steggall 43.5% on 0.913, Bowler 34.0% on 0.000.
+  Raw jump is not comparable across elections, exactly as the fixed-anchor
+  design anticipated. The percentile choice was correct.
+- **Major-party defector history**: the McBride rule's premise ("two
+  examples, no basis to fit") is outdated — there are 12 sitting-member
+  defectors and retention is 0.284 (sd 0.191). But implemented correctly, as
+  a FLOOR rather than a replacement, it is a no-op on fed2025. Calare is not
+  a missing-history problem: the seat already carries a ~20% independent base
+  from Kate Hook in 2022 and still projects only 0.122.
+
+### Where the remaining 0.027 sits
+
+Independents, and now specifically the MAGNITUDE of a strong emergence rather
+than its detection. We beat AEF on Labor seats by 3.23 and lose 4.23 on
+independents. Fowler 0.154 vs 0.682, Calare 0.122 vs 0.411, Bradfield 0.234
+vs 0.521, Kennedy 0.416 vs 0.922. The teals — Mayo, Wentworth, Curtin,
+Kooyong — have dropped out of the loss table entirely.
+
+The model detects these candidates (the screen fires) and still under-projects
+how far they go. Salience cannot supply the magnitude, per the refusal above.
+That is the open question, and it is a modelling one, not a parameter one.
