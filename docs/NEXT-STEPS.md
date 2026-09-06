@@ -94,6 +94,30 @@ transfers on disk; also one of AEF's archived elections). **One prior fetch
 each**: fed2007 (needs fed2004), vic2014 (vic2010), nsw2019 (nsw2015), sa2022
 (sa2018). Those five would make 22.
 
+## P4b SHIPPED 2026-09-07 01:00: the surge reaches the candidate it was fitted for
+
+`plans/prereg-surge-recipient-2026-09-06.md`, stage 2. Recipient ON at scale
+x1, all 17 elections at 20,000 draws: **pooled seat log loss 0.3631 ->
+0.3422, 1.9 SE**, RMSE unchanged, fed2022 0.4819 -> 0.3862, fed2010 0.4047 ->
+0.3281, fed2016 0.3566 -> 0.3154; x2 refused. Named cost: Clark 2022 and
+Melbourne 2013 fall 0.024/0.025 because the hazard there names a Green.
+`AUSPOL_SURGE_RECIPIENT=1` is published. The teals now sit at 0.02-0.05, off
+zero and an order of magnitude short of AEF's 0.3-0.5: **the remaining gap is
+the hazard's calibration** (ridge lambda 20 on ~13 winners), which is the
+next pre-registration — a calibration map from hazard rank to probability,
+or a lower lambda, scored the same way.
+
+**Next, in order** (each its own pre-registration, each a minutes-long sweep
+now): (1) hazard calibration; (2) the hazard must not fire against a
+returning sitting member of the same seat (Clark, Melbourne); (3) the
+transfer fraction for minor-party switchers (Hunter's One Nation at 0); (4) a
+retention model for a departed leader's base (Wentworth vs New England);
+(5) a Queensland harness (data on disk); (6) the two reviews' refactors.
+
+**Harness note**: a run launched while `src/` is compiling collides with the
+build (six stage 2 runs died at load_all on `seat_sim_core.o`). Launch one
+run first after any change to `src/`, then the rest.
+
 ## THE SIMULATOR IS COMPILED, 2026-09-07 00:45 — a sweep is minutes, not an hour
 
 `src/seat_sim_core.cpp` is the per-draw core of `simulate_seat_contests()`,
