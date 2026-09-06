@@ -79,6 +79,52 @@ Decomposition worth keeping: of One Nation's 47.6 -> 61.6 swing to the
 Coalition, cell-mix explains 47.6 -> 51.1 and the remaining +10.5 is genuine
 within-cell drift, positive in all four major cells.
 
+## THE OBJECTIVE, set by Pete 2026-09-06 evening
+
+**Every model change is decided by overall seat log loss AND seat-share RMSE
+pooled across ALL the elections we forecast** — every 21st-century state and
+federal election in the harnesses — never one election or one harness. The
+harnesses now print the RMSE line (`BF3r`/`BV2r`/`BT5r`/`BS2r`/`BW2r`,
+`seat_share_rmse()` on the point estimate) beside log loss.
+
+**Coverage today: 17 elections, ~1,570 seat-elections** — fed 2010, 2013,
+2016, 2019, 2022, 2025; vic 2018, 2022; nsw 2023; sa 2026; wa 2001, 2005,
+2008, 2013, 2017, 2021, 2025. **Buildable now**: qld2024 (2020 prior and
+transfers on disk; also one of AEF's archived elections). **One prior fetch
+each**: fed2007 (needs fed2004), vic2014 (vic2010), nsw2019 (nsw2015), sa2022
+(sa2018). Those five would make 22.
+
+## P1 RESULT 2026-09-06 late: rule 2 ships, rule 1 refused
+
+`plans/prereg-vote-belongs-to-the-person-2026-09-06.md`, results section.
+A switcher's vote now leaves the class it came from (`remove_transferred_votes()`,
+called from four harnesses and `fit_seats_full.R`): Kennedy 2013 and Hunter
+2022 fixed, SA 0.3865 -> 0.3516, NSW 0.3251 -> 0.2980, vic2022 0.2466 ->
+0.2348. The departed-leader rule fixed New England 2013 and broke Wentworth
+2022 (0.705 -> 0.138), a wash on the six federal pairs; refused, kept behind
+`honour_departed = TRUE`. **The rule-2-only run at published defaults is the
+new baseline** (in progress at the time of writing; numbers go in the plan
+file's section 2 when it lands). Two follow-ups recorded there: a minor
+party keeps some of a departed candidate's vote (the transfer fraction
+should be fitted, not 1.0), and the output fingerprint now carries the git
+commit (`-g<sha>`, `x` when dirty) so a code change cannot overwrite a
+baseline's files again.
+
+## Reviews done while the runs went (2026-09-06 evening), reports in the session scratchpad — bring into `docs/reviews/` next session
+
+- **Simplification**: seven blocks copied across the five harnesses (the
+  level-sd/multiplier header is ~100 lines x 5), one real drift (SA zeroes an
+  absent independent at `> 0.5`, the others at `> 0`), `seat_shrink_vector()`
+  exported with no caller, `avail` dead in `R/flow_matrix.R`, 45 one-off
+  scripts nothing references. Top refactor: one function for the seat-spread
+  resolution, proven by byte-identical WA output.
+- **Performance** (line profiler, true default path): `R/seat_sim.R:687` the
+  per-cell `sd_cell` recomputed 20,000x per seat when invariant across draws
+  (23% of time), and `ss_lookup()`'s string cache key at `R/seat_sim.R:570`
+  (16%) — both byte-identical hoists; `surge_hazard_for()` recomputes the
+  same four training pairs per federal pair (~15-25 s/run). TCP writes and
+  positional indexing measured negligible.
+
 ## NEXT, as of 2026-09-06 afternoon: what ships was not what was measured, and where the misses are
 
 Pete asked which elections we forecast, how we score against AE Forecasts,

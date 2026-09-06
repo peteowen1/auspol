@@ -197,7 +197,7 @@ CAL_TAG <- paste0(
   # perturbs every flow, which is as large a change as any flag here, and it
   # reached no filename at all -- so the ensemble arm overwrote the very
   # baseline it exists to be compared against.
-  if (identical(Sys.getenv("AUSPOL_FLOW_UNC", "0"), "1")) "-unc" else "", .arm_fingerprint)
+  if (identical(Sys.getenv("AUSPOL_FLOW_UNC", "0"), "1")) "-unc" else "", .arm_fingerprint, .code_tag)
 
 SEED <- 42; SMOOTH <- 0.15; eps <- 1e-6
 P <- election_data_path()
@@ -614,6 +614,10 @@ for (K in PAIRS) {
                   lo = stats::qlogis(pmin(pmax(res$pred_p, eps), 1 - eps)))
   sl <- if (length(unique(z$y)) > 1)
     stats::coef(stats::glm(y ~ lo, data = z, family = stats::binomial()))[["lo"]] else NA_real_
+  .rr <- seat_share_rmse(shares, fb)  # the second metric: point-estimate seat-share RMSE vs actual
+  cat(sprintf("BV2r  seat-share RMSE %.3f | MAE %.3f | by class %s | %d seats%s\n", .rr$rmse, .rr$mae,
+              paste(sprintf("%s=%.2f", names(.rr$by_class), .rr$by_class), collapse = " "),
+              .rr$n_seats, if (.rr$n_dropped) sprintf(" (%d unmatched dropped)", .rr$n_dropped) else ""))
   cat(sprintf("BV2  accuracy %d/%d (%.1f%%) | Brier %.4f | log score %.4f | slope %.3f\n",
               sum(res$pred == res$actual), nrow(res),
               100 * mean(res$pred == res$actual), mean((1 - res$prob)^2),

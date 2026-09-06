@@ -150,7 +150,7 @@ CAL_TAG <- paste0(
   if (PARTY_SD != 1.5) sprintf("-psd%s", sub("[.]", "", format(PARTY_SD, nsmall = 2))) else "",
   if (FB_SMOOTH != 0) sprintf("-fb%s", sub("0[.]", "", format(FB_SMOOTH, nsmall = 2))) else "",
   if (FLOW_SD != 0) sprintf("-fsd%s", sub("[.]", "", format(FLOW_SD, nsmall = 1))) else "",
-  if (SURGE_H > 0) "-surge" else "", .arm_fingerprint)
+  if (SURGE_H > 0) "-surge" else "", .arm_fingerprint, .code_tag)
 
 cat(sprintf("BW0  n_sims %d | shrink %.2f | party_sd %.2f | fb %.2f | flow_sd %.2f | surge %.4f\n",
             N_SIMS, SHRINK, PARTY_SD, FB_SMOOTH, FLOW_SD, SURGE_H))
@@ -335,6 +335,10 @@ for (K in PAIRS) {
                   lo = qlogis(pmin(pmax(r$pred_p, eps), 1 - eps)))
   sl <- if (length(unique(z$y)) > 1)
     coef(glm(y ~ lo, data = z, family = binomial()))[["lo"]] else NA_real_
+  .rr <- seat_share_rmse(shares, fb)  # the second metric: point-estimate seat-share RMSE vs actual
+  cat(sprintf("BW2r  seat-share RMSE %.3f | MAE %.3f | by class %s | %d seats%s\n", .rr$rmse, .rr$mae,
+              paste(sprintf("%s=%.2f", names(.rr$by_class), .rr$by_class), collapse = " "),
+              .rr$n_seats, if (.rr$n_dropped) sprintf(" (%d unmatched dropped)", .rr$n_dropped) else ""))
   cat(sprintf("BW2  %s: accuracy %d/%d (%.1f%%) | Brier %.4f | log %.4f | slope %.3f | seat_sd %.2f\n",
               el_to, sum(r$pred == r$actual), nrow(r),
               100 * mean(r$pred == r$actual), mean((1 - r$prob)^2),

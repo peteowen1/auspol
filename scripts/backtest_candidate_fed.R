@@ -362,7 +362,7 @@ CAL_TAG <- paste0(
   if (identical(Sys.getenv("AUSPOL_WA_DROP_LNP", "0"), "1")) "-nolnp" else "",
   if (FORECAST_MODE) "-fc" else "",
   if (SHRINK != 0) sprintf("-sh%s", sub("0[.]", "", format(SHRINK, nsmall = 2))) else "",
-  if (SMOOTH != 0.15) sprintf("-sm%s", sub("0[.]", "", format(SMOOTH, nsmall = 2))) else "", .arm_fingerprint)
+  if (SMOOTH != 0.15) sprintf("-sm%s", sub("0[.]", "", format(SMOOTH, nsmall = 2))) else "", .arm_fingerprint, .code_tag)
 
 # SEED settable so the Monte Carlo error on a reported figure can be measured
 # rather than assumed. At 20,000 sims over ~150 divisions the standard error
@@ -1216,7 +1216,7 @@ for (K in PAIRS) {
   out_all[[length(out_all) + 1L]] <- list(K = K, shares = shares, fm = fm,
                                           truth = truth, keep = keep,
                                           parties = parties, sd_w = sd_w,
-                                          sw_draws = sw_draws)
+                                          sw_draws = sw_draws, fb = fb)
 }
 
 # THE FALLBACK IS TAKEN OVER EVERY PAIR, NOT JUST THE ONES IN THIS RUN.
@@ -1421,6 +1421,14 @@ for (X in out_all) {
                   lo = stats::qlogis(pmin(pmax(res$pred_p, eps), 1 - eps)))
   sl <- if (length(unique(z$y)) > 1)
     stats::coef(stats::glm(y ~ lo, data = z, family = stats::binomial()))[["lo"]] else NA_real_
+  # THE SECOND METRIC: seat-share RMSE of the point estimate the simulator was
+  # handed, against the shares actually polled. Pete's objective (2026-09-06)
+  # is overall seat log loss AND this, across every election forecast.
+  .rr <- seat_share_rmse(X$shares[X$keep, , drop = FALSE], X$fb)
+  cat(sprintf("BF3r fed%d: seat-share RMSE %.3f | MAE %.3f | by class %s | %d seats%s\n",
+              K$to, .rr$rmse, .rr$mae,
+              paste(sprintf("%s=%.2f", names(.rr$by_class), .rr$by_class), collapse = " "),
+              .rr$n_seats, if (.rr$n_dropped) sprintf(" (%d unmatched dropped)", .rr$n_dropped) else ""))
   cat(sprintf("BF3  fed%d: accuracy %d/%d (%.1f%%) | Brier %.4f | log %.4f | slope %.3f%s\n",
               K$to, sum(res$pred == res$actual), nrow(res),
               100 * mean(res$pred == res$actual), mean((1 - res$prob)^2),

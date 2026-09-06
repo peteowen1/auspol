@@ -238,7 +238,7 @@ CAL_TAG <- paste0(
   if (nzchar(Sys.getenv("AUSPOL_WA_CUTOFF", "")) ||
       nzchar(Sys.getenv("AUSPOL_QLD_CUTOFF", ""))) "-cut" else "",
   if (identical(Sys.getenv("AUSPOL_WA_DROP_3C", "0"), "1")) "-no3c" else "",
-  if (identical(Sys.getenv("AUSPOL_WA_DROP_LNP", "0"), "1")) "-nolnp" else "", .arm_fingerprint)
+  if (identical(Sys.getenv("AUSPOL_WA_DROP_LNP", "0"), "1")) "-nolnp" else "", .arm_fingerprint, .code_tag)
 
 SEED <- 42; # INSURGENCY SURGE, against docs/plans/prereg-insurgency-surge.md. Wired here on
 # 2026-08-26 after a four-arm comparison produced BYTE-IDENTICAL results for the
@@ -676,6 +676,10 @@ z <- data.frame(y = as.integer(res$pred == res$actual),
                 lo = stats::qlogis(pmin(pmax(res$pred_p, eps), 1 - eps)))
 sl <- if (length(unique(z$y)) > 1)
   stats::coef(stats::glm(y ~ lo, data = z, family = stats::binomial()))[["lo"]] else NA_real_
+.rr <- seat_share_rmse(shares, fb)  # the second metric: point-estimate seat-share RMSE vs actual
+cat(sprintf("BS2r  seat-share RMSE %.3f | MAE %.3f | by class %s | %d seats%s\n", .rr$rmse, .rr$mae,
+            paste(sprintf("%s=%.2f", names(.rr$by_class), .rr$by_class), collapse = " "),
+            .rr$n_seats, if (.rr$n_dropped) sprintf(" (%d unmatched dropped)", .rr$n_dropped) else ""))
 cat(sprintf("\nBS2  accuracy %d/%d (%.1f%%) | Brier %.4f | log %.4f | slope %.3f\n",
             sum(res$pred == res$actual), nrow(res),
             100 * mean(res$pred == res$actual), mean((1 - res$prob)^2),

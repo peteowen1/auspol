@@ -217,7 +217,7 @@ CAL_TAG <- paste0(
   else "",
   # No -qld or -wa suffix: neither is admissible here, so an arm carrying
   # one would be a filename promising a difference the run cannot make.
-  "", .arm_fingerprint)
+  "", .arm_fingerprint, .code_tag)
 
 # READ FROM THE ENVIRONMENT like the other three harnesses. This was hardcoded
 # to 20000 while backtest_candidate_sa.R, _vic.R and _fed.R all read
@@ -619,6 +619,10 @@ cat(sprintf("BT4  winner accuracy: %d of %d (%.1f%%)\n",
             100 * mean(res$pred == res$actual)))
 cat(sprintf("BT5  Brier (on the party that won): %.4f\n", mean((1 - res$p)^2)))
 eps <- 1e-6
+.rr <- seat_share_rmse(shares, fp23)  # the second metric: point-estimate seat-share RMSE vs actual
+cat(sprintf("BT5r  seat-share RMSE %.3f | MAE %.3f | by class %s | %d seats%s\n", .rr$rmse, .rr$mae,
+            paste(sprintf("%s=%.2f", names(.rr$by_class), .rr$by_class), collapse = " "),
+            .rr$n_seats, if (.rr$n_dropped) sprintf(" (%d unmatched dropped)", .rr$n_dropped) else ""))
 cat(sprintf("BT5  mean log score: %.4f  (worse = more confident misses)\n",
             -mean(log(pmax(res$p, eps)))))
 cat(sprintf("BT5  seats where the winner got < 5%% from us: %d\n", sum(res$p < 0.05)))

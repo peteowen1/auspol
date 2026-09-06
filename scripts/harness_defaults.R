@@ -36,3 +36,17 @@ if (identical(Sys.getenv("AUSPOL_HARNESS_RAW", "0"), "1")) {
               if (length(.caller_set)) paste(sprintf("%s=%s", .caller_set, Sys.getenv(.caller_set)), collapse = " ") else "(none -- this run measures what ships)"))
   rm(.caller_set, .applied)
 }
+
+# THE CODE VERSION GOES INTO THE OUTPUT FILENAME. The arm fingerprint hashes
+# the environment only, so on 2026-09-06 an arm run with changed CODE and the
+# same switches wrote over the baseline's per-party tables under the same
+# name. Every harness appends this to CAL_TAG: the short git commit, with an
+# "x" when R/ or scripts/ carry uncommitted changes.
+.code_tag <- local({
+  sha <- tryCatch(suppressWarnings(system2("git", c("rev-parse", "--short=7", "HEAD"), stdout = TRUE, stderr = FALSE)),
+                  error = function(e) character(0))
+  dirty <- tryCatch(length(suppressWarnings(system2("git", c("status", "--porcelain", "--", "R", "scripts"), stdout = TRUE, stderr = FALSE))) > 0,
+                    error = function(e) FALSE)
+  if (!length(sha) || !nzchar(sha[1])) "" else sprintf("-g%s%s", sha[1], if (dirty) "x" else "")
+})
+cat(sprintf("HD2  code %s\n", if (nzchar(.code_tag)) sub("^-g", "", .code_tag) else "(not a git checkout)"))
