@@ -107,6 +107,23 @@ the hazard's calibration** (ridge lambda 20 on ~13 winners), which is the
 next pre-registration — a calibration map from hazard rank to probability,
 or a lower lambda, scored the same way.
 
+## P4c REFUSED and the calibration question ANSWERED, 2026-09-07
+
+`plans/prereg-recipient-at-zero-2026-09-07.md`. Letting a named recipient
+surge from zero share removes every demotion (275,205 → 0 on fed2022) and
+moves the targets only as far as their hazard allows (Goldstein 0.017 →
+0.022): **a seat's win probability now equals its hazard.** Pooled 0.3422 →
+0.3444, refused; the entire loss is Fairfax 2013, where Palmer's party won
+and the default rule had been rescuing it by accident.
+
+**The hazard is already calibrated** — out of fold, 1,920 seat-classes, the
+top 2% band predicts 0.173 and wins 0.158, and every band matches. So
+rescaling cannot help (x2/x4/x8 all lost), and Goldstein's 0.025 is not an
+under-estimate: seats that looked like that won ~5% of the time. **The gap to
+AE Forecasts is information, not calibration.** Next: a wave term (how many
+high-salience challengers a cycle carries, knowable before polling day), then
+Pete's call on seat polls or market odds.
+
 **Found by the review gate's new diagnostic line on its first run (fed2022,
 `BF3e`)**: in **275,205 of 3,000,000 seat-draws** the named recipient was at
 zero share after noise and the surge fell back to the largest non-major — a

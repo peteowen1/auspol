@@ -1416,6 +1416,7 @@ for (X in out_all) {
   sim <- simulate_seat_contests(level_sd = .level_sd, level_mult = .lm(X$shares), X$shares, X$fm, party_sd = psd, seat_sd = sd_w * SEAT_SD_MULT,
                                 n_sims = N_SIMS, smooth = SMOOTH, seed = SEED,
                                 shrink = shrink_arg, surge_h = surge_arg, surge_party = surge_party_arg,
+                                surge_from_zero = identical(Sys.getenv("AUSPOL_SURGE_FROM_ZERO", "0"), "1"),
                                 surge_mu = surge_mu_arg, surge_sd = surge_sd_arg,
                                 party_cor = PARTY_COR, statewide_draws = X$sw_draws,
                                 fallback_smooth = FB_SMOOTH, flow_sd = FLOW_SD)

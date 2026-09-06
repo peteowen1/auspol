@@ -285,6 +285,17 @@ test_that("surge_party directs the surge to the named class, below the floor, an
   z <- do.call(simulate_seat_contests, c(list(sh0, fm, party_sd = c(ALP = 0, LNP = 0, GRN = 0, IND = 0), seat_sd = 0,
                n_sims = 50, seed = 7, surge_h = c(1, 1), surge_mu = 40, surge_sd = 0.01), list(surge_party = c(s1 = "IND", s2 = "OTH"))))
   expect_equal(z$surge_recipient_fallback_draws, 50L)
+  # surge_from_zero: the named class takes it even from nothing, and the two
+  # engines stay identical on that path.
+  a0 <- list(sh0, fm, party_sd = c(ALP = 0, LNP = 0, GRN = 0, IND = 0), seat_sd = 0,
+             n_sims = 50, seed = 7, surge_h = c(1, 1), surge_mu = 40, surge_sd = 0.01,
+             surge_party = c(s1 = "IND", s2 = "OTH"), surge_from_zero = TRUE)
+  z0r <- do.call(simulate_seat_contests, c(a0, list(engine = "r")))
+  z0c <- do.call(simulate_seat_contests, c(a0, list(engine = "cpp")))
+  z0r$engine <- NULL; z0c$engine <- NULL
+  expect_identical(z0c, z0r)
+  expect_equal(z0r$surge_recipient_fallback_draws, 0L)
+  expect_true(z0r$win_prob$prob[z0r$win_prob$seat == "s1" & z0r$win_prob$party == "IND"] > 0.5)
   expect_error(do.call(simulate_seat_contests, c(base, list(surge_party = c(s1 = "IND")))), "no entry for")
 })
 

@@ -601,7 +601,8 @@ for (K in PAIRS) {
                                    seat_sd = sp$sd_within * SEAT_SD_MULT, n_sims = per,
                                    smooth = SMOOTH, seed = SEED + r, shrink = SHRINK,
                                    fallback_smooth = FB_SMOOTH, flow_sd = FLOW_SD,
-                                surge_h = surge_arg, surge_party = surge_party_arg, surge_mu = surge_mu_arg, surge_sd = surge_sd_arg)
+                                surge_h = surge_arg, surge_party = surge_party_arg,
+                                surge_from_zero = identical(Sys.getenv("AUSPOL_SURGE_FROM_ZERO", "0"), "1"), surge_mu = surge_mu_arg, surge_sd = surge_sd_arg)
       w1 <- as.data.table(s1$win_prob)[, .(seat, party, n = prob * per)]
       acc <- if (is.null(acc)) w1 else rbind(acc, w1)
     }
@@ -615,7 +616,8 @@ for (K in PAIRS) {
                                   smooth = SMOOTH, seed = SEED, party_cor = PARTY_COR,
                                   shrink = SHRINK,
                                   fallback_smooth = FB_SMOOTH, flow_sd = FLOW_SD,
-                                surge_h = surge_arg, surge_party = surge_party_arg, surge_mu = surge_mu_arg, surge_sd = surge_sd_arg)
+                                surge_h = surge_arg, surge_party = surge_party_arg,
+                                surge_from_zero = identical(Sys.getenv("AUSPOL_SURGE_FROM_ZERO", "0"), "1"), surge_mu = surge_mu_arg, surge_sd = surge_sd_arg)
     cat(sprintf("BV2e  engine %s | surge recipient fell back: %d class(es) absent, %d seat-draws at zero share\n", sim$engine, sim$surge_recipient_fallback, sim$surge_recipient_fallback_draws))
     wp <- as.data.table(sim$win_prob)
   }

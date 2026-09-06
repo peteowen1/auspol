@@ -168,6 +168,10 @@
 #'   surge. `NULL` (default) makes every column other than `ALP`, `LNP` and
 #'   `NAT` eligible. Any name not among the share columns is an error rather
 #'   than a silent no-op.
+#' @param surge_from_zero Logical, default `FALSE`. When `TRUE`, a class named
+#'   by `surge_party` receives the surge even at zero share in that draw. The
+#'   `surge_floor` still gates the DEFAULT rule (whoever is largest), which is
+#'   what it was written for.
 #' @param engine `"auto"` (default), `"cpp"` or `"r"`. The compiled core
 #'   (`src/seat_sim_core.cpp`, 2026-09-07) reproduces the R loop byte for byte
 #'   -- same random numbers in the same order, sums in long double as R's
@@ -235,7 +239,7 @@ simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
                                    level_mult = NULL,
                                    surge_h = 0, surge_mu = 15.6, surge_sd = 6.1,
                                    surge_parties = NULL, surge_floor = 2,
-                                   surge_party = NULL,
+                                   surge_party = NULL, surge_from_zero = FALSE,
                                    engine = c("auto", "cpp", "r")) {
   engine <- match.arg(engine)
   # SHRINK MAY BE PER-SEAT. A scalar applies the same rate everywhere and caps
@@ -749,6 +753,7 @@ simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
                           as.numeric(seat_sd_vec), has_level, sdp,
                           as.numeric(surge_h), as.integer(spi), as.integer(surge_idx),
                           as.numeric(surge_floor), as.numeric(surge_mu), as.numeric(surge_sd),
+                          as.logical(surge_from_zero),
                           cell_mat, cell_has, ss_mat, ss_has,
                           pool_mat, !is.null(pool_pw), pw_mat,
                           as.numeric(FLOW_SD_BY), as.numeric(smooth), as.numeric(fallback_smooth),
@@ -817,7 +822,13 @@ simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
         # as the class is actually on the ballot here (share > 0); otherwise
         # the default rule below.
         j0 <- surge_party_idx[i]
-        if (!is.na(j0) && v[j0] <= 0) { j0 <- NA_integer_; n_recipient_fb_draw <- n_recipient_fb_draw + 1L }
+        # A NAMED recipient at zero share: demoted to the default rule unless
+        # surge_from_zero. The floor exists to stop the DEFAULT rule handing a
+        # gain to whoever is largest among the near-zero; a class the hazard
+        # named from that candidate's own salience is the emergence case, and
+        # 275,205 of 3,000,000 fed2022 seat-draws were being demoted, which is
+        # Goldstein. docs/plans/prereg-recipient-at-zero-2026-09-07.md.
+        if (!is.na(j0) && v[j0] <= 0 && !surge_from_zero) { j0 <- NA_integer_; n_recipient_fb_draw <- n_recipient_fb_draw + 1L }
         cand <- if (!is.na(j0)) j0 else surge_idx[v[surge_idx] >= surge_floor]
         if (length(cand) && stats::runif(1) < surge_h[i]) {
           j <- if (!is.na(j0)) j0 else cand[which.max(v[cand])]

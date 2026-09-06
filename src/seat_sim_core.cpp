@@ -26,6 +26,7 @@ List seat_sim_core(NumericMatrix shares, int n_sims, int shift_mode,
                    NumericVector seat_sd_vec, bool has_level, NumericMatrix sd_cell_pre,
                    NumericVector surge_h, IntegerVector surge_party_idx, IntegerVector surge_idx,
                    double surge_floor, double surge_mu, double surge_sd,
+                   bool surge_from_zero,
                    NumericMatrix cell_mat, LogicalVector cell_has,
                    NumericMatrix ss_mat, LogicalVector ss_has,
                    NumericMatrix pool_mat, bool has_pw, NumericMatrix pw_mat,
@@ -79,7 +80,7 @@ List seat_sim_core(NumericMatrix shares, int n_sims, int shift_mode,
       // ---- insurgency surge ----
       if (surge_h[i] > 0 && surge_any) {
         int j0 = surge_party_idx[i];              // 1-based or NA
-        if (j0 != NA_INTEGER && v[j0 - 1] <= 0) { j0 = NA_INTEGER; ++n_recipient_fb_draw; }
+        if (j0 != NA_INTEGER && v[j0 - 1] <= 0 && !surge_from_zero) { j0 = NA_INTEGER; ++n_recipient_fb_draw; }
         cand.clear();
         if (j0 != NA_INTEGER) cand.push_back(j0 - 1);
         else for (int t = 0; t < n_surge; ++t) { const int c = surge_idx[t] - 1; if (v[c] >= surge_floor) cand.push_back(c); }

@@ -26,6 +26,7 @@ simulate_seat_contests(
   surge_parties = NULL,
   surge_floor = 2,
   surge_party = NULL,
+  surge_from_zero = FALSE,
   engine = c("auto", "cpp", "r")
 )
 }
@@ -234,6 +235,11 @@ default rule: a class absent from the columns is counted once in
 \code{surge_recipient_fallback}, a class at zero share in a given draw once
 per seat-draw in \code{surge_recipient_fallback_draws}. The list also returns
 \code{engine}, the engine that actually ran.}
+
+\item{surge_from_zero}{Logical, default \code{FALSE}. When \code{TRUE}, a class named
+by \code{surge_party} receives the surge even at zero share in that draw. The
+\code{surge_floor} still gates the DEFAULT rule (whoever is largest), which is
+what it was written for.}
 
 \item{engine}{\code{"auto"} (default), \code{"cpp"} or \code{"r"}. The compiled core
 (\code{src/seat_sim_core.cpp}, 2026-09-07) reproduces the R loop byte for byte
