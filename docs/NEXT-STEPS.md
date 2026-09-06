@@ -241,9 +241,9 @@ measurement or plan):
 ## Then
 
 1. ~~Re-measure the other four harnesses at `shrink=0.01`~~ — done above.
-2. **Push `dev` and take it through the review gate to `main`.** Three commits
-   are unmerged and unreviewed; `scripts/check_like_ci.R` passed in full on
-   2026-09-06 (706 tests, check clean).
+2. ~~Push `dev` and take it through the review gate to `main`~~ — **PR #27
+   merged 2026-09-06** after the review gate above; CI green in 2m04s. `main`
+   is current with `dev` for the first time since PR #26 (2026-08-23).
 3. **Data threads, Pete's call**: One Nation how-to-vote cards (the ONP drift is
    a published pre-election decision this repo does not hold), and seat-level
    polling.
