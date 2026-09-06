@@ -260,3 +260,76 @@ test_that("a NAMED length-1 shrink or surge_h names one seat and does not broadc
   expect_silent(do.call(simulate_seat_contests, c(args, list(shrink = 0.1))))
   expect_silent(do.call(simulate_seat_contests, c(args, list(shrink = c(s2 = 0.1, s1 = 0.2)))))
 })
+
+test_that("surge_party directs the surge to the named class, below the floor, and counts a missing one", {
+  # Two seats. In s1 the independent is at 1% (under the 2% floor) and the
+  # Greens at 15%: the default rule pays the Greens; the recipient rule pays
+  # the independent. In s2 the named class does not exist in the columns.
+  sh <- matrix(c(45, 39, 15, 1,  50, 40, 10, 0), nrow = 2, byrow = TRUE,
+               dimnames = list(c("s1", "s2"), c("ALP", "LNP", "GRN", "IND")))
+  fm <- build_flow_matrix(data.table::data.table(
+    election = "x", seat = rep(c("a", "b"), each = 2), round = 1L,
+    from = "GRN", to = rep(c("ALP", "LNP"), 2), votes = c(900, 100, 850, 150)), min_n = 2L)
+  base <- list(sh, fm, party_sd = c(ALP = 0, LNP = 0, GRN = 0, IND = 0), seat_sd = 0,
+               n_sims = 400, seed = 7, surge_h = c(1, 1), surge_mu = 40, surge_sd = 0.01)
+  old <- do.call(simulate_seat_contests, base)
+  new <- do.call(simulate_seat_contests, c(base, list(surge_party = c(s1 = "IND", s2 = "OTH"))))
+  p_old <- setNames(old$win_prob$prob, paste(old$win_prob$seat, old$win_prob$party))
+  p_new <- setNames(new$win_prob$prob, paste(new$win_prob$seat, new$win_prob$party))
+  expect_true(is.na(p_old["s1 IND"]) || p_old["s1 IND"] < 0.05)   # default rule never surges a 1% IND
+  expect_true(p_new["s1 IND"] > 0.5)                              # the named recipient does, floor or not
+  expect_equal(new$surge_recipient_fallback, 1L)                  # s2 named a class that is not there
+  expect_true(new$engine %in% c("r", "cpp")); expect_equal(new$surge_recipient_fallback_draws, 0L)
+  # A named class at ZERO share in the seat falls back per draw, and is counted per seat-draw.
+  sh0 <- sh; sh0["s1", "IND"] <- 0
+  z <- do.call(simulate_seat_contests, c(list(sh0, fm, party_sd = c(ALP = 0, LNP = 0, GRN = 0, IND = 0), seat_sd = 0,
+               n_sims = 50, seed = 7, surge_h = c(1, 1), surge_mu = 40, surge_sd = 0.01), list(surge_party = c(s1 = "IND", s2 = "OTH"))))
+  expect_equal(z$surge_recipient_fallback_draws, 50L)
+  expect_error(do.call(simulate_seat_contests, c(base, list(surge_party = c(s1 = "IND")))), "no entry for")
+})
+
+test_that("the compiled core is byte-identical to the R engine with every mechanism on", {
+  # Three seats, four classes, a flow matrix with a superset cell, a
+  # correlated statewide draw, level-dependent variance, a per-seat surge with
+  # a named recipient, per-seat shrink and per-source flow uncertainty: every
+  # random draw the R loop makes, in the same order, or this fails.
+  sh <- matrix(c(38, 40, 20, 2,  45, 35, 15, 5,  30, 30, 25, 15), nrow = 3, byrow = TRUE,
+               dimnames = list(c("s1", "s2", "s3"), c("ALP", "LNP", "GRN", "IND")))
+  fm <- build_flow_matrix(data.table::data.table(
+    election = "x", seat = rep(c("a", "b", "c", "d"), each = 3), round = 1L,
+    from = c("GRN", "GRN", "GRN", "IND", "IND", "IND", "GRN", "GRN", "GRN", "IND", "IND", "IND"),
+    to = c("ALP", "LNP", "IND", "ALP", "LNP", "GRN", "ALP", "LNP", "IND", "ALP", "LNP", "GRN"),
+    votes = c(700, 200, 100, 300, 500, 200, 650, 250, 100, 350, 450, 200)), min_n = 2L)
+  cor <- matrix(c(1, -0.6, 0.2, 0.1,  -0.6, 1, -0.3, 0.1,  0.2, -0.3, 1, 0,  0.1, 0.1, 0, 1), 4, 4,
+                dimnames = list(c("ALP", "LNP", "GRN", "IND"), c("ALP", "LNP", "GRN", "IND")))
+  args <- list(sh, fm, party_sd = c(ALP = 2, LNP = 2, GRN = 1.5, IND = 1), seat_sd = 3,
+               level_sd = c(1.1, 8.67), n_sims = 300, seed = 11, party_cor = cor,
+               shrink = c(s1 = 0.05, s2 = 0.01, s3 = 0.2), surge_h = c(0.3, 0.1, 0.5),
+               surge_mu = 30, surge_sd = 8, surge_party = c(s1 = "IND", s2 = NA, s3 = "GRN"),
+               flow_sd = 2, fallback_smooth = 0.3, smooth = 0.1)
+  # The returned list names the engine that ran; everything else must match.
+  strip <- function(x) { expect_true(x$engine %in% c("r", "cpp")); x$engine <- NULL; x }
+  r <- do.call(simulate_seat_contests, c(args, list(engine = "r")))
+  cc <- do.call(simulate_seat_contests, c(args, list(engine = "cpp")))
+  expect_identical(strip(cc), strip(r))
+  # And with statewide draws supplied instead of party_sd/party_cor.
+  set.seed(3); sw <- matrix(rnorm(300 * 4, 0, 2), 300, 4, dimnames = list(NULL, c("ALP", "LNP", "GRN", "IND")))
+  args2 <- args; args2$party_cor <- NULL; args2$statewide_draws <- sw
+  expect_identical(strip(do.call(simulate_seat_contests, c(args2, list(engine = "cpp")))),
+                   strip(do.call(simulate_seat_contests, c(args2, list(engine = "r")))))
+  # And the plain independent-shift path.
+  args3 <- args; args3$party_cor <- NULL
+  expect_identical(strip(do.call(simulate_seat_contests, c(args3, list(engine = "cpp")))),
+                   strip(do.call(simulate_seat_contests, c(args3, list(engine = "r")))))
+  # A seat whose every share is zero: under noise, some draws leave NOBODY
+  # alive. The R loop credits no one for that seat-draw; the compiled core
+  # read alive[0] of an empty vector until review caught it (2026-09-07).
+  sh0 <- rbind(sh, s0 = c(0, 0, 0, 0))
+  args4 <- args3; args4[[1]] <- sh0
+  args4$shrink <- c(args3$shrink, s0 = 0.1); args4$surge_h <- c(args3$surge_h, 0.2)
+  args4$surge_party <- c(args3$surge_party, s0 = "IND")
+  r4 <- do.call(simulate_seat_contests, c(args4, list(engine = "r")))
+  c4 <- do.call(simulate_seat_contests, c(args4, list(engine = "cpp")))
+  expect_identical(strip(c4), strip(r4))
+  expect_true(sum(r4$win_prob$prob[r4$win_prob$seat == "s0"]) < 1)   # some draws credited nobody
+})

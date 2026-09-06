@@ -57,6 +57,7 @@
 
 options(auspol.root = normalizePath("."))
 suppressMessages(devtools::load_all(quiet = TRUE))
+source("scripts/harness_defaults.R")  # published defaults for every unset AUSPOL_* switch; see that file
 suppressMessages(library(data.table))
 
 # LEVEL-DEPENDENT SEAT VARIANCE, off by default. AUSPOL_LEVEL_SD="1.10,8.67"
@@ -237,7 +238,7 @@ CAL_TAG <- paste0(
   if (nzchar(Sys.getenv("AUSPOL_WA_CUTOFF", "")) ||
       nzchar(Sys.getenv("AUSPOL_QLD_CUTOFF", ""))) "-cut" else "",
   if (identical(Sys.getenv("AUSPOL_WA_DROP_3C", "0"), "1")) "-no3c" else "",
-  if (identical(Sys.getenv("AUSPOL_WA_DROP_LNP", "0"), "1")) "-nolnp" else "", .arm_fingerprint)
+  if (identical(Sys.getenv("AUSPOL_WA_DROP_LNP", "0"), "1")) "-nolnp" else "", .arm_fingerprint, .code_tag)
 
 SEED <- 42; # INSURGENCY SURGE, against docs/plans/prereg-insurgency-surge.md. Wired here on
 # 2026-08-26 after a four-arm comparison produced BYTE-IDENTICAL results for the
@@ -349,7 +350,9 @@ if (.cond && !is.null(.returns))
                 paste(sprintf("%s=%.4f", names(.MP_SLOPE), .MP_SLOPE), collapse = " ")))
 .defect <- if (identical(Sys.getenv("AUSPOL_DEFECT_DISCOUNT", "0"), "1")) 0.282 else NULL
 # THE BASE VALUE, not just the slope -- see personal_prior_vote()'s docs.
-.own_prev <- if (.cond) tryCatch(personal_prior_vote("sa2022", "sa2026", major_discount = .defect), error = function(e) NULL) else NULL
+.own_prev <- if (.cond) tryCatch(personal_prior_vote("sa2022", "sa2026", major_discount = .defect), error = function(e) { cat(sprintf("BS1p! personal_prior_vote() FAILED; class-level bases kept and NO transfer removed: %s\n", conditionMessage(e))); NULL }) else NULL
+mat <- remove_transferred_votes(mat, .own_prev)  # the vote moves with the person; see personal_prior_vote()
+.tr <- attr(mat, "transfers"); if (!is.null(.tr)) cat(sprintf("TR1  transfers moved with the person: %d applied%s\n", .tr$applied, if (length(.tr$skipped)) paste0("; SKIPPED ", length(.tr$skipped), ": ", paste(utils::head(.tr$skipped, 5), collapse = ", ")) else ""))
 .own_x <- function(p, seats, x) {
   if (is.null(.own_prev)) return(x)
   ov <- .own_prev[.own_prev$party == p, ]
@@ -629,6 +632,7 @@ cat(sprintf("BS1f fallback_smooth %.2f | flow_sd %.2f\n", FB_SMOOTH, FLOW_SD))
 
 # ARM SURGE-V2: see R/salience_surge.R and scripts/backtest_candidate_fed.R.
 surge_arg <- SURGE_H; surge_mu_arg <- 15.6; surge_sd_arg <- 6.1
+surge_party_arg <- NULL
 if (identical(Sys.getenv("AUSPOL_SALIENCE_SURGE_V2", "0"), "1")) {
   v2_pairs <- list(
     list(election = "fed2010", prev = "fed2007", region = "fed"),
@@ -649,6 +653,23 @@ if (identical(Sys.getenv("AUSPOL_SALIENCE_SURGE_V2", "0"), "1")) {
     v <- setNames(hz$seat_hazard$surge_h, hz$seat_hazard$seat)[sn]
     miss <- sum(is.na(v)); v[is.na(v)] <- 0
     surge_arg <- unname(v); surge_mu_arg <- hz$surge_mu; surge_sd_arg <- hz$surge_sd
+    if (identical(Sys.getenv("AUSPOL_SURGE_RECIPIENT", "1"), "1") && !is.null(hz$seat_recipient)) {
+      # THE SURGE GOES TO THE CLASS THE HAZARD WAS FITTED FOR (prereg-surge-recipient-2026-09-06.md).
+      surge_party_arg <- unname(setNames(hz$seat_recipient$party, hz$seat_recipient$seat)[sn])
+      cat(sprintf("SR1  surge recipient ON: %d of %d seats name a class (%s)\n", sum(!is.na(surge_party_arg)), length(sn),
+                  paste(sprintf("%s=%d", names(table(surge_party_arg)), as.integer(table(surge_party_arg))), collapse = " ")))
+    }
+    # THE SCALE OF THE HAZARD (docs/plans/prereg-surge-hazard-scale-2026-09-06.md).
+    # The ridge fit shrinks every seat toward the base rate, so the top-ranked
+    # emergence seats carry 0.03-0.05; this multiplies before the blend and
+    # the draw, capped at 1. Published value 1 until the sweep decides.
+    .surge_scale <- as.numeric(Sys.getenv("AUSPOL_SURGE_SCALE", "1"))
+    if (!is.finite(.surge_scale) || .surge_scale <= 0) stop("AUSPOL_SURGE_SCALE must be a positive number")
+    if (.surge_scale != 1) {
+      surge_arg <- pmin(1, surge_arg * .surge_scale)
+      cat(sprintf("SC1  surge hazard x%.1f: mean %.4f, max %.4f, seats at the cap %d\n",
+                  .surge_scale, mean(surge_arg), max(surge_arg), sum(surge_arg >= 1)))
+    }
     cat(sprintf("BS0v sa2026: surge-v2 hazard for %d of %d seats (%d absent -> 0) | mean %.4f | mu %.2f sd %.2f | lambda %.1f | train winners %d\n",
                 length(sn) - miss, length(sn), miss, mean(surge_arg),
                 surge_mu_arg, surge_sd_arg, hz$lambda, hz$n_train_winners))
@@ -658,7 +679,8 @@ sim <- simulate_seat_contests(level_sd = .level_sd, level_mult = .lm(shares), sh
                               n_sims = N_SIMS, smooth = SMOOTH, seed = SEED,
                               shrink = SHRINK, party_cor = PARTY_COR,
                               fallback_smooth = FB_SMOOTH, flow_sd = FLOW_SD,
-                              surge_h = surge_arg, surge_mu = surge_mu_arg, surge_sd = surge_sd_arg)
+                              surge_h = surge_arg, surge_party = surge_party_arg, surge_mu = surge_mu_arg, surge_sd = surge_sd_arg)
+cat(sprintf("BS2e  engine %s | surge recipient fell back: %d class(es) absent, %d seat-draws at zero share\n", sim$engine, sim$surge_recipient_fallback, sim$surge_recipient_fallback_draws))
 wp <- as.data.table(sim$win_prob)
 
 pa <- merge(data.table(seat = keep, actual = unname(truth)),
@@ -674,6 +696,10 @@ z <- data.frame(y = as.integer(res$pred == res$actual),
                 lo = stats::qlogis(pmin(pmax(res$pred_p, eps), 1 - eps)))
 sl <- if (length(unique(z$y)) > 1)
   stats::coef(stats::glm(y ~ lo, data = z, family = stats::binomial()))[["lo"]] else NA_real_
+.rr <- seat_share_rmse(shares, fb)  # the second metric: point-estimate seat-share RMSE vs actual
+cat(sprintf("BS2r  seat-share RMSE %.3f | MAE %.3f | by class %s | %d seats%s\n", .rr$rmse, .rr$mae,
+            paste(sprintf("%s=%.2f", names(.rr$by_class), .rr$by_class), collapse = " "),
+            .rr$n_seats, if (.rr$n_dropped) sprintf(" (%d unmatched dropped)", .rr$n_dropped) else ""))
 cat(sprintf("\nBS2  accuracy %d/%d (%.1f%%) | Brier %.4f | log %.4f | slope %.3f\n",
             sum(res$pred == res$actual), nrow(res),
             100 * mean(res$pred == res$actual), mean((1 - res$prob)^2),

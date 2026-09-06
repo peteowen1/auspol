@@ -14,3 +14,9 @@ output/
 
 # OS
 Thumbs.db
+
+# compiled objects from src/ (devtools::load_all)
+src/*.o
+src/*.dll
+src/*.so
+src/*.o-*

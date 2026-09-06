@@ -58,6 +58,8 @@
 
 options(auspol.root = normalizePath("."))
 suppressMessages(devtools::load_all(quiet = TRUE))
+.harness_forecast_mode <- TRUE
+source("scripts/harness_defaults.R")  # published defaults for every unset AUSPOL_* switch; see that file
 suppressMessages(library(data.table))
 
 # LEVEL-DEPENDENT SEAT VARIANCE, off by default. AUSPOL_LEVEL_SD="1.10,8.67"
@@ -360,7 +362,7 @@ CAL_TAG <- paste0(
   if (identical(Sys.getenv("AUSPOL_WA_DROP_LNP", "0"), "1")) "-nolnp" else "",
   if (FORECAST_MODE) "-fc" else "",
   if (SHRINK != 0) sprintf("-sh%s", sub("0[.]", "", format(SHRINK, nsmall = 2))) else "",
-  if (SMOOTH != 0.15) sprintf("-sm%s", sub("0[.]", "", format(SMOOTH, nsmall = 2))) else "", .arm_fingerprint)
+  if (SMOOTH != 0.15) sprintf("-sm%s", sub("0[.]", "", format(SMOOTH, nsmall = 2))) else "", .arm_fingerprint, .code_tag)
 
 # SEED settable so the Monte Carlo error on a reported figure can be measured
 # rather than assumed. At 20,000 sims over ~150 divisions the standard error
@@ -685,7 +687,14 @@ for (K in PAIRS) {
     }, error = function(e) NULL)
   }
   .own_prev <- if (.cond) tryCatch(personal_prior_vote(ea, eb, major_discount = .defect),
-                                   error = function(e) NULL) else NULL
+                                   error = function(e) {
+                                     cat(sprintf("BF1p! personal_prior_vote() FAILED for %s -> %s; class-level bases kept and NO transfer removed: %s\n", ea, eb, conditionMessage(e)))
+                                     NULL }) else NULL
+  # THE VOTE MOVES WITH THE PERSON: what .own_x() substitutes into the new
+  # class below is taken out of the class it came from here (Hunter 2022,
+  # Kennedy 2013). remove_transferred_votes() is a no-op when .own_prev is NULL.
+  mat <- remove_transferred_votes(mat, .own_prev)
+  .tr <- attr(mat, "transfers"); if (!is.null(.tr)) cat(sprintf("TR1  transfers moved with the person: %d applied%s\n", .tr$applied, if (length(.tr$skipped)) paste0("; SKIPPED ", length(.tr$skipped), ": ", paste(utils::head(.tr$skipped, 5), collapse = ", ")) else ""))
   .own_x <- function(p, seats, x) {
     if (is.null(.own_prev)) return(x)
     ov <- .own_prev[.own_prev$party == p, ]
@@ -1210,7 +1219,7 @@ for (K in PAIRS) {
   out_all[[length(out_all) + 1L]] <- list(K = K, shares = shares, fm = fm,
                                           truth = truth, keep = keep,
                                           parties = parties, sd_w = sd_w,
-                                          sw_draws = sw_draws)
+                                          sw_draws = sw_draws, fb = fb)
 }
 
 # THE FALLBACK IS TAKEN OVER EVERY PAIR, NOT JUST THE ONES IN THIS RUN.
@@ -1233,7 +1242,7 @@ if (!is.finite(fallback)) {
 cat(sprintf("\nBF2  seat_sd per pair: %s | fallback (median over all %d pairs) %.3f\n",
             paste(sprintf("%.2f", seat_sds), collapse = ", "), length(PAIRS_ALL), fallback))
 
-res_all <- list(); tot_all <- list()
+res_all <- list(); tot_all <- list(); all_probs <- list()
 for (X in out_all) {
   K <- X$K
   sd_w <- if (is.finite(X$sd_w)) X$sd_w else fallback
@@ -1327,6 +1336,7 @@ for (X in out_all) {
   # flat SURGE_H, and a missing seat is REPORTED -- a silent fallback to the flat
   # rate would make a partial salience corpus look like a complete one.
   surge_arg <- SURGE_H
+  surge_party_arg <- NULL
   surge_mu_arg <- 15.6; surge_sd_arg <- 6.1
   if (SURGE_V2) {
     target_el <- paste0("fed", X$K$to)
@@ -1342,6 +1352,23 @@ for (X in out_all) {
       v[is.na(v)] <- 0
       surge_arg <- unname(v)
       surge_mu_arg <- hz$surge_mu; surge_sd_arg <- hz$surge_sd
+      if (identical(Sys.getenv("AUSPOL_SURGE_RECIPIENT", "1"), "1") && !is.null(hz$seat_recipient)) {
+        # THE SURGE GOES TO THE CLASS THE HAZARD WAS FITTED FOR (prereg-surge-recipient-2026-09-06.md).
+        surge_party_arg <- unname(setNames(hz$seat_recipient$party, hz$seat_recipient$seat)[sn])
+        cat(sprintf("SR1  surge recipient ON: %d of %d seats name a class (%s)\n", sum(!is.na(surge_party_arg)), length(sn),
+                    paste(sprintf("%s=%d", names(table(surge_party_arg)), as.integer(table(surge_party_arg))), collapse = " ")))
+      }
+      # THE SCALE OF THE HAZARD (docs/plans/prereg-surge-hazard-scale-2026-09-06.md).
+      # The ridge fit shrinks every seat toward the base rate, so the top-ranked
+      # emergence seats carry 0.03-0.05; this multiplies before the blend and
+      # the draw, capped at 1. Published value 1 until the sweep decides.
+      .surge_scale <- as.numeric(Sys.getenv("AUSPOL_SURGE_SCALE", "1"))
+      if (!is.finite(.surge_scale) || .surge_scale <= 0) stop("AUSPOL_SURGE_SCALE must be a positive number")
+      if (.surge_scale != 1) {
+        surge_arg <- pmin(1, surge_arg * .surge_scale)
+        cat(sprintf("SC1  surge hazard x%.1f: mean %.4f, max %.4f, seats at the cap %d\n",
+                    .surge_scale, mean(surge_arg), max(surge_arg), sum(surge_arg >= 1)))
+      }
       cat(sprintf("BF0v %s: surge-v2 hazard for %d of %d seats (%d absent -> 0) | mean %.4f | mu %.2f sd %.2f | lambda %.1f | train winners %d\n",
                   target_el, length(sn) - miss, length(sn), miss, mean(surge_arg),
                   surge_mu_arg, surge_sd_arg, hz$lambda, hz$n_train_winners))
@@ -1388,10 +1415,11 @@ for (X in out_all) {
   set.seed(SEED)
   sim <- simulate_seat_contests(level_sd = .level_sd, level_mult = .lm(X$shares), X$shares, X$fm, party_sd = psd, seat_sd = sd_w * SEAT_SD_MULT,
                                 n_sims = N_SIMS, smooth = SMOOTH, seed = SEED,
-                                shrink = shrink_arg, surge_h = surge_arg,
+                                shrink = shrink_arg, surge_h = surge_arg, surge_party = surge_party_arg,
                                 surge_mu = surge_mu_arg, surge_sd = surge_sd_arg,
                                 party_cor = PARTY_COR, statewide_draws = X$sw_draws,
                                 fallback_smooth = FB_SMOOTH, flow_sd = FLOW_SD)
+  cat(sprintf("BF3e  engine %s | surge recipient fell back: %d class(es) absent, %d seat-draws at zero share\n", sim$engine, sim$surge_recipient_fallback, sim$surge_recipient_fallback_draws))
   wp <- as.data.table(sim$win_prob)
 
   pa <- merge(data.table(seat = X$keep, actual = unname(X$truth)),
@@ -1402,11 +1430,27 @@ for (X in out_all) {
   res <- merge(pa, pr, by = "seat")
   stopifnot(nrow(res) == length(X$keep))
   res[, pair := sprintf("fed%d", K$to)]
+  # THE FULL PER-SEAT PER-PARTY TABLE, kept. This harness used to collapse it
+  # to winner-plus-argmax, so "why did IND get 0.53 in Hunter" needed a fresh
+  # 10-minute run and a trace to answer. SA already wrote it; ported
+  # 2026-09-06 while chasing exactly that question.
+  full <- merge(wp[, .(seat, party, prob)],
+                data.table(seat = X$keep, actual = unname(X$truth)), by = "seat")
+  full[, is_actual := party == actual][, pair := sprintf("fed%d", K$to)]
+  all_probs[[length(all_probs) + 1L]] <- full
 
   z <- data.frame(y = as.integer(res$pred == res$actual),
                   lo = stats::qlogis(pmin(pmax(res$pred_p, eps), 1 - eps)))
   sl <- if (length(unique(z$y)) > 1)
     stats::coef(stats::glm(y ~ lo, data = z, family = stats::binomial()))[["lo"]] else NA_real_
+  # THE SECOND METRIC: seat-share RMSE of the point estimate the simulator was
+  # handed, against the shares actually polled. Pete's objective (2026-09-06)
+  # is overall seat log loss AND this, across every election forecast.
+  .rr <- seat_share_rmse(X$shares[X$keep, , drop = FALSE], X$fb)
+  cat(sprintf("BF3r fed%d: seat-share RMSE %.3f | MAE %.3f | by class %s | %d seats%s\n",
+              K$to, .rr$rmse, .rr$mae,
+              paste(sprintf("%s=%.2f", names(.rr$by_class), .rr$by_class), collapse = " "),
+              .rr$n_seats, if (.rr$n_dropped) sprintf(" (%d unmatched dropped)", .rr$n_dropped) else ""))
   cat(sprintf("BF3  fed%d: accuracy %d/%d (%.1f%%) | Brier %.4f | log %.4f | slope %.3f%s\n",
               K$to, sum(res$pred == res$actual), nrow(res),
               100 * mean(res$pred == res$actual), mean((1 - res$prob)^2),
@@ -1432,4 +1476,5 @@ per <- R[, .(n = .N, accuracy = round(100 * mean(pred == actual), 1),
 print(per)
 fwrite(R, file.path("output", sprintf("backtest-fed%s.csv", CAL_TAG)))
 fwrite(rbindlist(tot_all, fill = TRUE), file.path("output", sprintf("backtest-fed-totals%s.csv", CAL_TAG)))
+fwrite(rbindlist(all_probs), file.path("output", sprintf("backtest-fed-allprobs%s.csv", CAL_TAG)))
 cat(sprintf("BF5  wrote output/backtest-fed%s.csv and its totals\n", CAL_TAG))

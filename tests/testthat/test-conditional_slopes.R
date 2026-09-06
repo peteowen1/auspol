@@ -59,3 +59,22 @@ test_that("screened_slopes falls back to conditional_slopes for an unfitted clas
 test_that("mismatched permit length is an error", {
   expect_error(screened_slopes("IND", c("A","B"), R1, permit = TRUE), "same length")
 })
+
+test_that("screened_slopes: a permit does not override a departed leader", {
+  seats <- c("s1", "s2", "s3")
+  # s1: new candidate, permitted, prior leader RETURNS (elsewhere in the seat) -> 1.0
+  # s2: new candidate, permitted, prior leader DEPARTED -> the new slope
+  # s3: returning candidate -> the same slope, permit irrelevant
+  returns <- data.table::data.table(seat = seats, party = "IND",
+                                    same = c(FALSE, FALSE, TRUE), same_mp = FALSE,
+                                    prior_leader_returns = c(TRUE, FALSE, TRUE))
+  sl <- screened_slopes("IND", seats, returns, permit = c(TRUE, TRUE, TRUE), honour_departed = TRUE)
+  expect_equal(sl[1], 1.0)
+  expect_equal(sl[2], 0.326)
+  expect_equal(sl[3], 0.907)
+  # Old-shape `returns` without the column: every leader taken as returning.
+  old <- returns[, list(seat, party, same, same_mp)]
+  expect_equal(screened_slopes("IND", seats, old, permit = c(TRUE, TRUE, TRUE), honour_departed = TRUE)[2], 1.0)
+  # And the DEFAULT is off (refused 2026-09-06): the departed case gets 1.0 as before.
+  expect_equal(screened_slopes("IND", seats, returns, permit = c(TRUE, TRUE, TRUE))[2], 1.0)
+})

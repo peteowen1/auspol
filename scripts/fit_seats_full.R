@@ -17,6 +17,16 @@
 
 options(auspol.root = normalizePath("."))
 suppressMessages(devtools::load_all(quiet = TRUE))
+# THE PUBLISHED CONFIGURATION lives in scripts/published_flags.R and nowhere
+# else. Every switch the caller left unset takes its value from there, so the
+# scattered Sys.getenv() defaults below are documentation, not behaviour.
+source("scripts/published_flags.R")
+.pf_applied <- apply_published_flags()
+cat(sprintf("S0   published flags applied to %d unset switch(es); caller set: %s
+",
+            length(.pf_applied),
+            { .cs <- setdiff(names(PUBLISHED_FLAGS), .pf_applied); .cs <- .cs[nzchar(Sys.getenv(.cs, ""))]
+              if (length(.cs)) paste(sprintf("%s=%s", .cs, Sys.getenv(.cs)), collapse = " ") else "(none)" }))
 suppressMessages(library(data.table))
 
 # LEVEL-DEPENDENT SEAT VARIANCE, ON BY DEFAULT since 2026-08-27. The per-seat
@@ -312,12 +322,7 @@ if (FLOW_SHIFT != 0) {
 # Derived from the list rather than restated, so adding a flag without adding
 # it here is the only remaining way to reopen the hole -- and S6 now prints
 # what actually differs, which a hand-maintained boolean could not.
-RUN_FLAGS <- c(AUSPOL_N_SIMS = "20000", AUSPOL_FP_SD_MODE = "additive",
-               AUSPOL_SEED = "42", AUSPOL_ONP_ORDER = "federal",
-               AUSPOL_ONP_FIX = "1", AUSPOL_QLD_FLOWS = "1",
-               AUSPOL_WA_FLOWS = "0", AUSPOL_FLOW_SHIFT = "0",
-               AUSPOL_FORCE_FP = "", AUSPOL_ONP_CV = "0",
-               AUSPOL_PARTY_COR = "shrunk", AUSPOL_SHRINK = "0.10")
+RUN_FLAGS <- PUBLISHED_FLAGS  # scripts/published_flags.R -- the only copy
 .now <- vapply(names(RUN_FLAGS), function(k) Sys.getenv(k, RUN_FLAGS[[k]]),
                character(1))
 changed <- names(RUN_FLAGS)[.now != RUN_FLAGS]
@@ -586,6 +591,11 @@ cat(sprintf("CAL  MP tier: %s | defector discount: %s
 # candidate-list gating as .returns above: NULL until vic2026 nominations close.
 .own_prev <- if (.cond && !is.null(.returns))
   .try("own_prev", personal_prior_vote("vic2022", "vic2026", major_discount = .defect)) else NULL
+# THE VOTE MOVES WITH THE PERSON: .own_x() below substitutes a returning
+# candidate's own prior vote into their new class; this takes it out of the
+# class it came from. No-op until vic2026 nominations exist.
+mat22 <- remove_transferred_votes(mat22, .own_prev)
+.tr <- attr(mat22, "transfers"); if (!is.null(.tr)) cat(sprintf("DS2t transfers moved with the person: %d applied%s\n", .tr$applied, if (length(.tr$skipped)) paste0("; SKIPPED ", length(.tr$skipped), ": ", paste(utils::head(.tr$skipped, 5), collapse = ", ")) else ""))
 if (.cond && !is.null(.returns)) {
   if (is.null(.own_prev)) {
     cat(sprintf("DS2o personal_prior_vote() FAILED -- class-level base kept for every seat%s\n",
@@ -622,6 +632,7 @@ if (.cond && !is.null(.returns)) {
 # salience is fetched (nominations close 12 noon, 9 Nov 2026).
 .surge_v2_on <- identical(Sys.getenv("AUSPOL_SALIENCE_SURGE_V2", "1"), "1")
 surge_arg <- as.numeric(Sys.getenv("AUSPOL_SURGE_H", "0"))
+surge_party_arg <- NULL
 surge_mu_arg <- 15.6; surge_sd_arg <- 6.1
 if (.surge_v2_on) {
   .v2_train_pairs <- list(
@@ -644,6 +655,23 @@ if (.surge_v2_on) {
     v <- setNames(.hz$seat_hazard$surge_h, .hz$seat_hazard$seat)[sn]
     miss <- sum(is.na(v)); v[is.na(v)] <- 0
     surge_arg <- unname(v); surge_mu_arg <- .hz$surge_mu; surge_sd_arg <- .hz$surge_sd
+    if (identical(Sys.getenv("AUSPOL_SURGE_RECIPIENT", "1"), "1") && !is.null(.hz$seat_recipient)) {
+      # THE SURGE GOES TO THE CLASS THE HAZARD WAS FITTED FOR (prereg-surge-recipient-2026-09-06.md).
+      surge_party_arg <- unname(setNames(.hz$seat_recipient$party, .hz$seat_recipient$seat)[sn])
+      cat(sprintf("SR1  surge recipient ON: %d of %d seats name a class (%s)\n", sum(!is.na(surge_party_arg)), length(sn),
+                  paste(sprintf("%s=%d", names(table(surge_party_arg)), as.integer(table(surge_party_arg))), collapse = " ")))
+    }
+# THE SCALE OF THE HAZARD (docs/plans/prereg-surge-hazard-scale-2026-09-06.md).
+# The ridge fit shrinks every seat toward the base rate, so the top-ranked
+# emergence seats carry 0.03-0.05; this multiplies before the blend and
+# the draw, capped at 1. Published value 1 until the sweep decides.
+.surge_scale <- as.numeric(Sys.getenv("AUSPOL_SURGE_SCALE", "1"))
+if (!is.finite(.surge_scale) || .surge_scale <= 0) stop("AUSPOL_SURGE_SCALE must be a positive number")
+if (.surge_scale != 1) {
+  surge_arg <- pmin(1, surge_arg * .surge_scale)
+  cat(sprintf("SC1  surge hazard x%.1f: mean %.4f, max %.4f, seats at the cap %d\n",
+              .surge_scale, mean(surge_arg), max(surge_arg), sum(surge_arg >= 1)))
+}
     cat(sprintf("DS3  surge-v2 hazard for %d of %d seats (%d absent -> 0) | mean %.4f | mu %.2f sd %.2f | lambda %.1f | train winners %d\n",
                 length(sn) - miss, length(sn), miss, mean(surge_arg),
                 surge_mu_arg, surge_sd_arg, .hz$lambda, .hz$n_train_winners))
@@ -901,7 +929,8 @@ if (SHRINK > 0) cat(sprintf("CAL  calibration shrink %.2f applied
 sim <- simulate_seat_contests(level_sd = .level_sd, level_mult = .lm(shares), shares, fm, party_sd = psd, seat_sd = SEAT_SD, shrink = SHRINK,
                               n_sims = N_SIMS, smooth = SMOOTH, seed = SEED,
                               statewide_draws = sw_draws,
-                              surge_h = surge_arg, surge_mu = surge_mu_arg, surge_sd = surge_sd_arg)
+                              surge_h = surge_arg, surge_party = surge_party_arg, surge_mu = surge_mu_arg, surge_sd = surge_sd_arg)
+cat(sprintf("S6e  engine %s | surge recipient fell back: %d class(es) absent, %d seat-draws at zero share\n", sim$engine, sim$surge_recipient_fallback, sim$surge_recipient_fallback_draws))
 cat(sprintf("\nsimulated %d seats x %d runs in %.0fs | pooled fallback %.1f%%\n",
             nrow(shares), N_SIMS,
             as.numeric(difftime(Sys.time(), t0, units = "secs")),

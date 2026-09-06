@@ -27,6 +27,7 @@
 
 options(auspol.root = normalizePath("."))
 suppressMessages(devtools::load_all(quiet = TRUE))
+source("scripts/harness_defaults.R")  # published defaults for every unset AUSPOL_* switch; see that file
 suppressMessages(library(data.table))
 
 # LEVEL-DEPENDENT SEAT VARIANCE, off by default. AUSPOL_LEVEL_SD="1.10,8.67"
@@ -89,6 +90,14 @@ eps <- 1e-6
 SEAT_SD_MULT <- as.numeric(Sys.getenv("AUSPOL_SEAT_SD_MULT", "1"))
 if (!is.finite(SEAT_SD_MULT) || SEAT_SD_MULT <= 0)
   stop("AUSPOL_SEAT_SD_MULT must be a positive number; got ", SEAT_SD_MULT)
+# NOT HERE, AND WHY (2026-09-07): surge-v2 (AUSPOL_SALIENCE_SURGE_V2, and with
+# it AUSPOL_SURGE_SCALE and AUSPOL_SURGE_RECIPIENT), the screened slope mode and
+# personal_prior_vote()/remove_transferred_votes() all need the candidate-level
+# salience corpus (output/salience-v6.csv), which has no WA rows: the WA
+# commission files carry no candidate names the corpus can key on. Until it
+# does, WA measures the class-level model only, and a five-harness comparison
+# of those switches is a four-harness comparison. This is the gap CLAUDE.md
+# says must be named rather than left silent.
 # PORTED FROM THE FEDERAL HARNESS 2026-09-06: simulate_seat_contests() computes
 # sd_cell from `level_sd` and IGNORES seat_sd whenever level_sd is given, and
 # level_sd is on by default, so `seat_sd * SEAT_SD_MULT` at the call site was
@@ -149,7 +158,7 @@ CAL_TAG <- paste0(
   if (PARTY_SD != 1.5) sprintf("-psd%s", sub("[.]", "", format(PARTY_SD, nsmall = 2))) else "",
   if (FB_SMOOTH != 0) sprintf("-fb%s", sub("0[.]", "", format(FB_SMOOTH, nsmall = 2))) else "",
   if (FLOW_SD != 0) sprintf("-fsd%s", sub("[.]", "", format(FLOW_SD, nsmall = 1))) else "",
-  if (SURGE_H > 0) "-surge" else "", .arm_fingerprint)
+  if (SURGE_H > 0) "-surge" else "", .arm_fingerprint, .code_tag)
 
 cat(sprintf("BW0  n_sims %d | shrink %.2f | party_sd %.2f | fb %.2f | flow_sd %.2f | surge %.4f\n",
             N_SIMS, SHRINK, PARTY_SD, FB_SMOOTH, FLOW_SD, SURGE_H))
@@ -319,6 +328,7 @@ for (K in PAIRS) {
                                 n_sims = N_SIMS, smooth = SMOOTH, seed = SEED,
                                 shrink = SHRINK, fallback_smooth = FB_SMOOTH,
                                 flow_sd = FLOW_SD, surge_h = SURGE_H)
+  cat(sprintf("BW2e  engine %s | surge recipient fell back: %d class(es) absent, %d seat-draws at zero share\n", sim$engine, sim$surge_recipient_fallback, sim$surge_recipient_fallback_draws))
   wp <- as.data.table(sim$win_prob)
 
   pa <- merge(data.table(seat = keep, actual = unname(truth[keep])),
@@ -334,6 +344,10 @@ for (K in PAIRS) {
                   lo = qlogis(pmin(pmax(r$pred_p, eps), 1 - eps)))
   sl <- if (length(unique(z$y)) > 1)
     coef(glm(y ~ lo, data = z, family = binomial()))[["lo"]] else NA_real_
+  .rr <- seat_share_rmse(shares, fb)  # the second metric: point-estimate seat-share RMSE vs actual
+  cat(sprintf("BW2r  seat-share RMSE %.3f | MAE %.3f | by class %s | %d seats%s\n", .rr$rmse, .rr$mae,
+              paste(sprintf("%s=%.2f", names(.rr$by_class), .rr$by_class), collapse = " "),
+              .rr$n_seats, if (.rr$n_dropped) sprintf(" (%d unmatched dropped)", .rr$n_dropped) else ""))
   cat(sprintf("BW2  %s: accuracy %d/%d (%.1f%%) | Brier %.4f | log %.4f | slope %.3f | seat_sd %.2f\n",
               el_to, sum(r$pred == r$actual), nrow(r),
               100 * mean(r$pred == r$actual), mean((1 - r$prob)^2),

@@ -168,6 +168,25 @@
 #'   surge. `NULL` (default) makes every column other than `ALP`, `LNP` and
 #'   `NAT` eligible. Any name not among the share columns is an error rather
 #'   than a silent no-op.
+#' @param engine `"auto"` (default), `"cpp"` or `"r"`. The compiled core
+#'   (`src/seat_sim_core.cpp`, 2026-09-07) reproduces the R loop byte for byte
+#'   -- same random numbers in the same order, sums in long double as R's
+#'   `sum()` does -- and is 10-50x faster. `"auto"` uses it whenever it can:
+#'   no `party_draws`, and a party count small enough for the dense cell
+#'   tables. `"r"` is the reference implementation, kept so the identity can
+#'   be re-proven (tests do) and for the two cases the core does not cover.
+#' @param surge_party Optional per-seat character vector (named by seat, or
+#'   in seat order) naming the class that RECEIVES the surge in that seat when
+#'   the hazard fires; `NA` for a seat means the default rule. When given, that
+#'   class is eligible regardless of `surge_floor`. Default `NULL` keeps the
+#'   old rule everywhere: the largest eligible non-major at that draw, which
+#'   in Kooyong 2022 is the Greens and not the independent the hazard was
+#'   fitted for (docs/plans/prereg-surge-recipient-2026-09-06.md). A named
+#'   class absent from the seat's columns, or at zero share, falls back to the
+#'   default rule: a class absent from the columns is counted once in
+#'   `surge_recipient_fallback`, a class at zero share in a given draw once
+#'   per seat-draw in `surge_recipient_fallback_draws`. The list also returns
+#'   `engine`, the engine that actually ran.
 #' @param surge_floor Minimum share, in percentage points, a candidate must
 #'   already hold in the seat before it can surge there. Stops the mechanism
 #'   handing a double-digit gain to a party polling near zero in that seat.
@@ -215,7 +234,10 @@ simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
                                    flow_sd = 0,
                                    level_mult = NULL,
                                    surge_h = 0, surge_mu = 15.6, surge_sd = 6.1,
-                                   surge_parties = NULL, surge_floor = 2) {
+                                   surge_parties = NULL, surge_floor = 2,
+                                   surge_party = NULL,
+                                   engine = c("auto", "cpp", "r")) {
+  engine <- match.arg(engine)
   # SHRINK MAY BE PER-SEAT. A scalar applies the same rate everywhere and caps
   # EVERY seat at 1 - shrink/2 -- 0.9598 at shrink = 0.10, with no seat above
   # 0.99. That absorbs one specific risk (a non-major taking a seat called safe
@@ -363,6 +385,24 @@ simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
 
   # Resolve the surge hazard to one value per seat, by the same rule.
   surge_h <- .fix_surge(surge_h, seat_names)
+  # THE RECIPIENT OF THE SURGE, per seat. Resolved to a column index once;
+  # NA means "the default rule" (largest eligible non-major at the draw).
+  surge_party_idx <- rep(NA_integer_, length(seat_names))
+  n_recipient_fb <- 0L        # named class absent from the columns (static)
+  n_recipient_fb_draw <- 0L   # named class at zero share in a draw (per seat-draw)
+  if (!is.null(surge_party)) {
+    sp <- surge_party
+    if (!is.null(names(sp))) {
+      miss <- setdiff(seat_names, names(sp))
+      if (length(miss)) stop("surge_party is named but has no entry for ", length(miss), " seat(s): ",
+                             paste(utils::head(miss, 5), collapse = ", "))
+      sp <- unname(sp[seat_names])
+    } else if (length(sp) != length(seat_names)) {
+      stop("surge_party must be length ", length(seat_names), " (one per seat) or named by seat; got ", length(sp))
+    }
+    surge_party_idx <- match(as.character(sp), parties)
+    n_recipient_fb <- sum(!is.na(sp) & is.na(surge_party_idx))
+  }
 
   # seat_sd may be one number for every party, or one per party. A named
   # vector is matched BY NAME to the share columns, never by position: the
@@ -564,21 +604,30 @@ simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
   # rate the exact key cannot reach -- LNP with {ALP, IND} alive is 71.2% to
   # the independent here against 69.9% in the raw counts, where `pairwise`
   # gives 46.2% and the pooled row 22.2%.
+  # INTEGER-KEYED, like the main cell cache since 2026-09-04. This sibling
+  # cache still built a string key with paste() on every miss of the main
+  # cache: 16% of the function's time on the default path (line profiler,
+  # 2026-09-06). The call site already holds `key = from * 2^K + mask`, which
+  # names the (source, alive-set) pair uniquely, so it is passed in.
   ss_cache <- new.env(parent = emptyenv())
-  ss_lookup <- function(from_i, alive_i) {
+  ss_list <- if (dense_cells) vector("list", n_slots) else NULL
+  ss_get <- function(key) if (dense_cells) ss_list[[key + 1L]] else
+    get0(as.character(key), envir = ss_cache, inherits = FALSE, ifnotfound = NULL)
+  ss_put <- function(key, val) if (dense_cells) ss_list[[key + 1L]] <<- val else
+    assign(as.character(key), val, envir = ss_cache)
+  ss_lookup <- function(from_i, alive_i, key) {
     if (is.null(matrix$superset) || !length(matrix$superset)) return(NULL)
-    ck <- paste0(from_i, ".", paste(alive_i, collapse = "."))
-    hit <- get0(ck, envir = ss_cache, inherits = FALSE, ifnotfound = NULL)
+    hit <- ss_get(key)
     if (!is.null(hit)) return(if (identical(hit, NA)) NULL else hit)
     nm <- paste0(parties[[from_i]], "|",
                  paste(sort(parties[alive_i]), collapse = "+"))
     r <- matrix$superset[[nm]]
-    if (is.null(r)) { assign(ck, NA, envir = ss_cache); return(NULL) }
+    if (is.null(r)) { ss_put(key, NA); return(NULL) }
     row <- numeric(K)
     keep <- intersect(names(r), parties)
     row[pidx[keep]] <- pmax(0, r[keep])
-    if (sum(row) <= 0) { assign(ck, NA, envir = ss_cache); return(NULL) }
-    assign(ck, row, envir = ss_cache)
+    if (sum(row) <= 0) { ss_put(key, NA); return(NULL) }
+    ss_put(key, row)
     row
   }
   pool_pw <- NULL
@@ -648,6 +697,68 @@ simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
     centre <- colMeans(statewide_draws)
   }
 
+  # HOISTED 2026-09-06 (line profiler, true default path: 23% of this
+  # function's time). `sd_cell` below depends on `base_v`, `level_mult_vec`
+  # and `level_sd` only; without `party_draws`, `base_v` is `shares[i, ]` on
+  # every draw, so the per-seat width was recomputed 20,000 times for one
+  # answer. Same arithmetic per element, so the values and the RNG stream are
+  # unchanged -- proven byte-identical on a full fed2022 run.
+  sd_cell_pre <- if (is.null(level_sd) || !is.null(party_draws)) NULL else {
+    ppm <- pmin(pmax(unname(as.matrix(shares)), 0), 100) / 100
+    level_sd[1L] + level_sd[2L] * matrix(level_mult_vec, nrow(ppm), K, byrow = TRUE) * sqrt(ppm * (1 - ppm))
+  }
+  # "auto" reads AUSPOL_SIM_ENGINE (published_flags.R carries the shipped
+  # value, "cpp" since the full-scale proof on 2026-09-07); AUSPOL_SIM_ENGINE=r
+  # forces the reference loop, which is how the identity is re-proven.
+  if (engine == "auto") engine <- if (!identical(Sys.getenv("AUSPOL_SIM_ENGINE", "cpp"), "r") &&
+                                      is.null(party_draws) && dense_cells) "cpp" else "r"
+  use_cpp <- engine == "cpp"
+  if (use_cpp && (!is.null(party_draws) || !dense_cells)) {
+    stop("engine = \"cpp\" cannot take party_draws, or this many parties; use engine = \"r\"")
+  }
+  if (use_cpp) {
+    # DENSE TABLES for the compiled core: one row per (from, alive-set) key,
+    # the same keys the R loop computes, filled from the same lookups so the
+    # values are identical. The superset rows are the lazily-cached ones,
+    # computed here for every key the loop could ask for (>= 2 alive).
+    cell_mat <- base::matrix(0, n_slots, K); cell_has <- logical(n_slots)
+    for (kk in seq_len(n_slots)) {
+      r <- cell_list[[kk]]
+      if (!is.null(r)) { cell_mat[kk, ] <- r; cell_has[kk] <- TRUE }
+    }
+    ss_mat <- base::matrix(0, n_slots, K); ss_has <- logical(n_slots)
+    if (!is.null(matrix$superset) && length(matrix$superset)) {
+      bits <- bitwShiftL(1L, seq_len(K) - 1L)
+      for (from_i in seq_len(K)) for (mask in seq_len(2^K) - 1L) {
+        alive_i <- which(bitwAnd(mask, bits) != 0L)
+        if (length(alive_i) < 2L) next
+        key <- from_i * 2^K + mask
+        r <- ss_lookup(from_i, alive_i, key)
+        if (!is.null(r)) { ss_mat[key + 1L, ] <- r; ss_has[key + 1L] <- TRUE }
+      }
+    }
+    pool_mat <- do.call(rbind, pool)
+    pw_mat <- if (!is.null(pool_pw)) do.call(rbind, pool_pw) else base::matrix(0, 1L, K)
+    shift_mode <- if (!is.null(statewide_draws)) 0L else if (is.null(chol_t)) 1L else 2L
+    shift_mat <- if (shift_mode == 0L) sweep(statewide_draws, 2L, centre) else base::matrix(0, 1L, K)
+    has_level <- !is.null(level_sd)
+    sdp <- if (has_level) sd_cell_pre else base::matrix(0, 1L, K)
+    spi <- surge_party_idx; spi[is.na(spi)] <- NA_integer_
+    core <- seat_sim_core(unname(as.matrix(shares)), as.integer(n_sims), shift_mode,
+                          shift_mat, as.numeric(sd_vec), if (is.null(chol_t)) base::matrix(0, 1L, K) else chol_t,
+                          as.numeric(seat_sd_vec), has_level, sdp,
+                          as.numeric(surge_h), as.integer(spi), as.integer(surge_idx),
+                          as.numeric(surge_floor), as.numeric(surge_mu), as.numeric(surge_sd),
+                          cell_mat, cell_has, ss_mat, ss_has,
+                          pool_mat, !is.null(pool_pw), pw_mat,
+                          as.numeric(FLOW_SD_BY), as.numeric(smooth), as.numeric(fallback_smooth),
+                          as.numeric(shrink))
+    wins[] <- core$wins; totals[] <- core$totals
+    tcp_winner[] <- parties[core$tcp_w]; tcp_runnerup[] <- parties[core$tcp_r]
+    tcp_share[] <- core$tcp_share
+    n_fb <- as.integer(core$n_fb); n_tx <- as.integer(core$n_tx)
+    n_recipient_fb_draw <- as.integer(core$n_recipient_fb_draw)
+  } else {
   for (s in seq_len(n_sims)) {
     shift <- if (is.null(statewide_draws)) {
       if (is.null(chol_t)) stats::rnorm(K, 0, sd_vec)
@@ -683,7 +794,7 @@ simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
       # deviate by the same number of points. `base_v` is this draw's projected
       # share, so the width tracks the level actually being simulated rather
       # than a fixed prior. NULL keeps seat_sd_vec exactly.
-      sd_cell <- if (is.null(level_sd)) seat_sd_vec else {
+      sd_cell <- if (is.null(level_sd)) seat_sd_vec else if (!is.null(sd_cell_pre)) sd_cell_pre[i, ] else {
         pp <- pmin(pmax(base_v, 0), 100) / 100
         level_sd[1L] + level_sd[2L] * level_mult_vec * sqrt(pp * (1 - pp))
       }
@@ -702,9 +813,14 @@ simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
       # why this is generative rather than an override like `shrink`, and why it
       # imposes no ceiling.
       if (surge_h[i] > 0 && length(surge_idx)) {
-        cand <- surge_idx[v[surge_idx] >= surge_floor]
+        # A named recipient takes the surge regardless of the floor, as long
+        # as the class is actually on the ballot here (share > 0); otherwise
+        # the default rule below.
+        j0 <- surge_party_idx[i]
+        if (!is.na(j0) && v[j0] <= 0) { j0 <- NA_integer_; n_recipient_fb_draw <- n_recipient_fb_draw + 1L }
+        cand <- if (!is.na(j0)) j0 else surge_idx[v[surge_idx] >= surge_floor]
         if (length(cand) && stats::runif(1) < surge_h[i]) {
-          j <- cand[which.max(v[cand])]
+          j <- if (!is.na(j0)) j0 else cand[which.max(v[cand])]
           add <- stats::rnorm(1, surge_mu, surge_sd)
           if (add > 0) {
             others <- setdiff(seq_len(K), j)
@@ -733,7 +849,7 @@ simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
           row
         } else {
           n_fb <- n_fb + 1L
-          ssr <- ss_lookup(from, alive)
+          ssr <- ss_lookup(from, alive, key)
           if (!is.null(ssr)) ssr
           else if (!is.null(pool_pw)) pool_pw[[from]] else pool[[from]]
         }
@@ -797,6 +913,7 @@ simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
       totals[s, w] <- totals[s, w] + 1L
     }
   }
+  }  # end of the R engine
 
   wp <- expand.grid(seat = seat_names, party = parties,
                     stringsAsFactors = FALSE)
@@ -806,7 +923,10 @@ simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
        tcp_winner = tcp_winner,
        tcp_runnerup = tcp_runnerup,
        tcp_share = tcp_share,
-       fallback_rate = if (n_tx) n_fb / n_tx else NA_real_)
+       fallback_rate = if (n_tx) n_fb / n_tx else NA_real_,
+       surge_recipient_fallback = n_recipient_fb,
+       surge_recipient_fallback_draws = n_recipient_fb_draw,
+       engine = engine)
 }
 
 #' Per-class slope multipliers for [simulate_seat_contests()]

@@ -25,3 +25,16 @@ test_that("a non-finite p_hat is treated as zero hazard, not propagated", {
   expect_equal(out[1], 5)
   expect_false(anyNA(out))
 })
+
+test_that("surge_hazard_for names the recipient class per seat", {
+  skip_if_not(exists("surge_hazard_for"))
+  skip_if(!file.exists(file.path("output", "salience-v6.csv")) || !file.exists(file.path("output", "candidacies.csv")),
+          "needs the salience corpus")
+  pairs <- list(list(election = "fed2019", prev = "fed2016", region = "fed"),
+                list(election = "vic2022", prev = "vic2018", region = "vic"))
+  h <- surge_hazard_for("fed2022", "fed2019", "fed", pairs)
+  skip_if(is.null(h), "no hazard for fed2022 here")
+  expect_true(all(c("seat", "party") %in% names(h$seat_recipient)))
+  expect_equal(nrow(h$seat_recipient), nrow(h$seat_hazard))
+  expect_false(anyNA(h$seat_recipient$party))
+})

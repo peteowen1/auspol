@@ -146,9 +146,16 @@ Weak spots / improvement candidates (for the quiz):
 - Poll CSVs hand-maintained — labour-intensive, no pipeline from Wikipedia poll tables.
 - C++/Python/Stan split makes the whole thing hard to reproduce (multi-day regeneration).
 
-## Decisions pending (Pete)
+## Decisions made since (were "pending Pete" as of 2026-08-14)
 
-- R architecture: R + Stan (`cmdstanr`) for trend; data.table + parquet pipeline;
-  simulation in R (vectorised) vs Rcpp if too slow.
-- Which election to target first (2028 federal vs a nearer state election as pilot).
-- Website/journalism layer — separate later phase.
+- **R architecture: not Stan.** The trend is an exact Gaussian posterior via one
+  sparse Cholesky solve (`fit_trend()`) — no MCMC, seconds per cycle rather than
+  the anchor's 1-4 hours. See `ARCHITECTURE.md`, "Load-bearing decisions."
+- **Simulation stays in R**, vectorised; profiled 2026-09-03 and optimised
+  (string-keyed environment replaced with an integer-indexed list) rather than
+  moved to Rcpp — see `docs/NEXT-STEPS.md`, "the seat simulator's hot loop."
+- **Target: Victoria, 28 November 2026** (not the 2028 federal pilot floated
+  here) — see `README.md`.
+- **Website/journalism layer**: `build_page.R` produces a self-contained HTML
+  forecast page (checked end-to-end by `tools/check-page.js`); a fuller
+  journalism/interactive layer beyond that page is still a later phase.

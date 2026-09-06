@@ -161,9 +161,17 @@ surge_hazard_for <- function(target_election, target_prev, target_region,
   # deterministic shift has to land on the right party's column, and a seat
   # can have governed candidates in more than one class (e.g. IND and GRN).
   seat_party_hazard <- target[, .(p_hat = max(p_hat)), by = .(seat, party)]
+  # THE RECIPIENT: the class whose candidate the seat's hazard IS. The comment
+  # above ("the mechanism itself picks the strongest eligible candidate ... so
+  # collapsing party here is fine") was the wrong assumption behind stage 1
+  # of docs/plans/prereg-surge-hazard-scale-2026-09-06.md: the simulator
+  # paid the Greens in every teal seat. Carried per seat so the simulator can
+  # be told (prereg-surge-recipient-2026-09-06.md).
+  seat_recipient <- seat_party_hazard[, .(party = party[which.max(p_hat)]), by = seat]
   winners <- TRAIN[TRAIN$elected == TRUE]
   list(seat_hazard = seat_hazard,
       seat_party_hazard = seat_party_hazard,
+      seat_recipient = seat_recipient,
       surge_mu = if (nrow(winners) >= 3) mean(winners$pcv) else 15.6,
       surge_sd = if (nrow(winners) >= 3) stats::sd(winners$pcv) else 6.1,
       lambda = lambda, n_train_winners = nrow(winners))

@@ -1,6 +1,6 @@
 # Data registry
 
-**Generated 2026-09-04 by `scripts/build_data_registry.R`. Do not hand-edit** --
+**Generated 2026-09-06 by `scripts/build_data_registry.R`. Do not hand-edit** --
 rerun the script instead. Regenerate it whenever you add or fetch data.
 
 This file exists because the same data has been declared missing three
@@ -55,7 +55,7 @@ cannot pass as a working one.
 
 ## Raw commission downloads (`external/reference/`)
 
-- **aec/** -- 32 files, 36.7 MB
+- **aec/** -- 48 files, 50.3 MB
   - e.g. booths/fed2016-NSW.csv, booths/fed2019-SA.csv, booths/fed2019-VIC.csv, booths/fed2022-NSW.csv
 - **vec/** -- 318 files, 1.9 MB
   - e.g. 2014/albertparkdistrict.html, 2014/altonadistrict.html, 2014/bassdistrict.html, 2014/bayswaterdistrict.html

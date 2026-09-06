@@ -43,7 +43,13 @@ not apply. Recorded with worked examples under "Recurring hazards" in
 Specific traps, all of which have bitten:
 
 - **data.table NSE**: a function argument or local variable sharing a name with
-  a column, used bare inside `dt[...]`, binds to the column. **Six times.** The
+  a column, used bare inside `dt[...]`, binds to the column. **Eight times.** The
+  seventh (2026-08-28): a local scalar `tot` shadowed by `candidacies.csv`'s
+  own `tot` column inside `C[...]`, 1122 rows from a groupby that should have
+  given 7. The eighth (2026-09-06, found by the review gate): `party_swing()`
+  wrote `C[C$region == region & ...]`, so every jurisdiction was pooled and
+  the "no rows for" guard could never fire; caught only by a test asking for
+  a region that does not exist. The
   sixth: `salience_permit_for(election, ...)` wrote `raw[raw$election ==
   election]` -- `raw$election` on the left made no difference, because
   data.table scopes `raw`'s columns into the WHOLE `i` expression, so the bare
@@ -136,6 +142,7 @@ So: cache the series, derive the statistic. Level, rise, peak, slope,
 volatility and time-to-peak all come free from a stored series and all cost a
 fresh scrape from a stored mean.
 
+### Why the registry exists
 
 It is **generated from disk** by `scripts/build_data_registry.R` — never
 hand-edit it, rerun the script. It lists every election, every raw commission
@@ -404,6 +411,25 @@ This rule was given three times in conversation and drifted from three times on
 2026-08-20 — a coefficient refit, a seat-type test and an exposure analysis were
 all built on the retired path before anyone noticed. It is written here because
 `CLAUDE.md` reloads every turn and a conversation does not.
+
+## The published configuration lives in `scripts/published_flags.R`, and nowhere else
+
+Every `AUSPOL_*` switch and the value the published forecast runs at. Both
+`fit_seats_full.R` and the five harnesses (via `scripts/harness_defaults.R`)
+apply it to every switch the caller left unset, so **a harness run with no
+environment measures what ships**, and a run that sets anything has to name
+it (the arm fingerprint in the output filename does the rest).
+
+This exists because on 2026-09-06 a day of headline numbers ("fed2025 0.2886,
+ahead of AE Forecasts") came from a harness "shipped config" that had
+surge-v2 OFF and the v1 salience ratio ON — the opposite of the forecast on
+both counts. What ships scores 0.3017, a tie. `fit_seats_full.R`'s own
+RUN_FLAGS list said shrink 0.10 a day after the code moved to 0.01. Two lists
+drift in both directions; there is one now.
+
+**When you add a switch to `fit_seats_full.R`, add it to `published_flags.R`
+in the same commit.** A `Sys.getenv("AUSPOL_...", default)` anywhere else is
+documentation; the registry is the behaviour.
 
 ## Two trend-model paths — know which one you are looking at
 

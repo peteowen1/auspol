@@ -28,16 +28,18 @@ Current live target is **Victoria, 28 November 2026**.
 | Two-party | TPP derived from first preferences via historical preference flows, with optional-preferential exhaust handling for NSW. | `derive_tpp()` |
 | Fundamentals | Expected result from history alone — previous result, long-run average, incumbency, years in office, federal alignment — by ridge regression chosen leave-one-election-out. | `fit_fundamentals()` |
 | Projection | Mixes trend and fundamentals by days-to-election, with the weight fitted on past elections. | `project_result()` |
-| Seats | Simulates a seat count: statewide draw, regional block effect, per-seat residual. | `simulate_seats()` |
+| Seats | Candidate-level: distributes each seat's vote by party, applies personal incumbency and a salience-screened swing, then runs an elimination count seat by seat. **This is the published model** — see below. | `fit_seats_full.R` / `simulate_seat_contests()` |
 | Scorecard | Per-pollster lean, noise against the binomial sampling floor, and final-poll accuracy. | `pollster_scorecard()` |
 
 The forecast is published as a self-contained page — see `build_page.R`.
 
-Not yet built: the anchor's per-seat elasticity and candidate effects
-(retirement, sophomore surge), and an elimination-aware preference simulator.
-None is likely to move the headline much: seat mechanics contribute a standard
-deviation of about 4 seats against 11 from the statewide vote, so accuracy in
-the projection is worth more than refinement below it.
+**There is no second seat model.** `fit_seats.R` / `simulate_seats()` (statewide
+draw + regional block + per-seat residual, two-party only) is **retired**: it
+cannot elect a minor party or an independent, and South Australia elected four
+One Nation members in March 2026. It still runs in `run_all.R` only to feed a
+pre-registered sanity check (`S5`) that the candidate-level result stays close
+to it; nothing about it should be tuned or treated as a finding. See
+`CLAUDE.md`, "The seat model is the candidate model."
 
 ## Discipline
 
@@ -89,7 +91,9 @@ hand in the wrong order silently uses whatever was left in `output/` from last
 time.
 
 Individual stages, if you want one: `fit_vic.R`, `fit_federal.R`, `fit_nsw.R`,
-`fit_projection.R`, `fit_seats.R`, `fit_scorecard.R`, `build_page.R`.
+`fit_projection.R`, `fit_seats.R` (retired two-party model, kept only for the
+`S5` cross-check), `fit_seats_full.R` (the published, candidate-level seat
+model), `fit_scorecard.R`, `build_page.R`.
 
 Outputs land in `output/` (gitignored): trend CSVs and plots per cycle,
 hyperparameters, seat simulations, the scorecard, and

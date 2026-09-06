@@ -9,6 +9,7 @@ screened_slopes(
   seats,
   returns,
   permit,
+  honour_departed = FALSE,
   same = c(IND = 0.907, OTH_RIGHT = 0.891, GRN = 0.994, ONP = 0.61),
   new = c(IND = 0.326, OTH_RIGHT = 0.325, GRN = 0.88, ONP = 0.545),
   default = 1,
@@ -27,6 +28,11 @@ every seat on \code{default}.}
 \item{permit}{Logical vector the length of \code{seats}, from
 \code{\link[=salience_screen]{salience_screen()}}: does the screen allow this seat's candidate of \code{cls}
 to emerge?}
+
+\item{honour_departed}{Logical, default \code{FALSE}. When \code{TRUE}, a permit does
+not override a departed prior leader (\code{returns$prior_leader_returns}):
+measured and refused 2026-09-06, kept for comparison against a retention
+model. See \verb{docs/plans/prereg-vote-belongs-to-the-person-2026-09-06.md}.}
 
 \item{same, new}{Named numeric vectors of slopes by class.}
 
