@@ -54,9 +54,14 @@ cls_share[, share := 100 * votes / sum(votes), by = .(election, seat)]
 statewide <- CAND[, .(votes = sum(votes, na.rm = TRUE)), by = .(election, party)]
 statewide[, level := 100 * votes / sum(votes), by = election]
 
+# COVERAGE, not presence: a pair whose candidate_returns() throws is NAMED and
+# the run stops, so a jurisdiction-specific matching bug cannot quietly shrink
+# the panel behind a plausible MP0/MP1 line.
+.pair_fail <- character(0)
 panel <- rbindlist(lapply(seq_len(nrow(pairs)), function(i) {
   a <- pairs$from[i]; b <- pairs$to[i]
-  r <- tryCatch(candidate_returns(a, b), error = function(e) NULL)
+  r <- tryCatch(candidate_returns(a, b), error = function(e) {
+    .pair_fail <<- c(.pair_fail, sprintf("%s->%s (%s)", a, b, conditionMessage(e))); NULL })
   if (is.null(r)) return(NULL)
   setDT(r)
   # Non-majors only: the tier exists to stop an entrenched independent being
@@ -82,6 +87,10 @@ panel <- rbindlist(lapply(seq_len(nrow(pairs)), function(i) {
   x[]
 }), fill = TRUE)
 
+cat(sprintf("MP0p %d of %d pairs contributed rows%s\n",
+            length(unique(panel$target)), nrow(pairs),
+            if (length(.pair_fail)) paste0("; FAILED: ", paste(.pair_fail, collapse = "; ")) else ""))
+if (length(.pair_fail)) stop("candidate_returns() failed for ", length(.pair_fail), " pair(s); see MP0p")
 stopifnot(nrow(panel) > 0)
 # COVERAGE, not presence: a column can be there, typed and empty. CLAUDE.md
 # records 4.98M silently-discarded values from exactly that.

@@ -31,3 +31,17 @@ test_that("a class absent at one election reads as zero, not NA", {
 test_that("an unknown election is an error rather than an empty answer", {
   expect_error(party_swing("xx", 1999L, 2024L, mk()), "no rows for")
 })
+
+test_that("the region argument filters, and is not shadowed by the region column", {
+  # Seventh instance of the data.table NSE trap: `region` was both the
+  # argument and a column, and inside C[...] the bare symbol bound to the
+  # column, so the filter was always TRUE and every region was pooled. A
+  # region that does not exist must be an error, and a region that does must
+  # see only its own votes.
+  d <- rbind(mk(), mk()[, region := "yy"][, votes := c(50, 50, 50, 50, 50, 50, 50, 50)])
+  expect_error(party_swing("zz", 2020L, 2024L, d), "no rows for zz2020")
+  s <- party_swing("xx", 2020L, 2024L, d)
+  expect_equal(s[party == "ONP"]$swing, 30)
+  s2 <- party_swing("yy", 2020L, 2024L, d)
+  expect_equal(s2[party == "ONP"]$swing, 0)
+})

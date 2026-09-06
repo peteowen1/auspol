@@ -528,13 +528,19 @@ if (all(SLOPE == 1)) cat("DS1  all 1.000 -- uniform swing, output must be unchan
 .mode <- Sys.getenv("AUSPOL_DEV_SLOPE_MODE", "screened")
 .cond <- .mode %in% c("conditional", "screened")
 .screened <- identical(.mode, "screened")
-.returns <- if (.cond) tryCatch(candidate_returns("vic2022", "vic2026"),
-                                error = function(e) NULL) else NULL
+# EVERY caught fallback records WHY. "vic2026 has no candidates yet" and "a
+# bug in candidate_returns()" used to print the same line, so once nominations
+# close a real failure would have read as the expected pre-nomination gap.
+.why <- new.env()
+.try <- function(name, expr) tryCatch(expr, error = function(e) {
+  assign(name, conditionMessage(e), envir = .why); NULL })
+.reason <- function(name) if (exists(name, envir = .why)) sprintf(" (%s)", get(name, envir = .why)) else ""
+.returns <- if (.cond) .try("returns", candidate_returns("vic2022", "vic2026")) else NULL
 .permit  <- if (.screened && !is.null(.returns))
-              tryCatch(salience_permit_for("vic2026", "vic2022", "vic"),
-                       error = function(e) NULL) else NULL
+              .try("permit", salience_permit_for("vic2026", "vic2022", "vic")) else NULL
 if (.cond && is.null(.returns)) {
-  cat("DS2  arm CS requested but vic2026 has no candidate list yet -- FALLING BACK to uniform swing\n")
+  cat(sprintf("DS2  arm CS requested but vic2026 has no candidate list yet -- FALLING BACK to uniform swing%s\n",
+              .reason("returns")))
 } else if (.cond) {
   cat(sprintf("DS2  arm C ON: %d of %d seat-classes have the same candidate returning%s\n",
               sum(.returns$same), nrow(.returns),
@@ -579,8 +585,16 @@ cat(sprintf("CAL  MP tier: %s | defector discount: %s
 # THE BASE VALUE, not just the slope -- see personal_prior_vote()'s docs. Same
 # candidate-list gating as .returns above: NULL until vic2026 nominations close.
 .own_prev <- if (.cond && !is.null(.returns))
-  tryCatch(personal_prior_vote("vic2022", "vic2026", major_discount = .defect),
-           error = function(e) NULL) else NULL
+  .try("own_prev", personal_prior_vote("vic2022", "vic2026", major_discount = .defect)) else NULL
+if (.cond && !is.null(.returns)) {
+  if (is.null(.own_prev)) {
+    cat(sprintf("DS2o personal_prior_vote() FAILED -- class-level base kept for every seat%s\n",
+                .reason("own_prev")))
+  } else {
+    cat(sprintf("DS2o personal prior vote ON: %d seat-classes take the returning candidate's own previous share\n",
+                sum(is.finite(.own_prev$own_prev_pcv))))
+  }
+}
 .own_x <- function(p, seats, x) {
   if (is.null(.own_prev)) return(x)
   ov <- .own_prev[.own_prev$party == p, ]
@@ -620,10 +634,10 @@ if (.surge_v2_on) {
     list(election = "nsw2023", prev = "nsw2019", region = "nsw"),
     list(election = "sa2026",  prev = "sa2022",  region = "sa"),
     list(election = "wa2008",  prev = "wa2005",  region = "wa"))
-  .hz <- tryCatch(surge_hazard_for("vic2026", "vic2022", "vic", .v2_train_pairs),
-                  error = function(e) NULL)
+  .hz <- .try("hz", surge_hazard_for("vic2026", "vic2022", "vic", .v2_train_pairs))
   if (is.null(.hz)) {
-    cat("DS3  surge-v2 requested but vic2026 has no salience corpus yet -- FALLING BACK to flat surge_h\n")
+    cat(sprintf("DS3  surge-v2 requested but vic2026 has no salience corpus yet -- FALLING BACK to flat surge_h%s\n",
+                .reason("hz")))
   } else {
     sn <- rownames(shares)
     if (is.null(sn) && is.data.frame(shares)) sn <- as.character(shares$seat)

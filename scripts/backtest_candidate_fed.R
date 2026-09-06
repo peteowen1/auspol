@@ -1309,7 +1309,10 @@ for (X in out_all) {
     # keeps the fitted shape where the risk is real and still gives every seat
     # the small baseline, so AUSPOL_SHRINK=0 reproduces the pure per-seat arm
     # exactly and AUSPOL_SHRINK=0.01 is the combination.
-    # NOT YET MEASURED -- added 2026-09-06 at the end of a session, unrun.
+    # MEASURED 2026-09-06, six pairs seed 42: per-seat + 0.01 floor 0.4062
+    # against the 0.02 scalar's 0.4047 (the bar) and the shipped 0.01's 0.4096;
+    # worse than shipped in 4 of 6 pairs. Refused; kept as the way to run the
+    # combination. See docs/NEXT-STEPS.md.
     if (SHRINK > 0) shrink_arg <- pmax(shrink_arg, SHRINK)
     stopifnot(!anyNA(shrink_arg), !anyNA(names(shrink_arg)),
               setequal(names(shrink_arg), sn), all(shrink_arg >= 0),

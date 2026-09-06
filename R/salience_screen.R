@@ -102,8 +102,17 @@ governed_population <- function(election, prev_election, region,
   if (!nrow(SAL)) return(NULL)
   yr <- as.integer(sub("^[a-z]+", "", election))
   py <- as.integer(sub("^[a-z]+", "", prev_election))
+  # A failure here is DISCLOSED, not swallowed: "no party is surging" and "the
+  # surge calculation broke" must not print the same thing. The fallback is
+  # kept because the empty-population case is legitimate (test corpora carry
+  # no region/year), but the reason is said.
   surging <- tryCatch(surging_parties(region, py, yr, surge_threshold),
-                      error = function(e) character(0))
+                      error = function(e) {
+                        message("salience screen: surging_parties() failed for ",
+                                election, " -- treating no party as surging (",
+                                conditionMessage(e), ")")
+                        character(0)
+                      })
   # MATCH EACH CANDIDATE PERSONALLY, not their class. output/salience-v6.csv is
   # already one row per NAMED candidate -- unlike a class-level `returns` table,
   # which has one row per (seat, party) and answers "did ANYONE of this class
@@ -141,8 +150,14 @@ governed_population <- function(election, prev_election, region,
     x[hit] <- SEAT_RENAMES[x[hit]]
     x
   }
-  C <- tryCatch(data.table::fread("output/candidacies.csv", showProgress = FALSE),
-               error = function(e) NULL)
+  # "No corpus" is a disclosed skip; "corpus present but unreadable" is an
+  # ERROR, matching candidate_returns(). Both used to fall through the same
+  # silent tryCatch, and a truncated corpus would have filed every returning
+  # candidate as a fresh emergence with nothing in the log.
+  cf <- "output/candidacies.csv"
+  C <- if (file.exists(cf)) data.table::fread(cf, showProgress = FALSE) else NULL
+  if (is.null(C)) message("salience screen: no ", cf,
+                          " -- every candidate treated as not personally returning")
   if (!is.null(C)) {
     PREVT <- C[C$election == prev_election]
     # search_form(), not surname_of()/given_of(): SAL$keyword is already this

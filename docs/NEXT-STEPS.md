@@ -188,6 +188,56 @@ confidence the simulation never expressed — worth aligning `eps` with
 change; and the "cannot elect a new independent" hole (Awaiting Pete, below)
 is what these seats are.
 
+### Review gate 2026-09-06, before the dev -> main PR: what it caught
+
+Three Sonnet reviewers over the two-week diff (package + tests; forecast script
++ five harnesses; silent-failure pass). Fixed in the same commit, each with a
+test or a proof that fails on the old code:
+
+- **`party_swing()` region filter was inert — the SEVENTH data.table NSE
+  instance.** `C[C$region == region & ...]` bound `region` to the column, so
+  every jurisdiction was pooled: with the bug Victoria 2022 reports ALP
+  surging, NSW 2023 LNP, SA 2026 ONP and LNP; fixed, only SA's ONP. The
+  spurious entries are all majors, which `governed_population()` already
+  excludes, so no published or harness number moves. Test added with a region
+  that does not exist and one whose swing differs.
+- **`AUSPOL_SEAT_SD_MULT` was inert in Victoria, NSW, SA and WA** — the
+  2026-09-05 federal fix had not been ported. Ported; proven on SA at 1.15
+  (log 0.3867 -> 0.3853, slope 1.010 -> 1.133, the CAL line names LEVEL_SD).
+- **A NAMED length-1 `shrink` or `surge_h` broadcast to every seat** instead
+  of hitting the missing-seat error the roxygen promises. Names now checked
+  before length. Test added.
+- **Every caught fallback in `fit_seats_full.R` now prints WHY** (`DS2`,
+  `DS2o`, `DS3` carry the error message), and the personal-prior-vote step,
+  which had no disclosure at all, has a `DS2o` line either way. Once
+  nominations close a real bug can no longer read as the pre-nomination gap.
+- **`governed_population()`**: a missing corpus is a disclosed skip, an
+  unreadable one is an error (it was a silent `tryCatch` for both); a failing
+  `surging_parties()` says so.
+- **`fit_mp_slope.R`** names any pair whose `candidate_returns()` fails and
+  stops, instead of silently shrinking the panel behind `stopifnot(nrow > 0)`.
+
+**Deferred, not fixed** (none on the published path; each needs its own
+measurement or plan):
+
+- **WA harness lacks the screened slope mode and `personal_prior_vote()`.**
+  `_wa.R` supports only `conditional`, so a five-harness comparison of
+  `AUSPOL_DEV_SLOPE_MODE=screened` measures WA without the base-value fix.
+  Its file banner disclaims `DEFECT_DISCOUNT` but not this.
+- **`AUSPOL_NOTIONAL` (notional baselines for redistributed seats) exists only
+  in `_fed.R`**, and WA is the harness that redistributes hardest.
+- **`pairwise` flow cells have no `min_n` floor** (`R/flow_matrix.R`) and sit
+  ahead of the fully-pooled rate in the simulator's lookup chain, so a
+  one-round cell can be preferred over a well-supported one. Same shape as
+  the Richmond zero. A statistical change; pre-register before touching.
+- **`leading_candidate_returns()` / `personal_prior_vote()`** drop a
+  seat-class whose leading candidate has no parseable name, with no coverage
+  count; fails safe to the class-level base.
+- `ridge_logistic()` returns the current beta on a singular Hessian with no
+  diagnostic; `avail` in `R/flow_matrix.R:122` is dead code.
+- The harness `eps = 1e-6` clamp sits below the simulation's own resolution
+  (see the state re-measurement above).
+
 ## Then
 
 1. ~~Re-measure the other four harnesses at `shrink=0.01`~~ — done above.

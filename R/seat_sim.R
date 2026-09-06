@@ -301,7 +301,8 @@ simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
   # the wrong seat's hazard to the wrong seat and nothing in the output would
   # show it.
   .fix_surge <- function(sh, seat_names) {
-    if (length(sh) == 1L) return(rep(unname(sh), length(seat_names)))
+    # NAMES FIRST: a named length-1 vector is a per-seat vector for one seat,
+    # and must hit the missing-seat error below, not broadcast to every seat.
     if (!is.null(names(sh))) {
       miss <- setdiff(seat_names, names(sh))
       if (length(miss))
@@ -311,6 +312,7 @@ simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
         stop("surge_h has duplicate seat names; cannot match unambiguously")
       return(unname(sh[seat_names]))
     }
+    if (length(sh) == 1L) return(rep(unname(sh), length(seat_names)))
     if (length(sh) != length(seat_names))
       stop("surge_h must be length 1, length ", length(seat_names),
            " (one per seat), or a named vector; got ", length(sh))
@@ -342,9 +344,9 @@ simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
   # the same reason: an unnoticed reordering would give the wrong seat's ceiling
   # to the wrong seat and nothing in the output would show it. An unnamed vector
   # must already be in seat order and is length-checked.
-  if (length(shrink) == 1L) {
-    shrink <- rep(unname(shrink), length(seat_names))
-  } else if (!is.null(names(shrink))) {
+  if (!is.null(names(shrink))) {
+    # NAMES FIRST, for the same reason as .fix_surge below: a named length-1
+    # vector names ONE seat and must not broadcast.
     miss <- setdiff(seat_names, names(shrink))
     if (length(miss))
       stop("shrink is named but has no entry for ", length(miss), " seat(s): ",
@@ -352,6 +354,8 @@ simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
     if (anyDuplicated(names(shrink)))
       stop("shrink has duplicate seat names; cannot match unambiguously")
     shrink <- unname(shrink[seat_names])
+  } else if (length(shrink) == 1L) {
+    shrink <- rep(unname(shrink), length(seat_names))
   } else if (length(shrink) != length(seat_names)) {
     stop("shrink must be length 1, length ", length(seat_names),
          " (one per seat), or a named vector; got ", length(shrink))
@@ -757,10 +761,11 @@ simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
         # it. The one-step-ahead error of "mean of the last five" was measured
         # at sd 3.65 points. Default 0 keeps the previous behaviour exactly.
         # Per-source lookup. `parties[from]` is the class being excluded; a
-        # scalar flow_sd has no names and applies to every source. Single-
-        # bracket indexing, never `[[`, because `[[` on a missing name in an
-        # atomic vector THROWS -- the trap CLAUDE.md records where an
-        # is.null() guard beside it is dead code that can never fire.
+        # scalar flow_sd has no names and applies to every source. `from` is
+        # a POSITIONAL index into a vector already expanded to length(parties),
+        # so `[[` cannot miss here; never index this by NAME with `[[`, because
+        # `[[` on a missing name in an atomic vector THROWS -- the trap
+        # CLAUDE.md records where an is.null() guard beside it is dead code.
         .fsd <- FLOW_SD_BY[[from]]
         if (.fsd > 0 && length(alive) > 1L) {
           p <- pmax(0, p + stats::rnorm(length(p), 0, .fsd / 100))

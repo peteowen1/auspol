@@ -243,3 +243,20 @@ test_that("the sparse lookup path resolves the SAME contest a small K does", {
   expect_equal(unname(r$totals[1, "ALP"]), 1L)
   expect_true(all(r$totals[, "ALP"] == 1L))
 })
+
+test_that("a NAMED length-1 shrink or surge_h names one seat and does not broadcast", {
+  # The length-1 check used to run before the names check, so c(s1 = 0.1)
+  # silently applied 0.1 to every seat instead of hitting the missing-seat
+  # error the roxygen promises.
+  sh <- matrix(c(38, 40, 22, 45, 35, 20), nrow = 2, byrow = TRUE,
+               dimnames = list(c("s1", "s2"), c("ALP","LNP","GRN")))
+  args <- list(sh, fake_matrix(), party_sd = c(ALP=0, LNP=0, GRN=0),
+               seat_sd = 0, n_sims = 10, seed = 1)
+  expect_error(do.call(simulate_seat_contests, c(args, list(shrink = c(s1 = 0.1)))),
+               "no entry for 1 seat")
+  expect_error(do.call(simulate_seat_contests, c(args, list(surge_h = c(s1 = 0.1)))),
+               "no entry for 1 seat")
+  # An unnamed scalar still broadcasts, and a complete named vector is fine.
+  expect_silent(do.call(simulate_seat_contests, c(args, list(shrink = 0.1))))
+  expect_silent(do.call(simulate_seat_contests, c(args, list(shrink = c(s2 = 0.1, s1 = 0.2)))))
+})

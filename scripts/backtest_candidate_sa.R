@@ -130,8 +130,24 @@ cat(sprintf("LV2  level_mult: %s
 # because CLAUDE.md records an experiment whose edit never ran and whose
 # byte-identical output read as "this input does not matter".
 SEAT_SD_MULT <- as.numeric(Sys.getenv("AUSPOL_SEAT_SD_MULT", "1"))
-if (SEAT_SD_MULT != 1) cat(sprintf("CAL  seat_sd multiplier %.2f applied
+if (!is.finite(SEAT_SD_MULT) || SEAT_SD_MULT <= 0)
+  stop("AUSPOL_SEAT_SD_MULT must be a positive number; got ", SEAT_SD_MULT)
+# PORTED FROM THE FEDERAL HARNESS 2026-09-06: simulate_seat_contests() computes
+# sd_cell from `level_sd` and IGNORES seat_sd whenever level_sd is given, and
+# level_sd is on by default, so `seat_sd * SEAT_SD_MULT` at the call site was
+# inert here while this printed "applied". The multiplier now scales whichever
+# spread is actually in force, and the message says which.
+if (SEAT_SD_MULT != 1) {
+  if (is.null(.level_sd)) {
+    cat(sprintf("CAL  seat_sd multiplier %.2f applied (flat seat_sd path)
 ", SEAT_SD_MULT))
+  } else {
+    .level_sd <- .level_sd * SEAT_SD_MULT
+    cat(sprintf("CAL  spread multiplier %.2f applied to LEVEL_SD -> a=%.3f b=%.3f (seat_sd is inert here)
+",
+                SEAT_SD_MULT, .level_sd[1], .level_sd[2]))
+  }
+}
 
 # OUTPUT FILENAME CARRIES THE CONFIG, and it must. These harnesses used to write
 # to one fixed name, so running an experimental arm SILENTLY OVERWROTE the
