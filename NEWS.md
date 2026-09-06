@@ -1,3 +1,40 @@
+# auspol 0.4.24
+
+**The surge reached the wrong candidate, and one registry now says what
+ships.** Pooled seat log loss over all 17 forecast elections (1,549
+seat-elections) 0.3717 -> 0.3422.
+
+- **`scripts/published_flags.R` is the published configuration**, applied by
+  `fit_seats_full.R` and all five harnesses to every switch a caller leaves
+  unset. A bare harness run measures what ships. This immediately showed that
+  the previous session's headline (fed2025 0.2886, ahead of AE Forecasts) had
+  been measured with surge-v2 off and a national salience ratio the forecast
+  never reads; what ships scored 0.3103.
+- **A candidate's vote moves with the person.** `personal_prior_vote()`
+  reports which class a returning candidate's vote came from and how much
+  moved; `remove_transferred_votes()` takes it out of that class. One vote is
+  no longer counted twice (Hunter 2022: One Nation kept 17.6 while the
+  independent base took 24.3, for one 21.6% vote). Kennedy 2013 and Hunter
+  2022 fixed; SA 0.3865 -> 0.3409, NSW 0.3251 -> 0.3085.
+- **The emergence surge goes to the candidate its hazard was fitted for.**
+  `simulate_seat_contests()` had awarded it to the largest non-major class in
+  the seat, which in every teal seat is the Greens; the salience work of the
+  previous fortnight was therefore paying the wrong candidate. Directed at
+  the salient class: fed2022 0.4819 -> 0.3862, fed2010 0.4047 -> 0.3281,
+  fed2016 0.3566 -> 0.3154, nsw2023 0.3085 -> 0.2970, sa2026 0.3409 ->
+  0.3281. Named cost: Clark 2022 and Melbourne 2013 fall about 0.025, where
+  the hazard names a Green.
+- **The per-draw simulation core is compiled** (`src/seat_sim_core.cpp`),
+  byte-identical to the R loop and about 15 times faster: a full 17-election
+  sweep is minutes rather than an hour. The R loop stays as the reference
+  implementation, and the identity is asserted by test.
+- **Seat-share RMSE** is reported beside log loss by every harness
+  (`seat_share_rmse()`), and every output filename carries the git commit, so
+  a code change cannot overwrite a baseline's files.
+- Refused and recorded, not deleted: a per-seat insurgency shrink, a rule
+  decaying a departed leader's vote (it trades New England 2013 for
+  Wentworth 2022), and a straight scale on the surge hazard.
+
 # auspol 0.4.22
 
 **We can now measure ourselves against a real forecaster, and doing so found
