@@ -94,6 +94,20 @@ transfers on disk; also one of AEF's archived elections). **One prior fetch
 each**: fed2007 (needs fed2004), vic2014 (vic2010), nsw2019 (nsw2015), sa2022
 (sa2018). Those five would make 22.
 
+## THE SIMULATOR IS COMPILED, 2026-09-07 00:45 — a sweep is minutes, not an hour
+
+`src/seat_sim_core.cpp` is the per-draw core of `simulate_seat_contests()`,
+ported with every random draw taken from R's generator in the R loop's order
+and every sum in long double as R's `sum()` does. **Proven byte-identical**:
+`expect_identical()` against the R engine on the synthetic fixture with every
+mechanism on (three shift modes, level variance, surge with a named
+recipient, shrink, flow uncertainty), and a full fed2022 run at 20,000 draws
+whose per-seat, per-party and totals files are byte-for-byte the rule-2
+baseline's. **45 seconds against about 11 minutes.** `AUSPOL_SIM_ENGINE=cpp`
+is the published value; `=r` forces the reference loop, which stays in the
+file so the identity can be re-proven. The core does not cover
+`party_draws` or more than the dense cell tables allow; both fall back to R.
+
 ## P4 STAGE 1, 2026-09-06 23:30: the surge pays the wrong candidate
 
 `plans/prereg-surge-hazard-scale-2026-09-06.md`, stage 1 result. Scaling the

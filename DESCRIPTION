@@ -14,8 +14,11 @@ Depends: R (>= 4.3)
 Imports:
     data.table,
     Matrix,
+    Rcpp,
     stats,
     utils
+LinkingTo:
+    Rcpp
 Suggests:
     ggplot2,
     jsonlite,

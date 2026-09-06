@@ -281,3 +281,36 @@ test_that("surge_party directs the surge to the named class, below the floor, an
   expect_equal(new$surge_recipient_fallback, 1L)                  # s2 named a class that is not there
   expect_error(do.call(simulate_seat_contests, c(base, list(surge_party = c(s1 = "IND")))), "no entry for")
 })
+
+test_that("the compiled core is byte-identical to the R engine with every mechanism on", {
+  # Three seats, four classes, a flow matrix with a superset cell, a
+  # correlated statewide draw, level-dependent variance, a per-seat surge with
+  # a named recipient, per-seat shrink and per-source flow uncertainty: every
+  # random draw the R loop makes, in the same order, or this fails.
+  sh <- matrix(c(38, 40, 20, 2,  45, 35, 15, 5,  30, 30, 25, 15), nrow = 3, byrow = TRUE,
+               dimnames = list(c("s1", "s2", "s3"), c("ALP", "LNP", "GRN", "IND")))
+  fm <- build_flow_matrix(data.table::data.table(
+    election = "x", seat = rep(c("a", "b", "c", "d"), each = 3), round = 1L,
+    from = c("GRN", "GRN", "GRN", "IND", "IND", "IND", "GRN", "GRN", "GRN", "IND", "IND", "IND"),
+    to = c("ALP", "LNP", "IND", "ALP", "LNP", "GRN", "ALP", "LNP", "IND", "ALP", "LNP", "GRN"),
+    votes = c(700, 200, 100, 300, 500, 200, 650, 250, 100, 350, 450, 200)), min_n = 2L)
+  cor <- matrix(c(1, -0.6, 0.2, 0.1,  -0.6, 1, -0.3, 0.1,  0.2, -0.3, 1, 0,  0.1, 0.1, 0, 1), 4, 4,
+                dimnames = list(c("ALP", "LNP", "GRN", "IND"), c("ALP", "LNP", "GRN", "IND")))
+  args <- list(sh, fm, party_sd = c(ALP = 2, LNP = 2, GRN = 1.5, IND = 1), seat_sd = 3,
+               level_sd = c(1.1, 8.67), n_sims = 300, seed = 11, party_cor = cor,
+               shrink = c(s1 = 0.05, s2 = 0.01, s3 = 0.2), surge_h = c(0.3, 0.1, 0.5),
+               surge_mu = 30, surge_sd = 8, surge_party = c(s1 = "IND", s2 = NA, s3 = "GRN"),
+               flow_sd = 2, fallback_smooth = 0.3, smooth = 0.1)
+  r <- do.call(simulate_seat_contests, c(args, list(engine = "r")))
+  cc <- do.call(simulate_seat_contests, c(args, list(engine = "cpp")))
+  expect_identical(cc, r)
+  # And with statewide draws supplied instead of party_sd/party_cor.
+  set.seed(3); sw <- matrix(rnorm(300 * 4, 0, 2), 300, 4, dimnames = list(NULL, c("ALP", "LNP", "GRN", "IND")))
+  args2 <- args; args2$party_cor <- NULL; args2$statewide_draws <- sw
+  expect_identical(do.call(simulate_seat_contests, c(args2, list(engine = "cpp"))),
+                   do.call(simulate_seat_contests, c(args2, list(engine = "r"))))
+  # And the plain independent-shift path.
+  args3 <- args; args3$party_cor <- NULL
+  expect_identical(do.call(simulate_seat_contests, c(args3, list(engine = "cpp"))),
+                   do.call(simulate_seat_contests, c(args3, list(engine = "r"))))
+})

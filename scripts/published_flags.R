@@ -35,6 +35,7 @@ PUBLISHED_FLAGS <- c(
   AUSPOL_PARTY_COR           = "shrunk",     # correlated statewide deviations
   # the statewide input and the simulation
   AUSPOL_N_SIMS              = "20000",
+  AUSPOL_SIM_ENGINE          = "cpp",        # compiled core; proven byte-identical to the R engine on a full fed2022 run 2026-09-07 (45 s vs ~11 min)
   AUSPOL_SEED                = "42",
   AUSPOL_FP_SD_MODE          = "additive",
   AUSPOL_ONP_ORDER           = "federal",
