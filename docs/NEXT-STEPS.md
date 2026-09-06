@@ -94,6 +94,22 @@ transfers on disk; also one of AEF's archived elections). **One prior fetch
 each**: fed2007 (needs fed2004), vic2014 (vic2010), nsw2019 (nsw2015), sa2022
 (sa2018). Those five would make 22.
 
+## P4 STAGE 1, 2026-09-06 23:30: the surge pays the wrong candidate
+
+`plans/prereg-surge-hazard-scale-2026-09-06.md`, stage 1 result. Scaling the
+surge-v2 hazard x8 moves Goldstein 0.000 -> 0.001 and Kooyong 0.007 -> 0.021
+while Cowper (lost) goes 0.47 -> 0.80. **The simulator awards the surge to
+the LARGEST non-major class in the seat** (`surge_parties = NULL` in
+`R/seat_sim.R`), which in every teal seat is the Greens, and the 2% floor
+bars a 1.3% base outright. A week of salience work fitted a hazard for a
+named independent and wired it to pay the Greens. **P4b, next**: carry the
+salient candidate's class per seat out of `surge_hazard_for()`, direct the
+surge at it, exempt it from the floor, then re-run the scale grid. Its own
+pre-registration, before any code.
+
+Also tonight: the two simulator hoists are proven byte-identical on a full
+fed2022 run (per-seat and per-party tables) and shipped.
+
 ## P1 RESULT 2026-09-06 late: rule 2 ships, rule 1 refused
 
 `plans/prereg-vote-belongs-to-the-person-2026-09-06.md`, results section.

@@ -90,3 +90,52 @@ scale's cost is concentrated in Cowper/Mallee-type seats (a departed
 independent's residual base plus a salient newcomer), the next experiment is
 the hazard's features (the seat's prior independent vote is one of them and
 is what fires on New England 2013 at 0.73), not a bigger scale.
+
+## Stage 1 result, 2026-09-06 23:30 — REFUSED as a scale; the finding is the recipient
+
+5,000 draws, four elections, rule-2 baseline code (`82bf887`):
+
+| election | n | x1 | x2 | x4 | x8 |
+|---|--:|--:|--:|--:|--:|
+| fed2022 | 150 | 0.5261 | 0.5087 | 0.4646 | 0.4732 |
+| fed2025 | 150 | 0.3034 | 0.3114 | 0.3423 | 0.4130 |
+| nsw2023 | 88 | 0.3137 | 0.3129 | 0.3245 | 0.3824 |
+| sa2026 | 47 | 0.3402 | 0.3459 | 0.3608 | 0.3936 |
+| pooled (435 seats) | | 0.3862 | 0.3835 | 0.3829 | 0.4238 |
+
+(x1 at 5,000 draws sits above the 20,000-draw baseline by the clamp on
+near-zero seats; the comparison is within the stage.) fed2022 improves at x4
+and every other election worsens monotonically from x2. The target seats:
+
+| fed2022, p(IND) | x1 | x2 | x4 | x8 |
+|---|--:|--:|--:|--:|
+| Goldstein | 0.000 | 0.000 | 0.000 | 0.001 |
+| Fowler | 0.000 | 0.000 | 0.001 | 0.002 |
+| North Sydney | 0.001 | 0.003 | 0.005 | 0.013 |
+| Curtin | 0.003 | 0.010 | 0.020 | 0.039 |
+| Kooyong | 0.007 | 0.009 | 0.013 | 0.021 |
+| Mackellar | 0.035 | 0.068 | 0.113 | 0.196 |
+| Cowper (lost) | 0.469 | 0.509 | 0.617 | 0.803 |
+| Mallee (lost) | 0.201 | 0.247 | 0.334 | 0.498 |
+| Wentworth (won) | 0.704 | 0.759 | 0.858 | 0.989 |
+
+**The scale does not reach the emergences and does reach the false
+positives.** Every guard fires: the false-independent list grows (Cowper and
+Mallee become calls at x4) while five of six targets stay under 0.05, and
+the pooled gain at x4 is fed2022 alone against three losses. Refused.
+
+**Why, from the simulator (`R/seat_sim.R`, `surge_idx`):** with
+`surge_parties = NULL` every non-major class is eligible and the surge is
+awarded to `cand[which.max(v[cand])]`, the LARGEST non-major in the seat.
+In Kooyong, Goldstein, North Sydney and Curtin that is the Greens at 10–20%,
+not the independent at 1–10%. The hazard was fitted from a NAMED
+independent's salience and pays out to whoever else is biggest; Cowper and
+Mallee rise because there the independent IS the largest non-major. The
+2% floor (`surge_floor`) is the second half: Goldstein's 1.3% base cannot
+receive a surge at all.
+
+**Next, its own pre-registration (P4b)**: the surge goes to the class the
+hazard was computed for (the salient candidate's class, carried per seat from
+`surge_hazard_for()`), and that class is exempt from the floor. Then the
+scale grid again. The scale question is not answered; it was asked of the
+wrong recipient.
