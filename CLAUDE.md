@@ -43,7 +43,13 @@ not apply. Recorded with worked examples under "Recurring hazards" in
 Specific traps, all of which have bitten:
 
 - **data.table NSE**: a function argument or local variable sharing a name with
-  a column, used bare inside `dt[...]`, binds to the column. **Six times.** The
+  a column, used bare inside `dt[...]`, binds to the column. **Eight times.** The
+  seventh (2026-08-28): a local scalar `tot` shadowed by `candidacies.csv`'s
+  own `tot` column inside `C[...]`, 1122 rows from a groupby that should have
+  given 7. The eighth (2026-09-06, found by the review gate): `party_swing()`
+  wrote `C[C$region == region & ...]`, so every jurisdiction was pooled and
+  the "no rows for" guard could never fire; caught only by a test asking for
+  a region that does not exist. The
   sixth: `salience_permit_for(election, ...)` wrote `raw[raw$election ==
   election]` -- `raw$election` on the left made no difference, because
   data.table scopes `raw`'s columns into the WHOLE `i` expression, so the bare
@@ -136,6 +142,7 @@ So: cache the series, derive the statistic. Level, rise, peak, slope,
 volatility and time-to-peak all come free from a stored series and all cost a
 fresh scrape from a stored mean.
 
+### Why the registry exists
 
 It is **generated from disk** by `scripts/build_data_registry.R` — never
 hand-edit it, rerun the script. It lists every election, every raw commission

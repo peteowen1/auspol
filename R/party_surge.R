@@ -28,7 +28,7 @@ party_swing <- function(region, year_from, year_to, corpus = NULL) {
     C <- data.table::fread(f, showProgress = FALSE)
   }
   C <- data.table::as.data.table(C)
-  # SEVENTH instance of the data.table NSE trap (CLAUDE.md): `region` is both
+  # EIGHTH instance of the data.table NSE trap (CLAUDE.md): `region` is both
   # the argument and a column of C, and inside `C[...]` the bare symbol binds
   # to the COLUMN, so `C$region == region` was always TRUE and every region's
   # votes were pooled. Copied to a differently-named local before use.

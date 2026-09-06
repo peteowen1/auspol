@@ -1,6 +1,6 @@
 # Data dictionary
 
-**Generated 2026-09-04 by `scripts/build_data_dictionary.R`. Do not hand-edit.**
+**Generated 2026-09-06 by `scripts/build_data_dictionary.R`. Do not hand-edit.**
 
 Companion to `docs/DATA-REGISTRY.md`. The registry answers *do we have this
 file*; this answers *do we have this field*. Four wrong "we don't have it"
@@ -12,7 +12,7 @@ column does not exist.**
 
 | file | rows | columns |
 |---|---:|---|
-| `aec-fed-firstprefs.csv` | 5,697 | `seat`, `party`, `votes`, `election` |
+| `aec-fed-firstprefs.csv` | 5,702 | `seat`, `party`, `votes`, `election` |
 | `aec-fed-tcp.csv` | 2,104 | `election`, `seat`, `party`, `votes` |
 | `aec-fed-transfers.csv` | 15,816 | `election`, `seat`, `round`, `from`, `to`, `votes` |
 | `aec-fed-winners.csv` | 1,052 | `election`, `seat`, `winner` |
@@ -148,5 +148,5 @@ processed extract. Every one is recoverable without a new fetch.
 | `demographic-swing-loo.csv` | 12 | `party`, `pair`, `n`, `mae_uniform`, `mae_demog`, `improvement` |
 | `dev-slopes-heldout.csv` | 42 | `party`, `slope`, `se`, `n`, `pairs`, `held_out`, `t_vs_1` |
 
-_(434 `backtest-*.csv` arm outputs omitted; they share one shape.)_
+_(601 `backtest-*.csv` arm outputs omitted; they share one shape.)_
 

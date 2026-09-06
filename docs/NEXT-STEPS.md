@@ -79,6 +79,38 @@ Decomposition worth keeping: of One Nation's 47.6 -> 61.6 swing to the
 Coalition, cell-mix explains 47.6 -> 51.1 and the remaining +10.5 is genuine
 within-cell drift, positive in all four major cells.
 
+## NEXT, as of 2026-09-06 afternoon: what ships was not what was measured, and where the misses are
+
+Pete asked which elections we forecast, how we score against AE Forecasts,
+and whether the big misses are polling or the model. Full answer with the
+evidence and a ranked plan:
+[plans/plan-miss-patterns-2026-09-06.md](plans/plan-miss-patterns-2026-09-06.md).
+The two facts that change what to do next:
+
+- **The harness "shipped config" is not the published config.** It ran with
+  the v1 national salience ratio (`AUSPOL_IND_SALIENCE=1`, which
+  `fit_seats_full.R` never reads) and surge-v2 OFF (which the forecast has ON).
+  With surge-v2 on: fed2022 0.6065 -> 0.4804, fed2025 0.2898 -> 0.3017 (AEF
+  0.3025 — a tie, not the win reported above), fed2019 0.2619 -> 0.2643,
+  fed2016 0.4080 -> 0.3924, fed2013 0.4386 -> 0.3817, fed2010 0.4525 -> 0.3963:
+  six-pair mean 0.4096 -> 0.3695 on log loss and WORSE on Brier in all six.
+  Surge-v2's gain is the log-loss clamp on seats moving 0.000 -> 0.004; it
+  hedges, it does not forecast.
+  **P0: make the five harnesses' defaults mirror the published script.**
+- **The misses have a shape.** 80% of the fed2022 gap to AEF is 11 seats a
+  first-time independent won; the false independent calls trace to three
+  specific mechanisms (a national IND multiplier applied uniformly, a
+  personal-vote double count on a class switch, three independents summed
+  into one); Tasmania and WA swings are a state term the federal simulator
+  does not have; 2016 redistributions have no notional baseline. Poll error
+  (2–3 points in four of six elections) is the part no model change fixes.
+
+Also found: the federal statewide draws carry duplicate `IND` and `OTH_RIGHT`
+columns (the simulator takes the first), and `dump-shares-fed*.csv` had not
+been written since 2026-08-28. The federal harness now writes the full
+per-party table (`backtest-fed-allprobs*.csv`), which is what made the trace
+possible.
+
 ## NEXT: per-seat shrink (the top item)
 
 `AUSPOL_INSURGENCY_SHRINK=1` already exists and gives each seat its OWN fitted
@@ -194,7 +226,7 @@ Three Sonnet reviewers over the two-week diff (package + tests; forecast script
 + five harnesses; silent-failure pass). Fixed in the same commit, each with a
 test or a proof that fails on the old code:
 
-- **`party_swing()` region filter was inert — the SEVENTH data.table NSE
+- **`party_swing()` region filter was inert — the EIGHTH data.table NSE
   instance.** `C[C$region == region & ...]` bound `region` to the column, so
   every jurisdiction was pooled: with the bug Victoria 2022 reports ALP
   surging, NSW 2023 LNP, SA 2026 ONP and LNP; fixed, only SA's ONP. The
@@ -305,145 +337,6 @@ open state, not the narrative of how it got here.
 two weeks roll into `backlog/journal-*.md` verbatim; live items get pulled
 forward, never cut by line range (`hub-slimming` skill).
 
-## Session of 2026-08-28 — incumbent transfer, a browse artifact, and the
-salience fetch now covers majors
-
-**The ACTIVE PLAN above (A1/A2) was not touched this session** — the whole day
-went on diagnostics and tooling Pete asked for mid-stream. Still next up.
-
-### Incumbent primary-vote transfer: a real regression, two bugs found in it
-
-`scripts/analyse_incumbent_transfer.R` (new, uncommitted pending review) fits
-`delta ~ own_prev_pcv + tpp_swing + party_swing [+ switched_party + jump_pctile
-+ jump_delta]` for minor/IND incumbents, and the major-party analogue.
-
-Two bugs found and fixed while building it:
-- **`party_swing_of()` summed `pcv` across every seat a party contested**
-  instead of averaging — values in the thousands, sign/significance
-  unaffected but magnitude meaningless. Fixed to `mean()`. This had been
-  quietly absorbing variance that should have gone to `party_swing`, which is
-  why `jump_pctile` (salience) looked significant (p=0.007) before the fix and
-  didn't (p=0.108) after it.
-- **The salience feature matched by SEAT, not by PERSON** — "loudest candidate
-  in the seat's percentile" rather than the specific incumbent's own value, so
-  it couldn't support "salience delta from last time" at all (no stable
-  per-person identity across two elections). Replaced with
-  `person_jump_pctile()`, matched via `search_form()` keys against the same
-  keyword the salience fetch already builds. `jump_pctile` came back
-  significant a third time (3.53, p=0.005) with both fixes in.
-
-**RESOLVED 2026-09-04**, in
-[reviews/incumbent-transfer-rerun-2026-09-04.md](reviews/incumbent-transfer-rerun-2026-09-04.md).
-Rerun against `salience-v6.csv` now that the majors fetch finished (coverage
-311→486/366, a materially different population, not a repeat measurement):
-**`jump_pctile` significant a fourth time and an order of magnitude stronger**
-(t=4.32, p=1.93e-05 level model; t=4.97, p=1.02e-06 delta model). The n=311
-**`switched_party` discrepancy was sample composition, not a real reversal** —
-at n=366 it comes back −10.69, p<2e-16, correctly signed and larger than the
-full-sample estimate. One new weak signal not chased further: `jump_delta` is
-negative (t=−2.16, p=0.032) — a candidate whose relative salience *rose* since
-last time gains *less*, plausibly regression to the mean in percentile terms.
-Next step if pursued: its own pre-registration under
-[plans/plan-wire-salience-into-forecast.md](plans/plan-wire-salience-into-forecast.md).
-
-**A genuine negative result, reported straight**: minor-party/IND incumbent
-vote change does NOT correlate with national or local TPP/party swing
-(r≈0.02–0.05, both ways). Implies wider seat-level uncertainty for these
-candidates is the right response, not a swing-elasticity term.
-
-### Scrutineer: a full candidate-level browse artifact for fed2025
-
-Built at Pete's request — every fed2025 candidate, sortable/filterable by
-seat or party, our projection vs AEF's vs the actual result, prior-vote
-history, and (eventually) salience. `scripts/build_fed2025_browse_table.R`
-(new, uncommitted). Hit a **seventh instance of the data.table NSE
-column-collision trap** in this repo (`CLAUDE.md` had six): a local scalar
-named `tot` was silently shadowed by `candidacies.csv`'s own `tot` column
-inside `C[...]`, producing 1122 rows instead of 7 from a groupby. Renamed to
-`total_votes_all`.
-
-Published, then caught two real problems by having Pete actually look at it:
-
-1. **A mislabelled column.** "Seat pctile" was `rank(jump)/.N` with no
-   `by=seat` — a rank against the whole ~390-candidate fetched pool for the
-   election, not the seat. Relabelled `Jump pctile*` with an honest footnote.
-2. **ALP/LNP/NAT have ZERO salience data — not a display bug, a scoping
-   decision.** `fetch_salience_v6.R` line 247 filters `!party %in% MAJ`
-   before Trends is ever queried, so majors were never fetched, cached or
-   otherwise. Fine for the emergence gate (the only consumer this was ever
-   built for); not fine for "compare the IND against the seat's LNP
-   candidate", which is what Pete actually wants the table for.
-
-### Salience fetch now covers every candidate, not just non-majors — IN PROGRESS
-
-Design settled with Pete: no PM-relative denominator needed. Since majors
-(including the PM/Premier themselves) now get fetched onto the same
-per-election scale as everyone else, both wanted metrics are just "ratio to
-the loudest candidate in scope": **`seat_salience = 100 × jump / max(jump in
-that seat)`**, **`election_salience = 100 × jump / max(jump in that
-election)`**. The PM/Premier's only remaining role is as the anchor that
-makes different Trends batches comparable at all, not as a literal
-denominator. Not yet computed/wired into the browse table — waiting on the
-fetch below.
-
-`scripts/fetch_salience_v6.R` modified (uncommitted pending review):
-- **`AUSPOL_SALIENCE_MAJORS=TRUE`** adds a second candidate pool per election
-  (all ALP/LNP/NAT, no top-2 screening — majors don't need it) run through
-  the identical batching/linking machinery as the non-major pool, refactored
-  into a shared `run_pool()` so nothing is duplicated.
-- **Fixed a self-referential-anchor edge case**, found on the sa2026
-  validation run: when the PM/Premier is their own batch's loudest
-  representative (the majors pool always includes them as an ordinary
-  candidate), the old linking pass queried their name twice in one gtrends
-  call and failed outright. `scale=1` is already the correct answer there
-  (a value divided by itself) — now detected and skipped rather than retried.
-- **Fixed a durability gap before letting this run unattended for hours.**
-  The script used to accumulate every election in memory and write
-  `salience-v6.csv` once, at the very end. This session has already seen
-  background R jobs killed externally and unexplainedly, mid-run, more than
-  once — under the old design a kill at election 15 of 23 would have lost
-  every one of the first 14 elections' fetches from the CSV, even though the
-  underlying Trends cache (which is what's actually rate-limited and slow to
-  rebuild) survived untouched. Now writes after every completed election.
-
-Validated on sa2026 (smallest election) before running the rest: 0% dropped,
-self-anchor case handled cleanly, majors linked correctly (max jump 17.62,
-25 distinct values).
-
-**Running now, in the background, across the remaining 23 elections** (fed
-2007/10/13/16/19/22/25, nsw2019/2023, sa2022, vic2014/2018/2022,
-qld2020/2024, wa1996/2001/2005/2008/2013/2017/2021/2025). Launched as a
-genuinely detached Windows process (PowerShell `Start-Process`, hidden
-window, `output/salience-majors-fetch.log`/`-err.log`) rather than a
-session-bound background task, specifically so it survives the terminal
-closing — confirmed independent (PIDs, no parent tie to the Claude Code
-process) before relying on it. Real network fetch, no cache to lean on for
-majors, so this is genuinely hours, with the same throttle risk that has
-throttled this pipeline out entirely before. **Check
-`output/salience-majors-fetch.log` and `uniqueN(fread("output/salience-v6.csv")$election)`
-next session** — should read 24 once done (was 21 before this session, 20
-in the file plus sa2026 added first as the validation run).
-
-### Next session starts here
-
-1. **Confirm the majors fetch finished** (or resume it — safe to just
-   re-run `AUSPOL_SALIENCE_MAJORS=TRUE Rscript scripts/fetch_salience_v6.R`,
-   the qry() cache makes any already-fetched batch free).
-2. **Compute `seat_salience`/`election_salience`** from the completed
-   `salience-v6.csv` and wire them into `build_fed2025_browse_table.R` in
-   place of the placeholder `salience_pctile`/`salience_pm_relative`
-   columns, then republish the Scrutineer artifact
-   (https://claude.ai/code/artifact/660a3507-3383-42a4-9c76-39030383a5e4).
-3. **Regenerate `docs/DATA-REGISTRY.md`/`docs/DATA-DICTIONARY.md`** once the
-   fetch is done — not run this session since the dataset was still moving.
-4. **Code-review and commit** `scripts/fetch_salience_v6.R`,
-   `scripts/analyse_incumbent_transfer.R`,
-   `scripts/build_fed2025_browse_table.R` — all three are still uncommitted
-   as of this write-up (tested and run successfully, not yet reviewed).
-5. Independently re-verify `jump_pctile`'s significance (three flips) and
-   look into the `switched_party` n=311-subsample discrepancy above.
-6. Then back to A1/A2 on the active plan.
-
 ## DONE 2026-09-04: the seat simulator's hot loop, profiled 2026-09-03
 
 **Shipped.** Measured 36-38% faster in fresh-process wall clock (204→132 us
@@ -514,36 +407,15 @@ Also observed: runtime RISES with `m_IND` (137s at 1.00 to 175s at 1.75 on South
 Australia), because a wider non-major keeps more parties alive through more
 elimination rounds. Arm cost is not flat across a grid.
 
-## Google Trends separates an emergence from a token candidacy (2026-08-26)
+## Google Trends and the 2026-08-28 session — moved out
 
-[reviews/salience-emergence-2026-08-26.md](reviews/salience-emergence-2026-08-26.md).
-**AUC 0.841, p = 0.005** on the strictest cut, and it supersedes every earlier
-salience number here.
+Both moved verbatim to
+[backlog/journal-2026-08-26-and-28.md](backlog/journal-2026-08-26-and-28.md)
+on 2026-09-06; every open item in them was closed by 2026-09-04 and the
+Trends finding ships as arm CS. One line stays live:
 
-The anchor check that produced it matters as much as the number. The model
-handles sitting independents WELL — 0.75 to 0.95 across Warringah, Indi, Clark,
-Kooyong, Mackellar, Wentworth and Curtin in 2025. It fails only on
-**transitions**, in both directions: North Sydney, Goldstein and Fowler 2022 all
-came in at **0.0000**, and it also missed Bandt LOSING Melbourne (ALP 0.049) and
-Daniel losing Goldstein (LNP 0.187).
-
-And it does not "spot" an emergence even when it looks like it. Wentworth 2022
-scored 0.396 only because Kerryn Phelps had polled 32.4% there as an IND in
-2019 — the model inherits the previous independent's vote regardless of whether
-it is the same person. Kooyong had a LARGER non-major vote (21.2%) and scored
-0.0026, because that vote was Green.
-
-**Where it stands:** signal measured, mapping fitted, nothing adopted.
-`docs/plans/prereg-salience-surge-hazard.md` is committed and the fed2022
-whole-seat fetch is in progress — all 151 seats, because the nine already held
-were chosen because something happened in them.
-
-**Refused in advance, with numbers**: salience share as a projected first
-preference. Slope 0.34 for independents, residual sd 11.7 points, Chaney
-overstated by 52. Rank is reliable, magnitude is not.
-
-**Hard date:** Victorian nominations close 12 noon 9 November 2026. The signal
-is candidate-level so it cannot run before then.
+**Hard date:** Victorian nominations close 12 noon 9 November 2026. The
+salience signal is candidate-level so it cannot run before then;
 `scripts/victoria_salience_dryrun.R` tests everything downstream against
 Victoria 2022 — two lines change on the day.
 

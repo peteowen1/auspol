@@ -266,7 +266,9 @@ model.
 
 - **data.table NSE shadowing.** A function argument sharing a name with a
   column, used bare inside `dt[...]`, filters nothing and returns every row.
-  Twice here. Masks are now computed outside the brackets with `which()`.
+  Eight times here; `CLAUDE.md` keeps the list. Masks are computed outside
+  the brackets with `which()`, and the argument is copied to a local with a
+  different name before it goes anywhere near `[`.
 - **`fread` stops early on a ragged row** without erroring. It read 263 of
   `eventual-results.csv`'s 421 lines and trained the fundamentals model on 62%
   of the data. All hand-maintained files now go through `read_anchor_csv()`.

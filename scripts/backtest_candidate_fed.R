@@ -1233,7 +1233,7 @@ if (!is.finite(fallback)) {
 cat(sprintf("\nBF2  seat_sd per pair: %s | fallback (median over all %d pairs) %.3f\n",
             paste(sprintf("%.2f", seat_sds), collapse = ", "), length(PAIRS_ALL), fallback))
 
-res_all <- list(); tot_all <- list()
+res_all <- list(); tot_all <- list(); all_probs <- list()
 for (X in out_all) {
   K <- X$K
   sd_w <- if (is.finite(X$sd_w)) X$sd_w else fallback
@@ -1402,6 +1402,14 @@ for (X in out_all) {
   res <- merge(pa, pr, by = "seat")
   stopifnot(nrow(res) == length(X$keep))
   res[, pair := sprintf("fed%d", K$to)]
+  # THE FULL PER-SEAT PER-PARTY TABLE, kept. This harness used to collapse it
+  # to winner-plus-argmax, so "why did IND get 0.53 in Hunter" needed a fresh
+  # 10-minute run and a trace to answer. SA already wrote it; ported
+  # 2026-09-06 while chasing exactly that question.
+  full <- merge(wp[, .(seat, party, prob)],
+                data.table(seat = X$keep, actual = unname(X$truth)), by = "seat")
+  full[, is_actual := party == actual][, pair := sprintf("fed%d", K$to)]
+  all_probs[[length(all_probs) + 1L]] <- full
 
   z <- data.frame(y = as.integer(res$pred == res$actual),
                   lo = stats::qlogis(pmin(pmax(res$pred_p, eps), 1 - eps)))
@@ -1432,4 +1440,5 @@ per <- R[, .(n = .N, accuracy = round(100 * mean(pred == actual), 1),
 print(per)
 fwrite(R, file.path("output", sprintf("backtest-fed%s.csv", CAL_TAG)))
 fwrite(rbindlist(tot_all, fill = TRUE), file.path("output", sprintf("backtest-fed-totals%s.csv", CAL_TAG)))
+fwrite(rbindlist(all_probs), file.path("output", sprintf("backtest-fed-allprobs%s.csv", CAL_TAG)))
 cat(sprintf("BF5  wrote output/backtest-fed%s.csv and its totals\n", CAL_TAG))

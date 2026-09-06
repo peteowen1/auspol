@@ -14,7 +14,7 @@ Status key: **ESTIMATED** — derived from data, moves as data arrives ·
 **ESTIMABLE** — could be, currently is not · **FIXED** — cannot or should not
 be estimated, with the reason given.
 
-Last audited 2026-08-21.
+Last audited 2026-08-21; two rows added 2026-09-06 (below, "Added 2026-09-06") after a documentation review found them missing.
 
 ---
 
@@ -410,3 +410,10 @@ see `docs/reviews/arm-c-conditional-slopes-2026-08-27.md` and the commits around
 `afb7fef`/`203610e`): rescues nearly all of arm C's damage on fed2022 (log loss
 1.0161 → 0.8780, vs unscreened 0.8727), and beats the unscreened baseline
 outright on sa2026, vic2022 and nsw2023.
+
+## Added 2026-09-06: two constants the inventory had missed
+
+| constant | where | value | status |
+|---|---|---|---|
+| Candidate-conditional slope defaults (`same` / `new` per class) | `R/dev_slope.R:138-140` | IND 0.907 / 0.326, OTH_RIGHT 0.891 / 0.325, others per the table in the roxygen | **ESTIMATED once, then frozen in code.** The roxygen says "measured across five harnesses"; no committed fitting script was found on 2026-09-06, which is the same shape as the sitting-member tier before `scripts/fit_mp_slope.R` existed. The sitting-member tier (`AUSPOL_MP_SLOPE=1`, `output/mp-slope-by-*.csv`) overrides these for sitting members only. Needs a fitting script or a row saying why it cannot have one. |
+| `AUSPOL_SEAT_SD_MULT` | all five `scripts/backtest_candidate_*.R` | default 1 | **FIXED** — a diagnostic multiplier on whichever seat spread is in force (`level_sd` when on, else `seat_sd`), for the pre-registered calibration arm B. Not read by `fit_seats_full.R`. Inert in four harnesses from 2026-08-27 to 2026-09-06 while printing "applied"; the arm B sweeps in that window measured nothing. |
