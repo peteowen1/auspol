@@ -45,6 +45,15 @@ measured was not what ships. Re-run with surge-v2 on, seed 42:
 | sa2026 | 47 | 0.3867 | — | **0.3865** (accuracy 76.6%) | 0.3525 (advantaged, still behind) |
 | wa2025 | 53 | 0.2589 | — | **0.2787** | 0.3537 (advantaged) |
 
+**Superseded the same night by the rule-2 baseline** (P1 shipped; see
+`prereg-vote-belongs-to-the-person-2026-09-06.md`), published defaults, seed
+42, log loss / seat-share RMSE: fed2010 0.4047 / 3.84, fed2013 0.3807 / 4.72,
+fed2016 0.3566 / 4.84, fed2019 0.2639 / 4.73, fed2022 0.4819 / 4.56, fed2025
+0.3037 / 4.30 (six-pair mean **0.3653**, Brier 0.0977); vic2018 0.3218 / 4.90,
+vic2022 0.2466 / 4.75, nsw2023 0.3085 / 5.20, sa2026 0.3409 / 4.84, wa2025
+0.2787 / 4.09 (wa pooled Brier 0.0995). That column, not this one, is what
+P4 is measured against.
+
 The "what ships" column is the baseline every future number in this repo is
 measured against: `scripts/published_flags.R` applied to a bare harness run,
 fingerprints `a9e385c` (fed), `a8447fb` (sa) and their siblings. Removing the

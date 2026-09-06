@@ -564,21 +564,30 @@ simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
   # rate the exact key cannot reach -- LNP with {ALP, IND} alive is 71.2% to
   # the independent here against 69.9% in the raw counts, where `pairwise`
   # gives 46.2% and the pooled row 22.2%.
+  # INTEGER-KEYED, like the main cell cache since 2026-09-04. This sibling
+  # cache still built a string key with paste() on every miss of the main
+  # cache: 16% of the function's time on the default path (line profiler,
+  # 2026-09-06). The call site already holds `key = from * 2^K + mask`, which
+  # names the (source, alive-set) pair uniquely, so it is passed in.
   ss_cache <- new.env(parent = emptyenv())
-  ss_lookup <- function(from_i, alive_i) {
+  ss_list <- if (dense_cells) vector("list", n_slots) else NULL
+  ss_get <- function(key) if (dense_cells) ss_list[[key + 1L]] else
+    get0(as.character(key), envir = ss_cache, inherits = FALSE, ifnotfound = NULL)
+  ss_put <- function(key, val) if (dense_cells) ss_list[[key + 1L]] <<- val else
+    assign(as.character(key), val, envir = ss_cache)
+  ss_lookup <- function(from_i, alive_i, key) {
     if (is.null(matrix$superset) || !length(matrix$superset)) return(NULL)
-    ck <- paste0(from_i, ".", paste(alive_i, collapse = "."))
-    hit <- get0(ck, envir = ss_cache, inherits = FALSE, ifnotfound = NULL)
+    hit <- ss_get(key)
     if (!is.null(hit)) return(if (identical(hit, NA)) NULL else hit)
     nm <- paste0(parties[[from_i]], "|",
                  paste(sort(parties[alive_i]), collapse = "+"))
     r <- matrix$superset[[nm]]
-    if (is.null(r)) { assign(ck, NA, envir = ss_cache); return(NULL) }
+    if (is.null(r)) { ss_put(key, NA); return(NULL) }
     row <- numeric(K)
     keep <- intersect(names(r), parties)
     row[pidx[keep]] <- pmax(0, r[keep])
-    if (sum(row) <= 0) { assign(ck, NA, envir = ss_cache); return(NULL) }
-    assign(ck, row, envir = ss_cache)
+    if (sum(row) <= 0) { ss_put(key, NA); return(NULL) }
+    ss_put(key, row)
     row
   }
   pool_pw <- NULL
@@ -648,6 +657,16 @@ simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
     centre <- colMeans(statewide_draws)
   }
 
+  # HOISTED 2026-09-06 (line profiler, true default path: 23% of this
+  # function's time). `sd_cell` below depends on `base_v`, `level_mult_vec`
+  # and `level_sd` only; without `party_draws`, `base_v` is `shares[i, ]` on
+  # every draw, so the per-seat width was recomputed 20,000 times for one
+  # answer. Same arithmetic per element, so the values and the RNG stream are
+  # unchanged -- proven byte-identical on a full fed2022 run.
+  sd_cell_pre <- if (is.null(level_sd) || !is.null(party_draws)) NULL else {
+    ppm <- pmin(pmax(unname(as.matrix(shares)), 0), 100) / 100
+    level_sd[1L] + level_sd[2L] * matrix(level_mult_vec, nrow(ppm), K, byrow = TRUE) * sqrt(ppm * (1 - ppm))
+  }
   for (s in seq_len(n_sims)) {
     shift <- if (is.null(statewide_draws)) {
       if (is.null(chol_t)) stats::rnorm(K, 0, sd_vec)
@@ -683,7 +702,7 @@ simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
       # deviate by the same number of points. `base_v` is this draw's projected
       # share, so the width tracks the level actually being simulated rather
       # than a fixed prior. NULL keeps seat_sd_vec exactly.
-      sd_cell <- if (is.null(level_sd)) seat_sd_vec else {
+      sd_cell <- if (is.null(level_sd)) seat_sd_vec else if (!is.null(sd_cell_pre)) sd_cell_pre[i, ] else {
         pp <- pmin(pmax(base_v, 0), 100) / 100
         level_sd[1L] + level_sd[2L] * level_mult_vec * sqrt(pp * (1 - pp))
       }
@@ -733,7 +752,7 @@ simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
           row
         } else {
           n_fb <- n_fb + 1L
-          ssr <- ss_lookup(from, alive)
+          ssr <- ss_lookup(from, alive, key)
           if (!is.null(ssr)) ssr
           else if (!is.null(pool_pw)) pool_pw[[from]] else pool[[from]]
         }
