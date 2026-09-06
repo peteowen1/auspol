@@ -96,3 +96,21 @@ Bare harness runs at published defaults, one pair per launch:
 AUSPOL_FED_PAIRS=<year> Rscript scripts/backtest_candidate_fed.R
 Rscript scripts/backtest_candidate_{vic,nsw,sa}.R
 ```
+
+## Amendment 1, added before the run (original text above left unedited)
+
+Rule 1 has a named cost. Wentworth 2022 has the same shape as New England
+2013: Kerryn Phelps' 33% departed, Allegra Spender was permitted, slope 1.0
+carried the base and the model gave the seat 0.705 — and Spender won with
+35.8%. Under rule 1 that base decays at 0.326 and Wentworth 2022 will lose
+most of its 0.705. Cowper 2022 (Oakeshott 22.6% → Heise 26.3%, lost narrowly)
+is the same shape again. So departed-base retention is heterogeneous (0.33
+Windsor → McIntyre/Taber, 1.08 Phelps → Spender, 1.16 Oakeshott → Heise,
+0.16 Oakeshott → Attkins) and rule 1 picks the low value for everyone the
+screen permits.
+
+Expected: fed2013 gains (New England), fed2022 loses (Wentworth). The
+six-pair mean guard decides, and a win carried by fed2013 alone with fed2022
+worse is reported as exactly that. If the mean is a wash, rule 2 ships on its
+own targets (Hunter, Kennedy) and rule 1 is refused pending a retention model
+that uses the departed leader's own size and the newcomer's salience.
