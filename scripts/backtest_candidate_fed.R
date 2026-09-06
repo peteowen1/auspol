@@ -402,6 +402,7 @@ out_all <- list(); seat_sds <- c()
 # AUSPOL_FED_PAIRS=2022 runs just that pair. Default is every pair, so nothing
 # changes unless asked.
 .want <- Sys.getenv("AUSPOL_FED_PAIRS", "")
+PAIRS_ALL <- PAIRS
 if (nzchar(.want)) {
   .keep <- as.integer(trimws(strsplit(.want, ",")[[1]]))
   PAIRS <- Filter(function(k) k$to %in% .keep, PAIRS)
@@ -1212,14 +1213,25 @@ for (K in PAIRS) {
                                           sw_draws = sw_draws)
 }
 
-fallback <- stats::median(seat_sds, na.rm = TRUE)
+# THE FALLBACK IS TAKEN OVER EVERY PAIR, NOT JUST THE ONES IN THIS RUN.
+# `sd_within` subtracts the statewide swing as a constant before taking
+# within-region deviations, so the swing cancels and spread_for(yr, 0) is the
+# same number the pair's own loop iteration produces. Before 2026-09-06 the
+# median ran over the restricted PAIRS only, so AUSPOL_FED_PAIRS=2010, 2013 or
+# 2016 -- the pairs with no seat file -- aborted here when run alone, and the
+# per-pair launches the 10-minute cap forces could not cover half the harness.
+# (The fallback for those pairs is a median over LATER elections' spreads. That
+# is the same value the full run has always used; it is a seat-sd
+# hyperparameter with no pre-2010 seat file to draw on, and is noted, not fixed.)
+seat_sds_all <- vapply(PAIRS_ALL, function(k) spread_for(k$to, 0), numeric(1))
+fallback <- stats::median(seat_sds_all, na.rm = TRUE)
 if (!is.finite(fallback)) {
   stop("No federal seat file yielded a within-region seat-swing spread, so ",
        "there is no measured value to fall back on and one would have to be ",
        "invented here.")
 }
-cat(sprintf("\nBF2  seat_sd per pair: %s | fallback (median) %.3f\n",
-            paste(sprintf("%.2f", seat_sds), collapse = ", "), fallback))
+cat(sprintf("\nBF2  seat_sd per pair: %s | fallback (median over all %d pairs) %.3f\n",
+            paste(sprintf("%.2f", seat_sds), collapse = ", "), length(PAIRS_ALL), fallback))
 
 res_all <- list(); tot_all <- list()
 for (X in out_all) {
