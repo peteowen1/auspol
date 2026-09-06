@@ -58,6 +58,8 @@
 
 options(auspol.root = normalizePath("."))
 suppressMessages(devtools::load_all(quiet = TRUE))
+.harness_forecast_mode <- TRUE
+source("scripts/harness_defaults.R")  # published defaults for every unset AUSPOL_* switch; see that file
 suppressMessages(library(data.table))
 
 # LEVEL-DEPENDENT SEAT VARIANCE, off by default. AUSPOL_LEVEL_SD="1.10,8.67"

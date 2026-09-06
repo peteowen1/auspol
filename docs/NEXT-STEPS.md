@@ -96,7 +96,14 @@ The two facts that change what to do next:
   six-pair mean 0.4096 -> 0.3695 on log loss and WORSE on Brier in all six.
   Surge-v2's gain is the log-loss clamp on seats moving 0.000 -> 0.004; it
   hedges, it does not forecast.
-  **P0: make the five harnesses' defaults mirror the published script.**
+  **P0 DONE 2026-09-06 evening: `scripts/published_flags.R` is the one registry;
+  `fit_seats_full.R` and all five harnesses apply it to unset switches** (the
+  forecast's outputs are byte-identical before and after, so the registry
+  equals the code defaults). Re-baseline at published defaults: see the table
+  in `plans/plan-miss-patterns-2026-09-06.md` section 2: six-pair federal
+  mean **0.3717** (Brier 0.0976); fed2022 0.4960 / fed2025 0.3103 against AEF
+  0.2353 / 0.3025; vic2022 0.2466, nsw2023 0.3251, sa2026 0.3865, wa2025
+  0.2787. **Every number after this is measured against that column.**
 - **The misses have a shape.** 80% of the fed2022 gap to AEF is 11 seats a
   first-time independent won; the false independent calls trace to three
   specific mechanisms (a national IND multiplier applied uniformly, a

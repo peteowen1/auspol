@@ -30,22 +30,31 @@ The harness run that produced last session's headline (`fed2025 0.2886`) had
 (which `fit_seats_full.R` has **on** by default since 2026-09-04). What was
 measured was not what ships. Re-run with surge-v2 on, seed 42:
 
-| election | n | ours, harness default | ours, surge-v2 ON (ships) | AEF | note |
-|---|--:|--:|--:|--:|---|
-| fed2010 | 147 | 0.4525 | 0.3963 | — | Brier 0.0991 -> 0.1002 |
-| fed2013 | 150 | 0.4386 | 0.3817 | — | Brier 0.1006 -> 0.1012 |
-| fed2016 | 147 | 0.4080 | 0.3924 | — | Brier 0.1056 -> 0.1080 |
-| fed2019 | 143 | 0.2619 | 0.2643 | — | Brier 0.0838 -> 0.0842 |
-| fed2022 | 150 | 0.6065 | **0.4804** | **0.2353** | Brier 0.1149 -> 0.1156 |
-| fed2025 | 150 | 0.2898 | 0.3017 | 0.3025 | a tie, not a win; Brier 0.0878 -> 0.0896 |
-| **six-pair mean** | 887 | **0.4096** | **0.3695** | | log loss better in 4 of 6, **Brier worse in 6 of 6** |
-| vic2022 | 78 | 0.2258 | — | 0.2572 | we are advantaged |
-| nsw2023 | 88 | 0.4252 | — | 0.2138 | advantaged and still behind |
-| sa2026 | 47 | 0.3867 | — | 0.3525 | advantaged and still behind |
-| wa2025 | 53 | 0.2589 | — | 0.3537 | advantaged |
+| election | n | harness as run yesterday (v1 ratio ON, surge OFF) | + surge-v2 (v1 still ON) | **what ships** (`published_flags.R`) | AEF |
+|---|--:|--:|--:|--:|--:|
+| fed2010 | 147 | 0.4525 | 0.3963 | **0.3963** (Brier 0.1000) | — |
+| fed2013 | 150 | 0.4386 | 0.3817 | **0.3817** (0.1012) | — |
+| fed2016 | 147 | 0.4080 | 0.3924 | **0.3814** (0.0965) | — |
+| fed2019 | 143 | 0.2619 | 0.2643 | **0.2643** (0.0842) | — |
+| fed2022 | 150 | 0.6065 | 0.4804 | **0.4960** (0.1104, accuracy 87.3%) | **0.2353** |
+| fed2025 | 150 | 0.2898 | 0.3017 | **0.3103** (0.0931) | **0.3025** |
+| **six-pair mean** | 887 | 0.4096 | 0.3695 | **0.3717** (Brier 0.0976) | |
+| vic2018 | 88 | 0.3212 | — | **0.3218** | — |
+| vic2022 | 78 | 0.2258 | — | **0.2466** | 0.2572 (we are advantaged) |
+| nsw2023 | 88 | 0.4252 | — | **0.3251** | 0.2138 (advantaged, still behind) |
+| sa2026 | 47 | 0.3867 | — | **0.3865** (accuracy 76.6%) | 0.3525 (advantaged, still behind) |
+| wa2025 | 53 | 0.2589 | — | **0.2787** | 0.3537 (advantaged) |
+
+The "what ships" column is the baseline every future number in this repo is
+measured against: `scripts/published_flags.R` applied to a bare harness run,
+fingerprints `a9e385c` (fed), `a8447fb` (sa) and their siblings. Removing the
+v1 ratio is visible where it was doing damage: fed2022 accuracy 85.3 → 87.3%
+and its best Brier of the three columns (Cowper, Hunter and Mallee were the
+v1 multiplier's work), fed2016 0.3924 → 0.3814. fed2025 is now **0.008
+behind** AEF, not ahead.
 
 Log loss throughout (the repo's primary metric). Surge-v2 lowers the six-pair
-mean by 0.040 and raises Brier in every pair: the shape of a hedge that
+mean by 0.040 against the v1-only column and raises Brier in every pair: the shape of a hedge that
 spreads a little probability everywhere, scored under a metric that punishes
 zeros without limit. Surge-v2's fed2022 gain is
 almost entirely the log-loss clamp: North Sydney, Goldstein and Fowler move
@@ -53,9 +62,11 @@ from 0.000 to 0.004, worth 5–8 each at `eps = 1e-6`, while it costs real
 probability in safe seats (Hume 0.85 → 0.73, Flinders 0.90 → 0.78). It hedges;
 it does not forecast an emergence.
 
-**P0, before anything else: make the five harnesses' defaults mirror
-`fit_seats_full.R`** (surge-v2 on, v1 ratio off or ported into the published
-script — one or the other), so a "shipped config" run means one thing.
+**P0 — DONE 2026-09-06 evening.** `scripts/published_flags.R` is the one
+registry; `fit_seats_full.R` (whose RUN_FLAGS list still said shrink 0.10)
+and all five harnesses apply it to every unset switch. The forecast's outputs
+are byte-identical before and after, so the registry equals the code
+defaults; the "what ships" column above is the re-baseline.
 
 ## 3. The misses, classified
 

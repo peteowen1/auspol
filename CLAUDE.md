@@ -412,6 +412,25 @@ This rule was given three times in conversation and drifted from three times on
 all built on the retired path before anyone noticed. It is written here because
 `CLAUDE.md` reloads every turn and a conversation does not.
 
+## The published configuration lives in `scripts/published_flags.R`, and nowhere else
+
+Every `AUSPOL_*` switch and the value the published forecast runs at. Both
+`fit_seats_full.R` and the five harnesses (via `scripts/harness_defaults.R`)
+apply it to every switch the caller left unset, so **a harness run with no
+environment measures what ships**, and a run that sets anything has to name
+it (the arm fingerprint in the output filename does the rest).
+
+This exists because on 2026-09-06 a day of headline numbers ("fed2025 0.2886,
+ahead of AE Forecasts") came from a harness "shipped config" that had
+surge-v2 OFF and the v1 salience ratio ON — the opposite of the forecast on
+both counts. What ships scores 0.3017, a tie. `fit_seats_full.R`'s own
+RUN_FLAGS list said shrink 0.10 a day after the code moved to 0.01. Two lists
+drift in both directions; there is one now.
+
+**When you add a switch to `fit_seats_full.R`, add it to `published_flags.R`
+in the same commit.** A `Sys.getenv("AUSPOL_...", default)` anywhere else is
+documentation; the registry is the behaviour.
+
 ## Two trend-model paths — know which one you are looking at
 
 `trend_as_at()` fits with default volatility and equal pollster weights, and

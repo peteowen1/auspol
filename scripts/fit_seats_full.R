@@ -17,6 +17,16 @@
 
 options(auspol.root = normalizePath("."))
 suppressMessages(devtools::load_all(quiet = TRUE))
+# THE PUBLISHED CONFIGURATION lives in scripts/published_flags.R and nowhere
+# else. Every switch the caller left unset takes its value from there, so the
+# scattered Sys.getenv() defaults below are documentation, not behaviour.
+source("scripts/published_flags.R")
+.pf_applied <- apply_published_flags()
+cat(sprintf("S0   published flags applied to %d unset switch(es); caller set: %s
+",
+            length(.pf_applied),
+            { .cs <- setdiff(names(PUBLISHED_FLAGS), .pf_applied); .cs <- .cs[nzchar(Sys.getenv(.cs, ""))]
+              if (length(.cs)) paste(sprintf("%s=%s", .cs, Sys.getenv(.cs)), collapse = " ") else "(none)" }))
 suppressMessages(library(data.table))
 
 # LEVEL-DEPENDENT SEAT VARIANCE, ON BY DEFAULT since 2026-08-27. The per-seat
@@ -312,12 +322,7 @@ if (FLOW_SHIFT != 0) {
 # Derived from the list rather than restated, so adding a flag without adding
 # it here is the only remaining way to reopen the hole -- and S6 now prints
 # what actually differs, which a hand-maintained boolean could not.
-RUN_FLAGS <- c(AUSPOL_N_SIMS = "20000", AUSPOL_FP_SD_MODE = "additive",
-               AUSPOL_SEED = "42", AUSPOL_ONP_ORDER = "federal",
-               AUSPOL_ONP_FIX = "1", AUSPOL_QLD_FLOWS = "1",
-               AUSPOL_WA_FLOWS = "0", AUSPOL_FLOW_SHIFT = "0",
-               AUSPOL_FORCE_FP = "", AUSPOL_ONP_CV = "0",
-               AUSPOL_PARTY_COR = "shrunk", AUSPOL_SHRINK = "0.10")
+RUN_FLAGS <- PUBLISHED_FLAGS  # scripts/published_flags.R -- the only copy
 .now <- vapply(names(RUN_FLAGS), function(k) Sys.getenv(k, RUN_FLAGS[[k]]),
                character(1))
 changed <- names(RUN_FLAGS)[.now != RUN_FLAGS]
