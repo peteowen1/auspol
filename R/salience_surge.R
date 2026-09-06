@@ -168,10 +168,32 @@ surge_hazard_for <- function(target_election, target_prev, target_region,
   # paid the Greens in every teal seat. Carried per seat so the simulator can
   # be told (prereg-surge-recipient-2026-09-06.md).
   seat_recipient <- seat_party_hazard[, .(party = party[which.max(p_hat)]), by = seat]
+  # EXPECTED VOTE, not a win probability. surge_blend_estimate() mixes a vote
+  # share using p_hat -- the probability the candidate WINS -- as the weight,
+  # which is a category error: Goldstein 2022 came out at 3.1 because 0.025 of
+  # 35.1 is 0.9. What the same training population answers directly is "what
+  # does a candidate with this salience poll", winners and losers together:
+  # the 98-99.5% band averages 14.0 and 9.3 even when it loses. Bands, not a
+  # continuous fit, because 20 winners cannot support one (pcv ~ jump_pctile
+  # has R^2 0.015 and loses to a constant out of fold). TRAIN excludes the
+  # target election, so this is leave-one-election-out by construction.
+  # docs/plans/prereg-salience-expected-primary-2026-09-07.md.
+  .bands <- c(-0.01, 0.5, 0.9, 0.95, 0.98, 0.995, 1.01)
+  TRB <- data.table::copy(TRAIN)[, .b := cut(jump_pctile, .bands)]
+  bstat <- TRB[, list(exp_pcv = mean(pcv, na.rm = TRUE),
+                      exp_sd  = stats::sd(pcv, na.rm = TRUE), n_band = .N), by = .b]
+  bstat[!is.finite(exp_sd), exp_sd := stats::sd(TRB$pcv, na.rm = TRUE)]
+  TGB <- data.table::copy(target)[, .b := cut(jump_pctile, .bands)]
+  TGB <- merge(TGB, bstat, by = ".b", all.x = TRUE)
+  TGB[is.na(exp_pcv), `:=`(exp_pcv = mean(TRB$pcv, na.rm = TRUE),
+                           exp_sd = stats::sd(TRB$pcv, na.rm = TRUE))]
+  seat_party_expected <- TGB[, list(exp_pcv = max(exp_pcv), exp_sd = max(exp_sd)), by = list(seat, party)]
   winners <- TRAIN[TRAIN$elected == TRUE]
   list(seat_hazard = seat_hazard,
       seat_party_hazard = seat_party_hazard,
       seat_recipient = seat_recipient,
+      seat_party_expected = seat_party_expected,
+      band_table = bstat,
       surge_mu = if (nrow(winners) >= 3) mean(winners$pcv) else 15.6,
       surge_sd = if (nrow(winners) >= 3) stats::sd(winners$pcv) else 6.1,
       lambda = lambda, n_train_winners = nrow(winners))

@@ -1381,13 +1381,44 @@ for (X in out_all) {
       # vs 34.5% actual. Blend toward surge_mu using the SAME p_hat already
       # fitted for the hazard, landed on the right (seat, party) column via
       # seat_party_hazard rather than the party-collapsed seat_hazard.
+      # 1 = the POINT estimate takes the band expectation, the draw keeps the
+      #     winners-only size (amendment 1 of the pre-registration);
+      # 2 = point AND draw, as originally pre-registered.
+      .exp_mode <- suppressWarnings(as.integer(Sys.getenv("AUSPOL_SALIENCE_EXPECTED", "0")))
+      if (is.na(.exp_mode)) .exp_mode <- 0L
+      .expected_on <- .exp_mode > 0L && !is.null(hz$seat_party_expected)
       for (pp in unique(hz$seat_party_hazard$party)) {
         if (!pp %in% colnames(X$shares)) next
-        ph <- hz$seat_party_hazard[hz$seat_party_hazard$party == pp]
-        w <- setNames(ph$p_hat, ph$seat)[sn]
-        w[is.na(w)] <- 0
-        X$shares[, pp] <- surge_blend_estimate(X$shares[, pp], unname(w), surge_mu_arg)
+        if (.expected_on) {
+          # THE EXPECTED VOTE GIVEN THE SALIENCE, floored by the uniform swing:
+          # a governed candidate polls what candidates with that salience poll,
+          # winners and losers together. prereg-salience-expected-primary.
+          pe <- hz$seat_party_expected[hz$seat_party_expected$party == pp]
+          ev <- setNames(pe$exp_pcv, pe$seat)[sn]
+          hit <- !is.na(ev)
+          X$shares[hit, pp] <- pmax(X$shares[hit, pp], unname(ev[hit]))
+        } else {
+          ph <- hz$seat_party_hazard[hz$seat_party_hazard$party == pp]
+          w <- setNames(ph$p_hat, ph$seat)[sn]
+          w[is.na(w)] <- 0
+          X$shares[, pp] <- surge_blend_estimate(X$shares[, pp], unname(w), surge_mu_arg)
+        }
       }
+      if (.expected_on && .exp_mode >= 2L) {
+        # The DRAW takes the same band's spread, per seat, replacing the single
+        # winners-only surge_mu/surge_sd.
+        er <- hz$seat_party_expected[hz$seat_party_expected$seat %in% sn]
+        er <- er[order(-er$exp_pcv)]
+        er <- er[!duplicated(er$seat), ]
+        mu <- setNames(er$exp_pcv, er$seat)[sn]; sdv <- setNames(er$exp_sd, er$seat)[sn]
+        surge_mu_arg <- ifelse(is.na(mu), surge_mu_arg, unname(mu))
+        surge_sd_arg <- ifelse(is.na(sdv), surge_sd_arg, unname(sdv))
+        cat(sprintf("SE1  salience EXPECTED vote, POINT AND DRAW: %d seats, draw mean %.1f
+",
+                    sum(!is.na(mu)), mean(mu, na.rm = TRUE)))
+      } else if (.expected_on) {
+        cat("SE1  salience EXPECTED vote, POINT ESTIMATE ONLY: the draw keeps the winners-only size
+")      }
       X$shares <- 100 * X$shares / rowSums(X$shares)
       cat(sprintf("BF0v %s: point estimate blended toward surge_mu for %d (seat,party) cells\n",
                   target_el, sum(hz$seat_party_hazard$p_hat > 0.001)))

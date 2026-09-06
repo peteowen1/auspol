@@ -155,7 +155,8 @@
 #'   of the nine misses above `pred_p` 0.9999 were a non-major taking a seat
 #'   called safe for a major.
 #' @param surge_mu,surge_sd Mean and standard deviation, in percentage points,
-#'   of the `N(surge_mu, surge_sd)` gain drawn for the surging candidate.
+#'   of the `N(surge_mu, surge_sd)` gain drawn for the surging candidate. Length
+#'   1 (every seat the same) or one per seat, in seat order.
 #'   Everyone else in the seat scales down by a common factor -- not a flat
 #'   subtraction, which would drive small parties negative and silently
 #'   redistribute their vote -- so the seat still sums to 100.
@@ -290,8 +291,16 @@ simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
          paste(utils::head(surge_h, 5), collapse = ", "))
   }
   if (length(surge_h) == 0L) stop("surge_h must have length >= 1")
-  if (!is.finite(surge_mu) || !is.finite(surge_sd) || surge_sd < 0) {
+  # PER-SEAT SIZE, not one number. The salience band a candidate sits in says
+  # what they poll (docs/plans/prereg-salience-expected-primary-2026-09-07.md),
+  # so the gain's mean and spread vary by seat exactly as the hazard does.
+  # Length 1 recycles, which is every caller before 2026-09-07.
+  if (!all(is.finite(surge_mu)) || !all(is.finite(surge_sd)) || any(surge_sd < 0)) {
     stop("surge_mu must be finite and surge_sd finite and non-negative")
+  }
+  if (!length(surge_mu) %in% c(1L, nrow(shares)) || !length(surge_sd) %in% c(1L, nrow(shares))) {
+    stop("surge_mu and surge_sd must be length 1 or one per seat (", nrow(shares),
+         "); got ", length(surge_mu), " and ", length(surge_sd))
   }
   if (!is.finite(surge_floor) || surge_floor < 0) {
     stop("surge_floor must be finite and non-negative; got ", surge_floor)
@@ -389,6 +398,8 @@ simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
 
   # Resolve the surge hazard to one value per seat, by the same rule.
   surge_h <- .fix_surge(surge_h, seat_names)
+  surge_mu <- if (length(surge_mu) == 1L) rep(unname(surge_mu), length(seat_names)) else unname(surge_mu)
+  surge_sd <- if (length(surge_sd) == 1L) rep(unname(surge_sd), length(seat_names)) else unname(surge_sd)
   # THE RECIPIENT OF THE SURGE, per seat. Resolved to a column index once;
   # NA means "the default rule" (largest eligible non-major at the draw).
   surge_party_idx <- rep(NA_integer_, length(seat_names))
@@ -832,7 +843,7 @@ simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
         cand <- if (!is.na(j0)) j0 else surge_idx[v[surge_idx] >= surge_floor]
         if (length(cand) && stats::runif(1) < surge_h[i]) {
           j <- if (!is.na(j0)) j0 else cand[which.max(v[cand])]
-          add <- stats::rnorm(1, surge_mu, surge_sd)
+          add <- stats::rnorm(1, surge_mu[i], surge_sd[i])
           if (add > 0) {
             others <- setdiff(seq_len(K), j)
             pool_v <- sum(v[others])

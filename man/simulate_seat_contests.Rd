@@ -204,7 +204,8 @@ of the nine misses above \code{pred_p} 0.9999 were a non-major taking a seat
 called safe for a major.}
 
 \item{surge_mu, surge_sd}{Mean and standard deviation, in percentage points,
-of the \code{N(surge_mu, surge_sd)} gain drawn for the surging candidate.
+of the \code{N(surge_mu, surge_sd)} gain drawn for the surging candidate. Length
+1 (every seat the same) or one per seat, in seat order.
 Everyone else in the seat scales down by a common factor -- not a flat
 subtraction, which would drive small parties negative and silently
 redistribute their vote -- so the seat still sums to 100.

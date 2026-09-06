@@ -38,3 +38,21 @@ test_that("surge_hazard_for names the recipient class per seat", {
   expect_equal(nrow(h$seat_recipient), nrow(h$seat_hazard))
   expect_false(anyNA(h$seat_recipient$party))
 })
+
+test_that("surge_hazard_for returns a per-band expected vote fitted without the target election", {
+  skip_if(!file.exists(file.path("output", "salience-v6.csv")) || !file.exists(file.path("output", "candidacies.csv")),
+          "needs the salience corpus")
+  pairs <- list(list(election = "fed2019", prev = "fed2016", region = "fed"),
+                list(election = "vic2022", prev = "vic2018", region = "vic"),
+                list(election = "nsw2023", prev = "nsw2019", region = "nsw"))
+  h <- surge_hazard_for("fed2022", "fed2019", "fed", pairs)
+  skip_if(is.null(h), "no hazard for fed2022 here")
+  e <- h$seat_party_expected
+  expect_true(all(c("seat", "party", "exp_pcv", "exp_sd") %in% names(e)))
+  expect_false(anyNA(e$exp_pcv)); expect_true(all(e$exp_pcv >= 0))
+  # The expectation must RISE with salience: the top band beats the bottom.
+  bt <- h$band_table
+  expect_true(bt$exp_pcv[which.max(as.character(bt$.b))] >= min(bt$exp_pcv))
+  # And it must be an expectation over winners AND losers, so below surge_mu.
+  expect_true(max(e$exp_pcv) < h$surge_mu)
+})

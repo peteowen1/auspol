@@ -97,3 +97,73 @@ Whether 2022's magnitudes were a wave. The band expectation is an average
 over nine elections, so it will under-predict a wave year and over-predict a
 quiet one; it cannot know which is which. That is the wave-term experiment,
 and it stays separate.
+
+## Amendment 1, written after the first fed2022 run and BEFORE scoring it
+
+The change as pre-registered replaces the point estimate AND the draw's size
+with the band expectation. On fed2022 the point estimate improved as intended
+(seat-share RMSE 4.558 -> 4.274, Goldstein's projected primary 2.3 -> 10.4),
+but the win probabilities FELL -- Mackellar 0.054 -> 0.022, North Sydney
+0.025 -> 0.008 -- because a surge adding the band's 14 points does not win a
+seat where one adding 35 did. The band mean is over winners and losers
+together: the right number for "what will they poll", the wrong number for
+"how big is a surge when one happens".
+
+So the arm splits, and BOTH are run and reported:
+
+- **Variant A**, exactly as pre-registered above (`AUSPOL_SALIENCE_EXPECTED=2`):
+  point estimate and draw size both from the band.
+- **Variant B** (`=1`): the point estimate takes the band expectation, the
+  draw keeps the winners-only size. This is the amendment.
+
+The original text is unedited above. Variant B is favourable to the result
+found later, so it is named as an amendment and held to the SAME criteria:
+pooled log loss and pooled seat-share RMSE over all 17 elections, both
+improving, and not carried by fed2022.
+
+## Result, 2026-09-07 — REFUSED on log loss; the vote-share gain is real and recorded
+
+All 17 elections (the 11 state ones are unchanged by construction: the
+point-estimate blend exists only in the federal harness, a cross-harness gap
+named below). Variant B, against the shipped baseline:
+
+| election | log loss | | seat-share RMSE | |
+|---|--:|--:|--:|--:|
+| | base | B | base | B |
+| fed2010 | 0.3281 | **0.3152** | 3.844 | 3.927 |
+| fed2013 | 0.3864 | 0.4136 | 4.718 | 4.904 |
+| fed2016 | 0.3154 | 0.3182 | 4.844 | **4.594** |
+| fed2019 | 0.2624 | 0.2648 | 4.726 | **4.713** |
+| fed2022 | 0.3862 | **0.3706** | 4.558 | **4.274** |
+| fed2025 | 0.3049 | 0.3096 | 4.297 | **4.040** |
+| **pooled, 1,549 seats** | **0.3422** | **0.3430** | **4.697** | **4.645** |
+| | | +0.2 SE | | −1.1 SE |
+
+**Log loss does not improve, so the pre-registration refuses it**, whatever
+the vote-share gain. Variant A is worse still on fed2022 (0.3946).
+
+**What is nonetheless established, and matters:** the point estimate is
+better. Pooled RMSE falls 0.051 and improves in 4 of 6 federal elections;
+Goldstein's projected primary goes 2.3 → 10.4 and the seven teals' mean 13.4
+→ about 19 against an actual 33.9. The category error is real and the fix
+does fix it. What it does not do is change who wins a seat, because a
+candidate lifted from 2 to 10 still loses to a major on 45, and the seat
+probability only moves when the DRAW is large — which is variant A, and
+variant A is worse.
+
+So the honest statement is: **the salience signal now predicts the vote well
+and the seat badly, and those are different problems.** fed2013 is the clear
+cost (+0.027 log, +0.186 RMSE): raising the expected vote of governed
+candidates in New England and Lyne, where they polled far below their
+salience, hurts twice.
+
+`AUSPOL_SALIENCE_EXPECTED` stays at 0. Kept, because the wave term would
+change the size of the band expectation and this is the mechanism it would
+act through.
+
+**Cross-harness gap found here and not fixed:** the point-estimate blend
+(`surge_blend_estimate`) is called only by `backtest_candidate_fed.R`. The
+Victorian, NSW and SA harnesses use the hazard for the draw only, and
+`fit_seats_full.R` — the published forecast — does not blend at all. So the
+salience point estimate has never reached the published Victoria forecast.
+That is its own item, ahead of any further salience modelling.

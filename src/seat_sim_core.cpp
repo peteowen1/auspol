@@ -25,7 +25,7 @@ List seat_sim_core(NumericMatrix shares, int n_sims, int shift_mode,
                    NumericMatrix shift_mat, NumericVector sd_vec, NumericMatrix chol_t,
                    NumericVector seat_sd_vec, bool has_level, NumericMatrix sd_cell_pre,
                    NumericVector surge_h, IntegerVector surge_party_idx, IntegerVector surge_idx,
-                   double surge_floor, double surge_mu, double surge_sd,
+                   double surge_floor, NumericVector surge_mu, NumericVector surge_sd,
                    bool surge_from_zero,
                    NumericMatrix cell_mat, LogicalVector cell_has,
                    NumericMatrix ss_mat, LogicalVector ss_has,
@@ -88,7 +88,7 @@ List seat_sim_core(NumericMatrix shares, int n_sims, int shift_mode,
           int j;
           if (j0 != NA_INTEGER) j = j0 - 1;
           else { j = cand[0]; for (size_t t = 1; t < cand.size(); ++t) if (v[cand[t]] > v[j]) j = cand[t]; }
-          const double add = R::rnorm(surge_mu, surge_sd);
+          const double add = R::rnorm(surge_mu[i], surge_sd[i]);
           if (add > 0) {
             long double pv = 0.0L;
             for (int k = 0; k < K; ++k) if (k != j) pv += v[k];
