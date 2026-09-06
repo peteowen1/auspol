@@ -251,4 +251,9 @@ test_that("remove_transferred_votes takes the moved vote out of the old class, o
   # Larger than what the class held: floored, not negative.
   op2 <- data.table::data.table(seat = "A", party = "IND", own_prev_pcv = 30, prev_party = "ONP", transfer = 30)
   expect_equal(unname(remove_transferred_votes(mat, op2)["A", "ONP"]), 0)
+  # Coverage travels with the result: applied and skipped are counted and named.
+  tr <- attr(out, "transfers"); expect_equal(tr$applied, 1L); expect_length(tr$skipped, 0)
+  op3 <- data.table::data.table(seat = c("A", "Ghost"), party = "IND", own_prev_pcv = 5, prev_party = c("ONP", "ONP"), transfer = 5)
+  tr3 <- attr(remove_transferred_votes(mat, op3), "transfers")
+  expect_equal(tr3$applied, 1L); expect_equal(tr3$skipped, "Ghost/ONP")
 })

@@ -350,8 +350,9 @@ if (.cond && !is.null(.returns))
                 paste(sprintf("%s=%.4f", names(.MP_SLOPE), .MP_SLOPE), collapse = " ")))
 .defect <- if (identical(Sys.getenv("AUSPOL_DEFECT_DISCOUNT", "0"), "1")) 0.282 else NULL
 # THE BASE VALUE, not just the slope -- see personal_prior_vote()'s docs.
-.own_prev <- if (.cond) tryCatch(personal_prior_vote("sa2022", "sa2026", major_discount = .defect), error = function(e) NULL) else NULL
+.own_prev <- if (.cond) tryCatch(personal_prior_vote("sa2022", "sa2026", major_discount = .defect), error = function(e) { cat(sprintf("BS1p! personal_prior_vote() FAILED; class-level bases kept and NO transfer removed: %s\n", conditionMessage(e))); NULL }) else NULL
 mat <- remove_transferred_votes(mat, .own_prev)  # the vote moves with the person; see personal_prior_vote()
+.tr <- attr(mat, "transfers"); if (!is.null(.tr)) cat(sprintf("TR1  transfers moved with the person: %d applied%s\n", .tr$applied, if (length(.tr$skipped)) paste0("; SKIPPED ", length(.tr$skipped), ": ", paste(utils::head(.tr$skipped, 5), collapse = ", ")) else ""))
 .own_x <- function(p, seats, x) {
   if (is.null(.own_prev)) return(x)
   ov <- .own_prev[.own_prev$party == p, ]
@@ -652,7 +653,7 @@ if (identical(Sys.getenv("AUSPOL_SALIENCE_SURGE_V2", "0"), "1")) {
     v <- setNames(hz$seat_hazard$surge_h, hz$seat_hazard$seat)[sn]
     miss <- sum(is.na(v)); v[is.na(v)] <- 0
     surge_arg <- unname(v); surge_mu_arg <- hz$surge_mu; surge_sd_arg <- hz$surge_sd
-    if (identical(Sys.getenv("AUSPOL_SURGE_RECIPIENT", "0"), "1") && !is.null(hz$seat_recipient)) {
+    if (identical(Sys.getenv("AUSPOL_SURGE_RECIPIENT", "1"), "1") && !is.null(hz$seat_recipient)) {
       # THE SURGE GOES TO THE CLASS THE HAZARD WAS FITTED FOR (prereg-surge-recipient-2026-09-06.md).
       surge_party_arg <- unname(setNames(hz$seat_recipient$party, hz$seat_recipient$seat)[sn])
       cat(sprintf("SR1  surge recipient ON: %d of %d seats name a class (%s)\n", sum(!is.na(surge_party_arg)), length(sn),
@@ -679,6 +680,7 @@ sim <- simulate_seat_contests(level_sd = .level_sd, level_mult = .lm(shares), sh
                               shrink = SHRINK, party_cor = PARTY_COR,
                               fallback_smooth = FB_SMOOTH, flow_sd = FLOW_SD,
                               surge_h = surge_arg, surge_party = surge_party_arg, surge_mu = surge_mu_arg, surge_sd = surge_sd_arg)
+cat(sprintf("BS2e  engine %s | surge recipient fell back: %d class(es) absent, %d seat-draws at zero share\n", sim$engine, sim$surge_recipient_fallback, sim$surge_recipient_fallback_draws))
 wp <- as.data.table(sim$win_prob)
 
 pa <- merge(data.table(seat = keep, actual = unname(truth)),

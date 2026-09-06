@@ -687,11 +687,14 @@ for (K in PAIRS) {
     }, error = function(e) NULL)
   }
   .own_prev <- if (.cond) tryCatch(personal_prior_vote(ea, eb, major_discount = .defect),
-                                   error = function(e) NULL) else NULL
+                                   error = function(e) {
+                                     cat(sprintf("BF1p! personal_prior_vote() FAILED for %s -> %s; class-level bases kept and NO transfer removed: %s\n", ea, eb, conditionMessage(e)))
+                                     NULL }) else NULL
   # THE VOTE MOVES WITH THE PERSON: what .own_x() substitutes into the new
   # class below is taken out of the class it came from here (Hunter 2022,
   # Kennedy 2013). remove_transferred_votes() is a no-op when .own_prev is NULL.
   mat <- remove_transferred_votes(mat, .own_prev)
+  .tr <- attr(mat, "transfers"); if (!is.null(.tr)) cat(sprintf("TR1  transfers moved with the person: %d applied%s\n", .tr$applied, if (length(.tr$skipped)) paste0("; SKIPPED ", length(.tr$skipped), ": ", paste(utils::head(.tr$skipped, 5), collapse = ", ")) else ""))
   .own_x <- function(p, seats, x) {
     if (is.null(.own_prev)) return(x)
     ov <- .own_prev[.own_prev$party == p, ]
@@ -1349,7 +1352,7 @@ for (X in out_all) {
       v[is.na(v)] <- 0
       surge_arg <- unname(v)
       surge_mu_arg <- hz$surge_mu; surge_sd_arg <- hz$surge_sd
-      if (identical(Sys.getenv("AUSPOL_SURGE_RECIPIENT", "0"), "1") && !is.null(hz$seat_recipient)) {
+      if (identical(Sys.getenv("AUSPOL_SURGE_RECIPIENT", "1"), "1") && !is.null(hz$seat_recipient)) {
         # THE SURGE GOES TO THE CLASS THE HAZARD WAS FITTED FOR (prereg-surge-recipient-2026-09-06.md).
         surge_party_arg <- unname(setNames(hz$seat_recipient$party, hz$seat_recipient$seat)[sn])
         cat(sprintf("SR1  surge recipient ON: %d of %d seats name a class (%s)\n", sum(!is.na(surge_party_arg)), length(sn),
@@ -1416,6 +1419,7 @@ for (X in out_all) {
                                 surge_mu = surge_mu_arg, surge_sd = surge_sd_arg,
                                 party_cor = PARTY_COR, statewide_draws = X$sw_draws,
                                 fallback_smooth = FB_SMOOTH, flow_sd = FLOW_SD)
+  cat(sprintf("BF3e  engine %s | surge recipient fell back: %d class(es) absent, %d seat-draws at zero share\n", sim$engine, sim$surge_recipient_fallback, sim$surge_recipient_fallback_draws))
   wp <- as.data.table(sim$win_prob)
 
   pa <- merge(data.table(seat = X$keep, actual = unname(X$truth)),

@@ -467,11 +467,20 @@ remove_transferred_votes <- function(mat, own_prev) {
   }
   mv <- op[!is.na(op$transfer) & !is.na(op$prev_party) & op$prev_party != op$party &
              is.finite(op$transfer) & op$transfer > 0]
-  if (!nrow(mv)) return(mat)
+  applied <- 0L; skipped <- character(0)
   for (i in seq_len(nrow(mv))) {
     s <- mv$seat[i]; from <- mv$prev_party[i]
-    if (!s %in% rownames(mat) || !from %in% colnames(mat)) next
+    if (!s %in% rownames(mat) || !from %in% colnames(mat)) {
+      # A class the target does not field is expected; a SEAT that does not
+      # match is a naming fault and must be visible, so both are named.
+      skipped <- c(skipped, sprintf("%s/%s", s, from)); next
+    }
     mat[s, from] <- max(0, mat[s, from] - mv$transfer[i])
+    applied <- applied + 1L
   }
+  # COVERAGE, carried on the result so every caller can print it: this
+  # function exists to stop one vote being counted twice, and a skip leaves
+  # that double count in place for the seat.
+  attr(mat, "transfers") <- list(applied = applied, skipped = skipped)
   mat
 }

@@ -230,7 +230,10 @@ old rule everywhere: the largest eligible non-major at that draw, which
 in Kooyong 2022 is the Greens and not the independent the hazard was
 fitted for (docs/plans/prereg-surge-recipient-2026-09-06.md). A named
 class absent from the seat's columns, or at zero share, falls back to the
-default rule and is counted in \code{surge_recipient_fallback}.}
+default rule: a class absent from the columns is counted once in
+\code{surge_recipient_fallback}, a class at zero share in a given draw once
+per seat-draw in \code{surge_recipient_fallback_draws}. The list also returns
+\code{engine}, the engine that actually ran.}
 
 \item{engine}{\code{"auto"} (default), \code{"cpp"} or \code{"r"}. The compiled core
 (\code{src/seat_sim_core.cpp}, 2026-09-07) reproduces the R loop byte for byte

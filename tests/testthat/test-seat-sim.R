@@ -279,6 +279,12 @@ test_that("surge_party directs the surge to the named class, below the floor, an
   expect_true(is.na(p_old["s1 IND"]) || p_old["s1 IND"] < 0.05)   # default rule never surges a 1% IND
   expect_true(p_new["s1 IND"] > 0.5)                              # the named recipient does, floor or not
   expect_equal(new$surge_recipient_fallback, 1L)                  # s2 named a class that is not there
+  expect_true(new$engine %in% c("r", "cpp")); expect_equal(new$surge_recipient_fallback_draws, 0L)
+  # A named class at ZERO share in the seat falls back per draw, and is counted per seat-draw.
+  sh0 <- sh; sh0["s1", "IND"] <- 0
+  z <- do.call(simulate_seat_contests, c(list(sh0, fm, party_sd = c(ALP = 0, LNP = 0, GRN = 0, IND = 0), seat_sd = 0,
+               n_sims = 50, seed = 7, surge_h = c(1, 1), surge_mu = 40, surge_sd = 0.01), list(surge_party = c(s1 = "IND", s2 = "OTH"))))
+  expect_equal(z$surge_recipient_fallback_draws, 50L)
   expect_error(do.call(simulate_seat_contests, c(base, list(surge_party = c(s1 = "IND")))), "no entry for")
 })
 
@@ -301,16 +307,29 @@ test_that("the compiled core is byte-identical to the R engine with every mechan
                shrink = c(s1 = 0.05, s2 = 0.01, s3 = 0.2), surge_h = c(0.3, 0.1, 0.5),
                surge_mu = 30, surge_sd = 8, surge_party = c(s1 = "IND", s2 = NA, s3 = "GRN"),
                flow_sd = 2, fallback_smooth = 0.3, smooth = 0.1)
+  # The returned list names the engine that ran; everything else must match.
+  strip <- function(x) { expect_true(x$engine %in% c("r", "cpp")); x$engine <- NULL; x }
   r <- do.call(simulate_seat_contests, c(args, list(engine = "r")))
   cc <- do.call(simulate_seat_contests, c(args, list(engine = "cpp")))
-  expect_identical(cc, r)
+  expect_identical(strip(cc), strip(r))
   # And with statewide draws supplied instead of party_sd/party_cor.
   set.seed(3); sw <- matrix(rnorm(300 * 4, 0, 2), 300, 4, dimnames = list(NULL, c("ALP", "LNP", "GRN", "IND")))
   args2 <- args; args2$party_cor <- NULL; args2$statewide_draws <- sw
-  expect_identical(do.call(simulate_seat_contests, c(args2, list(engine = "cpp"))),
-                   do.call(simulate_seat_contests, c(args2, list(engine = "r"))))
+  expect_identical(strip(do.call(simulate_seat_contests, c(args2, list(engine = "cpp")))),
+                   strip(do.call(simulate_seat_contests, c(args2, list(engine = "r")))))
   # And the plain independent-shift path.
   args3 <- args; args3$party_cor <- NULL
-  expect_identical(do.call(simulate_seat_contests, c(args3, list(engine = "cpp"))),
-                   do.call(simulate_seat_contests, c(args3, list(engine = "r"))))
+  expect_identical(strip(do.call(simulate_seat_contests, c(args3, list(engine = "cpp")))),
+                   strip(do.call(simulate_seat_contests, c(args3, list(engine = "r")))))
+  # A seat whose every share is zero: under noise, some draws leave NOBODY
+  # alive. The R loop credits no one for that seat-draw; the compiled core
+  # read alive[0] of an empty vector until review caught it (2026-09-07).
+  sh0 <- rbind(sh, s0 = c(0, 0, 0, 0))
+  args4 <- args3; args4[[1]] <- sh0
+  args4$shrink <- c(args3$shrink, s0 = 0.1); args4$surge_h <- c(args3$surge_h, 0.2)
+  args4$surge_party <- c(args3$surge_party, s0 = "IND")
+  r4 <- do.call(simulate_seat_contests, c(args4, list(engine = "r")))
+  c4 <- do.call(simulate_seat_contests, c(args4, list(engine = "cpp")))
+  expect_identical(strip(c4), strip(r4))
+  expect_true(sum(r4$win_prob$prob[r4$win_prob$seat == "s0"]) < 1)   # some draws credited nobody
 })

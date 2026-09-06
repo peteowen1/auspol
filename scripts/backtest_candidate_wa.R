@@ -90,6 +90,14 @@ eps <- 1e-6
 SEAT_SD_MULT <- as.numeric(Sys.getenv("AUSPOL_SEAT_SD_MULT", "1"))
 if (!is.finite(SEAT_SD_MULT) || SEAT_SD_MULT <= 0)
   stop("AUSPOL_SEAT_SD_MULT must be a positive number; got ", SEAT_SD_MULT)
+# NOT HERE, AND WHY (2026-09-07): surge-v2 (AUSPOL_SALIENCE_SURGE_V2, and with
+# it AUSPOL_SURGE_SCALE and AUSPOL_SURGE_RECIPIENT), the screened slope mode and
+# personal_prior_vote()/remove_transferred_votes() all need the candidate-level
+# salience corpus (output/salience-v6.csv), which has no WA rows: the WA
+# commission files carry no candidate names the corpus can key on. Until it
+# does, WA measures the class-level model only, and a five-harness comparison
+# of those switches is a four-harness comparison. This is the gap CLAUDE.md
+# says must be named rather than left silent.
 # PORTED FROM THE FEDERAL HARNESS 2026-09-06: simulate_seat_contests() computes
 # sd_cell from `level_sd` and IGNORES seat_sd whenever level_sd is given, and
 # level_sd is on by default, so `seat_sd * SEAT_SD_MULT` at the call site was
@@ -320,6 +328,7 @@ for (K in PAIRS) {
                                 n_sims = N_SIMS, smooth = SMOOTH, seed = SEED,
                                 shrink = SHRINK, fallback_smooth = FB_SMOOTH,
                                 flow_sd = FLOW_SD, surge_h = SURGE_H)
+  cat(sprintf("BW2e  engine %s | surge recipient fell back: %d class(es) absent, %d seat-draws at zero share\n", sim$engine, sim$surge_recipient_fallback, sim$surge_recipient_fallback_draws))
   wp <- as.data.table(sim$win_prob)
 
   pa <- merge(data.table(seat = keep, actual = unname(truth[keep])),

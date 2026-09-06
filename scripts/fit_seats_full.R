@@ -595,6 +595,7 @@ cat(sprintf("CAL  MP tier: %s | defector discount: %s
 # candidate's own prior vote into their new class; this takes it out of the
 # class it came from. No-op until vic2026 nominations exist.
 mat22 <- remove_transferred_votes(mat22, .own_prev)
+.tr <- attr(mat22, "transfers"); if (!is.null(.tr)) cat(sprintf("DS2t transfers moved with the person: %d applied%s\n", .tr$applied, if (length(.tr$skipped)) paste0("; SKIPPED ", length(.tr$skipped), ": ", paste(utils::head(.tr$skipped, 5), collapse = ", ")) else ""))
 if (.cond && !is.null(.returns)) {
   if (is.null(.own_prev)) {
     cat(sprintf("DS2o personal_prior_vote() FAILED -- class-level base kept for every seat%s\n",
@@ -654,7 +655,7 @@ if (.surge_v2_on) {
     v <- setNames(.hz$seat_hazard$surge_h, .hz$seat_hazard$seat)[sn]
     miss <- sum(is.na(v)); v[is.na(v)] <- 0
     surge_arg <- unname(v); surge_mu_arg <- .hz$surge_mu; surge_sd_arg <- .hz$surge_sd
-    if (identical(Sys.getenv("AUSPOL_SURGE_RECIPIENT", "0"), "1") && !is.null(.hz$seat_recipient)) {
+    if (identical(Sys.getenv("AUSPOL_SURGE_RECIPIENT", "1"), "1") && !is.null(.hz$seat_recipient)) {
       # THE SURGE GOES TO THE CLASS THE HAZARD WAS FITTED FOR (prereg-surge-recipient-2026-09-06.md).
       surge_party_arg <- unname(setNames(.hz$seat_recipient$party, .hz$seat_recipient$seat)[sn])
       cat(sprintf("SR1  surge recipient ON: %d of %d seats name a class (%s)\n", sum(!is.na(surge_party_arg)), length(sn),
@@ -929,6 +930,7 @@ sim <- simulate_seat_contests(level_sd = .level_sd, level_mult = .lm(shares), sh
                               n_sims = N_SIMS, smooth = SMOOTH, seed = SEED,
                               statewide_draws = sw_draws,
                               surge_h = surge_arg, surge_party = surge_party_arg, surge_mu = surge_mu_arg, surge_sd = surge_sd_arg)
+cat(sprintf("S6e  engine %s | surge recipient fell back: %d class(es) absent, %d seat-draws at zero share\n", sim$engine, sim$surge_recipient_fallback, sim$surge_recipient_fallback_draws))
 cat(sprintf("\nsimulated %d seats x %d runs in %.0fs | pooled fallback %.1f%%\n",
             nrow(shares), N_SIMS,
             as.numeric(difftime(Sys.time(), t0, units = "secs")),

@@ -31,6 +31,10 @@ seat_share_rmse <- function(shares, actual_votes) {
   seats <- intersect(rownames(shares), unique(A$seat))
   n_dropped <- nrow(shares) - length(seats)
   if (!length(seats)) stop("no seat in `shares` matches a seat in `actual_votes`", call. = FALSE)
+  if (n_dropped > 0.2 * nrow(shares)) {
+    warning(sprintf("seat_share_rmse: only %d of %d seats matched by name; the RMSE describes a fraction of the election",
+                    length(seats), nrow(shares)), call. = FALSE)
+  }
   cls <- union(colnames(shares), unique(A$party))
   pred <- matrix(0, length(seats), length(cls), dimnames = list(seats, cls))
   pred[, colnames(shares)] <- shares[seats, , drop = FALSE]

@@ -183,7 +183,10 @@
 #'   in Kooyong 2022 is the Greens and not the independent the hazard was
 #'   fitted for (docs/plans/prereg-surge-recipient-2026-09-06.md). A named
 #'   class absent from the seat's columns, or at zero share, falls back to the
-#'   default rule and is counted in `surge_recipient_fallback`.
+#'   default rule: a class absent from the columns is counted once in
+#'   `surge_recipient_fallback`, a class at zero share in a given draw once
+#'   per seat-draw in `surge_recipient_fallback_draws`. The list also returns
+#'   `engine`, the engine that actually ran.
 #' @param surge_floor Minimum share, in percentage points, a candidate must
 #'   already hold in the seat before it can surge there. Stops the mechanism
 #'   handing a double-digit gain to a party polling near zero in that seat.
@@ -385,7 +388,8 @@ simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
   # THE RECIPIENT OF THE SURGE, per seat. Resolved to a column index once;
   # NA means "the default rule" (largest eligible non-major at the draw).
   surge_party_idx <- rep(NA_integer_, length(seat_names))
-  n_recipient_fb <- 0L
+  n_recipient_fb <- 0L        # named class absent from the columns (static)
+  n_recipient_fb_draw <- 0L   # named class at zero share in a draw (per seat-draw)
   if (!is.null(surge_party)) {
     sp <- surge_party
     if (!is.null(names(sp))) {
@@ -753,6 +757,7 @@ simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
     tcp_winner[] <- parties[core$tcp_w]; tcp_runnerup[] <- parties[core$tcp_r]
     tcp_share[] <- core$tcp_share
     n_fb <- as.integer(core$n_fb); n_tx <- as.integer(core$n_tx)
+    n_recipient_fb_draw <- as.integer(core$n_recipient_fb_draw)
   } else {
   for (s in seq_len(n_sims)) {
     shift <- if (is.null(statewide_draws)) {
@@ -812,7 +817,7 @@ simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
         # as the class is actually on the ballot here (share > 0); otherwise
         # the default rule below.
         j0 <- surge_party_idx[i]
-        if (!is.na(j0) && v[j0] <= 0) j0 <- NA_integer_
+        if (!is.na(j0) && v[j0] <= 0) { j0 <- NA_integer_; n_recipient_fb_draw <- n_recipient_fb_draw + 1L }
         cand <- if (!is.na(j0)) j0 else surge_idx[v[surge_idx] >= surge_floor]
         if (length(cand) && stats::runif(1) < surge_h[i]) {
           j <- if (!is.na(j0)) j0 else cand[which.max(v[cand])]
@@ -919,7 +924,9 @@ simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
        tcp_runnerup = tcp_runnerup,
        tcp_share = tcp_share,
        fallback_rate = if (n_tx) n_fb / n_tx else NA_real_,
-       surge_recipient_fallback = n_recipient_fb)
+       surge_recipient_fallback = n_recipient_fb,
+       surge_recipient_fallback_draws = n_recipient_fb_draw,
+       engine = engine)
 }
 
 #' Per-class slope multipliers for [simulate_seat_contests()]

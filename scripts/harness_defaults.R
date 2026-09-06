@@ -46,7 +46,8 @@ if (identical(Sys.getenv("AUSPOL_HARNESS_RAW", "0"), "1")) {
   sha <- tryCatch(suppressWarnings(system2("git", c("rev-parse", "--short=7", "HEAD"), stdout = TRUE, stderr = FALSE)),
                   error = function(e) character(0))
   dirty <- tryCatch(length(suppressWarnings(system2("git", c("status", "--porcelain", "--", "R", "scripts"), stdout = TRUE, stderr = FALSE))) > 0,
-                    error = function(e) FALSE)
-  if (!length(sha) || !nzchar(sha[1])) "" else sprintf("-g%s%s", sha[1], if (dirty) "x" else "")
+                    error = function(e) NA)
+  # NA (git status itself failed) is marked "?" -- never reported as clean.
+  if (!length(sha) || !nzchar(sha[1])) "" else sprintf("-g%s%s", sha[1], if (is.na(dirty)) "?" else if (dirty) "x" else "")
 })
 cat(sprintf("HD2  code %s\n", if (nzchar(.code_tag)) sub("^-g", "", .code_tag) else "(not a git checkout)"))

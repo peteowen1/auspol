@@ -38,7 +38,7 @@ List seat_sim_core(NumericMatrix shares, int n_sims, int shift_mode,
   std::fill(tcp_w.begin(), tcp_w.end(), NA_INTEGER);
   std::fill(tcp_r.begin(), tcp_r.end(), NA_INTEGER);
   std::fill(tcp_share.begin(), tcp_share.end(), NA_REAL);
-  long long n_fb = 0, n_tx = 0;
+  long long n_fb = 0, n_tx = 0, n_recipient_fb_draw = 0;
   const double pow2K = std::ldexp(1.0, K);   // 2^K, exact
   const int n_surge = surge_idx.size();
   const bool surge_any = n_surge > 0;
@@ -76,7 +76,7 @@ List seat_sim_core(NumericMatrix shares, int n_sims, int shift_mode,
       // ---- insurgency surge ----
       if (surge_h[i] > 0 && surge_any) {
         int j0 = surge_party_idx[i];              // 1-based or NA
-        if (j0 != NA_INTEGER && v[j0 - 1] <= 0) j0 = NA_INTEGER;
+        if (j0 != NA_INTEGER && v[j0 - 1] <= 0) { j0 = NA_INTEGER; ++n_recipient_fb_draw; }
         cand.clear();
         if (j0 != NA_INTEGER) cand.push_back(j0 - 1);
         else for (int t = 0; t < n_surge; ++t) { const int c = surge_idx[t] - 1; if (v[c] >= surge_floor) cand.push_back(c); }
@@ -144,6 +144,13 @@ List seat_sim_core(NumericMatrix shares, int n_sims, int shift_mode,
         v[from] = 0;
       }
       // ---- winner, TCP, shrink ----
+      // Every party at or below zero after noise leaves nothing alive. The R
+      // loop credits nobody for that seat-draw (an integer(0) index is a
+      // no-op on `wins`/`totals`, TCP is not written, and the shrink toss
+      // short-circuits before its runif), so this does the same: no write,
+      // no random number. Found by review 2026-09-07 -- alive[0] on an empty
+      // vector was undefined behaviour and mis-credited a party.
+      if (alive.empty()) continue;
       int wpos = 0;
       for (size_t t = 1; t < alive.size(); ++t) if (v[alive[t]] > v[alive[wpos]]) wpos = t;
       int wk = alive[wpos];
@@ -162,5 +169,6 @@ List seat_sim_core(NumericMatrix shares, int n_sims, int shift_mode,
   }
   return List::create(_["wins"] = wins, _["totals"] = totals, _["tcp_w"] = tcp_w,
                       _["tcp_r"] = tcp_r, _["tcp_share"] = tcp_share,
-                      _["n_fb"] = (double) n_fb, _["n_tx"] = (double) n_tx);
+                      _["n_fb"] = (double) n_fb, _["n_tx"] = (double) n_tx,
+                      _["n_recipient_fb_draw"] = (double) n_recipient_fb_draw);
 }
