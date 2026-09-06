@@ -193,13 +193,17 @@ conditional_slopes <- function(cls, seats, returns,
 #' }
 #'
 #' @inheritParams conditional_slopes
+#' @param honour_departed Logical, default `FALSE`. When `TRUE`, a permit does
+#'   not override a departed prior leader (`returns$prior_leader_returns`):
+#'   measured and refused 2026-09-06, kept for comparison against a retention
+#'   model. See `docs/plans/prereg-vote-belongs-to-the-person-2026-09-06.md`.
 #' @param permit Logical vector the length of `seats`, from
 #'   [salience_screen()]: does the screen allow this seat's candidate of `cls`
 #'   to emerge?
 #' @return Numeric vector the length of `seats`.
 #' @param same_mp Passed through to [conditional_slopes()]; see there.
 #' @export
-screened_slopes <- function(cls, seats, returns, permit,
+screened_slopes <- function(cls, seats, returns, permit, honour_departed = FALSE,
                             same = c(IND = 0.907, OTH_RIGHT = 0.891,
                                      GRN = 0.994, ONP = 0.610),
                             new  = c(IND = 0.326, OTH_RIGHT = 0.325,
@@ -217,6 +221,24 @@ screened_slopes <- function(cls, seats, returns, permit,
   hit <- R[R$party == cls]
   idx <- match(seats, hit$seat)
   is_same <- !is.na(idx) & hit$same[idx]; is_same[is.na(is_same)] <- FALSE
-  # new AND screen-permitted -> uniform swing, overriding the harsh new-slope.
-  ifelse(!is_same & permit, 1.0, base)
+  # A PERMIT DOES NOT OVERRIDE A DEPARTED LEADER. The 1.0 path exists for a
+  # small base plus a salient newcomer (Goldstein 2022); applied to a base that
+  # is a retired member's personal vote it carries that vote to a stranger
+  # (New England 2013: Windsor's 61.9% to McIntyre, p(IND) 0.995). When the
+  # prior election's leading candidate of this class does not stand here
+  # again, the fitted new-candidate slope applies even if the screen permits.
+  # `returns` from before 2026-09-06 lacks the column; then every leader is
+  # taken as returning, which is the old behaviour exactly.
+  # OFF BY DEFAULT, measured and refused 2026-09-06 (docs/plans/prereg-vote-
+  # belongs-to-the-person-2026-09-06.md, amendment 1 and results): it fixes
+  # New England 2013 (Windsor -> McIntyre, retention 0.33) and breaks
+  # Wentworth 2022 (Phelps -> Spender, retention 1.08; 0.705 -> 0.138), a wash
+  # on the six-pair mean. Departed-base retention is heterogeneous and a rule
+  # that picks one value for everyone cannot win; it needs a retention model.
+  # Kept behind `honour_departed = TRUE` so that model can be measured against
+  # this one when it exists.
+  plr <- if (honour_departed && "prior_leader_returns" %in% names(hit)) hit$prior_leader_returns[idx] else rep(TRUE, length(idx))
+  plr[is.na(plr)] <- TRUE
+  # new AND screen-permitted AND (unless honour_departed) nobody departed -> uniform swing.
+  ifelse(!is_same & permit & plr, 1.0, base)
 }

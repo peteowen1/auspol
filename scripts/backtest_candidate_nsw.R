@@ -395,6 +395,7 @@ cat(sprintf("BT1m  MP tier: %s
 # overestimate a defector who loses the party's machine, not just his own
 # vote. This is what makes the base itself carry their real prior vote.
 .own_prev <- if (.cond) tryCatch(personal_prior_vote("nsw2019", "nsw2023", major_discount = .defect), error = function(e) NULL) else NULL
+mat <- remove_transferred_votes(mat, .own_prev)  # the vote moves with the person; see personal_prior_vote()
 .own_x <- function(p, seats, x) {
   if (is.null(.own_prev)) return(x)
   ov <- .own_prev[.own_prev$party == p, ]

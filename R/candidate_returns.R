@@ -148,7 +148,34 @@ candidate_returns <- function(election_from, election_to, corpus = NULL) {
   full <- unique(NOWT[, list(seat, party)])
   res <- merge(full, res, by = c("seat", "party"), all.x = TRUE)
   res[is.na(same), same := FALSE]
-  res[is.na(same_mp), same_mp := FALSE][]
+  res[is.na(same_mp), same_mp := FALSE]
+  # DOES THE PRIOR ELECTION'S LEADING CANDIDATE OF THIS CLASS STAND HERE AGAIN,
+  # under any label? `same` asks whether the TARGET's leading candidate has a
+  # history; this asks the reverse -- whether the vote the class carries from
+  # last time still has its owner on the ballot. New England 2013: Tony
+  # Windsor's 61.9% was the IND class base, Windsor retired, a salient newcomer
+  # was permitted and screened_slopes() carried the whole base at slope 1.0 to
+  # a stranger (p(IND) 0.995; the class polled 20.4). See
+  # docs/plans/prereg-vote-belongs-to-the-person-2026-09-06.md. TRUE when the
+  # class had no prior candidate at all (nothing departed), and TRUE when the
+  # corpus carries no `pcv` (no way to name a leader; old behaviour).
+  if ("pcv" %in% names(PREVT)) {
+    lp <- PREVT[nzchar(PREVT$.k) & is.finite(PREVT$pcv)]
+    lp <- lp[order(-pcv), .SD[1L], by = list(.s, party)][, list(.s, party, .k_prev = .k)]
+    lp <- rbind(lp, merge(lp, unique(PREVT[.s != .s_renamed, list(.s, .s_renamed)]),
+                          by = ".s")[, list(.s = .s_renamed, party, .k_prev)])
+    now_keys <- unique(NOWT[nzchar(NOWT$.k), list(.s, .k)])
+    lp[, prior_leader_returns := paste(.s, .k_prev) %in% paste(now_keys$.s, now_keys$.k)]
+    seat_key <- unique(NOWT[, list(seat, .s)])
+    lp <- merge(lp[, list(.s, party, prior_leader_returns)], seat_key, by = ".s",
+                allow.cartesian = TRUE)[, list(seat, party, prior_leader_returns)]
+    lp <- lp[, list(prior_leader_returns = any(prior_leader_returns)), by = list(seat, party)]
+    res <- merge(res, lp, by = c("seat", "party"), all.x = TRUE)
+    res[is.na(prior_leader_returns), prior_leader_returns := TRUE]
+  } else {
+    res[, prior_leader_returns := TRUE]
+  }
+  res[]
 }
 
 #' Does the LEADING candidate of a class personally return, not just anyone in it?
@@ -353,11 +380,12 @@ personal_prior_vote <- function(election_from, election_to, corpus = NULL,
   PT <- PREVT[nzchar(PREVT$.k) & !PREVT$party %in% MAJ]
   PT[, .s_renamed := .s]
   PT[.s %in% names(rn), .s_renamed := rn[.s]]
-  PTx <- rbind(PT[, .(.s, .k, pcv)], PT[.s != .s_renamed, .(.s = .s_renamed, .k, pcv)])
+  PTx <- rbind(PT[, .(.s, .k, pcv, party)], PT[.s != .s_renamed, .(.s = .s_renamed, .k, pcv, party)])
   # if (.N) guards max(): when the ONLY prior row for a (.s, .k) group is a
   # major party, filtering it out can leave that group with zero rows, and
   # max() over nothing warns "no non-missing arguments" and returns -Inf.
-  prev_best <- PTx[, .(own_prev_pcv = if (.N) max(pcv, na.rm = TRUE) else NA_real_),
+  prev_best <- PTx[, .(own_prev_pcv = if (.N) max(pcv, na.rm = TRUE) else NA_real_,
+                       prev_party   = if (.N) party[which.max(pcv)] else NA_character_),
                    by = .(.s, .k)]
   out <- merge(lead[, list(seat, .s, party, .k)], prev_best, by = c(".s", ".k"), all.x = TRUE)
   # DEFECTOR FALLBACK, applied only where this candidate now stands for a
@@ -368,7 +396,8 @@ personal_prior_vote <- function(election_from, election_to, corpus = NULL,
   if (!is.null(major_discount) && is.finite(major_discount) && major_discount > 0 &&
       "elected" %in% names(PREVT)) {
     DEF <- PREVT[nzchar(PREVT$.k) & PREVT$party %in% MAJ & PREVT$elected %in% TRUE,
-                 .(def_pcv = if (.N) max(pcv, na.rm = TRUE) else NA_real_),
+                 .(def_pcv   = if (.N) max(pcv, na.rm = TRUE) else NA_real_,
+                   def_party = if (.N) party[which.max(pcv)] else NA_character_),
                  by = .(.s, .k)]
     if (nrow(DEF)) {
       # A FLOOR, NOT A REPLACEMENT. The class may already have a real base in
@@ -391,9 +420,58 @@ personal_prior_vote <- function(election_from, election_to, corpus = NULL,
       # independents, 23.7% and 15.8%. Taking a maximum returned the 20% base
       # and left the seat projected at 17.7 against an actual 39.5.
       out[is.na(own_prev_pcv) & !party %in% MAJ & !is.na(def_pcv),
-          own_prev_pcv := cls_pcv + def_pcv * major_discount]
-      out[, c("def_pcv", "cls_pcv") := NULL]
+          `:=`(own_prev_pcv = cls_pcv + def_pcv * major_discount,
+               prev_party   = def_party,
+               transfer     = def_pcv * major_discount)]
+      out[, c("def_pcv", "def_party", "cls_pcv") := NULL]
     }
   }
-  out[, list(seat, party, own_prev_pcv)]
+  # THE VOTE MOVES WITH THE PERSON. `transfer` is how much of the prior class's
+  # seat base this candidate's own vote was, and `prev_party` which class held
+  # it. A caller that substitutes `own_prev_pcv` into the new class MUST also
+  # take `transfer` out of `prev_party` -- see remove_transferred_votes().
+  # Before 2026-09-06 nothing did: Stuart Bonds' 21.6% as One Nation in Hunter
+  # 2019 became his IND base for 2022 AND stayed in the ONP class (24.3 + 17.6
+  # into the simulator for one vote); Bob Katter's 46.7% as IND in Kennedy
+  # 2010 did the same into OTH_RIGHT for 2013. NA when nothing moves.
+  if (!"transfer" %in% names(out)) out[, transfer := NA_real_]
+  out[!is.na(own_prev_pcv) & is.na(transfer), transfer := own_prev_pcv]
+  out[is.na(prev_party) | prev_party == party, `:=`(transfer = NA_real_, prev_party = NA_character_)]
+  out[, list(seat, party, own_prev_pcv, prev_party, transfer)]
+}
+
+#' Take a transferred personal vote OUT of the class it came from
+#'
+#' Companion to [personal_prior_vote()]. That function reports, per seat and
+#' class, the leading candidate's own prior vote under whatever label they
+#' stood under last time (`own_prev_pcv`), and which class that was
+#' (`prev_party`) with the amount moved (`transfer`). Callers substitute
+#' `own_prev_pcv` into the new class's seat base; this function does the
+#' other half and subtracts `transfer` from `prev_party`'s seat base in the
+#' same seat, floored at zero. Without it one vote is counted twice.
+#'
+#' @param mat Numeric matrix, seats in rows (named) and party classes in
+#'   columns (named): the prior-election seat base the simulator starts from.
+#' @param own_prev The table from [personal_prior_vote()], or `NULL` (returns
+#'   `mat` unchanged).
+#' @return `mat` with the transfers removed. Seats or classes absent from
+#'   `mat` are skipped, not an error: a class the target election does not
+#'   field has no column to adjust.
+#' @export
+remove_transferred_votes <- function(mat, own_prev) {
+  if (is.null(own_prev)) return(mat)
+  op <- data.table::as.data.table(own_prev)
+  if (!all(c("seat", "party", "prev_party", "transfer") %in% names(op))) {
+    stop("own_prev must carry seat, party, prev_party and transfer; got ",
+         paste(names(op), collapse = ", "), call. = FALSE)
+  }
+  mv <- op[!is.na(op$transfer) & !is.na(op$prev_party) & op$prev_party != op$party &
+             is.finite(op$transfer) & op$transfer > 0]
+  if (!nrow(mv)) return(mat)
+  for (i in seq_len(nrow(mv))) {
+    s <- mv$seat[i]; from <- mv$prev_party[i]
+    if (!s %in% rownames(mat) || !from %in% colnames(mat)) next
+    mat[s, from] <- max(0, mat[s, from] - mv$transfer[i])
+  }
+  mat
 }

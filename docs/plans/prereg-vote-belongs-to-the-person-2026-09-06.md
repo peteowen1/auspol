@@ -114,3 +114,53 @@ six-pair mean guard decides, and a win carried by fed2013 alone with fed2022
 worse is reported as exactly that. If the mean is a wash, rule 2 ships on its
 own targets (Hunter, Kennedy) and rule 1 is refused pending a retention model
 that uses the departed leader's own size and the newcomer's salience.
+
+## Results, 2026-09-06 late (both rules on, published defaults, seed 42)
+
+| pair | baseline | arm | move |
+|---|--:|--:|--:|
+| fed2010 | 0.3963 | 0.4025 | +0.006 |
+| fed2013 | 0.3817 | 0.3723 | −0.009 |
+| fed2016 | 0.3814 | 0.3783 | −0.003 |
+| fed2019 | 0.2643 | 0.2728 | +0.009 |
+| fed2022 | 0.4960 | 0.5193 | +0.023 |
+| fed2025 | 0.3103 | 0.3047 | −0.006 |
+| **mean** | **0.3717** | **0.3750** | +0.003, sd of paired moves 0.012, SE 0.005: within one SE, a wash |
+| Brier mean | 0.0976 | 0.0983 | +0.0007 |
+| vic2018 / vic2022 | 0.3218 / 0.2466 | 0.3218 / 0.2348 | 0 / −0.012 |
+| nsw2023 | 0.3251 | 0.2980 | −0.027 |
+| sa2026 | 0.3865 | 0.3516 | −0.035 |
+
+Targets, from the arm's per-party tables and the trace runs:
+
+- **Kennedy 2013**: p(OTH_RIGHT) 0.306 → 0.587, above p(IND). Rule 2. **Met.**
+- **Hunter 2022**: p(ALP) 0.715 → 0.822; ONP+IND 0.255 → 0.175. Rule 2. **Met.**
+- **New England 2013**: p(IND) 0.995 → 0.957. Rule 1 did what it said (slope
+  1.000 → 0.326, share 93 → 33 before renormalising) and the seat stays wrong
+  because the 1.5x minor-vote scaling and the 0.73 surge hazard remain. The
+  refusal clause's "third mechanism" case. **Not met.**
+- **Lyne 2013**: 0.631 → 0.625, unchanged as expected.
+- **Wentworth 2022**: 0.705 → 0.138, the cost named in amendment 1. Phelps'
+  36% base at slope 0.326 is 14%, renormalised 20%, against Sharma's 50%.
+- Every returning-incumbent independent seat in the guard list is unchanged
+  (Clark 0.996, and the rest to three decimals). **Guard met.**
+
+**Decision, per the pre-registration and amendment 1: rule 2 ships, rule 1
+is refused.** The mean is a wash and the per-pair table is rule 1 trading
+New England for Wentworth; the state gains and the Kennedy/Hunter targets are
+rule 2. `screened_slopes()` keeps rule 1 behind `honour_departed = TRUE`
+(default off) so a retention model can be measured against it. The
+rule-2-only numbers are the shipped baseline and are run next.
+
+**One thing rule 2 gets wrong the other way, recorded not fixed**: it moves
+a switcher's WHOLE prior vote. Hunter 2022: One Nation's 21.6% (all Bonds)
+goes to 0 in the class base, and One Nation's new candidate polled 10.0%.
+A minor party keeps some of a departed candidate's vote; the transferred
+fraction should be fitted the way `major_discount` was (0.28–0.31 for
+majors), not assumed to be 1.0 for minors. Same heterogeneity as rule 1's
+retention, from the other side.
+
+**Harness defect found by this run**: the output fingerprint hashes the
+environment only, so a CODE change writes over the baseline's files with the
+same name. The arm overwrote the baseline per-party tables for fed2022,
+fed2013 and SA. The git commit now goes into the fingerprint.

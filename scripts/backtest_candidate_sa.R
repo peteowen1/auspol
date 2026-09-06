@@ -351,6 +351,7 @@ if (.cond && !is.null(.returns))
 .defect <- if (identical(Sys.getenv("AUSPOL_DEFECT_DISCOUNT", "0"), "1")) 0.282 else NULL
 # THE BASE VALUE, not just the slope -- see personal_prior_vote()'s docs.
 .own_prev <- if (.cond) tryCatch(personal_prior_vote("sa2022", "sa2026", major_discount = .defect), error = function(e) NULL) else NULL
+mat <- remove_transferred_votes(mat, .own_prev)  # the vote moves with the person; see personal_prior_vote()
 .own_x <- function(p, seats, x) {
   if (is.null(.own_prev)) return(x)
   ov <- .own_prev[.own_prev$party == p, ]

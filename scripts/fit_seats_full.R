@@ -591,6 +591,10 @@ cat(sprintf("CAL  MP tier: %s | defector discount: %s
 # candidate-list gating as .returns above: NULL until vic2026 nominations close.
 .own_prev <- if (.cond && !is.null(.returns))
   .try("own_prev", personal_prior_vote("vic2022", "vic2026", major_discount = .defect)) else NULL
+# THE VOTE MOVES WITH THE PERSON: .own_x() below substitutes a returning
+# candidate's own prior vote into their new class; this takes it out of the
+# class it came from. No-op until vic2026 nominations exist.
+mat22 <- remove_transferred_votes(mat22, .own_prev)
 if (.cond && !is.null(.returns)) {
   if (is.null(.own_prev)) {
     cat(sprintf("DS2o personal_prior_vote() FAILED -- class-level base kept for every seat%s\n",

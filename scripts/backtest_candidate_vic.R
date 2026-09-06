@@ -346,6 +346,7 @@ for (K in PAIRS) {
   .defect <- if (identical(Sys.getenv("AUSPOL_DEFECT_DISCOUNT", "0"), "1")) 0.282 else NULL
   .own_prev <- if (.cond) tryCatch(personal_prior_vote(.ea, .eb, major_discount = .defect),
                                    error = function(e) NULL) else NULL
+  mat <- remove_transferred_votes(mat, .own_prev)  # the vote moves with the person; see personal_prior_vote()
   .own_x <- function(p, seats, x) {
     if (is.null(.own_prev)) return(x)
     ov <- .own_prev[.own_prev$party == p, ]

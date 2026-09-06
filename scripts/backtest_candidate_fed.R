@@ -688,6 +688,10 @@ for (K in PAIRS) {
   }
   .own_prev <- if (.cond) tryCatch(personal_prior_vote(ea, eb, major_discount = .defect),
                                    error = function(e) NULL) else NULL
+  # THE VOTE MOVES WITH THE PERSON: what .own_x() substitutes into the new
+  # class below is taken out of the class it came from here (Hunter 2022,
+  # Kennedy 2013). remove_transferred_votes() is a no-op when .own_prev is NULL.
+  mat <- remove_transferred_votes(mat, .own_prev)
   .own_x <- function(p, seats, x) {
     if (is.null(.own_prev)) return(x)
     ov <- .own_prev[.own_prev$party == p, ]

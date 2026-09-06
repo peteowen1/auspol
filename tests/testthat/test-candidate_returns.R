@@ -201,3 +201,54 @@ test_that("candidate_returns and personal_prior_vote are unaffected by a rename 
   ppv <- personal_prior_vote("e0", "e1", d)
   expect_equal(ppv[seat == "Denison" & party == "IND"]$own_prev_pcv, 21.3)
 })
+
+test_that("prior_leader_returns says whether last time's leading candidate is back, under any label", {
+  d <- mk()
+  d[, pcv := c(40, 35, 30, 45,  38, 36, 20, 44, 5)]
+  r <- candidate_returns("e1", "e2", d)
+  expect_true(r[seat == "A" & party == "IND"]$prior_leader_returns)    # Jane Smith stood again
+  expect_false(r[seat == "B" & party == "IND"]$prior_leader_returns)   # Ann Brown departed; Taylor is new
+  expect_true(r[seat == "C" & party == "IND"]$prior_leader_returns)    # no prior candidate: nothing departed
+  # A prior leader who returns under ANOTHER label still counts as returning.
+  d2 <- mk(); d2[, pcv := c(40, 35, 30, 45,  38, 36, 20, 44, 5)]
+  d2[election == "e2" & seat == "B" & party == "IND", `:=`(surname = "BROWN", given = "Ann")]
+  d2[election == "e2" & seat == "B" & party == "IND", party := "OTH_RIGHT"]
+  r2 <- candidate_returns("e1", "e2", d2)
+  expect_true(r2[seat == "B" & party == "OTH_RIGHT"]$prior_leader_returns)
+  # Without pcv there is no way to name a leader: TRUE everywhere (old behaviour).
+  r3 <- candidate_returns("e1", "e2", mk())
+  expect_true(all(r3$prior_leader_returns))
+})
+
+test_that("personal_prior_vote names the class the vote came from and how much moves", {
+  # Bob Jones stood as ALP (a major) at e1 -- excluded -- so make him a
+  # minor-party switcher: ONP at e1, IND at e2, 21.6% of the seat.
+  d <- mk()
+  d[, pcv := c(40, 21.6, 30, 45,  38, 36, 20, 44, 5)]
+  d[election == "e1" & seat == "A" & surname == "JONES", party := "ONP"]
+  d[election == "e2" & seat == "A" & party == "IND", `:=`(surname = "JONES", given = "Bob")]
+  r <- personal_prior_vote("e1", "e2", d)
+  x <- r[seat == "A" & party == "IND"]
+  expect_equal(x$own_prev_pcv, 21.6)
+  expect_equal(x$prev_party, "ONP")
+  expect_equal(x$transfer, 21.6)
+  # A candidate returning under the SAME label moves nothing.
+  y <- personal_prior_vote("e1", "e2", mk()[, pcv := c(40, 35, 30, 45, 38, 36, 20, 44, 5)])
+  expect_true(is.na(y[seat == "A" & party == "IND"]$transfer))
+  expect_true(is.na(y[seat == "A" & party == "IND"]$prev_party))
+})
+
+test_that("remove_transferred_votes takes the moved vote out of the old class, once, floored at zero", {
+  mat <- matrix(c(30, 21.6, 2, 46.4,   50, 0, 5, 45), nrow = 2, byrow = TRUE,
+                dimnames = list(c("A", "B"), c("ALP", "ONP", "IND", "LNP")))
+  op <- data.table::data.table(seat = c("A", "B"), party = c("IND", "IND"),
+                               own_prev_pcv = c(21.6, NA), prev_party = c("ONP", NA), transfer = c(21.6, NA))
+  out <- remove_transferred_votes(mat, op)
+  expect_equal(unname(out["A", "ONP"]), 0)
+  expect_equal(unname(out["A", "IND"]), 2)        # substitution is the caller's job, not this function's
+  expect_equal(out["B", ], mat["B", ])            # nothing moved in B
+  expect_identical(remove_transferred_votes(mat, NULL), mat)
+  # Larger than what the class held: floored, not negative.
+  op2 <- data.table::data.table(seat = "A", party = "IND", own_prev_pcv = 30, prev_party = "ONP", transfer = 30)
+  expect_equal(unname(remove_transferred_votes(mat, op2)["A", "ONP"]), 0)
+})
