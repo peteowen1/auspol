@@ -15,11 +15,11 @@ test_that("a seat with no actual result is dropped and counted, not scored again
   sh <- matrix(c(40, 60,  50, 50), nrow = 2, byrow = TRUE,
                dimnames = list(c("A", "Ghost"), c("ALP", "LNP")))
   av <- data.table::data.table(seat = c("A", "A"), party = c("ALP", "LNP"), votes = c(40, 60))
-  r <- seat_share_rmse(sh, av)
+  expect_warning(r <- seat_share_rmse(sh, av), "only 1 of 2 seats")
   expect_equal(r$rmse, 0); expect_equal(r$n_dropped, 1L)
   # A class only the actual result has is scored against zero (the true share).
   av2 <- data.table::data.table(seat = "A", party = c("ALP", "LNP", "IND"), votes = c(40, 50, 10))
-  r2 <- seat_share_rmse(sh, av2)
+  expect_warning(r2 <- seat_share_rmse(sh, av2), "only 1 of 2 seats")
   expect_true(r2$rmse > 0); expect_equal(unname(r2$by_class[["IND"]]), 10)
   expect_error(seat_share_rmse(sh, av2[0]), "no seat")
 })

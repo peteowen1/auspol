@@ -48,6 +48,7 @@ List seat_sim_core(NumericMatrix shares, int n_sims, int shift_mode,
   alive.reserve(K); cand.reserve(K); p.reserve(K); w.reserve(K);
 
   RNGScope scope;
+  Function matprod("%*%");
   for (int s = 0; s < n_sims; ++s) {
     // ---- statewide shift for this draw, in the R loop's RNG order ----
     if (shift_mode == 0) {
@@ -55,14 +56,16 @@ List seat_sim_core(NumericMatrix shares, int n_sims, int shift_mode,
     } else if (shift_mode == 1) {
       for (int k = 0; k < K; ++k) shift[k] = R::rnorm(0.0, sd_vec[k]);
     } else {
-      for (int k = 0; k < K; ++k) z[k] = R::rnorm(0.0, 1.0);
-      // reference-BLAS dgemm order: for each column l of chol_t, y[i] += B[l] * A[i,l]
-      for (int k = 0; k < K; ++k) shift[k] = 0.0;
-      for (int l = 0; l < K; ++l) {
-        const double t = z[l];
-        for (int i = 0; i < K; ++i) shift[i] += t * chol_t(i, l);
-      }
-      for (int k = 0; k < K; ++k) shift[k] = shift[k] * sd_vec[k];
+      // The R loop does `as.vector(chol_t %*% rnorm(K)) * sd_vec`. The product
+      // is R's own `%*%`, i.e. whatever BLAS this R links to -- a hand-written
+      // accumulation matched reference BLAS on Windows and NOT the Linux CI
+      // runner's BLAS (last-bit differences, 2026-09-07). So the product is
+      // delegated to R's `%*%` itself, which makes the identity hold on any
+      // platform by construction. 20,000 calls cost well under a second.
+      NumericVector zz(K);
+      for (int k = 0; k < K; ++k) zz[k] = R::rnorm(0.0, 1.0);
+      NumericVector y = matprod(chol_t, zz);
+      for (int k = 0; k < K; ++k) shift[k] = y[k] * sd_vec[k];
     }
     for (int i = 0; i < nseat; ++i) {
       for (int k = 0; k < K; ++k) base[k] = shares(i, k);
