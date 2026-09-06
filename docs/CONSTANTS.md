@@ -64,7 +64,7 @@ trust a file, not what the forecast says.
 | `n > 100`, `< 60`, `< 380` | `load_polls.R:45,78`, `fundamentals.R:108` | Row-count floors that catch `fread` stopping early on a ragged row — the bug that once trained the fundamentals on 62% of the data |
 | `min_year = 1990` | several | Start of the modern polling record |
 | `min_polls`, `min_firm_polls` | several | Minimum data before fitting |
-| `parties_in(n = 8)` / `cnt >= 8` | `fit_vic.R:184,196`, `fit_nsw.R:164,177`; `>= 25` federal | **Which parties exist in the forecast at all** — not an input-sanity guard, which is how it was filed here until 2026-08-19 and why nobody looked at it. A party under the floor is not fitted, so its vote stays inside `OTH`. **Tested 2026-08-19 and kept at 8** (`plans/prereg-party-inclusion-floor.md`): lowering it is monotonically worse, and floor 15 beat it by 0.061 but was refused because it would drop One Nation from NSW 2027 at 21.0% — a refusal criterion added AFTER the result, which the write-up flags as a deviation. |
+| `PARTY_INCLUSION_FLOOR = 8` (`scales.R`) | `fit_vic.R:184,196`, `fit_nsw.R:164,177`; `>= 25` federal | **Which parties exist in the forecast at all** — not an input-sanity guard, which is how it was filed until 2026-08-19 and why nobody looked at it. A party under the floor is not fitted, so its vote stays inside `OTH`. Lowering it is monotonically worse (tested 2026-08-19). **Tried at 15, reverted, both 2026-08-24** (`plans/prereg-inclusion-floor-15-adoption.md`): floor 15 beats 8 by 0.061 MAE, three times the adoption bar, but folds One Nation from NSW 2027 (21.0% on 8 polls) into `OTH`, where a party polling in the twenties cannot be told apart from the rest. Adopted first with that cost disclosed (Victoria 2026, the only published forecast, is unaffected — verified byte-identical), then reverted: a live-cycle party going invisible is not acceptable even in an unpublished cycle. `scripts/test_inclusion_floor.R`'s anchor check (`IF6`) is what surfaced this, unweakened, and stays wired in for any future attempt. Extracted into a single named constant regardless of the reverted value, replacing four independent hardcoded `8`s this file had already flagged as a sister-copy risk. `fit_vic.R:115` AND `fit_nsw.R:84` each carry a separate `parties_in(n = 8)` default (validation-cycle noise-factor estimation, not the live party set) — a distinct constant, currently at the same value by coincidence rather than by the same name. |
 | `warn_days = 21`, `stale_days = 60` | `freshness.R:60` | When our copy of the poll data is old enough to warn, then stop |
 | `SHARE_CLAMP = c(0.25, 99.75)` | `scales.R:19` | Keeps logit finite at the boundary |
 | `EXHAUST_LIMIT = 0.02` | `fetch_preferences_wa.R` | Exhaustion rate above which an election's transfers may not be pooled with full-preferential ones. NSW runs ~12% and is excluded outright; the seven admitted WA elections run 0.15–0.88%. **FIXED, and deliberately not raised**: WA 2001 measured 2.27% and was named in `TRANSFERS_EXCLUDED` instead, because moving a threshold to admit the one election that failed it is choosing the number after seeing the answer. |
@@ -164,7 +164,7 @@ individual number below.
 
 | Constant | Where | What it does | Status |
 |---|---|---|---|
-| `SHRINK = 0.10` | `fit_seats_full.R:522` | Per-draw calibration shrink toward a coin toss in close seats. Added 2026-08-21 after measuring over-confidence on 1,187 seats across 10 elections. **On by default and it moves published seat counts**: ALP 41→40, LNP 38→37, ONP 4→5, and One Nation's 90% interval 0–9→1–11. | **ESTIMATED** — chosen by held-out calibration slope over a pre-registered grid. |
+| `SHRINK = 0.01` | `fit_seats_full.R` | Per-draw calibration shrink toward a coin toss in close seats. Added 2026-08-21 at 0.10; **lowered to 0.02 on 2026-09-06**. A scalar shrink caps every seat at `1 - shrink/2`, so 0.10 meant no seat could be called above 0.95 — measured max p was 0.9505 with 19 of 150 federal seats against that ceiling, costing ~0.006 of mean log loss on the cap alone. Swept on fed2025: 0.10→0.3042, 0.05→0.2933, **0.02→0.2891**, 0.00→0.2914. Three seeds at 0.02 mean 0.2886 against AE Forecasts' 0.3025. Validated election-wide before shipping: federal mean log 0.4154→0.4047 (better in 5 of 6 pairs, Brier in 6 of 6), Victoria 0.3020→0.2997, NSW 0.4062→0.3822, SA 0.3976→0.3857, WA accuracy 87.0%→87.3%. **Lowered again to 0.01 on 2026-09-06**: six federal pairs give mean log loss 0.10=0.4154, 0.02=0.4047, 0.01=0.4096, 0.00=0.4282, and 0.02's edge over 0.01 is one seed and not established as significant while 0.01 has the best mean Brier (0.0982). Stays NON-ZERO because 0.00 costs 0.0235 of mean log loss against 0.02, concentrated in fed2013 (+0.0975) and fed2022 (+0.0243) — a risk invisible on fed2025 alone. Expected to be superseded by the per-seat `AUSPOL_INSURGENCY_SHRINK`. | **ESTIMATED** — swept on held-out log loss, then checked election-wide as a do-no-harm guard. |
 | `LAMBDA = 0.5` | `estimate_statewide_cov.R:95` | Shrinks the statewide party-correlation matrix toward independence. Written to `cor_shrunk`, which `fit_seats_full.R:439` uses **by default**, so it shapes the published joint distribution over party votes. | **FIXED, pre-registered.** Half weight on a correlation estimated from few cycles; the alternative was to estimate the shrinkage from the same small sample that produced the correlation. |
 | `1.96` | `trend.R:423,424`, `projection.R:503`, `fit_seats_full.R:210,217` | The Gaussian 95% quantile, used to build the published bands and to turn a band back into a simulation sd. | **FIXED, and worth flagging**: §6c records that the model deliberately does *not* assume the error distribution is normal, yet this constant assumes it at five sites. A correctness matter, sized before it is worth changing. |
 | `SA_RESPONSE` (6 coefficients) | `fit_seats_full.R:240` | Where a party's statewide gain or loss comes from, fitted on South Australia 2026. `LNP −0.846, ALP −0.123, IND −0.086, OTH_RIGHT −0.074, GRN 0.063, OTH 0.065`. Reached only under `AUSPOL_FORCE_FP`, so **not on the default publish path**. | **ESTIMATED** from one election, which is its weakness. |
@@ -370,3 +370,43 @@ format as three meaningful results.
 Sizing comes before building in each case: if varying the constant across a
 plausible range barely moves the forecast, it is a correctness matter and gets
 recorded here rather than modelled.
+
+## `level_sd` — seat variance that scales with the level of the share
+
+`c(1.10, 8.67)`, giving `sd = 1.10 + 8.67 * sqrt(p * (1 - p))` in place of a
+flat `seat_sd` of 3.5. Set `AUSPOL_LEVEL_SD=off` to reproduce the flat form.
+
+**From data, not chosen.** Fitted over 9,015 seat-party observations across 17
+election pairs; the slope coefficient jackknifes to 6.82–7.29 over those pairs.
+It is the TOTAL residual form (`1.68 + 7.85 * sqrt(p(1-p))`) with the statewide
+component removed in variance, because `party_sd` is added separately and
+feeding the total in would count it twice.
+
+**Adopted 2026-08-27** on `docs/reviews/level-variance-2026-08-27.md`. Federal
+seats called 99%+ and lost fall from 23 to 12 across 886 seat-elections; Brier
+and log loss improve in every subset on both federal and NSW 2023. Victoria 2026
+medians move ALP 37→35 with every other party unchanged, under the
+stop-and-report threshold of 3.
+
+**Known limitation:** the form is global. NSW excluding independent wins was
+already calibrated at 0.959 and this overshoots it to 1.272, so the
+miscalibration it fixes is concentrated in IND seats while the correction is
+applied to every class. A class-specific form is the open follow-up.
+
+## Candidate-conditional slopes + salience screen (arm CS)
+
+Default ON in `fit_seats_full.R` since 2026-08-27. `AUSPOL_DEV_SLOPE_MODE=off`
+reproduces uniform swing exactly (proven byte-identical, not asserted).
+
+**Cannot run yet for Victoria 2026**: `candidate_returns()` and
+`salience_permit_for()` need vic2026's own candidate list, which does not exist
+until nominations close before the 28 November 2026 election. Until then the
+run prints `DS2 arm CS requested but vic2026 has no candidate list yet --
+FALLING BACK to uniform swing` and behaves exactly as before this change.
+Re-running after nominations close activates it with no code change.
+
+**Measured on backtests before shipping** (fed2022, vic2022, sa2026, nsw2023;
+see `docs/reviews/arm-c-conditional-slopes-2026-08-27.md` and the commits around
+`afb7fef`/`203610e`): rescues nearly all of arm C's damage on fed2022 (log loss
+1.0161 → 0.8780, vs unscreened 0.8727), and beats the unscreened baseline
+outright on sa2026, vic2022 and nsw2023.

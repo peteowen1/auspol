@@ -48,6 +48,13 @@ STAGES <- list(
   list(f = "scripts/fit_nsw.R",        what = "NSW cycles",              slow = TRUE,  target = FALSE),
   list(f = "scripts/fit_projection.R", what = "fundamentals + mix",      slow = FALSE),
   list(f = "scripts/fit_seats.R",      what = "seat simulation (two-party)", slow = FALSE),
+  # The statewide party covariance fit_seats_full.R draws from. It writes to
+  # output/, which is NOT cached between CI runs the way external/elections is,
+  # so it has to be a pipeline stage rather than a fetch step -- and it was
+  # neither, which is why the nightly run died on a bare gzfile() error for
+  # output/statewide-cov.rds. Reads ten election pairs' first preferences and
+  # nothing else; seconds, not minutes.
+  list(f = "scripts/estimate_statewide_cov.R", what = "statewide covariance", slow = FALSE),
   # Candidate-level seats. Runs AFTER fit_seats.R because its S5 check compares
   # the two, and needs the election data fetched into external/elections --
   # it exits cleanly with instructions when that is absent, so a developer
@@ -249,6 +256,45 @@ if (length(l3_breach)) {
       "   non-zero so it cannot pass unnoticed.\n")
 }
 
+# The same treatment for NSW, in its OWN marker file and under its own
+# heading. fit_nsw.R stopped halting on NL3 once two pre-registered experiments
+# aborted on whether its One Nation breach is the fit or the check; it reports
+# and continues, exactly as fit_vic.R does, and the run still fails here.
+#
+# Kept separate from L3_MARKER on purpose. NSW's breach must never be able to
+# stand in for -- or overwrite -- one on the published cycle, which is the
+# failure the block above was written to prevent.
+#
+# GATED ON WHETHER fit_nsw.R ACTUALLY RAN. It is a `slow` stage, so --quick
+# skips it -- and the marker is only refreshed (unlinked and rewritten) by the
+# stage itself. Reading it after a skip reports a PREVIOUS run's verdict for a
+# stage this run never checked, which is a stale-state bug in the same family
+# as the one the separation above prevents. It can only ever add a failure,
+# never remove one, but "cried wolf about a fixed problem" and "looks like NSW
+# was checked when it wasn't" are both wrong.
+#
+# fit_vic.R needs no such gate: it is not `slow`, so it runs on every
+# invocation and always freshens L3-BREACH.txt.
+NL3_MARKER <- file.path("output", "NL3-BREACH.txt")
+nsw_ran <- !quick
+nl3_breach <- if (nsw_ran && file.exists(NL3_MARKER)) {
+  readLines(NL3_MARKER, warn = FALSE)
+} else character(0)
+nl3_breach <- nl3_breach[nzchar(trimws(nl3_breach))]
+if (!nsw_ran && file.exists(NL3_MARKER)) {
+  cat("\nNL3  not checked this run (--quick skipped fit_nsw.R); a marker from\n",
+      "     an earlier run is present and is deliberately NOT being read.\n")
+}
+if (length(nl3_breach)) {
+  cat("\n=== NL3 BREACH ON AN NSW CYCLE (not the published forecast) ===\n")
+  for (b in nl3_breach) cat("   ", b, "\n")
+  cat("   NSW 2027's One Nation has very few polls in the 90-day window and\n",
+      "   two pre-registered experiments aborted on whether this is the fit or\n",
+      "   the check -- see docs/plans/prereg-poll-tracking-bound-scaling.md.\n",
+      "   The stage was NOT halted, so its other output still built. This run\n",
+      "   exits non-zero so it cannot pass unnoticed.\n")
+}
+
 clashes <- ls(CODE_CLASHES)
 if (length(clashes)) {
   cat("\nDUPLICATE CHECK CODES -- the summary cannot say which is which:\n")
@@ -257,7 +303,8 @@ if (length(clashes)) {
       " check code(s) claimed by two stages. Renumber one of each pair.\n")
 }
 
-if (length(FAILED_VALIDATION) || length(clashes) || length(l3_breach)) {
+if (length(FAILED_VALIDATION) || length(clashes) || length(l3_breach) ||
+    length(nl3_breach)) {
   stop("Run finished with problems: ",
        if (length(FAILED_VALIDATION))
          paste0(length(FAILED_VALIDATION), " validation stage(s) [",
@@ -265,7 +312,9 @@ if (length(FAILED_VALIDATION) || length(clashes) || length(l3_breach)) {
        if (length(clashes))
          paste0(length(clashes), " duplicate check code(s)") else "",
        if (length(l3_breach))
-         paste0(" ", length(l3_breach), " L3 breach(es) on the published cycle") else "")
+         paste0(" ", length(l3_breach), " L3 breach(es) on the published cycle") else "",
+       if (length(nl3_breach))
+         paste0(" ", length(nl3_breach), " NL3 breach(es) on an NSW cycle") else "")
 }
 
 cat(sprintf("\n=== pipeline complete in %.0f s ===\n",

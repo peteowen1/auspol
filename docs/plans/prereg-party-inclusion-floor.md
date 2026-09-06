@@ -160,3 +160,17 @@ analysis compared raw means across arms and produced a clean monotonic result
 that was substantially an artefact. Fixed by scoring every arm on the rows all
 arms fit. **The general lesson: when arms differ in what they attempt, they
 cannot be compared on an average over what they attempted.**
+
+---
+
+## Re-opened, adopted, then reverted — all 2026-08-24
+
+Per [prereg-inclusion-floor-15-adoption.md](prereg-inclusion-floor-15-adoption.md).
+Floor is **8**, unchanged from this plan's original result. It was raised to
+15 with the anchor examined and disclosed in advance this time (Victoria
+2026, the only forecast this repo publishes, verified unaffected), then
+reverted the same day: folding a party polling in the twenties into `OTH`,
+where it cannot be told apart from the rest, was judged not acceptable even
+confined to an unpublished cycle. The anchor above was never weakened — it
+stayed wired into `scripts/test_inclusion_floor.R` throughout and is what
+surfaced the cost both times.

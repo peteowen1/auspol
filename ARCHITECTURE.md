@@ -71,6 +71,75 @@ functions take a plain transfers table and are fully tested without it.
 independent: `fit_projection.R` writes the mix table both `fit_seats.R` and
 `build_page.R` read, so out-of-order runs silently use last time's numbers.
 
+### How one party's seat share actually gets projected
+
+Four steps, run in this order, for one party in one seat:
+
+**1. Pick the starting point (`x`).** Normally `x` is that party's own prior
+vote in that seat last time. Exception: if the leading candidate is personally
+the same person as last time (`personal_prior_vote()`), and they were not
+previously registered for a major party (ALP/LNP/NAT), `x` is *their own*
+prior vote instead — even under a different party label then. Philip Donato
+held Orange at 49.1% as a Shooter in 2019 and 53.1% as an independent in 2023;
+without this, the seat's IND-class prior vote in 2019 is 0%, since nobody was
+registered IND there, and his entire personal incumbency would vanish. The
+major-party exclusion is deliberate: the one example of a major-party
+defector in this data (McBride, MacKillop, LNP 62.3% → IND 14.8%) shows a
+defector can lose most of a major party's vote along with the party label,
+where a minor-to-minor relabelling (Donato's case) does not behave that way.
+
+**2. Swing it by the statewide trend** (`dev_slope()`):
+```
+base = level_now + slope × (x − level_prev)
+```
+`level_prev`/`level_now` are that party's statewide vote last time / this
+time. `slope` controls how much of the seat's individual deviation from the
+statewide figure is assumed to persist — near 1 keeps the seat's quirk intact,
+near 0 shrinks it to the statewide average. `slope` is 0.907 when the same
+candidate is personally returning, 0.326 for a fresh face, or 1.0 (uniform
+swing, no penalty) when the salience screen (`salience_permit_for()`,
+`screened_slopes()`) judges a fresh face as a plausible emergence rather than
+a no-hoper.
+
+**3. Pull toward a typical emergence, weighted by how likely one looks**
+(`surge_blend_estimate()`):
+```
+final = (1 − p_hat) × base + p_hat × surge_mu
+```
+`p_hat` comes from a SEPARATE model (`surge_hazard_for()`) — a ridge-penalised
+logistic regression on salience (search-interest jump, percentile-ranked
+within its own election), prior vote and party class, fitted only on the
+GOVERNED population (`governed_population()`: low prior vote, not a surging
+class, not personally returning — which excludes a declining incumbent like
+Adam Bandt by construction, not by tuning). `surge_mu` is the mean share of
+past governed candidates who *did* emerge (~35%, from 9 known cases across 5
+elections). At `p_hat` near 0 this step does nothing; the closer to 1, the
+more the estimate is pulled toward that ~35%.
+
+**4. Renormalise every party in the seat to sum to 100%.**
+
+**This is a patchwork, not one framework, and it shows.** Step 2's slope is a
+multiplier bolted onto a linear vote-share formula; step 1 is a hard override
+of that formula's input in raw percentage points; step 3 is a linear blend
+using the OUTPUT of a genuinely different model (a logistic regression, which
+is properly additive on the logit scale) as a blend weight applied back in raw
+percentage-point space. Three signals — personal incumbency, defection type,
+salience — arrived as three separate bespoke mechanisms discovered one at a
+time (2026-08-27/28), not as three terms in one coherent model. That is
+mechanically why fixing the salience gap did not also fix the party-defection
+gap: they live in structurally different code, and any new signal needs its
+own bespoke wiring rather than one more coefficient in an existing sum.
+
+**The actual fix is B2 (compositional/softmax shares)**, already named as the
+next structural priority once B1 (full candidate-level rows) was sized and
+found not to justify its cost
+(`docs/reviews/b1-sizing-2026-08-27.md`). A proper multinomial/softmax model
+would put every party's seat share on one additive-logit scale, the way
+`surge_hazard_for()` already does for its own probability — at which point
+personal incumbency, defection type and salience are each just a coefficient
+in the same linear predictor, and a new signal is "add a term" rather than
+"invent a new mechanism."
+
 ## Load-bearing decisions
 
 **The posterior is exact, not sampled.** Every term in the trend model is
@@ -117,11 +186,21 @@ was caught only against a number someone already knew.
   |---|---|
   | `fit_vic.R` | `F1`, `L2`, `L3`, `L3a`, `L4a`–`L4c`, `V5` |
   | `fit_federal.R` | `A1`–`A4` (plus `A2b`, `A3b`), `FF1`, `FL1`–`FL3`, `FL3a`, `FL4a`–`FL4c`, `FO1` |
-  | `fit_nsw.R` | `N1`–`N3`, `NF1`, `NL2`, `NL3`, `NL3a`, `NL4a`–`NL4c` |
+  | `fit_nsw.R` | `N1`–`N3`, `NF1`, `NL2`, `NL3`†, `NL3a`, `NL4a`–`NL4c` |
   | `fit_projection.R` | `P1`–`P4`, `B1` |
   | `fit_seats.R` | `S1`–`S4`, `R1`–`R3` |
   | `fit_seats_full.R` | `S5` |
   | `fit_scorecard.R` | `C1`–`C3` |
+
+  † **`NL3` reports rather than halting at the check**, like `fit_vic.R`'s
+  `L3`. Both write a marker (`output/NL3-BREACH.txt`,
+  `output/L3-BREACH.txt` — deliberately separate files) and `run_all.R` exits
+  non-zero on either; `fit_nsw.R` also exits non-zero itself, at the very end,
+  after its output is written. NSW 2027's One Nation breaches at 5.15 on three
+  polls, and two pre-registered experiments aborted on whether that is the fit
+  or the check — see `docs/plans/prereg-poll-tracking-bound-scaling.md`.
+  Neither `POLL_TRACKING_BOUND` nor `min_polls` may be moved to clear it.
+  Every other check in both scripts still halts where it fires.
 
   The version of this table before 2026-08-18 listed `fit_vic.R` as `V1`–`V5`,
   `fit_federal.R` as including `H1`–`H4`, and `fit_projection.R` as `B1`–`B3`.
@@ -218,6 +297,24 @@ model.
   check, and a grep for existing keys must match every format they are written
   in — the one run before choosing `B1` matched only some, and so came back
   clean when it was not.
+- **A fetch loop dropped failures with `next` and no counter, then scored the
+  survivors as the full sample.** 2026-08-23: a Google Trends batch-fetch loop
+  hit `widget$status_code == 200 is not TRUE` (an assertion with no status
+  code in it, indistinguishable from a real bug) on every NSW batch, `next`ed
+  past it silently, and reported "AUC national 0.850 vs state-level 0.775"
+  from 9 of 22 candidates — Allegra Spender (34.9% in Wentworth) simply absent
+  from the table. Caught by Pete reading the output, not by any check: *"There's
+  no way Allegra Spender would be absent from NSW Google Trends, she was
+  everywhere."* Same species as the guard-reports-success-for-the-wrong-reason
+  bullet above, but the failure mode is an absent guard rather than a wrong
+  one. Fixed in `scripts/trends_fetch.R`: every batch outcome is logged, and
+  `trends_require_complete()` **aborts** rather than let a caller compute a
+  statistic over a subset — proven against a 9-of-22 input before being
+  trusted. Re-run complete (22 of 22, both geographies): the real AUCs are
+  0.854 national vs 0.846 state-level, materially different from the withdrawn
+  numbers. **The general rule this keeps re-teaching: any loop that can skip
+  an item needs a counter that a downstream consumer is forced to check —
+  "most of it worked" must never look identical to "all of it worked."**
 
 ## Data boundary
 

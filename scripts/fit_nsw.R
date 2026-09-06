@@ -161,7 +161,7 @@ fit_cycle <- function(year) {
   }
   # Correct parties folded into OTH (see R/fold.R). NSW matters more than
   # federal here: ResolvePM reports ONP inside OTH on many NSW polls.
-  SEL <- names(cnt)[cnt >= 8]
+  SEL <- names(cnt)[cnt >= PARTY_INCLUSION_FLOOR]
   # Make OTH mean ONE thing across the cycle before fitting it. A party that
   # is polled but falls under the inclusion floor is reported separately by
   # some firms and folded into OTH by others, so the OTH column mixes two
@@ -174,7 +174,7 @@ fit_cycle <- function(year) {
   cp <- refold_unfitted(cp, fits = stats::setNames(
     vector("list", length(SEL)), SEL))
   fits <- fit_cycle_unfolded(
-    cp, parties = names(cnt)[cnt >= 8], priors = priors,
+    cp, parties = names(cnt)[cnt >= PARTY_INCLUSION_FLOOR], priors = priors,
     overrides = ov, firm_factors = fac_vec, verbose = FALSE
   )
   fkeep <- flows_all$year == year & flows_all$region == "nsw"
@@ -289,14 +289,55 @@ cat("NL2  all trends and bands strictly inside (0, 100)  OK\n")
 cat(sprintf("NL3a endpoint FP sums (reported, not asserted): %s\n",
             paste(sprintf("%d=%.1f", c(2023, 2027), share_sums),
                   collapse = "  ")))
-nsw_track <- lapply(c(2023, 2027), function(yr) {
+NSW_YEARS <- c(2023, 2027)
+nsw_track <- lapply(NSW_YEARS, function(yr) {
   r <- get(paste0("res", yr))
   x <- poll_tracking_check(r$polls, r$fits)
   report_poll_tracking(x, sprintf("NL3  %d", yr))
   x
 })
-stopifnot(!any(vapply(nsw_track, function(x) any(x$breach), TRUE)))
-cat("Structural checks NL2/NL3 passed.\n\n")
+
+# NL3 REPORTS ITS BREACH INSTEAD OF HALTING, mirroring what fit_vic.R already
+# does for the published cycle. This changes WHAT HALTS, not what is asserted:
+# the breach is still computed, still printed, still written to a marker, and
+# run_all.R still exits non-zero on it. Nothing is silenced.
+#
+# Why: NSW 2027's One Nation breaches at 5.15 on THREE polls in the window, and
+# two pre-registered experiments have now aborted trying to decide whether that
+# is the fit or the check --
+# docs/plans/prereg-nsw-onp-walk-threshold.md (6 clusters against a floor of
+# 10) and docs/plans/prereg-poll-tracking-bound-scaling.md (19 cycles against
+# a floor of 20). Neither POLL_TRACKING_BOUND nor min_polls may be moved to
+# clear it; both are forbidden by those plans and remain so. Halting the whole
+# stage on a question the record cannot settle buys nothing and stops the
+# later NSW output being produced at all.
+#
+# A SEPARATE MARKER FROM fit_vic.R's, deliberately. That file is
+# L3-BREACH.txt, run_all.R reports it under "L3 BREACH ON THE PUBLISHED
+# CYCLE", and fit_vic.R DELETES it on startup. fit_vic.R runs before this
+# stage, so writing NSW's breach into the same file would let NSW clobber a
+# genuine published-forecast breach and have it reported under the wrong
+# heading -- the exact conflation run_all.R:236-240 exists to prevent ("a
+# guard whose alarm depends on an unrelated guard also firing is not a guard").
+nl3_marker <- file.path("output", "NL3-BREACH.txt")
+dir.create("output", showWarnings = FALSE)
+if (file.exists(nl3_marker)) unlink(nl3_marker)
+nsw_breach <- vapply(nsw_track, function(x) any(x$breach), TRUE)
+if (any(nsw_breach)) {
+  det <- unlist(lapply(which(nsw_breach), function(i) {
+    b <- nsw_track[[i]][breach == TRUE]
+    sprintf("%d %s fitted %.2f against %.2f from %d polls (bound %.1f)",
+            NSW_YEARS[i], b$party, b$fitted, b$poll_mean, b$n,
+            POLL_TRACKING_BOUND)
+  }))
+  writeLines(det, nl3_marker)
+  cat(sprintf(paste0(
+    "NL3  !! BREACHED on %d cycle(s), NOT halted so the rest of this stage\n",
+    "     still runs. Recorded in %s; run_all.R fails on it at the end.\n"),
+    sum(nsw_breach), nl3_marker))
+} else {
+  cat("Structural checks NL2/NL3 passed.\n\n")
+}
 
 cat("=== NSW 2027 cycle trend endpoints ===\n")
 for (p in names(res2027$fits)) {
@@ -328,3 +369,24 @@ fwrite(fac, "output/firm-factors-nsw.csv")
 fwrite(cmp, "output/scale-comparison-nsw.csv")
 fwrite(walk_tab, "output/cycle-walks-nsw.csv")
 cat("\nWrote output/trend-nsw-{2023,2027}.{csv,png}, hyperpars-nsw.csv, firm-factors-nsw.csv, scale-comparison-nsw.csv\n")
+
+# THE STAGE STILL FAILS, it just fails LAST. Everything above has been written
+# by this point, which was the entire purpose of not halting at the check --
+# but the process must still signal failure on its own exit code.
+#
+# Without this the documented standalone invocation (`Rscript
+# "scripts/fit_nsw.R"`, README.md:91) exits 0 on a real breach, so any caller
+# using the ordinary exit-code convention -- a wrapper, a CI step, a person
+# typing `echo $?` -- gets a false green. Enforcement would live only inside
+# run_all.R, which is a mechanism nothing else invokes.
+#
+# Caught in review of 244682a. The first verification of that commit read
+# exit=1 and accepted it; that 1 came from PowerShell's stream redirection,
+# not from R. An exit code observed through `*>` is not the script's own.
+if (any(nsw_breach)) {
+  stop(sprintf(paste0(
+    "NL3 breached on %d NSW cycle(s) -- details above and in %s. ",
+    "The stage completed and wrote its output; this non-zero exit exists so ",
+    "the breach cannot pass unnoticed by a caller that only checks status."),
+    sum(nsw_breach), nl3_marker), call. = FALSE)
+}

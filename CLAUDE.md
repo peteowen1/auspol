@@ -43,7 +43,16 @@ not apply. Recorded with worked examples under "Recurring hazards" in
 Specific traps, all of which have bitten:
 
 - **data.table NSE**: a function argument or local variable sharing a name with
-  a column, used bare inside `dt[...]`, binds to the column. **Five times.**
+  a column, used bare inside `dt[...]`, binds to the column. **Six times.** The
+  sixth: `salience_permit_for(election, ...)` wrote `raw[raw$election ==
+  election]` -- `raw$election` on the left made no difference, because
+  data.table scopes `raw`'s columns into the WHOLE `i` expression, so the bare
+  `election` on the right resolved to the column and the filter became
+  `raw$election == raw$election`, always TRUE. It would have silently merged
+  every election's rows on the first real call. Caught only because a test
+  queried a label that cannot exist ("nope") and got data back anyway. Fix:
+  never a bare column-name symbol inside `[`, even qualified with `$` on one
+  side only -- copy the argument to a differently-named local first.
   Compute masks outside the brackets and name the variable differently. The
   fourth was `party[party$seat == seat, ]` where `party` was both the table and
   a column — `$` then fails on an atomic vector. Related: a column named `key`
@@ -95,6 +104,76 @@ Specific traps, all of which have bitten:
   `cat(sprintf("\nG3 ...`. Three incomplete greps, one of which let `B1` mean
   two different things. The registry is a table in `ARCHITECTURE.md`.
 
+## Before saying we don't have data, READ `docs/DATA-REGISTRY.md` and `docs/DATA-DICTIONARY.md`
+
+Both are **generated from disk** — `scripts/build_data_registry.R` and
+`scripts/build_data_dictionary.R`. Never hand-edit either; rerun the script.
+
+- **Registry** answers *do we have this file*.
+- **Dictionary** answers *do we have this field*, and carries a
+  "Columns we download and DROP" section that diffs each raw source against the
+  processed extract.
+
+**The second question is the one that keeps going wrong**, because the file is
+in the registry, so the registry says yes, and the field is gone anyway. Two of
+the four failures below were exactly that. **Never aggregate a source down to
+the columns you happen to need** — write every column through and select later.
+
+### The same rule applies to anything SCRAPED, and it is more expensive there
+
+**Store the raw response, never the summary you happen to want today.** A
+re-fetch is rate-limited and may simply be unavailable; a disk write is free.
+
+Cost of learning this on 2026-08-26: `fetch_seat_salience.R` cached an 8-week
+mean of each Google Trends series and discarded the weekly points. When the
+**campaign rise** turned out to be the statistic that separates a real
+emergence from a namesake — Cameron Smith the rugby league captain outscored
+Bill Shorten in Maribyrnong on 3.8% of the vote — all **259 cached batches**
+needed refetching, and by then Google had throttled us out entirely. The
+information had been on disk and was thrown away.
+
+So: cache the series, derive the statistic. Level, rise, peak, slope,
+volatility and time-to-peak all come free from a stored series and all cost a
+fresh scrape from a stored mean.
+
+
+It is **generated from disk** by `scripts/build_data_registry.R` — never
+hand-edit it, rerun the script. It lists every election, every raw commission
+download, the candidate-level corpus, and the known gaps, with file sizes so a
+zero-byte file cannot pass as a working one.
+
+This exists because the same data has been declared missing **three separate
+times on 2026-08-25 alone**, each time while sitting on disk:
+
+- **booth results and electoral boundaries** — both in `external/reference/`;
+  only the anchor archive had been searched.
+- **candidate-level federal first preferences for all seven elections** — in
+  `external/reference/aec/` since August. `fetch_preferences_fed.R` has been
+  downloading the AEC's `HouseFirstPrefsByCandidateByVoteType` files all along
+  and aggregating the names away. A whole plan was written around acquiring
+  data that was already there.
+- **seat-level swing** — the AEC ships a `Swing` column in that *same file*,
+  for every candidate in every division across all seven elections.
+  `backtest_candidate_fed.R` still records that it "cannot test" the seat-swing
+  port for want of a swing predictor. Same file, same fetcher, same loss.
+
+The third one produced a wrong recommendation, not just wasted time. **The cost
+is not the lookup — it is that "we don't have X" gets written into a plan and
+then reasoned from.**
+
+Two habits follow:
+
+1. **Check the registry first**, then the filesystem, then conclude. `ls` on one
+   directory is not a search.
+2. **Regenerate the registry whenever you fetch or build data**, in the same
+   commit. A stale registry is worse than none, which is the same rule
+   `~/.claude/CLAUDE.md` applies to hand-maintained reference data.
+
+Candidate NAMES live only in `output/candidacies.csv`
+(`scripts/build_candidacies.R`). Every per-seat results file carries
+`seat, party, votes` and nothing else, so any candidate-level question starts
+from the corpus, not from the election files.
+
 ## Constants
 
 Every one is inventoried in `docs/CONSTANTS.md` with whether it can come from
@@ -125,6 +204,105 @@ effects that would disqualify a winner, and what the criterion cannot see. If
 that section is hard to write, the criterion is probably measuring the wrong
 thing — which was true both times.
 
+**Scope the metric to the change. A targeted fix is validated on its targets;
+only a general change is validated election-wide.**
+
+Name the broken cases BEFORE proposing the fix, make those the primary
+criterion, and demote the election-wide metric to a do-no-harm guard. Reverse
+that and a real fix cannot be seen:
+
+- The salience gate moved the six fed2022 emergences by **18.29 points**.
+  Diluted across all 368 rows that is **0.85** — a large fix wearing the
+  disguise of a marginal one, because 6 cases in 151 seats barely move an
+  aggregate. The pre-registration made the aggregate primary and the emergences
+  secondary, which is backwards.
+- Its precision criterion then failed for the same reason: an election-wide
+  count of "false firings" for a change aimed at six seats scored 14 candidates
+  polling 15–26% as errors, when raising them was correct.
+
+So, before writing a criterion, ask **what question the change answers**:
+
+| the change is… | primary metric | secondary |
+|---|---|---|
+| targeted (these seats/candidates are wrong) | those cases, named in advance | election-wide, as a do-no-harm guard |
+| general (a decay, a variance form, a flow rate) | election-wide | slices that could hide a reversal |
+
+The window follows the same logic. A fix for emergence is tested on elections
+that CONTAIN emergences — fed2025 has none, so it can only ever be a negative
+control there, never evidence the fix works.
+
+And size it: a change affecting `k` of `n` seats needs roughly `n/k` times the
+effect to clear the same aggregate bar. At 6 of 151 that is a factor of 25, so
+an aggregate criterion will almost always refuse a targeted fix that works.
+
+**The metric order for seat probabilities is LOG LOSS, then Brier, then
+reliability by band. The calibration slope is reported and never decisive.**
+
+Log loss is the only one that matches the failure this repo actually has. A seat
+called 0.9997 and lost costs ~8 under log loss and ~1.0 under Brier — the same
+as a seat called 0.90 and lost. Brier CAPS exactly the error that keeps hurting
+us. Measured on the same change, same data, 886 federal seat-elections:
+
+| metric | base → level_sd | move |
+|---|---|---|
+| log loss | 0.5398 → 0.3839 | **−29%** |
+| Brier | 0.0922 → 0.0906 | −1.7% |
+| calibration slope | — | ~0 |
+
+One change; log loss saw it, Brier barely registered it, the slope missed it
+entirely, because the gain sat in the overconfident tail. Both of today's bad
+refusals would have been avoided by this ordering alone.
+
+Report reliability with **tail-focused bands** (0.9, 0.95, 0.99, 0.999) and
+their COUNTS, never equal-width bins — 60% of seats land in one bucket and the
+only region where decisions live disappears. An empty bin is not evidence.
+`scripts/compare_arms.R` does this, plus ECE and the per-subset breakdown.
+
+**And size the PRIMARY metric's own noise against the expected effect. If its
+MDE exceeds any plausible effect, it cannot be the primary.**
+
+Chosen twice now for what a metric appears to measure rather than for whether it
+can measure it. The level-dependent variance arm (2026-08-27) made the
+calibration slope primary: across 17 pairs that statistic has sd 0.562, giving
+an MDE of 0.419 — larger than almost any real effect on it. Brier's sd is
+0.0141, MDE 0.0089, and Brier improved in 10 of 17 pairs at p = 0.028 while
+calibration showed nothing. The change was refused on the metric that could not
+see it, and the significant result sat in the guard.
+
+So compute both numbers when writing the criterion: the metric's spread across
+the units you will cluster on, and the effect you expect. A primary whose MDE
+is larger than the effect is a criterion that can only ever refuse.
+
+**Dry-run every criterion on cases whose answer you already know, BEFORE
+committing the pre-registration.** Same rule as "prove a check fails on a
+deliberately broken input", applied to the criterion instead of the code. A
+criterion is a measuring instrument and gets tested like one.
+
+C2 of `prereg-salience-emergence-gate.md` (2026-08-27) failed this twice over,
+and both faults were visible without running anything:
+
+- It counted a "false positive" as **any flagged candidate who did not WIN**,
+  while the model it tested predicts **vote share**. So Nicolette Boele rising
+  from 0% to 20.9% in Bradfield scored as a mistake — the very behaviour wanted,
+  and she won the seat at the next election. 14 of the 73 "false positives"
+  polled 15–26% against a base prediction of 6.9%, and salience cut their error
+  by 5.1 points.
+- It said "the gate fires" about a **continuous** coefficient with no trigger,
+  so the threshold had to be invented at scoring time. The value used meant
+  "salience moved the prediction by 1.25 points", which is noise. At any bar a
+  forecast would notice, the same model passes.
+
+Ten seconds against two known candidates would have caught both. So: **name two
+or three cases whose verdict you already know, state what the criterion should
+say about each, and check that it does.** If it cannot be dry-run because the
+quantity is undefined — as "fires" was — that is the finding, and the criterion
+is not ready to commit.
+
+The cost is not just the wasted test. A criterion that fails for the wrong
+reason forces a real choice between shipping on a rewritten rule and withholding
+a change that works, and both are bad. Neither is recoverable after the fact,
+which is why this belongs before the commit.
+
 **And write every tolerance in standard errors, or compute its size in standard
 errors when you write it.** Two criteria have now failed the same way, four days
 apart, and both failures were computable from `n` before the experiment ran:
@@ -149,6 +327,59 @@ make it a **visible addition with the original clause left unedited**, and check
 whether it favours the answer found later — if it does, it is not an amendment,
 it is a rationalisation. The one amendment made so far picked the value
 pre-registered *first*, which is the only reason it was allowed to stand.
+
+## A fix to one harness is a fix to ALL of them. Apply and test everywhere.
+
+There are **five** candidate-seat backtest harnesses — `backtest_candidate_fed.R`,
+`_vic.R`, `_nsw.R`, `_sa.R`, `_wa.R` — and they share a structure but not a file.
+**Any improvement, parameter or bug fix applied to one MUST be applied to all
+five and measured on all five in the same session.** Not "noted for later".
+
+`_wa.R` was added 2026-08-25 and carries seven pairs at ~58 seats. **`_fed.R` is
+now the larger harness** — 6 pairs over ~880 seat-elections against WA's 361 —
+so prefer federal first and WA second when a criterion needs to resolve
+anything. (Corrected 2026-08-27; the earlier claim that WA held more clusters
+than the other four combined predates the federal harness reaching 6 pairs.)
+
+**Both exceed the 10-minute background-task cap when run as two arms in one
+command.** Run one arm per launch, and use `AUSPOL_FED_PAIRS` to take federal a
+pair at a time; a killed run loses every arm behind it. A Queensland
+harness is buildable from data already on disk and does not exist yet — when it
+is built, this count becomes six.
+
+**Two WA-specific facts that change how its numbers read.** The `wa2001` pair
+has no transfers of its own (excluded upstream) so its flows fall back to
+pooled; and WA redistributes hard, so seat names do not survive between
+elections — 2005→2008 scores only 67% of the chamber. Both are printed per pair
+and coverage is written into the output, because a pair scored on two thirds of
+its seats is not comparable with one scored on all of them.
+
+This has now gone wrong twice on the same parameter:
+
+- **2026-08-21**: `shrink` was wired into the federal, Victorian and NSW
+  harnesses and **missed in South Australia**. For four days every SA
+  calibration figure described a model we do not publish — slope 0.299 against
+  a published 0.980 — and a full day was spent investigating four seats at
+  0.000 probability that were partly an artefact of the missing parameter.
+- **2026-08-25**: the flow fixes, the IND-nomination fix and stronghold
+  elasticity all went into the SA harness first and **were not in Victoria or
+  NSW**, so the pre-registered criteria could not be evaluated until they were
+  ported.
+
+The cost is not just the rework. **A harness missing a parameter produces
+numbers that look like findings**, and they get investigated, written up and
+reasoned from — which is exactly what happened to the four SA seats.
+
+So, concretely, when changing a harness:
+
+1. `grep` the other three for the thing you are adding. If it is absent there,
+   it is part of this change, not a follow-up.
+2. Run all four and report the metric before and after for each. A change that
+   helps one election and hurts another is a finding, and you cannot see it
+   from one run.
+3. If a fix genuinely cannot apply somewhere, **say why in the commit** rather
+   than leaving the gap silent — a silent gap is indistinguishable from an
+   oversight the next time someone reads those numbers.
 
 ## The seat model is the candidate model. There is no second seat model.
 

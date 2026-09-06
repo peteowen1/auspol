@@ -277,25 +277,97 @@ went from 0.0000 to 0.0198** once queried as "Kylea Tink" rather than the AEC's
   cannot see a Cowper campaign, so this currently looks more like a **teal
   detector** than an independent detector.
 
-### National versus state: TESTED, INCOMPLETE, no verdict
+### National versus state: WITHDRAWN, and how it was caught
 
-Every figure above is national (`geo = "AU"`). A state-level run was attempted
-and **returned only 9 of 22 candidates**, with all of NSW missing — throttling,
-not absence — so the nominal "AUC national 0.850 vs state 0.775" is on a small,
-mostly-Victorian subset and settles nothing.
+Every figure above is national (`geo = "AU"`). A state-level run reported **"AUC
+national 0.850 vs state-level 0.775"**. **That number is withdrawn.** It was
+computed over 9 of 22 candidates.
 
-What the partial data does show, in both directions:
+Pete caught it from the table alone: *"There's no way Allegra Spender would be
+absent from NSW Google Trends, she was everywhere."* She polled **34.9%** in
+Wentworth. Checking:
 
-- **In-state is much stronger for real candidates**: Monique Ryan 0.147 national
-  → **0.363** in Victoria; Kate Chaney 0.033 → **0.237** in WA.
-- **Small jurisdictions inflate**: Tim Bohm in Canberra rose to 0.180 — third
-  overall — on 5.1% of the vote, because any candidate is a larger share of a
-  small search population.
+- She **was** in the sample. The seat→state merge lost nothing — 94 of 94 rows,
+  0 unmatched seats, 10 NSW candidates picked including Scamps, Tink, Boele,
+  Heise and Le.
+- Every NSW batch was **rejected by Google**. `gtrendsR` raises this as
+  `widget$status_code == 200 is not TRUE` — an assertion failure carrying no
+  status code, so a rejection looks exactly like a bug.
+- The loop caught it and hit `next` **with no counter and no message**, then
+  computed an AUC over the survivors, which were almost all Victorian.
 
-The likely design is **both as separate features** rather than a choice: national
-catches wave candidates, state catches locally-strong ones, and the ratio
-between them distinguishes a nationally-famous challenger from a purely local
-one. Untested.
+Re-testing the same keywords against `AU-VIC`, `AU-NSW` and `AU` an hour later:
+**all three failed**, including the national query that had worked. So it was
+global rate limiting, and NSW's absence was where the throttle happened to land
+— not anything about NSW. `AU-NSW` is a valid code (`gtrendsR::countries`).
+
+### National versus state, redone complete: they tie, and state does not rescue the misses
+
+Re-run through `trends_fetch.R` once the throttle lifted. **All 22 of 22
+candidates present, both national and state-level** — `trends_require_complete()`
+confirmed it before anything was computed, 15 of 15 batches ok, 0 failed.
+
+**AUC national 0.854 | state-level 0.846 | max(national, state) 0.858.** Tied
+within noise. State-level is not a better single signal, and combining the two
+with a simple max buys almost nothing.
+
+| candidate | seat | state | national | state-level | pct | breakout |
+|---|---|---|---:|---:|---:|:---:|
+| Monique Ryan | Kooyong | VIC | 0.1465 | **0.3630** | 39.1 | ✓ |
+| Kate Chaney | Curtin | WA | 0.0327 | **0.2358** | 28.5 | ✓ |
+| Tim Bohm | Canberra | ACT | 0.0023 | 0.1818 | 5.1 | ✗ |
+| Zoe Daniel | Goldstein | VIC | 0.0779 | 0.1718 | 33.3 | ✓ |
+| Allegra Spender | Wentworth | NSW | 0.0853 | 0.1355 | 34.9 | ✓ |
+| Nicolette Boele | Bradfield | NSW | 0.0014 | 0.0067 | 20.1 | ✓ |
+| Caz Heise | Cowper | NSW | 0.0000 | 0.0036 | 25.0 | ✓ |
+| Rob Priestly | Nicholls | VIC | 0.0009 | 0.0000 | 23.5 | ✓ |
+
+Two things confirmed, one hypothesis rejected:
+
+- **The wave-candidate lift is real and replicates the withdrawn numbers almost
+  exactly** (Ryan 0.147→0.363, Chaney 0.033→0.237, both re-measured to the same
+  three decimals). That part of the earlier partial run happened to be right —
+  it was the AUC computed over 9 of 22 that was invalid, not every cell in the
+  table.
+- **State-level does not rescue the regional misses.** Boele ticks 0.0014 →
+  0.0067, Heise 0.0000 → 0.0036, Priestly stays at 0.0000. All three remain far
+  below the noise floor — which is itself higher at state level, not lower.
+- **Rejected: "regional candidates are invisible nationally but visible
+  in-state."** Tim Bohm — the common-name false positive in Canberra — jumps to
+  **third overall** at state level on 5.1% of the vote, because the ACT is a
+  small search population and any query is a larger share of it. Geographic
+  granularity amplifies the genuine local signal (Ryan, Chaney) and the noise
+  (Bohm) together, and for Boele/Heise/Priestly the noise floor rose faster than
+  their own signal did. The regional misses look like genuinely low local
+  search interest, not a national blind spot.
+
+So the fix for the independent-gap seats is not "query at the right geography."
+Whatever distinguishes a real regional breakout from Rob Priestly (23.5%, our
+current worst miss) is not visible to Trends at either level tested here.
+
+### The fix, which matters more than the result
+
+`scripts/trends_fetch.R` replaces the ad-hoc fetching. Two rules:
+
+1. **Every batch outcome is recorded** — ok, cached or FAILED with the reason —
+   and `trends_report()` prints the failures by keyword.
+2. **`trends_require_complete()` aborts** rather than let a caller compute any
+   statistic over a subset. Batches also retry with exponential backoff, since
+   a rejection is usually transient.
+
+Proven to fail on deliberately broken input before being trusted, per the rule
+in `CLAUDE.md`:
+
+| check | input | result |
+|---|---|---|
+| G1 | 9 of 22 present — the exact 2026-08-23 failure | aborts, names the count |
+| G2 | 21 of 22 present | aborts, names the absentee |
+| G3 | 22 of 22 | passes through |
+| G4 | a rejected NSW batch | reported by keyword, not swallowed |
+
+**This is the fifth silent failure in this repo caught by a person reading
+output rather than by a check.** The tell was the same each time: a plausible
+number with a name missing from it.
 
 ### What this does and does not establish
 

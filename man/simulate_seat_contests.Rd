@@ -9,13 +9,22 @@ simulate_seat_contests(
   matrix,
   party_sd,
   seat_sd = 3.5,
+  level_sd = NULL,
   n_sims = 2000,
   smooth = 0.15,
   seed = NULL,
   statewide_draws = NULL,
   party_draws = NULL,
   shrink = 0,
-  party_cor = NULL
+  party_cor = NULL,
+  fallback_smooth = 0,
+  flow_sd = 0,
+  level_mult = NULL,
+  surge_h = 0,
+  surge_mu = 15.6,
+  surge_sd = 6.1,
+  surge_parties = NULL,
+  surge_floor = 2
 )
 }
 \arguments{
@@ -39,6 +48,29 @@ an estimate with a measured RMSE of 5.0 points against SA's actual result,
 against 3.5 for a party projected from its own prior seat vote. Giving both
 the same figure claims the constructed number is as reliable as the
 measured one. See docs/plans/prereg-onp-seat-uncertainty.md.}
+
+\item{level_sd}{Optional \code{c(a, b)} making the per-seat deviation depend on the
+LEVEL of a party's share: \code{sd = a + b * sqrt(p * (1 - p))}, with \code{p} the
+party's projected share in that seat. \code{NULL}, the default, keeps the flat
+\code{seat_sd} and is byte-identical to the previous behaviour.
+
+Why it exists: a flat 3.5 points is one number for every level, and
+measured over 9,015 seat-party observations across 17 election pairs the
+real spread runs 2.3 at 2\% to 5.4 at 50\%. Flat is therefore too WIDE at the
+bottom, giving no-hopers more chance than they have, and too NARROW at the
+top, making the leader more certain than they are. Too narrow at high
+shares is overconfidence about who wins, which is what federal calibration
+slopes of 0.18-0.38 look like.
+
+The fitted seat-level form is \code{1.10 + 8.67 * sqrt(p(1-p))}. That is the
+TOTAL residual (\code{1.68 + 7.85 * sqrt(p(1-p))}) with the statewide component
+removed in variance, because \code{party_sd} is added separately here and
+feeding the total in would count it twice.
+
+It is much flatter than binomial -- \code{sqrt(p(1-p))} alone would predict 9.8
+at 50\% against 6.4 observed -- because a seat's vote is not a random sample.
+
+Not adopted by default: see \code{docs/plans/prereg-level-dependent-variance.md}.}
 
 \item{n_sims}{Number of simulations.}
 
@@ -66,7 +98,20 @@ docs/reviews/onp-seat-uncertainty-2026-08-19.md.}
 
 \item{shrink}{Probability that a simulated seat is decided by a coin toss
 between its final two rather than by the count. Zero reproduces the
-previous behaviour exactly.
+previous behaviour exactly. May be a single number applied to every seat,
+or ONE VALUE PER SEAT -- either in seat order, or named by seat, in which
+case it is matched by name and a missing seat is an error rather than a
+silent recycle.
+
+PREFER THE PER-SEAT FORM. A scalar caps every seat at \code{1 - shrink/2}:
+at 0.10 the highest probability the model can emit is 0.9598, and on the
+federal corpus no seat sits above 0.99 where the unshrunk model had 529.
+The risk that cap absorbs is not spread evenly. Eight of the nine federal
+misses above \code{pred_p} 0.9999 were a non-major taking a seat called safe for
+a major, and the measured non-major win rate runs from 0.0\% where the best
+non-major polled under 5\% last time to 77.8\% where it polled over 30\%. So a
+flat rate charges 672 low-risk seats for a risk carried by a few dozen.
+See \code{scripts/fit_insurgency_risk.R}.
 
 THIS IS A CALIBRATION FIX, NOT A MODELLING FLOURISH. Scored on 1,187 seats
 across 10 elections, this model's calibration slope was below 1 in nine of
@@ -88,11 +133,108 @@ independently, which is what this did before and is not defensible: a
 simulation where one party runs hot has to take those votes from someone.
 Estimated across ten election pairs by
 \code{scripts/estimate_statewide_cov.R}. Scale still comes from \code{party_sd}.}
+
+\item{fallback_smooth}{Extra blend toward uniform applied ONLY when an
+exclusion has no conditional cell and falls back to the pooled rate. The
+effective smoothing becomes \code{max(smooth, fallback_smooth)}.
+
+A pooled rate is not a measurement of the contest in front of it, and
+renormalising it across the survivors treats it as one. Measured on South
+Australia 2026: the matrix built from federal 2025 has \strong{no cell at all}
+for \code{ALP|LNP+ONP}, \code{LNP|ALP+ONP} or \code{GRN|LNP+ONP} -- the exact contests a
+One Nation surge produces -- and the pooled Labor rate sends 59.9\% to
+independents. In a seat with no independent that mass is redistributed
+over whoever remains, leaving One Nation on 2.9\% of Labor preferences
+where the election itself gave 22.1\%, and 4.5\% of Coalition preferences
+where it gave 54.0\%.
+
+Zero reproduces the previous behaviour exactly.
+See \verb{docs/reviews/flow-matrix-is-the-defect-2026-08-25.md}.}
+
+\item{flow_sd}{Per-draw standard deviation, in percentage points, applied to
+each transfer proportion before it is used.
+
+Flows are a FORECAST quantity that this model has always treated as known:
+one fixed matrix applied identically in every draw, so a wrong rate yields
+the same wrong answer \code{n_sims} times and the simulation has no way to be
+uncertain about it. That is a direct contributor to over-confidence -- a
+seat can be called at 0.95 on a preference assumption carrying no error
+bars. The one-step-ahead error of "mean of the last five" was measured at
+\strong{sd 3.65 points} over 19 observations.
+
+Zero reproduces the previous behaviour exactly.}
+
+\item{level_mult}{Optional NAMED numeric vector giving a per-party multiplier
+on \code{level_sd}'s slope \code{b}, so a party's width becomes
+\code{a + b * m * sqrt(p * (1 - p))}. Any party absent from the vector takes
+\code{m = 1}, so \code{NULL} (the default) and a vector of ones are both exactly the
+published model. Requires \code{level_sd}; passing it alone is an error rather
+than a silent no-op.
+
+Why it exists: \code{level_sd} shipped ONE curve for every party, and the review
+that adopted it measured that the seats it fixed were not the seats it
+widened. On NSW the calibration slope went 0.565 to 0.720 across all seats
+but 0.959 to 1.272 EXCLUDING seats an independent won -- the majors were
+already almost perfectly calibrated and got widened past 1 anyway. The
+miscalibration lives in the non-major seats.
+
+Matched by NAME, and a name that is not a share column is an error. An
+unnamed vector could reorder onto the wrong party, and a typo aimed at a
+party the seat file does not carry would look exactly like an arm that made
+no difference -- which is indistinguishable from an experiment that never
+ran. See \code{docs/plans/prereg-class-specific-variance.md}.}
+
+\item{surge_h}{Per-draw probability, in \verb{[0, 1]}, that an insurgent
+non-major candidate surges in a seat. Length 1 (the same hazard
+everywhere), one entry per seat, or a NAMED vector matched by seat name --
+in which case every seat must have an entry, for the same reason \code{shrink}
+is matched by name: an unnoticed reordering would give the wrong seat's
+hazard to the wrong seat and nothing in the output would show it.
+
+Zero reproduces the previous behaviour exactly.
+
+This is a FAT TAIL, not a wider bell. Symmetric widening of \code{seat_sd} was
+measured across 1.0-2.0 and barely matters, because no plausible Gaussian
+flips a seat a major leads by 30 points -- yet that is exactly where the
+over-confidence lived. Federal seats called at 99.9\% won 95.7\%, and eight
+of the nine misses above \code{pred_p} 0.9999 were a non-major taking a seat
+called safe for a major.}
+
+\item{surge_mu, surge_sd}{Mean and standard deviation, in percentage points,
+of the \code{N(surge_mu, surge_sd)} gain drawn for the surging candidate.
+Everyone else in the seat scales down by a common factor -- not a flat
+subtraction, which would drive small parties negative and silently
+redistribute their vote -- so the seat still sums to 100.
+
+The count then decides the seat as usual, so a surge that falls short
+LOSES. That is why the mechanism is generative rather than an override
+like \code{shrink}, and why it imposes no ceiling. \code{surge_sd} must be finite
+and non-negative.}
+
+\item{surge_parties}{Character vector naming the share columns eligible to
+surge. \code{NULL} (default) makes every column other than \code{ALP}, \code{LNP} and
+\code{NAT} eligible. Any name not among the share columns is an error rather
+than a silent no-op.}
+
+\item{surge_floor}{Minimum share, in percentage points, a candidate must
+already hold in the seat before it can surge there. Stops the mechanism
+handing a double-digit gain to a party polling near zero in that seat.}
 }
 \value{
 List: \code{win_prob} (data.frame, one row per seat and party with a
 probability), \code{totals} (matrix of seats won per party per simulation),
-\code{fallback_rate} (share of transfers with no conditional cell).
+\code{tcp_winner}, \code{tcp_runnerup} (n_sims x nseat character matrices naming
+the final two survivors in each draw, \code{NA} for a seat uncontested down to
+one party), \code{tcp_share} (n_sims x nseat, \code{tcp_winner}'s share of their
+two-candidate-preferred total), \code{fallback_rate} (share of transfers with
+no conditional cell).
+
+\code{tcp_winner} is the COUNT winner, taken before the \code{shrink} coin toss
+below can overrule which party is credited in \code{wins}/\code{totals} for that
+same draw -- so when \code{shrink > 0} the two can legitimately disagree.
+That is intentional (TCP describes the simulated vote split; \code{shrink} is
+a calibration overlay on the recorded winner, not a property of the
+count) but matters to anyone joining TCP data against \code{wins}.
 }
 \description{
 Simulate every seat from first preferences
