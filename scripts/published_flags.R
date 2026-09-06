@@ -31,6 +31,7 @@ PUBLISHED_FLAGS <- c(
   AUSPOL_DEFECT_DISCOUNT     = "1",          # major-party defector carries a fitted fraction of their vote
   AUSPOL_SALIENCE_SURGE_V2   = "1",          # per-seat emergence hazard from the salience corpus
   AUSPOL_SURGE_SCALE         = "1",          # multiplier on that hazard, capped at 1; docs/plans/prereg-surge-hazard-scale-2026-09-06.md
+  AUSPOL_SURGE_RECIPIENT     = "0",          # 1 = the surge goes to the class the hazard was fitted for; docs/plans/prereg-surge-recipient-2026-09-06.md
   AUSPOL_PARTY_COR           = "shrunk",     # correlated statewide deviations
   # the statewide input and the simulation
   AUSPOL_N_SIMS              = "20000",

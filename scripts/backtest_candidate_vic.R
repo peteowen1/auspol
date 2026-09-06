@@ -534,6 +534,7 @@ for (K in PAIRS) {
   # for the full rationale. Computed fresh per pair, fit on every OTHER
   # available election so the target never leaks into its own fit.
   surge_arg <- SURGE_H; surge_mu_arg <- 15.6; surge_sd_arg <- 6.1
+  surge_party_arg <- NULL
   if (identical(Sys.getenv("AUSPOL_SALIENCE_SURGE_V2", "0"), "1")) {
     v2_pairs <- list(
       list(election = "fed2010", prev = "fed2007", region = "fed"),
@@ -554,6 +555,12 @@ for (K in PAIRS) {
       v <- setNames(hz$seat_hazard$surge_h, hz$seat_hazard$seat)[sn]
       miss <- sum(is.na(v)); v[is.na(v)] <- 0
       surge_arg <- unname(v); surge_mu_arg <- hz$surge_mu; surge_sd_arg <- hz$surge_sd
+      if (identical(Sys.getenv("AUSPOL_SURGE_RECIPIENT", "0"), "1") && !is.null(hz$seat_recipient)) {
+        # THE SURGE GOES TO THE CLASS THE HAZARD WAS FITTED FOR (prereg-surge-recipient-2026-09-06.md).
+        surge_party_arg <- unname(setNames(hz$seat_recipient$party, hz$seat_recipient$seat)[sn])
+        cat(sprintf("SR1  surge recipient ON: %d of %d seats name a class (%s)\n", sum(!is.na(surge_party_arg)), length(sn),
+                    paste(sprintf("%s=%d", names(table(surge_party_arg)), as.integer(table(surge_party_arg))), collapse = " ")))
+      }
       # THE SCALE OF THE HAZARD (docs/plans/prereg-surge-hazard-scale-2026-09-06.md).
       # The ridge fit shrinks every seat toward the base rate, so the top-ranked
       # emergence seats carry 0.03-0.05; this multiplies before the blend and
@@ -594,7 +601,7 @@ for (K in PAIRS) {
                                    seat_sd = sp$sd_within * SEAT_SD_MULT, n_sims = per,
                                    smooth = SMOOTH, seed = SEED + r, shrink = SHRINK,
                                    fallback_smooth = FB_SMOOTH, flow_sd = FLOW_SD,
-                                surge_h = surge_arg, surge_mu = surge_mu_arg, surge_sd = surge_sd_arg)
+                                surge_h = surge_arg, surge_party = surge_party_arg, surge_mu = surge_mu_arg, surge_sd = surge_sd_arg)
       w1 <- as.data.table(s1$win_prob)[, .(seat, party, n = prob * per)]
       acc <- if (is.null(acc)) w1 else rbind(acc, w1)
     }
@@ -608,7 +615,7 @@ for (K in PAIRS) {
                                   smooth = SMOOTH, seed = SEED, party_cor = PARTY_COR,
                                   shrink = SHRINK,
                                   fallback_smooth = FB_SMOOTH, flow_sd = FLOW_SD,
-                                surge_h = surge_arg, surge_mu = surge_mu_arg, surge_sd = surge_sd_arg)
+                                surge_h = surge_arg, surge_party = surge_party_arg, surge_mu = surge_mu_arg, surge_sd = surge_sd_arg)
     wp <- as.data.table(sim$win_prob)
   }
 

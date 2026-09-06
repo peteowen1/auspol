@@ -24,7 +24,8 @@ simulate_seat_contests(
   surge_mu = 15.6,
   surge_sd = 6.1,
   surge_parties = NULL,
-  surge_floor = 2
+  surge_floor = 2,
+  surge_party = NULL
 )
 }
 \arguments{
@@ -219,6 +220,16 @@ than a silent no-op.}
 \item{surge_floor}{Minimum share, in percentage points, a candidate must
 already hold in the seat before it can surge there. Stops the mechanism
 handing a double-digit gain to a party polling near zero in that seat.}
+
+\item{surge_party}{Optional per-seat character vector (named by seat, or
+in seat order) naming the class that RECEIVES the surge in that seat when
+the hazard fires; \code{NA} for a seat means the default rule. When given, that
+class is eligible regardless of \code{surge_floor}. Default \code{NULL} keeps the
+old rule everywhere: the largest eligible non-major at that draw, which
+in Kooyong 2022 is the Greens and not the independent the hazard was
+fitted for (docs/plans/prereg-surge-recipient-2026-09-06.md). A named
+class absent from the seat's columns, or at zero share, falls back to the
+default rule and is counted in \code{surge_recipient_fallback}.}
 }
 \value{
 List: \code{win_prob} (data.frame, one row per seat and party with a

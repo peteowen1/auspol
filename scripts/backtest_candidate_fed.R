@@ -1333,6 +1333,7 @@ for (X in out_all) {
   # flat SURGE_H, and a missing seat is REPORTED -- a silent fallback to the flat
   # rate would make a partial salience corpus look like a complete one.
   surge_arg <- SURGE_H
+  surge_party_arg <- NULL
   surge_mu_arg <- 15.6; surge_sd_arg <- 6.1
   if (SURGE_V2) {
     target_el <- paste0("fed", X$K$to)
@@ -1348,6 +1349,12 @@ for (X in out_all) {
       v[is.na(v)] <- 0
       surge_arg <- unname(v)
       surge_mu_arg <- hz$surge_mu; surge_sd_arg <- hz$surge_sd
+      if (identical(Sys.getenv("AUSPOL_SURGE_RECIPIENT", "0"), "1") && !is.null(hz$seat_recipient)) {
+        # THE SURGE GOES TO THE CLASS THE HAZARD WAS FITTED FOR (prereg-surge-recipient-2026-09-06.md).
+        surge_party_arg <- unname(setNames(hz$seat_recipient$party, hz$seat_recipient$seat)[sn])
+        cat(sprintf("SR1  surge recipient ON: %d of %d seats name a class (%s)\n", sum(!is.na(surge_party_arg)), length(sn),
+                    paste(sprintf("%s=%d", names(table(surge_party_arg)), as.integer(table(surge_party_arg))), collapse = " ")))
+      }
       # THE SCALE OF THE HAZARD (docs/plans/prereg-surge-hazard-scale-2026-09-06.md).
       # The ridge fit shrinks every seat toward the base rate, so the top-ranked
       # emergence seats carry 0.03-0.05; this multiplies before the blend and
@@ -1405,7 +1412,7 @@ for (X in out_all) {
   set.seed(SEED)
   sim <- simulate_seat_contests(level_sd = .level_sd, level_mult = .lm(X$shares), X$shares, X$fm, party_sd = psd, seat_sd = sd_w * SEAT_SD_MULT,
                                 n_sims = N_SIMS, smooth = SMOOTH, seed = SEED,
-                                shrink = shrink_arg, surge_h = surge_arg,
+                                shrink = shrink_arg, surge_h = surge_arg, surge_party = surge_party_arg,
                                 surge_mu = surge_mu_arg, surge_sd = surge_sd_arg,
                                 party_cor = PARTY_COR, statewide_draws = X$sw_draws,
                                 fallback_smooth = FB_SMOOTH, flow_sd = FLOW_SD)

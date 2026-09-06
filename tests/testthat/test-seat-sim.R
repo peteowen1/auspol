@@ -260,3 +260,24 @@ test_that("a NAMED length-1 shrink or surge_h names one seat and does not broadc
   expect_silent(do.call(simulate_seat_contests, c(args, list(shrink = 0.1))))
   expect_silent(do.call(simulate_seat_contests, c(args, list(shrink = c(s2 = 0.1, s1 = 0.2)))))
 })
+
+test_that("surge_party directs the surge to the named class, below the floor, and counts a missing one", {
+  # Two seats. In s1 the independent is at 1% (under the 2% floor) and the
+  # Greens at 15%: the default rule pays the Greens; the recipient rule pays
+  # the independent. In s2 the named class does not exist in the columns.
+  sh <- matrix(c(45, 39, 15, 1,  50, 40, 10, 0), nrow = 2, byrow = TRUE,
+               dimnames = list(c("s1", "s2"), c("ALP", "LNP", "GRN", "IND")))
+  fm <- build_flow_matrix(data.table::data.table(
+    election = "x", seat = rep(c("a", "b"), each = 2), round = 1L,
+    from = "GRN", to = rep(c("ALP", "LNP"), 2), votes = c(900, 100, 850, 150)), min_n = 2L)
+  base <- list(sh, fm, party_sd = c(ALP = 0, LNP = 0, GRN = 0, IND = 0), seat_sd = 0,
+               n_sims = 400, seed = 7, surge_h = c(1, 1), surge_mu = 40, surge_sd = 0.01)
+  old <- do.call(simulate_seat_contests, base)
+  new <- do.call(simulate_seat_contests, c(base, list(surge_party = c(s1 = "IND", s2 = "OTH"))))
+  p_old <- setNames(old$win_prob$prob, paste(old$win_prob$seat, old$win_prob$party))
+  p_new <- setNames(new$win_prob$prob, paste(new$win_prob$seat, new$win_prob$party))
+  expect_true(is.na(p_old["s1 IND"]) || p_old["s1 IND"] < 0.05)   # default rule never surges a 1% IND
+  expect_true(p_new["s1 IND"] > 0.5)                              # the named recipient does, floor or not
+  expect_equal(new$surge_recipient_fallback, 1L)                  # s2 named a class that is not there
+  expect_error(do.call(simulate_seat_contests, c(base, list(surge_party = c(s1 = "IND")))), "no entry for")
+})

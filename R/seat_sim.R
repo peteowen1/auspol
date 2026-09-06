@@ -168,6 +168,15 @@
 #'   surge. `NULL` (default) makes every column other than `ALP`, `LNP` and
 #'   `NAT` eligible. Any name not among the share columns is an error rather
 #'   than a silent no-op.
+#' @param surge_party Optional per-seat character vector (named by seat, or
+#'   in seat order) naming the class that RECEIVES the surge in that seat when
+#'   the hazard fires; `NA` for a seat means the default rule. When given, that
+#'   class is eligible regardless of `surge_floor`. Default `NULL` keeps the
+#'   old rule everywhere: the largest eligible non-major at that draw, which
+#'   in Kooyong 2022 is the Greens and not the independent the hazard was
+#'   fitted for (docs/plans/prereg-surge-recipient-2026-09-06.md). A named
+#'   class absent from the seat's columns, or at zero share, falls back to the
+#'   default rule and is counted in `surge_recipient_fallback`.
 #' @param surge_floor Minimum share, in percentage points, a candidate must
 #'   already hold in the seat before it can surge there. Stops the mechanism
 #'   handing a double-digit gain to a party polling near zero in that seat.
@@ -215,7 +224,8 @@ simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
                                    flow_sd = 0,
                                    level_mult = NULL,
                                    surge_h = 0, surge_mu = 15.6, surge_sd = 6.1,
-                                   surge_parties = NULL, surge_floor = 2) {
+                                   surge_parties = NULL, surge_floor = 2,
+                                   surge_party = NULL) {
   # SHRINK MAY BE PER-SEAT. A scalar applies the same rate everywhere and caps
   # EVERY seat at 1 - shrink/2 -- 0.9598 at shrink = 0.10, with no seat above
   # 0.99. That absorbs one specific risk (a non-major taking a seat called safe
@@ -363,6 +373,23 @@ simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
 
   # Resolve the surge hazard to one value per seat, by the same rule.
   surge_h <- .fix_surge(surge_h, seat_names)
+  # THE RECIPIENT OF THE SURGE, per seat. Resolved to a column index once;
+  # NA means "the default rule" (largest eligible non-major at the draw).
+  surge_party_idx <- rep(NA_integer_, length(seat_names))
+  n_recipient_fb <- 0L
+  if (!is.null(surge_party)) {
+    sp <- surge_party
+    if (!is.null(names(sp))) {
+      miss <- setdiff(seat_names, names(sp))
+      if (length(miss)) stop("surge_party is named but has no entry for ", length(miss), " seat(s): ",
+                             paste(utils::head(miss, 5), collapse = ", "))
+      sp <- unname(sp[seat_names])
+    } else if (length(sp) != length(seat_names)) {
+      stop("surge_party must be length ", length(seat_names), " (one per seat) or named by seat; got ", length(sp))
+    }
+    surge_party_idx <- match(as.character(sp), parties)
+    n_recipient_fb <- sum(!is.na(sp) & is.na(surge_party_idx))
+  }
 
   # seat_sd may be one number for every party, or one per party. A named
   # vector is matched BY NAME to the share columns, never by position: the
@@ -721,9 +748,14 @@ simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
       # why this is generative rather than an override like `shrink`, and why it
       # imposes no ceiling.
       if (surge_h[i] > 0 && length(surge_idx)) {
-        cand <- surge_idx[v[surge_idx] >= surge_floor]
+        # A named recipient takes the surge regardless of the floor, as long
+        # as the class is actually on the ballot here (share > 0); otherwise
+        # the default rule below.
+        j0 <- surge_party_idx[i]
+        if (!is.na(j0) && v[j0] <= 0) j0 <- NA_integer_
+        cand <- if (!is.na(j0)) j0 else surge_idx[v[surge_idx] >= surge_floor]
         if (length(cand) && stats::runif(1) < surge_h[i]) {
-          j <- cand[which.max(v[cand])]
+          j <- if (!is.na(j0)) j0 else cand[which.max(v[cand])]
           add <- stats::rnorm(1, surge_mu, surge_sd)
           if (add > 0) {
             others <- setdiff(seq_len(K), j)
@@ -825,7 +857,8 @@ simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
        tcp_winner = tcp_winner,
        tcp_runnerup = tcp_runnerup,
        tcp_share = tcp_share,
-       fallback_rate = if (n_tx) n_fb / n_tx else NA_real_)
+       fallback_rate = if (n_tx) n_fb / n_tx else NA_real_,
+       surge_recipient_fallback = n_recipient_fb)
 }
 
 #' Per-class slope multipliers for [simulate_seat_contests()]
