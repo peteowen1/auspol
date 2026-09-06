@@ -555,6 +555,14 @@ for (K in PAIRS) {
       v <- setNames(hz$seat_hazard$surge_h, hz$seat_hazard$seat)[sn]
       miss <- sum(is.na(v)); v[is.na(v)] <- 0
       surge_arg <- unname(v); surge_mu_arg <- hz$surge_mu; surge_sd_arg <- hz$surge_sd
+      # THE SALIENCE POINT ESTIMATE, ported from the federal harness 2026-09-07.
+      # This harness used the hazard for the DRAW only, so a governed candidate
+      # with real salience kept a uniform-swing projection here while the same
+      # candidate would have been blended federally.
+      .exp_mode <- suppressWarnings(as.integer(Sys.getenv("AUSPOL_SALIENCE_EXPECTED", "0")))
+      if (is.na(.exp_mode)) .exp_mode <- 0L
+      shares <- blend_salience_shares(shares, hz, surge_mu_arg[1], expected = .exp_mode > 0L)
+      cat(sprintf("BV0b salience point estimate applied to %d (seat,party) cells\n", attr(shares, "cells")))
       if (identical(Sys.getenv("AUSPOL_SURGE_RECIPIENT", "1"), "1") && !is.null(hz$seat_recipient)) {
         # THE SURGE GOES TO THE CLASS THE HAZARD WAS FITTED FOR (prereg-surge-recipient-2026-09-06.md).
         surge_party_arg <- unname(setNames(hz$seat_recipient$party, hz$seat_recipient$seat)[sn])

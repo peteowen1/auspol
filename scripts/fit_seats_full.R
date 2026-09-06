@@ -755,6 +755,18 @@ if (ONP_FIX == "1") {
 }
 shares[, "ONP"] <- onp_target
 shares <- 100 * shares / rowSums(shares)
+# THE SALIENCE POINT ESTIMATE REACHES THE PUBLISHED FORECAST, 2026-09-07.
+# It never had: the blend lived inline in the federal harness only, so every
+# figure this script published described a model without it while the federal
+# backtest measured one with it. No-op until vic2026 has a salience corpus
+# (.hz is NULL before nominations close), which is why this could sit unnoticed.
+.exp_mode <- suppressWarnings(as.integer(Sys.getenv("AUSPOL_SALIENCE_EXPECTED", "0")))
+if (is.na(.exp_mode)) .exp_mode <- 0L
+shares <- blend_salience_shares(shares, if (exists(".hz")) .hz else NULL, surge_mu_arg[1],
+                                expected = .exp_mode > 0L)
+cat(sprintf("DS3b salience point estimate applied to %d (seat,party) cells%s\n",
+            attr(shares, "cells"),
+            if (is.null(if (exists(".hz")) .hz else NULL)) " (no corpus for vic2026 yet)" else ""))
 cvf <- function(x) stats::sd(x) / mean(x)
 cat(sprintf("ONP allocation: target CV %.3f, delivered %.3f (previously compressed to 0.283)
 ",

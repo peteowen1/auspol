@@ -226,3 +226,53 @@ surge_blend_estimate <- function(uniform_share, p_hat, surge_mu) {
   p_hat[!is.finite(p_hat)] <- 0
   (1 - p_hat) * uniform_share + p_hat * surge_mu
 }
+
+#' Apply the salience point estimate to a seat-by-class share matrix
+#'
+#' The blend `surge_blend_estimate()` performs, lifted out of the federal
+#' harness so every caller runs the same code. Until 2026-09-07 this lived
+#' inline in `scripts/backtest_candidate_fed.R` alone: the Victorian, NSW and
+#' SA harnesses used the hazard for the DRAW only, and `fit_seats_full.R` --
+#' the published forecast -- did not blend at all, so the salience point
+#' estimate had never reached the published Victoria forecast.
+#'
+#' @param shares Numeric matrix, seats in rows (named) and classes in columns
+#'   (named), percentages. Rows are renormalised to 100 on the way out.
+#' @param hz The list from [surge_hazard_for()], or `NULL` (returns `shares`
+#'   unchanged, which is the case before a target election's corpus exists).
+#' @param surge_mu Mean vote of past winners, the value blended toward.
+#' @param expected When `TRUE`, use `hz$seat_party_expected`'s band mean as a
+#'   FLOOR instead of the hazard blend (P5; refused 2026-09-07, off by
+#'   default, kept because the wave term would act through it).
+#' @return `shares`, with an attribute `cells` giving how many (seat, class)
+#'   cells were moved.
+#' @export
+blend_salience_shares <- function(shares, hz, surge_mu, expected = FALSE) {
+  if (is.null(hz) || is.null(hz$seat_party_hazard) || !nrow(hz$seat_party_hazard)) {
+    attr(shares, "cells") <- 0L
+    return(shares)
+  }
+  sn <- rownames(shares)
+  moved <- 0L
+  for (pp in unique(hz$seat_party_hazard$party)) {
+    if (!pp %in% colnames(shares)) next
+    if (expected && !is.null(hz$seat_party_expected)) {
+      pe <- hz$seat_party_expected[hz$seat_party_expected$party == pp]
+      ev <- stats::setNames(pe$exp_pcv, pe$seat)[sn]
+      hit <- !is.na(ev)
+      if (any(hit)) {
+        shares[hit, pp] <- pmax(shares[hit, pp], unname(ev[hit]))
+        moved <- moved + sum(hit)
+      }
+    } else {
+      ph <- hz$seat_party_hazard[hz$seat_party_hazard$party == pp]
+      w <- stats::setNames(ph$p_hat, ph$seat)[sn]
+      w[is.na(w)] <- 0
+      shares[, pp] <- surge_blend_estimate(shares[, pp], unname(w), surge_mu)
+      moved <- moved + sum(w > 0.001)
+    }
+  }
+  shares <- 100 * shares / rowSums(shares)
+  attr(shares, "cells") <- as.integer(moved)
+  shares
+}
