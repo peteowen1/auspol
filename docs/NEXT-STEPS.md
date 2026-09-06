@@ -107,8 +107,17 @@ the hazard's calibration** (ridge lambda 20 on ~13 winners), which is the
 next pre-registration — a calibration map from hazard rank to probability,
 or a lower lambda, scored the same way.
 
+**Found by the review gate's new diagnostic line on its first run (fed2022,
+`BF3e`)**: in **275,205 of 3,000,000 seat-draws** the named recipient was at
+zero share after noise and the surge fell back to the largest non-major — a
+1.3% independent class clamps to zero in most draws, so Goldstein still hands
+its surge to the Greens most of the time. That is the floor case the P4
+pre-registration named, now measured. **P4c**: a named recipient at zero
+share should still receive the surge (an emergence from nothing is the
+case), pre-registered and scored the same way.
+
 **Next, in order** (each its own pre-registration, each a minutes-long sweep
-now): (1) hazard calibration; (2) the hazard must not fire against a
+now): (0) P4c above; (1) hazard calibration; (2) the hazard must not fire against a
 returning sitting member of the same seat (Clark, Melbourne); (3) the
 transfer fraction for minor-party switchers (Hunter's One Nation at 0); (4) a
 retention model for a departed leader's base (Wentworth vs New England);
