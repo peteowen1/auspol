@@ -1,5 +1,171 @@
 # auspol — work queue
 
+## SESSION 2026-09-05/06: the AEF gap closed, and the reason was a cap
+
+**fed2025 seat log loss 0.3663 -> 0.2886 against AE Forecasts' 0.3025.** Ahead
+by ~0.014 on a three-seed mean (0.2891 / 0.2899 / 0.2867), with Brier 0.0877
+against their 0.0996 and accuracy 86.7-87.3% against 86.0%.
+
+**What it was.** `shrink` is a per-draw coin toss, so a scalar caps EVERY seat
+at `1 - shrink/2`. At the shipped 0.10 no seat could be called above 0.95 —
+measured max p 0.9505, with 19 of 150 federal seats against that ceiling, each
+paying `-log(0.95) = 0.051` where `-log(0.99) = 0.010` was available. About
+0.006 of mean log loss on the cap alone, fifteen times the gap being chased.
+
+`AUSPOL_SHRINK` default is now **0.01** (`fit_seats_full.R`). Six federal pairs,
+seed 42:
+
+| shrink | mean log loss | mean Brier |
+|---|--:|--:|
+| 0.10 | 0.4154 | 0.1000 |
+| 0.02 | **0.4047** | 0.0983 |
+| **0.01 (shipped)** | 0.4096 | **0.0982** |
+| 0.00 | 0.4282 | 0.0983 |
+
+0.01 rather than 0.02 because Pete's standing rule is that this is a hack and
+should sit at the lowest value the evidence allows, rising only for a benefit
+that is significant — 0.02's 0.005 edge is one seed on six pairs and is not.
+
+**It must NOT go to zero**, which is the one thing the evidence refuses: 0.00
+costs 0.0235 of mean log loss, concentrated in fed2013 (+0.0975) and fed2022
+(+0.0243). That risk is invisible on fed2025, so tuning on fed2025 alone would
+have switched it off and taken the fed2013 blow-up unseen.
+
+Published Victoria forecast barely moves: ALP 34, LNP 36, GRN 6 medians
+unchanged, ONP 10 -> 9. This is calibration, not a different forecast.
+
+### Also shipped
+
+- **`scripts/fit_mp_slope.R`** (new). The sitting-member slope tier was fitted
+  on ten election pairs and then scored on fed2025, one of them. Refitted
+  leave-one-election-out over 18 pairs and 6 jurisdictions the tier is REAL —
+  member/also-ran gap positive in 18 of 18 folds — but three of its four shipped
+  values were wrong: IND 0.954 against 0.896, GRN carried a value where its
+  member and also-ran slopes are indistinguishable, and **ONP's 0.610 was the
+  also-ran slope written into the member row over ZERO member observations**.
+  All five harnesses and `fit_seats_full.R` now read fitted values from
+  `output/mp-slope-by-target.csv` / `-by-class.csv`. Worth 0.5083 -> 0.4062 on
+  NSW; the leaked value had cost Victoria 0.0029 for nothing.
+- **`fit_seats_full.R` now passes `same_mp` and `major_discount`.** It called
+  `personal_prior_vote()` / `screened_slopes()` / `conditional_slopes()` without
+  either, so what the harnesses measured was not what was published.
+- **`AUSPOL_SEAT_SD_MULT` fixed — it had been INERT since 2026-08-27.**
+  `sd_cell` is computed from `level_sd` and ignores `seat_sd` entirely whenever
+  `level_sd` is given, and `level_sd` is on by default, so every sweep of the
+  multiplier since then measured a parameter with no path to the output while
+  the harness printed "seat_sd multiplier applied". It now scales whichever
+  spread is in force and says which.
+
+### Measured NULLS — do not re-run these
+
+The recorded diagnosis in `fed2025-closing-the-aef-gap-2026-09-04.md` that the
+residual is "One Nation preference drift, and nothing else" is **FALSIFIED**.
+
+| arm | fed2025 log loss |
+|---|--:|
+| baseline | 0.3042 |
+| per-source flow uncertainty, k=0.25 / 0.50 | 0.3043 / 0.3051 |
+| trend-extrapolated flow cells, w=0.25 / 0.50 / 1.0 | 0.3040 / 0.3045 / 0.3065 |
+| **flow trend, ONP only, w=1.0** | **0.3105** |
+| spread (level_sd) x1.20 | 0.3142 |
+
+The trend arm lands the cell almost exactly — `ONP|ALP+LNP` 63.8 -> 72.2 against
+an actual 71.4 — and still scores WORSE. Under a 0.95 cap the model cannot
+express confidence, so a more accurate component has nowhere to go. Both
+mechanisms are kept (`R/flow_trend.R`, per-source `flow_sd` in `R/seat_sim.R`),
+correct and **off by default**, because the finding is the point.
+
+Decomposition worth keeping: of One Nation's 47.6 -> 61.6 swing to the
+Coalition, cell-mix explains 47.6 -> 51.1 and the remaining +10.5 is genuine
+within-cell drift, positive in all four major cells.
+
+## NEXT: per-seat shrink (the top item)
+
+`AUSPOL_INSURGENCY_SHRINK=1` already exists and gives each seat its OWN fitted
+risk from `output/fed-insurgency-risk.csv`, so most seats get ~0 and only seats
+with a non-major in reach pay anything — the outcome the scalar approximates
+badly, and the one Pete actually wants.
+
+All six pairs now measured, scalar shrink 0, seed 42:
+
+| pair | 0.01 scalar (shipped) | 0.02 scalar | per-seat |
+|---|--:|--:|--:|
+| fed2010 | 0.4525 | 0.4290 | 0.4564 |
+| fed2013 | 0.4386 | 0.4543 | **0.4092** |
+| fed2016 | 0.4080 | 0.4096 | 0.4144 |
+| fed2019 | 0.2619 | 0.2636 | 0.2718 |
+| fed2022 | 0.6065 | 0.5828 | 0.6099 |
+| fed2025 | 0.2898 | 0.2891 | 0.2929 |
+| **mean** | **0.4096** | **0.4047** | **0.4091** |
+
+**IT DOES NOT YET HOLD.** Per-seat ties the shipped 0.01 on the mean and is
+worse in **5 of 6 pairs** — the whole advantage is fed2013, and one election
+carrying a mean is the shape that does not replicate. Both scalars beat it on
+fed2025.
+
+Why it is still the top item: the mechanism is right (most seats get ~0,
+insurance only where a non-major is in reach) and it is the only arm that fixes
+fed2013, the election a zero scalar blows up on. What it plausibly needs is a
+SCALE parameter on the fitted risk — the current vector has median 0.012-0.038
+and max 0.200 per election, which is both flatter and more extreme than any
+scalar, so a single multiplier sweep (say 0.5x, 0.75x, 1.5x) is the obvious
+next experiment and was not run. Pre-register it: this is a general change, so
+the primary metric is election-wide mean log loss over all six pairs with the
+per-pair table as the guard against another fed2013-only result.
+
+**Two bugs were found and fixed getting it to run, both now VERIFIED:**
+
+1. It aborted the entire arm on fed2025 because **Bullwinkel is new at the 2025
+   redistribution**, so its upset features cannot exist (not staleness —
+   regenerating `build_upset_features.R` / `fit_insurgency_risk.R` did not help).
+   New seats now take the election's median risk and are NAMED in the output; a
+   non-new missing seat still aborts. Verified: "fed2025 1 seat(s) new at this
+   redistribution ... given the election median risk 0.048: Bullwinkel".
+2. Indexing a named vector by a name it does not carry returns an element whose
+   NAME is NA, so filling the value alone left the seat absent and
+   `simulate_seat_contests()` rejected the vector. Names are reasserted from the
+   seat order with a `stopifnot`. Verified: fed2025 now scores 0.2929.
+
+### The next experiment, ready to run
+
+Pete's question at the end of the session: **per-seat AND a 0.01 scalar floor,
+does that beat the straight 0.02 scalar?** It could not be answered as the code
+stood — the per-seat vector REPLACED the scalar, so `AUSPOL_SHRINK` was off in
+that arm. `backtest_candidate_fed.R` now applies `pmax(per_seat, SHRINK)`, so
+the scalar is a FLOOR: `AUSPOL_SHRINK=0` reproduces the pure per-seat arm
+exactly and a non-zero value is the combination. **This is unrun.**
+
+```
+AUSPOL_FORECAST_MODE=1 AUSPOL_DEV_SLOPE_MODE=screened AUSPOL_IND_SALIENCE=1 AUSPOL_DEFECT_DISCOUNT=1 AUSPOL_MP_SLOPE=1 AUSPOL_INSURGENCY_SHRINK=1 AUSPOL_SEED=42 AUSPOL_SHRINK=0.01   Rscript scripts/backtest_candidate_fed.R
+```
+
+Beat: **0.4047**, the straight 0.02 scalar's six-pair mean. Also worth a scale
+sweep on the fitted risk (0.5x / 0.75x / 1.5x) — its per-election median is
+0.012-0.038 with max 0.200, both flatter and more extreme than any scalar.
+Primary metric is the six-pair mean, with the per-pair table as the guard
+against another fed2013-only result.
+
+## Then
+
+1. **Re-measure the other four harnesses** at `shrink=0.01`. They were measured
+   at 0.02 (Victoria 0.3020 -> 0.2997 mean log, Brier 0.0789 -> 0.0761; NSW
+   0.4062 -> 0.3822; SA 0.3976 -> 0.3857; WA accuracy 87.0% -> 87.3%) but NOT at
+   the value that now ships.
+2. **Push `dev` and take it through the review gate to `main`.** Two commits are
+   unmerged and unreviewed; nothing has been pushed.
+3. **Data threads, Pete's call**: One Nation how-to-vote cards (the ONP drift is
+   a published pre-election decision this repo does not hold), and seat-level
+   polling.
+
+## Known gap
+
+`output/` is gitignored, so `output/mp-slope-by-target.csv` and
+`-by-class.csv` are NOT in the repo. A fresh clone must run
+`scripts/fit_mp_slope.R` before `AUSPOL_MP_SLOPE=1` will work, and
+`fit_seats_full.R` now needs `-by-class.csv` to run at all unless
+`AUSPOL_MP_SLOPE=0`. Both error rather than falling back, deliberately — a
+silent fallback to a constant is how the leaked value survived.
+
 ## ACTIVE PLAN: candidate-level seat model
 
 [plans/plan-candidate-level-model.md](plans/plan-candidate-level-model.md) —

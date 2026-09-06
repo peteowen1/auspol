@@ -1255,13 +1255,53 @@ for (X in out_all) {
     sn <- rownames(X$shares)
     if (is.null(sn) && is.data.frame(X$shares)) sn <- as.character(X$shares$seat)
     miss <- setdiff(sn, rk$seat)
-    # A silent recycle here would give the wrong seat's ceiling to the wrong
-    # seat and nothing downstream would show it, so this aborts rather than
-    # falling back to the flat rate.
-    if (length(miss))
-      stop(want, ": insurgency risk missing for ", length(miss), " seat(s): ",
-           paste(utils::head(miss, 5), collapse = ", "))
+    # A silent recycle would give the wrong seat's ceiling to the wrong seat and
+    # nothing downstream would show it, so an unexplained gap still aborts.
+    #
+    # A BRAND-NEW SEAT is the one explainable gap, and it is not staleness: the
+    # upset features are computed from the `from` election, so a division created
+    # at the redistribution has no predecessor to compute them from and CANNOT be
+    # in the risk file however recently it was rebuilt. fed2025's Bullwinkel is
+    # the first instance, and it aborted the whole arm. Such a seat takes the
+    # election's MEDIAN fitted risk -- the least informative honest choice, since
+    # nothing about it is known -- and every substituted seat is NAMED in the
+    # output, because a fabricated value that is not announced is exactly the
+    # failure this guard exists to prevent.
+    fill <- if (length(miss)) stats::median(rk$shrink_i) else NA_real_
+    if (length(miss)) {
+      .yv_i <- function(e) suppressWarnings(as.integer(sub("^[a-z]+", "", e)))
+      prior_seats <- unique(FP$seat[.yv_i(FP$election) < X$K$to])
+      stopifnot(length(prior_seats) > 100L)   # an empty set would call every seat "new"
+      new_seats <- setdiff(miss, prior_seats)
+      unexplained <- setdiff(miss, new_seats)
+      if (length(unexplained))
+        stop(want, ": insurgency risk missing for ", length(unexplained),
+             " seat(s) that are NOT new: ",
+             paste(utils::head(unexplained, 5), collapse = ", "))
+      cat(sprintf("BF2i %s %d seat(s) new at this redistribution, no prior to fit from; given the election median risk %.3f: %s
+",
+                  want, length(new_seats), fill, paste(sort(new_seats), collapse = ", ")))
+    }
     shrink_arg <- setNames(rk$shrink_i, rk$seat)[sn]
+    # Indexing a named vector by a name it does not carry returns an element
+    # whose NAME is NA, not the name asked for -- so filling the value alone
+    # leaves the seat still absent and simulate_seat_contests() rejects the
+    # vector ("shrink is named but has no entry for Bullwinkel"). The names are
+    # reasserted from `sn`, which is the authoritative seat order.
+    names(shrink_arg) <- sn
+    shrink_arg[is.na(shrink_arg)] <- fill
+    # THE SCALAR BECOMES A FLOOR, not a thing that is replaced. Measured over
+    # all six pairs the per-seat vector alone ties the 0.01 scalar (0.4091 vs
+    # 0.4096) but is worse in 5 of 6 -- its whole advantage is fed2013 -- which
+    # says it under-insures the seats a flat rate happens to cover. Flooring it
+    # keeps the fitted shape where the risk is real and still gives every seat
+    # the small baseline, so AUSPOL_SHRINK=0 reproduces the pure per-seat arm
+    # exactly and AUSPOL_SHRINK=0.01 is the combination.
+    # NOT YET MEASURED -- added 2026-09-06 at the end of a session, unrun.
+    if (SHRINK > 0) shrink_arg <- pmax(shrink_arg, SHRINK)
+    stopifnot(!anyNA(shrink_arg), !anyNA(names(shrink_arg)),
+              setequal(names(shrink_arg), sn), all(shrink_arg >= 0),
+              all(shrink_arg < 1))
     cat(sprintf("BF2i %s per-seat shrink: median %.3f | mean %.3f | max %.3f | seats above the flat %.2f: %d\n",
                 want, median(shrink_arg), mean(shrink_arg), max(shrink_arg),
                 SHRINK, sum(shrink_arg > SHRINK)))

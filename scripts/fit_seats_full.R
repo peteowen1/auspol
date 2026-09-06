@@ -540,9 +540,47 @@ if (.cond && is.null(.returns)) {
               sum(.returns$same), nrow(.returns),
               if (.screened && !is.null(.permit)) "" else " | screen: no salience data, arm C only"))
 }
+# SITTING-MEMBER SLOPE TIER and DEFECTOR DISCOUNT, wired into the PUBLISHED
+# forecast 2026-09-06. Both were validated in the backtest harnesses and then
+# sat there: this script called personal_prior_vote(), screened_slopes() and
+# conditional_slopes() without either argument, so the thing the harnesses
+# measured was not the thing being published.
+#
+# Values come from scripts/fit_mp_slope.R, never hard-coded. vic2026 has not
+# happened, so there is no fold to hold out and the ALL-DATA per-class fit is
+# both correct and leak-free here -- unlike a backtest, where the target's own
+# pair must be removed. That distinction is the reason a target-keyed table and
+# a pooled table are both written.
+.MP_SLOPE <- NULL
+.defect   <- NULL
+if (!identical(Sys.getenv("AUSPOL_MP_SLOPE", "1"), "0")) {
+  .mpf <- "output/mp-slope-by-class.csv"
+  if (!file.exists(.mpf))
+    stop("the MP slope tier needs ", .mpf, " -- run scripts/fit_mp_slope.R.
+",
+         "  Set AUSPOL_MP_SLOPE=0 to publish without it.")
+  .mpc <- data.table::fread(.mpf, showProgress = FALSE)
+  # GRN is excluded: its member slope (1.000) and also-ran slope (1.023) are
+  # indistinguishable, so a separate member value would assert a distinction the
+  # data does not contain. ONP is excluded by the n floor below -- no One Nation
+  # member has ever personally re-contested, and its shipped 0.610 was the
+  # also-ran slope written into the member row over zero observations.
+  .keep <- .mpc[is.finite(.mpc$member) & .mpc$n_member >= 8L &
+                  .mpc$party != "GRN", ]
+  if (nrow(.keep)) .MP_SLOPE <- stats::setNames(as.numeric(.keep$member), .keep$party)
+}
+if (!identical(Sys.getenv("AUSPOL_DEFECT_DISCOUNT", "1"), "0")) .defect <- 0.282
+cat(sprintf("CAL  MP tier: %s | defector discount: %s
+",
+            if (is.null(.MP_SLOPE)) "OFF" else
+              paste(sprintf("%s=%.4f", names(.MP_SLOPE), .MP_SLOPE), collapse = " "),
+            if (is.null(.defect)) "OFF" else sprintf("%.3f", .defect)))
+
 # THE BASE VALUE, not just the slope -- see personal_prior_vote()'s docs. Same
 # candidate-list gating as .returns above: NULL until vic2026 nominations close.
-.own_prev <- if (.cond && !is.null(.returns)) tryCatch(personal_prior_vote("vic2022", "vic2026"), error = function(e) NULL) else NULL
+.own_prev <- if (.cond && !is.null(.returns))
+  tryCatch(personal_prior_vote("vic2022", "vic2026", major_discount = .defect),
+           error = function(e) NULL) else NULL
 .own_x <- function(p, seats, x) {
   if (is.null(.own_prev)) return(x)
   ov <- .own_prev[.own_prev$party == p, ]
@@ -602,9 +640,9 @@ if (.surge_v2_on) {
     pv <- .permit[.permit$party == p, ]
     lut <- stats::setNames(as.logical(pv$permit), pv$seat)
     pm <- unname(lut[seats]); pm[is.na(pm)] <- TRUE
-    return(screened_slopes(p, seats, .returns, pm))
+    return(screened_slopes(p, seats, .returns, pm, same_mp = .MP_SLOPE))
   }
-  if (.cond && !is.null(.returns)) return(conditional_slopes(p, seats, .returns))
+  if (.cond && !is.null(.returns)) return(conditional_slopes(p, seats, .returns, same_mp = .MP_SLOPE))
   SLOPE[[p]]
 }
 
@@ -821,10 +859,29 @@ t0 <- Sys.time()
 # fed2013 is the one log-loss regression (+0.0359) and its Brier still improves,
 # so it is a confidence effect rather than a loss of correctness.
 #
-# Why it stays non-zero: shrink exists to absorb a non-major taking a seat
-# called safe for a major, and 0.00 scores worse than 0.02 on fed2025
-# (0.2914 vs 0.2891) even though its calibration slope is nearer 1.
-SHRINK <- as.numeric(Sys.getenv("AUSPOL_SHRINK", "0.02"))
+# LOWERED AGAIN 0.02 -> 0.01 on 2026-09-06, on Pete's rule that this is a hack
+# and should sit at the lowest value that survives the evidence, rising only for
+# a benefit that is actually significant. Six federal pairs, seed 42:
+#   0.10 mean log 0.4154 | 0.02 0.4047 | 0.01 0.4096 | 0.00 0.4282
+#   mean Brier            0.1000       | 0.0983      | 0.0982      | 0.0983
+# 0.02's 0.005 edge over 0.01 is one seed on six pairs and is NOT established as
+# significant; 0.01 has the best mean Brier of the four. On fed2025 the three
+# low values are indistinguishable (0.2891 / 0.2898 / 0.2914) and all beat AE
+# Forecasts' 0.3025.
+#
+# Why it stays NON-ZERO, which is the one thing the evidence refuses: shrink
+# absorbs a non-major taking a seat called safe for a major, and 0.00 costs
+# 0.0235 of mean log loss against 0.02, concentrated in fed2013 (+0.0975) and
+# fed2022 (+0.0243). That risk is invisible on fed2025, which is a well-behaved
+# election -- tuning this on fed2025 alone would have turned it off and taken
+# the fed2013 blow-up unseen.
+#
+# EXPECTED TO BE SUPERSEDED. AUSPOL_INSURGENCY_SHRINK gives each seat its OWN
+# fitted risk, so most seats get zero and only seats with a non-major in reach
+# pay anything -- the outcome this scalar approximates badly. Partial six-pair
+# numbers had it ahead of every scalar on fed2013 (0.3966-0.4092 against 0.4543).
+# See docs/NEXT-STEPS.md; it was not finished in this session.
+SHRINK <- as.numeric(Sys.getenv("AUSPOL_SHRINK", "0.01"))
 if (SHRINK > 0) cat(sprintf("CAL  calibration shrink %.2f applied
 ", SHRINK))
 sim <- simulate_seat_contests(level_sd = .level_sd, level_mult = .lm(shares), shares, fm, party_sd = psd, seat_sd = SEAT_SD, shrink = SHRINK,
