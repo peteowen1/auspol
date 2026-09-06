@@ -73,3 +73,30 @@ implementation is wrong, not the model.
 Refused if stage 2's pooled log loss does not beat the baseline by one SE, if
 the Greens cost exceeds the independents' gain, or if the targets move only
 in the clamp (nothing above 0.05).
+
+## Stage 1 result, 2026-09-07 00:30 (5,000 draws, code `3841dc5`)
+
+| election | n | recipient OFF x1 | ON x1 | ON x2 | ON x4 |
+|---|--:|--:|--:|--:|--:|
+| fed2022 | 150 | 0.5261 | **0.3897** | 0.3677 | 0.3575 |
+| fed2025 | 150 | 0.3034 | 0.3035 | 0.3120 | 0.3441 |
+| nsw2023 | 88 | 0.3137 | **0.2944** | 0.2989 | 0.3175 |
+| sa2026 | 47 | 0.3402 | **0.3276** | 0.3256 | 0.3327 |
+| pooled (435) | | 0.3865 | **0.3340** | 0.3315 | 0.3399 |
+
+Targets, fed2022 p(IND): Goldstein 0.000 → 0.017 (x1) / 0.069 (x4), Fowler
+0.000 → 0.007 / 0.040, North Sydney 0.002 → 0.023 / 0.099, Curtin 0.005 →
+0.029 / 0.133, Kooyong 0.007 → 0.043 / 0.168, Mackellar 0.033 → 0.055 /
+0.176. Every target is above 0.000 at x1 and the top-ranked above 0.10 at
+x4; none reaches AEF's 0.3–0.5, which is the hazard's calibration and is
+recorded, not chased here. Cowper 0.469 → 0.482 and Mallee 0.201 → 0.193 at
+x1: unchanged, as the dry run required.
+
+**One cost, as the Greens guard anticipated**: Clark 2022 (Wilkie, 0.994 →
+0.969 at x1, 0.902 at x4). The hazard there names a Green, and the surge now
+goes to that Green instead of harmlessly to Wilkie. Every Greens-won and
+returning-independent seat is scored in stage 2.
+
+**Stage 1 pick: x1**, with x2 as the neighbour (it wins fed2022 and SA by a
+little and loses NSW and fed2025). Stage 2 runs recipient ON at x1 across all
+17 elections at 20,000 draws against the rule-2 baseline, then x2.
