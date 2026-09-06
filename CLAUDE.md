@@ -337,10 +337,16 @@ pre-registered *first*, which is the only reason it was allowed to stand.
 
 ## A fix to one harness is a fix to ALL of them. Apply and test everywhere.
 
-There are **five** candidate-seat backtest harnesses — `backtest_candidate_fed.R`,
-`_vic.R`, `_nsw.R`, `_sa.R`, `_wa.R` — and they share a structure but not a file.
-**Any improvement, parameter or bug fix applied to one MUST be applied to all
-five and measured on all five in the same session.** Not "noted for later".
+There are **six** candidate-seat backtest harnesses — `backtest_candidate_fed.R`,
+`_vic.R`, `_nsw.R`, `_sa.R`, `_wa.R`, `_qld.R` (built 2026-09-07) — and they
+share a structure but not a file. **Any improvement, parameter or bug fix
+applied to one MUST be applied to all six and measured on all six in the same
+session.** Not "noted for later".
+
+**A sweep is minutes now, not an hour** (`src/seat_sim_core.cpp`, 2026-09-07),
+so there is no longer a compute excuse for measuring one and deferring the
+rest. Exploratory arms run at `AUSPOL_N_SIMS=5000`; only the deciding run
+needs 20,000.
 
 `_wa.R` was added 2026-08-25 and carries seven pairs at ~58 seats. **`_fed.R` is
 now the larger harness** — 6 pairs over ~880 seat-elections against WA's 361 —
@@ -350,9 +356,8 @@ than the other four combined predates the federal harness reaching 6 pairs.)
 
 **Both exceed the 10-minute background-task cap when run as two arms in one
 command.** Run one arm per launch, and use `AUSPOL_FED_PAIRS` to take federal a
-pair at a time; a killed run loses every arm behind it. A Queensland
-harness is buildable from data already on disk and does not exist yet — when it
-is built, this count becomes six.
+pair at a time; a killed run loses every arm behind it. Queensland was built 2026-09-07 and scores
+0.3351 against AE Forecasts' 0.3578.
 
 **Two WA-specific facts that change how its numbers read.** The `wa2001` pair
 has no transfers of its own (excluded upstream) so its flows fall back to

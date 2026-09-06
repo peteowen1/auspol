@@ -1,5 +1,14 @@
 #' Per-seat calibration shrink, zero wherever the risk it insures is absent
 #'
+#' **NOTHING CALLS THIS.** Checked 2026-09-06 across `R/`, `scripts/` and
+#' `tests/`: the shipped per-seat path is `AUSPOL_INSURGENCY_SHRINK=1`, which
+#' reads a FITTED risk from `output/fed-insurgency-risk.csv` (see
+#' `scripts/fit_insurgency_risk.R`) rather than deriving one from the shares.
+#' That arm was measured and refused on 2026-09-06. This function is the
+#' earlier, share-derived idea; it is kept because it is the natural form for
+#' a jurisdiction with no fitted risk file, and it is documented as unused so
+#' nobody reads its presence as evidence that it ships.
+#'
 #' `shrink` exists to absorb ONE failure: a non-major taking a seat the model
 #' called safe for a major. A scalar charges every seat for that insurance --
 #' `R/seat_sim.R`'s own note records 672 of 886 federal seat-elections whose

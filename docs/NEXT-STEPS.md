@@ -107,6 +107,45 @@ the hazard's calibration** (ridge lambda 20 on ~13 winners), which is the
 next pre-registration — a calibration map from hazard rank to probability,
 or a lower lambda, scored the same way.
 
+## SESSION 2026-09-07: a sixth harness, two refusals, and the salience gap named
+
+**Queensland exists and beats the benchmark.** `backtest_candidate_qld.R`
+(qld2020 -> qld2024, 93 seats): accuracy 82.8%, Brier 0.1087, **log loss
+0.3351 against AE Forecasts' 0.3578**, seat-share RMSE 3.259. Built from the
+SA harness with four differences named in its header, the largest being that
+its flows come from Queensland's OWN 2020 distribution rather than a federal
+election. Coverage is now **18 elections, ~1,640 seat-elections**, and a
+second AEF-benchmarked state election.
+
+**The salience point estimate reaches the published forecast at last.**
+`blend_salience_shares()` was inline in the federal harness alone; the three
+state harnesses and `fit_seats_full.R` never blended. Ported: pooled RMSE
+4.697 -> 4.689 (-1.8 SE), federal byte-identical.
+
+**Two changes refused, both by their own criteria:**
+- **P5** (the point estimate is an expected vote, not a win probability):
+  Pete's finding, and the category error was real. Fixed the projection
+  (Goldstein 2.3 -> 10.4, pooled RMSE better in 4 of 6 federal), but pooled
+  log loss did not move, so the pre-registration refuses it. The salience
+  signal now predicts the VOTE well and the SEAT badly.
+- **P6** (no surge against a returning sitting member): refused by its own
+  dry run BEFORE any code, because emergences do beat sitting members --
+  MacKillop and Narungga, SA 2026, both One Nation over a sitting
+  independent.
+
+**From the two reviews** (now in `reviews/code-simplification-2026-09-06.md`
+and `reviews/performance-2026-09-06.md`, each with a status header):
+SA and QLD were zeroing 30 seats and naming 22; dead code removed from
+`R/flow_matrix.R`; `seat_shrink_vector()` documented as uncalled. Five
+duplicated harness blocks remain, and memoising `governed_population()`
+across the pair loop remains.
+
+**The open question, and it is Pete's:** the six fed2022 teals polled 25-40%
+and the model projects 2-14%. The hazard is calibrated, the size (35.1) is
+right, the ranking is right; what is missing is that 2022 was a wave and
+nothing in the model can see one. Next: an election-level count of
+high-salience challengers, computable before polling day.
+
 ## P4c REFUSED and the calibration question ANSWERED, 2026-09-07
 
 `plans/prereg-recipient-at-zero-2026-09-07.md`. Letting a named recipient

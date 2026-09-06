@@ -492,7 +492,12 @@ if (ONP_CONC > 0) {
 if ("IND" %in% colnames(shares)) {
   ind_seats <- fb[party == "IND" & votes > 0, unique(seat)]
   no_ind <- setdiff(rownames(shares), ind_seats)
-  zeroed <- no_ind[shares[no_ind, "IND"] > 0.5]
+  # `> 0` like the other four harnesses, not `> 0.5`. Every seat in `no_ind`
+  # is zeroed on the next line either way; the threshold only decided which
+  # ones the log NAMED, so this harness under-reported its own work -- 22
+  # seats zeroed and fewer listed. Found by the simplification review
+  # 2026-09-06; behaviour unchanged, reporting corrected.
+  zeroed <- no_ind[shares[no_ind, "IND"] > 0]
   shares[no_ind, "IND"] <- 0
   cat(sprintf("BS1i zeroed IND in %d seat(s) with no independent nominated%s\n",
               length(zeroed),
