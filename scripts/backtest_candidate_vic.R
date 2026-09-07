@@ -657,6 +657,20 @@ for (K in PAIRS) {
                   surge_mu_arg, surge_sd_arg, hz$lambda, hz$n_train_winners))
     }
   }
+  # ARM H, docs/plans/prereg-reentry-flatratio-variance-2026-09-08.md. Widens
+  # the SIMULATED uncertainty, not the point estimate, for cells that fell
+  # back to the flat re-entry ratio -- point-shrinkage was tried and refused
+  # for these classes (docs/NEXT-STEPS.md 2026-09-08). Off by default
+  # (AUSPOL_REENTRY_SD_K=0); combined with any salience sd_override by taking
+  # the larger of the two, never adding them.
+  .reentry_sd_k <- as.numeric(Sys.getenv("AUSPOL_REENTRY_SD_K", "0"))
+  if (.reentry_sd_k > 0) {
+    .re_sd <- reentry_sd_matrix(shares, REENTRY_CELLS, .level_sd, .lm(shares), .reentry_sd_k)
+    cat(sprintf("RH1  re-entry sd widening ON (k=%.1f): %d cell(s)
+",
+                .reentry_sd_k, attr(.re_sd, "n_set")))
+    SD_OVR <- combine_sd_override(SD_OVR, .re_sd)
+  }
   FLOW_UNC <- identical(Sys.getenv("AUSPOL_FLOW_UNC", "0"), "1")
   if (FLOW_UNC) {
     sds <- readRDS("output/flow-uncertainty-sd.rds")

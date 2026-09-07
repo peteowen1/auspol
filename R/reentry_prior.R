@@ -508,12 +508,113 @@ apply_reentry_prior <- function(mat, standing, fit, lean_dt, state_share,
     if (!any(ok)) next
     v <- reentry_predict(fit, nd[ok, , drop = FALSE])
     mat[sn[ok], p] <- v
+    # n AND path, so a caller can size sd_override without repeating this
+    # loop. n is the training-row count reentry_fit() actually fit on for
+    # this class in this fold; path distinguishes the covariate GLM (which
+    # already has its own residual-implied uncertainty) from the flat-ratio
+    # fallback (which does not -- see prereg-reentry-flatratio-variance).
     rows[[p]] <- data.frame(seat = sn[ok], party = p, value = v,
+                            n = if (p %in% names(fit$n)) unname(fit$n[[p]]) else NA_integer_,
+                            path = if (!is.null(fit$fits[[p]])) "glm" else "ratio",
                             stringsAsFactors = FALSE)
   }
   attr(mat, "reentry") <- if (length(rows)) do.call(rbind, rows) else
-    data.frame(seat = character(0), party = character(0), value = numeric(0))
+    data.frame(seat = character(0), party = character(0), value = numeric(0),
+              n = integer(0), path = character(0))
   mat
+}
+
+#' Widen simulated variance for the flat-ratio re-entry path
+#'
+#' `docs/plans/prereg-reentry-flatratio-variance-2026-09-08.md`. A class with
+#' too few re-entry rows to fit (`reentry_fit()`'s `min_n`, default 40) falls
+#' back to a flat ratio, and that estimate is estimated on almost nothing --
+#' as little as 1-2 rows for Labor and the Coalition in this corpus. The POINT
+#' estimate cannot be improved with this little data (tested and refused,
+#' `docs/NEXT-STEPS.md` 2026-09-08); this widens the SIMULATED UNCERTAINTY
+#' instead, only for cells that went down the ratio path (`path == "ratio"`
+#' in [apply_reentry_prior()]'s `"reentry"` attribute) -- a GLM-fitted cell
+#' already carries its own residual-implied uncertainty and is left alone.
+#'
+#' `k_sd = 0` is a no-op: every value returned is `NA`, i.e. "no opinion,
+#' keep `level_sd`" in the `sd_override` contract ([simulate_seat_contests()]),
+#' the same convention [salience_sd_matrix()] uses. This is dry-run case 1 of
+#' the pre-registration and is asserted by this package's tests, not just
+#' claimed here.
+#'
+#' @param shares The post-fill share matrix (seats x parties), same object
+#'   passed to `simulate_seat_contests()`.
+#' @param reentry `apply_reentry_prior()`'s `"reentry"` attribute: a
+#'   `data.frame` of `seat`, `party`, `n`, `path`. Rows with `path != "ratio"`
+#'   or non-finite `n` are ignored.
+#' @param level_sd `c(a, b)`, the same constants passed to
+#'   `simulate_seat_contests()`.
+#' @param level_mult Optional named vector of per-class multipliers, the same
+#'   object `simulate_seat_contests()`'s `level_mult` argument takes (`NULL`
+#'   means every class multiplies by 1, matching that function's own default).
+#' @param k_sd A single non-negative constant, percentage points. The extra
+#'   sd added in quadrature is `k_sd / sqrt(n)`, so it is largest for the
+#'   classes with the least evidence and shrinks toward zero as `n` grows.
+#' @return A matrix the same shape and dimnames as `shares`, `NA` everywhere
+#'   except the ratio-path re-entry cells, suitable as `sd_override`.
+#' @export
+reentry_sd_matrix <- function(shares, reentry, level_sd, level_mult = NULL,
+                              k_sd = 0) {
+  out <- matrix(NA_real_, nrow(shares), ncol(shares), dimnames = dimnames(shares))
+  if (is.null(reentry) || !nrow(reentry) || !isTRUE(k_sd > 0)) {
+    attr(out, "n_set") <- 0L
+    return(out)
+  }
+  r <- reentry[reentry$path == "ratio" & is.finite(reentry$n) & reentry$n > 0, ]
+  ri <- match(r$seat, rownames(shares)); ci <- match(r$party, colnames(shares))
+  keep <- !is.na(ri) & !is.na(ci)
+  if (!any(keep)) {
+    attr(out, "n_set") <- 0L
+    return(out)
+  }
+  ri <- ri[keep]; ci <- ci[keep]; r <- r[keep, ]
+  lm_vec <- if (is.null(level_mult)) stats::setNames(rep(1, ncol(shares)), colnames(shares))
+    else { v <- rep(1, ncol(shares)); names(v) <- colnames(shares)
+           hit <- match(names(level_mult), colnames(shares))
+           v[hit[!is.na(hit)]] <- as.numeric(level_mult)[!is.na(hit)]; v }
+  ppm <- pmin(pmax(unname(as.matrix(shares)), 0), 100) / 100
+  idx <- cbind(ri, ci)
+  p_here <- ppm[idx]
+  base_sd <- level_sd[1L] + level_sd[2L] * lm_vec[ci] * sqrt(p_here * (1 - p_here))
+  extra_sd <- k_sd / sqrt(r$n)
+  out[idx] <- sqrt(base_sd^2 + extra_sd^2)
+  attr(out, "n_set") <- nrow(r)
+  out
+}
+
+#' Combine two `sd_override` matrices without understating either
+#'
+#' A cell can be claimed by more than one uncertainty source -- a governed
+#' salience candidate re-entering a seat their party did not contest last
+#' time is both. `sd_override` accepts exactly one matrix, so the two must be
+#' merged before the call. This takes the LARGER of the two wherever either
+#' has an opinion (`NA` means "no opinion", the `sd_override` convention
+#' throughout this package), rather than inventing a theory of how two
+#' independent-but-unquantified uncertainty sources compose -- see the
+#' refusal section of `prereg-reentry-flatratio-variance-2026-09-08.md`.
+#'
+#' Either argument may be `NULL`, in which case the other is returned
+#' unchanged (and both `NULL` returns `NULL`), so a caller can pass this
+#' straight through without an `if` at every call site.
+#'
+#' @param a,b Matrices of the same shape as `shares`, or `NULL`.
+#' @return The combined matrix, or `NULL` if both inputs are `NULL`.
+#' @export
+combine_sd_override <- function(a, b) {
+  if (is.null(a)) return(b)
+  if (is.null(b)) return(a)
+  if (!identical(dim(a), dim(b))) {
+    stop("combine_sd_override: a and b must be the same shape; got ",
+         paste(dim(a), collapse = "x"), " and ", paste(dim(b), collapse = "x"))
+  }
+  out <- matrix(pmax(as.vector(a), as.vector(b), na.rm = TRUE), nrow(a), ncol(a),
+               dimnames = dimnames(a))
+  out
 }
 
 #' One-call re-entry prior for a harness

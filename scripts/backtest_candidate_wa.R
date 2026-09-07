@@ -449,7 +449,26 @@ for (K in PAIRS) {
   sd_used <- if (is.na(prev_spread)) 3.5 else prev_spread
   psd <- setNames(rep(PARTY_SD, ncol(shares)), colnames(shares))
 
-  sim <- simulate_seat_contests(level_sd = .level_sd, level_mult = .lm(shares), shares, fm, party_sd = psd,
+  # ARM H, docs/plans/prereg-reentry-flatratio-variance-2026-09-08.md. Widens
+  # the SIMULATED uncertainty, not the point estimate, for cells that fell
+  # back to the flat re-entry ratio -- point-shrinkage was tried and refused
+  # for these classes (docs/NEXT-STEPS.md 2026-09-08). Off by default
+  # (AUSPOL_REENTRY_SD_K=0). WA had NO sd_override plumbing at all before
+  # this -- the sixth harness-parity gap found this session (positions,
+  # salience and the seed were the other three) -- so SD_OVR is declared
+  # here rather than inherited from a salience block the way the other five
+  # harnesses have it.
+  SD_OVR <- NULL
+  .reentry_sd_k <- as.numeric(Sys.getenv("AUSPOL_REENTRY_SD_K", "0"))
+  if (.reentry_sd_k > 0) {
+    .re_sd <- reentry_sd_matrix(shares, .recells, .level_sd, .lm(shares), .reentry_sd_k)
+    cat(sprintf("RH1  re-entry sd widening ON (k=%.1f): %d cell(s)
+",
+                .reentry_sd_k, attr(.re_sd, "n_set")))
+    SD_OVR <- combine_sd_override(SD_OVR, .re_sd)
+  }
+
+  sim <- simulate_seat_contests(level_sd = .level_sd, sd_override = SD_OVR, level_mult = .lm(shares), shares, fm, party_sd = psd,
                                 seat_sd = sd_used * SEAT_SD_MULT,
                                 n_sims = N_SIMS, smooth = SMOOTH, seed = SEED,
                                 shrink = SHRINK, fallback_smooth = FB_SMOOTH,
