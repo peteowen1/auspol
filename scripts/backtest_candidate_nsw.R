@@ -139,14 +139,14 @@ if (SEAT_SD_MULT != 1) {
 # ARM B/C of docs/plans/prereg-statewide-covariance.md. AUSPOL_PARTY_COR=shrunk
 # correlates the parties' statewide deviations instead of drawing them
 # independently. Empty (the default) reproduces the previous behaviour exactly.
+# THE MATRIX IS CHOSEN PER TARGET, and the target is not known yet -- this
+# harness picks its pair further down. So only the MODE is read here and the
+# matrix itself is fetched beside the pair, by statewide_cor(). Until
+# 2026-09-07 every harness read one all-pairs correlation and scored against
+# it, including the pairs that were in the fit, so an election was correlated
+# using its own statewide swing. See
+# docs/plans/prereg-statewide-cov-loo-2026-09-07.md.
 PARTY_COR <- NULL
-if (nzchar(Sys.getenv("AUSPOL_PARTY_COR", ""))) {
-  .co <- readRDS("output/statewide-cov.rds")
-  PARTY_COR <- if (identical(Sys.getenv("AUSPOL_PARTY_COR"), "raw")) .co$cor else .co$cor_shrunk
-  cat(sprintf("COV  party correlation ON (%s): cor(ONP,LNP) = %+.2f
-",
-              Sys.getenv("AUSPOL_PARTY_COR"), PARTY_COR["ONP", "LNP"]))
-}
 
 # THE FLOW FIXES, PORTED. `fallback_smooth` and `flow_sd` were added to the
 # South Australian harness on 2026-08-25 and existed NOWHERE ELSE, so setting
@@ -217,7 +217,13 @@ CAL_TAG <- paste0(
   # "-corraw" and "-cor" are DIFFERENT correlation matrices. Both used to tag
   # "-cor", so running the raw arm and then the shrunk one wrote the second
   # over the first and a before/after comparison compared an arm with itself.
-  if (!is.null(PARTY_COR))
+  # KEYED ON THE SWITCH, NOT ON THE MATRIX. PARTY_COR is now fetched per
+  # target, which happens AFTER this tag is built, so testing the matrix
+  # here silently dropped "-cor" from every filename while the run still
+  # used a correlation -- a file whose name says one arm and whose
+  # contents are another, which is the fingerprint failure this tag exists
+  # to prevent.
+  if (nzchar(Sys.getenv("AUSPOL_PARTY_COR", "")))
     (if (identical(Sys.getenv("AUSPOL_PARTY_COR"), "raw")) "-corraw" else "-cor")
   else "",
   # No -qld or -wa suffix: neither is admissible here, so an arm carrying
@@ -274,6 +280,20 @@ PRV  <- sprintf("nsw%d", FROM)
 cat(sprintf("BT0p pair %s -> %s | flows from %s | seat file %dnsw.txt
 ",
             PRV, TGT, PRV, TO))
+
+# The correlation matrix for THIS target. The source is printed because a
+# silent fallback is the failure this repo keeps finding: a run using a
+# different input from the one its log implies.
+if (nzchar(Sys.getenv("AUSPOL_PARTY_COR", ""))) {
+  PARTY_COR <- statewide_cor(TGT,
+                             mode = if (identical(Sys.getenv("AUSPOL_PARTY_COR"), "raw")) "raw" else "shrunk")
+  cat(sprintf("COV  party correlation ON (%s): cor(ONP,LNP) = %+.2f | %s\n",
+              Sys.getenv("AUSPOL_PARTY_COR"), PARTY_COR["ONP", "LNP"],
+              attr(PARTY_COR, "cor_source")))
+}
+
+
+
 
 fp_prev <- fread(file.path(PREF, sprintf("nswec-%d-nsw-firstprefs.csv", FROM)))
 fp_tgt  <- fread(file.path(PREF, sprintf("nswec-%d-nsw-firstprefs.csv", TO)))

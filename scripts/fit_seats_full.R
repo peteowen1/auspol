@@ -811,8 +811,14 @@ psd <- vapply(parties, function(p) if (is.na(state_sd[p])) 1.5 else state_sd[[p]
 COR_MODE <- Sys.getenv("AUSPOL_PARTY_COR", "shrunk")
 sw_cor <- NULL
 if (!identical(COR_MODE, "off") && nzchar(COR_MODE)) {
-  .co <- readRDS("output/statewide-cov.rds")
-  cm <- if (identical(COR_MODE, "raw")) .co$cor else .co$cor_shrunk
+  # NULL TARGET ON PURPOSE: this is the live forecast. Victoria 2026 has not
+  # happened, so no pair in the fit is the one being predicted and there is
+  # nothing to leave out. The backtests pass their target and get a
+  # leave-one-out matrix; withholding data here would be superstition rather
+  # than hygiene. See docs/plans/prereg-statewide-cov-loo-2026-09-07.md.
+  cm <- statewide_cor(NULL, mode = if (identical(COR_MODE, "raw")) "raw" else "shrunk")
+  cat(sprintf("COV  statewide correlation: %s
+", attr(cm, "cor_source")))
   miss <- setdiff(parties, colnames(cm))
   if (length(miss)) {
     stop("The statewide correlation has no entry for: ",

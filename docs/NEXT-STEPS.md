@@ -3,8 +3,11 @@
 ## SESSION 2026-09-07: New South Wales 2019 scored, and four findings
 
 **Coverage is now 22 pairs and 2,050 seat-elections**, up from 19 and 1,791.
-Pooled seat log loss **0.3433**, Brier 0.0945, accuracy 87.2%. All six harnesses
-were re-run the same day, so every row of that table describes one model.
+Pooled seat log loss **0.3452**, Brier 0.0945, accuracy 87.2%. The 0.0019 against
+the morning's figure is ONE seat: Barwon in nsw2019 crossing the 1e-6 floor,
+from 0.000050 to 0.000001, after the covariance was rebuilt on DLP-corrected
+federal first preferences. All six harnesses were re-run the same day, so
+every row of that table describes one model.
 
 Three elections were added: **nsw2019** (93 seats), **vic2014** (73 of 88, the
 2013 redistribution renamed 15 districts) and **qld2020** (93). All three came
@@ -33,12 +36,14 @@ refactor.
    returns Orange as Shooters-held — and is known before polling day, so it is
    leakage-free. Targeted fix, so the named seats are the primary metric and the
    election-wide number is a do-no-harm guard.
-2. **The statewide covariance is fitted in sample and on ten of twenty pairs.**
-   `scripts/estimate_statewide_cov.R` builds one matrix from a hardcoded list
-   and every harness reads it, including when scoring a pair inside the fit.
-   Missing: both Queensland pairs, all seven WA pairs, nsw2019 and vic2014 --
-   ten of the twenty-two. Fix is leave-one-election-out plus widening, in one
-   change, and it moves the published model.
+2. **Widen the statewide covariance to the non-Western-Australian pairs.**
+   The leakage is closed (leave-one-out, effect nil) and the full widening was
+   REFUSED by its own pre-registered refusal clause: cor(ALP, IND) is -0.16
+   with WA in the fit and +0.43 without, because WA has almost no independents
+   and enormous Labor swings. Adding fed2007, nsw2019, vic2014 and the two
+   Queensland pairs alone is a different change that clause does not implicate,
+   and it needs its own pre-registration.
+   `docs/reviews/statewide-cov-loo-2026-09-07.md`.
 3. **Western Australia has no surge-v2 hazard at all.** The other five harnesses
    do. A published switch a harness cannot honour is the failure recorded in
    `CLAUDE.md` for the missing SA `shrink`, and its numbers describe a different

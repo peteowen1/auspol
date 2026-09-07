@@ -164,13 +164,28 @@ if (SEAT_SD_MULT != 1) {
 # ARM B/C of docs/plans/prereg-statewide-covariance.md. AUSPOL_PARTY_COR=shrunk
 # correlates the parties' statewide deviations instead of drawing them
 # independently. Empty (the default) reproduces the previous behaviour exactly.
+# THE MATRIX IS NOW CHOSEN PER TARGET. Until 2026-09-07 every harness read one
+# all-pairs correlation and scored against it, including the pairs that were in
+# the fit -- so an election was correlated using its own statewide swing.
+# statewide_cor() returns the leave-one-out matrix where the target is in the
+# fit, the all-pairs matrix where it is not, and records which on the result.
+# The source is PRINTED because a silent fallback here is exactly the failure
+# this repo keeps finding: a run using a different input from the one its log
+# implies. See docs/plans/prereg-statewide-cov-loo-2026-09-07.md.
 PARTY_COR <- NULL
+# KEYED ON THE SWITCH, NOT ON THE MATRIX. PARTY_COR is now fetched per
+# target, which happens AFTER this tag is built, so testing the matrix
+# here silently dropped "-cor" from every filename while the run still
+# used a correlation -- a file whose name says one arm and whose
+# contents are another, which is the fingerprint failure this tag exists
+# to prevent.
 if (nzchar(Sys.getenv("AUSPOL_PARTY_COR", ""))) {
-  .co <- readRDS("output/statewide-cov.rds")
-  PARTY_COR <- if (identical(Sys.getenv("AUSPOL_PARTY_COR"), "raw")) .co$cor else .co$cor_shrunk
-  cat(sprintf("COV  party correlation ON (%s): cor(ONP,LNP) = %+.2f
+  PARTY_COR <- statewide_cor("sa2026",
+                             mode = if (identical(Sys.getenv("AUSPOL_PARTY_COR"), "raw")) "raw" else "shrunk")
+  cat(sprintf("COV  party correlation ON (%s): cor(ONP,LNP) = %+.2f | %s
 ",
-              Sys.getenv("AUSPOL_PARTY_COR"), PARTY_COR["ONP", "LNP"]))
+              Sys.getenv("AUSPOL_PARTY_COR"), PARTY_COR["ONP", "LNP"],
+              attr(PARTY_COR, "cor_source")))
 }
 
 # Read from the environment like the federal and Victorian harnesses, and
@@ -224,7 +239,7 @@ CAL_TAG <- paste0(
   # "-corraw" and "-cor" are DIFFERENT correlation matrices. Both used to tag
   # "-cor", so running the raw arm and then the shrunk one wrote the second
   # over the first and a before/after comparison compared an arm with itself.
-  if (!is.null(PARTY_COR))
+  if (nzchar(Sys.getenv("AUSPOL_PARTY_COR", "")))
     (if (identical(Sys.getenv("AUSPOL_PARTY_COR"), "raw")) "-corraw" else "-cor")
   else "",
   if (N_SIMS != 20000L) sprintf("-n%d", N_SIMS) else "",

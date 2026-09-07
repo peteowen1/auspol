@@ -109,14 +109,16 @@ N_SIMS <- as.integer(Sys.getenv("AUSPOL_N_SIMS", "20000"))
 # ARM B/C of docs/plans/prereg-statewide-covariance.md. AUSPOL_PARTY_COR=shrunk
 # correlates the parties' statewide deviations instead of drawing them
 # independently. Empty (the default) reproduces the previous behaviour exactly.
+# THE MATRIX IS CHOSEN PER TARGET, and this harness scores several targets in
+# one run, so the matrix cannot be a single value fixed here. Only the MODE is
+# read at this point; statewide_cor() is called inside the pair loop. Until
+# 2026-09-07 every harness read one all-pairs correlation and scored against
+# it, including the pairs that were in the fit, so an election was correlated
+# using its own statewide swing. See
+# docs/plans/prereg-statewide-cov-loo-2026-09-07.md.
 PARTY_COR <- NULL
-if (nzchar(Sys.getenv("AUSPOL_PARTY_COR", ""))) {
-  .co <- readRDS("output/statewide-cov.rds")
-  PARTY_COR <- if (identical(Sys.getenv("AUSPOL_PARTY_COR"), "raw")) .co$cor else .co$cor_shrunk
-  cat(sprintf("COV  party correlation ON (%s): cor(ONP,LNP) = %+.2f
-",
-              Sys.getenv("AUSPOL_PARTY_COR"), PARTY_COR["ONP", "LNP"]))
-}
+COR_MODE <- if (!nzchar(Sys.getenv("AUSPOL_PARTY_COR", ""))) NULL else
+  if (identical(Sys.getenv("AUSPOL_PARTY_COR"), "raw")) "raw" else "shrunk"
 
 # THE FLOW FIXES, PORTED. `fallback_smooth` and `flow_sd` were added to the
 # South Australian harness on 2026-08-25 and existed NOWHERE ELSE, so setting
@@ -180,7 +182,13 @@ CAL_TAG <- paste0(
   # "-corraw" and "-cor" are DIFFERENT correlation matrices. Both used to tag
   # "-cor", so running the raw arm and then the shrunk one wrote the second
   # over the first and a before/after comparison compared an arm with itself.
-  if (!is.null(PARTY_COR))
+  # KEYED ON THE SWITCH, NOT ON THE MATRIX. PARTY_COR is now fetched per
+  # target, which happens AFTER this tag is built, so testing the matrix
+  # here silently dropped "-cor" from every filename while the run still
+  # used a correlation -- a file whose name says one arm and whose
+  # contents are another, which is the fingerprint failure this tag exists
+  # to prevent.
+  if (nzchar(Sys.getenv("AUSPOL_PARTY_COR", "")))
     (if (identical(Sys.getenv("AUSPOL_PARTY_COR"), "raw")) "-corraw" else "-cor")
   else "",
   if (identical(Sys.getenv("AUSPOL_QLD_FLOWS", "0"), "1")) "-qld" else "",
@@ -226,6 +234,17 @@ share_of <- function(f) {
 
 out_all <- list(); tot_all <- list()
 for (K in PAIRS) {
+
+  # The correlation matrix for THIS pair. Printed with its source, because a
+  # silent fallback is the failure this repo keeps finding: a run using a
+  # different input from the one its log implies.
+  PARTY_COR <- if (is.null(COR_MODE)) NULL else
+    statewide_cor(sprintf("vic%d", K$to), mode = COR_MODE)
+  if (nzchar(Sys.getenv("AUSPOL_PARTY_COR", "")))
+    cat(sprintf("COV  vic%d party correlation (%s): cor(ONP,LNP) = %+.2f | %s\n",
+                K$to, COR_MODE, PARTY_COR["ONP", "LNP"],
+                attr(PARTY_COR, "cor_source")))
+
   fa <- share_of(sprintf("vec-%d-vic-firstprefs.csv", K$from))
   fb <- share_of(sprintf("vec-%d-vic-firstprefs.csv", K$to))
   tx <- fread(file.path(P, sprintf("vec-%d-vic-transfers.csv", K$from)),
