@@ -547,8 +547,56 @@ for (y in c(2010, 2014, 2018)) {
   }
   if (!length(rows)) { cat(sprintf("BC7  vic%d: no district tables parsed\n", y)); next }
   v <- rbindlist(rows, fill = TRUE)
+  # PROPER SEAT NAMES, resolved from the commission's own first-preference file.
+  # These pages are named "albertparkdistrict.html", and this block used to keep
+  # the seat as "albertpark" on the reasoning that nothing joined to the VEC
+  # results files. That reasoning was true when written and is not true now, and
+  # three things were silently failing on it:
+  #   * the salience corpus is built from this table, so every Victorian hazard
+  #     lookup missed -- vic2014 and vic2018 ran with salience on, a corpus
+  #     present, and 0 of 73 and 0 of 88 seats matched;
+  #   * remove_transferred_votes() skipped morwell/LNP, which is Russell Northe
+  #     carrying his vote from the Nationals to an independent run -- one of the
+  #     six worst-scored seats in the whole corpus;
+  #   * conditional slopes saw fewer returning candidates than exist.
+  # None of it errored. Matched on a normalised key and REFUSED if a seat fails
+  # to resolve, because a silent drop here is what caused all three.
+  .fp <- file.path(election_data_path(), sprintf("vec-%d-vic-firstprefs.csv", y))
+  if (file.exists(.fp)) {
+    .key <- function(x) tolower(gsub("[^A-Za-z]", "", x))
+    .proper <- unique(fread(.fp, showProgress = FALSE)$seat)
+    .map <- stats::setNames(.proper, .key(.proper))
+    .want <- .key(v$seat)
+    .miss <- unique(v$seat[!.want %in% names(.map)])
+    if (length(.miss)) {
+      stop("vic", y, ": ", length(.miss), " seat(s) from the district pages have ",
+           "no match in ", basename(.fp), ": ",
+           paste(utils::head(.miss, 6), collapse = ", "),
+           ". A silent drop here disables salience and the personal-vote ",
+           "transfer for those seats.")
+    }
+    v[, seat := unname(.map[.key(seat)])]
+    cat(sprintf("BC7  vic%d: seat names resolved to the commission's spelling (%d seats)
+",
+                y, uniqueN(v$seat)))
+  } else {
+    cat(sprintf("BC7! vic%d: %s absent, so seat names stay in the page-slug form and
+",
+                y, basename(.fp)))
+    cat("BC7! every downstream join keyed on seat name WILL silently miss.
+")
+  }
   v[is.na(party_raw) | party_raw == "", party_raw := "Independent"]
-  v[, `:=`(party = classify_party(party_raw, NULL), surname = NA_character_,
+  # THE ABBREVIATION AS WELL AS THE NAME, for the reason the WA block above
+  # spells out. The 2010 pages write the party as "ALP" where 2014 and 2018
+  # write "AUSTRALIAN LABOR PARTY", and no NAME rule in classify_party() matches
+  # a bare "ALP" -- so all 88 Victorian Labor candidates of 2010, 1,147,348
+  # votes, were classified OTH. Nothing errored and the first-preference file
+  # was right, because that one maps the abbreviation through the page's own
+  # party note; only the candidate corpus was wrong, which is where the
+  # returning-candidate and surge logic reads from. Found 2026-09-07 while
+  # diagnosing why Shepparton scored so badly.
+  v[, `:=`(party = classify_party(party_raw, party_raw), surname = NA_character_,
            given = NA_character_, elected = NA,
            election = sprintf("vic%d", y), region = "vic", year = y)]
   parts[[sprintf("vic%d", y)]] <- v
