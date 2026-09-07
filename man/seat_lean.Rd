@@ -4,10 +4,15 @@
 \alias{seat_lean}
 \title{Seat lean, safeness and non-major share from one election's shares}
 \usage{
-seat_lean(a)
+seat_lean(a, positions = NULL)
 }
 \arguments{
 \item{a}{A \code{data.table} of \code{seat}, \code{party}, \code{pcv} for ONE election.}
+
+\item{positions}{Optional named vector from \code{\link[=party_positions]{party_positions()}}. When given,
+the result gains \code{flow_lean} and \code{flow_safe}: the seat's position weighted
+by where each party's preferences actually go, which is defined even when a
+major did not contest the seat and the bloc measure saturates at 0 or 100.}
 }
 \value{
 A \code{data.table} of \code{seat}, \code{lean}, \code{safe}, \code{nonmajor_prev}.

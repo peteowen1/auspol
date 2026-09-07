@@ -141,3 +141,28 @@ test_that("a minor party is not filed as OTH because of word order", {
   expect_equal(classify_party("Australian Democrats"), "OTH")
   expect_equal(classify_party("Sustainable Australia Party"), "OTH")
 })
+
+
+test_that("the Country Liberals are the Coalition and Country Labor is not", {
+  # CLP is the Country LIBERAL Party in the Northern Territory and the Country
+  # LABOR Party in New South Wales -- opposite sides of politics under one
+  # abbreviation, which is why classify_party() deliberately refuses to resolve
+  # the CODE and matches on the name instead.
+  #
+  # The name list was an EXACT match, so "C.L.P." resolved and
+  # "CLP-The Territory Party" -- what the AEC published for fed2004 -- did not.
+  # It fell through to OTH: 16,494 votes in Lingiari and 23,361 in Solomon on
+  # the wrong side, Lingiari's seat lean saturated at "wholly left" because the
+  # seat then had no Coalition vote, and Solomon entered the defection training
+  # set as a 49.5% OTH -> LNP switch that was really one party reclassified.
+  expect_equal(classify_party("CLP-The Territory Party"), "LNP")
+  expect_equal(classify_party("The Territory Party"), "LNP")
+  expect_equal(classify_party("C.L.P."), "LNP")
+  expect_equal(classify_party("Country Liberal Party"), "LNP")
+  expect_equal(classify_party("CLP-The Territory Party", "CLP"), "LNP")
+
+  # And the other side of the collision is untouched.
+  expect_equal(classify_party("Country Labor Party"), "ALP")
+  expect_equal(classify_party("Country Labor Party", "CLP"), "ALP")
+  expect_equal(classify_party("Australian Labor Party (Northern Territory) Branch"), "ALP")
+})

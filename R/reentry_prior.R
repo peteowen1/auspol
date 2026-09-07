@@ -41,8 +41,8 @@
 #' re-reads. Nearly all of that gain — 1.87 of the 1.92 points — comes from
 #' moving off zero to a flat class ratio. The covariates add 0.047, against a
 #' per-election spread of 0.553; they win in 15 of 22 elections but a paired t
-#' over those elections gives p = 0.693 with a 95% interval of [-0.198, +0.292].
-#' At 22 elections this cannot be called either way. Adopted at Pete's direction
+#' over those elections gives p = 0.693, with a 95% interval running from
+#' -0.198 to +0.292. At 22 elections this cannot be called either way. Adopted at Pete's direction
 #' on the consistent direction and the in-sample structure; the flat ratio is
 #' available by passing `covariates = FALSE` and is the control to re-run
 #' against when more elections exist.
@@ -87,8 +87,14 @@ reentry_fit <- function(pairs, min_n = 40L, min_ratio_n = 20L, covariates = TRUE
     # assumption, and this is the evidence.
     ratios[cl] <- if (nrow(d) >= min_ratio_n) mean(d$pcv) / mean(d$state_pcv) else 1
     if (covariates && nrow(d) >= min_n) {
-      f <- try(stats::glm(pcv ~ log(state_pcv) + safe + lean + nonmajor_prev,
-                          family = stats::quasipoisson(link = "log"), data = d),
+      # BOTH LEANS. Measured out of fold: flat 3.3459, bloc 3.3082, flow
+      # 3.2895, both 3.2519. Flow alone barely beats bloc (12 of 22 elections),
+      # but both together gain +0.095 and win in 17 of 22 -- they agree in most
+      # seats and disagree usefully in the ones an independent dominates.
+      fo <- if (all(is.finite(d$flow_lean)))
+        pcv ~ log(state_pcv) + safe + lean + flow_safe + flow_lean + nonmajor_prev
+      else pcv ~ log(state_pcv) + safe + lean + nonmajor_prev
+      f <- try(stats::glm(fo, family = stats::quasipoisson(link = "log"), data = d),
                silent = TRUE)
       if (!inherits(f, "try-error")) fits[[cl]] <- f
     }
@@ -119,7 +125,9 @@ reentry_training <- function(pairs,
     a <- agg[agg$election == p$prev]
     b <- agg[agg$election == p$election]
     if (!nrow(a) || !nrow(b)) return(NULL)
-    ln <- seat_lean(a)
+    # Positions measured WITHOUT the target election, so the flow lean is
+    # leave-one-election-out like everything else here.
+    ln <- seat_lean(a, positions = party_positions(exclude = p$election))
     st <- b[, list(state_pcv = 100 * sum(votes) / sum(b$votes)), by = "party"]
     m <- merge(b, a[, list(seat, party, prev = pcv)], by = c("seat", "party"),
                all.x = TRUE)
@@ -127,11 +135,60 @@ reentry_training <- function(pairs,
     m <- m[is.na(m$prev) & m$seat %in% a$seat]
     if (!nrow(m)) return(NULL)
     m[, pair := p$election]
-    m[, list(pair, party, seat, pcv, state_pcv, lean, safe, nonmajor_prev)]
+    m[, list(pair, party, seat, pcv, state_pcv, lean, safe, nonmajor_prev,
+             flow_lean, flow_safe)]
   })
   D <- data.table::rbindlist(out, fill = TRUE)
   if (!nrow(D)) return(D)
   D[is.finite(D$lean) & is.finite(D$state_pcv) & D$state_pcv > 0]
+}
+
+#' Where each party's preferences actually go
+#'
+#' A party's position on the left-right axis, MEASURED rather than assigned: of
+#' its transferred preferences that reach a major, the share reaching the
+#' Coalition. 0 flows to Labor, 1 to the Coalition. Over 24.7 million
+#' transferred votes this recovers the ordering you would assign by hand —
+#' GRN 0.21, OTH 0.44, IND 0.47, OTH_RIGHT 0.64, ONP 0.69 — without assigning
+#' anything, and it drifts in ways that are political history: independents move
+#' 0.56 to 0.40 across the federal series, which is the teal shift showing up in
+#' preference behaviour.
+#'
+#' ALP AND LNP ARE PINNED at 0 and 1 rather than measured. A major's preferences
+#' are only distributed when it is EXCLUDED, which happens when it finishes
+#' third or worse, so the measured values are exclusion artefacts: Labor reads
+#' 0.997 because the only major left standing in those seats was the Coalition,
+#' and the Coalition reads 0.424 because that is Liberal-to-Nationals flow in a
+#' three-cornered contest, i.e. the class flowing to itself. They are the
+#' anchors of the scale, not points on it.
+#'
+#' @param exclude Election label to leave out, so the caller stays
+#'   leave-one-election-out.
+#' @param min_votes A party needs this many transferred votes to get a measured
+#'   position; below it, no opinion.
+#' @param path Directory holding the transfer files.
+#' @return Named numeric vector of positions.
+#' @export
+party_positions <- function(exclude = NULL, min_votes = 5000,
+                            path = election_data_path()) {
+  tf <- c("aec-fed-transfers.csv", "nswec-nsw-transfers.csv",
+          "ecq-qld-transfers.csv", "vec-2014-vic-transfers.csv",
+          "vec-2018-vic-transfers.csv", "vec-2022-vic-transfers.csv")
+  TX <- data.table::rbindlist(lapply(tf, function(f) {
+    fp <- file.path(path, f)
+    if (file.exists(fp)) data.table::fread(fp, showProgress = FALSE) else NULL
+  }), fill = TRUE)
+  if (!nrow(TX)) return(c(ALP = 0, LNP = 1))
+  if (!is.null(exclude)) TX <- TX[!TX$election %in% exclude]
+  s <- TX[TX$to %in% c("ALP", "LNP"), list(v = sum(votes)), by = c("from", "to")]
+  if (!nrow(s)) return(c(ALP = 0, LNP = 1))
+  w <- data.table::dcast(s, from ~ to, value.var = "v", fill = 0)
+  if (!"ALP" %in% names(w)) w[, ALP := 0]
+  if (!"LNP" %in% names(w)) w[, LNP := 0]
+  w[, n := ALP + LNP]
+  p <- stats::setNames(w$LNP / w$n, w$from)[w$n >= min_votes]
+  p[["ALP"]] <- 0; p[["LNP"]] <- 1
+  p
 }
 
 #' Seat lean, safeness and non-major share from one election's shares
@@ -141,9 +198,13 @@ reentry_training <- function(pairs,
 #' outside the two majors.
 #'
 #' @param a A `data.table` of `seat`, `party`, `pcv` for ONE election.
+#' @param positions Optional named vector from [party_positions()]. When given,
+#'   the result gains `flow_lean` and `flow_safe`: the seat's position weighted
+#'   by where each party's preferences actually go, which is defined even when a
+#'   major did not contest the seat and the bloc measure saturates at 0 or 100.
 #' @return A `data.table` of `seat`, `lean`, `safe`, `nonmajor_prev`.
 #' @export
-seat_lean <- function(a) {
+seat_lean <- function(a, positions = NULL) {
   w <- data.table::dcast(a, seat ~ party, value.var = "pcv", fill = 0)
   gcol <- function(nm) {
     k <- intersect(nm, names(w))
@@ -152,8 +213,27 @@ seat_lean <- function(a) {
   L <- gcol(c("ALP", "GRN")); R <- gcol(c("LNP", "ONP", "OTH_RIGHT"))
   nm <- gcol(setdiff(names(w), c("seat", "ALP", "LNP")))
   lean <- ifelse(L + R > 0, 100 * L / (L + R), NA_real_)
-  data.table::data.table(seat = w$seat, lean = lean, safe = abs(lean - 50),
-                         nonmajor_prev = nm)
+  out <- data.table::data.table(seat = w$seat, lean = lean, safe = abs(lean - 50),
+                                nonmajor_prev = nm)
+  # THE FLOW LEAN, alongside the bloc one rather than instead of it. They
+  # correlate at 0.956 and using BOTH beats either -- +0.095 mean gain over the
+  # bloc measure alone, better in 17 of 22 elections. Where they disagree is
+  # seats an independent dominates, which is where the bloc measure breaks:
+  # Kimberley 1996 was Bridge (IND) 63.1% and Liberal 36.9%, so its left bloc is
+  # EMPTY and it reads lean 0.0, the most right-wing seat possible, for a remote
+  # Labor-friendly electorate whose later leans are 59.2, 57.1 and 55.2.
+  if (!is.null(positions) && length(positions)) {
+    a2 <- data.table::as.data.table(a)
+    a2 <- a2[a2$party %in% names(positions)]
+    if (nrow(a2)) {
+      fl <- a2[, list(flow_lean = 100 * (1 - sum(pcv * unname(positions[party])) /
+                                           sum(pcv))), by = "seat"]
+      out <- merge(out, fl, by = "seat", all.x = TRUE)
+      out[, flow_safe := abs(flow_lean - 50)]
+    }
+  }
+  if (!"flow_lean" %in% names(out)) out[, `:=`(flow_lean = NA_real_, flow_safe = NA_real_)]
+  out[]
 }
 
 #' Predicted re-entry share for given seats and classes
@@ -220,9 +300,16 @@ apply_reentry_prior <- function(mat, standing, fit, lean_dt, state_share,
     nd <- data.frame(party = p,
                      state_pcv = unname(state_share[[p]]),
                      lean = ld[sn, "lean"], safe = ld[sn, "safe"],
+                     flow_lean = if ("flow_lean" %in% names(ld)) ld[sn, "flow_lean"] else NA_real_,
+                     flow_safe = if ("flow_safe" %in% names(ld)) ld[sn, "flow_safe"] else NA_real_,
                      nonmajor_prev = ld[sn, "nonmajor_prev"],
                      stringsAsFactors = FALSE)
-    ok <- stats::complete.cases(nd)
+    # Only the columns the fit actually uses need to be present. Requiring the
+    # flow columns too would silently drop every seat when transfers are absent.
+    need <- c("state_pcv", "lean", "safe", "nonmajor_prev")
+    if (!is.null(fit$fits[[p]]) && "flow_lean" %in% names(stats::coef(fit$fits[[p]])))
+      need <- c(need, "flow_lean", "flow_safe")
+    ok <- stats::complete.cases(nd[, need, drop = FALSE])
     if (!any(ok)) next
     v <- reentry_predict(fit, nd[ok, , drop = FALSE])
     mat[sn[ok], p] <- v
@@ -232,4 +319,55 @@ apply_reentry_prior <- function(mat, standing, fit, lean_dt, state_share,
   attr(mat, "reentry") <- if (length(rows)) do.call(rbind, rows) else
     data.frame(seat = character(0), party = character(0), value = numeric(0))
   mat
+}
+
+#' One-call re-entry prior for a harness
+#'
+#' Wraps [reentry_fit()], [seat_lean()] and [apply_reentry_prior()] so a harness
+#' needs one line rather than six, and so all six harnesses do the same thing.
+#' Returns `mat` unchanged, with a message, if the switch is off or anything
+#' fails — a harness must never be silently skipped, which is the failure this
+#' repo keeps recording.
+#'
+#' @param mat Seat-by-class share matrix.
+#' @param fa,fb Long-form `seat`, `party`, `votes` for the PREVIOUS and TARGET
+#'   elections.
+#' @param state_share Named projected statewide share per class.
+#' @param target Target election label, removed from the fit.
+#' @param pairs Every candidate pair for the fit.
+#' @param code Log prefix, e.g. `"BV1r"`.
+#' @return `mat`, with attribute `"reentry"` when applied.
+#' @export
+reentry_apply_harness <- function(mat, fa, fb, state_share, target, pairs,
+                                  code = "RE1") {
+  if (!identical(Sys.getenv("AUSPOL_REENTRY", "0"), "1")) return(mat)
+  fit <- tryCatch(reentry_fit(Filter(function(z) z$election != target, pairs)),
+                  error = function(e) {
+                    cat(sprintf("%s! reentry_fit() FAILED, prior NOT applied: %s
+",
+                                code, conditionMessage(e))); NULL })
+  if (is.null(fit)) return(mat)
+  fa <- data.table::as.data.table(fa)
+  fb <- data.table::as.data.table(fb)
+  a_pcv <- fa[, list(votes = sum(votes)), by = c("seat", "party")]
+  a_pcv[, pcv := 100 * votes / sum(votes), by = "seat"]
+  ln <- seat_lean(a_pcv[, list(seat, party, pcv)],
+                  positions = party_positions(exclude = target))
+  stand <- fb[fb$votes > 0, list(seat, party)]
+  out <- tryCatch(apply_reentry_prior(mat, stand, fit, ln, state_share),
+                  error = function(e) {
+                    cat(sprintf("%s! apply_reentry_prior() FAILED: %s
+",
+                                code, conditionMessage(e))); NULL })
+  if (is.null(out)) return(mat)
+  re <- attr(out, "reentry")
+  cat(sprintf("%s  re-entry prior: %d cell(s) filled%s
+", code, nrow(re),
+              if (nrow(re)) {
+                o <- order(-re$value)
+                paste0(" | largest: ", paste(utils::head(sprintf(
+                  "%s/%s %.1f", re$seat[o], re$party[o], re$value[o]), 3),
+                  collapse = ", "))
+              } else ""))
+  out
 }

@@ -71,6 +71,24 @@ classify_party <- function(name, code = NULL) {
   # reached first by nothing here but would be by a future variant.
   set(grepl("country liberal", n), "LNP")
   set(n %in% c("nt clp", "c.l.p.", "clp"), "LNP")
+  # AND THE SPELLINGS THE AEC ACTUALLY USED. The list above is an EXACT match,
+  # so "C.L.P." and "Country Liberal Party" resolve and "CLP-The Territory
+  # Party" -- what the AEC published for fed2004 -- does not. It fell through
+  # to OTH, so the Country Liberals were the Coalition in fed2007 and "other"
+  # in fed2004: 16,494 votes in Lingiari and 23,361 in Solomon on the wrong
+  # side of politics.
+  #
+  # It corrupted more than the shares. Lingiari's seat lean saturated at 100
+  # ("wholly left") because the seat had no LNP vote at all, and Solomon
+  # appeared in the defection training set as an OTH -> LNP switch of 49.5%,
+  # which is not a defection but the same party reclassified. Found 2026-09-07
+  # while asking why a Labor-leaning Territory seat read as maximally left.
+  #
+  # Matched on "territory party" and on CLP as a WORD. Country Labor of New
+  # South Wales shares the CLP abbreviation and is the opposite side of
+  # politics -- it carries neither string, and the "labor" rule below still
+  # catches it, which the test file asserts.
+  set(grepl("territory party|\\bclp\\b", n), "LNP")
 
   # "Labor DLP" is a different party from Labor and belongs on the right.
   # Two backslashes and not one: "\b" in an R STRING is the backspace

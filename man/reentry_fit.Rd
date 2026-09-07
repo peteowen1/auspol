@@ -76,8 +76,8 @@ AND THE HONEST CAVEAT, recorded here rather than in a commit message nobody
 re-reads. Nearly all of that gain — 1.87 of the 1.92 points — comes from
 moving off zero to a flat class ratio. The covariates add 0.047, against a
 per-election spread of 0.553; they win in 15 of 22 elections but a paired t
-over those elections gives p = 0.693 with a 95\% interval of \link{-0.198, +0.292}.
-At 22 elections this cannot be called either way. Adopted at Pete's direction
+over those elections gives p = 0.693, with a 95\% interval running from
+-0.198 to +0.292. At 22 elections this cannot be called either way. Adopted at Pete's direction
 on the consistent direction and the in-sample structure; the flat ratio is
 available by passing \code{covariates = FALSE} and is the control to re-run
 against when more elections exist.
