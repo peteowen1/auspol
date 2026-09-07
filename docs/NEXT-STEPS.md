@@ -143,8 +143,25 @@ across the pair loop remains.
 **The open question, and it is Pete's:** the six fed2022 teals polled 25-40%
 and the model projects 2-14%. The hazard is calibrated, the size (35.1) is
 right, the ranking is right; what is missing is that 2022 was a wave and
-nothing in the model can see one. Next: an election-level count of
-high-salience challengers, computable before polling day.
+nothing in the model can see one.
+
+**The wave term is BLOCKED, diagnosed, and no arm should be run**:
+[reviews/wave-term-blocked-2026-09-07.md](reviews/wave-term-blocked-2026-09-07.md).
+It needs an ABSOLUTE salience bar (the percentile is within-election by
+construction, so a wave and a quiet year look identical), and the raw measure
+is not comparable across elections: every Trends batch is anchored to
+**Anthony Albanese**, who was a little-known minister in 2008 and Prime
+Minister in 2026. fed2022, the wave, has the SECOND FEWEST candidates over an
+absolute bar and the most winners; the correlation between count and win rate
+is NEGATIVE. The cache holds only per-keyword means, not the weekly series,
+so nothing can be re-derived -- the "cache the series, derive the statistic"
+lesson landing a second time on a different question.
+
+The one unblocking route available before November is a different proxy
+entirely: the count of non-major candidates NOMINATED per seat, a commission
+fact rather than a search statistic, which the candidate-count work already
+needs after Victorian nominations close on 9 November 2026. It measures
+crowding rather than prominence and must be pre-registered as that.
 
 ## P4c REFUSED and the calibration question ANSWERED, 2026-09-07
 
