@@ -98,101 +98,100 @@ Labor 59.9% is McGowan's landslide and sa2026 Coalition 19.5% is the collapse
 that elected four One Nation members. So this is a granularity question, not a
 correctness one.
 
-### RESUME HERE — 2026-09-08
+### RESUME HERE — end of 2026-09-08 session (laptop restarting for memory)
 
-**1. A Google Trends refetch was RUNNING when the 2026-09-07 session ended and
-has NOT been resumed.** `scripts/fetch_salience_v6.R`, about a fifth through
-(it had done fed2010, was on fed2013). It caches each batch and skips what
-exists, so **re-running the script is how to resume it**. It rewrites
-`output/salience-v6.csv` per election, so the corpus is INCONSISTENT until it
-finishes — do not measure anything against salience until it does. Check with
-`wc -l output/salience-v6.csv` (8,706 before it started) and the `S6-1`/`S6-9`
-lines in its log. Why it is running: `OTH_RIGHT` candidates were cut before ever
-being queried, 842 of 2,866 present, sixteen non-major winners absent entirely.
+**Housekeeping first.** All 48 commits on `dev` are pushed to `origin/dev` (as
+of this session) but **none are merged to `main` and none have been through
+the review gate** — that is a queued task in its own right, separate from
+everything below, and per CLAUDE.md needs `pr-review-toolkit` agents before
+any PR. Working tree was clean at session end.
 
-**2. THE RE-ENTRY PRIOR IS NOT SHIPPED, and the next experiment is named.**
-`AUSPOL_REENTRY` stays 0. Three pre-registrations were run to completion on
-2026-09-08 and all three were refused; the plans carry the numbers.
+**1. Salience refetch: interrupted repeatedly by memory pressure, not stuck.**
+`scripts/fetch_salience_v6.R` is resumable (caches each batch, skips what
+exists). Corpus was already 8,301 rows / 20 of 22 fetchable elections complete
+*before* this session started — `wa1996` and `wa2001` predate Google Trends
+and can never be fetched, so 20/22 may be as complete as this ever gets. This
+session confirmed real, if slow, progress (96 of 521 candidates re-verified
+for fed2019 in ~1 minute) but never saw the row count grow, so whether there
+is genuinely new data to find is still open. Re-run it and watch for growth
+past 8,301 before concluding either way.
 
-What the sequence fixed and kept:
+**2. THE RE-ENTRY PRIOR IS NOT SHIPPED.** `AUSPOL_REENTRY` stays 0. Full
+history in `docs/plans/prereg-reentry-*-2026-09-08.md` (four plans, in order:
+the original prior, the defended/vacant split — refused at dry-run —, the
+bounded arms — refused at dry-run —, the lean-gap reparameterisation — arm D,
+measured on all 22 pairs and refused on marginal significance).
 
-- the prior was being **swung twice** — it filled the previous election's
-  matrix with a target-election share and `dev_slope()` swung it again. Fatal
-  where a party surged: sa2026 collapsed to 48.9% accuracy. Fixed in all six
-  harnesses.
-- `apply_reentry_prior()` and `reentry_training()` build the prediction frame
-  in two places, and one went stale, so `predict()` errored and
-  `try(..., silent = TRUE)` sent **all 1,418 cells** to the flat ratio. It
-  arrived as a plausible model result (sa2026 log 0.7068). The frame is fixed
-  and the fallback now prints `RE1!`.
-- the Western Australian harness alone **never passed party positions** to
-  `seat_lean()`, so `flow_lean` was NA there and every covariate class failed
-  the completeness check. Only flat-ratio classes ever filled.
-- `lean` and `flow_lean` correlate at **0.972** (VIF 20.7 and 20.6), so the fit
-  identifies only their difference and does so badly. Reparameterised to
-  (mid, gap) — exact to 1.07e-13 — and arm D bounds the gap at the class's
-  training range. Traeger's One Nation prediction goes **74.3 → 25.9** against
-  an actual 6.8.
+Arm D's result: PB3f **0.3149 → 0.3066** against prior OFF, every jurisdiction
+inside 2 SE, South Australia now *better* than baseline, Kimberley off the
+floor (1e-06 → 0.51 probability for the actual winner) — but on the 2,044
+seats neither arm floors, the move is **−0.0038 at 0.85 SE**, and two seats
+move *onto* the floor (Pilbara wa2001, Alfred Cove wa2005). Needs seed-
+averaging before it can be trusted either way — see item 5.
 
-Where it landed, all 22 pairs, arm D against prior OFF: PB3f **0.3149 →
-0.3066**, every jurisdiction inside 2 SE, South Australia now BETTER than
-baseline (0.3976 → 0.3924), and **Kimberley off the floor, 1e-06 → 0.51** —
-the seat the whole line of work exists for.
+**3. Arm H (variance widening for the flat-ratio path) is IMPLEMENTED,
+TESTED, and NOT YET MEASURED.** `docs/plans/prereg-reentry-flatratio-variance-
+2026-09-08.md`. Labor and the Coalition have 2 and 4 re-entry rows total,
+below `min_n = 40`, so they never get a GLM — point-shrinkage was tried and
+confirmed useless (see the diagnostic further down this file). Arm H widens
+the *simulated* uncertainty instead (`reentry_sd_matrix()`,
+`combine_sd_override()`, both in `R/reentry_prior.R`, `AUSPOL_REENTRY_SD_K`).
+818 tests pass, `check_like_ci.R` clean. **A Monte Carlo dry-run against the
+plan's own named cases (Traeger, Kimberley, Alfred Cove, Callide) has never
+been run** — do that before the pooled sweep, same discipline as arm D.
 
-Why it is still not shipped, and both reasons matter:
+Wiring this into Western Australia required adding `sd_override` plumbing
+that harness never had (§ below), and wiring it into federal exposed two real
+bugs (fixed, commits `bc6e51e`): federal's two-loop structure left `SD_OVR`
+and `REENTRY_CELLS` scoped to the projection loop while consumed in a
+separate simulation loop, so every federal pair but the last would have
+widened the *wrong* pair's cells. Fixed and tested; **not yet re-verified
+with an actual run**, since that needs the same memory this session ran out
+of.
 
-- on the 2,044 seats neither arm floors, PB3f moves **−0.0038 at 0.85 SE**.
-  Item 5 below says the seed alone moves vic2014 by 0.0112 at 5,000 sims, so
-  this is inside the noise and **needs seed-averaging before anyone believes
-  it**.
-- two seats move ONTO the floor: **Pilbara wa2001** and **Alfred Cove wa2005**.
+**4. WA slope/transfer decomposition — DONE, resolved, do not re-open.**
+Commit `6958430`. Conditional slopes help WA by ~0.005 pooled log loss
+regardless of the transfer setting; the transfer *hurts* by ~0.005 regardless
+of slope setting — but it works exactly as designed on Pilbara 2001 (the seat
+it was built for), so the pooled harm means it is making *other* seats worse.
+One seed only; not shipped; the next step if anyone picks this up is finding
+which other seats `personal_prior_vote()` fires on and whether they are real
+defections.
 
-**3. The next experiment, named by the evidence rather than chosen.** Labor and
-the Coalition have 2 and 4 re-entry rows in the whole corpus, below
-`min_n = 40`, so they never get a GLM and fall back to a flat ratio of 1.0 —
-"assume it polls its statewide share". That fallback now owns **both** new floor
-seats (Alfred Cove gets Labor 41.9 against an actual 22.8, pushing the
-independent who won to 1e-06) and the largest remaining prediction anywhere
-(Churchlands wa2013, 53.2 against an actual 59.0). It is the binding constraint
-on the whole prior. Needs its own pre-registration.
+**5. Seed-average / high-sim before believing arm D (or arm H, once
+measured).** At 5,000 sims the seed alone moves vic2014 by 0.0112, larger
+than most effects under test. **Partial progress this session**: re-ran at
+`AUSPOL_N_SIMS=20000` (CLAUDE.md's own rule — "only the deciding run needs
+20,000" — rather than averaging several 5,000-sim seeds). Confirms the arm-D
+effect is real everywhere checked so far:
 
-Note the covariate model was chosen over the flat ratio at Pete's direction on
-a 0.047 out-of-fold gain a paired t could not distinguish from noise (p = 0.693,
-better in 15 of 22). `reentry_fit(covariates = FALSE)` is the flat-ratio control
-arm and should be one of the arms in that plan.
-
-**4. Two Western Australian changes are still confounded.** The `.cond` gate fix
-(WA tested for "conditional" while the published value is "screened", so it ran
-with candidate-conditional slopes OFF) and the personal-vote transfer port
-shipped together and cost 0.003 combined. Run them separately to see which pays.
-
-**5. Seed-average before believing any arm.** At 5,000 sims the seed alone moves
-vic2014 by 0.0112 and the arm differences under test are 0.003. `AUSPOL_SEED`
-now works in every harness; it was inert in four of six until 2026-09-07. This
-is the reason item 2 is not shipped.
-
-**Partial progress 2026-09-08: re-run at `AUSPOL_N_SIMS=20000`** (CLAUDE.md's
-own rule -- "only the deciding run needs 20,000" -- rather than averaging
-several 5,000-sim seeds). Confirms the prior-off vs arm-D gap is real, not
-seed noise, everywhere it has been checked so far:
-
-| jurisdiction | prior off (5k / 20k) | arm D (5k / 20k) |
+| jurisdiction | prior off (5k → 20k) | arm D (5k → 20k) |
 |---|---|---|
-| WA | 0.4109 / 0.4101 | 0.3973 / 0.3967 |
-| Victoria | 0.2676 / 0.2693 | 0.2683 / 0.2691 |
-| South Australia | 0.3976 / 0.3973 | 0.3924 / 0.3914 |
-| Federal 2007-2016 | 0.3392 / 0.3303 | not yet run at 20k |
+| WA | 0.4109 → 0.4101 | 0.3973 → 0.3967 |
+| Victoria | 0.2676 → 0.2693 | 0.2683 → 0.2691 |
+| South Australia | 0.3976 → 0.3973 | 0.3924 → 0.3914 |
+| Federal 2007-2016 | 0.3392 → 0.3303 | not yet run at 20k |
 
-Federal moved the most of any group so far (fed2013 alone: 0.4163 -> 0.3813),
-which is exactly the seed-sensitivity item 5 exists to catch -- so federal is
-the group most worth finishing, not least.
+Federal moved the most of any group so far (fed2013 alone: 0.4163 → 0.3813) —
+exactly the seed-sensitivity this item exists to catch, so it is the group
+most worth finishing, not least. **Still needed: federal 2019-2025 (both
+arms), federal 2007-2016 arm D, NSW, Queensland — all at 20k sims.** Blocked
+by sustained memory pressure from other concurrent sessions on this machine
+(three consecutive kills, down to a single federal pair, at 1.8GB free with
+none of the surviving heavy processes belonging to this session). Not a
+sizing problem on this session's end — retry when the machine is quieter,
+which is the reason for tonight's restart.
 
-**Still needed: federal 2019-2025 baseline and arm D (all pairs), federal
-2007-2016 arm D, NSW, Queensland.** Blocked 2026-09-08 by sustained memory
-pressure from other concurrent sessions on this machine -- three consecutive
-kills even down to a single federal pair at 1.8GB free, with none of the
-heavy processes belonging to this session. Not a sizing problem on this
-session's end; retry when the machine is quieter.
+**6. New this session: `docs/plans/harness-unification-2026-09-08.md`.**
+Planning only, produced by an agent audit, not started. Recommends unifying
+the six `backtest_candidate_*.R` scripts into a shared harness core plus
+per-jurisdiction configs — found nine parity defects while auditing (WA's
+seed is still a hardcoded literal despite item 5's "now works everywhere"
+claim being about the *fix*, not WA specifically — re-check this; three
+published switches silently don't reach WA at all; the check-code registry
+broken three ways). This is a ~10-11 session project with its own hard stop
+(30 September) and refusal conditions — read the plan before starting it, do
+not just begin porting code.
 
 
 ### Open, in the order I would do them
