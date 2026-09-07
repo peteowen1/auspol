@@ -404,6 +404,12 @@ reentry_predict <- function(fit, newdata) {
     if (!is.null(f)) {
       p <- try(as.numeric(stats::predict(f, newdata = nd, type = "response")),
                silent = TRUE)
+      # A FALLBACK THAT DOES NOT ANNOUNCE ITSELF IS A SILENT FAILURE. This one
+      # hid a missing-column bug behind plausible numbers for a whole sweep.
+      if (inherits(p, "try-error"))
+        cat(sprintf("RE1! %s: predict() FAILED, falling back to ratio x statewide for %d cell(s): %s
+",
+                    cl, length(idx), trimws(conditionMessage(attr(p, "condition")))))
       if (!inherits(p, "try-error")) {
         # Arm A fits a PROPORTION. Returning it unscaled would divide every
         # re-entry prediction by 100 and read as "the prior does nothing",
@@ -468,6 +474,15 @@ apply_reentry_prior <- function(mat, standing, fit, lean_dt, state_share,
                        ld[sn, "nonmajor_vacant"] else NA_real_,
                      breadth = length(hit) / nrow(mat),
                      stringsAsFactors = FALSE)
+    # EVERY COLUMN THE FIT MIGHT NAME, because this frame is built by hand and
+    # reentry_training() builds a different one. When the (mid, gap)
+    # parameterisation was added to the training frame and not to this one,
+    # predict() errored, the try() below swallowed it, and all 1,418 cells fell
+    # back to ratio x statewide -- which read as a MODEL RESULT: sa2026 dropped
+    # to 59.6% accuracy and log 0.7068 while the cell-level dry-run, which uses
+    # the training frame, showed the predictions unchanged.
+    for (v in c("lean_mid", "lean_gap", "safe_mid", "safe_gap"))
+      nd[[v]] <- if (v %in% names(ld)) ld[sn, v] else NA_real_
     # Only the columns the fit actually uses need to be present. Requiring the
     # flow columns too would silently drop every seat when transfers are absent.
     # ONLY THE TERMS THIS CLASS'S FIT ACTUALLY USES. Requiring both the whole
