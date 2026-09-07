@@ -91,9 +91,18 @@ reentry_fit <- function(pairs, min_n = 40L, min_ratio_n = 20L, covariates = TRUE
       # 3.2895, both 3.2519. Flow alone barely beats bloc (12 of 22 elections),
       # but both together gain +0.095 and win in 17 of 22 -- they agree in most
       # seats and disagree usefully in the ones an independent dominates.
+      # STATEWIDE SHARE IS AN OFFSET, NOT A FITTED TERM. As a fitted term under
+      # a log link it learns an average elasticity across elections where the
+      # statewide share barely moves, and then regresses a genuine surge toward
+      # that mean. sa2026 is the case: One Nation went 2.6% -> 22.9% statewide
+      # and polled a mean of 20.3% in the 29 of 47 seats where they re-entered,
+      # and the fitted version projected about 10. As an offset the prediction
+      # is proportional to the statewide share by construction -- the flat
+      # ratio's one good property -- while the seat covariates still adjust it.
       fo <- if (all(is.finite(d$flow_lean)))
-        pcv ~ log(state_pcv) + safe + lean + flow_safe + flow_lean + nonmajor_prev
-      else pcv ~ log(state_pcv) + safe + lean + nonmajor_prev
+        pcv ~ offset(log(state_pcv)) + breadth + safe + lean + flow_safe +
+          flow_lean + nonmajor_prev
+      else pcv ~ offset(log(state_pcv)) + breadth + safe + lean + nonmajor_prev
       f <- try(stats::glm(fo, family = stats::quasipoisson(link = "log"), data = d),
                silent = TRUE)
       if (!inherits(f, "try-error")) fits[[cl]] <- f
@@ -135,8 +144,19 @@ reentry_training <- function(pairs,
     m <- m[is.na(m$prev) & m$seat %in% a$seat]
     if (!nrow(m)) return(NULL)
     m[, pair := p$election]
+    # HOW BROADLY THE CLASS IS RE-ENTERING, as a share of the chamber. A party
+    # re-entering a handful of seats has CHOSEN them and beats its statewide
+    # share; one re-entering most of the chamber has chosen nothing and lands on
+    # it. Measured: ratio 1.84 when re-entering 5-15% of seats and 1.01 above
+    # 35%, and for One Nation 5.50 against 0.98. sa2026 is the case -- ONP
+    # re-entered 29 of 47 seats on a 22.9% statewide share and polled a mean of
+    # 19.7%, while the pooled ratio of 1.458 (an average dominated by narrow
+    # re-entries) would have given 33. Knowable from the nomination list, so
+    # leakage-free.
+    n_seats <- length(unique(b$seat))
+    m[, breadth := .N / n_seats, by = "party"]
     m[, list(pair, party, seat, pcv, state_pcv, lean, safe, nonmajor_prev,
-             flow_lean, flow_safe)]
+             flow_lean, flow_safe, breadth)]
   })
   D <- data.table::rbindlist(out, fill = TRUE)
   if (!nrow(D)) return(D)
@@ -303,10 +323,11 @@ apply_reentry_prior <- function(mat, standing, fit, lean_dt, state_share,
                      flow_lean = if ("flow_lean" %in% names(ld)) ld[sn, "flow_lean"] else NA_real_,
                      flow_safe = if ("flow_safe" %in% names(ld)) ld[sn, "flow_safe"] else NA_real_,
                      nonmajor_prev = ld[sn, "nonmajor_prev"],
+                     breadth = length(hit) / nrow(mat),
                      stringsAsFactors = FALSE)
     # Only the columns the fit actually uses need to be present. Requiring the
     # flow columns too would silently drop every seat when transfers are absent.
-    need <- c("state_pcv", "lean", "safe", "nonmajor_prev")
+    need <- c("state_pcv", "lean", "safe", "nonmajor_prev", "breadth")
     if (!is.null(fit$fits[[p]]) && "flow_lean" %in% names(stats::coef(fit$fits[[p]])))
       need <- c(need, "flow_lean", "flow_safe")
     ok <- stats::complete.cases(nd[, need, drop = FALSE])

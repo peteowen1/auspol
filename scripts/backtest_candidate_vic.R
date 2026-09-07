@@ -330,9 +330,10 @@ for (K in PAIRS) {
   # corpus, costing 5.27 points of mean absolute error against 3.25 for the
   # model. Kimberley 2001 is the case: Labor did not stand there in 1996,
   # Carol Martin won it with 42.2%, and the model projected 2.1%.
-  mat <- reentry_apply_harness(mat, fa, fb, sb,
+  REENTRY_CELLS <- attr(reentry_apply_harness(mat, fa, fb, sb,
                                target = sprintf("vic%d", K$to),
-                               pairs = all_election_pairs(), code = "BV1r")
+                               pairs = all_election_pairs(), code = "BV1r"),
+                        "reentry")
 
   parties <- colnames(mat); shares <- mat
   # THIS HARNESS HAS NEVER PASSED `shrink`, the same defect
@@ -455,6 +456,16 @@ for (K in PAIRS) {
       }
     }
     shares[, p] <- val
+  }
+  # Re-entry prior lands here, on the POST-SWING projection. See BV1r above.
+  # The prediction is a target-election share; filling it into the prior-election
+  # matrix let dev_slope() swing it a second time.
+  if (!is.null(REENTRY_CELLS) && nrow(REENTRY_CELLS)) {
+    .ri <- cbind(match(REENTRY_CELLS$seat,  rownames(shares)),
+                 match(REENTRY_CELLS$party, colnames(shares)))
+    .rk <- stats::complete.cases(.ri)
+    shares[.ri[.rk, , drop = FALSE]] <- REENTRY_CELLS$value[.rk]
+    cat(sprintf("BV1r  re-entry applied post-swing to %d cell(s)\n", sum(.rk)))
   }
   if (ELASTIC > 0) {
     cat(sprintf("BV1e elasticity ON (over %.2f, fall %.1f): %d cells\n",

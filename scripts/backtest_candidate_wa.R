@@ -300,6 +300,10 @@ for (K in PAIRS) {
   # 0.000000. Leakage-free -- who is standing comes from the nomination list,
   # which this harness already reads to ZERO an independent column where nobody
   # nominated. Same fact, opposite direction.
+  # The prediction is a TARGET-election share, so it must NOT be swung again.
+  # The cells are identified here, while `mat` still shows which are empty, and
+  # written in AFTER dev_slope below.
+  .recells <- NULL
   if (identical(Sys.getenv("AUSPOL_REENTRY", "0"), "1")) {
     .rp <- Filter(function(z) z$election != el_to, REENTRY_PAIRS)
     .rf <- tryCatch(reentry_fit(.rp), error = function(e) {
@@ -310,8 +314,8 @@ for (K in PAIRS) {
       .ln <- seat_lean(fa[, .(seat, party, pcv = 100 * votes / sum(votes)),
                           by = seat][, .(seat, party, pcv)])
       .stand <- fb[votes > 0, .(seat, party)]
-      mat <- apply_reentry_prior(mat, .stand, .rf, .ln, sb)
-      .re <- attr(mat, "reentry")
+      .re <- attr(apply_reentry_prior(mat, .stand, .rf, .ln, sb), "reentry")
+      .recells <- .re
       cat(sprintf("BW1r  re-entry prior: %d cell(s) filled%s
 ", nrow(.re),
                   if (nrow(.re)) paste0(" | largest: ",
@@ -363,6 +367,14 @@ for (K in PAIRS) {
     to_pc   <- if (p %in% names(sb)) sb[[p]] else 0
     .sl <- if (.cond && !is.null(.returns)) conditional_slopes(p, rownames(mat), .returns, same_mp = .MP_SLOPE) else DEV_SLOPE[[p]]
     mat[, p] <- dev_slope(.own_x(p, rownames(mat), mat[, p]), from_pc, to_pc, .sl)
+  }
+  # Re-entry prior lands here, on the post-swing projection. See BW1r above.
+  if (!is.null(.recells) && nrow(.recells)) {
+    .ri <- cbind(match(.recells$seat, rownames(mat)),
+                 match(.recells$party, colnames(mat)))
+    .rk <- stats::complete.cases(.ri)
+    mat[.ri[.rk, , drop = FALSE]] <- .recells$value[.rk]
+    cat(sprintf("BW1r  re-entry applied post-swing to %d cell(s)\n", sum(.rk)))
   }
   # ZERO IND WHEREVER NOBODY ACTUALLY STOOD AT THE TARGET ELECTION. Ported from
   # backtest_candidate_fed.R and backtest_candidate_sa.R; was missing here and

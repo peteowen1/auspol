@@ -349,9 +349,10 @@ state_tgt <- fp_tgt[, .(v = sum(votes)), by = party][, setNames(100 * v / sum(v)
 # corpus, costing 5.27 points of mean absolute error against 3.25 for the
 # model. Kimberley 2001 is the case: Labor did not stand there in 1996,
 # Carol Martin won it with 42.2%, and the model projected 2.1%.
-mat <- reentry_apply_harness(mat, fp_prev, fp_tgt, state_tgt,
+REENTRY_CELLS <- attr(reentry_apply_harness(mat, fp_prev, fp_tgt, state_tgt,
                              target = TGT, pairs = all_election_pairs(),
-                             code = "BT1r")
+                             code = "BT1r"),
+                      "reentry")
 cat("\nBT1  statewide first preferences\n")
 # Column names carry the ACTUAL years. They were the literals y2019 and y2023,
 # which on the 2019 pair labelled nsw2015 figures as 2019 and nsw2019 figures
@@ -521,6 +522,16 @@ for (p in parties) {
     }
   }
   shares[, p] <- val
+}
+# Re-entry prior lands here, on the POST-SWING projection. See BT1r above.
+# The prediction is a target-election share; filling it into the prior-election
+# matrix let dev_slope() swing it a second time.
+if (!is.null(REENTRY_CELLS) && nrow(REENTRY_CELLS)) {
+  .ri <- cbind(match(REENTRY_CELLS$seat,  rownames(shares)),
+               match(REENTRY_CELLS$party, colnames(shares)))
+  .rk <- stats::complete.cases(.ri)
+  shares[.ri[.rk, , drop = FALSE]] <- REENTRY_CELLS$value[.rk]
+  cat(sprintf("BT1r  re-entry applied post-swing to %d cell(s)\n", sum(.rk)))
 }
 if (ELASTIC > 0) {
   cat(sprintf("NB1e elasticity ON (over %.2f, fall %.1f): %d cells\n",
@@ -747,6 +758,18 @@ cat(sprintf("BT5r  seat-share RMSE %.3f | MAE %.3f | by class %s | %d seats%s\n"
 cat(sprintf("BT5  mean log score: %.4f  (worse = more confident misses)\n",
             -mean(log(pmax(res$p, eps)))))
 cat(sprintf("BT5  seats where the winner got < 5%% from us: %d\n", sum(res$p < 0.05)))
+# ONE SUMMARY LINE IN THE SAME SHAPE AS EVERY OTHER HARNESS (BF2/BV2/BQ2/BS2/BW2).
+# Coded BT4s, not BT2: BT2 already labels the by-election truth notes above, and
+# CLAUDE.md records a case where one code meaning two things broke a grep.
+# All three numbers were already printed, but spread over three lines and with
+# log loss called "mean log score" -- so a grep for "log" across the six harness
+# logs returns nothing for New South Wales, and scripts/pool_backtests.R was the
+# only way to read its primary metric. Cost: this comparison was nearly reported
+# with New South Wales missing.
+cat(sprintf("BT4s %s: accuracy %d/%d (%.1f%%) | Brier %.4f | log %.4f\n",
+            TGT, sum(res$pred == res$actual), nrow(res),
+            100 * mean(res$pred == res$actual), mean((1 - res$p)^2),
+            -mean(log(pmax(res$p, eps)))))
 z <- data.frame(y = as.integer(res$pred == res$actual),
                 lo = stats::qlogis(pmin(pmax(res$pred_p, eps), 1 - eps)))
 if (length(unique(z$y)) > 1) {

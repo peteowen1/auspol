@@ -343,9 +343,10 @@ st_b <- fb[, .(v = sum(votes)), by = party][, setNames(100 * v / sum(v), party)]
 # corpus, costing 5.27 points of mean absolute error against 3.25 for the
 # model. Kimberley 2001 is the case: Labor did not stand there in 1996,
 # Carol Martin won it with 42.2%, and the model projected 2.1%.
-mat <- reentry_apply_harness(mat, fa, fb, st_b,
+REENTRY_CELLS <- attr(reentry_apply_harness(mat, fa, fb, st_b,
                              target = TGT,
-                             pairs = all_election_pairs(), code = "BQ1r")
+                             pairs = all_election_pairs(), code = "BQ1r"),
+                      "reentry")
 
 parties <- colnames(mat); shares <- mat
 
@@ -463,6 +464,16 @@ for (p in parties) if (p %in% names(st_b) && p %in% names(st_a)) {
     }
   }
   shares[, p] <- val
+}
+# Re-entry prior lands here, on the POST-SWING projection. See BQ1r above.
+# The prediction is a target-election share; filling it into the prior-election
+# matrix let dev_slope() swing it a second time.
+if (!is.null(REENTRY_CELLS) && nrow(REENTRY_CELLS)) {
+  .ri <- cbind(match(REENTRY_CELLS$seat,  rownames(shares)),
+               match(REENTRY_CELLS$party, colnames(shares)))
+  .rk <- stats::complete.cases(.ri)
+  shares[.ri[.rk, , drop = FALSE]] <- REENTRY_CELLS$value[.rk]
+  cat(sprintf("BQ1r  re-entry applied post-swing to %d cell(s)\n", sum(.rk)))
 }
 # PRINT WHAT IT APPLIED. CLAUDE.md records an experiment whose edit never ran
 # and whose byte-identical output read as "this input does not matter".

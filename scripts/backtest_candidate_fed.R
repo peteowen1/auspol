@@ -641,9 +641,10 @@ for (K in PAIRS) {
   # corpus, costing 5.27 points of mean absolute error against 3.25 for the
   # model. Kimberley 2001 is the case: Labor did not stand there in 1996,
   # Carol Martin won it with 42.2%, and the model projected 2.1%.
-  mat <- reentry_apply_harness(mat, fa, fb, st_b,
+  REENTRY_CELLS <- attr(reentry_apply_harness(mat, fa, fb, st_b,
                                target = eb,
-                               pairs = all_election_pairs(), code = "BF1r")
+                               pairs = all_election_pairs(), code = "BF1r"),
+                        "reentry")
 
   # ---- FORECAST MODE, against docs/plans/prereg-forecast-mode.md -----------
   # Default OFF, in which case the block below is the original: shift each
@@ -1189,6 +1190,16 @@ for (K in PAIRS) {
       shares[, p] <- dev_slope(.own_x(p, rownames(mat), mat[, p] / .s_p) * .s_p,
                                st_a[[p]], st_b[[p]], .sl)
     }
+  }
+  # Re-entry prior lands here, on the POST-SWING projection. See BF1r above.
+  # The prediction is a target-election share; filling it into the prior-election
+  # matrix let dev_slope() swing it a second time.
+  if (!is.null(REENTRY_CELLS) && nrow(REENTRY_CELLS)) {
+    .ri <- cbind(match(REENTRY_CELLS$seat,  rownames(shares)),
+                 match(REENTRY_CELLS$party, colnames(shares)))
+    .rk <- stats::complete.cases(.ri)
+    shares[.ri[.rk, , drop = FALSE]] <- REENTRY_CELLS$value[.rk]
+    cat(sprintf("BF1r  re-entry applied post-swing to %d cell(s)\n", sum(.rk)))
   }
   # Zero IND wherever nobody actually stood at the TARGET election. This is
   # nomination data, not the result being predicted: which classes contest a
