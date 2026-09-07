@@ -33,6 +33,9 @@ cannot pass as a working one.
 | `nswec-2023-nsw-firstprefs.csv` | 10 KB |
 | `nswec-nsw-transfers.csv` | 131 KB |
 | `nswec-nsw-winners.csv` | 7 KB |
+| `vec-2010-vic-firstprefs.csv` | 9 KB |
+| `vec-2010-vic-transfers.csv` | 22 KB |
+| `vec-2010-vic-winners.csv` | 3 KB |
 | `vec-2014-vic-firstprefs.csv` | 9 KB |
 | `vec-2014-vic-transfers.csv` | 27 KB |
 | `vec-2014-vic-winners.csv` | 1 KB |
@@ -58,8 +61,8 @@ cannot pass as a working one.
 
 - **aec/** -- 58 files, 53.1 MB
   - e.g. booths/fed2016-NSW.csv, booths/fed2019-SA.csv, booths/fed2019-VIC.csv, booths/fed2022-NSW.csv
-- **vec/** -- 326 files, 6.7 MB
-  - e.g. 2014/albertparkdistrict.html, 2014/altonadistrict.html, 2014/bassdistrict.html, 2014/bayswaterdistrict.html
+- **vec/** -- 547 files, 19.9 MB
+  - e.g. 2010/cdx-vec.txt, 2010/dop-AlbertPark.html, 2010/dop-BallaratEast.html, 2010/dop-BallaratWest.html
 - **nsw/** -- 292 files, 9.8 MB
   - e.g. dop-sample.html, dop/index-SG1901.html, dop/index-SG2301.html, dop/index-SGE2015.html
 - **ecsa/** -- 9 files, 2.9 MB. **1 ZERO-BYTE: ha-2018-03-17.json**
@@ -101,6 +104,7 @@ NAMES live -- the per-seat results files carry `seat, party, votes` only.
 | qld2024 | 93 | 525 | 38 | 14 |
 | sa2022 | 47 | 240 | 20 | 6 |
 | sa2026 | 47 | 388 | 34 | 31 |
+| vic2010 | 88 | 502 | 75 | 88 |
 | vic2014 | 88 | 545 | 91 | 9 |
 | vic2018 | 88 | 507 | 102 | 9 |
 | vic2022 | 87 | 731 | 119 | 13 |
@@ -113,7 +117,7 @@ NAMES live -- the per-seat results files carry `seat, party, votes` only.
 | wa2021 | 59 | 463 | 17 | 0 |
 | wa2025 | 59 | 398 | 29 | 6 |
 
-**Total: 16574 candidacies, 26 elections, 322 non-major breakouts.**
+**Total: 17076 candidacies, 27 elections, 410 non-major breakouts.**
 
 ## Known gaps
 

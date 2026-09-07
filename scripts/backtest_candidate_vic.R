@@ -202,9 +202,22 @@ CAL_TAG <- paste0(
 SEED <- 42; SMOOTH <- 0.15; eps <- 1e-6
 P <- election_data_path()
 
+# THREE PAIRS since 2026-09-07. vic2010 became available when the archived VEC
+# result pages were parsed (scripts/fetch_preferences_vic2010.R); the eight
+# spreadsheets previously recorded as the 2010 Assembly results are the
+# Legislative Council. The 2013 redistribution renamed 15 of the 88 districts,
+# so 2010 -> 2014 scores 73 seats, and the harness reports that coverage the
+# same way it does for the 2021 redistribution.
 PAIRS <- list(
+  list(from = 2010, to = 2014),
   list(from = 2014, to = 2018),
   list(from = 2018, to = 2022))
+
+# Polling day, per target election. This was a ternary reading
+# `if (K$to == 2018L) ... else ...`, which silently gave any third pair the
+# 2022 date -- a leakage bug the moment a pair was added, and one that nothing
+# downstream would have reported.
+VIC_DATE <- c("2014" = "2014-11-29", "2018" = "2018-11-24", "2022" = "2022-11-26")
 
 share_of <- function(f) {
   d <- fread(file.path(P, f), showProgress = FALSE)
@@ -220,7 +233,9 @@ for (K in PAIRS) {
   # LEAKAGE GUARD, asserted on the source rather than on a filtered copy: a
   # table filtered to one election trivially contains only that election.
   stopifnot(all(tx$election == sprintf("vic%d", K$from)))
-  tx <- pool_configured_flows(tx, if (K$to == 2018L) "2018-11-24" else "2022-11-26")
+  .asof <- VIC_DATE[[as.character(K$to)]]
+  if (is.null(.asof) || is.na(.asof)) stop("No polling date recorded for vic", K$to)
+  tx <- pool_configured_flows(tx, .asof)
   fm <- build_flow_matrix(tx, min_n = 3L)
 
   wf <- file.path(P, sprintf("vec-%d-vic-winners.csv", K$to))

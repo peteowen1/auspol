@@ -21,6 +21,15 @@
 options(auspol.root = normalizePath("."))
 suppressMessages(library(data.table))
 
+# THE SAME FLOOR THE HARNESSES USE. Every harness clamps at 1e-6 before taking
+# a log, and this script originally used 1e-9 -- which is not a rounding
+# difference. A seat the model gives probability EXACTLY zero contributes
+# -log(eps) on its own, so at 1e-9 it costs 20.7 and at 1e-6 it costs 13.8, and
+# over 73 seats that single choice moved vic2014 from 0.4662 to 0.5608. The
+# pooled table has to agree with the harness logs or the same model reports two
+# different numbers depending on who asked.
+EPS <- 1e-6
+
 OUT <- "output"
 files <- list.files(OUT, pattern = "^backtest-.*[.]csv$", full.names = TRUE)
 files <- grep("-totals|allprobs|-seatsd|-diag", files, value = TRUE, invert = TRUE)
@@ -40,7 +49,7 @@ rows <- rbindlist(lapply(files, function(f) {
     d[, pair := m]
   }
   d[, .(file = f, mtime = file.mtime(f), pair = as.character(pair),
-        p = pmin(pmax(get(pcol), 1e-9), 1), hit = as.integer(pred == actual))]
+        p = pmin(pmax(get(pcol), EPS), 1), hit = as.integer(pred == actual))]
 }))
 if (!nrow(rows)) stop("No readable backtest files")
 

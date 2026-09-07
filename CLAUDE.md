@@ -355,12 +355,20 @@ anything. (Corrected 2026-08-27; the earlier claim that WA held more clusters
 than the other four combined predates the federal harness reaching 6 pairs.)
 
 `_nsw.R` takes **two** pairs since 2026-09-07 via `AUSPOL_NSW_PAIR` (2019 or
-2023, default 2023) — it was hardcoded to one target in seventeen places. Every
-other state harness is still single-pair, so a change measured "on NSW" means
-whichever pair you set, and both need running.
+2023, default 2023) — it was hardcoded to one target in seventeen places. So a
+change measured "on NSW" means whichever pair you set, and both need running.
+`_vic.R` takes **three** since the same day (vic2010 was recovered from the
+Internet Archive) and runs them all in one go.
 
-**`scripts/pool_backtests.R` gives the pooled table across all 20 pairs and
-1,884 seat-elections** — accuracy, Brier and seat log loss per pair and overall.
+**Every log-loss number here is clamped at `eps = 1e-6` before the log.** That
+constant is not cosmetic: a seat given probability exactly zero contributes
+`-log(eps)` by itself, so moving the floor to 1e-9 moved vic2014 from 0.4662 to
+0.5608 and wa2001 from 0.8731 to 1.1155 with no change to the model. Pooled log
+loss is set as much by how many seats sit at the floor as by anything else, and
+every one of those seats is an emergence the model gave nothing to.
+
+**`scripts/pool_backtests.R` gives the pooled table across all 21 pairs and
+1,957 seat-elections** — accuracy, Brier and seat log loss per pair and overall.
 Run it instead of adding up six logs by hand. It takes the newest file per pair
 and prints that file's timestamp and code tag, so a row describing an older
 model is visible rather than silent.

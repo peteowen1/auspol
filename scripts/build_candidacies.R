@@ -436,14 +436,28 @@ for (E in qld_files) {
 # preferences, turning a 63% two-party result into a "63% primary". Position
 # indexing would fail silently and plausibly.
 VECD <- file.path("external", "reference", "vec")
-for (y in c(2014, 2018)) {
+# 2010 JOINED THIS LOOP rather than getting a parser of its own: the archived
+# 2010 result pages are the same site generation as 2014 and 2018 and carry the
+# same Candidate / Party / 1st pref votes headers. Only the file NAMING differs
+# -- scripts/fetch_preferences_vic2010.R writes "result-AlbertPark.html" where
+# the later years use "albertparkdistrict.html" -- so the pattern and the seat
+# derivation are per-year and everything else is shared.
+VIC_FILES <- list(
+  "2010" = list(pat = "^result-.*[.]html$",
+                seat = function(f) tolower(sub("[.]html$", "", sub("^result-", "", f)))),
+  "2014" = list(pat = "district[.]html$",
+                seat = function(f) sub("district[.]html$", "", f)),
+  "2018" = list(pat = "district[.]html$",
+                seat = function(f) sub("district[.]html$", "", f)))
+for (y in c(2010, 2014, 2018)) {
+  .vf <- VIC_FILES[[as.character(y)]]
   dir_y <- file.path(VECD, as.character(y))
   if (!dir.exists(dir_y)) { cat(sprintf("BC7  vic%d: no directory\n", y)); next }
   if (!requireNamespace("rvest", quietly = TRUE) ||
       !requireNamespace("xml2", quietly = TRUE)) {
     cat("BC7  vic: rvest/xml2 not installed; skipped\n"); break
   }
-  ff <- list.files(dir_y, pattern = "district\\.html$")
+  ff <- list.files(dir_y, pattern = .vf$pat)
   rows <- list(); skipped <- 0L
   for (f in ff) {
     p <- file.path(dir_y, f)
@@ -463,7 +477,7 @@ for (y in c(2014, 2018)) {
     # Kept lowercase and unspaced; the corpus is keyed on (election, seat) and
     # nothing here joins to the VEC results files, so inventing a spacing rule
     # would add a matching problem rather than solve one.
-    t[, seat := sub("district\\.html$", "", f)]
+    t[, seat := .vf$seat(f)]
     rows[[f]] <- t
   }
   if (!length(rows)) { cat(sprintf("BC7  vic%d: no district tables parsed\n", y)); next }

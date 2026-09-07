@@ -199,3 +199,104 @@ one the rule was written for. A test that exercises only the input the author
 had in mind is not a test of the rule. It now covers the spelling the data
 actually uses, the dotted form, the code-only path, and three genuine Labor
 labels including Country Labor as a negative control.
+
+## Victoria 2010 recovered, and a third Victorian pair
+
+The eight `state2010*RegionFPVbyVC.xls` workbooks recorded as this election's
+data are the Legislative COUNCIL. Each is one Council region, its eleven sheets
+are named for the eleven Assembly districts inside it, and every sheet lists
+GROUP A, GROUP B, GROUP C with zero candidate names. Checked across all eleven
+sheets of one workbook.
+
+The Assembly results are the old VEC site's own per-district result pages, on
+the Internet Archive. `scripts/fetch_preferences_vic2010.R` reads all 88.
+
+**Verified against the published result before use:**
+
+| | ours | published |
+|---|--:|--:|
+| Labor primary | 36.25% | 36.25% |
+| Greens primary | 11.21% | 11.21% |
+| seats, Coalition | 45 | 45 |
+| seats, Labor | 43 | 43 |
+
+That check is what caught the problem described below, and it is the reason to
+run it before trusting a scraped file rather than after.
+
+### Five ways this went wrong, all of them producing plausible output
+
+1. **A hyphen.** South-West Coast is the only 2010 district with one, and a
+   letters-only pattern returned 87 districts. The count then reads as an
+   archive gap rather than a regex bug. Found by diffing against the 88 names
+   the Council workbooks do carry.
+2. **A provisional count that looked complete.** The archive's first capture is
+   4 December 2010, five days after polling: Albert Park reads 30,302 first
+   preferences against a final 39,790, with no elected member and no formal-vote
+   line. Taking the earliest snapshot gives a complete-looking file of 88
+   districts that is three-quarters counted. A snapshot is now used only if it
+   proves it is final, by carrying both an elected member and a formal-vote
+   count.
+3. **A guard that passed on exactly what it existed to catch.** The
+   first-preference total was checked against the page's formal-vote figure
+   under `is.finite(formal)`, and the provisional pages carry no such figure --
+   so every one of them was filtered out of the check and the run reported
+   success. A district with no figure to check against is now a failure, not a
+   skip.
+4. **A port.** The archive stores these as `www.vec.vic.gov.au:80/...` and its
+   index API returns NOTHING for a URL carrying an explicit port, silently. An
+   empty result reads as "no snapshots exist", not as a bad query.
+5. **Cached error pages standing in as data.** The archive answers overload with
+   an nginx 504 page; `curl` and `download.file` both store it happily and the
+   next run reads it back as a cached snapshot list. This accounted for all
+   eight districts that failed every retry.
+
+### What it buys
+
+`vic2010 -> vic2014` is the twenty-first pair. The 2013 redistribution renamed
+15 of the 88 districts, so it scores 73 seats and that coverage is reported.
+
+| | value |
+|---|--:|
+| seats scored | 73 of 88 |
+| accuracy | 93.2% |
+| Brier | 0.0744 |
+| seat log loss | 0.4662 |
+| seat-share RMSE | 3.715 |
+
+Its log loss is the worst of the three Victorian pairs and its accuracy the
+best, which is the signature of a small number of confident misses. **Shepparton
+is the whole story: Suzanna Sheed won it as an independent and the model gave
+her a probability of exactly zero.** One seat at zero sets that pair's log loss
+almost by itself.
+
+Preference distributions survive for **44 of the 88** districts, which is enough
+for a pooled flow matrix but is not the same object as one estimated from a full
+chamber. The coverage is printed and written into the output.
+
+## Pooled position, 21 pairs
+
+| jurisdiction | pairs | seat-elections | accuracy | Brier | log loss |
+|---|--:|--:|--:|--:|--:|
+| federal | 7 | 1,036 | 86.9% | 0.0965 | 0.3241 |
+| Western Australia | 7 | 361 | 87.3% | 0.0995 | 0.3899 |
+| Victoria | 3 | 239 | 90.0% | 0.0779 | 0.3403 |
+| New South Wales | 2 | 181 | 89.0% | 0.0816 | 0.3480 |
+| Queensland | 1 | 93 | 82.8% | 0.1086 | 0.3349 |
+| South Australia | 1 | 47 | 78.7% | 0.1127 | 0.3225 |
+| **pooled** | **21** | **1,957** | **87.1%** | **0.0944** | **0.3444** |
+
+### A correction to the earlier figure in this document
+
+The 0.3507 reported above for 20 pairs was computed with a **1e-9** probability
+floor in `scripts/pool_backtests.R`, while every harness uses **1e-6**. That is
+not a rounding difference: a seat given probability exactly zero contributes
+`-log(eps)` on its own, so it costs 20.7 at 1e-9 and 13.8 at 1e-6, and over 73
+seats that one choice moved vic2014 from 0.4662 to 0.5608 and wa2001 from 0.8731
+to 1.1155. The script now uses the harnesses' floor, so the pooled table and the
+harness logs report the same number for the same model.
+
+**What that exposes is worth more than the correction.** Pooled log loss is
+dominated by a handful of seats the model gives essentially zero, and their
+contribution is set by an arbitrary constant rather than by anything the model
+knows. Every one of them is an emergence: Shepparton 2014, and the seats behind
+wa2001 and wa2008.

@@ -2,9 +2,14 @@
 
 ## SESSION 2026-09-07: New South Wales 2019 scored, and four findings
 
-**Coverage is now 20 pairs and 1,884 seat-elections**, up from 19 and 1,791.
-Pooled seat log loss **0.3507**, Brier 0.0952, accuracy 86.9%. All six harnesses
+**Coverage is now 21 pairs and 1,957 seat-elections**, up from 19 and 1,791.
+Pooled seat log loss **0.3444**, Brier 0.0944, accuracy 87.1%. All six harnesses
 were re-run the same day, so every row of that table describes one model.
+
+Two elections were added: **nsw2019** (93 seats) and **vic2014** (73 of 88, the
+2013 redistribution renamed 15 districts). vic2014 became possible when the
+archived VEC result pages were parsed -- the eight spreadsheets recorded here as
+the 2010 Assembly results are the Legislative Council.
 Full write-up: `docs/reviews/nsw2019-and-seat-turnover-2026-09-07.md`.
 
 `scripts/pool_backtests.R` is new and produces the pooled table on demand. It
@@ -35,8 +40,8 @@ refactor.
    do. A published switch a harness cannot honour is the failure recorded in
    `CLAUDE.md` for the missing SA `shrink`, and its numbers describe a different
    model from the rest of the table.
-4. **Four elections still unscored** — vic2010, qld2017, sa2018, fed2004 as a
-   scored target. Parsers are the remaining work; the sources were located.
+4. **Three elections still unscored** — qld2017, sa2018, and fed2004 as a
+   scored target rather than only a prior. Parsers are the remaining work; the sources were located.
 
 ### Closed this session
 

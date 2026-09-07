@@ -33,6 +33,9 @@ column does not exist.**
 | `nswec-2023-nsw-firstprefs.csv` | 473 | `seat`, `party`, `votes` |
 | `nswec-nsw-transfers.csv` | 3,935 | `election`, `seat`, `round`, `from`, `to`, `votes` |
 | `nswec-nsw-winners.csv` | 279 | `election`, `seat`, `code`, `winner` |
+| `vec-2010-vic-firstprefs.csv` | 414 | `seat`, `party`, `votes` |
+| `vec-2010-vic-transfers.csv` | 625 | `election`, `seat`, `round`, `from`, `to`, `votes` |
+| `vec-2010-vic-winners.csv` | 88 | `election`, `seat`, `winner`, `winner_name` |
 | `vec-2014-vic-firstprefs.csv` | 430 | `seat`, `party`, `votes` |
 | `vec-2014-vic-transfers.csv` | 767 | `election`, `seat`, `round`, `from`, `to`, `votes` |
 | `vec-2014-vic-winners.csv` | 88 | `seat`, `winner` |
@@ -138,7 +141,7 @@ processed extract. Every one is recoverable without a new fetch.
 | `cal-vic-m2.5.csv` | 166 | `seat`, `actual`, `prob`, `pred`, `pred_p`, `pair` |
 | `cal-vic-m4.0.csv` | 166 | `seat`, `actual`, `prob`, `pred`, `pred_p`, `pair` |
 | `calibration-arms.csv` | 10 | `pair`, `n`, `mult`, `logB`, `acc`, `T`, `logA`, `logC`, `B_vs_A`, `B_vs_C` |
-| `candidacies.csv` | 16,574 | `election`, `region`, `year`, `seat`, `name`, `surname`, `given`, `party`, `party_raw`, `party_ab`, `state`, `votes`, `pcv`, `elected`, `historic_elected`, `breakout`, `swing`, `ballot_position`, `ordinary`, `absent`, `provisional`, `prepoll`, `postal`, `ballot_order`, `tot` |
+| `candidacies.csv` | 17,076 | `election`, `region`, `year`, `seat`, `name`, `surname`, `given`, `party`, `party_raw`, `party_ab`, `state`, `votes`, `pcv`, `elected`, `historic_elected`, `breakout`, `swing`, `ballot_position`, `ordinary`, `absent`, `provisional`, `prepoll`, `postal`, `ballot_order`, `tot` |
 | `candidate-contests.csv` | 14,953 | `election`, `region`, `party`, `candidate_id`, `seat`, `pcv`, `surname`, `given`, `expected_pcv`, `performance_vs_expected` |
 | `candidate-ids.csv` | 10,763 | `V1`, `V2`, `V3`, `V4`, `V5`, `V6`, `V7`, `V8`, `V9`, `V10`, `V11`, `V12` |
 | `candidate-review.csv` | 190 | `V1`, `V2`, `V3`, `V4`, `V5`, `V6`, `V7`, `V8`, `V9`, `V10`, `V11`, `V12`, `V13`, `V14`, `V15` |
@@ -149,5 +152,5 @@ processed extract. Every one is recoverable without a new fetch.
 | `demographic-swing-loo.csv` | 12 | `party`, `pair`, `n`, `mae_uniform`, `mae_demog`, `improvement` |
 | `dev-slopes-heldout.csv` | 42 | `party`, `slope`, `se`, `n`, `pairs`, `held_out`, `t_vs_1` |
 
-_(971 `backtest-*.csv` arm outputs omitted; they share one shape.)_
+_(1020 `backtest-*.csv` arm outputs omitted; they share one shape.)_
 
