@@ -65,6 +65,7 @@
 # proportionality the offset exists to provide -- One Nation's 22.9% statewide
 # in South Australia is a real number, not an extrapolation.
 .REENTRY_COVARS <- c("breadth", "safe", "lean", "flow_safe", "flow_lean",
+                     "lean_mid", "lean_gap", "safe_mid", "safe_gap",
                      "nonmajor_prev", "nonmajor_defended", "nonmajor_vacant")
 
 # Logit of a percentage, guarded off the asymptotes. Used as the offset under
@@ -128,9 +129,16 @@ reentry_fit <- function(pairs, min_n = 40L, min_ratio_n = 20L, covariates = TRUE
       .split <- !identical(Sys.getenv("AUSPOL_REENTRY_SPLIT", "1"), "0") &&
         all(is.finite(d$nonmajor_defended))
       .nmterm <- if (.split) "nonmajor_defended + nonmajor_vacant" else "nonmajor_prev"
-      .rhs <- paste("breadth + safe + lean +",
-                    if (all(is.finite(d$flow_lean))) "flow_safe + flow_lean +" else "",
-                    .nmterm)
+      # AUSPOL_REENTRY_GAP: "" keeps the original lean + flow_lean pair;
+      # "winsor" and "drop" switch to the (mid, gap) parameterisation, which is
+      # arithmetically the same model when nothing else changes.
+      .gap <- Sys.getenv("AUSPOL_REENTRY_GAP", "")
+      .haveflow <- all(is.finite(d$flow_lean))
+      .leanterm <- if (!.haveflow) "safe + lean"
+        else if (identical(.gap, "drop")) "safe_mid + lean_mid"
+        else if (nzchar(.gap)) "safe_mid + lean_mid + safe_gap + lean_gap"
+        else "safe + lean + flow_safe + flow_lean"
+      .rhs <- paste("breadth +", .leanterm, "+", .nmterm)
       # ARM A, docs/plans/prereg-reentry-bounded-2026-09-08.md. A log link on a
       # response that is a share of 100 is unbounded, and it produced 74.3% for
       # One Nation in Traeger against an actual 6.8%. Under a logit link with a
@@ -214,7 +222,8 @@ reentry_training <- function(pairs,
     n_seats <- length(unique(b$seat))
     m[, breadth := .N / n_seats, by = "party"]
     m[, list(pair, party, seat, pcv, state_pcv, lean, safe, nonmajor_prev,
-             nonmajor_defended, nonmajor_vacant, flow_lean, flow_safe, breadth)]
+             nonmajor_defended, nonmajor_vacant, flow_lean, flow_safe,
+             lean_mid, lean_gap, safe_mid, safe_gap, breadth)]
   })
   D <- data.table::rbindlist(out, fill = TRUE)
   if (!nrow(D)) return(D)
@@ -339,6 +348,14 @@ seat_lean <- function(a, positions = NULL, standing = NULL) {
     }
   }
   if (!"flow_lean" %in% names(out)) out[, `:=`(flow_lean = NA_real_, flow_safe = NA_real_)]
+  # THE TWO LEANS, REPARAMETERISED. docs/plans/prereg-reentry-lean-gap-2026-09-08.md.
+  # lean and flow_lean correlate at 0.972 (VIF 20.7 and 20.6) and safe/flow_safe
+  # at 0.917, so the fit cannot identify the two levels separately -- only their
+  # difference, and with large variance. Entering (mid, gap) instead is an exact
+  # invertible linear change, so the fitted values are identical; what it buys
+  # is a NAME for the unstable direction, which is what the arms act on.
+  out[, `:=`(lean_mid = (lean + flow_lean) / 2, lean_gap = flow_lean - lean,
+             safe_mid = (safe + flow_safe) / 2, safe_gap = flow_safe - safe)]
   out[]
 }
 
@@ -358,14 +375,21 @@ reentry_predict <- function(fit, newdata) {
   # Traeger sits at the 100.0th percentile of its class's lean gap and Hill at
   # the 99.7th, which is where the 74.3% came from.
   .winsor <- identical(Sys.getenv("AUSPOL_REENTRY_WINSOR", "0"), "1")
+  # ARM D clips ONLY the gap columns. The previous plan's arm B clipped every
+  # covariate and made Traeger WORSE, because Traeger sits inside the class
+  # range on both leans and outside it only on nonmajor_prev, whose coefficient
+  # is negative -- so clipping removed the brake. The excursion lives in the
+  # difference, so the difference is the only thing bounded here.
+  .gapwin <- identical(Sys.getenv("AUSPOL_REENTRY_GAP", ""), "winsor")
+  .clipcols <- if (.gapwin) c("lean_gap", "safe_gap") else .REENTRY_COVARS
   n_clip <- 0L; n_rows_clip <- 0L
   for (cl in unique(newdata$party)) {
     idx <- which(newdata$party == cl)
     f <- fit$fits[[cl]]
     nd <- newdata[idx, , drop = FALSE]
-    if (.winsor && !is.null(fit$bounds[[cl]])) {
+    if ((.winsor || .gapwin) && !is.null(fit$bounds[[cl]])) {
       touched <- rep(FALSE, nrow(nd))
-      for (v in names(fit$bounds[[cl]])) {
+      for (v in intersect(names(fit$bounds[[cl]]), .clipcols)) {
         b <- fit$bounds[[cl]][[v]]
         if (!v %in% names(nd) || !is.finite(b[["lo"]])) next
         x <- nd[[v]]

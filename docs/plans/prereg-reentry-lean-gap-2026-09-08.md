@@ -135,3 +135,83 @@ a model with fewer terms on a degenerate direction is the simpler object.
 - Whether a ridge penalty would be better than winsorising or dropping. It
   would address the conditioning directly rather than its symptom, and it is
   not tested here because it needs a dependency this package does not carry.
+
+---
+
+## Dry-run outcome, 2026-09-08 — arm D passes every case; arm E is refused
+
+Added after the dry-run. Everything above is left exactly as committed.
+
+**Case 1 passes.** Maximum absolute difference between the reparameterised and
+original predictions over all 1,416 cells: **1.07e-13**. The change to
+(mid, gap) is exact, so everything downstream is measuring the arms rather than
+an accidental model change.
+
+| arm | max | >40 | >25 | mean | median | MAE | rows clipped |
+|---|--:|--:|--:|--:|--:|--:|--:|
+| base | 74.3 | 5 | 14 | 5.39 | 3.92 | 3.227 | — |
+| D — bound the gap | 53.2 | 3 | 13 | 5.34 | 3.92 | **3.172** | 66 (**4.7%**) |
+| E — drop the gap | 53.2 | 3 | 10 | 5.32 | 4.08 | 3.256 | — |
+
+| pair | seat | class | base | D | E | actual |
+|---|---|---|--:|--:|--:|--:|
+| qld2024 | Traeger | ONP | 74.3 | **25.9** | 30.9 | 6.8 |
+| qld2024 | Hill | ONP | 57.5 | **25.1** | 28.4 | 6.9 |
+| qld2024 | Callide | ONP | 44.6 | **44.6** | 46.5 | 15.8 |
+| wa2001 | Kimberley | ALP | 37.2 | 37.2 | 37.2 | 42.2 |
+| wa2005 | Alfred Cove | ALP | 41.9 | 41.9 | 41.9 | 22.8 |
+
+Case 2 predicted "arm D should land Traeger near 25"; it landed on **25.9**.
+Case 3 predicted Kimberley and Alfred Cove exactly unchanged; they are. Case 4
+predicted arm D must barely move Callide; it does not move it at all. The
+mechanism is doing what the plan said it would and nothing else.
+
+### Arm E is refused
+
+Dropping the gap makes the model **worse**, not simpler-and-equal: pooled MAE
+3.256 against a base of 3.227, and One Nation's own class MAE 3.919 against
+3.862. It also moves sa2026's mean One Nation prediction from 20.53 to 18.15,
+a 2.4-point drift away from an actual 19.27.
+
+So CLAUDE.md's finding that both leans together beat either alone **stands and
+needs no qualifying**. The disagreement carries real signal; the fault was only
+ever that its effect was unbounded.
+
+### Arm D passes every refusal
+
+1. sa2026's mean One Nation prediction is **20.53, identical to base**, against
+   an actual 19.27. The logit-offset worry does not arise and the
+   proportionality is untouched.
+2. Callide does not move, so the Traeger result is attributable.
+3. MAE **improves** 3.227 → 3.172 while the maximum falls, so the tail was not
+   bought with timidity. Per class: ONP 3.862 → **3.597**, IND 4.640 → 4.638,
+   OTH_RIGHT 2.076 → 2.080, OTH 1.816 → 1.849. The gain is concentrated in One
+   Nation and nothing else degrades materially.
+4. 66 rows clipped, **4.7%**, inside the 5% written into refusal 3.
+
+### Clause 1 was mis-specified, and this is the third time in this sequence
+
+Clause 1 requires the count above 40 to reach zero. Under arm D it is three,
+and **two of the three are cells no arm in this plan can reach**:
+
+| pair | seat | class | pred | actual | path |
+|---|---|---|--:|--:|---|
+| wa2013 | Churchlands | LNP | 53.2 | 59.0 | flat ratio |
+| qld2024 | Callide | ONP | 44.6 | 15.8 | GLM |
+| wa2005 | Alfred Cove | ALP | 41.9 | 22.8 | flat ratio |
+
+Labor and the Coalition never get a GLM, so their predictions are the flat
+ratio times the statewide share — and this plan's own "What the criterion
+cannot see" section says so **in advance**. Writing a clause that the same
+document declares unsatisfiable is a criterion-writing failure, not a finding
+about arm D.
+
+On the path the arms actually act on, the count above 40 falls from **3 to 1**
+and the maximum from 74.3 to 44.6.
+
+**The clause is NOT rewritten.** Arm D is recorded as failing clause 1 as
+written, with the reason, and the pooled measurement is reported beside it so
+the decision rests on evidence rather than on a threshold I would now be
+choosing after seeing the answer. Churchlands at 53.2 against an actual 59.0 is
+also worth noting: it is the largest remaining prediction and it is nearly
+right, which is its own argument that a flat 40 was the wrong instrument.
