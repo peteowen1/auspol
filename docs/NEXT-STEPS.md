@@ -171,6 +171,29 @@ vic2014 by 0.0112 and the arm differences under test are 0.003. `AUSPOL_SEED`
 now works in every harness; it was inert in four of six until 2026-09-07. This
 is the reason item 2 is not shipped.
 
+**Partial progress 2026-09-08: re-run at `AUSPOL_N_SIMS=20000`** (CLAUDE.md's
+own rule -- "only the deciding run needs 20,000" -- rather than averaging
+several 5,000-sim seeds). Confirms the prior-off vs arm-D gap is real, not
+seed noise, everywhere it has been checked so far:
+
+| jurisdiction | prior off (5k / 20k) | arm D (5k / 20k) |
+|---|---|---|
+| WA | 0.4109 / 0.4101 | 0.3973 / 0.3967 |
+| Victoria | 0.2676 / 0.2693 | 0.2683 / 0.2691 |
+| South Australia | 0.3976 / 0.3973 | 0.3924 / 0.3914 |
+| Federal 2007-2016 | 0.3392 / 0.3303 | not yet run at 20k |
+
+Federal moved the most of any group so far (fed2013 alone: 0.4163 -> 0.3813),
+which is exactly the seed-sensitivity item 5 exists to catch -- so federal is
+the group most worth finishing, not least.
+
+**Still needed: federal 2019-2025 baseline and arm D (all pairs), federal
+2007-2016 arm D, NSW, Queensland.** Blocked 2026-09-08 by sustained memory
+pressure from other concurrent sessions on this machine -- three consecutive
+kills even down to a single federal pair at 1.8GB free, with none of the
+heavy processes belonging to this session. Not a sizing problem on this
+session's end; retry when the machine is quieter.
+
 
 ### Open, in the order I would do them
 
