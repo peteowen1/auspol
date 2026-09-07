@@ -60,11 +60,33 @@
 #' @return An object for [reentry_predict()], carrying one fit or ratio per
 #'   class and the row counts behind each.
 #' @export
+# The covariates the arms bound. `state_pcv` is deliberately ABSENT: it enters
+# as an offset with no fitted coefficient, and clipping it would cap the very
+# proportionality the offset exists to provide -- One Nation's 22.9% statewide
+# in South Australia is a real number, not an extrapolation.
+.REENTRY_COVARS <- c("breadth", "safe", "lean", "flow_safe", "flow_lean",
+                     "nonmajor_prev", "nonmajor_defended", "nonmajor_vacant")
+
+# Logit of a percentage, guarded off the asymptotes. Used as the offset under
+# arm A; a statewide share of exactly 0 or 100 would otherwise be infinite.
+.ql <- function(x) stats::qlogis(pmin(pmax(x / 100, 1e-6), 1 - 1e-6))
+
+# The 1st and 99th percentile of each covariate in ONE class's training rows.
+.support <- function(d) {
+  k <- intersect(.REENTRY_COVARS, names(d))
+  out <- lapply(k, function(v) {
+    x <- d[[v]]; x <- x[is.finite(x)]
+    if (!length(x)) c(lo = NA_real_, hi = NA_real_)
+    else stats::setNames(unname(stats::quantile(x, c(0.01, 0.99))), c("lo", "hi"))
+  })
+  stats::setNames(out, k)
+}
+
 reentry_fit <- function(pairs, min_n = 40L, min_ratio_n = 20L, covariates = TRUE,
                         cand_path = file.path("output", "candidacies.csv")) {
   D <- reentry_training(pairs, cand_path)
   cls <- unique(D$party)
-  fits <- list(); ratios <- c(); ns <- c()
+  fits <- list(); ratios <- c(); ns <- c(); bounds <- list()
   for (cl in cls) {
     d <- D[D$party == cl]
     ns[cl] <- nrow(d)
@@ -106,13 +128,33 @@ reentry_fit <- function(pairs, min_n = 40L, min_ratio_n = 20L, covariates = TRUE
       .split <- !identical(Sys.getenv("AUSPOL_REENTRY_SPLIT", "1"), "0") &&
         all(is.finite(d$nonmajor_defended))
       .nmterm <- if (.split) "nonmajor_defended + nonmajor_vacant" else "nonmajor_prev"
+      .rhs <- paste("breadth + safe + lean +",
+                    if (all(is.finite(d$flow_lean))) "flow_safe + flow_lean +" else "",
+                    .nmterm)
+      # ARM A, docs/plans/prereg-reentry-bounded-2026-09-08.md. A log link on a
+      # response that is a share of 100 is unbounded, and it produced 74.3% for
+      # One Nation in Traeger against an actual 6.8%. Under a logit link with a
+      # logit offset the prediction cannot leave (0, 100). At small shares the
+      # logit offset behaves like the log one, which preserves the
+      # proportionality that fixed South Australia; at large shares it
+      # saturates, which is the point.
+      .logit <- identical(Sys.getenv("AUSPOL_REENTRY_LINK", "log"), "logit")
       fo <- stats::as.formula(paste(
-        "pcv ~ offset(log(state_pcv)) + breadth + safe + lean +",
-        if (all(is.finite(d$flow_lean))) "flow_safe + flow_lean +" else "",
-        .nmterm))
-      f <- try(stats::glm(fo, family = stats::quasipoisson(link = "log"), data = d),
-               silent = TRUE)
-      if (!inherits(f, "try-error")) fits[[cl]] <- f
+        if (.logit) "I(pcv/100) ~ offset(.ql(state_pcv)) +"
+        else        "pcv ~ offset(log(state_pcv)) +", .rhs))
+      f <- try(suppressWarnings(stats::glm(
+        fo, data = d,
+        family = if (.logit) stats::quasibinomial(link = "logit")
+                 else stats::quasipoisson(link = "log"))), silent = TRUE)
+      if (!inherits(f, "try-error")) {
+        attr(f, "auspol_scale") <- if (.logit) "proportion" else "percent"
+        fits[[cl]] <- f
+        # ARM B needs the training support, so it is recorded whether or not
+        # the arm is on. Storing it here rather than recomputing at predict
+        # time is what keeps the bound leave-one-out: it comes from the same
+        # `d` the coefficients came from.
+        bounds[[cl]] <- .support(d)
+      }
       # PRINT WHAT IT APPLIED. CLAUDE.md records an experiment whose edit never
       # ran and whose byte-identical output read as "this input does not
       # matter". A run that silently fell back to the whole-vote term would be
@@ -122,7 +164,8 @@ reentry_fit <- function(pairs, min_n = 40L, min_ratio_n = 20L, covariates = TRUE
 ", cl))
     }
   }
-  structure(list(fits = fits, ratios = ratios, n = ns, covariates = covariates),
+  structure(list(fits = fits, ratios = ratios, n = ns, covariates = covariates,
+                 bounds = bounds),
             class = "auspol_reentry")
 }
 
@@ -310,18 +353,47 @@ seat_lean <- function(a, positions = NULL, standing = NULL) {
 #' @export
 reentry_predict <- function(fit, newdata) {
   out <- rep(NA_real_, nrow(newdata))
+  # ARM B, docs/plans/prereg-reentry-bounded-2026-09-08.md. The fit is left
+  # alone; the model is simply not ASKED to extrapolate past the data it saw.
+  # Traeger sits at the 100.0th percentile of its class's lean gap and Hill at
+  # the 99.7th, which is where the 74.3% came from.
+  .winsor <- identical(Sys.getenv("AUSPOL_REENTRY_WINSOR", "0"), "1")
+  n_clip <- 0L; n_rows_clip <- 0L
   for (cl in unique(newdata$party)) {
     idx <- which(newdata$party == cl)
     f <- fit$fits[[cl]]
+    nd <- newdata[idx, , drop = FALSE]
+    if (.winsor && !is.null(fit$bounds[[cl]])) {
+      touched <- rep(FALSE, nrow(nd))
+      for (v in names(fit$bounds[[cl]])) {
+        b <- fit$bounds[[cl]][[v]]
+        if (!v %in% names(nd) || !is.finite(b[["lo"]])) next
+        x <- nd[[v]]
+        hit <- is.finite(x) & (x < b[["lo"]] | x > b[["hi"]])
+        if (any(hit)) {
+          nd[[v]] <- pmin(pmax(x, b[["lo"]]), b[["hi"]])
+          n_clip <- n_clip + sum(hit); touched <- touched | hit
+        }
+      }
+      n_rows_clip <- n_rows_clip + sum(touched)
+    }
     if (!is.null(f)) {
-      p <- try(as.numeric(stats::predict(f, newdata = newdata[idx, , drop = FALSE],
-                                         type = "response")), silent = TRUE)
-      if (!inherits(p, "try-error")) { out[idx] <- p; next }
+      p <- try(as.numeric(stats::predict(f, newdata = nd, type = "response")),
+               silent = TRUE)
+      if (!inherits(p, "try-error")) {
+        # Arm A fits a PROPORTION. Returning it unscaled would divide every
+        # re-entry prediction by 100 and read as "the prior does nothing",
+        # which is the silent-failure shape this repo keeps finding.
+        if (identical(attr(f, "auspol_scale"), "proportion")) p <- 100 * p
+        out[idx] <- p; next
+      }
     }
     r <- if (cl %in% names(fit$ratios)) unname(fit$ratios[[cl]]) else 1
     out[idx] <- r * newdata$state_pcv[idx]
   }
-  pmax(out, 0)
+  out <- pmax(out, 0)
+  attr(out, "clipped") <- c(cells = n_clip, rows = n_rows_clip)
+  out
 }
 
 #' Apply the re-entry prior to a seat-by-class share matrix

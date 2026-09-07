@@ -133,3 +133,72 @@ thresholds this implies are roughly 0.051 and 0.016 respectively.
   of `classify_party()` filing KAP as `OTH_RIGHT` while the flow positions
   place it near the centre.
 - Era, redistributions, and everything else the predecessor plans already list.
+
+---
+
+## Dry-run outcome, 2026-09-08 — ALL THREE ARMS FAIL CLAUSE 1
+
+Added after the dry-run and before any pooled number was computed. Everything
+above is left exactly as committed.
+
+| arm | max | >40 | >25 | mean | median | MAE | cells clipped |
+|---|--:|--:|--:|--:|--:|--:|--|
+| base | 74.3 | 5 | 14 | 5.39 | 3.92 | 3.227 | — |
+| A (logit) | **53.9** | 4 | 11 | 5.36 | 3.93 | **3.173** | — |
+| B (winsorise) | **92.8** | 5 | 13 | 5.45 | 3.91 | 3.248 | 289 rows, **20.4%** |
+| C (both) | 59.5 | 4 | 11 | 5.40 | 3.91 | 3.179 | 289 rows, 20.4% |
+
+Clause 1 requires the count above 40 to reach zero. No arm gets there.
+
+### The dry-run cases
+
+| pair | seat | class | base | A | B | C | actual |
+|---|---|---|--:|--:|--:|--:|--:|
+| qld2024 | Traeger | ONP | 74.3 | 53.9 | **92.8** | 59.5 | 6.8 |
+| qld2024 | Hill | ONP | 57.5 | 46.5 | 71.9 | 52.2 | 6.9 |
+| qld2024 | Callide | ONP | 44.6 | 35.2 | 44.6 | 35.2 | 15.8 |
+| wa2001 | Kimberley | ALP | 37.2 | 37.2 | 37.2 | 37.2 | 42.2 |
+| wa2005 | Alfred Cove | ALP | 41.9 | 41.9 | 41.9 | 41.9 | 22.8 |
+
+Case 2 passes exactly as predicted: Kimberley and Alfred Cove are byte-identical
+under every arm, because Labor and the Coalition never get a GLM. Case 3 also
+behaves as predicted — arm B leaves Callide at 44.6 while arm A moves it to
+35.2, which is the separation the case was written to produce.
+
+### Why arm B made Traeger WORSE, and what that diagnoses
+
+Winsorising is applied per covariate, and **Traeger is not extreme in any
+single covariate**. Its `lean` of 23.2 sits inside the class range (p01 22.0),
+its `flow_lean` of 44.5 well inside (p01 24.6, p99 77.5). The only covariate
+outside its range is `nonmajor_prev` at 63.3 against a p99 of 57.5 — and that
+term's coefficient is **negative** (−0.0245). Clipping it *removes a penalty*,
+so the prediction rose from 74.3 to 92.8.
+
+Traeger is a **joint** extrapolation, not a marginal one: a right-leaning seat
+whose two lean measures disagree by more than any other in the class. Bounding
+marginals cannot bound a joint excursion, and can make it worse by clipping
+exactly the term that was holding it down.
+
+Arm B also clips 20.4% of rows, against the 5% written into refusal 3. It is
+refused twice over and should not be revisited in this form.
+
+### Arm A is a real improvement that does not clear the bar
+
+The logit link cuts the maximum from 74.3 to 53.9, cuts cells above 25 from 14
+to 11, and improves leave-one-out MAE from 3.227 to 3.173. Refusal 1 passes
+comfortably: sa2026's mean predicted One Nation share moves 20.53 → 20.63
+against an actual 19.27, well inside the 3-point tolerance, so the logit offset
+does preserve the proportionality the log offset was adopted for.
+
+It still leaves four predictions above 40, so **clause 1 refuses it**. Recorded
+rather than adopted, and not re-argued against a threshold chosen after the
+fact.
+
+### What is actually left
+
+Traeger's error is that the model treats the disagreement between bloc lean and
+flow lean as a signal that One Nation does well, when in Queensland that
+disagreement is an artefact of `classify_party()` filing Katter's Australian
+Party as `OTH_RIGHT` while the flow positions place KAP near the centre. That
+is a classification question, and it is the next thing to test — not another
+bound on the same fit.
