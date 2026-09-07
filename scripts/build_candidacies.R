@@ -425,6 +425,71 @@ for (E in qld_files) {
   cat(sprintf("BC6  qld%d: %d candidates in %d seats\n", E$year, nrow(q), uniqueN(q$seat)))
 }
 
+# ---- QUEENSLAND 2017 --------------------------------------------------------
+# A SEPARATE BLOCK, not another entry in qld_files, because the 2017 results
+# package uses an unrelated schema: the district's name is `name` rather than
+# `districtName`, candidates sit directly under `candidates`, and there is no
+# countRound element at all. Branching the loop above on year would make it
+# read as if the two shapes were similar.
+#
+# scripts/fetch_preferences_qld2017.R writes this file and explains why "ZZZ"
+# is an independent. Same reasoning here: in Queensland a candidate is printed
+# with a party only if a registered party endorsed them.
+q17f <- file.path(ECQ, "qld2017.xml")
+if (!file.exists(q17f) || file.info(q17f)$size < 1e6) {
+  cat(sprintf("BC6  qld2017: MISSING or empty %s -- run scripts/fetch_preferences_qld2017.R
+",
+              q17f))
+} else if (!requireNamespace("xml2", quietly = TRUE)) {
+  cat("BC6  qld2017: xml2 not installed; skipped
+")
+} else {
+  x17 <- xml2::read_xml(q17f)
+  pnodes <- xml2::xml_find_all(x17, "//parties/party")
+  P17 <- stats::setNames(xml2::xml_attr(pnodes, "name"), xml2::xml_attr(pnodes, "code"))
+  P17[["ZZZ"]] <- "Independent"
+  rows17 <- list()
+  for (dd in xml2::xml_find_all(x17, "//districts/district")) {
+    sname <- xml2::xml_attr(dd, "name")
+    decl  <- xml2::xml_attr(dd, "declaredBallotName")
+    cn <- xml2::xml_find_all(dd, "./candidates/candidate")
+    if (!length(cn)) next
+    code <- xml2::xml_attr(cn, "party")
+    bal  <- xml2::xml_attr(cn, "ballotName")
+    rows17[[sname]] <- data.table(
+      seat = sname, name = bal, party_ab = code,
+      party_raw = ifelse(code %in% names(P17), unname(P17[code]), NA_character_),
+      votes = as.numeric(xml2::xml_text(
+        xml2::xml_find_first(cn, "./primaryVotes/count"))),
+      elected = !is.na(decl) & bal == decl)
+  }
+  if (!length(rows17)) {
+    cat("BC6  qld2017: no districts parsed
+")
+  } else {
+    q17 <- rbindlist(rows17, fill = TRUE)
+    bad17 <- q17[is.na(party_raw), unique(party_ab)]
+    if (length(bad17))
+      stop("qld2017 party code(s) with no name in the file's own party table: ",
+           paste(bad17, collapse = ", "),
+           ". Classifying them without a name would silently make them IND.")
+    if (q17[is.na(votes), .N])
+      stop("qld2017: ", q17[is.na(votes), .N], " candidates have no primary vote count")
+    if (uniqueN(q17$seat) != 93L)
+      stop("qld2017: parsed ", uniqueN(q17$seat), " districts, not 93")
+    if (sum(q17$elected) != 93L)
+      stop("qld2017: ", sum(q17$elected), " candidates marked elected, not 93")
+    q17[, `:=`(party = classify_party(party_raw, ifelse(party_ab == "ZZZ", "", party_ab)),
+               surname = NA_character_, given = NA_character_,
+               election = "qld2017", region = "qld", year = 2017L)]
+    parts[["qld2017"]] <- q17[, .(seat, name, party_raw, votes, party, surname,
+                                  given, elected, election, region, year)]
+    cat(sprintf("BC6  qld2017: %d candidates in %d seats
+",
+                nrow(q17), uniqueN(q17$seat)))
+  }
+}
+
 # ---- VICTORIA 2014, 2018 ----------------------------------------------------
 # One HTML page per district, already on disk. Each carries several tables; the
 # one wanted has columns Candidate / Party / 1st pref votes.

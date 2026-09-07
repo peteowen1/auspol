@@ -213,28 +213,75 @@ if (SURGE_H > 0)
 ", SURGE_H))
 SMOOTH <- 0.15; eps <- 1e-6
 P <- election_data_path()
-FLOW_FROM <- "qld2020"   # Queensland's OWN prior distribution; see the header
+# WHICH PAIR THIS RUN SCORES, selected with AUSPOL_QLD_PAIR (default "2024").
+# qld2017 was recovered on 2026-09-07 from the commission's old results site via
+# the Internet Archive, which makes qld2017 -> qld2020 scoreable.
+#
+# THE TWO PAIRS DO NOT SHARE A FLOW SOURCE, and that is the substantive
+# difference between them:
+#
+#   2024  Queensland's OWN qld2020 distribution. It predates the election being
+#         scored, so nothing leaks, and it is the right preferences for the
+#         jurisdiction.
+#   2020  FEDERAL 2019 flows. The 2017 results package carries no preference
+#         distribution at all, and using qld2020's own transfers here would put
+#         the election being predicted on both sides. Federal is defensible
+#         because both are COMPULSORY preferential -- which is exactly the test
+#         New South Wales fails, where ~12% of ballots exhaust and CLAUDE.md
+#         records pooling Queensland into NSW costing 0.194 of log score.
+QLD_PAIRS <- list(
+  "2020" = list(to = 2020L, from = 2017L,
+                fa = "ecq-2017-qld-firstprefs.csv",
+                fb = "ecq-2020-qld-firstprefs.csv",
+                flow_file = "aec-fed-transfers.csv", flow_from = "fed2019",
+                asof = "2020-10-31"),
+  "2024" = list(to = 2024L, from = 2020L,
+                fa = "ecq-2020-qld-firstprefs.csv",
+                fb = "ecq-2024-qld-firstprefs.csv",
+                flow_file = "ecq-qld-transfers.csv", flow_from = "qld2020",
+                asof = "2024-10-26"))
+.k <- Sys.getenv("AUSPOL_QLD_PAIR", "2024")
+if (!.k %in% names(QLD_PAIRS))
+  stop("AUSPOL_QLD_PAIR must be one of ", paste(names(QLD_PAIRS), collapse = ", "),
+       " and was ", sQuote(.k))
+PAIR <- QLD_PAIRS[[.k]]
+TO   <- PAIR$to
+FROM <- PAIR$from
+TGT  <- sprintf("qld%d", TO)
+PRV  <- sprintf("qld%d", FROM)
+FLOW_FROM <- PAIR$flow_from
+cat(sprintf("BQ0p pair %s -> %s | flows from %s (%s)
+",
+            PRV, TGT, FLOW_FROM, PAIR$flow_file))
 
-need <- c("ecq-2020-qld-firstprefs.csv", "ecq-2024-qld-firstprefs.csv",
-          "ecq-qld-winners.csv", "ecq-qld-transfers.csv")
+need <- c(PAIR$fa, PAIR$fb, "ecq-qld-winners.csv", PAIR$flow_file)
 miss <- need[!file.exists(file.path(P, need))]
 if (length(miss)) {
   stop("Missing ", paste(miss, collapse = ", "), ". Run ",
-       "scripts/fetch_preferences_qld.R.")
+       "scripts/fetch_preferences_qld.R and, for the 2020 pair, ",
+       "scripts/fetch_preferences_qld2017.R.")
 }
 
-fa <- fread(file.path(P, "ecq-2020-qld-firstprefs.csv"), showProgress = FALSE)
-fb <- fread(file.path(P, "ecq-2024-qld-firstprefs.csv"), showProgress = FALSE)
+fa <- fread(file.path(P, PAIR$fa), showProgress = FALSE)
+fb <- fread(file.path(P, PAIR$fb), showProgress = FALSE)
+# TGT_ not TGT inside the brackets: `election` is a column of the winners table
+# and a bare symbol on either side of == binds to the column, which is this
+# repo's most-repeated fault.
+TGT_ <- TGT
 win <- fread(file.path(P, "ecq-qld-winners.csv"),
-             showProgress = FALSE)[election == "qld2024", .(seat, winner)]
-tx <- fread(file.path(P, "ecq-qld-transfers.csv"),
-            showProgress = FALSE)[election == FLOW_FROM]
+             showProgress = FALSE)[election == TGT_, .(seat, winner)]
+if (!nrow(win)) stop("No winners recorded for ", TGT, " in ecq-qld-winners.csv")
+FLOW_FROM_ <- FLOW_FROM
+tx <- fread(file.path(P, PAIR$flow_file),
+            showProgress = FALSE)[election == FLOW_FROM_]
 # Guard on the row count as well as the id: all() over an empty table is TRUE,
 # which is the guard-that-cannot-fail pattern CLAUDE.md records.
 stopifnot(nrow(tx) > 100L, all(tx$election == FLOW_FROM))
-# NOT pooled with the external sources: tx already IS Queensland's own
-# transfers, and AUSPOL_QLD_FLOWS=1 (published) would pool qld2020 into
-# itself. The other harnesses pool because they start from federal flows.
+# NEITHER PAIR POOLS. For the 2024 pair tx already IS Queensland's own
+# transfers, and AUSPOL_QLD_FLOWS=1 (published) would pool qld2020 into itself.
+# For the 2020 pair tx is federal 2019 and pooling would draw qld2020 in --
+# the election being predicted -- which is leakage. The other harnesses pool
+# because they start from federal flows and their target is not in the pool.
 # SWITCHES THIS HARNESS CANNOT HONOUR. It uses Queensland's own transfers and
 # has no external-flow pooling and no One Nation concentration arm, so these
 # do nothing here. Until 2026-09-07 five of them still altered CAL_TAG, which
@@ -254,9 +301,9 @@ if (length(.set)) {
   stop("These switches do nothing in the Queensland harness and would have ",
        "produced a differently-named file identical to the baseline: ",
        paste(.set, collapse = ", "),
-       ". It uses Queensland's OWN 2020 transfers (no external pooling) and ",
-       "has no ONP concentration arm. Unset them, or run a harness that ",
-       "implements them.")
+       ". It takes its flows from one named source per pair with no external ",
+       "pooling, and has no ONP concentration arm. Unset them, or run a ",
+       "harness that implements them.")
 }
 fm <- build_flow_matrix(tx, min_n = 3L)
 cat(sprintf("\nBQ1  flow matrix from %s: %d exclusions\n",
@@ -290,7 +337,7 @@ n_elastic <- 0L; elastic_seats <- character(0)
 DEV_SLOPE <- dev_slopes_for(union(parties, names(st_b)))
   .cond <- Sys.getenv("AUSPOL_DEV_SLOPE_MODE", "") %in% c("conditional", "screened")
   .screened <- identical(Sys.getenv("AUSPOL_DEV_SLOPE_MODE", ""), "screened")
-.returns <- if (.cond) tryCatch(candidate_returns("qld2020", "qld2024"), error = function(e) {
+.returns <- if (.cond) tryCatch(candidate_returns(PRV, TGT), error = function(e) {
   cat(sprintf("BQ1c! conditional slopes unavailable: %s
 ", conditionMessage(e))); NULL }) else NULL
 if (.cond && !is.null(.returns))
@@ -322,7 +369,7 @@ if (.cond && !is.null(.returns))
     if (!file.exists(.mpf))
       stop("AUSPOL_MP_SLOPE=1 needs ", .mpf, " -- run scripts/fit_mp_slope.R")
     .mpt <- data.table::fread(.mpf, showProgress = FALSE)
-    .tgt <- "qld2024"                       # copied to a differently-named local: a bare
+    .tgt <- TGT                       # copied to a differently-named local: a bare
     .row <- .mpt[.mpt$target == .tgt & is.finite(.mpt$member), ]  # `target` inside
     if (!nrow(.row))                                              # `[` would bind
       stop("no leave-one-out MP slopes for ", .tgt, " in ", .mpf) # to the column
@@ -336,7 +383,7 @@ if (.cond && !is.null(.returns))
                 paste(sprintf("%s=%.4f", names(.MP_SLOPE), .MP_SLOPE), collapse = " ")))
 .defect <- if (identical(Sys.getenv("AUSPOL_DEFECT_DISCOUNT", "0"), "1")) 0.282 else NULL
 # THE BASE VALUE, not just the slope -- see personal_prior_vote()'s docs.
-.own_prev <- if (.cond) tryCatch(personal_prior_vote("qld2020", "qld2024", major_discount = .defect), error = function(e) { cat(sprintf("BQ1p! personal_prior_vote() FAILED; class-level bases kept and NO transfer removed: %s\n", conditionMessage(e))); NULL }) else NULL
+.own_prev <- if (.cond) tryCatch(personal_prior_vote(PRV, TGT, major_discount = .defect), error = function(e) { cat(sprintf("BQ1p! personal_prior_vote() FAILED; class-level bases kept and NO transfer removed: %s\n", conditionMessage(e))); NULL }) else NULL
 mat <- remove_transferred_votes(mat, .own_prev)  # the vote moves with the person; see personal_prior_vote()
 .tr <- attr(mat, "transfers"); if (!is.null(.tr)) cat(sprintf("TR1  transfers moved with the person: %d applied%s\n", .tr$applied, if (length(.tr$skipped)) paste0("; SKIPPED ", length(.tr$skipped), ": ", paste(utils::head(.tr$skipped, 5), collapse = ", ")) else ""))
 .own_x <- function(p, seats, x) {
@@ -348,7 +395,7 @@ mat <- remove_transferred_votes(mat, .own_prev)  # the vote moves with the perso
   out[hit] <- unname(v[hit])
   out
 }
-.permit <- if (.screened) salience_permit_for("qld2024", "qld2020", "qld") else NULL
+.permit <- if (.screened) salience_permit_for(TGT, PRV, "qld") else NULL
 .sa_slope <- function(p, seats) {
   if (.screened && !is.null(.permit)) {
     pv <- .permit[.permit$party == p, ]
@@ -477,9 +524,9 @@ if (ELASTIC > 0 && any(pinned)) {
 keep <- intersect(rownames(shares), win$seat)
 shares <- shares[keep, , drop = FALSE]
 truth <- setNames(win$winner, win$seat)[keep]
-N_DISTRICTS <- 93L   # Queensland's Legislative Assembly, unchanged 2020 -> 2024
+N_DISTRICTS <- 93L   # Queensland's Legislative Assembly, unchanged 2017 -> 2024
 if (length(keep) != N_DISTRICTS) {
-  stop("Only ", length(keep), " of ", N_DISTRICTS, " districts matched between the 2020 first ",
+  stop("Only ", length(keep), " of ", N_DISTRICTS, " districts matched between the ", FROM, " first ",
        "preferences and the 2024 winners. ",
        "Unmatched: ",
        paste(setdiff(win$seat, rownames(shares)), collapse = ", "))
@@ -497,7 +544,7 @@ if (length(keep) != N_DISTRICTS) {
 # (refusal P4).
 PORT <- identical(Sys.getenv("AUSPOL_SEAT_SWING_PORT", "0"), "1")
 if (PORT) {
-  sf_to <- as.data.table(load_seats(2024L, "qld"))
+  sf_to <- as.data.table(load_seats(TO, "qld"))
   idx_p <- match(rownames(shares), sf_to$seat)
   adj <- rep(0, nrow(shares))
   adj[!is.na(idx_p)] <- seat_swing_adjustment(sf_to[idx_p[!is.na(idx_p)]])
@@ -515,7 +562,23 @@ if (PORT) {
 }
 
 # Per-seat spread from the seat file of the election being predicted.
-sp <- seat_swing_spread(as.data.table(load_seats(2024L, "qld")),
+# THE SEAT FILE OF THE ELECTION BEING PREDICTED, where one exists. The anchor
+# ships 2024qld.txt and no 2020qld.txt, so the 2020 pair falls back to the
+# spread measured on the only Queensland file there is. That is a LATER
+# election, which is the same compromise the federal harness makes for its
+# pre-2010 pairs -- it is a variance hyperparameter rather than a prediction,
+# and it is announced rather than absorbed.
+.sf <- tryCatch(as.data.table(load_seats(TO, "qld")), error = function(e) NULL)
+.sf_fallback <- is.null(.sf)
+if (.sf_fallback) {
+  .sf <- tryCatch(as.data.table(load_seats(2024L, "qld")), error = function(e) NULL)
+  if (is.null(.sf))
+    stop("No Queensland seat file for ", TO, " and none for 2024 either, so 
+there is no measured seat-swing spread to fall back on.")
+  cat(sprintf("BQ1s! no %dqld.txt: seat-swing spread taken from the 2024 file
+", TO))
+}
+sp <- seat_swing_spread(.sf,
                         unname(st_b[["ALP"]] - st_a[["ALP"]]))
 # STATEWIDE UNCERTAINTY. 1.5 was hardcoded in all four harnesses; the realised
 # statewide first-preference error over 139 party-cycles is sd 2.33, so the
@@ -545,7 +608,13 @@ cat(sprintf("BQ1p party_sd %.2f (realised statewide sd is 2.33)
 # Defaulted to 0 so past runs stay comparable and nothing changes silently.
 SHRINK <- as.numeric(Sys.getenv("AUSPOL_SHRINK", "0"))
 stopifnot(is.finite(SHRINK), SHRINK >= 0, SHRINK < 1)
-cat(sprintf("BQ1s shrink %.2f (fit_seats_full.R publishes with 0.10)\n", SHRINK))
+# The published value comes from the registry, not from a number typed into a
+# log line. This said "publishes with 0.10" for a day after the code moved to
+# 0.01, which is the two-lists-drifting failure published_flags.R exists to end.
+.pub_shrink <- if (exists("PUBLISHED_FLAGS") && "AUSPOL_SHRINK" %in% names(PUBLISHED_FLAGS))
+  PUBLISHED_FLAGS[["AUSPOL_SHRINK"]] else "?"
+cat(sprintf("BQ1s shrink %.2f (published: %s)
+", SHRINK, .pub_shrink))
 
 set.seed(SEED)
 # The two flow fixes, both default OFF so a plain run is unchanged.
@@ -581,8 +650,8 @@ if (identical(Sys.getenv("AUSPOL_SALIENCE_SURGE_V2", "0"), "1")) {
     # informative one.
     list(election = "sa2026",  prev = "sa2022",  region = "sa"),
     list(election = "wa2008",  prev = "wa2005",  region = "wa"))
-  train_pairs <- Filter(function(p) p$election != "qld2024", v2_pairs)
-  hz <- tryCatch(surge_hazard_for("qld2024", "qld2020", "qld", train_pairs),
+  train_pairs <- Filter(function(p) p$election != TGT, v2_pairs)
+  hz <- tryCatch(surge_hazard_for(TGT, PRV, "qld", train_pairs),
                  error = function(e) { cat(sprintf("BQ0v! surge-v2 failed: %s\n", conditionMessage(e))); NULL })
   if (!is.null(hz)) {
     sn <- rownames(shares)
@@ -615,8 +684,8 @@ if (identical(Sys.getenv("AUSPOL_SALIENCE_SURGE_V2", "0"), "1")) {
       cat(sprintf("SC1  surge hazard x%.1f: mean %.4f, max %.4f, seats at the cap %d\n",
                   .surge_scale, mean(surge_arg), max(surge_arg), sum(surge_arg >= 1)))
     }
-    cat(sprintf("BQ0v qld2024: surge-v2 hazard for %d of %d seats (%d absent -> 0) | mean %.4f | mu %.2f sd %.2f | lambda %.1f | train winners %d\n",
-                length(sn) - miss, length(sn), miss, mean(surge_arg),
+    cat(sprintf("BQ0v %s: surge-v2 hazard for %d of %d seats (%d absent -> 0) | mean %.4f | mu %.2f sd %.2f | lambda %.1f | train winners %d\n",
+                TGT, length(sn) - miss, length(sn), miss, mean(surge_arg),
                 surge_mu_arg, surge_sd_arg, hz$lambda, hz$n_train_winners))
   }
 }
@@ -636,7 +705,7 @@ pa[is.na(prob), prob := 0]
 pr <- wp[, .SD[which.max(prob)], by = seat][, .(seat, pred = party, pred_p = prob)]
 res <- merge(pa, pr, by = "seat")
 stopifnot(nrow(res) == length(keep))
-res[, pair := "qld2024"]
+res[, pair := TGT]
 
 z <- data.frame(y = as.integer(res$pred == res$actual),
                 lo = stats::qlogis(pmin(pmax(res$pred_p, eps), 1 - eps)))
@@ -670,7 +739,7 @@ cat("\nBQ4  misses, worst first\n")
 print(head(res[pred != actual][order(prob),
                                .(seat, we_said = pred, our_p = round(pred_p, 3),
                                  actual, gave_winner = round(prob, 3))], 10))
-fwrite(res, file.path("output", sprintf("backtest-qld%s.csv", CAL_TAG)))
+fwrite(res, file.path("output", sprintf("backtest-%s%s.csv", TGT, CAL_TAG)))
 
 # RETAIN THE FULL PER-SEAT PER-PARTY PROBABILITY TABLE.
 #
@@ -689,7 +758,7 @@ full <- merge(wp[, .(seat, party, prob)],
               by = "seat", all.x = TRUE)
 full[, is_actual := party == actual]
 setorder(full, seat, -prob)
-fwrite(full, file.path("output", sprintf("backtest-qld-allprobs%s.csv", CAL_TAG)))
+fwrite(full, file.path("output", sprintf("backtest-%s-allprobs%s.csv", TGT, CAL_TAG)))
 cat(sprintf("BQ5  wrote the full probability table: %d rows, %d seats, %d parties\n",
             nrow(full), uniqueN(full$seat), uniqueN(full$party)))
 # A seat's probabilities must sum to 1. If they do not, the simulation dropped
@@ -701,11 +770,11 @@ if (any(abs(chk$s - 1) > 0.01)) {
        round(max(abs(chk$s - 1)), 4))
 }
 cat("BQ5  every seat's probabilities sum to 1 (max deviation checked)\n")
-fwrite(data.table(pair = "qld2024", as.data.table(sim$totals)), file.path("output", sprintf("backtest-qld-totals%s.csv", CAL_TAG)))
+fwrite(data.table(pair = TGT, as.data.table(sim$totals)), file.path("output", sprintf("backtest-%s-totals%s.csv", TGT, CAL_TAG)))
 
 # NAME THE FILE ACTUALLY WRITTEN. This line was a hardcoded string and printed
 # "backtest-qld.csv" for every arm, including arms that correctly wrote a tagged
 # name. The tag mechanism exists because an untagged arm once overwrote the
 # baseline it was being compared against; a log line that reports the untagged
 # name recreates that confusion at the point where someone reads the result.
-cat(sprintf("\nBQ5  wrote output/backtest-qld%s.csv and its totals\n", CAL_TAG))
+cat(sprintf("\nBQ5  wrote output/backtest-%s%s.csv and its totals\n", TGT, CAL_TAG))

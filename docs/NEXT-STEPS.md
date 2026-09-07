@@ -2,14 +2,16 @@
 
 ## SESSION 2026-09-07: New South Wales 2019 scored, and four findings
 
-**Coverage is now 21 pairs and 1,957 seat-elections**, up from 19 and 1,791.
-Pooled seat log loss **0.3444**, Brier 0.0944, accuracy 87.1%. All six harnesses
+**Coverage is now 22 pairs and 2,050 seat-elections**, up from 19 and 1,791.
+Pooled seat log loss **0.3433**, Brier 0.0945, accuracy 87.2%. All six harnesses
 were re-run the same day, so every row of that table describes one model.
 
-Two elections were added: **nsw2019** (93 seats) and **vic2014** (73 of 88, the
-2013 redistribution renamed 15 districts). vic2014 became possible when the
-archived VEC result pages were parsed -- the eight spreadsheets recorded here as
-the 2010 Assembly results are the Legislative Council.
+Three elections were added: **nsw2019** (93 seats), **vic2014** (73 of 88, the
+2013 redistribution renamed 15 districts) and **qld2020** (93). All three came
+off the Internet Archive from the commissions' own files. Queensland is the one
+that mattered most: it had our worst log loss and a single pair to learn from,
+and a second pair takes it from 0.3349 to **0.3294** over 186 seat-elections,
+with qld2020 itself at 88.2% accuracy against qld2024's 82.8%.
 Full write-up: `docs/reviews/nsw2019-and-seat-turnover-2026-09-07.md`.
 
 `scripts/pool_backtests.R` is new and produces the pooled table on demand. It
@@ -34,26 +36,19 @@ refactor.
 2. **The statewide covariance is fitted in sample and on ten of twenty pairs.**
    `scripts/estimate_statewide_cov.R` builds one matrix from a hardcoded list
    and every harness reads it, including when scoring a pair inside the fit.
-   Missing: qld2024, all seven WA pairs, nsw2019. Fix is leave-one-election-out
-   plus widening, in one change, and it moves the published model.
+   Missing: both Queensland pairs, all seven WA pairs, nsw2019 and vic2014 --
+   ten of the twenty-two. Fix is leave-one-election-out plus widening, in one
+   change, and it moves the published model.
 3. **Western Australia has no surge-v2 hazard at all.** The other five harnesses
    do. A published switch a harness cannot honour is the failure recorded in
    `CLAUDE.md` for the missing SA `shrink`, and its numbers describe a different
    model from the rest of the table.
-4. **qld2017 is on disk and verified but not yet scored.**
-   `scripts/fetch_preferences_qld2017.R` reads the commission's own 2017
-   results package from the Internet Archive: Labor 35.43%, LNP 33.69%, One
-   Nation 13.73%, Greens 10.00% and seats 48/39/3/1/1/1, all matching the
-   published result exactly. What is missing is a FLOW SOURCE. The package
-   carries no preference distribution, and the Queensland harness deliberately
-   uses Queensland's own transfers rather than pooling external ones -- which
-   works for qld2020 -> qld2024 and leaves qld2017 -> qld2020 with nothing that
-   predates it. Using qld2020's own transfers there would be leakage. The
-   defensible choice is federal flows from 2019 (both compulsory preferential,
-   which is the test NSW fails), and it needs the harness made per-pair the way
-   the NSW one now is. That is the work, not the data.
-5. **Two elections still unfound** — sa2018, and fed2004 as a scored target
-   rather than only a prior. Parsers are the remaining work; the sources were located.
+4. **Two elections still unfound** — sa2018, and fed2004 as a scored target
+   rather than only a prior. The Queensland recipe should be tried first: the
+   commission's old results site published a package per election and the
+   archive kept it, which is what made qld2017 available after it had been
+   written off.
+ Parsers are the remaining work; the sources were located.
 
 ### Closed this session
 

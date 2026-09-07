@@ -102,6 +102,7 @@ NAMES live -- the per-seat results files carry `seat, party, votes` only.
 | nsw2015 | 93 | 540 | 59 | 11 |
 | nsw2019 | 93 | 568 | 52 | 15 |
 | nsw2023 | 93 | 562 | 68 | 19 |
+| qld2017 | 93 | 453 | 95 | 49 |
 | qld2020 | 93 | 597 | 69 | 13 |
 | qld2024 | 93 | 525 | 38 | 14 |
 | sa2022 | 47 | 240 | 20 | 6 |
@@ -119,7 +120,7 @@ NAMES live -- the per-seat results files carry `seat, party, votes` only.
 | wa2021 | 59 | 463 | 17 | 0 |
 | wa2025 | 59 | 398 | 29 | 6 |
 
-**Total: 17076 candidacies, 27 elections, 410 non-major breakouts.**
+**Total: 17529 candidacies, 28 elections, 459 non-major breakouts.**
 
 ## Known gaps
 

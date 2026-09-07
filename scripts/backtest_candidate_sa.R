@@ -623,7 +623,13 @@ cat(sprintf("BS1p party_sd %.2f (realised statewide sd is 2.33)
 # Defaulted to 0 so past runs stay comparable and nothing changes silently.
 SHRINK <- as.numeric(Sys.getenv("AUSPOL_SHRINK", "0"))
 stopifnot(is.finite(SHRINK), SHRINK >= 0, SHRINK < 1)
-cat(sprintf("BS1s shrink %.2f (fit_seats_full.R publishes with 0.10)\n", SHRINK))
+# The published value comes from the registry, not from a number typed into a
+# log line. This said "publishes with 0.10" for a day after the code moved to
+# 0.01, which is the two-lists-drifting failure published_flags.R exists to end.
+.pub_shrink <- if (exists("PUBLISHED_FLAGS") && "AUSPOL_SHRINK" %in% names(PUBLISHED_FLAGS))
+  PUBLISHED_FLAGS[["AUSPOL_SHRINK"]] else "?"
+cat(sprintf("BS1s shrink %.2f (published: %s)
+", SHRINK, .pub_shrink))
 
 set.seed(SEED)
 # The two flow fixes, both default OFF so a plain run is unchanged.

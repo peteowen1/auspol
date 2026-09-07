@@ -358,7 +358,12 @@ than the other four combined predates the federal harness reaching 6 pairs.)
 2023, default 2023) — it was hardcoded to one target in seventeen places. So a
 change measured "on NSW" means whichever pair you set, and both need running.
 `_vic.R` takes **three** since the same day (vic2010 was recovered from the
-Internet Archive) and runs them all in one go.
+Internet Archive) and runs them all in one go. `_qld.R` takes **two** via
+`AUSPOL_QLD_PAIR` (2020 or 2024, default 2024), and the two do NOT share a flow
+source: 2024 uses Queensland's own qld2020 distribution, while 2020 uses FEDERAL
+2019 flows because the 2017 package carries no distribution and qld2020's own
+would be the election being predicted. Federal is admissible there only because
+both are compulsory preferential — the test NSW fails.
 
 **Every log-loss number here is clamped at `eps = 1e-6` before the log.** That
 constant is not cosmetic: a seat given probability exactly zero contributes
@@ -367,8 +372,8 @@ constant is not cosmetic: a seat given probability exactly zero contributes
 loss is set as much by how many seats sit at the floor as by anything else, and
 every one of those seats is an emergence the model gave nothing to.
 
-**`scripts/pool_backtests.R` gives the pooled table across all 21 pairs and
-1,957 seat-elections** — accuracy, Brier and seat log loss per pair and overall.
+**`scripts/pool_backtests.R` gives the pooled table across all 22 pairs and
+2,050 seat-elections** — accuracy, Brier and seat log loss per pair and overall.
 Run it instead of adding up six logs by hand. It takes the newest file per pair
 and prints that file's timestamp and code tag, so a row describing an older
 model is visible rather than silent.
