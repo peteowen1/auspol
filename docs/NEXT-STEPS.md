@@ -98,53 +98,68 @@ Labor 59.9% is McGowan's landslide and sa2026 Coalition 19.5% is the collapse
 that elected four One Nation members. So this is a granularity question, not a
 correctness one.
 
-### RESUME HERE — 2026-09-07 session ended mid-experiment
+### RESUME HERE — 2026-09-08
 
-**1. A Google Trends refetch was RUNNING when the session ended.** Two Rscript
-processes, `scripts/fetch_salience_v6.R`, walking all 22 elections and about a
-fifth through (it had done fed2010, was on fed2013). It caches each batch and
-skips what exists, so **re-running the script is how to resume it**. It rewrites
+**1. A Google Trends refetch was RUNNING when the 2026-09-07 session ended and
+has NOT been resumed.** `scripts/fetch_salience_v6.R`, about a fifth through
+(it had done fed2010, was on fed2013). It caches each batch and skips what
+exists, so **re-running the script is how to resume it**. It rewrites
 `output/salience-v6.csv` per election, so the corpus is INCONSISTENT until it
 finishes — do not measure anything against salience until it does. Check with
 `wc -l output/salience-v6.csv` (8,706 before it started) and the `S6-1`/`S6-9`
 lines in its log. Why it is running: `OTH_RIGHT` candidates were cut before ever
 being queried, 842 of 2,866 present, sixteen non-major winners absent entirely.
 
-**2. THE OPEN EXPERIMENT: the re-entry prior's `state_pcv` term is wrong.**
-This is the immediate next task and it is well defined.
+**2. THE RE-ENTRY PRIOR IS NOT SHIPPED, and the next experiment is named.**
+`AUSPOL_REENTRY` stays 0. Three pre-registrations were run to completion on
+2026-09-08 and all three were refused; the plans carry the numbers.
 
-`AUSPOL_REENTRY=1` is wired into all six harnesses and defaults OFF. On Western
-Australia it helps (accuracy 87.3→87.5, Brier 0.0995→0.0992, floor seats 3→2,
-Kimberley 0.000000→0.560000). On South Australia it is much WORSE (accuracy
-76.6→70.2, Brier 0.1297→0.1767, log 0.3950→0.5110 at 2,000 sims).
+What the sequence fixed and kept:
 
-The diagnosis is done. sa2026 is the One Nation surge: statewide 2.6% → 22.9%,
-and in the 29 of 47 seats where they re-entered they actually polled a mean of
-**20.3%** (median 20.2, max 34.9). The model projects about **10**. The flat
-class ratio alone would give 1.458 × 22.9 = **33.4**, far closer.
+- the prior was being **swung twice** — it filled the previous election's
+  matrix with a target-election share and `dev_slope()` swung it again. Fatal
+  where a party surged: sa2026 collapsed to 48.9% accuracy. Fixed in all six
+  harnesses.
+- `apply_reentry_prior()` and `reentry_training()` build the prediction frame
+  in two places, and one went stale, so `predict()` errored and
+  `try(..., silent = TRUE)` sent **all 1,418 cells** to the flat ratio. It
+  arrived as a plausible model result (sa2026 log 0.7068). The frame is fixed
+  and the fallback now prints `RE1!`.
+- the Western Australian harness alone **never passed party positions** to
+  `seat_lean()`, so `flow_lean` was NA there and every covariate class failed
+  the completeness check. Only flat-ratio classes ever filled.
+- `lean` and `flow_lean` correlate at **0.972** (VIF 20.7 and 20.6), so the fit
+  identifies only their difference and does so badly. Reparameterised to
+  (mid, gap) — exact to 1.07e-13 — and arm D bounds the gap at the class's
+  training range. Traeger's One Nation prediction goes **74.3 → 25.9** against
+  an actual 6.8.
 
-The cause is `pcv ~ log(state_pcv) + ...` with a fitted coefficient: it learned
-an average elasticity across elections where statewide barely moves, so it
-regresses a genuine surge toward the mean. **The fix to try is `state_pcv` as an
-OFFSET rather than a fitted term** — `offset(log(state_pcv))` — which forces the
-prediction proportional to the statewide share, keeping ratio behaviour while
-retaining the seat covariates (`safe`, `lean`, `flow_safe`, `flow_lean`,
-`nonmajor_prev`). Then re-measure BOTH arms on South Australia specifically,
-because that is where the two disagree most, and on Western Australia to confirm
-Kimberley survives.
+Where it landed, all 22 pairs, arm D against prior OFF: PB3f **0.3149 →
+0.3066**, every jurisdiction inside 2 SE, South Australia now BETTER than
+baseline (0.3976 → 0.3924), and **Kimberley off the floor, 1e-06 → 0.51** —
+the seat the whole line of work exists for.
 
-Note also that the covariate model was chosen over the flat ratio at Pete's
-direction on a 0.047 out-of-fold gain that a paired t could not distinguish from
-noise (p = 0.693, better in 15 of 22). The South Australian result is evidence
-against it. `reentry_fit(covariates = FALSE)` is the flat-ratio control arm.
+Why it is still not shipped, and both reasons matter:
 
-**3. Then the deferred decision: run all 22 pairs.** Three party-classification
-fixes today (Democratic Labour, Victorian "ALP", Country Liberals) changed the
-inputs to everything, so every pooled number quoted during the session is stale.
-Primary metric is PB3f, the floor-excluded pooled log loss from
-`scripts/pool_backtests.R`, plus the floor count. Pre-registrations:
-`prereg-reentry-prior-2026-09-07.md` and
-`prereg-salience-expected-and-variance-2026-09-07.md`.
+- on the 2,044 seats neither arm floors, PB3f moves **−0.0038 at 0.85 SE**.
+  Item 5 below says the seed alone moves vic2014 by 0.0112 at 5,000 sims, so
+  this is inside the noise and **needs seed-averaging before anyone believes
+  it**.
+- two seats move ONTO the floor: **Pilbara wa2001** and **Alfred Cove wa2005**.
+
+**3. The next experiment, named by the evidence rather than chosen.** Labor and
+the Coalition have 2 and 4 re-entry rows in the whole corpus, below
+`min_n = 40`, so they never get a GLM and fall back to a flat ratio of 1.0 —
+"assume it polls its statewide share". That fallback now owns **both** new floor
+seats (Alfred Cove gets Labor 41.9 against an actual 22.8, pushing the
+independent who won to 1e-06) and the largest remaining prediction anywhere
+(Churchlands wa2013, 53.2 against an actual 59.0). It is the binding constraint
+on the whole prior. Needs its own pre-registration.
+
+Note the covariate model was chosen over the flat ratio at Pete's direction on
+a 0.047 out-of-fold gain a paired t could not distinguish from noise (p = 0.693,
+better in 15 of 22). `reentry_fit(covariates = FALSE)` is the flat-ratio control
+arm and should be one of the arms in that plan.
 
 **4. Two Western Australian changes are still confounded.** The `.cond` gate fix
 (WA tested for "conditional" while the published value is "screened", so it ran
@@ -153,7 +168,8 @@ shipped together and cost 0.003 combined. Run them separately to see which pays.
 
 **5. Seed-average before believing any arm.** At 5,000 sims the seed alone moves
 vic2014 by 0.0112 and the arm differences under test are 0.003. `AUSPOL_SEED`
-now works in every harness; it was inert in four of six until 2026-09-07.
+now works in every harness; it was inert in four of six until 2026-09-07. This
+is the reason item 2 is not shipped.
 
 
 ### Open, in the order I would do them

@@ -1,3 +1,26 @@
+# The covariates the arms bound. `state_pcv` is deliberately ABSENT: it enters
+# as an offset with no fitted coefficient, and clipping it would cap the very
+# proportionality the offset exists to provide -- One Nation's 22.9% statewide
+# in South Australia is a real number, not an extrapolation.
+.REENTRY_COVARS <- c("breadth", "safe", "lean", "flow_safe", "flow_lean",
+                     "lean_mid", "lean_gap", "safe_mid", "safe_gap",
+                     "nonmajor_prev", "nonmajor_defended", "nonmajor_vacant")
+
+# Logit of a percentage, guarded off the asymptotes. Used as the offset under
+# arm A; a statewide share of exactly 0 or 100 would otherwise be infinite.
+.ql <- function(x) stats::qlogis(pmin(pmax(x / 100, 1e-6), 1 - 1e-6))
+
+# The 1st and 99th percentile of each covariate in ONE class's training rows.
+.support <- function(d) {
+  k <- intersect(.REENTRY_COVARS, names(d))
+  out <- lapply(k, function(v) {
+    x <- d[[v]]; x <- x[is.finite(x)]
+    if (!length(x)) c(lo = NA_real_, hi = NA_real_)
+    else stats::setNames(unname(stats::quantile(x, c(0.01, 0.99))), c("lo", "hi"))
+  })
+  stats::setNames(out, k)
+}
+
 #' Predict what a class polls when it did not contest the seat last time
 #'
 #' When a class contests a seat at the target election but not at the previous
@@ -60,29 +83,6 @@
 #' @return An object for [reentry_predict()], carrying one fit or ratio per
 #'   class and the row counts behind each.
 #' @export
-# The covariates the arms bound. `state_pcv` is deliberately ABSENT: it enters
-# as an offset with no fitted coefficient, and clipping it would cap the very
-# proportionality the offset exists to provide -- One Nation's 22.9% statewide
-# in South Australia is a real number, not an extrapolation.
-.REENTRY_COVARS <- c("breadth", "safe", "lean", "flow_safe", "flow_lean",
-                     "lean_mid", "lean_gap", "safe_mid", "safe_gap",
-                     "nonmajor_prev", "nonmajor_defended", "nonmajor_vacant")
-
-# Logit of a percentage, guarded off the asymptotes. Used as the offset under
-# arm A; a statewide share of exactly 0 or 100 would otherwise be infinite.
-.ql <- function(x) stats::qlogis(pmin(pmax(x / 100, 1e-6), 1 - 1e-6))
-
-# The 1st and 99th percentile of each covariate in ONE class's training rows.
-.support <- function(d) {
-  k <- intersect(.REENTRY_COVARS, names(d))
-  out <- lapply(k, function(v) {
-    x <- d[[v]]; x <- x[is.finite(x)]
-    if (!length(x)) c(lo = NA_real_, hi = NA_real_)
-    else stats::setNames(unname(stats::quantile(x, c(0.01, 0.99))), c("lo", "hi"))
-  })
-  stats::setNames(out, k)
-}
-
 reentry_fit <- function(pairs, min_n = 40L, min_ratio_n = 20L, covariates = TRUE,
                         cand_path = file.path("output", "candidacies.csv")) {
   D <- reentry_training(pairs, cand_path)
@@ -289,7 +289,15 @@ party_positions <- function(exclude = NULL, min_votes = 5000,
 #'   the result gains `flow_lean` and `flow_safe`: the seat's position weighted
 #'   by where each party's preferences actually go, which is defined even when a
 #'   major did not contest the seat and the bloc measure saturates at 0 or 100.
-#' @return A `data.table` of `seat`, `lean`, `safe`, `nonmajor_prev`.
+#' @param standing Optional `data.frame` of `seat` and `party` naming who is
+#'   contesting at the TARGET election, or a character vector of `"seat|party"`.
+#'   When given, the result splits `nonmajor_prev` into `nonmajor_defended` (vote
+#'   held by a class standing again there) and `nonmajor_vacant` (the rest).
+#'   Nominations close before polling day, so this is knowable in advance.
+#' @return A `data.table` of `seat`, `lean`, `safe`, `nonmajor_prev`,
+#'   `nonmajor_defended`, `nonmajor_vacant`, and — since the two lean measures
+#'   correlate at 0.972 and only their difference is identified — the
+#'   reparameterisation `lean_mid`, `lean_gap`, `safe_mid`, `safe_gap`.
 #' @export
 seat_lean <- function(a, positions = NULL, standing = NULL) {
   w <- data.table::dcast(a, seat ~ party, value.var = "pcv", fill = 0)

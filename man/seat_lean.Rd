@@ -4,7 +4,7 @@
 \alias{seat_lean}
 \title{Seat lean, safeness and non-major share from one election's shares}
 \usage{
-seat_lean(a, positions = NULL)
+seat_lean(a, positions = NULL, standing = NULL)
 }
 \arguments{
 \item{a}{A \code{data.table} of \code{seat}, \code{party}, \code{pcv} for ONE election.}
@@ -13,9 +13,18 @@ seat_lean(a, positions = NULL)
 the result gains \code{flow_lean} and \code{flow_safe}: the seat's position weighted
 by where each party's preferences actually go, which is defined even when a
 major did not contest the seat and the bloc measure saturates at 0 or 100.}
+
+\item{standing}{Optional \code{data.frame} of \code{seat} and \code{party} naming who is
+contesting at the TARGET election, or a character vector of \code{"seat|party"}.
+When given, the result splits \code{nonmajor_prev} into \code{nonmajor_defended} (vote
+held by a class standing again there) and \code{nonmajor_vacant} (the rest).
+Nominations close before polling day, so this is knowable in advance.}
 }
 \value{
-A \code{data.table} of \code{seat}, \code{lean}, \code{safe}, \code{nonmajor_prev}.
+A \code{data.table} of \code{seat}, \code{lean}, \code{safe}, \code{nonmajor_prev},
+\code{nonmajor_defended}, \code{nonmajor_vacant}, and — since the two lean measures
+correlate at 0.972 and only their difference is identified — the
+reparameterisation \code{lean_mid}, \code{lean_gap}, \code{safe_mid}, \code{safe_gap}.
 }
 \description{
 \code{lean} is the left bloc's share of the two blocs, so 50 is balanced and 100
