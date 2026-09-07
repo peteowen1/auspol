@@ -40,8 +40,20 @@ refactor.
    do. A published switch a harness cannot honour is the failure recorded in
    `CLAUDE.md` for the missing SA `shrink`, and its numbers describe a different
    model from the rest of the table.
-4. **Three elections still unscored** — qld2017, sa2018, and fed2004 as a
-   scored target rather than only a prior. Parsers are the remaining work; the sources were located.
+4. **qld2017 is on disk and verified but not yet scored.**
+   `scripts/fetch_preferences_qld2017.R` reads the commission's own 2017
+   results package from the Internet Archive: Labor 35.43%, LNP 33.69%, One
+   Nation 13.73%, Greens 10.00% and seats 48/39/3/1/1/1, all matching the
+   published result exactly. What is missing is a FLOW SOURCE. The package
+   carries no preference distribution, and the Queensland harness deliberately
+   uses Queensland's own transfers rather than pooling external ones -- which
+   works for qld2020 -> qld2024 and leaves qld2017 -> qld2020 with nothing that
+   predates it. Using qld2020's own transfers there would be leakage. The
+   defensible choice is federal flows from 2019 (both compulsory preferential,
+   which is the test NSW fails), and it needs the harness made per-pair the way
+   the NSW one now is. That is the work, not the data.
+5. **Two elections still unfound** — sa2018, and fed2004 as a scored target
+   rather than only a prior. Parsers are the remaining work; the sources were located.
 
 ### Closed this session
 

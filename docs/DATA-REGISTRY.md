@@ -16,6 +16,8 @@ cannot pass as a working one.
 | `aec-fed-tcp.csv` | 63 KB |
 | `aec-fed-transfers.csv` | 610 KB |
 | `aec-fed-winners.csv` | 25 KB |
+| `ecq-2017-qld-firstprefs.csv` | 8 KB |
+| `ecq-2017-qld-winners.csv` | 2 KB |
 | `ecq-2020-qld-firstprefs.csv` | 11 KB |
 | `ecq-2024-qld-firstprefs.csv` | 10 KB |
 | `ecq-qld-transfers.csv` | 97 KB |
@@ -67,8 +69,8 @@ cannot pass as a working one.
   - e.g. dop-sample.html, dop/index-SG1901.html, dop/index-SG2301.html, dop/index-SGE2015.html
 - **ecsa/** -- 9 files, 2.9 MB. **1 ZERO-BYTE: ha-2018-03-17.json**
   - e.g. ha-2018-03-17.json, ha-2022-03-19.json, ha-2026-03-21.json, ha-change-2022-03-19.json
-- **ecq/** -- 7 files, 47.4 MB
-  - e.g. elections.json, publicResults_SGE2024_ICCDiv4_Final.zip, publicResults_State2020_aurukun2020_Final.zip, qld2020.xml
+- **ecq/** -- 10 files, 57.0 MB
+  - e.g. elections.json, publicResults_SGE2024_ICCDiv4_Final.zip, publicResults_State2020_aurukun2020_Final.zip, qld2017-cdx.txt
 - **waec/** -- 947 files, 27.1 MB
   - e.g. app.html, app.min.js, config-loader.js, config.json
 - **trends/** -- 3727 files, 2.3 MB

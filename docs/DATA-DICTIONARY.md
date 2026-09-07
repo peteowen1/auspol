@@ -16,6 +16,8 @@ column does not exist.**
 | `aec-fed-tcp.csv` | 2,404 | `election`, `seat`, `party`, `votes` |
 | `aec-fed-transfers.csv` | 18,226 | `election`, `seat`, `round`, `from`, `to`, `votes` |
 | `aec-fed-winners.csv` | 1,202 | `election`, `seat`, `winner` |
+| `ecq-2017-qld-firstprefs.csv` | 416 | `seat`, `party`, `votes` |
+| `ecq-2017-qld-winners.csv` | 93 | `election`, `seat`, `winner` |
 | `ecq-2020-qld-firstprefs.csv` | 545 | `seat`, `party`, `votes` |
 | `ecq-2024-qld-firstprefs.csv` | 507 | `seat`, `party`, `votes` |
 | `ecq-qld-transfers.csv` | 2,739 | `election`, `seat`, `round`, `from`, `to`, `votes`, `to_n` |
