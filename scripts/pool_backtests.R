@@ -94,8 +94,29 @@ if (nrow(old)) {
   cat("\nPB2  every pair comes from a file within a day of the newest.\n")
 }
 
+# SEATS AT THE FLOOR, reported beside the metric they dominate. A seat the model
+# gives essentially zero contributes -log(EPS) on its own -- 13.8 at 1e-6 -- so a
+# handful of them set pooled log loss, and a seat CROSSING the floor moves it by
+# more than most real changes do. On 2026-09-07 the whole 0.0019 difference
+# between two versions of this model was one seat, Barwon in nsw2019, going from
+# 0.000050 to 0.000001. Without this line that reads as a model change.
+FLOOR <- 1e-4
+atf <- rows[p <= FLOOR]
+cat(sprintf("\nPB2f %d of %d seat-elections give the actual winner <= %.0e; they carry %.1f%% of the total log loss\n",
+            nrow(atf), nrow(rows), FLOOR,
+            100 * sum(-log(atf$p)) / sum(-log(rows$p))))
+if (nrow(atf))
+  cat(sprintf("PB2f by pair: %s\n",
+              paste(sprintf("%s=%d", names(table(atf$pair)), as.integer(table(atf$pair))),
+                    collapse = " ")))
 cat(sprintf("\nPB3  POOLED over %d seat-elections: accuracy %.4f | Brier %.4f | log loss %.4f\n",
             nrow(rows), mean(rows$hit), mean((1 - rows$p)^2), -mean(log(rows$p))))
+# The same pooled log loss with those seats removed. Not a replacement -- they
+# are real failures and hiding them would be worse -- but a change that moves
+# THIS number is a change to the model, while one that moves only the number
+# above may be a single seat crossing a constant.
+cat(sprintf("PB3f POOLED excluding the %d floor seats: log loss %.4f over %d seat-elections\n",
+            nrow(atf), -mean(log(rows[p > FLOOR]$p)), nrow(rows[p > FLOOR])))
 cat(sprintf("PB3  unweighted mean over the %d pairs:      accuracy %.4f | Brier %.4f | log loss %.4f\n",
             nrow(per), mean(per$accuracy), mean(per$brier), mean(per$logloss)))
 
