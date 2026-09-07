@@ -98,6 +98,64 @@ Labor 59.9% is McGowan's landslide and sa2026 Coalition 19.5% is the collapse
 that elected four One Nation members. So this is a granularity question, not a
 correctness one.
 
+### RESUME HERE — 2026-09-07 session ended mid-experiment
+
+**1. A Google Trends refetch was RUNNING when the session ended.** Two Rscript
+processes, `scripts/fetch_salience_v6.R`, walking all 22 elections and about a
+fifth through (it had done fed2010, was on fed2013). It caches each batch and
+skips what exists, so **re-running the script is how to resume it**. It rewrites
+`output/salience-v6.csv` per election, so the corpus is INCONSISTENT until it
+finishes — do not measure anything against salience until it does. Check with
+`wc -l output/salience-v6.csv` (8,706 before it started) and the `S6-1`/`S6-9`
+lines in its log. Why it is running: `OTH_RIGHT` candidates were cut before ever
+being queried, 842 of 2,866 present, sixteen non-major winners absent entirely.
+
+**2. THE OPEN EXPERIMENT: the re-entry prior's `state_pcv` term is wrong.**
+This is the immediate next task and it is well defined.
+
+`AUSPOL_REENTRY=1` is wired into all six harnesses and defaults OFF. On Western
+Australia it helps (accuracy 87.3→87.5, Brier 0.0995→0.0992, floor seats 3→2,
+Kimberley 0.000000→0.560000). On South Australia it is much WORSE (accuracy
+76.6→70.2, Brier 0.1297→0.1767, log 0.3950→0.5110 at 2,000 sims).
+
+The diagnosis is done. sa2026 is the One Nation surge: statewide 2.6% → 22.9%,
+and in the 29 of 47 seats where they re-entered they actually polled a mean of
+**20.3%** (median 20.2, max 34.9). The model projects about **10**. The flat
+class ratio alone would give 1.458 × 22.9 = **33.4**, far closer.
+
+The cause is `pcv ~ log(state_pcv) + ...` with a fitted coefficient: it learned
+an average elasticity across elections where statewide barely moves, so it
+regresses a genuine surge toward the mean. **The fix to try is `state_pcv` as an
+OFFSET rather than a fitted term** — `offset(log(state_pcv))` — which forces the
+prediction proportional to the statewide share, keeping ratio behaviour while
+retaining the seat covariates (`safe`, `lean`, `flow_safe`, `flow_lean`,
+`nonmajor_prev`). Then re-measure BOTH arms on South Australia specifically,
+because that is where the two disagree most, and on Western Australia to confirm
+Kimberley survives.
+
+Note also that the covariate model was chosen over the flat ratio at Pete's
+direction on a 0.047 out-of-fold gain that a paired t could not distinguish from
+noise (p = 0.693, better in 15 of 22). The South Australian result is evidence
+against it. `reentry_fit(covariates = FALSE)` is the flat-ratio control arm.
+
+**3. Then the deferred decision: run all 22 pairs.** Three party-classification
+fixes today (Democratic Labour, Victorian "ALP", Country Liberals) changed the
+inputs to everything, so every pooled number quoted during the session is stale.
+Primary metric is PB3f, the floor-excluded pooled log loss from
+`scripts/pool_backtests.R`, plus the floor count. Pre-registrations:
+`prereg-reentry-prior-2026-09-07.md` and
+`prereg-salience-expected-and-variance-2026-09-07.md`.
+
+**4. Two Western Australian changes are still confounded.** The `.cond` gate fix
+(WA tested for "conditional" while the published value is "screened", so it ran
+with candidate-conditional slopes OFF) and the personal-vote transfer port
+shipped together and cost 0.003 combined. Run them separately to see which pays.
+
+**5. Seed-average before believing any arm.** At 5,000 sims the seed alone moves
+vic2014 by 0.0112 and the arm differences under test are 0.003. `AUSPOL_SEED`
+now works in every harness; it was inert in four of six until 2026-09-07.
+
+
 ### Open, in the order I would do them
 
 0. **PARKED IDEA, not scheduled: correlated seat draws and demographics.**

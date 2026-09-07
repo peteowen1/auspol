@@ -116,22 +116,8 @@ if (SEAT_SD_MULT != 1) {
 }
 N_SIMS  <- as.integer(Sys.getenv("AUSPOL_N_SIMS", "20000"))
 
-# Every pair the re-entry model may be fitted on. The target is removed at the
-# call site, so the fit is leave-one-election-out like everything else here.
-REENTRY_PAIRS <- list(
-  list(election="fed2007",prev="fed2004"), list(election="fed2010",prev="fed2007"),
-  list(election="fed2013",prev="fed2010"), list(election="fed2016",prev="fed2013"),
-  list(election="fed2019",prev="fed2016"), list(election="fed2022",prev="fed2019"),
-  list(election="fed2025",prev="fed2022"),
-  list(election="vic2014",prev="vic2010"), list(election="vic2018",prev="vic2014"),
-  list(election="vic2022",prev="vic2018"),
-  list(election="nsw2019",prev="nsw2015"), list(election="nsw2023",prev="nsw2019"),
-  list(election="sa2026",prev="sa2022"),
-  list(election="qld2020",prev="qld2017"), list(election="qld2024",prev="qld2020"),
-  list(election="wa2001",prev="wa1996"), list(election="wa2005",prev="wa2001"),
-  list(election="wa2008",prev="wa2005"), list(election="wa2013",prev="wa2008"),
-  list(election="wa2017",prev="wa2013"), list(election="wa2021",prev="wa2017"),
-  list(election="wa2025",prev="wa2021"))
+# The pair list lives in the package, not here -- see all_election_pairs().
+REENTRY_PAIRS <- all_election_pairs()
 
 # PORTED FROM THE FEDERAL HARNESS 2026-09-05, per this repo's rule that a fix
 # to one harness is a fix to all of them. Both default OFF, so the default path

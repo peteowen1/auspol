@@ -324,6 +324,15 @@ for (K in PAIRS) {
   mat <- 100 * mat / rowSums(mat)
   sa <- fa[, .(v = sum(votes)), by = party][, setNames(100 * v / sum(v), party)]
   sb <- fb[, .(v = sum(votes)), by = party][, setNames(100 * v / sum(v), party)]
+  # RE-ENTRY PRIOR, docs/plans/prereg-reentry-prior-2026-09-07.md. A class
+  # contesting this seat but not the last one has no prior share, so swinging
+  # zero forward leaves approximately zero -- 1,418 seat-class rows across the
+  # corpus, costing 5.27 points of mean absolute error against 3.25 for the
+  # model. Kimberley 2001 is the case: Labor did not stand there in 1996,
+  # Carol Martin won it with 42.2%, and the model projected 2.1%.
+  mat <- reentry_apply_harness(mat, fa, fb, sb,
+                               target = sprintf("vic%d", K$to),
+                               pairs = all_election_pairs(), code = "BV1r")
 
   parties <- colnames(mat); shares <- mat
   # THIS HARNESS HAS NEVER PASSED `shrink`, the same defect

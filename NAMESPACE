@@ -3,6 +3,7 @@
 export(ANCHOR_K)
 export(POLL_TRACKING_BOUND)
 export(SEAT_SWING_COEF)
+export(all_election_pairs)
 export(anchor_data_path)
 export(apply_reentry_prior)
 export(blend_salience_shares)

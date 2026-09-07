@@ -371,3 +371,39 @@ reentry_apply_harness <- function(mat, fa, fb, state_share, target, pairs,
               } else ""))
   out
 }
+
+#' Every consecutive election pair the corpus holds
+#'
+#' ONE list, in the package, because this repo has already been bitten by six
+#' harnesses each carrying their own copy of a pair list: the Queensland surge
+#' list had `sa2026` renamed to `qld2024` in a copy-paste and trained without
+#' the election with four One Nation winners for as long as nobody diffed them.
+#' A caller removes its own target to stay leave-one-election-out.
+#'
+#' @return A list of `list(election=, prev=)`.
+#' @export
+all_election_pairs <- function() {
+  list(
+    list(election = "fed2007", prev = "fed2004"),
+    list(election = "fed2010", prev = "fed2007"),
+    list(election = "fed2013", prev = "fed2010"),
+    list(election = "fed2016", prev = "fed2013"),
+    list(election = "fed2019", prev = "fed2016"),
+    list(election = "fed2022", prev = "fed2019"),
+    list(election = "fed2025", prev = "fed2022"),
+    list(election = "vic2014", prev = "vic2010"),
+    list(election = "vic2018", prev = "vic2014"),
+    list(election = "vic2022", prev = "vic2018"),
+    list(election = "nsw2019", prev = "nsw2015"),
+    list(election = "nsw2023", prev = "nsw2019"),
+    list(election = "sa2026",  prev = "sa2022"),
+    list(election = "qld2020", prev = "qld2017"),
+    list(election = "qld2024", prev = "qld2020"),
+    list(election = "wa2001",  prev = "wa1996"),
+    list(election = "wa2005",  prev = "wa2001"),
+    list(election = "wa2008",  prev = "wa2005"),
+    list(election = "wa2013",  prev = "wa2008"),
+    list(election = "wa2017",  prev = "wa2013"),
+    list(election = "wa2021",  prev = "wa2017"),
+    list(election = "wa2025",  prev = "wa2021"))
+}
