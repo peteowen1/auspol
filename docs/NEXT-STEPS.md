@@ -28,6 +28,22 @@ refactor.
 
 ### Open, in the order I would do them
 
+0. **PARKED IDEA, not scheduled: correlated seat draws and demographics.**
+   `docs/plans/plan-correlated-seat-draws.md` (agent-written 2026-09-07).
+   Read its headline before spending anything on this: between-seat
+   correlation CANNOT move per-seat win probabilities, because no expression
+   inside a seat reads another seat's state, so a variance-preserving
+   correlation leaves every marginal unchanged and log loss is a mean over
+   marginals. What it would change is the JOINT distribution -- the seat-count
+   histogram and the majority probability, which are genuinely too narrow and
+   which no harness scores. The version that could move a marginal is a
+   cluster VARIANCE component, not a correlation.
+   Two facts to keep: Dubbo had a 2015 minor-right share of 2.54% against
+   Barwon 2.50%, Murray 1.40% and Orange 2.59%, so any similarity structure
+   lowers Dubbo and the criterion must accept that in advance; and census
+   coverage is NSW/VIC/SA only, 6 of 22 pairs and 23% of seat-elections, on
+   one 2021 vintage against elections from 2010 to 2026.
+
 1. **Seats that changed hands between elections are nearly invisible.**
    19 of 893, and the damage is concentrated: Orange and Wagga Wagga in nsw2019
    score 5.705 against 0.280 elsewhere, Morwell 2.175 against 0.224. Both NSW

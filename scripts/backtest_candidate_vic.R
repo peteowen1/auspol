@@ -234,6 +234,9 @@ share_of <- function(f) {
 
 out_all <- list(); tot_all <- list()
 for (K in PAIRS) {
+  # ARM B of docs/plans/prereg-salience-expected-and-variance-2026-09-07.md.
+  # NULL unless the switch is on, so a bare run is byte-identical.
+  SD_OVR <- NULL
 
   # The correlation matrix for THIS pair. Printed with its source, because a
   # silent fallback is the failure this repo keeps finding: a run using a
@@ -596,6 +599,17 @@ for (K in PAIRS) {
       .exp_mode <- suppressWarnings(as.integer(Sys.getenv("AUSPOL_SALIENCE_EXPECTED", "0")))
       if (is.na(.exp_mode)) .exp_mode <- 0L
       shares <- blend_salience_shares(shares, hz, surge_mu_arg[1], expected = .exp_mode > 0L)
+      # THE VARIANCE, not just the point estimate. level_sd is binomial-shaped
+      # and gives a major on 30% more uncertainty than a top-percentile
+      # insurgent on 13.9%; the salience band has measured the latter at 12.6.
+      # exp_sd has been computed since surge_hazard_for() was written and read
+      # by nothing. n_set is printed because an override that fills no cells is
+      # an arm that looks like it ran and did not.
+      if (identical(Sys.getenv("AUSPOL_SALIENCE_EXP_SD", "0"), "1")) {
+        SD_OVR <- salience_sd_matrix(shares, hz)
+        cat(sprintf("BV0d salience sd override: %d of %d cells set\n",
+                    attr(SD_OVR, "n_set"), length(SD_OVR)))
+      }
       cat(sprintf("BV0b salience point estimate applied to %d (seat,party) cells\n", attr(shares, "cells")))
       if (identical(Sys.getenv("AUSPOL_SURGE_RECIPIENT", "1"), "1") && !is.null(hz$seat_recipient)) {
         # THE SURGE GOES TO THE CLASS THE HAZARD WAS FITTED FOR (prereg-surge-recipient-2026-09-06.md).
@@ -639,7 +653,7 @@ for (K in PAIRS) {
         tx2[idx & to == "LNP", votes := pmax(0, votes * (1 - sh))]
       }
       fmr <- build_flow_matrix(tx2, min_n = 3L)
-      s1 <- simulate_seat_contests(level_sd = .level_sd, level_mult = .lm(shares), shares, fmr, party_sd = psd,
+      s1 <- simulate_seat_contests(level_sd = .level_sd, sd_override = SD_OVR, level_mult = .lm(shares), shares, fmr, party_sd = psd,
                                    seat_sd = sp$sd_within * SEAT_SD_MULT, n_sims = per,
                                    smooth = SMOOTH, seed = SEED + r, shrink = SHRINK,
                                    fallback_smooth = FB_SMOOTH, flow_sd = FLOW_SD,
@@ -653,7 +667,7 @@ for (K in PAIRS) {
 ")
   } else {
     set.seed(SEED)
-    sim <- simulate_seat_contests(level_sd = .level_sd, level_mult = .lm(shares), shares, fm, party_sd = psd,
+    sim <- simulate_seat_contests(level_sd = .level_sd, sd_override = SD_OVR, level_mult = .lm(shares), shares, fm, party_sd = psd,
                                   seat_sd = sp$sd_within * SEAT_SD_MULT, n_sims = N_SIMS,
                                   smooth = SMOOTH, seed = SEED, party_cor = PARTY_COR,
                                   shrink = SHRINK,

@@ -276,3 +276,56 @@ blend_salience_shares <- function(shares, hz, surge_mu, expected = FALSE) {
   attr(shares, "cells") <- as.integer(moved)
   shares
 }
+
+#' Per-cell deviation sd from a candidate's salience band
+#'
+#' Builds the matrix [simulate_seat_contests()] takes as `sd_override`: the
+#' band-level standard deviation of realised vote for every (seat, class) that
+#' has a governed candidate, and `NA` everywhere else.
+#'
+#' WHY THIS EXISTS. `level_sd` is `a + b*sqrt(p(1-p))`, which peaks near 50% and
+#' therefore gives an ALP candidate on 30% a wider distribution (sd 5.07) than a
+#' top-percentile independent on 13.9% (sd 4.10). For the seats this model
+#' loses, that is exactly backwards. Suzanna Sheed's band -- the 98th to 99.5th
+#' percentile of salience jump, 36 candidates -- has a realised sd of 12.6, and
+#' her actual 32.7% is a seven-sigma event at 4.10 but under two at 12.6.
+#'
+#' `exp_sd` has been computed by [surge_hazard_for()] since it was written and
+#' read by nothing. This is what reads it.
+#'
+#' THE SD IS NOT A FORECAST-ERROR SD, and that is a real caveat rather than a
+#' quibble: it is the spread of realised vote WITHIN a salience band, estimated
+#' on as few as 12 candidates in the top band. It is a better number than 4.10
+#' for these candidates, not a correct one.
+#'
+#' @param shares Numeric matrix, seats in rows (named) and classes in columns.
+#' @param hz The list returned by [surge_hazard_for()].
+#' @param floor_sd Cells are never given an sd BELOW this. Defaults to `NA`,
+#'   meaning no floor; a caller that wants the override only to widen should
+#'   pass the level_sd it would otherwise have used.
+#' @return A numeric matrix shaped like `shares`, `NA` where no governed
+#'   candidate was found, with attribute `"n_set"` giving how many cells were
+#'   filled -- print it, because an override that silently fills nothing is an
+#'   arm that looks like it ran and did not.
+#' @export
+salience_sd_matrix <- function(shares, hz, floor_sd = NA_real_) {
+  out <- base::matrix(NA_real_, nrow(shares), ncol(shares),
+                      dimnames = dimnames(shares))
+  e <- hz$seat_party_expected
+  if (is.null(e) || !nrow(e)) {
+    attr(out, "n_set") <- 0L
+    return(out)
+  }
+  e <- as.data.frame(e)
+  ri <- match(e$seat, rownames(shares))
+  ci <- match(e$party, colnames(shares))
+  keep <- !is.na(ri) & !is.na(ci) & is.finite(e$exp_sd) & e$exp_sd > 0
+  if (any(keep)) {
+    idx <- cbind(ri[keep], ci[keep])
+    v <- e$exp_sd[keep]
+    if (is.finite(floor_sd)) v <- pmax(v, floor_sd)
+    out[idx] <- v
+  }
+  attr(out, "n_set") <- sum(keep)
+  out
+}

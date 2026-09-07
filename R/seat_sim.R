@@ -42,6 +42,13 @@
 #'   crosses the winning threshold, downside costs nothing where it was
 #'   already losing. Measured at 71 seats up against 1 down; see
 #'   docs/reviews/onp-seat-uncertainty-2026-08-19.md.
+#' @param sd_override Optional numeric matrix, the same shape and dimnames as
+#'   `shares`, replacing the per-cell deviation sd wherever it is not `NA`.
+#'   `NA` means "no opinion, keep `level_sd`". Requires `level_sd`. Exists
+#'   because `level_sd` is binomial-shaped and so gives a major on 30% more
+#'   uncertainty than a top-percentile insurgent on 13.9%, which is backwards
+#'   for the seats this model loses; `salience_sd_matrix()` builds one from the
+#'   salience bands. `NULL` is byte-identical to the previous behaviour.
 #' @param level_sd Optional `c(a, b)` making the per-seat deviation depend on the
 #'   LEVEL of a party's share: `sd = a + b * sqrt(p * (1 - p))`, with `p` the
 #'   party's projected share in that seat. `NULL`, the default, keeps the flat
@@ -231,7 +238,7 @@
 #'   count) but matters to anyone joining TCP data against `wins`.
 #' @export
 simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
-                                   level_sd = NULL,
+                                   level_sd = NULL, sd_override = NULL,
                                    n_sims = 2000, smooth = 0.15, seed = NULL,
                                    statewide_draws = NULL,
                                    party_draws = NULL, shrink = 0,
@@ -721,6 +728,40 @@ simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
   sd_cell_pre <- if (is.null(level_sd) || !is.null(party_draws)) NULL else {
     ppm <- pmin(pmax(unname(as.matrix(shares)), 0), 100) / 100
     level_sd[1L] + level_sd[2L] * matrix(level_mult_vec, nrow(ppm), K, byrow = TRUE) * sqrt(ppm * (1 - ppm))
+  }
+  # PER-CELL SD OVERRIDE. `level_sd` is binomial-shaped -- a + b*sqrt(p(1-p)) --
+  # so it peaks near 50% and hands a major on 30% MORE uncertainty (5.07) than a
+  # top-percentile insurgent on 13.9% (4.10). That is backwards for the case the
+  # model keeps losing: Suzanna Sheed's salience band says 13.9% with an sd of
+  # 12.6, measured off 36 candidates, and her actual 32.7% is a seven-sigma
+  # event under 4.10. This lets a caller replace the sd for the cells it has a
+  # better number for, and leave every other cell alone.
+  #
+  # NA means "no opinion, keep level_sd", which is why the override is a matrix
+  # of the same shape rather than a list of cells: a cell nobody has an opinion
+  # about must be indistinguishable from the unmodified run. With sd_override
+  # NULL this block does nothing and the result is byte-identical, which is the
+  # contract the compiled core is proven against.
+  if (!is.null(sd_override)) {
+    if (is.null(sd_cell_pre)) {
+      stop("sd_override needs level_sd: without it there is no per-cell sd ",
+           "matrix to override, and silently ignoring it would be an arm that ",
+           "looks like it ran and did not")
+    }
+    so <- as.matrix(sd_override)
+    if (!identical(dim(so), dim(sd_cell_pre))) {
+      stop("sd_override must be ", nrow(sd_cell_pre), " x ", K,
+           " to match shares; got ", nrow(so), " x ", ncol(so))
+    }
+    if (!is.null(dimnames(so)[[1]]) && !identical(dimnames(so)[[1]], rownames(shares))) {
+      stop("sd_override's row names must match shares' seats, in the same order")
+    }
+    if (!is.null(dimnames(so)[[2]]) && !identical(dimnames(so)[[2]], colnames(shares))) {
+      stop("sd_override's column names must match shares' classes, in the same order")
+    }
+    ok <- !is.na(so)
+    if (any(so[ok] < 0)) stop("sd_override holds a negative standard deviation")
+    sd_cell_pre[ok] <- so[ok]
   }
   # "auto" reads AUSPOL_SIM_ENGINE (published_flags.R carries the shipped
   # value, "cpp" since the full-scale proof on 2026-09-07); AUSPOL_SIM_ENGINE=r

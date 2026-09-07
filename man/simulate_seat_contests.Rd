@@ -10,6 +10,7 @@ simulate_seat_contests(
   party_sd,
   seat_sd = 3.5,
   level_sd = NULL,
+  sd_override = NULL,
   n_sims = 2000,
   smooth = 0.15,
   seed = NULL,
@@ -74,6 +75,14 @@ It is much flatter than binomial -- \code{sqrt(p(1-p))} alone would predict 9.8
 at 50\% against 6.4 observed -- because a seat's vote is not a random sample.
 
 Not adopted by default: see \code{docs/plans/prereg-level-dependent-variance.md}.}
+
+\item{sd_override}{Optional numeric matrix, the same shape and dimnames as
+\code{shares}, replacing the per-cell deviation sd wherever it is not \code{NA}.
+\code{NA} means "no opinion, keep \code{level_sd}". Requires \code{level_sd}. Exists
+because \code{level_sd} is binomial-shaped and so gives a major on 30\% more
+uncertainty than a top-percentile insurgent on 13.9\%, which is backwards
+for the seats this model loses; \code{salience_sd_matrix()} builds one from the
+salience bands. \code{NULL} is byte-identical to the previous behaviour.}
 
 \item{n_sims}{Number of simulations.}
 
