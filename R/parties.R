@@ -42,6 +42,11 @@ classify_party <- function(name, code = NULL) {
   # jurisdiction, which is why "CLP" above is deliberately excluded.
   set(cd == "IND", "IND")
   set(cd == "SFF", "OTH_RIGHT")
+  # "DLP" means the Democratic Labour Party everywhere it appears and is not
+  # ambiguous the way "CLP" is, so it is safe here -- and it is needed here,
+  # because the NAME rule below was reached first for three federal elections.
+  # See the note on that rule.
+  set(cd == "DLP", "OTH_RIGHT")
 
   # Centre Alliance / Nick Xenophon Team / SA-BEST function as a community
   # independent rather than a bloc party -- Mayo has returned Rebekha Sharkie
@@ -70,7 +75,18 @@ classify_party <- function(name, code = NULL) {
   # "Labor DLP" is a different party from Labor and belongs on the right.
   # Two backslashes and not one: "\b" in an R STRING is the backspace
   # character, so this alternative matched a control code and never fired.
-  set(grepl("democratic labour|labour dlp|\\bdlp\\b", n), "OTH_RIGHT")
+  # Three spellings, because the commissions use all of them. "labour" is the
+  # party's federal registration, but the AEC wrote "D.L.P. - Democratic Labor
+  # Party" for fed2004, fed2007 and fed2010 -- American spelling, and the
+  # letters separated by dots. Neither alternative matched, so the "labor" rule
+  # below caught it and 13 Democratic Labour candidates carrying 12,602 votes
+  # were counted as LABOR in three federal elections, two of which are scored
+  # pairs and one of which is the prior side of a third. The same party reads
+  # as OTH_RIGHT from fed2013 on, where the name happens to contain "(DLP)", so
+  # the corpus disagreed with itself and nothing said so. Found 2026-09-07 while
+  # checking this classifier against the Victorian 2010 party labels.
+  set(grepl("democratic lab(o|ou)r|lab(o|ou)r dlp|\\bdlp\\b|d[.]l[.]p[.]", n),
+      "OTH_RIGHT")
   set(grepl("labor|labour", n), "ALP")
   # "Liberals For Climate" is a micro-party that ran against the Liberals in
   # two WA seats in 2021, and the "liberal" rule below would file it as LNP.

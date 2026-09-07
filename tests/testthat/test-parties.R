@@ -99,6 +99,24 @@ test_that("a bare DLP is not read as Labor", {
   expect_equal(classify_party("Democratic Labour Party"), "OTH_RIGHT")
   # A word CONTAINING dlp is not the DLP; that is what the boundary is for.
   expect_equal(classify_party("Australian Labor Party"), "ALP")
+
+  # THE SPELLING THE AEC ACTUALLY USES. This test previously checked only the
+  # British "Labour", which is the spelling the rule already handled, so it
+  # passed while the real data went the other way: "D.L.P. - Democratic Labor
+  # Party" is what the AEC published for fed2004, fed2007 and fed2010, and it
+  # matches neither "democratic labour" nor a bare "dlp" token, so 13
+  # candidates carrying 12,602 votes were counted as Labor. A test that only
+  # exercises the spelling the code was written for cannot find that.
+  expect_equal(classify_party("Democratic Labor Party"), "OTH_RIGHT")
+  expect_equal(classify_party("D.L.P. - Democratic Labor Party"), "OTH_RIGHT")
+  expect_equal(classify_party("D.L.P. - Democratic Labor Party", "DLP"), "OTH_RIGHT")
+  # The code alone is enough, for sources that publish no name.
+  expect_equal(classify_party("", "DLP"), "OTH_RIGHT")
+
+  # And nothing that is genuinely Labor moved.
+  expect_equal(classify_party("Country Labor Party", "CLP"), "ALP")
+  expect_equal(classify_party("Australian Labor Party (Northern Territory) Branch"), "ALP")
+  expect_equal(classify_party("Australian Labor Party - Victorian Branch", "ALP"), "ALP")
 })
 
 test_that("a party is not made Coalition by the word liberal in its name", {

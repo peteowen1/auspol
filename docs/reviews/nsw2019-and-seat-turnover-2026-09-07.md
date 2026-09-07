@@ -159,3 +159,43 @@ number stands.
 What the same numbers do show is the emergence problem in its usual form:
 Barwon and Murray, both won by the Shooters, carry hazards of 0.027 and 0.037.
 That is the model saying these are ordinary seats.
+
+## Finding 5 (defect, fixed): the Democratic Labour Party was counted as Labor
+
+Found while checking `classify_party()` against the Victorian 2010 party labels,
+which is the sort of place a classifier gets tested by accident rather than on
+purpose.
+
+The rule that separates the Democratic Labour Party from Labor read:
+
+```r
+set(grepl("democratic labour|labour dlp|\bdlp\b", n), "OTH_RIGHT")
+set(grepl("labor|labour", n), "ALP")
+```
+
+The AEC published this party as **"D.L.P. - Democratic Labor Party"** for
+fed2004, fed2007 and fed2010. That is the American spelling, so
+`democratic labour` misses, and the letters are separated by full stops, so
+`\bdlp\b` misses too. The next line then caught it on the word "labor".
+
+**13 candidates carrying 12,602 votes were counted as Labor** across three
+federal elections. Gorton 2007 is the largest single case: 3,516 votes, 3.7% of
+the division, added to Labor's primary. Two of those elections are scored pairs
+and the third, fed2004, is the prior side of a third pair, so the error entered
+both as a prediction input and as truth.
+
+The same party classifies correctly as `OTH_RIGHT` from fed2013 on, because the
+AEC changed the label to one containing "(DLP)". **So the corpus disagreed with
+itself across elections and nothing reported it.**
+
+Two fixes, because two different sources need them. `DLP` is unambiguous
+everywhere it appears, unlike `CLP`, so it now resolves from the code column
+before any name rule runs. And the name rule accepts both spellings and the
+dotted form, for sources like Victoria 2010 that publish a name and no code.
+
+**The existing test could not have caught this.** It asserted
+`classify_party("Democratic Labour Party")`, the British spelling, which is the
+one the rule was written for. A test that exercises only the input the author
+had in mind is not a test of the rule. It now covers the spelling the data
+actually uses, the dotted form, the code-only path, and three genuine Labor
+labels including Country Labor as a negative control.
