@@ -488,11 +488,14 @@ apply_reentry_prior <- function(mat, standing, fit, lean_dt, state_share,
     # ONLY THE TERMS THIS CLASS'S FIT ACTUALLY USES. Requiring both the whole
     # and the split non-major columns would drop every row whenever either is
     # absent, which is how a "no rows qualified" silence gets manufactured.
-    need <- c("state_pcv", "lean", "safe", "breadth")
-    .cf <- if (!is.null(fit$fits[[p]])) names(stats::coef(fit$fits[[p]])) else character(0)
-    need <- c(need, if ("nonmajor_defended" %in% .cf)
-      c("nonmajor_defended", "nonmajor_vacant") else "nonmajor_prev")
-    if ("flow_lean" %in% .cf) need <- c(need, "flow_lean", "flow_safe")
+    # DERIVED FROM THE FIT, not hand-kept. A hand-kept list went stale the
+    # moment the (mid, gap) parameterisation arrived: it still demanded
+    # flow_lean, which arm D's formula no longer names, so rows with a missing
+    # gap passed the completeness check and predict() returned NA for them.
+    need <- unique(c("state_pcv", "breadth",
+                     if (!is.null(fit$fits[[p]]))
+                       all.vars(stats::delete.response(stats::terms(fit$fits[[p]])))
+                     else character(0)))
     ok <- stats::complete.cases(nd[, need, drop = FALSE])
     if (!any(ok)) next
     v <- reentry_predict(fit, nd[ok, , drop = FALSE])

@@ -315,17 +315,23 @@ for (K in PAIRS) {
       # it is what separates defended from vacant non-major vote. Computed
       # first for that reason.
       .stand <- unique(fb[votes > 0, .(seat, party)])
+      # POSITIONS, which this harness alone was not passing. Without them
+      # flow_lean is NA for every Western Australian seat, so every class with
+      # a covariate fit failed the completeness check and only the flat-ratio
+      # classes ever filled. That is why Kimberley/ALP was the only large fill
+      # WA ever reported. Excluded from its own target like everywhere else.
       .ln <- seat_lean(fa[, .(seat, party, pcv = 100 * votes / sum(votes)),
                           by = seat][, .(seat, party, pcv)],
+                       positions = party_positions(exclude = el_to),
                        standing = .stand)
       .re <- attr(apply_reentry_prior(mat, .stand, .rf, .ln, sb), "reentry")
       .recells <- .re
       cat(sprintf("BW1r  re-entry prior: %d cell(s) filled%s
 ", nrow(.re),
                   if (nrow(.re)) paste0(" | largest: ",
-                    paste(utils::head(sprintf("%s/%s %.1f",
-                      .re$seat[order(-.re$value)], .re$party[order(-.re$value)],
-                      sort(.re$value, decreasing = TRUE)), 3), collapse = ", ")) else ""))
+                    paste(utils::head(with(.re[order(-.re$value), ],
+                      sprintf("%s/%s %.1f", seat, party, value)), 3),
+                      collapse = ", ")) else ""))
     }
   }
   mat <- remove_transferred_votes(mat, .own_prev)
