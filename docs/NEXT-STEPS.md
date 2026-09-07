@@ -26,6 +26,58 @@ NSW harness now takes `AUSPOL_NSW_PAIR` (2019 or 2023, default 2023); the 2023
 pair reproduces its previous output byte-for-byte, which is what accepted the
 refactor.
 
+### SALIENCE: where it stands, and what to do when the scrape finishes
+
+**A Google Trends refetch was running when the 2026-09-07 session ended.**
+`scripts/fetch_salience_v6.R`, no `AUSPOL_SALIENCE_ELECTION` set, so it walks
+every election. It caches each batch to `external/reference/trends/` and skips
+what is already there, so **it is safe to just re-run** -- that is how to
+resume it. Check progress with `wc -l output/salience-v6.csv` (8,706 before,
+9,303 after nsw2019 alone) and the `S6-1` / `S6-9` lines in its log.
+
+WHY IT IS RUNNING. `OTH_RIGHT` candidates were being cut before they were ever
+queried: the selection takes the top two non-majors per seat by the PARTY's
+prior vote, plus every independent, and minor-right was never given the
+exemption independents have. 842 of 2,866 `OTH_RIGHT` candidates were in the
+corpus, and SIXTEEN non-major winners were absent entirely -- Robbie Katter
+(58.9%), Shane Knuth (52.6%), Philip Donato (49.1%), Nick Dametto (42.5%),
+Helen Dalton (38.8%), Roy Butler (33.0%). Fixed 2026-09-07; the refetch is what
+makes the fix retrospective.
+
+**Do not expect it to fix Barwon or Orange.** nsw2019 was refetched first and
+both winners came back with a jump of EXACTLY 0.0000. Google Trends floors
+low-volume terms at zero and these are small rural electorates; everything that
+registers in that election is metropolitan. See
+`docs/reviews/salience-rural-blind-spot-2026-09-07.md`. The value of the
+refetch is that a zero is now a measured zero, plus real signal in urban seats.
+
+WHEN IT FINISHES, in order:
+
+1. **Rebuild and re-measure.** `scripts/build_salience_corpus.R`, then
+   `scripts/fit_mp_slope.R`, then all 22 pairs, then
+   `scripts/pool_backtests.R`. The corpus grew, so the surge hazard and the
+   training population move for every harness.
+2. **Decide the three salience arms**, which are BUILT, measured on Victoria
+   only, and undecided. Pre-registration:
+   `docs/plans/prereg-salience-expected-and-variance-2026-09-07.md`.
+   - `AUSPOL_SALIENCE_EXPECTED=1` -- point estimate from the salience band.
+   - `AUSPOL_SALIENCE_EXP_SD=1` -- deviation sd from the band (new code:
+     `salience_sd_matrix()` and `sd_override` on `simulate_seat_contests()`).
+   - both together, as its own arm.
+   Primary metric is PB3f, the floor-excluded pooled log loss, plus the floor
+   COUNT. All three switches are OFF; nothing is adopted.
+3. **Seed-average before believing anything.** At 5,000 sims, changing only the
+   seed moves vic2014 by 0.0112, and the arm differences measured so far are
+   0.003. Three seeds per arm minimum, or run at 20,000.
+   `AUSPOL_SEED` now works in every harness (it was inert in four of six until
+   2026-09-07, which is why this was not known earlier).
+
+`AUSPOL_SALIENCE_SMOOTH=1` is already the shipped default: exp_pcv and exp_sd
+now come from a monotone cubic on `log(1 - jump_pctile)` rather than six
+unequal bins. It changes no published number while both arms are off, and that
+was verified rather than assumed.
+
+
 ### Open, in the order I would do them
 
 0. **PARKED IDEA, not scheduled: correlated seat draws and demographics.**
