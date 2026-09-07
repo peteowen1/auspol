@@ -102,3 +102,46 @@ Two things follow, neither of them attempted here:
 | New South Wales | 2 | 181 | 89.0% | 0.0817 | 0.3697 |
 | Queensland | 2 | 186 | 85.5% | 0.1036 | 0.3295 |
 | South Australia | 1 | 47 | 78.7% | 0.1129 | 0.3233 |
+
+## C3, the non-WA widening — ADOPTED, and it changes nothing
+
+Against `docs/plans/prereg-statewide-cov-widen-nonwa-2026-09-07.md`, committed
+before the arm ran. The fit goes from 10 pairs to 15, adding fed2007, nsw2019,
+vic2014, qld2020 and qld2024. Western Australia's six stay out, because that is
+what the previous experiment's refusal clause found rather than a convenience.
+
+**Both refusal clauses pass.** No correlation above 0.15 changes sign when
+Queensland is excluded — the same test that refused the WA widening, applied to
+the jurisdiction this one leans on. And cor(ONP, LNP) moves from −0.83 to −0.76
+raw, a move of 0.07 against a 0.30 bar, so Queensland has joined South Australia
+in that column rather than replaced it, which was the point.
+
+| metric | 10 pairs | 15 pairs | bar |
+|---|--:|--:|--:|
+| **PB3f, floor-excluded log loss (primary)** | 0.3076 | **0.3077** | ±0.002 |
+| pooled log loss, reported not decisive | 0.3452 | 0.3454 | — |
+| pooled Brier | 0.0945 | 0.0945 | guard |
+| seats at the floor | 6 | 6, the same seats | reported |
+| worst jurisdiction move | — | +0.0015 (NSW) | ±0.01 |
+
+Per jurisdiction: federal 0.3237 → 0.3237, Victoria 0.3427 → 0.3426, Queensland
+0.3295 → 0.3293, South Australia 0.3233 → 0.3238, New South Wales 0.3697 →
+0.3712. **Western Australia is 0.4074 → 0.4074 exactly**, which is the control:
+that harness does not read this matrix at all, so an unchanged figure confirms
+the arm touched only what it should.
+
+**Adopted because the rule says adopt on a tie, not because it improved
+anything.** Every number here is a tie. The case for it is completeness — the
+files were on disk and the fit was not using them — and the case is honest only
+because the criterion was set before the result was known. Queensland is the
+substantive gain even at zero measured benefit: One Nation's column previously
+rested on South Australia 2026 alone, and it now has two Queensland elections
+carrying 13.73% and 7.12% One Nation votes behind it.
+
+### The instrument worked this time
+
+The criterion was dry-run on three cases with known verdicts before being
+committed, and behaved correctly on all three — including the Barwon floor
+crossing, which the previous criterion scored as 0.0019 of harm and this one
+correctly scores as ~0 while still reporting the seat. That is the difference
+between measuring the model and measuring the constant.

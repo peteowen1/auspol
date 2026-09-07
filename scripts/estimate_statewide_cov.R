@@ -65,15 +65,27 @@ state_share <- function(f) share_of(fread(file.path(P, f), showProgress = FALSE)
 # The file-driven table below is kept because it is a better shape than four
 # hand-written blocks, and it reproduces exactly the ten pairs this file has
 # always used.
+# FIFTEEN PAIRS, and Western Australia's six are absent ON PURPOSE.
+# docs/plans/prereg-statewide-cov-widen-nonwa-2026-09-07.md. The previous
+# widening tried all 21 and its refusal clause fired: cor(ALP, IND) is -0.16
+# with WA in the fit and +0.43 without. WA's Assembly has almost no independents
+# and its statewide Labor swings are enormous (+12 in 2017, +18 in 2021, -18 in
+# 2025), so a flat IND column against very large ALP moves manufactures a
+# correlation about nothing. WA seats are still SCORED; only its pairs are kept
+# out of this one estimate.
 SPEC <- list(
-  list(region = "fed", years = c(2007, 2010, 2013, 2016, 2019, 2022, 2025),
+  list(region = "fed", years = c(2004, 2007, 2010, 2013, 2016, 2019, 2022, 2025),
        get = fed_share),
-  list(region = "vic", years = c(2014, 2018, 2022),
+  list(region = "vic", years = c(2010, 2014, 2018, 2022),
        get = function(y) state_share(sprintf("vec-%d-vic-firstprefs.csv", y))),
-  list(region = "nsw", years = c(2019, 2023),
+  list(region = "nsw", years = c(2015, 2019, 2023),
        get = function(y) state_share(sprintf("nswec-%d-nsw-firstprefs.csv", y))),
   list(region = "sa", years = c(2022, 2026),
-       get = function(y) state_share(sprintf("ecsa-%d-sa-firstprefs.csv", y))))
+       get = function(y) state_share(sprintf("ecsa-%d-sa-firstprefs.csv", y))),
+  # The valuable addition: Queensland carries real One Nation votes (13.73% in
+  # 2017, 7.12% in 2020) where that column has rested on South Australia alone.
+  list(region = "qld", years = c(2017, 2020, 2024),
+       get = function(y) state_share(sprintf("ecq-%d-qld-firstprefs.csv", y))))
 
 PAIRS <- list()
 for (S in SPEC) {
@@ -146,27 +158,30 @@ print(round(SH, 2))
 # R1: is the matrix describing Western Australia rather than Australia? Seven of
 # the twelve pairs added by C2 are WA, so a correlation that CHANGES SIGN when
 # WA is removed is a correlation about one jurisdiction.
-if (any(REGION == "wa") && sum(REGION != "wa") >= 3L) {
-  noWA <- stats::cor(D[REGION != "wa", , drop = FALSE])
+# Refusal 1 of the current plan tests QUEENSLAND, which is what this widening
+# leans on, by the same rule that refused the Western Australian one.
+.excl <- if (any(REGION == "wa")) "wa" else "qld"
+if (any(REGION == .excl) && sum(REGION != .excl) >= 3L) {
+  noWA <- stats::cor(D[REGION != .excl, , drop = FALSE])
   flip <- which(sign(noWA) != sign(CO) & abs(CO) > 0.15 & abs(noWA) > 0.15,
                 arr.ind = TRUE)
   flip <- flip[flip[, 1] < flip[, 2], , drop = FALSE]
   if (nrow(flip)) {
     cat(sprintf("
-CVR1! %d correlation(s) change sign when WA is excluded:
-", nrow(flip)))
+CVR1! %d correlation(s) change sign when %s is excluded:
+", nrow(flip), toupper(.excl)))
     for (r in seq_len(nrow(flip))) {
       i1 <- flip[r, 1]; i2 <- flip[r, 2]
-      cat(sprintf("      %s/%s: %+.2f with WA, %+.2f without
+      cat(sprintf("      %s/%s: %+.2f with %s, %+.2f without
 ",
-                  PARTIES[i1], PARTIES[i2], CO[i1, i2], noWA[i1, i2]))
+                  PARTIES[i1], PARTIES[i2], CO[i1, i2], toupper(.excl), noWA[i1, i2]))
     }
     cat("CVR1! Refusal 1 of the pre-registration applies: investigate before shipping.
 ")
   } else {
-    cat("
-CVR1  no correlation above 0.15 changes sign when WA is excluded.
-")
+    cat(sprintf("
+CVR1  no correlation above 0.15 changes sign when %s is excluded.
+", toupper(.excl)))
   }
 }
 
