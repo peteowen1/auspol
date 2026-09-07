@@ -99,13 +99,27 @@ reentry_fit <- function(pairs, min_n = 40L, min_ratio_n = 20L, covariates = TRUE
       # and the fitted version projected about 10. As an offset the prediction
       # is proportional to the statewide share by construction -- the flat
       # ratio's one good property -- while the seat covariates still adjust it.
-      fo <- if (all(is.finite(d$flow_lean)))
-        pcv ~ offset(log(state_pcv)) + breadth + safe + lean + flow_safe +
-          flow_lean + nonmajor_prev
-      else pcv ~ offset(log(state_pcv)) + breadth + safe + lean + nonmajor_prev
+      # THE NON-MAJOR VOTE ENTERS SPLIT, not whole, when the nomination list
+      # reached seat_lean(). AUSPOL_REENTRY_SPLIT=0 restores the single
+      # `nonmajor_prev` term so the two can be measured against each other on
+      # identical data. See the pre-registration named in seat_lean().
+      .split <- !identical(Sys.getenv("AUSPOL_REENTRY_SPLIT", "1"), "0") &&
+        all(is.finite(d$nonmajor_defended))
+      .nmterm <- if (.split) "nonmajor_defended + nonmajor_vacant" else "nonmajor_prev"
+      fo <- stats::as.formula(paste(
+        "pcv ~ offset(log(state_pcv)) + breadth + safe + lean +",
+        if (all(is.finite(d$flow_lean))) "flow_safe + flow_lean +" else "",
+        .nmterm))
       f <- try(stats::glm(fo, family = stats::quasipoisson(link = "log"), data = d),
                silent = TRUE)
       if (!inherits(f, "try-error")) fits[[cl]] <- f
+      # PRINT WHAT IT APPLIED. CLAUDE.md records an experiment whose edit never
+      # ran and whose byte-identical output read as "this input does not
+      # matter". A run that silently fell back to the whole-vote term would be
+      # indistinguishable from one where the split had no effect.
+      if (!.split && !identical(Sys.getenv("AUSPOL_REENTRY_SPLIT", "1"), "0"))
+        cat(sprintf("RE1s %s: nomination list absent, fitted on nonmajor_prev
+", cl))
     }
   }
   structure(list(fits = fits, ratios = ratios, n = ns, covariates = covariates),
@@ -136,7 +150,8 @@ reentry_training <- function(pairs,
     if (!nrow(a) || !nrow(b)) return(NULL)
     # Positions measured WITHOUT the target election, so the flow lean is
     # leave-one-election-out like everything else here.
-    ln <- seat_lean(a, positions = party_positions(exclude = p$election))
+    ln <- seat_lean(a, positions = party_positions(exclude = p$election),
+                    standing = unique(b[, list(seat, party)]))
     st <- b[, list(state_pcv = 100 * sum(votes) / sum(b$votes)), by = "party"]
     m <- merge(b, a[, list(seat, party, prev = pcv)], by = c("seat", "party"),
                all.x = TRUE)
@@ -156,7 +171,7 @@ reentry_training <- function(pairs,
     n_seats <- length(unique(b$seat))
     m[, breadth := .N / n_seats, by = "party"]
     m[, list(pair, party, seat, pcv, state_pcv, lean, safe, nonmajor_prev,
-             flow_lean, flow_safe, breadth)]
+             nonmajor_defended, nonmajor_vacant, flow_lean, flow_safe, breadth)]
   })
   D <- data.table::rbindlist(out, fill = TRUE)
   if (!nrow(D)) return(D)
@@ -224,7 +239,7 @@ party_positions <- function(exclude = NULL, min_votes = 5000,
 #'   major did not contest the seat and the bloc measure saturates at 0 or 100.
 #' @return A `data.table` of `seat`, `lean`, `safe`, `nonmajor_prev`.
 #' @export
-seat_lean <- function(a, positions = NULL) {
+seat_lean <- function(a, positions = NULL, standing = NULL) {
   w <- data.table::dcast(a, seat ~ party, value.var = "pcv", fill = 0)
   gcol <- function(nm) {
     k <- intersect(nm, names(w))
@@ -233,8 +248,36 @@ seat_lean <- function(a, positions = NULL) {
   L <- gcol(c("ALP", "GRN")); R <- gcol(c("LNP", "ONP", "OTH_RIGHT"))
   nm <- gcol(setdiff(names(w), c("seat", "ALP", "LNP")))
   lean <- ifelse(L + R > 0, 100 * L / (L + R), NA_real_)
+  # DEFENDED vs VACANT non-major vote, per
+  # docs/plans/prereg-reentry-defended-nonmajor-2026-09-08.md. `nonmajor_prev`
+  # reads every vote outside the two majors as room a re-entering minor party
+  # can take, which is true only if the vote is AVAILABLE. Traeger qld2024:
+  # its 63.3% non-major vote in 2020 was entirely Katter's Australian Party,
+  # KAP stood again in 2024 and took 49.3%, and the model predicted One Nation
+  # at 74.3% against an actual 6.8%.
+  #
+  # `standing` is the target election's nomination list, so this is knowable
+  # before polling day -- the same fact the prior itself rests on. The two
+  # parts sum to `nonmajor_prev` exactly, so nothing is added, only separated.
+  nm_cols <- setdiff(names(w), c("seat", "ALP", "LNP"))
+  if (!is.null(standing) && length(nm_cols)) {
+    if (is.data.frame(standing))
+      standing <- paste(standing$seat, standing$party, sep = "|")
+    M <- as.matrix(w[, nm_cols, with = FALSE])
+    keys <- outer(w$seat, nm_cols, function(sx, px) paste(sx, px, sep = "|"))
+    held <- matrix(keys %in% standing, nrow = nrow(w), ncol = length(nm_cols))
+    def <- rowSums(M * held)
+    vac <- rowSums(M * !held)
+  } else {
+    # NOT a silent fallback to "all vacant": NA propagates into the model
+    # frame, complete.cases() drops the row, and reentry_fit() falls back to a
+    # formula without these terms and SAYS SO. A caller that forgets to pass
+    # the nomination list gets the old behaviour visibly, not invisibly.
+    def <- rep(NA_real_, nrow(w)); vac <- rep(NA_real_, nrow(w))
+  }
   out <- data.table::data.table(seat = w$seat, lean = lean, safe = abs(lean - 50),
-                                nonmajor_prev = nm)
+                                nonmajor_prev = nm,
+                                nonmajor_defended = def, nonmajor_vacant = vac)
   # THE FLOW LEAN, alongside the bloc one rather than instead of it. They
   # correlate at 0.956 and using BOTH beats either -- +0.095 mean gain over the
   # bloc measure alone, better in 17 of 22 elections. Where they disagree is
@@ -323,13 +366,22 @@ apply_reentry_prior <- function(mat, standing, fit, lean_dt, state_share,
                      flow_lean = if ("flow_lean" %in% names(ld)) ld[sn, "flow_lean"] else NA_real_,
                      flow_safe = if ("flow_safe" %in% names(ld)) ld[sn, "flow_safe"] else NA_real_,
                      nonmajor_prev = ld[sn, "nonmajor_prev"],
+                     nonmajor_defended = if ("nonmajor_defended" %in% names(ld))
+                       ld[sn, "nonmajor_defended"] else NA_real_,
+                     nonmajor_vacant = if ("nonmajor_vacant" %in% names(ld))
+                       ld[sn, "nonmajor_vacant"] else NA_real_,
                      breadth = length(hit) / nrow(mat),
                      stringsAsFactors = FALSE)
     # Only the columns the fit actually uses need to be present. Requiring the
     # flow columns too would silently drop every seat when transfers are absent.
-    need <- c("state_pcv", "lean", "safe", "nonmajor_prev", "breadth")
-    if (!is.null(fit$fits[[p]]) && "flow_lean" %in% names(stats::coef(fit$fits[[p]])))
-      need <- c(need, "flow_lean", "flow_safe")
+    # ONLY THE TERMS THIS CLASS'S FIT ACTUALLY USES. Requiring both the whole
+    # and the split non-major columns would drop every row whenever either is
+    # absent, which is how a "no rows qualified" silence gets manufactured.
+    need <- c("state_pcv", "lean", "safe", "breadth")
+    .cf <- if (!is.null(fit$fits[[p]])) names(stats::coef(fit$fits[[p]])) else character(0)
+    need <- c(need, if ("nonmajor_defended" %in% .cf)
+      c("nonmajor_defended", "nonmajor_vacant") else "nonmajor_prev")
+    if ("flow_lean" %in% .cf) need <- c(need, "flow_lean", "flow_safe")
     ok <- stats::complete.cases(nd[, need, drop = FALSE])
     if (!any(ok)) next
     v <- reentry_predict(fit, nd[ok, , drop = FALSE])
@@ -372,9 +424,10 @@ reentry_apply_harness <- function(mat, fa, fb, state_share, target, pairs,
   fb <- data.table::as.data.table(fb)
   a_pcv <- fa[, list(votes = sum(votes)), by = c("seat", "party")]
   a_pcv[, pcv := 100 * votes / sum(votes), by = "seat"]
+  stand <- unique(fb[fb$votes > 0, list(seat, party)])
   ln <- seat_lean(a_pcv[, list(seat, party, pcv)],
-                  positions = party_positions(exclude = target))
-  stand <- fb[fb$votes > 0, list(seat, party)]
+                  positions = party_positions(exclude = target),
+                  standing = stand)
   out <- tryCatch(apply_reentry_prior(mat, stand, fit, ln, state_share),
                   error = function(e) {
                     cat(sprintf("%s! apply_reentry_prior() FAILED: %s

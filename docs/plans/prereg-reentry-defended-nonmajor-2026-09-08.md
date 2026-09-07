@@ -115,3 +115,66 @@ advance rather than arguing about it afterwards.
   parties. That is a `classify_party()` question, not one this plan settles.
 - Anything about seats where the re-entering party's problem is the OTHER
   half of the model — the statewide offset, the breadth term, or the flow lean.
+
+---
+
+## Dry-run outcome, 2026-09-08 — THE ARM IS NOT RUN
+
+Added after the dry-run and before any pooled number was computed. Everything
+above is left exactly as committed.
+
+The three cases were checked as required and the arm **fails case 1**:
+
+| pair | seat | party | whole | split | actual |
+|---|---|---|--:|--:|--:|
+| qld2024 | Traeger | ONP | 74.3 | **79.2** | 6.8 |
+| qld2024 | Hill | ONP | 57.5 | **63.3** | 6.9 |
+| wa2001 | Kimberley | ALP | 37.2 | 37.2 | 42.2 |
+| wa2005 | Alfred Cove | ALP | 41.9 | 41.9 | 22.8 |
+
+Cases 2 and 3 pass — Kimberley is untouched, and the 14 cells with no
+non-major vote at all move by at most 0.098. Case 1 goes the wrong way.
+
+### Why, and why the premise of this plan was wrong
+
+The coefficients came back with exactly the signs this plan predicted. On the
+leave-one-out fit for qld2024, One Nation gets `nonmajor_defended` **−0.0326**
+(p = 0.0001) and `nonmajor_vacant` **+0.0321** (p = 0.010). Occupied non-major
+vote does suppress a newcomer and vacant non-major vote does invite one.
+
+But the term it replaced was **already negative**: `nonmajor_prev` had
+coefficient −0.0245 (p = 0.001). The model was never reading Traeger's KAP vote
+as room for One Nation. The premise stated at the top of this plan — "the
+model reads that as non-major vote is available" — is false, and it should have
+been checked against the fitted coefficient before the plan was written.
+
+Traeger's 74.3 comes from somewhere else entirely. Decomposing its linear
+predictor: `lean` −0.116 × 23.2 = −2.69 and `flow_lean` +0.115 × 44.5 = +5.13.
+Those two coefficients are **near-equal and opposite**, so the model is
+effectively using the *disagreement* between the two lean measures, at about
++0.115 per point of gap. Traeger's gap is 44.5 − 23.2 = 21.3 points, worth
+**+2.45 in log space, a factor of 11.6**, and that is the whole of the
+blow-up. Splitting the non-major term freed `lean` to grow from −0.0988 to
+−0.1161, which widened the gap term and made Traeger worse.
+
+The gap is itself a real signal about KAP: the bloc measure files KAP's 49% as
+fully right-wing, while the flow positions place it nearer the centre, and the
+model has learned that seats with a large centrist-flowing right-wing bloc are
+good for One Nation. In Queensland those seats are precisely the ones KAP
+already holds.
+
+### What this actually diagnoses
+
+The fault is not a covariate. It is that a quasipoisson log link with an
+offset is **unbounded**, applied to a response that is a share of 100. With
+`lean` spanning 19 to 100 at roughly −0.10 per point, the fitted ratio can
+range over a factor of about 3,300. Nothing in the specification prevents a
+prediction above 100, and five predictions already exceed 40.
+
+Successor arm, to be pre-registered separately: fit the re-entry share on a
+**bounded link** so an impossible forecast cannot be produced by construction.
+That is a different change from the one committed here, and it gets its own
+plan, criterion and dry-run rather than being folded into this one.
+
+`AUSPOL_REENTRY_SPLIT` is implemented and defaults to 1, but with
+`AUSPOL_REENTRY` at 0 it reaches nothing that is published.

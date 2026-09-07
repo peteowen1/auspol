@@ -311,9 +311,13 @@ for (K in PAIRS) {
 ",
                   conditionMessage(e))); NULL })
     if (!is.null(.rf)) {
+      # The nomination list goes IN to seat_lean, not just to the fill step:
+      # it is what separates defended from vacant non-major vote. Computed
+      # first for that reason.
+      .stand <- unique(fb[votes > 0, .(seat, party)])
       .ln <- seat_lean(fa[, .(seat, party, pcv = 100 * votes / sum(votes)),
-                          by = seat][, .(seat, party, pcv)])
-      .stand <- fb[votes > 0, .(seat, party)]
+                          by = seat][, .(seat, party, pcv)],
+                       standing = .stand)
       .re <- attr(apply_reentry_prior(mat, .stand, .rf, .ln, sb), "reentry")
       .recells <- .re
       cat(sprintf("BW1r  re-entry prior: %d cell(s) filled%s
