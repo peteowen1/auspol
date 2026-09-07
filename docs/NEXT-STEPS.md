@@ -1052,3 +1052,35 @@ Full write-ups moved to [docs/backlog/journal-2026-08.md](backlog/journal-2026-0
 - 2026-08-14 (session 2): Hyperparameters estimated, not fixed
 - 2026-08-14: Anchor model analysed; package skeleton; Jackman trend; federal and NSW cycles fitted
 
+
+### Diagnosed 2026-09-08, not implemented: point-estimate shrinkage cannot fix the majors' floor seats
+
+Tested continuous James-Stein shrinkage (`ratio = w*measured + (1-w)*1`,
+`w = n/(n+k)`) as a replacement for the hard `min_ratio_n = 20` cutoff, grid
+`k ∈ {3,5,10,20,40,80}`, leave-one-out MAE over every ratio-path cell (n < 40).
+Best `k = 20` gives MAE 3.677 against 3.710 for the current hard cutoff — a
+real but tiny gain, and it is **not coming from the majors**: Labor and the
+Coalition have 1-3 observations per leave-one-out fold, so `w` stays near zero
+and the shrunk ratio stays near 1. Alfred Cove predicts 42.1 against an actual
+22.8 under the best `k`, essentially unchanged from the current 41.9. This
+matches and extends the 2026-09-07 finding that pooling the two majors did not
+help either — with this few observations, no point-estimate trick can locate
+the true value; the estimate itself is just noisy.
+
+**The next thing to try is widening the SIMULATED VARIANCE for ratio-path
+cells, not moving the point estimate.** The existing `sd_override` mechanism
+(`R/seat_sim.R`, already threaded through five of six harnesses for salience)
+is the right tool, but it needs: (a) `apply_reentry_prior()` to return a
+per-cell sd inflation alongside the point estimate, sized by something like
+`a / sqrt(n+1)`; (b) a combination rule with the salience sd source where both
+apply to the same cell — take the max, since neither source should understate
+the other's uncertainty; (c) **`sd_override` plumbing added to the WA harness**,
+which does not have it at all (`scripts/backtest_candidate_wa.R:445` calls
+`simulate_seat_contests()` with no `sd_override` argument) — the sixth
+harness-parity gap this session found, after positions, salience and the seed.
+
+Scoped as a targeted fix (CLAUDE.md's own rule: validate on the named targets
+first, election-wide as a do-no-harm guard) — this can only ever move a
+handful of seats, since a major failing to contest the previous election is
+rare by construction. Not started this session; needs its own pre-registration
+before any of the plumbing goes in.
