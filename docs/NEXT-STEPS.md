@@ -78,6 +78,26 @@ unequal bins. It changes no published number while both arms are off, and that
 was verified rather than assumed.
 
 
+### OPEN QUESTION, parked: is one party class one party?
+
+`classify_party()` has SEVEN classes and they hide distinctions that matter:
+
+- **`LNP` is Liberal, National and LNP in one bucket.** Nationals preferences
+  behave differently from Liberal ones, and the measured "position" of LNP in
+  the preference-flow scale is 0.424 -- which is Liberal-to-Nationals flow in
+  three-cornered contests, i.e. the class flowing to itself. There is no way
+  to model a three-cornered contest properly while they share a class.
+- **`OTH_RIGHT` is Katter, Shooters, Family First and others together.** It is
+  the class that wins the seats this model loses, and it is a bucket.
+- **Is state Labor the same object as federal Labor** for the purpose of a
+  pooled flow or slope estimate? We pool them today without having asked.
+
+Major-party CODING was checked 2026-09-07 and is sound: ALP and LNP shares
+land plausibly in all 22 elections, and the two outliers are real -- wa2021
+Labor 59.9% is McGowan's landslide and sa2026 Coalition 19.5% is the collapse
+that elected four One Nation members. So this is a granularity question, not a
+correctness one.
+
 ### Open, in the order I would do them
 
 0. **PARKED IDEA, not scheduled: correlated seat draws and demographics.**
