@@ -266,6 +266,13 @@ for (K in PAIRS) {
   # model from the rest of the pooled table. Nothing errored; candidate_returns()
   # was still called and its result then discarded. Found 2026-09-07.
   .cond <- Sys.getenv("AUSPOL_DEV_SLOPE_MODE", "") %in% c("conditional", "screened")
+  # DECOUPLED FOR MEASUREMENT. .cond gates TWO independent mechanisms at once --
+  # candidate-conditional dev slopes (.returns, below) and the personal-vote
+  # transfer (.own_prev) -- so a single flag flip changes both together and
+  # NEXT-STEPS' item 4 could not tell them apart. AUSPOL_WA_TRANSFER unset
+  # keeps them coupled exactly as before (byte-identical default); set to "0"
+  # or "1" to force the transfer independently of the slope mode.
+  .xfer <- { v <- Sys.getenv("AUSPOL_WA_TRANSFER", ""); if (nzchar(v)) identical(v, "1") else .cond }
   .returns <- if (.cond) tryCatch(candidate_returns(el_from, el_to), error = function(e) {
     cat(sprintf("BW1c! conditional slopes unavailable: %s
 ", conditionMessage(e))); NULL }) else NULL
@@ -285,7 +292,7 @@ for (K in PAIRS) {
   # the model read the previous election's PARTY shares and the independent
   # column was empty.
   .defect <- if (identical(Sys.getenv("AUSPOL_DEFECT_DISCOUNT", "0"), "1")) 0.282 else NULL
-  .own_prev <- if (.cond) tryCatch(personal_prior_vote(el_from, el_to, major_discount = .defect),
+  .own_prev <- if (.xfer) tryCatch(personal_prior_vote(el_from, el_to, major_discount = .defect),
                                    error = function(e) {
                                      cat(sprintf("BW1p! personal_prior_vote() FAILED; class-level bases kept and NO transfer removed: %s\n",
                                                  conditionMessage(e))); NULL }) else NULL

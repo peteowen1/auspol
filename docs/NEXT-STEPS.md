@@ -1084,3 +1084,38 @@ first, election-wide as a do-no-harm guard) — this can only ever move a
 handful of seats, since a major failing to contest the previous election is
 rare by construction. Not started this session; needs its own pre-registration
 before any of the plumbing goes in.
+
+### Diagnosed 2026-09-08: the personal-vote transfer helps Pilbara and hurts WA overall
+
+Decoupled `AUSPOL_DEV_SLOPE_MODE` (conditional slopes) from the personal-vote
+transfer (`.own_prev`/`remove_transferred_votes`) in `backtest_candidate_wa.R`
+via a new `AUSPOL_WA_TRANSFER` flag — they were sharing one gate (`.cond`), so
+the two effects could never be told apart. Default behaviour is unchanged
+(verified byte-identical, 87.0%/0.1053 before and after the decoupling).
+
+Pooled log loss over all 361 WA seat-elections, one seed, `AUSPOL_N_SIMS=5000`:
+
+| slope mode | transfer | pooled log loss |
+|---|---|--:|
+| screened | **off** | **0.4058** |
+| screened | on (published) | 0.4109 |
+| uniform | off | 0.4104 |
+| uniform | on | 0.4158 |
+
+Conditional slopes help by ~0.005 either way. The transfer **hurts by ~0.005
+either way** — consistent sign in both slope settings, so not an interaction
+artefact.
+
+**But it works exactly as designed on the seat it was built for.** Pilbara
+2001, transfer off: the independent gets probability 0 (clamped to the 1e-6
+floor, costing 13.8 of log loss on that seat alone). Transfer on: 0.0058 — a
+huge per-seat gain, worth roughly 0.024 of pooled-equivalent log loss on its
+own. That the pooled effect is still net negative means the transfer is making
+OTHER seats worse broadly enough to swamp Pilbara's rescue several times over.
+
+**Not shipped, not further investigated this session.** One seed only — item
+2 already establishes that a single seed at 5,000 sims can move a pair by
+0.011, larger than this whole effect. Before acting on it: seed-average, then
+find which OTHER seats `personal_prior_vote()` is firing on and whether those
+are genuine defections or false positives. `Pilbara` is the one case the code
+comments name; nothing establishes the others are correct.
