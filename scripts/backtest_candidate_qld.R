@@ -569,7 +569,17 @@ if (identical(Sys.getenv("AUSPOL_SALIENCE_SURGE_V2", "0"), "1")) {
     list(election = "fed2022", prev = "fed2019", region = "fed"),
     list(election = "vic2022", prev = "vic2018", region = "vic"),
     list(election = "nsw2023", prev = "nsw2019", region = "nsw"),
-    list(election = "qld2024",  prev = "qld2020",  region = "qld"),
+    # sa2026, NOT qld2024. This list was copied from the South Australian
+    # harness on 2026-09-07 and sa2026 was mechanically renamed to qld2024,
+    # which is wrong twice over. scripts/fit_salience_surge_v2.R records that
+    # qld2020 and qld2024 were CHECKED and add no governed emergence -- every
+    # Queensland non-major winner in 2024 was a returning incumbent -- so the
+    # renamed row contributes nothing and is then filtered out anyway as this
+    # harness's own target. Meanwhile it dropped sa2026, the election with four
+    # One Nation winners and the largest emergence signal in the corpus. So
+    # Queensland's hazard was fitted on eight pairs missing the most
+    # informative one.
+    list(election = "sa2026",  prev = "sa2022",  region = "sa"),
     list(election = "wa2008",  prev = "wa2005",  region = "wa"))
   train_pairs <- Filter(function(p) p$election != "qld2024", v2_pairs)
   hz <- tryCatch(surge_hazard_for("qld2024", "qld2020", "qld", train_pairs),

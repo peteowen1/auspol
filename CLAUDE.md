@@ -349,15 +349,34 @@ rest. Exploratory arms run at `AUSPOL_N_SIMS=5000`; only the deciding run
 needs 20,000.
 
 `_wa.R` was added 2026-08-25 and carries seven pairs at ~58 seats. **`_fed.R` is
-now the larger harness** — 6 pairs over ~880 seat-elections against WA's 361 —
+now the larger harness** — 7 pairs over 1,036 seat-elections against WA's 361 —
 so prefer federal first and WA second when a criterion needs to resolve
 anything. (Corrected 2026-08-27; the earlier claim that WA held more clusters
 than the other four combined predates the federal harness reaching 6 pairs.)
 
+`_nsw.R` takes **two** pairs since 2026-09-07 via `AUSPOL_NSW_PAIR` (2019 or
+2023, default 2023) — it was hardcoded to one target in seventeen places. Every
+other state harness is still single-pair, so a change measured "on NSW" means
+whichever pair you set, and both need running.
+
+**`scripts/pool_backtests.R` gives the pooled table across all 20 pairs and
+1,884 seat-elections** — accuracy, Brier and seat log loss per pair and overall.
+Run it instead of adding up six logs by hand. It takes the newest file per pair
+and prints that file's timestamp and code tag, so a row describing an older
+model is visible rather than silent.
+
 **Both exceed the 10-minute background-task cap when run as two arms in one
 command.** Run one arm per launch, and use `AUSPOL_FED_PAIRS` to take federal a
-pair at a time; a killed run loses every arm behind it. Queensland was built 2026-09-07 and scores
-0.3351 against AE Forecasts' 0.3578.
+pair at a time; a killed run loses every arm behind it. Queensland was built
+2026-09-07 and scores 0.3350 against AE Forecasts' 0.3578.
+
+**Every harness carries its own copy of the surge training pair list**, and they
+are NOT the same list. Queensland's had `sa2026` renamed to `qld2024` when it
+was copied from the South Australian harness, so it trained without the four One
+Nation winners until 2026-09-07. Before changing one, diff it against
+`scripts/fit_salience_surge_v2.R`, which is the list with the reasoning attached
+— membership is deliberate, and pairs with no governed emergence were ruled out
+rather than forgotten.
 
 **Two WA-specific facts that change how its numbers read.** The `wa2001` pair
 has no transfers of its own (excluded upstream) so its flows fall back to

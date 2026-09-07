@@ -31,14 +31,20 @@ OUT <- election_data_path()
 dir.create(RAW, showWarnings = FALSE, recursive = TRUE)
 
 SRC <- list(
+  # 2015 uses the OLDER archive layout -- /SGE2015/data/la/state/ rather than
+  # /SG<yy>01/LA/state/ -- which is why probing the newer pattern for it
+  # returned a 500 and it read as unavailable. Found 2026-09-07.
+  list(year = 2015, code = "SGE2015", file = "SGE 2015 LA Final Votes.xlsx",
+       path = "data/la/state"),
   list(year = 2019, code = "SG1901", file = "SGE 2019 LA Final Votes.xlsx"),
   list(year = 2023, code = "SG2301", file = "SGE 2023 LA Final Votes.xlsx"))
 
 for (s in SRC) {
   dest <- file.path(RAW, sprintf("sge%d-la-final-votes.xlsx", s$year))
   if (!file.exists(dest)) {
-    url <- sprintf("https://pastvtr.elections.nsw.gov.au/%s/LA/state/%s",
-                   s$code, utils::URLencode(s$file))
+    .p <- if (!is.null(s$path)) s$path else "LA/state"
+    url <- sprintf("https://pastvtr.elections.nsw.gov.au/%s/%s/%s",
+                   s$code, .p, utils::URLencode(s$file))
     cat(sprintf("fetching %d ...\n", s$year))
     utils::download.file(url, dest, mode = "wb", quiet = TRUE,
                          headers = c("User-Agent" = UA))

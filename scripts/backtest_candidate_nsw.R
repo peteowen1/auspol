@@ -1,22 +1,27 @@
-# Backtest the candidate-level seat model on NSW 2023.
+# Backtest the candidate-level seat model on New South Wales.
 #
 # Against docs/plans/prereg-candidate-model-backtest.md (redesigned section),
 # committed before this ran. The decision rule and refusals C1-C6 are there.
 #
-# THE MODEL THAT PUBLISHES EVERY SEAT NUMBER HAS NEVER BEEN SCORED. The
-# calibration this repo has -- slope 1.113, Brier 0.0583 -- scores the two-party
-# model, which is now a cross-check only.
+# TWO PAIRS since 2026-09-07, selected with AUSPOL_NSW_PAIR (default "2023"):
 #
-# Nothing here is fitted on NSW 2023:
-#   predictors and margins   load_seats(2023, "nsw")  -- the pre-election file
-#   seat primaries to swing  nswec-2019-nsw-firstprefs.csv
-#   transfer matrix          nsw2019 transfers ONLY, asserted below
-#   truth                    nswec-2023-nsw-firstprefs.csv, cross-checked
+#   pair    scores    from      seat file    flows
+#   2023    nsw2023   nsw2019   2023nsw.txt  nsw2019
+#   2019    nsw2019   nsw2015   2019nsw.txt  nsw2015
+#
+# The 2019 pair became scoreable when the nsw2015 preference distributions were
+# fetched. Before that the target was a literal in seventeen places.
+#
+# Nothing here is fitted on the election being scored. For either pair:
+#   predictors and margins   the pre-election seat file for the target year
+#   seat primaries to swing  the PREVIOUS election's first preferences
+#   transfer matrix          the PREVIOUS election's transfers only, asserted
+#   truth                    the NSWEC's own ELECTED rows, cross-checked
 #
 # What this does NOT test: the Victoria-specific One Nation allocation (order by
 # Greens share, magnitudes quantile-mapped onto SA). NSW One Nation has a real
-# 2019 base to swing from -- 1.10% statewide -- so it is swung like every other
-# party. That allocation needs its own test and does not get one here.
+# base to swing from -- 1.10% statewide in 2019 -- so it is swung like every
+# other party. That allocation needs its own test and does not get one here.
 #
 # Emits BT* codes.
 
@@ -242,9 +247,37 @@ SEED   <- 42
 SMOOTH <- 0.15
 PREF   <- election_data_path()
 
-fp19 <- fread(file.path(PREF, "nswec-2019-nsw-firstprefs.csv"))
-fp23 <- fread(file.path(PREF, "nswec-2023-nsw-firstprefs.csv"))
-tx   <- fread(file.path(PREF, "nswec-nsw-transfers.csv"))
+# WHICH PAIR THIS RUN SCORES. Until 2026-09-07 the target election was written
+# out as a literal in seventeen places and only nsw2023 could be run. The
+# nsw2015 preference distributions were fetched that day, which makes
+# nsw2015 -> nsw2019 scoreable on flows that predate it, and NSW goes from one
+# pair to two.
+#
+# `next_seats` is the seat file used ONLY for the winner cross-check below. It
+# is the election AFTER the one being scored, because that file's `incumbent`
+# is who holds the seat now. CLAUDE.md records that this field is contaminated
+# by by-elections and carries the anchor's party classes rather than ours, so
+# it is a printed disagreement count and never the truth.
+NSW_PAIRS <- list(
+  "2019" = list(to = 2019L, from = 2015L, next_seats = 2023L),
+  "2023" = list(to = 2023L, from = 2019L, next_seats = 2027L))
+.k <- Sys.getenv("AUSPOL_NSW_PAIR", "2023")
+if (!.k %in% names(NSW_PAIRS)) {
+  stop("AUSPOL_NSW_PAIR must be one of ", paste(names(NSW_PAIRS), collapse = ", "),
+       " and was ", sQuote(.k))
+}
+PAIR <- NSW_PAIRS[[.k]]
+TO   <- PAIR$to
+FROM <- PAIR$from
+TGT  <- sprintf("nsw%d", TO)
+PRV  <- sprintf("nsw%d", FROM)
+cat(sprintf("BT0p pair %s -> %s | flows from %s | seat file %dnsw.txt
+",
+            PRV, TGT, PRV, TO))
+
+fp_prev <- fread(file.path(PREF, sprintf("nswec-%d-nsw-firstprefs.csv", FROM)))
+fp_tgt  <- fread(file.path(PREF, sprintf("nswec-%d-nsw-firstprefs.csv", TO)))
+tx      <- fread(file.path(PREF, "nswec-nsw-transfers.csv"))
 
 # LEAKAGE GUARD. The whole point of using NSW is that the flow matrix predates
 # the election being scored. Asserted, not assumed -- three leaks have entered
@@ -254,11 +287,15 @@ tx   <- fread(file.path(PREF, "nswec-nsw-transfers.csv"))
 # proves only that `==` works -- the "guard that cannot fail" shape CLAUDE.md
 # warns about, in the one place this script claims leakage safety.
 stopifnot("the transfer file must contain both elections to be filterable" =
-            all(c("nsw2019", "nsw2023") %in% tx$election))
-tx19 <- tx[election == "nsw2019"]
-stopifnot(nrow(tx19) > 0, nrow(tx19) < nrow(tx))
+            all(c(PRV, TGT) %in% tx$election))
+# PRV_ not PRV inside the brackets: `election` is a column of tx, and a bare
+# symbol on either side of `==` there binds to the column. That is this repo's
+# most-repeated fault, eight times recorded.
+PRV_ <- PRV
+tx_prev <- tx[election == PRV_]
+stopifnot(nrow(tx_prev) > 0, nrow(tx_prev) < nrow(tx))
 cat(sprintf("\nBT0  flow matrix from %d transfers, elections: %s\n",
-            nrow(tx19), paste(unique(tx19$election), collapse = ", ")))
+            nrow(tx_prev), paste(unique(tx_prev$election), collapse = ", ")))
 # NEW SOUTH WALES IS OPTIONAL PREFERENTIAL AND MUST NOT TAKE QUEENSLAND'S
 # TRANSFERS. About 12% of NSW ballots exhaust; Queensland's are compulsory
 # preferential and effectively none do, so pooling them estimates a rate that
@@ -269,21 +306,27 @@ cat(sprintf("\nBT0  flow matrix from %d transfers, elections: %s\n",
 # Measured before it was noticed: adding Queensland here made NSW 2023 WORSE by
 # 0.194 of log score, the largest single degradation in the run. That is not a
 # finding about Queensland, it is this mistake showing up as data.
-fm <- build_flow_matrix(tx19, min_n = 3L)
+fm <- build_flow_matrix(tx_prev, min_n = 3L)
 
-seats <- as.data.table(load_seats(2023, "nsw"))
+seats <- as.data.table(load_seats(TO, "nsw"))
 
 # Per-seat 2019 shares as a matrix.
-w19 <- dcast(fp19, seat ~ party, value.var = "votes", fill = 0)
-mat <- as.matrix(w19[, -1, with = FALSE]); rownames(mat) <- w19$seat
+w_prev <- dcast(fp_prev, seat ~ party, value.var = "votes", fill = 0)
+mat <- as.matrix(w_prev[, -1, with = FALSE]); rownames(mat) <- w_prev$seat
 mat <- 100 * mat / rowSums(mat)
 
-state19 <- fp19[, .(v = sum(votes)), by = party][, setNames(100 * v / sum(v), party)]
-state23 <- fp23[, .(v = sum(votes)), by = party][, setNames(100 * v / sum(v), party)]
+state_prev <- fp_prev[, .(v = sum(votes)), by = party][, setNames(100 * v / sum(v), party)]
+state_tgt <- fp_tgt[, .(v = sum(votes)), by = party][, setNames(100 * v / sum(v), party)]
 cat("\nBT1  statewide first preferences\n")
-print(data.table(party = names(state19), y2019 = round(state19, 2),
-                 y2023 = round(state23[names(state19)], 2),
-                 swing = round(state23[names(state19)] - state19, 2))[order(-y2023)])
+# Column names carry the ACTUAL years. They were the literals y2019 and y2023,
+# which on the 2019 pair labelled nsw2015 figures as 2019 and nsw2019 figures
+# as 2023 -- a printed table that is wrong in a way nothing downstream can
+# catch.
+.bt1 <- data.table(party = names(state_prev), prev = round(state_prev, 2),
+                   now = round(state_tgt[names(state_prev)], 2),
+                   swing = round(state_tgt[names(state_prev)] - state_prev, 2))
+setnames(.bt1, c("prev", "now"), sprintf("y%d", c(FROM, TO)))
+print(.bt1[order(-get(sprintf("y%d", TO)))])
 
 # TRUTH is the NSWEC's own declaration -- the candidate its distribution table
 # marks ELECTED -- and NOT this package's exclusion of the actual votes.
@@ -294,7 +337,8 @@ print(data.table(party = names(state19), y2019 = round(state19, 2),
 # cancel and the model would score better than it deserves. It is the leakage
 # shape this repo keeps finding: a check that shares its error with the thing
 # being checked.
-win <- fread(file.path(PREF, "nswec-nsw-winners.csv"))[election == "nsw2023"]
+TGT_ <- TGT
+win <- fread(file.path(PREF, "nswec-nsw-winners.csv"))[election == TGT_]
 stopifnot(nrow(win) == 93L)
 truth <- setNames(win$winner, win$seat)
 cat(sprintf("
@@ -303,22 +347,23 @@ BT2  truth from the NSWEC's ELECTED rows: %s
             paste(sprintf("%s %d", names(table(truth)), as.integer(table(truth))),
                   collapse = ", ")))
 
-# Cross-check against the 2027 file's incumbent. NAT/LIB are recorded separately
-# there and classify_party() maps both to LNP, so normalise before comparing --
+# Cross-check against the NEXT election's seat file, whose `incumbent` is who
+# holds the seat now. NAT/LIB are recorded separately there and
+# classify_party() maps both to LNP, so normalise before comparing --
 # raw, eleven rural Coalition seats look like conflicts when both sources agree.
 coal <- function(x) fifelse(x %in% c("NAT", "LIB", "LNP", "CLP"), "LNP", x)
-inc27 <- as.data.table(load_seats(2027, "nsw"))[, .(seat, incumbent)]
-chk <- merge(data.table(seat = names(truth), declared = unname(truth)), inc27, by = "seat")
+inc_next <- as.data.table(load_seats(PAIR$next_seats, "nsw"))[, .(seat, incumbent)]
+chk <- merge(data.table(seat = names(truth), declared = unname(truth)), inc_next, by = "seat")
 chk[, `:=`(declared = coal(declared), incumbent = coal(incumbent))]
 disagree <- chk[declared != incumbent]
-cat(sprintf("BT2  cross-check against the 2027 incumbent: %d of %d differ
+cat(sprintf("BT2  cross-check against the %d incumbent file: %d of %d differ
 ",
-            nrow(disagree), nrow(chk)))
+            PAIR$next_seats, nrow(disagree), nrow(chk)))
 if (nrow(disagree)) {
   print(disagree)
   cat("BT2  differences are expected where a by-election has since changed hands;
 ")
-  cat("BT2  the DECLARED 2023 result is truth and all 93 seats are scored.
+  cat("BT2  the DECLARED result is truth and all 93 seats are scored.
 ")
 }
 keep <- names(truth)
@@ -332,14 +377,14 @@ shares <- mat
 # SA before adoption.
 ELASTIC   <- as.numeric(Sys.getenv("AUSPOL_ELASTIC_OVER", "0"))
 ELASTIC_D <- as.numeric(Sys.getenv("AUSPOL_ELASTIC_FALL", "2"))
-DEV_SLOPE <- dev_slopes_for(union(parties, names(state23)))
+DEV_SLOPE <- dev_slopes_for(union(parties, names(state_tgt)))
 # ARM C: slopes conditional on whether the SAME candidate is standing again.
 # A single per-class slope averages two populations that behave nothing alike --
 # IND 0.907 when the person returns against 0.326 when they do not -- so it is
 # wrong for every individual seat. Off unless AUSPOL_DEV_SLOPE_MODE=conditional.
 .cond <- Sys.getenv("AUSPOL_DEV_SLOPE_MODE", "") %in% c("conditional", "screened")
 .screened <- identical(Sys.getenv("AUSPOL_DEV_SLOPE_MODE", ""), "screened")
-.returns <- if (.cond) candidate_returns("nsw2019", "nsw2023") else NULL
+.returns <- if (.cond) candidate_returns(PRV, TGT) else NULL
 if (.cond) cat(sprintf("BN1c conditional slopes ON: %d of %d seat-classes have the same candidate returning
 ",
                        sum(.returns$same), nrow(.returns)))
@@ -368,7 +413,7 @@ if (identical(Sys.getenv("AUSPOL_MP_SLOPE", "0"), "1")) {
   if (!file.exists(.mpf))
     stop("AUSPOL_MP_SLOPE=1 needs ", .mpf, " -- run scripts/fit_mp_slope.R")
   .mpt <- data.table::fread(.mpf, showProgress = FALSE)
-  .tgt <- "nsw2023"                       # copied to a differently-named local: a bare
+  .tgt <- TGT                       # copied to a differently-named local: a bare
   .row <- .mpt[.mpt$target == .tgt & is.finite(.mpt$member), ]  # `target` inside
   if (!nrow(.row))                                              # `[` would bind
     stop("no leave-one-out MP slopes for ", .tgt, " in ", .mpf) # to the column
@@ -394,7 +439,7 @@ cat(sprintf("BT1m  MP tier: %s
 # corpus (McBride, MacKillop, LNP 62.3% -> IND 14.8%) shows it can badly
 # overestimate a defector who loses the party's machine, not just his own
 # vote. This is what makes the base itself carry their real prior vote.
-.own_prev <- if (.cond) tryCatch(personal_prior_vote("nsw2019", "nsw2023", major_discount = .defect), error = function(e) { cat(sprintf("BT1p! personal_prior_vote() FAILED; class-level bases kept and NO transfer removed: %s\n", conditionMessage(e))); NULL }) else NULL
+.own_prev <- if (.cond) tryCatch(personal_prior_vote(PRV, TGT, major_discount = .defect), error = function(e) { cat(sprintf("BT1p! personal_prior_vote() FAILED; class-level bases kept and NO transfer removed: %s\n", conditionMessage(e))); NULL }) else NULL
 mat <- remove_transferred_votes(mat, .own_prev)  # the vote moves with the person; see personal_prior_vote()
 .tr <- attr(mat, "transfers"); if (!is.null(.tr)) cat(sprintf("TR1  transfers moved with the person: %d applied%s\n", .tr$applied, if (length(.tr$skipped)) paste0("; SKIPPED ", length(.tr$skipped), ": ", paste(utils::head(.tr$skipped, 5), collapse = ", ")) else ""))
 .own_x <- function(p, seats, x) {
@@ -412,7 +457,7 @@ mat <- remove_transferred_votes(mat, .own_prev)  # the vote moves with the perso
 # identifies that rare group (709 governed-silent candidates across five
 # elections, zero winners) and protects anyone it permits by leaving them on
 # uniform swing instead. See screened_slopes() and prereg-salience-screen.md.
-.permit <- if (.screened) salience_permit_for("nsw2023", "nsw2019", "nsw") else NULL
+.permit <- if (.screened) salience_permit_for(TGT, PRV, "nsw") else NULL
 cat(sprintf("BN1d  dev slopes: %s%s
 ",
             if (all(DEV_SLOPE == 1)) "all 1.000 (uniform swing)" else
@@ -422,8 +467,8 @@ cat(sprintf("BN1d  dev slopes: %s%s
                      paste(attr(DEV_SLOPE, "absent"), collapse=",")) else ""))
 pinned <- matrix(FALSE, nrow(mat), ncol(mat), dimnames = dimnames(mat))
 for (p in parties) {
-  if (!p %in% names(state23)) next
-  d_state <- state23[[p]] - state19[[p]]
+  if (!p %in% names(state_tgt)) next
+  d_state <- state_tgt[[p]] - state_prev[[p]]
   sl <- if (.screened) {
     pv <- .permit[.permit$party == p, ]
     lut <- stats::setNames(as.logical(pv$permit), pv$seat)
@@ -431,12 +476,12 @@ for (p in parties) {
     screened_slopes(p, rownames(mat), .returns, pm, same_mp = .MP_SLOPE)
   } else if (.cond) conditional_slopes(p, rownames(mat), .returns, same_mp = .MP_SLOPE) else DEV_SLOPE[[p]]
   x_p <- .own_x(p, rownames(mat), mat[, p])
-  val <- dev_slope(x_p, state19[[p]], state23[[p]], sl)
-  if (ELASTIC > 0 && d_state < -ELASTIC_D && state19[[p]] > 0) {
-    over <- x_p / state19[[p]]
+  val <- dev_slope(x_p, state_prev[[p]], state_tgt[[p]], sl)
+  if (ELASTIC > 0 && d_state < -ELASTIC_D && state_prev[[p]] > 0) {
+    over <- x_p / state_prev[[p]]
     hit <- is.finite(over) & over > ELASTIC
     if (any(hit)) {
-      val[hit] <- pmax(0, x_p[hit] * state23[[p]] / state19[[p]])
+      val[hit] <- pmax(0, x_p[hit] * state_tgt[[p]] / state_prev[[p]])
       pinned[hit, p] <- TRUE
     }
   }
@@ -476,16 +521,16 @@ if (ELASTIC > 0 && any(pinned)) {
 # (Dubbo's IND prior, 28.4%, is above the 15% governed threshold), which
 # removed that accidental damping and pushed the wrong call to 93.6%.
 #
-# fp23 is this harness's analogue of fed's `fb`: the TARGET election's own
+# fp_tgt is this harness's analogue of fed's `fb`: the TARGET election's own
 # first preferences, read only to answer "did anyone stand", not for vote share.
 if ("IND" %in% colnames(shares)) {
-  ind_seats <- fp23[party == "IND" & votes > 0, unique(seat)]
+  ind_seats <- fp_tgt[party == "IND" & votes > 0, unique(seat)]
   no_ind <- setdiff(rownames(shares), ind_seats)
   zeroed <- no_ind[shares[no_ind, "IND"] > 0]
   shares[no_ind, "IND"] <- 0
   if (length(zeroed)) {
-    cat(sprintf("BT0  nsw2023: zeroed IND in %d seat(s) with no independent nominated: %s\n",
-                length(zeroed), paste(sort(zeroed), collapse = ", ")))
+    cat(sprintf("BT0  %s: zeroed IND in %d seat(s) with no independent nominated: %s\n",
+                TGT, length(zeroed), paste(sort(zeroed), collapse = ", ")))
   }
   shares <- 100 * shares / rowSums(shares)
 }
@@ -508,7 +553,7 @@ if (PORT) {
   # post-redistribution ones, so five do not match. Those get an adjustment of
   # ZERO rather than being dropped -- dropping them would change which seats the
   # two arms are scored on and make the comparison meaningless.
-  sa <- as.data.table(load_seats(2023, "nsw"))
+  sa <- as.data.table(load_seats(TO, "nsw"))
   idx <- match(rownames(shares), sa$seat)
   adj <- rep(0, nrow(shares))
   adj[!is.na(idx)] <- seat_swing_adjustment(sa[idx[!is.na(idx)]])
@@ -533,7 +578,7 @@ if (PORT) {
 ")
 }
 
-sp <- seat_swing_spread(seats, unname(state23[["ALP"]] - state19[["ALP"]]))
+sp <- seat_swing_spread(seats, unname(state_tgt[["ALP"]] - state_prev[["ALP"]]))
 cat(sprintf("\nBT3  seat spread: within %.2f, between %.2f\n", sp$sd_within, sp$sd_between))
 
 set.seed(SEED)
@@ -563,11 +608,11 @@ if (identical(Sys.getenv("AUSPOL_SALIENCE_SURGE_V2", "0"), "1")) {
     list(election = "fed2019", prev = "fed2016", region = "fed"),
     list(election = "fed2022", prev = "fed2019", region = "fed"),
     list(election = "vic2022", prev = "vic2018", region = "vic"),
-    list(election = "nsw2023", prev = "nsw2019", region = "nsw"),
+    list(election = TGT, prev = PRV, region = "nsw"),
     list(election = "sa2026",  prev = "sa2022",  region = "sa"),
     list(election = "wa2008",  prev = "wa2005",  region = "wa"))
-  train_pairs <- Filter(function(p) p$election != "nsw2023", v2_pairs)
-  hz <- tryCatch(surge_hazard_for("nsw2023", "nsw2019", "nsw", train_pairs),
+  train_pairs <- Filter(function(p) p$election != TGT, v2_pairs)
+  hz <- tryCatch(surge_hazard_for(TGT, PRV, "nsw", train_pairs),
                  error = function(e) { cat(sprintf("BN0v! surge-v2 failed: %s\n", conditionMessage(e))); NULL })
   if (!is.null(hz)) {
     sn <- rownames(shares)
@@ -600,8 +645,8 @@ if (identical(Sys.getenv("AUSPOL_SALIENCE_SURGE_V2", "0"), "1")) {
       cat(sprintf("SC1  surge hazard x%.1f: mean %.4f, max %.4f, seats at the cap %d\n",
                   .surge_scale, mean(surge_arg), max(surge_arg), sum(surge_arg >= 1)))
     }
-    cat(sprintf("BN0v nsw2023: surge-v2 hazard for %d of %d seats (%d absent -> 0) | mean %.4f | mu %.2f sd %.2f | lambda %.1f | train winners %d\n",
-                length(sn) - miss, length(sn), miss, mean(surge_arg),
+    cat(sprintf("BN0v %s: surge-v2 hazard for %d of %d seats (%d absent -> 0) | mean %.4f | mu %.2f sd %.2f | lambda %.1f | train winners %d\n",
+                TGT, length(sn) - miss, length(sn), miss, mean(surge_arg),
                 surge_mu_arg, surge_sd_arg, hz$lambda, hz$n_train_winners))
   }
 }
@@ -648,7 +693,7 @@ cat(sprintf("BT4  winner accuracy: %d of %d (%.1f%%)\n",
             100 * mean(res$pred == res$actual)))
 cat(sprintf("BT5  Brier (on the party that won): %.4f\n", mean((1 - res$p)^2)))
 eps <- 1e-6
-.rr <- seat_share_rmse(shares, fp23)  # the second metric: point-estimate seat-share RMSE vs actual
+.rr <- seat_share_rmse(shares, fp_tgt)  # the second metric: point-estimate seat-share RMSE vs actual
 cat(sprintf("BT5r  seat-share RMSE %.3f | MAE %.3f | by class %s | %d seats%s\n", .rr$rmse, .rr$mae,
             paste(sprintf("%s=%.2f", names(.rr$by_class), .rr$by_class), collapse = " "),
             .rr$n_seats, if (.rr$n_dropped) sprintf(" (%d unmatched dropped)", .rr$n_dropped) else ""))
@@ -691,9 +736,9 @@ cat(sprintf("BT8  independents won %d of %d scored seats; we gave them a mean %.
             sum(res$actual == "IND"), nrow(res),
             mean(res[actual == "IND", p])))
 
-fwrite(res[order(seat)], file.path("output", sprintf("backtest-nsw2023%s.csv", CAL_TAG)))
-fwrite(data.table(pair = "nsw2023", as.data.table(sim$totals)), file.path("output", sprintf("backtest-nsw2023-totals%s.csv", CAL_TAG)))
+fwrite(res[order(seat)], file.path("output", sprintf("backtest-%s%s.csv", TGT, CAL_TAG)))
+fwrite(data.table(pair = TGT, as.data.table(sim$totals)), file.path("output", sprintf("backtest-%s-totals%s.csv", TGT, CAL_TAG)))
 # NAME THE FILE ACTUALLY WRITTEN, not the untagged name. Same fix as in
 # backtest_candidate_sa.R: a hardcoded filename in the log defeats the tag that
 # exists to stop an arm overwriting the baseline it is compared against.
-cat(sprintf("\nWrote output/backtest-nsw2023%s.csv and its totals\n", CAL_TAG))
+cat(sprintf("\nWrote output/backtest-%s%s.csv and its totals\n", TGT, CAL_TAG))

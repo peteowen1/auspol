@@ -1,5 +1,54 @@
 # auspol — work queue
 
+## SESSION 2026-09-07: New South Wales 2019 scored, and four findings
+
+**Coverage is now 20 pairs and 1,884 seat-elections**, up from 19 and 1,791.
+Pooled seat log loss **0.3507**, Brier 0.0952, accuracy 86.9%. All six harnesses
+were re-run the same day, so every row of that table describes one model.
+Full write-up: `docs/reviews/nsw2019-and-seat-turnover-2026-09-07.md`.
+
+`scripts/pool_backtests.R` is new and produces the pooled table on demand. It
+prints each source file's timestamp and code tag beside its numbers, so a stale
+row shows up in the output instead of having to be remembered.
+
+nsw2019 scores 92.5% accuracy, Brier 0.0695, log loss 0.3966, RMSE 5.552. The
+NSW harness now takes `AUSPOL_NSW_PAIR` (2019 or 2023, default 2023); the 2023
+pair reproduces its previous output byte-for-byte, which is what accepted the
+refactor.
+
+### Open, in the order I would do them
+
+1. **Seats that changed hands between elections are nearly invisible.**
+   19 of 893, and the damage is concentrated: Orange and Wagga Wagga in nsw2019
+   score 5.705 against 0.280 elsewhere, Morwell 2.175 against 0.224. Both NSW
+   seats were won at by-elections. Worth about **0.007 of pooled log loss**,
+   roughly 2%. The field that fixes it is already loaded — `load_seats()`
+   returns Orange as Shooters-held — and is known before polling day, so it is
+   leakage-free. Targeted fix, so the named seats are the primary metric and the
+   election-wide number is a do-no-harm guard.
+2. **The statewide covariance is fitted in sample and on ten of twenty pairs.**
+   `scripts/estimate_statewide_cov.R` builds one matrix from a hardcoded list
+   and every harness reads it, including when scoring a pair inside the fit.
+   Missing: qld2024, all seven WA pairs, nsw2019. Fix is leave-one-election-out
+   plus widening, in one change, and it moves the published model.
+3. **Western Australia has no surge-v2 hazard at all.** The other five harnesses
+   do. A published switch a harness cannot honour is the failure recorded in
+   `CLAUDE.md` for the missing SA `shrink`, and its numbers describe a different
+   model from the rest of the table.
+4. **Four elections still unscored** — vic2010, qld2017, sa2018, fed2004 as a
+   scored target. Parsers are the remaining work; the sources were located.
+
+### Closed this session
+
+- Queensland's surge training list had `sa2026` replaced by `qld2024` in the
+  copy that created the harness, so it trained without the four One Nation
+  winners. Fixed; effect is **neutral** (log loss 0.3350 either way).
+- Adding nsw2019 to the leave-one-out slope panel moved the fitted `also_ran`
+  slopes by up to 0.092 and changed no harness output at all, because only
+  `member` is consumed and nsw2019 contributes no returning members. `also_ran`
+  is read by nothing outside its own fitting script.
+
+
 ## SESSION 2026-09-05/06: the AEF gap closed, and the reason was a cap
 
 **fed2025 seat log loss 0.3663 -> 0.2886 against AE Forecasts' 0.3025.** Ahead

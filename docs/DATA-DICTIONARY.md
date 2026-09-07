@@ -1,6 +1,6 @@
 # Data dictionary
 
-**Generated 2026-09-06 by `scripts/build_data_dictionary.R`. Do not hand-edit.**
+**Generated 2026-09-07 by `scripts/build_data_dictionary.R`. Do not hand-edit.**
 
 Companion to `docs/DATA-REGISTRY.md`. The registry answers *do we have this
 file*; this answers *do we have this field*. Four wrong "we don't have it"
@@ -12,10 +12,10 @@ column does not exist.**
 
 | file | rows | columns |
 |---|---:|---|
-| `aec-fed-firstprefs.csv` | 5,702 | `seat`, `party`, `votes`, `election` |
-| `aec-fed-tcp.csv` | 2,104 | `election`, `seat`, `party`, `votes` |
-| `aec-fed-transfers.csv` | 15,816 | `election`, `seat`, `round`, `from`, `to`, `votes` |
-| `aec-fed-winners.csv` | 1,052 | `election`, `seat`, `winner` |
+| `aec-fed-firstprefs.csv` | 6,570 | `seat`, `party`, `votes`, `election` |
+| `aec-fed-tcp.csv` | 2,404 | `election`, `seat`, `party`, `votes` |
+| `aec-fed-transfers.csv` | 18,226 | `election`, `seat`, `round`, `from`, `to`, `votes` |
+| `aec-fed-winners.csv` | 1,202 | `election`, `seat`, `winner` |
 | `ecq-2020-qld-firstprefs.csv` | 545 | `seat`, `party`, `votes` |
 | `ecq-2024-qld-firstprefs.csv` | 507 | `seat`, `party`, `votes` |
 | `ecq-qld-transfers.csv` | 2,739 | `election`, `seat`, `round`, `from`, `to`, `votes`, `to_n` |
@@ -28,10 +28,11 @@ column does not exist.**
 | `fed-swing-transposed.csv` | 870 | `seat`, `fed_swing`, `booths`, `votes`, `region`, `cycle`, `fed` |
 | `federal-transposed-to-state.csv` | 3,565 | `seat`, `party`, `votes`, `pct`, `region`, `cycle`, `fed_election` |
 | `MANIFEST.csv` | 5 | `source`, `dataset`, `url`, `rows`, `fetched_at` |
+| `nswec-2015-nsw-firstprefs.csv` | 504 | `seat`, `party`, `votes` |
 | `nswec-2019-nsw-firstprefs.csv` | 467 | `seat`, `party`, `votes` |
 | `nswec-2023-nsw-firstprefs.csv` | 473 | `seat`, `party`, `votes` |
-| `nswec-nsw-transfers.csv` | 2,721 | `election`, `seat`, `round`, `from`, `to`, `votes` |
-| `nswec-nsw-winners.csv` | 186 | `election`, `seat`, `code`, `winner` |
+| `nswec-nsw-transfers.csv` | 3,935 | `election`, `seat`, `round`, `from`, `to`, `votes` |
+| `nswec-nsw-winners.csv` | 279 | `election`, `seat`, `code`, `winner` |
 | `vec-2014-vic-firstprefs.csv` | 430 | `seat`, `party`, `votes` |
 | `vec-2014-vic-transfers.csv` | 767 | `election`, `seat`, `round`, `from`, `to`, `votes` |
 | `vec-2014-vic-winners.csv` | 88 | `seat`, `winner` |
@@ -61,19 +62,19 @@ The originals, before any aggregation. **This is where dropped columns live.**
 
 | file | rows | columns |
 |---|---:|---|
+| `fed2004-dop.csv` | 29,057 | `StateAb`, `DivisionID`, `DivisionNm`, `CountNumber`, `BallotPosition`, `CandidateID`, `Surname`, `GivenNm`, `PartyAb`, `PartyNm`, `SittingMemberFl`, `CalculationType`, `CalculationValue` |
+| `fed2004-firstprefs.csv` | 1,242 | `StateAb`, `DivisionID`, `DivisionNm`, `CandidateID`, `Surname`, `GivenNm`, `BallotPosition`, `SittingMemberFl`, `PartyAb`, `PartyNm`, `OrdinaryVotes`, `AbsentVotes`, `ProvisionalVotes`, `PrePollVotes`, `PostalVotes`, `TotalVotes`, `Swing` |
+| `fed2004-tcp.csv` | 301 | `StateAb`, `DivisionID`, `DivisionNm`, `CandidateID`, `Surname`, `GivenNm`, `BallotPosition`, `SittingMemberFl`, `PartyAb`, `PartyNm`, `OrdinaryVotes`, `AbsentVotes`, `ProvisionalVotes`, `PrePollVotes`, `PostalVotes`, `TotalVotes`, `Swing` |
 | `fed2007-dop.csv` | 26,873 | `StateAb`, `DivisionID`, `DivisionNm`, `CountNumber`, `BallotPosition`, `CandidateID`, `Surname`, `GivenNm`, `PartyAb`, `PartyNm`, `Elected`, `HistoricElected`, `CalculationType`, `CalculationValue` |
 | `fed2007-firstprefs.csv` | 1,205 | `StateAb`, `DivisionID`, `DivisionNm`, `CandidateID`, `Surname`, `GivenNm`, `BallotPosition`, `Elected`, `HistoricElected`, `PartyAb`, `PartyNm`, `OrdinaryVotes`, `AbsentVotes`, `ProvisionalVotes`, `PrePollVotes`, `PostalVotes`, `TotalVotes`, `Swing` |
+| `fed2007-tcp.csv` | 301 | `StateAb`, `DivisionID`, `DivisionNm`, `CandidateID`, `Surname`, `GivenNm`, `BallotPosition`, `Elected`, `HistoricElected`, `PartyAb`, `PartyNm`, `OrdinaryVotes`, `AbsentVotes`, `ProvisionalVotes`, `PrePollVotes`, `PostalVotes`, `TotalVotes`, `Swing` |
 | `fed2010-dop.csv` | 17,433 | `StateAb`, `DivisionID`, `DivisionNm`, `CountNumber`, `BallotPosition`, `CandidateID`, `Surname`, `GivenNm`, `PartyAb`, `PartyNm`, `Elected`, `HistoricElected`, `CalculationType`, `CalculationValue` |
 | `fed2010-firstprefs.csv` | 1,000 | `StateAb`, `DivisionID`, `DivisionNm`, `CandidateID`, `Surname`, `GivenNm`, `BallotPosition`, `Elected`, `HistoricElected`, `PartyAb`, `PartyNm`, `OrdinaryVotes`, `AbsentVotes`, `ProvisionalVotes`, `PrePollVotes`, `PostalVotes`, `TotalVotes`, `Swing` |
+| `fed2010-tcp.csv` | 301 | `StateAb`, `DivisionID`, `DivisionNm`, `CandidateID`, `Surname`, `GivenNm`, `BallotPosition`, `Elected`, `HistoricElected`, `PartyAb`, `PartyNm`, `OrdinaryVotes`, `AbsentVotes`, `ProvisionalVotes`, `PrePollVotes`, `PostalVotes`, `TotalVotes`, `Swing` |
 | `fed2013-dop.csv` | 35,065 | `StateAb`, `DivisionID`, `DivisionNm`, `CountNumber`, `BallotPosition`, `CandidateID`, `Surname`, `GivenNm`, `PartyAb`, `PartyNm`, `Elected`, `HistoricElected`, `CalculationType`, `CalculationValue` |
 | `fed2013-firstprefs.csv` | 1,339 | `StateAb`, `DivisionID`, `DivisionNm`, `CandidateID`, `Surname`, `GivenNm`, `BallotPosition`, `Elected`, `HistoricElected`, `PartyAb`, `PartyNm`, `OrdinaryVotes`, `AbsentVotes`, `ProvisionalVotes`, `PrePollVotes`, `PostalVotes`, `TotalVotes`, `Swing` |
-| `fed2016-dop.csv` | 24,369 | `StateAb`, `DivisionID`, `DivisionNm`, `CountNumber`, `BallotPosition`, `CandidateID`, `Surname`, `GivenNm`, `PartyAb`, `PartyNm`, `Elected`, `HistoricElected`, `CalculationType`, `CalculationValue` |
-| `fed2016-firstprefs.csv` | 1,145 | `StateAb`, `DivisionID`, `DivisionNm`, `CandidateID`, `Surname`, `GivenNm`, `BallotPosition`, `Elected`, `HistoricElected`, `PartyAb`, `PartyNm`, `OrdinaryVotes`, `AbsentVotes`, `ProvisionalVotes`, `PrePollVotes`, `PostalVotes`, `TotalVotes`, `Swing` |
-| `fed2019-dop.csv` | 26,633 | `StateAb`, `DivisionID`, `DivisionNm`, `CountNumber`, `BallotPosition`, `CandidateID`, `Surname`, `GivenNm`, `PartyAb`, `PartyNm`, `Elected`, `HistoricElected`, `CalculationType`, `CalculationValue` |
-| `fed2019-firstprefs.csv` | 1,208 | `StateAb`, `DivisionID`, `DivisionNm`, `CandidateID`, `Surname`, `GivenNm`, `BallotPosition`, `Elected`, `HistoricElected`, `PartyAb`, `PartyNm`, `OrdinaryVotes`, `AbsentVotes`, `ProvisionalVotes`, `PrePollVotes`, `PostalVotes`, `TotalVotes`, `Swing` |
-| `fed2022-dop.csv` | 35,097 | `StateAb`, `DivisionID`, `DivisionNm`, `CountNumber`, `BallotPosition`, `CandidateID`, `Surname`, `GivenNm`, `PartyAb`, `PartyNm`, `Elected`, `HistoricElected`, `CalculationType`, `CalculationValue` |
-| `fed2022-firstprefs.csv` | 1,355 | `StateAb`, `DivisionID`, `DivisionNm`, `CandidateID`, `Surname`, `GivenNm`, `BallotPosition`, `Elected`, `HistoricElected`, `PartyAb`, `PartyNm`, `OrdinaryVotes`, `AbsentVotes`, `ProvisionalVotes`, `PrePollVotes`, `PostalVotes`, `TotalVotes`, `Swing` |
-| _(+2 more of the same shape)_ | | |
+| `fed2013-tcp.csv` | 301 | `StateAb`, `DivisionID`, `DivisionNm`, `CandidateID`, `Surname`, `GivenNm`, `BallotPosition`, `Elected`, `HistoricElected`, `PartyAb`, `PartyNm`, `OrdinaryVotes`, `AbsentVotes`, `ProvisionalVotes`, `PrePollVotes`, `PostalVotes`, `TotalVotes`, `Swing` |
+| _(+12 more of the same shape)_ | | |
 
 ### nsw/
 
@@ -137,7 +138,7 @@ processed extract. Every one is recoverable without a new fetch.
 | `cal-vic-m2.5.csv` | 166 | `seat`, `actual`, `prob`, `pred`, `pred_p`, `pair` |
 | `cal-vic-m4.0.csv` | 166 | `seat`, `actual`, `prob`, `pred`, `pred_p`, `pair` |
 | `calibration-arms.csv` | 10 | `pair`, `n`, `mult`, `logB`, `acc`, `T`, `logA`, `logC`, `B_vs_A`, `B_vs_C` |
-| `candidacies.csv` | 14,953 | `election`, `region`, `year`, `seat`, `name`, `surname`, `given`, `party`, `party_raw`, `party_ab`, `state`, `votes`, `pcv`, `elected`, `historic_elected`, `breakout`, `swing`, `ballot_position`, `ordinary`, `absent`, `provisional`, `prepoll`, `postal`, `ballot_order`, `tot` |
+| `candidacies.csv` | 16,574 | `election`, `region`, `year`, `seat`, `name`, `surname`, `given`, `party`, `party_raw`, `party_ab`, `state`, `votes`, `pcv`, `elected`, `historic_elected`, `breakout`, `swing`, `ballot_position`, `ordinary`, `absent`, `provisional`, `prepoll`, `postal`, `ballot_order`, `tot` |
 | `candidate-contests.csv` | 14,953 | `election`, `region`, `party`, `candidate_id`, `seat`, `pcv`, `surname`, `given`, `expected_pcv`, `performance_vs_expected` |
 | `candidate-ids.csv` | 10,763 | `V1`, `V2`, `V3`, `V4`, `V5`, `V6`, `V7`, `V8`, `V9`, `V10`, `V11`, `V12` |
 | `candidate-review.csv` | 190 | `V1`, `V2`, `V3`, `V4`, `V5`, `V6`, `V7`, `V8`, `V9`, `V10`, `V11`, `V12`, `V13`, `V14`, `V15` |
@@ -148,5 +149,5 @@ processed extract. Every one is recoverable without a new fetch.
 | `demographic-swing-loo.csv` | 12 | `party`, `pair`, `n`, `mae_uniform`, `mae_demog`, `improvement` |
 | `dev-slopes-heldout.csv` | 42 | `party`, `slope`, `se`, `n`, `pairs`, `held_out`, `t_vs_1` |
 
-_(601 `backtest-*.csv` arm outputs omitted; they share one shape.)_
+_(971 `backtest-*.csv` arm outputs omitted; they share one shape.)_
 

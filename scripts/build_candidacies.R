@@ -218,7 +218,13 @@ for (E in sa_files) {
 # are dropped before aggregating -- leaving them in would inflate every seat's
 # denominator and understate every share.
 NSWD <- file.path("external", "reference", "nsw")
-nsw_files <- list(list(year = 2019, f = "sge2019-la-final-votes.xlsx"),
+# 2015 added 2026-09-07 from the NSWEC's archived tally room
+# (pastvtr.elections.nsw.gov.au/SGE2015/data/la/state/), which serves the same
+# workbook in the same shape -- two sheets, Pivot and Data, verified identical
+# in structure to 2019 before wiring. It makes nsw2019 a forecastable target
+# rather than only a prior.
+nsw_files <- list(list(year = 2015, f = "sge2015-la-final-votes.xlsx"),
+                  list(year = 2019, f = "sge2019-la-final-votes.xlsx"),
                   list(year = 2023, f = "sge2023-la-final-votes.xlsx"))
 for (E in nsw_files) {
   fp <- file.path(NSWD, E$f)

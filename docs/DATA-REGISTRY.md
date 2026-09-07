@@ -28,10 +28,11 @@ cannot pass as a working one.
 | `fed-swing-transposed.csv` | 43 KB |
 | `federal-transposed-to-state.csv` | 178 KB |
 | `MANIFEST.csv` | 787 B |
+| `nswec-2015-nsw-firstprefs.csv` | 10 KB |
 | `nswec-2019-nsw-firstprefs.csv` | 10 KB |
 | `nswec-2023-nsw-firstprefs.csv` | 10 KB |
-| `nswec-nsw-transfers.csv` | 90 KB |
-| `nswec-nsw-winners.csv` | 5 KB |
+| `nswec-nsw-transfers.csv` | 131 KB |
+| `nswec-nsw-winners.csv` | 7 KB |
 | `vec-2014-vic-firstprefs.csv` | 9 KB |
 | `vec-2014-vic-transfers.csv` | 27 KB |
 | `vec-2014-vic-winners.csv` | 1 KB |
@@ -59,8 +60,8 @@ cannot pass as a working one.
   - e.g. booths/fed2016-NSW.csv, booths/fed2019-SA.csv, booths/fed2019-VIC.csv, booths/fed2022-NSW.csv
 - **vec/** -- 326 files, 6.7 MB
   - e.g. 2014/albertparkdistrict.html, 2014/altonadistrict.html, 2014/bassdistrict.html, 2014/bayswaterdistrict.html
-- **nsw/** -- 198 files, 7.7 MB
-  - e.g. dop-sample.html, dop/index-SG1901.html, dop/index-SG2301.html, dop/SG1901-albury.html
+- **nsw/** -- 292 files, 9.8 MB
+  - e.g. dop-sample.html, dop/index-SG1901.html, dop/index-SG2301.html, dop/index-SGE2015.html
 - **ecsa/** -- 9 files, 2.9 MB. **1 ZERO-BYTE: ha-2018-03-17.json**
   - e.g. ha-2018-03-17.json, ha-2022-03-19.json, ha-2026-03-21.json, ha-change-2022-03-19.json
 - **ecq/** -- 7 files, 47.4 MB
@@ -93,6 +94,7 @@ NAMES live -- the per-seat results files carry `seat, party, votes` only.
 | fed2019 | 151 | 1054 | 98 | 21 |
 | fed2022 | 151 | 1202 | 98 | 33 |
 | fed2025 | 150 | 1122 | 129 | 35 |
+| nsw2015 | 93 | 540 | 59 | 11 |
 | nsw2019 | 93 | 568 | 52 | 15 |
 | nsw2023 | 93 | 562 | 68 | 19 |
 | qld2020 | 93 | 597 | 69 | 13 |
@@ -111,7 +113,7 @@ NAMES live -- the per-seat results files carry `seat, party, votes` only.
 | wa2021 | 59 | 463 | 17 | 0 |
 | wa2025 | 59 | 398 | 29 | 6 |
 
-**Total: 16034 candidacies, 25 elections, 311 non-major breakouts.**
+**Total: 16574 candidacies, 26 elections, 322 non-major breakouts.**
 
 ## Known gaps
 
