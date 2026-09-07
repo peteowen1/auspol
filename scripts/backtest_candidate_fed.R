@@ -426,6 +426,8 @@ if (nzchar(.want)) {
   if (!length(PAIRS)) stop("AUSPOL_FED_PAIRS matched no pair")
 }
 for (K in PAIRS) {
+  # Arm B default: NULL per pair, so it cannot leak from one pair to the next.
+  SD_OVR <- NULL
 
   # The correlation matrix for THIS pair. Printed with its source, because a
   # silent fallback is the failure this repo keeps finding: a run using a
@@ -1410,6 +1412,15 @@ for (X in out_all) {
       .exp_mode <- suppressWarnings(as.integer(Sys.getenv("AUSPOL_SALIENCE_EXPECTED", "0")))
       if (is.na(.exp_mode)) .exp_mode <- 0L
       X$shares <- blend_salience_shares(X$shares, hz, surge_mu_arg[1], expected = .exp_mode > 0L)
+      # ARM B, docs/plans/prereg-salience-expected-and-variance-2026-09-07.md.
+      # level_sd is binomial-shaped and gives a major on 30% MORE uncertainty
+      # than a top-percentile insurgent on 13.9%; the salience band measures
+      # the latter at 12.6. exp_sd was computed and read by nothing.
+      if (identical(Sys.getenv("AUSPOL_SALIENCE_EXP_SD", "0"), "1")) {
+        SD_OVR <- salience_sd_matrix(X$shares, hz)
+        cat(sprintf("BF0d fed%d salience sd override: %d of %d cells set\n",
+                    X$K$to, attr(SD_OVR, "n_set"), length(SD_OVR)))
+      }
       cat(sprintf("BF0v %s: point estimate blended toward surge_mu for %d (seat,party) cells\n",
                   target_el, sum(hz$seat_party_hazard$p_hat > 0.001)))
       if (identical(Sys.getenv("AUSPOL_DUMP_SHARES", "0"), "1")) {
@@ -1434,7 +1445,7 @@ for (X in out_all) {
                 X$K$to, length(sn) - miss, length(sn), miss, SURGE_H, mean(surge_arg)))
   }
   set.seed(SEED)
-  sim <- simulate_seat_contests(level_sd = .level_sd, level_mult = .lm(X$shares), X$shares, X$fm, party_sd = psd, seat_sd = sd_w * SEAT_SD_MULT,
+  sim <- simulate_seat_contests(level_sd = .level_sd, sd_override = SD_OVR, level_mult = .lm(X$shares), X$shares, X$fm, party_sd = psd, seat_sd = sd_w * SEAT_SD_MULT,
                                 n_sims = N_SIMS, smooth = SMOOTH, seed = SEED,
                                 shrink = shrink_arg, surge_h = surge_arg, surge_party = surge_party_arg,
                                 surge_from_zero = identical(Sys.getenv("AUSPOL_SURGE_FROM_ZERO", "0"), "1"),

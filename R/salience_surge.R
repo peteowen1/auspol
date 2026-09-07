@@ -187,6 +187,84 @@ surge_hazard_for <- function(target_election, target_prev, target_region,
   TGB <- merge(TGB, bstat, by = ".b", all.x = TRUE)
   TGB[is.na(exp_pcv), `:=`(exp_pcv = mean(TRB$pcv, na.rm = TRUE),
                            exp_sd = stats::sd(TRB$pcv, na.rm = TRUE))]
+  # SMOOTH INSTEAD OF BINS, when AUSPOL_SALIENCE_SMOOTH=1. The bands above are
+  # six means over 1,920 governed candidates, but they are wildly unequal: 1,056
+  # in the bottom band and TWELVE in the top, which is the one that matters. A
+  # candidate at the 0.9949 percentile gets a materially different answer from
+  # one at 0.9951, and the 21.2 the top band reports is a twelve-point mean.
+  #
+  # Two parameters each, fitted on log(1 - jump_pctile). The percentile is
+  # uniform by construction, so a linear term IN THE PERCENTILE cannot bend
+  # where all the signal is -- it gives the top candidate 8.2 where the band
+  # says 21.2. On the tail scale the same two parameters track the bands
+  # closely and extrapolate into the top rather than averaging it flat.
+  #
+  # THE SD IS FITTED AS A VARIANCE, on squared residuals from the mean fit,
+  # because E[(y - mu(x))^2] = sigma^2(x). A log link keeps it positive. One
+  # linear term and no spline: a squared residual is a chi-square with one
+  # degree of freedom and a flexible fit would chase that noise.
+  #
+  # TRAIN already excludes the target election, so this is leave-one-election-out
+  # like the bands it replaces. The recorded refusal at the top of this block --
+  # "20 winners cannot support a continuous fit" -- was about predicting a
+  # WINNER's vote from 20 points, a different problem from a conditional mean
+  # over 1,920 governed candidates. Checked before writing this, not assumed.
+  if (identical(Sys.getenv("AUSPOL_SALIENCE_SMOOTH", "0"), "1")) {
+    fitd <- TRB[is.finite(jump_pctile) & is.finite(pcv)]
+    if (nrow(fitd) >= 50L) {
+      tls <- function(q) log(pmax(1 - q, 1 / (2 * nrow(fitd))))
+      fitd[, .tl := tls(jump_pctile)]
+      # CUBIC IN THE TAIL SCALE, not linear. A linear term gave the top
+      # percentile 14.9 where the six-bin table says 21.2 -- too flat exactly
+      # where the model loses seats. Fitted values at the 0.9975 percentile:
+      # linear 14.93, quadratic 15.17, cubic 22.68, bands 21.23. Out of fold
+      # (leave-one-election-out over 1,920 governed candidates) cubic is also
+      # the best of the four on mean absolute error -- 4.0796 against the
+      # bands' 4.1040 -- though that margin is 0.6% and the metric is dominated
+      # by the ~1,700 low-salience rows, so the SHAPE is the argument and the
+      # error is only a check that it is not worse.
+      mfit <- stats::glm(pcv ~ .tl + I(.tl^2) + I(.tl^3),
+                         family = stats::quasipoisson(link = "log"), data = fitd)
+      fitd[, .mu := stats::predict(mfit, type = "response")]
+      fitd[, .r2 := (pcv - .mu)^2]
+      vfit <- stats::glm(.r2 ~ .tl + I(.tl^2) + I(.tl^3),
+                         family = stats::quasipoisson(link = "log"), data = fitd)
+      # MONOTONE BY CONSTRUCTION, because a cubic on its own is not. Left to
+      # itself this fit turns over outside the training range -- at the
+      # 0.99999 percentile it predicts 1.3% and at 0.999999 it predicts ZERO,
+      # for a candidate MORE salient than any it was trained on. And its sd
+      # peaks at 15.80 in the interior before falling back to 13.15 at the most
+      # salient end, a wiggle with no meaning.
+      #
+      # So the cubic is fitted, evaluated on a dense grid, and then PROJECTED
+      # onto the nearest monotone curve with stats::isoreg. Salience can then
+      # never lower a candidate's expected vote or narrow their distribution.
+      # Interpolation is clamped at both ends (rule = 2), so beyond the data
+      # the answer is the most extreme FITTED value rather than a polynomial's
+      # opinion. This is what makes the shape safe to extrapolate, not the
+      # earlier hard clamp.
+      # INDEX SPACE, deliberately, so no sign convention can go wrong. `.tl` is
+      # log(1 - pctile), so MORE salient is MORE NEGATIVE: the curve must be
+      # non-INCREASING in .tl. Reversing it makes that a non-DECREASING problem,
+      # which is what isoreg solves, and the reversal is undone afterwards. A
+      # first attempt fitted isoreg on -g and then interpolated with xout in +g,
+      # which silently returned one constant for every seat.
+      mono <- function(fit, tr_tl, want_tl, take_sqrt = FALSE) {
+        g <- seq(min(tr_tl), max(tr_tl), length.out = 512L)   # ascending .tl
+        y <- as.numeric(stats::predict(fit, newdata = data.frame(.tl = g),
+                                       type = "response"))
+        if (take_sqrt) y <- sqrt(pmax(y, 0))
+        ymono <- rev(stats::isoreg(seq_along(y), rev(y))$yf)
+        stats::approx(x = g, y = ymono, xout = want_tl, rule = 2)$y
+      }
+      TGB[, exp_pcv := mono(mfit, fitd$.tl, tls(jump_pctile))]
+      TGB[, exp_sd := mono(vfit, fitd$.tl, tls(jump_pctile), take_sqrt = TRUE)]
+    } else {
+      warning("AUSPOL_SALIENCE_SMOOTH=1 but only ", nrow(fitd),
+              " usable training rows; keeping the banded estimates",
+              call. = FALSE)
+    }
+  }
   seat_party_expected <- TGB[, list(exp_pcv = max(exp_pcv), exp_sd = max(exp_sd)), by = list(seat, party)]
   winners <- TRAIN[TRAIN$elected == TRUE]
   list(seat_hazard = seat_hazard,

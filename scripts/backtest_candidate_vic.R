@@ -207,7 +207,11 @@ CAL_TAG <- paste0(
   # baseline it exists to be compared against.
   if (identical(Sys.getenv("AUSPOL_FLOW_UNC", "0"), "1")) "-unc" else "", .arm_fingerprint, .code_tag)
 
-SEED <- 42; SMOOTH <- 0.15; eps <- 1e-6
+# READ FROM THE ENVIRONMENT, like the federal harness. AUSPOL_SEED is in
+# scripts/published_flags.R, and until 2026-09-07 this harness hardcoded 42
+# and ignored it -- so a reseed run to measure the noise floor returned
+# byte-identical output, and the only tell was that it was TOO identical.
+SEED <- as.integer(Sys.getenv("AUSPOL_SEED", "42")); SMOOTH <- 0.15; eps <- 1e-6
 P <- election_data_path()
 
 # THREE PAIRS since 2026-09-07. vic2010 became available when the archived VEC

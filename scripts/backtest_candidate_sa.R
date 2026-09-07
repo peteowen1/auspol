@@ -255,7 +255,11 @@ CAL_TAG <- paste0(
   if (identical(Sys.getenv("AUSPOL_WA_DROP_3C", "0"), "1")) "-no3c" else "",
   if (identical(Sys.getenv("AUSPOL_WA_DROP_LNP", "0"), "1")) "-nolnp" else "", .arm_fingerprint, .code_tag)
 
-SEED <- 42; # INSURGENCY SURGE, against docs/plans/prereg-insurgency-surge.md. Wired here on
+# READ FROM THE ENVIRONMENT, like the federal harness. AUSPOL_SEED is in
+# scripts/published_flags.R, and until 2026-09-07 this harness hardcoded 42
+# and ignored it -- so a reseed run to measure the noise floor returned
+# byte-identical output, and the only tell was that it was TOO identical.
+SEED <- as.integer(Sys.getenv("AUSPOL_SEED", "42")); # INSURGENCY SURGE, against docs/plans/prereg-insurgency-surge.md. Wired here on
 # 2026-08-26 after a four-arm comparison produced BYTE-IDENTICAL results for the
 # surge arm and the do-nothing arm in this harness -- the "this input does not
 # matter" signature. It was implemented in seat_sim.R and wired into the federal
@@ -265,6 +269,8 @@ SURGE_H <- as.numeric(Sys.getenv("AUSPOL_SURGE_H", "0"))
 if (SURGE_H > 0)
   cat(sprintf("BS0s surge hazard %.4f, size N(15.6, 6.1), floor 2%%
 ", SURGE_H))
+# Arm B default: NULL, so a bare run is byte-identical.
+SD_OVR <- NULL
 SMOOTH <- 0.15; eps <- 1e-6
 P <- election_data_path()
 FLOW_FROM <- "fed2025"
@@ -686,6 +692,18 @@ if (identical(Sys.getenv("AUSPOL_SALIENCE_SURGE_V2", "0"), "1")) {
     .exp_mode <- suppressWarnings(as.integer(Sys.getenv("AUSPOL_SALIENCE_EXPECTED", "0")))
     if (is.na(.exp_mode)) .exp_mode <- 0L
     shares <- blend_salience_shares(shares, hz, surge_mu_arg[1], expected = .exp_mode > 0L)
+    # ARM B, docs/plans/prereg-salience-expected-and-variance-2026-09-07.md.
+    # level_sd is binomial-shaped and gives a major on 30% MORE uncertainty
+    # than a top-percentile insurgent on 13.9%; the salience band has
+    # measured the latter at 12.6. exp_sd has existed since
+    # surge_hazard_for() was written and was read by nothing. n_set is
+    # printed because an override filling no cells is an arm that looks
+    # like it ran and did not.
+    if (identical(Sys.getenv("AUSPOL_SALIENCE_EXP_SD", "0"), "1")) {
+      SD_OVR <- salience_sd_matrix(shares, hz)
+      cat(sprintf("BS0d salience sd override: %d of %d cells set\n",
+                  attr(SD_OVR, "n_set"), length(SD_OVR)))
+    }
     cat(sprintf("BS0b salience point estimate applied to %d (seat,party) cells\n", attr(shares, "cells")))
     if (identical(Sys.getenv("AUSPOL_SURGE_RECIPIENT", "1"), "1") && !is.null(hz$seat_recipient)) {
       # THE SURGE GOES TO THE CLASS THE HAZARD WAS FITTED FOR (prereg-surge-recipient-2026-09-06.md).
@@ -709,7 +727,7 @@ if (identical(Sys.getenv("AUSPOL_SALIENCE_SURGE_V2", "0"), "1")) {
                 surge_mu_arg, surge_sd_arg, hz$lambda, hz$n_train_winners))
   }
 }
-sim <- simulate_seat_contests(level_sd = .level_sd, level_mult = .lm(shares), shares, fm, party_sd = psd, seat_sd = sp$sd_within * SEAT_SD_MULT,
+sim <- simulate_seat_contests(level_sd = .level_sd, sd_override = SD_OVR, level_mult = .lm(shares), shares, fm, party_sd = psd, seat_sd = sp$sd_within * SEAT_SD_MULT,
                               n_sims = N_SIMS, smooth = SMOOTH, seed = SEED,
                               shrink = SHRINK, party_cor = PARTY_COR,
                               fallback_smooth = FB_SMOOTH, flow_sd = FLOW_SD,
