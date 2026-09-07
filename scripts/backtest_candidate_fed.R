@@ -1264,7 +1264,18 @@ for (K in PAIRS) {
   out_all[[length(out_all) + 1L]] <- list(K = K, shares = shares, fm = fm,
                                           truth = truth, keep = keep,
                                           parties = parties, sd_w = sd_w,
-                                          sw_draws = sw_draws, fb = fb)
+                                          sw_draws = sw_draws, fb = fb,
+                                          # Carried per pair -- see the FED-2
+                                          # finding in docs/plans/
+                                          # harness-unification-2026-09-08.md.
+                                          # The bare REENTRY_CELLS variable is
+                                          # the LAST projection-loop iteration's
+                                          # value by the time the simulation
+                                          # loop below reads it; every pair but
+                                          # the last would widen the wrong
+                                          # pair's re-entry cells, silently,
+                                          # with a plausible non-zero count.
+                                          REENTRY_CELLS = REENTRY_CELLS)
 }
 
 # THE FALLBACK IS TAKEN OVER EVERY PAIR, NOT JUST THE ONES IN THIS RUN.
@@ -1290,6 +1301,16 @@ cat(sprintf("\nBF2  seat_sd per pair: %s | fallback (median over all %d pairs) %
 res_all <- list(); tot_all <- list(); all_probs <- list()
 for (X in out_all) {
   K <- X$K
+  # FED-1, docs/plans/harness-unification-2026-09-08.md. SD_OVR's ONLY other
+  # reset (line ~430) is in the PROJECTION loop above, which finishes before
+  # this loop starts -- so without this line, whatever the arm-H combine below
+  # left in SD_OVR at the end of the PREVIOUS pair's iteration is still there
+  # when this pair's iteration begins, and combine_sd_override() either stops
+  # on a dimension mismatch (pairs have different seat counts) or silently
+  # combines a shape that happens to match. Salience's own block further down
+  # reassigns SD_OVR fresh when it runs; this reset is what makes that safe to
+  # rely on even when salience does NOT run for a given configuration.
+  SD_OVR <- NULL
   sd_w <- if (is.finite(X$sd_w)) X$sd_w else fallback
   # STATEWIDE UNCERTAINTY, MEASURED. All four harnesses hardcoded 1.5 with no
   # derivation. The realised statewide first-preference error over 139
@@ -1475,7 +1496,7 @@ for (X in out_all) {
   if (.reentry_sd_k > 0) {
     # n_set is read BEFORE combine_sd_override(), which builds a fresh matrix
     # and does not carry attributes from either input forward.
-    .re_sd <- reentry_sd_matrix(X$shares, REENTRY_CELLS, .level_sd, .lm(X$shares), .reentry_sd_k)
+    .re_sd <- reentry_sd_matrix(X$shares, X$REENTRY_CELLS, .level_sd, .lm(X$shares), .reentry_sd_k)
     cat(sprintf("RH1  re-entry sd widening ON (k=%.1f): %d cell(s)
 ",
                 .reentry_sd_k, attr(.re_sd, "n_set")))

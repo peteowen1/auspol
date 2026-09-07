@@ -612,6 +612,16 @@ combine_sd_override <- function(a, b) {
     stop("combine_sd_override: a and b must be the same shape; got ",
          paste(dim(a), collapse = "x"), " and ", paste(dim(b), collapse = "x"))
   }
+  # SAME SHAPE IS NOT SAME SEATS. Two elections can carry the same seat count
+  # by coincidence (federal 2022 and 2025 are both 150), and a caller that
+  # left a PREVIOUS pair's matrix sitting in `a` (docs/plans/
+  # harness-unification-2026-09-08.md, "FED-1") would otherwise pass the
+  # shape check and combine two matrices whose rows name different seats.
+  if (!identical(dimnames(a), dimnames(b))) {
+    stop("combine_sd_override: a and b are the same shape but do not name ",
+         "the same seats/parties -- one of them is very likely stale from a ",
+         "previous pair or fold rather than built for this one")
+  }
   out <- matrix(pmax(as.vector(a), as.vector(b), na.rm = TRUE), nrow(a), ncol(a),
                dimnames = dimnames(a))
   out

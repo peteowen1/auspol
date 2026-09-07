@@ -96,3 +96,12 @@ test_that("combine_sd_override refuses mismatched shapes rather than recycling",
   b <- matrix(1, 3, 2)
   expect_error(combine_sd_override(a, b), "same shape")
 })
+
+test_that("combine_sd_override refuses same-shape matrices for DIFFERENT seats", {
+  # docs/plans/harness-unification-2026-09-08.md, "FED-1": two elections can
+  # share a seat count by coincidence, and a stale matrix left over from a
+  # previous pair must not silently combine just because the dimensions agree.
+  a <- matrix(1, 2, 2, dimnames = list(c("s1", "s2"), c("p1", "p2")))
+  b <- matrix(1, 2, 2, dimnames = list(c("s3", "s4"), c("p1", "p2")))
+  expect_error(combine_sd_override(a, b), "do not name the same seats")
+})
