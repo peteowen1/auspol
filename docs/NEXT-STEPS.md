@@ -107,6 +107,19 @@ the hazard's calibration** (ridge lambda 20 on ~13 winners), which is the
 next pre-registration — a calibration map from hazard rank to probability,
 or a lower lambda, scored the same way.
 
+## Standing item found 2026-09-07: package functions read BARE RELATIVE paths
+
+`surge_hazard_for()` and `surge_training_population()` read
+`"output/candidacies.csv"` relative to the working directory. That is the
+package root for everything in `scripts/`, and `tests/testthat` for the
+suite -- so two tests of those functions guarded on `file.exists("output/...")`
+and skipped **unconditionally, on every machine, including the ones that have
+the corpus**. Found by review 2026-09-07; the tests now resolve from the root
+(`skip_if_no_salience_corpus()`) and run their bodies there
+(`with_package_root()`), both in `tests/testthat/helper-anchor.R`. The
+underlying smell is unfixed: package functions should resolve through
+`getOption("auspol.root")` the way `election_data_path()` does.
+
 ## SESSION 2026-09-07: a sixth harness, two refusals, and the salience gap named
 
 **Queensland exists and beats the benchmark.** `backtest_candidate_qld.R`

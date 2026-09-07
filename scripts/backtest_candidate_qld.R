@@ -175,13 +175,6 @@ N_SIMS <- as.integer(Sys.getenv("AUSPOL_N_SIMS", "20000"))
 CAL_TAG <- paste0(
   if (as.numeric(Sys.getenv("AUSPOL_SURGE_H", "0")) > 0) "-surge" else "",
   if (SEAT_SD_MULT != 1) sprintf("-m%s", format(SEAT_SD_MULT, nsmall = 1)) else "",
-  # The concentration arm MUST be in the tag. Without it the arm overwrites
-  # backtest-sa.csv and a before/after comparison compares an arm with itself
-  # -- the baseline-clobbering that has already produced four byte-identical
-  # comparisons in this repo.
-  if (as.numeric(Sys.getenv("AUSPOL_ONP_CONC_SD", "0")) > 0)
-    sprintf("-conc%s", sub("[.]", "", format(as.numeric(Sys.getenv("AUSPOL_ONP_CONC_SD")), nsmall = 2)))
-  else "",
   if (as.numeric(Sys.getenv("AUSPOL_SHRINK", "0")) != 0)
     sprintf("-sh%s", sub("0[.]", "", format(as.numeric(Sys.getenv("AUSPOL_SHRINK")), nsmall = 2)))
   else "",
@@ -206,16 +199,7 @@ CAL_TAG <- paste0(
   else "",
   if (N_SIMS != 20000L) sprintf("-n%d", N_SIMS) else "",
   if (!is.null(.level_sd)) sprintf("-lv%s", gsub("[.]", "", paste(format(.level_sd, nsmall=2), collapse="_"))) else "",
-  if (identical(Sys.getenv("AUSPOL_QLD_FLOWS", "0"), "1")) "-qld" else "",
-  if (identical(Sys.getenv("AUSPOL_WA_FLOWS", "0"), "1")) "-wa" else "",
-  # The control arm of refusal W1 runs with the flows switched ON and a cutoff
-  # that admits nothing. Without this it would write to the same "-wa" name as
-  # the real arm and overwrite it -- the baseline-clobbering that has already
-  # produced four byte-identical comparisons here.
-  if (nzchar(Sys.getenv("AUSPOL_WA_CUTOFF", "")) ||
-      nzchar(Sys.getenv("AUSPOL_QLD_CUTOFF", ""))) "-cut" else "",
-  if (identical(Sys.getenv("AUSPOL_WA_DROP_3C", "0"), "1")) "-no3c" else "",
-  if (identical(Sys.getenv("AUSPOL_WA_DROP_LNP", "0"), "1")) "-nolnp" else "", .arm_fingerprint, .code_tag)
+  .arm_fingerprint, .code_tag)
 
 SEED <- 42; # INSURGENCY SURGE, against docs/plans/prereg-insurgency-surge.md. Wired here on
 # 2026-08-26 after a four-arm comparison produced BYTE-IDENTICAL results for the
@@ -251,8 +235,29 @@ stopifnot(nrow(tx) > 100L, all(tx$election == FLOW_FROM))
 # NOT pooled with the external sources: tx already IS Queensland's own
 # transfers, and AUSPOL_QLD_FLOWS=1 (published) would pool qld2020 into
 # itself. The other harnesses pool because they start from federal flows.
-if (identical(Sys.getenv("AUSPOL_QLD_FLOWS", "0"), "1"))
-  cat("BQ1! AUSPOL_QLD_FLOWS is set and IGNORED here: this harness already uses Queensland's own flows\n")
+# SWITCHES THIS HARNESS CANNOT HONOUR. It uses Queensland's own transfers and
+# has no external-flow pooling and no One Nation concentration arm, so these
+# do nothing here. Until 2026-09-07 five of them still altered CAL_TAG, which
+# meant a run with one set wrote a differently-NAMED file that was identical
+# to the baseline -- an arm that looks like it ran and did not, the failure
+# this repo has recorded more than once. They are out of the tag, and setting
+# one now STOPS rather than being quietly ignored.
+.inert <- c("AUSPOL_QLD_FLOWS", "AUSPOL_WA_FLOWS", "AUSPOL_WA_CUTOFF", "AUSPOL_QLD_CUTOFF",
+            "AUSPOL_WA_DROP_3C", "AUSPOL_WA_DROP_LNP", "AUSPOL_ONP_CONC_SD")
+# Compared against the PUBLISHED value, not against "0": the registry itself
+# sets AUSPOL_QLD_FLOWS=1 for every harness, so a bare run must not trip this.
+# Only a value the caller deliberately changed counts.
+.pub <- function(v) if (exists("PUBLISHED_FLAGS") && v %in% names(PUBLISHED_FLAGS)) PUBLISHED_FLAGS[[v]] else "0"
+.set <- .inert[vapply(.inert, function(v) !identical(Sys.getenv(v, ""), .pub(v)) &&
+                        !Sys.getenv(v, "") %in% c("0", ""), logical(1))]
+if (length(.set)) {
+  stop("These switches do nothing in the Queensland harness and would have ",
+       "produced a differently-named file identical to the baseline: ",
+       paste(.set, collapse = ", "),
+       ". It uses Queensland's OWN 2020 transfers (no external pooling) and ",
+       "has no ONP concentration arm. Unset them, or run a harness that ",
+       "implements them.")
+}
 fm <- build_flow_matrix(tx, min_n = 3L)
 cat(sprintf("\nBQ1  flow matrix from %s: %d exclusions\n",
             FLOW_FROM, uniqueN(tx[, paste(seat, round)])))
@@ -399,13 +404,13 @@ if (ELASTIC > 0) {
 # it means the model enters those seats assuming One Nation polls its statewide
 # average there. That is recorded because it is the single biggest source of
 # error here, not because it can be fixed.
-absent22 <- setdiff(names(st_b)[st_b > 1], names(st_a)[st_a > 1])
+absent_prev <- setdiff(names(st_b)[st_b > 1], names(st_a)[st_a > 1])
 zero_base <- sum(mat[, "ONP"] == 0)
 cat(sprintf("BQ1  districts with no 2020 One Nation vote to swing from: %d of %d\n",
             zero_base, nrow(mat)))
-if (length(absent22)) {
-  cat(sprintf("BQ1  parties polling >1%% in 2026 but not 2022: %s\n",
-              paste(absent22, collapse = ", ")))
+if (length(absent_prev)) {
+  cat(sprintf("BQ1  parties polling >1%% in 2024 but not 2020: %s\n",
+              paste(absent_prev, collapse = ", ")))
 }
 # The SA harness's One Nation CONCENTRATION arm is deliberately not ported:
 # it is keyed on `region == "sa"` in federal-transposed-to-state.csv and
@@ -415,30 +420,21 @@ if (length(absent22)) {
 # ZERO IND WHERE NO INDEPENDENT STOOD. Ported from backtest_candidate_fed.R,
 # which got this fix today; this harness never had it.
 #
-# Six Queenslandn seats had an independent in 2022 and none in 2026, and
-# the model swings the departed candidate's vote forward regardless. Frome --
-# renamed Ngadjuri, and one of the four seats One Nation won -- carried a
-# 16.6% independent in 2022 who did not recontest, so roughly 15 points of the
-# seat is assigned to a candidate who does not exist and every real party is
-# dragged down when the seat renormalises.
+# ZERO IND WHERE NOBODY STOOD. Without this the model swings a departed
+# independent's vote forward into a seat where no independent nominated.
 #
-# This is NOMINATION data, not the result: which classes contest a seat is
-# knowable before polling day. There is no pre-election nomination list here,
-# only "IND received a nonzero vote in the target election" as a proxy, so it
-# is the same oracle input this harness already uses for `st_b` -- consistent
-# with the default path, and it is why the federal version is gated OFF under
-# FORECAST_MODE.
+# RESTORED 2026-09-07: a comment cleanup deleted this block, and the only
+# thing that revealed it was Queensland's log loss moving 0.3351 -> 0.3338
+# and its RMSE 3.259 -> 3.511 on a change that touched nothing but comments
+# and a filename tag. A metric that moves when nothing should have is the
+# check; "close enough" would have shipped it.
 if ("IND" %in% colnames(shares)) {
   ind_seats <- fb[party == "IND" & votes > 0, unique(seat)]
   no_ind <- setdiff(rownames(shares), ind_seats)
-  # `> 0` like the other four harnesses, not `> 0.5`. Every seat in `no_ind`
-  # is zeroed on the next line either way; the threshold only decided which
-  # ones the log NAMED, so this harness under-reported its own work -- 22
-  # seats zeroed and fewer listed. Found by the simplification review
-  # 2026-09-06; behaviour unchanged, reporting corrected.
   zeroed <- no_ind[shares[no_ind, "IND"] > 0]
   shares[no_ind, "IND"] <- 0
-  cat(sprintf("BQ1i zeroed IND in %d seat(s) with no independent nominated%s\n",
+  cat(sprintf("BQ1i zeroed IND in %d seat(s) with no independent nominated%s
+",
               length(zeroed),
               if (length(zeroed)) paste0(": ", paste(sort(zeroed), collapse = ", ")) else ""))
 }
@@ -473,20 +469,6 @@ if (ELASTIC > 0 && any(pinned)) {
   shares <- 100 * shares / rowSums(shares)
 }
 
-# FROME WAS RENAMED NGADJURI at the 2025 Queenslandn redistribution, and
-# it is the only name that differs between the two polls. It is MAPPED rather
-# than dropped, which is the opposite of what backtest_candidate_vic.R does with
-# Eureka -- so the reason has to be better than convenience.
-#
-# It is: One Nation WON Ngadjuri. Dropping the seat would remove one of its four
-# wins from a 47-seat test whose entire purpose is scoring how the model handles
-# a One Nation surge, and would do so in the direction that flatters the model.
-# Excluding a seat is not neutral when the exclusion is correlated with the
-# outcome under test.
-#
-# What is NOT verified is whether the boundaries moved materially as well as the
-# name. If they did, this seat carries more error than the rest, and it is named
-# here so nobody has to rediscover which one it is.
 # NO RENAME MAP. Queensland's districts are the same 93 in 2020 and 2024 --
 # the ECQ's 2017 redistribution predates both, and all 93 match by name
 # (asserted below). The SA harness's Frome -> Ngadjuri map is SA's 2025
@@ -498,7 +480,7 @@ truth <- setNames(win$winner, win$seat)[keep]
 N_DISTRICTS <- 93L   # Queensland's Legislative Assembly, unchanged 2020 -> 2024
 if (length(keep) != N_DISTRICTS) {
   stop("Only ", length(keep), " of ", N_DISTRICTS, " districts matched between the 2020 first ",
-       "preferences and the 2024 winners after applying the rename map. ",
+       "preferences and the 2024 winners. ",
        "Unmatched: ",
        paste(setdiff(win$seat, rownames(shares)), collapse = ", "))
 }

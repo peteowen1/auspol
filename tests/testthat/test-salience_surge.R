@@ -28,11 +28,10 @@ test_that("a non-finite p_hat is treated as zero hazard, not propagated", {
 
 test_that("surge_hazard_for names the recipient class per seat", {
   skip_if_not(exists("surge_hazard_for"))
-  skip_if(!file.exists(file.path("output", "salience-v6.csv")) || !file.exists(file.path("output", "candidacies.csv")),
-          "needs the salience corpus")
+  skip_if_no_salience_corpus()
   pairs <- list(list(election = "fed2019", prev = "fed2016", region = "fed"),
                 list(election = "vic2022", prev = "vic2018", region = "vic"))
-  h <- surge_hazard_for("fed2022", "fed2019", "fed", pairs)
+  h <- with_package_root(surge_hazard_for("fed2022", "fed2019", "fed", pairs))
   skip_if(is.null(h), "no hazard for fed2022 here")
   expect_true(all(c("seat", "party") %in% names(h$seat_recipient)))
   expect_equal(nrow(h$seat_recipient), nrow(h$seat_hazard))
@@ -40,19 +39,21 @@ test_that("surge_hazard_for names the recipient class per seat", {
 })
 
 test_that("surge_hazard_for returns a per-band expected vote fitted without the target election", {
-  skip_if(!file.exists(file.path("output", "salience-v6.csv")) || !file.exists(file.path("output", "candidacies.csv")),
-          "needs the salience corpus")
+  skip_if_no_salience_corpus()
   pairs <- list(list(election = "fed2019", prev = "fed2016", region = "fed"),
                 list(election = "vic2022", prev = "vic2018", region = "vic"),
                 list(election = "nsw2023", prev = "nsw2019", region = "nsw"))
-  h <- surge_hazard_for("fed2022", "fed2019", "fed", pairs)
+  h <- with_package_root(surge_hazard_for("fed2022", "fed2019", "fed", pairs))
   skip_if(is.null(h), "no hazard for fed2022 here")
   e <- h$seat_party_expected
   expect_true(all(c("seat", "party", "exp_pcv", "exp_sd") %in% names(e)))
   expect_false(anyNA(e$exp_pcv)); expect_true(all(e$exp_pcv >= 0))
   # The expectation must RISE with salience: the top band beats the bottom.
-  bt <- h$band_table
-  expect_true(bt$exp_pcv[which.max(as.character(bt$.b))] >= min(bt$exp_pcv))
+  # Order by the cut's own factor LEVELS, not by string-max over its labels --
+  # which.max() on a character vector coerces to double, gives all NA, and
+  # returns integer(0), so the comparison was vacuous.
+  bt <- h$band_table[order(as.integer(h$band_table$.b))]
+  expect_gt(bt$exp_pcv[nrow(bt)], bt$exp_pcv[1L])
   # And it must be an expectation over winners AND losers, so below surge_mu.
   expect_true(max(e$exp_pcv) < h$surge_mu)
 })
