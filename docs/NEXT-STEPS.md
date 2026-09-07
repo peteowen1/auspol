@@ -107,6 +107,34 @@ the hazard's calibration** (ridge lambda 20 on ~13 winners), which is the
 next pre-registration — a calibration map from hazard rank to probability,
 or a lower lambda, scored the same way.
 
+## DATA HUNT 2026-09-07: all five missing elections FOUND, one already forecast
+
+Pete's instruction was to take no election as unavailable. None of the five is.
+
+| election | source | status |
+|---|---|---|
+| **fed2004** | AEC, `results.aec.gov.au/12246/**results**/Downloads/` | **DONE.** First preferences, full distribution of preferences and two-candidate file, all fetched and wired in. **fed2007 now forecasts: log loss 0.2858, accuracy 88.6%, our second-best election.** |
+| **nsw2015** | NSWEC archived tally room, `pastvtr.elections.nsw.gov.au/SGE2015/data/la/state/` | Spreadsheet downloaded (1.46 MB), same format as the 2019/2023 files the fetcher already reads, plus a per-district distribution of preferences. Needs the parser wired. |
+| **vic2010** | Wayback Machine, 8 regional `state2010*RegionFPVbyVC.xls` | All 8 recovered (5 MB), first preferences by voting centre covering all 88 districts. The VEC's own links are dead and our fetcher's header said 2010 was unavailable -- it is, from the commission; the archive has it. |
+| **qld2017** | Wikipedia, `Results_of_the_2017_Queensland_state_election` | 93 district tables, exactly the chamber size, with party/candidate/votes/share. The ECQ publishes only two-candidate booth PDFs for 2017 and its data portal starts at 2020. |
+| **sa2018** | Wikipedia, `Results_of_the_2018_South_Australian_state_election_(House_of_Assembly)` | 47 district tables, exactly the chamber size. The ECSA API answers 2018 with an empty body; it holds only 2022 and 2026. |
+
+**The 2004 find is worth naming**: the AEC serves it from `/results/Downloads/`
+where every later election uses `/Website/Downloads/`, and the wrong path
+returns a 404 PAGE rather than an error, so it read as "not published" for a
+year. The 2004 file also has no `Elected` column -- it carries
+`SittingMemberFl`, who held the seat BEFORE -- so the winner is derived from
+the final count and cross-checked against the AEC's own two-candidate file,
+which agreed in all 150 divisions.
+
+**Wikipedia is a secondary source and is treated as one**: any harness built
+on it must verify its statewide totals against the anchor's
+`eventual-results.csv`, which holds qld2017 and sa2018, before the numbers
+are used.
+
+**Next**: parsers for nsw2015, vic2010, qld2017, sa2018, then their pairs.
+That would take coverage from 19 elections to 23.
+
 ## Standing item found 2026-09-07: package functions read BARE RELATIVE paths
 
 `surge_hazard_for()` and `surge_training_population()` read

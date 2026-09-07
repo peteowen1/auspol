@@ -130,7 +130,8 @@ cat(sprintf("LV2  level_mult: %s
 # Polling day for each federal election, which is what decides what a backtest
 # may see. Hand-entered, and the only ones here not covered by the year check
 # in EXTERNAL_FLOWS, so they are asserted against their own keys below.
-FED_DATE <- c("2010"="2010-08-21","2013"="2013-09-07","2016"="2016-07-02",
+FED_DATE <- c("2007"="2007-11-24",
+              "2010"="2010-08-21","2013"="2013-09-07","2016"="2016-07-02",
               "2019"="2019-05-18","2022"="2022-05-21","2025"="2025-05-03")
 stopifnot(names(FED_DATE) == format(as.Date(FED_DATE), "%Y"))
 
@@ -372,6 +373,9 @@ SEED <- as.integer(Sys.getenv("AUSPOL_SEED", "42")); eps <- 1e-6
 P <- election_data_path()
 
 PAIRS <- list(
+  # fed2007 became forecastable on 2026-09-07, when the AEC's 2004 files were
+  # found under a different URL path (see scripts/fetch_preferences_fed.R).
+  list(from = 2004, to = 2007),
   list(from = 2007, to = 2010), list(from = 2010, to = 2013),
   list(from = 2013, to = 2016), list(from = 2016, to = 2019),
   list(from = 2019, to = 2022), list(from = 2022, to = 2025))

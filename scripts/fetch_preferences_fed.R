@@ -34,7 +34,14 @@ RAW <- file.path("external", "reference", "aec")
 OUT <- election_data_path()
 dir.create(RAW, showWarnings = FALSE, recursive = TRUE)
 
+# 2004 SITS UNDER A DIFFERENT PATH. Every election from 2007 on is served from
+# /<id>/Website/Downloads/; 2004 is served from /<id>/results/Downloads/, and
+# probing the Website path returns a 404 page (1,245 bytes) rather than an
+# error, which is why this election read as unavailable for a year. Found
+# 2026-09-07 by probing the path directly after the 2004 Behind The Scenes PDF
+# resolved. The files are the same format, including the Swing column.
 ELECTIONS <- list(
+  list(year = 2004, id = 12246, path = "results"),
   list(year = 2007, id = 13745), list(year = 2010, id = 15508),
   list(year = 2013, id = 17496), list(year = 2016, id = 20499),
   list(year = 2019, id = 24310), list(year = 2022, id = 27966),
@@ -59,10 +66,17 @@ fp_all <- list(); tx_all <- list()
 for (E in ELECTIONS) {
   fpf <- file.path(RAW, sprintf("fed%d-firstprefs.csv", E$year))
   dpf <- file.path(RAW, sprintf("fed%d-dop.csv", E$year))
-  grab(sprintf("https://results.aec.gov.au/%d/Website/Downloads/HouseFirstPrefsByCandidateByVoteTypeDownload-%d.csv",
-               E$id, E$id), fpf)
-  grab(sprintf("https://results.aec.gov.au/%d/Website/Downloads/HouseDopByDivisionDownload-%d.csv",
-               E$id, E$id), dpf)
+  .seg <- if (!is.null(E$path)) E$path else "Website"
+  grab(sprintf("https://results.aec.gov.au/%d/%s/Downloads/HouseFirstPrefsByCandidateByVoteTypeDownload-%d.csv",
+               E$id, .seg, E$id), fpf)
+  grab(sprintf("https://results.aec.gov.au/%d/%s/Downloads/HouseDopByDivisionDownload-%d.csv",
+               E$id, .seg, E$id), dpf)
+  # The two-candidate-preferred file, kept for every election: it is the AEC's
+  # own statement of who finished top two and by how much, and it is what the
+  # derived-winner cross-check for 2004 reads. Cheap, and "capture every field,
+  # decide what is useful later" is the standing rule.
+  grab(sprintf("https://results.aec.gov.au/%d/%s/Downloads/HouseTcpByCandidateByVoteTypeDownload-%d.csv",
+               E$id, .seg, E$id), file.path(RAW, sprintf("fed%d-tcp.csv", E$year)))
 
   fp <- read_aec(fpf); setnames(fp, make.names(names(fp)))
   need <- c("DivisionNm", "PartyNm", "TotalVotes")

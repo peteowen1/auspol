@@ -38,7 +38,10 @@ read_aec <- function(path) {
   fread(path, skip = skip, showProgress = FALSE)
 }
 
-fed_years <- c(2007, 2010, 2013, 2016, 2019, 2022, 2025)
+# 2004 added 2026-09-07: the AEC serves it from a different path, which is why
+# it was missing (see scripts/fetch_preferences_fed.R). It makes fed2007 a
+# forecastable target rather than only a prior.
+fed_years <- c(2004, 2007, 2010, 2013, 2016, 2019, 2022, 2025)
 for (y in fed_years) {
   f <- file.path(AEC, sprintf("fed%d-firstprefs.csv", y))
   if (!file.exists(f)) { cat(sprintf("BC1  fed%d: MISSING %s\n", y, f)); next }
@@ -64,6 +67,34 @@ for (y in fed_years) {
   vt <- intersect(c("OrdinaryVotes", "AbsentVotes", "ProvisionalVotes",
                     "PrePollVotes", "PostalVotes"), names(d))
   for (v in vt) d[, (v) := as.numeric(get(v))]
+  # 2004 carries SittingMemberFl instead of Elected (see
+  # scripts/parse_transfers_fed.R). The winners for that year come from the
+  # commission's own winners file, which the transfer parser writes, rather
+  # than being re-derived here -- one derivation, in one place.
+  if (!"Elected" %in% names(d)) {
+    # The AEC's own two-candidate-preferred file names the winning CANDIDATE,
+    # so the winner is read from it rather than guessed. aec-fed-winners.csv
+    # carries the winning party CLASS, not the candidate, and cannot serve.
+    tcpf <- file.path("external", "reference", "aec", sprintf("fed%d-tcp.csv", y))
+    if (!file.exists(tcpf)) {
+      stop("Federal ", y, " has no Elected column and ", tcpf, " is absent. ",
+           "Run scripts/fetch_preferences_fed.R first.")
+    }
+    tcp <- data.table::fread(tcpf, skip = 1L, showProgress = FALSE)
+    data.table::setnames(tcp, make.names(names(tcp)))
+    tcp[, tv := suppressWarnings(as.numeric(TotalVotes))]
+    tw <- tcp[, .SD[which.max(tv)], by = DivisionNm][, .(DivisionNm, .wid = CandidateID)]
+    d <- merge(d, tw, by = "DivisionNm", all.x = TRUE)
+    d[, Elected := ifelse(!is.na(.wid) & CandidateID == .wid, "Y", "N")][, .wid := NULL]
+    n_win <- uniqueN(d[Elected == "Y", DivisionNm])
+    cat(sprintf("BC0  fed%d: `elected` DERIVED from the AEC two-candidate file (this year has no Elected column); %d of %d divisions have a winner
+",
+                y, n_win, uniqueN(d$DivisionNm)))
+    if (n_win != uniqueN(d$DivisionNm)) {
+      stop("fed", y, ": only ", n_win, " of ", uniqueN(d$DivisionNm),
+           " divisions matched a two-candidate winner.")
+    }
+  }
   d <- d[, c(list(votes = sum(as.numeric(TotalVotes)),
                   elected = any(toupper(as.character(Elected)) %in% c("Y", "TRUE")),
                   historic_elected = if ("HistoricElected" %in% names(.SD))

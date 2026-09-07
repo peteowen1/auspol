@@ -1,6 +1,6 @@
 # Data registry
 
-**Generated 2026-09-06 by `scripts/build_data_registry.R`. Do not hand-edit** --
+**Generated 2026-09-07 by `scripts/build_data_registry.R`. Do not hand-edit** --
 rerun the script instead. Regenerate it whenever you add or fetch data.
 
 This file exists because the same data has been declared missing three
@@ -12,10 +12,10 @@ cannot pass as a working one.
 
 | file | size |
 |---|---:|
-| `aec-fed-firstprefs.csv` | 153 KB |
-| `aec-fed-tcp.csv` | 56 KB |
-| `aec-fed-transfers.csv` | 531 KB |
-| `aec-fed-winners.csv` | 22 KB |
+| `aec-fed-firstprefs.csv` | 176 KB |
+| `aec-fed-tcp.csv` | 63 KB |
+| `aec-fed-transfers.csv` | 610 KB |
+| `aec-fed-winners.csv` | 25 KB |
 | `ecq-2020-qld-firstprefs.csv` | 11 KB |
 | `ecq-2024-qld-firstprefs.csv` | 10 KB |
 | `ecq-qld-transfers.csv` | 97 KB |
@@ -55,11 +55,11 @@ cannot pass as a working one.
 
 ## Raw commission downloads (`external/reference/`)
 
-- **aec/** -- 48 files, 50.3 MB
+- **aec/** -- 58 files, 53.1 MB
   - e.g. booths/fed2016-NSW.csv, booths/fed2019-SA.csv, booths/fed2019-VIC.csv, booths/fed2022-NSW.csv
-- **vec/** -- 318 files, 1.9 MB
+- **vec/** -- 326 files, 6.7 MB
   - e.g. 2014/albertparkdistrict.html, 2014/altonadistrict.html, 2014/bassdistrict.html, 2014/bayswaterdistrict.html
-- **nsw/** -- 197 files, 6.3 MB
+- **nsw/** -- 198 files, 7.7 MB
   - e.g. dop-sample.html, dop/index-SG1901.html, dop/index-SG2301.html, dop/SG1901-albury.html
 - **ecsa/** -- 9 files, 2.9 MB. **1 ZERO-BYTE: ha-2018-03-17.json**
   - e.g. ha-2018-03-17.json, ha-2022-03-19.json, ha-2026-03-21.json, ha-change-2022-03-19.json
@@ -85,6 +85,7 @@ NAMES live -- the per-seat results files carry `seat, party, votes` only.
 
 | election | seats | candidates | IND | non-major breakouts |
 |---|---:|---:|---:|---:|
+| fed2004 | 150 | 1081 | 99 | 8 |
 | fed2007 | 150 | 1050 | 102 | 6 |
 | fed2010 | 150 | 844 | 82 | 12 |
 | fed2013 | 150 | 1184 | 74 | 9 |
@@ -110,7 +111,7 @@ NAMES live -- the per-seat results files carry `seat, party, votes` only.
 | wa2021 | 59 | 463 | 17 | 0 |
 | wa2025 | 59 | 398 | 29 | 6 |
 
-**Total: 14953 candidacies, 24 elections, 303 non-major breakouts.**
+**Total: 16034 candidacies, 25 elections, 311 non-major breakouts.**
 
 ## Known gaps
 
