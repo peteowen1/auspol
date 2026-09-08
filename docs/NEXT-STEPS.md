@@ -1,5 +1,62 @@
 # auspol — work queue
 
+## MORNING READ, 2026-09-09 overnight session — start here
+
+Pete asked overnight for fed2022's teal seats to be actually fixed, not
+diagnosed again, and to not be interrupted until it was done. Two real
+fixes shipped, both tested and committed to `dev` (nothing merged to
+`main` — that still needs the review gate, per the autonomous-session rule).
+
+**1. fed2022's teal seats — genuinely better, not solved.** Shipped arm C
+(salience point estimate + variance,
+`docs/plans/prereg-salience-expected-and-variance-2026-09-07.md`, written
+2026-09-07, never run until tonight). Kooyong 5.3%→36.1%, Goldstein
+2.0%→12.2%, all six named seats move the right direction, several
+substantially. **This is now the DEFAULT behaviour of a bare
+`backtest_candidate_fed.R`/`_nsw.R` run** — verified end-to-end, no flags
+needed. Full write-up, including the honest caveat that this is a scope
+decision made after seeing results (not a clean pre-registered rule):
+[reviews/salience-arm-federal-nsw-scoped-2026-09-09.md](reviews/salience-arm-federal-nsw-scoped-2026-09-09.md).
+
+**Applying the same arm to Queensland/SA/Victoria was REFUSED** — SA
+(+0.025) and Victoria (+0.012) both breach the pre-registration's own 0.01
+per-jurisdiction bound, and Victoria is the live target election, so it
+was NOT added to `published_flags.R` — `fit_seats_full.R` (the actual
+published forecast) and QLD/SA/VIC/WA are completely untouched. This
+matters: the fix is real, scoped, and doesn't touch the live forecast.
+
+**Still true**: fed2022 remains under-called even with this on (Kooyong
+36.1% is still not over 50%). Improved, not solved. The underlying
+cross-election salience-anchor problem
+(`reviews/wave-term-blocked-2026-09-07.md`) is untouched — this works
+entirely on the within-election ranking, which was already known-good.
+
+**2. Personal-vote-priority fix, implemented** (yesterday's
+pre-registration, `plans/prereg-reentry-personal-vote-priority-2026-09-08.md`).
+All six harnesses now protect a `personal_prior_vote()`-informed cell
+(Kiama's Gareth Ward, Pilbara's Larry Graham) from being overwritten by the
+generic re-entry GLM. Verified firing correctly. **Dormant** — only matters
+when `AUSPOL_REENTRY` (arm D) is on, and arm D stays unshipped, so this
+changes nothing in current published output. Ready for whenever arm D's
+ship/refuse call is made.
+
+**3. The Waite/SA2026 pattern (class-level vote-share swung forward after
+the specific candidates who earned it left) — investigated, NOT fixed.**
+Ran out of time. Real, well-evidenced (see the AEF-miss investigation
+above), and a partial version already exists (`WA0`/`BW0`-style "zero IND
+if nobody stood" in fed/sa/wa, missing from nsw/vic) but doesn't cover
+Waite's shape (a *weaker* candidate stands, not zero). Next session.
+
+**Verification tonight**: full test suite (827/827, 8 new tests),
+`R CMD check --as-cran` (0 errors, 0 warnings, same 4 pre-existing NSE
+notes), and an end-to-end bare-invocation run confirming the shipped
+default reproduces the measured numbers exactly.
+
+**Not done tonight, queued**: the review gate for everything on `dev`
+(50+ commits since PR #29 merged) before any PR to `main`; a proper
+pre-registration for the federal+NSW scope decision, since tonight's was
+made under time pressure after seeing results.
+
 ## SESSION 2026-09-07: New South Wales 2019 scored, and four findings
 
 **Coverage is now 22 pairs and 2,050 seat-elections**, up from 19 and 1,791.
