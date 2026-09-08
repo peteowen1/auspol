@@ -27,6 +27,19 @@
 
 options(auspol.root = normalizePath("."))
 suppressMessages(devtools::load_all(quiet = TRUE))
+# NSW-SCOPED DEFAULT, not a published_flags.R change. Arm C (salience point
+# estimate + variance, docs/plans/prereg-salience-expected-and-variance-
+# 2026-09-07.md) was measured 2026-09-09 across all five harnesses with a
+# salience corpus: federal and NSW both improve, Queensland/SA/Victoria all
+# get WORSE, SA and Victoria beyond the pre-registration's own 0.01
+# per-jurisdiction refusal bound. Victoria is the LIVE TARGET, so this is
+# NOT set in published_flags.R. Defaults ON here and in
+# backtest_candidate_fed.R only, before published_flags.R's own registry
+# runs, so an explicit caller override (either direction) still works.
+# docs/reviews/salience-arm-federal-nsw-scoped-2026-09-09.md has the full
+# jurisdiction table.
+if (!nzchar(Sys.getenv("AUSPOL_SALIENCE_EXPECTED", ""))) Sys.setenv(AUSPOL_SALIENCE_EXPECTED = "1")
+if (!nzchar(Sys.getenv("AUSPOL_SALIENCE_EXP_SD", ""))) Sys.setenv(AUSPOL_SALIENCE_EXP_SD = "1")
 source("scripts/harness_defaults.R")  # published defaults for every unset AUSPOL_* switch; see that file
 suppressMessages(library(data.table))
 
@@ -527,11 +540,18 @@ for (p in parties) {
 # The prediction is a target-election share; filling it into the prior-election
 # matrix let dev_slope() swing it a second time.
 if (!is.null(REENTRY_CELLS) && nrow(REENTRY_CELLS)) {
-  .ri <- cbind(match(REENTRY_CELLS$seat,  rownames(shares)),
-               match(REENTRY_CELLS$party, colnames(shares)))
+  # PERSONAL-VOTE PRIORITY, docs/plans/prereg-reentry-personal-vote-priority-
+  # 2026-09-08.md. Kiama (Gareth Ward, LNP -> IND) is the case this exists
+  # for: .own_prev's identity-matched defector floor must not be overwritten
+  # by the generic re-entry GLM, which has no idea who the candidate is.
+  .rc <- protect_personal_vote_cells(REENTRY_CELLS, .own_prev)
+  .ri <- cbind(match(.rc$seat,  rownames(shares)),
+               match(.rc$party, colnames(shares)))
   .rk <- stats::complete.cases(.ri)
-  shares[.ri[.rk, , drop = FALSE]] <- REENTRY_CELLS$value[.rk]
-  cat(sprintf("BT1r  re-entry applied post-swing to %d cell(s)\n", sum(.rk)))
+  shares[.ri[.rk, , drop = FALSE]] <- .rc$value[.rk]
+  .protected <- nrow(REENTRY_CELLS) - nrow(.rc)
+  cat(sprintf("BT1r  re-entry applied post-swing to %d cell(s)%s\n", sum(.rk),
+              if (.protected) sprintf(" | %d protected by own_prev", .protected) else ""))
 }
 if (ELASTIC > 0) {
   cat(sprintf("NB1e elasticity ON (over %.2f, fall %.1f): %d cells\n",

@@ -59,6 +59,24 @@
 options(auspol.root = normalizePath("."))
 suppressMessages(devtools::load_all(quiet = TRUE))
 .harness_forecast_mode <- TRUE
+# FEDERAL-SCOPED DEFAULT, not a published_flags.R change. Arm C (salience
+# point estimate + variance, docs/plans/prereg-salience-expected-and-
+# variance-2026-09-07.md) was measured 2026-09-09 across all five harnesses
+# with a salience corpus: federal and NSW both improve, Queensland/SA/
+# Victoria all get WORSE, SA and Victoria beyond the pre-registration's own
+# 0.01 per-jurisdiction refusal bound. Victoria is the LIVE TARGET, so this
+# is NOT set in published_flags.R -- that would move the actual published
+# forecast in the wrong direction. It defaults ON here and in
+# backtest_candidate_nsw.R only, before published_flags.R's own registry
+# runs, so an explicit caller override (either direction) still works and
+# every other harness (including fit_seats_full.R) is untouched.
+# fed2022 specifically: the six 2022 teal seats moved from 2-6% win
+# probability to 3-36% -- still under-called on average, but no longer the
+# "essentially impossible" range that was the actual complaint.
+# docs/reviews/salience-arm-federal-nsw-scoped-2026-09-09.md has the full
+# jurisdiction table.
+if (!nzchar(Sys.getenv("AUSPOL_SALIENCE_EXPECTED", ""))) Sys.setenv(AUSPOL_SALIENCE_EXPECTED = "1")
+if (!nzchar(Sys.getenv("AUSPOL_SALIENCE_EXP_SD", ""))) Sys.setenv(AUSPOL_SALIENCE_EXP_SD = "1")
 source("scripts/harness_defaults.R")  # published defaults for every unset AUSPOL_* switch; see that file
 suppressMessages(library(data.table))
 
@@ -1203,11 +1221,18 @@ for (K in PAIRS) {
   # The prediction is a target-election share; filling it into the prior-election
   # matrix let dev_slope() swing it a second time.
   if (!is.null(REENTRY_CELLS) && nrow(REENTRY_CELLS)) {
-    .ri <- cbind(match(REENTRY_CELLS$seat,  rownames(shares)),
-                 match(REENTRY_CELLS$party, colnames(shares)))
+    # PERSONAL-VOTE PRIORITY, docs/plans/prereg-reentry-personal-vote-priority-
+    # 2026-09-08.md. A cell .own_prev already informed with an identity-matched
+    # defector floor (Kiama's Gareth Ward) must not be overwritten by the
+    # generic re-entry GLM, which has no idea who the candidate is.
+    .rc <- protect_personal_vote_cells(REENTRY_CELLS, .own_prev)
+    .ri <- cbind(match(.rc$seat,  rownames(shares)),
+                 match(.rc$party, colnames(shares)))
     .rk <- stats::complete.cases(.ri)
-    shares[.ri[.rk, , drop = FALSE]] <- REENTRY_CELLS$value[.rk]
-    cat(sprintf("BF1r  re-entry applied post-swing to %d cell(s)\n", sum(.rk)))
+    shares[.ri[.rk, , drop = FALSE]] <- .rc$value[.rk]
+    .protected <- nrow(REENTRY_CELLS) - nrow(.rc)
+    cat(sprintf("BF1r  re-entry applied post-swing to %d cell(s)%s\n", sum(.rk),
+                if (.protected) sprintf(" | %d protected by own_prev", .protected) else ""))
   }
   # Zero IND wherever nobody actually stood at the TARGET election. This is
   # nomination data, not the result being predicted: which classes contest a
