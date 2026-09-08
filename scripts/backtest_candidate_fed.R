@@ -1331,7 +1331,7 @@ if (!is.finite(fallback)) {
 cat(sprintf("\nBF2  seat_sd per pair: %s | fallback (median over all %d pairs) %.3f\n",
             paste(sprintf("%.2f", seat_sds), collapse = ", "), length(PAIRS_ALL), fallback))
 
-res_all <- list(); tot_all <- list(); all_probs <- list()
+res_all <- list(); tot_all <- list(); all_probs <- list(); share_detail <- list()
 for (X in out_all) {
   K <- X$K
   # FED-1, docs/plans/harness-unification-2026-09-08.md. SD_OVR's ONLY other
@@ -1570,6 +1570,12 @@ for (X in out_all) {
   # handed, against the shares actually polled. Pete's objective (2026-09-06)
   # is overall seat log loss AND this, across every election forecast.
   .rr <- seat_share_rmse(X$shares[X$keep, , drop = FALSE], X$fb)
+  # PERSIST THE POINT ESTIMATE, not just the aggregate RMSE. Until 2026-09-09
+  # "our predicted primary for seat X" required re-running the harness with a
+  # diagnostic dump; .rr$detail (seat, party, pred_share, actual_share) was
+  # already computed here every run and thrown away.
+  share_detail[[length(share_detail) + 1L]] <-
+    data.table::as.data.table(.rr$detail)[, pair := sprintf("fed%d", K$to)]
   cat(sprintf("BF3r fed%d: seat-share RMSE %.3f | MAE %.3f | by class %s | %d seats%s\n",
               K$to, .rr$rmse, .rr$mae,
               paste(sprintf("%s=%.2f", names(.rr$by_class), .rr$by_class), collapse = " "),
@@ -1600,4 +1606,5 @@ print(per)
 fwrite(R, file.path("output", sprintf("backtest-fed%s.csv", CAL_TAG)))
 fwrite(rbindlist(tot_all, fill = TRUE), file.path("output", sprintf("backtest-fed-totals%s.csv", CAL_TAG)))
 fwrite(rbindlist(all_probs), file.path("output", sprintf("backtest-fed-allprobs%s.csv", CAL_TAG)))
+fwrite(rbindlist(share_detail, fill = TRUE), file.path("output", sprintf("backtest-fed-sharedetail%s.csv", CAL_TAG)))
 cat(sprintf("BF5  wrote output/backtest-fed%s.csv and its totals\n", CAL_TAG))

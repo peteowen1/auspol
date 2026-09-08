@@ -213,7 +213,7 @@ if ("wa2001" %in% TX$election)
   cat("BW0  note: wa2001 transfers ARE present in the file\n") else
   cat("BW0  note: wa2001 transfers are ABSENT (excluded upstream); that pair uses pooled flows\n")
 
-res_all <- list()
+res_all <- list(); share_detail <- list()
 prev_spread <- NA_real_
 
 for (K in PAIRS) {
@@ -526,6 +526,8 @@ for (K in PAIRS) {
   sl <- if (length(unique(z$y)) > 1)
     coef(glm(y ~ lo, data = z, family = binomial()))[["lo"]] else NA_real_
   .rr <- seat_share_rmse(shares, fb)  # the second metric: point-estimate seat-share RMSE vs actual
+  share_detail[[length(share_detail) + 1L]] <-
+    data.table::as.data.table(.rr$detail)[, pair := el_to]
   cat(sprintf("BW2r  seat-share RMSE %.3f | MAE %.3f | by class %s | %d seats%s\n", .rr$rmse, .rr$mae,
               paste(sprintf("%s=%.2f", names(.rr$by_class), .rr$by_class), collapse = " "),
               .rr$n_seats, if (.rr$n_dropped) sprintf(" (%d unmatched dropped)", .rr$n_dropped) else ""))
@@ -547,6 +549,7 @@ for (K in PAIRS) {
 if (!length(res_all)) stop("no WA pair produced a result")
 R <- rbindlist(res_all)
 fwrite(R, file.path("output", sprintf("backtest-wa%s.csv", CAL_TAG)))
+fwrite(rbindlist(share_detail, fill = TRUE), file.path("output", sprintf("backtest-wa-sharedetail%s.csv", CAL_TAG)))
 cat(sprintf("\nBW4  pooled over %d seat-elections across %d pairs: accuracy %.1f%%, Brier %.4f\n",
             nrow(R), uniqueN(R$pair), 100 * mean(R$pred == R$actual),
             mean((1 - R$prob)^2)))

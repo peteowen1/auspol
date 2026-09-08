@@ -849,6 +849,7 @@ if (any(abs(chk$s - 1) > 0.01)) {
 }
 cat("BQ5  every seat's probabilities sum to 1 (max deviation checked)\n")
 fwrite(data.table(pair = TGT, as.data.table(sim$totals)), file.path("output", sprintf("backtest-%s-totals%s.csv", TGT, CAL_TAG)))
+fwrite(as.data.table(.rr$detail)[, pair := TGT], file.path("output", sprintf("backtest-%s-sharedetail%s.csv", TGT, CAL_TAG)))
 
 # NAME THE FILE ACTUALLY WRITTEN. This line was a hardcoded string and printed
 # "backtest-qld.csv" for every arm, including arms that correctly wrote a tagged

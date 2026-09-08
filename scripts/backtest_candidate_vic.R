@@ -236,7 +236,7 @@ share_of <- function(f) {
   d[, .(votes = sum(votes)), by = .(seat, party)]
 }
 
-out_all <- list(); tot_all <- list()
+out_all <- list(); tot_all <- list(); share_detail <- list()
 for (K in PAIRS) {
   # ARM B of docs/plans/prereg-salience-expected-and-variance-2026-09-07.md.
   # NULL unless the switch is on, so a bare run is byte-identical.
@@ -742,6 +742,8 @@ for (K in PAIRS) {
   sl <- if (length(unique(z$y)) > 1)
     stats::coef(stats::glm(y ~ lo, data = z, family = stats::binomial()))[["lo"]] else NA_real_
   .rr <- seat_share_rmse(shares, fb)  # the second metric: point-estimate seat-share RMSE vs actual
+  share_detail[[length(share_detail) + 1L]] <-
+    data.table::as.data.table(.rr$detail)[, pair := sprintf("vic%d", K$to)]
   cat(sprintf("BV2r  seat-share RMSE %.3f | MAE %.3f | by class %s | %d seats%s\n", .rr$rmse, .rr$mae,
               paste(sprintf("%s=%.2f", names(.rr$by_class), .rr$by_class), collapse = " "),
               .rr$n_seats, if (.rr$n_dropped) sprintf(" (%d unmatched dropped)", .rr$n_dropped) else ""))
@@ -774,6 +776,7 @@ for (K in PAIRS) {
 R <- rbindlist(out_all)
 fwrite(R, file.path("output", sprintf("backtest-vic%s.csv", CAL_TAG)))
 fwrite(rbindlist(tot_all, fill = TRUE), file.path("output", sprintf("backtest-vic-totals%s.csv", CAL_TAG)))
+fwrite(rbindlist(share_detail, fill = TRUE), file.path("output", sprintf("backtest-vic-sharedetail%s.csv", CAL_TAG)))
 cat(sprintf("\nBV4  pooled over %d district-elections: accuracy %.1f%%, Brier %.4f\n",
             nrow(R), 100 * mean(R$pred == R$actual), mean((1 - R$prob)^2)))
 cat("BV4  for comparison, NSW 2023 gave 80.7% and 0.1468\n")

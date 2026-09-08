@@ -844,6 +844,9 @@ cat(sprintf("BT8  independents won %d of %d scored seats; we gave them a mean %.
 
 fwrite(res[order(seat)], file.path("output", sprintf("backtest-%s%s.csv", TGT, CAL_TAG)))
 fwrite(data.table(pair = TGT, as.data.table(sim$totals)), file.path("output", sprintf("backtest-%s-totals%s.csv", TGT, CAL_TAG)))
+# PERSIST THE POINT ESTIMATE, not just the aggregate RMSE -- see fed's
+# equivalent line, 2026-09-09.
+fwrite(as.data.table(.rr$detail)[, pair := TGT], file.path("output", sprintf("backtest-%s-sharedetail%s.csv", TGT, CAL_TAG)))
 # NAME THE FILE ACTUALLY WRITTEN, not the untagged name. Same fix as in
 # backtest_candidate_sa.R: a hardcoded filename in the log defeats the tag that
 # exists to stop an arm overwriting the baseline it is compared against.
