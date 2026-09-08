@@ -415,11 +415,19 @@ for (K in PAIRS) {
   }
   # Re-entry prior lands here, on the post-swing projection. See BW1r above.
   if (!is.null(.recells) && nrow(.recells)) {
-    .ri <- cbind(match(.recells$seat, rownames(mat)),
-                 match(.recells$party, colnames(mat)))
+    # PERSONAL-VOTE PRIORITY, docs/plans/prereg-reentry-personal-vote-priority-
+    # 2026-09-08.md. .own_prev's identity-matched defector floor must not be
+    # overwritten by the generic re-entry GLM, which has no idea who the
+    # candidate is (Pilbara wa2001, Larry Graham, ALP -> IND, is this
+    # harness's own case).
+    .rc2 <- protect_personal_vote_cells(.recells, .own_prev)
+    .ri <- cbind(match(.rc2$seat, rownames(mat)),
+                 match(.rc2$party, colnames(mat)))
     .rk <- stats::complete.cases(.ri)
-    mat[.ri[.rk, , drop = FALSE]] <- .recells$value[.rk]
-    cat(sprintf("BW1r  re-entry applied post-swing to %d cell(s)\n", sum(.rk)))
+    mat[.ri[.rk, , drop = FALSE]] <- .rc2$value[.rk]
+    .protected <- nrow(.recells) - nrow(.rc2)
+    cat(sprintf("BW1r  re-entry applied post-swing to %d cell(s)%s\n", sum(.rk),
+                if (.protected) sprintf(" | %d protected by own_prev", .protected) else ""))
   }
   # ZERO IND WHEREVER NOBODY ACTUALLY STOOD AT THE TARGET ELECTION. Ported from
   # backtest_candidate_fed.R and backtest_candidate_sa.R; was missing here and

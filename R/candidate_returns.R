@@ -484,3 +484,39 @@ remove_transferred_votes <- function(mat, own_prev) {
   attr(mat, "transfers") <- list(applied = applied, skipped = skipped)
   mat
 }
+
+#' Keep the re-entry prior from overwriting a more-informed personal-vote floor
+#'
+#' `docs/plans/prereg-reentry-personal-vote-priority-2026-09-08.md`. Every
+#' harness applies `apply_reentry_prior()`'s fill to `shares` "on the
+#' post-swing projection" -- unconditionally, even for a cell
+#' [personal_prior_vote()] (with `major_discount` set) already informed with
+#' an identity-matched floor. Gareth Ward's Kiama (LNP 53.6% -> IND, real
+#' result 38.8%) is the case: the generic re-entry GLM predicts IND at 13.1%,
+#' discarding the defector's own 15.1% floor -- close in magnitude here, but
+#' the mechanism is the wrong one to have the last word on a cell it has no
+#' identity-specific information about. Pilbara wa2001 (Larry Graham, ALP ->
+#' IND) is the same shape.
+#'
+#' This is a filter on the WRITE, not a change to either mechanism: both
+#' keep computing what they already compute, and only the collision at
+#' write time changes. A no-op whenever `own_prev` is `NULL` (i.e.
+#' `AUSPOL_DEFECT_DISCOUNT` off) or carries no matching cell.
+#'
+#' @param reentry_cells A `data.frame`/`data.table` with `seat` and `party`
+#'   columns -- the `"reentry"` attribute from [apply_reentry_prior()] (via
+#'   [reentry_apply_harness()]), before it is written into `shares`.
+#' @param own_prev [personal_prior_vote()]'s output, or `NULL`.
+#' @return `reentry_cells` with any row matching an `own_prev` (seat, party)
+#'   pair removed.
+#' @export
+protect_personal_vote_cells <- function(reentry_cells, own_prev) {
+  if (is.null(reentry_cells) || !nrow(reentry_cells)) return(reentry_cells)
+  if (is.null(own_prev) || !nrow(own_prev)) return(reentry_cells)
+  op <- data.table::as.data.table(own_prev)
+  op <- op[!is.na(op$own_prev_pcv)]
+  if (!nrow(op)) return(reentry_cells)
+  rc <- data.table::as.data.table(reentry_cells)
+  key <- paste(op$seat, op$party)
+  rc[!paste(rc$seat, rc$party) %in% key]
+}

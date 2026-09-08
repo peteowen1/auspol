@@ -469,11 +469,18 @@ for (p in parties) if (p %in% names(st_b) && p %in% names(st_a)) {
 # The prediction is a target-election share; filling it into the prior-election
 # matrix let dev_slope() swing it a second time.
 if (!is.null(REENTRY_CELLS) && nrow(REENTRY_CELLS)) {
-  .ri <- cbind(match(REENTRY_CELLS$seat,  rownames(shares)),
-               match(REENTRY_CELLS$party, colnames(shares)))
+  # PERSONAL-VOTE PRIORITY, docs/plans/prereg-reentry-personal-vote-priority-
+  # 2026-09-08.md. .own_prev's identity-matched defector floor must not be
+  # overwritten by the generic re-entry GLM, which has no idea who the
+  # candidate is (same shape as Kiama's Gareth Ward, NSW).
+  .rc <- protect_personal_vote_cells(REENTRY_CELLS, .own_prev)
+  .ri <- cbind(match(.rc$seat,  rownames(shares)),
+               match(.rc$party, colnames(shares)))
   .rk <- stats::complete.cases(.ri)
-  shares[.ri[.rk, , drop = FALSE]] <- REENTRY_CELLS$value[.rk]
-  cat(sprintf("BQ1r  re-entry applied post-swing to %d cell(s)\n", sum(.rk)))
+  shares[.ri[.rk, , drop = FALSE]] <- .rc$value[.rk]
+  .protected <- nrow(REENTRY_CELLS) - nrow(.rc)
+  cat(sprintf("BQ1r  re-entry applied post-swing to %d cell(s)%s\n", sum(.rk),
+              if (.protected) sprintf(" | %d protected by own_prev", .protected) else ""))
 }
 # PRINT WHAT IT APPLIED. CLAUDE.md records an experiment whose edit never ran
 # and whose byte-identical output read as "this input does not matter".
