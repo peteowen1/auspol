@@ -229,15 +229,20 @@ earlier sessions, not itemised here).
 Full write-up: [reviews/reentry-prior-nsw-qld-2026-09-08.md](reviews/reentry-prior-nsw-qld-2026-09-08.md).
 The damage traces to Kiama (nsw2023), Traeger+Hill (qld2024) and Burdekin
 (qld2020) individually — 93-96% of each pair's regression from 1-2 seats.
-**All four are a well-supported GLM (n=180-392) confidently mispredicting a
-sitting member's or family dynasty's personal vote** (Katter-family KAP
-seats; Kiama's independent is a defected sitting member) — genuine model
+**Three of the four (Kiama, Traeger, Hill) are a well-supported GLM
+(n=180-392) confidently mispredicting a returning sitting member's personal
+vote**, verified against `output/candidacies.csv` — Gareth Ward (LNP 2019 →
+IND 2023, expelled over criminal charges), Robbie Katter and Shane Knuth
+(each held their seat both elections as OTH_RIGHT/KAP) — genuine model
 misses against real, uncontaminated results, a different and narrower
 failure than WA/SA's genuine gains from thin-data ratio-path cells (n=1-3).
+**Burdekin's mechanism is NOT established** — its own re-entry cells are too
+small to explain the swing; do not extend the personal-vote story to it.
 Not evidence to refuse arm D globally; the GLM overconfidence needs its own
-pre-registration, not yet written. (**Correction 2026-09-08**: an earlier
-version of this entry wrongly called Kiama's ground truth contaminated by a
-by-election — it is not; see the review for the correction.)
+pre-registration, not yet written. (**Corrected 2026-09-08 twice**: Kiama's
+ground truth is not by-election-contaminated, and Burdekin was not actually
+an ONP-vs-LNP re-entry effect — both wrongly claimed in an earlier draft;
+see the review.)
 
 ### ARM H: RUN, and REFUSED by its own pre-registered rule, 2026-09-08
 

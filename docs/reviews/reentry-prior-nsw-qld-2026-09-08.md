@@ -45,13 +45,26 @@ row is glm-path, so arm H doesn't fix WA's other floor seat either.
 
 ## The GLM failure has a clear shape
 
-- **Traeger and Hill (qld2024)** are Katter-family/KAP personal-vote seats
-  where the ONP re-entry model predicts generic One Nation strength that
-  doesn't apply. Traeger's predicted winner flips from correct at 99.4% to
-  wrong (ONP called at 59.6%, actual winner cut to 40.3%).
-- **Burdekin (qld2020)** is a North Queensland seat where ONP and LNP
-  compete for the same base; the fill drains LNP's already-shaky lead
-  further (both arms already call it wrong; arm D makes the miss worse).
+- **Traeger and Hill (qld2024) are same-MP KAP incumbency seats — verified
+  against `output/candidacies.csv`.** Traeger: Robbie Katter, OTH_RIGHT,
+  won both 2020 (58.9%) and 2024 (49.3%). Hill: Shane Knuth, OTH_RIGHT, won
+  both 2020 (52.6%) and 2024 (43.6%) — a different person from Katter, same
+  mechanism (not literally "family," corrected from an earlier draft of
+  this note). The ONP re-entry model predicts generic One Nation strength
+  in both (79.2%/63.3% shares) that doesn't apply against a safe, returning
+  local incumbent. Traeger's predicted winner flips from correct at 99.4%
+  to wrong (ONP called at 59.6%, actual winner cut to 40.3%).
+- **Burdekin (qld2020): mechanism NOT established — an earlier draft of
+  this note wrongly named ONP as the cause.** LNP's Dale Last held the seat
+  comfortably in both 2020 (39.7%, real winner) and 2024 (52.0%, growing
+  margin) — no defection, no independent surge. The only re-entry cells
+  on this seat are OTH (1.85%) and OTH_RIGHT (3.69%), both too small on
+  their own to plausibly explain the win probability collapsing from 36.5%
+  to 16.2% for the actual (correct-party) winner. qld2020 filled 158
+  re-entry cells statewide (largest: Surfers Paradise/ONP 25.4%); whether
+  Burdekin's swing comes through the statewide projection/swing-forward
+  rather than its own local cell is untested. Needs the same seat-level dig
+  Kiama got before any claim about its cause is trusted.
 - **Kiama (nsw2023) is a genuine model miss, NOT contaminated ground truth
   — corrected 2026-09-08, an earlier version of this note said otherwise.**
   `truth` in the NSW harness comes from `nswec-nsw-winners.csv`'s ELECTED
@@ -79,13 +92,15 @@ row is glm-path, so arm H doesn't fix WA's other floor seat either.
 
 This is NOT evidence to refuse arm D globally — it reframes the question
 from "does this jurisdiction get worse" to "does the model mis-handle
-personal-vote/family-party seats," which is a narrower, more fixable
-problem than a blanket jurisdiction refusal. All four named seats
-(Traeger, Hill, Burdekin, Kiama) share the same underlying shape: a
-sitting member's or family dynasty's personal vote that a party-class
-model cannot see, scored against real, uncontaminated election results.
-The GLM overconfidence on personal-vote seats needs its own
-pre-registration — not yet written (e.g. a personal-vote/family-party
+personal-vote seats," which is a narrower, more fixable problem than a
+blanket jurisdiction refusal. Three of the four named seats (Traeger, Hill,
+Kiama) share a verified shape: a same sitting member's personal vote,
+scored against real, uncontaminated election results, that a party-class
+model cannot see. **Burdekin is the odd one out — its mechanism is not
+established**, and an earlier draft of this note wrongly attributed it to
+the same cause; do not extend the personal-vote explanation to it without
+its own investigation. The GLM overconfidence on personal-vote seats needs
+its own pre-registration — not yet written (e.g. a personal-vote/family-party
 dampener on the re-entry GLM) — and Kiama's counterintuitive direction
 (a 13% point estimate producing a LOWER win probability than near-zero
 did) needs understanding before that pre-registration is written.
