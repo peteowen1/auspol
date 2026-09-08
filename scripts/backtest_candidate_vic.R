@@ -258,7 +258,11 @@ for (K in PAIRS) {
               showProgress = FALSE)
   # LEAKAGE GUARD, asserted on the source rather than on a filtered copy: a
   # table filtered to one election trivially contains only that election.
-  stopifnot(all(tx$election == sprintf("vic%d", K$from)))
+  # `all()` over zero rows is TRUE -- the guard this repo's CLAUDE.md
+  # documents as a shape that "cannot fail" -- so the row-count floor
+  # matches the equivalent guard already used in the federal/QLD/SA
+  # harnesses, not just the per-election check.
+  stopifnot(nrow(tx) > 100L, all(tx$election == sprintf("vic%d", K$from)))
   .asof <- VIC_DATE[[as.character(K$to)]]
   if (is.null(.asof) || is.na(.asof)) stop("No polling date recorded for vic", K$to)
   tx <- pool_configured_flows(tx, .asof)

@@ -712,14 +712,22 @@ for (K in PAIRS) {
         m <- merge(a, b, by = c(".s", ".k"))
         if (!nrow(m)) NULL else m[, .(ratio = now / prev)]
       }), fill = TRUE)
-      if (is.null(rr) || nrow(rr) < 5L) NULL else {
+      if (is.null(rr) || nrow(rr) < 5L) {
+        cat(sprintf("BF0d! only %d defector case(s) (need >=5); no discount applied\n",
+                    if (is.null(rr)) 0L else nrow(rr)))
+        NULL
+      } else {
         v <- stats::median(rr$ratio, na.rm = TRUE)
         cat(sprintf("BF0d defector discount %.3f from %d cases (target excluded)
 ",
                     v, nrow(rr)))
         v
       }
-    }, error = function(e) NULL)
+    }, error = function(e) {
+      cat(sprintf("BF0d! defector-discount fit FAILED, no discount applied: %s\n",
+                  conditionMessage(e)))
+      NULL
+    })
   }
   .own_prev <- if (.cond) tryCatch(personal_prior_vote(ea, eb, major_discount = .defect),
                                    error = function(e) {

@@ -113,10 +113,26 @@ governed_population <- function(election, prev_election, region,
   # Matched on a normalised key, and a match rate of ZERO is an ERROR rather
   # than a quiet pass, because that is the state this went undetected in.
   .cf <- file.path("output", "candidacies.csv")
-  if (file.exists(.cf)) {
+  # BOTH gates below used to fail closed with no disclosure: if the corpus
+  # was missing, or present but empty for this election, the stop() a few
+  # lines down -- the whole safety net for the zero-match disaster this
+  # block's header comment describes -- was skipped along with the
+  # normalisation itself, and SAL$seat quietly stayed unnormalised. That is
+  # the EXACT state the Shepparton/vic2014 failure went undetected in, just
+  # reached by a different path (missing corpus rather than a naming
+  # mismatch). Both are now disclosed rather than silently passed through.
+  if (!file.exists(.cf)) {
+    message("salience screen: no ", .cf, " -- seat names NOT normalised for ",
+            target_election, "; every hazard lookup keyed on a mismatched ",
+            "spelling will silently return nothing")
+  } else {
     .cc <- data.table::fread(.cf, showProgress = FALSE)
     .proper <- unique(.cc[.cc$election == target_election]$seat)
-    if (length(.proper)) {
+    if (!length(.proper)) {
+      message("salience screen: ", .cf, " has no rows for ", target_election,
+              " -- seat names NOT normalised; every hazard lookup keyed on a ",
+              "mismatched spelling will silently return nothing")
+    } else {
       .norm <- function(x) tolower(gsub("[^A-Za-z]", "", x))
       .map <- stats::setNames(.proper, .norm(.proper))
       .hit <- .norm(SAL$seat) %in% names(.map)

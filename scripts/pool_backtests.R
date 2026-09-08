@@ -20,6 +20,7 @@
 # Emits PB* codes.
 options(auspol.root = normalizePath("."))
 suppressMessages(library(data.table))
+suppressMessages(devtools::load_all(quiet = TRUE))  # for all_election_pairs()
 
 # THE SAME FLOOR THE HARNESSES USE. Every harness clamps at 1e-6 before taking
 # a log, and this script originally used 1e-9 -- which is not a rounding
@@ -38,20 +39,49 @@ if (!length(files)) stop("No backtest files in ", OUT)
 # One row per (file, pair). A harness that scores several pairs writes them into
 # one file with a `pair` column; the single-pair harnesses put the election in
 # the filename instead.
+#
+# EVERY return(NULL) BELOW USED TO BE SILENT. A read failure, an empty file,
+# a missing prob/pred/actual column or an unmatched filename all dropped that
+# file with nothing printed -- so losing one of 22+ pairs (a truncated CSV, a
+# harness that renamed a column, a partial write) shrank the pooled `n` with
+# no trace, in the one script whose entire job is to be the trustworthy
+# cross-election number. Each drop reason is now named (PB0!), and the
+# completeness check below (PB2c) catches a pair missing ENTIRELY.
 rows <- rbindlist(lapply(files, function(f) {
-  d <- tryCatch(fread(f, showProgress = FALSE), error = function(e) NULL)
-  if (is.null(d) || !nrow(d)) return(NULL)
+  d <- tryCatch(fread(f, showProgress = FALSE), error = function(e) {
+    cat(sprintf("PB0! %s: unreadable (%s) -- dropped\n", basename(f), conditionMessage(e)))
+    NULL
+  })
+  if (is.null(d)) return(NULL)
+  if (!nrow(d)) { cat(sprintf("PB0! %s: 0 rows -- dropped\n", basename(f))); return(NULL) }
   pcol <- if ("prob" %in% names(d)) "prob" else if ("p" %in% names(d)) "p" else NA_character_
-  if (is.na(pcol) || !all(c("pred", "actual") %in% names(d))) return(NULL)
+  if (is.na(pcol) || !all(c("pred", "actual") %in% names(d))) {
+    cat(sprintf("PB0! %s: missing prob/p/pred/actual column(s) -- dropped\n", basename(f)))
+    return(NULL)
+  }
   if (!"pair" %in% names(d)) {
     m <- regmatches(basename(f), regexpr("(fed|vic|nsw|sa|qld|wa)[0-9]{4}", basename(f)))
-    if (!length(m)) return(NULL)
+    if (!length(m)) {
+      cat(sprintf("PB0! %s: no pair column and no election in the filename -- dropped\n", basename(f)))
+      return(NULL)
+    }
     d[, pair := m]
   }
   d[, .(file = f, mtime = file.mtime(f), pair = as.character(pair),
         p = pmin(pmax(get(pcol), EPS), 1), hit = as.integer(pred == actual))]
 }))
 if (!nrow(rows)) stop("No readable backtest files")
+
+# COMPLETENESS, not just presence: a pair dropped entirely (not just a stale
+# file) is invisible to every check below, which only look at what IS there.
+.known <- vapply(all_election_pairs(), `[[`, character(1), "election")
+.missing <- setdiff(.known, unique(rows$pair))
+if (length(.missing)) {
+  cat(sprintf("PB2c! %d of %d known pair(s) have NO backtest file at all: %s\n",
+              length(.missing), length(.known), paste(.missing, collapse = ", ")))
+} else {
+  cat(sprintf("PB2c  all %d known pairs are present.\n", length(.known)))
+}
 
 # NEWEST FILE PER PAIR. Not the newest file overall and not all of them: two
 # arms of the same pair must never be averaged together, which is what globbing

@@ -91,11 +91,22 @@ PAIRS <- list()
 for (S in SPEC) {
   ys <- S$years
   for (n in seq_along(ys)[-1]) {
-    a <- tryCatch(S$get(ys[n - 1]), error = function(e) NULL)
-    b <- tryCatch(S$get(ys[n]), error = function(e) NULL)
+    # NAMES THE ACTUAL ERROR, not just "missing" -- a bare tryCatch(error =
+    # function(e) NULL) here used to catch EVERY error class (a corrupt or
+    # truncated file, a schema change inside share_of(), an fread parse
+    # failure) and report all of them as the same "file is missing" line,
+    # discarding conditionMessage(e) entirely. A malformed file and an
+    # absent one are different problems and this pipeline feeds a
+    # pre-registered refusal check (R1/CVR1) -- a pair silently dropped for
+    # the wrong reason should not read the same as one genuinely unavailable.
+    a <- tryCatch(S$get(ys[n - 1]), error = function(e) {
+      cat(sprintf("CV0! %s%d: %s\n", S$region, ys[n - 1], conditionMessage(e))); NULL
+    })
+    b <- tryCatch(S$get(ys[n]), error = function(e) {
+      cat(sprintf("CV0! %s%d: %s\n", S$region, ys[n], conditionMessage(e))); NULL
+    })
     if (is.null(a) || is.null(b)) {
-      cat(sprintf("CV0! %s%d -> %s%d: a first-preference file is missing; pair skipped
-",
+      cat(sprintf("CV0! %s%d -> %s%d: pair skipped\n",
                   S$region, ys[n - 1], S$region, ys[n]))
       next
     }

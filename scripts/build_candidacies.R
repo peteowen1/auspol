@@ -580,11 +580,15 @@ for (y in c(2010, 2014, 2018)) {
 ",
                 y, uniqueN(v$seat)))
   } else {
-    cat(sprintf("BC7! vic%d: %s absent, so seat names stay in the page-slug form and
-",
-                y, basename(.fp)))
-    cat("BC7! every downstream join keyed on seat name WILL silently miss.
-")
+    # SAME CONSEQUENCE AS THE PARTIAL-MISMATCH CASE ABOVE, so it gets the
+    # same stop() rather than a warning execution continues past. A `cat()`
+    # here used to be the whole guard for "reference file entirely absent,"
+    # which is the identical downstream failure (salience 0-match, a missed
+    # personal-vote transfer, an undercounted conditional slope) reached by
+    # a different door than the one this block was written to close.
+    stop("vic", y, ": ", basename(.fp), " is absent, so seat names would stay ",
+         "in the page-slug form. A silent drop here disables salience and the ",
+         "personal-vote transfer for every seat this election.")
   }
   v[is.na(party_raw) | party_raw == "", party_raw := "Independent"]
   # THE ABBREVIATION AS WELL AS THE NAME, for the reason the WA block above

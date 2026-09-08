@@ -162,6 +162,15 @@ reentry_fit <- function(pairs, min_n = 40L, min_ratio_n = 20L, covariates = TRUE
         # time is what keeps the bound leave-one-out: it comes from the same
         # `d` the coefficients came from.
         bounds[[cl]] <- .support(d)
+      } else {
+        # A silent fit failure here is indistinguishable downstream from
+        # "fewer than min_n rows" -- fits[[cl]] stays unset either way, and
+        # reentry_predict()'s own try-error disclosure only guards the
+        # PREDICT call, not this one, so a glm() error (rank-deficient
+        # design, a constant covariate, separation) fell through to the
+        # ratio path with nothing printed.
+        cat(sprintf("RE1! %s: glm() FAILED, falling back to the flat ratio: %s\n",
+                    cl, conditionMessage(attr(f, "condition"))))
       }
       # PRINT WHAT IT APPLIED. CLAUDE.md records an experiment whose edit never
       # ran and whose byte-identical output read as "this input does not
@@ -265,10 +274,25 @@ party_positions <- function(exclude = NULL, min_votes = 5000,
     fp <- file.path(path, f)
     if (file.exists(fp)) data.table::fread(fp, showProgress = FALSE) else NULL
   }), fill = TRUE)
-  if (!nrow(TX)) return(c(ALP = 0, LNP = 1))
+  # BOTH early returns give ALP/LNP a position and every other class NONE --
+  # a caller filtering on names(positions) (seat_lean()) silently keeps only
+  # ALP/LNP rows from then on, with nothing distinguishing "no transfer data
+  # at all" from "GRN/IND/OTH/OTH_RIGHT/ONP genuinely measured at these
+  # values." Disclosed rather than silent, since this feeds a leave-one-out
+  # fit whose whole point is per-class measured positions.
+  if (!nrow(TX)) {
+    message("party_positions(): no transfer files found under ", path,
+            " -- returning ALP/LNP anchors only, every other class unmeasured")
+    return(c(ALP = 0, LNP = 1))
+  }
   if (!is.null(exclude)) TX <- TX[!TX$election %in% exclude]
   s <- TX[TX$to %in% c("ALP", "LNP"), list(v = sum(votes)), by = c("from", "to")]
-  if (!nrow(s)) return(c(ALP = 0, LNP = 1))
+  if (!nrow(s)) {
+    message("party_positions(): transfer files found but zero rows survive ",
+            "the ALP/LNP filter (exclude = ", paste(exclude, collapse = ", "),
+            ") -- returning ALP/LNP anchors only, every other class unmeasured")
+    return(c(ALP = 0, LNP = 1))
+  }
   w <- data.table::dcast(s, from ~ to, value.var = "v", fill = 0)
   if (!"ALP" %in% names(w)) w[, ALP := 0]
   if (!"LNP" %in% names(w)) w[, LNP := 0]

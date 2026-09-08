@@ -90,14 +90,18 @@ eps <- 1e-6
 SEAT_SD_MULT <- as.numeric(Sys.getenv("AUSPOL_SEAT_SD_MULT", "1"))
 if (!is.finite(SEAT_SD_MULT) || SEAT_SD_MULT <= 0)
   stop("AUSPOL_SEAT_SD_MULT must be a positive number; got ", SEAT_SD_MULT)
-# NOT HERE, AND WHY (2026-09-07): surge-v2 (AUSPOL_SALIENCE_SURGE_V2, and with
-# it AUSPOL_SURGE_SCALE and AUSPOL_SURGE_RECIPIENT), the screened slope mode and
-# personal_prior_vote()/remove_transferred_votes() all need the candidate-level
-# salience corpus (output/salience-v6.csv), which has no WA rows: the WA
-# commission files carry no candidate names the corpus can key on. Until it
-# does, WA measures the class-level model only, and a five-harness comparison
-# of those switches is a four-harness comparison. This is the gap CLAUDE.md
-# says must be named rather than left silent.
+# NOT HERE, AND WHY (2026-09-07, narrowed 2026-09-08): surge-v2
+# (AUSPOL_SALIENCE_SURGE_V2, and with it AUSPOL_SURGE_SCALE and
+# AUSPOL_SURGE_RECIPIENT) and the screened slope mode's salience-permit step
+# need the candidate-level salience corpus (output/salience-v6.csv), which
+# has no WA rows. This paragraph used to also name
+# personal_prior_vote()/remove_transferred_votes() as blocked for the same
+# reason -- that stopped being true once WA's candidacies rows carried
+# names (see the AUSPOL_WA_TRANSFER block below); leaving the stale claim
+# here would have hidden that WA's true remaining parity gap is narrower
+# than this paragraph once said. Until the salience corpus covers WA, this
+# harness runs conditional-only slopes with a disclosed BW1c! line (below)
+# rather than silently claiming "screened."
 # PORTED FROM THE FEDERAL HARNESS 2026-09-06: simulate_seat_contests() computes
 # sd_cell from `level_sd` and IGNORES seat_sd whenever level_sd is given, and
 # level_sd is on by default, so `seat_sd * SEAT_SD_MULT` at the call site was
@@ -124,10 +128,13 @@ REENTRY_PAIRS <- all_election_pairs()
 # is byte-identical until an arm sets them.
 #   AUSPOL_MP_SLOPE        -- returning MEMBER (0.954) vs returning also-ran
 #                             (0.800); the shipped slope pooled them at 0.907.
-# AUSPOL_DEFECT_DISCOUNT is deliberately NOT wired here: this harness makes no
-# personal_prior_vote() call, so there is no per-seat base for a discounted
-# major vote to be added to. Said out loud rather than left as a silent gap,
-# which CLAUDE.md notes is indistinguishable from an oversight later.
+#   AUSPOL_DEFECT_DISCOUNT -- IS wired here (see the AUSPOL_WA_TRANSFER
+#                             block below, `.defect`), despite an earlier
+#                             version of this comment claiming otherwise.
+#                             Corrected 2026-09-08: this harness DOES call
+#                             personal_prior_vote() once candidacies rows
+#                             carried names, and the stale claim survived
+#                             three lines below the code that disproved it.
 
 SHRINK  <- as.numeric(Sys.getenv("AUSPOL_SHRINK", "0"))
 SMOOTH  <- as.numeric(Sys.getenv("AUSPOL_SMOOTH", "0.15"))
@@ -266,6 +273,18 @@ for (K in PAIRS) {
   # model from the rest of the pooled table. Nothing errored; candidate_returns()
   # was still called and its result then discarded. Found 2026-09-07.
   .cond <- Sys.getenv("AUSPOL_DEV_SLOPE_MODE", "") %in% c("conditional", "screened")
+  # "screened" MODE IS HALF-HONOURED HERE, AND SAYS SO. The other five
+  # harnesses pair conditional slopes with salience_permit_for()/
+  # screened_slopes(), which protects a governed-silent candidate from the
+  # harsh new-candidate slope. WA has neither wired in at all -- a bare
+  # published-default run (AUSPOL_DEV_SLOPE_MODE="screened") silently ran
+  # conditional-only here with nothing in the log to say the salience screen
+  # never fired, the same shape as the missing-SA-shrink incident CLAUDE.md
+  # records: a harness silently can't act on a switch it was handed.
+  if (identical(Sys.getenv("AUSPOL_DEV_SLOPE_MODE", ""), "screened")) {
+    cat("BW1c! screened mode requested but WA has no salience_permit_for()/",
+        "screened_slopes() wiring; running conditional-only\n", sep = "")
+  }
   # DECOUPLED FOR MEASUREMENT. .cond gates TWO independent mechanisms at once --
   # candidate-conditional dev slopes (.returns, below) and the personal-vote
   # transfer (.own_prev) -- so a single flag flip changes both together and
