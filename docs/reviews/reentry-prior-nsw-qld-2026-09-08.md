@@ -60,9 +60,14 @@ row is glm-path, so arm H doesn't fix WA's other floor seat either.
   `incumbent` field purely as a disagreement count and never as scoring
   truth (CLAUDE.md already documents that field as by-election-contaminated
   and explicitly unused for this reason). Kiama's declared 2023 winner really
-  is an independent. What makes it hard: the seat's IND vote is a sitting
-  member's PERSONAL following after a party defection, not a fresh
-  independent challenger, and the model only sees party classes. Arm D's
+  is an independent — and verified against `output/candidacies.csv`,
+  specifically: **Gareth Ward**, who won the seat as LNP in 2019 (53.6%)
+  then again as an Independent in 2023 (38.8%), the same person carrying a
+  personal vote through a party defection (he was expelled from the
+  parliamentary Liberal party over criminal charges and re-contested as an
+  independent). What makes it hard for the model: this is a sitting
+  member's PERSONAL following, not a fresh independent challenger, and the
+  model only sees party classes. Arm D's
   own re-entry GLM predicts IND at a real 13.1% share here (n=392, its own
   training data) — a substantial fill — yet the seat's win probability for
   the actual winner still falls under arm D (3.5%→0.2% prior-off vs arm D).
