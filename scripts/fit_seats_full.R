@@ -92,6 +92,28 @@ cat(sprintf("LV2  level_mult: %s
 
 N_SIMS  <- as.integer(Sys.getenv("AUSPOL_N_SIMS", "20000"))
 SEAT_SD <- 3.5      # within-region seat deviation, from seat_swing_spread()
+# AUSPOL_SEAT_SD_MULT NEVER REACHED THE PUBLISHED FORECAST -- found
+# 2026-09-09 checking every published switch against fit_seats_full.R and
+# all six harnesses directly. All six harnesses apply this multiplier (a
+# fix that itself took until 2026-09-06 to be inert-no-longer everywhere);
+# this script, which produces the actual published number, never did.
+# Harmless while the shipped value is 1 (a no-op), but a future tune of
+# this switch would silently not reach Victoria's forecast. Same pattern
+# as every harness's own block: scales whichever spread is actually in
+# force (level_sd if set, else the flat SEAT_SD), and says which.
+SEAT_SD_MULT <- as.numeric(Sys.getenv("AUSPOL_SEAT_SD_MULT", "1"))
+if (!is.finite(SEAT_SD_MULT) || SEAT_SD_MULT <= 0)
+  stop("AUSPOL_SEAT_SD_MULT must be a positive number; got ", SEAT_SD_MULT)
+if (SEAT_SD_MULT != 1) {
+  if (is.null(.level_sd)) {
+    SEAT_SD <- SEAT_SD * SEAT_SD_MULT
+    cat(sprintf("CAL  seat_sd multiplier %.2f applied (flat seat_sd path)\n", SEAT_SD_MULT))
+  } else {
+    .level_sd <- .level_sd * SEAT_SD_MULT
+    cat(sprintf("CAL  spread multiplier %.2f applied to LEVEL_SD -> a=%.3f b=%.3f (seat_sd is inert here)\n",
+                SEAT_SD_MULT, .level_sd[1], .level_sd[2]))
+  }
+}
 # NOT adopted: One Nation was given its own, larger seat sd here (5.5, the
 # measured RMSE of its allocation against SA 2026) and it failed its
 # pre-registration. Widening a party that is BEHIND in most seats is a one-way

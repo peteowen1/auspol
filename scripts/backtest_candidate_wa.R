@@ -142,7 +142,16 @@ FB_SMOOTH <- as.numeric(Sys.getenv("AUSPOL_FALLBACK_SMOOTH", "0"))
 FLOW_SD   <- as.numeric(Sys.getenv("AUSPOL_FLOW_SD", "0"))
 PARTY_SD  <- as.numeric(Sys.getenv("AUSPOL_PARTY_SD", "1.5"))
 SURGE_H   <- as.numeric(Sys.getenv("AUSPOL_SURGE_H", "0"))
-SEED <- 20260825L
+# WAS A HARDCODED LITERAL, ignoring AUSPOL_SEED entirely -- found 2026-09-09
+# checking every published switch against every harness directly. Every WA
+# run before this fix used 20260825L regardless of the env var, so it was
+# never actually part of any seed-robustness check the other five harnesses
+# went through (the "AUSPOL_SEED now works in every harness" claim recorded
+# 2026-09-07 was about the FIX, not verified per-harness -- this is the
+# harness it missed). Default kept at the same literal so nothing already
+# published moves silently; this harness's default (20260825L) still
+# differs from the other five's (42) and that is untouched here.
+SEED <- as.integer(Sys.getenv("AUSPOL_SEED", "20260825"))
 stopifnot(is.finite(SHRINK), SHRINK >= 0, SHRINK < 1)
 
 # ARM FINGERPRINT. CAL_TAG names the parameters someone remembered to add, and
