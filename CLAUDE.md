@@ -337,22 +337,59 @@ pre-registered *first*, which is the only reason it was allowed to stand.
 
 ## A fix to one harness is a fix to ALL of them. Apply and test everywhere.
 
-There are **five** candidate-seat backtest harnesses — `backtest_candidate_fed.R`,
-`_vic.R`, `_nsw.R`, `_sa.R`, `_wa.R` — and they share a structure but not a file.
-**Any improvement, parameter or bug fix applied to one MUST be applied to all
-five and measured on all five in the same session.** Not "noted for later".
+There are **six** candidate-seat backtest harnesses — `backtest_candidate_fed.R`,
+`_vic.R`, `_nsw.R`, `_sa.R`, `_wa.R`, `_qld.R` (built 2026-09-07) — and they
+share a structure but not a file. **Any improvement, parameter or bug fix
+applied to one MUST be applied to all six and measured on all six in the same
+session.** Not "noted for later".
+
+**A sweep is minutes now, not an hour** (`src/seat_sim_core.cpp`, 2026-09-07),
+so there is no longer a compute excuse for measuring one and deferring the
+rest. Exploratory arms run at `AUSPOL_N_SIMS=5000`; only the deciding run
+needs 20,000.
 
 `_wa.R` was added 2026-08-25 and carries seven pairs at ~58 seats. **`_fed.R` is
-now the larger harness** — 6 pairs over ~880 seat-elections against WA's 361 —
+now the larger harness** — 7 pairs over 1,036 seat-elections against WA's 361 —
 so prefer federal first and WA second when a criterion needs to resolve
 anything. (Corrected 2026-08-27; the earlier claim that WA held more clusters
 than the other four combined predates the federal harness reaching 6 pairs.)
 
+`_nsw.R` takes **two** pairs since 2026-09-07 via `AUSPOL_NSW_PAIR` (2019 or
+2023, default 2023) — it was hardcoded to one target in seventeen places. So a
+change measured "on NSW" means whichever pair you set, and both need running.
+`_vic.R` takes **three** since the same day (vic2010 was recovered from the
+Internet Archive) and runs them all in one go. `_qld.R` takes **two** via
+`AUSPOL_QLD_PAIR` (2020 or 2024, default 2024), and the two do NOT share a flow
+source: 2024 uses Queensland's own qld2020 distribution, while 2020 uses FEDERAL
+2019 flows because the 2017 package carries no distribution and qld2020's own
+would be the election being predicted. Federal is admissible there only because
+both are compulsory preferential — the test NSW fails.
+
+**Every log-loss number here is clamped at `eps = 1e-6` before the log.** That
+constant is not cosmetic: a seat given probability exactly zero contributes
+`-log(eps)` by itself, so moving the floor to 1e-9 moved vic2014 from 0.4662 to
+0.5608 and wa2001 from 0.8731 to 1.1155 with no change to the model. Pooled log
+loss is set as much by how many seats sit at the floor as by anything else, and
+every one of those seats is an emergence the model gave nothing to.
+
+**`scripts/pool_backtests.R` gives the pooled table across all 22 pairs and
+2,050 seat-elections** — accuracy, Brier and seat log loss per pair and overall.
+Run it instead of adding up six logs by hand. It takes the newest file per pair
+and prints that file's timestamp and code tag, so a row describing an older
+model is visible rather than silent.
+
 **Both exceed the 10-minute background-task cap when run as two arms in one
 command.** Run one arm per launch, and use `AUSPOL_FED_PAIRS` to take federal a
-pair at a time; a killed run loses every arm behind it. A Queensland
-harness is buildable from data already on disk and does not exist yet — when it
-is built, this count becomes six.
+pair at a time; a killed run loses every arm behind it. Queensland was built
+2026-09-07 and scores 0.3350 against AE Forecasts' 0.3578.
+
+**Every harness carries its own copy of the surge training pair list**, and they
+are NOT the same list. Queensland's had `sa2026` renamed to `qld2024` when it
+was copied from the South Australian harness, so it trained without the four One
+Nation winners until 2026-09-07. Before changing one, diff it against
+`scripts/fit_salience_surge_v2.R`, which is the list with the reasoning attached
+— membership is deliberate, and pairs with no governed emergence were ruled out
+rather than forgotten.
 
 **Two WA-specific facts that change how its numbers read.** The `wa2001` pair
 has no transfers of its own (excluded upstream) so its flows fall back to

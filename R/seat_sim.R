@@ -42,6 +42,13 @@
 #'   crosses the winning threshold, downside costs nothing where it was
 #'   already losing. Measured at 71 seats up against 1 down; see
 #'   docs/reviews/onp-seat-uncertainty-2026-08-19.md.
+#' @param sd_override Optional numeric matrix, the same shape and dimnames as
+#'   `shares`, replacing the per-cell deviation sd wherever it is not `NA`.
+#'   `NA` means "no opinion, keep `level_sd`". Requires `level_sd`. Exists
+#'   because `level_sd` is binomial-shaped and so gives a major on 30% more
+#'   uncertainty than a top-percentile insurgent on 13.9%, which is backwards
+#'   for the seats this model loses; `salience_sd_matrix()` builds one from the
+#'   salience bands. `NULL` is byte-identical to the previous behaviour.
 #' @param level_sd Optional `c(a, b)` making the per-seat deviation depend on the
 #'   LEVEL of a party's share: `sd = a + b * sqrt(p * (1 - p))`, with `p` the
 #'   party's projected share in that seat. `NULL`, the default, keeps the flat
@@ -155,7 +162,8 @@
 #'   of the nine misses above `pred_p` 0.9999 were a non-major taking a seat
 #'   called safe for a major.
 #' @param surge_mu,surge_sd Mean and standard deviation, in percentage points,
-#'   of the `N(surge_mu, surge_sd)` gain drawn for the surging candidate.
+#'   of the `N(surge_mu, surge_sd)` gain drawn for the surging candidate. Length
+#'   1 (every seat the same) or one per seat, in seat order.
 #'   Everyone else in the seat scales down by a common factor -- not a flat
 #'   subtraction, which would drive small parties negative and silently
 #'   redistribute their vote -- so the seat still sums to 100.
@@ -168,6 +176,10 @@
 #'   surge. `NULL` (default) makes every column other than `ALP`, `LNP` and
 #'   `NAT` eligible. Any name not among the share columns is an error rather
 #'   than a silent no-op.
+#' @param surge_from_zero Logical, default `FALSE`. When `TRUE`, a class named
+#'   by `surge_party` receives the surge even at zero share in that draw. The
+#'   `surge_floor` still gates the DEFAULT rule (whoever is largest), which is
+#'   what it was written for.
 #' @param engine `"auto"` (default), `"cpp"` or `"r"`. The compiled core
 #'   (`src/seat_sim_core.cpp`, 2026-09-07) reproduces the R loop byte for byte
 #'   -- same random numbers in the same order, sums in long double as R's
@@ -226,7 +238,7 @@
 #'   count) but matters to anyone joining TCP data against `wins`.
 #' @export
 simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
-                                   level_sd = NULL,
+                                   level_sd = NULL, sd_override = NULL,
                                    n_sims = 2000, smooth = 0.15, seed = NULL,
                                    statewide_draws = NULL,
                                    party_draws = NULL, shrink = 0,
@@ -235,7 +247,7 @@ simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
                                    level_mult = NULL,
                                    surge_h = 0, surge_mu = 15.6, surge_sd = 6.1,
                                    surge_parties = NULL, surge_floor = 2,
-                                   surge_party = NULL,
+                                   surge_party = NULL, surge_from_zero = FALSE,
                                    engine = c("auto", "cpp", "r")) {
   engine <- match.arg(engine)
   # SHRINK MAY BE PER-SEAT. A scalar applies the same rate everywhere and caps
@@ -286,8 +298,16 @@ simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
          paste(utils::head(surge_h, 5), collapse = ", "))
   }
   if (length(surge_h) == 0L) stop("surge_h must have length >= 1")
-  if (!is.finite(surge_mu) || !is.finite(surge_sd) || surge_sd < 0) {
+  # PER-SEAT SIZE, not one number. The salience band a candidate sits in says
+  # what they poll (docs/plans/prereg-salience-expected-primary-2026-09-07.md),
+  # so the gain's mean and spread vary by seat exactly as the hazard does.
+  # Length 1 recycles, which is every caller before 2026-09-07.
+  if (!all(is.finite(surge_mu)) || !all(is.finite(surge_sd)) || any(surge_sd < 0)) {
     stop("surge_mu must be finite and surge_sd finite and non-negative")
+  }
+  if (!length(surge_mu) %in% c(1L, nrow(shares)) || !length(surge_sd) %in% c(1L, nrow(shares))) {
+    stop("surge_mu and surge_sd must be length 1 or one per seat (", nrow(shares),
+         "); got ", length(surge_mu), " and ", length(surge_sd))
   }
   if (!is.finite(surge_floor) || surge_floor < 0) {
     stop("surge_floor must be finite and non-negative; got ", surge_floor)
@@ -385,6 +405,8 @@ simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
 
   # Resolve the surge hazard to one value per seat, by the same rule.
   surge_h <- .fix_surge(surge_h, seat_names)
+  surge_mu <- if (length(surge_mu) == 1L) rep(unname(surge_mu), length(seat_names)) else unname(surge_mu)
+  surge_sd <- if (length(surge_sd) == 1L) rep(unname(surge_sd), length(seat_names)) else unname(surge_sd)
   # THE RECIPIENT OF THE SURGE, per seat. Resolved to a column index once;
   # NA means "the default rule" (largest eligible non-major at the draw).
   surge_party_idx <- rep(NA_integer_, length(seat_names))
@@ -707,6 +729,40 @@ simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
     ppm <- pmin(pmax(unname(as.matrix(shares)), 0), 100) / 100
     level_sd[1L] + level_sd[2L] * matrix(level_mult_vec, nrow(ppm), K, byrow = TRUE) * sqrt(ppm * (1 - ppm))
   }
+  # PER-CELL SD OVERRIDE. `level_sd` is binomial-shaped -- a + b*sqrt(p(1-p)) --
+  # so it peaks near 50% and hands a major on 30% MORE uncertainty (5.07) than a
+  # top-percentile insurgent on 13.9% (4.10). That is backwards for the case the
+  # model keeps losing: Suzanna Sheed's salience band says 13.9% with an sd of
+  # 12.6, measured off 36 candidates, and her actual 32.7% is a seven-sigma
+  # event under 4.10. This lets a caller replace the sd for the cells it has a
+  # better number for, and leave every other cell alone.
+  #
+  # NA means "no opinion, keep level_sd", which is why the override is a matrix
+  # of the same shape rather than a list of cells: a cell nobody has an opinion
+  # about must be indistinguishable from the unmodified run. With sd_override
+  # NULL this block does nothing and the result is byte-identical, which is the
+  # contract the compiled core is proven against.
+  if (!is.null(sd_override)) {
+    if (is.null(sd_cell_pre)) {
+      stop("sd_override needs level_sd: without it there is no per-cell sd ",
+           "matrix to override, and silently ignoring it would be an arm that ",
+           "looks like it ran and did not")
+    }
+    so <- as.matrix(sd_override)
+    if (!identical(dim(so), dim(sd_cell_pre))) {
+      stop("sd_override must be ", nrow(sd_cell_pre), " x ", K,
+           " to match shares; got ", nrow(so), " x ", ncol(so))
+    }
+    if (!is.null(dimnames(so)[[1]]) && !identical(dimnames(so)[[1]], rownames(shares))) {
+      stop("sd_override's row names must match shares' seats, in the same order")
+    }
+    if (!is.null(dimnames(so)[[2]]) && !identical(dimnames(so)[[2]], colnames(shares))) {
+      stop("sd_override's column names must match shares' classes, in the same order")
+    }
+    ok <- !is.na(so)
+    if (any(so[ok] < 0)) stop("sd_override holds a negative standard deviation")
+    sd_cell_pre[ok] <- so[ok]
+  }
   # "auto" reads AUSPOL_SIM_ENGINE (published_flags.R carries the shipped
   # value, "cpp" since the full-scale proof on 2026-09-07); AUSPOL_SIM_ENGINE=r
   # forces the reference loop, which is how the identity is re-proven.
@@ -749,6 +805,7 @@ simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
                           as.numeric(seat_sd_vec), has_level, sdp,
                           as.numeric(surge_h), as.integer(spi), as.integer(surge_idx),
                           as.numeric(surge_floor), as.numeric(surge_mu), as.numeric(surge_sd),
+                          as.logical(surge_from_zero),
                           cell_mat, cell_has, ss_mat, ss_has,
                           pool_mat, !is.null(pool_pw), pw_mat,
                           as.numeric(FLOW_SD_BY), as.numeric(smooth), as.numeric(fallback_smooth),
@@ -817,11 +874,17 @@ simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
         # as the class is actually on the ballot here (share > 0); otherwise
         # the default rule below.
         j0 <- surge_party_idx[i]
-        if (!is.na(j0) && v[j0] <= 0) { j0 <- NA_integer_; n_recipient_fb_draw <- n_recipient_fb_draw + 1L }
+        # A NAMED recipient at zero share: demoted to the default rule unless
+        # surge_from_zero. The floor exists to stop the DEFAULT rule handing a
+        # gain to whoever is largest among the near-zero; a class the hazard
+        # named from that candidate's own salience is the emergence case, and
+        # 275,205 of 3,000,000 fed2022 seat-draws were being demoted, which is
+        # Goldstein. docs/plans/prereg-recipient-at-zero-2026-09-07.md.
+        if (!is.na(j0) && v[j0] <= 0 && !surge_from_zero) { j0 <- NA_integer_; n_recipient_fb_draw <- n_recipient_fb_draw + 1L }
         cand <- if (!is.na(j0)) j0 else surge_idx[v[surge_idx] >= surge_floor]
         if (length(cand) && stats::runif(1) < surge_h[i]) {
           j <- if (!is.na(j0)) j0 else cand[which.max(v[cand])]
-          add <- stats::rnorm(1, surge_mu, surge_sd)
+          add <- stats::rnorm(1, surge_mu[i], surge_sd[i])
           if (add > 0) {
             others <- setdiff(seq_len(K), j)
             pool_v <- sum(v[others])

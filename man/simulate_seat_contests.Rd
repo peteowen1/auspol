@@ -10,6 +10,7 @@ simulate_seat_contests(
   party_sd,
   seat_sd = 3.5,
   level_sd = NULL,
+  sd_override = NULL,
   n_sims = 2000,
   smooth = 0.15,
   seed = NULL,
@@ -26,6 +27,7 @@ simulate_seat_contests(
   surge_parties = NULL,
   surge_floor = 2,
   surge_party = NULL,
+  surge_from_zero = FALSE,
   engine = c("auto", "cpp", "r")
 )
 }
@@ -73,6 +75,14 @@ It is much flatter than binomial -- \code{sqrt(p(1-p))} alone would predict 9.8
 at 50\% against 6.4 observed -- because a seat's vote is not a random sample.
 
 Not adopted by default: see \code{docs/plans/prereg-level-dependent-variance.md}.}
+
+\item{sd_override}{Optional numeric matrix, the same shape and dimnames as
+\code{shares}, replacing the per-cell deviation sd wherever it is not \code{NA}.
+\code{NA} means "no opinion, keep \code{level_sd}". Requires \code{level_sd}. Exists
+because \code{level_sd} is binomial-shaped and so gives a major on 30\% more
+uncertainty than a top-percentile insurgent on 13.9\%, which is backwards
+for the seats this model loses; \code{salience_sd_matrix()} builds one from the
+salience bands. \code{NULL} is byte-identical to the previous behaviour.}
 
 \item{n_sims}{Number of simulations.}
 
@@ -203,7 +213,8 @@ of the nine misses above \code{pred_p} 0.9999 were a non-major taking a seat
 called safe for a major.}
 
 \item{surge_mu, surge_sd}{Mean and standard deviation, in percentage points,
-of the \code{N(surge_mu, surge_sd)} gain drawn for the surging candidate.
+of the \code{N(surge_mu, surge_sd)} gain drawn for the surging candidate. Length
+1 (every seat the same) or one per seat, in seat order.
 Everyone else in the seat scales down by a common factor -- not a flat
 subtraction, which would drive small parties negative and silently
 redistribute their vote -- so the seat still sums to 100.
@@ -234,6 +245,11 @@ default rule: a class absent from the columns is counted once in
 \code{surge_recipient_fallback}, a class at zero share in a given draw once
 per seat-draw in \code{surge_recipient_fallback_draws}. The list also returns
 \code{engine}, the engine that actually ran.}
+
+\item{surge_from_zero}{Logical, default \code{FALSE}. When \code{TRUE}, a class named
+by \code{surge_party} receives the surge even at zero share in that draw. The
+\code{surge_floor} still gates the DEFAULT rule (whoever is largest), which is
+what it was written for.}
 
 \item{engine}{\code{"auto"} (default), \code{"cpp"} or \code{"r"}. The compiled core
 (\code{src/seat_sim_core.cpp}, 2026-09-07) reproduces the R loop byte for byte

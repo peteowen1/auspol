@@ -24,6 +24,16 @@ Named numeric vector, one entry per row of \code{shares}, safe to pass
 straight to \code{simulate_seat_contests(shrink = )}.
 }
 \description{
+\strong{NOTHING CALLS THIS.} Checked 2026-09-06 across \verb{R/}, \verb{scripts/} and
+\verb{tests/}: the shipped per-seat path is \code{AUSPOL_INSURGENCY_SHRINK=1}, which
+reads a FITTED risk from \code{output/fed-insurgency-risk.csv} (see
+\code{scripts/fit_insurgency_risk.R}) rather than deriving one from the shares.
+That arm was measured and refused on 2026-09-06. This function is the
+earlier, share-derived idea; it is kept because it is the natural form for
+a jurisdiction with no fitted risk file, and it is documented as unused so
+nobody reads its presence as evidence that it ships.
+}
+\details{
 \code{shrink} exists to absorb ONE failure: a non-major taking a seat the model
 called safe for a major. A scalar charges every seat for that insurance --
 \code{R/seat_sim.R}'s own note records 672 of 886 federal seat-elections whose
@@ -31,8 +41,7 @@ measured risk is under 1.5\% paying the same premium as the seats that
 actually go wrong. And the premium is not small: a scalar caps every seat at
 \code{1 - shrink/2}, so 0.10 meant no seat could be called above 0.95, measured at
 about 0.006 of mean log loss on the cap alone.
-}
-\details{
+
 This returns a shrink value per seat: \code{base} in seats where a non-major is
 actually within reach, and \strong{exactly zero everywhere else}. The default
 position is no shrink; a seat has to show the risk before it pays for it.

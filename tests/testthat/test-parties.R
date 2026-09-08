@@ -99,6 +99,24 @@ test_that("a bare DLP is not read as Labor", {
   expect_equal(classify_party("Democratic Labour Party"), "OTH_RIGHT")
   # A word CONTAINING dlp is not the DLP; that is what the boundary is for.
   expect_equal(classify_party("Australian Labor Party"), "ALP")
+
+  # THE SPELLING THE AEC ACTUALLY USES. This test previously checked only the
+  # British "Labour", which is the spelling the rule already handled, so it
+  # passed while the real data went the other way: "D.L.P. - Democratic Labor
+  # Party" is what the AEC published for fed2004, fed2007 and fed2010, and it
+  # matches neither "democratic labour" nor a bare "dlp" token, so 13
+  # candidates carrying 12,602 votes were counted as Labor. A test that only
+  # exercises the spelling the code was written for cannot find that.
+  expect_equal(classify_party("Democratic Labor Party"), "OTH_RIGHT")
+  expect_equal(classify_party("D.L.P. - Democratic Labor Party"), "OTH_RIGHT")
+  expect_equal(classify_party("D.L.P. - Democratic Labor Party", "DLP"), "OTH_RIGHT")
+  # The code alone is enough, for sources that publish no name.
+  expect_equal(classify_party("", "DLP"), "OTH_RIGHT")
+
+  # And nothing that is genuinely Labor moved.
+  expect_equal(classify_party("Country Labor Party", "CLP"), "ALP")
+  expect_equal(classify_party("Australian Labor Party (Northern Territory) Branch"), "ALP")
+  expect_equal(classify_party("Australian Labor Party - Victorian Branch", "ALP"), "ALP")
 })
 
 test_that("a party is not made Coalition by the word liberal in its name", {
@@ -122,4 +140,29 @@ test_that("a minor party is not filed as OTH because of word order", {
   # Not a licence to catch anything with "united" or "australia" in it.
   expect_equal(classify_party("Australian Democrats"), "OTH")
   expect_equal(classify_party("Sustainable Australia Party"), "OTH")
+})
+
+
+test_that("the Country Liberals are the Coalition and Country Labor is not", {
+  # CLP is the Country LIBERAL Party in the Northern Territory and the Country
+  # LABOR Party in New South Wales -- opposite sides of politics under one
+  # abbreviation, which is why classify_party() deliberately refuses to resolve
+  # the CODE and matches on the name instead.
+  #
+  # The name list was an EXACT match, so "C.L.P." resolved and
+  # "CLP-The Territory Party" -- what the AEC published for fed2004 -- did not.
+  # It fell through to OTH: 16,494 votes in Lingiari and 23,361 in Solomon on
+  # the wrong side, Lingiari's seat lean saturated at "wholly left" because the
+  # seat then had no Coalition vote, and Solomon entered the defection training
+  # set as a 49.5% OTH -> LNP switch that was really one party reclassified.
+  expect_equal(classify_party("CLP-The Territory Party"), "LNP")
+  expect_equal(classify_party("The Territory Party"), "LNP")
+  expect_equal(classify_party("C.L.P."), "LNP")
+  expect_equal(classify_party("Country Liberal Party"), "LNP")
+  expect_equal(classify_party("CLP-The Territory Party", "CLP"), "LNP")
+
+  # And the other side of the collision is untouched.
+  expect_equal(classify_party("Country Labor Party"), "ALP")
+  expect_equal(classify_party("Country Labor Party", "CLP"), "ALP")
+  expect_equal(classify_party("Australian Labor Party (Northern Territory) Branch"), "ALP")
 })

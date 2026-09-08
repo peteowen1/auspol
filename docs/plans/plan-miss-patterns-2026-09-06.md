@@ -44,6 +44,7 @@ measured was not what ships. Re-run with surge-v2 on, seed 42:
 | nsw2023 | 88 | 0.4252 | — | **0.3251** | 0.2138 (advantaged, still behind) |
 | sa2026 | 47 | 0.3867 | — | **0.3865** (accuracy 76.6%) | 0.3525 (advantaged, still behind) |
 | wa2025 | 53 | 0.2589 | — | **0.2787** | 0.3537 (advantaged) |
+| **qld2024** | **93** | — | — | **0.3351** | **0.3578** (advantaged; harness built 2026-09-07) |
 
 **Superseded the same night by the rule-2 baseline** (P1 shipped; see
 `prereg-vote-belongs-to-the-person-2026-09-06.md`), published defaults, seed

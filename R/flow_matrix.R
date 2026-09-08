@@ -119,8 +119,6 @@ build_flow_matrix <- function(transfers, min_n = 3L, multiplicity = FALSE) {
   # a consumer renormalises over the alive set -- which is now legitimate,
   # because every rate in it was measured on rounds where that destination
   # could receive.
-  avail <- d[, list(votes = sum(get("votes")),
-                    denom = sum(get("votes"))), by = c("from", "to")]
   rd <- unique(d[, c("election", "seat", "round", "from", "surv"), with = FALSE])
   tot_round <- d[, list(rv = sum(get("votes"))),
                  by = c("election", "seat", "round", "from")]

@@ -369,7 +369,18 @@ for (el in names(ELS)) {
     # TOP TWO PER SEAT PLUS EVERY INDEPENDENT: 16 of 16 fed2022 non-major winners
     # against 11 for one-per-seat. An emergent candidate is by definition the one
     # with no prior vote, so any rule ranking on prior vote excludes them.
-    S <- D[rk <= 2L | party == "IND"][!is.na(kw) & nzchar(kw)]
+    # ... AND EVERY MINOR-RIGHT CANDIDATE, for the reason the comment above gives
+    # for independents. The rank is on the PARTY's prior vote in the seat, so a
+    # party emerging in a seat is cut by construction -- and OTH_RIGHT is the
+    # class that won Barwon, Murray and Orange in 2019, Mirani in 2020 and four
+    # South Australian seats in 2026.
+    #
+    # Roy Butler is the case. The Shooters polled 2.5% in Barwon in 2015, below
+    # the independents' 16.9% and the Greens' 6.2%, so he ranked third and was
+    # never queried. He then won the seat with 33.0%, and the salience corpus
+    # has Barwon's two independents and two majors and not the winner. No arm
+    # that prices salience can reach a candidate who was never fetched.
+    S <- D[rk <= 2L | party %in% c("IND", "OTH_RIGHT")][!is.na(kw) & nzchar(kw)]
     setorder(S, kw, -prev_pcv)
     S <- S[, .SD[1], by = kw]
     PB <- C[region == rg & year == py & !party %in% MAJ,

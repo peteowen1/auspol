@@ -90,14 +90,18 @@ eps <- 1e-6
 SEAT_SD_MULT <- as.numeric(Sys.getenv("AUSPOL_SEAT_SD_MULT", "1"))
 if (!is.finite(SEAT_SD_MULT) || SEAT_SD_MULT <= 0)
   stop("AUSPOL_SEAT_SD_MULT must be a positive number; got ", SEAT_SD_MULT)
-# NOT HERE, AND WHY (2026-09-07): surge-v2 (AUSPOL_SALIENCE_SURGE_V2, and with
-# it AUSPOL_SURGE_SCALE and AUSPOL_SURGE_RECIPIENT), the screened slope mode and
-# personal_prior_vote()/remove_transferred_votes() all need the candidate-level
-# salience corpus (output/salience-v6.csv), which has no WA rows: the WA
-# commission files carry no candidate names the corpus can key on. Until it
-# does, WA measures the class-level model only, and a five-harness comparison
-# of those switches is a four-harness comparison. This is the gap CLAUDE.md
-# says must be named rather than left silent.
+# NOT HERE, AND WHY (2026-09-07, narrowed 2026-09-08): surge-v2
+# (AUSPOL_SALIENCE_SURGE_V2, and with it AUSPOL_SURGE_SCALE and
+# AUSPOL_SURGE_RECIPIENT) and the screened slope mode's salience-permit step
+# need the candidate-level salience corpus (output/salience-v6.csv), which
+# has no WA rows. This paragraph used to also name
+# personal_prior_vote()/remove_transferred_votes() as blocked for the same
+# reason -- that stopped being true once WA's candidacies rows carried
+# names (see the AUSPOL_WA_TRANSFER block below); leaving the stale claim
+# here would have hidden that WA's true remaining parity gap is narrower
+# than this paragraph once said. Until the salience corpus covers WA, this
+# harness runs conditional-only slopes with a disclosed BW1c! line (below)
+# rather than silently claiming "screened."
 # PORTED FROM THE FEDERAL HARNESS 2026-09-06: simulate_seat_contests() computes
 # sd_cell from `level_sd` and IGNORES seat_sd whenever level_sd is given, and
 # level_sd is on by default, so `seat_sd * SEAT_SD_MULT` at the call site was
@@ -116,15 +120,21 @@ if (SEAT_SD_MULT != 1) {
 }
 N_SIMS  <- as.integer(Sys.getenv("AUSPOL_N_SIMS", "20000"))
 
+# The pair list lives in the package, not here -- see all_election_pairs().
+REENTRY_PAIRS <- all_election_pairs()
+
 # PORTED FROM THE FEDERAL HARNESS 2026-09-05, per this repo's rule that a fix
 # to one harness is a fix to all of them. Both default OFF, so the default path
 # is byte-identical until an arm sets them.
 #   AUSPOL_MP_SLOPE        -- returning MEMBER (0.954) vs returning also-ran
 #                             (0.800); the shipped slope pooled them at 0.907.
-# AUSPOL_DEFECT_DISCOUNT is deliberately NOT wired here: this harness makes no
-# personal_prior_vote() call, so there is no per-seat base for a discounted
-# major vote to be added to. Said out loud rather than left as a silent gap,
-# which CLAUDE.md notes is indistinguishable from an oversight later.
+#   AUSPOL_DEFECT_DISCOUNT -- IS wired here (see the AUSPOL_WA_TRANSFER
+#                             block below, `.defect`), despite an earlier
+#                             version of this comment claiming otherwise.
+#                             Corrected 2026-09-08: this harness DOES call
+#                             personal_prior_vote() once candidacies rows
+#                             carried names, and the stale claim survived
+#                             three lines below the code that disproved it.
 
 SHRINK  <- as.numeric(Sys.getenv("AUSPOL_SHRINK", "0"))
 SMOOTH  <- as.numeric(Sys.getenv("AUSPOL_SMOOTH", "0.15"))
@@ -255,10 +265,107 @@ for (K in PAIRS) {
                 dimnames = list(rownames(A), parties))
   mat[, colnames(A)] <- A
   DEV_SLOPE <- dev_slopes_for(parties)
-  .cond <- identical(Sys.getenv("AUSPOL_DEV_SLOPE_MODE", ""), "conditional")
+  # "screened" COUNTS TOO, as it does in the other five harnesses. The published
+  # value of AUSPOL_DEV_SLOPE_MODE is "screened", and this line tested for
+  # "conditional" alone -- so Western Australia ran the entire shipped
+  # configuration with candidate-conditional slopes OFF while every other
+  # harness had them ON, and its 361 seat-elections described a different
+  # model from the rest of the pooled table. Nothing errored; candidate_returns()
+  # was still called and its result then discarded. Found 2026-09-07.
+  .cond <- Sys.getenv("AUSPOL_DEV_SLOPE_MODE", "") %in% c("conditional", "screened")
+  # "screened" MODE IS HALF-HONOURED HERE, AND SAYS SO. The other five
+  # harnesses pair conditional slopes with salience_permit_for()/
+  # screened_slopes(), which protects a governed-silent candidate from the
+  # harsh new-candidate slope. WA has neither wired in at all -- a bare
+  # published-default run (AUSPOL_DEV_SLOPE_MODE="screened") silently ran
+  # conditional-only here with nothing in the log to say the salience screen
+  # never fired, the same shape as the missing-SA-shrink incident CLAUDE.md
+  # records: a harness silently can't act on a switch it was handed.
+  if (identical(Sys.getenv("AUSPOL_DEV_SLOPE_MODE", ""), "screened")) {
+    cat("BW1c! screened mode requested but WA has no salience_permit_for()/",
+        "screened_slopes() wiring; running conditional-only\n", sep = "")
+  }
+  # DECOUPLED FOR MEASUREMENT. .cond gates TWO independent mechanisms at once --
+  # candidate-conditional dev slopes (.returns, below) and the personal-vote
+  # transfer (.own_prev) -- so a single flag flip changes both together and
+  # NEXT-STEPS' item 4 could not tell them apart. AUSPOL_WA_TRANSFER unset
+  # keeps them coupled exactly as before (byte-identical default); set to "0"
+  # or "1" to force the transfer independently of the slope mode.
+  .xfer <- { v <- Sys.getenv("AUSPOL_WA_TRANSFER", ""); if (nzchar(v)) identical(v, "1") else .cond }
   .returns <- if (.cond) tryCatch(candidate_returns(el_from, el_to), error = function(e) {
     cat(sprintf("BW1c! conditional slopes unavailable: %s
 ", conditionMessage(e))); NULL }) else NULL
+
+  # THE VOTE MOVES WITH THE PERSON. Ported from the Victorian harness
+  # 2026-09-07. The header used to say personal_prior_vote() could not run
+  # here because "the WA commission files carry no candidate names" -- that is
+  # no longer true: every one of the 2,842 WA rows in output/candidacies.csv
+  # carries a name. Surnames only, which is weaker than a full name, but the
+  # match is within a single seat across two elections and that is enough.
+  #
+  # Three of the five worst-scored seats in the whole corpus are WA seats this
+  # fixes the mechanism for: GRAHAM won Pilbara for Labor in 1996 with 63.8%
+  # and as an INDEPENDENT in 2001 with 54.6%; BOWLER won Kalgoorlie as an
+  # independent in 2008 after sitting as Labor; and Kimberley ran the same
+  # shape in reverse. All three were given a probability of 0.000000, because
+  # the model read the previous election's PARTY shares and the independent
+  # column was empty.
+  .defect <- if (identical(Sys.getenv("AUSPOL_DEFECT_DISCOUNT", "0"), "1")) 0.282 else NULL
+  .own_prev <- if (.xfer) tryCatch(personal_prior_vote(el_from, el_to, major_discount = .defect),
+                                   error = function(e) {
+                                     cat(sprintf("BW1p! personal_prior_vote() FAILED; class-level bases kept and NO transfer removed: %s\n",
+                                                 conditionMessage(e))); NULL }) else NULL
+  # RE-ENTRY PRIOR, docs/plans/prereg-reentry-prior-2026-09-07.md. A class that
+  # contests this seat but did not contest it last time has no prior share, so
+  # swinging zero forward leaves approximately zero. Across the corpus that is
+  # 1,418 seat-class rows, and predicting zero for them costs 5.27 points of
+  # mean absolute error against 3.35 for this model.
+  #
+  # Kimberley 2001 is the case: Labor did not stand there in 1996, Carol Martin
+  # won it with 42.2%, and the model projected 2.1% and gave the winner
+  # 0.000000. Leakage-free -- who is standing comes from the nomination list,
+  # which this harness already reads to ZERO an independent column where nobody
+  # nominated. Same fact, opposite direction.
+  # The prediction is a TARGET-election share, so it must NOT be swung again.
+  # The cells are identified here, while `mat` still shows which are empty, and
+  # written in AFTER dev_slope below.
+  .recells <- NULL
+  if (identical(Sys.getenv("AUSPOL_REENTRY", "0"), "1")) {
+    .rp <- Filter(function(z) z$election != el_to, REENTRY_PAIRS)
+    .rf <- tryCatch(reentry_fit(.rp), error = function(e) {
+      cat(sprintf("BW1r! reentry_fit() FAILED, prior NOT applied: %s
+",
+                  conditionMessage(e))); NULL })
+    if (!is.null(.rf)) {
+      # The nomination list goes IN to seat_lean, not just to the fill step:
+      # it is what separates defended from vacant non-major vote. Computed
+      # first for that reason.
+      .stand <- unique(fb[votes > 0, .(seat, party)])
+      # POSITIONS, which this harness alone was not passing. Without them
+      # flow_lean is NA for every Western Australian seat, so every class with
+      # a covariate fit failed the completeness check and only the flat-ratio
+      # classes ever filled. That is why Kimberley/ALP was the only large fill
+      # WA ever reported. Excluded from its own target like everywhere else.
+      .ln <- seat_lean(fa[, .(seat, party, pcv = 100 * votes / sum(votes)),
+                          by = seat][, .(seat, party, pcv)],
+                       positions = party_positions(exclude = el_to),
+                       standing = .stand)
+      .re <- attr(apply_reentry_prior(mat, .stand, .rf, .ln, sb), "reentry")
+      .recells <- .re
+      cat(sprintf("BW1r  re-entry prior: %d cell(s) filled%s
+", nrow(.re),
+                  if (nrow(.re)) paste0(" | largest: ",
+                    paste(utils::head(with(.re[order(-.re$value), ],
+                      sprintf("%s/%s %.1f", seat, party, value)), 3),
+                      collapse = ", ")) else ""))
+    }
+  }
+  mat <- remove_transferred_votes(mat, .own_prev)
+  .tr <- attr(mat, "transfers")
+  if (!is.null(.tr))
+    cat(sprintf("TR1  %s: transfers moved with the person: %d applied%s\n", el_to, .tr$applied,
+                if (length(.tr$skipped)) paste0("; SKIPPED ", length(.tr$skipped), ": ",
+                                                paste(utils::head(.tr$skipped, 5), collapse = ", ")) else ""))
   if (.cond && !is.null(.returns))
     cat(sprintf("BW1c conditional slopes ON: %d of %d seat-classes returning
 ",
@@ -270,11 +377,40 @@ for (K in PAIRS) {
               if (length(attr(DEV_SLOPE, "absent")))
                 paste0(" | not contested here: ",
                        paste(attr(DEV_SLOPE, "absent"), collapse=",")) else ""))
+  # THE OTHER HALF OF THE TRANSFER. remove_transferred_votes() above only strips
+  # a defector's vote from the party they LEFT, so it is not swung forward for
+  # a candidate who is not there. On its own that changes nothing for the seat:
+  # the party they JOINED still starts from its own class share, which for an
+  # independent column is usually zero. This substitutes the person's own prior
+  # vote as the base for their new class, which is what makes the mechanism
+  # visible. Ported from the Victorian harness, where it is `.own_x`.
+  #
+  # Pilbara 2001 is the case: personal_prior_vote() carries GRAHAM's 63.8% Labor
+  # vote across at the defection discount, 17.996 points, and without this line
+  # that number is computed, reported as "applied", and never reaches the IND
+  # column the model then scores.
+  .own_x <- function(p, seats, x) {
+    if (is.null(.own_prev)) return(x)
+    ov <- .own_prev[.own_prev$party == p, ]
+    if (!nrow(ov)) return(x)
+    v <- stats::setNames(ov$own_prev_pcv, ov$seat)[seats]
+    hit <- !is.na(v)
+    x[hit] <- unname(v[hit])
+    x
+  }
   for (p in parties) {
     from_pc <- if (p %in% names(sa)) sa[[p]] else 0
     to_pc   <- if (p %in% names(sb)) sb[[p]] else 0
     .sl <- if (.cond && !is.null(.returns)) conditional_slopes(p, rownames(mat), .returns, same_mp = .MP_SLOPE) else DEV_SLOPE[[p]]
-    mat[, p] <- dev_slope(mat[, p], from_pc, to_pc, .sl)
+    mat[, p] <- dev_slope(.own_x(p, rownames(mat), mat[, p]), from_pc, to_pc, .sl)
+  }
+  # Re-entry prior lands here, on the post-swing projection. See BW1r above.
+  if (!is.null(.recells) && nrow(.recells)) {
+    .ri <- cbind(match(.recells$seat, rownames(mat)),
+                 match(.recells$party, colnames(mat)))
+    .rk <- stats::complete.cases(.ri)
+    mat[.ri[.rk, , drop = FALSE]] <- .recells$value[.rk]
+    cat(sprintf("BW1r  re-entry applied post-swing to %d cell(s)\n", sum(.rk)))
   }
   # ZERO IND WHEREVER NOBODY ACTUALLY STOOD AT THE TARGET ELECTION. Ported from
   # backtest_candidate_fed.R and backtest_candidate_sa.R; was missing here and
@@ -293,6 +429,15 @@ for (K in PAIRS) {
     }
   }
   shares <- 100 * mat / rowSums(mat)
+  # DIAGNOSTIC DUMP, off unless asked. Writes the projected primary the model
+  # actually simulates from, so a seat can be inspected without reconstructing
+  # the pipeline by hand and getting it subtly wrong.
+  if (nzchar(Sys.getenv("AUSPOL_WA_DUMP_SHARES", ""))) {
+    .d <- data.table::as.data.table(shares, keep.rownames = "seat")
+    .d[, pair := el_to]
+    data.table::fwrite(.d, file.path("output", sprintf("wa-shares-%s.csv", el_to)))
+    cat(sprintf("BWd  wrote output/wa-shares-%s.csv\n", el_to))
+  }
 
   truth <- WIN[election == el_to, setNames(winner, seat)]
   keep <- intersect(rownames(shares), names(truth))
@@ -323,7 +468,26 @@ for (K in PAIRS) {
   sd_used <- if (is.na(prev_spread)) 3.5 else prev_spread
   psd <- setNames(rep(PARTY_SD, ncol(shares)), colnames(shares))
 
-  sim <- simulate_seat_contests(level_sd = .level_sd, level_mult = .lm(shares), shares, fm, party_sd = psd,
+  # ARM H, docs/plans/prereg-reentry-flatratio-variance-2026-09-08.md. Widens
+  # the SIMULATED uncertainty, not the point estimate, for cells that fell
+  # back to the flat re-entry ratio -- point-shrinkage was tried and refused
+  # for these classes (docs/NEXT-STEPS.md 2026-09-08). Off by default
+  # (AUSPOL_REENTRY_SD_K=0). WA had NO sd_override plumbing at all before
+  # this -- the sixth harness-parity gap found this session (positions,
+  # salience and the seed were the other three) -- so SD_OVR is declared
+  # here rather than inherited from a salience block the way the other five
+  # harnesses have it.
+  SD_OVR <- NULL
+  .reentry_sd_k <- as.numeric(Sys.getenv("AUSPOL_REENTRY_SD_K", "0"))
+  if (.reentry_sd_k > 0) {
+    .re_sd <- reentry_sd_matrix(shares, .recells, .level_sd, .lm(shares), .reentry_sd_k)
+    cat(sprintf("RH1  re-entry sd widening ON (k=%.1f): %d cell(s)
+",
+                .reentry_sd_k, attr(.re_sd, "n_set")))
+    SD_OVR <- combine_sd_override(SD_OVR, .re_sd)
+  }
+
+  sim <- simulate_seat_contests(level_sd = .level_sd, sd_override = SD_OVR, level_mult = .lm(shares), shares, fm, party_sd = psd,
                                 seat_sd = sd_used * SEAT_SD_MULT,
                                 n_sims = N_SIMS, smooth = SMOOTH, seed = SEED,
                                 shrink = SHRINK, fallback_smooth = FB_SMOOTH,

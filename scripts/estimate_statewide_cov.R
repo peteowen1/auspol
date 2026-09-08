@@ -32,29 +32,92 @@ share_of <- function(dt) {
   out
 }
 
+# C2 of docs/plans/prereg-statewide-cov-loo-2026-09-07.md: EVERY pair the corpus
+# holds, not the ten this list used to name. The first-preference files for all
+# of them were already on disk; the list simply had not been revisited as the
+# harnesses grew from ten scored pairs to twenty-two.
+#
+# A file-driven table rather than four hand-written blocks, so adding an
+# election is one row and cannot be half-done.
 fed <- fread(file.path(P, "aec-fed-firstprefs.csv"), showProgress = FALSE)
+fed_share <- function(y) share_of(fed[election == sprintf("fed%d", y)])
+state_share <- function(f) share_of(fread(file.path(P, f), showProgress = FALSE))
+
+# C2 WAS REFUSED BY ITS OWN REFUSAL CLAUSE, 2026-09-07. The widened set -- all
+# 21 pairs the corpus holds -- was built and measured, and refusal 1 of
+# docs/plans/prereg-statewide-cov-loo-2026-09-07.md fired: cor(ALP, IND) is
+# -0.16 with Western Australia in the fit and +0.43 without it. A correlation
+# that CHANGES SIGN on one jurisdiction is describing that jurisdiction, and
+# independents are the class this model cares most about. Seven of the twelve
+# pairs C2 would have added are WA, whose Assembly has almost no independents
+# and whose statewide Labor swings are enormous (+12 in 2017, +18 in 2021, -18
+# in 2025), so a near-zero unmoving IND column paired with huge ALP moves
+# manufactures a negative correlation.
+#
+# The refusal was written before the run and it is honoured here rather than
+# rewritten, which is the whole point of writing it first.
+#
+# WHAT IS NOT SETTLED. Widening to the non-WA pairs alone -- fed2007, nsw2019,
+# vic2014 and the two Queensland pairs -- is a DIFFERENT change that refusal 1
+# does not implicate, and it needs its own pre-registration rather than being
+# smuggled in on the back of this one. It is the obvious next experiment.
+#
+# The file-driven table below is kept because it is a better shape than four
+# hand-written blocks, and it reproduces exactly the ten pairs this file has
+# always used.
+# FIFTEEN PAIRS, and Western Australia's six are absent ON PURPOSE.
+# docs/plans/prereg-statewide-cov-widen-nonwa-2026-09-07.md. The previous
+# widening tried all 21 and its refusal clause fired: cor(ALP, IND) is -0.16
+# with WA in the fit and +0.43 without. WA's Assembly has almost no independents
+# and its statewide Labor swings are enormous (+12 in 2017, +18 in 2021, -18 in
+# 2025), so a flat IND column against very large ALP moves manufactures a
+# correlation about nothing. WA seats are still SCORED; only its pairs are kept
+# out of this one estimate.
+SPEC <- list(
+  list(region = "fed", years = c(2004, 2007, 2010, 2013, 2016, 2019, 2022, 2025),
+       get = fed_share),
+  list(region = "vic", years = c(2010, 2014, 2018, 2022),
+       get = function(y) state_share(sprintf("vec-%d-vic-firstprefs.csv", y))),
+  list(region = "nsw", years = c(2015, 2019, 2023),
+       get = function(y) state_share(sprintf("nswec-%d-nsw-firstprefs.csv", y))),
+  list(region = "sa", years = c(2022, 2026),
+       get = function(y) state_share(sprintf("ecsa-%d-sa-firstprefs.csv", y))),
+  # The valuable addition: Queensland carries real One Nation votes (13.73% in
+  # 2017, 7.12% in 2020) where that column has rested on South Australia alone.
+  list(region = "qld", years = c(2017, 2020, 2024),
+       get = function(y) state_share(sprintf("ecq-%d-qld-firstprefs.csv", y))))
+
 PAIRS <- list()
-for (k in list(c(2007, 2010), c(2010, 2013), c(2013, 2016), c(2016, 2019),
-               c(2019, 2022), c(2022, 2025))) {
-  PAIRS[[length(PAIRS) + 1L]] <- list(
-    name = sprintf("fed%d", k[2]),
-    a = share_of(fed[election == sprintf("fed%d", k[1])]),
-    b = share_of(fed[election == sprintf("fed%d", k[2])]))
+for (S in SPEC) {
+  ys <- S$years
+  for (n in seq_along(ys)[-1]) {
+    # NAMES THE ACTUAL ERROR, not just "missing" -- a bare tryCatch(error =
+    # function(e) NULL) here used to catch EVERY error class (a corrupt or
+    # truncated file, a schema change inside share_of(), an fread parse
+    # failure) and report all of them as the same "file is missing" line,
+    # discarding conditionMessage(e) entirely. A malformed file and an
+    # absent one are different problems and this pipeline feeds a
+    # pre-registered refusal check (R1/CVR1) -- a pair silently dropped for
+    # the wrong reason should not read the same as one genuinely unavailable.
+    a <- tryCatch(S$get(ys[n - 1]), error = function(e) {
+      cat(sprintf("CV0! %s%d: %s\n", S$region, ys[n - 1], conditionMessage(e))); NULL
+    })
+    b <- tryCatch(S$get(ys[n]), error = function(e) {
+      cat(sprintf("CV0! %s%d: %s\n", S$region, ys[n], conditionMessage(e))); NULL
+    })
+    if (is.null(a) || is.null(b)) {
+      cat(sprintf("CV0! %s%d -> %s%d: pair skipped\n",
+                  S$region, ys[n - 1], S$region, ys[n]))
+      next
+    }
+    PAIRS[[length(PAIRS) + 1L]] <- list(name = sprintf("%s%d", S$region, ys[n]),
+                                        region = S$region, a = a, b = b)
+  }
 }
-for (k in list(c(2014, 2018), c(2018, 2022))) {
-  PAIRS[[length(PAIRS) + 1L]] <- list(
-    name = sprintf("vic%d", k[2]),
-    a = share_of(fread(file.path(P, sprintf("vec-%d-vic-firstprefs.csv", k[1])), showProgress = FALSE)),
-    b = share_of(fread(file.path(P, sprintf("vec-%d-vic-firstprefs.csv", k[2])), showProgress = FALSE)))
-}
-PAIRS[[length(PAIRS) + 1L]] <- list(
-  name = "nsw2023",
-  a = share_of(fread(file.path(P, "nswec-2019-nsw-firstprefs.csv"), showProgress = FALSE)),
-  b = share_of(fread(file.path(P, "nswec-2023-nsw-firstprefs.csv"), showProgress = FALSE)))
-PAIRS[[length(PAIRS) + 1L]] <- list(
-  name = "sa2026",
-  a = share_of(fread(file.path(P, "ecsa-2022-sa-firstprefs.csv"), showProgress = FALSE)),
-  b = share_of(fread(file.path(P, "ecsa-2026-sa-firstprefs.csv"), showProgress = FALSE)))
+cat(sprintf("CV0  %d election pairs across %d jurisdictions
+",
+            length(PAIRS), length(unique(vapply(PAIRS, function(p) p$region, character(1))))))
+REGION <- vapply(PAIRS, function(p) p$region, character(1))
 
 D <- t(vapply(PAIRS, function(p) p$b - p$a, numeric(length(PARTIES))))
 rownames(D) <- vapply(PAIRS, function(p) p$name, character(1))
@@ -98,7 +161,79 @@ dimnames(SH) <- dimnames(CO)
 cat(sprintf("\nCV5  shrunk toward independence at lambda = %.2f (pre-registered)\n", LAMBDA))
 print(round(SH, 2))
 
-saveRDS(list(change = D, cor = CO, cor_shrunk = SH, lambda = LAMBDA,
-             parties = PARTIES),
+# ---- REFUSAL CHECKS FOR C2, run rather than remembered ----------------------
+# docs/plans/prereg-statewide-cov-loo-2026-09-07.md names two things that would
+# disqualify the widening however the pooled metric moves. They are computed
+# here so the answer is in the log rather than in someone's head.
+#
+# R1: is the matrix describing Western Australia rather than Australia? Seven of
+# the twelve pairs added by C2 are WA, so a correlation that CHANGES SIGN when
+# WA is removed is a correlation about one jurisdiction.
+# Refusal 1 of the current plan tests QUEENSLAND, which is what this widening
+# leans on, by the same rule that refused the Western Australian one.
+.excl <- if (any(REGION == "wa")) "wa" else "qld"
+if (any(REGION == .excl) && sum(REGION != .excl) >= 3L) {
+  noWA <- stats::cor(D[REGION != .excl, , drop = FALSE])
+  flip <- which(sign(noWA) != sign(CO) & abs(CO) > 0.15 & abs(noWA) > 0.15,
+                arr.ind = TRUE)
+  flip <- flip[flip[, 1] < flip[, 2], , drop = FALSE]
+  if (nrow(flip)) {
+    cat(sprintf("
+CVR1! %d correlation(s) change sign when %s is excluded:
+", nrow(flip), toupper(.excl)))
+    for (r in seq_len(nrow(flip))) {
+      i1 <- flip[r, 1]; i2 <- flip[r, 2]
+      cat(sprintf("      %s/%s: %+.2f with %s, %+.2f without
+",
+                  PARTIES[i1], PARTIES[i2], CO[i1, i2], toupper(.excl), noWA[i1, i2]))
+    }
+    cat("CVR1! Refusal 1 of the pre-registration applies: investigate before shipping.
+")
+  } else {
+    cat(sprintf("
+CVR1  no correlation above 0.15 changes sign when %s is excluded.
+", toupper(.excl)))
+  }
+}
+
+# ---- LEAVE ONE ELECTION OUT ------------------------------------------------
+# C1 of docs/plans/prereg-statewide-cov-loo-2026-09-07.md. Until 2026-09-07 this
+# file wrote ONE matrix and every harness scored against it, including the pairs
+# that were in the fit -- so scoring nsw2023 used a correlation that had seen
+# nsw2023's own statewide swing. fit_mp_slope.R already solves this shape by
+# writing one row per target; this is the same idea.
+#
+# THE LIVE FORECAST IS DIFFERENT AND KEEPS THE FULL MATRIX. fit_seats_full.R
+# predicts an election that has not happened, so no pair in this fit is the one
+# being predicted and there is nothing to leave out. Withholding data from it
+# would be superstition rather than hygiene. `cor_shrunk` stays the all-pairs
+# matrix for that reason, and `by_target` is what a BACKTEST reads.
+shrink_to_diag <- function(m) {
+  out <- LAMBDA * m + (1 - LAMBDA) * diag(nrow(m))
+  dimnames(out) <- dimnames(m)
+  out
+}
+by_target <- lapply(stats::setNames(nm = rownames(D)), function(t) {
+  Dm <- D[rownames(D) != t, , drop = FALSE]
+  if (nrow(Dm) < 3L)
+    stop("Leaving out ", t, " leaves only ", nrow(Dm), " pairs, too few for a ",
+         "correlation over ", length(PARTIES), " parties.")
+  cm <- stats::cor(Dm)
+  list(cor = cm, cor_shrunk = shrink_to_diag(cm), n_pairs = nrow(Dm))
+})
+cat(sprintf("
+CV6  leave-one-election-out: %d matrices, each on %d pairs
+",
+            length(by_target), nrow(D) - 1L))
+mv <- vapply(names(by_target), function(t)
+  max(abs(by_target[[t]]$cor_shrunk - SH)), numeric(1))
+cat(sprintf("CV6  max |move| in a target's own shrunk matrix: %.3f (%s); median %.3f
+",
+            max(mv), names(which.max(mv)), stats::median(mv)))
+
+saveRDS(list(change = D, cor = CO, cor_shrunk = SH, by_target = by_target,
+             lambda = LAMBDA, parties = PARTIES),
         file.path("output", "statewide-cov.rds"))
-cat("\nCV6  wrote output/statewide-cov.rds\n")
+cat("
+CV7  wrote output/statewide-cov.rds
+")

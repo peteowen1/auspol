@@ -168,10 +168,110 @@ surge_hazard_for <- function(target_election, target_prev, target_region,
   # paid the Greens in every teal seat. Carried per seat so the simulator can
   # be told (prereg-surge-recipient-2026-09-06.md).
   seat_recipient <- seat_party_hazard[, .(party = party[which.max(p_hat)]), by = seat]
+  # EXPECTED VOTE, not a win probability. surge_blend_estimate() mixes a vote
+  # share using p_hat -- the probability the candidate WINS -- as the weight,
+  # which is a category error: Goldstein 2022 came out at 3.1 because 0.025 of
+  # 35.1 is 0.9. What the same training population answers directly is "what
+  # does a candidate with this salience poll", winners and losers together:
+  # the 98-99.5% band averages 14.0 and 9.3 even when it loses. Bands, not a
+  # continuous fit, because 20 winners cannot support one (pcv ~ jump_pctile
+  # has R^2 0.015 and loses to a constant out of fold). TRAIN excludes the
+  # target election, so this is leave-one-election-out by construction.
+  # docs/plans/prereg-salience-expected-primary-2026-09-07.md.
+  .bands <- c(-0.01, 0.5, 0.9, 0.95, 0.98, 0.995, 1.01)
+  TRB <- data.table::copy(TRAIN)[, .b := cut(jump_pctile, .bands)]
+  bstat <- TRB[, list(exp_pcv = mean(pcv, na.rm = TRUE),
+                      exp_sd  = stats::sd(pcv, na.rm = TRUE), n_band = .N), by = .b]
+  bstat[!is.finite(exp_sd), exp_sd := stats::sd(TRB$pcv, na.rm = TRUE)]
+  TGB <- data.table::copy(target)[, .b := cut(jump_pctile, .bands)]
+  TGB <- merge(TGB, bstat, by = ".b", all.x = TRUE)
+  TGB[is.na(exp_pcv), `:=`(exp_pcv = mean(TRB$pcv, na.rm = TRUE),
+                           exp_sd = stats::sd(TRB$pcv, na.rm = TRUE))]
+  # SMOOTH INSTEAD OF BINS, when AUSPOL_SALIENCE_SMOOTH=1. The bands above are
+  # six means over 1,920 governed candidates, but they are wildly unequal: 1,056
+  # in the bottom band and TWELVE in the top, which is the one that matters. A
+  # candidate at the 0.9949 percentile gets a materially different answer from
+  # one at 0.9951, and the 21.2 the top band reports is a twelve-point mean.
+  #
+  # Two parameters each, fitted on log(1 - jump_pctile). The percentile is
+  # uniform by construction, so a linear term IN THE PERCENTILE cannot bend
+  # where all the signal is -- it gives the top candidate 8.2 where the band
+  # says 21.2. On the tail scale the same two parameters track the bands
+  # closely and extrapolate into the top rather than averaging it flat.
+  #
+  # THE SD IS FITTED AS A VARIANCE, on squared residuals from the mean fit,
+  # because E[(y - mu(x))^2] = sigma^2(x). A log link keeps it positive. One
+  # linear term and no spline: a squared residual is a chi-square with one
+  # degree of freedom and a flexible fit would chase that noise.
+  #
+  # TRAIN already excludes the target election, so this is leave-one-election-out
+  # like the bands it replaces. The recorded refusal at the top of this block --
+  # "20 winners cannot support a continuous fit" -- was about predicting a
+  # WINNER's vote from 20 points, a different problem from a conditional mean
+  # over 1,920 governed candidates. Checked before writing this, not assumed.
+  if (identical(Sys.getenv("AUSPOL_SALIENCE_SMOOTH", "0"), "1")) {
+    fitd <- TRB[is.finite(jump_pctile) & is.finite(pcv)]
+    if (nrow(fitd) >= 50L) {
+      tls <- function(q) log(pmax(1 - q, 1 / (2 * nrow(fitd))))
+      fitd[, .tl := tls(jump_pctile)]
+      # CUBIC IN THE TAIL SCALE, not linear. A linear term gave the top
+      # percentile 14.9 where the six-bin table says 21.2 -- too flat exactly
+      # where the model loses seats. Fitted values at the 0.9975 percentile:
+      # linear 14.93, quadratic 15.17, cubic 22.68, bands 21.23. Out of fold
+      # (leave-one-election-out over 1,920 governed candidates) cubic is also
+      # the best of the four on mean absolute error -- 4.0796 against the
+      # bands' 4.1040 -- though that margin is 0.6% and the metric is dominated
+      # by the ~1,700 low-salience rows, so the SHAPE is the argument and the
+      # error is only a check that it is not worse.
+      mfit <- stats::glm(pcv ~ .tl + I(.tl^2) + I(.tl^3),
+                         family = stats::quasipoisson(link = "log"), data = fitd)
+      fitd[, .mu := stats::predict(mfit, type = "response")]
+      fitd[, .r2 := (pcv - .mu)^2]
+      vfit <- stats::glm(.r2 ~ .tl + I(.tl^2) + I(.tl^3),
+                         family = stats::quasipoisson(link = "log"), data = fitd)
+      # MONOTONE BY CONSTRUCTION, because a cubic on its own is not. Left to
+      # itself this fit turns over outside the training range -- at the
+      # 0.99999 percentile it predicts 1.3% and at 0.999999 it predicts ZERO,
+      # for a candidate MORE salient than any it was trained on. And its sd
+      # peaks at 15.80 in the interior before falling back to 13.15 at the most
+      # salient end, a wiggle with no meaning.
+      #
+      # So the cubic is fitted, evaluated on a dense grid, and then PROJECTED
+      # onto the nearest monotone curve with stats::isoreg. Salience can then
+      # never lower a candidate's expected vote or narrow their distribution.
+      # Interpolation is clamped at both ends (rule = 2), so beyond the data
+      # the answer is the most extreme FITTED value rather than a polynomial's
+      # opinion. This is what makes the shape safe to extrapolate, not the
+      # earlier hard clamp.
+      # INDEX SPACE, deliberately, so no sign convention can go wrong. `.tl` is
+      # log(1 - pctile), so MORE salient is MORE NEGATIVE: the curve must be
+      # non-INCREASING in .tl. Reversing it makes that a non-DECREASING problem,
+      # which is what isoreg solves, and the reversal is undone afterwards. A
+      # first attempt fitted isoreg on -g and then interpolated with xout in +g,
+      # which silently returned one constant for every seat.
+      mono <- function(fit, tr_tl, want_tl, take_sqrt = FALSE) {
+        g <- seq(min(tr_tl), max(tr_tl), length.out = 512L)   # ascending .tl
+        y <- as.numeric(stats::predict(fit, newdata = data.frame(.tl = g),
+                                       type = "response"))
+        if (take_sqrt) y <- sqrt(pmax(y, 0))
+        ymono <- rev(stats::isoreg(seq_along(y), rev(y))$yf)
+        stats::approx(x = g, y = ymono, xout = want_tl, rule = 2)$y
+      }
+      TGB[, exp_pcv := mono(mfit, fitd$.tl, tls(jump_pctile))]
+      TGB[, exp_sd := mono(vfit, fitd$.tl, tls(jump_pctile), take_sqrt = TRUE)]
+    } else {
+      warning("AUSPOL_SALIENCE_SMOOTH=1 but only ", nrow(fitd),
+              " usable training rows; keeping the banded estimates",
+              call. = FALSE)
+    }
+  }
+  seat_party_expected <- TGB[, list(exp_pcv = max(exp_pcv), exp_sd = max(exp_sd)), by = list(seat, party)]
   winners <- TRAIN[TRAIN$elected == TRUE]
   list(seat_hazard = seat_hazard,
       seat_party_hazard = seat_party_hazard,
       seat_recipient = seat_recipient,
+      seat_party_expected = seat_party_expected,
+      band_table = bstat,
       surge_mu = if (nrow(winners) >= 3) mean(winners$pcv) else 15.6,
       surge_sd = if (nrow(winners) >= 3) stats::sd(winners$pcv) else 6.1,
       lambda = lambda, n_train_winners = nrow(winners))
@@ -203,4 +303,107 @@ surge_blend_estimate <- function(uniform_share, p_hat, surge_mu) {
   }
   p_hat[!is.finite(p_hat)] <- 0
   (1 - p_hat) * uniform_share + p_hat * surge_mu
+}
+
+#' Apply the salience point estimate to a seat-by-class share matrix
+#'
+#' The blend `surge_blend_estimate()` performs, lifted out of the federal
+#' harness so every caller runs the same code. Until 2026-09-07 this lived
+#' inline in `scripts/backtest_candidate_fed.R` alone: the Victorian, NSW and
+#' SA harnesses used the hazard for the DRAW only, and `fit_seats_full.R` --
+#' the published forecast -- did not blend at all, so the salience point
+#' estimate had never reached the published Victoria forecast.
+#'
+#' @param shares Numeric matrix, seats in rows (named) and classes in columns
+#'   (named), percentages. Rows are renormalised to 100 on the way out.
+#' @param hz The list from [surge_hazard_for()], or `NULL` (returns `shares`
+#'   unchanged, which is the case before a target election's corpus exists).
+#' @param surge_mu Mean vote of past winners, the value blended toward.
+#' @param expected When `TRUE`, use `hz$seat_party_expected`'s band mean as a
+#'   FLOOR instead of the hazard blend (P5; refused 2026-09-07, off by
+#'   default, kept because the wave term would act through it).
+#' @return `shares`, with an attribute `cells` giving how many (seat, class)
+#'   cells were moved.
+#' @export
+blend_salience_shares <- function(shares, hz, surge_mu, expected = FALSE) {
+  if (is.null(hz) || is.null(hz$seat_party_hazard) || !nrow(hz$seat_party_hazard)) {
+    attr(shares, "cells") <- 0L
+    return(shares)
+  }
+  sn <- rownames(shares)
+  moved <- 0L
+  for (pp in unique(hz$seat_party_hazard$party)) {
+    if (!pp %in% colnames(shares)) next
+    if (expected && !is.null(hz$seat_party_expected)) {
+      pe <- hz$seat_party_expected[hz$seat_party_expected$party == pp]
+      ev <- stats::setNames(pe$exp_pcv, pe$seat)[sn]
+      hit <- !is.na(ev)
+      if (any(hit)) {
+        shares[hit, pp] <- pmax(shares[hit, pp], unname(ev[hit]))
+        moved <- moved + sum(hit)
+      }
+    } else {
+      ph <- hz$seat_party_hazard[hz$seat_party_hazard$party == pp]
+      w <- stats::setNames(ph$p_hat, ph$seat)[sn]
+      w[is.na(w)] <- 0
+      shares[, pp] <- surge_blend_estimate(shares[, pp], unname(w), surge_mu)
+      moved <- moved + sum(w > 0.001)
+    }
+  }
+  shares <- 100 * shares / rowSums(shares)
+  attr(shares, "cells") <- as.integer(moved)
+  shares
+}
+
+#' Per-cell deviation sd from a candidate's salience band
+#'
+#' Builds the matrix [simulate_seat_contests()] takes as `sd_override`: the
+#' band-level standard deviation of realised vote for every (seat, class) that
+#' has a governed candidate, and `NA` everywhere else.
+#'
+#' WHY THIS EXISTS. `level_sd` is `a + b*sqrt(p(1-p))`, which peaks near 50% and
+#' therefore gives an ALP candidate on 30% a wider distribution (sd 5.07) than a
+#' top-percentile independent on 13.9% (sd 4.10). For the seats this model
+#' loses, that is exactly backwards. Suzanna Sheed's band -- the 98th to 99.5th
+#' percentile of salience jump, 36 candidates -- has a realised sd of 12.6, and
+#' her actual 32.7% is a seven-sigma event at 4.10 but under two at 12.6.
+#'
+#' `exp_sd` has been computed by [surge_hazard_for()] since it was written and
+#' read by nothing. This is what reads it.
+#'
+#' THE SD IS NOT A FORECAST-ERROR SD, and that is a real caveat rather than a
+#' quibble: it is the spread of realised vote WITHIN a salience band, estimated
+#' on as few as 12 candidates in the top band. It is a better number than 4.10
+#' for these candidates, not a correct one.
+#'
+#' @param shares Numeric matrix, seats in rows (named) and classes in columns.
+#' @param hz The list returned by [surge_hazard_for()].
+#' @param floor_sd Cells are never given an sd BELOW this. Defaults to `NA`,
+#'   meaning no floor; a caller that wants the override only to widen should
+#'   pass the level_sd it would otherwise have used.
+#' @return A numeric matrix shaped like `shares`, `NA` where no governed
+#'   candidate was found, with attribute `"n_set"` giving how many cells were
+#'   filled -- print it, because an override that silently fills nothing is an
+#'   arm that looks like it ran and did not.
+#' @export
+salience_sd_matrix <- function(shares, hz, floor_sd = NA_real_) {
+  out <- base::matrix(NA_real_, nrow(shares), ncol(shares),
+                      dimnames = dimnames(shares))
+  e <- hz$seat_party_expected
+  if (is.null(e) || !nrow(e)) {
+    attr(out, "n_set") <- 0L
+    return(out)
+  }
+  e <- as.data.frame(e)
+  ri <- match(e$seat, rownames(shares))
+  ci <- match(e$party, colnames(shares))
+  keep <- !is.na(ri) & !is.na(ci) & is.finite(e$exp_sd) & e$exp_sd > 0
+  if (any(keep)) {
+    idx <- cbind(ri[keep], ci[keep])
+    v <- e$exp_sd[keep]
+    if (is.finite(floor_sd)) v <- pmax(v, floor_sd)
+    out[idx] <- v
+  }
+  attr(out, "n_set") <- sum(keep)
+  out
 }

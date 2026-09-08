@@ -100,6 +100,51 @@ governed_population <- function(election, prev_election, region,
   target_election <- election
   SAL <- raw[raw$election == target_election]
   if (!nrow(SAL)) return(NULL)
+  # SEAT NAMES ARE RESOLVED TO THE CANDIDACY CORPUS'S SPELLING, because the
+  # producers of output/salience-v6.csv do not agree on one. Its Victorian rows
+  # for vic2014 and vic2018 carry the page-slug form ("albertpark", "shepparton")
+  # while every other election and every downstream consumer uses the
+  # commission's spelling ("Albert Park"). Nothing errored: the hazard simply
+  # matched no seat, and both pairs ran with salience ON, a corpus PRESENT, and
+  # 0 of 73 and 0 of 88 seats covered. Suzanna Sheed's 0.164 jump -- the highest
+  # in Shepparton by a distance, in a seat she won from 3.6% -- was in the file
+  # and never reached the model.
+  #
+  # Matched on a normalised key, and a match rate of ZERO is an ERROR rather
+  # than a quiet pass, because that is the state this went undetected in.
+  .cf <- file.path("output", "candidacies.csv")
+  # BOTH gates below used to fail closed with no disclosure: if the corpus
+  # was missing, or present but empty for this election, the stop() a few
+  # lines down -- the whole safety net for the zero-match disaster this
+  # block's header comment describes -- was skipped along with the
+  # normalisation itself, and SAL$seat quietly stayed unnormalised. That is
+  # the EXACT state the Shepparton/vic2014 failure went undetected in, just
+  # reached by a different path (missing corpus rather than a naming
+  # mismatch). Both are now disclosed rather than silently passed through.
+  if (!file.exists(.cf)) {
+    message("salience screen: no ", .cf, " -- seat names NOT normalised for ",
+            target_election, "; every hazard lookup keyed on a mismatched ",
+            "spelling will silently return nothing")
+  } else {
+    .cc <- data.table::fread(.cf, showProgress = FALSE)
+    .proper <- unique(.cc[.cc$election == target_election]$seat)
+    if (!length(.proper)) {
+      message("salience screen: ", .cf, " has no rows for ", target_election,
+              " -- seat names NOT normalised; every hazard lookup keyed on a ",
+              "mismatched spelling will silently return nothing")
+    } else {
+      .norm <- function(x) tolower(gsub("[^A-Za-z]", "", x))
+      .map <- stats::setNames(.proper, .norm(.proper))
+      .hit <- .norm(SAL$seat) %in% names(.map)
+      if (!any(.hit)) {
+        stop("salience: not one of ", nrow(SAL), " rows for ", target_election,
+             " has a seat matching output/candidacies.csv. The corpus and the ",
+             "candidacy table disagree on seat naming, and every hazard lookup ",
+             "would silently return nothing.", call. = FALSE)
+      }
+      SAL[.hit, seat := unname(.map[.norm(seat)])]
+    }
+  }
   yr <- as.integer(sub("^[a-z]+", "", election))
   py <- as.integer(sub("^[a-z]+", "", prev_election))
   # A failure here is DISCLOSED, not swallowed: "no party is surging" and "the

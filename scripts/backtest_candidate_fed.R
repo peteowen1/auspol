@@ -130,7 +130,8 @@ cat(sprintf("LV2  level_mult: %s
 # Polling day for each federal election, which is what decides what a backtest
 # may see. Hand-entered, and the only ones here not covered by the year check
 # in EXTERNAL_FLOWS, so they are asserted against their own keys below.
-FED_DATE <- c("2010"="2010-08-21","2013"="2013-09-07","2016"="2016-07-02",
+FED_DATE <- c("2007"="2007-11-24",
+              "2010"="2010-08-21","2013"="2013-09-07","2016"="2016-07-02",
               "2019"="2019-05-18","2022"="2022-05-21","2025"="2025-05-03")
 stopifnot(names(FED_DATE) == format(as.Date(FED_DATE), "%Y"))
 
@@ -204,14 +205,16 @@ if (FORECAST_MODE) {
 # ARM B/C of docs/plans/prereg-statewide-covariance.md. AUSPOL_PARTY_COR=shrunk
 # correlates the parties' statewide deviations instead of drawing them
 # independently. Empty (the default) reproduces the previous behaviour exactly.
+# THE MATRIX IS CHOSEN PER TARGET, and this harness scores several targets in
+# one run, so the matrix cannot be a single value fixed here. Only the MODE is
+# read at this point; statewide_cor() is called inside the pair loop. Until
+# 2026-09-07 every harness read one all-pairs correlation and scored against
+# it, including the pairs that were in the fit, so an election was correlated
+# using its own statewide swing. See
+# docs/plans/prereg-statewide-cov-loo-2026-09-07.md.
 PARTY_COR <- NULL
-if (nzchar(Sys.getenv("AUSPOL_PARTY_COR", ""))) {
-  .co <- readRDS("output/statewide-cov.rds")
-  PARTY_COR <- if (identical(Sys.getenv("AUSPOL_PARTY_COR"), "raw")) .co$cor else .co$cor_shrunk
-  cat(sprintf("COV  party correlation ON (%s): cor(ONP,LNP) = %+.2f
-",
-              Sys.getenv("AUSPOL_PARTY_COR"), PARTY_COR["ONP", "LNP"]))
-}
+COR_MODE <- if (!nzchar(Sys.getenv("AUSPOL_PARTY_COR", ""))) NULL else
+  if (identical(Sys.getenv("AUSPOL_PARTY_COR"), "raw")) "raw" else "shrunk"
 
 # THE HARNESS HAS NEVER PASSED `shrink`. fit_seats_full.R passes SHRINK = 0.10 --
 # the per-draw calibration shrink adopted after measuring over-confidence on
@@ -347,7 +350,13 @@ CAL_TAG <- paste0(
   # the first and a before/after comparison compared an arm with itself. Fixed
   # in nsw/sa/vic and missed here, which is the sister-script trap: patch one
   # copy, grep for the rest.
-  if (!is.null(PARTY_COR))
+  # KEYED ON THE SWITCH, NOT ON THE MATRIX. PARTY_COR is now fetched per
+  # target, which happens AFTER this tag is built, so testing the matrix
+  # here silently dropped "-cor" from every filename while the run still
+  # used a correlation -- a file whose name says one arm and whose
+  # contents are another, which is the fingerprint failure this tag exists
+  # to prevent.
+  if (nzchar(Sys.getenv("AUSPOL_PARTY_COR", "")))
     (if (identical(Sys.getenv("AUSPOL_PARTY_COR"), "raw")) "-corraw" else "-cor")
   else "",
   if (identical(Sys.getenv("AUSPOL_QLD_FLOWS", "0"), "1")) "-qld" else "",
@@ -372,6 +381,9 @@ SEED <- as.integer(Sys.getenv("AUSPOL_SEED", "42")); eps <- 1e-6
 P <- election_data_path()
 
 PAIRS <- list(
+  # fed2007 became forecastable on 2026-09-07, when the AEC's 2004 files were
+  # found under a different URL path (see scripts/fetch_preferences_fed.R).
+  list(from = 2004, to = 2007),
   list(from = 2007, to = 2010), list(from = 2010, to = 2013),
   list(from = 2013, to = 2016), list(from = 2016, to = 2019),
   list(from = 2019, to = 2022), list(from = 2022, to = 2025))
@@ -414,6 +426,19 @@ if (nzchar(.want)) {
   if (!length(PAIRS)) stop("AUSPOL_FED_PAIRS matched no pair")
 }
 for (K in PAIRS) {
+  # Arm B default: NULL per pair, so it cannot leak from one pair to the next.
+  SD_OVR <- NULL
+
+  # The correlation matrix for THIS pair. Printed with its source, because a
+  # silent fallback is the failure this repo keeps finding: a run using a
+  # different input from the one its log implies.
+  PARTY_COR <- if (is.null(COR_MODE)) NULL else
+    statewide_cor(sprintf("fed%d", K$to), mode = COR_MODE)
+  if (nzchar(Sys.getenv("AUSPOL_PARTY_COR", "")))
+    cat(sprintf("COV  fed%d party correlation (%s): cor(ONP,LNP) = %+.2f | %s\n",
+                K$to, COR_MODE, PARTY_COR["ONP", "LNP"],
+                attr(PARTY_COR, "cor_source")))
+
   ea <- sprintf("fed%d", K$from); eb <- sprintf("fed%d", K$to)
   fa <- FP[election == ea, .(votes = sum(votes)), by = .(seat, party)]
   fb <- FP[election == eb, .(votes = sum(votes)), by = .(seat, party)]
@@ -610,6 +635,16 @@ for (K in PAIRS) {
   mat <- 100 * mat / rowSums(mat)
   st_a <- fa[, .(v = sum(votes)), by = party][, setNames(100 * v / sum(v), party)]
   st_b <- fb[, .(v = sum(votes)), by = party][, setNames(100 * v / sum(v), party)]
+  # RE-ENTRY PRIOR, docs/plans/prereg-reentry-prior-2026-09-07.md. A class
+  # contesting this seat but not the last one has no prior share, so swinging
+  # zero forward leaves approximately zero -- 1,418 seat-class rows across the
+  # corpus, costing 5.27 points of mean absolute error against 3.25 for the
+  # model. Kimberley 2001 is the case: Labor did not stand there in 1996,
+  # Carol Martin won it with 42.2%, and the model projected 2.1%.
+  REENTRY_CELLS <- attr(reentry_apply_harness(mat, fa, fb, st_b,
+                               target = eb,
+                               pairs = all_election_pairs(), code = "BF1r"),
+                        "reentry")
 
   # ---- FORECAST MODE, against docs/plans/prereg-forecast-mode.md -----------
   # Default OFF, in which case the block below is the original: shift each
@@ -677,14 +712,22 @@ for (K in PAIRS) {
         m <- merge(a, b, by = c(".s", ".k"))
         if (!nrow(m)) NULL else m[, .(ratio = now / prev)]
       }), fill = TRUE)
-      if (is.null(rr) || nrow(rr) < 5L) NULL else {
+      if (is.null(rr) || nrow(rr) < 5L) {
+        cat(sprintf("BF0d! only %d defector case(s) (need >=5); no discount applied\n",
+                    if (is.null(rr)) 0L else nrow(rr)))
+        NULL
+      } else {
         v <- stats::median(rr$ratio, na.rm = TRUE)
         cat(sprintf("BF0d defector discount %.3f from %d cases (target excluded)
 ",
                     v, nrow(rr)))
         v
       }
-    }, error = function(e) NULL)
+    }, error = function(e) {
+      cat(sprintf("BF0d! defector-discount fit FAILED, no discount applied: %s\n",
+                  conditionMessage(e)))
+      NULL
+    })
   }
   .own_prev <- if (.cond) tryCatch(personal_prior_vote(ea, eb, major_discount = .defect),
                                    error = function(e) {
@@ -1156,6 +1199,16 @@ for (K in PAIRS) {
                                st_a[[p]], st_b[[p]], .sl)
     }
   }
+  # Re-entry prior lands here, on the POST-SWING projection. See BF1r above.
+  # The prediction is a target-election share; filling it into the prior-election
+  # matrix let dev_slope() swing it a second time.
+  if (!is.null(REENTRY_CELLS) && nrow(REENTRY_CELLS)) {
+    .ri <- cbind(match(REENTRY_CELLS$seat,  rownames(shares)),
+                 match(REENTRY_CELLS$party, colnames(shares)))
+    .rk <- stats::complete.cases(.ri)
+    shares[.ri[.rk, , drop = FALSE]] <- REENTRY_CELLS$value[.rk]
+    cat(sprintf("BF1r  re-entry applied post-swing to %d cell(s)\n", sum(.rk)))
+  }
   # Zero IND wherever nobody actually stood at the TARGET election. This is
   # nomination data, not the result being predicted: which classes contest a
   # seat is knowable from the ballot before polling day (nominations close
@@ -1219,7 +1272,18 @@ for (K in PAIRS) {
   out_all[[length(out_all) + 1L]] <- list(K = K, shares = shares, fm = fm,
                                           truth = truth, keep = keep,
                                           parties = parties, sd_w = sd_w,
-                                          sw_draws = sw_draws, fb = fb)
+                                          sw_draws = sw_draws, fb = fb,
+                                          # Carried per pair -- see the FED-2
+                                          # finding in docs/plans/
+                                          # harness-unification-2026-09-08.md.
+                                          # The bare REENTRY_CELLS variable is
+                                          # the LAST projection-loop iteration's
+                                          # value by the time the simulation
+                                          # loop below reads it; every pair but
+                                          # the last would widen the wrong
+                                          # pair's re-entry cells, silently,
+                                          # with a plausible non-zero count.
+                                          REENTRY_CELLS = REENTRY_CELLS)
 }
 
 # THE FALLBACK IS TAKEN OVER EVERY PAIR, NOT JUST THE ONES IN THIS RUN.
@@ -1245,6 +1309,16 @@ cat(sprintf("\nBF2  seat_sd per pair: %s | fallback (median over all %d pairs) %
 res_all <- list(); tot_all <- list(); all_probs <- list()
 for (X in out_all) {
   K <- X$K
+  # FED-1, docs/plans/harness-unification-2026-09-08.md. SD_OVR's ONLY other
+  # reset (line ~430) is in the PROJECTION loop above, which finishes before
+  # this loop starts -- so without this line, whatever the arm-H combine below
+  # left in SD_OVR at the end of the PREVIOUS pair's iteration is still there
+  # when this pair's iteration begins, and combine_sd_override() either stops
+  # on a dimension mismatch (pairs have different seat counts) or silently
+  # combines a shape that happens to match. Salience's own block further down
+  # reassigns SD_OVR fresh when it runs; this reset is what makes that safe to
+  # rely on even when salience does NOT run for a given configuration.
+  SD_OVR <- NULL
   sd_w <- if (is.finite(X$sd_w)) X$sd_w else fallback
   # STATEWIDE UNCERTAINTY, MEASURED. All four harnesses hardcoded 1.5 with no
   # derivation. The realised statewide first-preference error over 139
@@ -1381,14 +1455,21 @@ for (X in out_all) {
       # vs 34.5% actual. Blend toward surge_mu using the SAME p_hat already
       # fitted for the hazard, landed on the right (seat, party) column via
       # seat_party_hazard rather than the party-collapsed seat_hazard.
-      for (pp in unique(hz$seat_party_hazard$party)) {
-        if (!pp %in% colnames(X$shares)) next
-        ph <- hz$seat_party_hazard[hz$seat_party_hazard$party == pp]
-        w <- setNames(ph$p_hat, ph$seat)[sn]
-        w[is.na(w)] <- 0
-        X$shares[, pp] <- surge_blend_estimate(X$shares[, pp], unname(w), surge_mu_arg)
+      # 1 = the POINT estimate takes the band expectation, the draw keeps the
+      #     winners-only size (amendment 1 of the pre-registration);
+      # 2 = point AND draw, as originally pre-registered.
+      .exp_mode <- suppressWarnings(as.integer(Sys.getenv("AUSPOL_SALIENCE_EXPECTED", "0")))
+      if (is.na(.exp_mode)) .exp_mode <- 0L
+      X$shares <- blend_salience_shares(X$shares, hz, surge_mu_arg[1], expected = .exp_mode > 0L)
+      # ARM B, docs/plans/prereg-salience-expected-and-variance-2026-09-07.md.
+      # level_sd is binomial-shaped and gives a major on 30% MORE uncertainty
+      # than a top-percentile insurgent on 13.9%; the salience band measures
+      # the latter at 12.6. exp_sd was computed and read by nothing.
+      if (identical(Sys.getenv("AUSPOL_SALIENCE_EXP_SD", "0"), "1")) {
+        SD_OVR <- salience_sd_matrix(X$shares, hz)
+        cat(sprintf("BF0d fed%d salience sd override: %d of %d cells set\n",
+                    X$K$to, attr(SD_OVR, "n_set"), length(SD_OVR)))
       }
-      X$shares <- 100 * X$shares / rowSums(X$shares)
       cat(sprintf("BF0v %s: point estimate blended toward surge_mu for %d (seat,party) cells\n",
                   target_el, sum(hz$seat_party_hazard$p_hat > 0.001)))
       if (identical(Sys.getenv("AUSPOL_DUMP_SHARES", "0"), "1")) {
@@ -1413,9 +1494,26 @@ for (X in out_all) {
                 X$K$to, length(sn) - miss, length(sn), miss, SURGE_H, mean(surge_arg)))
   }
   set.seed(SEED)
-  sim <- simulate_seat_contests(level_sd = .level_sd, level_mult = .lm(X$shares), X$shares, X$fm, party_sd = psd, seat_sd = sd_w * SEAT_SD_MULT,
+  # ARM H, docs/plans/prereg-reentry-flatratio-variance-2026-09-08.md. Widens
+  # the SIMULATED uncertainty, not the point estimate, for cells that fell
+  # back to the flat re-entry ratio -- point-shrinkage was tried and refused
+  # for these classes (docs/NEXT-STEPS.md 2026-09-08). Off by default
+  # (AUSPOL_REENTRY_SD_K=0); combined with any salience sd_override by taking
+  # the larger of the two, never adding them.
+  .reentry_sd_k <- as.numeric(Sys.getenv("AUSPOL_REENTRY_SD_K", "0"))
+  if (.reentry_sd_k > 0) {
+    # n_set is read BEFORE combine_sd_override(), which builds a fresh matrix
+    # and does not carry attributes from either input forward.
+    .re_sd <- reentry_sd_matrix(X$shares, X$REENTRY_CELLS, .level_sd, .lm(X$shares), .reentry_sd_k)
+    cat(sprintf("RH1  re-entry sd widening ON (k=%.1f): %d cell(s)
+",
+                .reentry_sd_k, attr(.re_sd, "n_set")))
+    SD_OVR <- combine_sd_override(SD_OVR, .re_sd)
+  }
+  sim <- simulate_seat_contests(level_sd = .level_sd, sd_override = SD_OVR, level_mult = .lm(X$shares), X$shares, X$fm, party_sd = psd, seat_sd = sd_w * SEAT_SD_MULT,
                                 n_sims = N_SIMS, smooth = SMOOTH, seed = SEED,
                                 shrink = shrink_arg, surge_h = surge_arg, surge_party = surge_party_arg,
+                                surge_from_zero = identical(Sys.getenv("AUSPOL_SURGE_FROM_ZERO", "0"), "1"),
                                 surge_mu = surge_mu_arg, surge_sd = surge_sd_arg,
                                 party_cor = PARTY_COR, statewide_draws = X$sw_draws,
                                 fallback_smooth = FB_SMOOTH, flow_sd = FLOW_SD)

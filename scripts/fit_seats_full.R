@@ -755,6 +755,18 @@ if (ONP_FIX == "1") {
 }
 shares[, "ONP"] <- onp_target
 shares <- 100 * shares / rowSums(shares)
+# THE SALIENCE POINT ESTIMATE REACHES THE PUBLISHED FORECAST, 2026-09-07.
+# It never had: the blend lived inline in the federal harness only, so every
+# figure this script published described a model without it while the federal
+# backtest measured one with it. No-op until vic2026 has a salience corpus
+# (.hz is NULL before nominations close), which is why this could sit unnoticed.
+.exp_mode <- suppressWarnings(as.integer(Sys.getenv("AUSPOL_SALIENCE_EXPECTED", "0")))
+if (is.na(.exp_mode)) .exp_mode <- 0L
+shares <- blend_salience_shares(shares, if (exists(".hz")) .hz else NULL, surge_mu_arg[1],
+                                expected = .exp_mode > 0L)
+cat(sprintf("DS3b salience point estimate applied to %d (seat,party) cells%s\n",
+            attr(shares, "cells"),
+            if (is.null(if (exists(".hz")) .hz else NULL)) " (no corpus for vic2026 yet)" else ""))
 cvf <- function(x) stats::sd(x) / mean(x)
 cat(sprintf("ONP allocation: target CV %.3f, delivered %.3f (previously compressed to 0.283)
 ",
@@ -799,8 +811,14 @@ psd <- vapply(parties, function(p) if (is.na(state_sd[p])) 1.5 else state_sd[[p]
 COR_MODE <- Sys.getenv("AUSPOL_PARTY_COR", "shrunk")
 sw_cor <- NULL
 if (!identical(COR_MODE, "off") && nzchar(COR_MODE)) {
-  .co <- readRDS("output/statewide-cov.rds")
-  cm <- if (identical(COR_MODE, "raw")) .co$cor else .co$cor_shrunk
+  # NULL TARGET ON PURPOSE: this is the live forecast. Victoria 2026 has not
+  # happened, so no pair in the fit is the one being predicted and there is
+  # nothing to leave out. The backtests pass their target and get a
+  # leave-one-out matrix; withholding data here would be superstition rather
+  # than hygiene. See docs/plans/prereg-statewide-cov-loo-2026-09-07.md.
+  cm <- statewide_cor(NULL, mode = if (identical(COR_MODE, "raw")) "raw" else "shrunk")
+  cat(sprintf("COV  statewide correlation: %s
+", attr(cm, "cor_source")))
   miss <- setdiff(parties, colnames(cm))
   if (length(miss)) {
     stop("The statewide correlation has no entry for: ",
@@ -929,7 +947,8 @@ if (SHRINK > 0) cat(sprintf("CAL  calibration shrink %.2f applied
 sim <- simulate_seat_contests(level_sd = .level_sd, level_mult = .lm(shares), shares, fm, party_sd = psd, seat_sd = SEAT_SD, shrink = SHRINK,
                               n_sims = N_SIMS, smooth = SMOOTH, seed = SEED,
                               statewide_draws = sw_draws,
-                              surge_h = surge_arg, surge_party = surge_party_arg, surge_mu = surge_mu_arg, surge_sd = surge_sd_arg)
+                              surge_h = surge_arg, surge_party = surge_party_arg,
+                              surge_from_zero = identical(Sys.getenv("AUSPOL_SURGE_FROM_ZERO", "0"), "1"), surge_mu = surge_mu_arg, surge_sd = surge_sd_arg)
 cat(sprintf("S6e  engine %s | surge recipient fell back: %d class(es) absent, %d seat-draws at zero share\n", sim$engine, sim$surge_recipient_fallback, sim$surge_recipient_fallback_draws))
 cat(sprintf("\nsimulated %d seats x %d runs in %.0fs | pooled fallback %.1f%%\n",
             nrow(shares), N_SIMS,

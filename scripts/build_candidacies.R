@@ -38,7 +38,10 @@ read_aec <- function(path) {
   fread(path, skip = skip, showProgress = FALSE)
 }
 
-fed_years <- c(2007, 2010, 2013, 2016, 2019, 2022, 2025)
+# 2004 added 2026-09-07: the AEC serves it from a different path, which is why
+# it was missing (see scripts/fetch_preferences_fed.R). It makes fed2007 a
+# forecastable target rather than only a prior.
+fed_years <- c(2004, 2007, 2010, 2013, 2016, 2019, 2022, 2025)
 for (y in fed_years) {
   f <- file.path(AEC, sprintf("fed%d-firstprefs.csv", y))
   if (!file.exists(f)) { cat(sprintf("BC1  fed%d: MISSING %s\n", y, f)); next }
@@ -64,6 +67,34 @@ for (y in fed_years) {
   vt <- intersect(c("OrdinaryVotes", "AbsentVotes", "ProvisionalVotes",
                     "PrePollVotes", "PostalVotes"), names(d))
   for (v in vt) d[, (v) := as.numeric(get(v))]
+  # 2004 carries SittingMemberFl instead of Elected (see
+  # scripts/parse_transfers_fed.R). The winners for that year come from the
+  # commission's own winners file, which the transfer parser writes, rather
+  # than being re-derived here -- one derivation, in one place.
+  if (!"Elected" %in% names(d)) {
+    # The AEC's own two-candidate-preferred file names the winning CANDIDATE,
+    # so the winner is read from it rather than guessed. aec-fed-winners.csv
+    # carries the winning party CLASS, not the candidate, and cannot serve.
+    tcpf <- file.path("external", "reference", "aec", sprintf("fed%d-tcp.csv", y))
+    if (!file.exists(tcpf)) {
+      stop("Federal ", y, " has no Elected column and ", tcpf, " is absent. ",
+           "Run scripts/fetch_preferences_fed.R first.")
+    }
+    tcp <- data.table::fread(tcpf, skip = 1L, showProgress = FALSE)
+    data.table::setnames(tcp, make.names(names(tcp)))
+    tcp[, tv := suppressWarnings(as.numeric(TotalVotes))]
+    tw <- tcp[, .SD[which.max(tv)], by = DivisionNm][, .(DivisionNm, .wid = CandidateID)]
+    d <- merge(d, tw, by = "DivisionNm", all.x = TRUE)
+    d[, Elected := ifelse(!is.na(.wid) & CandidateID == .wid, "Y", "N")][, .wid := NULL]
+    n_win <- uniqueN(d[Elected == "Y", DivisionNm])
+    cat(sprintf("BC0  fed%d: `elected` DERIVED from the AEC two-candidate file (this year has no Elected column); %d of %d divisions have a winner
+",
+                y, n_win, uniqueN(d$DivisionNm)))
+    if (n_win != uniqueN(d$DivisionNm)) {
+      stop("fed", y, ": only ", n_win, " of ", uniqueN(d$DivisionNm),
+           " divisions matched a two-candidate winner.")
+    }
+  }
   d <- d[, c(list(votes = sum(as.numeric(TotalVotes)),
                   elected = any(toupper(as.character(Elected)) %in% c("Y", "TRUE")),
                   historic_elected = if ("HistoricElected" %in% names(.SD))
@@ -187,7 +218,13 @@ for (E in sa_files) {
 # are dropped before aggregating -- leaving them in would inflate every seat's
 # denominator and understate every share.
 NSWD <- file.path("external", "reference", "nsw")
-nsw_files <- list(list(year = 2019, f = "sge2019-la-final-votes.xlsx"),
+# 2015 added 2026-09-07 from the NSWEC's archived tally room
+# (pastvtr.elections.nsw.gov.au/SGE2015/data/la/state/), which serves the same
+# workbook in the same shape -- two sheets, Pivot and Data, verified identical
+# in structure to 2019 before wiring. It makes nsw2019 a forecastable target
+# rather than only a prior.
+nsw_files <- list(list(year = 2015, f = "sge2015-la-final-votes.xlsx"),
+                  list(year = 2019, f = "sge2019-la-final-votes.xlsx"),
                   list(year = 2023, f = "sge2023-la-final-votes.xlsx"))
 for (E in nsw_files) {
   fp <- file.path(NSWD, E$f)
@@ -388,6 +425,71 @@ for (E in qld_files) {
   cat(sprintf("BC6  qld%d: %d candidates in %d seats\n", E$year, nrow(q), uniqueN(q$seat)))
 }
 
+# ---- QUEENSLAND 2017 --------------------------------------------------------
+# A SEPARATE BLOCK, not another entry in qld_files, because the 2017 results
+# package uses an unrelated schema: the district's name is `name` rather than
+# `districtName`, candidates sit directly under `candidates`, and there is no
+# countRound element at all. Branching the loop above on year would make it
+# read as if the two shapes were similar.
+#
+# scripts/fetch_preferences_qld2017.R writes this file and explains why "ZZZ"
+# is an independent. Same reasoning here: in Queensland a candidate is printed
+# with a party only if a registered party endorsed them.
+q17f <- file.path(ECQ, "qld2017.xml")
+if (!file.exists(q17f) || file.info(q17f)$size < 1e6) {
+  cat(sprintf("BC6  qld2017: MISSING or empty %s -- run scripts/fetch_preferences_qld2017.R
+",
+              q17f))
+} else if (!requireNamespace("xml2", quietly = TRUE)) {
+  cat("BC6  qld2017: xml2 not installed; skipped
+")
+} else {
+  x17 <- xml2::read_xml(q17f)
+  pnodes <- xml2::xml_find_all(x17, "//parties/party")
+  P17 <- stats::setNames(xml2::xml_attr(pnodes, "name"), xml2::xml_attr(pnodes, "code"))
+  P17[["ZZZ"]] <- "Independent"
+  rows17 <- list()
+  for (dd in xml2::xml_find_all(x17, "//districts/district")) {
+    sname <- xml2::xml_attr(dd, "name")
+    decl  <- xml2::xml_attr(dd, "declaredBallotName")
+    cn <- xml2::xml_find_all(dd, "./candidates/candidate")
+    if (!length(cn)) next
+    code <- xml2::xml_attr(cn, "party")
+    bal  <- xml2::xml_attr(cn, "ballotName")
+    rows17[[sname]] <- data.table(
+      seat = sname, name = bal, party_ab = code,
+      party_raw = ifelse(code %in% names(P17), unname(P17[code]), NA_character_),
+      votes = as.numeric(xml2::xml_text(
+        xml2::xml_find_first(cn, "./primaryVotes/count"))),
+      elected = !is.na(decl) & bal == decl)
+  }
+  if (!length(rows17)) {
+    cat("BC6  qld2017: no districts parsed
+")
+  } else {
+    q17 <- rbindlist(rows17, fill = TRUE)
+    bad17 <- q17[is.na(party_raw), unique(party_ab)]
+    if (length(bad17))
+      stop("qld2017 party code(s) with no name in the file's own party table: ",
+           paste(bad17, collapse = ", "),
+           ". Classifying them without a name would silently make them IND.")
+    if (q17[is.na(votes), .N])
+      stop("qld2017: ", q17[is.na(votes), .N], " candidates have no primary vote count")
+    if (uniqueN(q17$seat) != 93L)
+      stop("qld2017: parsed ", uniqueN(q17$seat), " districts, not 93")
+    if (sum(q17$elected) != 93L)
+      stop("qld2017: ", sum(q17$elected), " candidates marked elected, not 93")
+    q17[, `:=`(party = classify_party(party_raw, ifelse(party_ab == "ZZZ", "", party_ab)),
+               surname = NA_character_, given = NA_character_,
+               election = "qld2017", region = "qld", year = 2017L)]
+    parts[["qld2017"]] <- q17[, .(seat, name, party_raw, votes, party, surname,
+                                  given, elected, election, region, year)]
+    cat(sprintf("BC6  qld2017: %d candidates in %d seats
+",
+                nrow(q17), uniqueN(q17$seat)))
+  }
+}
+
 # ---- VICTORIA 2014, 2018 ----------------------------------------------------
 # One HTML page per district, already on disk. Each carries several tables; the
 # one wanted has columns Candidate / Party / 1st pref votes.
@@ -399,14 +501,28 @@ for (E in qld_files) {
 # preferences, turning a 63% two-party result into a "63% primary". Position
 # indexing would fail silently and plausibly.
 VECD <- file.path("external", "reference", "vec")
-for (y in c(2014, 2018)) {
+# 2010 JOINED THIS LOOP rather than getting a parser of its own: the archived
+# 2010 result pages are the same site generation as 2014 and 2018 and carry the
+# same Candidate / Party / 1st pref votes headers. Only the file NAMING differs
+# -- scripts/fetch_preferences_vic2010.R writes "result-AlbertPark.html" where
+# the later years use "albertparkdistrict.html" -- so the pattern and the seat
+# derivation are per-year and everything else is shared.
+VIC_FILES <- list(
+  "2010" = list(pat = "^result-.*[.]html$",
+                seat = function(f) tolower(sub("[.]html$", "", sub("^result-", "", f)))),
+  "2014" = list(pat = "district[.]html$",
+                seat = function(f) sub("district[.]html$", "", f)),
+  "2018" = list(pat = "district[.]html$",
+                seat = function(f) sub("district[.]html$", "", f)))
+for (y in c(2010, 2014, 2018)) {
+  .vf <- VIC_FILES[[as.character(y)]]
   dir_y <- file.path(VECD, as.character(y))
   if (!dir.exists(dir_y)) { cat(sprintf("BC7  vic%d: no directory\n", y)); next }
   if (!requireNamespace("rvest", quietly = TRUE) ||
       !requireNamespace("xml2", quietly = TRUE)) {
     cat("BC7  vic: rvest/xml2 not installed; skipped\n"); break
   }
-  ff <- list.files(dir_y, pattern = "district\\.html$")
+  ff <- list.files(dir_y, pattern = .vf$pat)
   rows <- list(); skipped <- 0L
   for (f in ff) {
     p <- file.path(dir_y, f)
@@ -426,13 +542,65 @@ for (y in c(2014, 2018)) {
     # Kept lowercase and unspaced; the corpus is keyed on (election, seat) and
     # nothing here joins to the VEC results files, so inventing a spacing rule
     # would add a matching problem rather than solve one.
-    t[, seat := sub("district\\.html$", "", f)]
+    t[, seat := .vf$seat(f)]
     rows[[f]] <- t
   }
   if (!length(rows)) { cat(sprintf("BC7  vic%d: no district tables parsed\n", y)); next }
   v <- rbindlist(rows, fill = TRUE)
+  # PROPER SEAT NAMES, resolved from the commission's own first-preference file.
+  # These pages are named "albertparkdistrict.html", and this block used to keep
+  # the seat as "albertpark" on the reasoning that nothing joined to the VEC
+  # results files. That reasoning was true when written and is not true now, and
+  # three things were silently failing on it:
+  #   * the salience corpus is built from this table, so every Victorian hazard
+  #     lookup missed -- vic2014 and vic2018 ran with salience on, a corpus
+  #     present, and 0 of 73 and 0 of 88 seats matched;
+  #   * remove_transferred_votes() skipped morwell/LNP, which is Russell Northe
+  #     carrying his vote from the Nationals to an independent run -- one of the
+  #     six worst-scored seats in the whole corpus;
+  #   * conditional slopes saw fewer returning candidates than exist.
+  # None of it errored. Matched on a normalised key and REFUSED if a seat fails
+  # to resolve, because a silent drop here is what caused all three.
+  .fp <- file.path(election_data_path(), sprintf("vec-%d-vic-firstprefs.csv", y))
+  if (file.exists(.fp)) {
+    .key <- function(x) tolower(gsub("[^A-Za-z]", "", x))
+    .proper <- unique(fread(.fp, showProgress = FALSE)$seat)
+    .map <- stats::setNames(.proper, .key(.proper))
+    .want <- .key(v$seat)
+    .miss <- unique(v$seat[!.want %in% names(.map)])
+    if (length(.miss)) {
+      stop("vic", y, ": ", length(.miss), " seat(s) from the district pages have ",
+           "no match in ", basename(.fp), ": ",
+           paste(utils::head(.miss, 6), collapse = ", "),
+           ". A silent drop here disables salience and the personal-vote ",
+           "transfer for those seats.")
+    }
+    v[, seat := unname(.map[.key(seat)])]
+    cat(sprintf("BC7  vic%d: seat names resolved to the commission's spelling (%d seats)
+",
+                y, uniqueN(v$seat)))
+  } else {
+    # SAME CONSEQUENCE AS THE PARTIAL-MISMATCH CASE ABOVE, so it gets the
+    # same stop() rather than a warning execution continues past. A `cat()`
+    # here used to be the whole guard for "reference file entirely absent,"
+    # which is the identical downstream failure (salience 0-match, a missed
+    # personal-vote transfer, an undercounted conditional slope) reached by
+    # a different door than the one this block was written to close.
+    stop("vic", y, ": ", basename(.fp), " is absent, so seat names would stay ",
+         "in the page-slug form. A silent drop here disables salience and the ",
+         "personal-vote transfer for every seat this election.")
+  }
   v[is.na(party_raw) | party_raw == "", party_raw := "Independent"]
-  v[, `:=`(party = classify_party(party_raw, NULL), surname = NA_character_,
+  # THE ABBREVIATION AS WELL AS THE NAME, for the reason the WA block above
+  # spells out. The 2010 pages write the party as "ALP" where 2014 and 2018
+  # write "AUSTRALIAN LABOR PARTY", and no NAME rule in classify_party() matches
+  # a bare "ALP" -- so all 88 Victorian Labor candidates of 2010, 1,147,348
+  # votes, were classified OTH. Nothing errored and the first-preference file
+  # was right, because that one maps the abbreviation through the page's own
+  # party note; only the candidate corpus was wrong, which is where the
+  # returning-candidate and surge logic reads from. Found 2026-09-07 while
+  # diagnosing why Shepparton scored so badly.
+  v[, `:=`(party = classify_party(party_raw, party_raw), surname = NA_character_,
            given = NA_character_, elected = NA,
            election = sprintf("vic%d", y), region = "vic", year = y)]
   parts[[sprintf("vic%d", y)]] <- v

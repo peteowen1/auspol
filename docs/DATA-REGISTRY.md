@@ -1,6 +1,6 @@
 # Data registry
 
-**Generated 2026-09-06 by `scripts/build_data_registry.R`. Do not hand-edit** --
+**Generated 2026-09-07 by `scripts/build_data_registry.R`. Do not hand-edit** --
 rerun the script instead. Regenerate it whenever you add or fetch data.
 
 This file exists because the same data has been declared missing three
@@ -12,10 +12,12 @@ cannot pass as a working one.
 
 | file | size |
 |---|---:|
-| `aec-fed-firstprefs.csv` | 153 KB |
-| `aec-fed-tcp.csv` | 56 KB |
-| `aec-fed-transfers.csv` | 531 KB |
-| `aec-fed-winners.csv` | 22 KB |
+| `aec-fed-firstprefs.csv` | 176 KB |
+| `aec-fed-tcp.csv` | 63 KB |
+| `aec-fed-transfers.csv` | 610 KB |
+| `aec-fed-winners.csv` | 25 KB |
+| `ecq-2017-qld-firstprefs.csv` | 8 KB |
+| `ecq-2017-qld-winners.csv` | 2 KB |
 | `ecq-2020-qld-firstprefs.csv` | 11 KB |
 | `ecq-2024-qld-firstprefs.csv` | 10 KB |
 | `ecq-qld-transfers.csv` | 97 KB |
@@ -28,10 +30,14 @@ cannot pass as a working one.
 | `fed-swing-transposed.csv` | 43 KB |
 | `federal-transposed-to-state.csv` | 178 KB |
 | `MANIFEST.csv` | 787 B |
+| `nswec-2015-nsw-firstprefs.csv` | 10 KB |
 | `nswec-2019-nsw-firstprefs.csv` | 10 KB |
 | `nswec-2023-nsw-firstprefs.csv` | 10 KB |
-| `nswec-nsw-transfers.csv` | 90 KB |
-| `nswec-nsw-winners.csv` | 5 KB |
+| `nswec-nsw-transfers.csv` | 131 KB |
+| `nswec-nsw-winners.csv` | 7 KB |
+| `vec-2010-vic-firstprefs.csv` | 9 KB |
+| `vec-2010-vic-transfers.csv` | 22 KB |
+| `vec-2010-vic-winners.csv` | 3 KB |
 | `vec-2014-vic-firstprefs.csv` | 9 KB |
 | `vec-2014-vic-transfers.csv` | 27 KB |
 | `vec-2014-vic-winners.csv` | 1 KB |
@@ -55,16 +61,16 @@ cannot pass as a working one.
 
 ## Raw commission downloads (`external/reference/`)
 
-- **aec/** -- 48 files, 50.3 MB
+- **aec/** -- 58 files, 53.1 MB
   - e.g. booths/fed2016-NSW.csv, booths/fed2019-SA.csv, booths/fed2019-VIC.csv, booths/fed2022-NSW.csv
-- **vec/** -- 318 files, 1.9 MB
-  - e.g. 2014/albertparkdistrict.html, 2014/altonadistrict.html, 2014/bassdistrict.html, 2014/bayswaterdistrict.html
-- **nsw/** -- 197 files, 6.3 MB
-  - e.g. dop-sample.html, dop/index-SG1901.html, dop/index-SG2301.html, dop/SG1901-albury.html
+- **vec/** -- 547 files, 19.9 MB
+  - e.g. 2010/cdx-vec.txt, 2010/dop-AlbertPark.html, 2010/dop-BallaratEast.html, 2010/dop-BallaratWest.html
+- **nsw/** -- 292 files, 9.8 MB
+  - e.g. dop-sample.html, dop/index-SG1901.html, dop/index-SG2301.html, dop/index-SGE2015.html
 - **ecsa/** -- 9 files, 2.9 MB. **1 ZERO-BYTE: ha-2018-03-17.json**
   - e.g. ha-2018-03-17.json, ha-2022-03-19.json, ha-2026-03-21.json, ha-change-2022-03-19.json
-- **ecq/** -- 7 files, 47.4 MB
-  - e.g. elections.json, publicResults_SGE2024_ICCDiv4_Final.zip, publicResults_State2020_aurukun2020_Final.zip, qld2020.xml
+- **ecq/** -- 10 files, 57.0 MB
+  - e.g. elections.json, publicResults_SGE2024_ICCDiv4_Final.zip, publicResults_State2020_aurukun2020_Final.zip, qld2017-cdx.txt
 - **waec/** -- 947 files, 27.1 MB
   - e.g. app.html, app.min.js, config-loader.js, config.json
 - **trends/** -- 3727 files, 2.3 MB
@@ -85,6 +91,7 @@ NAMES live -- the per-seat results files carry `seat, party, votes` only.
 
 | election | seats | candidates | IND | non-major breakouts |
 |---|---:|---:|---:|---:|
+| fed2004 | 150 | 1081 | 99 | 8 |
 | fed2007 | 150 | 1050 | 102 | 6 |
 | fed2010 | 150 | 844 | 82 | 12 |
 | fed2013 | 150 | 1184 | 74 | 9 |
@@ -92,12 +99,15 @@ NAMES live -- the per-seat results files carry `seat, party, votes` only.
 | fed2019 | 151 | 1054 | 98 | 21 |
 | fed2022 | 151 | 1202 | 98 | 33 |
 | fed2025 | 150 | 1122 | 129 | 35 |
+| nsw2015 | 93 | 540 | 59 | 11 |
 | nsw2019 | 93 | 568 | 52 | 15 |
 | nsw2023 | 93 | 562 | 68 | 19 |
+| qld2017 | 93 | 453 | 95 | 49 |
 | qld2020 | 93 | 597 | 69 | 13 |
 | qld2024 | 93 | 525 | 38 | 14 |
 | sa2022 | 47 | 240 | 20 | 6 |
 | sa2026 | 47 | 388 | 34 | 31 |
+| vic2010 | 88 | 502 | 75 | 88 |
 | vic2014 | 88 | 545 | 91 | 9 |
 | vic2018 | 88 | 507 | 102 | 9 |
 | vic2022 | 87 | 731 | 119 | 13 |
@@ -110,7 +120,7 @@ NAMES live -- the per-seat results files carry `seat, party, votes` only.
 | wa2021 | 59 | 463 | 17 | 0 |
 | wa2025 | 59 | 398 | 29 | 6 |
 
-**Total: 14953 candidacies, 24 elections, 303 non-major breakouts.**
+**Total: 17529 candidacies, 28 elections, 459 non-major breakouts.**
 
 ## Known gaps
 

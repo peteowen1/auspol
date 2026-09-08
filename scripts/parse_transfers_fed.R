@@ -27,6 +27,43 @@ tx_all <- list(); win_all <- list(); tcp_all <- list()
 for (E in raw) {
   d <- as.data.table(E$dt); setnames(d, make.names(names(d)))
   el <- sprintf("fed%d", E$year)
+  # THE 2004 FILE HAS NO `Elected` COLUMN. Every election from 2007 on carries
+  # `Elected`/`HistoricElected`; 2004 carries `SittingMemberFl`, which marks who
+  # held the seat BEFORE the election and is not the winner. So the winner is
+  # DERIVED from the distribution itself -- the candidate with the most votes at
+  # the final count -- and the derivation is announced, never silent, because a
+  # fabricated column that looks like a measured one is this repo's most
+  # expensive recurring fault. It is then cross-checked against the AEC's own
+  # two-candidate-preferred file, and a disagreement stops the run.
+  if (!"Elected" %in% names(d)) {
+    fin <- d[CalculationType == "Preference Count"]
+    fin[, val_ := suppressWarnings(as.numeric(CalculationValue))]
+    last_count <- fin[, .(CountNumber = max(as.integer(CountNumber))), by = DivisionNm]
+    fin <- merge(fin, last_count, by = c("DivisionNm", "CountNumber"))
+    wins <- fin[, .SD[which.max(val_)], by = DivisionNm][, .(DivisionNm, .win_cand = CandidateID)]
+    d <- merge(d, wins, by = "DivisionNm", all.x = TRUE)
+    d[, Elected := ifelse(CandidateID == .win_cand, "Y", "N")][, .win_cand := NULL]
+    tcpf <- file.path(RAW, sprintf("fed%d-tcp.csv", E$year))
+    if (file.exists(tcpf)) {
+      tcp <- data.table::fread(tcpf, skip = 1L, showProgress = FALSE)
+      setnames(tcp, make.names(names(tcp)))
+      tcp[, tv := suppressWarnings(as.numeric(TotalVotes))]
+      tw <- tcp[, .SD[which.max(tv)], by = DivisionNm][, .(DivisionNm, tcp_win = CandidateID)]
+      chk <- merge(unique(d[Elected == "Y", .(DivisionNm, CandidateID)]), tw, by = "DivisionNm")
+      bad <- chk[CandidateID != tcp_win]
+      if (nrow(bad)) {
+        stop(el, ": the winner derived from the final count disagrees with the ",
+             "AEC's own two-candidate-preferred file in ", nrow(bad), " division(s): ",
+             paste(utils::head(bad$DivisionNm, 5), collapse = ", "))
+      }
+      cat(sprintf("PT0  %s: `Elected` DERIVED from the final count (the file has none), ",
+                  el), sprintf("and agrees with the two-candidate-preferred file in all %d divisions\n",
+                               nrow(chk)))
+    } else {
+      cat(sprintf("PT0! %s: `Elected` DERIVED from the final count and NOT cross-checked -- no %s\n",
+                  el, basename(tcpf)))
+    }
+  }
   need <- c("DivisionNm", "CountNumber", "PartyNm", "PartyAb", "Elected",
             "CalculationType", "CalculationValue", "Surname")
   miss <- setdiff(need, names(d))
