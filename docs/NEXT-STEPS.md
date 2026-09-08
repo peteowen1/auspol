@@ -1,5 +1,82 @@
 # auspol — work queue
 
+## SESSION 2026-09-09 (AM #3) — candidate/party tracking audit, three fixes shipped
+
+Pete's ask: map out every possible between-election candidate/party
+transition (same person same party, same person new party, major->minor
+defection, candidate departs entirely, new entrant) and fix what's actually
+broken, using Waite (sa2022->2026) and Kiama (nsw2019->2023) as worked
+examples. Built `scripts/candidate_scenario.R` (a what-if tool: drop/add/
+relabel a candidate in one seat's target-election corpus, see the effect on
+`personal_prior_vote()`'s inputs without a full sim) to make this concrete
+rather than guessed.
+
+**Shipped, tested (910/910 pass), full 22-pair backtest rerun in progress:**
+
+1. **`fit_defector_discount()`, new, exported.** The major-party-defector
+   retention rate (Ward/Kiama's case) was fitted ONCE inline in
+   `backtest_candidate_fed.R` (federal pairs only, leave-one-out) while the
+   other five harnesses hardcoded a frozen `0.282` snapshot — exactly the
+   "fix in one harness, not ported" failure this repo has been burned by
+   before (`docs/plans/harness-unification-2026-09-08.md` named it). Now one
+   function, pooled across all six jurisdictions via `all_election_pairs()`,
+   every harness calls it. Value barely moves (0.277-0.291 depending on
+   target vs the old fixed 0.282) — low risk, but the PROCESS was broken
+   even though the number happened to be close.
+2. **Losing-major-party defector (Pete's "unseen example" — a losing LNP MP
+   moving to ONP) now has an explicit, evidenced comment instead of an
+   implicit side effect.** `candidate_returns()` already correctly flags the
+   identity match; `personal_prior_vote()` deliberately gives no floor
+   because the non-member analogue of the discount has only 5 corpus cases,
+   mean retention 2.32 / sd 4.38 — unusable, not a gap.
+
+**Built, tried, and REVERTED the same session — real finding, not shipped:**
+`personal_prior_vote()` summing every identity-matched returning candidate
+of a class (not just the leader) looked like a safe completeness fix for
+Waite's hypothetical (Duluk 19.7% + Holmes-Ross 14.6%, both returning).
+**Two things were wrong with "zero real cases, no measured effect":** first,
+the check that produced that claim had the same `all_election_pairs()`
+field-name bug (`election_from` vs `prev`) already caught once this session
+in the defector-discount count, and silently processed zero pairs instead of
+erroring. Rerun correctly: **40 real historical cases** hit this shape.
+Second, summing is only correct when EVERY prior candidate of a class
+returns (Waite's shape). The far more common real shape is a class with
+several prior candidates where only ONE returns — Rankin/OTH_RIGHT
+fed2016->2019 had three (Lawrie 5.9%, Davies 4.1%, Holley 3.4%), only Davies
+came back. Summing there REPLACES the class's true prior total (13.3%) with
+just Davies' own share (4.1%), silently discarding the other 9.2 points of
+real prior vote that belonged to people who left — understating the base,
+not completing it. Measured on real backtests before reverting: fed2019
+pooled log loss 0.263 -> 0.383, fed2025 0.324 -> 0.373 (both worse); vic2022
+improved slightly (0.249 -> 0.240). Mixed, non-trivial, not a no-op.
+**The real fix needs to separate "identity-tracked personal vote" from
+"anonymous residual class vote"** rather than treating a match as a full
+substitute for the class base — a genuine design question, not a mechanical
+patch. Full reasoning is now the long comment above `lead` in
+`personal_prior_vote()` (`R/candidate_returns.R`) so the next attempt starts
+from what's already known rather than re-discovering it. `scripts/
+candidate_scenario.R` still demonstrates the underlying gap live (Holmes-
+Ross's history is genuinely invisible under leader-only matching) — the tool
+is fine, the fix attempted on top of it wasn't.
+
+**Queued, not done**: hand-coding "scandal/disendorsement vs voluntary
+departure" as a feature for the 14-case defector-retention fit. Pete's own
+bar (10+ cases -> try to model) is cleared, but the two obvious data-only
+covariates already tried (prior seat margin r=0.07, prior vote size r=-0.10)
+found nothing — the visible split (Kelly/Jensen/McBride low, Ward/Graham
+high) is real but is circular with the very outcome being forecast. The only
+plausible signal is genuinely external (public record of why they left),
+knowable pre-election so not leaky, but needs manual per-case research, not
+a code change. Someone's call on whether that research is worth the time.
+
+**Pete's broader point, mid-session**: this exact failure (federal quietly
+fits something, five siblings hardcode a stale copy) is a documentation and
+consolidation problem, not just a one-off bug. Keep `docs/MODEL-REGISTRY.md`
+current and prefer pulling shared logic into `R/` over six near-duplicate
+harness copies — item 1 above is that consolidation applied to one constant;
+the six-harness architecture itself is the bigger, already-flagged version of
+this (`docs/plans/harness-unification-2026-09-08.md`).
+
 ## SESSION 2026-09-09 (AM #2) — worst-seats-vs-AEF table reviewed with Pete
 
 Full 22-pair sharedetail coverage confirmed (`scripts/pool_sharedetail.R`

@@ -398,7 +398,20 @@ for (K in PAIRS) {
   ",
               if (is.null(.MP_SLOPE)) "OFF" else
                 paste(sprintf("%s=%.4f", names(.MP_SLOPE), .MP_SLOPE), collapse = " ")))
-  .defect <- if (identical(Sys.getenv("AUSPOL_DEFECT_DISCOUNT", "0"), "1")) 0.282 else NULL
+  # PORTED to fit_defector_discount() 2026-09-09 -- was a frozen 0.282 snapshot
+  # of one federal-only run; now pooled across all six jurisdictions, refit
+  # leave-this-target-out. See R/candidate_returns.R's docs.
+  .defect <- NULL
+  if (identical(Sys.getenv("AUSPOL_DEFECT_DISCOUNT", "0"), "1")) {
+    .fd <- fit_defector_discount(.eb)
+    if (is.null(.fd$discount)) {
+      cat(sprintf("BV0d! only %d defector case(s) (need >=5); no discount applied\n", .fd$n))
+    } else {
+      cat(sprintf("BV0d defector discount %.3f from %d cases (target excluded, pooled all jurisdictions)\n",
+                  .fd$discount, .fd$n))
+      .defect <- .fd$discount
+    }
+  }
   .own_prev <- if (.cond) tryCatch(personal_prior_vote(.ea, .eb, major_discount = .defect), error = function(e) { cat(sprintf("BV1p! personal_prior_vote() FAILED; class-level bases kept and NO transfer removed: %s\n", conditionMessage(e))); NULL }) else NULL
   mat <- remove_transferred_votes(mat, .own_prev)  # the vote moves with the person; see personal_prior_vote()
   .tr <- attr(mat, "transfers"); if (!is.null(.tr)) cat(sprintf("TR1  transfers moved with the person: %d applied%s\n", .tr$applied, if (length(.tr$skipped)) paste0("; SKIPPED ", length(.tr$skipped), ": ", paste(utils::head(.tr$skipped, 5), collapse = ", ")) else ""))

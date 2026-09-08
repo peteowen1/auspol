@@ -474,7 +474,20 @@ cat(sprintf("BT1m  MP tier: %s
 ",
             if (is.null(.MP_SLOPE)) "OFF" else
               paste(sprintf("%s=%.4f", names(.MP_SLOPE), .MP_SLOPE), collapse = " ")))
-.defect <- if (identical(Sys.getenv("AUSPOL_DEFECT_DISCOUNT", "0"), "1")) 0.282 else NULL
+# PORTED to fit_defector_discount() 2026-09-09 -- was a frozen 0.282 snapshot
+# of one federal-only run; now pooled across all six jurisdictions, refit
+# leave-this-target-out. See R/candidate_returns.R's docs.
+.defect <- NULL
+if (identical(Sys.getenv("AUSPOL_DEFECT_DISCOUNT", "0"), "1")) {
+  .fd <- fit_defector_discount(TGT)
+  if (is.null(.fd$discount)) {
+    cat(sprintf("BN0d! only %d defector case(s) (need >=5); no discount applied\n", .fd$n))
+  } else {
+    cat(sprintf("BN0d defector discount %.3f from %d cases (target excluded, pooled all jurisdictions)\n",
+                .fd$discount, .fd$n))
+    .defect <- .fd$discount
+  }
+}
 # THE BASE VALUE, not just the slope -- see personal_prior_vote()'s docs.
 # Philip Donato (Orange), Helen Dalton (Murray) and Roy Butler (Barwon) are
 # sitting members who switched from Shooters-Fishers-Farmers to Independent

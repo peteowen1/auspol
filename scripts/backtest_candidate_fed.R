@@ -706,40 +706,23 @@ for (K in PAIRS) {
   # (mean 2.32, sd 4.38), so this is restricted to members inside
   # personal_prior_vote(). Estimated leave-one-election-out so the target
   # election never sets its own discount.
+  # PORTED to fit_defector_discount() (R/candidate_returns.R) 2026-09-09 --
+  # this used to be federal-only (same-region chain, inline, no seat-rename
+  # handling), and the other five harnesses hardcoded a frozen 0.282 snapshot
+  # of one such run. One function, pooled across all six jurisdictions via
+  # all_election_pairs(), leave-target-out, every harness calls it now. See
+  # the function's own docs for the before/after numbers.
   .defect <- NULL
   if (identical(Sys.getenv("AUSPOL_DEFECT_DISCOUNT", "0"), "1")) {
     .defect <- tryCatch({
-      MJ <- c("ALP", "LNP", "NAT")
-      kk <- function(d) match_key(surname_of(d$surname, d$name),
-                                  given_of(d$given, d$name), "initial")
-      CB <- fread("output/candidacies.csv", showProgress = FALSE)
-      els <- unique(CB$election)
-      rr <- rbindlist(lapply(els, function(e1) {
-        yr1 <- suppressWarnings(as.integer(sub("^[a-z]+", "", e1)))
-        rg  <- sub("[0-9]+$", "", e1)
-        nxt <- els[sub("[0-9]+$", "", els) == rg &
-                   suppressWarnings(as.integer(sub("^[a-z]+", "", els))) > yr1]
-        if (!length(nxt)) return(NULL)
-        e2 <- nxt[which.min(suppressWarnings(as.integer(sub("^[a-z]+", "", nxt))))]
-        if (identical(e2, eb)) return(NULL)   # never the target election
-        A <- copy(CB[election == e1])[, `:=`(.k = kk(.SD), .s = normalise_seat(seat))]
-        B <- copy(CB[election == e2])[, `:=`(.k = kk(.SD), .s = normalise_seat(seat))]
-        a <- A[nzchar(.k) & party %in% MJ & elected %in% TRUE,
-               .(.s, .k, prev = pcv)][, .SD[which.max(prev)], by = .(.s, .k)]
-        b <- B[nzchar(.k) & !party %in% MJ, .(.s, .k, now = pcv)]
-        m <- merge(a, b, by = c(".s", ".k"))
-        if (!nrow(m)) NULL else m[, .(ratio = now / prev)]
-      }), fill = TRUE)
-      if (is.null(rr) || nrow(rr) < 5L) {
-        cat(sprintf("BF0d! only %d defector case(s) (need >=5); no discount applied\n",
-                    if (is.null(rr)) 0L else nrow(rr)))
+      fd <- fit_defector_discount(eb)
+      if (is.null(fd$discount)) {
+        cat(sprintf("BF0d! only %d defector case(s) (need >=5); no discount applied\n", fd$n))
         NULL
       } else {
-        v <- stats::median(rr$ratio, na.rm = TRUE)
-        cat(sprintf("BF0d defector discount %.3f from %d cases (target excluded)
-",
-                    v, nrow(rr)))
-        v
+        cat(sprintf("BF0d defector discount %.3f from %d cases (target excluded, pooled all jurisdictions)\n",
+                    fd$discount, fd$n))
+        fd$discount
       }
     }, error = function(e) {
       cat(sprintf("BF0d! defector-discount fit FAILED, no discount applied: %s\n",

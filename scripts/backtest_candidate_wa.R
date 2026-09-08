@@ -319,7 +319,20 @@ for (K in PAIRS) {
   # shape in reverse. All three were given a probability of 0.000000, because
   # the model read the previous election's PARTY shares and the independent
   # column was empty.
-  .defect <- if (identical(Sys.getenv("AUSPOL_DEFECT_DISCOUNT", "0"), "1")) 0.282 else NULL
+  # PORTED to fit_defector_discount() 2026-09-09 -- was a frozen 0.282 snapshot
+  # of one federal-only run; now pooled across all six jurisdictions, refit
+  # leave-this-target-out. See R/candidate_returns.R's docs.
+  .defect <- NULL
+  if (identical(Sys.getenv("AUSPOL_DEFECT_DISCOUNT", "0"), "1")) {
+    .fd <- fit_defector_discount(el_to)
+    if (is.null(.fd$discount)) {
+      cat(sprintf("BW0d! only %d defector case(s) (need >=5); no discount applied\n", .fd$n))
+    } else {
+      cat(sprintf("BW0d defector discount %.3f from %d cases (target excluded, pooled all jurisdictions)\n",
+                  .fd$discount, .fd$n))
+      .defect <- .fd$discount
+    }
+  }
   .own_prev <- if (.xfer) tryCatch(personal_prior_vote(el_from, el_to, major_discount = .defect),
                                    error = function(e) {
                                      cat(sprintf("BW1p! personal_prior_vote() FAILED; class-level bases kept and NO transfer removed: %s\n",

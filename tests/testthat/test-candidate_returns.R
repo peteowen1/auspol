@@ -139,6 +139,16 @@ test_that("personal_prior_vote is NA for a genuinely new candidate", {
 })
 
 test_that("personal_prior_vote follows the LEADING candidate, not any candidate in the class", {
+  # KNOWN LIMITATION, not an oversight -- see the long comment above `lead`
+  # in personal_prior_vote() itself, dated 2026-09-09. A "sum every matched
+  # returner" version was tried and reverted the same day: it measurably
+  # WORSENED fed2019/fed2025 pooled log loss, because the far more common
+  # real shape is a class with several PRIOR candidates where only one
+  # returns (Rankin/OTH_RIGHT fed2016->2019, three candidates, one returns) --
+  # summing there REPLACES the class's true prior total with just the
+  # returner's own share, discarding the other candidates' real prior vote.
+  # Frontrunner (the leader at e2) never stood at e1 -- Minor did, but Minor
+  # is not the leader, so this must read NA, not Minor's 3%.
   d <- data.table::data.table(
     election = c(rep("e1", 2), rep("e2", 2)),
     seat = "A", party = "IND",
@@ -146,8 +156,6 @@ test_that("personal_prior_vote follows the LEADING candidate, not any candidate 
     given = c("Pat", "Sam", "Alex", "Pat"),
     pcv = c(3, 20, 40, 2), name = NA_character_)
   r <- personal_prior_vote("e1", "e2", d)
-  # Frontrunner (the leader at e2) never stood at e1 -- Minor did, but Minor
-  # is not the leader, so this must read NA, not Minor's 3%.
   expect_true(is.na(r[seat == "A" & party == "IND"]$own_prev_pcv))
 })
 
@@ -200,6 +208,35 @@ test_that("candidate_returns and personal_prior_vote are unaffected by a rename 
   expect_true(ret[seat == "Denison" & party == "IND"]$same)
   ppv <- personal_prior_vote("e0", "e1", d)
   expect_equal(ppv[seat == "Denison" & party == "IND"]$own_prev_pcv, 21.3)
+})
+
+test_that("major_discount gives a SITTING member's defection a personal-vote floor", {
+  # Gareth Ward's shape: LNP MP, wins, defects to IND next time. No test
+  # exercised major_discount at all before 2026-09-09 despite it being a
+  # published-default-active mechanism.
+  d <- data.table::data.table(
+    election = c("e1", "e2"), seat = "Kiama", party = c("LNP", "IND"),
+    surname = "WARD", given = "Gareth", pcv = c(53.6, 38.8),
+    elected = c(TRUE, FALSE), name = NA_character_)
+  r <- personal_prior_vote("e1", "e2", d, major_discount = 0.282)
+  expect_equal(r[seat == "Kiama" & party == "IND"]$own_prev_pcv, 53.6 * 0.282)
+  expect_equal(r[seat == "Kiama" & party == "IND"]$prev_party, "LNP")
+})
+
+test_that("major_discount gives a LOSING member's defection NOTHING -- deliberate, not a gap", {
+  # Same defection shape, but Ward LOST in e1 (elected = FALSE). Checked
+  # 2026-09-09: the non-member analogue of this discount has 5 corpus cases,
+  # mean retention 2.32, sd 4.38 -- unusable, so this stays a documented
+  # exclusion rather than a fitted number. candidate_returns() still reports
+  # the identity match correctly; only the vote FLOOR is withheld.
+  d <- data.table::data.table(
+    election = c("e1", "e2"), seat = "Kiama", party = c("LNP", "IND"),
+    surname = "WARD", given = "Gareth", pcv = c(53.6, 38.8),
+    elected = c(FALSE, FALSE), name = NA_character_)
+  r <- personal_prior_vote("e1", "e2", d, major_discount = 0.282)
+  expect_true(is.na(r[seat == "Kiama" & party == "IND"]$own_prev_pcv))
+  same <- candidate_returns("e1", "e2", d)
+  expect_true(same[seat == "Kiama" & party == "IND"]$same)
 })
 
 test_that("prior_leader_returns says whether last time's leading candidate is back, under any label", {
@@ -256,4 +293,34 @@ test_that("remove_transferred_votes takes the moved vote out of the old class, o
   op3 <- data.table::data.table(seat = c("A", "Ghost"), party = "IND", own_prev_pcv = 5, prev_party = c("ONP", "ONP"), transfer = 5)
   tr3 <- attr(remove_transferred_votes(mat, op3), "transfers")
   expect_equal(tr3$applied, 1L); expect_equal(tr3$skipped, "Ghost/ONP")
+})
+
+test_that("fit_defector_discount excludes the target election's own cases", {
+  # Two defector cases in e1->e2 (ratio 0.5) and one in e3->e4 (ratio 0.8).
+  # Fitting with e2 as the target must use only the e3->e4 case.
+  d <- data.table::data.table(
+    election = c("e1", "e2", "e1", "e2", "e3", "e4"),
+    seat = c("A", "A", "B", "B", "C", "C"),
+    party = c("LNP", "IND", "ALP", "OTH_RIGHT", "NAT", "IND"),
+    surname = c("ONE", "ONE", "TWO", "TWO", "THREE", "THREE"),
+    given = c("X", "X", "Y", "Y", "Z", "Z"),
+    pcv = c(50, 25, 40, 20, 60, 48),
+    elected = c(TRUE, FALSE, TRUE, FALSE, TRUE, FALSE),
+    name = NA_character_)
+  synthetic_pairs <- list(list(election = "e2", prev = "e1"),
+                           list(election = "e4", prev = "e3"))
+  r <- fit_defector_discount("e2", corpus = d, min_n = 1L, pairs = synthetic_pairs)
+  expect_equal(r$n, 1L)
+  expect_equal(r$discount, 0.8)
+})
+
+test_that("fit_defector_discount refuses below min_n", {
+  d <- data.table::data.table(
+    election = c("e1", "e2"), seat = "A", party = c("LNP", "IND"),
+    surname = "ONE", given = "X", pcv = c(50, 25),
+    elected = c(TRUE, FALSE), name = NA_character_)
+  synthetic_pairs <- list(list(election = "e2", prev = "e1"))
+  r <- fit_defector_discount("zzz", corpus = d, min_n = 5L, pairs = synthetic_pairs)
+  expect_null(r$discount)
+  expect_equal(r$n, 1L)
 })
