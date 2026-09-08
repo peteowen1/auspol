@@ -229,12 +229,15 @@ earlier sessions, not itemised here).
 Full write-up: [reviews/reentry-prior-nsw-qld-2026-09-08.md](reviews/reentry-prior-nsw-qld-2026-09-08.md).
 The damage traces to Kiama (nsw2023), Traeger+Hill (qld2024) and Burdekin
 (qld2020) individually — 93-96% of each pair's regression from 1-2 seats.
-**These are a well-supported GLM (n=180-392) confidently mispredicting
-Katter-family personal-vote seats and one contaminated-ground-truth seat
-(Kiama, a post-2023 by-election flip)** — a different, narrower failure than
-WA/SA's genuine gains, which come from thin-data ratio-path cells (n=1-3).
+**All four are a well-supported GLM (n=180-392) confidently mispredicting a
+sitting member's or family dynasty's personal vote** (Katter-family KAP
+seats; Kiama's independent is a defected sitting member) — genuine model
+misses against real, uncontaminated results, a different and narrower
+failure than WA/SA's genuine gains from thin-data ratio-path cells (n=1-3).
 Not evidence to refuse arm D globally; the GLM overconfidence needs its own
-pre-registration, not yet written.
+pre-registration, not yet written. (**Correction 2026-09-08**: an earlier
+version of this entry wrongly called Kiama's ground truth contaminated by a
+by-election — it is not; see the review for the correction.)
 
 ### ARM H: RUN, and REFUSED by its own pre-registered rule, 2026-09-08
 

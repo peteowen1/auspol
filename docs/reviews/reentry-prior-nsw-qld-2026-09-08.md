@@ -52,21 +52,38 @@ row is glm-path, so arm H doesn't fix WA's other floor seat either.
 - **Burdekin (qld2020)** is a North Queensland seat where ONP and LNP
   compete for the same base; the fill drains LNP's already-shaky lead
   further (both arms already call it wrong; arm D makes the miss worse).
-- **Kiama (nsw2023)**'s ground truth is a post-2023 by-election flip to an
-  independent — a pre-existing, disclosed scoring caveat (the harness's own
-  `BT2` line) that both arms already handled badly (IND probability 3.5%
-  even prior-off) and arm D compounds it further (3.5%→0.2%).
+- **Kiama (nsw2023) is a genuine model miss, NOT contaminated ground truth
+  — corrected 2026-09-08, an earlier version of this note said otherwise.**
+  `truth` in the NSW harness comes from `nswec-nsw-winners.csv`'s ELECTED
+  rows for the target election itself (`backtest_candidate_nsw.R:377-379`);
+  the harness's `BT2` line cross-checks against a LATER seat file's
+  `incumbent` field purely as a disagreement count and never as scoring
+  truth (CLAUDE.md already documents that field as by-election-contaminated
+  and explicitly unused for this reason). Kiama's declared 2023 winner really
+  is an independent. What makes it hard: the seat's IND vote is a sitting
+  member's PERSONAL following after a party defection, not a fresh
+  independent challenger, and the model only sees party classes. Arm D's
+  own re-entry GLM predicts IND at a real 13.1% share here (n=392, its own
+  training data) — a substantial fill — yet the seat's win probability for
+  the actual winner still falls under arm D (3.5%→0.2% prior-off vs arm D).
+  Why a 13% point estimate produces a LOWER win probability than a
+  near-zero one did is not yet understood and needs its own look before
+  concluding anything about the mechanism here.
 
 ## Conclusion
 
 This is NOT evidence to refuse arm D globally — it reframes the question
 from "does this jurisdiction get worse" to "does the model mis-handle
-personal-vote/family-party seats and contaminated ground truth," which is a
-narrower, more fixable problem than a blanket jurisdiction refusal. The
-GLM overconfidence on personal-vote seats needs its own pre-registration —
-not yet written (e.g. a personal-vote/family-party dampener on the ONP/IND
-re-entry GLM, or excluding contaminated-ground-truth seats like Kiama from
-scoring).
+personal-vote/family-party seats," which is a narrower, more fixable
+problem than a blanket jurisdiction refusal. All four named seats
+(Traeger, Hill, Burdekin, Kiama) share the same underlying shape: a
+sitting member's or family dynasty's personal vote that a party-class
+model cannot see, scored against real, uncontaminated election results.
+The GLM overconfidence on personal-vote seats needs its own
+pre-registration — not yet written (e.g. a personal-vote/family-party
+dampener on the re-entry GLM) — and Kiama's counterintuitive direction
+(a 13% point estimate producing a LOWER win probability than near-zero
+did) needs understanding before that pre-registration is written.
 
 The ship/refuse call on arm D as a whole is Pete's — this document narrows
 what "the NSW/QLD cost" actually is, it doesn't resolve the decision.
