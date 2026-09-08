@@ -1,5 +1,37 @@
 # auspol — work queue
 
+## SESSION 2026-09-09 (AM #2) — worst-seats-vs-AEF table reviewed with Pete
+
+Full 22-pair sharedetail coverage confirmed (`scripts/pool_sharedetail.R`
+PS2c clean). Pete reviewed the worst-20-seats-vs-AEF table live and gave
+four items:
+
+1. **Correction, not new news**: Waite and Kiama (rows 1-2) are NOT
+   shipped. Confirmed by grep: `AUSPOL_REENTRY` defaults `"0"` everywhere,
+   absent from `published_flags.R`. Kiama's fix
+   (`protect_personal_vote_cells`) is coded, reviewed, dormant behind arm
+   D. Waite's shape (candidate leaves entirely, no fallback candidate) has
+   no code at all — matches what was already in the section below, restated
+   here because Pete read the table as claiming "fixed."
+2. **New hypothesis, not yet designed**: minor-to-central-party reversion
+   (GRN→ALP, ONP→LNP, LNP→teal) scaled by seat lean — Melbourne fed2025 is
+   the seed example. Written up, explicitly NOT to be built without a
+   design session on real examples first:
+   [plans/hypothesis-lean-scaled-minor-reversion-2026-09-09.md](plans/hypothesis-lean-scaled-minor-reversion-2026-09-09.md).
+3. **Teal leakage, checked**: the shipped teal fix (arm C, salience-
+   expected) uses only Google Trends `jump` — pre-election, no outcome
+   data (`R/salience_screen.R`'s own docstring: "DECIDED FROM THE FIELD,
+   with no outcome data"). No dedicated "is this candidate a teal"
+   classifier exists — it's the generic governed/salience screen, so no
+   leakage, but also nothing teal-specific (e.g. Climate 200 backing).
+4. **Queued, harder**: gauging salience of emerging groups more directly
+   (beyond per-candidate Trends jump) as a further teal/emergence
+   improvement. Not scoped yet.
+
+Standing instruction from Pete: keep the worst-seats-vs-AEF table as a
+living reference and keep working known misses down it — this is now the
+main improvement loop, not a one-off.
+
 ## MORNING READ, 2026-09-09 overnight session — start here
 
 Pete asked overnight for fed2022's teal seats to be actually fixed, not
