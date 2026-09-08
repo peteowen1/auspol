@@ -141,6 +141,20 @@ Arm H (variance widening for the flat-ratio re-entry path,
 `docs/plans/prereg-reentry-flatratio-variance-2026-09-08.md`) is implemented,
 dry-run passed, grid run and **refused** — see below.
 
+**NEW, 2026-09-08: `docs/plans/prereg-reentry-personal-vote-priority-2026-09-08.md`
+— pre-registered, not yet implemented.** Found while investigating Kiama:
+all six harnesses apply the re-entry prior "on the post-swing projection"
+unconditionally, overwriting ANY re-entering cell — including ones
+`personal_prior_vote()`'s major-party-defector floor (`AUSPOL_DEFECT_DISCOUNT=1`,
+fitted on 12 sitting members) already informed with an identity-matched
+signal. Kiama (Gareth Ward, LNP→IND) is one of 12 such cells across 22
+pairs; **Pilbara wa2001 (Larry Graham, ALP→IND) is another — one of arm D's
+two named floor-loss seats.** The fix is a write-time filter, not a change
+to either mechanism. MacKillop is named in advance as a real risk (its
+defector, Nick McBride, is the low outlier the discount's mean was fitted
+from). Read the plan before implementing — the dry-run cases are specified
+but not yet run.
+
 **Seed-average / high-sim before believing arm D.** At 5,000 sims the seed
 alone moves vic2014 by 0.0112, larger than most effects under test. Re-ran at
 `AUSPOL_N_SIMS=20000` (CLAUDE.md's own rule — "only the deciding run needs
