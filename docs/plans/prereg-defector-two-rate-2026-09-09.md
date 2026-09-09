@@ -148,3 +148,46 @@ record, accepting that the criterion did not clear — which is a legitimate
 call for a change whose every directional indicator is positive and whose
 worst jurisdiction effect is inside the floor, but it must be recorded as a
 judgement rather than a measurement.
+
+---
+
+## ADOPTED 2026-09-09 — by Pete, on mechanism, NOT on the criterion
+
+Pete took option (b): adopt explicitly as a judgement, accepting that the
+committed criterion did not clear. `AUSPOL_DEFECT_POOLED` is now `"2"` in
+`scripts/published_flags.R`.
+
+**This is recorded as a judgement, not a measurement.** The primary missed at
+t = −2.04 against a bar of 2.08. Anyone later citing this change as
+"measured to improve the model" is overstating it; what is measured is that
+the mechanism improves its target cells (R1 passed in both arms) and that
+nothing measurably got worse.
+
+**R4 was checked before adoption and passes outright.** The published
+Victorian forecast is **byte-identical** — ALP 34, GRN 6, IND 0, LNP 36,
+ONP 9, OTH 0, OTH_RIGHT 0, with identical 90% ranges. The reason is that
+**Victoria 2026 fields no major-party defector standing under a minor
+label**, so the mechanism never fires in the live forecast. Adoption changes
+the model's general behaviour and its backtest scores, and changes nothing
+that publishes today.
+
+That also bounds the risk of the judgement: if the reasoning is wrong, the
+cost is confined to backtest scores and to any FUTURE Victorian defector,
+not to the numbers currently on the site.
+
+### The grounds, for the record
+
+| | |
+|---|---|
+| mechanism | confirmed twice — R1 passed in the pooled and two-rate arms |
+| target cells | 10.44 → 9.16 RMSE across the 12 losing cells |
+| member cells | +0.11, flat, the correct signature |
+| pooled seat log loss | 0.33647 → 0.33580, improved |
+| Victoria / WA backtests | both improved |
+| worst jurisdiction | SA +0.0137, inside the 0.02 floor |
+| panel | 4 better, **1 worse**, 4 unchanged |
+| what failed | primary t = −2.04 (bar 2.08); panel "better" count |
+
+The failing clauses are power and design limits — 29 cells cannot resolve an
+effect this size, and a 29-cell change cannot move election-wide aggregates
+past a 0.0005 threshold — rather than adverse evidence.

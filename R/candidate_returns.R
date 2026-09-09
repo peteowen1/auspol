@@ -295,6 +295,16 @@ leading_candidate_returns <- function(election_from, election_to, corpus = NULL)
 #'   better base in that seat from a different candidate -- overwriting Kate
 #'   Hook's 20% in Calare with Andrew Gee's discounted Nationals vote moved
 #'   the seat the wrong way, 0.122 -> 0.040.
+#' @param pooled Extend the defector floor to major-party candidates who were
+#'   NOT the sitting member. `NULL` reads `AUSPOL_DEFECT_POOLED`. Before
+#'   2026-09-09 they were excluded outright and received nothing, on a
+#'   comment asserting their retention was unusable noise -- which was wrong:
+#'   13 cases with a median of 0.142, not 5 with an outlier-driven mean.
+#' @param loser_discount Rate applied to those non-member defectors, when it
+#'   should differ from `major_discount`. `NULL` gives both groups the same
+#'   rate. Under `AUSPOL_DEFECT_POOLED="2"` this is resolved automatically
+#'   from [fit_defector_discount()] rather than threaded through six
+#'   harnesses -- see docs/plans/prereg-defector-two-rate-2026-09-09.md.
 #' @export
 personal_prior_vote <- function(election_from, election_to, corpus = NULL,
                                major_discount = NULL, pooled = NULL,
@@ -598,8 +608,17 @@ remove_transferred_votes <- function(mat, own_prev) {
 #'   [all_election_pairs()]; that function's real 22-pair list is used when
 #'   `NULL`. Exposed so tests can inject a small synthetic pair list instead
 #'   of depending on the real corpus.
-#' @return A list: `discount` (median retention ratio, or `NULL`), `n` (cases
-#'   used), `cases` (the underlying data.table, for inspection).
+#' @param pooled Include major-party candidates who were NOT the sitting
+#'   member. `NULL` reads `AUSPOL_DEFECT_POOLED` (`"1"` or `"2"` enable it).
+#'   `FALSE` fits on sitting members alone, the pre-2026-09-09 behaviour.
+#' @param min_prior Minimum prior vote, in points, for a case to enter the
+#'   fit. Stops a retention RATIO being taken on a denominator too small to
+#'   mean anything -- Preece (Schubert sa2026) went 2.1% to 21.7%, a ratio of
+#'   10.14 that on its own made the losing group look unusable.
+#' @return A list: `discount` (median retention ratio, or `NULL`),
+#'   `discount_mp` and `discount_loser` (the same for prior sitting members
+#'   and everyone else, for the two-rate arm), `n` (cases used), `cases` (the
+#'   underlying data.table, for inspection).
 #' @export
 fit_defector_discount <- function(target_election, corpus = NULL, min_n = 5L, pairs = NULL,
                                   pooled = NULL, min_prior = 10) {

@@ -5,7 +5,14 @@
 \title{Fit the major-party defector's retention rate, pooled across every
 jurisdiction, leave-one-target-out}
 \usage{
-fit_defector_discount(target_election, corpus = NULL, min_n = 5L, pairs = NULL)
+fit_defector_discount(
+  target_election,
+  corpus = NULL,
+  min_n = 5L,
+  pairs = NULL,
+  pooled = NULL,
+  min_prior = 10
+)
 }
 \arguments{
 \item{target_election}{The election being scored. Its own (seat, party)
@@ -24,10 +31,21 @@ federal-only fit used (\verb{BF0d!}).}
 \code{\link[=all_election_pairs]{all_election_pairs()}}; that function's real 22-pair list is used when
 \code{NULL}. Exposed so tests can inject a small synthetic pair list instead
 of depending on the real corpus.}
+
+\item{pooled}{Include major-party candidates who were NOT the sitting
+member. \code{NULL} reads \code{AUSPOL_DEFECT_POOLED} (\code{"1"} or \code{"2"} enable it).
+\code{FALSE} fits on sitting members alone, the pre-2026-09-09 behaviour.}
+
+\item{min_prior}{Minimum prior vote, in points, for a case to enter the
+fit. Stops a retention RATIO being taken on a denominator too small to
+mean anything -- Preece (Schubert sa2026) went 2.1\% to 21.7\%, a ratio of
+10.14 that on its own made the losing group look unusable.}
 }
 \value{
-A list: \code{discount} (median retention ratio, or \code{NULL}), \code{n} (cases
-used), \code{cases} (the underlying data.table, for inspection).
+A list: \code{discount} (median retention ratio, or \code{NULL}),
+\code{discount_mp} and \code{discount_loser} (the same for prior sitting members
+and everyone else, for the two-rate arm), \code{n} (cases used), \code{cases} (the
+underlying data.table, for inspection).
 }
 \description{
 \code{personal_prior_vote(major_discount = ...)} needs one number: what fraction
