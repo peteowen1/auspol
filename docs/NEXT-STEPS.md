@@ -1,5 +1,75 @@
 # auspol — work queue
 
+## QUEUED, Pete 2026-09-09: sweep partial pooling across EVERY parameter, and revisit what we refused for lack of power
+
+Pete: *"sweep partial pooling for all our parameters and adjustments — how do
+they look — any adjustments or steps we rejected when we could've applied a
+pooled model? Must be a few."* There are more than a few.
+
+The rule is now in `CLAUDE.md` ("Fit constants with SHRINKAGE, never a hard
+`min_n` cliff") but **nothing has been retrofitted yet.**
+
+### Part 1 — the cliffs that exist right now
+
+| function | cliff | ships? |
+|---|--:|---|
+| `fit_defector_discount()` | `min_n = 5` | **YES** (`AUSPOL_DEFECT_DISCOUNT=1`) |
+| `fit_conditional_slopes()` | `min_n = 40` | no (default off) |
+| `fit_split_slopes()` | `min_n = 200` | no (default off) |
+
+Only the first changes shipped behaviour, so only it needs a measured run.
+Also worth pooling rather than thresholding: the eight hardcoded `same`/`new`
+slopes, the MP tier (`output/mp-slope-by-target.csv`), and the per-class
+`level_mult` values.
+
+### Part 2 — refusals to re-examine under pooling
+
+**Triage rule, so this does not become a licence to re-litigate everything:**
+a refusal is a shrinkage candidate ONLY if it was refused for **thin data /
+no power / too few clusters**. A refusal for **measured harm or a wrong
+mechanism** is not rescuable and stays refused.
+
+Candidates found by grep on 2026-09-09, each needing the triage applied:
+
+- **`party_sd`** — came back **VOID**, "two of its three pre-registered
+  criteria had no power to resolve anything"
+  (`reviews/party-sd-tie-2026-08-26.md`, and the WA harness header). Textbook
+  candidate: a VOID is precisely "there might be signal, we could not
+  resolve it".
+- **First-preference widening** — *"Both widening factors were refused, by a
+  test with no power to accept either"*
+  (`reviews/fp-widening-choice-2026-08-19.md`). `CLAUDE.md` already records
+  this as a criterion that could only ever refuse.
+- **Non-major vote regression** — *"151 seats with 14 winners cannot support
+  six predictors"* (`plans/prereg-nonmajor-vote-regression.md`). Six
+  predictors on 14 events is exactly what a shrunk/penalised fit is for.
+- **Demographic seat model** — *"Three clusters cannot support a
+  cluster-robust significance test"* (`plans/prereg-demographic-seat-model.md`).
+- **Seat calibration** and **`prereg-party-sd-from-data`** — both cite "no
+  power to" (`plans/prereg-seat-calibration.md`).
+- **Surge-conditioned deviation slope** — abandoned 2026-09-09 with only 3
+  surge events in the whole corpus. Under pooling a 3-cluster term shrinks
+  back to the prior, so including it costs ~nothing. This is the cleanest
+  illustration of Pete's point and probably the first to try.
+- **Two experiments "aborted for lack of power on 2026-08-25"** — named in
+  this file; find and triage them.
+
+**Explicitly NOT candidates** (refused on measured harm / wrong mechanism,
+pooling would not change the verdict):
+the split-slope arm (it replaced the slope system rather than refining it),
+`fit_conditional_slopes` (shrinkage weights come out 0.94-0.997, so the
+pooled values are the ones already refused), and the ONP vote-sourcing test
+(refused because the confound control REVERSED the sign, not for power).
+
+### Part 3 — the honest caveat to carry into the sweep
+
+Shrinkage does not resurrect a dead result. It makes a thin estimate degrade
+gracefully instead of being discarded, which changes "we cannot test this"
+into "we can include this cheaply". Where a refusal came from a *measured*
+regression, pooling changes nothing, and the sweep should say so rather than
+re-open it.
+
+
 ## SESSION 2026-09-09 (AM #3) — candidate/party tracking audit, three fixes shipped
 
 Pete's ask: map out every possible between-election candidate/party
