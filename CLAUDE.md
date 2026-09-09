@@ -222,6 +222,25 @@ for bias, assumes the cells are exchangeable draws from a common distribution,
 and its weight is itself estimated — unstable with few groups. It does not
 license fitting anything at any n; it makes the failure graceful.
 
+**And the limit that bit on the first application, 2026-09-09: when the
+BETWEEN-group variance is itself barely estimable, shrinkage will
+UNDER-separate groups that genuinely differ.** Losing major-party defectors
+(median retention 0.142, n=12) and sitting members (0.282, n=17) are not
+separable by rank test — Wilcoxon p = 0.408 — so pooling put weight 0.12 on
+the losers and dragged them to 0.241. The seat-level outcome then said that
+was too high: at 0.270 the collapsing losers are visibly over-predicted, and
+South Australia breached the arm's own catastrophic floor because several
+coincide there. Both facts hold. p = 0.408 at n=12 is **absence of evidence,
+not evidence of absence**, and the shrinkage weight inherited that low power.
+Partial pooling behaved correctly given inputs too thin to tell it the groups
+differ.
+
+**So the corrective for a suspicious shrinkage result is an OUTCOME check —
+does the shrunk value predict better on the target cells? — not a bigger
+significance test.** See `docs/plans/prereg-defector-pooling-2026-09-09.md`,
+where the mechanism was confirmed (target cells improved 1.45 RMSE) and the
+magnitude refused in the same run.
+
 ## Constants
 
 Every one is inventoried in `docs/CONSTANTS.md` with whether it can come from
