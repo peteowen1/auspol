@@ -60,7 +60,12 @@ PUBLISHED_FLAGS <- c(
   AUSPOL_WA_FLOWS            = "0",
   AUSPOL_FLOW_SHIFT          = "0",
   AUSPOL_FORCE_FP            = "",
-  AUSPOL_ONP_CV              = "0",
+  AUSPOL_ONP_CV              = "0.365",     # One Nation seat-concentration target -- partially pooled 2026-09-09
+                                             # (SA 2026's own 0.346, weight 0.83, vs corpus-typical 0.479 at
+                                             # Victoria's ~21% level). Was unset (SA's raw 0.327). Moves ONP
+                                             # median seats 9 -> 10 (90%: 3-18 -> 4-20). Pete's call: publish
+                                             # the pooled estimate, not SA's point value alone.
+                                             # docs/reviews/onp-concentration-validated-2026-09-09.md
   AUSPOL_SURGE_H             = "0",          # flat fallback hazard, used only when surge-v2 has no corpus
   # switches the harnesses know and the forecast does not: listed so a harness
   # run at "published defaults" has them OFF explicitly, not by accident
