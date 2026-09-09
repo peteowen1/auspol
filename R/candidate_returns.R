@@ -297,7 +297,14 @@ leading_candidate_returns <- function(election_from, election_to, corpus = NULL)
 #'   the seat the wrong way, 0.122 -> 0.040.
 #' @export
 personal_prior_vote <- function(election_from, election_to, corpus = NULL,
-                               major_discount = NULL) {
+                               major_discount = NULL, pooled = NULL) {
+  # POOLED DEFECTOR MODE, docs/plans/prereg-defector-pooling-2026-09-09.md.
+  # The rate is fitted in fit_defector_discount(); this is the APPLICATION
+  # site that decides WHO receives it. Both ends must move together -- the
+  # first attempt changed only the fitting end, so the pooled rate was applied
+  # to the same sitting members as before and the 12 losing cells the arm
+  # exists for did not move at all. Caught by the plan's own R1.
+  if (is.null(pooled)) pooled <- identical(Sys.getenv("AUSPOL_DEFECT_POOLED", "0"), "1")
   C <- corpus
   if (is.null(C)) {
     f <- file.path("output", "candidacies.csv")
@@ -428,7 +435,8 @@ personal_prior_vote <- function(election_from, election_to, corpus = NULL,
   # its own prior vote -- measured, that took fed2025 accuracy to 25.3%.
   if (!is.null(major_discount) && is.finite(major_discount) && major_discount > 0 &&
       "elected" %in% names(PREVT)) {
-    DEF <- PREVT[nzchar(PREVT$.k) & PREVT$party %in% MAJ & PREVT$elected %in% TRUE,
+    DEF <- PREVT[nzchar(PREVT$.k) & PREVT$party %in% MAJ &
+                   (pooled | PREVT$elected %in% TRUE),
                  .(def_pcv   = if (.N) max(pcv, na.rm = TRUE) else NA_real_,
                    def_party = if (.N) party[which.max(pcv)] else NA_character_),
                  by = .(.s, .k)]
@@ -562,7 +570,21 @@ remove_transferred_votes <- function(mat, own_prev) {
 #' @return A list: `discount` (median retention ratio, or `NULL`), `n` (cases
 #'   used), `cases` (the underlying data.table, for inspection).
 #' @export
-fit_defector_discount <- function(target_election, corpus = NULL, min_n = 5L, pairs = NULL) {
+fit_defector_discount <- function(target_election, corpus = NULL, min_n = 5L, pairs = NULL,
+                                  pooled = NULL, min_prior = 10) {
+  # POOLED MODE (AUSPOL_DEFECT_POOLED=1), per
+  # docs/plans/prereg-defector-pooling-2026-09-09.md. Default FALSE reproduces
+  # the sitting-member-only rate exactly.
+  #
+  # Excluding losing candidates was justified in this file by a comment reading
+  # "5 corpus cases, mean retention 2.32 and sd 4.38 -- noise". Both halves were
+  # wrong: there are 13 such cases, and the mean is destroyed by ONE ratio taken
+  # on a 2.1% denominator (Preece, Schubert sa2026, 2.1 -> 21.7). Their MEDIAN is
+  # 0.142 -- about half a sitting member's 0.282, which is both usable and
+  # intuitive. But the two groups are NOT separable (Wilcoxon p = 0.408), and
+  # partial pooling puts weight 0.12 on the losing-candidate estimate, so the
+  # data supports ONE rate for every defector rather than two or an exclusion.
+  if (is.null(pooled)) pooled <- identical(Sys.getenv("AUSPOL_DEFECT_POOLED", "0"), "1")
   C <- corpus
   if (is.null(C)) {
     f <- file.path("output", "candidacies.csv")
@@ -593,7 +615,10 @@ fit_defector_discount <- function(target_election, corpus = NULL, min_n = 5L, pa
     if (!"elected" %in% names(PREVT)) return(NULL)
     PREVT[, .s_renamed := .s]
     PREVT[.s %in% names(rn), .s_renamed := rn[.s]]
-    a <- PREVT[nzchar(.k) & party %in% MAJ & elected %in% TRUE,
+    # `elected %in% TRUE` is the exclusion the pooled arm removes. min_prior
+    # stops a retention RATIO being computed on a denominator too small to
+    # mean anything -- it removes exactly one case from each group.
+    a <- PREVT[nzchar(.k) & party %in% MAJ & (pooled | elected %in% TRUE) & pcv >= min_prior,
                .(.s, .s_renamed, .k, prior_pcv = pcv)][, .SD[which.max(prior_pcv)], by = .(.s, .k)]
     a <- unique(rbind(a[, .(.s, .k, prior_pcv)], a[, .(.s = .s_renamed, .k, prior_pcv)]))
     b <- NOWT[nzchar(.k) & !party %in% MAJ, .(.s, .k, target_pcv = pcv)][

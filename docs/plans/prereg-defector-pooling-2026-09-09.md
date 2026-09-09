@@ -156,3 +156,75 @@ floor of zero onto something non-zero, and zero is clearly wrong for a group
 whose median is 0.142. Expect the election-wide panel to be near-flat, since
 29 cells cannot move 2,050 seat-elections much. Expect R1 to be the
 binding risk if anything: the member cells outnumber the losing ones.
+
+---
+
+## Result, 2026-09-09: the mechanism is CONFIRMED, the implementation is REFUSED
+
+**First run was VOID, and R1 is why the plan had it.** The rate was pooled in
+`fit_defector_discount()` but `personal_prior_vote()` keeps its OWN
+`elected %in% TRUE` filter deciding who RECEIVES the floor. Only the fitting
+end moved, so the run measured "lower the member rate 0.282 → 0.270" and the
+12 losing cells moved by 1.7e-07 — nothing. Both ends were then wired and the
+arm rerun. Recorded because it is the third time in one day an arm changed one
+end of a two-ended mechanism (the split-slope arm computed `sl` and discarded
+it; the fitted-slopes arm was inert on 20 of 22 pairs).
+
+### Scored, correctly wired
+
+| test | value | bar | verdict |
+|---|---:|---:|---|
+| **R1 — losing cells carry it** | **RMSE 10.44 → 8.99, −1.45** | must not be the member cells | **PASS** |
+| member cells (side effect) | 12.61 → 13.21, +0.60 | — | as predicted |
+| criterion 1 — paired primary | mean **−0.55**, t = −1.04, better in 9 of 17 | ≤ −2.08 SE | **FAIL** |
+| criterion 2 — panel | **3 better, 3 worse** | ≥ 6 better, ≤ 3 worse | **FAIL** |
+| catastrophic floor — SA | **+0.0364** | 0.02 | **BREACHED** |
+| Victoria | 0.2693 → **0.2655** | — | improved |
+
+**Refused on the SA floor breach.** `AUSPOL_DEFECT_POOLED` stays `0`.
+
+### What was learned, which is more than the refusal
+
+**The hypothesis is right.** Giving a losing defector a floor instead of zero
+improves exactly the cells it targets, by 1.45 RMSE points across 12 cells,
+and R1 — written to catch a member-cell effect masquerading as this one —
+passes cleanly. Victoria and WA both improved. The direction is not in doubt.
+
+**The magnitude is wrong.** One pooled rate of 0.270 over-predicts the losers
+who collapse. South Australia is the case: Harrison (Unley, 32.0 → 4.4,
+ratio 0.137) now carries a floor of 8.6 where he polled 4.4, and Dandenong's
+Key (29.3 → 1.5) gains 7.9 against an actual 1.5. Both were named in the
+dry-run above as cases the arm should hurt; SA is where enough of them
+coincide to breach the floor.
+
+### The tension this exposes, and it matters for the shrinkage rule
+
+The plan pooled the two rates because they are **not statistically
+separable** — Wilcoxon p = 0.408, and partial pooling put weight 0.12 on the
+losing-candidate estimate, dragging 0.142 up to 0.241.
+
+The seat-level outcome disagrees: at 0.270 the losers are visibly
+over-predicted, which is what a rate fitted mostly on *members* would do.
+
+Both can be true. p = 0.408 at n=12 is **absence of evidence, not evidence of
+absence** — the test has almost no power to separate 0.142 from 0.282. The
+shrinkage weight inherited that low power and shrank toward the members
+accordingly. So partial pooling did what it should given the inputs, and the
+inputs were too thin to tell it the groups differ.
+
+**This is a real limit of the rule as stated in `CLAUDE.md`, and it belongs
+there**: shrinkage protects against over-fitting a thin cell, but when the
+between-group variance is itself barely estimable it will under-separate
+groups that genuinely differ. The corrective is an outcome check — does the
+shrunk value predict better on the held-out cells? — not a bigger significance
+test.
+
+### Next, needing its own pre-registration
+
+Use the losing group's own median (0.142) rather than the pooled 0.270, i.e.
+**less** shrinkage, on the grounds that the seat-level outcome carries
+information the rank test cannot see. That value must NOT be chosen because
+0.270 breached — it is the pre-existing group median, computed and recorded
+above before this run — but adopting it after seeing this result still
+requires a fresh criterion, and the plan must say what would make it
+unacceptable.

@@ -324,3 +324,66 @@ test_that("fit_defector_discount refuses below min_n", {
   expect_null(r$discount)
   expect_equal(r$n, 1L)
 })
+
+test_that("fit_defector_discount pooled mode includes LOSING defectors, default excludes them", {
+  # docs/plans/prereg-defector-pooling-2026-09-09.md. Default keeps the
+  # sitting-member-only rate; pooled adds the losing candidates the corpus
+  # has 12 of, whose median retention is about half a member's.
+  mk <- function(el0, el1, seat, prior, now, was_mp) data.table::data.table(
+    election = c(el0, el1), seat = seat, party = c("LNP", "IND"),
+    surname = toupper(seat), given = "A", pcv = c(prior, now),
+    elected = c(was_mp, FALSE), name = NA_character_)
+  d <- data.table::rbindlist(list(
+    mk("e1","e2","alpha", 50, 15, TRUE),  mk("e1","e2","bravo", 40, 12, TRUE),
+    mk("e1","e2","charlie", 60, 18, TRUE), mk("e1","e2","delta", 45, 13, TRUE),
+    mk("e1","e2","echo",  30,  9, TRUE),
+    mk("e1","e2","foxtrot", 40,  2, FALSE), mk("e1","e2","golf", 35, 2, FALSE)))
+  prs <- list(list(election = "e2", prev = "e1"))
+  base <- fit_defector_discount("zzz", corpus = d, pairs = prs, min_n = 1L, pooled = FALSE)
+  pool <- fit_defector_discount("zzz", corpus = d, pairs = prs, min_n = 1L, pooled = TRUE)
+  expect_equal(base$n, 5L)                 # members only
+  expect_equal(pool$n, 7L)                 # members + losers
+  # The rate is a MEDIAN, so two low losers among seven do not move it. That is
+  # the point of using a median, and it is why the real corpus (12 losers in 29)
+  # moves only 0.2821 -> 0.2697. Assert the population changed, not the number.
+  expect_true(pool$discount <= base$discount)
+  expect_true(all(pool$cases$ratio %in% c(base$cases$ratio, 0.05, 2/35)) ||
+                nrow(pool$cases) > nrow(base$cases))
+})
+
+test_that("a loser-heavy corpus DOES pull the pooled defector rate down", {
+  mk <- function(seat, prior, now, was_mp) data.table::data.table(
+    election = c("e1","e2"), seat = seat, party = c("LNP","IND"),
+    surname = toupper(seat), given = "A", pcv = c(prior, now),
+    elected = c(was_mp, FALSE), name = NA_character_)
+  d <- data.table::rbindlist(c(
+    lapply(c("a","b","c"), function(x) mk(x, 50, 15, TRUE)),      # members, 0.30
+    lapply(c("d","e","f","g"), function(x) mk(x, 40, 4, FALSE)))) # losers,  0.10
+  prs <- list(list(election = "e2", prev = "e1"))
+  base <- fit_defector_discount("zzz", corpus=d, pairs=prs, min_n=1L, pooled=FALSE)
+  pool <- fit_defector_discount("zzz", corpus=d, pairs=prs, min_n=1L, pooled=TRUE)
+  expect_equal(base$discount, 0.30)
+  expect_true(pool$discount < base$discount)
+})
+
+test_that("fit_defector_discount's min_prior floor drops a ratio on a meaningless denominator", {
+  # Preece (Schubert sa2026) went 2.1% -> 21.7%, a ratio of 10.14 that
+  # destroyed the mean and was used to call the whole losing group unusable.
+  mk <- function(seat, prior, now) data.table::data.table(
+    election = c("e1","e2"), seat = seat, party = c("LNP","IND"),
+    surname = toupper(seat), given = "A", pcv = c(prior, now),
+    elected = c(TRUE, FALSE), name = NA_character_)
+  d <- data.table::rbindlist(list(mk("alpha",50,15), mk("bravo",40,12),
+                                   mk("tiny", 2.1, 21.7)))
+  prs <- list(list(election = "e2", prev = "e1"))
+  kept    <- fit_defector_discount("zzz", corpus=d, pairs=prs, min_n=1L, min_prior=0)
+  dropped <- fit_defector_discount("zzz", corpus=d, pairs=prs, min_n=1L, min_prior=10)
+  expect_equal(kept$n, 3L)
+  expect_equal(dropped$n, 2L)
+  # The MEDIAN is unmoved by the 10.14 outlier -- which is the whole reason the
+  # rate is a median. The MEAN is not: it is what produced the claim that the
+  # losing group was "unusable, mean 2.32", a claim built on exactly this shape
+  # of case. Assert both, so the distinction cannot rot.
+  expect_equal(dropped$discount, kept$discount)
+  expect_gt(mean(kept$cases$ratio), 3 * mean(dropped$cases$ratio))
+})
