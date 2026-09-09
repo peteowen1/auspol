@@ -27,6 +27,19 @@
 
 options(auspol.root = normalizePath("."))
 suppressMessages(devtools::load_all(quiet = TRUE))
+# NSW-SCOPED DEFAULT, not a published_flags.R change. Arm C (salience point
+# estimate + variance, docs/plans/prereg-salience-expected-and-variance-
+# 2026-09-07.md) was measured 2026-09-09 across all five harnesses with a
+# salience corpus: federal and NSW both improve, Queensland/SA/Victoria all
+# get WORSE, SA and Victoria beyond the pre-registration's own 0.01
+# per-jurisdiction refusal bound. Victoria is the LIVE TARGET, so this is
+# NOT set in published_flags.R. Defaults ON here and in
+# backtest_candidate_fed.R only, before published_flags.R's own registry
+# runs, so an explicit caller override (either direction) still works.
+# docs/reviews/salience-arm-federal-nsw-scoped-2026-09-09.md has the full
+# jurisdiction table.
+if (!nzchar(Sys.getenv("AUSPOL_SALIENCE_EXPECTED", ""))) Sys.setenv(AUSPOL_SALIENCE_EXPECTED = "1")
+if (!nzchar(Sys.getenv("AUSPOL_SALIENCE_EXP_SD", ""))) Sys.setenv(AUSPOL_SALIENCE_EXP_SD = "1")
 source("scripts/harness_defaults.R")  # published defaults for every unset AUSPOL_* switch; see that file
 suppressMessages(library(data.table))
 
@@ -461,7 +474,25 @@ cat(sprintf("BT1m  MP tier: %s
 ",
             if (is.null(.MP_SLOPE)) "OFF" else
               paste(sprintf("%s=%.4f", names(.MP_SLOPE), .MP_SLOPE), collapse = " ")))
-.defect <- if (identical(Sys.getenv("AUSPOL_DEFECT_DISCOUNT", "0"), "1")) 0.282 else NULL
+# PORTED to fit_defector_discount() 2026-09-09 -- was a frozen 0.282 snapshot
+# of one federal-only run; now pooled across all six jurisdictions, refit
+# leave-this-target-out. See R/candidate_returns.R's docs.
+.defect <- NULL
+if (identical(Sys.getenv("AUSPOL_DEFECT_DISCOUNT", "0"), "1")) {
+  .fd <- tryCatch(fit_defector_discount(TGT), error = function(e) {
+  cat(sprintf("BN0d! defector-discount fit FAILED, no discount applied: %s
+",
+              conditionMessage(e)))
+  list(discount = NULL, discount_mp = NULL, discount_loser = NULL, n = 0L)
+})
+  if (is.null(.fd$discount)) {
+    cat(sprintf("BN0d! only %d defector case(s) (need >=5); no discount applied\n", .fd$n))
+  } else {
+    cat(sprintf("BN0d defector discount %.3f from %d cases (target excluded, pooled all jurisdictions)\n",
+                .fd$discount, .fd$n))
+    .defect <- .fd$discount
+  }
+}
 # THE BASE VALUE, not just the slope -- see personal_prior_vote()'s docs.
 # Philip Donato (Orange), Helen Dalton (Murray) and Roy Butler (Barwon) are
 # sitting members who switched from Shooters-Fishers-Farmers to Independent
@@ -475,6 +506,20 @@ cat(sprintf("BT1m  MP tier: %s
 # corpus (McBride, MacKillop, LNP 62.3% -> IND 14.8%) shows it can badly
 # overestimate a defector who loses the party's machine, not just his own
 # vote. This is what makes the base itself carry their real prior vote.
+# SPLIT SLOPE (AUSPOL_SPLIT_SLOPE=1, default OFF -- unset reproduces this
+# harness byte-for-byte). Gives the returning and departed portions of a
+# class's prior vote their own fitted slope instead of one slope chosen by
+# a binary flag. docs/plans/prereg-partial-return-split-slope-2026-09-09.md
+# FITTED CONDITIONAL SLOPES (AUSPOL_FIT_SLOPES=1, default OFF). Replaces the
+# eight hardcoded same/new constants with a leave-this-target-out fit;
+# structure untouched. docs/plans/prereg-fit-conditional-slopes-2026-09-09.md
+.fitsl <- if (identical(Sys.getenv("AUSPOL_FIT_SLOPES", "0"), "1"))
+  fit_conditional_slopes(TGT) else NULL
+if (!is.null(.fitsl)) cat(sprintf("FS1  fitted slopes | same %s | new %s
+",
+  paste(sprintf("%s=%.3f", names(.fitsl$same), .fitsl$same), collapse=" "),
+  paste(sprintf("%s=%.3f", names(.fitsl$new),  .fitsl$new),  collapse=" ")))
+.split <- split_slope_context(PRV, TGT)
 .own_prev <- if (.cond) tryCatch(personal_prior_vote(PRV, TGT, major_discount = .defect), error = function(e) { cat(sprintf("BT1p! personal_prior_vote() FAILED; class-level bases kept and NO transfer removed: %s\n", conditionMessage(e))); NULL }) else NULL
 mat <- remove_transferred_votes(mat, .own_prev)  # the vote moves with the person; see personal_prior_vote()
 .tr <- attr(mat, "transfers"); if (!is.null(.tr)) cat(sprintf("TR1  transfers moved with the person: %d applied%s\n", .tr$applied, if (length(.tr$skipped)) paste0("; SKIPPED ", length(.tr$skipped), ": ", paste(utils::head(.tr$skipped, 5), collapse = ", ")) else ""))
@@ -509,10 +554,11 @@ for (p in parties) {
     pv <- .permit[.permit$party == p, ]
     lut <- stats::setNames(as.logical(pv$permit), pv$seat)
     pm <- unname(lut[rownames(mat)]); pm[is.na(pm)] <- TRUE
-    screened_slopes(p, rownames(mat), .returns, pm, same_mp = .MP_SLOPE)
-  } else if (.cond) conditional_slopes(p, rownames(mat), .returns, same_mp = .MP_SLOPE) else DEV_SLOPE[[p]]
+    screened_slopes(p, rownames(mat), .returns, pm, same_mp = .MP_SLOPE, same = if (is.null(.fitsl)) formals(screened_slopes)$same else .fitsl$same, new = if (is.null(.fitsl)) formals(screened_slopes)$new else .fitsl$new)
+  } else if (.cond) conditional_slopes(p, rownames(mat), .returns, same_mp = .MP_SLOPE, same = if (is.null(.fitsl)) formals(conditional_slopes)$same else .fitsl$same, new = if (is.null(.fitsl)) formals(conditional_slopes)$new else .fitsl$new) else DEV_SLOPE[[p]]
   x_p <- .own_x(p, rownames(mat), mat[, p])
-  val <- dev_slope(x_p, state_prev[[p]], state_tgt[[p]], sl)
+  val <- if (is.null(.split)) dev_slope(x_p, state_prev[[p]], state_tgt[[p]], sl) else
+    split_dev_slope(x_p, .split$frac(p, rownames(mat)), state_prev[[p]], state_tgt[[p]], .split$s_ret, .split$s_dep)
   if (ELASTIC > 0 && d_state < -ELASTIC_D && state_prev[[p]] > 0) {
     over <- x_p / state_prev[[p]]
     hit <- is.finite(over) & over > ELASTIC
@@ -527,11 +573,18 @@ for (p in parties) {
 # The prediction is a target-election share; filling it into the prior-election
 # matrix let dev_slope() swing it a second time.
 if (!is.null(REENTRY_CELLS) && nrow(REENTRY_CELLS)) {
-  .ri <- cbind(match(REENTRY_CELLS$seat,  rownames(shares)),
-               match(REENTRY_CELLS$party, colnames(shares)))
+  # PERSONAL-VOTE PRIORITY, docs/plans/prereg-reentry-personal-vote-priority-
+  # 2026-09-08.md. Kiama (Gareth Ward, LNP -> IND) is the case this exists
+  # for: .own_prev's identity-matched defector floor must not be overwritten
+  # by the generic re-entry GLM, which has no idea who the candidate is.
+  .rc <- protect_personal_vote_cells(REENTRY_CELLS, .own_prev)
+  .ri <- cbind(match(.rc$seat,  rownames(shares)),
+               match(.rc$party, colnames(shares)))
   .rk <- stats::complete.cases(.ri)
-  shares[.ri[.rk, , drop = FALSE]] <- REENTRY_CELLS$value[.rk]
-  cat(sprintf("BT1r  re-entry applied post-swing to %d cell(s)\n", sum(.rk)))
+  shares[.ri[.rk, , drop = FALSE]] <- .rc$value[.rk]
+  .protected <- nrow(REENTRY_CELLS) - nrow(.rc)
+  cat(sprintf("BT1r  re-entry applied post-swing to %d cell(s)%s\n", sum(.rk),
+              if (.protected) sprintf(" | %d protected by own_prev", .protected) else ""))
 }
 if (ELASTIC > 0) {
   cat(sprintf("NB1e elasticity ON (over %.2f, fall %.1f): %d cells\n",
@@ -824,6 +877,9 @@ cat(sprintf("BT8  independents won %d of %d scored seats; we gave them a mean %.
 
 fwrite(res[order(seat)], file.path("output", sprintf("backtest-%s%s.csv", TGT, CAL_TAG)))
 fwrite(data.table(pair = TGT, as.data.table(sim$totals)), file.path("output", sprintf("backtest-%s-totals%s.csv", TGT, CAL_TAG)))
+# PERSIST THE POINT ESTIMATE, not just the aggregate RMSE -- see fed's
+# equivalent line, 2026-09-09.
+fwrite(as.data.table(.rr$detail)[, pair := TGT], file.path("output", sprintf("backtest-%s-sharedetail%s.csv", TGT, CAL_TAG)))
 # NAME THE FILE ACTUALLY WRITTEN, not the untagged name. Same fix as in
 # backtest_candidate_sa.R: a hardcoded filename in the log defeats the tag that
 # exists to stop an arm overwriting the baseline it is compared against.

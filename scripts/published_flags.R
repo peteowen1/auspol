@@ -41,6 +41,14 @@ PUBLISHED_FLAGS <- c(
   AUSPOL_LEVEL_MULT_IND      = "1",          # per-class multiplier on level_sd (IND); prereg-class-specific-variance, refused, stays 1
   AUSPOL_LEVEL_MULT_OTH      = "1",          # per-class multiplier on level_sd (other non-majors)
   AUSPOL_DEV_SLOPE           = "",           # explicit per-class slope table; empty = uniform swing, the base under screened mode
+  AUSPOL_SPLIT_SLOPE         = "0",          # 1 = returning/departed portions get separate fitted slopes -- built, measured, REFUSED 2026-09-09; docs/plans/prereg-partial-return-split-slope-2026-09-09.md
+  AUSPOL_FIT_SLOPES          = "0",          # 1 = conditional same/new slopes fitted leave-one-election-out -- built, measured, REFUSED 2026-09-09 (pooled log loss FAIL, panel FAIL); docs/plans/prereg-fit-conditional-slopes-2026-09-09.md
+  AUSPOL_DEFECT_POOLED       = "2",          # 2 = separate member (0.282) / losing-candidate (0.142) defector rates.
+                                             # ADOPTED BY PETE ON MECHANISM 2026-09-09, not on the criterion: the arm
+                                             # missed its own primary bar (t -2.04 vs 2.08) but passed R1 in both arms,
+                                             # breached no floor, improved pooled log loss / Victoria / WA, and made only
+                                             # ONE panel metric worse. Recorded as a JUDGEMENT, not a measurement.
+                                             # docs/plans/prereg-defector-two-rate-2026-09-09.md
   # the statewide input and the simulation
   AUSPOL_N_SIMS              = "20000",
   AUSPOL_SIM_ENGINE          = "cpp",        # compiled core; proven byte-identical to the R engine on a full fed2022 run 2026-09-07 (45 s vs ~11 min)
@@ -52,7 +60,12 @@ PUBLISHED_FLAGS <- c(
   AUSPOL_WA_FLOWS            = "0",
   AUSPOL_FLOW_SHIFT          = "0",
   AUSPOL_FORCE_FP            = "",
-  AUSPOL_ONP_CV              = "0",
+  AUSPOL_ONP_CV              = "0.365",     # One Nation seat-concentration target -- partially pooled 2026-09-09
+                                             # (SA 2026's own 0.346, weight 0.83, vs corpus-typical 0.479 at
+                                             # Victoria's ~21% level). Was unset (SA's raw 0.327). Moves ONP
+                                             # median seats 9 -> 10 (90%: 3-18 -> 4-20). Pete's call: publish
+                                             # the pooled estimate, not SA's point value alone.
+                                             # docs/reviews/onp-concentration-validated-2026-09-09.md
   AUSPOL_SURGE_H             = "0",          # flat fallback hazard, used only when surge-v2 has no corpus
   # switches the harnesses know and the forecast does not: listed so a harness
   # run at "published defaults" has them OFF explicitly, not by accident

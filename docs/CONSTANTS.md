@@ -105,7 +105,7 @@ constant absent from this file is a bug in this file.
 | `SEAT_SD` | 3.5 | `fit_seats_full.R` | **ESTIMATED** |
 | `ONP_B1 = -0.0968` | `fit_seats_full.R` | Greens-share coefficient for the One Nation ordering | **RETIRED 2026-08-20 as the ordering rule.** On NSW 2023 it reached Spearman +0.331 against the actual One Nation ordering and MAE 3.287 -- *worse* than a uniform allocation's 2.595. Replaced by each district's transposed federal One Nation vote (+0.814, MAE 1.594). See `reviews/onp-allocation-federal-2026-08-20.md`. |
 | `ONP_CAP = 80` | `fit_seats_full.R` | Ceiling on any district's One Nation share | **SANITY BOUND, not a modelling choice.** Inert on real data (the maximum allocation is 33.0). It exists so a future statewide forecast times the largest quantile ratio cannot exceed 100 and drive the fill negative. |
-| One Nation spread | SA 2026 observed | `fit_seats_full.R` | **ESTIMATED, transferred** |
+| One Nation spread (`AUSPOL_ONP_CV`) | SA 2026 observed, partially pooled | `fit_seats_full.R` | **ESTIMATED, ADOPTED 2026-09-09 at CV 0.365** — see below and `reviews/onp-concentration-validated-2026-09-09.md` |
 | per-party statewide sd | from the trend | `fit_seats_full.R` | **ESTIMATED** |
 | `N_SIMS` | 20000 | `fit_seats_full.R` | FIXED, no modelling content |
 | S5 median-gap bound | 5 seats | `fit_seats_full.R` | **FIXED** — pre-registered |
@@ -152,6 +152,36 @@ distribution, measured at 22.97% statewide against Victoria's forecast 20.9%.
 Estimated, but from a different state, because Victoria has never had a large
 One Nation vote to measure its own. Checked within 1.41× against a 1.5 bar.
 See `docs/plans/prereg-onp-allocation-vic.md`.
+
+**Updated 2026-09-09 — the CONCENTRATION (not the ordering) is now partially
+pooled, not SA's raw shape.** `docs/reviews/onp-concentration-validated-
+2026-09-09.md` found two things: SA 2026 cannot test this allocation
+out-of-sample (it IS the training data — the earlier claim that it could was
+struck), and the concentration question is answerable across the whole
+corpus. Fitted on 49 (election, party) observations restricted to parties
+contesting ≥90% of seats, concentration is roughly **constant with level**
+(CV ∝ level^-0.128, not the level^-1 one candidate assumption implied), giving
+a corpus-typical CV of **0.479** at Victoria's ~21% forecast level against
+SA's own **0.346** — SA sits 1.4 residual sd low, not wrong, just imprecise
+on its own (R² 0.063, n=49).
+
+**Partially pooling SA's precise 47-seat observation (log-se 0.104) against
+that noisy corpus relationship (scatter 0.229 in logs, weight 0.83 on SA's
+own value) gives CV = 0.365.** `AUSPOL_ONP_CV` is set to this, replacing the
+unset default that used SA's raw shape (delivered CV 0.327).
+
+**Measured seat effect, all else held fixed:**
+
+| `AUSPOL_ONP_CV` | ONP median seats | 90% range |
+|---|--:|---|
+| 0.327 (SA's raw shape, shipped until 2026-09-09) | 9 | 3–18 |
+| **0.365 (partially pooled, now shipped)** | **10** | **4–20** |
+| 0.48 (corpus-typical — NOT adopted, discards SA's own precise observation) | 14 | 6–24 |
+
+Pete's call, 2026-09-09: publish the uncertainty rather than a bare point —
+this row's status line and the seat range above are the record of that, and
+`AUSPOL_ONP_CV=0.365` is now a **published default** in
+`scripts/published_flags.R`, not a diagnostic override.
 
 ## 4c. Missing until 2026-08-21, and why that matters
 
@@ -415,5 +445,5 @@ outright on sa2026, vic2022 and nsw2023.
 
 | constant | where | value | status |
 |---|---|---|---|
-| Candidate-conditional slope defaults (`same` / `new` per class) | `R/dev_slope.R:138-140` | IND 0.907 / 0.326, OTH_RIGHT 0.891 / 0.325, others per the table in the roxygen | **ESTIMATED once, then frozen in code.** The roxygen says "measured across five harnesses"; no committed fitting script was found on 2026-09-06, which is the same shape as the sitting-member tier before `scripts/fit_mp_slope.R` existed. The sitting-member tier (`AUSPOL_MP_SLOPE=1`, `output/mp-slope-by-*.csv`) overrides these for sitting members only. Needs a fitting script or a row saying why it cannot have one. |
+| Candidate-conditional slope defaults (`same` / `new` per class) | `R/dev_slope.R:138-140` | IND 0.907 / 0.326, OTH_RIGHT 0.891 / 0.325, others per the table in the roxygen | **ESTIMATED once, then frozen in code -- the fitting script now EXISTS.** `fit_conditional_slopes()` (`R/split_slope.R`), built 2026-09-09, refits all eight leave-one-election-out and checked each against its own definition: IND is fine (0.374 vs 0.326, 0.882 vs 0.907), but OTH_RIGHT is wrong in OPPOSITE directions (0.442 vs 0.325, +3.1 SE; 0.766 vs 0.891, -3.8 SE) and ONP "same" is off on 51 observations (-2.7 SE). The arm to REPLACE these frozen constants with the fit was pre-registered, run, and **REFUSED** (`docs/plans/prereg-fit-conditional-slopes-2026-09-09.md`: pooled log loss FAIL, panel FAIL) -- root cause was fed2013's OTH_RIGHT surge (Palmer United's debut), where the frozen `0.325` correctly shrinks hard toward the statewide level for a class with no local history, and the fit's `0.442` does not. So the CONSTANTS remain frozen, correctly, pending a slope that also conditions on surge status -- not for want of a fitting script anymore. The sitting-member tier (`AUSPOL_MP_SLOPE=1`, `output/mp-slope-by-*.csv`) overrides these for sitting members only. |
 | `AUSPOL_SEAT_SD_MULT` | all five `scripts/backtest_candidate_*.R` | default 1 | **FIXED** — a diagnostic multiplier on whichever seat spread is in force (`level_sd` when on, else `seat_sd`), for the pre-registered calibration arm B. Not read by `fit_seats_full.R`. Inert in four harnesses from 2026-08-27 to 2026-09-06 while printing "applied"; the arm B sweeps in that window measured nothing. |

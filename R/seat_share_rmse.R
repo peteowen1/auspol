@@ -18,7 +18,13 @@
 #'   election being predicted; aggregated here, so candidate-level rows are
 #'   fine.
 #' @return A list: `rmse` over every seat-class cell, `mae`, `by_class` (a
-#'   named vector of per-class RMSE), `n_seats` scored and `n_dropped`.
+#'   named vector of per-class RMSE), `n_seats` scored, `n_dropped`, and
+#'   `detail` -- a long `data.table` (`seat`, `party`, `pred_share`,
+#'   `actual_share`) with one row per scored seat-class cell. `detail` exists
+#'   so a caller can persist the point estimate alongside the win probability
+#'   it already writes, rather than recomputing this function's `pred`/`act`
+#'   matrices a second time to get at them -- see
+#'   `docs/reviews/rmse-persistence-2026-09-09.md`.
 #' @export
 seat_share_rmse <- function(shares, actual_votes) {
   stopifnot(is.matrix(shares), !is.null(rownames(shares)), !is.null(colnames(shares)))
@@ -42,6 +48,12 @@ seat_share_rmse <- function(shares, actual_votes) {
   A <- A[seat %in% seats]
   act[cbind(match(A$seat, seats), match(A$party, cls))] <- A$pcv
   d <- pred - act
+  detail <- data.table::data.table(
+    seat = rep(seats, times = length(cls)),
+    party = rep(cls, each = length(seats)),
+    pred_share = as.vector(pred),
+    actual_share = as.vector(act))
   list(rmse = sqrt(mean(d^2)), mae = mean(abs(d)),
-       by_class = sqrt(colMeans(d^2)), n_seats = length(seats), n_dropped = n_dropped)
+       by_class = sqrt(colMeans(d^2)), n_seats = length(seats), n_dropped = n_dropped,
+       detail = detail)
 }

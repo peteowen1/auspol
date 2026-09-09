@@ -289,15 +289,70 @@ leading_candidate_returns <- function(election_from, election_to, corpus = NULL)
 #'   registrations entirely, which is the previous behaviour.
 #'
 #'   Measured over 12 sitting members who did this, retention is 0.284 of
-#'   their major-party vote (sd 0.191); the 5 non-members are unusable
-#'   (mean 2.32, sd 4.38), which is why this is restricted to members. It is
-#'   a floor rather than a replacement because the class may already have a
+#'   their major-party vote (sd 0.191). `major_discount` alone applies only to
+#'   sitting members; a losing (non-member) defector's own median retention is
+#'   0.142 over 12-13 corpus cases -- real and usable, not the "5 cases, mean
+#'   2.32, noise" this docstring claimed before 2026-09-09 (that mean was
+#'   distorted by one ratio taken on a ~2% denominator). See `pooled` below
+#'   to extend the floor to them. It is a floor rather than a replacement
+#'   because the class may already have a
 #'   better base in that seat from a different candidate -- overwriting Kate
 #'   Hook's 20% in Calare with Andrew Gee's discounted Nationals vote moved
 #'   the seat the wrong way, 0.122 -> 0.040.
+#' @param pooled Extend the defector floor to major-party candidates who were
+#'   NOT the sitting member. `NULL` reads `AUSPOL_DEFECT_POOLED`. Before
+#'   2026-09-09 they were excluded outright and received nothing, on a
+#'   comment asserting their retention was unusable noise -- which was wrong:
+#'   13 cases with a median of 0.142, not 5 with an outlier-driven mean.
+#' @param loser_discount Rate applied to those non-member defectors, when it
+#'   should differ from `major_discount`. `NULL` gives both groups the same
+#'   rate. Under `AUSPOL_DEFECT_POOLED="2"` this is resolved automatically
+#'   from [fit_defector_discount()] rather than threaded through six
+#'   harnesses -- see docs/plans/prereg-defector-two-rate-2026-09-09.md.
 #' @export
 personal_prior_vote <- function(election_from, election_to, corpus = NULL,
-                               major_discount = NULL) {
+                               major_discount = NULL, pooled = NULL,
+                               loser_discount = NULL) {
+  # TWO-RATE MODE: `loser_discount` applies to a prior major-party candidate
+  # who was NOT the sitting member; `major_discount` keeps applying to those
+  # who were. NULL leaves one rate for both, which is the pooled arm.
+  # docs/plans/prereg-defector-two-rate-2026-09-09.md
+  # POOLED DEFECTOR MODE, docs/plans/prereg-defector-pooling-2026-09-09.md.
+  # The rate is fitted in fit_defector_discount(); this is the APPLICATION
+  # site that decides WHO receives it. Both ends must move together -- the
+  # first attempt changed only the fitting end, so the pooled rate was applied
+  # to the same sitting members as before and the 12 losing cells the arm
+  # exists for did not move at all. Caught by the plan's own R1.
+  .mode <- Sys.getenv("AUSPOL_DEFECT_POOLED", "0")
+  if (is.null(pooled)) pooled <- .mode %in% c("1", "2")
+  # MODE 2 resolves the losing-candidate rate itself rather than making every
+  # harness thread a second argument through -- six call sites, and the last
+  # time a two-ended mechanism was wired only at one end the arm ran void.
+  if (is.null(loser_discount) && identical(.mode, "2") &&
+      !is.null(major_discount) && is.finite(major_discount)) {
+    .fd <- tryCatch(fit_defector_discount(election_to, corpus = corpus),
+                    error = function(e) {
+                      cat(sprintf("DF2! two-rate fit FAILED, single rate %.3f kept: %s\n",
+                                  major_discount, conditionMessage(e)))
+                      NULL
+                    })
+    # NEVER just `is.finite(.fd$discount_loser)` -- a list missing the field
+    # entirely gives NULL, is.finite(NULL) is logical(0), and `TRUE &&
+    # logical(0)` throws rather than evaluating. Every branch below now logs,
+    # matching every other fallback in this file (BF1p!/BT1p!/BF0d! etc):
+    # silence on a degraded path is the one thing this repo's CLAUDE.md
+    # singles out as indistinguishable from an experiment that never ran.
+    if (!is.null(.fd) && !is.null(.fd$discount_loser) && is.finite(.fd$discount_loser)) {
+      loser_discount <- .fd$discount_loser
+      if (!is.null(.fd$discount_mp) && is.finite(.fd$discount_mp)) major_discount <- .fd$discount_mp
+      cat(sprintf("DF2  two-rate defector: member %.3f, loser %.3f
+",
+                  major_discount, loser_discount))
+    } else if (!is.null(.fd)) {
+      cat(sprintf("DF2! two-rate defector NOT applied (only %d case(s), need enough for a loser rate); single rate %.3f kept\n",
+                  .fd$n, major_discount))
+    }
+  }
   C <- corpus
   if (is.null(C)) {
     f <- file.path("output", "candidacies.csv")
@@ -331,31 +386,70 @@ personal_prior_vote <- function(election_from, election_to, corpus = NULL,
 
   # The LEADING row per (seat, party) at the TARGET election: the one whose
   # personal history actually drives this class's swing.
+  #
+  # NOT "sum every identity-matched returning candidate" -- tried 2026-09-09,
+  # reverted the same day. Waite's hypothetical (both Duluk 19.7% and
+  # Holmes-Ross 14.6% returning) is the only shape where summing is correct,
+  # because IND had exactly those two candidates and nothing else. The far
+  # more common REAL shape (40 cases across the corpus, checked 2026-09-09) is
+  # a class with SEVERAL prior candidates where only ONE returns -- Rankin/
+  # OTH_RIGHT fed2016->2019 had three candidates (Lawrie 5.9, Davies 4.1,
+  # Holley 3.4); only Davies returned. Summing there means REPLACING the
+  # class's true prior total (13.3, still real vote even though 9.2 points of
+  # it belongs to people who left) with just Davies' own 4.1 -- understating
+  # the base, not completing it. [[fit_defector_discount]]'s additive DEF
+  # branch below gets this right (adds a floor ON TOP of the class base); this
+  # branch does not, because own_prev_pcv here REPLACES `x` wholesale in every
+  # harness's `.own_x()`, and replacing a multi-candidate class's total with
+  # one returner's share is wrong whenever anyone else in that class did NOT
+  # return. Measured: fed2019 pooled log loss 0.263 -> 0.383, fed2025 0.324 ->
+  # 0.373, vic2022 improved slightly (0.249 -> 0.240) -- a real, mixed,
+  # non-trivial effect, not a no-op. (An nsw2023 figure was cited here too
+  # until the 2026-09-09 review gate found it did not trace to this arm's own
+  # measurement -- likely cross-contaminated from a different same-day
+  # comparison. Removed rather than left unverifiable.) The fix needs a design
+  # that separates "identity-tracked personal vote" from "anonymous residual
+  # class vote" rather than treating the match as a full substitute --
+  # queued, not built. scripts/candidate_scenario.R still demonstrates the
+  # underlying gap (Holmes-Ross's history is genuinely invisible under
+  # leader-only matching); the fix for it just isn't this.
   data.table::setorder(NOWT, seat, party, -pcv)
   lead <- NOWT[nzchar(.k), .SD[1], by = .(seat, party)]
 
-  # EXCLUDE A PRIOR MAJOR-PARTY REGISTRATION. Nick McBride won MacKillop as
-  # LNP with 62.3% in 2022, then re-contested as IND in 2026 and got 14.8% --
-  # using his LNP-era vote as the base badly overestimated him, because most
-  # of it was the party's machine, not personal support. Gareth Ward (Kiama)
-  # is the counter-case: LNP 53.6% -> IND 38.8%, still won, and the override
-  # would have been correct there. With only these two examples of a
-  # major-party defector, there is no basis to fit how much to discount --
-  # so this stays conservative and excludes ALP/LNP/NAT prior registrations
-  # entirely, falling back to the class-level base exactly as before this
-  # function existed. Switching FROM an already-minor label (Shooters,
-  # Fishers and Farmers, One Nation, Green, other independent) is a much
-  # smaller behavioural jump for voters and is not excluded.
+  # EXCLUDE A PRIOR MAJOR-PARTY REGISTRATION by default. Nick McBride won
+  # MacKillop as LNP with 62.3% in 2022, then re-contested as IND in 2026 and
+  # got 14.8% -- using his LNP-era vote as the base badly overestimated him,
+  # because most of it was the party's machine, not personal support. Gareth
+  # Ward (Kiama) is the counter-case: LNP 53.6% -> IND 38.8%, still won, and
+  # the override would have been correct there. [[fit_defector_discount]]
+  # (14+ cases, pooled across jurisdictions) is what `major_discount` draws
+  # on when a caller opts in below; without it this falls back to the
+  # class-level base exactly as before this function existed. Switching FROM
+  # an already-minor label (Shooters, Fishers and Farmers, One Nation, Green,
+  # other independent) is a much smaller behavioural jump for voters and is
+  # not excluded.
   MAJ <- c("ALP", "LNP", "NAT")
   # MAJOR-PARTY DEFECTORS, opt-in via `major_discount` (NULL = excluded, the
   # previous behaviour, byte-identical).
   #
-  # The exclusion above was written when there were TWO examples and "no
-  # basis to fit how much to discount". There are now 12 sitting members who
-  # re-contested their own seat under a non-major label, and their retention
-  # is estimable: mean 0.284 of their major-party vote, sd 0.191 (against
-  # n=5 non-members at mean 2.32, sd 4.38 -- unusable, so this is restricted
-  # to sitting members).
+  # [[fit_defector_discount]] (R/candidate_returns.R) is what a caller passes
+  # here now -- pooled across all six jurisdictions, leave-target-out, 14+
+  # cases, median ~0.28-0.29 depending on target.
+  #
+  # RESTRICTED TO SITTING MEMBERS (`elected %in% TRUE`) BY DEFAULT -- i.e.
+  # when `pooled` is FALSE, which is the caller's choice, not a fact about the
+  # data. An EARLIER version of this comment justified the restriction as
+  # permanent, on a claim now known wrong: "the non-member analogue has 5
+  # corpus cases, mean retention 2.32, sd 4.38 -- noise". Checked 2026-09-09:
+  # it is 13 cases (12 with a usable prior vote), the mean was distorted by
+  # one ratio taken on a ~2% denominator (Preece, Schubert sa2026, 2.1% ->
+  # 21.7%), and the MEDIAN -- 0.142 -- is real and usable, about half a
+  # sitting member's 0.284. `AUSPOL_DEFECT_POOLED="2"` (the PUBLISHED
+  # default, docs/plans/prereg-defector-two-rate-2026-09-09.md) sets `pooled`
+  # TRUE and gives losing defectors that 0.142 floor instead of nothing --
+  # this restriction is the fallback for a caller who explicitly opts out,
+  # not what ships. `same` always reports the identity match correctly
+  # regardless of `pooled`; only whether `own_prev_pcv` gets filled changes.
   #
   # Discarding the history entirely is not the safe choice it looks like. It
   # leaves a defector with the CLASS-level base, which in a seat with no
@@ -395,9 +489,11 @@ personal_prior_vote <- function(election_from, election_to, corpus = NULL,
   # its own prior vote -- measured, that took fed2025 accuracy to 25.3%.
   if (!is.null(major_discount) && is.finite(major_discount) && major_discount > 0 &&
       "elected" %in% names(PREVT)) {
-    DEF <- PREVT[nzchar(PREVT$.k) & PREVT$party %in% MAJ & PREVT$elected %in% TRUE,
-                 .(def_pcv   = if (.N) max(pcv, na.rm = TRUE) else NA_real_,
-                   def_party = if (.N) party[which.max(pcv)] else NA_character_),
+    DEF <- PREVT[nzchar(PREVT$.k) & PREVT$party %in% MAJ &
+                   (pooled | PREVT$elected %in% TRUE),
+                 .(def_pcv    = if (.N) max(pcv, na.rm = TRUE) else NA_real_,
+                   def_party  = if (.N) party[which.max(pcv)] else NA_character_,
+                   def_was_mp = if (.N) (elected %in% TRUE)[which.max(pcv)] else NA),
                  by = .(.s, .k)]
     if (nrow(DEF)) {
       # A FLOOR, NOT A REPLACEMENT. The class may already have a real base in
@@ -419,11 +515,20 @@ personal_prior_vote <- function(election_from, election_to, corpus = NULL,
       # already standing there -- and in the event the class ran two
       # independents, 23.7% and 15.8%. Taking a maximum returned the 20% base
       # and left the seat projected at 17.7 against an actual 39.5.
+      # PER-GROUP RATE. def_was_mp comes from the same PREVT row def_pcv does,
+      # so a losing defector is charged the loser rate and a member the member
+      # rate -- the two-rate arm. With loser_discount NULL both collapse to
+      # major_discount, reproducing the single-rate behaviour exactly.
+      out[, .rate := major_discount]
+      if (!is.null(loser_discount) && is.finite(loser_discount) && "def_was_mp" %in% names(out)) {
+        out[def_was_mp %in% FALSE, .rate := loser_discount]
+      }
       out[is.na(own_prev_pcv) & !party %in% MAJ & !is.na(def_pcv),
-          `:=`(own_prev_pcv = cls_pcv + def_pcv * major_discount,
+          `:=`(own_prev_pcv = cls_pcv + def_pcv * .rate,
                prev_party   = def_party,
-               transfer     = def_pcv * major_discount)]
-      out[, c("def_pcv", "def_party", "cls_pcv") := NULL]
+               transfer     = def_pcv * .rate)]
+      out[, .rate := NULL]
+      out[, c("def_pcv", "def_party", "def_was_mp", "cls_pcv") := NULL]
     }
   }
   # THE VOTE MOVES WITH THE PERSON. `transfer` is how much of the prior class's
@@ -483,4 +588,177 @@ remove_transferred_votes <- function(mat, own_prev) {
   # that double count in place for the seat.
   attr(mat, "transfers") <- list(applied = applied, skipped = skipped)
   mat
+}
+
+#' Fit the major-party defector's retention rate, pooled across every
+#' jurisdiction, leave-one-target-out
+#'
+#' `personal_prior_vote(major_discount = ...)` needs one number: what fraction
+#' of a sitting major-party MP's vote survives when they defect and re-contest
+#' their own seat under a non-major label. Before this function, that number
+#' was fitted ONCE, inline, in `backtest_candidate_fed.R` alone (federal pairs
+#' only, leave-one-election-out) and the other five harnesses hardcoded
+#' `0.282` -- a frozen snapshot of one federal run, never refreshed and never
+#' pooling the non-federal cases sitting in the same corpus (Ward/Kiama,
+#' Graham/Pilbara, Northe/Morwell, Masters/Vasse and others).
+#' `docs/plans/harness-unification-2026-09-08.md` names this exact drift.
+#'
+#' This pools every jurisdiction via [all_election_pairs()] (the shared list
+#' built for exactly this leave-one-out pattern) instead of federal's own
+#' narrower same-region chain, and every caller now shares one fit instead of
+#' five carrying a stale copy and one recomputing it. Reported over all 22
+#' pairs pooled: 14 defector cases, median retention 0.302 (individual ratios
+#' 0.13 to 0.86) -- close to, but not identical to, the federal-only 0.282
+#' this replaces, because the federal-only fit is a narrower sample of the
+#' same underlying population, not a different one.
+#'
+#' Median, not mean: with 14 points spanning 0.13-0.86, the mean (0.378) is
+#' pulled up by the two long-tenure independents who kept their seats (Ward
+#' 0.72, Graham 0.86) exactly as much as it should be, but a caller fitting a
+#' FLOOR for the typical case is better served by the median, which is also
+#' what the pre-existing federal fit already used.
+#'
+#' @param target_election The election being scored. Its own (seat, party)
+#'   defector cases are excluded from the fit -- this is what keeps the fit
+#'   leave-one-out rather than fitting the number on the data it will be
+#'   scored against.
+#' @param corpus Optional pre-read candidacy table; read from
+#'   `output/candidacies.csv` when `NULL`.
+#' @param min_n Minimum defector cases required to return a fit. Below this,
+#'   `discount` is `NULL` -- the same "not enough data" guard the original
+#'   federal-only fit used (`BF0d!`).
+#' @param pairs Optional list of `list(election=, prev=)`, as returned by
+#'   [all_election_pairs()]; that function's real 22-pair list is used when
+#'   `NULL`. Exposed so tests can inject a small synthetic pair list instead
+#'   of depending on the real corpus.
+#' @param pooled Include major-party candidates who were NOT the sitting
+#'   member. `NULL` reads `AUSPOL_DEFECT_POOLED` (`"1"` or `"2"` enable it).
+#'   `FALSE` fits on sitting members alone, the pre-2026-09-09 behaviour.
+#' @param min_prior Minimum prior vote, in points, for a case to enter the
+#'   fit. Stops a retention RATIO being taken on a denominator too small to
+#'   mean anything -- Preece (Schubert sa2026) went 2.1% to 21.7%, a ratio of
+#'   10.14 that on its own made the losing group look unusable.
+#' @return A list: `discount` (median retention ratio, or `NULL`),
+#'   `discount_mp` and `discount_loser` (the same for prior sitting members
+#'   and everyone else, for the two-rate arm), `n` (cases used), `cases` (the
+#'   underlying data.table, for inspection).
+#' @export
+fit_defector_discount <- function(target_election, corpus = NULL, min_n = 5L, pairs = NULL,
+                                  pooled = NULL, min_prior = 10) {
+  # POOLED MODE (AUSPOL_DEFECT_POOLED=1), per
+  # docs/plans/prereg-defector-pooling-2026-09-09.md. Default FALSE reproduces
+  # the sitting-member-only rate exactly.
+  #
+  # Excluding losing candidates was justified in this file by a comment reading
+  # "5 corpus cases, mean retention 2.32 and sd 4.38 -- noise". Both halves were
+  # wrong: there are 13 such cases, and the mean is destroyed by ONE ratio taken
+  # on a 2.1% denominator (Preece, Schubert sa2026, 2.1 -> 21.7). Their MEDIAN is
+  # 0.142 -- about half a sitting member's 0.282, which is both usable and
+  # intuitive. But the two groups are NOT separable (Wilcoxon p = 0.408), and
+  # partial pooling puts weight 0.12 on the losing-candidate estimate, so the
+  # data supports ONE rate for every defector rather than two or an exclusion.
+  if (is.null(pooled)) pooled <- Sys.getenv("AUSPOL_DEFECT_POOLED", "0") %in% c("1", "2")
+  C <- corpus
+  if (is.null(C)) {
+    f <- file.path("output", "candidacies.csv")
+    if (!file.exists(f)) {
+      stop("fit_defector_discount() needs output/candidacies.csv; run ",
+           "scripts/build_candidacies.R", call. = FALSE)
+    }
+    C <- data.table::fread(f, showProgress = FALSE)
+  }
+  C <- data.table::as.data.table(C)
+  MAJ <- c("ALP", "LNP", "NAT")
+  kk <- function(d) match_key(surname_of(if ("surname" %in% names(d)) d$surname else NA_character_,
+                                          if ("name" %in% names(d)) d$name else NA_character_),
+                               given_of(if ("given" %in% names(d)) d$given else NA_character_,
+                                        if ("name" %in% names(d)) d$name else NA_character_),
+                               "initial")
+  rn <- seat_rename_map()
+
+  if (is.null(pairs)) pairs <- all_election_pairs()
+  pairs <- Filter(function(pr) !identical(pr$election, target_election), pairs)
+
+  ratios <- rbindlist(lapply(pairs, function(pr) {
+    PREVT <- C[C$election == pr$prev]
+    NOWT  <- C[C$election == pr$election]
+    if (!nrow(PREVT) || !nrow(NOWT)) return(NULL)
+    PREVT <- data.table::copy(PREVT)[, `:=`(.k = kk(.SD), .s = normalise_seat(seat))]
+    NOWT  <- data.table::copy(NOWT)[,  `:=`(.k = kk(.SD), .s = normalise_seat(seat))]
+    if (!"elected" %in% names(PREVT)) return(NULL)
+    PREVT[, .s_renamed := .s]
+    PREVT[.s %in% names(rn), .s_renamed := rn[.s]]
+    # `elected %in% TRUE` is the exclusion the pooled arm removes. min_prior
+    # stops a retention RATIO being computed on a denominator too small to
+    # mean anything -- it removes exactly one case from each group.
+    a <- PREVT[nzchar(.k) & party %in% MAJ & (pooled | elected %in% TRUE) & pcv >= min_prior,
+               .(.s, .s_renamed, .k, prior_pcv = pcv, was_mp = elected %in% TRUE)][
+                 , .SD[which.max(prior_pcv)], by = .(.s, .k)]
+    a <- unique(rbind(a[, .(.s, .k, prior_pcv, was_mp)],
+                      a[, .(.s = .s_renamed, .k, prior_pcv, was_mp)]))
+    b <- NOWT[nzchar(.k) & !party %in% MAJ, .(.s, .k, target_pcv = pcv)][
+      , .SD[which.max(target_pcv)], by = .(.s, .k)]
+    m <- merge(a, b, by = c(".s", ".k"))
+    if (!nrow(m)) return(NULL)
+    m[, .(pair = pr$election, ratio = target_pcv / prior_pcv, was_mp)]
+  }), fill = TRUE)
+
+  if (is.null(ratios) || nrow(ratios) < min_n) {
+    # ALWAYS the same four fields, even here -- a caller that reads
+    # $discount_loser on a list that only sometimes has it is one `&&` away
+    # from "argument is of length zero" on the exact call chain
+    # fit_seats_full.R uses. Found 2026-09-09 by the review gate, reproduced
+    # by running R, not just read: with these fields absent,
+    # `is.finite(.fd$discount_loser)` was `logical(0)` and `TRUE && logical(0)`
+    # threw rather than evaluating.
+    return(list(discount = NULL, discount_mp = NULL, discount_loser = NULL,
+                n = if (is.null(ratios)) 0L else nrow(ratios), cases = ratios))
+  }
+  # TWO-RATE MODE (AUSPOL_DEFECT_POOLED=2),
+  # docs/plans/prereg-defector-two-rate-2026-09-09.md. `discount` stays the
+  # rate for prior sitting members; `discount_loser` is the losing group's own
+  # median. Pooling them to one number over-predicted the losers who collapse
+  # and breached South Australia's floor -- the outcome check the shrinkage
+  # rule prescribes when a pooled value looks wrong.
+  med <- function(x) if (length(x)) stats::median(x, na.rm = TRUE) else NA_real_
+  list(discount       = med(ratios$ratio),
+       discount_mp    = med(ratios$ratio[ratios$was_mp %in% TRUE]),
+       discount_loser = med(ratios$ratio[ratios$was_mp %in% FALSE]),
+       n = nrow(ratios), cases = ratios)
+}
+
+#' Keep the re-entry prior from overwriting a more-informed personal-vote floor
+#'
+#' `docs/plans/prereg-reentry-personal-vote-priority-2026-09-08.md`. Every
+#' harness applies `apply_reentry_prior()`'s fill to `shares` "on the
+#' post-swing projection" -- unconditionally, even for a cell
+#' [personal_prior_vote()] (with `major_discount` set) already informed with
+#' an identity-matched floor. Gareth Ward's Kiama (LNP 53.6% -> IND, real
+#' result 38.8%) is the case: the generic re-entry GLM predicts IND at 13.1%,
+#' discarding the defector's own 15.1% floor -- close in magnitude here, but
+#' the mechanism is the wrong one to have the last word on a cell it has no
+#' identity-specific information about. Pilbara wa2001 (Larry Graham, ALP ->
+#' IND) is the same shape.
+#'
+#' This is a filter on the WRITE, not a change to either mechanism: both
+#' keep computing what they already compute, and only the collision at
+#' write time changes. A no-op whenever `own_prev` is `NULL` (i.e.
+#' `AUSPOL_DEFECT_DISCOUNT` off) or carries no matching cell.
+#'
+#' @param reentry_cells A `data.frame`/`data.table` with `seat` and `party`
+#'   columns -- the `"reentry"` attribute from [apply_reentry_prior()] (via
+#'   [reentry_apply_harness()]), before it is written into `shares`.
+#' @param own_prev [personal_prior_vote()]'s output, or `NULL`.
+#' @return `reentry_cells` with any row matching an `own_prev` (seat, party)
+#'   pair removed.
+#' @export
+protect_personal_vote_cells <- function(reentry_cells, own_prev) {
+  if (is.null(reentry_cells) || !nrow(reentry_cells)) return(reentry_cells)
+  if (is.null(own_prev) || !nrow(own_prev)) return(reentry_cells)
+  op <- data.table::as.data.table(own_prev)
+  op <- op[!is.na(op$own_prev_pcv)]
+  if (!nrow(op)) return(reentry_cells)
+  rc <- data.table::as.data.table(reentry_cells)
+  key <- paste(op$seat, op$party)
+  rc[!paste(rc$seat, rc$party) %in% key]
 }

@@ -414,8 +414,40 @@ if (.cond && !is.null(.returns))
   ",
               if (is.null(.MP_SLOPE)) "OFF" else
                 paste(sprintf("%s=%.4f", names(.MP_SLOPE), .MP_SLOPE), collapse = " ")))
-.defect <- if (identical(Sys.getenv("AUSPOL_DEFECT_DISCOUNT", "0"), "1")) 0.282 else NULL
+# PORTED to fit_defector_discount() 2026-09-09 -- was a frozen 0.282 snapshot
+# of one federal-only run; now pooled across all six jurisdictions, refit
+# leave-this-target-out. See R/candidate_returns.R's docs.
+.defect <- NULL
+if (identical(Sys.getenv("AUSPOL_DEFECT_DISCOUNT", "0"), "1")) {
+  .fd <- tryCatch(fit_defector_discount(TGT), error = function(e) {
+  cat(sprintf("BQ0d! defector-discount fit FAILED, no discount applied: %s
+",
+              conditionMessage(e)))
+  list(discount = NULL, discount_mp = NULL, discount_loser = NULL, n = 0L)
+})
+  if (is.null(.fd$discount)) {
+    cat(sprintf("BQ0d! only %d defector case(s) (need >=5); no discount applied\n", .fd$n))
+  } else {
+    cat(sprintf("BQ0d defector discount %.3f from %d cases (target excluded, pooled all jurisdictions)\n",
+                .fd$discount, .fd$n))
+    .defect <- .fd$discount
+  }
+}
 # THE BASE VALUE, not just the slope -- see personal_prior_vote()'s docs.
+# SPLIT SLOPE (AUSPOL_SPLIT_SLOPE=1, default OFF -- unset reproduces this
+# harness byte-for-byte). Gives the returning and departed portions of a
+# class's prior vote their own fitted slope instead of one slope chosen by
+# a binary flag. docs/plans/prereg-partial-return-split-slope-2026-09-09.md
+# FITTED CONDITIONAL SLOPES (AUSPOL_FIT_SLOPES=1, default OFF). Replaces the
+# eight hardcoded same/new constants with a leave-this-target-out fit;
+# structure untouched. docs/plans/prereg-fit-conditional-slopes-2026-09-09.md
+.fitsl <- if (identical(Sys.getenv("AUSPOL_FIT_SLOPES", "0"), "1"))
+  fit_conditional_slopes(TGT) else NULL
+if (!is.null(.fitsl)) cat(sprintf("FS1  fitted slopes | same %s | new %s
+",
+  paste(sprintf("%s=%.3f", names(.fitsl$same), .fitsl$same), collapse=" "),
+  paste(sprintf("%s=%.3f", names(.fitsl$new),  .fitsl$new),  collapse=" ")))
+.split <- split_slope_context(PRV, TGT)
 .own_prev <- if (.cond) tryCatch(personal_prior_vote(PRV, TGT, major_discount = .defect), error = function(e) { cat(sprintf("BQ1p! personal_prior_vote() FAILED; class-level bases kept and NO transfer removed: %s\n", conditionMessage(e))); NULL }) else NULL
 mat <- remove_transferred_votes(mat, .own_prev)  # the vote moves with the person; see personal_prior_vote()
 .tr <- attr(mat, "transfers"); if (!is.null(.tr)) cat(sprintf("TR1  transfers moved with the person: %d applied%s\n", .tr$applied, if (length(.tr$skipped)) paste0("; SKIPPED ", length(.tr$skipped), ": ", paste(utils::head(.tr$skipped, 5), collapse = ", ")) else ""))
@@ -434,9 +466,9 @@ mat <- remove_transferred_votes(mat, .own_prev)  # the vote moves with the perso
     pv <- .permit[.permit$party == p, ]
     lut <- stats::setNames(as.logical(pv$permit), pv$seat)
     pm <- unname(lut[seats]); pm[is.na(pm)] <- TRUE
-    return(screened_slopes(p, seats, .returns, pm, same_mp = .MP_SLOPE))
+    return(screened_slopes(p, seats, .returns, pm, same_mp = .MP_SLOPE, same = if (is.null(.fitsl)) formals(screened_slopes)$same else .fitsl$same, new = if (is.null(.fitsl)) formals(screened_slopes)$new else .fitsl$new))
   }
-  if (.cond && !is.null(.returns)) return(conditional_slopes(p, seats, .returns, same_mp = .MP_SLOPE))
+  if (.cond && !is.null(.returns)) return(conditional_slopes(p, seats, .returns, same_mp = .MP_SLOPE, same = if (is.null(.fitsl)) formals(conditional_slopes)$same else .fitsl$same, new = if (is.null(.fitsl)) formals(conditional_slopes)$new else .fitsl$new))
   DEV_SLOPE[[p]]
 }
 cat(sprintf("BQ1d  dev slopes: %s%s
@@ -452,7 +484,8 @@ for (p in parties) if (p %in% names(st_b) && p %in% names(st_a)) {
   d_state <- st_b[[p]] - st_a[[p]]
   .sl <- .sa_slope(p, rownames(mat))
   x_p <- .own_x(p, rownames(mat), mat[, p])
-  val <- dev_slope(x_p, st_a[[p]], st_b[[p]], .sl)
+  val <- if (is.null(.split)) dev_slope(x_p, st_a[[p]], st_b[[p]], .sl) else
+    split_dev_slope(x_p, .split$frac(p, rownames(mat)), st_a[[p]], st_b[[p]], .split$s_ret, .split$s_dep)
   if (ELASTIC > 0 && d_state < -ELASTIC_D && st_a[[p]] > 0) {
     over <- x_p / st_a[[p]]
     hit  <- is.finite(over) & over > ELASTIC
@@ -469,11 +502,18 @@ for (p in parties) if (p %in% names(st_b) && p %in% names(st_a)) {
 # The prediction is a target-election share; filling it into the prior-election
 # matrix let dev_slope() swing it a second time.
 if (!is.null(REENTRY_CELLS) && nrow(REENTRY_CELLS)) {
-  .ri <- cbind(match(REENTRY_CELLS$seat,  rownames(shares)),
-               match(REENTRY_CELLS$party, colnames(shares)))
+  # PERSONAL-VOTE PRIORITY, docs/plans/prereg-reentry-personal-vote-priority-
+  # 2026-09-08.md. .own_prev's identity-matched defector floor must not be
+  # overwritten by the generic re-entry GLM, which has no idea who the
+  # candidate is (same shape as Kiama's Gareth Ward, NSW).
+  .rc <- protect_personal_vote_cells(REENTRY_CELLS, .own_prev)
+  .ri <- cbind(match(.rc$seat,  rownames(shares)),
+               match(.rc$party, colnames(shares)))
   .rk <- stats::complete.cases(.ri)
-  shares[.ri[.rk, , drop = FALSE]] <- REENTRY_CELLS$value[.rk]
-  cat(sprintf("BQ1r  re-entry applied post-swing to %d cell(s)\n", sum(.rk)))
+  shares[.ri[.rk, , drop = FALSE]] <- .rc$value[.rk]
+  .protected <- nrow(REENTRY_CELLS) - nrow(.rc)
+  cat(sprintf("BQ1r  re-entry applied post-swing to %d cell(s)%s\n", sum(.rk),
+              if (.protected) sprintf(" | %d protected by own_prev", .protected) else ""))
 }
 # PRINT WHAT IT APPLIED. CLAUDE.md records an experiment whose edit never ran
 # and whose byte-identical output read as "this input does not matter".
@@ -842,6 +882,7 @@ if (any(abs(chk$s - 1) > 0.01)) {
 }
 cat("BQ5  every seat's probabilities sum to 1 (max deviation checked)\n")
 fwrite(data.table(pair = TGT, as.data.table(sim$totals)), file.path("output", sprintf("backtest-%s-totals%s.csv", TGT, CAL_TAG)))
+fwrite(as.data.table(.rr$detail)[, pair := TGT], file.path("output", sprintf("backtest-%s-sharedetail%s.csv", TGT, CAL_TAG)))
 
 # NAME THE FILE ACTUALLY WRITTEN. This line was a hardcoded string and printed
 # "backtest-qld.csv" for every arm, including arms that correctly wrote a tagged

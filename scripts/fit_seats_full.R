@@ -92,6 +92,28 @@ cat(sprintf("LV2  level_mult: %s
 
 N_SIMS  <- as.integer(Sys.getenv("AUSPOL_N_SIMS", "20000"))
 SEAT_SD <- 3.5      # within-region seat deviation, from seat_swing_spread()
+# AUSPOL_SEAT_SD_MULT NEVER REACHED THE PUBLISHED FORECAST -- found
+# 2026-09-09 checking every published switch against fit_seats_full.R and
+# all six harnesses directly. All six harnesses apply this multiplier (a
+# fix that itself took until 2026-09-06 to be inert-no-longer everywhere);
+# this script, which produces the actual published number, never did.
+# Harmless while the shipped value is 1 (a no-op), but a future tune of
+# this switch would silently not reach Victoria's forecast. Same pattern
+# as every harness's own block: scales whichever spread is actually in
+# force (level_sd if set, else the flat SEAT_SD), and says which.
+SEAT_SD_MULT <- as.numeric(Sys.getenv("AUSPOL_SEAT_SD_MULT", "1"))
+if (!is.finite(SEAT_SD_MULT) || SEAT_SD_MULT <= 0)
+  stop("AUSPOL_SEAT_SD_MULT must be a positive number; got ", SEAT_SD_MULT)
+if (SEAT_SD_MULT != 1) {
+  if (is.null(.level_sd)) {
+    SEAT_SD <- SEAT_SD * SEAT_SD_MULT
+    cat(sprintf("CAL  seat_sd multiplier %.2f applied (flat seat_sd path)\n", SEAT_SD_MULT))
+  } else {
+    .level_sd <- .level_sd * SEAT_SD_MULT
+    cat(sprintf("CAL  spread multiplier %.2f applied to LEVEL_SD -> a=%.3f b=%.3f (seat_sd is inert here)\n",
+                SEAT_SD_MULT, .level_sd[1], .level_sd[2]))
+  }
+}
 # NOT adopted: One Nation was given its own, larger seat sd here (5.5, the
 # measured RMSE of its allocation against SA 2026) and it failed its
 # pre-registration. Widening a party that is BEHIND in most seats is a one-way
@@ -143,6 +165,15 @@ stopifnot(is.finite(SEED))
 
 SMOOTH  <- 0.15     # see distribute_preferences(); NOT optional, see its docs
 ONP_B1  <- -0.0968  # Greens-share coefficient, fitted on Victorian federal 2025
+# AUSPOL_FALLBACK_SMOOTH AND AUSPOL_FLOW_SD NEVER REACHED THE PUBLISHED
+# FORECAST -- found 2026-09-09 alongside the AUSPOL_SEAT_SD_MULT gap, same
+# shape: registered in published_flags.R, honoured by all six backtest
+# harnesses since the flow fixes were ported, never wired here. Both
+# default to 0 (a no-op), so this changes nothing today; wired so a future
+# tune of either reaches Victoria's forecast rather than silently not.
+FB_SMOOTH <- as.numeric(Sys.getenv("AUSPOL_FALLBACK_SMOOTH", "0"))
+FLOW_SD   <- as.numeric(Sys.getenv("AUSPOL_FLOW_SD", "0"))
+cat(sprintf("BS1f fallback_smooth %.2f | flow_sd %.2f\n", FB_SMOOTH, FLOW_SD))
 
 PREF <- election_data_path()          # external/elections, gitignored
 need <- file.path(PREF, c("vec-2022-vic-transfers.csv",
@@ -947,6 +978,7 @@ if (SHRINK > 0) cat(sprintf("CAL  calibration shrink %.2f applied
 sim <- simulate_seat_contests(level_sd = .level_sd, level_mult = .lm(shares), shares, fm, party_sd = psd, seat_sd = SEAT_SD, shrink = SHRINK,
                               n_sims = N_SIMS, smooth = SMOOTH, seed = SEED,
                               statewide_draws = sw_draws,
+                              fallback_smooth = FB_SMOOTH, flow_sd = FLOW_SD,
                               surge_h = surge_arg, surge_party = surge_party_arg,
                               surge_from_zero = identical(Sys.getenv("AUSPOL_SURGE_FROM_ZERO", "0"), "1"), surge_mu = surge_mu_arg, surge_sd = surge_sd_arg)
 cat(sprintf("S6e  engine %s | surge recipient fell back: %d class(es) absent, %d seat-draws at zero share\n", sim$engine, sim$surge_recipient_fallback, sim$surge_recipient_fallback_draws))

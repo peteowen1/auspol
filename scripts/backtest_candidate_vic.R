@@ -236,7 +236,7 @@ share_of <- function(f) {
   d[, .(votes = sum(votes)), by = .(seat, party)]
 }
 
-out_all <- list(); tot_all <- list()
+out_all <- list(); tot_all <- list(); share_detail <- list()
 for (K in PAIRS) {
   # ARM B of docs/plans/prereg-salience-expected-and-variance-2026-09-07.md.
   # NULL unless the switch is on, so a bare run is byte-identical.
@@ -398,7 +398,39 @@ for (K in PAIRS) {
   ",
               if (is.null(.MP_SLOPE)) "OFF" else
                 paste(sprintf("%s=%.4f", names(.MP_SLOPE), .MP_SLOPE), collapse = " ")))
-  .defect <- if (identical(Sys.getenv("AUSPOL_DEFECT_DISCOUNT", "0"), "1")) 0.282 else NULL
+  # PORTED to fit_defector_discount() 2026-09-09 -- was a frozen 0.282 snapshot
+  # of one federal-only run; now pooled across all six jurisdictions, refit
+  # leave-this-target-out. See R/candidate_returns.R's docs.
+  .defect <- NULL
+  if (identical(Sys.getenv("AUSPOL_DEFECT_DISCOUNT", "0"), "1")) {
+    .fd <- tryCatch(fit_defector_discount(.eb), error = function(e) {
+    cat(sprintf("BV0d! defector-discount fit FAILED, no discount applied: %s
+",
+                conditionMessage(e)))
+    list(discount = NULL, discount_mp = NULL, discount_loser = NULL, n = 0L)
+  })
+    if (is.null(.fd$discount)) {
+      cat(sprintf("BV0d! only %d defector case(s) (need >=5); no discount applied\n", .fd$n))
+    } else {
+      cat(sprintf("BV0d defector discount %.3f from %d cases (target excluded, pooled all jurisdictions)\n",
+                  .fd$discount, .fd$n))
+      .defect <- .fd$discount
+    }
+  }
+  # SPLIT SLOPE (AUSPOL_SPLIT_SLOPE=1, default OFF -- unset reproduces this
+  # harness byte-for-byte). Gives the returning and departed portions of a
+  # class's prior vote their own fitted slope instead of one slope chosen by
+  # a binary flag. docs/plans/prereg-partial-return-split-slope-2026-09-09.md
+  # FITTED CONDITIONAL SLOPES (AUSPOL_FIT_SLOPES=1, default OFF). Replaces the
+  # eight hardcoded same/new constants with a leave-this-target-out fit;
+  # structure untouched. docs/plans/prereg-fit-conditional-slopes-2026-09-09.md
+  .fitsl <- if (identical(Sys.getenv("AUSPOL_FIT_SLOPES", "0"), "1"))
+    fit_conditional_slopes(.eb) else NULL
+  if (!is.null(.fitsl)) cat(sprintf("FS1  fitted slopes | same %s | new %s
+",
+    paste(sprintf("%s=%.3f", names(.fitsl$same), .fitsl$same), collapse=" "),
+    paste(sprintf("%s=%.3f", names(.fitsl$new),  .fitsl$new),  collapse=" ")))
+  .split <- split_slope_context(.ea, .eb)
   .own_prev <- if (.cond) tryCatch(personal_prior_vote(.ea, .eb, major_discount = .defect), error = function(e) { cat(sprintf("BV1p! personal_prior_vote() FAILED; class-level bases kept and NO transfer removed: %s\n", conditionMessage(e))); NULL }) else NULL
   mat <- remove_transferred_votes(mat, .own_prev)  # the vote moves with the person; see personal_prior_vote()
   .tr <- attr(mat, "transfers"); if (!is.null(.tr)) cat(sprintf("TR1  transfers moved with the person: %d applied%s\n", .tr$applied, if (length(.tr$skipped)) paste0("; SKIPPED ", length(.tr$skipped), ": ", paste(utils::head(.tr$skipped, 5), collapse = ", ")) else ""))
@@ -419,9 +451,9 @@ for (K in PAIRS) {
       pv <- .permit[.permit$party == p, ]
       lut <- stats::setNames(as.logical(pv$permit), pv$seat)
       pm <- unname(lut[seats]); pm[is.na(pm)] <- TRUE
-      return(screened_slopes(p, seats, .returns, pm, same_mp = .MP_SLOPE))
+      return(screened_slopes(p, seats, .returns, pm, same_mp = .MP_SLOPE, same = if (is.null(.fitsl)) formals(screened_slopes)$same else .fitsl$same, new = if (is.null(.fitsl)) formals(screened_slopes)$new else .fitsl$new))
     }
-    if (.cond && !is.null(.returns)) return(conditional_slopes(p, seats, .returns, same_mp = .MP_SLOPE))
+    if (.cond && !is.null(.returns)) return(conditional_slopes(p, seats, .returns, same_mp = .MP_SLOPE, same = if (is.null(.fitsl)) formals(conditional_slopes)$same else .fitsl$same, new = if (is.null(.fitsl)) formals(conditional_slopes)$new else .fitsl$new))
     DEV_SLOPE[[p]]
   }
   # WHAT THE MP TIER ACTUALLY APPLIED TO. Printed unconditionally, including
@@ -450,7 +482,8 @@ for (K in PAIRS) {
     d_state <- sb[[p]] - sa[[p]]
     .sl <- .vic_slope(p, rownames(mat))
     x_p <- .own_x(p, rownames(mat), mat[, p])
-    val <- dev_slope(x_p, sa[[p]], sb[[p]], .sl)
+    val <- if (is.null(.split)) dev_slope(x_p, sa[[p]], sb[[p]], .sl) else
+      split_dev_slope(x_p, .split$frac(p, rownames(mat)), sa[[p]], sb[[p]], .split$s_ret, .split$s_dep)
     if (ELASTIC > 0 && d_state < -ELASTIC_D && sa[[p]] > 0) {
       over <- x_p / sa[[p]]
       hit <- is.finite(over) & over > ELASTIC
@@ -465,11 +498,19 @@ for (K in PAIRS) {
   # The prediction is a target-election share; filling it into the prior-election
   # matrix let dev_slope() swing it a second time.
   if (!is.null(REENTRY_CELLS) && nrow(REENTRY_CELLS)) {
-    .ri <- cbind(match(REENTRY_CELLS$seat,  rownames(shares)),
-                 match(REENTRY_CELLS$party, colnames(shares)))
+    # PERSONAL-VOTE PRIORITY, docs/plans/prereg-reentry-personal-vote-priority-
+    # 2026-09-08.md. .own_prev's identity-matched defector floor must not be
+    # overwritten by the generic re-entry GLM, which has no idea who the
+    # candidate is (same shape as Kiama's Gareth Ward, NSW; Morwell's Russell
+    # Northe, Nationals -> IND, is Victoria's own case).
+    .rc <- protect_personal_vote_cells(REENTRY_CELLS, .own_prev)
+    .ri <- cbind(match(.rc$seat,  rownames(shares)),
+                 match(.rc$party, colnames(shares)))
     .rk <- stats::complete.cases(.ri)
-    shares[.ri[.rk, , drop = FALSE]] <- REENTRY_CELLS$value[.rk]
-    cat(sprintf("BV1r  re-entry applied post-swing to %d cell(s)\n", sum(.rk)))
+    shares[.ri[.rk, , drop = FALSE]] <- .rc$value[.rk]
+    .protected <- nrow(REENTRY_CELLS) - nrow(.rc)
+    cat(sprintf("BV1r  re-entry applied post-swing to %d cell(s)%s\n", sum(.rk),
+                if (.protected) sprintf(" | %d protected by own_prev", .protected) else ""))
   }
   if (ELASTIC > 0) {
     cat(sprintf("BV1e elasticity ON (over %.2f, fall %.1f): %d cells\n",
@@ -734,6 +775,8 @@ for (K in PAIRS) {
   sl <- if (length(unique(z$y)) > 1)
     stats::coef(stats::glm(y ~ lo, data = z, family = stats::binomial()))[["lo"]] else NA_real_
   .rr <- seat_share_rmse(shares, fb)  # the second metric: point-estimate seat-share RMSE vs actual
+  share_detail[[length(share_detail) + 1L]] <-
+    data.table::as.data.table(.rr$detail)[, pair := sprintf("vic%d", K$to)]
   cat(sprintf("BV2r  seat-share RMSE %.3f | MAE %.3f | by class %s | %d seats%s\n", .rr$rmse, .rr$mae,
               paste(sprintf("%s=%.2f", names(.rr$by_class), .rr$by_class), collapse = " "),
               .rr$n_seats, if (.rr$n_dropped) sprintf(" (%d unmatched dropped)", .rr$n_dropped) else ""))
@@ -766,6 +809,7 @@ for (K in PAIRS) {
 R <- rbindlist(out_all)
 fwrite(R, file.path("output", sprintf("backtest-vic%s.csv", CAL_TAG)))
 fwrite(rbindlist(tot_all, fill = TRUE), file.path("output", sprintf("backtest-vic-totals%s.csv", CAL_TAG)))
+fwrite(rbindlist(share_detail, fill = TRUE), file.path("output", sprintf("backtest-vic-sharedetail%s.csv", CAL_TAG)))
 cat(sprintf("\nBV4  pooled over %d district-elections: accuracy %.1f%%, Brier %.4f\n",
             nrow(R), 100 * mean(R$pred == R$actual), mean((1 - R$prob)^2)))
 cat("BV4  for comparison, NSW 2023 gave 80.7% and 0.1468\n")

@@ -9,7 +9,9 @@ personal_prior_vote(
   election_from,
   election_to,
   corpus = NULL,
-  major_discount = NULL
+  major_discount = NULL,
+  pooled = NULL,
+  loser_discount = NULL
 )
 }
 \arguments{
@@ -26,12 +28,28 @@ class's seat base. \code{NULL} (the default) excludes prior major-party
 registrations entirely, which is the previous behaviour.
 
 Measured over 12 sitting members who did this, retention is 0.284 of
-their major-party vote (sd 0.191); the 5 non-members are unusable
-(mean 2.32, sd 4.38), which is why this is restricted to members. It is
-a floor rather than a replacement because the class may already have a
+their major-party vote (sd 0.191). \code{major_discount} alone applies only to
+sitting members; a losing (non-member) defector's own median retention is
+0.142 over 12-13 corpus cases -- real and usable, not the "5 cases, mean
+2.32, noise" this docstring claimed before 2026-09-09 (that mean was
+distorted by one ratio taken on a ~2\% denominator). See \code{pooled} below
+to extend the floor to them. It is a floor rather than a replacement
+because the class may already have a
 better base in that seat from a different candidate -- overwriting Kate
 Hook's 20\% in Calare with Andrew Gee's discounted Nationals vote moved
 the seat the wrong way, 0.122 -> 0.040.}
+
+\item{pooled}{Extend the defector floor to major-party candidates who were
+NOT the sitting member. \code{NULL} reads \code{AUSPOL_DEFECT_POOLED}. Before
+2026-09-09 they were excluded outright and received nothing, on a
+comment asserting their retention was unusable noise -- which was wrong:
+13 cases with a median of 0.142, not 5 with an outlier-driven mean.}
+
+\item{loser_discount}{Rate applied to those non-member defectors, when it
+should differ from \code{major_discount}. \code{NULL} gives both groups the same
+rate. Under \code{AUSPOL_DEFECT_POOLED="2"} this is resolved automatically
+from \code{\link[=fit_defector_discount]{fit_defector_discount()}} rather than threaded through six
+harnesses -- see docs/plans/prereg-defector-two-rate-2026-09-09.md.}
 }
 \value{
 A \code{data.table} of \code{seat}, \code{party}, \code{own_prev_pcv} (\code{NA_real_} where

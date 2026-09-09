@@ -16,7 +16,13 @@ fine.}
 }
 \value{
 A list: \code{rmse} over every seat-class cell, \code{mae}, \code{by_class} (a
-named vector of per-class RMSE), \code{n_seats} scored and \code{n_dropped}.
+named vector of per-class RMSE), \code{n_seats} scored, \code{n_dropped}, and
+\code{detail} -- a long \code{data.table} (\code{seat}, \code{party}, \code{pred_share},
+\code{actual_share}) with one row per scored seat-class cell. \code{detail} exists
+so a caller can persist the point estimate alongside the win probability
+it already writes, rather than recomputing this function's \code{pred}/\code{act}
+matrices a second time to get at them -- see
+\verb{docs/reviews/rmse-persistence-2026-09-09.md}.
 }
 \description{
 The second metric in this repo's objective, after seat log loss: how far
