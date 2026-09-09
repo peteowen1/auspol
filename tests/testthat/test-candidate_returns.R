@@ -387,3 +387,35 @@ test_that("fit_defector_discount's min_prior floor drops a ratio on a meaningles
   expect_equal(dropped$discount, kept$discount)
   expect_gt(mean(kept$cases$ratio), 3 * mean(dropped$cases$ratio))
 })
+
+test_that("personal_prior_vote under AUSPOL_DEFECT_POOLED=2 does not crash when the fit is too thin", {
+  # Reproduced by the review gate 2026-09-09: fit_defector_discount()'s
+  # below-min_n branch returned a list with NO discount_loser/discount_mp
+  # fields at all (not NA -- absent). `is.finite(.fd$discount_loser)` on that
+  # was logical(0), and `TRUE && logical(0)` threw "argument is of length
+  # zero" rather than evaluating. Latent on the real corpus (always enough
+  # cases) but a real crash in code on the fit_seats_full.R call path.
+  withr_env <- Sys.getenv("AUSPOL_DEFECT_POOLED")
+  on.exit(if (nzchar(withr_env)) Sys.setenv(AUSPOL_DEFECT_POOLED = withr_env)
+          else Sys.unsetenv("AUSPOL_DEFECT_POOLED"))
+  Sys.setenv(AUSPOL_DEFECT_POOLED = "2")
+  d <- data.table::data.table(
+    election = c("e1", "e2"), seat = "A", party = c("LNP", "IND"),
+    surname = "X", given = "a", pcv = c(50, 15), elected = c(TRUE, FALSE),
+    name = NA_character_)
+  r <- personal_prior_vote("e1", "e2", corpus = d, major_discount = 0.282)
+  # Falls back to the single supplied rate rather than crashing.
+  expect_equal(r[seat == "A" & party == "IND"]$own_prev_pcv, 50 * 0.282)
+})
+
+test_that("fit_defector_discount's below-min_n return always has discount_mp/discount_loser fields", {
+  # So a caller can safely read $discount_loser without checking existence
+  # first -- the field is always present (NULL when unfitted), never absent.
+  r <- fit_defector_discount("zzz", corpus = data.table::data.table(
+    election = "e1", seat = "A", party = "LNP", surname = "X", given = "a",
+    pcv = 50, elected = TRUE, name = NA_character_), min_n = 5L)
+  expect_true("discount_mp" %in% names(r))
+  expect_true("discount_loser" %in% names(r))
+  expect_null(r$discount_mp)
+  expect_null(r$discount_loser)
+})

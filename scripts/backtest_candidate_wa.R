@@ -324,7 +324,12 @@ for (K in PAIRS) {
   # leave-this-target-out. See R/candidate_returns.R's docs.
   .defect <- NULL
   if (identical(Sys.getenv("AUSPOL_DEFECT_DISCOUNT", "0"), "1")) {
-    .fd <- fit_defector_discount(el_to)
+    .fd <- tryCatch(fit_defector_discount(el_to), error = function(e) {
+    cat(sprintf("BW0d! defector-discount fit FAILED, no discount applied: %s
+",
+                conditionMessage(e)))
+    list(discount = NULL, discount_mp = NULL, discount_loser = NULL, n = 0L)
+  })
     if (is.null(.fd$discount)) {
       cat(sprintf("BW0d! only %d defector case(s) (need >=5); no discount applied\n", .fd$n))
     } else {

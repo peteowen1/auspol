@@ -28,9 +28,13 @@ class's seat base. \code{NULL} (the default) excludes prior major-party
 registrations entirely, which is the previous behaviour.
 
 Measured over 12 sitting members who did this, retention is 0.284 of
-their major-party vote (sd 0.191); the 5 non-members are unusable
-(mean 2.32, sd 4.38), which is why this is restricted to members. It is
-a floor rather than a replacement because the class may already have a
+their major-party vote (sd 0.191). \code{major_discount} alone applies only to
+sitting members; a losing (non-member) defector's own median retention is
+0.142 over 12-13 corpus cases -- real and usable, not the "5 cases, mean
+2.32, noise" this docstring claimed before 2026-09-09 (that mean was
+distorted by one ratio taken on a ~2\% denominator). See \code{pooled} below
+to extend the floor to them. It is a floor rather than a replacement
+because the class may already have a
 better base in that seat from a different candidate -- overwriting Kate
 Hook's 20\% in Calare with Andrew Gee's discounted Nationals vote moved
 the seat the wrong way, 0.122 -> 0.040.}

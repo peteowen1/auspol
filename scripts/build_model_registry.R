@@ -39,7 +39,7 @@ switches <- switches[nzchar(switches)]
 # gaps everywhere, which is not what "gap" means for this table. Verified by
 # reading R/*.R directly (see docs/MODEL-REGISTRY.md's own notes section for
 # citations); update this list if a switch moves between the two styles.
-SHARED_FN <- c("AUSPOL_COV_LOO", "AUSPOL_SALIENCE_SMOOTH", "AUSPOL_SIM_ENGINE")
+SHARED_FN <- c("AUSPOL_COV_LOO", "AUSPOL_SALIENCE_SMOOTH", "AUSPOL_SIM_ENGINE", "AUSPOL_DEFECT_POOLED")
 
 present <- function(sw, file) {
   if (!file.exists(file)) return(NA)
@@ -75,12 +75,12 @@ CLASSIFY <- list(
   AUSPOL_COV_LOO = "Read inside R/statewide_cor.R, not per-harness -- universal in practice, absent from every harness script by design.",
   AUSPOL_SALIENCE_SMOOTH = "Read inside R/salience_surge.R, not per-harness -- universal in practice.",
   AUSPOL_SIM_ENGINE = "Read inside R/seat_sim.R's simulate_seat_contests(), not per-harness -- universal in practice.",
-  AUSPOL_FLOW_SHIFT = "Federal-forecast-only concept (shifts the statewide TPP fundamentals blend); backtests inject real historical first preferences directly and have no fundamentals blend to shift.",
-  AUSPOL_FORCE_FP = "Federal-forecast-only (forces a first-preference override for the live forecast); no analogue in a backtest scored against real historical results.",
-  AUSPOL_FP_SD_MODE = "Federal-forecast-only (first-preference spread mode for the live projection); backtests use realised historical first preferences, not a projected spread.",
-  AUSPOL_ONP_CV = "Federal-forecast-only (One Nation allocation coefficient of variation for the live projection).",
-  AUSPOL_ONP_FIX = "Federal-forecast-only (One Nation allocation fix for the live projection).",
-  AUSPOL_ONP_ORDER = "Federal-forecast-only (One Nation allocation ordering for the live projection).",
+  AUSPOL_FLOW_SHIFT = "Published-forecast-only (fit_seats_full.R shifts the statewide TPP fundamentals blend for the live Victorian projection); backtests inject real historical first preferences directly and have no fundamentals blend to shift. NOT federal-specific -- fit_seats_full.R is the Victorian forecast; corrected 2026-09-09, this comment previously said \"federal\" for every switch fit_seats_full.R alone reads, which is wrong for all six in this group.",
+  AUSPOL_FORCE_FP = "Published-forecast-only (fit_seats_full.R -- forces a first-preference override for the live Victorian forecast); no analogue in a backtest scored against real historical results.",
+  AUSPOL_FP_SD_MODE = "Published-forecast-only (fit_seats_full.R -- first-preference spread mode for the live Victorian projection); backtests use realised historical first preferences, not a projected spread.",
+  AUSPOL_ONP_CV = "Published-forecast-only (fit_seats_full.R). ADOPTED 2026-09-09 at 0.365, partially pooled (docs/reviews/onp-concentration-validated-2026-09-09.md) -- moves the live Victorian One Nation median seat count 9 -> 10. The highest-stakes switch this registry tracks; was previously mislabelled \"federal\" here, which is wrong -- fit_seats_full.R is the Victorian forecast, not a federal one.",
+  AUSPOL_ONP_FIX = "Published-forecast-only (fit_seats_full.R -- One Nation allocation fix for the live Victorian projection).",
+  AUSPOL_ONP_ORDER = "Published-forecast-only (fit_seats_full.R -- One Nation allocation ordering for the live Victorian projection).",
   AUSPOL_IND_SALIENCE = "Deprecated experimental arm (the v1 national IND multiplier), superseded by the newer salience mechanisms; fed-only because that is the only harness it was ever tested in. Not adopted.",
   AUSPOL_INSURGENCY_SHRINK = "Per-seat shrink experiment, REFUSED 2026-09-06 (worse than the scalar shrink on 5 of 6 federal pairs) -- see docs/NEXT-STEPS.md. Fed/fit_seats-only because that is as far as the experiment got before being set aside. Not adopted.",
   AUSPOL_PARTY_COR = "WA deliberately excluded from the statewide party-correlation matrix -- cor(ALP, IND) flips sign there (docs/reviews/statewide-cov-loo-2026-09-07.md). Intentional, not a gap.",
@@ -173,8 +173,18 @@ L <- c(L, "\n## Every non-universal switch, explained\n")
 for (sw in switches) {
   r <- fmt_row(sw)
   if (r$universal) next
+  # THREE categories, not two. Until 2026-09-09 anything without "OPEN GAP" in
+  # its note fell into "intentional / dead experiment" -- which mislabelled
+  # AUSPOL_DEFECT_POOLED (adopted, shipping, correctly wired via a shared
+  # R/ function so it shows "NO" everywhere in the mechanical matrix above)
+  # as a dead experiment, directly under a note explaining it ships. Found by
+  # the review gate reading the generated doc, not the code.
   open_gap <- !is.null(r$note) && grepl("OPEN GAP", r$note)
-  tag <- if (is.null(r$note)) "**UNEXPLAINED -- audit this**" else if (open_gap) "**OPEN GAP**" else "intentional / dead experiment"
+  adopted  <- !is.null(r$note) && grepl("^ADOPTED\\b", r$note)
+  tag <- if (is.null(r$note)) "**UNEXPLAINED -- audit this**"
+         else if (open_gap) "**OPEN GAP**"
+         else if (adopted) "**adopted, shared-function wiring**"
+         else "intentional / dead experiment"
   L <- c(L, sprintf("- **`%s`** (%s): %s", sw,
                     tag, if (is.null(r$note)) "no classification recorded -- add one to CLASSIFY in scripts/build_model_registry.R" else r$note))
 }

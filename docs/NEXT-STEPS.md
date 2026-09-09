@@ -342,8 +342,13 @@ Arm H (variance widening for the flat-ratio re-entry path,
 `docs/plans/prereg-reentry-flatratio-variance-2026-09-08.md`) is implemented,
 dry-run passed, grid run and **refused** — see below.
 
-**NEW, 2026-09-08: `docs/plans/prereg-reentry-personal-vote-priority-2026-09-08.md`
-— pre-registered, not yet implemented.** Found while investigating Kiama:
+**`docs/plans/prereg-reentry-personal-vote-priority-2026-09-08.md`
+— IMPLEMENTED 2026-09-09 as `protect_personal_vote_cells()` (`R/candidate_returns.R`),
+tested, wired into all six harnesses. Dormant, not stale: it only fires when
+`REENTRY_CELLS` is populated, which needs arm D (`AUSPOL_REENTRY`), off by
+default and absent from `published_flags.R` — see the "SESSION 2026-09-09
+(AM #2)" entry above for the current status. Left below verbatim as the
+original finding.** Found while investigating Kiama:
 all six harnesses apply the re-entry prior "on the post-swing projection"
 unconditionally, overwriting ANY re-entering cell — including ones
 `personal_prior_vote()`'s major-party-defector floor (`AUSPOL_DEFECT_DISCOUNT=1`,

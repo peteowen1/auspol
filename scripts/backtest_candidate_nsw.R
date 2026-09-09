@@ -479,7 +479,12 @@ cat(sprintf("BT1m  MP tier: %s
 # leave-this-target-out. See R/candidate_returns.R's docs.
 .defect <- NULL
 if (identical(Sys.getenv("AUSPOL_DEFECT_DISCOUNT", "0"), "1")) {
-  .fd <- fit_defector_discount(TGT)
+  .fd <- tryCatch(fit_defector_discount(TGT), error = function(e) {
+  cat(sprintf("BN0d! defector-discount fit FAILED, no discount applied: %s
+",
+              conditionMessage(e)))
+  list(discount = NULL, discount_mp = NULL, discount_loser = NULL, n = 0L)
+})
   if (is.null(.fd$discount)) {
     cat(sprintf("BN0d! only %d defector case(s) (need >=5); no discount applied\n", .fd$n))
   } else {
