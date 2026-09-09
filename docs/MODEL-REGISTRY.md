@@ -31,15 +31,17 @@ All seven share one `R/` package core (`simulate_seat_contests()`,
 in which switches each one WIRES and which data source each reads, not in
 separate model code.
 
-## Switch parity (34 switches from `published_flags.R`, 7 entry points)
+## Switch parity (37 switches from `published_flags.R`, 7 entry points)
 
 | switch | fit_seats (published) | fed | nsw | qld | sa | vic | wa |
 |---|---|---|---|---|---|---|---|
 | `AUSPOL_COV_LOO` | NO | NO | NO | NO | NO | NO | NO |
 | `AUSPOL_DEFECT_DISCOUNT` | yes | yes | yes | yes | yes | yes | yes |
+| `AUSPOL_DEFECT_POOLED` | NO | NO | NO | NO | NO | NO | NO |
 | `AUSPOL_DEV_SLOPE` | yes | yes | yes | yes | yes | yes | yes |
 | `AUSPOL_DEV_SLOPE_MODE` | yes | yes | yes | yes | yes | yes | yes |
 | `AUSPOL_FALLBACK_SMOOTH` | yes | yes | yes | yes | yes | yes | yes |
+| `AUSPOL_FIT_SLOPES` | NO | yes | yes | yes | yes | yes | yes |
 | `AUSPOL_FLOW_SD` | yes | yes | yes | yes | yes | yes | yes |
 | `AUSPOL_FLOW_SHIFT` | yes | NO | NO | NO | NO | NO | NO |
 | `AUSPOL_FORCE_FP` | yes | NO | NO | NO | NO | NO | NO |
@@ -64,6 +66,7 @@ separate model code.
 | `AUSPOL_SEED` | yes | yes | yes | yes | yes | yes | yes |
 | `AUSPOL_SHRINK` | yes | yes | yes | yes | yes | yes | yes |
 | `AUSPOL_SIM_ENGINE` | NO | NO | NO | NO | NO | NO | NO |
+| `AUSPOL_SPLIT_SLOPE` | NO | yes | yes | yes | yes | yes | yes |
 | `AUSPOL_SURGE_FROM_ZERO` | yes | yes | yes | yes | yes | yes | NO |
 | `AUSPOL_SURGE_H` | yes | yes | yes | yes | yes | yes | yes |
 | `AUSPOL_SURGE_RECIPIENT` | yes | yes | yes | yes | yes | yes | yes |
@@ -73,6 +76,8 @@ separate model code.
 ## Every non-universal switch, explained
 
 - **`AUSPOL_COV_LOO`** (intentional / dead experiment): Read inside R/statewide_cor.R, not per-harness -- universal in practice, absent from every harness script by design.
+- **`AUSPOL_DEFECT_POOLED`** (intentional / dead experiment): ADOPTED 2026-09-09 at "2" (docs/plans/prereg-defector-two-rate- 2026-09-09.md), by Pete on mechanism -- the arm missed its own primary bar (t -2.04 vs 2.08) but every directional indicator was favourable and R4 confirmed the published Victorian forecast is byte-identical (Victoria fields no major-party defector standing as a minor this cycle, so the mechanism does not fire there). Reaches fit_seats_full.R correctly: personal_prior_vote() self-resolves both rates from Sys.getenv() when the caller passes NULL, exactly so this did not need a seventh call site wired by hand -- the mistake that made the first pooled-arm run VOID earlier the same day.
+- **`AUSPOL_FIT_SLOPES`** (intentional / dead experiment): REFUSED 2026-09-09 (docs/plans/prereg-fit-conditional-slopes-2026-09-09.md): pooled log loss FAIL, panel FAIL, though it surfaced that the shipped OTH_RIGHT constants are wrong in opposite directions. Harness-only by design -- a refused, default-off experiment has no reason to reach fit_seats_full.R.
 - **`AUSPOL_FLOW_SHIFT`** (intentional / dead experiment): Federal-forecast-only concept (shifts the statewide TPP fundamentals blend); backtests inject real historical first preferences directly and have no fundamentals blend to shift.
 - **`AUSPOL_FORCE_FP`** (intentional / dead experiment): Federal-forecast-only (forces a first-preference override for the live forecast); no analogue in a backtest scored against real historical results.
 - **`AUSPOL_FP_SD_MODE`** (intentional / dead experiment): Federal-forecast-only (first-preference spread mode for the live projection); backtests use realised historical first preferences, not a projected spread.
@@ -88,6 +93,7 @@ separate model code.
 - **`AUSPOL_SALIENCE_SMOOTH`** (intentional / dead experiment): Read inside R/salience_surge.R, not per-harness -- universal in practice.
 - **`AUSPOL_SALIENCE_SURGE_V2`** (**OPEN GAP**): WA: OPEN GAP, not fixed. Marked `yes*` above because the switch's name appears only in a disclosure comment explaining that it is NOT wired -- WA has no surge-v2 hazard at all where every other harness does (docs/NEXT-STEPS.md's own "Open" item 3, still unaddressed). A plain grep of the file would otherwise call this cell a clean "yes" and hide the gap.
 - **`AUSPOL_SIM_ENGINE`** (intentional / dead experiment): Read inside R/seat_sim.R's simulate_seat_contests(), not per-harness -- universal in practice.
+- **`AUSPOL_SPLIT_SLOPE`** (intentional / dead experiment): REFUSED 2026-09-09, and harmfully so (docs/plans/ prereg-partial-return-split-slope-2026-09-09.md): it discarded the existing conditional-slope system instead of refining it. Harness-only by design, same reasoning as AUSPOL_FIT_SLOPES.
 - **`AUSPOL_SURGE_FROM_ZERO`** (intentional / dead experiment): WA has no candidate-level salience corpus -- same exclusion as AUSPOL_SALIENCE_EXPECTED, intentional.
 - **`AUSPOL_WA_FLOWS`** (intentional / dead experiment): Self-referential no-op in the WA harness itself, same shape as AUSPOL_QLD_FLOWS above but not disclosed via an `.inert` list there. Genuinely absent from QLD (uses AUSPOL_QLD_FLOWS instead).
 
@@ -119,4 +125,4 @@ asks for":
 
 ## Coverage check
 
-MR2  every non-universal switch (18 of 34) has a recorded classification.
+MR2  every non-universal switch (21 of 37) has a recorded classification.

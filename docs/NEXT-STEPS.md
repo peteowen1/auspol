@@ -705,70 +705,14 @@ salience signal is candidate-level so it cannot run before then;
 `scripts/victoria_salience_dryrun.R` tests everything downstream against
 Victoria 2022 — two lines change on the day.
 
-## Four "we don't have it" claims that were wrong (2026-08-25/26)
+## Closed items archived
 
-Booth results, electoral boundaries, candidate-level federal first preferences
-for all seven elections, and the AEC's own seat-level `Swing` column. All four
-were on disk. The last two were being downloaded and **aggregated away** by
-`fetch_preferences_fed.R`, and a whole plan was written around acquiring data
-we already had.
-
-Now: `docs/DATA-REGISTRY.md` (does the file exist) and
-`docs/DATA-DICTIONARY.md` (does the field exist), both **generated from disk**.
-`build_candidacies.R` carries every column through — 23 against 13. The rule is
-in CLAUDE.md: never aggregate a source down to the columns you happen to need.
-
-## Resolved this session
-
-- **`party_sd`: TIE**, 11 of 17 pairs, p = 0.332
-  ([reviews/party-sd-tie-2026-08-26.md](reviews/party-sd-tie-2026-08-26.md)).
-  Stays at 1.50 — not because 1.50 is right, but because changing it buys
-  nothing measurable. **It caught a false positive**: 4-of-4 on federal alone,
-  a coin flip across seventeen.
-- **WA harness added** — seven pairs, 361 seat-elections, from data already on
-  disk. Took the repo from 10 election clusters to 17, which is what made the
-  `party_sd` question decidable at all. CLAUDE.md now says five harnesses.
-- **Federal seat-swing analogue: measured and NOT wired.** The prior
-  departure predicts the next at slope **−0.264** (t = −8.0), negative in all
-  six elections, where `SEAT_SWING_COEF` is **+0.7452**. Importing the
-  state-fitted coefficient would have applied it with the wrong sign. Worth
-  3.5% of seat-level error even correctly signed.
-- **Candidate corpus**: 24 elections, 14,959 candidacies, 338 non-major
-  breakouts, tracked and reproducible (was 21, untracked, no builder).
-
-## One Nation wins the WRONG SEAT TYPE in our model (2026-08-25)
-
-[reviews/onp-seat-type-asymmetry-2026-08-25.md](reviews/onp-seat-type-asymmetry-2026-08-25.md).
-**Nothing changed; this needs a pre-registered test.** Found by asking why our
-ONP seats differ from YouGov's — YouGov raised the question, SA 2026 answers
-it, and YouGov is not treated as truth anywhere in the review.
-
-Our model gives One Nation **6 of 6 seats in ALP-leaning territory and 0 of 6
-in LNP-leaning**. SA 2026 — the only election where the party won at this
-scale — was **0 of 5 and 5 of 5**, the exact opposite.
-
-The innocent explanation is ruled out. Among the 20 Victorian seats with the
-highest federal ONP vote (our own ordering input) the split is exactly 10/10
-by lean, yet mean ONP probability is **0.143 in ALP-leaning seats against
-0.036 in LNP-leaning ones**. Gippsland East carries more federal ONP vote than
-any seat we give the party except Morwell and scores **0.048**; Melton carries
-less than all of them and scores **0.561**.
-
-Mechanism: `shares` adds each party's statewide swing and renormalises, which
-takes One Nation's gain **proportionally from everyone**. Where the Coalition
-holds 58.9% it stays dominant. SA says otherwise — in the top decile of ONP
-gain the Coalition fell **17.69** against Labor's **4.96**, and MacKillop's
-Liberal vote collapsed 67.0 → 26.8 as One Nation took the seat.
-
-**Why it matters even if the TOTAL is right**: the same 9.25 expected seats
-taken from the Coalition rather than from Labor is a different parliament, and
-a total that is right for the wrong reason will not stay right.
-
-Caveats are in the review and are real (n=5, one state, no Nationals in SA, and
-the marginal gradient is weaker than the group means). Next step is a
-pre-registered test of source-weighted allocation against SA 2026 / WA 2017 /
-QLD 2020+2024 / NSW 2019 — a real corpus, unlike the two experiments that
-aborted for lack of power on 2026-08-25.
+Three closed 2026-08-25/26 items (data-registry lessons, that session's
+resolved list, and the ONP seat-type asymmetry — whose own stale "next step"
+was corrected before archiving: the follow-up test was run the same day and
+REFUSED, reversing Pete's directional hypothesis) moved to
+[backlog/journal-2026-08-25-to-26.md](backlog/journal-2026-08-25-to-26.md)
+on 2026-09-09.
 
 ## Awaiting Pete
 

@@ -97,7 +97,29 @@ CLASSIFY <- list(
     "WA has no surge-v2 hazard at all where every other harness does",
     "(docs/NEXT-STEPS.md's own \"Open\" item 3, still unaddressed). A plain",
     "grep of the file would otherwise call this cell a clean \"yes\" and hide",
-    "the gap.")
+    "the gap."),
+  AUSPOL_DEFECT_POOLED = paste(
+    "ADOPTED 2026-09-09 at \"2\" (docs/plans/prereg-defector-two-rate-",
+    "2026-09-09.md), by Pete on mechanism -- the arm missed its own primary",
+    "bar (t -2.04 vs 2.08) but every directional indicator was favourable",
+    "and R4 confirmed the published Victorian forecast is byte-identical",
+    "(Victoria fields no major-party defector standing as a minor this",
+    "cycle, so the mechanism does not fire there). Reaches fit_seats_full.R",
+    "correctly: personal_prior_vote() self-resolves both rates from",
+    "Sys.getenv() when the caller passes NULL, exactly so this did not need",
+    "a seventh call site wired by hand -- the mistake that made the first",
+    "pooled-arm run VOID earlier the same day."),
+  AUSPOL_FIT_SLOPES = paste(
+    "REFUSED 2026-09-09 (docs/plans/prereg-fit-conditional-slopes-2026-09-09.md):",
+    "pooled log loss FAIL, panel FAIL, though it surfaced that the shipped",
+    "OTH_RIGHT constants are wrong in opposite directions. Harness-only",
+    "by design -- a refused, default-off experiment has no reason to reach",
+    "fit_seats_full.R."),
+  AUSPOL_SPLIT_SLOPE = paste(
+    "REFUSED 2026-09-09, and harmfully so (docs/plans/",
+    "prereg-partial-return-split-slope-2026-09-09.md): it discarded the",
+    "existing conditional-slope system instead of refining it. Harness-only",
+    "by design, same reasoning as AUSPOL_FIT_SLOPES.")
 )
 
 fmt_row <- function(sw) {
