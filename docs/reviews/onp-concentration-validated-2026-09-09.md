@@ -127,3 +127,53 @@ If the range is narrow, the concern is closed. If a shift from 0.334 to 0.48
 moves One Nation's expected Victorian seats materially, then the choice of
 concentration is a headline assumption of the forecast and should be stated
 as one rather than inherited silently from a single election.
+
+---
+
+## Measured, 2026-09-09: the range is FIVE SEATS, not narrow
+
+Ran `fit_seats_full.R` at three concentrations, each to its own output
+suffix (the S6 guard refuses to write published filenames from a non-default
+run, so nothing was overwritten):
+
+| `AUSPOL_ONP_CV` | delivered CV | ONP median seats | 90% range |
+|---|--:|--:|---|
+| unset — **what ships today** | 0.327 | **9** | 3–18 |
+| 0.40 | 0.400 | 11 | 4–21 |
+| 0.48 — corpus-typical at 21% | 0.480 | **14** | 6–24 |
+
+**Moving from the shipped concentration to the corpus-typical one adds five
+seats to One Nation's median, a 56% increase**, and lifts the whole
+distribution (the 90% floor rises 3 → 6).
+
+So the question this closes is not academic. The concentration is:
+
+1. **load-bearing** — worth 5 median seats across the plausible range;
+2. **set at the low end** — 0.327 shipped against a fitted typical 0.479,
+   about 1.4 residual sd below;
+3. **inherited from one election**, not chosen.
+
+## What should happen, and what should not
+
+**Not** a silent change. The evidence does not say 0.327 is wrong: SA 2026 is
+a real election at almost exactly Victoria's forecast level, and one clean
+observation at the right level can legitimately beat a noisy cross-party
+regression (R2 0.063, p 0.083, residual scatter ±26%). Moving the number on
+this evidence alone would be choosing the answer.
+
+What the evidence does say is that **this is a headline assumption being
+carried silently**. Three options, for Pete:
+
+- **Publish the range.** Report One Nation's Victorian seats as sensitive to
+  concentration, 9–14 median across 0.327–0.48, rather than as a point. This
+  requires no model change and is honest about what is actually known.
+- **Pre-register a move to the corpus-typical value** and test it the way
+  every other arm this session was tested. Note the usual problem: there is
+  no out-of-sample seat outcome to score it against, because SA 2026 is the
+  training set and Victoria has not happened. Any such arm would be adopted
+  on mechanism, not on demonstrated seat accuracy — and must say so.
+- **Leave it and document it.** Keep 0.327, but replace the "single most
+  load-bearing unvalidated number" comment with this measurement, so the next
+  reader knows it is worth 5 seats and was chosen from one election.
+
+The third is the minimum; the first is probably right for a public forecast.
