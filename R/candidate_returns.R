@@ -297,14 +297,35 @@ leading_candidate_returns <- function(election_from, election_to, corpus = NULL)
 #'   the seat the wrong way, 0.122 -> 0.040.
 #' @export
 personal_prior_vote <- function(election_from, election_to, corpus = NULL,
-                               major_discount = NULL, pooled = NULL) {
+                               major_discount = NULL, pooled = NULL,
+                               loser_discount = NULL) {
+  # TWO-RATE MODE: `loser_discount` applies to a prior major-party candidate
+  # who was NOT the sitting member; `major_discount` keeps applying to those
+  # who were. NULL leaves one rate for both, which is the pooled arm.
+  # docs/plans/prereg-defector-two-rate-2026-09-09.md
   # POOLED DEFECTOR MODE, docs/plans/prereg-defector-pooling-2026-09-09.md.
   # The rate is fitted in fit_defector_discount(); this is the APPLICATION
   # site that decides WHO receives it. Both ends must move together -- the
   # first attempt changed only the fitting end, so the pooled rate was applied
   # to the same sitting members as before and the 12 losing cells the arm
   # exists for did not move at all. Caught by the plan's own R1.
-  if (is.null(pooled)) pooled <- identical(Sys.getenv("AUSPOL_DEFECT_POOLED", "0"), "1")
+  .mode <- Sys.getenv("AUSPOL_DEFECT_POOLED", "0")
+  if (is.null(pooled)) pooled <- .mode %in% c("1", "2")
+  # MODE 2 resolves the losing-candidate rate itself rather than making every
+  # harness thread a second argument through -- six call sites, and the last
+  # time a two-ended mechanism was wired only at one end the arm ran void.
+  if (is.null(loser_discount) && identical(.mode, "2") &&
+      !is.null(major_discount) && is.finite(major_discount)) {
+    .fd <- tryCatch(fit_defector_discount(election_to, corpus = corpus),
+                    error = function(e) NULL)
+    if (!is.null(.fd) && is.finite(.fd$discount_loser)) {
+      loser_discount <- .fd$discount_loser
+      if (is.finite(.fd$discount_mp)) major_discount <- .fd$discount_mp
+      cat(sprintf("DF2  two-rate defector: member %.3f, loser %.3f
+",
+                  major_discount, loser_discount))
+    }
+  }
   C <- corpus
   if (is.null(C)) {
     f <- file.path("output", "candidacies.csv")
@@ -437,8 +458,9 @@ personal_prior_vote <- function(election_from, election_to, corpus = NULL,
       "elected" %in% names(PREVT)) {
     DEF <- PREVT[nzchar(PREVT$.k) & PREVT$party %in% MAJ &
                    (pooled | PREVT$elected %in% TRUE),
-                 .(def_pcv   = if (.N) max(pcv, na.rm = TRUE) else NA_real_,
-                   def_party = if (.N) party[which.max(pcv)] else NA_character_),
+                 .(def_pcv    = if (.N) max(pcv, na.rm = TRUE) else NA_real_,
+                   def_party  = if (.N) party[which.max(pcv)] else NA_character_,
+                   def_was_mp = if (.N) (elected %in% TRUE)[which.max(pcv)] else NA),
                  by = .(.s, .k)]
     if (nrow(DEF)) {
       # A FLOOR, NOT A REPLACEMENT. The class may already have a real base in
@@ -460,11 +482,20 @@ personal_prior_vote <- function(election_from, election_to, corpus = NULL,
       # already standing there -- and in the event the class ran two
       # independents, 23.7% and 15.8%. Taking a maximum returned the 20% base
       # and left the seat projected at 17.7 against an actual 39.5.
+      # PER-GROUP RATE. def_was_mp comes from the same PREVT row def_pcv does,
+      # so a losing defector is charged the loser rate and a member the member
+      # rate -- the two-rate arm. With loser_discount NULL both collapse to
+      # major_discount, reproducing the single-rate behaviour exactly.
+      out[, .rate := major_discount]
+      if (!is.null(loser_discount) && is.finite(loser_discount) && "def_was_mp" %in% names(out)) {
+        out[def_was_mp %in% FALSE, .rate := loser_discount]
+      }
       out[is.na(own_prev_pcv) & !party %in% MAJ & !is.na(def_pcv),
-          `:=`(own_prev_pcv = cls_pcv + def_pcv * major_discount,
+          `:=`(own_prev_pcv = cls_pcv + def_pcv * .rate,
                prev_party   = def_party,
-               transfer     = def_pcv * major_discount)]
-      out[, c("def_pcv", "def_party", "cls_pcv") := NULL]
+               transfer     = def_pcv * .rate)]
+      out[, .rate := NULL]
+      out[, c("def_pcv", "def_party", "def_was_mp", "cls_pcv") := NULL]
     }
   }
   # THE VOTE MOVES WITH THE PERSON. `transfer` is how much of the prior class's
@@ -584,7 +615,7 @@ fit_defector_discount <- function(target_election, corpus = NULL, min_n = 5L, pa
   # intuitive. But the two groups are NOT separable (Wilcoxon p = 0.408), and
   # partial pooling puts weight 0.12 on the losing-candidate estimate, so the
   # data supports ONE rate for every defector rather than two or an exclusion.
-  if (is.null(pooled)) pooled <- identical(Sys.getenv("AUSPOL_DEFECT_POOLED", "0"), "1")
+  if (is.null(pooled)) pooled <- Sys.getenv("AUSPOL_DEFECT_POOLED", "0") %in% c("1", "2")
   C <- corpus
   if (is.null(C)) {
     f <- file.path("output", "candidacies.csv")
@@ -619,19 +650,31 @@ fit_defector_discount <- function(target_election, corpus = NULL, min_n = 5L, pa
     # stops a retention RATIO being computed on a denominator too small to
     # mean anything -- it removes exactly one case from each group.
     a <- PREVT[nzchar(.k) & party %in% MAJ & (pooled | elected %in% TRUE) & pcv >= min_prior,
-               .(.s, .s_renamed, .k, prior_pcv = pcv)][, .SD[which.max(prior_pcv)], by = .(.s, .k)]
-    a <- unique(rbind(a[, .(.s, .k, prior_pcv)], a[, .(.s = .s_renamed, .k, prior_pcv)]))
+               .(.s, .s_renamed, .k, prior_pcv = pcv, was_mp = elected %in% TRUE)][
+                 , .SD[which.max(prior_pcv)], by = .(.s, .k)]
+    a <- unique(rbind(a[, .(.s, .k, prior_pcv, was_mp)],
+                      a[, .(.s = .s_renamed, .k, prior_pcv, was_mp)]))
     b <- NOWT[nzchar(.k) & !party %in% MAJ, .(.s, .k, target_pcv = pcv)][
       , .SD[which.max(target_pcv)], by = .(.s, .k)]
     m <- merge(a, b, by = c(".s", ".k"))
     if (!nrow(m)) return(NULL)
-    m[, .(pair = pr$election, ratio = target_pcv / prior_pcv)]
+    m[, .(pair = pr$election, ratio = target_pcv / prior_pcv, was_mp)]
   }), fill = TRUE)
 
   if (is.null(ratios) || nrow(ratios) < min_n) {
     return(list(discount = NULL, n = if (is.null(ratios)) 0L else nrow(ratios), cases = ratios))
   }
-  list(discount = stats::median(ratios$ratio, na.rm = TRUE), n = nrow(ratios), cases = ratios)
+  # TWO-RATE MODE (AUSPOL_DEFECT_POOLED=2),
+  # docs/plans/prereg-defector-two-rate-2026-09-09.md. `discount` stays the
+  # rate for prior sitting members; `discount_loser` is the losing group's own
+  # median. Pooling them to one number over-predicted the losers who collapse
+  # and breached South Australia's floor -- the outcome check the shrinkage
+  # rule prescribes when a pooled value looks wrong.
+  med <- function(x) if (length(x)) stats::median(x, na.rm = TRUE) else NA_real_
+  list(discount       = med(ratios$ratio),
+       discount_mp    = med(ratios$ratio[ratios$was_mp %in% TRUE]),
+       discount_loser = med(ratios$ratio[ratios$was_mp %in% FALSE]),
+       n = nrow(ratios), cases = ratios)
 }
 
 #' Keep the re-entry prior from overwriting a more-informed personal-vote floor

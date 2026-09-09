@@ -43,7 +43,7 @@ PUBLISHED_FLAGS <- c(
   AUSPOL_DEV_SLOPE           = "",           # explicit per-class slope table; empty = uniform swing, the base under screened mode
   AUSPOL_SPLIT_SLOPE         = "0",          # 1 = returning/departed portions get separate fitted slopes -- built, measured, REFUSED 2026-09-09; docs/plans/prereg-partial-return-split-slope-2026-09-09.md
   AUSPOL_FIT_SLOPES          = "0",          # 1 = conditional same/new slopes fitted leave-one-election-out; docs/plans/prereg-fit-conditional-slopes-2026-09-09.md
-  AUSPOL_DEFECT_POOLED       = "0",          # 1 = ONE pooled defector rate for members and losing candidates alike, instead of excluding losers; docs/plans/prereg-defector-pooling-2026-09-09.md
+  AUSPOL_DEFECT_POOLED       = "0",          # 1 = one pooled defector rate (REFUSED 2026-09-09, SA floor breach); 2 = separate member/loser rates; docs/plans/prereg-defector-two-rate-2026-09-09.md
   # the statewide input and the simulation
   AUSPOL_N_SIMS              = "20000",
   AUSPOL_SIM_ENGINE          = "cpp",        # compiled core; proven byte-identical to the R engine on a full fed2022 run 2026-09-07 (45 s vs ~11 min)

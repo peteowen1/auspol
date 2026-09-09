@@ -92,3 +92,59 @@ collapse and only Cupper gains. Expect SA to recover. Expect the primary to
 remain short of 2.08 SE — 29 cells with a spread this wide is thin — in which
 case the honest outcome is "confirmed but not demonstrable", and the decision
 passes to Pete on mechanism rather than on the criterion.
+
+---
+
+## Result, 2026-09-09: REFUSED by the rule, failing criterion 1 by 0.04 SE
+
+| clause | value | bar | verdict |
+|---|---:|---:|---|
+| **R1 — losing cells carry it** | **−1.278** (10.44 → 9.16); members +0.109 | must not be members | **PASS** |
+| criterion 1 — paired primary | mean −0.670, **t = −2.04**, better in 8 of 17 | ≤ −2.08 SE | **FAIL** |
+| criterion 2 — panel | **4 better, 1 worse**, 4 unchanged | ≥ 6 better, ≤ 3 worse | **FAIL** |
+| criterion 3 — floors | SA +0.0137, pooled −0.00067 | 0.02 / 0.01 | **pass** |
+| criterion 4 — beat both baselines | primary −0.670 vs pooled arm's −0.552 | must beat both | **pass** |
+
+**`AUSPOL_DEFECT_POOLED` stays `0`.** The rule refuses and the rule stands.
+
+### Everything directional is favourable
+
+- Pooled seat log loss **0.33647 → 0.33580** — the only arm today to improve it.
+- Victoria (live target) **0.2693 → 0.2663**; WA 0.4103 → 0.4071.
+- SA recovered from the pooled arm's **+0.0364 to +0.0137**, inside the floor.
+- R1 passed cleanly: the 12 losing cells improved 1.28 while the 17 member
+  cells stayed flat (+0.11), which is the correct signature — their rate is
+  unchanged from shipped, so they should not move.
+- The dry-run's named cases behaved as recorded: Dandenong's floor fell
+  7.91 → 4.16, Harrison's 8.6 → 4.5 against an actual 4.4.
+
+### Why it still fails, stated plainly
+
+**t = −2.04 against a bar of 2.08.** Not a near miss to be waved through — the
+bar was set before the run precisely so a result of this size could not be
+argued into shipping. 29 cells with a spread this wide cannot resolve an
+effect this size, which the plan predicted in its own final paragraph
+("expect the primary to remain short of 2.08 SE").
+
+Criterion 2 fails differently and more informatively: only **1 metric got
+worse**, but 4 of the 9 landed inside the ±0.0005 "unchanged" band and so did
+not count as improvements. A 29-cell change cannot move election-wide
+aggregates enough to register — which is exactly why the primary was scoped
+to the named cells, and why the panel is a guard rather than evidence.
+
+### What would legitimately settle it
+
+**Not** a rerun at more sims to nudge t over the bar — the criterion did not
+pre-specify that, and doing it now would be choosing the answer. A clean
+confirmatory arm would need to be pre-registered separately, and the honest
+framing for it is a **power** question, not a fresh hypothesis: the mechanism
+is confirmed twice over (R1 passed in both the pooled and two-rate arms), the
+magnitude is now plausible, and what is missing is a corpus large enough to
+demonstrate it at 2 SE.
+
+Given that, the reasonable options are (a) leave it refused and revisit when
+the corpus grows, or (b) Pete adopts it on mechanism, explicitly and on the
+record, accepting that the criterion did not clear — which is a legitimate
+call for a change whose every directional indicator is positive and whose
+worst jurisdiction effect is inside the floor, but it must be recorded as a
+judgement rather than a measurement.
