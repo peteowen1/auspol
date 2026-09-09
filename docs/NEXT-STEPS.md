@@ -13,19 +13,21 @@ candidates were wrong.**
 | non-major vote regression | **not a candidate** | Refused on **measured** grounds (winners RMSE 2.99 base against 8.55), not power. Shrinkage cannot rescue a measured regression. |
 | `fit_defector_discount` cliff | **addressed today** | The `min_n=5` cliff never fired, but the hard `elected==TRUE` exclusion did. Losing defectors now carry 0.142 instead of zero (`prereg-defector-two-rate-2026-09-09.md`, adopted on mechanism). |
 | **surge-conditioned slope** | **GENUINE, open — but NOT shrinkage-rescuable the way I first said** | Split by direction (2026-09-09 follow-up), each surge instance is well-measured WITHIN itself (100+ seats, tight SEs): fed2013 OTH_RIGHT (rise, +6.6) slope 1.15 vs stable 0.54, **+3.1 SD**; sa2026 ONP (rise, +19.9) 0.81 vs 0.47, +1.1 SD; qld2020 ONP (**collapse**, −6.6) 0.26 vs 0.47, **−4.3 SD**. Rises amplify the slope, collapses suppress it — opposite signs, both real. Shrinkage needs REPLICATION within a group to estimate how much to trust it; with 1 collapse and 2 rises there is no such group to shrink from, and averaging them under one undirected "surging" flag (my first attempt, morning) launders two real opposite effects into noise. Needs more corpus (more elections), not better fitting of what exists. |
-| **demographic seat model** | **GENUINE, open** | Same shape — the plan says outright that "three clusters cannot support a cluster-robust significance test" and that running one would "be the theatre those aborts were meant to prevent". |
+| demographic seat model | **not a candidate** | Was already run (`fit_demographic_swing.R`) and refused on MEASURED grounds, not power: MAE of swing deviation 3.850 (predict zero) vs 4.087 (model) — worse than predicting nothing. The pre-registered subgroup went the other way (better in 4/4 cells) but the review itself refused to act on it: "the improvement is 1-5% of a catastrophic error" (35.99->34.03, both hopeless), and adopting a subgroup win after losing overall is the cherry-pick `CLAUDE.md` already names twice. Shrinkage does not touch a wrong-signed overall effect or a right-signed-but-too-small one. |
 
 ### What the sweep actually established
 
-**The repo's refusals were mostly right, and the one that was wrong had
-already been corrected.** The value of the sweep was not a list of rescues; it
-was isolating that **the only genuine remaining class is the ~3-cluster
-problem**, and that shrinkage's contribution there is specific and narrow:
+**Zero rescuable candidates, and that is the finding, not a failure of the
+exercise.** Every "GENUINE, open" entry I first wrote for this queue turned
+out wrong on inspection: the surge slope has a real effect but is the wrong
+shape for shrinkage (opposite-signed rise/collapse, no replication within
+either); the demographic model was already run and refused on a wrong-signed
+overall effect plus a too-small subgroup one, neither of which shrinkage
+fixes. Both write-ups above are corrected in place rather than left standing.
 
-> it converts "we cannot test this, so we refuse it" into "we can include this
-> cheaply, because with 3 clusters it shrinks back to the prior anyway".
-
-That is the whole remaining opportunity. Both open candidates are that shape.
+The sweep's value was confirming this repo's refusal discipline is well
+calibrated — nothing was sitting refused for want of a shrinkage a competent
+pre-registration hadn't already tried or wouldn't have caught.
 
 ### Still not retrofitted
 
