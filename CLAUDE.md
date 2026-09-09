@@ -181,6 +181,47 @@ Candidate NAMES live only in `output/candidacies.csv`
 `seat, party, votes` and nothing else, so any candidate-level question starts
 from the corpus, not from the election files.
 
+## Fit constants with SHRINKAGE, never a hard `min_n` cliff
+
+Pete's rule, 2026-09-09: *"Can't we always just build shrinkage into our
+regressions so we never overfit? I'd rather have someone there if there's some
+signal than have just one flat figure."*
+
+A threshold that discards an estimate below `min_n` and trusts it completely
+above is indefensible — a cell at n=41 is believed outright and one at n=39 is
+ignored outright. Three fitting functions written in a single session had
+cliffs at 5, 40 and 200. **Partial-pool instead**: shrink each cell toward the
+pooled mean by how precisely it is measured,
+
+```
+w      = tau^2 / (tau^2 + se_i^2)      # tau^2 = between-cell variance
+shrunk = mu + w * (est_i - mu)
+```
+
+so a thin cell degrades gracefully toward the prior rather than falling off a
+cliff. `AUSPOL_PARTY_COR="shrunk"` already does this for the statewide
+correlation; the fitted constants should too.
+
+**The reason this matters most is not tidiness — it is that shrinkage makes a
+weak signal safe to INCLUDE rather than refuse.** A term with three clusters
+shrinks almost entirely back to the prior, so adding it costs nearly nothing
+and picks up signal if the signal is real. That is the answer to "there might
+be something there but we cannot power a test for it", which had just caused a
+surge-conditioned slope to be abandoned on 3 events.
+
+It also stops a false binary between a well-measured single observation and a
+noisy pooled fit. Choosing between South Australia's One Nation concentration
+(0.346, from a full 47-seat chamber) and the corpus-typical value (0.474, R2
+0.063) put the Victorian forecast 5 seats apart; pooling them by precision
+gave 0.365 and a one-seat difference — and corrected a claim that was heading
+the wrong way. See
+[reviews/onp-concentration-validated-2026-09-09.md](docs/reviews/onp-concentration-validated-2026-09-09.md).
+
+**Limits, because "never overfit" overstates it**: shrinkage trades variance
+for bias, assumes the cells are exchangeable draws from a common distribution,
+and its weight is itself estimated — unstable with few groups. It does not
+license fitting anything at any n; it makes the failure graceful.
+
 ## Constants
 
 Every one is inventoried in `docs/CONSTANTS.md` with whether it can come from
