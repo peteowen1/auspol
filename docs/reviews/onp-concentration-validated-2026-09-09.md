@@ -177,3 +177,80 @@ carried silently**. Three options, for Pete:
   reader knows it is worth 5 seats and was chosen from one election.
 
 The third is the minimum; the first is probably right for a public forecast.
+
+---
+
+## Resolved by partial pooling, 2026-09-09: the answer is ONE seat, not five
+
+Pete's question — *"can't we always just build shrinkage into our regressions
+so we never overfit? I'd rather have someone there if there's some signal
+than have just one flat figure"* — resolves this, and corrects the direction
+this review was heading.
+
+The choice above was posed as SA's 0.346 versus the corpus-typical 0.474.
+That is a false binary. Shrink SA's observation toward the corpus line by how
+precisely each is known:
+
+| quantity | value |
+|---|--:|
+| SA 2026 observed CV (47 seats) | 0.346 |
+| sampling se of a CV from 47 seats, in logs | 0.104 |
+| between-election scatter, in logs | 0.229 |
+| **weight on SA's own value** | **0.83** |
+| corpus-typical at 22.5% | 0.474 |
+| **partially pooled estimate** | **0.365** |
+
+SA's CV is measured from a full 47-seat chamber, so it is precise; the corpus
+relationship is weak (R2 0.063). Pooling therefore keeps most of SA and
+nudges it up slightly.
+
+**Measured seat consequence:**
+
+| `AUSPOL_ONP_CV` | ONP median seats | 90% range |
+|---|--:|---|
+| unset — ships today (0.327) | 9 | 3–18 |
+| **0.365 — partially pooled** | **10** | 4–20 |
+| 0.48 — corpus-typical | 14 | 6–24 |
+
+**So the shipped forecast understates One Nation by about one seat, not
+five.** The "five seats" figure above is the spread across the full plausible
+range, not an error estimate, and reading it as the latter would have been
+wrong. The corpus-typical end of that range is not the right target — it
+discards a well-measured observation at exactly the right vote level in
+favour of a noisy cross-party fit.
+
+### The general lesson, which is bigger than this number
+
+Every fitting function added today uses a **hard `min_n` cliff**:
+`fit_defector_discount()` at 5, `fit_conditional_slopes()` at 40,
+`fit_split_slopes()` at 200. Below the threshold the estimate is discarded
+entirely and a flat constant is used; above it the estimate is trusted
+completely. A cell at n=41 is believed outright and one at n=39 is ignored
+outright, which is indefensible and is exactly the "one flat figure or
+overfit" dichotomy partial pooling exists to remove.
+
+Applied to the eight conditional slope constants, shrinkage changes little —
+weights come out 0.94 to 0.997, because the cells genuinely differ and each
+is well measured. **It would not have rescued the refused arm.** Its value is
+elsewhere:
+
+- **ONP "same" (n=51)** sits just above the `min_n=40` cliff, so the arm
+  trusted 0.449 outright against a shipped 0.610. Pooled it is 0.476 — the
+  cliff was making a 51-observation cell as authoritative as a
+  1,724-observation one.
+- **It makes weak signals safe to INCLUDE rather than refuse.** The
+  surge-conditioned slope was abandoned the same day for having 3 clusters.
+  Under partial pooling a surge term with 3 events shrinks almost entirely
+  back to the non-surge value, so including it costs nearly nothing and picks
+  up signal if the signal is real. That is Pete's point exactly, and it is
+  the right answer to "there might be something there but we cannot power a
+  test for it".
+
+### Limits, stated
+
+Shrinkage is not a general guarantee against overfitting. It trades variance
+for bias, assumes the cells are exchangeable draws from a common
+distribution, and the shrinkage weight itself is estimated — with few groups
+(here, four cells per tier) that estimate is unstable. It does not license
+fitting anything at any n; it makes the degradation graceful instead of a
+cliff.
