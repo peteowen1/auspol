@@ -92,3 +92,31 @@ test_that("fit_split_slopes returns NULL slopes below min_n rather than a fitted
 test_that("split_slope_context is NULL unless explicitly enabled", {
   expect_null(split_slope_context("e1", "e2", corpus = mk_pair(), enabled = FALSE))
 })
+
+test_that("fit_conditional_slopes keeps the shipped constant for a too-thin cell", {
+  # A cell with a handful of seats must NOT be fitted -- fitting a slope on a
+  # few observations is how this repo has produced confident wrong numbers.
+  d <- data.table::data.table(
+    election = c("e1","e2"), seat = c("A","A"), party = "IND",
+    surname = c("X","X"), given = c("a","a"), pcv = c(20, 15),
+    votes = c(2000, 1500), tot = 10000, name = NA_character_)
+  r <- fit_conditional_slopes("zzz", corpus = d,
+                              pairs = list(list(election = "e2", prev = "e1")),
+                              min_n = 40L)
+  expect_equal(unname(r$same[["IND"]]), 0.907)   # untouched shipped value
+  expect_equal(unname(r$new[["IND"]]),  0.326)
+})
+
+test_that("fit_conditional_slopes excludes the target election", {
+  mk <- function(el_prev, el_now, seats) data.table::rbindlist(lapply(seats, function(s)
+    data.table::data.table(
+      election = c(el_prev, el_now), seat = s, party = "IND",
+      surname = c("X","X"), given = c("a","a"),
+      pcv = c(20, 10), votes = c(2000, 1000), tot = 10000, name = NA_character_)))
+  d <- rbind(mk("e1","e2", paste0("S", 1:60)), mk("e3","e4", paste0("T", 1:60)))
+  prs <- list(list(election = "e2", prev = "e1"), list(election = "e4", prev = "e3"))
+  both <- fit_conditional_slopes("zzz", corpus = d, pairs = prs, min_n = 5L)
+  held <- fit_conditional_slopes("e4",  corpus = d, pairs = prs, min_n = 5L)
+  n_both <- sum(both$n[party == "IND"]$n); n_held <- sum(held$n[party == "IND"]$n)
+  expect_true(n_held < n_both)
+})

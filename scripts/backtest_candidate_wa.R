@@ -337,6 +337,15 @@ for (K in PAIRS) {
   # harness byte-for-byte). Gives the returning and departed portions of a
   # class's prior vote their own fitted slope instead of one slope chosen by
   # a binary flag. docs/plans/prereg-partial-return-split-slope-2026-09-09.md
+  # FITTED CONDITIONAL SLOPES (AUSPOL_FIT_SLOPES=1, default OFF). Replaces the
+  # eight hardcoded same/new constants with a leave-this-target-out fit;
+  # structure untouched. docs/plans/prereg-fit-conditional-slopes-2026-09-09.md
+  .fitsl <- if (identical(Sys.getenv("AUSPOL_FIT_SLOPES", "0"), "1"))
+    fit_conditional_slopes(el_to) else NULL
+  if (!is.null(.fitsl)) cat(sprintf("FS1  fitted slopes | same %s | new %s
+",
+    paste(sprintf("%s=%.3f", names(.fitsl$same), .fitsl$same), collapse=" "),
+    paste(sprintf("%s=%.3f", names(.fitsl$new),  .fitsl$new),  collapse=" ")))
   .split <- split_slope_context(el_from, el_to)
   .own_prev <- if (.xfer) tryCatch(personal_prior_vote(el_from, el_to, major_discount = .defect),
                                    error = function(e) {
@@ -428,7 +437,7 @@ for (K in PAIRS) {
   for (p in parties) {
     from_pc <- if (p %in% names(sa)) sa[[p]] else 0
     to_pc   <- if (p %in% names(sb)) sb[[p]] else 0
-    .sl <- if (.cond && !is.null(.returns)) conditional_slopes(p, rownames(mat), .returns, same_mp = .MP_SLOPE) else DEV_SLOPE[[p]]
+    .sl <- if (.cond && !is.null(.returns)) conditional_slopes(p, rownames(mat), .returns, same_mp = .MP_SLOPE, same = if (is.null(.fitsl)) formals(conditional_slopes)$same else .fitsl$same, new = if (is.null(.fitsl)) formals(conditional_slopes)$new else .fitsl$new) else DEV_SLOPE[[p]]
     mat[, p] <- if (is.null(.split)) dev_slope(.own_x(p, rownames(mat), mat[, p]), from_pc, to_pc, .sl) else
       split_dev_slope(.own_x(p, rownames(mat), mat[, p]), .split$frac(p, rownames(mat)), from_pc, to_pc, .split$s_ret, .split$s_dep)
   }

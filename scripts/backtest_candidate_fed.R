@@ -734,6 +734,15 @@ for (K in PAIRS) {
   # harness byte-for-byte). Gives the returning and departed portions of a
   # class's prior vote their own fitted slope instead of one slope chosen by
   # a binary flag. docs/plans/prereg-partial-return-split-slope-2026-09-09.md
+  # FITTED CONDITIONAL SLOPES (AUSPOL_FIT_SLOPES=1, default OFF). Replaces the
+  # eight hardcoded same/new constants with a leave-this-target-out fit;
+  # structure untouched. docs/plans/prereg-fit-conditional-slopes-2026-09-09.md
+  .fitsl <- if (identical(Sys.getenv("AUSPOL_FIT_SLOPES", "0"), "1"))
+    fit_conditional_slopes(eb) else NULL
+  if (!is.null(.fitsl)) cat(sprintf("FS1  fitted slopes | same %s | new %s
+",
+    paste(sprintf("%s=%.3f", names(.fitsl$same), .fitsl$same), collapse=" "),
+    paste(sprintf("%s=%.3f", names(.fitsl$new),  .fitsl$new),  collapse=" ")))
   .split <- split_slope_context(ea, eb)
   .own_prev <- if (.cond) tryCatch(personal_prior_vote(ea, eb, major_discount = .defect),
                                    error = function(e) {
@@ -814,10 +823,10 @@ for (K in PAIRS) {
       lut <- stats::setNames(as.logical(pv$permit), pv$seat)
       pm <- unname(lut[seats])
       pm[is.na(pm)] <- TRUE
-      return(screened_slopes(p, seats, returns, pm, same_mp = .MP_SLOPE))
+      return(screened_slopes(p, seats, returns, pm, same_mp = .MP_SLOPE, same = if (is.null(.fitsl)) formals(screened_slopes)$same else .fitsl$same, new = if (is.null(.fitsl)) formals(screened_slopes)$new else .fitsl$new))
     }
     if (cond && !is.null(returns))
-      return(conditional_slopes(p, seats, returns, same_mp = .MP_SLOPE))
+      return(conditional_slopes(p, seats, returns, same_mp = .MP_SLOPE, same = if (is.null(.fitsl)) formals(conditional_slopes)$same else .fitsl$same, new = if (is.null(.fitsl)) formals(conditional_slopes)$new else .fitsl$new))
     DEV_SLOPE[[p]]
   }
   cat(sprintf("BF1d  dev slopes: %s%s

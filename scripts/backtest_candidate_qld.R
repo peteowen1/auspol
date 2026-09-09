@@ -433,6 +433,15 @@ if (identical(Sys.getenv("AUSPOL_DEFECT_DISCOUNT", "0"), "1")) {
 # harness byte-for-byte). Gives the returning and departed portions of a
 # class's prior vote their own fitted slope instead of one slope chosen by
 # a binary flag. docs/plans/prereg-partial-return-split-slope-2026-09-09.md
+# FITTED CONDITIONAL SLOPES (AUSPOL_FIT_SLOPES=1, default OFF). Replaces the
+# eight hardcoded same/new constants with a leave-this-target-out fit;
+# structure untouched. docs/plans/prereg-fit-conditional-slopes-2026-09-09.md
+.fitsl <- if (identical(Sys.getenv("AUSPOL_FIT_SLOPES", "0"), "1"))
+  fit_conditional_slopes(TGT) else NULL
+if (!is.null(.fitsl)) cat(sprintf("FS1  fitted slopes | same %s | new %s
+",
+  paste(sprintf("%s=%.3f", names(.fitsl$same), .fitsl$same), collapse=" "),
+  paste(sprintf("%s=%.3f", names(.fitsl$new),  .fitsl$new),  collapse=" ")))
 .split <- split_slope_context(PRV, TGT)
 .own_prev <- if (.cond) tryCatch(personal_prior_vote(PRV, TGT, major_discount = .defect), error = function(e) { cat(sprintf("BQ1p! personal_prior_vote() FAILED; class-level bases kept and NO transfer removed: %s\n", conditionMessage(e))); NULL }) else NULL
 mat <- remove_transferred_votes(mat, .own_prev)  # the vote moves with the person; see personal_prior_vote()
@@ -452,9 +461,9 @@ mat <- remove_transferred_votes(mat, .own_prev)  # the vote moves with the perso
     pv <- .permit[.permit$party == p, ]
     lut <- stats::setNames(as.logical(pv$permit), pv$seat)
     pm <- unname(lut[seats]); pm[is.na(pm)] <- TRUE
-    return(screened_slopes(p, seats, .returns, pm, same_mp = .MP_SLOPE))
+    return(screened_slopes(p, seats, .returns, pm, same_mp = .MP_SLOPE, same = if (is.null(.fitsl)) formals(screened_slopes)$same else .fitsl$same, new = if (is.null(.fitsl)) formals(screened_slopes)$new else .fitsl$new))
   }
-  if (.cond && !is.null(.returns)) return(conditional_slopes(p, seats, .returns, same_mp = .MP_SLOPE))
+  if (.cond && !is.null(.returns)) return(conditional_slopes(p, seats, .returns, same_mp = .MP_SLOPE, same = if (is.null(.fitsl)) formals(conditional_slopes)$same else .fitsl$same, new = if (is.null(.fitsl)) formals(conditional_slopes)$new else .fitsl$new))
   DEV_SLOPE[[p]]
 }
 cat(sprintf("BQ1d  dev slopes: %s%s

@@ -505,6 +505,15 @@ if (identical(Sys.getenv("AUSPOL_DEFECT_DISCOUNT", "0"), "1")) {
 # harness byte-for-byte). Gives the returning and departed portions of a
 # class's prior vote their own fitted slope instead of one slope chosen by
 # a binary flag. docs/plans/prereg-partial-return-split-slope-2026-09-09.md
+# FITTED CONDITIONAL SLOPES (AUSPOL_FIT_SLOPES=1, default OFF). Replaces the
+# eight hardcoded same/new constants with a leave-this-target-out fit;
+# structure untouched. docs/plans/prereg-fit-conditional-slopes-2026-09-09.md
+.fitsl <- if (identical(Sys.getenv("AUSPOL_FIT_SLOPES", "0"), "1"))
+  fit_conditional_slopes(TGT) else NULL
+if (!is.null(.fitsl)) cat(sprintf("FS1  fitted slopes | same %s | new %s
+",
+  paste(sprintf("%s=%.3f", names(.fitsl$same), .fitsl$same), collapse=" "),
+  paste(sprintf("%s=%.3f", names(.fitsl$new),  .fitsl$new),  collapse=" ")))
 .split <- split_slope_context(PRV, TGT)
 .own_prev <- if (.cond) tryCatch(personal_prior_vote(PRV, TGT, major_discount = .defect), error = function(e) { cat(sprintf("BT1p! personal_prior_vote() FAILED; class-level bases kept and NO transfer removed: %s\n", conditionMessage(e))); NULL }) else NULL
 mat <- remove_transferred_votes(mat, .own_prev)  # the vote moves with the person; see personal_prior_vote()
@@ -540,8 +549,8 @@ for (p in parties) {
     pv <- .permit[.permit$party == p, ]
     lut <- stats::setNames(as.logical(pv$permit), pv$seat)
     pm <- unname(lut[rownames(mat)]); pm[is.na(pm)] <- TRUE
-    screened_slopes(p, rownames(mat), .returns, pm, same_mp = .MP_SLOPE)
-  } else if (.cond) conditional_slopes(p, rownames(mat), .returns, same_mp = .MP_SLOPE) else DEV_SLOPE[[p]]
+    screened_slopes(p, rownames(mat), .returns, pm, same_mp = .MP_SLOPE, same = if (is.null(.fitsl)) formals(screened_slopes)$same else .fitsl$same, new = if (is.null(.fitsl)) formals(screened_slopes)$new else .fitsl$new)
+  } else if (.cond) conditional_slopes(p, rownames(mat), .returns, same_mp = .MP_SLOPE, same = if (is.null(.fitsl)) formals(conditional_slopes)$same else .fitsl$same, new = if (is.null(.fitsl)) formals(conditional_slopes)$new else .fitsl$new) else DEV_SLOPE[[p]]
   x_p <- .own_x(p, rownames(mat), mat[, p])
   val <- if (is.null(.split)) dev_slope(x_p, state_prev[[p]], state_tgt[[p]], sl) else
     split_dev_slope(x_p, .split$frac(p, rownames(mat)), state_prev[[p]], state_tgt[[p]], .split$s_ret, .split$s_dep)

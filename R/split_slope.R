@@ -294,3 +294,99 @@ split_slope_context <- function(election_from, election_to, corpus = NULL,
       unname(v)
     })
 }
+
+#' Fit the conditional same/new deviation slopes, leave-one-election-out
+#'
+#' `conditional_slopes()` and `screened_slopes()` carry eight hardcoded
+#' numbers -- a "same" and a "new" slope for each of IND, OTH_RIGHT, GRN and
+#' ONP -- with no committed script that produced them. This fits them, holding
+#' out the election being scored, the same discipline
+#' [fit_defector_discount()] uses.
+#'
+#' Checked like-for-like 2026-09-09
+#' (`docs/plans/prereg-fit-conditional-slopes-2026-09-09.md`), IND's shipped
+#' constants are correct (new 0.374 fitted vs 0.326 shipped, +1.1 SE; same
+#' 0.882 vs 0.907, -0.7 SE). **OTH_RIGHT's are not**: fitted 0.442 / 0.766
+#' against shipped 0.325 / 0.891, +3.1 and -3.8 SE, wrong in opposite
+#' directions, so the shipped pair over-separates returning from new
+#' candidates. ONP "same" is -2.7 SE off on 51 observations.
+#'
+#' The tiers mean exactly what [candidate_returns()] means by them: "same" is
+#' a seat-class where AT LEAST ONE candidate of that class stood before,
+#' "new" is one where none did.
+#'
+#' @param target_election Election being scored; excluded from the fit.
+#' @param corpus Optional pre-read candidacy table.
+#' @param pairs Optional pair list; [all_election_pairs()] when `NULL`.
+#' @param min_n Minimum observations for a class/tier cell to be fitted at
+#'   all. Below it the shipped constant is kept -- fitting a slope on a
+#'   handful of seats is how this repo has produced confident wrong numbers
+#'   before. ONP "same" sits just above this floor at 51.
+#' @return A list of `same` and `new` named numeric vectors (shipped values
+#'   where a cell was too thin), plus `n` a table of the counts actually used.
+#' @export
+fit_conditional_slopes <- function(target_election, corpus = NULL, pairs = NULL,
+                                    min_n = 40L) {
+  SHIP_SAME <- c(IND = 0.907, OTH_RIGHT = 0.891, GRN = 0.994, ONP = 0.610)
+  SHIP_NEW  <- c(IND = 0.326, OTH_RIGHT = 0.325, GRN = 0.880, ONP = 0.545)
+  C <- corpus
+  if (is.null(C)) {
+    f <- file.path("output", "candidacies.csv")
+    if (!file.exists(f)) return(list(same = SHIP_SAME, new = SHIP_NEW, n = NULL))
+    C <- data.table::fread(f, showProgress = FALSE)
+  }
+  C <- data.table::as.data.table(C)
+  if (is.null(pairs)) pairs <- all_election_pairs()
+  pairs <- Filter(function(pr) !identical(pr$election, target_election), pairs)
+
+  state_level <- function(el) {
+    d <- C[C$election == el]
+    if (!nrow(d) || !all(c("votes", "tot") %in% names(d))) return(NULL)
+    d <- d[is.finite(d$votes)]
+    if (!nrow(d)) return(NULL)
+    st <- unique(d[, list(seat, tot)]); den <- sum(st$tot, na.rm = TRUE)
+    if (!is.finite(den) || den <= 0) return(NULL)
+    d[, list(level = 100 * sum(votes, na.rm = TRUE) / den), by = party]
+  }
+
+  rows <- data.table::rbindlist(lapply(pairs, function(pr) {
+    lp <- state_level(pr$prev); ln <- state_level(pr$election)
+    if (is.null(lp) || is.null(ln)) return(NULL)
+    fr <- tryCatch(returning_vote_fraction(pr$prev, pr$election, corpus = C),
+                   error = function(e) NULL)
+    if (is.null(fr) || !nrow(fr)) return(NULL)
+    NOWT <- C[C$election == pr$election]
+    nowc <- NOWT[, list(actual_now = sum(pcv, na.rm = TRUE)), by = list(seat, party)]
+    P <- data.table::copy(C[C$election == pr$prev])[, .s := normalise_seat(seat)]
+    prevc <- P[, list(x = sum(pcv, na.rm = TRUE)), by = list(.s, party)]
+    m <- merge(fr, nowc, by = c("seat", "party"))
+    m[, .s := normalise_seat(seat)]
+    m <- merge(m, prevc, by = c(".s", "party"))
+    m <- merge(m, lp[, list(party, level_prev = level)], by = "party")
+    m <- merge(m, ln[, list(party, level_now  = level)], by = "party")
+    m[x > 0]
+  }), fill = TRUE)
+  if (is.null(rows) || !nrow(rows)) return(list(same = SHIP_SAME, new = SHIP_NEW, n = NULL))
+
+  rows[, dev := x - level_prev]
+  rows[, yy  := actual_now - level_now]
+  same <- SHIP_SAME; new <- SHIP_NEW
+  counts <- list()
+  for (cl in names(SHIP_SAME)) {
+    for (tier in c("same", "new")) {
+      sub <- if (tier == "same") rows[party == cl & n_returning > 0]
+             else                rows[party == cl & n_returning == 0]
+      counts[[length(counts) + 1L]] <-
+        data.table::data.table(party = cl, tier = tier, n = nrow(sub))
+      if (nrow(sub) < min_n) next
+      fit <- tryCatch(stats::lm(yy ~ 0 + dev, data = sub), error = function(e) NULL)
+      if (is.null(fit)) next
+      cm <- summary(fit)$coefficients
+      # Same rank-deficiency guard as fit_split_slopes(): a degenerate cell
+      # drops the term and indexing it by name throws mid-run.
+      if (!nrow(cm) || !is.finite(cm[1, 1])) next
+      if (tier == "same") same[[cl]] <- cm[1, 1] else new[[cl]] <- cm[1, 1]
+    }
+  }
+  list(same = same, new = new, n = data.table::rbindlist(counts))
+}
