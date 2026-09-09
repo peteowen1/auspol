@@ -213,3 +213,84 @@ next) is large and obviously wrong in both directions. The binding constraint
 is expected to be **R3**: much of the gain may come from refitting frozen
 constants rather than from the split itself, and if the control arm shows
 that, the honest outcome is to ship the control and not the split.
+
+---
+
+## Result, 2026-09-09: REFUSED by the committed rule, and the reason is a specification error
+
+Run across all 22 pairs at 20,000 sims with `AUSPOL_SPLIT_SLOPE=1`, scored by
+`scripts/score_split_slope_arm.R` against the criterion above. **Nothing
+adopted. The flag stays at `0` in `scripts/published_flags.R`.**
+
+| test | value | bar | verdict |
+|---|---:|---:|---|
+| criterion 1 — primary, paired share RMSE on target cells | 5.377 → **5.584**, t = +0.97, better in 8 of 22 | improve at ≥ 2.08 SE | **FAIL** |
+| criterion 2 — 10-metric panel | **2 better, 7 worse** | ≥ 6 better, ≤ 3 worse | **FAIL** |
+| catastrophic floor — Victoria | **+0.0646** | 0.02 | **BREACHED** |
+| catastrophic floor — pooled log loss | **+0.0242** | 0.01 | **BREACHED** |
+
+Victoria is the live target and it regressed by 0.065 log loss, reported
+prominently here as the criterion requires. Only Queensland (−0.026) and
+South Australia (−0.078) improved.
+
+### The offline preview said the opposite, and that is the lesson
+
+Before implementing, an offline leave-one-out comparison on the same 329
+cells said the split was **better in 17 of 22 pairs** (RMSE 6.86 → 6.61,
+t = −3.04). The full harness says worse in 14 of 22. **The offline evaluation
+was not measuring the same thing**, and this is now the SECOND time in one
+session that a simplified offline check disagreed with the harness (the first
+being the reverted "sum the returners" arm the same day).
+
+### Root cause: the arm REPLACED the slope system instead of refining it
+
+The offline fit trained on the raw corpus quantity `returner_vote +
+departed_vote` and predicted the class's actual share. The harness applies the
+result somewhere else entirely:
+
+```r
+sl  <- if (.screened) screened_slopes(...) else conditional_slopes(...)   # computed
+val <- if (is.null(.split)) dev_slope(x_p, ..., sl)
+       else split_dev_slope(x_p, frac, ..., s_ret, s_dep)                 # sl IGNORED
+```
+
+When the arm is on, `sl` is computed and then **discarded**. That single line
+throws away:
+
+- the per-class deviation slopes (OTH 0.215 through GRN 0.926 — a 4x range),
+- the sitting-member tier (`AUSPOL_MP_SLOPE`, member 0.954 vs also-ran 0.800),
+- the salience screen (`screened_slopes()`, which protects the rare emergent),
+
+and substitutes **two numbers pooled across every non-major class**. So the
+arm was never "the existing model plus a split". It was "two global slopes
+instead of the tuned slope system", and it lost by about what discarding that
+system should cost. The split-vs-not question was never actually tested.
+
+### What that means for the idea itself
+
+**The mechanism is NOT refuted.** `s_ret` 0.899 vs `s_dep` 0.575 at 17.6 SE
+(R2) and the control arm capturing only 0.04 of the 0.26 offline gain (R3)
+both still stand — the returning/departed distinction is real and large, and
+the frozen `0.326` this repo carries for departed vote is badly wrong.
+
+What is refuted is **this implementation** of it. The correct shape, for
+whoever picks this up:
+
+> Keep `sl` exactly as the existing machinery computes it and apply it to the
+> RETURNING portion — it is already conditioned on class, member status and
+> salience. Give only the DEPARTED portion its own, lower slope. The split
+> then *refines* the slope system instead of replacing it, and reduces to
+> today's model exactly when a class is all-returning.
+
+That needs its own pre-registration and its own run; it is not an amendment to
+this one. This plan's criterion did its job — it refused a change that an
+offline preview had made look strong, and the post-mortem is only possible
+because the primary, the panel and the floors were all fixed before the run.
+
+### Kept, not reverted
+
+`R/split_slope.R`, its tests, and the `AUSPOL_SPLIT_SLOPE` wiring stay in the
+tree at default `0` (inert; verified byte-identical output with the flag
+unset). `returning_vote_fraction()` and `fit_split_slopes()` are the reusable
+parts a corrected attempt needs, and deleting them would mean re-deriving the
+0.899 / 0.575 fit and the 22-pair cell enumeration from scratch.

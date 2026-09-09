@@ -429,6 +429,11 @@ if (identical(Sys.getenv("AUSPOL_DEFECT_DISCOUNT", "0"), "1")) {
   }
 }
 # THE BASE VALUE, not just the slope -- see personal_prior_vote()'s docs.
+# SPLIT SLOPE (AUSPOL_SPLIT_SLOPE=1, default OFF -- unset reproduces this
+# harness byte-for-byte). Gives the returning and departed portions of a
+# class's prior vote their own fitted slope instead of one slope chosen by
+# a binary flag. docs/plans/prereg-partial-return-split-slope-2026-09-09.md
+.split <- split_slope_context(PRV, TGT)
 .own_prev <- if (.cond) tryCatch(personal_prior_vote(PRV, TGT, major_discount = .defect), error = function(e) { cat(sprintf("BQ1p! personal_prior_vote() FAILED; class-level bases kept and NO transfer removed: %s\n", conditionMessage(e))); NULL }) else NULL
 mat <- remove_transferred_votes(mat, .own_prev)  # the vote moves with the person; see personal_prior_vote()
 .tr <- attr(mat, "transfers"); if (!is.null(.tr)) cat(sprintf("TR1  transfers moved with the person: %d applied%s\n", .tr$applied, if (length(.tr$skipped)) paste0("; SKIPPED ", length(.tr$skipped), ": ", paste(utils::head(.tr$skipped, 5), collapse = ", ")) else ""))
@@ -465,7 +470,8 @@ for (p in parties) if (p %in% names(st_b) && p %in% names(st_a)) {
   d_state <- st_b[[p]] - st_a[[p]]
   .sl <- .sa_slope(p, rownames(mat))
   x_p <- .own_x(p, rownames(mat), mat[, p])
-  val <- dev_slope(x_p, st_a[[p]], st_b[[p]], .sl)
+  val <- if (is.null(.split)) dev_slope(x_p, st_a[[p]], st_b[[p]], .sl) else
+    split_dev_slope(x_p, .split$frac(p, rownames(mat)), st_a[[p]], st_b[[p]], .split$s_ret, .split$s_dep)
   if (ELASTIC > 0 && d_state < -ELASTIC_D && st_a[[p]] > 0) {
     over <- x_p / st_a[[p]]
     hit  <- is.finite(over) & over > ELASTIC

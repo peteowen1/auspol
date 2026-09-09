@@ -730,6 +730,11 @@ for (K in PAIRS) {
       NULL
     })
   }
+  # SPLIT SLOPE (AUSPOL_SPLIT_SLOPE=1, default OFF -- unset reproduces this
+  # harness byte-for-byte). Gives the returning and departed portions of a
+  # class's prior vote their own fitted slope instead of one slope chosen by
+  # a binary flag. docs/plans/prereg-partial-return-split-slope-2026-09-09.md
+  .split <- split_slope_context(ea, eb)
   .own_prev <- if (.cond) tryCatch(personal_prior_vote(ea, eb, major_discount = .defect),
                                    error = function(e) {
                                      cat(sprintf("BF1p! personal_prior_vote() FAILED for %s -> %s; class-level bases kept and NO transfer removed: %s\n", ea, eb, conditionMessage(e)))
@@ -1189,15 +1194,19 @@ for (K in PAIRS) {
       prev <- if (p %in% names(st_a)) st_a[[p]] else 0
       .sl <- .fed_slope(p, rownames(mat), .cond, .screened, .returns, .permit)
       .s_p <- if (p %in% names(lvl_scale)) lvl_scale[[p]] else 1
-      shares[, p] <- dev_slope(.own_x(p, rownames(mat), mat[, p] / .s_p) * .s_p,
-                               prev, st_fc[[p]], .sl)
+      shares[, p] <- if (is.null(.split)) dev_slope(.own_x(p, rownames(mat), mat[, p] / .s_p) * .s_p,
+                               prev, st_fc[[p]], .sl) else
+        split_dev_slope(.own_x(p, rownames(mat), mat[, p] / .s_p) * .s_p,
+                        .split$frac(p, rownames(mat)), prev, st_fc[[p]], .split$s_ret, .split$s_dep)
     }
   } else {
     for (p in parties) if (p %in% names(st_b) && p %in% names(st_a)) {
       .sl <- .fed_slope(p, rownames(mat), .cond, .screened, .returns, .permit)
       .s_p <- if (p %in% names(lvl_scale)) lvl_scale[[p]] else 1
-      shares[, p] <- dev_slope(.own_x(p, rownames(mat), mat[, p] / .s_p) * .s_p,
-                               st_a[[p]], st_b[[p]], .sl)
+      shares[, p] <- if (is.null(.split)) dev_slope(.own_x(p, rownames(mat), mat[, p] / .s_p) * .s_p,
+                               st_a[[p]], st_b[[p]], .sl) else
+        split_dev_slope(.own_x(p, rownames(mat), mat[, p] / .s_p) * .s_p,
+                        .split$frac(p, rownames(mat)), st_a[[p]], st_b[[p]], .split$s_ret, .split$s_dep)
     }
   }
   # Re-entry prior lands here, on the POST-SWING projection. See BF1r above.

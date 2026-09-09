@@ -41,6 +41,7 @@ PUBLISHED_FLAGS <- c(
   AUSPOL_LEVEL_MULT_IND      = "1",          # per-class multiplier on level_sd (IND); prereg-class-specific-variance, refused, stays 1
   AUSPOL_LEVEL_MULT_OTH      = "1",          # per-class multiplier on level_sd (other non-majors)
   AUSPOL_DEV_SLOPE           = "",           # explicit per-class slope table; empty = uniform swing, the base under screened mode
+  AUSPOL_SPLIT_SLOPE         = "0",          # 1 = returning and departed portions of a class's prior vote get separate fitted slopes; docs/plans/prereg-partial-return-split-slope-2026-09-09.md
   # the statewide input and the simulation
   AUSPOL_N_SIMS              = "20000",
   AUSPOL_SIM_ENGINE          = "cpp",        # compiled core; proven byte-identical to the R engine on a full fed2022 run 2026-09-07 (45 s vs ~11 min)

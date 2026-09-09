@@ -333,6 +333,11 @@ for (K in PAIRS) {
       .defect <- .fd$discount
     }
   }
+  # SPLIT SLOPE (AUSPOL_SPLIT_SLOPE=1, default OFF -- unset reproduces this
+  # harness byte-for-byte). Gives the returning and departed portions of a
+  # class's prior vote their own fitted slope instead of one slope chosen by
+  # a binary flag. docs/plans/prereg-partial-return-split-slope-2026-09-09.md
+  .split <- split_slope_context(el_from, el_to)
   .own_prev <- if (.xfer) tryCatch(personal_prior_vote(el_from, el_to, major_discount = .defect),
                                    error = function(e) {
                                      cat(sprintf("BW1p! personal_prior_vote() FAILED; class-level bases kept and NO transfer removed: %s\n",
@@ -424,7 +429,8 @@ for (K in PAIRS) {
     from_pc <- if (p %in% names(sa)) sa[[p]] else 0
     to_pc   <- if (p %in% names(sb)) sb[[p]] else 0
     .sl <- if (.cond && !is.null(.returns)) conditional_slopes(p, rownames(mat), .returns, same_mp = .MP_SLOPE) else DEV_SLOPE[[p]]
-    mat[, p] <- dev_slope(.own_x(p, rownames(mat), mat[, p]), from_pc, to_pc, .sl)
+    mat[, p] <- if (is.null(.split)) dev_slope(.own_x(p, rownames(mat), mat[, p]), from_pc, to_pc, .sl) else
+      split_dev_slope(.own_x(p, rownames(mat), mat[, p]), .split$frac(p, rownames(mat)), from_pc, to_pc, .split$s_ret, .split$s_dep)
   }
   # Re-entry prior lands here, on the post-swing projection. See BW1r above.
   if (!is.null(.recells) && nrow(.recells)) {
