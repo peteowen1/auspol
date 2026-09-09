@@ -1,74 +1,37 @@
 # auspol — work queue
 
-## QUEUED, Pete 2026-09-09: sweep partial pooling across EVERY parameter, and revisit what we refused for lack of power
+## DONE 2026-09-09: the partial-pooling sweep, triaged
 
-Pete: *"sweep partial pooling for all our parameters and adjustments — how do
-they look — any adjustments or steps we rejected when we could've applied a
-pooled model? Must be a few."* There are more than a few.
+Pete asked which refused adjustments a pooled model could have saved. **Answer:
+fewer than expected — most refusals were correct, and two of my own queued
+candidates were wrong.**
 
-The rule is now in `CLAUDE.md` ("Fit constants with SHRINKAGE, never a hard
-`min_n` cliff") but **nothing has been retrofitted yet.**
+| candidate | verdict | why |
+|---|---|---|
+| `party_sd` | **not a candidate** | Was VOID 2026-08-25, but **re-run 2026-08-26 on 17 clusters and DECIDED** — a tie, effect "real in sign, negligible in size". I had grepped a stale VOID line in the WA harness header. And the per-party question was already asked and correctly pooled: majors 2.37 vs minors 2.31, "within 0.06, a fifth of one SE". |
+| first-preference widening | **not a candidate** | The refusal **was overturned and the fix shipped** — `fp_extra_sd = 2.419` in `R/forecast_mode.R`, with a published-effect table in the review. |
+| non-major vote regression | **not a candidate** | Refused on **measured** grounds (winners RMSE 2.99 base against 8.55), not power. Shrinkage cannot rescue a measured regression. |
+| `fit_defector_discount` cliff | **addressed today** | The `min_n=5` cliff never fired, but the hard `elected==TRUE` exclusion did. Losing defectors now carry 0.142 instead of zero (`prereg-defector-two-rate-2026-09-09.md`, adopted on mechanism). |
+| **surge-conditioned slope** | **GENUINE, open** | 3 surge events in the whole corpus. Cannot be significance-tested; under shrinkage a 3-cluster term shrinks back to the prior, so including it costs ~nothing. |
+| **demographic seat model** | **GENUINE, open** | Same shape — the plan says outright that "three clusters cannot support a cluster-robust significance test" and that running one would "be the theatre those aborts were meant to prevent". |
 
-### Part 1 — the cliffs that exist right now
+### What the sweep actually established
 
-| function | cliff | ships? |
-|---|--:|---|
-| `fit_defector_discount()` | `min_n = 5` | **YES** (`AUSPOL_DEFECT_DISCOUNT=1`) |
-| `fit_conditional_slopes()` | `min_n = 40` | no (default off) |
-| `fit_split_slopes()` | `min_n = 200` | no (default off) |
+**The repo's refusals were mostly right, and the one that was wrong had
+already been corrected.** The value of the sweep was not a list of rescues; it
+was isolating that **the only genuine remaining class is the ~3-cluster
+problem**, and that shrinkage's contribution there is specific and narrow:
 
-Only the first changes shipped behaviour, so only it needs a measured run.
-Also worth pooling rather than thresholding: the eight hardcoded `same`/`new`
-slopes, the MP tier (`output/mp-slope-by-target.csv`), and the per-class
-`level_mult` values.
+> it converts "we cannot test this, so we refuse it" into "we can include this
+> cheaply, because with 3 clusters it shrinks back to the prior anyway".
 
-### Part 2 — refusals to re-examine under pooling
+That is the whole remaining opportunity. Both open candidates are that shape.
 
-**Triage rule, so this does not become a licence to re-litigate everything:**
-a refusal is a shrinkage candidate ONLY if it was refused for **thin data /
-no power / too few clusters**. A refusal for **measured harm or a wrong
-mechanism** is not rescuable and stays refused.
+### Still not retrofitted
 
-Candidates found by grep on 2026-09-09, each needing the triage applied:
-
-- **`party_sd`** — came back **VOID**, "two of its three pre-registered
-  criteria had no power to resolve anything"
-  (`reviews/party-sd-tie-2026-08-26.md`, and the WA harness header). Textbook
-  candidate: a VOID is precisely "there might be signal, we could not
-  resolve it".
-- **First-preference widening** — *"Both widening factors were refused, by a
-  test with no power to accept either"*
-  (`reviews/fp-widening-choice-2026-08-19.md`). `CLAUDE.md` already records
-  this as a criterion that could only ever refuse.
-- **Non-major vote regression** — *"151 seats with 14 winners cannot support
-  six predictors"* (`plans/prereg-nonmajor-vote-regression.md`). Six
-  predictors on 14 events is exactly what a shrunk/penalised fit is for.
-- **Demographic seat model** — *"Three clusters cannot support a
-  cluster-robust significance test"* (`plans/prereg-demographic-seat-model.md`).
-- **Seat calibration** and **`prereg-party-sd-from-data`** — both cite "no
-  power to" (`plans/prereg-seat-calibration.md`).
-- **Surge-conditioned deviation slope** — abandoned 2026-09-09 with only 3
-  surge events in the whole corpus. Under pooling a 3-cluster term shrinks
-  back to the prior, so including it costs ~nothing. This is the cleanest
-  illustration of Pete's point and probably the first to try.
-- **Two experiments "aborted for lack of power on 2026-08-25"** — named in
-  this file; find and triage them.
-
-**Explicitly NOT candidates** (refused on measured harm / wrong mechanism,
-pooling would not change the verdict):
-the split-slope arm (it replaced the slope system rather than refining it),
-`fit_conditional_slopes` (shrinkage weights come out 0.94-0.997, so the
-pooled values are the ones already refused), and the ONP vote-sourcing test
-(refused because the confound control REVERSED the sign, not for power).
-
-### Part 3 — the honest caveat to carry into the sweep
-
-Shrinkage does not resurrect a dead result. It makes a thin estimate degrade
-gracefully instead of being discarded, which changes "we cannot test this"
-into "we can include this cheaply". Where a refusal came from a *measured*
-regression, pooling changes nothing, and the sweep should say so rather than
-re-open it.
-
+`fit_conditional_slopes()` (`min_n=40`) and `fit_split_slopes()` (`min_n=200`)
+still carry cliffs. Both are default-off arms that were refused, so the cliffs
+change nothing shipped — retrofit them if either is ever revisited, not before.
 
 ## SESSION 2026-09-09 (AM #3) — candidate/party tracking audit, three fixes shipped
 
