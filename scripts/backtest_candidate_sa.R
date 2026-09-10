@@ -352,6 +352,11 @@ fb <- fread(file.path(P, PAIR$fp_to), showProgress = FALSE)
 # makes both file shapes safe, and is a no-op on the already-aggregated ones.
 fa <- fa[, .(votes = sum(votes)), by = .(seat, party)]
 fb <- fb[, .(votes = sum(votes)), by = .(seat, party)]
+# Permanent guard, not a one-time fix: this aggregation exists because a
+# duplicate (seat, party) row silently made dcast() below COUNT candidates
+# instead of SUMMING their votes. Asserting uniqueness here means a future
+# source with the same shape fails loudly instead of quietly reproducing it.
+stopifnot(!anyDuplicated(fa[, .(seat, party)]), !anyDuplicated(fb[, .(seat, party)]))
 # Copied to a differently-named local before use inside `[` -- a bare
 # variable on either side of a data.table filter can bind to a column of the
 # SAME name; this repo's rule is to never risk it, even where (as here) TGT
@@ -730,10 +735,10 @@ keep <- intersect(rownames(shares), win$seat)
 shares <- shares[keep, , drop = FALSE]
 truth <- setNames(win$winner, win$seat)[keep]
 if (length(keep) != 47L) {
-  stop("Only ", length(keep), " of 47 districts matched between the 2022 first ",
-       "preferences and the 2026 winners after applying the rename map. ",
-       "Unmatched: ",
-       paste(setdiff(win$seat, rownames(shares)), collapse = ", "))
+  unmatched <- union(setdiff(win$seat, rownames(shares)), setdiff(rownames(shares), win$seat))
+  stop("Only ", length(keep), " of 47 districts matched between the ", PRV, " first ",
+       "preferences and the ", TGT, " winners after applying the rename map. ",
+       "Unmatched: ", paste(unmatched, collapse = ", "))
 }
 
 # ---- seat-swing port, third testable election ------------------------------
@@ -829,7 +834,23 @@ if (identical(Sys.getenv("AUSPOL_SALIENCE_SURGE_V2", "0"), "1")) {
     list(election = "nsw2023", prev = "nsw2019", region = "nsw"),
     list(election = "sa2026",  prev = "sa2022",  region = "sa"),
     list(election = "wa2008",  prev = "wa2005",  region = "wa"))
-  train_pairs <- Filter(function(p) p$election != TGT, v2_pairs)
+  # LEAKAGE GUARD, by DATE, not by name match. `p$election != TGT` only ever
+  # removed an entry whose name is EXACTLY the target -- this list's SA entry
+  # is named "sa2026", so introducing "sa2022" as a target (the 2018->2022
+  # pair added 2026-09-10) matched nothing and silently trained the hazard
+  # on fed2022/vic2022/nsw2023/sa2026 -- four elections that POSTDATE
+  # sa2022's own 19 March 2022 polling day. The old filter happened to be
+  # leak-safe only because sa2026 was always the chronologically-last pair
+  # in this list; that invariant broke the moment an earlier target existed.
+  V2_DATES <- as.Date(c(fed2010 = "2010-08-21", fed2013 = "2013-09-07",
+                        fed2016 = "2016-07-02", fed2019 = "2019-05-18",
+                        fed2022 = "2022-05-21", vic2022 = "2022-11-26",
+                        nsw2023 = "2023-03-25", sa2026  = "2026-03-21",
+                        wa2008  = "2008-09-06"))
+  tgt_date <- as.Date(PAIR$flow_before)
+  train_pairs <- Filter(function(p) V2_DATES[[p$election]] < tgt_date, v2_pairs)
+  cat(sprintf("BS0v  surge-v2 training pairs after the %s leakage cutoff: %s\n",
+              TGT, paste(vapply(train_pairs, `[[`, "", "election"), collapse = ", ")))
   hz <- tryCatch(surge_hazard_for(TGT, PRV, "sa", train_pairs),
                  error = function(e) { cat(sprintf("BS0v! surge-v2 failed: %s\n", conditionMessage(e))); NULL })
   if (!is.null(hz)) {
@@ -875,7 +896,7 @@ if (identical(Sys.getenv("AUSPOL_SALIENCE_SURGE_V2", "0"), "1")) {
       cat(sprintf("SC1  surge hazard x%.1f: mean %.4f, max %.4f, seats at the cap %d\n",
                   .surge_scale, mean(surge_arg), max(surge_arg), sum(surge_arg >= 1)))
     }
-    cat(sprintf("BS0v sa2026: surge-v2 hazard for %d of %d seats (%d absent -> 0) | mean %.4f | mu %.2f sd %.2f | lambda %.1f | train winners %d\n",
+    cat(sprintf(paste0("BS0v ", TGT, ": surge-v2 hazard for %d of %d seats (%d absent -> 0) | mean %.4f | mu %.2f sd %.2f | lambda %.1f | train winners %d\n"),
                 length(sn) - miss, length(sn), miss, mean(surge_arg),
                 surge_mu_arg, surge_sd_arg, hz$lambda, hz$n_train_winners))
   }
