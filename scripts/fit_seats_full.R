@@ -836,13 +836,26 @@ if (ONP_FIX == "1") {
 }
 shares[, "ONP"] <- onp_target
 shares <- 100 * shares / rowSums(shares)
-# XGBOOST PRIMARY CHALLENGER (AUSPOL_XGB_PRIMARY_LIVE, default 0 -- NOT SHIPPED).
-# docs/reviews/xgb-primary-challenger-2026-09-09.md: leave-one-pair-out
-# backtest result 0.3358 -> 0.3122 pooled seat log loss (t=-2.89). KNOWN
-# WEAKNESS, unresolved: worse than this model specifically on rare
-# independent/minor-party emergences, which is what a One Nation surge in
-# Victoria is. Held pending the fix queue in docs/NEXT-STEPS.md.
-shares <- xgb_primary_predict_live(shares, mat22, a22, state_mean, .returns, region = "vic")
+# XGBOOST PRIMARY CHALLENGER, v6 (AUSPOL_XGB_PRIMARY_LIVE). Best pooled seat
+# log loss of v1-v6, leave-one-pair-out: 0.3403 -> ~0.3071
+# (R/xgb_primary_override.R's own docstring carries the full detail and the
+# ship-decision record -- read that, not this comment, for the current
+# state). KNOWN, NOT fixed: worse than this model specifically on rare
+# independent/minor-party emergences -- SA2026 One Nation and vic2014 both
+# regress -- which is what a One Nation surge in Victoria is. Tracked in
+# docs/NEXT-STEPS.md as the active improvement queue, not a blocker to
+# shipping. Wrapped in .try(), same as every other pre-nomination-dependent
+# feature in this script (.returns/.permit/.own_prev above) -- this now runs
+# inside the published forecast, so an unhandled error here would otherwise
+# crash the whole run rather than falling back to the shipped-only model.
+shares_x <- .try("xgb_live", xgb_primary_predict_live(shares, mat22, a22, state_mean, .returns,
+                                                        own_prev = .own_prev, region = "vic"))
+if (!is.null(shares_x)) {
+  shares <- shares_x
+} else if (identical(Sys.getenv("AUSPOL_XGB_PRIMARY_LIVE", "0"), "1")) {
+  cat(sprintf("XG4!! xgb_primary_predict_live() FAILED%s -- shares UNCHANGED, shipped-only model used\n",
+              .reason("xgb_live")))
+}
 # THE SALIENCE POINT ESTIMATE REACHES THE PUBLISHED FORECAST, 2026-09-07.
 # It never had: the blend lived inline in the federal harness only, so every
 # figure this script published described a model without it while the federal
