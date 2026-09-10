@@ -19,6 +19,7 @@ simulate_seat_contests(
   shrink = 0,
   party_cor = NULL,
   fallback_smooth = 0,
+  shrink_k = 0,
   flow_sd = 0,
   level_mult = NULL,
   surge_h = 0,
@@ -162,6 +163,26 @@ where it gave 54.0\%.
 
 Zero reproduces the previous behaviour exactly.
 See \verb{docs/reviews/flow-matrix-is-the-defect-2026-08-25.md}.}
+
+\item{shrink_k}{EXPERIMENTAL, default 0 (disabled, exact previous
+behaviour). When > 0, replaces the flat \code{smooth} weight on a MATCHED
+conditional cell with \code{shrink_k / (n + shrink_k)}, where \code{n} is that
+cell's own event count from \code{build_flow_matrix()}'s \code{coverage} table --
+a well-measured cell (hundreds of events) is barely smoothed toward
+uniform; a thin one (a handful of events) is smoothed close to the old
+fixed weight or harder. Scoped deliberately to conditional cells only:
+the POOLED fallback path (\code{fallback_smooth}, above) is a different,
+already-flagged-dangerous question (a pooled rate is not a measurement
+of THIS contest at all) and is untouched by this parameter.
+Forces \code{engine = "r"} when > 0 -- the compiled core does not implement
+per-cell shrinkage, and silently ignoring the parameter under
+\code{engine = "cpp"} would be an experiment that never ran. \strong{Tested across
+all 22 backtest pairs and REFUSED} -- every tested k made pooled seat
+log loss worse (0.339 baseline vs. 0.340-0.354). Kept as an inert,
+off-by-default scaffold for a narrower future attempt, not an untried
+idea -- see \verb{docs/reviews/flow-cell-shrinkage-REFUSED-2026-09-10.md}
+for the result and \verb{docs/plans/prereg-flow-cell-shrinkage-2026-09-10.md}
+for the original pre-registration.}
 
 \item{flow_sd}{Per-draw standard deviation, in percentage points, applied to
 each transfer proportion before it is used.

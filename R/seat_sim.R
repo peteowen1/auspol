@@ -118,6 +118,25 @@
 #'   Estimated across ten election pairs by
 #'   `scripts/estimate_statewide_cov.R`. Scale still comes from `party_sd`.
 #' @param smooth Passed to the transfer step; see [distribute_preferences()].
+#' @param shrink_k EXPERIMENTAL, default 0 (disabled, exact previous
+#'   behaviour). When > 0, replaces the flat `smooth` weight on a MATCHED
+#'   conditional cell with `shrink_k / (n + shrink_k)`, where `n` is that
+#'   cell's own event count from `build_flow_matrix()`'s `coverage` table --
+#'   a well-measured cell (hundreds of events) is barely smoothed toward
+#'   uniform; a thin one (a handful of events) is smoothed close to the old
+#'   fixed weight or harder. Scoped deliberately to conditional cells only:
+#'   the POOLED fallback path (`fallback_smooth`, above) is a different,
+#'   already-flagged-dangerous question (a pooled rate is not a measurement
+#'   of THIS contest at all) and is untouched by this parameter.
+#'   Forces `engine = "r"` when > 0 -- the compiled core does not implement
+#'   per-cell shrinkage, and silently ignoring the parameter under
+#'   `engine = "cpp"` would be an experiment that never ran. **Tested across
+#'   all 22 backtest pairs and REFUSED** -- every tested k made pooled seat
+#'   log loss worse (0.339 baseline vs. 0.340-0.354). Kept as an inert,
+#'   off-by-default scaffold for a narrower future attempt, not an untried
+#'   idea -- see `docs/reviews/flow-cell-shrinkage-REFUSED-2026-09-10.md`
+#'   for the result and `docs/plans/prereg-flow-cell-shrinkage-2026-09-10.md`
+#'   for the original pre-registration.
 #' @param fallback_smooth Extra blend toward uniform applied ONLY when an
 #'   exclusion has no conditional cell and falls back to the pooled rate. The
 #'   effective smoothing becomes `max(smooth, fallback_smooth)`.
@@ -243,6 +262,7 @@ simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
                                    statewide_draws = NULL,
                                    party_draws = NULL, shrink = 0,
                                    party_cor = NULL, fallback_smooth = 0,
+                                   shrink_k = 0,
                                    flow_sd = 0,
                                    level_mult = NULL,
                                    surge_h = 0, surge_mu = 15.6, surge_sd = 6.1,
@@ -265,6 +285,14 @@ simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
   if (length(shrink) == 0L) stop("shrink must have length >= 1")
   if (!is.finite(fallback_smooth) || fallback_smooth < 0 || fallback_smooth > 1) {
     stop("fallback_smooth must be in [0, 1]; got ", fallback_smooth)
+  }
+  if (!is.finite(shrink_k) || shrink_k < 0) {
+    stop("shrink_k must be finite and >= 0; got ", shrink_k)
+  }
+  if (shrink_k > 0 && identical(engine, "cpp")) {
+    stop("shrink_k > 0 needs engine = \"r\" -- the compiled core has no ",
+         "per-cell shrinkage logic, so engine = \"cpp\" would silently ",
+         "ignore shrink_k rather than apply it.")
   }
   # FLOW_SD MAY BE PER-SOURCE. A scalar says every excluded party's transfer
   # rate is equally uncertain, which the data contradicts: measured one-step-
@@ -598,6 +626,61 @@ simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
     row[pidx[keep]] <- pmax(0, r[keep])
     put(from * 2^K + mask, row)
   }
+  # Per-cell event count, keyed IDENTICALLY to cell_list/cells above, for
+  # shrink_k's data-weighted smoothing. Built unconditionally (cheap) but only
+  # read when shrink_k > 0. matrix$coverage$cell uses the same "FROM|A+B+C"
+  # string as matrix$conditional's names, so this is a plain lookup, not a
+  # re-derivation -- if build_flow_matrix() ever changes that key shape both
+  # loops break together instead of silently disagreeing.
+  if (dense_cells) {
+    cell_n_list <- vector("list", n_slots)
+    put_n <- function(k, v) cell_n_list[[k + 1L]] <<- v
+  } else {
+    cells_n <- new.env(parent = emptyenv())
+    put_n <- function(k, v) assign(as.character(k), v, envir = cells_n)
+  }
+  # Only demanded when there is at least one conditional cell to look an `n`
+  # up for. `matrix` is legitimately NULL for a pair with no transfers of its
+  # own (e.g. WA's wa2001-as-prior case, which falls back to uniform flows
+  # entirely) -- shrink_k has nothing to do there, and refusing on a matrix
+  # with zero conditional cells would kill a harness for a case this
+  # parameter was never going to touch anyway.
+  if (shrink_k > 0 && length(matrix$conditional) > 0) {
+    if (is.null(matrix$coverage) || !all(c("cell", "n") %in% names(matrix$coverage))) {
+      stop("shrink_k > 0 needs matrix$coverage with a \"cell\" and \"n\" ",
+           "column (build_flow_matrix()'s own output) to know each cell's ",
+           "event count. Build the matrix without multiplicity = TRUE, ",
+           "on a build_flow_matrix() call that returns coverage as usual.")
+    }
+    cov_n <- stats::setNames(matrix$coverage$n, matrix$coverage$cell)
+  }
+  for (nm in names(matrix$conditional)) {
+    bits <- strsplit(nm, "|", fixed = TRUE)[[1]]
+    from <- unname(pidx[bits[1]])
+    if (is.na(from)) next
+    surv <- strsplit(bits[2], "+", fixed = TRUE)[[1]]
+    if (!all(surv %in% parties)) next
+    mask <- sum(bitwShiftL(1L, pidx[surv] - 1L))
+    # Single-bracket, not [[: `[[` on a missing name in an atomic vector
+    # THROWS (CLAUDE.md's own recorded case), which would make the is.na()
+    # guard below dead code -- the crash would happen here instead, before
+    # the diagnostic stop() message a few lines down ever gets to run.
+    n_here <- if (shrink_k > 0) unname(cov_n[nm]) else NA_real_
+    # A conditional cell with no matching coverage row would be a
+    # build_flow_matrix()/simulate_seat_contests() mismatch, not a data gap --
+    # every conditional row is BUILT from a coverage row, so an NA here means
+    # the two structures disagree, not that data is thin. Refuse rather than
+    # silently treating it as n = 0 (maximal shrinkage), which would look like
+    # a legitimate thin-cell result and hide the real bug.
+    if (shrink_k > 0 && (is.null(n_here) || is.na(n_here))) {
+      stop("shrink_k > 0: conditional cell \"", nm, "\" has no matching ",
+           "row in matrix$coverage -- build_flow_matrix()'s conditional ",
+           "and coverage outputs disagree, which should never happen.")
+    }
+    put_n(from * 2^K + mask, n_here)
+  }
+  get_n <- function(key) if (dense_cells) cell_n_list[[key + 1L]] else
+    get0(as.character(key), envir = cells_n, inherits = FALSE, ifnotfound = NA_real_)
   pool <- vector("list", K)
   for (p in parties) {
     r <- matrix$pooled[[p]]
@@ -767,7 +850,8 @@ simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
   # value, "cpp" since the full-scale proof on 2026-09-07); AUSPOL_SIM_ENGINE=r
   # forces the reference loop, which is how the identity is re-proven.
   if (engine == "auto") engine <- if (!identical(Sys.getenv("AUSPOL_SIM_ENGINE", "cpp"), "r") &&
-                                      is.null(party_draws) && dense_cells) "cpp" else "r"
+                                      is.null(party_draws) && dense_cells &&
+                                      shrink_k == 0) "cpp" else "r"
   use_cpp <- engine == "cpp"
   if (use_cpp && (!is.null(party_draws) || !dense_cells)) {
     stop("engine = \"cpp\" cannot take party_draws, or this many parties; use engine = \"r\"")
@@ -931,7 +1015,20 @@ simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
         # whether the cell was measured or invented. This applies a HEAVIER
         # blend when there was no conditional cell at all. Default 0 keeps the
         # previous behaviour exactly.
-        sm <- if (!got_cell) max(smooth, fallback_smooth) else smooth
+        # shrink_k > 0: a MATCHED conditional cell's smoothing weight becomes
+        # data-dependent (shrink_k / (n + shrink_k)) instead of the flat
+        # `smooth`, so a well-measured cell (Ballarat's GRN|ALP+LNP, n=672) is
+        # barely smoothed and a thin one is smoothed close to (or harder than)
+        # the old fixed weight. The POOLED fallback path is untouched --
+        # different, already-flagged-dangerous question, not this parameter's.
+        sm <- if (!got_cell) {
+          max(smooth, fallback_smooth)
+        } else if (shrink_k > 0) {
+          n_cell <- get_n(key)
+          shrink_k / (n_cell + shrink_k)
+        } else {
+          smooth
+        }
         p <- if (tot <= 0) rep(u, length(alive)) else (1 - sm) * (w / tot) + sm * u
         # FLOW UNCERTAINTY, per draw. Flows are a FORECAST quantity and the
         # model has always treated them as known: one fixed matrix applied
