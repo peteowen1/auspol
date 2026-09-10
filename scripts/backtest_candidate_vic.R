@@ -138,6 +138,7 @@ if (SURGE_H > 0)
   cat(sprintf("BS0s surge hazard %.4f, size N(15.6, 6.1), floor 2%%
 ", SURGE_H))
 FB_SMOOTH <- as.numeric(Sys.getenv("AUSPOL_FALLBACK_SMOOTH", "0"))
+SHRINK_K  <- as.numeric(Sys.getenv("AUSPOL_FLOW_SHRINK_K", "0"))    # EXPERIMENTAL, docs/plans/prereg-flow-cell-shrinkage-2026-09-10.md
 FLOW_SD   <- as.numeric(Sys.getenv("AUSPOL_FLOW_SD", "0"))
 cat(sprintf("BS1f fallback_smooth %.2f | flow_sd %.2f
 ", FB_SMOOTH, FLOW_SD))
@@ -424,7 +425,9 @@ for (K in PAIRS) {
   # FITTED CONDITIONAL SLOPES (AUSPOL_FIT_SLOPES=1, default OFF). Replaces the
   # eight hardcoded same/new constants with a leave-this-target-out fit;
   # structure untouched. docs/plans/prereg-fit-conditional-slopes-2026-09-09.md
-  .fitsl <- if (identical(Sys.getenv("AUSPOL_FIT_SLOPES", "0"), "1"))
+  .fitsl <- if (identical(Sys.getenv("AUSPOL_DISPERSION_SLOPE", "0"), "1"))
+    fit_dispersion_slopes(.eb)
+  else if (identical(Sys.getenv("AUSPOL_FIT_SLOPES", "0"), "1"))
     fit_conditional_slopes(.eb) else NULL
   if (!is.null(.fitsl)) cat(sprintf("FS1  fitted slopes | same %s | new %s
 ",
@@ -591,6 +594,7 @@ for (K in PAIRS) {
       shares <- 100 * shares / rowSums(shares)
     }
   }
+  shares <- xgb_primary_override(shares, sprintf("vic%d", K$to))
 
   cat(sprintf("\nBV1  Victoria %d -> %d: %d districts scored, truth from %s\n",
               K$from, K$to, length(keep), truth_src))
@@ -739,7 +743,7 @@ for (K in PAIRS) {
       s1 <- simulate_seat_contests(level_sd = .level_sd, sd_override = SD_OVR, level_mult = .lm(shares), shares, fmr, party_sd = psd,
                                    seat_sd = sp$sd_within * SEAT_SD_MULT, n_sims = per,
                                    smooth = SMOOTH, seed = SEED + r, shrink = SHRINK,
-                                   fallback_smooth = FB_SMOOTH, flow_sd = FLOW_SD,
+                                   fallback_smooth = FB_SMOOTH, shrink_k = SHRINK_K, flow_sd = FLOW_SD,
                                 surge_h = surge_arg, surge_party = surge_party_arg,
                                 surge_from_zero = identical(Sys.getenv("AUSPOL_SURGE_FROM_ZERO", "0"), "1"), surge_mu = surge_mu_arg, surge_sd = surge_sd_arg)
       w1 <- as.data.table(s1$win_prob)[, .(seat, party, n = prob * per)]
@@ -754,7 +758,7 @@ for (K in PAIRS) {
                                   seat_sd = sp$sd_within * SEAT_SD_MULT, n_sims = N_SIMS,
                                   smooth = SMOOTH, seed = SEED, party_cor = PARTY_COR,
                                   shrink = SHRINK,
-                                  fallback_smooth = FB_SMOOTH, flow_sd = FLOW_SD,
+                                  fallback_smooth = FB_SMOOTH, shrink_k = SHRINK_K, flow_sd = FLOW_SD,
                                 surge_h = surge_arg, surge_party = surge_party_arg,
                                 surge_from_zero = identical(Sys.getenv("AUSPOL_SURGE_FROM_ZERO", "0"), "1"), surge_mu = surge_mu_arg, surge_sd = surge_sd_arg)
     cat(sprintf("BV2e  engine %s | surge recipient fell back: %d class(es) absent, %d seat-draws at zero share\n", sim$engine, sim$surge_recipient_fallback, sim$surge_recipient_fallback_draws))

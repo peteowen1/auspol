@@ -441,8 +441,11 @@ if (identical(Sys.getenv("AUSPOL_DEFECT_DISCOUNT", "0"), "1")) {
 # FITTED CONDITIONAL SLOPES (AUSPOL_FIT_SLOPES=1, default OFF). Replaces the
 # eight hardcoded same/new constants with a leave-this-target-out fit;
 # structure untouched. docs/plans/prereg-fit-conditional-slopes-2026-09-09.md
-.fitsl <- if (identical(Sys.getenv("AUSPOL_FIT_SLOPES", "0"), "1"))
-  fit_conditional_slopes(TGT) else NULL
+.fitsl <- if (identical(Sys.getenv("AUSPOL_DISPERSION_SLOPE", "0"), "1")) {
+  fit_dispersion_slopes(TGT)
+} else if (identical(Sys.getenv("AUSPOL_FIT_SLOPES", "0"), "1")) {
+  fit_conditional_slopes(TGT)
+} else NULL
 if (!is.null(.fitsl)) cat(sprintf("FS1  fitted slopes | same %s | new %s
 ",
   paste(sprintf("%s=%.3f", names(.fitsl$same), .fitsl$same), collapse=" "),
@@ -643,6 +646,7 @@ if (PORT) {
   shares[, "LNP"] <- pmax(0, shares[, "LNP"] - adj)
   shares <- 100 * shares / rowSums(shares)
 }
+shares <- xgb_primary_override(shares, TGT)
 
 # Per-seat spread from the seat file of the election being predicted.
 # THE SEAT FILE OF THE ELECTION BEING PREDICTED, where one exists. The anchor
@@ -706,6 +710,7 @@ set.seed(SEED)
 # One Nation contest falls back to a pooled rate that gives ONP 2.9% of Labor
 # preferences (actual 22.1%) and 4.5% of Coalition preferences (actual 54.0%).
 FB_SMOOTH <- as.numeric(Sys.getenv("AUSPOL_FALLBACK_SMOOTH", "0"))
+SHRINK_K  <- as.numeric(Sys.getenv("AUSPOL_FLOW_SHRINK_K", "0"))    # EXPERIMENTAL, docs/plans/prereg-flow-cell-shrinkage-2026-09-10.md
 FLOW_SD   <- as.numeric(Sys.getenv("AUSPOL_FLOW_SD", "0"))
 cat(sprintf("BQ1f fallback_smooth %.2f | flow_sd %.2f\n", FB_SMOOTH, FLOW_SD))
 
@@ -803,7 +808,7 @@ if (identical(Sys.getenv("AUSPOL_SALIENCE_SURGE_V2", "0"), "1")) {
 sim <- simulate_seat_contests(level_sd = .level_sd, sd_override = SD_OVR, level_mult = .lm(shares), shares, fm, party_sd = psd, seat_sd = sp$sd_within * SEAT_SD_MULT,
                               n_sims = N_SIMS, smooth = SMOOTH, seed = SEED,
                               shrink = SHRINK, party_cor = PARTY_COR,
-                              fallback_smooth = FB_SMOOTH, flow_sd = FLOW_SD,
+                              fallback_smooth = FB_SMOOTH, shrink_k = SHRINK_K, flow_sd = FLOW_SD,
                               surge_h = surge_arg, surge_party = surge_party_arg,
                                 surge_from_zero = identical(Sys.getenv("AUSPOL_SURGE_FROM_ZERO", "0"), "1"), surge_mu = surge_mu_arg, surge_sd = surge_sd_arg)
 cat(sprintf("BQ2e  engine %s | surge recipient fell back: %d class(es) absent, %d seat-draws at zero share\n", sim$engine, sim$surge_recipient_fallback, sim$surge_recipient_fallback_draws))

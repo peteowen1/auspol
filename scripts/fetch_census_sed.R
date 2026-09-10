@@ -25,7 +25,7 @@ REF <- file.path("external", "reference")
 CEN <- file.path(REF, "census")
 dir.create(CEN, showWarnings = FALSE, recursive = TRUE)
 
-STATES <- c(VIC = "VIC", NSW = "NSW", SA = "SA")
+STATES <- c(VIC = "VIC", NSW = "NSW", SA = "SA", QLD = "QLD", WA = "WA")
 BASE <- paste0("https://www.abs.gov.au/census/find-census-data/datapacks/",
                "download/2021_GCP_SED_for_%s_short-header.zip")
 
@@ -130,6 +130,18 @@ cen <- merge(all_cen, look[, .(sed_code, sed_name = SED_NAME21, ste = STE_NAME21
 # collides two seats is the failure mode this repo records for hand-maintained
 # reference data.
 cen[, seat := trimws(sub("\\s*\\(.*\\)\\s*$", "", sed_name))]
+
+# NAMED SPELLING FIX, not a fuzzy/case-insensitive join. Confirmed 2026-09-10
+# while verifying SA's unmatched-seat list against the SA Electoral Districts
+# Boundaries Commission record: MacKillop had NO boundary change for the 2026
+# election (unlike Ngadjuri, a genuine 2024 redistribution of Frome), so its
+# absence from the join was never a redistribution -- ABS's own data spells
+# it "Mackillop" (lower-case k), while our seat files use "MacKillop". A
+# blanket case-insensitive join was rejected on purpose: it would paper over
+# a FUTURE genuine mismatch the same way this one was almost accepted as
+# "just another redistribution." One named correction, not a general rule.
+cen[seat == "Mackillop", seat := "MacKillop"]
+
 # Unmatched rows are NOT collisions -- a code present in the 2021 Census pack
 # but absent from the 2022 boundary file has no name and must be counted
 # separately, or the collision check fires on NA and hides the real question.
@@ -195,3 +207,36 @@ cat("     a rename map cannot fix a boundary that actually moved.\n")
 fwrite(cen, file.path(CEN, "census-sed-2021.csv"))
 cat(sprintf("\nCE5  wrote %s (%d rows, %d columns)\n",
             file.path(CEN, "census-sed-2021.csv"), nrow(cen), ncol(cen)))
+
+# ---- QLD / WA coverage, reported not enforced ------------------------------
+# Added 2026-09-10 to extend census coverage beyond NSW/VIC/SA. UNLIKE the
+# Victorian check above, this does NOT stop() on an unexplained miss -- this
+# repo has no verified QLD/WA redistribution-history table the way the
+# Victorian one above was built and checked against SED_2022. Treat this as
+# a feasibility report: every unmatched seat is NAMED, none is silently
+# waved through, but none is asserted to be "just a redistribution" without
+# that being checked first. Tighten before this feeds any model.
+cf <- file.path("output", "candidacies.csv")
+if (file.exists(cf)) {
+  C <- fread(cf, showProgress = FALSE)
+  for (chk in list(list(region = "Queensland",         election = "qld2024"),
+                    list(region = "Western Australia",  election = "wa2025"))) {
+    ours <- sort(unique(C[election == chk$election, seat]))
+    theirs <- cen[ste == chk$region & !is.na(seat), sort(unique(seat))]
+    miss <- setdiff(ours, theirs)
+    extra <- setdiff(theirs, ours)
+    cov <- if (length(ours)) 1 - length(miss) / length(ours) else NA_real_
+    cat(sprintf("\nCE6  %s (%s): our seats %d | census divisions %d | coverage %.1f%%\n",
+                chk$region, chk$election, length(ours), length(theirs), 100 * cov))
+    if (length(miss)) {
+      cat(sprintf("CE6  %s unmatched (NOT yet explained by a checked redistribution table): %s\n",
+                  length(miss), paste(miss, collapse = ", ")))
+    }
+    if (length(extra)) {
+      cat(sprintf("CE6  %s census divisions with no matching seat: %s\n",
+                  length(extra), paste(extra, collapse = ", ")))
+    }
+  }
+} else {
+  cat("\nCE6  output/candidacies.csv not found -- QLD/WA coverage not checked this run.\n")
+}

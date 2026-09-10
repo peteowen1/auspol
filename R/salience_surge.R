@@ -57,9 +57,23 @@ predict_ridge <- function(beta, X, center, scale) {
 #' IND vote, separate from `prev_party`).
 #'
 #' @param pairs A list of `list(election=, prev=, region=)`.
-#' @return A `data.table`, one row per governed candidate.
+#' @param require_governed If `TRUE` (default), only `governed == TRUE`
+#'   candidates are returned -- the correct population to FIT the hazard
+#'   model on, since a surging-class win is not explained by the personal-
+#'   salience features being regressed and would corrupt the coefficients.
+#'   Pass `FALSE` to SCORE a target election's full candidate population
+#'   instead (governed and surging classes both) with an already-fitted
+#'   model -- see `surge_hazard_for()`'s own use of this for exactly why:
+#'   `governed_population()` deliberately marks a surging class's own
+#'   candidates `governed = FALSE`, so filtering to TRUE here made a
+#'   genuine party-wide surge (e.g. SA2026 One Nation) structurally
+#'   ineligible to ever be picked as a seat's hazard `recipient`, regardless
+#'   of how strong its real signal was -- the model was never even asked to
+#'   score it. Never pass `FALSE` when the result feeds TRAINING.
+#' @return A `data.table`, one row per candidate (governed only, or governed
+#'   plus surging, depending on `require_governed`).
 #' @export
-surge_training_population <- function(pairs) {
+surge_training_population <- function(pairs, require_governed = TRUE) {
   cand_path <- file.path("output", "candidacies.csv")
   if (!file.exists(cand_path)) stop("needs output/candidacies.csv", call. = FALSE)
   C <- data.table::fread(cand_path, showProgress = FALSE)
@@ -70,7 +84,7 @@ surge_training_population <- function(pairs) {
   build_one <- function(p) {
     G <- governed_population(p$election, p$prev, p$region)
     if (is.null(G)) return(NULL)
-    G <- G[G$governed == TRUE]
+    if (require_governed) G <- G[G$governed == TRUE]
     if (!nrow(G)) return(NULL)
     pi <- prev_ind_for(p$prev)
     G <- merge(G, pi, by = "seat", all.x = TRUE)
@@ -120,8 +134,15 @@ surge_hazard_for <- function(target_election, target_prev, target_region,
   }
   TRAIN <- surge_training_population(train_pairs)
   if (is.null(TRAIN) || !nrow(TRAIN)) return(NULL)
+  # require_governed = FALSE: score the target election's FULL candidate
+  # population (governed AND surging classes), with the model fit above on
+  # TRAIN's governed-only population. Fitting stays clean; scoring no longer
+  # structurally excludes a genuine party-wide surge from ever being picked
+  # as a seat's recipient. See surge_training_population()'s own docs for
+  # the SA2026 One Nation case this fixes.
   target <- surge_training_population(list(list(
-    election = target_election, prev = target_prev, region = target_region)))
+    election = target_election, prev = target_prev, region = target_region)),
+    require_governed = FALSE)
   if (is.null(target) || !nrow(target)) return(NULL)
 
   party_levels <- sort(unique(c(TRAIN$party, target$party)))

@@ -212,6 +212,31 @@ for (E in sa_files) {
   cat(sprintf("BC2  sa%d: %d candidates in %d seats\n", E$year, nrow(m), uniqueN(m$seat)))
 }
 
+# ---- SOUTH AUSTRALIA 2018 (Wikipedia, not ECSA) ------------------------------
+# ECSA never served a results file for 2018 (its API answers with an empty body
+# and ha-2018-03-17.json above is a 0-byte failed download), so the join-on-
+# candidateId path above always skips this year. scripts/fetch_preferences_sa2018.R
+# reads Wikipedia's own "Election box" tables instead -- already candidate-level,
+# already checked against external/aus-polling-analyser's eventual-results.csv --
+# so this is a separate block, not a branch of the loop above, the same
+# reasoning as the qld2017 block below being separate from the qld2020/2024 loop.
+sa18f <- file.path(election_data_path(), "wikipedia-2018-sa-firstprefs.csv")
+if (!file.exists(sa18f)) {
+  cat(sprintf("BC2b sa2018: MISSING %s -- run scripts/fetch_preferences_sa2018.R\n", sa18f))
+} else {
+  sa18 <- fread(sa18f, showProgress = FALSE)
+  if (sa18[is.na(votes), .N])
+    stop("sa2018: ", sa18[is.na(votes), .N], " candidates have no vote count")
+  if (uniqueN(sa18$seat) != 47L)
+    stop("sa2018: parsed ", uniqueN(sa18$seat), " seats, not 47")
+  sa18[, `:=`(surname = NA_character_, given = NA_character_, elected = NA,
+             party = classify_party(party_raw), election = "sa2018",
+             region = "sa", year = 2018L)]
+  parts[["sa2018"]] <- sa18[, .(seat, surname, given, party_raw, votes, elected,
+                                party, election, region, year, name)]
+  cat(sprintf("BC2b sa2018: %d candidates in %d seats\n", nrow(sa18), uniqueN(sa18$seat)))
+}
+
 # ---- NEW SOUTH WALES 2019, 2023 ---------------------------------------------
 # The NSWEC workbook's "Data" sheet is one row per candidate PER VENUE, so it
 # must be aggregated to candidate level. Informal rows carry no candidate and
@@ -657,6 +682,14 @@ for (y in c(2014L, 2018L, 2022L)) {
   if (!file.exists(f)) next
   w <- fread(f, showProgress = FALSE)
   WV[[length(WV) + 1L]] <- w[, .(election = sprintf("vic%d", y), seat, winner)]
+}
+# sa2018 winners come from Wikipedia (see BC2b above), not ECSA -- a separate
+# file so a rerun of fetch_sa2022_and_winners.R (which OVERWRITES
+# ecsa-sa-winners.csv wholesale) can never silently drop this year.
+sa18w <- file.path(election_data_path(), "wikipedia-2018-sa-winners.csv")
+if (file.exists(sa18w)) {
+  w <- fread(sa18w, showProgress = FALSE)
+  WV[[length(WV) + 1L]] <- w[, .(election, seat, winner)]
 }
 if (length(WV)) {
   W <- unique(rbindlist(WV, fill = TRUE))
