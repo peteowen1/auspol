@@ -129,6 +129,12 @@ PUBLISHED_FLAGS <- c(
                                              # median seats 9 -> 10 (90%: 3-18 -> 4-20). Pete's call: publish
                                              # the pooled estimate, not SA's point value alone.
                                              # docs/reviews/onp-concentration-validated-2026-09-09.md
+  AUSPOL_SALIENCE_BLEND      = "1",          # 1 = the salience hazard also moves the POINT ESTIMATE toward surge_mu
+                                             # (blend_salience_shares), on top of the stochastic surge in the draw.
+                                             # Shipped value is 1 = the behaviour that has always run. Set to "0" to
+                                             # measure the suspected double count: both are driven by the same hazard
+                                             # fit, so the lift may be ~1.7x intended wherever a corpus exists.
+                                             # Added 2026-09-11; docs/ARCHITECTURE.md "What the simulator actually does".
   AUSPOL_SURGE_H             = "0",          # flat fallback hazard, used only when surge-v2 has no corpus
   # switches the harnesses know and the forecast does not: listed so a harness
   # run at "published defaults" has them OFF explicitly, not by accident
