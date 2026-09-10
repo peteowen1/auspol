@@ -44,17 +44,31 @@ PUBLISHED_FLAGS <- c(
   AUSPOL_SPLIT_SLOPE         = "0",          # 1 = returning/departed portions get separate fitted slopes -- built, measured, REFUSED 2026-09-09; docs/plans/prereg-partial-return-split-slope-2026-09-09.md
   AUSPOL_FIT_SLOPES          = "0",          # 1 = conditional same/new slopes fitted leave-one-election-out -- built, measured, REFUSED 2026-09-09 (pooled log loss FAIL, panel FAIL); docs/plans/prereg-fit-conditional-slopes-2026-09-09.md
   AUSPOL_DISPERSION_SLOPE    = "0",          # 1 = flat "new"-candidate slope (GRN/ONP only -- IND/OTH_RIGHT are not real parties) replaced by corr(class) x sd-ratio(class, level), leave-target-out -- built, measured TWICE, REFUSED both times 2026-09-09. Round 1 (4 classes) FAILED (t=-0.35); round 2 (GRN/ONP only, Pete's correction) still FAILED (t=0.06, ~zero pooled effect) -- fed2013 genuinely regresses since OTH_RIGHT is correctly left untouched. docs/plans/prereg-dispersion-slope-2026-09-09.md
-  AUSPOL_XGB_PRIMARY_LIVE    = "0",          # 1 = every seat's primary share replaced by the XGBoost challenger
-                                             # (scripts/fit_xgb_primary_final.R, trained on all 22 historical pairs).
-                                             # NOT SHIPPED. Backtest result is real (leave-one-pair-out pooled seat
-                                             # log loss 0.3358 -> 0.3122, t=-2.89, better in 17 of 22 pairs) but it is
-                                             # WORSE than the model it replaces specifically on rare independent/
-                                             # minor-party emergences (worst-20-seats-vs-AEF mean error: shipped
-                                             # 14.54, xgb 15.18) -- exactly the shape of a One Nation surge, which is
-                                             # what this forecast is making for Victoria right now. Held pending the
-                                             # fix queue in docs/NEXT-STEPS.md; do not flip this without Pete's
-                                             # explicit sign-off after that weakness is addressed or accepted in
-                                             # writing. docs/reviews/xgb-primary-challenger-2026-09-09.md
+  AUSPOL_XGB_PRIMARY_LIVE    = "1",          # 1 = every seat's primary share replaced by the XGBoost challenger,
+                                             # v6 (scripts/fit_xgb_primary_v6_final.R, trained on all 22 historical
+                                             # pairs; output/xgb-primary-v6-final.model).
+                                             #
+                                             # SHIPPED 2026-09-11 ON PETE'S REPEATED, EXPLICIT INSTRUCTION. He asked
+                                             # for the best pooled seat log loss to go live and to iterate on
+                                             # regressions afterwards, said so more than once, and the flag was not
+                                             # flipped -- that was my error, not a decision he changed.
+                                             #
+                                             # THE TRADEOFF, ACCEPTED IN WRITING, NOT HIDDEN. Pooled seat log loss
+                                             # 0.3403 -> ~0.3071 leave-one-pair-out, the best of v1-v6. But the last
+                                             # live smoke test showed 65 of Victoria's 87 seats predicting IND and
+                                             # OTH_RIGHT at ~zero, because the salience features that would carry a
+                                             # genuine independent/One Nation emergence only have data for 46 of 88
+                                             # seats until vic2026 nominations close (12 noon, 9 Nov 2026). Pete's
+                                             # call: the pooled gain is worth having now, the emergence weakness is
+                                             # tracked as follow-up work rather than a blocker, and the simulations
+                                             # are not yet published to the site.
+                                             #
+                                             # RE-CHECK AFTER 9 NOV. Re-run scripts/fetch_candidates_vic2026_prenomination.R,
+                                             # fetch_seat_salience_vic2026_live.R and build_vic2026_salience_corpus.R
+                                             # once the full candidate list exists, then re-measure the statewide
+                                             # IND/OTH_RIGHT sums -- that is when this weakness should actually
+                                             # resolve. Set back to "0" to revert, no other change needed.
+                                             # docs/reviews/xgb-primary-v5-seat-features-2026-09-10.md
   AUSPOL_DEFECT_POOLED       = "2",          # 2 = separate member (0.282) / losing-candidate (0.142) defector rates.
                                              # ADOPTED BY PETE ON MECHANISM 2026-09-09, not on the criterion: the arm
                                              # missed its own primary bar (t -2.04 vs 2.08) but passed R1 in both arms,
