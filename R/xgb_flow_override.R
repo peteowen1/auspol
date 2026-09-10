@@ -141,15 +141,31 @@ xgb_flow_conditional_override_for <- function(shares, target_election, prev_elec
   # it, and say loudly when falling back, because a silent fallback is a
   # leaked backtest that reads as a good result.
   loo_f   <- sprintf("output/xgb-flows-v1-loo-%s.model", target_election)
-  model_f <- if (file.exists(loo_f)) loo_f else "output/xgb-flows-v1-final.model"
-  if (!identical(model_f, loo_f)) {
-    cat(sprintf("XF9! %s not found -- falling back to the ALL-DATA model, which SAW %s in training. This arm is LEAKED; run scripts/fit_xgb_flows_loo.R before quoting any number from it.\n",
-                loo_f, target_election))
-  } else {
-    cat(sprintf("XF9  leave-one-election-out flow model for %s: %s\n", target_election, loo_f))
-  }
   cols_f  <- "output/xgb-flows-v1-final-cols.json"
   feat_f  <- "output/xgb-flows-v1-features.csv"
+  model_f <- if (file.exists(loo_f)) loo_f else "output/xgb-flows-v1-final.model"
+  if (identical(model_f, loo_f)) {
+    cat(sprintf("XF9  leave-one-election-out flow model for %s: %s\n", target_election, loo_f))
+  } else {
+    # NOT EVERY MISSING LOO MODEL IS A LEAK. An election with no transfer file
+    # of its own -- wa2001 is the standing example, excluded upstream -- never
+    # enters the training corpus, so the all-data model has not seen it and no
+    # per-election model was ever written for it. Crying "LEAKED" there trains
+    # the reader to ignore the warning in the case that IS one, so check the
+    # corpus before choosing which thing to say.
+    in_corpus <- tryCatch({
+      if (!file.exists(feat_f)) NA
+      else target_election %in% unique(data.table::fread(feat_f, select = "election",
+                                                          showProgress = FALSE)$election)
+    }, error = function(e) NA)
+    if (isTRUE(in_corpus)) {
+      cat(sprintf("XF9! %s not found and %s IS in the training corpus -- falling back to the ALL-DATA model, which SAW it. This arm is LEAKED; run scripts/fit_xgb_flows_loo.R before quoting any number from it.\n",
+                  loo_f, target_election))
+    } else {
+      cat(sprintf("XF9  %s is not in the flow training corpus (no transfer file of its own), so no held-out model exists and the all-data model has not seen it -- using it is correct here, not leakage.\n",
+                  target_election))
+    }
+  }
   if (!file.exists(model_f) || !file.exists(cols_f) || !file.exists(feat_f)) {
     cat(sprintf("XF9! model/cols/features file missing -- run scripts/fit_xgb_flows_v1.R; AUSPOL_XGB_FLOWS per-seat override skipped\n"))
     return(NULL)

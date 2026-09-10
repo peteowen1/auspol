@@ -203,6 +203,130 @@ Two candidates worth trying before revisiting the flag, in order:
    below. That changes the absolute numbers for every arm here and could change
    the ranking.
 
+---
+
+# Diagnosis of the two regressing pairs (2026-09-11, Pete's follow-up)
+
+They are **two different failures**, not one.
+
+## wa2001: two seats, both independents
+
+57 seats, 27 worse and 25 better — a coin flip — but **the worst 5 carry 86% of
+the damage** and the top two are both independent winners:
+
+| seat | winner | p(winner), table flows | p(winner), xgb flows | log-loss cost |
+|---|---|---|---|---|
+| Alfred Cove | IND | 0.1877 | 0.0373 | +1.62 |
+| Pilbara | IND | 0.0169 | 0.0038 | +1.49 |
+
+No seat crossed the log-loss floor in either arm, so this is not a floor
+artifact. Accuracy 44/57 → 43/57.
+
+The mechanism, from the key the simulator actually consults in Alfred Cove:
+
+| key `ALP\|IND+LNP` | table | xgb |
+|---|---|---|
+| → IND | **90.8%** | **72.8%** |
+| → LNP | 9.2% | 27.2% |
+
+Janet Woollard won Alfred Cove on ALP preferences. Cutting that flow by 18
+points is what removes her.
+
+**wa2001 is structurally the worst possible case for this model**, for reasons
+that predate the experiment and are already in CLAUDE.md:
+
+- it has **no transfer file of its own**, so it is absent from the flow
+  training corpus entirely — no leave-one-out model exists for it, and the
+  all-data model has genuinely never seen it (that is not leakage, and the
+  warning now says so rather than crying wolf);
+- its table comes from **wa1996** — five years and a One Nation realignment
+  earlier;
+- the override supplies **118 keys for this seat where the table had 13**, so
+  105 of them replace the shipped model's fallback rather than a measurement.
+
+## fed2016: a broad drift, and a small ALP bias
+
+The opposite shape. 83 seats worse, 58 better, and the worst 5 carry only 37% —
+no single seat to blame. The losers are almost all **ALP-won marginals the
+model already had below 0.20** (Herbert, Cowan, Paterson, Longman, Macarthur,
+Macquarie, Braddon); the winners are the minor-party seats (Indi, Melbourne,
+Kennedy, Mayo). Accuracy is unchanged at 129/147.
+
+### Two hypotheses tested and killed
+
+**"The table holds a local signal xgb washes out."** No. Scored against the
+table the harness *actually* builds — `build_flow_matrix()` on the immediately
+preceding election, not the pooled `base_pred` every previous comparison used —
+**xgb beats the real table in 7 of 8 elections**, and on fed2016 by 19%
+(RMSE 0.0848 vs 0.1049). fed2016 gets *more accurate flows* and *worse seat
+calls*.
+
+Worth recording separately: every earlier "xgb vs the table" number in this
+repo was scored against `base_pred`, a pooled-over-all-elections lookup, which
+is **not** what the simulator uses. `scripts/diag_flow_vs_real_table.R` is the
+apples-to-apples version.
+
+**"A better flow exposes a bad primary pot."** Also no, and this one was my
+best guess. If the table's flow error had been compensating for primary error,
+flow damage should track primary RMSE. It does not: **r = 0.129, p = 0.567**
+over 22 pairs, and the median split runs the *wrong* way (worse primaries →
+flows helped more, −0.0119 vs −0.0072).
+
+### What does explain it
+
+A per-destination bias. Pooled over all 25 elections, signed error
+(prediction − truth) on ALP as a destination:
+
+| | table | xgb |
+|---|---|---|
+| ALP bias | +0.0002 | **−0.0022** |
+| ALP RMSE | 0.0874 | 0.0777 |
+
+The xgb model is **more accurate but slightly less well-centred on ALP** — the
+table was almost exactly unbiased there. Net two-party effect for fed2016:
+the model shifts preferences **1.35 points away from ALP** relative to the
+table. In an election decided by ALP marginals, a systematic 1.35-point shift
+moves every one of them the same way — which is precisely the 83-seat drift.
+
+That is a fixable defect, not a reason to abandon the model: a
+leave-one-election-out per-class bias correction on the model's output is the
+obvious candidate, and it is cheap.
+
+## Sensitivity — reported because it changes the verdict
+
+| pairs included | mean per-pair | t | p | better in |
+|---|---|---|---|---|
+| **all 22 (the headline)** | −0.0096 | −1.67 | **0.111** | 12/22 |
+| excluding wa2001 | −0.0122 | −2.30 | **0.032** | 12/21 |
+| excluding fed2016 | −0.0117 | −2.10 | 0.048 | 12/21 |
+| excluding both | −0.0147 | −2.93 | 0.009 | 12/20 |
+
+**wa2001 alone is what holds this below significance.** Excluding it takes
+p from 0.111 to 0.032 and the pooled gain from −0.0068 to −0.0083.
+
+**This is a sensitivity check, not the headline, and it must not become one.**
+Dropping the pair that regressed is exactly the after-the-fact rationalisation
+CLAUDE.md warns about, twice, with worked examples. The only thing that makes
+it worth printing is that wa2001's special status was documented **before** this
+experiment — it is excluded from the transfer corpus upstream, and CLAUDE.md
+already carries "the wa2001 pair has no transfers of its own so its flows fall
+back to pooled" as a standing caveat on how WA numbers read. The honest
+statement is: **the headline is p = 0.111**, and there is a principled reason to
+think one pair is unrepresentative.
+
+## Where it got better, and where it got worse — the summary
+
+- **Better**: minor-party and independent seats where the survivor set is
+  large and the table has no measurement. vic2014 −0.0664, wa2005 −0.0595,
+  nsw2019 −0.0435, vic2018 −0.0369, fed2013 −0.0355, sa2026 −0.0293.
+- **Worse**: (a) an election with no flow data of its own at all (wa2001), and
+  (b) two-party marginals in an election decided by them, via a ~1.35-point
+  systematic shift away from ALP (fed2016).
+
+Diagnostics: `scripts/diag_flow_regressions.R`, `diag_flow_one_seat.R`,
+`diag_flow_by_evidence.R`, `diag_flow_vs_real_table.R`,
+`diag_flow_gain_vs_primary.R`, `diag_flow_bias.R`.
+
 ## Caveat that applies to every number here
 
 Both challengers are validated **leave-one-group-out, not leave-future-out**.
