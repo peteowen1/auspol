@@ -1,6 +1,59 @@
 # auspol — work queue
 
+## SESSION 2026-09-10 (continued further): xgb v6 built, reviewed, two real bugs fixed — ship decision pending
+
+**Corrects the v5 entry below**: v5 was superseded same session by **v6**
+(v5's features + salience/emergence signal), pooled seat log loss **0.3403 →
+~0.3071**, best of v1-v6. Pete gave explicit, current authorization to ship
+whichever variant has the best pooled number and iterate on regressions
+after. Built the missing live-deployment pieces (`scripts/fit_xgb_primary_v6_final.R`,
+trained model saved) and wired `xgb_primary_predict_live()` to use them.
+
+**A HIGH-effort review pass before flipping the switch found two real,
+serious bugs — both fixed and verified, not just reported:**
+
+1. **Feature-scrambling bug.** `xgb_primary_predict_live()` joined feature
+   tables with `merge()` then assigned results back *by row position* —
+   `merge()` re-sorts its output alphabetically by default, so this silently
+   attached the wrong seat's/candidate's data to almost every prediction.
+   Found and independently reproduced by the reviewing agent. **Fixed**: all
+   six vulnerable joins replaced with `match()`-based key lookups, verified
+   against a standalone test reproducing the exact failure shape.
+2. **The salience data fix was never actually connected.** An earlier report
+   that real pre-nomination search-interest data had been "wired in" traced
+   to a manual one-off file edit that no script reproduced — confirmed via
+   git-history archaeology. **Fixed**: new `scripts/build_vic2026_salience_corpus.R`
+   is the real, idempotent, rerunnable version.
+
+**The corrected, TRUE picture, re-measured after both fixes**: 65 of
+Victoria's 87 seats predict independent/minor-right vote share near zero —
+not the 35 reported earlier (that number was computed while the scrambling
+bug was still live). Where real search-interest data exists (46 of 88 seats,
+independents/One Nation/other minor-right only), predictions look genuinely
+plausible — Eureka, Ripon, Sunbury, Morwell, Narre Warren North, Pakenham,
+Shepparton, Lara all correctly show strong One Nation shares, consistent
+with ~23% statewide ONP polling. Full detail: commit `1eccd0c`.
+
+Also fixed while reviewing: a live-forecast-crashing bug in the surge-v2
+hazard block, unrelated to xgb (`rownames(shares)` referenced before
+`shares` existed — dead code until real vic2026 salience data started
+flowing today, would have broken the published forecast the day nominations
+close, 9 Nov 2026, regardless of any xgb decision) — commit `ea5950c`.
+
+**Everything is committed to `dev` and pushed. `AUSPOL_XGB_PRIMARY_LIVE`
+stays `"0"` in `published_flags.R` — nothing has shipped.** Test suite and
+`R CMD check --as-cran` both clean. The only open question is Pete's:
+ship today with 65/87 seats still degraded outside the 46-seat salience
+coverage, or hold. Full session narrative in the entry below (superseded in
+parts, left for the record).
+
 ## SESSION 2026-09-10 (continued): census expansion, xgb v5, flows design started, GDELT parked
+
+**Superseded by the entry above**: xgb v5 → v6, census/sa2018 items below
+are now DONE (see commits `6ed6ea6`, `cb16d46`, `f856dd3` — NSW/SA/WA
+redistribution verification completed and one real bug fixed — MacKillop
+case mismatch; sa2018 wired into `backtest_candidate_sa.R` as
+`AUSPOL_SA_PAIR="2022"`). Left below verbatim as the original session record.
 
 **GDELT (news-article mention counts as a second salience signal) — PARKED,
 explicit resume next session, not dropped.** Full scoping:
