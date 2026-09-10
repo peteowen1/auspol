@@ -40,23 +40,29 @@ landed unless marked otherwise.
   exactly zero. `scripts/build_vic2026_salience_corpus.R` writes it into the
   schema `governed_population()` reads.
 
+### SHIPPED
+
+- **xgb primary vote, v6.** `AUSPOL_XGB_PRIMARY_LIVE = "1"` since 2026-09-11,
+  on Pete's repeated explicit instruction to ship the best pooled seat log loss
+  and iterate on regressions after. Pooled 0.3332 → **0.3069** measured
+  leave-one-pair-out over all 22 pairs. Accepted tradeoff, written into
+  `published_flags.R`: it erases independent/minor-right vote share across most
+  of Victoria (65 of 87 seats near zero) until vic2026 salience coverage
+  improves at nominations (9 Nov 2026). Re-check procedure is in that file.
+
 ### Built, measured, NOT shipped
 
-- **xgb primary vote, v1-v6.** Best pooled seat log loss 0.3403 → ~0.3071,
-  but erases independent/minor-right vote share across most of Victoria
-  (65 of 87 seats near zero). `AUSPOL_XGB_PRIMARY_LIVE` stays `"0"`.
-  **On hold** — the salience fix that would repair it only has data for 46 of
-  88 seats until nominations close. Two serious bugs were found and fixed
-  during review: a `merge()`-then-positional-assign that scrambled features
-  onto the wrong seats, and a "wired in" salience claim that was actually a
-  one-off manual file edit no script reproduced.
-- **xgb preference flows, v1** — measuring now. Row-level RMSE 0.1064 →
-  0.0979. First simulator measurement was invalid (the wiring fed statewide
-  averages where the model expects per-seat shares); with real per-seat data
-  it went to 2 clear wins, 2 ties, 0 regressions over 6 pairs. Full 22-pair ×
-  3-seed run in progress. Note what it *is*: 87% of its gain is `cond_rate` +
-  `pool_rate`, i.e. the existing lookup's own output — this is **learned
-  partial pooling over the lookup**, not a new information source.
+- **xgb preference flows, v1** — measured, **held off**.
+  `docs/reviews/xgb-primary-x-flows-2x2-2026-09-11.md` has the full 2x2.
+  Worth −0.0068 pooled log loss on top of the xgb primary (0.3069 → 0.3001),
+  but t = −1.67, **p = 0.111**, better in only 12 of 22 pairs, at ~3x runtime.
+  The two challengers **add** (interaction −0.0030, no interference); the
+  primary carries −0.0263 of the −0.0331 total.
+  More seeds will not settle it — seed sd is 0.0006-0.0019 against a 0.0068
+  effect, so **pair-to-pair variance is the binding constraint**.
+  Note what the flow model *is*: 87% of its gain is `cond_rate` + `pool_rate`,
+  i.e. the existing lookup's own output — **learned partial pooling over the
+  lookup**, not a new information source.
 - **`conditional_override` is now in the compiled C++ core** — per-seat flow
   overrides no longer force `engine="r"`. Verified byte-identical R vs cpp
   with the override both active and absent, down to the RNG-sequence counter.
@@ -71,13 +77,25 @@ dispersion-slope arm — both documented, both off.
 
 ### Open
 
-1. **v6 ship decision** — on hold pending the 9 Nov nomination data.
-2. **xgb flows** — awaiting the 22-pair result; known v2 defect, the wired
-   path hardcodes `dest_same`/`dest_same_mp` to 0, which is exactly why Kiama
-   can't work there.
-3. **GDELT** — parked, needs a GCP/BigQuery project before it can be tested
+1. **Why do wa2001 (+0.048) and fed2016 (+0.035) get WORSE under xgb flows?**
+   Between them they are most of the reason the flow arm misses significance.
+   wa2001 has no transfers of its own so its flows fall back to pooled — a
+   plausible mechanism rather than noise. This is the cheapest route to a
+   verdict on the flag.
+2. **Re-measure both challengers with TIME-FORWARD folds.** Both are validated
+   leave-one-group-out, so fed2007 is predicted by a model trained on fed2025.
+   Fair between arms, optimistic against the shipped baseline by an unmeasured
+   amount. Changes every absolute number in the 2x2.
+3. **vic2026 salience re-check after 12 noon, 9 Nov 2026** — re-run the three
+   fetch/build scripts named in `published_flags.R`, then re-measure the
+   statewide IND/OTH_RIGHT sums. That is when the shipped v6 model's Victorian
+   weakness should actually resolve.
+4. **`docs/NEXT-STEPS.md` is 53.4k chars / 878 lines** and past the hub warning
+   threshold again. Needs a scoped read-and-roll into `docs/backlog/`, not a
+   mechanical cut — live and closed items interleave.
+5. **GDELT** — parked, needs a GCP/BigQuery project before it can be tested
    (`docs/plans/gdelt-feasibility-2026-09-10.md`).
-4. **Census 2011/2006/2001** — the correspondence mechanism now exists, which
+6. **Census 2011/2006/2001** — the correspondence mechanism now exists, which
    was the blocker. 2006/2001 have no bulk data pack (per-division Excel).
 
 Full narrative, including the parts superseded within the session itself:

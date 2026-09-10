@@ -344,3 +344,163 @@ test_that("the compiled core is byte-identical to the R engine with every mechan
   expect_identical(strip(c4), strip(r4))
   expect_true(sum(r4$win_prob$prob[r4$win_prob$seat == "s0"]) < 1)   # some draws credited nobody
 })
+
+# ---------------------------------------------------------------------------
+# conditional_override: a PER-SEAT flow table, consulted before the shared one.
+# The shared matrix$conditional is keyed only by (excluded party, survivor set)
+# and has no seat dimension at all, so a flow model whose prediction depends on
+# a seat's own primary shares cannot reach the simulation without this.
+# Ported into src/seat_sim_core.cpp on 2026-09-10 as a sparse (seat, key, row)
+# triple; before that it forced engine = "r" and gave up ~80x.
+
+test_that("conditional_override moves the answer by exactly the amount it claims", {
+  # Fully deterministic: every sd is 0 and smooth is 0, so each number below is
+  # hand-computable and a wrong one names its own cause.
+  P  <- c("ALP", "LNP", "GRN", "OTH")
+  sh <- matrix(c(38, 40, 14, 8), nrow = 1, dimnames = list("s1", P))
+  # Shared table sends OTH 80/10/10 to ALP -- deliberately NOT uniform, so an
+  # override row that collapses to uniform is distinguishable from falling
+  # through to this table.
+  fm <- build_flow_matrix(data.table::data.table(
+    election = "x", seat = rep(c("a", "b"), each = 5), round = 1L,
+    from  = c("OTH","OTH","OTH","GRN","GRN", "OTH","OTH","OTH","GRN","GRN"),
+    to    = c("ALP","LNP","GRN","ALP","LNP", "ALP","LNP","GRN","ALP","LNP"),
+    votes = c(800,100,100,100,100, 800,100,100,100,100)), min_n = 1L)
+  go <- function(ov, eng = "cpp") {
+    unname(simulate_seat_contests(
+      sh, fm, party_sd = stats::setNames(rep(0, 4), P), seat_sd = 0,
+      n_sims = 3, smooth = 0, seed = 1,
+      conditional_override = ov, engine = eng)$tcp_share[1, 1])
+  }
+  # tcp_share is the WINNER's share of the final two, not ALP's.
+  # No override: OTH's 8 goes 80/10/10 (ALP 44.4, LNP 40.8, GRN 14.8), GRN then
+  # splits 50/50 -> ALP 51.8 v LNP 48.2.
+  expect_equal(go(NULL), 0.518)
+  # All of OTH then all of GRN to ALP: 38 + 8 = 46, + 14 = 60 v 40.
+  expect_equal(go(list(list("OTH|ALP+GRN+LNP" = c(ALP = 100),
+                            "GRN|ALP+LNP"     = c(ALP = 100)))), 0.600)
+  # A row naming no SURVIVING party sums to zero, so the transfer goes uniform
+  # across the three survivors (ALP 40.67, LNP 42.67, GRN 16.67 -> LNP 51.0).
+  # It must NOT fall through to the shared 80/10/10 table: an override row is a
+  # claim about this contest, and a claim of "nothing" is still a claim, so it
+  # takes `smooth` and not max(smooth, fallback_smooth).
+  #
+  # BOTH ENGINES. This asserted cpp only until 2026-09-11; the zero-weight path
+  # is a two-branch agreement (R sets got_cell before its tot <= 0 check, the
+  # core does the same), so a one-engine assertion would let a change break the
+  # agreement in the other and still pass.
+  for (eng in c("r", "cpp")) {
+    expect_equal(go(list(list("OTH|ALP+GRN+LNP" = c(OTH = 100))), eng), 0.510)
+  }
+})
+
+test_that("conditional_override ignores exactly the keys the R engine cannot reach", {
+  P  <- c("ALP", "LNP", "GRN", "OTH")
+  sh <- matrix(c(38, 40, 14, 8), nrow = 1, dimnames = list("s1", P))
+  fm <- build_flow_matrix(data.table::data.table(
+    election = "x", seat = rep(c("a", "b"), each = 5), round = 1L,
+    from  = c("OTH","OTH","OTH","GRN","GRN", "OTH","OTH","OTH","GRN","GRN"),
+    to    = c("ALP","LNP","GRN","ALP","LNP", "ALP","LNP","GRN","ALP","LNP"),
+    votes = c(800,100,100,100,100, 800,100,100,100,100)), min_n = 1L)
+  go <- function(ov, eng = "cpp") {
+    unname(simulate_seat_contests(
+      sh, fm, party_sd = stats::setNames(rep(0, 4), P), seat_sd = 0,
+      n_sims = 3, smooth = 0, seed = 1,
+      conditional_override = ov, engine = eng)$tcp_share[1, 1])
+  }
+  base <- 0.518
+  # The R loop looks the override up by a string it builds itself with sort(),
+  # so survivors in any other order can never match there. The compiled core
+  # works from an integer MASK, where survivor order is meaningless -- without
+  # an explicit canonical-form check it would honour a key R ignores, and the
+  # two engines would disagree on exactly the input a typo produces.
+  for (eng in c("r", "cpp")) {
+    expect_equal(go(list(list("OTH|LNP+GRN+ALP" = c(LNP = 100))), eng), base)
+    expect_equal(go(list(list("OTH|ALP+GRN+ZZZ" = c(LNP = 100),
+                              "ZZZ|ALP+GRN+LNP" = c(LNP = 100))), eng), base)
+    # `[[` on a list takes the FIRST exact match, so a repeated key is dead in
+    # the R engine. Keeping the LAST would send OTH's 8 to LNP -> 0.520.
+    expect_equal(go(list(list("OTH|ALP+GRN+LNP" = c(ALP = 100),
+                              "OTH|ALP+GRN+LNP" = c(LNP = 100),
+                              "GRN|ALP+LNP"     = c(ALP = 100))), eng), 0.600)
+    # A DUPLICATED SURVIVOR TOKEN inside one key. This is the nastiest of the
+    # unreachable-key shapes and it defeats the canonical round-trip check on
+    # its own: sort() leaves the repeat adjacent to itself, so the key
+    # reconstructs byte-identically and passes. The damage is in the mask,
+    # which combines bits with sum(), so a repeated bit CARRIES instead of
+    # setting: here ALP+ALP+ALP gives 1+1+1 = 3, which is exactly the mask of
+    # the REAL survivor set {ALP,LNP}. Without the anyDuplicated() guard in
+    # R/seat_sim.R this key hijacks the genuine "GRN|ALP+LNP" round in the
+    # compiled engine only (sending GRN's 14.8 to LNP -> 0.556), while R
+    # ignores it -- the exact silent divergence the round-trip check exists to
+    # prevent. Both engines must return the untouched base.
+    expect_equal(go(list(list("GRN|ALP+ALP+ALP" = c(LNP = 100))), eng), base)
+  }
+})
+
+test_that("conditional_override is byte-identical across engines and touches only its own seats", {
+  P <- c("ALP", "LNP", "GRN", "ONP", "IND", "OTH"); K <- length(P)
+  NS <- 8L; seats <- paste0("seat", seq_len(NS))
+  sh <- matrix(NA_real_, NS, K, dimnames = list(seats, P))
+  for (i in seq_len(NS)) {
+    x <- c(34 + i, 36 - i * 0.7, 11 + i * 0.3, 8, 6, 5)
+    sh[i, ] <- 100 * x / sum(x)
+  }
+  mk <- function(st, fr, to, v) data.table::data.table(
+    election = "e1", seat = st, round = 1L, from = fr, to = to, votes = v)
+  fm <- build_flow_matrix(data.table::rbindlist(lapply(c("a", "b"), function(s)
+    data.table::rbindlist(list(
+      mk(s, "OTH", c("ALP","LNP","GRN","ONP","IND"), c(300,250,200,150,100)),
+      mk(s, "IND", c("ALP","LNP","GRN","ONP"), c(400,350,150,100)),
+      mk(s, "ONP", c("ALP","LNP","GRN"), c(120,600,80)),
+      mk(s, "GRN", c("ALP","LNP"), c(800,200)))))), min_n = 2L)
+  ov <- vector("list", NS)
+  ov[[2]] <- list("GRN|ALP+LNP" = c(ALP = 20, LNP = 80),
+                  "ONP|ALP+GRN+LNP" = c(ALP = 55, LNP = 45))   # IND unnamed -> 0
+  ov[[5]] <- list("OTH|ALP+GRN+IND+LNP+ONP" = c(ALP = 10, LNP = 10, GRN = 40,
+                                                ONP = 20, IND = 20),
+                  "GRN|ALP+LNP" = c(ALP = 95, LNP = 5))
+  args <- list(sh, fm, party_sd = stats::setNames(c(2, 2, 1.5, 1.8, 2.2, 1.2), P),
+               seat_sd = 2.5, level_sd = c(1.2, 0.35), n_sims = 300, seed = 42,
+               shrink = 0.02, fallback_smooth = 0.30, flow_sd = 4,
+               surge_h = 0.06, surge_parties = c("ONP", "IND"))
+  # `engine` records which engine ran, so it is the one field that must differ.
+  strip <- function(x) x[setdiff(names(x), "engine")]
+  fit <- function(ov, eng) do.call(simulate_seat_contests,
+                                   c(args, list(conditional_override = ov, engine = eng)))
+  c_ov <- fit(ov, "cpp"); r_ov <- fit(ov, "r")
+  c_no <- fit(NULL, "cpp"); r_no <- fit(NULL, "r")
+  expect_identical(strip(c_ov), strip(r_ov))
+  expect_identical(strip(c_no), strip(r_no))
+  # A list of all-NULL entries must be exactly as inert as NULL itself.
+  expect_identical(strip(fit(vector("list", NS), "cpp")), strip(c_no))
+  # Without this the identity above is vacuous -- it would also hold if the
+  # override were silently ignored by BOTH engines.
+  expect_false(identical(c_ov$tcp_share, c_no$tcp_share))
+  # And the effect must be confined to the two seats that were given one.
+  moved <- colMeans(abs(c_ov$tcp_share - c_no$tcp_share), na.rm = TRUE) > 1e-12
+  expect_identical(unname(which(moved)), c(2L, 5L))
+})
+
+test_that("an override row is smoothed as a MEASUREMENT, not as a pooled fallback", {
+  # The one claim in the port that no other test pins to a number. `smooth` and
+  # `fallback_smooth` differ here (0.10 v 0.50), so the two readings of an
+  # override hit give visibly different answers: an override is a claim about
+  # THIS contest, which is what a real conditional cell is and what a pooled
+  # rate is not, so it must take `smooth` and never max(smooth, fallback_smooth).
+  P  <- c("ALP", "LNP", "GRN", "OTH")
+  sh <- matrix(c(38, 40, 14, 8), nrow = 1, dimnames = list("s1", P))
+  fm <- build_flow_matrix(data.table::data.table(
+    election = "x", seat = rep(c("a", "b"), each = 2), round = 1L,
+    from = "GRN", to = c("ALP", "LNP", "ALP", "LNP"),
+    votes = c(100, 100, 100, 100)), min_n = 1L)
+  go <- function(eng) unname(simulate_seat_contests(
+    sh, fm, party_sd = stats::setNames(rep(0, 4), P), seat_sd = 0,
+    n_sims = 3, smooth = 0.10, fallback_smooth = 0.50, seed = 1, engine = eng,
+    conditional_override = list(list("OTH|ALP+GRN+LNP" = c(ALP = 100))))$tcp_share[1, 1])
+  # Round 1: OTH's 8 at sm = 0.10 -> p = (0.93333, 0.03333, 0.03333), giving
+  # ALP 45.4667, LNP 40.2667, GRN 14.2667. Round 2: GRN out, shared 50/50 cell
+  # -> ALP 52.6 v LNP 47.4. At sm = 0.50 the same seat lands on 0.510 instead.
+  expect_equal(go("cpp"), 0.526)
+  expect_equal(go("r"), 0.526)
+})

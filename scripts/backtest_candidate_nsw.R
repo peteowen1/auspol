@@ -782,9 +782,14 @@ if (identical(Sys.getenv("AUSPOL_SALIENCE_SURGE_V2", "0"), "1")) {
                 .reentry_sd_k, attr(.re_sd, "n_set")))
     SD_OVR <- combine_sd_override(SD_OVR, .re_sd)
   }
+.xgb_flow_ov <- NULL
+if (identical(Sys.getenv("AUSPOL_XGB_FLOWS", "0"), "1")) {
+  .xgb_flow_ov <- tryCatch(xgb_flow_conditional_override_for(shares, TGT, PRV, "nsw"),
+                            error = function(e) { cat(sprintf("XF9! xgb flows per-seat FAILED: %s\n", conditionMessage(e))); NULL })
+}
 sim <- simulate_seat_contests(level_sd = .level_sd, sd_override = SD_OVR, level_mult = .lm(shares), shares, fm, party_sd = psd, seat_sd = sp$sd_within * SEAT_SD_MULT,
                               n_sims = N_SIMS, smooth = SMOOTH, seed = SEED, party_cor = PARTY_COR,
-                              shrink = SHRINK,
+                              shrink = SHRINK, conditional_override = .xgb_flow_ov,
                               fallback_smooth = FB_SMOOTH, shrink_k = SHRINK_K, flow_sd = FLOW_SD,
                               surge_h = surge_arg, surge_party = surge_party_arg,
                                 surge_from_zero = identical(Sys.getenv("AUSPOL_SURGE_FROM_ZERO", "0"), "1"), surge_mu = surge_mu_arg, surge_sd = surge_sd_arg)

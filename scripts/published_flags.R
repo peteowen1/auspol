@@ -100,6 +100,16 @@ PUBLISHED_FLAGS <- c(
   AUSPOL_SEAT_SD_MULT        = "1",
   AUSPOL_FLOW_SD             = "0",
   AUSPOL_FALLBACK_SMOOTH     = "0",
+  AUSPOL_XGB_PRIMARY         = "0",          # harness-only: 1 = replace every seat's primaries with the challenger's
+                                             # LEAVE-ONE-PAIR-OUT out-of-fold predictions. This is the backtest
+                                             # counterpart of AUSPOL_XGB_PRIMARY_LIVE and is leakage-free by
+                                             # construction; the live flag above is what ships.
+  AUSPOL_XGB_PRIMARY_OOF     = "",           # harness-only: which oof file the line above reads. Empty = the v6
+                                             # default (output/xgb-primary-v6-oof-predictions.csv), matching the
+                                             # shipped model. Set it to output/xgb-primary-oof-predictions.csv to
+                                             # measure v1 instead.
+  AUSPOL_XGB_FLOWS           = "0",          # harness-only: 1 = per-seat conditional preference flows from the
+                                             # XGBoost flow model -- experimental, NOT shipped
   AUSPOL_FLOW_SHRINK_K       = "0"           # data-weighted flow-cell smoothing -- REFUSED 2026-09-10, worse pooled at every tested k (0.339-0.354 vs baseline 0.339); helps Ballarat's own cell exactly as designed but federal/WA dominate the aggregate. docs/reviews/flow-cell-shrinkage-REFUSED-2026-09-10.md
 )
 

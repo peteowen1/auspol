@@ -1540,12 +1540,17 @@ for (X in out_all) {
                 .reentry_sd_k, attr(.re_sd, "n_set")))
     SD_OVR <- combine_sd_override(SD_OVR, .re_sd)
   }
+  .xgb_flow_ov <- NULL
+  if (identical(Sys.getenv("AUSPOL_XGB_FLOWS", "0"), "1")) {
+    .xgb_flow_ov <- tryCatch(xgb_flow_conditional_override_for(X$shares, sprintf("fed%d", K$to), sprintf("fed%d", K$from), "fed"),
+                              error = function(e) { cat(sprintf("XF9! xgb flows per-seat FAILED: %s\n", conditionMessage(e))); NULL })
+  }
   sim <- simulate_seat_contests(level_sd = .level_sd, sd_override = SD_OVR, level_mult = .lm(X$shares), X$shares, X$fm, party_sd = psd, seat_sd = sd_w * SEAT_SD_MULT,
                                 n_sims = N_SIMS, smooth = SMOOTH, seed = SEED,
                                 shrink = shrink_arg, surge_h = surge_arg, surge_party = surge_party_arg,
                                 surge_from_zero = identical(Sys.getenv("AUSPOL_SURGE_FROM_ZERO", "0"), "1"),
                                 surge_mu = surge_mu_arg, surge_sd = surge_sd_arg,
-                                party_cor = PARTY_COR, statewide_draws = X$sw_draws,
+                                party_cor = PARTY_COR, statewide_draws = X$sw_draws, conditional_override = .xgb_flow_ov,
                                 fallback_smooth = FB_SMOOTH, shrink_k = SHRINK_K, flow_sd = FLOW_SD)
   cat(sprintf("BF3e  engine %s | surge recipient fell back: %d class(es) absent, %d seat-draws at zero share\n", sim$engine, sim$surge_recipient_fallback, sim$surge_recipient_fallback_draws))
   wp <- as.data.table(sim$win_prob)
