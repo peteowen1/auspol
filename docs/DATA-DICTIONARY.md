@@ -1,6 +1,6 @@
 # Data dictionary
 
-**Generated 2026-09-07 by `scripts/build_data_dictionary.R`. Do not hand-edit.**
+**Generated 2026-09-10 by `scripts/build_data_dictionary.R`. Do not hand-edit.**
 
 Companion to `docs/DATA-REGISTRY.md`. The registry answers *do we have this
 file*; this answers *do we have this field*. Four wrong "we don't have it"
@@ -12,9 +12,9 @@ column does not exist.**
 
 | file | rows | columns |
 |---|---:|---|
-| `aec-fed-firstprefs.csv` | 6,570 | `seat`, `party`, `votes`, `election` |
+| `aec-fed-firstprefs.csv` | 6,572 | `seat`, `party`, `votes`, `election` |
 | `aec-fed-tcp.csv` | 2,404 | `election`, `seat`, `party`, `votes` |
-| `aec-fed-transfers.csv` | 18,226 | `election`, `seat`, `round`, `from`, `to`, `votes` |
+| `aec-fed-transfers.csv` | 18,227 | `election`, `seat`, `round`, `from`, `to`, `votes` |
 | `aec-fed-winners.csv` | 1,202 | `election`, `seat`, `winner` |
 | `ecq-2017-qld-firstprefs.csv` | 416 | `seat`, `party`, `votes` |
 | `ecq-2017-qld-winners.csv` | 93 | `election`, `seat`, `winner` |
@@ -58,6 +58,8 @@ column does not exist.**
 | `waec-2025-wa-firstprefs.csv` | 334 | `seat`, `party`, `votes` |
 | `waec-wa-transfers.csv` | 5,894 | `election`, `seat`, `round`, `from`, `to`, `votes`, `three_cornered` |
 | `waec-wa-winners.csv` | 466 | `election`, `seat`, `winner` |
+| `wikipedia-2018-sa-firstprefs.csv` | 264 | `seat`, `name`, `party_raw`, `votes`, `party` |
+| `wikipedia-2018-sa-winners.csv` | 47 | `election`, `seat`, `winner` |
 
 ## Raw downloads (`external/reference/`)
 
@@ -123,7 +125,10 @@ processed extract. Every one is recoverable without a new fetch.
 
 | file | rows | columns |
 |---|---:|---|
+| `aef-comparison-full.csv` | 659 | `seat`, `actual`, `our_pred`, `our_p`, `aef_pred`, `aef_p`, `delta`, `our_primary`, `actual_primary`, `aef_primary`, `pair` |
+| `aef-primary-all.csv` | 3,671 | `seat`, `party`, `aef_pcv`, `election` |
 | `aef-seat-scores.csv` | 728 | `election`, `seat`, `actual`, `pred`, `pred_p`, `prob`, `tpp_actual` |
+| `aef-worst-seats-full.csv` | 659 | `seat`, `actual`, `our_pred`, `our_p`, `aef_pred`, `aef_p`, `delta`, `our_primary_actual`, `actual_primary`, `aef_primary_actual`, `pair` |
 | `anchor-k.csv` | 834 | `region`, `year`, `K`, `party`, `fitted`, `actual`, `prior`, `polls30`, `err`, `cyc` |
 | `c3-widened-population.csv` | 4,168 | `election`, `region`, `seat`, `name`, `party`, `pcv`, `elected`, `own_prev_pcv`, `base`, `gated`, `xp`, `emergence` |
 | `cal-fed-m1.0.csv` | 886 | `seat`, `actual`, `prob`, `pred`, `pred_p`, `pair` |
@@ -143,16 +148,13 @@ processed extract. Every one is recoverable without a new fetch.
 | `cal-vic-m2.5.csv` | 166 | `seat`, `actual`, `prob`, `pred`, `pred_p`, `pair` |
 | `cal-vic-m4.0.csv` | 166 | `seat`, `actual`, `prob`, `pred`, `pred_p`, `pair` |
 | `calibration-arms.csv` | 10 | `pair`, `n`, `mult`, `logB`, `acc`, `T`, `logA`, `logC`, `B_vs_A`, `B_vs_C` |
-| `candidacies.csv` | 17,076 | `election`, `region`, `year`, `seat`, `name`, `surname`, `given`, `party`, `party_raw`, `party_ab`, `state`, `votes`, `pcv`, `elected`, `historic_elected`, `breakout`, `swing`, `ballot_position`, `ordinary`, `absent`, `provisional`, `prepoll`, `postal`, `ballot_order`, `tot` |
+| `candidacies.csv` | 17,793 | `election`, `region`, `year`, `seat`, `name`, `surname`, `given`, `party`, `party_raw`, `party_ab`, `state`, `votes`, `pcv`, `elected`, `historic_elected`, `breakout`, `swing`, `ballot_position`, `ordinary`, `absent`, `provisional`, `prepoll`, `postal`, `ballot_order`, `tot` |
 | `candidate-contests.csv` | 14,953 | `election`, `region`, `party`, `candidate_id`, `seat`, `pcv`, `surname`, `given`, `expected_pcv`, `performance_vs_expected` |
 | `candidate-ids.csv` | 10,763 | `V1`, `V2`, `V3`, `V4`, `V5`, `V6`, `V7`, `V8`, `V9`, `V10`, `V11`, `V12` |
 | `candidate-review.csv` | 190 | `V1`, `V2`, `V3`, `V4`, `V5`, `V6`, `V7`, `V8`, `V9`, `V10`, `V11`, `V12`, `V13`, `V14`, `V15` |
 | `cross-party-swing.csv` | 1,508 | `cycle`, `region`, `seat`, `party`, `y`, `x`, `own_base`, `pred_uniform`, `pred_cross` |
 | `cycle-walks-fed.csv` | 17 | `year`, `party`, `n`, `own_weight`, `obs_pooled`, `obs_cycle`, `rw_pooled_pts`, `rw_cycle_pts`, `at_lower`, `at_upper`, `conv`, `acf1`, `speedup` |
 | `cycle-walks-nsw.csv` | 8 | `year`, `party`, `n`, `own_weight`, `cycle_level`, `obs_pts`, `rw_pooled`, `rw_cycle`, `floor_ref`, `at_lower`, `at_upper`, `acf1` |
-| `cycle-walks-vic.csv` | 13 | `year`, `party`, `n`, `own_weight`, `cycle_level`, `obs_pts`, `rw_pts`, `floor_ref`, `at_upper`, `floored`, `acf1` |
-| `demographic-swing-loo.csv` | 12 | `party`, `pair`, `n`, `mae_uniform`, `mae_demog`, `improvement` |
-| `dev-slopes-heldout.csv` | 42 | `party`, `slope`, `se`, `n`, `pairs`, `held_out`, `t_vs_1` |
 
-_(1020 `backtest-*.csv` arm outputs omitted; they share one shape.)_
+_(1918 `backtest-*.csv` arm outputs omitted; they share one shape.)_
 

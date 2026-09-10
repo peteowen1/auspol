@@ -1,6 +1,6 @@
 # Data registry
 
-**Generated 2026-09-07 by `scripts/build_data_registry.R`. Do not hand-edit** --
+**Generated 2026-09-10 by `scripts/build_data_registry.R`. Do not hand-edit** --
 rerun the script instead. Regenerate it whenever you add or fetch data.
 
 This file exists because the same data has been declared missing three
@@ -58,6 +58,8 @@ cannot pass as a working one.
 | `waec-2025-wa-firstprefs.csv` | 7 KB |
 | `waec-wa-transfers.csv` | 231 KB |
 | `waec-wa-winners.csv` | 10 KB |
+| `wikipedia-2018-sa-firstprefs.csv` | 12 KB |
+| `wikipedia-2018-sa-winners.csv` | 963 B |
 
 ## Raw commission downloads (`external/reference/`)
 
@@ -73,7 +75,7 @@ cannot pass as a working one.
   - e.g. elections.json, publicResults_SGE2024_ICCDiv4_Final.zip, publicResults_State2020_aurukun2020_Final.zip, qld2017-cdx.txt
 - **waec/** -- 947 files, 27.1 MB
   - e.g. app.html, app.min.js, config-loader.js, config.json
-- **trends/** -- 3727 files, 2.3 MB
+- **trends/** -- 4627 files, 2.8 MB
   - e.g. 2019_anch2_Adrian_Wone_Susie_Beveridge_Will_Landers_Ammar_Khan.rds, 2019_anch2_Bill_Chandler_Susan_Moylan_Dave_Blake_Tim_Bohm.rds, 2019_anch2_Robert_Oakeshott_Helen_Haines_Zali_Steggall_Kerryn_Phelps.rds, 2019_anch2_Trevor_Jones_Colin_Butland_David_Norman_Thor_Prohaska.rds
 - **boundaries/** -- 20 files, 157.6 MB
   - e.g. SED_2021.zip, SED_2021_AUST_GDA2020.CPG, SED_2021_AUST_GDA2020.dbf, SED_2021_AUST_GDA2020.prj
@@ -91,7 +93,7 @@ NAMES live -- the per-seat results files carry `seat, party, votes` only.
 
 | election | seats | candidates | IND | non-major breakouts |
 |---|---:|---:|---:|---:|
-| fed2004 | 150 | 1081 | 99 | 8 |
+| fed2004 | 150 | 1081 | 99 | 6 |
 | fed2007 | 150 | 1050 | 102 | 6 |
 | fed2010 | 150 | 844 | 82 | 12 |
 | fed2013 | 150 | 1184 | 74 | 9 |
@@ -105,9 +107,10 @@ NAMES live -- the per-seat results files carry `seat, party, votes` only.
 | qld2017 | 93 | 453 | 95 | 49 |
 | qld2020 | 93 | 597 | 69 | 13 |
 | qld2024 | 93 | 525 | 38 | 14 |
+| sa2018 | 47 | 264 | 51 | 12 |
 | sa2022 | 47 | 240 | 20 | 6 |
 | sa2026 | 47 | 388 | 34 | 31 |
-| vic2010 | 88 | 502 | 75 | 88 |
+| vic2010 | 88 | 502 | 75 | 9 |
 | vic2014 | 88 | 545 | 91 | 9 |
 | vic2018 | 88 | 507 | 102 | 9 |
 | vic2022 | 87 | 731 | 119 | 13 |
@@ -120,7 +123,7 @@ NAMES live -- the per-seat results files carry `seat, party, votes` only.
 | wa2021 | 59 | 463 | 17 | 0 |
 | wa2025 | 59 | 398 | 29 | 6 |
 
-**Total: 17529 candidacies, 28 elections, 459 non-major breakouts.**
+**Total: 17793 candidacies, 29 elections, 390 non-major breakouts.**
 
 ## Known gaps
 
