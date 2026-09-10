@@ -682,7 +682,16 @@ if (.surge_v2_on) {
     cat(sprintf("DS3  surge-v2 requested but vic2026 has no salience corpus yet -- FALLING BACK to flat surge_h%s\n",
                 .reason("hz")))
   } else {
-    sn <- rownames(shares)
+    # `shares` does not exist yet at this point in the script -- it is first
+    # created at `shares <- mat22` further down. This branch was DEAD until a
+    # real vic2026 salience corpus existed (previously .hz was always NULL
+    # here), so the bug was never exercised: it would have crashed the
+    # published forecast the day real candidate salience data became
+    # available (nominations close 9 Nov 2026), unrelated to anything else.
+    # Seat names are identical to what `shares` will have (shares <- mat22,
+    # unchanged since), so mat22's rownames are the correct, already-defined
+    # substitute.
+    sn <- rownames(mat22)
     if (is.null(sn) && is.data.frame(shares)) sn <- as.character(shares$seat)
     v <- setNames(.hz$seat_hazard$surge_h, .hz$seat_hazard$seat)[sn]
     miss <- sum(is.na(v)); v[is.na(v)] <- 0
