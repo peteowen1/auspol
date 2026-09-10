@@ -29,30 +29,45 @@ CEN <- file.path(REF, "census")
 BND <- file.path(REF, "boundaries")
 dir.create(CEN, showWarnings = FALSE, recursive = TRUE)
 
+# REAL integrity check, not just "the central directory lists it": `unzip(...,
+# list = TRUE)` only reads the zip's directory and proves nothing about
+# whether the compressed bytes themselves are intact -- a truncated download
+# can still produce a complete, listable directory (CLAUDE.md's own recorded
+# case: a truncated file passed a size guard and parsed to zero rows). This
+# extracts every member to a scratch directory and checks each extracted
+# file's size against the size the directory itself claims, which forces the
+# decompression to actually happen.
+verify_zip_integrity <- function(zip_path) {
+  listing <- utils::unzip(zip_path, list = TRUE)
+  tdir <- tempfile("zipcheck")
+  ok <- tryCatch({
+    utils::unzip(zip_path, exdir = tdir)
+    sizes <- file.size(file.path(tdir, listing$Name))
+    !anyNA(sizes) && all(sizes == listing$Length)
+  }, error = function(e) FALSE)
+  unlink(tdir, recursive = TRUE)
+  ok
+}
+
 # ---- acquire: national census pack ------------------------------------------
 census_zip <- file.path(CEN, "2021_GCP_CED_AUS.zip")
-if (!file.exists(census_zip) || file.size(census_zip) < 1e6) {
+if (!file.exists(census_zip) || file.size(census_zip) < 1e6 || !verify_zip_integrity(census_zip)) {
   url <- paste0("https://www.abs.gov.au/census/find-census-data/datapacks/",
                 "download/2021_GCP_CED_for_AUS_short-header.zip")
-  ok <- tryCatch({
+  dl_err <- tryCatch({
     utils::download.file(url, census_zip, quiet = TRUE, mode = "wb")
-    TRUE
-  }, error = function(e) FALSE)
-  good <- ok && file.exists(census_zip) &&
-    !inherits(tryCatch(utils::unzip(census_zip, list = TRUE), error = function(e) e), "error")
-  if (!good) stop("CED census download failed or is not a readable archive")
-  cat(sprintf("CE1  census pack downloaded (%.1f MB)\n", file.size(census_zip)/1e6))
+    NULL
+  }, error = function(e) conditionMessage(e))
+  if (!is.null(dl_err)) stop("CED census download failed: ", dl_err)
+  if (!verify_zip_integrity(census_zip))
+    stop("CED census zip downloaded but failed integrity verification (extracted ",
+         "member size mismatch) -- treat as corrupt, do not use")
+  cat(sprintf("CE1  census pack downloaded and verified (%.1f MB)\n", file.size(census_zip)/1e6))
 } else {
-  cat(sprintf("CE1  census pack already present (%.1f MB)\n", file.size(census_zip)/1e6))
+  cat(sprintf("CE1  census pack already present and verified (%.1f MB)\n", file.size(census_zip)/1e6))
 }
-# integrity: every member's CRC, not just that the zip opens -- a truncated
-# download can still produce a listable central directory.
 zi <- utils::unzip(census_zip, list = TRUE)
-bad_crc <- tryCatch({
-  con <- unz(census_zip, zi$Name[1]); close(con); FALSE
-}, error = function(e) TRUE)
-if (bad_crc) stop("CED census zip: first member failed to open -- treat as corrupt")
-cat(sprintf("CE1  archive readable, %d members\n", nrow(zi)))
+cat(sprintf("CE1  archive verified, %d members\n", nrow(zi)))
 
 # ---- acquire: CED boundary shapefile -----------------------------------------
 bnd_zip <- file.path(BND, "CED_2021_AUST_GDA2020_SHP.zip")
@@ -62,16 +77,16 @@ if (!file.exists(dbf)) {
   url <- paste0("https://www.abs.gov.au/statistics/standards/",
                 "australian-statistical-geography-standard-asgs-edition-3-july-2021-june-2026/",
                 "access-and-downloads/digital-boundary-files/CED_2021_AUST_GDA2020_SHP.zip")
-  ok <- tryCatch({
+  dl_err <- tryCatch({
     utils::download.file(url, bnd_zip, quiet = TRUE, mode = "wb")
-    TRUE
-  }, error = function(e) FALSE)
-  good <- ok && file.exists(bnd_zip) &&
-    !inherits(tryCatch(utils::unzip(bnd_zip, list = TRUE), error = function(e) e), "error")
-  if (!good) stop("CED boundary download failed or is not a readable archive")
+    NULL
+  }, error = function(e) conditionMessage(e))
+  if (!is.null(dl_err)) stop("CED boundary download failed: ", dl_err)
+  if (!verify_zip_integrity(bnd_zip))
+    stop("CED boundary zip downloaded but failed integrity verification -- treat as corrupt")
   utils::unzip(bnd_zip, exdir = BND)
   if (!file.exists(dbf)) stop("CED boundary zip extracted but .dbf missing")
-  cat(sprintf("CE2  boundary shapefile fetched and extracted (%.1f MB)\n", file.size(bnd_zip)/1e6))
+  cat(sprintf("CE2  boundary shapefile fetched, verified and extracted (%.1f MB)\n", file.size(bnd_zip)/1e6))
 } else {
   cat("CE2  boundary shapefile already present\n")
 }
@@ -94,6 +109,7 @@ read_dbf_fields <- function(path, want) {
   }
   seek(con, hlen)
   out <- vector("list", nrec)
+  n_read <- 0L
   for (i in seq_len(nrec)) {
     rec <- readBin(con, "raw", rlen)
     if (length(rec) < rlen) break
@@ -105,6 +121,16 @@ read_dbf_fields <- function(path, want) {
       off <- off + wd[j]
     }
     out[[i]] <- vals
+    n_read <- i
+  }
+  # A short read means the .dbf is truncated -- the header's own record count
+  # (nrec) says how many rows to expect, and reading fewer must be visible
+  # rather than silently returning a short table (the same "size floor is not
+  # completeness" trap this repo has hit before, here on a record count
+  # instead of a byte count).
+  if (n_read < nrec) {
+    stop(".dbf truncated: header claims ", nrec, " records, only ", n_read,
+         " could be read from ", path, " -- treat the file as corrupt, do not use")
   }
   d <- as.data.table(do.call(rbind, out))
   setnames(d, nm)
@@ -144,6 +170,19 @@ cat(sprintf("CE4  excluding %d non-electorate residual row(s) (one 'No usual add
 cat("     'Migratory - Offshore - Shipping' per state/territory, not real seats): ")
 cat(paste(cen$ced_name[is_residual], collapse = ", "), "\n")
 cen <- cen[!is_residual]
+# This is a fixed allowlist of two known residual patterns, not a verified-
+# complete list -- if ABS ever adds or renames a residual category, a row
+# with a plausible-but-fake "seat" name would silently survive as a real
+# electorate. A broader, case-insensitive check for the words that mark every
+# residual category ABS has ever used catches a new one even if its exact
+# wording changes, rather than trusting the allowlist stays exhaustive.
+still_residual_looking <- grepl("usual address|migratory|no fixed address",
+                                 cen$ced_name, ignore.case = TRUE)
+if (any(still_residual_looking)) {
+  stop("Row(s) surviving exclusion still look like ABS residual categories, not real ",
+       "electorates -- the allowlist above is stale: ",
+       paste(cen$ced_name[still_residual_looking], collapse = ", "))
+}
 
 # Real federal division names ARE single-tier (no upper-house-region suffix
 # the way ABS's SED names carry) -- checked directly rather than assumed.

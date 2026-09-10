@@ -46,16 +46,30 @@ HTML <- file.path(RAW, "sa2018-ha.html")
 
 if (!file.exists(HTML) || file.info(HTML)$size < 3e5) {
   ok <- FALSE
+  last_err <- NULL
   for (k in 1:3) {
-    try({
+    last_err <- tryCatch({
       utils::download.file(utils::URLencode(URL), HTML, quiet = TRUE, mode = "wb",
                             headers = c("User-Agent" = UA))
-      ok <- file.exists(HTML) && file.info(HTML)$size > 3e5
-    }, silent = TRUE)
+      NULL
+    }, error = function(e) conditionMessage(e))
+    # Size alone is a FLOOR, not a completeness check -- CLAUDE.md's own
+    # recorded case is a truncated 65536-byte file that cleared a bare size
+    # guard and parsed to zero rows. A real Wikipedia page always closes its
+    # </html> tag; a response cut off mid-transfer (or a large rate-limit/
+    # CAPTCHA page) might still clear the size floor without ever closing it.
+    ok <- is.null(last_err) && file.exists(HTML) && file.info(HTML)$size > 3e5 &&
+      grepl("</html>",
+            paste(readLines(HTML, warn = FALSE, encoding = "UTF-8"), collapse = ""),
+            fixed = TRUE)
     if (ok) break
     Sys.sleep(c(5, 15, 30)[k])
   }
-  if (!ok) stop("Could not fetch ", URL)
+  if (!ok) {
+    stop("Could not fetch ", URL,
+         if (!is.null(last_err)) paste0(" -- last error: ", last_err)
+         else " -- downloaded but failed the size/closing-tag integrity check")
+  }
 }
 x <- paste(readLines(HTML, warn = FALSE, encoding = "UTF-8"), collapse = "\n")
 cat(sprintf("SW1  %s: %.1f MB\n", HTML, file.info(HTML)$size / 1e6))
