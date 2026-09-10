@@ -174,3 +174,61 @@ the **lower** bound of 0.65, added here rather than after seeing results.
 
 Ship if the primary passes **and** all three guards hold **and** no refusal
 condition fires. Report all of them either way, including the ones that fail.
+
+---
+
+# RESULT, 2026-09-11: v1 REFUSED on its own primary
+
+`scripts/fit_xgb_emergence.R`. Scored without running the simulator, because
+the criterion is defined on the predicted distribution.
+
+| | baseline | after | bar | verdict |
+|---|---|---|---|---|
+| **PRIMARY** rms_z, 201 emergence rows | 3.93 | **3.00** | ≤ 2.50 | **FAIL** |
+| % beyond z = 2 | 56.2% | 40.8% | — | improved |
+| GUARD 1 non-emergent minors | 0.80 | **0.69** | [0.65, 1.25] | pass, *barely* |
+| GUARD 1 % beyond z = 2 | 1.5% | 1.6% | ≤ 5% | pass |
+| GUARD 3 pairs improved | — | **17 of 17** | ≥ 6 of 10 | pass |
+
+**Refused.** The primary moved 0.93 of the required 1.43, against an MDE of
+0.93 — so the improvement is real and roughly one MDE, and still short of the
+bar committed before any of it was run.
+
+Guard 1 is worth noting as a near-miss: 0.69 against a floor of 0.65. That is
+the failure mode the dry-run predicted — buying the tail by widening everything
+— showing up at about a third of the strength that would have disqualified it.
+The two-sided guard earned its place.
+
+## Why it fell short, diagnosed
+
+The mechanism works **where the class is learnable**, and fails where it is not:
+
+| class | emergences | pairs | % in one pair | model AUC | `pred_share` alone |
+|---|---|---|---|---|---|
+| IND | 91 | 21 | 13% | **0.872** | 0.819 |
+| ONP | 64 | 7 | **59% (sa2026)** | **0.201** | 0.854 |
+| OTH_RIGHT | 37 | 9 | **57% (fed2013)** | 0.546 | 0.751 |
+| GRN | 22 | 10 | 36% | 0.473 | 0.643 |
+
+**IND — 93% of the AEF gap — works, and beats the best single feature.** The
+other three do not, and ONP is not merely uninformative at 0.201, it is
+*inverted*: holding out sa2026 removes 38 of its 64 emergences, so the fold
+that needs the prediction is the fold that carries the evidence. That is a
+data-sufficiency limit of leave-one-pair-out on a concentrated class, not a
+flaw in the parameterisation.
+
+The conditional magnitudes came out sane and are worth keeping either way
+(partially pooled, leave-one-pair-out): IND +12.9 (sd 8.9), OTH_RIGHT +9.2,
+ONP +7.0, GRN +5.9, against the simulator's single global `surge_mu`.
+
+## What is NOT being done here
+
+A per-class fallback — use `pred_share`'s ranking wherever the out-of-fold AUC
+is below 0.5 — would very likely clear the bar. **It is not being applied,
+because choosing it now means choosing it after seeing which classes failed**,
+which is the rationalisation this file exists to prevent, and which CLAUDE.md
+records happening twice in three experiments.
+
+It is a good idea and it needs its own pre-registration, with its own guard
+against the obvious hole: a rule that swaps in a different predictor whenever
+the first one underperforms out-of-fold will look good by construction.
