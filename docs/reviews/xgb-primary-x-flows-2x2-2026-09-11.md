@@ -179,7 +179,12 @@ elections**. The weak seat-log-loss result is therefore not a bad flow model —
 it is that better preference flows translate weakly into better seat calls,
 because most seats are not decided by the preference distribution.
 
-## Recommendation
+## Recommendation — SUPERSEDED 2026-09-11 by the diagnosis below
+
+Left unedited. The original recommendation was to hold the flows; after
+diagnosing the two regressing pairs and refusing the bias correction on its own
+dry run, the recommendation changed to ship. The revised version is at the end
+of the diagnosis section.
 
 **Keep `AUSPOL_XGB_FLOWS` off for now; the xgb primary stays shipped.** The
 flows are worth 0.0068 on top, which is real money in this metric, but at
@@ -288,9 +293,54 @@ the model shifts preferences **1.35 points away from ALP** relative to the
 table. In an election decided by ALP marginals, a systematic 1.35-point shift
 moves every one of them the same way — which is precisely the 83-seat drift.
 
-That is a fixable defect, not a reason to abandon the model: a
-leave-one-election-out per-class bias correction on the model's output is the
-obvious candidate, and it is cheap.
+That looked like a fixable defect, and I recommended fixing it before shipping.
+**The dry run killed it.** See the next section — the conclusion below is
+superseded and is left in place so the reasoning is visible.
+
+### The bias correction, proposed and REFUSED before any simulation ran
+
+Proposed: `bias(c, e) = mean(xgb_pred - y)` over out-of-fold rows with
+destination class `c`, excluding election `e`; subtract, floor at zero,
+renormalise per event. Leave-one-election-out twice over.
+
+Dry-run first, per CLAUDE.md, because a seat-sim arm is 40 minutes and this is
+seconds. Results (`scripts/diag_flow_bias_correction.R`):
+
+- It does exactly what it says on its direct target: per-class pooled bias goes
+  to ~0.000 for all seven classes, row RMSE 0.0979 → 0.0972.
+- **And it makes the quantity that actually matters worse.** Net two-party bias
+  shrank in only **4 of 25** elections; mean |bias| went **0.0275 → 0.0302**.
+- **The named case got worse**: fed2016 −0.0195 → −0.0216.
+
+**Why**: the global per-class bias is tiny (−0.0022 on ALP) while the
+*per-election* net two-party bias is an order of magnitude larger, ±0.03 to
+±0.07, and **swings in sign** — vic2014 −0.068, wa2025 +0.071. Correcting a
+global mean cannot touch an election-specific swing, and subtracting a constant
+from a quantity whose sign varies pushes half the cases further out.
+
+**And the swing is not predictable, so no correction fitted on history can
+remove it:**
+
+- against the previous election in the same jurisdiction, **r = 0.282,
+  p = 0.242** (n = 19 consecutive pairs);
+- as a stable per-region offset, within-region sd **0.0315** against an overall
+  sd of **0.0352** — almost no reduction.
+
+So fed2016's regression is **variance, not a defect**. There is nothing to fix.
+
+### Which also disposes of the reason not to ship
+
+The concern that blocked shipping was that a systematic ALP shift would distort
+the live Victorian forecast. It will not, and the flow model is **better**
+centred than the thing it replaces:
+
+| net two-party flow bias, mean \|bias\| over 25 elections | |
+|---|---|
+| pooled-lookup baseline | 0.0407 |
+| **xgb flow model** | **0.0275** |
+
+xgb is better centred in **16 of 25** elections. It reduces two-party flow bias
+on average; fed2016 is one of the nine where it overshoots past zero.
 
 ## Sensitivity — reported because it changes the verdict
 
@@ -325,7 +375,37 @@ think one pair is unrepresentative.
 
 Diagnostics: `scripts/diag_flow_regressions.R`, `diag_flow_one_seat.R`,
 `diag_flow_by_evidence.R`, `diag_flow_vs_real_table.R`,
-`diag_flow_gain_vs_primary.R`, `diag_flow_bias.R`.
+`diag_flow_gain_vs_primary.R`, `diag_flow_bias.R`,
+`diag_flow_bias_correction.R`.
+
+## REVISED recommendation
+
+**Ship it.** Set `AUSPOL_XGB_FLOWS = "1"`.
+
+What changed from the original "hold": the only concrete reason to hold was a
+suspected systematic ALP bias that would reach the live Victorian forecast.
+That is disproven — the flow model is *better* centred on two-party flow bias
+than the mechanism it replaces (0.0275 vs 0.0407, better in 16 of 25), and the
+residual swing is unpredictable, so no correction can remove it.
+
+What remains is: a model that predicts flows better than the shipped table in
+**7 of 8 elections**, worth **−0.0068** pooled seat log loss on top of the xgb
+primary (0.3069 → 0.3001), better in 12 of 22 pairs, with two named
+regressions — one an election with no flow data of its own, one variance.
+
+That is exactly the situation Pete's standing rule covers: if the overall model
+keeps getting better, one or two regressions are acceptable. The honest caveats
+that go with shipping it:
+
+- the headline is **p = 0.111**, not significant, and it should be described
+  that way rather than as a proven gain;
+- it costs ~3x runtime per pair;
+- **wa2001 will regress, and that is expected, not a surprise to investigate
+  later** — it has no transfer file of its own.
+
+Not blockers, but queued: re-measure with time-forward folds (below), and
+`AUSPOL_XGB_FLOWS` needs adding to `published_flags.R` at its shipped value in
+the same commit that flips it.
 
 ## Caveat that applies to every number here
 
