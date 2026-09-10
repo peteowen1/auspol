@@ -69,6 +69,43 @@ PUBLISHED_FLAGS <- c(
                                              # IND/OTH_RIGHT sums -- that is when this weakness should actually
                                              # resolve. Set back to "0" to revert, no other change needed.
                                              # docs/reviews/xgb-primary-v5-seat-features-2026-09-10.md
+  AUSPOL_XGB_FLOWS           = "1",          # 1 = per-seat conditional preference flows from the XGBoost flow
+                                             # model (R/xgb_flow_override.R), consulted BEFORE the lookup table
+                                             # rather than instead of it -- a key the model does not supply falls
+                                             # back exactly as before.
+                                             #
+                                             # SHIPPED 2026-09-11. Worth -0.0068 pooled seat log loss on top of
+                                             # the xgb primary (0.3069 -> 0.3001), all 22 pairs, 3 seeds, better
+                                             # in 12 of 22. The flow model beats the table the harness actually
+                                             # builds in 7 of 8 elections tested head to head.
+                                             #
+                                             # THE HEADLINE IS NOT SIGNIFICANT: t = -1.67, p = 0.111 clustered on
+                                             # pairs. Shipped on Pete's standing rule -- overall better, one or
+                                             # two regressions acceptable -- not because it cleared a bar. Say
+                                             # "not significant" when quoting it.
+                                             #
+                                             # TWO KNOWN REGRESSIONS, both diagnosed, neither a blocker:
+                                             #   wa2001 +0.048 -- EXPECTED. No transfer file of its own, so it
+                                             #     never enters the flow training corpus. Do not re-investigate.
+                                             #   fed2016 +0.035 -- VARIANCE, not a defect. A per-class bias
+                                             #     correction was proposed, dry-run and REFUSED: it zeroed the
+                                             #     global bias and made the per-election two-party bias worse
+                                             #     (shrank in 4 of 25, mean |bias| 0.0275 -> 0.0302), because
+                                             #     that bias swings sign and is unpredictable from history
+                                             #     (r = 0.282, p = 0.242 against the previous election).
+                                             #
+                                             # LIVE LIMITATION, verified by smoke test 2026-09-11 and NOT hidden:
+                                             # the personal-vote features dest_same / dest_same_mp are 0 on
+                                             # 0.0% of 42,108 rows for vic2026, because output/candidacies.csv
+                                             # has ZERO vic2026 rows -- candidate_returns(vic2022, vic2026)
+                                             # errors and the override says so. Every other feature works; the
+                                             # override still builds for 87 of 87 seats. This resolves only when
+                                             # scripts/build_candidacies.R is extended to write vic2026 rows
+                                             # after nominations close (12 noon, 9 Nov 2026) -- add it to the
+                                             # AUSPOL_XGB_PRIMARY_LIVE re-check above, it is the same trip.
+                                             #
+                                             # Costs ~3x runtime per pair. Set to "0" to revert; no other change
+                                             # needed. docs/reviews/xgb-primary-x-flows-2x2-2026-09-11.md
   AUSPOL_DEFECT_POOLED       = "2",          # 2 = separate member (0.282) / losing-candidate (0.142) defector rates.
                                              # ADOPTED BY PETE ON MECHANISM 2026-09-09, not on the criterion: the arm
                                              # missed its own primary bar (t -2.04 vs 2.08) but passed R1 in both arms,
@@ -100,16 +137,25 @@ PUBLISHED_FLAGS <- c(
   AUSPOL_SEAT_SD_MULT        = "1",
   AUSPOL_FLOW_SD             = "0",
   AUSPOL_FALLBACK_SMOOTH     = "0",
-  AUSPOL_XGB_PRIMARY         = "0",          # harness-only: 1 = replace every seat's primaries with the challenger's
+  AUSPOL_XGB_PRIMARY         = "1",          # harness-only: 1 = replace every seat's primaries with the challenger's
                                              # LEAVE-ONE-PAIR-OUT out-of-fold predictions. This is the backtest
                                              # counterpart of AUSPOL_XGB_PRIMARY_LIVE and is leakage-free by
-                                             # construction; the live flag above is what ships.
+                                             # construction; the live flag above is the one that ships.
+                                             #
+                                             # SET TO "1" 2026-09-11, in the same commit that shipped the flows.
+                                             # It was "0" while AUSPOL_XGB_PRIMARY_LIVE was "1", which broke this
+                                             # file's whole contract: an unadorned harness run is supposed to
+                                             # measure WHAT SHIPS, and it was measuring the pre-xgb primary while
+                                             # the published forecast ran v6. That is the exact 2026-09-06
+                                             # incident this registry exists to prevent, in a new costume.
+                                             #
+                                             # It moves the harness baseline: pooled seat log loss at published
+                                             # defaults goes 0.3332 -> ~0.3001 (with the flows below). Comparisons
+                                             # against pre-2026-09-11 numbers must say which baseline they used.
   AUSPOL_XGB_PRIMARY_OOF     = "",           # harness-only: which oof file the line above reads. Empty = the v6
                                              # default (output/xgb-primary-v6-oof-predictions.csv), matching the
                                              # shipped model. Set it to output/xgb-primary-oof-predictions.csv to
                                              # measure v1 instead.
-  AUSPOL_XGB_FLOWS           = "0",          # harness-only: 1 = per-seat conditional preference flows from the
-                                             # XGBoost flow model -- experimental, NOT shipped
   AUSPOL_FLOW_SHRINK_K       = "0"           # data-weighted flow-cell smoothing -- REFUSED 2026-09-10, worse pooled at every tested k (0.339-0.354 vs baseline 0.339); helps Ballarat's own cell exactly as designed but federal/WA dominate the aggregate. docs/reviews/flow-cell-shrinkage-REFUSED-2026-09-10.md
 )
 

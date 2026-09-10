@@ -30,6 +30,13 @@ globalVariables(c(
 # trend_flow_matrix() -- the last pre-existing but not previously declared).
 # Same reason as the block above: R CMD check reads these as undefined
 # globals without this.
+# Added 2026-09-11: the per-seat flow override's own data.table columns
+# (xgb_flow_conditional_override_for()). R CMD check reported all eight as
+# undefined globals the moment that function was exported.
+globalVariables(c(
+  "from", "from_primary", "n_cell", "n_survivors", "rate", "seat_i",
+  "surv", "to_primary"
+))
 globalVariables(c(
   "..feat_cols", ".b", ".k", ".k_prev", ".mu", ".r2", ".rate", ".s",
   ".s_renamed", ".tl", "ALP", "LNP", "actual_now", "ballot_pos_min",

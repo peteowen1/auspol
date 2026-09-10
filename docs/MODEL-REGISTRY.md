@@ -1,6 +1,6 @@
 # Model registry
 
-**Generated 2026-09-09 by `scripts/build_model_registry.R`. Do not hand-edit** --
+**Generated 2026-09-11 by `scripts/build_model_registry.R`. Do not hand-edit** --
 rerun the script instead. Regenerate whenever a switch is added to
 `published_flags.R` or a harness's wiring changes.
 
@@ -31,7 +31,7 @@ All seven share one `R/` package core (`simulate_seat_contests()`,
 in which switches each one WIRES and which data source each reads, not in
 separate model code.
 
-## Switch parity (37 switches from `published_flags.R`, 7 entry points)
+## Switch parity (43 switches from `published_flags.R`, 7 entry points)
 
 | switch | fit_seats (published) | fed | nsw | qld | sa | vic | wa |
 |---|---|---|---|---|---|---|---|
@@ -40,10 +40,12 @@ separate model code.
 | `AUSPOL_DEFECT_POOLED` | NO | NO | NO | NO | NO | NO | NO |
 | `AUSPOL_DEV_SLOPE` | yes | yes | yes | yes | yes | yes | yes |
 | `AUSPOL_DEV_SLOPE_MODE` | yes | yes | yes | yes | yes | yes | yes |
+| `AUSPOL_DISPERSION_SLOPE` | yes | yes | yes | yes | yes | yes | yes |
 | `AUSPOL_FALLBACK_SMOOTH` | yes | yes | yes | yes | yes | yes | yes |
-| `AUSPOL_FIT_SLOPES` | NO | yes | yes | yes | yes | yes | yes |
+| `AUSPOL_FIT_SLOPES` | yes | yes | yes | yes | yes | yes | yes |
 | `AUSPOL_FLOW_SD` | yes | yes | yes | yes | yes | yes | yes |
 | `AUSPOL_FLOW_SHIFT` | yes | NO | NO | NO | NO | NO | NO |
+| `AUSPOL_FLOW_SHRINK_K` | yes | yes | yes | yes | yes | yes | yes |
 | `AUSPOL_FORCE_FP` | yes | NO | NO | NO | NO | NO | NO |
 | `AUSPOL_FP_SD_MODE` | yes | NO | NO | NO | NO | NO | NO |
 | `AUSPOL_IND_SALIENCE` | NO | yes | NO | NO | NO | NO | NO |
@@ -72,12 +74,15 @@ separate model code.
 | `AUSPOL_SURGE_RECIPIENT` | yes | yes | yes | yes | yes | yes | yes |
 | `AUSPOL_SURGE_SCALE` | yes | yes | yes | yes | yes | yes | yes |
 | `AUSPOL_WA_FLOWS` | yes | yes | NO | yes | yes | yes | NO |
+| `AUSPOL_XGB_FLOWS` | yes | yes | yes | yes | yes | yes | yes |
+| `AUSPOL_XGB_PRIMARY` | yes | NO | NO | NO | NO | NO | NO |
+| `AUSPOL_XGB_PRIMARY_LIVE` | yes | NO | NO | NO | NO | NO | NO |
+| `AUSPOL_XGB_PRIMARY_OOF` | NO | NO | NO | NO | NO | NO | NO |
 
 ## Every non-universal switch, explained
 
 - **`AUSPOL_COV_LOO`** (intentional / dead experiment): Read inside R/statewide_cor.R, not per-harness -- universal in practice, absent from every harness script by design.
 - **`AUSPOL_DEFECT_POOLED`** (**adopted, shared-function wiring**): ADOPTED 2026-09-09 at "2" (docs/plans/prereg-defector-two-rate- 2026-09-09.md), by Pete on mechanism -- the arm missed its own primary bar (t -2.04 vs 2.08) but every directional indicator was favourable and R4 confirmed the published Victorian forecast is byte-identical (Victoria fields no major-party defector standing as a minor this cycle, so the mechanism does not fire there). Reaches fit_seats_full.R correctly: personal_prior_vote() self-resolves both rates from Sys.getenv() when the caller passes NULL, exactly so this did not need a seventh call site wired by hand -- the mistake that made the first pooled-arm run VOID earlier the same day.
-- **`AUSPOL_FIT_SLOPES`** (intentional / dead experiment): REFUSED 2026-09-09 (docs/plans/prereg-fit-conditional-slopes-2026-09-09.md): pooled log loss FAIL, panel FAIL, though it surfaced that the shipped OTH_RIGHT constants are wrong in opposite directions. Harness-only by design -- a refused, default-off experiment has no reason to reach fit_seats_full.R.
 - **`AUSPOL_FLOW_SHIFT`** (intentional / dead experiment): Published-forecast-only (fit_seats_full.R shifts the statewide TPP fundamentals blend for the live Victorian projection); backtests inject real historical first preferences directly and have no fundamentals blend to shift. NOT federal-specific -- fit_seats_full.R is the Victorian forecast; corrected 2026-09-09, this comment previously said "federal" for every switch fit_seats_full.R alone reads, which is wrong for all six in this group.
 - **`AUSPOL_FORCE_FP`** (intentional / dead experiment): Published-forecast-only (fit_seats_full.R -- forces a first-preference override for the live Victorian forecast); no analogue in a backtest scored against real historical results.
 - **`AUSPOL_FP_SD_MODE`** (intentional / dead experiment): Published-forecast-only (fit_seats_full.R -- first-preference spread mode for the live Victorian projection); backtests use realised historical first preferences, not a projected spread.
@@ -96,6 +101,9 @@ separate model code.
 - **`AUSPOL_SPLIT_SLOPE`** (intentional / dead experiment): REFUSED 2026-09-09, and harmfully so (docs/plans/ prereg-partial-return-split-slope-2026-09-09.md): it discarded the existing conditional-slope system instead of refining it. Harness-only by design, same reasoning as AUSPOL_FIT_SLOPES.
 - **`AUSPOL_SURGE_FROM_ZERO`** (intentional / dead experiment): WA has no candidate-level salience corpus -- same exclusion as AUSPOL_SALIENCE_EXPECTED, intentional.
 - **`AUSPOL_WA_FLOWS`** (intentional / dead experiment): Self-referential no-op in the WA harness itself, same shape as AUSPOL_QLD_FLOWS above but not disclosed via an `.inert` list there. Genuinely absent from QLD (uses AUSPOL_QLD_FLOWS instead).
+- **`AUSPOL_XGB_PRIMARY`** (intentional / dead experiment): Harness-only BY DESIGN, and the split is the point: a backtest must predict a pair with a model that never saw it, so the harnesses read the leave-one-pair-out out-of-fold predictions (output/xgb-primary-v6-oof-predictions.csv) while the published forecast reads the all-data model via AUSPOL_XGB_PRIMARY_LIVE. Same shipped decision, two artifacts, because vic2026 is not in any training set and fed2016 is. Absent from fit_seats_full.R deliberately -- an oof file has no row for an election that has not happened.
+- **`AUSPOL_XGB_PRIMARY_LIVE`** (intentional / dead experiment): Published-forecast-only (fit_seats_full.R), the live counterpart of AUSPOL_XGB_PRIMARY above. Loads output/xgb-primary-v6-final.model, trained on all 22 historical pairs -- correct here and leakage in a backtest, which is exactly why the two switches exist separately.
+- **`AUSPOL_XGB_PRIMARY_OOF`** (intentional / dead experiment): Harness-only escape hatch naming which out-of-fold file AUSPOL_XGB_PRIMARY reads; empty means the v6 default. Exists because the unversioned filename is v1's, and until 2026-09-11 the backtest arm measured v1 while the live forecast shipped v6 -- the two were never describing the same model. Not a modelling switch; no published-forecast analogue.
 
 ## Gaps the switch-presence matrix cannot see
 
@@ -125,4 +133,4 @@ asks for":
 
 ## Coverage check
 
-MR2  every non-universal switch (21 of 37) has a recorded classification.
+MR2  every non-universal switch (23 of 43) has a recorded classification.

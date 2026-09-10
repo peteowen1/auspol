@@ -72,6 +72,22 @@ for (sw in names(COMMENT_ONLY)) {
 # row; update this when a gap is fixed or a new one is found by rerunning
 # this script and diffing its output.
 CLASSIFY <- list(
+  AUSPOL_XGB_PRIMARY = paste(
+    "Harness-only BY DESIGN, and the split is the point: a backtest must predict a pair with a",
+    "model that never saw it, so the harnesses read the leave-one-pair-out out-of-fold predictions",
+    "(output/xgb-primary-v6-oof-predictions.csv) while the published forecast reads the all-data",
+    "model via AUSPOL_XGB_PRIMARY_LIVE. Same shipped decision, two artifacts, because vic2026 is",
+    "not in any training set and fed2016 is. Absent from fit_seats_full.R deliberately -- an oof",
+    "file has no row for an election that has not happened."),
+  AUSPOL_XGB_PRIMARY_LIVE = paste(
+    "Published-forecast-only (fit_seats_full.R), the live counterpart of AUSPOL_XGB_PRIMARY above.",
+    "Loads output/xgb-primary-v6-final.model, trained on all 22 historical pairs -- correct here and",
+    "leakage in a backtest, which is exactly why the two switches exist separately."),
+  AUSPOL_XGB_PRIMARY_OOF = paste(
+    "Harness-only escape hatch naming which out-of-fold file AUSPOL_XGB_PRIMARY reads; empty means",
+    "the v6 default. Exists because the unversioned filename is v1's, and until 2026-09-11 the",
+    "backtest arm measured v1 while the live forecast shipped v6 -- the two were never describing",
+    "the same model. Not a modelling switch; no published-forecast analogue."),
   AUSPOL_COV_LOO = "Read inside R/statewide_cor.R, not per-harness -- universal in practice, absent from every harness script by design.",
   AUSPOL_SALIENCE_SMOOTH = "Read inside R/salience_surge.R, not per-harness -- universal in practice.",
   AUSPOL_SIM_ENGINE = "Read inside R/seat_sim.R's simulate_seat_contests(), not per-harness -- universal in practice.",

@@ -1045,8 +1045,45 @@ t0 <- Sys.time()
 SHRINK <- as.numeric(Sys.getenv("AUSPOL_SHRINK", "0.01"))
 if (SHRINK > 0) cat(sprintf("CAL  calibration shrink %.2f applied
 ", SHRINK))
+# XGBOOST PREFERENCE FLOWS (AUSPOL_XGB_FLOWS). Per-seat conditional flow
+# dictionaries replacing the lookup table's, consulted before it rather than
+# instead of it -- a key the model does not supply still falls back exactly as
+# before. Worth -0.0068 pooled seat log loss on top of the xgb primary
+# (0.3069 -> 0.3001) across all 22 pairs, better in 12 of 22.
+#
+# SHIPPED 2026-09-11 with its weaknesses named rather than buried, and the
+# headline is NOT significant: t = -1.67, p = 0.111 clustered on pairs. It goes
+# in on the same standing rule as the primary -- overall better, one or two
+# regressions acceptable -- not because it cleared a bar.
+#
+#   - wa2001 REGRESSES (+0.048) and that is EXPECTED, not a mystery to chase
+#     later: it has no transfer file of its own, so it never enters the flow
+#     training corpus at all.
+#   - fed2016 regresses (+0.035) and that is VARIANCE, not a defect. A per-class
+#     bias correction was proposed, dry-run, and REFUSED -- it fixed the global
+#     bias and made the per-election two-party bias worse, because that bias
+#     swings sign and is unpredictable (r = 0.282, p = 0.242 against the
+#     previous election in the same jurisdiction).
+#
+# For vic2026 there is no leave-one-out model and there cannot be -- the
+# election has not happened, so it is not in the corpus and the all-data model
+# has not seen it. That is the correct artifact for a live forecast, and
+# R/xgb_flow_override.R says so explicitly rather than warning about leakage.
+#
+# .try() for the same reason as xgb_primary_predict_live() above: this depends
+# on pre-nomination candidate data, and an unhandled error here would crash the
+# published run instead of falling back to the shipped flow table.
+# docs/reviews/xgb-primary-x-flows-2x2-2026-09-11.md
+.cond_ov <- NULL
+if (identical(Sys.getenv("AUSPOL_XGB_FLOWS", "0"), "1")) {
+  .cond_ov <- .try("xgb_flows", xgb_flow_conditional_override_for(shares, "vic2026", "vic2022", "vic"))
+  if (is.null(.cond_ov))
+    cat(sprintf("XF4!! xgb_flow_conditional_override_for() FAILED%s -- flows UNCHANGED, shipped lookup table used\n",
+                .reason("xgb_flows")))
+}
 sim <- simulate_seat_contests(level_sd = .level_sd, level_mult = .lm(shares), shares, fm, party_sd = psd, seat_sd = SEAT_SD, shrink = SHRINK,
                               n_sims = N_SIMS, smooth = SMOOTH, seed = SEED,
+                              conditional_override = .cond_ov,
                               statewide_draws = sw_draws,
                               fallback_smooth = FB_SMOOTH, shrink_k = SHRINK_K, flow_sd = FLOW_SD,
                               surge_h = surge_arg, surge_party = surge_party_arg,

@@ -50,19 +50,21 @@ landed unless marked otherwise.
   of Victoria (65 of 87 seats near zero) until vic2026 salience coverage
   improves at nominations (9 Nov 2026). Re-check procedure is in that file.
 
-### Built, measured, NOT shipped
-
-- **xgb preference flows, v1** — measured, **held off**.
-  `docs/reviews/xgb-primary-x-flows-2x2-2026-09-11.md` has the full 2x2.
-  Worth −0.0068 pooled log loss on top of the xgb primary (0.3069 → 0.3001),
-  but t = −1.67, **p = 0.111**, better in only 12 of 22 pairs, at ~3x runtime.
-  The two challengers **add** (interaction −0.0030, no interference); the
-  primary carries −0.0263 of the −0.0331 total.
-  More seeds will not settle it — seed sd is 0.0006-0.0019 against a 0.0068
-  effect, so **pair-to-pair variance is the binding constraint**.
+- **xgb preference flows, v1.** `AUSPOL_XGB_FLOWS = "1"` since 2026-09-11.
+  Pooled 0.3069 → **0.3001** on top of the xgb primary, all 22 pairs, 3 seeds,
+  better in 12 of 22. **Quote it as NOT significant**: t = −1.67, p = 0.111
+  clustered on pairs. Shipped on the standing "overall better, one or two
+  regressions acceptable" rule, not because it cleared a bar. Costs ~3x runtime.
+  Both regressions are diagnosed and neither is a bug to chase:
+  **wa2001 +0.048 is expected** (no transfer file of its own, so it never
+  enters the flow training corpus) and **fed2016 +0.035 is variance** — a
+  per-class bias correction was proposed, dry-run and **refused** because it
+  zeroed the global bias while making the per-election two-party bias worse.
   Note what the flow model *is*: 87% of its gain is `cond_rate` + `pool_rate`,
   i.e. the existing lookup's own output — **learned partial pooling over the
   lookup**, not a new information source.
+  Full 2x2 and diagnosis: `docs/reviews/xgb-primary-x-flows-2x2-2026-09-11.md`.
+
 - **`conditional_override` is now in the compiled C++ core** — per-seat flow
   overrides no longer force `engine="r"`. Verified byte-identical R vs cpp
   with the override both active and absent, down to the RNG-sequence counter.
@@ -77,25 +79,26 @@ dispersion-slope arm — both documented, both off.
 
 ### Open
 
-1. **Why do wa2001 (+0.048) and fed2016 (+0.035) get WORSE under xgb flows?**
-   Between them they are most of the reason the flow arm misses significance.
-   wa2001 has no transfers of its own so its flows fall back to pooled — a
-   plausible mechanism rather than noise. This is the cheapest route to a
-   verdict on the flag.
-2. **Re-measure both challengers with TIME-FORWARD folds.** Both are validated
+1. **Re-measure both challengers with TIME-FORWARD folds.** Both are validated
    leave-one-group-out, so fed2007 is predicted by a model trained on fed2025.
    Fair between arms, optimistic against the shipped baseline by an unmeasured
    amount. Changes every absolute number in the 2x2.
-3. **vic2026 salience re-check after 12 noon, 9 Nov 2026** — re-run the three
-   fetch/build scripts named in `published_flags.R`, then re-measure the
-   statewide IND/OTH_RIGHT sums. That is when the shipped v6 model's Victorian
-   weakness should actually resolve.
-4. **`docs/NEXT-STEPS.md` is 53.4k chars / 878 lines** and past the hub warning
+2. **vic2026 re-check after 12 noon, 9 Nov 2026**, one trip covering two
+   things. (a) Re-run the three salience fetch/build scripts named in
+   `published_flags.R` and re-measure the statewide IND/OTH_RIGHT sums — that
+   is when the shipped v6 primary's Victorian weakness should resolve.
+   (b) **Extend `scripts/build_candidacies.R` to write vic2026 rows.**
+   `output/candidacies.csv` has zero of them today, so
+   `candidate_returns(vic2022, vic2026)` errors and the flow model's
+   personal-vote features `dest_same`/`dest_same_mp` are **0.0% populated in
+   the live forecast** (verified by smoke test 2026-09-11). Everything else in
+   the override works; this one feature pair is inert until then.
+3. **`docs/NEXT-STEPS.md` is 54.2k chars / 888 lines** and past the hub warning
    threshold again. Needs a scoped read-and-roll into `docs/backlog/`, not a
    mechanical cut — live and closed items interleave.
-5. **GDELT** — parked, needs a GCP/BigQuery project before it can be tested
+4. **GDELT** — parked, needs a GCP/BigQuery project before it can be tested
    (`docs/plans/gdelt-feasibility-2026-09-10.md`).
-6. **Census 2011/2006/2001** — the correspondence mechanism now exists, which
+5. **Census 2011/2006/2001** — the correspondence mechanism now exists, which
    was the blocker. 2006/2001 have no bulk data pack (per-division Excel).
 
 Full narrative, including the parts superseded within the session itself:
