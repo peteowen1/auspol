@@ -1,3 +1,40 @@
+# auspol 0.4.28
+
+**A surging class could never be picked as its own seat's surge recipient,
+and census coverage went from three jurisdictions to six-plus-two-vintages.**
+
+- **SA2026 One Nation fix**: `surge_hazard_for()` scored a target election's
+  candidates through a population unconditionally filtered to
+  `governed == TRUE` -- correct for FITTING the hazard model, but
+  `governed_population()` deliberately marks every candidate of a surging
+  class `governed = FALSE`, so a genuine party-wide surge (One Nation in
+  SA2026, the flagship case behind this fix) could never be selected as a
+  seat's recipient, no matter how strong its real signal was.
+  `surge_training_population()` gains `require_governed` (default `TRUE`,
+  every existing caller unaffected); scoring now uses the target election's
+  full population. SA2026: recipient selection goes from structurally 0-for-
+  47 to 5-for-47 (1 of 4 real winners matched); seat log loss holds flat
+  (0.4098 vs shipped 0.4088). This changes the DEFAULT surge-v2 behaviour,
+  already published.
+- **A latent crash fixed before it could happen**: the same surge-v2 block
+  referenced a variable before it existed -- dead code until real candidate
+  salience data starts flowing, which happens when Victorian nominations
+  close (9 Nov 2026). Found and fixed before that date, not after.
+- **sa2018** South Australian election data fetched, verified, wired into
+  the SA harness as a prior-only pair.
+- **Census (ABS) extended from NSW/VIC/SA-2021-only to all six
+  jurisdictions plus federal, plus a 2016 vintage** -- including catching a
+  real data bug (SA's "MacKillop" vs ABS's "Mackillop", a case mismatch not
+  a boundary change) and a real boundary-vintage mismatch (ABS silently
+  re-issues old boundary files under later timestamps -- confirmed for
+  WA/QLD's 2016 boundaries, which turned out to be 2018 boundaries under a
+  2016 label).
+- **xgb-primary-vote challenger investigated (v1-v6), not shipped.** Best
+  variant beats shipped pooled seat log loss (0.3403 -> ~0.3071) but has a
+  severe live-forecast side effect (near-total erasure of independent/
+  minor-right predicted vote share) not yet fully solved by real
+  pre-nomination salience data. `AUSPOL_XGB_PRIMARY_LIVE` stays `"0"`.
+
 # auspol 0.4.24
 
 **The surge reached the wrong candidate, and one registry now says what
