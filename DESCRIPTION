@@ -16,7 +16,8 @@ Imports:
     Matrix,
     Rcpp,
     stats,
-    utils
+    utils,
+    xgboost
 LinkingTo:
     Rcpp
 Suggests:
