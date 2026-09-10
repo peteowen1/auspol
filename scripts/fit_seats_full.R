@@ -172,6 +172,7 @@ ONP_B1  <- -0.0968  # Greens-share coefficient, fitted on Victorian federal 2025
 # default to 0 (a no-op), so this changes nothing today; wired so a future
 # tune of either reaches Victoria's forecast rather than silently not.
 FB_SMOOTH <- as.numeric(Sys.getenv("AUSPOL_FALLBACK_SMOOTH", "0"))
+SHRINK_K  <- as.numeric(Sys.getenv("AUSPOL_FLOW_SHRINK_K", "0"))    # EXPERIMENTAL, docs/plans/prereg-flow-cell-shrinkage-2026-09-10.md
 FLOW_SD   <- as.numeric(Sys.getenv("AUSPOL_FLOW_SD", "0"))
 cat(sprintf("BS1f fallback_smooth %.2f | flow_sd %.2f\n", FB_SMOOTH, FLOW_SD))
 
@@ -708,14 +709,54 @@ if (.surge_scale != 1) {
                 surge_mu_arg, surge_sd_arg, .hz$lambda, .hz$n_train_winners))
   }
 }
+# DISPERSION SLOPE (AUSPOL_DISPERSION_SLOPE=1, default OFF -- unset
+# reproduces this forecast byte-for-byte). Replaces the flat "new"-candidate
+# constant with corr(class) x sd-ratio(class, level), fit leave-target-out;
+# see fit_dispersion_slopes() and docs/plans/prereg-dispersion-slope-2026-09-09.md.
+# level_now is the FORECAST state_mean, not an actual result -- vic2026 has
+# not happened -- which is exactly what fit_dispersion_slopes()'s level_now
+# argument exists for.
+.fitsl <- if (identical(Sys.getenv("AUSPOL_DISPERSION_SLOPE", "0"), "1")) {
+  # vic2026 is not in all_election_pairs() (it names completed elections
+  # only); add it here so the target's own "prev" seat history (vic2022) is
+  # found, same as .returns above handles the same gap for candidate_returns().
+  .try("fitsl", fit_dispersion_slopes("vic2026", level_now = state_mean,
+                                       pairs = c(all_election_pairs(),
+                                                 list(list(election = "vic2026", prev = "vic2022")))))
+} else if (identical(Sys.getenv("AUSPOL_FIT_SLOPES", "0"), "1")) {
+  .try("fitsl", fit_conditional_slopes("vic2026"))
+} else NULL
+.slope_arm_requested <- identical(Sys.getenv("AUSPOL_DISPERSION_SLOPE", "0"), "1") ||
+  identical(Sys.getenv("AUSPOL_FIT_SLOPES", "0"), "1")
+if (!is.null(.fitsl)) {
+  cat(sprintf("FS1  fitted slopes | same %s | new %s%s\n",
+    paste(sprintf("%s=%.3f", names(.fitsl$same), .fitsl$same), collapse=" "),
+    paste(sprintf("%s=%.3f", names(.fitsl$new),  .fitsl$new),  collapse=" "),
+    if (!is.null(.fitsl$n)) sprintf(" | n_pairs %s",
+      paste(sprintf("%s=%d", .fitsl$n$class, .fitsl$n$n_pairs), collapse=" ")) else " | n_pairs unavailable (fallback constants, nothing fitted)"))
+} else if (.slope_arm_requested) {
+  # .try() records a thrown error into .why; this branch fires on the OTHER
+  # failure shape -- the call returned NULL/threw without .try capturing a
+  # message, or ran and every class fell back internally. Either way, this
+  # must be visible: a silent success-only branch here is the exact "guard
+  # that can't fail" pattern that let a real bug print nothing, indistinguishable
+  # from "the arm is simply off."
+  cat(sprintf("FS1! fitted-slope arm requested but produced no result%s -- falling back to shipped constants\n",
+              .reason("fitsl")))
+}
 .vic_slope <- function(p, seats) {
   if (.screened && !is.null(.permit) && !is.null(.returns)) {
     pv <- .permit[.permit$party == p, ]
     lut <- stats::setNames(as.logical(pv$permit), pv$seat)
     pm <- unname(lut[seats]); pm[is.na(pm)] <- TRUE
-    return(screened_slopes(p, seats, .returns, pm, same_mp = .MP_SLOPE))
+    return(screened_slopes(p, seats, .returns, pm, same_mp = .MP_SLOPE,
+                            same = if (is.null(.fitsl)) formals(screened_slopes)$same else .fitsl$same,
+                            new  = if (is.null(.fitsl)) formals(screened_slopes)$new  else .fitsl$new))
   }
-  if (.cond && !is.null(.returns)) return(conditional_slopes(p, seats, .returns, same_mp = .MP_SLOPE))
+  if (.cond && !is.null(.returns))
+    return(conditional_slopes(p, seats, .returns, same_mp = .MP_SLOPE,
+                               same = if (is.null(.fitsl)) formals(conditional_slopes)$same else .fitsl$same,
+                               new  = if (is.null(.fitsl)) formals(conditional_slopes)$new  else .fitsl$new))
   SLOPE[[p]]
 }
 
@@ -786,6 +827,13 @@ if (ONP_FIX == "1") {
 }
 shares[, "ONP"] <- onp_target
 shares <- 100 * shares / rowSums(shares)
+# XGBOOST PRIMARY CHALLENGER (AUSPOL_XGB_PRIMARY_LIVE, default 0 -- NOT SHIPPED).
+# docs/reviews/xgb-primary-challenger-2026-09-09.md: leave-one-pair-out
+# backtest result 0.3358 -> 0.3122 pooled seat log loss (t=-2.89). KNOWN
+# WEAKNESS, unresolved: worse than this model specifically on rare
+# independent/minor-party emergences, which is what a One Nation surge in
+# Victoria is. Held pending the fix queue in docs/NEXT-STEPS.md.
+shares <- xgb_primary_predict_live(shares, mat22, a22, state_mean, .returns, region = "vic")
 # THE SALIENCE POINT ESTIMATE REACHES THE PUBLISHED FORECAST, 2026-09-07.
 # It never had: the blend lived inline in the federal harness only, so every
 # figure this script published described a model without it while the federal
@@ -978,7 +1026,7 @@ if (SHRINK > 0) cat(sprintf("CAL  calibration shrink %.2f applied
 sim <- simulate_seat_contests(level_sd = .level_sd, level_mult = .lm(shares), shares, fm, party_sd = psd, seat_sd = SEAT_SD, shrink = SHRINK,
                               n_sims = N_SIMS, smooth = SMOOTH, seed = SEED,
                               statewide_draws = sw_draws,
-                              fallback_smooth = FB_SMOOTH, flow_sd = FLOW_SD,
+                              fallback_smooth = FB_SMOOTH, shrink_k = SHRINK_K, flow_sd = FLOW_SD,
                               surge_h = surge_arg, surge_party = surge_party_arg,
                               surge_from_zero = identical(Sys.getenv("AUSPOL_SURGE_FROM_ZERO", "0"), "1"), surge_mu = surge_mu_arg, surge_sd = surge_sd_arg)
 cat(sprintf("S6e  engine %s | surge recipient fell back: %d class(es) absent, %d seat-draws at zero share\n", sim$engine, sim$surge_recipient_fallback, sim$surge_recipient_fallback_draws))

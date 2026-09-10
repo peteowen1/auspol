@@ -43,6 +43,18 @@ PUBLISHED_FLAGS <- c(
   AUSPOL_DEV_SLOPE           = "",           # explicit per-class slope table; empty = uniform swing, the base under screened mode
   AUSPOL_SPLIT_SLOPE         = "0",          # 1 = returning/departed portions get separate fitted slopes -- built, measured, REFUSED 2026-09-09; docs/plans/prereg-partial-return-split-slope-2026-09-09.md
   AUSPOL_FIT_SLOPES          = "0",          # 1 = conditional same/new slopes fitted leave-one-election-out -- built, measured, REFUSED 2026-09-09 (pooled log loss FAIL, panel FAIL); docs/plans/prereg-fit-conditional-slopes-2026-09-09.md
+  AUSPOL_DISPERSION_SLOPE    = "0",          # 1 = flat "new"-candidate slope (GRN/ONP only -- IND/OTH_RIGHT are not real parties) replaced by corr(class) x sd-ratio(class, level), leave-target-out -- built, measured TWICE, REFUSED both times 2026-09-09. Round 1 (4 classes) FAILED (t=-0.35); round 2 (GRN/ONP only, Pete's correction) still FAILED (t=0.06, ~zero pooled effect) -- fed2013 genuinely regresses since OTH_RIGHT is correctly left untouched. docs/plans/prereg-dispersion-slope-2026-09-09.md
+  AUSPOL_XGB_PRIMARY_LIVE    = "0",          # 1 = every seat's primary share replaced by the XGBoost challenger
+                                             # (scripts/fit_xgb_primary_final.R, trained on all 22 historical pairs).
+                                             # NOT SHIPPED. Backtest result is real (leave-one-pair-out pooled seat
+                                             # log loss 0.3358 -> 0.3122, t=-2.89, better in 17 of 22 pairs) but it is
+                                             # WORSE than the model it replaces specifically on rare independent/
+                                             # minor-party emergences (worst-20-seats-vs-AEF mean error: shipped
+                                             # 14.54, xgb 15.18) -- exactly the shape of a One Nation surge, which is
+                                             # what this forecast is making for Victoria right now. Held pending the
+                                             # fix queue in docs/NEXT-STEPS.md; do not flip this without Pete's
+                                             # explicit sign-off after that weakness is addressed or accepted in
+                                             # writing. docs/reviews/xgb-primary-challenger-2026-09-09.md
   AUSPOL_DEFECT_POOLED       = "2",          # 2 = separate member (0.282) / losing-candidate (0.142) defector rates.
                                              # ADOPTED BY PETE ON MECHANISM 2026-09-09, not on the criterion: the arm
                                              # missed its own primary bar (t -2.04 vs 2.08) but passed R1 in both arms,
@@ -73,7 +85,8 @@ PUBLISHED_FLAGS <- c(
   AUSPOL_INSURGENCY_SHRINK   = "0",          # per-seat shrink -- measured and refused 2026-09-06
   AUSPOL_SEAT_SD_MULT        = "1",
   AUSPOL_FLOW_SD             = "0",
-  AUSPOL_FALLBACK_SMOOTH     = "0"
+  AUSPOL_FALLBACK_SMOOTH     = "0",
+  AUSPOL_FLOW_SHRINK_K       = "0"           # data-weighted flow-cell smoothing -- REFUSED 2026-09-10, worse pooled at every tested k (0.339-0.354 vs baseline 0.339); helps Ballarat's own cell exactly as designed but federal/WA dominate the aggregate. docs/reviews/flow-cell-shrinkage-REFUSED-2026-09-10.md
 )
 
 # Apply to whatever the caller left unset. Returns the names it set.

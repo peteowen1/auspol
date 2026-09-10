@@ -332,7 +332,16 @@ fit_conditional_slopes <- function(target_election, corpus = NULL, pairs = NULL,
   C <- corpus
   if (is.null(C)) {
     f <- file.path("output", "candidacies.csv")
-    if (!file.exists(f)) return(list(same = SHIP_SAME, new = SHIP_NEW, n = NULL))
+    if (!file.exists(f)) {
+      # A guard that can't fail is worse than none: this must be visibly
+      # distinguishable from a genuine fit that happened to find nothing,
+      # matching governed_population()'s convention (R/salience_screen.R)
+      # of message()-ing rather than degrading silently on a missing input.
+      message("fit_dispersion_slopes()/fit_conditional_slopes(): ", f,
+              " missing -- falling back to SHIP_SAME/SHIP_NEW for every class, ",
+              "nothing was fitted")
+      return(list(same = SHIP_SAME, new = SHIP_NEW, n = NULL))
+    }
     C <- data.table::fread(f, showProgress = FALSE)
   }
   C <- data.table::as.data.table(C)
@@ -389,4 +398,156 @@ fit_conditional_slopes <- function(target_election, corpus = NULL, pairs = NULL,
     }
   }
   list(same = same, new = new, n = data.table::rbindlist(counts))
+}
+
+#' Fit the "new"-candidate slope from dispersion, leave-one-election-out
+#'
+#' The flat `new` constant in [conditional_slopes()] averages hundreds of
+#' ordinary no-hoper candidacies with the handful of real emergence/collapse
+#' events, and is provably wrong on the events that matter most: shipped
+#' `OTH_RIGHT` `new` = 0.325 is 3.1x off fed2013's actual slope (Palmer
+#' United's debut), shipped `ONP` `new` = 0.545 is 3.7x off sa2026's.
+#'
+#' For a no-intercept regression, `slope = corr(dev_before, dev_after) *
+#' sd(dev_after) / sd(dev_before)` is an exact identity. Neither ingredient
+#' is stable POOLED ACROSS CLASSES (correlation ranges 0.75-0.94 for GRN down
+#' to near-zero for OTH; sd-at-a-given-level differs 2.5x between IND and ONP
+#' at the same statewide share) -- but each is far more stable within one
+#' class, fit leave-target-out over that class's other pairs. Verified
+#' 2026-09-09 against the three real ONP/OTH_RIGHT emergence and collapse
+#' events in the corpus: predicted slopes within 15-42% of the true fitted
+#' slope, versus the flat constants' 1.2x-3.7x errors on the same three
+#' cases (`docs/plans/prereg-dispersion-slope-2026-09-09.md`).
+#'
+#' Falls back to the shipped flat constant for a class when: fewer than
+#' `min_pairs` other pairs of that class exist to fit corr/the sd-curve on,
+#' the target's own "new"-tier seat history is too thin to measure a real
+#' `sd_before` (< 5 seats, or sd < 0.3 -- indistinguishable from noise), or
+#' any intermediate fit is non-finite. The predicted slope is clipped to
+#' `[0, 3]`; anything outside that range is not credible and falls back too.
+#'
+#' Only the `new` (no candidate of this class stood here before, and not
+#' salience-screen-permitted) tier moves. `same` is returned unchanged at the
+#' shipped constants -- this arm does not touch the returning-candidate
+#' slope, the sitting-member tier, or the screen's 1.0 override.
+#'
+#' @param target_election Election being scored; excluded from every fit.
+#' @param corpus Optional pre-read candidacy table.
+#' @param pairs Optional pair list; [all_election_pairs()] when `NULL`. Must
+#'   include the pair that PRODUCES `target_election`, so its own "before"
+#'   seat history and (when `level_now` is not supplied) its own actual
+#'   statewide result can be read.
+#' @param min_pairs Minimum OTHER pairs of a class needed to fit its
+#'   correlation and sd-curve. Below it, that class keeps the shipped
+#'   constant.
+#' @param level_now Optional named numeric vector (by class) of the
+#'   statewide share to predict `sd_after` at. `NULL` (the default, used by
+#'   every backtest harness) reads the target election's own ACTUAL result
+#'   from the corpus -- appropriate for backtesting a known outcome. A live
+#'   forecast (no actual result yet) passes the trend model's forecast level
+#'   here instead.
+#' @param classes Which classes to fit. Default is GRN and ONP only --
+#'   real, persistent, single-brand parties, which is what the corr x
+#'   sd-ratio mechanism assumes. `IND` and `OTH_RIGHT` are NOT parties in
+#'   that sense: `IND` is by definition a different person every election
+#'   (`classify_party()`'s own docs: "Independents are their own class ...
+#'   not other"), and `OTH_RIGHT` is a residual bucket `classify_party()`
+#'   files a dozen-plus unrelated minor-right parties into (DLP, Liberal
+#'   Democrats, Palmer United/UAP, Rise Up Australia, Family First, Shooters
+#'   Fishers Farmers, Katter's, and more -- see `R/parties.R`). Fitting IND
+#'   this way on 2026-09-09 gave fed2013 a slope of 0.071, crushing all 74
+#'   of its "new" independent seats toward the state mean, and made fed2013
+#'   -- the case the whole arm was built around -- WORSE overall despite
+#'   OTH_RIGHT's own fitted slope being closer to the truth (see the result
+#'   section of `docs/plans/prereg-dispersion-slope-2026-09-09.md`). Classes
+#'   left out of `classes` keep the shipped flat constant untouched -- the
+#'   structurally correct default for a bucket with no brand continuity.
+#' @return A list: `same` (unchanged `SHIP_SAME`), `new` (named vector, one
+#'   entry fitted or falling back per class), `n` (a table of how many other
+#'   pairs each class had to fit on, for coverage reporting).
+#' @export
+fit_dispersion_slopes <- function(target_election, corpus = NULL, pairs = NULL,
+                                   min_pairs = 6L, level_now = NULL,
+                                   classes = c("GRN", "ONP")) {
+  SHIP_SAME <- c(IND = 0.907, OTH_RIGHT = 0.891, GRN = 0.994, ONP = 0.610)
+  SHIP_NEW  <- c(IND = 0.326, OTH_RIGHT = 0.325, GRN = 0.880, ONP = 0.545)
+  classes <- intersect(classes, names(SHIP_NEW))
+  C <- corpus
+  if (is.null(C)) {
+    f <- file.path("output", "candidacies.csv")
+    if (!file.exists(f)) {
+      # A guard that can't fail is worse than none: this must be visibly
+      # distinguishable from a genuine fit that happened to find nothing,
+      # matching governed_population()'s convention (R/salience_screen.R)
+      # of message()-ing rather than degrading silently on a missing input.
+      message("fit_dispersion_slopes()/fit_conditional_slopes(): ", f,
+              " missing -- falling back to SHIP_SAME/SHIP_NEW for every class, ",
+              "nothing was fitted")
+      return(list(same = SHIP_SAME, new = SHIP_NEW, n = NULL))
+    }
+    C <- data.table::fread(f, showProgress = FALSE)
+  }
+  C <- data.table::as.data.table(C)
+  if (is.null(pairs)) pairs <- all_election_pairs()
+  target_pair <- Find(function(pr) identical(pr$election, target_election), pairs)
+  fit_pairs <- Filter(function(pr) !identical(pr$election, target_election), pairs)
+
+  new_tier_cell <- function(before, after, cls) {
+    bb <- C[C$election == before & C$party == cls]
+    aa <- C[C$election == after  & C$party == cls]
+    if (!nrow(bb) || !nrow(aa)) return(NULL)
+    b <- bb[order(-pcv), .SD[1], by = seat][, list(seat, name_before = name, pcv_before = pcv)]
+    a <- aa[order(-pcv), .SD[1], by = seat][, list(seat, name_after  = name, pcv_after  = pcv)]
+    sw_before <- mean(bb[, sum(pcv), by = seat]$V1)
+    sw_after  <- mean(aa[, sum(pcv), by = seat]$V1)
+    m <- merge(a, b, by = "seat", all.x = TRUE)
+    m[, is_new := is.na(name_before) | name_before != name_after]
+    m <- m[m$is_new == TRUE & !is.na(m$pcv_after)]
+    if (!nrow(m)) return(NULL)
+    m[, dev_before := ifelse(is.na(pcv_before), 0, pcv_before - sw_before)]
+    m[, dev_after  := pcv_after - sw_after]
+    list(m = m, sw_before = sw_before, sw_after = sw_after)
+  }
+
+  new_slopes <- SHIP_NEW
+  cov <- list()
+  for (cl in classes) {
+    rows <- list()
+    for (p in fit_pairs) {
+      r <- tryCatch(new_tier_cell(p$prev, p$election, cl), error = function(e) NULL)
+      if (is.null(r) || nrow(r$m) < 15) next
+      co <- suppressWarnings(stats::cor(r$m$dev_before, r$m$dev_after))
+      if (is.finite(co)) {
+        rows[[length(rows) + 1L]] <- data.table::data.table(
+          n = nrow(r$m), corr = co, lvl_after = r$sw_after, sd_after = stats::sd(r$m$dev_after))
+      }
+    }
+    Tc <- data.table::rbindlist(rows)
+    cov[[cl]] <- data.table::data.table(class = cl, n_pairs = nrow(Tc))
+    if (nrow(Tc) < min_pairs || is.null(target_pair)) next
+
+    class_corr <- stats::weighted.mean(Tc$corr, Tc$n)
+    Tc <- Tc[Tc$sd_after > 0]
+    Tc[, shape := sqrt(lvl_after * (100 - lvl_after) / 100)]
+    Tc <- Tc[Tc$shape > 0]
+    if (nrow(Tc) < min_pairs) next
+    curve <- tryCatch(stats::lm(log(sd_after) ~ log(shape), data = Tc), error = function(e) NULL)
+    if (is.null(curve)) next
+
+    tgt_r <- tryCatch(new_tier_cell(target_pair$prev, target_pair$election, cl), error = function(e) NULL)
+    if (is.null(tgt_r) || nrow(tgt_r$m) < 5) next
+    sd_before <- stats::sd(tgt_r$m$dev_before)
+    if (!is.finite(sd_before) || sd_before < 0.3) next
+
+    lvl_now <- if (!is.null(level_now) && cl %in% names(level_now)) level_now[[cl]] else tgt_r$sw_after
+    shape_now <- sqrt(lvl_now * (100 - lvl_now) / 100)
+    if (!is.finite(shape_now) || shape_now <= 0) next
+    sd_after_pred <- tryCatch(
+      exp(stats::predict(curve, newdata = data.frame(shape = shape_now))),
+      error = function(e) NA_real_)
+    pred_slope <- class_corr * sd_after_pred / sd_before
+    if (!is.finite(pred_slope)) next
+    new_slopes[[cl]] <- max(0, min(3, pred_slope))
+  }
+  list(same = SHIP_SAME, new = new_slopes, n = data.table::rbindlist(cov))
 }

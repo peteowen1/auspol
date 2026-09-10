@@ -177,3 +177,136 @@ collapses to ≈ class_corr — close to the existing flat constants for ONP
 therefore expected to show a near-wash on ordinary cells and the real gain
 concentrated on the named rare events — which is the point of the arm, not a
 disqualifying pattern.
+
+---
+
+## Result, 2026-09-09: REFUSED
+
+Run across all 22 pairs at 20,000 sims with `AUSPOL_DISPERSION_SLOPE=1`,
+scored against the criterion above using `fit_dispersion_slopes()` built
+in `R/split_slope.R` (function-level tests pass, 22/22). **Nothing adopted.
+The flag stays at `0` in `scripts/published_flags.R`.**
+
+| test | value | bar | verdict |
+|---|---:|---:|---|
+| criterion 1 — paired pooled seat log loss | 0.3358 → **0.3362**, t = **−0.35**, better in 7 of 22, worse in 11, tied in 4 | improve at ≥ 2.08 SE | **FAIL** |
+| criterion 2 — 10-metric panel | **~2 better (Brier, WA), ~7 worse or unchanged** (log loss, fed, nsw, qld, sa-tied, vic, floor-seat count) | ≥ 6 better, ≤ 3 worse | **FAIL** |
+| catastrophic floor — jurisdiction | worst is nsw +0.0051, WA actually **improved** −0.0099 | 0.02 | not breached |
+| catastrophic floor — pooled | +0.0004 | 0.01 | not breached |
+| floor seats (actual winner ≤ 1e-4) | 4 → **5** (new one in nsw2019) | — | worse |
+
+**fed2013 — the case this arm was built for — got WORSE, not better:
+0.3758 → 0.3964 (+0.0206), the single largest regression in the corpus.**
+sa2026 was exactly unchanged (fell back to the shipped constant, as
+designed — its `sd_before` guard fired correctly). qld2020 moved by +0.0001,
+indistinguishable from zero. **The only real gain in the whole run is wa2013,
+−0.0882 — a pair never named, checked, or validated anywhere in this plan.**
+
+### Root cause: the dry-run only checked 2 of the 4 classes the arm touches
+
+The mechanism table above validated `OTH_RIGHT` and `ONP` against three real
+cases. It never checked `IND` or `GRN`. The fed2013 smoke test (run before
+the full backtest, and which should have been read as a warning rather than
+a green light) showed why that mattered: `fit_dispersion_slopes("fed2013")`
+returned `IND = 0.071` — a class-specific correlation and sd-curve fit on
+IND's OTHER pairs that happened to produce a near-zero slope, applied
+uniformly to all 74 of fed2013's IND "new" seats (`SR1` log: `IND=74` of 150
+seats). IND is the class this repo's own docs already flag as carrying the
+worst seat-level RMSE and deciding the most marginal seats. Slashing its
+new-candidate slope to 0.071 — crushing every new independent toward the
+state mean — plausibly cost more than OTH_RIGHT's corrected slope (1.358 vs
+shipped 0.325, genuinely closer to the true ~1.0-1.4) gained back. This is
+the same failure shape as both arms refused earlier today: the change
+touched more of the model than was ever validated. **Verify a dry-run covers
+every class an arm modifies, not just the classes that motivated it** — the
+generalisable lesson for whoever builds the next version of this.
+
+### What worked and what didn't, for whoever picks this up next
+
+- The identity itself (`slope = corr × sd-ratio`) is real and not in doubt.
+- Per-class, leave-one-out estimation of both pieces is a large improvement
+  over a flat constant **on the two classes it was checked against**
+  (OTH_RIGHT, ONP) — but was never checked on IND or GRN, and IND broke.
+- `sd_before < 0.3` / `min_pairs` fallback guards worked exactly as designed
+  (sa2026 fell back cleanly, no crash, no wild number).
+- wa2013's large, unexplained improvement is worth understanding before
+  anyone trusts this mechanism again — it could be a real fix or an
+  overfit; nobody has looked.
+- Next attempt should validate EVERY class the arm touches against a known
+  case (or hold the arm to IND/GRN off, OTH_RIGHT/ONP on, i.e. ship it as a
+  two-class fix) rather than assuming two dry-run checks generalise to four
+  classes.
+
+### Kept, not reverted
+
+`fit_dispersion_slopes()`, its tests, and the `AUSPOL_DISPERSION_SLOPE`
+wiring across all 6 harnesses and `fit_seats_full.R` stay in the tree,
+inert at the default `0`.
+
+---
+
+## Round 2, 2026-09-09: restricted to GRN/ONP only (Pete's call) — STILL REFUSED
+
+Pete, on seeing the class list: *"why are you fitting IND and OTH_RIGHT they
+arent parties i thought this was just for parties like ONP and GRN?"* Correct
+and decisive — checked `R/parties.R`: `IND` is by definition a different
+person every election, and `OTH_RIGHT` is a residual bucket `classify_party()`
+files a dozen-plus unrelated minor-right parties into (DLP, Liberal
+Democrats, Palmer United/UAP, Rise Up Australia, Family First, Shooters
+Fishers Farmers, Katter's, and more). Only `GRN` and `ONP` are single,
+persistent, named parties — the premise the corr × sd-ratio mechanism needs.
+`fit_dispersion_slopes()` now defaults `classes = c("GRN", "ONP")`; `IND`
+and `OTH_RIGHT` keep the shipped flat constant always. Re-ran all 22 pairs.
+
+| test | round 1 (4 classes) | round 2 (GRN/ONP only) | bar | verdict |
+|---|---:|---:|---:|---|
+| pooled log loss | 0.3358 → 0.3362 | 0.3358 → **0.3365** | improve ≥ 2.08 SE | **FAIL** (t = 0.06, ~zero effect) |
+| better / worse / tied | 7 / 11 / 4 | **5 / 10 / 6** | ≥ 6 better, ≤ 3 worse | **FAIL** |
+| catastrophic floor | not breached | not breached (worst: fed +0.0037, wa +0.0024) | 0.02 / 0.01 | pass |
+| floor seats | 4 → 5 | 4 → **5** (still nsw2019) | — | unchanged, not fixed |
+
+**wa2013's round-1 "win" (−0.0882) vanished entirely (+0.0015, flat) once IND
+was excluded — confirming it was never a real GRN/ONP effect, just IND's
+0.071 doing something coincidentally favourable on that one pair.** Restoring
+the mechanism to real parties only removed a mystery result along with the
+harm, which is itself a useful confirmation the class restriction was right.
+
+**fed2013 got WORSE again (0.3758 → 0.4015, now the single largest
+regression) — and this time it is not a bug.** OTH_RIGHT's flat 0.325 really
+is wrong for THIS election (Palmer United's debut dominated the bucket that
+year), but OTH_RIGHT is not a coherent party in general, so this arm
+correctly declines to touch it — and pays for that correctness on the one
+case where the bucket happened to be one real party. Fixing fed2013
+specifically would need a detector for "this bucket is dominated by a single
+entrant this cycle," which is out of scope here.
+
+**nsw2019 improved substantially (0.4403 → 0.4014, −0.0389) — a real,
+unexplained gain nobody has looked into.** The two effects are close to
+offsetting pooled, which is why the net is a wash rather than a loss.
+
+### Verdict
+
+Still refused by the pre-registered rule. The class restriction was the
+right fix for the MECHANISM (confirmed: no more mystery wins from classes
+that shouldn't have brand continuity), but the pooled effect on real parties
+alone is statistically indistinguishable from zero — GRN and ONP's
+"new"-candidate cells are not, in aggregate, biased enough by the flat
+constant to move the whole corpus, even though the mechanism visibly gets
+the three known emergence/collapse cases closer to right individually.
+**Flag stays `0`.**
+
+### What's still true and worth keeping
+
+- The identity and the class-restriction logic are both correct and now
+  well-tested (24/24 in `test-split_slope.R`, including a test that GRN
+  moves and IND/OTH_RIGHT don't even when both have equally strong
+  synthetic signal).
+- nsw2019's gain and fed2013's (now cleanly attributable) loss are two
+  concrete, real, opposite-signed effects worth understanding before anyone
+  revisits this — neither was investigated further here.
+- This is now the THIRD arm refused today (with the split-slope and
+  fit_conditional_slopes arms) that improves specific known cases without
+  clearing a pooled, 22-pair bar. The pattern across all three: real,
+  measurable, individually-defensible local fixes do not add up to a
+  pooled win once every ordinary election gets a chance to be hurt by the
+  same change.

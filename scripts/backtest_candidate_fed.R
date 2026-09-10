@@ -317,6 +317,7 @@ cat(sprintf("CAL  shrink %.2f (published model uses 0.10), smooth %.2f\n",
 # a fix to ALL of them", and it recurred in the same session the rule was
 # written. Both default to 0, which reproduces the previous behaviour exactly.
 FB_SMOOTH <- as.numeric(Sys.getenv("AUSPOL_FALLBACK_SMOOTH", "0"))
+SHRINK_K  <- as.numeric(Sys.getenv("AUSPOL_FLOW_SHRINK_K", "0"))    # EXPERIMENTAL, docs/plans/prereg-flow-cell-shrinkage-2026-09-10.md
 FLOW_SD   <- as.numeric(Sys.getenv("AUSPOL_FLOW_SD", "0"))  # may be REPLACED per pair by AUSPOL_FLOW_SD_BY_SOURCE
 cat(sprintf("BS1f fallback_smooth %.2f | flow_sd %.2f
 ", FB_SMOOTH, FLOW_SD))
@@ -737,7 +738,9 @@ for (K in PAIRS) {
   # FITTED CONDITIONAL SLOPES (AUSPOL_FIT_SLOPES=1, default OFF). Replaces the
   # eight hardcoded same/new constants with a leave-this-target-out fit;
   # structure untouched. docs/plans/prereg-fit-conditional-slopes-2026-09-09.md
-  .fitsl <- if (identical(Sys.getenv("AUSPOL_FIT_SLOPES", "0"), "1"))
+  .fitsl <- if (identical(Sys.getenv("AUSPOL_DISPERSION_SLOPE", "0"), "1"))
+    fit_dispersion_slopes(eb)
+  else if (identical(Sys.getenv("AUSPOL_FIT_SLOPES", "0"), "1"))
     fit_conditional_slopes(eb) else NULL
   if (!is.null(.fitsl)) cat(sprintf("FS1  fitted slopes | same %s | new %s
 ",
@@ -1260,6 +1263,7 @@ for (K in PAIRS) {
     }
   }
   shares <- 100 * shares / rowSums(shares)
+  shares <- xgb_primary_override(shares, sprintf("fed%d", K$to))
   keep <- intersect(rownames(shares), win$seat)
   shares <- shares[keep, , drop = FALSE]
   truth <- setNames(win$winner, win$seat)[keep]
@@ -1542,7 +1546,7 @@ for (X in out_all) {
                                 surge_from_zero = identical(Sys.getenv("AUSPOL_SURGE_FROM_ZERO", "0"), "1"),
                                 surge_mu = surge_mu_arg, surge_sd = surge_sd_arg,
                                 party_cor = PARTY_COR, statewide_draws = X$sw_draws,
-                                fallback_smooth = FB_SMOOTH, flow_sd = FLOW_SD)
+                                fallback_smooth = FB_SMOOTH, shrink_k = SHRINK_K, flow_sd = FLOW_SD)
   cat(sprintf("BF3e  engine %s | surge recipient fell back: %d class(es) absent, %d seat-draws at zero share\n", sim$engine, sim$surge_recipient_fallback, sim$surge_recipient_fallback_draws))
   wp <- as.data.table(sim$win_prob)
 
