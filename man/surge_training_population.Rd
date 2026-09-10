@@ -4,13 +4,28 @@
 \alias{surge_training_population}
 \title{The governed-population training set for the surge hazard, across elections}
 \usage{
-surge_training_population(pairs)
+surge_training_population(pairs, require_governed = TRUE)
 }
 \arguments{
 \item{pairs}{A list of \code{list(election=, prev=, region=)}.}
+
+\item{require_governed}{If \code{TRUE} (default), only \code{governed == TRUE}
+candidates are returned -- the correct population to FIT the hazard
+model on, since a surging-class win is not explained by the personal-
+salience features being regressed and would corrupt the coefficients.
+Pass \code{FALSE} to SCORE a target election's full candidate population
+instead (governed and surging classes both) with an already-fitted
+model -- see \code{surge_hazard_for()}'s own use of this for exactly why:
+\code{governed_population()} deliberately marks a surging class's own
+candidates \code{governed = FALSE}, so filtering to TRUE here made a
+genuine party-wide surge (e.g. SA2026 One Nation) structurally
+ineligible to ever be picked as a seat's hazard \code{recipient}, regardless
+of how strong its real signal was -- the model was never even asked to
+score it. Never pass \code{FALSE} when the result feeds TRAINING.}
 }
 \value{
-A \code{data.table}, one row per governed candidate.
+A \code{data.table}, one row per candidate (governed only, or governed
+plus surging, depending on \code{require_governed}).
 }
 \description{
 One row per governed candidate (see \code{\link[=governed_population]{governed_population()}}) across the
