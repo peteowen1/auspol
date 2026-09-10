@@ -96,6 +96,47 @@ twice in this repo.
    that number is to be looked up from the VEC record **before** scoring, not
    chosen after seeing the output.
 
+   **RESOLVED 2026-09-11, before any result exists.** Original clause above
+   left unedited. The number is **3**, the modern-era maximum, reached twice:
+
+   | election | independents elected |
+   |---|---|
+   | 1999 | 3 (Ingram, Davies, Savage — held the balance of power) |
+   | 2002 | 2 (Ingram, Savage) |
+   | 2006 | 1 (Ingram) |
+   | 2010 | **0** |
+   | 2014 | 1 (Sheed, Shepparton) |
+   | 2018 | 3 (Sheed, Northe, Cupper) |
+   | 2022 | **0** (all three 2018 independents lost) |
+
+   So the refusal bar is **IND median > 3**. Caveats kept because they affect
+   how the bar reads: 1943 shows 5 in Wikipedia's summary table, but only 3
+   carry a plain "Independent" label — the other two are "Independent Country"
+   and "Independent Socialist", which is a judgement call. No authoritative
+   body (VEC, Parliament of Victoria, Antony Green) publishes an explicit
+   all-time ranking, so **3** is a compiled figure, not a citable record.
+   Russell Northe (Morwell 2018) is an ex-National who quit mid-term and then
+   won as an independent at the general election — he counts, but he is a
+   "defected then re-elected" independent rather than a career one, which is a
+   distinction the model may eventually want.
+
+   **AND THIS CORRECTS SOMETHING I ASSERTED EARLIER IN THE SESSION.** I
+   repeatedly described the live forecast's "IND median 0, 90%: 0–1" as
+   self-evidently broken and as making the case for this work. It is not
+   self-evidently broken. **Victoria elected 0 independents in 2022 and 0 in
+   2010, and has never elected more than 3.** A median of 0 is defensible; the
+   plausible defect is a 90% ceiling of 1 where the record supports 2–3, which
+   is a far smaller claim than the one I made.
+   The teal seats that motivated this work — Curtin, Goldstein, Mackellar,
+   North Sydney — are all **federal**. The emergence problem is real and
+   costly in the pooled backtest (91 IND emergences, 26 winners across 22
+   pairs), but it is concentrated in federal, NSW and SA, and the Victorian
+   base rate is genuinely low. This work should be justified on the pooled
+   metric, not on the Victorian IND median.
+   *This is exactly what "look it up BEFORE scoring" is for: had the number
+   been fetched after seeing a result, the temptation would have been to set
+   the bar wherever the output landed.*
+
 ## What the criterion CANNOT see
 
 - It scores each candidate's **marginal** distribution, not the correlation

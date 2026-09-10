@@ -233,6 +233,42 @@ the same hazard fit. From a base of 5 with p = 0.1 and `surge_mu` = 15.6:
 same quantity — which is why `AUSPOL_SALIENCE_BLEND` was added (default `"1"`,
 the existing behaviour) to settle it by measurement rather than argument.
 
+### MEASURED 2026-09-11: the double count is REAL, and removing it makes things WORSE
+
+**The mechanism is confirmed.** `surge_h` is the per-seat maximum of `p_hat` —
+correlation 0.984 on fed2022 and 0.991 on nsw2019, with identical maxima. One
+hazard fit drives both effects. And it is larger than the function signature
+suggests: `surge_mu` is fitted per election, not the 15.6 default, and fed2022
+gives **35.1** with sd 12.8.
+
+**And the arm still refuses.** `AUSPOL_SALIENCE_BLEND=0` over 9 pairs:
+
+| | mean change | better in |
+|---|---|---|
+| as measured | −0.0034 | 5 of 9 |
+| **excluding one floor seat** | **+0.0029** | **4 of 9** |
+
+The apparent gain was **one seat**. Barwon in nsw2019 went 0.0000 → 0.0002
+across the `eps = 1e-6` floor, worth −5.298 on its own against a total of
+−4.799 across all 93 seats — **114% of the change from the top three seats**.
+Excluding Barwon, nsw2019 gets *worse* by 0.0054, and removing the blend also
+costs fed2013 +0.0094 and fed2022 +0.0096, the two most emergence-heavy
+federal pairs.
+
+**Read this correctly.** The double count is real arithmetic, and the model is
+nonetheless better with it than without, because the underlying under-prediction
+of emergences is larger than the over-counting. The blend is a **third patch on
+the same missing tail**, alongside `surge` and `shrink`.
+
+So it joins them in the falsifiable prediction: **if the per-cell variance is
+specified correctly, `AUSPOL_SALIENCE_BLEND=0` should become the better arm.**
+Do not remove it before then — that would strip a compensation while leaving
+the defect it compensates for.
+
+This is also the third time in this repo that a pooled log-loss gain turned out
+to be one seat crossing the floor. Check the per-seat breakdown before believing
+any of them.
+
 ### The target architecture
 
 Two stages, not ten:
