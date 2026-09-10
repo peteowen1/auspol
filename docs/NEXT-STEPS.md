@@ -515,12 +515,18 @@ Full evidence — every 20k-sim table, per jurisdiction and pair — moved to
    WA's seed was a hardcoded literal ignoring `AUSPOL_SEED`, and
    `AUSPOL_SEAT_SD_MULT`/`AUSPOL_FALLBACK_SMOOTH`/`AUSPOL_FLOW_SD` never
    reached `fit_seats_full.R` (the actual published forecast) at all.
-4. **Two elections still unfound** — sa2018, and fed2004 as a scored target
-   rather than only a prior. The Queensland recipe should be tried first: the
+4. **~~Two elections still unfound~~ — STALE, corrected 2026-09-11.** sa2018
+   was fetched, verified against the anchor and wired in as a prior-only pair
+   (`AUSPOL_SA_PAIR="2022"`) — see "Data coverage" at the top of this file.
+   Only **fed2004** remains, and only as a scored TARGET rather than a prior;
+   it already serves as a prior today. The Queensland recipe applies: the
    commission's old results site published a package per election and the
    archive kept it, which is what made qld2017 available after it had been
-   written off.
- Parsers are the remaining work; the sources were located.
+   written off. Parsers are the remaining work; the sources were located.
+
+   *Left visible rather than deleted because this is the failure CLAUDE.md
+   names — "we don't have X" gets written into a plan and then reasoned from.
+   It had been stale for a day.*
 
 ### Closed this session
 
