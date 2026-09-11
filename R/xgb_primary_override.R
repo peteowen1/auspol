@@ -182,6 +182,21 @@ xgb_primary_predict_live <- function(shares, mat22, a22, state_mean, returns,
   rows[, x           := mapply(function(s, p) if (p %in% colnames(mat22)) mat22[s, p] else 0, seat, party)]
   rows[, level_prev  := vapply(party, function(p) if (p %in% names(a22)) unname(a22[[p]]) else 0, numeric(1))]
   rows[, level_now   := vapply(party, function(p) if (p %in% names(state_mean)) unname(state_mean[[p]]) else 0, numeric(1))]
+  # `level_now` above is `state_mean` -- the forecast's OWN projected statewide,
+  # never a result, because the election has not happened. That was already true
+  # before 2026-09-11 and is why the published forecast never leaked on this
+  # feature; what changed that day is that the model is now TRAINED on a
+  # prediction too (AUSPOL_LEVEL_MODE="pred"), so training and serving finally
+  # agree. Before, it learned to trust a feature that was exact in training and
+  # approximate in production.
+  #
+  # `level_from_polls` says whether that statewide came from real polling. A
+  # live forecast always has polls -- it could not have produced state_mean
+  # otherwise -- so it is 1 here. In the training data it is 0 for the one pair
+  # (wa2021) whose cycle is too thin to fit a trend. Both models carry the same
+  # feature set; a column present in one and absent in the other is exactly the
+  # mismatch being removed.
+  rows[, level_from_polls := 1L]
   rows[, dev_prev    := x - level_prev]
   # KEY-MATCHED, NOT merge()-THEN-POSITIONAL, throughout this function.
   # data.table::merge() defaults to sort=TRUE, which returns its result

@@ -278,6 +278,14 @@ if (identical(.lvl_mode, "pred") && "level_from_polls" %in% names(ALL))
               sum(ALL$level_from_polls == 1L, na.rm = TRUE), nrow(ALL)))
 feat_cols <- c("pred_share", "x", "level_prev",
                if (!identical(.lvl_mode, "none")) "level_now",
+               # `level_from_polls` marks the rows whose statewide is the
+               # no-swing fallback rather than a poll-based projection -- it
+               # tells the model how much to trust level_now on that row.
+               # Dropping it costs 0.014 of primary RMSE (3.9201 -> 3.9341),
+               # so it stays, and xgb_primary_predict_live() sets it to 1L to
+               # match: a live forecast always has polls, or it would not be
+               # running. Both models therefore carry the SAME feature set,
+               # which is the train/serve consistency this change exists for.
                if (identical(.lvl_mode, "pred")) "level_from_polls",
                "dev_prev",
                "n_cand_prev", "n_cand_now", "same_i", "same_mp_i", "is_major_i",
