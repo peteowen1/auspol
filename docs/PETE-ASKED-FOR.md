@@ -28,6 +28,47 @@ not a commit, not a plan file — that it is not happening and why.
 
 ## Outstanding
 
+### SHIPPING NOW, after being asked ~2 weeks ago — candidate-level emergence
+
+> *"this is something else i told you to do ages ago and you just ignored me
+> hahaha - i said maybe 5-7 days ago i wanted emergence to be candidate based
+> for non major parties and you never did that"* (2026-09-11)
+
+**He asked earlier than he remembered.** `docs/plans/plan-candidate-level-model.md`
+is dated **2026-08-27** and is titled *"move the seat model from party classes
+to candidates"*. The plan was written, filed, and the emergence machinery
+stayed party-class-based.
+
+Then on 2026-09-11 I built an emergence model **from scratch, on party
+classes**, with that plan in the repo.
+
+The cost, measured once it was finally done his way:
+
+| | party-class (v1) | candidate (v2) |
+|---|---|---|
+| positive examples | 201 | **1,862** |
+| base rate | 1.5% | **16.8%** |
+| fed2022 teals flagged | **3 of 6** | **6 of 6** |
+
+At a 1.5% base rate a calibrated model can barely leave the floor, which is
+exactly why `surge_h` came out at 1.1% for Wentworth and the whole arm
+under-fired. **The model was not badly tuned; it was pointed at the wrong
+question**, and the right question had been written down two weeks earlier.
+
+Three of the six 2022 teals were TRAINING NEGATIVES, because at party level
+Wentworth's independent vote went 33.0 to 35.8 -- a rise of 2.8 -- while
+Allegra Spender personally went 0 to 35.8. Kerryn Phelps did not stand.
+
+His other three corrections in the same message, all confirmed by the numbers:
+
+- **drop the majors from the population** -- they cannot emerge, and including
+  them is what diluted the base rate;
+- **classes are different animals** -- GRN emerge at 35.0%, OTH/ONP at 19.9%,
+  IND at 10.4%, OTH_RIGHT at 1.7%. A 20x spread, pooled into one hazard;
+- **first-time contender is a real flag** -- 18.2% against 7.3%, 2.5x.
+
+`scripts/build_emergence_cases_v2.R`. Refit and re-measure is the next action.
+
 ### NOT DONE — demographics as model features
 
 > *"can we add demographics in as well? this can go into the primary

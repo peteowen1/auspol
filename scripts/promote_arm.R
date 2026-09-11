@@ -92,11 +92,36 @@ AF <- unique(arm_files())
 AF <- AF[!grepl("sharedetail|allprobs|totals|-seatsd|-diag", file) & file.exists(file)]
 if (!nrow(AF)) stop("no output files found for ", RUNDIR)
 FS <- unique(AF$file)
-tags <- unique(unlist(regmatches(basename(FS), gregexpr("-a[0-9a-f]+", basename(FS)))))
-SD <- list.files(OUT, pattern = "-sharedetail.*[.]csv$", full.names = TRUE)
-SD <- SD[vapply(basename(SD), function(b) any(vapply(tags, grepl, logical(1), x = b)), logical(1))]
-cat(sprintf("PA2  %d win file(s), %d sharedetail file(s), %d arm fingerprint(s)\n",
-            length(FS), length(SD), length(tags)))
+# MATCH ON THE FULL TAG, fingerprint AND code version. Matching on the arm
+# fingerprint `-a<hash>` alone is not unique: the same flags run against a
+# different commit produce the same fingerprint with a different `-g<sha>`, so
+# a stale run of the same configuration was being copied in alongside the real
+# one -- and because the pooled table averages by (pair, seat, party), the two
+# were silently AVERAGED. Caught 2026-09-11: Wentworth's IND primary read 22.1,
+# the classical model's value, when the xgb primary this arm ran had predicted
+# 14.4. Every primary column downstream, including the AEF comparison's, was
+# reading a blend of two runs.
+#
+# The sharedetail sits next to its main file with the identical tail, so derive
+# it by name rather than by pattern-matching a fragment.
+# The prefix is the harness stem INCLUDING any year, because the year-suffixed
+# harnesses name theirs backtest-nsw2019-sharedetail-... while the multi-pair
+# ones use backtest-fed-sharedetail-... . Splitting on [a-z]+ alone produced
+# "backtest-nsw-sharedetail2019-", which matches nothing, and silently dropped
+# half the files.
+SD <- unique(vapply(FS, function(f) {
+  b <- basename(f)
+  stem <- sub("^(backtest-[a-z]+[0-9]*)-.*$", "\\1", b)
+  cand <- file.path(OUT, sub(sprintf("^%s-", stem),
+                             sprintf("%s-sharedetail-", stem), b))
+  if (file.exists(cand)) cand else NA_character_
+}, character(1)))
+SD <- SD[!is.na(SD)]
+if (length(SD) < length(FS))
+  cat(sprintf("PA2! %d of %d output files have no sharedetail sibling -- their primaries will be absent, not stale\n",
+              length(FS) - length(SD), length(FS)))
+cat(sprintf("PA2  %d win file(s), %d sharedetail file(s) matched by exact name\n",
+            length(FS), length(SD)))
 
 # ---- 3. stable copies ------------------------------------------------------
 dir.create(SHIP, showWarnings = FALSE, recursive = TRUE)
