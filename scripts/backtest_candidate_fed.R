@@ -912,12 +912,38 @@ for (K in PAIRS) {
       # on the CURRENT (forecast) scale, so it is split by ratio only, not
       # multiplied by scale_to again -- scale_to converts a PRIOR-election
       # level to a forecast one, and oth_draw already is one.
+      # FOLD INTO THE BUCKET, THEN REPLACE IN PLACE. Until 2026-09-11 this
+      # cbind()ed new columns for the folded classes -- but
+      # statewide_draws_as_at() already returns a column for EVERY party in
+      # `parties`, folded ones included, so the result had 9 columns for 7
+      # parties with IND and OTH_RIGHT appearing twice. `sw_draws[, "IND"]`
+      # takes the FIRST match, which was the raw near-zero column, so the
+      # rescale this block exists to perform never reached the simulation and
+      # the very bug the comment above describes as fixed was still live.
+      # Verified by assertion before the fix, not inferred.
+      #
+      # The fold must also come first: a folded class is not exactly zero in
+      # the raw draws (fallback_sd noise, then row renormalisation), so
+      # overwriting its column without adding it in first deletes that share
+      # and the statewide stops summing to 100.
       oth_draw <- sw_draws[, "OTH"]
-      new_cols <- matrix(0, nrow(sw_draws), length(unmodelled),
-                         dimnames = list(NULL, unmodelled))
-      for (p in unmodelled) new_cols[, p] <- oth_draw * ratio[[p]]
+      for (p in unmodelled) oth_draw <- oth_draw + sw_draws[, p]
+      for (p in unmodelled) sw_draws[, p] <- oth_draw * ratio[[p]]
       sw_draws[, "OTH"] <- oth_draw * ratio[["OTH"]]
-      sw_draws <- cbind(sw_draws, new_cols)
+      # PROBE, added 2026-09-11 while extracting this block into
+      # R/forecast_statewide.R. statewide_draws_as_at() returns a column for
+      # EVERY party in `parties`, folded ones included, so this cbind may be
+      # producing a matrix with two columns of the same name -- after which
+      # sw_draws[, "IND"] silently takes whichever comes first. Asserted rather
+      # than assumed either way, because it decides whether this harness's
+      # forecast-mode numbers mean what they say.
+      if (anyDuplicated(colnames(sw_draws))) {
+        cat(sprintf("BF0!! DUPLICATE statewide draw columns after the fold: %d columns for %d parties -- %s\n",
+                    ncol(sw_draws), length(parties),
+                    paste(colnames(sw_draws)[duplicated(colnames(sw_draws))], collapse = ", ")))
+      } else {
+        cat(sprintf("BF0  statewide draw columns after the fold: %d, no duplicates\n", ncol(sw_draws)))
+      }
       # THE LEVEL, separately from the draws' spread. simulate_seat_contests()
       # centres statewide_draws on ITS OWN column means internally (each
       # draw's contribution is `draw - colMeans(draws)`), so the draws above
