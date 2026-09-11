@@ -223,7 +223,22 @@ region_levels <- sort(unique(ALL$region))
 for (p in party_levels) ALL[[paste0("party_", p)]] <- as.integer(ALL$party == p)
 for (r in region_levels) ALL[[paste0("region_", r)]] <- as.integer(ALL$region == r)
 
-feat_cols <- c("pred_share", "x", "level_prev", "level_now", "dev_prev",
+# AUSPOL_NO_LEVEL_NOW=1 drops `level_now`, which is state_level(pr$election) --
+# the party's ACTUAL statewide share at the election being predicted.
+#
+# Pete, 2026-09-11: "its not deliberate - you decided this without telling me
+# ---- everything for an election forecast shold be predictive!!!"  He is
+# right. The harness banner calls the oracle statewide "this harness's whole
+# design", but that was a choice made in code and never put to him, and
+# describing it afterwards as deliberate let the decision stand unexamined.
+#
+# Measured cost of the oracle statewide overall, federal, 7 pairs: seat log
+# loss 0.2936 told-the-answer vs 0.2982 predicting it from polls, +0.0047, and
+# actually BETTER in 3 of 7. So the model does not lean on it -- but "small"
+# is not "allowed", and a forecast feature has to be knowable before the vote.
+feat_cols <- c("pred_share", "x", "level_prev",
+               if (!identical(Sys.getenv("AUSPOL_NO_LEVEL_NOW", "0"), "1")) "level_now",
+               "dev_prev",
                "n_cand_prev", "n_cand_now", "same_i", "same_mp_i", "is_major_i",
                "margin", "fed_swing", "retirement_i", "soph_cand_i", "soph_party_i",
                "prev_swing", "is_incumbent_party_i", "own_prev_pcv",

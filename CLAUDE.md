@@ -70,6 +70,34 @@ So, concretely:
    gone — and `fit_xgb_flows_v1.R` already wrote its own.
 4. **A refusal needs the same evidence bar as a ship.** Both close a question.
 
+### The same root, one level up: ASK WHAT THE SYSTEM ALREADY HAS
+
+Both failures above are the same move — reasoning from the file in front of me
+instead of the system I already know about. Later the same day, again:
+
+`fit_xgb_primary_v6.R` computes `level_now` as `state_level(pr$election)`, the
+party's ACTUAL statewide share at the election being predicted. Reading that
+one function, the conclusion was "this is the harness's design, deliberate".
+
+**The pipeline already predicts exactly that quantity.** `fit_seats_full.R:409`,
+`state_mean` — poll trend plus fundamentals, every party's statewide primary.
+It is stage one of the model. It was written into `ARCHITECTURE.md`'s own
+pipeline walkthrough, Part A step 4, *by me, that morning*.
+
+Pete had to point it out: *"why do i have to catch this for you - surely you
+should know this? im confused why you dont know 'we model each parties
+primary'"*.
+
+So, before accepting a limitation or designing around it:
+
+- **Ask what already computes this quantity.** Grep for it across `R/` and
+  `scripts/`, not just in the file that surfaced the problem.
+- **Re-read the architecture doc you wrote.** If the answer is in it, the
+  failure is not knowledge, it is not looking.
+- **"Deliberate design" is a claim that needs a source.** A code comment saying
+  a thing is the design is evidence that someone coded it that way, not that it
+  was chosen — and never that Pete chose it. Say which of the three it is.
+
 ## The rule this codebase keeps relearning
 
 **Prove a check fails on a deliberately broken input before trusting it to
