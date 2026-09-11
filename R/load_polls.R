@@ -18,6 +18,31 @@ load_polls <- function(region = "fed") {
 
   party_cols <- grep(" FP$", names(raw), value = TRUE)
   parties <- sub(" FP$", "", party_cols)
+
+  # WESTERN AUSTRALIA CALLS THE LIBERALS "LIB"; EVERY OTHER FILE SAYS "LNP".
+  # Checked across all six: fed/nsw/qld/sa/vic use `LNP FP`, wa uses `LIB FP`
+  # and additionally breaks out `NAT FP`, which classify_party() folds into LNP
+  # anyway.
+  #
+  # Unmapped, the trend model finds no LNP series for WA, so
+  # statewide_draws_as_at() FOLDS the Liberal Party into OTH as though it were
+  # an unpollable minor -- then reconstructs it from its share of the prior
+  # election's minor bucket. The result is not subtly wrong. wa2017: ALP
+  # predicted 16.5 against an actual 42.2, LNP 61.0 against 36.6, while GRN
+  # came out at 8.9 against 8.9. The two-party TOTAL was right (77.5 vs 78.8)
+  # and the SPLIT was inverted, which is what made it look like a sign error
+  # rather than a naming one.
+  #
+  # Pooled over the 22 pairs this was the entire major-party bias in the
+  # predicted statewide: ALP -6.84 and LNP +3.47 with WA in, ALP -1.23 and
+  # LNP -1.35 with WA out. Found 2026-09-11 while building level-pred.csv.
+  if (identical(region, "wa")) {
+    if ("LIB" %in% parties && !"LNP" %in% parties) {
+      names(raw)[match("LIB FP", names(raw))] <- "LNP FP"
+      party_cols[match("LIB", parties)] <- "LNP FP"
+      parties[match("LIB", parties)] <- "LNP"
+    }
+  }
   out <- data.table::data.table(
     date = as.Date(raw$MidDate),
     firm = trimws(raw$Firm),
