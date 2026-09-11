@@ -181,8 +181,9 @@ PUBLISHED_FLAGS <- c(
                                              # published forecast never leaked -- it was trained on the actual and
                                              # served the predicted. Training on the prediction makes them agree.
                                              #
-                                             # THE COST, MEASURED, 22 pairs / 2,050 seat-elections, seed 1:
-                                             # pooled seat log loss 0.3007 leaked -> 0.3134 honest, +0.0127.
+                                             # THE COST, MEASURED, 22 pairs / 2,050 seat-elections, 3 seeds:
+                                             # pooled seat log loss 0.3001 leaked -> 0.3117 honest, +0.0116
+                                             # (seed sd 0.0015 either side, so the gap is ~8x the noise).
                                              # Concentrated where you would expect: sa2026, the One Nation surge
                                              # election, 0.4200 -> 0.5564. Every headline number quoted before
                                              # 2026-09-11 was the leaked one.
