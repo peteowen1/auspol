@@ -98,7 +98,38 @@ for (pr in PAIRS) {
   m <- merge(sd_pair, prevc, by = c("seat", "party"), all.x = TRUE)
   m <- merge(m, nowc, by = c("seat", "party"), all.x = TRUE)
   m <- merge(m, lp[, list(party, level_prev = level)], by = "party", all.x = TRUE)
-  m <- merge(m, ln[, list(party, level_now  = level)], by = "party", all.x = TRUE)
+  # THE STATEWIDE THE MODEL IS ALLOWED TO SEE. AUSPOL_LEVEL_MODE:
+  #   "pred" (default) -- output/level-pred.csv, the poll trend plus
+  #        leave-one-out fundamentals as at the day BEFORE polling day. Nothing
+  #        here sees the result. Mean absolute error 2.06 points per class.
+  #   "now"  -- state_level(pr$election), the ACTUAL statewide result. This is
+  #        the original behaviour and it is leakage; kept only so the cost can
+  #        be re-measured, never as a default.
+  #   "none" -- neither. Measured and REJECTED as the fix: deleting the feature
+  #        removes the model's only route to knowing what is happening
+  #        nationally, and sa2026 went 0.4200 -> 0.6309. Pete's instruction was
+  #        to substitute a prediction, not to remove the information.
+  .lvl_mode <- Sys.getenv("AUSPOL_LEVEL_MODE", "pred")
+  if (!.lvl_mode %in% c("pred", "now", "none"))
+    stop("AUSPOL_LEVEL_MODE must be pred, now or none; got ", .lvl_mode)
+  if (identical(.lvl_mode, "now")) {
+    m <- merge(m, ln[, list(party, level_now = level)], by = "party", all.x = TRUE)
+  } else if (identical(.lvl_mode, "pred")) {
+    lpf <- file.path(OUT, "level-pred.csv")
+    if (!file.exists(lpf)) stop("AUSPOL_LEVEL_MODE=pred needs ", lpf,
+                                " -- run scripts/build_level_pred.R first")
+    LPRED <- data.table::fread(lpf, showProgress = FALSE)
+    lp1 <- LPRED[LPRED$pair == pr$election, list(party, level_now = level_pred,
+                                                  level_from_polls = from_polls)]
+    if (!nrow(lp1)) stop("no predicted statewide for ", pr$election,
+                         " -- a pair silently missing here becomes a column of NAs ",
+                         "that xgboost splits on as though it were a value")
+    m <- merge(m, lp1, by = "party", all.x = TRUE)
+  }
+  # The column keeps the name `level_now` in every mode so the feature list,
+  # the saved models and every downstream reader stay on one name. What CHANGES
+  # is where it comes from, which is recorded in the run banner below rather
+  # than left to be inferred from a filename.
   if (!is.null(ret)) m <- merge(m, ret, by = c("seat", "party"), all.x = TRUE)
   if (!is.null(pv))  m <- merge(m, pv[, list(seat, party, own_prev_pcv)], by = c("seat", "party"), all.x = TRUE)
 
@@ -236,8 +267,18 @@ for (r in region_levels) ALL[[paste0("region_", r)]] <- as.integer(ALL$region ==
 # loss 0.2936 told-the-answer vs 0.2982 predicting it from polls, +0.0047, and
 # actually BETTER in 3 of 7. So the model does not lean on it -- but "small"
 # is not "allowed", and a forecast feature has to be knowable before the vote.
+.lvl_mode <- Sys.getenv("AUSPOL_LEVEL_MODE", "pred")
+cat(sprintf("\n=== STATEWIDE SOURCE: %s === %s\n", .lvl_mode,
+            switch(.lvl_mode,
+                   pred = "predicted from polls the day before -- leakage-free",
+                   now  = "the ACTUAL result -- LEAKED, for measurement only",
+                   none = "no statewide feature at all")))
+if (identical(.lvl_mode, "pred") && "level_from_polls" %in% names(ALL))
+  cat(sprintf("    %d of %d rows have a poll-based prediction; the rest fall back to no-swing\n",
+              sum(ALL$level_from_polls == 1L, na.rm = TRUE), nrow(ALL)))
 feat_cols <- c("pred_share", "x", "level_prev",
-               if (!identical(Sys.getenv("AUSPOL_NO_LEVEL_NOW", "0"), "1")) "level_now",
+               if (!identical(.lvl_mode, "none")) "level_now",
+               if (identical(.lvl_mode, "pred")) "level_from_polls",
                "dev_prev",
                "n_cand_prev", "n_cand_now", "same_i", "same_mp_i", "is_major_i",
                "margin", "fed_swing", "retirement_i", "soph_cand_i", "soph_party_i",
