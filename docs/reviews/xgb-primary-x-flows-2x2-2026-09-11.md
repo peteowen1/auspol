@@ -9,6 +9,30 @@ challengers add, overlap, or interfere?) can be answered from the same run.
 after three defects were found and fixed. The previously banked 0.3332 / 0.3283
 flow-arm numbers are superseded and should not be quoted.
 
+> ## ⚠️ EVERY ABSOLUTE NUMBER IN THIS FILE WAS MEASURED WITH A LEAK
+>
+> Later on 2026-09-11 the backtest was found to be feeding the xgb primary
+> model `level_now` — the target election's **own actual statewide result**.
+> Every pooled figure below (0.3332, 0.3069, 0.3001, and the AE Forecasts
+> comparison) carries it.
+>
+> **The honest number is 0.3117** (22 pairs, 3 seeds, sd 0.0015). The leak was
+> worth **+0.0116**, about 8x the seed noise, concentrated in sa2026 — the One
+> Nation surge election, where `level_now` amounted to telling the model the
+> answer.
+>
+> **What still stands**: every RELATIVE comparison in this file. Both sides of
+> each arm carried the same leak, so the 2x2, the interaction, the per-pair
+> deltas and the shipping decisions for the xgb primary and xgb flows are all
+> unaffected.
+>
+> **What does not**: the absolute pooled figures, and the AEF gap — which is
+> wider than reported here.
+>
+> Left unedited rather than restated, because the reasoning is what makes the
+> relative conclusions readable. See `scripts/published_flags.R`'s
+> `AUSPOL_LEVEL_MODE` entry for the current numbers.
+
 ---
 
 ## Three defects found before any number was quoted

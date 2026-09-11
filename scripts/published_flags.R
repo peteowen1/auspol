@@ -129,6 +129,36 @@ PUBLISHED_FLAGS <- c(
                                              # median seats 9 -> 10 (90%: 3-18 -> 4-20). Pete's call: publish
                                              # the pooled estimate, not SA's point value alone.
                                              # docs/reviews/onp-concentration-validated-2026-09-09.md
+  AUSPOL_FORECAST_MODE       = "0",          # harness-only: 1 = the statewide the seats swing toward is PREDICTED
+                                             # from the poll trend plus leave-one-out fundamentals, instead of read
+                                             # off the election being scored. Implemented in backtest_candidate_fed.R
+                                             # and _sa.R only; nsw/qld/vic/wa still use the actual result and are
+                                             # tracked as an open gap in docs/NEXT-STEPS.md.
+                                             #
+                                             # DEFAULT "0" IS NOT AN ENDORSEMENT. Pete's ruling 2026-09-11 is that a
+                                             # forecast must be predictive throughout, and the default is 0 only
+                                             # because four harnesses cannot yet honour it -- flipping it would
+                                             # silently mean two different things across the six. The xgb primary's
+                                             # own statewide feature IS already leakage-free (AUSPOL_LEVEL_MODE),
+                                             # which is the part that reaches the published forecast.
+                                             # Measured cost where implemented: federal +0.0047 pooled seat log loss,
+                                             # sa2026 0.3640 -> 0.4756 with the xgb primary OFF (with it on the
+                                             # statewide swing never reaches the output, so the two modes tie).
+  AUSPOL_XGB_SURGE           = "0",          # harness-only: 1 = surge_h/surge_party/surge_mu/surge_sd come from the
+                                             # XGBoost emergence model (R/xgb_surge_override.R) instead of the
+                                             # salience hazard. BUILT, NOT SHIPPED.
+                                             #
+                                             # The hazard itself is good -- out-of-fold AUC 0.936 against the
+                                             # salience version's 0.751, and ONP goes from 0.201 (actively inverted)
+                                             # to 0.862 -- and on sa2026 it moves seat log loss 0.6362 -> 0.5891.
+                                             # It is not shipped because it FAILED its own pre-registered bar
+                                             # (rms_z 3.93 -> 2.83 against 2.50) and because a calibration check
+                                             # says it is now OVER-dispersed: it scores 2.83 on reality against
+                                             # 3.48 on data generated from its own predicted distributions.
+                                             # The deciding test is a seat COUNT -- 26 of 2,050 historical
+                                             # seat-elections were won by an emerging non-major -- and that has not
+                                             # been run. Wired into backtest_candidate_sa.R only; the live path is
+                                             # an unimplemented stub. docs/plans/prereg-xgb-surge-parameters-2026-09-11.md
   AUSPOL_SALIENCE_BLEND      = "1",          # 1 = the salience hazard also moves the POINT ESTIMATE toward surge_mu
                                              # (blend_salience_shares), on top of the stochastic surge in the draw.
                                              # Shipped value is 1 = the behaviour that has always run. Set to "0" to

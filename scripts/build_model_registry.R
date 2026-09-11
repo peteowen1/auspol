@@ -72,6 +72,36 @@ for (sw in names(COMMENT_ONLY)) {
 # row; update this when a gap is fixed or a new one is found by rerunning
 # this script and diffing its output.
 CLASSIFY <- list(
+  AUSPOL_LEVEL_MODE = paste(
+    "Read by scripts/fit_xgb_primary_v6.R when the model is FITTED, not by any harness or by",
+    "fit_seats_full.R at run time -- the choice is baked into the oof file and the saved model, so it",
+    "shows as absent everywhere while governing every row of both. 'pred' (default) trains on a",
+    "poll-based statewide projection; 'now' trains on the target election's actual result and is",
+    "LEAKAGE, kept only so the cost stays measurable. The live path has always used a prediction",
+    "(R/xgb_primary_override.R fills level_now from state_mean), so this made training match serving."),
+  AUSPOL_FORECAST_MODE = paste(
+    "OPEN GAP, and the most consequential one in this table. 1 = the statewide the seats swing toward",
+    "is PREDICTED from polls rather than read off the election being scored. Implemented in",
+    "backtest_candidate_fed.R and _sa.R ONLY; nsw/qld/vic/wa still use the actual result, so their",
+    "numbers answer a different question from federal's and are not comparable to a forecast. Default",
+    "0 because flipping it today would mean two different things across the six harnesses, NOT because",
+    "the oracle statewide is endorsed -- Pete's ruling 2026-09-11 is that a forecast must be predictive",
+    "throughout. Cost where measured: federal +0.0047 pooled seat log loss."),
+  AUSPOL_XGB_SURGE = paste(
+    "Harness-only and wired into backtest_candidate_sa.R ALONE, which is this file's own 'a fix to one",
+    "harness is a fix to all of them' rule outstanding rather than satisfied. Built, measured, NOT",
+    "shipped: the hazard is much better than the salience one it would replace (out-of-fold AUC 0.936",
+    "against 0.751) but it failed its pre-registered bar and a calibration check says it is now",
+    "over-dispersed. Its live path is an unimplemented stub, so fit_seats_full.R cannot honour it even",
+    "if asked. docs/plans/prereg-xgb-surge-parameters-2026-09-11.md"),
+  AUSPOL_SALIENCE_BLEND = paste(
+    "Read inside R/salience_surge.R's blend_salience_shares(), not per-harness -- universal in practice,",
+    "and gated there deliberately so all five harnesses and the published forecast get the switch from",
+    "one change. Exists to make a suspected DOUBLE COUNT measurable: the same hazard drives both a shift",
+    "of the point estimate and an additive jump in the draw. Measured 2026-09-11 -- the double count is",
+    "real (surge_h is the per-seat max of p_hat, correlation 0.984) and turning the blend OFF makes",
+    "things WORSE, because the under-prediction of emergences is larger than the over-counting.",
+    "Stays at 1 until the per-cell variance is fixed."),
   AUSPOL_XGB_PRIMARY = paste(
     "Harness-only BY DESIGN, and the split is the point: a backtest must predict a pair with a",
     "model that never saw it, so the harnesses read the leave-one-pair-out out-of-fold predictions",

@@ -31,7 +31,7 @@ All seven share one `R/` package core (`simulate_seat_contests()`,
 in which switches each one WIRES and which data source each reads, not in
 separate model code.
 
-## Switch parity (43 switches from `published_flags.R`, 7 entry points)
+## Switch parity (47 switches from `published_flags.R`, 7 entry points)
 
 | switch | fit_seats (published) | fed | nsw | qld | sa | vic | wa |
 |---|---|---|---|---|---|---|---|
@@ -47,9 +47,11 @@ separate model code.
 | `AUSPOL_FLOW_SHIFT` | yes | NO | NO | NO | NO | NO | NO |
 | `AUSPOL_FLOW_SHRINK_K` | yes | yes | yes | yes | yes | yes | yes |
 | `AUSPOL_FORCE_FP` | yes | NO | NO | NO | NO | NO | NO |
+| `AUSPOL_FORECAST_MODE` | NO | yes | NO | NO | yes | NO | NO |
 | `AUSPOL_FP_SD_MODE` | yes | NO | NO | NO | NO | NO | NO |
 | `AUSPOL_IND_SALIENCE` | NO | yes | NO | NO | NO | NO | NO |
 | `AUSPOL_INSURGENCY_SHRINK` | yes | yes | NO | NO | NO | NO | NO |
+| `AUSPOL_LEVEL_MODE` | NO | NO | NO | NO | NO | NO | NO |
 | `AUSPOL_LEVEL_MULT_IND` | yes | yes | yes | yes | yes | yes | yes |
 | `AUSPOL_LEVEL_MULT_OTH` | yes | yes | yes | yes | yes | yes | yes |
 | `AUSPOL_LEVEL_SD` | yes | yes | yes | yes | yes | yes | yes |
@@ -60,6 +62,7 @@ separate model code.
 | `AUSPOL_ONP_ORDER` | yes | NO | NO | NO | NO | NO | NO |
 | `AUSPOL_PARTY_COR` | yes | yes | yes | yes | yes | yes | NO |
 | `AUSPOL_QLD_FLOWS` | yes | yes | NO | yes | yes | yes | NO |
+| `AUSPOL_SALIENCE_BLEND` | NO | NO | NO | NO | NO | NO | NO |
 | `AUSPOL_SALIENCE_EXP_SD` | NO | yes | yes | yes | yes | yes | NO |
 | `AUSPOL_SALIENCE_EXPECTED` | yes | yes | yes | yes | yes | yes | NO |
 | `AUSPOL_SALIENCE_SMOOTH` | NO | NO | NO | NO | NO | NO | NO |
@@ -78,6 +81,7 @@ separate model code.
 | `AUSPOL_XGB_PRIMARY` | yes | NO | NO | NO | NO | NO | NO |
 | `AUSPOL_XGB_PRIMARY_LIVE` | yes | NO | NO | NO | NO | NO | NO |
 | `AUSPOL_XGB_PRIMARY_OOF` | NO | NO | NO | NO | NO | NO | NO |
+| `AUSPOL_XGB_SURGE` | NO | NO | NO | NO | yes | NO | NO |
 
 ## Every non-universal switch, explained
 
@@ -85,14 +89,17 @@ separate model code.
 - **`AUSPOL_DEFECT_POOLED`** (**adopted, shared-function wiring**): ADOPTED 2026-09-09 at "2" (docs/plans/prereg-defector-two-rate- 2026-09-09.md), by Pete on mechanism -- the arm missed its own primary bar (t -2.04 vs 2.08) but every directional indicator was favourable and R4 confirmed the published Victorian forecast is byte-identical (Victoria fields no major-party defector standing as a minor this cycle, so the mechanism does not fire there). Reaches fit_seats_full.R correctly: personal_prior_vote() self-resolves both rates from Sys.getenv() when the caller passes NULL, exactly so this did not need a seventh call site wired by hand -- the mistake that made the first pooled-arm run VOID earlier the same day.
 - **`AUSPOL_FLOW_SHIFT`** (intentional / dead experiment): Published-forecast-only (fit_seats_full.R shifts the statewide TPP fundamentals blend for the live Victorian projection); backtests inject real historical first preferences directly and have no fundamentals blend to shift. NOT federal-specific -- fit_seats_full.R is the Victorian forecast; corrected 2026-09-09, this comment previously said "federal" for every switch fit_seats_full.R alone reads, which is wrong for all six in this group.
 - **`AUSPOL_FORCE_FP`** (intentional / dead experiment): Published-forecast-only (fit_seats_full.R -- forces a first-preference override for the live Victorian forecast); no analogue in a backtest scored against real historical results.
+- **`AUSPOL_FORECAST_MODE`** (**OPEN GAP**): OPEN GAP, and the most consequential one in this table. 1 = the statewide the seats swing toward is PREDICTED from polls rather than read off the election being scored. Implemented in backtest_candidate_fed.R and _sa.R ONLY; nsw/qld/vic/wa still use the actual result, so their numbers answer a different question from federal's and are not comparable to a forecast. Default 0 because flipping it today would mean two different things across the six harnesses, NOT because the oracle statewide is endorsed -- Pete's ruling 2026-09-11 is that a forecast must be predictive throughout. Cost where measured: federal +0.0047 pooled seat log loss.
 - **`AUSPOL_FP_SD_MODE`** (intentional / dead experiment): Published-forecast-only (fit_seats_full.R -- first-preference spread mode for the live Victorian projection); backtests use realised historical first preferences, not a projected spread.
 - **`AUSPOL_IND_SALIENCE`** (intentional / dead experiment): Deprecated experimental arm (the v1 national IND multiplier), superseded by the newer salience mechanisms; fed-only because that is the only harness it was ever tested in. Not adopted.
 - **`AUSPOL_INSURGENCY_SHRINK`** (intentional / dead experiment): Per-seat shrink experiment, REFUSED 2026-09-06 (worse than the scalar shrink on 5 of 6 federal pairs) -- see docs/NEXT-STEPS.md. Fed/fit_seats-only because that is as far as the experiment got before being set aside. Not adopted.
+- **`AUSPOL_LEVEL_MODE`** (intentional / dead experiment): Read by scripts/fit_xgb_primary_v6.R when the model is FITTED, not by any harness or by fit_seats_full.R at run time -- the choice is baked into the oof file and the saved model, so it shows as absent everywhere while governing every row of both. 'pred' (default) trains on a poll-based statewide projection; 'now' trains on the target election's actual result and is LEAKAGE, kept only so the cost stays measurable. The live path has always used a prediction (R/xgb_primary_override.R fills level_now from state_mean), so this made training match serving.
 - **`AUSPOL_ONP_CV`** (intentional / dead experiment): Published-forecast-only (fit_seats_full.R). ADOPTED 2026-09-09 at 0.365, partially pooled (docs/reviews/onp-concentration-validated-2026-09-09.md) -- moves the live Victorian One Nation median seat count 9 -> 10. The highest-stakes switch this registry tracks; was previously mislabelled "federal" here, which is wrong -- fit_seats_full.R is the Victorian forecast, not a federal one.
 - **`AUSPOL_ONP_FIX`** (intentional / dead experiment): Published-forecast-only (fit_seats_full.R -- One Nation allocation fix for the live Victorian projection).
 - **`AUSPOL_ONP_ORDER`** (intentional / dead experiment): Published-forecast-only (fit_seats_full.R -- One Nation allocation ordering for the live Victorian projection).
 - **`AUSPOL_PARTY_COR`** (intentional / dead experiment): WA deliberately excluded from the statewide party-correlation matrix -- cor(ALP, IND) flips sign there (docs/reviews/statewide-cov-loo-2026-09-07.md). Intentional, not a gap.
 - **`AUSPOL_QLD_FLOWS`** (intentional / dead experiment): Self-referential no-op in the QLD harness itself ("use Queensland's own flows" is trivially true there) -- disclosed via its own `.inert` list. Genuinely absent from WA (uses AUSPOL_WA_FLOWS instead).
+- **`AUSPOL_SALIENCE_BLEND`** (intentional / dead experiment): Read inside R/salience_surge.R's blend_salience_shares(), not per-harness -- universal in practice, and gated there deliberately so all five harnesses and the published forecast get the switch from one change. Exists to make a suspected DOUBLE COUNT measurable: the same hazard drives both a shift of the point estimate and an additive jump in the draw. Measured 2026-09-11 -- the double count is real (surge_h is the per-seat max of p_hat, correlation 0.984) and turning the blend OFF makes things WORSE, because the under-prediction of emergences is larger than the over-counting. Stays at 1 until the per-cell variance is fixed.
 - **`AUSPOL_SALIENCE_EXP_SD`** (**OPEN GAP**): WA: same salience-corpus exclusion as AUSPOL_SALIENCE_EXPECTED, intentional. fit_seats_full.R: OPEN GAP, not fixed -- registered as published but sd_override is never wired into the forecast script at all (docs/reviews/pre-main-review-gate-2026-09-08.md). Currently harmless: this whole salience-variance arm is still pre-registered and undecided (docs/plans/prereg-salience-expected-and-variance-2026-09-07.md), so the switch is off everywhere. Wire it in the same commit that ships the arm, not before.
 - **`AUSPOL_SALIENCE_EXPECTED`** (intentional / dead experiment): WA has no candidate-level salience corpus at all (the WA commission files carry surnames only, no salience-v6.csv rows) -- documented, intentional exclusion.
 - **`AUSPOL_SALIENCE_SMOOTH`** (intentional / dead experiment): Read inside R/salience_surge.R, not per-harness -- universal in practice.
@@ -104,6 +111,7 @@ separate model code.
 - **`AUSPOL_XGB_PRIMARY`** (intentional / dead experiment): Harness-only BY DESIGN, and the split is the point: a backtest must predict a pair with a model that never saw it, so the harnesses read the leave-one-pair-out out-of-fold predictions (output/xgb-primary-v6-oof-predictions.csv) while the published forecast reads the all-data model via AUSPOL_XGB_PRIMARY_LIVE. Same shipped decision, two artifacts, because vic2026 is not in any training set and fed2016 is. Absent from fit_seats_full.R deliberately -- an oof file has no row for an election that has not happened.
 - **`AUSPOL_XGB_PRIMARY_LIVE`** (intentional / dead experiment): Published-forecast-only (fit_seats_full.R), the live counterpart of AUSPOL_XGB_PRIMARY above. Loads output/xgb-primary-v6-final.model, trained on all 22 historical pairs -- correct here and leakage in a backtest, which is exactly why the two switches exist separately.
 - **`AUSPOL_XGB_PRIMARY_OOF`** (intentional / dead experiment): Harness-only escape hatch naming which out-of-fold file AUSPOL_XGB_PRIMARY reads; empty means the v6 default. Exists because the unversioned filename is v1's, and until 2026-09-11 the backtest arm measured v1 while the live forecast shipped v6 -- the two were never describing the same model. Not a modelling switch; no published-forecast analogue.
+- **`AUSPOL_XGB_SURGE`** (intentional / dead experiment): Harness-only and wired into backtest_candidate_sa.R ALONE, which is this file's own 'a fix to one harness is a fix to all of them' rule outstanding rather than satisfied. Built, measured, NOT shipped: the hazard is much better than the salience one it would replace (out-of-fold AUC 0.936 against 0.751) but it failed its pre-registered bar and a calibration check says it is now over-dispersed. Its live path is an unimplemented stub, so fit_seats_full.R cannot honour it even if asked. docs/plans/prereg-xgb-surge-parameters-2026-09-11.md
 
 ## Gaps the switch-presence matrix cannot see
 
@@ -133,4 +141,4 @@ asks for":
 
 ## Coverage check
 
-MR2  every non-universal switch (23 of 43) has a recorded classification.
+MR2  every non-universal switch (27 of 47) has a recorded classification.

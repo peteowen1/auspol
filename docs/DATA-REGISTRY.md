@@ -1,6 +1,6 @@
 # Data registry
 
-**Generated 2026-09-10 by `scripts/build_data_registry.R`. Do not hand-edit** --
+**Generated 2026-09-11 by `scripts/build_data_registry.R`. Do not hand-edit** --
 rerun the script instead. Regenerate it whenever you add or fetch data.
 
 This file exists because the same data has been declared missing three
@@ -75,14 +75,14 @@ cannot pass as a working one.
   - e.g. elections.json, publicResults_SGE2024_ICCDiv4_Final.zip, publicResults_State2020_aurukun2020_Final.zip, qld2017-cdx.txt
 - **waec/** -- 947 files, 27.1 MB
   - e.g. app.html, app.min.js, config-loader.js, config.json
-- **trends/** -- 4627 files, 2.8 MB
+- **trends/** -- 4673 files, 2.8 MB
   - e.g. 2019_anch2_Adrian_Wone_Susie_Beveridge_Will_Landers_Ammar_Khan.rds, 2019_anch2_Bill_Chandler_Susan_Moylan_Dave_Blake_Tim_Bohm.rds, 2019_anch2_Robert_Oakeshott_Helen_Haines_Zali_Steggall_Kerryn_Phelps.rds, 2019_anch2_Trevor_Jones_Colin_Butland_David_Norman_Thor_Prohaska.rds
-- **boundaries/** -- 20 files, 157.6 MB
-  - e.g. SED_2021.zip, SED_2021_AUST_GDA2020.CPG, SED_2021_AUST_GDA2020.dbf, SED_2021_AUST_GDA2020.prj
-- **census/** -- 4 files, 18.0 MB
-  - e.g. 2021_GCP_SED_NSW.zip, 2021_GCP_SED_SA.zip, 2021_GCP_SED_VIC.zip, census-sed-2021.csv
-- **correspondences/** -- 12 files, 899 KB
-  - e.g. booths-2018vic.csv, booths-2018vic.txt, booths-2019nsw.csv, booths-2019nsw.txt
+- **boundaries/** -- 47 files, 414.3 MB
+  - e.g. CED_2016/CED_2016_AUST.dbf, CED_2016/CED_2016_AUST.prj, CED_2016/CED_2016_AUST.shp, CED_2016/CED_2016_AUST.shx
+- **census/** -- 20 files, 77.4 MB
+  - e.g. 2016_GCP_CED_AUS.zip, 2016_GCP_SED_NSW.zip, 2016_GCP_SED_QLD.zip, 2016_GCP_SED_SA.zip
+- **correspondences/** -- 21 files, 1.3 MB
+  - e.g. abs-sed/CG_CED_2016_CED_2021.csv, abs-sed/CG_SED_2016_SED_2021.csv, abs-sed/CG_SED_2021_SED_2022.csv, abs-sed/CG_SED_2022_SED_2024.csv
 - **aef/** -- 16 files, 4.1 MB
   - e.g. 2022fed-results.json, 2022fed-summary.json, 2022sa-results.json, 2022sa-summary.json
 

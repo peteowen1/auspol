@@ -1,6 +1,76 @@
 # auspol — work queue
 
-## CURRENT STATE, end of the 2026-09-10/11 session
+## CURRENT STATE, end of the 2026-09-11 session — START HERE
+
+**PR #32 open, `dev` → `main`, review-gated and CI-equivalent green.**
+
+**The headline number changed because a LEAK was removed, not because the model
+got worse.** Pooled seat log loss over 22 pairs / 2,050 seat-elections, 3 seeds:
+
+| | |
+|---|---|
+| previously published | 0.3332 |
+| xgb primary + xgb flows, **leaked** | 0.3001 |
+| **honest — the number to quote** | **0.3117** (sd 0.0015), accuracy 0.8805 |
+
+### Shipped today
+
+- **`AUSPOL_XGB_FLOWS = "1"`** — per-seat preference flows, −0.0068 on top of
+  the primary. **Quote as NOT significant**: t = −1.67, p = 0.111.
+- **`AUSPOL_LEVEL_MODE = "pred"`** — the primary model trains on a statewide
+  predicted from polls, not the actual result.
+
+### The leak, and why deleting was the wrong fix
+
+`level_now` was the target election's own statewide share. Pete's ruling:
+everything in a forecast must be predictive. **Deleting it cost sa2026
+0.4200 → 0.6309** — it was the model's only route to knowing the national
+picture. Predicting it recovers ~84% (primary RMSE 3.9647 deleted / 3.9201
+predicted / 3.9117 leaked), and it closed a train/serve mismatch that predated
+the work: the live path always used a prediction, so the published forecast
+never leaked — it was trained on the actual and served the prediction.
+
+### Seven bugs, all in shipped code
+
+1. **WA's poll file calls the Liberals `LIB`** — the Liberal Party was folded
+   into "Other" and rebuilt from its prior minor-bucket share. wa2017 predicted
+   ALP 16.5 (actual 42.2), LNP 61.0 (actual 36.6), GRN 8.9 (actual 8.9).
+   Statewide error 3.24 → 2.06 points.
+2. Duplicate statewide draw columns in the federal harness — the rescale never
+   reached the simulation, so the bug its own comment called fixed was live.
+3. The statewide stopped summing to 100 when folding (97.7 on fed2022).
+4. `NA` statewide when a folded class hadn't contested the prior election —
+   fixed in the shared function, then found **again** in the federal harness by
+   the review gate.
+5. Pooling scripts never checked whether an arm's overrides actually ran.
+6. `promote_arm.R` warned on missing pairs then overwrote the canonical tables.
+7. Two silent drops uncounted, and a stub documented as though it worked.
+
+### Open, highest value first
+
+1. **Four harnesses still swing toward the ACTUAL statewide.**
+   `AUSPOL_FORECAST_MODE` exists in fed and sa only. Until nsw/qld/vic/wa have
+   it, their numbers answer a different question from federal's. The core is
+   already extracted into `R/forecast_statewide.R`, so this is wiring.
+2. **The emergence model decision.** v4 is built, hazard AUC 0.936 against the
+   salience version's 0.751, and sa2026 moves 0.6362 → 0.5891 — but it failed
+   its pre-registered bar and a calibration check says it is now
+   OVER-dispersed. The deciding test is a seat COUNT: 26 of 2,050 historical
+   seat-elections were won by an emerging non-major. Not yet run.
+   `docs/plans/prereg-xgb-surge-parameters-v2-2026-09-11.md`.
+3. **Re-derive the AE Forecasts comparison** — every figure in it was measured
+   with the leak, so the real gap is wider than reported.
+4. **WA breaks out `NAT` separately and nothing merges it into `LNP`'s trend.**
+   WA's OTH bias is +1.71 against Victoria's +0.45 — suggestive, within noise
+   at n=7. Same shape as the `LIB` bug, so worth an hour.
+5. **`docs/NEXT-STEPS.md` is over its size threshold** and needs a scoped
+   read-and-roll into `docs/backlog/`, not a mechanical cut.
+
+Full detail: `docs/reviews/xgb-primary-x-flows-2x2-2026-09-11.md` (note its
+banner — its absolute numbers are the leaked ones), the "What the simulator
+actually does" section in `ARCHITECTURE.md`, and `scripts/published_flags.R`.
+
+## PREVIOUS STATE, 2026-09-10/11 session
 
 **Merged to `main` (PR #31, CI green).** Everything below in this block is
 landed unless marked otherwise.
