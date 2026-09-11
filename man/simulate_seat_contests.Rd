@@ -20,6 +20,7 @@ simulate_seat_contests(
   party_cor = NULL,
   fallback_smooth = 0,
   shrink_k = 0,
+  conditional_override = NULL,
   flow_sd = 0,
   level_mult = NULL,
   surge_h = 0,
@@ -183,6 +184,20 @@ off-by-default scaffold for a narrower future attempt, not an untried
 idea -- see \verb{docs/reviews/flow-cell-shrinkage-REFUSED-2026-09-10.md}
 for the result and \verb{docs/plans/prereg-flow-cell-shrinkage-2026-09-10.md}
 for the original pre-registration.}
+
+\item{conditional_override}{EXPERIMENTAL, default \code{NULL} (disabled, exact
+previous behaviour). A list, one entry per seat (matched to \code{seat_names}
+by name if named, else by position), each \code{NULL} (this seat uses the
+shared \code{matrix$conditional} table unchanged) or a named list of named
+numeric vectors in \code{matrix$conditional}'s own shape (keyed
+\code{"FROM|A+B+C"}), consulted BEFORE the shared table at each exclusion
+round for that seat only. Built for a genuinely per-seat flow-rate
+model (\code{R/xgb_flow_override.R}, \verb{docs/plans/prereg-xgb-flows-v1-2026-09-10.md})
+-- the shared \code{matrix$conditional} table has no seat dimension at all,
+so a model whose prediction depends on a SEAT's own primary shares had
+no way to reach the simulation without this. Implemented in BOTH engines
+(the compiled core takes it as a sparse seat/key/row triple), so unlike
+\code{shrink_k} it does not force \code{engine = "r"}.}
 
 \item{flow_sd}{Per-draw standard deviation, in percentage points, applied to
 each transfer proportion before it is used.

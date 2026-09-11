@@ -379,6 +379,31 @@ mat <- as.matrix(wide[, -1, with = FALSE]); rownames(mat) <- wide$seat
 mat <- 100 * mat / rowSums(mat)
 st_a <- fa[, .(v = sum(votes)), by = party][, setNames(100 * v / sum(v), party)]
 st_b <- fb[, .(v = sum(votes)), by = party][, setNames(100 * v / sum(v), party)]
+# FORECAST MODE (AUSPOL_FORECAST_MODE=1). `st_b` above is the TARGET
+# election's own counted result, used as the statewide the seats swing toward.
+# Pete's ruling, 2026-09-11: that is leakage, because the thing being built is
+# a forecast. This replaces it with a projection from the polls up to the day
+# before, anchored on leave-one-out fundamentals -- see R/forecast_statewide.R,
+# which is the federal harness's block extracted so the five other harnesses
+# cannot each re-acquire its bugs.
+#
+# Measured on sa2026: One Nation predicted 19.83 against an actual 22.50, mean
+# absolute error 1.96 points per party. The polls did see that surge, which is
+# why replacing the oracle with a prediction is not the same as deleting it.
+SA_FORECAST_MODE <- identical(Sys.getenv("AUSPOL_FORECAST_MODE", "0"), "1")
+if (SA_FORECAST_MODE) {
+  .fc <- forecast_statewide_for(
+    "sa", PAIR$to, PAIR$flow_before, colnames(mat), st_a,
+    fundamentals_loo_table(),
+    fread(file.path("output", "projection-mix.csv"), showProgress = FALSE),
+    n_sims = N_SIMS, seed = as.integer(Sys.getenv("AUSPOL_SEED", "42")))
+  .oracle <- st_b
+  st_b <- .fc$st_fc[intersect(names(.fc$st_fc), names(st_b))]
+  cat(sprintf("BS0  forecast statewide replaces the oracle. Mean |error| %.2f pts over %d classes:\n",
+              mean(abs(st_b - .oracle[names(st_b)]), na.rm = TRUE), length(st_b)))
+  cat(sprintf("BS0  %s\n", paste(sprintf("%s %.1f(%.1f)", names(st_b), st_b,
+                                         .oracle[names(st_b)]), collapse = " ")))
+}
 # RE-ENTRY PRIOR, docs/plans/prereg-reentry-prior-2026-09-07.md. A class
 # contesting this seat but not the last one has no prior share, so swinging
 # zero forward leaves approximately zero -- 1,418 seat-class rows across the
@@ -917,10 +942,32 @@ if (identical(Sys.getenv("AUSPOL_SALIENCE_SURGE_V2", "0"), "1")) {
                 .reentry_sd_k, attr(.re_sd, "n_set")))
     SD_OVR <- combine_sd_override(SD_OVR, .re_sd)
   }
+# EXPERIMENTAL, default OFF: xgb-flows-v1 PER-SEAT conditional override.
+# docs/plans/prereg-xgb-flows-v1-2026-09-10.md. Built here, not earlier,
+# because it needs `shares` (each seat's own actual primary shares) as a
+# feature -- the earlier statewide-average version was found by review to
+# be an unfair test of a model trained on real per-seat shares.
+.xgb_flow_ov <- NULL
+if (identical(Sys.getenv("AUSPOL_XGB_FLOWS", "0"), "1")) {
+  .xgb_flow_ov <- tryCatch(xgb_flow_conditional_override_for(shares, TGT, PRV, "sa"),
+                            error = function(e) { cat(sprintf("XF9! xgb flows per-seat FAILED: %s\n", conditionMessage(e))); NULL })
+}
+# XGB SURGE PARAMETERS (AUSPOL_XGB_SURGE). Replaces the salience-derived
+# surge_h / surge_party / surge_mu / surge_sd with the emergence model's. No
+# simulator change: all four are already per-seat vectors.
+if (identical(Sys.getenv("AUSPOL_XGB_SURGE", "0"), "1")) {
+  .xs <- tryCatch(xgb_surge_params_for(shares, TGT),
+                  error = function(e) { cat(sprintf("XS9! xgb surge FAILED: %s\n", conditionMessage(e))); NULL })
+  if (!is.null(.xs)) {
+    surge_arg <- .xs$surge_h; surge_party_arg <- .xs$surge_party
+    surge_mu_arg <- .xs$surge_mu; surge_sd_arg <- .xs$surge_sd
+  }
+}
 sim <- simulate_seat_contests(level_sd = .level_sd, sd_override = SD_OVR, level_mult = .lm(shares), shares, fm, party_sd = psd, seat_sd = sp$sd_within * SEAT_SD_MULT,
                               n_sims = N_SIMS, smooth = SMOOTH, seed = SEED,
                               shrink = SHRINK, party_cor = PARTY_COR,
                               fallback_smooth = FB_SMOOTH, shrink_k = SHRINK_K, flow_sd = FLOW_SD,
+                              conditional_override = .xgb_flow_ov,
                               surge_h = surge_arg, surge_party = surge_party_arg,
                                 surge_from_zero = identical(Sys.getenv("AUSPOL_SURGE_FROM_ZERO", "0"), "1"), surge_mu = surge_mu_arg, surge_sd = surge_sd_arg)
 cat(sprintf("BS2e  engine %s | surge recipient fell back: %d class(es) absent, %d seat-draws at zero share\n", sim$engine, sim$surge_recipient_fallback, sim$surge_recipient_fallback_draws))

@@ -98,7 +98,38 @@ for (pr in PAIRS) {
   m <- merge(sd_pair, prevc, by = c("seat", "party"), all.x = TRUE)
   m <- merge(m, nowc, by = c("seat", "party"), all.x = TRUE)
   m <- merge(m, lp[, list(party, level_prev = level)], by = "party", all.x = TRUE)
-  m <- merge(m, ln[, list(party, level_now  = level)], by = "party", all.x = TRUE)
+  # THE STATEWIDE THE MODEL IS ALLOWED TO SEE. AUSPOL_LEVEL_MODE:
+  #   "pred" (default) -- output/level-pred.csv, the poll trend plus
+  #        leave-one-out fundamentals as at the day BEFORE polling day. Nothing
+  #        here sees the result. Mean absolute error 2.06 points per class.
+  #   "now"  -- state_level(pr$election), the ACTUAL statewide result. This is
+  #        the original behaviour and it is leakage; kept only so the cost can
+  #        be re-measured, never as a default.
+  #   "none" -- neither. Measured and REJECTED as the fix: deleting the feature
+  #        removes the model's only route to knowing what is happening
+  #        nationally, and sa2026 went 0.4200 -> 0.6309. Pete's instruction was
+  #        to substitute a prediction, not to remove the information.
+  .lvl_mode <- Sys.getenv("AUSPOL_LEVEL_MODE", "pred")
+  if (!.lvl_mode %in% c("pred", "now", "none"))
+    stop("AUSPOL_LEVEL_MODE must be pred, now or none; got ", .lvl_mode)
+  if (identical(.lvl_mode, "now")) {
+    m <- merge(m, ln[, list(party, level_now = level)], by = "party", all.x = TRUE)
+  } else if (identical(.lvl_mode, "pred")) {
+    lpf <- file.path(OUT, "level-pred.csv")
+    if (!file.exists(lpf)) stop("AUSPOL_LEVEL_MODE=pred needs ", lpf,
+                                " -- run scripts/build_level_pred.R first")
+    LPRED <- data.table::fread(lpf, showProgress = FALSE)
+    lp1 <- LPRED[LPRED$pair == pr$election, list(party, level_now = level_pred,
+                                                  level_from_polls = from_polls)]
+    if (!nrow(lp1)) stop("no predicted statewide for ", pr$election,
+                         " -- a pair silently missing here becomes a column of NAs ",
+                         "that xgboost splits on as though it were a value")
+    m <- merge(m, lp1, by = "party", all.x = TRUE)
+  }
+  # The column keeps the name `level_now` in every mode so the feature list,
+  # the saved models and every downstream reader stay on one name. What CHANGES
+  # is where it comes from, which is recorded in the run banner below rather
+  # than left to be inferred from a filename.
   if (!is.null(ret)) m <- merge(m, ret, by = c("seat", "party"), all.x = TRUE)
   if (!is.null(pv))  m <- merge(m, pv[, list(seat, party, own_prev_pcv)], by = c("seat", "party"), all.x = TRUE)
 
@@ -223,7 +254,46 @@ region_levels <- sort(unique(ALL$region))
 for (p in party_levels) ALL[[paste0("party_", p)]] <- as.integer(ALL$party == p)
 for (r in region_levels) ALL[[paste0("region_", r)]] <- as.integer(ALL$region == r)
 
-feat_cols <- c("pred_share", "x", "level_prev", "level_now", "dev_prev",
+# `level_now` was state_level(pr$election) -- the party's ACTUAL statewide share
+# at the election being predicted. AUSPOL_LEVEL_MODE (defined below, default
+# "pred") now controls where it comes from; `"none"` drops it entirely.
+#
+# This comment previously named AUSPOL_NO_LEVEL_NOW, a flag that was replaced by
+# AUSPOL_LEVEL_MODE later the same day and no longer exists anywhere in the
+# repo. Anyone setting it would have changed nothing, silently. Caught by the
+# review gate 2026-09-11.
+#
+# Pete, 2026-09-11: "its not deliberate - you decided this without telling me
+# ---- everything for an election forecast shold be predictive!!!"  He is
+# right. The harness banner calls the oracle statewide "this harness's whole
+# design", but that was a choice made in code and never put to him, and
+# describing it afterwards as deliberate let the decision stand unexamined.
+#
+# Measured cost of the oracle statewide overall, federal, 7 pairs: seat log
+# loss 0.2936 told-the-answer vs 0.2982 predicting it from polls, +0.0047, and
+# actually BETTER in 3 of 7. So the model does not lean on it -- but "small"
+# is not "allowed", and a forecast feature has to be knowable before the vote.
+.lvl_mode <- Sys.getenv("AUSPOL_LEVEL_MODE", "pred")
+cat(sprintf("\n=== STATEWIDE SOURCE: %s === %s\n", .lvl_mode,
+            switch(.lvl_mode,
+                   pred = "predicted from polls the day before -- leakage-free",
+                   now  = "the ACTUAL result -- LEAKED, for measurement only",
+                   none = "no statewide feature at all")))
+if (identical(.lvl_mode, "pred") && "level_from_polls" %in% names(ALL))
+  cat(sprintf("    %d of %d rows have a poll-based prediction; the rest fall back to no-swing\n",
+              sum(ALL$level_from_polls == 1L, na.rm = TRUE), nrow(ALL)))
+feat_cols <- c("pred_share", "x", "level_prev",
+               if (!identical(.lvl_mode, "none")) "level_now",
+               # `level_from_polls` marks the rows whose statewide is the
+               # no-swing fallback rather than a poll-based projection -- it
+               # tells the model how much to trust level_now on that row.
+               # Dropping it costs 0.014 of primary RMSE (3.9201 -> 3.9341),
+               # so it stays, and xgb_primary_predict_live() sets it to 1L to
+               # match: a live forecast always has polls, or it would not be
+               # running. Both models therefore carry the SAME feature set,
+               # which is the train/serve consistency this change exists for.
+               if (identical(.lvl_mode, "pred")) "level_from_polls",
+               "dev_prev",
                "n_cand_prev", "n_cand_now", "same_i", "same_mp_i", "is_major_i",
                "margin", "fed_swing", "retirement_i", "soph_cand_i", "soph_party_i",
                "prev_swing", "is_incumbent_party_i", "own_prev_pcv",
@@ -232,6 +302,23 @@ feat_cols <- c("pred_share", "x", "level_prev", "level_now", "dev_prev",
                paste0("party_", party_levels), paste0("region_", region_levels))
 X <- as.matrix(ALL[, ..feat_cols])
 y <- ALL$actual_share
+
+# PERSIST THE FEATURE MATRIX. scripts/fit_xgb_flows_v1.R writes its own
+# (xgb-flows-v1-features.csv) and this script did not, so anything wanting to
+# model something ELSE about these rows had to either re-run this whole script
+# or make do with the eleven columns the oof file carries.
+#
+# That is not hypothetical: on 2026-09-11 the emergence model was built on
+# those eleven columns -- 7 real predictors out of the 25 here -- and the
+# missing ones were exactly the plausible ones (retirement_i, margin,
+# same_mp_i, own_prev_pcv, n_cand_now, historic_elected_i). It then concluded
+# "we cannot predict who surges", which is a claim about the crippled feature
+# set, not about the problem. Same shape as benchmarking a deliberately limited
+# implementation and calling the result evidence about the design.
+fwrite(ALL[, c("pair", "seat", "party", "actual_share", ..feat_cols)],
+       file.path(OUT, "xgb-primary-v6-features.csv"))
+cat(sprintf("wrote %s/xgb-primary-v6-features.csv (%d rows, %d features)\n",
+            OUT, nrow(ALL), length(feat_cols)))
 
 pairs <- sort(unique(ALL$pair))
 fold_id <- match(ALL$pair, pairs)

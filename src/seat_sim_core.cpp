@@ -12,6 +12,7 @@
 // Anything the R loop does that this does not is handled by the R engine:
 // `party_draws`, and a party count too large for the dense cell tables.
 #include <Rcpp.h>
+#include <unordered_map>
 using namespace Rcpp;
 
 static inline double ld_sum(const std::vector<double>& x, const std::vector<int>& idx) {
@@ -31,8 +32,22 @@ List seat_sim_core(NumericMatrix shares, int n_sims, int shift_mode,
                    NumericMatrix ss_mat, LogicalVector ss_has,
                    NumericMatrix pool_mat, bool has_pw, NumericMatrix pw_mat,
                    NumericVector flow_sd_by, double smooth, double fallback_smooth,
-                   NumericVector shrink) {
+                   NumericVector shrink,
+                   IntegerVector ov_seat, IntegerVector ov_key, NumericMatrix ov_mat) {
   const int nseat = shares.nrow(), K = shares.ncol();
+  // PER-SEAT CONDITIONAL OVERRIDE, sparse. The shared cell_mat is dense over
+  // the key space but has no seat dimension; a per-seat dense table would be
+  // nseat * (K+1) * 2^K * K doubles, which is why this is a hash instead.
+  // Keyed (seat, packed key) -> row index into ov_mat. Empty when the caller
+  // passes no override, and then this costs one bool test per exclusion.
+  const bool has_ov = ov_seat.size() > 0;
+  const long long KEYSPACE = (long long) (K + 1) * (1LL << K);
+  std::unordered_map<long long, int> ov_idx;
+  if (has_ov) {
+    ov_idx.reserve((size_t) ov_seat.size() * 2);
+    for (int t = 0; t < ov_seat.size(); ++t)
+      ov_idx[(long long) ov_seat[t] * KEYSPACE + (long long) ov_key[t]] = t;
+  }
   IntegerMatrix wins(nseat, K), totals(n_sims, K);
   IntegerMatrix tcp_w(n_sims, nseat), tcp_r(n_sims, nseat);
   NumericMatrix tcp_share(n_sims, nseat);
@@ -113,21 +128,39 @@ List seat_sim_core(NumericMatrix shares, int n_sims, int shift_mode,
         for (size_t t = 0; t < alive.size(); ++t) mask += std::ldexp(1.0, alive[t]);
         const double key = (from + 1) * pow2K + mask;   // R's from is 1-based
         const int ki = (int) key;                       // exact: key < (K+1) * 2^K
+        // Rcpp matrices are column-major: the element for party k on a row
+        // sits `k * nrow` doubles past that row's first element, so every
+        // source below carries its own stride.
         const double* row;
-        bool got_cell = cell_has[ki];
-        if (got_cell) row = &cell_mat(ki, 0);
-        else {
-          ++n_fb;
-          if (ss_has[ki]) row = &ss_mat(ki, 0);
-          else if (has_pw) row = &pw_mat(from, 0);
-          else row = &pool_mat(from, 0);
+        int stride = 0;
+        bool got_cell = false;
+        // PER-SEAT override, consulted BEFORE the shared table -- the same
+        // order R/seat_sim.R:1046 uses. A hit sets got_cell, so it takes plain
+        // `smooth` and NOT max(smooth, fallback_smooth): an override row is a
+        // claim about THIS contest, which is exactly what a real cell is and
+        // what a pooled fallback is not.
+        if (has_ov) {
+          std::unordered_map<long long, int>::const_iterator it =
+            ov_idx.find((long long) i * KEYSPACE + (long long) ki);
+          if (it != ov_idx.end()) {
+            got_cell = true;
+            row = &ov_mat(it->second, 0);
+            stride = ov_mat.nrow();
+          }
+        }
+        if (!got_cell) {
+          got_cell = cell_has[ki];
+          if (got_cell) { row = &cell_mat(ki, 0); stride = cell_mat.nrow(); }
+          else {
+            ++n_fb;
+            if (ss_has[ki]) { row = &ss_mat(ki, 0); stride = ss_mat.nrow(); }
+            else if (has_pw) { row = &pw_mat(from, 0); stride = pw_mat.nrow(); }
+            else { row = &pool_mat(from, 0); stride = pool_mat.nrow(); }
+          }
         }
         ++n_tx;
         const size_t na = alive.size();
         w.resize(na); p.resize(na);
-        // Rcpp matrices are column-major: the element for party k on this row
-        // sits `k * nrow` doubles past the row's first element.
-        const int stride = got_cell ? cell_mat.nrow() : (ss_has[ki] ? ss_mat.nrow() : (has_pw ? pw_mat.nrow() : pool_mat.nrow()));
         long double ts = 0.0L;
         for (size_t t = 0; t < na; ++t) { w[t] = row[(size_t) alive[t] * stride]; ts += w[t]; }
         const double tot = (double) ts;

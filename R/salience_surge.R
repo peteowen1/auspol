@@ -347,6 +347,27 @@ surge_blend_estimate <- function(uniform_share, p_hat, surge_mu) {
 #'   cells were moved.
 #' @export
 blend_salience_shares <- function(shares, hz, surge_mu, expected = FALSE) {
+  # AUSPOL_SALIENCE_BLEND, added 2026-09-11 to make a suspected DOUBLE COUNT
+  # measurable instead of arguable. This function moves the POINT ESTIMATE
+  # toward surge_mu with weight p_hat; the simulator then ALSO adds
+  # N(surge_mu, surge_sd) with probability surge_h. Both come from the same
+  # hazard fit, so from a base of 5 with p = 0.1 and surge_mu = 15.6:
+  #
+  #   blend only  5 + 10.6p     draw only  5 + 15.6p     BOTH  5 + 26.2p
+  #
+  # which is ~1.7x the intended lift wherever a corpus exists. Whether that is
+  # a real defect depends on whether p_hat (per seat-PARTY) and surge_h (per
+  # SEAT) are the same quantity on the same scale -- they are different
+  # granularity, so this is a question to measure, not a bug to assume.
+  #
+  # Default "1" is exactly the previous behaviour, so nothing moves until an
+  # arm asks it to. Gating it HERE rather than at the six call sites means all
+  # five harnesses and fit_seats_full.R get the switch from one change --
+  # "a fix to one harness is a fix to ALL of them".
+  if (identical(Sys.getenv("AUSPOL_SALIENCE_BLEND", "1"), "0")) {
+    attr(shares, "cells") <- 0L
+    return(shares)
+  }
   if (is.null(hz) || is.null(hz$seat_party_hazard) || !nrow(hz$seat_party_hazard)) {
     attr(shares, "cells") <- 0L
     return(shares)

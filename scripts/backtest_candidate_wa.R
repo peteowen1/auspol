@@ -256,6 +256,18 @@ for (K in PAIRS) {
   # election the pooled source can add.
   tx <- pool_configured_flows(tx, WA_DATE[[as.character(K$to)]])
   fm <- if (nrow(tx)) build_flow_matrix(tx, min_n = 3L) else NULL
+  # NO STATEWIDE xgb_flow_conditional_for() CALL HERE ANY MORE. WA was the only
+  # harness that applied it, on top of the per-seat override it also applies at
+  # line ~556 -- so under AUSPOL_XGB_FLOWS, Western Australia was getting a
+  # different treatment from the other five harnesses, and the pooled arm mixed
+  # two things. Found 2026-09-11: 6 statewide rebuilds plus 7 per-seat
+  # overrides in WA's log, 0 statewide in fed/nsw/qld/sa/vic. The per-seat
+  # version supersedes the statewide one (it feeds each seat's OWN primary
+  # shares rather than a statewide average), so removing this leaves WA doing
+  # exactly what everyone else does. See "A fix to one harness is a fix to ALL
+  # of them" in CLAUDE.md -- this is that rule read backwards, an EXTRA
+  # parameter in one harness rather than a missing one, and it produces numbers
+  # that look like findings just the same.
   if (is.null(fm))
     cat(sprintf("BW1  wa%d->%d: NO transfers for %s; flows fall back to uniform\n",
                 K$from, K$to, el_from))
@@ -541,10 +553,19 @@ for (K in PAIRS) {
     SD_OVR <- combine_sd_override(SD_OVR, .re_sd)
   }
 
+  # EXPERIMENTAL, default OFF: xgb-flows-v1 PER-SEAT conditional override.
+  # docs/plans/prereg-xgb-flows-v1-2026-09-10.md. Needs `shares` (this seat's
+  # own primary shares), so it is built here rather than beside build_flow_matrix().
+  .xgb_flow_ov <- NULL
+  if (identical(Sys.getenv("AUSPOL_XGB_FLOWS", "0"), "1")) {
+    .xgb_flow_ov <- tryCatch(xgb_flow_conditional_override_for(shares, el_to, el_from, "wa"),
+                              error = function(e) { cat(sprintf("XF9! xgb flows per-seat FAILED: %s\n", conditionMessage(e))); NULL })
+  }
   sim <- simulate_seat_contests(level_sd = .level_sd, sd_override = SD_OVR, level_mult = .lm(shares), shares, fm, party_sd = psd,
                                 seat_sd = sd_used * SEAT_SD_MULT,
                                 n_sims = N_SIMS, smooth = SMOOTH, seed = SEED,
                                 shrink = SHRINK, fallback_smooth = FB_SMOOTH, shrink_k = SHRINK_K,
+                                conditional_override = .xgb_flow_ov,
                                 flow_sd = FLOW_SD, surge_h = SURGE_H)
   cat(sprintf("BW2e  engine %s | surge recipient fell back: %d class(es) absent, %d seat-draws at zero share\n", sim$engine, sim$surge_recipient_fallback, sim$surge_recipient_fallback_draws))
   wp <- as.data.table(sim$win_prob)

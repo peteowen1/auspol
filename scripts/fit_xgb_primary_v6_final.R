@@ -48,7 +48,13 @@ stopifnot(all(sort(unique(ALL$region)) %in% region_levels))
 for (p in party_levels) ALL[[paste0("party_", p)]] <- as.integer(ALL$party == p)
 for (r in region_levels) ALL[[paste0("region_", r)]] <- as.integer(ALL$region == r)
 
-feat_cols <- c("pred_share", "x", "level_prev", "level_now", "dev_prev",
+# MUST MATCH scripts/fit_xgb_primary_v6.R's list exactly. This script trains the
+# model the LIVE forecast loads; that one trains the model the backtests score.
+# Two feature lists maintained separately drift, and a model served features in
+# a different order or set than it was trained on fails silently rather than
+# loudly. `level_from_polls` was added to both on 2026-09-11, and
+# xgb_primary_predict_live() sets it to 1L.
+feat_cols <- c("pred_share", "x", "level_prev", "level_now", "level_from_polls", "dev_prev",
                "n_cand_prev", "n_cand_now", "same_i", "same_mp_i", "is_major_i",
                "margin", "fed_swing", "retirement_i", "soph_cand_i", "soph_party_i",
                "prev_swing", "is_incumbent_party_i", "own_prev_pcv",

@@ -1,3 +1,61 @@
+# auspol 0.4.29
+
+**The backtest was reading the target election's own statewide result. It no
+longer does, and the honest pooled seat log loss is 0.3117.**
+
+- **The statewide leak, removed.** `fit_xgb_primary_v6.R` fed the model
+  `level_now` -- the party's ACTUAL statewide share at the election being
+  predicted. `AUSPOL_LEVEL_MODE` now defaults to `"pred"`: a projection from
+  the poll trend plus leave-one-out fundamentals as at the day before polling
+  day, mean absolute error 2.06 points per class. Pooled seat log loss over 22
+  pairs and 3 seeds moves 0.3001 (leaked) to **0.3117** (honest), a gap about
+  8x the seed-to-seed noise. Concentrated where the mechanism predicts:
+  sa2026, the One Nation surge election, goes 0.4200 to 0.5564.
+
+  **Deleting the feature was measured and refused as the fix** -- it removed
+  the model's only route to knowing what was happening nationally and cost
+  sa2026 0.6309. Predicting it recovers about 84% of the information.
+
+  It also closed a train/serve mismatch that predated this work: the live path
+  always used the predicted statewide, so the published forecast never leaked
+  -- it was trained on the actual and served the prediction.
+
+- **XGBoost preference flows shipped** (`AUSPOL_XGB_FLOWS = "1"`). Worth
+  -0.0068 pooled on top of the xgb primary, better in 12 of 22 pairs. **Not
+  significant**: t = -1.67, p = 0.111 clustered on pairs. Shipped on the
+  standing "overall better, one or two regressions acceptable" rule rather
+  than because it cleared a bar; both regressions are diagnosed and neither is
+  a defect to chase.
+
+- **Western Australia's poll file calls the Liberals `LIB`**; every other
+  region says `LNP`. Unmapped, the Liberal Party was folded into "Other" and
+  reconstructed from its share of the prior election's minor bucket. wa2017
+  predicted ALP 16.5 against an actual 42.2 and LNP 61.0 against 36.6, while
+  the Greens came out at 8.9 against 8.9 -- the two-party total was right and
+  the split inverted, which is why it read as a sign error rather than a
+  naming one. Predicted-statewide error across 22 pairs: 3.24 to 2.06 points.
+
+- **Four more bugs, all in code that had shipped**: duplicate statewide draw
+  columns in the federal harness (9 for 7 parties, so the rescale never
+  reached the simulation and the bug its own comment called fixed was still
+  live); a statewide that stopped summing to 100 when folding; an `NA`
+  statewide when a folded class had not contested the prior election; and
+  pooling scripts that never checked whether an arm's overrides had actually
+  run -- they fail open, so an inert arm pooled as "this model is worth
+  nothing".
+
+- **New**: `R/forecast_statewide.R` (the federal forecast-mode core, extracted
+  so five more harnesses cannot each re-acquire its bugs),
+  `scripts/build_level_pred.R`, `scripts/promote_arm.R` and
+  `scripts/publish_shipped_release.R` (models and results now go to the
+  `shipped-models` release with a manifest carrying the git SHA and a checksum
+  per model).
+
+- **Known, not fixed**: four harnesses still take their swing target from the
+  actual statewide; `AUSPOL_XGB_SURGE` is wired into South Australia only and
+  its live path is an unimplemented stub; WA breaks out `NAT` separately and
+  nothing merges it into `LNP`'s trend.
+
 # auspol 0.4.28
 
 **A surging class could never be picked as its own seat's surge recipient,

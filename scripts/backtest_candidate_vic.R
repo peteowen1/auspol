@@ -754,10 +754,15 @@ for (K in PAIRS) {
 ")
   } else {
     set.seed(SEED)
+    .xgb_flow_ov <- NULL
+    if (identical(Sys.getenv("AUSPOL_XGB_FLOWS", "0"), "1")) {
+      .xgb_flow_ov <- tryCatch(xgb_flow_conditional_override_for(shares, sprintf("vic%d", K$to), sprintf("vic%d", K$from), "vic"),
+                                error = function(e) { cat(sprintf("XF9! xgb flows per-seat FAILED: %s\n", conditionMessage(e))); NULL })
+    }
     sim <- simulate_seat_contests(level_sd = .level_sd, sd_override = SD_OVR, level_mult = .lm(shares), shares, fm, party_sd = psd,
                                   seat_sd = sp$sd_within * SEAT_SD_MULT, n_sims = N_SIMS,
                                   smooth = SMOOTH, seed = SEED, party_cor = PARTY_COR,
-                                  shrink = SHRINK,
+                                  shrink = SHRINK, conditional_override = .xgb_flow_ov,
                                   fallback_smooth = FB_SMOOTH, shrink_k = SHRINK_K, flow_sd = FLOW_SD,
                                 surge_h = surge_arg, surge_party = surge_party_arg,
                                 surge_from_zero = identical(Sys.getenv("AUSPOL_SURGE_FROM_ZERO", "0"), "1"), surge_mu = surge_mu_arg, surge_sd = surge_sd_arg)
@@ -811,9 +816,17 @@ for (K in PAIRS) {
 }
 
 R <- rbindlist(out_all)
-fwrite(R, file.path("output", sprintf("backtest-vic%s.csv", CAL_TAG)))
+.vic_out <- file.path("output", sprintf("backtest-vic%s.csv", CAL_TAG))
+fwrite(R, .vic_out)
 fwrite(rbindlist(tot_all, fill = TRUE), file.path("output", sprintf("backtest-vic-totals%s.csv", CAL_TAG)))
 fwrite(rbindlist(share_detail, fill = TRUE), file.path("output", sprintf("backtest-vic-sharedetail%s.csv", CAL_TAG)))
+# SAY WHAT WAS WRITTEN. Every other harness prints this; Victoria did not, and
+# the arm fingerprint in the filename is not reconstructable from the outside.
+# Cost, 2026-09-11: scripts/pool_pf_arms.R attributes each run's output by
+# reading these lines out of the harness logs, so Victoria -- the LIVE TARGET
+# -- silently dropped out of a four-arm comparison and the pooled table read
+# 19 pairs instead of 22 without complaining.
+cat(sprintf("\nBV5  wrote %s and its totals/sharedetail\n", .vic_out))
 cat(sprintf("\nBV4  pooled over %d district-elections: accuracy %.1f%%, Brier %.4f\n",
             nrow(R), 100 * mean(R$pred == R$actual), mean((1 - R$prob)^2)))
 cat("BV4  for comparison, NSW 2023 gave 80.7% and 0.1468\n")

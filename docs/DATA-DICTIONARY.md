@@ -1,6 +1,6 @@
 # Data dictionary
 
-**Generated 2026-09-10 by `scripts/build_data_dictionary.R`. Do not hand-edit.**
+**Generated 2026-09-11 by `scripts/build_data_dictionary.R`. Do not hand-edit.**
 
 Companion to `docs/DATA-REGISTRY.md`. The registry answers *do we have this
 file*; this answers *do we have this field*. Four wrong "we don't have it"
@@ -125,7 +125,7 @@ processed extract. Every one is recoverable without a new fetch.
 
 | file | rows | columns |
 |---|---:|---|
-| `aef-comparison-full.csv` | 659 | `seat`, `actual`, `our_pred`, `our_p`, `aef_pred`, `aef_p`, `delta`, `our_primary`, `actual_primary`, `aef_primary`, `pair` |
+| `aef-comparison-full.csv` | 659 | `seat`, `actual`, `our_pred`, `our_p`, `seeds`, `aef_pred`, `aef_p`, `delta`, `our_primary`, `actual_primary`, `aef_primary`, `pair` |
 | `aef-primary-all.csv` | 3,671 | `seat`, `party`, `aef_pcv`, `election` |
 | `aef-seat-scores.csv` | 728 | `election`, `seat`, `actual`, `pred`, `pred_p`, `prob`, `tpp_actual` |
 | `aef-worst-seats-full.csv` | 659 | `seat`, `actual`, `our_pred`, `our_p`, `aef_pred`, `aef_p`, `delta`, `our_primary_actual`, `actual_primary`, `aef_primary_actual`, `pair` |
@@ -156,5 +156,5 @@ processed extract. Every one is recoverable without a new fetch.
 | `cycle-walks-fed.csv` | 17 | `year`, `party`, `n`, `own_weight`, `obs_pooled`, `obs_cycle`, `rw_pooled_pts`, `rw_cycle_pts`, `at_lower`, `at_upper`, `conv`, `acf1`, `speedup` |
 | `cycle-walks-nsw.csv` | 8 | `year`, `party`, `n`, `own_weight`, `cycle_level`, `obs_pts`, `rw_pooled`, `rw_cycle`, `floor_ref`, `at_lower`, `at_upper`, `acf1` |
 
-_(1918 `backtest-*.csv` arm outputs omitted; they share one shape.)_
+_(2606 `backtest-*.csv` arm outputs omitted; they share one shape.)_
 

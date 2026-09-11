@@ -32,6 +32,72 @@ the PR was opened hours earlier; the rule has to be about the push.
 Run `devtools::document()` **in the same commit**. A changed default with a
 stale `.Rd` is a `WARNING`, and CI treats warnings as errors.
 
+## A NEGATIVE RESULT IS ONLY REPORTABLE FROM THE STRONGEST VERSION YOU CAN BUILD
+
+**Before saying a model, feature or design "doesn't work", state what you gave
+it against what was available. If the answer is "a subset", that is not a
+result — it is a to-do.**
+
+Four times on 2026-09-11 alone, in one session, all the same shape: a negative
+finding reported from the cheapest version that was to hand.
+
+| what was reported | what was actually built | what the full version did |
+|---|---|---|
+| "xgb flows point to refuse" | statewide averages fed to a model whose features are per-seat | 2 wins, 2 ties, 0 regressions |
+| flow model's personal-vote features useless | `dest_same`/`dest_same_mp` hardcoded to 0 at inference, trained on real values | 22.8% of rows populated |
+| "201 rows will overfit, use class averages" | never fitted | dead heat with the average — the objection cost a round and decided nothing |
+| **"we cannot predict who surges"** | **7 of the 25 features the primary model already had** | **AUC 0.751 → 0.936; one class went from 0.201 (inverted) to 0.862** |
+
+Pete had to ask four separate times. The last one — "did we test xgboost with a
+tonne of variables for this?" — overturned a conclusion that had already been
+written into a pre-registration and two commits.
+
+**The asymmetry is the whole argument.** Building the full version costs
+minutes. A wrong negative gets written into a plan, reasoned from, and closes a
+line of work. There is no symmetric cost that justifies the shortcut.
+
+So, concretely:
+
+1. **When Pete says "fit an xgboost on it", fit it.** Do not argue from `n`.
+   Fit it with `xgb.cv` and early stopping, report it beside the alternative,
+   and let the measurement decide. An objection that a two-minute run would
+   settle is not an objection, it is a delay.
+2. **Name the feature count in the result.** "AUC 0.75 using 7 of the 25
+   features available" is a reportable sentence. "AUC 0.75" is not.
+3. **If the convenient input is a summary file, go back to the source.** The
+   emergence model used an eleven-column output file because it was there.
+   `output/xgb-primary-v6-features.csv` now exists precisely so that excuse is
+   gone — and `fit_xgb_flows_v1.R` already wrote its own.
+4. **A refusal needs the same evidence bar as a ship.** Both close a question.
+
+### The same root, one level up: ASK WHAT THE SYSTEM ALREADY HAS
+
+Both failures above are the same move — reasoning from the file in front of me
+instead of the system I already know about. Later the same day, again:
+
+`fit_xgb_primary_v6.R` computes `level_now` as `state_level(pr$election)`, the
+party's ACTUAL statewide share at the election being predicted. Reading that
+one function, the conclusion was "this is the harness's design, deliberate".
+
+**The pipeline already predicts exactly that quantity.** `fit_seats_full.R:409`,
+`state_mean` — poll trend plus fundamentals, every party's statewide primary.
+It is stage one of the model. It was written into `ARCHITECTURE.md`'s own
+pipeline walkthrough, Part A step 4, *by me, that morning*.
+
+Pete had to point it out: *"why do i have to catch this for you - surely you
+should know this? im confused why you dont know 'we model each parties
+primary'"*.
+
+So, before accepting a limitation or designing around it:
+
+- **Ask what already computes this quantity.** Grep for it across `R/` and
+  `scripts/`, not just in the file that surfaced the problem.
+- **Re-read the architecture doc you wrote.** If the answer is in it, the
+  failure is not knowledge, it is not looking.
+- **"Deliberate design" is a claim that needs a source.** A code comment saying
+  a thing is the design is evidence that someone coded it that way, not that it
+  was chosen — and never that Pete chose it. Say which of the three it is.
+
 ## The rule this codebase keeps relearning
 
 **Prove a check fails on a deliberately broken input before trusting it to

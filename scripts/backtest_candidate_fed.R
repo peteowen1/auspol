@@ -894,10 +894,26 @@ for (K in PAIRS) {
     if (length(FC$folded) && "OTH" %in% parties) {
       unmodelled <- FC$folded
       bucket <- c(unmodelled, "OTH")
-      base_share <- sum(st_a[unmodelled], st_a[["OTH"]], na.rm = TRUE)
+      # A FOLDED CLASS MAY NOT HAVE CONTESTED THE PRIOR ELECTION. `st_a[name]`
+      # returns NA for a missing name, and NA then propagates through the split
+      # ratio into the draws, making that party's entire statewide-draw column
+      # NA for every simulation. R/forecast_statewide.R was fixed for this on
+      # 2026-09-11 after vic2022 (One Nation folded, did not stand in vic2018)
+      # produced an NA statewide -- and the fix was NOT ported here, which is
+      # the "a fix to one harness is a fix to ALL of them" rule failing in the
+      # same session that wrote it down. Found by the review gate, 2026-09-11.
+      #
+      # `st_a[["OTH"]]` is the same trap a second time: `[[` on a missing name
+      # in an atomic vector THROWS rather than returning NA, so a prior
+      # election with no OTH share would kill the run outright.
+      prior_sh <- vapply(bucket, function(p) {
+        v <- st_a[p]
+        if (length(v) != 1L || !is.finite(v)) 0 else unname(v)
+      }, numeric(1))
+      base_share <- sum(prior_sh)
       scale_to <- if (isTRUE(base_share > 0)) st_fc[["OTH"]] / base_share else 1
       ratio <- stats::setNames(
-        if (isTRUE(base_share > 0)) unlist(st_a[bucket]) / base_share
+        if (isTRUE(base_share > 0)) prior_sh / base_share
         else rep(1 / length(bucket), length(bucket)),
         bucket)
       # EVERY DRAW, not just the point estimate. simulate_seat_contests()
@@ -912,12 +928,38 @@ for (K in PAIRS) {
       # on the CURRENT (forecast) scale, so it is split by ratio only, not
       # multiplied by scale_to again -- scale_to converts a PRIOR-election
       # level to a forecast one, and oth_draw already is one.
+      # FOLD INTO THE BUCKET, THEN REPLACE IN PLACE. Until 2026-09-11 this
+      # cbind()ed new columns for the folded classes -- but
+      # statewide_draws_as_at() already returns a column for EVERY party in
+      # `parties`, folded ones included, so the result had 9 columns for 7
+      # parties with IND and OTH_RIGHT appearing twice. `sw_draws[, "IND"]`
+      # takes the FIRST match, which was the raw near-zero column, so the
+      # rescale this block exists to perform never reached the simulation and
+      # the very bug the comment above describes as fixed was still live.
+      # Verified by assertion before the fix, not inferred.
+      #
+      # The fold must also come first: a folded class is not exactly zero in
+      # the raw draws (fallback_sd noise, then row renormalisation), so
+      # overwriting its column without adding it in first deletes that share
+      # and the statewide stops summing to 100.
       oth_draw <- sw_draws[, "OTH"]
-      new_cols <- matrix(0, nrow(sw_draws), length(unmodelled),
-                         dimnames = list(NULL, unmodelled))
-      for (p in unmodelled) new_cols[, p] <- oth_draw * ratio[[p]]
+      for (p in unmodelled) oth_draw <- oth_draw + sw_draws[, p]
+      for (p in unmodelled) sw_draws[, p] <- oth_draw * ratio[[p]]
       sw_draws[, "OTH"] <- oth_draw * ratio[["OTH"]]
-      sw_draws <- cbind(sw_draws, new_cols)
+      # PROBE, added 2026-09-11 while extracting this block into
+      # R/forecast_statewide.R. statewide_draws_as_at() returns a column for
+      # EVERY party in `parties`, folded ones included, so this cbind may be
+      # producing a matrix with two columns of the same name -- after which
+      # sw_draws[, "IND"] silently takes whichever comes first. Asserted rather
+      # than assumed either way, because it decides whether this harness's
+      # forecast-mode numbers mean what they say.
+      if (anyDuplicated(colnames(sw_draws))) {
+        cat(sprintf("BF0!! DUPLICATE statewide draw columns after the fold: %d columns for %d parties -- %s\n",
+                    ncol(sw_draws), length(parties),
+                    paste(colnames(sw_draws)[duplicated(colnames(sw_draws))], collapse = ", ")))
+      } else {
+        cat(sprintf("BF0  statewide draw columns after the fold: %d, no duplicates\n", ncol(sw_draws)))
+      }
       # THE LEVEL, separately from the draws' spread. simulate_seat_contests()
       # centres statewide_draws on ITS OWN column means internally (each
       # draw's contribution is `draw - colMeans(draws)`), so the draws above
@@ -1540,12 +1582,17 @@ for (X in out_all) {
                 .reentry_sd_k, attr(.re_sd, "n_set")))
     SD_OVR <- combine_sd_override(SD_OVR, .re_sd)
   }
+  .xgb_flow_ov <- NULL
+  if (identical(Sys.getenv("AUSPOL_XGB_FLOWS", "0"), "1")) {
+    .xgb_flow_ov <- tryCatch(xgb_flow_conditional_override_for(X$shares, sprintf("fed%d", K$to), sprintf("fed%d", K$from), "fed"),
+                              error = function(e) { cat(sprintf("XF9! xgb flows per-seat FAILED: %s\n", conditionMessage(e))); NULL })
+  }
   sim <- simulate_seat_contests(level_sd = .level_sd, sd_override = SD_OVR, level_mult = .lm(X$shares), X$shares, X$fm, party_sd = psd, seat_sd = sd_w * SEAT_SD_MULT,
                                 n_sims = N_SIMS, smooth = SMOOTH, seed = SEED,
                                 shrink = shrink_arg, surge_h = surge_arg, surge_party = surge_party_arg,
                                 surge_from_zero = identical(Sys.getenv("AUSPOL_SURGE_FROM_ZERO", "0"), "1"),
                                 surge_mu = surge_mu_arg, surge_sd = surge_sd_arg,
-                                party_cor = PARTY_COR, statewide_draws = X$sw_draws,
+                                party_cor = PARTY_COR, statewide_draws = X$sw_draws, conditional_override = .xgb_flow_ov,
                                 fallback_smooth = FB_SMOOTH, shrink_k = SHRINK_K, flow_sd = FLOW_SD)
   cat(sprintf("BF3e  engine %s | surge recipient fell back: %d class(es) absent, %d seat-draws at zero share\n", sim$engine, sim$surge_recipient_fallback, sim$surge_recipient_fallback_draws))
   wp <- as.data.table(sim$win_prob)

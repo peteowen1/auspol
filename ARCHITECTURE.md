@@ -140,6 +140,170 @@ personal incumbency, defection type and salience are each just a coefficient
 in the same linear predictor, and a new signal is "add a term" rather than
 "invent a new mechanism."
 
+## What the simulator actually does, end to end
+
+Written 2026-09-11 because nobody could hold it in their head — Pete asked
+"what are all the steps" and was surprised the insurgency surge was still in.
+It is, and it is on. Read this before adding another mechanism.
+
+### Part A — building the inputs (`fit_seats_full.R`, once)
+
+**The numbers below are a grouping, NOT execution order** — corrected by the
+review gate 2026-09-11, which found a reader following the table top to bottom
+would get two steps backwards. In the file, the surge hazard (step 9,
+`:665-719`) runs BEFORE the swing (step 5, `:773`), and the statewide draws
+(step 4, `:935-971`) are built AFTER the whole `shares` chain (steps 5-8),
+because `sw_draws` and `shares` are different objects that never touch until
+`simulate_seat_contests()`. Execution order is: 1-3, 9, 5-8, 4, 10.
+
+| # | step | where |
+|---|---|---|
+| 1 | flow table from the previous election's transfers | `:284` |
+| 2 | baseline per-seat primaries (`mat22`), normalised | `:293` |
+| 3 | strip transferred votes | `:629` |
+| 4 | statewide projection → `sw_draws`, one correlated vector per draw | `:935-971` |
+| 5 | apply the swing per seat via the dev slopes | `:773+` |
+| 6 | One Nation written over the swung value from a concentration ratio | `:837` |
+| 7 | **XGB primary override replaces every seat's primaries** | `:854` |
+| 8 | salience point blend — a *second* surge effect, on the mean | `salience_surge.R:388` |
+| 9 | surge hazard → per-seat `surge_h`, `surge_mu`, `surge_sd`, `surge_party` | `:680-712` |
+| 10 | XGB flow override → per-seat `conditional_override` | |
+
+### Part B — the per-draw loop (`src/seat_sim_core.cpp`, x `n_sims`)
+
+One statewide shift per draw, then per seat:
+
+1. **statewide shift**, correlated across parties via the Cholesky factor (`:83`)
+2. **seat noise**: `v = base + shift + rnorm(0, sd_cell)`, clamped at 0, where
+   `sd_cell` is `level_sd = 1.10 + 8.67*sqrt(p(1-p))` (`:90`)
+3. **insurgency surge**: with probability `surge_h[i]`, add
+   `N(surge_mu, surge_sd)` to the recipient and scale the others down (`:96`)
+4. **eliminations**: exclude the lowest, distribute by conditional flow, looking
+   up per-seat override → shared table → seat-specific → pooled (`:118`)
+5. **winner** = higher of the last two; TCP recorded (`:191-198`)
+6. **calibration shrink**: with probability `shrink`, replace the winner with a
+   uniform pick among the alive (`:199`)
+
+### The naming trap that caused the confusion
+
+`published_flags.R` reads `AUSPOL_SURGE_H = "0"`, which looks like the surge is
+off. It is not. That is only the FLAT FALLBACK hazard. The real per-seat hazard
+comes from `AUSPOL_SALIENCE_SURGE_V2 = "1"` and **overwrites `surge_arg` at
+`fit_seats_full.R:698`**. What is genuinely off is `AUSPOL_IND_SALIENCE`,
+`AUSPOL_INSURGENCY_SHRINK`, `AUSPOL_SALIENCE_EXPECTED`, `AUSPOL_SALIENCE_EXP_SD`
+and the retired two-party `simulate_seats()`.
+
+### The two-step is stacking, and it is load-bearing — do not "simplify" it
+
+The obvious objection is that steps 5-6 compute primaries the classical way and
+step 7 throws them away. They do not. **`pred_share` — the classical
+pipeline's own output — is the FIRST feature of the xgb primary model**, and
+`cond_rate`/`pool_rate` are 87% of the flow model's gain. xgb learns a
+correction on top, it does not replace.
+
+Measured 2026-09-11 rather than assumed: setting `AUSPOL_ONP_CV` from 0.365 to
+0.15 moves the published One Nation median from **8 seats to 1**, entirely
+through `pred_share`. The classical path is live.
+
+### Where it IS Frankenstein: three mechanisms for one problem
+
+The mean is set in four places (5, 6, 7, 8). The uncertainty is set in five
+(statewide draws, `level_sd`, surge, `flow_sd`, `shrink`). Two of the five exist
+only because another was wrong:
+
+- **`level_sd`** is a global curve, so it cannot reach an emergence. For IND
+  predicted at 10-15%: actual p10 2.0, p50 10.1, p90 26.3, 12.1% above 25% —
+  against an assumed sd of 3.70, which puts a 30% outcome 5.4 sd away.
+- **`surge`** was bolted on to reach that tail, and its hazard does not fire:
+  `surge_h <= 0.05` on **184 of 201** historical emergences.
+- **`shrink`** is not a model of anything. It is a 1% coin toss that caps every
+  seat at 99.5%, applied AFTER the count where nothing can distinguish
+  "genuinely 99.9%" from "we do not model this".
+
+**`shrink` is the tell, and it gives the redesign a falsifiable prediction: if
+the per-cell variance is specified correctly, the best `shrink` should go to
+zero.** It is 0.01 today, and 0.00 costs 0.0235 concentrated in fed2013 — an
+emergence-heavy pair. That is what a patch for a missing tail looks like.
+
+### Suspected double count, gated so it can be measured
+
+Step 8 sets the mean to `(1 - p_hat) * base + p_hat * surge_mu`. Step B3 then
+ALSO adds `N(surge_mu, surge_sd)` with probability `surge_h`. Both derive from
+the same hazard fit. From a base of 5 with p = 0.1 and `surge_mu` = 15.6:
+
+| | expected share |
+|---|---|
+| blend only | 5 + 10.6p |
+| draw only | 5 + 15.6p |
+| **both, as shipped** | **5 + 26.2p** |
+
+`p_hat` is per seat-PARTY and `surge_h` per SEAT, so they are not obviously the
+same quantity — which is why `AUSPOL_SALIENCE_BLEND` was added (default `"1"`,
+the existing behaviour) to settle it by measurement rather than argument.
+
+### MEASURED 2026-09-11: the double count is REAL, and removing it makes things WORSE
+
+**The mechanism is confirmed.** `surge_h` is the per-seat maximum of `p_hat` —
+correlation 0.984 on fed2022 and 0.991 on nsw2019, with identical maxima. One
+hazard fit drives both effects. And it is larger than the function signature
+suggests: `surge_mu` is fitted per election, not the 15.6 default, and fed2022
+gives **35.1** with sd 12.8.
+
+**And the arm still refuses.** `AUSPOL_SALIENCE_BLEND=0` over 9 pairs:
+
+| | mean change | better in |
+|---|---|---|
+| as measured | −0.0034 | 5 of 9 |
+| **excluding one floor seat** | **+0.0029** | **4 of 9** |
+
+The apparent gain was **one seat**. Barwon in nsw2019 went 0.0000 → 0.0002
+across the `eps = 1e-6` floor, worth −5.298 on its own against a total of
+−4.799 across all 93 seats — **114% of the change from the top three seats**.
+Excluding Barwon, nsw2019 gets *worse* by 0.0054, and removing the blend also
+costs fed2013 +0.0094 and fed2022 +0.0096, the two most emergence-heavy
+federal pairs.
+
+**Read this correctly.** The double count is real arithmetic, and the model is
+nonetheless better with it than without, because the underlying under-prediction
+of emergences is larger than the over-counting. The blend is a **third patch on
+the same missing tail**, alongside `surge` and `shrink`.
+
+So it joins them in the falsifiable prediction: **if the per-cell variance is
+specified correctly, `AUSPOL_SALIENCE_BLEND=0` should become the better arm.**
+Do not remove it before then — that would strip a compensation while leaving
+the defect it compensates for.
+
+This is also the third time in this repo that a pooled log-loss gain turned out
+to be one seat crossing the floor. Check the per-seat breakdown before believing
+any of them.
+
+### The target architecture
+
+Two stages, not ten:
+
+1. **One model emits a predictive DISTRIBUTION per (seat, party)**, not a point.
+   Everything now hard-coded as its own step becomes a feature — the classical
+   baseline (keep the stacking), the statewide projection, incumbency, ONP
+   concentration, salience. The output is a mixture: P(ordinary), P(surge), and
+   the parameters of each, which is the shape the data actually shows.
+2. **The simulator samples that distribution**, applies the correlated
+   statewide shock, and runs the preference count. Nothing else — no
+   `level_sd`, no bolted-on surge, no `shrink`.
+
+The preference side stays as it is; table → xgb override → elimination loop is
+already clean.
+
+What this buys is legibility, not elegance: one place the mean lives, one place
+the uncertainty lives. The double count above could sit unnoticed precisely
+because neither is true today.
+
+**Do NOT attempt this as one rewrite.** Every layer was added for a measured
+reason and a big-bang would lose those without a way to tell which. Subtract one
+layer at a time, measuring each. The pre-registered variance work
+(`docs/plans/prereg-xgb-surge-parameters-2026-09-11.md`) is the first
+subtraction, because if it lands then `surge` and `shrink` both become
+removable.
+
 ## Load-bearing decisions
 
 **The posterior is exact, not sampled.** Every term in the trend model is

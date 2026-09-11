@@ -20,7 +20,9 @@ The overridden matrix, or \code{shares} unchanged if not enabled.
 \description{
 Exploratory only -- not part of the published model. Loads the
 leave-one-pair-out out-of-fold predictions written by
-\code{scripts/fit_xgb_primary_cv.R} (\code{output/xgb-primary-oof-predictions.csv})
+\code{scripts/fit_xgb_primary_v6.R} (\code{output/xgb-primary-v6-oof-predictions.csv},
+the model \code{AUSPOL_XGB_PRIMARY_LIVE} ships; override with
+\code{AUSPOL_XGB_PRIMARY_OOF})
 and overwrites every (seat, party) cell of \code{shares} that file covers for
 \code{pair_label}, renormalising each seat's row back to 100. Cells the xgb file
 doesn't cover (should not happen for a class the shares matrix carries;

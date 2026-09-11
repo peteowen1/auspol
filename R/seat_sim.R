@@ -137,6 +137,19 @@
 #'   idea -- see `docs/reviews/flow-cell-shrinkage-REFUSED-2026-09-10.md`
 #'   for the result and `docs/plans/prereg-flow-cell-shrinkage-2026-09-10.md`
 #'   for the original pre-registration.
+#' @param conditional_override EXPERIMENTAL, default `NULL` (disabled, exact
+#'   previous behaviour). A list, one entry per seat (matched to `seat_names`
+#'   by name if named, else by position), each `NULL` (this seat uses the
+#'   shared `matrix$conditional` table unchanged) or a named list of named
+#'   numeric vectors in `matrix$conditional`'s own shape (keyed
+#'   `"FROM|A+B+C"`), consulted BEFORE the shared table at each exclusion
+#'   round for that seat only. Built for a genuinely per-seat flow-rate
+#'   model (`R/xgb_flow_override.R`, `docs/plans/prereg-xgb-flows-v1-2026-09-10.md`)
+#'   -- the shared `matrix$conditional` table has no seat dimension at all,
+#'   so a model whose prediction depends on a SEAT's own primary shares had
+#'   no way to reach the simulation without this. Implemented in BOTH engines
+#'   (the compiled core takes it as a sparse seat/key/row triple), so unlike
+#'   `shrink_k` it does not force `engine = "r"`.
 #' @param fallback_smooth Extra blend toward uniform applied ONLY when an
 #'   exclusion has no conditional cell and falls back to the pooled rate. The
 #'   effective smoothing becomes `max(smooth, fallback_smooth)`.
@@ -263,6 +276,7 @@ simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
                                    party_draws = NULL, shrink = 0,
                                    party_cor = NULL, fallback_smooth = 0,
                                    shrink_k = 0,
+                                   conditional_override = NULL,
                                    flow_sd = 0,
                                    level_mult = NULL,
                                    surge_h = 0, surge_mu = 15.6, surge_sd = 6.1,
@@ -430,6 +444,37 @@ simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
     stop("shrink must be length 1, length ", length(seat_names),
          " (one per seat), or a named vector; got ", length(shrink))
   }
+
+  # EXPERIMENTAL, default NULL (inert): per-seat conditional-flow override.
+  # docs/plans/prereg-xgb-flows-v1-2026-09-10.md. Same resolution rule as
+  # `shrink` immediately above: a named list (keyed by seat name) or a plain
+  # list already in seat_names order, one entry per seat, each NULL (use the
+  # shared matrix$conditional unchanged for that seat) or a named list of
+  # named numeric vectors in matrix$conditional's own shape ("FROM|A+B+C").
+  if (!is.null(conditional_override)) {
+    if (!is.list(conditional_override)) {
+      stop("conditional_override must be a list (one entry per seat) or NULL; got ",
+           class(conditional_override)[1])
+    }
+    if (!is.null(names(conditional_override)) && any(nzchar(names(conditional_override)))) {
+      miss <- setdiff(seat_names, names(conditional_override))
+      if (length(miss))
+        stop("conditional_override is named but has no entry for ", length(miss),
+             " seat(s): ", paste(utils::head(miss, 5), collapse = ", "))
+      if (anyDuplicated(names(conditional_override)))
+        stop("conditional_override has duplicate seat names; cannot match unambiguously")
+      conditional_override <- unname(conditional_override[seat_names])
+    } else if (length(conditional_override) != length(seat_names)) {
+      stop("conditional_override must be length ", length(seat_names),
+           " (one per seat, NULL entries allowed), or a named list; got ",
+           length(conditional_override))
+    }
+  }
+  # Both engines implement this (the core takes it as a sparse (seat, key, row)
+  # triple; see the flattening at the seat_sim_core() call). `engine = "r"` is
+  # still how the identity gets re-proven, but it is no longer forced.
+  .cond_override_active <- !is.null(conditional_override) &&
+    any(!vapply(conditional_override, is.null, logical(1)))
 
   # Resolve the surge hazard to one value per seat, by the same rule.
   surge_h <- .fix_surge(surge_h, seat_names)
@@ -884,6 +929,84 @@ simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
     has_level <- !is.null(level_sd)
     sdp <- if (has_level) sd_cell_pre else base::matrix(0, 1L, K)
     spi <- surge_party_idx; spi[is.na(spi)] <- NA_integer_
+    # PER-SEAT conditional override, flattened for the compiled core. The
+    # shared cell_mat is dense over the whole key space but has NO seat
+    # dimension, and a per-seat dense table would be nseat * n_slots * K
+    # doubles -- so this crosses as three parallel SPARSE vectors (seat,
+    # packed key, row) that the core hashes once on entry.
+    #
+    # Every skip below exists to keep the two engines identical on input the R
+    # loop would never match, rather than to be lenient: the R loop looks the
+    # override up by the string it builds itself, so a key it cannot build is
+    # dead there and must be dead here too.
+    ov_seat <- integer(0); ov_key <- integer(0); ov_mat <- base::matrix(0, 0L, K)
+    if (.cond_override_active) {
+      .os <- vector("list", length(conditional_override))
+      .okv <- vector("list", length(conditional_override))
+      .orw <- vector("list", length(conditional_override))
+      for (i in seq_along(conditional_override)) {
+        co <- conditional_override[[i]]
+        if (is.null(co) || !length(co)) next
+        nms <- names(co)
+        if (is.null(nms)) {
+          stop("conditional_override[[", i, "]] has no names; it must be keyed ",
+               "\"FROM|A+B+C\" like matrix$conditional")
+        }
+        keys_i <- integer(0); rows_i <- list()
+        for (j in seq_along(co)) {
+          kj <- nms[j]
+          # `[[` on a list takes the FIRST exact match, so a repeated key is
+          # unreachable in the R engine and must stay unreachable here.
+          if (j > 1L && kj %in% nms[seq_len(j - 1L)]) next
+          .or <- co[[j]]
+          if (is.null(.or)) next          # R falls through to the shared table
+          parts <- strsplit(kj, "|", fixed = TRUE)[[1]]
+          if (length(parts) != 2L) next
+          from_i <- pidx[parts[1]]        # single-bracket: NA, not an error
+          surv <- strsplit(parts[2], "+", fixed = TRUE)[[1]]
+          # anyDuplicated() is NOT redundant with the round-trip check below,
+          # and leaving it out was a real bug (found by review 2026-09-11
+          # before this ever ran live). sort() leaves a repeated token adjacent
+          # to itself, so "OTH|ALP+ALP+GRN" reconstructs byte-identically and
+          # PASSES the round-trip check -- while being a key the R engine can
+          # never build, since its own `alive` set is unique by construction.
+          # It then corrupts the mask: the bits are combined with sum(), so a
+          # repeated bit CARRIES rather than setting. With ALP=1,LNP=2,GRN=3,
+          # "ALP+ALP+GRN" gives 1+1+4 = 6, which is exactly the mask of the
+          # genuine, different survivor set {LNP,GRN}. The malformed key would
+          # silently override a real elimination round in the compiled engine
+          # only -- invisible to R, i.e. precisely the divergence the
+          # round-trip check exists to prevent. With duplicates rejected here,
+          # each party contributes its bit exactly once, so sum() and bitwOr()
+          # coincide and the arithmetic below is safe.
+          if (is.na(from_i) || !length(surv) || anyDuplicated(surv) ||
+              !all(surv %in% parties)) next
+          # The R loop builds its key as sort(parties[alive]), so a key written
+          # in any other order can never match there.
+          if (!identical(kj, paste0(parts[1], "|", paste(sort(surv), collapse = "+")))) next
+          mask <- sum(bitwShiftL(1L, unname(pidx[surv]) - 1L))
+          # Same positional, full-length-K expansion the R engine does at the
+          # override site -- the core indexes the row positionally.
+          row <- numeric(K)
+          .keep <- intersect(names(.or), parties)
+          row[pidx[.keep]] <- pmax(0, .or[.keep])
+          keys_i <- c(keys_i, as.integer(unname(from_i) * 2^K + mask))
+          rows_i[[length(rows_i) + 1L]] <- row
+        }
+        if (!length(keys_i)) next
+        .os[[i]] <- rep.int(i - 1L, length(keys_i))
+        .okv[[i]] <- keys_i
+        .orw[[i]] <- do.call(rbind, rows_i)
+      }
+      ov_seat <- as.integer(unlist(.os))
+      ov_key <- as.integer(unlist(.okv))
+      ov_mat <- do.call(rbind, .orw)
+      if (is.null(ov_mat)) { ov_seat <- integer(0); ov_key <- integer(0); ov_mat <- base::matrix(0, 0L, K) }
+      if (length(ov_seat) != nrow(ov_mat) || length(ov_key) != nrow(ov_mat)) {
+        stop("conditional_override flattening produced ", length(ov_seat), " seats, ",
+             length(ov_key), " keys and ", nrow(ov_mat), " rows; these must agree")
+      }
+    }
     core <- seat_sim_core(unname(as.matrix(shares)), as.integer(n_sims), shift_mode,
                           shift_mat, as.numeric(sd_vec), if (is.null(chol_t)) base::matrix(0, 1L, K) else chol_t,
                           as.numeric(seat_sd_vec), has_level, sdp,
@@ -893,7 +1016,7 @@ simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
                           cell_mat, cell_has, ss_mat, ss_has,
                           pool_mat, !is.null(pool_pw), pw_mat,
                           as.numeric(FLOW_SD_BY), as.numeric(smooth), as.numeric(fallback_smooth),
-                          as.numeric(shrink))
+                          as.numeric(shrink), ov_seat, ov_key, ov_mat)
     wins[] <- core$wins; totals[] <- core$totals
     tcp_winner[] <- parties[core$tcp_w]; tcp_runnerup[] <- parties[core$tcp_r]
     tcp_share[] <- core$tcp_share
@@ -989,8 +1112,34 @@ simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
         alive <- alive[alive != from]
         mask <- sum(bitwShiftL(1L, alive - 1L))
         key <- from * 2^K + mask
-        row <- if (dense_cells) cell_list[[key + 1L]] else
-          get0(as.character(key), envir = cells, inherits = FALSE, ifnotfound = NULL)
+        # PER-SEAT override, checked FIRST: `i` is this seat's index, so
+        # conditional_override[[i]] is either NULL (this seat uses the
+        # shared cell_list/cells table below, unchanged) or a seat-specific
+        # dict in matrix$conditional's own shape, keyed the same
+        # "FROM|A+B+C" way -- built by looking up the string key, not the
+        # packed integer one (the override is small and rarely populated per
+        # seat, so a string key on the R-engine's already-slow path costs
+        # nothing that matters relative to what the packed integer key saves
+        # for the SHARED, much larger table below).
+        row <- NULL
+        if (!is.null(conditional_override) && !is.null(conditional_override[[i]])) {
+          .ok <- paste0(parties[from], "|", paste(sort(parties[alive]), collapse = "+"))
+          .or <- conditional_override[[i]][[.ok]]
+          if (!is.null(.or)) {
+            # Same positional, full-length-K shape the pre-built cell_list
+            # rows already have (see the "put(from * 2^K + mask, row)" block
+            # above) -- `row[alive]` a few lines down indexes POSITIONALLY,
+            # not by name, so a short named vector from the override must be
+            # expanded the identical way, not passed through as-is.
+            row <- numeric(K)
+            .keep <- intersect(names(.or), parties)
+            row[pidx[.keep]] <- pmax(0, .or[.keep])
+          }
+        }
+        if (is.null(row)) {
+          row <- if (dense_cells) cell_list[[key + 1L]] else
+            get0(as.character(key), envir = cells, inherits = FALSE, ifnotfound = NULL)
+        }
         got_cell <- !is.null(row)
         row <- if (got_cell) {
           row

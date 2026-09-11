@@ -2,7 +2,9 @@
 #'
 #' Exploratory only -- not part of the published model. Loads the
 #' leave-one-pair-out out-of-fold predictions written by
-#' `scripts/fit_xgb_primary_cv.R` (`output/xgb-primary-oof-predictions.csv`)
+#' `scripts/fit_xgb_primary_v6.R` (`output/xgb-primary-v6-oof-predictions.csv`,
+#' the model `AUSPOL_XGB_PRIMARY_LIVE` ships; override with
+#' `AUSPOL_XGB_PRIMARY_OOF`)
 #' and overwrites every (seat, party) cell of `shares` that file covers for
 #' `pair_label`, renormalising each seat's row back to 100. Cells the xgb file
 #' doesn't cover (should not happen for a class the shares matrix carries;
@@ -17,11 +19,18 @@
 xgb_primary_override <- function(shares, pair_label, enabled = NULL) {
   if (is.null(enabled)) enabled <- identical(Sys.getenv("AUSPOL_XGB_PRIMARY", "0"), "1")
   if (!isTRUE(enabled)) return(shares)
-  f <- "output/xgb-primary-oof-predictions.csv"
+  # DEFAULT TO v6, because v6 is what AUSPOL_XGB_PRIMARY_LIVE ships. The
+  # unversioned filename is v1's (scripts/fit_xgb_primary_cv.R writes it), so
+  # until 2026-09-11 every backtest arm run under this flag measured v1 while
+  # the live forecast ran v6 -- the two numbers were never about the same
+  # model. Both files carry the same 22 pairs and 13,314 (seat, party) rows;
+  # v6's is a column superset. AUSPOL_XGB_PRIMARY_OOF names a different file.
+  f <- Sys.getenv("AUSPOL_XGB_PRIMARY_OOF", "output/xgb-primary-v6-oof-predictions.csv")
   if (!file.exists(f)) {
     cat(sprintf("XG1! %s missing; AUSPOL_XGB_PRIMARY ignored\n", f))
     return(shares)
   }
+  cat(sprintf("XG1  reading %s\n", f))
   X <- data.table::fread(f, showProgress = FALSE)
   X <- X[X$pair == pair_label]
   if (!nrow(X)) {
@@ -173,6 +182,21 @@ xgb_primary_predict_live <- function(shares, mat22, a22, state_mean, returns,
   rows[, x           := mapply(function(s, p) if (p %in% colnames(mat22)) mat22[s, p] else 0, seat, party)]
   rows[, level_prev  := vapply(party, function(p) if (p %in% names(a22)) unname(a22[[p]]) else 0, numeric(1))]
   rows[, level_now   := vapply(party, function(p) if (p %in% names(state_mean)) unname(state_mean[[p]]) else 0, numeric(1))]
+  # `level_now` above is `state_mean` -- the forecast's OWN projected statewide,
+  # never a result, because the election has not happened. That was already true
+  # before 2026-09-11 and is why the published forecast never leaked on this
+  # feature; what changed that day is that the model is now TRAINED on a
+  # prediction too (AUSPOL_LEVEL_MODE="pred"), so training and serving finally
+  # agree. Before, it learned to trust a feature that was exact in training and
+  # approximate in production.
+  #
+  # `level_from_polls` says whether that statewide came from real polling. A
+  # live forecast always has polls -- it could not have produced state_mean
+  # otherwise -- so it is 1 here. In the training data it is 0 for the one pair
+  # (wa2021) whose cycle is too thin to fit a trend. Both models carry the same
+  # feature set; a column present in one and absent in the other is exactly the
+  # mismatch being removed.
+  rows[, level_from_polls := 1L]
   rows[, dev_prev    := x - level_prev]
   # KEY-MATCHED, NOT merge()-THEN-POSITIONAL, throughout this function.
   # data.table::merge() defaults to sort=TRUE, which returns its result
