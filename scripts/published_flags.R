@@ -158,6 +158,34 @@ PUBLISHED_FLAGS <- c(
                                              # It moves the harness baseline: pooled seat log loss at published
                                              # defaults goes 0.3332 -> ~0.3001 (with the flows below). Comparisons
                                              # against pre-2026-09-11 numbers must say which baseline they used.
+  AUSPOL_LEVEL_MODE          = "pred",       # where the xgb primary's statewide feature comes from when the
+                                             # model is FITTED (scripts/fit_xgb_primary_v6.R).
+                                             #   pred = output/level-pred.csv, the poll trend plus leave-one-out
+                                             #          fundamentals as at the day BEFORE polling day. Mean
+                                             #          absolute error 2.06 points per class over 153 cells.
+                                             #   now  = the ACTUAL statewide result. LEAKAGE. Kept only so the
+                                             #          cost stays measurable; never a default.
+                                             #   none = no statewide feature. Measured and REJECTED -- it removes
+                                             #          the model's only route to knowing what is happening
+                                             #          nationally and cost sa2026 0.4200 -> 0.6309.
+                                             #
+                                             # SET TO "pred" 2026-09-11 on Pete's ruling: "everything for an
+                                             # election forecast shold be predictive". The previous behaviour read
+                                             # the target election's own result, which I had described as the
+                                             # harness's deliberate design -- it was deliberately coded and never
+                                             # put to him.
+                                             #
+                                             # IT ALSO FIXED A TRAIN/SERVE MISMATCH. The LIVE path always used the
+                                             # predicted statewide (R/xgb_primary_override.R:184 fills level_now
+                                             # from state_mean, since vic2026 has no result to read), so the
+                                             # published forecast never leaked -- it was trained on the actual and
+                                             # served the predicted. Training on the prediction makes them agree.
+                                             #
+                                             # THE COST, MEASURED, 22 pairs / 2,050 seat-elections, seed 1:
+                                             # pooled seat log loss 0.3007 leaked -> 0.3134 honest, +0.0127.
+                                             # Concentrated where you would expect: sa2026, the One Nation surge
+                                             # election, 0.4200 -> 0.5564. Every headline number quoted before
+                                             # 2026-09-11 was the leaked one.
   AUSPOL_XGB_PRIMARY_OOF     = "",           # harness-only: which oof file the line above reads. Empty = the v6
                                              # default (output/xgb-primary-v6-oof-predictions.csv), matching the
                                              # shipped model. Set it to output/xgb-primary-oof-predictions.csv to
