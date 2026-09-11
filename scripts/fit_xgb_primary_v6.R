@@ -233,6 +233,23 @@ feat_cols <- c("pred_share", "x", "level_prev", "level_now", "dev_prev",
 X <- as.matrix(ALL[, ..feat_cols])
 y <- ALL$actual_share
 
+# PERSIST THE FEATURE MATRIX. scripts/fit_xgb_flows_v1.R writes its own
+# (xgb-flows-v1-features.csv) and this script did not, so anything wanting to
+# model something ELSE about these rows had to either re-run this whole script
+# or make do with the eleven columns the oof file carries.
+#
+# That is not hypothetical: on 2026-09-11 the emergence model was built on
+# those eleven columns -- 7 real predictors out of the 25 here -- and the
+# missing ones were exactly the plausible ones (retirement_i, margin,
+# same_mp_i, own_prev_pcv, n_cand_now, historic_elected_i). It then concluded
+# "we cannot predict who surges", which is a claim about the crippled feature
+# set, not about the problem. Same shape as benchmarking a deliberately limited
+# implementation and calling the result evidence about the design.
+fwrite(ALL[, c("pair", "seat", "party", "actual_share", ..feat_cols)],
+       file.path(OUT, "xgb-primary-v6-features.csv"))
+cat(sprintf("wrote %s/xgb-primary-v6-features.csv (%d rows, %d features)\n",
+            OUT, nrow(ALL), length(feat_cols)))
+
 pairs <- sort(unique(ALL$pair))
 fold_id <- match(ALL$pair, pairs)
 dtrain <- xgb.DMatrix(data = X, label = y, missing = NA)

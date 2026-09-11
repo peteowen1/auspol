@@ -177,6 +177,77 @@ condition fires. Report all of them either way, including the ones that fail.
 
 ---
 
+# v4 RESULT, and a DEFECT IN THIS CRITERION
+
+## v4: the feature set was the problem, not the problem
+
+v1 and v3 used **7** substantive predictors — the columns that happened to sit
+in the oof file. The primary model carries **25**. v4 uses all of them.
+
+| | v1/v3 (7 features) | **v4 (25 features)** |
+|---|---|---|
+| hazard AUC, overall | 0.751 | **0.936** |
+| IND | 0.872 | 0.922 |
+| ONP | **0.201** (inverted) | **0.862** |
+| OTH_RIGHT | 0.546 | 0.835 |
+| GRN | 0.473 | 0.876 |
+| median hazard on rows that surged | 0.015 | **0.162** |
+| median on rows that did not | 0.013 | 0.003 |
+
+**"We cannot predict who surges" was a conclusion about a crippled feature set,
+not about the problem.** Same error as benchmarking a deliberately limited
+implementation and reporting the result as evidence about the design — the
+second time in this session.
+
+Top features for who surges: `pred_share` (0.40), `xgb_pred` (0.17), `x`
+(0.13), `level_prev` (0.09), `party_IND`, `jump`, `margin`.
+
+| | today | v1 | v3 | **v4** | bar |
+|---|---|---|---|---|---|
+| PRIMARY rms_z | 3.93 | 3.00 | 3.01 | **2.83** | 2.50 |
+| GUARD 1 | 0.80 | 0.69 | 0.68 | **0.72** | [0.65, 1.25] |
+| GUARD 3 pairs | — | 17/17 | — | **22/22** | ≥6 of 10 |
+
+**v4 still FAILS the pre-registered primary.** 2.83 against 2.50.
+
+## THE CRITERION IS PARTLY BROKEN, and this is not an excuse for the failure
+
+Testing what a **perfectly specified** mixture would score, by simulating data
+*from* the model and scoring it the way this criterion does:
+
+| the model's hazard | perfect mixture, all rows | perfect mixture, **scored only on rows that jumped** |
+|---|---|---|
+| 0.05 | 1.00 | **3.02** |
+| 0.162 (v4's actual) | 1.01 | **2.05** |
+| 0.30 | 1.00 | 1.53 |
+
+The primary scores the **201 rows that surged** — rows selected *on the
+outcome* — and measures them against the unconditional mixture mean. They are
+above that mean by construction. **So `rms_z = 1.00`, stated in this file as
+the target, was never achievable, and the achievable value depends on the
+hazard the model produces.**
+
+The bar of 2.50 survives as a bar — it sits between what a perfect model scores
+at v4's hazard (2.05) and where the model started (3.93) — but the reasoning
+that set it was wrong, and the "target 1.00" line above is false. v4's real
+headroom is **2.83 → ~2.05**, so it has closed roughly half of the distance,
+not a quarter.
+
+**How the dry-run missed it.** The dry-run checked that the criterion FLAGS
+cases already known to be failures (Curtin z = 5.6, Goldstein z = 6.0) and that
+it leaves already-fine rows alone. It never asked **what a perfect model would
+score**. That is the missing question, and it belongs in the rule:
+
+> Dry-run every criterion on cases whose answer you already know — *including
+> a perfect model*. A criterion whose best achievable value you have not
+> computed is a criterion whose bar you cannot interpret.
+
+**The failure verdict stands.** 2.83 > 2.50, the bar predates the result, and
+the right response is a better model or a correctly-derived criterion
+pre-registered fresh — not a bar moved after the fact.
+
+---
+
 # RESULT, 2026-09-11: v1 REFUSED on its own primary
 
 `scripts/fit_xgb_emergence.R`. Scored without running the simulator, because
