@@ -32,6 +32,27 @@ the PR was opened hours earlier; the rule has to be about the push.
 Run `devtools::document()` **in the same commit**. A changed default with a
 stale `.Rd` is a `WARNING`, and CI treats warnings as errors.
 
+## EVERY REQUEST FROM PETE GOES IN `docs/PETE-ASKED-FOR.md`
+
+**Read that file at the start of any session.** It is the register of what he
+asked for and whether it is actually in the model.
+
+A request leaves the register when it SHIPS, or when he has been told in a
+message — not a commit, not a plan file — that it is not happening and why.
+
+**"In a plan" is not "shipped". "Built but flagged off" is not "shipped".**
+
+Written 2026-09-11, when Pete asked what he had requested that was never
+delivered, and the answer was three things. One of them was demographics as
+model features, which he had asked for in the same breath as *"if you leave
+any vars out let me know dont just silently do it"*. It was left out silently.
+
+The failure is never a refusal. It is judging something unready, folding that
+judgement into a plan, and never saying plainly **"I am not doing what you
+asked, and here is why."** From the outside that is indistinguishable from
+having done it — which is why he ends up assuming a feature is in the model
+when it is not.
+
 ## A NEGATIVE RESULT IS ONLY REPORTABLE FROM THE STRONGEST VERSION YOU CAN BUILD
 
 **Before saying a model, feature or design "doesn't work", state what you gave
