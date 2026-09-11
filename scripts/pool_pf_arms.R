@@ -36,6 +36,31 @@ read_arm_seed <- function(arm, seed) {
   if (!dir.exists(d)) return(NULL)
   logs <- list.files(d, pattern = "[.]log$", full.names = TRUE)
   if (!length(logs)) return(NULL)
+
+  # DID THE ARM ACTUALLY APPLY? Found by the review gate, 2026-09-11, and it is
+  # this repo's own named hazard reproduced in the script built to prevent it:
+  # "an experiment that never ran looks exactly like an experiment with no
+  # effect."
+  #
+  # xgb_primary_override() and xgb_flow_conditional_override_for() FAIL OPEN --
+  # a missing model or oof file prints `XG1!`/`XF9!` and returns the input
+  # unchanged, and the harness then runs to completion and writes an output
+  # file identical in shape to a real one. These logs are already being read to
+  # find that filename; nothing was reading them for the marker. A p1f0 arm
+  # whose oof file went missing would have pooled as "the xgb primary is worth
+  # nothing", which is a conclusion about a file, not a model.
+  ignored <- unlist(lapply(logs, function(lg) {
+    ln <- readLines(lg, warn = FALSE)
+    grep("^(XG1!|XF9!|XS9!).*(ignored|unchanged|FAILED|missing)", ln, value = TRUE)
+  }))
+  if (length(ignored)) {
+    cat(sprintf("PF0!! %s: %d override(s) DID NOT APPLY -- this arm is not what its name says:\n",
+                basename(d), length(ignored)))
+    for (m in unique(ignored)) cat(sprintf("PF0!!   %s\n", substr(m, 1, 150)))
+    if (!identical(Sys.getenv("AUSPOL_ALLOW_INERT_ARM", "0"), "1"))
+      stop("refusing to pool ", basename(d), ": an override this arm is named for did not run. ",
+           "Fix the missing input, or set AUSPOL_ALLOW_INERT_ARM=1 if you know why it is inert.")
+  }
   fs <- unlist(lapply(logs, function(lg) {
     ln <- readLines(lg, warn = FALSE)
     m <- regmatches(ln, regexpr("output/backtest-[^ ]+[.]csv", ln))

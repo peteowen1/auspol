@@ -34,7 +34,7 @@ globalVariables(c(
 # (xgb_flow_conditional_override_for()). R CMD check reported all eight as
 # undefined globals the moment that function was exported.
 globalVariables(c(
-  "from", "from_primary", "n_cell", "n_survivors", "rate", "seat_i",
+  "from", "from_primary", "level_from_polls", "n_cell", "n_survivors", "rate", "seat_i",
   "surv", "to_primary"
 ))
 globalVariables(c(

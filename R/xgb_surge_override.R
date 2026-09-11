@@ -15,11 +15,20 @@
 #' and gives candidates who did surge a median probability of 0.162 against
 #' 0.003 for those who did not.
 #'
-#' BACKTEST vs LIVE, the same split as the primary challenger and for the same
-#' reason. A backtest must predict a pair with a model that never saw it, so it
-#' reads the leave-one-pair-out out-of-fold file; the live forecast has no
-#' out-of-fold row for an election that has not happened, so it uses the
-#' all-data model, which is correct there and leakage in a backtest.
+#' BACKTEST ONLY SO FAR. A backtest must predict a pair with a model that never
+#' saw it, so this reads the leave-one-pair-out out-of-fold file.
+#'
+#' **`live = TRUE` IS NOT IMPLEMENTED.** It prints a message and returns `NULL`.
+#' The live forecast has no out-of-fold row for an election that has not
+#' happened, so it would need the all-data model plus a feature builder that
+#' constructs the 25 v6 columns from the current forecast's own inputs -- the
+#' equivalent of `xgb_primary_predict_live()`, which does not exist for the
+#' emergence model. Until it does, `fit_seats_full.R` cannot use this and does
+#' not call it.
+#'
+#' This docstring previously described the live path as though it worked, which
+#' is how an unimplemented stub gets wired into a published forecast on the
+#' strength of its own documentation. Corrected by the review gate 2026-09-11.
 #'
 #' KNOWN, MEASURED, NOT FIXED: a calibration check -- generating outcomes from
 #' the model's own predicted distributions and scoring them the way the real
@@ -33,8 +42,8 @@
 #'
 #' @param shares Seats x classes matrix, as passed to `simulate_seat_contests()`.
 #' @param target_election Pair label, e.g. `"fed2022"`, `"vic2026"`.
-#' @param live If `TRUE`, use the all-data model instead of the out-of-fold
-#'   predictions. Defaults to `FALSE`.
+#' @param live NOT IMPLEMENTED -- `TRUE` returns `NULL` with a message. Reserved
+#'   for a future live path once the emergence model has a feature builder.
 #' @return `NULL`, or a list with `surge_h`, `surge_party`, `surge_mu` and
 #'   `surge_sd`, each one entry per row of `shares` in the same order.
 #' @export
@@ -81,7 +90,18 @@ xgb_surge_params_for <- function(shares, target_election, live = FALSE) {
   # drop the name and let the simulator pick among eligible classes rather than
   # silently surging nobody.
   bad <- !is.na(pty) & !(pty %in% colnames(shares))
-  if (any(bad)) pty[bad] <- NA_character_
+  if (any(bad)) {
+    # COUNTED AND PRINTED, not silently dropped. A seat whose predicted
+    # recipient class is absent from this jurisdiction's shares matrix keeps a
+    # NON-ZERO hazard while losing its named recipient -- so the simulator
+    # allocates probability to "a surge happens here" with nobody to receive
+    # it. Every other drop in this function is counted; this one was not, and
+    # the summary below used table(), which discards NA, so the affected seats
+    # vanished from the tally too. Found by the review gate 2026-09-11.
+    cat(sprintf("XS9! %d of %d seat(s) name a recipient class absent from the shares matrix (%s) -- surge_party dropped to NA, hazard left intact\n",
+                sum(bad), length(seats), paste(sort(unique(pty[bad])), collapse = ", ")))
+    pty[bad] <- NA_character_
+  }
 
   # surge_mu/surge_sd must be finite for every seat, including the ones with no
   # prediction, because the simulator takes them as full-length vectors. Seats
@@ -92,8 +112,13 @@ xgb_surge_params_for <- function(shares, target_election, live = FALSE) {
 
   cat(sprintf("XS9  xgb surge params for %s: %d of %d seats (%d with no row), mean hazard %.3f, max %.3f, mean jump %.1f\n",
               target_election, sum(!is.na(idx)), length(seats), miss, mean(h), max(h), mean(mu)))
-  cat(sprintf("XS9  recipients: %s\n",
-              paste(sprintf("%s=%d", names(table(pty)), as.integer(table(pty))), collapse = " ")))
+  # useNA = "ifany": table() drops NA by default, so seats with no named
+  # recipient disappeared from this tally entirely and the counts silently
+  # failed to sum to the number of seats.
+  .tb <- table(pty, useNA = "ifany")
+  names(.tb)[is.na(names(.tb))] <- "(none)"
+  cat(sprintf("XS9  recipients over %d seats: %s\n", length(seats),
+              paste(sprintf("%s=%d", names(.tb), as.integer(.tb)), collapse = " ")))
   list(surge_h = unname(h), surge_party = unname(pty),
        surge_mu = unname(mu), surge_sd = unname(sdv))
 }

@@ -142,9 +142,31 @@ logloss_seedwise <- mean(rows[, .(ll = -mean(log(p))), by = seed]$ll)
 rows <- rows[, .(p = mean(p), hit = mean(hit), seeds = .N), by = .(pair, seat)]
 known <- vapply(all_election_pairs(), `[[`, character(1), "election")
 missing <- setdiff(known, unique(rows$pair))
-if (length(missing))
-  cat(sprintf("PA4! %d known pair(s) absent from this arm: %s\n",
+if (length(missing)) {
+  # REFUSE, do not warn. This script overwrites output/pooled-backtest.csv and
+  # pooled-sharedetail.csv -- the two files every other question in the repo
+  # treats as ground truth -- and then prints "now describe the shipped arm",
+  # a completeness claim it was not checking. A cat() here meant a partial arm
+  # could become the canonical answer with nothing in the artifact to show it,
+  # which is the same failure as the stale 0.3316 this script was written to
+  # stop, arriving by a different route. Found by the review gate 2026-09-11.
+  cat(sprintf("PA4!! %d known pair(s) absent from this arm: %s\n",
               length(missing), paste(missing, collapse = ", ")))
+  if (!identical(Sys.getenv("AUSPOL_ALLOW_PARTIAL_PROMOTE", "0"), "1"))
+    stop("refusing to promote a partial arm over the canonical tables. ",
+         "Re-run the missing pair(s), or set AUSPOL_ALLOW_PARTIAL_PROMOTE=1 deliberately.")
+}
+# Same check as scripts/pool_pf_arms.R: an override that failed open leaves the
+# arm inert while its output looks identical to a real run.
+.inert <- unlist(lapply(list.files(dirs, pattern = "[.]log$", full.names = TRUE), function(lg) {
+  grep("^(XG1!|XF9!|XS9!).*(ignored|unchanged|FAILED|missing)", readLines(lg, warn = FALSE), value = TRUE)
+}))
+if (length(.inert)) {
+  cat(sprintf("PA4!! %d override(s) did not apply in this arm:\n", length(.inert)))
+  for (m in unique(.inert)) cat(sprintf("PA4!!   %s\n", substr(m, 1, 150)))
+  if (!identical(Sys.getenv("AUSPOL_ALLOW_INERT_ARM", "0"), "1"))
+    stop("refusing to promote an arm whose own overrides did not run.")
+}
 
 per <- rows[, .(n = .N, accuracy = mean(hit), brier = mean((1 - p)^2),
                 logloss = -mean(log(p))), by = pair]

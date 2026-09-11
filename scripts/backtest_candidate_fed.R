@@ -894,10 +894,26 @@ for (K in PAIRS) {
     if (length(FC$folded) && "OTH" %in% parties) {
       unmodelled <- FC$folded
       bucket <- c(unmodelled, "OTH")
-      base_share <- sum(st_a[unmodelled], st_a[["OTH"]], na.rm = TRUE)
+      # A FOLDED CLASS MAY NOT HAVE CONTESTED THE PRIOR ELECTION. `st_a[name]`
+      # returns NA for a missing name, and NA then propagates through the split
+      # ratio into the draws, making that party's entire statewide-draw column
+      # NA for every simulation. R/forecast_statewide.R was fixed for this on
+      # 2026-09-11 after vic2022 (One Nation folded, did not stand in vic2018)
+      # produced an NA statewide -- and the fix was NOT ported here, which is
+      # the "a fix to one harness is a fix to ALL of them" rule failing in the
+      # same session that wrote it down. Found by the review gate, 2026-09-11.
+      #
+      # `st_a[["OTH"]]` is the same trap a second time: `[[` on a missing name
+      # in an atomic vector THROWS rather than returning NA, so a prior
+      # election with no OTH share would kill the run outright.
+      prior_sh <- vapply(bucket, function(p) {
+        v <- st_a[p]
+        if (length(v) != 1L || !is.finite(v)) 0 else unname(v)
+      }, numeric(1))
+      base_share <- sum(prior_sh)
       scale_to <- if (isTRUE(base_share > 0)) st_fc[["OTH"]] / base_share else 1
       ratio <- stats::setNames(
-        if (isTRUE(base_share > 0)) unlist(st_a[bucket]) / base_share
+        if (isTRUE(base_share > 0)) prior_sh / base_share
         else rep(1 / length(bucket), length(bucket)),
         bucket)
       # EVERY DRAW, not just the point estimate. simulate_seat_contests()

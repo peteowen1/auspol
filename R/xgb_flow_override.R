@@ -208,8 +208,18 @@ xgb_flow_conditional_override_for <- function(shares, target_election, prev_elec
     ret_key     <- paste(normalise_seat(ret$seat), ret$party)
     ret_same    <- ifelse(is.na(ret$same), 0L, as.integer(ret$same))
     ret_same_mp <- ifelse(is.na(ret$same_mp), 0L, as.integer(ret$same_mp))
+    # STOP, do not silently keep the first. R/xgb_primary_override.R treats a
+    # duplicate (seat, party) key as a hard error, for a documented reason --
+    # this repo has precedent of an arbitrary duplicate being picked and
+    # corrupting a result. This function's own comment cites that file as the
+    # pattern it follows and then did the weaker, silent thing. Found by the
+    # review gate 2026-09-11.
     dup <- duplicated(ret_key)
-    if (any(dup)) { ret_key <- ret_key[!dup]; ret_same <- ret_same[!dup]; ret_same_mp <- ret_same_mp[!dup] }
+    if (any(dup)) {
+      stop(sprintf("xgb_flow_conditional_override_for(): candidate_returns(%s, %s) returned %d duplicate (seat, party) key(s) -- e.g. %s. Keeping whichever sorted first would decide dest_same/dest_same_mp arbitrarily.",
+                   prev_election, target_election, sum(dup),
+                   paste(utils::head(unique(ret_key[dup]), 3), collapse = "; ")))
+    }
   }
   seat_norm <- normalise_seat(seats)
 

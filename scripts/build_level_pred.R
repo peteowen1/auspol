@@ -110,8 +110,20 @@ ACT <- rbindlist(lapply(names(DATES), function(pr) {
 }), fill = TRUE)
 CMP <- merge(LP, ACT, by = c("pair", "party"), all.x = TRUE)
 CMP[, err := level_pred - actual]
+# SPLIT THE FALLBACK ROWS OUT OF THE ACCURACY CLAIM. LP2-LP4 pool every row,
+# including the pairs whose cycle was too thin to fit and which carry last
+# election's result unchanged. Those are a naive baseline, not a forecast, and
+# mixing them into "how good is the prediction" overstates or understates it
+# depending on how that election moved. Found by the review gate 2026-09-11.
+cat(sprintf("\nLP2a headline accuracy on POLL-BASED rows only (%d of %d cells): mean absolute error %.2f points\n",
+            sum(CMP$from_polls == 1L), nrow(CMP),
+            mean(abs(CMP[from_polls == 1L]$err), na.rm = TRUE)))
+if (any(CMP$from_polls == 0L))
+  cat(sprintf("LP2a the %d no-swing fallback cell(s) score %.2f -- reported separately, never folded in\n",
+              sum(CMP$from_polls == 0L), mean(abs(CMP[from_polls == 0L]$err), na.rm = TRUE)))
 cat("\nLP2  how good is the prediction? mean absolute error in points, per pair\n")
-print(CMP[, .(classes = .N, mae = round(mean(abs(err), na.rm = TRUE), 2)), by = pair][order(-mae)])
+print(CMP[, .(classes = .N, poll_based = sum(from_polls == 1L),
+              mae = round(mean(abs(err), na.rm = TRUE), 2)), by = pair][order(-mae)])
 cat("\nLP3  by class, pooled over pairs. bias = predicted minus actual\n")
 print(CMP[, .(n = .N, bias = round(mean(err, na.rm = TRUE), 2),
               mae = round(mean(abs(err), na.rm = TRUE), 2)), by = party][order(-mae)])

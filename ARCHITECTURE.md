@@ -148,16 +148,24 @@ It is, and it is on. Read this before adding another mechanism.
 
 ### Part A — building the inputs (`fit_seats_full.R`, once)
 
+**The numbers below are a grouping, NOT execution order** — corrected by the
+review gate 2026-09-11, which found a reader following the table top to bottom
+would get two steps backwards. In the file, the surge hazard (step 9,
+`:665-719`) runs BEFORE the swing (step 5, `:773`), and the statewide draws
+(step 4, `:935-971`) are built AFTER the whole `shares` chain (steps 5-8),
+because `sw_draws` and `shares` are different objects that never touch until
+`simulate_seat_contests()`. Execution order is: 1-3, 9, 5-8, 4, 10.
+
 | # | step | where |
 |---|---|---|
 | 1 | flow table from the previous election's transfers | `:284` |
-| 2 | baseline per-seat primaries (`mat22`), normalised | `:292` |
+| 2 | baseline per-seat primaries (`mat22`), normalised | `:293` |
 | 3 | strip transferred votes | `:629` |
 | 4 | statewide projection → `sw_draws`, one correlated vector per draw | `:935-971` |
 | 5 | apply the swing per seat via the dev slopes | `:773+` |
-| 6 | One Nation written over the swung value from a concentration ratio | `:838` |
-| 7 | **XGB primary override replaces every seat's primaries** | `:855` |
-| 8 | salience point blend — a *second* surge effect, on the mean | `salience_surge.R:369` |
+| 6 | One Nation written over the swung value from a concentration ratio | `:837` |
+| 7 | **XGB primary override replaces every seat's primaries** | `:854` |
+| 8 | salience point blend — a *second* surge effect, on the mean | `salience_surge.R:388` |
 | 9 | surge hazard → per-seat `surge_h`, `surge_mu`, `surge_sd`, `surge_party` | `:680-712` |
 | 10 | XGB flow override → per-seat `conditional_override` | |
 
@@ -165,14 +173,14 @@ It is, and it is on. Read this before adding another mechanism.
 
 One statewide shift per draw, then per seat:
 
-1. **statewide shift**, correlated across parties via the Cholesky factor (`:79`)
+1. **statewide shift**, correlated across parties via the Cholesky factor (`:83`)
 2. **seat noise**: `v = base + shift + rnorm(0, sd_cell)`, clamped at 0, where
    `sd_cell` is `level_sd = 1.10 + 8.67*sqrt(p(1-p))` (`:90`)
 3. **insurgency surge**: with probability `surge_h[i]`, add
    `N(surge_mu, surge_sd)` to the recipient and scale the others down (`:96`)
 4. **eliminations**: exclude the lowest, distribute by conditional flow, looking
    up per-seat override → shared table → seat-specific → pooled (`:118`)
-5. **winner** = higher of the last two; TCP recorded (`:190`)
+5. **winner** = higher of the last two; TCP recorded (`:191-198`)
 6. **calibration shrink**: with probability `shrink`, replace the winner with a
    uniform pick among the alive (`:199`)
 

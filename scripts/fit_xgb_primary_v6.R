@@ -254,8 +254,14 @@ region_levels <- sort(unique(ALL$region))
 for (p in party_levels) ALL[[paste0("party_", p)]] <- as.integer(ALL$party == p)
 for (r in region_levels) ALL[[paste0("region_", r)]] <- as.integer(ALL$region == r)
 
-# AUSPOL_NO_LEVEL_NOW=1 drops `level_now`, which is state_level(pr$election) --
-# the party's ACTUAL statewide share at the election being predicted.
+# `level_now` was state_level(pr$election) -- the party's ACTUAL statewide share
+# at the election being predicted. AUSPOL_LEVEL_MODE (defined below, default
+# "pred") now controls where it comes from; `"none"` drops it entirely.
+#
+# This comment previously named AUSPOL_NO_LEVEL_NOW, a flag that was replaced by
+# AUSPOL_LEVEL_MODE later the same day and no longer exists anywhere in the
+# repo. Anyone setting it would have changed nothing, silently. Caught by the
+# review gate 2026-09-11.
 #
 # Pete, 2026-09-11: "its not deliberate - you decided this without telling me
 # ---- everything for an election forecast shold be predictive!!!"  He is
