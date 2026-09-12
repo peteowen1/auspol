@@ -242,7 +242,13 @@ CAL_TAG <- paste0(
   else "",
   # No -qld or -wa suffix: neither is admissible here, so an arm carrying
   # one would be a filename promising a difference the run cannot make.
-  "", .arm_fingerprint, .code_tag)
+  "",
+  # "-fc" MARKS THE FORECAST ARM, as it does in backtest_candidate_fed.R. The
+  # arm fingerprint already hashes every AUSPOL_* variable so the two arms
+  # cannot overwrite each other, but a hash does not tell a reader which file
+  # is the honest one, and these two answer different questions.
+  if (identical(Sys.getenv("AUSPOL_FORECAST_MODE", "0"), "1")) "-fc" else "",
+  .arm_fingerprint, .code_tag)
 
 # READ FROM THE ENVIRONMENT like the other three harnesses. This was hardcoded
 # to 20000 while backtest_candidate_sa.R, _vic.R and _fed.R all read
@@ -284,9 +290,18 @@ PREF   <- election_data_path()
 # is who holds the seat now. CLAUDE.md records that this field is contaminated
 # by by-elections and carries the anchor's party classes rather than ours, so
 # it is a printed disagreement count and never the truth.
+#
+# `date` is polling day for the TARGET election, added 2026-09-12 for
+# AUSPOL_FORECAST_MODE, which fits the poll trend to the day before it. Same
+# treatment backtest_candidate_wa.R gives WA_DATE: hand-entered, then asserted
+# against the key it is filed under, because a date that disagrees with the
+# pair silently fits the trend to the wrong window and nothing downstream can
+# report it.
 NSW_PAIRS <- list(
-  "2019" = list(to = 2019L, from = 2015L, next_seats = 2023L),
-  "2023" = list(to = 2023L, from = 2019L, next_seats = 2027L))
+  "2019" = list(to = 2019L, from = 2015L, next_seats = 2023L, date = "2019-03-23"),
+  "2023" = list(to = 2023L, from = 2019L, next_seats = 2027L, date = "2023-03-25"))
+stopifnot(vapply(NSW_PAIRS, function(p)
+  identical(format(as.Date(p$date), "%Y"), as.character(p$to)), logical(1)))
 .k <- Sys.getenv("AUSPOL_NSW_PAIR", "2023")
 if (!.k %in% names(NSW_PAIRS)) {
   stop("AUSPOL_NSW_PAIR must be one of ", paste(names(NSW_PAIRS), collapse = ", "),
@@ -357,6 +372,30 @@ mat <- 100 * mat / rowSums(mat)
 
 state_prev <- fp_prev[, .(v = sum(votes)), by = party][, setNames(100 * v / sum(v), party)]
 state_tgt <- fp_tgt[, .(v = sum(votes)), by = party][, setNames(100 * v / sum(v), party)]
+# FORECAST MODE (AUSPOL_FORECAST_MODE=1), ported from backtest_candidate_sa.R
+# 2026-09-12. `state_tgt` above is the TARGET election's own counted result,
+# used as the statewide the seats swing toward. Pete's ruling, 2026-09-11: that
+# is leakage, because the thing being built is a forecast. This replaces it
+# with a projection from the polls up to the day before, anchored on
+# leave-one-out fundamentals -- see R/forecast_statewide.R.
+#
+# Until this port the switch existed in fed and sa ONLY, so four harnesses
+# answered a different question from federal's and their numbers were not
+# comparable to a forecast (docs/MODEL-REGISTRY.md called it the most
+# consequential open gap in its table). Default 0, i.e. a bare run is unchanged.
+#
+# THE ORACLE IS KEPT for the BT1 table below. That table prints the REAL swing
+# as a diagnostic, and printing the forecast under a column headed with the
+# target year would make the log say the election returned what the model
+# guessed -- the shape of error this repo keeps finding, where the output is
+# plausible and the tell is missing.
+NSW_FORECAST_MODE <- identical(Sys.getenv("AUSPOL_FORECAST_MODE", "0"), "1")
+state_tgt_oracle <- state_tgt
+if (NSW_FORECAST_MODE) {
+  state_tgt <- forecast_statewide_replace(
+    "nsw", TO, PAIR$date, colnames(mat), state_prev, state_tgt,
+    n_sims = N_SIMS, seed = SEED, code = "BT0")$st
+}
 # RE-ENTRY PRIOR, docs/plans/prereg-reentry-prior-2026-09-07.md. A class
 # contesting this seat but not the last one has no prior share, so swinging
 # zero forward leaves approximately zero -- 1,418 seat-class rows across the
@@ -373,8 +412,10 @@ cat("\nBT1  statewide first preferences\n")
 # as 2023 -- a printed table that is wrong in a way nothing downstream can
 # catch.
 .bt1 <- data.table(party = names(state_prev), prev = round(state_prev, 2),
-                   now = round(state_tgt[names(state_prev)], 2),
-                   swing = round(state_tgt[names(state_prev)] - state_prev, 2))
+                   now = round(state_tgt_oracle[names(state_prev)], 2),
+                   swing = round(state_tgt_oracle[names(state_prev)] - state_prev, 2))
+if (NSW_FORECAST_MODE)
+  cat("BT1  the table below is the ACTUAL result, printed as a diagnostic. Under AUSPOL_FORECAST_MODE the seats swing toward the forecast in BT0, not toward this.\n")
 setnames(.bt1, c("prev", "now"), sprintf("y%d", c(FROM, TO)))
 print(.bt1[order(-get(sprintf("y%d", TO)))])
 

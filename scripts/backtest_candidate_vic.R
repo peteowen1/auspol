@@ -206,7 +206,13 @@ CAL_TAG <- paste0(
   # perturbs every flow, which is as large a change as any flag here, and it
   # reached no filename at all -- so the ensemble arm overwrote the very
   # baseline it exists to be compared against.
-  if (identical(Sys.getenv("AUSPOL_FLOW_UNC", "0"), "1")) "-unc" else "", .arm_fingerprint, .code_tag)
+  if (identical(Sys.getenv("AUSPOL_FLOW_UNC", "0"), "1")) "-unc" else "",
+  # "-fc" MARKS THE FORECAST ARM, as it does in backtest_candidate_fed.R. The
+  # arm fingerprint already hashes every AUSPOL_* variable so the two arms
+  # cannot overwrite each other, but a hash does not tell a reader which file
+  # is the honest one, and these two answer different questions.
+  if (identical(Sys.getenv("AUSPOL_FORECAST_MODE", "0"), "1")) "-fc" else "",
+  .arm_fingerprint, .code_tag)
 
 # READ FROM THE ENVIRONMENT, like the federal harness. AUSPOL_SEED is in
 # scripts/published_flags.R, and until 2026-09-07 this harness hardcoded 42
@@ -264,8 +270,11 @@ for (K in PAIRS) {
   # matches the equivalent guard already used in the federal/QLD/SA
   # harnesses, not just the per-election check.
   stopifnot(nrow(tx) > 100L, all(tx$election == sprintf("vic%d", K$from)))
-  .asof <- VIC_DATE[[as.character(K$to)]]
-  if (is.null(.asof) || is.na(.asof)) stop("No polling date recorded for vic", K$to)
+  # Single bracket for the same reason as the forecast block below: `[[` on a
+  # missing name in an atomic vector THROWS, so the is.null() half of this
+  # guard was dead code that could never fire.
+  .asof <- unname(VIC_DATE[as.character(K$to)])
+  if (length(.asof) != 1L || is.na(.asof)) stop("No polling date recorded for vic", K$to)
   tx <- pool_configured_flows(tx, .asof)
   fm <- build_flow_matrix(tx, min_n = 3L)
 
@@ -329,6 +338,36 @@ for (K in PAIRS) {
   mat <- 100 * mat / rowSums(mat)
   sa <- fa[, .(v = sum(votes)), by = party][, setNames(100 * v / sum(v), party)]
   sb <- fb[, .(v = sum(votes)), by = party][, setNames(100 * v / sum(v), party)]
+  # FORECAST MODE (AUSPOL_FORECAST_MODE=1), ported from backtest_candidate_sa.R
+  # 2026-09-12. `sb` above is the TARGET election's own counted result, used as
+  # the statewide the seats swing toward. Pete's ruling, 2026-09-11: that is
+  # leakage, because the thing being built is a forecast. This replaces it with
+  # a projection from the polls up to the day before, anchored on leave-one-out
+  # fundamentals -- see R/forecast_statewide.R.
+  #
+  # Until this port the switch existed in fed and sa ONLY, so four harnesses
+  # answered a different question from federal's and their numbers were not
+  # comparable to a forecast (docs/MODEL-REGISTRY.md called it the most
+  # consequential open gap in its table). Default 0, i.e. a bare run is
+  # unchanged.
+  #
+  # PER PAIR, INSIDE THE LOOP. This harness scores three targets in one run, so
+  # a forecast built once outside would give two of them the wrong election's
+  # polls -- the same fault VIC_DATE was introduced to fix when the polling date
+  # was a ternary that silently gave any third pair the 2022 date.
+  if (identical(Sys.getenv("AUSPOL_FORECAST_MODE", "0"), "1")) {
+    # SINGLE BRACKET, NOT `[[`. CLAUDE.md's recorded trap: `[[` on a missing
+    # name in an ATOMIC vector THROWS, so an is.null() guard beside it is dead
+    # code that can never fire. Single-bracket indexing returns NA for a
+    # missing name, which is what the check below can actually catch.
+    .ed <- unname(VIC_DATE[as.character(K$to)])
+    if (length(.ed) != 1L || is.na(.ed))
+      stop("No polling date recorded for vic", K$to, " -- AUSPOL_FORECAST_MODE ",
+           "needs polling day to fit the trend to the day before it.")
+    sb <- forecast_statewide_replace(
+      "vic", K$to, .ed, colnames(mat), sa, sb,
+      n_sims = N_SIMS, seed = SEED, code = "BV0")$st
+  }
   # RE-ENTRY PRIOR, docs/plans/prereg-reentry-prior-2026-09-07.md. A class
   # contesting this seat but not the last one has no prior share, so swinging
   # zero forward leaves approximately zero -- 1,418 seat-class rows across the

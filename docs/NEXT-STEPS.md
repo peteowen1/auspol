@@ -48,10 +48,31 @@ never leaked — it was trained on the actual and served the prediction.
 
 ### Open, highest value first
 
-1. **Four harnesses still swing toward the ACTUAL statewide.**
-   `AUSPOL_FORECAST_MODE` exists in fed and sa only. Until nsw/qld/vic/wa have
-   it, their numbers answer a different question from federal's. The core is
-   already extracted into `R/forecast_statewide.R`, so this is wiring.
+1. **`AUSPOL_FORECAST_MODE` is now wired in all six harnesses (2026-09-12) and
+   has been RUN in two of them.** nsw/qld/vic/wa call the same shared
+   `forecast_statewide_replace()` as sa; the switch defaults to 0, so a bare
+   run is unchanged. **Nothing was measured**: the session that wrote it had
+   neither the election data nor the anchor clone, so the four new paths have
+   never executed. What remains is a run, not a build:
+   - both modes on nsw (x2 pairs), qld (x2), vic (3 in one go) and wa (7 in
+     one go), one arm per launch -- the 10-minute background cap makes two
+     arms in one command a killed run;
+   - report pooled seat log loss per pair before and after, the way the
+     federal +0.0047 was reported, and expect the honest number to be WORSE:
+     the oracle statewide is an advantage being given up;
+   - then the default becomes a decision with evidence behind it. Pete's
+     ruling is that a forecast must be predictive throughout, so the question
+     is what the honesty costs, not whether to pay it.
+   - **The first run will exercise four code paths that have never run at
+     all.** Expect to fix something; a clean first run would itself be worth
+     checking. `forecast_statewide_restrict()` is covered by tests that pass
+     and that were proved to fail on a deliberately broken input, but that is
+     the pure half only.
+   - **Not closed by the port**: WA takes its party LIST from the target
+     election (`parties <- union(colnames(A), names(sb))`), so class
+     membership is still target-derived there even in forecast mode. Every
+     other harness takes it from the prior election. That is its own measured
+     change -- it moves WA's baseline arm too -- not a rider on this one.
 2. **The emergence model decision.** v4 is built, hazard AUC 0.936 against the
    salience version's 0.751, and sa2026 moves 0.6362 → 0.5891 — but it failed
    its pre-registered bar and a calibration check says it is now
