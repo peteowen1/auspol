@@ -1,3 +1,56 @@
+# auspol 0.4.30
+
+**sa2022 was scored for months but never trained on, because every sa2018
+surname was being read as a first name. Pooled seat log loss 0.3207 to 0.3115.**
+
+- **sa2022 into the model.** It was scored by `backtest_candidate_sa.R` and
+  absent from the xgb primary feature corpus, the SD model, `level-pred.csv`,
+  `mp-slope-by-target.csv` and the party-correlation fit. Its 0.9409 seat log
+  loss -- the worst pair in the corpus, carrying 2 of its 4 seats where the
+  actual winner was given <= 1e-4 -- sat in the headline pooled figure as though
+  it measured the model. It measured our fallback paths.
+- **The root cause, four layers down.** `build_candidacies.R` set sa2018's
+  `surname` and `given` to `NA`, pushing consumers onto the combined `name`
+  field -- and sa2018 is the only election stored in natural "Given Surname"
+  order, because ECSA never served a 2018 results file and it comes from
+  Wikipedia prose. `surname_of()` takes the leading token when there is no
+  comma, so every sa2018 surname resolved to a first name and
+  `candidate_returns("sa2018", "sa2022")` matched **0 of 219**. No returning
+  non-majors meant no MP-slope rows, no slopes, and a harness that refused to
+  run the pair at all. Now 52 of 219 (23.7%), inside the 15-26% band
+  `R/candidate_returns.R` records as normal.
+- **Measured over all 23 pairs**, SD off both sides: sa2022 0.9409 -> 0.6463,
+  pooled over 2,097 seat-elections 0.3207 -> **0.3115**. 16 pairs improved and 7
+  worsened; 5 of 6 jurisdictions improved. sa2026 (+0.0410) and fed2016
+  (+0.0113) are the regressions still open.
+- **Demographics as model features, delivered and measured.**
+  `scripts/build_census_features.R` joins seven census features onto 2,097
+  seat-pairs at 95% coverage. Year 12 completion against One Nation's sa2026
+  vote is r = -0.922 over 47 seats, the strongest correlation in the corpus --
+  and it still fails out of fold (3.8740 baseline against 3.8854 raw, 3.8718
+  within-pair z, 3.8769 within-pair percentile), because that is a
+  *within-sa2026* correlation and leave-one-pair-out cannot see it. Not shipped.
+  Six income and housing medians were deliberately excluded and named: they
+  exist federally and not in the state reaggregations, and a column real for 7
+  pairs and filler for 15 becomes a jurisdiction label.
+- **The per-cell primary SD model stays off.** Measured on 22 pairs: it gains
+  0.0325 on sa2026 and 0.0265 on nsw2019, where the model has no other
+  mechanism, and loses on federal (1,036 seat-elections). fed2022 gets worse,
+  0.3034 -> 0.3062 -- the teals already have the salience gate, and
+  `combine_sd_override()` takes an elementwise maximum, so extra width only
+  dilutes a point estimate that is roughly right.
+- **Guards that could not fire, fixed.** `fit_mp_slope.R` printed "22 of 23
+  pairs contributed rows" and carried on; it now names the missing targets and
+  stops. `pool_sharedetail.R`'s n_sims guard failed open on any file without a
+  `-n` token -- which is every full-quality run -- and now resolves the absent
+  token to an explicit `DEFAULT_SIMS` constant. `R/salience_surge.R`'s
+  non-zero-count floor zeroed a whole pair's salience signal silently and now
+  prints `SS9!`.
+- **`state_swing_adjustment()` documented and corrected.** It carried `@export`
+  with no NAMESPACE entry or `.Rd`, and a docstring reading as a validated
+  feature while implementing the single-fitted-slope design that was measured
+  and rejected.
+
 # auspol 0.4.29
 
 **The backtest was reading the target election's own statewide result. It no
