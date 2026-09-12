@@ -57,23 +57,44 @@ Four things to fix, in order:
    `level_pred` / `level_actual`, since it currently holds a forecast in one mode
    and the actual result in another under one name.
 
-### NOT DONE — demographics as model features
+### BUILT AND MEASURED, DOES NOT HELP — demographics as model features
 
 > *"can we add demographics in as well? this can go into the primary
 > prediction stuff as well actually if not already! -- **if you leave any vars
 > out let me know dont just silently do it**"*
 
-Still true on 2026-09-12. The primary model's features contain no census,
-SEIFA, income or age term. Census 2016 and 2021 packs for all six
-jurisdictions sit in `external/reference/census/` with
-`scripts/build_census_correspondence.R` to map them across boundary changes.
-Fetched, never connected.
+**Delivered 2026-09-12, and the answer is that it does not improve the model.**
+Full write-up with every number:
+[reviews/xgb-primary-sd-and-census-2026-09-12.md](reviews/xgb-primary-sd-and-census-2026-09-12.md).
 
-**This is now the most likely source of the remaining error.** The salience
-work below has taken the independent model as far as search data can: inside
-the top salience bin, salience and outcome correlate at **−0.096**, because
-high search interest cannot distinguish a real campaign from a famous name.
-"What kind of seat is this" is exactly the missing signal.
+Built: `scripts/build_census_features.R` emits seven features over 2,050
+seat-pairs at 95% coverage. The correlation is the strongest in the corpus —
+Year 12 completion against One Nation's sa2026 vote, **r = −0.922** over 47
+seats.
+
+Measured: three arms, raw and two within-pair standardisations. Pooled
+out-of-fold RMSE 3.8740 baseline against 3.8854 / 3.8718 / 3.8769. On sa2026
+One Nation — the case it was built for — every variant is WORSE (8.658 →
+9.547). Census features do help GRN, OTH and OTH_RIGHT and hurt ONP, ALP and
+LNP, which is why the pooled figure is a wash.
+
+Why: −0.922 is a **within-sa2026** correlation, and leave-one-pair-out makes
+the model learn the relationship from other elections and transfer it. It does
+not transfer. More importantly the target was wrong — predicted One Nation
+spread across those 47 seats is 1.49 against an actual 7.67, so the error is
+mostly a **level** miss (we say ~18.5 statewide, One Nation polled ~27) and
+demographics can only fix **ranking**.
+
+**Vars deliberately left out, stated here rather than silently:** six income and
+housing medians that exist in the federal CED census files and do NOT exist in
+the state reaggregations (ABS table G01 only). Including them would make a
+column real for 7 pairs and filler for 15 — the shape that sank the
+state-deviation block the same day. Fixing it properly means reaggregating ABS
+table G02 to state boundaries.
+
+**So the remaining error is NOT mainly "what kind of seat is this".** It is the
+statewide level, set at `state_mean` in `fit_seats_full.R:409` — the poll-trend
+and fundamentals stage, upstream of the seat model entirely.
 
 ### 2026-09-12 — RESOLVED THE SAME DAY
 
