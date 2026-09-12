@@ -90,7 +90,8 @@ the answer is that it does not help.
 ### The join works
 
 `scripts/build_census_features.R` → `output/census-features.csv`, seven
-features over 2,050 seat-pairs at 95% coverage. The reaggregated census files
+features over 2,097 seat-pairs at 95% coverage (2,050 when first built, before
+sa2022 joined the corpus later the same day). The reaggregated census files
 carried `final_name` all along, so the join everyone assumed was missing needed
 no fetching.
 

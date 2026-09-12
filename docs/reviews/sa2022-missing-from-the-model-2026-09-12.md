@@ -85,7 +85,14 @@ names yield no surname.
 | feature corpus | 13,352 rows / 22 pairs | 13,634 / 23 |
 | sa2022 backtest | **failed to run** | runs |
 | sa2022 seat log loss | 0.9409 | **0.6463** |
-| pooled over 2,097 seat-elections | 0.3207 | **0.3141** |
+| pooled over 2,097 seat-elections | 0.3207 | **0.3115** |
+
+The 0.3115 is the FULL 23-pair rerun with every harness re-measured on the new
+corpus, SD off on both sides. An earlier estimate in this session put it at
+0.3141 by crediting only sa2022's own 47 seats; the real figure is better
+because the gain is spread -- leave-one-pair-out means every fold now trains on
+one more pair. 16 pairs improved and 7 worsened, with sa2026 (+0.0410) and
+fed2016 (+0.0113) the regressions still open.
 
 23.7% is the number that says the parse is RIGHT rather than merely non-empty:
 `R/candidate_returns.R` records 15-26% as the normal range across pairs, and a

@@ -67,7 +67,7 @@ Four things to fix, in order:
 Full write-up with every number:
 [reviews/xgb-primary-sd-and-census-2026-09-12.md](reviews/xgb-primary-sd-and-census-2026-09-12.md).
 
-Built: `scripts/build_census_features.R` emits seven features over 2,050
+Built: `scripts/build_census_features.R` emits seven features over 2,097
 seat-pairs at 95% coverage. The correlation is the strongest in the corpus —
 Year 12 completion against One Nation's sa2026 vote, **r = −0.922** over 47
 seats.

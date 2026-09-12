@@ -348,6 +348,14 @@ if (file.exists(.csf)) {
 
   # ---- WITHIN-PAIR STANDARDISATION, and this is the whole ballgame ---------
   #
+  # EVERY RMSE QUOTED IN THIS BLOCK WAS MEASURED ON THE 22-PAIR CORPUS, before
+  # sa2022 was added to PAIRS above in the same commit. They were accurate when
+  # taken and they are NOT reproducible against this file as it now stands: v7c
+  # alone moves 3.8740 -> 3.9355 on 23 pairs, because the corpus got harder, not
+  # because the model changed. The RELATIVE ordering is what the argument rests
+  # on and that was measured consistently; treat the absolute values as a dated
+  # snapshot. Flagged by the review gate rather than silently left to mislead.
+  #
   # The raw columns FAILED (v7k 3.8854 against v7c 3.8740), and sa2026 One
   # Nation -- the case they were built for -- got WORSE, 8.658 to 9.544, with
   # its correlation against the actual collapsing from +0.362 to +0.057. The

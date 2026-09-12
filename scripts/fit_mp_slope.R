@@ -107,9 +107,33 @@ if (length(.pair_fail)) stop("candidate_returns() failed for ", length(.pair_fai
 #
 # A count is not an identity. Two lines, and the next instance announces itself.
 .missing <- setdiff(pairs$to, unique(panel$target))
-if (length(.missing))
-  cat(sprintf("MP0p! NO ROWS for %d target(s): %s -- those pairs get NO slopes, and any harness that needs them will refuse to run\n",
+if (length(.missing)) {
+  cat(sprintf("MP0p! NO ROWS for %d target(s): %s\n",
               length(.missing), paste(.missing, collapse = ", ")))
+  # STOP, do not warn. The first version of this check only printed, and the
+  # review gate was right that this reproduces the very failure it patches: the
+  # OLD line printed "22 of 23 pairs contributed rows" and was ignored for an
+  # unknown length of time, because a diagnostic buried in a wall of Rscript
+  # output does not force anyone to look. Making the replacement another print
+  # protects only the person who immediately reruns the affected harness, and
+  # nobody did that last time -- the gap was found by a coincidental audit
+  # months later, after its fallback-path log loss had been pooled into the
+  # headline figure all along.
+  #
+  # The six harnesses DO each stop() when their own target is missing, so the
+  # gap is eventually loud. But "eventually, if someone runs that exact pair" is
+  # what let sa2022 sit outside the model. This script already hard-fails on a
+  # coverage gap two lines above (stopifnot on dev_prev/dev_now); this is the
+  # same class of guarantee.
+  #
+  # If a target legitimately has no returning non-majors, that is a real finding
+  # about the data and should be handled deliberately -- by fixing the upstream
+  # parse, or by removing the pair -- not by shipping a table with a hole in it.
+  stop("fit_mp_slope: ", length(.missing), " target(s) produced no slopes (",
+       paste(.missing, collapse = ", "),
+       "). A harness run against them will refuse to start. Fix the upstream ",
+       "candidate matching rather than writing an incomplete table.")
+}
 stopifnot(nrow(panel) > 0)
 # COVERAGE, not presence: a column can be there, typed and empty. CLAUDE.md
 # records 4.98M silently-discarded values from exactly that.

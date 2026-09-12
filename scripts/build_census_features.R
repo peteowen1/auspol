@@ -15,10 +15,18 @@
 #   Unley            9.4     affluent inner-south
 #
 # That is a class and urbanity split, and the model has NO feature for either.
-# Partisan lean does not capture it -- the Coalition polls well in affluent Bragg
-# AND rural MacKillop (r = +0.133 with the One Nation vote), while the Greens'
-# prior vote separates them at -0.786. We were using a party's vote as a proxy
-# for demography; this measures it directly.
+#
+# Partisan lean does not capture it. The Coalition's own share barely separates
+# these seats -- r = -0.286 with the One Nation vote across the 47 seats,
+# because the Coalition polls respectably in affluent Bragg AND rural MacKillop
+# -- while the Greens' prior vote separates them at -0.786. We were using a
+# party's vote as a proxy for demography; this measures it directly.
+#
+# (An earlier version of this comment put the Coalition figure at +0.133, which
+# was wrong: measured, LNP is -0.286 and it is IND that sits at +0.145. Caught
+# by the review gate. The argument is unchanged -- a weak correlation and a
+# wrong-signed one both fail to separate the seats -- but the number was not
+# something to leave sitting in a header for a later session to reason from.)
 #
 # The same feature should serve the other half of the gap. Our worst Greens
 # misses in fed2022 were Ryan, Brisbane and Griffith -- all inner-Brisbane.
@@ -62,7 +70,16 @@ derive <- function(d) {
   sch <- c("High_yr_schl_comp_Yr_12_eq_P", "High_yr_schl_comp_Yr_11_eq_P",
            "High_yr_schl_comp_Yr_10_eq_P", "High_yr_schl_comp_Yr_9_eq_P",
            "High_yr_schl_comp_Yr_8_belw_P")
-  tot <- if ("Tot_P_P" %in% names(d)) as.numeric(d$Tot_P_P) else rep(NA_real_, nrow(d))
+  # Tot_P_P is the denominator for FIVE of the seven features, so losing it
+  # quietly would NA out most of a file's contribution with nothing on screen.
+  # Every other missing-column path here prints a CF0!/CF1! line; this one did
+  # not, which made it the least-defended fallback in the script. Review gate.
+  if (!"Tot_P_P" %in% names(d)) {
+    cat("CF0! Tot_P_P absent -- born_aus, indig, over55, under35 and edu_25plus will be NA for this file\n")
+    tot <- rep(NA_real_, nrow(d))
+  } else {
+    tot <- as.numeric(d$Tot_P_P)
+  }
   d[, yr12_pct := 100 * .sum_cols(d, sch[1]) / .sum_cols(d, sch)]
   d[, born_aus_pct := 100 * .sum_cols(d, "Birthplace_Australia_P") / tot]
   d[, indig_pct := 100 * .sum_cols(d, "Indigenous_P_Tot_P") / tot]
@@ -131,7 +148,15 @@ for (el in names(VINTAGE)) {
   PREFIX <- c(nsw = "1", vic = "2", qld = "3", sa = "4", wa = "5")
   reg <- sub("[0-9]{4}$", "", el)
   if (reg %in% names(PREFIX)) {
-    keep_rows <- substr(as.character(d$final_code), 1, 1) == PREFIX[[reg]]
+    # The !is.na() is DEFENSIVE, not a fix for a live bug, and the difference
+    # matters enough to record. A review flagged that an NA final_code would
+    # make the comparison NA and inject a phantom all-NA row. That is true of a
+    # base R data.frame and NOT of a data.table, which drops NA from a logical
+    # `i` -- tested both ways, and `d` is a data.table from fread(). The real
+    # files also carry 0 NA codes in 379 rows. Kept anyway so the filter states
+    # its intent and still holds if `d` ever becomes a data.frame.
+    keep_rows <- !is.na(d$final_code) &
+                 substr(as.character(d$final_code), 1, 1) == PREFIX[[reg]]
     if (!any(keep_rows)) {
       cat(sprintf("CF0! %s: no census rows with state prefix %s -- skipped\n", el, PREFIX[[reg]]))
       next
@@ -215,6 +240,23 @@ for (v in names(cov)) cat(sprintf("CF2    %-16s %5.1f%%\n", v, 100 * cov[[v]]))
 if (any(cov < 0.5)) {
   stop(sprintf("CF2! feature(s) below 50%% coverage: %s -- a column that is present and empty is worse than an absent one",
                paste(names(cov)[cov < 0.5], collapse = ", ")))
+}
+# PER PAIR, not just per feature -- and this is the more dangerous direction.
+#
+# The check above pools across all 2,097 cells, so one vintage file failing to
+# load takes its whole election to 0% while the global average stays healthy and
+# the build passes. That is not ordinary missingness: it is a CONSTANT-WITHIN-
+# SUBGROUP block of NAs covering every seat of one election, which is exactly
+# the shape CLAUDE.md records a tree learning as a label for that subgroup --
+# the same mechanism that cost the state-deviation block 0.056 RMSE.
+#
+# The WA pairs sit at 54-81% legitimately (seat names do not survive their
+# redistributions), so the floor is set low enough to allow that and high enough
+# that a skipped election cannot pass. Review gate.
+by_pair <- J[, .(cov = mean(is.finite(yr12_pct))), by = pair]
+if (any(by_pair$cov < 0.25)) {
+  print(by_pair[cov < 0.25])
+  stop("CF2! pair(s) below 25% census coverage -- an all-NA block for one election is a jurisdiction label, not missing data")
 }
 cat("CF2  coverage by pair -- an unmatched pair contributes nothing and must be visible:\n")
 print(J[, .(seats = .N, matched = sum(!is.na(yr12_pct)),
