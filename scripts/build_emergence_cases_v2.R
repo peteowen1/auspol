@@ -36,7 +36,28 @@ OUT <- "output"
 RISE <- as.numeric(Sys.getenv("AUSPOL_EMERGE_RISE", "10"))
 MAJORS <- c("ALP", "LNP", "NAT")
 C <- fread(file.path(OUT, "candidacies.csv"), showProgress = FALSE)
-C[, cls := classify_party(party_raw, party_ab)]
+# USE THE `party` COLUMN, DO NOT RE-DERIVE IT.
+#
+# This script originally called classify_party(party_raw, party_ab) itself, and
+# that silently destroyed vic2022: Victoria's source puts the ABBREVIATION in
+# party_raw ("ALP", "LNP", "GRN") and leaves party_ab empty, so classify_party
+# saw no recognisable party NAME and returned OTH for all 731 candidates. Every
+# major-party candidate then survived the "non-majors only" filter with
+# own_prev = 0, and a 35% Labor vote scored as a 35-point emergence. vic2022's
+# seat-level emergence rate read 95.4%.
+#
+# build_candidacies.R already handles this, per source, at line 628: it calls
+# classify_party(party_raw, party_raw) for Victoria for exactly this reason.
+# Its output IS our own classification -- so this is the one source of truth,
+# not a field someone else classified.
+C[, cls := party]
+# A pair that collapses to one class means the upstream classification failed
+# for that source. It is invisible in a base rate, so fail loudly instead.
+bad <- C[, .(classes = uniqueN(cls)), by = election][classes <= 2]
+if (nrow(bad)) {
+  print(bad)
+  stop("E20! elections above resolve to <=2 party classes -- classification is broken there")
+}
 C[, sn := normalise_seat(seat)]
 # Person key: surname plus given initial, the same shape candidate_returns()
 # uses. Not the full name -- commissions are inconsistent about middle names
