@@ -167,6 +167,83 @@ print(SPL[, .(cells = .N, polled_last_time = round(mean(x), 1),
               polled_this_time = round(mean(actual_share), 1),
               retention = round(mean(actual_share / x), 2)), by = sal_band])
 
+# ---- prior strength as a RATIO, not a difference -------------------------
+# The existing features encode a seat's prior strength ADDITIVELY: dev_prev is
+# x - level_prev. That does not survive the party's statewide level moving.
+#
+# sa2026 One Nation is the worked example. level_prev 2.6, level_now 19.9 -- an
+# eight-fold rise. The model anchors seats with history to their small absolute
+# prior share and lets seats with NO history float to the statewide level, so
+# MacKillop's 8.1 points of 2022 vote dragged it DOWN to 16.7 in a year the
+# party polled 20% statewide. Measured: seats where ONP stood in 2022 averaged
+# 27.4 and were predicted 19.0; seats where they did not averaged 20.3 and were
+# predicted 22.0. The prediction correlates with prior vote at -0.706 where the
+# truth is +0.562, and the OLD non-xgb model gets the order right (+0.549) --
+# so the xgb inverts a correctly-ordered input.
+#
+# Trees cannot extrapolate beyond their training range, and the corpus has no
+# example of One Nation at a 19.9 statewide level.
+#
+#   x_rel     how many times the party's own statewide share this seat was
+#   x_scaled  that ratio applied to THIS election's level -- the prediction you
+#             get if the seat pattern is stable and only the level moved
+#
+# x_scaled is handed over pre-multiplied for the same reason ret_exp was: a tree
+# adds, it cannot multiply, so it needs a split on x AND on level AND a separate
+# leaf for every combination to express this.
+.lvfloor <- 0.5   # level_prev is a statewide share; below half a point the
+                  # ratio is noise dividing by noise
+FE[, x_rel := ifelse(is.finite(x) & is.finite(level_prev),
+                     x / pmax(level_prev, .lvfloor), 0)]
+FE[, x_scaled := ifelse(is.finite(level_now), x_rel * level_now, 0)]
+cat(sprintf("\nX72b x_rel: median %.2f, p90 %.2f, max %.2f | x_scaled median %.1f\n",
+            median(FE$x_rel), quantile(FE$x_rel, 0.9), max(FE$x_rel), median(FE$x_scaled)))
+cat("X72b does it order sa2026 ONP correctly? (the case it was built for)\n")
+.s <- FE[pair == "sa2026" & party == "ONP"]
+if (nrow(.s) > 10) {
+  cat(sprintf("X72b   r(x_scaled, actual) = %+.3f | r(x, actual) = %+.3f | r(dev_prev, actual) = %+.3f\n",
+              cor(.s$x_scaled, .s$actual_share), cor(.s$x, .s$actual_share),
+              cor(.s$dev_prev, .s$actual_share)))
+}
+
+# ---- CROSS-CLASS prior shares --------------------------------------------
+# Every feature so far is about the cell's OWN class. A One Nation row knows
+# what One Nation polled here last time and nothing about anyone else, because
+# the model is fitted per (seat, class). That makes an entire axis invisible.
+#
+# The evidence, measured on South Australia across two elections:
+#
+#   2022 seat variable   r with ONP 2022   r with ONP 2026
+#   GRN                      -0.385            -0.777
+#   LNP                      -0.055            -0.243
+#
+# The Greens' vote is by far the best non-trivial predictor of the One Nation
+# vote and holds its sign in both elections; the Coalition's is near-useless.
+# That is not a left-right axis -- the Coalition polls well in affluent Bragg
+# (ONP 9.1) AND rural MacKillop (ONP 35.3), so it cannot separate them, while
+# the Greens poll 12-19 in the first and 0 in the second. It is an
+# education/urbanity axis, and the Greens' vote is the proxy we already hold.
+#
+# Census would measure it directly and is on disk, but carries sed_code with no
+# seat name, so it needs scripts/build_census_correspondence.R run first. This
+# is the cheap version of the same signal.
+#
+# NOT a leak: these are all PREVIOUS-election shares, known before polling day.
+.wide <- dcast(FE, pair + seat ~ party, value.var = "x")
+.cls <- setdiff(names(.wide), c("pair", "seat"))
+setnames(.wide, .cls, paste0("oth_prev_", .cls))
+n0 <- nrow(FE)
+FE <- merge(FE, .wide, by = c("pair", "seat"), all.x = TRUE)
+stopifnot(nrow(FE) == n0)
+xcls <- paste0("oth_prev_", .cls)
+for (j in xcls) set(FE, which(!is.finite(FE[[j]])), j, 0)
+cat(sprintf("\nX72c cross-class prior shares: %d columns (%s)\n",
+            length(xcls), paste(.cls, collapse = "/")))
+.s <- FE[pair == "sa2026" & party == "ONP"]
+if (nrow(.s) > 10 && "oth_prev_GRN" %in% names(.s))
+  cat(sprintf("X72c sa2026 ONP check: r(oth_prev_GRN, actual) = %+.3f (expect about -0.78)\n",
+              cor(.s$oth_prev_GRN, .s$actual_share)))
+
 # The fold unit for every model and every fitted feature below: one election
 # pair. Defined here because the engineered features are fitted leave-one-pair-
 # out too, and they must use the SAME folds as the models that consume them --
@@ -323,7 +400,13 @@ ARMS <- list(
   # and it is the one that answers whether the collapse penalty should be
   # CONDITIONAL rather than removed: dev_prev is right for 67 of the 74 cells
   # it fires on, so the fix is to tell the model when it does not apply.
-  v7f = c(setdiff(base_feat, "jump"), "jump_pctile", "sal_exp", "ret_exp")
+  v7f = c(setdiff(base_feat, "jump"), "jump_pctile", "sal_exp", "ret_exp"),
+  # v7g: the winning set PLUS prior strength as a ratio. Targets the sign flip
+  # on sa2026 One Nation without touching anything else.
+  v7g = c(setdiff(base_feat, "jump"), "jump_pctile", "sal_exp", "x_rel", "x_scaled"),
+  # v7h: the winning set PLUS what the OTHER classes polled in this seat last
+  # time. One small change, targeting an axis the per-cell fit cannot see.
+  v7h = c(setdiff(base_feat, "jump"), "jump_pctile", "sal_exp", xcls)
 )
 fold_id <- match(FE$pair, pairs_all)   # pairs_all defined above, with the
                                        # engineered features that share its folds
@@ -350,7 +433,7 @@ cat(sprintf("\nX73  running arms: %s\n",
 # THE FULL FEATURE MATRIX, always. Written before any fitting so a diagnostic
 # never has to re-run the arms to get at the columns -- the same reason
 # fit_xgb_primary_v6.R persists its own matrix.
-FULL <- unique(c(base_feat, "jump_pctile", "sal_exp", "ret_exp", cand_feat))
+FULL <- unique(c(base_feat, "jump_pctile", "sal_exp", "ret_exp", "x_rel", "x_scaled", xcls, cand_feat))
 fwrite(FE[, c("pair", "seat", "party", "actual_share", FULL), with = FALSE],
        file.path(OUT, "xgb-primary-v7-features.csv"))
 cat(sprintf("X73  wrote %s/xgb-primary-v7-features.csv (%d rows, %d features)\n",
@@ -417,7 +500,7 @@ cat(sprintf("X73e ONP placement: %s\n", .onp))
 cat(sprintf("\nX73e split: %d poll-anchored cells (%s), %d candidate-driven (%s)\n",
             sum(FE$grp == "poll_anchored"), paste(POLL_ANCHORED, collapse = "/"),
             sum(FE$grp == "candidate_driven"), "IND/OTH/OTH_RIGHT"))
-best <- ARMS$v7c   # the winning single-model feature set, so the ONLY thing
+best <- ARMS[[Sys.getenv("AUSPOL_V7_SPLIT_BASE", "v7c")]]   # the winning single-model feature set, so the ONLY thing
                    # changing here is one model versus two
 # AUSPOL_V7_IND_FEAT=small gives the candidate-driven group a REDUCED feature
 # set. On a single held-out fed2022 fold, 9 features beat 41 on that population
@@ -482,7 +565,7 @@ cat("\nX73  ALL ARMS. RMSE and MAE are points of primary vote, LOWER IS BETTER.\
 print(rbindlist(res)[, .(arm, features, nrounds, rmse = round(rmse, 4), mae = round(mae, 4))])
 
 cat("\nX74  RMSE by class, lower is better. This is where a change should show up:\n")
-ran <- intersect(paste0("pred_", c("v6","v7a","v7b","v7c","v7d","v7e","v7f")), names(FE))
+ran <- intersect(paste0("pred_", c("v6","v7a","v7b","v7c","v7d","v7e","v7f","v7g","v7h")), names(FE))
 ran <- ran[vapply(ran, function(k) any(is.finite(FE[[k]])), TRUE)]
 rm_ <- function(k) sqrt(mean((FE[[k]] - FE$actual_share)^2))
 by_cls <- FE[, c(list(cells = .N),
