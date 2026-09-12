@@ -153,6 +153,22 @@ PUBLISHED_FLAGS <- c(
                                              # with the gain on IND (1.50), OTH (0.95) and ONP (0.91) rather
                                              # than the majors (ALP 0.03, LNP 0.09).
   AUSPOL_XGB_PRIMARY_SD_SRC  = "output/xgb-primary-sd-oof.csv",
+  AUSPOL_XGB_PRIMARY_SD_CLASSES = "IND,OTH,OTH_RIGHT,ONP",
+                                             # which classes AUSPOL_XGB_PRIMARY_SD widens. NOT every class:
+                                             # setting all 1,050 fed2022 cells replaced the tuned seat_sd
+                                             # machinery for the majors and cost the 144 non-teal seats
+                                             # 0.267 -> 0.278 of log loss, because the sd model has nothing
+                                             # to offer them (Gaussian log-score gain ALP 0.03, LNP 0.09
+                                             # against IND 1.50).
+                                             #
+                                             # REGISTERED HERE SO THE ARM FINGERPRINT SEES IT. The
+                                             # fingerprint hashes every AUSPOL_* variable that is SET, and
+                                             # harness_defaults.R only exports what this list names. A
+                                             # Sys.getenv("AUSPOL_...", default) read inside a function is
+                                             # invisible to it, so two runs differing only in that value
+                                             # write the SAME filename and the second silently overwrites
+                                             # the first. That happened on 2026-09-12 while measuring this
+                                             # very switch.
   AUSPOL_XGB_SURGE_SRC       = "output/xgb-emergence-v5-seat.csv",
                                              # which emergence model AUSPOL_XGB_SURGE reads. v5 is candidate-level
                                              # (scripts/fit_xgb_emergence_v5.R); v4 was party-class level and gave
