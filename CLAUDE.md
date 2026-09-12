@@ -196,6 +196,20 @@ Specific traps, all of which have bitten:
 - **Grepping for check codes**: patterns anchored on an adjacent quote miss
   `cat(sprintf("\nG3 ...`. Three incomplete greps, one of which let `B1` mean
   two different things. The registry is a table in `ARCHITECTURE.md`.
+- **A COLUMN THAT IS CONSTANT WITHIN A SUBGROUP IS A LABEL FOR THAT SUBGROUP,
+  and a tree will use it as one.** xgboost cannot tell "this is 0 because the
+  concept does not apply here" from "this is 0 because the value is zero". On
+  2026-09-12 four state-deviation features were added for federal pairs only;
+  the other 6,100 cells got `state_poll_dev = 0`, `state_elec_gap = 999` and so
+  on as fillers. A split like `state_elec_gap > 500` then separates every
+  non-federal row cleanly, so the tree spent splits partitioning on jurisdiction
+  and reshaped the whole fit around it. **96% of non-federal predictions moved,
+  by up to 5.87 points, from columns that say nothing about them** -- South
+  Australia, the smallest region at 329 cells, moved most. Pooled RMSE 3.8740 ->
+  3.9297 even though the feature gained 0.060 on fed2022, the pair it was built
+  for. If a feature only exists for part of the corpus, either fit that part
+  separately or do not add it -- a filler value is not neutral. Same root as the
+  percentile trap below: both are cases where a placeholder became a signal.
 - **A PERCENTILE of a mostly-tied variable reports "is this the mode?", not
   "how big is this?"** `jump_pctile` ranked campaign salience within each
   election, and `jump` is **51-81% exactly zero** — 447 of fed2007's 552

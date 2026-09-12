@@ -244,6 +244,47 @@ if (nrow(.s) > 10 && "oth_prev_GRN" %in% names(.s))
   cat(sprintf("X72c sa2026 ONP check: r(oth_prev_GRN, actual) = %+.3f (expect about -0.78)\n",
               cor(.s$oth_prev_GRN, .s$actual_share)))
 
+# ---- STATE DEVIATION, for federal pairs only -------------------------------
+# `level_pred` carries a single NATIONAL figure and the harness distributes it
+# uniformly, so nothing in the model can express "Western Australia is moving
+# differently from Australia". fed2022 missed Hasluck by 11.4 points and Tangney
+# by 12.9 on the Labor primary for exactly that reason: WA swung +10.55 two-party
+# against a national +3.66.
+#
+# Two independent sources, both raw rather than pre-fitted, so the model decides
+# how to weigh them (Pete's call -- a first version regressed each into a single
+# prediction and shrank WA 2022 from a true +5.8 to +0.96).
+#
+#   state_poll_dev   state-level federal polls, minus the national swing.
+#                    r = +0.582 over 30 state-years.
+#   state_elec_dev   the preceding state election's own ALP swing.
+#                    r = +0.742 over 8, but only inside ~24 months.
+#   state_elec_gap   age of that state election in months; 999 = none.
+#   state_poll_n     how many polls the state reading rests on; 0 = none.
+#
+# The two disagree usefully. WA 2022: polls +3.5, state election +17.7, truth
+# +6.9. Tasmania, ACT and the NT have neither source and read 0 with gap 999 and
+# n 0, which the model can tell apart from a genuine zero deviation.
+#
+# Non-federal pairs are all zero: a state election IS one state.
+sdev_f <- c("state_poll_dev", "state_elec_dev", "state_elec_gap", "state_poll_n")
+.sdf <- file.path(OUT, "state-deviation-features.csv")
+if (file.exists(.sdf)) {
+  SDV <- fread(.sdf, showProgress = FALSE)
+  n0 <- nrow(FE)
+  FE <- merge(FE, SDV[, c("pair", "seat", ..sdev_f)], by = c("pair", "seat"), all.x = TRUE)
+  stopifnot(nrow(FE) == n0)
+  for (j in c("state_poll_dev", "state_elec_dev")) set(FE, which(!is.finite(FE[[j]])), j, 0)
+  set(FE, which(!is.finite(FE$state_elec_gap)), "state_elec_gap", 999)
+  set(FE, which(!is.finite(FE$state_poll_n)), "state_poll_n", 0L)
+  cat(sprintf("\nX72d state deviation: %d of %d cells carry a poll signal (%.0f%%), %d a state election\n",
+              sum(FE$state_poll_dev != 0), nrow(FE), 100 * mean(FE$state_poll_dev != 0),
+              sum(FE$state_elec_dev != 0)))
+} else {
+  cat(sprintf("\nX72d! %s missing -- run scripts/build_state_deviation_features.R; columns set to 0\n", .sdf))
+  for (j in sdev_f) FE[[j]] <- if (j == "state_elec_gap") 999 else 0
+}
+
 # The fold unit for every model and every fitted feature below: one election
 # pair. Defined here because the engineered features are fitted leave-one-pair-
 # out too, and they must use the SAME folds as the models that consume them --
@@ -404,6 +445,10 @@ ARMS <- list(
   # v7g: the winning set PLUS prior strength as a ratio. Targets the sign flip
   # on sa2026 One Nation without touching anything else.
   v7g = c(setdiff(base_feat, "jump"), "jump_pctile", "sal_exp", "x_rel", "x_scaled"),
+  # v7i: the winning set PLUS the state-deviation block. Targets the single
+  # largest miss in the corpus (Hasluck 11.4, Tangney 12.9) with a dimension the
+  # model previously had no feature for at all.
+  v7i = c(setdiff(base_feat, "jump"), "jump_pctile", "sal_exp", sdev_f),
   # v7h: the winning set PLUS what the OTHER classes polled in this seat last
   # time. One small change, targeting an axis the per-cell fit cannot see.
   v7h = c(setdiff(base_feat, "jump"), "jump_pctile", "sal_exp", xcls)
@@ -433,7 +478,7 @@ cat(sprintf("\nX73  running arms: %s\n",
 # THE FULL FEATURE MATRIX, always. Written before any fitting so a diagnostic
 # never has to re-run the arms to get at the columns -- the same reason
 # fit_xgb_primary_v6.R persists its own matrix.
-FULL <- unique(c(base_feat, "jump_pctile", "sal_exp", "ret_exp", "x_rel", "x_scaled", xcls, cand_feat))
+FULL <- unique(c(base_feat, "jump_pctile", "sal_exp", "ret_exp", "x_rel", "x_scaled", xcls, sdev_f, cand_feat))
 fwrite(FE[, c("pair", "seat", "party", "actual_share", FULL), with = FALSE],
        file.path(OUT, "xgb-primary-v7-features.csv"))
 cat(sprintf("X73  wrote %s/xgb-primary-v7-features.csv (%d rows, %d features)\n",
@@ -565,7 +610,7 @@ cat("\nX73  ALL ARMS. RMSE and MAE are points of primary vote, LOWER IS BETTER.\
 print(rbindlist(res)[, .(arm, features, nrounds, rmse = round(rmse, 4), mae = round(mae, 4))])
 
 cat("\nX74  RMSE by class, lower is better. This is where a change should show up:\n")
-ran <- intersect(paste0("pred_", c("v6","v7a","v7b","v7c","v7d","v7e","v7f","v7g","v7h")), names(FE))
+ran <- intersect(paste0("pred_", c("v6","v7a","v7b","v7c","v7d","v7e","v7f","v7g","v7h","v7i")), names(FE))
 ran <- ran[vapply(ran, function(k) any(is.finite(FE[[k]])), TRUE)]
 rm_ <- function(k) sqrt(mean((FE[[k]] - FE$actual_share)^2))
 by_cls <- FE[, c(list(cells = .N),
