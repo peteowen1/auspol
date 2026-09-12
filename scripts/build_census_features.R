@@ -234,29 +234,50 @@ cat(sprintf("\nCF2  %d seat-pairs | %d matched a census row (%.0f%%)\n",
 # coverage rather than presence after a join; this is that assertion, and it
 # fails the build rather than warning, because a 100% empty feature is never
 # what anyone intended.
+#
+# TESTS FOR ZERO, NOT A PERCENTAGE. The first version stopped below 50%, and
+# that was a made-up number doing no work: the failure it exists to catch is a
+# column that is ENTIRELY empty, and a feature legitimately varies in coverage
+# with how many seats matched. Same correction as the per-pair check below.
 cov <- vapply(FEATS, function(v) mean(is.finite(J[[v]])), numeric(1))
 cat("CF2  per-feature coverage (share of matched cells carrying a finite value):\n")
 for (v in names(cov)) cat(sprintf("CF2    %-16s %5.1f%%\n", v, 100 * cov[[v]]))
-if (any(cov < 0.5)) {
-  stop(sprintf("CF2! feature(s) below 50%% coverage: %s -- a column that is present and empty is worse than an absent one",
-               paste(names(cov)[cov < 0.5], collapse = ", ")))
+empty_feats <- names(cov)[cov == 0]
+if (length(empty_feats)) {
+  stop(sprintf("CF2! feature(s) at ZERO coverage: %s -- present, correctly typed and entirely empty, which is worse than an absent column because every other check passes. This is what median_mortgage did.",
+               paste(empty_feats, collapse = ", ")))
 }
 # PER PAIR, not just per feature -- and this is the more dangerous direction.
 #
 # The check above pools across all 2,097 cells, so one vintage file failing to
-# load takes its whole election to 0% while the global average stays healthy and
-# the build passes. That is not ordinary missingness: it is a CONSTANT-WITHIN-
-# SUBGROUP block of NAs covering every seat of one election, which is exactly
-# the shape CLAUDE.md records a tree learning as a label for that subgroup --
-# the same mechanism that cost the state-deviation block 0.056 RMSE.
+# load takes its whole election to zero while the global average stays healthy
+# and the build passes. That is not ordinary missingness: it is a CONSTANT-
+# WITHIN-SUBGROUP block of NAs covering every seat of one election, exactly the
+# shape CLAUDE.md records a tree learning as a label for that subgroup -- the
+# mechanism that cost the state-deviation block 0.056 RMSE.
 #
-# The WA pairs sit at 54-81% legitimately (seat names do not survive their
-# redistributions), so the floor is set low enough to allow that and high enough
-# that a skipped election cannot pass. Review gate.
-by_pair <- J[, .(cov = mean(is.finite(yr12_pct))), by = pair]
-if (any(by_pair$cov < 0.25)) {
-  print(by_pair[cov < 0.25])
-  stop("CF2! pair(s) below 25% census coverage -- an all-NA block for one election is a jurisdiction label, not missing data")
+# NO THRESHOLD, and that is Pete's correction (2026-09-12): the first version
+# stopped below 25% coverage, and he pushed back on the hard floor.
+#
+# He is right, and the reason is worth keeping. 25% was invented, and it is not
+# what distinguishes the good case from the bad one. WA sits at 54-81% because
+# its seat names genuinely do not survive redistributions, and a pair at 40%
+# would be fine for the same reason -- partial matching is NORMAL here. The
+# failure is categorical, not a point on a continuum: did this election
+# contribute ANYTHING, or did its census file fail to load, fail to carry
+# final_name, or fail the state filter and get skipped?
+#
+# Zero versus non-zero is a real boundary in the data. 25% was a guess about
+# where a real boundary might be. So the check tests the actual event, and the
+# continuous coverage stays a printed diagnostic -- visible for a human to judge
+# without being a cliff that fails a build on the wrong side of a made-up number.
+by_pair <- J[, .(cov = mean(is.finite(yr12_pct)), matched = sum(is.finite(yr12_pct))), by = pair]
+if (any(by_pair$matched == 0)) {
+  print(by_pair[matched == 0])
+  stop("CF2! pair(s) matched ZERO census rows -- that election's cells become an ",
+       "all-NA block a tree can key on as a jurisdiction label. Check the CF0! ",
+       "lines above for a skipped vintage file, a missing final_name column, or ",
+       "a state-prefix filter that removed everything.")
 }
 cat("CF2  coverage by pair -- an unmatched pair contributes nothing and must be visible:\n")
 print(J[, .(seats = .N, matched = sum(!is.na(yr12_pct)),
