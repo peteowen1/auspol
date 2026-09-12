@@ -144,6 +144,23 @@ PUBLISHED_FLAGS <- c(
                                              # Measured cost where implemented: federal +0.0047 pooled seat log loss,
                                              # sa2026 0.3640 -> 0.4756 with the xgb primary OFF (with it on the
                                              # statewide swing never reaches the output, so the two modes tie).
+  AUSPOL_XGB_PRIMARY_SD      = "0",          # 1 = per-cell primary SD comes from the XGBoost spread model
+                                             # (R/xgb_primary_sd_override.R, scripts/fit_xgb_primary_sd.R)
+                                             # instead of only the salience-derived sd matrix. This is the
+                                             # REPLACEMENT for the surge mechanism binned 2026-09-12: honest
+                                             # width on cells that could emerge, rather than a coin-flip jump.
+                                             # Gaussian log score on 13,352 held-out cells 1.8661 -> 1.2863,
+                                             # with the gain on IND (1.50), OTH (0.95) and ONP (0.91) rather
+                                             # than the majors (ALP 0.03, LNP 0.09).
+  AUSPOL_XGB_PRIMARY_SD_SRC  = "output/xgb-primary-sd-oof.csv",
+  AUSPOL_XGB_SURGE_SRC       = "output/xgb-emergence-v5-seat.csv",
+                                             # which emergence model AUSPOL_XGB_SURGE reads. v5 is candidate-level
+                                             # (scripts/fit_xgb_emergence_v5.R); v4 was party-class level and gave
+                                             # Wentworth a 1.1% hazard because Allegra Spender's 0 -> 35.8 showed up
+                                             # as the IND class moving 33.0 -> 35.8. Point this at
+                                             # output/xgb-emergence-v4-oof.csv only to reproduce the old arm --
+                                             # note v4 writes one row per (seat, class) and v5 one per seat, so the
+                                             # override's duplicate-seat guard will reject the v4 file as-is.
   AUSPOL_XGB_SURGE           = "0",          # harness-only: 1 = surge_h/surge_party/surge_mu/surge_sd come from the
                                              # XGBoost emergence model (R/xgb_surge_override.R) instead of the
                                              # salience hazard. BUILT, NOT SHIPPED.
