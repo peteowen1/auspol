@@ -118,6 +118,19 @@ surge_training_population <- function(pairs, require_governed = TRUE) {
       if (length(.nz) >= 10) {
         data.table::set(G, .nz, "jump_pctile",
                         rank(G$jump[.nz], ties.method = "average") / length(.nz))
+      } else {
+        # SAY SO. Below the floor every candidate in the pair keeps
+        # jump_pctile = 0, so the whole election's salience signal goes to zero
+        # -- not just the sparse tail. Silently that is indistinguishable from
+        # an election where nobody had any search interest, which is a plausible
+        # sentence and therefore the dangerous kind of quiet. The six pairs
+        # measured in docs/reviews/salience-percentile-fix-2026-09-12.md carry
+        # 36-351 non-zero jumps and are nowhere near this, but a thin state pair
+        # with sparse Google Trends coverage could be, and should not reach zero
+        # without a trace. Review gate; matches what xgb_primary_sd_matrix() and
+        # xgb_surge_params_for() already do when they cannot fill a cell.
+        cat(sprintf("SS9! %s: only %d candidate(s) with a non-zero salience jump (need 10) -- jump_pctile is 0 for ALL %d governed candidates in this pair\n",
+                    p$election, length(.nz), nrow(G)))
       }
     } else {
       G[, jump_pctile := rank(jump, ties.method = "average") / .N]

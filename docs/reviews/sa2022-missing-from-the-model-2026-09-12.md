@@ -129,6 +129,25 @@ built for the failure mode someone imagined, and the real one walked past it.
 
 A check that reports "22 of 23" must say WHICH ONE. The fix is one `setdiff()`.
 
+## A FIFTH place, deliberately NOT fixed here
+
+`all_election_pairs()` in `R/reentry_prior.R:716` does not list sa2022 either.
+That function's own docstring calls itself *"ONE list, in the package, because
+this repo has already been bitten by six harnesses each carrying their own copy
+of a pair list"* -- so the canonical anti-drift list has the same gap as the
+five above. `pool_sharedetail.R` surfaces it: it reports "23 pairs" of data and
+"all 22 known pairs have sharedetail on hand" in consecutive lines.
+
+It is left alone in this change ON PURPOSE. `all_election_pairs()` feeds the
+re-entry prior, which pools across pairs and reaches all six harnesses, so
+adding sa2022 there SHIFTS THE PRIOR -- a behavioural change, not a corpus
+addition. It would invalidate the 23-pair baselines established in this same
+session and needs its own measured run rather than a quiet ride-along on a
+change whose numbers are already settled.
+
+It regresses nothing: sa2022 was never in that list. Next session's job, with a
+before/after on the pooled figure like everything else here.
+
 ## Still open
 
 - `AUSPOL_SA_PAIR=2022` needs adding to the harness parity sweep in

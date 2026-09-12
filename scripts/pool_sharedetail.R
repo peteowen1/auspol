@@ -81,10 +81,26 @@ rows <- merge(rows, keep, by = c("pair", "file"))
 # any of the 23 pairs and refused for the wrong reason. Tenth instance of the
 # data.table NSE trap in this repo; CLAUDE.md says never use a bare column-name
 # symbol inside `[`, and that is why.
+# ABSENT TOKEN MEANS 20,000, AND THAT IS A CONVENTION, NOT AN UNKNOWN.
+#
+# All six harnesses build the tag as
+#   if (N_SIMS != 20000L) sprintf("-n%d", N_SIMS) else ""
+# so a full-quality deciding run carries NO token at all, and the great majority
+# of files on disk have none. The first version returned NA for those and only
+# printed "cannot be checked", which the review gate correctly called fail-open:
+# the one posture a guard must not take is "unverifiable, therefore allow".
+#
+# But refusing every untokened file would refuse exactly the good ones. The
+# honest fix is to make the convention EXPLICIT rather than leave it implicit --
+# an absent token resolves to DEFAULT_SIMS, which then goes through the same
+# comparison as every measured value. If a harness's own default ever drifts
+# from 20000 this constant is the single place that has to move, and the
+# mismatch becomes a one-line change instead of a silent hole.
+DEFAULT_SIMS <- 20000L
 .sims_for <- function(paths) {
   bn <- basename(paths)
   m <- regmatches(bn, regexpr("-n[0-9]+-", bn))
-  out <- rep(NA_integer_, length(bn))
+  out <- rep(DEFAULT_SIMS, length(bn))
   hit <- regexpr("-n[0-9]+-", bn) > 0
   out[hit] <- as.integer(gsub("[^0-9]", "", m))
   stats::setNames(out, paths)
@@ -95,8 +111,14 @@ MIN_SIMS <- as.integer(Sys.getenv("AUSPOL_POOL_MIN_SIMS", "20000"))
 .low <- unique(rows[is.finite(n_sims) & n_sims < MIN_SIMS, .(pair, n_sims)])
 .unk <- unique(rows[!is.finite(n_sims), .(pair)])
 if (nrow(.unk))
-  cat(sprintf("PS1! %d pair(s) have no n_sims in the filename, so it cannot be checked: %s\n",
-              nrow(.unk), paste(.unk$pair, collapse = ", ")))
+  stop(sprintf(paste0("refusing to pool: %d pair(s) have an n_sims that is not finite ",
+                      "even after the DEFAULT_SIMS convention was applied, which means ",
+                      "the filename is malformed rather than merely untokened: %s"),
+               nrow(.unk), paste(.unk$pair, collapse = ", ")))
+# No longer reachable by an untokened file -- those now resolve to DEFAULT_SIMS
+# and are checked like everything else. It stays as a genuine fail-closed branch
+# for a filename that parses to something non-finite, which should be impossible
+# and therefore should stop rather than print.
 if (nrow(.low)) {
   print(.low[order(n_sims)])
   stop(sprintf(paste0("refusing to pool: %d pair(s) come from runs below %d sims. ",

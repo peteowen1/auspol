@@ -576,6 +576,21 @@ for (K in PAIRS) {
   # XGB SURGE PARAMETERS (AUSPOL_XGB_SURGE). Replaces the salience-derived
   # surge_h / surge_party / surge_mu / surge_sd with the emergence model's.
   # No simulator change: all four are already per-seat vectors.
+  #
+  # RESET EVERY ITERATION, then override. The four defaults are assigned here
+  # unconditionally so this pair cannot inherit the previous pair's values, and
+  # the call site below reads these variables rather than testing exists(.xs).
+  #
+  # The earlier version left `.xs` unset except inside the flag-gated block and
+  # asked `exists(".xs") && !is.null(.xs)` at the call site. That works in a
+  # clean Rscript run and is fragile anywhere else: source this file twice in
+  # one session and a stale `.xs` from the previous run satisfies exists() and
+  # silently applies another pair's surge parameters. The other five harnesses
+  # all use the reset-then-override shape, and combine_sd_override() in
+  # R/reentry_prior.R already carries an explicit guard against exactly this
+  # ("a caller that left a PREVIOUS pair's matrix sitting in `a`"). Review gate.
+  surge_arg <- SURGE_H; surge_party_arg <- NULL
+  surge_mu_arg <- 15.6; surge_sd_arg <- 6.1
   if (identical(Sys.getenv("AUSPOL_XGB_SURGE", "0"), "1")) {
     .xs <- tryCatch(xgb_surge_params_for(shares, el_to),
                     error = function(e) { cat(sprintf("XS9! xgb surge FAILED: %s
@@ -607,10 +622,10 @@ for (K in PAIRS) {
                                 # wiring it here also closes WA's long-standing
                                 # no-surge gap.
                                 flow_sd = FLOW_SD,
-                                surge_h = if (exists(".xs") && !is.null(.xs)) .xs$surge_h else SURGE_H,
-                                surge_party = if (exists(".xs") && !is.null(.xs)) .xs$surge_party else NULL,
-                                surge_mu = if (exists(".xs") && !is.null(.xs)) .xs$surge_mu else 15.6,
-                                surge_sd = if (exists(".xs") && !is.null(.xs)) .xs$surge_sd else 6.1)
+                                surge_h = surge_arg,
+                                surge_party = surge_party_arg,
+                                surge_mu = surge_mu_arg,
+                                surge_sd = surge_sd_arg)
   cat(sprintf("BW2e  engine %s | surge recipient fell back: %d class(es) absent, %d seat-draws at zero share\n", sim$engine, sim$surge_recipient_fallback, sim$surge_recipient_fallback_draws))
   wp <- as.data.table(sim$win_prob)
 
