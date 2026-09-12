@@ -89,7 +89,39 @@ surge_training_population <- function(pairs, require_governed = TRUE) {
     pi <- prev_ind_for(p$prev)
     G <- merge(G, pi, by = "seat", all.x = TRUE)
     G[is.na(G$prev_ind), prev_ind := 0]
-    G[, jump_pctile := rank(jump, ties.method = "average") / .N]
+    # RANKED AMONG NON-ZERO ONLY, behind AUSPOL_SALIENCE_PCTILE_NZ.
+    #
+    # `jump` is 51-81% EXACTLY zero in every governed field -- 717 candidates in
+    # fed2016, 51% of them at zero; 447 of fed2007's 552, with 62 distinct values
+    # in the whole field. Ranking over all of them puts that tied block mid-scale
+    # and hands any non-zero value a high percentile automatically.
+    #
+    # Measured, fed2016 independents: Tony Backhouse (Warringah) has a jump of
+    # EXACTLY 0.000 and scored the 41st percentile; Dennis Jensen (Tangney) has
+    # 0.092 and scored 0.709, and his seat was predicted 29.2 against an actual
+    # 11.9. Cells predicted above 13 average old percentile 0.634 and fixed
+    # percentile 0.279.
+    #
+    # The damage is not confined here. This percentile feeds salience_expected(),
+    # whose top band assigns ~14 points of expected primary; that flows into
+    # `pred_share`, which the xgb primary model tracks at r = 0.991. So 34
+    # fed2016 IND cells were predicted 16.3 against an actual 10.2, the sd model
+    # correctly reported those predictions as unreliable and assigned SDs near
+    # 20, and the simulator then handed 22% win probabilities to candidates who
+    # polled 1.5%. fed2016 is the worst regression in the 22-pair corpus.
+    #
+    # Under the fix the same band holds 13 cells at 19.5 against 16.6.
+    # docs/reviews/salience-percentile-fix-2026-09-12.md.
+    if (identical(Sys.getenv("AUSPOL_SALIENCE_PCTILE_NZ", "1"), "1")) {
+      .nz <- which(is.finite(G$jump) & G$jump > 0)
+      G[, jump_pctile := 0]
+      if (length(.nz) >= 10) {
+        data.table::set(G, .nz, "jump_pctile",
+                        rank(G$jump[.nz], ties.method = "average") / length(.nz))
+      }
+    } else {
+      G[, jump_pctile := rank(jump, ties.method = "average") / .N]
+    }
     G[, pair := p$election]
     G[, .(pair, seat, party, keyword, elected, pcv, jump, jump_pctile, prev_party, prev_ind)]
   }
