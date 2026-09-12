@@ -28,6 +28,35 @@ not a commit, not a plan file — that it is not happening and why.
 
 ## Outstanding
 
+### THE STANDING GAP AGAINST AE FORECASTS (2026-09-12)
+
+Full table in [reviews/aef-standing-2026-09-12.md](reviews/aef-standing-2026-09-12.md).
+All 22 pairs at 20,000 sims, one code tag, no mixed arms.
+
+**Ahead on four of seven comparable elections. Pooled ours 0.3016 vs 0.2855 --
+behind by 5.6%.** fed2022's gap roughly halved today.
+
+**The entire deficit is non-majors.** Mean primary error on the winner across
+659 seats: ours 4.23, AEF 4.50 -- we are BETTER overall, better on Labor (4.05
+vs 4.63) and the Coalition (3.60 vs 3.87). We are worse on One Nation (13.75 vs
+10.97) and independents (8.31 vs 5.74). Forty seats of 659 carry the whole gap.
+
+Four things to fix, in order:
+
+1. **One Nation in South Australia** -- biggest single contributor, needs the
+   census join below.
+2. **No state-level swing in federal elections.** Hasluck and Tangney missed by
+   11.4 and 12.9 points because WA swung 10-12 to Labor in 2022 and `level_pred`
+   carries only a national number. Check whether our poll files hold state
+   breakdowns.
+3. **Turn the SD model on where it was built to help.** On Narungga and Hammond
+   AEF's primary was no better than ours yet they gave the winner 5x the
+   probability -- a variance failure, and fit_xgb_primary_sd.R already wants 6.0
+   points of spread there. It is off.
+4. **Rename the overloaded columns.** `x` -> `seat_prev_share`; `level_now` ->
+   `level_pred` / `level_actual`, since it currently holds a forecast in one mode
+   and the actual result in another under one name.
+
 ### NOT DONE — demographics as model features
 
 > *"can we add demographics in as well? this can go into the primary
