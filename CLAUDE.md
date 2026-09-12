@@ -196,6 +196,23 @@ Specific traps, all of which have bitten:
 - **Grepping for check codes**: patterns anchored on an adjacent quote miss
   `cat(sprintf("\nG3 ...`. Three incomplete greps, one of which let `B1` mean
   two different things. The registry is a table in `ARCHITECTURE.md`.
+- **A PERCENTILE of a mostly-tied variable reports "is this the mode?", not
+  "how big is this?"** `jump_pctile` ranked campaign salience within each
+  election, and `jump` is **51-81% exactly zero** — 447 of fed2007's 552
+  governed candidates, 62 distinct values in the whole field. The tie-averaged
+  zero block took percentile 0.55, so **any** non-zero value started above the
+  81st percentile: a raw `jump` of 0.0220, which is noise, scored 0.9846. Two
+  unrelated 2007 candidates in different states had identical percentiles to
+  four decimals, both polled under 3%, and both sat in the top salience bin
+  next to the teals. Inside that bin salience correlated with outcome at
+  **−0.096**. Nothing downstream revealed it: the column was populated, the
+  model trained, the metrics looked plausible, and it surfaced only when Pete
+  asked why a specific candidate scored high. Fixed by ranking within the
+  non-zero set (`docs/reviews/salience-percentile-fix-2026-09-12.md`); the
+  strike rate of independents above the 90th percentile went 19% to 57% on the
+  same data. **Before percentile-ranking anything, print three numbers: percent
+  exactly zero, count of distinct values, and the size of the largest tied
+  block.** Still unported to `R/salience_surge.R:92`.
 
 ## Before saying we don't have data, READ `docs/DATA-REGISTRY.md` and `docs/DATA-DICTIONARY.md`
 
