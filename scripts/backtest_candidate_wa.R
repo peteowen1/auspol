@@ -178,7 +178,13 @@ CAL_TAG <- paste0(
   if (PARTY_SD != 1.5) sprintf("-psd%s", sub("[.]", "", format(PARTY_SD, nsmall = 2))) else "",
   if (FB_SMOOTH != 0) sprintf("-fb%s", sub("0[.]", "", format(FB_SMOOTH, nsmall = 2))) else "",
   if (FLOW_SD != 0) sprintf("-fsd%s", sub("[.]", "", format(FLOW_SD, nsmall = 1))) else "",
-  if (SURGE_H > 0) "-surge" else "", .arm_fingerprint, .code_tag)
+  if (SURGE_H > 0) "-surge" else "",
+  # "-fc" MARKS THE FORECAST ARM, as it does in backtest_candidate_fed.R. The
+  # arm fingerprint already hashes every AUSPOL_* variable so the two arms
+  # cannot overwrite each other, but a hash does not tell a reader which file
+  # is the honest one, and these two answer different questions.
+  if (identical(Sys.getenv("AUSPOL_FORECAST_MODE", "0"), "1")) "-fc" else "",
+  .arm_fingerprint, .code_tag)
 
 cat(sprintf("BW0  n_sims %d | shrink %.2f | party_sd %.2f | fb %.2f | flow_sd %.2f | surge %.4f\n",
             N_SIMS, SHRINK, PARTY_SD, FB_SMOOTH, FLOW_SD, SURGE_H))
@@ -283,6 +289,43 @@ for (K in PAIRS) {
   sb <- fb[, .(v = sum(votes)), by = party][, setNames(100 * v / sum(v), party)]
 
   parties <- union(colnames(A), names(sb))
+  # FORECAST MODE (AUSPOL_FORECAST_MODE=1), ported from backtest_candidate_sa.R
+  # 2026-09-12. `sb` above is the TARGET election's own counted result, used as
+  # the statewide the seats swing toward. Pete's ruling, 2026-09-11: that is
+  # leakage, because the thing being built is a forecast. This replaces it with
+  # a projection from the polls up to the day before, anchored on leave-one-out
+  # fundamentals -- see R/forecast_statewide.R. Per pair, inside the loop: this
+  # harness scores seven targets in one run.
+  #
+  # Until this port the switch existed in fed and sa ONLY, so four harnesses
+  # answered a different question from federal's and their numbers were not
+  # comparable to a forecast (docs/MODEL-REGISTRY.md called it the most
+  # consequential open gap in its table). Default 0, i.e. a bare run is
+  # unchanged.
+  #
+  # A RESIDUAL LEAK THIS DOES NOT CLOSE, stated rather than left silent. Every
+  # other harness takes `parties` from the PRIOR election's share matrix; this
+  # one unions in `names(sb)`, so the target election's own party list still
+  # decides which classes the simulation carries even in forecast mode. The
+  # LEVELS are forecast; the membership is not. Changing that is a behaviour
+  # change to WA's baseline arm as well as its forecast arm, so it is its own
+  # measured change, not a rider on this one.
+  #
+  # THE REPLACEMENT COMES AFTER `parties`, deliberately, so the two arms carry
+  # the same classes and differ only in the statewide they swing toward.
+  if (identical(Sys.getenv("AUSPOL_FORECAST_MODE", "0"), "1")) {
+    # SINGLE BRACKET, NOT `[[`. CLAUDE.md's recorded trap: `[[` on a missing
+    # name in an ATOMIC vector THROWS, so an is.null() guard beside it is dead
+    # code that can never fire. Single-bracket indexing returns NA for a
+    # missing name, which is what the check below can actually catch.
+    .ed <- unname(WA_DATE[as.character(K$to)])
+    if (length(.ed) != 1L || is.na(.ed))
+      stop("No polling date recorded for wa", K$to, " -- AUSPOL_FORECAST_MODE ",
+           "needs polling day to fit the trend to the day before it.")
+    sb <- forecast_statewide_replace(
+      "wa", K$to, .ed, parties, sa, sb,
+      n_sims = N_SIMS, seed = SEED, code = "BW0")$st
+  }
   mat <- matrix(0, nrow = nrow(A), ncol = length(parties),
                 dimnames = list(rownames(A), parties))
   mat[, colnames(A)] <- A

@@ -131,14 +131,18 @@ PUBLISHED_FLAGS <- c(
                                              # docs/reviews/onp-concentration-validated-2026-09-09.md
   AUSPOL_FORECAST_MODE       = "0",          # harness-only: 1 = the statewide the seats swing toward is PREDICTED
                                              # from the poll trend plus leave-one-out fundamentals, instead of read
-                                             # off the election being scored. Implemented in backtest_candidate_fed.R
-                                             # and _sa.R only; nsw/qld/vic/wa still use the actual result and are
-                                             # tracked as an open gap in docs/NEXT-STEPS.md.
+                                             # off the election being scored. Honoured by ALL SIX harnesses since
+                                             # 2026-09-12; fed and _sa.R only before that, which is why every
+                                             # nsw/qld/vic/wa figure quoted before that date is an oracle-statewide
+                                             # figure and not comparable to a forecast.
                                              #
                                              # DEFAULT "0" IS NOT AN ENDORSEMENT. Pete's ruling 2026-09-11 is that a
-                                             # forecast must be predictive throughout, and the default is 0 only
-                                             # because four harnesses cannot yet honour it -- flipping it would
-                                             # silently mean two different things across the six. The xgb primary's
+                                             # forecast must be predictive throughout. The default stayed 0 through
+                                             # the port because the port is UNMEASURED -- the container it was
+                                             # written in has neither the election data nor the anchor clone, so
+                                             # nsw/qld/vic/wa have not been run in either mode. Flipping a default
+                                             # on wiring nobody has executed is exactly the "built, flagged, called
+                                             # done" failure CLAUDE.md records. Run all six, both modes, then decide. The xgb primary's
                                              # own statewide feature IS already leakage-free (AUSPOL_LEVEL_MODE),
                                              # which is the part that reaches the published forecast.
                                              # Measured cost where implemented: federal +0.0047 pooled seat log loss,

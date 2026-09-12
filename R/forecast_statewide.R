@@ -166,3 +166,97 @@ fundamentals_loo_table <- function() {
   data.table::data.table(year = m$data$year, region = m$data$region,
                          fund = m$data$actual - m$loo_errors)
 }
+
+.fs_cache <- new.env(parent = emptyenv())
+
+# Replace a harness's ORACLE statewide with the forecast one, and say so
+#
+# Every harness computes `st_b` -- the target election's own counted statewide
+# result -- and swings its seats toward it. Under AUSPOL_FORECAST_MODE that is
+# replaced by forecast_statewide_for()'s poll-based prediction. The swap itself
+# is four lines, and backtest_candidate_sa.R had all four; this is those four
+# lines once, so that nsw/qld/vic/wa do not each acquire their own version of
+# them. Deliberately NOT exported and NOT roxygenised: the callers are scripts
+# running under devtools::load_all(), so there is no .Rd to go stale against a
+# signature change (CLAUDE.md records three CI failures from exactly that).
+#
+# TWO THINGS IT REPORTS THAT THE INLINE VERSION DID NOT.
+#
+# 1. The RESTRICTION IS A DROP. The replacement keeps only the classes the
+#    forecast produced, so a class that stood at the target election but not at
+#    the prior one -- it is `parties`, from the prior election's share matrix,
+#    that decides what gets forecast -- leaves `st_b` entirely. That is the
+#    right behaviour for a forecast (who stands is not knowable from polls) but
+#    it is a silent deletion of a class from the statewide, and CLAUDE.md's
+#    standing rule is that a drop gets counted out loud or it is indistinguish-
+#    able from a bug.
+# 2. The SUM. Dropping classes means the forecast statewide no longer sums to
+#    100, and everything downstream takes ratios against it.
+#
+# @param st_b The oracle statewide, which the caller overwrites with `$st`.
+# @param code The harness's log prefix ("BS0", "BT0", ...), so a line in a log
+#   can be traced to the harness that wrote it.
+# @return `list(st = replacement, oracle = st_b, fc = forecast_statewide_for())`
+forecast_statewide_replace <- function(region, year, election_date, parties,
+                                       st_a, st_b, n_sims = 20000L, seed = NULL,
+                                       code = "FS0") {
+  # BOTH INPUTS ARE RUN-CONSTANT AND BOTH ARE EXPENSIVE, and two harnesses call
+  # this once per pair (vic scores three, wa seven). The fundamentals model is
+  # refitted from scratch on every call otherwise, and the mix re-read from
+  # disk. Cached in an environment rather than recomputed, and per process --
+  # nothing here depends on the pair.
+  #
+  # THE PATH RESOLVES FROM THE PACKAGE ROOT, not the working directory.
+  # docs/NEXT-STEPS.md's standing item records what bare relative paths in
+  # package functions have already cost here: two tests of surge_hazard_for()
+  # that skipped unconditionally on every machine, because "output/" does not
+  # exist relative to tests/testthat.
+  if (is.null(.fs_cache$fund)) .fs_cache$fund <- fundamentals_loo_table()
+  if (is.null(.fs_cache$mix)) {
+    .mixf <- file.path(pkg_root(), "output", "projection-mix.csv")
+    if (!file.exists(.mixf))
+      stop("AUSPOL_FORECAST_MODE needs ", .mixf, " -- run scripts/fit_projection.R",
+           call. = FALSE)
+    .fs_cache$mix <- data.table::fread(.mixf, showProgress = FALSE)
+  }
+  fc <- forecast_statewide_for(region, year, election_date, parties, st_a,
+                               .fs_cache$fund, .fs_cache$mix,
+                               n_sims = n_sims, seed = seed)
+  st <- forecast_statewide_restrict(fc$st_fc, st_b, region, year, code)
+  list(st = st, oracle = st_b, fc = fc)
+}
+
+# The restriction, the reporting and the guard, separately from the fitting
+#
+# SPLIT OUT SO IT CAN BE TESTED WITHOUT POLLS. Everything above needs the
+# anchor clone and a fitted trend, so a test of it can only ever run on a
+# developer machine -- and CLAUDE.md's standing rule is that a guard is proved
+# by failing on a deliberately broken input, not by passing on a good one. This
+# half is pure: two named vectors in, one named vector out.
+#
+# @param st_fc The forecast statewide, over the classes the caller asked for.
+# @param st_b The oracle statewide, i.e. the target election's own result.
+# @return `st_fc` restricted to the classes `st_b` also has.
+forecast_statewide_restrict <- function(st_fc, st_b, region, year, code = "FS0") {
+  keep <- intersect(names(st_fc), names(st_b))
+  # A GUARD THAT CAN ACTUALLY FIRE. With no overlap the replacement is an empty
+  # named vector, every `p %in% names(st_b)` downstream is FALSE, and the
+  # harness scores a run in which no class swings anywhere -- plausible output,
+  # nothing reported.
+  if (!length(keep))
+    stop("forecast_statewide_restrict(): the forecast (", paste(names(st_fc), collapse = ", "),
+         ") shares no class with the result (", paste(names(st_b), collapse = ", "), ")",
+         call. = FALSE)
+  dropped <- setdiff(names(st_b), keep)
+  st <- st_fc[keep]
+  cat(sprintf("%s  forecast statewide replaces the oracle. Mean |error| %.2f pts over %d classes; sums to %.1f\n",
+              code, mean(abs(st - st_b[keep]), na.rm = TRUE), length(st), sum(st)))
+  cat(sprintf("%s  %s\n", code,
+              paste(sprintf("%s %.1f(%.1f)", names(st), st, st_b[keep]), collapse = " ")))
+  if (length(dropped)) {
+    cat(sprintf("%s! %d class(es) stood at %s%d and are NOT in the forecast, so they leave the statewide: %s (%.1f pts of the actual vote)\n",
+                code, length(dropped), region, year, paste(dropped, collapse = ", "),
+                sum(st_b[dropped])))
+  }
+  st
+}

@@ -80,13 +80,18 @@ CLASSIFY <- list(
     "LEAKAGE, kept only so the cost stays measurable. The live path has always used a prediction",
     "(R/xgb_primary_override.R fills level_now from state_mean), so this made training match serving."),
   AUSPOL_FORECAST_MODE = paste(
-    "OPEN GAP, and the most consequential one in this table. 1 = the statewide the seats swing toward",
-    "is PREDICTED from polls rather than read off the election being scored. Implemented in",
-    "backtest_candidate_fed.R and _sa.R ONLY; nsw/qld/vic/wa still use the actual result, so their",
-    "numbers answer a different question from federal's and are not comparable to a forecast. Default",
-    "0 because flipping it today would mean two different things across the six harnesses, NOT because",
-    "the oracle statewide is endorsed -- Pete's ruling 2026-09-11 is that a forecast must be predictive",
-    "throughout. Cost where measured: federal +0.0047 pooled seat log loss."),
+    "WIRED EVERYWHERE, MEASURED IN TWO PLACES. 1 = the statewide the seats swing toward is PREDICTED",
+    "from polls rather than read off the election being scored. It was fed and _sa.R only until",
+    "2026-09-12, when nsw/qld/vic/wa were wired onto the same shared core (forecast_statewide_replace()",
+    "in R/forecast_statewide.R). THE PORT IS UNRUN: it was written in a container with neither the",
+    "election data nor the anchor clone, so no nsw/qld/vic/wa figure exists in either mode and the four",
+    "new cells below say the switch is HONOURED, not that it has been exercised. Default 0 for that",
+    "reason, NOT because the oracle statewide is endorsed -- Pete's ruling 2026-09-11 is that a",
+    "forecast must be predictive throughout. Cost where measured: federal +0.0047 pooled seat log loss;",
+    "sa2026 0.3640 -> 0.4756 with the xgb primary off. The published forecast is excluded because it",
+    "never had the leak: fit_seats_full.R predicts the statewide from polls and fundamentals already.",
+    "NOT closed by the port: WA still takes its PARTY LIST from the target election (union with",
+    "names(sb)), so its class membership is target-derived even in forecast mode."),
   AUSPOL_XGB_SURGE = paste(
     "Harness-only and wired into backtest_candidate_sa.R ALONE, which is this file's own 'a fix to one",
     "harness is a fix to all of them' rule outstanding rather than satisfied. Built, measured, NOT",
@@ -225,11 +230,21 @@ for (sw in switches) {
   # R/ function so it shows "NO" everywhere in the mechanical matrix above)
   # as a dead experiment, directly under a note explaining it ships. Found by
   # the review gate reading the generated doc, not the code.
+  #
+  # FOUR categories since 2026-09-12, for the same reason there are three. A
+  # switch that is wired in every harness but has never been RUN in any of them
+  # is not an open gap (nothing is missing) and it is certainly not a dead
+  # experiment (nothing has been tried). Calling it either would let "it is in
+  # all six harnesses" read as "it has been measured in all six", which is the
+  # built-flagged-called-done failure CLAUDE.md exists to stop. Keyed on a note
+  # opening "WIRED", which is a claim about code and not about evidence.
   open_gap <- !is.null(r$note) && grepl("OPEN GAP", r$note)
   adopted  <- !is.null(r$note) && grepl("^ADOPTED\\b", r$note)
+  unrun    <- !is.null(r$note) && grepl("^WIRED\\b", r$note)
   tag <- if (is.null(r$note)) "**UNEXPLAINED -- audit this**"
          else if (open_gap) "**OPEN GAP**"
          else if (adopted) "**adopted, shared-function wiring**"
+         else if (unrun) "**WIRED EVERYWHERE, NOT YET MEASURED**"
          else "intentional / dead experiment"
   L <- c(L, sprintf("- **`%s`** (%s): %s", sw,
                     tag, if (is.null(r$note)) "no classification recorded -- add one to CLASSIFY in scripts/build_model_registry.R" else r$note))

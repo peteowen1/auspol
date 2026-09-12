@@ -205,6 +205,12 @@ CAL_TAG <- paste0(
   else "",
   if (N_SIMS != 20000L) sprintf("-n%d", N_SIMS) else "",
   if (!is.null(.level_sd)) sprintf("-lv%s", gsub("[.]", "", paste(format(.level_sd, nsmall=2), collapse="_"))) else "",
+
+  # "-fc" MARKS THE FORECAST ARM, as it does in backtest_candidate_fed.R. The
+  # arm fingerprint already hashes every AUSPOL_* variable so the two arms
+  # cannot overwrite each other, but a hash does not tell a reader which file
+  # is the honest one, and these two answer different questions.
+  if (identical(Sys.getenv("AUSPOL_FORECAST_MODE", "0"), "1")) "-fc" else "",
   .arm_fingerprint, .code_tag)
 
 # READ FROM THE ENVIRONMENT, like the federal harness. AUSPOL_SEED is in
@@ -337,6 +343,30 @@ mat <- as.matrix(wide[, -1, with = FALSE]); rownames(mat) <- wide$seat
 mat <- 100 * mat / rowSums(mat)
 st_a <- fa[, .(v = sum(votes)), by = party][, setNames(100 * v / sum(v), party)]
 st_b <- fb[, .(v = sum(votes)), by = party][, setNames(100 * v / sum(v), party)]
+# FORECAST MODE (AUSPOL_FORECAST_MODE=1), ported from backtest_candidate_sa.R
+# 2026-09-12. `st_b` above is the TARGET election's own counted result, used as
+# the statewide the seats swing toward. Pete's ruling, 2026-09-11: that is
+# leakage, because the thing being built is a forecast. This replaces it with a
+# projection from the polls up to the day before, anchored on leave-one-out
+# fundamentals -- see R/forecast_statewide.R.
+#
+# Until this port the switch existed in fed and sa ONLY, so four harnesses
+# answered a different question from federal's and their numbers were not
+# comparable to a forecast (docs/MODEL-REGISTRY.md called it the most
+# consequential open gap in its table). Default 0, i.e. a bare run is unchanged.
+#
+# `asof` WAS DEAD until this used it. The field has been in QLD_PAIRS since the
+# harness was built and nothing read it; both values are polling day, which is
+# the contract forecast_statewide_for() needs ("one day before"), so it is
+# asserted against the pair's own year rather than trusted.
+QLD_FORECAST_MODE <- identical(Sys.getenv("AUSPOL_FORECAST_MODE", "0"), "1")
+if (QLD_FORECAST_MODE) {
+  .ed <- as.Date(PAIR$asof)
+  stopifnot(is.finite(.ed), format(.ed, "%Y") == as.character(TO))
+  st_b <- forecast_statewide_replace(
+    "qld", TO, .ed, colnames(mat), st_a, st_b,
+    n_sims = N_SIMS, seed = SEED, code = "BQ0")$st
+}
 # RE-ENTRY PRIOR, docs/plans/prereg-reentry-prior-2026-09-07.md. A class
 # contesting this seat but not the last one has no prior share, so swinging
 # zero forward leaves approximately zero -- 1,418 seat-class rows across the

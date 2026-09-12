@@ -143,3 +143,45 @@ test_that("the two-party anchor is applied and a degenerate one is refused", {
   expect_error(do.call(statewide_draws_as_at,
     c(args, list(tpp_target = list(mean = 52, sd = 0)))), "positive `sd`")
 })
+
+# forecast_statewide_replace()'s restriction half, which is what nsw/qld/vic/wa
+# gained on 2026-09-12 when AUSPOL_FORECAST_MODE was ported into them. Tested
+# here rather than through the harnesses because it is pure -- no polls, no
+# anchor clone, so it runs on CI, where the fitting half cannot.
+
+test_that("a class the forecast does not carry is dropped and COUNTED", {
+  fc <- c(ALP = 36, LNP = 34, GRN = 12, OTH = 18)
+  st <- c(ALP = 35, LNP = 35, GRN = 11, OTH = 15, ONP = 4)
+  out <- capture.output(r <- forecast_statewide_restrict(fc, st, "vic", 2022,
+                                                        code = "TT0"))
+  # the drop is reported with its NAME and its SIZE, not merely omitted -- a
+  # class leaving the statewide silently is indistinguishable from a bug
+  expect_true(any(grepl("ONP", out, fixed = TRUE)))
+  expect_true(any(grepl("4.0 pts of the actual vote", out, fixed = TRUE)))
+  expect_equal(names(r), c("ALP", "LNP", "GRN", "OTH"))
+  expect_equal(unname(r), c(36, 34, 12, 18))
+})
+
+test_that("the sum is reported, because dropping classes stops it being 100", {
+  fc <- c(ALP = 36, LNP = 34, OTH = 18)
+  st <- c(ALP = 35, LNP = 35, OTH = 15, ONP = 15)
+  expect_output(forecast_statewide_restrict(fc, st, "sa", 2026, code = "TT0"),
+                "sums to 88.0")
+})
+
+test_that("the mean error aligns by NAME, not by position", {
+  # `st_b[keep]` reorders the oracle onto the forecast's order. Without that
+  # subset the subtraction would pair ALP with OTH and report a large error on
+  # a perfect forecast -- output that looks like a finding.
+  fc <- c(OTH = 10, ALP = 40, LNP = 50)
+  st <- c(ALP = 40, LNP = 50, OTH = 10)
+  expect_output(forecast_statewide_restrict(fc, st, "nsw", 2023, code = "TT0"),
+                "Mean \\|error\\| 0.00")
+})
+
+test_that("no overlap at all is refused rather than scored as a silent no-swing", {
+  expect_error(
+    forecast_statewide_restrict(c(ALP = 50, LNP = 50), c(FOO = 60, BAR = 40),
+                                "wa", 2025, code = "TT0"),
+    "shares no class with the result")
+})

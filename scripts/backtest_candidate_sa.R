@@ -309,7 +309,13 @@ CAL_TAG <- paste0(
   if (nzchar(Sys.getenv("AUSPOL_WA_CUTOFF", "")) ||
       nzchar(Sys.getenv("AUSPOL_QLD_CUTOFF", ""))) "-cut" else "",
   if (identical(Sys.getenv("AUSPOL_WA_DROP_3C", "0"), "1")) "-no3c" else "",
-  if (identical(Sys.getenv("AUSPOL_WA_DROP_LNP", "0"), "1")) "-nolnp" else "", .arm_fingerprint, .code_tag)
+  if (identical(Sys.getenv("AUSPOL_WA_DROP_LNP", "0"), "1")) "-nolnp" else "",
+  # "-fc" MARKS THE FORECAST ARM, as it does in backtest_candidate_fed.R. The
+  # arm fingerprint already hashes every AUSPOL_* variable so the two arms
+  # cannot overwrite each other, but a hash does not tell a reader which file
+  # is the honest one, and these two answer different questions.
+  if (identical(Sys.getenv("AUSPOL_FORECAST_MODE", "0"), "1")) "-fc" else "",
+  .arm_fingerprint, .code_tag)
 
 # READ FROM THE ENVIRONMENT, like the federal harness. AUSPOL_SEED is in
 # scripts/published_flags.R, and until 2026-09-07 this harness hardcoded 42
@@ -390,19 +396,17 @@ st_b <- fb[, .(v = sum(votes)), by = party][, setNames(100 * v / sum(v), party)]
 # Measured on sa2026: One Nation predicted 19.83 against an actual 22.50, mean
 # absolute error 1.96 points per party. The polls did see that surge, which is
 # why replacing the oracle with a prediction is not the same as deleting it.
+#
+# THE SWAP ITSELF IS forecast_statewide_replace(), shared. It was four lines
+# here and is four lines in nsw/qld/vic/wa as of 2026-09-12; one copy means the
+# class-drop count and the sum-to-100 report reach all five at once, rather
+# than this harness keeping diagnostics the others never got.
 SA_FORECAST_MODE <- identical(Sys.getenv("AUSPOL_FORECAST_MODE", "0"), "1")
 if (SA_FORECAST_MODE) {
-  .fc <- forecast_statewide_for(
-    "sa", PAIR$to, PAIR$flow_before, colnames(mat), st_a,
-    fundamentals_loo_table(),
-    fread(file.path("output", "projection-mix.csv"), showProgress = FALSE),
-    n_sims = N_SIMS, seed = as.integer(Sys.getenv("AUSPOL_SEED", "42")))
-  .oracle <- st_b
-  st_b <- .fc$st_fc[intersect(names(.fc$st_fc), names(st_b))]
-  cat(sprintf("BS0  forecast statewide replaces the oracle. Mean |error| %.2f pts over %d classes:\n",
-              mean(abs(st_b - .oracle[names(st_b)]), na.rm = TRUE), length(st_b)))
-  cat(sprintf("BS0  %s\n", paste(sprintf("%s %.1f(%.1f)", names(st_b), st_b,
-                                         .oracle[names(st_b)]), collapse = " ")))
+  st_b <- forecast_statewide_replace(
+    "sa", PAIR$to, PAIR$flow_before, colnames(mat), st_a, st_b,
+    n_sims = N_SIMS, seed = as.integer(Sys.getenv("AUSPOL_SEED", "42")),
+    code = "BS0")$st
 }
 # RE-ENTRY PRIOR, docs/plans/prereg-reentry-prior-2026-09-07.md. A class
 # contesting this seat but not the last one has no prior share, so swinging
