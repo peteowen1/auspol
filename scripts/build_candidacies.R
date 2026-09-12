@@ -229,9 +229,59 @@ if (!file.exists(sa18f)) {
     stop("sa2018: ", sa18[is.na(votes), .N], " candidates have no vote count")
   if (uniqueN(sa18$seat) != 47L)
     stop("sa2018: parsed ", uniqueN(sa18$seat), " seats, not 47")
-  sa18[, `:=`(surname = NA_character_, given = NA_character_, elected = NA,
+  # PARSE surname AND given RATHER THAN LEAVING THEM NA.
+  #
+  # They were hardcoded to NA_character_, which pushed every consumer onto the
+  # combined `name` field -- and sa2018's `name` is the ONE field in the corpus
+  # stored in natural "Given Surname" order, because it comes from Wikipedia
+  # prose rather than a commission extract. `surname_of()` falls back to the
+  # LEADING token when there is no comma, which is correct for "SANDERSON,
+  # Rachel" and for "SANDERSON Rachel", and takes the GIVEN name for
+  # "Rachel Sanderson".
+  #
+  # So every sa2018 surname was silently read as a first name, and
+  # candidate_returns("sa2018", "sa2022") matched 0 of 219 candidates. Nothing
+  # downstream could show it: the call returned 219 rows all marked
+  # same = FALSE, which reads as "no South Australian candidate re-stood in
+  # 2022" -- a sentence that could have been true. Same shape as the Victorian
+  # seat-case bug this file's sibling records, which reported that no Victorian
+  # candidate had ever re-stood.
+  #
+  # The cost was that sa2022 could never be an MP-slope target (no returning
+  # non-majors => no panel rows), so the SA harness refused to run that pair at
+  # all, and sa2022 sat outside the model while still being scored.
+  #
+  # 61 of 264 names also carry raw wiki markup -- "[[Rachel Sanderson]]" and
+  # the piped "[[Robert Simms (politician)|Robert Simms]]" -- stripped here,
+  # display half kept. Audited across the corpus: sa2018 is the only election
+  # affected.
+  .wiki <- function(x) {
+    x <- as.character(x)
+    x <- gsub("\\[\\[([^]|]*)\\|([^]]*)\\]\\]", "\\2", x)  # [[Target|Display]] -> Display
+    x <- gsub("\\[\\[|\\]\\]", "", x)                       # [[Plain]]          -> Plain
+    trimws(gsub("[[:space:]]+", " ", x))
+  }
+  .n_wiki <- sum(grepl("[[", sa18$name, fixed = TRUE))
+  .clean <- .wiki(sa18$name)
+  # Natural order: first token is the given name, the REST is the surname.
+  # "the rest" rather than "the last token" so a two-word surname survives --
+  # "Dominic Wy Kanak" keeps "Wy Kanak", which normalises to the same key as
+  # sa2022's "WY KANAK, Dominic". The failure mode it accepts instead is a
+  # middle name ("John Paul Smith"), which Wikipedia election boxes rarely
+  # carry. The match rate is asserted below rather than assumed.
+  .tok <- strsplit(.clean, " ", fixed = TRUE)
+  .giv <- vapply(.tok, function(p) if (length(p)) p[1] else NA_character_, character(1))
+  .sur <- vapply(.tok, function(p) if (length(p) > 1)
+                   paste(p[-1], collapse = " ") else NA_character_, character(1))
+  sa18[, `:=`(name = .clean, surname = .sur, given = .giv, elected = NA,
              party = classify_party(party_raw), election = "sa2018",
              region = "sa", year = 2018L)]
+  cat(sprintf("BC2b sa2018: parsed %d surnames and %d given names from `name`; %d carried wiki markup\n",
+              sum(!is.na(.sur)), sum(!is.na(.giv)), .n_wiki))
+  # A name that yields no surname is a parse failure, not a person with one
+  # name -- fail rather than write an NA that reads as "not applicable".
+  if (sum(is.na(.sur)) > 5)
+    stop("sa2018: ", sum(is.na(.sur)), " names produced no surname -- check the wiki strip")
   parts[["sa2018"]] <- sa18[, .(seat, surname, given, party_raw, votes, elected,
                                 party, election, region, year, name)]
   cat(sprintf("BC2b sa2018: %d candidates in %d seats\n", nrow(sa18), uniqueN(sa18$seat)))

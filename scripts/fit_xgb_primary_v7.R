@@ -50,7 +50,12 @@ PAIRS <- list(
   list(election="fed2019",prev="fed2016",region="fed"), list(election="fed2022",prev="fed2019",region="fed"),
   list(election="fed2025",prev="fed2022",region="fed"), list(election="nsw2019",prev="nsw2015",region="nsw"),
   list(election="nsw2023",prev="nsw2019",region="nsw"), list(election="qld2020",prev="qld2017",region="qld"),
-  list(election="qld2024",prev="qld2020",region="qld"), list(election="sa2026", prev="sa2022", region="sa"),
+  list(election="qld2024",prev="qld2020",region="qld"),
+  # sa2022 added 2026-09-12 -- scored by the backtest but never a target here, so
+  # 47 seat-elections ran on fallback paths. See fit_xgb_primary_v6.R for the
+  # full note and the sa2018 name-order bug that blocked it.
+  list(election="sa2022", prev="sa2018", region="sa"),
+  list(election="sa2026", prev="sa2022", region="sa"),
   list(election="vic2014",prev="vic2010",region="vic"), list(election="vic2018",prev="vic2014",region="vic"),
   list(election="vic2022",prev="vic2018",region="vic"), list(election="wa2001", prev="wa1996", region="wa"),
   list(election="wa2005", prev="wa2001", region="wa"),  list(election="wa2008", prev="wa2005", region="wa"),
@@ -285,6 +290,137 @@ if (file.exists(.sdf)) {
   for (j in sdev_f) FE[[j]] <- if (j == "state_elec_gap") 999 else 0
 }
 
+# ---- census demographics, from scripts/build_census_features.R -------------
+# Pete asked for demographics as model features in August. This is the first
+# time they have actually reached a model.
+#
+# WHY THESE SEVEN. They describe the PEOPLE in a seat, not the politics, which
+# is what makes them different from every feature already here. The model's
+# proxy for "what kind of place is this" has been other parties' prior votes --
+# prev_GRN correlates -0.786 with One Nation's sa2026 vote, which works but is
+# measuring demography through a political lens.
+#
+# Measured directly on those 47 seats, ONP's vote against:
+#   yr12_pct        -0.922   share of adults whose top schooling is Year 12
+#   edu_25plus_pct  -0.758   share aged 25+ still in an educational institution
+#   indig_pct       +0.607
+#   born_aus_pct    +0.581
+#   lang_other_pct  -0.566   speaks a language other than English at home
+#   under35_pct     -0.317
+#   over55_pct      +0.175
+#
+# -0.922 is the strongest single correlation with anything in this corpus, and
+# the model currently predicts 18.9 in Narungga (ONP 37.5) and 22.4 in Bragg
+# (ONP 9.1) -- flat across a 28-point spread.
+#
+# MISSING STAYS NA, AND THAT IS THE WHOLE DIFFERENCE FROM v7i.
+#
+# The state-deviation block filled its gaps with 0 because a state election IS
+# one state -- the concept does not apply, so 0 was a LABEL, and the tree learned
+# it as one. That cost 0.056 RMSE.
+#
+# Here a gap means something else entirely: 5.3% of cells are seats whose name
+# did not survive a Western Australian redistribution, so the 2021-boundary
+# census has no row for them. That is honest missingness, not a category, and
+# xgboost handles it natively by learning a default branch direction per split.
+# Filling with 0 would assert that Narungga has 0% Year 12 completion -- a real
+# value, at the extreme of the range that matters most.
+#
+# NO LEAKAGE: every census predates the election it is attached to, and these
+# are properties of a place, not of a result.
+census_f <- c("yr12_pct", "born_aus_pct", "indig_pct", "over55_pct",
+              "under35_pct", "lang_other_pct", "edu_25plus_pct")
+census_z <- paste0(census_f, "_z")   # within-pair z-score
+census_r <- paste0(census_f, "_r")   # within-pair percentile rank
+.csf <- file.path(OUT, "census-features.csv")
+if (file.exists(.csf)) {
+  CSV <- fread(.csf, showProgress = FALSE)
+  n0 <- nrow(FE)
+  FE <- merge(FE, CSV[, c("pair", "seat", ..census_f)], by = c("pair", "seat"), all.x = TRUE)
+  stopifnot(nrow(FE) == n0)
+  cat(sprintf("\nX72e census: %d of %d cells carry demographics (%.0f%%); NA is left as NA\n",
+              sum(is.finite(FE$yr12_pct)), nrow(FE), 100 * mean(is.finite(FE$yr12_pct))))
+  # Coverage per PAIR, because a pair at 0% would silently contribute nothing
+  # while the corpus-wide figure still looked healthy.
+  .cc <- FE[, .(pct = round(100 * mean(is.finite(yr12_pct)))), by = pair][order(pct)]
+  cat(sprintf("X72e  weakest pairs: %s\n",
+              paste(sprintf("%s %d%%", .cc$pair[1:5], .cc$pct[1:5]), collapse = ", ")))
+
+  # ---- WITHIN-PAIR STANDARDISATION, and this is the whole ballgame ---------
+  #
+  # The raw columns FAILED (v7k 3.8854 against v7c 3.8740), and sa2026 One
+  # Nation -- the case they were built for -- got WORSE, 8.658 to 9.544, with
+  # its correlation against the actual collapsing from +0.362 to +0.057. The
+  # features did not merely fail to help; they destroyed the ranking that was
+  # already there.
+  #
+  # The suspected reason is that an absolute census value is not comparable
+  # across pairs. Mean Year 12 completion runs from 51.4 in sa2026 to 60.8 in
+  # fed2022 -- 9.4 points of drift BETWEEN elections, against roughly 40 points
+  # of spread WITHIN one (Narungga 33, Bragg 73). Australian Year 12 completion
+  # rose across the corpus and the reaggregation vintages differ, so a tree
+  # splitting at `yr12_pct < 55` selects below-average seats in fed2022 and
+  # above-average ones in sa2026. Leave-one-pair-out punishes exactly that.
+  #
+  # SIZE IT HONESTLY: 9.4 points of between-pair drift against 40 within-pair is
+  # a real confound but a modest one, so this was never going to be the whole
+  # story, and it was not. Measured below, v7l recovers 3.8854 -> 3.8718 -- the
+  # mechanism is real and worth 0.014 -- but that only lands it in a dead heat
+  # with v7c's 3.8740. (An earlier note here claimed a 30-point spread; that was
+  # an arithmetic error, counting unmatched WA seats as zero rather than absent.)
+  #
+  # And the -0.922 that motivated the whole exercise was always a WITHIN-sa2026
+  # correlation. It says "among South Australian seats in 2026, the less
+  # educated ones went One Nation". Handing the model an absolute value and
+  # asking it to recover a relative one was still the wrong shape of input.
+  #
+  # So standardise within the pair. Both forms are emitted because they trade
+  # off differently and the measurement should decide, not me:
+  #   _z  within-pair z-score -- preserves magnitude, so a seat three sds out
+  #       still reads as extreme, but one outlier moves the mean and sd.
+  #   _r  within-pair percentile rank -- robust to outliers and to differing
+  #       chamber sizes (38 seats in wa2008, 150 in fed2022), but compresses
+  #       exactly the tails where Narungga and Bragg live. This is the form
+  #       jump_pctile already uses successfully.
+  #
+  # NA stays NA in both: a seat with no census match is excluded from its pair's
+  # mean, sd and ranking rather than being scored against a value it lacks.
+  # Computed on PLAIN VECTORS outside the data.table brackets. `get(v)` inside
+  # `[` is the pattern that broke build_census_features.R earlier tonight
+  # (object not found despite the guard passing) and the one CLAUDE.md blames
+  # for multi-GB unreclaimed RSS. Index arithmetic here, assignment after.
+  .pr <- FE$pair
+  .grp <- split(seq_len(nrow(FE)), .pr)
+  for (v in census_f) {
+    x <- FE[[v]]
+    z <- rep(NA_real_, length(x)); r <- rep(NA_real_, length(x))
+    for (idx in .grp) {
+      ok <- idx[is.finite(x[idx])]
+      if (length(ok) < 5) next
+      xv <- x[ok]
+      s <- stats::sd(xv)
+      if (is.finite(s) && s > 0) z[ok] <- (xv - mean(xv)) / s
+      r[ok] <- rank(xv, ties.method = "average") / length(ok)
+    }
+    data.table::set(FE, j = paste0(v, "_z"), value = z)
+    data.table::set(FE, j = paste0(v, "_r"), value = r)
+  }
+  cat(sprintf("X72e  standardised within pair: %d z-score and %d percentile columns\n",
+              length(census_f), length(census_f)))
+  # PROVE THE STANDARDISATION ACTUALLY REMOVED THE BETWEEN-PAIR SHIFT. The raw
+  # column's pair means spread by 30 points; the z column's must be ~0 for every
+  # pair. A check that cannot fail is worth nothing, so print the range.
+  .pm <- FE[, .(raw = mean(yr12_pct, na.rm = TRUE),
+                z = mean(yr12_pct_z, na.rm = TRUE)), by = pair]
+  cat(sprintf("X72e  yr12 pair means -- raw span %.1f to %.1f (%.1f wide) | z span %+.2f to %+.2f\n",
+              min(.pm$raw, na.rm = TRUE), max(.pm$raw, na.rm = TRUE),
+              diff(range(.pm$raw, na.rm = TRUE)),
+              min(.pm$z, na.rm = TRUE), max(.pm$z, na.rm = TRUE)))
+} else {
+  cat(sprintf("\nX72e! %s missing -- run scripts/build_census_features.R; census arms are vacuous\n", .csf))
+  for (j in c(census_f, census_z, census_r)) data.table::set(FE, j = j, value = NA_real_)
+}
+
 # The fold unit for every model and every fitted feature below: one election
 # pair. Defined here because the engineered features are fitted leave-one-pair-
 # out too, and they must use the SAME folds as the models that consume them --
@@ -451,7 +587,19 @@ ARMS <- list(
   v7i = c(setdiff(base_feat, "jump"), "jump_pctile", "sal_exp", sdev_f),
   # v7h: the winning set PLUS what the OTHER classes polled in this seat last
   # time. One small change, targeting an axis the per-cell fit cannot see.
-  v7h = c(setdiff(base_feat, "jump"), "jump_pctile", "sal_exp", xcls)
+  v7h = c(setdiff(base_feat, "jump"), "jump_pctile", "sal_exp", xcls),
+  # v7k: the winning set PLUS seven census demographics. The first time Pete's
+  # August request has reached a model. Targets the largest remaining gap
+  # against AE Forecasts -- sa2026 One Nation, where our RMSE is 8.55 to their
+  # 5.58 -- with a dimension nothing in base_feat measures directly.
+  v7k = c(setdiff(base_feat, "jump"), "jump_pctile", "sal_exp", census_f),
+  # v7l / v7m: the same seven demographics, standardised WITHIN the pair, so the
+  # model sees "how educated is this seat relative to its own chamber" rather
+  # than a raw percentage that drifts 30 points across the corpus. v7l uses the
+  # z-score, v7m the percentile rank. See the standardisation block above for
+  # why v7k's raw version could not work out-of-fold.
+  v7l = c(setdiff(base_feat, "jump"), "jump_pctile", "sal_exp", census_z),
+  v7m = c(setdiff(base_feat, "jump"), "jump_pctile", "sal_exp", census_r)
 )
 fold_id <- match(FE$pair, pairs_all)   # pairs_all defined above, with the
                                        # engineered features that share its folds
@@ -470,7 +618,7 @@ keep <- trimws(strsplit(.want, ",")[[1]])
 # for SHAP work and diagnostics that need the columns but not another 20 minutes
 # of cross-validation.
 if (identical(.want, "none")) keep <- character(0)
-unknown <- setdiff(setdiff(keep, "v7e"), names(ARMS))
+unknown <- setdiff(setdiff(keep, c("v7e", "v7j")), names(ARMS))
 if (length(unknown)) stop("AUSPOL_V7_ARMS names no such arm: ", paste(unknown, collapse = ", "))
 cat(sprintf("\nX73  running arms: %s\n",
             if (length(keep)) paste(keep, collapse = ", ") else "none (feature build only)"))
@@ -606,11 +754,70 @@ for (g in unique(FE$grp)) {
   cat(sprintf("X73e  v7e pooled over both models: RMSE %.4f\n",
               sqrt(mean((FE$pred_v7e - y)^2))))
 }
+# ---- v7j: split by JURISDICTION, so a federal-only feature stays federal ---
+# v7i added the state-deviation block to the pooled model and lost: 3.9297
+# against v7c's 3.8740. It GAINED 0.060 on fed2022 -- the largest single-pair
+# gain of any arm -- and lost everywhere else, because the four columns are
+# constant for all 6,100 non-federal cells (0, 0, 999, 0) and a tree cannot tell
+# "0 because the concept does not apply" from "0 because the value is zero". A
+# split on `state_elec_gap > 500` separates every non-federal row cleanly, so the
+# fit reshapes around a jurisdiction label. Verified: 96% of non-federal
+# predictions moved, by up to 5.87 points, from columns that say nothing about
+# them.
+#
+# The fix is not a seventh tuning pass. It is to stop showing a federal-only
+# feature to a model fitted across every jurisdiction. Federal cells get the
+# state-deviation block; state-election cells get the same feature set they had.
+# Same principle as AUSPOL_SALIENCE_EXPECTED being scoped to federal and NSW.
+if ("v7j" %in% keep) {
+  FE[, juris := ifelse(grepl("^fed", pair), "federal", "state_election")]
+  cat(sprintf("\nX73j jurisdiction split: %d federal cells, %d state-election cells\n",
+              sum(FE$juris == "federal"), sum(FE$juris == "state_election")))
+  FE[, pred_v7j := NA_real_]
+  for (g in c("federal", "state_election")) {
+    gi <- which(FE$juris == g)
+    # The ONLY difference between the two feature sets. State-election cells
+    # never see the block, so it cannot act as a label for them.
+    gfeat <- if (g == "federal") c(ARMS$v7c, sdev_f) else ARMS$v7c
+    gfeat <- intersect(gfeat, names(FE))
+    Mg <- as.matrix(FE[gi, gfeat, with = FALSE])
+    gp <- sort(unique(FE$pair[gi]))
+    gfolds <- split(seq_along(gi), match(FE$pair[gi], gp))
+    set.seed(42)
+    cvg <- xgb.cv(params = params, data = xgb.DMatrix(Mg, label = y[gi], missing = NA),
+                  nrounds = 2000, folds = gfolds, early_stopping_rounds = 30,
+                  prediction = TRUE, verbose = 0)
+    set(FE, gi, "pred_v7j", cvg$cv_predict$pred[, 1])
+    cat(sprintf("X73j   %-15s [%d feat]: %d cells, %d rounds, within-group RMSE %.4f\n",
+                g, length(gfeat), length(gi), cvg$early_stop$best_iteration,
+                sqrt(mean((cvg$cv_predict$pred[, 1] - y[gi])^2))))
+    rm(cvg, Mg); invisible(gc(verbose = FALSE))
+  }
+  stopifnot(all(is.finite(FE$pred_v7j)))
+  res[["v7j"]] <- data.table(arm = "v7j", features = length(ARMS$v7c) + length(sdev_f),
+                             nrounds = NA_integer_,
+                             rmse = sqrt(mean((FE$pred_v7j - y)^2)),
+                             mae = mean(abs(FE$pred_v7j - y)))
+  cat(sprintf("X73j  v7j pooled over both models: RMSE %.4f\n", sqrt(mean((FE$pred_v7j - y)^2))))
+  cat("X73j  THE CHECK THAT MATTERS: state-election predictions must be unaffected by\n")
+  cat("X73j  a feature they never see. Compare against v7c on those cells only.\n")
+  if ("pred_v7c" %in% names(FE)) {
+    s <- FE[juris == "state_election"]
+    cat(sprintf("X73j   state-election cells: v7c %.4f | v7j %.4f\n",
+                sqrt(mean((s$pred_v7c - s$actual_share)^2)),
+                sqrt(mean((s$pred_v7j - s$actual_share)^2))))
+    f <- FE[juris == "federal"]
+    cat(sprintf("X73j   federal cells:        v7c %.4f | v7j %.4f\n",
+                sqrt(mean((f$pred_v7c - f$actual_share)^2)),
+                sqrt(mean((f$pred_v7j - f$actual_share)^2))))
+  }
+}
+
 cat("\nX73  ALL ARMS. RMSE and MAE are points of primary vote, LOWER IS BETTER.\n")
 print(rbindlist(res)[, .(arm, features, nrounds, rmse = round(rmse, 4), mae = round(mae, 4))])
 
 cat("\nX74  RMSE by class, lower is better. This is where a change should show up:\n")
-ran <- intersect(paste0("pred_", c("v6","v7a","v7b","v7c","v7d","v7e","v7f","v7g","v7h","v7i")), names(FE))
+ran <- intersect(paste0("pred_", c("v6","v7a","v7b","v7c","v7d","v7e","v7f","v7g","v7h","v7i","v7j","v7k","v7l","v7m")), names(FE))
 ran <- ran[vapply(ran, function(k) any(is.finite(FE[[k]])), TRUE)]
 rm_ <- function(k) sqrt(mean((FE[[k]] - FE$actual_share)^2))
 by_cls <- FE[, c(list(cells = .N),

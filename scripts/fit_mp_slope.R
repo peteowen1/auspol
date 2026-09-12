@@ -91,6 +91,25 @@ cat(sprintf("MP0p %d of %d pairs contributed rows%s\n",
             length(unique(panel$target)), nrow(pairs),
             if (length(.pair_fail)) paste0("; FAILED: ", paste(.pair_fail, collapse = "; ")) else ""))
 if (length(.pair_fail)) stop("candidate_returns() failed for ", length(.pair_fail), " pair(s); see MP0p")
+# NAME THE MISSING PAIRS, do not just count them.
+#
+# This line printed "22 of 23 pairs contributed rows" for an unknown length of
+# time and carried on. The missing one was sa2018->sa2022, and because that pair
+# silently produced no MP slopes, sa2022 could not be scored by its harness at
+# all -- while its fallback-path log loss (0.9409, the worst in the corpus) went
+# on being pooled into the headline figure as though it measured the model.
+#
+# `.pair_fail` above only catches a pair whose candidate_returns() THROWS. This
+# pair did not throw: it returned 219 rows that all failed the downstream
+# "non-major AND returning" filter, because every sa2018 surname was being
+# parsed as a first name. The guard was built for the failure someone imagined
+# and the real one walked straight past it.
+#
+# A count is not an identity. Two lines, and the next instance announces itself.
+.missing <- setdiff(pairs$to, unique(panel$target))
+if (length(.missing))
+  cat(sprintf("MP0p! NO ROWS for %d target(s): %s -- those pairs get NO slopes, and any harness that needs them will refuse to run\n",
+              length(.missing), paste(.missing, collapse = ", ")))
 stopifnot(nrow(panel) > 0)
 # COVERAGE, not presence: a column can be there, typed and empty. CLAUDE.md
 # records 4.98M silently-discarded values from exactly that.
