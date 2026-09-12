@@ -15,6 +15,51 @@
 # not a silently short table. Re-run this after any backtest run that should
 # be reflected here -- it does not run anything itself.
 #
+# ============================================================================
+# THE CIRCULARITY TRAP, found 2026-09-13, and it cost a night of confused
+# measurements before it was traced. READ THIS BEFORE REGENERATING SHAREDETAIL
+# FOR THE PURPOSE OF TRAINING fit_xgb_primary_v6.R.
+#
+# AUSPOL_XGB_PRIMARY = "1" is the SHIPPED DEFAULT (published_flags.R) for
+# every harness. It makes xgb_primary_override() REPLACE `shares` with v6's
+# OWN prior predictions BEFORE the seat simulator runs -- and the simulator
+# writes `pred_share` (into sharedetail, hence into this file, hence into
+# what fit_xgb_primary_v6.R calls "the shipped baseline" and trains on as a
+# feature) from THAT ALREADY-OVERRIDDEN result. So a sharedetail file built
+# under default settings is NOT an independent "shipped model" baseline --
+# it is v6's own output, one step removed through the simulator.
+#
+# Consequence: running "harness -> pool -> refit v6 -> harness again" under
+# default flags is NOT a stable measurement, it is an ITERATIVE REFITTING
+# LOOP. Doing this several times in one session (investigating sa2026's One
+# Nation ranking) fed v6's output back into what it treats as ground truth
+# each pass, and the pooled log loss drifted monotonically WORSE with every
+# iteration -- 0.5384 -> 0.5794 -> 0.6463 -> 0.7015 -> 0.8126 on sa2026 alone
+# -- with NOTHING in the committed code changing between measurements.
+#
+# THE FIX, every time sharedetail is regenerated FOR v6 TRAINING PURPOSES:
+#   1. Run every harness with AUSPOL_XGB_PRIMARY=0 EXPLICITLY -- this writes
+#      the TRUE, non-circular shipped-model pred_share.
+#   2. Run this script (pool_sharedetail.R) to pool those files.
+#   3. Run fit_xgb_primary_v6.R ONCE against that clean pool.
+#   4. THEN, and only then, run the harnesses again with default flags
+#      (AUSPOL_XGB_PRIMARY=1) to evaluate v6 in its normal operational role.
+#      Do not iterate step 4's output back into step 1 -- that is the loop.
+#
+# Measured cost of getting this right, 2026-09-13: pooled seat log loss over
+# all 23 pairs went 0.3115 (contaminated, several iterations deep) -> 0.2926
+# (clean, one pass) -- the TRUE model was BETTER than every number reported
+# that night, not worse; the contamination had been making it look worse.
+#
+# NOT YET FIXED: this script cannot tell, from a sharedetail file's name or
+# content, whether AUSPOL_XGB_PRIMARY was on or off when it was written --
+# the arm fingerprint hashes it in but the hash is not decodable. A proper
+# fix records the flag's value as a column or sidecar file per sharedetail
+# output and lets this script refuse/warn on contaminated input automatically,
+# rather than relying on a human remembering this comment. Top-priority
+# follow-up, not yet built.
+# ============================================================================
+#
 # Emits PS* codes.
 options(auspol.root = normalizePath("."))
 suppressMessages(library(data.table))

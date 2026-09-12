@@ -26,6 +26,16 @@ suppressMessages(library(xgboost))
 
 OUT <- "output"
 C <- fread(file.path(OUT, "candidacies.csv"), showProgress = FALSE)
+# `pred_share` in this file (the "BASELINE (shipped model)" print below, and
+# the base feature this script trains x/dev_prev-style columns from) is ONLY a
+# genuine, independent baseline if it was pooled from sharedetail generated
+# with AUSPOL_XGB_PRIMARY=0. The published default is "1", which makes every
+# ordinary harness run overwrite `shares` with THIS model's own prior output
+# before simulating -- so the ordinary "run harness, pool, refit" cycle trains
+# v6 on its own recycled predictions and compounds with every iteration.
+# Traced 2026-09-13 after it drifted a pair's log loss 0.5384 -> 0.8126 across
+# repeated same-session refits with no code change. See the full explanation
+# and the correct four-step procedure in scripts/pool_sharedetail.R's header.
 SD <- fread(file.path(OUT, "pooled-sharedetail.csv"), showProgress = FALSE)
 
 PAIRS <- list(
