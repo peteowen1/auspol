@@ -28,6 +28,7 @@ PUBLISHED_FLAGS <- c(
   AUSPOL_COV_LOO             = "1",          # statewide correlation held out of its own target; 0 = the in-sample matrix
   AUSPOL_LEVEL_SD            = "1.10,8.67",  # level-dependent seat variance, a + b*sqrt(p(1-p))
   AUSPOL_DEV_SLOPE_MODE      = "screened",   # candidate-conditional slopes + salience screen (arm CS)
+  AUSPOL_HONOUR_DEPARTED     = "0",          # 1 = a departed class leader's base decays at the new-candidate slope even when the screen permits a newcomer; measured and refused 2026-09-06 on a federal wash (New England vs Wentworth), re-measurement queued 2026-09-13 on the fuller 89-case corpus -- docs/plans/prereg-vote-belongs-to-the-person-2026-09-06.md
   AUSPOL_MP_SLOPE            = "1",          # sitting-member slope tier from output/mp-slope-by-*.csv
   AUSPOL_DEFECT_DISCOUNT     = "1",          # major-party defector carries a fitted fraction of their vote
   AUSPOL_SALIENCE_SURGE_V2   = "1",          # per-seat emergence hazard from the salience corpus

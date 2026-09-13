@@ -434,6 +434,8 @@ DEV_SLOPE <- dev_slopes_for(union(parties, names(state_tgt)))
 # wrong for every individual seat. Off unless AUSPOL_DEV_SLOPE_MODE=conditional.
 .cond <- Sys.getenv("AUSPOL_DEV_SLOPE_MODE", "") %in% c("conditional", "screened")
 .screened <- identical(Sys.getenv("AUSPOL_DEV_SLOPE_MODE", ""), "screened")
+# Off by default -- see the matching comment in backtest_candidate_fed.R.
+.honour_departed <- Sys.getenv("AUSPOL_HONOUR_DEPARTED", "0") %in% c("1", "TRUE", "true")
 .returns <- if (.cond) candidate_returns(PRV, TGT) else NULL
 if (.cond) cat(sprintf("BN1c conditional slopes ON: %d of %d seat-classes have the same candidate returning
 ",
@@ -558,7 +560,7 @@ for (p in parties) {
     pv <- .permit[.permit$party == p, ]
     lut <- stats::setNames(as.logical(pv$permit), pv$seat)
     pm <- unname(lut[rownames(mat)]); pm[is.na(pm)] <- TRUE
-    screened_slopes(p, rownames(mat), .returns, pm, same_mp = .MP_SLOPE, same = if (is.null(.fitsl)) formals(screened_slopes)$same else .fitsl$same, new = if (is.null(.fitsl)) formals(screened_slopes)$new else .fitsl$new)
+    screened_slopes(p, rownames(mat), .returns, pm, same_mp = .MP_SLOPE, honour_departed = .honour_departed, same = if (is.null(.fitsl)) formals(screened_slopes)$same else .fitsl$same, new = if (is.null(.fitsl)) formals(screened_slopes)$new else .fitsl$new)
   } else if (.cond) conditional_slopes(p, rownames(mat), .returns, same_mp = .MP_SLOPE, same = if (is.null(.fitsl)) formals(conditional_slopes)$same else .fitsl$same, new = if (is.null(.fitsl)) formals(conditional_slopes)$new else .fitsl$new) else DEV_SLOPE[[p]]
   x_p <- .own_x(p, rownames(mat), mat[, p])
   val <- if (is.null(.split)) dev_slope(x_p, state_prev[[p]], state_tgt[[p]], sl) else

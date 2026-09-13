@@ -680,6 +680,11 @@ for (K in PAIRS) {
   # IND 0.907 returning against 0.326 new -- so it is wrong for every seat.
   .cond <- Sys.getenv("AUSPOL_DEV_SLOPE_MODE", "") %in% c("conditional", "screened")
   .screened <- identical(Sys.getenv("AUSPOL_DEV_SLOPE_MODE", ""), "screened")
+  # Off by default -- measured and refused 2026-09-06 on a federal-only wash
+  # (New England gained, Wentworth lost the same amount back). Exposed here so
+  # the bigger, corpus-wide measurement (89 departure cases across 19 pairs,
+  # 2026-09-13) can be re-run and re-decided, not silently re-shipped.
+  .honour_departed <- Sys.getenv("AUSPOL_HONOUR_DEPARTED", "0") %in% c("1", "TRUE", "true")
   .returns <- if (.cond) tryCatch(candidate_returns(ea, eb), error = function(e) {
     cat(sprintf("BF1c! conditional slopes unavailable for %s->%s: %s
 ", ea, eb,
@@ -826,7 +831,7 @@ for (K in PAIRS) {
       lut <- stats::setNames(as.logical(pv$permit), pv$seat)
       pm <- unname(lut[seats])
       pm[is.na(pm)] <- TRUE
-      return(screened_slopes(p, seats, returns, pm, same_mp = .MP_SLOPE, same = if (is.null(.fitsl)) formals(screened_slopes)$same else .fitsl$same, new = if (is.null(.fitsl)) formals(screened_slopes)$new else .fitsl$new))
+      return(screened_slopes(p, seats, returns, pm, same_mp = .MP_SLOPE, honour_departed = .honour_departed, same = if (is.null(.fitsl)) formals(screened_slopes)$same else .fitsl$same, new = if (is.null(.fitsl)) formals(screened_slopes)$new else .fitsl$new))
     }
     if (cond && !is.null(returns))
       return(conditional_slopes(p, seats, returns, same_mp = .MP_SLOPE, same = if (is.null(.fitsl)) formals(conditional_slopes)$same else .fitsl$same, new = if (is.null(.fitsl)) formals(conditional_slopes)$new else .fitsl$new))

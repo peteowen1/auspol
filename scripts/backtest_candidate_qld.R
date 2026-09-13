@@ -370,6 +370,8 @@ n_elastic <- 0L; elastic_seats <- character(0)
 DEV_SLOPE <- dev_slopes_for(union(parties, names(st_b)))
   .cond <- Sys.getenv("AUSPOL_DEV_SLOPE_MODE", "") %in% c("conditional", "screened")
   .screened <- identical(Sys.getenv("AUSPOL_DEV_SLOPE_MODE", ""), "screened")
+  # Off by default -- see the matching comment in backtest_candidate_fed.R.
+  .honour_departed <- Sys.getenv("AUSPOL_HONOUR_DEPARTED", "0") %in% c("1", "TRUE", "true")
 .returns <- if (.cond) tryCatch(candidate_returns(PRV, TGT), error = function(e) {
   cat(sprintf("BQ1c! conditional slopes unavailable: %s
 ", conditionMessage(e))); NULL }) else NULL
@@ -469,7 +471,7 @@ mat <- remove_transferred_votes(mat, .own_prev)  # the vote moves with the perso
     pv <- .permit[.permit$party == p, ]
     lut <- stats::setNames(as.logical(pv$permit), pv$seat)
     pm <- unname(lut[seats]); pm[is.na(pm)] <- TRUE
-    return(screened_slopes(p, seats, .returns, pm, same_mp = .MP_SLOPE, same = if (is.null(.fitsl)) formals(screened_slopes)$same else .fitsl$same, new = if (is.null(.fitsl)) formals(screened_slopes)$new else .fitsl$new))
+    return(screened_slopes(p, seats, .returns, pm, same_mp = .MP_SLOPE, honour_departed = .honour_departed, same = if (is.null(.fitsl)) formals(screened_slopes)$same else .fitsl$same, new = if (is.null(.fitsl)) formals(screened_slopes)$new else .fitsl$new))
   }
   if (.cond && !is.null(.returns)) return(conditional_slopes(p, seats, .returns, same_mp = .MP_SLOPE, same = if (is.null(.fitsl)) formals(conditional_slopes)$same else .fitsl$same, new = if (is.null(.fitsl)) formals(conditional_slopes)$new else .fitsl$new))
   DEV_SLOPE[[p]]
