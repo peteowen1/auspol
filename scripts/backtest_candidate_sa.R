@@ -1058,7 +1058,19 @@ if (any(abs(chk$s - 1) > 0.01)) {
 }
 cat("BS5  every seat's probabilities sum to 1 (max deviation checked)\n")
 fwrite(data.table(pair = TGT, as.data.table(sim$totals)), file.path("output", sprintf("backtest-sa-totals%s.csv", CAL_TAG)))
-fwrite(as.data.table(.rr$detail)[, pair := TGT], file.path("output", sprintf("backtest-sa-sharedetail%s.csv", CAL_TAG)))
+# xgb_primary_on RECORDS WHETHER pred_share BELOW IS CIRCULAR.
+#
+# AUSPOL_XGB_PRIMARY=1 (the shipped default) makes xgb_primary_override()
+# replace `shares` with v6's own prior predictions before this simulation
+# runs, so pred_share in this file is v6's output one step removed rather
+# than an independent baseline. pool_sharedetail.R now refuses to pool a
+# file with this column at 1, which is the enforced version of the warning
+# comment added there and in fit_xgb_primary_v6.R on 2026-09-13
+# (docs/reviews/xgb-primary-circularity-2026-09-13.md) after a night lost to
+# exactly this contamination with no way to detect it after the fact.
+fwrite(as.data.table(.rr$detail)[, `:=`(pair = TGT,
+       xgb_primary_on = as.integer(identical(Sys.getenv("AUSPOL_XGB_PRIMARY", "0"), "1")))],
+       file.path("output", sprintf("backtest-sa-sharedetail%s.csv", CAL_TAG)))
 
 # NAME THE FILE ACTUALLY WRITTEN. This line was a hardcoded string and printed
 # "backtest-sa.csv" for every arm, including arms that correctly wrote a tagged

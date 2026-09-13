@@ -843,7 +843,12 @@ R <- rbindlist(out_all)
 .vic_out <- file.path("output", sprintf("backtest-vic%s.csv", CAL_TAG))
 fwrite(R, .vic_out)
 fwrite(rbindlist(tot_all, fill = TRUE), file.path("output", sprintf("backtest-vic-totals%s.csv", CAL_TAG)))
-fwrite(rbindlist(share_detail, fill = TRUE), file.path("output", sprintf("backtest-vic-sharedetail%s.csv", CAL_TAG)))
+# xgb_primary_on RECORDS WHETHER pred_share BELOW IS CIRCULAR -- see
+# backtest_candidate_sa.R's equivalent line for the full explanation.
+# pool_sharedetail.R refuses to pool a file with this column at 1.
+fwrite(rbindlist(share_detail, fill = TRUE)[, xgb_primary_on :=
+       as.integer(identical(Sys.getenv("AUSPOL_XGB_PRIMARY", "0"), "1"))],
+       file.path("output", sprintf("backtest-vic-sharedetail%s.csv", CAL_TAG)))
 # SAY WHAT WAS WRITTEN. Every other harness prints this; Victoria did not, and
 # the arm fingerprint in the filename is not reconstructable from the outside.
 # Cost, 2026-09-11: scripts/pool_pf_arms.R attributes each run's output by
