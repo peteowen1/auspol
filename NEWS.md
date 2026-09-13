@@ -1,3 +1,19 @@
+# auspol 0.4.32
+
+**The training-data circularity fix left only a comment. Now it's enforced.**
+
+- **`pool_sharedetail.R` refuses contaminated sharedetail, not just warns.**
+  Each of the six harnesses now records `AUSPOL_XGB_PRIMARY`'s value as an
+  `xgb_primary_on` column; a pair whose newest file has it at 1 -- or has no
+  record of it at all (predates this fix) -- is refused, not silently
+  pooled. `AUSPOL_POOL_ALLOW_CONTAMINATED=1` is the named escape hatch for a
+  genuine non-training read. Verified with a real contaminate-then-restore
+  test, not just a synthetic one.
+- **Review-gate fix, same session**: the escape hatch's own diagnostic print
+  lived inside the refused-path's guard, so using it produced a false "all
+  pairs verified clean" line on the exact run that had contamination.
+  Fixed; the hatch path now logs honestly.
+
 # auspol 0.4.31
 
 **A "no data for WA" conclusion was wrong within the same session it was
