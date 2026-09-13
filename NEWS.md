@@ -1,3 +1,21 @@
+# auspol 0.4.34
+
+**Docs cleanup and a mirrored WA salience fix.**
+
+- **`fit_xgb_primary_v7.R`'s `SAL_PAIRS` filter now excludes only `wa2001`**
+  (predates Google Trends entirely), matching the fix already shipped in
+  `fit_xgb_primary_v6.R` (0.4.32). v7 is experimental and unwired from any
+  harness or `published_flags.R`, so this is a consistency fix, not a
+  measured result.
+- **Corrected the scope of the `build_candidacies.R` CI gap** documented in
+  0.4.33: the real issue is roughly 14 `stop()` sites across seven
+  `external/reference/` subdirectories CI never populates, not just VIC
+  2010 -- the first diagnosis was itself run against an unrepresentative
+  local test. Queued as its own dedicated session.
+- **`docs/NEXT-STEPS.md` trimmed** from 63k to 49.5k characters: two fully
+  superseded session-history blocks archived to
+  `docs/backlog/journal-2026-09-10-to-11.md`, every still-open item kept.
+
 # auspol 0.4.33
 
 **The nightly "Forecast refresh" GitHub Action had been failing every run
