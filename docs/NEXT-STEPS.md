@@ -47,6 +47,20 @@ the worst single seat in the corpus.
 time, zero effect on any pair — a documented, verified null, kept for
 completeness). Census demographics and the per-cell primary SD model were
 both measured properly and don't ship (see the 2026-09-12 review docs).
+
+**The nightly "Forecast refresh" CI workflow crash is fixed** (PR #37,
+merged, verified with two real `workflow_dispatch` runs, not just local
+simulation) — `estimate_statewide_cov.R` no longer dies when the federal
+preferences file is genuinely absent in CI. **It still doesn't complete
+end-to-end**: the real run got one stage further and hit a different,
+separate wall — `fit_seats_full.R`'s MP-slope tier needs
+`output/mp-slope-by-class.csv`, and neither it nor its prerequisite
+(`build_candidacies.R`) is wired into the pipeline at all. Trying to add
+them surfaced that `build_candidacies.R` has its own *deliberate* hard stop
+on VIC 2010 data being absent (permanently true in CI). This is real design
+work on a large, careful script — queued as its own item, not attempted
+tonight. Full details:
+`docs/reviews/forecast-refresh-remaining-gap-2026-09-13.md`.
 sa2026's One Nation seat-ranking problem got three honest negative results
 (NA-gating, isolated model, same-jurisdiction slope) and is parked — no
 same-state precedent exists for a party that didn't contest South Australia
