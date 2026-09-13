@@ -71,6 +71,12 @@ Action is failing on a missing `external/elections/aec-fed-firstprefs.csv` on
 the CI runner (`estimate_statewide_cov.R`) — pre-existing, nothing tonight
 touched that script.
 
+**PRs #38 and #39 MERGED to `main`** (v0.4.34): the `fit_xgb_primary_v7.R`
+WA-salience mirror fix, the `build_candidacies.R` gap-scope correction doc,
+and this `NEXT-STEPS.md` trim (63k → 49.5k chars, see below). Everything from
+tonight's 5-item list is now closed out: items 1-3 documented/confirmed dead
+ends, item 4 shipped, item 5 (this trim) shipped.
+
 ## PREVIOUS SESSIONS, 2026-09-10/11 — rolled to journal, open items carried forward
 
 Full narrative (PR #31/#32, the xgb-primary leak fix, the SA2026 governed-
