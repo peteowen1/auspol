@@ -71,179 +71,32 @@ Action is failing on a missing `external/elections/aec-fed-firstprefs.csv` on
 the CI runner (`estimate_statewide_cov.R`) — pre-existing, nothing tonight
 touched that script.
 
-## PREVIOUS STATE, end of the 2026-09-11 session
+## PREVIOUS SESSIONS, 2026-09-10/11 — rolled to journal, open items carried forward
 
-**PR #32 open, `dev` → `main`, review-gated and CI-equivalent green.**
+Full narrative (PR #31/#32, the xgb-primary leak fix, the SA2026 governed-
+population fix, census correspondence build, seven shipped bugs):
+[backlog/journal-2026-09-10-to-11.md](backlog/journal-2026-09-10-to-11.md).
 
-**The headline number changed because a LEAK was removed, not because the model
-got worse.** Pooled seat log loss over 22 pairs / 2,050 seat-elections, 3 seeds:
+**Still-open items from those sessions, not yet resolved or restated above:**
 
-| | |
-|---|---|
-| previously published | 0.3332 |
-| xgb primary + xgb flows, **leaked** | 0.3001 |
-| **honest — the number to quote** | **0.3117** (sd 0.0015), accuracy 0.8805 |
-
-### Shipped today
-
-- **`AUSPOL_XGB_FLOWS = "1"`** — per-seat preference flows, −0.0068 on top of
-  the primary. **Quote as NOT significant**: t = −1.67, p = 0.111.
-- **`AUSPOL_LEVEL_MODE = "pred"`** — the primary model trains on a statewide
-  predicted from polls, not the actual result.
-
-### The leak, and why deleting was the wrong fix
-
-`level_now` was the target election's own statewide share. Pete's ruling:
-everything in a forecast must be predictive. **Deleting it cost sa2026
-0.4200 → 0.6309** — it was the model's only route to knowing the national
-picture. Predicting it recovers ~84% (primary RMSE 3.9647 deleted / 3.9201
-predicted / 3.9117 leaked), and it closed a train/serve mismatch that predated
-the work: the live path always used a prediction, so the published forecast
-never leaked — it was trained on the actual and served the prediction.
-
-### Seven bugs, all in shipped code
-
-1. **WA's poll file calls the Liberals `LIB`** — the Liberal Party was folded
-   into "Other" and rebuilt from its prior minor-bucket share. wa2017 predicted
-   ALP 16.5 (actual 42.2), LNP 61.0 (actual 36.6), GRN 8.9 (actual 8.9).
-   Statewide error 3.24 → 2.06 points.
-2. Duplicate statewide draw columns in the federal harness — the rescale never
-   reached the simulation, so the bug its own comment called fixed was live.
-3. The statewide stopped summing to 100 when folding (97.7 on fed2022).
-4. `NA` statewide when a folded class hadn't contested the prior election —
-   fixed in the shared function, then found **again** in the federal harness by
-   the review gate.
-5. Pooling scripts never checked whether an arm's overrides actually ran.
-6. `promote_arm.R` warned on missing pairs then overwrote the canonical tables.
-7. Two silent drops uncounted, and a stub documented as though it worked.
-
-### Open, highest value first
-
-1. **Four harnesses still swing toward the ACTUAL statewide.**
-   `AUSPOL_FORECAST_MODE` exists in fed and sa only. Until nsw/qld/vic/wa have
-   it, their numbers answer a different question from federal's. The core is
-   already extracted into `R/forecast_statewide.R`, so this is wiring.
-2. **The emergence model decision.** v4 is built, hazard AUC 0.936 against the
-   salience version's 0.751, and sa2026 moves 0.6362 → 0.5891 — but it failed
-   its pre-registered bar and a calibration check says it is now
-   OVER-dispersed. The deciding test is a seat COUNT: 26 of 2,050 historical
-   seat-elections were won by an emerging non-major. Not yet run.
+1. **Four harnesses still swing toward the ACTUAL statewide, not a prediction.**
+   `AUSPOL_FORECAST_MODE` exists in fed and sa only; nsw/qld/vic/wa answer a
+   different question from federal's. Core logic already extracted into
+   `R/forecast_statewide.R` — this is wiring.
+2. **The emergence model decision (v4 vs. salience)** — v4's hazard AUC 0.936
+   vs. 0.751, sa2026 moves 0.6362 → 0.5891, but it failed its pre-registered
+   bar and reads over-dispersed. Deciding test (seat count, 26 of 2,050
+   historical seat-elections won by an emerging non-major) not yet run.
    `docs/plans/prereg-xgb-surge-parameters-v2-2026-09-11.md`.
-3. **Re-derive the AE Forecasts comparison** — every figure in it was measured
-   with the leak, so the real gap is wider than reported.
-4. **WA breaks out `NAT` separately and nothing merges it into `LNP`'s trend.**
-   WA's OTH bias is +1.71 against Victoria's +0.45 — suggestive, within noise
-   at n=7. Same shape as the `LIB` bug, so worth an hour.
-5. **`docs/NEXT-STEPS.md` is over its size threshold** and needs a scoped
-   read-and-roll into `docs/backlog/`, not a mechanical cut.
-
-Full detail: `docs/reviews/xgb-primary-x-flows-2x2-2026-09-11.md` (note its
-banner — its absolute numbers are the leaked ones), the "What the simulator
-actually does" section in `ARCHITECTURE.md`, and `scripts/published_flags.R`.
-
-## PREVIOUS STATE, 2026-09-10/11 session
-
-**Merged to `main` (PR #31, CI green).** Everything below in this block is
-landed unless marked otherwise.
-
-### Shipped — real behaviour changes
-
-- **SA2026 One Nation, structural fix.** `surge_hazard_for()` scored a target
-  election through a population filtered to `governed == TRUE`, but
-  `governed_population()` deliberately marks a *surging* class
-  `governed = FALSE` — so a genuine party-wide surge could never be selected
-  as a seat's hazard recipient, however strong its signal. Scoring now uses
-  the full population (`require_governed = FALSE`); fitting is unchanged.
-  SA2026 recipient selection went from structurally 0-of-47 to 5-of-47, seat
-  log loss flat (0.4098 vs 0.4088). Changes the DEFAULT surge-v2 behaviour.
-- **A latent crash fixed before it could fire**: the same surge-v2 block read
-  `rownames(shares)` ~80 lines before `shares` exists — dead code until real
-  vic2026 salience data arrives, i.e. it would have broken the published
-  forecast when nominations close (9 Nov 2026).
-
-### Data coverage
-
-- **sa2018** fetched, verified against the anchor, wired in as a prior-only
-  pair (`AUSPOL_SA_PAIR="2022"`).
-- **Census: all six jurisdictions + federal at the 2021 vintage, plus 2016.**
-  Caught a real case-mismatch bug (SA "MacKillop" vs ABS "Mackillop") and a
-  real boundary-vintage trap: ABS silently re-issues old boundary files under
-  later timestamps, so the "2016" WA/QLD boundaries are actually 2018 ones.
-  Flagged in-script rather than trusted.
-- **Correspondence re-aggregation built** (`scripts/build_census_correspondence.R`):
-  ABS population-weighted SED-to-SED files, chained 2016→2025, one output per
-  vintage. qld2017/2020 82.8%→100%, wa2017 59.3%→98.3%. **Newest is not always
-  right** — wa2017 peaks at the 2021/2022 vintage and degrades by 2025, since
-  WA's 2023 redistribution enters the chain after the election.
-  `scripts/check_correspondence_coverage.R` names the right file per election.
-- **vic2026 pre-nomination candidates + salience fetched.** 26 of 27 One
-  Nation candidates show real Trends signal; every OTH_RIGHT candidate is
-  exactly zero. `scripts/build_vic2026_salience_corpus.R` writes it into the
-  schema `governed_population()` reads.
-
-### SHIPPED
-
-- **xgb primary vote, v6.** `AUSPOL_XGB_PRIMARY_LIVE = "1"` since 2026-09-11,
-  on Pete's repeated explicit instruction to ship the best pooled seat log loss
-  and iterate on regressions after. Pooled 0.3332 → **0.3069** measured
-  leave-one-pair-out over all 22 pairs. Accepted tradeoff, written into
-  `published_flags.R`: it erases independent/minor-right vote share across most
-  of Victoria (65 of 87 seats near zero) until vic2026 salience coverage
-  improves at nominations (9 Nov 2026). Re-check procedure is in that file.
-
-- **xgb preference flows, v1.** `AUSPOL_XGB_FLOWS = "1"` since 2026-09-11.
-  Pooled 0.3069 → **0.3001** on top of the xgb primary, all 22 pairs, 3 seeds,
-  better in 12 of 22. **Quote it as NOT significant**: t = −1.67, p = 0.111
-  clustered on pairs. Shipped on the standing "overall better, one or two
-  regressions acceptable" rule, not because it cleared a bar. Costs ~3x runtime.
-  Both regressions are diagnosed and neither is a bug to chase:
-  **wa2001 +0.048 is expected** (no transfer file of its own, so it never
-  enters the flow training corpus) and **fed2016 +0.035 is variance** — a
-  per-class bias correction was proposed, dry-run and **refused** because it
-  zeroed the global bias while making the per-election two-party bias worse.
-  Note what the flow model *is*: 87% of its gain is `cond_rate` + `pool_rate`,
-  i.e. the existing lookup's own output — **learned partial pooling over the
-  lookup**, not a new information source.
-  Full 2x2 and diagnosis: `docs/reviews/xgb-primary-x-flows-2x2-2026-09-11.md`.
-
-- **`conditional_override` is now in the compiled C++ core** — per-seat flow
-  overrides no longer force `engine="r"`. Verified byte-identical R vs cpp
-  with the override both active and absent, down to the RNG-sequence counter.
-  **82x faster.** Also caught: R keys survivor sets by sorted string, C++ by
-  order-free bitmask, so a typo'd key was unreachable in R but honoured in
-  C++ — now guarded by a canonical round-trip check.
-
-### Refused, kept inert
-
-Flow-cell shrinkage (`AUSPOL_FLOW_SHRINK_K`, worse pooled at every k) and the
-dispersion-slope arm — both documented, both off.
-
-### Open
-
-1. **Re-measure both challengers with TIME-FORWARD folds.** Both are validated
-   leave-one-group-out, so fed2007 is predicted by a model trained on fed2025.
-   Fair between arms, optimistic against the shipped baseline by an unmeasured
-   amount. Changes every absolute number in the 2x2.
-2. **vic2026 re-check after 12 noon, 9 Nov 2026**, one trip covering two
-   things. (a) Re-run the three salience fetch/build scripts named in
-   `published_flags.R` and re-measure the statewide IND/OTH_RIGHT sums — that
-   is when the shipped v6 primary's Victorian weakness should resolve.
-   (b) **Extend `scripts/build_candidacies.R` to write vic2026 rows.**
-   `output/candidacies.csv` has zero of them today, so
-   `candidate_returns(vic2022, vic2026)` errors and the flow model's
-   personal-vote features `dest_same`/`dest_same_mp` are **0.0% populated in
-   the live forecast** (verified by smoke test 2026-09-11). Everything else in
-   the override works; this one feature pair is inert until then.
-3. **`docs/NEXT-STEPS.md` is 54.2k chars / 888 lines** and past the hub warning
-   threshold again. Needs a scoped read-and-roll into `docs/backlog/`, not a
-   mechanical cut — live and closed items interleave.
-4. **GDELT** — parked, needs a GCP/BigQuery project before it can be tested
+3. **vic2026 re-check after 12 noon, 9 Nov 2026** (nominations close): re-run
+   the three salience fetch/build scripts named in `published_flags.R`, and
+   extend `build_candidacies.R` to write vic2026 rows so
+   `candidate_returns(vic2022, vic2026)` stops erroring and the flow model's
+   `dest_same`/`dest_same_mp` features (0.0% populated today) go live.
+4. **GDELT** — parked, needs a GCP/BigQuery project first
    (`docs/plans/gdelt-feasibility-2026-09-10.md`).
-5. **Census 2011/2006/2001** — the correspondence mechanism now exists, which
-   was the blocker. 2006/2001 have no bulk data pack (per-division Excel).
-
-Full narrative, including the parts superseded within the session itself:
-[backlog/journal-2026-09-07-to-08-reentry.md](backlog/journal-2026-09-07-to-08-reentry.md).
+5. **Census 2011/2006/2001** — correspondence mechanism now exists; 2006/2001
+   have no bulk data pack (per-division Excel only).
 
 ## PARKED 2026-09-09, not killed: seat lean from several past elections (decayed)
 
@@ -465,151 +318,41 @@ made under time pressure after seeing results.
 
 ## SESSION 2026-09-07: New South Wales 2019 scored, and four findings
 
-**Coverage is now 22 pairs and 2,050 seat-elections**, up from 19 and 1,791.
-Pooled seat log loss **0.3454**, Brier 0.0945, accuracy 87.2%. The 0.0021 against
-the morning's figure is ONE seat: Barwon in nsw2019 crossing the 1e-6 floor,
-from 0.000050 to 0.000001, after the covariance was rebuilt on DLP-corrected
-federal first preferences. All six harnesses were re-run the same day, so
-every row of that table describes one model.
+Coverage reached 22 pairs / 2,050 seat-elections, pooled seat log loss 0.3454
+(nsw2019, vic2014, qld2020 added; qld2020 second-pair took Queensland to
+0.3294). Full write-up: `docs/reviews/nsw2019-and-seat-turnover-2026-09-07.md`.
+`scripts/pool_backtests.R` (new that session) still produces the pooled table
+on demand.
 
-Three elections were added: **nsw2019** (93 seats), **vic2014** (73 of 88, the
-2013 redistribution renamed 15 districts) and **qld2020** (93). All three came
-off the Internet Archive from the commissions' own files. Queensland is the one
-that mattered most: it had our worst log loss and a single pair to learn from,
-and a second pair takes it from 0.3349 to **0.3294** over 186 seat-elections,
-with qld2020 itself at 88.2% accuracy against qld2024's 82.8%.
-Full write-up: `docs/reviews/nsw2019-and-seat-turnover-2026-09-07.md`.
-
-`scripts/pool_backtests.R` is new and produces the pooled table on demand. It
-prints each source file's timestamp and code tag beside its numbers, so a stale
-row shows up in the output instead of having to be remembered.
-
-nsw2019 scores 92.5% accuracy, Brier 0.0695, log loss 0.3966, RMSE 5.552. The
-NSW harness now takes `AUSPOL_NSW_PAIR` (2019 or 2023, default 2023); the 2023
-pair reproduces its previous output byte-for-byte, which is what accepted the
-refactor.
-
-### SALIENCE — largely superseded 2026-09-10, see below
-
-The 2026-09-07 entry here ("what to do when the scrape finishes") is now
-mostly historical: the vic2026 pre-nomination candidate list and its Google
-Trends salience were fetched, and `scripts/build_vic2026_salience_corpus.R`
-now writes them into `output/salience-v6.csv` in the schema
-`governed_population()` reads. Full detail in the 2026-09-10 entries at the
-top of this file.
-
-**What is still live from it:**
-
-- **`OTH_RIGHT` candidates were being cut before they were ever queried** —
-  the selection took the top two non-majors per seat by the PARTY's prior
-  vote, and minor-right never got the exemption independents have. 842 of
-  2,866 `OTH_RIGHT` candidates were in the corpus and SIXTEEN non-major
-  winners were absent entirely (Robbie Katter 58.9%, Shane Knuth 52.6%,
-  Philip Donato 49.1%, Nick Dametto 42.5%). Fixed 2026-09-07; the refetch is
-  what makes the fix retrospective.
-- **Google Trends is rural-blind and this is measured, not suspected.**
-  nsw2019's Barwon and Orange winners both returned a jump of EXACTLY 0.0000
-  — Trends floors low-volume terms at zero and everything that registers in
-  that election is metropolitan.
-  [reviews/salience-rural-blind-spot-2026-09-07.md](reviews/salience-rural-blind-spot-2026-09-07.md).
-  Confirmed again 2026-09-10 on vic2026: every OTH_RIGHT candidate fetched
-  came back at exactly zero, while 26 of 27 One Nation candidates showed
-  real signal.
-- **`wa1996` and `wa2001` predate Google Trends** and can never be fetched —
-  20 of 22 fetchable elections may be as complete as this ever gets.
-- **Three salience arms remain BUILT, measured on Victoria only, and
-  undecided**: `AUSPOL_SALIENCE_EXPECTED`, `AUSPOL_SALIENCE_EXP_SD`, and both
-  together. Pre-registration:
-  `docs/plans/prereg-salience-expected-and-variance-2026-09-07.md`. Primary
-  metric is PB3f, the floor-excluded pooled log loss, plus the floor COUNT.
-  (Note: federal and NSW harnesses default these ON at harness level even
-  though `published_flags.R` has them at 0 — a real, intentional divergence,
-  confirmed 2026-09-10.)
-
-Original entry moved verbatim to
+**Salience** — largely superseded 2026-09-10 (vic2026 corpus now built by
+`scripts/build_vic2026_salience_corpus.R`); original entry moved verbatim to
 [backlog/journal-2026-09-07-to-08-reentry.md](backlog/journal-2026-09-07-to-08-reentry.md).
+Still-live facts from it: Google Trends is measured rural-blind (nsw2019
+Barwon/Orange winners both scored exactly 0.0000 —
+[reviews/salience-rural-blind-spot-2026-09-07.md](reviews/salience-rural-blind-spot-2026-09-07.md));
+`wa1996`/`wa2001` predate Trends and can never be fetched; three salience arms
+(`AUSPOL_SALIENCE_EXPECTED`, `AUSPOL_SALIENCE_EXP_SD`, both together) remain
+built, Victoria-only, undecided —
+`docs/plans/prereg-salience-expected-and-variance-2026-09-07.md`.
 
-### OPEN QUESTION, parked: is one party class one party?
+**OPEN QUESTION, parked**: is one party class one party? `classify_party()`'s
+seven classes bucket Liberal/National/LNP together and Katter/Shooters/Family
+First together, and pool state vs. federal Labor without having asked. Major-
+party coding itself was checked 2026-09-07 and is sound — this is a
+granularity question, not a correctness one.
 
-`classify_party()` has SEVEN classes and they hide distinctions that matter:
+**Housekeeping**: WA slope/transfer decomposition — DONE, resolved, do not
+re-open (commit `6958430`). `docs/plans/harness-unification-2026-09-08.md` —
+planning only, not started, own hard stop 30 September, read before starting.
 
-- **`LNP` is Liberal, National and LNP in one bucket.** Nationals preferences
-  behave differently from Liberal ones, and the measured "position" of LNP in
-  the preference-flow scale is 0.424 -- which is Liberal-to-Nationals flow in
-  three-cornered contests, i.e. the class flowing to itself. There is no way
-  to model a three-cornered contest properly while they share a class.
-- **`OTH_RIGHT` is Katter, Shooters, Family First and others together.** It is
-  the class that wins the seats this model loses, and it is a bucket.
-- **Is state Labor the same object as federal Labor** for the purpose of a
-  pooled flow or slope estimate? We pool them today without having asked.
-
-Major-party CODING was checked 2026-09-07 and is sound: ALP and LNP shares
-land plausibly in all 22 elections, and the two outliers are real -- wa2021
-Labor 59.9% is McGowan's landslide and sa2026 Coalition 19.5% is the collapse
-that elected four One Nation members. So this is a granularity question, not a
-correctness one.
-
-### Housekeeping, standing
-
-All commits on `dev` are pushed to `origin/dev` but **none are merged to
-`main` and none have been through the review gate** — queued separately, and
-per CLAUDE.md needs `pr-review-toolkit` agents before any PR.
-
-**Salience refetch: interrupted repeatedly by memory pressure, not stuck.**
-`scripts/fetch_salience_v6.R` is resumable (caches each batch, skips what
-exists). Corpus was already 8,301 rows / 20 of 22 fetchable elections complete
-— `wa1996` and `wa2001` predate Google Trends and can never be fetched, so
-20/22 may be as complete as this ever gets. Whether there is genuinely new
-data left to find is still open; re-run it and watch for growth past 8,301.
-
-**WA slope/transfer decomposition — DONE, resolved, do not re-open.** Commit
-`6958430`. Conditional slopes help WA by ~0.005 pooled log loss regardless of
-the transfer setting; the transfer *hurts* by ~0.005 regardless of slope
-setting — but it works exactly as designed on Pilbara 2001 (the seat it was
-built for), so the pooled harm means it is making *other* seats worse. One
-seed only; not shipped; next step if picked up is finding which other seats
-`personal_prior_vote()` fires on and whether they are real defections.
-
-**`docs/plans/harness-unification-2026-09-08.md`** — planning only, produced
-by an agent audit, not started. Recommends unifying the six
-`backtest_candidate_*.R` scripts into a shared harness core plus
-per-jurisdiction configs — found nine parity defects while auditing (WA's
-seed is still a hardcoded literal; three published switches silently don't
-reach WA at all; the check-code registry broken three ways). A ~10-11
-session project with its own hard stop (30 September) and refusal
-conditions — read the plan before starting it.
-
-### THE RE-ENTRY PRIOR (arm D) — decision ready, still unshipped
-
-`AUSPOL_REENTRY` stays 0. Seed-averaged at 20,000 sims across all seven
-jurisdiction-groups, and the verdict is **genuinely mixed, not marginal**:
-
-| better | flat | worse |
-|---|---|---|
-| WA, South Australia, Federal 2007-2016 | Victoria, Federal 2019-2025 | **NSW, Queensland** |
-
-At 5,000 sims this read as "marginal but real, refused on significance alone";
-at 20,000 it is three groups better, two flat, two worse on every metric. A
-true pooled seat-weighted number across all 22 pairs was never computed.
-
-- **Arm H** (variance widening, `prereg-reentry-flatratio-variance-2026-09-08.md`):
-  RUN and **REFUSED** by its own pre-registered rule — the entire pooled gain
-  was one seat (Alfred Cove) crossing the `eps=1e-6` floor, which is refusal
-  condition #2 verbatim. `AUSPOL_REENTRY_SD_K` stays 0.
-- **The NSW/QLD "regression" is 1-4 seats, not a jurisdictional weakness** —
-  traced to Kiama, Traeger+Hill and Burdekin individually; three of the four
-  are a well-supported GLM (n=180-392) confidently mispredicting a returning
-  sitting member's personal vote. Burdekin's mechanism is NOT established.
-  [reviews/reentry-prior-nsw-qld-2026-09-08.md](reviews/reentry-prior-nsw-qld-2026-09-08.md).
-- **`protect_personal_vote_cells()` is implemented** (`R/candidate_returns.R`,
-  2026-09-09), tested, wired into all six harnesses — **dormant, not stale**:
-  it only fires when arm D is on, which it isn't.
-
-**The lesson both investigations converge on**: a pooled log-loss number can
-look like a genuine improvement while one seat's floor-crossing does all the
-work. Checking named cells individually is what caught it both times.
-
-Full evidence — every 20k-sim table, per jurisdiction and pair — moved to
+**THE RE-ENTRY PRIOR (arm D) — decision ready, still unshipped.**
+`AUSPOL_REENTRY` stays 0. Seed-averaged at 20,000 sims, verdict genuinely
+mixed: better on WA/SA/Federal 2007-2016, flat on VIC/Federal 2019-2025,
+worse on NSW/Queensland (1-4 seats, traced to specific by-election seats, not
+a jurisdictional weakness). Arm H (variance widening) was run and REFUSED by
+its own pre-registered rule — stays 0. `protect_personal_vote_cells()` is
+implemented and wired into all six harnesses but dormant (only fires when arm
+D is on). Full evidence moved to
 [backlog/journal-2026-09-07-to-08-reentry.md](backlog/journal-2026-09-07-to-08-reentry.md).
 
 ### Open, in the order I would do them
