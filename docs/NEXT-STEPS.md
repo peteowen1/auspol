@@ -1,6 +1,34 @@
 # auspol — work queue
 
-## CURRENT STATE, end of the 2026-09-12/13 session — START HERE
+## CURRENT STATE, 2026-09-13 evening session — START HERE
+
+**Two real fixes shipped and composed correctly** (commits `75a5076`,
+`8db4305`, `cea78e2`, `a8af56b`, `f3c4b3e`, `75462ea`): the Frome->Ngadjuri
+seat-rename bug; the notional (redistribution-adjusted) prior for federal
+seats, on by default now regardless of aggregate effect (Pete's call — "the
+right thing to do... do the Antony Green ABC method"); and `ret_exp` (the
+IND retention feature), confirmed real at two seeds before shipping. A bug
+from composing the two carelessly (x_notional_adj leaked into ret_exp's
+model as a jurisdiction label, tanking sa2026 to 0.5061) was caught and
+fixed same session. **Current state: pooled log loss 0.2914 over 23 pairs
+(was 0.2984); on the 7 AEF-comparable elections, ours 0.2743 vs AEF's 0.2851
+(was −0.0049, now −0.0108).**
+
+**Next queued: Pattern A from the worst-seats review below.** Full
+five-pattern analysis of the current worst-15-vs-AEF table:
+[reviews/worst-seats-five-patterns-2026-09-13.md](reviews/worst-seats-five-patterns-2026-09-13.md).
+Pattern A — a SENIOR retiring MP (minister/leader) loses more personal vote
+than the flat retirement discount assumes — explains 5 of 15 seats (Monaro/
+Barilaro, Braddon/Pearce, Riverstone/Conolly, Richmond/Wynne, Parramatta/
+Lee) and is the cheapest lever: a static, hand-curated feature, no new data
+fetch, extends `fit_defector_discount()`/the MP-slope tier directly. **Size
+it (case count, effect size) before building.** Other four patterns
+(SA One Nation surge broader than known; a defecting incumbent fragmenting
+the right three ways; a departed independent's vote reverting rightward,
+untested direction for `ret_exp`; QLD optional-preferential flows against
+the primary leader) are recorded in the review doc, not yet actioned.
+
+## Session 2026-09-12/13 (earlier), morning/day — rolled to journal below
 
 **PR #34 MERGED to `main`** (6b51957). sa2022 is now in the model
 (`docs/reviews/sa2022-missing-from-the-model-2026-09-12.md`) — a name-order
