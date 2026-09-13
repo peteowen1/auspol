@@ -280,10 +280,20 @@ PUBLISHED_FLAGS <- c(
                                              # Concentrated where you would expect: sa2026, the One Nation surge
                                              # election, 0.4200 -> 0.5564. Every headline number quoted before
                                              # 2026-09-11 was the leaked one.
-  AUSPOL_XGB_PRIMARY_OOF     = "",           # harness-only: which oof file the line above reads. Empty = the v6
-                                             # default (output/xgb-primary-v6-oof-predictions.csv), matching the
-                                             # shipped model. Set it to output/xgb-primary-oof-predictions.csv to
-                                             # measure v1 instead.
+  AUSPOL_XGB_PRIMARY_OOF     = "output/xgb-primary-shipped-oof-predictions.csv",
+                                             # harness-only: which oof file the line above reads. Points at v7's
+                                             # ret_exp arm (the IND retention feature, docs/reviews/xgb-primary-
+                                             # retention-feature-2026-09-13.md) since 2026-09-13 -- confirmed a real,
+                                             # replicable effect (pooled delta -0.0016 to -0.0017 across two seeds,
+                                             # not noise), shipped on Pete's call alongside the notional-prior fix.
+                                             # output/ is gitignored, so this filename is the ONLY durable record of
+                                             # what ships -- regenerate it with:
+                                             #   Rscript scripts/fit_xgb_primary_v6.R
+                                             #   AUSPOL_V7_ARMS="v7c,v7f" AUSPOL_V7_SHIP="v7f" Rscript scripts/fit_xgb_primary_v7.R
+                                             #   cp output/xgb-primary-v7-oof-predictions.csv output/xgb-primary-shipped-oof-predictions.csv
+                                             # v6 must run first: v7 loads its persisted feature matrix as its base,
+                                             # including the notional-prior x_notional_adj column. Set to "" to fall
+                                             # back to plain v6 (output/xgb-primary-v6-oof-predictions.csv).
   AUSPOL_FLOW_SHRINK_K       = "0"           # data-weighted flow-cell smoothing -- REFUSED 2026-09-10, worse pooled at every tested k (0.339-0.354 vs baseline 0.339); helps Ballarat's own cell exactly as designed but federal/WA dominate the aggregate. docs/reviews/flow-cell-shrinkage-REFUSED-2026-09-10.md
 )
 

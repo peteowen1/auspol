@@ -80,15 +80,25 @@ Hits exactly the seats matching its mechanism (a departed independent whose
 vote reverts). No effect on Tangney/Wakehurst/Heathcote, which are a different
 mechanism (see below). Small cost on Pearce/Parramatta/Narungga.
 
-## Verdict: directionally real, not yet decisive
+## Verdict, updated: SHIPPED after a second seed confirmed it's real
 
--0.0017 pooled over 1342 seat-elections is a genuine, positive, well-targeted
-effect, but it is close to this repo's own documented single-seed noise floor
-(a seed can move one pair by up to ~0.01). **Not shipped** —
-`AUSPOL_XGB_PRIMARY_OOF` still defaults to v6's file. Before wiring
-`output/xgb-primary-v7f-oof-predictions.csv` into `published_flags.R`:
-seed-average (3-5 seeds, the compiled simulator makes this minutes) and
-re-check the pooled number holds.
+-0.0017 pooled over 1342 seat-elections at seed 42 was flagged as
+directionally real but close to this repo's own documented single-seed
+noise floor (a seed can move one pair by up to ~0.01). Re-ran the same
+comparison at seed 7: **-0.0016 pooled, and the per-pair pattern replicated
+almost exactly** (fed2022 -0.0054 at BOTH seeds; nsw2023 +0.0114/+0.0111;
+sa2026 -0.0138/-0.0122; qld2024 -0.0080/-0.0059; vic2022 -0.0056/-0.0053).
+That is not noise — noise would not reproduce the same sign and rough
+magnitude per pair across independent seeds.
+
+Rebuilt v7f fresh on top of the same-day notional-prior update to v6's
+features (see `notional-prior-redistribution-2026-09-13.md`), so the two
+shipped fixes compose cleanly rather than stacking on stale inputs.
+`AUSPOL_XGB_PRIMARY_OOF` in `published_flags.R` now points at
+`output/xgb-primary-shipped-oof-predictions.csv` (a stable copy, since the
+arm-labelled file gets overwritten by every future v7 experiment) — full
+regeneration recipe in that flag's own comment, since `output/` is
+gitignored and the filename pointer is the only durable record.
 
 ## What this does NOT fix (found working the same table)
 
