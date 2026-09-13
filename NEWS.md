@@ -1,3 +1,34 @@
+# auspol 0.4.33
+
+**The nightly "Forecast refresh" GitHub Action had been failing every run
+since 2026-09-03. Every check-code line ("CV0!", "S5!", ...) was also
+invisible in its run summary the whole time.**
+
+- **The workflow crash, fixed.** `estimate_statewide_cov.R` read
+  `aec-fed-firstprefs.csv` eagerly, but the workflow deliberately never
+  fetches it in CI. A missing federal file threw uncaught and halted the
+  whole pipeline before `fit_seats_full.R`/`build_page.R` ever ran. Fixed
+  in two passes: the first fix (lazy federal read) was verified against a
+  local data cache unrepresentative of real CI, and only closed part of the
+  problem -- the real CI environment has just 1 usable election pair, which
+  hit a second, different crash a few lines further down (a leave-one-out
+  guard). The corrected fix adds a `MIN_PAIRS = 4` floor that falls back to
+  the independence assumption (no correlation) when there's too little data
+  to fit anything real -- the script's own documented pre-feature behaviour,
+  not a guess. Verified against a properly reconstructed CI simulation (9
+  files moved aside, not 1) before trusting it.
+- **`share_of()` no longer silently returns an all-zero share** on a
+  zero-row input (a corrupt or truncated file that still reads
+  successfully) -- it now errors, caught by the existing per-pair guard
+  instead of surfacing later as a misleading, differently-worded failure.
+- **Every "CODE!" check line is now visible in the run summary.** The
+  extraction regex (in `run_all.R` and the workflow YAML, previously two
+  independently hand-maintained copies) required a literal space after the
+  code, so `S5!`, `CV0!`, `PS0!` and similar lines were silently dropped --
+  the "incomplete grep for check codes" hazard this repo has now hit five
+  times. Also missed 3-letter code prefixes. Both fixed; the YAML's
+  hand-kept letter list replaced with the same pattern `run_all.R` uses.
+
 # auspol 0.4.32
 
 **The training-data circularity fix left only a comment. Now it's enforced.**
