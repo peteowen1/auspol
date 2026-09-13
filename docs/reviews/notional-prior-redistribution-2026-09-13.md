@@ -1,9 +1,12 @@
-# Notional (redistribution-adjusted) prior: real gap found, three fix attempts, no clean win
+# Notional (redistribution-adjusted) prior: real gap found, closed, shipped on principle
 
 2026-09-13. Working the Tangney/Pearce/Heathcote/Hartley cluster from the AEF
 worst-seats table (all four: a sitting LNP incumbent recontested and lost by
-2.3-3.7x the trend the model applied). Found and closed a real gap; the fixes
-tried to exploit it did not clearly pay off.
+2.3-3.7x the trend the model applied). Found and closed a real gap; three
+attempts to exploit it in the shipped model, none a clean pooled win, one
+genuinely moved a named target (Pearce) and shipped anyway on Pete's call --
+this is the correct baseline methodology regardless of what one corpus
+rewards.
 
 ## The gap: we have never adjusted for redistribution on a continuing seat
 
@@ -80,14 +83,31 @@ rate didn't). **Real movement this time, but mixed**: Pearce ALP 30.53 ->
 RMSE 3.8477 -> 3.8516 (very slightly worse), federal-only 3.4166 -> 3.4094
 (very slightly better). Best of the three, still net-neutral in aggregate.
 
-## Verdict: not shipped, all three left in the tree as off-by-default code
+## Verdict, updated: variant 3 SHIPPED on Pete's explicit call
 
-Per Pete's own call ("try this one more time then stop regardless"),
-stopping after the third variant. `output/xgb-primary-v6-oof-predictions.csv`
-restored to the pre-investigation baseline after each test; nothing here
-changes the shipped forecast. `AUSPOL_NOTIONAL=2` and `AUSPOL_XGB_NOTIONAL=1`
-both stay in the code, off by default, documented, for whoever revisits this
--- same convention as `screened_slopes(honour_departed=)`.
+Per Pete's own call after seeing the trace ("try this one more time then
+stop regardless"), stopping engineering after the third variant. But when
+told the pooled effect was net-neutral either way, Pete's instruction was to
+ship it anyway: *"It's the right thing to do even if it doesn't move the
+models much - do the Anthony green abc method like you said."* Booth-level
+respread onto current boundaries is the correct baseline regardless of
+whether this corpus happens to reward it on aggregate.
+
+So, as of 2026-09-13:
+
+- `AUSPOL_NOTIONAL` in `published_flags.R` is now `"2"` (was unset,
+  defaulting to `"1"` inline) -- full replacement for every redistricted
+  seat, not just missing-name fallback. Currently a no-op under
+  `AUSPOL_XGB_PRIMARY=1` for the reason above, kept correct for the ~1% of
+  cells it isn't overridden on and for if that ever changes.
+- `AUSPOL_XGB_NOTIONAL` in `fit_xgb_primary_v6.R` now defaults to `"1"` --
+  variant 3 (the explicit `x_notional_adj` feature) is baked into
+  `output/xgb-primary-v6-oof-predictions.csv`, the file the harnesses read
+  by default. Regenerated and confirmed firing on all six federal pairs.
+- Variant 2 (silent `x` substitution, the one that made things slightly
+  worse) stays off -- never had a case for shipping.
+- `AUSPOL_XGB_PRIMARY=0` runs (which don't touch this file) and
+  non-federal jurisdictions are unaffected either way.
 
 `output/notional-baselines.csv` itself is now genuinely improved regardless
 of any of the above: extended from covering only the 2022->2025 pair to all
