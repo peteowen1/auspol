@@ -124,18 +124,31 @@ rows <- merge(rows, keep, by = c("pair", "file"))
 # this file is wanted as a live/scoreboard read rather than as v6's own
 # training input -- named to make misuse visible in any log that sets it.
 bad <- unique(rows[is.na(xgb_on) | xgb_on == 1, .(pair, file, xgb_on)])
-if (nrow(bad) && !identical(Sys.getenv("AUSPOL_POOL_ALLOW_CONTAMINATED", "0"), "1")) {
+if (nrow(bad)) {
+  # PRINT REGARDLESS OF WHETHER THE ESCAPE HATCH LETS EXECUTION CONTINUE.
+  # The first version put this print INSIDE the stop()-guarded block, so
+  # setting AUSPOL_POOL_ALLOW_CONTAMINATED=1 skipped both the stop AND the
+  # print, and execution fell through to the unconditional "all clean" line
+  # below -- a false success message on the exact run where contamination
+  # was knowingly let through. Caught by the review gate. The escape hatch's
+  # whole purpose is "make misuse visible in any log that sets it"; a log
+  # that says "all clean" is the one thing it must never say here.
   print(bad)
-  stop(sprintf(paste0(
-    "refusing to pool: %d pair(s) come from sharedetail written with ",
-    "AUSPOL_XGB_PRIMARY=1 or no record of it at all (NA above means the ",
-    "file predates this check). Re-run those harnesses with ",
-    "AUSPOL_XGB_PRIMARY=0 before pooling for fit_xgb_primary_v6.R. Set ",
-    "AUSPOL_POOL_ALLOW_CONTAMINATED=1 to override for a non-training read."),
-    nrow(bad)))
+  if (!identical(Sys.getenv("AUSPOL_POOL_ALLOW_CONTAMINATED", "0"), "1")) {
+    stop(sprintf(paste0(
+      "refusing to pool: %d pair(s) come from sharedetail written with ",
+      "AUSPOL_XGB_PRIMARY=1 or no record of it at all (NA above means the ",
+      "file predates this check). Re-run those harnesses with ",
+      "AUSPOL_XGB_PRIMARY=0 before pooling for fit_xgb_primary_v6.R. Set ",
+      "AUSPOL_POOL_ALLOW_CONTAMINATED=1 to override for a non-training read."),
+      nrow(bad)))
+  }
+  cat(sprintf("PS3! %d pair(s) pooled DESPITE contamination (AUSPOL_POOL_ALLOW_CONTAMINATED=1) -- NOT safe for v6 training, only for a non-training read\n",
+              nrow(bad)))
+} else {
+  cat(sprintf("PS3  all %d pairs verified clean: xgb_primary_on = 0 for every file pooled\n",
+              uniqueN(rows$pair)))
 }
-cat(sprintf("PS3  all %d pairs verified clean: xgb_primary_on = 0 for every file pooled\n",
-            uniqueN(rows$pair)))
 
 # N_SIMS GUARD. `pred_share` here is a SIMULATION MEAN, and this file is not
 # only a scoreboard -- fit_xgb_primary_v6.R reads it and trains the shipped
