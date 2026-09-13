@@ -77,10 +77,46 @@ downstream behaviour (it already hard-stops on any target with zero panel
 rows, from this same session's earlier commits) tolerates a candidacies.csv
 with some elections missing entirely.
 
-## Recommendation
+## CORRECTED, same night: the scope is bigger than the section above states
 
-Treat this as its own item, scoped and reviewed properly, not a continuation
-tacked onto tonight's session. `estimate_statewide_cov.R`'s fix took two
-real-CI round trips to get right even though it was a much smaller script;
-`build_candidacies.R` is substantially larger and its failure modes are more
-varied.
+The VIC 2010 stop() above was diagnosed from a test that, in hindsight, was
+ALSO not fully representative — the same class of mistake made twice already
+on this exact investigation (see `docs/reviews/xgb-primary-circularity-
+2026-09-13.md` and this file's own earlier correction). That test removed
+files from `external/elections/` but left `external/reference/vec/2010/`
+(the RAW SCRAPED VEC pages this block actually reads) fully intact on this
+machine, so the block never exercised its OWN already-graceful
+`if (!dir.exists(dir_y)) next` skip (line 664) -- it read the real, present
+HTML pages, built `v` successfully, and only THEN hit the stop() because the
+SEPARATE reference CSV used purely for seat-name resolution had been moved.
+
+In real CI, `external/reference/` is never created, fetched, or cached at
+all -- the workflow's only cache step is `path: external/elections`. So
+`external/reference/vec/2010/` almost certainly does not exist there either,
+which means the EARLIER, already-graceful skip at line 664 would fire FIRST,
+and the stop() this section originally centred on may never be reached in
+practice.
+
+`build_candidacies.R` reads from SEVEN `external/reference/` subdirectories
+(`aec`, `ecq`, `ecsa`, `nsw`, `vec`, `waec` -- confirmed by grep, plus
+`wikipedia` used elsewhere in the corpus), none of which CI ever populates,
+across roughly 14 `stop()` calls and 15 existence guards in this one script.
+The earlier "BC5 wa2001: 366 candidates" / "BC6 qld2020: 599 candidates"
+success lines in this file's first version were run against a machine that
+still had ALL of `external/reference/` intact -- they prove those blocks work
+when the raw scraped data is present, not that they degrade correctly when
+it (genuinely, in CI) is not.
+
+## Recommendation, revised
+
+The real question is not "does the VIC block crash" -- it's "does EVERY
+per-region block correctly degrade when its own `external/reference/`
+subdirectory is entirely absent," which needs each of roughly 14 `stop()`
+sites checked against a true simulation (moving aside whole
+`external/reference/{aec,ecq,ecsa,nsw,vec,waec}` trees, not individual
+files -- a bigger, more careful operation than anything attempted tonight,
+given the risk of mishandling large cached directories). That is real,
+multi-hour audit work on a ~900-line script with 14 independent failure
+points, not a same-session continuation. Queued as its own item with this
+corrected scope, so whoever picks it up next does not have to re-discover
+that the original diagnosis was itself incomplete.
