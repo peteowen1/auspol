@@ -80,6 +80,23 @@ cat(sprintf("NB2  booth rows matched: %d of %d (%.1f%%) | VOTES matched: %.1f%%\
             nrow(J), nrow(A), 100 * nrow(J) / nrow(A), cov))
 if (cov < 80) stop("NB!  only ", round(cov, 1), "% of prior votes map forward; refusing")
 
+# THE POLLING-PLACE DOWNLOAD CARRIES AN "Informal" PSEUDO-CANDIDATE ROW that
+# the candidate-level results file candidacies.csv is built from does not --
+# informal ballots are not a vote for anyone and are excluded from `pcv`
+# everywhere else in this repo. Left in here, they fell through
+# classify_party() into OTH and inflated the per-seat denominator by the
+# seat's informal rate (typically 3-6%, fairly uniform nationwide), which
+# silently diluted every real party's notional share by a near-constant
+# amount. Found 2026-09-13 chasing what looked like a WA-specific
+# redistribution effect on Tangney/Pearce: the same ~2-3 point "gap" showed
+# up in EVERY state, including ones with no federal redistribution that
+# cycle -- Pearce 2019 alone carried 6,153 informal votes, exactly the size
+# of its notional-vs-raw discrepancy once every other party's totals were
+# checked and matched exactly.
+n_informal <- sum(J[Surname == "Informal"]$OrdinaryVotes, na.rm = TRUE)
+J <- J[Surname != "Informal"]
+cat(sprintf("NB2i excluded %d informal vote(s) before computing shares\n", n_informal))
+
 J[, party := classify_party(PartyNm, PartyAb)]
 N <- J[, .(votes = sum(OrdinaryVotes)), by = .(seat, party)]
 N[, pcv := 100 * votes / sum(votes), by = seat]
