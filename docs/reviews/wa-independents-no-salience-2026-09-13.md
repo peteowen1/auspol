@@ -61,13 +61,18 @@ engineer a feature from. Not the same failure mode as sa2026's ONP ranking
 (which had a genuine feature, `x`, that simply didn't transfer out of
 sample) — here there is no candidate feature to try in the first place.
 
-## Recommended next step
+## CORRECTED, same session: this recommendation was wrong
 
-Build a WA salience corpus, the same shape as the fetchers that already exist
-for federal/NSW/QLD/SA/VIC (`scripts/fetch_seat_salience*.R`), covering WA
-state candidates back to 2001 where Google Trends coverage allows. This is
-data-acquisition work, not a same-session model change, and is the concrete,
-scoped next step rather than a vague "WA is bad" note.
+This section originally recommended building a WA salience corpus from
+scratch. It already existed: `scripts/fetch_salience_v6.R:142-157` has
+covered every WA election since 2026-08-27, and `output/salience-v6.csv` has
+carried real data for six of the seven WA pairs since 2026-09-10 — the grep
+that concluded otherwise (`"wa"`, `region == .wa.`) missed `geo = "AU-WA"`.
+`fit_xgb_primary_v6.R` was simply still excluding the whole region on a
+comment that predated the fetch. Fixed and measured:
+`docs/reviews/wa-salience-data-already-existed-2026-09-13.md` — small net
+improvement (pooled 0.2926 -> 0.2915), shipped. wa2001 (10 Feb 2001) remains
+genuinely unfixable: it predates Google Trends' public data entirely.
 
 ## Also resolved tonight, same session
 

@@ -69,11 +69,30 @@ PAIRS <- list(
   list(election = "wa2021",  prev = "wa2017",  region = "wa"),
   list(election = "wa2025",  prev = "wa2021",  region = "wa")
 )
-# Salience/surge population is NOT available for WA (no seat-level salience
-# corpus built there -- same gap already found for v1-v4). Kept as its own
-# list, matching v4 exactly, rather than silently extending to WA with data
-# that does not exist.
-SAL_PAIRS <- Filter(function(p) p$region != "wa", PAIRS)
+# WA salience data DOES exist now, for six of the seven WA pairs -- this
+# comment was accurate for v1-v4 and became stale on 2026-08-27, when
+# fetch_salience_v6.R's ELS list was extended to every WA election
+# candidacies.csv has results for. output/salience-v6.csv has carried
+# wa2005/2008/2013/2017/2021/2025 since then (40-100 candidates each with a
+# non-zero search jump), and it sat unused because this filter still excluded
+# the whole region. Found 2026-09-13 diagnosing why wa2001/wa2008 were the
+# worst pairs in the corrected 23-pair corpus -- Kalgoorlie's independent
+# winner (wa2008) was given probability 0.0000, and CLAUDE.md's own rule is to
+# ask what the system already has before concluding data doesn't exist.
+#
+# Only wa2001 is excluded, not the whole region: 2001-02-10 predates Google
+# Trends' own public data (which starts ~2004), so no fetch can ever produce
+# a signal for that specific pair -- a genuine data-era limit, not a gap to
+# close. Verified: fread("output/salience-v6.csv")[grepl("^wa", election)]
+# has zero rows for wa2001 and never will.
+#
+# NOTE: this does not guarantee Kalgoorlie itself improves. Its own winner's
+# jump is exactly 0 in the fetched data -- he was a sitting member who had
+# already publicly quit his party months before the campaign window this
+# jump statistic measures against, so his search interest was an elevated,
+# sustained story rather than a last-8-weeks spike. Measured before claiming
+# either way; see docs/reviews/ for the result.
+SAL_PAIRS <- Filter(function(p) !identical(p$election, "wa2001"), PAIRS)
 SURGE_CANON <- list(
   list(election = "fed2010", prev = "fed2007", region = "fed"),
   list(election = "fed2013", prev = "fed2010", region = "fed"),

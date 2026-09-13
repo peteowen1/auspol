@@ -1,3 +1,23 @@
+# auspol 0.4.31
+
+**A "no data for WA" conclusion was wrong within the same session it was
+written -- the data existed, a grep just missed it. Pooled seat log loss
+0.2926 -> 0.2915.**
+
+- **WA salience data wired into `v6`.** `fit_xgb_primary_v6.R` excluded the
+  entire WA region from salience/surge features on a comment accurate for
+  v1-v4 that never got revisited. `fetch_salience_v6.R` has covered every WA
+  election since 2026-08-27, and `output/salience-v6.csv` has carried real
+  data for six of seven WA pairs since 2026-09-10. Fixed: excludes only
+  `wa2001` now (10 Feb 2001 predates Google Trends' public data entirely).
+  Measured over all 23 pairs: pooled seat log loss 0.2926 -> **0.2915**, 11
+  improved / 9 worse / 3 unchanged, no catastrophic regression.
+- **`all_election_pairs()` gains `sa2022`**, the fifth place it was missing
+  from. Measured cleanly this time (`v6` held fixed, since this function
+  feeds re-entry modelling independent of `v6`'s training): every one of the
+  23 pairs scored bit-for-bit identical to the pre-change baseline -- a
+  verified null, kept for completeness.
+
 # auspol 0.4.30
 
 **sa2022 was scored for months but never trained on, because every sa2018

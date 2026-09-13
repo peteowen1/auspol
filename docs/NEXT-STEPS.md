@@ -2,9 +2,9 @@
 
 ## CURRENT STATE, end of the 2026-09-12/13 session — START HERE
 
-**PR #34 open, `dev` → `main`, review-gated twice and CI green.** sa2022 is
-now in the model (`docs/reviews/sa2022-missing-from-the-model-2026-09-12.md`)
-— a name-order parsing bug meant it was scored but never trained on.
+**PR #34 MERGED to `main`** (6b51957). sa2022 is now in the model
+(`docs/reviews/sa2022-missing-from-the-model-2026-09-12.md`) — a name-order
+parsing bug meant it was scored but never trained on.
 
 **The big find: `fit_xgb_primary_v6.R` was training on its own recycled
 output.** `AUSPOL_XGB_PRIMARY=1` (shipped default) makes every harness
@@ -25,11 +25,16 @@ follow-up.
 **New worst pairs, once the numbers were honest: wa2001 (0.6819) and wa2008
 (0.6840)**, not sa2026 (0.4597, much improved from the corrupted 0.7015+
 seen mid-session). Four specific seats — three of them independents — carry
-53% and 41% of those pairs' total loss, because WA has no salience/emergence
-corpus at all (`docs/reviews/wa-independents-no-salience-2026-09-13.md`).
-**Recommended next step: build a WA salience corpus** (Google Trends
-coverage for WA state candidates back to 2001), the same shape as the
-existing per-region fetchers — this is data acquisition, not a model tweak.
+53% and 41% of those pairs' total loss
+(`docs/reviews/wa-independents-no-salience-2026-09-13.md`). First diagnosis
+wrongly concluded WA had no salience corpus at all — a `grep` for `"wa"`
+missed `geo = "AU-WA"` in `fetch_salience_v6.R`, which has covered every WA
+election since 2026-08-27, with real data on disk since 2026-09-10. **Fixed
+same session** (`docs/reviews/wa-salience-data-already-existed-2026-09-13.md`):
+`fit_xgb_primary_v6.R`'s stale region-wide exclusion now excludes only
+wa2001 (predates Google Trends entirely, genuinely no signal possible).
+Pooled seat log loss 0.2926 → **0.2915**, 11 pairs improved / 9 worse / 3
+unchanged, no catastrophic regression. Shipped, PR pending.
 
 **Also done:** `all_election_pairs()` gained `sa2022` (measured cleanly this
 time, zero effect on any pair — a documented, verified null, kept for

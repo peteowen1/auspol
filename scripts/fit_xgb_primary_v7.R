@@ -62,8 +62,12 @@ PAIRS <- list(
   list(election="wa2013", prev="wa2008", region="wa"),  list(election="wa2017", prev="wa2013", region="wa"),
   list(election="wa2021", prev="wa2017", region="wa"),  list(election="wa2025", prev="wa2021", region="wa")
 )
-# No seat-level salience corpus exists for WA. Kept as its own list rather than
-# silently extending to WA with data that is not there.
+# STALE, matching what fit_xgb_primary_v6.R had until 2026-09-13: WA salience
+# data now exists (output/salience-v6.csv has carried it since 2026-09-10, for
+# six of seven WA pairs -- see docs/reviews/wa-salience-data-already-existed-
+# 2026-09-13.md). v6 fixed this; v7 is experimental and never shipped, so left
+# as-is rather than fixed opportunistically here -- but flagged so a future
+# session doesn't rediscover the same stale exclusion as a fresh mystery.
 SAL_PAIRS <- Filter(function(p) p$region != "wa", PAIRS)
 
 # ---- jump_pctile, computed the way the surge model computes it -------------
