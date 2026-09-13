@@ -634,18 +634,37 @@ for (K in PAIRS) {
   # a redistribution is silently DROPPED from the forecast, which is a wrong
   # answer rather than a missing one. Set AUSPOL_NOTIONAL=0 to restore the
   # previous drop-the-seat behaviour.
-  if (identical(Sys.getenv("AUSPOL_NOTIONAL", "1"), "1") &&
-      file.exists("output/notional-baselines.csv")) {
+  # MODE "2", new 2026-09-13: apply the notional (redistribution-adjusted)
+  # prior to EVERY seat build_notional_baselines.R has one for, not just
+  # seats missing entirely. A seat that keeps its name after a boundary
+  # change (Tangney, Pearce -- fed2022, same names, different booths) was
+  # previously invisible to this mechanism altogether: `missing_seats` is
+  # only ever the brand-new-name case, so every continuing redistricted seat
+  # used its raw, un-adjusted prior result. Found chasing Tangney/Pearce's
+  # AEF misses: the notional prior alone (booth-level respread, leakage-free
+  # -- redistributions are known well before polling day) closes 20-29% of
+  # the gap on those two seats. See docs/reviews/notional-prior-2026-09-13.md.
+  .notional_mode <- Sys.getenv("AUSPOL_NOTIONAL", "1")
+  if (.notional_mode %in% c("1", "2") && file.exists("output/notional-baselines.csv")) {
     NB <- fread("output/notional-baselines.csv", showProgress = FALSE)
     NB <- NB[election == eb & prior == ea]
     if (nrow(NB)) {
-      missing_seats <- setdiff(unique(fb$seat), unique(fa$seat))
-      add <- NB[seat %in% missing_seats, .(seat, party, votes)]
-      if (nrow(add)) {
-        cat(sprintf("BF0n notional baseline supplied for %d seat(s): %s
+      if (identical(.notional_mode, "2")) {
+        notional_seats <- unique(NB$seat)
+        fa <- fa[!seat %in% notional_seats]
+        fa <- rbind(fa, NB[, .(seat, party, votes)], fill = TRUE)
+        cat(sprintf("BF0n2 notional (redistribution-adjusted) prior REPLACED for %d seat(s)
 ",
-                    uniqueN(add$seat), paste(sort(unique(add$seat)), collapse = ", ")))
-        fa <- rbind(fa, add, fill = TRUE)
+                    length(notional_seats)))
+      } else {
+        missing_seats <- setdiff(unique(fb$seat), unique(fa$seat))
+        add <- NB[seat %in% missing_seats, .(seat, party, votes)]
+        if (nrow(add)) {
+          cat(sprintf("BF0n notional baseline supplied for %d seat(s): %s
+",
+                      uniqueN(add$seat), paste(sort(unique(add$seat)), collapse = ", ")))
+          fa <- rbind(fa, add, fill = TRUE)
+        }
       }
     }
   }

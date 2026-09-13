@@ -125,6 +125,41 @@ for (pr in PAIRS) {
   lp <- state_level(pr$prev); ln <- state_level(pr$election)
   if (is.null(lp) || is.null(ln)) { cat(sprintf("XG6! no state level for %s -> skip\n", pr$election)); next }
   prevc <- C[C$election == pr$prev][, list(x = sum(pcv, na.rm = TRUE), n_cand_prev = .N), by = list(seat, party)]
+  # NOTIONAL (REDISTRIBUTION-ADJUSTED) PRIOR, exposed as its own signed
+  # feature rather than substituted into `x`. Measured 2026-09-13: silently
+  # replacing `x` moved dev_prev by 3-4 points for Tangney/Pearce (fed2022,
+  # WA's 2021 redistribution) but barely moved the model's prediction --
+  # xgboost only responds when a feature crosses a LEARNED SPLIT threshold,
+  # and a few points of additive correction apparently doesn't for these
+  # cells (pooled RMSE actually got slightly worse, 3.8477 -> 3.8625). Same
+  # failure shape as ret_exp's flat-rate predecessor: the tree cannot
+  # discover "trust this adjustment" on its own from a silently-changed
+  # input, it needs the adjustment itself as an explicit, learnable column.
+  # `x_notional_adj` is that column: notional minus raw, signed, 0 when no
+  # redistribution data applies (`output/notional-baselines.csv`, booth-
+  # level respread -- the same technique Antony Green's own notional
+  # margins use, leakage-free since a redistribution is public well before
+  # polling day). `x` itself is left untouched.
+  prevc[, x_notional_adj := 0]
+  if (identical(Sys.getenv("AUSPOL_XGB_NOTIONAL", "0"), "1")) {
+    .nbf <- file.path(OUT, "notional-baselines.csv")
+    if (file.exists(.nbf)) {
+      NB <- fread(.nbf, showProgress = FALSE)
+      nb_pair <- NB[election == pr$election & prior == pr$prev]
+      if (nrow(nb_pair)) {
+        nb_x <- nb_pair[, list(x_notional = sum(pcv, na.rm = TRUE)), by = list(seat, party)]
+        prevc <- merge(prevc, nb_x, by = c("seat", "party"), all.x = TRUE)
+        n_set <- sum(!is.na(prevc$x_notional))
+        prevc[!is.na(x_notional), x_notional_adj := x_notional - x]
+        prevc[, x_notional := NULL]
+        cat(sprintf("XG6n  %s: x_notional_adj set for %d of %d (seat,party) cells\n",
+                    pr$election, n_set, nrow(prevc)))
+      }
+    } else {
+      cat(sprintf("XG6n! %s missing -- AUSPOL_XGB_NOTIONAL=1 had nothing to apply for %s\n",
+                  .nbf, pr$election))
+    }
+  }
   nowc  <- C[C$election == pr$election][, list(n_cand_now = .N), by = list(seat, party)]
   ret <- tryCatch(candidate_returns(pr$prev, pr$election), error = function(e) NULL)
   pv  <- tryCatch(personal_prior_vote(pr$prev, pr$election), error = function(e) NULL)
@@ -203,6 +238,7 @@ cat(sprintf("\nseat-file (load_seats) coverage: %d of %d pairs -- %s\n",
             seat_file_hits, length(PAIRS), paste(seat_file_pairs, collapse = ", ")))
 
 ALL[, x := ifelse(is.na(x), 0, x)]
+ALL[, x_notional_adj := ifelse(is.na(x_notional_adj), 0, x_notional_adj)]
 ALL[, n_cand_prev := ifelse(is.na(n_cand_prev), 0L, n_cand_prev)]
 ALL[, n_cand_now  := ifelse(is.na(n_cand_now), 1L, n_cand_now)]
 ALL[, dev_prev := x - level_prev]
@@ -330,6 +366,11 @@ feat_cols <- c("pred_share", "x", "level_prev",
                # which is the train/serve consistency this change exists for.
                if (identical(.lvl_mode, "pred")) "level_from_polls",
                "dev_prev",
+               # x_notional_adj (see its own comment above, where it's built):
+               # only included when AUSPOL_XGB_NOTIONAL=1. The column exists
+               # unconditionally (0 when off) so feat_cols can name it without
+               # the model ever seeing a non-zero value unless the switch is on.
+               if (identical(Sys.getenv("AUSPOL_XGB_NOTIONAL", "0"), "1")) "x_notional_adj",
                "n_cand_prev", "n_cand_now", "same_i", "same_mp_i", "is_major_i",
                "margin", "fed_swing", "retirement_i", "soph_cand_i", "soph_party_i",
                "prev_swing", "is_incumbent_party_i", "own_prev_pcv",
