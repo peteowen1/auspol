@@ -727,6 +727,16 @@ all_election_pairs <- function() {
     list(election = "vic2022", prev = "vic2018"),
     list(election = "nsw2019", prev = "nsw2015"),
     list(election = "nsw2023", prev = "nsw2019"),
+    # sa2022 added 2026-09-13. Scored by backtest_candidate_sa.R since the
+    # candidate-name fix (docs/reviews/sa2022-missing-from-the-model-2026-
+    # 09-12.md) but absent from this list -- the fifth place that gap lived.
+    # Measured cleanly this time: v6 held fixed (this function feeds
+    # split_slope()/re-entry modeling, a mechanism separate from v6's own
+    # training), harnesses run once under default flags, no repool/refit in
+    # between -- so unlike the first attempt at this same change, the result
+    # is not confounded by fit_xgb_primary_v6.R's training-data circularity
+    # (docs/reviews/xgb-primary-circularity-2026-09-13.md).
+    list(election = "sa2022",  prev = "sa2018"),
     list(election = "sa2026",  prev = "sa2022"),
     list(election = "qld2020", prev = "qld2017"),
     list(election = "qld2024", prev = "qld2020"),
