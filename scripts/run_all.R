@@ -101,7 +101,25 @@ run <- function(stage) {
   # guard could not see them either, so the guard the rename exists to serve
   # passed vacuously. That is the "incomplete grep for check codes" hazard
   # this repo has now hit four times; see CLAUDE.md.
-  keep <- grep("^[A-Z]{1,2}[0-9]+[a-c]?[ ]", res, value = TRUE)
+  #
+  # [ !] NOT JUST [ ], AND {1,3} NOT {1,2} -- the FIFTH instance, found
+  # 2026-09-13 review-gating an unrelated fix. Two separate gaps, both
+  # silently dropping real check lines from the summary:
+  #
+  #   1. This codebase's own convention for "this check fired / something is
+  #      wrong" is "CODE!" with the bang directly against the digit -- S5!,
+  #      CV0!, PS0!, MP0p! and this file's own new CV1! all follow it -- and
+  #      every one of them failed this regex, because the character after the
+  #      optional [a-c] had to be a literal space. "CV0! fed2004: File does
+  #      not exist" was invisible in run.log's summary in every CI run before
+  #      this fix; only trailing "wrote output/..." lines (two spaces, no
+  #      bang) ever surfaced.
+  #   2. estimate_statewide_cov.R's own CVR1/CVR1! (a THREE-letter prefix --
+  #      inconsistent with the rest of that file's CV0-CV7, but real,
+  #      pre-existing, and not renamed here given CLAUDE.md's own record of
+  #      renames silently breaking a grep elsewhere) needed one more letter of
+  #      headroom than {1,2} allowed. Widened rather than renaming the code.
+  keep <- grep("^[A-Z]{1,3}[0-9]+[a-c]?[ !]", res, value = TRUE)
 
   if (length(keep)) cat(paste(keep, collapse = "\n"), "\n")
 
