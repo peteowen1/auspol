@@ -41,7 +41,19 @@ suppressMessages(library(xgboost))
 
 OUT <- "output"
 FE <- fread(file.path(OUT, "xgb-primary-v6-features.csv"), showProgress = FALSE)
-base_feat <- setdiff(names(FE), c("pair", "seat", "party", "actual_share"))
+# x_notional_adj EXCLUDED explicitly, not just left out by omission. v6
+# persists it as 0 for every non-federal row (it comes from the federal-
+# only booth-respread in output/notional-baselines.csv), which makes it a
+# near-perfect "is this seat federal" indicator -- inherited into v7's
+# shared base_feat automatically once v6 started persisting it (2026-09-13),
+# and it repeated the EXACT v7i/v7j failure already documented above (a
+# filler value used as a jurisdiction label, reshaping predictions for
+# seats that have nothing to do with the feature): sa2026 log loss jumped
+# 0.4344 -> 0.5061 the one time this ran uncaught. ret_exp/sal_exp are safe
+# here because they vary WITHIN each jurisdiction (per candidate); this one
+# is constant across an entire jurisdiction, which is the disqualifying
+# property, not its origin.
+base_feat <- setdiff(names(FE), c("pair", "seat", "party", "actual_share", "x_notional_adj"))
 cat(sprintf("X71  v6 feature matrix: %d rows, %d features\n", nrow(FE), length(base_feat)))
 
 PAIRS <- list(
