@@ -178,6 +178,22 @@
 #'   **sd 3.65 points** over 19 observations.
 #'
 #'   Zero reproduces the previous behaviour exactly.
+#' @param exhaust Percent (0-100) of an excluded party's votes that carry no
+#'   further preference and are dropped from the count rather than
+#'   redistributed, under optional preferential voting. Length 1 (same rate
+#'   for every party), or a named vector by party class with an unnamed
+#'   element as the default for any class not listed. **R-engine only**:
+#'   `src/seat_sim_core.cpp` has no exhaustion path, so a nonzero value forces
+#'   `engine = "r"` automatically under `"auto"`, and is refused outright if
+#'   `engine = "cpp"` is requested explicitly -- silently ignoring it would be
+#'   exactly the failure mode this repo's own `CLAUDE.md` exists to catch.
+#'   Zero (the default) reproduces the previous behaviour exactly. Real for
+#'   NSW (and Queensland before 2016): fitted from the anchor's own
+#'   preference-estimates.csv, e.g. nsw2023 GRN 39.7%, ONP 71.1%, OTH 61.2% --
+#'   see [distribute_preferences()]'s own docs for the full rates and why
+#'   this matters (40-71% of minor-party preferences there carry no major-
+#'   party preference at all, which nothing in this package could previously
+#'   represent).
 #' @param surge_h Per-draw probability, in `[0, 1]`, that an insurgent
 #'   non-major candidate surges in a seat. Length 1 (the same hazard
 #'   everywhere), one entry per seat, or a NAMED vector matched by seat name --
@@ -278,6 +294,7 @@ simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
                                    shrink_k = 0,
                                    conditional_override = NULL,
                                    flow_sd = 0,
+                                   exhaust = 0,
                                    level_mult = NULL,
                                    surge_h = 0, surge_mu = 15.6, surge_sd = 6.1,
                                    surge_parties = NULL, surge_floor = 2,
@@ -377,6 +394,24 @@ simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
       .v <- unname(flow_sd[parties]); .v[is.na(.v)] <- .fsd_default; as.numeric(.v)
     }
   names(FLOW_SD_BY) <- parties
+  # Same resolution pattern as FLOW_SD_BY, for the same reason: a plain
+  # vector indexed like `parties`, resolved once rather than looked up by
+  # name inside the innermost draw loop. `exhaust` percent (0-100) of the
+  # EXCLUDED party's votes are dropped rather than redistributed -- see
+  # distribute_preferences()'s own docs for the real NSW rates this exists
+  # for. An unnamed scalar (the default, 0) applies to every party.
+  .exh_default <- if (is.null(names(exhaust))) exhaust[1] else {
+    .u <- exhaust[!nzchar(names(exhaust))]
+    if (length(.u)) .u[1] else 0
+  }
+  EXHAUST_BY <- if (length(exhaust) == 1L && is.null(names(exhaust)))
+    rep(as.numeric(exhaust), length(parties)) else {
+      .v <- unname(exhaust[parties]); .v[is.na(.v)] <- .exh_default; as.numeric(.v)
+    }
+  names(EXHAUST_BY) <- parties
+  if (any(EXHAUST_BY < 0) || any(EXHAUST_BY >= 100)) {
+    stop("exhaust must be in [0, 100); got ", paste(utils::head(EXHAUST_BY, 5), collapse = ", "))
+  }
   if (is.null(parties)) stop("shares must have party names as column names")
   K <- length(parties)
 
@@ -894,12 +929,23 @@ simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
   # "auto" reads AUSPOL_SIM_ENGINE (published_flags.R carries the shipped
   # value, "cpp" since the full-scale proof on 2026-09-07); AUSPOL_SIM_ENGINE=r
   # forces the reference loop, which is how the identity is re-proven.
+  # `exhaust` (optional-preferential exhaustion, added 2026-09-13 for NSW) is
+  # R-engine only -- src/seat_sim_core.cpp has no exhaustion path at all, and
+  # WOULD SILENTLY IGNORE a nonzero value if this fell through to cpp, exactly
+  # the class of failure this repo's own CLAUDE.md exists to catch. Any
+  # nonzero exhaust forces "auto" to "r"; an explicit engine = "cpp" with
+  # nonzero exhaust is refused outright rather than silently dropped.
+  has_exhaust <- any(as.numeric(exhaust) != 0)
   if (engine == "auto") engine <- if (!identical(Sys.getenv("AUSPOL_SIM_ENGINE", "cpp"), "r") &&
                                       is.null(party_draws) && dense_cells &&
-                                      shrink_k == 0) "cpp" else "r"
+                                      shrink_k == 0 && !has_exhaust) "cpp" else "r"
   use_cpp <- engine == "cpp"
   if (use_cpp && (!is.null(party_draws) || !dense_cells)) {
     stop("engine = \"cpp\" cannot take party_draws, or this many parties; use engine = \"r\"")
+  }
+  if (use_cpp && has_exhaust) {
+    stop("engine = \"cpp\" has no exhaustion path (src/seat_sim_core.cpp); ",
+         "use engine = \"r\", or exhaust = 0 to use cpp without it")
   }
   if (use_cpp) {
     # DENSE TABLES for the compiled core: one row per (from, alive-set) key,
@@ -1109,6 +1155,11 @@ simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
       while (length(alive) > 2L) {
         from <- alive[which.min(v[alive])]
         pot <- v[from]
+        # EXHAUSTION, before `pot` is touched -- votes that exhaust here never
+        # existed for the rest of the count, matching distribute_preferences().
+        # Positional index into EXHAUST_BY: `from` already indexes `parties`.
+        .exr <- EXHAUST_BY[[from]]
+        if (.exr > 0) pot <- pot * (1 - .exr / 100)
         alive <- alive[alive != from]
         mask <- sum(bitwShiftL(1L, alive - 1L))
         key <- from * 2^K + mask

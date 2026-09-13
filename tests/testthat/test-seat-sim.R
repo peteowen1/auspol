@@ -21,6 +21,46 @@ test_that("a party can win without ever leading on first preferences", {
   expect_equal(unname(r$totals[1, "ALP"]), 1L)
 })
 
+test_that("exhaust drops votes instead of redistributing them, and can flip the winner", {
+  # Same seat as above (GRN sends 90% to ALP, carrying it past LNP's primary
+  # lead) but with most of GRN's preferences exhausting under optional
+  # preferential voting: only a shrinking fraction of GRN's 22 points ever
+  # reaches ALP, so ALP's win margin shrinks and eventually LNP overtakes it.
+  sh <- matrix(c(38, 40, 22), nrow = 1,
+               dimnames = list("seat1", c("ALP","LNP","GRN")))
+  args <- list(shares = sh, matrix = fake_matrix(),
+               party_sd = c(ALP=0, LNP=0, GRN=0), seat_sd = 0,
+               n_sims = 1, seed = 1)
+  r0  <- do.call(simulate_seat_contests, args)
+  r80 <- do.call(simulate_seat_contests, c(args, list(exhaust = c(GRN = 80))))
+  r95 <- do.call(simulate_seat_contests, c(args, list(exhaust = c(GRN = 95))))
+  expect_equal(unname(r0$tcp_winner[1, 1]), "ALP")
+  expect_equal(unname(r80$tcp_winner[1, 1]), "ALP")
+  expect_equal(unname(r95$tcp_winner[1, 1]), "LNP")
+})
+
+test_that("exhaust = 0 (the default) reproduces the previous behaviour exactly", {
+  sh <- matrix(c(38, 40, 22), nrow = 1,
+               dimnames = list("seat1", c("ALP","LNP","GRN")))
+  args <- list(shares = sh, matrix = fake_matrix(),
+               party_sd = c(ALP=1, LNP=1, GRN=1), seat_sd = 1,
+               n_sims = 200, seed = 7)
+  omitted <- do.call(simulate_seat_contests, args)
+  explicit0 <- do.call(simulate_seat_contests, c(args, list(exhaust = 0)))
+  expect_identical(omitted, explicit0)
+})
+
+test_that("engine = \"cpp\" refuses a nonzero exhaust rather than silently ignoring it", {
+  sh <- matrix(c(38, 40, 22), nrow = 1,
+               dimnames = list("seat1", c("ALP","LNP","GRN")))
+  expect_error(
+    simulate_seat_contests(sh, fake_matrix(), party_sd = c(ALP=0,LNP=0,GRN=0),
+                           seat_sd = 0, n_sims = 1, engine = "cpp",
+                           exhaust = c(GRN = 40)),
+    "no exhaustion path"
+  )
+})
+
 test_that("a minor party CAN win a seat outright", {
   sh <- matrix(c(20, 25, 55), nrow = 1,
                dimnames = list("green_seat", c("ALP","LNP","GRN")))

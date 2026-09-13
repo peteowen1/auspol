@@ -8,7 +8,8 @@ distribute_preferences(
   shares,
   conditional = list(),
   pooled = list(),
-  smooth = 0.15
+  smooth = 0.15,
+  exhaust = NULL
 )
 }
 \arguments{
@@ -25,12 +26,27 @@ conditional row matches.}
 \item{smooth}{Weight given to a uniform distribution over the survivors,
 in \verb{[0, 1)}. \strong{Do not set this to zero} without reading the note above:
 it is what stops an unobserved destination being treated as impossible.}
+
+\item{exhaust}{Named numeric vector, party -> percent (0-100) of that
+party's ballots that carry no further preference and are DROPPED from
+the count entirely when that party is excluded, rather than
+redistributed. \code{NULL} (default) or an unnamed/missing entry means 0 --
+full preferential, every ballot redistributes, byte-identical to this
+function's behaviour before this parameter existed. Real for optional-
+preferential systems (NSW; Queensland before 2016): fitted from the
+anchor's own preference-estimates.csv, e.g. nsw2023 GRN 39.7\%, ONP
+71.1\%, OTH 61.2\% -- 40-71\% of minor-party preferences there carry no
+major-party preference at all, which this function previously had no
+way to represent. \code{final_shares} then sums to LESS than the original
+total (see \code{exhausted}), matching the official two-candidate-preferred
+count rather than the full formal vote.}
 }
 \value{
 List: \code{winner}, \code{final_two}, \code{final_shares} (the two-candidate-
 preferred count for those two, in the units \code{shares} was given in),
-\code{order} (exclusion order), and \code{fallbacks} (how many transfers had no
-conditional row).
+\code{order} (exclusion order), \code{fallbacks} (how many transfers had no
+conditional row), and \code{exhausted} (total votes dropped rather than
+redistributed, same units as \code{shares}; 0 whenever \code{exhaust} is unset).
 }
 \description{
 Distribute preferences to a final two
