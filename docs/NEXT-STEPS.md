@@ -97,6 +97,20 @@ population fix, census correspondence build, seven shipped bugs):
    (`docs/plans/gdelt-feasibility-2026-09-10.md`).
 5. **Census 2011/2006/2001** — correspondence mechanism now exists; 2006/2001
    have no bulk data pack (per-division Excel only).
+6. **WA breaks out `NAT` separately and nothing merges it into `LNP`'s
+   trend.** WA's OTH bias is +1.71 against Victoria's +0.45 — suggestive,
+   within noise at n=7. Same shape as the fixed `LIB`-mislabelling bug, so
+   worth an hour. Re-flagged 2026-09-13 — dropped from an earlier trim pass,
+   confirmed still genuinely open (no later doc addresses it).
+7. **Re-measure the xgb-primary/xgb-flows challengers with TIME-FORWARD
+   folds**, not leave-one-group-out. fed2007 being predicted by a model
+   trained on fed2025 is optimistic against the shipped baseline by an
+   unmeasured amount, and every absolute number in
+   `docs/reviews/xgb-primary-x-flows-2x2-2026-09-11.md` inherits it. Possibly
+   superseded by the 2026-09-13 xgb-primary circularity fix (PR #36) — that
+   fix addresses a DIFFERENT leak (training data recycling `pred_share`), not
+   this one (fold direction), so re-check whether it still applies before
+   running it. Re-flagged 2026-09-13, also dropped from the same trim pass.
 
 ## PARKED 2026-09-09, not killed: seat lean from several past elections (decayed)
 
