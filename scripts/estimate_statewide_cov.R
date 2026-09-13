@@ -39,8 +39,35 @@ share_of <- function(dt) {
 #
 # A file-driven table rather than four hand-written blocks, so adding an
 # election is one row and cannot be half-done.
-fed <- fread(file.path(P, "aec-fed-firstprefs.csv"), showProgress = FALSE)
-fed_share <- function(y) share_of(fed[election == sprintf("fed%d", y)])
+# LAZY AND PROTECTED, matching how state_share() already behaves -- and this
+# is the actual bug behind the scheduled "Forecast refresh" workflow failing
+# every night since 2026-09-03. Every state file below is read INSIDE
+# state_share(), called per-pair from within the tryCatch loop further down,
+# so a missing NSW/VIC/QLD/SA file already degrades to "CV0! <pair>: skipped"
+# for that one pair. `fed` used to be read EAGERLY here, unconditionally,
+# before that loop starts -- so a missing federal file threw an UNCAUGHT
+# top-level error and crashed the whole script, halting run_all.R (this stage
+# has no target = FALSE) before fit_seats_full.R, fit_scorecard.R or
+# build_page.R ever ran.
+#
+# .github/workflows/forecast.yaml deliberately does not fetch
+# aec-fed-firstprefs.csv in CI (fetch_preferences_fed.R is one of the four
+# fetchers excluded there, because fetch_preferences_nsw.R cannot run from a
+# GitHub runner's IP and "it has to be all four or none" per that file's own
+# comment) -- so this file has been absent on every scheduled run since that
+# decision, and nothing ever told this script to tolerate it the way
+# fit_seats_full.R already tolerates its own missing external data.
+#
+# Read once, lazily, on first use, and let a read failure surface as a normal
+# per-pair error the existing loop already catches -- same shape as
+# state_share(), just memoised so six federal pairs don't each reopen the file.
+.fed <- NULL
+fed_share <- function(y) {
+  if (is.null(.fed)) {
+    .fed <<- fread(file.path(P, "aec-fed-firstprefs.csv"), showProgress = FALSE)
+  }
+  share_of(.fed[election == sprintf("fed%d", y)])
+}
 state_share <- function(f) share_of(fread(file.path(P, f), showProgress = FALSE))
 
 # C2 WAS REFUSED BY ITS OWN REFUSAL CLAUSE, 2026-09-07. The widened set -- all
