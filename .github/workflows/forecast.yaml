@@ -153,7 +153,18 @@ jobs:
             echo
             echo "### Checks"
             echo '```'
-            grep -E "^(A[0-9]|N[0-9]|V[0-9]|H[0-9]|L[0-9]|P[0-9]|B[0-9]|C[0-9]|S[0-9]|R[0-9]|G[0-9]|F1|O1)" run.log | head -40 || echo "(none captured)"
+            # A SEPARATE, hand-maintained letter enumeration here had already
+            # drifted from run_all.R's own filter -- it never matched a
+            # two-letter code prefix (CV, FL, NL: run_all.R's own comment names
+            # them as needed for region-scoped checks) or a "!" terminator
+            # (this repo's convention for "the check fired"). Every CV0!/CV1!/
+            # S5! line -- the whole point of this step -- was invisible here.
+            # Found 2026-09-13 fixing an unrelated crash whose own diagnostic
+            # output would otherwise have gone the same way. Matched to
+            # run_all.R's regex instead of a second hand-kept list, since two
+            # independently-maintained copies of the same pattern is exactly
+            # how it drifted the first time.
+            grep -E "^[A-Z]{1,3}[0-9]+[a-c]?[ !]" run.log | head -40 || echo "(none captured)"
             echo '```'
             if grep -q "WARNINGS from this stage" run.log; then
               echo "### Warnings"

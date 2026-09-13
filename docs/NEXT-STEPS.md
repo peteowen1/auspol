@@ -17,10 +17,14 @@ changes. Full trace and the fix:
 
 **Corrected pooled seat log loss, 2,097 seat-elections, 23 pairs: 0.2926**
 (PR #34 had claimed 0.3115 — worse than reality, not better; the
-contamination was dragging every number the wrong way). `pool_sharedetail.R`
-and `fit_xgb_primary_v6.R` now carry the correct four-step procedure; an
-**enforced check is still needed** (currently just a loud comment) — top
-follow-up.
+contamination was dragging every number the wrong way).
+
+**The circularity is now ENFORCED, not just documented** (PR #36, merged).
+Each harness records `AUSPOL_XGB_PRIMARY`'s value in its sharedetail output;
+`pool_sharedetail.R` refuses to pool any pair that's contaminated or
+unverifiable. Verified with a real contaminate-then-restore test. Review
+gate caught the escape hatch logging a false "all clean" when used — fixed,
+re-verified.
 
 **New worst pairs, once the numbers were honest: wa2001 (0.6819) and wa2008
 (0.6840)**, not sa2026 (0.4597, much improved from the corrupted 0.7015+
@@ -34,7 +38,10 @@ same session** (`docs/reviews/wa-salience-data-already-existed-2026-09-13.md`):
 `fit_xgb_primary_v6.R`'s stale region-wide exclusion now excludes only
 wa2001 (predates Google Trends entirely, genuinely no signal possible).
 Pooled seat log loss 0.2926 → **0.2915**, 11 pairs improved / 9 worse / 3
-unchanged, no catastrophic regression. Shipped, PR pending.
+unchanged, no catastrophic regression. Shipped (PR #35, merged) — `main` is
+at 0.2915. wa2008/Kalgoorlie itself (jump = 0, a sustained pre-campaign
+story not a last-minute surge) still not rescued — flagged in advance, still
+the worst single seat in the corpus.
 
 **Also done:** `all_election_pairs()` gained `sa2022` (measured cleanly this
 time, zero effect on any pair — a documented, verified null, kept for

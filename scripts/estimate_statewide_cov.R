@@ -25,6 +25,21 @@ P <- election_data_path()
 PARTIES <- c("ALP", "LNP", "GRN", "ONP", "IND", "OTH", "OTH_RIGHT")
 
 share_of <- function(dt) {
+  # ASSERT COVERAGE, NOT JUST PRESENCE. A MISSING file already throws (caught
+  # by the per-pair tryCatch below and reported as "CV0! <pair>: <message>").
+  # A file that reads successfully but is CORRUPT -- truncated to a header
+  # row, or filtered to zero rows by an upstream election-label mismatch --
+  # does not: `s` comes back with 0 rows, `m <- intersect(..., PARTIES)` is
+  # character(0), `out[m] <- ...` on an empty index is a silent no-op, and this
+  # function returns all-zero shares with no error at all. That bypasses the
+  # tryCatch entirely, so the pair is never skipped -- it enters PAIRS with a
+  # bogus zero row, and the ONLY thing that eventually catches it is CV2's row-
+  # sum check, dozens of lines later, reporting "first preferences do not sum
+  # to the same total" rather than naming the actual corrupt file. Found by the
+  # review gate on 2026-09-13, same class CLAUDE.md already records: "a
+  # truncated download... parsed to zero rows and dropped a seat... silently."
+  if (!nrow(dt)) stop("no rows -- the source file may be corrupt, truncated, ",
+                      "or filtered by an election label that does not exist")
   s <- dt[, .(v = sum(votes)), by = party]
   out <- setNames(rep(0, length(PARTIES)), PARTIES)
   m <- intersect(s$party, PARTIES)
@@ -39,8 +54,35 @@ share_of <- function(dt) {
 #
 # A file-driven table rather than four hand-written blocks, so adding an
 # election is one row and cannot be half-done.
-fed <- fread(file.path(P, "aec-fed-firstprefs.csv"), showProgress = FALSE)
-fed_share <- function(y) share_of(fed[election == sprintf("fed%d", y)])
+# LAZY AND PROTECTED, matching how state_share() already behaves -- and this
+# is the actual bug behind the scheduled "Forecast refresh" workflow failing
+# every night since 2026-09-03. Every state file below is read INSIDE
+# state_share(), called per-pair from within the tryCatch loop further down,
+# so a missing NSW/VIC/QLD/SA file already degrades to "CV0! <pair>: skipped"
+# for that one pair. `fed` used to be read EAGERLY here, unconditionally,
+# before that loop starts -- so a missing federal file threw an UNCAUGHT
+# top-level error and crashed the whole script, halting run_all.R (this stage
+# has no target = FALSE) before fit_seats_full.R, fit_scorecard.R or
+# build_page.R ever ran.
+#
+# .github/workflows/forecast.yaml deliberately does not fetch
+# aec-fed-firstprefs.csv in CI (fetch_preferences_fed.R is one of the four
+# fetchers excluded there, because fetch_preferences_nsw.R cannot run from a
+# GitHub runner's IP and "it has to be all four or none" per that file's own
+# comment) -- so this file has been absent on every scheduled run since that
+# decision, and nothing ever told this script to tolerate it the way
+# fit_seats_full.R already tolerates its own missing external data.
+#
+# Read once, lazily, on first use, and let a read failure surface as a normal
+# per-pair error the existing loop already catches -- same shape as
+# state_share(), just memoised so six federal pairs don't each reopen the file.
+.fed <- NULL
+fed_share <- function(y) {
+  if (is.null(.fed)) {
+    .fed <<- fread(file.path(P, "aec-fed-firstprefs.csv"), showProgress = FALSE)
+  }
+  share_of(.fed[election == sprintf("fed%d", y)])
+}
 state_share <- function(f) share_of(fread(file.path(P, f), showProgress = FALSE))
 
 # C2 WAS REFUSED BY ITS OWN REFUSAL CLAUSE, 2026-09-07. The widened set -- all
@@ -125,6 +167,68 @@ colnames(D) <- PARTIES
 cat(sprintf("\nCV1  statewide first-preference CHANGE, %d election pairs\n", nrow(D)))
 print(round(D, 2))
 
+# TOO FEW PAIRS TO FIT ANYTHING -- write the safe fallback and stop here,
+# rather than let cor()/the leave-one-out loop below reach a degenerate input.
+#
+# Found 2026-09-13, review-gating the fix that made a MISSING federal file
+# degrade gracefully instead of crashing (see the fed_share() comment above).
+# That fix was verified against a LOCAL reproduction that removed only the
+# federal file -- but this machine also holds a full historical cache
+# (vic2010/2014/2018, sa2022, qld2017) from earlier development work that CI
+# has never fetched, so the "8 clean pairs" that test produced was not the
+# real CI condition. .github/workflows/forecast.yaml's fetch step actually
+# gets fed(0), nsw(0), vic2022-only(0 pairs, every SPEC pair needs a second
+# endpoint), sa2026-only(0 pairs, same reason), qld2020+qld2024(1 pair) -- ONE
+# total pair, not eight. The leave-one-out loop below removes each pair's own
+# row for that pair's own target, so with one pair it removes the only row,
+# `nrow(Dm) < 3L` fires, and stop() runs UNCAUGHT at the top level -- the
+# exact failure class the fed_share() fix exists to close, just moved a few
+# lines down. Caught by the review gate before this was trusted on inspection.
+#
+# fit_seats_full.R's OWN prerequisite data (vic2022/sa2026 transfers) IS
+# fetched in CI, so it reaches statewide_cor(), which hard-stop()s if
+# output/statewide-cov.rds does not exist at all (R/statewide_cor.R:43-46) --
+# so simply skipping without writing the file only moves the crash there
+# instead. The file must always be written, even in the degenerate case.
+#
+# THE SAFE FALLBACK IS INDEPENDENCE: the identity matrix, cor = 0 off the
+# diagonal. That is precisely what this file's own opening comment names as
+# the behaviour BEFORE this feature existed -- "simulate_seat_contests() draws
+# each party's statewide deviation independently" -- so falling back to it
+# when there is not enough data to estimate anything is not a guess, it is
+# reverting to the documented prior state.
+#
+# statewide_cor(target = NULL) -- what fit_seats_full.R's LIVE forecast call
+# actually uses (scripts/fit_seats_full.R:920) -- never reads `by_target` at
+# all (R/statewide_cor.R:65-70), so an empty list is safe there. A BACKTEST
+# call with a real target falls through to the "target is not in the fit"
+# branch (R/statewide_cor.R:86-89) and gets the same identity matrix, correctly
+# labelled -- also safe, just uninformative, which is the honest state of
+# affairs when there is nothing to inform it.
+#
+# Threshold matches the leave-one-out loop's own requirement below (each
+# target needs >= 3 pairs remaining after removing its own row, so >= 4 total
+# to run that loop at all) rather than inventing a separate number.
+#
+# LAMBDA moved up from beside SH below -- it is a fixed constant, not
+# data-dependent, and this fallback branch needs it before that point.
+LAMBDA <- 0.5
+MIN_PAIRS <- 4L
+if (nrow(D) < MIN_PAIRS) {
+  cat(sprintf("\nCV1! only %d election pair(s), below the %d needed for a leave-one-out fit\n",
+              nrow(D), MIN_PAIRS))
+  cat("CV1! writing the INDEPENDENCE fallback (identity matrix, no correlation\n")
+  cat("CV1! assumed) rather than fitting a correlation degenerate input cannot\n")
+  cat("CV1! support -- this is the documented pre-feature behaviour, not a guess.\n")
+  ID <- diag(length(PARTIES)); dimnames(ID) <- list(PARTIES, PARTIES)
+  saveRDS(list(change = D, cor = ID, cor_shrunk = ID, by_target = list(),
+               lambda = LAMBDA, parties = PARTIES, degraded = TRUE,
+               degraded_reason = sprintf("only %d pair(s) available", nrow(D))),
+          file.path("output", "statewide-cov.rds"))
+  cat("\nCV7  wrote output/statewide-cov.rds (DEGRADED: independence assumed)\n")
+  quit(save = "no", status = 0)
+}
+
 # Each row should sum to about zero: shares that rise must come from shares that
 # fall. A row that does not is a party class missing from one side of the pair.
 rs <- rowSums(D)
@@ -155,7 +259,6 @@ cat(sprintf("CV4  One Nation's change without SA: %s\n",
             paste(sprintf("%+.2f", D[rownames(D) != "sa2026", "ONP"]), collapse = ", ")))
 
 # Shrunk toward the diagonal at a weight FIXED IN ADVANCE by the plan, not tuned.
-LAMBDA <- 0.5
 SH <- LAMBDA * CO + (1 - LAMBDA) * diag(nrow(CO))
 dimnames(SH) <- dimnames(CO)
 cat(sprintf("\nCV5  shrunk toward independence at lambda = %.2f (pre-registered)\n", LAMBDA))
