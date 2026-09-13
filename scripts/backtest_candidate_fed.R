@@ -1681,5 +1681,10 @@ print(per)
 fwrite(R, file.path("output", sprintf("backtest-fed%s.csv", CAL_TAG)))
 fwrite(rbindlist(tot_all, fill = TRUE), file.path("output", sprintf("backtest-fed-totals%s.csv", CAL_TAG)))
 fwrite(rbindlist(all_probs), file.path("output", sprintf("backtest-fed-allprobs%s.csv", CAL_TAG)))
-fwrite(rbindlist(share_detail, fill = TRUE), file.path("output", sprintf("backtest-fed-sharedetail%s.csv", CAL_TAG)))
+# xgb_primary_on RECORDS WHETHER pred_share BELOW IS CIRCULAR -- see
+# backtest_candidate_sa.R's equivalent line for the full explanation.
+# pool_sharedetail.R refuses to pool a file with this column at 1.
+fwrite(rbindlist(share_detail, fill = TRUE)[, xgb_primary_on :=
+       as.integer(identical(Sys.getenv("AUSPOL_XGB_PRIMARY", "0"), "1"))],
+       file.path("output", sprintf("backtest-fed-sharedetail%s.csv", CAL_TAG)))
 cat(sprintf("BF5  wrote output/backtest-fed%s.csv and its totals\n", CAL_TAG))

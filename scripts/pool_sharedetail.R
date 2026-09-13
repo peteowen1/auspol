@@ -90,8 +90,15 @@ rows <- rbindlist(lapply(files, function(f) {
     cat(sprintf("PS0! %s: missing column(s) %s -- dropped\n", basename(f), paste(miss, collapse = ", ")))
     return(NULL)
   }
+  # xgb_on: NA when the harness that wrote this file predates the
+  # xgb_primary_on column (2026-09-13). NA, not 0 -- an absent column is
+  # UNVERIFIABLE, not confirmed clean, and the whole point of this guard is
+  # that "unverifiable, therefore allow" is the posture that let the
+  # circularity in docs/reviews/xgb-primary-circularity-2026-09-13.md go
+  # undetected for a full session.
+  xgb_on <- if ("xgb_primary_on" %in% names(d)) as.integer(d$xgb_primary_on[1]) else NA_integer_
   d[, .(file = f, mtime = file.mtime(f), pair = as.character(pair), seat, party,
-        pred_share, actual_share)]
+        pred_share, actual_share, xgb_on = xgb_on)]
 }))
 if (!nrow(rows)) stop("No readable sharedetail files")
 
@@ -101,6 +108,47 @@ pick <- rows[, .(mtime = max(mtime)), by = pair]
 rows <- merge(rows, pick, by = c("pair", "mtime"))
 keep <- rows[, .(file = file[1]), by = pair]
 rows <- merge(rows, keep, by = c("pair", "file"))
+
+# THE ENFORCED VERSION of the warning comment above and in
+# fit_xgb_primary_v6.R. AUSPOL_XGB_PRIMARY=1 (the shipped default) makes
+# every harness overwrite `shares` with v6's own prior predictions before
+# simulating, so pred_share in such a file is v6's output one step removed,
+# not an independent baseline -- pooling it and refitting v6 is the
+# circularity that cost a full session before it was traced
+# (docs/reviews/xgb-primary-circularity-2026-09-13.md). A missing
+# xgb_primary_on column (a file from before 2026-09-13) is UNVERIFIABLE, not
+# confirmed clean, and gets the same refusal -- "unverifiable, therefore
+# allow" is the posture that let this go undetected for a full session.
+#
+# AUSPOL_POOL_ALLOW_CONTAMINATED=1 is the escape hatch, for the rare case
+# this file is wanted as a live/scoreboard read rather than as v6's own
+# training input -- named to make misuse visible in any log that sets it.
+bad <- unique(rows[is.na(xgb_on) | xgb_on == 1, .(pair, file, xgb_on)])
+if (nrow(bad)) {
+  # PRINT REGARDLESS OF WHETHER THE ESCAPE HATCH LETS EXECUTION CONTINUE.
+  # The first version put this print INSIDE the stop()-guarded block, so
+  # setting AUSPOL_POOL_ALLOW_CONTAMINATED=1 skipped both the stop AND the
+  # print, and execution fell through to the unconditional "all clean" line
+  # below -- a false success message on the exact run where contamination
+  # was knowingly let through. Caught by the review gate. The escape hatch's
+  # whole purpose is "make misuse visible in any log that sets it"; a log
+  # that says "all clean" is the one thing it must never say here.
+  print(bad)
+  if (!identical(Sys.getenv("AUSPOL_POOL_ALLOW_CONTAMINATED", "0"), "1")) {
+    stop(sprintf(paste0(
+      "refusing to pool: %d pair(s) come from sharedetail written with ",
+      "AUSPOL_XGB_PRIMARY=1 or no record of it at all (NA above means the ",
+      "file predates this check). Re-run those harnesses with ",
+      "AUSPOL_XGB_PRIMARY=0 before pooling for fit_xgb_primary_v6.R. Set ",
+      "AUSPOL_POOL_ALLOW_CONTAMINATED=1 to override for a non-training read."),
+      nrow(bad)))
+  }
+  cat(sprintf("PS3! %d pair(s) pooled DESPITE contamination (AUSPOL_POOL_ALLOW_CONTAMINATED=1) -- NOT safe for v6 training, only for a non-training read\n",
+              nrow(bad)))
+} else {
+  cat(sprintf("PS3  all %d pairs verified clean: xgb_primary_on = 0 for every file pooled\n",
+              uniqueN(rows$pair)))
+}
 
 # N_SIMS GUARD. `pred_share` here is a SIMULATION MEAN, and this file is not
 # only a scoreboard -- fit_xgb_primary_v6.R reads it and trains the shipped

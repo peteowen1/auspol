@@ -666,7 +666,12 @@ for (K in PAIRS) {
 if (!length(res_all)) stop("no WA pair produced a result")
 R <- rbindlist(res_all)
 fwrite(R, file.path("output", sprintf("backtest-wa%s.csv", CAL_TAG)))
-fwrite(rbindlist(share_detail, fill = TRUE), file.path("output", sprintf("backtest-wa-sharedetail%s.csv", CAL_TAG)))
+# xgb_primary_on RECORDS WHETHER pred_share BELOW IS CIRCULAR -- see
+# backtest_candidate_sa.R's equivalent line for the full explanation.
+# pool_sharedetail.R refuses to pool a file with this column at 1.
+fwrite(rbindlist(share_detail, fill = TRUE)[, xgb_primary_on :=
+       as.integer(identical(Sys.getenv("AUSPOL_XGB_PRIMARY", "0"), "1"))],
+       file.path("output", sprintf("backtest-wa-sharedetail%s.csv", CAL_TAG)))
 cat(sprintf("\nBW4  pooled over %d seat-elections across %d pairs: accuracy %.1f%%, Brier %.4f\n",
             nrow(R), uniqueN(R$pair), 100 * mean(R$pred == R$actual),
             mean((1 - R$prob)^2)))

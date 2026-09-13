@@ -913,7 +913,13 @@ fwrite(res[order(seat)], file.path("output", sprintf("backtest-%s%s.csv", TGT, C
 fwrite(data.table(pair = TGT, as.data.table(sim$totals)), file.path("output", sprintf("backtest-%s-totals%s.csv", TGT, CAL_TAG)))
 # PERSIST THE POINT ESTIMATE, not just the aggregate RMSE -- see fed's
 # equivalent line, 2026-09-09.
-fwrite(as.data.table(.rr$detail)[, pair := TGT], file.path("output", sprintf("backtest-%s-sharedetail%s.csv", TGT, CAL_TAG)))
+#
+# xgb_primary_on RECORDS WHETHER pred_share BELOW IS CIRCULAR -- see
+# backtest_candidate_sa.R's equivalent line for the full explanation.
+# pool_sharedetail.R refuses to pool a file with this column at 1.
+fwrite(as.data.table(.rr$detail)[, `:=`(pair = TGT,
+       xgb_primary_on = as.integer(identical(Sys.getenv("AUSPOL_XGB_PRIMARY", "0"), "1")))],
+       file.path("output", sprintf("backtest-%s-sharedetail%s.csv", TGT, CAL_TAG)))
 # NAME THE FILE ACTUALLY WRITTEN, not the untagged name. Same fix as in
 # backtest_candidate_sa.R: a hardcoded filename in the log defeats the tag that
 # exists to stop an arm overwriting the baseline it is compared against.
