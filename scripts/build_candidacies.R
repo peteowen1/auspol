@@ -229,9 +229,128 @@ if (!file.exists(sa18f)) {
     stop("sa2018: ", sa18[is.na(votes), .N], " candidates have no vote count")
   if (uniqueN(sa18$seat) != 47L)
     stop("sa2018: parsed ", uniqueN(sa18$seat), " seats, not 47")
-  sa18[, `:=`(surname = NA_character_, given = NA_character_, elected = NA,
+  # PARSE surname AND given RATHER THAN LEAVING THEM NA.
+  #
+  # They were hardcoded to NA_character_, which pushed every consumer onto the
+  # combined `name` field -- and sa2018's `name` is the ONE field in the corpus
+  # stored in natural "Given Surname" order, because it comes from Wikipedia
+  # prose rather than a commission extract. `surname_of()` falls back to the
+  # LEADING token when there is no comma, which is correct for "SANDERSON,
+  # Rachel" and for "SANDERSON Rachel", and takes the GIVEN name for
+  # "Rachel Sanderson".
+  #
+  # So every sa2018 surname was silently read as a first name, and
+  # candidate_returns("sa2018", "sa2022") matched 0 of 219 candidates. Nothing
+  # downstream could show it: the call returned 219 rows all marked
+  # same = FALSE, which reads as "no South Australian candidate re-stood in
+  # 2022" -- a sentence that could have been true. Same shape as the Victorian
+  # seat-case bug this file's sibling records, which reported that no Victorian
+  # candidate had ever re-stood.
+  #
+  # The cost was that sa2022 could never be an MP-slope target (no returning
+  # non-majors => no panel rows), so the SA harness refused to run that pair at
+  # all, and sa2022 sat outside the model while still being scored.
+  #
+  # 61 of 264 names also carry raw wiki markup -- "[[Rachel Sanderson]]" and
+  # the piped "[[Robert Simms (politician)|Robert Simms]]" -- stripped here,
+  # display half kept. Audited across the corpus: sa2018 is the only election
+  # affected.
+  .wiki <- function(x) {
+    x <- as.character(x)
+    x <- gsub("\\[\\[([^]|]*)\\|([^]]*)\\]\\]", "\\2", x)  # [[Target|Display]] -> Display
+    x <- gsub("\\[\\[|\\]\\]", "", x)                       # [[Plain]]          -> Plain
+    trimws(gsub("[[:space:]]+", " ", x))
+  }
+  .n_wiki <- sum(grepl("[[", sa18$name, fixed = TRUE))
+  .clean <- .wiki(sa18$name)
+  # Natural order: first token is the given name, the REST is the surname.
+  # "the rest" rather than "the last token" so a two-word surname survives --
+  # "Dominic Wy Kanak" keeps "Wy Kanak", which normalises to the same key as
+  # sa2022's "WY KANAK, Dominic". The failure mode it accepts instead is a
+  # middle name ("John Paul Smith"), which Wikipedia election boxes rarely
+  # carry. The match rate is asserted below rather than assumed.
+  .tok <- strsplit(.clean, " ", fixed = TRUE)
+  .giv <- vapply(.tok, function(p) if (length(p)) p[1] else NA_character_, character(1))
+  .sur <- vapply(.tok, function(p) if (length(p) > 1)
+                   paste(p[-1], collapse = " ") else NA_character_, character(1))
+  sa18[, `:=`(name = .clean, surname = .sur, given = .giv, elected = NA,
              party = classify_party(party_raw), election = "sa2018",
              region = "sa", year = 2018L)]
+  cat(sprintf("BC2b sa2018: parsed %d surnames and %d given names from `name`; %d carried wiki markup\n",
+              sum(!is.na(.sur)), sum(!is.na(.giv)), .n_wiki))
+  # A name that yields no surname is a parse failure, not a person with one
+  # name -- fail rather than write an NA that reads as "not applicable".
+  #
+  # NAME THE ROWS, DO NOT JUST COUNT THEM. The first version of this check
+  # printed only a count and stopped above 5, which let up to five candidates
+  # fail to parse with nothing on screen saying who -- the same "a count is not
+  # an identity" mistake that fit_mp_slope.R's MP0p! guard exists to fix, in the
+  # very commit that fixes it. Caught by the review gate.
+  #
+  # The tolerance stays above zero rather than at zero because a genuine mononym
+  # is possible in a candidate field, and stopping the whole corpus build on one
+  # would be worse than surfacing it. But every failure is now printed, so a
+  # partial failure cannot be silent -- which is the property that actually
+  # matters. Today the count is 0 of 264.
+  .bad <- which(is.na(.sur))
+  if (length(.bad)) {
+    cat(sprintf("BC2b! sa2018: %d name(s) produced no surname -- printed in full, none may pass unseen:\n",
+                length(.bad)))
+    print(sa18[.bad, .(seat, name)])
+  }
+  if (length(.bad) > 5)
+    stop("sa2018: ", length(.bad), " names produced no surname -- check the wiki strip")
+
+  # ASSERT THE MATCH RATE, because a WRONG surname is the dangerous failure and
+  # the NA count above cannot see it.
+  #
+  # The original bug produced 264 perfectly well-formed surnames that were all
+  # the wrong field, and every count-based check passed. A name arriving as
+  # "Rachel Sanderson (Liberal)" or from an unclosed "[[..." link would do the
+  # same thing again: non-NA, non-empty, silently unmatchable against sa2022.
+  #
+  # The only thing that distinguishes a right parse from a well-formed wrong one
+  # is whether the surnames actually MATCH the next election. A wrong parse gives
+  # ~0%, which is what we had.
+  #
+  # Tested against three deliberately broken inputs before being trusted:
+  #   correct parse, as stored                      35.5%  guard quiet
+  #   surname taken as the leading token (the bug)    1.7%  guard FIRES
+  #   surname with a trailing "(Liberal)" glued on    0.0%  guard FIRES
+  #
+  # WHAT IT DOES NOT CATCH, stated because a guard oversold is worse than none:
+  # a PARTIAL corruption. If 61 of 264 names broke, the other 203 still match and
+  # the rate stays near 35%, well clear of the floor. This is a tripwire for a
+  # WHOLESALE parse failure -- the failure that actually happened -- not a
+  # per-row validator.
+  #
+  # The floor is 5%, not the 15-26% cross-pair band R/candidate_returns.R
+  # records, because this measures a different quantity (share of sa2022
+  # surnames seen anywhere in sa2018, not the returning-candidate rate) and a
+  # tripwire should sit far from the healthy value, not just below it.
+  # Review gate.
+  .s22 <- parts[["sa2022"]]
+  if (!is.null(.s22) && nrow(.s22)) {
+    .k18 <- unique(tolower(gsub("[^A-Za-z]", "", .sur)))
+    # rep(), not a bare NA_character_. surname_of() opens with
+    # ifelse(is.na(surname), "", surname), and ifelse() returns a result the
+    # length of its CONDITION -- so a length-1 NA collapsed 240 names to one and
+    # the check reported "100.0% (1 of 1)" and passed. A guard that reports
+    # perfect health because it is measuring nothing, which is the exact family
+    # of bug this whole block exists to prevent. Caught by reading the printed
+    # number rather than the exit code.
+    .k22 <- unique(surname_of(rep(NA_character_, nrow(.s22)), .s22$name))
+    .k18 <- .k18[nzchar(.k18)]; .k22 <- .k22[nzchar(.k22)]
+    .rate <- if (length(.k22)) length(intersect(.k18, .k22)) / length(.k22) else NA_real_
+    cat(sprintf("BC2b sa2018->sa2022 surname overlap: %.1f%% (%d of %d sa2022 surnames seen in sa2018)\n",
+                100 * .rate, length(intersect(.k18, .k22)), length(.k22)))
+    if (!is.finite(.rate) || .rate < 0.05)
+      stop("sa2018: surname overlap with sa2022 is ", round(100 * .rate, 1),
+           "% -- at or near zero means the names are parsed into the wrong field, ",
+           "which is the bug this block exists to fix, not a real absence of returning candidates")
+  } else {
+    cat("BC2b! sa2022 not built yet -- cannot check the sa2018 surname parse against it\n")
+  }
   parts[["sa2018"]] <- sa18[, .(seat, surname, given, party_raw, votes, elected,
                                 party, election, region, year, name)]
   cat(sprintf("BC2b sa2018: %d candidates in %d seats\n", nrow(sa18), uniqueN(sa18$seat)))

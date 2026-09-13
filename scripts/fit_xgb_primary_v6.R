@@ -26,6 +26,16 @@ suppressMessages(library(xgboost))
 
 OUT <- "output"
 C <- fread(file.path(OUT, "candidacies.csv"), showProgress = FALSE)
+# `pred_share` in this file (the "BASELINE (shipped model)" print below, and
+# the base feature this script trains x/dev_prev-style columns from) is ONLY a
+# genuine, independent baseline if it was pooled from sharedetail generated
+# with AUSPOL_XGB_PRIMARY=0. The published default is "1", which makes every
+# ordinary harness run overwrite `shares` with THIS model's own prior output
+# before simulating -- so the ordinary "run harness, pool, refit" cycle trains
+# v6 on its own recycled predictions and compounds with every iteration.
+# Traced 2026-09-13 after it drifted a pair's log loss 0.5384 -> 0.8126 across
+# repeated same-session refits with no code change. See the full explanation
+# and the correct four-step procedure in scripts/pool_sharedetail.R's header.
 SD <- fread(file.path(OUT, "pooled-sharedetail.csv"), showProgress = FALSE)
 
 PAIRS <- list(
@@ -40,6 +50,13 @@ PAIRS <- list(
   list(election = "nsw2023", prev = "nsw2019", region = "nsw"),
   list(election = "qld2020", prev = "qld2017", region = "qld"),
   list(election = "qld2024", prev = "qld2020", region = "qld"),
+  # sa2022 added 2026-09-12. It was scored by the backtest but absent from this
+  # list, so 47 seat-elections ran on fallback paths while their log loss (0.9409,
+  # the worst pair in the corpus, and 2 of its 4 seats where the actual winner got
+  # <= 1e-4) was pooled in as though it measured the model. Its predecessor sa2018
+  # could not be matched to it until the name-order bug in build_candidacies.R was
+  # fixed the same day -- 0 of 219 candidates were recognised as returning.
+  list(election = "sa2022",  prev = "sa2018",  region = "sa"),
   list(election = "sa2026",  prev = "sa2022",  region = "sa"),
   list(election = "vic2014", prev = "vic2010", region = "vic"),
   list(election = "vic2018", prev = "vic2014", region = "vic"),

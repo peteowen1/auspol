@@ -1,6 +1,51 @@
 # auspol — work queue
 
-## CURRENT STATE, end of the 2026-09-11 session — START HERE
+## CURRENT STATE, end of the 2026-09-12/13 session — START HERE
+
+**PR #34 open, `dev` → `main`, review-gated twice and CI green.** sa2022 is
+now in the model (`docs/reviews/sa2022-missing-from-the-model-2026-09-12.md`)
+— a name-order parsing bug meant it was scored but never trained on.
+
+**The big find: `fit_xgb_primary_v6.R` was training on its own recycled
+output.** `AUSPOL_XGB_PRIMARY=1` (shipped default) makes every harness
+overwrite `shares` with `v6`'s own prior predictions before simulating, and
+the simulator writes `pred_share` — what `v6` calls "the shipped baseline" —
+from that already-overridden result. Repeated same-session refit cycles
+compounded this and drifted a pair's log loss 0.5384 → 0.8126 with zero code
+changes. Full trace and the fix:
+`docs/reviews/xgb-primary-circularity-2026-09-13.md`.
+
+**Corrected pooled seat log loss, 2,097 seat-elections, 23 pairs: 0.2926**
+(PR #34 had claimed 0.3115 — worse than reality, not better; the
+contamination was dragging every number the wrong way). `pool_sharedetail.R`
+and `fit_xgb_primary_v6.R` now carry the correct four-step procedure; an
+**enforced check is still needed** (currently just a loud comment) — top
+follow-up.
+
+**New worst pairs, once the numbers were honest: wa2001 (0.6819) and wa2008
+(0.6840)**, not sa2026 (0.4597, much improved from the corrupted 0.7015+
+seen mid-session). Four specific seats — three of them independents — carry
+53% and 41% of those pairs' total loss, because WA has no salience/emergence
+corpus at all (`docs/reviews/wa-independents-no-salience-2026-09-13.md`).
+**Recommended next step: build a WA salience corpus** (Google Trends
+coverage for WA state candidates back to 2001), the same shape as the
+existing per-region fetchers — this is data acquisition, not a model tweak.
+
+**Also done:** `all_election_pairs()` gained `sa2022` (measured cleanly this
+time, zero effect on any pair — a documented, verified null, kept for
+completeness). Census demographics and the per-cell primary SD model were
+both measured properly and don't ship (see the 2026-09-12 review docs).
+sa2026's One Nation seat-ranking problem got three honest negative results
+(NA-gating, isolated model, same-jurisdiction slope) and is parked — no
+same-state precedent exists for a party that didn't contest South Australia
+before 2022, so it may not be fixable with this model shape at all.
+
+**Unrelated, flagged not fixed:** the scheduled "Forecast refresh" GitHub
+Action is failing on a missing `external/elections/aec-fed-firstprefs.csv` on
+the CI runner (`estimate_statewide_cov.R`) — pre-existing, nothing tonight
+touched that script.
+
+## PREVIOUS STATE, end of the 2026-09-11 session
 
 **PR #32 open, `dev` → `main`, review-gated and CI-equivalent green.**
 

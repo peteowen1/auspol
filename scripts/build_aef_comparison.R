@@ -165,13 +165,32 @@ print(per[, .(pair, n, our_acc = round(our_acc,3), our_ll = round(our_ll,4),
               aef_ll = round(aef_ll,4), delta = round(delta,4))])
 # The all-22 number: prefer this arm's own pooled table (scripts/pool_pf_arms.R)
 # over pooled-backtest.csv, which is newest-per-pair and therefore mixed.
-.arm_pooled <- file.path(OUT, "pf-arms-pooled.csv")
-.arm <- sub(".*/(p[01]f[01])_s.*", "\\1", RUNDIR)
-if (nzchar(RUNDIR) && file.exists(.arm_pooled) &&
-    .arm %in% fread(.arm_pooled, showProgress = FALSE)$arm) {
-  .ap <- fread(.arm_pooled, showProgress = FALSE)[arm == .arm]
-  cat(sprintf("\nPooled seat log loss, ALL 22 elections, THIS arm (%s, seed-averaged): %.4f\n",
-              .arm, .ap$logloss[1]))
+# COMPUTE THE ALL-PAIRS FIGURE FROM THIS ARM'S OWN FILES, never from a stored
+# summary. pf-arms-pooled.csv is written by a different script at a different
+# time, and on 2026-09-11 it was left holding the LEAKED arm's 0.3001 while
+# this arm's files had been re-run leakage-free -- so this line printed a
+# number from one model under another model's name, captioned "ALL 22
+# elections" without ever checking the pair count. Flagged by the review gate;
+# both faults fixed by reading the arm directly and stating the real coverage.
+.allf <- if (length(ARM_FILES)) ARM_FILES else character(0)
+if (length(.allf)) {
+  .allr <- unique(rbindlist(lapply(.allf, function(f) {
+    d <- fread(f, showProgress = FALSE)
+    pc <- if ("prob" %in% names(d)) "prob" else if ("p" %in% names(d)) "p" else NA_character_
+    if (is.na(pc) || !all(c("seat", "actual") %in% names(d))) return(NULL)
+    if (!"pair" %in% names(d)) {
+      mm <- regmatches(basename(f), regexpr("(fed|vic|nsw|sa|qld|wa)[0-9]{4}", basename(f)))
+      if (!length(mm)) return(NULL)
+      d[, pair := mm]
+    }
+    d[, .(pair = as.character(pair), seat = as.character(seat),
+          p = pmin(pmax(get(pc), eps), 1))]
+  }), fill = TRUE))
+  .allr <- .allr[, .(p = mean(p)), by = .(pair, seat)]
+  .known <- length(vapply(all_election_pairs(), `[[`, character(1), "election"))
+  cat(sprintf("\nPooled seat log loss, %d of %d known pairs, THIS arm (%s, seed-averaged): %.4f%s\n",
+              uniqueN(.allr$pair), .known, RUNDIR, -mean(log(.allr$p)),
+              if (uniqueN(.allr$pair) < .known) "  <- PARTIAL, not the full backtest" else ""))
 } else {
   cat(sprintf("\nPooled seat log loss, ALL 22 elections (newest-per-pair, MAY MIX ARMS): %.4f\n",
               sum(bt_all$logloss * bt_all$n) / sum(bt_all$n)))
@@ -181,14 +200,50 @@ cat(sprintf("Pooled seat log loss on the %d AEF-comparable elections: ours %.4f 
             mean(-log(ALL$our_p)) - mean(-log(ALL$aef_p))))
 
 N_WORST <- as.integer(Sys.getenv("AUSPOL_AEF_WORST", "20"))
+# IS IT THE PRIMARY OR THE FLOWS? Pete's question, 2026-09-11, and the table
+# could not answer it before: it showed our primary and AEF's side by side and
+# left the subtraction to the reader.
+#
+# `prim_gap` is OUR absolute primary error on the winner minus AEF's. Positive
+# means we predicted that candidate's vote WORSE than AEF did. `why` reads it:
+#
+#   "primary"   we are >=2 points worse on the winner's primary -- the vote
+#               estimate is the problem and better flows cannot rescue it.
+#   "flow/var"  our primary is within 2 points of AEF's (or better) and we
+#               still gave a much lower win probability -- so we had roughly
+#               the right vote and turned it into the wrong answer, which is
+#               preferences or the spread around the point estimate.
+#   "both"      worse on primary AND the probability gap is larger than the
+#               primary gap explains.
+ALL[, our_pe := abs(our_primary - actual_primary)]
+ALL[, aef_pe := abs(aef_primary - actual_primary)]
+ALL[, prim_gap := our_pe - aef_pe]
+ALL[, why := fifelse(is.na(prim_gap), "no primary data",
+             fifelse(prim_gap >= 2 & delta > 2 * prim_gap / 10, "both",
+             fifelse(prim_gap >= 2, "primary", "flow/var")))]
 cat(sprintf("\n=== WORST %d SEATS (our log loss minus AEF's, worst first) ===\n", N_WORST))
+cat("our_prim/aef_prim/actual are the WINNER's primary vote. prim_gap = our error minus AEF's,\n")
+cat("so positive means we called that candidate's vote worse. why: is the miss the primary or not.\n")
 setorder(ALL, -delta)
-worst <- ALL[seq_len(min(N_WORST, .N)), .(pair, seat, actual, our_pred, our_p = round(our_p,3),
-                      aef_pred, aef_p = round(aef_p,3),
-                      our_primary = round(our_primary,1),
-                      actual_primary = round(actual_primary,1),
-                      aef_primary = round(aef_primary,1),
-                      delta = round(delta,2))]
+worst <- ALL[seq_len(min(N_WORST, .N)),
+             .(pair, seat, won = actual, our_p = round(our_p, 3), aef_p = round(aef_p, 3),
+               our_prim = round(our_primary, 1), aef_prim = round(aef_primary, 1),
+               actual = round(actual_primary, 1), prim_gap = round(prim_gap, 1),
+               why, delta = round(delta, 2))]
 print(worst)
+cat("\n=== SO WHICH IS IT? worst 20, and all 659 comparable seats ===\n")
+cat(sprintf("worst %d: %s\n", N_WORST,
+            paste(sprintf("%s=%d", names(table(worst$why)), as.integer(table(worst$why))), collapse = "  ")))
+.sc <- ALL[!is.na(prim_gap)]
+cat(sprintf("all %d scored seats: %s\n", nrow(.sc),
+            paste(sprintf("%s=%d", names(table(.sc$why)), as.integer(table(.sc$why))), collapse = "  ")))
+cat(sprintf("mean primary error on the winner: ours %.2f, AEF %.2f (we are %s by %.2f points)\n",
+            mean(.sc$our_pe), mean(.sc$aef_pe),
+            if (mean(.sc$our_pe) > mean(.sc$aef_pe)) "WORSE" else "better",
+            abs(mean(.sc$our_pe) - mean(.sc$aef_pe))))
+cat("\n=== the same split, by who won the seat ===\n")
+print(.sc[, .(seats = .N, our_prim_err = round(mean(our_pe), 2), aef_prim_err = round(mean(aef_pe), 2),
+              prim_gap = round(mean(prim_gap), 2), ll_damage = round(sum(delta), 2)),
+          by = .(won = actual)][order(-ll_damage)])
 fwrite(ALL, file.path(OUT, "aef-comparison-full.csv"))
 cat(sprintf("\nwrote %s\n", file.path(OUT, "aef-comparison-full.csv")))

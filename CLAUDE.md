@@ -32,6 +32,27 @@ the PR was opened hours earlier; the rule has to be about the push.
 Run `devtools::document()` **in the same commit**. A changed default with a
 stale `.Rd` is a `WARNING`, and CI treats warnings as errors.
 
+## EVERY REQUEST FROM PETE GOES IN `docs/PETE-ASKED-FOR.md`
+
+**Read that file at the start of any session.** It is the register of what he
+asked for and whether it is actually in the model.
+
+A request leaves the register when it SHIPS, or when he has been told in a
+message — not a commit, not a plan file — that it is not happening and why.
+
+**"In a plan" is not "shipped". "Built but flagged off" is not "shipped".**
+
+Written 2026-09-11, when Pete asked what he had requested that was never
+delivered, and the answer was three things. One of them was demographics as
+model features, which he had asked for in the same breath as *"if you leave
+any vars out let me know dont just silently do it"*. It was left out silently.
+
+The failure is never a refusal. It is judging something unready, folding that
+judgement into a plan, and never saying plainly **"I am not doing what you
+asked, and here is why."** From the outside that is indistinguishable from
+having done it — which is why he ends up assuming a feature is in the model
+when it is not.
+
 ## A NEGATIVE RESULT IS ONLY REPORTABLE FROM THE STRONGEST VERSION YOU CAN BUILD
 
 **Before saying a model, feature or design "doesn't work", state what you gave
@@ -175,6 +196,37 @@ Specific traps, all of which have bitten:
 - **Grepping for check codes**: patterns anchored on an adjacent quote miss
   `cat(sprintf("\nG3 ...`. Three incomplete greps, one of which let `B1` mean
   two different things. The registry is a table in `ARCHITECTURE.md`.
+- **A COLUMN THAT IS CONSTANT WITHIN A SUBGROUP IS A LABEL FOR THAT SUBGROUP,
+  and a tree will use it as one.** xgboost cannot tell "this is 0 because the
+  concept does not apply here" from "this is 0 because the value is zero". On
+  2026-09-12 four state-deviation features were added for federal pairs only;
+  the other 6,100 cells got `state_poll_dev = 0`, `state_elec_gap = 999` and so
+  on as fillers. A split like `state_elec_gap > 500` then separates every
+  non-federal row cleanly, so the tree spent splits partitioning on jurisdiction
+  and reshaped the whole fit around it. **96% of non-federal predictions moved,
+  by up to 5.87 points, from columns that say nothing about them** -- South
+  Australia, the smallest region at 329 cells, moved most. Pooled RMSE 3.8740 ->
+  3.9297 even though the feature gained 0.060 on fed2022, the pair it was built
+  for. If a feature only exists for part of the corpus, either fit that part
+  separately or do not add it -- a filler value is not neutral. Same root as the
+  percentile trap below: both are cases where a placeholder became a signal.
+- **A PERCENTILE of a mostly-tied variable reports "is this the mode?", not
+  "how big is this?"** `jump_pctile` ranked campaign salience within each
+  election, and `jump` is **51-81% exactly zero** — 447 of fed2007's 552
+  governed candidates, 62 distinct values in the whole field. The tie-averaged
+  zero block took percentile 0.55, so **any** non-zero value started above the
+  81st percentile: a raw `jump` of 0.0220, which is noise, scored 0.9846. Two
+  unrelated 2007 candidates in different states had identical percentiles to
+  four decimals, both polled under 3%, and both sat in the top salience bin
+  next to the teals. Inside that bin salience correlated with outcome at
+  **−0.096**. Nothing downstream revealed it: the column was populated, the
+  model trained, the metrics looked plausible, and it surfaced only when Pete
+  asked why a specific candidate scored high. Fixed by ranking within the
+  non-zero set (`docs/reviews/salience-percentile-fix-2026-09-12.md`); the
+  strike rate of independents above the 90th percentile went 19% to 57% on the
+  same data. **Before percentile-ranking anything, print three numbers: percent
+  exactly zero, count of distinct values, and the size of the largest tied
+  block.** Still unported to `R/salience_surge.R:92`.
 
 ## Before saying we don't have data, READ `docs/DATA-REGISTRY.md` and `docs/DATA-DICTIONARY.md`
 

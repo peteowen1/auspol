@@ -91,6 +91,49 @@ cat(sprintf("MP0p %d of %d pairs contributed rows%s\n",
             length(unique(panel$target)), nrow(pairs),
             if (length(.pair_fail)) paste0("; FAILED: ", paste(.pair_fail, collapse = "; ")) else ""))
 if (length(.pair_fail)) stop("candidate_returns() failed for ", length(.pair_fail), " pair(s); see MP0p")
+# NAME THE MISSING PAIRS, do not just count them.
+#
+# This line printed "22 of 23 pairs contributed rows" for an unknown length of
+# time and carried on. The missing one was sa2018->sa2022, and because that pair
+# silently produced no MP slopes, sa2022 could not be scored by its harness at
+# all -- while its fallback-path log loss (0.9409, the worst in the corpus) went
+# on being pooled into the headline figure as though it measured the model.
+#
+# `.pair_fail` above only catches a pair whose candidate_returns() THROWS. This
+# pair did not throw: it returned 219 rows that all failed the downstream
+# "non-major AND returning" filter, because every sa2018 surname was being
+# parsed as a first name. The guard was built for the failure someone imagined
+# and the real one walked straight past it.
+#
+# A count is not an identity. Two lines, and the next instance announces itself.
+.missing <- setdiff(pairs$to, unique(panel$target))
+if (length(.missing)) {
+  cat(sprintf("MP0p! NO ROWS for %d target(s): %s\n",
+              length(.missing), paste(.missing, collapse = ", ")))
+  # STOP, do not warn. The first version of this check only printed, and the
+  # review gate was right that this reproduces the very failure it patches: the
+  # OLD line printed "22 of 23 pairs contributed rows" and was ignored for an
+  # unknown length of time, because a diagnostic buried in a wall of Rscript
+  # output does not force anyone to look. Making the replacement another print
+  # protects only the person who immediately reruns the affected harness, and
+  # nobody did that last time -- the gap was found by a coincidental audit
+  # months later, after its fallback-path log loss had been pooled into the
+  # headline figure all along.
+  #
+  # The six harnesses DO each stop() when their own target is missing, so the
+  # gap is eventually loud. But "eventually, if someone runs that exact pair" is
+  # what let sa2022 sit outside the model. This script already hard-fails on a
+  # coverage gap two lines above (stopifnot on dev_prev/dev_now); this is the
+  # same class of guarantee.
+  #
+  # If a target legitimately has no returning non-majors, that is a real finding
+  # about the data and should be handled deliberately -- by fixing the upstream
+  # parse, or by removing the pair -- not by shipping a table with a hole in it.
+  stop("fit_mp_slope: ", length(.missing), " target(s) produced no slopes (",
+       paste(.missing, collapse = ", "),
+       "). A harness run against them will refuse to start. Fix the upstream ",
+       "candidate matching rather than writing an incomplete table.")
+}
 stopifnot(nrow(panel) > 0)
 # COVERAGE, not presence: a column can be there, typed and empty. CLAUDE.md
 # records 4.98M silently-discarded values from exactly that.

@@ -556,17 +556,76 @@ for (K in PAIRS) {
   # EXPERIMENTAL, default OFF: xgb-flows-v1 PER-SEAT conditional override.
   # docs/plans/prereg-xgb-flows-v1-2026-09-10.md. Needs `shares` (this seat's
   # own primary shares), so it is built here rather than beside build_flow_matrix().
+  # XGB PER-CELL PRIMARY SD (AUSPOL_XGB_PRIMARY_SD). The replacement for the
+  # surge: instead of firing a jump at one candidate, be honestly WIDE on cells
+  # that could plausibly emerge and let the simulator's own tail carry it.
+  # Combined by taking the larger of the two, never added -- same convention as
+  # the salience and re-entry overrides above.
+  if (identical(Sys.getenv("AUSPOL_XGB_PRIMARY_SD", "0"), "1")) {
+    .xsd <- tryCatch(xgb_primary_sd_matrix(shares, el_to),
+                     error = function(e) {
+                       cat(sprintf("XD9! xgb primary sd FAILED: %s
+", conditionMessage(e))); NULL })
+    if (!is.null(.xsd)) SD_OVR <- combine_sd_override(SD_OVR, .xsd)
+  }
   .xgb_flow_ov <- NULL
   if (identical(Sys.getenv("AUSPOL_XGB_FLOWS", "0"), "1")) {
     .xgb_flow_ov <- tryCatch(xgb_flow_conditional_override_for(shares, el_to, el_from, "wa"),
                               error = function(e) { cat(sprintf("XF9! xgb flows per-seat FAILED: %s\n", conditionMessage(e))); NULL })
+  }
+  # XGB SURGE PARAMETERS (AUSPOL_XGB_SURGE). Replaces the salience-derived
+  # surge_h / surge_party / surge_mu / surge_sd with the emergence model's.
+  # No simulator change: all four are already per-seat vectors.
+  #
+  # RESET EVERY ITERATION, then override. The four defaults are assigned here
+  # unconditionally so this pair cannot inherit the previous pair's values, and
+  # the call site below reads these variables rather than testing exists(.xs).
+  #
+  # The earlier version left `.xs` unset except inside the flag-gated block and
+  # asked `exists(".xs") && !is.null(.xs)` at the call site. That works in a
+  # clean Rscript run and is fragile anywhere else: source this file twice in
+  # one session and a stale `.xs` from the previous run satisfies exists() and
+  # silently applies another pair's surge parameters. The other five harnesses
+  # all use the reset-then-override shape, and combine_sd_override() in
+  # R/reentry_prior.R already carries an explicit guard against exactly this
+  # ("a caller that left a PREVIOUS pair's matrix sitting in `a`"). Review gate.
+  surge_arg <- SURGE_H; surge_party_arg <- NULL
+  surge_mu_arg <- 15.6; surge_sd_arg <- 6.1
+  if (identical(Sys.getenv("AUSPOL_XGB_SURGE", "0"), "1")) {
+    .xs <- tryCatch(xgb_surge_params_for(shares, el_to),
+                    error = function(e) { cat(sprintf("XS9! xgb surge FAILED: %s
+  ", conditionMessage(e))); NULL })
+    if (!is.null(.xs)) {
+      surge_arg <- .xs$surge_h; surge_party_arg <- .xs$surge_party
+      surge_mu_arg <- .xs$surge_mu; surge_sd_arg <- .xs$surge_sd
+    }
   }
   sim <- simulate_seat_contests(level_sd = .level_sd, sd_override = SD_OVR, level_mult = .lm(shares), shares, fm, party_sd = psd,
                                 seat_sd = sd_used * SEAT_SD_MULT,
                                 n_sims = N_SIMS, smooth = SMOOTH, seed = SEED,
                                 shrink = SHRINK, fallback_smooth = FB_SMOOTH, shrink_k = SHRINK_K,
                                 conditional_override = .xgb_flow_ov,
-                                flow_sd = FLOW_SD, surge_h = SURGE_H)
+                                # WA passed only the SCALAR surge_h and never
+                                # surge_party/mu/sd, because it has no salience
+                                # corpus and so never had surge-v2 -- a
+                                # documented parity gap. When AUSPOL_XGB_SURGE
+                                # arrived that became a silent no-op: the block
+                                # above computed all four per-seat vectors, the
+                                # log printed XS9 lines saying so, and the call
+                                # site threw them away. All seven WA pairs came
+                                # back byte-identical, which reads as "this
+                                # input does not matter" rather than "it never
+                                # reached the simulator". Caught 2026-09-11 by
+                                # noticing every WA delta was exactly 0.0000.
+                                #
+                                # The xgb surge needs no salience corpus, so
+                                # wiring it here also closes WA's long-standing
+                                # no-surge gap.
+                                flow_sd = FLOW_SD,
+                                surge_h = surge_arg,
+                                surge_party = surge_party_arg,
+                                surge_mu = surge_mu_arg,
+                                surge_sd = surge_sd_arg)
   cat(sprintf("BW2e  engine %s | surge recipient fell back: %d class(es) absent, %d seat-draws at zero share\n", sim$engine, sim$surge_recipient_fallback, sim$surge_recipient_fallback_draws))
   wp <- as.data.table(sim$win_prob)
 

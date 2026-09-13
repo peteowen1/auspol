@@ -2,7 +2,7 @@
 % Please edit documentation in R/xgb_surge_override.R
 \name{xgb_surge_params_for}
 \alias{xgb_surge_params_for}
-\title{Per-seat surge parameters from the XGBoost emergence model}
+\title{Per-seat surge parameters from the candidate-level emergence model}
 \usage{
 xgb_surge_params_for(shares, target_election, live = FALSE)
 }
@@ -21,27 +21,56 @@ for a future live path once the emergence model has a feature builder.}
 \description{
 Replaces the salience-derived emergence parameters the simulator runs on --
 \code{surge_h}, \code{surge_party}, \code{surge_mu}, \code{surge_sd} -- with predictions from
-\code{scripts/fit_xgb_emergence_v4.R}. \strong{No simulator change is needed}: all four
+\code{scripts/fit_xgb_emergence_v5.R}. \strong{No simulator change is needed}: all four
 are already per-seat vectors and the mixture is already implemented in the
 compiled core (\code{src/seat_sim_core.cpp}, the \code{surge_h[i]} branch).
 }
 \details{
-Why. The salience hazard fires on almost nothing that actually happens:
-\code{surge_h <= 0.05} on 184 of 201 historical emergences, and it only carries
-real signal for independents. The xgb model, given the primary model's full
-25-feature set rather than the 7 that happened to be in an output file,
-reaches out-of-fold AUC 0.936 overall -- IND 0.922, ONP 0.862 (the salience
-version was 0.201, i.e. actively inverted), OTH_RIGHT 0.835, GRN 0.876 --
-and gives candidates who did surge a median probability of 0.162 against
-0.003 for those who did not.
+WHY v5 AND NOT v4. v4 modelled the party CLASS in a seat. Three of the six
+2022 teals were training negatives under that target, because Wentworth's
+independent vote went 33.0 to 35.8 -- a rise of 2.8 -- while Allegra Spender
+personally went 0 to 35.8 and Kerryn Phelps did not stand. v4 gave Wentworth
+a 1.1\% hazard and Mackellar 1.3\%. v5 models the CANDIDATE, which is what Pete
+asked for on 2026-08-27, and gives those seats 28.7\% and 17.4\%.
 
-BACKTEST ONLY SO FAR. A backtest must predict a pair with a model that never
-saw it, so this reads the leave-one-pair-out out-of-fold file.
+v5 also fixed a data fault that corrupted v4's inputs: Victoria's source puts
+the party ABBREVIATION in \code{party_raw} and leaves \code{party_ab} empty, so a
+\code{classify_party(party_raw, party_ab)} call returned \code{OTH} for all 731 vic2022
+candidates. Every Labor and Liberal candidate then survived the non-majors
+filter with no previous vote, and a 35\% major-party result scored as a
+35-point emergence.
+
+THE TARGET. A non-major candidate whose own vote rose at least 10 points on
+a baseline that depends on the class, because the two kinds of vote behave
+differently (Pete's call, 2026-09-12):
+\itemize{
+\item GRN and ONP are INSTITUTIONAL. The vote belongs to the party and a new
+candidate inherits it, so the baseline is the class's previous share.
+\item IND, OTH and OTH_RIGHT are PERSONAL. The vote leaves with the person, so
+the baseline is what that individual polled in that seat last time.
+}
+
+THE HAZARD IS CALIBRATED, AND THAT MATTERS. Taking the highest-scoring
+candidate in a seat SELECTS on the prediction, so the winner's realised rate
+beats its stated probability -- the raw argmax gave a mean 0.075 against a
+15.5\% realised rate for independents. \code{fit_xgb_emergence_v5.R} corrects this
+with a leave-one-pair-out isotonic regression, which is monotone and so
+cannot reorder seats. An xgboost seat model was tried first and rejected: it
+scored AUC 0.665 against 0.739 for the single feature it was built on.
+
+KNOWN AND NOT FIXED. sa2026 badly under-fires -- 10.9\% predicted against
+63.8\% realised -- which is the One Nation breakthrough, the case the surge
+exists for. One Nation's out-of-fold AUC under this target is 0.555, barely
+above a coin toss, and OTH ranks worse than chance at 0.148 on 31 emergences
+in 2,590 rows. Greens (0.902) and independents (0.677) carry the model.
+
+BACKTEST ONLY. A backtest must predict a pair with a model that never saw it,
+so this reads the leave-one-pair-out file.
 
 \strong{\code{live = TRUE} IS NOT IMPLEMENTED.} It prints a message and returns \code{NULL}.
 The live forecast has no out-of-fold row for an election that has not
 happened, so it would need the all-data model plus a feature builder that
-constructs the 25 v6 columns from the current forecast's own inputs -- the
+constructs the v6 columns from the current forecast's own inputs -- the
 equivalent of \code{xgb_primary_predict_live()}, which does not exist for the
 emergence model. Until it does, \code{fit_seats_full.R} cannot use this and does
 not call it.
@@ -49,14 +78,4 @@ not call it.
 This docstring previously described the live path as though it worked, which
 is how an unimplemented stub gets wired into a published forecast on the
 strength of its own documentation. Corrected by the review gate 2026-09-11.
-
-KNOWN, MEASURED, NOT FIXED: a calibration check -- generating outcomes from
-the model's own predicted distributions and scoring them the way the real
-ones are scored -- says this model is somewhat OVER-dispersed. It scores 2.83
-on reality against 3.48 on its own self-generated data, i.e. reality sits
-closer to its predictions than its own error bars imply. The published
-behaviour was badly UNDER-dispersed, so this is a move through correct rather
-than toward it, and the seat-level count is what decides whether it has gone
-too far: 26 of 2,050 historical seat-elections were won by an emerging
-non-major, and an arm that elects far more than that has over-corrected.
 }

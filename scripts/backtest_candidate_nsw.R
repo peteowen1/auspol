@@ -782,10 +782,34 @@ if (identical(Sys.getenv("AUSPOL_SALIENCE_SURGE_V2", "0"), "1")) {
                 .reentry_sd_k, attr(.re_sd, "n_set")))
     SD_OVR <- combine_sd_override(SD_OVR, .re_sd)
   }
+# XGB PER-CELL PRIMARY SD (AUSPOL_XGB_PRIMARY_SD). The replacement for the
+# surge: instead of firing a jump at one candidate, be honestly WIDE on cells
+# that could plausibly emerge and let the simulator's own tail carry it.
+# Combined by taking the larger of the two, never added -- same convention as
+# the salience and re-entry overrides above.
+if (identical(Sys.getenv("AUSPOL_XGB_PRIMARY_SD", "0"), "1")) {
+  .xsd <- tryCatch(xgb_primary_sd_matrix(shares, TGT),
+                   error = function(e) {
+                     cat(sprintf("XD9! xgb primary sd FAILED: %s
+", conditionMessage(e))); NULL })
+  if (!is.null(.xsd)) SD_OVR <- combine_sd_override(SD_OVR, .xsd)
+}
 .xgb_flow_ov <- NULL
 if (identical(Sys.getenv("AUSPOL_XGB_FLOWS", "0"), "1")) {
   .xgb_flow_ov <- tryCatch(xgb_flow_conditional_override_for(shares, TGT, PRV, "nsw"),
                             error = function(e) { cat(sprintf("XF9! xgb flows per-seat FAILED: %s\n", conditionMessage(e))); NULL })
+}
+# XGB SURGE PARAMETERS (AUSPOL_XGB_SURGE). Replaces the salience-derived
+# surge_h / surge_party / surge_mu / surge_sd with the emergence model's.
+# No simulator change: all four are already per-seat vectors.
+if (identical(Sys.getenv("AUSPOL_XGB_SURGE", "0"), "1")) {
+  .xs <- tryCatch(xgb_surge_params_for(shares, TGT),
+                  error = function(e) { cat(sprintf("XS9! xgb surge FAILED: %s
+", conditionMessage(e))); NULL })
+  if (!is.null(.xs)) {
+    surge_arg <- .xs$surge_h; surge_party_arg <- .xs$surge_party
+    surge_mu_arg <- .xs$surge_mu; surge_sd_arg <- .xs$surge_sd
+  }
 }
 sim <- simulate_seat_contests(level_sd = .level_sd, sd_override = SD_OVR, level_mult = .lm(shares), shares, fm, party_sd = psd, seat_sd = sp$sd_within * SEAT_SD_MULT,
                               n_sims = N_SIMS, smooth = SMOOTH, seed = SEED, party_cor = PARTY_COR,
