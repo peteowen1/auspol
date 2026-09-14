@@ -863,6 +863,151 @@ if (any(council)) {
   C <- C[!council]
 }
 
+# ---- BC9: historic_elected for STATE elections, derived from our own data ---
+#
+# `historic_elected` comes from the AEC's HistoricElected column, which exists
+# ONLY in federal files -- the `else NA` branch above fires for every state
+# commission. Downstream, %in% c("Y","TRUE","1") turns that NA into FALSE, so
+# all 21 state elections recorded a CONSTANT 0: zero returning members, ever,
+# in any state parliament. That is false about the world, and it made the
+# column a federal/state label inside the model -- the constant-within-subgroup
+# trap CLAUDE.md documents, where a tree splits on it to separate jurisdictions
+# rather than to learn anything.
+#
+# It also broke the live Victorian forecast, because handing that model an NA
+# for a feature it had only ever seen as 0 or 1 deflated every prediction by
+# ~45% (see R/xgb_primary_override.R and NEWS 0.4.36).
+#
+# We can derive it ourselves. `elected` and `name` are populated for every
+# state candidacy, so a candidate is historically elected if THE SAME NAME won
+# a seat at any EARLIER election in the same region. Federal rows keep the
+# AEC's own value -- it is authoritative and covers people elected before our
+# corpus starts, which name matching here cannot.
+#
+# Matching on `name` and not `surname`: state rows leave `surname` blank while
+# `name` is populated, which is exactly the hazard that made the first attempt
+# at this report every candidate as a prior winner.
+#
+# AND THE NAME FORMAT IS NOT CONSISTENT ACROSS ELECTIONS. sa2018 stores
+# "Rachel Sanderson" while sa2022 stores "SANDERSON, Rachel" -- the same
+# person, and a plain uppercase-and-strip comparison matched NEITHER, giving
+# sa2022 zero returning members when the true answer is 40. So parse both
+# shapes into (surname, first initial) rather than comparing the raw string.
+# The first initial rather than the full given name, because middle names and
+# preferred forms drift between commission files in a way surnames do not.
+# FOUR NAME FORMATS LIVE IN THIS CORPUS and a single rule fits none of them:
+#
+#   federal        "Trish WORTH"       given first, SURNAME capitalised
+#   nsw            "APLIN Greg"        SURNAME first, no comma
+#   sa2018         "Rachel Sanderson"  given first, title case
+#   vic/qld/sa22+  "HOOD, Lucy"        SURNAME, given
+#   wa             "PRINCE"            SURNAME ONLY, 97-100% of rows
+#
+# Taking the last token as the surname -- the obvious rule -- INVERTS every
+# NSW row, and on a one-token WA name sets surname and given to the same word.
+# Both then "work" anyway, because each jurisdiction is internally consistent
+# and a wrong key matches a wrong key. That is luck, not correctness, and it
+# broke the moment a jurisdiction changed format mid-corpus: sa2018 and sa2022
+# disagree, and SA matched ZERO returning members until this was handled.
+#
+# So: comma wins if present; otherwise the ALL-CAPS token is the surname;
+# otherwise fall back to the last token.
+.key <- function(x) {
+  s <- trimws(gsub("[^A-Za-z, ]", "", as.character(x)))
+  sur <- character(length(s)); giv <- character(length(s))
+  for (i in seq_along(s)) {
+    v <- s[i]
+    if (grepl(",", v, fixed = TRUE)) {
+      sur[i] <- trimws(sub(",.*$", "", v)); giv[i] <- trimws(sub("^[^,]*,", "", v))
+      next
+    }
+    tk <- strsplit(v, "\\s+")[[1]]
+    tk <- tk[nzchar(tk)]
+    if (length(tk) == 0L) { sur[i] <- ""; giv[i] <- ""; next }
+    if (length(tk) == 1L) { sur[i] <- tk[1]; giv[i] <- ""; next }
+    caps <- tk == toupper(tk) & grepl("[A-Z]", tk)
+    if (any(caps)) {
+      sur[i] <- tk[which(caps)[1]]
+      giv[i] <- paste(tk[!caps], collapse = " ")
+    } else {
+      sur[i] <- tk[length(tk)]
+      giv[i] <- paste(tk[-length(tk)], collapse = " ")
+    }
+  }
+  sur <- toupper(trimws(sur)); giv <- toupper(trimws(giv))
+  # A surname-only source (WA) can only ever be matched on the surname. That
+  # is a limit of the data, not a choice, so it is made explicit with an empty
+  # initial rather than arrived at by a parser accident -- and it carries a
+  # real collision risk between different people sharing a surname, which the
+  # BC9a line below quantifies.
+  out <- paste0(sur, "|", substr(giv, 1, 1))
+  out[!nzchar(sur)] <- NA_character_
+  out
+}
+C[, .nm := .key(name)]
+.state <- C$region != "fed"
+if (any(.state)) {
+  .won <- C[elected %in% c(TRUE, "TRUE", "Y", "1") & nzchar(.nm),
+            list(region, year, .nm)]
+  .before <- vapply(which(.state), function(i) {
+    w <- .won[.won$region == C$region[i] & .won$year < C$year[i]]
+    C$.nm[i] %in% w$.nm
+  }, logical(1))
+  .n_before <- sum(C$historic_elected[.state] %in% c(TRUE, "TRUE", "Y", "1"),
+                   na.rm = TRUE)
+  C[which(.state), historic_elected := .before]
+  # HOW MUCH OF THE MATCH IS SURNAME-ONLY, and therefore exposed to two
+  # different people sharing a surname being treated as one. Reported rather
+  # than silently accepted: WA's commission files carry no given names at all,
+  # so its entire backfill rests on this and the number should be visible next
+  # to it.
+  .so <- sum(.state & grepl("\\|$", C$.nm))
+  cat(sprintf("BC9a surname-only names (no given name in the source): %d of %d state rows (%.0f%%)\n",
+              .so, sum(.state), 100 * .so / sum(.state)))
+  cat(sprintf("BC9  state historic_elected derived from prior winners: %d of %d state candidacies (was %d)\n",
+              sum(.before), sum(.state), .n_before))
+  # ZERO IS ONLY LEGITIMATE WHEN THERE WAS NOBODY TO MATCH. An election whose
+  # region has no EARLIER election, or whose earlier elections carry no winner
+  # rows, can honestly return none -- vic2010 has 502 candidacies and 0
+  # recorded winners, so vic2014 cannot have a returning member no matter how
+  # good the match is, and wa1996 has exactly 1, so wa2001 can have at most 1.
+  # Gate on prior winners AVAILABLE, not on position in the sequence:
+  # otherwise the check either fires on those two forever or is loosened until
+  # it cannot fire at all.
+  .by <- C[.state, list(n = .N, hits = sum(historic_elected %in% c(TRUE, "TRUE"))),
+           by = list(region, year)][order(region, year)]
+  .wn <- C[.state & C$elected %in% c(TRUE, "TRUE", "Y", "1"),
+           list(w = .N), by = list(region, year)]
+  .by[, avail := vapply(seq_len(.N), function(k)
+    sum(.wn$w[.wn$region == region[k] & .wn$year < year[k]]), numeric(1))]
+  for (k in seq_len(nrow(.by))) {
+    cat(sprintf("     %s%d: %d of %d  (prior winners available: %d)\n",
+                .by$region[k], .by$year[k], .by$hits[k], .by$n[k], .by$avail[k]))
+  }
+  # MORE RETURNING MEMBERS THAN THERE WERE WINNERS TO RETURN is arithmetically
+  # impossible and means two different people were treated as one. It is not
+  # fatal -- WA's files carry surnames only, so a collision there is a limit of
+  # the source -- but it must be visible, because "59 returning from 57
+  # winners" is the kind of number that reads as fine until someone checks it.
+  .over <- .by[hits > avail & avail > 0]
+  if (nrow(.over)) {
+    cat(sprintf("BC9! %d election(s) matched MORE returning members than there were prior winners -- surname collisions: %s\n",
+                nrow(.over), paste(sprintf("%s%d (%d from %d)", .over$region,
+                                           .over$year, .over$hits, .over$avail),
+                                   collapse = ", ")))
+  }
+  .bad <- .by[hits == 0 & avail > 0]
+  if (nrow(.bad)) {
+    stop("BC9! ", nrow(.bad), " state election(s) matched ZERO returning ",
+         "members despite having prior winners to match against: ",
+         paste(sprintf("%s%d (%d available)", .bad$region, .bad$year,
+                       .bad$avail), collapse = ", "),
+         ". That is the constant-zero bug this block replaces, so the name ",
+         "match has failed rather than found nothing.")
+  }
+}
+C[, .nm := NULL]
+
 setorder(C, election, seat, -pcv)
 # WRITE EVERY COLUMN. Selecting a subset here is the same mistake one layer
 # down: whatever is not written cannot be found later, and "we don't have it"
