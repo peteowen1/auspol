@@ -82,13 +82,36 @@ awk '
     s = substr($0, i + length("scripts/"))
     sub(/[ \t(].*$/, "", s)
 
-    # Everything after "-- Error: " identifies WHICH check or crash it was:
+    # Everything after the error prefix identifies WHICH check or crash it was:
     # "nrow(bad_conv) == 0 is not TRUE", "NL3 breached on 1 NSW cycle(s)...".
-    # Truncated, because the tail carries paths and timings that churn.
+    #
+    # R WRITES THAT PREFIX TWO WAYS and the first version handled only one.
+    # stop(..., call. = FALSE) gives "-- Error: msg"; a plain stop() or any
+    # genuine crash keeps the calling context and gives
+    # "-- Error in eval(ei, envir) : msg". Matching the literal "-- Error: "
+    # therefore found nothing for S5, G7 and every real crash, `why` came back
+    # empty, and the token collapsed to "stage:<script>:<KIND>:" -- the coarse,
+    # reason-blind form this whole change exists to eliminate. Found by review
+    # 2026-09-14; the first round of tests missed it because the fixtures were
+    # hand-written in the call.=FALSE shape rather than taken from a real log.
+    #
+    # So: locate "-- Error", then take what follows the first colon, which is
+    # the message in both forms.
+    # `tail`, NOT `s`: awk has no local scope inside a pattern block, and `s`
+    # already holds the script name three lines up. Reusing it emitted
+    # "stage:: NL3 breached...:CHECK:NL3 breached..." -- the script name gone,
+    # the reason in its place. Caught by the test suite on the first run after
+    # the change, which is the only reason it is not in this commit.
     why = ""
-    j = index($0, "-- Error: ")
+    j = index($0, "-- Error")
     if (j > 0) {
-      why = substr($0, j + length("-- Error: "))
+      tail = substr($0, j + length("-- Error"))
+      if (substr(tail, 1, 1) == ":") {
+        why = substr(tail, 2)
+      } else {
+        k = index(tail, " : ")
+        if (k > 0) why = substr(tail, k + 3)
+      }
       gsub(/[ \t\r]+/, " ", why)
       sub(/^ /, "", why)
       why = substr(why, 1, 60)

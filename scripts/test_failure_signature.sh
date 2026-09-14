@@ -89,6 +89,34 @@ EOF
 set +e; sh "$SIG" "$T/otherchk.log" "$T/baseline" > "$T/out5c"; check "5c. a DIFFERENT check in a known script -> fires" 1 $?; set -e
 grep -q "NL4a" "$T/out5c" || { echo "   (did not distinguish it from the known NL3 failure)"; FAILED=1; }
 
+# 5e. THE FORM R ACTUALLY EMITS for a plain stop() -- "Error in <call> : msg",
+#     not "Error: msg". Only stop(..., call. = FALSE) produces the latter, so
+#     S5, G7 and every genuine crash take this path. The first version of the
+#     tokeniser matched the literal "-- Error: " and so extracted NOTHING here,
+#     collapsing the token back to the coarse reason-blind form. Found by
+#     review; these fixtures are copied from real run_all.R output rather than
+#     hand-written in the convenient shape, which is what hid it the first time.
+cat > "$T/realform.log" <<'EOF'
+   CHECK FAILED: scripts/fit_seats_full.R (exit 1) after 9 s -- Error in eval(ei, envir) : S5 FAILED. Mean ALP total 39.49 against 32.10
+EOF
+set +e; sh "$SIG" "$T/realform.log" "$T/baseline" > "$T/out5e"; check "5e. real 'Error in <call> : msg' form -> fires" 1 $?; set -e
+grep -q "S5 FAILED" "$T/out5e" || { echo "   (did not extract the reason from the real R form)"; FAILED=1; }
+
+# 5f. Two DIFFERENT failures of the same script in the real form must not
+#     collapse to one token -- that was the whole point of carrying the reason.
+cat > "$T/twoforms.log" <<'EOF'
+   CHECK FAILED: scripts/fit_seats_full.R (exit 1) after 9 s -- Error in eval(ei, envir) : S5 FAILED. Mean ALP total 39.49 against 32.10
+EOF
+cat > "$T/twoforms2.log" <<'EOF'
+   CHECK FAILED: scripts/fit_seats_full.R (exit 1) after 9 s -- Error in eval(ei, envir) : S6 FAILED. run config is not a default publish run
+EOF
+t1=$(sh "$SIG" "$T/twoforms.log"); t2=$(sh "$SIG" "$T/twoforms2.log")
+if [ "$t1" = "$t2" ]; then
+  printf '%-58s **FAIL** (two different failures share a token)\n' "5f. different reasons -> different tokens"; FAILED=1
+else
+  printf '%-58s PASS\n' "5f. different reasons -> different tokens"
+fi
+
 # 5d. "FAILED (no error text)" -- the fourth label, also unmatched before.
 cat > "$T/notext.log" <<'EOF'
    FAILED (no error text): scripts/build_page.R (exit 1) after 2 s
