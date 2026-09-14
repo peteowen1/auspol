@@ -123,6 +123,57 @@ jobs:
           path: external/elections
           key: elections-v5-${{ hashFiles('scripts/fetch_preferences_*.R', 'scripts/transpose_federal_to_state.R') }}
 
+      # THE TRAINED MODELS THE PUBLISHED CONFIG ASKS FOR.
+      #
+      # Without this step the nightly forecast was NOT the model we measure.
+      # published_flags.R ships AUSPOL_XGB_PRIMARY_LIVE=1 and AUSPOL_XGB_FLOWS=1,
+      # so the pipeline asks for the XGBoost primary replacement and the
+      # per-seat conditional flows -- and on a runner neither model file exists,
+      # because they are far too big for git and live in the shipped-models
+      # release instead. Both components fall back and SAY SO:
+      #
+      #   XG4!  xgb-primary-v6-final.model missing -- shares unchanged
+      #   XF9!  model/cols/features file missing -- override skipped
+      #   XF4!! xgb_flow_conditional_override_for() FAILED -- flows UNCHANGED
+      #
+      # Announced on every run since the flags shipped, and unread. That is the
+      # same class of failure published_flags.R exists to prevent -- what runs
+      # differing from what we validate -- arriving through missing artifacts
+      # instead of drifting flags.
+      #
+      # AN EXPLICIT ALLOWLIST, NOT THE WHOLE RELEASE. shipped-models also holds
+      # OUTPUTS: seat-probs-vic-2026.csv, victoria-2026.html, level-pred.csv.
+      # Downloading those into output/ would seed the run with a previous
+      # forecast's results, and build_page.R -- which is not a `slow` stage and
+      # so runs even on --quick -- would publish them if fit_seats_full.R
+      # failed. A stale forecast behind a green build is exactly what the
+      # elections-cache comment above guards against, and it would be far
+      # harder to notice here.
+      #
+      # NOT the LOO models either (xgb-flows-v1-loo-models.zip, 8MB). Those
+      # exist for leakage-free BACKTESTS; the live Victorian forecast has no
+      # LOO model of its own -- XF9 records that vic2026 is not in the flow
+      # training corpus -- so it correctly uses the final model.
+      - name: Fetch the trained models
+        run: |
+          set -euo pipefail
+          for f in xgb-primary-v6-final.model xgb-primary-v6-final-cols.json \
+                   xgb-flows-v1-final.model xgb-flows-v1-final-cols.json \
+                   xgb-flows-v1-features.csv; do
+            gh release download shipped-models -p "$f" -D output --clobber
+          done
+          ls -l output/xgb-*
+          # A truncated or absent download must fail HERE, loudly, rather than
+          # surfacing as a fallback line in a log nobody reads. This repo has
+          # already lost a seat to a 65536-byte partial download that passed a
+          # size guard, so check the files xgboost must actually parse.
+          for f in output/xgb-primary-v6-final.model output/xgb-flows-v1-final.model; do
+            [ -s "$f" ] || { echo "::error::$f is missing or empty after download"; exit 1; }
+          done
+          Rscript -e 'for (f in c("output/xgb-primary-v6-final.model", "output/xgb-flows-v1-final.model")) { m <- xgboost::xgb.load(f); cat(sprintf("%s loads OK\n", f)) }'
+        env:
+          GH_TOKEN: ${{ github.token }}
+
       - name: Run the pipeline
         id: run
         run: |
