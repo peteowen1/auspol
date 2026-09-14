@@ -13,11 +13,15 @@
 # pair/party, not an unweighted seat average which would over-count small
 # seats equally with large ones).
 #
-# "Old" xgb baseline = output/xgb-primary-v6-oof-predictions-BASELINE4.csv
-#   (AUSPOL_XGB_RAW_LEVEL=0, i.e. what v6 produces today with level_now/
-#   level_from_polls features -- the shipped-equivalent state).
-# "New" xgb          = output/xgb-primary-v6-oof-predictions.csv
-#   (AUSPOL_XGB_RAW_LEVEL=1 test run currently sitting in this file).
+# The two xgb inputs are whatever the caller has put at these paths -- this
+# script does not build them, so check their provenance before quoting a
+# number out of it:
+#   output/xgb-primary-v6-oof-predictions-BASELINE4.csv  -- the comparison arm
+#   output/xgb-primary-v6-oof-predictions.csv            -- v6's live output
+# Written 2026-09-13 to compare AUSPOL_XGB_RAW_LEVEL=0 against =1 (the raw
+# trend/fundamentals split, since refused). The =0 side used `level_pred` and
+# `level_from_polls`; the =1 side replaced them with trend_level_raw/
+# fund_level_raw.
 #
 # Actual = statewide % of formal first-preference votes per party, from
 # output/candidacies.csv, informal rows already excluded upstream.

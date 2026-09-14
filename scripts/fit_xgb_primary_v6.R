@@ -26,8 +26,10 @@ suppressMessages(library(xgboost))
 
 OUT <- "output"
 C <- fread(file.path(OUT, "candidacies.csv"), showProgress = FALSE)
-# `pred_share` in this file (the "BASELINE (shipped model)" print below, and
-# the base feature this script trains x/dev_prev-style columns from) is ONLY a
+# `pred_share` -- the sharedetail column this script reads and immediately
+# renames to `base_pred` (see the setnames seam below; the "BASELINE (shipped
+# model)" print further down and the seat_prev_pcv/dev_prev-style columns both
+# come off it) -- is ONLY a
 # genuine, independent baseline if it was pooled from sharedetail generated
 # with AUSPOL_XGB_PRIMARY=0. The published default is "1", which makes every
 # ordinary harness run overwrite `shares` with THIS model's own prior output
@@ -325,6 +327,14 @@ ALL[, retiring_mp_tenure := ifelse(is.na(retiring_mp_tenure), 0, retiring_mp_ten
 # treats NA as a value it can split on, the same trap AUSPOL_XGB_RAW_LEVEL's
 # own header comment names for a pair silently missing from level-pred.csv.
 # Guarded: level_pred is absent entirely under AUSPOL_LEVEL_MODE=none.
+# REFUSE THE SCALAR-0 FALLBACK. Under AUSPOL_LEVEL_MODE=none there is no
+# level_pred to fall back to, and filling these two features with a constant 0
+# is precisely the filler-value-becomes-a-jurisdiction-label failure this
+# repo has already paid for once (CLAUDE.md, 2026-09-12: 6,100 cells of
+# filler moved 96% of non-federal predictions).
+if (identical(Sys.getenv("AUSPOL_XGB_RAW_LEVEL", "0"), "1") && !"level_pred" %in% names(ALL))
+  stop("AUSPOL_XGB_RAW_LEVEL=1 with AUSPOL_LEVEL_MODE=none has no statewide level ",
+       "to fall back to -- refusing to fill trend/fund_level_raw with a constant 0")
 .lvl_fallback <- if ("level_pred" %in% names(ALL)) ALL$level_pred else 0
 ALL[, trend_level_raw := ifelse(is.na(trend_level_raw), .lvl_fallback, trend_level_raw)]
 ALL[, fund_level_raw := ifelse(is.na(fund_level_raw), .lvl_fallback, fund_level_raw)]

@@ -517,7 +517,16 @@ GOV <- rbindlist(lapply(SAL_PAIRS, function(p) {
   if (Sys.getenv("AUSPOL_SAL_CURVE_NZ", "0") %in% c("1", "2")) {
     nz <- which(is.finite(s$jump) & s$jump > 0)
     s[, jump_pctile := 0]
-    if (length(nz) >= 10) set(s, nz, "jump_pctile", rank(s$jump[nz], ties.method = "average") / length(nz))
+    if (length(nz) >= 10) {
+      set(s, nz, "jump_pctile", rank(s$jump[nz], ties.method = "average") / length(nz))
+    } else {
+      # SAY SO. Without this the pair is silently zeroed and then dropped
+      # entirely by the `jump_pctile > 0` filter below, contributing nothing
+      # to the curve with no trace -- the X71 block above logs this same
+      # guard and this one did not.
+      cat(sprintf("X73c! %s: only %d non-zero jumps -- pair contributes nothing to the curve\n",
+                  p$election, length(nz)))
+    }
   } else {
     s[, jump_pctile := rank(jump, ties.method = "average") / .N]  # the mismatched original
   }
@@ -528,8 +537,8 @@ GI <- GOV[party == "IND" & is.finite(pcv) & is.finite(jump_pctile)]
 # TRAIN ON THE POPULATION THIS IS APPLIED TO. The isoreg below is only ever
 # queried for rows with `jump_pctile > 0` (see the `te <-` line), so training
 # it on the zero-jump pile as well fits a curve through a population it never
-# predicts for. AUSPOL_SAL_CURVE_NZ=1 restricts training to match; default 0
-# keeps the previous behaviour byte-for-byte.
+# predicts for. AUSPOL_SAL_CURVE_NZ=1 AND =2 both restrict training to match;
+# default 0 keeps the previous behaviour byte-for-byte.
 if (Sys.getenv("AUSPOL_SAL_CURVE_NZ", "0") %in% c("1", "2")) {
   .n0 <- nrow(GI); GI <- GI[jump_pctile > 0]
   cat(sprintf("X73c curve trained on NON-ZERO salience only: %d of %d rows kept\n", nrow(GI), .n0))

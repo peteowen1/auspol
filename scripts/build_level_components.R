@@ -135,6 +135,15 @@ for (pr in failed) {
   }
   cat(sprintf("LC2  %s: no usable trend -- trend_level falls back to %s's result\n", pr, PREV[[pr]]))
 }
+# SAY HOW MANY. This fallback makes fund_level an exact copy of trend_level,
+# which is harder to spot downstream than an empty column -- a region/year
+# label mismatch in the lookup above would silently collapse EVERY row this
+# way and the file would still look well-formed. Print the count so a mass
+# fallback is visible in the log rather than inferred later.
+.n_fb <- sum(is.na(LC$fund_level))
+cat(sprintf("LC3  %d of %d rows have no fundamentals fit -- fund_level falls back to trend_level (%.0f%%)\n",
+            .n_fb, nrow(LC), 100 * .n_fb / nrow(LC)))
+if (.n_fb == nrow(LC)) stop("every row fell back -- the fundamentals lookup matched nothing, check region/year labels")
 LC[is.na(fund_level), fund_level := trend_level] # no fundamentals fit at all: trend is the only signal
 
 cat(sprintf("\nLC9  %d rows, %d pairs, %d classes\n", nrow(LC), uniqueN(LC$pair), uniqueN(LC$party)))
