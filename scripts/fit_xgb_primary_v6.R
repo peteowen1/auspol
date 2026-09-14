@@ -159,6 +159,16 @@ for (pr in PAIRS) {
         prevc[, x_notional := NULL]
         cat(sprintf("XG6n  %s: x_notional_adj set for %d of %d (seat,party) cells\n",
                     pr$election, n_set, nrow(prevc)))
+      } else {
+        # SAY SO. The file existing is not the same as it covering THIS pair,
+        # and a pair it does not cover runs with x_notional_adj = 0 for every
+        # row -- identical to the feature being off, with nothing printed to
+        # distinguish the two. fed2004->fed2007 is live in exactly this state:
+        # build_notional_baselines.R's IDS table starts at 2007, so that pair
+        # can never have a baseline. Anyone measuring the feature on it would
+        # get a null result that reads as "no effect" rather than "never ran".
+        cat(sprintf("XG6n! %s: no notional rows for this pair (prior %s) -- x_notional_adj stays 0 everywhere\n",
+                    pr$election, pr$prev))
       }
     } else {
       cat(sprintf("XG6n! %s missing -- AUSPOL_XGB_NOTIONAL=1 had nothing to apply for %s\n",

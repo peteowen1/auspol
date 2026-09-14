@@ -30,6 +30,7 @@ PUBLISHED_FLAGS <- c(
   AUSPOL_DEV_SLOPE_MODE      = "screened",   # candidate-conditional slopes + salience screen (arm CS)
   AUSPOL_HONOUR_DEPARTED     = "0",          # 1 = a departed class leader's base decays at the new-candidate slope even when the screen permits a newcomer; measured and refused 2026-09-06 on a federal wash (New England vs Wentworth), re-measurement queued 2026-09-13 on the fuller 89-case corpus -- docs/plans/prereg-vote-belongs-to-the-person-2026-09-06.md
   AUSPOL_NOTIONAL            = "2",          # redistribution-adjusted (notional) prior for EVERY seat build_notional_baselines.R covers, not just brand-new names; upgraded from "1" (missing-seat fallback only) 2026-09-13 -- Antony Green's own booth-respread method, leakage-free. Currently a no-op under AUSPOL_XGB_PRIMARY=1 (which overrides the table this feeds) except the few cells XGB has no prediction for; shipped anyway because it is the methodologically correct baseline, not because it moves the pooled number -- docs/reviews/notional-prior-redistribution-2026-09-13.md
+                                             # HOW FAR THIS ACTUALLY REACHES (2026-09-14, found by the review gate): the FEDERAL BACKTEST only. fit_seats_full.R -- the live Victorian forecast -- has no notional path at all, and build_notional_baselines.R reads the federal AEC polling-place download, so it cannot produce Victorian data. Nor does fit_xgb_primary_v6_final.R, which builds the model artifact xgb_primary_predict_live() serves, so output/xgb-primary-v6-final-cols.json carries no x_notional_adj either. Setting this flag does not change the published Victoria 2026 numbers; it changes what the federal backtest measures.
   AUSPOL_MP_SLOPE            = "1",          # sitting-member slope tier from output/mp-slope-by-*.csv
   AUSPOL_DEFECT_DISCOUNT     = "1",          # major-party defector carries a fitted fraction of their vote
   AUSPOL_SALIENCE_SURGE_V2   = "1",          # per-seat emergence hazard from the salience corpus
@@ -288,10 +289,18 @@ PUBLISHED_FLAGS <- c(
                                              # not noise), shipped on Pete's call alongside the notional-prior fix.
                                              # output/ is gitignored, so this filename is the ONLY durable record of
                                              # what ships -- regenerate it with:
+                                             #   for y in 2010 2013 2016 2019 2022 2025; do  # prior is the election before
+                                             #     AUSPOL_NB_TARGET=$y AUSPOL_NB_PRIOR=<prev> Rscript scripts/build_notional_baselines.R
+                                             #   done
                                              #   Rscript scripts/fit_xgb_primary_v6.R
                                              #   AUSPOL_V7_ARMS="v7c,v7f" AUSPOL_V7_SHIP="v7f" Rscript scripts/fit_xgb_primary_v7.R
                                              #   cp output/xgb-primary-v7-oof-predictions.csv output/xgb-primary-shipped-oof-predictions.csv
-                                             # v6 must run first: v7 loads its persisted feature matrix as its base,
+                                             # THE FIRST STEP IS NOT OPTIONAL and was missing from this recipe until
+                                             # 2026-09-14. build_notional_baselines.R does ONE pair per invocation, and
+                                             # output/ is gitignored -- so on a fresh checkout the file does not exist,
+                                             # v6 logs "XG6n! ... missing" and carries on, and the "shipped" oof file
+                                             # comes out silently WITHOUT the notional prior it is supposed to carry.
+                                             # v6 must run before v7: v7 loads its persisted feature matrix as its base,
                                              # including the notional-prior x_notional_adj column. Set to "" to fall
                                              # back to plain v6 (output/xgb-primary-v6-oof-predictions.csv).
   AUSPOL_FLOW_SHRINK_K       = "0"           # data-weighted flow-cell smoothing -- REFUSED 2026-09-10, worse pooled at every tested k (0.339-0.354 vs baseline 0.339); helps Ballarat's own cell exactly as designed but federal/WA dominate the aggregate. docs/reviews/flow-cell-shrinkage-REFUSED-2026-09-10.md

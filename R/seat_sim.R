@@ -404,11 +404,38 @@ simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
     .u <- exhaust[!nzchar(names(exhaust))]
     if (length(.u)) .u[1] else 0
   }
+  # A NAME THAT MATCHES NO PARTY IS AN ERROR, NOT A NO-OP. `exhaust[parties]`
+  # silently drops any entry whose name is not a column of `shares`, so a typo
+  # or a stale class code (SFF vs OTH_RIGHT, say -- CLAUDE.md records that
+  # exact mismatch biting elsewhere) produced an all-default EXHAUST_BY while
+  # `has_exhaust` below, which reads the RAW argument, still saw a non-zero
+  # number and reported the feature active. The engine guard fired, the run
+  # looked right, and not one party actually exhausted.
+  if (!is.null(names(exhaust))) {
+    .named <- names(exhaust)[nzchar(names(exhaust))]
+    .unknown <- setdiff(.named, parties)
+    if (length(.unknown))
+      stop("exhaust names no party in `shares`: ", paste(.unknown, collapse = ", "),
+           " (columns are: ", paste(parties, collapse = ", "), ")")
+  }
   EXHAUST_BY <- if (length(exhaust) == 1L && is.null(names(exhaust)))
     rep(as.numeric(exhaust), length(parties)) else {
       .v <- unname(exhaust[parties]); .v[is.na(.v)] <- .exh_default; as.numeric(.v)
     }
   names(EXHAUST_BY) <- parties
+  # An explicit NA for a party that IS named is "unknown", not "zero". Letting
+  # it fall through to the default made "we have no estimate for the Greens"
+  # indistinguishable from "the Greens' ballots never exhaust", which is the
+  # absence-of-evidence-as-certainty trap this repo has already paid for.
+  if (!is.null(names(exhaust))) {
+    .explicit_na <- intersect(names(exhaust)[is.na(exhaust)], parties)
+    if (length(.explicit_na))
+      stop("exhaust is NA for: ", paste(.explicit_na, collapse = ", "),
+           " -- pass a rate or omit the name; NA would silently mean 0")
+  }
+  if (!all(is.finite(EXHAUST_BY)))
+    stop("exhaust resolved to a non-finite rate for: ",
+         paste(parties[!is.finite(EXHAUST_BY)], collapse = ", "))
   if (any(EXHAUST_BY < 0) || any(EXHAUST_BY >= 100)) {
     stop("exhaust must be in [0, 100); got ", paste(utils::head(EXHAUST_BY, 5), collapse = ", "))
   }

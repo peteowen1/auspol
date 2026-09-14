@@ -109,6 +109,30 @@ So, as of 2026-09-13:
 - `AUSPOL_XGB_PRIMARY=0` runs (which don't touch this file) and
   non-federal jurisdictions are unaffected either way.
 
+  **MEASURED 2026-09-14, after the review gate pointed out this was an
+  assertion, not a result.** It was a fair challenge: the identical feature in
+  v7 behaved as an "is this federal" label and moved sa2026's log loss
+  0.4344 -> 0.5061 (fixed in `75462ea` by excluding it there), and v6 has the
+  same pooled-across-six-regions architecture. Ran v6 at
+  `AUSPOL_XGB_NOTIONAL=0` against the shipped `=1` and diffed per pair:
+
+  | | mean RMSE delta (ON - OFF) | worse | better |
+  |---|--:|--:|--:|
+  | non-federal (feature is constant 0) | -0.0101 | 8 | 8 |
+  | federal (feature has real values) | +0.0048 | 4 | 3 |
+  | pooled | ON 3.8078 vs OFF 3.8141 | | |
+
+  The claim holds. Non-federal pairs split evenly either side of zero, which
+  is the shape of noise, not of a jurisdiction label; sa2026 is +0.0373 and
+  not even the worst (wa2013 +0.0506, qld2024 +0.0459). Nothing resembling
+  v7's blowup.
+
+  Worth recording the awkward half of the same table: the feature is slightly
+  WORSE on average across the federal pairs it actually has data for
+  (+0.0048, 4 of 7 worse). That does not change the decision -- this shipped
+  on the methodological argument, explicitly not on the pooled number -- but
+  it should not be quietly dropped either.
+
 `output/notional-baselines.csv` itself is now genuinely improved regardless
 of any of the above: extended from covering only the 2022->2025 pair to all
 six federal pairs (2007 through 2025), and the informal-vote fix applies to

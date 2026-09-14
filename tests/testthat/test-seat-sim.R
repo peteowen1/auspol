@@ -39,6 +39,34 @@ test_that("exhaust drops votes instead of redistributing them, and can flip the 
   expect_equal(unname(r95$tcp_winner[1, 1]), "LNP")
 })
 
+test_that("exhaust refuses a name that matches no party instead of silently doing nothing", {
+  # `exhaust[parties]` drops an unmatched name, so a typo or a stale class
+  # code used to leave every party at the default while `has_exhaust` -- which
+  # reads the RAW argument -- still saw a nonzero number, forced the R engine,
+  # and reported the feature active. The run then produced output identical to
+  # exhaust = 0 with nothing to say so. Found by the review gate 2026-09-14.
+  sh <- matrix(c(38, 40, 22), nrow = 1,
+               dimnames = list("seat1", c("ALP","LNP","GRN")))
+  expect_error(
+    simulate_seat_contests(sh, fake_matrix(), party_sd = c(ALP=0,LNP=0,GRN=0),
+                           seat_sd = 0, n_sims = 1, exhaust = c(FOO = 50)),
+    "names no party")
+  # a name that DOES match still works, and so does a partial vector
+  expect_silent(simulate_seat_contests(sh, fake_matrix(), party_sd = c(ALP=0,LNP=0,GRN=0),
+                                       seat_sd = 0, n_sims = 1, exhaust = c(GRN = 39.7)))
+})
+
+test_that("an explicit NA exhaust rate is refused rather than read as zero", {
+  # NA for a named party meant "unknown", but fell through to the default and
+  # became 0 -- indistinguishable from "this party's ballots never exhaust".
+  sh <- matrix(c(38, 40, 22), nrow = 1,
+               dimnames = list("seat1", c("ALP","LNP","GRN")))
+  expect_error(
+    simulate_seat_contests(sh, fake_matrix(), party_sd = c(ALP=0,LNP=0,GRN=0),
+                           seat_sd = 0, n_sims = 1, exhaust = c(GRN = 39.7, ALP = NA)),
+    "is NA for")
+})
+
 test_that("exhaust = 0 (the default) reproduces the previous behaviour exactly", {
   sh <- matrix(c(38, 40, 22), nrow = 1,
                dimnames = list("seat1", c("ALP","LNP","GRN")))
