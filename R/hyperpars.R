@@ -233,8 +233,25 @@ trend_tracking <- function(fit) {
 #' Nelder-Mead on a boxed objective, and keep whichever candidate achieves the
 #' lowest value.
 #'
+#' Those two fallbacks both restart from `start`, so neither ever examines the
+#' point L-BFGS-B returned — and since the lowest value wins, a code-52
+#' candidate survives exactly when it beat them. A genuinely optimal but
+#' uncertified point therefore had no route to certification. The final step
+#' closes that: if the winner is still uncertified, polish from **it** with
+#' Nelder-Mead, which is derivative-free and so immune to the line-search
+#' failure. That either confirms the point or improves on it. If it cannot
+#' converge either, the non-zero code stands and the caller's check fires.
+#'
+#' Whether code 52 appears at all is platform-dependent: federal 2028 Greens
+#' converged cleanly on Windows and returned 52 on Linux CI from identical
+#' data and to the same optimum, because the line search near a flat optimum
+#' depends on the local BLAS. A check that fires only on CI is the worst kind,
+#' so certification has to be something this function establishes rather than
+#' something it hopes the optimiser reports.
+#'
 #' @param start,fn,lower,upper As for [stats::optim()], all on the log scale.
-#' @return List: `par`, `value`, `convergence`, `method`.
+#' @return List: `par`, `value`, `convergence`, `method`. `method` records
+#'   `+NM-verified` when the optimum was certified by the polish step.
 #' @keywords internal
 optim_boxed <- function(start, fn, lower, upper) {
   best <- NULL
@@ -269,6 +286,40 @@ optim_boxed <- function(start, fn, lower, upper) {
                  error = function(e) NULL)
   consider(o3, "Nelder-Mead")
   if (is.null(best)) stop("all optimisers failed")
+
+  # CERTIFY AN UNCERTIFIED OPTIMUM, rather than passing code 52 through.
+  #
+  # Every fallback above restarts from `start`, so none of them ever LOOKS AT
+  # the point L-BFGS-B returned. A result that is genuinely optimal but
+  # uncertified therefore had no route to becoming certified, however many
+  # fallbacks ran -- and `consider()` keeps the lowest value, so a code-52
+  # candidate survives precisely when it beat both restarts.
+  #
+  # Polishing from `best$par` closes that. Nelder-Mead is derivative-free, so
+  # it is unaffected by the noisy-gradient line-search failure that produces 52,
+  # and it can only move downhill from where it starts: either it confirms the
+  # point (value unchanged -> independently certified) or it finds something
+  # better (take it). If it cannot converge either, the code stays non-zero and
+  # the caller's check fires as before -- this verifies, it does not excuse.
+  #
+  # Found 2026-09-14 on federal 2028 GRN, which failed
+  # `stopifnot(nrow(bad_conv) == 0)` on CI and not locally, ON IDENTICAL DATA
+  # (3,998 federal polls to 2026-09-09 both sides). Same optimum to six
+  # decimals; Linux reported 52 and Windows 0, because an L-BFGS-B line search
+  # near a flat optimum is at the mercy of the platform's BLAS. A grid around
+  # the returned point found nothing better by more than 2e-4, and Nelder-Mead
+  # restarted there moved 0.000000. So the fit was right and the certificate
+  # was missing -- the worst shape for a check, since it is invisible on the
+  # machine where the code is written.
+  if (best$convergence != 0) {
+    o4 <- tryCatch(stats::optim(best$par, boxed, method = "Nelder-Mead"),
+                   error = function(e) NULL)
+    if (!is.null(o4) && is.finite(o4$value) && o4$convergence == 0 &&
+        o4$value <= best$value) {
+      best <- list(par = o4$par, value = o4$value, convergence = 0L,
+                   method = paste0(best$method, "+NM-verified"))
+    }
+  }
   best
 }
 

@@ -10,7 +10,8 @@ optim_boxed(start, fn, lower, upper)
 \item{start, fn, lower, upper}{As for \code{\link[stats:optim]{stats::optim()}}, all on the log scale.}
 }
 \value{
-List: \code{par}, \code{value}, \code{convergence}, \code{method}.
+List: \code{par}, \code{value}, \code{convergence}, \code{method}. \code{method} records
+\code{+NM-verified} when the optimum was certified by the polish step.
 }
 \description{
 L-BFGS-B returns code 52 ("abnormal termination in line search") on
@@ -20,5 +21,22 @@ fine but are not certified, and treating 52 as success would mean trusting
 an uncertified optimum. So: retry from a perturbed start, then fall back to
 Nelder-Mead on a boxed objective, and keep whichever candidate achieves the
 lowest value.
+}
+\details{
+Those two fallbacks both restart from \code{start}, so neither ever examines the
+point L-BFGS-B returned — and since the lowest value wins, a code-52
+candidate survives exactly when it beat them. A genuinely optimal but
+uncertified point therefore had no route to certification. The final step
+closes that: if the winner is still uncertified, polish from \strong{it} with
+Nelder-Mead, which is derivative-free and so immune to the line-search
+failure. That either confirms the point or improves on it. If it cannot
+converge either, the non-zero code stands and the caller's check fires.
+
+Whether code 52 appears at all is platform-dependent: federal 2028 Greens
+converged cleanly on Windows and returned 52 on Linux CI from identical
+data and to the same optimum, because the line search near a flat optimum
+depends on the local BLAS. A check that fires only on CI is the worst kind,
+so certification has to be something this function establishes rather than
+something it hopes the optimiser reports.
 }
 \keyword{internal}
