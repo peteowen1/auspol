@@ -855,6 +855,59 @@ if (length(WV)) {
 # fill above, i.e. the fill worked as a contamination detector. Left in, they
 # would count as seats in any per-seat rate and as unresolved seats in any
 # coverage check.
+# ---- BC10: Victoria 2026 candidates, from Wikipedia -------------------------
+#
+# The Victorian election is 28 November 2026 and nominations have NOT closed,
+# so the VEC publishes no candidate list and every candidate-level feature for
+# vic2026 falls back: DS2 (candidate returns), DS3 (salience), own_prev_pcv,
+# and historic_elected. Wikipedia maintains one, sourced per candidate.
+#
+# external/reference/wikipedia/vic2026-candidates.csv is produced by
+# scripts/parse_wikipedia_candidates.py from the RAW WIKITEXT, which is stored
+# beside it. Parsing the rendered page instead would not do: a summariser
+# reading the table reported the Greens candidate for Albert Park as the
+# Coalition's, because the Coalition cell is empty and it closed the gap.
+#
+# THIS LIST IS INCOMPLETE BY CONSTRUCTION and nothing here may read absence as
+# a decision not to contest. 379 candidacies against vic2022's 731 for the same
+# 88 seats -- Labor appears in 74 of 88, and Labor will contest all 88. A blank
+# means "not yet announced", and treating it as "not running" would be the same
+# fabrication as the NA that deflated the live model (NEWS 0.4.36).
+#
+# So this supplies NAMES ONLY. No votes, no pcv, no elected flag: those are
+# facts about an election that has not happened.
+.wiki <- file.path("external", "reference", "wikipedia", "vic2026-candidates.csv")
+if (file.exists(.wiki)) {
+  W <- fread(.wiki, showProgress = FALSE)
+  stopifnot(all(c("seat", "name", "party_raw", "sitting") %in% names(W)))
+  # classify_party() and nothing else. CLAUDE.md records a silent corruption
+  # caused by trusting a party field someone else classified -- the anchor
+  # filing the Shooters as IND where we call them OTH_RIGHT -- so the mapping
+  # from "Family First" to a class happens here, over our own function.
+  W[, party := classify_party(party_raw)]
+  if (any(is.na(W$party))) {
+    stop("BC10! classify_party() returned NA for: ",
+         paste(unique(W$party_raw[is.na(W$party)]), collapse = ", "))
+  }
+  V <- W[, list(election = "vic2026", region = "vic", year = 2026L,
+                seat = seat, name = name, party = party, party_raw = party_raw,
+                votes = NA_real_, pcv = NA_real_,
+                elected = NA, historic_elected = NA,
+                breakout = NA, swing = NA_real_,
+                ballot_position = NA_integer_, tot = NA_real_)]
+  cat(sprintf("BC10 vic2026: %d candidacies across %d seats from Wikipedia (%d sitting members marked)\n",
+              nrow(V), uniqueN(V$seat), sum(W$sitting %in% c(TRUE, "TRUE"))))
+  cat(sprintf("     by class: %s\n",
+              paste(sprintf("%s=%d", names(table(V$party)), table(V$party)),
+                    collapse = " ")))
+  # Coverage, stated rather than assumed. vic2022 ran 731 candidacies over the
+  # same chamber; anything near that means nominations have closed and this
+  # comment needs revisiting.
+  cat(sprintf("     coverage: %.0f%% of vic2022's 731 candidacies -- nominations are NOT closed, absence is NOT a decision not to contest\n",
+              100 * nrow(V) / 731))
+  C <- rbindlist(list(C, V), fill = TRUE)
+}
+
 council <- grepl(" (Shire|City|Regional|Council) Division ", C$seat)
 if (any(council)) {
   cat(sprintf("BC8  dropping %d local-council rows in %d pseudo-seats: %s\n",
