@@ -434,6 +434,8 @@ DEV_SLOPE <- dev_slopes_for(union(parties, names(state_tgt)))
 # wrong for every individual seat. Off unless AUSPOL_DEV_SLOPE_MODE=conditional.
 .cond <- Sys.getenv("AUSPOL_DEV_SLOPE_MODE", "") %in% c("conditional", "screened")
 .screened <- identical(Sys.getenv("AUSPOL_DEV_SLOPE_MODE", ""), "screened")
+# Off by default -- see the matching comment in backtest_candidate_fed.R.
+.honour_departed <- Sys.getenv("AUSPOL_HONOUR_DEPARTED", "0") %in% c("1", "TRUE", "true")
 .returns <- if (.cond) candidate_returns(PRV, TGT) else NULL
 if (.cond) cat(sprintf("BN1c conditional slopes ON: %d of %d seat-classes have the same candidate returning
 ",
@@ -558,7 +560,7 @@ for (p in parties) {
     pv <- .permit[.permit$party == p, ]
     lut <- stats::setNames(as.logical(pv$permit), pv$seat)
     pm <- unname(lut[rownames(mat)]); pm[is.na(pm)] <- TRUE
-    screened_slopes(p, rownames(mat), .returns, pm, same_mp = .MP_SLOPE, same = if (is.null(.fitsl)) formals(screened_slopes)$same else .fitsl$same, new = if (is.null(.fitsl)) formals(screened_slopes)$new else .fitsl$new)
+    screened_slopes(p, rownames(mat), .returns, pm, same_mp = .MP_SLOPE, honour_departed = .honour_departed, same = if (is.null(.fitsl)) formals(screened_slopes)$same else .fitsl$same, new = if (is.null(.fitsl)) formals(screened_slopes)$new else .fitsl$new)
   } else if (.cond) conditional_slopes(p, rownames(mat), .returns, same_mp = .MP_SLOPE, same = if (is.null(.fitsl)) formals(conditional_slopes)$same else .fitsl$same, new = if (is.null(.fitsl)) formals(conditional_slopes)$new else .fitsl$new) else DEV_SLOPE[[p]]
   x_p <- .own_x(p, rownames(mat), mat[, p])
   val <- if (is.null(.split)) dev_slope(x_p, state_prev[[p]], state_tgt[[p]], sl) else
@@ -811,12 +813,66 @@ if (identical(Sys.getenv("AUSPOL_XGB_SURGE", "0"), "1")) {
     surge_mu_arg <- .xs$surge_mu; surge_sd_arg <- .xs$surge_sd
   }
 }
+# OPTIONAL-PREFERENTIAL EXHAUSTION, off by default (AUSPOL_NSW_EXHAUST=1).
+# NSW is optional preferential; neither seat simulator engine could
+# previously represent a ballot carrying no further preference at all --
+# distribute_preferences() and simulate_seat_contests()'s R loop both always
+# redistributed 100% of an excluded candidate's votes. The anchor's own
+# preference-estimates.csv gives real per-party exhaust rates
+# (flows_for(..., region="nsw")): 40-71% of minor-party preferences here
+# carry no major-party preference. Classes with no direct estimate fall back
+# to OTH's rate, the same convention derive_tpp() already uses for an
+# unlisted minor party; majors get 0 (no rate is ever given for them, and
+# they are essentially never excluded early enough for it to matter).
+# R-ENGINE ONLY -- src/seat_sim_core.cpp has no exhaustion path, and
+# simulate_seat_contests() refuses engine="cpp" with nonzero exhaust rather
+# than silently ignoring it, so this must force engine="r" explicitly.
+.exhaust_on <- identical(Sys.getenv("AUSPOL_NSW_EXHAUST", "0"), "1")
+EXHAUST_ARG <- 0
+SIM_ENGINE <- "auto"
+if (.exhaust_on) {
+  .flows_nsw <- tryCatch(
+    flows_for(load_preference_flows(), year = TO, region = "nsw", estimate = FALSE, quiet = TRUE),
+    error = function(e) { cat(sprintf("BN0x! preference flows unavailable for nsw%d: %s\n", TO, conditionMessage(e))); NULL })
+  # REFUSE RATHER THAN QUIETLY DO NOTHING. Falling through here would leave
+  # EXHAUST_ARG at 0 and SIM_ENGINE at "auto", which resolves to the cpp
+  # engine -- the one with no exhaustion path at all. A run that explicitly
+  # asked for exhaustion would then produce output identical to the flag being
+  # off, behind a single log line. That is this repo's own "an experiment that
+  # never ran looks exactly like an experiment with no effect" trap.
+  if (is.null(.flows_nsw))
+    stop("AUSPOL_NSW_EXHAUST=1 but no preference flows for nsw", TO,
+         " -- refusing to run with exhaustion silently disabled")
+  .oth_ex <- .flows_nsw[party == "OTH", exhaust]
+  .oth_ex <- if (length(.oth_ex)) .oth_ex[1] else 0
+  # OTH_RIGHT maps to SFF: the Shooters, Fishers and Farmers are the class's
+  # only NSW member with an estimate of its own, and classify_party() files
+  # them here (the anchor files them as IND -- see CLAUDE.md's note on that
+  # mismatch, which is why this reads from our own class, not the anchor's).
+  .rate_of <- function(p) { r <- .flows_nsw[party == p, exhaust]; if (length(r)) r[1] else .oth_ex }
+  EXHAUST_ARG <- c(ALP = 0, LNP = 0, NAT = 0,
+                   GRN = .rate_of("GRN"), ONP = .rate_of("ONP"),
+                   OTH_RIGHT = .rate_of("SFF"), OTH = .oth_ex, IND = .oth_ex)
+  # AND REFUSE AN ALL-ZERO RATE SET. load_preference_flows() collapses a
+  # missing exhaust field to 0 at parse time (R/load_polls.R), and NSW rows
+  # from 2015 and earlier carry only 4 fields -- no exhaust column existed
+  # yet. So "every rate is 0" is indistinguishable from "no ballot exhausts
+  # here", and silently means the flag did nothing. Both current targets
+  # (2019, 2023) carry real rates; this guards the next pair someone adds.
+  if (all(EXHAUST_ARG == 0))
+    stop("AUSPOL_NSW_EXHAUST=1 but every exhaust rate for nsw", TO, " is 0 -- ",
+         "the source rows predate the exhaust column; refusing to run a no-op arm")
+  SIM_ENGINE <- "r"
+  cat(sprintf("BN0x  exhaust ON for nsw%d: %s\n", TO,
+              paste(sprintf("%s=%.1f%%", names(EXHAUST_ARG), EXHAUST_ARG), collapse = " ")))
+}
 sim <- simulate_seat_contests(level_sd = .level_sd, sd_override = SD_OVR, level_mult = .lm(shares), shares, fm, party_sd = psd, seat_sd = sp$sd_within * SEAT_SD_MULT,
                               n_sims = N_SIMS, smooth = SMOOTH, seed = SEED, party_cor = PARTY_COR,
                               shrink = SHRINK, conditional_override = .xgb_flow_ov,
                               fallback_smooth = FB_SMOOTH, shrink_k = SHRINK_K, flow_sd = FLOW_SD,
                               surge_h = surge_arg, surge_party = surge_party_arg,
-                                surge_from_zero = identical(Sys.getenv("AUSPOL_SURGE_FROM_ZERO", "0"), "1"), surge_mu = surge_mu_arg, surge_sd = surge_sd_arg)
+                                surge_from_zero = identical(Sys.getenv("AUSPOL_SURGE_FROM_ZERO", "0"), "1"), surge_mu = surge_mu_arg, surge_sd = surge_sd_arg,
+                              exhaust = EXHAUST_ARG, engine = SIM_ENGINE)
 cat(sprintf("BT5e  engine %s | surge recipient fell back: %d class(es) absent, %d seat-draws at zero share\n", sim$engine, sim$surge_recipient_fallback, sim$surge_recipient_fallback_draws))
 wp <- as.data.table(sim$win_prob)
 

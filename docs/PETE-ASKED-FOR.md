@@ -26,6 +26,16 @@ not a commit, not a plan file — that it is not happening and why.
 
 ---
 
+## 2026-09-13/14 overnight session
+
+| ask | status |
+|---|---|
+| *"can we rename all our vars to be more clear... level_now / pred_share / x"* | **SHIPPED (uncommitted)**. `level_now`->`level_pred`, `pred_share`->`base_pred`, `x`->`seat_prev_pcv` across `fit_xgb_primary_v6.R`, `v6_final.R`, `v7.R` (via compatibility alias, not full rewrite), `R/xgb_primary_override.R`. Verified byte-identical RMSE before/after. Not yet committed. |
+| *"does it behave better if we split ALP/LNP, GRN/ONP, others into 3 models?"* | **NOT DONE, and refused with evidence**. Pooled RMSE 3.8083 -> 3.8254 (worse), sa2026 ONP RMSE 7.498 -> 10.543 (much worse) -- less training data per group hurts more than the split helps. Not pursued further. |
+| *"see if the SHAPs pick up more demo stuff or prior-running stuff"* | **Answered, both no**. `base_pred` is ~89% of gain regardless of grouping; census and prior-running features combined are a rounding error next to it in every configuration tested. |
+| *"whats in the training set for this primary prediction model"* | **Answered inline in conversation**, not a doc entry -- one pooled xgboost model, ~13,739 rows, ~48 features, see `docs/reviews/sa2026-onp-base-pred-diagnosis-2026-09-14.md` for the fuller trace. |
+| implicit: fix sa2026 ONP / `base_pred` itself, not xgboost features | **BUILT, OFF -- NOT a clean win**. `AUSPOL_ONP_CONC_SD` already existed in `backtest_candidate_sa.R`, unused for sa2026 itself. Tested at the fitted value (9.18): raw-model log loss 0.3611->0.2961, survives a full retrain into the shipped config (0.4339->0.3577) -- but the six-harness sweep found a real regression on VIC2022 (72/78->69/78 seats, log loss +6.3%), the retrained model over-predicting IND broadly, coupled to the same "vic2022 IND degeneracy" already named in `fit_xgb_primary_v6.R`. This is a real trade, not a clean fix -- needs the VIC2022 coupling understood before shipping, plus MacKillop's federal/state boundary mismatch. Full detail: `docs/reviews/sa2026-onp-base-pred-diagnosis-2026-09-14.md`. |
+
 ## Outstanding
 
 ### THE STANDING GAP AGAINST AE FORECASTS (2026-09-12)

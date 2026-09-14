@@ -565,6 +565,8 @@ if (all(SLOPE == 1)) cat("DS1  all 1.000 -- uniform swing, output must be unchan
 .mode <- Sys.getenv("AUSPOL_DEV_SLOPE_MODE", "screened")
 .cond <- .mode %in% c("conditional", "screened")
 .screened <- identical(.mode, "screened")
+# Off by default -- see the matching comment in backtest_candidate_fed.R.
+.honour_departed <- Sys.getenv("AUSPOL_HONOUR_DEPARTED", "0") %in% c("1", "TRUE", "true")
 # EVERY caught fallback records WHY. "vic2026 has no candidates yet" and "a
 # bug in candidate_returns()" used to print the same line, so once nominations
 # close a real failure would have read as the expected pre-nomination gap.
@@ -759,6 +761,7 @@ if (!is.null(.fitsl)) {
     lut <- stats::setNames(as.logical(pv$permit), pv$seat)
     pm <- unname(lut[seats]); pm[is.na(pm)] <- TRUE
     return(screened_slopes(p, seats, .returns, pm, same_mp = .MP_SLOPE,
+                            honour_departed = .honour_departed,
                             same = if (is.null(.fitsl)) formals(screened_slopes)$same else .fitsl$same,
                             new  = if (is.null(.fitsl)) formals(screened_slopes)$new  else .fitsl$new))
   }

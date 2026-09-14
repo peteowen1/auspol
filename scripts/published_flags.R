@@ -28,6 +28,9 @@ PUBLISHED_FLAGS <- c(
   AUSPOL_COV_LOO             = "1",          # statewide correlation held out of its own target; 0 = the in-sample matrix
   AUSPOL_LEVEL_SD            = "1.10,8.67",  # level-dependent seat variance, a + b*sqrt(p(1-p))
   AUSPOL_DEV_SLOPE_MODE      = "screened",   # candidate-conditional slopes + salience screen (arm CS)
+  AUSPOL_HONOUR_DEPARTED     = "0",          # 1 = a departed class leader's base decays at the new-candidate slope even when the screen permits a newcomer; measured and refused 2026-09-06 on a federal wash (New England vs Wentworth), re-measurement queued 2026-09-13 on the fuller 89-case corpus -- docs/plans/prereg-vote-belongs-to-the-person-2026-09-06.md
+  AUSPOL_NOTIONAL            = "2",          # redistribution-adjusted (notional) prior for EVERY seat build_notional_baselines.R covers, not just brand-new names; upgraded from "1" (missing-seat fallback only) 2026-09-13 -- Antony Green's own booth-respread method, leakage-free. Currently a no-op under AUSPOL_XGB_PRIMARY=1 (which overrides the table this feeds) except the few cells XGB has no prediction for; shipped anyway because it is the methodologically correct baseline, not because it moves the pooled number -- docs/reviews/notional-prior-redistribution-2026-09-13.md
+                                             # HOW FAR THIS ACTUALLY REACHES (2026-09-14, found by the review gate): the FEDERAL BACKTEST only. fit_seats_full.R -- the live Victorian forecast -- has no notional path at all, and build_notional_baselines.R reads the federal AEC polling-place download, so it cannot produce Victorian data. Nor does fit_xgb_primary_v6_final.R, which builds the model artifact xgb_primary_predict_live() serves, so output/xgb-primary-v6-final-cols.json carries no x_notional_adj either. Setting this flag does not change the published Victoria 2026 numbers; it changes what the federal backtest measures.
   AUSPOL_MP_SLOPE            = "1",          # sitting-member slope tier from output/mp-slope-by-*.csv
   AUSPOL_DEFECT_DISCOUNT     = "1",          # major-party defector carries a fitted fraction of their vote
   AUSPOL_SALIENCE_SURGE_V2   = "1",          # per-seat emergence hazard from the salience corpus
@@ -278,10 +281,28 @@ PUBLISHED_FLAGS <- c(
                                              # Concentrated where you would expect: sa2026, the One Nation surge
                                              # election, 0.4200 -> 0.5564. Every headline number quoted before
                                              # 2026-09-11 was the leaked one.
-  AUSPOL_XGB_PRIMARY_OOF     = "",           # harness-only: which oof file the line above reads. Empty = the v6
-                                             # default (output/xgb-primary-v6-oof-predictions.csv), matching the
-                                             # shipped model. Set it to output/xgb-primary-oof-predictions.csv to
-                                             # measure v1 instead.
+  AUSPOL_XGB_PRIMARY_OOF     = "output/xgb-primary-shipped-oof-predictions.csv",
+                                             # harness-only: which oof file the line above reads. Points at v7's
+                                             # ret_exp arm (the IND retention feature, docs/reviews/xgb-primary-
+                                             # retention-feature-2026-09-13.md) since 2026-09-13 -- confirmed a real,
+                                             # replicable effect (pooled delta -0.0016 to -0.0017 across two seeds,
+                                             # not noise), shipped on Pete's call alongside the notional-prior fix.
+                                             # output/ is gitignored, so this filename is the ONLY durable record of
+                                             # what ships -- regenerate it with:
+                                             #   for y in 2010 2013 2016 2019 2022 2025; do  # prior is the election before
+                                             #     AUSPOL_NB_TARGET=$y AUSPOL_NB_PRIOR=<prev> Rscript scripts/build_notional_baselines.R
+                                             #   done
+                                             #   Rscript scripts/fit_xgb_primary_v6.R
+                                             #   AUSPOL_V7_ARMS="v7c,v7f" AUSPOL_V7_SHIP="v7f" Rscript scripts/fit_xgb_primary_v7.R
+                                             #   cp output/xgb-primary-v7-oof-predictions.csv output/xgb-primary-shipped-oof-predictions.csv
+                                             # THE FIRST STEP IS NOT OPTIONAL and was missing from this recipe until
+                                             # 2026-09-14. build_notional_baselines.R does ONE pair per invocation, and
+                                             # output/ is gitignored -- so on a fresh checkout the file does not exist,
+                                             # v6 logs "XG6n! ... missing" and carries on, and the "shipped" oof file
+                                             # comes out silently WITHOUT the notional prior it is supposed to carry.
+                                             # v6 must run before v7: v7 loads its persisted feature matrix as its base,
+                                             # including the notional-prior x_notional_adj column. Set to "" to fall
+                                             # back to plain v6 (output/xgb-primary-v6-oof-predictions.csv).
   AUSPOL_FLOW_SHRINK_K       = "0"           # data-weighted flow-cell smoothing -- REFUSED 2026-09-10, worse pooled at every tested k (0.339-0.354 vs baseline 0.339); helps Ballarat's own cell exactly as designed but federal/WA dominate the aggregate. docs/reviews/flow-cell-shrinkage-REFUSED-2026-09-10.md
 )
 

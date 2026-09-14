@@ -26,7 +26,7 @@ suppressMessages(library(xgboost))
 
 OUT <- "output"
 ALL <- fread(file.path(OUT, "xgb-primary-features-v6.csv"), showProgress = FALSE)
-ALL <- ALL[is.finite(level_prev) & is.finite(level_now)]
+ALL <- ALL[is.finite(level_prev) & is.finite(level_pred)]
 
 ALL[, same_i := as.integer(same)]
 ALL[, same_mp_i := as.integer(same_mp)]
@@ -54,7 +54,24 @@ for (r in region_levels) ALL[[paste0("region_", r)]] <- as.integer(ALL$region ==
 # a different order or set than it was trained on fails silently rather than
 # loudly. `level_from_polls` was added to both on 2026-09-11, and
 # xgb_primary_predict_live() sets it to 1L.
-feat_cols <- c("pred_share", "x", "level_prev", "level_now", "level_from_polls", "dev_prev",
+#
+# ONE DELIBERATE DIVERGENCE, recorded 2026-09-14 after the review gate flagged
+# the gap: v6 carries `x_notional_adj` by default (AUSPOL_XGB_NOTIONAL=1) and
+# this list does NOT. That is intentional, not drift. The column is a signed
+# redistribution adjustment computed from the federal AEC booth respread, so it
+# is a constant 0 for every non-federal row -- and the live forecast is
+# Victoria, where it would be 0 for all 88 seats. Training the SERVED model on
+# a column that is uniformly 0 at serving time is precisely the
+# constant-within-a-subgroup-becomes-a-label hazard that made the same feature
+# wreck sa2026 in v7 (log loss 0.4344 -> 0.5061, fixed in 75462ea by excluding
+# it there too). Measured in v6 on 2026-09-14: no comparable damage in the
+# BACKTEST (non-federal pairs split 8 better / 8 worse, mean RMSE delta
+# -0.0101, i.e. noise), but the backtest scores federal pairs where the column
+# has real values -- the live Victorian case has none, so the hazard there is
+# unmitigated by that result. Leave it out until Victorian notional data
+# exists; if it is ever added here, xgb_primary_predict_live() must build the
+# column too, or the stop() guard in R/xgb_primary_override.R will fire.
+feat_cols <- c("base_pred", "seat_prev_pcv", "level_prev", "level_pred", "level_from_polls", "dev_prev",
                "n_cand_prev", "n_cand_now", "same_i", "same_mp_i", "is_major_i",
                "margin", "fed_swing", "retirement_i", "soph_cand_i", "soph_party_i",
                "prev_swing", "is_incumbent_party_i", "own_prev_pcv",

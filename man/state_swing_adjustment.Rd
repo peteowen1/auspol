@@ -19,14 +19,39 @@ primary (and subtract from the Coalition's). Zero where no state election
 qualifies. \code{NULL} if the prior file is missing.
 }
 \description{
+\strong{NOT WIRED TO ANYTHING, AND THE APPROACH IT IMPLEMENTS WAS MEASURED AND
+REJECTED. Read this before believing the numbers below.}
+}
+\details{
+This function fits one regression across all state-years and applies the
+fitted value. That is exactly the design that was tried and abandoned on
+2026-09-12: a single slope fitted over 30 mixed state-years SHRINKS the cases
+that matter most, and Western Australia 2022 came out at +0.96 primary points
+against a true +5.8, because the polls there were understated by half and a
+pooled slope cannot know that. Pete's call was to emit the RAW quantities and
+let the model weigh them, which is what
+\code{scripts/build_state_deviation_features.R} does instead.
+
+Those raw features were then measured too, and also did not ship: arm v7i
+scored 3.9297 against the 3.8740 baseline, and v7j (split by jurisdiction)
+was worse on both halves. The reason is recorded in CLAUDE.md -- the columns
+are constant for every non-federal cell, so a tree reads them as a
+jurisdiction label.
+
+So the fit statistics below are real and the conclusion drawn from them was
+wrong. They are kept because the measurement is worth having; they are NOT a
+recommendation. This note exists because a docstring in this package once
+described an unimplemented path as though it worked, and that is how a stub
+gets wired into a published forecast on the strength of its own
+documentation. Flagged by the review gate, 2026-09-12.
+
 Federal seats in one state can swing very differently from the nation, and
 nothing in the model knows it: \code{level_pred} carries a single NATIONAL figure
 and the harness distributes it uniformly. fed2022 missed Hasluck by 11.4
 points and Tangney by 12.9 on the Labor primary because Western Australia
 swung +7.0 to Labor while the country swung -0.8 -- a +7.8 deviation, the
 largest in the corpus.
-}
-\details{
+
 OUR FEDERAL POLLS HAVE NO STATE BREAKDOWN (\code{poll-data-fed.csv} is 16 columns,
 national only), so the obvious input is unavailable. This is the substitute:
 the most recent STATE election before federal polling day, which we hold for

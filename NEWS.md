@@ -1,3 +1,39 @@
+# auspol 0.4.35
+
+**Two model changes ship, three arms measured and refused, and sa2026's worst
+miss traced to the seat model rather than anything downstream of it.**
+
+- **Redistribution-adjusted (notional) prior for federal seats**, on by
+  default (`AUSPOL_NOTIONAL=2`, `AUSPOL_XGB_NOTIONAL=1`). Antony Green's own
+  booth-respread method, leakage-free. Shipped on the methodological argument,
+  explicitly not on the metric -- the pooled effect is near-neutral. Reach is
+  narrower than the flag suggested and is now stated in `published_flags.R`:
+  the FEDERAL BACKTEST only, since `fit_seats_full.R` has no notional path and
+  the mechanism cannot produce Victorian data at all.
+- **`ret_exp`** (independent-candidate retention) shipped, confirmed at two
+  seeds before shipping rather than on a single run.
+- **Frome -> Ngadjuri** seat continuity across SA's 2025 redistribution.
+- **Three arms measured and REFUSED**, flags present and defaulted off: NSW
+  optional-preferential exhaustion (nsw2023 log loss 0.2699 -> 0.2943), the
+  salience percentile correction (repairs vic2022 and gives the best sa2026 of
+  any config, but costs 2.6 points of mean absolute error on teal primaries --
+  the thing the feature exists for), and the raw trend/fundamentals split.
+- **sa2026's One Nation miss traced end to end.** Four independent SHAP checks
+  put ~89% of tree gain on `base_pred`, and `dev_slope()` turns out to be
+  rank-preserving by construction -- Narungga went 5.4% to 37.7% and no slope
+  value reproduces that. An existing, unused fix (`AUSPOL_ONP_CONC_SD`) is
+  worth 0.4339 -> 0.3577 seat log loss there, replicated at two seeds and
+  surviving a full retrain, but costs vic2022 and is left OFF pending a
+  decision. `docs/reviews/sa2026-onp-base-pred-diagnosis-2026-09-14.md`.
+- **Column rename**, behaviour-neutral and verified so: `level_now` ->
+  `level_pred` (it held a forecast in one mode and an actual result in
+  another), `pred_share` -> `base_pred`, `x` -> `seat_prev_pcv`.
+- **Three bugs found by the review gate and fixed**, each one a silent
+  failure rather than a crash: `exhaust` did nothing when a name matched no
+  party while still reporting itself active; `build_notional_baselines.R`
+  overwrote five of its six pairs on the documented re-run command; and the
+  rename left `globalVariables()` stale (`R CMD check` notes 3 -> 2).
+
 # auspol 0.4.34
 
 **Docs cleanup and a mirrored WA salience fix.**

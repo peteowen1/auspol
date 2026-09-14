@@ -19,7 +19,7 @@ xgb_primary_predict_live(
 }
 \arguments{
 \item{shares}{The just-computed shipped-model shares matrix (seats x
-parties, summing to 100/row) -- becomes the \code{pred_share} feature.}
+parties, summing to 100/row) -- becomes the \code{base_pred} feature.}
 
 \item{mat22}{Seat-level 2022 class shares matrix, same shape as \code{shares}.}
 

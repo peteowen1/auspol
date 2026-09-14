@@ -80,6 +80,35 @@ cat(sprintf("NB2  booth rows matched: %d of %d (%.1f%%) | VOTES matched: %.1f%%\
             nrow(J), nrow(A), 100 * nrow(J) / nrow(A), cov))
 if (cov < 80) stop("NB!  only ", round(cov, 1), "% of prior votes map forward; refusing")
 
+# THE POLLING-PLACE DOWNLOAD CARRIES AN "Informal" PSEUDO-CANDIDATE ROW that
+# the candidate-level results file candidacies.csv is built from does not --
+# informal ballots are not a vote for anyone and are excluded from `pcv`
+# everywhere else in this repo. Left in here, they fell through
+# classify_party() into OTH and inflated the per-seat denominator by the
+# seat's informal rate (typically 3-6%, fairly uniform nationwide), which
+# silently diluted every real party's notional share by a near-constant
+# amount. Found 2026-09-13 chasing what looked like a WA-specific
+# redistribution effect on Tangney/Pearce: the same ~2-3 point "gap" showed
+# up in EVERY state, including ones with no federal redistribution that
+# cycle -- Pearce 2019 alone carried 6,153 informal votes, exactly the size
+# of its notional-vs-raw discrepancy once every other party's totals were
+# checked and matched exactly.
+n_informal <- sum(J[Surname == "Informal"]$OrdinaryVotes, na.rm = TRUE)
+.tot_all <- sum(J$OrdinaryVotes, na.rm = TRUE)
+J <- J[Surname != "Informal"]
+cat(sprintf("NB2i excluded %d informal vote(s) before computing shares (%.2f%% of the count)\n",
+            n_informal, 100 * n_informal / .tot_all))
+# COVERAGE FLOOR, not just a printed number. This is an exact-string match on
+# a field the AEC controls; if they ever reformat it, the match finds nothing,
+# prints "excluded 0", and silently reinstates the very contamination this
+# exclusion exists to remove -- with a log line that reads like confirmation.
+# Australian informal rates run ~3-6% of the House count and have never been
+# near zero, so anything under 1% means the match broke, not that the ballots
+# were unusually clean.
+if (n_informal / .tot_all < 0.01)
+  stop(sprintf("informal votes are %.3f%% of the count -- the `Surname == \"Informal\"` match has broken; refusing to compute shares on contaminated totals",
+               100 * n_informal / .tot_all))
+
 J[, party := classify_party(PartyNm, PartyAb)]
 N <- J[, .(votes = sum(OrdinaryVotes)), by = .(seat, party)]
 N[, pcv := 100 * votes / sum(votes), by = seat]
@@ -98,7 +127,23 @@ for (s in newseats) {
   print(N[seat == s][order(-pcv)][, .(party, votes, pcv = round(pcv, 2))])
 }
 
-fwrite(N[, .(election, prior, seat, party, votes, pcv)],
-       "output/notional-baselines.csv")
-cat(sprintf("\nNB9  wrote output/notional-baselines.csv: %d rows, %d seats\n",
-            nrow(N), uniqueN(N$seat)))
+# MERGE, DO NOT CLOBBER. This script builds ONE pair per invocation (PRIOR ->
+# TARGET, default 2022 -> 2025), but every consumer reads the file expecting
+# ALL federal pairs. A plain overwrite meant that running the documented
+# command with no env vars set silently reduced a six-pair file to one pair,
+# and fit_xgb_primary_v6.R would then quietly apply x_notional_adj to a single
+# pair and zero for the rest -- no error anywhere in the chain. Keep the other
+# pairs, replace only the one just rebuilt.
+.nbf <- "output/notional-baselines.csv"
+.new <- N[, .(election, prior, seat, party, votes, pcv)]
+if (file.exists(.nbf)) {
+  .old <- fread(.nbf, showProgress = FALSE)
+  .kept <- .old[!(election == .new$election[1] & prior == .new$prior[1])]
+  cat(sprintf("\nNB9  keeping %d rows for %d other pair(s) already in the file\n",
+              nrow(.kept), uniqueN(.kept$election)))
+  .new <- rbindlist(list(.kept, .new), use.names = TRUE, fill = TRUE)
+}
+setorder(.new, election, seat, party)
+fwrite(.new, .nbf)
+cat(sprintf("NB9  wrote %s: %d rows, %d pair(s) -- %s\n", .nbf, nrow(.new),
+            uniqueN(.new$election), paste(sort(unique(.new$election)), collapse = ", ")))

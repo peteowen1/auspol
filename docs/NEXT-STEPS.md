@@ -1,6 +1,81 @@
 # auspol — work queue
 
-## CURRENT STATE, end of the 2026-09-12/13 session — START HERE
+## OVERNIGHT CONTINUATION, 2026-09-14 early morning — READ THIS FIRST
+
+Pete went to sleep mid-session; this continued autonomously per
+`~/.claude/CLAUDE.md`'s Autonomous Sessions rule. Nothing committed, nothing
+destructive. Full writeup: `docs/reviews/sa2026-onp-base-pred-diagnosis-2026-09-14.md`.
+
+**The headline result**: traced sa2026's worst miss (One Nation) all the way
+through the pipeline via SHAP, four separate seats/parties in a row, to the
+same place — `base_pred` (the pre-xgboost seat-level forecast) dominates every
+prediction (~89% of tree gain) and nothing downstream of it (census
+demographics, retiring-MP tenure, a party-group-split model) can compete.
+Traced ONP's `base_pred` formula by hand for Narungga and found the actual
+bug: `dev_slope()`'s rank-preserving deviation model cannot express a seat
+going from modestly-above-average to the state's strongest seat, which is
+exactly what happened. **Found an existing, already-built fix
+(`AUSPOL_ONP_CONC_SD`) sitting unused for sa2026** — tested it, confirmed a
+real 18% log-loss improvement on the raw model, then verified it survives a
+full retrain into the actually-shipped xgboost configuration (0.4339 -> 0.3577
+seat log loss, 39/47 -> 41/47 seats called correctly). **UPDATE, full
+six-harness sweep now done**: NSW/QLD/WA/FED all unaffected (noise-level),
+but **VIC2022 is a real regression** (72/78 -> 69/78 seats, log loss +6.3%),
+traced to the retrained model over-predicting IND broadly across VIC2022 --
+the same "vic2022 IND/OTH_RIGHT degeneracy" pattern already named in
+`fit_xgb_primary_v6.R`'s own diagnostics, now shown to interact with this fix.
+**NOT a clean win — a real trade. Not ready to ship.** Full detail and
+recommended next steps: `docs/reviews/sa2026-onp-base-pred-diagnosis-2026-09-14.md`.
+
+**Renamed the confusing xgboost column names** (`level_now`->`level_pred`,
+`pred_share`->`base_pred`, `x`->`seat_prev_pcv`) per Pete's request — verified
+byte-identical behaviour before/after. Also fixed a real bug in
+`fit_xgb_primary_v7.R`: a hardcoded arm-name list silently reported any new
+arm as "did not run" even after it trained successfully.
+
+**Not yet done, in priority order**:
+1. Understand and fix the VIC2022/IND coupling before this can ship at all —
+   see the review doc's Recommendation section for candidate approaches
+   (regularisation, region-scoped IND feature, re-run the vic2022 IND SHAP
+   breakdown against the retrained model).
+2. MacKillop's federal/state boundary mismatch — its federal ONP vote ranks
+   it 15th of 47 SA seats but its actual result is 2nd-highest; no CV setting
+   fixes this, worth checking the actual boundary maps.
+3. Once 1 and 2 are resolved, decide whether to default
+   `AUSPOL_ONP_CONC_SD=9.18` in `published_flags.R`.
+4. Review and commit: the rename (this session), the `ran`-list bug fix, and
+   the still-uncommitted items from the evening before (NSW exhaust wiring,
+   `build_level_components.R`, `build_retiring_mp_cases.R`).
+
+## CURRENT STATE, 2026-09-13 evening session — START HERE
+
+**Two real fixes shipped and composed correctly** (commits `75a5076`,
+`8db4305`, `cea78e2`, `a8af56b`, `f3c4b3e`, `75462ea`): the Frome->Ngadjuri
+seat-rename bug; the notional (redistribution-adjusted) prior for federal
+seats, on by default now regardless of aggregate effect (Pete's call — "the
+right thing to do... do the Antony Green ABC method"); and `ret_exp` (the
+IND retention feature), confirmed real at two seeds before shipping. A bug
+from composing the two carelessly (x_notional_adj leaked into ret_exp's
+model as a jurisdiction label, tanking sa2026 to 0.5061) was caught and
+fixed same session. **Current state: pooled log loss 0.2914 over 23 pairs
+(was 0.2984); on the 7 AEF-comparable elections, ours 0.2743 vs AEF's 0.2851
+(was −0.0049, now −0.0108).**
+
+**Next queued: Pattern A from the worst-seats review below.** Full
+five-pattern analysis of the current worst-15-vs-AEF table:
+[reviews/worst-seats-five-patterns-2026-09-13.md](reviews/worst-seats-five-patterns-2026-09-13.md).
+Pattern A — a SENIOR retiring MP (minister/leader) loses more personal vote
+than the flat retirement discount assumes — explains 5 of 15 seats (Monaro/
+Barilaro, Braddon/Pearce, Riverstone/Conolly, Richmond/Wynne, Parramatta/
+Lee) and is the cheapest lever: a static, hand-curated feature, no new data
+fetch, extends `fit_defector_discount()`/the MP-slope tier directly. **Size
+it (case count, effect size) before building.** Other four patterns
+(SA One Nation surge broader than known; a defecting incumbent fragmenting
+the right three ways; a departed independent's vote reverting rightward,
+untested direction for `ret_exp`; QLD optional-preferential flows against
+the primary leader) are recorded in the review doc, not yet actioned.
+
+## Session 2026-09-12/13 (earlier), morning/day — rolled to journal below
 
 **PR #34 MERGED to `main`** (6b51957). sa2022 is now in the model
 (`docs/reviews/sa2022-missing-from-the-model-2026-09-12.md`) — a name-order
@@ -70,6 +145,12 @@ before 2022, so it may not be fixable with this model shape at all.
 Action is failing on a missing `external/elections/aec-fed-firstprefs.csv` on
 the CI runner (`estimate_statewide_cov.R`) — pre-existing, nothing tonight
 touched that script.
+
+**PRs #38 and #39 MERGED to `main`** (v0.4.34): the `fit_xgb_primary_v7.R`
+WA-salience mirror fix, the `build_candidacies.R` gap-scope correction doc,
+and this `NEXT-STEPS.md` trim (63k → 49.5k chars, see below). Everything from
+tonight's 5-item list is now closed out: items 1-3 documented/confirmed dead
+ends, item 4 shipped, item 5 (this trim) shipped.
 
 ## PREVIOUS SESSIONS, 2026-09-10/11 — rolled to journal, open items carried forward
 

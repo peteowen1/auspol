@@ -34,13 +34,28 @@
 #' @param smooth Weight given to a uniform distribution over the survivors,
 #'   in `[0, 1)`. **Do not set this to zero** without reading the note above:
 #'   it is what stops an unobserved destination being treated as impossible.
+#' @param exhaust Named numeric vector, party -> percent (0-100) of that
+#'   party's ballots that carry no further preference and are DROPPED from
+#'   the count entirely when that party is excluded, rather than
+#'   redistributed. `NULL` (default) or an unnamed/missing entry means 0 --
+#'   full preferential, every ballot redistributes, byte-identical to this
+#'   function's behaviour before this parameter existed. Real for optional-
+#'   preferential systems (NSW; Queensland before 2016): fitted from the
+#'   anchor's own preference-estimates.csv, e.g. nsw2023 GRN 39.7%, ONP
+#'   71.1%, OTH 61.2% -- 40-71% of minor-party preferences there carry no
+#'   major-party preference at all, which this function previously had no
+#'   way to represent. `final_shares` then sums to LESS than the original
+#'   total (see `exhausted`), matching the official two-candidate-preferred
+#'   count rather than the full formal vote.
 #' @return List: `winner`, `final_two`, `final_shares` (the two-candidate-
 #'   preferred count for those two, in the units `shares` was given in),
-#'   `order` (exclusion order), and `fallbacks` (how many transfers had no
-#'   conditional row).
+#'   `order` (exclusion order), `fallbacks` (how many transfers had no
+#'   conditional row), and `exhausted` (total votes dropped rather than
+#'   redistributed, same units as `shares`; 0 whenever `exhaust` is unset).
 #' @export
 distribute_preferences <- function(shares, conditional = list(),
-                                   pooled = list(), smooth = 0.15) {
+                                   pooled = list(), smooth = 0.15,
+                                   exhaust = NULL) {
   # This receives only the conditional LIST, so it cannot see the matrix's
   # multiplicity stamp. It checks the key shape instead: a survivor label
   # ending in a digit is a multiplicity key ("LNP2"), which the lookup below
@@ -70,12 +85,20 @@ distribute_preferences <- function(shares, conditional = list(),
   if (!length(v)) stop("No candidate has a positive share")
   excluded <- character(0)
   fallbacks <- 0L
+  exhausted_total <- 0
 
   while (length(v) > 2L) {
     # `which.min` on a named vector returns a position; take the NAME, since
     # the vector is reordered as parties are removed.
     from <- names(v)[which.min(v)]
     pot <- v[[from]]
+    # EXHAUSTION, before the pot is touched. A ballot that exhausts here never
+    # existed for the rest of the count -- it is not one more destination to
+    # smooth over, it is votes leaving `pot` before `p` is even computed.
+    ex_rate <- if (is.null(exhaust) || !from %in% names(exhaust)) 0 else exhaust[[from]] / 100
+    pot_exhausted <- pot * ex_rate
+    pot <- pot - pot_exhausted
+    exhausted_total <- exhausted_total + pot_exhausted
     v <- v[setdiff(names(v), from)]
     surv <- names(v)
 
@@ -114,5 +137,6 @@ distribute_preferences <- function(shares, conditional = list(),
        final_two = names(v),
        final_shares = v,
        order = excluded,
-       fallbacks = fallbacks)
+       fallbacks = fallbacks,
+       exhausted = exhausted_total)
 }

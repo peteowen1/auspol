@@ -26,8 +26,10 @@ suppressMessages(library(xgboost))
 
 OUT <- "output"
 C <- fread(file.path(OUT, "candidacies.csv"), showProgress = FALSE)
-# `pred_share` in this file (the "BASELINE (shipped model)" print below, and
-# the base feature this script trains x/dev_prev-style columns from) is ONLY a
+# `pred_share` -- the sharedetail column this script reads and immediately
+# renames to `base_pred` (see the setnames seam below; the "BASELINE (shipped
+# model)" print further down and the seat_prev_pcv/dev_prev-style columns both
+# come off it) -- is ONLY a
 # genuine, independent baseline if it was pooled from sharedetail generated
 # with AUSPOL_XGB_PRIMARY=0. The published default is "1", which makes every
 # ordinary harness run overwrite `shares` with THIS model's own prior output
@@ -124,12 +126,99 @@ seat_file_hits <- 0L; seat_file_pairs <- character(0)
 for (pr in PAIRS) {
   lp <- state_level(pr$prev); ln <- state_level(pr$election)
   if (is.null(lp) || is.null(ln)) { cat(sprintf("XG6! no state level for %s -> skip\n", pr$election)); next }
-  prevc <- C[C$election == pr$prev][, list(x = sum(pcv, na.rm = TRUE), n_cand_prev = .N), by = list(seat, party)]
+  prevc <- C[C$election == pr$prev][, list(seat_prev_pcv = sum(pcv, na.rm = TRUE), n_cand_prev = .N), by = list(seat, party)]
+  # NOTIONAL (REDISTRIBUTION-ADJUSTED) PRIOR, ON BY DEFAULT since 2026-09-13
+  # (Pete's call). Exposed as its own signed feature rather than substituted
+  # into `seat_prev_pcv`: a first version silently replaced it and barely
+  # moved the model's prediction (xgboost only responds when a feature
+  # crosses a learned split threshold, and a few points of additive
+  # correction didn't cross one here; pooled RMSE actually got slightly
+  # worse). This version gave the tree an explicit, learnable column instead
+  # -- same fix shape as ret_exp's flat-rate predecessor -- and moved
+  # Pearce's ALP prediction +4.55 toward the actual result. Pooled effect is
+  # net-neutral either way (federal RMSE -0.007, overall +0.004): shipped
+  # anyway because it is the methodologically correct baseline (booth-level
+  # respread onto current boundaries -- the same technique Antony Green's
+  # own notional margins use, leakage-free since a redistribution is public
+  # well before polling day), not because it moves the pooled number. Full
+  # trace: docs/reviews/notional-prior-redistribution-2026-09-13.md.
+  # `x_notional_adj`: notional minus raw seat_prev_pcv, signed, 0 when no
+  # redistribution data applies (`output/notional-baselines.csv`).
+  # `seat_prev_pcv` itself untouched.
+  prevc[, x_notional_adj := 0]
+  if (identical(Sys.getenv("AUSPOL_XGB_NOTIONAL", "1"), "1")) {
+    .nbf <- file.path(OUT, "notional-baselines.csv")
+    if (file.exists(.nbf)) {
+      NB <- fread(.nbf, showProgress = FALSE)
+      nb_pair <- NB[election == pr$election & prior == pr$prev]
+      if (nrow(nb_pair)) {
+        nb_x <- nb_pair[, list(x_notional = sum(pcv, na.rm = TRUE)), by = list(seat, party)]
+        prevc <- merge(prevc, nb_x, by = c("seat", "party"), all.x = TRUE)
+        n_set <- sum(!is.na(prevc$x_notional))
+        prevc[!is.na(x_notional), x_notional_adj := x_notional - seat_prev_pcv]
+        prevc[, x_notional := NULL]
+        cat(sprintf("XG6n  %s: x_notional_adj set for %d of %d (seat,party) cells\n",
+                    pr$election, n_set, nrow(prevc)))
+      } else {
+        # SAY SO. The file existing is not the same as it covering THIS pair,
+        # and a pair it does not cover runs with x_notional_adj = 0 for every
+        # row -- identical to the feature being off, with nothing printed to
+        # distinguish the two. fed2004->fed2007 is live in exactly this state:
+        # build_notional_baselines.R's IDS table starts at 2007, so that pair
+        # can never have a baseline. Anyone measuring the feature on it would
+        # get a null result that reads as "no effect" rather than "never ran".
+        cat(sprintf("XG6n! %s: no notional rows for this pair (prior %s) -- x_notional_adj stays 0 everywhere\n",
+                    pr$election, pr$prev))
+      }
+    } else {
+      cat(sprintf("XG6n! %s missing -- AUSPOL_XGB_NOTIONAL=1 had nothing to apply for %s\n",
+                  .nbf, pr$election))
+    }
+  }
+  # RETIRING-MP TENURE, off by default (AUSPOL_XGB_RETIRING_MP=1), tested in
+  # isolation before any decision to ship. Working the AEF worst-seats table
+  # 2026-09-13 (Parramatta/Monaro/Heathcote/Riverstone/Braddon/Richmond/
+  # Morwell), the common shape was a SENIOR retiring member whose successor's
+  # primary collapsed far more than the flat retirement discount assumes.
+  # Ministerial/leadership status isn't in this corpus and would need real
+  # hand-curated research; TENURE (consecutive terms served, known before
+  # the target election, leakage-free) is a purely data-derived proxy that
+  # DOES predict retention once a real bug in the sizing corpus was found and
+  # fixed (a vanished/redistricted seat was misread as "party got 0 votes",
+  # contaminating the naive correlation to nothing -- r=0.068, p=0.16). The
+  # corrected corpus (scripts/build_retiring_mp_cases.R, 343 cases, 22
+  # pairs): r=-0.111, p=0.039 -- 2-term retirees keep ~96.5% of their vote,
+  # 3+ term retirees keep ~89-90%. Modest but real; Pete's call is to expose
+  # it as a feature and let xgboost decide rather than refuse it on
+  # correlation strength alone. 0 where no retiring member applies.
+  prevc[, retiring_mp_tenure := 0]
+  if (identical(Sys.getenv("AUSPOL_XGB_RETIRING_MP", "0"), "1")) {
+    .rmf <- file.path(OUT, "retiring-mp-cases.csv")
+    if (file.exists(.rmf)) {
+      RM <- fread(.rmf, showProgress = FALSE)
+      rm_pair <- RM[pair == pr$election]
+      if (nrow(rm_pair)) {
+        prevc <- merge(prevc, rm_pair[, .(seat, party, tenure)], by = c("seat", "party"), all.x = TRUE)
+        n_set <- sum(!is.na(prevc$tenure))
+        prevc[!is.na(tenure), retiring_mp_tenure := tenure]
+        prevc[, tenure := NULL]
+        cat(sprintf("XG6m  %s: retiring_mp_tenure set for %d of %d (seat,party) cells\n",
+                    pr$election, n_set, nrow(prevc)))
+      }
+    } else {
+      cat(sprintf("XG6m! %s missing -- AUSPOL_XGB_RETIRING_MP=1 had nothing to apply for %s\n",
+                  .rmf, pr$election))
+    }
+  }
   nowc  <- C[C$election == pr$election][, list(n_cand_now = .N), by = list(seat, party)]
   ret <- tryCatch(candidate_returns(pr$prev, pr$election), error = function(e) NULL)
   pv  <- tryCatch(personal_prior_vote(pr$prev, pr$election), error = function(e) NULL)
   sd_pair <- SD[pair == pr$election]
   if (!nrow(sd_pair)) { cat(sprintf("XG6! no sharedetail rows for %s -> skip\n", pr$election)); next }
+  # sharedetail's own column is `pred_share` (see the file-level comment at
+  # the top of this script); renamed to `base_pred` here so it reads clearly
+  # alongside `level_pred` below instead of the two being conflated.
+  setnames(sd_pair, "pred_share", "base_pred")
 
   m <- merge(sd_pair, prevc, by = c("seat", "party"), all.x = TRUE)
   m <- merge(m, nowc, by = c("seat", "party"), all.x = TRUE)
@@ -149,20 +238,59 @@ for (pr in PAIRS) {
   if (!.lvl_mode %in% c("pred", "now", "none"))
     stop("AUSPOL_LEVEL_MODE must be pred, now or none; got ", .lvl_mode)
   if (identical(.lvl_mode, "now")) {
-    m <- merge(m, ln[, list(party, level_now = level)], by = "party", all.x = TRUE)
+    m <- merge(m, ln[, list(party, level_pred = level)], by = "party", all.x = TRUE)
   } else if (identical(.lvl_mode, "pred")) {
     lpf <- file.path(OUT, "level-pred.csv")
     if (!file.exists(lpf)) stop("AUSPOL_LEVEL_MODE=pred needs ", lpf,
                                 " -- run scripts/build_level_pred.R first")
     LPRED <- data.table::fread(lpf, showProgress = FALSE)
-    lp1 <- LPRED[LPRED$pair == pr$election, list(party, level_now = level_pred,
+    lp1 <- LPRED[LPRED$pair == pr$election, list(party, level_pred,
                                                   level_from_polls = from_polls)]
     if (!nrow(lp1)) stop("no predicted statewide for ", pr$election,
                          " -- a pair silently missing here becomes a column of NAs ",
                          "that xgboost splits on as though it were a value")
     m <- merge(m, lp1, by = "party", all.x = TRUE)
   }
-  # The column keeps the name `level_now` in every mode so the feature list,
+  # RAW TREND + FUNDAMENTALS, kept separate, off by default
+  # (AUSPOL_XGB_RAW_LEVEL=1). `level_pred` above is a single PRE-BLENDED
+  # figure: `w * trend + (1-w) * fundamentals`, with `w` fitted on a horizon
+  # grid starting at 30 days and clamped (not extrapolated) for anything
+  # closer -- so a "day before polling day" forecast (horizon=1, every
+  # backtest's convention) gets the SAME weight as one built a month out.
+  # Found 2026-09-13 chasing nsw2023's 5.7-point statewide miss: raw trend
+  # alone (35.4) was close to the actual result (37.0); the blend (31.3)
+  # dragged it toward a badly wrong fundamentals figure. Sized across all 22
+  # pairs, pure trend beats the frozen blend on average (MAE 2.14 vs 2.47)
+  # but NOT universally -- fed2007/2010/2013/2019 are genuinely helped by
+  # some fundamentals weight -- so neither "always trend" nor the current
+  # frozen blend is right. Pete's call: don't hand-fit a better w(horizon)
+  # curve, expose both raw components and let xgboost learn how much to
+  # trust each conditioned on everything else it knows about a seat, the
+  # same way ret_exp and sal_exp already work -- this is a strict
+  # generalisation of a fixed global blend weight. scripts/
+  # build_level_components.R computes both per party, LOO, leakage-free.
+  m[, trend_level_raw := NA_real_]
+  m[, fund_level_raw := NA_real_]
+  if (identical(Sys.getenv("AUSPOL_XGB_RAW_LEVEL", "0"), "1")) {
+    .lcf <- file.path(OUT, "level-components.csv")
+    if (file.exists(.lcf)) {
+      LC <- fread(.lcf, showProgress = FALSE)
+      lc1 <- LC[LC$pair == pr$election]
+      if (nrow(lc1)) {
+        m <- merge(m, lc1[, list(party, .trend = trend_level, .fund = fund_level)],
+                  by = "party", all.x = TRUE)
+        n_set <- sum(!is.na(m$.trend))
+        m[!is.na(.trend), `:=`(trend_level_raw = .trend, fund_level_raw = .fund)]
+        m[, c(".trend", ".fund") := NULL]
+        cat(sprintf("XG6r  %s: trend_level_raw/fund_level_raw set for %d of %d rows\n",
+                    pr$election, n_set, nrow(m)))
+      }
+    } else {
+      cat(sprintf("XG6r! %s missing -- AUSPOL_XGB_RAW_LEVEL=1 had nothing to apply for %s\n",
+                  .lcf, pr$election))
+    }
+  }
+  # The column keeps the name `level_pred` in every mode so the feature list,
   # the saved models and every downstream reader stay on one name. What CHANGES
   # is where it comes from, which is recorded in the run banner below rather
   # than left to be inferred from a filename.
@@ -202,10 +330,27 @@ ALL <- rbindlist(rows, fill = TRUE)
 cat(sprintf("\nseat-file (load_seats) coverage: %d of %d pairs -- %s\n",
             seat_file_hits, length(PAIRS), paste(seat_file_pairs, collapse = ", ")))
 
-ALL[, x := ifelse(is.na(x), 0, x)]
+ALL[, seat_prev_pcv := ifelse(is.na(seat_prev_pcv), 0, seat_prev_pcv)]
+ALL[, x_notional_adj := ifelse(is.na(x_notional_adj), 0, x_notional_adj)]
+ALL[, retiring_mp_tenure := ifelse(is.na(retiring_mp_tenure), 0, retiring_mp_tenure)]
+# Fall back to the existing blended level_pred, never to a bare NA -- xgboost
+# treats NA as a value it can split on, the same trap AUSPOL_XGB_RAW_LEVEL's
+# own header comment names for a pair silently missing from level-pred.csv.
+# Guarded: level_pred is absent entirely under AUSPOL_LEVEL_MODE=none.
+# REFUSE THE SCALAR-0 FALLBACK. Under AUSPOL_LEVEL_MODE=none there is no
+# level_pred to fall back to, and filling these two features with a constant 0
+# is precisely the filler-value-becomes-a-jurisdiction-label failure this
+# repo has already paid for once (CLAUDE.md, 2026-09-12: 6,100 cells of
+# filler moved 96% of non-federal predictions).
+if (identical(Sys.getenv("AUSPOL_XGB_RAW_LEVEL", "0"), "1") && !"level_pred" %in% names(ALL))
+  stop("AUSPOL_XGB_RAW_LEVEL=1 with AUSPOL_LEVEL_MODE=none has no statewide level ",
+       "to fall back to -- refusing to fill trend/fund_level_raw with a constant 0")
+.lvl_fallback <- if ("level_pred" %in% names(ALL)) ALL$level_pred else 0
+ALL[, trend_level_raw := ifelse(is.na(trend_level_raw), .lvl_fallback, trend_level_raw)]
+ALL[, fund_level_raw := ifelse(is.na(fund_level_raw), .lvl_fallback, fund_level_raw)]
 ALL[, n_cand_prev := ifelse(is.na(n_cand_prev), 0L, n_cand_prev)]
 ALL[, n_cand_now  := ifelse(is.na(n_cand_now), 1L, n_cand_now)]
-ALL[, dev_prev := x - level_prev]
+ALL[, dev_prev := seat_prev_pcv - level_prev]
 ALL[, same := ifelse(is.na(same), FALSE, same)]
 ALL[, same_mp := ifelse(is.na(same_mp), FALSE, same_mp)]
 ALL[, is_major := party %in% c("ALP", "LNP", "NAT")]
@@ -271,10 +416,10 @@ cat(sprintf("wrote %s\n\n", file.path(OUT, "xgb-primary-features-v6.csv")))
 
 # ============================== fit + CV =====================================
 before <- nrow(ALL)
-ALL <- ALL[is.finite(level_prev) & is.finite(level_now)]
+ALL <- ALL[is.finite(level_prev) & is.finite(level_pred)]
 cat(sprintf("dropped %d of %d rows with no state level; %d remain\n", before - nrow(ALL), before, nrow(ALL)))
 
-base_rmse <- sqrt(mean((ALL$pred_share - ALL$actual_share)^2))
+base_rmse <- sqrt(mean((ALL$base_pred - ALL$actual_share)^2))
 cat(sprintf("\nBASELINE (shipped model) pooled primary RMSE: %.4f  (n=%d)\n", base_rmse, nrow(ALL)))
 
 ALL[, same_i := as.integer(same)]
@@ -290,7 +435,7 @@ region_levels <- sort(unique(ALL$region))
 for (p in party_levels) ALL[[paste0("party_", p)]] <- as.integer(ALL$party == p)
 for (r in region_levels) ALL[[paste0("region_", r)]] <- as.integer(ALL$region == r)
 
-# `level_now` was state_level(pr$election) -- the party's ACTUAL statewide share
+# `level_pred` was state_level(pr$election) -- the party's ACTUAL statewide share
 # at the election being predicted. AUSPOL_LEVEL_MODE (defined below, default
 # "pred") now controls where it comes from; `"none"` drops it entirely.
 #
@@ -318,18 +463,32 @@ cat(sprintf("\n=== STATEWIDE SOURCE: %s === %s\n", .lvl_mode,
 if (identical(.lvl_mode, "pred") && "level_from_polls" %in% names(ALL))
   cat(sprintf("    %d of %d rows have a poll-based prediction; the rest fall back to no-swing\n",
               sum(ALL$level_from_polls == 1L, na.rm = TRUE), nrow(ALL)))
-feat_cols <- c("pred_share", "x", "level_prev",
-               if (!identical(.lvl_mode, "none")) "level_now",
+.raw_level <- identical(Sys.getenv("AUSPOL_XGB_RAW_LEVEL", "0"), "1")
+feat_cols <- c("base_pred", "seat_prev_pcv", "level_prev",
+               # RAW MODE: trend_level_raw + fund_level_raw REPLACE level_pred
+               # (and level_from_polls, which existed only to tell the model
+               # how much to trust a single blended figure -- moot once the
+               # tree sees both raw ingredients and can weigh them itself).
+               # See the AUSPOL_XGB_RAW_LEVEL block above, where these are
+               # built, for the full reasoning.
+               if (.raw_level) c("trend_level_raw", "fund_level_raw")
+               else if (!identical(.lvl_mode, "none")) "level_pred",
                # `level_from_polls` marks the rows whose statewide is the
                # no-swing fallback rather than a poll-based projection -- it
-               # tells the model how much to trust level_now on that row.
+               # tells the model how much to trust level_pred on that row.
                # Dropping it costs 0.014 of primary RMSE (3.9201 -> 3.9341),
                # so it stays, and xgb_primary_predict_live() sets it to 1L to
                # match: a live forecast always has polls, or it would not be
                # running. Both models therefore carry the SAME feature set,
                # which is the train/serve consistency this change exists for.
-               if (identical(.lvl_mode, "pred")) "level_from_polls",
+               if (!.raw_level && identical(.lvl_mode, "pred")) "level_from_polls",
                "dev_prev",
+               # x_notional_adj (see its own comment above, where it's built):
+               # only included when AUSPOL_XGB_NOTIONAL=1. The column exists
+               # unconditionally (0 when off) so feat_cols can name it without
+               # the model ever seeing a non-zero value unless the switch is on.
+               if (identical(Sys.getenv("AUSPOL_XGB_NOTIONAL", "1"), "1")) "x_notional_adj",
+               if (identical(Sys.getenv("AUSPOL_XGB_RETIRING_MP", "0"), "1")) "retiring_mp_tenure",
                "n_cand_prev", "n_cand_now", "same_i", "same_mp_i", "is_major_i",
                "margin", "fed_swing", "retirement_i", "soph_cand_i", "soph_party_i",
                "prev_swing", "is_incumbent_party_i", "own_prev_pcv",
@@ -381,25 +540,25 @@ cat("\ntop 20 features by gain:\n")
 print(head(imp, 20))
 
 ALL[, xgb_pred := oof_pred]
-fwrite(ALL[, .(pair, seat, party, pred_share, actual_share, xgb_pred, jump, governed, permit, surge_h, is_recipient)],
+fwrite(ALL[, .(pair, seat, party, base_pred, actual_share, xgb_pred, jump, governed, permit, surge_h, is_recipient)],
        file.path(OUT, "xgb-primary-v6-oof-predictions.csv"))
 cat(sprintf("\nwrote %s\n", file.path(OUT, "xgb-primary-v6-oof-predictions.csv")))
 
 cat("\nRMSE by jurisdiction (shipped vs xgb v6):\n")
 print(ALL[, .(n = .N,
-              shipped_rmse = sqrt(mean((pred_share - actual_share)^2)),
+              shipped_rmse = sqrt(mean((base_pred - actual_share)^2)),
               xgb_rmse = sqrt(mean((xgb_pred - actual_share)^2))), by = region])
 
 cat("\nsa2026 ONP check:\n")
 sa_onp <- ALL[pair == "sa2026" & party == "ONP"]
-sa_onp[, err_shipped := abs(pred_share - actual_share)]
+sa_onp[, err_shipped := abs(base_pred - actual_share)]
 sa_onp[, err_v6 := abs(xgb_pred - actual_share)]
-print(sa_onp[order(-err_shipped), .(seat, actual_share = round(actual_share,1), pred_share = round(pred_share,1),
+print(sa_onp[order(-err_shipped), .(seat, actual_share = round(actual_share,1), base_pred = round(base_pred,1),
                                      xgb_v6 = round(xgb_pred,1), permit, is_recipient)])
 cat(sprintf("\nSA ONP mean abs error: shipped %.3f -> xgb v6 %.3f\n",
             mean(sa_onp$err_shipped), mean(sa_onp$err_v6)))
 
 cat("\nvic2022 IND/OTH_RIGHT degeneracy check:\n")
 vic <- ALL[pair == "vic2022" & party %in% c("IND", "OTH_RIGHT")]
-print(vic[, .(sum_pred_share = sum(pred_share), sum_xgb_pred = sum(xgb_pred),
+print(vic[, .(sum_base_pred = sum(base_pred), sum_xgb_pred = sum(xgb_pred),
               n_zero_pred = sum(xgb_pred < 0.05)), by = party])

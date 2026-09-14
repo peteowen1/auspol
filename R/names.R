@@ -249,5 +249,14 @@ normalise_seat <- function(x) gsub("[^a-z0-9]", "", tolower(x))
 #'   post-rename key.
 #' @export
 seat_rename_map <- function() {
-  c(denison = "clark", batman = "cooper", melbourneports = "macnamara")
+  c(denison = "clark", batman = "cooper", melbourneports = "macnamara",
+    # South Australia's 2025 redistribution abolished Frome and replaced it
+    # with Ngadjuri. Verified the same way as the other three entries here --
+    # candidate continuity, not name similarity: Penny Pratt held Frome for
+    # the LNP (45.0% sa2022, elected) and recontested Ngadjuri in sa2026
+    # (26.7%, lost to One Nation). Found 2026-09-13 building the AEF worst-
+    # seats table: Ngadjuri had ZERO candidacies.csv rows for sa2022, which
+    # read as a brand-new electorate with no incumbent and no personal-vote
+    # history at all, when in fact its sitting member simply moved with it.
+    frome = "ngadjuri")
 }

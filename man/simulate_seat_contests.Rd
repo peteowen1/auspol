@@ -22,6 +22,7 @@ simulate_seat_contests(
   shrink_k = 0,
   conditional_override = NULL,
   flow_sd = 0,
+  exhaust = 0,
   level_mult = NULL,
   surge_h = 0,
   surge_mu = 15.6,
@@ -211,6 +212,23 @@ bars. The one-step-ahead error of "mean of the last five" was measured at
 \strong{sd 3.65 points} over 19 observations.
 
 Zero reproduces the previous behaviour exactly.}
+
+\item{exhaust}{Percent (0-100) of an excluded party's votes that carry no
+further preference and are dropped from the count rather than
+redistributed, under optional preferential voting. Length 1 (same rate
+for every party), or a named vector by party class with an unnamed
+element as the default for any class not listed. \strong{R-engine only}:
+\code{src/seat_sim_core.cpp} has no exhaustion path, so a nonzero value forces
+\code{engine = "r"} automatically under \code{"auto"}, and is refused outright if
+\code{engine = "cpp"} is requested explicitly -- silently ignoring it would be
+exactly the failure mode this repo's own \code{CLAUDE.md} exists to catch.
+Zero (the default) reproduces the previous behaviour exactly. Real for
+NSW (and Queensland before 2016): fitted from the anchor's own
+preference-estimates.csv, e.g. nsw2023 GRN 39.7\%, ONP 71.1\%, OTH 61.2\% --
+see \code{\link[=distribute_preferences]{distribute_preferences()}}'s own docs for the full rates and why
+this matters (40-71\% of minor-party preferences there carry no major-
+party preference at all, which nothing in this package could previously
+represent).}
 
 \item{level_mult}{Optional NAMED numeric vector giving a per-party multiplier
 on \code{level_sd}'s slope \code{b}, so a party's width becomes
