@@ -1,6 +1,46 @@
 # auspol — work queue
 
-## OPEN, 2026-09-14: every Victorian number measured today is stale
+## MORNING READ, 2026-09-15 — the Victorian draft is done, three things need you
+
+Full writeup: `docs/reviews/vic2026-first-correct-draft-2026-09-15.md`.
+
+**The forecast, against AE Forecasts** (expected seats, their NAT folded into
+our LNP): LNP 41.63 vs **32.86**, ALP 28.12 vs **34.09**, ONP 9.00 vs
+**14.51**, GRN 4.60 vs **5.32**, IND 4.38 vs **0.22**. 19 of 87 seats called
+differently. One Nation favourite in 7 seats for us, 0 for them.
+
+**1. The independent under-call is now the biggest gap.** 0.22 against AEF's
+4.38. Nothing overnight touched it and it is the largest proportional
+disagreement in the table.
+
+**2. One Nation at 14.51 is the number to argue about.** AEF under-called One
+Nation badly in sa2026 (1 of 4 seats, favourite in none) — but our own
+override was ALSO measured worse there than no override (4 of 4 correct off, 1
+of 4 on). Both cannot be right and the corpus has exactly one election where
+One Nation has won a seat.
+
+**3. The backfill shipped against a worse backtest, on my judgement.**
+`AUSPOL_HISTORIC_ELECTED_BACKFILL=1` costs 0.0141 pooled RMSE. The reasoning:
+vic2026 is the target and never a training pair, so the 62 returning members
+can only move the live forecast and never the RMSE — the backtest cannot see
+the gain it is being weighed against. Reversible in one flag if you disagree.
+
+**Not done, needs you**: the PR. 15 commits on `dev`, CI green, all reviewed.
+Merging to `main` is yours per the standing rule.
+
+## RESOLVED overnight 2026-09-14/15
+
+- `historic_elected_i` fed as NA to the live model, deflating every prediction
+  ~45% behind renormalisation. Fixed, written up in
+  `reviews/live-path-missing-feature-2026-09-14.md`.
+- Victorian candidate list in (379 candidacies, 88 districts), which unblocked
+  `DS2` (0 → 87 seat-classes), `DS2o` (0 → 22) and `DS3` (flat → 30 seats).
+- `DS2` was inert because Wikipedia's "Nina Taylor" and our "TAYLOR, Nina"
+  resolve to opposite surnames. Worth 4.4 Labor seats.
+- Review findings: Mac/Mc surnames inverting NSW rows; the forced-value
+  detector blind to a multi-line `Sys.setenv`.
+
+## SUPERSEDED, 2026-09-14: every Victorian number measured that day is stale
 
 `historic_elected_i` was being fed to the live model as `NA`, a value it had
 never seen, deflating every prediction ~45% and hiding it behind
