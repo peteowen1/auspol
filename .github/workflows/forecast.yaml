@@ -166,11 +166,36 @@ jobs:
           # A truncated or absent download must fail HERE, loudly, rather than
           # surfacing as a fallback line in a log nobody reads. This repo has
           # already lost a seat to a 65536-byte partial download that passed a
-          # size guard, so check the files xgboost must actually parse.
-          for f in output/xgb-primary-v6-final.model output/xgb-flows-v1-final.model; do
+          # size guard, so PARSE each file rather than measuring it.
+          #
+          # ALL FIVE, not just the two models. The first version checked only
+          # the .model files, leaving the two cols.json files and the features
+          # CSV unverified -- and those are read UNGUARDED by
+          # R/xgb_primary_override.R and R/xgb_flow_override.R, inside a .try()
+          # in fit_seats_full.R that turns any error into "XG4!! ... shares
+          # UNCHANGED". So a corrupt-but-present cols.json would arrive as
+          # exactly the silent fallback this step exists to eliminate, through
+          # a path that already exists for a legitimate reason and so cannot be
+          # relied on to shout. Found by review, 2026-09-14.
+          for f in output/xgb-primary-v6-final.model output/xgb-primary-v6-final-cols.json \
+                   output/xgb-flows-v1-final.model output/xgb-flows-v1-final-cols.json \
+                   output/xgb-flows-v1-features.csv; do
             [ -s "$f" ] || { echo "::error::$f is missing or empty after download"; exit 1; }
           done
-          Rscript -e 'for (f in c("output/xgb-primary-v6-final.model", "output/xgb-flows-v1-final.model")) { m <- xgboost::xgb.load(f); cat(sprintf("%s loads OK\n", f)) }'
+          Rscript -e '
+            for (f in c("output/xgb-primary-v6-final.model", "output/xgb-flows-v1-final.model")) {
+              m <- xgboost::xgb.load(f); cat(sprintf("%s loads OK\n", f))
+            }
+            for (f in c("output/xgb-primary-v6-final-cols.json", "output/xgb-flows-v1-final-cols.json")) {
+              j <- jsonlite::fromJSON(readLines(f, warn = FALSE))
+              if (!length(j)) stop(f, " parsed to zero columns")
+              cat(sprintf("%s parses OK (%d columns)\n", f, length(j)))
+            }
+            f <- "output/xgb-flows-v1-features.csv"
+            d <- data.table::fread(f, showProgress = FALSE)
+            if (!nrow(d)) stop(f, " parsed to zero rows")
+            cat(sprintf("%s parses OK (%d rows, %d cols)\n", f, nrow(d), ncol(d)))
+          '
         env:
           GH_TOKEN: ${{ github.token }}
 

@@ -1,5 +1,42 @@
 # auspol — work queue
 
+## OPEN, 2026-09-14: the model registry cannot see a harness that FORCES a switch
+
+`scripts/backtest_candidate_fed.R:78-79` and `_nsw.R:41-42` set
+`AUSPOL_SALIENCE_EXPECTED=1` and `AUSPOL_SALIENCE_EXP_SD=1` whenever they are
+unset. `published_flags.R` ships both as **`0`**.
+
+So federal and NSW backtest numbers describe a configuration that is not what
+ships, and any pooled figure across the six harnesses silently mixes two
+configurations. `published_flags.R`'s own promise — "a harness run with no
+environment measures what ships" — is false for two of the six.
+
+It was deliberate (`01c8e1c`, "Ship arm C (salience point estimate + variance),
+scoped to federal and NSW"), so the code is not the bug. **The bug is that two
+authoritative documents say otherwise and neither records the scoping**:
+
+- `published_flags.R` lists both at `0` with no mention of the exception.
+- `docs/MODEL-REGISTRY.md:103` states the arm is undecided "so the switch is
+  off everywhere". It is on in two harnesses.
+
+**The registry cannot catch this by construction.** It records whether a
+harness *reads* a switch, so a harness that reads it and then forces a
+non-shipped value scores a clean "yes". Reachability is not the same question
+as value, and the registry only asks the first — which is why the thing built
+to stop what-runs drifting from what-ships missed a five-day drift.
+
+**Fix**: teach `scripts/build_model_registry.R` to detect a `Sys.setenv(AUSPOL_*)`
+or `if (!nzchar(Sys.getenv(...))) Sys.setenv(...)` in a harness and report the
+forced VALUE beside the honoured/not-honoured cell. Then reconcile
+`published_flags.R` so the fed/NSW scoping is written down where the default
+is. Do not "fix" the harnesses to match the flags file without checking
+whether arm C is meant to be live there — the commit says it is.
+
+**Known consequence, not yet sized**: every federal and NSW backtest number
+since 2026-09-09 was measured with arm C on. Any comparison that pooled them
+with vic/sa/wa/qld results compared two configurations.
+
+
 ## WATCH, 2026-09-14: One Nation's Victorian level sits 2.47 under its polls, 0.03 inside the bound
 
 **NOT currently breaching. An earlier version of this entry said 2.85 and
