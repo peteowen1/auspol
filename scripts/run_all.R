@@ -282,24 +282,55 @@ if (length(l3_breach)) {
 # they sat on opposite sides of the bound, One Nation 2.44 off its polls in the
 # fit L3 checks and 2.85 off in the fit that ships.
 #
-# NOT gated on `quick`, unlike NL3. fit_seats_full.R IS a slow stage, so a
-# --quick run skips it -- but it also skips the page, and the block above
-# already reports that no forecast was produced. The marker is unlinked by the
-# stage itself before it runs, so a stale one cannot survive a full run; after
-# a --quick run there is no fresh page for a stale marker to mislead about.
+# DELIBERATELY NOT GATED ON `quick`, and that is the opposite of NL3.
+#
+# The first version of this block was gated on `!quick`, copied from NL3, under
+# a comment claiming it was not gated and that --quick "also skips the page".
+# Both halves were wrong, and the second one is the bug: build_page.R is
+# `slow = FALSE`, so --quick SKIPS fit_seats_full.R AND STILL PUBLISHES THE
+# PAGE, from the seat-probs files already on disk. Found by review, 2026-09-14.
+#
+# That inverts NL3's reasoning. NL3's gate is right because fit_nsw.R validates
+# a cycle nobody publishes, so declining to read its marker loses nothing live.
+# S7's marker describes the statewide trend behind the seat-probs files that
+# build_page.R publishes FROM -- so it applies to the page whenever the page
+# was built, whether or not the stage ran this invocation. A --quick run after
+# a breaching full run would republish the breaching page and exit 0, with no
+# message anywhere saying S7 had not been looked at.
+#
+# So: read it whenever it exists, and let the marker's own header say whether
+# it describes the published configuration.
 S7_MARKER <- file.path("output", "S7-BREACH.txt")
-s7_breach <- if (!quick && file.exists(S7_MARKER)) {
-  readLines(S7_MARKER, warn = FALSE)
-} else character(0)
-s7_breach <- s7_breach[nzchar(trimws(s7_breach))]
-if (!quick && file.exists(S7_MARKER) && !length(s7_breach)) {
-  # Present but empty should never happen -- the stage unlinks rather than
-  # truncating -- so say so rather than reading it as "no breach".
-  cat("\nS7  marker file exists but is empty; treating as no breach.\n")
+s7_raw <- if (file.exists(S7_MARKER)) readLines(S7_MARKER, warn = FALSE) else character(0)
+s7_hdr <- grep("^#run ", s7_raw, value = TRUE)
+s7_breach <- s7_raw[!startsWith(s7_raw, "#") & nzchar(trimws(s7_raw))]
+# A run on a non-default configuration measures something nobody publishes, so
+# its breaches are reported and NOT failed on. Absent a header the file predates
+# this format; treat it as default rather than silently discounting a breach.
+s7_default <- !length(s7_hdr) || !grepl("default_run=FALSE", s7_hdr[1], fixed = TRUE)
+if (length(s7_breach) && !s7_default) {
+  cat("\nS7  breach(es) recorded, but by a NON-DEFAULT run:\n")
+  for (b in s7_breach) cat("   ", b, "\n")
+  cat("   ", s7_hdr[1], "\n")
+  cat("   This describes a configuration that is not published, so the run is\n",
+      "   NOT failed on it. The published config has not been checked since.\n")
+  s7_breach <- character(0)
 }
-if (length(s7_breach)) {
+if (!file.exists(S7_MARKER)) {
+  # Missing is NOT the same as clean: the stage writes this file on every run,
+  # breach or not. Absent means it never got here.
+  cat("\nS7  no marker: fit_seats_full.R has not recorded a poll-tracking\n",
+      "    verdict for the published trend. It was skipped or died before S7.\n")
+} else if (length(s7_breach)) {
   cat("\n=== S7 BREACH ON THE PUBLISHED FORECAST'S OWN TREND ===\n")
   for (b in s7_breach) cat("   ", b, "\n")
+  if (length(s7_hdr)) cat("   ", s7_hdr[1], "\n")
+  if (quick) {
+    cat("   RECORDED BY AN EARLIER RUN -- this one was --quick, so\n",
+        "   fit_seats_full.R did not re-check. build_page.R is NOT a slow\n",
+        "   stage, so the page WAS rebuilt from the seat-probs these lines\n",
+        "   describe.\n")
+  }
   cat("   This is the statewide level that fit_seats_full.R feeds to every\n",
       "   seat, so the gap is not confined to the trend chart. The page was\n",
       "   still built -- it is the target -- and this run exits non-zero.\n")

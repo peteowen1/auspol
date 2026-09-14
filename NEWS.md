@@ -21,6 +21,19 @@ publishes, and the published Victorian trend has been breaching it.**
 - `S7` also fires on a party *dropped* from the published fit for falling
   under `min_polls`. Nothing else on that path would notice: the published
   path never calls `refold_unfitted()`, so a dropped party simply vanishes.
+  Victoria 2026 did exactly this at 6–7 One Nation polls.
+- **Two review findings, both fixed before merge.** `S7-BREACH.txt` is now
+  written on every run with a `#run <timestamp> default_run=<TRUE|FALSE>`
+  header, because a two-state marker could not distinguish "never ran" from
+  "ran clean" from "ran on a config nobody publishes". And the read is
+  deliberately **not** gated on `quick`, unlike `NL3`: `build_page.R` is not a
+  `slow` stage, so `--quick` skips `fit_seats_full.R` **and still republishes
+  the page** from the seat-probs the marker describes — the first version
+  would have republished a breaching page and exited 0 with no message.
+- `S7` is wrapped in `tryCatch` and a check that throws is recorded as a
+  breach. This stage publishes, so a crashing check would take the page down
+  for the exact reason the report-don't-halt design exists; and treating
+  "could not run" as a pass would be the silent failure `S7` exists to catch.
 - `trend_as_at(with_series = TRUE)` now also returns `polls` and `fits`, the
   two arguments the check takes.
 

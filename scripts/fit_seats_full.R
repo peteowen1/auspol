@@ -403,22 +403,76 @@ now <- trend_as_at(polls, 2026, cycles, Sys.Date(), priors, fl, with_series = TR
 # and `NL3-BREACH.txt` on purpose, so a breach on the published cycle can
 # never be masked by, or overwrite, one on a cycle nobody publishes.
 S7_MARKER <- file.path("output", "S7-BREACH.txt")
-# Unlink FIRST, unconditionally: a marker left by an earlier run must not be
-# read as this run's verdict. Same stale-state trap run_all.R gates NL3 on.
-if (default_run) unlink(S7_MARKER)
-s7 <- poll_tracking_check(now$polls, now$fits)
-report_poll_tracking(s7, "S7")
-s7_bad <- s7[breach == TRUE | dropped == TRUE]
-if (nrow(s7_bad)) {
-  lines <- sprintf("2026 %s fitted %.2f against %.2f from %d polls (bound %.1f)%s",
-                   s7_bad$party, s7_bad$fitted, s7_bad$poll_mean, s7_bad$n,
-                   attr(s7, "bound"),
-                   ifelse(s7_bad$dropped, "  [DROPPED FROM THE FIT]", ""))
-  if (default_run) {
-    writeLines(lines, S7_MARKER)
-  } else {
-    cat("S7  breach NOT recorded: this is not a default publish run.\n")
-  }
+
+# `now` is NULL on any of trend_as_at()'s several thin-cycle paths. Say which
+# quantity is missing rather than letting it surface as `stopifnot(length(fits)
+# > 0L)` inside the check, or as a data.table error on `now$series` twenty
+# lines below: `NULL$anything` is NULL in R, so a NULL fit propagates silently
+# until something unrelated trips over it.
+if (is.null(now)) {
+  stop("trend_as_at() returned NULL for Victoria 2026, so there is no trend ",
+       "to publish, to check with S7, or to draw. Too few polls, no ALP ",
+       "series, or the fit failed -- rerun it directly to see which.")
+}
+
+# WRAPPED, because an S7 that THROWS would halt this stage -- and this stage
+# publishes. The whole point of reporting rather than halting is that a
+# tracking gap must not stop the Victorian forecast; a check that crashes
+# instead of reporting takes the page down for the exact reason the design
+# says it must not.
+#
+# The failure is recorded as a BREACH LINE, not swallowed. A check that cannot
+# run is not a check that passed, and turning "S7 errored" into a green build
+# would be the silent failure S7 exists to catch, arriving through S7.
+s7 <- tryCatch(poll_tracking_check(now$polls, now$fits), error = function(e) e)
+s7_lines <- if (inherits(s7, "error")) {
+  cat(sprintf("S7  THE CHECK ITSELF FAILED: %s\n", conditionMessage(s7)))
+  sprintf("2026 S7 COULD NOT RUN: %s", conditionMessage(s7))
+} else {
+  report_poll_tracking(s7, "S7")
+  s7_bad <- s7[breach == TRUE | dropped == TRUE]
+  if (nrow(s7_bad)) {
+    sprintf("2026 %s fitted %.2f against %.2f from %d polls (bound %.1f)%s",
+            s7_bad$party, s7_bad$fitted, s7_bad$poll_mean, s7_bad$n,
+            attr(s7, "bound"),
+            ifelse(s7_bad$dropped, "  [DROPPED FROM THE FIT]", ""))
+  } else character(0)
+}
+
+# WRITE THE MARKER EVERY RUN, AND PUT THIS RUN'S PROVENANCE IN IT.
+#
+# The first version gated both the unlink and the write on `default_run`, and
+# run_all.R gated the READ on `!quick` -- "did this stage run at all", which is
+# a much weaker condition. `default_run` additionally requires every AUSPOL_*
+# variable to match published_flags.R and OUT_SUFFIX to be empty, and stages
+# inherit the shell (run_all.R's system2() call passes no `env`). So a full run
+# with AUSPOL_OUT_SUFFIX set would leave the marker neither refreshed nor
+# cleared, and run_all.R would report a PREVIOUS run's verdict as this one's.
+# Found by review, 2026-09-14.
+#
+# Neither obvious repair is right, which is why the file carries a header now:
+#
+#   - Write unconditionally, and a diagnostic arm's breach gets reported by
+#     run_all.R as a breach "on the published forecast". It is not; it is a
+#     breach in a configuration nobody publishes.
+#   - Unlink unconditionally but write only when default, and a diagnostic run
+#     ERASES a real breach. The next run_all.R sees no marker and goes green.
+#     That is the silent failure this check exists to prevent, introduced by
+#     the check itself.
+#
+# The marker encoded two states where there are three: never ran, ran on a
+# non-default config, ran on the published config. So it records which, and
+# run_all.R decides. A missing file now means "the stage did not get here",
+# which is distinguishable from "it ran and was clean" -- something L3 and NL3
+# cannot currently tell apart.
+writeLines(c(sprintf("#run %s default_run=%s",
+                     format(Sys.time(), "%Y-%m-%dT%H:%M:%S"), default_run),
+             s7_lines), S7_MARKER)
+if (length(s7_lines) && !default_run) {
+  cat("S7  breach recorded as NON-DEFAULT: this run changed",
+      paste(c(changed, if (OUT_SUFFIX != "") "AUSPOL_OUT_SUFFIX"), collapse = ", "),
+      "\n    so it does not describe the published forecast, and run_all.R",
+      "will not fail on it.\n")
 }
 
 last <- as.data.table(now$series)[, .SD[which.max(date)], by = party]
