@@ -54,14 +54,47 @@ awk '
     next
   }
 
-  # "CHECK FAILED: scripts/fit_federal.R (exit 1)" and
-  # "FAILED (unclassified): scripts/build_page.R (exit 1)" -> stage:<script>
-  /CHECK FAILED: scripts\// || /FAILED \(unclassified\): scripts\// {
+  # A stage failure, WITH THE REASON IN THE TOKEN.
+  #
+  # ALL FOUR labels stage_failure_label() can emit (R/stage_failure.R): the
+  # first version matched only CHECK FAILED and FAILED (unclassified), so a
+  # CRASHED or FAILED (no error text) stage produced NO TOKEN AT ALL. An empty
+  # token set is a subset of any baseline, so the alarm said "nothing new" and
+  # stayed silent on a crash -- in a target stage like fit_vic.R, which is not
+  # wrapped by the validation tryCatch in run_all.R, that was the only line
+  # there was. A mute button, found by review 2026-09-14.
+  # (No apostrophes below this point: the awk program is single-quoted, and one
+  # in a comment closes it -- which is how this very block first failed.)
+  #
+  # AND THE ERROR TEXT, not just the script name. `stage:fit_nsw.R` matches
+  # that script failing for ANY reason, so with it in the baseline a brand-new
+  # NL4 breach -- or a crash -- would have been muted by an entry whose written
+  # justification is specifically about NL3 and One Nation. Carrying the reason
+  # means a different failure in the same script is a different token, and
+  # therefore an alarm. Same review.
+  /(CHECK FAILED|CRASHED|FAILED \(no error text\)|FAILED \(unclassified\)): scripts\// {
+    kind = "UNCLASS"
+    if (index($0, "CHECK FAILED:")) kind = "CHECK"
+    else if (index($0, "CRASHED:")) kind = "CRASH"
+    else if (index($0, "FAILED (no error text):")) kind = "NOTEXT"
+
     i = index($0, "scripts/")
     s = substr($0, i + length("scripts/"))
     sub(/[ \t(].*$/, "", s)
-    gsub(/[ \t\r]+$/, "", s)
-    if (s != "") print "stage:" s
+
+    # Everything after "-- Error: " identifies WHICH check or crash it was:
+    # "nrow(bad_conv) == 0 is not TRUE", "NL3 breached on 1 NSW cycle(s)...".
+    # Truncated, because the tail carries paths and timings that churn.
+    why = ""
+    j = index($0, "-- Error: ")
+    if (j > 0) {
+      why = substr($0, j + length("-- Error: "))
+      gsub(/[ \t\r]+/, " ", why)
+      sub(/^ /, "", why)
+      why = substr(why, 1, 60)
+      sub(/ +$/, "", why)
+    }
+    if (s != "") print "stage:" s ":" kind ":" why
     next
   }
 

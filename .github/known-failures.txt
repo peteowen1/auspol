@@ -39,6 +39,15 @@
 #
 # REMOVABLE WHEN: the separability gate can run (it needs one more completed
 # election with polls), or Pete decides between the options that plan names.
+#
+# NOTE the shape of the middle line. It was `stage:fit_nsw.R` until review on
+# 2026-09-14 pointed out that such a token matches that script failing for ANY
+# reason -- so a brand-new NL4 breach, or an unrelated crash, would have been
+# muted by an entry whose justification above is specifically about NL3 and One
+# Nation. Carrying the reason means a different failure in the same script is a
+# different token, and therefore an alarm.
+#
+# So do NOT shorten these lines to make them tidy. The detail is the point.
 stage:NSW cycles
-stage:fit_nsw.R
+stage:fit_nsw.R:CHECK:NL3 breached on 1 NSW cycle(s) -- details above and in outpu
 breach:NL3:2027:ONP

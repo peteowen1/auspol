@@ -27,7 +27,7 @@ cat > "$T/baseline" <<'EOF'
 # a comment, and a blank line, both of which must be ignored
 
 stage:NSW cycles
-stage:fit_nsw.R
+stage:fit_nsw.R:CHECK:NL3 breached on 1 NSW cycle(s)
 breach:NL3:2027:ONP
 EOF
 
@@ -35,7 +35,7 @@ EOF
 cat > "$T/known_only.log" <<'EOF'
 --- NSW cycles (scripts/fit_nsw.R) ---
 !! VALIDATION STAGE FAILED: NSW cycles
-   CHECK FAILED: scripts/fit_nsw.R (exit 1) after 20 s -- Error: NL3
+   CHECK FAILED: scripts/fit_nsw.R (exit 1) after 20 s -- Error: NL3 breached on 1 NSW cycle(s)
 === NL3 BREACH ON AN NSW CYCLE (not the published forecast) ===
     2027 ONP fitted 21.29 against 24.67 from 3 polls (bound 2.5)
 EOF
@@ -64,6 +64,36 @@ cat > "$T/errored.log" <<'EOF'
     2026 S7 COULD NOT RUN: length(fits) > 0L is not TRUE
 EOF
 set +e; sh "$SIG" "$T/errored.log" "$T/baseline" > "$T/out5"; check "5. the check itself errored -> fires" 1 $?; set -e
+
+# 5b. A CRASH in a target stage. run_all.R does not wrap target stages in its
+#     validation tryCatch, so "CRASHED: scripts/fit_vic.R ..." is the ONLY line
+#     there is -- no "VALIDATION STAGE FAILED" to fall back on. The first
+#     version of the tokeniser matched neither label, produced zero tokens, and
+#     an empty set is a subset of any baseline, so the alarm said "nothing new"
+#     on a crashed live forecast. Found by review; this is its regression test.
+cat > "$T/crash.log" <<'EOF'
+--- Victoria (live target) (scripts/fit_vic.R) ---
+Error in run(s) :
+  CRASHED: scripts/fit_vic.R (exit 1) after 4 s -- Error: object 'x' not found
+EOF
+set +e; sh "$SIG" "$T/crash.log" "$T/baseline" > "$T/out5b"; check "5b. a target stage CRASHED -> fires" 1 $?; set -e
+grep -q "stage:fit_vic.R:CRASH" "$T/out5b" || { echo "   (did not emit a CRASH token)"; FAILED=1; }
+
+# 5c. A DIFFERENT check failing in a script the baseline already lists. The
+#     coarse token `stage:fit_nsw.R` used to match this and mute it, even
+#     though the baseline entry is justified only for NL3 and One Nation.
+cat > "$T/otherchk.log" <<'EOF'
+!! VALIDATION STAGE FAILED: NSW cycles
+   CHECK FAILED: scripts/fit_nsw.R (exit 1) after 20 s -- Error: NL4a acf1 out of bounds for 2 party-cycles
+EOF
+set +e; sh "$SIG" "$T/otherchk.log" "$T/baseline" > "$T/out5c"; check "5c. a DIFFERENT check in a known script -> fires" 1 $?; set -e
+grep -q "NL4a" "$T/out5c" || { echo "   (did not distinguish it from the known NL3 failure)"; FAILED=1; }
+
+# 5d. "FAILED (no error text)" -- the fourth label, also unmatched before.
+cat > "$T/notext.log" <<'EOF'
+   FAILED (no error text): scripts/build_page.R (exit 1) after 2 s
+EOF
+set +e; sh "$SIG" "$T/notext.log" "$T/baseline" > "$T/out5d"; check "5d. FAILED (no error text) -> fires" 1 $?; set -e
 
 # 6. A clean run. Quiet, and every baseline line reported as ready to delete.
 : > "$T/clean.log"

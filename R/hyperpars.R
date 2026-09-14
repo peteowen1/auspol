@@ -223,6 +223,52 @@ trend_tracking <- function(fit) {
        peak_polled = max(local_avg))
 }
 
+#' Is this point actually a local optimum, on the code's own evidence?
+#'
+#' Split out of [optim_boxed()] so the REFUSAL half can be tested. Code 52 is
+#' platform-dependent -- it appears on Linux CI and not on Windows -- so the
+#' branch that consumes it cannot be driven from a developer machine at all,
+#' and three separate attempts to provoke it locally produced only inputs that
+#' L-BFGS-B certified unaided. A test of the whole branch would therefore have
+#' passed without ever running the code it claimed to cover, which is this
+#' repo's oldest hazard. As a named function the check can be handed
+#' constructed inputs directly.
+#'
+#' Three conditions, each answering a way Nelder-Mead's own `convergence == 0`
+#' can be worthless:
+#'
+#' 1. **Inside the box.** `boxed()` returns a constant `1e12` outside it, and a
+#'    constant is perfectly flat and so perfectly "converged". Certifying there
+#'    would hand back a parameter outside its own bounds.
+#' 2. **Not near the penalty.** Same reason, from the value side.
+#' 3. **Nothing a short step away is better.** This is the one that means
+#'    optimum. Nelder-Mead stops on a RELATIVE tolerance, so where the
+#'    objective is numerically large -- a near-singular precision matrix gives
+#'    a huge but finite negative log-likelihood -- a simplex started at the
+#'    point under test satisfies it without having moved. Asking the objective
+#'    directly does not care how large it is.
+#'
+#' @param par,value The candidate point and its objective value.
+#' @param fn The boxed objective.
+#' @param lower,upper Box bounds.
+#' @param step How far to probe in each coordinate.
+#' @param tol How much better a neighbour must be to count as better.
+#' @return `TRUE` if the point survives all three checks.
+#' @keywords internal
+optimum_verified <- function(par, value, fn, lower, upper,
+                             step = 0.05, tol = 1e-6) {
+  if (!is.finite(value) || value >= 1e11) return(FALSE)
+  if (any(par < lower) || any(par > upper)) return(FALSE)
+  for (i in seq_along(par)) {
+    for (d in c(-step, step)) {
+      p <- par
+      p[i] <- min(max(p[i] + d, lower[i]), upper[i])
+      if (isTRUE(fn(p) < value - tol)) return(FALSE)
+    }
+  }
+  TRUE
+}
+
 #' Box-constrained minimisation that does not give up on a line-search failure
 #'
 #' L-BFGS-B returns code 52 ("abnormal termination in line search") on
@@ -314,8 +360,28 @@ optim_boxed <- function(start, fn, lower, upper) {
   if (best$convergence != 0) {
     o4 <- tryCatch(stats::optim(best$par, boxed, method = "Nelder-Mead"),
                    error = function(e) NULL)
-    if (!is.null(o4) && is.finite(o4$value) && o4$convergence == 0 &&
-        o4$value <= best$value) {
+    # `o4$convergence == 0` ALONE IS NOT A VERIFICATION, and taking it as one
+    # would make this a rubber stamp. Nelder-Mead stops on a RELATIVE
+    # tolerance, so anywhere the objective is numerically large -- a party
+    # whose walk is pinned near the bottom of the box gives a near-singular
+    # precision matrix and a huge but finite negative log-likelihood -- tiny
+    # absolute differences between simplex vertices satisfy it, and a simplex
+    # started AT `best$par` can report success without having moved or learned
+    # anything. That is the same spurious-convergence family as the L-BFGS-B
+    # line-search failure this block exists to adjudicate, so trusting it to
+    # adjudicate itself is circular. Raised by review, 2026-09-14.
+    #
+    # So certify only if the point survives three things the code checks
+    # itself: it is inside the box (not parked on the 1e12 penalty plateau,
+    # which `boxed` makes perfectly flat and therefore perfectly "converged"),
+    # its value is nowhere near that penalty, and -- the one that actually
+    # means optimum -- nothing a short step away in either coordinate beats it.
+    # Four extra objective evaluations, only ever on the path that was already
+    # going to fail the caller's check.
+    ok <- !is.null(o4) && is.finite(o4$value) && o4$convergence == 0 &&
+      o4$value <= best$value &&
+      optimum_verified(o4$par, o4$value, boxed, lower, upper)
+    if (ok) {
       best <- list(par = o4$par, value = o4$value, convergence = 0L,
                    method = paste0(best$method, "+NM-verified"))
     }
