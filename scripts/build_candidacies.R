@@ -945,7 +945,34 @@ if (any(council)) {
   out
 }
 C[, .nm := .key(name)]
-.state <- C$region != "fed"
+# OFF BY DEFAULT, and that is a decision rather than caution.
+#
+# The backfill is correct -- 21 state parliaments do not have zero returning
+# members -- but it does not earn its place in the model and it cannot ship
+# alone:
+#
+#   * Measured, isolated (same code, only this feature differing): pooled
+#     primary RMSE 3.8078 -> 3.8219, WORSE by 0.0141 and worse in 5 of 6
+#     jurisdictions. On seat log loss, the metric that decides, sa2026 moved
+#     0.3260 -> 0.3256 -- 0.0004, nothing.
+#   * It BREAKS the live path. R/xgb_primary_override.R defaults
+#     historic_elected_i to 0 for a state election precisely because that is
+#     what every state election carries in training. Turn this on and 0 stops
+#     meaning "the universal state default" and starts meaning "no returning
+#     members anywhere in Victoria", which is false and which the model would
+#     then read as signal. The two changes are a package.
+#
+# So it waits for the Victorian candidate list (docs/NEXT-STEPS.md step 3),
+# which makes the live value real and gives this something to pair with. The
+# code stays because deriving it was the hard part and the name-format traps
+# below are worth not rediscovering.
+.backfill <- identical(Sys.getenv("AUSPOL_HISTORIC_ELECTED_BACKFILL", "0"), "1")
+.state <- C$region != "fed" & .backfill
+if (!.backfill) {
+  cat("BC9  state historic_elected backfill OFF (AUSPOL_HISTORIC_ELECTED_BACKFILL=0):\n",
+      "     reproducing what the shipped model was fitted on. Measured worse\n",
+      "     and cannot ship without the live-path change -- see the note here.\n")
+}
 if (any(.state)) {
   .won <- C[elected %in% c(TRUE, "TRUE", "Y", "1") & nzchar(.nm),
             list(region, year, .nm)]
