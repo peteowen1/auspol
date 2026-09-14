@@ -1,4 +1,4 @@
-# auspol 0.4.36 (development)
+# auspol 0.4.36
 
 **The poll-tracking check was wired into every fit script except the one that
 publishes, and the published Victorian trend has been breaching it.**
