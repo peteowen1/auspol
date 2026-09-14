@@ -46,6 +46,54 @@ present <- function(sw, file) {
   any(grepl(sw, readLines(file, warn = FALSE), fixed = TRUE))
 }
 
+# READING A SWITCH IS NOT RUNNING AT ITS PUBLISHED VALUE, and until 2026-09-14
+# this file only asked the first question.
+#
+# backtest_candidate_fed.R and _nsw.R both do
+#
+#   if (!nzchar(Sys.getenv("AUSPOL_SALIENCE_EXPECTED", ""))) Sys.setenv(AUSPOL_SALIENCE_EXPECTED = "1")
+#
+# while published_flags.R ships that switch at "0". Both harnesses therefore
+# score a clean "yes" for honouring it -- they do read it -- and then run at a
+# value the published forecast does not. MODEL-REGISTRY.md went further and
+# stated the arm was "off everywhere", which had been untrue since 2026-09-09.
+#
+# The scoping itself is deliberate (01c8e1c, "Ship arm C ... scoped to federal
+# and NSW"). The defect was that the registry built to stop what-runs drifting
+# from what-ships could not see it, because reachability and value are
+# different questions. So ask the second one too.
+forced_value <- function(sw, file) {
+  if (!file.exists(file)) return(NA_character_)
+  ln <- readLines(file, warn = FALSE)
+  ln <- ln[!grepl("^\\s*#", ln)]            # a commented-out setenv is not wiring
+  pat <- sprintf("Sys\\.setenv\\(\\s*%s\\s*=\\s*[\"']([^\"']*)[\"']", sw)
+  m <- regmatches(ln, regexec(pat, ln))
+  hit <- Filter(function(x) length(x) == 2L, m)
+  if (!length(hit)) return(NA_character_)
+  hit[[1]][2]
+}
+
+# The value published_flags.R ships, for comparison. Parsed from the same file
+# the switch list came from, so the two cannot drift apart.
+published_value <- function(sw) {
+  pat <- sprintf("^\\s*%s\\s*=\\s*[\"']([^\"']*)[\"']", sw)
+  m <- regmatches(pf, regexec(pat, pf))
+  hit <- Filter(function(x) length(x) == 2L, m)
+  if (!length(hit)) return(NA_character_)
+  hit[[1]][2]
+}
+
+FORCED <- do.call(rbind, lapply(switches, function(sw) {
+  pubv <- published_value(sw)
+  do.call(rbind, lapply(names(FILES), function(h) {
+    fv <- forced_value(sw, FILES[[h]])
+    if (is.na(fv) || identical(fv, pubv)) return(NULL)
+    data.frame(switch = sw, harness = h, forced = fv,
+               published = if (is.na(pubv)) "(not in published_flags)" else pubv,
+               stringsAsFactors = FALSE)
+  }))
+}))
+
 M <- data.table::as.data.table(
   do.call(rbind, lapply(switches, function(sw) {
     c(switch = sw, vapply(FILES, function(f) if (present(sw, f)) "yes" else "NO", character(1)))
@@ -258,6 +306,26 @@ L <- c(L,
        "  were registered in `published_flags.R` and honoured by all six",
        "  backtest harnesses, but never wired into `fit_seats_full.R` at all.",
        "  Fixed 2026-09-09; harmless while shipped at their no-op defaults.\n",
+       "## Switches a harness FORCES away from its published value\n",
+       paste0("Honouring a switch and running at its published value are different ",
+              "questions, and this table asked only the first until 2026-09-14. A ",
+              "harness that reads a switch and then `Sys.setenv()`s it scores a clean ",
+              "\"yes\" above while measuring a configuration the forecast does not ship. ",
+              "Detected mechanically below, so it cannot go stale.\n"),
+       if (is.null(FORCED) || !nrow(FORCED))
+         "MR3  no harness forces a switch away from its published value.\n"
+       else c(
+         sprintf("**MR3! %d harness/switch pair(s) run at a non-published value.** Any figure that pools these harnesses with the others compares two configurations.\n",
+                 nrow(FORCED)),
+         "| switch | harness | forced to | published |",
+         "|---|---|---|---|",
+         sprintf("| `%s` | `%s` | **%s** | %s |",
+                 FORCED$switch, FORCED$harness, FORCED$forced, FORCED$published),
+         paste0("\nThis is not automatically a bug -- `AUSPOL_SALIENCE_EXPECTED` and ",
+                "`AUSPOL_SALIENCE_EXP_SD` are forced in `fed` and `nsw` on purpose ",
+                "(`01c8e1c`, \"Ship arm C ... scoped to federal and NSW\"). It is a bug ",
+                "when `published_flags.R` does not record the scoping, which it did not ",
+                "until this row existed.\n")),
        "## Coverage check\n",
        if (length(unexplained))
          sprintf("**MR2! %d switch(es) have a non-universal row with NO recorded classification: %s.** Add them to CLASSIFY in scripts/build_model_registry.R before trusting this table.",

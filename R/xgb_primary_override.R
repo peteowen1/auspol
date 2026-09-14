@@ -129,8 +129,15 @@ xgb_primary_override <- function(shares, pair_label, enabled = NULL) {
 #'   model was trained on ("fed","nsw","qld","sa","vic","wa").
 #' @param year Target election year, used for `load_seats(year, region)` and
 #'   for identifying this election's own rows in `output/candidacies.csv`
-#'   (`historic_elected`/`ballot_position`, both NA pre-nomination -- fine,
-#'   same missing-value routing).
+#'   (`historic_elected`/`ballot_position`, both absent pre-nomination).
+#'   `ballot_position` stays NA, which IS the same missing-value routing the
+#'   model saw in training (60.6% missing there). `historic_elected` is NOT --
+#'   it is never missing in training, only ever 0 or 1 -- so on a state
+#'   election it defaults to 0, the value all 21 state training elections
+#'   carry. This line previously claimed both were "fine, same missing-value
+#'   routing"; that was an assumption written as a reassurance and never
+#'   tested, and it cost the live forecast 45% of its predicted vote. See the
+#'   note at the assignment.
 #' @param prev_year Prior election year, for the corresponding prior-year
 #'   candidacy row counts.
 #' @param enabled Logical; defaults to `AUSPOL_XGB_PRIMARY_LIVE` env var == "1".
@@ -263,11 +270,42 @@ xgb_primary_predict_live <- function(shares, mat22, a22, state_mean, returns,
     cat(sprintf("XG4! load_seats(%d, %s) unavailable -- seat-file features NA for every row\n", year, region))
   }
 
-  rows[, historic_elected_i := NA_integer_]
+  # `historic_elected_i` DEFAULTS TO 0 FOR A STATE ELECTION, NOT NA.
+  #
+  # It is built from the AEC's HistoricElected column, which exists only in
+  # FEDERAL files -- scripts/build_candidacies.R falls to `else NA` for every
+  # state commission, and the downstream %in% c("Y","TRUE","1") maps that to
+  # FALSE. So all 21 state elections in the training corpus carry a constant
+  # 0, and the model has never seen this feature missing on a state row.
+  #
+  # Handing it NA is therefore not "the same missing-value routing" the old
+  # comment claimed. It is a value the model has no experience of, and
+  # xgboost sends every such row down a default branch calibrated for nothing:
+  # measured 2026-09-14, the live Victorian rows summed to a median of 54.3
+  # where the same model's out-of-fold predictions sum to 91-105 on all 23
+  # backtest pairs. Renormalising each seat back to 100 then HID it -- shares
+  # summing to 100, plausible-looking concentration -- while the Coalition sat
+  # at 6% in Melton and One Nation was handed 43% by the rescale. Setting this
+  # to 0 restored the median row sum to 98.7.
+  #
+  # 0 is not a fallback here, it is the correct value: it is what every state
+  # election in the training data carries. A FEDERAL live forecast must keep
+  # NA, because there the feature is real and a missing value means unknown.
+  #
+  # This is a stopgap for the live path only. The underlying defect is that
+  # the feature is never computed for state elections at all -- 21 elections
+  # recording zero returning members, which is false about the world and makes
+  # the column a federal/state label inside the model. Backfilling it from
+  # candidacies.csv is queued in docs/NEXT-STEPS.md.
+  rows[, historic_elected_i := if (identical(region, "fed")) NA_integer_ else 0L]
   rows[, ballot_pos_min := NA_real_]
   if (!is.null(agg_now)) {
     idx <- match(key_now, paste(agg_now$seat, agg_now$party))
-    rows[, historic_elected_i := as.integer(agg_now$historic_elected_any[idx])]
+    .he <- as.integer(agg_now$historic_elected_any[idx])
+    # Only overwrite where the candidacy data actually says something, so a
+    # seat/party with no nomination row keeps the state default rather than
+    # reverting to NA.
+    rows[!is.na(.he), historic_elected_i := .he[!is.na(.he)]]
     rows[, ballot_pos_min := agg_now$ballot_pos_min[idx]]
   }
 
