@@ -45,7 +45,26 @@ pri23 <- prior_vec(2023); pri27 <- prior_vec(2027)
 # parties fall back to defaults + the documented hand override below).
 counts <- vapply(attr(polls, "parties"), function(p)
   sum(!is.na(cp23[[p]])) + sum(!is.na(cp27[[p]])), 1L)
-est_parties <- names(counts)[counts >= 20]
+# AUSPOL_NSW_EST_FLOOR lowers this cliff (Pete's call 2026-09-14). A hard
+# ">= 20 or nothing" is the shape CLAUDE.md calls indefensible -- a party at
+# 21 polls is believed outright and one at 19 is excluded outright -- and
+# ONP sits the wrong side of it at 8, so it runs on a DEFAULT walk that is too
+# slow for its 2% -> 25% climb: fitted endpoint 19.5 with a 17.1-22.2 band
+# that excludes its own last three polls (22, 27, 25).
+#
+# The shrinkage this needs already exists: estimate_cycle_sigmas() pulls each
+# estimate toward the pooled value with weight n/(n+25), so ONP's 8 polls
+# would carry 24% of their own estimate and 76% pooled -- degrading gracefully
+# instead of falling off a cliff. The pre-registered reason for the cliff was
+# that ONP hit BOTH optimiser bounds on 8 polls; an upper-bound hit is a real
+# failure (the walk runs away) so this stays OFF until measured, and the
+# at_bound column below is the thing to read when it is.
+.est_floor <- as.integer(Sys.getenv("AUSPOL_NSW_EST_FLOOR", "20"))
+est_parties <- names(counts)[counts >= .est_floor]
+if (.est_floor != 20L)
+  cat(sprintf("NH0  estimation floor lowered to %d polls: %s\n", .est_floor,
+              paste(setdiff(names(counts)[counts >= .est_floor],
+                            names(counts)[counts >= 20L]), collapse = ", ")))
 
 estimate_on <- function(scale, firm_factors = NULL) {
   out <- lapply(est_parties, function(p) estimate_trend_sigmas(
