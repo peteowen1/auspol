@@ -237,8 +237,7 @@ jobs:
           STAGES="$(grep -E 'CHECK FAILED|VALIDATION STAGE FAILED|FAILED \(unclassified\)|^Error' run.log 2>/dev/null | head -10 || true)"
           if [ -z "$STAGES" ]; then
             if [ -f run.log ]; then
-              STAGES="(no recognised failure line; last lines of run.log)
-$(tail -5 run.log)"
+              STAGES="$(printf '(no recognised failure line; last lines of run.log)\n%s' "$(tail -5 run.log)")"
             else
               STAGES="(run.log does not exist -- the job failed before the pipeline step)"
             fi
