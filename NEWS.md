@@ -1,5 +1,34 @@
 # auspol 0.4.36
 
+**The nightly forecast was not the model we measure.** `published_flags.R`
+ships `AUSPOL_XGB_PRIMARY_LIVE=1` and `AUSPOL_XGB_FLOWS=1`, but neither trained
+model existed on a runner — they are far too big for git and live in the
+`shipped-models` release — so both components fell back and said so on every
+run since the flags shipped (`XG4!`, `XF9!`, `XF4!!`). Announced nightly in the
+step summary, unread.
+
+- The workflow now fetches the models before running, from an **allowlist**:
+  `shipped-models` also holds *outputs* (`seat-probs-vic-2026.csv`,
+  `victoria-2026.html`), and pulling those into `output/` would seed a run with
+  a previous forecast's results, which `build_page.R` would publish if
+  `fit_seats_full.R` failed. The step loads both models with `xgb.load()`
+  rather than trusting that a download succeeded.
+- **`xgb-flows-v1-final.model` was missing from the release entirely**, so the
+  flows override could not have worked on CI even with a fetch step.
+- **`xgb-primary-v6-final.model` was stale against the rename.** Built
+  2026-09-11, it expected `pred_share`, `x`, `level_now`; the rename on
+  2026-09-14 made the code build `base_pred`, `seat_prev_pcv`, `level_pred`, so
+  the live override broke that morning and was invisible because CI could not
+  load the model at all. Rebuilt: 40 columns that map back to the old 40 in the
+  same order, so it is the same feature set relabelled.
+- **Effect on the headline: ALP 32.84 → 39.95 seats.** That is the difference
+  between the two XGBoost components falling back and being applied. Nothing
+  wrong was published — the workflow deliberately does not publish — but the
+  nightly artifact differed materially from the configuration all along.
+- Noted, not chased: CI gives 39.95 where a Windows machine gives 39.49 on the
+  same seed, data and models. The same platform-level numerics as the `conv=52`
+  story below.
+
 **The poll-tracking check was wired into every fit script except the one that
 publishes, and the published Victorian trend has been breaching it.**
 
