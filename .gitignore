@@ -3,6 +3,27 @@ external/
 
 # Generated data and model outputs (release-as-data-bus later if needed)
 output/
+# ONE EXCEPTION, added 2026-09-14. This is 278 bytes of FITTED CONSTANTS, not
+# data: five per-class sitting-member slopes. fit_seats_full.R hard-stops
+# without it whenever AUSPOL_MP_SLOPE=1, which is the published default, and
+# the file is produced by scripts/fit_mp_slope.R, which needs
+# output/candidacies.csv, which needs build_candidacies.R, which needs
+# external/reference/ directories CI never populates. That deadlock took the
+# nightly Forecast refresh down for six consecutive runs (2026-09-10 to 09-14)
+# and it was found only by opening the Actions tab.
+#
+# Tracking it lets the monitor run the REAL published configuration rather
+# than a variant of it -- the alternative (AUSPOL_MP_SLOPE=0 in the workflow)
+# would have the nightly job report numbers for a model that is not the one
+# that ships, which defeats the point of the job.
+#
+# REFIT IT when output/candidacies.csv changes: Rscript scripts/fit_mp_slope.R.
+# Provenance for the committed copy is in docs/CONSTANTS.md. Remove this
+# exception once build_candidacies.R can run in CI -- that is the real fix and
+# is already queued (NEWS 0.4.34).
+!output/
+output/*
+!output/mp-slope-by-class.csv
 *.parquet
 *.rds
 
