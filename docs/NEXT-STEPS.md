@@ -1,5 +1,52 @@
 # auspol — work queue
 
+## OVERNIGHT CONTINUATION, 2026-09-14 early morning — READ THIS FIRST
+
+Pete went to sleep mid-session; this continued autonomously per
+`~/.claude/CLAUDE.md`'s Autonomous Sessions rule. Nothing committed, nothing
+destructive. Full writeup: `docs/reviews/sa2026-onp-base-pred-diagnosis-2026-09-14.md`.
+
+**The headline result**: traced sa2026's worst miss (One Nation) all the way
+through the pipeline via SHAP, four separate seats/parties in a row, to the
+same place — `base_pred` (the pre-xgboost seat-level forecast) dominates every
+prediction (~89% of tree gain) and nothing downstream of it (census
+demographics, retiring-MP tenure, a party-group-split model) can compete.
+Traced ONP's `base_pred` formula by hand for Narungga and found the actual
+bug: `dev_slope()`'s rank-preserving deviation model cannot express a seat
+going from modestly-above-average to the state's strongest seat, which is
+exactly what happened. **Found an existing, already-built fix
+(`AUSPOL_ONP_CONC_SD`) sitting unused for sa2026** — tested it, confirmed a
+real 18% log-loss improvement on the raw model, then verified it survives a
+full retrain into the actually-shipped xgboost configuration (0.4339 -> 0.3577
+seat log loss, 39/47 -> 41/47 seats called correctly). **UPDATE, full
+six-harness sweep now done**: NSW/QLD/WA/FED all unaffected (noise-level),
+but **VIC2022 is a real regression** (72/78 -> 69/78 seats, log loss +6.3%),
+traced to the retrained model over-predicting IND broadly across VIC2022 --
+the same "vic2022 IND/OTH_RIGHT degeneracy" pattern already named in
+`fit_xgb_primary_v6.R`'s own diagnostics, now shown to interact with this fix.
+**NOT a clean win — a real trade. Not ready to ship.** Full detail and
+recommended next steps: `docs/reviews/sa2026-onp-base-pred-diagnosis-2026-09-14.md`.
+
+**Renamed the confusing xgboost column names** (`level_now`->`level_pred`,
+`pred_share`->`base_pred`, `x`->`seat_prev_pcv`) per Pete's request — verified
+byte-identical behaviour before/after. Also fixed a real bug in
+`fit_xgb_primary_v7.R`: a hardcoded arm-name list silently reported any new
+arm as "did not run" even after it trained successfully.
+
+**Not yet done, in priority order**:
+1. Understand and fix the VIC2022/IND coupling before this can ship at all —
+   see the review doc's Recommendation section for candidate approaches
+   (regularisation, region-scoped IND feature, re-run the vic2022 IND SHAP
+   breakdown against the retrained model).
+2. MacKillop's federal/state boundary mismatch — its federal ONP vote ranks
+   it 15th of 47 SA seats but its actual result is 2nd-highest; no CV setting
+   fixes this, worth checking the actual boundary maps.
+3. Once 1 and 2 are resolved, decide whether to default
+   `AUSPOL_ONP_CONC_SD=9.18` in `published_flags.R`.
+4. Review and commit: the rename (this session), the `ran`-list bug fix, and
+   the still-uncommitted items from the evening before (NSW exhaust wiring,
+   `build_level_components.R`, `build_retiring_mp_cases.R`).
+
 ## CURRENT STATE, 2026-09-13 evening session — START HERE
 
 **Two real fixes shipped and composed correctly** (commits `75a5076`,
