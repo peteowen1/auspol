@@ -57,8 +57,11 @@ counts <- vapply(attr(polls, "parties"), function(p)
 # would carry 24% of their own estimate and 76% pooled -- degrading gracefully
 # instead of falling off a cliff. The pre-registered reason for the cliff was
 # that ONP hit BOTH optimiser bounds on 8 polls; an upper-bound hit is a real
-# failure (the walk runs away) so this stays OFF until measured, and the
-# at_bound column below is the thing to read when it is.
+# failure (the walk runs away), and MEASURING IT CONFIRMED THAT -- at
+# AUSPOL_NSW_EST_FLOOR=8 the unshrunk estimate came back sigma_obs 4.0000,
+# sigma_rw 0.6000, both box bounds, and the H-check below rightly refused it.
+# So this floor stays at 20 and the shrinkage is applied through
+# AUSPOL_NSW_THIN_WALK in walk_of() instead, which is where it belongs.
 .est_floor <- as.integer(Sys.getenv("AUSPOL_NSW_EST_FLOOR", "20"))
 est_parties <- names(counts)[counts >= .est_floor]
 if (.est_floor != 20L)
@@ -98,7 +101,7 @@ stopifnot(!anyNA(scale_of), all(est_parties %in% names(scale_of)))
 # -- looks their scale up here. They are fitted on logit by
 # AUSPOL_NSW_THIN_WALK, so record that rather than leaving a lookup that
 # subscripts out of bounds the moment one is admitted.
-if (identical(Sys.getenv("AUSPOL_NSW_THIN_WALK", "0"), "1")) {
+if (identical(Sys.getenv("AUSPOL_NSW_THIN_WALK", "1"), "1")) {
   .thin_all <- setdiff(names(counts)[counts >= PARTY_INCLUSION_FLOOR], est_parties)
   for (.p in .thin_all) scale_of[[.p]] <- "logit"
 }
@@ -183,7 +186,7 @@ walk_of <- function(cp, year) {
   # shrinkage moves them off it only as far as their own data supports.
   # A bound hit is safe under this by construction -- it is pulled 76% back --
   # which is what the function's own docs mean by the shrinkage handling it.
-  if (identical(Sys.getenv("AUSPOL_NSW_THIN_WALK", "0"), "1")) {
+  if (identical(Sys.getenv("AUSPOL_NSW_THIN_WALK", "1"), "1")) {
     thin <- setdiff(names(cnt)[cnt >= PARTY_INCLUSION_FLOOR], est_parties)
     for (p in thin) {
       d <- default_sigmas("logit")
