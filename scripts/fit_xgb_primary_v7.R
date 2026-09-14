@@ -41,6 +41,15 @@ suppressMessages(library(xgboost))
 
 OUT <- "output"
 FE <- fread(file.path(OUT, "xgb-primary-v6-features.csv"), showProgress = FALSE)
+# COMPATIBILITY ALIASES. v6 renamed these three columns for clarity (2026-09-13,
+# Pete: level_now/pred_share/x were confusing three different things with two
+# opaque names) -- base_pred (was pred_share), level_pred (was level_now),
+# seat_prev_pcv (was x). This 800+-line exploratory file references the old
+# short names dozens of times in arm-building code and diagnostic prints; an
+# alias here keeps every one of them working unchanged instead of a risky
+# full rewrite. Explicitly excluded from base_feat below so they are never
+# fed to xgboost as duplicate copies of the same three real features.
+FE[, `:=`(x = seat_prev_pcv, level_now = level_pred, pred_share = base_pred)]
 # x_notional_adj EXCLUDED explicitly, not just left out by omission. v6
 # persists it as 0 for every non-federal row (it comes from the federal-
 # only booth-respread in output/notional-baselines.csv), which makes it a
@@ -53,7 +62,8 @@ FE <- fread(file.path(OUT, "xgb-primary-v6-features.csv"), showProgress = FALSE)
 # here because they vary WITHIN each jurisdiction (per candidate); this one
 # is constant across an entire jurisdiction, which is the disqualifying
 # property, not its origin.
-base_feat <- setdiff(names(FE), c("pair", "seat", "party", "actual_share", "x_notional_adj"))
+base_feat <- setdiff(names(FE), c("pair", "seat", "party", "actual_share", "x_notional_adj",
+                                   "x", "level_now", "pred_share"))
 cat(sprintf("X71  v6 feature matrix: %d rows, %d features\n", nrow(FE), length(base_feat)))
 
 PAIRS <- list(
@@ -474,11 +484,56 @@ GOV <- rbindlist(lapply(SAL_PAIRS, function(p) {
   s <- tryCatch(governed_population(p$election, p$prev, p$region), error = function(e) NULL)
   if (is.null(s) || !nrow(s)) return(NULL)
   s <- data.table::copy(s)
-  s[, jump_pctile := rank(jump, ties.method = "average") / .N]
+  # AUSPOL_SAL_CURVE_NZ=1 ranks AMONG NON-ZERO ONLY, matching the feature's own
+  # jump_pctile above (X71) exactly. Default 0 keeps the original, which is
+  # MISMATCHED and known to be so -- measured and kept anyway, see below.
+  #
+  # The original ranks over ALL governed candidates including the
+  # 51-81% with jump==0 (CLAUDE.md's own documented percentile-of-ties trap,
+  # applied here a second time), so the isotonic curve below was TRAINED on a
+  # scale where the whole zero-jump population piles up around pctile 0.4-0.55
+  # instead of 0, then APPLIED to FE's jump_pctile, which correctly puts zeros
+  # at 0. Any candidate with a real but modest jump_pctile below that pile-up
+  # point got clamped (rule=2 in the approx() call below) up to "what a
+  # typical zero-salience independent gets" instead of extrapolating toward
+  # zero. Found 2026-09-14 diagnosing why sal_exp over-predicted several
+  # vic2022 independents (Richmond, Northcote, Prahran, St Albans, Brunswick,
+  # Malvern) by 1-4 points each; the mismatch turned out to affect every
+  # election similarly (25-67% of nonzero-jump IND candidates clamped), not
+  # vic2022 specifically -- it was just the pair the ONP-fix do-no-harm check
+  # happened to be looking at.
+  #
+  # MEASURED 2026-09-14, AND THE CORRECTED VERSION LOSES. Over 738 seat-
+  # elections (sa2026 + 3 VIC + fed2019/2022/2025), pooled seat log loss:
+  # 0.2403 with the mismatch left alone, 0.2426 corrected. It repairs vic2022
+  # (0.2494 -> 0.2373, the regression this hunt started from) and costs
+  # federal (fed2022 0.2628 -> 0.2708, fed2025 0.2600 -> 0.2658). The isotonic
+  # curve's SHAPE is evidently tuned to the compressed training scale, so
+  # correcting the input without refitting the curve for the new scale trades
+  # one election's accuracy for another's. This is a GENERAL change, so by
+  # this repo's own rule it is judged election-wide, and election-wide it
+  # loses. Left OFF, with the flag kept so the next attempt starts from a
+  # measured baseline rather than rediscovering the mismatch.
+  if (Sys.getenv("AUSPOL_SAL_CURVE_NZ", "0") %in% c("1", "2")) {
+    nz <- which(is.finite(s$jump) & s$jump > 0)
+    s[, jump_pctile := 0]
+    if (length(nz) >= 10) set(s, nz, "jump_pctile", rank(s$jump[nz], ties.method = "average") / length(nz))
+  } else {
+    s[, jump_pctile := rank(jump, ties.method = "average") / .N]  # the mismatched original
+  }
   s[, pair := p$election]
   s[, .(pair, seat, party, pcv, jump_pctile)]
 }), fill = TRUE)
 GI <- GOV[party == "IND" & is.finite(pcv) & is.finite(jump_pctile)]
+# TRAIN ON THE POPULATION THIS IS APPLIED TO. The isoreg below is only ever
+# queried for rows with `jump_pctile > 0` (see the `te <-` line), so training
+# it on the zero-jump pile as well fits a curve through a population it never
+# predicts for. AUSPOL_SAL_CURVE_NZ=1 restricts training to match; default 0
+# keeps the previous behaviour byte-for-byte.
+if (Sys.getenv("AUSPOL_SAL_CURVE_NZ", "0") %in% c("1", "2")) {
+  .n0 <- nrow(GI); GI <- GI[jump_pctile > 0]
+  cat(sprintf("X73c curve trained on NON-ZERO salience only: %d of %d rows kept\n", nrow(GI), .n0))
+}
 cat(sprintf("\nX73c salience curve trained on %d governed IND candidates over %d elections\n",
             nrow(GI), uniqueN(GI$pair)))
 # ISOTONIC, NOT A LINEAR FIT ON log(1 - pctile).
@@ -500,19 +555,41 @@ cat(sprintf("\nX73c salience curve trained on %d governed IND candidates over %d
 # less vote) but otherwise free, so it can be flat across the bottom 80% and
 # steep in the tail without one region distorting the other. Same tool, and the
 # same reason, as the surge-hazard calibration.
+# MEAN vs MEDIAN (AUSPOL_SAL_CURVE_NZ=2). isoreg() is least squares, so it
+# fits the conditional MEAN, and an independent's vote is heavily right-skewed:
+# on the corrected scale the (0.5,0.8] band averages 9.8 across 160 cells while
+# most of those candidates poll far less, so mean-fitting hands every
+# mid-salience independent a prediction the typical one never reaches. That is
+# precisely what made the corrected-scale curve lose on federal 2026-09-14 even
+# though it PREDICTS TEALS BETTER (Curtin 21.6 -> 27.4 against an actual 29.5).
+# Mode 2 bins the training rows, takes each bin's MEDIAN, and isoregs the bin
+# medians -- monotone as before, but tracking the typical outcome rather than
+# one dragged up by a handful of successes.
+.sal_med <- identical(Sys.getenv("AUSPOL_SAL_CURVE_NZ", "0"), "2")
+fit_sal_curve <- function(tr) {
+  if (!.sal_med) {
+    o <- order(tr$jump_pctile)
+    ir <- isoreg(tr$jump_pctile[o], tr$pcv[o])
+    return(list(x = ir$x, y = ir$yf))
+  }
+  o <- order(tr$jump_pctile); t2 <- tr[o]
+  grp <- ceiling(seq_len(nrow(t2)) / 30L)
+  bx <- tapply(t2$jump_pctile, grp, mean); by <- tapply(t2$pcv, grp, stats::median)
+  ir <- isoreg(bx, by)
+  list(x = ir$x, y = ir$yf)
+}
 FE[, sal_exp := 0]
 for (pr in pairs_all) {
   tr <- GI[GI$pair != pr]
   if (nrow(tr) < 50) next
-  o <- order(tr$jump_pctile)
-  ir <- isoreg(tr$jump_pctile[o], tr$pcv[o])
+  ir <- fit_sal_curve(tr)
   te <- which(FE$pair == pr & FE$party == "IND" & FE$jump_pctile > 0)
   if (!length(te)) next
   # rule = 2 clamps beyond the training range rather than returning NA, so a
   # held-out candidate more salient than anything seen keeps the top fitted
   # value instead of dropping out of the feature entirely.
   set(FE, te, "sal_exp",
-      pmax(0, approx(ir$x, ir$yf, xout = FE$jump_pctile[te],
+      pmax(0, approx(ir$x, ir$y, xout = FE$jump_pctile[te],
                      rule = 2, ties = "ordered")$y))
 }
 cat("X73c curve vs truth by band -- these two columns should now track:\n")
@@ -622,7 +699,18 @@ ARMS <- list(
   # z-score, v7m the percentile rank. See the standardisation block above for
   # why v7k's raw version could not work out-of-fold.
   v7l = c(setdiff(base_feat, "jump"), "jump_pctile", "sal_exp", census_z),
-  v7m = c(setdiff(base_feat, "jump"), "jump_pctile", "sal_exp", census_r)
+  v7m = c(setdiff(base_feat, "jump"), "jump_pctile", "sal_exp", census_r),
+  # v7n: RETEST of v7k/l/m, 2026-09-13. Those three were measured 2026-09-12
+  # against v7c (pre-ret_exp, pre-notional-prior) and all three made sa2026
+  # ONP WORSE (8.658 -> 9.544-9.547) despite v7l's pooled RMSE beating
+  # baseline. The stated reason: sa2026 ONP's error back then was mostly a
+  # LEVEL miss (predicted ~18.5 statewide vs polled ~27), and demographics
+  # "can only fix ranking, not level". Since then the level itself has moved
+  # a lot -- ret_exp shipped, and the notional-prior fix shipped -- so this
+  # arm is v7f (today's actual shipped feature set: base_feat + jump_pctile +
+  # sal_exp + ret_exp) PLUS the within-pair z-scored census block, to check
+  # whether the precondition that killed v7l has changed.
+  v7n = c(setdiff(base_feat, "jump"), "jump_pctile", "sal_exp", "ret_exp", census_z)
 )
 fold_id <- match(FE$pair, pairs_all)   # pairs_all defined above, with the
                                        # engineered features that share its folds
@@ -840,7 +928,8 @@ cat("\nX73  ALL ARMS. RMSE and MAE are points of primary vote, LOWER IS BETTER.\
 print(rbindlist(res)[, .(arm, features, nrounds, rmse = round(rmse, 4), mae = round(mae, 4))])
 
 cat("\nX74  RMSE by class, lower is better. This is where a change should show up:\n")
-ran <- intersect(paste0("pred_", c("v6","v7a","v7b","v7c","v7d","v7e","v7f","v7g","v7h","v7i","v7j","v7k","v7l","v7m")), names(FE))
+ran <- intersect(paste0("pred_", names(ARMS)), names(FE))
+ran <- union(ran, intersect(paste0("pred_", c("v7e","v7j")), names(FE))) # arms built outside ARMS, below
 ran <- ran[vapply(ran, function(k) any(is.finite(FE[[k]])), TRUE)]
 rm_ <- function(k) sqrt(mean((FE[[k]] - FE$actual_share)^2))
 by_cls <- FE[, c(list(cells = .N),
