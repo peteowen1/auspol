@@ -142,6 +142,28 @@ PUBLISHED_FLAGS <- c(
   AUSPOL_WA_FLOWS            = "0",
   AUSPOL_FLOW_SHIFT          = "0",
   AUSPOL_FORCE_FP            = "",
+  AUSPOL_ONP_CONC_SD         = "auto",      # BACKTEST-side One Nation seat concentration, SHIPPED 2026-09-14 on
+                                             # Pete's call. Orders a state's seats by their own transposed FEDERAL
+                                             # One Nation vote -- a fresher, independent signal than the seat's own
+                                             # stale prior state result -- and quantile-maps the statewide total onto
+                                             # a target SD. Worth a lot where it applies: sa2026 seat log loss
+                                             # 0.4339 -> 0.3577 and 39/47 -> 41/47 seats, replicated at two seeds,
+                                             # and it survives a full retrain through the xgb primary layer.
+                                             # It COSTS vic2022 (72/78 -> 69/78) via a pre-existing IND weakness it
+                                             # amplifies rather than creates; pooled over 738 seat-elections it is
+                                             # still a clear gain (0.2452 -> 0.2403). The argument that settled it:
+                                             # fit_seats_full.R ALREADY concentrates ONP for the live forecast
+                                             # (AUSPOL_ONP_ORDER/AUSPOL_ONP_CV below), so without this the backtest
+                                             # was scoring a different model than the one that ships.
+                                             # "auto" and not a number ON PURPOSE. SD = a * statewide^k with k about
+                                             # 0.5, so one frozen scalar is only right for the election it was fitted
+                                             # against -- sa2026 wants 9.18, sa2022 wants 2.97. scripts/
+                                             # estimate_onp_concentration.R writes output/onp-concentration-curve.csv
+                                             # with each election held out of its own fit, so every row is
+                                             # leakage-free for the election it describes. A pair whose ordering
+                                             # signal does not exist (sa2022: ONP in 5 of 47 seats) is reported and
+                                             # skipped, not silently zeroed and not fatal.
+                                             # docs/reviews/sa2026-onp-base-pred-diagnosis-2026-09-14.md
   AUSPOL_ONP_CV              = "0.365",     # One Nation seat-concentration target -- partially pooled 2026-09-09
                                              # (SA 2026's own 0.346, weight 0.83, vs corpus-typical 0.479 at
                                              # Victoria's ~21% level). Was unset (SA's raw 0.327). Moves ONP
