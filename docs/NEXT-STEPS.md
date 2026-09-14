@@ -1,5 +1,44 @@
 # auspol — work queue
 
+## OPEN, 2026-09-14: One Nation's Victorian level is 2.85 points below its polls
+
+**This is on the LIVE forecast, it is red now, and it is the top item.**
+
+`S7` (new, shipped 2026-09-14) runs `poll_tracking_check()` on the trend
+`fit_seats_full.R` actually publishes. It breaches immediately:
+
+```
+S7  BREACH ONP fitted 20.20 against 23.05 from 11 polls (bound 2.5)
+```
+
+The other four parties track within 0.41. `20.20` is what `state_mean` hands
+to every Victorian seat, so this is not confined to the trend chart.
+
+**Mechanism**: One Nation's prior is its 2022 Victorian result, **0.28%**. The
+fit shrinks toward that, and 19 polls this cycle at 11–27% pull it only to
+20.20. Same shape as the NSW 2027 One Nation breach, which is the other red
+stage — a near-zero prior against a surging party.
+
+**The question to answer, decided with Pete 2026-09-14**: why does a 0.28%
+result from four years ago still outweigh 19 polls? Measure how the
+shrinkage-to-prior weight behaves when the prior is near zero and the polls
+are far from it, across the backtest corpus. Fix the mechanism, not this one
+number.
+
+**Explicitly NOT the fix**: switching Victoria to `sigmas = "per_cycle"`. It
+clears the breach (2.85 → 2.44) but only by 0.06, and that path was measured
+not better — 0.2% held-out gain for 33x the runtime. Adopting a model because
+it scrapes under the bound it is being judged by is the same criterion-fitting
+that `k0` was not tuned to clear. Neither `POLL_TRACKING_BOUND` nor
+`min_polls` may be moved either.
+
+**Why nothing caught this before**: `poll_tracking_check()` was wired into
+`fit_vic.R`, `fit_federal.R` and `fit_nsw.R` — every fit script *except* the
+one that publishes. All three fit with `sigmas = "per_cycle"`; the published
+call takes the defaults. The two paths sit on opposite sides of the bound
+(2.44 vs 2.85), so a green `L3` was asserting on a model nobody ships. Full
+note under "Where the guards are" in `ARCHITECTURE.md`.
+
 ## OVERNIGHT CONTINUATION, 2026-09-14 early morning — READ THIS FIRST
 
 Pete went to sleep mid-session; this continued autonomously per

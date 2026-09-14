@@ -353,7 +353,7 @@ was caught only against a number someone already knew.
   | `fit_nsw.R` | `N1`–`N3`, `NF1`, `NL2`, `NL3`†, `NL3a`, `NL4a`–`NL4c` |
   | `fit_projection.R` | `P1`–`P4`, `B1` |
   | `fit_seats.R` | `S1`–`S4`, `R1`–`R3` |
-  | `fit_seats_full.R` | `S5` |
+  | `fit_seats_full.R` | `S5`, `S7`‡ |
   | `fit_scorecard.R` | `C1`–`C3` |
 
   † **`NL3` reports rather than halting at the check**, like `fit_vic.R`'s
@@ -365,6 +365,20 @@ was caught only against a number someone already knew.
   or the check — see `docs/plans/prereg-poll-tracking-bound-scaling.md`.
   Neither `POLL_TRACKING_BOUND` nor `min_polls` may be moved to clear it.
   Every other check in both scripts still halts where it fires.
+
+  ‡ **`S7` is `L3` applied to the fit that actually publishes**, added
+  2026-09-14. `poll_tracking_check()` had been wired into every fit script
+  *except* `fit_seats_full.R` — and those three fit with
+  `sigmas = "per_cycle"`, while the published call takes the defaults. So a
+  green `L3` asserted on a model this repo does not ship. The two are not
+  interchangeable: on the day `S7` was wired they sat on **opposite sides of
+  the bound** — One Nation 2.44 points off its polls in the fit `L3` checks,
+  **2.85 off in the fit that ships**, against a bound of 2.5. Like `L3` it
+  reports rather than halting, writes `output/S7-BREACH.txt` (a third,
+  separate marker), and `run_all.R` exits non-zero after the page is built.
+  It also fires on a party `dropped` from the published fit for falling under
+  `min_polls`, which nothing else on that path would notice — the published
+  path never calls `refold_unfitted()`, so a dropped party simply vanishes.
 
   The version of this table before 2026-08-18 listed `fit_vic.R` as `V1`–`V5`,
   `fit_federal.R` as including `H1`–`H4`, and `fit_projection.R` as `B1`–`B3`.

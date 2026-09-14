@@ -26,6 +26,16 @@ not a commit, not a plan file — that it is not happening and why.
 
 ---
 
+## 2026-09-14 afternoon
+
+| ask | status |
+|---|---|
+| *"Sounds good"* — look at whether any Victorian party is falling off `fit_vic.R`'s `>= 20` poll cliff | **Answered, and it found something bigger**. No party falls off the cliff in a way that matters, because `fit_vic.R`'s output is not read by the published forecast. What it found instead: `poll_tracking_check()` was wired into every fit script EXCEPT `fit_seats_full.R`, the one that publishes — and the published Victorian trend breaches it, One Nation 2.85 points below its polls against a 2.5 bound. |
+| decided via quiz: ship the check even though it turns the nightly red | **SHIPPED as `S7`** in `fit_seats_full.R`, with `output/S7-BREACH.txt` and a non-zero exit from `run_all.R`. Proven to fire at bound 2.5, stay silent at 5.0, and catch a dropped party independently. |
+| decided via quiz: fix the One Nation undershoot by investigating the prior's weight, not by switching to per-cycle sigmas | **NOT DONE — queued, and this row is the honest record.** Top item in `docs/NEXT-STEPS.md`. The per-cycle switch would clear the breach (2.85 → 2.44) and was explicitly refused as criterion-fitting: it clears by 0.06 on a path measured not better. |
+
+---
+
 ## 2026-09-13/14 overnight session
 
 | ask | status |

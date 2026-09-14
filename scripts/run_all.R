@@ -274,6 +274,37 @@ if (length(l3_breach)) {
       "   non-zero so it cannot pass unnoticed.\n")
 }
 
+# S7 is the same check as L3, on the fit that is actually PUBLISHED.
+#
+# L3 asserts on fit_vic.R's per-cycle-sigma fit; fit_seats_full.R publishes a
+# trend_as_at() fit with the DEFAULTS, and until 2026-09-14 nothing asserted on
+# that one at all. The two are not interchangeable: on the day this was wired
+# they sat on opposite sides of the bound, One Nation 2.44 off its polls in the
+# fit L3 checks and 2.85 off in the fit that ships.
+#
+# NOT gated on `quick`, unlike NL3. fit_seats_full.R IS a slow stage, so a
+# --quick run skips it -- but it also skips the page, and the block above
+# already reports that no forecast was produced. The marker is unlinked by the
+# stage itself before it runs, so a stale one cannot survive a full run; after
+# a --quick run there is no fresh page for a stale marker to mislead about.
+S7_MARKER <- file.path("output", "S7-BREACH.txt")
+s7_breach <- if (!quick && file.exists(S7_MARKER)) {
+  readLines(S7_MARKER, warn = FALSE)
+} else character(0)
+s7_breach <- s7_breach[nzchar(trimws(s7_breach))]
+if (!quick && file.exists(S7_MARKER) && !length(s7_breach)) {
+  # Present but empty should never happen -- the stage unlinks rather than
+  # truncating -- so say so rather than reading it as "no breach".
+  cat("\nS7  marker file exists but is empty; treating as no breach.\n")
+}
+if (length(s7_breach)) {
+  cat("\n=== S7 BREACH ON THE PUBLISHED FORECAST'S OWN TREND ===\n")
+  for (b in s7_breach) cat("   ", b, "\n")
+  cat("   This is the statewide level that fit_seats_full.R feeds to every\n",
+      "   seat, so the gap is not confined to the trend chart. The page was\n",
+      "   still built -- it is the target -- and this run exits non-zero.\n")
+}
+
 # The same treatment for NSW, in its OWN marker file and under its own
 # heading. fit_nsw.R stopped halting on NL3 once two pre-registered experiments
 # aborted on whether its One Nation breach is the fit or the check; it reports
@@ -322,7 +353,7 @@ if (length(clashes)) {
 }
 
 if (length(FAILED_VALIDATION) || length(clashes) || length(l3_breach) ||
-    length(nl3_breach)) {
+    length(s7_breach) || length(nl3_breach)) {
   stop("Run finished with problems: ",
        if (length(FAILED_VALIDATION))
          paste0(length(FAILED_VALIDATION), " validation stage(s) [",
@@ -331,6 +362,9 @@ if (length(FAILED_VALIDATION) || length(clashes) || length(l3_breach) ||
          paste0(length(clashes), " duplicate check code(s)") else "",
        if (length(l3_breach))
          paste0(" ", length(l3_breach), " L3 breach(es) on the published cycle") else "",
+       if (length(s7_breach))
+         paste0(" ", length(s7_breach),
+                " S7 breach(es) on the published forecast's own trend") else "",
        if (length(nl3_breach))
          paste0(" ", length(nl3_breach), " NL3 breach(es) on an NSW cycle") else "")
 }

@@ -1,3 +1,35 @@
+# auspol 0.4.36 (development)
+
+**The poll-tracking check was wired into every fit script except the one that
+publishes, and the published Victorian trend has been breaching it.**
+
+- **`S7`: `poll_tracking_check()` now runs on the PUBLISHED trend**, in
+  `fit_seats_full.R`. It had been in `fit_vic.R` (`L3`), `fit_federal.R`
+  (`FL3`) and `fit_nsw.R` (`NL3`) since 2026-08-18 — all three of which fit
+  with `sigmas = "per_cycle"`, while the published call takes the defaults. A
+  green `L3` therefore asserted on a model this repo does not ship.
+- **The two paths are on opposite sides of the bound.** One Nation is 2.44
+  points off its polls in the fit `L3` checks and **2.85 off in the fit that
+  ships**, against a bound of 2.5. The published number, 20.20 against a
+  90-day poll mean of 23.05 over 11 polls, is what `state_mean` hands to every
+  Victorian seat.
+- Like `L3` it reports rather than halting, writes `output/S7-BREACH.txt` (a
+  third, separate marker so a published-cycle breach can never be masked by an
+  NSW one), and `run_all.R` exits non-zero after the page is built. **The
+  nightly run is red until One Nation's statewide level is fixed, and that is
+  the correct state.**
+- `S7` also fires on a party *dropped* from the published fit for falling
+  under `min_polls`. Nothing else on that path would notice: the published
+  path never calls `refold_unfitted()`, so a dropped party simply vanishes.
+- `trend_as_at(with_series = TRUE)` now also returns `polls` and `fits`, the
+  two arguments the check takes.
+
+Not fixed here: **why a 0.28% prior (One Nation's 2022 Victorian result) still
+outweighs 19 polls at 11–27%.** Switching Victoria to per-cycle sigmas would
+clear the breach, but only by 0.06, and that path was measured not better
+(0.2% held-out gain for 33x the runtime) — adopting it to scrape under the
+bound it is judged by is criterion-fitting. Queued in `docs/NEXT-STEPS.md`.
+
 # auspol 0.4.35
 
 **Two model changes ship, three arms measured and refused, and sa2026's worst

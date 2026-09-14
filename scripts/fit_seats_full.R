@@ -380,6 +380,47 @@ cat(sprintf(paste0("S6  run config: seed %d, FP sd %s, flow %+.2f, ",
               paste("FAIL -- NOT A DEFAULT PUBLISH RUN; changed:",
                     paste(changed, collapse = ", "))))
 now <- trend_as_at(polls, 2026, cycles, Sys.Date(), priors, fl, with_series = TRUE)
+
+# ---- S7: does the PUBLISHED trend follow the polls it was fitted to? --------
+#
+# This check existed since 2026-08-18 and was wired into `fit_vic.R` (`L3`),
+# `fit_federal.R` (`FL3`) and `fit_nsw.R` (`NL3`) -- every script EXCEPT this
+# one, which is the only one whose fit is published. All three of those fit
+# with `sigmas = "per_cycle"` and `weights = "firm_factors"`; the call above
+# takes the defaults. So a green `L3` said "the model we do not publish tracks
+# its polls", and the model we DO publish was unasserted.
+#
+# That is not a hypothetical gap. On 2026-09-14 the two paths sat on opposite
+# sides of the bound -- the per-cycle Victorian fit had One Nation 2.44 points
+# off its polls and the published fit had it 2.85 off, breaching. The number
+# that goes into `state_mean` below, and therefore into every seat, was the
+# unchecked one.
+#
+# REPORTS RATHER THAN HALTING, for the same reason `L3` does: this is the
+# target stage, and a `stopifnot` here means the Victorian forecast never
+# publishes. The breach goes to its OWN marker file that `run_all.R` exits
+# non-zero on after the page is built -- a separate file from `L3-BREACH.txt`
+# and `NL3-BREACH.txt` on purpose, so a breach on the published cycle can
+# never be masked by, or overwrite, one on a cycle nobody publishes.
+S7_MARKER <- file.path("output", "S7-BREACH.txt")
+# Unlink FIRST, unconditionally: a marker left by an earlier run must not be
+# read as this run's verdict. Same stale-state trap run_all.R gates NL3 on.
+if (default_run) unlink(S7_MARKER)
+s7 <- poll_tracking_check(now$polls, now$fits)
+report_poll_tracking(s7, "S7")
+s7_bad <- s7[breach == TRUE | dropped == TRUE]
+if (nrow(s7_bad)) {
+  lines <- sprintf("2026 %s fitted %.2f against %.2f from %d polls (bound %.1f)%s",
+                   s7_bad$party, s7_bad$fitted, s7_bad$poll_mean, s7_bad$n,
+                   attr(s7, "bound"),
+                   ifelse(s7_bad$dropped, "  [DROPPED FROM THE FIT]", ""))
+  if (default_run) {
+    writeLines(lines, S7_MARKER)
+  } else {
+    cat("S7  breach NOT recorded: this is not a default publish run.\n")
+  }
+}
+
 last <- as.data.table(now$series)[, .SD[which.max(date)], by = party]
 tppr <- last[party == "TPP_ALP"]
 mix <- fread("output/projection-mix.csv")
