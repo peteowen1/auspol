@@ -889,6 +889,32 @@ if (file.exists(.wiki)) {
     stop("BC10! classify_party() returned NA for: ",
          paste(unique(W$party_raw[is.na(W$party)]), collapse = ", "))
   }
+  # NORMALISE TO THIS REPO'S NAME CONVENTION, "SURNAME, Given".
+  #
+  # Wikipedia writes "Nina Taylor"; every other Victorian row is
+  # "TAYLOR, Nina". surname_of() splits on the comma and otherwise takes the
+  # FIRST token, so it read the Wikipedia form as surname "nina", given
+  # "taylor" -- the same person with opposite keys in the two elections, and
+  # candidate_returns() found 0 of 356 returning candidates when 62 of these
+  # people demonstrably won a previous Victorian election. DS2, DS2t and DS2o
+  # were all silently inert.
+  #
+  # Converting here rather than teaching surname_of() a second format: every
+  # other consumer of candidacies.csv then works unchanged, and the file stays
+  # internally consistent, which is the property that broke.
+  #
+  # Last token as the surname. Wrong for a multi-word surname -- "Vincenzo De
+  # Paolis" becomes "PAOLIS, Vincenzo De" -- which costs a match for those
+  # candidates but never mis-assigns one, since both sides of any later
+  # comparison get the same treatment.
+  .tok <- strsplit(trimws(W$name), "\\s+")
+  W[, name := vapply(seq_len(.N), function(i) {
+    t <- .tok[[i]]
+    if (length(t) < 2L) return(toupper(t[1]))
+    sprintf("%s, %s", toupper(t[length(t)]), paste(t[-length(t)], collapse = " "))
+  }, character(1))]
+  cat(sprintf("BC10 names normalised to 'SURNAME, Given' (e.g. %s)\n", W$name[1]))
+
   V <- W[, list(election = "vic2026", region = "vic", year = 2026L,
                 seat = seat, name = name, party = party, party_raw = party_raw,
                 votes = NA_real_, pcv = NA_real_,

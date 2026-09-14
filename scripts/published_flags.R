@@ -310,20 +310,28 @@ PUBLISHED_FLAGS <- c(
                                              # Concentrated where you would expect: sa2026, the One Nation surge
                                              # election, 0.4200 -> 0.5564. Every headline number quoted before
                                              # 2026-09-11 was the leaked one.
-  AUSPOL_HISTORIC_ELECTED_BACKFILL = "0",
+  AUSPOL_HISTORIC_ELECTED_BACKFILL = "1",
                                              # build-time: 1 = derive historic_elected for STATE elections from our
                                              # own prior winners (scripts/build_candidacies.R, BC9). The AEC ships
                                              # HistoricElected only in federal files, so all 21 state elections
                                              # record ZERO returning members -- false about the world, and it makes
                                              # the column a federal/state label inside the model.
-                                             # OFF because correcting it is measured WORSE: isolated A/B, same code,
-                                             # pooled primary RMSE 3.8078 -> 3.8219 and worse in 5 of 6
-                                             # jurisdictions; on seat log loss sa2026 moved 0.3260 -> 0.3256, which
-                                             # is nothing. AND it cannot ship alone -- R/xgb_primary_override.R
-                                             # defaults the feature to 0 for a state election BECAUSE that is what
-                                             # training carries, so turning this on silently makes that default a
-                                             # false claim about Victoria. Ship it with the Victorian candidate list
-                                             # (docs/NEXT-STEPS.md step 3) or not at all.
+                                             # ON since 2026-09-15, when the Victorian candidate list arrived
+                                             # (e8c5eab) and made the precondition true: Victoria now carries real
+                                             # values like every other state, so the live path reads 62 returning
+                                             # members instead of a default.
+                                             #
+                                             # SHIPPED AGAINST A SLIGHTLY WORSE BACKTEST, deliberately, and the
+                                             # number is here so the trade is visible: isolated A/B, same code,
+                                             # pooled primary RMSE 3.8078 -> 3.8219, worse in 5 of 6 jurisdictions;
+                                             # on seat log loss sa2026 moved 0.3260 -> 0.3256, which is nothing.
+                                             # The backtest CANNOT see the gain: vic2026 is the target, never a
+                                             # training pair, so the 62 returning members can only move the live
+                                             # forecast and never the RMSE. Turning it off now would mean holding
+                                             # real information out of the only election being forecast in order to
+                                             # protect a 0.014 number on elections already decided.
+                                             # Was OFF from b2c5572 to e8c5eab, when the live path had no Victorian
+                                             # candidate data and this would have made the 0-default a false claim.
   AUSPOL_XGB_PRIMARY_OOF     = "output/xgb-primary-shipped-oof-predictions.csv",
                                              # harness-only: which oof file the line above reads. Points at v7's
                                              # ret_exp arm (the IND retention feature, docs/reviews/xgb-primary-
