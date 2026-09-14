@@ -168,8 +168,18 @@ walk_of <- function(cp, year) {
     prior_result = priors[p] %||% NA_real_, scale = scale_of[[p]],
     firm_factors = fac_vec
   )), ps)
-  # THIN PARTIES, PARTIALLY POOLED RATHER THAN EXCLUDED (AUSPOL_NSW_THIN_WALK=1,
-  # default off; Pete's call 2026-09-14). A party under the estimation floor
+  # THIN PARTIES, PARTIALLY POOLED RATHER THAN EXCLUDED (AUSPOL_NSW_THIN_WALK,
+  # DEFAULT 1 -- ON -- since 49bc733; Pete's call 2026-09-14, shipped the same
+  # day it was built). This comment said "default off" until 2026-09-14: the
+  # flag was built defaulting to "0", and the commit that shipped it flipped
+  # both `Sys.getenv(..., "0")` fallbacks to "1" without touching the two
+  # comments above them, so the file asserted the opposite of what it did.
+  # Caught by the review gate. It matters because published_flags.R explicitly
+  # defers to THIS file as the single source of truth for this flag's shipped
+  # default, so a reader asking "is thin-party pooling live?" got a confident
+  # wrong answer from the only place that is supposed to know.
+  #
+  # A party under the estimation floor
   # currently gets no walk of its own at all and falls back to the scale
   # default, which is too slow for One Nation's 2% -> 25% NSW climb: fitted
   # 19.5 with a 17.1-22.2 band that excludes its own last three polls.
