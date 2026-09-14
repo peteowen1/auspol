@@ -1,0 +1,44 @@
+# Known, accepted failures of the nightly forecast refresh.
+#
+# The scheduled run exits non-zero whenever anything breaches, and that is
+# correct -- the build status should honestly say "something is breaching".
+# But an alarm that opens an issue every night for the same known thing is one
+# people learn to ignore, which is the failure this repo's own workflow
+# comments were written to prevent.
+#
+# So the alarm fires on a CHANGE. Every token below is a failure someone has
+# looked at and decided to live with, for a reason recorded here. Anything NOT
+# in this list raises the alarm.
+#
+# Tokens come from scripts/failure_signature.sh and carry what and who, never
+# how much, so a moving number does not read as a new problem:
+#
+#   stage:<script or stage name>
+#   breach:<CODE>:<cycle year>:<party>
+#
+# ADDING A LINE HERE IS A DECISION, NOT HOUSEKEEPING. It means "we know, and
+# the alarm should stop telling us". Say why, and say what would make it
+# removable. A line with no reason is indistinguishable from a silenced bug.
+#
+# REMOVE a line the moment its failure is fixed. A stale entry here is worse
+# than no baseline: it would mute the failure if it ever came back. The alarm
+# step reports tokens that are in this file but no longer failing, so the
+# run summary will tell you when one is ready to delete.
+
+# --- NSW 2027 One Nation, poll tracking ------------------------------------
+# fit_nsw.R's NL3 check: One Nation is fitted below its own recent polls by
+# more than the 2.5-point bound. Partial pooling of thin parties' walk
+# parameters (AUSPOL_NSW_THIN_WALK, shipped 2026-09-14) narrowed the gap from
+# 5.15 to 3.38 but did not close it.
+#
+# Kept rather than fixed because two pre-registered experiments aborted on
+# whether the gap is the fit or the check, the second at 19 cycles against a
+# floor of 20 -- see docs/plans/prereg-poll-tracking-bound-scaling.md, whose
+# closing section records that the remaining options are decisions rather than
+# experiments and forbids raising POLL_TRACKING_BOUND or min_polls to clear it.
+#
+# REMOVABLE WHEN: the separability gate can run (it needs one more completed
+# election with polls), or Pete decides between the options that plan names.
+stage:NSW cycles
+stage:fit_nsw.R
+breach:NL3:2027:ONP

@@ -181,6 +181,15 @@ jobs:
               grep -A3 "WARNINGS from this stage" run.log | head -30
               echo '```'
             fi
+            # What failed, against what we already knew about. Shown on EVERY
+            # run, including green ones -- that is how anyone finds out a
+            # baseline line is stale and ready to delete.
+            if [ -f run.log ]; then
+              echo "### Failures vs the known baseline"
+              echo '```'
+              sh scripts/failure_signature.sh run.log .github/known-failures.txt || true
+              echo '```'
+            fi
           } >> "$GITHUB_STEP_SUMMARY"
 
       # Kept so a human can download and eyeball the page before publishing it.
@@ -226,6 +235,48 @@ jobs:
         run: |
           set -euo pipefail
           TITLE="Forecast refresh is failing"
+
+          # FIRE ON A CHANGE, NOT ON REDNESS.
+          #
+          # The scheduled run has been red continuously, so an alarm keyed on
+          # "the run failed" opens or comments an issue every single night for
+          # something already known -- and an alarm that speaks every night is
+          # one people stop reading. That is the exact failure the comments
+          # further up this file were written to prevent, arriving through the
+          # alarm rather than through silence.
+          #
+          # Muting it would be worse: a NEW failure would hide behind the old
+          # one. So the alarm compares what failed against
+          # .github/known-failures.txt, and speaks only about what is not
+          # already accounted for there. The run still exits non-zero either
+          # way -- the build status should honestly say something is breaching;
+          # this decides only whether a human gets told.
+          #
+          # The comparison is scripts/failure_signature.sh, not inline shell,
+          # because both previous defects in this alarm were in untested inline
+          # shell: a grep matching none of the shapes run_all.R emits, and a
+          # comment contradicting the code beneath it. That script is proven by
+          # scripts/test_failure_signature.sh against real logs from both sides
+          # of a fixed failure.
+          set +e
+          DIFF="$(sh scripts/failure_signature.sh run.log .github/known-failures.txt 2>&1)"
+          NEW=$?
+          set -e
+          echo "$DIFF"
+          if [ "$NEW" = "0" ]; then
+            echo "No alarm: every failure this run is already in .github/known-failures.txt."
+            {
+              echo "### Alarm not raised"
+              echo
+              echo "Every failure is already known. Details in the run summary above."
+            } >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          if [ "$NEW" != "1" ]; then
+            # Exit 2 means the script could not read a file. That is not "no
+            # new failures" and must not be treated as one.
+            echo "failure_signature.sh could not run (exit $NEW); alarming anyway."
+          fi
           # Which stages actually failed, so the issue is readable without
           # opening the log. run.log may not exist if the job died early.
           # MATCH EVERY SHAPE run_all.R EMITS, not just one. The first version
@@ -242,8 +293,8 @@ jobs:
               STAGES="(run.log does not exist -- the job failed before the pipeline step)"
             fi
           fi
-          BODY=$(printf '%s\n\n```\n%s\n```\n\nRun: %s\n\nThis issue is opened by the scheduled Forecast refresh and is reused for every consecutive failure. Close it when the run is green again.' \
-                 "The nightly forecast refresh failed." "$STAGES" "$RUN_URL")
+          BODY=$(printf '%s\n\n```\n%s\n```\n\n## What failed\n\n```\n%s\n```\n\nRun: %s\n\nThis issue is raised only for failures NOT already listed in `.github/known-failures.txt`, so everything under "NEW failures" above is something that changed. If one of them is a failure to live with rather than fix, add its token to that file WITH A REASON -- the alarm will then stay quiet about it and tell you when it stops failing.\n\nThis issue is reused for every consecutive alarm rather than opening a new one. Close it when the run is green again.' \
+                 "The nightly forecast refresh failed with something new." "$STAGES" "$DIFF" "$RUN_URL")
           # EXACT title match, filtered client-side. `--search ... in:title` is
           # fuzzy and this repo already has an open issue whose title contains
           # "Forecast refresh" -- a false match would comment there forever and
