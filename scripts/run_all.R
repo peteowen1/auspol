@@ -278,9 +278,12 @@ if (length(l3_breach)) {
 #
 # L3 asserts on fit_vic.R's per-cycle-sigma fit; fit_seats_full.R publishes a
 # trend_as_at() fit with the DEFAULTS, and until 2026-09-14 nothing asserted on
-# that one at all. The two are not interchangeable: on the day this was wired
-# they sat on opposite sides of the bound, One Nation 2.44 off its polls in the
-# fit L3 checks and 2.85 off in the fit that ships.
+# that one at all. The two are not interchangeable: they give different answers
+# for the same party on the same polls, and on data four weeks old they sat on
+# OPPOSITE SIDES of the bound -- One Nation 2.44 off its polls in the fit L3
+# checks and 2.85 off in the fit that ships. On current data it is 2.44 against
+# 2.47, both inside. Which side of 2.5 the published fit lands on is decided by
+# a couple of polls, so "L3 is green" has never been evidence about it.
 #
 # DELIBERATELY NOT GATED ON `quick`, and that is the opposite of NL3.
 #

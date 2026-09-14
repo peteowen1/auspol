@@ -1,23 +1,33 @@
 # auspol — work queue
 
-## OPEN, 2026-09-14: One Nation's Victorian level is 2.85 points below its polls
+## WATCH, 2026-09-14: One Nation's Victorian level sits 2.47 under its polls, 0.03 inside the bound
 
-**This is on the LIVE forecast, it is red now, and it is the top item.**
+**NOT currently breaching. An earlier version of this entry said 2.85 and
+called it a live breach; that number came from a poll clone 19 commits and
+four weeks stale.** See the stale-data note at the end of this section — the
+process failure is the more useful finding.
+
+Current, on poll data to 2026-08-12 (agrees with CI exactly):
+
+| party | fitted | polls (90d, n=12) | gap |
+|---|--:|--:|--:|
+| **ONP** | 20.57 | 23.04 | **2.47** |
+| LNP | 28.59 | 28.17 | 0.43 |
+| ALP | 24.96 | 24.67 | 0.29 |
+| GRN | 12.88 | 13.13 | 0.24 |
+| OTH | 10.99 | 10.92 | 0.07 |
 
 `S7` (new, shipped 2026-09-14) runs `poll_tracking_check()` on the trend
-`fit_seats_full.R` actually publishes. It breaches immediately:
-
-```
-S7  BREACH ONP fitted 20.20 against 23.05 from 11 polls (bound 2.5)
-```
-
-The other four parties track within 0.41. `20.20` is what `state_mean` hands
-to every Victorian seat, so this is not confined to the trend chart.
+`fit_seats_full.R` actually publishes, and reports rather than halting. One
+Nation is **0.03 inside a 2.5 bound** — the closest any party has been without
+crossing, and worth watching rather than acting on. `20.57` is what
+`state_mean` hands to every Victorian seat, so the gap is not confined to the
+trend chart.
 
 **Mechanism**: One Nation's prior is its 2022 Victorian result, **0.28%**. The
-fit shrinks toward that, and 19 polls this cycle at 11–27% pull it only to
-20.20. Same shape as the NSW 2027 One Nation breach, which is the other red
-stage — a near-zero prior against a surging party.
+fit shrinks toward that, and 20 polls this cycle at 11–27% pull it only to
+20.57. Same shape as the NSW 2027 One Nation breach, which IS a live red stage
+— a near-zero prior against a surging party.
 
 **The investigation Pete approved was ALREADY DONE, and it answers the other
 way.** `docs/reviews/poll-lag-2026-08-19.md`, run against a pre-registration
@@ -39,18 +49,20 @@ committed before measuring:
   fixed at 0) was built and refused on exactly the theory above. WA 2017 had a
   prior of 0.00 and the model fitted 7.8 — it left the anchor far behind.
 
-**And the gap is converging, not degrading** (measured 2026-09-14, refitting at
-each ONP poll date): −3.97 at 8 polls → −4.13 at 15 → **−2.85 at 19**, trend
-+0.08 points per 30 days. It has breached at *every* cutoff since polls began,
-so `S7` is not catching a new fault — it is catching a year-old condition that
-was invisible because nothing checked the published path. At 6–7 polls One
-Nation was **dropped from the published fit entirely** (`min_polls = 8`), with
-OTH absorbing it.
+**And the gap is converging** (measured 2026-09-14, refitting at each ONP poll
+date, on the stale clone): −3.97 at 8 polls → −4.13 at 15 → −2.85 at 19, and
+**−2.47 at 20** on fresh data. Trend is toward closing as polls accumulate,
+which is a fit converging. It sat OUTSIDE the bound for most of the cycle and
+has just come inside it, so the direction of travel is the reassuring part,
+not the current margin. At 6–7 polls One Nation was **dropped from the
+published fit entirely** (`min_polls = 8`), with OTH absorbing it — the
+dropped-party path `S7` also asserts on, and it happened on this cycle.
 
 **So there is no ONP fix to make, and these are all forbidden:**
 
-- `sigmas = "per_cycle"` for Victoria — clears the breach by 0.06 on a path
-  measured not better (0.2% held-out gain, 33x runtime). Criterion-fitting.
+- `sigmas = "per_cycle"` for Victoria — measured not better (0.2% held-out
+  gain, 33x runtime), and reaching for it to buy margin on a bound is
+  criterion-fitting.
 - Raising `POLL_TRACKING_BOUND` (it re-derives to 2.5 today), raising
   `min_polls` from 3 to 4, or lowering the separability gate from 20 — all
   three explicitly forbidden by
@@ -74,9 +86,31 @@ comments were written to prevent.
 **Why nothing caught this before**: `poll_tracking_check()` was wired into
 `fit_vic.R`, `fit_federal.R` and `fit_nsw.R` — every fit script *except* the
 one that publishes. All three fit with `sigmas = "per_cycle"`; the published
-call takes the defaults. The two paths sit on opposite sides of the bound
-(2.44 vs 2.85), so a green `L3` was asserting on a model nobody ships. Full
-note under "Where the guards are" in `ARCHITECTURE.md`.
+call takes the defaults, and the two produce different numbers for the same
+party on the same polls, so a green `L3` was asserting on a model nobody
+ships. Full note under "Where the guards are" in `ARCHITECTURE.md`.
+
+### The stale-clone failure, which is the more useful finding
+
+Every poll-derived number quoted in this session before 17:40 came from
+`external/aus-polling-analyser` **19 commits behind, last pulled 2026-08-16**.
+Nothing warns about this: the clone is a plain git checkout, `load_polls()`
+reads whatever is on disk, and the row count it prints (`polls[vic]: 606
+rows`) looks exactly as healthy as a current one.
+
+It changed a verdict, not just a decimal. On the stale clone One Nation was
+2.85 off its polls and **breaching**; on current data it is 2.47 and **inside
+the bound**. A whole entry here described a live breach on the published
+Victorian forecast that does not exist. CI was right the entire time, because
+the workflow clones the anchor fresh on every run — the divergence was
+visible in both logs as `606 rows to 2026-08-08` against `607 rows to
+2026-08-12` and went unread.
+
+**So: `git -C external/aus-polling-analyser log -1` before quoting any poll
+number, and treat a CI/local disagreement as data staleness until proven
+otherwise.** Same rule this repo already applies to release assets, whose
+`createdAt` lies about freshness, and the same shape as the memory note about
+dated docs being snapshots.
 
 ## OVERNIGHT CONTINUATION, 2026-09-14 early morning — READ THIS FIRST
 

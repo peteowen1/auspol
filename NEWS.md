@@ -8,16 +8,22 @@ publishes, and the published Victorian trend has been breaching it.**
   (`FL3`) and `fit_nsw.R` (`NL3`) since 2026-08-18 — all three of which fit
   with `sigmas = "per_cycle"`, while the published call takes the defaults. A
   green `L3` therefore asserted on a model this repo does not ship.
-- **The two paths are on opposite sides of the bound.** One Nation is 2.44
-  points off its polls in the fit `L3` checks and **2.85 off in the fit that
-  ships**, against a bound of 2.5. The published number, 20.20 against a
-  90-day poll mean of 23.05 over 11 polls, is what `state_mean` hands to every
-  Victorian seat.
+- **The two paths give different answers for the same party on the same
+  polls**, and on data four weeks stale they sat on opposite sides of the
+  bound — One Nation 2.44 points off its polls in the fit `L3` checks against
+  **2.85 in the fit that ships**. On current data (to 2026-08-12) it is 2.44
+  against **2.47, both inside 2.5**. Which side the published fit lands on is
+  decided by a couple of polls, so "`L3` is green" has never been evidence
+  about it. The published number, 20.57 against a 90-day poll mean of 23.04
+  over 12 polls, is what `state_mean` hands to every Victorian seat.
 - Like `L3` it reports rather than halting, writes `output/S7-BREACH.txt` (a
   third, separate marker so a published-cycle breach can never be masked by an
-  NSW one), and `run_all.R` exits non-zero after the page is built. **The
-  nightly run is red until One Nation's statewide level is fixed, and that is
-  the correct state.**
+  NSW one), and `run_all.R` exits non-zero after the page is built.
+- **Not currently breaching**, at 0.03 inside the bound — the closest any
+  party has come without crossing. An earlier draft of this entry called it a
+  live breach at 2.85; that came from a poll clone 19 commits and four weeks
+  stale, and the error is recorded in `docs/NEXT-STEPS.md` because it changed
+  a verdict rather than a decimal.
 - `S7` also fires on a party *dropped* from the published fit for falling
   under `min_polls`. Nothing else on that path would notice: the published
   path never calls `refold_unfitted()`, so a dropped party simply vanishes.
@@ -39,10 +45,12 @@ publishes, and the published Victorian trend has been breaching it.**
 
 **The gap is not a new fault and there is no fix pending.** Refitting at each
 One Nation poll date shows it converging as polls accumulate — −3.97 at 8
-polls, −4.13 at 15, −2.85 at 19 — and breaching at every cutoff since January.
-`S7` catches a year-old condition that was invisible because nothing checked
-the published path. At 6–7 polls One Nation was dropped from the published fit
-entirely (`min_polls = 8`), with OTH absorbing it.
+polls, −4.13 at 15, −2.85 at 19, **−2.47 at 20**. It sat outside the bound for
+most of the cycle and has just come inside it, so the direction of travel is
+the reassuring part rather than the current margin. `S7` catches a year-old
+condition that was invisible because nothing checked the published path. At
+6–7 polls One Nation was dropped from the published fit entirely
+(`min_polls = 8`), with OTH absorbing it.
 
 The behaviour itself was pre-registered, measured on 139 party-cycles and
 endorsed in `docs/reviews/poll-lag-2026-08-19.md`: minor parties are shaded
