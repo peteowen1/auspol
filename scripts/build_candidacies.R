@@ -925,7 +925,21 @@ if (any(council)) {
     tk <- tk[nzchar(tk)]
     if (length(tk) == 0L) { sur[i] <- ""; giv[i] <- ""; next }
     if (length(tk) == 1L) { sur[i] <- tk[1]; giv[i] <- ""; next }
-    caps <- tk == toupper(tk) & grepl("[A-Z]", tk)
+    # MAJORITY-uppercase, not byte-identical to toupper(). "McKAY" and
+    # "MacTIERNAN" are shouted surnames that are NOT equal to their own
+    # toupper(), so an exact test drops them into the given-first branch and
+    # INVERTS the row -- nsw2015 files "McKAY Jodi" under surname JODI while
+    # nsw2019 spells her "MCKAY" and files her correctly, so the same person
+    # gets two keys and her 2015 win stops counting as a prior win. 43 of
+    # 1,670 NSW rows carry a Mac/Mc surname. Found by review 2026-09-14.
+    #
+    # Counting letters handles any prefix casing without enumerating them.
+    # It still misses a name like "O'Brien" once the apostrophe is stripped
+    # (2 of 6 letters upper), which is genuinely ambiguous in a surname-first
+    # file and is left to the last-token fallback.
+    nup <- nchar(gsub("[^A-Z]", "", tk))
+    nlo <- nchar(gsub("[^a-z]", "", tk))
+    caps <- nup >= 2 & nup >= nlo
     if (any(caps)) {
       sur[i] <- tk[which(caps)[1]]
       giv[i] <- paste(tk[!caps], collapse = " ")

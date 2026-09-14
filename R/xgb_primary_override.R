@@ -297,7 +297,16 @@ xgb_primary_predict_live <- function(shares, mat22, a22, state_mean, returns,
   # recording zero returning members, which is false about the world and makes
   # the column a federal/state label inside the model. Backfilling it from
   # candidacies.csv is queued in docs/NEXT-STEPS.md.
-  rows[, historic_elected_i := if (identical(region, "fed")) NA_integer_ else 0L]
+  # Computed OUTSIDE the brackets and named differently from the argument.
+  # `rows` has no `region` column today, so a bare `region` in `j` does resolve
+  # to the function argument -- but that is a property of the current column
+  # set, not of the code, and adding a `region` column later would silently
+  # rebind it to a vector of "vic" and make identical(region, "fed") FALSE by
+  # a different route. Eight instances of exactly this are recorded in
+  # CLAUDE.md, and its rule is to copy the argument to a differently-named
+  # local first rather than rely on the absence of a collision.
+  .he_default <- if (identical(region, "fed")) NA_integer_ else 0L
+  rows[, historic_elected_i := .he_default]
   rows[, ballot_pos_min := NA_real_]
   if (!is.null(agg_now)) {
     idx <- match(key_now, paste(agg_now$seat, agg_now$party))
@@ -305,7 +314,12 @@ xgb_primary_predict_live <- function(shares, mat22, a22, state_mean, returns,
     # Only overwrite where the candidacy data actually says something, so a
     # seat/party with no nomination row keeps the state default rather than
     # reverting to NA.
-    rows[!is.na(.he), historic_elected_i := .he[!is.na(.he)]]
+    # Indexed explicitly rather than with a logical on both sides. The logical
+    # form is correct -- i and j select the same positions in the same order --
+    # but "aligned because both filters happen to agree" is the kind of thing
+    # that is true until someone edits one side.
+    .ok <- which(!is.na(.he))
+    rows[.ok, historic_elected_i := .he[.ok]]
     rows[, ballot_pos_min := agg_now$ballot_pos_min[idx]]
   }
 

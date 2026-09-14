@@ -66,10 +66,32 @@ forced_value <- function(sw, file) {
   if (!file.exists(file)) return(NA_character_)
   ln <- readLines(file, warn = FALSE)
   ln <- ln[!grepl("^\\s*#", ln)]            # a commented-out setenv is not wiring
+  # COLLAPSED, not matched line by line. A call split across lines --
+  #
+  #   Sys.setenv(
+  #     AUSPOL_SALIENCE_EXPECTED = "1"
+  #   )
+  #
+  # has no single line carrying both the call and the assignment, so a
+  # per-line match reports the switch as NOT forced while it plainly is, and
+  # the registry then prints a clean "no harness forces a switch". That is the
+  # same shape as the three incomplete check-code greps CLAUDE.md records --
+  # a pattern anchored on something that happens to be adjacent today. Found
+  # by review 2026-09-14; dry-run against a multi-line fixture below.
+  one <- paste(ln, collapse = " ")
   pat <- sprintf("Sys\\.setenv\\(\\s*%s\\s*=\\s*[\"']([^\"']*)[\"']", sw)
-  m <- regmatches(ln, regexec(pat, ln))
+  m <- regmatches(one, regexec(pat, one))
   hit <- Filter(function(x) length(x) == 2L, m)
-  if (!length(hit)) return(NA_character_)
+  if (!length(hit)) {
+    # A non-literal value (Sys.setenv(X = as.character(v)) or a do.call) is
+    # forcing the switch to something this cannot read. Say so rather than
+    # report "not forced", which is the answer that hides it.
+    dyn <- sprintf("Sys\\.setenv\\(\\s*%s\\s*=\\s*[^\"')]", sw)
+    if (grepl(dyn, one)) return("(non-literal)")
+    if (grepl("do\\.call\\(\\s*Sys\\.setenv", one) &&
+        grepl(sw, one, fixed = TRUE)) return("(via do.call)")
+    return(NA_character_)
+  }
   hit[[1]][2]
 }
 
