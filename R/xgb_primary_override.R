@@ -114,7 +114,7 @@ xgb_primary_override <- function(shares, pair_label, enabled = NULL) {
 #' shipped-only model with no other change needed.
 #'
 #' @param shares The just-computed shipped-model shares matrix (seats x
-#'   parties, summing to 100/row) -- becomes the `pred_share` feature.
+#'   parties, summing to 100/row) -- becomes the `base_pred` feature.
 #' @param mat22 Seat-level 2022 class shares matrix, same shape as `shares`.
 #' @param a22 Named numeric vector, 2022 STATEWIDE class shares.
 #' @param state_mean Named numeric vector, the forecast's statewide class
@@ -178,11 +178,11 @@ xgb_primary_predict_live <- function(shares, mat22, a22, state_mean, returns,
 
   seats <- rownames(shares); parties <- colnames(shares)
   rows <- data.table::CJ(seat = seats, party = parties, sorted = FALSE)
-  rows[, pred_share := mapply(function(s, p) shares[s, p], seat, party)]
-  rows[, x           := mapply(function(s, p) if (p %in% colnames(mat22)) mat22[s, p] else 0, seat, party)]
+  rows[, base_pred      := mapply(function(s, p) shares[s, p], seat, party)]
+  rows[, seat_prev_pcv  := mapply(function(s, p) if (p %in% colnames(mat22)) mat22[s, p] else 0, seat, party)]
   rows[, level_prev  := vapply(party, function(p) if (p %in% names(a22)) unname(a22[[p]]) else 0, numeric(1))]
-  rows[, level_now   := vapply(party, function(p) if (p %in% names(state_mean)) unname(state_mean[[p]]) else 0, numeric(1))]
-  # `level_now` above is `state_mean` -- the forecast's OWN projected statewide,
+  rows[, level_pred  := vapply(party, function(p) if (p %in% names(state_mean)) unname(state_mean[[p]]) else 0, numeric(1))]
+  # `level_pred` above is `state_mean` -- the forecast's OWN projected statewide,
   # never a result, because the election has not happened. That was already true
   # before 2026-09-11 and is why the published forecast never leaked on this
   # feature; what changed that day is that the model is now TRAINED on a
@@ -197,7 +197,7 @@ xgb_primary_predict_live <- function(shares, mat22, a22, state_mean, returns,
   # feature set; a column present in one and absent in the other is exactly the
   # mismatch being removed.
   rows[, level_from_polls := 1L]
-  rows[, dev_prev    := x - level_prev]
+  rows[, dev_prev    := seat_prev_pcv - level_prev]
   # KEY-MATCHED, NOT merge()-THEN-POSITIONAL, throughout this function.
   # data.table::merge() defaults to sort=TRUE, which returns its result
   # re-sorted by the join key -- NOT in `rows`'s original CJ(sorted=FALSE)
@@ -228,7 +228,7 @@ xgb_primary_predict_live <- function(shares, mat22, a22, state_mean, returns,
   rows[, is_major_i := as.integer(party %in% MAJ)]
 
   # own_prev_pcv: the identity-matched candidate's own prior share, from
-  # personal_prior_vote() -- distinct from the seat/class-level `x` above.
+  # personal_prior_vote() -- distinct from the seat/class-level `seat_prev_pcv` above.
   rows[, own_prev_pcv := NA_real_]
   if (!is.null(own_prev)) {
     OP <- data.table::as.data.table(own_prev)

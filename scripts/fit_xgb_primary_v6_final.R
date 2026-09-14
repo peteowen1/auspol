@@ -26,7 +26,7 @@ suppressMessages(library(xgboost))
 
 OUT <- "output"
 ALL <- fread(file.path(OUT, "xgb-primary-features-v6.csv"), showProgress = FALSE)
-ALL <- ALL[is.finite(level_prev) & is.finite(level_now)]
+ALL <- ALL[is.finite(level_prev) & is.finite(level_pred)]
 
 ALL[, same_i := as.integer(same)]
 ALL[, same_mp_i := as.integer(same_mp)]
@@ -54,7 +54,7 @@ for (r in region_levels) ALL[[paste0("region_", r)]] <- as.integer(ALL$region ==
 # a different order or set than it was trained on fails silently rather than
 # loudly. `level_from_polls` was added to both on 2026-09-11, and
 # xgb_primary_predict_live() sets it to 1L.
-feat_cols <- c("pred_share", "x", "level_prev", "level_now", "level_from_polls", "dev_prev",
+feat_cols <- c("base_pred", "seat_prev_pcv", "level_prev", "level_pred", "level_from_polls", "dev_prev",
                "n_cand_prev", "n_cand_now", "same_i", "same_mp_i", "is_major_i",
                "margin", "fed_swing", "retirement_i", "soph_cand_i", "soph_party_i",
                "prev_swing", "is_incumbent_party_i", "own_prev_pcv",
