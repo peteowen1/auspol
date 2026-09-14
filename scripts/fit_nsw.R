@@ -45,7 +45,29 @@ pri23 <- prior_vec(2023); pri27 <- prior_vec(2027)
 # parties fall back to defaults + the documented hand override below).
 counts <- vapply(attr(polls, "parties"), function(p)
   sum(!is.na(cp23[[p]])) + sum(!is.na(cp27[[p]])), 1L)
-est_parties <- names(counts)[counts >= 20]
+# AUSPOL_NSW_EST_FLOOR lowers this cliff (Pete's call 2026-09-14). A hard
+# ">= 20 or nothing" is the shape CLAUDE.md calls indefensible -- a party at
+# 21 polls is believed outright and one at 19 is excluded outright -- and
+# ONP sits the wrong side of it at 8, so it runs on a DEFAULT walk that is too
+# slow for its 2% -> 25% climb: fitted endpoint 19.5 with a 17.1-22.2 band
+# that excludes its own last three polls (22, 27, 25).
+#
+# The shrinkage this needs already exists: estimate_cycle_sigmas() pulls each
+# estimate toward the pooled value with weight n/(n+25), so ONP's 8 polls
+# would carry 24% of their own estimate and 76% pooled -- degrading gracefully
+# instead of falling off a cliff. The pre-registered reason for the cliff was
+# that ONP hit BOTH optimiser bounds on 8 polls; an upper-bound hit is a real
+# failure (the walk runs away), and MEASURING IT CONFIRMED THAT -- at
+# AUSPOL_NSW_EST_FLOOR=8 the unshrunk estimate came back sigma_obs 4.0000,
+# sigma_rw 0.6000, both box bounds, and the H-check below rightly refused it.
+# So this floor stays at 20 and the shrinkage is applied through
+# AUSPOL_NSW_THIN_WALK in walk_of() instead, which is where it belongs.
+.est_floor <- as.integer(Sys.getenv("AUSPOL_NSW_EST_FLOOR", "20"))
+est_parties <- names(counts)[counts >= .est_floor]
+if (.est_floor != 20L)
+  cat(sprintf("NH0  estimation floor lowered to %d polls: %s\n", .est_floor,
+              paste(setdiff(names(counts)[counts >= .est_floor],
+                            names(counts)[counts >= 20L]), collapse = ", ")))
 
 estimate_on <- function(scale, firm_factors = NULL) {
   out <- lapply(est_parties, function(p) estimate_trend_sigmas(
@@ -73,6 +95,16 @@ cat("=== NSW L1: logit vs points, log evidence in original percentage units ===\
 print(cmp[order(-gain)])
 scale_of <- setNames(cmp$scale, cmp$party)
 stopifnot(!anyNA(scale_of), all(est_parties %in% names(scale_of)))
+# Thin parties are not in the L1 comparison (it needs both scales' log
+# evidence, and theirs is exactly the estimate that is unreliable), but
+# everything downstream -- the per-cycle walk table, the binomial-floor check
+# -- looks their scale up here. They are fitted on logit by
+# AUSPOL_NSW_THIN_WALK, so record that rather than leaving a lookup that
+# subscripts out of bounds the moment one is admitted.
+if (identical(Sys.getenv("AUSPOL_NSW_THIN_WALK", "1"), "1")) {
+  .thin_all <- setdiff(names(counts)[counts >= PARTY_INCLUSION_FLOOR], est_parties)
+  for (.p in .thin_all) scale_of[[.p]] <- "logit"
+}
 
 hyp_of <- function(est) setNames(lapply(names(est), function(p) list(
   sigma_obs = est[[p]]$sigma_obs, sigma_rw = est[[p]]$sigma_rw,
@@ -130,12 +162,72 @@ walk_of <- function(cp, year) {
   priors <- prior_vec(year)
   cnt <- vapply(attr(cp, "parties"), function(p) sum(!is.na(cp[[p]])), 1L)
   ps <- intersect(names(cnt)[cnt >= 15], est_parties)
-  setNames(lapply(ps, function(p) estimate_cycle_sigmas(
+  out <- setNames(lapply(ps, function(p) estimate_cycle_sigmas(
     cp, p, sigma_obs_pooled = est[[p]]$sigma_obs,
     sigma_rw_pooled = est[[p]]$sigma_rw,
     prior_result = priors[p] %||% NA_real_, scale = scale_of[[p]],
     firm_factors = fac_vec
   )), ps)
+  # THIN PARTIES, PARTIALLY POOLED RATHER THAN EXCLUDED (AUSPOL_NSW_THIN_WALK,
+  # DEFAULT 1 -- ON -- since 49bc733; Pete's call 2026-09-14, shipped the same
+  # day it was built). This comment said "default off" until 2026-09-14: the
+  # flag was built defaulting to "0", and the commit that shipped it flipped
+  # both `Sys.getenv(..., "0")` fallbacks to "1" without touching the two
+  # comments above them, so the file asserted the opposite of what it did.
+  # Caught by the review gate. It matters because published_flags.R explicitly
+  # defers to THIS file as the single source of truth for this flag's shipped
+  # default, so a reader asking "is thin-party pooling live?" got a confident
+  # wrong answer from the only place that is supposed to know.
+  #
+  # A party under the estimation floor
+  # currently gets no walk of its own at all and falls back to the scale
+  # default, which is too slow for One Nation's 2% -> 25% NSW climb: fitted
+  # 19.5 with a 17.1-22.2 band that excludes its own last three polls.
+  #
+  # Lowering the floor instead does NOT work and was measured not to: on 8
+  # polls the unshrunk ML walk runs away to both box bounds (sigma_obs 4.0000,
+  # sigma_rw 0.6000) and the H-check rightly refuses it.
+  #
+  # estimate_cycle_sigmas() is the shrinking estimator -- geometric, weight
+  # n/(n+25) -- so at 8 polls the party keeps 24% of its own estimate and 76%
+  # of what it is shrunk toward. Toward the SCALE DEFAULT here, because no NSW
+  # party is ML-estimated on the logit scale, so there is no fitted pooled
+  # value to borrow; the default is exactly what these parties already use, so
+  # shrinkage moves them off it only as far as their own data supports.
+  # A bound hit is safe under this by construction -- it is pulled 76% back --
+  # which is what the function's own docs mean by the shrinkage handling it.
+  if (identical(Sys.getenv("AUSPOL_NSW_THIN_WALK", "1"), "1")) {
+    thin <- setdiff(names(cnt)[cnt >= PARTY_INCLUSION_FLOOR], est_parties)
+    for (p in thin) {
+      d <- default_sigmas("logit")
+      # FLOOR THE OBSERVATION NOISE. A thin party polling near 1% can fit a
+      # noise below pure sampling error -- SFF came out at 0.215 points
+      # against a 0.246 binomial floor, which is not a very precise pollster
+      # but evidence the polls agree more than sampling theory allows. Left
+      # unfloored it makes the trend over-confident and sets it chasing
+      # individual polls, and NL4b rightly refuses it. The parameter exists
+      # for this; the pre-existing call above does not pass it only because
+      # its parties are all comfortably above their floors already.
+      .lvl <- mean(cp[[p]][!is.na(cp[[p]])])
+      .flr <- if (is.finite(.lvl)) binomial_sd_link(.lvl, BINOMIAL_REF_N, "logit") else NULL
+      e <- tryCatch(estimate_cycle_sigmas(
+        cp, p, sigma_obs_pooled = unname(d[["sigma_obs"]]),
+        sigma_rw_pooled = unname(d[["sigma_rw"]]),
+        prior_result = priors[p] %||% NA_real_, scale = "logit",
+        sigma_obs_floor = .flr,
+        firm_factors = fac_vec), error = function(e) NULL)
+      if (is.null(e)) {
+        cat(sprintf("NH1! %d thin-party walk failed for %s -- default kept\n", year, p))
+        next
+      }
+      out[[p]] <- e
+      cat(sprintf("NH1  %d %s partially pooled: n=%d weight %.2f | sigma_rw %.4f raw -> %.4f shrunk (default %.4f)%s\n",
+                  year, p, e$n_polls, e$weight, e$sigma_rw_raw, e$sigma_rw,
+                  unname(d[["sigma_rw"]]),
+                  if (isTRUE(e$at_bound)) " [raw hit a bound -- shrinkage is what makes that safe]" else ""))
+    }
+  }
+  out
 }
 
 fit_cycle <- function(year) {
@@ -266,16 +358,30 @@ walk_tab <- rbindlist(lapply(c(2023, 2027), function(yr) {
 }))
 cat("\n=== NSW per-cycle sigmas and tracking ===\n")
 print(walk_tab[order(year, party)])
+# NAME WHAT COULD NOT BE CHECKED, do not quietly drop it. A party with too few
+# polls to estimate a lag-1 autocorrelation returns NA, and `all(NA < 0.25)` is
+# NA, which fails stopifnot() with a message that says nothing about why -- how
+# admitting a thin party first surfaced here. Dropping NA with an is.na()
+# escape hatch would be worse: this repo's own rule is that such a hatch makes
+# a check pass on exactly the input it exists to catch. So the assertion runs
+# on the rows it CAN judge, and the rows it cannot are listed, the same way
+# NL3 already reports "not asserted on N of 7 parties (too few polls)".
+.acf_na <- walk_tab[!is.finite(acf1)]
+if (nrow(.acf_na)) {
+  cat(sprintf("NL4a  NOT ASSERTED on %d row(s), too few polls for a lag-1 autocorrelation: %s\n",
+              nrow(.acf_na), .acf_na[, paste(year, party, collapse = ", ")]))
+}
+.acf_ok <- walk_tab[is.finite(acf1)]
 cat(sprintf("NL4a max residual autocorrelation = %+.3f (require < +0.25)\n",
-            walk_tab[, max(acf1)]))
+            .acf_ok[, max(acf1)]))
 cat(sprintf("NL4b min (noise / binomial floor) = %.2f (require >= 1)\n",
             walk_tab[, min(obs_pts / floor_ref)]))
-cat(sprintf("NL4c negative tail (reported): min %+.3f\n", walk_tab[, min(acf1)]))
+cat(sprintf("NL4c negative tail (reported): min %+.3f\n", .acf_ok[, min(acf1)]))
 if (any(walk_tab$at_lower)) {
   cat(sprintf("    walk at lower bound (no detectable movement, shrunk toward pooled): %s\n",
               walk_tab[at_lower == TRUE, paste(year, party, collapse = ", ")]))
 }
-stopifnot(walk_tab[, all(acf1 < 0.25)], walk_tab[, all(obs_pts >= floor_ref)],
+stopifnot(.acf_ok[, all(acf1 < 0.25)], walk_tab[, all(obs_pts >= floor_ref)],
           !any(walk_tab$at_upper))
 
 cat("NL2  all trends and bands strictly inside (0, 100)  OK\n")

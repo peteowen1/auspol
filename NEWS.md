@@ -1,3 +1,65 @@
+# auspol 0.4.36
+
+**The poll-tracking check was wired into every fit script except the one that
+publishes, and the published Victorian trend has been breaching it.**
+
+- **`S7`: `poll_tracking_check()` now runs on the PUBLISHED trend**, in
+  `fit_seats_full.R`. It had been in `fit_vic.R` (`L3`), `fit_federal.R`
+  (`FL3`) and `fit_nsw.R` (`NL3`) since 2026-08-18 — all three of which fit
+  with `sigmas = "per_cycle"`, while the published call takes the defaults. A
+  green `L3` therefore asserted on a model this repo does not ship.
+- **The two paths are on opposite sides of the bound.** One Nation is 2.44
+  points off its polls in the fit `L3` checks and **2.85 off in the fit that
+  ships**, against a bound of 2.5. The published number, 20.20 against a
+  90-day poll mean of 23.05 over 11 polls, is what `state_mean` hands to every
+  Victorian seat.
+- Like `L3` it reports rather than halting, writes `output/S7-BREACH.txt` (a
+  third, separate marker so a published-cycle breach can never be masked by an
+  NSW one), and `run_all.R` exits non-zero after the page is built. **The
+  nightly run is red until One Nation's statewide level is fixed, and that is
+  the correct state.**
+- `S7` also fires on a party *dropped* from the published fit for falling
+  under `min_polls`. Nothing else on that path would notice: the published
+  path never calls `refold_unfitted()`, so a dropped party simply vanishes.
+  Victoria 2026 did exactly this at 6–7 One Nation polls.
+- **Two review findings, both fixed before merge.** `S7-BREACH.txt` is now
+  written on every run with a `#run <timestamp> default_run=<TRUE|FALSE>`
+  header, because a two-state marker could not distinguish "never ran" from
+  "ran clean" from "ran on a config nobody publishes". And the read is
+  deliberately **not** gated on `quick`, unlike `NL3`: `build_page.R` is not a
+  `slow` stage, so `--quick` skips `fit_seats_full.R` **and still republishes
+  the page** from the seat-probs the marker describes — the first version
+  would have republished a breaching page and exited 0 with no message.
+- `S7` is wrapped in `tryCatch` and a check that throws is recorded as a
+  breach. This stage publishes, so a crashing check would take the page down
+  for the exact reason the report-don't-halt design exists; and treating
+  "could not run" as a pass would be the silent failure `S7` exists to catch.
+- `trend_as_at(with_series = TRUE)` now also returns `polls` and `fits`, the
+  two arguments the check takes.
+
+**The gap is not a new fault and there is no fix pending.** Refitting at each
+One Nation poll date shows it converging as polls accumulate — −3.97 at 8
+polls, −4.13 at 15, −2.85 at 19 — and breaching at every cutoff since January.
+`S7` catches a year-old condition that was invisible because nothing checked
+the published path. At 6–7 polls One Nation was dropped from the published fit
+entirely (`min_polls = 8`), with OTH absorbing it.
+
+The behaviour itself was pre-registered, measured on 139 party-cycles and
+endorsed in `docs/reviews/poll-lag-2026-08-19.md`: minor parties are shaded
+down systematically (OTH −1.19 on 33 cycles), following the polls instead is
+not better (1.03 clustered SE, inside the 2 SE band), and in the one
+historically analogous case — WA 2017 One Nation, prior 0.00, polls 10.3,
+fitted 7.8 — the **actual was 4.9**, so the lag helped and was nowhere near
+enough. The day-0 anchor was never the mechanism; `ANCHOR_K` was built and
+refused on precisely that theory.
+
+What is left is a judgement `docs/plans/prereg-poll-tracking-bound-scaling.md`
+already handed to Pete, now with a second instance: whether the bound should
+scale with how thin a party's polling is. That experiment aborted at 19 cycles
+against a pre-registered floor of 20 and cannot re-run until another election
+completes. Raising the bound, raising `min_polls`, and lowering the gate are
+all explicitly forbidden by it.
+
 # auspol 0.4.35
 
 **Two model changes ship, three arms measured and refused, and sa2026's worst

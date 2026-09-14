@@ -81,3 +81,42 @@ if (ho$statewide > max(fit_set$statewide)) {
 }
 
 cat(sprintf("\nCN5  run the arm with:  AUSPOL_ONP_CONC_SD=%.2f\n", pred))
+
+# PERSIST THE CURVE, ONE ROW PER HELD-OUT ELECTION. Until 2026-09-14 this
+# script only PRINTED the number, so shipping the arm meant pasting a single
+# scalar into published_flags.R -- correct for the one election it was fitted
+# against and wrong for every other, since SD = a * statewide^k and the
+# statewide level is what varies (sa2026 at 22.9% wants 9.18; sa2022 at 2.63%
+# wants about 3.0). A frozen scalar is exactly the hardcoded constant this
+# repo's own rules say to estimate instead.
+#
+# Refitting with each election held out in turn keeps every row leakage-free
+# for the election it describes -- the same shape as
+# output/mp-slope-by-target.csv, and for the same reason.
+rows <- lapply(seq_len(nrow(R)), function(i) {
+  fs <- R[-i]
+  if (nrow(fs) < 5) return(NULL)
+  m_i <- stats::lm(log(sd_pts) ~ log(statewide), data = fs)
+  k_i <- unname(stats::coef(m_i)[["log(statewide)"]])
+  a_i <- exp(unname(stats::coef(m_i)[["(Intercept)"]]))
+  # A pair key the harnesses can look themselves up by. "aec-fed-...:fed2025"
+  # already carries one after the colon; the commission files encode it as
+  # -<year>-<region>-firstprefs.
+  .f <- R$file[i]
+  .pair <- if (grepl(":", .f, fixed = TRUE)) sub("^.*:", "", .f) else {
+    .m <- regmatches(.f, regexec("-([0-9]{4})-([a-z]+)-firstprefs", .f))[[1]]
+    if (length(.m) == 3L) paste0(.m[3], .m[2]) else NA_character_
+  }
+  data.table(file = R$file[i], pair = .pair,
+             statewide = R$statewide[i], sd_actual = R$sd_pts[i],
+             a = a_i, k = k_i, sd_pred = a_i * R$statewide[i]^k_i,
+             n_fit = nrow(fs), r2 = summary(m_i)$r.squared,
+             extrapolated = R$statewide[i] > max(fs$statewide))
+})
+CURVE <- rbindlist(rows)
+fwrite(CURVE, "output/onp-concentration-curve.csv")
+cat(sprintf("CN5  wrote output/onp-concentration-curve.csv (%d rows, each fitted with its own election held out)\n",
+            nrow(CURVE)))
+print(CURVE[order(-statewide), .(file, statewide = round(statewide, 2),
+                                 sd_actual = round(sd_actual, 2),
+                                 sd_pred = round(sd_pred, 2), extrapolated)])

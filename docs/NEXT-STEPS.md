@@ -1,5 +1,83 @@
 # auspol — work queue
 
+## OPEN, 2026-09-14: One Nation's Victorian level is 2.85 points below its polls
+
+**This is on the LIVE forecast, it is red now, and it is the top item.**
+
+`S7` (new, shipped 2026-09-14) runs `poll_tracking_check()` on the trend
+`fit_seats_full.R` actually publishes. It breaches immediately:
+
+```
+S7  BREACH ONP fitted 20.20 against 23.05 from 11 polls (bound 2.5)
+```
+
+The other four parties track within 0.41. `20.20` is what `state_mean` hands
+to every Victorian seat, so this is not confined to the trend chart.
+
+**Mechanism**: One Nation's prior is its 2022 Victorian result, **0.28%**. The
+fit shrinks toward that, and 19 polls this cycle at 11–27% pull it only to
+20.20. Same shape as the NSW 2027 One Nation breach, which is the other red
+stage — a near-zero prior against a surging party.
+
+**The investigation Pete approved was ALREADY DONE, and it answers the other
+way.** `docs/reviews/poll-lag-2026-08-19.md`, run against a pre-registration
+committed before measuring:
+
+- Across **139 party-cycles** the trend sits below recent polls in 88 of them.
+  Minor parties are systematically shaded: OTH **−1.19** on 33 cycles, ONP
+  **−1.40** on 3. Majors are tracked almost exactly.
+- Following the polls instead is **not** better: MAE 1.755 vs the trend's
+  1.862 — **1.03 clustered standard errors**, inside the pre-registered 2 SE
+  band. RMSE 2.376 vs 2.387, a tie.
+- The single historically analogous case, **WA 2017 One Nation**: prior 0.00,
+  polls 10.3, fitted 7.8, **actual 4.9**. The lag helped a great deal and was
+  nowhere near enough.
+- Across all three near-zero-prior ONP cycles the mean error is **+1.42 — we
+  OVER-state One Nation**, and in both near-zero-prior cases the polls
+  over-stated it far more.
+- **The day-0 anchor was never the mechanism.** `ANCHOR_K` (`R/trend.R:82`,
+  fixed at 0) was built and refused on exactly the theory above. WA 2017 had a
+  prior of 0.00 and the model fitted 7.8 — it left the anchor far behind.
+
+**And the gap is converging, not degrading** (measured 2026-09-14, refitting at
+each ONP poll date): −3.97 at 8 polls → −4.13 at 15 → **−2.85 at 19**, trend
++0.08 points per 30 days. It has breached at *every* cutoff since polls began,
+so `S7` is not catching a new fault — it is catching a year-old condition that
+was invisible because nothing checked the published path. At 6–7 polls One
+Nation was **dropped from the published fit entirely** (`min_polls = 8`), with
+OTH absorbing it.
+
+**So there is no ONP fix to make, and these are all forbidden:**
+
+- `sigmas = "per_cycle"` for Victoria — clears the breach by 0.06 on a path
+  measured not better (0.2% held-out gain, 33x runtime). Criterion-fitting.
+- Raising `POLL_TRACKING_BOUND` (it re-derives to 2.5 today), raising
+  `min_polls` from 3 to 4, or lowering the separability gate from 20 — all
+  three explicitly forbidden by
+  `docs/plans/prereg-poll-tracking-bound-scaling.md`.
+
+**What is actually left is a judgement, and that plan already handed it to
+Pete** — now with a second instance. Its aborted question was whether the
+bound should SCALE with how thin a party's polling is; it stopped at **19
+cycles against a pre-registered floor of 20** and cannot re-run until another
+election completes. Meanwhile both red stages, NSW 2027 and Victoria 2026, are
+the same shape: a near-zero prior against a surging minor party. The options
+it names are leave it red, report rather than halt, or mark the trend
+unreliable where it is used.
+
+**The new consideration it did not have**: `.github/workflows/forecast.yaml`
+now opens a tracking issue on every failed scheduled run (added 2026-09-13).
+A permanently-red nightly plus an automated issue is how an alarm becomes the
+thing people learn to ignore — which is the failure that workflow's own
+comments were written to prevent.
+
+**Why nothing caught this before**: `poll_tracking_check()` was wired into
+`fit_vic.R`, `fit_federal.R` and `fit_nsw.R` — every fit script *except* the
+one that publishes. All three fit with `sigmas = "per_cycle"`; the published
+call takes the defaults. The two paths sit on opposite sides of the bound
+(2.44 vs 2.85), so a green `L3` was asserting on a model nobody ships. Full
+note under "Where the guards are" in `ARCHITECTURE.md`.
+
 ## OVERNIGHT CONTINUATION, 2026-09-14 early morning — READ THIS FIRST
 
 Pete went to sleep mid-session; this continued autonomously per

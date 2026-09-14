@@ -47,9 +47,12 @@
 #' @param with_series Also return the full fitted series (`series`), in the
 #'   same long shape `fit_vic.R` writes: `party`, `date`, `mean`, `lo95`,
 #'   `hi95`, including `TPP_ALP`. The page needs this so its chart and its
-#'   headline come from the same fit.
-#' @return List: `tpp`, `fp` (named vector), `n_polls`, and `series` if
-#'   requested; or NULL if too thin.
+#'   headline come from the same fit. Also returns `polls` and `fits`, the two
+#'   arguments [poll_tracking_check()] takes, for the same reason: so a caller
+#'   can assert on the fit it publishes rather than a differently-configured
+#'   one.
+#' @return List: `tpp`, `fp` (named vector), `n_polls`, and -- if
+#'   `with_series` -- `series`, `polls` and `fits`. NULL if too thin.
 #' @export
 trend_as_at <- function(polls, year, cycles, as_at, priors, flows,
                         min_polls = 8, nu = Inf, with_series = FALSE,
@@ -192,6 +195,26 @@ trend_as_at <- function(polls, year, cycles, as_at, priors, flows,
       list(data.table::as.data.table(tpp)[, party := "TPP_ALP"][
              , .(party, date, mean, lo95, hi95)])
     ))
+    # The two inputs [poll_tracking_check()] needs, returned alongside the
+    # series for the same reason the series is: so the caller asserts on the
+    # fit it PUBLISHES.
+    #
+    # Until 2026-09-14 `poll_tracking_check()` was called only from
+    # `fit_vic.R`, `fit_federal.R` and `fit_nsw.R`, all of which fit with
+    # `sigmas = "per_cycle"` and `weights = "firm_factors"`. `fit_seats_full.R`
+    # -- the published forecast -- calls this function with the defaults and
+    # had no tracking assertion at all. So a green L3 said "the model we do not
+    # publish tracks its polls", which is the exact two-paths confusion
+    # CLAUDE.md warns about, arriving from the side nobody had checked. The two
+    # paths do not agree across the bound either: the published Victorian fit
+    # put One Nation 2.49 off its polls where the per-cycle fit had it 2.78 off
+    # -- opposite sides of 2.5.
+    #
+    # `cp2` and not `cp`: `cp2` is what `fit_cycle_trends()` was actually given,
+    # and it carries the `parties` and `refolded` attributes the check reads to
+    # notice a party that the fit DROPPED.
+    out$polls <- cp2
+    out$fits  <- fits
   }
   out
 }

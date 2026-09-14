@@ -353,7 +353,7 @@ was caught only against a number someone already knew.
   | `fit_nsw.R` | `N1`–`N3`, `NF1`, `NL2`, `NL3`†, `NL3a`, `NL4a`–`NL4c` |
   | `fit_projection.R` | `P1`–`P4`, `B1` |
   | `fit_seats.R` | `S1`–`S4`, `R1`–`R3` |
-  | `fit_seats_full.R` | `S5` |
+  | `fit_seats_full.R` | `S5`, `S7`‡ |
   | `fit_scorecard.R` | `C1`–`C3` |
 
   † **`NL3` reports rather than halting at the check**, like `fit_vic.R`'s
@@ -365,6 +365,51 @@ was caught only against a number someone already knew.
   or the check — see `docs/plans/prereg-poll-tracking-bound-scaling.md`.
   Neither `POLL_TRACKING_BOUND` nor `min_polls` may be moved to clear it.
   Every other check in both scripts still halts where it fires.
+
+  ‡ **`S7` is `L3` applied to the fit that actually publishes**, added
+  2026-09-14. `poll_tracking_check()` had been wired into every fit script
+  *except* `fit_seats_full.R` — and those three fit with
+  `sigmas = "per_cycle"`, while the published call takes the defaults. So a
+  green `L3` asserted on a model this repo does not ship. The two are not
+  interchangeable: on the day `S7` was wired they sat on **opposite sides of
+  the bound** — One Nation 2.44 points off its polls in the fit `L3` checks,
+  **2.85 off in the fit that ships**, against a bound of 2.5. Like `L3` it
+  reports rather than halting, writes `output/S7-BREACH.txt` (a third,
+  separate marker), and `run_all.R` exits non-zero after the page is built.
+  It also fires on a party `dropped` from the published fit for falling under
+  `min_polls`, which nothing else on that path would notice — the published
+  path never calls `refold_unfitted()`, so a dropped party simply vanishes.
+  Victoria 2026 did exactly this at 6–7 One Nation polls.
+
+  **`S7-BREACH.txt` is written on EVERY run and carries a provenance header**,
+  `#run <timestamp> default_run=<TRUE|FALSE>`, which `L3-BREACH.txt` and
+  `NL3-BREACH.txt` do not. Two review findings forced it, and both are worth
+  knowing before copying this pattern:
+
+  - **A marker with two states cannot describe three.** Gating the write on
+    `default_run` (every `AUSPOL_*` at its published value *and* no output
+    suffix) while `run_all.R` gated the read on `!quick` left a full run with
+    `AUSPOL_OUT_SUFFIX` set neither refreshing nor clearing the file — so a
+    previous run's verdict was reported as the current one's. Writing
+    unconditionally instead would report a diagnostic arm's breach as a breach
+    on the published forecast; unlinking unconditionally but writing only when
+    default would let a diagnostic run *erase* a real breach and go green. The
+    header removes the ambiguity: a missing file means the stage never got
+    here, which is distinguishable from "ran and was clean".
+  - **`S7`'s read is deliberately NOT gated on `quick`, the opposite of
+    `NL3`.** `NL3`'s gate is right because `fit_nsw.R` validates a cycle nobody
+    publishes. `build_page.R` is **not** a `slow` stage, so `--quick` skips
+    `fit_seats_full.R` **and still republishes the page** from the seat-probs
+    already on disk — the very files `S7`'s marker describes. Gating the read
+    on `quick` therefore republished a breaching page and exited 0 with no
+    message anywhere. The marker applies whenever the page was built, not
+    whenever the stage ran.
+
+  `S7` is also wrapped in `tryCatch`, and a check that throws is written into
+  the marker as a breach line. This stage publishes, so a crashing check would
+  take the page down for exactly the reason the report-don't-halt design says
+  it must not — and treating "the check could not run" as a pass would be the
+  silent failure `S7` exists to catch, arriving through `S7`.
 
   The version of this table before 2026-08-18 listed `fit_vic.R` as `V1`–`V5`,
   `fit_federal.R` as including `H1`–`H4`, and `fit_projection.R` as `B1`–`B3`.

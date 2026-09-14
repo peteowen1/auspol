@@ -273,9 +273,17 @@ CAL_TAG <- paste0(
   # backtest-sa.csv and a before/after comparison compares an arm with itself
   # -- the baseline-clobbering that has already produced four byte-identical
   # comparisons in this repo.
-  if (as.numeric(Sys.getenv("AUSPOL_ONP_CONC_SD", "0")) > 0)
-    sprintf("-conc%s", sub("[.]", "", format(as.numeric(Sys.getenv("AUSPOL_ONP_CONC_SD")), nsmall = 2)))
-  else "",
+  # "auto" tags the filename as -concauto rather than being coerced to NA.
+  # as.numeric("auto") is NA, and `if (NA)` is an ERROR, not FALSE -- so the
+  # un-guarded version below halted the whole run before the arm could even
+  # start. The fingerprint must survive every value the flag accepts.
+  local({
+    .v <- Sys.getenv("AUSPOL_ONP_CONC_SD", "0")
+    if (identical(tolower(.v), "auto")) "-concauto"
+    else if (isTRUE(suppressWarnings(as.numeric(.v)) > 0))
+      sprintf("-conc%s", sub("[.]", "", format(as.numeric(.v), nsmall = 2)))
+    else ""
+  }),
   if (as.numeric(Sys.getenv("AUSPOL_SHRINK", "0")) != 0)
     sprintf("-sh%s", sub("0[.]", "", format(as.numeric(Sys.getenv("AUSPOL_SHRINK")), nsmall = 2)))
   else "",
@@ -638,7 +646,33 @@ if (length(absent22)) {
 # published curve, IS fitted on SA 2026 (its CV 0.327 against SA's actual
 # 0.334) and is deliberately not used here -- that would be fitting and
 # testing on one election.
-ONP_CONC <- as.numeric(Sys.getenv("AUSPOL_ONP_CONC_SD", "0"))
+# "auto" LOOKS THE SD UP PER PAIR instead of freezing one number. SD rises
+# with the statewide level (SD = a * statewide^k, k about 0.5), so a single
+# scalar is only ever right for the one election it was fitted against:
+# sa2026 at 22.9% wants 9.18, sa2022 at 2.63% wants 2.97. Shipping the scalar
+# would have applied sa2026's value to both. The table is written by
+# scripts/estimate_onp_concentration.R with each election held out of its own
+# fit, so every row is leakage-free for the election it describes -- the same
+# shape, and the same reason, as output/mp-slope-by-target.csv.
+# An explicit number still works, so a measured arm stays reproducible.
+.conc_raw <- Sys.getenv("AUSPOL_ONP_CONC_SD", "0")
+ONP_CONC <- 0
+if (identical(tolower(.conc_raw), "auto")) {
+  .ccf <- "output/onp-concentration-curve.csv"
+  if (!file.exists(.ccf))
+    stop("AUSPOL_ONP_CONC_SD=auto needs ", .ccf, " -- run scripts/estimate_onp_concentration.R")
+  .cc <- fread(.ccf, showProgress = FALSE)
+  .tgt <- TGT                                  # copied to a differently-named
+  .row <- .cc[.cc$pair == .tgt, ]              # local: a bare `pair` inside
+  if (!nrow(.row))                             # `[` would bind to the column
+    stop("AUSPOL_ONP_CONC_SD=auto has no row for ", .tgt, " in ", .ccf)
+  ONP_CONC <- .row$sd_pred[1]
+  cat(sprintf("BS1c ONP concentration SD from the fitted curve: %.2f for %s (statewide %.2f, %s)\n",
+              ONP_CONC, .tgt, .row$statewide[1],
+              if (isTRUE(.row$extrapolated[1])) "EXTRAPOLATED beyond the fitted range -- provisional" else "interpolated"))
+} else {
+  ONP_CONC <- as.numeric(.conc_raw)
+}
 if (ONP_CONC > 0) {
   ftr <- fread(file.path(P, "federal-transposed-to-state.csv"), showProgress = FALSE)
   fo <- ftr[region == "sa" & party == "ONP" & cycle == TO, .(seat, pct)]
@@ -655,9 +689,30 @@ if (ONP_CONC > 0) {
   if (identical(TGT, "sa2026")) lookup_names[lookup_names == "Frome"] <- "Ngadjuri"
   ix <- fo$pct[match(lookup_names, fo$seat)]
   if (anyNA(ix)) {
-    stop("No transposed federal One Nation vote for: ",
-         paste(lookup_names[is.na(ix)], collapse = ", "))
+    # ASKED-FOR vs ON-BY-DEFAULT, which deserve different answers. An explicit
+    # SD means someone requested this arm for this pair, and quietly not
+    # running it would be the "experiment that never ran looks like an
+    # experiment with no effect" trap -- so that still halts. Under "auto" the
+    # arm is a published default sweeping every pair, and a pair whose
+    # ordering signal does not exist should be reported and skipped, not take
+    # the whole harness down. sa2022 is exactly that: the transposed federal
+    # file covers ONP in 5 of its 47 seats against 47 of 47 for sa2026,
+    # because One Nation barely contested federally in those areas.
+    .msg <- sprintf("no transposed federal One Nation vote for %d of %d seats (%s)",
+                    sum(is.na(ix)), length(ix),
+                    paste(utils::head(lookup_names[is.na(ix)], 6), collapse = ", "))
+    if (identical(tolower(.conc_raw), "auto")) {
+      cat(sprintf("BS1c! ONP concentration SKIPPED for %s -- %s\n", TGT, .msg))
+      cat("BS1c! the uniform allocation stands for this pair; this is a DATA gap, not a model choice\n")
+      ONP_CONC <- 0
+    } else {
+      stop("AUSPOL_ONP_CONC_SD was set explicitly but there is ", .msg)
+    }
   }
+}
+# Applied separately from the lookup above, because "auto" may have just
+# switched the arm off for a pair whose ordering signal does not exist.
+if (ONP_CONC > 0) {
   lvl <- mean(shares[, "ONP"])
   # Normal quantile map: rank by federal ONP, assign z-scores, scale to the
   # target SD. Minimal choice -- it hits the SD without importing any shape

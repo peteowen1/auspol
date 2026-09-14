@@ -274,6 +274,68 @@ if (length(l3_breach)) {
       "   non-zero so it cannot pass unnoticed.\n")
 }
 
+# S7 is the same check as L3, on the fit that is actually PUBLISHED.
+#
+# L3 asserts on fit_vic.R's per-cycle-sigma fit; fit_seats_full.R publishes a
+# trend_as_at() fit with the DEFAULTS, and until 2026-09-14 nothing asserted on
+# that one at all. The two are not interchangeable: on the day this was wired
+# they sat on opposite sides of the bound, One Nation 2.44 off its polls in the
+# fit L3 checks and 2.85 off in the fit that ships.
+#
+# DELIBERATELY NOT GATED ON `quick`, and that is the opposite of NL3.
+#
+# The first version of this block was gated on `!quick`, copied from NL3, under
+# a comment claiming it was not gated and that --quick "also skips the page".
+# Both halves were wrong, and the second one is the bug: build_page.R is
+# `slow = FALSE`, so --quick SKIPS fit_seats_full.R AND STILL PUBLISHES THE
+# PAGE, from the seat-probs files already on disk. Found by review, 2026-09-14.
+#
+# That inverts NL3's reasoning. NL3's gate is right because fit_nsw.R validates
+# a cycle nobody publishes, so declining to read its marker loses nothing live.
+# S7's marker describes the statewide trend behind the seat-probs files that
+# build_page.R publishes FROM -- so it applies to the page whenever the page
+# was built, whether or not the stage ran this invocation. A --quick run after
+# a breaching full run would republish the breaching page and exit 0, with no
+# message anywhere saying S7 had not been looked at.
+#
+# So: read it whenever it exists, and let the marker's own header say whether
+# it describes the published configuration.
+S7_MARKER <- file.path("output", "S7-BREACH.txt")
+s7_raw <- if (file.exists(S7_MARKER)) readLines(S7_MARKER, warn = FALSE) else character(0)
+s7_hdr <- grep("^#run ", s7_raw, value = TRUE)
+s7_breach <- s7_raw[!startsWith(s7_raw, "#") & nzchar(trimws(s7_raw))]
+# A run on a non-default configuration measures something nobody publishes, so
+# its breaches are reported and NOT failed on. Absent a header the file predates
+# this format; treat it as default rather than silently discounting a breach.
+s7_default <- !length(s7_hdr) || !grepl("default_run=FALSE", s7_hdr[1], fixed = TRUE)
+if (length(s7_breach) && !s7_default) {
+  cat("\nS7  breach(es) recorded, but by a NON-DEFAULT run:\n")
+  for (b in s7_breach) cat("   ", b, "\n")
+  cat("   ", s7_hdr[1], "\n")
+  cat("   This describes a configuration that is not published, so the run is\n",
+      "   NOT failed on it. The published config has not been checked since.\n")
+  s7_breach <- character(0)
+}
+if (!file.exists(S7_MARKER)) {
+  # Missing is NOT the same as clean: the stage writes this file on every run,
+  # breach or not. Absent means it never got here.
+  cat("\nS7  no marker: fit_seats_full.R has not recorded a poll-tracking\n",
+      "    verdict for the published trend. It was skipped or died before S7.\n")
+} else if (length(s7_breach)) {
+  cat("\n=== S7 BREACH ON THE PUBLISHED FORECAST'S OWN TREND ===\n")
+  for (b in s7_breach) cat("   ", b, "\n")
+  if (length(s7_hdr)) cat("   ", s7_hdr[1], "\n")
+  if (quick) {
+    cat("   RECORDED BY AN EARLIER RUN -- this one was --quick, so\n",
+        "   fit_seats_full.R did not re-check. build_page.R is NOT a slow\n",
+        "   stage, so the page WAS rebuilt from the seat-probs these lines\n",
+        "   describe.\n")
+  }
+  cat("   This is the statewide level that fit_seats_full.R feeds to every\n",
+      "   seat, so the gap is not confined to the trend chart. The page was\n",
+      "   still built -- it is the target -- and this run exits non-zero.\n")
+}
+
 # The same treatment for NSW, in its OWN marker file and under its own
 # heading. fit_nsw.R stopped halting on NL3 once two pre-registered experiments
 # aborted on whether its One Nation breach is the fit or the check; it reports
@@ -322,7 +384,7 @@ if (length(clashes)) {
 }
 
 if (length(FAILED_VALIDATION) || length(clashes) || length(l3_breach) ||
-    length(nl3_breach)) {
+    length(s7_breach) || length(nl3_breach)) {
   stop("Run finished with problems: ",
        if (length(FAILED_VALIDATION))
          paste0(length(FAILED_VALIDATION), " validation stage(s) [",
@@ -331,6 +393,9 @@ if (length(FAILED_VALIDATION) || length(clashes) || length(l3_breach) ||
          paste0(length(clashes), " duplicate check code(s)") else "",
        if (length(l3_breach))
          paste0(" ", length(l3_breach), " L3 breach(es) on the published cycle") else "",
+       if (length(s7_breach))
+         paste0(" ", length(s7_breach),
+                " S7 breach(es) on the published forecast's own trend") else "",
        if (length(nl3_breach))
          paste0(" ", length(nl3_breach), " NL3 breach(es) on an NSW cycle") else "")
 }

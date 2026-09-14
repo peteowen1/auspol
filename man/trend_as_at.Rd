@@ -38,7 +38,10 @@ trend_as_at(
 \item{with_series}{Also return the full fitted series (\code{series}), in the
 same long shape \code{fit_vic.R} writes: \code{party}, \code{date}, \code{mean}, \code{lo95},
 \code{hi95}, including \code{TPP_ALP}. The page needs this so its chart and its
-headline come from the same fit.}
+headline come from the same fit. Also returns \code{polls} and \code{fits}, the two
+arguments \code{\link[=poll_tracking_check]{poll_tracking_check()}} takes, for the same reason: so a caller
+can assert on the fit it publishes rather than a differently-configured
+one.}
 
 \item{sigmas}{\code{"default"} uses \code{\link[=fit_trend]{fit_trend()}}'s default volatility for every
 cycle -- what the published forecast does today. \code{"per_cycle"} estimates
@@ -61,8 +64,8 @@ function binds itself -- \code{parties}, \code{overrides}, \code{polls}, \code{p
 the top of the body.}
 }
 \value{
-List: \code{tpp}, \code{fp} (named vector), \code{n_polls}, and \code{series} if
-requested; or NULL if too thin.
+List: \code{tpp}, \code{fp} (named vector), \code{n_polls}, and -- if
+\code{with_series} -- \code{series}, \code{polls} and \code{fits}. NULL if too thin.
 }
 \description{
 Refits from scratch on polls up to \code{as_at} only.

@@ -41,3 +41,9 @@ src/*.o
 src/*.dll
 src/*.so
 src/*.o-*
+
+# Scratch copies of pipeline scripts. Rscript re-reads a script WHILE it runs,
+# so a script under test gets copied rather than edited in place; those copies
+# are not the source of truth and must never be committed. Two were swept in by
+# a `git add -A` on 2026-09-14.
+_tmp_*.R
