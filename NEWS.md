@@ -24,11 +24,28 @@ publishes, and the published Victorian trend has been breaching it.**
 - `trend_as_at(with_series = TRUE)` now also returns `polls` and `fits`, the
   two arguments the check takes.
 
-Not fixed here: **why a 0.28% prior (One Nation's 2022 Victorian result) still
-outweighs 19 polls at 11–27%.** Switching Victoria to per-cycle sigmas would
-clear the breach, but only by 0.06, and that path was measured not better
-(0.2% held-out gain for 33x the runtime) — adopting it to scrape under the
-bound it is judged by is criterion-fitting. Queued in `docs/NEXT-STEPS.md`.
+**The gap is not a new fault and there is no fix pending.** Refitting at each
+One Nation poll date shows it converging as polls accumulate — −3.97 at 8
+polls, −4.13 at 15, −2.85 at 19 — and breaching at every cutoff since January.
+`S7` catches a year-old condition that was invisible because nothing checked
+the published path. At 6–7 polls One Nation was dropped from the published fit
+entirely (`min_polls = 8`), with OTH absorbing it.
+
+The behaviour itself was pre-registered, measured on 139 party-cycles and
+endorsed in `docs/reviews/poll-lag-2026-08-19.md`: minor parties are shaded
+down systematically (OTH −1.19 on 33 cycles), following the polls instead is
+not better (1.03 clustered SE, inside the 2 SE band), and in the one
+historically analogous case — WA 2017 One Nation, prior 0.00, polls 10.3,
+fitted 7.8 — the **actual was 4.9**, so the lag helped and was nowhere near
+enough. The day-0 anchor was never the mechanism; `ANCHOR_K` was built and
+refused on precisely that theory.
+
+What is left is a judgement `docs/plans/prereg-poll-tracking-bound-scaling.md`
+already handed to Pete, now with a second instance: whether the bound should
+scale with how thin a party's polling is. That experiment aborted at 19 cycles
+against a pre-registered floor of 20 and cannot re-run until another election
+completes. Raising the bound, raising `min_polls`, and lowering the gate are
+all explicitly forbidden by it.
 
 # auspol 0.4.35
 
