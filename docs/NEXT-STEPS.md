@@ -1,5 +1,49 @@
 # auspol — work queue
 
+## OPEN, 2026-09-14: every Victorian number measured today is stale
+
+`historic_elected_i` was being fed to the live model as `NA`, a value it had
+never seen, deflating every prediction ~45% and hiding it behind
+renormalisation. Fixed (`88653b4`), and the training data it comes from was
+then backfilled for all 21 state elections (`4e5fde4`). **The model has not yet
+been refitted on the corrected data**, so:
+
+- **Do not quote any Victorian figure from before this is retrained.** ALP
+  expected seats went 39.49 → 29.95 on the live fix alone, and will move again.
+- The seven-pair override on/off comparison (AEF corpus, pooled ON 0.2702 vs
+  OFF 0.2864) was measured on the old OOF file and must be rerun.
+- The `shipped-models` release holds a model trained with the feature
+  constant-zero for every state election. Re-upload after refitting.
+
+**Order**: `fit_xgb_primary_v6.R` (rebuilds features + leave-one-pair-out OOF)
+→ `fit_xgb_primary_v6_final.R` → re-upload both to the release → rerun the
+seven pairs both ways.
+
+**Still to do after that (step 3)**: Victoria 2026 has no candidate list, so
+`DS2`, `DS3` and `own_prev_pcv` all fall back. Wikipedia publishes one
+(`Candidates_of_the_2026_Victorian_state_election`). Do NOT do this before the
+retrain — populating Victoria while the other 21 state elections carry the old
+constant would make it the only state row with non-zero values, which is the
+same out-of-distribution fault in reverse.
+
+### What this cost, so it is not repeated
+
+The bug survived because **renormalisation made it look right**. Shares summed
+to 100, One Nation concentrated in plausible regional seats, nothing errored.
+Underneath, the model was predicting the Coalition at 6.05% in Melton. The
+tell was only visible by comparing raw row sums against the backtest's: 54.3
+against 91-105.
+
+Three wrong conclusions were drawn from it before the cause was found — that
+the override suppresses One Nation, that it helps minor parties broadly, and
+that the SA regression was a modelling disagreement. All were artefacts.
+
+The comment that hid it, at `R/xgb_primary_override.R:132`, read *"both NA
+pre-nomination -- fine, same missing-value routing"*. An assumption written as
+a reassurance, never tested. It was true of `ballot_pos_min` (60.6% missing in
+training) and false of the one beside it.
+
+
 ## OPEN, 2026-09-14: the model registry cannot see a harness that FORCES a switch
 
 `scripts/backtest_candidate_fed.R:78-79` and `_nsw.R:41-42` set
