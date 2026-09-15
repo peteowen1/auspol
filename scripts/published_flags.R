@@ -325,6 +325,14 @@ PUBLISHED_FLAGS <- c(
                                              # 1,989 seats, so both read one class-and-urbanity axis from opposite
                                              # ends. It recovered 71% of the gain and refused the mechanism
                                              # (prereg-education-residual-correction-2026-09-15.md, RESULT).
+  AUSPOL_DEMO_RESID          = "0",          # 1 = Arm A of docs/plans/prereg-demographic-axis-2026-09-15.md:
+                                             # correct each seat's minor-party primary using ALL SEVEN census
+                                             # columns under a leave-one-pair-out elastic net, instead of the one
+                                             # hand-picked column the refused AUSPOL_EDU_RESID used. No intercept,
+                                             # so corrections sum to zero within a pair and statewide class totals
+                                             # are untouched. UNDER TEST -- do not turn on without the plan's
+                                             # criterion being met.
+  AUSPOL_DEMO_RESID_SHUFFLE  = "0",          # control for the above; same permutation as AUSPOL_EDU_RESID_SHUFFLE.
   AUSPOL_EDU_RESID_SHUFFLE   = "0",          # the real control. 0 = off; any other integer is an RNG seed that
                                              # PERMUTES each census column across seats WITHIN each election, at
                                              # fit and at apply both. Breaks the seat-to-demographics link while

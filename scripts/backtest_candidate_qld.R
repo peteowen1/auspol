@@ -662,6 +662,18 @@ if (identical(Sys.getenv("AUSPOL_EDU_RESID", "0"), "1")) {
     shuffle = Sys.getenv("AUSPOL_EDU_RESID_SHUFFLE", "0"))
 }
 
+# DEMOGRAPHIC RESIDUAL CORRECTION, Arm A of
+# docs/plans/prereg-demographic-axis-2026-09-15.md (AUSPOL_DEMO_RESID,
+# default 0). All seven census columns under an elastic net, replacing the
+# single hand-picked yr12_pct of the refused version above. Same position in
+# the pipeline, immediately after the override, so it corrects exactly the
+# shares that reach the simulation.
+if (identical(Sys.getenv("AUSPOL_DEMO_RESID", "0"), "1")) {
+  shares <- demographic_residual_apply(
+    shares, TGT,
+    shuffle = Sys.getenv("AUSPOL_DEMO_RESID_SHUFFLE", "0"))
+}
+
 # Per-seat spread from the seat file of the election being predicted.
 # THE SEAT FILE OF THE ELECTION BEING PREDICTED, where one exists. The anchor
 # ships 2024qld.txt and no 2020qld.txt, so the 2020 pair falls back to the

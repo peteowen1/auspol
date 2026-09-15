@@ -696,6 +696,18 @@ if (identical(Sys.getenv("AUSPOL_EDU_RESID", "0"), "1")) {
     shuffle = Sys.getenv("AUSPOL_EDU_RESID_SHUFFLE", "0"))
 }
 
+# DEMOGRAPHIC RESIDUAL CORRECTION, Arm A of
+# docs/plans/prereg-demographic-axis-2026-09-15.md (AUSPOL_DEMO_RESID,
+# default 0). All seven census columns under an elastic net, replacing the
+# single hand-picked yr12_pct of the refused version above. Same position in
+# the pipeline, immediately after the override, so it corrects exactly the
+# shares that reach the simulation.
+if (identical(Sys.getenv("AUSPOL_DEMO_RESID", "0"), "1")) {
+  shares <- demographic_residual_apply(
+    shares, TGT,
+    shuffle = Sys.getenv("AUSPOL_DEMO_RESID_SHUFFLE", "0"))
+}
+
 sp <- seat_swing_spread(seats, unname(state_tgt[["ALP"]] - state_prev[["ALP"]]))
 cat(sprintf("\nBT3  seat spread: within %.2f, between %.2f\n", sp$sd_within, sp$sd_between))
 

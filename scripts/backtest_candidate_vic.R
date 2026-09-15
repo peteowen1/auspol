@@ -610,6 +610,18 @@ for (K in PAIRS) {
       shuffle = Sys.getenv("AUSPOL_EDU_RESID_SHUFFLE", "0"))
   }
 
+  # DEMOGRAPHIC RESIDUAL CORRECTION, Arm A of
+  # docs/plans/prereg-demographic-axis-2026-09-15.md (AUSPOL_DEMO_RESID,
+  # default 0). All seven census columns under an elastic net, replacing the
+  # single hand-picked yr12_pct of the refused version above. Same position in
+  # the pipeline, immediately after the override, so it corrects exactly the
+  # shares that reach the simulation.
+  if (identical(Sys.getenv("AUSPOL_DEMO_RESID", "0"), "1")) {
+    shares <- demographic_residual_apply(
+      shares, sprintf("vic%d", K$to),
+      shuffle = Sys.getenv("AUSPOL_DEMO_RESID_SHUFFLE", "0"))
+  }
+
   cat(sprintf("\nBV1  Victoria %d -> %d: %d districts scored, truth from %s\n",
               K$from, K$to, length(keep), truth_src))
   dropped <- setdiff(win$seat, rownames(mat))

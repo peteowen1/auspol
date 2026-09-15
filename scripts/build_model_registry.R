@@ -142,6 +142,38 @@ for (sw in names(COMMENT_ONLY)) {
 # row; update this when a gap is fixed or a new one is found by rerunning
 # this script and diffing its output.
 CLASSIFY <- list(
+  AUSPOL_DEMO_RESID = paste(
+    "UNDER TEST, wired into all six harnesses and deliberately NOT into fit_seats_full.R -- the gap in",
+    "this row is the point, not an oversight. Arm A of docs/plans/prereg-demographic-axis-2026-09-15.md:",
+    "all seven census columns, each z-scored WITHIN pair, into a leave-one-pair-out elastic net on the",
+    "primary residual, with no intercept so corrections sum to zero across a pair and statewide class",
+    "totals are untouched. It replaces the single hand-picked yr12_pct of AUSPOL_EDU_RESID, which was",
+    "REFUSED. Do not add a live call site until the plan's criterion is met -- and note that",
+    "census-features.csv now carries vic2026, so the live path is blocked only by the decision, not the",
+    "data, which it was until 2026-09-15."),
+  AUSPOL_DEMO_RESID_SHUFFLE = paste(
+    "Control, not an arm. Permutes which seat gets which seat's demographics within each election, at",
+    "fit and at apply both, so every marginal and the whole procedure survive and only the",
+    "seat-to-demographics link dies. Absent from fit_seats_full.R for the same reason its arm is: a",
+    "control has no business in the published forecast. Calibrated on sa2026 -- 8 draws give mean",
+    "0.3576 against a 0.3577 baseline, sd 0.0013, so the null manufactures nothing and the real effect",
+    "sits 8.9 sds out."),
+  AUSPOL_EDU_RESID = paste(
+    "REFUSED 2026-09-15 and left wired so the result stays reproducible.",
+    "docs/plans/prereg-education-residual-correction-2026-09-15.md: the criterion passed (pooled seat",
+    "log loss 0.2702 -> 0.2689 over the AEF-7) and the placebo condition fired, so the answer is no.",
+    "Superseded by AUSPOL_DEMO_RESID. Default 0 and it should stay 0."),
+  AUSPOL_EDU_RESID_FEATURE = paste(
+    "Which census column AUSPOL_EDU_RESID uses. born_aus_pct was pre-registered as the PLACEBO and was",
+    "not one: r(yr12_pct, born_aus_pct) = -0.706 over 1,989 seats, so both columns read a single",
+    "class-and-urbanity axis from opposite ends. It recovered 71% of the pooled gain and 100% of it on",
+    "qld2024, which is what refused the mechanism. The lesson is in AUSPOL_DEMO_RESID_SHUFFLE: with",
+    "correlated features the control must break the link, not swap the variable."),
+  AUSPOL_EDU_RESID_SHUFFLE = paste(
+    "The permutation control retrofitted to the refused single-feature arm, and the instrument that",
+    "showed its signal was REAL (8.9 sds) even though the arm was refused. Same mechanism as",
+    "AUSPOL_DEMO_RESID_SHUFFLE; absent from fit_seats_full.R because a control does not belong in the",
+    "published forecast."),
   AUSPOL_LEVEL_MODE = paste(
     "Read by scripts/fit_xgb_primary_v6.R when the model is FITTED, not by any harness or by",
     "fit_seats_full.R at run time -- the choice is baked into the oof file and the saved model, so it",
