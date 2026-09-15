@@ -259,6 +259,27 @@ PUBLISHED_FLAGS <- c(
                                              # write the SAME filename and the second silently overwrites
                                              # the first. That happened on 2026-09-12 while measuring this
                                              # very switch.
+  AUSPOL_SD_DEPARTED         = "0",          # 1 = extend the per-cell sd override to ALP/LNP cells in seats
+                                             # whose previous GENERAL-election winner is not on the ballot.
+                                             # UNDER TEST 2026-09-16, not adopted.
+                                             # docs/plans/prereg-departed-member-width-2026-09-16.md
+                                             #
+                                             # Measured motivation: in NSW the held party's own primary error
+                                             # spreads from sd 5.17 when their member stands to 8.81 when they
+                                             # go (federal 1.06x, other states 1.22x), while
+                                             # simulate_seat_contests() gives every seat in the chamber ONE
+                                             # seat_sd. A NSW seat held by 5+ points whose member has gone is
+                                             # called wrong 26.2% of the time against 1.8% otherwise.
+                                             #
+                                             # Requires AUSPOL_XGB_PRIMARY_SD=1 to have any effect, since it
+                                             # widens the `keep` mask inside the same override. To test it
+                                             # ALONE, set AUSPOL_XGB_PRIMARY_SD_CLASSES to a sentinel that
+                                             # matches no class -- otherwise the minor classes switch on too
+                                             # and the arm measures two changes at once.
+                                             #
+                                             # CANNOT REACH vic2026 THIS YEAR: nominations close 12 noon,
+                                             # 9 Nov 2026, so which members are standing is unknown until
+                                             # then and output/retirement-derived.csv has no vic2026 rows.
   AUSPOL_XGB_SURGE_SRC       = "output/xgb-emergence-v5-seat.csv",
                                              # which emergence model AUSPOL_XGB_SURGE reads. v5 is candidate-level
                                              # (scripts/fit_xgb_emergence_v5.R); v4 was party-class level and gave

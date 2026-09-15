@@ -151,3 +151,99 @@ apparent gain is the eleven wrong seats being hedged toward 0.5 while the 31
 right ones pay for it. If the net over all 42 is positive but the 31 lose more
 than 0.02, this is a confidence tax rather than a correction, and it should be
 refused even though the headline passes.
+
+---
+
+# RESULT, 2026-09-16: REFUSED. It works only on the election it was found on.
+
+## The criterion
+
+| test | bar | result | verdict |
+|---|---|--:|---|
+| **Primary**: mean seat log loss over the 42 targets | improve by 0.05 | 0.9293 → **0.9040**, −0.0253 | **FAILS**, half the bar |
+| Refusal: the 31 seats we call RIGHT | rise under +0.62 total | 2.33 → 2.94, **+0.609** | inside by 0.011 |
+| Refusal: gain confined to nsw2023 | must not be | **it is entirely** | **FAILS** |
+| Guard 1: nsw2019 election-wide | worsen < 0.005 | 0.3749 → 0.3732 | passes |
+| Guard 1: nsw2023 election-wide | worsen < 0.005 | 0.2694 → 0.2577 | passes |
+| Guard 2: pooled over all 22 pairs | worsen < 0.005 | **not run** | moot |
+
+Split by pair, which is the whole story:
+
+| pair | targets | baseline | arm | move |
+|---|--:|--:|--:|--:|
+| nsw2019 (out of sample) | 19 | 1.3641 | 1.3643 | **+0.0003** |
+| nsw2023 (where found) | 23 | 0.5702 | 0.5238 | −0.0465 |
+
+**Nothing happened on nsw2019.** The pattern replicated there — that is how the
+review confirmed it — but the fix does not.
+
+## Why, and it is not subtle
+
+The wrong target seats, by the party that actually won:
+
+| pair | wrong targets | won by a major | won by a NON-major |
+|---|--:|--:|--:|
+| nsw2019 | 4 | 0 | **4** — Shooters x3, independent x1 |
+| nsw2023 | 7 | 6 | 1 |
+
+**All four of nsw2019's failures were won by a minor party, and this arm widens
+ALP and LNP.** Barwon, Orange and Murray went to the Shooters, Fishers and
+Farmers; Wagga Wagga to an independent. No amount of major-party width reaches
+a seat lost to a fourth party.
+
+So the arm was scoped to the wrong classes. The risk in a departed seat is not
+"the other major does better than we think", it is **"somebody else wins"** —
+and which somebody differs by election. nsw2023 was a Labor year and the seats
+fell to Labor; nsw2019 was a rural-minor year and they fell to the Shooters.
+
+That the arm still cleared both election-wide guards, and half the primary bar,
+purely on one of the two pairs is exactly what the "confined to one election"
+refusal condition exists to catch.
+
+## The control was not run, and why that is not a gap
+
+The pre-registration required the arm to beat a flat-multiplier control on the
+31 correct seats. **The arm failed the primary bar and the one-election
+condition first**, so the control could not change the verdict. Running it to
+produce a number after the decision was already determined would be decoration.
+Recorded as not-run rather than quietly dropped.
+
+Worth noting the near-miss anyway: the 31 correct seats cost **+0.609** against
+a refusal line of +0.62. The hedge is expensive. Even had the primary passed,
+this arm was one seat away from being refused as a confidence tax — which is
+what the first refusal condition predicted as the most likely failure.
+
+## What IS kept
+
+**The feature swap.** `departed_i` replaces `retirement_i` in
+`fit_xgb_primary_sd.R`. Measured as a clean A/B on the identical corpus, same
+seed, refitting only that one column:
+
+| sd model feature set | Gaussian NLL, held out | improvement over flat 3.82 |
+|---|--:|--:|
+| `retirement_i` (0% on 11 of 23 pairs) | 1.3096 | 0.5311 |
+| **`departed_i`** (all 21 pairs) | **1.3012** | **0.5395** |
+
+Small, real, and it removes a column that was a partial jurisdiction label.
+`AUSPOL_XGB_PRIMARY_SD` remains `0`, so this changes no published output today;
+it changes what the override would do whenever it is turned on.
+
+**`AUSPOL_SD_DEPARTED` stays at `0`** and the code stays wired, so the
+measurement reproduces.
+
+## The next arm, NOT run here and not smuggled in
+
+The obvious follow-up is to widen **whoever could plausibly win** in a departed
+seat rather than the two majors — which means the minor classes the override
+already covers by default, switched on in departed seats.
+
+**That is a different arm and it gets its own pre-registration.** Inventing it
+now, after seeing which classes this one missed, and reporting it as if it had
+been planned, is precisely the move `CLAUDE.md` records going wrong twice. The
+finding that motivates it is legitimate; the criterion for it must be written
+before it runs, by someone who has not yet seen its result.
+
+One thing that pre-registration will have to face: nsw2019's failures sit at the
+log-loss floor (Barwon and Orange are at probability ~0.000), so their 1.3641
+baseline is dominated by three seats. A criterion on that set needs to survive
+dropping any one of them.

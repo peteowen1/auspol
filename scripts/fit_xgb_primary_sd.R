@@ -33,12 +33,40 @@ OUT <- "output"
 P  <- fread(file.path(OUT, "xgb-primary-v6-oof-predictions.csv"), showProgress = FALSE)
 FE <- fread(file.path(OUT, "xgb-primary-v6-features.csv"), showProgress = FALSE)
 
+# departed_i REPLACES retirement_i below, it does not sit beside it.
+# retirement_i comes from load_seats(), which ships seat files only for recent
+# elections, so it is 0.0% populated on ELEVEN of twenty-three pairs -- every
+# federal pair to 2016, qld2020, vic2014, vic2018 and every WA pair before 2025.
+# A column constant within a subgroup is a LABEL for that subgroup and a tree
+# will split on it, which is the defect CLAUDE.md records costing pooled RMSE
+# 3.8740 -> 3.9297. The derived column covers all 21 pairs and asks the question
+# the model actually needs: was the previous GENERAL election's winner on this
+# ballot? That also catches mid-term departures load_seats() cannot see, because
+# its incumbent field is whoever holds the seat now -- Tudge in Aston, Morrison
+# in Cook, Robert in Fadden. 93% agreement where both exist.
+# scripts/build_retirement_derived.py, docs/reviews/nsw-departed-member-2026-09-15.md
+.df <- file.path(OUT, "retirement-derived.csv")
+if (file.exists(.df)) {
+  .D <- fread(.df, showProgress = FALSE)
+  FE <- merge(FE, .D[, .(pair, seat, departed_i = as.integer(retire_derived))],
+              by = c("pair", "seat"), all.x = TRUE)
+  # NA, never 0: a seat we could not match is unknown, not "stood again", and
+  # xgboost routes missing down its own branch. Filling it would recreate the
+  # very label problem this column exists to remove.
+  cat(sprintf("SD0  departed_i joined: %d of %d rows (%.1f%%), %d departed\n",
+              sum(!is.na(FE$departed_i)), nrow(FE),
+              100 * mean(!is.na(FE$departed_i)), sum(FE$departed_i == 1L, na.rm = TRUE)))
+} else {
+  FE[, departed_i := NA_integer_]
+  cat(sprintf("SD0! %s missing -- run scripts/build_retirement_derived.py. departed_i is ALL NA, so this fit is the OLD feature set with one dead column, not the arm.\n", .df))
+}
+
 # level_now is the ACTUAL statewide share under AUSPOL_LEVEL_MODE="now" and a
 # prediction under "pred". The file does not record which mode wrote it, so it
 # is excluded rather than assumed clean. actual_share is the answer itself.
 feat_ctx <- c("pred_share", "level_prev", "level_from_polls", "dev_prev",
               "n_cand_prev", "n_cand_now", "same_i", "same_mp_i", "is_major_i",
-              "margin", "fed_swing", "retirement_i", "soph_cand_i",
+              "margin", "fed_swing", "departed_i", "soph_cand_i",
               "soph_party_i", "prev_swing", "is_incumbent_party_i",
               "own_prev_pcv", "historic_elected_i", "ballot_pos_min",
               "jump", "governed", "permit", "surge_h", "is_recipient",
