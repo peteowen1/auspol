@@ -24,6 +24,13 @@ test -- if it matches again the mechanism is "correct toward anything
 correlated", not education.}
 
 \item{oof, census}{Source tables.}
+
+\item{shuffle}{Permutation control. 0 fits on the real census; any other
+integer is the RNG seed for \code{\link[=.er_shuffle]{.er_shuffle()}}, which permutes \code{feature}
+WITHIN each pair so the seat-to-demographics link is broken while every
+marginal is preserved. Must be passed identically here and to
+\code{\link[=education_residual_apply]{education_residual_apply()}} -- a control shuffled at fit and not at apply
+measures something else entirely.}
 }
 \value{
 Single numeric coefficient, or \code{NA_real_} if the class has too few

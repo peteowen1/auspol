@@ -73,6 +73,12 @@
 #'   test -- if it matches again the mechanism is "correct toward anything
 #'   correlated", not education.
 #' @param oof,census Source tables.
+#' @param shuffle Permutation control. 0 fits on the real census; any other
+#'   integer is the RNG seed for [.er_shuffle()], which permutes `feature`
+#'   WITHIN each pair so the seat-to-demographics link is broken while every
+#'   marginal is preserved. Must be passed identically here and to
+#'   [education_residual_apply()] -- a control shuffled at fit and not at apply
+#'   measures something else entirely.
 #' @return Single numeric coefficient, or `NA_real_` if the class has too few
 #'   training rows.
 #' @export
@@ -116,6 +122,8 @@ education_residual_b <- function(cls, exclude_pair,
 #'   in sign across elections (-0.357 to +0.240).
 #' @param feature Census column; see [education_residual_b()].
 #' @param census Source table.
+#' @param shuffle Permutation control; see [education_residual_b()]. Pass the
+#'   same value both places or the control is not a control.
 #' @return The corrected matrix, rows renormalised to their original totals.
 #' @export
 education_residual_apply <- function(shares, pair,

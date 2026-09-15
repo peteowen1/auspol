@@ -25,6 +25,9 @@ in sign across elections (-0.357 to +0.240).}
 \item{feature}{Census column; see \code{\link[=education_residual_b]{education_residual_b()}}.}
 
 \item{census}{Source table.}
+
+\item{shuffle}{Permutation control; see \code{\link[=education_residual_b]{education_residual_b()}}. Pass the
+same value both places or the control is not a control.}
 }
 \value{
 The corrected matrix, rows renormalised to their original totals.

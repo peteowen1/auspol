@@ -92,6 +92,13 @@ xgb_flow_conditional_for <- function(target_election, prev_election, region, min
                 n_survivors = length(surv), dest_same = 0L, dest_same_mp = 0L)]
     rows[, to_primary := vapply(to, function(p) if (p %in% names(state_share)) state_share[[p]] else 0, numeric(1))]
     rows[, from_primary := if (from %in% names(state_share)) state_share[[from]] else 0]
+    # lead_primary: the seat's leading first-preference share. THIS function
+    # only has statewide shares, so it gets the statewide maximum -- the same
+    # compromise `to_primary`/`from_primary` already make here, and the reason
+    # this function is not the live path (see the per-seat version below).
+    # NA, never 0, when no shares were loaded: a filler becomes a label to a
+    # tree, which is the state-deviation defect recorded in CLAUDE.md.
+    rows[, lead_primary := if (any(state_share > 0)) max(state_share) else NA_real_]
     for (cl in CLASSES) rows[[paste0("surv_", cl)]] <- as.integer(cl %in% surv)
     for (cl in CLASSES) rows[[paste0("from_", cl)]] <- as.integer(from == cl)
     for (cl in CLASSES) rows[[paste0("to_", cl)]]   <- as.integer(rows$to == cl)
@@ -246,6 +253,13 @@ xgb_flow_conditional_override_for <- function(shares, target_election, prev_elec
     }
     R[, to_primary := vapply(to, function(p) if (p %in% names(sh)) unname(sh[[p]]) else 0, numeric(1))]
     R[, from_primary := vapply(from, function(p) if (p %in% names(sh)) unname(sh[[p]]) else 0, numeric(1))]
+    # lead_primary: the seat's leading first-preference share, from the SAME
+    # `shares` row that supplies to_primary/from_primary, so it carries their
+    # units. Training reads the seat's ACTUAL leading share and this reads the
+    # simulation's predicted one -- the identical substitution to_primary and
+    # from_primary already make, not an extra approximation.
+    # docs/plans/prereg-flow-fragmentation-2026-09-15.md
+    R[, lead_primary := if (any(is.finite(sh))) max(sh, na.rm = TRUE) else NA_real_]
     rows_list[[si]] <- R
   }
   ALLR <- data.table::rbindlist(rows_list)
@@ -255,6 +269,10 @@ xgb_flow_conditional_override_for <- function(shares, target_election, prev_elec
   cat(sprintf("XF9  dest_same populated on %d of %d rows (%.1f%%), dest_same_mp on %d (%.1f%%)\n",
               sum(ALLR$dest_same == 1L), nrow(ALLR), 100 * mean(ALLR$dest_same == 1L),
               sum(ALLR$dest_same_mp == 1L), 100 * mean(ALLR$dest_same_mp == 1L)))
+  cat(sprintf("XF9  lead_primary populated on %d of %d rows (%.1f%%), median %.1f\n",
+              sum(is.finite(ALLR$lead_primary)), nrow(ALLR),
+              100 * mean(is.finite(ALLR$lead_primary)),
+              stats::median(ALLR$lead_primary, na.rm = TRUE)))
   if (length(ret_key) && !any(ALLR$dest_same == 1L)) {
     cat(sprintf("XF9! dest_same is 0 on every row although candidate_returns() gave %d keys -- the seat/party join found nothing; check seat naming between shares rownames and output/candidacies.csv\n", length(ret_key)))
   }

@@ -142,6 +142,17 @@ for (sw in names(COMMENT_ONLY)) {
 # row; update this when a gap is fixed or a new one is found by rerunning
 # this script and diffing its output.
 CLASSIFY <- list(
+  AUSPOL_FLOW_FRAG = paste(
+    "SHIPPED 2026-09-15 and reads NO everywhere by construction: it is a FITTING-TIME switch, not a runtime",
+    "one. Only scripts/fit_xgb_flows_v1.R reads it, where it decides whether lead_primary (the seat's leading",
+    "first-preference share) enters feat_cols and so whether the column is baked into",
+    "output/xgb-flows-v1-final-cols.json. Every harness and fit_seats_full.R then reads that JSON, never the",
+    "environment, so the feature reaches them through the ARTIFACT. The parity question for this switch is",
+    "therefore not 'does each harness honour it' but 'was the artifact refit with it', which the cols JSON",
+    "answers: 40 features, lead_primary present. scripts/fit_xgb_flows_loo.R inherits the same list, so the 25",
+    "leave-one-election-out models must be refit in the same breath or a harness loads a 39-feature model",
+    "against a 40-column matrix. Both were refit 2026-09-15.",
+    "docs/plans/prereg-flow-fragmentation-2026-09-15.md"),
   AUSPOL_STATE_DEV = paste(
     "ADOPTED 2026-09-15 and FEDERAL ONLY, which is a design fact rather than the all-harnesses rule",
     "outstanding: a state election has no deviation from a national swing to correct, so the other five",
@@ -340,10 +351,19 @@ for (sw in switches) {
   # R/ function so it shows "NO" everywhere in the mechanical matrix above)
   # as a dead experiment, directly under a note explaining it ships. Found by
   # the review gate reading the generated doc, not the code.
+  # FOUR now, and the third one's trigger was too narrow. It matched only a note
+  # beginning "ADOPTED", so AUSPOL_FLOW_FRAG -- shipped 2026-09-15, its note
+  # beginning "SHIPPED" because that is the word published_flags.R uses --
+  # printed as a dead experiment on the day it shipped, which is the identical
+  # failure this comment was written about. Match both words.
   open_gap <- !is.null(r$note) && grepl("OPEN GAP", r$note)
-  adopted  <- !is.null(r$note) && grepl("^ADOPTED\\b", r$note)
+  adopted  <- !is.null(r$note) && grepl("^(ADOPTED|SHIPPED)\\b", r$note)
+  # A switch only the FITTING scripts read reaches the harnesses through the
+  # saved artifact, so an all-NO row is the correct answer rather than a gap.
+  fitting  <- !is.null(r$note) && grepl("FITTING-TIME", r$note)
   tag <- if (is.null(r$note)) "**UNEXPLAINED -- audit this**"
          else if (open_gap) "**OPEN GAP**"
+         else if (fitting) "**shipped, fitting-time switch (reaches harnesses via the artifact)**"
          else if (adopted) "**adopted, shared-function wiring**"
          else "intentional / dead experiment"
   L <- c(L, sprintf("- **`%s`** (%s): %s", sw,

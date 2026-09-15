@@ -113,18 +113,48 @@ PUBLISHED_FLAGS <- c(
                                              #     that bias swings sign and is unpredictable from history
                                              #     (r = 0.282, p = 0.242 against the previous election).
                                              #
-                                             # LIVE LIMITATION, verified by smoke test 2026-09-11 and NOT hidden:
-                                             # the personal-vote features dest_same / dest_same_mp are 0 on
-                                             # 0.0% of 42,108 rows for vic2026, because output/candidacies.csv
-                                             # has ZERO vic2026 rows -- candidate_returns(vic2022, vic2026)
-                                             # errors and the override says so. Every other feature works; the
-                                             # override still builds for 87 of 87 seats. This resolves only when
-                                             # scripts/build_candidacies.R is extended to write vic2026 rows
-                                             # after nominations close (12 noon, 9 Nov 2026) -- add it to the
-                                             # AUSPOL_XGB_PRIMARY_LIVE re-check above, it is the same trip.
+                                             # LIVE LIMITATION, RESOLVED 2026-09-15 -- left here because the
+                                             # old note said the opposite and a reader needs to know it moved.
+                                             # It read: dest_same / dest_same_mp populated on 0.0% of 42,108
+                                             # vic2026 rows, because output/candidacies.csv had ZERO vic2026
+                                             # rows. It now has 379, from the announced-candidates list
+                                             # scripts/build_candidacies.R:879 reads out of Wikipedia, and the
+                                             # smoke test measures dest_same at 19.6% / dest_same_mp at 15.5%.
+                                             # Those rows carry names and no votes, which is correct: a
+                                             # preselection is public long before nominations close, so this is
+                                             # knowable now and is not a leak. Expect the rate to rise again at
+                                             # the close of nominations (12 noon, 9 Nov 2026), when the full
+                                             # field replaces the announced one -- still on the
+                                             # AUSPOL_XGB_PRIMARY_LIVE re-check above, same trip.
                                              #
                                              # Costs ~3x runtime per pair. Set to "0" to revert; no other change
                                              # needed. docs/reviews/xgb-primary-x-flows-2x2-2026-09-11.md
+  AUSPOL_FLOW_FRAG           = "1",          # 1 = the flow model also sees lead_primary, the seat's LEADING
+                                             # first-preference share. Flows track how fragmented the field is,
+                                             # not how close the contest is: the 2CP margin's slope collapses
+                                             # from +0.357 to +0.003 once this term enters (872 observations),
+                                             # and the leader's own share carries all of it at t = +3.69.
+                                             #
+                                             # SHIPPED 2026-09-15 ON PETE'S CALL, over my recommendation. The
+                                             # pre-registered criterion said adopt if out-of-fold RMSE improves,
+                                             # and it did -- 0.098070 -> 0.097987 over 36,064 transfer rows,
+                                             # deterministic (the baseline ran three times to 0.0981). I argued
+                                             # -0.084% is too small to earn a column and wanted the criterion
+                                             # rewritten with a size threshold; he shipped it on the criterion as
+                                             # written, which is the right reading of a pre-registration. The
+                                             # threshold belongs in the NEXT plan, not in a re-reading of this one.
+                                             #
+                                             # NOT MEASURED: pooled seat log loss, the plan's own confirming
+                                             # guard. Its MDE is near 0.003 and a 0.084% flow change cannot reach
+                                             # that, so the number would be simulation variance. Reported as
+                                             # unmeasured rather than run to produce a believable-looking figure.
+                                             #
+                                             # TRAIN/SERVE: training reads the seat's ACTUAL leading share;
+                                             # R/xgb_flow_override.R's per-seat path reads the simulation's
+                                             # PREDICTED one from the same `shares` row that already supplies
+                                             # to_primary/from_primary. Same substitution those two make, not a
+                                             # new one. The retired statewide path takes the statewide maximum
+                                             # and says so. docs/plans/prereg-flow-fragmentation-2026-09-15.md
   AUSPOL_DEFECT_POOLED       = "2",          # 2 = separate member (0.282) / losing-candidate (0.142) defector rates.
                                              # ADOPTED BY PETE ON MECHANISM 2026-09-09, not on the criterion: the arm
                                              # missed its own primary bar (t -2.04 vs 2.08) but passed R1 in both arms,

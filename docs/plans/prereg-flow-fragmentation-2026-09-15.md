@@ -183,3 +183,76 @@ class dummies."* The linear slope was **t = 3.69**; the tree extracts **0.08%**
 from it. The signal is real and the existing features already carry nearly all
 of it -- which is the fourth refusal condition's conclusion, "already
 captured", arrived at by a route the condition did not quite cover.
+
+---
+
+# SHIPPED ANYWAY, 2026-09-15, ON PETE'S CALL
+
+**The verdict above is overturned and the section is left unedited**, per the
+repo's own amendment rule: an amendment is a visible addition, never a rewrite
+of what was written first.
+
+Pete read the result table and said ship it. He is right and the section above
+is wrong, for a reason worth keeping:
+
+**The criterion said "adopt if out-of-fold RMSE improves against the arm without
+the feature". It improved.** I then declined on a threshold that appears nowhere
+in this document, invented after seeing that the improvement was 0.084% rather
+than the 0.5-2% I had predicted. That is precisely the move pre-registration
+exists to stop, and `CLAUDE.md` records two previous instances of it -- the
+inclusion floor and the One Nation seat uncertainty, both refused on anchors
+written after the result. This was the third, and the only thing separating it
+from those two is that it was caught.
+
+The drafting error is real and stands: a criterion with no size threshold cannot
+distinguish a gain worth a column from one that is not. **The fix belongs in the
+next plan.** It does not license re-reading this one.
+
+## What was actually done to ship it
+
+1. `AUSPOL_FLOW_FRAG = "1"` in `scripts/published_flags.R`.
+2. `output/xgb-flows-v1-final.model` and `-final-cols.json` refit with the
+   feature: **40 columns, `lead_primary` present.**
+3. **All 25 leave-one-election-out models refit.** Not optional. The harnesses
+   take `feat_cols` from the shared cols JSON but load a per-election model, so
+   a 39-feature model against a 40-column matrix is a hard `predict()` failure
+   in every backtest.
+4. `R/xgb_flow_override.R` builds the feature in **both** functions. The
+   per-seat path -- the live one -- takes `max(shares[si, ])`, the seat's own
+   leading predicted share, from the same row that already supplies
+   `to_primary`/`from_primary`. The retired statewide path takes the statewide
+   maximum and says so in a comment.
+5. Coverage is printed, not assumed: `XF9 lead_primary populated on N of N rows
+   (%%), median M`. **This mattered.** `R/xgb_flow_override.R:100` does
+   `if (length(miss)) next` -- a feature the serving path fails to build does
+   not error, it silently disables the whole override.
+
+## Verified, not assumed
+
+| check | result |
+|---|---|
+| cols JSON feature count | **40**, `lead_primary` present |
+| LOO models refit | **25 of 25** |
+| WA harness, all 7 pairs | override builds for every seat; `lead_primary` **100%** populated, medians 46.6-55.1 |
+| live vic2026 (`fit_seats_full.R`) | **87 of 87** seats; **100%** populated, median **34.1** |
+| `check_like_ci.R` full | 0 errors, 0 warnings |
+
+The Victorian median of 34.1 against Western Australia's 46.6-55.1 is the
+mechanism this feature was built for, visible in the live forecast: the
+Victorian field is markedly more fragmented, which is exactly the condition
+under which the fitted slope says flows behave differently.
+
+**Still not measured: pooled seat log loss**, the confirming guard. The reason
+above is unchanged -- its MDE is near 0.003 and a 0.084% flow improvement cannot
+reach that, so the run returns simulation variance. Shipped with that guard
+open, which is a real and stated cost of this decision, not a clean pass.
+
+## One thing found while shipping
+
+The smoke test printed `dest_same` populated on **19.6%** of vic2026 rows.
+`scripts/published_flags.R` had carried a standing note since 2026-09-11 saying
+it was **0.0%**, because `output/candidacies.csv` held no vic2026 rows at all.
+It now holds **379**, from the announced-candidate list
+`scripts/build_candidacies.R:879` reads out of Wikipedia -- names with no votes,
+which is correct, and knowable now because preselections are public long before
+nominations close. Not a leak. The note is corrected in place.
