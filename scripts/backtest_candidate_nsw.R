@@ -991,6 +991,22 @@ cat(sprintf("BT8  independents won %d of %d scored seats; we gave them a mean %.
 
 fwrite(res[order(seat)], file.path("output", sprintf("backtest-%s%s.csv", TGT, CAL_TAG)))
 fwrite(data.table(pair = TGT, as.data.table(sim$totals)), file.path("output", sprintf("backtest-%s-totals%s.csv", TGT, CAL_TAG)))
+# THE FULL PER-SEAT PER-PARTY PROBABILITY TABLE. `wp` has existed in memory
+# since line 901 and was thrown away at the last step, so "did we give anyone
+# else a chance?" could not be answered without a fresh run -- the same loss
+# the Queensland harness records at its own equivalent line. Emitted here for
+# parity with fed/sa/qld, which already write it; without it NSW is invisible
+# to any emergence analysis, and nsw2019 is the corpus's worst emergence
+# (the Shooters won 3 seats against a simulated 0.0 +/- 0.21).
+.full <- merge(wp[, .(seat, party, prob)],
+               data.table(seat = names(truth), actual = unname(truth)),
+               by = "seat", all.x = TRUE)
+.full[, is_actual := party == actual]
+setorder(.full, seat, -prob)
+fwrite(.full, file.path("output", sprintf("backtest-%s-allprobs%s.csv", TGT, CAL_TAG)))
+cat(sprintf("BT9  wrote the full probability table: %d rows, %d seats, %d parties
+",
+            nrow(.full), uniqueN(.full$seat), uniqueN(.full$party)))
 # PERSIST THE POINT ESTIMATE, not just the aggregate RMSE -- see fed's
 # equivalent line, 2026-09-09.
 #
