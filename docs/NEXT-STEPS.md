@@ -1,5 +1,55 @@
 # auspol — work queue
 
+## MORNING READ, 2026-09-16 — the NSW failure is a VARIANCE fault, and it needs you to build
+
+Overnight, working the seats where we lose most log loss to AE Forecasts.
+Full write-up: `docs/reviews/nsw-departed-member-2026-09-15.md`.
+
+**Across both NSW pairs, a seat held by 5+ points whose previous winner is not
+on the ballot is called WRONG 26.2% of the time (11 of 42) against 1.8% when
+the member stands again.** Found on nsw2023, confirmed out of sample on
+nsw2019 (z = +3.89). Margin does not explain it — the effect is *largest* in
+the safest seats, 15x on seats held by 12+.
+
+**The cause is variance, not bias.** The held party's own primary error spreads
+from sd 5.17 when their member stands to **8.81** when they go (NSW; federal is
+1.06x, other states 1.22x). The level shift is only 2.77 points. Meanwhile
+`simulate_seat_contests()` applies **one `seat_sd` to every seat in the
+chamber** — `R/seat_sim.R:575-589` builds a per-PARTY vector, not per-seat. So
+these seats get an ordinary seat's spread, the margin says safe, and we publish
+0.95 where the honest number is nearer 0.75.
+
+**WAITING ON YOU, deliberately not built.** The fix is a per-seat `seat_sd`
+multiplier, partial-pooled by region (cells are 47/40/59, so a hard NSW cliff
+would be exactly the thing the shrinkage rule forbids). It cannot be expressed
+today: making `seat_sd` per-seat changes the signature of the C++ core in
+`src/seat_sim_core.cpp`, which every harness and the published Victorian
+forecast run through. `CLAUDE.md` says a forecast rule gets designed WITH you on
+real examples first — the eleven seats are tabulated in the review, ready.
+
+Three questions to settle before anything is fitted:
+
+1. Region, or **optional preferential voting**? NSW is the only OPV jurisdiction
+   in the corpus, so the two cannot be told apart here.
+2. The simulation's `seat_sd`, or the **primary model's** sd? The widening is
+   measured in first preferences, which argues for the latter.
+3. Does the 2.77-point level shift ride along, or is it variance only?
+
+**REFUSED on measurement, so you do not have to wonder:** filling in the missing
+`retirement` feature. It is 0.0% populated on **eleven of twenty-three pairs**
+(every federal pair to 2016, qld2020, vic2014, vic2018, every WA pair before
+2025), which is a genuine label-leak defect — but the effect on those pairs is
+**-0.09 points, t = -0.16**. A mean correction cannot fix a variance fault.
+`scripts/build_retirement_derived.py` now derives the column for all 21 pairs
+anyway (93% agreement with the anchor, and it catches mid-term departures the
+anchor cannot see — Tudge, Morrison, Robert, Murphy).
+
+**Also done overnight:** fed2022 re-run under `AUSPOL_STATE_DEV`, which had
+shipped seven hours after that backtest was taken. Every WA seat improved
+(Tangney 3.53 → 3.11, Swan 0.62 → 0.49); pooled 0.2701 → **0.2696** against
+AEF's 0.2808 over 660 seats. The ledger artifact is refreshed to v13 and now
+picks the newest non-arm backtest per pair, so that staleness cannot recur.
+
 ## 2026-09-15 later — demographics: the signal is REAL, the correction is too small
 
 Two pre-registrations run and both refused, but the second one refused on
