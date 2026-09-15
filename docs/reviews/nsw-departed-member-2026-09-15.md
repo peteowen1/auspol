@@ -85,6 +85,42 @@ played no part in forming it:
 | nsw2023 (where found) | 3 of 64 (4.7%) | 8 of 24 (33.3%) | +3.62 |
 | **nsw2019 (out of sample)** | **1 of 70 (1.4%)** | **6 of 23 (26.1%)** | **+3.89** |
 
+## MECHANISM FOUND: it is variance, not level
+
+Added after the first draft said the mechanism was untested. It is now tested.
+
+Signed error on the **held party's own primary** — the party that won the seat
+last time — split by whether their member was on the ballot again. `sd` is the
+spread a simulation has to reproduce:
+
+| region | n stood | mean | sd | n gone | mean | sd | sd ratio |
+|---|--:|--:|--:|--:|--:|--:|--:|
+| **NSW** | 134 | +1.81 | 5.17 | 47 | -0.96 | **8.81** | **1.71x** |
+| federal | 259 | -1.40 | 4.05 | 40 | -1.17 | 4.28 | 1.06x |
+| vic/qld/wa/sa | 211 | -1.00 | 4.69 | 59 | -1.08 | 5.70 | 1.22x |
+
+**The level shift is small and the spread shift is large.** In NSW the held
+party goes from being under-predicted by 1.81 when their member stands to
+over-predicted by 0.96 when they go — a personal vote worth **2.77 points**,
+real but nowhere near enough to flip a seat held by twelve. The challenger's
+error barely moves at all (-0.81 to -0.02).
+
+What moves is the **spread: 5.17 to 8.81**. A departed-member NSW seat is not
+biased, it is *unpredictable* — and `simulate_seat_contests()` takes **one
+`seat_sd` for every seat in the chamber** (`R/seat_sim.R:288`; the vector it
+builds is per-PARTY, length K, never per-seat). So every one of these seats is
+simulated with the spread of an ordinary seat, the margin says safe, and the
+probability comes out at 0.95 when the honest answer is nearer 0.75.
+
+That is the whole failure, and it explains every part of the pattern: why it is
+worst in SAFE seats (a wide error only changes the answer where the margin said
+there was no question), why the mean-based retirement feature bought nothing
+(-0.09 points, t = -0.16 — a mean correction cannot fix a variance fault), and
+why margin does not explain it.
+
+**Federal at 1.06x says this is not a general truth about departing members.**
+Whatever it is, it is close to absent federally and strong in NSW.
+
 ## It is NSW, and I cannot say why
 
 Pooled over all seven AEF elections the same split is **13.8% against 11.4%,
@@ -171,11 +207,37 @@ lose 15.46.** We are sharper and they hedge. Our gap is not spread thinly — it
 lives entirely in confident errors, and in NSW those are disproportionately
 seats whose member walked away.
 
-## Next
+## Next: the fix this implies, and why I did not build it overnight
 
-Not a pre-registration and not a proposal. The measured, unexplained fact is
-that departed-member NSW seats need far more uncertainty than a safe margin
-implies. Before anything is fitted, the OPV-exhaustion mechanism should be
-tested against the personal-vote one, because they imply different corrections
-and the data to separate them is the NSW preference detail that is still
-unparsed.
+The correction the measurement asks for is **a per-seat multiplier on
+`seat_sd` when the previous winner is not on the ballot**, around 1.7x in NSW
+and 1.2x elsewhere — and, per the shrinkage rule, partial-pooled by region
+rather than a hard NSW-only cliff, because the regional cells are thin (47, 40,
+59) and one of them is doing all the work.
+
+**`simulate_seat_contests()` cannot express that today.** `seat_sd` resolves to
+one vector of length K — one number per PARTY, shared by every seat
+(`R/seat_sim.R:575-589`) — and `seat_sim_core()` takes it as `seat_sd_vec`.
+Making it per-seat changes the C++ core's signature (`src/seat_sim_core.cpp`,
+`R/RcppExports.R`), which every harness and the published Victorian forecast run
+through.
+
+I stopped here deliberately. `CLAUDE.md` says a model or forecast rule gets
+designed WITH Pete on real examples before it is written, and the eleven seats
+in the table above are exactly those examples. A signature change to the
+simulation core, made overnight and unreviewed, against a live forecast, is the
+wrong way to spend that trust — and the measurement it would serve is already
+banked and will not go stale.
+
+Open questions for that conversation, in the order they matter:
+
+1. **Is the multiplier regional or is NSW a proxy for something else?**
+   Federal is 1.06x and the other states 1.22x. If the real driver is optional
+   preferential voting, the correction should key on the voting system, not the
+   state — and NSW is the only OPV jurisdiction in the corpus, so the two are
+   indistinguishable here by construction.
+2. **Does it belong on the primary or on the seat?** The measured widening is
+   in the held party's own first-preference error, which argues for the primary
+   model's sd rather than the simulation's `seat_sd`.
+3. **Does the level shift ride along?** 2.77 points is small but real and has
+   the sign a personal vote should have.
