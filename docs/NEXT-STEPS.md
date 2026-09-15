@@ -19,21 +19,49 @@ chamber** — `R/seat_sim.R:575-589` builds a per-PARTY vector, not per-seat. So
 these seats get an ordinary seat's spread, the margin says safe, and we publish
 0.95 where the honest number is nearer 0.75.
 
-**WAITING ON YOU, deliberately not built.** The fix is a per-seat `seat_sd`
-multiplier, partial-pooled by region (cells are 47/40/59, so a hard NSW cliff
-would be exactly the thing the shrinkage rule forbids). It cannot be expressed
-today: making `seat_sd` per-seat changes the signature of the C++ core in
-`src/seat_sim_core.cpp`, which every harness and the published Victorian
-forecast run through. `CLAUDE.md` says a forecast rule gets designed WITH you on
-real examples first — the eleven seats are tabulated in the review, ready.
+**ONE FIX WAS BUILT AND MEASURED OVERNIGHT, AND REFUSED.**
+`docs/plans/prereg-departed-member-width-2026-09-16.md`, pre-registered and
+committed before it ran. It rode the existing per-cell sd path
+(`AUSPOL_SD_DEPARTED`, no C++ change) and widened ALP/LNP cells in departed
+seats only.
 
-Three questions to settle before anything is fitted:
+| | bar | result |
+|---|---|--:|
+| primary, 42 target seats | improve 0.05 | 0.9293 → 0.9040, **−0.0253** |
+| **gain confined to nsw2023** | must not be | **it is** |
+| the 31 seats we call RIGHT | cap +0.62 | +0.609 |
 
-1. Region, or **optional preferential voting**? NSW is the only OPV jurisdiction
-   in the corpus, so the two cannot be told apart here.
-2. The simulation's `seat_sd`, or the **primary model's** sd? The widening is
-   measured in first preferences, which argues for the latter.
-3. Does the 2.77-point level shift ride along, or is it variance only?
+| pair | targets | baseline | arm |
+|---|--:|--:|--:|
+| nsw2019 (out of sample) | 19 | 1.3641 | **1.3643** |
+| nsw2023 (where found) | 23 | 0.5702 | 0.5238 |
+
+**Why it failed is the useful part.** All four of nsw2019's wrong target seats
+were won by a MINOR party — Shooters in Barwon, Orange and Murray, an
+independent in Wagga Wagga — and the arm widens the majors. nsw2023's were six
+of seven majors, so it helped there and nowhere else. The risk in a departed
+seat is not "the other major does better", it is **"somebody else wins"**, and
+which somebody differs by election.
+
+**KEPT from that run:** `departed_i` replaces `retirement_i` in the sd model.
+Clean A/B, same corpus and seed, one column: held-out Gaussian NLL
+1.3096 → **1.3012**. `AUSPOL_XGB_PRIMARY_SD` is still 0 so nothing published
+moved.
+
+**YOUR CALL, three things:**
+
+1. **The next arm** — widen whoever could plausibly win, not the two majors.
+   Deliberately NOT written overnight: inventing a criterion after seeing which
+   classes the last one missed is the failure `CLAUDE.md` records twice. It
+   needs a pre-registration written before it runs. Note nsw2019's failures sit
+   at the log-loss floor, so any criterion there must survive dropping any one
+   of them.
+2. **Region or optional preferential voting?** NSW is the only OPV jurisdiction
+   in the corpus, so the two cannot be told apart with what we have.
+3. **Is a per-seat `seat_sd` worth the C++ change?** The per-cell sd path was
+   the cheap route and it is class-scoped; a genuine per-seat multiplier means
+   changing `src/seat_sim_core.cpp`, which every harness and the live Victorian
+   forecast run through. Not started — that one gets designed with you.
 
 **REFUSED on measurement, so you do not have to wonder:** filling in the missing
 `retirement` feature. It is 0.0% populated on **eleven of twenty-three pairs**
