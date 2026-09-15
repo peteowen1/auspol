@@ -214,7 +214,7 @@ if ("wa2001" %in% TX$election)
   cat("BW0  note: wa2001 transfers ARE present in the file\n") else
   cat("BW0  note: wa2001 transfers are ABSENT (excluded upstream); that pair uses pooled flows\n")
 
-res_all <- list(); share_detail <- list()
+res_all <- list(); ap_all <- list(); share_detail <- list()
 prev_spread <- NA_real_
 
 for (K in PAIRS) {
@@ -495,6 +495,30 @@ for (K in PAIRS) {
   }
   shares <- 100 * mat / rowSums(mat)
   shares <- xgb_primary_override(shares, el_to)
+
+  # EDUCATION RESIDUAL CORRECTION (AUSPOL_EDU_RESID, default 0).
+  # Pre-registered in docs/plans/prereg-education-residual-correction-2026-09-15.md.
+  # Applied HERE, immediately after the override, so it corrects exactly the
+  # shares that reach the simulation. Leakage-free: the coefficient for this pair
+  # is fitted on every OTHER pair's out-of-fold residuals.
+  if (identical(Sys.getenv("AUSPOL_EDU_RESID", "0"), "1")) {
+    shares <- education_residual_apply(
+      shares, el_to,
+      feature = Sys.getenv("AUSPOL_EDU_RESID_FEATURE", "yr12_pct"),
+      shuffle = Sys.getenv("AUSPOL_EDU_RESID_SHUFFLE", "0"))
+  }
+
+  # DEMOGRAPHIC RESIDUAL CORRECTION, Arm A of
+  # docs/plans/prereg-demographic-axis-2026-09-15.md (AUSPOL_DEMO_RESID,
+  # default 0). All seven census columns under an elastic net, replacing the
+  # single hand-picked yr12_pct of the refused version above. Same position in
+  # the pipeline, immediately after the override, so it corrects exactly the
+  # shares that reach the simulation.
+  if (identical(Sys.getenv("AUSPOL_DEMO_RESID", "0"), "1")) {
+    shares <- demographic_residual_apply(
+      shares, el_to,
+      shuffle = Sys.getenv("AUSPOL_DEMO_RESID_SHUFFLE", "0"))
+  }
   # DIAGNOSTIC DUMP, off unless asked. Writes the projected primary the model
   # actually simulates from, so a seat can be inspected without reconstructing
   # the pipeline by hand and getting it subtly wrong.
@@ -636,6 +660,16 @@ for (K in PAIRS) {
   pr <- wp[, .SD[which.max(prob)], by = seat][, .(seat, pred = party, pred_p = prob)]
   r <- merge(pa, pr, by = "seat")
   r[, `:=`(pair = el_to, coverage = round(cover, 3))]
+  # Per-seat per-party probabilities, per pair. Parity with fed/sa/qld, which
+  # already write this; WA carries seven pairs and was entirely invisible to
+  # emergence analysis without it.
+  ap_all[[el_to]] <- {
+    .f <- merge(wp[, .(seat, party, prob)],
+                data.table(seat = keep, actual = unname(truth[keep])),
+                by = "seat", all.x = TRUE)
+    .f[, is_actual := party == actual]
+    .f[, pair := el_to][]
+  }
   res_all[[el_to]] <- r
 
   z <- data.frame(y = as.integer(r$pred == r$actual),
@@ -666,6 +700,11 @@ for (K in PAIRS) {
 if (!length(res_all)) stop("no WA pair produced a result")
 R <- rbindlist(res_all)
 fwrite(R, file.path("output", sprintf("backtest-wa%s.csv", CAL_TAG)))
+.wa_ap <- rbindlist(ap_all, fill = TRUE)
+fwrite(.wa_ap, file.path("output", sprintf("backtest-wa-allprobs%s.csv", CAL_TAG)))
+cat(sprintf("BW5  wrote the full probability table: %d rows over %d pair(s)
+",
+            nrow(.wa_ap), uniqueN(.wa_ap$pair)))
 # xgb_primary_on RECORDS WHETHER pred_share BELOW IS CIRCULAR -- see
 # backtest_candidate_sa.R's equivalent line for the full explanation.
 # pool_sharedetail.R refuses to pool a file with this column at 1.

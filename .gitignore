@@ -47,3 +47,18 @@ src/*.o-*
 # are not the source of truth and must never be committed. Two were swept in by
 # a `git add -A` on 2026-09-14.
 _tmp_*.R
+
+# Victorian 2026 candidate names, derived from Wikipedia by
+# scripts/parse_wikipedia_candidates.py. Tracked as an exception because CI
+# cannot produce it: the raw wikitext is fetched from the network, and a
+# scheduled run that scrapes Wikipedia every morning would be both rude and a
+# new way for the build to fail. Same reasoning as mp-slope-by-class.csv above.
+#
+# The DERIVED table only, not the 133KB of raw wikitext beside it. What is
+# tracked here is factual -- who is standing where, for which party -- and
+# small. Refetch the source with:
+#   curl -sL "https://en.wikipedia.org/w/index.php?title=Candidates_of_the_2026_Victorian_state_election&action=raw" \
+#     -o external/reference/wikipedia/vic2026-candidates.wikitext
+# then rerun the parser. Source: Wikipedia, CC BY-SA 4.0.
+!external/reference/wikipedia/
+!external/reference/wikipedia/vic2026-candidates.csv

@@ -1,6 +1,6 @@
 # Data dictionary
 
-**Generated 2026-09-11 by `scripts/build_data_dictionary.R`. Do not hand-edit.**
+**Generated 2026-09-15 by `scripts/build_data_dictionary.R`. Do not hand-edit.**
 
 Companion to `docs/DATA-REGISTRY.md`. The registry answers *do we have this
 file*; this answers *do we have this field*. Four wrong "we don't have it"
@@ -125,10 +125,12 @@ processed extract. Every one is recoverable without a new fetch.
 
 | file | rows | columns |
 |---|---:|---|
-| `aef-comparison-full.csv` | 659 | `seat`, `actual`, `our_pred`, `our_p`, `seeds`, `aef_pred`, `aef_p`, `delta`, `our_primary`, `actual_primary`, `aef_primary`, `pair` |
+| `_prefix-shipped-oof-BACKUP.csv` | 13,739 | `pair`, `seat`, `party`, `pred_share`, `actual_share`, `xgb_pred` |
+| `aef-comparison-full.csv` | 660 | `seat`, `actual`, `our_pred`, `our_p`, `seeds`, `aef_pred`, `aef_p`, `delta`, `our_primary`, `actual_primary`, `aef_primary`, `pair`, `our_pe`, `aef_pe`, `prim_gap`, `why` |
 | `aef-primary-all.csv` | 3,671 | `seat`, `party`, `aef_pcv`, `election` |
 | `aef-seat-scores.csv` | 728 | `election`, `seat`, `actual`, `pred`, `pred_p`, `prob`, `tpp_actual` |
 | `aef-worst-seats-full.csv` | 659 | `seat`, `actual`, `our_pred`, `our_p`, `aef_pred`, `aef_p`, `delta`, `our_primary_actual`, `actual_primary`, `aef_primary_actual`, `pair` |
+| `aef7-final-two-derived.csv` | 347 | `election`, `seat`, `f1`, `f2`, `f2cp`, `rule` |
 | `anchor-k.csv` | 834 | `region`, `year`, `K`, `party`, `fitted`, `actual`, `prior`, `polls30`, `err`, `cyc` |
 | `c3-widened-population.csv` | 4,168 | `election`, `region`, `seat`, `name`, `party`, `pcv`, `elected`, `own_prev_pcv`, `base`, `gated`, `xp`, `emergence` |
 | `cal-fed-m1.0.csv` | 886 | `seat`, `actual`, `prob`, `pred`, `pred_p`, `pair` |
@@ -148,13 +150,28 @@ processed extract. Every one is recoverable without a new fetch.
 | `cal-vic-m2.5.csv` | 166 | `seat`, `actual`, `prob`, `pred`, `pred_p`, `pair` |
 | `cal-vic-m4.0.csv` | 166 | `seat`, `actual`, `prob`, `pred`, `pred_p`, `pair` |
 | `calibration-arms.csv` | 10 | `pair`, `n`, `mult`, `logB`, `acc`, `T`, `logA`, `logC`, `B_vs_A`, `B_vs_C` |
-| `candidacies.csv` | 17,793 | `election`, `region`, `year`, `seat`, `name`, `surname`, `given`, `party`, `party_raw`, `party_ab`, `state`, `votes`, `pcv`, `elected`, `historic_elected`, `breakout`, `swing`, `ballot_position`, `ordinary`, `absent`, `provisional`, `prepoll`, `postal`, `ballot_order`, `tot` |
+| `candidacies.csv` | 18,172 | `election`, `region`, `year`, `seat`, `name`, `surname`, `given`, `party`, `party_raw`, `party_ab`, `state`, `votes`, `pcv`, `elected`, `historic_elected`, `breakout`, `swing`, `ballot_position`, `ordinary`, `absent`, `provisional`, `prepoll`, `postal`, `ballot_order`, `tot` |
 | `candidate-contests.csv` | 14,953 | `election`, `region`, `party`, `candidate_id`, `seat`, `pcv`, `surname`, `given`, `expected_pcv`, `performance_vs_expected` |
 | `candidate-ids.csv` | 10,763 | `V1`, `V2`, `V3`, `V4`, `V5`, `V6`, `V7`, `V8`, `V9`, `V10`, `V11`, `V12` |
 | `candidate-review.csv` | 190 | `V1`, `V2`, `V3`, `V4`, `V5`, `V6`, `V7`, `V8`, `V9`, `V10`, `V11`, `V12`, `V13`, `V14`, `V15` |
-| `cross-party-swing.csv` | 1,508 | `cycle`, `region`, `seat`, `party`, `y`, `x`, `own_base`, `pred_uniform`, `pred_cross` |
-| `cycle-walks-fed.csv` | 17 | `year`, `party`, `n`, `own_weight`, `obs_pooled`, `obs_cycle`, `rw_pooled_pts`, `rw_cycle_pts`, `at_lower`, `at_upper`, `conv`, `acf1`, `speedup` |
-| `cycle-walks-nsw.csv` | 8 | `year`, `party`, `n`, `own_weight`, `cycle_level`, `obs_pts`, `rw_pooled`, `rw_cycle`, `floor_ref`, `at_lower`, `at_upper`, `acf1` |
+| `census-features.csv` | 2,372 | `pair`, `seat`, `vintage`, `exact`, `yr12_pct`, `born_aus_pct`, `indig_pct`, `over55_pct`, `under35_pct`, `lang_other_pct`, `edu_25plus_pct` |
 
-_(2606 `backtest-*.csv` arm outputs omitted; they share one shape.)_
+_(3913 `backtest-*.csv` arm outputs omitted; they share one shape.)_
+
+
+## Columns we HAVE on disk and never parse
+
+Generated files above describe what we store. This section records what the
+SOURCES carry that our parsers drop, because "the file is in the registry" has
+three times been read as "we have the field". See
+`docs/reviews/unparsed-preference-detail-2026-09-15.md`.
+
+| source on disk | files | carried by the source | kept in our CSV |
+|---|--:|---|---|
+| `external/reference/nsw/dop/*.html` | 279 | candidate names + party, round-by-round progressive totals, exclusion order, **exhausted votes**, printed two-candidate percentages | `election, seat, round, from, to, votes` (classes only) |
+| `external/elections/cache/vec-2022-vic/*.html` | 163 | the same, for Victoria 2022 | as above, and **incomplete**: 76 of 87 seats, only 48 counts complete |
+
+Every `*-transfers.csv` in `external/elections/` is class-to-class. None carries
+an exhausted-votes column, although `R/preferences.R` takes an `exhaust`
+argument and currently sources it from polling rather than from these counts.
 

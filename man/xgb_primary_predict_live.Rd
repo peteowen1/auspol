@@ -41,8 +41,15 @@ model was trained on ("fed","nsw","qld","sa","vic","wa").}
 
 \item{year}{Target election year, used for \code{load_seats(year, region)} and
 for identifying this election's own rows in \code{output/candidacies.csv}
-(\code{historic_elected}/\code{ballot_position}, both NA pre-nomination -- fine,
-same missing-value routing).}
+(\code{historic_elected}/\code{ballot_position}, both absent pre-nomination).
+\code{ballot_position} stays NA, which IS the same missing-value routing the
+model saw in training (60.6\% missing there). \code{historic_elected} is NOT --
+it is never missing in training, only ever 0 or 1 -- so on a state
+election it defaults to 0, the value all 21 state training elections
+carry. This line previously claimed both were "fine, same missing-value
+routing"; that was an assumption written as a reassurance and never
+tested, and it cost the live forecast 45\% of its predicted vote. See the
+note at the assignment.}
 
 \item{prev_year}{Prior election year, for the corresponding prior-year
 candidacy row counts.}

@@ -237,7 +237,7 @@ share_of <- function(f) {
   d[, .(votes = sum(votes)), by = .(seat, party)]
 }
 
-out_all <- list(); tot_all <- list(); share_detail <- list()
+out_all <- list(); ap_all <- list(); tot_all <- list(); share_detail <- list()
 for (K in PAIRS) {
   # ARM B of docs/plans/prereg-salience-expected-and-variance-2026-09-07.md.
   # NULL unless the switch is on, so a bare run is byte-identical.
@@ -598,6 +598,30 @@ for (K in PAIRS) {
   }
   shares <- xgb_primary_override(shares, sprintf("vic%d", K$to))
 
+  # EDUCATION RESIDUAL CORRECTION (AUSPOL_EDU_RESID, default 0).
+  # Pre-registered in docs/plans/prereg-education-residual-correction-2026-09-15.md.
+  # Applied HERE, immediately after the override, so it corrects exactly the
+  # shares that reach the simulation. Leakage-free: the coefficient for this pair
+  # is fitted on every OTHER pair's out-of-fold residuals.
+  if (identical(Sys.getenv("AUSPOL_EDU_RESID", "0"), "1")) {
+    shares <- education_residual_apply(
+      shares, sprintf("vic%d", K$to),
+      feature = Sys.getenv("AUSPOL_EDU_RESID_FEATURE", "yr12_pct"),
+      shuffle = Sys.getenv("AUSPOL_EDU_RESID_SHUFFLE", "0"))
+  }
+
+  # DEMOGRAPHIC RESIDUAL CORRECTION, Arm A of
+  # docs/plans/prereg-demographic-axis-2026-09-15.md (AUSPOL_DEMO_RESID,
+  # default 0). All seven census columns under an elastic net, replacing the
+  # single hand-picked yr12_pct of the refused version above. Same position in
+  # the pipeline, immediately after the override, so it corrects exactly the
+  # shares that reach the simulation.
+  if (identical(Sys.getenv("AUSPOL_DEMO_RESID", "0"), "1")) {
+    shares <- demographic_residual_apply(
+      shares, sprintf("vic%d", K$to),
+      shuffle = Sys.getenv("AUSPOL_DEMO_RESID_SHUFFLE", "0"))
+  }
+
   cat(sprintf("\nBV1  Victoria %d -> %d: %d districts scored, truth from %s\n",
               K$from, K$to, length(keep), truth_src))
   dropped <- setdiff(win$seat, rownames(mat))
@@ -838,6 +862,16 @@ for (K in PAIRS) {
     tot_all[[length(tot_all) + 1L]] <- data.table::data.table(
       pair = sprintf("vic%d", K$to), as.data.table(sim$totals))
   }
+  # Per-seat per-party probabilities, accumulated per pair. See the NSW
+  # equivalent: the table exists in memory and was discarded, which made
+  # Victoria invisible to emergence analysis.
+  ap_all[[length(ap_all) + 1L]] <- {
+    .f <- merge(wp[, .(seat, party, prob)],
+                data.table::data.table(seat = keep, actual = unname(truth)),
+                by = "seat", all.x = TRUE)
+    .f[, is_actual := party == actual]
+    .f[, pair := sprintf("vic%d", K$to)][]
+  }
   out_all[[length(out_all) + 1L]] <- res
 }
 
@@ -845,6 +879,11 @@ R <- rbindlist(out_all)
 .vic_out <- file.path("output", sprintf("backtest-vic%s.csv", CAL_TAG))
 fwrite(R, .vic_out)
 fwrite(rbindlist(tot_all, fill = TRUE), file.path("output", sprintf("backtest-vic-totals%s.csv", CAL_TAG)))
+.vic_ap <- rbindlist(ap_all, fill = TRUE)
+fwrite(.vic_ap, file.path("output", sprintf("backtest-vic-allprobs%s.csv", CAL_TAG)))
+cat(sprintf("BV5  wrote the full probability table: %d rows over %d pair(s)
+",
+            nrow(.vic_ap), uniqueN(.vic_ap$pair)))
 # xgb_primary_on RECORDS WHETHER pred_share BELOW IS CIRCULAR -- see
 # backtest_candidate_sa.R's equivalent line for the full explanation.
 # pool_sharedetail.R refuses to pool a file with this column at 1.

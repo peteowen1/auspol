@@ -1330,6 +1330,43 @@ for (K in PAIRS) {
   }
   shares <- 100 * shares / rowSums(shares)
   shares <- xgb_primary_override(shares, sprintf("fed%d", K$to))
+
+  # EDUCATION RESIDUAL CORRECTION (AUSPOL_EDU_RESID, default 0).
+  # Pre-registered in docs/plans/prereg-education-residual-correction-2026-09-15.md.
+  # Applied HERE, immediately after the override, so it corrects exactly the
+  # shares that reach the simulation. Leakage-free: the coefficient for this pair
+  # is fitted on every OTHER pair's out-of-fold residuals.
+  if (identical(Sys.getenv("AUSPOL_EDU_RESID", "0"), "1")) {
+    shares <- education_residual_apply(
+      shares, sprintf("fed%d", K$to),
+      feature = Sys.getenv("AUSPOL_EDU_RESID_FEATURE", "yr12_pct"),
+      shuffle = Sys.getenv("AUSPOL_EDU_RESID_SHUFFLE", "0"))
+  }
+
+  # DEMOGRAPHIC RESIDUAL CORRECTION, Arm A of
+  # docs/plans/prereg-demographic-axis-2026-09-15.md (AUSPOL_DEMO_RESID,
+  # default 0). All seven census columns under an elastic net, replacing the
+  # single hand-picked yr12_pct of the refused version above. Same position in
+  # the pipeline, immediately after the override, so it corrects exactly the
+  # shares that reach the simulation.
+  if (identical(Sys.getenv("AUSPOL_DEMO_RESID", "0"), "1")) {
+    shares <- demographic_residual_apply(
+      shares, sprintf("fed%d", K$to),
+      shuffle = Sys.getenv("AUSPOL_DEMO_RESID_SHUFFLE", "0"))
+  }
+
+  # STATE-LEVEL SWING, Arm of docs/plans/prereg-state-deviation-2026-09-15.md
+  # (AUSPOL_STATE_DEV, default 0). FEDERAL ONLY, and deliberately absent from
+  # the other five harnesses rather than a parity gap: a state election has no
+  # "state deviation from the national swing" to correct for. The same columns
+  # were tried as MODEL features and cost 3.8740 -> 3.9297 pooled RMSE because
+  # non-federal cells got filler values a tree read as a jurisdiction label;
+  # applying it after the fact touches no non-federal cell at all.
+  if (identical(Sys.getenv("AUSPOL_STATE_DEV", "0"), "1")) {
+    shares <- state_deviation_apply(
+      shares, sprintf("fed%d", K$to),
+      shuffle = Sys.getenv("AUSPOL_STATE_DEV_SHUFFLE", "0"))
+  }
   keep <- intersect(rownames(shares), win$seat)
   shares <- shares[keep, , drop = FALSE]
   truth <- setNames(win$winner, win$seat)[keep]
