@@ -127,3 +127,65 @@ glance. Validate against them; do not store them.
 - **That candidate-level flows improve anything.** More detail is not
   automatically more signal, and the class aggregation may be doing useful
   smoothing.
+
+---
+
+## Addendum: what the truncated Victorian flows actually cost (idea 4, measured)
+
+**vic2022 is the only election affected.** Every other jurisdiction's
+distributions are essentially complete:
+
+| election | seats with rows | complete counts |
+|---|--:|--:|
+| qld2024 | 93 | 93 |
+| sa2026 | 47 | 47 |
+| nsw2023 | 93 | 92 |
+| wa2025 | 59 | 57 |
+| **vic2022** | **76** | **48** |
+
+**The truncation drops the LAST exclusions, which are the biggest transfers.**
+A truncated seat is short by a median of one round, and the final excluded
+candidate is the one holding everything handed down before them.
+
+| vic2022 seats | n | share of formal vote that moves | mean rounds |
+|---|--:|--:|--:|
+| complete | 48 | **39.7%** | 6.5 |
+| truncated | 28 | **19.2%** | 5.0 |
+| no rows at all | 11 | 0% | -- |
+
+We record 1,016,053 transferred votes against roughly 1,436,197 implied by the
+complete seats' rate: about **420,000 missing, 29% of Victoria's transfers**.
+
+**And the loss is compositional, not just volumetric.** The class excluded in
+the final RECORDED round:
+
+| excluded last | complete counts | truncated counts |
+|---|--:|--:|
+| GRN | 56 | 18 |
+| LNP | 22 | **0** |
+| ALP | 6 | **0** |
+| IND / OTH / OTH_RIGHT | 12 | **74** |
+
+**In a truncated seat we never observe a major-party exclusion.** The Victorian
+flow estimates are therefore built disproportionately from micro-party and
+independent transfers and under-weight the Green and major transfers that
+decide seats.
+
+**This reaches the model.** `scripts/fit_xgb_flows_v1.R:24` globs
+`vec-[0-9]{4}-vic-transfers.csv` into the training corpus alongside every other
+jurisdiction, so the biased rows are training data, not just a ledger gap.
+
+### What follows, and what I am NOT claiming
+
+Repairing this is a **data repair with a measured directional defect**, which
+is a different and stronger class of change than the mechanisms refused
+earlier today -- those added a term and hoped; this removes a known bias from
+existing training data. The raw pages are already cached in
+`external/elections/cache/vec-2022-vic/` (163 files), so it is a parser job,
+not a fetch.
+
+But "bound to improve" is the expectation that failed four times today
+(education residual, demographic axis, Greens concentration, seat correlation).
+The honest statement is: the input is wrong in a known direction, fixing it is
+cheap, and the effect on seat log loss is **unmeasured**. It gets a
+pre-registration like anything else.
