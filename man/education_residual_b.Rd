@@ -9,7 +9,8 @@ education_residual_b(
   exclude_pair,
   feature = "yr12_pct",
   oof = "output/xgb-primary-v6-oof-predictions.csv",
-  census = "output/census-features.csv"
+  census = "output/census-features.csv",
+  shuffle = 0L
 )
 }
 \arguments{

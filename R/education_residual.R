@@ -1,3 +1,52 @@
+#' The honest null: permute demographics across seats, within each election
+#'
+#' `born_aus_pct` was pre-registered as the placebo for the education
+#' correction and was NOT one: r(yr12_pct, born_aus_pct) = -0.706 over 1,989
+#' seats, so the two columns read a single class-and-urbanity axis from opposite
+#' ends and the check could not separate the hypotheses it named
+#' (`docs/plans/prereg-education-residual-correction-2026-09-15.md`). With seven
+#' mutually correlated census columns there is no "other column" that works as a
+#' control at all.
+#'
+#' So the control has to break the LINK rather than swap the variable. This
+#' permutes which seat gets which seat's demographics, inside each election, so
+#' that every marginal distribution and the entire fitting procedure are
+#' unchanged and only the seat-to-demographics correspondence is destroyed.
+#' Anything that survives is the flexibility of the procedure, not a
+#' measurement.
+#'
+#' Permuting WITHIN a pair, not across the corpus, matters: mean Year 12
+#' completion drifts 51.4 to 60.8 between elections, so a corpus-wide shuffle
+#' would also destroy the between-pair structure and would be a weaker, easier
+#' null to beat.
+#'
+#' @param C Census table.
+#' @param feature Column to permute.
+#' @param shuffle 0 leaves `C` untouched; any other integer is the RNG seed, so
+#'   a control can be run several times and its spread reported rather than one
+#'   draw being taken as the answer.
+#' @return `C`, with `feature` permuted within each pair when `shuffle` is set.
+#' @keywords internal
+.er_shuffle <- function(C, feature, shuffle = 0L) {
+  shuffle <- suppressWarnings(as.integer(shuffle))
+  if (!isTRUE(is.finite(shuffle)) || shuffle == 0L) return(C)
+  C <- data.table::copy(C)
+  # The seed is set and restored around the permutation so a control run does
+  # not silently move every downstream draw in the harness -- the simulation
+  # seed is a published switch and a control must not become a second arm.
+  .old <- if (exists(".Random.seed", .GlobalEnv)) get(".Random.seed", .GlobalEnv) else NULL
+  set.seed(shuffle)
+  # Permute by pair. `.f` is assigned by reference per group; `pair` is a real
+  # column so it is referenced bare only in `by=`, never in `i`.
+  C[, (feature) := sample(.SD[[1L]]), by = pair, .SDcols = feature]
+  if (is.null(.old)) {
+    if (exists(".Random.seed", .GlobalEnv)) rm(".Random.seed", envir = .GlobalEnv)
+  } else {
+    assign(".Random.seed", .old, envir = .GlobalEnv)
+  }
+  C
+}
+
 #' Correct a primary prediction toward what education explains about its error
 #'
 #' Fits ONE coefficient per class on the residual, LEAVE-ONE-PAIR-OUT, and
@@ -30,11 +79,13 @@
 education_residual_b <- function(cls, exclude_pair,
                                  feature = "yr12_pct",
                                  oof = "output/xgb-primary-v6-oof-predictions.csv",
-                                 census = "output/census-features.csv") {
+                                 census = "output/census-features.csv",
+                                 shuffle = 0L) {
   if (!file.exists(oof) || !file.exists(census)) return(NA_real_)
   O <- data.table::fread(oof, showProgress = FALSE)
   C <- data.table::fread(census, showProgress = FALSE)
   if (!feature %in% names(C)) return(NA_real_)
+  C <- .er_shuffle(C, feature, shuffle)
   # `.cls` and `.ex`, never the bare argument names: a name matching a column
   # inside `[` binds to the COLUMN, recorded eight times in CLAUDE.md.
   .cls <- cls; .ex <- exclude_pair
@@ -70,12 +121,18 @@ education_residual_b <- function(cls, exclude_pair,
 education_residual_apply <- function(shares, pair,
                                      classes = c("ONP", "OTH_RIGHT", "GRN"),
                                      feature = "yr12_pct",
-                                     census = "output/census-features.csv") {
+                                     census = "output/census-features.csv",
+                                     shuffle = 0L) {
   if (!file.exists(census)) {
     cat("ER1! census features missing; education residual correction SKIPPED\n")
     return(shares)
   }
   C <- data.table::fread(census, showProgress = FALSE)
+  # Shuffled at FIT and at APPLY both. Permuting only one end would leave a
+  # genuine coefficient sprayed onto the wrong seats, which measures how much
+  # damage noise does -- a different question from whether the procedure
+  # manufactures a gain out of nothing.
+  C <- .er_shuffle(C, feature, shuffle)
   .p <- pair
   C <- C[C$pair == .p]
   if (!nrow(C) || !feature %in% names(C)) {
@@ -103,7 +160,8 @@ education_residual_apply <- function(shares, pair,
   tot <- rowSums(shares)
   applied <- character(0)
   for (cl in intersect(classes, colnames(shares))) {
-    b <- education_residual_b(cl, pair, feature = feature, census = census)
+    b <- education_residual_b(cl, pair, feature = feature, census = census,
+                              shuffle = shuffle)
     if (!is.finite(b)) next
     shares[, cl] <- pmax(0, shares[, cl] + b * z)
     applied <- c(applied, sprintf("%s b=%+.4f", cl, b))
@@ -117,7 +175,14 @@ education_residual_apply <- function(shares, pair,
   rs <- rowSums(shares)
   keep <- rs > 0
   shares[keep, ] <- shares[keep, ] * (tot[keep] / rs[keep])
-  cat(sprintf("ER1  education residual correction ON for %s (%s): %s\n",
-              pair, feature, paste(applied, collapse = ", ")))
+  # The control announces itself. An experiment that never ran looks exactly
+  # like an experiment with no effect, and a control that silently failed to
+  # shuffle would read as "the null also improves" -- the most expensive wrong
+  # conclusion available here.
+  cat(sprintf("ER1  education residual correction ON for %s (%s%s): %s\n",
+              pair, feature,
+              if (identical(as.integer(shuffle), 0L)) "" else
+                sprintf(", SHUFFLED CONTROL seed=%s", shuffle),
+              paste(applied, collapse = ", ")))
   shares
 }

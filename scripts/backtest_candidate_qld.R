@@ -658,7 +658,8 @@ shares <- xgb_primary_override(shares, TGT)
 if (identical(Sys.getenv("AUSPOL_EDU_RESID", "0"), "1")) {
   shares <- education_residual_apply(
     shares, TGT,
-    feature = Sys.getenv("AUSPOL_EDU_RESID_FEATURE", "yr12_pct"))
+    feature = Sys.getenv("AUSPOL_EDU_RESID_FEATURE", "yr12_pct"),
+    shuffle = Sys.getenv("AUSPOL_EDU_RESID_SHUFFLE", "0"))
 }
 
 # Per-seat spread from the seat file of the election being predicted.

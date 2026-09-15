@@ -320,10 +320,18 @@ PUBLISHED_FLAGS <- c(
                                              # (ONP on the shipped arm 3.1000 -> 3.0086) but WORSENS the two
                                              # elections where One Nation is largest -- sa2026 +0.636 and
                                              # qld2020 +0.203 -- which is a named refusal condition.
-  AUSPOL_EDU_RESID_FEATURE   = "yr12_pct",   # which census column. "born_aus_pct" is the pre-registered
-                                             # PLACEBO: it matched education exactly in the reallocation test,
-                                             # so if it matches again the mechanism is "correct toward anything
-                                             # correlated" rather than anything about education.
+  AUSPOL_EDU_RESID_FEATURE   = "yr12_pct",   # which census column. "born_aus_pct" was pre-registered as the
+                                             # PLACEBO and was NOT one -- r(yr12_pct, born_aus_pct) = -0.706 over
+                                             # 1,989 seats, so both read one class-and-urbanity axis from opposite
+                                             # ends. It recovered 71% of the gain and refused the mechanism
+                                             # (prereg-education-residual-correction-2026-09-15.md, RESULT).
+  AUSPOL_EDU_RESID_SHUFFLE   = "0",          # the real control. 0 = off; any other integer is an RNG seed that
+                                             # PERMUTES each census column across seats WITHIN each election, at
+                                             # fit and at apply both. Breaks the seat-to-demographics link while
+                                             # leaving every marginal and the whole procedure intact, so whatever
+                                             # still "improves" is the procedure's own flexibility. With seven
+                                             # mutually correlated census columns there is no other-column
+                                             # placebo that works, which is the lesson born_aus_pct cost.
   AUSPOL_HISTORIC_ELECTED_BACKFILL = "1",
                                              # build-time: 1 = derive historic_elected for STATE elections from our
                                              # own prior winners (scripts/build_candidacies.R, BC9). The AEC ships

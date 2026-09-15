@@ -504,7 +504,8 @@ for (K in PAIRS) {
   if (identical(Sys.getenv("AUSPOL_EDU_RESID", "0"), "1")) {
     shares <- education_residual_apply(
       shares, el_to,
-      feature = Sys.getenv("AUSPOL_EDU_RESID_FEATURE", "yr12_pct"))
+      feature = Sys.getenv("AUSPOL_EDU_RESID_FEATURE", "yr12_pct"),
+      shuffle = Sys.getenv("AUSPOL_EDU_RESID_SHUFFLE", "0"))
   }
   # DIAGNOSTIC DUMP, off unless asked. Writes the projected primary the model
   # actually simulates from, so a seat can be inspected without reconstructing

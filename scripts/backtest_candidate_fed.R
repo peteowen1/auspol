@@ -1339,7 +1339,8 @@ for (K in PAIRS) {
   if (identical(Sys.getenv("AUSPOL_EDU_RESID", "0"), "1")) {
     shares <- education_residual_apply(
       shares, sprintf("fed%d", K$to),
-      feature = Sys.getenv("AUSPOL_EDU_RESID_FEATURE", "yr12_pct"))
+      feature = Sys.getenv("AUSPOL_EDU_RESID_FEATURE", "yr12_pct"),
+      shuffle = Sys.getenv("AUSPOL_EDU_RESID_SHUFFLE", "0"))
   }
   keep <- intersect(rownames(shares), win$seat)
   shares <- shares[keep, , drop = FALSE]

@@ -606,7 +606,8 @@ for (K in PAIRS) {
   if (identical(Sys.getenv("AUSPOL_EDU_RESID", "0"), "1")) {
     shares <- education_residual_apply(
       shares, sprintf("vic%d", K$to),
-      feature = Sys.getenv("AUSPOL_EDU_RESID_FEATURE", "yr12_pct"))
+      feature = Sys.getenv("AUSPOL_EDU_RESID_FEATURE", "yr12_pct"),
+      shuffle = Sys.getenv("AUSPOL_EDU_RESID_SHUFFLE", "0"))
   }
 
   cat(sprintf("\nBV1  Victoria %d -> %d: %d districts scored, truth from %s\n",
