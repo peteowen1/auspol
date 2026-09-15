@@ -109,6 +109,48 @@ targets do not, the answer is NO.
   called sa2026 at 9.18 against 7.67 actual -- 20% too wide -- and vic2026 is a
   further extrapolation.
 
+## Scoping, measured BEFORE the criterion and recorded whatever it says
+
+Three facts found while reading the mechanism, all before anything was scored.
+Recorded here because the second and third weaken the plan, and a fact that
+becomes inconvenient later is exactly the one that gets omitted.
+
+**1. The mechanism already exists and this is a one-vector change.** Both the
+harness (`backtest_candidate_sa.R:715`) and the live path
+(`fit_seats_full.R:585`) rank seats and map a concentration shape onto that
+ranking. `AUSPOL_ONP_ORDER` already takes `federal` or `greens`. This adds a
+third option; it does not add a mechanism.
+
+**2. The federal ordering signal exists for ONE pair.** Spearman of each signal
+against the ACTUAL vote:
+
+| pair | class | Year 12 | federal |
+|---|---|---|---|
+| qld2020 | ONP | 0.665 | n/a |
+| fed2013 | OTH_RIGHT | 0.591 | n/a |
+| qld2024 | ONP | 0.747 | n/a |
+| fed2022 | ONP | 0.739 | n/a |
+| fed2025 | ONP | 0.800 | n/a |
+| sa2026 | ONP | 0.922 | **0.939** |
+| sa2026 | OTH_RIGHT | 0.144 | **0.538** |
+
+So on the only pair where both exist, **federal is better** -- and everywhere
+else there is no federal signal at all. The plan is therefore NOT "replace
+federal with education". It is "extend a mechanism that runs on one pair to the
+other 22", and the named targets qld2020 and fed2013 currently have NO
+concentration applied, which makes the test cleaner than originally written:
+mechanism off versus mechanism on, ordered by education.
+
+**3. For VICTORIA specifically this will probably change little.** The two
+orderings agree at Spearman **+0.764** over the 78 seats carrying both, and all
+eight of federal's top-ranked Victorian seats fall in education's top 12 of 78.
+Murray Plains is federal 4th / education 1st; Gippsland East 3rd / 2nd. If the
+Victorian forecast moves a lot on this change, that is a reason to distrust the
+implementation, not to celebrate.
+
+Education's advantage in Victoria is coverage: 78 of 88 seats have a federal
+signal, census has all 88.
+
 ## Prediction, written before running
 
 qld2020 and fed2013 OTH_RIGHT improve modestly (RMSE down 0.1-0.3 points),
