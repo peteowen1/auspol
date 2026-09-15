@@ -204,12 +204,27 @@ The null lands **exactly on the baseline** and the real arm is 6.7 control-sds
 below it, with 0 of 6 draws beating it. The fitted coefficient collapses the
 same way: ALP b = +0.334 real against -0.091, +0.004, +0.013 shuffled.
 
-**DEVIATION, disclosed rather than buried:** the plan specified **K = 10 draws
-of the POOLED federal statistic**. What was run is 6 draws on one pair. That is
-60 harness runs reduced to 6, and it is a real shortfall -- fed2010 is the pair
-where the effect is largest, so it is the easiest place for the control to
-pass. **The mechanism should not be switched on until the pooled control is
-run as registered.**
+**The pooled control was subsequently run in full, as registered.** An earlier
+version of this section recorded 6 draws on one pair and said the mechanism
+should not be switched on until the full control was run. It now has been --
+60 harness runs, 10 draws on each of the six pairs that change:
+
+| | pooled seat log loss |
+|---|--:|
+| baseline | 0.2584 |
+| **state-dev arm** | **0.2539** (-0.0045) |
+| control mean of 10 | 0.2586 (+0.0001) |
+| control sd | 0.0008 |
+| control range | 0.2573 to 0.2603 |
+
+**0 of 10 control draws beat the arm**, which sits 5.6 control-sds below the
+null mean, and the null lands on the baseline to within 0.0001. Per pair the
+four that improve are 0/10 and the three that do not are 10/10 -- the control
+separates them exactly as it should.
+
+The exact permutation p is 1/11 = 0.091, which is the floor at K = 10 rather
+than a measured borderline. The criterion registered here is "improves AND no
+control draw beats it", both met; it did not set a p threshold.
 
 ## Why fed2019 regresses, and what it says about the mechanism
 
@@ -252,3 +267,31 @@ worth roughly -0.0045 federal seat log loss. It does **nothing for Victoria
 fed2025 has no state-deviation rows, and three jurisdictions never will.
 
 `AUSPOL_STATE_DEV` stays at `0` until the pooled control is run.
+
+
+## Refusal conditions, all five evaluated
+
+| condition | result |
+|---|---|
+| any control draw beats the arm | **does not fire** -- 0 of 10 |
+| the all-22 guard worsens | **does not fire** -- non-federal seats untouched by construction; `state_deviation_apply()` returns early on any pair not matching `^fed`, verified on sa2026 |
+| fed2022 worsens | **does not fire** -- improved -0.0035 |
+| the gain needs `state_elec_dev` | **does not fire** -- polls-only, as registered |
+| a class moves one way in >90% of seats | **does not fire** -- most one-sided is IND at 66%, against a 90% bar. ALP 60% up, LNP 61% down, GRN 59% down, ONP 53%, OTH_RIGHT 50% |
+
+## VERDICT: ADOPTED
+
+`AUSPOL_STATE_DEV = "1"` in `scripts/published_flags.R`.
+
+**It does not change the published Victorian forecast.** `fit_seats_full.R` has
+no call site and the mechanism is federal by construction, so what changes is
+what the federal backtest measures. Victoria 2026 is a state election and has
+no deviation-from-national to correct.
+
+**fed2019 still regresses by +0.0110 and that is accepted, not overlooked.**
+The control confirms it is a real wrong-direction correction rather than noise:
+fed2019's control mean is 0.1730, essentially the baseline, while the arm is
+0.1835. State polls pointed the right way in only 2 of 5 states that year --
+Queensland implied +5.3 for Labor against an actual -3.8. This mechanism buys
+accuracy in normal elections and costs it in the elections where polling breaks,
+which is a property of correcting toward polls and not a defect in the fit.

@@ -31,7 +31,7 @@ All seven share one `R/` package core (`simulate_seat_contests()`,
 in which switches each one WIRES and which data source each reads, not in
 separate model code.
 
-## Switch parity (64 switches from `published_flags.R`, 7 entry points)
+## Switch parity (66 switches from `published_flags.R`, 7 entry points)
 
 | switch | fit_seats (published) | fed | nsw | qld | sa | vic | wa |
 |---|---|---|---|---|---|---|---|
@@ -84,6 +84,8 @@ separate model code.
 | `AUSPOL_SHRINK` | yes | yes | yes | yes | yes | yes | yes |
 | `AUSPOL_SIM_ENGINE` | NO | NO | NO | NO | NO | NO | NO |
 | `AUSPOL_SPLIT_SLOPE` | NO | yes | yes | yes | yes | yes | yes |
+| `AUSPOL_STATE_DEV` | NO | yes | NO | NO | NO | NO | NO |
+| `AUSPOL_STATE_DEV_SHUFFLE` | NO | yes | NO | NO | NO | NO | NO |
 | `AUSPOL_SURGE_FROM_ZERO` | yes | yes | yes | yes | yes | yes | NO |
 | `AUSPOL_SURGE_H` | yes | yes | yes | yes | yes | yes | yes |
 | `AUSPOL_SURGE_RECIPIENT` | yes | yes | yes | yes | yes | yes | yes |
@@ -135,6 +137,8 @@ separate model code.
 - **`AUSPOL_SALIENCE_SURGE_V2`** (**OPEN GAP**): WA: OPEN GAP, not fixed. Marked `yes*` above because the switch's name appears only in a disclosure comment explaining that it is NOT wired -- WA has no surge-v2 hazard at all where every other harness does (docs/NEXT-STEPS.md's own "Open" item 3, still unaddressed). A plain grep of the file would otherwise call this cell a clean "yes" and hide the gap.
 - **`AUSPOL_SIM_ENGINE`** (intentional / dead experiment): Read inside R/seat_sim.R's simulate_seat_contests(), not per-harness -- universal in practice.
 - **`AUSPOL_SPLIT_SLOPE`** (intentional / dead experiment): REFUSED 2026-09-09, and harmfully so (docs/plans/ prereg-partial-return-split-slope-2026-09-09.md): it discarded the existing conditional-slope system instead of refining it. Harness-only by design, same reasoning as AUSPOL_FIT_SLOPES.
+- **`AUSPOL_STATE_DEV`** (**UNEXPLAINED -- audit this**): no classification recorded -- add one to CLASSIFY in scripts/build_model_registry.R
+- **`AUSPOL_STATE_DEV_SHUFFLE`** (**UNEXPLAINED -- audit this**): no classification recorded -- add one to CLASSIFY in scripts/build_model_registry.R
 - **`AUSPOL_SURGE_FROM_ZERO`** (intentional / dead experiment): WA has no candidate-level salience corpus -- same exclusion as AUSPOL_SALIENCE_EXPECTED, intentional.
 - **`AUSPOL_V7_ARMS`** (**UNEXPLAINED -- audit this**): no classification recorded -- add one to CLASSIFY in scripts/build_model_registry.R
 - **`AUSPOL_WA_FLOWS`** (intentional / dead experiment): Self-referential no-op in the WA harness itself, same shape as AUSPOL_QLD_FLOWS above but not disclosed via an `.inert` list there. Genuinely absent from QLD (uses AUSPOL_QLD_FLOWS instead).
@@ -189,4 +193,4 @@ This is not automatically a bug -- `AUSPOL_SALIENCE_EXPECTED` and `AUSPOL_SALIEN
 
 ## Coverage check
 
-**MR2! 12 switch(es) have a non-universal row with NO recorded classification: AUSPOL_HISTORIC_ELECTED_BACKFILL, AUSPOL_HONOUR_DEPARTED, AUSPOL_NB_TARGET, AUSPOL_NOTIONAL, AUSPOL_NSW_THIN_WALK, AUSPOL_ONP_CONC_SD, AUSPOL_SALIENCE_PCTILE_NZ, AUSPOL_V7_ARMS, AUSPOL_XGB_PRIMARY_SD, AUSPOL_XGB_PRIMARY_SD_CLASSES, AUSPOL_XGB_PRIMARY_SD_SRC, AUSPOL_XGB_SURGE_SRC.** Add them to CLASSIFY in scripts/build_model_registry.R before trusting this table.
+**MR2! 14 switch(es) have a non-universal row with NO recorded classification: AUSPOL_HISTORIC_ELECTED_BACKFILL, AUSPOL_HONOUR_DEPARTED, AUSPOL_NB_TARGET, AUSPOL_NOTIONAL, AUSPOL_NSW_THIN_WALK, AUSPOL_ONP_CONC_SD, AUSPOL_SALIENCE_PCTILE_NZ, AUSPOL_STATE_DEV, AUSPOL_STATE_DEV_SHUFFLE, AUSPOL_V7_ARMS, AUSPOL_XGB_PRIMARY_SD, AUSPOL_XGB_PRIMARY_SD_CLASSES, AUSPOL_XGB_PRIMARY_SD_SRC, AUSPOL_XGB_SURGE_SRC.** Add them to CLASSIFY in scripts/build_model_registry.R before trusting this table.
