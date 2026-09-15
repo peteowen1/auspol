@@ -108,3 +108,78 @@ either direction I will look for a bug before believing it.
 **The most likely failure is the fourth refusal condition**: the tree already
 has `from_primary`, `to_primary` and `n_survivors`, and may be reconstructing
 the seat's shape from them well enough that an explicit term adds nothing.
+
+---
+
+# RESULT, 2026-09-15: real, deterministic, and far too small to ship
+
+## The criterion
+
+Out-of-fold row-level RMSE, `xgb.cv` with leave-one-election-out folds, 36,064
+transfer rows over 25 elections.
+
+| arm | out-of-fold RMSE |
+|---|--:|
+| shipped-equivalent baseline (`0.85*rate + 0.15/n`) | 0.106359 |
+| xgb without the feature | **0.098070** |
+| xgb with `lead_primary` | **0.097987** |
+| **move** | **-0.000083, or -0.084% relative** |
+
+**The fit is deterministic**: the baseline arm was run three times and returned
+0.0981 every time, so the move is real rather than run-to-run noise. It is also
+**six times smaller than the bottom of the predicted 0.5-2% range.**
+
+## Refusal conditions
+
+| condition | result |
+|---|---|
+| pooled seat log loss worsens | **not measured** -- see below |
+| the gain needs a second feature | does not fire; one feature, as registered |
+| `lead_primary` outside the top ten by gain | **does not fire** -- it ranks **8th** |
+| improvement confined to one region | not reached |
+| a class's mean flow moves >2 points | not reached |
+
+The top-ten condition was written to catch exactly this case and it fails to,
+by letter. By substance it lands: `lead_primary` has gain **0.0082** against
+`cond_rate`'s **0.660** -- eighty times smaller -- and sits below `to_primary`
+and `from_primary`, which is the tree saying the seat's shape adds almost
+nothing once it knows the two classes in the transfer.
+
+## Why the downstream guard was not run
+
+The guard is pooled seat log loss across 22 pairs. Its minimum detectable
+effect is around 0.003. A **0.084%** improvement in flow RMSE cannot produce a
+seat-level effect within two orders of magnitude of that, so the run would cost
+hours and return noise, and any apparent movement would be simulation variance
+dressed as a result. Reporting an unmeasured guard as unmeasured is the honest
+option; running it to produce a number nobody should believe is not.
+
+## VERDICT: do not ship
+
+The criterion as written says adopt -- RMSE improved and the feature is inside
+the top ten. **I am not adopting it, and the criterion was too weak.** It asked
+only whether the number moved, with no threshold for how much, and 0.084% is
+below any level at which a column earns its maintenance. Writing "improves" and
+not "improves by at least X" was the drafting error, and the fix belongs in the
+next plan rather than in a reinterpretation of this one.
+
+`AUSPOL_FLOW_FRAG` stays at `0` and the feature stays wired so the measurement
+is reproducible.
+
+**The model artifact was restored.** Running the arm overwrote
+`output/xgb-flows-v1-final.model` and `-final-cols.json` with a 40-feature
+model that the live path, which computes 39, would have loaded. The baseline
+was re-run to put the shipped artifact back. **Any experiment on a fitting
+script that saves a final artifact overwrites what inference loads** -- the
+same shape as the harness fingerprint defect recorded in
+`prereg-vote-belongs-to-the-person-2026-09-06.md`, where an arm overwrote the
+baseline's own outputs.
+
+## What this confirms
+
+The plan's own warning was right: *"a correlation in a linear fit is not an
+improvement in a fitted tree that already has `from_primary`, `to_primary` and
+class dummies."* The linear slope was **t = 3.69**; the tree extracts **0.08%**
+from it. The signal is real and the existing features already carry nearly all
+of it -- which is the fourth refusal condition's conclusion, "already
+captured", arrived at by a route the condition did not quite cover.
