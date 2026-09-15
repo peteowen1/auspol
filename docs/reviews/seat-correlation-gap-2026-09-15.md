@@ -122,3 +122,90 @@ that moves smoothly is trackable, and polls carry information about where it
 has moved to.
 
 Both of these are in `docs/PETE-ASKED-FOR.md` as NOT DONE.
+
+---
+
+## Follow-up the same day: all three inputs measured, and two corrections
+
+### CORRECTION 1: the seat-count distribution is NOT grossly too narrow
+
+The "~1.5x understated" figure above was inferred from the correlation gradient
+as if seats were uncoupled. They are not: `shift[k]` already applies a shared
+statewide move to every seat in a draw, and that common component does most of
+the work seat-seat correlation would do. Measured directly, on 100
+party-election cells from 15 pairs, with `z = (actual seats - simulated mean) /
+simulated sd`:
+
+| statistic | value | reading |
+|---|--:|---|
+| sd(z), all 100 cells | 1.823 | looks badly over-confident |
+| drop the single worst cell | 1.124 | it was mostly one cell |
+| drop the 5 worst | 1.000 | exactly right |
+| **median \|z\|** | **0.583** against 0.674 expected | the body is slightly too WIDE |
+| excluding OTH_RIGHT | sd 1.149, median ratio 1.02 | near-calibrated |
+
+The seat-count distribution is roughly calibrated in the body with a fat tail
+from a handful of EMERGENCE failures -- worst is nsw2019 OTH_RIGHT, where the
+Shooters won 3 seats against a simulated 0.0 +/- 0.21, z = 14.3.
+
+So the value of seat-seat correlation is not "widen the totals". It is knowing
+WHICH seats move together, which shapes the joint distribution.
+
+### CORRECTION 2: proximity beats demographics
+
+Only demographics had been measured. Adding great-circle distance between seat
+centroids (`output/seat-centroids.csv`, built from the ABS SED/CED shapefiles)
+and the historical residual correlation between two seats, computed from the
+OTHER elections of the same jurisdiction so the target election never informs
+its own structure:
+
+Clustered on (election, class), 30 independent clusters:
+
+| input | mean coefficient | t | sign-consistent |
+|---|--:|--:|--:|
+| **geographic distance** | -0.0612 | -6.40 | **30 of 30** |
+| historical swing correlation | +0.0657 | +5.28 | 27 of 30 |
+| demographic distance | -0.0337 | -4.72 | 26 of 30 |
+
+All three survive in a joint model, and proximity is the strongest. Pete named
+all three -- "a mixture of proximity and demographics and previous swing
+correlations" -- and a demographics-only model would have used the weakest.
+
+The unclustered fit gives t-values of 20 to 30 on 331,157 seat-pairs. Those are
+inflated by roughly `sqrt(n_pairs / n_clusters)` and are not reported as
+significance; the clustered table is.
+
+## The criterion problem, and the fact that settles it
+
+**Seat log loss cannot see this change at all.** It is `sum(-log(p_i))` over
+seats. Correlation alters the JOINT distribution while leaving each seat's
+marginal untouched, so every `p_i` is identical and the metric is unchanged up
+to Monte Carlo noise. The repo's primary metric is blind to seat-seat
+correlation by construction.
+
+That is decisive in both directions:
+
+- **No criterion built on seat log loss can ever detect this.** A
+  pre-registration using it would refuse or accept for reasons unrelated to the
+  change -- the exact trap `CLAUDE.md` records twice.
+- **The change cannot HURT the metric everything else is judged on**, which
+  makes the do-no-harm guard nearly free.
+
+And seat-count dispersion is a poor primary too, for the reasons in Correction
+1: already near 1 in the body, dominated by a different failure (emergence),
+and noisy at 100 heavy-tailed cells.
+
+What is left, and what a pre-registration should be built on:
+
+1. **CRPS of the seat-count distribution** per (election, party) -- proper,
+   sensitive to dispersion rather than only to the point estimate, and
+   decision-relevant. MDE must be computed before committing.
+2. **Pairwise joint calibration** -- predicted P(both seats won by party X)
+   against observed, pooled over seat-pairs. This tests the correlation
+   structure directly and is the only one of the three that targets exactly
+   what changes.
+3. **P(party reaches N seats)** -- the quantity a reader actually uses, and the
+   one correlation moves most.
+
+None of these is measured yet. The MDE work has to come before the plan, not
+after, because that is the mistake that has already cost two criteria today.
