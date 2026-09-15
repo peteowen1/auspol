@@ -1,3 +1,43 @@
+# auspol 0.4.37
+
+**The Victorian candidate list arrives, and three components stop falling back.**
+
+- **Victoria 2026 candidates from Wikipedia** — 379 candidacies across all 88
+  districts, 67 sitting members, 62 matched to prior Victorian winners.
+  Nominations do not close until November, so the list is ~52% complete against
+  vic2022's 731 and **absence means "not yet announced", never "not
+  contesting"**. Parsed from raw wikitext: a summariser reading the rendered
+  table reported the Greens candidate for Albert Park as the Coalition's,
+  because the Coalition cell is empty and it closed the gap.
+- **`DS2` 0 → 87 seat-classes with a returning candidate, `DS2o` 0 → 22,
+  `DS3` flat → 30 seats.** `DS2` was inert because Wikipedia writes "Nina
+  Taylor" and every other Victorian row is "TAYLOR, Nina", and `surname_of()`
+  takes the first token absent a comma — the same person with opposite keys.
+  Worth **4.4 Labor seats** once fixed.
+- **`historic_elected` derived for state elections** behind
+  `AUSPOL_HISTORIC_ELECTED_BACKFILL`. The AEC ships `HistoricElected` federally
+  only, so all 21 state elections recorded zero returning members — false about
+  the world, and it made the column a federal/state label inside the model.
+  1,023 of 9,264 state candidacies now flagged.
+- Shipped **against a slightly worse backtest**, deliberately: isolated A/B
+  pooled primary RMSE 3.8078 → 3.8219. vic2026 is the target and never a
+  training pair, so its 62 returning members can only move the live forecast
+  and never the RMSE — the backtest cannot see the gain it is weighed against.
+
+**Against AE Forecasts** (expected seats, their NAT folded into our LNP):
+LNP 41.63 vs **32.86**, ALP 28.12 vs **34.09**, ONP 9.00 vs **14.51**,
+GRN 4.60 vs **5.32**, IND 4.38 vs **0.22**. 19 of 87 seats called differently.
+
+**Refused, with the result recorded**: allocating a minor party's seat spread
+by education rank. Pooled per-seat RMSE roughly doubles (3.3546 → 7.3936) and a
+`born_aus_pct` placebo matches it, so the ranking contributed nothing and the
+damage was discarding the existing prediction. It did establish when the
+shipped concentration mechanism is valid: sa2026 One Nation is the only
+class-pair of 92 where reallocation helps, and it has the lowest CV of any One
+Nation pair — the quantile map imposes a normal shape and only helps where the
+truth is already near-normal. See
+`docs/plans/prereg-class-concentration-v2-2026-09-15.md`.
+
 # auspol 0.4.36
 
 **The nightly forecast was not the model we measure.** `published_flags.R`
