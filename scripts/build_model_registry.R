@@ -142,6 +142,19 @@ for (sw in names(COMMENT_ONLY)) {
 # row; update this when a gap is fixed or a new one is found by rerunning
 # this script and diffing its output.
 CLASSIFY <- list(
+  AUSPOL_STATE_DEV = paste(
+    "ADOPTED 2026-09-15 and FEDERAL ONLY, which is a design fact rather than the all-harnesses rule",
+    "outstanding: a state election has no deviation from a national swing to correct, so the other five",
+    "harnesses have nothing to honour. Corrects a federal seat's primaries for how its STATE moves against",
+    "the national swing -- WA 2022 swung to Labor far harder than the country (mean ALP per-seat primary",
+    "error +6.43 over 15 seats, positive in 14). Federal pooled seat log loss 0.2584 -> 0.2539 over 1,052",
+    "seat-elections, 0 of 10 permutation-control draws beating it. fit_seats_full.R reads NO for the same",
+    "reason the state harnesses do; the published Victorian forecast is unaffected.",
+    "docs/plans/prereg-state-deviation-2026-09-15.md"),
+  AUSPOL_STATE_DEV_SHUFFLE = paste(
+    "Control for the above, not an arm: permutes which state each seat sits in, within its election, at fit",
+    "and apply both. Absent from fit_seats_full.R because a control has no business in the published",
+    "forecast. Calibrated -- the null lands on the baseline to within 0.0001 pooled."),
   AUSPOL_DEMO_RESID = paste(
     "UNDER TEST, wired into all six harnesses and deliberately NOT into fit_seats_full.R -- the gap in",
     "this row is the point, not an oversight. Arm A of docs/plans/prereg-demographic-axis-2026-09-15.md:",
