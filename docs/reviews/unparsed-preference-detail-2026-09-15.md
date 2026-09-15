@@ -189,3 +189,70 @@ But "bound to improve" is the expectation that failed four times today
 The honest statement is: the input is wrong in a known direction, fixing it is
 cheap, and the effect on seat log loss is **unmeasured**. It gets a
 pre-registration like anything else.
+
+---
+
+## RETRACTION of the addendum above: the Victorian data is not truncated
+
+**Same day, immediately after. The "29% of transfers missing" finding is WRONG
+and the addendum above is left standing only so the error is legible.**
+
+I read "the count stops with 3 candidates still holding votes" as a truncated
+file. It is not. **A preferential count stops the moment someone holds an
+absolute majority** -- there is nothing left to distribute, and the remaining
+candidates keep their votes where they are. Checking the cached VEC pages for
+exactly that:
+
+| vic2022 cached distribution pages | seats | leader's share when the count ended |
+|---|--:|---|
+| ran to a final TWO | 48 | -- |
+| **stopped with 3+ standing** | **28** | **26 of 28 at 50%+** |
+
+Bendigo East 50.0, Carrum 50.0, Berwick 50.1, Yan Yean 50.2, Brighton 50.3.
+Every one of them stopped because it was decided.
+
+And the 11 seats with no transfer rows at all:
+
+| | |
+|---|---|
+| won outright on FIRST PREFERENCES | **10 of 11** |
+| Gippsland East 63.3, Murray Plains 61.8, Lowan 58.9, Dandenong 54.9 | no distribution was ever conducted |
+| **Pakenham** (leader 33.8%) | the one genuine gap |
+
+**So the corrected position: `vec-2022-vic-transfers.csv` faithfully reflects
+what the VEC published.** 86 of 87 seats are accounted for -- 48 full
+distributions, 28 majority stops, 10 primary-vote wins -- and exactly one seat,
+Pakenham, is missing data it should have.
+
+### What this kills
+
+- The "420,000 missing transfers" figure. Those votes were never distributed.
+- The compositional claim that "in a truncated seat we never observe a
+  major-party exclusion". True as arithmetic, and it is a fact about
+  ELECTIONS, not about our file: in a safe seat the major wins on an early
+  majority, so no major is ever excluded. That is the world, not a defect.
+- Idea 4 as a repair job. There is nothing to repair beyond one seat.
+
+### What survives, and is worth keeping
+
+**Preference flows are only ever observed in seats that went the distance.**
+A full distribution happens precisely when the seat is close; a safe seat stops
+early or never starts. So the flow corpus is a sample of COMPETITIVE seats, and
+flows estimated from it are flows-in-close-seats. That is a real selection
+property with real consequences for a model that applies those rates
+everywhere -- but it is inherent to how counts are conducted, not something a
+better parser fixes.
+
+Whether flows differ between close and safe seats is measurable and unmeasured.
+That is the question idea 4 should have been.
+
+### The mistake, named
+
+Five times today I have inferred a defect from an aggregate without checking
+the mechanism that generates it: the Greens "under-concentration" (selection on
+the outcome), the worst-seat primary error (same), the worst-seat party
+concentration (base rates), the group-E label (read the seats), and now this.
+The pattern is identical each time -- a number looked wrong, and I explained it
+before establishing that it needed explaining. **The check that would have
+caught all five costs about one minute: ask what process produced this number,
+and what it would look like if nothing were wrong.**
