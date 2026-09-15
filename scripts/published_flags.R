@@ -310,6 +310,20 @@ PUBLISHED_FLAGS <- c(
                                              # Concentrated where you would expect: sa2026, the One Nation surge
                                              # election, 0.4200 -> 0.5564. Every headline number quoted before
                                              # 2026-09-11 was the leaked one.
+  AUSPOL_EDU_RESID           = "0",          # 1 = correct each seat's minor-party primary by what Year 12
+                                             # completion explains about the model's RESIDUAL, one coefficient
+                                             # per class fitted leave-one-pair-out (R/education_residual.R).
+                                             # UNDER TEST, not adopted: pre-registered in
+                                             # docs/plans/prereg-education-residual-correction-2026-09-15.md
+                                             # against pooled SEAT LOG LOSS, which is not yet measured. What IS
+                                             # measured is per-seat primary RMSE, where it improves all six arms
+                                             # (ONP on the shipped arm 3.1000 -> 3.0086) but WORSENS the two
+                                             # elections where One Nation is largest -- sa2026 +0.636 and
+                                             # qld2020 +0.203 -- which is a named refusal condition.
+  AUSPOL_EDU_RESID_FEATURE   = "yr12_pct",   # which census column. "born_aus_pct" is the pre-registered
+                                             # PLACEBO: it matched education exactly in the reallocation test,
+                                             # so if it matches again the mechanism is "correct toward anything
+                                             # correlated" rather than anything about education.
   AUSPOL_HISTORIC_ELECTED_BACKFILL = "1",
                                              # build-time: 1 = derive historic_elected for STATE elections from our
                                              # own prior winners (scripts/build_candidacies.R, BC9). The AEC ships

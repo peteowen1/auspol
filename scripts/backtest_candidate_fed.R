@@ -1330,6 +1330,17 @@ for (K in PAIRS) {
   }
   shares <- 100 * shares / rowSums(shares)
   shares <- xgb_primary_override(shares, sprintf("fed%d", K$to))
+
+  # EDUCATION RESIDUAL CORRECTION (AUSPOL_EDU_RESID, default 0).
+  # Pre-registered in docs/plans/prereg-education-residual-correction-2026-09-15.md.
+  # Applied HERE, immediately after the override, so it corrects exactly the
+  # shares that reach the simulation. Leakage-free: the coefficient for this pair
+  # is fitted on every OTHER pair's out-of-fold residuals.
+  if (identical(Sys.getenv("AUSPOL_EDU_RESID", "0"), "1")) {
+    shares <- education_residual_apply(
+      shares, sprintf("fed%d", K$to),
+      feature = Sys.getenv("AUSPOL_EDU_RESID_FEATURE", "yr12_pct"))
+  }
   keep <- intersect(rownames(shares), win$seat)
   shares <- shares[keep, , drop = FALSE]
   truth <- setNames(win$winner, win$seat)[keep]

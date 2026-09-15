@@ -495,6 +495,17 @@ for (K in PAIRS) {
   }
   shares <- 100 * mat / rowSums(mat)
   shares <- xgb_primary_override(shares, el_to)
+
+  # EDUCATION RESIDUAL CORRECTION (AUSPOL_EDU_RESID, default 0).
+  # Pre-registered in docs/plans/prereg-education-residual-correction-2026-09-15.md.
+  # Applied HERE, immediately after the override, so it corrects exactly the
+  # shares that reach the simulation. Leakage-free: the coefficient for this pair
+  # is fitted on every OTHER pair's out-of-fold residuals.
+  if (identical(Sys.getenv("AUSPOL_EDU_RESID", "0"), "1")) {
+    shares <- education_residual_apply(
+      shares, el_to,
+      feature = Sys.getenv("AUSPOL_EDU_RESID_FEATURE", "yr12_pct"))
+  }
   # DIAGNOSTIC DUMP, off unless asked. Writes the projected primary the model
   # actually simulates from, so a seat can be inspected without reconstructing
   # the pipeline by hand and getting it subtly wrong.

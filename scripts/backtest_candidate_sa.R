@@ -852,6 +852,17 @@ if (PORT) {
 }
 shares <- xgb_primary_override(shares, TGT)
 
+# EDUCATION RESIDUAL CORRECTION (AUSPOL_EDU_RESID, default 0).
+# Pre-registered in docs/plans/prereg-education-residual-correction-2026-09-15.md.
+# Applied HERE, immediately after the override, so it corrects exactly the
+# shares that reach the simulation. Leakage-free: the coefficient for this pair
+# is fitted on every OTHER pair's out-of-fold residuals.
+if (identical(Sys.getenv("AUSPOL_EDU_RESID", "0"), "1")) {
+  shares <- education_residual_apply(
+    shares, TGT,
+    feature = Sys.getenv("AUSPOL_EDU_RESID_FEATURE", "yr12_pct"))
+}
+
 # Per-seat spread from the seat file of the election being predicted.
 sp <- seat_swing_spread(as.data.table(load_seats(TO, "sa")),
                         unname(st_b[["ALP"]] - st_a[["ALP"]]))
