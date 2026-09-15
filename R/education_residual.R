@@ -86,8 +86,15 @@ education_residual_apply <- function(shares, pair,
   if (anyNA(f)) {
     # Reported and skipped, not silently part-applied: correcting some seats
     # and not others would shift the statewide total in a way nobody chose.
-    cat(sprintf("ER1! %d of %d seats have no census row for %s; correction SKIPPED\n",
-                sum(is.na(f)), length(f), pair))
+    #
+    # NAME THE SEATS. The count alone sent a whole session down the wrong path
+    # on 2026-09-15: "5 of 93" reads as a census gap, and the real cause can be
+    # either a missing census row OR a seat the two sides spell differently.
+    # Only the names distinguish those, and they need opposite fixes.
+    .miss <- rownames(shares)[is.na(f)]
+    cat(sprintf("ER1! %d of %d seats have no census row for %s; correction SKIPPED\n  missing: %s\n",
+                length(.miss), length(f), pair,
+                paste(utils::head(.miss, 12), collapse = ", ")))
     return(shares)
   }
   s <- stats::sd(f)
