@@ -86,3 +86,61 @@ and OTH where the current allocation is worst, is near zero for GRN, and IND is
 the one I am least sure about -- best curve, least reliable ordering. If the
 pooled number improves but the per-class table shows one class carrying it, the
 refusal above applies and the answer is no.
+
+---
+
+## Result, 2026-09-15: REFUSED. Pooled RMSE roughly doubles.
+
+| arm | ranking | cells | as-is | reallocated | move |
+|---|---|---|---|---|---|
+| xgb (ships) | education | 8,082 | **3.3546** | 7.3936 | **+4.0390** |
+| xgb | placebo | 8,082 | 3.3546 | 7.4206 | +4.0660 |
+| base | education | 8,416 | **3.7844** | 7.2234 | +3.4390 |
+| base | placebo | 8,416 | 3.7844 | 7.2322 | +3.4478 |
+
+Every class worse: GRN +7.13, IND +4.59, OTH_RIGHT +2.37, OTH +1.35, ONP +0.65.
+
+**The placebo matched education** (+4.07 against +4.04). The ranking variable
+contributes almost nothing; the damage is the reallocation itself. That is the
+refusal condition written in advance, and it fires.
+
+### Why: the method discards what it should have stretched
+
+Per (pair, class) it took the arm's per-seat predictions, kept only their MEAN
+as the statewide level, threw the individual predictions away, and rebuilt each
+seat from its education rank alone. So a seat's predicted vote depended on
+nothing but its schooling -- not incumbency, not the previous result, not who
+is standing. The originals already carried the education signal PLUS all of
+that, so a rank-only rebuild can only lose information however good the rank.
+
+### And the corpus says when the SHIPPED mechanism is valid
+
+sa2026 ONP is the **only class-pair of 92 where reallocation helps** (-0.178),
+and it is the pair the mechanism was built for. The damage elsewhere is nearly
+monotone in how far the true distribution is from normal:
+
+| ONP pair | move | actual CV |
+|---|---|---|
+| sa2026 | **-0.178** | **0.330** |
+| qld2020 | +0.204 | 0.667 |
+| fed2025 | +0.445 | 0.514 |
+| wa2025 | +0.626 | 0.832 |
+| nsw2023 | +1.301 | 2.329 |
+| fed2019 | +1.467 | 1.539 |
+
+The quantile map imposes a NORMAL shape. It helps only where the truth is
+already near-normal, and sa2026 has the lowest CV of any One Nation pair.
+
+**So `AUSPOL_ONP_CONC_SD` carries an unstated precondition** -- that the
+class's seat distribution is approximately normal -- and it is shipped on the
+one pair that satisfies it. That is not a reason to turn it off: it is measured
+to help there. It is a reason not to generalise it, and to state the condition
+where the flag is defined.
+
+### What survives
+
+- The education finding, untouched: 43 of 43 party-elections, consistent sign.
+  It is real and it is NOT usable as a wholesale allocator.
+- Untested and different: using education to STRETCH an existing prediction
+  toward a target spread, rather than replace it. That is the mechanism I
+  should have written, and it is not what was refuted here.
