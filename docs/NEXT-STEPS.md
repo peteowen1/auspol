@@ -48,7 +48,7 @@ Clean A/B, same corpus and seed, one column: held-out Gaussian NLL
 1.3096 → **1.3012**. `AUSPOL_XGB_PRIMARY_SD` is still 0 so nothing published
 moved.
 
-**YOUR CALL, three things:**
+**YOUR CALL, two things left (item 2 resolved 2026-09-16):**
 
 1. **The next arm** — widen whoever could plausibly win, not the two majors.
    Deliberately NOT written overnight: inventing a criterion after seeing which
@@ -56,8 +56,18 @@ moved.
    needs a pre-registration written before it runs. Note nsw2019's failures sit
    at the log-loss floor, so any criterion there must survive dropping any one
    of them.
-2. **Region or optional preferential voting?** NSW is the only OPV jurisdiction
-   in the corpus, so the two cannot be told apart with what we have.
+2. ~~Region or optional preferential voting?~~ **RESOLVED 2026-09-16: it is
+   region, not OPV.** Parsed the exhausted-votes line off all 186 cached NSWEC
+   distribution pages (was on disk, discarded at parse time — see
+   `docs/reviews/unparsed-preference-detail-2026-09-15.md`). Exhaustion is
+   real but small (11.0%→13.3% departed vs stood, p=0.010) and does not
+   discriminate the seats we call wrong from the ones we don't (13.24% vs
+   13.30% within the departed cohort). It also cannot be the mechanism at all:
+   the measured variance blowup is in the held party's FIRST-preference share,
+   settled before any redistribution happens, and exhaustion is a
+   later-round phenomenon. Full writeup:
+   `docs/reviews/nsw-departed-member-opv-ruled-out-2026-09-16.md`. The
+   correction should key on region/member-type, not voting system.
 3. **Is a per-seat `seat_sd` worth the C++ change?** The per-cell sd path was
    the cheap route and it is class-scoped; a genuine per-seat multiplier means
    changing `src/seat_sim_core.cpp`, which every harness and the live Victorian
