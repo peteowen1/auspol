@@ -1,5 +1,47 @@
 # auspol — work queue
 
+## 2026-09-15 later — demographics: the signal is REAL, the correction is too small
+
+Two pre-registrations run and both refused, but the second one refused on
+magnitude, not on whether the effect exists.
+
+`docs/plans/prereg-education-residual-correction-2026-09-15.md` — one census
+column (`yr12_pct`). Criterion passed, placebo condition fired, REFUSED. The
+placebo was mis-specified: `born_aus_pct` correlates **-0.706** with `yr12_pct`
+over 1,989 seats, so it was a second reading of the same axis, not a control.
+
+`docs/plans/prereg-demographic-axis-2026-09-15.md` — all seven census columns
+under a leave-one-pair-out elastic net, 22 pairs, 2,066 seat-elections. Pooled
+seat log loss 0.2849 → 0.2831, **-0.0018**, 14 of 22 pairs improved
+(t = -1.83, p = 0.08; binomial p = 0.143). REFUSED: qld2024 worsened by
++0.0024 and it is one of three named One Nation pairs.
+
+**The permutation control is the thing to keep.** Permuting which seat gets
+which seat's demographics lands the model on the baseline every time — sa2026
+mean 0.3576 against a 0.3577 baseline over 8 draws, and within 0.0004 on all
+three Victorian pairs — while the real arm sits 0.005 to 0.012 better. **The
+demographic axis carries genuine seat-level information.** Use this control for
+anything in this family; a correlated second column is not a placebo.
+
+**Why it still failed, and the next hypothesis.** On sa2026 One Nation it
+helped in **10 of the 10 worst-missed seats** and by about half a point where
+the gap is seven to eleven — MacKillop 23.8 → 24.3 against an actual 35.3. One
+coefficient per class is fitted across a corpus where most elections have a
+tiny One Nation vote, so it cannot move a seat far enough in an election where
+the party polls 23% statewide. A **level interaction** is the obvious fix and
+needs its own pre-registration; fitting it now would be choosing the model
+after seeing the result.
+
+**Shipped regardless, and it was a real defect**: `census-features.csv` was
+keyed on the previous election's feature file, so redistributions stranded
+seats at both ends. `vic2026` had **no census rows at all** and now has 88 of
+88; nsw2023 went 88 → 98, fed2022 149 → 152, and partial application unblocked
+all seven WA pairs. Demographics could not have reached the live forecast by
+any route before this.
+
+**Still open**: `fit_seats_full.R` has no call site for either correction, so
+nothing here touches the published forecast yet.
+
 ## MORNING READ, 2026-09-15 — the Victorian draft is done, three things need you
 
 Full writeup: `docs/reviews/vic2026-first-correct-draft-2026-09-15.md`.

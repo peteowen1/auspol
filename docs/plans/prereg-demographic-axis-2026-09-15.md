@@ -217,3 +217,118 @@ multi-feature obviously changes that.
 If Arm A passes and Arm B fails, the honest reading is that the demographic
 axis is real but the override is discarding it, and the work that follows is on
 the override rather than on more census columns.
+
+---
+
+# RESULT, 2026-09-15: Arm A measured on all 22 pairs. REFUSED, narrowly.
+
+## The criterion
+
+Pooled seat log loss, 22 pairs, 2,066 seat-elections. Lower is better.
+
+| | pooled |
+|---|--:|
+| baseline | 0.2849 |
+| Arm A | 0.2831 |
+| **move** | **-0.0018** |
+| per-pair mean | -0.0021, SE 0.00115 |
+| t | **-1.83** on 21 df (p = 0.08 two-sided) |
+| pairs improved | 14 of 22 (binomial p = 0.143) |
+
+Below the baseline, yes. But the pooled effect is **not distinguishable from
+zero at conventional levels**, and it came in at the bottom of the 0.002-0.006
+range predicted above.
+
+| improves most | move | worsens most | move |
+|---|--:|---|--:|
+| nsw2019 | -0.0145 | wa2013 | +0.0074 |
+| vic2014 | -0.0117 | fed2025 | +0.0052 |
+| qld2020 | -0.0080 | wa2017 | +0.0032 |
+| sa2026 | -0.0079 | **qld2024** | **+0.0024** |
+| vic2022 | -0.0057 | fed2007 | +0.0022 |
+
+## Refusal condition 2 fired
+
+**"If sa2026, qld2020 or qld2024 worsens."** qld2024 worsened by +0.0024. It is
+one of only three elections in the corpus with a large One Nation vote and it is
+named in the plan precisely because those are the elections Victoria 2026 has to
+resemble. The condition was written before any of this ran and it is not
+reinterpreted now.
+
+## THE SIGNAL IS REAL, and that is the finding worth keeping
+
+This is not a "the procedure fabricates gains" refusal. The permutation control
+says the opposite, on every pair tested:
+
+| pair | baseline | control draws | real Arm A |
+|---|--:|--:|--:|
+| sa2026 | 0.3577 | mean 0.3576 over 8 draws, sd 0.0013 | 0.3498 |
+| vic2014 | 0.2477 | 0.2478, 0.2477, 0.2476 | 0.2360 |
+| vic2018 | 0.2073 | 0.2074, 0.2074, 0.2083 | 0.2027 |
+| vic2022 | 0.2494 | 0.2494, 0.2495 | 0.2437 |
+
+Permuting which seat gets which seat's demographics lands the model **on the
+baseline every time**, within 0.0004, while the real arm sits 0.005 to 0.012
+better. The demographic axis carries genuine seat-level information. What is in
+doubt is the size and the shape of the correction, not its existence.
+
+## The One Nation question, answered directly
+
+sa2026 One Nation primary, the seats the model missed by most:
+
+| seat | actual | base | demo | yr12 | err base -> demo |
+|---|--:|--:|--:|--:|--:|
+| MacKillop | 35.3 | 23.8 | 24.3 | 24.5 | 11.48 -> 10.98 |
+| Narungga | 37.5 | 29.6 | 30.1 | 30.4 | 7.98 -> 7.47 |
+| Reynell | 27.7 | 20.0 | 20.2 | 20.3 | 7.75 -> 7.50 |
+| Light | 34.5 | 27.1 | 27.5 | 27.5 | 7.45 -> 7.06 |
+| Chaffey | 33.9 | 26.6 | 27.0 | 27.4 | 7.32 -> 6.88 |
+| Elizabeth | 33.3 | 26.2 | 26.5 | 26.7 | 7.09 -> 6.79 |
+
+| ONP primary RMSE, sa2026 | base | demo | yr12 |
+|---|--:|--:|--:|
+| all 47 seats | 4.622 | 4.461 | 4.402 |
+| the 10 worst misses | 7.896 | 7.496 | 7.348 |
+| the 20 seats ONP won 25%+ | 6.284 | 6.013 | 5.878 |
+
+**It helped in 10 of the 10 worst-missed seats, and by about half a point where
+the gap is seven to eleven.** The direction is right in every seat that matters
+and the magnitude is an order of magnitude too small. That is the actual
+result, and it is more informative than the pooled log loss.
+
+## Why more features lost to one feature where it counts
+
+`yr12_pct` alone beats all seven columns on every sa2026 cut above, and on
+qld2024 the multi-feature version turns a small gain into a small loss. CV
+chose ridge (`alpha = 0`), which spreads weight across seven columns
+correlated 0.65 to 0.81 with each other. Where the axis is diffuse -- Victoria,
+NSW 2019, Queensland 2020 -- that pooling wins clearly. Where one column
+carries almost all of it -- sa2026, where r(yr12, ONP vote) = -0.922 -- the
+spreading dilutes the signal.
+
+So "use every column" and "use the right column" are both right, on different
+elections, and neither is right everywhere.
+
+## The diagnosis this points at, NOT acted on here
+
+The correction is too SMALL, and there is an obvious reason. One coefficient
+per class is fitted across the whole corpus, where most elections have a tiny
+One Nation vote. A single `b` calibrated mostly on elections where the party
+polls 2-5% cannot move a seat far enough in an election where it polls 23%
+statewide. The first plan named a level interaction, tried one crude version on
+primary RMSE, and deliberately did not pursue it.
+
+That is the next hypothesis and it needs its own pre-registration. Fitting it
+now, having seen these numbers, would be choosing the model after the result.
+
+## What was kept regardless
+
+- **Partial application unblocked every WA pair**, all seven now at 100%
+  coverage, where the all-or-nothing guard had disabled all of them.
+- **`indig_pct +0.367` for OTH_RIGHT**, an effect a single education column has
+  no way to express.
+- **The permutation control**, which is now the standard for anything in this
+  family and which retroactively showed the refused single-feature arm's signal
+  was real too.
+
+`AUSPOL_DEMO_RESID` stays at `0` in `scripts/published_flags.R`.
