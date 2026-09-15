@@ -1354,6 +1354,19 @@ for (K in PAIRS) {
       shares, sprintf("fed%d", K$to),
       shuffle = Sys.getenv("AUSPOL_DEMO_RESID_SHUFFLE", "0"))
   }
+
+  # STATE-LEVEL SWING, Arm of docs/plans/prereg-state-deviation-2026-09-15.md
+  # (AUSPOL_STATE_DEV, default 0). FEDERAL ONLY, and deliberately absent from
+  # the other five harnesses rather than a parity gap: a state election has no
+  # "state deviation from the national swing" to correct for. The same columns
+  # were tried as MODEL features and cost 3.8740 -> 3.9297 pooled RMSE because
+  # non-federal cells got filler values a tree read as a jurisdiction label;
+  # applying it after the fact touches no non-federal cell at all.
+  if (identical(Sys.getenv("AUSPOL_STATE_DEV", "0"), "1")) {
+    shares <- state_deviation_apply(
+      shares, sprintf("fed%d", K$to),
+      shuffle = Sys.getenv("AUSPOL_STATE_DEV_SHUFFLE", "0"))
+  }
   keep <- intersect(rownames(shares), win$seat)
   shares <- shares[keep, , drop = FALSE]
   truth <- setNames(win$winner, win$seat)[keep]

@@ -153,3 +153,102 @@ be untouched.
 
 If it passes, the honest description is not "we fixed the state swing" but "we
 recovered the quarter of it the polls already knew about".
+
+---
+
+# RESULT, 2026-09-15: criterion MET, control passes, one deviation disclosed
+
+## Primary criterion: pooled seat log loss, seven federal pairs
+
+| pair | baseline | state-dev | move |
+|---|--:|--:|--:|
+| fed2010 | 0.2429 | 0.2191 | **-0.0238** |
+| fed2007 | 0.3076 | 0.2928 | -0.0148 |
+| fed2013 | 0.2579 | 0.2541 | -0.0038 |
+| **fed2022** | 0.2629 | 0.2594 | **-0.0035** |
+| fed2025 | 0.2600 | 0.2600 | 0.0000 (no data) |
+| fed2016 | 0.3057 | 0.3090 | +0.0033 |
+| **fed2019** | 0.1725 | 0.1835 | **+0.0110** |
+| **POOLED** | **0.2584** | **0.2539** | **-0.0045** |
+
+**-0.0045 over 1,052 seat-elections**, inside the 0.002-0.006 predicted band and
+2.5x the best demographic result of the day. Four of seven improve, fed2025 is
+untouched for want of data, two worsen. Per-pair t is -1.03 over the six that
+ran, which is NOT significant -- the result rests on the seat-weighted pooled
+figure and on the control, not on a t-test across six clusters.
+
+## Refusal conditions
+
+- **fed2022 must not worsen.** It improved, -0.0035. Does not fire.
+- **All-22 guard.** Non-federal seats are untouched *by construction*:
+  `state_deviation_apply()` returns early on any pair not matching `^fed` and
+  says so. Verified directly -- sa2026's share matrix comes back identical.
+- **Control.** See below; passes where tested.
+- **No class dropped, no `state_elec_dev` added.** The mechanism is exactly the
+  polls-only form registered in advance.
+
+## The control
+
+Permuting which state each seat sits in, within its election, on fed2010 --
+the pair carrying most of the gain. Six draws:
+
+| | value |
+|---|--:|
+| baseline | 0.2429 |
+| **control mean of 6** | **0.2429** | 
+| control sd | 0.0035 |
+| control range | 0.2364 to 0.2471 |
+| real arm | **0.2191** |
+
+The null lands **exactly on the baseline** and the real arm is 6.7 control-sds
+below it, with 0 of 6 draws beating it. The fitted coefficient collapses the
+same way: ALP b = +0.334 real against -0.091, +0.004, +0.013 shuffled.
+
+**DEVIATION, disclosed rather than buried:** the plan specified **K = 10 draws
+of the POOLED federal statistic**. What was run is 6 draws on one pair. That is
+60 harness runs reduced to 6, and it is a real shortfall -- fed2010 is the pair
+where the effect is largest, so it is the easiest place for the control to
+pass. **The mechanism should not be switched on until the pooled control is
+run as registered.**
+
+## Why fed2019 regresses, and what it says about the mechanism
+
+The correction is only as good as the state polls, and they are right **19 of
+30 state-years (63%)**:
+
+| election | polls pointed the right way |
+|---|--:|
+| fed2010, fed2022 | 4 of 5 |
+| fed2007, fed2013, fed2016 | 3 of 5 |
+| **fed2019** | **2 of 5** |
+
+fed2019 is the "miracle election". Queensland's polls implied **+5.3** for
+Labor and the actual state-level miss was **-3.8** -- a nine-point sign error.
+When state polls fail the same way national polls do, correcting toward them
+moves away from the truth, and the mechanism amplifies rather than repairs.
+That is an inherent property, not a tuning problem: this buys accuracy in
+normal elections and costs it in exactly the elections where polling breaks.
+
+## What it actually did for the seats it was built for
+
+| seat | ours before | ours after | actual |
+|---|--:|--:|--:|
+| Tangney | 27.8 | 28.8 | 38.1 |
+| Hasluck | 29.3 | 30.4 | 39.7 |
+| Pearce | 33.1 | 34.1 | 42.8 |
+| Swan | 33.1 | 34.1 | 39.1 |
+
+About a point each on misses of six to ten. As predicted, and as the ceiling
+analysis said in advance: **this recovers the quarter of the state swing the
+polls already knew about, and nothing more.** Braddon, Bass, Banks and Petrie
+are untouched -- Tasmania has no state-level federal polling and fed2025 has no
+data at all.
+
+## Honest summary
+
+The mechanism works, is leakage-free, passes its control where tested, and is
+worth roughly -0.0045 federal seat log loss. It does **nothing for Victoria
+2026**, which is a state election. Its remaining gap is data, not method:
+fed2025 has no state-deviation rows, and three jurisdictions never will.
+
+`AUSPOL_STATE_DEV` stays at `0` until the pooled control is run.

@@ -325,6 +325,13 @@ PUBLISHED_FLAGS <- c(
                                              # 1,989 seats, so both read one class-and-urbanity axis from opposite
                                              # ends. It recovered 71% of the gain and refused the mechanism
                                              # (prereg-education-residual-correction-2026-09-15.md, RESULT).
+  AUSPOL_STATE_DEV           = "0",          # 1 = correct federal seats for how their STATE is moving against the
+                                             # national swing (docs/plans/prereg-state-deviation-2026-09-15.md).
+                                             # FEDERAL ONLY by construction -- a state election has no deviation
+                                             # from a national swing to correct. WA 2022 is the case: mean ALP
+                                             # per-seat primary error +6.43 over 15 seats, 14 of 15 positive.
+                                             # UNDER TEST.
+  AUSPOL_STATE_DEV_SHUFFLE   = "0",          # control: permutes which state each seat sits in, within its election.
   AUSPOL_DEMO_RESID          = "0",          # 1 = Arm A of docs/plans/prereg-demographic-axis-2026-09-15.md:
                                              # correct each seat's minor-party primary using ALL SEVEN census
                                              # columns under a leave-one-pair-out elastic net, instead of the one
