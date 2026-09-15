@@ -122,3 +122,126 @@ thoroughly than any of the faults this plan was written to avoid.
 
 The criterion is otherwise unchanged: pooled seat log loss, the four refusal
 conditions, the classes named in advance.
+
+---
+
+# RESULT, 2026-09-15: REFUSED
+
+The criterion passed and the second refusal condition fired. The refusal
+condition wins, as it is meant to.
+
+## The criterion: pooled seat log loss over the AEF-7
+
+Lower is better. `ran?` records whether the mechanism was applied at all.
+
+| pair | seats | baseline | corrected | move | ran? |
+|---|--:|--:|--:|--:|---|
+| sa2026 | 47 | 0.3577 | 0.3464 | **-0.0113** | yes |
+| vic2022 | 78 | 0.2494 | 0.2477 | -0.0017 | yes |
+| qld2024 | 93 | 0.3106 | 0.3089 | -0.0017 | yes |
+| nsw2023 | 88 | 0.2694 | 0.2694 | 0.0000 | no |
+| wa2025 | 53 | 0.2027 | 0.2027 | 0.0000 | no |
+| fed2022 | 151 | 0.2629 | 0.2629 | 0.0000 | no |
+| fed2025 | 150 | 0.2600 | 0.2600 | 0.0000 | no |
+| **pooled** | **660** | **0.2702** | **0.2689** | **-0.0012** | 3 of 7 |
+
+**The pre-registered prediction was wrong in its specifics and right in its
+size.** I wrote "improves slightly, 0.001-0.004" and the answer is 0.0012. I
+also wrote "sa2026 worsens and the first refusal condition fires" -- sa2026
+improved the most of the seven. Primary RMSE said sa2026 got 0.636 WORSE;
+seat log loss says it got 0.0113 better. The two metrics disagree in sign on
+the same arm, which is the clearest evidence yet for this repo's rule that
+primary RMSE is secondary and seat log loss decides.
+
+## Refusal condition 2 fired: the placebo matches
+
+`born_aus_pct` substituted for `yr12_pct`, everything else identical.
+
+| pair | seats | baseline | education | placebo | edu move | placebo move | placebo recovers |
+|---|--:|--:|--:|--:|--:|--:|--:|
+| sa2026 | 47 | 0.3577 | 0.3464 | 0.3485 | -0.0113 | -0.0092 | 81% |
+| qld2024 | 93 | 0.3106 | 0.3089 | 0.3089 | -0.0017 | -0.0017 | **100%** |
+| vic2022 | 78 | 0.2494 | 0.2477 | 0.2495 | -0.0017 | +0.0001 | -6% |
+| **pooled** | **218** | **0.2989** | **0.2951** | **0.2962** | **-0.0038** | **-0.0027** | **71%** |
+
+On qld2024 the placebo is identical to four decimals. On sa2026 -- the pair
+this whole line of work was built for, One Nation in South Australia -- it
+recovers 81%. **The two pairs with a real One Nation vote are exactly the two
+where the placebo is indistinguishable from education.** Only Victoria, where
+no right-minor party clears 6.5%, separates them, and there the education gain
+is 0.0017 on 78 seats, which is noise.
+
+## The placebo was mis-specified, and that is a fault in this plan
+
+r(`yr12_pct`, `born_aus_pct`) = **-0.706** pooled over 1,989 seats
+(-0.694 sa2026, -0.656 qld2024, -0.677 vic2022, -0.727 fed2022, -0.813
+nsw2023). The fitted coefficients are mirror images: ONP `b=-0.63` on
+education, `b=+0.44` on birthplace.
+
+So the two variables are one latent class-and-urbanity axis measured from
+opposite ends, and a check built on them **cannot distinguish "education
+specifically" from "this demographic axis"** -- which is what it was written to
+do. That correlation was computable from a file already on disk before this
+plan was committed, and checking it would have shown the check was not ready.
+Same fault as the C2 criterion recorded in `CLAUDE.md`: a measuring instrument
+shipped without being dry-run.
+
+**The verdict stands anyway, and deliberately.** The condition as written says
+a matching placebo means refuse. Rewriting it now -- to "a placebo on a
+different axis" -- would be choosing the rule after seeing the result, and
+would convert a refusal into an adoption. That is the exact move
+`CLAUDE.md` records going wrong twice in three experiments.
+
+## Refusal condition 3: not separately measured, and why
+
+"If the gain is only on `xgb_pred`." The evidence recorded BEFORE the run
+already leans this way -- ONP -0.0914 on `xgb_pred` against -0.0055 on
+`base_pred`, a factor of 17. It was not re-measured on seat log loss because
+condition 2 had already fired, and a refusal condition that fires is
+sufficient; further arms could only have confirmed the refusal, never lifted it.
+
+## The finding that outlived the test: it cannot reach Victoria
+
+Four of the seven AEF pairs never ran the mechanism, and the reason is the same
+in all four. `build_census_features.R:201` joins census onto the cells in
+`output/xgb-primary-v6-features.csv`, so **a seat created at a redistribution
+has no prior-election row, therefore no feature row, therefore no census row**,
+and `education_residual_apply()` skips the whole election rather than
+part-applying it.
+
+| pair | seats with no census row | what they are |
+|---|---|---|
+| nsw2023 | 5 of 93 | Badgerys Creek, Kellyville, Leppington, Wahroonga, Winston Hills -- all new in the 2021 NSW redistribution |
+| wa2025 | 9 of 59 | WA redistributes hard; seat names do not survive between elections |
+| fed2022 | 2 of 152 | includes Hawke, created 2021 |
+| fed2025 | 3 of 152 | same cause |
+
+**And this blocks the live target twice over.** `output/census-features.csv`
+carries `vic2014`, `vic2018` and `vic2022` and **no `vic2026` rows at all**; 10
+of the 88 vic2026 seats (Ashwood, Berwick, Eureka, Glen Waverley, Greenvale,
+Kalkallo, Laverton, Narracan, Pakenham, Point Cook) have no vic2022 row either.
+Separately, `fit_seats_full.R` -- the published forecast -- **has no call site
+for this function**; it reached the six backtest harnesses only. So a win here
+would have bought nothing for 28 November 2026 without further work.
+
+## What is actually established
+
+- There is a real signal in the residual worth **0.0113 seat log loss on
+  sa2026**, readable through at least two different census columns.
+- It is a **class-and-urbanity** signal, not an education signal. Nothing here
+  supports the narrower claim.
+- It is concentrated where a right-minor party is large, and absent in Victoria
+  at its current levels.
+- The model does not use it, and the current census join cannot deliver it to
+  any election with new seats -- including the one being forecast.
+
+## What follows, in order
+
+1. **Fix the census join** so it keys on the seat list the forecast simulates,
+   not on the prior-election feature corpus. Without this nothing in this
+   family can ever reach vic2026, whatever its merits.
+2. Only then re-open the demographic axis, as a **model feature with a proper
+   placebo on an unrelated column**, not as a post-hoc offset with a placebo
+   correlated -0.71 with the thing it is testing.
+
+`AUSPOL_EDU_RESID` stays at `0` in `scripts/published_flags.R`.
