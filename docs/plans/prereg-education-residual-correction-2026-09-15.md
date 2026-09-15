@@ -100,3 +100,25 @@ condition fires**, making the honest answer NO despite a pooled gain. If that
 happens the finding is not "education corrections work" but "education
 corrections work where the party is small, and the large-party case needs an
 interaction nobody has specified correctly yet".
+
+---
+
+## Amendment, 2026-09-15, before running: scored on the AEF-7, not all 23
+
+Pete's call, for turnaround. The original clause above is left unedited.
+
+**Does this favour the answer I want? No -- it makes the test harder.** The
+AEF-7 are fed2022, fed2025, vic2022, nsw2023, qld2024, wa2025 and sa2026. The
+pair I have written down as expected to fail, sa2026, is **1 of 7 here against
+1 of 23** in the original, so it carries over three times the weight. qld2020,
+the other regressing pair, drops out -- but sa2026 is the larger regression
+(+0.636 against +0.203) and it stays.
+
+**Interim results are a SMOKE TEST, not a stopping rule.** Each pair is checked
+as it lands, to confirm the mechanism is wired and running, not to decide. All
+seven run regardless of what the first ones show. Stopping when the numbers
+look good is optional stopping and would invalidate the criterion more
+thoroughly than any of the faults this plan was written to avoid.
+
+The criterion is otherwise unchanged: pooled seat log loss, the four refusal
+conditions, the classes named in advance.
