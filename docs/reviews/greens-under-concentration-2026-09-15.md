@@ -1,3 +1,74 @@
+# RETRACTED: the Greens "under-concentration" was a selection artefact
+
+**2026-09-15, same day. The finding below is WRONG. It is kept in full rather
+than deleted, because the way it fooled me is the reusable part.**
+
+## What the retraction rests on
+
+The claim was: the mean GRN primary error in the ten seats where the Greens
+polled highest, minus the error elsewhere, is positive in 22 of 23 elections
+(mean +2.95). True as arithmetic, worthless as evidence.
+
+**Those ten seats were selected by their ACTUAL result.** A seat lands in that
+group partly because it got a positive error, so the group's mean error is
+positive by construction -- regression to the mean, selected on the outcome.
+It is the identical trap I had caught earlier the same day in the worst-seat
+tables (`aef7-worst-seats-2026-09-15.md`) and then walked straight into here.
+
+| selection | mean gap | elections positive |
+|---|--:|--:|
+| top 10 by **actual** share (what was done) | +2.95 | 22 of 23 |
+| top 10 by **predicted** share (sound) | **+0.41** | **13 of 23** |
+| **placebo: errors shuffled within election, no signal whatever** | **+2.28** | **23 of 23** |
+
+The placebo reproduces four fifths of the effect out of pure noise. Selected on
+a quantity known before the outcome, the Greens gap is +0.41 in 13 of 23.
+
+## The evidence that should have stopped it earlier
+
+The spread calibration was already available and said the opposite. Slope of
+(actual - mean) on (predicted - mean) across seats, per election:
+
+| class | mean slope | median | elections above 1 |
+|---|--:|--:|--:|
+| ALP | 1.026 | 1.008 | 12/23 |
+| **GRN** | **1.011** | **0.998** | **11/23** |
+| LNP | 0.982 | 0.982 | 10/23 |
+| IND | 0.958 | 0.927 | 9/23 |
+
+A real under-concentration would put the Greens slope well above 1. It is
+1.011 -- perfectly calibrated spread, indistinguishable from the majors. I ran
+this only because I paused to check whether the effect was Greens-specific
+before writing the pre-registration. Without that pause a plan would have been
+committed on an artefact.
+
+## What survives
+
+- **The eight group-D seats are real and expensive.** Ryan, Brisbane,
+  Griffith, Melbourne, Richmond, South Brisbane and the rest carry 9.5% of the
+  AEF-7's seat log loss. That is a sum over named seats with no selection
+  inference in it.
+- **The Greens' cost is real**: 18 wins given a mean win probability of 0.572,
+  5.1% of pooled log loss from 1.6% of seats, 8 of 18 winners under a coin
+  flip. Prahran 2014 at 0.013 is a genuine bad call.
+- **What does NOT survive is the explanation.** "The model systematically
+  under-concentrates the Greens" is unsupported, and so is everything resting
+  on it: the lag story about fed2025, the One Nation analogy, and the proposed
+  correction. Group D still needs a diagnosis.
+
+## The rule this earns
+
+**Never select a subgroup by the outcome and then report that subgroup's mean
+error.** The selector must be something known before the result -- the
+prediction, the prior vote, a demographic -- or the finding is guaranteed
+before any data is seen. Where selection on the outcome is unavoidable, run the
+shuffled placebo first: here it took one minute and returned +2.28 of the
++2.95.
+
+---
+
+# The original claim, left unedited below
+
 # The Greens are under-concentrated in 22 of 23 elections
 
 2026-09-15. Found while working group D of the AEF-7 triage

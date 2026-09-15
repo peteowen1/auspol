@@ -110,3 +110,19 @@ not be quoted as though it did. The evidence for that sits in
 - **Whether sa2026's ONP concentration generalises.** One election.
 - **Anything causal from the worst-seat tables.** Selection dominates them, as
   the two failed patterns above show.
+
+
+---
+
+## Addendum, same day: group D's LABEL is unexplained
+
+Group D was called "Greens inner-city cluster" and I proposed an
+under-concentration diagnosis for it. **That diagnosis was retracted** --
+`greens-under-concentration-2026-09-15.md` -- because it rested on selecting
+the top seats by their ACTUAL result, which guarantees a positive mean error.
+A shuffled placebo reproduced +2.28 of the +2.95, and the Greens' spread
+calibration is 1.011, indistinguishable from the majors.
+
+The eight seats and their 9.5% of pooled log loss are unaffected: that is a sum
+over named seats. What has no support is any account of WHY they are missed.
+Group D is an observation awaiting a diagnosis, not a diagnosed group.
