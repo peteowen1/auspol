@@ -34,7 +34,8 @@ List seat_sim_core(NumericMatrix shares, int n_sims, int shift_mode,
                    NumericVector flow_sd_by, double smooth, double fallback_smooth,
                    NumericVector shrink,
                    IntegerVector ov_seat, IntegerVector ov_key, NumericMatrix ov_mat,
-                   double fallback_flow_sd = 0) {
+                   double fallback_flow_sd = 0,
+                   NumericVector ov_sd = NumericVector::create()) {
   const int nseat = shares.nrow(), K = shares.ncol();
   // PER-SEAT CONDITIONAL OVERRIDE, sparse. The shared cell_mat is dense over
   // the key space but has no seat dimension; a per-seat dense table would be
@@ -135,6 +136,15 @@ List seat_sim_core(NumericMatrix shares, int n_sims, int shift_mode,
         const double* row;
         int stride = 0;
         bool got_cell = false;
+        // PER-CELL FLOW UNCERTAINTY. ov_sd carries one fitted sd per override
+        // row -- how much THIS flow actually drifts between elections, from
+        // scripts/fit_flow_drift.R, which measures 2.7 to 17.5 points
+        // depending on how many events back the rate, how many survivors are
+        // in the contest, and how stale it is. A single global flow_sd cannot
+        // express that range, which is why the blanket version made federal
+        // log loss worse. 0 means "not supplied", and the old per-source
+        // behaviour applies unchanged.
+        double ov_hit_sd = 0.0;
         // PER-SEAT override, consulted BEFORE the shared table -- the same
         // order R/seat_sim.R:1046 uses. A hit sets got_cell, so it takes plain
         // `smooth` and NOT max(smooth, fallback_smooth): an override row is a
@@ -147,6 +157,7 @@ List seat_sim_core(NumericMatrix shares, int n_sims, int shift_mode,
             got_cell = true;
             row = &ov_mat(it->second, 0);
             stride = ov_mat.nrow();
+            if (ov_sd.size() > it->second) ov_hit_sd = ov_sd[it->second];
           }
         }
         if (!got_cell) {
@@ -174,7 +185,8 @@ List seat_sim_core(NumericMatrix shares, int n_sims, int shift_mode,
         // gets AT LEAST fallback_flow_sd on top of whatever flow_sd_by[from]
         // already gives it; a real exact-cell hit is untouched. See the
         // fallback_flow_sd docstring in R/seat_sim.R.
-        const double fsd = (!got_cell) ? std::max(flow_sd_by[from], fallback_flow_sd) : flow_sd_by[from];
+        const double fsd = (ov_hit_sd > 0) ? ov_hit_sd
+                           : ((!got_cell) ? std::max(flow_sd_by[from], fallback_flow_sd) : flow_sd_by[from]);
         if (fsd > 0 && na > 1) {
           for (size_t t = 0; t < na; ++t) { const double e = R::rnorm(0.0, fsd / 100.0); const double q = p[t] + e; p[t] = q > 0 ? q : 0; }
           long double ps = 0.0L;

@@ -1182,7 +1182,7 @@ if (identical(Sys.getenv("AUSPOL_XGB_FLOWS", "0"), "1")) {
 }
 sim <- simulate_seat_contests(level_sd = .level_sd, level_mult = .lm(shares), shares, fm, party_sd = psd, seat_sd = SEAT_SD, shrink = SHRINK,
                               n_sims = N_SIMS, smooth = SMOOTH, seed = SEED,
-                              conditional_override = .cond_ov,
+                              conditional_override = .cond_ov, conditional_override_sd = attr(.cond_ov, "sd"),
                               statewide_draws = sw_draws,
                               fallback_smooth = FB_SMOOTH, shrink_k = SHRINK_K, flow_sd = FLOW_SD,
                               surge_h = surge_arg, surge_party = surge_party_arg,

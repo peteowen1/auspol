@@ -652,7 +652,7 @@ for (K in PAIRS) {
                                 seat_sd = sd_used * SEAT_SD_MULT,
                                 n_sims = N_SIMS, smooth = SMOOTH, seed = SEED,
                                 shrink = SHRINK, fallback_smooth = FB_SMOOTH, shrink_k = SHRINK_K,
-                                conditional_override = .xgb_flow_ov,
+                                conditional_override = .xgb_flow_ov, conditional_override_sd = attr(.xgb_flow_ov, "sd"),
                                 # WA passed only the SCALAR surge_h and never
                                 # surge_party/mu/sd, because it has no salience
                                 # corpus and so never had surge-v2 -- a

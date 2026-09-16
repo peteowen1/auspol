@@ -319,6 +319,7 @@ simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
                                    party_cor = NULL, fallback_smooth = 0,
                                    shrink_k = 0,
                                    conditional_override = NULL,
+                                   conditional_override_sd = NULL,
                                    flow_sd = 0,
                                    fallback_flow_sd = 0,
                                    exhaust = 0,
@@ -1055,11 +1056,12 @@ simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
     # loop would never match, rather than to be lenient: the R loop looks the
     # override up by the string it builds itself, so a key it cannot build is
     # dead there and must be dead here too.
-    ov_seat <- integer(0); ov_key <- integer(0); ov_mat <- base::matrix(0, 0L, K)
+    ov_seat <- integer(0); ov_key <- integer(0); ov_mat <- base::matrix(0, 0L, K); ov_sd <- numeric(0)
     if (.cond_override_active) {
       .os <- vector("list", length(conditional_override))
       .okv <- vector("list", length(conditional_override))
       .orw <- vector("list", length(conditional_override))
+      .osd <- vector("list", length(conditional_override))
       for (i in seq_along(conditional_override)) {
         co <- conditional_override[[i]]
         if (is.null(co) || !length(co)) next
@@ -1068,7 +1070,7 @@ simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
           stop("conditional_override[[", i, "]] has no names; it must be keyed ",
                "\"FROM|A+B+C\" like matrix$conditional")
         }
-        keys_i <- integer(0); rows_i <- list()
+        keys_i <- integer(0); rows_i <- list(); sds_i <- numeric(0)
         for (j in seq_along(co)) {
           kj <- nms[j]
           # `[[` on a list takes the FIRST exact match, so a repeated key is
@@ -1108,16 +1110,33 @@ simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
           row[pidx[.keep]] <- pmax(0, .or[.keep])
           keys_i <- c(keys_i, as.integer(unname(from_i) * 2^K + mask))
           rows_i[[length(rows_i) + 1L]] <- row
+          # Same order as rows_i, so ov_sd[t] describes ov_mat[t, ].
+          .sd1 <- 0
+          if (!is.null(conditional_override_sd) && !is.null(conditional_override_sd[[i]])) {
+            .sdv <- conditional_override_sd[[i]][[kj]]
+            if (!is.null(.sdv) && is.finite(.sdv)) .sd1 <- .sdv
+          }
+          sds_i <- c(sds_i, .sd1)
         }
         if (!length(keys_i)) next
         .os[[i]] <- rep.int(i - 1L, length(keys_i))
         .okv[[i]] <- keys_i
         .orw[[i]] <- do.call(rbind, rows_i)
+        .osd[[i]] <- sds_i
       }
       ov_seat <- as.integer(unlist(.os))
       ov_key <- as.integer(unlist(.okv))
       ov_mat <- do.call(rbind, .orw)
-      if (is.null(ov_mat)) { ov_seat <- integer(0); ov_key <- integer(0); ov_mat <- base::matrix(0, 0L, K) }
+      ov_sd <- as.numeric(unlist(.osd))
+      if (is.null(ov_mat)) { ov_seat <- integer(0); ov_key <- integer(0); ov_mat <- base::matrix(0, 0L, K); ov_sd <- numeric(0) }
+      # ov_sd[t] must describe ov_mat[t, ]. If these fall out of step the noise
+      # lands on the wrong cell and every number downstream still looks
+      # plausible -- exactly the silent class of failure this repo keeps
+      # relearning, so it is asserted rather than assumed.
+      if (length(ov_sd) && length(ov_sd) != nrow(ov_mat)) {
+        stop("conditional_override_sd flattened to ", length(ov_sd),
+             " values for ", nrow(ov_mat), " override rows; these must agree")
+      }
       if (length(ov_seat) != nrow(ov_mat) || length(ov_key) != nrow(ov_mat)) {
         stop("conditional_override flattening produced ", length(ov_seat), " seats, ",
              length(ov_key), " keys and ", nrow(ov_mat), " rows; these must agree")
@@ -1133,7 +1152,7 @@ simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
                           pool_mat, !is.null(pool_pw), pw_mat,
                           as.numeric(FLOW_SD_BY), as.numeric(smooth), as.numeric(fallback_smooth),
                           as.numeric(shrink), ov_seat, ov_key, ov_mat,
-                          as.numeric(fallback_flow_sd))
+                          as.numeric(fallback_flow_sd), as.numeric(ov_sd))
     wins[] <- core$wins; totals[] <- core$totals
     tcp_winner[] <- parties[core$tcp_w]; tcp_runnerup[] <- parties[core$tcp_r]
     tcp_share[] <- core$tcp_share
@@ -1244,9 +1263,18 @@ simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
         # nothing that matters relative to what the packed integer key saves
         # for the SHARED, much larger table below).
         row <- NULL
+        .ov_sd_hit <- 0
         if (!is.null(conditional_override) && !is.null(conditional_override[[i]])) {
           .ok <- paste0(parties[from], "|", paste(sort(parties[alive]), collapse = "+"))
           .or <- conditional_override[[i]][[.ok]]
+          # PER-CELL FLOW UNCERTAINTY, mirroring the compiled core's ov_sd.
+          # How much THIS flow actually drifts between elections, fitted by
+          # scripts/fit_flow_drift.R. 0 means not supplied and the
+          # per-source flow_sd applies unchanged.
+          if (!is.null(conditional_override_sd) && !is.null(conditional_override_sd[[i]])) {
+            .s1 <- conditional_override_sd[[i]][[.ok]]
+            if (!is.null(.s1) && is.finite(.s1)) .ov_sd_hit <- .s1
+          }
           if (!is.null(.or)) {
             # Same positional, full-length-K shape the pre-built cell_list
             # rows already have (see the "put(from * 2^K + mask, row)" block
@@ -1315,6 +1343,7 @@ simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
         # CLAUDE.md records where an is.null() guard beside it is dead code.
         .fsd <- FLOW_SD_BY[[from]]
         if (!got_cell) .fsd <- max(.fsd, fallback_flow_sd)
+        if (.ov_sd_hit > 0) .fsd <- .ov_sd_hit
         if (.fsd > 0 && length(alive) > 1L) {
           p <- pmax(0, p + stats::rnorm(length(p), 0, .fsd / 100))
           ps <- sum(p)

@@ -1701,7 +1701,7 @@ for (X in out_all) {
                                 shrink = shrink_arg, surge_h = surge_arg, surge_party = surge_party_arg,
                                 surge_from_zero = identical(Sys.getenv("AUSPOL_SURGE_FROM_ZERO", "0"), "1"),
                                 surge_mu = surge_mu_arg, surge_sd = surge_sd_arg,
-                                party_cor = PARTY_COR, statewide_draws = X$sw_draws, conditional_override = .xgb_flow_ov,
+                                party_cor = PARTY_COR, statewide_draws = X$sw_draws, conditional_override = .xgb_flow_ov, conditional_override_sd = attr(.xgb_flow_ov, "sd"),
                                 fallback_smooth = FB_SMOOTH, shrink_k = SHRINK_K, flow_sd = FLOW_SD)
   # OUR OWN final-two scenario frequencies -- see tcp_scenarios(). Uses
   # sprintf("fed%d", K$to) rather than `eb` to match how this harness names

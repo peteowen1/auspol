@@ -1085,7 +1085,7 @@ sim <- simulate_seat_contests(level_sd = .level_sd, sd_override = SD_OVR, level_
                               n_sims = N_SIMS, smooth = SMOOTH, seed = SEED,
                               shrink = SHRINK, party_cor = PARTY_COR,
                               fallback_smooth = FB_SMOOTH, shrink_k = SHRINK_K, flow_sd = FLOW_SD,
-                              conditional_override = .xgb_flow_ov,
+                              conditional_override = .xgb_flow_ov, conditional_override_sd = attr(.xgb_flow_ov, "sd"),
                               surge_h = surge_arg, surge_party = surge_party_arg,
                                 surge_from_zero = identical(Sys.getenv("AUSPOL_SURGE_FROM_ZERO", "0"), "1"), surge_mu = surge_mu_arg, surge_sd = surge_sd_arg)
 

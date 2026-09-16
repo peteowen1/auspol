@@ -75,11 +75,18 @@ if (nzchar(WEIGHT_SCHEME) && anyNA(TX$el_year))
 
 weights_for <- function(tr, target_year, target_region, target_seats) {
   if (!nzchar(WEIGHT_SCHEME)) return(rep(1, nrow(tr)))
-  if (!identical(WEIGHT_SCHEME, "decay8_seatregion"))
-    stop("unknown AUSPOL_FLOW_WEIGHT: ", WEIGHT_SCHEME,
-         " (only \"decay8_seatregion\" is implemented; add it to ",
+  known <- c("decay8_seatregion", "decay_hl8")
+  if (!WEIGHT_SCHEME %in% known)
+    stop("unknown AUSPOL_FLOW_WEIGHT: ", WEIGHT_SCHEME, " (implemented: ",
+         paste(known, collapse = ", "), "; add it to ",
          "scripts/fit_xgb_flows_weighted.R first and measure it there)")
   decay <- 0.5 ^ (pmax(0, target_year - tr$el_year) / 8)
+  # decay_hl8 is recency ONLY. Kept as a separate arm because the two proxy
+  # metrics disagree about it: it ties decay8_seatregion on pooled row-level
+  # flow RMSE but improves only 13 of 25 elections (sign p=1.00) against
+  # 18 of 25. When the proxies disagree, seat log loss in a harness run is
+  # what decides, so both get taken there rather than argued about.
+  if (identical(WEIGHT_SCHEME, "decay_hl8")) return(decay)
   seat_boost <- ifelse(tr$region == target_region & tr$seat %in% target_seats, 3, 1)
   decay * seat_boost
 }

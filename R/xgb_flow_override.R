@@ -317,5 +317,66 @@ xgb_flow_conditional_override_for <- function(shares, target_election, prev_elec
   cat(sprintf("XF9  per-seat xgb flows override built for %s: %d of %d seats, %d key(s) each (min_events=%d)\n",
               target_election, n_built, length(seats), nrow(key_rates), min_events))
   if (n_built == 0L) return(NULL)
+
+  # PER-CELL FLOW UNCERTAINTY, opt-in via AUSPOL_FLOW_CELL_SD. Attached as an
+  # attribute so a caller that does not know about it is unaffected; unset
+  # leaves this function byte-identical to before.
+  #
+  # The simulator has always applied one flow rate in every draw, so a wrong
+  # rate is wrong in all 20,000 of them. `flow_sd` exists to fix that but is a
+  # single global number, and a blanket flow_sd=15 measured WORSE on federal
+  # (log loss 0.2543 -> 0.2607): it charges a rate backed by 43 events the
+  # same uncertainty as one backed by 1. scripts/fit_flow_drift.R fits that
+  # uncertainty instead -- over 3,711 repeat sightings of the same cell, drift
+  # runs 2.7 to 17.5 points depending on sample size, survivor count and
+  # staleness.
+  if (identical(Sys.getenv("AUSPOL_FLOW_CELL_SD", "0"), "1")) {
+    dm_f <- "output/flow-drift-v1.model"; dc_f <- "output/flow-drift-v1-cols.json"
+    if (!file.exists(dm_f) || !file.exists(dc_f)) {
+      cat("XF9! AUSPOL_FLOW_CELL_SD=1 but output/flow-drift-v1.model is missing -- run scripts/fit_flow_drift.R; per-cell sd NOT applied
+")
+      return(out)
+    }
+    dmod <- xgboost::xgb.load(dm_f)
+    dcols <- jsonlite::fromJSON(readLines(dc_f))
+    t_year <- as.integer(sub("^[a-z]+", "", target_election))
+    hist2 <- data.table::copy(hist)
+    hist2[, "el_year" := as.integer(sub("^[a-z]+", "", get("election")))]
+    last_seen <- hist2[, list(prev_year = max(get("el_year")),
+                              prev_n = data.table::uniqueN(paste(get("election"), get("seat"), get("round")))),
+                       by = c("from", "surv", "to")]
+    KR <- merge(data.table::copy(key_rates), last_seen, by = c("from", "surv", "to"), all.x = TRUE)
+    KR[, "gap" := pmax(1L, t_year - get("prev_year"))]
+    KR[is.na(get("prev_n")), "prev_n" := 1L]
+    KR[, "n_surv" := lengths(strsplit(get("surv"), "+", fixed = TRUE))]
+    for (cl in CLASSES) KR[[paste0("f_", cl)]] <- as.integer(KR$from == cl)
+    for (cl in CLASSES) KR[[paste0("t_", cl)]] <- as.integer(KR$to == cl)
+    for (r in region_levels) KR[[paste0("r_", r)]] <- as.integer(region == r)
+    miss <- setdiff(dcols, names(KR))
+    if (length(miss)) {
+      cat(sprintf("XF9! drift model expects %s, which the override cannot build -- per-cell sd NOT applied
+",
+                  paste(miss, collapse = ", ")))
+      return(out)
+    }
+    # MEAN ABSOLUTE DEVIATION IS NOT A STANDARD DEVIATION: the drift model's
+    # target is |drift|, and sd = MAD * sqrt(pi/2) for a normal variate.
+    # Feeding the raw prediction in would understate the spread by 20%.
+    dpred <- pmax(0, stats::predict(dmod, as.matrix(KR[, ..dcols])))
+    KR[, "sd_pts" := 100 * dpred * sqrt(pi / 2)]
+    # One sd per transfer ROUND: the simulator perturbs a whole round's split
+    # at once, so a key's destinations share a single value.
+    key_sd <- KR[, list(sd_pts = mean(get("sd_pts"))), by = c("from", "surv")]
+    sd_lut <- stats::setNames(key_sd$sd_pts, paste0(key_sd$from, "|", key_sd$surv))
+    sd_out <- lapply(out, function(so) {
+      if (is.null(so)) return(NULL)
+      v <- sd_lut[names(so)]; v[is.na(v)] <- 0
+      stats::setNames(as.list(unname(v)), names(so))
+    })
+    attr(out, "sd") <- sd_out
+    cat(sprintf("XF9s per-cell flow sd attached: %d keys, %.1f to %.1f points (median %.1f)
+",
+                length(sd_lut), min(sd_lut), max(sd_lut), stats::median(sd_lut)))
+  }
   out
 }
