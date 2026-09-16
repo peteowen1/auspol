@@ -309,10 +309,21 @@ leading_candidate_returns <- function(election_from, election_to, corpus = NULL)
 #'   rate. Under `AUSPOL_DEFECT_POOLED="2"` this is resolved automatically
 #'   from [fit_defector_discount()] rather than threaded through six
 #'   harnesses -- see docs/plans/prereg-defector-two-rate-2026-09-09.md.
+#' @param minor_discount Optional numeric. When set, discounts `own_prev_pcv`
+#'   for a candidate who switched between two NON-major classes (e.g. ONP to
+#'   KAP/OTH_RIGHT) -- `prev_best` above matches on IDENTITY regardless of
+#'   party, so without this the old class's full, undiscounted result carries
+#'   forward as the new class's base. `NULL` (the default) leaves this
+#'   byte-identical to before the parameter existed. The value the harnesses
+#'   pass is [fit_minor_defector_discount()]'s own return -- a MEDIAN over 18
+#'   corpus cases, 0.3255 for most targets. (The review's headline "49%" is a
+#'   geometric mean at a lower `min_prior` and is NOT what ships; see that
+#'   function's docstring.) See
+#'   `docs/reviews/minor-to-minor-defector-2026-09-16.md`.
 #' @export
 personal_prior_vote <- function(election_from, election_to, corpus = NULL,
                                major_discount = NULL, pooled = NULL,
-                               loser_discount = NULL) {
+                               loser_discount = NULL, minor_discount = NULL) {
   # TWO-RATE MODE: `loser_discount` applies to a prior major-party candidate
   # who was NOT the sitting member; `major_discount` keeps applying to those
   # who were. NULL leaves one rate for both, which is the pooled arm.
@@ -482,6 +493,48 @@ personal_prior_vote <- function(election_from, election_to, corpus = NULL,
                        prev_party   = if (.N) party[which.max(pcv)] else NA_character_),
                    by = .(.s, .k)]
   out <- merge(lead[, list(seat, .s, party, .k)], prev_best, by = c(".s", ".k"), all.x = TRUE)
+  # MINOR-TO-MINOR DEFECTOR DISCOUNT, opt-in via `minor_discount`. `prev_best`
+  # above finds the best prior NON-MAJOR result for this identity regardless
+  # of whether the party matches -- so a candidate who switched from one
+  # minor party to another (Stephen Andrew, ONP -> KAP, Mirani qld2024) gets
+  # their OLD party's full undiscounted result as `own_prev_pcv`, on the
+  # documented assumption a few lines up that switching between minor labels
+  # "is a much smaller behavioural jump for voters and is not excluded". That
+  # assumption doesn't hold. The effect is real: at prev_pcv >= 5 there are 34
+  # corpus cases with a geometric mean retention of 0.50 (t-test on log-ratio
+  # p = 0.00035). docs/reviews/minor-to-minor-defector-2026-09-16.md.
+  #
+  # BUT THAT IS NOT THE NUMBER THAT SHIPS, and this comment claimed it was
+  # until the review gate checked it on 2026-09-16. Two gaps, both verified by
+  # running the function:
+  #   - the SIZING used prev_pcv >= 5; fit_minor_defector_discount()'s default
+  #     is min_prior = 10 and no caller overrides it, which cuts the sample to
+  #     18 cases.
+  #   - the sizing quoted a GEOMETRIC MEAN; the function returns a MEDIAN.
+  # Together: sized at 0.50, ships at 0.3255 (fed2025/sa2026/vic2022/wa2025;
+  # 0.3103 qld2024, 0.2939 nsw2023). A defector keeps a third of their vote,
+  # not half -- the shipped discount is materially harsher than its own
+  # evidence, and it was the harsher value that the harnesses measured, so the
+  # backtest numbers are honest even though the justification did not match.
+  # Which of the two is right is a constants question for a pre-registered
+  # grid, not something to settle by editing a comment; logged in
+  # docs/NEXT-STEPS.md. NULL (default) leaves this byte-identical to before
+  # the parameter existed.
+  # `transfer` (below) must carry the FULL prior vote regardless of this
+  # discount -- the old class genuinely lost the whole thing, discount or
+  # not. Saved before the discount is applied so remove_transferred_votes()
+  # still zeroes the old class's seat base correctly; without this, less
+  # gets removed from the old class than actually left it, which inflates
+  # ITS statewide average and leaks into every OTHER seat that class
+  # contests via dev_slope()'s level_prev term -- not just this target row.
+  # Found 2026-09-16 sizing why the base_pred version of this discount
+  # helped Mirani but made the pooled aggregate worse: docs/reviews/
+  # base-pred-blind-to-tonights-fixes-2026-09-16.md.
+  out[, .own_prev_pcv_full := own_prev_pcv]
+  if (!is.null(minor_discount) && is.finite(minor_discount)) {
+    out[!is.na(own_prev_pcv) & !prev_party %in% MAJ & !party %in% MAJ & prev_party != party,
+        own_prev_pcv := own_prev_pcv * minor_discount]
+  }
   # DEFECTOR FALLBACK, applied only where this candidate now stands for a
   # NON-major class and has no non-major history to draw on. Adding the
   # discounted rows to `prev_best` instead would match a returning ALP member
@@ -523,6 +576,26 @@ personal_prior_vote <- function(election_from, election_to, corpus = NULL,
       if (!is.null(loser_discount) && is.finite(loser_discount) && "def_was_mp" %in% names(out)) {
         out[def_was_mp %in% FALSE, .rate := loser_discount]
       }
+      # `transfer` HERE IS THE DISCOUNTED AMOUNT, and a few lines up the
+      # minor-to-minor path deliberately uses the UNDISCOUNTED one. The two
+      # paths answer the same question differently and that is not yet
+      # resolved -- flagged by the review gate 2026-09-16, left as-is.
+      #
+      # This path CONSERVES: `def_pcv * .rate` is added to the new class and
+      # the same `def_pcv * .rate` is taken out of the old one, so the votes
+      # a defector fails to carry are implicitly left with their old party --
+      # a new Nationals candidate inherits them.
+      #
+      # The minor-to-minor path does NOT conserve: it adds the discounted
+      # vote and removes the full one, on the argument at line 523 that the
+      # old class lost its candidate outright. That choice was MEASURED (it
+      # is what fixed the pooled aggregate while keeping Mirani), this one
+      # never has been. So do not "fix" this line to match without running
+      # it -- changing it moves every major-party defector seat in all six
+      # harnesses, and the conservative reading may well be right for a major
+      # party, which unlike a one-member minor still has a machine and a
+      # brand when its member walks. Constants question, logged in
+      # docs/NEXT-STEPS.md.
       out[is.na(own_prev_pcv) & !party %in% MAJ & !is.na(def_pcv),
           `:=`(own_prev_pcv = cls_pcv + def_pcv * .rate,
                prev_party   = def_party,
@@ -540,8 +613,9 @@ personal_prior_vote <- function(election_from, election_to, corpus = NULL,
   # into the simulator for one vote); Bob Katter's 46.7% as IND in Kennedy
   # 2010 did the same into OTH_RIGHT for 2013. NA when nothing moves.
   if (!"transfer" %in% names(out)) out[, transfer := NA_real_]
-  out[!is.na(own_prev_pcv) & is.na(transfer), transfer := own_prev_pcv]
+  out[!is.na(own_prev_pcv) & is.na(transfer), transfer := .own_prev_pcv_full]
   out[is.na(prev_party) | prev_party == party, `:=`(transfer = NA_real_, prev_party = NA_character_)]
+  out[, .own_prev_pcv_full := NULL]
   out[, list(seat, party, own_prev_pcv, prev_party, transfer)]
 }
 
@@ -725,6 +799,96 @@ fit_defector_discount <- function(target_election, corpus = NULL, min_n = 5L, pa
        discount_mp    = med(ratios$ratio[ratios$was_mp %in% TRUE]),
        discount_loser = med(ratios$ratio[ratios$was_mp %in% FALSE]),
        n = nrow(ratios), cases = ratios)
+}
+
+#' Fit the minor-to-minor defector discount, leave-target-out
+#'
+#' Same shape as [[fit_defector_discount]] but for a candidate who switched
+#' between two NON-major parties (Stephen Andrew, ONP -> KAP, Mirani
+#' qld2024) rather than out of a major one. Sized separately, not folded
+#' into the major-party rate: the two groups' retention scales differ
+#' (major-party sitting-MP median ~0.28-0.29, non-member ~0.142; this one's
+#' median is 0.3255 on 18 corpus cases), so sharing a rate risks being wrong
+#' for both. docs/reviews/minor-to-minor-defector-2026-09-16.md.
+#'
+#' `min_prior = 10` matches [[fit_defector_discount]]'s own floor -- a
+#' retention RATIO on a denominator that small is mostly noise, the same
+#' reason that function excludes them. No caller overrides it.
+#'
+#' **The sizing writeup and this default disagree, and the default wins.**
+#' The "49% retention, p = 0.0003" figure quoted in the review and previously
+#' in this docstring is a GEOMETRIC MEAN at `min_prior = 5` (34 cases,
+#' geometric mean 0.50, t-test on log-ratio p = 0.00035). This function
+#' returns a MEDIAN at `min_prior = 10`, which is 0.3255 -- a defector keeps
+#' a third of their vote here, not half. Both differences run the same way,
+#' so the shipped discount is harsher than the evidence that motivated it.
+#' The harnesses measured the shipped value, so no published number is wrong;
+#' what was wrong was a docstring citing evidence for a value the code does
+#' not use. Verified by running the function 2026-09-16 after the review gate
+#' queried the wording. Whether 0.33 or 0.50 forecasts better is a constants
+#' question for a pre-registered grid.
+#'
+#' @param target_election The election being scored. Its own (seat, party)
+#'   defector cases are excluded from the fit -- leave-one-out, same as
+#'   [[fit_defector_discount]].
+#' @param corpus Optional pre-read candidacy table; read from
+#'   `output/candidacies.csv` when `NULL`.
+#' @param min_n Minimum defector cases required to return a fit. Below this,
+#'   `discount` is `NULL`.
+#' @param pairs Optional list of `list(election=, prev=)`, as returned by
+#'   [all_election_pairs()]; that function's real pair list is used when
+#'   `NULL`.
+#' @param min_prior Minimum prior vote, in points, for a case to enter the
+#'   fit -- excludes a ratio taken on a denominator too small to mean
+#'   anything.
+#' @return A list: `discount` (the MEDIAN of the per-case retention ratios,
+#'   or `NULL` below `min_n`), `n` (cases used), `cases` (the underlying
+#'   data.table). Called it a "median geometric" ratio until 2026-09-16,
+#'   which read as a geometric mean and is a different statistic; the median
+#'   is transform-invariant, so there is nothing geometric about it.
+#' @export
+fit_minor_defector_discount <- function(target_election, corpus = NULL, min_n = 5L,
+                                        pairs = NULL, min_prior = 10) {
+  C <- corpus
+  if (is.null(C)) {
+    f <- file.path("output", "candidacies.csv")
+    if (!file.exists(f)) {
+      stop("fit_minor_defector_discount() needs output/candidacies.csv; run ",
+           "scripts/build_candidacies.R", call. = FALSE)
+    }
+    C <- data.table::fread(f, showProgress = FALSE)
+  }
+  C <- data.table::as.data.table(C)
+  MAJ <- c("ALP", "LNP", "NAT")
+  kk <- function(d) match_key(surname_of(if ("surname" %in% names(d)) d$surname else NA_character_,
+                                          if ("name" %in% names(d)) d$name else NA_character_),
+                               given_of(if ("given" %in% names(d)) d$given else NA_character_,
+                                        if ("name" %in% names(d)) d$name else NA_character_),
+                               "initial")
+  if (is.null(pairs)) pairs <- all_election_pairs()
+  pairs <- Filter(function(pr) !identical(pr$election, target_election), pairs)
+
+  ratios <- rbindlist(lapply(pairs, function(pr) {
+    PREVT <- C[C$election == pr$prev]
+    NOWT  <- C[C$election == pr$election]
+    if (!nrow(PREVT) || !nrow(NOWT)) return(NULL)
+    PREVT <- data.table::copy(PREVT)[, `:=`(.k = kk(.SD), .s = normalise_seat(seat))]
+    NOWT  <- data.table::copy(NOWT)[,  `:=`(.k = kk(.SD), .s = normalise_seat(seat))]
+    a <- PREVT[nzchar(.k) & !party %in% MAJ & pcv >= min_prior,
+               .(.s, .k, prior_pcv = pcv, prior_party = party)][
+                 , .SD[which.max(prior_pcv)], by = .(.s, .k)]
+    b <- NOWT[nzchar(.k) & !party %in% MAJ, .(.s, .k, target_pcv = pcv, party)][
+      , .SD[which.max(target_pcv)], by = .(.s, .k)]
+    m <- merge(a, b, by = c(".s", ".k"))
+    m <- m[prior_party != party]
+    if (!nrow(m)) return(NULL)
+    m[, .(pair = pr$election, ratio = target_pcv / prior_pcv)]
+  }), fill = TRUE)
+
+  if (is.null(ratios) || nrow(ratios) < min_n) {
+    return(list(discount = NULL, n = if (is.null(ratios)) 0L else nrow(ratios), cases = ratios))
+  }
+  list(discount = stats::median(ratios$ratio, na.rm = TRUE), n = nrow(ratios), cases = ratios)
 }
 
 #' Keep the re-entry prior from overwriting a more-informed personal-vote floor

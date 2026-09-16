@@ -293,6 +293,41 @@ CAL_TAG <- paste0(
   if (as.numeric(Sys.getenv("AUSPOL_FLOW_SD", "0")) != 0)
     sprintf("-fsd%s", sub("[.]", "", format(as.numeric(Sys.getenv("AUSPOL_FLOW_SD")), nsmall = 1)))
   else "",
+  # FLOW MODEL VARIANT in the fingerprint. Added 2026-09-16 after a federal
+  # A/B silently overwrote its own baseline: AUSPOL_FLOW_MODEL_TAG changes
+  # which model the run loads but did not change the output filename, so both
+  # arms wrote the same file and the second clobbered the first. That is the
+  # exact failure CAL_TAG exists to prevent -- this file's own header
+  # (backtest_candidate_fed.R, the "seat_sd sweep" note) records a sweep
+  # doing it to backtest-fed.csv and backtest-vic.csv on 2026-08-21, where it
+  # read as "+0.0000 difference" across all six federal elections. CLAUDE.md
+  # carries the general pattern, not that incident.
+  # Behaviour-changing switch, so it MUST alter the filename. Added
+  # 2026-09-16 -- the third switch in one session to change what a run does
+  # without changing what the run is called. CAL_TAG exists for exactly this.
+  if (identical(Sys.getenv("AUSPOL_FLOW_CELL_SD", "0"), "1")) "-cellsd" else "",
+  # AUSPOL_SD_DEPARTED widens the per-cell sd override to ALP/LNP cells in
+  # seats whose previous winner has left the ballot, inside
+  # xgb_primary_sd_matrix() (R/xgb_primary_sd_override.R:103) -- so it never
+  # appears in this file and a grep of the harness could not see it.
+  #
+  # THIS IS READABILITY, NOT A BUG FIX, and the commit that added it
+  # (d91dc9c) says otherwise. It claimed two arms differing only in this
+  # switch would overwrite each other's output file. They would not:
+  # .arm_fingerprint above hashes EVERY set AUSPOL_* variable, and
+  # apply_published_flags() sets every published switch before it runs, so
+  # the baseline hashes to -a614a9d and the SD_DEPARTED arm to -a614adc.
+  # Measured 2026-09-16, after the same wrong diagnosis had already been
+  # made once that night and corrected by git note on 4456aea. What this
+  # line actually buys is a filename that SAYS which arm it is instead of
+  # hiding it in an opaque six-character hash -- worth having, and not what
+  # was claimed. docs/MODEL-REGISTRY.md marks the switch "UNEXPLAINED --
+  # audit this" because its grep only scans the harnesses and
+  # fit_seats_full.R, never R/; that gap is real and separate.
+  if (identical(Sys.getenv("AUSPOL_SD_DEPARTED", "0"), "1")) "-sddep" else "",
+  if (nzchar(Sys.getenv("AUSPOL_FLOW_MODEL_TAG", "")))
+    sprintf("-fm%s", Sys.getenv("AUSPOL_FLOW_MODEL_TAG"))
+  else "",
   if (as.numeric(Sys.getenv("AUSPOL_PARTY_SD", "1.5")) != 1.5)
     sprintf("-psd%s", sub("[.]", "", format(as.numeric(Sys.getenv("AUSPOL_PARTY_SD")), nsmall = 2)))
   else "",
@@ -531,8 +566,24 @@ if (!is.null(.fitsl)) cat(sprintf("FS1  fitted slopes | same %s | new %s
 ",
   paste(sprintf("%s=%.3f", names(.fitsl$same), .fitsl$same), collapse=" "),
   paste(sprintf("%s=%.3f", names(.fitsl$new),  .fitsl$new),  collapse=" ")))
+# MINOR-TO-MINOR DEFECTOR DISCOUNT reaching base_pred, not just the xgb
+# feature -- docs/reviews/base-pred-blind-to-tonights-fixes-2026-09-16.md.
+# Same shape as major_discount/.defect above.
+.minor_disc <- NULL
+if (identical(Sys.getenv("AUSPOL_MINOR_DEFECT_BASE_PRED", "0"), "1")) {
+  .mfd <- tryCatch(fit_minor_defector_discount(TGT), error = function(e) {
+    cat(sprintf("BS0n! minor-defector fit FAILED, no discount applied: %s\n", conditionMessage(e)))
+    list(discount = NULL, n = 0L)
+  })
+  if (is.null(.mfd$discount)) {
+    cat(sprintf("BS0n! only %d minor-defector case(s) (need >=5); no discount applied\n", .mfd$n))
+  } else {
+    cat(sprintf("BS0n minor-defector discount %.3f from %d cases (target excluded)\n", .mfd$discount, .mfd$n))
+    .minor_disc <- .mfd$discount
+  }
+}
 .split <- split_slope_context(PRV, TGT)
-.own_prev <- if (.cond) tryCatch(personal_prior_vote(PRV, TGT, major_discount = .defect), error = function(e) { cat(sprintf("BS1p! personal_prior_vote() FAILED; class-level bases kept and NO transfer removed: %s\n", conditionMessage(e))); NULL }) else NULL
+.own_prev <- if (.cond) tryCatch(personal_prior_vote(PRV, TGT, major_discount = .defect, minor_discount = .minor_disc), error = function(e) { cat(sprintf("BS1p! personal_prior_vote() FAILED; class-level bases kept and NO transfer removed: %s\n", conditionMessage(e))); NULL }) else NULL
 mat <- remove_transferred_votes(mat, .own_prev)  # the vote moves with the person; see personal_prior_vote()
 .tr <- attr(mat, "transfers"); if (!is.null(.tr)) cat(sprintf("TR1  transfers moved with the person: %d applied%s\n", .tr$applied, if (length(.tr$skipped)) paste0("; SKIPPED ", length(.tr$skipped), ": ", paste(utils::head(.tr$skipped, 5), collapse = ", ")) else ""))
 .own_x <- function(p, seats, x) {
@@ -852,6 +903,30 @@ if (PORT) {
 }
 shares <- xgb_primary_override(shares, TGT)
 
+# EDUCATION RESIDUAL CORRECTION (AUSPOL_EDU_RESID, default 0).
+# Pre-registered in docs/plans/prereg-education-residual-correction-2026-09-15.md.
+# Applied HERE, immediately after the override, so it corrects exactly the
+# shares that reach the simulation. Leakage-free: the coefficient for this pair
+# is fitted on every OTHER pair's out-of-fold residuals.
+if (identical(Sys.getenv("AUSPOL_EDU_RESID", "0"), "1")) {
+  shares <- education_residual_apply(
+    shares, TGT,
+    feature = Sys.getenv("AUSPOL_EDU_RESID_FEATURE", "yr12_pct"),
+    shuffle = Sys.getenv("AUSPOL_EDU_RESID_SHUFFLE", "0"))
+}
+
+# DEMOGRAPHIC RESIDUAL CORRECTION, Arm A of
+# docs/plans/prereg-demographic-axis-2026-09-15.md (AUSPOL_DEMO_RESID,
+# default 0). All seven census columns under an elastic net, replacing the
+# single hand-picked yr12_pct of the refused version above. Same position in
+# the pipeline, immediately after the override, so it corrects exactly the
+# shares that reach the simulation.
+if (identical(Sys.getenv("AUSPOL_DEMO_RESID", "0"), "1")) {
+  shares <- demographic_residual_apply(
+    shares, TGT,
+    shuffle = Sys.getenv("AUSPOL_DEMO_RESID_SHUFFLE", "0"))
+}
+
 # Per-seat spread from the seat file of the election being predicted.
 sp <- seat_swing_spread(as.data.table(load_seats(TO, "sa")),
                         unname(st_b[["ALP"]] - st_a[["ALP"]]))
@@ -1036,9 +1111,28 @@ sim <- simulate_seat_contests(level_sd = .level_sd, sd_override = SD_OVR, level_
                               n_sims = N_SIMS, smooth = SMOOTH, seed = SEED,
                               shrink = SHRINK, party_cor = PARTY_COR,
                               fallback_smooth = FB_SMOOTH, shrink_k = SHRINK_K, flow_sd = FLOW_SD,
-                              conditional_override = .xgb_flow_ov,
+                              conditional_override = .xgb_flow_ov, conditional_override_sd = attr(.xgb_flow_ov, "sd"),
                               surge_h = surge_arg, surge_party = surge_party_arg,
                                 surge_from_zero = identical(Sys.getenv("AUSPOL_SURGE_FROM_ZERO", "0"), "1"), surge_mu = surge_mu_arg, surge_sd = surge_sd_arg)
+
+# OUR OWN final-two scenario frequencies -- see tcp_scenarios(). Pete asked
+# 2026-09-16 whether we track how often a seat lands on each possible
+# head-to-head; simulate_seat_contests() already computes this per draw and
+# every harness discarded it. Written per pair so build_aef_tcp.R-style
+# tooling can compare against AEF's own seatTcpScenarios.
+.scen <- tcp_scenarios(sim)
+if (!is.null(.scen) && nrow(.scen)) {
+  fwrite(.scen, file.path("output", sprintf("backtest-%s-ourtcp%s.csv", TGT, CAL_TAG)))
+  cat(sprintf("BS2t  wrote %d seat/scenario rows to backtest-%s-ourtcp%s.csv
+",
+              nrow(.scen), TGT, CAL_TAG))
+} else {
+  # NOT silent. No file AND no message is indistinguishable from this
+  # script never having run for the pair -- the gap the data-registry
+  # discipline exists to make visible.
+  cat(sprintf("BS2t! tcp_scenarios() returned no rows for %s -- ourtcp CSV NOT written
+", TGT))
+}
 cat(sprintf("BS2e  engine %s | surge recipient fell back: %d class(es) absent, %d seat-draws at zero share\n", sim$engine, sim$surge_recipient_fallback, sim$surge_recipient_fallback_draws))
 wp <- as.data.table(sim$win_prob)
 

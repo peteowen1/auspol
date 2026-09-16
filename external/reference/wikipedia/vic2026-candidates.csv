@@ -1,0 +1,380 @@
+seat,name,party_raw,sitting
+Albert Park,Nina Taylor,Australian Labor Party,TRUE
+Albert Park,Sonya Semmens,Australian Greens,FALSE
+Albert Park,Tammy Lindrum,One Nation,FALSE
+Albert Park,Colleen Bolger,Victorian Socialists,FALSE
+Ashwood,Matt Fregon,Australian Labor Party,TRUE
+Ashwood,Tim Randall,Australian Greens,FALSE
+Ashwood,Jacob van der Eynden,Victorian Socialists,FALSE
+Ashwood,Theo Zographos,Liberal,FALSE
+Ashwood,Hitendra Joshi,Independent,FALSE
+Bass,Chris Buckingham,Australian Labor Party,FALSE
+Bass,Sophie Thorn,Australian Greens,FALSE
+Bass,Nikole Schellekens,One Nation,FALSE
+Bass,Chris Jobe,Victorian Socialists,FALSE
+Bass,Rochelle Halstead,Liberal,FALSE
+Bayswater,Julie Buxton,Australian Labor Party,FALSE
+Bayswater,Jess Kennedy,Australian Greens,FALSE
+Bayswater,Alec Ferguson,Victorian Socialists,FALSE
+Bayswater,David Kitchen,Liberal,FALSE
+Bayswater,Gary Coombs,Family First,FALSE
+Bellarine,Alison Marchant,Australian Labor Party,TRUE
+Bellarine,Mitch Pope,Australian Greens,FALSE
+Bellarine,Callum Whitehead,Liberal,FALSE
+Bellarine,Dom Williams,Socialist Alliance,FALSE
+Benambra,Graham Parton,Australian Greens,FALSE
+Benambra,Alex Vangalen,Victorian Socialists,FALSE
+Benambra,Steve Martin,Liberal,FALSE
+Benambra,Lachie McKeeman,Independent,FALSE
+Benambra,Mike Fruery,Animal Justice Party,FALSE
+Bendigo East,Michael Tolhurst,Australian Greens,FALSE
+Bendigo East,Cheryl Hawken,One Nation,FALSE
+Bendigo East,Denali Norsen,Victorian Socialists,FALSE
+Bendigo East,Andrew Lethlean,National,FALSE
+Bendigo West,Liza Shaw,Australian Greens,FALSE
+Bendigo West,Tayne Shalevski,Victorian Socialists,FALSE
+Bentleigh,Nick Staikos,Australian Labor Party,TRUE
+Bentleigh,Liam Kruger,Victorian Socialists,FALSE
+Bentleigh,Tynan Putt,Liberal,FALSE
+Berwick,Rana Khan,Australian Labor Party,FALSE
+Berwick,Roshan De Silva,Australian Greens,FALSE
+Berwick,Michael Piastrino,One Nation,FALSE
+Berwick,Nalinda Amarasiri Gunawardana,Victorian Socialists,FALSE
+Berwick,Brad Battin,Liberal,TRUE
+Berwick,Vincenzo De Paolis,Family First,FALSE
+Box Hill,Paul Hamer,Australian Labor Party,TRUE
+Box Hill,Aaron Qin,Australian Greens,FALSE
+Box Hill,Jamie Baker,One Nation,FALSE
+Box Hill,Saravina Afaj,Victorian Socialists,FALSE
+Box Hill,Sally Houguet,Liberal,FALSE
+Box Hill,Heena Sinha Cheung,Independent,FALSE
+Box Hill,Peter Fagg,Family First,FALSE
+Brighton,Bridget Mullahy,Australian Labor Party,FALSE
+Brighton,Ebony Bain,Australian Greens,FALSE
+Brighton,Jessica Smith,Victorian Socialists,FALSE
+Brighton,James Newbury,Liberal,TRUE
+Broadmeadows,Kathleen Matthews-Ward,Australian Labor Party,TRUE
+Broadmeadows,Maryam Nasim,Australian Greens,FALSE
+Broadmeadows,Mutullah Can Yolbulan,Victorian Socialists,FALSE
+Broadmeadows,Sue Bolton,Socialist Alliance,FALSE
+Broadmeadows,Candace Feild,Animal Justice Party,FALSE
+Brunswick,Gabriel Steger,Australian Labor Party,FALSE
+Brunswick,Adam Pulford,Australian Greens,FALSE
+Brunswick,Naomi Farmer,Victorian Socialists,FALSE
+Bulleen,Tomas Lightbody,Australian Greens,FALSE
+Bulleen,Dimitrios Tafidis,Victorian Socialists,FALSE
+Bulleen,Matthew Guy,Liberal,TRUE
+Bundoora,Colin Brooks,Australian Labor Party,TRUE
+Bundoora,Nina Laitala,Australian Greens,FALSE
+Bundoora,Sagar Sanyal,Victorian Socialists,FALSE
+Bundoora,Chris Parr,Liberal,FALSE
+Bundoora,Melissa Murphy-Webster,Independent,FALSE
+Carrum,Sonya Kilkenny,Australian Labor Party,TRUE
+Carrum,Reema Ababneh,Victorian Socialists,FALSE
+Carrum,Jeff Shelley,Liberal,FALSE
+Caulfield,Mikaela Stafrace,Australian Labor Party,FALSE
+Caulfield,Angel Dolejsí,Australian Greens,FALSE
+Caulfield,Malak Ababneh,Victorian Socialists,FALSE
+Caulfield,David Southwick,Liberal,TRUE
+Caulfield,Geneviève Gilbert,Family First,FALSE
+Clarinda,Meng Heang Tak,Australian Labor Party,TRUE
+Clarinda,Conor Boyd-Eedle,Australian Greens,FALSE
+Clarinda,Kit Message,Victorian Socialists,FALSE
+Cranbourne,Pauline Richards,Australian Labor Party,TRUE
+Cranbourne,Annalise Mercer,Australian Greens,FALSE
+Cranbourne,Reem Yunis,Victorian Socialists,FALSE
+Cranbourne,Shane Foreman,Family First,FALSE
+Croydon,Richard Farr,Australian Labor Party,FALSE
+Croydon,Lini Fernando,Australian Greens,FALSE
+Croydon,Beth Grimshaw,Victorian Socialists,FALSE
+Croydon,Grant Hutchinson,Liberal,FALSE
+Croydon,David Vanderwolf,Independent,FALSE
+Dandenong,Gabrielle Williams,Australian Labor Party,TRUE
+Dandenong,Catherine D'Arcy,Australian Greens,FALSE
+Dandenong,Glenda Wright,One Nation,FALSE
+Dandenong,Jack McMahon,Victorian Socialists,FALSE
+Eildon,Kevin Gibson,Australian Labor Party,FALSE
+Eildon,Talia Gulpilil,Australian Greens,FALSE
+Eildon,Cindy McLeish,Liberal,TRUE
+Eildon,Chloe Bond,Animal Justice Party,FALSE
+Eltham,Vicki Ward,Australian Labor Party,TRUE
+Eltham,Rachel Busbridge,Australian Greens,FALSE
+Eltham,Jessie Weatherly,One Nation,FALSE
+Eltham,Maeve Riches,Victorian Socialists,FALSE
+Eltham,Paul Byrnes,Liberal,FALSE
+Essendon,Katerine Theodosis,Australian Labor Party,FALSE
+Essendon,James Williams,Australian Greens,FALSE
+Essendon,John Barnes,One Nation,FALSE
+Essendon,Michal Kedem,Victorian Socialists,FALSE
+Essendon,Tommy Le Deux,Liberal,FALSE
+Essendon,Oscar Yildiz,Independent,FALSE
+Eureka,Michaela Settle,Australian Labor Party,TRUE
+Eureka,Sam McColl,Australian Greens,FALSE
+Eureka,Paul Ballinger,One Nation,FALSE
+Eureka,Andy Raven,Victorian Socialists,FALSE
+Eureka,Emma Muir,Liberal,FALSE
+Eureka,Wendy Morrison,Animal Justice Party,FALSE
+Eureka,Ian Harkness,Family First,FALSE
+Euroa,Alysia Regan,Australian Greens,FALSE
+Euroa,Steve Campbell,One Nation,FALSE
+Euroa,Annabelle Cleeland,National,TRUE
+Evelyn,Analise Sherlock,Australian Labor Party,FALSE
+Evelyn,Andrew Henley,Australian Greens,FALSE
+Evelyn,Bridget Vallence,Liberal,TRUE
+Evelyn,Jan Heald,Animal Justice Party,FALSE
+Footscray,Katie Hall,Australian Labor Party,TRUE
+Footscray,Elena Pereyra,Australian Greens,FALSE
+Footscray,Alexander Lopez,One Nation,FALSE
+Footscray,Jasmine Duff,Victorian Socialists,FALSE
+Footscray,Minh Quan Nguyen,The West Party,FALSE
+Footscray,Jess Marsh,Independent,FALSE
+Frankston,Paul Edbrooke,Australian Labor Party,TRUE
+Frankston,Katie Goulas,Australian Greens,FALSE
+Frankston,Andrew Cheeseman,Victorian Socialists,FALSE
+Frankston,Bree Ambry,Liberal,FALSE
+Frankston,Chrysten Abraham,Independent,FALSE
+Frankston,Julie Harman,Animal Justice Party,FALSE
+Geelong,Christine Couzens,Australian Labor Party,TRUE
+Geelong,Emilie Flynn,Australian Greens,FALSE
+Geelong,Bree Vanderpol,Victorian Socialists,FALSE
+Geelong,Andy Pobjoy,Liberal,FALSE
+Geelong,Brenden Grull,Socialist Alliance,FALSE
+Gippsland East,Sonny Stephens,Australian Labor Party,FALSE
+Gippsland East,Ash Munro,Australian Greens,FALSE
+Gippsland East,Steve Goodman,One Nation,FALSE
+Gippsland East,Amy Espeseth,Victorian Socialists,FALSE
+Gippsland East,Gemma Rendell,National,FALSE
+Gippsland South,Zave Evans,Australian Greens,FALSE
+Gippsland South,Bianca Wilke,One Nation,FALSE
+Gippsland South,Danny O'Brien,National,TRUE
+Glen Waverley,John Mullahy,Australian Labor Party,TRUE
+Glen Waverley,Toyo White,Australian Greens,FALSE
+Glen Waverley,Nicholas Siow,Victorian Socialists,FALSE
+Glen Waverley,Jacky Sun,Liberal,FALSE
+Greenvale,Iwan Walters,Australian Labor Party,TRUE
+Greenvale,Kirill Smelov,Victorian Socialists,FALSE
+Greenvale,Jim Overend,Liberal,FALSE
+Hastings,Paul Mercurio,Australian Labor Party,TRUE
+Hastings,Isaac Willoughby,Australian Greens,FALSE
+Hastings,Frank Schiefler,Liberal,FALSE
+Hastings,Chloe Coulson,Animal Justice Party,FALSE
+Hawthorn,Clive Crosby,Australian Labor Party,FALSE
+Hawthorn,Kylie Rocha,Australian Greens,FALSE
+Hawthorn,Tess McEnearney,Victorian Socialists,FALSE
+Hawthorn,John Pesutto,Liberal,TRUE
+Hawthorn,Shima Ibuki,Independent,FALSE
+Ivanhoe,Anthony Carbines,Australian Labor Party,TRUE
+Ivanhoe,Nina Crawley,Australian Greens,FALSE
+Ivanhoe,Ben Milne,Victorian Socialists,FALSE
+Ivanhoe,Oscar Lopez,Liberal,FALSE
+Ivanhoe,Michelle Kennedy,Independent,FALSE
+Kalkallo,Ros Spence,Australian Labor Party,TRUE
+Kalkallo,Courtney Millett,Victorian Socialists,FALSE
+Kew,David Sun,Australian Labor Party,FALSE
+Kew,Jackie Carter,Australian Greens,FALSE
+Kew,Samantha Lincolne,Victorian Socialists,FALSE
+Kew,Jess Wilson,Liberal,TRUE
+Kew,Sophie Torney,Independent,FALSE
+Kew,Ann Seeley,Family First,FALSE
+Kororoit,Luba Grigorovitch,Australian Labor Party,TRUE
+Kororoit,Joyce McDonald,Australian Greens,FALSE
+Kororoit,Rayan Hassan,Victorian Socialists,FALSE
+Lara,Ella George,Australian Labor Party,TRUE
+Lara,Theresa Slater,Australian Greens,FALSE
+Lara,Oliver Randall,Victorian Socialists,FALSE
+Lara,Sarah Hathway,Socialist Alliance,FALSE
+Laverton,Sarah Connolly,Australian Labor Party,TRUE
+Laverton,Lucy Nguyen,Australian Greens,FALSE
+Laverton,Van Thanh Rudd,Victorian Socialists,FALSE
+Laverton,Ghada Noune,Liberal,FALSE
+Laverton,Shohre Mansouri,Animal Justice Party,FALSE
+Lowan,Emma Kealy,National,TRUE
+Lowan,Lee Ann Elms,Family First,FALSE
+Macedon,Annette Death,Australian Labor Party,FALSE
+Macedon,Marley McRae McLeod,Australian Greens,FALSE
+Macedon,Catherine Wilson,Victorian Socialists,FALSE
+Macedon,Kate Kendall,Liberal,FALSE
+Macedon,Natalie Korinfsky,Animal Justice Party,FALSE
+Malvern,Georgia Katsikis,Australian Greens,FALSE
+Malvern,Gavin Leonard,Victorian Socialists,FALSE
+Malvern,Amelia Hamer,Liberal,FALSE
+Melbourne,Davydd Griffiths,Australian Labor Party,FALSE
+Melbourne,Ellen Sandell,Australian Greens,TRUE
+Melbourne,Jordan van den Lamb,Victorian Socialists,FALSE
+Melbourne,Naomi Jones,Animal Justice Party,FALSE
+Melton,Broden Borg,Australian Labor Party,FALSE
+Melton,Veronika Levchenkova,Australian Greens,FALSE
+Melton,Matthew Katselis,One Nation,FALSE
+Melton,Jarrod Bingham,Liberal,FALSE
+Melton,Fiona Adin-Jones,Animal Justice Party,FALSE
+Melton,Marlene West,Family First,FALSE
+Mildura,Katie Clements,Australian Greens,FALSE
+Mildura,Guy Cooper,One Nation,FALSE
+Mildura,Renee Nayef,Victorian Socialists,FALSE
+Mildura,Jade Benham,National,TRUE
+Mildura,Ali Cupper,Independent,FALSE
+Mill Park,Elizabeth Nealy,Australian Labor Party,FALSE
+Mill Park,Jesse Lambourn,Victorian Socialists,FALSE
+Mill Park,Joel Drysdale,Liberal,FALSE
+Monbulk,Daniela De Martino,Australian Labor Party,TRUE
+Monbulk,Merran Blair,Australian Greens,FALSE
+Monbulk,Clare Fitzmaurice,Liberal,FALSE
+Monbulk,Alyssa Wormald,Animal Justice Party,FALSE
+Monbulk,Craig Manners,Family First,FALSE
+Mordialloc,Tim Richardson,Australian Labor Party,TRUE
+Mordialloc,Alex Breskin,Australian Greens,FALSE
+Mordialloc,Mahee Hossain,Victorian Socialists,FALSE
+Mordialloc,Paul O'Halloran,Liberal,FALSE
+Mornington,Ashli Beards,One Nation,FALSE
+Mornington,Chris Crewther,Liberal,TRUE
+Morwell,Tracie Lund,Australian Labor Party,FALSE
+Morwell,Rochelle Hine,Australian Greens,FALSE
+Morwell,Martin Cameron,National,TRUE
+Mulgrave,Eden Foster,Australian Labor Party,TRUE
+Mulgrave,Paul Schofield,Australian Greens,FALSE
+Mulgrave,Connor Buchanan,Victorian Socialists,FALSE
+Mulgrave,Charles Tran,Liberal,FALSE
+Murray Plains,Zoe Cook,Australian Greens,FALSE
+Murray Plains,Garner Smith,One Nation,FALSE
+Murray Plains,Brett Hosking,National,FALSE
+Narracan,Jannette Langley,Australian Labor Party,FALSE
+Narracan,Alyssa Weaver,Australian Greens,FALSE
+Narracan,Ben Lucas,One Nation,FALSE
+Narracan,Moss Page,Victorian Socialists,FALSE
+Narracan,Wayne Farnham,Liberal,TRUE
+Narracan,Geoff Dethlefs,Family First,FALSE
+Narre Warren North,Belinda Wilson,Australian Labor Party,TRUE
+Narre Warren North,Hayley Perry,Australian Greens,FALSE
+Narre Warren North,Sebastian Crutchfield,One Nation,FALSE
+Narre Warren South,Stefan Koomen,Australian Labor Party,FALSE
+Narre Warren South,Jill Nambu,Australian Greens,FALSE
+Narre Warren South,Trevor Hammond,One Nation,FALSE
+Narre Warren South,Bailey McCracken,Victorian Socialists,FALSE
+Narre Warren South,Norliah Peterson,Liberal,FALSE
+Narre Warren South,Scott Watson,Independent,FALSE
+Nepean,Sianan Healy,Australian Greens,FALSE
+Nepean,Darren Hercus,One Nation,FALSE
+Nepean,Anthony Marsh,Liberal,TRUE
+Niddrie,Ben Carroll,Australian Labor Party,TRUE
+Niddrie,Brendan Laws,Victorian Socialists,FALSE
+Niddrie,Samantha Byrne,Liberal,FALSE
+Niddrie,Elisabetta Celata,The West Party,FALSE
+Northcote,Kat Theophanous,Australian Labor Party,TRUE
+Northcote,Campbell Gome,Australian Greens,FALSE
+Northcote,Kath Larkin,Victorian Socialists,FALSE
+Northcote,Lynda Awad,Liberal,FALSE
+Northcote,Jim Penman,Libertarian Party,FALSE
+Oakleigh,Steve Dimopoulos,Australian Labor Party,TRUE
+Oakleigh,Hsiang Han-Hsieh,Australian Greens,FALSE
+Oakleigh,Rowdy Bugter,Victorian Socialists,FALSE
+Oakleigh,Martin Jung,Liberal,FALSE
+Ovens Valley,Ben Gilbert,Australian Greens,FALSE
+Ovens Valley,Tim McCurdy,National,TRUE
+Ovens Valley,Steve Manning,Independent,FALSE
+Pakenham,Alessandra Soliven,Australian Labor Party,FALSE
+Pakenham,Nasser Yawari,Australian Greens,FALSE
+Pakenham,Warren Pickering,One Nation,FALSE
+Pakenham,Stephanie Grigg,Victorian Socialists,FALSE
+Pakenham,Radmila Dyson,Liberal,FALSE
+Pakenham,Raymond French,Independent,FALSE
+Pascoe Vale,Anthony Cianflone,Australian Labor Party,TRUE
+Pascoe Vale,Angelica Panopoulos,Australian Greens,FALSE
+Pascoe Vale,Yasemin Shamsili,Victorian Socialists,FALSE
+Pascoe Vale,Jacob Andrewartha,Socialist Alliance,FALSE
+Pascoe Vale,Kathrine Ashton,Family First,FALSE
+Point Cook,Mathew Hilakari,Australian Labor Party,TRUE
+Point Cook,Ponraj Krishna Pandi,Australian Greens,FALSE
+Point Cook,Cameron Reid,One Nation,FALSE
+Point Cook,Taylor Laine,Victorian Socialists,FALSE
+Point Cook,Raja Reddy,Liberal,FALSE
+Point Cook,Mark Grech,The West Party,FALSE
+Polwarth,Hutch Hussein,Australian Labor Party,FALSE
+Polwarth,Jesse Holden,Australian Greens,FALSE
+Polwarth,Richard Riordan,Liberal,TRUE
+Prahran,Meghan Hopper,Australian Labor Party,FALSE
+Prahran,Angelica Di Camillo,Australian Greens,FALSE
+Prahran,Clayton Doueihi,Victorian Socialists,FALSE
+Prahran,Rachel Westaway,Liberal,TRUE
+Preston,Nathan Lambert,Australian Labor Party,TRUE
+Preston,Loki Sangarya,Australian Greens,FALSE
+Preston,Serena Ashmore,Victorian Socialists,FALSE
+Preston,Rachel Unicomb,Animal Justice Party,FALSE
+Richmond,Sarah McKenzie,Australian Labor Party,FALSE
+Richmond,Gabrielle de Vietri,Australian Greens,TRUE
+Richmond,Harrison Rindfleish,One Nation,FALSE
+Richmond,Chris Dite,Victorian Socialists,FALSE
+Ringwood,Rachel Halse,Australian Labor Party,FALSE
+Ringwood,Amy Mills,Australian Greens,FALSE
+Ringwood,Jack Gardner,Victorian Socialists,FALSE
+Ringwood,Nick McGowan,Liberal,FALSE
+Ringwood,Prue Cutts,Independent,FALSE
+Ripon,Martha Haylett,Australian Labor Party,TRUE
+Ripon,Tim Drylie,Australian Greens,FALSE
+Ripon,Donna Buxton,One Nation,FALSE
+Ripon,Taylah Brennan-Jones,Victorian Socialists,FALSE
+Ripon,Jo Armstrong (N)Megan Read,Liberal,FALSE
+Rowville,Muhammad Shahbaz,Australian Labor Party,FALSE
+Rowville,Lars Hiemstra,Victorian Socialists,FALSE
+Rowville,Max Williams,Liberal,FALSE
+Sandringham,Anastasia Sagris-Desmond,Australian Labor Party,FALSE
+Sandringham,Timon Fotakis,Australian Greens,FALSE
+Sandringham,Lauren Stevenson,Victorian Socialists,FALSE
+Sandringham,Brad Rowswell,Liberal,TRUE
+Shepparton,Cayla Fin,Australian Labor Party,FALSE
+Shepparton,Grace Verney,Australian Greens,FALSE
+Shepparton,Phillip Bryant,One Nation,FALSE
+South Barwon,Rebecca Thistleton,Australian Labor Party,FALSE
+South Barwon,Izzy Scherrer,Australian Greens,FALSE
+South Barwon,Josh Geard,One Nation,FALSE
+South Barwon,Madilyn Gorman,Victorian Socialists,FALSE
+South Barwon,Libby Pettit,Liberal,FALSE
+South Barwon,Freya Hedley,Socialist Alliance,FALSE
+South Barwon,Ron Nelson,Independent,FALSE
+South-West Coast,Andrew Govanstone,Australian Labor Party,FALSE
+South-West Coast,Silver Rose,Australian Greens,FALSE
+South-West Coast,Hera Sheppard,Victorian Socialists,FALSE
+South-West Coast,Roma Britnell,Liberal,TRUE
+St Albans,Natalie Suleyman,Australian Labor Party,TRUE
+St Albans,Bao Huynh,Australian Greens,FALSE
+St Albans,Leanna Nguyen,Victorian Socialists,FALSE
+St Albans,Luận Walker,The West Party,FALSE
+Sunbury,Josh Bull,Australian Labor Party,TRUE
+Sunbury,Elita Dabrowski,One Nation,FALSE
+Sunbury,Adam Bremner,Victorian Socialists,FALSE
+Sunbury,Simmone Cottom,Liberal,FALSE
+Sunbury,Bruce Lancashire,The West Party,FALSE
+Sydenham,Uros Rasic,Australian Labor Party,FALSE
+Sydenham,Maggie Jane,Australian Greens,FALSE
+Sydenham,Shania Khan,Victorian Socialists,FALSE
+Sydenham,Nathalie Moussi,Liberal,FALSE
+Tarneit,Dylan Wight,Australian Labor Party,TRUE
+Tarneit,Rifai Raheem,Australian Greens,FALSE
+Tarneit,Leah Van Koulen,Victorian Socialists,FALSE
+Tarneit,Andrew Elsbury,The West Party,FALSE
+Tarneit,Maurita Rahn,Animal Justice Party,FALSE
+Thomastown,Bronwyn Halfpenny,Australian Labor Party,TRUE
+Thomastown,Priya Reddy,Victorian Socialists,FALSE
+Warrandyte,John Stanley,Victorian Socialists,FALSE
+Warrandyte,Nicole Werner,Liberal,TRUE
+Wendouree,Juliana Addison,Australian Labor Party,TRUE
+Wendouree,Ellen Burns,Australian Greens,FALSE
+Wendouree,Stuart Robinson,One Nation,FALSE
+Wendouree,Chris Meagher,Victorian Socialists,FALSE
+Wendouree,Melissa Collins,Animal Justice Party,FALSE
+Werribee,John Lister,Australian Labor Party,TRUE
+Werribee,Tushar Kumar,Australian Greens,FALSE
+Werribee,Sue Munro,Victorian Socialists,FALSE
+Werribee,Reece Clark,Liberal,FALSE
+Werribee,Paul Hopper,The West Party,FALSE
+Werribee,Matthew Emerson,Family First,FALSE
+Williamstown,Melissa Horne,Australian Labor Party,TRUE
+Williamstown,Ben Hocking,Australian Greens,FALSE
+Williamstown,Oskar Martin,Victorian Socialists,FALSE
+Williamstown,Paul Lindemann,Liberal,FALSE
+Williamstown,Gil Gannon,The West Party,FALSE
+Williamstown,Tony Briffa,Independent,FALSE
+Yan Yean,Lauren Kathage,Australian Labor Party,TRUE
+Yan Yean,Gufran Mohammed,Australian Greens,FALSE
+Yan Yean,Jeremy Johnson,One Nation,FALSE
+Yan Yean,Andrew Bell,Victorian Socialists,FALSE
+Yan Yean,Amanda Dow,Liberal,FALSE

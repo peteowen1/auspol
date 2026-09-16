@@ -1,3 +1,16 @@
+# MODEL VARIANT TAG, so an experimental retrain can be A/B'd against the
+# shipped models without overwriting them. `AUSPOL_FLOW_MODEL_TAG=w` reads
+# `output/xgb-flows-v1-w-loo-<election>.model` -- note the hyphen, which
+# .flow_model_tag() adds below; unset reads the shipped
+# `xgb-flows-v1-loo-<election>.model` and is byte-identical to before this
+# existed. The feature COLUMNS file is shared -- a variant that changed the
+# feature set would need its own, and this is asserted rather than assumed
+# by the column check `predict()` already performs on the matrix it is given.
+.flow_model_tag <- function() {
+  t <- Sys.getenv("AUSPOL_FLOW_MODEL_TAG", "")
+  if (nzchar(t)) paste0("-", t) else ""
+}
+
 #' Build an xgb-flows-v1 conditional flow list for one target election
 #'
 #' Experimental, gated behind `AUSPOL_XGB_FLOWS` -- see
@@ -26,7 +39,7 @@
 xgb_flow_conditional_for <- function(target_election, prev_election, region, min_events = 3L) {
   # Same leave-one-election-out rule as the per-seat version below -- see its
   # comment for why the all-data model is a leaked backtest.
-  loo_f   <- sprintf("output/xgb-flows-v1-loo-%s.model", target_election)
+  loo_f   <- sprintf("output/xgb-flows-v1%s-loo-%s.model", .flow_model_tag(), target_election)
   model_f <- if (file.exists(loo_f)) loo_f else "output/xgb-flows-v1-final.model"
   if (!identical(model_f, loo_f))
     cat(sprintf("XF9! %s not found -- falling back to the ALL-DATA model, which SAW %s in training. This arm is LEAKED; run scripts/fit_xgb_flows_loo.R.\n",
@@ -92,6 +105,13 @@ xgb_flow_conditional_for <- function(target_election, prev_election, region, min
                 n_survivors = length(surv), dest_same = 0L, dest_same_mp = 0L)]
     rows[, to_primary := vapply(to, function(p) if (p %in% names(state_share)) state_share[[p]] else 0, numeric(1))]
     rows[, from_primary := if (from %in% names(state_share)) state_share[[from]] else 0]
+    # lead_primary: the seat's leading first-preference share. THIS function
+    # only has statewide shares, so it gets the statewide maximum -- the same
+    # compromise `to_primary`/`from_primary` already make here, and the reason
+    # this function is not the live path (see the per-seat version below).
+    # NA, never 0, when no shares were loaded: a filler becomes a label to a
+    # tree, which is the state-deviation defect recorded in CLAUDE.md.
+    rows[, lead_primary := if (any(state_share > 0)) max(state_share) else NA_real_]
     for (cl in CLASSES) rows[[paste0("surv_", cl)]] <- as.integer(cl %in% surv)
     for (cl in CLASSES) rows[[paste0("from_", cl)]] <- as.integer(from == cl)
     for (cl in CLASSES) rows[[paste0("to_", cl)]]   <- as.integer(rows$to == cl)
@@ -140,7 +160,7 @@ xgb_flow_conditional_override_for <- function(shares, target_election, prev_elec
   # scripts/fit_xgb_flows_loo.R writes one model per held-out election; prefer
   # it, and say loudly when falling back, because a silent fallback is a
   # leaked backtest that reads as a good result.
-  loo_f   <- sprintf("output/xgb-flows-v1-loo-%s.model", target_election)
+  loo_f   <- sprintf("output/xgb-flows-v1%s-loo-%s.model", .flow_model_tag(), target_election)
   cols_f  <- "output/xgb-flows-v1-final-cols.json"
   feat_f  <- "output/xgb-flows-v1-features.csv"
   model_f <- if (file.exists(loo_f)) loo_f else "output/xgb-flows-v1-final.model"
@@ -246,6 +266,13 @@ xgb_flow_conditional_override_for <- function(shares, target_election, prev_elec
     }
     R[, to_primary := vapply(to, function(p) if (p %in% names(sh)) unname(sh[[p]]) else 0, numeric(1))]
     R[, from_primary := vapply(from, function(p) if (p %in% names(sh)) unname(sh[[p]]) else 0, numeric(1))]
+    # lead_primary: the seat's leading first-preference share, from the SAME
+    # `shares` row that supplies to_primary/from_primary, so it carries their
+    # units. Training reads the seat's ACTUAL leading share and this reads the
+    # simulation's predicted one -- the identical substitution to_primary and
+    # from_primary already make, not an extra approximation.
+    # docs/plans/prereg-flow-fragmentation-2026-09-15.md
+    R[, lead_primary := if (any(is.finite(sh))) max(sh, na.rm = TRUE) else NA_real_]
     rows_list[[si]] <- R
   }
   ALLR <- data.table::rbindlist(rows_list)
@@ -255,6 +282,10 @@ xgb_flow_conditional_override_for <- function(shares, target_election, prev_elec
   cat(sprintf("XF9  dest_same populated on %d of %d rows (%.1f%%), dest_same_mp on %d (%.1f%%)\n",
               sum(ALLR$dest_same == 1L), nrow(ALLR), 100 * mean(ALLR$dest_same == 1L),
               sum(ALLR$dest_same_mp == 1L), 100 * mean(ALLR$dest_same_mp == 1L)))
+  cat(sprintf("XF9  lead_primary populated on %d of %d rows (%.1f%%), median %.1f\n",
+              sum(is.finite(ALLR$lead_primary)), nrow(ALLR),
+              100 * mean(is.finite(ALLR$lead_primary)),
+              stats::median(ALLR$lead_primary, na.rm = TRUE)))
   if (length(ret_key) && !any(ALLR$dest_same == 1L)) {
     cat(sprintf("XF9! dest_same is 0 on every row although candidate_returns() gave %d keys -- the seat/party join found nothing; check seat naming between shares rownames and output/candidacies.csv\n", length(ret_key)))
   }
@@ -287,5 +318,69 @@ xgb_flow_conditional_override_for <- function(shares, target_election, prev_elec
   cat(sprintf("XF9  per-seat xgb flows override built for %s: %d of %d seats, %d key(s) each (min_events=%d)\n",
               target_election, n_built, length(seats), nrow(key_rates), min_events))
   if (n_built == 0L) return(NULL)
+
+  # PER-CELL FLOW UNCERTAINTY, opt-in via AUSPOL_FLOW_CELL_SD. Attached as an
+  # attribute so a caller that does not know about it is unaffected; unset
+  # leaves this function byte-identical to before.
+  #
+  # The simulator has always applied one flow rate in every draw, so a wrong
+  # rate is wrong in all 20,000 of them. `flow_sd` exists to fix that but is a
+  # single global number, and a blanket flow_sd=15 measured WORSE on federal
+  # (log loss 0.2543 -> 0.2607): it charges a rate backed by 43 events the
+  # same uncertainty as one backed by 1. scripts/fit_flow_drift.R fits that
+  # uncertainty instead -- over 3,711 repeat sightings of the same cell, drift
+  # runs 2.7 to 17.5 points depending on sample size, survivor count and
+  # staleness.
+  if (identical(Sys.getenv("AUSPOL_FLOW_CELL_SD", "0"), "1")) {
+    dm_f <- "output/flow-drift-v1.model"; dc_f <- "output/flow-drift-v1-cols.json"
+    if (!file.exists(dm_f) || !file.exists(dc_f)) {
+      stop("AUSPOL_FLOW_CELL_SD=1 but output/flow-drift-v1.model is missing. ",
+           "Run scripts/fit_flow_drift.R first. Refusing rather than returning ",
+           "an override with no sd attached: the caller cannot tell that apart ",
+           "from the flag being off, so the run would score as a per-cell-sd ",
+           "arm while being byte-identical to the baseline.", call. = FALSE)
+    }
+    dmod <- xgboost::xgb.load(dm_f)
+    dcols <- jsonlite::fromJSON(readLines(dc_f))
+    t_year <- as.integer(sub("^[a-z]+", "", target_election))
+    hist2 <- data.table::copy(hist)
+    hist2[, "el_year" := as.integer(sub("^[a-z]+", "", get("election")))]
+    last_seen <- hist2[, list(prev_year = max(get("el_year")),
+                              prev_n = data.table::uniqueN(paste(get("election"), get("seat"), get("round")))),
+                       by = c("from", "surv", "to")]
+    KR <- merge(data.table::copy(key_rates), last_seen, by = c("from", "surv", "to"), all.x = TRUE)
+    KR[, "gap" := pmax(1L, t_year - get("prev_year"))]
+    KR[is.na(get("prev_n")), "prev_n" := 1L]
+    KR[, "n_surv" := lengths(strsplit(get("surv"), "+", fixed = TRUE))]
+    for (cl in CLASSES) KR[[paste0("f_", cl)]] <- as.integer(KR$from == cl)
+    for (cl in CLASSES) KR[[paste0("t_", cl)]] <- as.integer(KR$to == cl)
+    for (r in region_levels) KR[[paste0("r_", r)]] <- as.integer(region == r)
+    miss <- setdiff(dcols, names(KR))
+    if (length(miss)) {
+      stop("AUSPOL_FLOW_CELL_SD=1 but the drift model expects ",
+           paste(miss, collapse = ", "), ", which this override cannot build. ",
+           "The drift model's feature set and this function have drifted apart; ",
+           "refit with scripts/fit_flow_drift.R. Refusing rather than silently ",
+           "running the baseline under a per-cell-sd arm name.", call. = FALSE)
+    }
+    # MEAN ABSOLUTE DEVIATION IS NOT A STANDARD DEVIATION: the drift model's
+    # target is |drift|, and sd = MAD * sqrt(pi/2) for a normal variate.
+    # Feeding the raw prediction in would understate the spread by 20%.
+    dpred <- pmax(0, stats::predict(dmod, as.matrix(KR[, ..dcols])))
+    KR[, "sd_pts" := 100 * dpred * sqrt(pi / 2)]
+    # One sd per transfer ROUND: the simulator perturbs a whole round's split
+    # at once, so a key's destinations share a single value.
+    key_sd <- KR[, list(sd_pts = mean(get("sd_pts"))), by = c("from", "surv")]
+    sd_lut <- stats::setNames(key_sd$sd_pts, paste0(key_sd$from, "|", key_sd$surv))
+    sd_out <- lapply(out, function(so) {
+      if (is.null(so)) return(NULL)
+      v <- sd_lut[names(so)]; v[is.na(v)] <- 0
+      stats::setNames(as.list(unname(v)), names(so))
+    })
+    attr(out, "sd") <- sd_out
+    cat(sprintf("XF9s per-cell flow sd attached: %d keys, %.1f to %.1f points (median %.1f)
+",
+                length(sd_lut), min(sd_lut), max(sd_lut), stats::median(sd_lut)))
+  }
   out
 }

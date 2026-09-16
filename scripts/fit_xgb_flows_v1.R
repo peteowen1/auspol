@@ -10,6 +10,25 @@ suppressMessages(devtools::load_all(quiet = TRUE))
 suppressMessages(library(data.table))
 suppressMessages(library(xgboost))
 
+# PUBLISHED DEFAULTS, same mechanism the six harnesses use. Without this the
+# script's own inline Sys.getenv() defaults decide what gets fitted, and they
+# disagreed with what ships: this file defaulted AUSPOL_FLOW_FRAG to "0" while
+# scripts/published_flags.R ships "1" and documents it "SHIPPED 2026-09-15 ON PETE'S CALL".
+# The feature it controls, lead_primary, would have vanished from the model. So the OBVIOUS way to
+# refit -- `Rscript scripts/fit_xgb_flows_v1.R` with a clean environment --
+# silently produced the non-shipped configuration, wrote a normal-looking
+# artifact, and printed nothing to say the two differed. Downstream only ever
+# reads the artifact, never the switch, so nothing further could catch it.
+# Found 2026-09-16 by the review gate. apply_published_flags() fills only
+# UNSET variables, so every explicit arm still works and still has to name
+# what it changes.
+source("scripts/published_flags.R")
+local({
+  a <- apply_published_flags()
+  cat(sprintf("PF0  published defaults applied to %d unset switch(es)
+", length(a)))
+})
+
 EL <- election_data_path()
 OUT <- "output"
 
@@ -113,6 +132,29 @@ TX[, `:=`(to_primary = ifelse(is.na(to_primary), 0, to_primary),
 cat(sprintf("XF4  primary-share join: %d of %d rows matched for destination party\n",
             sum(!is.na(TX$to_primary) & TX$to_primary > 0), nrow(TX)))
 
+# ---- 4b. the SEAT's shape, not just the two classes in this transfer -------
+# `to_primary` and `from_primary` describe the destination and source classes.
+# Neither says how dominant the LEADING candidate is, and that is what moves
+# flows: over 3,031 early-round observations the flow to ALP as a share of the
+# two majors runs 38.4% where the leader polls under 35% and 48.2% where they
+# poll 50%+. Closeness is NOT the driver -- the two-candidate margin's slope
+# collapses from +0.357 to +0.003 once this term enters, which is why the 2CP
+# margin is deliberately not the feature here.
+# docs/plans/prereg-flow-fragmentation-2026-09-15.md
+if (identical(Sys.getenv("AUSPOL_FLOW_FRAG", "0"), "1")) {
+  .lead <- sd_all[, .(lead_primary = max(actual_share, na.rm = TRUE)), by = .(election, seat)]
+  TX <- merge(TX, .lead, by = c("election", "seat"), all.x = TRUE)
+  # A seat with no share detail gets NA, never a filler: xgboost routes missing
+  # down its own default branch, and CLAUDE.md records what a filler did to the
+  # state-deviation block when a tree read it as a jurisdiction label.
+  TX[!is.finite(lead_primary), lead_primary := NA_real_]
+  cat(sprintf("XF4b lead_primary attached to %d of %d rows (median %.1f)\n",
+              sum(is.finite(TX$lead_primary)), nrow(TX),
+              stats::median(TX$lead_primary, na.rm = TRUE)))
+} else {
+  TX[, lead_primary := NA_real_]
+}
+
 # ---- 5. identity/personal-vote signal for the DESTINATION party ----------
 # Simplification, noted in the pre-registration: candidate_returns() is
 # per-party (same person, same party), so it cannot directly represent
@@ -161,6 +203,7 @@ for (r in region_levels) TX[[paste0("region_", r)]] <- as.integer(TX$region == r
 
 feat_cols <- c("cond_rate","cond_n","pool_rate","pool_n","to_primary","from_primary",
                "dest_same","dest_same_mp","n_survivors",
+               if (identical(Sys.getenv("AUSPOL_FLOW_FRAG", "0"), "1")) "lead_primary" else NULL,
                paste0("surv_", CLASSES), paste0("from_", CLASSES), paste0("to_", CLASSES),
                paste0("region_", region_levels))
 cat(sprintf("XF6  %d rows, %d features\n", nrow(TX), length(feat_cols)))

@@ -400,6 +400,95 @@ fit_conditional_slopes <- function(target_election, corpus = NULL, pairs = NULL,
   list(same = same, new = new, n = data.table::rbindlist(counts))
 }
 
+#' Fit same/new conditional slopes for MAJOR parties, leave-target-out
+#'
+#' [conditional_slopes()]/[screened_slopes()] have never had a same/new
+#' distinction for ALP/LNP/NAT -- `dev_slope()`'s `default = 1` (full,
+#' unconditional carryforward of a seat's premium over the state average)
+#' applies to every major-party seat regardless of whether the sitting
+#' member is standing again. Found 2026-09-16 tracing why Parramatta's
+#' `base_pred` gave LNP's 2023 candidate the FULL +12.4 of Geoff Lee's 2019
+#' personal-vote premium, undiscounted, after Lee retired --
+#' `docs/reviews/base-pred-blind-to-tonights-fixes-2026-09-16.md`.
+#'
+#' Identical method to [fit_conditional_slopes()] (`yy ~ 0 + dev`, no
+#' intercept, split by whether the class had a returning candidate in that
+#' seat, leave-target-out): reused rather than duplicated logic diverging.
+#' The only real difference is the fallback -- there is no shipped
+#' major-party same/new constant to fall back to (majors were never
+#' conditioned at all), so a cell that fails `min_n` falls back to `1.0`,
+#' i.e. today's actual unconditioned behaviour, not a guessed number.
+#'
+#' @inheritParams fit_conditional_slopes
+#' @export
+fit_major_conditional_slopes <- function(target_election, corpus = NULL, pairs = NULL,
+                                         min_n = 40L) {
+  MAJ <- c("ALP", "LNP", "NAT")
+  FALLBACK <- stats::setNames(rep(1, length(MAJ)), MAJ)
+  C <- corpus
+  if (is.null(C)) {
+    f <- file.path("output", "candidacies.csv")
+    if (!file.exists(f)) {
+      message("fit_major_conditional_slopes(): ", f,
+              " missing -- falling back to 1.0 (uniform swing) for every class")
+      return(list(same = FALLBACK, new = FALLBACK, n = NULL))
+    }
+    C <- data.table::fread(f, showProgress = FALSE)
+  }
+  C <- data.table::as.data.table(C)
+  if (is.null(pairs)) pairs <- all_election_pairs()
+  pairs <- Filter(function(pr) !identical(pr$election, target_election), pairs)
+
+  state_level <- function(el) {
+    d <- C[C$election == el]
+    if (!nrow(d) || !all(c("votes", "tot") %in% names(d))) return(NULL)
+    d <- d[is.finite(d$votes)]
+    if (!nrow(d)) return(NULL)
+    st <- unique(d[, list(seat, tot)]); den <- sum(st$tot, na.rm = TRUE)
+    if (!is.finite(den) || den <= 0) return(NULL)
+    d[, list(level = 100 * sum(votes, na.rm = TRUE) / den), by = party]
+  }
+
+  rows <- data.table::rbindlist(lapply(pairs, function(pr) {
+    lp <- state_level(pr$prev); ln <- state_level(pr$election)
+    if (is.null(lp) || is.null(ln)) return(NULL)
+    fr <- tryCatch(returning_vote_fraction(pr$prev, pr$election, corpus = C),
+                   error = function(e) NULL)
+    if (is.null(fr) || !nrow(fr)) return(NULL)
+    NOWT <- C[C$election == pr$election]
+    nowc <- NOWT[, list(actual_now = sum(pcv, na.rm = TRUE)), by = list(seat, party)]
+    P <- data.table::copy(C[C$election == pr$prev])[, .s := normalise_seat(seat)]
+    prevc <- P[, list(x = sum(pcv, na.rm = TRUE)), by = list(.s, party)]
+    m <- merge(fr, nowc, by = c("seat", "party"))
+    m[, .s := normalise_seat(seat)]
+    m <- merge(m, prevc, by = c(".s", "party"))
+    m <- merge(m, lp[, list(party, level_prev = level)], by = "party")
+    m <- merge(m, ln[, list(party, level_now  = level)], by = "party")
+    m[x > 0]
+  }), fill = TRUE)
+  if (is.null(rows) || !nrow(rows)) return(list(same = FALLBACK, new = FALLBACK, n = NULL))
+
+  rows[, dev := x - level_prev]
+  rows[, yy  := actual_now - level_now]
+  same <- FALLBACK; new <- FALLBACK
+  counts <- list()
+  for (cl in MAJ) {
+    for (tier in c("same", "new")) {
+      sub <- if (tier == "same") rows[party == cl & n_returning > 0]
+             else                rows[party == cl & n_returning == 0]
+      counts[[length(counts) + 1L]] <-
+        data.table::data.table(party = cl, tier = tier, n = nrow(sub))
+      if (nrow(sub) < min_n) next
+      fit <- tryCatch(stats::lm(yy ~ 0 + dev, data = sub), error = function(e) NULL)
+      if (is.null(fit)) next
+      cm <- summary(fit)$coefficients
+      if (!nrow(cm) || !is.finite(cm[1, 1])) next
+      if (tier == "same") same[[cl]] <- cm[1, 1] else new[[cl]] <- cm[1, 1]
+    }
+  }
+  list(same = same, new = new, n = data.table::rbindlist(counts))
+}
+
 #' Fit the "new"-candidate slope from dispersion, leave-one-election-out
 #'
 #' The flat `new` constant in [conditional_slopes()] averages hundreds of

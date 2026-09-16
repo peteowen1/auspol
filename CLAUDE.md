@@ -656,6 +656,35 @@ drift in both directions; there is one now.
 in the same commit.** A `Sys.getenv("AUSPOL_...", default)` anywhere else is
 documentation; the registry is the behaviour.
 
+## A primary-vote fix must be tested in `base_pred` AND the xgb layer, always
+
+`base_pred` (`dev_slope()`, `R/dev_slope.R`) is the pre-xgb swing baseline
+every harness builds first, and it dominates the shipped ensemble's SHAP
+decomposition -- typically +16 to +22 points of a row's prediction, against
+single-digit contributions from most engineered xgb features. **An xgb
+feature layered on top of an unconditioned baseline is a small correction
+fighting a big one, and it can pass every test (pooled RMSE, a placebo-
+controlled targeted delta, a real published p-value) while barely moving the
+actual number for the seat it was built for.**
+
+Written 2026-09-16 after shipping two real, correctly-sized, correctly-
+measured xgb features in one session -- `seat_outperf` and the minor-to-
+minor defector discount -- and finding neither touched `base_pred` at all.
+Both had SHAP contributions near zero (`seat_outperf`: +0.4 on the seat it
+was built for, against `base_pred`'s +22.2) because the discount machinery
+they extend (`personal_prior_vote()`'s `major_discount`/`minor_discount`,
+`screened_slopes()`'s same/new conditional-slope tables) was wired into the
+harnesses' OWN xgb-feature-building calls only, never into the SAME
+harnesses' `base_pred`-building calls to the identical functions. Full
+trace: `docs/reviews/base-pred-blind-to-tonights-fixes-2026-09-16.md`.
+
+**So: before calling a fix "shipped," check the specific seat(s) it targets
+end to end** -- the actual predicted primary vote against actual, not just
+the aggregate metric. And **when a fix is proposed, test it edited into
+`base_pred` AND as an xgb feature, not one or the other** — either can look
+like a real, positive, statistically clean result while leaving the
+published number for the flagship case untouched.
+
 ## Two trend-model paths — know which one you are looking at
 
 `trend_as_at()` fits with default volatility and equal pollster weights, and

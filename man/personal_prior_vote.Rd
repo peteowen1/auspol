@@ -11,7 +11,8 @@ personal_prior_vote(
   corpus = NULL,
   major_discount = NULL,
   pooled = NULL,
-  loser_discount = NULL
+  loser_discount = NULL,
+  minor_discount = NULL
 )
 }
 \arguments{
@@ -50,6 +51,18 @@ should differ from \code{major_discount}. \code{NULL} gives both groups the same
 rate. Under \code{AUSPOL_DEFECT_POOLED="2"} this is resolved automatically
 from \code{\link[=fit_defector_discount]{fit_defector_discount()}} rather than threaded through six
 harnesses -- see docs/plans/prereg-defector-two-rate-2026-09-09.md.}
+
+\item{minor_discount}{Optional numeric. When set, discounts \code{own_prev_pcv}
+for a candidate who switched between two NON-major classes (e.g. ONP to
+KAP/OTH_RIGHT) -- \code{prev_best} above matches on IDENTITY regardless of
+party, so without this the old class's full, undiscounted result carries
+forward as the new class's base. \code{NULL} (the default) leaves this
+byte-identical to before the parameter existed. The value the harnesses
+pass is \code{\link[=fit_minor_defector_discount]{fit_minor_defector_discount()}}'s own return -- a MEDIAN over 18
+corpus cases, 0.3255 for most targets. (The review's headline "49\%" is a
+geometric mean at a lower \code{min_prior} and is NOT what ships; see that
+function's docstring.) See
+\verb{docs/reviews/minor-to-minor-defector-2026-09-16.md}.}
 }
 \value{
 A \code{data.table} of \code{seat}, \code{party}, \code{own_prev_pcv} (\code{NA_real_} where

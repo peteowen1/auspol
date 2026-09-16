@@ -1,6 +1,6 @@
 # Data registry
 
-**Generated 2026-09-11 by `scripts/build_data_registry.R`. Do not hand-edit** --
+**Generated 2026-09-15 by `scripts/build_data_registry.R`. Do not hand-edit** --
 rerun the script instead. Regenerate it whenever you add or fetch data.
 
 This file exists because the same data has been declared missing three
@@ -63,7 +63,7 @@ cannot pass as a working one.
 
 ## Raw commission downloads (`external/reference/`)
 
-- **aec/** -- 58 files, 53.1 MB
+- **aec/** -- 98 files, 83.4 MB
   - e.g. booths/fed2016-NSW.csv, booths/fed2019-SA.csv, booths/fed2019-VIC.csv, booths/fed2022-NSW.csv
 - **vec/** -- 547 files, 19.9 MB
   - e.g. 2010/cdx-vec.txt, 2010/dop-AlbertPark.html, 2010/dop-BallaratEast.html, 2010/dop-BallaratWest.html
@@ -83,7 +83,7 @@ cannot pass as a working one.
   - e.g. 2016_GCP_CED_AUS.zip, 2016_GCP_SED_NSW.zip, 2016_GCP_SED_QLD.zip, 2016_GCP_SED_SA.zip
 - **correspondences/** -- 21 files, 1.3 MB
   - e.g. abs-sed/CG_CED_2016_CED_2021.csv, abs-sed/CG_SED_2016_SED_2021.csv, abs-sed/CG_SED_2021_SED_2022.csv, abs-sed/CG_SED_2022_SED_2024.csv
-- **aef/** -- 16 files, 4.1 MB
+- **aef/** -- 17 files, 4.8 MB
   - e.g. 2022fed-results.json, 2022fed-summary.json, 2022sa-results.json, 2022sa-summary.json
 
 ## Candidate-level corpus (`output/candidacies.csv`)
@@ -114,6 +114,7 @@ NAMES live -- the per-seat results files carry `seat, party, votes` only.
 | vic2014 | 88 | 545 | 91 | 9 |
 | vic2018 | 88 | 507 | 102 | 9 |
 | vic2022 | 87 | 731 | 119 | 13 |
+| vic2026 | 88 | 379 | 18 | NA |
 | wa1996 | 57 | 232 | 36 | 7 |
 | wa2001 | 57 | 366 | 89 | 12 |
 | wa2005 | 57 | 375 | 42 | 3 |
@@ -123,7 +124,7 @@ NAMES live -- the per-seat results files carry `seat, party, votes` only.
 | wa2021 | 59 | 463 | 17 | 0 |
 | wa2025 | 59 | 398 | 29 | 6 |
 
-**Total: 17793 candidacies, 29 elections, 390 non-major breakouts.**
+**Total: 18172 candidacies, 30 elections, NA non-major breakouts.**
 
 ## Known gaps
 

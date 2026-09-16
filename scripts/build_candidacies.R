@@ -20,6 +20,24 @@
 # Emits BC* codes.
 options(auspol.root = normalizePath("."))
 suppressMessages(devtools::load_all(quiet = TRUE))
+
+# PUBLISHED DEFAULTS, same mechanism the six harnesses use. Without this the
+# script's own inline Sys.getenv() defaults decide what gets fitted, and they
+# disagreed with what ships: this file defaulted AUSPOL_HISTORIC_ELECTED_BACKFILL to "0" while
+# scripts/published_flags.R ships "1". So the OBVIOUS way to
+# refit -- `Rscript scripts/build_candidacies.R` with a clean environment --
+# silently produced the non-shipped configuration, wrote a normal-looking
+# artifact, and printed nothing to say the two differed. Downstream only ever
+# reads the artifact, never the switch, so nothing further could catch it.
+# Found 2026-09-16 by the review gate. apply_published_flags() fills only
+# UNSET variables, so every explicit arm still works and still has to name
+# what it changes.
+source("scripts/published_flags.R")
+local({
+  a <- apply_published_flags()
+  cat(sprintf("PF0  published defaults applied to %d unset switch(es)
+", length(a)))
+})
 suppressMessages(library(data.table))
 
 `%||%` <- function(x, y) if (is.null(x)) y else x
@@ -855,6 +873,88 @@ if (length(WV)) {
 # fill above, i.e. the fill worked as a contamination detector. Left in, they
 # would count as seats in any per-seat rate and as unresolved seats in any
 # coverage check.
+# ---- BC10: Victoria 2026 candidates, from Wikipedia -------------------------
+#
+# The Victorian election is 28 November 2026 and nominations have NOT closed,
+# so the VEC publishes no candidate list and every candidate-level feature for
+# vic2026 falls back: DS2 (candidate returns), DS3 (salience), own_prev_pcv,
+# and historic_elected. Wikipedia maintains one, sourced per candidate.
+#
+# external/reference/wikipedia/vic2026-candidates.csv is produced by
+# scripts/parse_wikipedia_candidates.py from the RAW WIKITEXT, which is stored
+# beside it. Parsing the rendered page instead would not do: a summariser
+# reading the table reported the Greens candidate for Albert Park as the
+# Coalition's, because the Coalition cell is empty and it closed the gap.
+#
+# THIS LIST IS INCOMPLETE BY CONSTRUCTION and nothing here may read absence as
+# a decision not to contest. 379 candidacies against vic2022's 731 for the same
+# 88 seats -- Labor appears in 74 of 88, and Labor will contest all 88. A blank
+# means "not yet announced", and treating it as "not running" would be the same
+# fabrication as the NA that deflated the live model
+# (docs/reviews/live-path-missing-feature-2026-09-14.md -- NOT NEWS 0.4.36,
+# which this cited until 2026-09-16 and which records a different incident,
+# trained models missing from the CI runner).
+#
+# So this supplies NAMES ONLY. No votes, no pcv, no elected flag: those are
+# facts about an election that has not happened.
+.wiki <- file.path("external", "reference", "wikipedia", "vic2026-candidates.csv")
+if (file.exists(.wiki)) {
+  W <- fread(.wiki, showProgress = FALSE)
+  stopifnot(all(c("seat", "name", "party_raw", "sitting") %in% names(W)))
+  # classify_party() and nothing else. CLAUDE.md records a silent corruption
+  # caused by trusting a party field someone else classified -- the anchor
+  # filing the Shooters as IND where we call them OTH_RIGHT -- so the mapping
+  # from "Family First" to a class happens here, over our own function.
+  W[, party := classify_party(party_raw)]
+  if (any(is.na(W$party))) {
+    stop("BC10! classify_party() returned NA for: ",
+         paste(unique(W$party_raw[is.na(W$party)]), collapse = ", "))
+  }
+  # NORMALISE TO THIS REPO'S NAME CONVENTION, "SURNAME, Given".
+  #
+  # Wikipedia writes "Nina Taylor"; every other Victorian row is
+  # "TAYLOR, Nina". surname_of() splits on the comma and otherwise takes the
+  # FIRST token, so it read the Wikipedia form as surname "nina", given
+  # "taylor" -- the same person with opposite keys in the two elections, and
+  # candidate_returns() found 0 of 356 returning candidates when 62 of these
+  # people demonstrably won a previous Victorian election. DS2, DS2t and DS2o
+  # were all silently inert.
+  #
+  # Converting here rather than teaching surname_of() a second format: every
+  # other consumer of candidacies.csv then works unchanged, and the file stays
+  # internally consistent, which is the property that broke.
+  #
+  # Last token as the surname. Wrong for a multi-word surname -- "Vincenzo De
+  # Paolis" becomes "PAOLIS, Vincenzo De" -- which costs a match for those
+  # candidates but never mis-assigns one, since both sides of any later
+  # comparison get the same treatment.
+  .tok <- strsplit(trimws(W$name), "\\s+")
+  W[, name := vapply(seq_len(.N), function(i) {
+    t <- .tok[[i]]
+    if (length(t) < 2L) return(toupper(t[1]))
+    sprintf("%s, %s", toupper(t[length(t)]), paste(t[-length(t)], collapse = " "))
+  }, character(1))]
+  cat(sprintf("BC10 names normalised to 'SURNAME, Given' (e.g. %s)\n", W$name[1]))
+
+  V <- W[, list(election = "vic2026", region = "vic", year = 2026L,
+                seat = seat, name = name, party = party, party_raw = party_raw,
+                votes = NA_real_, pcv = NA_real_,
+                elected = NA, historic_elected = NA,
+                breakout = NA, swing = NA_real_,
+                ballot_position = NA_integer_, tot = NA_real_)]
+  cat(sprintf("BC10 vic2026: %d candidacies across %d seats from Wikipedia (%d sitting members marked)\n",
+              nrow(V), uniqueN(V$seat), sum(W$sitting %in% c(TRUE, "TRUE"))))
+  cat(sprintf("     by class: %s\n",
+              paste(sprintf("%s=%d", names(table(V$party)), table(V$party)),
+                    collapse = " ")))
+  # Coverage, stated rather than assumed. vic2022 ran 731 candidacies over the
+  # same chamber; anything near that means nominations have closed and this
+  # comment needs revisiting.
+  cat(sprintf("     coverage: %.0f%% of vic2022's 731 candidacies -- nominations are NOT closed, absence is NOT a decision not to contest\n",
+              100 * nrow(V) / 731))
+  C <- rbindlist(list(C, V), fill = TRUE)
+}
+
 council <- grepl(" (Shire|City|Regional|Council) Division ", C$seat)
 if (any(council)) {
   cat(sprintf("BC8  dropping %d local-council rows in %d pseudo-seats: %s\n",
@@ -862,6 +962,199 @@ if (any(council)) {
               paste(unique(C$seat[council]), collapse = ", ")))
   C <- C[!council]
 }
+
+# ---- BC9: historic_elected for STATE elections, derived from our own data ---
+#
+# `historic_elected` comes from the AEC's HistoricElected column, which exists
+# ONLY in federal files -- the `else NA` branch above fires for every state
+# commission. Downstream, %in% c("Y","TRUE","1") turns that NA into FALSE, so
+# all 21 state elections recorded a CONSTANT 0: zero returning members, ever,
+# in any state parliament. That is false about the world, and it made the
+# column a federal/state label inside the model -- the constant-within-subgroup
+# trap CLAUDE.md documents, where a tree splits on it to separate jurisdictions
+# rather than to learn anything.
+#
+# It also broke the live Victorian forecast, because handing that model an NA
+# for a feature it had only ever seen as 0 or 1 deflated every prediction by
+# ~45% (see R/xgb_primary_override.R, whose own comment cites the right
+# file: docs/reviews/live-path-missing-feature-2026-09-14.md. This line said
+# NEWS 0.4.36 until 2026-09-16; that entry is about models missing from the
+# runner, not about this NA.)
+#
+# We can derive it ourselves. `elected` and `name` are populated for every
+# state candidacy, so a candidate is historically elected if THE SAME NAME won
+# a seat at any EARLIER election in the same region. Federal rows keep the
+# AEC's own value -- it is authoritative and covers people elected before our
+# corpus starts, which name matching here cannot.
+#
+# Matching on `name` and not `surname`: state rows leave `surname` blank while
+# `name` is populated, which is exactly the hazard that made the first attempt
+# at this report every candidate as a prior winner.
+#
+# AND THE NAME FORMAT IS NOT CONSISTENT ACROSS ELECTIONS. sa2018 stores
+# "Rachel Sanderson" while sa2022 stores "SANDERSON, Rachel" -- the same
+# person, and a plain uppercase-and-strip comparison matched NEITHER, giving
+# sa2022 zero returning members when the true answer is 40. So parse both
+# shapes into (surname, first initial) rather than comparing the raw string.
+# The first initial rather than the full given name, because middle names and
+# preferred forms drift between commission files in a way surnames do not.
+# FOUR NAME FORMATS LIVE IN THIS CORPUS and a single rule fits none of them:
+#
+#   federal        "Trish WORTH"       given first, SURNAME capitalised
+#   nsw            "APLIN Greg"        SURNAME first, no comma
+#   sa2018         "Rachel Sanderson"  given first, title case
+#   vic/qld/sa22+  "HOOD, Lucy"        SURNAME, given
+#   wa             "PRINCE"            SURNAME ONLY, 97-100% of rows
+#
+# Taking the last token as the surname -- the obvious rule -- INVERTS every
+# NSW row, and on a one-token WA name sets surname and given to the same word.
+# Both then "work" anyway, because each jurisdiction is internally consistent
+# and a wrong key matches a wrong key. That is luck, not correctness, and it
+# broke the moment a jurisdiction changed format mid-corpus: sa2018 and sa2022
+# disagree, and SA matched ZERO returning members until this was handled.
+#
+# So: comma wins if present; otherwise the ALL-CAPS token is the surname;
+# otherwise fall back to the last token.
+.key <- function(x) {
+  s <- trimws(gsub("[^A-Za-z, ]", "", as.character(x)))
+  sur <- character(length(s)); giv <- character(length(s))
+  for (i in seq_along(s)) {
+    v <- s[i]
+    if (grepl(",", v, fixed = TRUE)) {
+      sur[i] <- trimws(sub(",.*$", "", v)); giv[i] <- trimws(sub("^[^,]*,", "", v))
+      next
+    }
+    tk <- strsplit(v, "\\s+")[[1]]
+    tk <- tk[nzchar(tk)]
+    if (length(tk) == 0L) { sur[i] <- ""; giv[i] <- ""; next }
+    if (length(tk) == 1L) { sur[i] <- tk[1]; giv[i] <- ""; next }
+    # MAJORITY-uppercase, not byte-identical to toupper(). "McKAY" and
+    # "MacTIERNAN" are shouted surnames that are NOT equal to their own
+    # toupper(), so an exact test drops them into the given-first branch and
+    # INVERTS the row -- nsw2015 files "McKAY Jodi" under surname JODI while
+    # nsw2019 spells her "MCKAY" and files her correctly, so the same person
+    # gets two keys and her 2015 win stops counting as a prior win. 43 of
+    # 1,670 NSW rows carry a Mac/Mc surname. Found by review 2026-09-14.
+    #
+    # Counting letters handles any prefix casing without enumerating them.
+    # It still misses a name like "O'Brien" once the apostrophe is stripped
+    # (2 of 6 letters upper), which is genuinely ambiguous in a surname-first
+    # file and is left to the last-token fallback.
+    nup <- nchar(gsub("[^A-Z]", "", tk))
+    nlo <- nchar(gsub("[^a-z]", "", tk))
+    caps <- nup >= 2 & nup >= nlo
+    if (any(caps)) {
+      sur[i] <- tk[which(caps)[1]]
+      giv[i] <- paste(tk[!caps], collapse = " ")
+    } else {
+      sur[i] <- tk[length(tk)]
+      giv[i] <- paste(tk[-length(tk)], collapse = " ")
+    }
+  }
+  sur <- toupper(trimws(sur)); giv <- toupper(trimws(giv))
+  # A surname-only source (WA) can only ever be matched on the surname. That
+  # is a limit of the data, not a choice, so it is made explicit with an empty
+  # initial rather than arrived at by a parser accident -- and it carries a
+  # real collision risk between different people sharing a surname, which the
+  # BC9a line below quantifies.
+  out <- paste0(sur, "|", substr(giv, 1, 1))
+  out[!nzchar(sur)] <- NA_character_
+  out
+}
+C[, .nm := .key(name)]
+# OFF BY DEFAULT, and that is a decision rather than caution.
+#
+# The backfill is correct -- 21 state parliaments do not have zero returning
+# members -- but it does not earn its place in the model and it cannot ship
+# alone:
+#
+#   * Measured, isolated (same code, only this feature differing): pooled
+#     primary RMSE 3.8078 -> 3.8219, WORSE by 0.0141 and worse in 5 of 6
+#     jurisdictions. On seat log loss, the metric that decides, sa2026 moved
+#     0.3260 -> 0.3256 -- 0.0004, nothing.
+#   * It BREAKS the live path. R/xgb_primary_override.R defaults
+#     historic_elected_i to 0 for a state election precisely because that is
+#     what every state election carries in training. Turn this on and 0 stops
+#     meaning "the universal state default" and starts meaning "no returning
+#     members anywhere in Victoria", which is false and which the model would
+#     then read as signal. The two changes are a package.
+#
+# So it waits for the Victorian candidate list (docs/NEXT-STEPS.md step 3),
+# which makes the live value real and gives this something to pair with. The
+# code stays because deriving it was the hard part and the name-format traps
+# below are worth not rediscovering.
+.backfill <- identical(Sys.getenv("AUSPOL_HISTORIC_ELECTED_BACKFILL", "0"), "1")
+.state <- C$region != "fed" & .backfill
+if (!.backfill) {
+  cat("BC9  state historic_elected backfill OFF (AUSPOL_HISTORIC_ELECTED_BACKFILL=0):\n",
+      "     reproducing what the shipped model was fitted on. Measured worse\n",
+      "     and cannot ship without the live-path change -- see the note here.\n")
+}
+if (any(.state)) {
+  .won <- C[elected %in% c(TRUE, "TRUE", "Y", "1") & nzchar(.nm),
+            list(region, year, .nm)]
+  .before <- vapply(which(.state), function(i) {
+    w <- .won[.won$region == C$region[i] & .won$year < C$year[i]]
+    C$.nm[i] %in% w$.nm
+  }, logical(1))
+  .n_before <- sum(C$historic_elected[.state] %in% c(TRUE, "TRUE", "Y", "1"),
+                   na.rm = TRUE)
+  C[which(.state), historic_elected := .before]
+  # HOW MUCH OF THE MATCH IS SURNAME-ONLY, and therefore exposed to two
+  # different people sharing a surname being treated as one. Reported rather
+  # than silently accepted: WA's commission files carry no given names at all,
+  # so its entire backfill rests on this and the number should be visible next
+  # to it.
+  .so <- sum(.state & grepl("\\|$", C$.nm))
+  cat(sprintf("BC9a surname-only names (no given name in the source): %d of %d state rows (%.0f%%)\n",
+              .so, sum(.state), 100 * .so / sum(.state)))
+  cat(sprintf("BC9  state historic_elected derived from prior winners: %d of %d state candidacies (was %d)\n",
+              sum(.before), sum(.state), .n_before))
+  # ZERO IS ONLY LEGITIMATE WHEN THERE WAS NOBODY TO MATCH. An election whose
+  # region has no EARLIER election, or whose earlier elections carry no winner
+  # rows, can honestly return none -- vic2010 has 502 candidacies and 0
+  # recorded winners, so vic2014 cannot have a returning member no matter how
+  # good the match is. (This example USED to add "and wa1996 has exactly 1, so
+  # wa2001 can have at most 1". Checked 2026-09-16: wa1996 has 232 candidacies
+  # and 57 winners -- a full Legislative Assembly. The "1" was wrong by 57x
+  # and made the rule look tighter than it is. vic2010's 502/0 is right and is
+  # the only genuine instance in the corpus.)
+  # Gate on prior winners AVAILABLE, not on position in the sequence:
+  # otherwise the check either fires on vic2014 forever or is loosened until
+  # it cannot fire at all.
+  .by <- C[.state, list(n = .N, hits = sum(historic_elected %in% c(TRUE, "TRUE"))),
+           by = list(region, year)][order(region, year)]
+  .wn <- C[.state & C$elected %in% c(TRUE, "TRUE", "Y", "1"),
+           list(w = .N), by = list(region, year)]
+  .by[, avail := vapply(seq_len(.N), function(k)
+    sum(.wn$w[.wn$region == region[k] & .wn$year < year[k]]), numeric(1))]
+  for (k in seq_len(nrow(.by))) {
+    cat(sprintf("     %s%d: %d of %d  (prior winners available: %d)\n",
+                .by$region[k], .by$year[k], .by$hits[k], .by$n[k], .by$avail[k]))
+  }
+  # MORE RETURNING MEMBERS THAN THERE WERE WINNERS TO RETURN is arithmetically
+  # impossible and means two different people were treated as one. It is not
+  # fatal -- WA's files carry surnames only, so a collision there is a limit of
+  # the source -- but it must be visible, because "59 returning from 57
+  # winners" is the kind of number that reads as fine until someone checks it.
+  .over <- .by[hits > avail & avail > 0]
+  if (nrow(.over)) {
+    cat(sprintf("BC9! %d election(s) matched MORE returning members than there were prior winners -- surname collisions: %s\n",
+                nrow(.over), paste(sprintf("%s%d (%d from %d)", .over$region,
+                                           .over$year, .over$hits, .over$avail),
+                                   collapse = ", ")))
+  }
+  .bad <- .by[hits == 0 & avail > 0]
+  if (nrow(.bad)) {
+    stop("BC9! ", nrow(.bad), " state election(s) matched ZERO returning ",
+         "members despite having prior winners to match against: ",
+         paste(sprintf("%s%d (%d available)", .bad$region, .bad$year,
+                       .bad$avail), collapse = ", "),
+         ". That is the constant-zero bug this block replaces, so the name ",
+         "match has failed rather than found nothing.")
+  }
+}
+C[, .nm := NULL]
 
 setorder(C, election, seat, -pcv)
 # WRITE EVERY COLUMN. Selecting a subset here is the same mistake one layer

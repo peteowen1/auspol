@@ -390,11 +390,12 @@ now <- trend_as_at(polls, 2026, cycles, Sys.Date(), priors, fl, with_series = TR
 # takes the defaults. So a green `L3` said "the model we do not publish tracks
 # its polls", and the model we DO publish was unasserted.
 #
-# That is not a hypothetical gap. On 2026-09-14 the two paths sat on opposite
-# sides of the bound -- the per-cycle Victorian fit had One Nation 2.44 points
-# off its polls and the published fit had it 2.85 off, breaching. The number
-# that goes into `state_mean` below, and therefore into every seat, was the
-# unchecked one.
+# That is not a hypothetical gap. The two paths give different answers for the
+# same party on the same polls -- on 2026-09-14 the per-cycle Victorian fit had
+# One Nation 2.44 points off its polls where the published fit had it 2.47 off,
+# and on data four weeks older they were 2.44 against 2.85, i.e. opposite sides
+# of the bound. The number that goes into `state_mean` below, and therefore
+# into every seat, was the unchecked one either way.
 #
 # REPORTS RATHER THAN HALTING, for the same reason `L3` does: this is the
 # target stage, and a `stopifnot` here means the Victorian forecast never
@@ -1181,7 +1182,7 @@ if (identical(Sys.getenv("AUSPOL_XGB_FLOWS", "0"), "1")) {
 }
 sim <- simulate_seat_contests(level_sd = .level_sd, level_mult = .lm(shares), shares, fm, party_sd = psd, seat_sd = SEAT_SD, shrink = SHRINK,
                               n_sims = N_SIMS, smooth = SMOOTH, seed = SEED,
-                              conditional_override = .cond_ov,
+                              conditional_override = .cond_ov, conditional_override_sd = attr(.cond_ov, "sd"),
                               statewide_draws = sw_draws,
                               fallback_smooth = FB_SMOOTH, shrink_k = SHRINK_K, flow_sd = FLOW_SD,
                               surge_h = surge_arg, surge_party = surge_party_arg,

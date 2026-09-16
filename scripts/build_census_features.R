@@ -130,8 +130,16 @@ VINTAGE <- c(wa2021 = "2021", vic2022 = "2022", sa2022 = "2022", sa2026 = "2025"
              nsw2023 = "2022", qld2024 = "2024", wa2025 = "2025",
              vic2018 = "2021", vic2014 = "2021", nsw2019 = "2021",
              qld2020 = "2021", wa2017 = "2021", wa2013 = "2021",
-             wa2008 = "2021", wa2005 = "2021", wa2001 = "2021")
-EXACT <- c("wa2021","vic2022","sa2022","nsw2023","qld2024","wa2025","sa2026")
+             wa2008 = "2021", wa2005 = "2021", wa2001 = "2021",
+             # THE LIVE TARGET, added 2026-09-15. Victoria's boundaries have not
+             # moved since the 2021 redistribution, so the reaggregation built
+             # for 2022 applies exactly: all 88 vic2026 divisions appear in
+             # census-sed-2016-reaggregated-to-2022.csv, and the only name that
+             # differs between the two elections is Narracan, whose 2022 poll
+             # was deferred rather than redistributed away.
+             vic2026 = "2022")
+EXACT <- c("wa2021","vic2022","sa2022","nsw2023","qld2024","wa2025","sa2026",
+           "vic2026")
 
 sed_rows <- list()
 for (el in names(VINTAGE)) {
@@ -197,9 +205,91 @@ if (nrow(FEDC)) {
   SED <- rbindlist(c(list(SED), fed_rows2), fill = TRUE)
 }
 
-# Join onto the cells the model actually scores.
+# JOIN ONTO THE SEATS BEING CONTESTED, not the seats that existed last time.
+#
+# This read `unique(F[, .(pair, seat)])` from xgb-primary-v6-features.csv until
+# 2026-09-15. That file is keyed on the PREVIOUS election's seats, so a division
+# created at a redistribution had no feature row, therefore no census row -- and
+# education_residual_apply() skips an entire election rather than part-applying
+# it, because correcting some seats and not others moves the statewide total.
+# Four of the seven AEF pairs were disabled that way:
+#
+#   nsw2023   5 of 93   Badgerys Creek, Kellyville, Leppington, Wahroonga, Winston Hills
+#   wa2025    9 of 59   WA redistributes hard; names do not survive between elections
+#   fed2022   2 of 152  includes Hawke, created 2021
+#   fed2025   3 of 152  same cause
+#
+# Every one of those seats was ALREADY in the reaggregated census files -- 5 of
+# 5 NSW and 10 of 10 Victorian, in the 2022, 2024 and 2025 vintages. Nothing was
+# missing from disk; the join was asking the wrong question. Third instance of
+# the pattern CLAUDE.md records under "Before saying we don't have data".
+#
+# vic2026 had no rows AT ALL, which is the one that matters: it is the election
+# being forecast. See the RESULT section of
+# docs/plans/prereg-education-residual-correction-2026-09-15.md.
+#
+# candidacies.csv is the contested-seat list for every election we hold, vic2026
+# included. Pairs with no census vintage are filtered out here rather than
+# joined to nothing -- an all-NA pair is the constant-within-subgroup block the
+# CF2 check below exists to stop. The v6 cells are UNIONED IN rather than
+# replaced, so no downstream consumer loses a row it had before.
+CAND <- fread(file.path(OUT, "candidacies.csv"), showProgress = FALSE)
+# Mask computed OUTSIDE the brackets and the columns pulled with `$`: `election`
+# and `seat` are both column names here, and CLAUDE.md records eight bugs from a
+# bare column-name symbol inside `[`.
+keep_cand <- CAND$election %in% unique(SED$pair)
+cand_cells <- unique(data.table(pair = CAND$election[keep_cand],
+                                seat = CAND$seat[keep_cand]))
+
+# AND THE PREVIOUS ELECTION'S DIVISIONS, filed under the CURRENT pair.
+#
+# A pair needs both seat sets, because the pipeline handles both. The forecast
+# is made for the seats being contested; the matrix it is built from is keyed on
+# the seats of the election it projects forward (`shares <- mat`,
+# backtest_candidate_nsw.R:424). A redistribution breaks those two apart in both
+# directions at once -- nsw2023 gains Badgerys Creek, Kellyville, Leppington,
+# Wahroonga and Winston Hills, and loses Baulkham Hills, Ku-ring-gai, Lakemba,
+# Mulgoa and Seven Hills -- and a census table covering only one side disables
+# the election for anything that needs every seat.
+#
+# The predecessor is DERIVED, not hand-listed: the most recent election of the
+# same region strictly before this one. A hand-maintained map here would be one
+# more thing to forget when a pair is added, and CLAUDE.md records that the six
+# harnesses' copied pair lists have already drifted apart once.
+.el     <- unique(CAND$election)
+.el_reg <- sub("[0-9]{4}$", "", .el)
+.el_yr  <- suppressWarnings(as.integer(sub("^[a-z]+", "", .el)))
+prev_of <- vapply(unique(SED$pair), function(p) {
+  r <- sub("[0-9]{4}$", "", p)
+  y <- suppressWarnings(as.integer(sub("^[a-z]+", "", p)))
+  ok <- .el_reg == r & is.finite(.el_yr) & .el_yr < y
+  if (!any(ok)) return(NA_character_)
+  .el[ok][which.max(.el_yr[ok])]
+}, character(1))
+prev_cells <- rbindlist(lapply(names(prev_of), function(p) {
+  pe <- prev_of[[p]]
+  if (is.na(pe)) return(NULL)
+  m <- CAND$election == pe
+  if (!any(m)) return(NULL)
+  data.table(pair = p, seat = CAND$seat[m])
+}))
+if (nrow(prev_cells)) cand_cells <- unique(rbindlist(list(cand_cells, prev_cells)))
+cat(sprintf("CF1a predecessor election resolved for %d of %d pairs\n",
+            sum(!is.na(prev_of)), length(prev_of)))
 F <- fread(file.path(OUT, "xgb-primary-v6-features.csv"), showProgress = FALSE)
-cells <- unique(F[, .(pair, seat)])
+v6_cells <- unique(F[, .(pair, seat)])
+cells <- unique(rbindlist(list(cand_cells, v6_cells)))
+# PRINT WHAT THE UNION ADDED, per pair. A silent widening is indistinguishable
+# from no widening, and this whole fix exists because a gap was invisible.
+added <- merge(cells[, .N, by = pair], v6_cells[, .(was = .N), by = pair],
+               by = "pair", all.x = TRUE)
+added[is.na(was), was := 0L][, gained := N - was]
+cat(sprintf("CF1b seat universe: %d cells (was %d from the v6 features file alone)\n",
+            nrow(cells), nrow(v6_cells)))
+if (nrow(added[gained > 0])) {
+  cat("CF1b pairs that gained seats -- each one was a silently disabled election:\n")
+  print(added[gained > 0][order(-gained)])
+}
 # VICTORIAN CENSUS NAMES CARRY A REGION SUFFIX. The census calls it
 # "Albert Park (Southern Metropolitan)" and we call it "Albert Park", so the
 # join matched 2 of 78 vic2022 seats -- 90 Victorian rows were present and
@@ -212,6 +302,18 @@ cells <- unique(F[, .(pair, seat)])
 .strip_region <- function(x) trimws(sub("\\s*\\([^)]*\\)\\s*$", "", x))
 SED[, sn := normalise_seat(.strip_region(seat))]
 cells[, sn := normalise_seat(seat)]
+# THE UNION CAN CARRY TWO SPELLINGS OF ONE SEAT. candidacies.csv and the v6
+# feature file are built by different scripts, so a division they name
+# differently ("Kurri Kurri" against "Kurri-Kurri") survives the union as two
+# rows that normalise to the same key -- both would then match the same census
+# row and the file would ship a duplicate. Report and drop, never silently keep
+# the first: which spelling wins decides whether a harness finds its seat.
+cdup <- cells[, .N, by = .(pair, sn)][N > 1]
+if (nrow(cdup)) {
+  cat(sprintf("CF1c! %d (pair, seat) keys reached by two different spellings:\n", nrow(cdup)))
+  print(merge(cells, cdup[, .(pair, sn)], by = c("pair", "sn"))[order(pair, sn)])
+  cells <- cells[!duplicated(cells[, .(pair, sn)])]
+}
 # Whatever survives the strip must still be one row per (pair, seat), or the
 # merge below multiplies cells. Print what collided rather than quietly taking
 # the first -- a silent narrowing here would corrupt every feature downstream.
@@ -224,6 +326,69 @@ if (nrow(dup)) {
 J <- merge(cells, SED[, c("pair", "sn", "vintage", "exact", ..FEATS)],
            by = c("pair", "sn"), all.x = TRUE)
 stopifnot(nrow(J) == nrow(cells))
+
+# FALL BACK TO ANOTHER BOUNDARY VINTAGE FOR SEATS THE PAIR'S OWN VINTAGE LACKS.
+#
+# The harnesses project each seat's PREVIOUS primaries forward, so the matrix
+# they hand to education_residual_apply() is keyed on the PREVIOUS election's
+# divisions -- `shares <- mat` at backtest_candidate_nsw.R:424. A division
+# ABOLISHED at a redistribution therefore still needs a census row, and the
+# pair's own vintage is by construction built on the boundaries that abolished
+# it. Widening the seat universe to the contested seats (above) does not help
+# with that: it fixes the opposite end of the same redistribution.
+#
+# nsw2023 is the worked case. Baulkham Hills, Ku-ring-gai, Lakemba, Mulgoa and
+# Seven Hills disappeared in the 2021 NSW redistribution; the 2022
+# reaggregation has none of them and the 2021 reaggregation has all five.
+# Without this, education_residual_apply() skips the entire election, which is
+# what silently disabled four of the seven AEF pairs.
+#
+# NEAREST other vintage wins, earlier preferred on a tie, and the row is marked
+# exact = FALSE so a consumer can tell a boundary-matched row from a borrowed
+# one. Borrowing is a real approximation -- the demographics are measured on
+# boundaries that differ from the ones in use -- and it is better than dropping
+# the election, but only because it is visible in the data.
+pool_rows <- list()
+for (.v in unique(VINTAGE)) {
+  .f <- file.path(CEN, sprintf("census-sed-2016-reaggregated-to-%s.csv", .v))
+  if (!file.exists(.f)) next
+  .d <- derive(fread(.f, showProgress = FALSE))
+  if (!"final_name" %in% names(.d)) next
+  .reg <- c("1" = "nsw", "2" = "vic", "3" = "qld", "4" = "sa", "5" = "wa")[
+    substr(as.character(.d$final_code), 1, 1)]
+  pool_rows[[.v]] <- data.table(
+    region = unname(.reg), vintage = .v,
+    sn = normalise_seat(.strip_region(.d$final_name)))[, (FEATS) := .d[, ..FEATS]][]
+}
+if (nrow(FEDC)) {
+  pool_rows[["fed"]] <- data.table(
+    region = "fed", vintage = FEDC$vintage,
+    sn = normalise_seat(.strip_region(FEDC$seat)))[, (FEATS) := FEDC[, ..FEATS]][]
+}
+POOL <- rbindlist(pool_rows, fill = TRUE)
+POOL <- unique(POOL[!is.na(region) & !is.na(sn)], by = c("region", "sn", "vintage"))
+
+need <- which(!is.finite(J$yr12_pct))
+if (length(need) && nrow(POOL)) {
+  nd <- data.table(ri = need,
+                   region = sub("[0-9]{4}$", "", J$pair[need]),
+                   sn = J$sn[need],
+                   yr = suppressWarnings(as.integer(sub("^[a-z]+", "", J$pair[need]))))
+  cand <- merge(nd, POOL, by = c("region", "sn"), allow.cartesian = TRUE)
+  if (nrow(cand)) {
+    cand[, vy := suppressWarnings(as.integer(vintage))]
+    cand[, gap := abs(vy - yr)]
+    setorder(cand, ri, gap, vy)
+    pick <- cand[!duplicated(cand$ri)]
+    for (.v in FEATS) set(J, pick$ri, .v, pick[[.v]])
+    set(J, pick$ri, "vintage", pick$vintage)
+    set(J, pick$ri, "exact", FALSE)
+    cat(sprintf("\nCF2b %d of %d unmatched cells filled from another boundary vintage:\n",
+                nrow(pick), length(need)))
+    print(data.table(pair = J$pair[pick$ri], vintage = pick$vintage)[, .N,
+          by = .(pair, vintage)][order(-N)])
+  }
+}
 cat(sprintf("\nCF2  %d seat-pairs | %d matched a census row (%.0f%%)\n",
             nrow(J), sum(!is.na(J$yr12_pct)), 100 * mean(!is.na(J$yr12_pct))))
 # COVERAGE PER FEATURE, NOT JUST PER ROW. median_mortgage shipped in the first

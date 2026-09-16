@@ -223,6 +223,41 @@ CAL_TAG <- paste0(
   if (as.numeric(Sys.getenv("AUSPOL_FLOW_SD", "0")) != 0)
     sprintf("-fsd%s", sub("[.]", "", format(as.numeric(Sys.getenv("AUSPOL_FLOW_SD")), nsmall = 1)))
   else "",
+  # FLOW MODEL VARIANT in the fingerprint. Added 2026-09-16 after a federal
+  # A/B silently overwrote its own baseline: AUSPOL_FLOW_MODEL_TAG changes
+  # which model the run loads but did not change the output filename, so both
+  # arms wrote the same file and the second clobbered the first. That is the
+  # exact failure CAL_TAG exists to prevent -- this file's own header
+  # (backtest_candidate_fed.R, the "seat_sd sweep" note) records a sweep
+  # doing it to backtest-fed.csv and backtest-vic.csv on 2026-08-21, where it
+  # read as "+0.0000 difference" across all six federal elections. CLAUDE.md
+  # carries the general pattern, not that incident.
+  # Behaviour-changing switch, so it MUST alter the filename. Added
+  # 2026-09-16 -- the third switch in one session to change what a run does
+  # without changing what the run is called. CAL_TAG exists for exactly this.
+  if (identical(Sys.getenv("AUSPOL_FLOW_CELL_SD", "0"), "1")) "-cellsd" else "",
+  # AUSPOL_SD_DEPARTED widens the per-cell sd override to ALP/LNP cells in
+  # seats whose previous winner has left the ballot, inside
+  # xgb_primary_sd_matrix() (R/xgb_primary_sd_override.R:103) -- so it never
+  # appears in this file and a grep of the harness could not see it.
+  #
+  # THIS IS READABILITY, NOT A BUG FIX, and the commit that added it
+  # (d91dc9c) says otherwise. It claimed two arms differing only in this
+  # switch would overwrite each other's output file. They would not:
+  # .arm_fingerprint above hashes EVERY set AUSPOL_* variable, and
+  # apply_published_flags() sets every published switch before it runs, so
+  # the baseline hashes to -a614a9d and the SD_DEPARTED arm to -a614adc.
+  # Measured 2026-09-16, after the same wrong diagnosis had already been
+  # made once that night and corrected by git note on 4456aea. What this
+  # line actually buys is a filename that SAYS which arm it is instead of
+  # hiding it in an opaque six-character hash -- worth having, and not what
+  # was claimed. docs/MODEL-REGISTRY.md marks the switch "UNEXPLAINED --
+  # audit this" because its grep only scans the harnesses and
+  # fit_seats_full.R, never R/; that gap is real and separate.
+  if (identical(Sys.getenv("AUSPOL_SD_DEPARTED", "0"), "1")) "-sddep" else "",
+  if (nzchar(Sys.getenv("AUSPOL_FLOW_MODEL_TAG", "")))
+    sprintf("-fm%s", Sys.getenv("AUSPOL_FLOW_MODEL_TAG"))
+  else "",
   if (as.numeric(Sys.getenv("AUSPOL_PARTY_SD", "1.5")) != 1.5)
     sprintf("-psd%s", sub("[.]", "", format(as.numeric(Sys.getenv("AUSPOL_PARTY_SD")), nsmall = 2)))
   else "",
@@ -525,8 +560,24 @@ if (!is.null(.fitsl)) cat(sprintf("FS1  fitted slopes | same %s | new %s
 ",
   paste(sprintf("%s=%.3f", names(.fitsl$same), .fitsl$same), collapse=" "),
   paste(sprintf("%s=%.3f", names(.fitsl$new),  .fitsl$new),  collapse=" ")))
+# MINOR-TO-MINOR DEFECTOR DISCOUNT reaching base_pred, not just the xgb
+# feature -- docs/reviews/base-pred-blind-to-tonights-fixes-2026-09-16.md.
+# Same shape as major_discount/.defect above.
+.minor_disc <- NULL
+if (identical(Sys.getenv("AUSPOL_MINOR_DEFECT_BASE_PRED", "0"), "1")) {
+  .mfd <- tryCatch(fit_minor_defector_discount(TGT), error = function(e) {
+    cat(sprintf("BT0n! minor-defector fit FAILED, no discount applied: %s\n", conditionMessage(e)))
+    list(discount = NULL, n = 0L)
+  })
+  if (is.null(.mfd$discount)) {
+    cat(sprintf("BT0n! only %d minor-defector case(s) (need >=5); no discount applied\n", .mfd$n))
+  } else {
+    cat(sprintf("BT0n minor-defector discount %.3f from %d cases (target excluded)\n", .mfd$discount, .mfd$n))
+    .minor_disc <- .mfd$discount
+  }
+}
 .split <- split_slope_context(PRV, TGT)
-.own_prev <- if (.cond) tryCatch(personal_prior_vote(PRV, TGT, major_discount = .defect), error = function(e) { cat(sprintf("BT1p! personal_prior_vote() FAILED; class-level bases kept and NO transfer removed: %s\n", conditionMessage(e))); NULL }) else NULL
+.own_prev <- if (.cond) tryCatch(personal_prior_vote(PRV, TGT, major_discount = .defect, minor_discount = .minor_disc), error = function(e) { cat(sprintf("BT1p! personal_prior_vote() FAILED; class-level bases kept and NO transfer removed: %s\n", conditionMessage(e))); NULL }) else NULL
 mat <- remove_transferred_votes(mat, .own_prev)  # the vote moves with the person; see personal_prior_vote()
 .tr <- attr(mat, "transfers"); if (!is.null(.tr)) cat(sprintf("TR1  transfers moved with the person: %d applied%s\n", .tr$applied, if (length(.tr$skipped)) paste0("; SKIPPED ", length(.tr$skipped), ": ", paste(utils::head(.tr$skipped, 5), collapse = ", ")) else ""))
 .own_x <- function(p, seats, x) {
@@ -552,6 +603,23 @@ cat(sprintf("BN1d  dev slopes: %s%s
             if (length(attr(DEV_SLOPE, "absent")))
               paste0(" | not contested here: ",
                      paste(attr(DEV_SLOPE, "absent"), collapse=",")) else ""))
+# MAJOR-PARTY SAME/NEW SLOPES, off by default -- screened_slopes()/
+# conditional_slopes() have never had a same/new distinction for ALP/LNP/NAT,
+# so a departing MP's premium carries forward at slope=1 (full, unconditional)
+# every time, for every major-party seat. Sized 2026-09-16, leave-target-out:
+# ALP same~0.92 new~0.90 (barely differs -- brand vote dominates), LNP
+# same~0.92 new~0.83 (a real but modest gap -- nowhere near minors' 3x).
+# docs/reviews/base-pred-blind-to-tonights-fixes-2026-09-16.md.
+.major_sl <- NULL
+if (identical(Sys.getenv("AUSPOL_MAJOR_SLOPES", "0"), "1")) {
+  .major_sl <- tryCatch(fit_major_conditional_slopes(TGT), error = function(e) {
+    cat(sprintf("BN0m! major-slope fit FAILED, majors stay unconditioned: %s\n", conditionMessage(e)))
+    NULL
+  })
+  if (!is.null(.major_sl)) cat(sprintf("BN0m major slopes | same %s | new %s\n",
+      paste(sprintf("%s=%.3f", names(.major_sl$same), .major_sl$same), collapse=" "),
+      paste(sprintf("%s=%.3f", names(.major_sl$new),  .major_sl$new),  collapse=" ")))
+}
 pinned <- matrix(FALSE, nrow(mat), ncol(mat), dimnames = dimnames(mat))
 for (p in parties) {
   if (!p %in% names(state_tgt)) next
@@ -562,6 +630,12 @@ for (p in parties) {
     pm <- unname(lut[rownames(mat)]); pm[is.na(pm)] <- TRUE
     screened_slopes(p, rownames(mat), .returns, pm, same_mp = .MP_SLOPE, honour_departed = .honour_departed, same = if (is.null(.fitsl)) formals(screened_slopes)$same else .fitsl$same, new = if (is.null(.fitsl)) formals(screened_slopes)$new else .fitsl$new)
   } else if (.cond) conditional_slopes(p, rownames(mat), .returns, same_mp = .MP_SLOPE, same = if (is.null(.fitsl)) formals(conditional_slopes)$same else .fitsl$same, new = if (is.null(.fitsl)) formals(conditional_slopes)$new else .fitsl$new) else DEV_SLOPE[[p]]
+  if (!is.null(.major_sl) && p %in% names(.major_sl$same) && !is.null(.returns)) {
+    .r <- .returns[.returns$party == p]
+    .is_same <- unname(stats::setNames(.r$same, .r$seat)[rownames(mat)])
+    .is_same[is.na(.is_same)] <- FALSE
+    sl <- ifelse(.is_same, .major_sl$same[[p]], .major_sl$new[[p]])
+  }
   x_p <- .own_x(p, rownames(mat), mat[, p])
   val <- if (is.null(.split)) dev_slope(x_p, state_prev[[p]], state_tgt[[p]], sl) else
     split_dev_slope(x_p, .split$frac(p, rownames(mat)), state_prev[[p]], state_tgt[[p]], .split$s_ret, .split$s_dep)
@@ -683,6 +757,30 @@ if (PORT) {
 ")
 }
 shares <- xgb_primary_override(shares, TGT)
+
+# EDUCATION RESIDUAL CORRECTION (AUSPOL_EDU_RESID, default 0).
+# Pre-registered in docs/plans/prereg-education-residual-correction-2026-09-15.md.
+# Applied HERE, immediately after the override, so it corrects exactly the
+# shares that reach the simulation. Leakage-free: the coefficient for this pair
+# is fitted on every OTHER pair's out-of-fold residuals.
+if (identical(Sys.getenv("AUSPOL_EDU_RESID", "0"), "1")) {
+  shares <- education_residual_apply(
+    shares, TGT,
+    feature = Sys.getenv("AUSPOL_EDU_RESID_FEATURE", "yr12_pct"),
+    shuffle = Sys.getenv("AUSPOL_EDU_RESID_SHUFFLE", "0"))
+}
+
+# DEMOGRAPHIC RESIDUAL CORRECTION, Arm A of
+# docs/plans/prereg-demographic-axis-2026-09-15.md (AUSPOL_DEMO_RESID,
+# default 0). All seven census columns under an elastic net, replacing the
+# single hand-picked yr12_pct of the refused version above. Same position in
+# the pipeline, immediately after the override, so it corrects exactly the
+# shares that reach the simulation.
+if (identical(Sys.getenv("AUSPOL_DEMO_RESID", "0"), "1")) {
+  shares <- demographic_residual_apply(
+    shares, TGT,
+    shuffle = Sys.getenv("AUSPOL_DEMO_RESID_SHUFFLE", "0"))
+}
 
 sp <- seat_swing_spread(seats, unname(state_tgt[["ALP"]] - state_prev[["ALP"]]))
 cat(sprintf("\nBT3  seat spread: within %.2f, between %.2f\n", sp$sd_within, sp$sd_between))
@@ -868,11 +966,30 @@ if (.exhaust_on) {
 }
 sim <- simulate_seat_contests(level_sd = .level_sd, sd_override = SD_OVR, level_mult = .lm(shares), shares, fm, party_sd = psd, seat_sd = sp$sd_within * SEAT_SD_MULT,
                               n_sims = N_SIMS, smooth = SMOOTH, seed = SEED, party_cor = PARTY_COR,
-                              shrink = SHRINK, conditional_override = .xgb_flow_ov,
+                              shrink = SHRINK, conditional_override = .xgb_flow_ov, conditional_override_sd = attr(.xgb_flow_ov, "sd"),
                               fallback_smooth = FB_SMOOTH, shrink_k = SHRINK_K, flow_sd = FLOW_SD,
                               surge_h = surge_arg, surge_party = surge_party_arg,
                                 surge_from_zero = identical(Sys.getenv("AUSPOL_SURGE_FROM_ZERO", "0"), "1"), surge_mu = surge_mu_arg, surge_sd = surge_sd_arg,
                               exhaust = EXHAUST_ARG, engine = SIM_ENGINE)
+
+# OUR OWN final-two scenario frequencies -- see tcp_scenarios(). Pete asked
+# 2026-09-16 whether we track how often a seat lands on each possible
+# head-to-head; simulate_seat_contests() already computes this per draw and
+# every harness discarded it. Written per pair so build_aef_tcp.R-style
+# tooling can compare against AEF's own seatTcpScenarios.
+.scen <- tcp_scenarios(sim)
+if (!is.null(.scen) && nrow(.scen)) {
+  fwrite(.scen, file.path("output", sprintf("backtest-%s-ourtcp%s.csv", TGT, CAL_TAG)))
+  cat(sprintf("BT2t  wrote %d seat/scenario rows to backtest-%s-ourtcp%s.csv
+",
+              nrow(.scen), TGT, CAL_TAG))
+} else {
+  # NOT silent. No file AND no message is indistinguishable from this
+  # script never having run for the pair -- the gap the data-registry
+  # discipline exists to make visible.
+  cat(sprintf("BT2t! tcp_scenarios() returned no rows for %s -- ourtcp CSV NOT written
+", TGT))
+}
 cat(sprintf("BT5e  engine %s | surge recipient fell back: %d class(es) absent, %d seat-draws at zero share\n", sim$engine, sim$surge_recipient_fallback, sim$surge_recipient_fallback_draws))
 wp <- as.data.table(sim$win_prob)
 
@@ -967,6 +1084,22 @@ cat(sprintf("BT8  independents won %d of %d scored seats; we gave them a mean %.
 
 fwrite(res[order(seat)], file.path("output", sprintf("backtest-%s%s.csv", TGT, CAL_TAG)))
 fwrite(data.table(pair = TGT, as.data.table(sim$totals)), file.path("output", sprintf("backtest-%s-totals%s.csv", TGT, CAL_TAG)))
+# THE FULL PER-SEAT PER-PARTY PROBABILITY TABLE. `wp` has existed in memory
+# since line 901 and was thrown away at the last step, so "did we give anyone
+# else a chance?" could not be answered without a fresh run -- the same loss
+# the Queensland harness records at its own equivalent line. Emitted here for
+# parity with fed/sa/qld, which already write it; without it NSW is invisible
+# to any emergence analysis, and nsw2019 is the corpus's worst emergence
+# (the Shooters won 3 seats against a simulated 0.0 +/- 0.21).
+.full <- merge(wp[, .(seat, party, prob)],
+               data.table(seat = names(truth), actual = unname(truth)),
+               by = "seat", all.x = TRUE)
+.full[, is_actual := party == actual]
+setorder(.full, seat, -prob)
+fwrite(.full, file.path("output", sprintf("backtest-%s-allprobs%s.csv", TGT, CAL_TAG)))
+cat(sprintf("BT9  wrote the full probability table: %d rows, %d seats, %d parties
+",
+            nrow(.full), uniqueN(.full$seat), uniqueN(.full$party)))
 # PERSIST THE POINT ESTIMATE, not just the aggregate RMSE -- see fed's
 # equivalent line, 2026-09-09.
 #

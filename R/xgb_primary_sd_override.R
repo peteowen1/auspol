@@ -89,6 +89,39 @@ xgb_primary_sd_matrix <- function(shares, target_election, floor_sd = NA_real_) 
   ci <- match(P$party, colnames(shares))
   keep <- !is.na(ri) & !is.na(ci) & is.finite(P$sd_hat) & P$sd_hat > 0 &
           P$party %in% cls
+
+  # AUSPOL_SD_DEPARTED: extend the override to ALP and LNP cells, but ONLY in
+  # seats whose previous general-election winner is not on the ballot. Those
+  # seats are a measurably different population -- the held party's primary
+  # error spreads from sd 5.17 to 8.81 in NSW, against 1.06x federally -- while
+  # `simulate_seat_contests()` gives every seat in the chamber one `seat_sd`.
+  # Deliberately NOT the majors everywhere: that arm was already measured and
+  # refused, costing 144 non-teal fed2022 seats 0.267 -> 0.278, and this is the
+  # same switch narrowed to the cells where the width is earned.
+  # docs/plans/prereg-departed-member-width-2026-09-16.md
+  n_dep <- 0L
+  if (identical(Sys.getenv("AUSPOL_SD_DEPARTED", "0"), "1")) {
+    df <- "output/retirement-derived.csv"
+    if (!file.exists(df)) {
+      # LOUD, not silent. A missing file here would leave the arm looking like
+      # the baseline and read as "no effect", which is the failure mode
+      # CLAUDE.md records as indistinguishable from an experiment that ran.
+      cat(sprintf("XD9! AUSPOL_SD_DEPARTED=1 but %s is missing -- run scripts/build_retirement_derived.py. NO major cells widened; this run is the BASELINE, not the arm.\n", df))
+    } else {
+      D <- data.table::fread(df, showProgress = FALSE)
+      D <- D[D$pair == want & D$retire_derived == 1L]
+      if (!nrow(D)) {
+        cat(sprintf("XD9! no departed seats recorded for %s -- no major cells widened\n", want))
+      } else {
+        dep <- P$seat %in% D$seat & P$party %in% c("ALP", "LNP") &
+               !is.na(ri) & !is.na(ci) & is.finite(P$sd_hat) & P$sd_hat > 0
+        n_dep <- sum(dep & !keep)
+        keep <- keep | dep
+        cat(sprintf("XD9  SD_DEPARTED: %d departed seat(s) for %s, %d extra ALP/LNP cell(s) widened\n",
+                    nrow(D), want, n_dep))
+      }
+    }
+  }
   if (any(keep)) {
     v <- P$sd_hat[keep]
     if (is.finite(floor_sd)) v <- pmax(v, floor_sd)

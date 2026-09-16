@@ -107,9 +107,31 @@ SURGE_CANON <- list(
   list(election = "wa2008",  prev = "wa2005",  region = "wa")
 )
 
-# Anchor's incumbent strings distinguish LIB/NAT/LNP where our classify_party()
-# buckets all three as "LNP" -- map so is_incumbent_party can actually match.
-to_class <- function(p) ifelse(p %in% c("LIB", "NAT", "LNP"), "LNP", p)
+# Anchor's incumbent strings are raw commission codes and never went through
+# classify_party() -- so is_incumbent_party silently compared our party class
+# (e.g. "OTH_RIGHT") against a bare code (e.g. "SFF") and was FALSE on every
+# minor-party-held seat, no matter who actually held it. Found 2026-09-16
+# chasing why the primary model missed the eventual OTH_RIGHT/IND winner by
+# 30-40 points in four safe-and-wrong nsw2019 seats -- Orange's incumbent was
+# "SFF" (Shooters, won a 2016 by-election) the whole time, and the model never
+# got told that party was the incumbent.
+#
+# LIB/NAT/LNP -> LNP is classify_party()'s own Coalition rule. SFF -> OTH_RIGHT
+# is classify_party()'s own CODE rule (R/parties.R:44) -- unambiguous, so
+# reused directly. KAP (Katter's Australian Party) has no code rule in
+# classify_party() because it is classified by NAME there, but the code alone
+# is unambiguous everywhere it appears, so it is safe to hardcode here. CA is
+# genuinely ambiguous in general (Centre Alliance federally since 2018 vs.
+# Carers Alliance, fed2010, coded "CA" in candidacies.csv's party_ab) -- but
+# an INCUMBENT is, by definition, a party that already won a seat, and Carers
+# Alliance never did, so "CA" as an incumbent code can only mean Centre
+# Alliance (Mayo, Rebekha Sharkie, continuously since 2016). That reasoning is
+# specific to this field and does not license adding CA to classify_party()
+# itself, which also has to classify losing candidates.
+INCUMBENT_CODE_CLASS <- c(LIB = "LNP", NAT = "LNP", LNP = "LNP",
+                          SFF = "OTH_RIGHT", KAP = "OTH_RIGHT", CA = "IND")
+to_class <- function(p) ifelse(p %in% names(INCUMBENT_CODE_CLASS),
+                               unname(INCUMBENT_CODE_CLASS[p]), p)
 
 state_level <- function(el) {
   d <- C[C$election == el]
@@ -127,6 +149,18 @@ for (pr in PAIRS) {
   lp <- state_level(pr$prev); ln <- state_level(pr$election)
   if (is.null(lp) || is.null(ln)) { cat(sprintf("XG6! no state level for %s -> skip\n", pr$election)); next }
   prevc <- C[C$election == pr$prev][, list(seat_prev_pcv = sum(pcv, na.rm = TRUE), n_cand_prev = .N), by = list(seat, party)]
+  # SEAT_OUTPERF: how much this party beat its own statewide average in this
+  # seat last time -- the size of whatever local factor (a personal vote, a
+  # demographic lean, anything) makes this seat different from the state.
+  # Built to size Pattern A from
+  # docs/reviews/worst-seats-five-patterns-2026-09-13.md -- "a senior retiring
+  # MP loses more personal vote than the flat retirement discount assumes" --
+  # sized on all 349 retirement cases in the corpus (r=0.176, p=0.001), not
+  # just the 5 that motivated it. Full trace, including why this stays
+  # gated: docs/reviews/pattern-a-seat-outperf-2026-09-16.md.
+  prevc <- merge(prevc, lp[, .(party, .state_prev_level = level)], by = "party", all.x = TRUE)
+  prevc[, seat_outperf := seat_prev_pcv - .state_prev_level]
+  prevc[, .state_prev_level := NULL]
   # NOTIONAL (REDISTRIBUTION-ADJUSTED) PRIOR, ON BY DEFAULT since 2026-09-13
   # (Pete's call). Exposed as its own signed feature rather than substituted
   # into `seat_prev_pcv`: a first version silently replaced it and barely
@@ -212,7 +246,30 @@ for (pr in PAIRS) {
   }
   nowc  <- C[C$election == pr$election][, list(n_cand_now = .N), by = list(seat, party)]
   ret <- tryCatch(candidate_returns(pr$prev, pr$election), error = function(e) NULL)
-  pv  <- tryCatch(personal_prior_vote(pr$prev, pr$election), error = function(e) NULL)
+  # AUSPOL_MINOR_DEFECT: the minor-to-minor party-defector discount sized in
+  # docs/reviews/minor-to-minor-defector-2026-09-16.md (Mirani qld2024,
+  # Stephen Andrew ONP -> KAP). Leave-target-out per pair, same convention
+  # as fit_defector_discount(). SHIPPED ON by default (published_flags.R):
+  # 33 corpus cases, geometric mean retention 0.49 (p=0.0003), measured
+  # targeted RMSE 9.2363 -> 8.8813 against a pooled cost (+0.0017) well
+  # inside the ~0.014-per-column noise floor found the same session.
+  .minor_disc <- NULL
+  if (identical(Sys.getenv("AUSPOL_MINOR_DEFECT", "1"), "1")) {
+    .mfd <- tryCatch(fit_minor_defector_discount(pr$election), error = function(e) {
+      cat(sprintf("XG9! minor-defector fit FAILED for %s: %s\n", pr$election, conditionMessage(e)))
+      NULL
+    })
+    if (!is.null(.mfd) && !is.null(.mfd$discount) && is.finite(.mfd$discount)) {
+      .minor_disc <- .mfd$discount
+      cat(sprintf("XG9  %s: minor-defector discount %.3f (n=%d leave-target-out cases)\n",
+                  pr$election, .minor_disc, .mfd$n))
+    } else {
+      cat(sprintf("XG9! %s: minor-defector discount NOT fit (n=%s), no discount applied\n",
+                  pr$election, if (is.null(.mfd)) "NULL" else .mfd$n))
+    }
+  }
+  pv  <- tryCatch(personal_prior_vote(pr$prev, pr$election, minor_discount = .minor_disc),
+                  error = function(e) NULL)
   sd_pair <- SD[pair == pr$election]
   if (!nrow(sd_pair)) { cat(sprintf("XG6! no sharedetail rows for %s -> skip\n", pr$election)); next }
   # sharedetail's own column is `pred_share` (see the file-level comment at
@@ -430,6 +487,42 @@ ALL[, soph_cand_i := as.integer(soph_cand)]
 ALL[, soph_party_i := as.integer(soph_party)]
 ALL[, is_incumbent_party_i := as.integer(is_incumbent_party)]
 ALL[, historic_elected_i := as.integer(historic_elected_any)]
+
+# GATE seat_outperf to the one row it means anything for: the party that held
+# the seat, in a pair where its member is gone. Left ungated, it changed
+# predictions on 66.5% of ALL 13,739 rows (not just the 349 retirement
+# cases) and made non-retirement rows WORSE on net.
+#
+# NA, NOT 0, for every other row -- this is not cosmetic. 0-filling cost
+# roughly TWICE what NA-filling does (+0.0155 vs +0.0083 pooled RMSE against
+# the no-column baseline) because seat_outperf's real values range -24 to
+# +63, so a filled 0 sits inside the plausible range and every split placed
+# near it mixes "off-target row" with "a seat that genuinely scored zero".
+# NA is routed through xgboost's learned missing-direction path instead.
+# Placebo-tested (an all-NA column with zero real information still costs
+# +0.0144 pooled RMSE -- the floor of adding ANY column to this pipeline,
+# not specific to this feature): the real values are worth +0.0061 once that
+# floor is subtracted out. Full derivation:
+# docs/reviews/pattern-a-seat-outperf-2026-09-16.md.
+.retdf <- fread(file.path("output", "retirement-derived.csv"))
+setnames(.retdf, "pair", "election_tag")
+ALL <- merge(ALL, .retdf, by.x = c("pair", "seat"), by.y = c("election_tag", "seat"), all.x = TRUE)
+# retire_derived is LEFT AS NA for a seat with no match, not 0-filled. Before
+# 2026-09-17 this 0-filled it, which made the `!is.na()` clause below dead
+# code -- it could never be FALSE, since a 0-filled row already fails the
+# `== 1L` test right after it. Behaviourally identical (confirmed: an
+# unmatched row is excluded either way), but it read as distinguishing
+# "confirmed not departed" from "unknown", which it could not do -- the
+# absence-of-evidence conflation CLAUDE.md's fake-precision entry names, and
+# the exact thing the sibling fit_xgb_primary_sd.R's departed_i deliberately
+# avoids by keeping NA. Found by the review gate 2026-09-16, fixed 09-17.
+# `NA == 1L` is NA, and `NA & anything` is not TRUE, so `!is.na()` now does
+# real work and the row is still excluded -- same output, honest guard.
+.outperf_gate <- !is.na(ALL$retire_derived) & !is.na(ALL$is_incumbent_party_i) &
+                 ALL$retire_derived == 1L & ALL$is_incumbent_party_i == 1L
+ALL[, seat_outperf := ifelse(.outperf_gate, seat_outperf, NA_real_)]
+cat(sprintf("XG8  seat_outperf gated (NA-filled elsewhere): %d of %d rows carry a real value\n",
+            sum(.outperf_gate), nrow(ALL)))
 party_levels <- sort(unique(ALL$party))
 region_levels <- sort(unique(ALL$region))
 for (p in party_levels) ALL[[paste0("party_", p)]] <- as.integer(ALL$party == p)
@@ -464,7 +557,7 @@ if (identical(.lvl_mode, "pred") && "level_from_polls" %in% names(ALL))
   cat(sprintf("    %d of %d rows have a poll-based prediction; the rest fall back to no-swing\n",
               sum(ALL$level_from_polls == 1L, na.rm = TRUE), nrow(ALL)))
 .raw_level <- identical(Sys.getenv("AUSPOL_XGB_RAW_LEVEL", "0"), "1")
-feat_cols <- c("base_pred", "seat_prev_pcv", "level_prev",
+feat_cols <- c("base_pred", "seat_prev_pcv", "seat_outperf", "level_prev",
                # RAW MODE: trend_level_raw + fund_level_raw REPLACE level_pred
                # (and level_from_polls, which existed only to tell the model
                # how much to trust a single blended figure -- moot once the
@@ -497,6 +590,19 @@ feat_cols <- c("base_pred", "seat_prev_pcv", "level_prev",
                paste0("party_", party_levels), paste0("region_", region_levels))
 X <- as.matrix(ALL[, ..feat_cols])
 y <- ALL$actual_share
+
+# FEATURE-ONLY EXIT, for scripts/shap_from_cached_model.R: the feature
+# build above is fast (a few seconds); xgb.cv/model training below is the
+# slow part this whole mechanism exists to skip. Saves everything a caller
+# needs to reconstruct X for one pair/seat/party and score it against a
+# cached model, without re-running any of the below.
+if (identical(Sys.getenv("AUSPOL_XGB_SKIP_TRAIN", "0"), "1")) {
+  saveRDS(list(ALL = ALL, feat_cols = feat_cols),
+          file.path(OUT, "xgb-primary-v6-featurecache.rds"))
+  cat(sprintf("\nXG11 feature-only exit: wrote %s, skipping training\n",
+              file.path(OUT, "xgb-primary-v6-featurecache.rds")))
+  quit(save = "no", status = 0)
+}
 
 # PERSIST THE FEATURE MATRIX. scripts/fit_xgb_flows_v1.R writes its own
 # (xgb-flows-v1-features.csv) and this script did not, so anything wanting to
@@ -533,6 +639,31 @@ oof_pred <- cv$cv_predict$pred[, 1]
 xgb_rmse <- sqrt(mean((oof_pred - y)^2))
 cat(sprintf("\nXGBOOST v6 (leave-one-pair-out) pooled primary RMSE: %.4f  (n=%d)\n", xgb_rmse, length(y)))
 cat(sprintf("improvement vs shipped model: %.2f%%\n", 100 * (base_rmse - xgb_rmse) / base_rmse))
+
+# CACHE ONE MODEL PER PAIR, so a SHAP/diagnostic question about a single
+# seat doesn't need a full retrain (Pete, 2026-09-16, mid the Parramatta/
+# Mirani walkthrough -- ~21 pairs, no memory concern). Each model is trained
+# on every OTHER pair, so it reproduces that pair's OOF prediction exactly
+# (not a leaked one from a model that has already seen the answer) -- see
+# scripts/shap_from_cached_model.R, which loads these instead of retraining.
+# Off by default: this triples-plus the run's cost and nothing else needs it.
+if (identical(Sys.getenv("AUSPOL_XGB_SAVE_OOF_MODELS", "0"), "1")) {
+  .mdir <- file.path(OUT, "xgb-primary-v6-models")
+  dir.create(.mdir, showWarnings = FALSE, recursive = TRUE)
+  cat(sprintf("\nXG10 caching %d leave-one-pair-out models to %s ...\n", length(pairs), .mdir))
+  for (.p in pairs) {
+    .idx <- which(ALL$pair != .p)
+    .dm <- xgb.DMatrix(data = X[.idx, , drop = FALSE], label = y[.idx], missing = NA)
+    .m <- xgb.train(params = params, data = .dm, nrounds = best_n, verbose = 0)
+    xgb.save(.m, file.path(.mdir, paste0(.p, ".ubj")))
+  }
+  # feat_cols is fixed at this point in the script (used to build X just
+  # above); saved once, not per-pair, so a loader doesn't need to re-derive
+  # column order or risk it drifting from a future edit to this script.
+  writeLines(feat_cols, file.path(.mdir, "feat_cols.txt"))
+  saveRDS(params, file.path(.mdir, "params.rds"))
+  cat(sprintf("XG10 done: %d models, feat_cols.txt, params.rds\n", length(pairs)))
+}
 
 final <- xgb.train(params = params, data = dtrain, nrounds = best_n, verbose = 0)
 imp <- xgb.importance(feature_names = feat_cols, model = final)

@@ -113,24 +113,62 @@ PUBLISHED_FLAGS <- c(
                                              #     that bias swings sign and is unpredictable from history
                                              #     (r = 0.282, p = 0.242 against the previous election).
                                              #
-                                             # LIVE LIMITATION, verified by smoke test 2026-09-11 and NOT hidden:
-                                             # the personal-vote features dest_same / dest_same_mp are 0 on
-                                             # 0.0% of 42,108 rows for vic2026, because output/candidacies.csv
-                                             # has ZERO vic2026 rows -- candidate_returns(vic2022, vic2026)
-                                             # errors and the override says so. Every other feature works; the
-                                             # override still builds for 87 of 87 seats. This resolves only when
-                                             # scripts/build_candidacies.R is extended to write vic2026 rows
-                                             # after nominations close (12 noon, 9 Nov 2026) -- add it to the
-                                             # AUSPOL_XGB_PRIMARY_LIVE re-check above, it is the same trip.
+                                             # LIVE LIMITATION, RESOLVED 2026-09-15 -- left here because the
+                                             # old note said the opposite and a reader needs to know it moved.
+                                             # It read: dest_same / dest_same_mp populated on 0.0% of 42,108
+                                             # vic2026 rows, because output/candidacies.csv had ZERO vic2026
+                                             # rows. It now has 379, from the announced-candidates list
+                                             # scripts/build_candidacies.R:879 reads out of Wikipedia, and the
+                                             # smoke test measures dest_same at 19.6% / dest_same_mp at 15.5%.
+                                             # Those rows carry names and no votes, which is correct: a
+                                             # preselection is public long before nominations close, so this is
+                                             # knowable now and is not a leak. Expect the rate to rise again at
+                                             # the close of nominations (12 noon, 9 Nov 2026), when the full
+                                             # field replaces the announced one -- still on the
+                                             # AUSPOL_XGB_PRIMARY_LIVE re-check above, same trip.
                                              #
                                              # Costs ~3x runtime per pair. Set to "0" to revert; no other change
                                              # needed. docs/reviews/xgb-primary-x-flows-2x2-2026-09-11.md
+  AUSPOL_FLOW_FRAG           = "1",          # 1 = the flow model also sees lead_primary, the seat's LEADING
+                                             # first-preference share. Flows track how fragmented the field is,
+                                             # not how close the contest is: the 2CP margin's slope collapses
+                                             # from +0.357 to +0.003 once this term enters (872 observations),
+                                             # and the leader's own share carries all of it at t = +3.69.
+                                             #
+                                             # SHIPPED 2026-09-15 ON PETE'S CALL, over my recommendation. The
+                                             # pre-registered criterion said adopt if out-of-fold RMSE improves,
+                                             # and it did -- 0.098070 -> 0.097987 over 36,064 transfer rows,
+                                             # deterministic (the baseline ran three times to 0.0981). I argued
+                                             # -0.084% is too small to earn a column and wanted the criterion
+                                             # rewritten with a size threshold; he shipped it on the criterion as
+                                             # written, which is the right reading of a pre-registration. The
+                                             # threshold belongs in the NEXT plan, not in a re-reading of this one.
+                                             #
+                                             # NOT MEASURED: pooled seat log loss, the plan's own confirming
+                                             # guard. Its MDE is near 0.003 and a 0.084% flow change cannot reach
+                                             # that, so the number would be simulation variance. Reported as
+                                             # unmeasured rather than run to produce a believable-looking figure.
+                                             #
+                                             # TRAIN/SERVE: training reads the seat's ACTUAL leading share;
+                                             # R/xgb_flow_override.R's per-seat path reads the simulation's
+                                             # PREDICTED one from the same `shares` row that already supplies
+                                             # to_primary/from_primary. Same substitution those two make, not a
+                                             # new one. The retired statewide path takes the statewide maximum
+                                             # and says so. docs/plans/prereg-flow-fragmentation-2026-09-15.md
   AUSPOL_DEFECT_POOLED       = "2",          # 2 = separate member (0.282) / losing-candidate (0.142) defector rates.
                                              # ADOPTED BY PETE ON MECHANISM 2026-09-09, not on the criterion: the arm
                                              # missed its own primary bar (t -2.04 vs 2.08) but passed R1 in both arms,
                                              # breached no floor, improved pooled log loss / Victoria / WA, and made only
                                              # ONE panel metric worse. Recorded as a JUDGEMENT, not a measurement.
                                              # docs/plans/prereg-defector-two-rate-2026-09-09.md
+  AUSPOL_MINOR_DEFECT        = "1",          # discount a candidate's own_prev_pcv when they switched between two
+                                             # NON-major parties (Stephen Andrew, ONP -> KAP, Mirani qld2024) --
+                                             # fit_minor_defector_discount(), leave-target-out median, same shape as
+                                             # AUSPOL_DEFECT_POOLED but for the case MAJ <- c("ALP","LNP","NAT")
+                                             # excludes by design. Sized on 33 corpus cases (geometric mean retention
+                                             # 0.49, p=0.0003), measured: targeted RMSE 9.2363 -> 8.8813, pooled RMSE
+                                             # 3.8161 -> 3.8178 (well within the ~0.014-per-column noise floor found
+                                             # the same session). docs/reviews/minor-to-minor-defector-2026-09-16.md
   # the statewide input and the simulation
   AUSPOL_N_SIMS              = "20000",
   AUSPOL_SIM_ENGINE          = "cpp",        # compiled core; proven byte-identical to the R engine on a full fed2022 run 2026-09-07 (45 s vs ~11 min)
@@ -229,6 +267,27 @@ PUBLISHED_FLAGS <- c(
                                              # write the SAME filename and the second silently overwrites
                                              # the first. That happened on 2026-09-12 while measuring this
                                              # very switch.
+  AUSPOL_SD_DEPARTED         = "0",          # 1 = extend the per-cell sd override to ALP/LNP cells in seats
+                                             # whose previous GENERAL-election winner is not on the ballot.
+                                             # UNDER TEST 2026-09-16, not adopted.
+                                             # docs/plans/prereg-departed-member-width-2026-09-16.md
+                                             #
+                                             # Measured motivation: in NSW the held party's own primary error
+                                             # spreads from sd 5.17 when their member stands to 8.81 when they
+                                             # go (federal 1.06x, other states 1.22x), while
+                                             # simulate_seat_contests() gives every seat in the chamber ONE
+                                             # seat_sd. A NSW seat held by 5+ points whose member has gone is
+                                             # called wrong 26.2% of the time against 1.8% otherwise.
+                                             #
+                                             # Requires AUSPOL_XGB_PRIMARY_SD=1 to have any effect, since it
+                                             # widens the `keep` mask inside the same override. To test it
+                                             # ALONE, set AUSPOL_XGB_PRIMARY_SD_CLASSES to a sentinel that
+                                             # matches no class -- otherwise the minor classes switch on too
+                                             # and the arm measures two changes at once.
+                                             #
+                                             # CANNOT REACH vic2026 THIS YEAR: nominations close 12 noon,
+                                             # 9 Nov 2026, so which members are standing is unknown until
+                                             # then and output/retirement-derived.csv has no vic2026 rows.
   AUSPOL_XGB_SURGE_SRC       = "output/xgb-emergence-v5-seat.csv",
                                              # which emergence model AUSPOL_XGB_SURGE reads. v5 is candidate-level
                                              # (scripts/fit_xgb_emergence_v5.R); v4 was party-class level and gave
@@ -310,6 +369,73 @@ PUBLISHED_FLAGS <- c(
                                              # Concentrated where you would expect: sa2026, the One Nation surge
                                              # election, 0.4200 -> 0.5564. Every headline number quoted before
                                              # 2026-09-11 was the leaked one.
+  AUSPOL_EDU_RESID           = "0",          # 1 = correct each seat's minor-party primary by what Year 12
+                                             # completion explains about the model's RESIDUAL, one coefficient
+                                             # per class fitted leave-one-pair-out (R/education_residual.R).
+                                             # UNDER TEST, not adopted: pre-registered in
+                                             # docs/plans/prereg-education-residual-correction-2026-09-15.md
+                                             # against pooled SEAT LOG LOSS, which is not yet measured. What IS
+                                             # measured is per-seat primary RMSE, where it improves all six arms
+                                             # (ONP on the shipped arm 3.1000 -> 3.0086) but WORSENS the two
+                                             # elections where One Nation is largest -- sa2026 +0.636 and
+                                             # qld2020 +0.203 -- which is a named refusal condition.
+  AUSPOL_EDU_RESID_FEATURE   = "yr12_pct",   # which census column. "born_aus_pct" was pre-registered as the
+                                             # PLACEBO and was NOT one -- r(yr12_pct, born_aus_pct) = -0.706 over
+                                             # 1,989 seats, so both read one class-and-urbanity axis from opposite
+                                             # ends. It recovered 71% of the gain and refused the mechanism
+                                             # (prereg-education-residual-correction-2026-09-15.md, RESULT).
+  AUSPOL_STATE_DEV           = "1",          # ADOPTED 2026-09-15. Corrects a federal seat's primaries for how its STATE
+                                             # is moving against the national swing. Pete's diagnosis: WA 2022 swung to
+                                             # Labor far harder than the country, mean ALP per-seat primary error +6.43
+                                             # over 15 seats, positive in 14 of them.
+                                             # Federal pooled seat log loss 0.2584 -> 0.2539 over 1,052 seat-elections,
+                                             # 0 of 10 permutation-control draws beating it, control mean landing on the
+                                             # baseline (+0.0001). All five refusal conditions checked and none fired.
+                                             # docs/plans/prereg-state-deviation-2026-09-15.md
+                                             # FEDERAL ONLY by construction, and that is not a parity gap -- a state
+                                             # election has no deviation-from-national to correct.
+                                             # NO EFFECT ON THE PUBLISHED VICTORIAN FORECAST: fit_seats_full.R has no
+                                             # call site, so this changes what the federal backtest measures and
+                                             # nothing else. fed2019 REGRESSES (+0.0110) because state polls failed the
+                                             # same way national polls did that year -- an inherent property.
+  AUSPOL_STATE_DEV_SHUFFLE   = "0",          # control: permutes which state each seat sits in, within its election.
+  AUSPOL_DEMO_RESID          = "0",          # 1 = Arm A of docs/plans/prereg-demographic-axis-2026-09-15.md:
+                                             # correct each seat's minor-party primary using ALL SEVEN census
+                                             # columns under a leave-one-pair-out elastic net, instead of the one
+                                             # hand-picked column the refused AUSPOL_EDU_RESID used. No intercept,
+                                             # so corrections sum to zero within a pair and statewide class totals
+                                             # are untouched. UNDER TEST -- do not turn on without the plan's
+                                             # criterion being met.
+  AUSPOL_DEMO_RESID_SHUFFLE  = "0",          # control for the above; same permutation as AUSPOL_EDU_RESID_SHUFFLE.
+  AUSPOL_EDU_RESID_SHUFFLE   = "0",          # the real control. 0 = off; any other integer is an RNG seed that
+                                             # PERMUTES each census column across seats WITHIN each election, at
+                                             # fit and at apply both. Breaks the seat-to-demographics link while
+                                             # leaving every marginal and the whole procedure intact, so whatever
+                                             # still "improves" is the procedure's own flexibility. With seven
+                                             # mutually correlated census columns there is no other-column
+                                             # placebo that works, which is the lesson born_aus_pct cost.
+  AUSPOL_HISTORIC_ELECTED_BACKFILL = "1",
+                                             # build-time: 1 = derive historic_elected for STATE elections from our
+                                             # own prior winners (scripts/build_candidacies.R, BC9). The AEC ships
+                                             # HistoricElected only in federal files, so all 21 state elections
+                                             # record ZERO returning members -- false about the world, and it makes
+                                             # the column a federal/state label inside the model.
+                                             # ON since 2026-09-15, when the Victorian candidate list arrived
+                                             # (e8c5eab) and made the precondition true: Victoria now carries real
+                                             # values like every other state, so the live path reads 62 returning
+                                             # members instead of a default.
+                                             #
+                                             # SHIPPED AGAINST A SLIGHTLY WORSE BACKTEST, deliberately, and the
+                                             # number is here so the trade is visible: isolated A/B, same code,
+                                             # pooled primary RMSE 3.8078 -> 3.8219, worse in 5 of 6 jurisdictions;
+                                             # on seat log loss sa2026 moved 0.3260 -> 0.3256, which is nothing.
+                                             # The backtest CANNOT see the gain: vic2026 is the target, never a
+                                             # training pair, so the 62 returning members can only move the live
+                                             # forecast and never the RMSE. Turning it off now would mean holding
+                                             # real information out of the only election being forecast in order to
+                                             # protect a 0.014 number on elections already decided.
+                                             # Was OFF from b2c5572 to e8c5eab, when the live path had no Victorian
+                                             # candidate data and this would have made the 0-default a false claim.
   AUSPOL_XGB_PRIMARY_OOF     = "output/xgb-primary-shipped-oof-predictions.csv",
                                              # harness-only: which oof file the line above reads. Points at v7's
                                              # ret_exp arm (the IND retention feature, docs/reviews/xgb-primary-

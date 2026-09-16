@@ -1,4 +1,73 @@
+# auspol 0.4.37
+
+**The Victorian candidate list arrives, and three components stop falling back.**
+
+- **Victoria 2026 candidates from Wikipedia** — 379 candidacies across all 88
+  districts, 67 sitting members, 62 matched to prior Victorian winners.
+  Nominations do not close until November, so the list is ~52% complete against
+  vic2022's 731 and **absence means "not yet announced", never "not
+  contesting"**. Parsed from raw wikitext: a summariser reading the rendered
+  table reported the Greens candidate for Albert Park as the Coalition's,
+  because the Coalition cell is empty and it closed the gap.
+- **`DS2` 0 → 87 seat-classes with a returning candidate, `DS2o` 0 → 22,
+  `DS3` flat → 30 seats.** `DS2` was inert because Wikipedia writes "Nina
+  Taylor" and every other Victorian row is "TAYLOR, Nina", and `surname_of()`
+  takes the first token absent a comma — the same person with opposite keys.
+  Worth **4.4 Labor seats** once fixed.
+- **`historic_elected` derived for state elections** behind
+  `AUSPOL_HISTORIC_ELECTED_BACKFILL`. The AEC ships `HistoricElected` federally
+  only, so all 21 state elections recorded zero returning members — false about
+  the world, and it made the column a federal/state label inside the model.
+  1,023 of 9,264 state candidacies now flagged.
+- Shipped **against a slightly worse backtest**, deliberately: isolated A/B
+  pooled primary RMSE 3.8078 → 3.8219. vic2026 is the target and never a
+  training pair, so its 62 returning members can only move the live forecast
+  and never the RMSE — the backtest cannot see the gain it is weighed against.
+
+**Against AE Forecasts** (expected seats, their NAT folded into our LNP):
+LNP 41.63 vs **32.86**, ALP 28.12 vs **34.09**, ONP 9.00 vs **14.51**,
+GRN 4.60 vs **5.32**, IND 4.38 vs **0.22**. 19 of 87 seats called differently.
+
+**Refused, with the result recorded**: allocating a minor party's seat spread
+by education rank. Pooled per-seat RMSE roughly doubles (3.3546 → 7.3936) and a
+`born_aus_pct` placebo matches it, so the ranking contributed nothing and the
+damage was discarding the existing prediction. It did establish when the
+shipped concentration mechanism is valid: sa2026 One Nation is the only
+class-pair of 92 where reallocation helps, and it has the lowest CV of any One
+Nation pair — the quantile map imposes a normal shape and only helps where the
+truth is already near-normal. See
+`docs/plans/prereg-class-concentration-v2-2026-09-15.md`.
+
 # auspol 0.4.36
+
+**The nightly forecast was not the model we measure.** `published_flags.R`
+ships `AUSPOL_XGB_PRIMARY_LIVE=1` and `AUSPOL_XGB_FLOWS=1`, but neither trained
+model existed on a runner — they are far too big for git and live in the
+`shipped-models` release — so both components fell back and said so on every
+run since the flags shipped (`XG4!`, `XF9!`, `XF4!!`). Announced nightly in the
+step summary, unread.
+
+- The workflow now fetches the models before running, from an **allowlist**:
+  `shipped-models` also holds *outputs* (`seat-probs-vic-2026.csv`,
+  `victoria-2026.html`), and pulling those into `output/` would seed a run with
+  a previous forecast's results, which `build_page.R` would publish if
+  `fit_seats_full.R` failed. The step loads both models with `xgb.load()`
+  rather than trusting that a download succeeded.
+- **`xgb-flows-v1-final.model` was missing from the release entirely**, so the
+  flows override could not have worked on CI even with a fetch step.
+- **`xgb-primary-v6-final.model` was stale against the rename.** Built
+  2026-09-11, it expected `pred_share`, `x`, `level_now`; the rename on
+  2026-09-14 made the code build `base_pred`, `seat_prev_pcv`, `level_pred`, so
+  the live override broke that morning and was invisible because CI could not
+  load the model at all. Rebuilt: 40 columns that map back to the old 40 in the
+  same order, so it is the same feature set relabelled.
+- **Effect on the headline: ALP 32.84 → 39.95 seats.** That is the difference
+  between the two XGBoost components falling back and being applied. Nothing
+  wrong was published — the workflow deliberately does not publish — but the
+  nightly artifact differed materially from the configuration all along.
+- Noted, not chased: CI gives 39.95 where a Windows machine gives 39.49 on the
+  same seed, data and models. The same platform-level numerics as the `conv=52`
+  story below.
 
 **The poll-tracking check was wired into every fit script except the one that
 publishes, and the published Victorian trend has been breaching it.**
@@ -8,16 +77,22 @@ publishes, and the published Victorian trend has been breaching it.**
   (`FL3`) and `fit_nsw.R` (`NL3`) since 2026-08-18 — all three of which fit
   with `sigmas = "per_cycle"`, while the published call takes the defaults. A
   green `L3` therefore asserted on a model this repo does not ship.
-- **The two paths are on opposite sides of the bound.** One Nation is 2.44
-  points off its polls in the fit `L3` checks and **2.85 off in the fit that
-  ships**, against a bound of 2.5. The published number, 20.20 against a
-  90-day poll mean of 23.05 over 11 polls, is what `state_mean` hands to every
-  Victorian seat.
+- **The two paths give different answers for the same party on the same
+  polls**, and on data four weeks stale they sat on opposite sides of the
+  bound — One Nation 2.44 points off its polls in the fit `L3` checks against
+  **2.85 in the fit that ships**. On current data (to 2026-08-12) it is 2.44
+  against **2.47, both inside 2.5**. Which side the published fit lands on is
+  decided by a couple of polls, so "`L3` is green" has never been evidence
+  about it. The published number, 20.57 against a 90-day poll mean of 23.04
+  over 12 polls, is what `state_mean` hands to every Victorian seat.
 - Like `L3` it reports rather than halting, writes `output/S7-BREACH.txt` (a
   third, separate marker so a published-cycle breach can never be masked by an
-  NSW one), and `run_all.R` exits non-zero after the page is built. **The
-  nightly run is red until One Nation's statewide level is fixed, and that is
-  the correct state.**
+  NSW one), and `run_all.R` exits non-zero after the page is built.
+- **Not currently breaching**, at 0.03 inside the bound — the closest any
+  party has come without crossing. An earlier draft of this entry called it a
+  live breach at 2.85; that came from a poll clone 19 commits and four weeks
+  stale, and the error is recorded in `docs/NEXT-STEPS.md` because it changed
+  a verdict rather than a decimal.
 - `S7` also fires on a party *dropped* from the published fit for falling
   under `min_polls`. Nothing else on that path would notice: the published
   path never calls `refold_unfitted()`, so a dropped party simply vanishes.
@@ -39,10 +114,12 @@ publishes, and the published Victorian trend has been breaching it.**
 
 **The gap is not a new fault and there is no fix pending.** Refitting at each
 One Nation poll date shows it converging as polls accumulate — −3.97 at 8
-polls, −4.13 at 15, −2.85 at 19 — and breaching at every cutoff since January.
-`S7` catches a year-old condition that was invisible because nothing checked
-the published path. At 6–7 polls One Nation was dropped from the published fit
-entirely (`min_polls = 8`), with OTH absorbing it.
+polls, −4.13 at 15, −2.85 at 19, **−2.47 at 20**. It sat outside the bound for
+most of the cycle and has just come inside it, so the direction of travel is
+the reassuring part rather than the current margin. `S7` catches a year-old
+condition that was invisible because nothing checked the published path. At
+6–7 polls One Nation was dropped from the published fit entirely
+(`min_polls = 8`), with OTH absorbing it.
 
 The behaviour itself was pre-registered, measured on 139 party-cycles and
 endorsed in `docs/reviews/poll-lag-2026-08-19.md`: minor parties are shaded

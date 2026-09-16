@@ -371,9 +371,12 @@ was caught only against a number someone already knew.
   *except* `fit_seats_full.R` — and those three fit with
   `sigmas = "per_cycle"`, while the published call takes the defaults. So a
   green `L3` asserted on a model this repo does not ship. The two are not
-  interchangeable: on the day `S7` was wired they sat on **opposite sides of
-  the bound** — One Nation 2.44 points off its polls in the fit `L3` checks,
-  **2.85 off in the fit that ships**, against a bound of 2.5. Like `L3` it
+  interchangeable: they give different answers for the same party on the same
+  polls, and on data four weeks stale they sat on **opposite sides of the
+  bound** — One Nation 2.44 points off its polls in the fit `L3` checks against
+  **2.85 in the fit that ships**. On current data it is 2.44 against 2.47, both
+  inside. Which side of 2.5 the published fit lands on is decided by a couple
+  of polls, so "`L3` is green" has never been evidence about it. Like `L3` it
   reports rather than halting, writes `output/S7-BREACH.txt` (a third,
   separate marker), and `run_all.R` exits non-zero after the page is built.
   It also fires on a party `dropped` from the published fit for falling under

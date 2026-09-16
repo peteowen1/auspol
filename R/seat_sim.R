@@ -166,6 +166,23 @@
 #'
 #'   Zero reproduces the previous behaviour exactly.
 #'   See `docs/reviews/flow-matrix-is-the-defect-2026-08-25.md`.
+#' @param conditional_override_sd Optional per-seat, per-key standard
+#'   deviation to pair with `conditional_override`, same shape (a list by
+#'   seat, each a named list keyed `"FROM|A+B+C"`), in percentage points.
+#'   Where supplied and positive it REPLACES `flow_sd` for that transfer, so
+#'   each flow carries its own measured uncertainty instead of one global
+#'   number.
+#'
+#'   Built by [xgb_flow_conditional_override_for()] under
+#'   `AUSPOL_FLOW_CELL_SD=1` from `scripts/fit_flow_drift.R`, which measures
+#'   how far a flow actually moves between elections: a mean 7.6 points over
+#'   3,711 repeat sightings of the same cell, ranging 2.7 to 17.5 depending
+#'   on how many events back the rate, how many survivors are in the contest
+#'   and how stale it is. A single global `flow_sd` cannot express that
+#'   range, which is why a blanket `flow_sd = 15` made federal log loss
+#'   worse (0.2543 -> 0.2607) while the fitted per-cell version did not.
+#'
+#'   `NULL` (the default) reproduces the previous behaviour exactly.
 #' @param flow_sd Per-draw standard deviation, in percentage points, applied to
 #'   each transfer proportion before it is used.
 #'
@@ -176,6 +193,32 @@
 #'   seat can be called at 0.95 on a preference assumption carrying no error
 #'   bars. The one-step-ahead error of "mean of the last five" was measured at
 #'   **sd 3.65 points** over 19 observations.
+#'
+#'   Zero reproduces the previous behaviour exactly.
+#' @param fallback_flow_sd Extra `flow_sd`, applied ONLY when an exclusion has
+#'   no conditional cell and falls back to the pooled/pairwise rate (same
+#'   condition `fallback_smooth` uses). The effective noise becomes
+#'   `max(flow_sd_by[from], fallback_flow_sd)` for that transfer only.
+#'
+#'   Built to be the surgical version of a blanket `flow_sd` -- a blanket
+#'   `flow_sd=15-20` moves Mirani and South Brisbane (both decided by a flow
+#'   cell with 0-1 real observations) the right direction, but perturbs every
+#'   well-measured exact-cell transfer too and that costs more than it gains
+#'   (federal pooled log loss 0.2543 -> 0.2607 at `flow_sd=15`).
+#'
+#'   **Tested 2026-09-16 and it DOES NOT WORK as hoped.** Confining the noise
+#'   to just the final, sparse exclusion round barely moves either target seat
+#'   (Mirani's LNP win probability 0.0956 -> 0.089 at `fallback_flow_sd=80`,
+#'   effectively flat) while STILL costing pooled log loss on qld2024 (0.3089
+#'   -> 0.3110). The uncertainty that actually helped Mirani when applied
+#'   blanket evidently comes from the EARLIER exclusion rounds too -- cells
+#'   with a real conditional match, which still drift election to election
+#'   (this file's own `flow_sd` docstring: One Nation's rate to the Coalition
+#'   measured at 47.4/60.4/47.6/61.6 across four elections, a MEASURED cell,
+#'   not a fallback one). "Fallback vs measured" is not the axis this needs.
+#'   Kept as tested, working, documented infrastructure -- default 0 changes
+#'   nothing -- but it is not the fix. See
+#'   `docs/reviews/flow-uncertainty-fallback-only-2026-09-16.md`.
 #'
 #'   Zero reproduces the previous behaviour exactly.
 #' @param exhaust Percent (0-100) of an excluded party's votes that carry no
@@ -293,7 +336,9 @@ simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
                                    party_cor = NULL, fallback_smooth = 0,
                                    shrink_k = 0,
                                    conditional_override = NULL,
+                                   conditional_override_sd = NULL,
                                    flow_sd = 0,
+                                   fallback_flow_sd = 0,
                                    exhaust = 0,
                                    level_mult = NULL,
                                    surge_h = 0, surge_mu = 15.6, surge_sd = 6.1,
@@ -347,6 +392,22 @@ simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
   if (length(flow_sd) == 0L) stop("flow_sd must have length >= 1")
   if (length(flow_sd) > 1L && is.null(names(flow_sd)))
     stop("a per-source flow_sd must be a NAMED vector keyed by party class")
+  # FALLBACK_FLOW_SD, same shape as fallback_smooth above but for the NOISE
+  # term rather than the point estimate. A blanket flow_sd charges every
+  # transfer the same uncertainty regardless of how well the rate is
+  # measured -- tested 2026-09-16: it moves the two seats it was built for
+  # (Mirani, South Brisbane; both fall back past the exact cell) the right
+  # way, but it ALSO perturbs well-measured exact-cell transfers everywhere
+  # else, and that costs more than it gains -- federal pooled log loss
+  # 0.2543 -> 0.2607 at flow_sd=15, worse than the targeted gain. This
+  # applies noise ONLY when `!got_cell` (the exact same condition
+  # fallback_smooth already uses), scalar only -- a fallback row has no
+  # reliable per-source read on which class's transfer it actually is,
+  # since it is by definition NOT the measured cell.
+  # docs/reviews/flow-uncertainty-fallback-only-2026-09-16.md.
+  if (!is.finite(fallback_flow_sd) || fallback_flow_sd < 0) {
+    stop("fallback_flow_sd must be finite and >= 0; got ", fallback_flow_sd)
+  }
   # SURGE_H MAY BE PER-SEAT, exactly as `shrink` may. `shrink` was made a vector
   # and surge_h was not, so wiring a 150-element salience hazard into it passed
   # a vector to a scalar parameter -- the same fix applied in one place and not
@@ -1012,11 +1073,12 @@ simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
     # loop would never match, rather than to be lenient: the R loop looks the
     # override up by the string it builds itself, so a key it cannot build is
     # dead there and must be dead here too.
-    ov_seat <- integer(0); ov_key <- integer(0); ov_mat <- base::matrix(0, 0L, K)
+    ov_seat <- integer(0); ov_key <- integer(0); ov_mat <- base::matrix(0, 0L, K); ov_sd <- numeric(0)
     if (.cond_override_active) {
       .os <- vector("list", length(conditional_override))
       .okv <- vector("list", length(conditional_override))
       .orw <- vector("list", length(conditional_override))
+      .osd <- vector("list", length(conditional_override))
       for (i in seq_along(conditional_override)) {
         co <- conditional_override[[i]]
         if (is.null(co) || !length(co)) next
@@ -1025,7 +1087,7 @@ simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
           stop("conditional_override[[", i, "]] has no names; it must be keyed ",
                "\"FROM|A+B+C\" like matrix$conditional")
         }
-        keys_i <- integer(0); rows_i <- list()
+        keys_i <- integer(0); rows_i <- list(); sds_i <- numeric(0)
         for (j in seq_along(co)) {
           kj <- nms[j]
           # `[[` on a list takes the FIRST exact match, so a repeated key is
@@ -1065,16 +1127,33 @@ simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
           row[pidx[.keep]] <- pmax(0, .or[.keep])
           keys_i <- c(keys_i, as.integer(unname(from_i) * 2^K + mask))
           rows_i[[length(rows_i) + 1L]] <- row
+          # Same order as rows_i, so ov_sd[t] describes ov_mat[t, ].
+          .sd1 <- 0
+          if (!is.null(conditional_override_sd) && !is.null(conditional_override_sd[[i]])) {
+            .sdv <- conditional_override_sd[[i]][[kj]]
+            if (!is.null(.sdv) && is.finite(.sdv)) .sd1 <- .sdv
+          }
+          sds_i <- c(sds_i, .sd1)
         }
         if (!length(keys_i)) next
         .os[[i]] <- rep.int(i - 1L, length(keys_i))
         .okv[[i]] <- keys_i
         .orw[[i]] <- do.call(rbind, rows_i)
+        .osd[[i]] <- sds_i
       }
       ov_seat <- as.integer(unlist(.os))
       ov_key <- as.integer(unlist(.okv))
       ov_mat <- do.call(rbind, .orw)
-      if (is.null(ov_mat)) { ov_seat <- integer(0); ov_key <- integer(0); ov_mat <- base::matrix(0, 0L, K) }
+      ov_sd <- as.numeric(unlist(.osd))
+      if (is.null(ov_mat)) { ov_seat <- integer(0); ov_key <- integer(0); ov_mat <- base::matrix(0, 0L, K); ov_sd <- numeric(0) }
+      # ov_sd[t] must describe ov_mat[t, ]. If these fall out of step the noise
+      # lands on the wrong cell and every number downstream still looks
+      # plausible -- exactly the silent class of failure this repo keeps
+      # relearning, so it is asserted rather than assumed.
+      if (length(ov_sd) && length(ov_sd) != nrow(ov_mat)) {
+        stop("conditional_override_sd flattened to ", length(ov_sd),
+             " values for ", nrow(ov_mat), " override rows; these must agree")
+      }
       if (length(ov_seat) != nrow(ov_mat) || length(ov_key) != nrow(ov_mat)) {
         stop("conditional_override flattening produced ", length(ov_seat), " seats, ",
              length(ov_key), " keys and ", nrow(ov_mat), " rows; these must agree")
@@ -1089,7 +1168,8 @@ simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
                           cell_mat, cell_has, ss_mat, ss_has,
                           pool_mat, !is.null(pool_pw), pw_mat,
                           as.numeric(FLOW_SD_BY), as.numeric(smooth), as.numeric(fallback_smooth),
-                          as.numeric(shrink), ov_seat, ov_key, ov_mat)
+                          as.numeric(shrink), ov_seat, ov_key, ov_mat,
+                          as.numeric(fallback_flow_sd), as.numeric(ov_sd))
     wins[] <- core$wins; totals[] <- core$totals
     tcp_winner[] <- parties[core$tcp_w]; tcp_runnerup[] <- parties[core$tcp_r]
     tcp_share[] <- core$tcp_share
@@ -1200,10 +1280,30 @@ simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
         # nothing that matters relative to what the packed integer key saves
         # for the SHARED, much larger table below).
         row <- NULL
+        .ov_sd_hit <- 0
         if (!is.null(conditional_override) && !is.null(conditional_override[[i]])) {
           .ok <- paste0(parties[from], "|", paste(sort(parties[alive]), collapse = "+"))
           .or <- conditional_override[[i]][[.ok]]
           if (!is.null(.or)) {
+            # PER-CELL FLOW UNCERTAINTY, mirroring the compiled core's ov_sd.
+            # How much THIS flow actually drifts between elections, fitted by
+            # scripts/fit_flow_drift.R. 0 means not supplied and the
+            # per-source flow_sd applies unchanged.
+            #
+            # This lookup MUST sit inside `!is.null(.or)`. The core reads
+            # ov_sd only from `it->second`, the row index of an override that
+            # was actually found (seat_sim_core.cpp:157-161), so an sd
+            # supplied for a key with no matching override row is invisible
+            # to it. Outside this branch, R would apply that sd on top of a
+            # shared-table or pooled flow while the core applied the ordinary
+            # per-source one -- a silent divergence between the two engines
+            # on well-formed input to an exported function. Found by the
+            # review gate 2026-09-16; see test-seat-sim.R's "sd key with no
+            # matching override row" case, which fails on the old ordering.
+            if (!is.null(conditional_override_sd) && !is.null(conditional_override_sd[[i]])) {
+              .s1 <- conditional_override_sd[[i]][[.ok]]
+              if (!is.null(.s1) && is.finite(.s1)) .ov_sd_hit <- .s1
+            }
             # Same positional, full-length-K shape the pre-built cell_list
             # rows already have (see the "put(from * 2^K + mask, row)" block
             # above) -- `row[alive]` a few lines down indexes POSITIONALLY,
@@ -1270,6 +1370,8 @@ simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
         # `[[` on a missing name in an atomic vector THROWS -- the trap
         # CLAUDE.md records where an is.null() guard beside it is dead code.
         .fsd <- FLOW_SD_BY[[from]]
+        if (!got_cell) .fsd <- max(.fsd, fallback_flow_sd)
+        if (.ov_sd_hit > 0) .fsd <- .ov_sd_hit
         if (.fsd > 0 && length(alive) > 1L) {
           p <- pmax(0, p + stats::rnorm(length(p), 0, .fsd / 100))
           ps <- sum(p)

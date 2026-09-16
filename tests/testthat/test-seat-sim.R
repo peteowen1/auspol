@@ -506,6 +506,57 @@ test_that("conditional_override ignores exactly the keys the R engine cannot rea
   }
 })
 
+# conditional_override_sd: one fitted flow sd per override row, added
+# 2026-09-16. The file header claims every mechanism is asserted across both
+# engines; that was untrue for this one until the review gate pointed it out,
+# and the very first case below fails on the ordering it shipped with.
+
+test_that("conditional_override_sd applies in both engines, and only where the override row exists", {
+  P  <- c("ALP", "LNP", "GRN", "OTH")
+  sh <- matrix(c(38, 40, 14, 8), nrow = 1, dimnames = list("s1", P))
+  fm <- build_flow_matrix(data.table::data.table(
+    election = "x", seat = rep(c("a", "b"), each = 5), round = 1L,
+    from  = c("OTH","OTH","OTH","GRN","GRN", "OTH","OTH","OTH","GRN","GRN"),
+    to    = c("ALP","LNP","GRN","ALP","LNP", "ALP","LNP","GRN","ALP","LNP"),
+    votes = c(800,100,100,100,100, 800,100,100,100,100)), min_n = 1L)
+  # flow_sd > 0 so a per-cell sd has something to REPLACE. With flow_sd = 0
+  # every case below collapses to the same answer and the test proves nothing.
+  go <- function(ov, sd, eng) {
+    simulate_seat_contests(
+      sh, fm, party_sd = stats::setNames(rep(0, 4), P), seat_sd = 0,
+      n_sims = 200, smooth = 0, seed = 1, flow_sd = 3,
+      conditional_override = ov, conditional_override_sd = sd,
+      engine = eng)$tcp_share[1, ]
+  }
+  ov <- list(list("OTH|ALP+GRN+LNP" = c(ALP = 80, LNP = 20)))
+
+  # POSITIVE CONTROL first. An sd on the override's OWN key must change the
+  # spread of the answer in both engines -- otherwise every "no difference"
+  # assertion below passes vacuously because the sd never reached the draw.
+  hit <- list(list("OTH|ALP+GRN+LNP" = 40))
+  for (eng in c("r", "cpp")) {
+    expect_false(isTRUE(all.equal(go(ov, NULL, eng), go(ov, hit, eng))))
+  }
+  expect_identical(go(ov, hit, "r"), go(ov, hit, "cpp"))
+
+  # THE REGRESSION. An sd supplied for a key with NO matching override row.
+  # "GRN|ALP+LNP" is a real round in this contest (GRN is excluded second), so
+  # R builds that exact key and finds the sd -- but there is no override row
+  # under it, so the compiled core never sees the sd at all: it reads ov_sd
+  # only at `it->second`, the row index of an override it actually matched
+  # (seat_sim_core.cpp:157-161). Until 2026-09-16 the R engine looked the sd up
+  # BEFORE checking the override row existed, so it applied sd 40 to a flow the
+  # core drew at flow_sd 3, and the two engines returned different numbers for
+  # well-formed input to an exported function.
+  miss <- list(list("GRN|ALP+LNP" = 40))
+  expect_identical(go(ov, miss, "r"), go(ov, miss, "cpp"))
+  # ...and that answer is the no-sd one, in both engines. Identical-but-wrong
+  # is the failure this repo keeps hitting, so assert the VALUE too.
+  for (eng in c("r", "cpp")) {
+    expect_identical(go(ov, miss, eng), go(ov, NULL, eng))
+  }
+})
+
 test_that("conditional_override is byte-identical across engines and touches only its own seats", {
   P <- c("ALP", "LNP", "GRN", "ONP", "IND", "OTH"); K <- length(P)
   NS <- 8L; seats <- paste0("seat", seq_len(NS))
