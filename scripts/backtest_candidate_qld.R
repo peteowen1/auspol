@@ -452,8 +452,28 @@ if (!is.null(.fitsl)) cat(sprintf("FS1  fitted slopes | same %s | new %s
 ",
   paste(sprintf("%s=%.3f", names(.fitsl$same), .fitsl$same), collapse=" "),
   paste(sprintf("%s=%.3f", names(.fitsl$new),  .fitsl$new),  collapse=" ")))
+# MINOR-TO-MINOR DEFECTOR DISCOUNT reaching base_pred, not just the xgb
+# feature. docs/reviews/base-pred-blind-to-tonights-fixes-2026-09-16.md:
+# AUSPOL_MINOR_DEFECT was wired into fit_xgb_primary_v6.R's own
+# personal_prior_vote() call only, so base_pred (built HERE) kept using the
+# undiscounted own_prev_pcv -- Stephen Andrew's full 31.66% ONP history,
+# unconditionally, at Mirani. Same shape as major_discount/.defect above.
+.minor_disc <- NULL
+if (identical(Sys.getenv("AUSPOL_MINOR_DEFECT", "0"), "1")) {
+  .mfd <- tryCatch(fit_minor_defector_discount(TGT), error = function(e) {
+    cat(sprintf("BQ0n! minor-defector fit FAILED, no discount applied: %s\n", conditionMessage(e)))
+    list(discount = NULL, n = 0L)
+  })
+  if (is.null(.mfd$discount)) {
+    cat(sprintf("BQ0n! only %d minor-defector case(s) (need >=5); no discount applied\n", .mfd$n))
+  } else {
+    cat(sprintf("BQ0n minor-defector discount %.3f from %d cases (target excluded)\n",
+                .mfd$discount, .mfd$n))
+    .minor_disc <- .mfd$discount
+  }
+}
 .split <- split_slope_context(PRV, TGT)
-.own_prev <- if (.cond) tryCatch(personal_prior_vote(PRV, TGT, major_discount = .defect), error = function(e) { cat(sprintf("BQ1p! personal_prior_vote() FAILED; class-level bases kept and NO transfer removed: %s\n", conditionMessage(e))); NULL }) else NULL
+.own_prev <- if (.cond) tryCatch(personal_prior_vote(PRV, TGT, major_discount = .defect, minor_discount = .minor_disc), error = function(e) { cat(sprintf("BQ1p! personal_prior_vote() FAILED; class-level bases kept and NO transfer removed: %s\n", conditionMessage(e))); NULL }) else NULL
 mat <- remove_transferred_votes(mat, .own_prev)  # the vote moves with the person; see personal_prior_vote()
 .tr <- attr(mat, "transfers"); if (!is.null(.tr)) cat(sprintf("TR1  transfers moved with the person: %d applied%s\n", .tr$applied, if (length(.tr$skipped)) paste0("; SKIPPED ", length(.tr$skipped), ": ", paste(utils::head(.tr$skipped, 5), collapse = ", ")) else ""))
 .own_x <- function(p, seats, x) {

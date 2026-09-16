@@ -770,8 +770,24 @@ for (K in PAIRS) {
 ",
     paste(sprintf("%s=%.3f", names(.fitsl$same), .fitsl$same), collapse=" "),
     paste(sprintf("%s=%.3f", names(.fitsl$new),  .fitsl$new),  collapse=" ")))
+  # MINOR-TO-MINOR DEFECTOR DISCOUNT reaching base_pred, not just the xgb
+  # feature -- docs/reviews/base-pred-blind-to-tonights-fixes-2026-09-16.md.
+  # Same shape as major_discount/.defect above.
+  .minor_disc <- NULL
+  if (identical(Sys.getenv("AUSPOL_MINOR_DEFECT", "0"), "1")) {
+    .mfd <- tryCatch(fit_minor_defector_discount(eb), error = function(e) {
+      cat(sprintf("BF0n! minor-defector fit FAILED, no discount applied: %s\n", conditionMessage(e)))
+      list(discount = NULL, n = 0L)
+    })
+    if (is.null(.mfd$discount)) {
+      cat(sprintf("BF0n! only %d minor-defector case(s) (need >=5); no discount applied\n", .mfd$n))
+    } else {
+      cat(sprintf("BF0n minor-defector discount %.3f from %d cases (target excluded)\n", .mfd$discount, .mfd$n))
+      .minor_disc <- .mfd$discount
+    }
+  }
   .split <- split_slope_context(ea, eb)
-  .own_prev <- if (.cond) tryCatch(personal_prior_vote(ea, eb, major_discount = .defect),
+  .own_prev <- if (.cond) tryCatch(personal_prior_vote(ea, eb, major_discount = .defect, minor_discount = .minor_disc),
                                    error = function(e) {
                                      cat(sprintf("BF1p! personal_prior_vote() FAILED for %s -> %s; class-level bases kept and NO transfer removed: %s\n", ea, eb, conditionMessage(e)))
                                      NULL }) else NULL

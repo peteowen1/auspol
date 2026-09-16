@@ -110,9 +110,55 @@ just not reliably per-seat.
    was always working around a gap in the baseline rather than closing it.
    Not yet sized, not yet built.
 
-Both are scoped, not started. Item 1 is safe to build immediately (small,
-mirrors existing code exactly). Item 2 needs its own sizing pass first --
-same discipline as everything else measured tonight.
+## Item 1 built and tested both ways -- MIXED, NOT SHIPPED
+
+Wired `minor_discount` into all six harnesses' own `personal_prior_vote()`
+calls (mirrors `major_discount`/`.defect` exactly). Ran the full non-circular
+4-step procedure `pool_sharedetail.R` documents (all 21 pairs, explicit
+`AUSPOL_XGB_PRIMARY=0`, `AUSPOL_N_SIMS=20000` -- `pred_share` is a
+simulation mean, not deterministic; a `pool_sharedetail.R` guard correctly
+refused a first attempt at lower sims), pooled, retrained v6 once.
+
+**Mirani improved substantially**: `base_pred` for OTH_RIGHT dropped
+33.24 -> 11.13 (the discount finally reaching the baseline), `xgb_pred`
+34.37 -> 32.75 (error 6.51 -> 4.89 against actual 27.86). Pooled RMSE also
+improved slightly (3.8178 -> 3.8091).
+
+**But the full 28-row targeted aggregate got WORSE**: RMSE 8.8813 -> 11.4315,
+mean abs error 7.251 -> 7.787 -- worse than the ALREADY-SHIPPED xgb-only
+version, not just worse than doing nothing. Individual rows are genuinely
+mixed (several much better, several much worse) -- feeding the discount into
+`base_pred` doesn't just adjust the target row, it ripples through
+`remove_transferred_votes()`'s class-level redistribution and affects OTHER
+candidates in the same class at other seats, and that ripple cost more than
+Mirani gained.
+
+**Not shipped.** Reverted `output/xgb-primary-v6-oof-predictions.csv` to the
+tested, shipped xgb-only state (confirmed reproducing 3.8178 exactly). Set
+`AUSPOL_MINOR_DEFECT`'s default back to `"0"` in all six harnesses (opt-in
+only) so a future clean-pool regeneration doesn't silently pick up the
+untested combination. The wiring code stays -- tested, real, available for
+whoever revisits this with a narrower application (e.g. gate the ripple to
+only the target row's own class-and-seat cell, not the whole class
+redistribution) -- but the current implementation is not an improvement over
+xgb-only.
+
+**This is exactly the result the new standing rule exists to produce.**
+Testing base_pred alone would have shipped a worse aggregate on the strength
+of one dramatically-better seat. Testing xgb alone (what happened earlier
+tonight) shipped a real but narrow win. Testing both surfaced the actual
+tradeoff and let the already-good xgb-only version stay shipped rather than
+being replaced by something that looked more dramatic on the flagship case
+and was worse everywhere else.
+
+## Item 2: major same/new conditional slopes -- STILL NOT SIZED, NOT BUILT
+
+This is the fix that would actually address Parramatta's shape of miss
+(Pattern A: a MAJOR party's departing-MP premium, not a minor-to-minor
+defection). Scoped, not started tonight -- needs the same corpus-wide sizing
+discipline as the minor-to-minor work (all major-party retirements, not just
+the 5 named seats), then the same both-layers test this session's rule now
+requires.
 
 ## Standing rule from this session (Pete, 2026-09-16): test both layers, always
 

@@ -1,5 +1,35 @@
 # auspol — work queue
 
+## 2026-09-16 very late: base_pred never got either of tonight's fixes -- tested both layers, mixed result
+
+Pete pushed back on Parramatta ("did its job" when LNP was predicted 48%
+against an actual 35%) and it found something real: `seat_outperf` AND the
+minor-to-minor defector discount both only reached `fit_xgb_primary_v6.R`'s
+own feature-building calls, never the six harnesses' own `base_pred`-
+building calls to the identical functions (`personal_prior_vote()`,
+`screened_slopes()`'s same/new tables, which never covered ALP/LNP at all).
+`seat_outperf`'s SHAP contribution on Parramatta: +0.4, against `base_pred`'s
++22.2. **New standing rule, added to `CLAUDE.md`: test any primary-vote fix
+edited into `base_pred` AND as an xgb feature, always.**
+Full trace: `docs/reviews/base-pred-blind-to-tonights-fixes-2026-09-16.md`.
+
+Wired `minor_discount` into all six harnesses, ran the full non-circular
+4-step retrain (`pool_sharedetail.R`'s own procedure, all 21 pairs,
+`AUSPOL_XGB_PRIMARY=0`, `AUSPOL_N_SIMS=20000`). **Mirani improved a lot**
+(base_pred 33.24->11.13, xgb_pred error 6.51->4.89) **but the full 28-row
+targeted aggregate got WORSE** (RMSE 8.8813->11.4315) than the already-
+shipped xgb-only version -- the discount ripples through
+`remove_transferred_votes()`'s class-level redistribution and hurts other
+rows. **Not shipped** -- reverted to the tested xgb-only state, harness
+default back to OFF. Exactly the tradeoff the new rule exists to surface.
+
+**Still open, not sized, not built**: major-party same/new conditional
+slopes (`R/dev_slope.R:207-210` only covers IND/OTH_RIGHT/GRN/ONP) -- this
+is the actual fix for Parramatta's shape of miss (Pattern A). Also built
+tonight, reusable infrastructure: `AUSPOL_XGB_SAVE_OOF_MODELS` (21 cached
+leave-one-pair-out models) and `scripts/shap_from_cached_model.R`, so a
+single-seat SHAP question doesn't cost a full retrain.
+
 ## 2026-09-16 late: Mirani diagnosed, minor-to-minor defector discount SHIPPED
 
 Mirani (qld2024) traced to a real, verified mechanism, not a bug: Stephen
