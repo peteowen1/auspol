@@ -1,5 +1,21 @@
 # auspol — work queue
 
+## 2026-09-16 late: Mirani diagnosed — a mid-campaign party defection, not a bug
+
+Stephen Andrew won Mirani for One Nation in 2017/2020, was disendorsed by
+One Nation in 2024, joined KAP mid-campaign, and lost to LNP. Every feature
+is individually correct (`is_incumbent_party`, `seat_prev_pcv`,
+`own_prev_pcv` all check out against the real 2020/2024 counts) but nothing
+discounts a defecting incumbent's personal vote the way `seat_outperf`
+(shipped tonight) discounts a retiring one. Full trace, including why this
+is NOT a data bug: `docs/reviews/mirani-party-defection-2026-09-16.md`.
+
+**Not sized, not built.** One case. Before doing anything: search the corpus
+for other same-person, party-changed candidacies (filter
+`personal_prior_vote()`'s own matching to `prior_party != current_party`)
+and measure the same way Pattern A was sized on all 349 retirement cases
+before being built — not on this one case alone.
+
 ## MORNING READ, 2026-09-16 — the NSW failure is a VARIANCE fault, and it needs you to build
 
 Overnight, working the seats where we lose most log loss to AE Forecasts.
