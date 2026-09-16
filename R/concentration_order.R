@@ -9,9 +9,39 @@
 #'
 #' Year 12 completion is available for every seat in every pair, and its
 #' correlation with a right-minor party's vote is negative in **43 of 43**
-#' party-elections measured: One Nation in 7 of 7, OTH_RIGHT in 13 of 13, and
-#' the mirror image for the Greens, positive in 23 of 23. Its Spearman against
-#' the actual vote runs 0.665 to 0.800 wherever the party is non-trivial.
+#' party-elections measured (docs/plans/prereg-class-concentration-v2-2026-09-15.md),
+#' the mirror image for the Greens, positive in 23 of 23 -- that is a SIGN
+#' count only, and does not itself say how strong the ordering is.
+#'
+#' The 43-of-43 breakdown by class is NOT traceable from the cited plan: only
+#' its totals (43 overall, 23 of them Greens) are there, not a per-class
+#' split. Do not repeat "ONP in 7 of 7, OTH_RIGHT in 13 of 13" as if it were
+#' independently confirmed; it previously appeared here without a source.
+#'
+#' As a RANKING (Spearman against the actual vote, the quantity this function
+#' produces), the strength is far less consistent, per the only table
+#' actually measuring it (same plan, citing
+#' docs/plans/prereg-education-ranked-concentration-2026-09-15.md:129-134):
+#'
+#' | pair | class | Year 12 Spearman |
+#' |---|---|---|
+#' | sa2026 | OTH_RIGHT | 0.144 |
+#' | fed2013 | OTH_RIGHT | 0.591 |
+#' | qld2020 | ONP | 0.665 |
+#' | fed2022 | ONP | 0.739 |
+#' | qld2024 | ONP | 0.747 |
+#' | fed2025 | ONP | 0.800 |
+#' | sa2026 | ONP | 0.922 |
+#'
+#' "0.665 to 0.800" -- previously in this docstring and still in the v2
+#' plan's own "what I already know" section -- silently takes only the ONP
+#' rows and drops both OTH_RIGHT ones. The real range over this table is
+#' **0.144 to 0.922**. sa2026's OTH_RIGHT is also the LARGEST of the seven
+#' classes by mean vote share (23%), so "wherever the party is non-trivial"
+#' is not a defensible qualifier for excluding it -- if anything it is the
+#' case the claim most needs to cover. Corrected 2026-09-17; the plan doc is
+#' left unedited with a dated note, per this repo's rule that an amendment is
+#' a visible addition, not a silent edit.
 #'
 #' NOT A REPLACEMENT FOR THE FEDERAL SIGNAL. On sa2026, the one pair carrying
 #' both, federal ranks better (0.939 against 0.922 for One Nation, and 0.538

@@ -65,7 +65,9 @@ state_deviation_b <- function(cls, exclude_pair,
   # ONE ROW PER STATE-YEAR, not per seat. Seats within a state share the
   # deviation exactly, so fitting on seats would treat 47 NSW divisions as 47
   # independent observations of one number and shrink the standard error by
-  # roughly sqrt(47) -- the clustering fault CLAUDE.md records twice.
+  # roughly sqrt(47) -- the same clustering fault CLAUDE.md records for the
+  # 139 party-cycles that were really 33 independent cycles ("Cluster the
+  # standard error on the right unit").
   S <- M[, .(err = mean(.resid), dev = .SD$state_poll_dev[1L]), by = c("pair", "state")]
   if (nrow(S) < 5) return(NA_real_)
   den <- sum(S$dev * S$dev)

@@ -35,6 +35,19 @@ I cannot write "targets chosen before seeing the data" because I have seen:
   sign, Spearman 0.665-0.800 where the party is non-trivial;
 - the per-class concentration fits in the table above.
 
+> **CORRECTION added 2026-09-17, left as a note beside the line above rather
+> than an edit to it.** "Spearman 0.665-0.800 where the party is non-trivial"
+> takes only the ONP rows of the ranking table this claim is sourced from
+> (prereg-education-ranked-concentration-2026-09-15.md:129-134) and silently
+> drops the two OTH_RIGHT rows: fed2013 at 0.591 and sa2026 at **0.144**. The
+> real range over that table is 0.144 to 0.922, and sa2026's OTH_RIGHT is the
+> largest of the seven classes by mean vote share (23%) -- not a case
+> "non-trivial" can exclude. Found and corrected in
+> `R/concentration_order.R`'s docstring, which had inherited the same wrong
+> range verbatim. This section is background ("what I already know"), not
+> the pre-registered criterion itself, so correcting it does not touch the
+> decision rule this plan committed to.
+
 What is still genuinely unknown is whether COMBINING them predicts the
 per-seat vote better than what we currently produce. Component quality does not
 imply the combination helps.
