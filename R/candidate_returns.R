@@ -496,6 +496,17 @@ personal_prior_vote <- function(election_from, election_to, corpus = NULL,
   # excluded" treatment this row got before. docs/reviews/
   # minor-to-minor-defector-2026-09-16.md. NULL (default) leaves this
   # byte-identical to before the parameter existed.
+  # `transfer` (below) must carry the FULL prior vote regardless of this
+  # discount -- the old class genuinely lost the whole thing, discount or
+  # not. Saved before the discount is applied so remove_transferred_votes()
+  # still zeroes the old class's seat base correctly; without this, less
+  # gets removed from the old class than actually left it, which inflates
+  # ITS statewide average and leaks into every OTHER seat that class
+  # contests via dev_slope()'s level_prev term -- not just this target row.
+  # Found 2026-09-16 sizing why the base_pred version of this discount
+  # helped Mirani but made the pooled aggregate worse: docs/reviews/
+  # base-pred-blind-to-tonights-fixes-2026-09-16.md.
+  out[, .own_prev_pcv_full := own_prev_pcv]
   if (!is.null(minor_discount) && is.finite(minor_discount)) {
     out[!is.na(own_prev_pcv) & !prev_party %in% MAJ & !party %in% MAJ & prev_party != party,
         own_prev_pcv := own_prev_pcv * minor_discount]
@@ -558,8 +569,9 @@ personal_prior_vote <- function(election_from, election_to, corpus = NULL,
   # into the simulator for one vote); Bob Katter's 46.7% as IND in Kennedy
   # 2010 did the same into OTH_RIGHT for 2013. NA when nothing moves.
   if (!"transfer" %in% names(out)) out[, transfer := NA_real_]
-  out[!is.na(own_prev_pcv) & is.na(transfer), transfer := own_prev_pcv]
+  out[!is.na(own_prev_pcv) & is.na(transfer), transfer := .own_prev_pcv_full]
   out[is.na(prev_party) | prev_party == party, `:=`(transfer = NA_real_, prev_party = NA_character_)]
+  out[, .own_prev_pcv_full := NULL]
   out[, list(seat, party, own_prev_pcv, prev_party, transfer)]
 }
 

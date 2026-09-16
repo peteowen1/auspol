@@ -201,6 +201,60 @@ same "ripples through class redistribution" mechanism suspected for the
 minor-defector case, since `dev_slope()` feeds `remove_transferred_votes()`
 the same way.
 
+## Item 3: found and fixed a real bug in `transfer` -- not the narrowing item 3 set out to do
+
+Went looking for the "ripples through class redistribution" mechanism behind
+item 1's minor-defector base_pred result, to try Pete's suggested narrower
+fix (gate the discount to just the target row). Found something more
+specific: `personal_prior_vote()`'s `transfer` column -- the amount
+[remove_transferred_votes()] subtracts from the OLD class's seat base, so a
+departed candidate's vote is not double-counted -- falls back to
+`own_prev_pcv` at `R/candidate_returns.R:572` (before this fix), and
+`minor_discount` is applied to `own_prev_pcv` *earlier* in the same
+function, at line ~499. So a discounted candidate had LESS removed from
+their old class's statewide baseline than they actually took with them --
+inflating that class's average at every OTHER seat it contests, via
+`dev_slope()`'s `level_prev` term. This is exactly the mechanism a "ripple
+through class redistribution... affects OTHER candidates in the same class
+at OTHER seats" finding predicts, and it is a genuine bug (an inconsistency
+between how much left the old class and how much arrived in the new one),
+independent of whether the discount itself should ship.
+
+**Fixed**: `own_prev_pcv` is snapshotted to `.own_prev_pcv_full` before the
+discount is applied, and `transfer`'s fallback now uses the undiscounted
+snapshot -- the old class always loses the full vote it actually lost;
+only the new class's row-level base is discounted. `minor_discount = NULL`
+(current default, nothing ships this) is byte-identical, confirmed by the
+existing `test-candidate_returns.R` suite passing unchanged (69 tests, no
+new failures). Since `AUSPOL_MINOR_DEFECT` defaults to `"0"`, **this fix has
+zero effect on the currently published model** -- it only matters to
+whoever next tries the discount with `minor_discount` set.
+
+**Re-tested Mirani with the fix, base_pred layer only** (QLD harness,
+`AUSPOL_XGB_PRIMARY=0`, `n=20000`) -- and found something that changes the
+picture for anyone revisiting this: the fixed-transfer discount is *closer*
+to the buggy version's error than to a fix. Actual Mirani OTH_RIGHT 27.86.
+No discount at all: base_pred 33.24 (error 5.38). Buggy-transfer discount
+(documented above): base_pred 11.13 (error 16.73). Fixed-transfer discount:
+base_pred 14.22 (error 13.64) -- better than the bug, still nearly 3x
+*worse* than doing nothing at this layer. **Discounting Mirani specifically
+pushes base_pred further from actual than leaving it undiscounted does.**
+The corpus-wide 49% geometric retention is real (`docs/reviews/minor-to-
+minor-defector-2026-09-16.md`), but Mirani itself may just be a
+higher-than-typical-retention case -- exactly the shrinkage argument in
+`CLAUDE.md` ("Fit constants with SHRINKAGE"): a corpus average correctly
+sized does not mean every individual cell sits near it.
+
+So the honest state to hand off: item 1's mixed pooled result (Mirani gain,
+aggregate loss) may not have been *purely* the class-redistribution ripple
+this fix targets -- part of it could be that discounting Mirani was already
+the wrong call for that specific seat, discount-leakage bug or not. Did NOT
+re-run the full non-circular 21-pair retrain to re-check the pooled
+aggregate with the leak fixed (`AUSPOL_MINOR_DEFECT=1` still opt-in only,
+default off) -- that retrain, plus checking whether Mirani individually
+needs a milder discount than the corpus rate, is the real next step here,
+not attempted tonight given the time already spent on items 1 and 2.
+
 ## Standing rule from this session (Pete, 2026-09-16): test both layers, always
 
 **Whenever a fix is proposed for something in this model, test it edited into
