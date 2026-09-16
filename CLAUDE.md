@@ -525,6 +525,13 @@ and `AUSPOL_SEAT_SD_MULT` never reached `fit_seats_full.R`, the actual
 published forecast, at all. Regenerate it before trusting a parity claim,
 same discipline as `docs/DATA-REGISTRY.md`.
 
+**Two reading traps.** The table's columns run `fit_seats` (published)
+**first**, then `fed | nsw | qld | sa | vic | wa` — misread once as the
+other order, which turned a deliberate exclusion into a reported bug. And
+the generator only greps the harness files and `fit_seats_full.R`, so a
+switch read inside `R/` (not the harness itself) shows "UNEXPLAINED" even
+when it's correctly wired — `AUSPOL_SD_DEPARTED` is the current example.
+
 There are **six** candidate-seat backtest harnesses — `backtest_candidate_fed.R`,
 `_vic.R`, `_nsw.R`, `_sa.R`, `_wa.R`, `_qld.R` (built 2026-09-07) — and they
 share a structure but not a file. **Any improvement, parameter or bug fix
@@ -644,6 +651,14 @@ Every `AUSPOL_*` switch and the value the published forecast runs at. Both
 apply it to every switch the caller left unset, so **a harness run with no
 environment measures what ships**, and a run that sets anything has to name
 it (the arm fingerprint in the output filename does the rest).
+
+**A switch missing from `CAL_TAG` is NOT a filename-collision bug.**
+`.arm_fingerprint` hashes every set `AUSPOL_*` variable already, so two arms
+differing only in an un-fingerprinted switch still get different output
+filenames. Asserted otherwise three times in one session (2026-09-16/17,
+`fe91e68`) before computing both hashes settled it in under a minute.
+`CAL_TAG` is for a human reading the filename, not for preventing a
+collision — check what it actually does before claiming it doesn't.
 
 This exists because on 2026-09-06 a day of headline numbers ("fed2025 0.2886,
 ahead of AE Forecasts") came from a harness "shipped config" that had
