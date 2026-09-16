@@ -1,46 +1,27 @@
 # auspol — work queue
 
-## 2026-09-16 late: Mirani diagnosed — a mid-campaign party defection, not a bug
+## 2026-09-16 late: Mirani diagnosed, minor-to-minor defector discount SHIPPED
 
-Stephen Andrew won Mirani for One Nation in 2017/2020, was disendorsed by
-One Nation in 2024, joined KAP mid-campaign, and lost to LNP. Every feature
-is individually correct (`is_incumbent_party`, `seat_prev_pcv`,
-`own_prev_pcv` all check out against the real 2020/2024 counts). Full
-trace: `docs/reviews/mirani-party-defection-2026-09-16.md`.
+Mirani (qld2024) traced to a real, verified mechanism, not a bug: Stephen
+Andrew won it for One Nation in 2017/2020, was disendorsed in 2024, joined
+KAP mid-campaign, lost to LNP. `personal_prior_vote()`'s existing defector
+discount excludes minor-to-minor switches by design ("a much smaller
+behavioural jump for voters") — Andrew's case (31.66% -> 25.0%, 21% loss)
+contradicted that. Sized across the full corpus (not just Mirani): 33 clean
+cases, geometric mean retention **49%**, p=0.0003 — real. Built
+`fit_minor_defector_discount()` as its own rate (not shared with the
+major-party one, whose retention scale differs), wired via
+`AUSPOL_MINOR_DEFECT` (published ON). Targeted RMSE 9.2363 -> 8.8813 (33
+cases), Mirani 8.666 -> 6.511; pooled cost +0.0017, well inside the noise
+floor below. Full derivation, both docs:
+`docs/reviews/mirani-party-defection-2026-09-16.md`,
+`docs/reviews/minor-to-minor-defector-2026-09-16.md`.
 
-**Root cause found, not a bug — a design call.** `personal_prior_vote()`
-(`R/candidate_returns.R`) already has defector-discount machinery
-(`fit_defector_discount()`), but restricts it to `MAJ <- c("ALP","LNP","NAT")`
-defectors by design: "switching FROM an already-minor label... is a much
-smaller behavioural jump for voters and is not excluded." Andrew is
-ONP -> KAP, exactly the excluded case, and his real result (31.66% -> 25.0%,
-21% relative loss) contradicts that assumption on this one case.
-
-**SIZED, 2026-09-16 — real and significant.** 33 clean corpus cases
-(`prev_pcv >= 5`, excluding tiny-denominator noise): geometric mean
-retention **49%**, t-test on log-ratio p=0.0003, Wilcoxon p=0.037. Minor-to-
-minor defectors lose about half their personal vote on average — far from
-the "not excluded" (100% retained) treatment `MAJ` currently gives them.
-Mirani sits almost exactly at the geometric mean, not even the worst case.
-Full derivation: `docs/reviews/minor-to-minor-defector-2026-09-16.md`.
-
-**BUILT, MEASURED, SHIPPED, 2026-09-16.** Fit a SEPARATE rate rather than
-sharing the major-party one (retention scales differ: 49% here vs
-~28%/~14% for major-party sitting-member/non-member). `fit_minor_defector_
-discount()` mirrors `fit_defector_discount()` exactly (leave-target-out,
-`min_prior=10`, median). Wired as `personal_prior_vote(..., minor_discount=)`
-(NULL default, byte-identical unless opted in) and `AUSPOL_MINOR_DEFECT`
-(published ON). Targeted RMSE 9.2363 -> 8.8813 (33 cases, not cherry-picked),
-Mirani specifically 8.666 -> 6.511 error. Pooled cost +0.0017 — an order of
-magnitude inside the ~0.014-per-column noise floor, clears the do-no-harm
-guard cleanly. Full numbers: `docs/reviews/minor-to-minor-defector-2026-09-16.md`.
-
-**Also checked tonight, systematically, not left as a guess**: are there
-OTHER by-election-installed incumbents our code can't see? Cross-referenced
-the anchor's `by-elections.csv` (27 party-changing by-elections) against
-every pair's `incumbent` field — 5 fall in our corpus's scored windows
-(Aston, Bega, Wentworth, Wagga Wagga, Ipswich West), all 5 correctly show
-the post-by-election party. No gap found beyond tonight's KAP/CA/SFF fix.
+Also checked systematically (not guessed): any OTHER by-election-installed
+incumbent our code can't see? Cross-referenced the anchor's 27 party-
+changing by-elections against every pair's `incumbent` field — the 5 that
+fall in our scored windows all correctly show the post-by-election party.
+No gap beyond the KAP/CA/SFF classification fix below.
 
 ## MORNING READ, 2026-09-16 — the NSW failure is a VARIANCE fault, and it needs you to build
 
@@ -893,15 +874,11 @@ Coverage reached 22 pairs / 2,050 seat-elections, pooled seat log loss 0.3454
 on demand.
 
 **Salience** — largely superseded 2026-09-10 (vic2026 corpus now built by
-`scripts/build_vic2026_salience_corpus.R`); original entry moved verbatim to
-[backlog/journal-2026-09-07-to-08-reentry.md](backlog/journal-2026-09-07-to-08-reentry.md).
-Still-live facts from it: Google Trends is measured rural-blind (nsw2019
-Barwon/Orange winners both scored exactly 0.0000 —
-[reviews/salience-rural-blind-spot-2026-09-07.md](reviews/salience-rural-blind-spot-2026-09-07.md));
-`wa1996`/`wa2001` predate Trends and can never be fetched; three salience arms
-(`AUSPOL_SALIENCE_EXPECTED`, `AUSPOL_SALIENCE_EXP_SD`, both together) remain
-built, Victoria-only, undecided —
-`docs/plans/prereg-salience-expected-and-variance-2026-09-07.md`.
+`scripts/build_vic2026_salience_corpus.R`). Still-live: Google Trends is
+measured rural-blind ([reviews/salience-rural-blind-spot-2026-09-07.md]
+(reviews/salience-rural-blind-spot-2026-09-07.md)); `wa1996`/`wa2001` predate
+Trends and can never be fetched; three salience arms remain built,
+Victoria-only, undecided (`docs/plans/prereg-salience-expected-and-variance-2026-09-07.md`).
 
 **OPEN QUESTION, parked**: is one party class one party? `classify_party()`'s
 seven classes bucket Liberal/National/LNP together and Katter/Shooters/Family
@@ -909,9 +886,8 @@ First together, and pool state vs. federal Labor without having asked. Major-
 party coding itself was checked 2026-09-07 and is sound — this is a
 granularity question, not a correctness one.
 
-**Housekeeping**: WA slope/transfer decomposition — DONE, resolved, do not
-re-open (commit `6958430`). `docs/plans/harness-unification-2026-09-08.md` —
-planning only, not started, own hard stop 30 September, read before starting.
+**Housekeeping**: WA slope/transfer decomposition DONE (commit `6958430`), do
+not re-open. Harness-unification plan not started, hard stop 30 September.
 
 **THE RE-ENTRY PRIOR (arm D) — decision ready, still unshipped.**
 `AUSPOL_REENTRY` stays 0. Seed-averaged at 20,000 sims, verdict genuinely
@@ -942,18 +918,14 @@ D is on). Full evidence moved to
    one 2021 vintage against elections from 2010 to 2026.
 
 1. ~~Seats that changed hands between elections are nearly invisible~~ —
-   **WORKED THROUGH 2026-09-16, partially fixed, not closed.** The
-   `load_seats()` incumbent field this item pointed at was wired in but never
-   correctly reaching the model (`is_incumbent_party` compared our class
-   against a raw commission code and was silently FALSE for every minor-party
-   incumbent) — fixed and shipped, small real gain, see
-   `docs/reviews/incumbent-classification-bug-2026-09-16.md`. Orange and Wagga
-   Wagga themselves are still wrong by 30-50 points: traced to `own_prev_pcv`
-   being `NA` for both (by-election winners have no general-election match),
-   built and measured a by-election-data fallback, and it does not help (see
-   `docs/reviews/nsw-departed-member-opv-ruled-out-2026-09-16.md` and the
-   2026-09-16 entry at the top of this file). Needs a dedicated feature, not a
-   fallback fill — open.
+   **WORKED THROUGH 2026-09-16.** `is_incumbent_party` classification bug
+   found and fixed (small real gain) —
+   `docs/reviews/incumbent-classification-bug-2026-09-16.md`. Orange/Wagga
+   Wagga themselves still wrong by 30-50 points — `own_prev_pcv` is `NA` for
+   both (by-election winners have no general-election match); a fallback fix
+   was built, measured, and made things worse elsewhere, reverted —
+   `docs/reviews/nsw-departed-member-opv-ruled-out-2026-09-16.md`. Needs a
+   dedicated feature, not a fallback fill — open.
 2. **The statewide covariance is settled for now.** Leakage closed
    (leave-one-out, effect nil), widened to 15 of the 21 pairs, and Western
    Australia deliberately excluded because cor(ALP, IND) flips sign on it.
