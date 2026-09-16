@@ -309,13 +309,21 @@ CAL_TAG <- paste0(
   # AUSPOL_SD_DEPARTED widens the per-cell sd override to ALP/LNP cells in
   # seats whose previous winner has left the ballot, inside
   # xgb_primary_sd_matrix() (R/xgb_primary_sd_override.R:103) -- so it never
-  # appears in this file and a grep of the harness could not see it. It
-  # changes the matrix that reaches simulate_seat_contests(sd_override=),
-  # which is as behaviour-changing as a switch gets. Missing from all six
-  # fingerprints until 2026-09-16: the FOURTH such omission found in one
-  # session, and the second where the switch lives in R/ rather than here.
-  # docs/MODEL-REGISTRY.md marks it "NO / UNEXPLAINED -- audit this" for the
-  # same reason its own grep only scans the harnesses and fit_seats_full.R.
+  # appears in this file and a grep of the harness could not see it.
+  #
+  # THIS IS READABILITY, NOT A BUG FIX, and the commit that added it
+  # (d91dc9c) says otherwise. It claimed two arms differing only in this
+  # switch would overwrite each other's output file. They would not:
+  # .arm_fingerprint above hashes EVERY set AUSPOL_* variable, and
+  # apply_published_flags() sets every published switch before it runs, so
+  # the baseline hashes to -a614a9d and the SD_DEPARTED arm to -a614adc.
+  # Measured 2026-09-16, after the same wrong diagnosis had already been
+  # made once that night and corrected by git note on 4456aea. What this
+  # line actually buys is a filename that SAYS which arm it is instead of
+  # hiding it in an opaque six-character hash -- worth having, and not what
+  # was claimed. docs/MODEL-REGISTRY.md marks the switch "UNEXPLAINED --
+  # audit this" because its grep only scans the harnesses and
+  # fit_seats_full.R, never R/; that gap is real and separate.
   if (identical(Sys.getenv("AUSPOL_SD_DEPARTED", "0"), "1")) "-sddep" else "",
   if (nzchar(Sys.getenv("AUSPOL_FLOW_MODEL_TAG", "")))
     sprintf("-fm%s", Sys.getenv("AUSPOL_FLOW_MODEL_TAG"))
