@@ -568,6 +568,23 @@ cat(sprintf("BN1d  dev slopes: %s%s
             if (length(attr(DEV_SLOPE, "absent")))
               paste0(" | not contested here: ",
                      paste(attr(DEV_SLOPE, "absent"), collapse=",")) else ""))
+# MAJOR-PARTY SAME/NEW SLOPES, off by default -- screened_slopes()/
+# conditional_slopes() have never had a same/new distinction for ALP/LNP/NAT,
+# so a departing MP's premium carries forward at slope=1 (full, unconditional)
+# every time, for every major-party seat. Sized 2026-09-16, leave-target-out:
+# ALP same~0.92 new~0.90 (barely differs -- brand vote dominates), LNP
+# same~0.92 new~0.83 (a real but modest gap -- nowhere near minors' 3x).
+# docs/reviews/base-pred-blind-to-tonights-fixes-2026-09-16.md.
+.major_sl <- NULL
+if (identical(Sys.getenv("AUSPOL_MAJOR_SLOPES", "0"), "1")) {
+  .major_sl <- tryCatch(fit_major_conditional_slopes(TGT), error = function(e) {
+    cat(sprintf("BN0m! major-slope fit FAILED, majors stay unconditioned: %s\n", conditionMessage(e)))
+    NULL
+  })
+  if (!is.null(.major_sl)) cat(sprintf("BN0m major slopes | same %s | new %s\n",
+      paste(sprintf("%s=%.3f", names(.major_sl$same), .major_sl$same), collapse=" "),
+      paste(sprintf("%s=%.3f", names(.major_sl$new),  .major_sl$new),  collapse=" ")))
+}
 pinned <- matrix(FALSE, nrow(mat), ncol(mat), dimnames = dimnames(mat))
 for (p in parties) {
   if (!p %in% names(state_tgt)) next
@@ -578,6 +595,12 @@ for (p in parties) {
     pm <- unname(lut[rownames(mat)]); pm[is.na(pm)] <- TRUE
     screened_slopes(p, rownames(mat), .returns, pm, same_mp = .MP_SLOPE, honour_departed = .honour_departed, same = if (is.null(.fitsl)) formals(screened_slopes)$same else .fitsl$same, new = if (is.null(.fitsl)) formals(screened_slopes)$new else .fitsl$new)
   } else if (.cond) conditional_slopes(p, rownames(mat), .returns, same_mp = .MP_SLOPE, same = if (is.null(.fitsl)) formals(conditional_slopes)$same else .fitsl$same, new = if (is.null(.fitsl)) formals(conditional_slopes)$new else .fitsl$new) else DEV_SLOPE[[p]]
+  if (!is.null(.major_sl) && p %in% names(.major_sl$same) && !is.null(.returns)) {
+    .r <- .returns[.returns$party == p]
+    .is_same <- unname(stats::setNames(.r$same, .r$seat)[rownames(mat)])
+    .is_same[is.na(.is_same)] <- FALSE
+    sl <- ifelse(.is_same, .major_sl$same[[p]], .major_sl$new[[p]])
+  }
   x_p <- .own_x(p, rownames(mat), mat[, p])
   val <- if (is.null(.split)) dev_slope(x_p, state_prev[[p]], state_tgt[[p]], sl) else
     split_dev_slope(x_p, .split$frac(p, rownames(mat)), state_prev[[p]], state_tgt[[p]], .split$s_ret, .split$s_dep)

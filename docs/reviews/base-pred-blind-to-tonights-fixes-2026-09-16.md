@@ -151,14 +151,55 @@ tradeoff and let the already-good xgb-only version stay shipped rather than
 being replaced by something that looked more dramatic on the flagship case
 and was worse everywhere else.
 
-## Item 2: major same/new conditional slopes -- STILL NOT SIZED, NOT BUILT
+## Item 2: major same/new conditional slopes -- SIZED, BUILT, TESTED (base_pred layer) -- NOT SHIPPED
 
-This is the fix that would actually address Parramatta's shape of miss
-(Pattern A: a MAJOR party's departing-MP premium, not a minor-to-minor
-defection). Scoped, not started tonight -- needs the same corpus-wide sizing
-discipline as the minor-to-minor work (all major-party retirements, not just
-the 5 named seats), then the same both-layers test this session's rule now
-requires.
+Sized `fit_major_conditional_slopes()` (`R/split_slope.R`, leave-target-out
+`lm(yy ~ 0 + dev)`, same method as the existing minor-party fitter, mirrored
+not duplicated) across the full corpus, stable over 4 different leave-out
+targets: **ALP same≈0.92 new≈0.90-0.92** (barely differs -- ALP's brand vote
+persists almost regardless of the candidate), **LNP same≈0.91-0.92
+new≈0.826-0.831** (a real, consistent ~9% relative reduction). NAT never
+appears as its own class in this corpus (folded into LNP), n=0, stays at the
+unconditioned fallback of 1.0.
+
+Wired into `backtest_candidate_nsw.R` behind `AUSPOL_MAJOR_SLOPES` (default
+`"0"`, opt-in): after the existing `screened_slopes()`/`conditional_slopes()`
+call, override `sl` for ALP/LNP using `.returns$same` (the same same/new
+join `screened_slopes()` itself already uses, `match(seats, hit$seat)`) to
+pick `.major_sl$same[[p]]` or `.major_sl$new[[p]]`. Contained: the existing
+minor-party-tested `screened_slopes()`/`conditional_slopes()` functions are
+untouched.
+
+**Tested base_pred layer only** (`AUSPOL_XGB_PRIMARY=0`, so the xgb-override
+that would otherwise paper over a `base_pred` change is off), NSW harness
+only, `AUSPOL_N_SIMS=20000`:
+
+Parramatta -- real, modest improvement, exactly as the sizing predicted:
+LNP error 14.76 -> 13.51 (-1.25), ALP error 11.37 -> 10.31 (-1.06). Nowhere
+near closing the ~13-point miss -- a nudge, not a fix, as flagged before
+testing.
+
+**Pooled ALP+LNP across NSW (176 seat-party rows) got marginally WORSE**:
+MAE 4.6944 -> 4.7606 (+0.066), RMSE 6.2152 -> 6.2198 (+0.005, ~flat). Not a
+clean win even on this one harness -- individual seats are genuinely mixed
+(Newtown LNP 4.40 -> 0.37, Cabramatta LNP 14.66 -> 10.77 improve a lot;
+Wallsend LNP 0.13 -> 3.42, Auburn LNP 7.35 -> 8.36, Albury LNP 4.18 -> 5.23
+get worse), the same shape as the minor-defector base_pred experiment above.
+
+**Not shipped.** `AUSPOL_MAJOR_SLOPES` stays default-off. Did not proceed to
+porting the wiring into the other five harnesses or the full 21-pair
+non-circular retrain (xgb layer test) -- NSW alone already failed the
+do-no-harm bar the earlier minor-defector experiment used, and porting to
+five more harnesses for an already-flat-to-negative single-harness result
+isn't a good use of the remaining autonomous-session budget. The fitter and
+wiring code stay (tested, real, available for whoever revisits this) but
+this is explicitly an UNRESOLVED finding, not a shelved-because-it-worked
+one: Parramatta's shape of miss (a major MP's undiscounted departure
+premium) is still real and still unfixed. A next attempt should look at why
+the pooled effect is mixed rather than uniformly positive -- possibly the
+same "ripples through class redistribution" mechanism suspected for the
+minor-defector case, since `dev_slope()` feeds `remove_transferred_votes()`
+the same way.
 
 ## Standing rule from this session (Pete, 2026-09-16): test both layers, always
 

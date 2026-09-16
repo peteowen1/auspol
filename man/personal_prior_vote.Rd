@@ -11,7 +11,8 @@ personal_prior_vote(
   corpus = NULL,
   major_discount = NULL,
   pooled = NULL,
-  loser_discount = NULL
+  loser_discount = NULL,
+  minor_discount = NULL
 )
 }
 \arguments{
