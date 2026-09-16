@@ -19,7 +19,7 @@ whichever party won the MAJORITY of that pairing's own draws, so it
 reads as "the pairing's own favourite", not an artefact of party
 order), \code{freq} (share of ALL draws for that seat landing on this
 pairing -- frequencies for one seat sum to 1, uncontested seats
-excepted), \code{f1_tcp_pct} (median \link{f1}'s two-candidate-preferred share
+excepted), \code{f1_tcp_pct} (median \code{f1}'s two-candidate-preferred share
 across just the draws in this pairing). Ordered by seat then
 descending \code{freq}, so \verb{[seat == "X"][1]} is always that seat's
 most-likely pairing -- the same "headline scenario" AEF's own site

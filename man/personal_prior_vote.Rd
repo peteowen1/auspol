@@ -51,6 +51,16 @@ should differ from \code{major_discount}. \code{NULL} gives both groups the same
 rate. Under \code{AUSPOL_DEFECT_POOLED="2"} this is resolved automatically
 from \code{\link[=fit_defector_discount]{fit_defector_discount()}} rather than threaded through six
 harnesses -- see docs/plans/prereg-defector-two-rate-2026-09-09.md.}
+
+\item{minor_discount}{Optional numeric. When set, discounts \code{own_prev_pcv}
+for a candidate who switched between two NON-major classes (e.g. ONP to
+KAP/OTH_RIGHT) -- \code{prev_best} above matches on IDENTITY regardless of
+party, so without this the old class's full, undiscounted result carries
+forward as the new class's base. \code{NULL} (the default) leaves this
+byte-identical to before the parameter existed. Sized at 49\% geometric
+mean retention over 33 corpus cases; see
+\code{\link[=fit_minor_defector_discount]{fit_minor_defector_discount()}} and
+\verb{docs/reviews/minor-to-minor-defector-2026-09-16.md}.}
 }
 \value{
 A \code{data.table} of \code{seat}, \code{party}, \code{own_prev_pcv} (\code{NA_real_} where

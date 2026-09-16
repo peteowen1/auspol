@@ -23,7 +23,7 @@
 #'   reads as "the pairing's own favourite", not an artefact of party
 #'   order), `freq` (share of ALL draws for that seat landing on this
 #'   pairing -- frequencies for one seat sum to 1, uncontested seats
-#'   excepted), `f1_tcp_pct` (median [f1]'s two-candidate-preferred share
+#'   excepted), `f1_tcp_pct` (median `f1`'s two-candidate-preferred share
 #'   across just the draws in this pairing). Ordered by seat then
 #'   descending `freq`, so `[seat == "X"][1]` is always that seat's
 #'   most-likely pairing -- the same "headline scenario" AEF's own site

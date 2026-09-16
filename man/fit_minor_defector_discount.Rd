@@ -12,6 +12,29 @@ fit_minor_defector_discount(
   min_prior = 10
 )
 }
+\arguments{
+\item{target_election}{The election being scored. Its own (seat, party)
+defector cases are excluded from the fit -- leave-one-out, same as
+[\link{fit_defector_discount}].}
+
+\item{corpus}{Optional pre-read candidacy table; read from
+\code{output/candidacies.csv} when \code{NULL}.}
+
+\item{min_n}{Minimum defector cases required to return a fit. Below this,
+\code{discount} is \code{NULL}.}
+
+\item{pairs}{Optional list of \code{list(election=, prev=)}, as returned by
+\code{\link[=all_election_pairs]{all_election_pairs()}}; that function's real pair list is used when
+\code{NULL}.}
+
+\item{min_prior}{Minimum prior vote, in points, for a case to enter the
+fit -- excludes a ratio taken on a denominator too small to mean
+anything.}
+}
+\value{
+A list: \code{discount} (median geometric retention ratio, or \code{NULL}
+below \code{min_n}), \code{n} (cases used), \code{cases} (the underlying data.table).
+}
 \description{
 Same shape as [\link{fit_defector_discount}] but for a candidate who switched
 between two NON-major parties (Stephen Andrew, ONP -> KAP, Mirani

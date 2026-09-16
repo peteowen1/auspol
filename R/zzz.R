@@ -61,3 +61,9 @@ globalVariables(c(
   "swing", "target_pcv", "to", "tot", "tot_prior", "transfer", "v",
   "votes", "was_mp", "x", "xgb_pred", "yy"
 ))
+
+# Added 2026-09-16: fit_minor_defector_discount()'s prior_party (present
+# since it was first written, never declared until R CMD check was actually
+# run against it), personal_prior_vote()'s .own_prev_pcv_full (the transfer-
+# leak fix's undiscounted snapshot), and tcp_scenarios()'s freq.
+globalVariables(c("prior_party", ".own_prev_pcv_full", "freq"))

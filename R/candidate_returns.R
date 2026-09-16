@@ -309,6 +309,15 @@ leading_candidate_returns <- function(election_from, election_to, corpus = NULL)
 #'   rate. Under `AUSPOL_DEFECT_POOLED="2"` this is resolved automatically
 #'   from [fit_defector_discount()] rather than threaded through six
 #'   harnesses -- see docs/plans/prereg-defector-two-rate-2026-09-09.md.
+#' @param minor_discount Optional numeric. When set, discounts `own_prev_pcv`
+#'   for a candidate who switched between two NON-major classes (e.g. ONP to
+#'   KAP/OTH_RIGHT) -- `prev_best` above matches on IDENTITY regardless of
+#'   party, so without this the old class's full, undiscounted result carries
+#'   forward as the new class's base. `NULL` (the default) leaves this
+#'   byte-identical to before the parameter existed. Sized at 49% geometric
+#'   mean retention over 33 corpus cases; see
+#'   [fit_minor_defector_discount()] and
+#'   `docs/reviews/minor-to-minor-defector-2026-09-16.md`.
 #' @export
 personal_prior_vote <- function(election_from, election_to, corpus = NULL,
                                major_discount = NULL, pooled = NULL,
@@ -770,6 +779,22 @@ fit_defector_discount <- function(target_election, corpus = NULL, min_n = 5L, pa
 #' `min_prior = 10` matches [[fit_defector_discount]]'s own floor -- a
 #' retention RATIO on a denominator that small is mostly noise, the same
 #' reason that function excludes them.
+#'
+#' @param target_election The election being scored. Its own (seat, party)
+#'   defector cases are excluded from the fit -- leave-one-out, same as
+#'   [[fit_defector_discount]].
+#' @param corpus Optional pre-read candidacy table; read from
+#'   `output/candidacies.csv` when `NULL`.
+#' @param min_n Minimum defector cases required to return a fit. Below this,
+#'   `discount` is `NULL`.
+#' @param pairs Optional list of `list(election=, prev=)`, as returned by
+#'   [all_election_pairs()]; that function's real pair list is used when
+#'   `NULL`.
+#' @param min_prior Minimum prior vote, in points, for a case to enter the
+#'   fit -- excludes a ratio taken on a denominator too small to mean
+#'   anything.
+#' @return A list: `discount` (median geometric retention ratio, or `NULL`
+#'   below `min_n`), `n` (cases used), `cases` (the underlying data.table).
 #' @export
 fit_minor_defector_discount <- function(target_election, corpus = NULL, min_n = 5L,
                                         pairs = NULL, min_prior = 10) {
