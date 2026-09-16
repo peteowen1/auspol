@@ -535,7 +535,7 @@ if (!is.null(.fitsl)) cat(sprintf("FS1  fitted slopes | same %s | new %s
 # feature -- docs/reviews/base-pred-blind-to-tonights-fixes-2026-09-16.md.
 # Same shape as major_discount/.defect above.
 .minor_disc <- NULL
-if (identical(Sys.getenv("AUSPOL_MINOR_DEFECT", "0"), "1")) {
+if (identical(Sys.getenv("AUSPOL_MINOR_DEFECT_BASE_PRED", "0"), "1")) {
   .mfd <- tryCatch(fit_minor_defector_discount(TGT), error = function(e) {
     cat(sprintf("BS0n! minor-defector fit FAILED, no discount applied: %s\n", conditionMessage(e)))
     list(discount = NULL, n = 0L)

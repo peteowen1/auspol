@@ -458,8 +458,19 @@ if (!is.null(.fitsl)) cat(sprintf("FS1  fitted slopes | same %s | new %s
 # personal_prior_vote() call only, so base_pred (built HERE) kept using the
 # undiscounted own_prev_pcv -- Stephen Andrew's full 31.66% ONP history,
 # unconditionally, at Mirani. Same shape as major_discount/.defect above.
+#
+# DELIBERATELY A DIFFERENT FLAG from AUSPOL_MINOR_DEFECT (which reaches only
+# fit_xgb_primary_v6.R and stays published ON). This one was ALSO named
+# AUSPOL_MINOR_DEFECT until 2026-09-16 late, defaulting "0" in this file --
+# but published_flags.R already set AUSPOL_MINOR_DEFECT="1" for the OTHER
+# purpose, and apply_published_flags() fills every unset caller from it
+# before this line's own Sys.getenv runs. So the "0" default here was never
+# reached in a bare/published run, and the base_pred wiring -- tested and
+# found net-negative, explicitly NOT shipped -- was silently live in every
+# harness anyway. Renamed so the two purposes cannot share one flag again;
+# this one stays out of published_flags.R entirely.
 .minor_disc <- NULL
-if (identical(Sys.getenv("AUSPOL_MINOR_DEFECT", "0"), "1")) {
+if (identical(Sys.getenv("AUSPOL_MINOR_DEFECT_BASE_PRED", "0"), "1")) {
   .mfd <- tryCatch(fit_minor_defector_discount(TGT), error = function(e) {
     cat(sprintf("BQ0n! minor-defector fit FAILED, no discount applied: %s\n", conditionMessage(e)))
     list(discount = NULL, n = 0L)
