@@ -47,22 +47,42 @@ vote — which is exactly what happened (31.66% -> 25.0%).
   was about the FEATURE reaching the model at all; here it reaches the model
   and is used, just without a defection-specific discount.
 
+## This is not a gap in the model -- it's a design call, and this case contradicts it
+
+`R/candidate_returns.R`'s defector-discount machinery (`fit_defector_discount()`,
+`major_discount`) exists precisely for "same candidate, different party" --
+but is deliberately restricted to `MAJ <- c("ALP", "LNP", "NAT")` defectors.
+The comment directly above it: *"Switching FROM an already-minor label
+(Shooters, Fishers and Farmers, One Nation, Green, other independent) is a
+much smaller behavioural jump for voters and is not excluded [from using the
+undiscounted prior vote]."*
+
+Stephen Andrew is exactly the excluded case -- One Nation to KAP, minor to
+minor -- and his real result (31.66% -> 25.0%, a 21% relative loss) is a
+concrete data point against that assumption. One case does not overturn a
+design call sized on 14+ major-party cases, but it is a real contradiction
+worth checking, not dismissing.
+
 ## What this establishes and what it does not
 
 **Established**: the mechanism, precisely, with real vote counts on both
-sides. A defecting incumbent's `own_prev_pcv` needs the same kind of
-discount a retiring MP's `seat_prev_pcv` gets (Pattern A, shipped earlier
-tonight as `seat_outperf`) — except keyed to a PARTY CHANGE rather than a
-DEPARTURE. Whether this is common enough in the corpus to be worth a
-dedicated feature is not established — this is one case, not sized against
-the corpus the way Pattern A was before it was built.
+sides, and the exact line of code responsible — `MAJ <- c("ALP", "LNP",
+"NAT")` in `personal_prior_vote()`, which by design gives minor-to-minor
+defectors (Andrew's case) the FULL undiscounted prior vote, unlike
+major-party defectors, who already get `fit_defector_discount()`'s rate.
+Whether the underlying assumption ("minor-to-minor is a smaller jump for
+voters") is wrong in general, or just wrong for this one case, is not
+established.
 
-**Not established**: how many other defection cases exist in the corpus, and
-whether the size of the effect (a ~6.6-point drop here) generalises. Before
-building anything: search the corpus for other same-person, party-changed
-candidacies (`personal_prior_vote()`'s own matching, filtered to prior_party
-!= current_party) and measure the same way Pattern A was sized on all 349
-retirement cases before being built — not on this one case alone.
+**Not established**: how many other MINOR-to-minor defection cases exist in
+the corpus specifically (major-party defectors already have
+`fit_defector_discount()`), and whether the size of the effect (a ~6.6-point
+drop here) generalises. Before touching `MAJ` or building a second rate:
+search the corpus for other same-person, minor-to-minor party changes
+(`personal_prior_vote()`'s own `.k` identity matching, filtered to
+`prior_party` and `current_party` both outside `MAJ` and unequal to each
+other) and measure the same way Pattern A was sized on all 349 retirement
+cases before being built — not on this one case alone.
 
 ## Where this leaves the AEF-7 miss
 

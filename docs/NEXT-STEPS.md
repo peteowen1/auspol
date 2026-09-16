@@ -5,16 +5,29 @@
 Stephen Andrew won Mirani for One Nation in 2017/2020, was disendorsed by
 One Nation in 2024, joined KAP mid-campaign, and lost to LNP. Every feature
 is individually correct (`is_incumbent_party`, `seat_prev_pcv`,
-`own_prev_pcv` all check out against the real 2020/2024 counts) but nothing
-discounts a defecting incumbent's personal vote the way `seat_outperf`
-(shipped tonight) discounts a retiring one. Full trace, including why this
-is NOT a data bug: `docs/reviews/mirani-party-defection-2026-09-16.md`.
+`own_prev_pcv` all check out against the real 2020/2024 counts). Full
+trace: `docs/reviews/mirani-party-defection-2026-09-16.md`.
 
-**Not sized, not built.** One case. Before doing anything: search the corpus
-for other same-person, party-changed candidacies (filter
-`personal_prior_vote()`'s own matching to `prior_party != current_party`)
-and measure the same way Pattern A was sized on all 349 retirement cases
-before being built — not on this one case alone.
+**Root cause found, not a bug — a design call.** `personal_prior_vote()`
+(`R/candidate_returns.R`) already has defector-discount machinery
+(`fit_defector_discount()`), but restricts it to `MAJ <- c("ALP","LNP","NAT")`
+defectors by design: "switching FROM an already-minor label... is a much
+smaller behavioural jump for voters and is not excluded." Andrew is
+ONP -> KAP, exactly the excluded case, and his real result (31.66% -> 25.0%,
+21% relative loss) contradicts that assumption on this one case.
+
+**Not sized, not built.** Before touching `MAJ` or fitting a second rate:
+search the corpus for other minor-to-minor defections (same identity-match
+logic, `prior_party` and `current_party` both outside `MAJ` and unequal) and
+measure the same way Pattern A was sized on all 349 retirement cases before
+being built — one case does not overturn a design call sized on 14+.
+
+**Also checked tonight, systematically, not left as a guess**: are there
+OTHER by-election-installed incumbents our code can't see? Cross-referenced
+the anchor's `by-elections.csv` (27 party-changing by-elections) against
+every pair's `incumbent` field — 5 fall in our corpus's scored windows
+(Aston, Bega, Wentworth, Wagga Wagga, Ipswich West), all 5 correctly show
+the post-by-election party. No gap found beyond tonight's KAP/CA/SFF fix.
 
 ## MORNING READ, 2026-09-16 — the NSW failure is a VARIANCE fault, and it needs you to build
 
