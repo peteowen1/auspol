@@ -581,6 +581,19 @@ feat_cols <- c("base_pred", "seat_prev_pcv", "seat_outperf", "level_prev",
 X <- as.matrix(ALL[, ..feat_cols])
 y <- ALL$actual_share
 
+# FEATURE-ONLY EXIT, for scripts/shap_from_cached_model.R: the feature
+# build above is fast (a few seconds); xgb.cv/model training below is the
+# slow part this whole mechanism exists to skip. Saves everything a caller
+# needs to reconstruct X for one pair/seat/party and score it against a
+# cached model, without re-running any of the below.
+if (identical(Sys.getenv("AUSPOL_XGB_SKIP_TRAIN", "0"), "1")) {
+  saveRDS(list(ALL = ALL, feat_cols = feat_cols),
+          file.path(OUT, "xgb-primary-v6-featurecache.rds"))
+  cat(sprintf("\nXG11 feature-only exit: wrote %s, skipping training\n",
+              file.path(OUT, "xgb-primary-v6-featurecache.rds")))
+  quit(save = "no", status = 0)
+}
+
 # PERSIST THE FEATURE MATRIX. scripts/fit_xgb_flows_v1.R writes its own
 # (xgb-flows-v1-features.csv) and this script did not, so anything wanting to
 # model something ELSE about these rows had to either re-run this whole script
@@ -616,6 +629,31 @@ oof_pred <- cv$cv_predict$pred[, 1]
 xgb_rmse <- sqrt(mean((oof_pred - y)^2))
 cat(sprintf("\nXGBOOST v6 (leave-one-pair-out) pooled primary RMSE: %.4f  (n=%d)\n", xgb_rmse, length(y)))
 cat(sprintf("improvement vs shipped model: %.2f%%\n", 100 * (base_rmse - xgb_rmse) / base_rmse))
+
+# CACHE ONE MODEL PER PAIR, so a SHAP/diagnostic question about a single
+# seat doesn't need a full retrain (Pete, 2026-09-16, mid the Parramatta/
+# Mirani walkthrough -- ~21 pairs, no memory concern). Each model is trained
+# on every OTHER pair, so it reproduces that pair's OOF prediction exactly
+# (not a leaked one from a model that has already seen the answer) -- see
+# scripts/shap_from_cached_model.R, which loads these instead of retraining.
+# Off by default: this triples-plus the run's cost and nothing else needs it.
+if (identical(Sys.getenv("AUSPOL_XGB_SAVE_OOF_MODELS", "0"), "1")) {
+  .mdir <- file.path(OUT, "xgb-primary-v6-models")
+  dir.create(.mdir, showWarnings = FALSE, recursive = TRUE)
+  cat(sprintf("\nXG10 caching %d leave-one-pair-out models to %s ...\n", length(pairs), .mdir))
+  for (.p in pairs) {
+    .idx <- which(ALL$pair != .p)
+    .dm <- xgb.DMatrix(data = X[.idx, , drop = FALSE], label = y[.idx], missing = NA)
+    .m <- xgb.train(params = params, data = .dm, nrounds = best_n, verbose = 0)
+    xgb.save(.m, file.path(.mdir, paste0(.p, ".ubj")))
+  }
+  # feat_cols is fixed at this point in the script (used to build X just
+  # above); saved once, not per-pair, so a loader doesn't need to re-derive
+  # column order or risk it drifting from a future edit to this script.
+  writeLines(feat_cols, file.path(.mdir, "feat_cols.txt"))
+  saveRDS(params, file.path(.mdir, "params.rds"))
+  cat(sprintf("XG10 done: %d models, feat_cols.txt, params.rds\n", length(pairs)))
+}
 
 final <- xgb.train(params = params, data = dtrain, nrounds = best_n, verbose = 0)
 imp <- xgb.importance(feature_names = feat_cols, model = final)
