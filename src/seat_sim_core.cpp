@@ -33,7 +33,8 @@ List seat_sim_core(NumericMatrix shares, int n_sims, int shift_mode,
                    NumericMatrix pool_mat, bool has_pw, NumericMatrix pw_mat,
                    NumericVector flow_sd_by, double smooth, double fallback_smooth,
                    NumericVector shrink,
-                   IntegerVector ov_seat, IntegerVector ov_key, NumericMatrix ov_mat) {
+                   IntegerVector ov_seat, IntegerVector ov_key, NumericMatrix ov_mat,
+                   double fallback_flow_sd = 0) {
   const int nseat = shares.nrow(), K = shares.ncol();
   // PER-SEAT CONDITIONAL OVERRIDE, sparse. The shared cell_mat is dense over
   // the key space but has no seat dimension; a per-seat dense table would be
@@ -168,7 +169,12 @@ List seat_sim_core(NumericMatrix shares, int n_sims, int shift_mode,
         const double sm = (!got_cell) ? std::max(smooth, fallback_smooth) : smooth;
         if (tot <= 0) { for (size_t t = 0; t < na; ++t) p[t] = u; }
         else { for (size_t t = 0; t < na; ++t) p[t] = (1.0 - sm) * (w[t] / tot) + sm * u; }
-        const double fsd = flow_sd_by[from];
+        // FALLBACK-ONLY EXTRA NOISE, same condition fallback_smooth already
+        // uses. A fallback row is not a measurement of THIS contest, so it
+        // gets AT LEAST fallback_flow_sd on top of whatever flow_sd_by[from]
+        // already gives it; a real exact-cell hit is untouched. See the
+        // fallback_flow_sd docstring in R/seat_sim.R.
+        const double fsd = (!got_cell) ? std::max(flow_sd_by[from], fallback_flow_sd) : flow_sd_by[from];
         if (fsd > 0 && na > 1) {
           for (size_t t = 0; t < na; ++t) { const double e = R::rnorm(0.0, fsd / 100.0); const double q = p[t] + e; p[t] = q > 0 ? q : 0; }
           long double ps = 0.0L;

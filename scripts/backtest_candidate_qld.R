@@ -769,7 +769,8 @@ set.seed(SEED)
 FB_SMOOTH <- as.numeric(Sys.getenv("AUSPOL_FALLBACK_SMOOTH", "0"))
 SHRINK_K  <- as.numeric(Sys.getenv("AUSPOL_FLOW_SHRINK_K", "0"))    # EXPERIMENTAL, docs/plans/prereg-flow-cell-shrinkage-2026-09-10.md
 FLOW_SD   <- as.numeric(Sys.getenv("AUSPOL_FLOW_SD", "0"))
-cat(sprintf("BQ1f fallback_smooth %.2f | flow_sd %.2f\n", FB_SMOOTH, FLOW_SD))
+FB_FLOW_SD <- as.numeric(Sys.getenv("AUSPOL_FALLBACK_FLOW_SD", "0"))  # see R/seat_sim.R's docstring
+cat(sprintf("BQ1f fallback_smooth %.2f | flow_sd %.2f | fallback_flow_sd %.2f\n", FB_SMOOTH, FLOW_SD, FB_FLOW_SD))
 
 # ARM SURGE-V2: see R/salience_surge.R and scripts/backtest_candidate_fed.R.
 surge_arg <- SURGE_H; surge_mu_arg <- 15.6; surge_sd_arg <- 6.1
@@ -894,11 +895,23 @@ if (identical(Sys.getenv("AUSPOL_XGB_SURGE", "0"), "1")) {
 sim <- simulate_seat_contests(level_sd = .level_sd, sd_override = SD_OVR, level_mult = .lm(shares), shares, fm, party_sd = psd, seat_sd = sp$sd_within * SEAT_SD_MULT,
                               n_sims = N_SIMS, smooth = SMOOTH, seed = SEED,
                               shrink = SHRINK, party_cor = PARTY_COR, conditional_override = .xgb_flow_ov,
-                              fallback_smooth = FB_SMOOTH, shrink_k = SHRINK_K, flow_sd = FLOW_SD,
+                              fallback_smooth = FB_SMOOTH, shrink_k = SHRINK_K, flow_sd = FLOW_SD, fallback_flow_sd = FB_FLOW_SD,
                               surge_h = surge_arg, surge_party = surge_party_arg,
                                 surge_from_zero = identical(Sys.getenv("AUSPOL_SURGE_FROM_ZERO", "0"), "1"), surge_mu = surge_mu_arg, surge_sd = surge_sd_arg)
 cat(sprintf("BQ2e  engine %s | surge recipient fell back: %d class(es) absent, %d seat-draws at zero share\n", sim$engine, sim$surge_recipient_fallback, sim$surge_recipient_fallback_draws))
 wp <- as.data.table(sim$win_prob)
+
+# OUR OWN final-two scenario frequencies -- see tcp_scenarios(). Pete asked
+# 2026-09-16 whether we track how often a seat lands on each possible
+# head-to-head; simulate_seat_contests() already computes this per draw and
+# every harness discarded it. Written per pair so build_aef_tcp.R-style
+# tooling can compare against AEF's own seatTcpScenarios.
+.scen <- tcp_scenarios(sim)
+if (!is.null(.scen) && nrow(.scen)) {
+  fwrite(.scen, file.path("output", sprintf("backtest-%s-ourtcp%s.csv", TGT, CAL_TAG)))
+  cat(sprintf("BQ2t  wrote %d seat/scenario rows to backtest-%s-ourtcp%s.csv\n",
+              nrow(.scen), TGT, CAL_TAG))
+}
 
 pa <- merge(data.table(seat = keep, actual = unname(truth)),
             wp[, .(seat, party, prob)],

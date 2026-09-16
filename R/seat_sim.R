@@ -178,6 +178,32 @@
 #'   **sd 3.65 points** over 19 observations.
 #'
 #'   Zero reproduces the previous behaviour exactly.
+#' @param fallback_flow_sd Extra `flow_sd`, applied ONLY when an exclusion has
+#'   no conditional cell and falls back to the pooled/pairwise rate (same
+#'   condition `fallback_smooth` uses). The effective noise becomes
+#'   `max(flow_sd_by[from], fallback_flow_sd)` for that transfer only.
+#'
+#'   Built to be the surgical version of a blanket `flow_sd` -- a blanket
+#'   `flow_sd=15-20` moves Mirani and South Brisbane (both decided by a flow
+#'   cell with 0-1 real observations) the right direction, but perturbs every
+#'   well-measured exact-cell transfer too and that costs more than it gains
+#'   (federal pooled log loss 0.2543 -> 0.2607 at `flow_sd=15`).
+#'
+#'   **Tested 2026-09-16 and it DOES NOT WORK as hoped.** Confining the noise
+#'   to just the final, sparse exclusion round barely moves either target seat
+#'   (Mirani's LNP win probability 0.0956 -> 0.089 at `fallback_flow_sd=80`,
+#'   effectively flat) while STILL costing pooled log loss on qld2024 (0.3089
+#'   -> 0.3110). The uncertainty that actually helped Mirani when applied
+#'   blanket evidently comes from the EARLIER exclusion rounds too -- cells
+#'   with a real conditional match, which still drift election to election
+#'   (this file's own `flow_sd` docstring: One Nation's rate to the Coalition
+#'   measured at 47.4/60.4/47.6/61.6 across four elections, a MEASURED cell,
+#'   not a fallback one). "Fallback vs measured" is not the axis this needs.
+#'   Kept as tested, working, documented infrastructure -- default 0 changes
+#'   nothing -- but it is not the fix. See
+#'   `docs/reviews/flow-uncertainty-fallback-only-2026-09-16.md`.
+#'
+#'   Zero reproduces the previous behaviour exactly.
 #' @param exhaust Percent (0-100) of an excluded party's votes that carry no
 #'   further preference and are dropped from the count rather than
 #'   redistributed, under optional preferential voting. Length 1 (same rate
@@ -294,6 +320,7 @@ simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
                                    shrink_k = 0,
                                    conditional_override = NULL,
                                    flow_sd = 0,
+                                   fallback_flow_sd = 0,
                                    exhaust = 0,
                                    level_mult = NULL,
                                    surge_h = 0, surge_mu = 15.6, surge_sd = 6.1,
@@ -347,6 +374,22 @@ simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
   if (length(flow_sd) == 0L) stop("flow_sd must have length >= 1")
   if (length(flow_sd) > 1L && is.null(names(flow_sd)))
     stop("a per-source flow_sd must be a NAMED vector keyed by party class")
+  # FALLBACK_FLOW_SD, same shape as fallback_smooth above but for the NOISE
+  # term rather than the point estimate. A blanket flow_sd charges every
+  # transfer the same uncertainty regardless of how well the rate is
+  # measured -- tested 2026-09-16: it moves the two seats it was built for
+  # (Mirani, South Brisbane; both fall back past the exact cell) the right
+  # way, but it ALSO perturbs well-measured exact-cell transfers everywhere
+  # else, and that costs more than it gains -- federal pooled log loss
+  # 0.2543 -> 0.2607 at flow_sd=15, worse than the targeted gain. This
+  # applies noise ONLY when `!got_cell` (the exact same condition
+  # fallback_smooth already uses), scalar only -- a fallback row has no
+  # reliable per-source read on which class's transfer it actually is,
+  # since it is by definition NOT the measured cell.
+  # docs/reviews/flow-uncertainty-fallback-only-2026-09-16.md.
+  if (!is.finite(fallback_flow_sd) || fallback_flow_sd < 0) {
+    stop("fallback_flow_sd must be finite and >= 0; got ", fallback_flow_sd)
+  }
   # SURGE_H MAY BE PER-SEAT, exactly as `shrink` may. `shrink` was made a vector
   # and surge_h was not, so wiring a 150-element salience hazard into it passed
   # a vector to a scalar parameter -- the same fix applied in one place and not
@@ -1089,7 +1132,8 @@ simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
                           cell_mat, cell_has, ss_mat, ss_has,
                           pool_mat, !is.null(pool_pw), pw_mat,
                           as.numeric(FLOW_SD_BY), as.numeric(smooth), as.numeric(fallback_smooth),
-                          as.numeric(shrink), ov_seat, ov_key, ov_mat)
+                          as.numeric(shrink), ov_seat, ov_key, ov_mat,
+                          as.numeric(fallback_flow_sd))
     wins[] <- core$wins; totals[] <- core$totals
     tcp_winner[] <- parties[core$tcp_w]; tcp_runnerup[] <- parties[core$tcp_r]
     tcp_share[] <- core$tcp_share
@@ -1270,6 +1314,7 @@ simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
         # `[[` on a missing name in an atomic vector THROWS -- the trap
         # CLAUDE.md records where an is.null() guard beside it is dead code.
         .fsd <- FLOW_SD_BY[[from]]
+        if (!got_cell) .fsd <- max(.fsd, fallback_flow_sd)
         if (.fsd > 0 && length(alive) > 1L) {
           p <- pmax(0, p + stats::rnorm(length(p), 0, .fsd / 100))
           ps <- sum(p)
