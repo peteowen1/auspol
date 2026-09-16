@@ -507,7 +507,17 @@ ALL[, historic_elected_i := as.integer(historic_elected_any)]
 .retdf <- fread(file.path("output", "retirement-derived.csv"))
 setnames(.retdf, "pair", "election_tag")
 ALL <- merge(ALL, .retdf, by.x = c("pair", "seat"), by.y = c("election_tag", "seat"), all.x = TRUE)
-ALL[, retire_derived := ifelse(is.na(retire_derived), 0L, retire_derived)]
+# retire_derived is LEFT AS NA for a seat with no match, not 0-filled. Before
+# 2026-09-17 this 0-filled it, which made the `!is.na()` clause below dead
+# code -- it could never be FALSE, since a 0-filled row already fails the
+# `== 1L` test right after it. Behaviourally identical (confirmed: an
+# unmatched row is excluded either way), but it read as distinguishing
+# "confirmed not departed" from "unknown", which it could not do -- the
+# absence-of-evidence conflation CLAUDE.md's fake-precision entry names, and
+# the exact thing the sibling fit_xgb_primary_sd.R's departed_i deliberately
+# avoids by keeping NA. Found by the review gate 2026-09-16, fixed 09-17.
+# `NA == 1L` is NA, and `NA & anything` is not TRUE, so `!is.na()` now does
+# real work and the row is still excluded -- same output, honest guard.
 .outperf_gate <- !is.na(ALL$retire_derived) & !is.na(ALL$is_incumbent_party_i) &
                  ALL$retire_derived == 1L & ALL$is_incumbent_party_i == 1L
 ALL[, seat_outperf := ifelse(.outperf_gate, seat_outperf, NA_real_)]

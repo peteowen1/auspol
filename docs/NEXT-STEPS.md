@@ -1,58 +1,31 @@
 # auspol — work queue
 
-## OPEN, 2026-09-16: PR #44 is now fully reviewed — six items left, none blocking
+## CLOSED, 2026-09-17: PR #44 review — all items resolved
 
-The second pass covered the 32 code files that predate tonight. Two live
-config bugs were fixed (`AUSPOL_FLOW_FRAG` silently dropping `lead_primary` on
-an ordinary refit; `AUSPOL_SD_DEPARTED` in no arm fingerprint) and a check for
-the first class now runs in `check_like_ci.R`. What is left:
+Full review across all 102 files (`aea1cb7`..`a697c11`). Closed:
 
-1. ~~17 switches are in SOME harnesses' `CAL_TAG` but not all six.~~
-   **WITHDRAWN the same day — the item and the script behind it were both
-   wrong.** Two faults. First, a switch absent from `CAL_TAG` is not a defect
-   at all: `.arm_fingerprint` hashes every set `AUSPOL_*` variable and
-   `apply_published_flags()` sets them all before it runs, so the filename
-   already separates the arms (baseline `-a614a9d`, `SD_DEPARTED` arm
-   `-a614adc`). Second, the script grepped for switch NAMES inside the
-   `CAL_TAG` block, so a harness that assigns to a local first and uses the
-   local — which is what **wa** does for `FLOW_SD` and `FB_SMOOTH` — read as
-   a gap when it is not. Both of the things that made this look like the
-   repo's six-harness parity problem were artefacts.
-   **CLOSED 2026-09-17, nothing to do.** The one part I thought survived —
-   `AUSPOL_PARTY_COR` appearing nowhere in `backtest_candidate_wa.R` — is
-   deliberate and already documented. `docs/MODEL-REGISTRY.md:75` records it
-   as `wa = NO` and line 133 gives the reason: WA is excluded from the
-   statewide party-correlation matrix because `cor(ALP, IND)` is **−0.16 with
-   WA included** (that Assembly has almost no independents), per
-   `docs/reviews/statewide-cov-loo-2026-09-07.md:44`. I read the registry row
-   as six harnesses then `fit_seats`; the column order is `fit_seats` FIRST,
-   so the row I read as "all six yes" already said wa was out.
-   **The registry worked exactly as intended** — it is the check for this
-   rule, and reading it first would have closed the item without the detour.
-2. **A doc disagreement behind a code comment.** `R/demographic_residual.R`
-   says fed2025 was discarded "over ONE seat out of 152", citing
-   `prereg-demographic-axis-2026-09-15.md`; the sibling
-   `prereg-education-residual-correction-2026-09-15.md` says **3** of 152 for
-   the same gap. One of the two is wrong and the comment inherited it.
-3. **`R/concentration_order.R`'s docstring** claims Spearman "runs 0.665 to
-   0.800 wherever the party is non-trivial"; the cited plan's own table spans
-   0.144 to 0.922, with the widest case (sa2026 ONP, 23% mean vote) arguably
-   the most non-trivial in the corpus. These functions are not called anywhere
-   yet, so this is a claim to fix before they go live, not a live defect.
-4. **Partial fit failure is silent** in `education_residual_apply()`,
-   `demographic_residual_apply()` and `state_deviation_apply()`. Total failure
-   prints loudly; one class dropping out of three prints nothing and is only
-   inferable by diffing the `applied` list against `classes`. All three are
-   gated behind switches that ship off or federal-only, so fix this before any
-   of them goes live more broadly.
-5. **A vestigial guard** in `scripts/fit_xgb_primary_v6.R`'s `seat_outperf`
-   gate: `!is.na(retire_derived)` on a column zero-filled the line before, so
-   it cannot be FALSE. Harmless today, but it reads as distinguishing
-   "confirmed not departed" from "unknown", which is exactly the
-   absence-of-evidence conflation the sibling `fit_xgb_primary_sd.R`
-   deliberately avoids by keeping `NA`.
-6. **`R/state_deviation.R:68`** says the clustering fault is one CLAUDE.md
-   "records twice"; it records it once.
+- CAL_TAG/`.arm_fingerprint` — false alarm, withdrawn; see the "Correct the
+  record" and "Withdraw the fingerprint-parity item" commits (`fe91e68`,
+  `f19f258`) for why the arms were never colliding.
+- `AUSPOL_PARTY_COR` wa exclusion — deliberate, already in
+  `docs/MODEL-REGISTRY.md:75,133` (`cor(ALP,IND)` −0.16 with WA included).
+- fed2025 census gap: 1 seat (Bullwinkel), not 3 — measured against the CSV,
+  both prereg docs corrected (`3f49748`'s predecessor commit).
+- `concentration_order.R` Spearman range: 0.144–0.922, not "0.665–0.800
+  wherever non-trivial" — fixed (`a697c11`).
+- Partial fit failure in the three `*_apply()` functions now names the
+  skipped class (`3f49748`).
+- `state_deviation.R:68` clustering citation: CLAUDE.md records it once, not
+  twice — fixed (`a697c11`).
+
+- `fit_xgb_primary_v6.R`'s `seat_outperf` gate stopped 0-filling
+  `retire_derived`, so `!is.na()` does real work instead of being dead code.
+  Proved output-identical on every case (matched/departed/unmatched/NA
+  incumbency) before shipping.
+
+Nothing left open from this review. The one real bug of the whole pass — the
+cross-engine `ov_sd` divergence in `R/seat_sim.R` — is fixed and tested;
+everything else was comment accuracy or config drift, all closed above.
 
 ## OPEN, 2026-09-16: the review gate on PR #44 left three questions for Pete
 
