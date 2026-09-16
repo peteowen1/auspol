@@ -107,9 +107,31 @@ SURGE_CANON <- list(
   list(election = "wa2008",  prev = "wa2005",  region = "wa")
 )
 
-# Anchor's incumbent strings distinguish LIB/NAT/LNP where our classify_party()
-# buckets all three as "LNP" -- map so is_incumbent_party can actually match.
-to_class <- function(p) ifelse(p %in% c("LIB", "NAT", "LNP"), "LNP", p)
+# Anchor's incumbent strings are raw commission codes and never went through
+# classify_party() -- so is_incumbent_party silently compared our party class
+# (e.g. "OTH_RIGHT") against a bare code (e.g. "SFF") and was FALSE on every
+# minor-party-held seat, no matter who actually held it. Found 2026-09-16
+# chasing why the primary model missed the eventual OTH_RIGHT/IND winner by
+# 30-40 points in four safe-and-wrong nsw2019 seats -- Orange's incumbent was
+# "SFF" (Shooters, won a 2016 by-election) the whole time, and the model never
+# got told that party was the incumbent.
+#
+# LIB/NAT/LNP -> LNP is classify_party()'s own Coalition rule. SFF -> OTH_RIGHT
+# is classify_party()'s own CODE rule (R/parties.R:44) -- unambiguous, so
+# reused directly. KAP (Katter's Australian Party) has no code rule in
+# classify_party() because it is classified by NAME there, but the code alone
+# is unambiguous everywhere it appears, so it is safe to hardcode here. CA is
+# genuinely ambiguous in general (Centre Alliance federally since 2018 vs.
+# Carers Alliance, fed2010, coded "CA" in candidacies.csv's party_ab) -- but
+# an INCUMBENT is, by definition, a party that already won a seat, and Carers
+# Alliance never did, so "CA" as an incumbent code can only mean Centre
+# Alliance (Mayo, Rebekha Sharkie, continuously since 2016). That reasoning is
+# specific to this field and does not license adding CA to classify_party()
+# itself, which also has to classify losing candidates.
+INCUMBENT_CODE_CLASS <- c(LIB = "LNP", NAT = "LNP", LNP = "LNP",
+                          SFF = "OTH_RIGHT", KAP = "OTH_RIGHT", CA = "IND")
+to_class <- function(p) ifelse(p %in% names(INCUMBENT_CODE_CLASS),
+                               unname(INCUMBENT_CODE_CLASS[p]), p)
 
 state_level <- function(el) {
   d <- C[C$election == el]

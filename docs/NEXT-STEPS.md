@@ -48,14 +48,21 @@ Clean A/B, same corpus and seed, one column: held-out Gaussian NLL
 1.3096 → **1.3012**. `AUSPOL_XGB_PRIMARY_SD` is still 0 so nothing published
 moved.
 
-**YOUR CALL, two things left (item 2 resolved 2026-09-16):**
+**YOUR CALL, one thing left (items 1 and 2 resolved 2026-09-16):**
 
-1. **The next arm** — widen whoever could plausibly win, not the two majors.
-   Deliberately NOT written overnight: inventing a criterion after seeing which
-   classes the last one missed is the failure `CLAUDE.md` records twice. It
-   needs a pre-registration written before it runs. Note nsw2019's failures sit
-   at the log-loss floor, so any criterion there must survive dropping any one
-   of them.
+1. ~~The next arm~~ **DEAD for the nsw2019 four, confirmed 2026-09-16.**
+   Dumped the primary model's own point estimate for Barwon/Orange/Murray/
+   Wagga Wagga: it missed the eventual OTH_RIGHT/IND winner by 30-40 points on
+   the MEAN, not just the width — no `seat_sd` widening fixes that. Chased it
+   into a real bug (`is_incumbent_party` silently FALSE on every minor-party-
+   held seat, 9 seat-elections across 6 regions — see
+   `docs/reviews/incumbent-classification-bug-2026-09-16.md`), fixed it,
+   measured it: pooled OOF RMSE improved 3.8217→3.8078 (kept), but the 9 named
+   targets did NOT move (8.398→8.433, noise) — Orange still predicts OTH_RIGHT
+   at 7.8% against an actual 56.2%. **The real question is now: what explains
+   an idiosyncratic 40+ point personal vote the model has no feature for?**
+   Not started. `own_prev_pcv` exists in the feature set already — check
+   whether it's populated for these rows before building anything new.
 2. ~~Region or optional preferential voting?~~ **RESOLVED 2026-09-16: it is
    region, not OPV.** Parsed the exhausted-votes line off all 186 cached NSWEC
    distribution pages (was on disk, discarded at parse time — see
