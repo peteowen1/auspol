@@ -21,6 +21,7 @@ simulate_seat_contests(
   fallback_smooth = 0,
   shrink_k = 0,
   conditional_override = NULL,
+  conditional_override_sd = NULL,
   flow_sd = 0,
   fallback_flow_sd = 0,
   exhaust = 0,
@@ -200,6 +201,24 @@ so a model whose prediction depends on a SEAT's own primary shares had
 no way to reach the simulation without this. Implemented in BOTH engines
 (the compiled core takes it as a sparse seat/key/row triple), so unlike
 \code{shrink_k} it does not force \code{engine = "r"}.}
+
+\item{conditional_override_sd}{Optional per-seat, per-key standard
+deviation to pair with \code{conditional_override}, same shape (a list by
+seat, each a named list keyed \code{"FROM|A+B+C"}), in percentage points.
+Where supplied and positive it REPLACES \code{flow_sd} for that transfer, so
+each flow carries its own measured uncertainty instead of one global
+number.
+
+Built by \code{\link[=xgb_flow_conditional_override_for]{xgb_flow_conditional_override_for()}} under
+\code{AUSPOL_FLOW_CELL_SD=1} from \code{scripts/fit_flow_drift.R}, which measures
+how far a flow actually moves between elections: a mean 7.6 points over
+3,711 repeat sightings of the same cell, ranging 2.7 to 17.5 depending
+on how many events back the rate, how many survivors are in the contest
+and how stale it is. A single global \code{flow_sd} cannot express that
+range, which is why a blanket \code{flow_sd = 15} made federal log loss
+worse (0.2543 -> 0.2607) while the fitted per-cell version did not.
+
+\code{NULL} (the default) reproduces the previous behaviour exactly.}
 
 \item{flow_sd}{Per-draw standard deviation, in percentage points, applied to
 each transfer proportion before it is used.

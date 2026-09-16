@@ -67,3 +67,7 @@ globalVariables(c(
 # run against it), personal_prior_vote()'s .own_prev_pcv_full (the transfer-
 # leak fix's undiscounted snapshot), and tcp_scenarios()'s freq.
 globalVariables(c("prior_party", ".own_prev_pcv_full", "freq"))
+
+# Added 2026-09-16: the per-cell flow-sd block's data.table column selection
+# in xgb_flow_conditional_override_for().
+globalVariables(c("..dcols"))
