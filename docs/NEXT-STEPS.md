@@ -1,5 +1,46 @@
 # auspol — work queue
 
+## OPEN, 2026-09-16: PR #44 is now fully reviewed — six items left, none blocking
+
+The second pass covered the 32 code files that predate tonight. Two live
+config bugs were fixed (`AUSPOL_FLOW_FRAG` silently dropping `lead_primary` on
+an ordinary refit; `AUSPOL_SD_DEPARTED` in no arm fingerprint) and a check for
+the first class now runs in `check_like_ci.R`. What is left:
+
+1. **17 switches are in SOME harnesses' `CAL_TAG` but not all six.** Full list
+   printable by diffing each `CAL_TAG` block against `PUBLISHED_FLAGS`. Some
+   are legitimate (`AUSPOL_QLD_FLOWS` only matters where QLD flows are used);
+   some look like the six-harness parity gap this repo keeps hitting
+   (`AUSPOL_SEED`, `AUSPOL_PARTY_COR`, `AUSPOL_FLOW_SD` and
+   `AUSPOL_FALLBACK_SMOOTH` are in five and missing from **wa** alone, which
+   is the shape of an oversight rather than a design). Each needs a judgement;
+   there is no mechanical rule, which is why the automated version of this
+   check was built and thrown away rather than shipped with 343 exemptions.
+2. **A doc disagreement behind a code comment.** `R/demographic_residual.R`
+   says fed2025 was discarded "over ONE seat out of 152", citing
+   `prereg-demographic-axis-2026-09-15.md`; the sibling
+   `prereg-education-residual-correction-2026-09-15.md` says **3** of 152 for
+   the same gap. One of the two is wrong and the comment inherited it.
+3. **`R/concentration_order.R`'s docstring** claims Spearman "runs 0.665 to
+   0.800 wherever the party is non-trivial"; the cited plan's own table spans
+   0.144 to 0.922, with the widest case (sa2026 ONP, 23% mean vote) arguably
+   the most non-trivial in the corpus. These functions are not called anywhere
+   yet, so this is a claim to fix before they go live, not a live defect.
+4. **Partial fit failure is silent** in `education_residual_apply()`,
+   `demographic_residual_apply()` and `state_deviation_apply()`. Total failure
+   prints loudly; one class dropping out of three prints nothing and is only
+   inferable by diffing the `applied` list against `classes`. All three are
+   gated behind switches that ship off or federal-only, so fix this before any
+   of them goes live more broadly.
+5. **A vestigial guard** in `scripts/fit_xgb_primary_v6.R`'s `seat_outperf`
+   gate: `!is.na(retire_derived)` on a column zero-filled the line before, so
+   it cannot be FALSE. Harmless today, but it reads as distinguishing
+   "confirmed not departed" from "unknown", which is exactly the
+   absence-of-evidence conflation the sibling `fit_xgb_primary_sd.R`
+   deliberately avoids by keeping `NA`.
+6. **`R/state_deviation.R:68`** says the clustering fault is one CLAUDE.md
+   "records twice"; it records it once.
+
 ## OPEN, 2026-09-16: the review gate on PR #44 left three questions for Pete
 
 The gate found one real cross-engine bug (fixed, with a test that fails on the
