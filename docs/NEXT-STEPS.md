@@ -7,15 +7,22 @@ config bugs were fixed (`AUSPOL_FLOW_FRAG` silently dropping `lead_primary` on
 an ordinary refit; `AUSPOL_SD_DEPARTED` in no arm fingerprint) and a check for
 the first class now runs in `check_like_ci.R`. What is left:
 
-1. **17 switches are in SOME harnesses' `CAL_TAG` but not all six.** Full list
-   printable by diffing each `CAL_TAG` block against `PUBLISHED_FLAGS`. Some
-   are legitimate (`AUSPOL_QLD_FLOWS` only matters where QLD flows are used);
-   some look like the six-harness parity gap this repo keeps hitting
-   (`AUSPOL_SEED`, `AUSPOL_PARTY_COR`, `AUSPOL_FLOW_SD` and
-   `AUSPOL_FALLBACK_SMOOTH` are in five and missing from **wa** alone, which
-   is the shape of an oversight rather than a design). Each needs a judgement;
-   there is no mechanical rule, which is why the automated version of this
-   check was built and thrown away rather than shipped with 343 exemptions.
+1. ~~17 switches are in SOME harnesses' `CAL_TAG` but not all six.~~
+   **WITHDRAWN the same day — the item and the script behind it were both
+   wrong.** Two faults. First, a switch absent from `CAL_TAG` is not a defect
+   at all: `.arm_fingerprint` hashes every set `AUSPOL_*` variable and
+   `apply_published_flags()` sets them all before it runs, so the filename
+   already separates the arms (baseline `-a614a9d`, `SD_DEPARTED` arm
+   `-a614adc`). Second, the script grepped for switch NAMES inside the
+   `CAL_TAG` block, so a harness that assigns to a local first and uses the
+   local — which is what **wa** does for `FLOW_SD` and `FB_SMOOTH` — read as
+   a gap when it is not. Both of the things that made this look like the
+   repo's six-harness parity problem were artefacts.
+   **What survives, and is worth doing:** `AUSPOL_PARTY_COR` genuinely does
+   not appear in `backtest_candidate_wa.R` at all, in any form — wa does not
+   honour the switch, which is a real parity gap in BEHAVIOUR rather than in
+   a filename, and is the kind `docs/MODEL-REGISTRY.md` exists to catch.
+   Check that one against the registry before assuming it is an oversight.
 2. **A doc disagreement behind a code comment.** `R/demographic_residual.R`
    says fed2025 was discarded "over ONE seat out of 152", citing
    `prereg-demographic-axis-2026-09-15.md`; the sibling
