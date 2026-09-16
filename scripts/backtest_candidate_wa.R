@@ -178,6 +178,14 @@ CAL_TAG <- paste0(
   if (PARTY_SD != 1.5) sprintf("-psd%s", sub("[.]", "", format(PARTY_SD, nsmall = 2))) else "",
   if (FB_SMOOTH != 0) sprintf("-fb%s", sub("0[.]", "", format(FB_SMOOTH, nsmall = 2))) else "",
   if (FLOW_SD != 0) sprintf("-fsd%s", sub("[.]", "", format(FLOW_SD, nsmall = 1))) else "",
+  # FLOW MODEL VARIANT in the fingerprint. Added 2026-09-16 after a federal
+  # A/B silently overwrote its own baseline: AUSPOL_FLOW_MODEL_TAG changes
+  # which model the run loads but did not change the output filename, so both
+  # arms wrote the same file and the second clobbered the first. That is the
+  # exact failure CAL_TAG exists to prevent -- CLAUDE.md records a seat_sd
+  # sweep doing it to backtest-fed.csv before.
+  if (nzchar(Sys.getenv("AUSPOL_FLOW_MODEL_TAG", "")))
+    sprintf("-fm%s", Sys.getenv("AUSPOL_FLOW_MODEL_TAG")) else "",
   if (SURGE_H > 0) "-surge" else "", .arm_fingerprint, .code_tag)
 
 cat(sprintf("BW0  n_sims %d | shrink %.2f | party_sd %.2f | fb %.2f | flow_sd %.2f | surge %.4f\n",
