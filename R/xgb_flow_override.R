@@ -333,9 +333,11 @@ xgb_flow_conditional_override_for <- function(shares, target_election, prev_elec
   if (identical(Sys.getenv("AUSPOL_FLOW_CELL_SD", "0"), "1")) {
     dm_f <- "output/flow-drift-v1.model"; dc_f <- "output/flow-drift-v1-cols.json"
     if (!file.exists(dm_f) || !file.exists(dc_f)) {
-      cat("XF9! AUSPOL_FLOW_CELL_SD=1 but output/flow-drift-v1.model is missing -- run scripts/fit_flow_drift.R; per-cell sd NOT applied
-")
-      return(out)
+      stop("AUSPOL_FLOW_CELL_SD=1 but output/flow-drift-v1.model is missing. ",
+           "Run scripts/fit_flow_drift.R first. Refusing rather than returning ",
+           "an override with no sd attached: the caller cannot tell that apart ",
+           "from the flag being off, so the run would score as a per-cell-sd ",
+           "arm while being byte-identical to the baseline.", call. = FALSE)
     }
     dmod <- xgboost::xgb.load(dm_f)
     dcols <- jsonlite::fromJSON(readLines(dc_f))
@@ -354,10 +356,11 @@ xgb_flow_conditional_override_for <- function(shares, target_election, prev_elec
     for (r in region_levels) KR[[paste0("r_", r)]] <- as.integer(region == r)
     miss <- setdiff(dcols, names(KR))
     if (length(miss)) {
-      cat(sprintf("XF9! drift model expects %s, which the override cannot build -- per-cell sd NOT applied
-",
-                  paste(miss, collapse = ", ")))
-      return(out)
+      stop("AUSPOL_FLOW_CELL_SD=1 but the drift model expects ",
+           paste(miss, collapse = ", "), ", which this override cannot build. ",
+           "The drift model's feature set and this function have drifted apart; ",
+           "refit with scripts/fit_flow_drift.R. Refusing rather than silently ",
+           "running the baseline under a per-cell-sd arm name.", call. = FALSE)
     }
     # MEAN ABSOLUTE DEVIATION IS NOT A STANDARD DEVIATION: the drift model's
     # target is |drift|, and sd = MAD * sqrt(pi/2) for a normal variate.

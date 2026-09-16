@@ -196,6 +196,10 @@ CAL_TAG <- paste0(
   # arms wrote the same file and the second clobbered the first. That is the
   # exact failure CAL_TAG exists to prevent -- CLAUDE.md records a seat_sd
   # sweep doing it to backtest-fed.csv before.
+  # Behaviour-changing switch, so it MUST alter the filename. Added
+  # 2026-09-16 -- the third switch in one session to change what a run does
+  # without changing what the run is called. CAL_TAG exists for exactly this.
+  if (identical(Sys.getenv("AUSPOL_FLOW_CELL_SD", "0"), "1")) "-cellsd" else "",
   if (nzchar(Sys.getenv("AUSPOL_FLOW_MODEL_TAG", "")))
     sprintf("-fm%s", Sys.getenv("AUSPOL_FLOW_MODEL_TAG"))
   else "",
@@ -926,6 +930,12 @@ if (!is.null(.scen) && nrow(.scen)) {
   fwrite(.scen, file.path("output", sprintf("backtest-%s-ourtcp%s.csv", TGT, CAL_TAG)))
   cat(sprintf("BQ2t  wrote %d seat/scenario rows to backtest-%s-ourtcp%s.csv\n",
               nrow(.scen), TGT, CAL_TAG))
+} else {
+  # NOT silent. No file AND no message is indistinguishable from this
+  # script never having run for the pair -- the gap the data-registry
+  # discipline exists to make visible.
+  cat(sprintf("BQ2t! tcp_scenarios() returned no rows for %s -- ourtcp CSV NOT written
+", TGT))
 }
 
 pa <- merge(data.table(seat = keep, actual = unname(truth)),
