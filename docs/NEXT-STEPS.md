@@ -1,5 +1,42 @@
 # auspol — work queue
 
+## 2026-09-16, continued: items 1-3 of the 5-item list resolved
+
+Working the list Pete approved ("work your way through these - i trust your
+triage"). Item 4 (per-seat `seat_sd`, by-election fetch generalisation)
+explicitly needs Pete's design input, not solo work -- still open, see the
+NSW variance-fault entry above. Item 5 is this hub trim.
+
+**Item 1 -- major-party same/new conditional slopes: sized, built, tested,
+NOT shipped.** `fit_major_conditional_slopes()` (leave-target-out, mirrors
+the existing minor-party fitter): ALP same~0.92 new~0.90-0.92 (barely
+differs), LNP same~0.91-0.92 new~0.826-0.831 (real ~9% relative reduction).
+Wired into `backtest_candidate_nsw.R` behind `AUSPOL_MAJOR_SLOPES` (default
+off). Tested base_pred layer (NSW, n=20000): Parramatta improved modestly
+(LNP error -1.25, ALP error -1.06) but pooled ALP+LNP across NSW got
+marginally WORSE (MAE +0.066). Not shipped, not ported to the other five
+harnesses given NSW alone already misses do-no-harm.
+
+**Item 2 -- AEF's own TCP prediction, parsed and shipped to the ledger.**
+`scripts/build_aef_tcp.R` parses `seatTcpScenarios`/`seatTcpBands` out of
+our own cached AEF summary JSON (previously unparsed). All 660 AEF-7 rows
+matched. Published to the ledger artifact (v17) as a new "AEF final two"
+column. Confirms the NSW pattern from a second angle: AEF's own simulation
+correctly favoured ALP at Parramatta (52.6% TCP) while ours favoured LNP.
+
+**Item 3 -- found and fixed a real bug while looking for the narrower
+minor-defector fix.** `personal_prior_vote()`'s `transfer` column (how much
+`remove_transferred_votes()` removes from the OLD class's seat base) was
+falling back to the DISCOUNTED `own_prev_pcv` instead of the true full
+amount -- under-removing from the old class and inflating its statewide
+average at every OTHER seat it contests. Fixed (zero effect on the
+currently published model, since `AUSPOL_MINOR_DEFECT` defaults off).
+Re-tested Mirani with the fix: closer to correct than the bug, but
+discounting Mirani specifically still moves it further from actual than no
+discount at all at the base_pred layer -- the corpus-wide 49% retention may
+just not fit this one seat. Full detail on all three:
+`docs/reviews/base-pred-blind-to-tonights-fixes-2026-09-16.md`.
+
 ## 2026-09-16 very late: base_pred never got either of tonight's fixes -- tested both layers, mixed result
 
 Pete pushed back on Parramatta ("did its job" when LNP was predicted 48%
@@ -23,12 +60,12 @@ shipped xgb-only version -- the discount ripples through
 rows. **Not shipped** -- reverted to the tested xgb-only state, harness
 default back to OFF. Exactly the tradeoff the new rule exists to surface.
 
-**Still open, not sized, not built**: major-party same/new conditional
-slopes (`R/dev_slope.R:207-210` only covers IND/OTH_RIGHT/GRN/ONP) -- this
-is the actual fix for Parramatta's shape of miss (Pattern A). Also built
-tonight, reusable infrastructure: `AUSPOL_XGB_SAVE_OOF_MODELS` (21 cached
-leave-one-pair-out models) and `scripts/shap_from_cached_model.R`, so a
-single-seat SHAP question doesn't cost a full retrain.
+**Major-party same/new conditional slopes** (`R/dev_slope.R:207-210` only
+covers IND/OTH_RIGHT/GRN/ONP) were sized, built and tested later the same
+night -- see item 1 in the section above; real but modest, not shipped.
+Also built tonight, reusable infrastructure: `AUSPOL_XGB_SAVE_OOF_MODELS`
+(21 cached leave-one-pair-out models) and `scripts/shap_from_cached_model.R`,
+so a single-seat SHAP question doesn't cost a full retrain.
 
 ## 2026-09-16 late: Mirani diagnosed, minor-to-minor defector discount SHIPPED
 
@@ -53,142 +90,19 @@ changing by-elections against every pair's `incumbent` field — the 5 that
 fall in our scored windows all correctly show the post-by-election party.
 No gap beyond the KAP/CA/SFF classification fix below.
 
-## MORNING READ, 2026-09-16 — the NSW failure is a VARIANCE fault, and it needs you to build
+## MORNING READ, 2026-09-16 - the NSW failure is a VARIANCE fault, and it needs you to build
 
-Overnight, working the seats where we lose most log loss to AE Forecasts.
-Full write-up: `docs/reviews/nsw-departed-member-2026-09-15.md`.
+Full write-up and the whole investigation (widening arm refused, incumbent-
+classification bug fixed, by-election fallback built/measured/reverted,
+region-not-OPV resolved): `docs/backlog/journal-2026-09-08-to-16.md`, plus
+`docs/reviews/nsw-departed-member-2026-09-15.md` and
+`docs/reviews/nsw-departed-member-opv-ruled-out-2026-09-16.md`.
 
-**Across both NSW pairs, a seat held by 5+ points whose previous winner is not
-on the ballot is called WRONG 26.2% of the time (11 of 42) against 1.8% when
-the member stands again.** Found on nsw2023, confirmed out of sample on
-nsw2019 (z = +3.89). Margin does not explain it — the effect is *largest* in
-the safest seats, 15x on seats held by 12+.
-
-**The cause is variance, not bias.** The held party's own primary error spreads
-from sd 5.17 when their member stands to **8.81** when they go (NSW; federal is
-1.06x, other states 1.22x). The level shift is only 2.77 points. Meanwhile
-`simulate_seat_contests()` applies **one `seat_sd` to every seat in the
-chamber** — `R/seat_sim.R:575-589` builds a per-PARTY vector, not per-seat. So
-these seats get an ordinary seat's spread, the margin says safe, and we publish
-0.95 where the honest number is nearer 0.75.
-
-**ONE FIX WAS BUILT AND MEASURED OVERNIGHT, AND REFUSED.**
-`docs/plans/prereg-departed-member-width-2026-09-16.md`, pre-registered and
-committed before it ran. It rode the existing per-cell sd path
-(`AUSPOL_SD_DEPARTED`, no C++ change) and widened ALP/LNP cells in departed
-seats only.
-
-| | bar | result |
-|---|---|--:|
-| primary, 42 target seats | improve 0.05 | 0.9293 → 0.9040, **−0.0253** |
-| **gain confined to nsw2023** | must not be | **it is** |
-| the 31 seats we call RIGHT | cap +0.62 | +0.609 |
-
-| pair | targets | baseline | arm |
-|---|--:|--:|--:|
-| nsw2019 (out of sample) | 19 | 1.3641 | **1.3643** |
-| nsw2023 (where found) | 23 | 0.5702 | 0.5238 |
-
-**Why it failed is the useful part.** All four of nsw2019's wrong target seats
-were won by a MINOR party — Shooters in Barwon, Orange and Murray, an
-independent in Wagga Wagga — and the arm widens the majors. nsw2023's were six
-of seven majors, so it helped there and nowhere else. The risk in a departed
-seat is not "the other major does better", it is **"somebody else wins"**, and
-which somebody differs by election.
-
-**KEPT from that run:** `departed_i` replaces `retirement_i` in the sd model.
-Clean A/B, same corpus and seed, one column: held-out Gaussian NLL
-1.3096 → **1.3012**. `AUSPOL_XGB_PRIMARY_SD` is still 0 so nothing published
-moved.
-
-**YOUR CALL, one thing left (items 1 and 2 resolved 2026-09-16):**
-
-1. ~~The next arm~~ **DEAD for the nsw2019 four, confirmed 2026-09-16.**
-   Dumped the primary model's own point estimate for Barwon/Orange/Murray/
-   Wagga Wagga: it missed the eventual OTH_RIGHT/IND winner by 30-40 points on
-   the MEAN, not just the width — no `seat_sd` widening fixes that. Chased it
-   into a real bug (`is_incumbent_party` silently FALSE on every minor-party-
-   held seat, 9 seat-elections across 6 regions — see
-   `docs/reviews/incumbent-classification-bug-2026-09-16.md`), fixed it,
-   measured it: pooled OOF RMSE improved 3.8217→3.8078 (kept), but the 9 named
-   targets did NOT move (8.398→8.433, noise) — Orange still predicts OTH_RIGHT
-   at 7.8% against an actual 56.2%. **The real question is now: what explains
-   an idiosyncratic 40+ point personal vote the model has no feature for?**
-
-   **ANSWERED 2026-09-16: `own_prev_pcv` already does this well, and it's
-   `NA` for exactly the two worst misses.** Where populated (Mayo,
-   Hinchinbrook, Kennedy — ordinary returning candidates from a prior
-   GENERAL election), the model lands within 1-10 points of actual. Orange
-   and Wagga Wagga are both `NA` — their current members won by-elections
-   (2016, 2018), so `personal_prior_vote()`'s general-to-general matching
-   never finds them, and the model falls back toward baseline: Orange
-   predicts OTH_RIGHT at 7.8% against an actual 56.2%. Checked whether the
-   anchor clone has by-election candidate data to fall back to —
-   `external/aus-polling-analyser/analysis/Data/by-elections.csv` exists but
-   is the wrong shape (87 rows total, seat-level SWING only, no candidate
-   names or vote shares, and its one Orange row is 1996, not the relevant
-   2016 event). **No candidate-level by-election result exists on disk for
-   any jurisdiction.** This is a genuine fetch gap, not a parsing one — find
-   the NSWEC by-election results pages for Orange 2016 and Wagga Wagga 2018,
-   parse candidate-level primaries (same shape as `fetch_transfers_nsw.R`),
-   feed into `personal_prior_vote()`'s fallback path.
-
-   **BUILT AND MEASURED 2026-09-16, DOES NOT HELP.**
-   `scripts/build_nsw_byelection_prevpcv.R` fetched and parsed both pages
-   (Orange SB1602, Wagga Wagga SB1801 — real NSWEC results, validated exactly
-   against Wikipedia: Donato 23.76%, McGirr 25.42%), wired as a fallback into
-   `own_prev_pcv` only where it was `NA`. Retrained, measured against the
-   incumbent-fix baseline:
-
-   | | Orange xgb_pred | Wagga xgb_pred | pooled OOF RMSE |
-   |---|--:|--:|--:|
-   | before | 7.82 (actual 56.2) | 11.37 (actual 46.1) | 3.8078 |
-   | after | 8.10 | 11.13 | **3.8158** |
-
-   **Neither target moved and the pooled corpus got measurably worse** — 10+
-   seats in completely unrelated pairs (Hunter, Fremantle, Morwell, Roe,
-   Giles, none NSW, none by-election seats) each lost 2.3-4.0 points, almost
-   certainly because filling 2 of 13,739 rows shifted `own_prev_pcv`'s global
-   histogram bin boundaries in xgboost's tree construction — a real
-   perturbation with no offsetting benefit. **Two real data points can't
-   teach a tree ensemble anything on their own; this needs a different
-   mechanism (e.g. a dedicated by-election-origin feature/flag), not a blind
-   fill into a shared column.** Reverted the wiring in `fit_xgb_primary_v6.R`
-   (back to the incumbent-fix-only state, 3.8078). **Kept**: the parser
-   script and its validated numbers (both hardcoded checks pass) — a real,
-   reusable asset for whoever revisits this with a better mechanism. Not
-   pursuing further tonight.
-2. ~~Region or optional preferential voting?~~ **RESOLVED 2026-09-16: it is
-   region, not OPV.** Parsed the exhausted-votes line off all 186 cached NSWEC
-   distribution pages (was on disk, discarded at parse time — see
-   `docs/reviews/unparsed-preference-detail-2026-09-15.md`). Exhaustion is
-   real but small (11.0%→13.3% departed vs stood, p=0.010) and does not
-   discriminate the seats we call wrong from the ones we don't (13.24% vs
-   13.30% within the departed cohort). It also cannot be the mechanism at all:
-   the measured variance blowup is in the held party's FIRST-preference share,
-   settled before any redistribution happens, and exhaustion is a
-   later-round phenomenon. Full writeup:
-   `docs/reviews/nsw-departed-member-opv-ruled-out-2026-09-16.md`. The
-   correction should key on region/member-type, not voting system.
-3. **Is a per-seat `seat_sd` worth the C++ change?** The per-cell sd path was
-   the cheap route and it is class-scoped; a genuine per-seat multiplier means
-   changing `src/seat_sim_core.cpp`, which every harness and the live Victorian
-   forecast run through. Not started — that one gets designed with you.
-
-**REFUSED on measurement, so you do not have to wonder:** filling in the missing
-`retirement` feature. It is 0.0% populated on **eleven of twenty-three pairs**
-(every federal pair to 2016, qld2020, vic2014, vic2018, every WA pair before
-2025), which is a genuine label-leak defect — but the effect on those pairs is
-**-0.09 points, t = -0.16**. A mean correction cannot fix a variance fault.
-`scripts/build_retirement_derived.py` now derives the column for all 21 pairs
-anyway (93% agreement with the anchor, and it catches mid-term departures the
-anchor cannot see — Tudge, Morrison, Robert, Murphy).
-
-**Also done overnight:** fed2022 re-run under `AUSPOL_STATE_DEV`, which had
-shipped seven hours after that backtest was taken. Every WA seat improved
-(Tangney 3.53 → 3.11, Swan 0.62 → 0.49); pooled 0.2701 → **0.2696** against
-AEF's 0.2808 over 660 seats. The ledger artifact is refreshed to v13 and now
-picks the newest non-arm backtest per pair, so that staleness cannot recur.
+**One thing left, still needs you**: is a per-seat `seat_sd` worth the C++
+change? A genuine per-seat multiplier means changing `src/seat_sim_core.cpp`,
+which every harness and the live Victorian forecast run through. This is
+item 4 on the 2026-09-16 list above - explicitly design-with-Pete, not
+solo-build.
 
 ## 2026-09-16 evening: Pattern A SHIPPED — NA-fill beats 0-fill, and a noise-floor finding
 
@@ -305,49 +219,13 @@ Merging to `main` is yours per the standing rule.
 - Review findings: Mac/Mc surnames inverting NSW rows; the forced-value
   detector blind to a multi-line `Sys.setenv`.
 
-## SUPERSEDED, 2026-09-14: every Victorian number measured that day is stale
+## SUPERSEDED, 2026-09-14: every Victorian number measured that day is stale (resolved same day)
 
-`historic_elected_i` was being fed to the live model as `NA`, a value it had
-never seen, deflating every prediction ~45% and hiding it behind
-renormalisation. Fixed (`88653b4`), and the training data it comes from was
-then backfilled for all 21 state elections (`4e5fde4`). **The model has not yet
-been refitted on the corrected data**, so:
-
-- **Do not quote any Victorian figure from before this is retrained.** ALP
-  expected seats went 39.49 → 29.95 on the live fix alone, and will move again.
-- The seven-pair override on/off comparison (AEF corpus, pooled ON 0.2702 vs
-  OFF 0.2864) was measured on the old OOF file and must be rerun.
-- The `shipped-models` release holds a model trained with the feature
-  constant-zero for every state election. Re-upload after refitting.
-
-**Order**: `fit_xgb_primary_v6.R` (rebuilds features + leave-one-pair-out OOF)
-→ `fit_xgb_primary_v6_final.R` → re-upload both to the release → rerun the
-seven pairs both ways.
-
-**Still to do after that (step 3)**: Victoria 2026 has no candidate list, so
-`DS2`, `DS3` and `own_prev_pcv` all fall back. Wikipedia publishes one
-(`Candidates_of_the_2026_Victorian_state_election`). Do NOT do this before the
-retrain — populating Victoria while the other 21 state elections carry the old
-constant would make it the only state row with non-zero values, which is the
-same out-of-distribution fault in reverse.
-
-### What this cost, so it is not repeated
-
-The bug survived because **renormalisation made it look right**. Shares summed
-to 100, One Nation concentrated in plausible regional seats, nothing errored.
-Underneath, the model was predicting the Coalition at 6.05% in Melton. The
-tell was only visible by comparing raw row sums against the backtest's: 54.3
-against 91-105.
-
-Three wrong conclusions were drawn from it before the cause was found — that
-the override suppresses One Nation, that it helps minor parties broadly, and
-that the SA regression was a modelling disagreement. All were artefacts.
-
-The comment that hid it, at `R/xgb_primary_override.R:132`, read *"both NA
-pre-nomination -- fine, same missing-value routing"*. An assumption written as
-a reassurance, never tested. It was true of `ballot_pos_min` (60.6% missing in
-training) and false of the one beside it.
-
+`historic_elected_i` was reaching the live model as `NA`, deflating every
+Victorian prediction ~45% behind renormalisation - fixed and the training
+data backfilled same day (`88653b4`, `4e5fde4`), model retrained after.
+Full narrative and the "what this cost" lesson (a bug that renormalisation
+made look right): `docs/backlog/journal-2026-09-08-to-16.md`.
 
 ## OPEN, 2026-09-14: the model registry cannot see a harness that FORCES a switch
 
@@ -386,103 +264,27 @@ since 2026-09-09 was measured with arm C on. Any comparison that pooled them
 with vic/sa/wa/qld results compared two configurations.
 
 
-## WATCH, 2026-09-14: One Nation's Victorian level sits 2.47 under its polls, 0.03 inside the bound
+## WATCH, 2026-09-14: One Nation's Victorian level - not breaching, a judgement call still open
 
-**NOT currently breaching. An earlier version of this entry said 2.85 and
-called it a live breach; that number came from a poll clone 19 commits and
-four weeks stale.** See the stale-data note at the end of this section — the
-process failure is the more useful finding.
+Fitted 20.57 vs 90-day poll average 23.04, a 2.47 gap, **0.03 inside the
+2.5 bound** - the closest any party has been without crossing. Mechanism:
+a near-zero 2022 prior (0.28%) against a surging party, same shape as the
+NSW 2027 ONP breach. Investigated and answers the other way to intuition:
+following recent polls instead of the trend is NOT better (MAE 1.755 vs
+1.862, inside 2 SE), and the historical analogue (WA 2017 ONP) shows the
+trend OVER-states, not under-states, near-zero-prior surges. Full evidence:
+`docs/reviews/poll-lag-2026-08-19.md`, full narrative:
+`docs/backlog/journal-2026-09-08-to-16.md`.
 
-Current, on poll data to 2026-08-12 (agrees with CI exactly):
+**Still a judgement, handed to Pete**: whether `POLL_TRACKING_BOUND` should
+SCALE with how thin a party's polling is - the pre-registered test to decide
+this stopped one cycle short of its own floor (19 vs 20) and can't re-run
+until another election completes. `docs/plans/prereg-poll-tracking-bound-
+scaling.md`.
 
-| party | fitted | polls (90d, n=12) | gap |
-|---|--:|--:|--:|
-| **ONP** | 20.57 | 23.04 | **2.47** |
-| LNP | 28.59 | 28.17 | 0.43 |
-| ALP | 24.96 | 24.67 | 0.29 |
-| GRN | 12.88 | 13.13 | 0.24 |
-| OTH | 10.99 | 10.92 | 0.07 |
-
-`S7` (new, shipped 2026-09-14) runs `poll_tracking_check()` on the trend
-`fit_seats_full.R` actually publishes, and reports rather than halting. One
-Nation is **0.03 inside a 2.5 bound** — the closest any party has been without
-crossing, and worth watching rather than acting on. `20.57` is what
-`state_mean` hands to every Victorian seat, so the gap is not confined to the
-trend chart.
-
-**Mechanism**: One Nation's prior is its 2022 Victorian result, **0.28%**. The
-fit shrinks toward that, and 20 polls this cycle at 11–27% pull it only to
-20.57. Same shape as the NSW 2027 One Nation breach, which IS a live red stage
-— a near-zero prior against a surging party.
-
-**The investigation Pete approved was ALREADY DONE, and it answers the other
-way.** `docs/reviews/poll-lag-2026-08-19.md`, run against a pre-registration
-committed before measuring:
-
-- Across **139 party-cycles** the trend sits below recent polls in 88 of them.
-  Minor parties are systematically shaded: OTH **−1.19** on 33 cycles, ONP
-  **−1.40** on 3. Majors are tracked almost exactly.
-- Following the polls instead is **not** better: MAE 1.755 vs the trend's
-  1.862 — **1.03 clustered standard errors**, inside the pre-registered 2 SE
-  band. RMSE 2.376 vs 2.387, a tie.
-- The single historically analogous case, **WA 2017 One Nation**: prior 0.00,
-  polls 10.3, fitted 7.8, **actual 4.9**. The lag helped a great deal and was
-  nowhere near enough.
-- Across all three near-zero-prior ONP cycles the mean error is **+1.42 — we
-  OVER-state One Nation**, and in both near-zero-prior cases the polls
-  over-stated it far more.
-- **The day-0 anchor was never the mechanism.** `ANCHOR_K` (`R/trend.R:82`,
-  fixed at 0) was built and refused on exactly the theory above. WA 2017 had a
-  prior of 0.00 and the model fitted 7.8 — it left the anchor far behind.
-
-**And the gap is converging** (measured 2026-09-14, refitting at each ONP poll
-date, on the stale clone): −3.97 at 8 polls → −4.13 at 15 → −2.85 at 19, and
-**−2.47 at 20** on fresh data. Trend is toward closing as polls accumulate,
-which is a fit converging. It sat OUTSIDE the bound for most of the cycle and
-has just come inside it, so the direction of travel is the reassuring part,
-not the current margin. At 6–7 polls One Nation was **dropped from the
-published fit entirely** (`min_polls = 8`), with OTH absorbing it — the
-dropped-party path `S7` also asserts on, and it happened on this cycle.
-
-**So there is no ONP fix to make, and these are all forbidden:**
-
-- `sigmas = "per_cycle"` for Victoria — measured not better (0.2% held-out
-  gain, 33x runtime), and reaching for it to buy margin on a bound is
-  criterion-fitting.
-- Raising `POLL_TRACKING_BOUND` (it re-derives to 2.5 today), raising
-  `min_polls` from 3 to 4, or lowering the separability gate from 20 — all
-  three explicitly forbidden by
-  `docs/plans/prereg-poll-tracking-bound-scaling.md`.
-
-**What is actually left is a judgement, and that plan already handed it to
-Pete** — now with a second instance. Its aborted question was whether the
-bound should SCALE with how thin a party's polling is; it stopped at **19
-cycles against a pre-registered floor of 20** and cannot re-run until another
-election completes. Meanwhile both red stages, NSW 2027 and Victoria 2026, are
-the same shape: a near-zero prior against a surging minor party. The options
-it names are leave it red, report rather than halt, or mark the trend
-unreliable where it is used.
-
-**The new consideration it did not have**: `.github/workflows/forecast.yaml`
-now opens a tracking issue on every failed scheduled run (added 2026-09-13).
-A permanently-red nightly plus an automated issue is how an alarm becomes the
-thing people learn to ignore — which is the failure that workflow's own
-comments were written to prevent.
-
-**Why nothing caught this before**: `poll_tracking_check()` was wired into
-`fit_vic.R`, `fit_federal.R` and `fit_nsw.R` — every fit script *except* the
-one that publishes. All three fit with `sigmas = "per_cycle"`; the published
-call takes the defaults, and the two produce different numbers for the same
-party on the same polls, so a green `L3` was asserting on a model nobody
-ships. Full note under "Where the guards are" in `ARCHITECTURE.md`.
-
-### The stale-clone failure, which is the more useful finding
-
-A 19-commit-stale `external/aus-polling-analyser` clone flipped this entry's
-verdict (2.85/breaching on stale data vs. 2.47/inside the bound on current) —
-not just a decimal, a whole false live-breach entry. Captured in persistent
-memory (`check-anchor-clone-freshness.md`): `git -C
-external/aus-polling-analyser log -1` before quoting any poll number.
+**Process lesson kept live**: a 19-commit-stale anchor clone flipped this
+entry's verdict once (2.85/breaching vs 2.47/inside). Always `git -C
+external/aus-polling-analyser log -1` before quoting a poll number.
 
 ## OVERNIGHT CONTINUATION, 2026-09-14 early morning — READ THIS FIRST
 
@@ -559,82 +361,14 @@ the right three ways; a departed independent's vote reverting rightward,
 untested direction for `ret_exp`; QLD optional-preferential flows against
 the primary leader) are recorded in the review doc, not yet actioned.
 
-## Session 2026-09-12/13 (earlier), morning/day — rolled to journal below
+## Session 2026-09-12/13 - PRs #34-39 merged, xgb-primary circularity found and enforced
 
-**PR #34 MERGED to `main`** (6b51957). sa2022 is now in the model
-(`docs/reviews/sa2022-missing-from-the-model-2026-09-12.md`) — a name-order
-parsing bug meant it was scored but never trained on.
-
-**The big find: `fit_xgb_primary_v6.R` was training on its own recycled
-output.** `AUSPOL_XGB_PRIMARY=1` (shipped default) makes every harness
-overwrite `shares` with `v6`'s own prior predictions before simulating, and
-the simulator writes `pred_share` — what `v6` calls "the shipped baseline" —
-from that already-overridden result. Repeated same-session refit cycles
-compounded this and drifted a pair's log loss 0.5384 → 0.8126 with zero code
-changes. Full trace and the fix:
-`docs/reviews/xgb-primary-circularity-2026-09-13.md`.
-
-**Corrected pooled seat log loss, 2,097 seat-elections, 23 pairs: 0.2926**
-(PR #34 had claimed 0.3115 — worse than reality, not better; the
-contamination was dragging every number the wrong way).
-
-**The circularity is now ENFORCED, not just documented** (PR #36, merged).
-Each harness records `AUSPOL_XGB_PRIMARY`'s value in its sharedetail output;
-`pool_sharedetail.R` refuses to pool any pair that's contaminated or
-unverifiable. Verified with a real contaminate-then-restore test. Review
-gate caught the escape hatch logging a false "all clean" when used — fixed,
-re-verified.
-
-**New worst pairs, once the numbers were honest: wa2001 (0.6819) and wa2008
-(0.6840)**, not sa2026 (0.4597, much improved from the corrupted 0.7015+
-seen mid-session). Four specific seats — three of them independents — carry
-53% and 41% of those pairs' total loss
-(`docs/reviews/wa-independents-no-salience-2026-09-13.md`). First diagnosis
-wrongly concluded WA had no salience corpus at all — a `grep` for `"wa"`
-missed `geo = "AU-WA"` in `fetch_salience_v6.R`, which has covered every WA
-election since 2026-08-27, with real data on disk since 2026-09-10. **Fixed
-same session** (`docs/reviews/wa-salience-data-already-existed-2026-09-13.md`):
-`fit_xgb_primary_v6.R`'s stale region-wide exclusion now excludes only
-wa2001 (predates Google Trends entirely, genuinely no signal possible).
-Pooled seat log loss 0.2926 → **0.2915**, 11 pairs improved / 9 worse / 3
-unchanged, no catastrophic regression. Shipped (PR #35, merged) — `main` is
-at 0.2915. wa2008/Kalgoorlie itself (jump = 0, a sustained pre-campaign
-story not a last-minute surge) still not rescued — flagged in advance, still
-the worst single seat in the corpus.
-
-**Also done:** `all_election_pairs()` gained `sa2022` (measured cleanly this
-time, zero effect on any pair — a documented, verified null, kept for
-completeness). Census demographics and the per-cell primary SD model were
-both measured properly and don't ship (see the 2026-09-12 review docs).
-
-**The nightly "Forecast refresh" CI workflow crash is fixed** (PR #37,
-merged, verified with two real `workflow_dispatch` runs, not just local
-simulation) — `estimate_statewide_cov.R` no longer dies when the federal
-preferences file is genuinely absent in CI. **It still doesn't complete
-end-to-end**: the real run got one stage further and hit a different,
-separate wall — `fit_seats_full.R`'s MP-slope tier needs
-`output/mp-slope-by-class.csv`, and neither it nor its prerequisite
-(`build_candidacies.R`) is wired into the pipeline at all. Trying to add
-them surfaced that `build_candidacies.R` has its own *deliberate* hard stop
-on VIC 2010 data being absent (permanently true in CI). This is real design
-work on a large, careful script — queued as its own item, not attempted
-tonight. Full details:
-`docs/reviews/forecast-refresh-remaining-gap-2026-09-13.md`.
-sa2026's One Nation seat-ranking problem got three honest negative results
-(NA-gating, isolated model, same-jurisdiction slope) and is parked — no
-same-state precedent exists for a party that didn't contest South Australia
-before 2022, so it may not be fixable with this model shape at all.
-
-**Unrelated, flagged not fixed:** the scheduled "Forecast refresh" GitHub
-Action is failing on a missing `external/elections/aec-fed-firstprefs.csv` on
-the CI runner (`estimate_statewide_cov.R`) — pre-existing, nothing tonight
-touched that script.
-
-**PRs #38 and #39 MERGED to `main`** (v0.4.34): the `fit_xgb_primary_v7.R`
-WA-salience mirror fix, the `build_candidacies.R` gap-scope correction doc,
-and this `NEXT-STEPS.md` trim (63k → 49.5k chars, see below). Everything from
-tonight's 5-item list is now closed out: items 1-3 documented/confirmed dead
-ends, item 4 shipped, item 5 (this trim) shipped.
+Full narrative (the recycled-`pred_share` circularity bug, its enforcement
+in `pool_sharedetail.R`, wa2001/wa2008 becoming the new worst pairs once
+numbers were honest, the WA salience-exclusion fix, the CI workflow crash
+fix): `docs/backlog/journal-2026-09-08-to-16.md`. Headline: pooled seat log
+loss corrected to 0.2926 (2,097 seat-elections, 23 pairs), then 0.2915 after
+the WA salience fix. `main` was at 0.2915 as of PR #39.
 
 ## PREVIOUS SESSIONS, 2026-09-10/11 — rolled to journal, open items carried forward
 
@@ -694,206 +428,51 @@ Two rounds (all 4 classes, then GRN/ONP only). Both failed the pre-registered
 pooled-log-loss bar. Full detail: `docs/plans/prereg-dispersion-slope-2026-09-09.md`.
 Machinery (`fit_dispersion_slopes()`) stays in the tree, inert.
 
-## DONE 2026-09-09: the partial-pooling sweep, triaged
+## DONE 2026-09-09: the partial-pooling sweep, triaged - zero rescuable candidates
 
-Pete asked which refused adjustments a pooled model could have saved. **Answer:
-fewer than expected — most refusals were correct, and two of my own queued
-candidates were wrong.**
+Checked every refused adjustment for whether pooled/shrinkage fitting could
+have saved it. **Answer: no** - every refusal was correct on its own
+measured grounds (wrong-signed effects, opposite-signed sub-groups with no
+replication to shrink from, or a defect that reshapes the estimate not just
+its precision). One genuine open item survives: the surge-conditioned slope
+has a real effect but needs more corpus (more elections), not better fitting
+of what exists. Full table and reasoning:
+`docs/backlog/journal-2026-09-08-to-16.md`.
 
-| candidate | verdict | why |
-|---|---|---|
-| `party_sd` | **not a candidate** | Was VOID 2026-08-25, but **re-run 2026-08-26 on 17 clusters and DECIDED** — a tie, effect "real in sign, negligible in size". I had grepped a stale VOID line in the WA harness header. And the per-party question was already asked and correctly pooled: majors 2.37 vs minors 2.31, "within 0.06, a fifth of one SE". |
-| first-preference widening | **not a candidate** | The refusal **was overturned and the fix shipped** — `fp_extra_sd = 2.419` in `R/forecast_mode.R`, with a published-effect table in the review. |
-| non-major vote regression | **not a candidate** | Refused on **measured** grounds (winners RMSE 2.99 base against 8.55), not power. Shrinkage cannot rescue a measured regression. |
-| `fit_defector_discount` cliff | **addressed today** | The `min_n=5` cliff never fired, but the hard `elected==TRUE` exclusion did. Losing defectors now carry 0.142 instead of zero (`prereg-defector-two-rate-2026-09-09.md`, adopted on mechanism). |
-| **surge-conditioned slope** | **GENUINE, open — but NOT shrinkage-rescuable the way I first said** | Split by direction (2026-09-09 follow-up), each surge instance is well-measured WITHIN itself (100+ seats, tight SEs): fed2013 OTH_RIGHT (rise, +6.6) slope 1.15 vs stable 0.54, **+3.1 SD**; sa2026 ONP (rise, +19.9) 0.81 vs 0.47, +1.1 SD; qld2020 ONP (**collapse**, −6.6) 0.26 vs 0.47, **−4.3 SD**. Rises amplify the slope, collapses suppress it — opposite signs, both real. Shrinkage needs REPLICATION within a group to estimate how much to trust it; with 1 collapse and 2 rises there is no such group to shrink from, and averaging them under one undirected "surging" flag (my first attempt, morning) launders two real opposite effects into noise. Needs more corpus (more elections), not better fitting of what exists. |
-| demographic seat model | **not a candidate** | Was already run (`fit_demographic_swing.R`) and refused on MEASURED grounds, not power: MAE of swing deviation 3.850 (predict zero) vs 4.087 (model) — worse than predicting nothing. The pre-registered subgroup went the other way (better in 4/4 cells) but the review itself refused to act on it: "the improvement is 1-5% of a catastrophic error" (35.99->34.03, both hopeless), and adopting a subgroup win after losing overall is the cherry-pick `CLAUDE.md` already names twice. Shrinkage does not touch a wrong-signed overall effect or a right-signed-but-too-small one. |
+## SESSION 2026-09-09 (AM #3) - candidate/party tracking audit, `fit_defector_discount()` shipped
 
-### What the sweep actually established
+Mapped every between-election candidate/party transition and fixed what was
+broken: `fit_defector_discount()` (major-party defector retention, pooled
+across all six harnesses instead of one fitting it and five hardcoding a
+stale copy). A completeness fix (sum every identity-matched returning
+candidate of a class, not just the leader) was built, found genuinely mixed
+on real backtests, and reverted - the real fix needs to separate
+"identity-tracked personal vote" from "anonymous residual class vote", a
+design question not a mechanical patch; full reasoning is the long comment
+above `lead` in `personal_prior_vote()` (`R/candidate_returns.R`). Full
+narrative: `docs/backlog/journal-2026-09-08-to-16.md`.
 
-**Zero rescuable candidates, and that is the finding, not a failure of the
-exercise.** Every "GENUINE, open" entry I first wrote for this queue turned
-out wrong on inspection: the surge slope has a real effect but is the wrong
-shape for shrinkage (opposite-signed rise/collapse, no replication within
-either); the demographic model was already run and refused on a wrong-signed
-overall effect plus a too-small subgroup one, neither of which shrinkage
-fixes. Both write-ups above are corrected in place rather than left standing.
+## SESSION 2026-09-09 (AM #2) - worst-seats-vs-AEF table reviewed with Pete
 
-The sweep's value was confirming this repo's refusal discipline is well
-calibrated — nothing was sitting refused for want of a shrinkage a competent
-pre-registration hadn't already tried or wouldn't have caught.
+Standing instruction from this session: keep the worst-seats-vs-AEF table as
+a living reference and keep working known misses down it - this is the main
+improvement loop, not a one-off. Four items from that review: Waite/Kiama
+confirmed NOT shipped (dormant behind arm D), a new minor-to-central-party
+reversion hypothesis written up but not built
+([plans/hypothesis-lean-scaled-minor-reversion-2026-09-09.md](plans/hypothesis-lean-scaled-minor-reversion-2026-09-09.md)),
+teal leakage checked clean, salience-of-emerging-groups queued unscoped.
+Full detail: `docs/backlog/journal-2026-09-08-to-16.md`.
 
-### Still not retrofitted
+## MORNING READ, 2026-09-09 overnight session
 
-`fit_conditional_slopes()` (`min_n=40`) and `fit_split_slopes()` (`min_n=200`)
-still carry cliffs. Both are default-off arms that were refused, so the cliffs
-change nothing shipped — retrofit them if either is ever revisited, not before.
-
-## SESSION 2026-09-09 (AM #3) — candidate/party tracking audit, three fixes shipped
-
-Pete's ask: map out every possible between-election candidate/party
-transition (same person same party, same person new party, major->minor
-defection, candidate departs entirely, new entrant) and fix what's actually
-broken, using Waite (sa2022->2026) and Kiama (nsw2019->2023) as worked
-examples. Built `scripts/candidate_scenario.R` (a what-if tool: drop/add/
-relabel a candidate in one seat's target-election corpus, see the effect on
-`personal_prior_vote()`'s inputs without a full sim) to make this concrete
-rather than guessed.
-
-**Shipped, tested (910/910 pass), full 22-pair backtest rerun in progress:**
-
-1. **`fit_defector_discount()`, new, exported.** The major-party-defector
-   retention rate (Ward/Kiama's case) was fitted ONCE inline in
-   `backtest_candidate_fed.R` (federal pairs only, leave-one-out) while the
-   other five harnesses hardcoded a frozen `0.282` snapshot — exactly the
-   "fix in one harness, not ported" failure this repo has been burned by
-   before (`docs/plans/harness-unification-2026-09-08.md` named it). Now one
-   function, pooled across all six jurisdictions via `all_election_pairs()`,
-   every harness calls it. Value barely moves (0.277-0.291 depending on
-   target vs the old fixed 0.282) — low risk, but the PROCESS was broken
-   even though the number happened to be close.
-2. **Losing-major-party defector (Pete's "unseen example" — a losing LNP MP
-   moving to ONP) now has an explicit, evidenced comment instead of an
-   implicit side effect.** `candidate_returns()` already correctly flags the
-   identity match; `personal_prior_vote()` deliberately gives no floor
-   because the non-member analogue of the discount has only 5 corpus cases,
-   mean retention 2.32 / sd 4.38 — unusable, not a gap.
-
-**Built, tried, and REVERTED the same session — real finding, not shipped:**
-`personal_prior_vote()` summing every identity-matched returning candidate
-of a class (not just the leader) looked like a safe completeness fix for
-Waite's hypothetical (Duluk 19.7% + Holmes-Ross 14.6%, both returning).
-**Two things were wrong with "zero real cases, no measured effect":** first,
-the check that produced that claim had the same `all_election_pairs()`
-field-name bug (`election_from` vs `prev`) already caught once this session
-in the defector-discount count, and silently processed zero pairs instead of
-erroring. Rerun correctly: **40 real historical cases** hit this shape.
-Second, summing is only correct when EVERY prior candidate of a class
-returns (Waite's shape). The far more common real shape is a class with
-several prior candidates where only ONE returns — Rankin/OTH_RIGHT
-fed2016->2019 had three (Lawrie 5.9%, Davies 4.1%, Holley 3.4%), only Davies
-came back. Summing there REPLACES the class's true prior total (13.3%) with
-just Davies' own share (4.1%), silently discarding the other 9.2 points of
-real prior vote that belonged to people who left — understating the base,
-not completing it. Measured on real backtests before reverting: fed2019
-pooled log loss 0.263 -> 0.383, fed2025 0.324 -> 0.373 (both worse); vic2022
-improved slightly (0.249 -> 0.240). Mixed, non-trivial, not a no-op.
-**The real fix needs to separate "identity-tracked personal vote" from
-"anonymous residual class vote"** rather than treating a match as a full
-substitute for the class base — a genuine design question, not a mechanical
-patch. Full reasoning is now the long comment above `lead` in
-`personal_prior_vote()` (`R/candidate_returns.R`) so the next attempt starts
-from what's already known rather than re-discovering it. `scripts/
-candidate_scenario.R` still demonstrates the underlying gap live (Holmes-
-Ross's history is genuinely invisible under leader-only matching) — the tool
-is fine, the fix attempted on top of it wasn't.
-
-**Queued, not done**: hand-coding "scandal/disendorsement vs voluntary
-departure" as a feature for the 14-case defector-retention fit. Pete's own
-bar (10+ cases -> try to model) is cleared, but the two obvious data-only
-covariates already tried (prior seat margin r=0.07, prior vote size r=-0.10)
-found nothing — the visible split (Kelly/Jensen/McBride low, Ward/Graham
-high) is real but is circular with the very outcome being forecast. The only
-plausible signal is genuinely external (public record of why they left),
-knowable pre-election so not leaky, but needs manual per-case research, not
-a code change. Someone's call on whether that research is worth the time.
-
-**Pete's broader point, mid-session**: this exact failure (federal quietly
-fits something, five siblings hardcode a stale copy) is a documentation and
-consolidation problem, not just a one-off bug. Keep `docs/MODEL-REGISTRY.md`
-current and prefer pulling shared logic into `R/` over six near-duplicate
-harness copies — item 1 above is that consolidation applied to one constant;
-the six-harness architecture itself is the bigger, already-flagged version of
-this (`docs/plans/harness-unification-2026-09-08.md`).
-
-## SESSION 2026-09-09 (AM #2) — worst-seats-vs-AEF table reviewed with Pete
-
-Full 22-pair sharedetail coverage confirmed (`scripts/pool_sharedetail.R`
-PS2c clean). Pete reviewed the worst-20-seats-vs-AEF table live and gave
-four items:
-
-1. **Correction, not new news**: Waite and Kiama (rows 1-2) are NOT
-   shipped. Confirmed by grep: `AUSPOL_REENTRY` defaults `"0"` everywhere,
-   absent from `published_flags.R`. Kiama's fix
-   (`protect_personal_vote_cells`) is coded, reviewed, dormant behind arm
-   D. Waite's shape (candidate leaves entirely, no fallback candidate) has
-   no code at all — matches what was already in the section below, restated
-   here because Pete read the table as claiming "fixed."
-2. **New hypothesis, not yet designed**: minor-to-central-party reversion
-   (GRN→ALP, ONP→LNP, LNP→teal) scaled by seat lean — Melbourne fed2025 is
-   the seed example. Written up, explicitly NOT to be built without a
-   design session on real examples first:
-   [plans/hypothesis-lean-scaled-minor-reversion-2026-09-09.md](plans/hypothesis-lean-scaled-minor-reversion-2026-09-09.md).
-3. **Teal leakage, checked**: the shipped teal fix (arm C, salience-
-   expected) uses only Google Trends `jump` — pre-election, no outcome
-   data (`R/salience_screen.R`'s own docstring: "DECIDED FROM THE FIELD,
-   with no outcome data"). No dedicated "is this candidate a teal"
-   classifier exists — it's the generic governed/salience screen, so no
-   leakage, but also nothing teal-specific (e.g. Climate 200 backing).
-4. **Queued, harder**: gauging salience of emerging groups more directly
-   (beyond per-candidate Trends jump) as a further teal/emergence
-   improvement. Not scoped yet.
-
-Standing instruction from Pete: keep the worst-seats-vs-AEF table as a
-living reference and keep working known misses down it — this is now the
-main improvement loop, not a one-off.
-
-## MORNING READ, 2026-09-09 overnight session — start here
-
-Pete asked overnight for fed2022's teal seats to be actually fixed, not
-diagnosed again, and to not be interrupted until it was done. Two real
-fixes shipped, both tested and committed to `dev` (nothing merged to
-`main` — that still needs the review gate, per the autonomous-session rule).
-
-**1. fed2022's teal seats — genuinely better, not solved.** Shipped arm C
-(salience point estimate + variance,
-`docs/plans/prereg-salience-expected-and-variance-2026-09-07.md`, written
-2026-09-07, never run until tonight). Kooyong 5.3%→36.1%, Goldstein
-2.0%→12.2%, all six named seats move the right direction, several
-substantially. **This is now the DEFAULT behaviour of a bare
-`backtest_candidate_fed.R`/`_nsw.R` run** — verified end-to-end, no flags
-needed. Full write-up, including the honest caveat that this is a scope
-decision made after seeing results (not a clean pre-registered rule):
-[reviews/salience-arm-federal-nsw-scoped-2026-09-09.md](reviews/salience-arm-federal-nsw-scoped-2026-09-09.md).
-
-**Applying the same arm to Queensland/SA/Victoria was REFUSED** — SA
-(+0.025) and Victoria (+0.012) both breach the pre-registration's own 0.01
-per-jurisdiction bound, and Victoria is the live target election, so it
-was NOT added to `published_flags.R` — `fit_seats_full.R` (the actual
-published forecast) and QLD/SA/VIC/WA are completely untouched. This
-matters: the fix is real, scoped, and doesn't touch the live forecast.
-
-**Still true**: fed2022 remains under-called even with this on (Kooyong
-36.1% is still not over 50%). Improved, not solved. The underlying
-cross-election salience-anchor problem
-(`reviews/wave-term-blocked-2026-09-07.md`) is untouched — this works
-entirely on the within-election ranking, which was already known-good.
-
-**2. Personal-vote-priority fix, implemented** (yesterday's
-pre-registration, `plans/prereg-reentry-personal-vote-priority-2026-09-08.md`).
-All six harnesses now protect a `personal_prior_vote()`-informed cell
-(Kiama's Gareth Ward, Pilbara's Larry Graham) from being overwritten by the
-generic re-entry GLM. Verified firing correctly. **Dormant** — only matters
-when `AUSPOL_REENTRY` (arm D) is on, and arm D stays unshipped, so this
-changes nothing in current published output. Ready for whenever arm D's
-ship/refuse call is made.
-
-**3. The Waite/SA2026 pattern (class-level vote-share swung forward after
-the specific candidates who earned it left) — investigated, NOT fixed.**
-Ran out of time. Real, well-evidenced (see the AEF-miss investigation
-above), and a partial version already exists (`WA0`/`BW0`-style "zero IND
-if nobody stood" in fed/sa/wa, missing from nsw/vic) but doesn't cover
-Waite's shape (a *weaker* candidate stands, not zero). Next session.
-
-**Verification tonight**: full test suite (827/827, 8 new tests),
-`R CMD check --as-cran` (0 errors, 0 warnings, same 4 pre-existing NSE
-notes), and an end-to-end bare-invocation run confirming the shipped
-default reproduces the measured numbers exactly.
-
-**Not done tonight, queued**: the review gate for everything on `dev`
-(50+ commits since PR #29 merged) before any PR to `main`; a proper
-pre-registration for the federal+NSW scope decision, since tonight's was
-made under time pressure after seeing results.
+fed2022's teal seats shipped arm C (salience point estimate + variance),
+scoped to federal+NSW only after SA/Victoria breached the pre-registration's
+per-jurisdiction bound - Kooyong 5.3%->36.1%, Goldstein 2.0%->12.2%, still
+under-called but genuinely better. Personal-vote-priority fix implemented
+across all six harnesses, dormant behind unshipped arm D. Waite/SA2026
+pattern (class vote-share swung forward after the specific candidates who
+earned it left) investigated, not fixed that session. Full narrative:
+`docs/backlog/journal-2026-09-08-to-16.md`.
 
 ## SESSION 2026-09-07: New South Wales 2019 scored, and four findings
 
@@ -1292,67 +871,22 @@ Full write-ups moved to [docs/backlog/journal-2026-08.md](backlog/journal-2026-0
 
 ### Diagnosed 2026-09-08, not implemented: point-estimate shrinkage cannot fix the majors' floor seats
 
-Tested continuous James-Stein shrinkage (`ratio = w*measured + (1-w)*1`,
-`w = n/(n+k)`) as a replacement for the hard `min_ratio_n = 20` cutoff, grid
-`k ∈ {3,5,10,20,40,80}`, leave-one-out MAE over every ratio-path cell (n < 40).
-Best `k = 20` gives MAE 3.677 against 3.710 for the current hard cutoff — a
-real but tiny gain, and it is **not coming from the majors**: Labor and the
-Coalition have 1-3 observations per leave-one-out fold, so `w` stays near zero
-and the shrunk ratio stays near 1. Alfred Cove predicts 42.1 against an actual
-22.8 under the best `k`, essentially unchanged from the current 41.9. This
-matches and extends the 2026-09-07 finding that pooling the two majors did not
-help either — with this few observations, no point-estimate trick can locate
-the true value; the estimate itself is just noisy.
-
-**The next thing to try is widening the SIMULATED VARIANCE for ratio-path
-cells, not moving the point estimate.** The existing `sd_override` mechanism
-(`R/seat_sim.R`, already threaded through five of six harnesses for salience)
-is the right tool, but it needs: (a) `apply_reentry_prior()` to return a
-per-cell sd inflation alongside the point estimate, sized by something like
-`a / sqrt(n+1)`; (b) a combination rule with the salience sd source where both
-apply to the same cell — take the max, since neither source should understate
-the other's uncertainty; (c) **`sd_override` plumbing added to the WA harness**,
-which does not have it at all (`scripts/backtest_candidate_wa.R:445` calls
-`simulate_seat_contests()` with no `sd_override` argument) — the sixth
-harness-parity gap this session found, after positions, salience and the seed.
-
-Scoped as a targeted fix (CLAUDE.md's own rule: validate on the named targets
-first, election-wide as a do-no-harm guard) — this can only ever move a
-handful of seats, since a major failing to contest the previous election is
-rare by construction. Not started this session; needs its own pre-registration
-before any of the plumbing goes in.
+James-Stein shrinkage on the ratio-path cliff gives a real but tiny gain
+(MAE 3.677 vs 3.710) and doesn't come from the majors - too few
+observations per leave-one-out fold for any point-estimate trick to help.
+**The next thing to try is widening the SIMULATED VARIANCE for these cells,
+not moving the point estimate** - `sd_override` plumbing is the right tool
+but needs threading into the WA harness (missing entirely) and a combination
+rule with the salience sd source. Not started; needs its own
+pre-registration. Full detail: `docs/backlog/journal-2026-09-08-to-16.md`.
 
 ### Diagnosed 2026-09-08: the personal-vote transfer helps Pilbara and hurts WA overall
 
-Decoupled `AUSPOL_DEV_SLOPE_MODE` (conditional slopes) from the personal-vote
-transfer (`.own_prev`/`remove_transferred_votes`) in `backtest_candidate_wa.R`
-via a new `AUSPOL_WA_TRANSFER` flag — they were sharing one gate (`.cond`), so
-the two effects could never be told apart. Default behaviour is unchanged
-(verified byte-identical, 87.0%/0.1053 before and after the decoupling).
-
-Pooled log loss over all 361 WA seat-elections, one seed, `AUSPOL_N_SIMS=5000`:
-
-| slope mode | transfer | pooled log loss |
-|---|---|--:|
-| screened | **off** | **0.4058** |
-| screened | on (published) | 0.4109 |
-| uniform | off | 0.4104 |
-| uniform | on | 0.4158 |
-
-Conditional slopes help by ~0.005 either way. The transfer **hurts by ~0.005
-either way** — consistent sign in both slope settings, so not an interaction
-artefact.
-
-**But it works exactly as designed on the seat it was built for.** Pilbara
-2001, transfer off: the independent gets probability 0 (clamped to the 1e-6
-floor, costing 13.8 of log loss on that seat alone). Transfer on: 0.0058 — a
-huge per-seat gain, worth roughly 0.024 of pooled-equivalent log loss on its
-own. That the pooled effect is still net negative means the transfer is making
-OTHER seats worse broadly enough to swamp Pilbara's rescue several times over.
-
-**Not shipped, not further investigated this session.** One seed only — item
-2 already establishes that a single seed at 5,000 sims can move a pair by
-0.011, larger than this whole effect. Before acting on it: seed-average, then
-find which OTHER seats `personal_prior_vote()` is firing on and whether those
-are genuine defections or false positives. `Pilbara` is the one case the code
-comments name; nothing establishes the others are correct.
+Decoupled the WA harness's conditional-slope and personal-vote-transfer
+gates (`AUSPOL_WA_TRANSFER`, byte-identical default). Pooled WA log loss:
+transfer OFF beats transfer ON by ~0.005 regardless of slope mode - but it
+rescues Pilbara 2001's independent from a 0-probability floor clamp (13.8
+of log loss on that one seat). Net negative because it makes OTHER seats
+worse broadly enough to swamp the rescue. Not shipped, one seed only - needs
+seed-averaging and a check of which other seats `personal_prior_vote()`
+fires on before acting. Full detail: `docs/backlog/journal-2026-09-08-to-16.md`.
