@@ -61,8 +61,27 @@ moved.
    targets did NOT move (8.398→8.433, noise) — Orange still predicts OTH_RIGHT
    at 7.8% against an actual 56.2%. **The real question is now: what explains
    an idiosyncratic 40+ point personal vote the model has no feature for?**
-   Not started. `own_prev_pcv` exists in the feature set already — check
-   whether it's populated for these rows before building anything new.
+
+   **ANSWERED 2026-09-16: `own_prev_pcv` already does this well, and it's
+   `NA` for exactly the two worst misses.** Where populated (Mayo,
+   Hinchinbrook, Kennedy — ordinary returning candidates from a prior
+   GENERAL election), the model lands within 1-10 points of actual. Orange
+   and Wagga Wagga are both `NA` — their current members won by-elections
+   (2016, 2018), so `personal_prior_vote()`'s general-to-general matching
+   never finds them, and the model falls back toward baseline: Orange
+   predicts OTH_RIGHT at 7.8% against an actual 56.2%. Checked whether the
+   anchor clone has by-election candidate data to fall back to —
+   `external/aus-polling-analyser/analysis/Data/by-elections.csv` exists but
+   is the wrong shape (87 rows total, seat-level SWING only, no candidate
+   names or vote shares, and its one Orange row is 1996, not the relevant
+   2016 event). **No candidate-level by-election result exists on disk for
+   any jurisdiction.** This is a genuine fetch gap, not a parsing one — find
+   the NSWEC by-election results pages for Orange 2016 and Wagga Wagga 2018,
+   parse candidate-level primaries (same shape as `fetch_transfers_nsw.R`),
+   feed into `personal_prior_vote()`'s fallback path. Not started. Worth
+   checking federal/QLD by-election coverage too once the NSW path exists —
+   `PAIRS` in `fit_xgb_primary_v6.R` covers 6 regions and this mechanism is
+   general, not NSW-specific.
 2. ~~Region or optional preferential voting?~~ **RESOLVED 2026-09-16: it is
    region, not OPV.** Parsed the exhausted-votes line off all 186 cached NSWEC
    distribution pages (was on disk, discarded at parse time — see
