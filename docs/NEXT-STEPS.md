@@ -78,10 +78,33 @@ moved.
    any jurisdiction.** This is a genuine fetch gap, not a parsing one — find
    the NSWEC by-election results pages for Orange 2016 and Wagga Wagga 2018,
    parse candidate-level primaries (same shape as `fetch_transfers_nsw.R`),
-   feed into `personal_prior_vote()`'s fallback path. Not started. Worth
-   checking federal/QLD by-election coverage too once the NSW path exists —
-   `PAIRS` in `fit_xgb_primary_v6.R` covers 6 regions and this mechanism is
-   general, not NSW-specific.
+   feed into `personal_prior_vote()`'s fallback path.
+
+   **BUILT AND MEASURED 2026-09-16, DOES NOT HELP.**
+   `scripts/build_nsw_byelection_prevpcv.R` fetched and parsed both pages
+   (Orange SB1602, Wagga Wagga SB1801 — real NSWEC results, validated exactly
+   against Wikipedia: Donato 23.76%, McGirr 25.42%), wired as a fallback into
+   `own_prev_pcv` only where it was `NA`. Retrained, measured against the
+   incumbent-fix baseline:
+
+   | | Orange xgb_pred | Wagga xgb_pred | pooled OOF RMSE |
+   |---|--:|--:|--:|
+   | before | 7.82 (actual 56.2) | 11.37 (actual 46.1) | 3.8078 |
+   | after | 8.10 | 11.13 | **3.8158** |
+
+   **Neither target moved and the pooled corpus got measurably worse** — 10+
+   seats in completely unrelated pairs (Hunter, Fremantle, Morwell, Roe,
+   Giles, none NSW, none by-election seats) each lost 2.3-4.0 points, almost
+   certainly because filling 2 of 13,739 rows shifted `own_prev_pcv`'s global
+   histogram bin boundaries in xgboost's tree construction — a real
+   perturbation with no offsetting benefit. **Two real data points can't
+   teach a tree ensemble anything on their own; this needs a different
+   mechanism (e.g. a dedicated by-election-origin feature/flag), not a blind
+   fill into a shared column.** Reverted the wiring in `fit_xgb_primary_v6.R`
+   (back to the incumbent-fix-only state, 3.8078). **Kept**: the parser
+   script and its validated numbers (both hardcoded checks pass) — a real,
+   reusable asset for whoever revisits this with a better mechanism. Not
+   pursuing further tonight.
 2. ~~Region or optional preferential voting?~~ **RESOLVED 2026-09-16: it is
    region, not OPV.** Parsed the exhausted-votes line off all 186 cached NSWEC
    distribution pages (was on disk, discarded at parse time — see
