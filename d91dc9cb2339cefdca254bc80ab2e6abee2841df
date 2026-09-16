@@ -1,0 +1,1 @@
+CORRECTION (2026-09-16): the CAL_TAG claim in this message is wrong. .arm_fingerprint already hashes every set AUSPOL_* variable, so the arms this says would collide never could. Measured: baseline -a614a9d, SD_DEPARTED arm -a614adc. See the 'Correct the record' commit. The fail-open and drift fixes in this commit are unaffected and stand.
