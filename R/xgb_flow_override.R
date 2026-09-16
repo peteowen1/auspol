@@ -1,6 +1,7 @@
 # MODEL VARIANT TAG, so an experimental retrain can be A/B'd against the
 # shipped models without overwriting them. `AUSPOL_FLOW_MODEL_TAG=w` reads
-# `output/xgb-flows-v1w-loo-<election>.model`; unset reads the shipped
+# `output/xgb-flows-v1-w-loo-<election>.model` -- note the hyphen, which
+# .flow_model_tag() adds below; unset reads the shipped
 # `xgb-flows-v1-loo-<election>.model` and is byte-identical to before this
 # existed. The feature COLUMNS file is shared -- a variant that changed the
 # feature set would need its own, and this is asserted rather than assumed

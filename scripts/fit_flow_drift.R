@@ -15,11 +15,25 @@
 #
 #   events behind the rate   1 -> 9.3pts   3-5 -> 7.2   11+ -> 6.7
 #   gap since last seen    <=3y -> 7.4     9-12y -> 9.8  13y+ -> 9.7
-#   destination class      OTH_RIGHT 9.4 · IND 8.4 · ONP 8.4 · ALP/GRN 6.7
 #
-# Note the destination, not the source, is what carries the signal -- IND as
-# a SOURCE is among the more stable (7.2). That is the opposite of the
-# intuition this was built on, which is why it was measured first.
+# Mean |drift| in points by party class, with n, over the same 3,711
+# observations. Both marginals are shown because the interesting thing is
+# that they say nearly the same thing:
+#
+#   as DESTINATION  OTH_RIGHT 9.4 (388) · IND 8.4 (379) · ONP 8.4 (297)
+#                   LNP 8.1 (900) · GRN 6.7 (607) · ALP 6.7 (878) · OTH 6.7 (262)
+#   as SOURCE       LNP 9.3 (249) · ONP 8.0 (292) · OTH_RIGHT 7.8 (956)
+#                   OTH 7.6 (862) · IND 7.2 (903) · GRN 7.1 (363) · ALP 6.0 (86)
+#
+# The intuition this was built on was that an unpredictable SOURCE -- an
+# independent, a new minor -- is where the uncertainty lives. It is not:
+# IND as a source sits at 7.2, below the 7.6 corpus mean, and the two
+# marginals span almost the same range (6.0-9.3 as source, 6.7-9.4 as
+# destination). Party class of either end is a weak signal. What the model
+# actually leans on is how well the rate is MEASURED and how stale it is --
+# see the FD3 gain table this script prints, where prev_n, n_surv and gap
+# come out on top and no class feature is near them. Measuring first is the
+# only reason that is known rather than assumed.
 #
 # Emits FD* codes.
 options(auspol.root = normalizePath("."))
@@ -44,6 +58,16 @@ D <- cell_el[!is.na(prev_rate) & year > prev_year]
 D[, `:=`(drift = abs(rate - prev_rate), gap = year - prev_year)]
 cat(sprintf("FD1  %d drift observations over %d cells; mean |drift| %.1f points\n",
             nrow(D), uniqueN(D[, paste(from, surv, to)]), 100 * mean(D$drift)))
+# FD1b exists so the two class breakdowns in this file's header are
+# REPRODUCIBLE rather than a number someone typed once. The header's claim is
+# that class of either end is a weak signal; that is only checkable if the
+# script prints both marginals with their counts.
+cat("FD1b mean |drift| in points by class, with n -- header table's source:\n")
+for (.end in c("from", "to")) {
+  .b <- D[, .(pts = round(100 * mean(drift), 1), n = .N), by = c(.end)][order(-pts)]
+  cat(sprintf("     as %-11s %s\n", if (.end == "from") "SOURCE" else "DESTINATION",
+              paste(sprintf("%s %.1f (%d)", .b[[1]], .b$pts, .b$n), collapse = " · ")))
+}
 
 CLASSES <- c("ALP","GRN","IND","LNP","NAT","ONP","OTH","OTH_RIGHT")
 for (cl in CLASSES) D[[paste0("f_", cl)]] <- as.integer(D$from == cl)

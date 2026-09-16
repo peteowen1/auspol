@@ -1,9 +1,9 @@
 # AE Forecasts' own TCP (two-candidate-preferred) prediction, per seat.
 #
 # WHY THIS EXISTS. Pete pointed out AEForecasts.com's live site shows a TCP
-# scenario table with confidence ranges -- score_aeforecasts.R only ever
-# parsed seatPartyWinFrequencies (win probability) and fpTrend (primary
-# vote). The TCP data was sitting in our own cached
+# scenario table with confidence ranges -- score_aeforecasts.R parses
+# seatPartyWinFrequencies (win probability) and nothing else. The TCP data
+# was sitting in our own cached
 # external/reference/aef/*-summary.json all along, unparsed:
 #   seatTcpScenarios[seat] = list of [[partyA, partyB], frequency] -- which
 #     pairing AEF's simulation thinks reaches the final two, and how often.
@@ -19,6 +19,15 @@
 # scenario distribution (e.g. 55/45 between two different pairings) is
 # reported on its majority pairing only; scenario_freq is included so that
 # ambiguity is visible rather than hidden.
+#
+# STILL UNPARSED, found 2026-09-16 by the same sweep: `fpTrend`, AEF's own
+# per-party PRIMARY VOTE trend, is present in every cached *-summary.json and
+# read by no script in this repo. We score ourselves against AEF on seat win
+# probability and now TCP, and not at all on the primary -- which is the
+# stage our own errors actually start at, as Mirani showed (LNP predicted
+# 32.5 against an actual 36.7, before a single preference moved). Doing the
+# same thing for fpTrend that this file does for TCP is the obvious next
+# comparison and has not been built.
 
 options(auspol.root = normalizePath("."))
 suppressMessages(devtools::load_all(quiet = TRUE))

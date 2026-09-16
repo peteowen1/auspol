@@ -32,8 +32,11 @@ fit -- excludes a ratio taken on a denominator too small to mean
 anything.}
 }
 \value{
-A list: \code{discount} (median geometric retention ratio, or \code{NULL}
-below \code{min_n}), \code{n} (cases used), \code{cases} (the underlying data.table).
+A list: \code{discount} (the MEDIAN of the per-case retention ratios,
+or \code{NULL} below \code{min_n}), \code{n} (cases used), \code{cases} (the underlying
+data.table). Called it a "median geometric" ratio until 2026-09-16,
+which read as a geometric mean and is a different statistic; the median
+is transform-invariant, so there is nothing geometric about it.
 }
 \description{
 Same shape as [\link{fit_defector_discount}] but for a candidate who switched
@@ -41,11 +44,24 @@ between two NON-major parties (Stephen Andrew, ONP -> KAP, Mirani
 qld2024) rather than out of a major one. Sized separately, not folded
 into the major-party rate: the two groups' retention scales differ
 (major-party sitting-MP median ~0.28-0.29, non-member ~0.142; this one's
-geometric mean is 0.49 on 33 corpus cases), so sharing a rate risks being
-wrong for both. docs/reviews/minor-to-minor-defector-2026-09-16.md.
+median is 0.3255 on 18 corpus cases), so sharing a rate risks being wrong
+for both. docs/reviews/minor-to-minor-defector-2026-09-16.md.
 }
 \details{
 \code{min_prior = 10} matches [\link{fit_defector_discount}]'s own floor -- a
 retention RATIO on a denominator that small is mostly noise, the same
-reason that function excludes them.
+reason that function excludes them. No caller overrides it.
+
+\strong{The sizing writeup and this default disagree, and the default wins.}
+The "49\% retention, p = 0.0003" figure quoted in the review and previously
+in this docstring is a GEOMETRIC MEAN at \code{min_prior = 5} (34 cases,
+geometric mean 0.50, t-test on log-ratio p = 0.00035). This function
+returns a MEDIAN at \code{min_prior = 10}, which is 0.3255 -- a defector keeps
+a third of their vote here, not half. Both differences run the same way,
+so the shipped discount is harsher than the evidence that motivated it.
+The harnesses measured the shipped value, so no published number is wrong;
+what was wrong was a docstring citing evidence for a value the code does
+not use. Verified by running the function 2026-09-16 after the review gate
+queried the wording. Whether 0.33 or 0.50 forecasts better is a constants
+question for a pre-registered grid.
 }

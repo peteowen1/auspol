@@ -1,5 +1,44 @@
 # auspol — work queue
 
+## OPEN, 2026-09-16: the review gate on PR #44 left three questions for Pete
+
+The gate found one real cross-engine bug (fixed, with a test that fails on the
+old code) and a pile of comment errors (fixed). Three things it turned up are
+**modelling decisions, not defects**, so they are logged rather than changed.
+
+**1. The minor-defector discount ships at a third, and was sized at a half.**
+`fit_minor_defector_discount()` returns a MEDIAN at `min_prior = 10`, which is
+**0.3255** for fed2025/sa2026/vic2022/wa2025 (0.3103 qld2024, 0.2939 nsw2023).
+The "49% retention, p = 0.0003" in
+`docs/reviews/minor-to-minor-defector-2026-09-16.md` is a **geometric mean at
+`min_prior = 5`** — a different statistic on a different sample (34 cases,
+geometric mean 0.50, t p = 0.00035; at `min_prior = 10` it is 18 cases). Both
+differences push the same way, so the shipped discount is harsher than its own
+evidence. **No published number is wrong** — the harnesses measured the value
+that ships — but the justification did not describe it. Which of 0.33 and 0.50
+forecasts better wants a pre-registered grid on the defector seats, with the
+election-wide metric as the do-no-harm guard. Docstrings corrected meanwhile.
+
+**2. The two defector paths disagree about where a defector's lost votes go,
+and only one side was measured.** The major-party path
+(`R/candidate_returns.R:579`) CONSERVES — it adds `def_pcv * rate` to the new
+class and removes the same amount from the old, so votes that do not follow
+the candidate stay with their old party. The minor-to-minor path
+(`R/candidate_returns.R:533`) does NOT — it adds the discounted vote and
+removes the full one, on the argument that a one-member minor loses its base
+outright when its member walks. That asymmetry may be right: a major party
+keeps a machine and a brand, a micro-party is often just the member. It is
+also untested. Only the non-conserving side has a measurement behind it.
+Changing the major path moves every major-defector seat in all six harnesses,
+so it needs a run, not an edit.
+
+**3. AEF's `fpTrend` is in every cached summary JSON and parsed by nothing.**
+We now score ourselves against AEF on seat win probability and TCP, and not at
+all on the primary vote — which is where our errors start (Mirani: LNP
+predicted 32.5 against an actual 36.7, before a single preference moved).
+`scripts/build_aef_tcp.R` is the template; the same thing for `fpTrend` is
+maybe an hour.
+
 ## 2026-09-16, continued: items 1-3 of the 5-item list resolved
 
 Working the list Pete approved ("work your way through these - i trust your

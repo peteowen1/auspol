@@ -56,7 +56,7 @@ fold_id <- match(TX$election, elections)
 # `decay8_seatregion` = 8-year half-life on recency x3 on the target's own
 # seats, region-qualified. Region qualification is NOT optional: 23 seat
 # names appear in more than one jurisdiction, and for sa2026 a name-only
-# match is 100% spurious. Chosen over seven alternatives on held-out flow
+# match is 100% spurious. Chosen over nine alternatives on held-out flow
 # RMSE plus per-election consistency -- scripts/fit_xgb_flows_weighted.R,
 # and the weight functions below are deliberately identical to that
 # script's so the retrain reproduces what the experiment measured.

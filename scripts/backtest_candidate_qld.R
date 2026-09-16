@@ -185,8 +185,8 @@ CAL_TAG <- paste0(
     sprintf("-fsd%s", sub("[.]", "", format(as.numeric(Sys.getenv("AUSPOL_FLOW_SD")), nsmall = 1)))
   else "",
   # Same omission as the flow-model tag below, found in the same pass: this
-  # switch was added earlier tonight and changed behaviour without changing
-  # the filename.
+  # switch was added 2026-09-16 and changed behaviour without changing the
+  # filename.
   if (as.numeric(Sys.getenv("AUSPOL_FALLBACK_FLOW_SD", "0")) != 0)
     sprintf("-ffsd%s", sub("[.]", "", format(as.numeric(Sys.getenv("AUSPOL_FALLBACK_FLOW_SD")), nsmall = 1)))
   else "",
@@ -194,8 +194,11 @@ CAL_TAG <- paste0(
   # A/B silently overwrote its own baseline: AUSPOL_FLOW_MODEL_TAG changes
   # which model the run loads but did not change the output filename, so both
   # arms wrote the same file and the second clobbered the first. That is the
-  # exact failure CAL_TAG exists to prevent -- CLAUDE.md records a seat_sd
-  # sweep doing it to backtest-fed.csv before.
+  # exact failure CAL_TAG exists to prevent -- this file's own header
+  # (backtest_candidate_fed.R, the "seat_sd sweep" note) records a sweep
+  # doing it to backtest-fed.csv and backtest-vic.csv on 2026-08-21, where it
+  # read as "+0.0000 difference" across all six federal elections. CLAUDE.md
+  # carries the general pattern, not that incident.
   # Behaviour-changing switch, so it MUST alter the filename. Added
   # 2026-09-16 -- the third switch in one session to change what a run does
   # without changing what the run is called. CAL_TAG exists for exactly this.

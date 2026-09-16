@@ -314,9 +314,11 @@ leading_candidate_returns <- function(election_from, election_to, corpus = NULL)
 #'   KAP/OTH_RIGHT) -- `prev_best` above matches on IDENTITY regardless of
 #'   party, so without this the old class's full, undiscounted result carries
 #'   forward as the new class's base. `NULL` (the default) leaves this
-#'   byte-identical to before the parameter existed. Sized at 49% geometric
-#'   mean retention over 33 corpus cases; see
-#'   [fit_minor_defector_discount()] and
+#'   byte-identical to before the parameter existed. The value the harnesses
+#'   pass is [fit_minor_defector_discount()]'s own return -- a MEDIAN over 18
+#'   corpus cases, 0.3255 for most targets. (The review's headline "49%" is a
+#'   geometric mean at a lower `min_prior` and is NOT what ships; see that
+#'   function's docstring.) See
 #'   `docs/reviews/minor-to-minor-defector-2026-09-16.md`.
 #' @export
 personal_prior_vote <- function(election_from, election_to, corpus = NULL,
@@ -498,13 +500,26 @@ personal_prior_vote <- function(election_from, election_to, corpus = NULL,
   # their OLD party's full undiscounted result as `own_prev_pcv`, on the
   # documented assumption a few lines up that switching between minor labels
   # "is a much smaller behavioural jump for voters and is not excluded". That
-  # assumption doesn't hold: sized on 33 corpus cases (prev_pcv >= 5,
-  # excluding tiny-denominator noise), geometric mean retention is 49%
-  # (t-test on log-ratio p=0.0003, Wilcoxon p=0.037) -- real, and comparable
-  # in shape to the major-party defector discount just below, not the "not
-  # excluded" treatment this row got before. docs/reviews/
-  # minor-to-minor-defector-2026-09-16.md. NULL (default) leaves this
-  # byte-identical to before the parameter existed.
+  # assumption doesn't hold. The effect is real: at prev_pcv >= 5 there are 34
+  # corpus cases with a geometric mean retention of 0.50 (t-test on log-ratio
+  # p = 0.00035). docs/reviews/minor-to-minor-defector-2026-09-16.md.
+  #
+  # BUT THAT IS NOT THE NUMBER THAT SHIPS, and this comment claimed it was
+  # until the review gate checked it on 2026-09-16. Two gaps, both verified by
+  # running the function:
+  #   - the SIZING used prev_pcv >= 5; fit_minor_defector_discount()'s default
+  #     is min_prior = 10 and no caller overrides it, which cuts the sample to
+  #     18 cases.
+  #   - the sizing quoted a GEOMETRIC MEAN; the function returns a MEDIAN.
+  # Together: sized at 0.50, ships at 0.3255 (fed2025/sa2026/vic2022/wa2025;
+  # 0.3103 qld2024, 0.2939 nsw2023). A defector keeps a third of their vote,
+  # not half -- the shipped discount is materially harsher than its own
+  # evidence, and it was the harsher value that the harnesses measured, so the
+  # backtest numbers are honest even though the justification did not match.
+  # Which of the two is right is a constants question for a pre-registered
+  # grid, not something to settle by editing a comment; logged in
+  # docs/NEXT-STEPS.md. NULL (default) leaves this byte-identical to before
+  # the parameter existed.
   # `transfer` (below) must carry the FULL prior vote regardless of this
   # discount -- the old class genuinely lost the whole thing, discount or
   # not. Saved before the discount is applied so remove_transferred_votes()
@@ -561,6 +576,26 @@ personal_prior_vote <- function(election_from, election_to, corpus = NULL,
       if (!is.null(loser_discount) && is.finite(loser_discount) && "def_was_mp" %in% names(out)) {
         out[def_was_mp %in% FALSE, .rate := loser_discount]
       }
+      # `transfer` HERE IS THE DISCOUNTED AMOUNT, and a few lines up the
+      # minor-to-minor path deliberately uses the UNDISCOUNTED one. The two
+      # paths answer the same question differently and that is not yet
+      # resolved -- flagged by the review gate 2026-09-16, left as-is.
+      #
+      # This path CONSERVES: `def_pcv * .rate` is added to the new class and
+      # the same `def_pcv * .rate` is taken out of the old one, so the votes
+      # a defector fails to carry are implicitly left with their old party --
+      # a new Nationals candidate inherits them.
+      #
+      # The minor-to-minor path does NOT conserve: it adds the discounted
+      # vote and removes the full one, on the argument at line 523 that the
+      # old class lost its candidate outright. That choice was MEASURED (it
+      # is what fixed the pooled aggregate while keeping Mirani), this one
+      # never has been. So do not "fix" this line to match without running
+      # it -- changing it moves every major-party defector seat in all six
+      # harnesses, and the conservative reading may well be right for a major
+      # party, which unlike a one-member minor still has a machine and a
+      # brand when its member walks. Constants question, logged in
+      # docs/NEXT-STEPS.md.
       out[is.na(own_prev_pcv) & !party %in% MAJ & !is.na(def_pcv),
           `:=`(own_prev_pcv = cls_pcv + def_pcv * .rate,
                prev_party   = def_party,
@@ -773,12 +808,25 @@ fit_defector_discount <- function(target_election, corpus = NULL, min_n = 5L, pa
 #' qld2024) rather than out of a major one. Sized separately, not folded
 #' into the major-party rate: the two groups' retention scales differ
 #' (major-party sitting-MP median ~0.28-0.29, non-member ~0.142; this one's
-#' geometric mean is 0.49 on 33 corpus cases), so sharing a rate risks being
-#' wrong for both. docs/reviews/minor-to-minor-defector-2026-09-16.md.
+#' median is 0.3255 on 18 corpus cases), so sharing a rate risks being wrong
+#' for both. docs/reviews/minor-to-minor-defector-2026-09-16.md.
 #'
 #' `min_prior = 10` matches [[fit_defector_discount]]'s own floor -- a
 #' retention RATIO on a denominator that small is mostly noise, the same
-#' reason that function excludes them.
+#' reason that function excludes them. No caller overrides it.
+#'
+#' **The sizing writeup and this default disagree, and the default wins.**
+#' The "49% retention, p = 0.0003" figure quoted in the review and previously
+#' in this docstring is a GEOMETRIC MEAN at `min_prior = 5` (34 cases,
+#' geometric mean 0.50, t-test on log-ratio p = 0.00035). This function
+#' returns a MEDIAN at `min_prior = 10`, which is 0.3255 -- a defector keeps
+#' a third of their vote here, not half. Both differences run the same way,
+#' so the shipped discount is harsher than the evidence that motivated it.
+#' The harnesses measured the shipped value, so no published number is wrong;
+#' what was wrong was a docstring citing evidence for a value the code does
+#' not use. Verified by running the function 2026-09-16 after the review gate
+#' queried the wording. Whether 0.33 or 0.50 forecasts better is a constants
+#' question for a pre-registered grid.
 #'
 #' @param target_election The election being scored. Its own (seat, party)
 #'   defector cases are excluded from the fit -- leave-one-out, same as
@@ -793,8 +841,11 @@ fit_defector_discount <- function(target_election, corpus = NULL, min_n = 5L, pa
 #' @param min_prior Minimum prior vote, in points, for a case to enter the
 #'   fit -- excludes a ratio taken on a denominator too small to mean
 #'   anything.
-#' @return A list: `discount` (median geometric retention ratio, or `NULL`
-#'   below `min_n`), `n` (cases used), `cases` (the underlying data.table).
+#' @return A list: `discount` (the MEDIAN of the per-case retention ratios,
+#'   or `NULL` below `min_n`), `n` (cases used), `cases` (the underlying
+#'   data.table). Called it a "median geometric" ratio until 2026-09-16,
+#'   which read as a geometric mean and is a different statistic; the median
+#'   is transform-invariant, so there is nothing geometric about it.
 #' @export
 fit_minor_defector_discount <- function(target_election, corpus = NULL, min_n = 5L,
                                         pairs = NULL, min_prior = 10) {

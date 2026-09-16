@@ -4,7 +4,10 @@
 # excluded, LNP vs OTH_RIGHT left) has 10 well-matched historical events in
 # the corpus, and they trend steadily: Kennedy's own ALP->LNP share runs
 # 19.0% (fed2013) -> 22.3% -> 29.0% -> 30.7% -> 29.7% (fed2025). The flat
-# unweighted mean the model currently trains on is 26.6%; the actual Mirani
+# unweighted mean the model trained on as of 2026-09-16 is 26.6%; the
+# present tense is deliberately avoided here because this script exists to
+# replace that flat weighting, so "currently" would go stale the day it
+# ships and give no signal that it had. The actual Mirani
 # result was 32.7%. Flat-averaging twelve years pulls the estimate ~6 points
 # below where the recent trend sits, and that is most of that seat's error.
 #

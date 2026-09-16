@@ -1284,15 +1284,26 @@ simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
         if (!is.null(conditional_override) && !is.null(conditional_override[[i]])) {
           .ok <- paste0(parties[from], "|", paste(sort(parties[alive]), collapse = "+"))
           .or <- conditional_override[[i]][[.ok]]
-          # PER-CELL FLOW UNCERTAINTY, mirroring the compiled core's ov_sd.
-          # How much THIS flow actually drifts between elections, fitted by
-          # scripts/fit_flow_drift.R. 0 means not supplied and the
-          # per-source flow_sd applies unchanged.
-          if (!is.null(conditional_override_sd) && !is.null(conditional_override_sd[[i]])) {
-            .s1 <- conditional_override_sd[[i]][[.ok]]
-            if (!is.null(.s1) && is.finite(.s1)) .ov_sd_hit <- .s1
-          }
           if (!is.null(.or)) {
+            # PER-CELL FLOW UNCERTAINTY, mirroring the compiled core's ov_sd.
+            # How much THIS flow actually drifts between elections, fitted by
+            # scripts/fit_flow_drift.R. 0 means not supplied and the
+            # per-source flow_sd applies unchanged.
+            #
+            # This lookup MUST sit inside `!is.null(.or)`. The core reads
+            # ov_sd only from `it->second`, the row index of an override that
+            # was actually found (seat_sim_core.cpp:157-161), so an sd
+            # supplied for a key with no matching override row is invisible
+            # to it. Outside this branch, R would apply that sd on top of a
+            # shared-table or pooled flow while the core applied the ordinary
+            # per-source one -- a silent divergence between the two engines
+            # on well-formed input to an exported function. Found by the
+            # review gate 2026-09-16; see test-seat-sim.R's "sd key with no
+            # matching override row" case, which fails on the old ordering.
+            if (!is.null(conditional_override_sd) && !is.null(conditional_override_sd[[i]])) {
+              .s1 <- conditional_override_sd[[i]][[.ok]]
+              if (!is.null(.s1) && is.finite(.s1)) .ov_sd_hit <- .s1
+            }
             # Same positional, full-length-K shape the pre-built cell_list
             # rows already have (see the "put(from * 2^K + mask, row)" block
             # above) -- `row[alive]` a few lines down indexes POSITIONALLY,
