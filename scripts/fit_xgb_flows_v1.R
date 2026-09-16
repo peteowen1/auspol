@@ -10,6 +10,25 @@ suppressMessages(devtools::load_all(quiet = TRUE))
 suppressMessages(library(data.table))
 suppressMessages(library(xgboost))
 
+# PUBLISHED DEFAULTS, same mechanism the six harnesses use. Without this the
+# script's own inline Sys.getenv() defaults decide what gets fitted, and they
+# disagreed with what ships: this file defaulted AUSPOL_FLOW_FRAG to "0" while
+# scripts/published_flags.R ships "1" and documents it "SHIPPED 2026-09-15 ON PETE'S CALL".
+# The feature it controls, lead_primary, would have vanished from the model. So the OBVIOUS way to
+# refit -- `Rscript scripts/fit_xgb_flows_v1.R` with a clean environment --
+# silently produced the non-shipped configuration, wrote a normal-looking
+# artifact, and printed nothing to say the two differed. Downstream only ever
+# reads the artifact, never the switch, so nothing further could catch it.
+# Found 2026-09-16 by the review gate. apply_published_flags() fills only
+# UNSET variables, so every explicit arm still works and still has to name
+# what it changes.
+source("scripts/published_flags.R")
+local({
+  a <- apply_published_flags()
+  cat(sprintf("PF0  published defaults applied to %d unset switch(es)
+", length(a)))
+})
+
 EL <- election_data_path()
 OUT <- "output"
 

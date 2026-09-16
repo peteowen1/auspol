@@ -203,6 +203,17 @@ CAL_TAG <- paste0(
   # 2026-09-16 -- the third switch in one session to change what a run does
   # without changing what the run is called. CAL_TAG exists for exactly this.
   if (identical(Sys.getenv("AUSPOL_FLOW_CELL_SD", "0"), "1")) "-cellsd" else "",
+  # AUSPOL_SD_DEPARTED widens the per-cell sd override to ALP/LNP cells in
+  # seats whose previous winner has left the ballot, inside
+  # xgb_primary_sd_matrix() (R/xgb_primary_sd_override.R:103) -- so it never
+  # appears in this file and a grep of the harness could not see it. It
+  # changes the matrix that reaches simulate_seat_contests(sd_override=),
+  # which is as behaviour-changing as a switch gets. Missing from all six
+  # fingerprints until 2026-09-16: the FOURTH such omission found in one
+  # session, and the second where the switch lives in R/ rather than here.
+  # docs/MODEL-REGISTRY.md marks it "NO / UNEXPLAINED -- audit this" for the
+  # same reason its own grep only scans the harnesses and fit_seats_full.R.
+  if (identical(Sys.getenv("AUSPOL_SD_DEPARTED", "0"), "1")) "-sddep" else "",
   if (nzchar(Sys.getenv("AUSPOL_FLOW_MODEL_TAG", "")))
     sprintf("-fm%s", Sys.getenv("AUSPOL_FLOW_MODEL_TAG"))
   else "",

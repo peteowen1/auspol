@@ -62,6 +62,71 @@ if (n_pass < 100) {
 
 cat("OK: nothing depends on anchor data that should not.\n")
 
+# ---- Half one-and-a-half: a script's own default vs what ships --------------
+#
+# WHY. scripts/published_flags.R is meant to be the single source of truth for
+# every AUSPOL_* switch. The six harnesses honour it by sourcing
+# harness_defaults.R, which calls apply_published_flags(). The FITTING scripts
+# did not: each carried its own `Sys.getenv("AUSPOL_X", "default")` literal,
+# and two of them disagreed with what ships.
+#
+# fit_xgb_flows_v1.R defaulted AUSPOL_FLOW_FRAG to "0" while published_flags.R
+# ships "1" and calls it "SHIPPED 2026-09-15 ON PETE'S CALL". So refitting the
+# flow model the obvious way -- `Rscript scripts/fit_xgb_flows_v1.R`, clean
+# environment -- dropped the lead_primary feature, wrote a normal-looking
+# model file, and said nothing. Downstream reads only the artifact's column
+# list, never the switch, so no consumer could tell. Found by the review gate
+# 2026-09-16, along with the same shape in build_candidacies.R.
+#
+# NOTE ON SCOPE. The first version of this check asked whether every published
+# switch appears in each harness's CAL_TAG fingerprint. That premise was wrong
+# -- only 1 of 66 does, because CAL_TAG fingerprints switches you SWEEP, not
+# published constants -- and it fired on 343 pairs. This version asks a
+# question with an unambiguous right answer, which is why it finds 0 rather
+# than 343 once the two real cases are fixed.
+drift <- local({
+  ex <- new.env()
+  sys.source("scripts/published_flags.R", envir = ex)
+  PF <- get("PUBLISHED_FLAGS", envir = ex)
+  fs <- setdiff(c(Sys.glob("scripts/fit_*.R"), Sys.glob("scripts/build_*.R")),
+                "scripts/fit_seats_full.R")  # applies the flags itself
+  pat <- 'Sys\\.getenv\\(\\s*"(AUSPOL_[A-Z0-9_]+)"\\s*,\\s*"([^"]*)"\\s*\\)'
+  out <- list()
+  for (f in fs) {
+    src <- readLines(f, warn = FALSE)
+    # a switch named in a COMMENT is documentation, not behaviour
+    src <- src[!grepl("^\\s*#", src)]
+    # A script that applies the published flags cannot drift from them.
+    # KNOWN WEAKNESS, stated rather than hidden: this is a grep, so a call
+    # that is present but disabled -- commented out, or inside `if (FALSE)`
+    # -- still exempts the file. Found while trying to break this check:
+    # the first attempt disabled the call that way and the check stayed
+    # quiet. Proving it fires needed a file with no call at all, which is
+    # what the real pre-fix fit_xgb_flows_v1.R was.
+    if (any(grepl("apply_published_flags|harness_defaults", src))) next
+    for (hit in unlist(regmatches(src, gregexpr(pat, src)))) {
+      g <- regmatches(hit, regexec(pat, hit))[[1]]
+      if (!g[2] %in% names(PF)) next
+      if (!identical(g[3], PF[[g[2]]])) {
+        out[[length(out) + 1L]] <- sprintf(
+          "  %-28s %-34s own default %-6s but ships %s",
+          basename(f), g[2], dQuote(g[3], FALSE), dQuote(PF[[g[2]]], FALSE))
+      }
+    }
+  }
+  unique(unlist(out))
+})
+if (length(drift)) {
+  cat(paste(drift, collapse = "\n"), "\n")
+  stop("A script's own Sys.getenv() default disagrees with the value ",
+       "scripts/published_flags.R ships, and the script never applies the ",
+       "published flags. Running it plainly produces the NON-shipped ",
+       "behaviour and prints nothing to say so. Either source ",
+       "published_flags.R and call apply_published_flags(), or change the ",
+       "inline default to match what ships.")
+}
+cat("OK: no fitting script's default disagrees with what published_flags.R ships.\n")
+
 # ---- Half two: R CMD check --as-cran, warnings as errors --------------------
 #
 # The half this script was missing. Slower (a full build and check), so it runs

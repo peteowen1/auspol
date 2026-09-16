@@ -20,6 +20,24 @@
 # Emits BC* codes.
 options(auspol.root = normalizePath("."))
 suppressMessages(devtools::load_all(quiet = TRUE))
+
+# PUBLISHED DEFAULTS, same mechanism the six harnesses use. Without this the
+# script's own inline Sys.getenv() defaults decide what gets fitted, and they
+# disagreed with what ships: this file defaulted AUSPOL_HISTORIC_ELECTED_BACKFILL to "0" while
+# scripts/published_flags.R ships "1". So the OBVIOUS way to
+# refit -- `Rscript scripts/build_candidacies.R` with a clean environment --
+# silently produced the non-shipped configuration, wrote a normal-looking
+# artifact, and printed nothing to say the two differed. Downstream only ever
+# reads the artifact, never the switch, so nothing further could catch it.
+# Found 2026-09-16 by the review gate. apply_published_flags() fills only
+# UNSET variables, so every explicit arm still works and still has to name
+# what it changes.
+source("scripts/published_flags.R")
+local({
+  a <- apply_published_flags()
+  cat(sprintf("PF0  published defaults applied to %d unset switch(es)
+", length(a)))
+})
 suppressMessages(library(data.table))
 
 `%||%` <- function(x, y) if (is.null(x)) y else x
@@ -872,7 +890,10 @@ if (length(WV)) {
 # a decision not to contest. 379 candidacies against vic2022's 731 for the same
 # 88 seats -- Labor appears in 74 of 88, and Labor will contest all 88. A blank
 # means "not yet announced", and treating it as "not running" would be the same
-# fabrication as the NA that deflated the live model (NEWS 0.4.36).
+# fabrication as the NA that deflated the live model
+# (docs/reviews/live-path-missing-feature-2026-09-14.md -- NOT NEWS 0.4.36,
+# which this cited until 2026-09-16 and which records a different incident,
+# trained models missing from the CI runner).
 #
 # So this supplies NAMES ONLY. No votes, no pcv, no elected flag: those are
 # facts about an election that has not happened.
@@ -955,7 +976,10 @@ if (any(council)) {
 #
 # It also broke the live Victorian forecast, because handing that model an NA
 # for a feature it had only ever seen as 0 or 1 deflated every prediction by
-# ~45% (see R/xgb_primary_override.R and NEWS 0.4.36).
+# ~45% (see R/xgb_primary_override.R, whose own comment cites the right
+# file: docs/reviews/live-path-missing-feature-2026-09-14.md. This line said
+# NEWS 0.4.36 until 2026-09-16; that entry is about models missing from the
+# runner, not about this NA.)
 #
 # We can derive it ourselves. `elected` and `name` are populated for every
 # state candidacy, so a candidate is historically elected if THE SAME NAME won
@@ -1090,9 +1114,13 @@ if (any(.state)) {
   # region has no EARLIER election, or whose earlier elections carry no winner
   # rows, can honestly return none -- vic2010 has 502 candidacies and 0
   # recorded winners, so vic2014 cannot have a returning member no matter how
-  # good the match is, and wa1996 has exactly 1, so wa2001 can have at most 1.
+  # good the match is. (This example USED to add "and wa1996 has exactly 1, so
+  # wa2001 can have at most 1". Checked 2026-09-16: wa1996 has 232 candidacies
+  # and 57 winners -- a full Legislative Assembly. The "1" was wrong by 57x
+  # and made the rule look tighter than it is. vic2010's 502/0 is right and is
+  # the only genuine instance in the corpus.)
   # Gate on prior winners AVAILABLE, not on position in the sequence:
-  # otherwise the check either fires on those two forever or is loosened until
+  # otherwise the check either fires on vic2014 forever or is loosened until
   # it cannot fire at all.
   .by <- C[.state, list(n = .N, hits = sum(historic_elected %in% c(TRUE, "TRUE"))),
            by = list(region, year)][order(region, year)]
