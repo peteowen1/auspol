@@ -32,6 +32,20 @@ ancestor skipped an entire election if any seat lacked a census row, which
 discarded 13 of 23 pairs -- including fed2025 over ONE seat out of 152.
 }
 \details{
+Both numbers re-verified against \code{output/census-features.csv} on
+2026-09-17, because a sibling plan
+(\verb{prereg-education-residual-correction-2026-09-15.md}) tabulates fed2025 as
+\strong{3} of 152 and this docstring inherited the other figure. This one is
+right: exactly 13 of the 23 pairs carry a row with a missing census value,
+and fed2025's single such row is \strong{Bullwinkel} -- a division created in
+2021, so it has no prior-election census to carry forward. The sibling's
+table is counting NON-EXACT rows (a seat matched to an older boundary
+vintage) and labelling them "no census row", which are different things:
+fed2025 has 1 of each, not 3 of either. Its nsw2023 (5) and wa2025 (9)
+figures are right as non-exact counts, and its "of 152"/"of 59"
+denominators are census-file row counts, not chamber sizes -- fed2025's
+chamber is 150.
+
 Here a seat with no census row simply gets no correction, which is the
 neutral action, and \code{z} is re-centred over the seats that DO have data so the
 corrections still sum to about zero and the statewide class totals are

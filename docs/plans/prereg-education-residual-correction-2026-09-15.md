@@ -216,6 +216,31 @@ part-applying it.
 | fed2022 | 2 of 152 | includes Hawke, created 2021 |
 | fed2025 | 3 of 152 | same cause |
 
+> **CORRECTION added 2026-09-17. The table above is left unedited; read it
+> with this.** Re-measured against `output/census-features.csv`, the two
+> federal rows are wrong and the column is mislabelled.
+>
+> The counts are of rows flagged **non-exact** — a seat matched to an older
+> boundary vintage — not of seats with *no* census row. Those are different
+> things, and against the file on disk today no pair has a chamber seat
+> missing a census row at all. Actual figures:
+>
+> | pair | non-exact | rows with a missing census value | this table said |
+> |---|---|---|---|
+> | nsw2023 | 5 | 0 | 5 — right |
+> | wa2025 | 9 | 3 | 9 — right |
+> | fed2022 | 1 | 0 | 2 — wrong |
+> | fed2025 | 1 | 1 (**Bullwinkel**, created 2021) | 3 — wrong |
+>
+> The denominators are census-file row counts, not chamber sizes: fed2025's
+> chamber is 150 and fed2022's is 151, neither is 152.
+>
+> This matters because `R/demographic_residual.R:136` cites the *other* plan's
+> "fed2025 over ONE seat out of 152", and that one is correct — Bullwinkel is
+> the single row. The sibling plan's "13 of 23 pairs" is also correct: 13
+> pairs carry a row with a missing census value. Nothing downstream was
+> computed from the wrong numbers; they sat in prose.
+
 **And this blocks the live target twice over.** `output/census-features.csv`
 carries `vic2014`, `vic2018` and `vic2022` and **no `vic2026` rows at all**; 10
 of the 88 vic2026 seats (Ashwood, Berwick, Eureka, Glen Waverley, Greenvale,
