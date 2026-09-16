@@ -137,20 +137,25 @@ shipped seven hours after that backtest was taken. Every WA seat improved
 AEF's 0.2808 over 660 seats. The ledger artifact is refreshed to v13 and now
 picks the newest non-arm backtest per pair, so that staleness cannot recur.
 
-## 2026-09-16 evening: Pattern A tested — real signal, NA-fill beats 0-fill, and a noise-floor finding
+## 2026-09-16 evening: Pattern A SHIPPED — NA-fill beats 0-fill, and a noise-floor finding
 
-Built and tested `seat_outperf` (Pattern A from the 2026-09-13 worst-seats
-review — a senior retiring MP's personal-vote premium, sized on all 349
-retirement cases, r=0.176 p=0.001). Full trace:
+Built, tested and **shipped** `seat_outperf` (Pattern A from the 2026-09-13
+worst-seats review — a senior retiring MP's personal-vote premium, sized on
+all 349 retirement cases, r=0.176 p=0.001). Full trace:
 `docs/reviews/pattern-a-seat-outperf-2026-09-16.md`.
 
-**Not shipped**, but close and worth returning to: gated to the retiring
-incumbent's row, **NA-filled elsewhere (not the usual 0-fill)**, it clears a
-placebo-controlled comparison (+0.0061 pooled RMSE vs. a same-convention
-zero-information placebo) and gives a real targeted gain (held-party RMSE in
-retirement seats 7.6661 -> 7.2843; Riverstone's error roughly quarters).
-Richmond (a different, untested mechanism per the 2026-09-13 review) gets
-worse, as expected.
+Gated to the retiring incumbent's row, **NA-filled elsewhere (not the usual
+0-fill)**: clears a placebo-controlled comparison (+0.0061 pooled RMSE vs. a
+same-convention zero-information placebo) and gives a real targeted gain
+(held-party RMSE in retirement seats 7.6661 -> 7.2843; Riverstone's error
+roughly quarters). Richmond (a different, untested mechanism per the
+2026-09-13 review) gets worse, as expected. Pooled OOF RMSE now 3.8161;
+`output/xgb-primary-v6-oof-predictions.csv` regenerated, every harness on
+`AUSPOL_XGB_PRIMARY_LIVE=1` picks it up next run.
+
+**NEXT: audit other 0-filled features for the same NA-fill fix**
+(`seat_prev_pcv` at minimum uses the same `ifelse(is.na(x), 0, x)`
+convention) — cheap, and could be a broader win than this one feature.
 
 **Bigger finding: adding ANY column to this pipeline costs ~0.014 pooled
 RMSE regardless of its information content** (measured directly with an

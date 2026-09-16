@@ -149,6 +149,18 @@ for (pr in PAIRS) {
   lp <- state_level(pr$prev); ln <- state_level(pr$election)
   if (is.null(lp) || is.null(ln)) { cat(sprintf("XG6! no state level for %s -> skip\n", pr$election)); next }
   prevc <- C[C$election == pr$prev][, list(seat_prev_pcv = sum(pcv, na.rm = TRUE), n_cand_prev = .N), by = list(seat, party)]
+  # SEAT_OUTPERF: how much this party beat its own statewide average in this
+  # seat last time -- the size of whatever local factor (a personal vote, a
+  # demographic lean, anything) makes this seat different from the state.
+  # Built to size Pattern A from
+  # docs/reviews/worst-seats-five-patterns-2026-09-13.md -- "a senior retiring
+  # MP loses more personal vote than the flat retirement discount assumes" --
+  # sized on all 349 retirement cases in the corpus (r=0.176, p=0.001), not
+  # just the 5 that motivated it. Full trace, including why this stays
+  # gated: docs/reviews/pattern-a-seat-outperf-2026-09-16.md.
+  prevc <- merge(prevc, lp[, .(party, .state_prev_level = level)], by = "party", all.x = TRUE)
+  prevc[, seat_outperf := seat_prev_pcv - .state_prev_level]
+  prevc[, .state_prev_level := NULL]
   # NOTIONAL (REDISTRIBUTION-ADJUSTED) PRIOR, ON BY DEFAULT since 2026-09-13
   # (Pete's call). Exposed as its own signed feature rather than substituted
   # into `seat_prev_pcv`: a first version silently replaced it and barely
@@ -452,6 +464,32 @@ ALL[, soph_cand_i := as.integer(soph_cand)]
 ALL[, soph_party_i := as.integer(soph_party)]
 ALL[, is_incumbent_party_i := as.integer(is_incumbent_party)]
 ALL[, historic_elected_i := as.integer(historic_elected_any)]
+
+# GATE seat_outperf to the one row it means anything for: the party that held
+# the seat, in a pair where its member is gone. Left ungated, it changed
+# predictions on 66.5% of ALL 13,739 rows (not just the 349 retirement
+# cases) and made non-retirement rows WORSE on net.
+#
+# NA, NOT 0, for every other row -- this is not cosmetic. 0-filling cost
+# roughly TWICE what NA-filling does (+0.0155 vs +0.0083 pooled RMSE against
+# the no-column baseline) because seat_outperf's real values range -24 to
+# +63, so a filled 0 sits inside the plausible range and every split placed
+# near it mixes "off-target row" with "a seat that genuinely scored zero".
+# NA is routed through xgboost's learned missing-direction path instead.
+# Placebo-tested (an all-NA column with zero real information still costs
+# +0.0144 pooled RMSE -- the floor of adding ANY column to this pipeline,
+# not specific to this feature): the real values are worth +0.0061 once that
+# floor is subtracted out. Full derivation:
+# docs/reviews/pattern-a-seat-outperf-2026-09-16.md.
+.retdf <- fread(file.path("output", "retirement-derived.csv"))
+setnames(.retdf, "pair", "election_tag")
+ALL <- merge(ALL, .retdf, by.x = c("pair", "seat"), by.y = c("election_tag", "seat"), all.x = TRUE)
+ALL[, retire_derived := ifelse(is.na(retire_derived), 0L, retire_derived)]
+.outperf_gate <- !is.na(ALL$retire_derived) & !is.na(ALL$is_incumbent_party_i) &
+                 ALL$retire_derived == 1L & ALL$is_incumbent_party_i == 1L
+ALL[, seat_outperf := ifelse(.outperf_gate, seat_outperf, NA_real_)]
+cat(sprintf("XG8  seat_outperf gated (NA-filled elsewhere): %d of %d rows carry a real value\n",
+            sum(.outperf_gate), nrow(ALL)))
 party_levels <- sort(unique(ALL$party))
 region_levels <- sort(unique(ALL$region))
 for (p in party_levels) ALL[[paste0("party_", p)]] <- as.integer(ALL$party == p)
@@ -486,7 +524,7 @@ if (identical(.lvl_mode, "pred") && "level_from_polls" %in% names(ALL))
   cat(sprintf("    %d of %d rows have a poll-based prediction; the rest fall back to no-swing\n",
               sum(ALL$level_from_polls == 1L, na.rm = TRUE), nrow(ALL)))
 .raw_level <- identical(Sys.getenv("AUSPOL_XGB_RAW_LEVEL", "0"), "1")
-feat_cols <- c("base_pred", "seat_prev_pcv", "level_prev",
+feat_cols <- c("base_pred", "seat_prev_pcv", "seat_outperf", "level_prev",
                # RAW MODE: trend_level_raw + fund_level_raw REPLACE level_pred
                # (and level_from_polls, which existed only to tell the model
                # how much to trust a single blended figure -- moot once the

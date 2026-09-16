@@ -87,11 +87,16 @@ metrics (calibration slope, seat-share RMSE at one seed) — this is the
 *primary model's own training procedure* being unstable to column addition,
 not sampling noise in what it's evaluated against.
 
-**Not established**: whether this instability is itself a property worth
-fixing (e.g. training with `colsample_bytree=1` to remove the interaction
-between random column subsampling and feature-set size), or whether it's
-inherent and the fix is to average multiple `xgb.cv` seeds before trusting
-any pooled delta below some threshold. Either would change how every future
+**Tested and ruled out**: `colsample_bytree=1` (removing column-subsampling
+randomness entirely) does NOT fix this — pooled RMSE with the gated feature
+at `colsample_bytree=1` was 3.8279, slightly worse than the default 0.8's
+3.8233. The instability is not from random column selection interacting
+with feature-set size.
+
+**Not established**: whether the instability is fixable another way (e.g.
+averaging multiple `xgb.cv` seeds before trusting any pooled delta below
+some threshold), or whether it's simply an inherent property of this
+training procedure to live with. Either would change how every future
 "pooled vs targeted" measurement in this pipeline should be read, not just
 this one.
 
@@ -149,15 +154,16 @@ so it should not be expected to help there.
 
 ## Status
 
-**Not shipped.** `scripts/fit_xgb_primary_v6.R` reverted to its committed
-state (pooled RMSE confirmed back to 3.8078 after every test run). Best
-candidate found: `seat_outperf`, gated to the retiring incumbent's own row,
-**NA-filled elsewhere, not zero-filled** — real, placebo-controlled positive
-effect (+0.0061), strong targeted gain (held-party RMSE -0.38, two of the
-five named seats' errors roughly halved), known and expected exception
-(Richmond, different mechanism).
+**SHIPPED, 2026-09-16.** `seat_outperf`, gated to the retiring incumbent's own
+row, **NA-filled elsewhere, not zero-filled** — real, placebo-controlled
+positive effect (+0.0061), strong targeted gain (held-party RMSE -0.38, two
+of the five named seats' errors roughly halved), known and expected
+exception (Richmond, different mechanism). Pooled OOF RMSE 3.8161, confirmed
+to reproduce exactly on the final commit. `output/xgb-primary-v6-oof-
+predictions.csv` regenerated; every harness reading `AUSPOL_XGB_PRIMARY_LIVE=1`
+picks it up on its next run.
 
-**Before shipping**: the zero-vs-NA finding likely generalises to OTHER
+**Not yet done**: the zero-vs-NA finding likely generalises to OTHER
 existing features in this script using the same `ifelse(is.na(x), 0, x)`
 convention (`seat_prev_pcv` itself, at minimum, uses it) — worth an audit,
 not assumed. And the noise-floor finding (any added column costs ~0.014
