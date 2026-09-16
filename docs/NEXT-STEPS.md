@@ -18,11 +18,17 @@ the first class now runs in `check_like_ci.R`. What is left:
    local — which is what **wa** does for `FLOW_SD` and `FB_SMOOTH` — read as
    a gap when it is not. Both of the things that made this look like the
    repo's six-harness parity problem were artefacts.
-   **What survives, and is worth doing:** `AUSPOL_PARTY_COR` genuinely does
-   not appear in `backtest_candidate_wa.R` at all, in any form — wa does not
-   honour the switch, which is a real parity gap in BEHAVIOUR rather than in
-   a filename, and is the kind `docs/MODEL-REGISTRY.md` exists to catch.
-   Check that one against the registry before assuming it is an oversight.
+   **CLOSED 2026-09-17, nothing to do.** The one part I thought survived —
+   `AUSPOL_PARTY_COR` appearing nowhere in `backtest_candidate_wa.R` — is
+   deliberate and already documented. `docs/MODEL-REGISTRY.md:75` records it
+   as `wa = NO` and line 133 gives the reason: WA is excluded from the
+   statewide party-correlation matrix because `cor(ALP, IND)` is **−0.16 with
+   WA included** (that Assembly has almost no independents), per
+   `docs/reviews/statewide-cov-loo-2026-09-07.md:44`. I read the registry row
+   as six harnesses then `fit_seats`; the column order is `fit_seats` FIRST,
+   so the row I read as "all six yes" already said wa was out.
+   **The registry worked exactly as intended** — it is the check for this
+   rule, and reading it first would have closed the item without the detour.
 2. **A doc disagreement behind a code comment.** `R/demographic_residual.R`
    says fed2025 was discarded "over ONE seat out of 152", citing
    `prereg-demographic-axis-2026-09-15.md`; the sibling
