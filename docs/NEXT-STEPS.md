@@ -16,11 +16,19 @@ smaller behavioural jump for voters and is not excluded." Andrew is
 ONP -> KAP, exactly the excluded case, and his real result (31.66% -> 25.0%,
 21% relative loss) contradicts that assumption on this one case.
 
-**Not sized, not built.** Before touching `MAJ` or fitting a second rate:
-search the corpus for other minor-to-minor defections (same identity-match
-logic, `prior_party` and `current_party` both outside `MAJ` and unequal) and
-measure the same way Pattern A was sized on all 349 retirement cases before
-being built — one case does not overturn a design call sized on 14+.
+**SIZED, 2026-09-16 — real and significant.** 33 clean corpus cases
+(`prev_pcv >= 5`, excluding tiny-denominator noise): geometric mean
+retention **49%**, t-test on log-ratio p=0.0003, Wilcoxon p=0.037. Minor-to-
+minor defectors lose about half their personal vote on average — far from
+the "not excluded" (100% retained) treatment `MAJ` currently gives them.
+Mirani sits almost exactly at the geometric mean, not even the worst case.
+Full derivation: `docs/reviews/minor-to-minor-defector-2026-09-16.md`.
+
+**Not built.** Clears the sizing bar Pattern A needed before it shipped.
+Next: design decision on HOW to fold this into `personal_prior_vote()` —
+share the existing major-party rate, or fit a separate one (their retention
+scales may differ) — then build, NA-fill not 0-fill per tonight's lesson,
+measure against the model before shipping.
 
 **Also checked tonight, systematically, not left as a guess**: are there
 OTHER by-election-installed incumbents our code can't see? Cross-referenced
