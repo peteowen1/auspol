@@ -1,8 +1,13 @@
 # auspol — work queue
 
+## MERGED, 2026-09-17: PR #44 landed on `main` at `4e09ce3`
+
+All 102 files, fully reviewed. `dev` is at `b9a941f`, `main` now matches it.
+Branch not deleted (`dev` is the permanent working branch).
+
 ## CLOSED, 2026-09-17: PR #44 review — all items resolved
 
-Full review across all 102 files (`aea1cb7`..`a697c11`). Closed:
+Full review across all 102 files (`aea1cb7`..`b9a941f`). Closed:
 
 - CAL_TAG/`.arm_fingerprint` — false alarm, withdrawn; see the "Correct the
   record" and "Withdraw the fingerprint-parity item" commits (`fe91e68`,
