@@ -137,6 +137,34 @@ shipped seven hours after that backtest was taken. Every WA seat improved
 AEF's 0.2808 over 660 seats. The ledger artifact is refreshed to v13 and now
 picks the newest non-arm backtest per pair, so that staleness cannot recur.
 
+## 2026-09-16 evening: Pattern A tested — real signal, NA-fill beats 0-fill, and a noise-floor finding
+
+Built and tested `seat_outperf` (Pattern A from the 2026-09-13 worst-seats
+review — a senior retiring MP's personal-vote premium, sized on all 349
+retirement cases, r=0.176 p=0.001). Full trace:
+`docs/reviews/pattern-a-seat-outperf-2026-09-16.md`.
+
+**Not shipped**, but close and worth returning to: gated to the retiring
+incumbent's row, **NA-filled elsewhere (not the usual 0-fill)**, it clears a
+placebo-controlled comparison (+0.0061 pooled RMSE vs. a same-convention
+zero-information placebo) and gives a real targeted gain (held-party RMSE in
+retirement seats 7.6661 -> 7.2843; Riverstone's error roughly quarters).
+Richmond (a different, untested mechanism per the 2026-09-13 review) gets
+worse, as expected.
+
+**Bigger finding: adding ANY column to this pipeline costs ~0.014 pooled
+RMSE regardless of its information content** (measured directly with an
+all-zero and an all-NA placebo column, both costing the same). Every past
+"pooled RMSE moved by X" verdict in `fit_xgb_primary_v6.R` that added or
+removed a feature should be read against that floor, not at face value.
+And zero-fill vs NA-fill for a feature only meaningful on a row subset is
+not cosmetic — NA-fill halved the pooled cost here. `seat_prev_pcv` and
+other existing features use the same `ifelse(is.na(x), 0, x)` convention;
+worth auditing before assuming any of them are gated correctly.
+
+Next: decide whether to ship `seat_outperf` (NA-filled) as-is, and audit
+existing 0-filled features for the same fix.
+
 ## 2026-09-15 later — demographics: the signal is REAL, the correction is too small
 
 Two pre-registrations run and both refused, but the second one refused on
