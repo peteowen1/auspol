@@ -392,25 +392,11 @@ ships. Full note under "Where the guards are" in `ARCHITECTURE.md`.
 
 ### The stale-clone failure, which is the more useful finding
 
-Every poll-derived number quoted in this session before 17:40 came from
-`external/aus-polling-analyser` **19 commits behind, last pulled 2026-08-16**.
-Nothing warns about this: the clone is a plain git checkout, `load_polls()`
-reads whatever is on disk, and the row count it prints (`polls[vic]: 606
-rows`) looks exactly as healthy as a current one.
-
-It changed a verdict, not just a decimal. On the stale clone One Nation was
-2.85 off its polls and **breaching**; on current data it is 2.47 and **inside
-the bound**. A whole entry here described a live breach on the published
-Victorian forecast that does not exist. CI was right the entire time, because
-the workflow clones the anchor fresh on every run — the divergence was
-visible in both logs as `606 rows to 2026-08-08` against `607 rows to
-2026-08-12` and went unread.
-
-**So: `git -C external/aus-polling-analyser log -1` before quoting any poll
-number, and treat a CI/local disagreement as data staleness until proven
-otherwise.** Same rule this repo already applies to release assets, whose
-`createdAt` lies about freshness, and the same shape as the memory note about
-dated docs being snapshots.
+A 19-commit-stale `external/aus-polling-analyser` clone flipped this entry's
+verdict (2.85/breaching on stale data vs. 2.47/inside the bound on current) —
+not just a decimal, a whole false live-breach entry. Captured in persistent
+memory (`check-anchor-clone-freshness.md`): `git -C
+external/aus-polling-analyser log -1` before quoting any poll number.
 
 ## OVERNIGHT CONTINUATION, 2026-09-14 early morning — READ THIS FIRST
 
@@ -880,14 +866,19 @@ D is on). Full evidence moved to
    coverage is NSW/VIC/SA only, 6 of 22 pairs and 23% of seat-elections, on
    one 2021 vintage against elections from 2010 to 2026.
 
-1. **Seats that changed hands between elections are nearly invisible.**
-   19 of 893, and the damage is concentrated: Orange and Wagga Wagga in nsw2019
-   score 5.705 against 0.280 elsewhere, Morwell 2.175 against 0.224. Both NSW
-   seats were won at by-elections. Worth about **0.007 of pooled log loss**,
-   roughly 2%. The field that fixes it is already loaded — `load_seats()`
-   returns Orange as Shooters-held — and is known before polling day, so it is
-   leakage-free. Targeted fix, so the named seats are the primary metric and the
-   election-wide number is a do-no-harm guard.
+1. ~~Seats that changed hands between elections are nearly invisible~~ —
+   **WORKED THROUGH 2026-09-16, partially fixed, not closed.** The
+   `load_seats()` incumbent field this item pointed at was wired in but never
+   correctly reaching the model (`is_incumbent_party` compared our class
+   against a raw commission code and was silently FALSE for every minor-party
+   incumbent) — fixed and shipped, small real gain, see
+   `docs/reviews/incumbent-classification-bug-2026-09-16.md`. Orange and Wagga
+   Wagga themselves are still wrong by 30-50 points: traced to `own_prev_pcv`
+   being `NA` for both (by-election winners have no general-election match),
+   built and measured a by-election-data fallback, and it does not help (see
+   `docs/reviews/nsw-departed-member-opv-ruled-out-2026-09-16.md` and the
+   2026-09-16 entry at the top of this file). Needs a dedicated feature, not a
+   fallback fill — open.
 2. **The statewide covariance is settled for now.** Leakage closed
    (leave-one-out, effect nil), widened to 15 of the 21 pairs, and Western
    Australia deliberately excluded because cor(ALP, IND) flips sign on it.
