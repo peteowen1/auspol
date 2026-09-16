@@ -72,19 +72,31 @@ decay_w <- function(train_year, target_year, half_life) {
 region_w <- function(train_region, target_region, off_region) {
   ifelse(train_region == target_region, 1, off_region)
 }
+# SEAT MATCHING IS REGION-QUALIFIED, and the name-only version is kept only
+# to show why. 23 seat names appear in more than one jurisdiction (Murray in
+# three; Bass, Parramatta, Adelaide, Melbourne, Perth...), so matching on name
+# alone pulls in 8.8% cross-region rows corpus-wide -- and for sa2026, which
+# is the only South Australian election in the corpus, it is 100% spurious:
+# 365 "same seat" rows, none of them actually South Australian. A weight built
+# on that is measuring a name collision, not a seat.
 seat_w <- function(train_seat, target_seats, same_seat_boost) {
   ifelse(train_seat %in% target_seats, same_seat_boost, 1)
 }
+seat_region_w <- function(train_seat, train_region, target_seats, target_region, same_seat_boost) {
+  ifelse(train_region == target_region & train_seat %in% target_seats, same_seat_boost, 1)
+}
 
 SCHEMES <- list(
-  uniform          = function(tr, ty, trg, seats) rep(1, nrow(tr)),
-  decay_hl8        = function(tr, ty, trg, seats) decay_w(tr$el_year, ty, 8),
-  decay_hl4        = function(tr, ty, trg, seats) decay_w(tr$el_year, ty, 4),
-  region_only      = function(tr, ty, trg, seats) region_w(tr$region, trg, 0.4),
-  seat_only        = function(tr, ty, trg, seats) seat_w(tr$seat, seats, 3),
-  decay8_region    = function(tr, ty, trg, seats) decay_w(tr$el_year, ty, 8) * region_w(tr$region, trg, 0.4),
-  decay8_reg_seat  = function(tr, ty, trg, seats) decay_w(tr$el_year, ty, 8) * region_w(tr$region, trg, 0.4) * seat_w(tr$seat, seats, 3),
-  decay4_reg_seat  = function(tr, ty, trg, seats) decay_w(tr$el_year, ty, 4) * region_w(tr$region, trg, 0.4) * seat_w(tr$seat, seats, 3)
+  uniform           = function(tr, ty, trg, seats) rep(1, nrow(tr)),
+  decay_hl8         = function(tr, ty, trg, seats) decay_w(tr$el_year, ty, 8),
+  decay_hl4         = function(tr, ty, trg, seats) decay_w(tr$el_year, ty, 4),
+  region_only       = function(tr, ty, trg, seats) region_w(tr$region, trg, 0.4),
+  seat_name_only    = function(tr, ty, trg, seats) seat_w(tr$seat, seats, 3),
+  seat_region_x3    = function(tr, ty, trg, seats) seat_region_w(tr$seat, tr$region, seats, trg, 3),
+  seat_region_x6    = function(tr, ty, trg, seats) seat_region_w(tr$seat, tr$region, seats, trg, 6),
+  decay8_region     = function(tr, ty, trg, seats) decay_w(tr$el_year, ty, 8) * region_w(tr$region, trg, 0.4),
+  decay8_seatregion = function(tr, ty, trg, seats) decay_w(tr$el_year, ty, 8) * seat_region_w(tr$seat, tr$region, seats, trg, 3),
+  decay8_reg_seat   = function(tr, ty, trg, seats) decay_w(tr$el_year, ty, 8) * region_w(tr$region, trg, 0.4) * seat_region_w(tr$seat, tr$region, seats, trg, 3)
 )
 
 oof <- matrix(NA_real_, nrow = nrow(TX), ncol = length(SCHEMES),
