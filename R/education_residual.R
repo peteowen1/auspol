@@ -167,12 +167,21 @@ education_residual_apply <- function(shares, pair,
   z <- (f - mean(f)) / s
   tot <- rowSums(shares)
   applied <- character(0)
+  skipped <- character(0)
   for (cl in intersect(classes, colnames(shares))) {
     b <- education_residual_b(cl, pair, feature = feature, census = census,
                               shuffle = shuffle)
-    if (!is.finite(b)) next
+    if (!is.finite(b)) { skipped <- c(skipped, cl); next }
     shares[, cl] <- pmax(0, shares[, cl] + b * z)
     applied <- c(applied, sprintf("%s b=%+.4f", cl, b))
+  }
+  # PARTIAL failure was previously silent: total failure printed ER1!, but one
+  # class of three dropping out (not enough training rows for it specifically)
+  # produced no message at all -- only visible by diffing `applied` against
+  # `classes` by hand. Found by the review gate 2026-09-16.
+  if (length(skipped)) {
+    cat(sprintf("ER1! %s: not enough training rows, no correction applied\n",
+                paste(skipped, collapse = ", ")))
   }
   if (!length(applied)) {
     cat("ER1! no class had enough training rows; correction SKIPPED\n")

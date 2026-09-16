@@ -152,11 +152,19 @@ state_deviation_apply <- function(shares, pair, classes = c("ALP", "LNP"),
 
   tot <- rowSums(shares)
   applied <- character(0)
+  skipped <- character(0)
   for (cl in intersect(classes, colnames(shares))) {
     b <- state_deviation_b(cl, pair, dev = dev, shuffle = shuffle)
-    if (!is.finite(b)) next
+    if (!is.finite(b)) { skipped <- c(skipped, cl); next }
     shares[, cl] <- pmax(0, shares[, cl] + b * dv)
     applied <- c(applied, sprintf("%s b=%+.4f", cl, b))
+  }
+  # PARTIAL failure used to print nothing -- total failure (below) fires SD1!,
+  # but one class dropping out of several was only inferable by diffing
+  # `applied` against `classes` by hand. Found by the review gate 2026-09-16.
+  if (length(skipped)) {
+    cat(sprintf("SD1! %s: not enough training rows, no correction applied\n",
+                paste(skipped, collapse = ", ")))
   }
   if (!length(applied)) {
     cat(sprintf("SD1! no class could be fitted for %s; correction SKIPPED\n", pair))

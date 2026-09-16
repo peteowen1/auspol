@@ -211,12 +211,13 @@ demographic_residual_apply <- function(shares, pair,
 
   tot <- rowSums(shares)
   applied <- character(0)
+  skipped <- character(0)
   for (cl in intersect(classes, colnames(shares))) {
     fit <- demographic_residual_fit(cl, pair, features = usable,
                                     census = census, shuffle = shuffle)
-    if (is.null(fit) || !length(fit$b)) next
+    if (is.null(fit) || !length(fit$b)) { skipped <- c(skipped, paste0(cl, ": no fit")); next }
     bf <- intersect(names(fit$b), colnames(Z))
-    if (!length(bf)) next
+    if (!length(bf)) { skipped <- c(skipped, paste0(cl, ": fit columns absent from Z")); next }
     adj <- as.vector(Z[, bf, drop = FALSE] %*% fit$b[bf])
     # A seat with no census data has z = 0 on every column, so its adjustment is
     # already exactly zero; this is belt and braces against a future column
@@ -227,6 +228,12 @@ demographic_residual_apply <- function(shares, pair,
     applied <- c(applied, sprintf("%s[a=%.2f n=%d: %s]", cl, fit$alpha, fit$n,
                                   if (length(nz)) paste(sprintf("%s%+.3f", nz, fit$b[nz]),
                                                         collapse = " ") else "all shrunk to zero"))
+  }
+  # PARTIAL failure used to print nothing -- total failure (below) fires DR1!,
+  # but one class of several dropping out was only inferable by diffing
+  # `applied` against `classes` by hand. Found by the review gate 2026-09-16.
+  if (length(skipped)) {
+    cat(sprintf("DR1! %s\n", paste(skipped, collapse = "; ")))
   }
   if (!length(applied)) {
     cat(sprintf("DR1! no class could be fitted for %s; correction SKIPPED\n", pair))
