@@ -1,3 +1,15 @@
+# MODEL VARIANT TAG, so an experimental retrain can be A/B'd against the
+# shipped models without overwriting them. `AUSPOL_FLOW_MODEL_TAG=w` reads
+# `output/xgb-flows-v1w-loo-<election>.model`; unset reads the shipped
+# `xgb-flows-v1-loo-<election>.model` and is byte-identical to before this
+# existed. The feature COLUMNS file is shared -- a variant that changed the
+# feature set would need its own, and this is asserted rather than assumed
+# by the column check `predict()` already performs on the matrix it is given.
+.flow_model_tag <- function() {
+  t <- Sys.getenv("AUSPOL_FLOW_MODEL_TAG", "")
+  if (nzchar(t)) paste0("-", t) else ""
+}
+
 #' Build an xgb-flows-v1 conditional flow list for one target election
 #'
 #' Experimental, gated behind `AUSPOL_XGB_FLOWS` -- see
@@ -26,7 +38,7 @@
 xgb_flow_conditional_for <- function(target_election, prev_election, region, min_events = 3L) {
   # Same leave-one-election-out rule as the per-seat version below -- see its
   # comment for why the all-data model is a leaked backtest.
-  loo_f   <- sprintf("output/xgb-flows-v1-loo-%s.model", target_election)
+  loo_f   <- sprintf("output/xgb-flows-v1%s-loo-%s.model", .flow_model_tag(), target_election)
   model_f <- if (file.exists(loo_f)) loo_f else "output/xgb-flows-v1-final.model"
   if (!identical(model_f, loo_f))
     cat(sprintf("XF9! %s not found -- falling back to the ALL-DATA model, which SAW %s in training. This arm is LEAKED; run scripts/fit_xgb_flows_loo.R.\n",
@@ -147,7 +159,7 @@ xgb_flow_conditional_override_for <- function(shares, target_election, prev_elec
   # scripts/fit_xgb_flows_loo.R writes one model per held-out election; prefer
   # it, and say loudly when falling back, because a silent fallback is a
   # leaked backtest that reads as a good result.
-  loo_f   <- sprintf("output/xgb-flows-v1-loo-%s.model", target_election)
+  loo_f   <- sprintf("output/xgb-flows-v1%s-loo-%s.model", .flow_model_tag(), target_election)
   cols_f  <- "output/xgb-flows-v1-final-cols.json"
   feat_f  <- "output/xgb-flows-v1-features.csv"
   model_f <- if (file.exists(loo_f)) loo_f else "output/xgb-flows-v1-final.model"

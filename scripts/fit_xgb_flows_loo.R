@@ -49,6 +49,44 @@ y <- TX$y
 elections <- sort(unique(TX$election))
 fold_id <- match(TX$election, elections)
 
+# TRAINING-ROW WEIGHTS, off by default (uniform = byte-identical to before
+# this existed). Preference flows drift and a seat's own past behaviour is
+# better evidence about it than a different state's, so a flat weight over a
+# 1996-2026 corpus is a modelling choice, not a neutral default.
+# `decay8_seatregion` = 8-year half-life on recency x3 on the target's own
+# seats, region-qualified. Region qualification is NOT optional: 23 seat
+# names appear in more than one jurisdiction, and for sa2026 a name-only
+# match is 100% spurious. Chosen over seven alternatives on held-out flow
+# RMSE plus per-election consistency -- scripts/fit_xgb_flows_weighted.R,
+# and the weight functions below are deliberately identical to that
+# script's so the retrain reproduces what the experiment measured.
+#
+# WRITE TO A TAGGED FILENAME. AUSPOL_FLOW_MODEL_TAG=w writes
+# xgb-flows-v1-w-loo-<election>.model, which xgb_flow_conditional_override_for()
+# reads under the same variable -- so a weighted retrain can be A/B'd against
+# the shipped models without overwriting them.
+WEIGHT_SCHEME <- Sys.getenv("AUSPOL_FLOW_WEIGHT", "")
+MODEL_TAG <- Sys.getenv("AUSPOL_FLOW_MODEL_TAG", "")
+tag_sfx <- if (nzchar(MODEL_TAG)) paste0("-", MODEL_TAG) else ""
+TX[, el_year := as.integer(sub("^[a-z]+", "", election))]
+if (nzchar(WEIGHT_SCHEME) && anyNA(TX$el_year))
+  stop("AUSPOL_FLOW_WEIGHT set but a year could not be parsed from: ",
+       paste(unique(TX$election[is.na(TX$el_year)]), collapse = ", "))
+
+weights_for <- function(tr, target_year, target_region, target_seats) {
+  if (!nzchar(WEIGHT_SCHEME)) return(rep(1, nrow(tr)))
+  if (!identical(WEIGHT_SCHEME, "decay8_seatregion"))
+    stop("unknown AUSPOL_FLOW_WEIGHT: ", WEIGHT_SCHEME,
+         " (only \"decay8_seatregion\" is implemented; add it to ",
+         "scripts/fit_xgb_flows_weighted.R first and measure it there)")
+  decay <- 0.5 ^ (pmax(0, target_year - tr$el_year) / 8)
+  seat_boost <- ifelse(tr$region == target_region & tr$seat %in% target_seats, 3, 1)
+  decay * seat_boost
+}
+cat(sprintf("XL1w weight scheme %s | model tag %s\n",
+            if (nzchar(WEIGHT_SCHEME)) WEIGHT_SCHEME else "uniform (default)",
+            if (nzchar(tag_sfx)) tag_sfx else "(none, writes the shipped names)"))
+
 params <- list(objective = "reg:squarederror", eta = 0.05, max_depth = 4,
                 subsample = 0.8, colsample_bytree = 0.8, min_child_weight = 5)
 
@@ -66,11 +104,14 @@ for (e in elections) {
   # A held-out election that leaves nothing to train on would silently produce
   # a model fitted on an empty set; refuse instead.
   if (sum(keep) < 100L) { cat(sprintf("XL3! %s: only %d training rows -- skipped\n", e, sum(keep))); next }
+  w <- weights_for(TX[keep], TX$el_year[!keep][1], TX$region[!keep][1], unique(TX$seat[!keep]))
+  stopifnot(length(w) == sum(keep), all(is.finite(w)), all(w > 0))
   set.seed(42)
   m <- xgb.train(params = params,
-                 data = xgb.DMatrix(data = X[keep, , drop = FALSE], label = y[keep], missing = NA),
+                 data = xgb.DMatrix(data = X[keep, , drop = FALSE], label = y[keep],
+                                    weight = w, missing = NA),
                  nrounds = best_n, verbose = 0)
-  f <- file.path(OUT, sprintf("xgb-flows-v1-loo-%s.model", e))
+  f <- file.path(OUT, sprintf("xgb-flows-v1%s-loo-%s.model", tag_sfx, e))
   xgb.save(m, f)
   # PROVE the held-out rows were actually held out: a model trained without
   # election e should score WORSE on e than the all-data model does. Printing
@@ -80,5 +121,5 @@ for (e in elections) {
   cat(sprintf("XL3  %-8s trained on %5d rows, held out %4d; RMSE on held-out %.4f\n",
               e, sum(keep), sum(!keep), sqrt(mean((pe - y[!keep])^2))))
 }
-cat(sprintf("\nXL4  wrote %d leave-one-election-out models to %s/xgb-flows-v1-loo-<election>.model\n",
-            length(elections), OUT))
+cat(sprintf("\nXL4  wrote %d leave-one-election-out models to %s/xgb-flows-v1%s-loo-<election>.model\n",
+            length(elections), OUT, tag_sfx))
