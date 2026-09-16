@@ -1079,6 +1079,19 @@ sim <- simulate_seat_contests(level_sd = .level_sd, sd_override = SD_OVR, level_
                               conditional_override = .xgb_flow_ov,
                               surge_h = surge_arg, surge_party = surge_party_arg,
                                 surge_from_zero = identical(Sys.getenv("AUSPOL_SURGE_FROM_ZERO", "0"), "1"), surge_mu = surge_mu_arg, surge_sd = surge_sd_arg)
+
+# OUR OWN final-two scenario frequencies -- see tcp_scenarios(). Pete asked
+# 2026-09-16 whether we track how often a seat lands on each possible
+# head-to-head; simulate_seat_contests() already computes this per draw and
+# every harness discarded it. Written per pair so build_aef_tcp.R-style
+# tooling can compare against AEF's own seatTcpScenarios.
+.scen <- tcp_scenarios(sim)
+if (!is.null(.scen) && nrow(.scen)) {
+  fwrite(.scen, file.path("output", sprintf("backtest-%s-ourtcp%s.csv", TGT, CAL_TAG)))
+  cat(sprintf("BS2t  wrote %d seat/scenario rows to backtest-%s-ourtcp%s.csv
+",
+              nrow(.scen), TGT, CAL_TAG))
+}
 cat(sprintf("BS2e  engine %s | surge recipient fell back: %d class(es) absent, %d seat-draws at zero share\n", sim$engine, sim$surge_recipient_fallback, sim$surge_recipient_fallback_draws))
 wp <- as.data.table(sim$win_prob)
 
