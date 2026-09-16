@@ -161,6 +161,14 @@ PUBLISHED_FLAGS <- c(
                                              # breached no floor, improved pooled log loss / Victoria / WA, and made only
                                              # ONE panel metric worse. Recorded as a JUDGEMENT, not a measurement.
                                              # docs/plans/prereg-defector-two-rate-2026-09-09.md
+  AUSPOL_MINOR_DEFECT        = "1",          # discount a candidate's own_prev_pcv when they switched between two
+                                             # NON-major parties (Stephen Andrew, ONP -> KAP, Mirani qld2024) --
+                                             # fit_minor_defector_discount(), leave-target-out median, same shape as
+                                             # AUSPOL_DEFECT_POOLED but for the case MAJ <- c("ALP","LNP","NAT")
+                                             # excludes by design. Sized on 33 corpus cases (geometric mean retention
+                                             # 0.49, p=0.0003), measured: targeted RMSE 9.2363 -> 8.8813, pooled RMSE
+                                             # 3.8161 -> 3.8178 (well within the ~0.014-per-column noise floor found
+                                             # the same session). docs/reviews/minor-to-minor-defector-2026-09-16.md
   # the statewide input and the simulation
   AUSPOL_N_SIMS              = "20000",
   AUSPOL_SIM_ENGINE          = "cpp",        # compiled core; proven byte-identical to the R engine on a full fed2022 run 2026-09-07 (45 s vs ~11 min)

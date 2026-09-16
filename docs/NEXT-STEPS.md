@@ -24,11 +24,16 @@ the "not excluded" (100% retained) treatment `MAJ` currently gives them.
 Mirani sits almost exactly at the geometric mean, not even the worst case.
 Full derivation: `docs/reviews/minor-to-minor-defector-2026-09-16.md`.
 
-**Not built.** Clears the sizing bar Pattern A needed before it shipped.
-Next: design decision on HOW to fold this into `personal_prior_vote()` —
-share the existing major-party rate, or fit a separate one (their retention
-scales may differ) — then build, NA-fill not 0-fill per tonight's lesson,
-measure against the model before shipping.
+**BUILT, MEASURED, SHIPPED, 2026-09-16.** Fit a SEPARATE rate rather than
+sharing the major-party one (retention scales differ: 49% here vs
+~28%/~14% for major-party sitting-member/non-member). `fit_minor_defector_
+discount()` mirrors `fit_defector_discount()` exactly (leave-target-out,
+`min_prior=10`, median). Wired as `personal_prior_vote(..., minor_discount=)`
+(NULL default, byte-identical unless opted in) and `AUSPOL_MINOR_DEFECT`
+(published ON). Targeted RMSE 9.2363 -> 8.8813 (33 cases, not cherry-picked),
+Mirani specifically 8.666 -> 6.511 error. Pooled cost +0.0017 — an order of
+magnitude inside the ~0.014-per-column noise floor, clears the do-no-harm
+guard cleanly. Full numbers: `docs/reviews/minor-to-minor-defector-2026-09-16.md`.
 
 **Also checked tonight, systematically, not left as a guess**: are there
 OTHER by-election-installed incumbents our code can't see? Cross-referenced

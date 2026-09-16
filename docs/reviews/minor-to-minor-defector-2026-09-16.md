@@ -62,20 +62,36 @@ already documents for major-party cases.
 - **Not why some cases gain and some collapse.** Same open question the
   major-defector comment already names for its own cases: "what separates
   them... is not in any column this repo has."
-- **Not measured against the model.** This is a corpus-level sizing check
-  only, same stage Pattern A was at before it was built and retrained. The
-  actual model effect (pooled RMSE, targeted seats, NA-fill vs 0-fill for
-  the discount factor — apply the same lesson from tonight's `seat_outperf`
-  work) is not yet tested.
+## Built, measured, SHIPPED
 
-## Recommendation
+Fit a SEPARATE rate rather than sharing the major-party one — their
+retention scales differ (49% here vs. ~28%/~14% for major-party sitting-
+member/non-member), so a shared rate risked being wrong for both.
+`fit_minor_defector_discount()` (`R/candidate_returns.R`), same shape as
+`fit_defector_discount()`: leave-target-out, `min_prior = 10`, median ratio.
+Wired into `personal_prior_vote()` as a new `minor_discount` parameter
+(`NULL` default — byte-identical unless a caller opts in) and into
+`fit_xgb_primary_v6.R` via `AUSPOL_MINOR_DEFECT`, published ON
+(`scripts/published_flags.R`).
 
-The evidence clears the bar Pattern A needed before building: real,
-significant, sized on the full corpus, not the one case that found it. Next
-step, if this gets built: extend `personal_prior_vote()`'s discount logic to
-cover minor-to-minor transitions — either folding them into the existing
-`MAJ` set's mechanism (risk: their retention scale may differ from
-major-party defectors' 0.14-0.28, so a shared rate could be wrong for both)
-or fitting a separate minor-to-minor rate the same way
-`fit_defector_discount()` fits the major-party one. Needs a design decision
-before building, not a default.
+Per-pair leave-target-out rates cluster around 0.30-0.34, one outlier at
+0.556 (wa2005, n=14, thinnest fold).
+
+| | before | after |
+|---|--:|--:|
+| targeted (33 cases) RMSE | 9.2363 | **8.8813** |
+| targeted mean abs error | 7.496 | **7.251** |
+| Mirani/OTH_RIGHT error specifically | 8.666 | **6.511** |
+| pooled OOF RMSE (all 13,739 rows) | 3.8161 | 3.8178 (+0.0017) |
+
+Targeted gain is real (~3.8% RMSE reduction) and not Mirani-specific — the
+aggregate improves across all 33 cases, not cherry-picked. Pooled cost
+(+0.0017) is an order of magnitude inside the ~0.014-per-column noise floor
+established the same session (`docs/reviews/pattern-a-seat-outperf-
+2026-09-16.md`), so this clears the do-no-harm guard cleanly, unlike
+`seat_outperf`'s narrower placebo-controlled case.
+
+**Not established** (same limits as before building): not a
+finely-calibrated rate the way the major-party version is (33 mixed-direction
+cases vs. 14+ feeding one direction); still no column that explains why some
+defections collapse and some gain.

@@ -246,7 +246,30 @@ for (pr in PAIRS) {
   }
   nowc  <- C[C$election == pr$election][, list(n_cand_now = .N), by = list(seat, party)]
   ret <- tryCatch(candidate_returns(pr$prev, pr$election), error = function(e) NULL)
-  pv  <- tryCatch(personal_prior_vote(pr$prev, pr$election), error = function(e) NULL)
+  # AUSPOL_MINOR_DEFECT: the minor-to-minor party-defector discount sized in
+  # docs/reviews/minor-to-minor-defector-2026-09-16.md (Mirani qld2024,
+  # Stephen Andrew ONP -> KAP). Leave-target-out per pair, same convention
+  # as fit_defector_discount(). SHIPPED ON by default (published_flags.R):
+  # 33 corpus cases, geometric mean retention 0.49 (p=0.0003), measured
+  # targeted RMSE 9.2363 -> 8.8813 against a pooled cost (+0.0017) well
+  # inside the ~0.014-per-column noise floor found the same session.
+  .minor_disc <- NULL
+  if (identical(Sys.getenv("AUSPOL_MINOR_DEFECT", "1"), "1")) {
+    .mfd <- tryCatch(fit_minor_defector_discount(pr$election), error = function(e) {
+      cat(sprintf("XG9! minor-defector fit FAILED for %s: %s\n", pr$election, conditionMessage(e)))
+      NULL
+    })
+    if (!is.null(.mfd) && !is.null(.mfd$discount) && is.finite(.mfd$discount)) {
+      .minor_disc <- .mfd$discount
+      cat(sprintf("XG9  %s: minor-defector discount %.3f (n=%d leave-target-out cases)\n",
+                  pr$election, .minor_disc, .mfd$n))
+    } else {
+      cat(sprintf("XG9! %s: minor-defector discount NOT fit (n=%s), no discount applied\n",
+                  pr$election, if (is.null(.mfd)) "NULL" else .mfd$n))
+    }
+  }
+  pv  <- tryCatch(personal_prior_vote(pr$prev, pr$election, minor_discount = .minor_disc),
+                  error = function(e) NULL)
   sd_pair <- SD[pair == pr$election]
   if (!nrow(sd_pair)) { cat(sprintf("XG6! no sharedetail rows for %s -> skip\n", pr$election)); next }
   # sharedetail's own column is `pred_share` (see the file-level comment at
