@@ -1,5 +1,31 @@
 # auspol — work queue
 
+## NEW, 2026-09-17: a minor-to-major party switcher can erase a retiring
+## major incumbent's entire seat base — real, live, not yet sized or fixed
+
+Found tracing the single worst per-seat regression in today's
+(refused) `base_margin` experiment — Pilbara/wa2013, `base_pred` predicted
+LNP at 81.94% against actual 61.73%. **The cause has nothing to do with
+that experiment**: confirmed by direct instrumentation of
+`backtest_candidate_wa.R`, `personal_prior_vote()`'s `own_prev_pcv`
+substitution let Howlett (GRN in 2008, 9.63%, switched to ALP in 2013 as
+the new candidate after the actual ALP incumbent Stephens retired) replace
+Stephens' real 44.38% seat base with Howlett's own unrelated 9.63% history.
+ALP's projected class share collapsed to 6.93%, the seat's row summed to
+61.50 instead of 100, and renormalisation inflated every OTHER class
+proportionally — including LNP, to 81.94%, though nothing about LNP's own
+projection was wrong.
+
+This is the mirror image of today's major-defector conservation question
+(settled: keep conserving) — a MINOR-party candidate arriving into a major
+party's seat, rather than a MAJOR-party member leaving one. Never measured,
+never named as a distinct case. Full trace:
+[reviews/minor-to-major-personal-vote-substitution-2026-09-17.md](reviews/minor-to-major-personal-vote-substitution-2026-09-17.md).
+**Not sized against the corpus yet** — how often does this pattern occur,
+and how wrong does it make the projection each time? Needs the same
+sizing-before-criterion treatment as today's other pre-registrations before
+deciding whether/how to fix it.
+
 ## MERGED, 2026-09-17: PR #44 landed on `main` at `4e09ce3`
 
 All 102 files, fully reviewed. `dev` is at `b9a941f`, `main` now matches it.
