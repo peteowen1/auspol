@@ -261,17 +261,18 @@ for (pr in PAIRS) {
     })
     if (!is.null(.mfd) && !is.null(.mfd$discount) && is.finite(.mfd$discount)) {
       .minor_disc <- .mfd$discount
-      # TWO-RATE: docs/reviews/minor-defector-two-rate-2026-09-17.md. Sitting
-      # members retain far more of their vote after a minor-to-minor (or
-      # minor-to-IND) switch than a non-sitting candidate does -- 1.08 vs
-      # 0.276 median across the corpus, same shape as major_discount/
-      # loser_discount. Falls back to the single pooled rate above when
-      # either group's leave-target-out fit lacks enough cases.
-      if (!is.null(.mfd$discount_mp) && is.finite(.mfd$discount_mp)) .minor_disc <- .mfd$discount_mp
+      # TWO-RATE, REVISED 2026-09-18: docs/reviews/minor-defector-two-rate-
+      # 2026-09-17.md. A confirmed sitting-member switcher gets NO discount
+      # at all -- leave-one-out cross-validated against all 5 sitting corpus
+      # cases, flat 1.0 halves the squared error a fitted rate gets (0.405 vs
+      # 0.782); n=5 is too thin to fit a rate below 1 usefully. `.minor_disc`
+      # is only the fallback rate for unknown sitting status; `.minor_disc_loser`
+      # (median 0.276, n=13, well-powered) applies to confirmed non-sitting
+      # switchers.
       if (!is.null(.mfd$discount_loser) && is.finite(.mfd$discount_loser)) .minor_disc_loser <- .mfd$discount_loser
       cat(sprintf("XG9  %s: minor-defector discount %.3f%s (n=%d leave-target-out cases)\n",
                   pr$election, .minor_disc,
-                  if (!is.null(.minor_disc_loser)) sprintf(" (sitting-member; non-sitting %.3f)", .minor_disc_loser) else "",
+                  if (!is.null(.minor_disc_loser)) sprintf(" (unknown-status; sitting=NO DISCOUNT, non-sitting %.3f)", .minor_disc_loser) else "",
                   .mfd$n))
     } else {
       cat(sprintf("XG9! %s: minor-defector discount NOT fit (n=%s), no discount applied\n",

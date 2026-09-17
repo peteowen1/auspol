@@ -293,18 +293,23 @@ test_that("a minor-to-major switcher cannot erase the major's own retiring incum
   expect_true(is.na(x$transfer))
 })
 
-test_that("minor_discount_loser gives a SITTING minor-party defector the higher rate", {
+test_that("minor_discount_loser gives a CONFIRMED SITTING minor-party defector NO discount at all", {
   # Orange/Murray/Barwon's real shape: a sitting Shooters-Fishers-and-Farmers
   # (OTH_RIGHT) member formally quits and recontests as Independent, keeping
   # the seat. Found 2026-09-17: the single pooled minor_discount rate treated
   # this identically to a losing candidate's relabel, badly under-predicting
-  # three real sitting members. docs/reviews/minor-defector-two-rate-2026-09-17.md.
+  # three real sitting members. REVISED 2026-09-18 after shipping a fitted
+  # sitting-member rate and finding it made those same three seats worse:
+  # leave-one-out cross-validated against all 5 sitting corpus cases, flat
+  # 1.0 (no discount) halves the squared error a fitted rate gets (n=5 is
+  # too thin to fit below 1 usefully). docs/reviews/minor-defector-two-rate-
+  # 2026-09-17.md.
   d <- data.table::data.table(
     election = c("e1", "e2"), seat = "Orange", party = c("OTH_RIGHT", "IND"),
     surname = "DONATO", given = "Philip", pcv = c(49.1, 53.1),
     elected = c(TRUE, FALSE), name = NA_character_)
   r <- personal_prior_vote("e1", "e2", d, minor_discount = 0.71, minor_discount_loser = 0.28)
-  expect_equal(r[seat == "Orange" & party == "IND"]$own_prev_pcv, 49.1 * 0.71)
+  expect_equal(r[seat == "Orange" & party == "IND"]$own_prev_pcv, 49.1)
 })
 
 test_that("minor_discount_loser gives a NON-SITTING minor-party defector the lower rate", {

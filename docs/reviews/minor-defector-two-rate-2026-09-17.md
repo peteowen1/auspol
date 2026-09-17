@@ -107,3 +107,62 @@ Not fixed, because there is no usable evidence to fit a rate from --
 recorded here rather than silently dropped, per this repo's own rule that
 "a request leaves the register when it ships, or when told plainly it is
 not happening and why."
+
+## Update, 2026-09-18: `AUSPOL_MINOR_DEFECT_BASE_PRED` retested and shipped, revised
+
+The fix above (`0a834e0`) only reached `AUSPOL_MINOR_DEFECT`'s xgb
+FEATURE. It does not touch `base_pred` -- that requires the separate
+`AUSPOL_MINOR_DEFECT_BASE_PRED` flag, off by default because the OLD
+single-rate version of this discount was refused there on 2026-09-16
+(helped Mirani, made a targeted RMSE aggregate worse, 8.8813 -> 11.4315).
+Pete asked to retest it now that the discount has a two-rate split.
+
+**First retest (fitted sitting-member rate) showed 0.000000 delta on
+Murray/Orange/Barwon** despite the discount being correctly computed and
+logged. Root cause: the published default `AUSPOL_XGB_PRIMARY=1` runs an
+XGB override AFTER `dev_slope()` that replaces `shares` entirely, so any
+base_pred-flag test under default settings measures nothing -- the fix
+was firing correctly, just being overwritten downstream before the number
+ever reaches `pooled-sharedetail.csv`. Retesting with `AUSPOL_XGB_PRIMARY=0`
+(this repo's own established method for isolating base_pred, per the
+2026-09-16 "4-step non-circular retrain" note) confirmed the wiring works.
+
+**But the fitted sitting-member rate made things worse, not better.**
+Orange moved from an undiscounted 52.44 (already close to actual 53.08) to
+a discounted 44.96 -- away from truth. The leave-target-out fit for
+nsw2023 draws on only 2 other sitting cases (Mirani 0.79, Kennedy 0.63),
+underestimating what Murray/Orange/Barwon (108-136% retention) needed.
+
+**Revised: a confirmed sitting-member switcher now gets NO discount at
+all**, not a fitted rate. Leave-one-out cross-validated against all 5
+sitting-member corpus cases (Barwon 1.36, Murray 1.30, Orange 1.08, Mirani
+0.79, Kennedy 0.63): predicting flat 1.0 gives HALF the squared error
+(0.405) of predicting each case from the other four's median (0.782) --
+n=5 is too thin to fit a rate below 1 usefully, and the median/mean (1.08
+/ 1.03) both sit almost exactly on "keep it all" anyway. The 13-case
+non-sitting rate (median 0.276) is unaffected -- well-powered, no such
+problem. `personal_prior_vote()`'s `minor_discount` parameter now means
+"the rate for a switcher whose sitting status is unknown" when
+`minor_discount_loser` is also given, not "the sitting-member rate" --
+updated in its own roxygen doc, all 8 call sites, and the regression
+tests.
+
+**Shipped**: `AUSPOL_MINOR_DEFECT_BASE_PRED = "1"` added to
+`published_flags.R`. Measured across the 14 pairs with a real
+minor-to-minor case (nsw2023, qld2024, fed2013/2016/2019/2022/2025,
+wa2001/2005/2008/2013/2017/2021/2025), `AUSPOL_XGB_PRIMARY=0` both sides:
+pooled RMSE 4.0554 -> 4.0568 (n=8,910, +0.0014, negligible -- a much
+better do-no-harm result than the original refusal's real cost).
+Murray/Orange/Barwon move from their old ~14-18 base_pred to
+52.44/39.78/37.25 (actual 53.08/53.31/45.83) -- large, correctly directed,
+still short of full retention because `dev_slope()` applies its own
+returning-candidate slope on top.
+
+**Honest trade-off, not hidden**: Mirani and Kennedy (the other 2 of 5
+sitting cases, both of whom actually lost vote after switching) also
+revert to no discount, undoing 2026-09-16's Mirani-specific improvement --
+back to over-predicting Mirani at 33.24 against actual 27.86. Accepted
+because the aggregate evidence (half the cross-validated error) favours
+one rule applied uniformly over a rate fitted well enough for 3 of 5 cases
+and badly for the other 2, with no way to tell in advance which a new
+target's own case will be.

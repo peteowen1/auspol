@@ -315,29 +315,46 @@ leading_candidate_returns <- function(election_from, election_to, corpus = NULL)
 #'   party, so without this the old class's full, undiscounted result carries
 #'   forward as the new class's base. `NULL` (the default) leaves this
 #'   byte-identical to before the parameter existed. When `minor_discount_loser`
-#'   is also given, this rate applies ONLY to a switcher who was the SITTING
-#'   MEMBER at the prior election; otherwise it applies to everyone (the old,
-#'   single-rate behaviour). The value the harnesses pass is
-#'   [fit_minor_defector_discount()]'s own return -- a MEDIAN over 18
-#'   corpus cases, 0.3255 for most targets. (The review's headline "49%" is a
-#'   geometric mean at a lower `min_prior` and is NOT what ships; see that
-#'   function's docstring.) See
+#'   is also given (two-rate mode), this rate applies ONLY to a switcher whose
+#'   sitting-member status at the prior election is UNKNOWN (no `elected`
+#'   column) -- a confirmed sitting member gets NO discount at all (see
+#'   `minor_discount_loser`'s own doc for why), so this becomes the fallback
+#'   rate for the one case that is neither confirmed sitting nor confirmed
+#'   non-sitting. Without `minor_discount_loser`, this applies to every
+#'   switcher (the old, single-rate behaviour). The value the harnesses pass
+#'   is [fit_minor_defector_discount()]'s own pooled `discount` field -- a
+#'   MEDIAN over 18 corpus cases, 0.3255 for most targets. (The review's
+#'   headline "49%" is a geometric mean at a lower `min_prior` and is NOT
+#'   what ships; see that function's docstring.) See
 #'   `docs/reviews/minor-to-minor-defector-2026-09-16.md`.
 #' @param minor_discount_loser Optional numeric. Rate applied to a
-#'   minor-to-minor (or minor-to-IND, IND-to-minor) switcher who was NOT the
-#'   sitting member at the prior election, when it should differ from
-#'   `minor_discount`. `NULL` (the default) gives every switcher
-#'   `minor_discount`'s single rate, byte-identical to before this parameter
-#'   existed. Found 2026-09-17 tracing why Murray, Orange and Barwon's real
-#'   sitting-member Shooters-Fishers-and-Farmers-to-Independent departures
-#'   (retention 108-136%) were badly under-predicted by the single pooled
-#'   rate: of 18 corpus cases, the 5 sitting-member switches retain a median
-#'   1.08 and the 13 non-sitting retain 0.276 -- the same 4x gap
-#'   `major_discount`/`loser_discount` already exists to handle for
-#'   major-party defectors. A prior candidate whose sitting-member status is
-#'   unknown (older data with no `elected` column) gets `minor_discount`, not
-#'   this rate -- "unknown" is never read as "definitely not the sitting
-#'   member". `docs/reviews/minor-defector-two-rate-2026-09-17.md`.
+#'   minor-to-minor (or minor-to-IND, IND-to-minor) switcher CONFIRMED NOT to
+#'   be the sitting member at the prior election. `NULL` (the default) gives
+#'   every switcher `minor_discount`'s single rate, byte-identical to before
+#'   this parameter existed.
+#'
+#'   A CONFIRMED SITTING MEMBER gets NO discount when this is set -- not a
+#'   fitted "sitting-member rate". Found 2026-09-17 tracing why Murray,
+#'   Orange and Barwon's real sitting-member Shooters-Fishers-and-Farmers-to-
+#'   Independent departures (retention 108-136%) were badly under-predicted
+#'   by the single pooled rate, and revised 2026-09-18 after actually
+#'   shipping a fitted sitting-member rate and finding it made those same
+#'   three seats WORSE, not better: [fit_minor_defector_discount()]'s
+#'   leave-target-out fit for nsw2023 draws only on the other two sitting
+#'   cases (Mirani 0.79, Kennedy 0.63), giving 0.71 -- an underestimate for
+#'   seats that actually retained 108-136%. Leave-one-out cross-validated
+#'   against all 5 sitting-member corpus cases (Barwon 1.36, Murray 1.30,
+#'   Orange 1.08, Mirani 0.79, Kennedy 0.63): predicting flat 1.0 (no
+#'   discount) gives HALF the squared error (0.405) of predicting each case
+#'   from the other four's median (0.782) -- n=5 is too thin to fit a rate
+#'   below 1 usefully, and the corpus median/mean (1.08 / 1.03) both sit
+#'   almost exactly on "keep it all" anyway. The 13-case non-sitting rate
+#'   (median 0.276) has no such problem and is used as fitted.
+#'
+#'   A switcher whose prior status is unknown (`prev_was_mp` is NA -- older
+#'   data with no `elected` column) gets `minor_discount`, not this rate --
+#'   "unknown" is never read as "definitely not the sitting member".
+#'   `docs/reviews/minor-defector-two-rate-2026-09-17.md`.
 #' @export
 personal_prior_vote <- function(election_from, election_to, corpus = NULL,
                                major_discount = NULL, pooled = NULL,
@@ -593,12 +610,25 @@ personal_prior_vote <- function(election_from, election_to, corpus = NULL,
     .switched <- !is.na(out$own_prev_pcv) & !out$prev_party %in% MAJ &
                  !out$party %in% MAJ & out$prev_party != out$party
     if (!is.null(minor_discount_loser) && is.finite(minor_discount_loser)) {
-      # TWO-RATE: a confirmed sitting-member switcher gets `minor_discount`,
-      # a confirmed NON-sitting switcher gets `minor_discount_loser`. A
+      # TWO-RATE, REVISED 2026-09-18: a confirmed SITTING-MEMBER switcher
+      # gets NO discount at all (ratio 1, full retention) -- not
+      # `minor_discount` applied as a multiplier. Found leave-one-out cross-
+      # validating the fitted sitting-member rate against all 5 corpus
+      # cases (Barwon 1.36, Murray 1.30, Orange 1.08, Mirani 0.79, Kennedy
+      # 0.63): predicting flat 1.0 gives HALF the squared error (0.405) of
+      # predicting each case from the other four's median (0.782) --
+      # n=5 is too thin to fit a rate below 1 usefully, and the corpus
+      # median/mean (1.08 / 1.03) both sit almost exactly on "keep it all"
+      # anyway. `minor_discount` still applies to a switcher whose sitting
+      # status is UNKNOWN (see below) -- it is the pooled rate for that
+      # case, not the (now-unused-for-sitting-members) MP-specific rate.
+      # docs/reviews/minor-defector-two-rate-2026-09-17.md.
+      # A confirmed NON-sitting switcher gets `minor_discount_loser`. A
       # switcher whose prior status is unknown (`prev_was_mp` is NA -- older
       # data with no `elected` column) falls back to `minor_discount`, the
       # single-rate behaviour, rather than being guessed into either bucket.
-      out[.switched & out$prev_was_mp %in% TRUE,  own_prev_pcv := own_prev_pcv * minor_discount]
+      # prev_was_mp %in% TRUE: no line needed -- own_prev_pcv is left exactly
+      # as prev_best found it, i.e. full retention.
       out[.switched & out$prev_was_mp %in% FALSE, own_prev_pcv := own_prev_pcv * minor_discount_loser]
       out[.switched & is.na(out$prev_was_mp),     own_prev_pcv := own_prev_pcv * minor_discount]
     } else {

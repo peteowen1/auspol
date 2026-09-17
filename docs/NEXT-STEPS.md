@@ -1,5 +1,49 @@
 # auspol — work queue
 
+## RESOLVED 2026-09-18: AUSPOL_MINOR_DEFECT_BASE_PRED shipped, revised to "no discount for sitting members"
+
+Follow-up to the two-rate `minor_discount` ship (`0a834e0`). The initial
+retest of `AUSPOL_MINOR_DEFECT_BASE_PRED=1` (fitted sitting-member rate,
+0.71 for nsw2023) showed Murray/Orange/Barwon with EXACTLY 0.000000 delta
+despite the discount being correctly computed and logged -- traced to the
+published default `AUSPOL_XGB_PRIMARY=1`: the XGB override layer runs
+after `dev_slope()` and replaces `shares` entirely, so ANY base_pred-flag
+test under default settings is measuring nothing. Retesting with
+`AUSPOL_XGB_PRIMARY=0` (this repo's own established method for isolating
+base_pred, per the 2026-09-16 "4-step non-circular retrain" note) confirmed
+the wiring works -- but the fitted sitting-member rate made things WORSE:
+Orange moved from an undiscounted 52.44 (already near actual 53.08) to a
+discounted 44.96, moving AWAY from truth. `discount_mp`'s leave-target-out
+fit for nsw2023 draws on only 2 other sitting cases (Mirani 0.79, Kennedy
+0.63), underestimating what Murray/Orange/Barwon (108-136% retention)
+actually needed.
+
+**Fixed by removing the fitted sitting-member rate entirely.**
+Leave-one-out cross-validated against all 5 sitting-member corpus cases
+(Barwon 1.36, Murray 1.30, Orange 1.08, Mirani 0.79, Kennedy 0.63):
+predicting flat 1.0 (no discount) gives HALF the squared error (0.405) of
+predicting each case from the other four's median (0.782) -- n=5 is too
+thin to fit a rate below 1 usefully, and the median/mean both sit almost
+exactly on "keep it all" anyway. `personal_prior_vote()` now applies NO
+discount to a confirmed sitting-member switcher; the fitted rate
+(`minor_discount`) survives only as the fallback for unknown sitting
+status. The 13-case non-sitting rate (median 0.276) is unaffected --
+well-powered, no such problem.
+
+**Shipped**, `AUSPOL_MINOR_DEFECT_BASE_PRED = "1"` in `published_flags.R`:
+pooled RMSE across the 14 affected pairs moved +0.0014 (4.0554 -> 4.0568,
+n=8910) -- negligible, a much better do-no-harm result than the original
+refusal's real cost (8.8813 -> 11.4315). Murray/Orange/Barwon move from
+~14-18 to 52.44/39.78/37.25 (actual 53.08/53.31/45.83) -- large, correctly
+directed. **Honest trade-off, not hidden**: Mirani and Kennedy (the other
+2 of 5 sitting cases, both of whom actually lost vote) also revert to no
+discount, undoing 2026-09-16's Mirani-specific improvement. Accepted
+because the aggregate evidence favours one rule over cherry-picking a rate
+per seat -- the same logic already governing every other shrinkage
+decision in this repo.
+
+Full trace: `docs/reviews/minor-defector-two-rate-2026-09-17.md`.
+
 ## FIXED, 2026-09-17: a minor-to-major party switcher could erase a retiring
 ## major incumbent's entire seat base
 

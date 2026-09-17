@@ -199,6 +199,30 @@ PUBLISHED_FLAGS <- c(
                                              # 0.49, p=0.0003), measured: targeted RMSE 9.2363 -> 8.8813, pooled RMSE
                                              # 3.8161 -> 3.8178 (well within the ~0.014-per-column noise floor found
                                              # the same session). docs/reviews/minor-to-minor-defector-2026-09-16.md
+  AUSPOL_MINOR_DEFECT_BASE_PRED = "1",       # SHIPPED 2026-09-18, reversing the 2026-09-16 refusal. Same
+                                             # mechanism as AUSPOL_MINOR_DEFECT above but reaching base_pred
+                                             # (dev_slope()), not just the xgb feature -- gated separately because
+                                             # the single-rate version was refused here 2026-09-16 (helped Mirani,
+                                             # targeted RMSE 8.8813 -> 11.4315, worse). Revised to a two-rate split
+                                             # (personal_prior_vote()'s minor_discount/minor_discount_loser) after
+                                             # finding Murray/Orange/Barwon (nsw2023, real sitting Shooters-
+                                             # Fishers-and-Farmers-to-Independent departures, retention 108-136%)
+                                             # were badly under-predicted by the single pooled rate. A CONFIRMED
+                                             # SITTING MEMBER gets NO discount at all (not a fitted rate) --
+                                             # leave-one-out cross-validated against all 5 sitting corpus cases,
+                                             # flat 1.0 halves the squared error a fitted rate gets (0.405 vs
+                                             # 0.782; n=5 is too thin to fit below 1 usefully). A confirmed
+                                             # NON-sitting switcher still gets the fitted rate (median 0.276,
+                                             # n=13, well-powered). Measured: pooled RMSE across the 14
+                                             # affected pairs 4.0554 -> 4.0568 (n=8910, negligible), Murray/
+                                             # Orange/Barwon move from ~14-18 to 52.44/39.78/37.25 (actual
+                                             # 53.08/53.31/45.83) -- a large, correctly-directed improvement.
+                                             # Honest trade-off: Mirani and Kennedy (the other 2 of 5 sitting
+                                             # cases, both of whom actually LOST vote) also revert to NO
+                                             # discount, undoing 2026-09-16's Mirani-specific improvement --
+                                             # accepted because the aggregate evidence favours one rule over
+                                             # cherry-picking per seat. docs/reviews/minor-defector-two-rate-
+                                             # 2026-09-17.md.
   AUSPOL_XGB_SEATPREV_NAFILL = "1",          # fit_xgb_primary_v6.R (build-time) AND xgb_primary_predict_live()
                                              # (live serving, R/xgb_primary_override.R) -- both must read the same
                                              # default or a retrain reintroduces a train/serve mismatch (found by

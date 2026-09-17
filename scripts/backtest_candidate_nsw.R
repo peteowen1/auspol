@@ -574,10 +574,13 @@ if (identical(Sys.getenv("AUSPOL_MINOR_DEFECT_BASE_PRED", "0"), "1")) {
   } else {
     cat(sprintf("BT0n minor-defector discount %.3f from %d cases (target excluded)\n", .mfd$discount, .mfd$n))
     .minor_disc <- .mfd$discount
-    if (!is.null(.mfd$discount_mp) && is.finite(.mfd$discount_mp)) .minor_disc <- .mfd$discount_mp
+    # REVISED 2026-09-18: a confirmed sitting-member switcher now gets NO
+    # discount (see personal_prior_vote()'s own doc) -- .minor_disc here is
+    # only the fallback rate for a switcher whose sitting status is
+    # unknown, not a "sitting-member rate" anymore.
     if (!is.null(.mfd$discount_loser) && is.finite(.mfd$discount_loser)) {
       .minor_disc_loser <- .mfd$discount_loser
-      cat(sprintf("BT0n  two-rate: sitting-member %.3f, non-sitting %.3f\n", .minor_disc, .minor_disc_loser))
+      cat(sprintf("BT0n  two-rate: sitting-member NO DISCOUNT, non-sitting %.3f, unknown-status %.3f\n", .minor_disc_loser, .minor_disc))
     }
   }
 }

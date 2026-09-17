@@ -730,14 +730,16 @@ if (!identical(Sys.getenv("AUSPOL_MINOR_DEFECT", "1"), "0")) {
   })
   if (!is.null(.mfd$discount) && is.finite(.mfd$discount)) {
     .minor_disc <- .mfd$discount
-    # TWO-RATE: docs/reviews/minor-defector-two-rate-2026-09-17.md. A sitting
-    # member who switches between two non-major labels retains far more
-    # (median 1.08 on 5 corpus cases) than a non-sitting switcher (0.276 on
-    # 13) -- same shape as major_discount/loser_discount. Real today: check
-    # whether any of vic2026's 5 known cases (Frankston, Broadmeadows, Lara,
-    # Werribee, Sydenham -- see comment above) are sitting-member switches
-    # before trusting the live forecast reflects this correctly.
-    if (!is.null(.mfd$discount_mp) && is.finite(.mfd$discount_mp)) .minor_disc <- .mfd$discount_mp
+    # TWO-RATE, REVISED 2026-09-18: docs/reviews/minor-defector-two-rate-
+    # 2026-09-17.md. A confirmed sitting-member switcher gets NO discount at
+    # all (leave-one-out cross-validated against all 5 sitting corpus cases:
+    # flat 1.0 halves the squared error a fitted rate gets, 0.405 vs 0.782 --
+    # n=5 is too thin to fit below 1 usefully). `.minor_disc` here is only
+    # the fallback rate for a switcher whose sitting status is unknown.
+    # Real today: check whether any of vic2026's 5 known cases (Frankston,
+    # Broadmeadows, Lara, Werribee, Sydenham -- see comment above) are
+    # sitting-member switches before trusting the live forecast reflects
+    # this correctly.
     if (!is.null(.mfd$discount_loser) && is.finite(.mfd$discount_loser)) .minor_disc_loser <- .mfd$discount_loser
   } else {
     cat(sprintf("CAL! minor-defector discount not fit (n=%s), no discount applied\n",
