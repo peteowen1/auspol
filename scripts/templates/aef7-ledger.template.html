@@ -186,7 +186,19 @@
   </details>
 
   <details class="provlog">
-    <summary>Provenance &amp; changelog <span class="n">(6 updates)</span></summary>
+    <summary>Provenance &amp; changelog <span class="n">(7 updates)</span></summary>
+    <p class="sub prov"><b>Correction, same session, minutes after the refresh below.</b> Pete
+       caught it by eye: Murray showed 94.7% win probability off a 15.3% predicted primary --
+       internally implausible. Traced to source: the raw backtest gives Murray/IND 33.1%, not
+       15.3%. <code>build_aef7_ledger_data.R</code>'s primary-share join fell back to
+       <code>output/pooled-sharedetail.csv</code>, which was a day stale (16 Sep) and had not
+       been repooled after today's reruns -- exactly the "newest file per pair mixes arms"
+       failure this repo's own harnesses have hit before, this time in the ledger-build script
+       itself. Fixed by repooling (<code>scripts/pool_sharedetail.R</code>) before rebuilding.
+       Win probabilities and log loss were unaffected (they read a different, already-fresh
+       file) -- only the displayed primary-vote-%% columns were wrong, and only for seats whose
+       sharedetail predates today.</p>
+
     <p class="sub prov"><b>Full refresh, 17 Sep 2026.</b> All seven AEF7 pairs re-run at the full
        20,000 sims after <code>base_margin</code> shipped (train the primary-vote model on the
        residual to <code>base_pred</code> rather than as a plain feature -- fails the standing
