@@ -38,18 +38,21 @@ The gate found one real cross-engine bug (fixed, with a test that fails on the
 old code) and a pile of comment errors (fixed). Three things it turned up are
 **modelling decisions, not defects**, so they are logged rather than changed.
 
-**1. The minor-defector discount ships at a third, and was sized at a half.**
-Shipped per-pair rates cluster 0.30-0.34 (median, `min_prior = 10`); the
-49% geometric-mean retention that justified it in
-`docs/reviews/minor-to-minor-defector-2026-09-16.md` is a different statistic
-on a different, smaller sample, both differences pushing the same way — no
-published number is wrong, but the justification didn't describe the number
-that ships. Docstrings corrected. **Pre-registered 2026-09-17, not yet run**:
+**1. CLOSED 2026-09-17 — the minor-defector discount ships at a third, and
+was sized at a half; settled by a pre-registered grid, kept shipped.**
+Docstrings corrected to describe the number that actually ships (0.30-0.34,
+median, `min_prior=10`), then
 [plans/prereg-minor-defector-rate-2026-09-17.md](plans/prereg-minor-defector-rate-2026-09-17.md)
-— a 2×2 grid deconfounding the two things that changed at once (`min_prior`
-5-vs-10, median-vs-geomean), scored on a fixed 33-case held-out set, with
-pooled-RMSE and seat-log-loss guards. Prediction on record: neither axis
-clears the bar and 0.30-0.34 stays shipped, but written before running.
+ran a 2×2 grid deconfounding `min_prior` (5 vs 10) and the aggregation
+statistic (median vs geometric mean) against a fixed held-out case set.
+Two of the four candidate rates (geomean at both `min_prior` settings)
+looked like real improvements on the primary RMSE bar — 6.5% and 11.3%
+better — but both were refused on a concentration check: 90-96% of the
+apparent gain sat in 5 of 34 cases, the same overfitting shape the review
+that started this already knew to watch for. **Shipped rate unchanged.**
+Added `fit_minor_defector_discount()`'s `agg` parameter as reusable
+machinery (default `"median"`, no behavior change) so the next attempt at
+this doesn't start from scratch.
 
 **2. The two defector paths disagree about where a defector's lost votes go,
 and only one side was measured.** The major-party path

@@ -841,14 +841,22 @@ fit_defector_discount <- function(target_election, corpus = NULL, min_n = 5L, pa
 #' @param min_prior Minimum prior vote, in points, for a case to enter the
 #'   fit -- excludes a ratio taken on a denominator too small to mean
 #'   anything.
-#' @return A list: `discount` (the MEDIAN of the per-case retention ratios,
-#'   or `NULL` below `min_n`), `n` (cases used), `cases` (the underlying
-#'   data.table). Called it a "median geometric" ratio until 2026-09-16,
-#'   which read as a geometric mean and is a different statistic; the median
-#'   is transform-invariant, so there is nothing geometric about it.
+#' @param agg `"median"` (default, what ships) or `"geomean"`. Added
+#'   2026-09-17 for `docs/plans/prereg-minor-defector-rate-2026-09-17.md`,
+#'   the pre-registered grid deciding whether `min_prior` and/or this
+#'   statistic should change from the shipped `min_prior=10`/median. No
+#'   caller other than that grid sets it away from the default.
+#' @return A list: `discount` (median or geometric mean of the per-case
+#'   retention ratios per `agg`, or `NULL` below `min_n`), `n` (cases used),
+#'   `cases` (the underlying data.table). Called it a "median geometric"
+#'   ratio until 2026-09-16, which read as a geometric mean and is a
+#'   different statistic; the median is transform-invariant, so there was
+#'   nothing geometric about it before `agg` existed.
 #' @export
 fit_minor_defector_discount <- function(target_election, corpus = NULL, min_n = 5L,
-                                        pairs = NULL, min_prior = 10) {
+                                        pairs = NULL, min_prior = 10,
+                                        agg = c("median", "geomean")) {
+  agg <- match.arg(agg)
   C <- corpus
   if (is.null(C)) {
     f <- file.path("output", "candidacies.csv")
@@ -888,7 +896,9 @@ fit_minor_defector_discount <- function(target_election, corpus = NULL, min_n = 
   if (is.null(ratios) || nrow(ratios) < min_n) {
     return(list(discount = NULL, n = if (is.null(ratios)) 0L else nrow(ratios), cases = ratios))
   }
-  list(discount = stats::median(ratios$ratio, na.rm = TRUE), n = nrow(ratios), cases = ratios)
+  disc <- if (agg == "geomean") exp(mean(log(ratios$ratio), na.rm = TRUE))
+          else stats::median(ratios$ratio, na.rm = TRUE)
+  list(discount = disc, n = nrow(ratios), cases = ratios)
 }
 
 #' Keep the re-entry prior from overwriting a more-informed personal-vote floor
