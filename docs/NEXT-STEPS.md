@@ -54,25 +54,29 @@ Added `fit_minor_defector_discount()`'s `agg` parameter as reusable
 machinery (default `"median"`, no behavior change) so the next attempt at
 this doesn't start from scratch.
 
-**2. The two defector paths disagree about where a defector's lost votes go,
-and only one side was measured.** The major-party path
-(`R/candidate_returns.R:579`) CONSERVES — it adds `def_pcv * rate` to the new
-class and removes the same amount from the old, so votes that do not follow
-the candidate stay with their old party. The minor-to-minor path
-(`R/candidate_returns.R:533`) does NOT — it adds the discounted vote and
-removes the full one, on the argument that a one-member minor loses its base
-outright when its member walks. That asymmetry may be right: a major party
-keeps a machine and a brand, a micro-party is often just the member. It is
-also untested. Only the non-conserving side has a measurement behind it.
-Changing the major path moves every major-defector seat in all six harnesses,
-so it needs a run, not an edit. **Pete's call 2026-09-17: worth measuring,
-not assuming.** Pre-registered:
+**2. CLOSED 2026-09-17 — measured, decisive: keep conserving.** The
+major-party path (`R/candidate_returns.R:579`) conserves a departed member's
+unclaimed vote for their old party; the minor-to-minor path doesn't.
 [plans/prereg-major-defector-conserve-2026-09-17.md](plans/prereg-major-defector-conserve-2026-09-17.md)
-— 33 cases across 18 pairs (all scorable, old party fields someone in every
-one), old-party retention ranges 0.20 to 0.97 of the departed member's own
-vote, tested in both `base_pred` and the xgb layer per the standing rule.
-Not yet run. Prediction on record: heterogeneity too wide for either
-endpoint to win cleanly, current conserving default likely stays.
+measured non-conserving on the fixed 33-case set: RMSE **209% worse**
+(8.59 → 26.54), every jurisdiction worse except NSW, only 1 of 33 cases
+improved. Not a near-miss — my prediction (heterogeneity too wide for a
+clean answer) was wrong; most major-party defector seats retain 70-97% of
+their vote, so full removal massively under-predicts almost everywhere.
+**No change** — current conserving behaviour stays.
+
+**Found while tracing this, unrelated and LIVE**: the switch couldn't even
+reach the xgb layer, because `fit_xgb_primary_v6.R` never passes
+`major_discount` at all (only `minor_discount`) — fine, that's just this
+mechanism's actual reach. But following that thread further:
+`fit_seats_full.R` (the published forecast) shares ONE `own_prev` object
+between the `mat22` base and the xgb-layer feature, and only applies
+`major_discount` to it — never `minor_discount`, anywhere. Training's xgb
+`own_prev_pcv` IS minor-discounted (`AUSPOL_MINOR_DEFECT`, on by default);
+live-serving's is not. **Not dormant**: vic2026's current partial candidate
+list already has 5 minor-to-minor defector cases (Frankston, Broadmeadows,
+Lara, Werribee, Sydenham) being served the wrong value today. Fix in
+progress, separate commit.
 
 **3. CLOSED 2026-09-17 — the premise was wrong, not just the file to parse.**
 This item claimed "we score against AEF on TCP and win probability, not at

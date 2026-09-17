@@ -144,3 +144,66 @@ minor-to-minor grid. **My best guess is this closes the same way**: a
 real, named heterogeneity that no single constant resolves, current default
 kept, logged as a candidate for a future per-seat or per-subgroup rate
 rather than a binary switch.
+
+---
+
+# RESULT, 2026-09-17: decisive. Keep conserving. My prediction was wrong,
+# in the interesting direction.
+
+**Structural finding, verified before trusting the "both layers" bar**:
+`fit_xgb_primary_v6.R:271` never passes `major_discount` to
+`personal_prior_vote()` at all — only `minor_discount`. The entire
+major-party defector mechanism this switch lives inside, not just the
+conserve/non-conserve question, **cannot reach the xgb layer**, in either
+setting. Confirmed empirically (`scripts/prereg_major_defector_verify.R`):
+identical `NA` `own_prev_pcv` for a known case (Calare) regardless of the
+switch. The pre-registration's "must clear both layers" bar is
+inapplicable — there is only one layer where this mechanism exists at all
+(`base_pred`, via the six harnesses, which do pass `major_discount`).
+
+**Result, `base_pred` layer, all 33 cases, genuine non-circular
+(`AUSPOL_XGB_PRIMARY=0`, verified via `sharedetail`'s own `xgb_primary_on`
+column — a first pass forgot this flag, was silently contaminated by the
+xgb override, caught before trusting it, redone):**
+
+- RMSE: conserving (shipped) = **8.5878**, non-conserving = **26.5369** —
+  **209% worse**, not a near-miss.
+- Subgroups agree in direction: sitting-member -192.6%, losing-candidate
+  -259.8%.
+- Concentration: only 1 of 33 cases (Kiama) individually improved under
+  non-conserving; every other case got worse.
+- Pooled primary RMSE guard: non-conserving worsens every jurisdiction
+  except NSW (fed +0.21, qld2020 +0.26, sa2026 +0.89, sa2022 +0.52,
+  vic +0.37, wa +0.28) — all far past the 0.005 guard.
+
+**Primary bar fails decisively. No guard backtest run** — the
+pre-registration's own instructions say not to once the primary metric
+already refuses this clearly.
+
+**My prediction was wrong, in the interesting direction.** I expected
+heterogeneity too wide for either endpoint to win, with any apparent win
+concentrated in a few collapse seats. Instead conserving wins outright and
+by a huge margin: most major-party defector seats retain the bulk of their
+vote (ratios 0.7–0.97), so removing the full amount massively under-predicts
+almost every case. The asymmetry with the minor-to-minor path is real and
+now measured, not just a plausible story: a major party keeping its
+machine when a member walks is not a weaker version of the same effect a
+one-member minor shows — it is close to the opposite end of the scale.
+
+**Verdict: keep `AUSPOL_DEFECT_CONSERVE=1` (current behaviour). Closes item
+2 of the PR #44 review.**
+
+## A second, unrelated, LIVE finding surfaced while tracing this
+
+Investigating why the switch can't reach the xgb layer led to checking
+whether `fit_seats_full.R` (the actual published forecast) applies
+`minor_discount` at all. **It does not, anywhere** — its one `personal_prior_vote()`
+call (used for both the `mat22` base AND, via the same object, the
+`xgb_primary_predict_live()` feature) passes `major_discount` only.
+Training's xgb feature IS minor-discounted (`fit_xgb_primary_v6.R:271`);
+live-serving's is not — a train/serve mismatch in `own_prev_pcv`, the same
+shape as `seat_prev_pcv`'s fix earlier this session, for a different
+column. **Not dormant**: vic2026's current partial candidate list already
+has 5 minor-to-minor defector cases (Frankston, Broadmeadows, Lara,
+Werribee, Sydenham). Tracked as its own fix, not folded into this
+pre-registration's result — see the commit that follows.
