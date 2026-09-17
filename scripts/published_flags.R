@@ -161,6 +161,15 @@ PUBLISHED_FLAGS <- c(
                                              # breached no floor, improved pooled log loss / Victoria / WA, and made only
                                              # ONE panel metric worse. Recorded as a JUDGEMENT, not a measurement.
                                              # docs/plans/prereg-defector-two-rate-2026-09-09.md
+  AUSPOL_DEFECT_CONSERVE     = "1",          # 1 (shipped) = a major-party defector's UNCLAIMED vote stays with
+                                             # their old party (conserving); 0 = it evaporates instead, matching
+                                             # AUSPOL_MINOR_DEFECT's own non-conserving treatment. Measured and
+                                             # REFUSED 2026-09-17: non-conserving is 209% worse RMSE on the fixed
+                                             # 33-case set (8.5878 -> 26.5369), worse in every jurisdiction except
+                                             # NSW, only 1 of 33 cases improved. Most major-party defector seats
+                                             # retain 70-97% of their vote, so full removal massively under-predicts
+                                             # almost everywhere -- kept inert for reuse, not because the question
+                                             # is still open. docs/plans/prereg-major-defector-conserve-2026-09-17.md
   AUSPOL_MINOR_DEFECT        = "1",          # discount a candidate's own_prev_pcv when they switched between two
                                              # NON-major parties (Stephen Andrew, ONP -> KAP, Mirani qld2024) --
                                              # fit_minor_defector_discount(), leave-target-out median, same shape as

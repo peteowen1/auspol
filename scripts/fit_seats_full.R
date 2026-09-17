@@ -711,16 +711,57 @@ if (!identical(Sys.getenv("AUSPOL_MP_SLOPE", "1"), "0")) {
   if (nrow(.keep)) .MP_SLOPE <- stats::setNames(as.numeric(.keep$member), .keep$party)
 }
 if (!identical(Sys.getenv("AUSPOL_DEFECT_DISCOUNT", "1"), "0")) .defect <- 0.282
-cat(sprintf("CAL  MP tier: %s | defector discount: %s
+
+# MINOR-TO-MINOR DEFECTOR DISCOUNT, same AUSPOL_MINOR_DEFECT switch and same
+# fit_minor_defector_discount() call fit_xgb_primary_v6.R:271 uses to build
+# the xgb TRAINING feature -- computed here so the LIVE xgb feature can match
+# it. Found missing entirely 2026-09-17 while measuring
+# docs/plans/prereg-major-defector-conserve-2026-09-17.md: this script had no
+# reference to minor_discount anywhere, so the live own_prev_pcv the xgb
+# model is SERVED never carried the discount the model was TRAINED on for a
+# minor-to-minor defector. Not dormant -- vic2026's partial candidate list
+# already has 5 such cases (Frankston, Broadmeadows, Lara, Werribee,
+# Sydenham) being served the wrong value.
+.minor_disc <- NULL
+if (!identical(Sys.getenv("AUSPOL_MINOR_DEFECT", "1"), "0")) {
+  .mfd <- tryCatch(fit_minor_defector_discount("vic2026"), error = function(e) {
+    cat(sprintf("CAL! minor-defector fit FAILED, no discount applied: %s\n", conditionMessage(e)))
+    list(discount = NULL, n = 0L)
+  })
+  if (!is.null(.mfd$discount) && is.finite(.mfd$discount)) {
+    .minor_disc <- .mfd$discount
+  } else {
+    cat(sprintf("CAL! minor-defector discount not fit (n=%s), no discount applied\n",
+                if (is.null(.mfd$n)) "NULL" else .mfd$n))
+  }
+}
+cat(sprintf("CAL  MP tier: %s | defector discount: %s | minor-defector discount: %s
 ",
             if (is.null(.MP_SLOPE)) "OFF" else
               paste(sprintf("%s=%.4f", names(.MP_SLOPE), .MP_SLOPE), collapse = " "),
-            if (is.null(.defect)) "OFF" else sprintf("%.3f", .defect)))
+            if (is.null(.defect)) "OFF" else sprintf("%.3f", .defect),
+            if (is.null(.minor_disc)) "OFF" else sprintf("%.3f", .minor_disc)))
 
 # THE BASE VALUE, not just the slope -- see personal_prior_vote()'s docs. Same
 # candidate-list gating as .returns above: NULL until vic2026 nominations close.
+# THIS ONE FEEDS mat22 (the base_pred blend) ONLY -- major_discount matches
+# the six harnesses' own base_pred convention. It deliberately carries NO
+# minor_discount: AUSPOL_MINOR_DEFECT_BASE_PRED (that arm, not this one) was
+# measured and REFUSED for base_pred 2026-09-16 (helped Mirani, made the
+# pooled aggregate worse), so base_pred stays byte-identical to before this
+# fix regardless of AUSPOL_MINOR_DEFECT.
 .own_prev <- if (.cond && !is.null(.returns))
   .try("own_prev", personal_prior_vote("vic2022", "vic2026", major_discount = .defect)) else NULL
+# THIS ONE FEEDS xgb_primary_predict_live()'s own_prev_pcv FEATURE ONLY --
+# mirrors fit_xgb_primary_v6.R:271's TRAINING call exactly: minor_discount,
+# and deliberately NO major_discount (training's xgb feature never gets one
+# either -- personal_prior_vote()'s major-defector branch is gated on
+# major_discount, which the training call never passes). Serving anything
+# else here would itself be a second train/serve mismatch in the opposite
+# direction: applying a discount at serve time the model was never trained
+# to expect.
+.own_prev_xgb <- if (.cond && !is.null(.returns))
+  .try("own_prev_xgb", personal_prior_vote("vic2022", "vic2026", minor_discount = .minor_disc)) else NULL
 # THE VOTE MOVES WITH THE PERSON: .own_x() below substitutes a returning
 # candidate's own prior vote into their new class; this takes it out of the
 # class it came from. No-op until vic2026 nominations exist.
@@ -948,7 +989,7 @@ shares <- 100 * shares / rowSums(shares)
 # inside the published forecast, so an unhandled error here would otherwise
 # crash the whole run rather than falling back to the shipped-only model.
 shares_x <- .try("xgb_live", xgb_primary_predict_live(shares, mat22, a22, state_mean, .returns,
-                                                        own_prev = .own_prev, region = "vic"))
+                                                        own_prev = .own_prev_xgb, region = "vic"))
 if (!is.null(shares_x)) {
   shares <- shares_x
 } else if (identical(Sys.getenv("AUSPOL_XGB_PRIMARY_LIVE", "0"), "1")) {

@@ -576,30 +576,29 @@ personal_prior_vote <- function(election_from, election_to, corpus = NULL,
       if (!is.null(loser_discount) && is.finite(loser_discount) && "def_was_mp" %in% names(out)) {
         out[def_was_mp %in% FALSE, .rate := loser_discount]
       }
-      # `transfer` HERE IS THE DISCOUNTED AMOUNT, and a few lines up the
-      # minor-to-minor path deliberately uses the UNDISCOUNTED one. The two
-      # paths answer the same question differently and that is not yet
-      # resolved -- flagged by the review gate 2026-09-16, left as-is.
+      # `transfer` HERE IS THE DISCOUNTED AMOUNT by default, and a few lines
+      # up the minor-to-minor path deliberately uses the UNDISCOUNTED one.
       #
-      # This path CONSERVES: `def_pcv * .rate` is added to the new class and
-      # the same `def_pcv * .rate` is taken out of the old one, so the votes
-      # a defector fails to carry are implicitly left with their old party --
-      # a new Nationals candidate inherits them.
+      # This path CONSERVES by default: `def_pcv * .rate` is added to the new
+      # class and the same `def_pcv * .rate` is taken out of the old one, so
+      # the votes a defector fails to carry are implicitly left with their
+      # old party -- a new Nationals candidate inherits them.
       #
-      # The minor-to-minor path does NOT conserve: it adds the discounted
-      # vote and removes the full one, on the argument at line 523 that the
-      # old class lost its candidate outright. That choice was MEASURED (it
-      # is what fixed the pooled aggregate while keeping Mirani), this one
-      # never has been. So do not "fix" this line to match without running
-      # it -- changing it moves every major-party defector seat in all six
-      # harnesses, and the conservative reading may well be right for a major
-      # party, which unlike a one-member minor still has a machine and a
-      # brand when its member walks. Constants question, logged in
-      # docs/NEXT-STEPS.md.
+      # AUSPOL_DEFECT_CONSERVE (default "1", reproducing the above exactly):
+      # "0" removes the FULL `def_pcv`, matching the minor-to-minor path's
+      # own non-conserving treatment. Pre-registered 2026-09-17:
+      # docs/plans/prereg-major-defector-conserve-2026-09-17.md. Only reaches
+      # base_pred (the six harnesses pass major_discount; fit_xgb_primary_v6.R
+      # never does, so this whole branch is unreached in the xgb layer
+      # regardless of this switch -- verified, not assumed, before writing
+      # this comment).
+      .conserve <- identical(Sys.getenv("AUSPOL_DEFECT_CONSERVE", "1"), "1")
+      out[, .transfer_amt := if (.conserve) def_pcv * .rate else def_pcv]
       out[is.na(own_prev_pcv) & !party %in% MAJ & !is.na(def_pcv),
           `:=`(own_prev_pcv = cls_pcv + def_pcv * .rate,
                prev_party   = def_party,
-               transfer     = def_pcv * .rate)]
+               transfer     = .transfer_amt)]
+      out[, .transfer_amt := NULL]
       out[, .rate := NULL]
       out[, c("def_pcv", "def_party", "def_was_mp", "cls_pcv") := NULL]
     }
