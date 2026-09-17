@@ -5,7 +5,8 @@
 regression (Pilbara, wa2013, `base_pred` predicting LNP at 81.94% against an
 actual 61.73%) happened at all — traced to the harness's own `base_pred`
 computation, not the base_margin experiment. **This is a live gap in the
-shipped model, unrelated to that refused arm.**
+shipped model, unrelated to that refused arm. Fixed same day, per Pete's
+call — see RESULT at the bottom.**
 
 ## The mechanism, confirmed by direct instrumentation
 
@@ -50,18 +51,44 @@ whether the person is a returning major incumbent, a major-to-minor
 defector, or (this case) a minor-to-major arrival replacing someone else
 entirely.
 
-## Scale, not yet measured
+## Scale, and the fix
 
-Not sized against the corpus. The shape (a minor-party candidate becomes a
-major party's new candidate in a seat where that major party's own MP
-retires or was not the same identity) is a real, recurring pattern —
-Pilbara/wa2013 is not obviously a one-off. Worth sizing the same way the
-conserve/non-conserve question was sized today (count of corpus cases,
-distribution of how wrong the resulting projection was) before deciding
-whether this needs a fix, and if so, what shape (exclude minor-to-major
-switches from `own_prev_pcv` substitution entirely and fall back to the
-class-level base, the same way major-to-minor already has a discount
-rather than a full substitution).
+Sized against the full corpus before fixing: **3 cases in the whole corpus**
+(Prospect/fed2007, Pilbara/wa2013, West Swan/wa2025 — all 3 found, all 3
+independently discovered by the sizing script, not just the one this
+investigation started from). All three understate the true major-class base
+by 35-37 points.
+
+**Fixed in `personal_prior_vote()` (`R/candidate_returns.R`)**: a major-party
+target row now never receives this generic `own_prev_pcv` substitution —
+mirroring the already-existing opposite-direction guard ("EXCLUDE A PRIOR
+MAJOR-PARTY REGISTRATION by default", a few lines above in the same
+function), which prevented the reverse case (a major-to-minor switch using
+its own major history without `major_discount` opting in) but had no
+equivalent for minor-to-major. A returning MAJOR incumbent is handled by
+`candidate_returns()`/`conditional_slopes()`'s own same/same_mp machinery,
+never by this function — and `prev_best`'s own exclusion of major PRIOR rows
+already means a genuine major-to-major identity never reached this
+substitution anyway, so majors lose nothing legitimate by being excluded as
+targets.
+
+Verified: sizing script confirms 0 cases remain. Pilbara/wa2013's
+deterministic pre-simulation projection moves from ALP=11.3/LNP=81.9 to
+ALP=40.6/LNP=49.1 (actual: ALP=29.8/LNP=61.7) — both errors roughly halved.
+vic2026's current partial candidate list has 0 cases of this pattern today
+(checked directly), so this does not change the live forecast right now,
+but protects it as nominations complete.
+
+**Pair-level seat log loss barely moved on the two affected historical
+pairs** (fed2007: 0.3137 → 0.3143; wa2013: 0.5611 → 0.5649, both flat,
+same accuracy before and after) — because in all 3 known cases the "safe"
+party was still correctly favoured despite the corrupted primary number,
+so the seat call never flipped. **The value of this fix is correctness and
+risk reduction, not a measured historical log-loss gain**: this exact
+mechanism landing in a genuinely marginal seat (rather than the three safe
+seats it happened to hit historically) could flip a call outright, and
+"confident and wrong" is the costliest error shape this whole codebase's
+AEF gap analysis keeps finding.
 
 ## What this does NOT explain
 

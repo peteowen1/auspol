@@ -1,11 +1,11 @@
 # auspol — work queue
 
-## NEW, 2026-09-17: a minor-to-major party switcher can erase a retiring
-## major incumbent's entire seat base — real, live, not yet sized or fixed
+## FIXED, 2026-09-17: a minor-to-major party switcher could erase a retiring
+## major incumbent's entire seat base
 
 Found tracing the single worst per-seat regression in today's
 (refused) `base_margin` experiment — Pilbara/wa2013, `base_pred` predicted
-LNP at 81.94% against actual 61.73%. **The cause has nothing to do with
+LNP at 81.94% against actual 61.73%. **The cause had nothing to do with
 that experiment**: confirmed by direct instrumentation of
 `backtest_candidate_wa.R`, `personal_prior_vote()`'s `own_prev_pcv`
 substitution let Howlett (GRN in 2008, 9.63%, switched to ALP in 2013 as
@@ -16,15 +16,26 @@ ALP's projected class share collapsed to 6.93%, the seat's row summed to
 proportionally — including LNP, to 81.94%, though nothing about LNP's own
 projection was wrong.
 
-This is the mirror image of today's major-defector conservation question
-(settled: keep conserving) — a MINOR-party candidate arriving into a major
-party's seat, rather than a MAJOR-party member leaving one. Never measured,
-never named as a distinct case. Full trace:
+Mirror image of today's major-defector conservation question (settled:
+keep conserving) — a MINOR-party candidate arriving into a major party's
+seat, rather than a MAJOR-party member leaving one. **Pete's call: fix it,
+not just measure it** — this is a correctness bug, not a design tradeoff.
+**Sized: exactly 3 cases in the whole corpus** (Prospect/fed2007,
+Pilbara/wa2013, West Swan/wa2025), each understating the true major-class
+base by 35-37 points. **Fixed in `personal_prior_vote()`**: a major-party
+target row can no longer receive this substitution at all, mirroring the
+already-existing opposite-direction guard for major-to-minor switches.
+Verified: 0 cases remain corpus-wide; Pilbara's projection moves from
+ALP=11.3/LNP=81.9 to ALP=40.6/LNP=49.1 (actual 29.8/61.7) — both errors
+roughly halved; vic2026's current candidate list has 0 cases today (no
+change to the live forecast right now, but protected going forward).
+**Pair-level seat log loss barely moved** on the two affected historical
+pairs (fed2007 0.3137→0.3143, wa2013 0.5611→0.5649, same accuracy) — in all
+3 known cases the safe party still won regardless, so no historical call
+flips. The value is correctness and risk reduction (this mechanism landing
+in a genuinely marginal seat could flip a call outright), not a measured
+historical log-loss gain. Full trace:
 [reviews/minor-to-major-personal-vote-substitution-2026-09-17.md](reviews/minor-to-major-personal-vote-substitution-2026-09-17.md).
-**Not sized against the corpus yet** — how often does this pattern occur,
-and how wrong does it make the projection each time? Needs the same
-sizing-before-criterion treatment as today's other pre-registrations before
-deciding whether/how to fix it.
 
 ## MERGED, 2026-09-17: PR #44 landed on `main` at `4e09ce3`
 
