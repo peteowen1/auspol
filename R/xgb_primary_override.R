@@ -282,6 +282,38 @@ xgb_primary_predict_live <- function(shares, mat22, a22, state_mean, returns,
     cat(sprintf("XG4! load_seats(%d, %s) unavailable -- seat-file features NA for every row\n", year, region))
   }
 
+  # SEAT_OUTPERF, PORTED FROM fit_xgb_primary_v6.R -- shipped there 2026-09-16
+  # (831d693) and never wired here, so the live-serving model has been
+  # missing it since the day it shipped. Found 2026-09-17 while reviewing the
+  # base_margin fork's output: v6_final.R trains on 40 features against
+  # v6.R's own list, and seat_outperf was the undocumented difference (the
+  # other, x_notional_adj, is a deliberate federal-only exclusion, commented
+  # at v6_final.R's feat_cols). Live for vic2026 today: 20 seats currently
+  # have a retiring major-party incumbent, exactly the condition this
+  # feature is gated to.
+  #
+  # `seat_outperf = seat_prev_pcv - level_prev` is identical to the training
+  # side's `seat_prev_pcv - .state_prev_level`: both are the party's PRIOR
+  # election's seat share minus that SAME prior election's statewide share
+  # (level_prev here is built from a22, the prior-election state shares --
+  # see the comment above where it's set).
+  #
+  # GATE: training uses `retire_derived` (a name-matched signal built by
+  # scripts/build_retirement_derived.py specifically because the seat file's
+  # own `retirement` column is unreliable on OLDER pairs -- eleven of the
+  # twenty-three training pairs have it hardcoded to 0). That does not apply
+  # here: this is the live target election, load_seats() is the anchor's
+  # CURRENT clone, and `retirement_i`/`is_incumbent_party_i` are already
+  # built two blocks above from that same file. Using them directly is lower
+  # risk than extending build_retirement_derived.py's hardcoded election-pair
+  # map for an unconcluded election it was never designed to cover.
+  rows[, seat_outperf := seat_prev_pcv - level_prev]
+  .outperf_gate <- !is.na(rows$retirement_i) & !is.na(rows$is_incumbent_party_i) &
+                   rows$retirement_i == 1L & rows$is_incumbent_party_i == 1L
+  rows[, seat_outperf := ifelse(.outperf_gate, seat_outperf, NA_real_)]
+  cat(sprintf("XG8  seat_outperf gated (NA-filled elsewhere): %d of %d rows carry a real value\n",
+              sum(.outperf_gate), nrow(rows)))
+
   # `historic_elected_i` DEFAULTS TO 0 FOR A STATE ELECTION, NOT NA.
   #
   # It is built from the AEC's HistoricElected column, which exists only in
@@ -409,7 +441,21 @@ xgb_primary_predict_live <- function(shares, mat22, a22, state_mean, returns,
   if (length(miss)) stop("xgb_primary_predict_live(): model expects columns not built here: ",
                           paste(miss, collapse = ", "))
   X <- as.matrix(rows[, ..feat_cols])
-  pred <- predict(model, X)
+  # MUST MATCH fit_xgb_primary_v6_final.R's own training DMatrix exactly --
+  # that script sets base_margin=base_pred whenever AUSPOL_XGB_BASE_MARGIN is
+  # "1" or "2" (shipped 2026-09-17 at "2"). Predicting on a plain matrix with
+  # no base_margin would silently return the model's own near-zero base_score
+  # plus the boosted correction -- i.e. roughly "the residual" instead of
+  # "the residual plus base_pred" -- a wrong-scale number for every row, not
+  # a subtle miscalibration. `dtest`'s base_margin must be set even when the
+  # switch is off (`0`) below, since setting base_margin=0 is a no-op for a
+  # model trained without one -- this keeps the two code paths identical
+  # rather than branching on the switch here too.
+  .base_margin_mode <- Sys.getenv("AUSPOL_XGB_BASE_MARGIN", "2")
+  .margin <- if (.base_margin_mode %in% c("1", "2")) rows$base_pred else 0
+  dtest <- xgboost::xgb.DMatrix(data = X, missing = NA)
+  xgboost::setinfo(dtest, "base_margin", .margin)
+  pred <- predict(model, dtest)
   rows[, xgb_pred := pmax(0, pred)]
 
   out <- shares

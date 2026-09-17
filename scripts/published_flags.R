@@ -170,6 +170,27 @@ PUBLISHED_FLAGS <- c(
                                              # retain 70-97% of their vote, so full removal massively under-predicts
                                              # almost everywhere -- kept inert for reuse, not because the question
                                              # is still open. docs/plans/prereg-major-defector-conserve-2026-09-17.md
+  AUSPOL_XGB_BASE_MARGIN     = "2",          # fit_xgb_primary_v6.R: 2 = base_pred set as the training DMatrix's
+                                             # base_margin AND kept as an ordinary feature -- forces every tree to
+                                             # boost on the residual to base_pred while still letting the tree use
+                                             # base_pred's own value to size the correction. (1 = margin-only,
+                                             # base_pred removed as a feature -- measured WORSE than plain-feature,
+                                             # 3.8563 vs 3.8012 pooled all-23 RMSE; not shipped.)
+                                             # SHIPPED 2026-09-17, decided against AEF7 (fed2022/fed2025/nsw2023/
+                                             # qld2024/sa2026/vic2022/wa2025) as the working criterion, per Pete's
+                                             # call that day: faster to iterate on than the full 23-pair pooled bar.
+                                             # Pooled AEF7 primary RMSE: 3.6082 (base_margin) vs 3.6662 (plain
+                                             # feature) vs 3.6715 (v7f, the mechanism this REPLACES -- see
+                                             # AUSPOL_XGB_PRIMARY_OOF below). Also beats v7f pooled across all 23
+                                             # pairs (3.7603 vs 3.7914). Driven mostly by sa2026 (One Nation, the
+                                             # single pair the standing AEF gap analysis names as our biggest
+                                             # deficit): 4.852 -> 4.219 vs v6-plain, 5.096 -> 4.219 vs v7f.
+                                             # On the full 23-pair pooled SEAT log loss bar (the OTHER standing
+                                             # criterion, CLAUDE.md's "THE OBJECTIVE"), this arm was measured
+                                             # 2026-09-17 and REFUSED (0.2841 -> 0.2880, worse, concentrated in 2 of
+                                             # 23 pairs) -- shipped anyway on the AEF7 decision, which is a policy
+                                             # change from that standing rule, not a reversal of the seat-log-loss
+                                             # measurement. docs/NEXT-STEPS.md carries both numbers.
   AUSPOL_MINOR_DEFECT        = "1",          # discount a candidate's own_prev_pcv when they switched between two
                                              # NON-major parties (Stephen Andrew, ONP -> KAP, Mirani qld2024) --
                                              # fit_minor_defector_discount(), leave-target-out median, same shape as
@@ -457,25 +478,38 @@ PUBLISHED_FLAGS <- c(
                                              # protect a 0.014 number on elections already decided.
                                              # Was OFF from b2c5572 to e8c5eab, when the live path had no Victorian
                                              # candidate data and this would have made the 0-default a false claim.
-  AUSPOL_XGB_PRIMARY_OOF     = "output/xgb-primary-shipped-oof-predictions.csv",
-                                             # harness-only: which oof file the line above reads. Points at v7's
-                                             # ret_exp arm (the IND retention feature, docs/reviews/xgb-primary-
-                                             # retention-feature-2026-09-13.md) since 2026-09-13 -- confirmed a real,
-                                             # replicable effect (pooled delta -0.0016 to -0.0017 across two seeds,
-                                             # not noise), shipped on Pete's call alongside the notional-prior fix.
+  AUSPOL_XGB_PRIMARY_OOF     = "output/xgb-primary-v6-oof-predictions.csv",
+                                             # harness-only: which oof file the line above reads. REPOINTED
+                                             # 2026-09-17 from v7's "v7f" arm straight to v6's own output -- v7
+                                             # (fit_xgb_primary_v7.R) is BYPASSED for primary-vote shipping as of
+                                             # this change, not because v7's own features (jump_pctile fix,
+                                             # candidate-level features, the ret_exp IND-retention feature that
+                                             # justified pointing here in the first place) stopped working, but
+                                             # because v6 WITH base_margin (AUSPOL_XGB_BASE_MARGIN=2 above) measured
+                                             # better than v7f, fresh, same day: pooled AEF7 primary RMSE 3.6082 vs
+                                             # v7f's 3.6715, and 3.7603 vs 3.7914 pooled across all 23 pairs. v7's
+                                             # own gains were real when measured (2026-09-13) but did not survive
+                                             # being re-compared against a v6 that now also has base_margin -- v7
+                                             # itself was never re-run WITH base_margin threaded through its own
+                                             # separate training code (an "800+ line exploratory file" per its own
+                                             # header, per Pete's call not attempted the same day). Re-integrating
+                                             # v7's features on top of base_margin is the natural next arm, not
+                                             # done here. docs/NEXT-STEPS.md carries the full trace.
+                                             #
                                              # output/ is gitignored, so this filename is the ONLY durable record of
                                              # what ships -- regenerate it with:
                                              #   for y in 2010 2013 2016 2019 2022 2025; do  # prior is the election before
                                              #     AUSPOL_NB_TARGET=$y AUSPOL_NB_PRIOR=<prev> Rscript scripts/build_notional_baselines.R
                                              #   done
                                              #   Rscript scripts/fit_xgb_primary_v6.R
-                                             #   AUSPOL_V7_ARMS="v7c,v7f" AUSPOL_V7_SHIP="v7f" Rscript scripts/fit_xgb_primary_v7.R
-                                             #   cp output/xgb-primary-v7-oof-predictions.csv output/xgb-primary-shipped-oof-predictions.csv
-                                             # THE FIRST STEP IS NOT OPTIONAL and was missing from this recipe until
-                                             # 2026-09-14. build_notional_baselines.R does ONE pair per invocation, and
-                                             # output/ is gitignored -- so on a fresh checkout the file does not exist,
-                                             # v6 logs "XG6n! ... missing" and carries on, and the "shipped" oof file
-                                             # comes out silently WITHOUT the notional prior it is supposed to carry.
+                                             # THE NOTIONAL-BASELINES STEP IS NOT OPTIONAL and was missing from this
+                                             # recipe until 2026-09-14. build_notional_baselines.R does ONE pair per
+                                             # invocation, and output/ is gitignored -- so on a fresh checkout the
+                                             # file does not exist, v6 logs "XG6n! ... missing" and carries on, and
+                                             # the "shipped" oof file comes out silently WITHOUT the notional prior
+                                             # it is supposed to carry. v7 is NO LONGER PART OF THIS RECIPE -- do not
+                                             # run fit_xgb_primary_v7.R to regenerate this file; that would silently
+                                             # re-point at the mechanism this change moved away from.
                                              # v6 must run before v7: v7 loads its persisted feature matrix as its base,
                                              # including the notional-prior x_notional_adj column. Set to "" to fall
                                              # back to plain v6 (output/xgb-primary-v6-oof-predictions.csv).

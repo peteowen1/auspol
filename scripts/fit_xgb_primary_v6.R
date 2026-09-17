@@ -630,7 +630,17 @@ feat_cols <- c("base_pred", "seat_prev_pcv", "seat_outperf", "level_prev",
 # Measured =1 first: worse than the plain-feature baseline (3.8563 vs
 # 3.8012), so testing whether that's residual-modeling itself losing, or
 # specifically the lost base_pred-as-splittable-feature capacity.
-.base_margin_mode <- Sys.getenv("AUSPOL_XGB_BASE_MARGIN", "0")
+# SHIPPED 2026-09-17 at "2" (base_margin + base_pred kept as a feature), on
+# Pete's call, decided against the AEF7-comparable pairs as the working
+# criterion (faster iteration than the full 23-pair pooled bar): pooled AEF7
+# primary RMSE 3.6082 vs the plain-feature baseline's 3.6662 and the actual
+# previously-shipped v7f mechanism's 3.6715 -- base_margin beats BOTH,
+# fresh, same day. Also beats v7f pooled across all 23 pairs (3.7603 vs
+# 3.7914). v7 (fit_xgb_primary_v7.R) is BYPASSED for primary-vote shipping
+# as of this change -- AUSPOL_XGB_PRIMARY_OOF now points at this script's
+# own output directly (published_flags.R), not v7's. docs/NEXT-STEPS.md
+# carries the full trace.
+.base_margin_mode <- Sys.getenv("AUSPOL_XGB_BASE_MARGIN", "2")
 .base_margin <- .base_margin_mode %in% c("1", "2")
 if (identical(.base_margin_mode, "1")) feat_cols <- setdiff(feat_cols, "base_pred")
 # NOT YET WIRED if this mode is combined with AUSPOL_XGB_SAVE_OOF_MODELS=1:
