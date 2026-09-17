@@ -169,7 +169,10 @@ PUBLISHED_FLAGS <- c(
                                              # 0.49, p=0.0003), measured: targeted RMSE 9.2363 -> 8.8813, pooled RMSE
                                              # 3.8161 -> 3.8178 (well within the ~0.014-per-column noise floor found
                                              # the same session). docs/reviews/minor-to-minor-defector-2026-09-16.md
-  AUSPOL_XGB_SEATPREV_NAFILL = "1",          # build-time, fit_xgb_primary_v6.R: NA-fill seat_prev_pcv instead of
+  AUSPOL_XGB_SEATPREV_NAFILL = "1",          # fit_xgb_primary_v6.R (build-time) AND xgb_primary_predict_live()
+                                             # (live serving, R/xgb_primary_override.R) -- both must read the same
+                                             # default or a retrain reintroduces a train/serve mismatch (found by
+                                             # review 2026-09-17, f3bd280). NA-fill seat_prev_pcv instead of
                                              # 0-fill when a party did not contest that seat last time (16.7% of
                                              # rows, concentrated in ONP/IND/OTH_RIGHT -- 24.2% of minor-party rows
                                              # vs 4.5% major). Same shape as seat_outperf's NA-fill fix. SHIPPED
