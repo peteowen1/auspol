@@ -1,3 +1,15 @@
+# auspol 0.4.40
+
+**Minor-defector-discount rate pre-registration: refused, correctly. No model change.**
+
+- Ran the pre-registered 2×2 grid (`min_prior` 5-vs-10 × median-vs-geomean)
+  deciding whether the shipped 0.30-0.34 rate should move toward 0.50. Two
+  candidates cleared the primary RMSE bar (6.5%, 11.3%) but both failed the
+  concentration refusal check (90-96% of the gain in 5 of 34 cases) —
+  overfitting, not a real estimator improvement. Shipped rate unchanged.
+- Adds `fit_minor_defector_discount()`'s `agg` parameter as reusable
+  machinery (default `"median"`, no behavior change for existing callers).
+
 # auspol 0.4.39
 
 **`seat_prev_pcv` NA-fill shipped, and a stale-snapshot bug fixed along the way.**
