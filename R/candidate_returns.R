@@ -493,6 +493,34 @@ personal_prior_vote <- function(election_from, election_to, corpus = NULL,
                        prev_party   = if (.N) party[which.max(pcv)] else NA_character_),
                    by = .(.s, .k)]
   out <- merge(lead[, list(seat, .s, party, .k)], prev_best, by = c(".s", ".k"), all.x = TRUE)
+  # A MINOR-TO-MAJOR SWITCHER CANNOT ERASE A MAJOR PARTY'S OWN SEAT HISTORY.
+  # `prev_best` searches only non-major PRIOR rows (line ~485), but `lead`
+  # covers every CURRENT party including majors -- so a candidate who ran as
+  # a minor party last time and is a major party's new candidate this time
+  # (the retiring incumbent's replacement, not a returning identity) gets
+  # their own small minor-party history substituted as the ENTIRE major
+  # class's base, discarding the seat's real major-party total outright.
+  # Found 2026-09-17, docs/reviews/minor-to-major-personal-vote-substitution-
+  # 2026-09-17.md: Howlett ran GRN 9.6% in Pilbara 2008, then stood as ALP in
+  # 2013 after the real ALP incumbent (Stephens, 44.4%) retired -- own_x()
+  # then substituted 9.6 for 44.4, understating the class by 34.7 points, and
+  # the resulting seat row summed to 61.5 instead of 100, so renormalisation
+  # inflated every OTHER class in that seat too (LNP: 50.4 -> 81.9). Rare (3
+  # of ~11,500 (seat,party) rows in the whole corpus, all three understating
+  # the true base by 35-37 points) but each occurrence is severe and corrupts
+  # the whole seat's row, not just the one cell.
+  #
+  # A major party never lacks institutional history the way an independent or
+  # minor class does -- that asymmetry is exactly why "EXCLUDE A PRIOR
+  # MAJOR-PARTY REGISTRATION by default" above already protects the opposite
+  # direction (a major-to-minor switch cannot use ITS OWN major-party history
+  # without `major_discount` opting in). This is the missing other half: a
+  # major TARGET should never receive this generic substitution at all, since
+  # a returning MAJOR incumbent is handled by candidate_returns()/
+  # conditional_slopes()'s own same/same_mp machinery, not by this function,
+  # and `prev_best`'s exclusion of major PRIOR rows already means a
+  # major-to-major identity never reaches here in the first place.
+  out[party %in% MAJ, `:=`(own_prev_pcv = NA_real_, prev_party = NA_character_)]
   # MINOR-TO-MINOR DEFECTOR DISCOUNT, opt-in via `minor_discount`. `prev_best`
   # above finds the best prior NON-MAJOR result for this identity regardless
   # of whether the party matches -- so a candidate who switched from one

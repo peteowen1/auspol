@@ -275,6 +275,24 @@ test_that("personal_prior_vote names the class the vote came from and how much m
   expect_true(is.na(y[seat == "A" & party == "IND"]$prev_party))
 })
 
+test_that("a minor-to-major switcher cannot erase the major's own retiring incumbent", {
+  # Jane Smith (IND, 40% at e1) switches to ALP at e2 in the same seat, where
+  # Bob Jones (ALP, 21.6% at e1) is the seat's real ALP history and does not
+  # stand again. own_prev_pcv for ALP must stay NA (falling back to the
+  # class-level base, Bob Jones's 21.6) rather than substitute Jane's own
+  # unrelated 40% IND history -- found live in vic2026 (Melton, Morwell)
+  # 2026-09-17, docs/reviews/minor-to-major-personal-vote-substitution-
+  # 2026-09-17.md.
+  d <- mk()
+  d[, pcv := c(40, 21.6, 30, 45,  38, 36, 20, 44, 5)]
+  d[election == "e2" & seat == "A" & party == "ALP", `:=`(surname = "SMITH", given = "Jane")]
+  r <- personal_prior_vote("e1", "e2", d)
+  x <- r[seat == "A" & party == "ALP"]
+  expect_true(is.na(x$own_prev_pcv))
+  expect_true(is.na(x$prev_party))
+  expect_true(is.na(x$transfer))
+})
+
 test_that("remove_transferred_votes takes the moved vote out of the old class, once, floored at zero", {
   mat <- matrix(c(30, 21.6, 2, 46.4,   50, 0, 5, 45), nrow = 2, byrow = TRUE,
                 dimnames = list(c("A", "B"), c("ALP", "ONP", "IND", "LNP")))

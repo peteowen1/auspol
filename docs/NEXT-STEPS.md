@@ -1,5 +1,50 @@
 # auspol — work queue
 
+## FIXED, 2026-09-17: a minor-to-major party switcher could erase a retiring
+## major incumbent's entire seat base
+
+Found tracing the single worst per-seat regression in today's
+(refused) `base_margin` experiment — Pilbara/wa2013, `base_pred` predicted
+LNP at 81.94% against actual 61.73%. **The cause had nothing to do with
+that experiment**: confirmed by direct instrumentation of
+`backtest_candidate_wa.R`, `personal_prior_vote()`'s `own_prev_pcv`
+substitution let Howlett (GRN in 2008, 9.63%, switched to ALP in 2013 as
+the new candidate after the actual ALP incumbent Stephens retired) replace
+Stephens' real 44.38% seat base with Howlett's own unrelated 9.63% history.
+ALP's projected class share collapsed to 6.93%, the seat's row summed to
+61.50 instead of 100, and renormalisation inflated every OTHER class
+proportionally — including LNP, to 81.94%, though nothing about LNP's own
+projection was wrong.
+
+Mirror image of today's major-defector conservation question (settled:
+keep conserving) — a MINOR-party candidate arriving into a major party's
+seat, rather than a MAJOR-party member leaving one. **Pete's call: fix it,
+not just measure it** — this is a correctness bug, not a design tradeoff.
+**Sized: 3 cases across the 22 concluded pairs** (Prospect/fed2007 36.7pt
+understatement, Pilbara/wa2013 34.7pt, West Swan/wa2025 10.2pt — corrected
+from an earlier wrong claim that all three were 35-37pt). **The sizing
+script's own gap: it used `all_election_pairs()`, which never includes
+vic2026** — the review gate caught this and found **2 LIVE cases in the
+current published forecast**: Melton/LNP (18.5pt understatement, Jarrod
+Bingham IND→LNP) and Morwell/ALP (28.6pt, Tracie Lund IND→ALP). **This was
+not a future-nominations risk — it was actively wrong in today's forecast
+until this fix landed.** Confirmed fixed by rerunning
+`personal_prior_vote("vic2022","vic2026")` directly: both rows now
+correctly resolve to NA. **Fixed in `personal_prior_vote()`**: a
+major-party target row can no longer receive this substitution at all,
+mirroring the already-existing opposite-direction guard for major-to-minor
+switches. Also verified: 0 cases remain across all 22 concluded pairs;
+Pilbara's projection moves from ALP=11.3/LNP=81.9 to ALP=40.6/LNP=49.1
+(actual 29.8/61.7) — both errors roughly halved. Added a regression test
+(`tests/testthat/test-candidate_returns.R`) for this exact shape.
+**Pair-level seat log loss barely moved** on the two affected historical
+pairs (fed2007 0.3137→0.3143, wa2013 0.5611→0.5649, same accuracy) — in all
+3 known cases the safe party still won regardless, so no historical call
+flips. The value is correctness and risk reduction (this mechanism landing
+in a genuinely marginal seat could flip a call outright), not a measured
+historical log-loss gain. Full trace:
+[reviews/minor-to-major-personal-vote-substitution-2026-09-17.md](reviews/minor-to-major-personal-vote-substitution-2026-09-17.md).
+
 ## MERGED, 2026-09-17: PR #44 landed on `main` at `4e09ce3`
 
 All 102 files, fully reviewed. `dev` is at `b9a941f`, `main` now matches it.
@@ -189,6 +234,36 @@ change? A genuine per-seat multiplier means changing `src/seat_sim_core.cpp`,
 which every harness and the live Victorian forecast run through. This is
 item 4 on the 2026-09-16 list above - explicitly design-with-Pete, not
 solo-build.
+
+**2026-09-17: designed with Pete on the 11 real seats first, per `CLAUDE.md`'s
+own rule.** Walked the table — nsw2019's 4 wrong seats all went to a minor
+party/independent, nsw2023's 7 split 6-to-the-other-major-plus-1-independent
+(and one, Holsworthy, backwards). The beneficiary differs every time, which
+argues for genuine seat-level uncertainty over widening one specific class
+— consistent with the review's own "primary model's sd, not simulation's
+seat_sd" lean, but pointing toward a broader mechanism than the already-
+refused major-only widening arm tried.
+
+**Side investigation that grew into its own thread: Pete's `base_margin`
+idea** (train xgb on the residual to `base_pred` rather than as a plain
+feature) — real signal (AEF7 pooled primary RMSE -0.0452, sa2026 -0.60),
+but **refused at the seat level**: pooled log loss 0.2841→0.2880, worse,
+concentrated in 2 of 23 pairs, with ALP (not the predicted IND) carrying
+the real cost. Of the three AEF7 pairs that regressed at the primary
+level, only vic2022 (+0.0183) carries a comparable seat-level cost;
+nsw2023 is a small real cost too (+0.0021); wa2025 reverses and actually
+improves at the seat level (-0.0236) — a primary-level regression is not a
+reliable predictor of a seat-level one either way. Full trace:
+[plans/prereg-xgb-base-margin-2026-09-17.md](plans/prereg-xgb-base-margin-2026-09-17.md).
+Genuine finding kept from it: **both current and base_margin models already
+beat AEF pooled on the 7 comparable pairs** (ahead by 0.0113 and 0.0180
+respectively) — worth knowing on its own, separate from this refused arm.
+**Next arm, not yet built**: scope `base_margin` away from ALP, or to just
+the sa2026/wa2021-shaped cases it measurably helps.
+
+**The NSW seat_sd design question itself is still open** — the base_margin
+detour didn't resolve it, only confirmed AEF beats us less than the
+standing narrative suggested.
 
 ## 2026-09-16 evening: Pattern A SHIPPED — NA-fill beats 0-fill, and a noise-floor finding
 
