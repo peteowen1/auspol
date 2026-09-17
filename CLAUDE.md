@@ -226,7 +226,9 @@ Specific traps, all of which have bitten:
   strike rate of independents above the 90th percentile went 19% to 57% on the
   same data. **Before percentile-ranking anything, print three numbers: percent
   exactly zero, count of distinct values, and the size of the largest tied
-  block.** Still unported to `R/salience_surge.R:92`.
+  block.** Ported to `R/salience_surge.R:92` in `b7b5839` (2026-09-12) — the
+  percentile is now ranked among non-zero values only, gated behind
+  `AUSPOL_SALIENCE_PCTILE_NZ`.
 
 ## Before saying we don't have data, READ `docs/DATA-REGISTRY.md` and `docs/DATA-DICTIONARY.md`
 
@@ -260,12 +262,11 @@ So: cache the series, derive the statistic. Level, rise, peak, slope,
 volatility and time-to-peak all come free from a stored series and all cost a
 fresh scrape from a stored mean.
 
-### Why the registry exists
+### What the registry lists
 
-It is **generated from disk** by `scripts/build_data_registry.R` — never
-hand-edit it, rerun the script. It lists every election, every raw commission
-download, the candidate-level corpus, and the known gaps, with file sizes so a
-zero-byte file cannot pass as a working one.
+It lists every election, every raw commission download, the candidate-level
+corpus, and the known gaps, with file sizes so a zero-byte file cannot pass as
+a working one.
 
 This exists because the same data has been declared missing **three separate
 times on 2026-08-25 alone**, each time while sitting on disk:
