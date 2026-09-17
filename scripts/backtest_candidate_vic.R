@@ -261,6 +261,25 @@ PAIRS <- list(
   list(from = 2014, to = 2018),
   list(from = 2018, to = 2022))
 
+# RESTRICT TO ONE OR MORE PAIRS, AUSPOL_VIC_PAIR (default "" = all three).
+# Comma-separated target years, e.g. "2022" or "2018,2022". Added
+# 2026-09-17: this was the only harness among fed/nsw/qld/sa/vic/wa with no
+# restriction flag despite being the LIVE TARGET jurisdiction, so checking one
+# seat in one pair meant rerunning the whole file. Same mechanism as
+# AUSPOL_NSW_PAIR/AUSPOL_QLD_PAIR/AUSPOL_SA_PAIR, generalised to a set because
+# this harness runs several pairs per invocation rather than picking one.
+.vic_pair_sel <- Sys.getenv("AUSPOL_VIC_PAIR", "")
+if (nzchar(.vic_pair_sel)) {
+  .want <- trimws(strsplit(.vic_pair_sel, ",")[[1]])
+  .have <- vapply(PAIRS, function(p) as.character(p$to), character(1))
+  if (!all(.want %in% .have))
+    stop("AUSPOL_VIC_PAIR must be one or more of ", paste(.have, collapse = ", "),
+         " (comma-separated), and included ", paste(setdiff(.want, .have), collapse = ", "))
+  PAIRS <- PAIRS[.have %in% .want]
+  cat(sprintf("BV0p  AUSPOL_VIC_PAIR restricts this run to: %s\n",
+              paste(vapply(PAIRS, function(p) sprintf("%d->%d", p$from, p$to), character(1)), collapse = ", ")))
+}
+
 # Polling day, per target election. This was a ternary reading
 # `if (K$to == 2018L) ... else ...`, which silently gave any third pair the
 # 2022 date -- a leakage bug the moment a pair was added, and one that nothing

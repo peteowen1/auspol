@@ -229,6 +229,24 @@ YEARS <- c(1996, 2001, 2005, 2008, 2013, 2017, 2021, 2025)
 PAIRS <- Map(function(a, b) list(from = a, to = b),
              YEARS[-length(YEARS)], YEARS[-1])
 
+# RESTRICT TO ONE OR MORE PAIRS, AUSPOL_WA_PAIR (default "" = all seven).
+# Comma-separated target years, e.g. "2013" or "2013,2025". Added 2026-09-17:
+# WA is the largest harness (7 pairs, ~58 seats each) and had no restriction
+# flag at all, so a single-seat investigation (Pilbara/wa2013) required
+# rerunning every pair each time. Same mechanism as
+# AUSPOL_NSW_PAIR/AUSPOL_QLD_PAIR/AUSPOL_SA_PAIR/AUSPOL_VIC_PAIR.
+.wa_pair_sel <- Sys.getenv("AUSPOL_WA_PAIR", "")
+if (nzchar(.wa_pair_sel)) {
+  .want <- trimws(strsplit(.wa_pair_sel, ",")[[1]])
+  .have <- vapply(PAIRS, function(p) as.character(p$to), character(1))
+  if (!all(.want %in% .have))
+    stop("AUSPOL_WA_PAIR must be one or more of ", paste(.have, collapse = ", "),
+         " (comma-separated), and included ", paste(setdiff(.want, .have), collapse = ", "))
+  PAIRS <- PAIRS[.have %in% .want]
+  cat(sprintf("BW0p  AUSPOL_WA_PAIR restricts this run to: %s\n",
+              paste(vapply(PAIRS, function(p) sprintf("%d->%d", p$from, p$to), character(1)), collapse = ", ")))
+}
+
 share_of <- function(y) {
   f <- file.path(P, sprintf("waec-%d-wa-firstprefs.csv", y))
   if (!file.exists(f)) return(NULL)

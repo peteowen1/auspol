@@ -94,8 +94,8 @@ separate model code.
 | `AUSPOL_SURGE_H` | yes | yes | yes | yes | yes | yes | yes |
 | `AUSPOL_SURGE_RECIPIENT` | yes | yes | yes | yes | yes | yes | yes |
 | `AUSPOL_SURGE_SCALE` | yes | yes | yes | yes | yes | yes | yes |
-| `AUSPOL_V7_ARMS` | NO | NO | NO | NO | NO | NO | NO |
 | `AUSPOL_WA_FLOWS` | yes | yes | NO | yes | yes | yes | NO |
+| `AUSPOL_XGB_BASE_MARGIN` | NO | NO | NO | NO | NO | NO | NO |
 | `AUSPOL_XGB_FLOWS` | yes | yes | yes | yes | yes | yes | yes |
 | `AUSPOL_XGB_PRIMARY` | yes | yes | yes | yes | yes | yes | yes |
 | `AUSPOL_XGB_PRIMARY_LIVE` | yes | NO | NO | NO | NO | NO | NO |
@@ -148,8 +148,8 @@ separate model code.
 - **`AUSPOL_STATE_DEV`** (**adopted, shared-function wiring**): ADOPTED 2026-09-15 and FEDERAL ONLY, which is a design fact rather than the all-harnesses rule outstanding: a state election has no deviation from a national swing to correct, so the other five harnesses have nothing to honour. Corrects a federal seat's primaries for how its STATE moves against the national swing -- WA 2022 swung to Labor far harder than the country (mean ALP per-seat primary error +6.43 over 15 seats, positive in 14). Federal pooled seat log loss 0.2584 -> 0.2539 over 1,052 seat-elections, 0 of 10 permutation-control draws beating it. fit_seats_full.R reads NO for the same reason the state harnesses do; the published Victorian forecast is unaffected. docs/plans/prereg-state-deviation-2026-09-15.md
 - **`AUSPOL_STATE_DEV_SHUFFLE`** (intentional / dead experiment): Control for the above, not an arm: permutes which state each seat sits in, within its election, at fit and apply both. Absent from fit_seats_full.R because a control has no business in the published forecast. Calibrated -- the null lands on the baseline to within 0.0001 pooled.
 - **`AUSPOL_SURGE_FROM_ZERO`** (intentional / dead experiment): WA has no candidate-level salience corpus -- same exclusion as AUSPOL_SALIENCE_EXPECTED, intentional.
-- **`AUSPOL_V7_ARMS`** (**UNEXPLAINED -- audit this**): no classification recorded -- add one to CLASSIFY in scripts/build_model_registry.R
 - **`AUSPOL_WA_FLOWS`** (intentional / dead experiment): Self-referential no-op in the WA harness itself, same shape as AUSPOL_QLD_FLOWS above but not disclosed via an `.inert` list there. Genuinely absent from QLD (uses AUSPOL_QLD_FLOWS instead).
+- **`AUSPOL_XGB_BASE_MARGIN`** (**UNEXPLAINED -- audit this**): no classification recorded -- add one to CLASSIFY in scripts/build_model_registry.R
 - **`AUSPOL_XGB_PRIMARY_LIVE`** (intentional / dead experiment): Published-forecast-only (fit_seats_full.R), the live counterpart of AUSPOL_XGB_PRIMARY above. Loads output/xgb-primary-v6-final.model, trained on all 22 historical pairs -- correct here and leakage in a backtest, which is exactly why the two switches exist separately.
 - **`AUSPOL_XGB_PRIMARY_OOF`** (intentional / dead experiment): Harness-only escape hatch naming which out-of-fold file AUSPOL_XGB_PRIMARY reads; empty means the v6 default. Exists because the unversioned filename is v1's, and until 2026-09-11 the backtest arm measured v1 while the live forecast shipped v6 -- the two were never describing the same model. Not a modelling switch; no published-forecast analogue.
 - **`AUSPOL_XGB_PRIMARY_SD`** (**UNEXPLAINED -- audit this**): no classification recorded -- add one to CLASSIFY in scripts/build_model_registry.R
@@ -202,4 +202,4 @@ This is not automatically a bug -- `AUSPOL_SALIENCE_EXPECTED` and `AUSPOL_SALIEN
 
 ## Coverage check
 
-**MR2! 15 switch(es) have a non-universal row with NO recorded classification: AUSPOL_DEFECT_CONSERVE, AUSPOL_HISTORIC_ELECTED_BACKFILL, AUSPOL_HONOUR_DEPARTED, AUSPOL_NB_TARGET, AUSPOL_NOTIONAL, AUSPOL_NSW_THIN_WALK, AUSPOL_ONP_CONC_SD, AUSPOL_SALIENCE_PCTILE_NZ, AUSPOL_SD_DEPARTED, AUSPOL_V7_ARMS, AUSPOL_XGB_PRIMARY_SD, AUSPOL_XGB_PRIMARY_SD_CLASSES, AUSPOL_XGB_PRIMARY_SD_SRC, AUSPOL_XGB_SEATPREV_NAFILL, AUSPOL_XGB_SURGE_SRC.** Add them to CLASSIFY in scripts/build_model_registry.R before trusting this table.
+**MR2! 15 switch(es) have a non-universal row with NO recorded classification: AUSPOL_DEFECT_CONSERVE, AUSPOL_HISTORIC_ELECTED_BACKFILL, AUSPOL_HONOUR_DEPARTED, AUSPOL_NB_TARGET, AUSPOL_NOTIONAL, AUSPOL_NSW_THIN_WALK, AUSPOL_ONP_CONC_SD, AUSPOL_SALIENCE_PCTILE_NZ, AUSPOL_SD_DEPARTED, AUSPOL_XGB_BASE_MARGIN, AUSPOL_XGB_PRIMARY_SD, AUSPOL_XGB_PRIMARY_SD_CLASSES, AUSPOL_XGB_PRIMARY_SD_SRC, AUSPOL_XGB_SEATPREV_NAFILL, AUSPOL_XGB_SURGE_SRC.** Add them to CLASSIFY in scripts/build_model_registry.R before trusting this table.
