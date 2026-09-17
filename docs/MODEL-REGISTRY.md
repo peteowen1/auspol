@@ -31,11 +31,12 @@ All seven share one `R/` package core (`simulate_seat_contests()`,
 in which switches each one WIRES and which data source each reads, not in
 separate model code.
 
-## Switch parity (70 switches from `published_flags.R`, 7 entry points)
+## Switch parity (71 switches from `published_flags.R`, 7 entry points)
 
 | switch | fit_seats (published) | fed | nsw | qld | sa | vic | wa |
 |---|---|---|---|---|---|---|---|
 | `AUSPOL_COV_LOO` | NO | NO | NO | NO | NO | NO | NO |
+| `AUSPOL_DEFECT_CONSERVE` | NO | NO | NO | NO | NO | NO | NO |
 | `AUSPOL_DEFECT_DISCOUNT` | yes | yes | yes | yes | yes | yes | yes |
 | `AUSPOL_DEFECT_POOLED` | NO | NO | NO | NO | NO | NO | NO |
 | `AUSPOL_DEMO_RESID` | NO | yes | yes | yes | yes | yes | yes |
@@ -109,6 +110,7 @@ separate model code.
 ## Every non-universal switch, explained
 
 - **`AUSPOL_COV_LOO`** (intentional / dead experiment): Read inside R/statewide_cor.R, not per-harness -- universal in practice, absent from every harness script by design.
+- **`AUSPOL_DEFECT_CONSERVE`** (**UNEXPLAINED -- audit this**): no classification recorded -- add one to CLASSIFY in scripts/build_model_registry.R
 - **`AUSPOL_DEFECT_POOLED`** (**adopted, shared-function wiring**): ADOPTED 2026-09-09 at "2" (docs/plans/prereg-defector-two-rate- 2026-09-09.md), by Pete on mechanism -- the arm missed its own primary bar (t -2.04 vs 2.08) but every directional indicator was favourable and R4 confirmed the published Victorian forecast is byte-identical (Victoria fields no major-party defector standing as a minor this cycle, so the mechanism does not fire there). Reaches fit_seats_full.R correctly: personal_prior_vote() self-resolves both rates from Sys.getenv() when the caller passes NULL, exactly so this did not need a seventh call site wired by hand -- the mistake that made the first pooled-arm run VOID earlier the same day.
 - **`AUSPOL_DEMO_RESID`** (intentional / dead experiment): UNDER TEST, wired into all six harnesses and deliberately NOT into fit_seats_full.R -- the gap in this row is the point, not an oversight. Arm A of docs/plans/prereg-demographic-axis-2026-09-15.md: all seven census columns, each z-scored WITHIN pair, into a leave-one-pair-out elastic net on the primary residual, with no intercept so corrections sum to zero across a pair and statewide class totals are untouched. It replaces the single hand-picked yr12_pct of AUSPOL_EDU_RESID, which was REFUSED. Do not add a live call site until the plan's criterion is met -- and note that census-features.csv now carries vic2026, so the live path is blocked only by the decision, not the data, which it was until 2026-09-15.
 - **`AUSPOL_DEMO_RESID_SHUFFLE`** (intentional / dead experiment): Control, not an arm. Permutes which seat gets which seat's demographics within each election, at fit and at apply both, so every marginal and the whole procedure survive and only the seat-to-demographics link dies. Absent from fit_seats_full.R for the same reason its arm is: a control has no business in the published forecast. Calibrated on sa2026 -- 8 draws give mean 0.3576 against a 0.3577 baseline, sd 0.0013, so the null manufactures nothing and the real effect sits 8.9 sds out.
@@ -200,4 +202,4 @@ This is not automatically a bug -- `AUSPOL_SALIENCE_EXPECTED` and `AUSPOL_SALIEN
 
 ## Coverage check
 
-**MR2! 14 switch(es) have a non-universal row with NO recorded classification: AUSPOL_HISTORIC_ELECTED_BACKFILL, AUSPOL_HONOUR_DEPARTED, AUSPOL_NB_TARGET, AUSPOL_NOTIONAL, AUSPOL_NSW_THIN_WALK, AUSPOL_ONP_CONC_SD, AUSPOL_SALIENCE_PCTILE_NZ, AUSPOL_SD_DEPARTED, AUSPOL_V7_ARMS, AUSPOL_XGB_PRIMARY_SD, AUSPOL_XGB_PRIMARY_SD_CLASSES, AUSPOL_XGB_PRIMARY_SD_SRC, AUSPOL_XGB_SEATPREV_NAFILL, AUSPOL_XGB_SURGE_SRC.** Add them to CLASSIFY in scripts/build_model_registry.R before trusting this table.
+**MR2! 15 switch(es) have a non-universal row with NO recorded classification: AUSPOL_DEFECT_CONSERVE, AUSPOL_HISTORIC_ELECTED_BACKFILL, AUSPOL_HONOUR_DEPARTED, AUSPOL_NB_TARGET, AUSPOL_NOTIONAL, AUSPOL_NSW_THIN_WALK, AUSPOL_ONP_CONC_SD, AUSPOL_SALIENCE_PCTILE_NZ, AUSPOL_SD_DEPARTED, AUSPOL_V7_ARMS, AUSPOL_XGB_PRIMARY_SD, AUSPOL_XGB_PRIMARY_SD_CLASSES, AUSPOL_XGB_PRIMARY_SD_SRC, AUSPOL_XGB_SEATPREV_NAFILL, AUSPOL_XGB_SURGE_SRC.** Add them to CLASSIFY in scripts/build_model_registry.R before trusting this table.
