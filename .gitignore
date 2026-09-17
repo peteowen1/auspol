@@ -24,6 +24,21 @@ output/
 !output/
 output/*
 !output/mp-slope-by-class.csv
+# TWO MORE EXCEPTIONS, added 2026-09-17. These feed the "AEF-7 Seat Ledger"
+# artifact -- Pete's main day-to-day debugging tool -- and have NO builder
+# script: aef7-seat-groups.csv is 34 hand-assigned failure-category labels
+# (which specific seats cluster in the same unresolved pattern, e.g. "missed
+# together, cause unknown") from real analysis sessions, and
+# aef7-final-two-and-tcp-reference.csv is AEF's own published TCP scenario
+# data plus a two-candidate-preferred derivation for South Australia (43 of
+# 47 seats confirmed against the official pair). Neither depends on OUR
+# model, so neither needs regenerating when our forecast changes -- but
+# losing them means re-deriving analysis that took real sessions to produce,
+# the exact mistake CLAUDE.md's "keep raw scraped data" rule exists to
+# prevent, extended to hand-curated analysis instead of a scrape.
+# scripts/build_aef7_ledger_data.R reads both; it does NOT regenerate them.
+!output/aef7-seat-groups.csv
+!output/aef7-final-two-and-tcp-reference.csv
 *.parquet
 *.rds
 
