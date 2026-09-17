@@ -1,3 +1,20 @@
+# auspol 0.4.41
+
+**Major-defector conservation: measured, decisive, no model change. Fixes a live train/serve bug found along the way.**
+
+- Non-conserving (a major-party defector's unclaimed vote evaporating,
+  matching the minor-to-minor treatment) is 209% worse RMSE on the fixed
+  33-case set (8.59 → 26.54), worse in every jurisdiction except NSW. Kept
+  conserving (current behaviour). `AUSPOL_DEFECT_CONSERVE` added and
+  registered, default "1", refused arm kept inert for reuse.
+- Fixed `fit_seats_full.R` (the published Victoria 2026 forecast) sharing
+  one `own_prev` object between the base_pred blend and the xgb-layer
+  feature, applying `major_discount` to both when training's xgb feature
+  never applies it and always applies `minor_discount` instead — a real,
+  currently-live mismatch (5 minor-to-minor defector cases already in
+  vic2026's candidate list were affected). Split into two correctly-scoped
+  objects.
+
 # auspol 0.4.40
 
 **Minor-defector-discount rate pre-registration: refused, correctly. No model change.**
