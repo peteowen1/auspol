@@ -39,17 +39,17 @@ old code) and a pile of comment errors (fixed). Three things it turned up are
 **modelling decisions, not defects**, so they are logged rather than changed.
 
 **1. The minor-defector discount ships at a third, and was sized at a half.**
-`fit_minor_defector_discount()` returns a MEDIAN at `min_prior = 10`, which is
-**0.3255** for fed2025/sa2026/vic2022/wa2025 (0.3103 qld2024, 0.2939 nsw2023).
-The "49% retention, p = 0.0003" in
-`docs/reviews/minor-to-minor-defector-2026-09-16.md` is a **geometric mean at
-`min_prior = 5`** — a different statistic on a different sample (34 cases,
-geometric mean 0.50, t p = 0.00035; at `min_prior = 10` it is 18 cases). Both
-differences push the same way, so the shipped discount is harsher than its own
-evidence. **No published number is wrong** — the harnesses measured the value
-that ships — but the justification did not describe it. Which of 0.33 and 0.50
-forecasts better wants a pre-registered grid on the defector seats, with the
-election-wide metric as the do-no-harm guard. Docstrings corrected meanwhile.
+Shipped per-pair rates cluster 0.30-0.34 (median, `min_prior = 10`); the
+49% geometric-mean retention that justified it in
+`docs/reviews/minor-to-minor-defector-2026-09-16.md` is a different statistic
+on a different, smaller sample, both differences pushing the same way — no
+published number is wrong, but the justification didn't describe the number
+that ships. Docstrings corrected. **Pre-registered 2026-09-17, not yet run**:
+[plans/prereg-minor-defector-rate-2026-09-17.md](plans/prereg-minor-defector-rate-2026-09-17.md)
+— a 2×2 grid deconfounding the two things that changed at once (`min_prior`
+5-vs-10, median-vs-geomean), scored on a fixed 33-case held-out set, with
+pooled-RMSE and seat-log-loss guards. Prediction on record: neither axis
+clears the bar and 0.30-0.34 stays shipped, but written before running.
 
 **2. The two defector paths disagree about where a defector's lost votes go,
 and only one side was measured.** The major-party path
@@ -192,9 +192,40 @@ roughly quarters). Richmond (a different, untested mechanism per the
 `output/xgb-primary-v6-oof-predictions.csv` regenerated, every harness on
 `AUSPOL_XGB_PRIMARY_LIVE=1` picks it up next run.
 
-**NEXT: audit other 0-filled features for the same NA-fill fix**
-(`seat_prev_pcv` at minimum uses the same `ifelse(is.na(x), 0, x)`
-convention) — cheap, and could be a broader win than this one feature.
+**SHIPPED 2026-09-17: `seat_prev_pcv` NA-fill, `AUSPOL_XGB_SEATPREV_NAFILL`,
+on Pete's call — but the number he said yes to was wrong.** 16.7% of
+(seat,party) rows have no prior-election vote for that party in that seat
+(24.2% of minor-party rows, 4.5% major — concentrated in ONP/IND/OTH_RIGHT,
+the classes the AEF gap analysis already names as our biggest error). Same
+NA-fill mechanism as `seat_outperf`.
+
+**First measurement (INVALID, superseded below):** tested by overriding
+`AUSPOL_XGB_PRIMARY_OOF` to swap `output/xgb-primary-v6-oof-predictions.csv`
+directly — but that file is not what ships. The published forecast reads
+`output/xgb-primary-shipped-oof-predictions.csv`, v7's "v7f" arm built ON TOP
+of v6's feature matrix, not v6 raw. That first pass reported pooled seat log
+loss 0.2846→0.2844 (wash), SA -0.0127, sa2026 alone -0.0242 (the biggest
+single-pair move found) — all **overstated 5-6x** by testing the wrong
+artifact.
+
+**Same session, separately: `output/xgb-primary-shipped-oof-predictions.csv`
+was found genuinely 3 days stale** (mtime 2026-09-14 13:19, missing 21
+commits including `seat_outperf` and the minor-to-minor defector discount —
+the LIVE Victorian forecast was running without both). Fixed by regenerating
+via the documented recipe in `published_flags.R`. **New true baseline, all
+23 pairs: pooled seat log loss 0.2817, Brier 0.0844, accuracy 88.64%.**
+
+**`seat_prev_pcv` re-measured through the corrected real pipeline
+(v6→v7's v7f arm→shipped snapshot→six-harness backtest): pooled seat log
+loss 0.2817→0.2811 (-0.0006), Brier -0.0005 — small, real, broad.** By
+jurisdiction: FED, NSW, QLD, SA, VIC all slightly better (sa2026 itself
+-0.0044, not the claimed -0.0242), **WA +0.0039 worse**. Both guards clear.
+Pete confirmed ship on the corrected numbers. Default flipped to `1` in
+`fit_xgb_primary_v6.R` and `published_flags.R`; shipped snapshot regenerated.
+
+`x_notional_adj` and `retiring_mp_tenure` also 0-fill but are explicitly documented "0 where
+not applicable" (a real value, not a stand-in for missing data) — not the
+same failure shape as `seat_outperf` or `seat_prev_pcv`, not retested.
 
 **Bigger finding: adding ANY column to this pipeline costs ~0.014 pooled
 RMSE regardless of its information content** (measured directly with an

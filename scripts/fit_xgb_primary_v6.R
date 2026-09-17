@@ -387,7 +387,27 @@ ALL <- rbindlist(rows, fill = TRUE)
 cat(sprintf("\nseat-file (load_seats) coverage: %d of %d pairs -- %s\n",
             seat_file_hits, length(PAIRS), paste(seat_file_pairs, collapse = ", ")))
 
-ALL[, seat_prev_pcv := ifelse(is.na(seat_prev_pcv), 0, seat_prev_pcv)]
+# AUSPOL_XGB_SEATPREV_NAFILL: 16.7% of (seat,party) rows have no seat_prev_pcv
+# because the party did not contest that seat last time (24.2% of minor-party
+# rows, 4.5% of major-party rows) -- concentrated in exactly the classes
+# (ONP, IND, OTH_RIGHT) where the AEF gap analysis already found our biggest
+# error. 0-filling makes "no prior data" indistinguishable from "contested
+# and got exactly 0%", the same shape that made seat_outperf's own NA-fill
+# beat its 0-fill (halved pooled RMSE cost of adding it, 2026-09-16).
+#
+# SHIPPED 2026-09-17, on Pete's call. Measured through the REAL pipeline
+# (v6 -> v7's v7f arm -> the shipped snapshot -> full six-harness backtest),
+# not v6 in isolation -- a first pass measured v6 alone and overstated the
+# gain by 5-6x (claimed sa2026 -0.0242, real move -0.0044). Real result, all
+# 23 pairs: pooled seat log loss 0.2817 -> 0.2811 (-0.0006), Brier -0.0005.
+# By jurisdiction: FED/NSW/QLD/SA/VIC all slightly better, WA +0.0039 worse.
+# Small, broad, real; one small real regression. docs/NEXT-STEPS.md carries
+# the full trace.
+if (identical(Sys.getenv("AUSPOL_XGB_SEATPREV_NAFILL", "1"), "1")) {
+  ALL[, seat_prev_pcv := ifelse(is.na(seat_prev_pcv), NA_real_, seat_prev_pcv)]
+} else {
+  ALL[, seat_prev_pcv := ifelse(is.na(seat_prev_pcv), 0, seat_prev_pcv)]
+}
 ALL[, x_notional_adj := ifelse(is.na(x_notional_adj), 0, x_notional_adj)]
 ALL[, retiring_mp_tenure := ifelse(is.na(retiring_mp_tenure), 0, retiring_mp_tenure)]
 # Fall back to the existing blended level_pred, never to a bare NA -- xgboost

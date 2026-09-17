@@ -1,3 +1,18 @@
+# auspol 0.4.39
+
+**`seat_prev_pcv` NA-fill shipped, and a stale-snapshot bug fixed along the way.**
+
+- `AUSPOL_XGB_SEATPREV_NAFILL`: NA-fill `seat_prev_pcv` instead of 0-fill when
+  a party had no prior-election vote for a seat (16.7% of rows, concentrated
+  in ONP/IND/OTH_RIGHT). Measured through the real production pipeline (v6 →
+  v7's `v7f` arm → shipped snapshot), all 23 pairs: pooled seat log loss
+  0.2817 → 0.2811, Brier -0.0005. A first pass measured against the wrong
+  artifact and overstated the gain ~5-6x — corrected before shipping.
+- Fixed `output/xgb-primary-shipped-oof-predictions.csv` being 3 days stale
+  (the live Victoria forecast was missing `seat_outperf` and the
+  minor-to-minor defector discount) and a train/serve mismatch in
+  `xgb_primary_predict_live()`, which still hardcoded the old 0-fill.
+
 # auspol 0.4.38
 
 **`output/aef-primary-all.csv` gets a generating script.**

@@ -1,6 +1,6 @@
 # Model registry
 
-**Generated 2026-09-16 by `scripts/build_model_registry.R`. Do not hand-edit** --
+**Generated 2026-09-17 by `scripts/build_model_registry.R`. Do not hand-edit** --
 rerun the script instead. Regenerate whenever a switch is added to
 `published_flags.R` or a harness's wiring changes.
 
@@ -31,7 +31,7 @@ All seven share one `R/` package core (`simulate_seat_contests()`,
 in which switches each one WIRES and which data source each reads, not in
 separate model code.
 
-## Switch parity (68 switches from `published_flags.R`, 7 entry points)
+## Switch parity (70 switches from `published_flags.R`, 7 entry points)
 
 | switch | fit_seats (published) | fed | nsw | qld | sa | vic | wa |
 |---|---|---|---|---|---|---|---|
@@ -63,6 +63,7 @@ separate model code.
 | `AUSPOL_LEVEL_MULT_IND` | yes | yes | yes | yes | yes | yes | yes |
 | `AUSPOL_LEVEL_MULT_OTH` | yes | yes | yes | yes | yes | yes | yes |
 | `AUSPOL_LEVEL_SD` | yes | yes | yes | yes | yes | yes | yes |
+| `AUSPOL_MINOR_DEFECT` | NO | yes | yes | yes | yes | yes | yes |
 | `AUSPOL_MP_SLOPE` | yes | yes | yes | yes | yes | yes | yes |
 | `AUSPOL_N_SIMS` | yes | yes | yes | yes | yes | yes | yes |
 | `AUSPOL_NB_TARGET` | NO | NO | NO | NO | NO | NO | NO |
@@ -80,7 +81,7 @@ separate model code.
 | `AUSPOL_SALIENCE_PCTILE_NZ` | NO | NO | NO | NO | NO | NO | NO |
 | `AUSPOL_SALIENCE_SMOOTH` | NO | NO | NO | NO | NO | NO | NO |
 | `AUSPOL_SALIENCE_SURGE_V2` | yes | yes | yes | yes | yes | yes | yes* |
-| `AUSPOL_SD_DEPARTED` | NO | NO | NO | NO | NO | NO | NO |
+| `AUSPOL_SD_DEPARTED` | NO | yes | yes | yes | yes | yes | yes |
 | `AUSPOL_SEAT_SD_MULT` | yes | yes | yes | yes | yes | yes | yes |
 | `AUSPOL_SEED` | yes | yes | yes | yes | yes | yes | yes |
 | `AUSPOL_SHRINK` | yes | yes | yes | yes | yes | yes | yes |
@@ -101,6 +102,7 @@ separate model code.
 | `AUSPOL_XGB_PRIMARY_SD` | NO | yes | yes | yes | yes | yes | yes |
 | `AUSPOL_XGB_PRIMARY_SD_CLASSES` | NO | NO | NO | NO | NO | NO | NO |
 | `AUSPOL_XGB_PRIMARY_SD_SRC` | NO | NO | NO | NO | NO | NO | NO |
+| `AUSPOL_XGB_SEATPREV_NAFILL` | NO | NO | NO | NO | NO | NO | NO |
 | `AUSPOL_XGB_SURGE` | NO | yes | yes | yes | yes | yes | yes |
 | `AUSPOL_XGB_SURGE_SRC` | NO | NO | NO | NO | NO | NO | NO |
 
@@ -123,6 +125,7 @@ separate model code.
 - **`AUSPOL_IND_SALIENCE`** (intentional / dead experiment): Deprecated experimental arm (the v1 national IND multiplier), superseded by the newer salience mechanisms; fed-only because that is the only harness it was ever tested in. Not adopted.
 - **`AUSPOL_INSURGENCY_SHRINK`** (intentional / dead experiment): Per-seat shrink experiment, REFUSED 2026-09-06 (worse than the scalar shrink on 5 of 6 federal pairs) -- see docs/NEXT-STEPS.md. Fed/fit_seats-only because that is as far as the experiment got before being set aside. Not adopted.
 - **`AUSPOL_LEVEL_MODE`** (intentional / dead experiment): Read by scripts/fit_xgb_primary_v6.R when the model is FITTED, not by any harness or by fit_seats_full.R at run time -- the choice is baked into the oof file and the saved model, so it shows as absent everywhere while governing every row of both. 'pred' (default) trains on a poll-based statewide projection; 'now' trains on the target election's actual result and is LEAKAGE, kept only so the cost stays measurable. The live path has always used a prediction (R/xgb_primary_override.R fills level_now from state_mean), so this made training match serving.
+- **`AUSPOL_MINOR_DEFECT`** (**UNEXPLAINED -- audit this**): no classification recorded -- add one to CLASSIFY in scripts/build_model_registry.R
 - **`AUSPOL_NB_TARGET`** (**UNEXPLAINED -- audit this**): no classification recorded -- add one to CLASSIFY in scripts/build_model_registry.R
 - **`AUSPOL_NOTIONAL`** (**UNEXPLAINED -- audit this**): no classification recorded -- add one to CLASSIFY in scripts/build_model_registry.R
 - **`AUSPOL_NSW_THIN_WALK`** (**UNEXPLAINED -- audit this**): no classification recorded -- add one to CLASSIFY in scripts/build_model_registry.R
@@ -151,6 +154,7 @@ separate model code.
 - **`AUSPOL_XGB_PRIMARY_SD`** (**UNEXPLAINED -- audit this**): no classification recorded -- add one to CLASSIFY in scripts/build_model_registry.R
 - **`AUSPOL_XGB_PRIMARY_SD_CLASSES`** (**UNEXPLAINED -- audit this**): no classification recorded -- add one to CLASSIFY in scripts/build_model_registry.R
 - **`AUSPOL_XGB_PRIMARY_SD_SRC`** (**UNEXPLAINED -- audit this**): no classification recorded -- add one to CLASSIFY in scripts/build_model_registry.R
+- **`AUSPOL_XGB_SEATPREV_NAFILL`** (**UNEXPLAINED -- audit this**): no classification recorded -- add one to CLASSIFY in scripts/build_model_registry.R
 - **`AUSPOL_XGB_SURGE`** (intentional / dead experiment): Harness-only and wired into backtest_candidate_sa.R ALONE, which is this file's own 'a fix to one harness is a fix to all of them' rule outstanding rather than satisfied. Built, measured, NOT shipped: the hazard is much better than the salience one it would replace (out-of-fold AUC 0.936 against 0.751) but it failed its pre-registered bar and a calibration check says it is now over-dispersed. Its live path is an unimplemented stub, so fit_seats_full.R cannot honour it even if asked. docs/plans/prereg-xgb-surge-parameters-2026-09-11.md
 - **`AUSPOL_XGB_SURGE_SRC`** (**UNEXPLAINED -- audit this**): no classification recorded -- add one to CLASSIFY in scripts/build_model_registry.R
 
@@ -197,4 +201,4 @@ This is not automatically a bug -- `AUSPOL_SALIENCE_EXPECTED` and `AUSPOL_SALIEN
 
 ## Coverage check
 
-**MR2! 13 switch(es) have a non-universal row with NO recorded classification: AUSPOL_HISTORIC_ELECTED_BACKFILL, AUSPOL_HONOUR_DEPARTED, AUSPOL_NB_TARGET, AUSPOL_NOTIONAL, AUSPOL_NSW_THIN_WALK, AUSPOL_ONP_CONC_SD, AUSPOL_SALIENCE_PCTILE_NZ, AUSPOL_SD_DEPARTED, AUSPOL_V7_ARMS, AUSPOL_XGB_PRIMARY_SD, AUSPOL_XGB_PRIMARY_SD_CLASSES, AUSPOL_XGB_PRIMARY_SD_SRC, AUSPOL_XGB_SURGE_SRC.** Add them to CLASSIFY in scripts/build_model_registry.R before trusting this table.
+**MR2! 15 switch(es) have a non-universal row with NO recorded classification: AUSPOL_HISTORIC_ELECTED_BACKFILL, AUSPOL_HONOUR_DEPARTED, AUSPOL_MINOR_DEFECT, AUSPOL_NB_TARGET, AUSPOL_NOTIONAL, AUSPOL_NSW_THIN_WALK, AUSPOL_ONP_CONC_SD, AUSPOL_SALIENCE_PCTILE_NZ, AUSPOL_SD_DEPARTED, AUSPOL_V7_ARMS, AUSPOL_XGB_PRIMARY_SD, AUSPOL_XGB_PRIMARY_SD_CLASSES, AUSPOL_XGB_PRIMARY_SD_SRC, AUSPOL_XGB_SEATPREV_NAFILL, AUSPOL_XGB_SURGE_SRC.** Add them to CLASSIFY in scripts/build_model_registry.R before trusting this table.
