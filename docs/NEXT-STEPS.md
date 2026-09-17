@@ -65,7 +65,14 @@ outright when its member walks. That asymmetry may be right: a major party
 keeps a machine and a brand, a micro-party is often just the member. It is
 also untested. Only the non-conserving side has a measurement behind it.
 Changing the major path moves every major-defector seat in all six harnesses,
-so it needs a run, not an edit.
+so it needs a run, not an edit. **Pete's call 2026-09-17: worth measuring,
+not assuming.** Pre-registered:
+[plans/prereg-major-defector-conserve-2026-09-17.md](plans/prereg-major-defector-conserve-2026-09-17.md)
+— 33 cases across 18 pairs (all scorable, old party fields someone in every
+one), old-party retention ranges 0.20 to 0.97 of the departed member's own
+vote, tested in both `base_pred` and the xgb layer per the standing rule.
+Not yet run. Prediction on record: heterogeneity too wide for either
+endpoint to win cleanly, current conserving default likely stays.
 
 **3. CLOSED 2026-09-17 — the premise was wrong, not just the file to parse.**
 This item claimed "we score against AEF on TCP and win probability, not at
