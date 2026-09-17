@@ -53,11 +53,32 @@ entirely.
 
 ## Scale, and the fix
 
-Sized against the full corpus before fixing: **3 cases in the whole corpus**
-(Prospect/fed2007, Pilbara/wa2013, West Swan/wa2025 — all 3 found, all 3
-independently discovered by the sizing script, not just the one this
-investigation started from). All three understate the true major-class base
-by 35-37 points.
+Sized against the full corpus before fixing: **3 cases across the 22
+CONCLUDED-election pairs in `all_election_pairs()`** (Prospect/fed2007,
+Pilbara/wa2013, West Swan/wa2025). Understatement of the true major-class
+base: fed2007 36.7 points, wa2013 34.7 points, **wa2025 only 10.2 points —
+corrected from an earlier draft of this doc that wrongly stated 35-37 for
+all three; checked against `output/candidacies.csv` directly** (Nesbit,
+LNP, wa2021: 11.79% real vs 1.59% substituted).
+
+**The sizing script's real gap: `all_election_pairs()` only lists concluded
+elections, so it never checked vic2026 — the one pair that actually
+matters.** Found by the review gate: `personal_prior_vote("vic2022",
+"vic2026")` has **2 live cases today**, both severe:
+
+| seat | target | switcher (their 2022 party, %) | real 2022 major incumbent, % | understatement |
+|---|---|---|---|--:|
+| Melton | LNP | Jarrod Bingham, IND, 5.81% | Graham Watt, LNP, 24.34% | 18.5 pts |
+| Morwell | ALP | Tracie Lund, IND, 2.79% | Kate Maxfield, ALP, 31.44% | 28.6 pts |
+
+Confirmed reachable in the real pipeline: `fit_seats_full.R:754` calls this
+exact function with `.cond` (screened dev-slope mode) TRUE by default, and
+`candidate_returns("vic2022","vic2026")` already runs successfully against
+the current partial nomination list. **This is not a future-nominations
+risk — it was live in today's published forecast until this fix**, and is
+now confirmed fixed (both rows resolve to NA, correctly falling back to the
+seat's real major-party base) by rerunning `personal_prior_vote()` against
+the current candidate list with the fix applied.
 
 **Fixed in `personal_prior_vote()` (`R/candidate_returns.R`)**: a major-party
 target row now never receives this generic `own_prev_pcv` substitution —
@@ -72,12 +93,12 @@ already means a genuine major-to-major identity never reached this
 substitution anyway, so majors lose nothing legitimate by being excluded as
 targets.
 
-Verified: sizing script confirms 0 cases remain. Pilbara/wa2013's
-deterministic pre-simulation projection moves from ALP=11.3/LNP=81.9 to
-ALP=40.6/LNP=49.1 (actual: ALP=29.8/LNP=61.7) — both errors roughly halved.
-vic2026's current partial candidate list has 0 cases of this pattern today
-(checked directly), so this does not change the live forecast right now,
-but protects it as nominations complete.
+Verified: sizing script confirms 0 cases remain across all 22 concluded
+pairs AND vic2026. Pilbara/wa2013's deterministic pre-simulation projection
+moves from ALP=11.3/LNP=81.9 to ALP=40.6/LNP=49.1 (actual: ALP=29.8/LNP=61.7)
+— both errors roughly halved. Melton and Morwell's LNP/ALP `own_prev_pcv`
+both correctly resolve to NA now, restoring the real major-class base as
+the projection's starting point for the live forecast.
 
 **Pair-level seat log loss barely moved on the two affected historical
 pairs** (fed2007: 0.3137 → 0.3143; wa2013: 0.5611 → 0.5649, both flat,

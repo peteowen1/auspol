@@ -20,15 +20,23 @@ Mirror image of today's major-defector conservation question (settled:
 keep conserving) — a MINOR-party candidate arriving into a major party's
 seat, rather than a MAJOR-party member leaving one. **Pete's call: fix it,
 not just measure it** — this is a correctness bug, not a design tradeoff.
-**Sized: exactly 3 cases in the whole corpus** (Prospect/fed2007,
-Pilbara/wa2013, West Swan/wa2025), each understating the true major-class
-base by 35-37 points. **Fixed in `personal_prior_vote()`**: a major-party
-target row can no longer receive this substitution at all, mirroring the
-already-existing opposite-direction guard for major-to-minor switches.
-Verified: 0 cases remain corpus-wide; Pilbara's projection moves from
-ALP=11.3/LNP=81.9 to ALP=40.6/LNP=49.1 (actual 29.8/61.7) — both errors
-roughly halved; vic2026's current candidate list has 0 cases today (no
-change to the live forecast right now, but protected going forward).
+**Sized: 3 cases across the 22 concluded pairs** (Prospect/fed2007 36.7pt
+understatement, Pilbara/wa2013 34.7pt, West Swan/wa2025 10.2pt — corrected
+from an earlier wrong claim that all three were 35-37pt). **The sizing
+script's own gap: it used `all_election_pairs()`, which never includes
+vic2026** — the review gate caught this and found **2 LIVE cases in the
+current published forecast**: Melton/LNP (18.5pt understatement, Jarrod
+Bingham IND→LNP) and Morwell/ALP (28.6pt, Tracie Lund IND→ALP). **This was
+not a future-nominations risk — it was actively wrong in today's forecast
+until this fix landed.** Confirmed fixed by rerunning
+`personal_prior_vote("vic2022","vic2026")` directly: both rows now
+correctly resolve to NA. **Fixed in `personal_prior_vote()`**: a
+major-party target row can no longer receive this substitution at all,
+mirroring the already-existing opposite-direction guard for major-to-minor
+switches. Also verified: 0 cases remain across all 22 concluded pairs;
+Pilbara's projection moves from ALP=11.3/LNP=81.9 to ALP=40.6/LNP=49.1
+(actual 29.8/61.7) — both errors roughly halved. Added a regression test
+(`tests/testthat/test-candidate_returns.R`) for this exact shape.
 **Pair-level seat log loss barely moved** on the two affected historical
 pairs (fed2007 0.3137→0.3143, wa2013 0.5611→0.5649, same accuracy) — in all
 3 known cases the safe party still won regardless, so no historical call
