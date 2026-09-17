@@ -1,3 +1,27 @@
+# auspol 0.4.43
+
+**base_margin shipped, overriding the 0.4.42 refusal above -- FAILS the
+pre-registered all-23-pair seat log loss bar (0.2841 -> 0.2880, worse) but
+ships anyway on Pete's explicit call to decide by AEF7 pooled primary RMSE
+instead (a policy change, not a re-measurement): 3.6082 vs the previous
+model's 3.6715, and 3.7603 vs 3.7914 pooled across all 23 pairs. The ALP
+regression the 0.4.42 refusal found (qld2020, wa2001, wa2013) is real and
+unresolved by this decision -- it is accepted, not fixed.**
+
+- `AUSPOL_XGB_BASE_MARGIN` default flipped from `"0"` to `"2"` in both
+  `fit_xgb_primary_v6.R` and `fit_xgb_primary_v6_final.R`.
+  `AUSPOL_XGB_PRIMARY_OOF` repointed at v6's own output; v7
+  (`fit_xgb_primary_v7.R`) is bypassed for primary-vote shipping.
+- Fixing the live-serving trainer to set `base_margin` surfaced a second,
+  unrelated, pre-existing gap: `seat_outperf` (shipped into the backtest
+  2026-09-16) had never reached live serving at all. Fixed -- live today
+  for 20 vic2026 seats with a retiring major-party incumbent. See
+  `docs/reviews/seat-outperf-missing-from-live-model-2026-09-17.md`.
+- Added `AUSPOL_WA_PAIR`/`AUSPOL_VIC_PAIR` per-pair restriction flags
+  (the last two of six backtest harnesses without one) and
+  `scripts/compare_arm_outputs.R`, a zero-movement-bucket-first comparison
+  tool. See `docs/plans/repo-speedup-2026-09-17.md`.
+
 # auspol 0.4.42
 
 **base_margin residual-modeling experiment: refused. No model change. A real AEF-gap finding kept.**
