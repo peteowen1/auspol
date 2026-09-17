@@ -80,6 +80,16 @@
   details.provlog .prov:first-of-type{margin-top:6px}
 
   /* summary strip: one row per election, us vs AEF */
+  .overall{background:var(--surface); border:1px solid var(--line-2); border-radius:9px; padding:13px 16px;
+           margin-bottom:14px; display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:14px 22px}
+  .overall .stat{display:flex; flex-direction:column; gap:3px}
+  .overall .stat .lab{font-size:10.5px; text-transform:uppercase; letter-spacing:.08em; color:var(--ink-3); font-weight:700}
+  .overall .stat .row{display:flex; align-items:baseline; gap:8px; font-family:"IBM Plex Mono",monospace; font-variant-numeric:tabular-nums}
+  .overall .stat .row b{font-size:16px; color:var(--ink)}
+  .overall .stat .row .aef{font-size:13px; color:var(--ink-3)}
+  .overall .stat .row .aef::before{content:"AEF "}
+  .overall .stat .row b.better{color:var(--good)}
+  .overall .stat .n{font-size:10.5px; color:var(--ink-3)}
   .strip{display:grid; grid-template-columns:repeat(auto-fit,minmax(178px,1fr)); gap:8px; margin-bottom:18px}
   .card{background:var(--surface); border:1px solid var(--line); border-radius:7px; padding:9px 11px}
   .card .pair{font-weight:600; font-size:12.5px; letter-spacing:.02em; display:flex; justify-content:space-between; align-items:baseline}
@@ -181,12 +191,39 @@
   <details class="provlog">
     <summary>What the columns mean</summary>
     <p class="sub prov">Every seat of the seven elections AE&nbsp;Forecasts also covered, our numbers beside theirs.
-     <b>Miss</b> is the winner's actual primary minus our prediction. <b>Δ&nbsp;loss</b> is our seat log loss minus
-     theirs — negative means we did better. Notes save for everyone. <b>Final two</b> is the two-candidate count: official for the federal elections and South Australia; a starred value is one we derived from published preference flows, which reproduces the official pair in 43 of 47 SA seats and lands within 0.6 points when it does. <b>AEF final two</b> is AE&nbsp;Forecasts' own simulated TCP prediction, parsed from their own cached scenario data (<code>seatTcpScenarios</code>/<code>seatTcpBands</code>): the pairing their model gave the highest chance of reaching the final two, that party's predicted median TCP%, and how confident AEF itself was in that PAIRING occurring (not the % itself) &mdash; a seat where AEF's own scenario confidence is well under 1.0 means even they saw a real chance of a different final two.</p>
+     <b>Miss</b> is the winner's actual primary minus our prediction; <b>AEF miss</b> is the same for them.
+     <b>Δ&nbsp;primary</b> is our |miss| minus their |miss| &mdash; negative means we did better on the winner's
+     primary specifically, same convention as <b>Δ&nbsp;loss</b> (our seat log loss minus theirs). Notes save for
+     everyone. <b>Final two</b> is the two-candidate count: official for the federal elections and South Australia;
+     a starred value is one we derived from published preference flows, which reproduces the official pair in 43 of
+     47 SA seats and lands within 0.6 points when it does. <b>ITG final two</b> is OUR OWN top-frequency scenario
+     out of every final-two pairing our simulation drew: the pairing our model gave the highest chance of
+     occurring, and (<code>R/tcp_scenarios.R</code>) <b>ITG pick is defined as whichever party won the MAJORITY of
+     that pairing's own draws</b> &mdash; so <b>ITG TCP% is always &ge;50</b> by construction, it names our
+     predicted WINNER of the pairing. <b>ITG confidence</b> is how often our own simulation landed on that exact
+     pairing at all. <b>AEF final two</b> works differently and is NOT directly comparable pick-for-pick: it is
+     parsed from AE&nbsp;Forecasts' own cached scenario data (<code>seatTcpScenarios</code>/<code>seatTcpBands</code>),
+     and <b>"AEF pick" names a fixed party for that scenario, not necessarily the one AEF expects to win it</b> --
+     "AEF TCP%" is that named party's own share, which can sit UNDER 50, and when it does AEF's real prediction is
+     the OTHER party in the pairing. Wentworth fed2025 is the case that surfaced this: "AEF pick" reads LNP at
+     43.5%, which means AEF actually predicted IND (the other finalist) to win with ~56.5% -- correctly, since IND
+     won. "AEF confidence" is how often AEF's own simulation landed on that PAIRING occurring at all, independent
+     of who wins it.</p>
   </details>
 
   <details class="provlog">
-    <summary>Provenance &amp; changelog <span class="n">(7 updates)</span></summary>
+    <summary>Provenance &amp; changelog <span class="n">(8 updates)</span></summary>
+    <p class="sub prov"><b>Added, same session.</b> Pooled headline stats at the top (seat count,
+       seat log loss, primary RMSE on the winner, TCP MAE) -- ours vs AEF, each with its own n.
+       <b>AEF miss</b> and <b>Δ&nbsp;primary</b> columns, same convention as the existing Δ&nbsp;loss.
+       An <b>ITG final two</b> column group mirroring AEF's own, with a real difference worth
+       reading the docs for: ours always names the pairing's predicted WINNER (&ge;50% by
+       construction, <code>R/tcp_scenarios.R</code>), AEF's does not -- discovered when Pete asked
+       why Wentworth fed2025 showed "AEF pick: LNP" at only 43.5%, which turned out to mean AEF
+       actually predicted the OTHER finalist (IND) to win, correctly. The first version of the TCP
+       MAE metric had exactly this bug on AEF's side (compared a losing-party percentage against
+       the actual winner's share); fixed before publishing by comparing each named party against
+       ITS OWN actual share of the count, not always the winner's.</p>
     <p class="sub prov"><b>Correction, same session, minutes after the refresh below.</b> Pete
        caught it by eye: Murray showed 94.7% win probability off a 15.3% predicted primary --
        internally implausible. Traced to source: the raw backtest gives Murray/IND 33.1%, not
@@ -257,6 +294,7 @@
        <code>docs/NEXT-STEPS.md</code>.</p>
   </details>
 
+  <div class="overall" id="overall"></div>
   <div class="strip" id="strip"></div>
 
   <div class="controls">
@@ -285,8 +323,9 @@
         <tr class="grp">
           <th colspan="5"></th>
           <th colspan="4" class="sep">Probability of winning</th>
-          <th colspan="4" class="sep">Winner's primary vote %</th>
+          <th colspan="6" class="sep">Winner's primary vote %</th>
           <th colspan="3" class="sep">Final two</th>
+          <th colspan="3" class="sep">ITG final two</th>
           <th colspan="3" class="sep">AEF final two</th>
           <th colspan="3" class="sep">Seat log loss</th>
           <th colspan="2" class="sep"></th>
@@ -316,9 +355,14 @@ const COLS = [
   {k:"our_fp_win",t:"Ours",   num:true, dp:1},
   {k:"aef_fp_win",t:"AEF",    num:true, dp:1},
   {k:"miss",      t:"Our miss", num:true, dp:1, miss:true},
+  {k:"aef_miss",  t:"AEF miss", num:true, dp:1, miss:true},
+  {k:"primary_delta", t:"Δ primary", num:true, dp:1, delta:true},
   {k:"f1",     t:"Led",    cls:"pill-cell", sep:true},
   {k:"f2",     t:"Runner-up", cls:"pill-cell"},
   {k:"f2cp",   t:"Winner 2CP", num:true, dp:1},
+  {k:"our_tcp_f1",  t:"ITG pick", cls:"pill-cell", sep:true},
+  {k:"our_tcp_pct", t:"ITG TCP%", num:true, dp:1},
+  {k:"our_tcp_freq", t:"ITG confidence", num:true, dp:3},
   {k:"aef_tcp_f1",  t:"AEF pick", cls:"pill-cell", sep:true},
   {k:"aef_tcp_pct", t:"AEF TCP%", num:true, dp:1},
   {k:"aef_tcp_scenario_freq", t:"AEF confidence", num:true, dp:3},
@@ -344,6 +388,46 @@ SEATS.forEach(r => BYKEY.set(key(r), r));
 
 let sortKey = "ll", sortDir = -1;
 const F = {pair:"", win:"", fav:"", grp:"", q:"", wrong:false, beat:false, noted:false};
+
+/* ---------- overall pooled stats ---------- */
+// TCP MAE is only meaningful on seats where the PREDICTED pairing is the one
+// that actually happened (f1/f2 unordered) -- a percentage for a pairing
+// that never occurred isn't measuring the same thing as one that did. Scored
+// separately for ours and AEF since the two sources don't always predict the
+// same pairing for the same seat -- see "What the columns mean" above.
+const pairMatch = (a1,a2,b1,b2) => (a1===b1&&a2===b2)||(a1===b2&&a2===b1);
+// The named party is not always the actual winner even when the pairing
+// matches -- AEF's own "pick" can be the pairing's LOSER (see "What the
+// columns mean": Wentworth fed2025). f2cp is the WINNER's real share, so
+// this picks 100-f2cp (the actual runner-up's own real share) when the
+// named party is the runner-up instead, rather than comparing mismatched
+// things.
+const actualShareOf = (named,w,r,wshare) => named===w ? wshare : (named===r ? 100-wshare : null);
+function overall(){
+  const el = document.getElementById("overall");
+  const n = SEATS.length;
+  const rmse = (a,b) => Math.sqrt(mean(SEATS.map(r=>({v:(r[a]-r[b])**2})), "v"));
+  const ourTcpHit = SEATS.filter(r=>r.our_tcp_pct!=null && pairMatch(r.our_tcp_f1,r.our_tcp_f2,r.f1,r.f2))
+    .map(r=>({...r, our_actual_share: actualShareOf(r.our_tcp_f1,r.f1,r.f2,r.f2cp)}));
+  const aefTcpHit = SEATS.filter(r=>r.aef_tcp_pct!=null && pairMatch(r.aef_tcp_f1,r.aef_tcp_f2,r.f1,r.f2))
+    .map(r=>({...r, aef_actual_share: actualShareOf(r.aef_tcp_f1,r.f1,r.f2,r.f2cp)}));
+  const mae = (rs,a,b) => mean(rs.map(r=>({v:Math.abs(r[a]-r[b])})), "v");
+  const stats = [
+    {lab:"Seats", our:n, aef:null, n:null, fmt:v=>v},
+    {lab:"Seat log loss", our:mean(SEATS,"ll"), aef:mean(SEATS,"aef_ll"), n:n, lower:true, fmt:v=>v.toFixed(4)},
+    {lab:"Primary RMSE (winner)", our:rmse("our_fp_win","act_fp_win"), aef:rmse("aef_fp_win","act_fp_win"), n:n, lower:true, fmt:v=>v.toFixed(2)},
+    {lab:"TCP MAE (matched pairing)", our:mae(ourTcpHit,"our_tcp_pct","our_actual_share"), aef:mae(aefTcpHit,"aef_tcp_pct","aef_actual_share"),
+     n:`${ourTcpHit.length} ours / ${aefTcpHit.length} AEF`, lower:true, fmt:v=>v.toFixed(2)},
+  ];
+  el.innerHTML = stats.map(s=>{
+    const better = s.aef!=null && s.lower && s.our<=s.aef;
+    return `<div class="stat">
+      <div class="lab">${s.lab}</div>
+      <div class="row"><b${better?' class="better"':""}>${s.fmt(s.our)}</b>${s.aef!=null?`<span class="aef">${s.fmt(s.aef)}</span>`:""}</div>
+      ${s.n!=null?`<div class="n">n=${s.n}</div>`:""}
+    </div>`;
+  }).join("");
+}
 
 /* ---------- summary strip ---------- */
 function strip(){
@@ -482,7 +566,7 @@ function fit(){
   const h = Math.max(260, window.innerHeight - top - 46);
   document.documentElement.style.setProperty('--th', h + 'px');
 }
-strip(); header(); render(); fit();
+overall(); strip(); header(); render(); fit();
 addEventListener('resize', fit);
 
 claude.use("db").then(db=>{
