@@ -492,21 +492,26 @@ for (K in PAIRS) {
   # MINOR-TO-MINOR DEFECTOR DISCOUNT reaching base_pred, not just the xgb
   # feature -- docs/reviews/base-pred-blind-to-tonights-fixes-2026-09-16.md.
   # Same shape as major_discount/.defect above.
-  .minor_disc <- NULL
+  .minor_disc <- NULL; .minor_disc_loser <- NULL
   if (identical(Sys.getenv("AUSPOL_MINOR_DEFECT_BASE_PRED", "0"), "1")) {
     .mfd <- tryCatch(fit_minor_defector_discount(.eb), error = function(e) {
       cat(sprintf("BV0n! minor-defector fit FAILED, no discount applied: %s\n", conditionMessage(e)))
-      list(discount = NULL, n = 0L)
+      list(discount = NULL, discount_mp = NULL, discount_loser = NULL, n = 0L)
     })
     if (is.null(.mfd$discount)) {
       cat(sprintf("BV0n! only %d minor-defector case(s) (need >=5); no discount applied\n", .mfd$n))
     } else {
       cat(sprintf("BV0n minor-defector discount %.3f from %d cases (target excluded)\n", .mfd$discount, .mfd$n))
       .minor_disc <- .mfd$discount
+      if (!is.null(.mfd$discount_mp) && is.finite(.mfd$discount_mp)) .minor_disc <- .mfd$discount_mp
+      if (!is.null(.mfd$discount_loser) && is.finite(.mfd$discount_loser)) {
+        .minor_disc_loser <- .mfd$discount_loser
+        cat(sprintf("BV0n  two-rate: sitting-member %.3f, non-sitting %.3f\n", .minor_disc, .minor_disc_loser))
+      }
     }
   }
   .split <- split_slope_context(.ea, .eb)
-  .own_prev <- if (.cond) tryCatch(personal_prior_vote(.ea, .eb, major_discount = .defect, minor_discount = .minor_disc), error = function(e) { cat(sprintf("BV1p! personal_prior_vote() FAILED; class-level bases kept and NO transfer removed: %s\n", conditionMessage(e))); NULL }) else NULL
+  .own_prev <- if (.cond) tryCatch(personal_prior_vote(.ea, .eb, major_discount = .defect, minor_discount = .minor_disc, minor_discount_loser = .minor_disc_loser), error = function(e) { cat(sprintf("BV1p! personal_prior_vote() FAILED; class-level bases kept and NO transfer removed: %s\n", conditionMessage(e))); NULL }) else NULL
   mat <- remove_transferred_votes(mat, .own_prev)  # the vote moves with the person; see personal_prior_vote()
   .tr <- attr(mat, "transfers"); if (!is.null(.tr)) cat(sprintf("TR1  transfers moved with the person: %d applied%s\n", .tr$applied, if (length(.tr$skipped)) paste0("; SKIPPED ", length(.tr$skipped), ": ", paste(utils::head(.tr$skipped, 5), collapse = ", ")) else ""))
   .own_x <- function(p, seats, x) {

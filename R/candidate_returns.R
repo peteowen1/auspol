@@ -314,16 +314,35 @@ leading_candidate_returns <- function(election_from, election_to, corpus = NULL)
 #'   KAP/OTH_RIGHT) -- `prev_best` above matches on IDENTITY regardless of
 #'   party, so without this the old class's full, undiscounted result carries
 #'   forward as the new class's base. `NULL` (the default) leaves this
-#'   byte-identical to before the parameter existed. The value the harnesses
-#'   pass is [fit_minor_defector_discount()]'s own return -- a MEDIAN over 18
+#'   byte-identical to before the parameter existed. When `minor_discount_loser`
+#'   is also given, this rate applies ONLY to a switcher who was the SITTING
+#'   MEMBER at the prior election; otherwise it applies to everyone (the old,
+#'   single-rate behaviour). The value the harnesses pass is
+#'   [fit_minor_defector_discount()]'s own return -- a MEDIAN over 18
 #'   corpus cases, 0.3255 for most targets. (The review's headline "49%" is a
 #'   geometric mean at a lower `min_prior` and is NOT what ships; see that
 #'   function's docstring.) See
 #'   `docs/reviews/minor-to-minor-defector-2026-09-16.md`.
+#' @param minor_discount_loser Optional numeric. Rate applied to a
+#'   minor-to-minor (or minor-to-IND, IND-to-minor) switcher who was NOT the
+#'   sitting member at the prior election, when it should differ from
+#'   `minor_discount`. `NULL` (the default) gives every switcher
+#'   `minor_discount`'s single rate, byte-identical to before this parameter
+#'   existed. Found 2026-09-17 tracing why Murray, Orange and Barwon's real
+#'   sitting-member Shooters-Fishers-and-Farmers-to-Independent departures
+#'   (retention 108-136%) were badly under-predicted by the single pooled
+#'   rate: of 18 corpus cases, the 5 sitting-member switches retain a median
+#'   1.08 and the 13 non-sitting retain 0.276 -- the same 4x gap
+#'   `major_discount`/`loser_discount` already exists to handle for
+#'   major-party defectors. A prior candidate whose sitting-member status is
+#'   unknown (older data with no `elected` column) gets `minor_discount`, not
+#'   this rate -- "unknown" is never read as "definitely not the sitting
+#'   member". `docs/reviews/minor-defector-two-rate-2026-09-17.md`.
 #' @export
 personal_prior_vote <- function(election_from, election_to, corpus = NULL,
                                major_discount = NULL, pooled = NULL,
-                               loser_discount = NULL, minor_discount = NULL) {
+                               loser_discount = NULL, minor_discount = NULL,
+                               minor_discount_loser = NULL) {
   # TWO-RATE MODE: `loser_discount` applies to a prior major-party candidate
   # who was NOT the sitting member; `major_discount` keeps applying to those
   # who were. NULL leaves one rate for both, which is the pooled arm.
@@ -485,12 +504,23 @@ personal_prior_vote <- function(election_from, election_to, corpus = NULL,
   PT <- PREVT[nzchar(PREVT$.k) & !PREVT$party %in% MAJ]
   PT[, .s_renamed := .s]
   PT[.s %in% names(rn), .s_renamed := rn[.s]]
-  PTx <- rbind(PT[, .(.s, .k, pcv, party)], PT[.s != .s_renamed, .(.s = .s_renamed, .k, pcv, party)])
+  # `prev_was_mp`, carried alongside `prev_party`, is what lets the
+  # minor-to-minor discount below distinguish a sitting member's switch
+  # (Murray/Orange/Barwon's real Shooters-Fishers-and-Farmers-to-Independent
+  # departures, median retention 1.08) from a losing candidate's (median
+  # 0.276) -- same shape as major_discount/loser_discount. Absent entirely on
+  # older data (no `elected` column) rather than 0-filled, so "unknown" is
+  # never read as "definitely not the sitting member".
+  .prev_was_mp <- if ("elected" %in% names(PT)) PT$elected %in% TRUE else NA
+  PT[, .was_mp := .prev_was_mp]
+  PTx <- rbind(PT[, .(.s, .k, pcv, party, .was_mp)],
+               PT[.s != .s_renamed, .(.s = .s_renamed, .k, pcv, party, .was_mp)])
   # if (.N) guards max(): when the ONLY prior row for a (.s, .k) group is a
   # major party, filtering it out can leave that group with zero rows, and
   # max() over nothing warns "no non-missing arguments" and returns -Inf.
   prev_best <- PTx[, .(own_prev_pcv = if (.N) max(pcv, na.rm = TRUE) else NA_real_,
-                       prev_party   = if (.N) party[which.max(pcv)] else NA_character_),
+                       prev_party   = if (.N) party[which.max(pcv)] else NA_character_,
+                       prev_was_mp  = if (.N) .was_mp[which.max(pcv)] else NA),
                    by = .(.s, .k)]
   out <- merge(lead[, list(seat, .s, party, .k)], prev_best, by = c(".s", ".k"), all.x = TRUE)
   # A MINOR-TO-MAJOR SWITCHER CANNOT ERASE A MAJOR PARTY'S OWN SEAT HISTORY.
@@ -560,8 +590,20 @@ personal_prior_vote <- function(election_from, election_to, corpus = NULL,
   # base-pred-blind-to-tonights-fixes-2026-09-16.md.
   out[, .own_prev_pcv_full := own_prev_pcv]
   if (!is.null(minor_discount) && is.finite(minor_discount)) {
-    out[!is.na(own_prev_pcv) & !prev_party %in% MAJ & !party %in% MAJ & prev_party != party,
-        own_prev_pcv := own_prev_pcv * minor_discount]
+    .switched <- !is.na(out$own_prev_pcv) & !out$prev_party %in% MAJ &
+                 !out$party %in% MAJ & out$prev_party != out$party
+    if (!is.null(minor_discount_loser) && is.finite(minor_discount_loser)) {
+      # TWO-RATE: a confirmed sitting-member switcher gets `minor_discount`,
+      # a confirmed NON-sitting switcher gets `minor_discount_loser`. A
+      # switcher whose prior status is unknown (`prev_was_mp` is NA -- older
+      # data with no `elected` column) falls back to `minor_discount`, the
+      # single-rate behaviour, rather than being guessed into either bucket.
+      out[.switched & out$prev_was_mp %in% TRUE,  own_prev_pcv := own_prev_pcv * minor_discount]
+      out[.switched & out$prev_was_mp %in% FALSE, own_prev_pcv := own_prev_pcv * minor_discount_loser]
+      out[.switched & is.na(out$prev_was_mp),     own_prev_pcv := own_prev_pcv * minor_discount]
+    } else {
+      out[.switched, own_prev_pcv := own_prev_pcv * minor_discount]
+    }
   }
   # DEFECTOR FALLBACK, applied only where this candidate now stands for a
   # NON-major class and has no non-major history to draw on. Adding the
@@ -909,23 +951,38 @@ fit_minor_defector_discount <- function(target_election, corpus = NULL, min_n = 
     if (!nrow(PREVT) || !nrow(NOWT)) return(NULL)
     PREVT <- data.table::copy(PREVT)[, `:=`(.k = kk(.SD), .s = normalise_seat(seat))]
     NOWT  <- data.table::copy(NOWT)[,  `:=`(.k = kk(.SD), .s = normalise_seat(seat))]
+    if (!"elected" %in% names(PREVT)) return(NULL)
     a <- PREVT[nzchar(.k) & !party %in% MAJ & pcv >= min_prior,
-               .(.s, .k, prior_pcv = pcv, prior_party = party)][
+               .(.s, .k, prior_pcv = pcv, prior_party = party, was_mp = elected %in% TRUE)][
                  , .SD[which.max(prior_pcv)], by = .(.s, .k)]
     b <- NOWT[nzchar(.k) & !party %in% MAJ, .(.s, .k, target_pcv = pcv, party)][
       , .SD[which.max(target_pcv)], by = .(.s, .k)]
     m <- merge(a, b, by = c(".s", ".k"))
     m <- m[prior_party != party]
     if (!nrow(m)) return(NULL)
-    m[, .(pair = pr$election, ratio = target_pcv / prior_pcv)]
+    m[, .(pair = pr$election, ratio = target_pcv / prior_pcv, was_mp)]
   }), fill = TRUE)
 
   if (is.null(ratios) || nrow(ratios) < min_n) {
-    return(list(discount = NULL, n = if (is.null(ratios)) 0L else nrow(ratios), cases = ratios))
+    return(list(discount = NULL, discount_mp = NULL, discount_loser = NULL,
+                n = if (is.null(ratios)) 0L else nrow(ratios), cases = ratios))
   }
-  disc <- if (agg == "geomean") exp(mean(log(ratios$ratio), na.rm = TRUE))
-          else stats::median(ratios$ratio, na.rm = TRUE)
-  list(discount = disc, n = nrow(ratios), cases = ratios)
+  agg_fn <- function(x) if (!length(x)) NA_real_ else
+    if (agg == "geomean") exp(mean(log(x), na.rm = TRUE)) else stats::median(x, na.rm = TRUE)
+  # SITTING vs NON-SITTING, same split [[fit_defector_discount]] already uses
+  # for major-party defectors -- found 2026-09-17 tracing why Murray, Orange
+  # and Barwon's real Shooters-Fishers-and-Farmers-to-Independent sitting
+  # members (retention 108-136%) were badly under-predicted by the single
+  # pooled rate this function used to return. Of 18 corpus cases, 5 are
+  # sitting members at the time of the switch (median retention 1.08) and 13
+  # are not (median 0.276) -- a 4x gap, same shape as major-party defectors'
+  # 0.28-0.29 (sitting) vs 0.142 (losing). `discount` stays the POOLED rate
+  # for a caller not using the two-rate mode, byte-identical to before this
+  # split. docs/reviews/minor-defector-two-rate-2026-09-17.md.
+  list(discount        = agg_fn(ratios$ratio),
+       discount_mp     = agg_fn(ratios$ratio[ratios$was_mp %in% TRUE]),
+       discount_loser  = agg_fn(ratios$ratio[ratios$was_mp %in% FALSE]),
+       n = nrow(ratios), cases = ratios)
 }
 
 #' Keep the re-entry prior from overwriting a more-informed personal-vote floor

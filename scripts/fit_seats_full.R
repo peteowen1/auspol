@@ -722,14 +722,23 @@ if (!identical(Sys.getenv("AUSPOL_DEFECT_DISCOUNT", "1"), "0")) .defect <- 0.282
 # minor-to-minor defector. Not dormant -- vic2026's partial candidate list
 # already has 5 such cases (Frankston, Broadmeadows, Lara, Werribee,
 # Sydenham) being served the wrong value.
-.minor_disc <- NULL
+.minor_disc <- NULL; .minor_disc_loser <- NULL
 if (!identical(Sys.getenv("AUSPOL_MINOR_DEFECT", "1"), "0")) {
   .mfd <- tryCatch(fit_minor_defector_discount("vic2026"), error = function(e) {
     cat(sprintf("CAL! minor-defector fit FAILED, no discount applied: %s\n", conditionMessage(e)))
-    list(discount = NULL, n = 0L)
+    list(discount = NULL, discount_mp = NULL, discount_loser = NULL, n = 0L)
   })
   if (!is.null(.mfd$discount) && is.finite(.mfd$discount)) {
     .minor_disc <- .mfd$discount
+    # TWO-RATE: docs/reviews/minor-defector-two-rate-2026-09-17.md. A sitting
+    # member who switches between two non-major labels retains far more
+    # (median 1.08 on 5 corpus cases) than a non-sitting switcher (0.276 on
+    # 13) -- same shape as major_discount/loser_discount. Real today: check
+    # whether any of vic2026's 5 known cases (Frankston, Broadmeadows, Lara,
+    # Werribee, Sydenham -- see comment above) are sitting-member switches
+    # before trusting the live forecast reflects this correctly.
+    if (!is.null(.mfd$discount_mp) && is.finite(.mfd$discount_mp)) .minor_disc <- .mfd$discount_mp
+    if (!is.null(.mfd$discount_loser) && is.finite(.mfd$discount_loser)) .minor_disc_loser <- .mfd$discount_loser
   } else {
     cat(sprintf("CAL! minor-defector discount not fit (n=%s), no discount applied\n",
                 if (is.null(.mfd$n)) "NULL" else .mfd$n))
@@ -761,7 +770,7 @@ cat(sprintf("CAL  MP tier: %s | defector discount: %s | minor-defector discount:
 # direction: applying a discount at serve time the model was never trained
 # to expect.
 .own_prev_xgb <- if (.cond && !is.null(.returns))
-  .try("own_prev_xgb", personal_prior_vote("vic2022", "vic2026", minor_discount = .minor_disc)) else NULL
+  .try("own_prev_xgb", personal_prior_vote("vic2022", "vic2026", minor_discount = .minor_disc, minor_discount_loser = .minor_disc_loser)) else NULL
 # THE VOTE MOVES WITH THE PERSON: .own_x() below substitutes a returning
 # candidate's own prior vote into their new class; this takes it out of the
 # class it came from. No-op until vic2026 nominations exist.

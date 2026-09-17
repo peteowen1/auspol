@@ -12,7 +12,8 @@ personal_prior_vote(
   major_discount = NULL,
   pooled = NULL,
   loser_discount = NULL,
-  minor_discount = NULL
+  minor_discount = NULL,
+  minor_discount_loser = NULL
 )
 }
 \arguments{
@@ -57,12 +58,31 @@ for a candidate who switched between two NON-major classes (e.g. ONP to
 KAP/OTH_RIGHT) -- \code{prev_best} above matches on IDENTITY regardless of
 party, so without this the old class's full, undiscounted result carries
 forward as the new class's base. \code{NULL} (the default) leaves this
-byte-identical to before the parameter existed. The value the harnesses
-pass is \code{\link[=fit_minor_defector_discount]{fit_minor_defector_discount()}}'s own return -- a MEDIAN over 18
+byte-identical to before the parameter existed. When \code{minor_discount_loser}
+is also given, this rate applies ONLY to a switcher who was the SITTING
+MEMBER at the prior election; otherwise it applies to everyone (the old,
+single-rate behaviour). The value the harnesses pass is
+\code{\link[=fit_minor_defector_discount]{fit_minor_defector_discount()}}'s own return -- a MEDIAN over 18
 corpus cases, 0.3255 for most targets. (The review's headline "49\%" is a
 geometric mean at a lower \code{min_prior} and is NOT what ships; see that
 function's docstring.) See
 \verb{docs/reviews/minor-to-minor-defector-2026-09-16.md}.}
+
+\item{minor_discount_loser}{Optional numeric. Rate applied to a
+minor-to-minor (or minor-to-IND, IND-to-minor) switcher who was NOT the
+sitting member at the prior election, when it should differ from
+\code{minor_discount}. \code{NULL} (the default) gives every switcher
+\code{minor_discount}'s single rate, byte-identical to before this parameter
+existed. Found 2026-09-17 tracing why Murray, Orange and Barwon's real
+sitting-member Shooters-Fishers-and-Farmers-to-Independent departures
+(retention 108-136\%) were badly under-predicted by the single pooled
+rate: of 18 corpus cases, the 5 sitting-member switches retain a median
+1.08 and the 13 non-sitting retain 0.276 -- the same 4x gap
+\code{major_discount}/\code{loser_discount} already exists to handle for
+major-party defectors. A prior candidate whose sitting-member status is
+unknown (older data with no \code{elected} column) gets \code{minor_discount}, not
+this rate -- "unknown" is never read as "definitely not the sitting
+member". \verb{docs/reviews/minor-defector-two-rate-2026-09-17.md}.}
 }
 \value{
 A \code{data.table} of \code{seat}, \code{party}, \code{own_prev_pcv} (\code{NA_real_} where
