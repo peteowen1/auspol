@@ -608,6 +608,37 @@ feat_cols <- c("base_pred", "seat_prev_pcv", "seat_outperf", "level_prev",
                "historic_elected_i", "ballot_pos_min",
                "jump", "governed", "permit", "surge_h", "is_recipient",
                paste0("party_", party_levels), paste0("region_", region_levels))
+# AUSPOL_XGB_BASE_MARGIN: Pete's idea, 2026-09-17 -- base_pred already carries
+# the vast majority of the prediction (SHAP +16 to +22 of a typical row,
+# CLAUDE.md's "test base_pred and xgb layer" note), but as an ordinary
+# feature xgboost has no GUARANTEE it fully trusts it -- eta=0.05 shrinkage
+# and L2 regularisation mean the tree ensemble could easily under- or
+# over-weight it relative to a coefficient of exactly 1, spending capacity
+# re-deriving what a correlated feature already tells it instead of
+# purely correcting base_pred's error. Setting base_pred as the DMatrix's
+# base_margin forces every tree to boost on the RESIDUAL (actual_share -
+# base_pred) from the first round, structurally different from including it
+# as a feature: xgboost's own predict()/cv_predict always returns the full
+# prediction (base_margin + boosted correction), so nothing downstream needs
+# to change to read it. base_pred is REMOVED from feat_cols in this mode --
+# the model already starts there, a duplicate raw feature would be
+# redundant with the boosted starting point.
+# AUSPOL_XGB_BASE_MARGIN=2: keep base_pred as a feature TOO. Pure offset-only
+# (=1) removes the tree's ability to use base_pred's own VALUE to size the
+# correction (e.g. "an extreme base_pred needs a bigger correction") -- an
+# offset is a fixed additive shift, not something a tree can split on.
+# Measured =1 first: worse than the plain-feature baseline (3.8563 vs
+# 3.8012), so testing whether that's residual-modeling itself losing, or
+# specifically the lost base_pred-as-splittable-feature capacity.
+.base_margin_mode <- Sys.getenv("AUSPOL_XGB_BASE_MARGIN", "0")
+.base_margin <- .base_margin_mode %in% c("1", "2")
+if (identical(.base_margin_mode, "1")) feat_cols <- setdiff(feat_cols, "base_pred")
+# NOT YET WIRED if this mode is combined with AUSPOL_XGB_SAVE_OOF_MODELS=1:
+# scripts/shap_from_cached_model.R loads a cached model and predicts on new
+# data without setting base_margin, which would silently score against a
+# base_margin of 0/the model's base_score instead of that row's base_pred.
+# Exploratory today; needs fixing before that combination is ever used for
+# real.
 X <- as.matrix(ALL[, ..feat_cols])
 y <- ALL$actual_share
 
@@ -644,6 +675,10 @@ cat(sprintf("wrote %s/xgb-primary-v6-features.csv (%d rows, %d features)\n",
 pairs <- sort(unique(ALL$pair))
 fold_id <- match(ALL$pair, pairs)
 dtrain <- xgb.DMatrix(data = X, label = y, missing = NA)
+if (.base_margin) {
+  xgboost::setinfo(dtrain, "base_margin", ALL$base_pred)
+  cat("XG12 AUSPOL_XGB_BASE_MARGIN=1: training on the residual to base_pred, not raw actual_share\n")
+}
 
 params <- list(objective = "reg:squarederror", eta = 0.05, max_depth = 4,
                 subsample = 0.8, colsample_bytree = 0.8, min_child_weight = 5)
@@ -674,6 +709,7 @@ if (identical(Sys.getenv("AUSPOL_XGB_SAVE_OOF_MODELS", "0"), "1")) {
   for (.p in pairs) {
     .idx <- which(ALL$pair != .p)
     .dm <- xgb.DMatrix(data = X[.idx, , drop = FALSE], label = y[.idx], missing = NA)
+    if (.base_margin) xgboost::setinfo(.dm, "base_margin", ALL$base_pred[.idx])
     .m <- xgb.train(params = params, data = .dm, nrounds = best_n, verbose = 0)
     xgb.save(.m, file.path(.mdir, paste0(.p, ".ubj")))
   }
