@@ -186,7 +186,19 @@ xgb_primary_predict_live <- function(shares, mat22, a22, state_mean, returns,
   seats <- rownames(shares); parties <- colnames(shares)
   rows <- data.table::CJ(seat = seats, party = parties, sorted = FALSE)
   rows[, base_pred      := mapply(function(s, p) shares[s, p], seat, party)]
-  rows[, seat_prev_pcv  := mapply(function(s, p) if (p %in% colnames(mat22)) mat22[s, p] else 0, seat, party)]
+  # MUST MATCH fit_xgb_primary_v6.R's own AUSPOL_XGB_SEATPREV_NAFILL fill,
+  # exactly the same env var and exactly the same default -- xgboost's
+  # native NA handling means a party with no prior-election vote for this
+  # seat is either "missing, route down the learned branch" or "a literal
+  # 0", and training and serving must agree on which. Found by review
+  # 2026-09-17 when the switch's default flipped in fit_xgb_primary_v6.R but
+  # this serving path still hardcoded 0 -- currently harmless only because
+  # output/xgb-primary-v6-final.model predates the flip; the next retrain
+  # would silently reintroduce the train/serve mismatch the switch exists to
+  # remove.
+  .seatprev_nafill <- identical(Sys.getenv("AUSPOL_XGB_SEATPREV_NAFILL", "1"), "1")
+  .seatprev_absent <- if (.seatprev_nafill) NA_real_ else 0
+  rows[, seat_prev_pcv  := mapply(function(s, p) if (p %in% colnames(mat22)) mat22[s, p] else .seatprev_absent, seat, party)]
   rows[, level_prev  := vapply(party, function(p) if (p %in% names(a22)) unname(a22[[p]]) else 0, numeric(1))]
   rows[, level_pred  := vapply(party, function(p) if (p %in% names(state_mean)) unname(state_mean[[p]]) else 0, numeric(1))]
   # `level_pred` above is `state_mean` -- the forecast's OWN projected statewide,
