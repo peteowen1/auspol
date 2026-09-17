@@ -190,6 +190,32 @@ which every harness and the live Victorian forecast run through. This is
 item 4 on the 2026-09-16 list above - explicitly design-with-Pete, not
 solo-build.
 
+**2026-09-17: designed with Pete on the 11 real seats first, per `CLAUDE.md`'s
+own rule.** Walked the table — nsw2019's 4 wrong seats all went to a minor
+party/independent, nsw2023's 7 split 6-to-the-other-major-plus-1-independent
+(and one, Holsworthy, backwards). The beneficiary differs every time, which
+argues for genuine seat-level uncertainty over widening one specific class
+— consistent with the review's own "primary model's sd, not simulation's
+seat_sd" lean, but pointing toward a broader mechanism than the already-
+refused major-only widening arm tried.
+
+**Side investigation that grew into its own thread: Pete's `base_margin`
+idea** (train xgb on the residual to `base_pred` rather than as a plain
+feature) — real signal (AEF7 pooled primary RMSE -0.0452, sa2026 -0.60),
+but **refused at the seat level**: pooled log loss 0.2841→0.2880, worse,
+concentrated in 2 of 23 pairs, with ALP (not the predicted IND) carrying
+the real cost. Full trace:
+[plans/prereg-xgb-base-margin-2026-09-17.md](plans/prereg-xgb-base-margin-2026-09-17.md).
+Genuine finding kept from it: **both current and base_margin models already
+beat AEF pooled on the 7 comparable pairs** (ahead by 0.0113 and 0.0180
+respectively) — worth knowing on its own, separate from this refused arm.
+**Next arm, not yet built**: scope `base_margin` away from ALP, or to just
+the sa2026/wa2021-shaped cases it measurably helps.
+
+**The NSW seat_sd design question itself is still open** — the base_margin
+detour didn't resolve it, only confirmed AEF beats us less than the
+standing narrative suggested.
+
 ## 2026-09-16 evening: Pattern A SHIPPED — NA-fill beats 0-fill, and a noise-floor finding
 
 Built, tested and **shipped** `seat_outperf` (Pattern A from the 2026-09-13

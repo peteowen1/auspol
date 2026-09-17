@@ -147,3 +147,44 @@ cost and the three AEF7 regressions are accounted for. **I expect IND's
 seat-level cost to be real but small** relative to the ONP/sa2026 gain,
 worth naming and worth a class-scoped follow-up, but not large enough on
 its own to refuse the whole arm.
+
+---
+
+# RESULT, 2026-09-17: REFUSED. Bar missed, and for a different reason than predicted.
+
+Full six-harness backtest, all 23 pairs, `AUSPOL_N_SIMS=5000`, both
+conditions via the `AUSPOL_XGB_PRIMARY_OOF` swap technique, confirmed via
+each harness's own log line.
+
+**Pooled seat log loss: 0.2841 → 0.2880 (+0.0039, worse).** The bar required
+an improvement of at least 0.005. Missed, and in the wrong direction.
+
+**Refusal condition confirmed**: excluding sa2026 and wa2021 (the two large
+predicted wins), the other 21 pairs go **0.2868 → 0.2928** — genuinely
+worse on their own. The pooled win, where it exists, really is carried by
+two pairs, exactly the shape the pre-registration's refusal conditions
+existed to catch.
+
+**My prediction about the mechanism was wrong. IND's named risk did NOT
+materialize at the seat level** — log loss on seats IND actually won moved
+0.9993 → 0.9705 (slightly better), accuracy 0.6528 → 0.6944. **The real cost
+is ALP**, the single largest class in the corpus: seat log loss 0.2478 →
+0.2606 across 1,112 seat-elections, plus real losses in qld2020 (+0.0347),
+wa2001 (+0.1036), wa2013 (+0.0842), vic2022 (+0.0183). A primary-level view
+correctly flagged that something would get worse; it flagged the wrong
+class.
+
+**A genuine silver lining, unplanned by the criterion**: both conditions
+already beat AEF pooled on the 7 comparable pairs (baseline ahead by
+0.0113), and base_margin widens that lead to 0.0180. Seats where we're
+notably worse than AEF (>1.0 log-loss gap) narrow from 13 of 660 to 8:
+Morwell, Richmond, Hughes, Higgins, Black, Parramatta, Flynn, Wakehurst,
+Mount Gambier remain.
+
+**Verdict: does not ship.** `AUSPOL_XGB_BASE_MARGIN` stays in
+`fit_xgb_primary_v6.R`, default off, kept for reuse (same convention as
+`AUSPOL_DEFECT_CONSERVE`). The natural next arm — scoped away from ALP, or
+to just the pairs it measurably helps (sa2026/wa2021-shaped cases) — is a
+real follow-up, not run here; the pre-registration's own "what the
+criterion cannot see" section already named a class-scoped version as the
+obvious next step, just for the wrong class.
