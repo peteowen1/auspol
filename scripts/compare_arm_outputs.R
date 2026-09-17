@@ -58,6 +58,12 @@ if (only_a > 0 || only_b > 0) {
 }
 
 mm <- m[!is.na(val_a) & !is.na(val_b)]
+if (!nrow(mm)) {
+  stop("No rows have a non-NA value on both sides after joining on ",
+       paste(key_cols, collapse = ", "), " -- check key_cols names the right ",
+       "columns and that both files actually use the same key values (party ",
+       "labels, seat spelling, etc.) before trusting anything else here.")
+}
 mm[, rel_move := fifelse(val_a == 0, fifelse(val_b == 0, 0, Inf), abs(val_b - val_a) / abs(val_a))]
 
 # THE ZERO-MOVEMENT BUCKET, FIRST. Exact zero, not a threshold -- see header.
@@ -71,10 +77,26 @@ if (pct_zero >= 99.9) {
   cat("CA1! <0.1% identical -- if you expected a targeted change (most rows untouched), this arm touched EVERYTHING; check for a confound\n")
 }
 
+# A row that went from EXACTLY ZERO to something non-zero has an undefined
+# relative move (rel_move = Inf) -- neither "zero movement" nor a finite
+# "moved" value, so it fell through both buckets silently until review found
+# it. This is precisely the "impossible -> plausible" pattern this repo has
+# hit before (a party's predicted share going from a hard 0 to a real
+# number), so it gets its own named bucket rather than disappearing.
+n_from_zero <- sum(!is.finite(mm$rel_move))
+if (n_from_zero > 0) {
+  cat(sprintf("CA1b %d row(s) moved FROM EXACTLY ZERO to a non-zero value -- not in either bucket below\n",
+              n_from_zero))
+}
+
 # THE REST, only meaningful once the zero bucket above has been read.
 moved <- mm[rel_move > 0 & is.finite(rel_move)]
+if (!nrow(moved)) {
+  cat("\nCA2  no rows moved by a finite non-zero amount (all rows are either unchanged or moved from exactly zero, see CA1b)\n")
+} else {
 cat(sprintf("\nCA2  of the %d rows that moved: mean |rel move| %.4f | median %.4f | max %.4f\n",
             nrow(moved), mean(moved$rel_move), stats::median(moved$rel_move), max(moved$rel_move)))
+}
 cat(sprintf("CA2  raw value change: mean %.4f | mean |change| %.4f | sd(A) %.4f sd(B) %.4f\n",
             mean(mm$val_b - mm$val_a), mean(abs(mm$val_b - mm$val_a)), stats::sd(mm$val_a), stats::sd(mm$val_b)))
 

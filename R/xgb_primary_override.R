@@ -452,7 +452,13 @@ xgb_primary_predict_live <- function(shares, mat22, a22, state_mean, returns,
   # model trained without one -- this keeps the two code paths identical
   # rather than branching on the switch here too.
   .base_margin_mode <- Sys.getenv("AUSPOL_XGB_BASE_MARGIN", "2")
-  .margin <- if (.base_margin_mode %in% c("1", "2")) rows$base_pred else 0
+  # A bare scalar 0 here throws inside xgboost::setinfo() ("Invalid size for
+  # `base_margin`") whenever nrow(rows) > 1 -- setinfo requires length(info)
+  # %% n_samples == 0, and a length-1 vector against N>1 rows fails that
+  # check. Found by review 2026-09-17 before this mode was ever exercised
+  # live (default is "2"), but AUSPOL_XGB_BASE_MARGIN=0 is exactly the value
+  # someone sets to reproduce the pre-base_margin arm for a comparison.
+  .margin <- if (.base_margin_mode %in% c("1", "2")) rows$base_pred else rep(0, nrow(rows))
   dtest <- xgboost::xgb.DMatrix(data = X, missing = NA)
   xgboost::setinfo(dtest, "base_margin", .margin)
   pred <- predict(model, dtest)
