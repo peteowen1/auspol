@@ -386,7 +386,7 @@ const notes = new Map();           // "pair__seat" -> text
 const key = r => r.pair + "__" + r.seat.replace(/[^A-Za-z0-9]+/g, "-");
 SEATS.forEach(r => BYKEY.set(key(r), r));
 
-let sortKey = "ll", sortDir = -1;
+let sortKey = "dll", sortDir = -1;
 const F = {pair:"", win:"", fav:"", grp:"", q:"", wrong:false, beat:false, noted:false};
 
 /* ---------- overall pooled stats ---------- */
