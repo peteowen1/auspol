@@ -174,6 +174,17 @@ wa2001 (+0.1036), wa2013 (+0.0842), vic2022 (+0.0183). A primary-level view
 correctly flagged that something would get worse; it flagged the wrong
 class.
 
+**The third named refusal condition, checked on all three named pairs, not
+just the one that failed it**: of the three AEF7 pairs that regressed at
+the primary level, only **vic2022 carries a comparable seat-level cost
+(+0.0183)**. **nsw2023 is a small real cost too (+0.0021)** — same
+direction, much smaller. **wa2025 reverses entirely and improves at the
+seat level (-0.0236)** despite its primary-level regression — a primary-RMSE
+regression that did not survive to a seat-level cost at all. So this
+condition is mixed: one pair confirms it, one shows the same direction at
+a much smaller scale, one reverses outright. A primary-level regression is
+not a reliable predictor of a seat-level one in either direction here.
+
 **A genuine silver lining, unplanned by the criterion**: both conditions
 already beat AEF pooled on the 7 comparable pairs (baseline ahead by
 0.0113), and base_margin widens that lead to 0.0180. Seats where we're

@@ -204,7 +204,11 @@ idea** (train xgb on the residual to `base_pred` rather than as a plain
 feature) — real signal (AEF7 pooled primary RMSE -0.0452, sa2026 -0.60),
 but **refused at the seat level**: pooled log loss 0.2841→0.2880, worse,
 concentrated in 2 of 23 pairs, with ALP (not the predicted IND) carrying
-the real cost. Full trace:
+the real cost. Of the three AEF7 pairs that regressed at the primary
+level, only vic2022 (+0.0183) carries a comparable seat-level cost;
+nsw2023 is a small real cost too (+0.0021); wa2025 reverses and actually
+improves at the seat level (-0.0236) — a primary-level regression is not a
+reliable predictor of a seat-level one either way. Full trace:
 [plans/prereg-xgb-base-margin-2026-09-17.md](plans/prereg-xgb-base-margin-2026-09-17.md).
 Genuine finding kept from it: **both current and base_margin models already
 beat AEF pooled on the 7 comparable pairs** (ahead by 0.0113 and 0.0180
