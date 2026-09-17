@@ -69,7 +69,9 @@ against the actual `target_pcv`.
 
 **This is a targeted change** (33 named cases across 21 pairs), so per
 `CLAUDE.md`'s scoping rule the primary is targeted, with an election-wide
-guard.
+guard. *(Left as written before running, per the amendment rule below — the
+guard section a few paragraphs down already says 23, and the corpus was
+in fact 23 pairs / 34 cases by execution time; see the RESULT section.)*
 
 **Primary: RMSE over the fixed 33-case evaluation set**, arms B/C/D each
 compared against arm A (shipped). **Adopt a replacement only if it beats

@@ -57,10 +57,11 @@ ARMS <- data.table(arm = c("A", "B", "C", "D"),
 targets <- sort(unique(CASES$target_election))
 
 # Leave-target-out rate for every arm x every target election IN THE FULL
-# CORPUS (21 pairs), not just the ones with a scored case -- this is what
-# "per-pair rate stability across the 21 leave-target-out folds" means in
-# the refusal conditions, matching how arm A's own 0.30-0.34 cluster was
-# described over the whole corpus.
+# CORPUS, not just the ones with a scored case -- this is what "per-pair
+# rate stability across the leave-target-out folds" means in the refusal
+# conditions, matching how arm A's own 0.30-0.34 cluster was described over
+# the whole corpus. Pair count printed dynamically below, not hardcoded --
+# it was 21 when the pre-registration was drafted and is 23 now.
 all_targets <- sort(unique(vapply(PAIRS, `[[`, character(1), "election")))
 rate_table <- rbindlist(lapply(seq_len(nrow(ARMS)), function(i) {
   arm <- ARMS[i]
@@ -70,7 +71,7 @@ rate_table <- rbindlist(lapply(seq_len(nrow(ARMS)), function(i) {
   }))
 }))
 
-cat("\nP2  per-pair leave-target-out rates by arm (all 21 pairs):\n")
+cat(sprintf("\nP2  per-pair leave-target-out rates by arm (all %d pairs):\n", length(all_targets)))
 print(rate_table[!is.na(discount), .(mean = round(mean(discount), 4), median = round(median(discount), 4),
                                        sd = round(sd(discount), 4), min = round(min(discount), 4),
                                        max = round(max(discount), 4), n_folds = .N), by = arm][order(arm)])
@@ -142,7 +143,8 @@ for (a in c("B", "C", "D")) {
 }
 
 # Refusal condition: winning arm's per-pair rate spread wider than A's.
-cat("\nP6  stability check -- sd of per-pair rate across 21 folds, arm vs A:\n")
+cat(sprintf("\nP6  stability check -- sd of per-pair rate across %d folds, arm vs A:\n",
+            length(all_targets)))
 sdA <- rate_table[arm == "A" & !is.na(discount), sd(discount)]
 for (a in c("B", "C", "D")) {
   sdX <- rate_table[arm == a & !is.na(discount), sd(discount)]
