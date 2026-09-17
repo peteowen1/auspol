@@ -31,6 +31,26 @@ xgb_primary_override <- function(shares, pair_label, enabled = NULL) {
     return(shares)
   }
   cat(sprintf("XG1  reading %s\n", f))
+  # STALENESS CHECK. This file is a CACHE, written once by
+  # scripts/fit_xgb_primary_v6.R and read here every time -- nothing
+  # forces a rerun of the writer when the code it depends on changes.
+  # Found the hard way 2026-09-18: reran backtest_candidate_nsw.R twice
+  # after fixing personal_prior_vote(), both times reading THIS file
+  # unchanged, so the fix never reached the published number until the
+  # cache was rebuilt explicitly -- a wasted rerun that looked identical
+  # to a working one. Loud, not fatal: a stale cache is often fine (most
+  # code changes don't touch what feeds this model), so this warns rather
+  # than blocks, but it warns EVERY TIME the cache is older than a file
+  # that could plausibly have changed its content.
+  .oof_deps <- c("R/candidate_returns.R", "R/dev_slope.R", "scripts/fit_xgb_primary_v6.R", "output/candidacies.csv")
+  .oof_deps <- .oof_deps[file.exists(.oof_deps)]
+  if (length(.oof_deps)) {
+    .stale <- .oof_deps[file.mtime(.oof_deps) > file.mtime(f)]
+    if (length(.stale)) {
+      cat(sprintf("XG1! %s is OLDER than %s -- if you changed feature-building or personal-vote logic, this cache will NOT reflect it until you rerun scripts/fit_xgb_primary_v6.R\n",
+                  f, paste(.stale, collapse = ", ")))
+    }
+  }
   X <- data.table::fread(f, showProgress = FALSE)
   X <- X[X$pair == pair_label]
   if (!nrow(X)) {
