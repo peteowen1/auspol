@@ -1,3 +1,17 @@
+# auspol 0.4.42
+
+**base_margin residual-modeling experiment: refused. No model change. A real AEF-gap finding kept.**
+
+- Tested training `fit_xgb_primary_v6.R` on the residual to `base_pred`
+  (xgboost `base_margin`) instead of as a plain feature. Refused: pooled
+  seat log loss 0.2841 → 0.2880, concentrated in 2 of 23 pairs (sa2026,
+  wa2021), with ALP — not the predicted IND — carrying the real cost.
+- Kept: both the current model and the base_margin variant already beat
+  AEF pooled on the 7 comparable pairs (ahead by 0.0113 / 0.0180), and
+  the worst-vs-AEF seat count narrows from 13 to 8 of 660 under
+  base_margin. `AUSPOL_XGB_BASE_MARGIN` stays, default off, for a
+  possible class-scoped follow-up.
+
 # auspol 0.4.41
 
 **Major-defector conservation: measured, decisive, no model change. Fixes a live train/serve bug found along the way.**
