@@ -9,7 +9,8 @@ fit_minor_defector_discount(
   corpus = NULL,
   min_n = 5L,
   pairs = NULL,
-  min_prior = 10
+  min_prior = 10,
+  agg = c("median", "geomean")
 )
 }
 \arguments{
@@ -30,13 +31,20 @@ defector cases are excluded from the fit -- leave-one-out, same as
 \item{min_prior}{Minimum prior vote, in points, for a case to enter the
 fit -- excludes a ratio taken on a denominator too small to mean
 anything.}
+
+\item{agg}{\code{"median"} (default, what ships) or \code{"geomean"}. Added
+2026-09-17 for \verb{docs/plans/prereg-minor-defector-rate-2026-09-17.md},
+the pre-registered grid deciding whether \code{min_prior} and/or this
+statistic should change from the shipped \code{min_prior=10}/median. No
+caller other than that grid sets it away from the default.}
 }
 \value{
-A list: \code{discount} (the MEDIAN of the per-case retention ratios,
-or \code{NULL} below \code{min_n}), \code{n} (cases used), \code{cases} (the underlying
-data.table). Called it a "median geometric" ratio until 2026-09-16,
-which read as a geometric mean and is a different statistic; the median
-is transform-invariant, so there is nothing geometric about it.
+A list: \code{discount} (median or geometric mean of the per-case
+retention ratios per \code{agg}, or \code{NULL} below \code{min_n}), \code{n} (cases used),
+\code{cases} (the underlying data.table). Called it a "median geometric"
+ratio until 2026-09-16, which read as a geometric mean and is a
+different statistic; the median is transform-invariant, so there was
+nothing geometric about it before \code{agg} existed.
 }
 \description{
 Same shape as [\link{fit_defector_discount}] but for a candidate who switched

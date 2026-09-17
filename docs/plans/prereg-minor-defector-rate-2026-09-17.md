@@ -133,3 +133,49 @@ I expect **no arm to clear the 5% primary bar**, and the honest finding to be
 "the shipped 0.30-0.34 stays, and the review's 49% was answering a different,
 noisier question" — but this is written before running, and a clear winner
 that also clears both guards should ship regardless of what I predicted here.
+
+---
+
+# RESULT, 2026-09-17: no arm ships. 0.30-0.34 stays — but my prediction was
+# wrong about why.
+
+Executed by `scripts/prereg_minor_defector_grid.R` (kept, not committed as
+part of this doc, since it is the reusable scoring machinery). Added
+`fit_minor_defector_discount()`'s `agg` parameter as planned (default
+`"median"`, no behavior change for existing callers).
+
+**Deviation, not forced**: the corpus has moved since 2026-09-16 (Victorian
+candidate data, identity-matching fixes shipped this session), so the fixed
+evaluation set is **34 cases**, not 33. Proceeded on current data — this
+pre-registers the method, not a frozen row count.
+
+| arm | `min_prior` | `agg` | mean rate | median rate | sd |
+|---|--:|---|--:|--:|--:|
+| A (shipped) | 10 | median | 0.3369 | 0.3255 | 0.0513 |
+| B | 5 | median | 0.4301 | 0.4367 | 0.0430 |
+| C | 10 | geomean | 0.4463 | 0.4445 | 0.0364 |
+| D | 5 | geomean | 0.5024 | 0.5012 | 0.0315 |
+
+**Fixed 34-case RMSE vs. the 5% primary bar**: A=14.7877 · B=14.3870 (2.71%,
+fails) · **C=13.8303 (6.47%, clears)** · **D=13.1233 (11.26%, clears)**.
+
+**My prediction was wrong on every specific.** I expected nothing to clear
+the primary bar; C and D both did, comfortably. I expected D to fail on
+stability; both C (sd 0.0364) and D (sd 0.0315) are actually TIGHTER than A
+(sd 0.0513) — the stability check passes for both. I called C "least likely
+to move anything"; C was the one with a genuine-looking win that needed the
+concentration check to catch.
+
+**Refused on concentration, correctly**: C's top-5 cases carry **90.0%** of
+its total squared-error reduction; D's top-5 carry **96.3%**. Both apparent
+wins are a handful of large corrections (Fremantle-2008-shaped cases), not a
+better estimator — exactly the failure mode the refusal condition existed to
+catch, and exactly the one the stability check (which I expected to do the
+work) did not.
+
+**No guard-check backtest run** — correctly: nothing survived to the point
+of needing one.
+
+**Verdict: shipped 0.30-0.34 (arm A, `min_prior=10`, median) stays
+unchanged.** The bottom line I predicted held; the mechanism that produced
+it was not the one I expected. Closes the PR #44 review's open item 1.
