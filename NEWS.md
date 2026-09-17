@@ -1,3 +1,14 @@
+# auspol 0.4.38
+
+**`output/aef-primary-all.csv` gets a generating script.**
+
+- `scripts/build_aef_fp.R` parses AE Forecasts' cached `seatFpBands` field
+  (same 15-point percentile-band shape as `seatTcpBands`, already parsed by
+  `scripts/build_aef_tcp.R`) into `output/aef7-fp.csv`. Reproduces the
+  existing `output/aef-primary-all.csv` — already joined against our own
+  predictions in `build_aef_comparison.R` — exactly across all 3,671 rows,
+  which had no generating script anywhere in the repo before this.
+
 # auspol 0.4.37
 
 **The Victorian candidate list arrives, and three components stop falling back.**
