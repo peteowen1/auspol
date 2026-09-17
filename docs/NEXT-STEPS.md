@@ -64,12 +64,23 @@ also untested. Only the non-conserving side has a measurement behind it.
 Changing the major path moves every major-defector seat in all six harnesses,
 so it needs a run, not an edit.
 
-**3. AEF's `fpTrend` is in every cached summary JSON and parsed by nothing.**
-We now score ourselves against AEF on seat win probability and TCP, and not at
-all on the primary vote — which is where our errors start (Mirani: LNP
-predicted 32.5 against an actual 36.7, before a single preference moved).
-`scripts/build_aef_tcp.R` is the template; the same thing for `fpTrend` is
-maybe an hour.
+**3. CLOSED 2026-09-17 — the premise was wrong, not just the file to parse.**
+This item claimed "we score against AEF on TCP and win probability, not at
+all on primary vote." **False**: `output/aef-primary-all.csv` already holds
+a per-(seat, party) AEF primary prediction and `build_aef_comparison.R`
+already joins it against ours — it's where "mean primary error on the
+winner: ours 4.23 vs AEF 4.50" (`docs/PETE-ASKED-FOR.md`) came from. The real
+gap was that `aef-primary-all.csv` had **no generating script anywhere in
+the repo** — a static, unreproducible artifact.
+
+Built `scripts/build_aef_fp.R` to close that gap instead. It parses
+`seatFpBands` (same 15-point percentile-band shape as `seatTcpBands`, median
+at position 8 — `fpTrend` itself is a statewide campaign trend, not a seat
+prediction, so it was never the right field regardless). Aggregated to class
+level, it reproduces `aef-primary-all.csv` **exactly** — all 3,671 rows AEF
+publishes a class for, max diff 0.007 (rounding). `output/aef-primary-all.csv`
+now has a source. `output/aef7-fp.csv` additionally keeps the raw per-party-index
+rows before class aggregation, which the existing file discarded.
 
 ## 2026-09-16, continued: items 1-3 of the 5-item list resolved
 
