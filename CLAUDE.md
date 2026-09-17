@@ -589,3 +589,42 @@ The fuller model was measured and is **not** better: 0.2% held-out gain for 33×
 the runtime. Two reviewers with full repo access have reached opposite
 conclusions about which one publishes, so state it explicitly when touching
 either.
+
+## Two XGB-primary override paths — same trap, different mechanism
+
+`R/xgb_primary_override.R` holds two functions that both "override the primary
+shares with the XGB challenger" and are easy to conflate:
+
+- **`xgb_primary_override()`** (`AUSPOL_XGB_PRIMARY`) — the **six backtest
+  harnesses only**. Substitutes in a STATIC cached file
+  (`output/xgb-primary-v6-oof-predictions.csv`), written once by
+  `scripts/fit_xgb_primary_v6.R`. Whatever `base_pred`/`dev_slope()` values
+  were baked into that pool at the time it was last built are frozen there —
+  a later fix to `dev_slope()`/`screened_slopes()`/`candidate_returns()` has
+  **zero effect** on a backtest run under this flag until the cache is
+  regenerated (the 4-step non-circular retrain,
+  `docs/reviews/xgb-primary-circularity-2026-09-13.md`).
+- **`xgb_primary_predict_live()`** (`AUSPOL_XGB_PRIMARY_LIVE`) — **the
+  published Victoria forecast only** (`fit_seats_full.R`). Sets `base_margin`
+  from THIS RUN'S OWN freshly-computed `shares` matrix at prediction time
+  (`R/xgb_primary_override.R:481-483`), so a primary-vote fix reaches the
+  published number **immediately on the next run**, with no retrain needed —
+  the trained tree model only ever learned a residual correction on top of
+  whatever `base_margin` it's handed.
+
+**A primary-vote fix can be live in production and simultaneously invisible
+to a backtest run at `AUSPOL_XGB_PRIMARY=1`, at the same time, correctly.**
+These are not the same "xgb layer" — they are two different mechanisms gated
+by two different, similarly-named env vars. Found 2026-09-18: the
+`AUSPOL_HONOUR_DEPARTED` fix was reported as "does not reach the published
+forecast" from a backtest test alone, and that claim was wrong — Pete caught
+it by asking directly whether published defaults use base_margin now. Before
+claiming a fix does or doesn't reach "the published number", check **which of
+these two functions the script you're actually asking about calls** — grep
+`fit_seats_full.R` specifically, don't reason from `xgb_primary_override()`'s
+docstring alone. `docs/MODEL-REGISTRY.md`'s per-switch table can mislead here
+too: it lists `AUSPOL_XGB_PRIMARY` as reaching `fit_seats_full.R` ("yes"),
+which is very likely a grep substring false-positive against
+`AUSPOL_XGB_PRIMARY_LIVE`/`_OOF`/`_SD` mentions in comments, not a real call
+site — `fit_seats_full.R` has no direct call to `xgb_primary_override()`.
+Verify with a function-name grep, not the registry table, when this matters.

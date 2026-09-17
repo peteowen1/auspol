@@ -142,6 +142,22 @@ for (sw in names(COMMENT_ONLY)) {
 # row; update this when a gap is fixed or a new one is found by rerunning
 # this script and diffing its output.
 CLASSIFY <- list(
+  AUSPOL_HONOUR_DEPARTED = paste(
+    "SHIPPED 2026-09-18 (flipped 0->1). A departed non-major class leader's vote base decays toward a",
+    "measured 0.38 retention rate, gated on prior_leader_returns==FALSE (not candidate_returns()'s `same`,",
+    "which is any() across every candidate in the class and can read TRUE even when the actual leader",
+    "departed -- Morwell/vic2022, an unrelated minor candidate persisting) AND the salience screen not",
+    "independently permitting a new emergence. Wired into R/dev_slope.R's screened_slopes(), read by all",
+    "five harnesses that call it (fed/nsw/qld/sa/vic; backtest_candidate_wa.R has no screened_slopes()",
+    "wiring at all, a separate pre-existing gap) and by fit_seats_full.R. 2026-09-06's refusal was a",
+    "federal two-seat wash (New England vs Wentworth) that conflated departure with 'no new emergence' as",
+    "one mechanism; re-measured on the fuller 593-case corpus. Isolated in base_pred: pooled log loss",
+    "0.2810->0.2801 (5 harnesses, n=1751), Morwell 3.049->1.877. Reaches the published Victoria forecast",
+    "immediately via fit_seats_full.R's xgb_primary_predict_live() (base_margin set fresh each run from",
+    "the current shares matrix) with no retrain needed -- but the BACKTEST harnesses' AUSPOL_XGB_PRIMARY",
+    "path (xgb_primary_override(), a static cached OOF file) needs the 4-step non-circular retrain to",
+    "reflect it in a pooled backtest comparison. See docs/reviews/departed-leader-honour-fix-2026-09-18.md",
+    "and docs/reviews/departed-leader-retention-2026-09-15.md."),
   AUSPOL_FLOW_FRAG = paste(
     "SHIPPED 2026-09-15 and reads NO everywhere by construction: it is a FITTING-TIME switch, not a runtime",
     "one. Only scripts/fit_xgb_flows_v1.R reads it, where it decides whether lead_primary (the seat's leading",

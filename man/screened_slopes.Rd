@@ -13,7 +13,8 @@ screened_slopes(
   same = c(IND = 0.907, OTH_RIGHT = 0.891, GRN = 0.994, ONP = 0.61),
   new = c(IND = 0.326, OTH_RIGHT = 0.325, GRN = 0.88, ONP = 0.545),
   default = 1,
-  same_mp = NULL
+  same_mp = NULL,
+  departed_rate = c(IND = 0.38)
 )
 }
 \arguments{
@@ -29,16 +30,51 @@ every seat on \code{default}.}
 \code{\link[=salience_screen]{salience_screen()}}: does the screen allow this seat's candidate of \code{cls}
 to emerge?}
 
-\item{honour_departed}{Logical, default \code{FALSE}. When \code{TRUE}, a permit does
-not override a departed prior leader (\code{returns$prior_leader_returns}):
-measured and refused 2026-09-06, kept for comparison against a retention
-model. See \verb{docs/plans/prereg-vote-belongs-to-the-person-2026-09-06.md}.}
+\item{honour_departed}{Logical, default \code{FALSE}. When \code{TRUE}, a departed
+prior leader's (\code{returns$prior_leader_returns}) class base decays toward
+\code{departed_rate} INSTEAD of the generic \code{new} rate -- but only when the
+screen does NOT independently permit a successor. A screen-permitted
+successor still gets the uniform 1.0 treatment regardless of departure,
+because departure and a real new emergence are different mechanisms that
+can coincide in the same seat (Wentworth 2022: Phelps departs, Spender
+emerges -- both true at once). The original 2026-09-06 version did not
+make this distinction (\code{permit & plr} collapsed to FALSE the moment a
+leader departed, regardless of the successor's own signal), which is
+exactly why it traded New England 2013 for Wentworth 2022 and was
+refused on that basis. Revised 2026-09-18 after
+\verb{docs/reviews/departed-leader-retention-2026-09-15.md} measured the real
+departure retention (0.38, n=305) and found it was never wired past that
+two-seat refusal. See \verb{docs/plans/prereg-vote-belongs-to-the-person- 2026-09-06.md} for the original design.
+
+The departure check applies WHENEVER \code{prior_leader_returns} is FALSE and
+no successor is permitted, EVEN WHEN \code{is_same} (the same/new split
+\code{conditional_slopes()} itself already applies) is TRUE. Those two are
+NOT the same question: \code{is_same} is \code{any()} across every candidate of
+the class, so a departed leader's seat still reads \code{is_same = TRUE}
+whenever some OTHER, minor perennial candidate of the same class also
+happened to stand both times -- Morwell 2022 is exactly this shape
+(Tracie Lund ran IND in both 2018 and 2022 on 2-3\%, while Russell
+Northe, who actually carried 19.6 of the class's 28.2-point base, did
+not recontest at all). Gating only on \code{!is_same} would apply the "same"
+slope (0.907, built for a genuine incumbent-level return) to a base
+that is overwhelmingly a departed leader's personal vote. Checking
+\code{prior_leader_returns} directly asks the right question regardless of
+what any other class member did.}
 
 \item{same, new}{Named numeric vectors of slopes by class.}
 
 \item{default}{Slope for a class absent from \code{same}/\code{new}.}
 
 \item{same_mp}{Passed through to \code{\link[=conditional_slopes]{conditional_slopes()}}; see there.}
+
+\item{departed_rate}{Named numeric vector by class, the retention rate for
+a departed leader's class base when the screen does NOT permit a
+successor. Default \code{c(IND = 0.38)} -- \verb{departed-leader-retention-2026- 09-15.md}, a sitting non-major who departs keeps a bit over a third of
+their vote (n=305) against ~101\% for one who recontests (n=288), a 2.6x
+split on a well-powered sample, not the thin-data case CLAUDE.md's
+shrinkage caveat is about. Other classes fall back to the generic \code{new}
+rate (no departure-specific measurement exists for them yet -- MINOR
+retirements are only 2 corpus-wide, too thin to fit separately).}
 }
 \value{
 Numeric vector the length of \code{seats}.

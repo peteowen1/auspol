@@ -193,10 +193,46 @@ conditional_slopes <- function(cls, seats, returns,
 #' }
 #'
 #' @inheritParams conditional_slopes
-#' @param honour_departed Logical, default `FALSE`. When `TRUE`, a permit does
-#'   not override a departed prior leader (`returns$prior_leader_returns`):
-#'   measured and refused 2026-09-06, kept for comparison against a retention
-#'   model. See `docs/plans/prereg-vote-belongs-to-the-person-2026-09-06.md`.
+#' @param honour_departed Logical, default `FALSE`. When `TRUE`, a departed
+#'   prior leader's (`returns$prior_leader_returns`) class base decays toward
+#'   `departed_rate` INSTEAD of the generic `new` rate -- but only when the
+#'   screen does NOT independently permit a successor. A screen-permitted
+#'   successor still gets the uniform 1.0 treatment regardless of departure,
+#'   because departure and a real new emergence are different mechanisms that
+#'   can coincide in the same seat (Wentworth 2022: Phelps departs, Spender
+#'   emerges -- both true at once). The original 2026-09-06 version did not
+#'   make this distinction (`permit & plr` collapsed to FALSE the moment a
+#'   leader departed, regardless of the successor's own signal), which is
+#'   exactly why it traded New England 2013 for Wentworth 2022 and was
+#'   refused on that basis. Revised 2026-09-18 after
+#'   `docs/reviews/departed-leader-retention-2026-09-15.md` measured the real
+#'   departure retention (0.38, n=305) and found it was never wired past that
+#'   two-seat refusal. See `docs/plans/prereg-vote-belongs-to-the-person-
+#'   2026-09-06.md` for the original design.
+#'
+#'   The departure check applies WHENEVER `prior_leader_returns` is FALSE and
+#'   no successor is permitted, EVEN WHEN `is_same` (the same/new split
+#'   `conditional_slopes()` itself already applies) is TRUE. Those two are
+#'   NOT the same question: `is_same` is `any()` across every candidate of
+#'   the class, so a departed leader's seat still reads `is_same = TRUE`
+#'   whenever some OTHER, minor perennial candidate of the same class also
+#'   happened to stand both times -- Morwell 2022 is exactly this shape
+#'   (Tracie Lund ran IND in both 2018 and 2022 on 2-3%, while Russell
+#'   Northe, who actually carried 19.6 of the class's 28.2-point base, did
+#'   not recontest at all). Gating only on `!is_same` would apply the "same"
+#'   slope (0.907, built for a genuine incumbent-level return) to a base
+#'   that is overwhelmingly a departed leader's personal vote. Checking
+#'   `prior_leader_returns` directly asks the right question regardless of
+#'   what any other class member did.
+#' @param departed_rate Named numeric vector by class, the retention rate for
+#'   a departed leader's class base when the screen does NOT permit a
+#'   successor. Default `c(IND = 0.38)` -- `departed-leader-retention-2026-
+#'   09-15.md`, a sitting non-major who departs keeps a bit over a third of
+#'   their vote (n=305) against ~101% for one who recontests (n=288), a 2.6x
+#'   split on a well-powered sample, not the thin-data case CLAUDE.md's
+#'   shrinkage caveat is about. Other classes fall back to the generic `new`
+#'   rate (no departure-specific measurement exists for them yet -- MINOR
+#'   retirements are only 2 corpus-wide, too thin to fit separately).
 #' @param permit Logical vector the length of `seats`, from
 #'   [salience_screen()]: does the screen allow this seat's candidate of `cls`
 #'   to emerge?
@@ -208,7 +244,8 @@ screened_slopes <- function(cls, seats, returns, permit, honour_departed = FALSE
                                      GRN = 0.994, ONP = 0.610),
                             new  = c(IND = 0.326, OTH_RIGHT = 0.325,
                                      GRN = 0.880, ONP = 0.545),
-                            default = 1, same_mp = NULL) {
+                            default = 1, same_mp = NULL,
+                            departed_rate = c(IND = 0.38)) {
   if (length(permit) != length(seats)) {
     stop("permit must be the same length as seats: ", length(permit),
          " vs ", length(seats), call. = FALSE)
@@ -221,24 +258,39 @@ screened_slopes <- function(cls, seats, returns, permit, honour_departed = FALSE
   hit <- R[R$party == cls]
   idx <- match(seats, hit$seat)
   is_same <- !is.na(idx) & hit$same[idx]; is_same[is.na(is_same)] <- FALSE
-  # A PERMIT DOES NOT OVERRIDE A DEPARTED LEADER. The 1.0 path exists for a
-  # small base plus a salient newcomer (Goldstein 2022); applied to a base that
-  # is a retired member's personal vote it carries that vote to a stranger
-  # (New England 2013: Windsor's 61.9% to McIntyre, p(IND) 0.995). When the
-  # prior election's leading candidate of this class does not stand here
-  # again, the fitted new-candidate slope applies even if the screen permits.
-  # `returns` from before 2026-09-06 lacks the column; then every leader is
-  # taken as returning, which is the old behaviour exactly.
-  # OFF BY DEFAULT, measured and refused 2026-09-06 (docs/plans/prereg-vote-
-  # belongs-to-the-person-2026-09-06.md, amendment 1 and results): it fixes
-  # New England 2013 (Windsor -> McIntyre, retention 0.33) and breaks
-  # Wentworth 2022 (Phelps -> Spender, retention 1.08; 0.705 -> 0.138), a wash
-  # on the six-pair mean. Departed-base retention is heterogeneous and a rule
-  # that picks one value for everyone cannot win; it needs a retention model.
-  # Kept behind `honour_departed = TRUE` so that model can be measured against
-  # this one when it exists.
+  # A DEPARTED LEADER DECAYS TOWARD `departed_rate`, BUT ONLY WHEN THE SCREEN
+  # DOES NOT ALSO SEE A REAL SUCCESSOR. The 1.0 (uniform) path exists for a
+  # small base plus a salient newcomer (Goldstein 2022); a departed leader and
+  # a genuine new emergence are DIFFERENT, INDEPENDENT things that can both be
+  # true in the same seat -- Wentworth 2022 is exactly that: Phelps departs
+  # (leader gone) AND Spender emerges (screen-permitted, real campaign). The
+  # ORIGINAL 2026-09-06 version of this logic collapsed `permit & plr` to
+  # FALSE the moment a leader departed, REGARDLESS of the successor's own
+  # signal -- so it fixed New England 2013 (Windsor -> McIntyre, no permitted
+  # successor, retention should be low) and broke Wentworth (Spender WAS
+  # permitted, but got decayed anyway), a wash on the six-pair mean, and was
+  # refused on exactly that basis. Revised 2026-09-18: a permitted successor
+  # now wins regardless of departure; departure only matters when the screen
+  # has NOTHING to say. `returns` from before 2026-09-06 lacks the
+  # `prior_leader_returns` column; then every leader is taken as returning,
+  # the pre-2026-09-06 behaviour exactly.
   plr <- if (honour_departed && "prior_leader_returns" %in% names(hit)) hit$prior_leader_returns[idx] else rep(TRUE, length(idx))
   plr[is.na(plr)] <- TRUE
-  # new AND screen-permitted AND (unless honour_departed) nobody departed -> uniform swing.
-  ifelse(!is_same & permit & plr, 1.0, base)
+  # DEPARTURE IS GATED ON `prior_leader_returns`, NOT `is_same`, AND CAN FIRE
+  # EVEN WHEN is_same IS TRUE. `same` (feeding is_same, from
+  # candidate_returns()) is `any(hit)` across EVERY candidate of this class,
+  # not just the leader -- Morwell 2022 is `same = TRUE` because Tracie Lund
+  # personally stood as IND in both 2018 (2.1%) and 2022 (2.8%), even though
+  # Russell Northe -- the actual leader carrying 19.6% of the class's 28.2%
+  # prior base -- did not recontest at all. Gating on `!is_same` alone would
+  # have routed Morwell to the "same" slope (0.907) on its WHOLE base,
+  # applying incumbent-level retention to a base that is overwhelmingly a
+  # departed leader's personal vote plus a minor perennial candidate's own
+  # unrelated 2-3%. `prior_leader_returns` asks the right question directly:
+  # did THE LEADER specifically come back, under any label, anywhere in this
+  # seat -- decoupled from whether some other class member also happened to.
+  departed <- honour_departed & !plr & !permit
+  dep_rate <- if (cls %in% names(departed_rate)) departed_rate[[cls]] else new[[cls]]
+  ifelse(!is_same & permit, 1.0,
+         ifelse(departed, dep_rate, base))
 }
