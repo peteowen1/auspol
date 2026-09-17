@@ -169,6 +169,15 @@ PUBLISHED_FLAGS <- c(
                                              # 0.49, p=0.0003), measured: targeted RMSE 9.2363 -> 8.8813, pooled RMSE
                                              # 3.8161 -> 3.8178 (well within the ~0.014-per-column noise floor found
                                              # the same session). docs/reviews/minor-to-minor-defector-2026-09-16.md
+  AUSPOL_XGB_SEATPREV_NAFILL = "1",          # build-time, fit_xgb_primary_v6.R: NA-fill seat_prev_pcv instead of
+                                             # 0-fill when a party did not contest that seat last time (16.7% of
+                                             # rows, concentrated in ONP/IND/OTH_RIGHT -- 24.2% of minor-party rows
+                                             # vs 4.5% major). Same shape as seat_outperf's NA-fill fix. SHIPPED
+                                             # 2026-09-17. Measured through the real v6->v7(v7f)->shipped-snapshot
+                                             # pipeline, not v6 alone -- a first pass on v6 in isolation overstated
+                                             # the gain 5-6x (sa2026 claimed -0.0242, real -0.0044). Real result,
+                                             # all 23 pairs: pooled seat log loss 0.2817 -> 0.2811, Brier -0.0005,
+                                             # FED/NSW/QLD/SA/VIC better, WA +0.0039 worse. docs/NEXT-STEPS.md.
   # the statewide input and the simulation
   AUSPOL_N_SIMS              = "20000",
   AUSPOL_SIM_ENGINE          = "cpp",        # compiled core; proven byte-identical to the R engine on a full fed2022 run 2026-09-07 (45 s vs ~11 min)
