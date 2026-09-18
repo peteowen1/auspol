@@ -215,8 +215,10 @@
      <p class="sub prov"><b>TCP on real pairing</b> ("Ours err"/"AEF err" columns, and the matching headline stats)
      is a DIFFERENT question from ITG/AEF final two above: those score each side's own #1-guessed pairing, so a
      seat only counts if that guess happened to match reality (n=568 ours / 574 AEF of 660). This instead looks up,
-     for EVERY seat with a resolved real result (632 of 660 -- 28 vic2022/nsw2023 seats have no official/derived
-     final-two at all, a pre-existing data gap, and are excluded rather than scored as a guess), whichever party
+     for EVERY seat with a resolved real result (659 of 660 -- Port Macquarie nsw2023 is decided outright on
+     primary votes with no real two-candidate-preferred count to score against, excluded rather than faked;
+     the other 27 gap seats, all vic2022, were backfilled from AE Forecasts' own cached real-result data,
+     <code>scripts/build_aef7_tcp_backfill.R</code>), whichever party
      that side's own scenario table named as leader of the pairing that ACTUALLY happened -- even when that was not
      their #1 pick -- and compares that side's predicted share for that party against what it actually got.
      "TCP scenario log loss" is a further-back question: how much of the probability mass each side's own
@@ -226,9 +228,10 @@
      <p class="sub prov"><b>Primary RMSE (every party, weighted by actual share)</b> scores every party's predicted
      primary vote in every seat, not just the eventual winner's -- weighted by how big that party's ACTUAL vote was,
      so a badly-misjudged fringe candidate on 1% barely moves it while a badly-misjudged front-runner does. AEF's
-     side is not shown: their <code>fpTrend</code> field (their own full per-party primary prediction) sits in the
-     cached data this page already reads but has never been parsed by any script in this repo -- a real, separate
-     build, not a metric tweak, and queued rather than guessed at.</p>
+     side comes from their <code>seatFpBands</code> field (indexed by the same global party index as their TCP
+     scenarios, not the per-seat candidate index), parsed by <code>scripts/build_aef_fptrend.R</code> and verified
+     against a real seat (Frankston, vic2022) before being trusted. Cell counts differ (4,620 ours / 3,578 AEF)
+     because AEF does not classify every candidate uniquely in every seat.</p>
   </details>
 
   <details class="provlog">
@@ -427,28 +430,9 @@ let sortKey = "dll", sortDir = -1;
 const F = {pair:"", win:"", fav:"", grp:"", q:"", wrong:false, beat:false, noted:false};
 
 /* ---------- overall pooled stats ---------- */
-// TCP MAE is only meaningful on seats where the PREDICTED pairing is the one
-// that actually happened (f1/f2 unordered) -- a percentage for a pairing
-// that never occurred isn't measuring the same thing as one that did. Scored
-// separately for ours and AEF since the two sources don't always predict the
-// same pairing for the same seat -- see "What the columns mean" above.
-const pairMatch = (a1,a2,b1,b2) => (a1===b1&&a2===b2)||(a1===b2&&a2===b1);
-// The named party is not always the actual winner even when the pairing
-// matches -- AEF's own "pick" can be the pairing's LOSER (see "What the
-// columns mean": Wentworth fed2025). f2cp is the WINNER's real share, so
-// this picks 100-f2cp (the actual runner-up's own real share) when the
-// named party is the runner-up instead, rather than comparing mismatched
-// things.
-const actualShareOf = (named,w,r,wshare) => named===w ? wshare : (named===r ? 100-wshare : null);
 function overall(){
   const el = document.getElementById("overall");
   const n = SEATS.length;
-  const rmse = (a,b) => Math.sqrt(mean(SEATS.map(r=>({v:(r[a]-r[b])**2})), "v"));
-  const ourTcpHit = SEATS.filter(r=>r.our_tcp_pct!=null && pairMatch(r.our_tcp_f1,r.our_tcp_f2,r.f1,r.f2))
-    .map(r=>({...r, our_actual_share: actualShareOf(r.our_tcp_f1,r.f1,r.f2,r.f2cp)}));
-  const aefTcpHit = SEATS.filter(r=>r.aef_tcp_pct!=null && pairMatch(r.aef_tcp_f1,r.aef_tcp_f2,r.f1,r.f2))
-    .map(r=>({...r, aef_actual_share: actualShareOf(r.aef_tcp_f1,r.f1,r.f2,r.f2cp)}));
-  const mae = (rs,a,b) => mean(rs.map(r=>({v:Math.abs(r[a]-r[b])})), "v");
   const eps = 1e-6;
   const tcpScoreable = SEATS.filter(r=>r.our_tcp_actual_freq!=null);
   const tcpLL = (rs,k) => mean(rs.map(r=>({v:-Math.log(Math.max(r[k]??0, eps))})), "v");
@@ -457,13 +441,11 @@ function overall(){
   const stats = [
     {lab:"Seats", our:n, aef:null, n:null, fmt:v=>v},
     {lab:"Seat log loss", our:mean(SEATS,"ll"), aef:mean(SEATS,"aef_ll"), n:n, lower:true, fmt:v=>v.toFixed(4)},
-    {lab:"Primary RMSE (winner only)", our:rmse("our_fp_win","act_fp_win"), aef:rmse("aef_fp_win","act_fp_win"), n:n, lower:true, fmt:v=>v.toFixed(2)},
     {lab:"Primary RMSE (every party, weighted by actual share)",
-     our: pwrmse && pwrmse.our!=null ? pwrmse.our : null, aef: null,
-     n: pwrmse ? `${pwrmse.our_n} cells ours; AEF needs fpTrend parsed, not built` : null,
+     our: pwrmse && pwrmse.our!=null ? pwrmse.our : null,
+     aef: pwrmse && pwrmse.aef!=null ? pwrmse.aef : null,
+     n: pwrmse ? `${pwrmse.our_n} cells` : null,
      lower:true, fmt:v=>v.toFixed(3)},
-    {lab:"TCP MAE (each side's own #1 pairing, where it matched)", our:mae(ourTcpHit,"our_tcp_pct","our_actual_share"), aef:mae(aefTcpHit,"aef_tcp_pct","aef_actual_share"),
-     n:`${ourTcpHit.length} ours / ${aefTcpHit.length} AEF`, lower:true, fmt:v=>v.toFixed(2)},
     {lab:"TCP scenario log loss (probability given to the pairing that actually happened, all seats)",
      our: tcpScoreable.length ? tcpLL(tcpScoreable,"our_tcp_actual_freq") : null,
      aef: tcpScoreable.length ? tcpLL(tcpScoreable,"aef_tcp_actual_freq") : null,

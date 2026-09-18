@@ -217,6 +217,20 @@ if (file.exists(sd_f)) {
 } else {
   cat("AEFL7! output/pooled-sharedetail.csv missing -- weighted primary RMSE (ours) left NA\n")
 }
+# AEF's side: scripts/build_aef_fptrend.R, built 2026-09-18, parses their
+# per-party seatFpBands medians. Verified against a real seat (Frankston,
+# vic2022) before trusting it -- see that script's own header.
+aft_f <- file.path(OUT, "aef7-fptrend.csv")
+if (file.exists(aft_f) && exists("sdw")) {
+  aft <- fread(aft_f, showProgress = FALSE)
+  aftw <- merge(aft, sdw[, .(pair, seat, party, actual_share)], by = c("pair", "seat", "party"))
+  if (nrow(aftw)) {
+    primary_wrmse$aef <- sqrt(sum(aftw$actual_share * (aftw$aef_fp_pred - aftw$actual_share)^2) / sum(aftw$actual_share))
+    primary_wrmse$aef_n <- nrow(aftw)
+  }
+} else {
+  cat("AEFL8! output/aef7-fptrend.csv missing -- run scripts/build_aef_fptrend.R first; weighted primary RMSE (AEF) left NA\n")
+}
 
 summary_stats <- list(
   n_seats = nrow(SEATS),
@@ -227,8 +241,7 @@ summary_stats <- list(
   accuracy = list(our = mean(SEATS$correct), aef = mean(SEATS$aef_p_win >= 0.5), n = nrow(SEATS)))
 
 write(toJSON(summary_stats, auto_unbox = TRUE, digits = 4), file.path(OUT, "aef7-ledger-summary.json"))
-cat(sprintf("\nAEFL5 pooled summary: seat log loss ours %.4f vs AEF %.4f (n=%d) | primary RMSE (winner only) ours %.2f vs AEF %.2f (n=%d) | primary RMSE (all parties, weighted) ours %.3f (n=%d), AEF n/a | TCP MAE ours %.2f (n=%d) vs AEF %.2f (n=%d)\n",
+cat(sprintf("\nAEFL5 pooled summary: seat log loss ours %.4f vs AEF %.4f (n=%d) | primary RMSE (all parties, weighted) ours %.3f (n=%d) vs AEF %.3f (n=%d) | TCP MAE ours %.2f (n=%d) vs AEF %.2f (n=%d)\n",
             summary_stats$seat_logloss$our, summary_stats$seat_logloss$aef, summary_stats$seat_logloss$n,
-            summary_stats$primary_rmse$our, summary_stats$primary_rmse$aef, summary_stats$primary_rmse$n,
-            primary_wrmse$our, primary_wrmse$our_n,
+            primary_wrmse$our, primary_wrmse$our_n, primary_wrmse$aef, primary_wrmse$aef_n,
             summary_stats$tcp_mae$our, summary_stats$tcp_mae$our_n, summary_stats$tcp_mae$aef, summary_stats$tcp_mae$aef_n))
