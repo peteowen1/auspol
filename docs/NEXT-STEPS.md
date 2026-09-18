@@ -144,13 +144,21 @@ had by-elections); `fit_seats_full.R` does not use any of them as a prior.
    5.08 (SE 0.32). vic2026 needs its row the day the Liberal cards are out.
 2. By-elections: `external/reference/byelections/byelection-results.csv`
    (26 by-elections, candidate level, Wikipedia), `R/byelection_prior.R`,
-   `AUSPOL_BYELECTION_PRIOR` -- MEASURING, `plans/prereg-byelection-prior-2026-09-18.md`.
-   Earlier windows (fed2007-2019, nsw2015-2019, vic2010-2018, wa) not fetched yet.
+   `AUSPOL_BYELECTION_PRIOR` = "blend" SHIPPED 2026-09-19: full replacement
+   refused (+0.59 on 17 seats, protest swings revert), half blend 2.78 -> 2.44
+   (SE 0.24). `plans/prereg-byelection-prior-2026-09-18.md`. Earlier windows
+   (fed2007-2019, nsw2015-2019, vic2010-2018, wa) not fetched yet; Bragg and
+   Dunstan did not match sa harness seat names (check naming).
 3. Per-state swing: ALREADY IN. `AUSPOL_STATE_DEV` = 1 since 2026-09-15
    applies a leave-one-pair-out fitted share (ALP ~0.2-0.4, LNP ~-0.15-
    -0.28) of each state's poll deviation to federal seats. The 1-1.5 point
    residual state bias measured tonight is what remains AFTER it; nothing
    more to build without a different input.
+
+**Combined rebuild DONE 2026-09-19 00:33, ledger v35 published**: pooled seat
+log loss 0.2689 -> 0.2667 (AEF 0.2851), TCP MAE 3.74 -> 3.69; sa2026 0.3269
+-> 0.3062, nsw2023 0.2190 -> 0.2102; wa2025 worse 0.2581 -> 0.2713 (look
+at which wa seats moved). Day total v32 0.2735 -> v35 0.2667.
 
 **Remaining**:
 1. The flow pattern (ALP v GRN and

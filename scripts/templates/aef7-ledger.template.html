@@ -250,7 +250,25 @@
   </details>
 
   <details class="provlog">
-    <summary>Provenance &amp; changelog <span class="n">(21 updates)</span></summary>
+    <summary>Provenance &amp; changelog <span class="n">(22 updates)</span></summary>
+    <p class="sub prov"><b>Two data inputs the model never had, 19 Sep 2026, 00:35 -- Pete's "do all three then one combined
+       rerun".</b> (1) <b>How-to-vote cards.</b> With our own flow tables run on the ACTUAL primaries, Footscray, Richmond,
+       Brunswick and Pascoe Vale still gave ALP 6-8 points too much 2CP and South Brisbane 6 too little: one cell, Liberal
+       preferences with ALP and GRN both alive, went 58% to ALP in vic2018 and 35% in vic2022 because the Liberal cards put
+       the Greens above Labor, and the flow table learned the previous election. The card order is public before polling
+       day; <code>external/reference/htv/liberal-alp-grn-order.csv</code> records it and <code>AUSPOL_HTV_FLOW</code> selects
+       between two shares fitted from every other election (36% / 61%). Real-pairing 2CP error on ALP-v-GRN seats 6.19 &rarr;
+       5.08 (n=26, SE 0.32). vic2026 gets its row the day the Liberal cards are published. (2) <b>By-elections.</b> 26
+       by-elections' candidate-level results scraped (Wikipedia) into <code>external/reference/byelections/</code>. Full
+       replacement of the seat baseline was REFUSED (protest swings revert: Inala, Ipswich West, Upper Hunter; error +0.59
+       on 17 seats); the pre-declared half blend passed (2.78 &rarr; 2.44, SE 0.24) and ships as
+       <code>AUSPOL_BYELECTION_PRIOR=blend</code>. Black: ALP 34 &rarr; 38 on the way to 43. Werribee and Mulgrave now start
+       from their by-elections in the live Victoria run; Prahran does not (no Labor candidate stood). (3) <b>Per-state
+       federal swing</b> turned out to be already in (<code>AUSPOL_STATE_DEV</code>, 15 Sep); the 1-1.5 point residual state
+       bias is what remains after it. <b>Pooled seat log loss 0.2689 &rarr; 0.2667</b> (AEF 0.2851); TCP MAE on the real
+       pairing 3.74 &rarr; 3.69; sa2026 0.3269 &rarr; 0.3062, nsw2023 0.2190 &rarr; 0.2102, wa2025 the one clear loser
+       (0.2581 &rarr; 0.2713). Full 20,000-sim rebuild, 40 minutes two harnesses at a time (the machine was short of
+       memory). Every seat's verdict in <code>docs/SEAT-REGISTRY.md</code>.</p>
     <p class="sub prov"><b>Preference-flow model now "as at" each election too, 18 Sep 2026, 19:25.</b> The per-election
        xgb flow model the harnesses read was leave-one-election-out, so vic2022's flows were learned partly from
        fed2025 and sa2026. <code>scripts/fit_xgb_flows_asat.R</code> trains one model per election from earlier elections
