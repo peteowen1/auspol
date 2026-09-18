@@ -19,7 +19,7 @@
 #' @return data.table with an added `party` class column, or NULL when absent.
 #' @export
 byelection_table <- function(path = file.path("external", "reference", "byelections", "byelection-results.csv")) {
-  if (!file.exists(path)) { message("byelection_table(): ", path, " not found"); return(NULL) }
+  if (!file.exists(path)) { cat(sprintf("BF0b! by-election table missing at %s -- AUSPOL_BYELECTION_PRIOR does NOTHING this run\n", path)); return(NULL) }
   d <- data.table::fread(path, showProgress = FALSE)
   need <- c("region", "seat", "date", "party_raw", "pct")
   miss <- setdiff(need, names(d))
@@ -42,7 +42,7 @@ byelections_between <- function(election_from, election_to, table = NULL) {
   tab <- if (is.null(table)) byelection_table() else data.table::as.data.table(table)
   empty <- data.table::data.table(seat = character(0), date = as.Date(character(0)), party = character(0),
                                   share = numeric(0), both_majors = logical(0))
-  if (is.null(tab) || !nrow(tab)) return(empty)
+  if (is.null(tab) || !nrow(tab)) { attr(empty, "reason") <- "no-table"; return(empty) }
   tab <- data.table::copy(tab)
   if (!"party" %in% names(tab)) tab[, party := classify_party(party_raw)]
   if (!inherits(tab$date, "Date")) tab[, date := as.Date(date)]
@@ -77,6 +77,10 @@ byelections_between <- function(election_from, election_to, table = NULL) {
 byelection_prior <- function(mat, election_from, election_to, table = NULL, weight = 1) {
   s <- byelections_between(election_from, election_to, table = table)
   applied <- character(0); skipped <- character(0)
+  if (identical(attr(s, "reason"), "no-table")) {
+    attr(mat, "byelection") <- list(applied = applied, skipped = "NO TABLE -- nothing could apply", cases = s)
+    return(mat)
+  }
   if (nrow(s)) for (st in unique(s$seat)) {
     rows <- s[s$seat == st]
     if (!isTRUE(rows$both_majors[1])) { skipped <- c(skipped, sprintf("%s (a major did not stand)", st)); next }

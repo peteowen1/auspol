@@ -26,8 +26,9 @@ the candidate-identity transfers. `AUSPOL_BYELECTION_PRIOR`.
 Usable in the backtest pairs: Black, Bragg, Dunstan (sa2026); Aston,
 Dunkley, Fadden (fed2025); Bega, Monaro, Strathfield, Upper Hunter
 (nsw2023); Callide, Inala, Ipswich West, Stretton (qld2024); Rockingham
-(wa2025); Eden-Monaro, Groom (fed2022) = 17 seats. (Bragg and Dunstan
-are not rows of the sa harness prior under those names; check.)
+(wa2025); Eden-Monaro, Groom (fed2022) = 17 seats. (An early smoke test
+on a one-row matrix reported Bragg and Dunstan as unmatched; in the sa
+harness itself both matched and were replaced.)
 
 ## Criterion, in order
 

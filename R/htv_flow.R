@@ -21,7 +21,7 @@
 #' @return data.table, or NULL with a message when the file is absent.
 #' @export
 htv_order_table <- function(path = file.path("external", "reference", "htv", "liberal-alp-grn-order.csv")) {
-  if (!file.exists(path)) { message("htv_order_table(): ", path, " not found"); return(NULL) }
+  if (!file.exists(path)) { cat(sprintf("HTV0! how-to-vote table missing at %s -- AUSPOL_HTV_FLOW does NOTHING this run\n", path)); return(NULL) }
   d <- data.table::fread(path, showProgress = FALSE)
   need <- c("election", "seat", "greens_above_labor")
   miss <- setdiff(need, names(d))
@@ -93,22 +93,25 @@ fit_htv_flow_rows <- function(target_election, dir = file.path("external", "elec
 #' @export
 htv_flow_override <- function(ov, fm, target_election, seats, table = NULL, rows = NULL) {
   tab <- if (is.null(table)) htv_order_table() else data.table::as.data.table(table)
-  if (is.null(tab)) return(ov)
+  if (is.null(tab)) { cat("HTV0! no how-to-vote table -- flow rows unchanged (the switch is on but has no input)\n"); return(ov) }
   tab <- tab[tab$election == target_election]
   if (!nrow(tab)) { cat(sprintf("HTV0 no how-to-vote entry for %s -- flow rows unchanged\n", target_election)); return(ov) }
   fr <- if (is.null(rows)) fit_htv_flow_rows(target_election) else rows
-  if (is.null(fr)) return(ov)
+  if (is.null(fr)) { cat("HTV0! no transfer files to fit the card shares from -- flow rows unchanged\n"); return(ov) }
+  if (!is.finite(fr$greens_above) || !is.finite(fr$labor_above))
+    cat(sprintf("HTV0! a card share could not be fitted (greens-above %s, labor-above %s): seats needing the missing one are left unchanged\n",
+                format(fr$greens_above), format(fr$labor_above)))
   share_for <- function(above) if (isTRUE(above)) fr$greens_above else fr$labor_above
   all_entry <- tab[tab$seat == "ALL"]
   seat_entry <- tab[tab$seat != "ALL"]
   out <- if (is.null(ov)) list() else ov
-  applied <- 0L; orders <- character(0)
+  applied <- 0L; orders <- character(0); skipped_na <- character(0)
   for (s in seats) {
     above <- if (s %in% seat_entry$seat) seat_entry[seat_entry$seat == s]$greens_above_labor[1]
              else if (nrow(all_entry)) all_entry$greens_above_labor[1] else NA
     if (is.na(above)) next
     share <- share_for(above)
-    if (!is.finite(share)) next
+    if (!is.finite(share)) { skipped_na <- c(skipped_na, s); next }
     L <- if (!is.null(out[[s]])) out[[s]] else fm$conditional
     touched <- FALSE
     for (k in names(L)) {
@@ -123,7 +126,8 @@ htv_flow_override <- function(ov, fm, target_election, seats, table = NULL, rows
     if (touched) { out[[s]] <- L; applied <- applied + 1L; orders <- c(orders, if (above) "greens_above" else "labor_above") }
   }
   if (!is.null(ov)) for (a in setdiff(names(attributes(ov)), "names")) attr(out, a) <- attr(ov, a)
-  attr(out, "htv") <- list(applied = applied, share = fr[c("greens_above", "labor_above")], order = table(orders))
+  if (length(skipped_na)) cat(sprintf("HTV0! %d seat(s) skipped because their card share is NA: %s\n", length(skipped_na), paste(utils::head(skipped_na, 8), collapse = ", ")))
+  attr(out, "htv") <- list(applied = applied, share = fr[c("greens_above", "labor_above")], order = table(orders), skipped_na = skipped_na)
   cat(sprintf("HTV1 %s: Liberal card applied to %d of %d seats (%s); fitted Liberal->ALP share when ALP+GRN alive: greens-above %.0f%%, labor-above %.0f%%\n",
               target_election, applied, length(seats), paste(sprintf("%s=%d", names(table(orders)), as.integer(table(orders))), collapse = " "),
               fr$greens_above, fr$labor_above))

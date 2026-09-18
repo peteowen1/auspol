@@ -1772,7 +1772,7 @@ for (X in out_all) {
   }
   # HOW-TO-VOTE CARD (AUSPOL_HTV_FLOW=1): the Liberal-excluded, ALP+GRN-alive flow rows follow the recorded
   # card order for this election (R/htv_flow.R, external/reference/htv/liberal-alp-grn-order.csv).
-  .htv_ov <- if (identical(Sys.getenv("AUSPOL_HTV_FLOW", "0"), "1")) tryCatch(htv_flow_override(.xgb_flow_ov, fm, sprintf("fed%d", K$to), rownames(X$shares)),
+  .htv_ov <- if (identical(Sys.getenv("AUSPOL_HTV_FLOW", "0"), "1")) tryCatch(htv_flow_override(.xgb_flow_ov, X$fm, sprintf("fed%d", K$to), rownames(X$shares)),
     error = function(e) { cat(sprintf("HTV9! how-to-vote override FAILED, flow rows unchanged: %s\n", conditionMessage(e))); .xgb_flow_ov }) else .xgb_flow_ov
   sim <- simulate_seat_contests(level_sd = .level_sd, sd_override = SD_OVR, level_mult = .lm(X$shares), X$shares, X$fm, party_sd = psd, seat_sd = sd_w * SEAT_SD_MULT,
                                 n_sims = N_SIMS, smooth = SMOOTH, seed = SEED,
