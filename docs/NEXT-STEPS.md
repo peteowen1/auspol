@@ -1,5 +1,23 @@
 # auspol — work queue
 
+## OPEN, 2026-09-18: intra-Coalition (Liberal vs National) seats have no TCP winner class
+
+`classify_party()` buckets Liberal and National as one "LNP" class everywhere
+in the pipeline, so a seat where BOTH stand (Port Macquarie nsw2023, Roe
+wa2025 -- 2 of 660 in the AEF7 backtest corpus) collapses to "LNP vs LNP",
+with no second class to score a TCP winner against. Checked AEF's own cached
+data for Port Macquarie: they have the identical limitation (`tcp: {"LNP":
+39.2}`, one entry, not two) -- not a gap unique to us. Zero Victorian seats
+in the current (pre-nomination) 2026 candidate list have both a Liberal and
+a National candidate, so this is not live-forecast-blocking today; re-check
+closer to the nomination deadline. Pete's call: flag and leave for now.
+Cheap partial fix available whenever it's worth doing -- show the real raw
+party labels (LIB/NAT) instead of the collapsed class in ledger/verification
+output for just these seats; the harder fix (the seat SIMULATION predicting
+which of the two wins) needs `classify_party()` and the seat-contest model
+to both know two Coalition candidates can contest one seat, which they
+currently don't anywhere in the pipeline.
+
 ## RESOLVED 2026-09-18: AUSPOL_MINOR_DEFECT_BASE_PRED shipped, revised to "no discount for sitting members"
 
 Follow-up to the two-rate `minor_discount` ship (`0a834e0`). The initial
