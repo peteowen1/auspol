@@ -105,6 +105,16 @@ newest_win_file <- function(pr) {
        else {
          g <- list.files(OUT, pattern = pat, full.names = TRUE)
          g <- g[!grepl("sharedetail|allprobs|totals", g)]
+         # Newest file FOR THIS PAIR, not newest by prefix: the sa/nsw/qld
+         # harnesses write one pair per run under the same "backtest-sa-"
+         # name, so after rebuild_forecasts.sh's second wave (sa2022) the
+         # newest sa file carried no sa2026 rows and the pair silently
+         # dropped out of the ledger (2026-09-18: 660 -> 613 seats). Same
+         # selection rule as pool_backtests.R: read the pair column.
+         g <- g[vapply(g, function(f) {
+           x <- fread(f, showProgress = FALSE, nrows = 5000)
+           !"pair" %in% names(x) || pr %in% x$pair
+         }, logical(1))]
          if (!length(g)) return(NULL) else g[which.max(file.mtime(g))]
        }
   if (!length(f)) return(NULL)

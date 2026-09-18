@@ -1,6 +1,6 @@
 # auspol — work queue
 
-## IN PROGRESS 2026-09-18 (session compacted mid-build): the AEF-7 backtests now use the PRODUCTION pipeline, frozen "as at" each election
+## IN PROGRESS 2026-09-18 (exploratory pass done, deciding run next): the AEF-7 backtests now use the PRODUCTION pipeline, frozen "as at" each election
 
 **Pete's rule, stated 2026-09-18 and now the design**: the AEF-7 ledger is
 the main debugging surface for the production model, so it must be built by
@@ -39,37 +39,35 @@ now (`fit_xgb_primary_v6_final.R`, unchanged).
   Default 20000 sims (deciding); `AUSPOL_N_SIMS=5000` is exploratory and
   lowers `AUSPOL_POOL_MIN_SIMS` to match.
 
-**Where the build stood at compaction (16:31)**: stage 1 (all 23 pairs at
-`AUSPOL_XGB_PRIMARY=0`, n=5000, WITH today's three candidate-identity fixes
-`57ebced`) DONE; stage 2 pool DONE (23/23 verified clean); stage 3 v6 features
-DONE (base RMSE 4.1283, LOO 3.7589, n=13739); stage 4 as-at models RUNNING,
-fast (seconds per target; fed2010..wa2021 done, 4 earliest targets correctly
-skipped for <4 prior pairs); stage 5 (production model) queued in the same
-background chain. Logs: the session scratchpad `s2_pool.log`, `s3_v6.log`,
-`s4_asat.log`, `s5_final.log`.
+**Exploratory run (5,000 sims) COMPLETE 2026-09-18 ~17:00; ledger v31
+published from it.** Stages 4-8 all ran; two defects found and fixed on the
+way: (a) `build_aef_comparison.R` was never a stage of the driver, so the
+first ledger rebuild read the stale 08:44 comparison file and printed a log
+loss identical to the run before (now stage 8's first step); (b) it picked
+the newest `backtest-sa-` file by NAME, so wave B's sa2022 run hid sa2026 and
+the ledger fell to 613 seats -- now selects by the file's `pair` column like
+`pool_backtests.R`. Results, all 660 AEF-7 seats (lower is better):
 
-**To resume, in order**:
-1. Confirm stage 4/5 finished: `output/xgb-primary-asat-manifest.csv` exists
-   with 19 modelled targets; read `s4_asat.log`'s `XA4` block (as-at vs base
-   vs leave-one-out per pair -- as-at is EXPECTED to trail LOO on early targets).
-2. Stage 6: the six harnesses at shipped flags (both pairs for nsw/qld/sa),
-   `AUSPOL_N_SIMS=5000` -- this is what `scripts/rebuild_forecasts.sh`'s
-   `run6 1 s6` does; can be run by hand the same way as stage 1 was.
-3. `pool_backtests.R`, `build_forecasts_table.R`, `build_aef7_tcp_actual.R`,
-   `build_aef7_ledger_data.R`; republish the ledger (assemble from
-   `scripts/templates/aef7-ledger.template.html`, artifact URL in the
-   ledger's own git history) with a changelog entry for this change.
-4. Report pooled seat log loss vs the pre-change ledger (0.2627 pooled AEF-7;
-   per-pair fed2022 0.2817 / nsw2023 0.2274 / vic2022 0.2353 -- those were
-   leave-one-out xgb; expect the honest as-at number to be somewhat worse, and
-   SAY SO -- it is the price of not seeing the future, not a regression).
-5. Then the deciding run: `bash scripts/rebuild_forecasts.sh` (20000 sims,
-   ~1h; check free RAM first). Commit models/manifest? -- `output/` is
-   gitignored except listed exceptions; decide with Pete whether the 19
-   `.ubj` files and the two forecasts tables become tracked exceptions or a
-   GitHub Release (the repo's release-as-data-bus pattern).
-6. `docs/DECISIONS.md` row + this entry closed; `docs/PETE-ASKED-FOR.md`
-   row for "AEF-7 must be production" (asked 2026-09-18) -> SHIPPED once 5 is done.
+| metric | old ledger (leave-one-out, 20k sims) | as-at (5k sims) | AEF |
+|---|---|---|---|
+| seat log loss | 0.2627 | 0.2696 | 0.2851 |
+| primary RMSE weighted by actual share, 4,489 candidate rows | 4.67 | 4.80 | -- |
+| primary wRMSE, ledger definition | 5.301 | 5.277 | 5.424 |
+
+Per pair log loss old -> as-at: fed2022 0.2817->0.2783, fed2025 0.2406->0.2403,
+nsw2023 0.2274->0.2325, qld2024 0.3259->0.3422, sa2026 0.2942->0.3018,
+vic2022 0.2353->0.2543, wa2025 0.2317->0.2559. The old number saw the future;
+the as-at one is the honest one. Two confounds remain until the 20k run: sim
+count, and `base_pred` itself changed (three fixes in `57ebced`).
+`docs/PIPELINE.md` (new) is the stage map Pete asked for.
+
+**Remaining**:
+1. Deciding run: `bash scripts/rebuild_forecasts.sh` (20000 sims; ~11GB free
+   was enough at 5k -- check before). Republish the ledger from it.
+2. Decide with Pete: the 19 `.ubj` files + `forecasts.csv`/`forecasts-seats.csv`
+   as tracked exceptions in `output/` or a GitHub Release.
+3. `docs/DECISIONS.md` row; `docs/PETE-ASKED-FOR.md` "AEF-7 must be
+   production" -> SHIPPED after 1. Review gate before any PR.
 
 ## OPEN, 2026-09-18: intra-Coalition (Liberal vs National) seats have no TCP winner class
 

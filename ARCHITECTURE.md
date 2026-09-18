@@ -2,7 +2,8 @@
 
 How the pieces fit and why they are shaped this way. For the work queue and
 measured findings see [docs/NEXT-STEPS.md](docs/NEXT-STEPS.md); for the anchor
-model this is built on, [docs/ANCHOR-MODEL.md](docs/ANCHOR-MODEL.md).
+model this is built on, [docs/ANCHOR-MODEL.md](docs/ANCHOR-MODEL.md); for a
+one-page map of the forecast steps and the rebuild stages, [docs/PIPELINE.md](docs/PIPELINE.md).
 
 ## The shape of the thing
 

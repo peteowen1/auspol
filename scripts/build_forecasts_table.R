@@ -68,9 +68,11 @@ setorder(F, election_date, seat, party)
 fwrite(F, file.path(OUT, "forecasts.csv"), na = "NA")
 cat(sprintf("FT1  wrote output/forecasts.csv: %d rows, %d elections, %d with a named candidate (%.1f%%)\n",
             nrow(F), uniqueN(F$election), sum(!is.na(F$candidate)), 100 * mean(!is.na(F$candidate))))
-cat(sprintf("FT1  AEF-7 subset: %d rows | pooled primary RMSE base %.4f -> as-at xgb %.4f\n",
-            nrow(F[election %in% AEF7]),
-            sqrt(mean(F[election %in% AEF7]$err_base^2)), sqrt(mean(F[election %in% AEF7]$err_xgb^2))))
+A7 <- F[election %in% AEF7]
+wr <- function(e, a) sqrt(sum(a * e^2) / sum(a))   # weighted by actual share -- the headline (Pete, 2026-09-18)
+cat(sprintf("FT1  AEF-7 subset: %d rows | primary RMSE WEIGHTED by actual share: base %.4f -> as-at xgb %.4f  (unweighted %.4f -> %.4f)\n",
+            nrow(A7), wr(A7$err_base, A7$actual_share), wr(A7$err_xgb, A7$actual_share),
+            sqrt(mean(A7$err_base^2)), sqrt(mean(A7$err_xgb^2))))
 
 # ---- seat-level win probabilities: newest allprobs file per pair ------------
 files <- list.files(OUT, pattern = "^backtest-.*allprobs.*[.]csv$", full.names = TRUE)

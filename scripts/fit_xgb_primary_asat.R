@@ -156,8 +156,15 @@ cat(sprintf("XA3  wrote %s and %d model file(s) under %s\n", file.path(OUT, "xgb
 # Pooled, and against the leave-one-out cache if it exists -- the honest
 # comparison: as-at is expected to be somewhat WORSE than leave-one-out on
 # early targets (less data) and that is the price of not seeing the future.
-cat(sprintf("\nXA4  pooled primary RMSE over %d rows: base %.4f -> as-at %.4f\n",
-            nrow(P), sqrt(mean((P$base_pred - P$actual_share)^2)), sqrt(mean((P$xgb_pred - P$actual_share)^2))))
+# Headline is WEIGHTED by actual vote share (Pete, 2026-09-18: "primary RMSE
+# should always be actual weighted"): a 2-point miss on a 40% candidate is a
+# forecast error, the same miss on a 3% candidate barely moves any seat. The
+# unweighted figure is kept beside it because that is what the training
+# objective minimises.
+wrmse <- function(p, a) sqrt(sum(a * (p - a)^2) / sum(a))
+cat(sprintf("\nXA4  pooled primary RMSE over %d rows, WEIGHTED by actual share: base %.4f -> as-at %.4f  (unweighted %.4f -> %.4f)\n",
+            nrow(P), wrmse(P$base_pred, P$actual_share), wrmse(P$xgb_pred, P$actual_share),
+            sqrt(mean((P$base_pred - P$actual_share)^2)), sqrt(mean((P$xgb_pred - P$actual_share)^2))))
 oof <- file.path(OUT, "xgb-primary-v6-oof-predictions.csv")
 if (file.exists(oof)) {
   O <- fread(oof, showProgress = FALSE)[, .(pair, seat, party, oof_pred = xgb_pred)]

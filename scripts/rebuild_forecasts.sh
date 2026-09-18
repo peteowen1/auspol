@@ -19,7 +19,8 @@
 #      file via published_flags.R)              -> seat probabilities
 #   7. pool_backtests.R + build_forecasts_table.R -> forecasts.csv,
 #      forecasts-seats.csv, and the pooled scoreboard
-#   8. build_aef7_tcp_actual.R + build_aef7_ledger_data.R -> ledger JSON
+#   8. build_aef_comparison.R + build_aef7_tcp_actual.R + build_aef7_ledger_data.R
+#      -> ledger JSON
 #
 # AUSPOL_N_SIMS defaults to 20000 -- the DECIDING run, because stage 3 trains
 # on base_pred, which is a simulation mean, and pool_sharedetail.R refuses
@@ -73,7 +74,8 @@ stage "5-production-model";    Rscript scripts/fit_xgb_primary_v6_final.R > "$LO
 stage "6-harnesses-shipped";   run6 1 s6; done_stage "6-harnesses-shipped"
 stage "7-pool-and-forecasts";  Rscript scripts/pool_backtests.R        > "$LOG/s7_pool.log" 2>&1
                                Rscript scripts/build_forecasts_table.R > "$LOG/s7_forecasts.log" 2>&1; done_stage "7-pool-and-forecasts"
-stage "8-ledger";              Rscript scripts/build_aef7_tcp_actual.R > "$LOG/s8_tcp.log" 2>&1
+stage "8-ledger";              Rscript scripts/build_aef_comparison.R  > "$LOG/s8_comp.log" 2>&1   # aef-comparison-full.csv, the ledger's seat-probability input -- was missing from the first draft, so the ledger's log loss came out identical to the run before (2026-09-18)
+                               Rscript scripts/build_aef7_tcp_actual.R > "$LOG/s8_tcp.log" 2>&1
                                Rscript scripts/build_aef7_ledger_data.R > "$LOG/s8_ledger.log" 2>&1; done_stage "8-ledger"
 
 echo; echo "=== stage split (seconds) ==="
