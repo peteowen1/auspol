@@ -96,7 +96,17 @@ log loss 0.2735 -> 0.2715 (AEF 0.2851), winner-primary RMSE 5.94 -> 5.52.**
 
 **Flow models now as-at, SHIPPED 2026-09-18 evening** (`AUSPOL_FLOW_ASAT` = 1,
 `scripts/fit_xgb_flows_asat.R`, stage 4b of the driver, 21 models; resumable
-and skips models already current). Not in v33; the next rebuild carries it.
+and skips models already current). Ledger v34 (19:25) carries it: seat log loss 0.2715 -> 0.2689, 5 of 7
+pairs better.
+
+**Evening total, 2026-09-18, all on the production pipeline**: v32 0.2735
+-> v34 0.2689 (AEF 0.2851); weighted primary RMSE 4.79 -> 4.77 (AEF 5.42);
+winner-primary RMSE 5.94 -> 5.52. Shipped: AUSPOL_MAJOR_DEPARTED,
+AUSPOL_MAJOR_SLOPE, AUSPOL_FLOW_ASAT, ledger_inputs.R vintage rule.
+Measured and left off: AUSPOL_DEPARTED_ORIGIN. Open data items: Liberal
+how-to-vote order for ALP-v-GRN seats; by-election results as the seat
+baseline (live: Prahran); federal per-state swing input (ceiling ~1-1.5
+points per pair, measured).
 
 **Was: the xgb flow models are leave-one-election-out, not as-at**
 (`xgb-flows-v1-loo-<election>.model` trains on later elections). Same leak

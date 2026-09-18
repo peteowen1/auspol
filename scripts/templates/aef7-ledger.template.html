@@ -250,7 +250,16 @@
   </details>
 
   <details class="provlog">
-    <summary>Provenance &amp; changelog <span class="n">(20 updates)</span></summary>
+    <summary>Provenance &amp; changelog <span class="n">(21 updates)</span></summary>
+    <p class="sub prov"><b>Preference-flow model now "as at" each election too, 18 Sep 2026, 19:25.</b> The per-election
+       xgb flow model the harnesses read was leave-one-election-out, so vic2022's flows were learned partly from
+       fed2025 and sa2026. <code>scripts/fit_xgb_flows_asat.R</code> trains one model per election from earlier elections
+       only (21 models; the four earliest have none and use the pooled flow table), read under
+       <code>AUSPOL_FLOW_ASAT</code>. Not a scored change -- an honest number replacing a leaked one -- but it happens to
+       help: <b>pooled seat log loss 0.2715 &rarr; 0.2689</b> (AEF 0.2851), 5 of 7 pairs better (wa2025 0.2711&rarr;0.2581,
+       fed2022 0.2762&rarr;0.2717, vic2022 0.2537&rarr;0.2488; sa2026 and qld2024 slightly worse). TCP MAE on the real
+       pairing 3.75 &rarr; 3.74. Full 20,000-sim rebuild, 23 minutes; the new flow stage costs 2 seconds when its
+       models are already current.</p>
     <p class="sub prov"><b>Two major-party slope tiers shipped from the worst-seat pass, 18 Sep 2026 evening.</b> Working
        through the worst seats on v32 with the pipeline now trustworthy: (1) a major party whose sitting member did not
        re-stand was over-predicted by 2.8 points on 361 seat-elections (SE 0.35), because ALP and Liberal/National classes
