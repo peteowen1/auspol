@@ -95,10 +95,20 @@ parse_abc_seat <- function(html) {
   tcp_name  <- html_elements(doc, "h4[class^='AfterPreferenceCandidate_candidateName']")
   tcp_party <- html_elements(doc, "h3[class^='AfterPreferenceCandidate_candidateParty']")
   tcp_pct   <- html_elements(doc, "p[class^='AfterPreferenceCandidate_votePct']")
+  tcp_cnt   <- html_elements(doc, "p[class^='AfterPreferenceCandidate_voteCount']")
   tcp <- NULL
   if (length(tcp_name) == 2 && length(tcp_pct) == 2) {
+    # pct is rounded to 1dp and a real near-50/50 seat (fed2025 Bradfield:
+    # Liberal 56,088 vs Independent 56,114, decided by 26 votes after a full
+    # recount) rounds to an EXACT 50.0/50.0 tie -- ranking on pct then breaks
+    # the tie on DOM order, not the actual result, and called the seat for
+    # whichever candidate the page happened to list first (Liberal). Pete
+    # caught this from the actual ABC page, which shows Boele (IND) 26 votes
+    # ahead. Ranking on the raw vote count instead resolves it correctly.
+    votes <- if (length(tcp_cnt) == 2) suppressWarnings(as.numeric(gsub("[^0-9]", "", html_text2(tcp_cnt)))) else c(NA_real_, NA_real_)
     tcp <- data.table(party_name = trimws(html_text2(tcp_party)),
-                       pct = suppressWarnings(as.numeric(gsub("[^0-9.]", "", html_text2(tcp_pct)))))
+                       pct = suppressWarnings(as.numeric(gsub("[^0-9.]", "", html_text2(tcp_pct)))),
+                       votes = votes)
   }
   list(seat = seat, is_supp = is_supp, primary = primary, tcp = tcp)
 }
@@ -147,7 +157,13 @@ itg_tcp <- rbindlist(lapply(AEF7, function(pr) {
 # "Mount" vs "Mt", a dash variant) needs a human decision, not a guess.
 abc_tcp_named <- NULL
 if (nrow(abc_tcp)) {
-  abc_tcp[, rk := frank(-pct, ties.method = "first"), by = .(pair, seat)]
+  # Rank on raw votes, not the rounded percentage -- see parse_abc_seat's
+  # note on Bradfield, an exact 50.0/50.0 by rounding that a real 26-vote
+  # margin decides. Per-ROW fallback to pct (not an all-or-nothing check
+  # across the whole table) so one seat missing a vote count doesn't
+  # degrade every other seat's ranking back to the tie-prone rounded pct.
+  abc_tcp[, rank_key := ifelse(!is.na(votes), -votes, -pct * 1e6)]
+  abc_tcp[, rk := frank(rank_key, ties.method = "first"), by = .(pair, seat)]
   wide <- dcast(abc_tcp[rk <= 2], pair + seat ~ rk, value.var = c("cls", "pct"))
   setnames(wide, c("cls_1","cls_2","pct_1"), c("abc_tcp_f1","abc_tcp_f2","abc_tcp_pct"))
   abc_tcp_named <- wide[, .(pair, seat, abc_tcp_f1, abc_tcp_f2, abc_tcp_pct)]
