@@ -5,12 +5,15 @@
 
   TO REFRESH: run scripts/build_aef_comparison.R (needs fresh full-sim
   backtests for fed2022, fed2025, nsw2023, qld2024, sa2026, vic2022, wa2025 --
-  see that script's own header), then scripts/build_aef7_ledger_data.R, which
-  writes output/aef7-ledger-data.json. Substitute that JSON for the
-  __SEATS_JSON__ placeholder below and publish via the Artifact tool with
-  `url` set to the existing artifact so it updates in place (this preserves
-  the shared "notes" database untouched -- it lives separately from the
-  page, keyed by pair__seat, and republishing the page never touches it).
+  see that script's own header), then scripts/build_aef7_tcp_actual.R (TCP
+  scored against the pairing that actually happened, all 660 seats -- added
+  2026-09-18), then scripts/build_aef7_ledger_data.R, which writes
+  output/aef7-ledger-data.json AND output/aef7-ledger-summary.json.
+  Substitute the first for __SEATS_JSON__ and the second for __SUMMARY_JSON__
+  below, and publish via the Artifact tool with `url` set to the existing
+  artifact so it updates in place (this preserves the shared "notes" database
+  untouched -- it lives separately from the page, keyed by pair__seat, and
+  republishing the page never touches it).
 
   Committed 2026-09-17 after the page had drifted out of sync with a shipped
   model change and the ORIGINAL assembly script turned out to only ever have
@@ -209,6 +212,23 @@
      43.5%, which means AEF actually predicted IND (the other finalist) to win with ~56.5% -- correctly, since IND
      won. "AEF confidence" is how often AEF's own simulation landed on that PAIRING occurring at all, independent
      of who wins it.</p>
+     <p class="sub prov"><b>TCP on real pairing</b> ("Ours err"/"AEF err" columns, and the matching headline stats)
+     is a DIFFERENT question from ITG/AEF final two above: those score each side's own #1-guessed pairing, so a
+     seat only counts if that guess happened to match reality (n=568 ours / 574 AEF of 660). This instead looks up,
+     for EVERY seat with a resolved real result (632 of 660 -- 28 vic2022/nsw2023 seats have no official/derived
+     final-two at all, a pre-existing data gap, and are excluded rather than scored as a guess), whichever party
+     that side's own scenario table named as leader of the pairing that ACTUALLY happened -- even when that was not
+     their #1 pick -- and compares that side's predicted share for that party against what it actually got.
+     "TCP scenario log loss" is a further-back question: how much of the probability mass each side's own
+     simulation put on that pairing occurring AT ALL, regardless of who it thought would lead it or win it -- floored
+     at 1e-6 for a pairing that side's simulation never drew, same convention as every other log loss on this page.
+     <code>scripts/build_aef7_tcp_actual.R</code>.</p>
+     <p class="sub prov"><b>Primary RMSE (every party, weighted by actual share)</b> scores every party's predicted
+     primary vote in every seat, not just the eventual winner's -- weighted by how big that party's ACTUAL vote was,
+     so a badly-misjudged fringe candidate on 1% barely moves it while a badly-misjudged front-runner does. AEF's
+     side is not shown: their <code>fpTrend</code> field (their own full per-party primary prediction) sits in the
+     cached data this page already reads but has never been parsed by any script in this repo -- a real, separate
+     build, not a metric tweak, and queued rather than guessed at.</p>
   </details>
 
   <details class="provlog">
@@ -327,6 +347,7 @@
           <th colspan="3" class="sep">Final two</th>
           <th colspan="3" class="sep">ITG final two</th>
           <th colspan="3" class="sep">AEF final two</th>
+          <th colspan="2" class="sep">TCP on real pairing</th>
           <th colspan="3" class="sep">Seat log loss</th>
           <th colspan="2" class="sep"></th>
         </tr>
@@ -340,6 +361,7 @@
 
 <script>
 const SEATS = __SEATS_JSON__;
+const SUMMARY = __SUMMARY_JSON__;
 
 const COLS = [
   {k:"pair",   t:"Election", cls:"pair fz fz1"},
@@ -366,6 +388,8 @@ const COLS = [
   {k:"aef_tcp_f1",  t:"AEF pick", cls:"pill-cell", sep:true},
   {k:"aef_tcp_pct", t:"AEF TCP%", num:true, dp:1},
   {k:"aef_tcp_scenario_freq", t:"AEF confidence", num:true, dp:3},
+  {k:"our_tcp_actual_err", t:"Ours err", num:true, sep:true, dp:1, miss:true},
+  {k:"aef_tcp_actual_err", t:"AEF err",  num:true, dp:1, miss:true},
   {k:"ll",     t:"Ours",  num:true, sep:true, dp:3},
   {k:"aef_ll", t:"AEF",   num:true, dp:3},
   {k:"dll",    t:"Δ loss", num:true, dp:3, delta:true},
@@ -373,7 +397,20 @@ const COLS = [
   {k:"note",   t:"Notes", cls:"note"}
 ];
 
-SEATS.forEach(r => { r.dll = (r.ll != null && r.aef_ll != null) ? +(r.ll - r.aef_ll).toFixed(3) : null; });
+SEATS.forEach(r => {
+  r.dll = (r.ll != null && r.aef_ll != null) ? +(r.ll - r.aef_ll).toFixed(3) : null;
+  // TCP scored on the pairing that ACTUALLY happened, regardless of whether
+  // it was that side's #1 guess -- see "What the columns mean" for why this
+  // is a different question from ITG/AEF TCP% above, which are each side's
+  // own top-frequency scenario. our_tcp_actual_share/aef_tcp_actual_share
+  // are the REAL result for whichever party that side's scenario table named
+  // as leader of the real pairing; *_pred_pct is what that side predicted
+  // for that same party -- the error is the gap between the two.
+  r.our_tcp_actual_err = (r.our_tcp_pred_pct != null && r.our_tcp_actual_share != null)
+    ? +Math.abs(r.our_tcp_pred_pct - r.our_tcp_actual_share).toFixed(1) : null;
+  r.aef_tcp_actual_err = (r.aef_tcp_pred_pct != null && r.aef_tcp_actual_share != null)
+    ? +Math.abs(r.aef_tcp_pred_pct - r.aef_tcp_actual_share).toFixed(1) : null;
+});
 
 const BYKEY = new Map();
 const PAIRS = [...new Set(SEATS.map(r=>r.pair))].sort();
@@ -412,18 +449,37 @@ function overall(){
   const aefTcpHit = SEATS.filter(r=>r.aef_tcp_pct!=null && pairMatch(r.aef_tcp_f1,r.aef_tcp_f2,r.f1,r.f2))
     .map(r=>({...r, aef_actual_share: actualShareOf(r.aef_tcp_f1,r.f1,r.f2,r.f2cp)}));
   const mae = (rs,a,b) => mean(rs.map(r=>({v:Math.abs(r[a]-r[b])})), "v");
+  const eps = 1e-6;
+  const tcpScoreable = SEATS.filter(r=>r.our_tcp_actual_freq!=null);
+  const tcpLL = (rs,k) => mean(rs.map(r=>({v:-Math.log(Math.max(r[k]??0, eps))})), "v");
+  const tcpErrRows = (rs,k) => rs.filter(r=>r[k]!=null);
+  const pwrmse = SUMMARY && SUMMARY.primary_wrmse;
   const stats = [
     {lab:"Seats", our:n, aef:null, n:null, fmt:v=>v},
     {lab:"Seat log loss", our:mean(SEATS,"ll"), aef:mean(SEATS,"aef_ll"), n:n, lower:true, fmt:v=>v.toFixed(4)},
-    {lab:"Primary RMSE (winner)", our:rmse("our_fp_win","act_fp_win"), aef:rmse("aef_fp_win","act_fp_win"), n:n, lower:true, fmt:v=>v.toFixed(2)},
-    {lab:"TCP MAE (matched pairing)", our:mae(ourTcpHit,"our_tcp_pct","our_actual_share"), aef:mae(aefTcpHit,"aef_tcp_pct","aef_actual_share"),
+    {lab:"Primary RMSE (winner only)", our:rmse("our_fp_win","act_fp_win"), aef:rmse("aef_fp_win","act_fp_win"), n:n, lower:true, fmt:v=>v.toFixed(2)},
+    {lab:"Primary RMSE (every party, weighted by actual share)",
+     our: pwrmse && pwrmse.our!=null ? pwrmse.our : null, aef: null,
+     n: pwrmse ? `${pwrmse.our_n} cells ours; AEF needs fpTrend parsed, not built` : null,
+     lower:true, fmt:v=>v.toFixed(3)},
+    {lab:"TCP MAE (each side's own #1 pairing, where it matched)", our:mae(ourTcpHit,"our_tcp_pct","our_actual_share"), aef:mae(aefTcpHit,"aef_tcp_pct","aef_actual_share"),
      n:`${ourTcpHit.length} ours / ${aefTcpHit.length} AEF`, lower:true, fmt:v=>v.toFixed(2)},
+    {lab:"TCP scenario log loss (probability given to the pairing that actually happened, all seats)",
+     our: tcpScoreable.length ? tcpLL(tcpScoreable,"our_tcp_actual_freq") : null,
+     aef: tcpScoreable.length ? tcpLL(tcpScoreable,"aef_tcp_actual_freq") : null,
+     n: tcpScoreable.length, lower:true, fmt:v=>v.toFixed(4)},
+    {lab:"TCP MAE (on the real pairing, whether or not it was the #1 pick)",
+     our: (()=>{const rs=tcpErrRows(SEATS,"our_tcp_actual_err"); return rs.length?mean(rs,"our_tcp_actual_err"):null;})(),
+     aef: (()=>{const rs=tcpErrRows(SEATS,"aef_tcp_actual_err"); return rs.length?mean(rs,"aef_tcp_actual_err"):null;})(),
+     n: `${tcpErrRows(SEATS,"our_tcp_actual_err").length} ours / ${tcpErrRows(SEATS,"aef_tcp_actual_err").length} AEF`,
+     lower:true, fmt:v=>v.toFixed(2)},
   ];
   el.innerHTML = stats.map(s=>{
     const better = s.aef!=null && s.lower && s.our<=s.aef;
+    const ourTxt = s.our!=null ? s.fmt(s.our) : "—";
     return `<div class="stat">
       <div class="lab">${s.lab}</div>
-      <div class="row"><b${better?' class="better"':""}>${s.fmt(s.our)}</b>${s.aef!=null?`<span class="aef">${s.fmt(s.aef)}</span>`:""}</div>
+      <div class="row"><b${better?' class="better"':""}>${ourTxt}</b>${s.aef!=null?`<span class="aef">${s.fmt(s.aef)}</span>`:""}</div>
       ${s.n!=null?`<div class="n">n=${s.n}</div>`:""}
     </div>`;
   }).join("");

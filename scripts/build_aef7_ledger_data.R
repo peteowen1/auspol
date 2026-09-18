@@ -103,6 +103,23 @@ ALL[is.na(grp), grp := ""]
 ALL <- merge(ALL, ref, by = c("pair","seat"), all.x = TRUE)
 ALL <- merge(ALL, tcp_all, by = c("pair","seat"), all.x = TRUE)
 
+# TCP scored against the pairing that ACTUALLY happened, not just each
+# side's own #1 guess -- scripts/build_aef7_tcp_actual.R, built 2026-09-18
+# after Pete asked for TCP scored on all 660 seats, not the ~86% subset
+# where a side's top pick happened to match. NA for the 28 seats (27
+# vic2022, 1 nsw2023) with no resolved official final-two at all.
+tcp_actual_f <- file.path(OUT, "aef7-tcp-actual.csv")
+if (file.exists(tcp_actual_f)) {
+  tcpa <- fread(tcp_actual_f, showProgress = FALSE)
+  tcpa <- tcpa[, .(pair, seat, our_tcp_actual_freq, our_tcp_pred_pct, our_tcp_actual_share,
+                    aef_tcp_actual_freq, aef_tcp_pred_pct, aef_tcp_actual_share)]
+  ALL <- merge(ALL, tcpa, by = c("pair","seat"), all.x = TRUE)
+} else {
+  cat("AEFL6! output/aef7-tcp-actual.csv missing -- run scripts/build_aef7_tcp_actual.R first; actual-pairing TCP columns left NA\n")
+  ALL[, `:=`(our_tcp_actual_freq = NA_real_, our_tcp_pred_pct = NA_real_, our_tcp_actual_share = NA_real_,
+             aef_tcp_actual_freq = NA_real_, aef_tcp_pred_pct = NA_real_, aef_tcp_actual_share = NA_real_)]
+}
+
 SEATS <- ALL[, .(
   pair, seat,
   winner = actual, fav, correct = (our_pred == actual),
@@ -121,7 +138,9 @@ SEATS <- ALL[, .(
   f1, f2, f2cp, fsrc,
   our_fp_fav, aef_fp_fav = aef_primary, act_fp_fav = actual_primary,
   aef_tcp_f1, aef_tcp_f2, aef_tcp_pct, aef_tcp_scenario_freq, aef_tcp_p05, aef_tcp_p95,
-  our_tcp_f1, our_tcp_f2, our_tcp_pct, our_tcp_freq
+  our_tcp_f1, our_tcp_f2, our_tcp_pct, our_tcp_freq,
+  our_tcp_actual_freq, our_tcp_pred_pct, our_tcp_actual_share,
+  aef_tcp_actual_freq, aef_tcp_pred_pct, aef_tcp_actual_share
 )]
 # AEF'S OWN aef_p/aef_pred is already "AEF's favourite and AEF's probability
 # for it" (build_aef_comparison.R's read from aef_scores), so aef_p_fav ==
@@ -174,15 +193,42 @@ tcp_mae <- list(
   our = mean(abs(our_tcp_hit$our_tcp_pct - our_tcp_hit$our_actual_share)), our_n = nrow(our_tcp_hit),
   aef = mean(abs(aef_tcp_hit$aef_tcp_pct - aef_tcp_hit$aef_actual_share)), aef_n = nrow(aef_tcp_hit))
 
+
+# WEIGHTED PRIMARY RMSE, every party in every seat, weighted by that party's
+# ACTUAL vote share -- not just the eventual winner. Pete's request 2026-09-18:
+# the winner-only primary_rmse above misses how well-calibrated the WHOLE
+# primary vote distribution is (a seat where we nail the winner's share but
+# badly misjudge everyone else's slice looks perfect on primary_rmse alone).
+# OUR side is fully computable from output/pooled-sharedetail.csv, which
+# already carries one row per (pair, seat, party) with pred_share/actual_share.
+# AEF'S side needs their fpTrend field parsed out of external/reference/aef/
+# *-summary.json -- flagged as unparsed in build_aef_tcp.R's own header
+# comment and genuinely not built yet, so AEF is reported as unavailable
+# rather than guessed at or silently omitted.
+primary_wrmse <- list(our = NA_real_, our_n = 0L, aef = NA_real_, aef_n = 0L)
+sd_f <- file.path(OUT, "pooled-sharedetail.csv")
+if (file.exists(sd_f)) {
+  sdw <- fread(sd_f, showProgress = FALSE)
+  sdw <- sdw[pair %in% MAP$pair]
+  if (nrow(sdw)) {
+    primary_wrmse$our <- sqrt(sum(sdw$actual_share * (sdw$pred_share - sdw$actual_share)^2) / sum(sdw$actual_share))
+    primary_wrmse$our_n <- nrow(sdw)
+  }
+} else {
+  cat("AEFL7! output/pooled-sharedetail.csv missing -- weighted primary RMSE (ours) left NA\n")
+}
+
 summary_stats <- list(
   n_seats = nrow(SEATS),
   seat_logloss = list(our = mean(SEATS$ll), aef = mean(SEATS$aef_ll), n = nrow(SEATS)),
   primary_rmse = list(our = primary_rmse$our, aef = primary_rmse$aef, n = primary_rmse$n),
+  primary_wrmse = primary_wrmse,
   tcp_mae = tcp_mae,
   accuracy = list(our = mean(SEATS$correct), aef = mean(SEATS$aef_p_win >= 0.5), n = nrow(SEATS)))
 
 write(toJSON(summary_stats, auto_unbox = TRUE, digits = 4), file.path(OUT, "aef7-ledger-summary.json"))
-cat(sprintf("\nAEFL5 pooled summary: seat log loss ours %.4f vs AEF %.4f (n=%d) | primary RMSE ours %.2f vs AEF %.2f (n=%d) | TCP MAE ours %.2f (n=%d) vs AEF %.2f (n=%d)\n",
+cat(sprintf("\nAEFL5 pooled summary: seat log loss ours %.4f vs AEF %.4f (n=%d) | primary RMSE (winner only) ours %.2f vs AEF %.2f (n=%d) | primary RMSE (all parties, weighted) ours %.3f (n=%d), AEF n/a | TCP MAE ours %.2f (n=%d) vs AEF %.2f (n=%d)\n",
             summary_stats$seat_logloss$our, summary_stats$seat_logloss$aef, summary_stats$seat_logloss$n,
             summary_stats$primary_rmse$our, summary_stats$primary_rmse$aef, summary_stats$primary_rmse$n,
+            primary_wrmse$our, primary_wrmse$our_n,
             summary_stats$tcp_mae$our, summary_stats$tcp_mae$our_n, summary_stats$tcp_mae$aef, summary_stats$tcp_mae$aef_n))
