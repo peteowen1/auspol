@@ -124,6 +124,8 @@ dev_slopes_for <- function(parties, default = 1) {
 #' @param major_departed Optional named numeric (ALP, LNP): the slope a major
 #'   party keeps on its deviation where `returns$mp_departed` is TRUE, from
 #'   [fit_major_departed_slope()]. `NULL` keeps majors at `default`.
+#' @param major_present Optional named numeric (ALP, LNP): the slope every
+#'   other ALP/LNP cell keeps on its deviation. `NULL` keeps `default`.
 #' @param same_mp Optional named numeric vector of slopes by class, applied
 #'   where the returning candidate was the SITTING MEMBER. `NULL` (the
 #'   default) keeps the two-tier `same`/`new` behaviour byte-identical.
@@ -143,21 +145,29 @@ conditional_slopes <- function(cls, seats, returns,
                                new  = c(IND = 0.326, OTH_RIGHT = 0.325,
                                         GRN = 0.880, ONP = 0.545),
                                default = 1,
-                               same_mp = NULL, major_departed = NULL) {
+                               same_mp = NULL, major_departed = NULL,
+                               major_present = NULL) {
   # MAJOR-PARTY DEPARTURE TIER. ALP/LNP have no same/new table and always
   # took `default` (1.0): a seat whose sitting member retired projected its
   # full personal-vote-inflated base. Measured 2026-09-18: -2.8 points on
   # 361 such cells, scaling with the vote. `major_departed` (fitted by
   # fit_major_departed_slope(), gated by AUSPOL_MAJOR_DEPARTED) gives that
   # class a slope on its deviation only where `returns$mp_departed` is TRUE.
-  if (!is.null(major_departed) && cls %in% names(major_departed) &&
-      !is.null(returns) && "mp_departed" %in% names(returns)) {
+  # `major_present` (AUSPOL_MAJOR_SLOPE) is the other tier: every ALP/LNP
+  # cell that is NOT departed regresses toward the statewide level too
+  # (docs/plans/prereg-major-present-slope-2026-09-18.md). Either may be
+  # given without the other; a cell takes the departed slope if departed,
+  # else the present slope, else `default`.
+  has_dep  <- !is.null(major_departed) && cls %in% names(major_departed)
+  has_pres <- !is.null(major_present)  && cls %in% names(major_present)
+  if ((has_dep || has_pres) && !is.null(returns) && "mp_departed" %in% names(returns)) {
     R0 <- data.table::as.data.table(returns)
     h0 <- R0[R0$party == cls]
     i0 <- match(seats, h0$seat)
     dep <- !is.na(i0) & h0$mp_departed[i0]; dep[is.na(dep)] <- FALSE
     out <- rep(as.numeric(default), length(seats))
-    out[dep] <- as.numeric(major_departed[[cls]])
+    if (has_pres) out[!dep] <- as.numeric(major_present[[cls]])
+    if (has_dep)  out[dep]  <- as.numeric(major_departed[[cls]])
     return(out)
   }
   # SITTING-MEMBER TIER, opt-in via `same_mp` (AUSPOL_MP_SLOPE=1 in the
@@ -275,12 +285,13 @@ screened_slopes <- function(cls, seats, returns, permit, honour_departed = FALSE
                             new  = c(IND = 0.326, OTH_RIGHT = 0.325,
                                      GRN = 0.880, ONP = 0.545),
                             default = 1, same_mp = NULL,
-                            departed_rate = c(IND = 0.38), major_departed = NULL) {
+                            departed_rate = c(IND = 0.38), major_departed = NULL,
+                            major_present = NULL) {
   if (length(permit) != length(seats)) {
     stop("permit must be the same length as seats: ", length(permit),
          " vs ", length(seats), call. = FALSE)
   }
-  base <- conditional_slopes(cls, seats, returns, same, new, default, same_mp, major_departed)
+  base <- conditional_slopes(cls, seats, returns, same, new, default, same_mp, major_departed, major_present)
   if (is.null(returns) || !cls %in% names(same) || !cls %in% names(new)) {
     return(base)   # class never fitted: conditional_slopes already left it at default
   }

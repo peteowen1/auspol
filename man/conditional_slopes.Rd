@@ -12,7 +12,8 @@ conditional_slopes(
   new = c(IND = 0.326, OTH_RIGHT = 0.325, GRN = 0.88, ONP = 0.545),
   default = 1,
   same_mp = NULL,
-  major_departed = NULL
+  major_departed = NULL,
+  major_present = NULL
 )
 }
 \arguments{
@@ -43,6 +44,9 @@ log-loss gap to AE Forecasts sits. Requires \code{returns} to carry a
 \item{major_departed}{Optional named numeric (ALP, LNP): the slope a major
 party keeps on its deviation where \code{returns$mp_departed} is TRUE, from
 \code{\link[=fit_major_departed_slope]{fit_major_departed_slope()}}. \code{NULL} keeps majors at \code{default}.}
+
+\item{major_present}{Optional named numeric (ALP, LNP): the slope every
+other ALP/LNP cell keeps on its deviation. \code{NULL} keeps \code{default}.}
 }
 \value{
 Numeric vector the length of \code{seats}.

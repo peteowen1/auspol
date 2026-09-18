@@ -794,14 +794,20 @@ mat22 <- (function(m) {
               if (length(.a$skipped)) paste0("; SKIPPED ", paste(.a$skipped, collapse = ", ")) else ""))
   m2
 })(mat22)
-# MAJOR-PARTY DEPARTURE SLOPE (AUSPOL_MAJOR_DEPARTED=1): docs/plans/prereg-major-departed-slope-2026-09-18.md
-.MAJDEP <- if (identical(Sys.getenv("AUSPOL_MAJOR_DEPARTED", "0"), "1")) tryCatch({
-  .fmd <- fit_major_departed_slope("vic2026")
-  cat(sprintf("BF0m major-departed slope ALP %.3f (n=%d) LNP %.3f (n=%d), target excluded
-", .fmd$slope[["ALP"]], .fmd$n[["ALP"]], .fmd$slope[["LNP"]], .fmd$n[["LNP"]]))
-  .fmd$slope
-}, error = function(e) { cat(sprintf("BF0m! major-departed fit FAILED, majors keep slope 1: %s
-", conditionMessage(e))); NULL }) else NULL
+# MAJOR-PARTY SLOPE TIERS: departed member (AUSPOL_MAJOR_DEPARTED, shipped) and every other
+# ALP/LNP cell (AUSPOL_MAJOR_SLOPE). docs/plans/prereg-major-departed-slope-2026-09-18.md,
+# docs/plans/prereg-major-present-slope-2026-09-18.md
+.MAJDEP <- NULL; .MAJPRES <- NULL
+if (identical(Sys.getenv("AUSPOL_MAJOR_DEPARTED", "0"), "1") || identical(Sys.getenv("AUSPOL_MAJOR_SLOPE", "0"), "1")) {
+  .fmd <- tryCatch(fit_major_departed_slope("vic2026"), error = function(e) { cat(sprintf("BF0m! major slope fit FAILED, majors keep slope 1: %s\n", conditionMessage(e))); NULL })
+  if (!is.null(.fmd)) {
+    if (identical(Sys.getenv("AUSPOL_MAJOR_DEPARTED", "0"), "1")) .MAJDEP <- .fmd$slope
+    if (identical(Sys.getenv("AUSPOL_MAJOR_SLOPE", "0"), "1")) .MAJPRES <- .fmd$slope_present
+    cat(sprintf("BF0m major slopes, target excluded: departed ALP %.3f (n=%d) LNP %.3f (n=%d) [%s] | present ALP %.3f (n=%d) LNP %.3f (n=%d) [%s]\n",
+                .fmd$slope[["ALP"]], .fmd$n[["ALP"]], .fmd$slope[["LNP"]], .fmd$n[["LNP"]], if (is.null(.MAJDEP)) "off" else "ON",
+                .fmd$slope_present[["ALP"]], .fmd$n_present[["ALP"]], .fmd$slope_present[["LNP"]], .fmd$n_present[["LNP"]], if (is.null(.MAJPRES)) "off" else "ON"))
+  }
+}
 .tr <- attr(mat22, "transfers"); if (!is.null(.tr)) cat(sprintf("DS2t transfers moved with the person: %d applied%s\n", .tr$applied, if (length(.tr$skipped)) paste0("; SKIPPED ", length(.tr$skipped), ": ", paste(utils::head(.tr$skipped, 5), collapse = ", ")) else ""))
 if (.cond && !is.null(.returns)) {
   if (is.null(.own_prev)) {
@@ -933,13 +939,13 @@ if (!is.null(.fitsl)) {
     pv <- .permit[.permit$party == p, ]
     lut <- stats::setNames(as.logical(pv$permit), pv$seat)
     pm <- unname(lut[seats]); pm[is.na(pm)] <- TRUE
-    return(screened_slopes(p, seats, .returns, pm, same_mp = .MP_SLOPE, major_departed = .MAJDEP,
+    return(screened_slopes(p, seats, .returns, pm, same_mp = .MP_SLOPE, major_departed = .MAJDEP, major_present = .MAJPRES,
                             honour_departed = .honour_departed,
                             same = if (is.null(.fitsl)) formals(screened_slopes)$same else .fitsl$same,
                             new  = if (is.null(.fitsl)) formals(screened_slopes)$new  else .fitsl$new))
   }
   if (.cond && !is.null(.returns))
-    return(conditional_slopes(p, seats, .returns, same_mp = .MP_SLOPE, major_departed = .MAJDEP,
+    return(conditional_slopes(p, seats, .returns, same_mp = .MP_SLOPE, major_departed = .MAJDEP, major_present = .MAJPRES,
                                same = if (is.null(.fitsl)) formals(conditional_slopes)$same else .fitsl$same,
                                new  = if (is.null(.fitsl)) formals(conditional_slopes)$new  else .fitsl$new))
   SLOPE[[p]]

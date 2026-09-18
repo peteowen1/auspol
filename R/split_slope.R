@@ -654,7 +654,8 @@ fit_dispersion_slopes <- function(target_election, corpus = NULL, pairs = NULL,
 #' @param target_election Pair excluded from the fit.
 #' @param corpus,pairs As in [fit_conditional_slopes()].
 #' @param min_n Minimum departed rows per class.
-#' @return list(slope = named numeric (ALP, LNP), n = named integer, rows).
+#' @return list(slope, n) for the departed tier, (slope_present, n_present)
+#'   for every other ALP/LNP cell, and `rows`, the fitted data.
 #' @export
 fit_major_departed_slope <- function(target_election, corpus = NULL, pairs = NULL, min_n = 40L) {
   MAJ <- c("ALP", "LNP")
@@ -693,16 +694,23 @@ fit_major_departed_slope <- function(target_election, corpus = NULL, pairs = NUL
     m[x > 0]
   }), fill = TRUE)
   slope <- c(ALP = 1, LNP = 1); n <- c(ALP = 0L, LNP = 0L)
-  if (!nrow(rows)) return(list(slope = slope, n = n, rows = rows))
+  slope_present <- c(ALP = 1, LNP = 1); n_present <- c(ALP = 0L, LNP = 0L)
+  if (!nrow(rows)) return(list(slope = slope, n = n, slope_present = slope_present, n_present = n_present, rows = rows))
   rows[, dev := x - level_prev]; rows[, yy := actual_now - level_now]
-  for (cl in MAJ) {
-    sub <- rows[party == cl & mp_departed %in% TRUE]
-    n[[cl]] <- nrow(sub)
-    if (nrow(sub) < min_n) next
+  fit1 <- function(sub) {
+    if (nrow(sub) < min_n) return(NA_real_)
     fit <- tryCatch(stats::lm(yy ~ 0 + dev, data = sub), error = function(e) NULL)
-    if (is.null(fit)) next
+    if (is.null(fit)) return(NA_real_)
     cm <- summary(fit)$coefficients
-    if (nrow(cm) && is.finite(cm[1, 1])) slope[[cl]] <- cm[1, 1]
+    if (nrow(cm) && is.finite(cm[1, 1])) cm[1, 1] else NA_real_
   }
-  list(slope = slope, n = n, rows = rows)
+  for (cl in MAJ) {
+    sub <- rows[party == cl & mp_departed %in% TRUE]; n[[cl]] <- nrow(sub)
+    s <- fit1(sub); if (is.finite(s)) slope[[cl]] <- s
+    # THE OTHER TIER: member stayed, or the class never held the seat
+    # (docs/plans/prereg-major-present-slope-2026-09-18.md).
+    subp <- rows[party == cl & !mp_departed %in% TRUE]; n_present[[cl]] <- nrow(subp)
+    sp <- fit1(subp); if (is.finite(sp)) slope_present[[cl]] <- sp
+  }
+  list(slope = slope, n = n, slope_present = slope_present, n_present = n_present, rows = rows)
 }

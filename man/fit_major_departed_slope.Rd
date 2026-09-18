@@ -19,7 +19,8 @@ fit_major_departed_slope(
 \item{min_n}{Minimum departed rows per class.}
 }
 \value{
-list(slope = named numeric (ALP, LNP), n = named integer, rows).
+list(slope, n) for the departed tier, (slope_present, n_present)
+for every other ALP/LNP cell, and \code{rows}, the fitted data.
 }
 \description{
 Leave-target-out over every other pair. For ALP and LNP separately, rows

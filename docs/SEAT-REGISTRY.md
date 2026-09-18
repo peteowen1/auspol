@@ -138,8 +138,13 @@ file is the durable copy.
   it DOWN to 56.6, actual 71.6. Adam Marshall DID re-stand in 2023
   (`candidate_returns()` has `same_mp = TRUE`; the first registry entry
   said he retired, wrong). So base_pred was 5 under and xgb made it 15
-  under; the IND we gave 10.7 got 3.0. **OPEN**, xgb-layer question: what
-  feature drove a 10-point cut on a sitting member in a safe seat (SHAP).
+  under; the IND we gave 10.7 got 3.0. SHAP (as-at nsw2023 model): the cut
+  is the `base_pred` feature itself at a high value (-6.1) plus `dev_prev`
+  (-2.3): the xgb layer has learned that big deviations shrink, i.e. a
+  generic regression-to-mean, not a seat signal. `AUSPOL_MAJOR_SLOPE`
+  (present-tier slope, measuring) moves that into base_pred where the xgb
+  layer can then re-learn a smaller correction. **NOTHING TO FIX** beyond
+  that; the seat swung against the state.
 - **Auburn, Parramatta, Heathcote** — western-Sydney swing to ALP far beyond
   the statewide swing (Auburn ALP 48.8 vs 60.1). Pattern 3 in the 2026-09-18
   dig (NSW landslide); same shape as Higgins/Tangney. **OPEN**, swing model.

@@ -106,6 +106,13 @@ when they do. Majors had no same/new tier at all (slope 1 always). Built:
 `AUSPOL_MAJOR_DEPARTED` = 1. Measured: departed-cell error -0.71 points (SE 0.11), pooled
 log loss 0.2979 -> 0.2951, Parramatta 2.20 -> 1.47. `plans/prereg-major-departed-slope-2026-09-18.md`.
 
+**Major-party present-tier slope, SHIPPED 2026-09-18 evening** (`AUSPOL_MAJOR_SLOPE`
+= 1): every non-departed ALP/LNP cell gets a fitted slope (~0.95 / ~0.89)
+on its deviation from the statewide level. Non-departed cell error -0.049
+(SE 0.013), concentrated in majors predicted under 15 (-0.77) and over 55
+(-0.20); pooled log loss flat within 1 SE. `plans/prereg-major-present-slope-2026-09-18.md`.
+Full rebuild with both tiers launched 18:35 -> ledger v33.
+
 **By-election results as the seat baseline -- OPEN, DATA.** Black sa2026:
 Dighton (ALP) won the 2024 by-election and held with 43.2; our baseline is
 sa2022 (Speirs LNP 50.1) so ALP starts at 34.7. Only two NSW by-elections
