@@ -170,6 +170,10 @@ PUBLISHED_FLAGS <- c(
                                              # retain 70-97% of their vote, so full removal massively under-predicts
                                              # almost everywhere -- kept inert for reuse, not because the question
                                              # is still open. docs/plans/prereg-major-defector-conserve-2026-09-17.md
+  AUSPOL_ASAT_MIN_PAIRS      = "4",          # fit_xgb_primary_asat.R: a target election gets its own point-in-time
+                                             # model only if at least this many earlier pairs exist to train it on;
+                                             # below that it keeps base_pred and the log says so. Added 2026-09-18
+                                             # with the as-at models (see AUSPOL_XGB_PRIMARY_OOF below).
   AUSPOL_XGB_BASE_MARGIN     = "2",          # fit_xgb_primary_v6.R: 2 = base_pred set as the training DMatrix's
                                              # base_margin AND kept as an ordinary feature -- forces every tree to
                                              # boost on the residual to base_pred while still letting the tree use
@@ -392,9 +396,11 @@ PUBLISHED_FLAGS <- c(
   AUSPOL_FLOW_SD             = "0",
   AUSPOL_FALLBACK_SMOOTH     = "0",
   AUSPOL_XGB_PRIMARY         = "1",          # harness-only: 1 = replace every seat's primaries with the challenger's
-                                             # LEAVE-ONE-PAIR-OUT out-of-fold predictions. This is the backtest
-                                             # counterpart of AUSPOL_XGB_PRIMARY_LIVE and is leakage-free by
-                                             # construction; the live flag above is the one that ships.
+                                             # predictions from the file AUSPOL_XGB_PRIMARY_OOF names -- since
+                                             # 2026-09-18 the POINT-IN-TIME ("as at") models, one per election,
+                                             # trained only on earlier elections; before that, leave-one-pair-out.
+                                             # This is the backtest counterpart of AUSPOL_XGB_PRIMARY_LIVE and is
+                                             # leakage-free by construction; the live flag above is the one that ships.
                                              #
                                              # SET TO "1" 2026-09-11, in the same commit that shipped the flows.
                                              # It was "0" while AUSPOL_XGB_PRIMARY_LIVE was "1", which broke this
@@ -502,8 +508,20 @@ PUBLISHED_FLAGS <- c(
                                              # protect a 0.014 number on elections already decided.
                                              # Was OFF from b2c5572 to e8c5eab, when the live path had no Victorian
                                              # candidate data and this would have made the 0-default a false claim.
-  AUSPOL_XGB_PRIMARY_OOF     = "output/xgb-primary-v6-oof-predictions.csv",
-                                             # harness-only: which oof file the line above reads. REPOINTED
+  AUSPOL_XGB_PRIMARY_OOF     = "output/xgb-primary-asat-predictions.csv",
+                                             # harness-only: which predictions file the line above reads.
+                                             # REPOINTED 2026-09-18 to the POINT-IN-TIME models
+                                             # (scripts/fit_xgb_primary_asat.R): one model per election, trained
+                                             # only on pairs whose polling day precedes it, same recipe and
+                                             # base_margin mode as the production model (fit_xgb_primary_v6_final.R,
+                                             # cutoff = now). Pete's call: the AEF-7 ledger is the debugging surface
+                                             # for PRODUCTION, so it must be produced by the production pipeline
+                                             # frozen at an earlier date -- not by a leave-one-out cache that lets
+                                             # fed2022's model learn from fed2025. The leave-one-out file
+                                             # (xgb-primary-v6-oof-predictions.csv) is a diagnostic now, still
+                                             # written by fit_xgb_primary_v6.R, never shipped. Rebuild everything
+                                             # in the non-circular order with scripts/rebuild_forecasts.sh.
+                                             # Previously REPOINTED
                                              # 2026-09-17 from v7's "v7f" arm straight to v6's own output -- v7
                                              # (fit_xgb_primary_v7.R) is BYPASSED for primary-vote shipping as of
                                              # this change, not because v7's own features (jump_pctile fix,

@@ -1,5 +1,76 @@
 # auspol — work queue
 
+## IN PROGRESS 2026-09-18 (session compacted mid-build): the AEF-7 backtests now use the PRODUCTION pipeline, frozen "as at" each election
+
+**Pete's rule, stated 2026-09-18 and now the design**: the AEF-7 ledger is
+the main debugging surface for the production model, so it must be built by
+the production pipeline -- same training recipe, same parameters, same
+`base_margin` mode -- not by a parallel one, or a fix in one never reaches the
+other. Concretely: one XGBoost primary model PER ELECTION, trained only on
+pairs whose polling day is strictly before it (stricter than the old
+leave-one-pair-out cache, which let fed2022's model learn from fed2025), saved
+to disk; forecasts persisted as tables, one row per (election, seat, class)
+with the leading candidate named. Production = the same recipe with cutoff =
+now (`fit_xgb_primary_v6_final.R`, unchanged).
+
+**Built this session (all parse, 1009/1009 tests pass; committed as WIP)**:
+- `R/election_dates.R` -- `election_dates()`, ONE polling-day table (was six
+  copies in the harnesses); `tests/testthat/test-election_dates.R`.
+- `scripts/fit_xgb_primary_asat.R` -- the point-in-time trainer. Reads
+  `output/xgb-primary-v6-features.csv` (the numeric model matrix -- NOT the
+  similarly-named raw `xgb-primary-features-v6.csv`), drops `x_notional_adj`
+  to match production's feature list, `AUSPOL_ASAT_MIN_PAIRS=4`. Writes
+  `output/xgb-primary-asat/<target>.ubj`, `-manifest.csv`, and
+  `output/xgb-primary-asat-predictions.csv` in the OOF file's schema so
+  `xgb_primary_override()` reads it with NO harness change.
+- `scripts/published_flags.R` -- `AUSPOL_XGB_PRIMARY_OOF` now points at the
+  as-at predictions file (the shipped harness default); `AUSPOL_ASAT_MIN_PAIRS`
+  registered. `R/xgb_primary_override.R` default + docstring + staleness deps
+  updated. `scripts/build_model_registry.R` CLASSIFY: `AUSPOL_XGB_BASE_MARGIN`
+  (was UNEXPLAINED) and `AUSPOL_ASAT_MIN_PAIRS` classified.
+- `scripts/build_forecasts_table.R` -- `output/forecasts.csv` (class-level
+  primary forecasts, ~13.7k rows over 23 pairs, AEF-7 subset by `election`)
+  and `output/forecasts-seats.csv` (win probabilities, newest allprobs per pair).
+- `scripts/rebuild_forecasts.sh` -- the ONE command, 8 timed stages in the
+  non-circular order (harnesses at XGB_PRIMARY=0 -> pool -> v6 features ->
+  as-at models -> production model -> harnesses at shipped flags -> pool +
+  forecasts tables -> ledger). Runs BOTH pairs for nsw/qld/sa (the first
+  version ran each harness once and `pool_sharedetail.R` correctly refused).
+  Default 20000 sims (deciding); `AUSPOL_N_SIMS=5000` is exploratory and
+  lowers `AUSPOL_POOL_MIN_SIMS` to match.
+
+**Where the build stood at compaction (16:31)**: stage 1 (all 23 pairs at
+`AUSPOL_XGB_PRIMARY=0`, n=5000, WITH today's three candidate-identity fixes
+`57ebced`) DONE; stage 2 pool DONE (23/23 verified clean); stage 3 v6 features
+DONE (base RMSE 4.1283, LOO 3.7589, n=13739); stage 4 as-at models RUNNING,
+fast (seconds per target; fed2010..wa2021 done, 4 earliest targets correctly
+skipped for <4 prior pairs); stage 5 (production model) queued in the same
+background chain. Logs: the session scratchpad `s2_pool.log`, `s3_v6.log`,
+`s4_asat.log`, `s5_final.log`.
+
+**To resume, in order**:
+1. Confirm stage 4/5 finished: `output/xgb-primary-asat-manifest.csv` exists
+   with 19 modelled targets; read `s4_asat.log`'s `XA4` block (as-at vs base
+   vs leave-one-out per pair -- as-at is EXPECTED to trail LOO on early targets).
+2. Stage 6: the six harnesses at shipped flags (both pairs for nsw/qld/sa),
+   `AUSPOL_N_SIMS=5000` -- this is what `scripts/rebuild_forecasts.sh`'s
+   `run6 1 s6` does; can be run by hand the same way as stage 1 was.
+3. `pool_backtests.R`, `build_forecasts_table.R`, `build_aef7_tcp_actual.R`,
+   `build_aef7_ledger_data.R`; republish the ledger (assemble from
+   `scripts/templates/aef7-ledger.template.html`, artifact URL in the
+   ledger's own git history) with a changelog entry for this change.
+4. Report pooled seat log loss vs the pre-change ledger (0.2627 pooled AEF-7;
+   per-pair fed2022 0.2817 / nsw2023 0.2274 / vic2022 0.2353 -- those were
+   leave-one-out xgb; expect the honest as-at number to be somewhat worse, and
+   SAY SO -- it is the price of not seeing the future, not a regression).
+5. Then the deciding run: `bash scripts/rebuild_forecasts.sh` (20000 sims,
+   ~1h; check free RAM first). Commit models/manifest? -- `output/` is
+   gitignored except listed exceptions; decide with Pete whether the 19
+   `.ubj` files and the two forecasts tables become tracked exceptions or a
+   GitHub Release (the repo's release-as-data-bus pattern).
+6. `docs/DECISIONS.md` row + this entry closed; `docs/PETE-ASKED-FOR.md`
+   row for "AEF-7 must be production" (asked 2026-09-18) -> SHIPPED once 5 is done.
+
 ## OPEN, 2026-09-18: intra-Coalition (Liberal vs National) seats have no TCP winner class
 
 `classify_party()` buckets Liberal and National as one "LNP" class everywhere

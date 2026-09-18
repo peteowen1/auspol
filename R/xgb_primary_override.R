@@ -1,14 +1,16 @@
 #' Substitute the XGBoost challenger's primary predictions into a shares matrix
 #'
-#' Exploratory only -- not part of the published model. Loads the
-#' leave-one-pair-out out-of-fold predictions written by
-#' `scripts/fit_xgb_primary_v6.R` (`output/xgb-primary-v6-oof-predictions.csv`,
-#' the model `AUSPOL_XGB_PRIMARY_LIVE` ships; override with
-#' `AUSPOL_XGB_PRIMARY_OOF`)
+#' The backtest counterpart of [xgb_primary_predict_live()]. Loads a
+#' predictions file -- since 2026-09-18 the POINT-IN-TIME models' output
+#' (`output/xgb-primary-asat-predictions.csv`, `scripts/fit_xgb_primary_asat.R`:
+#' one model per election, trained only on elections whose polling day
+#' precedes it, same recipe and base_margin mode as the production model) --
 #' and overwrites every (seat, party) cell of `shares` that file covers for
-#' `pair_label`, renormalising each seat's row back to 100. Cells the xgb file
+#' `pair_label`, renormalising each seat's row back to 100. Cells the file
 #' doesn't cover (should not happen for a class the shares matrix carries;
-#' logged if it does) keep the harness's own value.
+#' logged if it does) keep the harness's own value. `AUSPOL_XGB_PRIMARY_OOF`
+#' names a different file; the leave-one-pair-out cache
+#' `scripts/fit_xgb_primary_v6.R` still writes is the diagnostic alternative.
 #'
 #' @param shares Numeric matrix, seats x parties, summing to ~100 per row.
 #' @param pair_label The target election label, matching the `pair` column
@@ -25,7 +27,7 @@ xgb_primary_override <- function(shares, pair_label, enabled = NULL) {
   # the live forecast ran v6 -- the two numbers were never about the same
   # model. Both files carry the same 22 pairs and 13,314 (seat, party) rows;
   # v6's is a column superset. AUSPOL_XGB_PRIMARY_OOF names a different file.
-  f <- Sys.getenv("AUSPOL_XGB_PRIMARY_OOF", "output/xgb-primary-v6-oof-predictions.csv")
+  f <- Sys.getenv("AUSPOL_XGB_PRIMARY_OOF", "output/xgb-primary-asat-predictions.csv")
   if (!file.exists(f)) {
     cat(sprintf("XG1! %s missing; AUSPOL_XGB_PRIMARY ignored\n", f))
     return(shares)
@@ -42,7 +44,8 @@ xgb_primary_override <- function(shares, pair_label, enabled = NULL) {
   # code changes don't touch what feeds this model), so this warns rather
   # than blocks, but it warns EVERY TIME the cache is older than a file
   # that could plausibly have changed its content.
-  .oof_deps <- c("R/candidate_returns.R", "R/dev_slope.R", "scripts/fit_xgb_primary_v6.R", "output/candidacies.csv")
+  .oof_deps <- c("R/candidate_returns.R", "R/dev_slope.R", "R/salience_screen.R",
+                 "scripts/fit_xgb_primary_v6.R", "scripts/fit_xgb_primary_asat.R", "output/candidacies.csv")
   .oof_deps <- .oof_deps[file.exists(.oof_deps)]
   if (length(.oof_deps)) {
     .stale <- .oof_deps[file.mtime(.oof_deps) > file.mtime(f)]
