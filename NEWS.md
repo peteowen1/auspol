@@ -1,3 +1,36 @@
+# auspol 0.4.44
+
+**The AEF-7 ledger is now built by the production pipeline, frozen "as at"
+each election (Pete's rule, 2026-09-18), and three fixes found on it shipped.**
+
+- `scripts/rebuild_forecasts.sh`: one command, eight stages, 23 minutes at
+  20,000 sims. `scripts/fit_xgb_primary_asat.R` trains one primary xgb model
+  per election on earlier elections only (`election_dates()`, new export);
+  `scripts/fit_xgb_flows_asat.R` does the same for the flow model
+  (`AUSPOL_FLOW_ASAT`). Forecasts persist to `output/forecasts.csv` and
+  `output/forecasts-seats.csv`. The leave-one-out caches both models
+  replaced trained on later elections.
+- `scripts/ledger_inputs.R`: every ledger column for a pair comes from the
+  harness run `pool_backtests.R` scored; the pool refuses base_pred-only or
+  in-flight win files. The first as-at ledger had mixed three vintages,
+  and its weighted primary RMSE card had compared AEF against our pre-xgb
+  baseline.
+- `AUSPOL_MAJOR_DEPARTED` (shipped): an ALP/LNP class whose sitting member
+  did not re-stand gets a fitted leave-target-out slope (~0.60/0.65) on its
+  deviation from the statewide level; majors had no tier at all. Departed
+  cells were over-predicted by 2.8 points (n=361); error -0.71 (SE 0.11).
+  `candidate_returns()` gains `mp_departed`; `fit_major_departed_slope()`.
+- `AUSPOL_MAJOR_SLOPE` (shipped): every other ALP/LNP cell gets a fitted
+  slope (~0.95/0.89); majors predicted under 15 were landing 3.4 higher.
+- `AUSPOL_DEPARTED_ORIGIN` (built, OFF): a departed defector's vote routed
+  to the party they came from; Morwell 1.86 -> 1.03 but 15 cases missed the
+  criterion by 0.06 SE.
+- Three candidate-identity fixes from earlier the same day: leader-level
+  same/new slopes (`leader_same`), `salience_screen(min_jump = 0.03)`,
+  person-level `prev_party` for OTH_RIGHT.
+- Ledger v32 -> v34: pooled seat log loss 0.2735 -> 0.2689 (AEF 0.2851);
+  `docs/SEAT-REGISTRY.md` and `docs/PIPELINE.md` are new.
+
 # auspol 0.4.43
 
 **base_margin shipped, overriding the 0.4.42 refusal above -- FAILS the
