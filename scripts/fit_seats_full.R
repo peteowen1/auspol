@@ -776,6 +776,16 @@ cat(sprintf("CAL  MP tier: %s | defector discount: %s | minor-defector discount:
 # THE VOTE MOVES WITH THE PERSON: .own_x() below substitutes a returning
 # candidate's own prior vote into their new class; this takes it out of the
 # class it came from. No-op until vic2026 nominations exist.
+# BY-ELECTION AS THE SEAT BASELINE (AUSPOL_BYELECTION_PRIOR=1): a by-election between the two
+# general elections where both majors stood replaces the seat's prior row (R/byelection_prior.R,
+# external/reference/byelections/byelection-results.csv). docs/plans/prereg-byelection-prior-2026-09-18.md
+if (Sys.getenv("AUSPOL_BYELECTION_PRIOR", "0") %in% c("1", "blend")) {
+  mat22 <- tryCatch(byelection_prior(mat22, "vic2022", "vic2026", weight = if (identical(Sys.getenv("AUSPOL_BYELECTION_PRIOR"), "blend")) 0.5 else 1), error = function(e) { cat(sprintf("BF0b! by-election prior FAILED, prior kept: %s\n", conditionMessage(e))); mat22 })
+  .by <- attr(mat22, "byelection")
+  if (!is.null(.by)) cat(sprintf("BF0b by-election prior: %d seat(s) replaced%s%s\n", length(.by$applied),
+                                if (length(.by$applied)) paste0(" (", paste(.by$applied, collapse = ", "), ")") else "",
+                                if (length(.by$skipped)) paste0("; SKIPPED ", paste(.by$skipped, collapse = ", ")) else ""))
+}
 mat22 <- remove_transferred_votes(mat22, .own_prev)
 mat22 <- (function(m) {
   # A DEPARTED DEFECTOR'S VOTE GOES HOME (AUSPOL_DEPARTED_ORIGIN: "1" = leave-

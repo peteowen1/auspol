@@ -138,6 +138,20 @@ are on disk (`build_nsw_byelection_prevpcv.R`, personal-vote fallback).
 hands at a 2025 by-election (Mulgrave, Warrandyte, Narracan, Werribee also
 had by-elections); `fit_seats_full.R` does not use any of them as a prior.
 
+**Pete's call, 2026-09-18 23:00: "do all three then one combined rerun".**
+1. How-to-vote cards: SHIPPED (`AUSPOL_HTV_FLOW`, `R/htv_flow.R`,
+   `external/reference/htv/`). ALP-v-GRN real-pairing 2CP error 6.19 ->
+   5.08 (SE 0.32). vic2026 needs its row the day the Liberal cards are out.
+2. By-elections: `external/reference/byelections/byelection-results.csv`
+   (26 by-elections, candidate level, Wikipedia), `R/byelection_prior.R`,
+   `AUSPOL_BYELECTION_PRIOR` -- MEASURING, `plans/prereg-byelection-prior-2026-09-18.md`.
+   Earlier windows (fed2007-2019, nsw2015-2019, vic2010-2018, wa) not fetched yet.
+3. Per-state swing: ALREADY IN. `AUSPOL_STATE_DEV` = 1 since 2026-09-15
+   applies a leave-one-pair-out fitted share (ALP ~0.2-0.4, LNP ~-0.15-
+   -0.28) of each state's poll deviation to federal seats. The 1-1.5 point
+   residual state bias measured tonight is what remains AFTER it; nothing
+   more to build without a different input.
+
 **Remaining**:
 1. The flow pattern (ALP v GRN and
    LNP v teal 2CPs over-favour the major by ~10 points: Footscray, Richmond,

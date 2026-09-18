@@ -491,6 +491,16 @@ for (K in PAIRS) {
                       collapse = ", ")) else ""))
     }
   }
+  # BY-ELECTION AS THE SEAT BASELINE (AUSPOL_BYELECTION_PRIOR=1): a by-election between the two
+  # general elections where both majors stood replaces the seat's prior row (R/byelection_prior.R,
+  # external/reference/byelections/byelection-results.csv). docs/plans/prereg-byelection-prior-2026-09-18.md
+  if (Sys.getenv("AUSPOL_BYELECTION_PRIOR", "0") %in% c("1", "blend")) {
+    mat <- tryCatch(byelection_prior(mat, el_from, el_to, weight = if (identical(Sys.getenv("AUSPOL_BYELECTION_PRIOR"), "blend")) 0.5 else 1), error = function(e) { cat(sprintf("BF0b! by-election prior FAILED, prior kept: %s\n", conditionMessage(e))); mat })
+    .by <- attr(mat, "byelection")
+    if (!is.null(.by)) cat(sprintf("BF0b by-election prior: %d seat(s) replaced%s%s\n", length(.by$applied),
+                                  if (length(.by$applied)) paste0(" (", paste(.by$applied, collapse = ", "), ")") else "",
+                                  if (length(.by$skipped)) paste0("; SKIPPED ", paste(.by$skipped, collapse = ", ")) else ""))
+  }
   mat <- remove_transferred_votes(mat, .own_prev)
   mat <- (function(m) {
     # A DEPARTED DEFECTOR'S VOTE GOES HOME (AUSPOL_DEPARTED_ORIGIN: "1" = leave-
