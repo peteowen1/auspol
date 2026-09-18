@@ -1,3 +1,60 @@
+# auspol 0.4.44
+
+**The AEF-7 ledger is now built by the production pipeline, frozen "as at"
+each election (Pete's rule, 2026-09-18), and three fixes found on it shipped.**
+
+- `scripts/rebuild_forecasts.sh`: one command, eight stages, 23 minutes at
+  20,000 sims. `scripts/fit_xgb_primary_asat.R` trains one primary xgb model
+  per election on earlier elections only (`election_dates()`, new export);
+  `scripts/fit_xgb_flows_asat.R` does the same for the flow model
+  (`AUSPOL_FLOW_ASAT`). Forecasts persist to `output/forecasts.csv` and
+  `output/forecasts-seats.csv`. The leave-one-out caches both models
+  replaced trained on later elections.
+- `scripts/ledger_inputs.R`: every ledger column for a pair comes from the
+  harness run `pool_backtests.R` scored; the pool refuses base_pred-only or
+  in-flight win files. The first as-at ledger had mixed three vintages,
+  and its weighted primary RMSE card had compared AEF against our pre-xgb
+  baseline.
+- `AUSPOL_MAJOR_DEPARTED` (shipped): an ALP/LNP class whose sitting member
+  did not re-stand gets a fitted leave-target-out slope (~0.60/0.65) on its
+  deviation from the statewide level; majors had no tier at all. Departed
+  cells were over-predicted by 2.8 points (n=361); error -0.71 (SE 0.11).
+  `candidate_returns()` gains `mp_departed`; `fit_major_departed_slope()`.
+- `AUSPOL_MAJOR_SLOPE` (shipped): every other ALP/LNP cell gets a fitted
+  slope (~0.95/0.89); majors predicted under 15 were landing 3.4 higher.
+- `AUSPOL_DEPARTED_ORIGIN` (built, OFF): a departed defector's vote routed
+  to the party they came from; Morwell 1.86 -> 1.03 but 15 cases missed the
+  criterion by 0.06 SE.
+- Three candidate-identity fixes from earlier the same day: leader-level
+  same/new slopes (`leader_same`), `salience_screen(min_jump = 0.03)`,
+  person-level `prev_party` for OTH_RIGHT.
+- Ledger v32 -> v34: pooled seat log loss 0.2735 -> 0.2689 (AEF 0.2851);
+  `docs/SEAT-REGISTRY.md` and `docs/PIPELINE.md` are new.
+
+# auspol 0.4.43
+
+**base_margin shipped, overriding the 0.4.42 refusal above -- FAILS the
+pre-registered all-23-pair seat log loss bar (0.2841 -> 0.2880, worse) but
+ships anyway on Pete's explicit call to decide by AEF7 pooled primary RMSE
+instead (a policy change, not a re-measurement): 3.6082 vs the previous
+model's 3.6715, and 3.7603 vs 3.7914 pooled across all 23 pairs. The ALP
+regression the 0.4.42 refusal found (qld2020, wa2001, wa2013) is real and
+unresolved by this decision -- it is accepted, not fixed.**
+
+- `AUSPOL_XGB_BASE_MARGIN` default flipped from `"0"` to `"2"` in both
+  `fit_xgb_primary_v6.R` and `fit_xgb_primary_v6_final.R`.
+  `AUSPOL_XGB_PRIMARY_OOF` repointed at v6's own output; v7
+  (`fit_xgb_primary_v7.R`) is bypassed for primary-vote shipping.
+- Fixing the live-serving trainer to set `base_margin` surfaced a second,
+  unrelated, pre-existing gap: `seat_outperf` (shipped into the backtest
+  2026-09-16) had never reached live serving at all. Fixed -- live today
+  for 20 vic2026 seats with a retiring major-party incumbent. See
+  `docs/reviews/seat-outperf-missing-from-live-model-2026-09-17.md`.
+- Added `AUSPOL_WA_PAIR`/`AUSPOL_VIC_PAIR` per-pair restriction flags
+  (the last two of six backtest harnesses without one) and
+  `scripts/compare_arm_outputs.R`, a zero-movement-bucket-first comparison
+  tool. See `docs/plans/repo-speedup-2026-09-17.md`.
+
 # auspol 0.4.42
 
 **base_margin residual-modeling experiment: refused. No model change. A real AEF-gap finding kept.**

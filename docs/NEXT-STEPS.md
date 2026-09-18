@@ -1,5 +1,214 @@
 # auspol — work queue
 
+## IN PROGRESS 2026-09-18 (exploratory pass done, deciding run next): the AEF-7 backtests now use the PRODUCTION pipeline, frozen "as at" each election
+
+**Pete's rule, stated 2026-09-18 and now the design**: the AEF-7 ledger is
+the main debugging surface for the production model, so it must be built by
+the production pipeline -- same training recipe, same parameters, same
+`base_margin` mode -- not by a parallel one, or a fix in one never reaches the
+other. Concretely: one XGBoost primary model PER ELECTION, trained only on
+pairs whose polling day is strictly before it (stricter than the old
+leave-one-pair-out cache, which let fed2022's model learn from fed2025), saved
+to disk; forecasts persisted as tables, one row per (election, seat, class)
+with the leading candidate named. Production = the same recipe with cutoff =
+now (`fit_xgb_primary_v6_final.R`, unchanged).
+
+**Built this session (all parse, 1009/1009 tests pass; committed as WIP)**:
+- `R/election_dates.R` -- `election_dates()`, ONE polling-day table (was six
+  copies in the harnesses); `tests/testthat/test-election_dates.R`.
+- `scripts/fit_xgb_primary_asat.R` -- the point-in-time trainer. Reads
+  `output/xgb-primary-v6-features.csv` (the numeric model matrix -- NOT the
+  similarly-named raw `xgb-primary-features-v6.csv`), drops `x_notional_adj`
+  to match production's feature list, `AUSPOL_ASAT_MIN_PAIRS=4`. Writes
+  `output/xgb-primary-asat/<target>.ubj`, `-manifest.csv`, and
+  `output/xgb-primary-asat-predictions.csv` in the OOF file's schema so
+  `xgb_primary_override()` reads it with NO harness change.
+- `scripts/published_flags.R` -- `AUSPOL_XGB_PRIMARY_OOF` now points at the
+  as-at predictions file (the shipped harness default); `AUSPOL_ASAT_MIN_PAIRS`
+  registered. `R/xgb_primary_override.R` default + docstring + staleness deps
+  updated. `scripts/build_model_registry.R` CLASSIFY: `AUSPOL_XGB_BASE_MARGIN`
+  (was UNEXPLAINED) and `AUSPOL_ASAT_MIN_PAIRS` classified.
+- `scripts/build_forecasts_table.R` -- `output/forecasts.csv` (class-level
+  primary forecasts, ~13.7k rows over 23 pairs, AEF-7 subset by `election`)
+  and `output/forecasts-seats.csv` (win probabilities, newest allprobs per pair).
+- `scripts/rebuild_forecasts.sh` -- the ONE command, 8 timed stages in the
+  non-circular order (harnesses at XGB_PRIMARY=0 -> pool -> v6 features ->
+  as-at models -> production model -> harnesses at shipped flags -> pool +
+  forecasts tables -> ledger). Runs BOTH pairs for nsw/qld/sa (the first
+  version ran each harness once and `pool_sharedetail.R` correctly refused).
+  Default 20000 sims (deciding); `AUSPOL_N_SIMS=5000` is exploratory and
+  lowers `AUSPOL_POOL_MIN_SIMS` to match.
+
+**Exploratory run (5,000 sims) COMPLETE 2026-09-18 ~17:00; ledger v31
+published from it.** Stages 4-8 all ran; two defects found and fixed on the
+way: (a) `build_aef_comparison.R` was never a stage of the driver, so the
+first ledger rebuild read the stale 08:44 comparison file and printed a log
+loss identical to the run before (now stage 8's first step); (b) it picked
+the newest `backtest-sa-` file by NAME, so wave B's sa2022 run hid sa2026 and
+the ledger fell to 613 seats -- now selects by the file's `pair` column like
+`pool_backtests.R`. Results, all 660 AEF-7 seats (lower is better):
+
+| metric | old ledger (leave-one-out, 20k sims) | as-at (5k sims) | AEF |
+|---|---|---|---|
+| seat log loss | 0.2627 | 0.2696 | 0.2851 |
+| primary RMSE weighted by actual share, 4,489 candidate rows | 4.67 | 4.80 | -- |
+| primary wRMSE, ledger definition | 5.301 | 5.277 | 5.424 |
+
+Per pair log loss old -> as-at: fed2022 0.2817->0.2783, fed2025 0.2406->0.2403,
+nsw2023 0.2274->0.2325, qld2024 0.3259->0.3422, sa2026 0.2942->0.3018,
+vic2022 0.2353->0.2543, wa2025 0.2317->0.2559. The old number saw the future;
+the as-at one is the honest one. Two confounds remain until the 20k run: sim
+count, and `base_pred` itself changed (three fixes in `57ebced`).
+`docs/PIPELINE.md` (new) is the stage map Pete asked for.
+
+**Deciding run DONE 2026-09-18 17:12 (23 min at 20,000 sims); ledger v32
+published from it.** Pooled seat log loss 0.2735 vs AEF 0.2851 (660 seats);
+weighted primary RMSE 4.79 vs AEF 5.42. Found and fixed on the way: the
+ledger was mixing THREE vintages on one page (`scripts/ledger_inputs.R` is
+now the one rule -- every column from the harness run `pool_backtests.R`
+scored; the pool refuses stage-1 xgb-off files). The weighted-RMSE card had
+been comparing AEF against our PRE-xgb baseline (5.28) and calling it ours.
+
+**Worst-seat pass on v32 (Pete's request)**: `docs/SEAT-REGISTRY.md` (new)
+holds every seat's verdict so nothing gets re-dug. The Morwell rule (a
+departed defector's vote returns to the party they came from) was built,
+wired into all seven scripts and measured base_pred-only on 15 cases: 8 of
+15 better, Morwell 1.86 -> 1.03, pooled log loss unchanged-to-better, but
+the pre-registered primary criterion missed by 0.06 SE. **Switch
+`AUSPOL_DEPARTED_ORIGIN` is OFF**; re-decide when the corpus grows.
+`plans/prereg-departed-origin-return-2026-09-18.md`.
+
+**Flow pattern resolved to a DATA item, 2026-09-18 evening.** With our own
+flow tables run on the ACTUAL primaries, Footscray/Richmond/Brunswick/
+Pascoe Vale still give ALP 6-8 points too much, and South Brisbane 6 too
+little. One cell: Liberal/LNP preferences with ALP and GRN both alive.
+Measured from the transfer files: vic2018 58% to ALP, vic2022 35% (Liberal
+cards put Greens above Labor), qld2020 36%, qld2024 73% (Greens last),
+federal 59-73%. The card order is public before polling day and the model
+has no input for it. **OPEN: an HTV-order table** (election, party, seat or
+"all", ALP-above-GRN yes/no) at `external/reference/htv/`, and a flow row
+for that cell conditioned on it. For vic2026 this is worth ~8 points of 2CP
+in every inner-Melbourne ALP v GRN seat the moment the Liberal cards are
+published. Kooyong and Cottesloe are NOT flow (checked): teal primaries.
+
+**Ledger v33 published from the full rebuild with both tiers (18:55): seat
+log loss 0.2735 -> 0.2715 (AEF 0.2851), winner-primary RMSE 5.94 -> 5.52.**
+
+**Flow models now as-at, SHIPPED 2026-09-18 evening** (`AUSPOL_FLOW_ASAT` = 1,
+`scripts/fit_xgb_flows_asat.R`, stage 4b of the driver, 21 models; resumable
+and skips models already current). Ledger v34 (19:25) carries it: seat log loss 0.2715 -> 0.2689, 5 of 7
+pairs better.
+
+**Evening total, 2026-09-18, all on the production pipeline**: v32 0.2735
+-> v34 0.2689 (AEF 0.2851); weighted primary RMSE 4.79 -> 4.77 (AEF 5.42);
+winner-primary RMSE 5.94 -> 5.52. Shipped: AUSPOL_MAJOR_DEPARTED,
+AUSPOL_MAJOR_SLOPE, AUSPOL_FLOW_ASAT, ledger_inputs.R vintage rule.
+Measured and left off: AUSPOL_DEPARTED_ORIGIN. Open data items: Liberal
+how-to-vote order for ALP-v-GRN seats; by-election results as the seat
+baseline (live: Prahran); federal per-state swing input (ceiling ~1-1.5
+points per pair, measured).
+
+**Was: the xgb flow models are leave-one-election-out, not as-at**
+(`xgb-flows-v1-loo-<election>.model` trains on later elections). Same leak
+shape as the primary cache replaced today. OPEN: `fit_xgb_flows_asat.R`
+mirroring `fit_xgb_primary_asat.R`, as a stage of `rebuild_forecasts.sh`.
+
+**Major-party retirement discount, found and SHIPPED 2026-09-18 evening.**
+Across all 23 pairs, base_pred over-predicts an ALP/LNP class by 2.8
+points (n=361, SE 0.35) when its sitting member does not re-stand, +0.6
+when they do. Majors had no same/new tier at all (slope 1 always). Built:
+`mp_departed` in `candidate_returns()`, `fit_major_departed_slope()`
+(leave-target-out; ALP ~0.60, LNP ~0.65, stable across targets),
+`conditional_slopes(major_departed=)`, wired in all seven scripts behind
+`AUSPOL_MAJOR_DEPARTED` = 1. Measured: departed-cell error -0.71 points (SE 0.11), pooled
+log loss 0.2979 -> 0.2951, Parramatta 2.20 -> 1.47. `plans/prereg-major-departed-slope-2026-09-18.md`.
+
+**Major-party present-tier slope, SHIPPED 2026-09-18 evening** (`AUSPOL_MAJOR_SLOPE`
+= 1): every non-departed ALP/LNP cell gets a fitted slope (~0.95 / ~0.89)
+on its deviation from the statewide level. Non-departed cell error -0.049
+(SE 0.013), concentrated in majors predicted under 15 (-0.77) and over 55
+(-0.20); pooled log loss flat within 1 SE. `plans/prereg-major-present-slope-2026-09-18.md`.
+Full rebuild with both tiers launched 18:35 -> ledger v33.
+
+**By-election results as the seat baseline -- OPEN, DATA.** Black sa2026:
+Dighton (ALP) won the 2024 by-election and held with 43.2; our baseline is
+sa2022 (Speirs LNP 50.1) so ALP starts at 34.7. Only two NSW by-elections
+are on disk (`build_nsw_byelection_prevpcv.R`, personal-vote fallback).
+**Live relevance**: vic2026's baseline is vic2022, and Prahran changed
+hands at a 2025 by-election (Mulgrave, Warrandyte, Narracan, Werribee also
+had by-elections); `fit_seats_full.R` does not use any of them as a prior.
+
+**Remaining**:
+1. The flow pattern (ALP v GRN and
+   LNP v teal 2CPs over-favour the major by ~10 points: Footscray, Richmond,
+   Brunswick, Kooyong, Cottesloe).
+2. Decide with Pete: the 19 `.ubj` files + `forecasts.csv`/`forecasts-seats.csv`
+   as tracked exceptions in `output/` or a GitHub Release.
+3. `docs/DECISIONS.md` row; `docs/PETE-ASKED-FOR.md` "AEF-7 must be
+   production" -> SHIPPED after 1. Review gate before any PR.
+
+## OPEN, 2026-09-18: intra-Coalition (Liberal vs National) seats have no TCP winner class
+
+`classify_party()` buckets Liberal and National as one "LNP" class everywhere
+in the pipeline, so a seat where BOTH stand (Port Macquarie nsw2023, Roe
+wa2025 -- 2 of 660 in the AEF7 backtest corpus) collapses to "LNP vs LNP",
+with no second class to score a TCP winner against. Checked AEF's own cached
+data for Port Macquarie: they have the identical limitation (`tcp: {"LNP":
+39.2}`, one entry, not two) -- not a gap unique to us. Zero Victorian seats
+in the current (pre-nomination) 2026 candidate list have both a Liberal and
+a National candidate, so this is not live-forecast-blocking today; re-check
+closer to the nomination deadline. Pete's call: flag and leave for now.
+Cheap partial fix available whenever it's worth doing -- show the real raw
+party labels (LIB/NAT) instead of the collapsed class in ledger/verification
+output for just these seats; the harder fix (the seat SIMULATION predicting
+which of the two wins) needs `classify_party()` and the seat-contest model
+to both know two Coalition candidates can contest one seat, which they
+currently don't anywhere in the pipeline.
+
+## RESOLVED 2026-09-18: AUSPOL_MINOR_DEFECT_BASE_PRED shipped, revised to "no discount for sitting members"
+
+Follow-up to the two-rate `minor_discount` ship (`0a834e0`). The initial
+retest of `AUSPOL_MINOR_DEFECT_BASE_PRED=1` (fitted sitting-member rate,
+0.71 for nsw2023) showed Murray/Orange/Barwon with EXACTLY 0.000000 delta
+despite the discount being correctly computed and logged -- traced to the
+published default `AUSPOL_XGB_PRIMARY=1`: the XGB override layer runs
+after `dev_slope()` and replaces `shares` entirely, so ANY base_pred-flag
+test under default settings is measuring nothing. Retesting with
+`AUSPOL_XGB_PRIMARY=0` (this repo's own established method for isolating
+base_pred, per the 2026-09-16 "4-step non-circular retrain" note) confirmed
+the wiring works -- but the fitted sitting-member rate made things WORSE:
+Orange moved from an undiscounted 52.44 (already near actual 53.08) to a
+discounted 44.96, moving AWAY from truth. `discount_mp`'s leave-target-out
+fit for nsw2023 draws on only 2 other sitting cases (Mirani 0.79, Kennedy
+0.63), underestimating what Murray/Orange/Barwon (108-136% retention)
+actually needed.
+
+**Fixed by removing the fitted sitting-member rate entirely.**
+Leave-one-out cross-validated against all 5 sitting-member corpus cases
+(Barwon 1.36, Murray 1.30, Orange 1.08, Mirani 0.79, Kennedy 0.63):
+predicting flat 1.0 (no discount) gives HALF the squared error (0.405) of
+predicting each case from the other four's median (0.782) -- n=5 is too
+thin to fit a rate below 1 usefully, and the median/mean both sit almost
+exactly on "keep it all" anyway. `personal_prior_vote()` now applies NO
+discount to a confirmed sitting-member switcher; the fitted rate
+(`minor_discount`) survives only as the fallback for unknown sitting
+status. The 13-case non-sitting rate (median 0.276) is unaffected --
+well-powered, no such problem.
+
+**Shipped**, `AUSPOL_MINOR_DEFECT_BASE_PRED = "1"` in `published_flags.R`:
+pooled RMSE across the 14 affected pairs moved +0.0014 (4.0554 -> 4.0568,
+n=8910) -- negligible, a much better do-no-harm result than the original
+refusal's real cost (8.8813 -> 11.4315). Murray/Orange/Barwon move from
+~14-18 to 52.44/39.78/37.25 (actual 53.08/53.31/45.83) -- large, correctly
+directed. **Honest trade-off, not hidden**: Mirani and Kennedy (the other
+2 of 5 sitting cases, both of whom actually lost vote) also revert to no
+discount, undoing 2026-09-16's Mirani-specific improvement. Accepted
+because the aggregate evidence favours one rule over cherry-picking a rate
+per seat -- the same logic already governing every other shrinkage
+decision in this repo.
+
+Full trace: `docs/reviews/minor-defector-two-rate-2026-09-17.md`.
+
 ## FIXED, 2026-09-17: a minor-to-major party switcher could erase a retiring
 ## major incumbent's entire seat base
 

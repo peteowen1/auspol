@@ -1,0 +1,744 @@
+<!--
+  AEF-7 Seat Ledger -- Pete's main day-to-day debugging tool, comparing our
+  forecast against AE Forecasts seat by seat across the 7 elections we have
+  an external benchmark for.
+
+  TO REFRESH: run scripts/build_aef_comparison.R (needs fresh full-sim
+  backtests for fed2022, fed2025, nsw2023, qld2024, sa2026, vic2022, wa2025 --
+  see that script's own header), then scripts/build_aef7_tcp_actual.R (TCP
+  scored against the pairing that actually happened, all 660 seats -- added
+  2026-09-18), then scripts/build_aef7_ledger_data.R, which writes
+  output/aef7-ledger-data.json AND output/aef7-ledger-summary.json.
+  Substitute the first for __SEATS_JSON__ and the second for __SUMMARY_JSON__
+  below, and publish via the Artifact tool with `url` set to the existing
+  artifact so it updates in place (this preserves the shared "notes" database
+  untouched -- it lives separately from the page, keyed by pair__seat, and
+  republishing the page never touches it).
+
+  Committed 2026-09-17 after the page had drifted out of sync with a shipped
+  model change and the ORIGINAL assembly script turned out to only ever have
+  existed in a since-lost scratchpad file. Never let that happen again: this
+  template plus scripts/build_aef7_ledger_data.R plus the two committed
+  reference CSVs (output/aef7-seat-groups.csv,
+  output/aef7-final-two-and-tcp-reference.csv -- see .gitignore for why
+  those two are tracked despite output/ being generally ignored) are
+  everything needed to rebuild this page from a clean checkout.
+-->
+<title>AEF-7 Seat Ledger</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:ital,wght@0,400;0,500;0,600;0,700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+  :root{
+    --ground:#f4f6f9; --surface:#ffffff; --surface-2:#eef2f7;
+    --ink:#131820; --ink-2:#4a5566; --ink-3:#77839a;
+    --line:#dde3ec; --line-2:#c6d0de;
+    --accent:#1b6ac9; --accent-soft:#e3edfa;
+    --good:#157f4a; --bad:#c0392b; --warn:#b06a00;
+    --alp:#e0393e; --lnp:#1f4fa0; --grn:#19a05a; --onp:#f26522;
+    --ind:#6b5ca5; --othr:#8d6e3a; --oth:#7a8699;
+    --shadow:0 1px 2px rgba(19,24,32,.06), 0 4px 16px rgba(19,24,32,.05);
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --ground:#0a0e14; --surface:#10151c; --surface-2:#161d27;
+      --ink:#e6ebf3; --ink-2:#a3aec0; --ink-3:#77839a;
+      --line:#222c3a; --line-2:#31405340;
+      --accent:#5ba3f0; --accent-soft:#16283f;
+      --good:#3fbd7c; --bad:#f0705f; --warn:#d99a2b;
+      --alp:#f2646a; --lnp:#5b8ede; --grn:#3fc07a; --onp:#ff8a4d;
+      --ind:#9a8ad6; --othr:#bb9560; --oth:#94a1b5;
+      --shadow:0 1px 2px rgba(0,0,0,.4), 0 4px 16px rgba(0,0,0,.3);
+    }
+  }
+  :root[data-theme="dark"]{
+    --ground:#0a0e14; --surface:#10151c; --surface-2:#161d27;
+    --ink:#e6ebf3; --ink-2:#a3aec0; --ink-3:#77839a;
+    --line:#222c3a; --line-2:#314053;
+    --accent:#5ba3f0; --accent-soft:#16283f;
+    --good:#3fbd7c; --bad:#f0705f; --warn:#d99a2b;
+    --alp:#f2646a; --lnp:#5b8ede; --grn:#3fc07a; --onp:#ff8a4d;
+    --ind:#9a8ad6; --othr:#bb9560; --oth:#94a1b5;
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 4px 16px rgba(0,0,0,.3);
+  }
+  *{box-sizing:border-box}
+  body{
+    background:var(--ground); color:var(--ink);
+    font-family:"Public Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+    font-size:14px; line-height:1.45; margin:0;
+  }
+  .wrap{max-width:1500px; margin:0 auto; padding-inline:18px; padding-block:22px 48px}
+
+  header.top{display:flex; flex-wrap:wrap; align-items:baseline; gap:10px 16px; margin-bottom:4px}
+  h1{font-size:22px; font-weight:700; letter-spacing:-.015em; margin:0; text-wrap:balance}
+  .sub{color:var(--ink-2); font-size:13px; max-width:66ch; margin:2px 0 18px}
+  .sub code{font-family:"IBM Plex Mono",ui-monospace,monospace; font-size:12px; background:var(--surface-2); padding:1px 5px; border-radius:3px}
+  .prov{border-left:2px solid var(--accent); padding-left:10px; margin:-10px 0 18px}
+  details.provlog{margin:0 0 14px}
+  details.provlog summary{cursor:pointer; list-style:none; font-size:12.5px; font-weight:600; color:var(--ink-2);
+    display:flex; align-items:center; gap:6px; padding:6px 0; user-select:none}
+  details.provlog summary::-webkit-details-marker{display:none}
+  details.provlog summary::before{content:"▸"; color:var(--accent); font-size:11px; transition:transform .12s ease}
+  details.provlog[open] summary::before{transform:rotate(90deg)}
+  details.provlog summary:hover{color:var(--accent)}
+  details.provlog summary .n{color:var(--ink-3); font-weight:500}
+  details.provlog .prov:first-of-type{margin-top:6px}
+
+  /* summary strip: one row per election, us vs AEF */
+  .overall{background:var(--surface); border:1px solid var(--line-2); border-radius:9px; padding:13px 16px;
+           margin-bottom:14px; display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:14px 22px}
+  .overall .stat{display:flex; flex-direction:column; gap:3px}
+  .overall .stat .lab{font-size:10.5px; text-transform:uppercase; letter-spacing:.08em; color:var(--ink-3); font-weight:700}
+  .overall .stat .row{display:flex; align-items:baseline; gap:8px; font-family:"IBM Plex Mono",monospace; font-variant-numeric:tabular-nums}
+  .overall .stat .row b{font-size:16px; color:var(--ink)}
+  .overall .stat .row .aef{font-size:13px; color:var(--ink-3)}
+  .overall .stat .row .aef::before{content:"AEF "}
+  .overall .stat .row b.better{color:var(--good)}
+  .overall .stat .n{font-size:10.5px; color:var(--ink-3)}
+  .strip{display:grid; grid-template-columns:repeat(auto-fit,minmax(178px,1fr)); gap:8px; margin-bottom:18px}
+  .card{background:var(--surface); border:1px solid var(--line); border-radius:7px; padding:9px 11px}
+  .card .pair{font-weight:600; font-size:12.5px; letter-spacing:.02em; display:flex; justify-content:space-between; align-items:baseline}
+  .card .pair span{color:var(--ink-3); font-weight:500; font-size:11px}
+  .bars{margin-top:7px; display:grid; gap:3px}
+  .bar{display:grid; grid-template-columns:30px 1fr 42px; align-items:center; gap:6px; font-size:10.5px}
+  .bar b{color:var(--ink-3); font-weight:600; letter-spacing:.04em}
+  .bar .track{height:6px; background:var(--surface-2); border-radius:3px; overflow:hidden}
+  .bar .fill{height:100%; border-radius:3px}
+  .bar .val{font-family:"IBM Plex Mono",monospace; font-variant-numeric:tabular-nums; text-align:right; color:var(--ink-2)}
+
+  /* controls */
+  .controls{background:var(--surface); border:1px solid var(--line); border-radius:8px;
+            padding:11px 12px; margin-bottom:12px; display:flex; flex-wrap:wrap; gap:10px 14px; align-items:flex-end;
+            z-index:6; box-shadow:var(--shadow)}
+  .field{display:flex; flex-direction:column; gap:4px; min-width:0}
+  .field label{font-size:10.5px; text-transform:uppercase; letter-spacing:.08em; color:var(--ink-3); font-weight:600}
+  select,input[type=search]{
+    font:inherit; font-size:13px; color:var(--ink); background:var(--surface);
+    border:1px solid var(--line-2); border-radius:6px; padding:5px 8px; min-width:112px;
+  }
+  input[type=search]{min-width:150px}
+  select:focus-visible,input:focus-visible,button:focus-visible,textarea:focus-visible{
+    outline:2px solid var(--accent); outline-offset:1px}
+  .chips{display:flex; gap:5px; flex-wrap:wrap}
+  .toggle{font:inherit; font-size:12px; font-weight:600; cursor:pointer; color:var(--ink-2);
+          background:var(--surface); border:1px solid var(--line-2); border-radius:999px; padding:4px 11px}
+  .toggle[aria-pressed="true"]{background:var(--accent-soft); border-color:var(--accent); color:var(--accent)}
+  .count{margin-left:auto; font-size:12px; color:var(--ink-2); font-family:"IBM Plex Mono",monospace;
+         font-variant-numeric:tabular-nums; white-space:nowrap}
+
+  /* table */
+  .tablewrap{overflow:auto; max-height:var(--th,72vh); background:var(--surface);
+           border:1px solid var(--line); border-radius:8px; box-shadow:var(--shadow);
+           overscroll-behavior:contain}
+  table{border-collapse:separate; border-spacing:0; width:100%; min-width:1620px}
+  thead th{position:sticky; background:var(--surface-2); z-index:3}
+  thead tr.grp th{top:0;
+    font-size:10px; text-transform:uppercase; letter-spacing:.09em; color:var(--ink-3);
+    font-weight:700; padding:7px 9px 3px; text-align:center; border-bottom:1px solid var(--line);
+  }
+  thead tr.grp th.sep{border-left:1px solid var(--line-2)}
+  thead tr.hdr th{top:26px; font-size:11px; font-weight:600; color:var(--ink-2); text-align:left;
+                  padding:5px 9px 7px; border-bottom:1px solid var(--line-2); white-space:nowrap; cursor:pointer; user-select:none}
+  thead tr.hdr th.num{text-align:right}
+  thead tr.hdr th.sep{border-left:1px solid var(--line-2)}
+  thead tr.hdr th:hover{color:var(--accent)}
+  th .arrow{opacity:.35; font-size:9px; margin-left:2px}
+  th[aria-sort] .arrow{opacity:1; color:var(--accent)}
+  tbody td{padding:5px 9px; border-bottom:1px solid var(--line); vertical-align:middle}
+  tbody td.sep{border-left:1px solid var(--line-2)}
+  tbody tr:hover{background:var(--surface-2)}
+  td.num{font-family:"IBM Plex Mono",monospace; font-variant-numeric:tabular-nums; text-align:right; font-size:12.5px}
+  td.seat{font-weight:600; white-space:nowrap}
+  td.pair{color:var(--ink-3); font-family:"IBM Plex Mono",monospace; font-size:11.5px; white-space:nowrap}
+  .pill{display:inline-block; font-size:10.5px; font-weight:700; letter-spacing:.03em; padding:2px 7px;
+        border-radius:4px; color:#fff; white-space:nowrap}
+  .ALP{background:var(--alp)} .LNP{background:var(--lnp)} .GRN{background:var(--grn)}
+  .ONP{background:var(--onp)} .IND{background:var(--ind)} .OTH_RIGHT{background:var(--othr)} .OTH{background:var(--oth)}
+  .mark{font-weight:700; font-size:13px}
+  .mark.y{color:var(--good)} .mark.n{color:var(--bad)}
+  .delta.better{color:var(--good); font-weight:600}
+  .delta.worse{color:var(--bad); font-weight:600}
+  th.fz, td.fz{position:sticky; z-index:2; background:var(--surface)}
+  thead th.fz{z-index:4; background:var(--surface-2)}
+  tbody tr:hover td.fz{background:var(--surface-2)}
+  .fz1{left:0;     min-width:74px;  max-width:74px}
+  .fz2{left:74px;  min-width:148px; max-width:148px}
+  .fz3{left:222px; min-width:78px;  max-width:78px}
+  .fz4{left:300px; min-width:88px;  max-width:88px;
+       box-shadow:6px 0 6px -6px rgba(19,24,32,.18)}
+  @media (max-width:700px){ th.fz, td.fz{position:static; box-shadow:none} }
+  td.grp{font-size:11px; color:var(--ink-2); white-space:nowrap; font-weight:500}
+  td.note{min-width:230px}
+  td.note textarea{
+    width:100%; font:inherit; font-size:12px; color:var(--ink); background:transparent;
+    border:1px solid transparent; border-radius:5px; padding:3px 5px; resize:vertical;
+    min-height:26px; height:26px; line-height:1.35;
+  }
+  td.note textarea:hover{border-color:var(--line-2)}
+  td.note textarea:focus{border-color:var(--accent); background:var(--surface); height:64px}
+  td.note textarea::placeholder{color:var(--ink-3); opacity:.7}
+  .drv{color:var(--warn); font-weight:700; margin-left:1px}
+  .saving{font-size:10px; color:var(--ink-3); font-style:italic}
+  .dbstate{font-size:11.5px; color:var(--ink-3); margin:9px 2px 0}
+  .dbstate.on{color:var(--good)}
+  @media (prefers-reduced-motion:no-preference){
+    td.note textarea{transition:height .12s ease, border-color .12s ease}
+  }
+  @media (max-width:560px){
+    .wrap{padding-inline:16px}
+    h1{font-size:19px}
+    .count{margin-left:0; width:100%}
+  }
+</style>
+
+<div class="wrap">
+  <header class="top"><h1>AEF-7 Seat Ledger</h1></header>
+  <details class="provlog">
+    <summary>What the columns mean</summary>
+    <p class="sub prov">Every seat of the seven elections AE&nbsp;Forecasts also covered, our numbers beside theirs.
+     <b>Miss</b> is the winner's actual primary minus our prediction; <b>AEF miss</b> is the same for them.
+     <b>Δ&nbsp;primary</b> is our |miss| minus their |miss| &mdash; negative means we did better on the winner's
+     primary specifically, same convention as <b>Δ&nbsp;loss</b> (our seat log loss minus theirs). Notes save for
+     everyone. <b>Final two</b> is the two-candidate count: official for the federal elections and South Australia;
+     a starred value is one we derived from published preference flows, which reproduces the official pair in 43 of
+     47 SA seats and lands within 0.6 points when it does.
+     <b>ITG final two</b> / <b>AEF final two</b> both answer the SAME question, given the REAL final two (the
+     "Led"/"Runner-up" columns): which of those two did that side predict to win, what did they give that party's
+     share, and how often did that side's OWN simulation draw this exact pairing at all. "Pick" is always one of the
+     two real finalists and "TCP%" is always &ge;50 by construction, like every other 2CP number on this page --
+     never a fixed "party A" from either side's raw scenario-tuple ordering, which is what these columns showed
+     before 18&nbsp;Sep&nbsp;2026 and could read UNDER 50 for the side's own actual favourite (AEF's Wentworth
+     fed2025 scenario named "LNP" at 43.5%, when AEF's real prediction was IND at ~56.5%, correctly, since IND won).
+     "Confidence" is how much of that side's OWN simulation drew this real pairing AT ALL -- independent of who it
+     thought would win it, and independent of whether this was that side's #1-most-likely scenario overall. Mallee
+     fed2022 is the case that motivated fixing this: our TOP scenario there was LNP v IND (0.853 confidence) but the
+     real pairing was LNP v ALP, which our simulation only drew 9.6% of the time -- "ITG confidence" now correctly
+     shows that 0.096, not the 0.853 belonging to a pairing that never happened.</p>
+     <p class="sub prov"><b>TCP on real pairing</b> ("Ours err"/"AEF err" columns, and the matching headline stats)
+     is a DIFFERENT question from ITG/AEF final two above: those score each side's own #1-guessed pairing, so a
+     seat only counts if that guess happened to match reality (n=568 ours / 574 AEF of 660). This instead looks up,
+     for EVERY seat with a resolved real result (658 of 660 -- Port Macquarie nsw2023 and Roe wa2025 are
+     INTRA-COALITION contests, Liberal vs National, both classified to our single "LNP" bucket with no
+     second class to pair against; correctly excluded rather than forced into a pairing our own
+     classification cannot represent (Roe's reference row briefly carried a wrong, implausible one --
+     LNP vs OTH at 97.5%% -- before this check existed). 26 other gap seats, all vic2022, were backfilled
+     from AE Forecasts' own cached real-result data, <code>scripts/build_aef7_tcp_backfill.R</code>),
+     whichever party
+     that side's own scenario table named as leader of the pairing that ACTUALLY happened -- even when that was not
+     their #1 pick -- and compares that side's predicted share for that party against what it actually got.
+     "TCP scenario log loss" is a further-back question: how much of the probability mass each side's own
+     simulation put on that pairing occurring AT ALL, regardless of who it thought would lead it or win it -- floored
+     at 1e-6 for a pairing that side's simulation never drew, same convention as every other log loss on this page.
+     <code>scripts/build_aef7_tcp_actual.R</code>. <b>Δ&nbsp;TCP&nbsp;err</b> and <b>Δ&nbsp;confidence</b> split this
+     into the two separate ways a seat can go wrong: Δ&nbsp;TCP&nbsp;err is "Ours err" minus "AEF err" -- same
+     negative-is-better convention as every other Δ column -- and answers "given the pairing that happened, whose
+     predicted SHARE within it was closer to the truth". Δ&nbsp;confidence is our TCP-scenario-freq minus AEF's,
+     for that same real pairing, and reads the OPPOSITE way round: POSITIVE means WE put more of our own
+     simulation's probability on the pairing that actually occurred, which is the good direction here, so it is
+     coloured on that basis rather than the page's usual sign convention. Since 18&nbsp;Sep&nbsp;2026's "ITG/AEF pick"
+     fix above, Δ&nbsp;confidence is literally "ITG confidence" minus "AEF confidence" as shown in the visible
+     columns -- no longer two different quantities hiding under similar names, which is what caused the Mallee
+     fed2022 confusion this same page records below. Mirani qld2024 is the case that prompted adding these Δ
+     columns in the first place: Δ&nbsp;confidence +0.34 (we were far more sure OTH_RIGHT v LNP would be the final two, and it was) but
+     Δ&nbsp;TCP&nbsp;err about +1 (both sides misjudged the flow WITHIN that pairing by almost the same amount) --
+     two very different failure shapes that the single combined "Ours err" number could not tell apart.</p>
+     <p class="sub prov"><b>Primary RMSE (every party, weighted by actual share)</b> scores every party's predicted
+     primary vote in every seat, not just the eventual winner's -- weighted by how big that party's ACTUAL vote was,
+     so a badly-misjudged fringe candidate on 1% barely moves it while a badly-misjudged front-runner does. AEF's
+     side comes from their <code>seatFpBands</code> field (indexed by the same global party index as their TCP
+     scenarios, not the per-seat candidate index), parsed by <code>scripts/build_aef_fptrend.R</code> and verified
+     against a real seat (Frankston, vic2022) before being trusted. Cell counts differ (4,620 ours / 3,578 AEF)
+     because AEF does not classify every candidate uniquely in every seat.</p>
+  </details>
+
+  <details class="provlog">
+    <summary>Provenance &amp; changelog <span class="n">(21 updates)</span></summary>
+    <p class="sub prov"><b>Preference-flow model now "as at" each election too, 18 Sep 2026, 19:25.</b> The per-election
+       xgb flow model the harnesses read was leave-one-election-out, so vic2022's flows were learned partly from
+       fed2025 and sa2026. <code>scripts/fit_xgb_flows_asat.R</code> trains one model per election from earlier elections
+       only (21 models; the four earliest have none and use the pooled flow table), read under
+       <code>AUSPOL_FLOW_ASAT</code>. Not a scored change -- an honest number replacing a leaked one -- but it happens to
+       help: <b>pooled seat log loss 0.2715 &rarr; 0.2689</b> (AEF 0.2851), 5 of 7 pairs better (wa2025 0.2711&rarr;0.2581,
+       fed2022 0.2762&rarr;0.2717, vic2022 0.2537&rarr;0.2488; sa2026 and qld2024 slightly worse). TCP MAE on the real
+       pairing 3.75 &rarr; 3.74. Full 20,000-sim rebuild, 23 minutes; the new flow stage costs 2 seconds when its
+       models are already current.</p>
+    <p class="sub prov"><b>Two major-party slope tiers shipped from the worst-seat pass, 18 Sep 2026 evening.</b> Working
+       through the worst seats on v32 with the pipeline now trustworthy: (1) a major party whose sitting member did not
+       re-stand was over-predicted by 2.8 points on 361 seat-elections (SE 0.35), because ALP and Liberal/National classes
+       had NO same/new slope tier at all -- they always projected their full base. <code>AUSPOL_MAJOR_DEPARTED</code>: a
+       fitted, leave-target-out slope (ALP 0.60, LNP 0.65) on the deviation from the statewide level for those cells.
+       Measured base_pred-only: their error 5.37 &rarr; 4.66 points (SE 0.11), Parramatta 2.20 &rarr; 1.47, Monaro 2.66
+       &rarr; 1.98. (2) every OTHER major-party cell regresses toward the level too (a major predicted under 15 lands 3.4
+       higher on average, over 55 lands 1.6 lower): <code>AUSPOL_MAJOR_SLOPE</code>, fitted 0.95 / 0.89. Both
+       pre-registered, both cleared their criteria, both in this full 20,000-sim rebuild. <b>Pooled seat log loss 0.2735
+       &rarr; 0.2715</b> (AEF 0.2851); winner-primary RMSE 5.94 &rarr; 5.52; weighted primary RMSE 4.79 &rarr; 4.75.
+       Per pair: fed2022 0.2821&rarr;0.2762, nsw2023 0.2309&rarr;0.2225, vic2022 0.2605&rarr;0.2537, sa2026 0.3234&rarr;0.3196,
+       fed2025 flat, qld2024 0.3446&rarr;0.3493, wa2025 0.2630&rarr;0.2711. Also tested and left OFF: routing a departed
+       defector's vote back to their origin party (Morwell 1.86 &rarr; 1.03 but 15 cases missed the criterion by 0.06 SE).
+       Also found and NOT yet in this build: the flow model was leave-one-election-out (sees later elections); an as-at
+       version is trained and shipped and lands in the next rebuild. And a data gap behind Footscray/Richmond/Brunswick/
+       South Brisbane: Liberal how-to-vote cards flipped their ALP-v-Greens order between elections (58% to ALP in
+       vic2018, 35% in vic2022) and the model has no input for it. Every seat's verdict is now in
+       <code>docs/SEAT-REGISTRY.md</code>.</p>
+    <p class="sub prov"><b>This page is now built by the PRODUCTION pipeline, frozen "as at" each election. Pete's
+       rule, 18 Sep 2026: one pipeline, not two.</b> Until now the backtests behind every number here read a static
+       leave-one-election-out xgb cache that (a) trained on elections AFTER the one being predicted and (b) froze an
+       old base_pred, so three real primary-vote fixes shipped the same day were invisible to this page while live in
+       production. Now <code>scripts/fit_xgb_primary_asat.R</code> trains one model per election on only the pairs
+       whose polling day precedes it (19 models, <code>output/xgb-primary-asat/</code>; the four earliest targets
+       have fewer than 4 prior pairs and keep base_pred), with the identical recipe
+       <code>fit_xgb_primary_v6_final.R</code> uses for the live Victoria model, and <code>scripts/rebuild_forecasts.sh</code>
+       is the one command that rebuilds everything in the non-circular order. Every candidate-level forecast is
+       persisted in <code>output/forecasts.csv</code> (11,991 rows over 19 elections; 4,489 on these 7) and seat
+       probabilities in <code>output/forecasts-seats.csv</code>. <b>The headline moved the honest way: pooled seat log
+       loss 0.2627 &rarr; 0.2735</b> (AEF 0.2851), because the old number saw the future. This is the 20,000-sim
+       deciding run (23 minutes end to end). Weighted primary RMSE on these 7 elections (4,489 candidate rows,
+       weighted by actual share): base_pred 5.28, old look-ahead cache 4.67, honest as-at 4.82 -- the look-ahead was
+       worth about 0.15 points of primary vote, and that is what the log loss gave back. <b>Also corrected on this
+       page: the "primary RMSE (all parties, weighted)" card was comparing AEF against our PRE-xgb baseline
+       (5.28) and calling it ours.</b> The shipped model on the same rows is 4.79; AEF is 5.42. Four vintage leaks
+       found and fixed in the same pass, all the same shape (an input chosen as "newest file by name"):
+       <code>build_aef_comparison.R</code> dropped sa2026 after the second SA pair ran (660 &rarr; 613 seats);
+       <code>build_aef7_tcp_actual.R</code> skipped any 5,000-sim file, so the TCP columns came from the previous
+       model while the log loss came from the new one (Mallee's "9.6%" real-pairing frequency was stale; the true
+       figure was 32%); the ledger builder read stage 1's xgb-off files whenever a rebuild was in flight; and the
+       weighted-RMSE card read the xgb-off pool. <code>scripts/ledger_inputs.R</code> is now the one rule: every
+       column for a pair comes from the harness run <code>pool_backtests.R</code> scored, matched by harness prefix
+       and arm+git hash, and the pool refuses any run whose sharedetail says xgb was off. <code>docs/PIPELINE.md</code>,
+       <code>docs/NEXT-STEPS.md</code>.</p>
+    <p class="sub prov"><b>ITG/AEF pick fixed to always name the winner of the REAL pairing, Pete's request after
+       Mallee.</b> "AEF pick: ALP" at 36.8% looked broken -- Pete's math (2CP should always be &ge;50%) was right,
+       and the root cause was the same "party A" arbitrariness already flagged for Wentworth in this doc, just not
+       yet fixed: <code>our_tcp_f1</code>/<code>aef_tcp_f1</code> named an unlabelled position in each side's own
+       scenario-tuple ordering, not a predicted winner, and could legitimately read under 50. Worse, "ITG pick"/
+       "ITG confidence" were reporting each side's OWN TOP-SCENARIO pairing, which for Mallee was LNP v IND for us
+       -- a pairing that never happened, while the real one (LNP v ALP) was something our simulation only drew
+       9.6% of the time. <code>scripts/build_aef7_tcp_actual.R</code> now computes <code>our_tcp_pick</code>/
+       <code>aef_tcp_pick</code> (always one of the REAL two finalists, &ge;50% by construction) and the ledger's
+       "ITG/AEF final two" groups now show those, not the old top-scenario fields -- see "What the columns mean"
+       for the full rewrite.</p>
+    <p class="sub prov"><b>Δ TCP err / Δ confidence columns added, Pete's request after the Mirani dig.</b> The
+       existing "Ours err"/"AEF err" pair answers only "who was closer", which conflates two different failure
+       shapes: calling the wrong final-two pairing versus calling the right pairing but the wrong split within it.
+       Δ&nbsp;TCP&nbsp;err (Ours err minus AEF err) and Δ&nbsp;confidence (our TCP-scenario-freq minus AEF's, for
+       the pairing that actually happened) separate them -- see "What the columns mean" for the full definition and
+       why Δ&nbsp;confidence is coloured the opposite way round from every other Δ on this page.</p>
+    <p class="sub prov"><b>Known limitation, flagged and parked at Pete's direction.</b> The 2 excluded seats (Port Macquarie nsw2023, Roe wa2025) are Liberal-vs-National contests that <code>classify_party()</code> collapses to one "LNP" class everywhere in the pipeline, with no second class to score a TCP winner against. Checked AEF's own cached data for Port Macquarie: they have the identical limitation (<code>tcp: {"LNP": 39.2}</code>, one entry, not two) -- not a gap unique to us, and nothing to copy from them. Zero seats in the live 2026 Victorian candidate list currently have both a Liberal and a National candidate nominated, so this is not forecast-blocking today. <code>docs/NEXT-STEPS.md</code>.</p>
+    <p class="sub prov"><b>Bradfield tie-break bug, caught by Pete from the actual ABC page.</b> fed2025 Bradfield is a genuine 26-vote margin after a full recount (Boele/IND 56,114 vs Kapterian/LNP 56,088), both rounding to an identical 50.0%%. Ranking the ABC scrape's two finalists by that ROUNDED percentage made the tie-break fall back to page order, silently calling the seat for whichever candidate the page listed first (Liberal) -- not the real result. First reported here as a "genuine coin-flip, not a bug"; it wasn't, until ranking on the raw vote count instead of the rounded percentage fixed it. Winner agreement against official sources is now 658/658 (100%%), up from 656/658. Also fixed, same pass: the reference CSV's own NA values for the 2 excluded seats were round-tripping as empty strings rather than true NA through every script that reads or writes it -- a downstream <code>is.na()</code> check would have silently passed on them. Zero data values changed, representation only.</p>
+    <p class="sub prov"><b>vic2022 closed via an independent ABC scrape, same evening.</b> vic2022's 78 seats had no equivalent official archive on disk (no VEC distribution-of-preferences source for 2022), so they stayed unverified. Built <code>scripts/fetch_abc_seat_guides.R</code>, scraping ABC's own per-seat guide pages (static HTML, verified page-by-page) for all 660 AEF7 seats as a general cross-check, then found vic2022's mean gap against it (0.49 points) was an order of magnitude worse than every commission-sourced pair (0.00-0.01) -- confirming it really had been unverified, not just unlabelled. Also caught a wrong winner: Bass (ours: LNP, real result: ALP). vic2022 is now fsrc="abc-scrape", kept distinct from "official" since it is a secondary not primary source. <code>scripts/build_aef7_tcp_vic_from_abc.R</code>, <code>scripts/build_aef7_truth_tables.R</code>.</p>
+    <p class="sub prov"><b>Real declared TCP for nsw2023/qld2024/wa2025, 18 Sep 2026 evening.</b> All 232 <code>fsrc="derived"</code> rows replaced with the actual declared two-candidate result, parsed straight from each commission's own source that was already on disk unread: NSWEC's distribution-of-preferences pages (<code>external/reference/nsw/dop</code>), ECQ's declared-results XML, and WAEC's <code>resultsFullDistribution</code>. Most seats were unchanged -- the old preference-flow reconstruction was accurate -- but this caught 2 seats with the WRONG WINNER CLASS recorded (qld2024 Mirani, wa2025 Kalgoorlie) and one margin error (nsw2023 Wagga Wagga, off by 7.9 points). <code>scripts/build_aef7_tcp_official.R</code>.</p>
+    <p class="sub prov"><b>Correction, minutes later.</b> Pete asked why Port Macquarie was the ONLY excluded seat out of 660 given 125 seats have a &gt;50%% primary winner -- it wasn't a &gt;50%% thing at all. The real contest there was Liberal (60.8%%) vs National (39.2%%), and our own <code>classify_party()</code> buckets both under one "LNP" label, so there is no second class to pair it against. Checking the rest of the corpus found a SECOND such seat, wa2025 Roe -- which had NOT been excluded, and carried a wrong, implausible resolved TCP (LNP vs OTH at 97.5%%) sitting silently in the "good" 659. Both are now detected from the raw candidacy data (not hand-spotted) and excluded the same way. Coverage is 658 of 660, one fewer than reported minutes ago, for the right reason this time instead of a wrong number nobody was looking for.</p>
+    <p class="sub prov"><b>Banner cleanup + AEF primary parser + TCP coverage to 659/660, 18 Sep 2026 later still.</b> Removed the two redundant headline cards ("Primary RMSE, winner only" and "TCP MAE, each side's #1 pairing where it matched") now that their replacements cover the same ground on all seats. Built <code>scripts/build_aef_fptrend.R</code>, parsing AEF's <code>seatFpBands</code> (verified against a real seat, Frankston vic2022, before being trusted) so the weighted primary RMSE card now compares both sides: ours 5.301 vs AEF 5.424 -- we are ahead here too, not just on TCP. Found the 28-seat final-two gap capping TCP coverage at 632/660 was NOT a missing-data problem: <code>external/reference/aef/*-results.json</code> already carries the real post-election TCP for every seat, cached and unread by any script. <code>scripts/build_aef7_tcp_backfill.R</code> filled 27 of 28 from it; the last (Port Macquarie, nsw2023) was won outright on primary votes with no real TCP to score against, correctly excluded rather than faked. TCP coverage is now 659 of 660.</p>
+    <p class="sub prov"><b>New metrics, 18 Sep 2026 later.</b> Default sort is now delta log loss, worst first. Added TCP scored against the pairing that ACTUALLY happened (not just each side's own #1 guess) across all 632 of 660 seats with a resolved result -- "Ours err"/"AEF err" columns and two new headline stats (TCP scenario log loss: ours 0.317 vs AEF 0.482, we are clearly better at knowing WHO reaches the final two; TCP MAE on the real pairing: ours 3.91 vs AEF 3.82, roughly level once it is known). Also added primary RMSE weighted by actual vote share across EVERY party in every seat, not just the winner (5.30, AEF not yet comparable -- their per-party fpTrend field is unparsed). Together with the existing winner-only numbers this answers Pete's question directly: our gap to AEF is almost entirely PRIMARY VOTE, not TCP -- 18 of the worst 20 delta-log-loss seats have a bigger primary miss than AEF's, while we correctly named the real final-two pairing in 15 of those same 20. The miss is concentrated in independents/teals we under-predict where they win (Pittwater, Wakehurst, Mackellar, Manly, Goldstein, Fremantle, Calwell all under-called by 15-29 points), and 8 of the worst 20 are fed2022 specifically. <code>scripts/build_aef7_tcp_actual.R</code>.</p>
+    <p class="sub prov"><b>Full refresh, 18 Sep 2026.</b> Shipped <code>AUSPOL_HONOUR_DEPARTED</code>: a departed non-major class leader's vote base now decays toward a measured 0.38 retention rate, independent of whether an unrelated candidate makes <code>candidate_returns()</code>'s <code>same</code> read TRUE -- Morwell/vic2022 is the flagship case (Tracie Lund persisted on 2-3%% while Russell Northe, who carried the real 19.6%% base, retired). Morwell log loss 3.05&nbsp;&rarr;&nbsp;1.66, Geelong 0.43&nbsp;&rarr;&nbsp;0.03. Pooled log loss on these 660 seats 0.2667&nbsp;&rarr;&nbsp;0.2627 (AEF's is 0.2851) -- not an isolated A/B for this fix alone, since the minor-defector two-rate discount and a staleness safeguard also shipped in the same session; both are reflected here too. 2026-09-06's earlier refusal of this mechanism was a federal two-seat wash that conflated departure with "no new emergence" as one thing; this is the fuller, 593-case re-measurement that superseded it. <code>docs/reviews/departed-leader-honour-fix-2026-09-18.md</code>, <code>docs/reviews/departed-leader-retention-2026-09-15.md</code>.</p>
+    <p class="sub prov"><b>Added, same session.</b> Pooled headline stats at the top (seat count,
+       seat log loss, primary RMSE on the winner, TCP MAE) -- ours vs AEF, each with its own n.
+       <b>AEF miss</b> and <b>Δ&nbsp;primary</b> columns, same convention as the existing Δ&nbsp;loss.
+       An <b>ITG final two</b> column group mirroring AEF's own, with a real difference worth
+       reading the docs for: ours always names the pairing's predicted WINNER (&ge;50% by
+       construction, <code>R/tcp_scenarios.R</code>), AEF's does not -- discovered when Pete asked
+       why Wentworth fed2025 showed "AEF pick: LNP" at only 43.5%, which turned out to mean AEF
+       actually predicted the OTHER finalist (IND) to win, correctly. The first version of the TCP
+       MAE metric had exactly this bug on AEF's side (compared a losing-party percentage against
+       the actual winner's share); fixed before publishing by comparing each named party against
+       ITS OWN actual share of the count, not always the winner's.</p>
+    <p class="sub prov"><b>Correction, same session, minutes after the refresh below.</b> Pete
+       caught it by eye: Murray showed 94.7% win probability off a 15.3% predicted primary --
+       internally implausible. Traced to source: the raw backtest gives Murray/IND 33.1%, not
+       15.3%. <code>build_aef7_ledger_data.R</code>'s primary-share join fell back to
+       <code>output/pooled-sharedetail.csv</code>, which was a day stale (16 Sep) and had not
+       been repooled after today's reruns -- exactly the "newest file per pair mixes arms"
+       failure this repo's own harnesses have hit before, this time in the ledger-build script
+       itself. Fixed by repooling (<code>scripts/pool_sharedetail.R</code>) before rebuilding.
+       Win probabilities and log loss were unaffected (they read a different, already-fresh
+       file) -- only the displayed primary-vote-%% columns were wrong, and only for seats whose
+       sharedetail predates today.</p>
+
+    <p class="sub prov"><b>Full refresh, 17 Sep 2026.</b> All seven AEF7 pairs re-run at the full
+       20,000 sims after <code>base_margin</code> shipped (train the primary-vote model on the
+       residual to <code>base_pred</code> rather than as a plain feature -- fails the standing
+       all-23-pair seat log loss bar but wins on this page's own AEF7 pairs, shipped on that basis)
+       and a second, unrelated fix: <code>seat_outperf</code> had been missing from the live-serving
+       model since the day it shipped (16 Sep), though that gap never touched this backtest page,
+       only the live Victorian forecast. Pooled log loss on these 660 seats <b>0.2702&nbsp;→&nbsp;0.2667</b>
+       (AEF's is 0.2851). This page's own assembly script was also rebuilt from scratch this session
+       -- see the HTML comment at the top of the source for why -- so a future refresh does not
+       depend on a scratchpad file surviving between sessions.
+       <code>docs/plans/prereg-xgb-base-margin-2026-09-17.md</code>,
+       <code>docs/reviews/seat-outperf-missing-from-live-model-2026-09-17.md</code>.</p>
+
+    <p class="sub prov"><b>AEF final two column added, 16 Sep 2026 later.</b> Parsed AE Forecasts' own TCP scenario data out of our cached copies of their site (<code>seatTcpScenarios</code>/<code>seatTcpBands</code>/<code>partyAbbr</code>) for the first time &mdash; previously only their win probability and primary vote were parsed. Confirms the NSW pattern above from a second angle: on Parramatta, AEF's own simulation gave ALP a 52.6% TCP (correctly favouring ALP, who won), while our published number favoured LNP 58.6%. All 660 rows matched AEF's seat names with none unresolved. <code>scripts/build_aef_tcp.R</code>.</p>
+
+    <p class="sub prov"><b>Full refresh, 16 Sep 2026 late.</b> Every seat on this page re-simulated
+       (20,000 draws, published config) after two more shipped changes: <code>seat_outperf</code>
+       (a departing MP's personal-vote premium, gated to the 176 retiring-incumbent rows it applies
+       to) and a minor-to-minor party-defector discount (Stephen Andrew, ONP&nbsp;→&nbsp;KAP, Mirani —
+       33 corpus cases, geometric mean retention 49%). Pooled log loss <b>0.2696&nbsp;→&nbsp;0.2702</b>
+       (AEF's is 0.2808) — real but tiny, as expected: both changes are narrowly targeted, most of
+       this page's 660 seats carry neither feature. 3 seats flipped correct/incorrect (Box Hill
+       vic2022, Albany and Geraldton wa2025) — all were near-50/50 calls before and after (0.47-0.50),
+       not a directional effect of tonight's changes. <code>docs/reviews/pattern-a-seat-outperf-2026-09-16.md</code>,
+       <code>docs/reviews/minor-to-minor-defector-2026-09-16.md</code>.</p>
+
+    <p class="sub prov">Backtests as at <b>15 Sep 2026, 23:10</b>. fed2022 was re-run that evening under the
+       state-swing correction (<code>AUSPOL_STATE_DEV</code>), which shipped after the previous numbers were taken:
+       every Western Australian seat improved — Tangney 3.53&nbsp;→&nbsp;3.11, Swan 0.62&nbsp;→&nbsp;0.49 — and the
+       election's gap to AEF narrowed from +0.0289 to +0.0267 per seat. The other six pairs are unchanged.</p>
+
+    <p class="sub prov"><b>Refreshed 16 Sep 2026.</b> <code>is_incumbent_party</code> was comparing our
+       classified party label against the commission's raw incumbent code, which never matched for a minor
+       party — silently FALSE on every seat a minor party held. Fixed; 8 rows here move: Kennedy (fed2022,
+       fed2025), Mayo (fed2022, fed2025), Hill/Hinchinbrook/Mirani/Traeger (qld2024). No row changes which
+       party we favoured. Mayo and Hinchinbrook's primary miss improved (Mayo fed2022 &minus;4.7&nbsp;&rarr;&nbsp;&minus;3.7,
+       Hinchinbrook &minus;1.3&nbsp;&rarr;&nbsp;0.7); Kennedy fed2025 and Traeger got WORSE (Traeger
+       &minus;1.7&nbsp;&rarr;&nbsp;&minus;6.0) — a real, mixed, small effect, not a one-directional improvement.
+       Mirani is unchanged and still our worst miss on this page.
+       <code>docs/reviews/incumbent-classification-bug-2026-09-16.md</code>.</p>
+
+    <p class="sub prov"><b>Where the remaining gap lives.</b> On the 581 seats we call correctly we beat AEF by
+       22.48 of total log loss; on the 79 we call wrong we lose 15.46. We are sharper and they hedge, so the gap
+       is not spread thinly — it sits entirely in confident errors. In NSW those are disproportionately seats
+       whose previous winner was <b>not on the ballot</b>: across both NSW pairs a seat held by 5+&nbsp;points
+       is called wrong <b>26.2%</b> of the time when the member has gone against <b>1.8%</b> when they stand
+       again, and the effect is <i>largest in the safest seats</i>. The cause is variance rather than bias —
+       the held party's primary error spreads from sd&nbsp;5.17 to&nbsp;8.81, while the simulation gives every
+       seat the same <code>seat_sd</code>. Confirmed out of sample on nsw2019 and close to absent federally
+       (1.06x); ruled out optional preferential voting as the mechanism (exhaustion doesn't separate the
+       seats we get wrong from the ones we don't). <b>NSW isn't in this AEF-7 set</b>, so none of that work
+       moves any row on this page — the incumbent fix above is the only thing that does.
+       A by-election-data fallback for Orange/Wagga Wagga specifically was built and measured and made things
+       WORSE elsewhere in the corpus with no gain on either target seat; reverted, not shipped. Both still
+       miss by 30-50 points. <code>docs/reviews/nsw-departed-member-opv-ruled-out-2026-09-16.md</code>,
+       <code>docs/NEXT-STEPS.md</code>.</p>
+  </details>
+
+  <div class="overall" id="overall"></div>
+  <div class="strip" id="strip"></div>
+
+  <div class="controls">
+    <div class="field"><label for="f-pair">Election</label>
+      <select id="f-pair"><option value="">All seven</option></select></div>
+    <div class="field"><label for="f-win">Won by</label>
+      <select id="f-win"><option value="">Any party</option></select></div>
+    <div class="field"><label for="f-fav">We favoured</label>
+      <select id="f-fav"><option value="">Any party</option></select></div>
+    <div class="field"><label for="f-grp">Failure group</label>
+      <select id="f-grp"><option value="">Any</option><option value="*">Any grouped seat</option></select></div>
+    <div class="field"><label for="f-q">Seat</label>
+      <input type="search" id="f-q" placeholder="Search name"></div>
+    <div class="field"><label>Show</label>
+      <div class="chips">
+        <button class="toggle" id="t-wrong" aria-pressed="false">We called it wrong</button>
+        <button class="toggle" id="t-beat" aria-pressed="false">AEF beat us</button>
+        <button class="toggle" id="t-noted" aria-pressed="false">Has a note</button>
+      </div></div>
+    <div class="count" id="count"></div>
+  </div>
+
+  <div class="tablewrap">
+    <table>
+      <thead>
+        <tr class="grp">
+          <th colspan="5"></th>
+          <th colspan="4" class="sep">Probability of winning</th>
+          <th colspan="6" class="sep">Winner's primary vote %</th>
+          <th colspan="3" class="sep">Final two</th>
+          <th colspan="3" class="sep">ITG final two</th>
+          <th colspan="3" class="sep">AEF final two</th>
+          <th colspan="4" class="sep">TCP on real pairing</th>
+          <th colspan="3" class="sep">Seat log loss</th>
+          <th colspan="2" class="sep"></th>
+        </tr>
+        <tr class="hdr" id="hdr"></tr>
+      </thead>
+      <tbody id="body"></tbody>
+    </table>
+  </div>
+  <p class="dbstate" id="dbstate">Notes are local to this view until the shared store connects.</p>
+</div>
+
+<script>
+const SEATS = __SEATS_JSON__;
+const SUMMARY = __SUMMARY_JSON__;
+
+const COLS = [
+  {k:"pair",   t:"Election", cls:"pair fz fz1"},
+  {k:"seat",   t:"Seat",     cls:"seat fz fz2"},
+  {k:"winner", t:"Winner",   cls:"fz fz3"},
+  {k:"fav",    t:"Our pick", cls:"fz fz4"},
+  {k:"correct",t:"Hit",      cls:"mark-cell"},
+  {k:"our_p_win", t:"Ours→winner", num:true, sep:true, dp:3},
+  {k:"aef_p_win", t:"AEF→winner", num:true, dp:3},
+  {k:"our_p_fav", t:"Ours→pick",  num:true, dp:3},
+  {k:"aef_p_fav", t:"AEF→pick",   num:true, dp:3},
+  {k:"act_fp_win",t:"Actual", num:true, sep:true, dp:1},
+  {k:"our_fp_win",t:"Ours",   num:true, dp:1},
+  {k:"aef_fp_win",t:"AEF",    num:true, dp:1},
+  {k:"miss",      t:"Our miss", num:true, dp:1, miss:true},
+  {k:"aef_miss",  t:"AEF miss", num:true, dp:1, miss:true},
+  {k:"primary_delta", t:"Δ primary", num:true, dp:1, delta:true},
+  {k:"f1",     t:"Led",    cls:"pill-cell", sep:true},
+  {k:"f2",     t:"Runner-up", cls:"pill-cell"},
+  {k:"f2cp",   t:"Winner 2CP", num:true, dp:1},
+  {k:"our_tcp_pick",  t:"ITG pick", cls:"pill-cell", sep:true},
+  {k:"our_tcp_pick_pct", t:"ITG TCP%", num:true, dp:1},
+  {k:"our_tcp_actual_freq", t:"ITG confidence", num:true, dp:3},
+  {k:"aef_tcp_pick",  t:"AEF pick", cls:"pill-cell", sep:true},
+  {k:"aef_tcp_pick_pct", t:"AEF TCP%", num:true, dp:1},
+  {k:"aef_tcp_actual_freq", t:"AEF confidence", num:true, dp:3},
+  {k:"our_tcp_actual_err", t:"Ours err", num:true, sep:true, dp:1, miss:true},
+  {k:"aef_tcp_actual_err", t:"AEF err",  num:true, dp:1, miss:true},
+  {k:"tcp_err_delta",  t:"Δ TCP err",  num:true, dp:1, delta:true},
+  {k:"tcp_conf_delta", t:"Δ confidence", num:true, dp:3, hidelta:true},
+  {k:"ll",     t:"Ours",  num:true, sep:true, dp:3},
+  {k:"aef_ll", t:"AEF",   num:true, dp:3},
+  {k:"dll",    t:"Δ loss", num:true, dp:3, delta:true},
+  {k:"grp",    t:"Failure group", cls:"grp", sep:true},
+  {k:"note",   t:"Notes", cls:"note"}
+];
+
+SEATS.forEach(r => {
+  r.dll = (r.ll != null && r.aef_ll != null) ? +(r.ll - r.aef_ll).toFixed(3) : null;
+  // TCP scored on the pairing that ACTUALLY happened, regardless of whether
+  // it was that side's #1 guess -- see "What the columns mean" for why this
+  // is a different question from ITG/AEF TCP% above, which are each side's
+  // own top-frequency scenario. our_tcp_actual_share/aef_tcp_actual_share
+  // are the REAL result for whichever party that side's scenario table named
+  // as leader of the real pairing; *_pred_pct is what that side predicted
+  // for that same party -- the error is the gap between the two.
+  r.our_tcp_actual_err = (r.our_tcp_pred_pct != null && r.our_tcp_actual_share != null)
+    ? +Math.abs(r.our_tcp_pred_pct - r.our_tcp_actual_share).toFixed(1) : null;
+  r.aef_tcp_actual_err = (r.aef_tcp_pred_pct != null && r.aef_tcp_actual_share != null)
+    ? +Math.abs(r.aef_tcp_pred_pct - r.aef_tcp_actual_share).toFixed(1) : null;
+  // Δ TCP err: ours minus theirs on the SHARE prediction for the pairing
+  // that actually happened -- same "negative = we did better" convention as
+  // every other Δ column. Δ confidence: ours minus theirs on how much
+  // probability mass each side's own simulation put on that real pairing
+  // occurring at all -- POSITIVE here means WE were more confident in the
+  // pairing that actually happened, so it reads the opposite way round
+  // (styled by hidelta, not delta). Pete asked for these to separate "we
+  // called the wrong pairing" from "we called the right pairing but got its
+  // internal split wrong" -- Mirani qld2024 is the case that prompted it:
+  // Δ confidence +0.34 (we were far more sure OTH_RIGHT v LNP would happen,
+  // correctly) but Δ TCP err only ~+1 (both sides misjudged the flow inside
+  // that pairing by almost the same amount once it did happen).
+  r.tcp_err_delta = (r.our_tcp_actual_err != null && r.aef_tcp_actual_err != null)
+    ? +(r.our_tcp_actual_err - r.aef_tcp_actual_err).toFixed(1) : null;
+  r.tcp_conf_delta = (r.our_tcp_actual_freq != null && r.aef_tcp_actual_freq != null)
+    ? +(r.our_tcp_actual_freq - r.aef_tcp_actual_freq).toFixed(3) : null;
+});
+
+const BYKEY = new Map();
+const PAIRS = [...new Set(SEATS.map(r=>r.pair))].sort();
+const PARTIES = [...new Set(SEATS.flatMap(r=>[r.winner,r.fav]))].sort();
+const notes = new Map();           // "pair__seat" -> text
+// Document ids allow only [A-Za-z0-9_-.~:@+], so a seat with a space or an
+// apostrophe -- South Brisbane, Murray-Wellington -- cannot be an id verbatim.
+// Every non-alphanumeric run becomes a hyphen, and the row also carries pair and
+// seat as fields so a stored note is readable without decoding its id.
+const key = r => r.pair + "__" + r.seat.replace(/[^A-Za-z0-9]+/g, "-");
+SEATS.forEach(r => BYKEY.set(key(r), r));
+
+let sortKey = "dll", sortDir = -1;
+const F = {pair:"", win:"", fav:"", grp:"", q:"", wrong:false, beat:false, noted:false};
+
+/* ---------- overall pooled stats ---------- */
+function overall(){
+  const el = document.getElementById("overall");
+  const n = SEATS.length;
+  const eps = 1e-6;
+  const tcpScoreable = SEATS.filter(r=>r.our_tcp_actual_freq!=null);
+  const tcpLL = (rs,k) => mean(rs.map(r=>({v:-Math.log(Math.max(r[k]??0, eps))})), "v");
+  const tcpErrRows = (rs,k) => rs.filter(r=>r[k]!=null);
+  const pwrmse = SUMMARY && SUMMARY.primary_wrmse;
+  const stats = [
+    {lab:"Seats", our:n, aef:null, n:null, fmt:v=>v},
+    {lab:"Seat log loss", our:mean(SEATS,"ll"), aef:mean(SEATS,"aef_ll"), n:n, lower:true, fmt:v=>v.toFixed(4)},
+    {lab:"Primary RMSE (every party, weighted by actual share)",
+     our: pwrmse && pwrmse.our!=null ? pwrmse.our : null,
+     aef: pwrmse && pwrmse.aef!=null ? pwrmse.aef : null,
+     n: pwrmse ? `${pwrmse.our_n} cells` : null,
+     lower:true, fmt:v=>v.toFixed(3)},
+    {lab:"TCP scenario log loss (probability given to the pairing that actually happened, all seats)",
+     our: tcpScoreable.length ? tcpLL(tcpScoreable,"our_tcp_actual_freq") : null,
+     aef: tcpScoreable.length ? tcpLL(tcpScoreable,"aef_tcp_actual_freq") : null,
+     n: tcpScoreable.length, lower:true, fmt:v=>v.toFixed(4)},
+    {lab:"TCP MAE (on the real pairing, whether or not it was the #1 pick)",
+     our: (()=>{const rs=tcpErrRows(SEATS,"our_tcp_actual_err"); return rs.length?mean(rs,"our_tcp_actual_err"):null;})(),
+     aef: (()=>{const rs=tcpErrRows(SEATS,"aef_tcp_actual_err"); return rs.length?mean(rs,"aef_tcp_actual_err"):null;})(),
+     n: `${tcpErrRows(SEATS,"our_tcp_actual_err").length} ours / ${tcpErrRows(SEATS,"aef_tcp_actual_err").length} AEF`,
+     lower:true, fmt:v=>v.toFixed(2)},
+  ];
+  el.innerHTML = stats.map(s=>{
+    const better = s.aef!=null && s.lower && s.our<=s.aef;
+    const ourTxt = s.our!=null ? s.fmt(s.our) : "—";
+    return `<div class="stat">
+      <div class="lab">${s.lab}</div>
+      <div class="row"><b${better?' class="better"':""}>${ourTxt}</b>${s.aef!=null?`<span class="aef">${s.fmt(s.aef)}</span>`:""}</div>
+      ${s.n!=null?`<div class="n">n=${s.n}</div>`:""}
+    </div>`;
+  }).join("");
+}
+
+/* ---------- summary strip ---------- */
+function strip(){
+  const el = document.getElementById("strip");
+  const worst = Math.max(...PAIRS.map(p => {
+    const rs = SEATS.filter(r=>r.pair===p);
+    return Math.max(mean(rs,"ll"), mean(rs,"aef_ll"));
+  }));
+  el.innerHTML = PAIRS.map(p => {
+    const rs = SEATS.filter(r=>r.pair===p);
+    const o = mean(rs,"ll"), a = mean(rs,"aef_ll");
+    const acc = 100*rs.filter(r=>r.correct).length/rs.length;
+    return `<div class="card">
+      <div class="pair">${p}<span>${rs.length} seats · ${acc.toFixed(0)}% hit</span></div>
+      <div class="bars">
+        ${bar("OURS", o, worst, o<=a ? "var(--good)" : "var(--bad)")}
+        ${bar("AEF",  a, worst, "var(--ink-3)")}
+      </div></div>`;
+  }).join("");
+}
+const mean = (rs,k) => rs.reduce((s,r)=>s+(r[k]??0),0)/rs.length;
+const bar = (lab,v,max,col) =>
+  `<div class="bar"><b>${lab}</b><div class="track"><div class="fill" style="width:${(100*v/max).toFixed(1)}%;background:${col}"></div></div><div class="val">${v.toFixed(4)}</div></div>`;
+
+/* ---------- header ---------- */
+function header(){
+  document.getElementById("hdr").innerHTML = COLS.map(c=>{
+    const on = c.k===sortKey;
+    return `<th data-k="${c.k}" class="${c.num?"num":""} ${c.sep?"sep":""} ${(c.cls||"").split(" ").filter(x=>x.startsWith("fz")).join(" ")}"${on?` aria-sort="${sortDir<0?"descending":"ascending"}"`:""}>${c.t}<span class="arrow">${on?(sortDir<0?"▼":"▲"):"▲"}</span></th>`;
+  }).join("");
+  document.querySelectorAll("#hdr th").forEach(th=>th.addEventListener("click",()=>{
+    const k = th.dataset.k;
+    if (k === sortKey) sortDir = -sortDir; else { sortKey = k; sortDir = (k==="seat"||k==="pair"||k==="winner"||k==="fav") ? 1 : -1; }
+    header(); render();
+  }));
+}
+
+/* ---------- filter + render ---------- */
+function visible(){
+  return SEATS.filter(r=>
+    (!F.pair || r.pair===F.pair) &&
+    (!F.win  || r.winner===F.win) &&
+    (!F.fav  || r.fav===F.fav) &&
+    (!F.grp  || (F.grp==="*" ? !!r.grp : r.grp===F.grp)) &&
+    (!F.q    || r.seat.toLowerCase().includes(F.q)) &&
+    (!F.wrong|| !r.correct) &&
+    (!F.beat || (r.dll!=null && r.dll>0)) &&
+    (!F.noted|| (notes.get(key(r))||"").trim().length>0)
+  );
+}
+const fmt = (v,dp) => v==null ? "<span style='color:var(--ink-3)'>—</span>" : v.toFixed(dp);
+
+function render(){
+  const rows = visible().sort((a,b)=>{
+    let x=a[sortKey], y=b[sortKey];
+    if (sortKey==="note"){ x=notes.get(key(a))||""; y=notes.get(key(b))||""; }
+    if (typeof x==="boolean"){ x=+x; y=+y; }
+    if (x==null) return 1; if (y==null) return -1;
+    return (x>y?1:x<y?-1:0)*sortDir;
+  });
+  document.getElementById("body").innerHTML = rows.map(r=>{
+    const k = key(r);
+    return "<tr>" + COLS.map(c=>{
+      const sep = c.sep ? " sep" : "";
+      if (c.k==="winner"||c.k==="fav"||c.k==="f1"||c.k==="f2"||c.k==="our_tcp_pick"||c.k==="aef_tcp_pick") return r[c.k]
+        ? `<td class="${(c.cls||"")+sep}"><span class="pill ${r[c.k]}">${r[c.k]}</span></td>`
+        : `<td class="${(c.cls||"")+sep}" style="color:var(--ink-3)">—</td>`;
+      if (c.k==="correct") return `<td class="${(c.cls||"")+sep}"><span class="mark ${r.correct?"y":"n"}">${r.correct?"✓":"✗"}</span></td>`;
+      if (c.k==="note") return `<td class="note${sep}"><textarea rows="1" data-k="${k}" placeholder="Add a note"
+            aria-label="Note for ${r.seat}">${esc(notes.get(k)||"")}</textarea></td>`;
+      if (c.k==="f2cp") return r.f2cp==null
+        ? `<td class="num${sep}" style="color:var(--ink-3)">\u2014</td>`
+        : `<td class="num${sep}">${r.f2cp.toFixed(1)}${r.fsrc==="derived"?"<span class='drv' title='derived from published preference flows, not an official two-candidate count'>*</span>":""}</td>`;
+      if (c.num){
+        let d = "";
+        if (c.delta && r[c.k]!=null) d = r[c.k]<0 ? " delta better" : " delta worse";
+        // hidelta: same red/green idea as delta, but POSITIVE is the good
+        // direction (Δ confidence -- more of our own probability mass on the
+        // pairing that really happened is better), so the comparison is
+        // flipped relative to every other Δ column on this page.
+        if (c.hidelta && r[c.k]!=null) d = r[c.k]>0 ? " delta better" : (r[c.k]<0 ? " delta worse" : "");
+        if (c.miss  && r[c.k]!=null) d = Math.abs(r[c.k])>=8 ? " delta worse" : "";
+        return `<td class="num${sep}${d}">${fmt(r[c.k], c.dp)}</td>`;
+      }
+      return `<td class="${c.cls||""}${sep}">${esc(String(r[c.k]))}</td>`;
+    }).join("") + "</tr>";
+  }).join("");
+
+  const shown = rows.length;
+  const o = shown?mean(rows,"ll"):0, a = shown?mean(rows,"aef_ll"):0;
+  document.getElementById("count").textContent =
+    shown ? `${shown} of ${SEATS.length} seats · ours ${o.toFixed(4)} · AEF ${a.toFixed(4)}` : "no seats match";
+  wireNotes();
+}
+const esc = s => s.replace(/[&<>"]/g, m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[m]));
+
+/* ---------- notes ---------- */
+let DB = null;
+const timers = new Map();
+function wireNotes(){
+  document.querySelectorAll("td.note textarea").forEach(ta=>{
+    ta.addEventListener("input", ()=>{
+      const k = ta.dataset.k, text = ta.value;
+      notes.set(k, text);
+      clearTimeout(timers.get(k));
+      timers.set(k, setTimeout(()=>save(k, text), 600));
+    });
+  });
+}
+async function save(k, text){
+  if (!DB) return;
+  try{
+    const r = BYKEY.get(k) || {};
+    await DB.doc("notes/"+k).set({text, pair:r.pair||"", seat:r.seat||"", updatedAt:new Date().toISOString()});
+  }catch(e){ /* read-only viewer or refusal: the local edit stands for this view */ }
+}
+
+/* ---------- boot ---------- */
+PAIRS.forEach(p=>document.getElementById("f-pair").insertAdjacentHTML("beforeend",`<option>${p}</option>`));
+const GROUPS=[...new Set(SEATS.map(r=>r.grp).filter(Boolean))].sort();
+GROUPS.forEach(g=>document.getElementById("f-grp").insertAdjacentHTML("beforeend",`<option>${g}</option>`));
+document.getElementById("f-grp").addEventListener("change",e=>{F.grp=e.target.value; render();});
+PARTIES.forEach(p=>{
+  document.getElementById("f-win").insertAdjacentHTML("beforeend",`<option>${p}</option>`);
+  document.getElementById("f-fav").insertAdjacentHTML("beforeend",`<option>${p}</option>`);
+});
+document.getElementById("f-pair").addEventListener("change",e=>{F.pair=e.target.value; render();});
+document.getElementById("f-win").addEventListener("change",e=>{F.win=e.target.value; render();});
+document.getElementById("f-fav").addEventListener("change",e=>{F.fav=e.target.value; render();});
+document.getElementById("f-q").addEventListener("input",e=>{F.q=e.target.value.trim().toLowerCase(); render();});
+[["t-wrong","wrong"],["t-beat","beat"],["t-noted","noted"]].forEach(([id,f])=>{
+  document.getElementById(id).addEventListener("click",e=>{
+    F[f]=!F[f]; e.currentTarget.setAttribute("aria-pressed",String(F[f])); render();
+  });
+});
+
+function fit(){
+  const w = document.querySelector('.tablewrap');
+  if (!w) return;
+  const top = w.getBoundingClientRect().top + window.scrollY - (window.scrollY||0);
+  const h = Math.max(260, window.innerHeight - top - 46);
+  document.documentElement.style.setProperty('--th', h + 'px');
+}
+overall(); strip(); header(); render(); fit();
+addEventListener('resize', fit);
+
+claude.use("db").then(db=>{
+  if (!db){ document.getElementById("dbstate").textContent =
+    "Shared notes are unavailable in this view — anything you type stays here."; return; }
+  DB = db;
+  const s = document.getElementById("dbstate");
+  s.textContent = "Notes are shared — every viewer sees the same ones."; s.className = "dbstate on";
+  db.collection("notes").onSnapshot(snap=>{
+    const focused = document.activeElement;
+    const skip = focused && focused.tagName==="TEXTAREA" ? focused.dataset.k : null;
+    let changed = false;
+    snap.docs.forEach(d=>{
+      const t = (d.data()||{}).text || "";
+      if (d.id !== skip && notes.get(d.id) !== t){ notes.set(d.id, t); changed = true; }
+    });
+    if (changed) render();
+  }, ()=>{ s.textContent = "Lost the shared notes connection; edits stay in this view."; s.className="dbstate"; });
+});
+</script>
+

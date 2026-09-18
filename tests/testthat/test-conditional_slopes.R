@@ -60,21 +60,62 @@ test_that("mismatched permit length is an error", {
   expect_error(screened_slopes("IND", c("A","B"), R1, permit = TRUE), "same length")
 })
 
-test_that("screened_slopes: a permit does not override a departed leader", {
+test_that("screened_slopes: a PERMITTED successor wins regardless of departure (Wentworth shape)", {
+  # REVISED 2026-09-18. The original version of this test asserted the
+  # opposite -- that departure overrides a permit -- which is exactly the
+  # Wentworth 2022 bug (Spender was permitted, got decayed anyway) that got
+  # this whole mechanism refused. Departure and a real new emergence are
+  # different, independent things; the screen's permit signal wins when it
+  # fires, whether or not the old leader also departed.
   seats <- c("s1", "s2", "s3")
   # s1: new candidate, permitted, prior leader RETURNS (elsewhere in the seat) -> 1.0
-  # s2: new candidate, permitted, prior leader DEPARTED -> the new slope
+  # s2: new candidate, permitted, prior leader DEPARTED (Wentworth shape) -> STILL 1.0
   # s3: returning candidate -> the same slope, permit irrelevant
   returns <- data.table::data.table(seat = seats, party = "IND",
                                     same = c(FALSE, FALSE, TRUE), same_mp = FALSE,
                                     prior_leader_returns = c(TRUE, FALSE, TRUE))
   sl <- screened_slopes("IND", seats, returns, permit = c(TRUE, TRUE, TRUE), honour_departed = TRUE)
   expect_equal(sl[1], 1.0)
-  expect_equal(sl[2], 0.326)
+  expect_equal(sl[2], 1.0)
   expect_equal(sl[3], 0.907)
   # Old-shape `returns` without the column: every leader taken as returning.
   old <- returns[, list(seat, party, same, same_mp)]
   expect_equal(screened_slopes("IND", seats, old, permit = c(TRUE, TRUE, TRUE), honour_departed = TRUE)[2], 1.0)
-  # And the DEFAULT is off (refused 2026-09-06): the departed case gets 1.0 as before.
-  expect_equal(screened_slopes("IND", seats, returns, permit = c(TRUE, TRUE, TRUE))[2], 1.0)
+})
+
+test_that("screened_slopes: a departed leader with NO permitted successor decays to departed_rate (New England shape)", {
+  # The case the 2026-09-06 version could never express correctly: nobody
+  # new is visibly emerging (screen does not permit), AND the old leader is
+  # gone. docs/reviews/departed-leader-retention-2026-09-15.md: n=305,
+  # departing non-major retains 0.38 against 1.01 for one who recontests.
+  seats <- c("s1", "s2")
+  returns <- data.table::data.table(seat = seats, party = "IND",
+                                    same = c(FALSE, FALSE), same_mp = FALSE,
+                                    prior_leader_returns = c(FALSE, TRUE))
+  sl <- screened_slopes("IND", seats, returns, permit = c(FALSE, FALSE), honour_departed = TRUE)
+  expect_equal(sl[1], 0.38)   # departed, not permitted -> the measured rate
+  expect_equal(sl[2], 0.326)  # not departed, not permitted -> the generic new rate, unchanged
+  # honour_departed DEFAULTS TO FALSE: a departed leader's seat (s1), even
+  # unpermitted, gets the old pre-fix behaviour if a caller doesn't opt in.
+  expect_equal(screened_slopes("IND", seats, returns, permit = c(FALSE, FALSE))[1], 0.326)
+})
+
+test_that("screened_slopes: departure decay fires even when is_same is TRUE (Morwell shape)", {
+  # Morwell 2022's real shape, verified directly against candidate_returns():
+  # same = TRUE because Tracie Lund personally stood as IND in both 2018 and
+  # 2022 on 2-3%, but prior_leader_returns = FALSE because Russell Northe --
+  # who actually carried 19.6 of the class's 28.2-point base -- did not
+  # recontest. Without checking prior_leader_returns independently of
+  # is_same, this seat would get the "same" slope (0.907) on its WHOLE base,
+  # applying incumbent-level retention to a base that is overwhelmingly a
+  # departed leader's personal vote.
+  seats <- "Morwell"
+  returns <- data.table::data.table(seat = seats, party = "IND",
+                                    same = TRUE, same_mp = FALSE,
+                                    prior_leader_returns = FALSE)
+  sl <- screened_slopes("IND", seats, returns, permit = FALSE, honour_departed = TRUE)
+  expect_equal(sl, 0.38)
+  # Without honour_departed, same = TRUE alone still drives the old (wrong
+  # for this shape) behaviour -- the "same" slope, not the new one.
+  expect_equal(screened_slopes("IND", seats, returns, permit = FALSE), 0.907)
 })

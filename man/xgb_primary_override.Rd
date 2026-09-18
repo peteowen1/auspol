@@ -18,13 +18,15 @@ in the oof-predictions file.}
 The overridden matrix, or \code{shares} unchanged if not enabled.
 }
 \description{
-Exploratory only -- not part of the published model. Loads the
-leave-one-pair-out out-of-fold predictions written by
-\code{scripts/fit_xgb_primary_v6.R} (\code{output/xgb-primary-v6-oof-predictions.csv},
-the model \code{AUSPOL_XGB_PRIMARY_LIVE} ships; override with
-\code{AUSPOL_XGB_PRIMARY_OOF})
+The backtest counterpart of \code{\link[=xgb_primary_predict_live]{xgb_primary_predict_live()}}. Loads a
+predictions file -- since 2026-09-18 the POINT-IN-TIME models' output
+(\code{output/xgb-primary-asat-predictions.csv}, \code{scripts/fit_xgb_primary_asat.R}:
+one model per election, trained only on elections whose polling day
+precedes it, same recipe and base_margin mode as the production model) --
 and overwrites every (seat, party) cell of \code{shares} that file covers for
-\code{pair_label}, renormalising each seat's row back to 100. Cells the xgb file
+\code{pair_label}, renormalising each seat's row back to 100. Cells the file
 doesn't cover (should not happen for a class the shares matrix carries;
-logged if it does) keep the harness's own value.
+logged if it does) keep the harness's own value. \code{AUSPOL_XGB_PRIMARY_OOF}
+names a different file; the leave-one-pair-out cache
+\code{scripts/fit_xgb_primary_v6.R} still writes is the diagnostic alternative.
 }

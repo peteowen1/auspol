@@ -28,9 +28,18 @@
 #'   corpus, e.g. `"fed2019"` and `"fed2022"`.
 #' @param corpus Optional pre-read candidacy table; read from
 #'   `output/candidacies.csv` when `NULL`.
-#' @return A `data.table` of `seat`, `party`, `same` covering every seat/class
-#'   present at `election_to`. `same` is `FALSE` where nobody of that class stood
+#' @return A `data.table` of `seat`, `party`, `same`, `same_mp`,
+#'   `prior_leader_returns`, `leader_same` covering every seat/class present
+#'   at `election_to`. `same` is `FALSE` where nobody of that class stood
 #'   before, which is the correct reading: there is no one to return.
+#'   `leader_same` (added 2026-09-18) is TRUE only when the class's CURRENT
+#'   leading candidate personally returns -- see [leading_candidate_returns()]
+#'   for why `same`'s `any()`-across-the-class semantics wrongly attribute one
+#'   candidate's history to an unrelated, genuinely new class-mate (New
+#'   England fed2022: Natasha Ledger's personal return made `same = TRUE` for
+#'   the whole IND class even though Matt Sharpham, the actual class leader,
+#'   was new). `screened_slopes()`/`conditional_slopes()` key their same/new
+#'   slope choice on `leader_same`, not `same`.
 #' @export
 candidate_returns <- function(election_from, election_to, corpus = NULL) {
   C <- corpus
@@ -149,6 +158,26 @@ candidate_returns <- function(election_from, election_to, corpus = NULL) {
   res <- merge(full, res, by = c("seat", "party"), all.x = TRUE)
   res[is.na(same), same := FALSE]
   res[is.na(same_mp), same_mp := FALSE]
+  # DID THIS CLASS HOLD THE SEAT, AND DID ITS MEMBER LEAVE? `mp_departed` is
+  # TRUE when the class had the elected member at `election_from` (under the
+  # target's seat name or its renamed form) and `same_mp` is FALSE -- a
+  # retirement, a defection to another label, or a loss at a by-election.
+  # Major parties lose a measured ~2.8 points of primary vote in exactly
+  # this case (docs/plans/prereg-major-departed-slope-2026-09-18.md) and
+  # had no tier for it. FALSE everywhere when the corpus has no `elected`.
+  if ("elected" %in% names(PREVT)) {
+    held <- unique(rbind(PREVT[PREVT$elected %in% TRUE, list(.s = .s,         party)],
+                         PREVT[PREVT$elected %in% TRUE, list(.s = .s_renamed, party)]))
+    held[, had_mp := TRUE]
+    smap <- unique(NOWT[, list(seat, .s)])
+    held <- merge(held, smap, by = ".s", allow.cartesian = TRUE)[, list(seat, party, had_mp)]
+    res <- merge(res, unique(held), by = c("seat", "party"), all.x = TRUE)
+    res[is.na(had_mp), had_mp := FALSE]
+    res[, mp_departed := had_mp & !same_mp]
+    res[, had_mp := NULL]
+  } else {
+    res[, mp_departed := FALSE]
+  }
   # DOES THE PRIOR ELECTION'S LEADING CANDIDATE OF THIS CLASS STAND HERE AGAIN,
   # under any label? `same` asks whether the TARGET's leading candidate has a
   # history; this asks the reverse -- whether the vote the class carries from
@@ -172,8 +201,27 @@ candidate_returns <- function(election_from, election_to, corpus = NULL) {
     lp <- lp[, list(prior_leader_returns = any(prior_leader_returns)), by = list(seat, party)]
     res <- merge(res, lp, by = c("seat", "party"), all.x = TRUE)
     res[is.na(prior_leader_returns), prior_leader_returns := TRUE]
+    # LEADER_SAME: does the CURRENT leading candidate of this class personally
+    # return, as opposed to `same` above (any() across every candidate of the
+    # class). New England fed2022 is `same = TRUE` for IND because Natasha
+    # Ledger personally stood there in both 2019 and 2022 -- but she polled
+    # 2.8% in 2022, not the class's leader; Matt Sharpham, a genuinely new
+    # candidate, led the class at 7.9% and is who the class's primary-vote
+    # slope is actually applied to. Reusing `same` there projected him with
+    # the RETURNING slope (0.907, near-full carryforward) instead of the new
+    # one (~0.33), a ~2x over-prediction -- this repo's own docs on
+    # leading_candidate_returns() (below) named this exact failure shape in
+    # 2026, measured it against seat WINS (found none flipped, five
+    # elections), and never checked it against primary-vote accuracy, which
+    # is where the miss actually lands. Wired in here, 2026-09-18, so every
+    # caller of candidate_returns() gets it for free instead of needing its
+    # own call to leading_candidate_returns().
+    leader <- leading_candidate_returns(election_from, election_to, corpus = C)
+    res <- merge(res, leader, by = c("seat", "party"), all.x = TRUE)
+    res[is.na(leader_same), leader_same := same]
   } else {
     res[, prior_leader_returns := TRUE]
+    res[, leader_same := same]
   }
   res[]
 }
@@ -314,16 +362,52 @@ leading_candidate_returns <- function(election_from, election_to, corpus = NULL)
 #'   KAP/OTH_RIGHT) -- `prev_best` above matches on IDENTITY regardless of
 #'   party, so without this the old class's full, undiscounted result carries
 #'   forward as the new class's base. `NULL` (the default) leaves this
-#'   byte-identical to before the parameter existed. The value the harnesses
-#'   pass is [fit_minor_defector_discount()]'s own return -- a MEDIAN over 18
-#'   corpus cases, 0.3255 for most targets. (The review's headline "49%" is a
-#'   geometric mean at a lower `min_prior` and is NOT what ships; see that
-#'   function's docstring.) See
+#'   byte-identical to before the parameter existed. When `minor_discount_loser`
+#'   is also given (two-rate mode), this rate applies ONLY to a switcher whose
+#'   sitting-member status at the prior election is UNKNOWN (no `elected`
+#'   column) -- a confirmed sitting member gets NO discount at all (see
+#'   `minor_discount_loser`'s own doc for why), so this becomes the fallback
+#'   rate for the one case that is neither confirmed sitting nor confirmed
+#'   non-sitting. Without `minor_discount_loser`, this applies to every
+#'   switcher (the old, single-rate behaviour). The value the harnesses pass
+#'   is [fit_minor_defector_discount()]'s own pooled `discount` field -- a
+#'   MEDIAN over 18 corpus cases, 0.3255 for most targets. (The review's
+#'   headline "49%" is a geometric mean at a lower `min_prior` and is NOT
+#'   what ships; see that function's docstring.) See
 #'   `docs/reviews/minor-to-minor-defector-2026-09-16.md`.
+#' @param minor_discount_loser Optional numeric. Rate applied to a
+#'   minor-to-minor (or minor-to-IND, IND-to-minor) switcher CONFIRMED NOT to
+#'   be the sitting member at the prior election. `NULL` (the default) gives
+#'   every switcher `minor_discount`'s single rate, byte-identical to before
+#'   this parameter existed.
+#'
+#'   A CONFIRMED SITTING MEMBER gets NO discount when this is set -- not a
+#'   fitted "sitting-member rate". Found 2026-09-17 tracing why Murray,
+#'   Orange and Barwon's real sitting-member Shooters-Fishers-and-Farmers-to-
+#'   Independent departures (retention 108-136%) were badly under-predicted
+#'   by the single pooled rate, and revised 2026-09-18 after actually
+#'   shipping a fitted sitting-member rate and finding it made those same
+#'   three seats WORSE, not better: [fit_minor_defector_discount()]'s
+#'   leave-target-out fit for nsw2023 draws only on the other two sitting
+#'   cases (Mirani 0.79, Kennedy 0.63), giving 0.71 -- an underestimate for
+#'   seats that actually retained 108-136%. Leave-one-out cross-validated
+#'   against all 5 sitting-member corpus cases (Barwon 1.36, Murray 1.30,
+#'   Orange 1.08, Mirani 0.79, Kennedy 0.63): predicting flat 1.0 (no
+#'   discount) gives HALF the squared error (0.405) of predicting each case
+#'   from the other four's median (0.782) -- n=5 is too thin to fit a rate
+#'   below 1 usefully, and the corpus median/mean (1.08 / 1.03) both sit
+#'   almost exactly on "keep it all" anyway. The 13-case non-sitting rate
+#'   (median 0.276) has no such problem and is used as fitted.
+#'
+#'   A switcher whose prior status is unknown (`prev_was_mp` is NA -- older
+#'   data with no `elected` column) gets `minor_discount`, not this rate --
+#'   "unknown" is never read as "definitely not the sitting member".
+#'   `docs/reviews/minor-defector-two-rate-2026-09-17.md`.
 #' @export
 personal_prior_vote <- function(election_from, election_to, corpus = NULL,
                                major_discount = NULL, pooled = NULL,
-                               loser_discount = NULL, minor_discount = NULL) {
+                               loser_discount = NULL, minor_discount = NULL,
+                               minor_discount_loser = NULL) {
   # TWO-RATE MODE: `loser_discount` applies to a prior major-party candidate
   # who was NOT the sitting member; `major_discount` keeps applying to those
   # who were. NULL leaves one rate for both, which is the pooled arm.
@@ -485,12 +569,23 @@ personal_prior_vote <- function(election_from, election_to, corpus = NULL,
   PT <- PREVT[nzchar(PREVT$.k) & !PREVT$party %in% MAJ]
   PT[, .s_renamed := .s]
   PT[.s %in% names(rn), .s_renamed := rn[.s]]
-  PTx <- rbind(PT[, .(.s, .k, pcv, party)], PT[.s != .s_renamed, .(.s = .s_renamed, .k, pcv, party)])
+  # `prev_was_mp`, carried alongside `prev_party`, is what lets the
+  # minor-to-minor discount below distinguish a sitting member's switch
+  # (Murray/Orange/Barwon's real Shooters-Fishers-and-Farmers-to-Independent
+  # departures, median retention 1.08) from a losing candidate's (median
+  # 0.276) -- same shape as major_discount/loser_discount. Absent entirely on
+  # older data (no `elected` column) rather than 0-filled, so "unknown" is
+  # never read as "definitely not the sitting member".
+  .prev_was_mp <- if ("elected" %in% names(PT)) PT$elected %in% TRUE else NA
+  PT[, .was_mp := .prev_was_mp]
+  PTx <- rbind(PT[, .(.s, .k, pcv, party, .was_mp)],
+               PT[.s != .s_renamed, .(.s = .s_renamed, .k, pcv, party, .was_mp)])
   # if (.N) guards max(): when the ONLY prior row for a (.s, .k) group is a
   # major party, filtering it out can leave that group with zero rows, and
   # max() over nothing warns "no non-missing arguments" and returns -Inf.
   prev_best <- PTx[, .(own_prev_pcv = if (.N) max(pcv, na.rm = TRUE) else NA_real_,
-                       prev_party   = if (.N) party[which.max(pcv)] else NA_character_),
+                       prev_party   = if (.N) party[which.max(pcv)] else NA_character_,
+                       prev_was_mp  = if (.N) .was_mp[which.max(pcv)] else NA),
                    by = .(.s, .k)]
   out <- merge(lead[, list(seat, .s, party, .k)], prev_best, by = c(".s", ".k"), all.x = TRUE)
   # A MINOR-TO-MAJOR SWITCHER CANNOT ERASE A MAJOR PARTY'S OWN SEAT HISTORY.
@@ -560,8 +655,33 @@ personal_prior_vote <- function(election_from, election_to, corpus = NULL,
   # base-pred-blind-to-tonights-fixes-2026-09-16.md.
   out[, .own_prev_pcv_full := own_prev_pcv]
   if (!is.null(minor_discount) && is.finite(minor_discount)) {
-    out[!is.na(own_prev_pcv) & !prev_party %in% MAJ & !party %in% MAJ & prev_party != party,
-        own_prev_pcv := own_prev_pcv * minor_discount]
+    .switched <- !is.na(out$own_prev_pcv) & !out$prev_party %in% MAJ &
+                 !out$party %in% MAJ & out$prev_party != out$party
+    if (!is.null(minor_discount_loser) && is.finite(minor_discount_loser)) {
+      # TWO-RATE, REVISED 2026-09-18: a confirmed SITTING-MEMBER switcher
+      # gets NO discount at all (ratio 1, full retention) -- not
+      # `minor_discount` applied as a multiplier. Found leave-one-out cross-
+      # validating the fitted sitting-member rate against all 5 corpus
+      # cases (Barwon 1.36, Murray 1.30, Orange 1.08, Mirani 0.79, Kennedy
+      # 0.63): predicting flat 1.0 gives HALF the squared error (0.405) of
+      # predicting each case from the other four's median (0.782) --
+      # n=5 is too thin to fit a rate below 1 usefully, and the corpus
+      # median/mean (1.08 / 1.03) both sit almost exactly on "keep it all"
+      # anyway. `minor_discount` still applies to a switcher whose sitting
+      # status is UNKNOWN (see below) -- it is the pooled rate for that
+      # case, not the (now-unused-for-sitting-members) MP-specific rate.
+      # docs/reviews/minor-defector-two-rate-2026-09-17.md.
+      # A confirmed NON-sitting switcher gets `minor_discount_loser`. A
+      # switcher whose prior status is unknown (`prev_was_mp` is NA -- older
+      # data with no `elected` column) falls back to `minor_discount`, the
+      # single-rate behaviour, rather than being guessed into either bucket.
+      # prev_was_mp %in% TRUE: no line needed -- own_prev_pcv is left exactly
+      # as prev_best found it, i.e. full retention.
+      out[.switched & out$prev_was_mp %in% FALSE, own_prev_pcv := own_prev_pcv * minor_discount_loser]
+      out[.switched & is.na(out$prev_was_mp),     own_prev_pcv := own_prev_pcv * minor_discount]
+    } else {
+      out[.switched, own_prev_pcv := own_prev_pcv * minor_discount]
+    }
   }
   # DEFECTOR FALLBACK, applied only where this candidate now stands for a
   # NON-major class and has no non-major history to draw on. Adding the
@@ -909,23 +1029,38 @@ fit_minor_defector_discount <- function(target_election, corpus = NULL, min_n = 
     if (!nrow(PREVT) || !nrow(NOWT)) return(NULL)
     PREVT <- data.table::copy(PREVT)[, `:=`(.k = kk(.SD), .s = normalise_seat(seat))]
     NOWT  <- data.table::copy(NOWT)[,  `:=`(.k = kk(.SD), .s = normalise_seat(seat))]
+    if (!"elected" %in% names(PREVT)) return(NULL)
     a <- PREVT[nzchar(.k) & !party %in% MAJ & pcv >= min_prior,
-               .(.s, .k, prior_pcv = pcv, prior_party = party)][
+               .(.s, .k, prior_pcv = pcv, prior_party = party, was_mp = elected %in% TRUE)][
                  , .SD[which.max(prior_pcv)], by = .(.s, .k)]
     b <- NOWT[nzchar(.k) & !party %in% MAJ, .(.s, .k, target_pcv = pcv, party)][
       , .SD[which.max(target_pcv)], by = .(.s, .k)]
     m <- merge(a, b, by = c(".s", ".k"))
     m <- m[prior_party != party]
     if (!nrow(m)) return(NULL)
-    m[, .(pair = pr$election, ratio = target_pcv / prior_pcv)]
+    m[, .(pair = pr$election, ratio = target_pcv / prior_pcv, was_mp)]
   }), fill = TRUE)
 
   if (is.null(ratios) || nrow(ratios) < min_n) {
-    return(list(discount = NULL, n = if (is.null(ratios)) 0L else nrow(ratios), cases = ratios))
+    return(list(discount = NULL, discount_mp = NULL, discount_loser = NULL,
+                n = if (is.null(ratios)) 0L else nrow(ratios), cases = ratios))
   }
-  disc <- if (agg == "geomean") exp(mean(log(ratios$ratio), na.rm = TRUE))
-          else stats::median(ratios$ratio, na.rm = TRUE)
-  list(discount = disc, n = nrow(ratios), cases = ratios)
+  agg_fn <- function(x) if (!length(x)) NA_real_ else
+    if (agg == "geomean") exp(mean(log(x), na.rm = TRUE)) else stats::median(x, na.rm = TRUE)
+  # SITTING vs NON-SITTING, same split [[fit_defector_discount]] already uses
+  # for major-party defectors -- found 2026-09-17 tracing why Murray, Orange
+  # and Barwon's real Shooters-Fishers-and-Farmers-to-Independent sitting
+  # members (retention 108-136%) were badly under-predicted by the single
+  # pooled rate this function used to return. Of 18 corpus cases, 5 are
+  # sitting members at the time of the switch (median retention 1.08) and 13
+  # are not (median 0.276) -- a 4x gap, same shape as major-party defectors'
+  # 0.28-0.29 (sitting) vs 0.142 (losing). `discount` stays the POOLED rate
+  # for a caller not using the two-rate mode, byte-identical to before this
+  # split. docs/reviews/minor-defector-two-rate-2026-09-17.md.
+  list(discount        = agg_fn(ratios$ratio),
+       discount_mp     = agg_fn(ratios$ratio[ratios$was_mp %in% TRUE]),
+       discount_loser  = agg_fn(ratios$ratio[ratios$was_mp %in% FALSE]),
+       n = nrow(ratios), cases = ratios)
 }
 
 #' Keep the re-entry prior from overwriting a more-informed personal-vote floor
@@ -962,4 +1097,132 @@ protect_personal_vote_cells <- function(reentry_cells, own_prev) {
   rc <- data.table::as.data.table(reentry_cells)
   key <- paste(op$seat, op$party)
   rc[!paste(rc$seat, rc$party) %in% key]
+}
+
+# ---- A DEPARTED DEFECTOR'S VOTE GOES HOME --------------------------------
+# docs/plans/prereg-departed-origin-return-2026-09-18.md. Morwell vic2022:
+# Russell Northe (National 2014, IND 2018 at 19.6) retired; the Nationals
+# rose from our 27.2 to 38.4. AUSPOL_HONOUR_DEPARTED decays his class and
+# renormalisation spreads the released vote pro-rata; these functions send a
+# fitted share of it back to the party he came from, which the candidacy
+# corpus knows.
+
+.corpus_or_load <- function(corpus, who) {
+  if (!is.null(corpus)) return(data.table::as.data.table(corpus))
+  f <- file.path("output", "candidacies.csv")
+  if (!file.exists(f)) stop(who, "() needs output/candidacies.csv; run scripts/build_candidacies.R", call. = FALSE)
+  data.table::fread(f, showProgress = FALSE)
+}
+
+#' Departed class leaders who earlier stood for a major party in the seat
+#'
+#' For the pair `election_from -> election_to`: every seat/class where the
+#' class's leading candidate at `election_from` (non-major class, at least
+#' `min_pcv` points) does not stand in that seat at `election_to` under any
+#' label, and who at some election BEFORE `election_from` stood for a major
+#' party in the same seat. That party is `origin`.
+#'
+#' @param election_from,election_to Election labels.
+#' @param corpus Candidacy corpus; `output/candidacies.csv` when `NULL`.
+#' @param min_pcv Minimum leader vote, in points, to count.
+#' @return data.table: seat, party, origin, name, lead_pcv. Zero rows when
+#'   nothing qualifies.
+#' @export
+departed_defectors <- function(election_from, election_to, corpus = NULL, min_pcv = 5) {
+  C <- .corpus_or_load(corpus, "departed_defectors")
+  MAJ <- c("ALP", "LNP", "NAT")
+  kf <- function(d) match_key(surname_of(if ("surname" %in% names(d)) d$surname else NA_character_,
+                                         if ("name" %in% names(d)) d$name else NA_character_),
+                              given_of(if ("given" %in% names(d)) d$given else NA_character_,
+                                       if ("name" %in% names(d)) d$name else NA_character_), "initial")
+  C <- data.table::copy(C)[, .k := kf(.SD), .SDcols = names(C)]
+  dates <- election_dates()
+  C[, .d := dates[election]]
+  PREVT <- C[C$election == election_from & !C$party %in% MAJ & nzchar(C$.k)]
+  NOWT  <- C[C$election == election_to]
+  empty <- data.table::data.table(seat = character(0), party = character(0), origin = character(0),
+                                  name = character(0), lead_pcv = numeric(0))
+  if (!nrow(PREVT) || !nrow(NOWT)) return(empty)
+  lead <- PREVT[, .SD[which.max(pcv)], by = .(seat, party)][, .(seat, party, .k, name, lead_pcv = pcv)]
+  lead <- lead[lead$lead_pcv >= min_pcv & lead$seat %in% NOWT$seat &
+                 !paste(lead$seat, lead$.k) %in% paste(NOWT$seat, NOWT$.k)]
+  if (!nrow(lead)) return(empty)
+  d_from <- dates[[election_from]]
+  H <- C[C$party %in% MAJ & C$.d < d_from & nzchar(C$.k), .(seat, .k, party, .d)]
+  H <- H[order(-.d)][, .SD[1L], by = .(seat, .k)][, .(seat, .k, origin = party)]
+  out <- merge(lead, H, by = c("seat", ".k"))
+  out[, .(seat, party, origin, name, lead_pcv)]
+}
+
+#' Fit the share of a departed defector's vote that returns to their origin party
+#'
+#' Leave-target-out over every other pair: for each case from
+#' [departed_defectors()], `(origin party's actual vote at election_to -
+#' origin_prev * statewide ratio) / lead_pcv`, clipped to `[0, 1]`, then the
+#' median (`stat = "median"`, the shipped arm) or mean (`"mean"`).
+#'
+#' @param target_election Pair whose own rows are excluded from the fit.
+#' @param corpus,pairs As in [fit_defector_discount()].
+#' @param stat `"median"` or `"mean"`.
+#' @param min_n Fewer usable cases than this returns `frac = NULL`.
+#' @return list(frac, n, cases).
+#' @export
+fit_departed_origin_return <- function(target_election, corpus = NULL, pairs = NULL,
+                                       stat = c("median", "mean"), min_n = 5L) {
+  stat <- match.arg(stat)
+  C <- .corpus_or_load(corpus, "fit_departed_origin_return")
+  if (is.null(pairs)) pairs <- all_election_pairs()
+  ST <- C[, .(v = sum(votes)), by = .(election, party)][, share := 100 * v / sum(v), by = election]
+  seat_share <- function(el, s, p) { v <- C[C$election == el & C$seat == s & C$party == p, sum(pcv)]; if (length(v)) v else 0 }
+  rows <- lapply(pairs, function(pr) {
+    if (identical(pr$election, target_election)) return(NULL)
+    d <- departed_defectors(pr$prev, pr$election, corpus = C)
+    if (!nrow(d)) return(NULL)
+    d[, pair := pr$election]
+    d[, origin_prev := mapply(seat_share, pr$prev, seat, origin)]
+    d[, origin_now  := mapply(seat_share, pr$election, seat, origin)]
+    d[, ratio := mapply(function(p) { a <- ST[election == pr$election & party == p]$share
+                                      b <- ST[election == pr$prev & party == p]$share
+                                      if (length(a) && length(b) && b > 0) a / b else NA_real_ }, origin)]
+    d[origin_now > 0 & is.finite(ratio)]
+  })
+  cases <- data.table::rbindlist(rows, fill = TRUE)
+  if (!nrow(cases)) return(list(frac = NULL, n = 0L, cases = cases))
+  cases[, frac := pmin(1, pmax(0, (origin_now - origin_prev * ratio) / lead_pcv))]
+  n <- nrow(cases)
+  if (n < min_n) return(list(frac = NULL, n = n, cases = cases))
+  list(frac = if (stat == "median") stats::median(cases$frac) else mean(cases$frac), n = n, cases = cases)
+}
+
+#' Move a departed defector's vote to their origin party in the prior matrix
+#'
+#' For each [departed_defectors()] case, `frac * lead_pcv` points move from
+#' the departed class's column to the origin party's column, in the seat's
+#' row of `mat` (rows seats, columns classes, in points). The class then
+#' decays under the departed slope on what is left. Missing seat or column:
+#' skipped and named in `attr(, "departed_origin")`.
+#'
+#' @param mat Prior share matrix, seats by classes.
+#' @param election_from,election_to Election labels.
+#' @param frac Share of the leader's vote to move, from
+#'   [fit_departed_origin_return()]. `NULL` returns `mat` untouched.
+#' @param corpus Candidacy corpus; `output/candidacies.csv` when `NULL`.
+#' @return `mat` with attribute `departed_origin`: list(applied, skipped, cases).
+#' @export
+route_departed_origin <- function(mat, election_from, election_to, frac, corpus = NULL) {
+  if (is.null(frac) || !is.finite(frac) || frac <= 0) return(mat)
+  d <- departed_defectors(election_from, election_to, corpus = corpus)
+  applied <- 0L; skipped <- character(0)
+  for (i in seq_len(nrow(d))) {
+    s <- d$seat[i]; from <- d$party[i]; to <- d$origin[i]
+    if (!s %in% rownames(mat) || !from %in% colnames(mat) || !to %in% colnames(mat)) {
+      skipped <- c(skipped, sprintf("%s/%s->%s", s, from, to)); next
+    }
+    amt <- min(frac * d$lead_pcv[i], mat[s, from])
+    mat[s, from] <- mat[s, from] - amt
+    mat[s, to]   <- mat[s, to] + amt
+    applied <- applied + 1L
+  }
+  attr(mat, "departed_origin") <- list(applied = applied, skipped = skipped, cases = d)
+  mat
 }

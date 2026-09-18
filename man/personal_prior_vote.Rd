@@ -12,7 +12,8 @@ personal_prior_vote(
   major_discount = NULL,
   pooled = NULL,
   loser_discount = NULL,
-  minor_discount = NULL
+  minor_discount = NULL,
+  minor_discount_loser = NULL
 )
 }
 \arguments{
@@ -57,12 +58,48 @@ for a candidate who switched between two NON-major classes (e.g. ONP to
 KAP/OTH_RIGHT) -- \code{prev_best} above matches on IDENTITY regardless of
 party, so without this the old class's full, undiscounted result carries
 forward as the new class's base. \code{NULL} (the default) leaves this
-byte-identical to before the parameter existed. The value the harnesses
-pass is \code{\link[=fit_minor_defector_discount]{fit_minor_defector_discount()}}'s own return -- a MEDIAN over 18
-corpus cases, 0.3255 for most targets. (The review's headline "49\%" is a
-geometric mean at a lower \code{min_prior} and is NOT what ships; see that
-function's docstring.) See
+byte-identical to before the parameter existed. When \code{minor_discount_loser}
+is also given (two-rate mode), this rate applies ONLY to a switcher whose
+sitting-member status at the prior election is UNKNOWN (no \code{elected}
+column) -- a confirmed sitting member gets NO discount at all (see
+\code{minor_discount_loser}'s own doc for why), so this becomes the fallback
+rate for the one case that is neither confirmed sitting nor confirmed
+non-sitting. Without \code{minor_discount_loser}, this applies to every
+switcher (the old, single-rate behaviour). The value the harnesses pass
+is \code{\link[=fit_minor_defector_discount]{fit_minor_defector_discount()}}'s own pooled \code{discount} field -- a
+MEDIAN over 18 corpus cases, 0.3255 for most targets. (The review's
+headline "49\%" is a geometric mean at a lower \code{min_prior} and is NOT
+what ships; see that function's docstring.) See
 \verb{docs/reviews/minor-to-minor-defector-2026-09-16.md}.}
+
+\item{minor_discount_loser}{Optional numeric. Rate applied to a
+minor-to-minor (or minor-to-IND, IND-to-minor) switcher CONFIRMED NOT to
+be the sitting member at the prior election. \code{NULL} (the default) gives
+every switcher \code{minor_discount}'s single rate, byte-identical to before
+this parameter existed.
+
+A CONFIRMED SITTING MEMBER gets NO discount when this is set -- not a
+fitted "sitting-member rate". Found 2026-09-17 tracing why Murray,
+Orange and Barwon's real sitting-member Shooters-Fishers-and-Farmers-to-
+Independent departures (retention 108-136\%) were badly under-predicted
+by the single pooled rate, and revised 2026-09-18 after actually
+shipping a fitted sitting-member rate and finding it made those same
+three seats WORSE, not better: \code{\link[=fit_minor_defector_discount]{fit_minor_defector_discount()}}'s
+leave-target-out fit for nsw2023 draws only on the other two sitting
+cases (Mirani 0.79, Kennedy 0.63), giving 0.71 -- an underestimate for
+seats that actually retained 108-136\%. Leave-one-out cross-validated
+against all 5 sitting-member corpus cases (Barwon 1.36, Murray 1.30,
+Orange 1.08, Mirani 0.79, Kennedy 0.63): predicting flat 1.0 (no
+discount) gives HALF the squared error (0.405) of predicting each case
+from the other four's median (0.782) -- n=5 is too thin to fit a rate
+below 1 usefully, and the corpus median/mean (1.08 / 1.03) both sit
+almost exactly on "keep it all" anyway. The 13-case non-sitting rate
+(median 0.276) has no such problem and is used as fitted.
+
+A switcher whose prior status is unknown (\code{prev_was_mp} is NA -- older
+data with no \code{elected} column) gets \code{minor_discount}, not this rate --
+"unknown" is never read as "definitely not the sitting member".
+\verb{docs/reviews/minor-defector-two-rate-2026-09-17.md}.}
 }
 \value{
 A \code{data.table} of \code{seat}, \code{party}, \code{own_prev_pcv} (\code{NA_real_} where

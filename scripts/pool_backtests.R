@@ -47,6 +47,7 @@ if (!length(files)) stop("No backtest files in ", OUT)
 # no trace, in the one script whose entire job is to be the trustworthy
 # cross-election number. Each drop reason is now named (PB0!), and the
 # completeness check below (PB2c) catches a pair missing ENTIRELY.
+skipped_files <- data.table(file = character(0), mtime = as.POSIXct(character(0)))
 rows <- rbindlist(lapply(files, function(f) {
   d <- tryCatch(fread(f, showProgress = FALSE), error = function(e) {
     cat(sprintf("PB0! %s: unreadable (%s) -- dropped\n", basename(f), conditionMessage(e)))
@@ -58,6 +59,31 @@ rows <- rbindlist(lapply(files, function(f) {
   if (is.na(pcol) || !all(c("pred", "actual") %in% names(d))) {
     cat(sprintf("PB0! %s: missing prob/p/pred/actual column(s) -- dropped\n", basename(f)))
     return(NULL)
+  }
+  # A stage-1 run of scripts/rebuild_forecasts.sh (AUSPOL_XGB_PRIMARY=0, the
+  # base_pred-only baseline the xgb layer is trained on) writes win files
+  # that look exactly like scored ones and are the NEWEST on disk for the
+  # hour until stage 6 finishes. Its sibling sharedetail carries the flag;
+  # a win file whose sibling says xgb was off is not a forecast and never
+  # scores here. (Added 2026-09-18 after the ledger silently mixed vintages.)
+  suf <- regmatches(basename(f), regexpr("-a[0-9a-f]+-g[0-9a-f]+x?[.]csv$", basename(f)))
+  if (length(suf)) {
+    sib <- list.files(OUT, pattern = paste0("sharedetail.*", sub("[.]csv$", "", suf), "[.]csv$"), full.names = TRUE)
+    if (!length(sib)) {
+      # Every harness writes its sharedetail beside its win file; a win file
+      # with no sibling is a run still in flight (or one killed before it
+      # finished), and its flag is unknown. Unknown is not "scored".
+      cat(sprintf("PB0  %s: no sibling sharedetail yet (run in flight or incomplete) -- skipped\n", basename(f)))
+      skipped_files <<- rbind(skipped_files, data.table(file = f, mtime = file.mtime(f)))
+      return(NULL)
+    }
+    s1 <- fread(sib[1], showProgress = FALSE, nrows = 1)
+    if ("xgb_primary_on" %in% names(s1) && s1$xgb_primary_on[1] != 1L) {
+      cat(sprintf("PB0  %s: sibling sharedetail has xgb_primary_on=%s (a base_pred-only stage-1 run) -- not a forecast, skipped\n",
+                  basename(f), s1$xgb_primary_on[1]))
+      skipped_files <<- rbind(skipped_files, data.table(file = f, mtime = file.mtime(f)))
+      return(NULL)
+    }
   }
   if (!"pair" %in% names(d)) {
     m <- regmatches(basename(f), regexpr("(fed|vic|nsw|sa|qld|wa)[0-9]{4}", basename(f)))
@@ -87,6 +113,18 @@ if (length(.missing)) {
 # arms of the same pair must never be averaged together, which is what globbing
 # everything would silently do.
 pick <- rows[, .(mtime = max(mtime)), by = pair]
+# A SKIPPED FILE NEWER THAN THE CHOSEN ONE IS SAID OUT LOUD. The sibling
+# guard above drops in-flight or base_pred-only win files, and the newest
+# SURVIVING file is then pooled -- which is right while a rebuild is
+# running, and wrong if the newest run crashed between its win file and
+# its sharedetail (review gate, 2026-09-18). Both look the same from here.
+if (nrow(skipped_files)) {
+  for (pr in pick$pair) {
+    nf <- skipped_files[grepl(paste0("(^|[^a-z])", sub("[0-9]{4}$", "", pr), "|", pr), basename(skipped_files$file)) & skipped_files$mtime > pick[pair == pr]$mtime]
+    if (nrow(nf)) cat(sprintf("PB2s! %s: pooled file is older than %d skipped file(s) (in flight, incomplete, or xgb off): %s\n",
+                              pr, nrow(nf), paste(basename(nf$file), collapse = ", ")))
+  }
+}
 rows <- merge(rows, pick, by = c("pair", "mtime"))
 # A pair can still tie on mtime across two arms; keep one file per pair.
 keep <- rows[, .(file = file[1]), by = pair]
@@ -156,6 +194,10 @@ by_region <- rows[, .(pairs = uniqueN(pair), n = .N, accuracy = round(mean(hit),
                   by = .(region = sub("[0-9]{4}$", "", pair))][order(region)]
 cat("\nPB4  by jurisdiction\n"); print(by_region)
 
-fwrite(per[, .(pair, n, accuracy, brier, logloss, code, mtime)],
+# `file` is written so downstream consumers (scripts/ledger_inputs.R) can
+# take their sharedetail / allprobs / ourtcp inputs from the SAME harness run
+# as this win file, by its arm+git hash suffix -- not "the newest file by
+# name", which on 2026-09-18 mixed three vintages into one ledger page.
+fwrite(per[, .(pair, n, accuracy, brier, logloss, code, mtime, file = basename(file))],
        file.path(OUT, "pooled-backtest.csv"))
 cat(sprintf("\nPB5  wrote %s\n", file.path(OUT, "pooled-backtest.csv")))

@@ -24,27 +24,63 @@
 #'   surged — see [candidate_returns()] and [surging_parties()].
 #' @param min_fire Minimum share of the field that must register for the screen
 #'   to apply at all.
+#' @param min_jump Minimum salience magnitude to count as "fired", not merely
+#'   nonzero. Added 2026-09-18: `jump > 0` treated any nonzero reading as full
+#'   permission (uniform-swing carryforward, slope 1.0 in
+#'   [screened_slopes()]) with no regard for size -- Mallee and Maranoa
+#'   fed2022 both fired on jump ~0.01, a barely-there signal, and both were
+#'   over-predicted roughly 2x. Checked against every governed candidate
+#'   across the 7 elections this screen is scored on: the SMALLEST jump among
+#'   the 9 governed winners with `jump > 0` is 0.0352 (Michael Regan,
+#'   Wakehurst nsw2023) -- Pete asked for the actual number rather than
+#'   trusting a round threshold with unmeasured margin below it, which is
+#'   what an earlier pass at this (0.02) was. `0.03` sits just under that
+#'   true boundary rather than exactly on it, and reclassifies 279 of 339
+#'   governed non-winners below it as "not fired" with zero winners lost --
+#'   279, not the 244 an unexamined 0.02 would have caught. `0` reproduces
+#'   the original behaviour exactly.
 #' @return Logical vector, `TRUE` where the candidate may emerge. Ungoverned
 #'   candidates are always `TRUE`: the screen makes no claim about them.
 #' @export
-salience_screen <- function(jump, governed, min_fire = 0.10) {
+salience_screen <- function(jump, governed, min_fire = 0.10, min_jump = 0.03) {
   if (length(jump) != length(governed)) {
     stop("jump and governed must be the same length: ", length(jump), " vs ",
          length(governed), call. = FALSE)
   }
   if (!length(jump)) return(logical(0))
   jump[!is.finite(jump)] <- 0
-  fired <- jump > 0
+  # TWO DIFFERENT TESTS, kept on TWO DIFFERENT BARS. `registered` (jump > 0,
+  # the original bar) answers a DATA-COVERAGE question -- does this election
+  # have enough salience readings at all to trust the screen ("South
+  # Australia had 7 of 111 candidates fire; federal elections have a
+  # third"). `fired` (jump >= min_jump) answers a SIGNAL question -- does
+  # THIS candidate's own reading clear noise. The first version of min_jump
+  # used `fired` for BOTH, which silently broke the coverage test: raising
+  # the per-candidate bar mechanically drops the measured registration rate
+  # too (fed2022 read 2%, not its real ~33%), so `mean(fired) < min_fire`
+  # fired the GLOBAL "screen doesn't apply, permit everyone" bypass for the
+  # WHOLE election -- exactly cancelling the fix it was meant to sit beside.
+  # Caught only by testing the fix end-to-end and seeing zero movement on a
+  # known case (Maranoa/ONP) instead of trusting the unit change in
+  # isolation.
+  registered <- jump > 0
+  fired <- jump >= min_jump
   # DECIDED FROM THE FIELD, with no outcome data.
-  if (mean(fired) < min_fire) return(rep(TRUE, length(jump)))
+  if (mean(registered) < min_fire) return(rep(TRUE, length(jump)))
   # Silence is only evidence about candidates the screen governs.
   !governed | fired
 }
 
 #' Share of a field that registers any campaign salience
 #'
-#' The quantity the registration test reads. Reported separately so a run can
-#' print it before any result is looked at.
+#' The quantity the registration test (`min_fire`) reads -- a DATA-COVERAGE
+#' question, deliberately kept on the original `jump > 0` bar, not the
+#' higher per-candidate `min_jump` signal bar `salience_screen()` uses for
+#' its "fired" decision. Conflating the two once made a normal-coverage
+#' election (fed2022, ~33%) read as a data-starved one (2%) and silently
+#' disabled the screen entirely -- see the comment in `salience_screen()`
+#' itself. Reported separately so a run can print it before any result is
+#' looked at.
 #'
 #' @param jump Numeric campaign-salience values.
 #' @return Proportion in `[0, 1]`.
@@ -258,8 +294,20 @@ governed_population <- function(election, prev_election, region,
     prev_keys <- unique(c(paste(pseat_pre[.valid], pk[.valid]),
                           paste(pseat_post[.valid], pk[.valid])))
     ret <- nzchar(sk) & !is.na(sk) & paste(sseat, sk) %in% prev_keys
-    # PERSON-LEVEL prev_party FOR IND/OTH, added 2026-09-04. Everywhere else
-    # in this function, `prev_party` is the CLASS's own max(pcv) in the seat
+    # PERSON-LEVEL prev_party FOR IND/OTH/OTH_RIGHT. IND/OTH added 2026-09-04;
+    # OTH_RIGHT added 2026-09-18 after Murray Plains vic2022 showed the exact
+    # same fault one class over: OTH_RIGHT is classify_party()'s catch-all for
+    # a heterogeneous set of unrelated minor-right registrations (Family
+    # First, Katter's, Shooters Fishers and Farmers, United Australia,
+    # Liberal Democrats, ...), not one continuous organisation the way
+    # ONP/GRN are -- structurally the same "label, not a party" shape as
+    # IND/OTH, just never extended to it. Murray Plains' class-level
+    # prev_party (16.0%) belonged to whichever OTH_RIGHT candidate/party
+    # topped it last time, not the specific 2022 candidate (who registered
+    # zero salience), so `governed` read FALSE ("already established, screen
+    # makes no claim") and the class carried a full uniform-swing slope
+    # forward on someone else's result. Everywhere else in this function,
+    # `prev_party` is the CLASS's own max(pcv) in the seat
     # (fetch_salience_v6.R), which is a reasonable "does this party already
     # have a foothold here" signal for ALP/LNP/NAT/GRN/ONP -- those labels
     # denote one continuous organisation. IND (and the OTH catch-all) carry
@@ -281,7 +329,7 @@ governed_population <- function(election, prev_election, region,
       own_pcv = rep(PREVT$pcv[.valid], 2))[, .(own_pcv = max(own_pcv, na.rm = TRUE)), by = pkey]
     own_v <- stats::setNames(own_prevp$own_pcv, own_prevp$pkey)[paste(sseat, sk)]
     own_v <- unname(own_v); own_v[is.na(own_v)] <- 0
-    .indoth <- SAL$party %in% c("IND", "OTH")
+    .indoth <- SAL$party %in% c("IND", "OTH", "OTH_RIGHT")
     SAL[.indoth, prev_party := own_v[.indoth]]
   } else ret <- rep(FALSE, nrow(SAL))
   # EXCLUDES MAJOR PARTIES, added 2026-09-04. This function had no such

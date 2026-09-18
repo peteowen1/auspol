@@ -71,7 +71,7 @@ for (r in region_levels) ALL[[paste0("region_", r)]] <- as.integer(ALL$region ==
 # unmitigated by that result. Leave it out until Victorian notional data
 # exists; if it is ever added here, xgb_primary_predict_live() must build the
 # column too, or the stop() guard in R/xgb_primary_override.R will fire.
-feat_cols <- c("base_pred", "seat_prev_pcv", "level_prev", "level_pred", "level_from_polls", "dev_prev",
+feat_cols <- c("base_pred", "seat_prev_pcv", "seat_outperf", "level_prev", "level_pred", "level_from_polls", "dev_prev",
                "n_cand_prev", "n_cand_now", "same_i", "same_mp_i", "is_major_i",
                "margin", "fed_swing", "retirement_i", "soph_cand_i", "soph_party_i",
                "prev_swing", "is_incumbent_party_i", "own_prev_pcv",
@@ -92,6 +92,24 @@ params <- list(objective = "reg:squarederror", eta = 0.05, max_depth = 4,
 pairs <- sort(unique(ALL$pair))
 fold_id <- match(ALL$pair, pairs)
 dtrain <- xgb.DMatrix(data = X, label = y, missing = NA)
+# MUST MATCH fit_xgb_primary_v6.R's AUSPOL_XGB_BASE_MARGIN (shipped 2026-09-17
+# at "2" -- base_margin set AND base_pred kept as a feature, both already true
+# of feat_cols above). Training this FINAL model without base_margin while the
+# OOF/backtest model has it would silently serve predictions on the wrong
+# scale entirely: predict() with no base_margin falls back to the model's own
+# base_score (near-zero, since training labels are effectively
+# actual_share - base_pred), so the live forecast would return something like
+# "the residual" instead of "the residual plus base_pred" -- not a subtle
+# miscalibration, a catastrophically wrong number for every seat.
+# xgb_primary_predict_live() (R/xgb_primary_override.R) must supply the same
+# base_margin at PREDICT time for this to be correct -- checked and fixed the
+# same day this comment was written.
+.base_margin_mode <- Sys.getenv("AUSPOL_XGB_BASE_MARGIN", "2")
+if (.base_margin_mode %in% c("1", "2")) {
+  xgboost::setinfo(dtrain, "base_margin", ALL$base_pred)
+  cat(sprintf("training FINAL model with base_margin=base_pred (AUSPOL_XGB_BASE_MARGIN=%s)\n",
+              .base_margin_mode))
+}
 
 cat("running xgb.cv (grouped folds by election pair) to fix nrounds...\n")
 set.seed(42)

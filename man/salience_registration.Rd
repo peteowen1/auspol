@@ -13,6 +13,12 @@ salience_registration(jump)
 Proportion in \verb{[0, 1]}.
 }
 \description{
-The quantity the registration test reads. Reported separately so a run can
-print it before any result is looked at.
+The quantity the registration test (\code{min_fire}) reads -- a DATA-COVERAGE
+question, deliberately kept on the original \code{jump > 0} bar, not the
+higher per-candidate \code{min_jump} signal bar \code{salience_screen()} uses for
+its "fired" decision. Conflating the two once made a normal-coverage
+election (fed2022, ~33\%) read as a data-starved one (2\%) and silently
+disabled the screen entirely -- see the comment in \code{salience_screen()}
+itself. Reported separately so a run can print it before any result is
+looked at.
 }

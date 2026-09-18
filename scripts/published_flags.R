@@ -28,7 +28,27 @@ PUBLISHED_FLAGS <- c(
   AUSPOL_COV_LOO             = "1",          # statewide correlation held out of its own target; 0 = the in-sample matrix
   AUSPOL_LEVEL_SD            = "1.10,8.67",  # level-dependent seat variance, a + b*sqrt(p(1-p))
   AUSPOL_DEV_SLOPE_MODE      = "screened",   # candidate-conditional slopes + salience screen (arm CS)
-  AUSPOL_HONOUR_DEPARTED     = "0",          # 1 = a departed class leader's base decays at the new-candidate slope even when the screen permits a newcomer; measured and refused 2026-09-06 on a federal wash (New England vs Wentworth), re-measurement queued 2026-09-13 on the fuller 89-case corpus -- docs/plans/prereg-vote-belongs-to-the-person-2026-09-06.md
+  AUSPOL_HONOUR_DEPARTED     = "1",          # a departed class leader's base decays toward the measured 0.38 retention rate, independent of whether the screen separately permits a new emergence (0.907/1.0 previously applied even when the "same" candidate was an unrelated minor figure, e.g. Morwell/Tracie Lund masking Russell Northe's real departure). 2026-09-06's refusal conflated "departure" with "no new emergence" as one mechanism; re-measured 2026-09-18 on the fuller 593-case corpus -- docs/reviews/departed-leader-retention-2026-09-15.md, docs/reviews/departed-leader-honour-fix-2026-09-18.md. Isolated in base_pred: pooled log loss 0.2810->0.2801 (5 harnesses, n=1751), vic2022 alone 0.2789->0.2587, Morwell 3.049->1.877.
+  AUSPOL_DEPARTED_ORIGIN     = "0",          # MEASURING 2026-09-18 (docs/plans/prereg-departed-origin-return-2026-09-18.md): when a departed
+                                             # non-major class leader earlier stood for a major party in the seat, route a fitted share of
+                                             # their prior vote back to that party in the prior matrix ("1" = leave-target-out median ~0.21,
+                                             # "mean" ~0.36) before the departed decay applies to the rest. Morwell vic2022 (Northe, National ->
+                                             # IND -> retired; Nationals 27.2 predicted vs 38.4). route_departed_origin(), all six harnesses +
+                                             # fit_seats_full.R at the remove_transferred_votes() step. "0" = today's pro-rata release.
+  AUSPOL_MAJOR_DEPARTED      = "1",          # SHIPPED 2026-09-18 (docs/plans/prereg-major-departed-slope-2026-09-18.md): ALP/LNP seats
+                                             # whose sitting member did not re-stand get a fitted (leave-target-out) slope on their deviation
+                                             # from the statewide level instead of 1.0 -- base_pred over-predicts them by 2.8 points on 361
+                                             # cells, scaling with the vote. fit_major_departed_slope(), conditional_slopes(major_departed=).
+                                             # Measured base_pred-only, 20k sims, all 23 pairs: departed-cell error 5.37 -> 4.66 points
+                                             # (-0.71, SE 0.11), bias 2.7 -> 1.0; pooled seat log loss 0.2979 -> 0.2951, 14 of 23 pairs
+                                             # better; other classes in those seats unchanged. Parramatta 2.20 -> 1.47, Monaro 2.66 -> 1.98.
+  AUSPOL_MAJOR_SLOPE         = "1",          # SHIPPED 2026-09-18 (docs/plans/prereg-major-present-slope-2026-09-18.md): every OTHER ALP/LNP
+                                             # cell (member stayed, or class never held the seat) gets a fitted leave-target-out slope on its
+                                             # deviation too -- a major predicted under 15 lands +3.4 higher on average, one over 55 lands
+                                             # -1.6 lower. fit_major_departed_slope()$slope_present (ALP ~0.95, LNP ~0.89), conditional_slopes(
+                                             # major_present=). Measured on top of AUSPOL_MAJOR_DEPARTED, base_pred-only, 20k sims: non-departed
+                                             # cell error 3.579 -> 3.530 (-0.049, SE 0.013), the 0-15 band -0.77; pooled log loss 0.2951 ->
+                                             # 0.2957 (within 1 SE), accuracy 0.8878 -> 0.8902. New England ALP 12.7 -> 14.0 (actual 18.6).
   AUSPOL_NOTIONAL            = "2",          # redistribution-adjusted (notional) prior for EVERY seat build_notional_baselines.R covers, not just brand-new names; upgraded from "1" (missing-seat fallback only) 2026-09-13 -- Antony Green's own booth-respread method, leakage-free. Currently a no-op under AUSPOL_XGB_PRIMARY=1 (which overrides the table this feeds) except the few cells XGB has no prediction for; shipped anyway because it is the methodologically correct baseline, not because it moves the pooled number -- docs/reviews/notional-prior-redistribution-2026-09-13.md
                                              # HOW FAR THIS ACTUALLY REACHES (2026-09-14, found by the review gate): the FEDERAL BACKTEST only. fit_seats_full.R -- the live Victorian forecast -- has no notional path at all, and build_notional_baselines.R reads the federal AEC polling-place download, so it cannot produce Victorian data. Nor does fit_xgb_primary_v6_final.R, which builds the model artifact xgb_primary_predict_live() serves, so output/xgb-primary-v6-final-cols.json carries no x_notional_adj either. Setting this flag does not change the published Victoria 2026 numbers; it changes what the federal backtest measures.
   AUSPOL_MP_SLOPE            = "1",          # sitting-member slope tier from output/mp-slope-by-*.csv
@@ -129,6 +149,10 @@ PUBLISHED_FLAGS <- c(
                                              #
                                              # Costs ~3x runtime per pair. Set to "0" to revert; no other change
                                              # needed. docs/reviews/xgb-primary-x-flows-2x2-2026-09-11.md
+  AUSPOL_FLOW_ASAT           = "1",          # SHIPPED 2026-09-18: the per-election flow model the harnesses read is trained on EARLIER
+                                             # elections only (scripts/fit_xgb_flows_asat.R, output/xgb-flows-v1-asat-<election>.model),
+                                             # not the leave-one-election-out model that sees later elections. Same leak, same fix as
+                                             # AUSPOL_XGB_PRIMARY_OOF. Not a scored change: an honest number replacing a leaked one.
   AUSPOL_FLOW_FRAG           = "1",          # 1 = the flow model also sees lead_primary, the seat's LEADING
                                              # first-preference share. Flows track how fragmented the field is,
                                              # not how close the contest is: the 2CP margin's slope collapses
@@ -170,6 +194,31 @@ PUBLISHED_FLAGS <- c(
                                              # retain 70-97% of their vote, so full removal massively under-predicts
                                              # almost everywhere -- kept inert for reuse, not because the question
                                              # is still open. docs/plans/prereg-major-defector-conserve-2026-09-17.md
+  AUSPOL_ASAT_MIN_PAIRS      = "4",          # fit_xgb_primary_asat.R: a target election gets its own point-in-time
+                                             # model only if at least this many earlier pairs exist to train it on;
+                                             # below that it keeps base_pred and the log says so. Added 2026-09-18
+                                             # with the as-at models (see AUSPOL_XGB_PRIMARY_OOF below).
+  AUSPOL_XGB_BASE_MARGIN     = "2",          # fit_xgb_primary_v6.R: 2 = base_pred set as the training DMatrix's
+                                             # base_margin AND kept as an ordinary feature -- forces every tree to
+                                             # boost on the residual to base_pred while still letting the tree use
+                                             # base_pred's own value to size the correction. (1 = margin-only,
+                                             # base_pred removed as a feature -- measured WORSE than plain-feature,
+                                             # 3.8563 vs 3.8012 pooled all-23 RMSE; not shipped.)
+                                             # SHIPPED 2026-09-17, decided against AEF7 (fed2022/fed2025/nsw2023/
+                                             # qld2024/sa2026/vic2022/wa2025) as the working criterion, per Pete's
+                                             # call that day: faster to iterate on than the full 23-pair pooled bar.
+                                             # Pooled AEF7 primary RMSE: 3.6082 (base_margin) vs 3.6662 (plain
+                                             # feature) vs 3.6715 (v7f, the mechanism this REPLACES -- see
+                                             # AUSPOL_XGB_PRIMARY_OOF below). Also beats v7f pooled across all 23
+                                             # pairs (3.7603 vs 3.7914). Driven mostly by sa2026 (One Nation, the
+                                             # single pair the standing AEF gap analysis names as our biggest
+                                             # deficit): 4.852 -> 4.219 vs v6-plain, 5.096 -> 4.219 vs v7f.
+                                             # On the full 23-pair pooled SEAT log loss bar (the OTHER standing
+                                             # criterion, CLAUDE.md's "THE OBJECTIVE"), this arm was measured
+                                             # 2026-09-17 and REFUSED (0.2841 -> 0.2880, worse, concentrated in 2 of
+                                             # 23 pairs) -- shipped anyway on the AEF7 decision, which is a policy
+                                             # change from that standing rule, not a reversal of the seat-log-loss
+                                             # measurement. docs/NEXT-STEPS.md carries both numbers.
   AUSPOL_MINOR_DEFECT        = "1",          # discount a candidate's own_prev_pcv when they switched between two
                                              # NON-major parties (Stephen Andrew, ONP -> KAP, Mirani qld2024) --
                                              # fit_minor_defector_discount(), leave-target-out median, same shape as
@@ -178,6 +227,30 @@ PUBLISHED_FLAGS <- c(
                                              # 0.49, p=0.0003), measured: targeted RMSE 9.2363 -> 8.8813, pooled RMSE
                                              # 3.8161 -> 3.8178 (well within the ~0.014-per-column noise floor found
                                              # the same session). docs/reviews/minor-to-minor-defector-2026-09-16.md
+  AUSPOL_MINOR_DEFECT_BASE_PRED = "1",       # SHIPPED 2026-09-18, reversing the 2026-09-16 refusal. Same
+                                             # mechanism as AUSPOL_MINOR_DEFECT above but reaching base_pred
+                                             # (dev_slope()), not just the xgb feature -- gated separately because
+                                             # the single-rate version was refused here 2026-09-16 (helped Mirani,
+                                             # targeted RMSE 8.8813 -> 11.4315, worse). Revised to a two-rate split
+                                             # (personal_prior_vote()'s minor_discount/minor_discount_loser) after
+                                             # finding Murray/Orange/Barwon (nsw2023, real sitting Shooters-
+                                             # Fishers-and-Farmers-to-Independent departures, retention 108-136%)
+                                             # were badly under-predicted by the single pooled rate. A CONFIRMED
+                                             # SITTING MEMBER gets NO discount at all (not a fitted rate) --
+                                             # leave-one-out cross-validated against all 5 sitting corpus cases,
+                                             # flat 1.0 halves the squared error a fitted rate gets (0.405 vs
+                                             # 0.782; n=5 is too thin to fit below 1 usefully). A confirmed
+                                             # NON-sitting switcher still gets the fitted rate (median 0.276,
+                                             # n=13, well-powered). Measured: pooled RMSE across the 14
+                                             # affected pairs 4.0554 -> 4.0568 (n=8910, negligible), Murray/
+                                             # Orange/Barwon move from ~14-18 to 52.44/39.78/37.25 (actual
+                                             # 53.08/53.31/45.83) -- a large, correctly-directed improvement.
+                                             # Honest trade-off: Mirani and Kennedy (the other 2 of 5 sitting
+                                             # cases, both of whom actually LOST vote) also revert to NO
+                                             # discount, undoing 2026-09-16's Mirani-specific improvement --
+                                             # accepted because the aggregate evidence favours one rule over
+                                             # cherry-picking per seat. docs/reviews/minor-defector-two-rate-
+                                             # 2026-09-17.md.
   AUSPOL_XGB_SEATPREV_NAFILL = "1",          # fit_xgb_primary_v6.R (build-time) AND xgb_primary_predict_live()
                                              # (live serving, R/xgb_primary_override.R) -- both must read the same
                                              # default or a retrain reintroduces a train/serve mismatch (found by
@@ -347,9 +420,11 @@ PUBLISHED_FLAGS <- c(
   AUSPOL_FLOW_SD             = "0",
   AUSPOL_FALLBACK_SMOOTH     = "0",
   AUSPOL_XGB_PRIMARY         = "1",          # harness-only: 1 = replace every seat's primaries with the challenger's
-                                             # LEAVE-ONE-PAIR-OUT out-of-fold predictions. This is the backtest
-                                             # counterpart of AUSPOL_XGB_PRIMARY_LIVE and is leakage-free by
-                                             # construction; the live flag above is the one that ships.
+                                             # predictions from the file AUSPOL_XGB_PRIMARY_OOF names -- since
+                                             # 2026-09-18 the POINT-IN-TIME ("as at") models, one per election,
+                                             # trained only on earlier elections; before that, leave-one-pair-out.
+                                             # This is the backtest counterpart of AUSPOL_XGB_PRIMARY_LIVE and is
+                                             # leakage-free by construction; the live flag above is the one that ships.
                                              #
                                              # SET TO "1" 2026-09-11, in the same commit that shipped the flows.
                                              # It was "0" while AUSPOL_XGB_PRIMARY_LIVE was "1", which broke this
@@ -457,25 +532,50 @@ PUBLISHED_FLAGS <- c(
                                              # protect a 0.014 number on elections already decided.
                                              # Was OFF from b2c5572 to e8c5eab, when the live path had no Victorian
                                              # candidate data and this would have made the 0-default a false claim.
-  AUSPOL_XGB_PRIMARY_OOF     = "output/xgb-primary-shipped-oof-predictions.csv",
-                                             # harness-only: which oof file the line above reads. Points at v7's
-                                             # ret_exp arm (the IND retention feature, docs/reviews/xgb-primary-
-                                             # retention-feature-2026-09-13.md) since 2026-09-13 -- confirmed a real,
-                                             # replicable effect (pooled delta -0.0016 to -0.0017 across two seeds,
-                                             # not noise), shipped on Pete's call alongside the notional-prior fix.
+  AUSPOL_XGB_PRIMARY_OOF     = "output/xgb-primary-asat-predictions.csv",
+                                             # harness-only: which predictions file the line above reads.
+                                             # REPOINTED 2026-09-18 to the POINT-IN-TIME models
+                                             # (scripts/fit_xgb_primary_asat.R): one model per election, trained
+                                             # only on pairs whose polling day precedes it, same recipe and
+                                             # base_margin mode as the production model (fit_xgb_primary_v6_final.R,
+                                             # cutoff = now). Pete's call: the AEF-7 ledger is the debugging surface
+                                             # for PRODUCTION, so it must be produced by the production pipeline
+                                             # frozen at an earlier date -- not by a leave-one-out cache that lets
+                                             # fed2022's model learn from fed2025. The leave-one-out file
+                                             # (xgb-primary-v6-oof-predictions.csv) is a diagnostic now, still
+                                             # written by fit_xgb_primary_v6.R, never shipped. Rebuild everything
+                                             # in the non-circular order with scripts/rebuild_forecasts.sh.
+                                             # Previously REPOINTED
+                                             # 2026-09-17 from v7's "v7f" arm straight to v6's own output -- v7
+                                             # (fit_xgb_primary_v7.R) is BYPASSED for primary-vote shipping as of
+                                             # this change, not because v7's own features (jump_pctile fix,
+                                             # candidate-level features, the ret_exp IND-retention feature that
+                                             # justified pointing here in the first place) stopped working, but
+                                             # because v6 WITH base_margin (AUSPOL_XGB_BASE_MARGIN=2 above) measured
+                                             # better than v7f, fresh, same day: pooled AEF7 primary RMSE 3.6082 vs
+                                             # v7f's 3.6715, and 3.7603 vs 3.7914 pooled across all 23 pairs. v7's
+                                             # own gains were real when measured (2026-09-13) but did not survive
+                                             # being re-compared against a v6 that now also has base_margin -- v7
+                                             # itself was never re-run WITH base_margin threaded through its own
+                                             # separate training code (an "800+ line exploratory file" per its own
+                                             # header, per Pete's call not attempted the same day). Re-integrating
+                                             # v7's features on top of base_margin is the natural next arm, not
+                                             # done here. docs/NEXT-STEPS.md carries the full trace.
+                                             #
                                              # output/ is gitignored, so this filename is the ONLY durable record of
                                              # what ships -- regenerate it with:
                                              #   for y in 2010 2013 2016 2019 2022 2025; do  # prior is the election before
                                              #     AUSPOL_NB_TARGET=$y AUSPOL_NB_PRIOR=<prev> Rscript scripts/build_notional_baselines.R
                                              #   done
                                              #   Rscript scripts/fit_xgb_primary_v6.R
-                                             #   AUSPOL_V7_ARMS="v7c,v7f" AUSPOL_V7_SHIP="v7f" Rscript scripts/fit_xgb_primary_v7.R
-                                             #   cp output/xgb-primary-v7-oof-predictions.csv output/xgb-primary-shipped-oof-predictions.csv
-                                             # THE FIRST STEP IS NOT OPTIONAL and was missing from this recipe until
-                                             # 2026-09-14. build_notional_baselines.R does ONE pair per invocation, and
-                                             # output/ is gitignored -- so on a fresh checkout the file does not exist,
-                                             # v6 logs "XG6n! ... missing" and carries on, and the "shipped" oof file
-                                             # comes out silently WITHOUT the notional prior it is supposed to carry.
+                                             # THE NOTIONAL-BASELINES STEP IS NOT OPTIONAL and was missing from this
+                                             # recipe until 2026-09-14. build_notional_baselines.R does ONE pair per
+                                             # invocation, and output/ is gitignored -- so on a fresh checkout the
+                                             # file does not exist, v6 logs "XG6n! ... missing" and carries on, and
+                                             # the "shipped" oof file comes out silently WITHOUT the notional prior
+                                             # it is supposed to carry. v7 is NO LONGER PART OF THIS RECIPE -- do not
+                                             # run fit_xgb_primary_v7.R to regenerate this file; that would silently
+                                             # re-point at the mechanism this change moved away from.
                                              # v6 must run before v7: v7 loads its persisted feature matrix as its base,
                                              # including the notional-prior x_notional_adj column. Set to "" to fall
                                              # back to plain v6 (output/xgb-primary-v6-oof-predictions.csv).

@@ -261,6 +261,25 @@ PAIRS <- list(
   list(from = 2014, to = 2018),
   list(from = 2018, to = 2022))
 
+# RESTRICT TO ONE OR MORE PAIRS, AUSPOL_VIC_PAIR (default "" = all three).
+# Comma-separated target years, e.g. "2022" or "2018,2022". Added
+# 2026-09-17: this was the only harness among fed/nsw/qld/sa/vic/wa with no
+# restriction flag despite being the LIVE TARGET jurisdiction, so checking one
+# seat in one pair meant rerunning the whole file. Same mechanism as
+# AUSPOL_NSW_PAIR/AUSPOL_QLD_PAIR/AUSPOL_SA_PAIR, generalised to a set because
+# this harness runs several pairs per invocation rather than picking one.
+.vic_pair_sel <- Sys.getenv("AUSPOL_VIC_PAIR", "")
+if (nzchar(.vic_pair_sel)) {
+  .want <- trimws(strsplit(.vic_pair_sel, ",")[[1]])
+  .have <- vapply(PAIRS, function(p) as.character(p$to), character(1))
+  if (!all(.want %in% .have))
+    stop("AUSPOL_VIC_PAIR must be one or more of ", paste(.have, collapse = ", "),
+         " (comma-separated), and included ", paste(setdiff(.want, .have), collapse = ", "))
+  PAIRS <- PAIRS[.have %in% .want]
+  cat(sprintf("BV0p  AUSPOL_VIC_PAIR restricts this run to: %s\n",
+              paste(vapply(PAIRS, function(p) sprintf("%d->%d", p$from, p$to), character(1)), collapse = ", ")))
+}
+
 # Polling day, per target election. This was a ternary reading
 # `if (K$to == 2018L) ... else ...`, which silently gave any third pair the
 # 2022 date -- a leakage bug the moment a pair was added, and one that nothing
@@ -473,22 +492,60 @@ for (K in PAIRS) {
   # MINOR-TO-MINOR DEFECTOR DISCOUNT reaching base_pred, not just the xgb
   # feature -- docs/reviews/base-pred-blind-to-tonights-fixes-2026-09-16.md.
   # Same shape as major_discount/.defect above.
-  .minor_disc <- NULL
+  .minor_disc <- NULL; .minor_disc_loser <- NULL
   if (identical(Sys.getenv("AUSPOL_MINOR_DEFECT_BASE_PRED", "0"), "1")) {
     .mfd <- tryCatch(fit_minor_defector_discount(.eb), error = function(e) {
       cat(sprintf("BV0n! minor-defector fit FAILED, no discount applied: %s\n", conditionMessage(e)))
-      list(discount = NULL, n = 0L)
+      list(discount = NULL, discount_mp = NULL, discount_loser = NULL, n = 0L)
     })
     if (is.null(.mfd$discount)) {
       cat(sprintf("BV0n! only %d minor-defector case(s) (need >=5); no discount applied\n", .mfd$n))
     } else {
       cat(sprintf("BV0n minor-defector discount %.3f from %d cases (target excluded)\n", .mfd$discount, .mfd$n))
       .minor_disc <- .mfd$discount
+      # REVISED 2026-09-18: a confirmed sitting-member switcher now gets NO
+      # discount (see personal_prior_vote()'s own doc) -- .minor_disc here
+      # is only the fallback rate for unknown sitting status.
+      if (!is.null(.mfd$discount_loser) && is.finite(.mfd$discount_loser)) {
+        .minor_disc_loser <- .mfd$discount_loser
+        cat(sprintf("BV0n  two-rate: sitting-member NO DISCOUNT, non-sitting %.3f, unknown-status %.3f\n", .minor_disc_loser, .minor_disc))
+      }
     }
   }
   .split <- split_slope_context(.ea, .eb)
-  .own_prev <- if (.cond) tryCatch(personal_prior_vote(.ea, .eb, major_discount = .defect, minor_discount = .minor_disc), error = function(e) { cat(sprintf("BV1p! personal_prior_vote() FAILED; class-level bases kept and NO transfer removed: %s\n", conditionMessage(e))); NULL }) else NULL
+  .own_prev <- if (.cond) tryCatch(personal_prior_vote(.ea, .eb, major_discount = .defect, minor_discount = .minor_disc, minor_discount_loser = .minor_disc_loser), error = function(e) { cat(sprintf("BV1p! personal_prior_vote() FAILED; class-level bases kept and NO transfer removed: %s\n", conditionMessage(e))); NULL }) else NULL
   mat <- remove_transferred_votes(mat, .own_prev)  # the vote moves with the person; see personal_prior_vote()
+  mat <- (function(m) {
+    # A DEPARTED DEFECTOR'S VOTE GOES HOME (AUSPOL_DEPARTED_ORIGIN: "1" = leave-
+    # target-out median share, "mean" = mean). docs/plans/prereg-departed-origin-return-2026-09-18.md
+    .dor <- Sys.getenv("AUSPOL_DEPARTED_ORIGIN", "0")
+    if (!.dor %in% c("1", "mean")) { if (!.dor %in% c("0", "")) cat(sprintf("BF0o! AUSPOL_DEPARTED_ORIGIN=%s is not a mode (\"1\" or \"mean\") -- treated as OFF\n", .dor)); return(m) }
+    .fdo <- tryCatch(fit_departed_origin_return(.eb, stat = if (.dor == "mean") "mean" else "median"),
+                     error = function(e) { cat(sprintf("BF0o! departed-origin fit FAILED, nothing routed: %s
+  ", conditionMessage(e))); NULL })
+    if (is.null(.fdo) || is.null(.fdo$frac)) { cat(sprintf("BF0o! departed-origin: %d case(s), no rate fitted, nothing routed
+  ", if (is.null(.fdo)) 0L else .fdo$n)); return(m) }
+    m2 <- route_departed_origin(m, .ea, .eb, .fdo$frac)
+    .a <- attr(m2, "departed_origin")
+    cat(sprintf("BF0o departed-origin share %.3f from %d cases (target excluded): %d routed%s
+  ", .fdo$frac, .fdo$n, .a$applied,
+                if (length(.a$skipped)) paste0("; SKIPPED ", paste(.a$skipped, collapse = ", ")) else ""))
+    m2
+  })(mat)
+  # MAJOR-PARTY SLOPE TIERS: departed member (AUSPOL_MAJOR_DEPARTED, shipped) and every other
+  # ALP/LNP cell (AUSPOL_MAJOR_SLOPE). docs/plans/prereg-major-departed-slope-2026-09-18.md,
+  # docs/plans/prereg-major-present-slope-2026-09-18.md
+  .MAJDEP <- NULL; .MAJPRES <- NULL
+  if (identical(Sys.getenv("AUSPOL_MAJOR_DEPARTED", "0"), "1") || identical(Sys.getenv("AUSPOL_MAJOR_SLOPE", "0"), "1")) {
+    .fmd <- tryCatch(fit_major_departed_slope(.eb), error = function(e) { cat(sprintf("BF0m! major slope fit FAILED, majors keep slope 1: %s\n", conditionMessage(e))); NULL })
+    if (!is.null(.fmd)) {
+      if (identical(Sys.getenv("AUSPOL_MAJOR_DEPARTED", "0"), "1")) .MAJDEP <- .fmd$slope
+      if (identical(Sys.getenv("AUSPOL_MAJOR_SLOPE", "0"), "1")) .MAJPRES <- .fmd$slope_present
+      cat(sprintf("BF0m major slopes, target excluded: departed ALP %.3f (n=%d) LNP %.3f (n=%d) [%s] | present ALP %.3f (n=%d) LNP %.3f (n=%d) [%s]\n",
+                  .fmd$slope[["ALP"]], .fmd$n[["ALP"]], .fmd$slope[["LNP"]], .fmd$n[["LNP"]], if (is.null(.MAJDEP)) "off" else "ON",
+                  .fmd$slope_present[["ALP"]], .fmd$n_present[["ALP"]], .fmd$slope_present[["LNP"]], .fmd$n_present[["LNP"]], if (is.null(.MAJPRES)) "off" else "ON"))
+    }
+  }
   .tr <- attr(mat, "transfers"); if (!is.null(.tr)) cat(sprintf("TR1  transfers moved with the person: %d applied%s\n", .tr$applied, if (length(.tr$skipped)) paste0("; SKIPPED ", length(.tr$skipped), ": ", paste(utils::head(.tr$skipped, 5), collapse = ", ")) else ""))
   .own_x <- function(p, seats, x) {
     if (is.null(.own_prev)) return(x)
@@ -507,9 +564,9 @@ for (K in PAIRS) {
       pv <- .permit[.permit$party == p, ]
       lut <- stats::setNames(as.logical(pv$permit), pv$seat)
       pm <- unname(lut[seats]); pm[is.na(pm)] <- TRUE
-      return(screened_slopes(p, seats, .returns, pm, same_mp = .MP_SLOPE, honour_departed = .honour_departed, same = if (is.null(.fitsl)) formals(screened_slopes)$same else .fitsl$same, new = if (is.null(.fitsl)) formals(screened_slopes)$new else .fitsl$new))
+      return(screened_slopes(p, seats, .returns, pm, same_mp = .MP_SLOPE, major_departed = .MAJDEP, major_present = .MAJPRES, honour_departed = .honour_departed, same = if (is.null(.fitsl)) formals(screened_slopes)$same else .fitsl$same, new = if (is.null(.fitsl)) formals(screened_slopes)$new else .fitsl$new))
     }
-    if (.cond && !is.null(.returns)) return(conditional_slopes(p, seats, .returns, same_mp = .MP_SLOPE, same = if (is.null(.fitsl)) formals(conditional_slopes)$same else .fitsl$same, new = if (is.null(.fitsl)) formals(conditional_slopes)$new else .fitsl$new))
+    if (.cond && !is.null(.returns)) return(conditional_slopes(p, seats, .returns, same_mp = .MP_SLOPE, major_departed = .MAJDEP, major_present = .MAJPRES, same = if (is.null(.fitsl)) formals(conditional_slopes)$same else .fitsl$same, new = if (is.null(.fitsl)) formals(conditional_slopes)$new else .fitsl$new))
     DEV_SLOPE[[p]]
   }
   # WHAT THE MP TIER ACTUALLY APPLIED TO. Printed unconditionally, including

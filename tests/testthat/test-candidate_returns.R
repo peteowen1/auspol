@@ -293,6 +293,71 @@ test_that("a minor-to-major switcher cannot erase the major's own retiring incum
   expect_true(is.na(x$transfer))
 })
 
+test_that("minor_discount_loser gives a CONFIRMED SITTING minor-party defector NO discount at all", {
+  # Orange/Murray/Barwon's real shape: a sitting Shooters-Fishers-and-Farmers
+  # (OTH_RIGHT) member formally quits and recontests as Independent, keeping
+  # the seat. Found 2026-09-17: the single pooled minor_discount rate treated
+  # this identically to a losing candidate's relabel, badly under-predicting
+  # three real sitting members. REVISED 2026-09-18 after shipping a fitted
+  # sitting-member rate and finding it made those same three seats worse:
+  # leave-one-out cross-validated against all 5 sitting corpus cases, flat
+  # 1.0 (no discount) halves the squared error a fitted rate gets (n=5 is
+  # too thin to fit below 1 usefully). docs/reviews/minor-defector-two-rate-
+  # 2026-09-17.md.
+  d <- data.table::data.table(
+    election = c("e1", "e2"), seat = "Orange", party = c("OTH_RIGHT", "IND"),
+    surname = "DONATO", given = "Philip", pcv = c(49.1, 53.1),
+    elected = c(TRUE, FALSE), name = NA_character_)
+  r <- personal_prior_vote("e1", "e2", d, minor_discount = 0.71, minor_discount_loser = 0.28)
+  expect_equal(r[seat == "Orange" & party == "IND"]$own_prev_pcv, 49.1)
+})
+
+test_that("minor_discount_loser gives a NON-SITTING minor-party defector the lower rate", {
+  # Same relabelling shape, but this candidate LOST at e1 -- Stephen Andrew's
+  # non-sitting analogue.
+  d <- data.table::data.table(
+    election = c("e1", "e2"), seat = "Orange", party = c("OTH_RIGHT", "IND"),
+    surname = "DONATO", given = "Philip", pcv = c(49.1, 53.1),
+    elected = c(FALSE, FALSE), name = NA_character_)
+  r <- personal_prior_vote("e1", "e2", d, minor_discount = 0.71, minor_discount_loser = 0.28)
+  expect_equal(r[seat == "Orange" & party == "IND"]$own_prev_pcv, 49.1 * 0.28)
+})
+
+test_that("an unknown sitting-member status falls back to minor_discount, not minor_discount_loser", {
+  # No `elected` column at all -- older data. "Unknown" must never be read
+  # as "definitely not the sitting member", which would silently apply the
+  # harsher rate to every case a corpus vintage happens to lack the column for.
+  d <- data.table::data.table(
+    election = c("e1", "e2"), seat = "Orange", party = c("OTH_RIGHT", "IND"),
+    surname = "DONATO", given = "Philip", pcv = c(49.1, 53.1), name = NA_character_)
+  r <- personal_prior_vote("e1", "e2", d, minor_discount = 0.71, minor_discount_loser = 0.28)
+  expect_equal(r[seat == "Orange" & party == "IND"]$own_prev_pcv, 49.1 * 0.71)
+})
+
+test_that("minor_discount alone (no minor_discount_loser) applies to every switcher, unchanged behaviour", {
+  d <- data.table::data.table(
+    election = c("e1", "e2"), seat = "Orange", party = c("OTH_RIGHT", "IND"),
+    surname = "DONATO", given = "Philip", pcv = c(49.1, 53.1),
+    elected = c(TRUE, FALSE), name = NA_character_)
+  r <- personal_prior_vote("e1", "e2", d, minor_discount = 0.3255)
+  expect_equal(r[seat == "Orange" & party == "IND"]$own_prev_pcv, 49.1 * 0.3255)
+})
+
+test_that("fit_minor_defector_discount splits sitting vs non-sitting into discount_mp/discount_loser", {
+  pairs <- list(list(election = "e2", prev = "e1"), list(election = "e4", prev = "e3"))
+  d <- data.table::rbindlist(list(
+    data.table::data.table(election = "e1", seat = "A", party = "ONP", surname = "X", given = "A", pcv = 30, elected = TRUE),
+    data.table::data.table(election = "e2", seat = "A", party = "IND", surname = "X", given = "A", pcv = 32, elected = FALSE),
+    data.table::data.table(election = "e3", seat = "B", party = "ONP", surname = "Y", given = "B", pcv = 40, elected = FALSE),
+    data.table::data.table(election = "e4", seat = "B", party = "IND", surname = "Y", given = "B", pcv = 12, elected = FALSE)
+  ), fill = TRUE)
+  d[, name := NA_character_]
+  fit <- fit_minor_defector_discount("nope", corpus = d, pairs = pairs, min_n = 2L, min_prior = 10)
+  expect_equal(fit$n, 2L)
+  expect_equal(fit$discount_mp, 32 / 30)
+  expect_equal(fit$discount_loser, 12 / 40)
+})
+
 test_that("remove_transferred_votes takes the moved vote out of the old class, once, floored at zero", {
   mat <- matrix(c(30, 21.6, 2, 46.4,   50, 0, 5, 45), nrow = 2, byrow = TRUE,
                 dimnames = list(c("A", "B"), c("ALP", "ONP", "IND", "LNP")))

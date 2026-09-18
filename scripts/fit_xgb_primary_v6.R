@@ -253,7 +253,7 @@ for (pr in PAIRS) {
   # 33 corpus cases, geometric mean retention 0.49 (p=0.0003), measured
   # targeted RMSE 9.2363 -> 8.8813 against a pooled cost (+0.0017) well
   # inside the ~0.014-per-column noise floor found the same session.
-  .minor_disc <- NULL
+  .minor_disc <- NULL; .minor_disc_loser <- NULL
   if (identical(Sys.getenv("AUSPOL_MINOR_DEFECT", "1"), "1")) {
     .mfd <- tryCatch(fit_minor_defector_discount(pr$election), error = function(e) {
       cat(sprintf("XG9! minor-defector fit FAILED for %s: %s\n", pr$election, conditionMessage(e)))
@@ -261,14 +261,25 @@ for (pr in PAIRS) {
     })
     if (!is.null(.mfd) && !is.null(.mfd$discount) && is.finite(.mfd$discount)) {
       .minor_disc <- .mfd$discount
-      cat(sprintf("XG9  %s: minor-defector discount %.3f (n=%d leave-target-out cases)\n",
-                  pr$election, .minor_disc, .mfd$n))
+      # TWO-RATE, REVISED 2026-09-18: docs/reviews/minor-defector-two-rate-
+      # 2026-09-17.md. A confirmed sitting-member switcher gets NO discount
+      # at all -- leave-one-out cross-validated against all 5 sitting corpus
+      # cases, flat 1.0 halves the squared error a fitted rate gets (0.405 vs
+      # 0.782); n=5 is too thin to fit a rate below 1 usefully. `.minor_disc`
+      # is only the fallback rate for unknown sitting status; `.minor_disc_loser`
+      # (median 0.276, n=13, well-powered) applies to confirmed non-sitting
+      # switchers.
+      if (!is.null(.mfd$discount_loser) && is.finite(.mfd$discount_loser)) .minor_disc_loser <- .mfd$discount_loser
+      cat(sprintf("XG9  %s: minor-defector discount %.3f%s (n=%d leave-target-out cases)\n",
+                  pr$election, .minor_disc,
+                  if (!is.null(.minor_disc_loser)) sprintf(" (unknown-status; sitting=NO DISCOUNT, non-sitting %.3f)", .minor_disc_loser) else "",
+                  .mfd$n))
     } else {
       cat(sprintf("XG9! %s: minor-defector discount NOT fit (n=%s), no discount applied\n",
                   pr$election, if (is.null(.mfd)) "NULL" else .mfd$n))
     }
   }
-  pv  <- tryCatch(personal_prior_vote(pr$prev, pr$election, minor_discount = .minor_disc),
+  pv  <- tryCatch(personal_prior_vote(pr$prev, pr$election, minor_discount = .minor_disc, minor_discount_loser = .minor_disc_loser),
                   error = function(e) NULL)
   sd_pair <- SD[pair == pr$election]
   if (!nrow(sd_pair)) { cat(sprintf("XG6! no sharedetail rows for %s -> skip\n", pr$election)); next }
@@ -630,7 +641,17 @@ feat_cols <- c("base_pred", "seat_prev_pcv", "seat_outperf", "level_prev",
 # Measured =1 first: worse than the plain-feature baseline (3.8563 vs
 # 3.8012), so testing whether that's residual-modeling itself losing, or
 # specifically the lost base_pred-as-splittable-feature capacity.
-.base_margin_mode <- Sys.getenv("AUSPOL_XGB_BASE_MARGIN", "0")
+# SHIPPED 2026-09-17 at "2" (base_margin + base_pred kept as a feature), on
+# Pete's call, decided against the AEF7-comparable pairs as the working
+# criterion (faster iteration than the full 23-pair pooled bar): pooled AEF7
+# primary RMSE 3.6082 vs the plain-feature baseline's 3.6662 and the actual
+# previously-shipped v7f mechanism's 3.6715 -- base_margin beats BOTH,
+# fresh, same day. Also beats v7f pooled across all 23 pairs (3.7603 vs
+# 3.7914). v7 (fit_xgb_primary_v7.R) is BYPASSED for primary-vote shipping
+# as of this change -- AUSPOL_XGB_PRIMARY_OOF now points at this script's
+# own output directly (published_flags.R), not v7's. docs/NEXT-STEPS.md
+# carries the full trace.
+.base_margin_mode <- Sys.getenv("AUSPOL_XGB_BASE_MARGIN", "2")
 .base_margin <- .base_margin_mode %in% c("1", "2")
 if (identical(.base_margin_mode, "1")) feat_cols <- setdiff(feat_cols, "base_pred")
 # NOT YET WIRED if this mode is combined with AUSPOL_XGB_SAVE_OOF_MODELS=1:
