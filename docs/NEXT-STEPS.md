@@ -61,9 +61,25 @@ the as-at one is the honest one. Two confounds remain until the 20k run: sim
 count, and `base_pred` itself changed (three fixes in `57ebced`).
 `docs/PIPELINE.md` (new) is the stage map Pete asked for.
 
+**Deciding run DONE 2026-09-18 17:12 (23 min at 20,000 sims); ledger v32
+published from it.** Pooled seat log loss 0.2735 vs AEF 0.2851 (660 seats);
+weighted primary RMSE 4.79 vs AEF 5.42. Found and fixed on the way: the
+ledger was mixing THREE vintages on one page (`scripts/ledger_inputs.R` is
+now the one rule -- every column from the harness run `pool_backtests.R`
+scored; the pool refuses stage-1 xgb-off files). The weighted-RMSE card had
+been comparing AEF against our PRE-xgb baseline (5.28) and calling it ours.
+
+**Worst-seat pass on v32 (Pete's request)**: `docs/SEAT-REGISTRY.md` (new)
+holds every seat's verdict so nothing gets re-dug. One fix identified and
+NOT yet built -- a departed defector's released vote should return to the
+party they defected FROM (Morwell: Northe's 11 points went back to the
+Nationals; we spread them pro-rata). About 8 testable cases in the corpus.
+Design with Pete on the examples before writing the rule.
+
 **Remaining**:
-1. Deciding run: `bash scripts/rebuild_forecasts.sh` (20000 sims; ~11GB free
-   was enough at 5k -- check before). Republish the ledger from it.
+1. Morwell rule above, if Pete agrees; then the flow pattern (ALP v GRN and
+   LNP v teal 2CPs over-favour the major by ~10 points: Footscray, Richmond,
+   Brunswick, Kooyong, Cottesloe).
 2. Decide with Pete: the 19 `.ubj` files + `forecasts.csv`/`forecasts-seats.csv`
    as tracked exceptions in `output/` or a GitHub Release.
 3. `docs/DECISIONS.md` row; `docs/PETE-ASKED-FOR.md` "AEF-7 must be

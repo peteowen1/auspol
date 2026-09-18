@@ -262,16 +262,21 @@
        is the one command that rebuilds everything in the non-circular order. Every candidate-level forecast is
        persisted in <code>output/forecasts.csv</code> (11,991 rows over 19 elections; 4,489 on these 7) and seat
        probabilities in <code>output/forecasts-seats.csv</code>. <b>The headline moved the honest way: pooled seat log
-       loss 0.2627 &rarr; 0.2696</b> (AEF 0.2851), because the old number saw the future. Per pair: fed2022 0.2817&rarr;0.2783,
-       fed2025 0.2406&rarr;0.2403, nsw2023 0.2274&rarr;0.2325, qld2024 0.3259&rarr;0.3422, sa2026 0.2942&rarr;0.3018,
-       vic2022 0.2353&rarr;0.2543, wa2025 0.2317&rarr;0.2559. Two caveats on that comparison: this build ran at 5,000
-       simulations per seat (the previous at 20,000), and the primary RMSE on these 7 elections (4,489 candidate
-       rows) is base_pred 4.08, old look-ahead cache 3.56, honest as-at 3.64 -- the look-ahead was worth about
-       0.08 points of primary vote, and that is what the log loss gave back. nsw2023 and sa2026 are the two
-       pairs where the as-at model beats the old cache even so. A 20,000-sim deciding run follows. Also caught in this rebuild:
-       <code>build_aef_comparison.R</code> picked the newest "backtest-sa-" file by name, so the second SA pair run
-       silently dropped sa2026 (660 &rarr; 613 seats); it now selects by the file's own pair column like
-       <code>pool_backtests.R</code>. <code>docs/NEXT-STEPS.md</code>.</p>
+       loss 0.2627 &rarr; 0.2735</b> (AEF 0.2851), because the old number saw the future. This is the 20,000-sim
+       deciding run (23 minutes end to end). Weighted primary RMSE on these 7 elections (4,489 candidate rows,
+       weighted by actual share): base_pred 5.28, old look-ahead cache 4.67, honest as-at 4.82 -- the look-ahead was
+       worth about 0.15 points of primary vote, and that is what the log loss gave back. <b>Also corrected on this
+       page: the "primary RMSE (all parties, weighted)" card was comparing AEF against our PRE-xgb baseline
+       (5.28) and calling it ours.</b> The shipped model on the same rows is 4.79; AEF is 5.42. Four vintage leaks
+       found and fixed in the same pass, all the same shape (an input chosen as "newest file by name"):
+       <code>build_aef_comparison.R</code> dropped sa2026 after the second SA pair ran (660 &rarr; 613 seats);
+       <code>build_aef7_tcp_actual.R</code> skipped any 5,000-sim file, so the TCP columns came from the previous
+       model while the log loss came from the new one (Mallee's "9.6%" real-pairing frequency was stale; the true
+       figure was 32%); the ledger builder read stage 1's xgb-off files whenever a rebuild was in flight; and the
+       weighted-RMSE card read the xgb-off pool. <code>scripts/ledger_inputs.R</code> is now the one rule: every
+       column for a pair comes from the harness run <code>pool_backtests.R</code> scored, matched by harness prefix
+       and arm+git hash, and the pool refuses any run whose sharedetail says xgb was off. <code>docs/PIPELINE.md</code>,
+       <code>docs/NEXT-STEPS.md</code>.</p>
     <p class="sub prov"><b>ITG/AEF pick fixed to always name the winner of the REAL pairing, Pete's request after
        Mallee.</b> "AEF pick: ALP" at 36.8% looked broken -- Pete's math (2CP should always be &ge;50%) was right,
        and the root cause was the same "party A" arbitrariness already flagged for Wentworth in this doc, just not
