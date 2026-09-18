@@ -149,8 +149,13 @@ for (i in seq_len(nrow(MAP))) {
   if (is.null(win)) { cat(sprintf("AEF0! no win file for %s\n", pr)); next }
   a <- aef_scores[election == ac]
   a[, aef_p := pmin(pmax(prob, eps), 1)]
+  # `prob` is AEF's probability for the ACTUAL winner (what log loss needs);
+  # `pred_p` is the probability AEF gave its own favourite. The ledger's
+  # "AEF confidence" column had shown the former under the latter's label
+  # until 2026-09-19.
+  a[, aef_p_fav := if ("pred_p" %in% names(a)) pmin(pmax(pred_p, eps), 1) else aef_p]
   setnames(a, "pred", "aef_pred")
-  m <- merge(win, a[, .(seat, aef_pred, aef_p)], by = "seat")
+  m <- merge(win, a[, .(seat, aef_pred, aef_p, aef_p_fav)], by = "seat")
   m[, delta := (-log(our_p)) - (-log(aef_p))]
   sd_p <- sd_all[pair == pr]
   ap_p <- aef_primary[election == ac]

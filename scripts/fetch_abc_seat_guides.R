@@ -141,6 +141,12 @@ for (pr in names(ELECTIONS)) {
     n_ok <- n_ok + 1L
   }
   cat(sprintf("ABC0 %s done: %d/%d seats parsed so far (cumulative)\n", pr, n_ok, n_ok + n_fail))
+  # PERSIST AFTER EVERY PAIR. The raw HTML is cached per seat, but the parsed
+  # tables were only written once at the very end, so a kill at 90% left
+  # nothing parsed on disk (~/.claude/CLAUDE.md, long-runs rule). Same two
+  # files, rewritten each pair; the final write below is then a no-op.
+  fwrite(rbindlist(all_primary, fill = TRUE), file.path("output", "abc-scrape-primary.csv"))
+  fwrite(rbindlist(all_tcp, fill = TRUE), file.path("output", "abc-scrape-tcp.csv"))
 }
 
 primary_dt <- rbindlist(all_primary, fill = TRUE)

@@ -53,15 +53,15 @@ corpus grows.
   changed base_pred seats), not a WA cause.
 - Minor-to-minor defector "conserve" (Mirani's ONP kept 11.9 with a new
   candidate where we gave 0.9): a rule with ~8 cases, untested.
-- `aef_p_fav` in the ledger shows P(actual winner), not the favourite's
-  probability (`build_aef_comparison.R:141`). ABC scraper writes its CSV
-  only at the end.
+- ~~`aef_p_fav` mislabel~~ FIXED overnight (ledger v36, `pred_p`). ~~ABC
+  scraper writes only at the end~~ FIXED (writes after every pair).
 - Hub: `docs/NEXT-STEPS.md` was 71KB; this pass moved the 13-18 Sep
   narrative to `backlog/journal-2026-09-13-to-18.md`.
 
 **Overnight 2026-09-19 (autonomous)**: PR #51 CI fixed (stale
 `byelection_prior.Rd`), 18 more by-elections scraped and committed,
-registries regenerated, `PETE-ASKED-FOR.md` rows added, this hub slimmed.
+registries regenerated, `PETE-ASKED-FOR.md` rows added, this hub slimmed,
+ledger v36 (AEF confidence column corrected), scraper now persists per pair.
 No merges, no heavy runs (free memory sat at 3-7GB under Chrome and 18
 other Claude sessions; the driver now falls back to two-wide waves).
 
