@@ -1078,3 +1078,131 @@ protect_personal_vote_cells <- function(reentry_cells, own_prev) {
   key <- paste(op$seat, op$party)
   rc[!paste(rc$seat, rc$party) %in% key]
 }
+
+# ---- A DEPARTED DEFECTOR'S VOTE GOES HOME --------------------------------
+# docs/plans/prereg-departed-origin-return-2026-09-18.md. Morwell vic2022:
+# Russell Northe (National 2014, IND 2018 at 19.6) retired; the Nationals
+# rose from our 27.2 to 38.4. AUSPOL_HONOUR_DEPARTED decays his class and
+# renormalisation spreads the released vote pro-rata; these functions send a
+# fitted share of it back to the party he came from, which the candidacy
+# corpus knows.
+
+.corpus_or_load <- function(corpus, who) {
+  if (!is.null(corpus)) return(data.table::as.data.table(corpus))
+  f <- file.path("output", "candidacies.csv")
+  if (!file.exists(f)) stop(who, "() needs output/candidacies.csv; run scripts/build_candidacies.R", call. = FALSE)
+  data.table::fread(f, showProgress = FALSE)
+}
+
+#' Departed class leaders who earlier stood for a major party in the seat
+#'
+#' For the pair `election_from -> election_to`: every seat/class where the
+#' class's leading candidate at `election_from` (non-major class, at least
+#' `min_pcv` points) does not stand in that seat at `election_to` under any
+#' label, and who at some election BEFORE `election_from` stood for a major
+#' party in the same seat. That party is `origin`.
+#'
+#' @param election_from,election_to Election labels.
+#' @param corpus Candidacy corpus; `output/candidacies.csv` when `NULL`.
+#' @param min_pcv Minimum leader vote, in points, to count.
+#' @return data.table: seat, party, origin, name, lead_pcv. Zero rows when
+#'   nothing qualifies.
+#' @export
+departed_defectors <- function(election_from, election_to, corpus = NULL, min_pcv = 5) {
+  C <- .corpus_or_load(corpus, "departed_defectors")
+  MAJ <- c("ALP", "LNP", "NAT")
+  kf <- function(d) match_key(surname_of(if ("surname" %in% names(d)) d$surname else NA_character_,
+                                         if ("name" %in% names(d)) d$name else NA_character_),
+                              given_of(if ("given" %in% names(d)) d$given else NA_character_,
+                                       if ("name" %in% names(d)) d$name else NA_character_), "initial")
+  C <- data.table::copy(C)[, .k := kf(.SD), .SDcols = names(C)]
+  dates <- election_dates()
+  C[, .d := dates[election]]
+  PREVT <- C[C$election == election_from & !C$party %in% MAJ & nzchar(C$.k)]
+  NOWT  <- C[C$election == election_to]
+  empty <- data.table::data.table(seat = character(0), party = character(0), origin = character(0),
+                                  name = character(0), lead_pcv = numeric(0))
+  if (!nrow(PREVT) || !nrow(NOWT)) return(empty)
+  lead <- PREVT[, .SD[which.max(pcv)], by = .(seat, party)][, .(seat, party, .k, name, lead_pcv = pcv)]
+  lead <- lead[lead$lead_pcv >= min_pcv & lead$seat %in% NOWT$seat &
+                 !paste(lead$seat, lead$.k) %in% paste(NOWT$seat, NOWT$.k)]
+  if (!nrow(lead)) return(empty)
+  d_from <- dates[[election_from]]
+  H <- C[C$party %in% MAJ & C$.d < d_from & nzchar(C$.k), .(seat, .k, party, .d)]
+  H <- H[order(-.d)][, .SD[1L], by = .(seat, .k)][, .(seat, .k, origin = party)]
+  out <- merge(lead, H, by = c("seat", ".k"))
+  out[, .(seat, party, origin, name, lead_pcv)]
+}
+
+#' Fit the share of a departed defector's vote that returns to their origin party
+#'
+#' Leave-target-out over every other pair: for each case from
+#' [departed_defectors()], `(origin party's actual vote at election_to -
+#' origin_prev * statewide ratio) / lead_pcv`, clipped to `[0, 1]`, then the
+#' median (`stat = "median"`, the shipped arm) or mean (`"mean"`).
+#'
+#' @param target_election Pair whose own rows are excluded from the fit.
+#' @param corpus,pairs As in [fit_defector_discount()].
+#' @param stat `"median"` or `"mean"`.
+#' @param min_n Fewer usable cases than this returns `frac = NULL`.
+#' @return list(frac, n, cases).
+#' @export
+fit_departed_origin_return <- function(target_election, corpus = NULL, pairs = NULL,
+                                       stat = c("median", "mean"), min_n = 5L) {
+  stat <- match.arg(stat)
+  C <- .corpus_or_load(corpus, "fit_departed_origin_return")
+  if (is.null(pairs)) pairs <- all_election_pairs()
+  ST <- C[, .(v = sum(votes)), by = .(election, party)][, share := 100 * v / sum(v), by = election]
+  seat_share <- function(el, s, p) { v <- C[C$election == el & C$seat == s & C$party == p, sum(pcv)]; if (length(v)) v else 0 }
+  rows <- lapply(pairs, function(pr) {
+    if (identical(pr$election, target_election)) return(NULL)
+    d <- departed_defectors(pr$prev, pr$election, corpus = C)
+    if (!nrow(d)) return(NULL)
+    d[, pair := pr$election]
+    d[, origin_prev := mapply(seat_share, pr$prev, seat, origin)]
+    d[, origin_now  := mapply(seat_share, pr$election, seat, origin)]
+    d[, ratio := mapply(function(p) { a <- ST[election == pr$election & party == p]$share
+                                      b <- ST[election == pr$prev & party == p]$share
+                                      if (length(a) && length(b) && b > 0) a / b else NA_real_ }, origin)]
+    d[origin_now > 0 & is.finite(ratio)]
+  })
+  cases <- data.table::rbindlist(rows, fill = TRUE)
+  if (!nrow(cases)) return(list(frac = NULL, n = 0L, cases = cases))
+  cases[, frac := pmin(1, pmax(0, (origin_now - origin_prev * ratio) / lead_pcv))]
+  n <- nrow(cases)
+  if (n < min_n) return(list(frac = NULL, n = n, cases = cases))
+  list(frac = if (stat == "median") stats::median(cases$frac) else mean(cases$frac), n = n, cases = cases)
+}
+
+#' Move a departed defector's vote to their origin party in the prior matrix
+#'
+#' For each [departed_defectors()] case, `frac * lead_pcv` points move from
+#' the departed class's column to the origin party's column, in the seat's
+#' row of `mat` (rows seats, columns classes, in points). The class then
+#' decays under the departed slope on what is left. Missing seat or column:
+#' skipped and named in `attr(, "departed_origin")`.
+#'
+#' @param mat Prior share matrix, seats by classes.
+#' @param election_from,election_to Election labels.
+#' @param frac Share of the leader's vote to move, from
+#'   [fit_departed_origin_return()]. `NULL` returns `mat` untouched.
+#' @param corpus Candidacy corpus; `output/candidacies.csv` when `NULL`.
+#' @return `mat` with attribute `departed_origin`: list(applied, skipped, cases).
+#' @export
+route_departed_origin <- function(mat, election_from, election_to, frac, corpus = NULL) {
+  if (is.null(frac) || !is.finite(frac) || frac <= 0) return(mat)
+  d <- departed_defectors(election_from, election_to, corpus = corpus)
+  applied <- 0L; skipped <- character(0)
+  for (i in seq_len(nrow(d))) {
+    s <- d$seat[i]; from <- d$party[i]; to <- d$origin[i]
+    if (!s %in% rownames(mat) || !from %in% colnames(mat) || !to %in% colnames(mat)) {
+      skipped <- c(skipped, sprintf("%s/%s->%s", s, from, to)); next
+    }
+    amt <- min(frac * d$lead_pcv[i], mat[s, from])
+    mat[s, from] <- mat[s, from] - amt
+    mat[s, to]   <- mat[s, to] + amt
+    applied <- applied + 1L
+  }
+  attr(mat, "departed_origin") <- list(applied = applied, skipped = skipped, cases = d)
+  mat
+}

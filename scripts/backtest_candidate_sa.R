@@ -593,6 +593,23 @@ if (identical(Sys.getenv("AUSPOL_MINOR_DEFECT_BASE_PRED", "0"), "1")) {
 .split <- split_slope_context(PRV, TGT)
 .own_prev <- if (.cond) tryCatch(personal_prior_vote(PRV, TGT, major_discount = .defect, minor_discount = .minor_disc, minor_discount_loser = .minor_disc_loser), error = function(e) { cat(sprintf("BS1p! personal_prior_vote() FAILED; class-level bases kept and NO transfer removed: %s\n", conditionMessage(e))); NULL }) else NULL
 mat <- remove_transferred_votes(mat, .own_prev)  # the vote moves with the person; see personal_prior_vote()
+mat <- (function(m) {
+  # A DEPARTED DEFECTOR'S VOTE GOES HOME (AUSPOL_DEPARTED_ORIGIN: "1" = leave-
+  # target-out median share, "mean" = mean). docs/plans/prereg-departed-origin-return-2026-09-18.md
+  .dor <- Sys.getenv("AUSPOL_DEPARTED_ORIGIN", "0")
+  if (!.dor %in% c("1", "mean")) return(m)
+  .fdo <- tryCatch(fit_departed_origin_return(TGT, stat = if (.dor == "mean") "mean" else "median"),
+                   error = function(e) { cat(sprintf("BF0o! departed-origin fit FAILED, nothing routed: %s
+", conditionMessage(e))); NULL })
+  if (is.null(.fdo) || is.null(.fdo$frac)) { cat(sprintf("BF0o! departed-origin: %d case(s), no rate fitted, nothing routed
+", if (is.null(.fdo)) 0L else .fdo$n)); return(m) }
+  m2 <- route_departed_origin(m, PRV, TGT, .fdo$frac)
+  .a <- attr(m2, "departed_origin")
+  cat(sprintf("BF0o departed-origin share %.3f from %d cases (target excluded): %d routed%s
+", .fdo$frac, .fdo$n, .a$applied,
+              if (length(.a$skipped)) paste0("; SKIPPED ", paste(.a$skipped, collapse = ", ")) else ""))
+  m2
+})(mat)
 .tr <- attr(mat, "transfers"); if (!is.null(.tr)) cat(sprintf("TR1  transfers moved with the person: %d applied%s\n", .tr$applied, if (length(.tr$skipped)) paste0("; SKIPPED ", length(.tr$skipped), ": ", paste(utils::head(.tr$skipped, 5), collapse = ", ")) else ""))
 .own_x <- function(p, seats, x) {
   if (is.null(.own_prev)) return(x)

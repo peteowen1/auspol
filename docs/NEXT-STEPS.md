@@ -70,14 +70,16 @@ scored; the pool refuses stage-1 xgb-off files). The weighted-RMSE card had
 been comparing AEF against our PRE-xgb baseline (5.28) and calling it ours.
 
 **Worst-seat pass on v32 (Pete's request)**: `docs/SEAT-REGISTRY.md` (new)
-holds every seat's verdict so nothing gets re-dug. One fix identified and
-NOT yet built -- a departed defector's released vote should return to the
-party they defected FROM (Morwell: Northe's 11 points went back to the
-Nationals; we spread them pro-rata). About 8 testable cases in the corpus.
-Design with Pete on the examples before writing the rule.
+holds every seat's verdict so nothing gets re-dug. The Morwell rule (a
+departed defector's vote returns to the party they came from) was built,
+wired into all seven scripts and measured base_pred-only on 15 cases: 8 of
+15 better, Morwell 1.86 -> 1.03, pooled log loss unchanged-to-better, but
+the pre-registered primary criterion missed by 0.06 SE. **Switch
+`AUSPOL_DEPARTED_ORIGIN` is OFF**; re-decide when the corpus grows.
+`plans/prereg-departed-origin-return-2026-09-18.md`.
 
 **Remaining**:
-1. Morwell rule above, if Pete agrees; then the flow pattern (ALP v GRN and
+1. The flow pattern (ALP v GRN and
    LNP v teal 2CPs over-favour the major by ~10 points: Footscray, Richmond,
    Brunswick, Kooyong, Cottesloe).
 2. Decide with Pete: the 19 `.ubj` files + `forecasts.csv`/`forecasts-seats.csv`

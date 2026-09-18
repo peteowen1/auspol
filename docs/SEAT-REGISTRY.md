@@ -40,7 +40,12 @@ file is the durable copy.
   IND base toward the measured 0.38 retention (`AUSPOL_HONOUR_DEPARTED`) but
   the released vote is spread pro-rata over every class. It went home: the
   Nationals rose from our 27.2 to 38.4, and that 11 points is the miss. His
-  origin party is in `output/candidacies.csv`, so this is knowable. Note the
+  origin party is in `output/candidacies.csv`, so this is knowable. **Built
+  and measured 2026-09-18** (`AUSPOL_DEPARTED_ORIGIN`, `route_departed_origin()`):
+  Morwell itself goes 1.86 -> 1.03 and 8 of 15 such cases improve, but the
+  15-case pooled criterion fell 0.06 SE short and the switch stays off;
+  `plans/prereg-departed-origin-return-2026-09-18.md`. Re-decide when the
+  corpus grows. Note the
   09-18 honour fix's "3.05 -> 1.88" was measured under the old look-ahead
   xgb cache; under the honest as-at model the seat is back at 2.70.
   `reviews/departed-leader-honour-fix-2026-09-18.md`, pattern D in
@@ -74,13 +79,20 @@ file is the durable copy.
   the corpus (only 2 went to a minor party rather than IND, so a
   destination-split rate cannot be fitted). AEF also missed it (33.0). A
   pooled constant was right to use; this is the tail. Checked 2026-09-18.
-- **Mallee, New England, Maranoa** — safe National seats. Ledger v31 showed
-  us drawing the real LNP v ALP pairing 9.6% / 13% / 46%; that was a
-  vintage bug (stale TCP file, fixed 2026-09-18). True figures 33% / 38% /
-  76%. Our primaries in Mallee are within 2 points on every class; second
-  place is ALP 15 v IND 13.5 v OTH_RIGHT 12.5, which the calibrated seat
-  noise scrambles. **NOTHING TO FIX** as a bug; a better flow would sharpen
-  it. Mallee's 2019 fragmentation history: `plans/plan-miss-patterns-2026-09-06.md`.
+- **Mallee, Maranoa** — **NOTHING TO FIX** (checked against the AEC
+  distribution of preferences, 2026-09-18). Ledger v31's 9.6% / 46% for
+  drawing the real LNP v ALP pairing was a vintage bug (stale TCP file);
+  true figures 33% / 76%. The real three-candidate count was ALP 22.9 v
+  IND 20.9 in Mallee and ALP 20.1 v ONP 20.0 in Maranoa, so second place
+  was a genuine coin-flip in both. AEF's 96% / 91% there is Mirani-style
+  luck, not a better model. Our Mallee primaries are within 2 points on
+  every class.
+- **New England** — a real miss, not a coin-flip: the three-candidate
+  count was ALP 26.2 v IND 15.4 (10.8-point gap) and we drew LNP v ALP only
+  38% of the time (AEF 96%). Cause is primaries: ALP 13.1 predicted vs
+  18.6 actual, right-minor 9.3 vs 5.9. **OPEN**; the ALP under-prediction in
+  safe National seats is worth a look alongside the swing-beyond-statewide
+  seats.
 - **Higgins, Tangney** — the swing to ALP beat the statewide swing by 6-11
   points (Higgins ALP 22.2 base vs 28.5). Pattern A (state swing, federal).
   **OPEN** in the sense that only a seat-level swing model fixes it; no

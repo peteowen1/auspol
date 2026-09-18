@@ -777,6 +777,23 @@ cat(sprintf("CAL  MP tier: %s | defector discount: %s | minor-defector discount:
 # candidate's own prior vote into their new class; this takes it out of the
 # class it came from. No-op until vic2026 nominations exist.
 mat22 <- remove_transferred_votes(mat22, .own_prev)
+mat22 <- (function(m) {
+  # A DEPARTED DEFECTOR'S VOTE GOES HOME (AUSPOL_DEPARTED_ORIGIN: "1" = leave-
+  # target-out median share, "mean" = mean). docs/plans/prereg-departed-origin-return-2026-09-18.md
+  .dor <- Sys.getenv("AUSPOL_DEPARTED_ORIGIN", "0")
+  if (!.dor %in% c("1", "mean")) return(m)
+  .fdo <- tryCatch(fit_departed_origin_return("vic2026", stat = if (.dor == "mean") "mean" else "median"),
+                   error = function(e) { cat(sprintf("BF0o! departed-origin fit FAILED, nothing routed: %s
+", conditionMessage(e))); NULL })
+  if (is.null(.fdo) || is.null(.fdo$frac)) { cat(sprintf("BF0o! departed-origin: %d case(s), no rate fitted, nothing routed
+", if (is.null(.fdo)) 0L else .fdo$n)); return(m) }
+  m2 <- route_departed_origin(m, "vic2022", "vic2026", .fdo$frac)
+  .a <- attr(m2, "departed_origin")
+  cat(sprintf("BF0o departed-origin share %.3f from %d cases (target excluded): %d routed%s
+", .fdo$frac, .fdo$n, .a$applied,
+              if (length(.a$skipped)) paste0("; SKIPPED ", paste(.a$skipped, collapse = ", ")) else ""))
+  m2
+})(mat22)
 .tr <- attr(mat22, "transfers"); if (!is.null(.tr)) cat(sprintf("DS2t transfers moved with the person: %d applied%s\n", .tr$applied, if (length(.tr$skipped)) paste0("; SKIPPED ", length(.tr$skipped), ": ", paste(utils::head(.tr$skipped, 5), collapse = ", ")) else ""))
 if (.cond && !is.null(.returns)) {
   if (is.null(.own_prev)) {

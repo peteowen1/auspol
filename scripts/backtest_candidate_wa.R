@@ -492,6 +492,23 @@ for (K in PAIRS) {
     }
   }
   mat <- remove_transferred_votes(mat, .own_prev)
+  mat <- (function(m) {
+    # A DEPARTED DEFECTOR'S VOTE GOES HOME (AUSPOL_DEPARTED_ORIGIN: "1" = leave-
+    # target-out median share, "mean" = mean). docs/plans/prereg-departed-origin-return-2026-09-18.md
+    .dor <- Sys.getenv("AUSPOL_DEPARTED_ORIGIN", "0")
+    if (!.dor %in% c("1", "mean")) return(m)
+    .fdo <- tryCatch(fit_departed_origin_return(el_to, stat = if (.dor == "mean") "mean" else "median"),
+                     error = function(e) { cat(sprintf("BF0o! departed-origin fit FAILED, nothing routed: %s
+  ", conditionMessage(e))); NULL })
+    if (is.null(.fdo) || is.null(.fdo$frac)) { cat(sprintf("BF0o! departed-origin: %d case(s), no rate fitted, nothing routed
+  ", if (is.null(.fdo)) 0L else .fdo$n)); return(m) }
+    m2 <- route_departed_origin(m, el_from, el_to, .fdo$frac)
+    .a <- attr(m2, "departed_origin")
+    cat(sprintf("BF0o departed-origin share %.3f from %d cases (target excluded): %d routed%s
+  ", .fdo$frac, .fdo$n, .a$applied,
+                if (length(.a$skipped)) paste0("; SKIPPED ", paste(.a$skipped, collapse = ", ")) else ""))
+    m2
+  })(mat)
   .tr <- attr(mat, "transfers")
   if (!is.null(.tr))
     cat(sprintf("TR1  %s: transfers moved with the person: %d applied%s\n", el_to, .tr$applied,
