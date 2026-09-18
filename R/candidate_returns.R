@@ -28,9 +28,18 @@
 #'   corpus, e.g. `"fed2019"` and `"fed2022"`.
 #' @param corpus Optional pre-read candidacy table; read from
 #'   `output/candidacies.csv` when `NULL`.
-#' @return A `data.table` of `seat`, `party`, `same` covering every seat/class
-#'   present at `election_to`. `same` is `FALSE` where nobody of that class stood
+#' @return A `data.table` of `seat`, `party`, `same`, `same_mp`,
+#'   `prior_leader_returns`, `leader_same` covering every seat/class present
+#'   at `election_to`. `same` is `FALSE` where nobody of that class stood
 #'   before, which is the correct reading: there is no one to return.
+#'   `leader_same` (added 2026-09-18) is TRUE only when the class's CURRENT
+#'   leading candidate personally returns -- see [leading_candidate_returns()]
+#'   for why `same`'s `any()`-across-the-class semantics wrongly attribute one
+#'   candidate's history to an unrelated, genuinely new class-mate (New
+#'   England fed2022: Natasha Ledger's personal return made `same = TRUE` for
+#'   the whole IND class even though Matt Sharpham, the actual class leader,
+#'   was new). `screened_slopes()`/`conditional_slopes()` key their same/new
+#'   slope choice on `leader_same`, not `same`.
 #' @export
 candidate_returns <- function(election_from, election_to, corpus = NULL) {
   C <- corpus
@@ -172,8 +181,27 @@ candidate_returns <- function(election_from, election_to, corpus = NULL) {
     lp <- lp[, list(prior_leader_returns = any(prior_leader_returns)), by = list(seat, party)]
     res <- merge(res, lp, by = c("seat", "party"), all.x = TRUE)
     res[is.na(prior_leader_returns), prior_leader_returns := TRUE]
+    # LEADER_SAME: does the CURRENT leading candidate of this class personally
+    # return, as opposed to `same` above (any() across every candidate of the
+    # class). New England fed2022 is `same = TRUE` for IND because Natasha
+    # Ledger personally stood there in both 2019 and 2022 -- but she polled
+    # 2.8% in 2022, not the class's leader; Matt Sharpham, a genuinely new
+    # candidate, led the class at 7.9% and is who the class's primary-vote
+    # slope is actually applied to. Reusing `same` there projected him with
+    # the RETURNING slope (0.907, near-full carryforward) instead of the new
+    # one (~0.33), a ~2x over-prediction -- this repo's own docs on
+    # leading_candidate_returns() (below) named this exact failure shape in
+    # 2026, measured it against seat WINS (found none flipped, five
+    # elections), and never checked it against primary-vote accuracy, which
+    # is where the miss actually lands. Wired in here, 2026-09-18, so every
+    # caller of candidate_returns() gets it for free instead of needing its
+    # own call to leading_candidate_returns().
+    leader <- leading_candidate_returns(election_from, election_to, corpus = C)
+    res <- merge(res, leader, by = c("seat", "party"), all.x = TRUE)
+    res[is.na(leader_same), leader_same := same]
   } else {
     res[, prior_leader_returns := TRUE]
+    res[, leader_same := same]
   }
   res[]
 }

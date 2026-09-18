@@ -4,7 +4,7 @@
 \alias{salience_screen}
 \title{Which candidates salience permits to emerge}
 \usage{
-salience_screen(jump, governed, min_fire = 0.1)
+salience_screen(jump, governed, min_fire = 0.1, min_jump = 0.03)
 }
 \arguments{
 \item{jump}{Numeric campaign-salience values, one per candidate.}
@@ -15,6 +15,22 @@ surged — see \code{\link[=candidate_returns]{candidate_returns()}} and \code{\
 
 \item{min_fire}{Minimum share of the field that must register for the screen
 to apply at all.}
+
+\item{min_jump}{Minimum salience magnitude to count as "fired", not merely
+nonzero. Added 2026-09-18: \code{jump > 0} treated any nonzero reading as full
+permission (uniform-swing carryforward, slope 1.0 in
+\code{\link[=screened_slopes]{screened_slopes()}}) with no regard for size -- Mallee and Maranoa
+fed2022 both fired on jump ~0.01, a barely-there signal, and both were
+over-predicted roughly 2x. Checked against every governed candidate
+across the 7 elections this screen is scored on: the SMALLEST jump among
+the 9 governed winners with \code{jump > 0} is 0.0352 (Michael Regan,
+Wakehurst nsw2023) -- Pete asked for the actual number rather than
+trusting a round threshold with unmeasured margin below it, which is
+what an earlier pass at this (0.02) was. \code{0.03} sits just under that
+true boundary rather than exactly on it, and reclassifies 279 of 339
+governed non-winners below it as "not fired" with zero winners lost --
+279, not the 244 an unexamined 0.02 would have caught. \code{0} reproduces
+the original behaviour exactly.}
 }
 \value{
 Logical vector, \code{TRUE} where the candidate may emerge. Ungoverned

@@ -158,7 +158,18 @@ conditional_slopes <- function(cls, seats, returns,
   # candidate history. Seats absent from `returns` get FALSE, meaning nobody of
   # this class stood before, which is the correct reading.
   idx <- match(seats, hit$seat)
-  is_same <- !is.na(idx) & hit$same[idx]
+  # leader_same (does the class's CURRENT LEADING candidate personally
+  # return), not `same` (any() across every candidate of the class) -- see
+  # the note on this exact line in screened_slopes(). This is the actual
+  # branch that mis-slopes New England fed2022 (Sharpham, new, wrongly gets
+  # the returning-candidate slope because Ledger, a different, minor-polling
+  # IND candidate, personally returned): screened_slopes()'s "!is_same &
+  # permit -> 1.0" branch doesn't fire there (permit is FALSE, since Ledger's
+  # own return makes the class read as having a governed history), so it
+  # falls through to THIS function's base slope, which needs the same fix.
+  # Falls back to `same` for a returns table that predates this column.
+  same_col <- if ("leader_same" %in% names(hit)) hit$leader_same else hit$same
+  is_same <- !is.na(idx) & same_col[idx]
   is_same[is.na(is_same)] <- FALSE
   out <- ifelse(is_same, as.numeric(same[[cls]]), as.numeric(new[[cls]]))
   if (!is.null(same_mp) && cls %in% names(same_mp) && "same_mp" %in% names(hit)) {
@@ -257,7 +268,17 @@ screened_slopes <- function(cls, seats, returns, permit, honour_departed = FALSE
   R <- data.table::as.data.table(returns)
   hit <- R[R$party == cls]
   idx <- match(seats, hit$seat)
-  is_same <- !is.na(idx) & hit$same[idx]; is_same[is.na(is_same)] <- FALSE
+  # is_same keys on the CLASS LEADER personally returning (leader_same), not
+  # `same` (any() across every candidate of the class) -- New England fed2022
+  # is `same = TRUE` because Natasha Ledger personally stood as IND in both
+  # 2019 and 2022, but she polled 2.8% in 2022; Matt Sharpham, a genuinely new
+  # candidate, LED the class at 7.9% and is who this slope actually multiplies.
+  # `same` routed him to the 0.907 "returning" slope instead of ~0.33 "new" --
+  # a ~2x over-prediction. `leader_same` falls back to `same` itself when a
+  # returns table predates this column (candidate_returns()'s own guard), so
+  # this degrades to the old behaviour rather than erroring on stale input.
+  same_col <- if ("leader_same" %in% names(hit)) hit$leader_same else hit$same
+  is_same <- !is.na(idx) & same_col[idx]; is_same[is.na(is_same)] <- FALSE
   # A DEPARTED LEADER DECAYS TOWARD `departed_rate`, BUT ONLY WHEN THE SCREEN
   # DOES NOT ALSO SEE A REAL SUCCESSOR. The 1.0 (uniform) path exists for a
   # small base plus a salient newcomer (Goldstein 2022); a departed leader and

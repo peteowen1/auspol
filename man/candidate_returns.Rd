@@ -14,9 +14,18 @@ corpus, e.g. \code{"fed2019"} and \code{"fed2022"}.}
 \code{output/candidacies.csv} when \code{NULL}.}
 }
 \value{
-A \code{data.table} of \code{seat}, \code{party}, \code{same} covering every seat/class
-present at \code{election_to}. \code{same} is \code{FALSE} where nobody of that class stood
+A \code{data.table} of \code{seat}, \code{party}, \code{same}, \code{same_mp},
+\code{prior_leader_returns}, \code{leader_same} covering every seat/class present
+at \code{election_to}. \code{same} is \code{FALSE} where nobody of that class stood
 before, which is the correct reading: there is no one to return.
+\code{leader_same} (added 2026-09-18) is TRUE only when the class's CURRENT
+leading candidate personally returns -- see \code{\link[=leading_candidate_returns]{leading_candidate_returns()}}
+for why \code{same}'s \code{any()}-across-the-class semantics wrongly attribute one
+candidate's history to an unrelated, genuinely new class-mate (New
+England fed2022: Natasha Ledger's personal return made \code{same = TRUE} for
+the whole IND class even though Matt Sharpham, the actual class leader,
+was new). \code{screened_slopes()}/\code{conditional_slopes()} key their same/new
+slope choice on \code{leader_same}, not \code{same}.
 }
 \description{
 The seat model is party-class based, so a returning independent and a
