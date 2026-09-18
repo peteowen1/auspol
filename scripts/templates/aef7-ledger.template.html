@@ -227,7 +227,16 @@
      "TCP scenario log loss" is a further-back question: how much of the probability mass each side's own
      simulation put on that pairing occurring AT ALL, regardless of who it thought would lead it or win it -- floored
      at 1e-6 for a pairing that side's simulation never drew, same convention as every other log loss on this page.
-     <code>scripts/build_aef7_tcp_actual.R</code>.</p>
+     <code>scripts/build_aef7_tcp_actual.R</code>. <b>Δ&nbsp;TCP&nbsp;err</b> and <b>Δ&nbsp;confidence</b> split this
+     into the two separate ways a seat can go wrong: Δ&nbsp;TCP&nbsp;err is "Ours err" minus "AEF err" -- same
+     negative-is-better convention as every other Δ column -- and answers "given the pairing that happened, whose
+     predicted SHARE within it was closer to the truth". Δ&nbsp;confidence is our TCP-scenario-freq minus AEF's,
+     for that same real pairing, and reads the OPPOSITE way round: POSITIVE means WE put more of our own
+     simulation's probability on the pairing that actually occurred, which is the good direction here, so it is
+     coloured on that basis rather than the page's usual sign convention. Mirani qld2024 is the case that prompted
+     this: Δ&nbsp;confidence +0.34 (we were far more sure OTH_RIGHT v LNP would be the final two, and it was) but
+     Δ&nbsp;TCP&nbsp;err about +1 (both sides misjudged the flow WITHIN that pairing by almost the same amount) --
+     two very different failure shapes that the single combined "Ours err" number could not tell apart.</p>
      <p class="sub prov"><b>Primary RMSE (every party, weighted by actual share)</b> scores every party's predicted
      primary vote in every seat, not just the eventual winner's -- weighted by how big that party's ACTUAL vote was,
      so a badly-misjudged fringe candidate on 1% barely moves it while a badly-misjudged front-runner does. AEF's
@@ -238,7 +247,13 @@
   </details>
 
   <details class="provlog">
-    <summary>Provenance &amp; changelog <span class="n">(16 updates)</span></summary>
+    <summary>Provenance &amp; changelog <span class="n">(17 updates)</span></summary>
+    <p class="sub prov"><b>Δ TCP err / Δ confidence columns added, Pete's request after the Mirani dig.</b> The
+       existing "Ours err"/"AEF err" pair answers only "who was closer", which conflates two different failure
+       shapes: calling the wrong final-two pairing versus calling the right pairing but the wrong split within it.
+       Δ&nbsp;TCP&nbsp;err (Ours err minus AEF err) and Δ&nbsp;confidence (our TCP-scenario-freq minus AEF's, for
+       the pairing that actually happened) separate them -- see "What the columns mean" for the full definition and
+       why Δ&nbsp;confidence is coloured the opposite way round from every other Δ on this page.</p>
     <p class="sub prov"><b>Known limitation, flagged and parked at Pete's direction.</b> The 2 excluded seats (Port Macquarie nsw2023, Roe wa2025) are Liberal-vs-National contests that <code>classify_party()</code> collapses to one "LNP" class everywhere in the pipeline, with no second class to score a TCP winner against. Checked AEF's own cached data for Port Macquarie: they have the identical limitation (<code>tcp: {"LNP": 39.2}</code>, one entry, not two) -- not a gap unique to us, and nothing to copy from them. Zero seats in the live 2026 Victorian candidate list currently have both a Liberal and a National candidate nominated, so this is not forecast-blocking today. <code>docs/NEXT-STEPS.md</code>.</p>
     <p class="sub prov"><b>Bradfield tie-break bug, caught by Pete from the actual ABC page.</b> fed2025 Bradfield is a genuine 26-vote margin after a full recount (Boele/IND 56,114 vs Kapterian/LNP 56,088), both rounding to an identical 50.0%%. Ranking the ABC scrape's two finalists by that ROUNDED percentage made the tie-break fall back to page order, silently calling the seat for whichever candidate the page listed first (Liberal) -- not the real result. First reported here as a "genuine coin-flip, not a bug"; it wasn't, until ranking on the raw vote count instead of the rounded percentage fixed it. Winner agreement against official sources is now 658/658 (100%%), up from 656/658. Also fixed, same pass: the reference CSV's own NA values for the 2 excluded seats were round-tripping as empty strings rather than true NA through every script that reads or writes it -- a downstream <code>is.na()</code> check would have silently passed on them. Zero data values changed, representation only.</p>
     <p class="sub prov"><b>vic2022 closed via an independent ABC scrape, same evening.</b> vic2022's 78 seats had no equivalent official archive on disk (no VEC distribution-of-preferences source for 2022), so they stayed unverified. Built <code>scripts/fetch_abc_seat_guides.R</code>, scraping ABC's own per-seat guide pages (static HTML, verified page-by-page) for all 660 AEF7 seats as a general cross-check, then found vic2022's mean gap against it (0.49 points) was an order of magnitude worse than every commission-sourced pair (0.00-0.01) -- confirming it really had been unverified, not just unlabelled. Also caught a wrong winner: Bass (ours: LNP, real result: ALP). vic2022 is now fsrc="abc-scrape", kept distinct from "official" since it is a secondary not primary source. <code>scripts/build_aef7_tcp_vic_from_abc.R</code>, <code>scripts/build_aef7_truth_tables.R</code>.</p>
@@ -361,7 +376,7 @@
           <th colspan="3" class="sep">Final two</th>
           <th colspan="3" class="sep">ITG final two</th>
           <th colspan="3" class="sep">AEF final two</th>
-          <th colspan="2" class="sep">TCP on real pairing</th>
+          <th colspan="4" class="sep">TCP on real pairing</th>
           <th colspan="3" class="sep">Seat log loss</th>
           <th colspan="2" class="sep"></th>
         </tr>
@@ -404,6 +419,8 @@ const COLS = [
   {k:"aef_tcp_scenario_freq", t:"AEF confidence", num:true, dp:3},
   {k:"our_tcp_actual_err", t:"Ours err", num:true, sep:true, dp:1, miss:true},
   {k:"aef_tcp_actual_err", t:"AEF err",  num:true, dp:1, miss:true},
+  {k:"tcp_err_delta",  t:"Δ TCP err",  num:true, dp:1, delta:true},
+  {k:"tcp_conf_delta", t:"Δ confidence", num:true, dp:3, hidelta:true},
   {k:"ll",     t:"Ours",  num:true, sep:true, dp:3},
   {k:"aef_ll", t:"AEF",   num:true, dp:3},
   {k:"dll",    t:"Δ loss", num:true, dp:3, delta:true},
@@ -424,6 +441,22 @@ SEATS.forEach(r => {
     ? +Math.abs(r.our_tcp_pred_pct - r.our_tcp_actual_share).toFixed(1) : null;
   r.aef_tcp_actual_err = (r.aef_tcp_pred_pct != null && r.aef_tcp_actual_share != null)
     ? +Math.abs(r.aef_tcp_pred_pct - r.aef_tcp_actual_share).toFixed(1) : null;
+  // Δ TCP err: ours minus theirs on the SHARE prediction for the pairing
+  // that actually happened -- same "negative = we did better" convention as
+  // every other Δ column. Δ confidence: ours minus theirs on how much
+  // probability mass each side's own simulation put on that real pairing
+  // occurring at all -- POSITIVE here means WE were more confident in the
+  // pairing that actually happened, so it reads the opposite way round
+  // (styled by hidelta, not delta). Pete asked for these to separate "we
+  // called the wrong pairing" from "we called the right pairing but got its
+  // internal split wrong" -- Mirani qld2024 is the case that prompted it:
+  // Δ confidence +0.34 (we were far more sure OTH_RIGHT v LNP would happen,
+  // correctly) but Δ TCP err only ~+1 (both sides misjudged the flow inside
+  // that pairing by almost the same amount once it did happen).
+  r.tcp_err_delta = (r.our_tcp_actual_err != null && r.aef_tcp_actual_err != null)
+    ? +(r.our_tcp_actual_err - r.aef_tcp_actual_err).toFixed(1) : null;
+  r.tcp_conf_delta = (r.our_tcp_actual_freq != null && r.aef_tcp_actual_freq != null)
+    ? +(r.our_tcp_actual_freq - r.aef_tcp_actual_freq).toFixed(3) : null;
 });
 
 const BYKEY = new Map();
@@ -553,6 +586,11 @@ function render(){
       if (c.num){
         let d = "";
         if (c.delta && r[c.k]!=null) d = r[c.k]<0 ? " delta better" : " delta worse";
+        // hidelta: same red/green idea as delta, but POSITIVE is the good
+        // direction (Δ confidence -- more of our own probability mass on the
+        // pairing that really happened is better), so the comparison is
+        // flipped relative to every other Δ column on this page.
+        if (c.hidelta && r[c.k]!=null) d = r[c.k]>0 ? " delta better" : (r[c.k]<0 ? " delta worse" : "");
         if (c.miss  && r[c.k]!=null) d = Math.abs(r[c.k])>=8 ? " delta worse" : "";
         return `<td class="num${sep}${d}">${fmt(r[c.k], c.dp)}</td>`;
       }
