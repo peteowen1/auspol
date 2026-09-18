@@ -1146,11 +1146,15 @@ if (identical(Sys.getenv("AUSPOL_XGB_SURGE", "0"), "1")) {
     surge_mu_arg <- .xs$surge_mu; surge_sd_arg <- .xs$surge_sd
   }
 }
+# HOW-TO-VOTE CARD (AUSPOL_HTV_FLOW=1): the Liberal-excluded, ALP+GRN-alive flow rows follow the recorded
+# card order for this election (R/htv_flow.R, external/reference/htv/liberal-alp-grn-order.csv).
+.htv_ov <- if (identical(Sys.getenv("AUSPOL_HTV_FLOW", "0"), "1")) tryCatch(htv_flow_override(.xgb_flow_ov, fm, TGT, rownames(shares)),
+  error = function(e) { cat(sprintf("HTV9! how-to-vote override FAILED, flow rows unchanged: %s\n", conditionMessage(e))); .xgb_flow_ov }) else .xgb_flow_ov
 sim <- simulate_seat_contests(level_sd = .level_sd, sd_override = SD_OVR, level_mult = .lm(shares), shares, fm, party_sd = psd, seat_sd = sp$sd_within * SEAT_SD_MULT,
                               n_sims = N_SIMS, smooth = SMOOTH, seed = SEED,
                               shrink = SHRINK, party_cor = PARTY_COR,
                               fallback_smooth = FB_SMOOTH, shrink_k = SHRINK_K, flow_sd = FLOW_SD,
-                              conditional_override = .xgb_flow_ov, conditional_override_sd = attr(.xgb_flow_ov, "sd"),
+                              conditional_override = .htv_ov, conditional_override_sd = attr(.htv_ov, "sd"),
                               surge_h = surge_arg, surge_party = surge_party_arg,
                                 surge_from_zero = identical(Sys.getenv("AUSPOL_SURGE_FROM_ZERO", "0"), "1"), surge_mu = surge_mu_arg, surge_sd = surge_sd_arg)
 

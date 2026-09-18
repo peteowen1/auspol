@@ -1263,9 +1263,13 @@ if (identical(Sys.getenv("AUSPOL_XGB_FLOWS", "0"), "1")) {
     cat(sprintf("XF4!! xgb_flow_conditional_override_for() FAILED%s -- flows UNCHANGED, shipped lookup table used\n",
                 .reason("xgb_flows")))
 }
+# HOW-TO-VOTE CARD (AUSPOL_HTV_FLOW=1): the Liberal-excluded, ALP+GRN-alive flow rows follow the recorded
+# card order for this election (R/htv_flow.R, external/reference/htv/liberal-alp-grn-order.csv).
+.htv_ov <- if (identical(Sys.getenv("AUSPOL_HTV_FLOW", "0"), "1")) tryCatch(htv_flow_override(.cond_ov, fm, "vic2026", rownames(shares)),
+  error = function(e) { cat(sprintf("HTV9! how-to-vote override FAILED, flow rows unchanged: %s\n", conditionMessage(e))); .cond_ov }) else .cond_ov
 sim <- simulate_seat_contests(level_sd = .level_sd, level_mult = .lm(shares), shares, fm, party_sd = psd, seat_sd = SEAT_SD, shrink = SHRINK,
                               n_sims = N_SIMS, smooth = SMOOTH, seed = SEED,
-                              conditional_override = .cond_ov, conditional_override_sd = attr(.cond_ov, "sd"),
+                              conditional_override = .htv_ov, conditional_override_sd = attr(.htv_ov, "sd"),
                               statewide_draws = sw_draws,
                               fallback_smooth = FB_SMOOTH, shrink_k = SHRINK_K, flow_sd = FLOW_SD,
                               surge_h = surge_arg, surge_party = surge_party_arg,

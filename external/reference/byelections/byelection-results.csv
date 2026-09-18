@@ -1,0 +1,97 @@
+region,seat,date,candidate,party_raw,votes,pct,source
+vic,Prahran,2025-02-08,Rachel Westaway,Liberal,11443,36.19,https://en.wikipedia.org/wiki/2025_Prahran_state_by-election
+vic,Prahran,2025-02-08,Angelica Di Camillo,Greens,11442,36.19,https://en.wikipedia.org/wiki/2025_Prahran_state_by-election
+vic,Prahran,2025-02-08,Tony Lupton,Independent,4021,12.72,https://en.wikipedia.org/wiki/2025_Prahran_state_by-election
+vic,Prahran,2025-02-08,Nathan Chisholm,Independent,1672,5.29,https://en.wikipedia.org/wiki/2025_Prahran_state_by-election
+vic,Prahran,2025-02-08,Faith Fuhrer,Animal Justice,879,2.78,https://en.wikipedia.org/wiki/2025_Prahran_state_by-election
+vic,Prahran,2025-02-08,Janine Hendry,Independent,505,1.60,https://en.wikipedia.org/wiki/2025_Prahran_state_by-election
+vic,Prahran,2025-02-08,Buzz Billman,Independent,465,1.47,https://en.wikipedia.org/wiki/2025_Prahran_state_by-election
+vic,Prahran,2025-02-08,Dennis Bilic,Sustainable Australia,430,1.36,https://en.wikipedia.org/wiki/2025_Prahran_state_by-election
+vic,Prahran,2025-02-08,Genevieve Gilbert,Family First,340,1.08,https://en.wikipedia.org/wiki/2025_Prahran_state_by-election
+vic,Prahran,2025-02-08,Mark Dessau,Libertarian,292,0.92,https://en.wikipedia.org/wiki/2025_Prahran_state_by-election
+vic,Prahran,2025-02-08,Alan Menadue,Independent,126,0.40,https://en.wikipedia.org/wiki/2025_Prahran_state_by-election
+vic,Werribee,2025-02-08,John Lister,Labor,12168,28.89,https://en.wikipedia.org/wiki/2025_Werribee_state_by-election
+vic,Werribee,2025-02-08,Steve Murphy,Liberal,12207,28.98,https://en.wikipedia.org/wiki/2025_Werribee_state_by-election
+vic,Werribee,2025-02-08,Paul Hopper,Independent,6134,14.56,https://en.wikipedia.org/wiki/2025_Werribee_state_by-election
+vic,Werribee,2025-02-08,Rifai A. Raheem,Greens,3190,7.57,https://en.wikipedia.org/wiki/2025_Werribee_state_by-election
+vic,Werribee,2025-02-08,Sue Munro,Victorian Socialists,3008,7.14,https://en.wikipedia.org/wiki/2025_Werribee_state_by-election
+vic,Werribee,2025-02-08,Xavier Menta,Legalise Cannabis,2316,5.50,https://en.wikipedia.org/wiki/2025_Werribee_state_by-election
+vic,Werribee,2025-02-08,Matt Emerson,Family First,1827,4.34,https://en.wikipedia.org/wiki/2025_Werribee_state_by-election
+vic,Werribee,2025-02-08,Shohre Mansouri Jajaee,Animal Justice,401,0.95,https://en.wikipedia.org/wiki/2025_Werribee_state_by-election
+vic,Werribee,2025-02-08,Munish Joshi,Independent,352,0.84,https://en.wikipedia.org/wiki/2025_Werribee_state_by-election
+vic,Werribee,2025-02-08,Aidan McLindon,Independent,270,0.64,https://en.wikipedia.org/wiki/2025_Werribee_state_by-election
+vic,Werribee,2025-02-08,Aijaz Moinuddin,Independent,164,0.39,https://en.wikipedia.org/wiki/2025_Werribee_state_by-election
+vic,Werribee,2025-02-08,Kodei Mulcahy,Independent,80,0.19,https://en.wikipedia.org/wiki/2025_Werribee_state_by-election
+vic,Mulgrave,2023-11-18,Eden Foster,Labor,14481,40.18,https://en.wikipedia.org/wiki/2023_Mulgrave_state_by-election
+vic,Mulgrave,2023-11-18,Courtney Mann,Liberal,7817,21.69,https://en.wikipedia.org/wiki/2023_Mulgrave_state_by-election
+vic,Mulgrave,2023-11-18,Ian Cook,Independent,6780,18.81,https://en.wikipedia.org/wiki/2023_Mulgrave_state_by-election
+vic,Mulgrave,2023-11-18,Rhonda Garad,Greens,2153,5.97,https://en.wikipedia.org/wiki/2023_Mulgrave_state_by-election
+vic,Mulgrave,2023-11-18,Kelly Cvetkova,Victorian Socialists,1315,3.65,https://en.wikipedia.org/wiki/2023_Mulgrave_state_by-election
+vic,Mulgrave,2023-11-18,Jane Foreman,Family First,1111,3.08,https://en.wikipedia.org/wiki/2023_Mulgrave_state_by-election
+vic,Mulgrave,2023-11-18,Ethelyn King,Libertarian,1046,2.90,https://en.wikipedia.org/wiki/2023_Mulgrave_state_by-election
+vic,Mulgrave,2023-11-18,Tina Theodossopoulou,Independent,662,1.84,https://en.wikipedia.org/wiki/2023_Mulgrave_state_by-election
+vic,Mulgrave,2023-11-18,Bronwyn Currie,Animal Justice,403,1.12,https://en.wikipedia.org/wiki/2023_Mulgrave_state_by-election
+vic,Mulgrave,2023-11-18,Celeste Ackerly,Sustainable Australia,276,0.77,https://en.wikipedia.org/wiki/2023_Mulgrave_state_by-election
+vic,Warrandyte,2023-08-26,Nicole Werner,Liberal,21921,57.3,https://en.wikipedia.org/wiki/2023_Warrandyte_state_by-election
+vic,Warrandyte,2023-08-26,Tomas Lightbody,Greens,7130,18.6,https://en.wikipedia.org/wiki/2023_Warrandyte_state_by-election
+vic,Warrandyte,2023-08-26,Cary de Wit,Democratic Labour,2204,5.8,https://en.wikipedia.org/wiki/2023_Warrandyte_state_by-election
+vic,Warrandyte,2023-08-26,Maya Tesa,Independent,1556,4.1,https://en.wikipedia.org/wiki/2023_Warrandyte_state_by-election
+vic,Warrandyte,2023-08-26,Colleen Bolger,Victorian Socialists,1459,3.8,https://en.wikipedia.org/wiki/2023_Warrandyte_state_by-election
+vic,Warrandyte,2023-08-26,Richard Griffith-Jones,Family First,1073,2.8,https://en.wikipedia.org/wiki/2023_Warrandyte_state_by-election
+vic,Warrandyte,2023-08-26,Jack Corcoran,Sustainable Australia,1030,2.7,https://en.wikipedia.org/wiki/2023_Warrandyte_state_by-election
+vic,Warrandyte,2023-08-26,Greg Cheesman,Freedom,846,2.2,https://en.wikipedia.org/wiki/2023_Warrandyte_state_by-election
+vic,Warrandyte,2023-08-26,Wai Man Raymond Chow,Independent,694,1.8,https://en.wikipedia.org/wiki/2023_Warrandyte_state_by-election
+vic,Warrandyte,2023-08-26,Morgan Ranieri,Independent,168,0.4,https://en.wikipedia.org/wiki/2023_Warrandyte_state_by-election
+vic,Warrandyte,2023-08-26,Alan Max Menadue,Independent,121,0.3,https://en.wikipedia.org/wiki/2023_Warrandyte_state_by-election
+vic,Warrandyte,2023-08-26,Philip Jenkins,Independent,77,0.2,https://en.wikipedia.org/wiki/2023_Warrandyte_state_by-election
+vic,Narracan,2023-01-28,Wayne Farnham,Liberal,16741,45.0,https://en.wikipedia.org/wiki/2023_Narracan_state_supplementary_election
+vic,Narracan,2023-01-28,Alyssa Weaver,Greens,4132,11.1,https://en.wikipedia.org/wiki/2023_Narracan_state_supplementary_election
+vic,Narracan,2023-01-28,Tony Wolfe,Independent,4110,11.0,https://en.wikipedia.org/wiki/2023_Narracan_state_supplementary_election
+vic,Narracan,2023-01-28,Sophia Camille De Wit,Democratic Labour,2641,7.1,https://en.wikipedia.org/wiki/2023_Narracan_state_supplementary_election
+vic,Narracan,2023-01-28,Leonie Blackwell,Freedom,2254,6.1,https://en.wikipedia.org/wiki/2023_Narracan_state_supplementary_election
+vic,Narracan,2023-01-28,Casey Murphy,One Nation,2246,6.0,https://en.wikipedia.org/wiki/2023_Narracan_state_supplementary_election
+vic,Narracan,2023-01-28,Annemarie McCabe,Independent,1437,3.9,https://en.wikipedia.org/wiki/2023_Narracan_state_supplementary_election
+vic,Narracan,2023-01-28,Michael Abelman,Liberal Democrats,1325,3.6,https://en.wikipedia.org/wiki/2023_Narracan_state_supplementary_election
+vic,Narracan,2023-01-28,Brendan Clarke,Family First,1089,2.9,https://en.wikipedia.org/wiki/2023_Narracan_state_supplementary_election
+vic,Narracan,2023-01-28,Austin Cram,Animal Justice,849,2.3,https://en.wikipedia.org/wiki/2023_Narracan_state_supplementary_election
+vic,Narracan,2023-01-28,Ian Honey,Independent,381,1.0,https://en.wikipedia.org/wiki/2023_Narracan_state_supplementary_election
+vic,Nepean,2026-05-02,Anthony Marsh,Liberal,15682,38.7,https://en.wikipedia.org/wiki/2026_Nepean_state_by-election
+vic,Nepean,2026-05-02,Darren Hercus,One Nation,9941,24.5,https://en.wikipedia.org/wiki/2026_Nepean_state_by-election
+vic,Nepean,2026-05-02,Tracee Hutchison,Independent,8533,21.0,https://en.wikipedia.org/wiki/2026_Nepean_state_by-election
+vic,Nepean,2026-05-02,Sianan Healy,Greens,3805,9.4,https://en.wikipedia.org/wiki/2026_Nepean_state_by-election
+vic,Nepean,2026-05-02,Renee Thompson,Legalise Cannabis,1192,2.9,https://en.wikipedia.org/wiki/2026_Nepean_state_by-election
+vic,Nepean,2026-05-02,Reade Smith,Sustainable Australia,721,1.8,https://en.wikipedia.org/wiki/2026_Nepean_state_by-election
+vic,Nepean,2026-05-02,Peter Angelico,Libertarian,505,1.2,https://en.wikipedia.org/wiki/2026_Nepean_state_by-election
+vic,Nepean,2026-05-02,Milton Wilde,EMI - Reform,166,0.4,https://en.wikipedia.org/wiki/2026_Nepean_state_by-election
+fed,Aston,2023-04-01,Mary Doyle,Labor,37318,40.87,https://en.wikipedia.org/wiki/2023_Aston_by-election
+fed,Aston,2023-04-01,Roshena Campbell,Liberal,35680,39.07,https://en.wikipedia.org/wiki/2023_Aston_by-election
+fed,Aston,2023-04-01,Angelica Di Camillo,Greens,9256,10.14,https://en.wikipedia.org/wiki/2023_Aston_by-election
+fed,Aston,2023-04-01,Maya Tesa,Independent,6426,7.04,https://en.wikipedia.org/wiki/2023_Aston_by-election
+fed,Aston,2023-04-01,Owen Miller,Fusion,2637,2.89,https://en.wikipedia.org/wiki/2023_Aston_by-election
+fed,Fadden,2023-07-15,Cameron Caldwell,Liberal National,43554,49.08,https://en.wikipedia.org/wiki/2023_Fadden_by-election
+fed,Fadden,2023-07-15,Letitia Del Fabbro,Labor,19580,22.06,https://en.wikipedia.org/wiki/2023_Fadden_by-election
+fed,Fadden,2023-07-15,Sandy Roach,One Nation,7896,8.90,https://en.wikipedia.org/wiki/2023_Fadden_by-election
+fed,Fadden,2023-07-15,Suzette Luyken,Legalise Cannabis,6424,7.24,https://en.wikipedia.org/wiki/2023_Fadden_by-election
+fed,Fadden,2023-07-15,Scott Turner,Greens,5477,6.17,https://en.wikipedia.org/wiki/2023_Fadden_by-election
+fed,Fadden,2023-07-15,Belinda Jones,Independent,931,1.05,https://en.wikipedia.org/wiki/2023_Fadden_by-election
+fed,Fadden,2023-07-15,Marnie Laree Davis,Indigenous-Aboriginal,895,1.01,https://en.wikipedia.org/wiki/2023_Fadden_by-election
+fed,Fadden,2023-07-15,Stewart Brooker,Independent,805,0.91,https://en.wikipedia.org/wiki/2023_Fadden_by-election
+fed,Fadden,2023-07-15,Quentin Bye,Sustainable Australia,779,0.88,https://en.wikipedia.org/wiki/2023_Fadden_by-election
+fed,Fadden,2023-07-15,Kevin Young,Independent,641,0.72,https://en.wikipedia.org/wiki/2023_Fadden_by-election
+fed,Fadden,2023-07-15,James Tayler,Federation,607,0.68,https://en.wikipedia.org/wiki/2023_Fadden_by-election
+fed,Fadden,2023-07-15,Chris Simpson,Democrats,589,0.66,https://en.wikipedia.org/wiki/2023_Fadden_by-election
+fed,Fadden,2023-07-15,Jan Pukallus,Citizens,570,0.64,https://en.wikipedia.org/wiki/2023_Fadden_by-election
+fed,Dunkley,2024-03-02,Jodie Belyea,Labor,37418,41.07,https://en.wikipedia.org/wiki/2024_Dunkley_by-election
+fed,Dunkley,2024-03-02,Nathan Conroy,Liberal,35746,39.23,https://en.wikipedia.org/wiki/2024_Dunkley_by-election
+fed,Dunkley,2024-03-02,Alex Breskin,Greens,5798,6.36,https://en.wikipedia.org/wiki/2024_Dunkley_by-election
+fed,Dunkley,2024-03-02,Darren Bergwerf,Independent,4315,4.74,https://en.wikipedia.org/wiki/2024_Dunkley_by-election
+fed,Dunkley,2024-03-02,Bronwyn Currie,Animal Justice,2818,3.09,https://en.wikipedia.org/wiki/2024_Dunkley_by-election
+fed,Dunkley,2024-03-02,Chrysten Abraham,Libertarian,2246,2.47,https://en.wikipedia.org/wiki/2024_Dunkley_by-election
+fed,Dunkley,2024-03-02,Reem Yunis,Victorian Socialists,1529,1.68,https://en.wikipedia.org/wiki/2024_Dunkley_by-election
+fed,Dunkley,2024-03-02,Heath McKenzie,Democrats,1242,1.36,https://en.wikipedia.org/wiki/2024_Dunkley_by-election
+fed,Cook,2024-04-13,Simon Kennedy,Liberal,53799,62.67,https://en.wikipedia.org/wiki/2024_Cook_by-election
+fed,Cook,2024-04-13,Martin Moore,Greens,14120,16.45,https://en.wikipedia.org/wiki/2024_Cook_by-election
+fed,Cook,2024-04-13,Natasha Brown,Animal Justice,5841,6.80,https://en.wikipedia.org/wiki/2024_Cook_by-election
+fed,Cook,2024-04-13,Vinay Kolhatkar,Libertarian,5117,5.96,https://en.wikipedia.org/wiki/2024_Cook_by-election
+fed,Cook,2024-04-13,Roger Woodward,Independent,4920,5.73,https://en.wikipedia.org/wiki/2024_Cook_by-election
+fed,Cook,2024-04-13,Simone Gagatam,Sustainable Australia,2054,2.39,https://en.wikipedia.org/wiki/2024_Cook_by-election

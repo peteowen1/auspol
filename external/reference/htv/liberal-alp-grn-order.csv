@@ -1,0 +1,10 @@
+election,seat,greens_above_labor,source
+vic2018,ALL,FALSE,Liberal cards put Labor above the Greens statewide in 2018; observed Liberal->ALP split 58% where both alive
+vic2022,ALL,TRUE,Victorian Liberals preferenced the Greens above Labor in 2022 (reported pre-election); observed split 35% to ALP
+qld2020,ALL,TRUE,"LNP put the Greens above Labor in 2020 inner-Brisbane seats (South Brisbane, Maiwar); observed split 36% to ALP"
+qld2024,ALL,FALSE,LNP put the Greens last in 2024; observed split 73% to ALP
+fed2019,ALL,FALSE,Coalition Greens-last policy; observed split 59% to ALP
+fed2022,ALL,FALSE,Coalition Greens-last policy; observed split 65% to ALP
+fed2025,ALL,FALSE,Coalition Greens-last policy; observed split 73% to ALP
+nsw2019,ALL,FALSE,NSW Liberals put the Greens last (reported)
+nsw2023,ALL,FALSE,NSW Liberals put the Greens last (reported)

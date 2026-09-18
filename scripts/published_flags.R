@@ -153,6 +153,13 @@ PUBLISHED_FLAGS <- c(
                                              # elections only (scripts/fit_xgb_flows_asat.R, output/xgb-flows-v1-asat-<election>.model),
                                              # not the leave-one-election-out model that sees later elections. Same leak, same fix as
                                              # AUSPOL_XGB_PRIMARY_OOF. Not a scored change: an honest number replacing a leaked one.
+  AUSPOL_HTV_FLOW            = "1",          # SHIPPED 2026-09-18 (docs/plans/prereg-htv-flow-2026-09-18.md): the Liberal how-to-vote card
+                                             # order for ALP-v-GRN seats (external/reference/htv/liberal-alp-grn-order.csv) selects the
+                                             # Liberal-excluded, ALP+GRN-alive flow row -- 35% to ALP when the card puts Greens above Labor,
+                                             # ~61% otherwise, both fitted leave-target-out from the transfer files. R/htv_flow.R. Measured
+                                             # base_pred-only, 20k sims: real-pairing 2CP error on ALP-v-GRN seats 6.19 -> 5.08 (n=26, SE
+                                             # 0.32), other pairings unchanged, pooled log loss 0.2945 -> 0.2938. No entry for an election
+                                             # (wa, sa, vic2026 until the cards are out) = unchanged.
   AUSPOL_FLOW_FRAG           = "1",          # 1 = the flow model also sees lead_primary, the seat's LEADING
                                              # first-preference share. Flows track how fragmented the field is,
                                              # not how close the contest is: the 2CP margin's slope collapses
