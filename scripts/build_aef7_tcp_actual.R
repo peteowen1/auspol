@@ -47,24 +47,16 @@ cat(sprintf("AT7  %d of %d official rows have a resolved final-two to score agai
 actual_share_of <- function(named, w, r, wshare)
   fifelse(named == w, wshare, fifelse(named == r, 100 - wshare, NA_real_))
 
-# ---- OUR side: newest ourtcp file per pair, excluding exploratory/
-# restricted-arm variants, same convention CLAUDE.md documents for every
-# other "newest file per pair" join in this repo (pool_backtests.R etc.) ----
+# ---- OUR side: the ourtcp file from the SAME harness run as the pair's
+# win file (scripts/ledger_inputs.R). The previous rule -- newest by name,
+# skipping anything named n5000 -- silently paired the new run's seat
+# probabilities with the OLD run's TCP scenarios on 2026-09-18. ----
 PAIRS <- unique(ref$pair)
-JURIS_PREFIX <- c(sa2026 = "sa2026", sa2022 = "sa2022", wa2025 = "wa2025",
-                   vic2022 = "vic2022")
-
-newest_ourtcp <- function(pr) {
-  g <- list.files(OUT, pattern = sprintf("^backtest-%s-ourtcp", pr), full.names = TRUE)
-  g <- g[!grepl("n5000|-p[0-9]{4,}", g)]   # exclude exploratory sims and restricted-pair arms
-  if (!length(g)) return(NULL)
-  g[which.max(file.mtime(g))]
-}
+source("scripts/ledger_inputs.R")
 
 our_rows <- rbindlist(lapply(PAIRS, function(pr) {
-  f <- newest_ourtcp(pr)
-  if (is.null(f)) { cat(sprintf("AT7! no ourtcp file for %s\n", pr)); return(NULL) }
-  x <- fread(f, showProgress = FALSE)
+  x <- run_table(pr, "ourtcp")
+  if (is.null(x)) { cat(sprintf("AT7! no ourtcp file for %s\n", pr)); return(NULL) }
   x[, pair := pr]
   x
 }), fill = TRUE)

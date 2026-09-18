@@ -47,28 +47,18 @@ groups <- fread(file.path(OUT, "aef7-seat-groups.csv"), showProgress = FALSE)
 ref <- fread(file.path(OUT, "aef7-final-two-and-tcp-reference.csv"), showProgress = FALSE)
 
 # OUR OWN FAVOURITE'S probability and primary share, for seats where we
-# called it wrong (our_pred != actual). newest-file-per-pair, same
-# convention as build_aef_comparison.R's read_win() -- an AUSPOL_AEF_RUNDIR
-# arm-fingerprint match would be more precise but this repo has only ever
-# had one arm's files present per pair at ledger-refresh time.
-newest_file <- function(pr, kind) {
-  pat <- if (pr %in% names(JURIS_PREFIX)) sprintf("^backtest-%s-%s", JURIS_PREFIX[[pr]], kind)
-         else if (grepl("^fed", pr)) sprintf("^backtest-fed-%s", kind)
-         else sprintf("^backtest-%s-%s", pr, kind)
-  g <- list.files(OUT, pattern = pat, full.names = TRUE)
-  if (!length(g)) return(NULL)
-  g[which.max(file.mtime(g))]
-}
+# called it wrong (our_pred != actual). Every file comes from the SAME
+# harness run as the pair's win file -- scripts/ledger_inputs.R explains the
+# three-vintage page that "newest file by name" produced on 2026-09-18.
+source("scripts/ledger_inputs.R")
 fav_for <- function(pr) {
-  af <- newest_file(pr, "allprobs")
-  sf <- newest_file(pr, "sharedetail")
-  if (is.null(af)) { cat(sprintf("AEFL1! %s: no allprobs file -- our_p_fav will equal our_p_win\n", pr)); return(NULL) }
-  ap <- fread(af, showProgress = FALSE)
-  if ("pair" %in% names(ap)) ap <- ap[ap$pair == pr]
+  ap <- run_table(pr, "allprobs")
+  sd <- run_table(pr, "sharedetail")
+  if (is.null(ap)) { cat(sprintf("AEFL1! %s: no allprobs file -- our_p_fav will equal our_p_win\n", pr)); return(NULL) }
   fav <- ap[, .SD[which.max(prob)], by = seat][, .(seat, fav = party, our_p_fav = prob)]
-  if (!is.null(sf)) {
-    sd <- fread(sf, showProgress = FALSE)
-    if ("pair" %in% names(sd)) sd <- sd[sd$pair == pr]
+  if (!is.null(sd)) {
+    if ("xgb_primary_on" %in% names(sd) && any(sd$xgb_primary_on != 1))
+      stop(pr, ": the run's sharedetail has xgb_primary_on != 1 -- this is a stage-1 (base_pred only) run, not the shipped model")
     sd <- sd[, .(pred_share = mean(pred_share)), by = .(seat, party)]
     fav <- merge(fav, sd, by.x = c("seat","fav"), by.y = c("seat","party"), all.x = TRUE)
     setnames(fav, "pred_share", "our_fp_fav")
@@ -84,10 +74,8 @@ cat(sprintf("AEFL1 our-favourite lookup built for %d/%d pairs\n",
 # (not the region), even for the multi-pair harnesses -- a different
 # convention, checked directly rather than assumed.
 tcp_for <- function(pr) {
-  g <- list.files(OUT, pattern = sprintf("^backtest-%s-ourtcp-", pr), full.names = TRUE)
-  if (!length(g)) { cat(sprintf("AEFL4! %s: no ourtcp file -- our TCP%% left NA\n", pr)); return(NULL) }
-  f <- g[which.max(file.mtime(g))]
-  x <- fread(f, showProgress = FALSE)
+  x <- run_table(pr, "ourtcp")
+  if (is.null(x)) { cat(sprintf("AEFL4! %s: no ourtcp file -- our TCP%% left NA\n", pr)); return(NULL) }
   x[, .SD[which.max(freq)], by = seat][, .(seat, our_tcp_f1 = f1, our_tcp_f2 = f2, our_tcp_pct = f1_tcp_pct, our_tcp_freq = freq)][, pair := pr][]
 }
 tcp_all <- rbindlist(lapply(MAP$pair, tcp_for), fill = TRUE)
@@ -211,16 +199,20 @@ tcp_mae <- list(
 # comment and genuinely not built yet, so AEF is reported as unavailable
 # rather than guessed at or silently omitted.
 primary_wrmse <- list(our = NA_real_, our_n = 0L, aef = NA_real_, aef_n = 0L)
-sd_f <- file.path(OUT, "pooled-sharedetail.csv")
-if (file.exists(sd_f)) {
-  sdw <- fread(sd_f, showProgress = FALSE)
-  sdw <- sdw[pair %in% MAP$pair]
-  if (nrow(sdw)) {
-    primary_wrmse$our <- sqrt(sum(sdw$actual_share * (sdw$pred_share - sdw$actual_share)^2) / sum(sdw$actual_share))
-    primary_wrmse$our_n <- nrow(sdw)
-  }
+# From the SAME runs as everything else on the page -- NOT pooled-sharedetail.csv,
+# which pool_sharedetail.R only accepts at xgb_primary_on = 0 and is therefore
+# base_pred without the xgb layer. Until 2026-09-18 this card compared AEF
+# against our PRE-xgb baseline (5.28) and called it "ours"; the shipped model
+# is 4.80 on the same rows.
+sdw <- rbindlist(lapply(MAP$pair, function(pr) { x <- run_table(pr, "sharedetail"); if (!is.null(x)) x[, pair := pr] }), fill = TRUE)
+sdw <- sdw[!is.na(actual_share)]
+if (nrow(sdw)) {
+  if ("xgb_primary_on" %in% names(sdw) && any(sdw$xgb_primary_on != 1))
+    stop("weighted primary RMSE: a run's sharedetail has xgb_primary_on != 1 -- not the shipped model")
+  primary_wrmse$our <- sqrt(sum(sdw$actual_share * (sdw$pred_share - sdw$actual_share)^2) / sum(sdw$actual_share))
+  primary_wrmse$our_n <- nrow(sdw)
 } else {
-  cat("AEFL7! output/pooled-sharedetail.csv missing -- weighted primary RMSE (ours) left NA\n")
+  cat("AEFL7! no sharedetail rows from the chosen runs -- weighted primary RMSE (ours) left NA\n")
 }
 # AEF's side: scripts/build_aef_fptrend.R, built 2026-09-18, parses their
 # per-party seatFpBands medians. Verified against a real seat (Frankston,
