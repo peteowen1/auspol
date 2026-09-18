@@ -95,3 +95,49 @@ byelection_prior <- function(mat, election_from, election_to, table = NULL, weig
   attr(mat, "byelection") <- list(applied = applied, skipped = skipped, cases = s)
   mat
 }
+
+#' The by-election winner as the seat's sitting member
+#'
+#' For the pair `election_from -> election_to`, one row per by-election in
+#' the window whose winner is known (`byelection-winners.csv`): the winning
+#' candidate's name, party class and by-election first-preference share,
+#' shaped like a candidacy row with `elected = TRUE`. [candidate_returns()]
+#' uses it (under `AUSPOL_BYELECTION_MP=1`) to replace the previous general
+#' election's `elected` flags for that seat, so a member who resigned and
+#' lost the seat at a by-election (Speirs, Black sa2026) stops reading as
+#' the returning sitting member, and the by-election winner (Dighton) starts.
+#'
+#' @param election_from,election_to Election labels.
+#' @param results,winners Injectable tables; read from disk when `NULL`.
+#' @return data.table: seat, party, name, surname, given, pcv, elected; zero
+#'   rows when nothing applies.
+#' @export
+byelection_winner_rows <- function(election_from, election_to, results = NULL, winners = NULL) {
+  empty <- data.table::data.table(seat = character(0), party = character(0), name = character(0),
+                                  surname = character(0), given = character(0), pcv = numeric(0), elected = logical(0))
+  res <- if (is.null(results)) byelection_table() else data.table::as.data.table(results)
+  wf <- file.path("external", "reference", "byelections", "byelection-winners.csv")
+  win <- if (!is.null(winners)) data.table::as.data.table(winners) else if (file.exists(wf)) data.table::fread(wf, showProgress = FALSE) else NULL
+  if (is.null(res) || is.null(win) || !nrow(res) || !nrow(win)) return(empty)
+  res <- data.table::copy(res); win <- data.table::copy(win)
+  if (!"party" %in% names(res)) res[, party := classify_party(party_raw)]
+  if (!inherits(res$date, "Date")) res[, date := as.Date(date)]
+  if (!inherits(win$date, "Date")) win[, date := as.Date(date)]
+  win[, party := classify_party(winner_party_raw)]
+  dates <- election_dates(); d0 <- dates[[election_from]]; d1 <- dates[[election_to]]
+  reg <- sub("[0-9]{4}$", "", election_to)
+  w <- win[win$region == reg & win$date > d0 & win$date < d1]
+  if (!nrow(w)) return(empty)
+  w <- w[order(-date), .SD[1L], by = seat]   # the last by-election in a seat decides
+  out <- data.table::rbindlist(lapply(seq_len(nrow(w)), function(i) {
+    r <- res[res$region == reg & res$seat == w$seat[i] & res$date == w$date[i] & res$party == w$party[i]]
+    if (!nrow(r)) return(NULL)
+    r <- r[which.max(r$pct)]
+    nm <- r$candidate
+    sp <- strsplit(trimws(nm), " ")[[1]]
+    data.table::data.table(seat = r$seat, party = r$party, name = nm,
+                           surname = toupper(sp[length(sp)]), given = paste(sp[-length(sp)], collapse = " "),
+                           pcv = r$pct, elected = TRUE)
+  }), fill = TRUE)
+  if (is.null(out) || !nrow(out)) empty else out
+}

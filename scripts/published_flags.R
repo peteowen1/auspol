@@ -167,6 +167,10 @@ PUBLISHED_FLAGS <- c(
                                              # replacement ("1") was REFUSED: protest swings revert (Inala, Ipswich West, Upper Hunter), error
                                              # +0.59 on 17 seats. "blend" = half by-election, half general election: error 2.78 -> 2.44 (SE
                                              # 0.24), pooled log loss 0.2945 -> 0.2936. Black 34.2 -> ~38 on ALP (actual 43.0).
+  AUSPOL_BYELECTION_MP       = "0",          # MEASURING 2026-09-19: the by-election WINNER is the seat's sitting member for every
+                                             # candidate-identity test (same_mp, mp_departed, historic_elected), not the previous general
+                                             # election's member. Black sa2026: Speirs read as the returning member of the IND class (+5 pts
+                                             # from the xgb layer), Dighton as a newcomer. byelection_winner_rows(), candidate_returns().
   AUSPOL_FLOW_FRAG           = "1",          # 1 = the flow model also sees lead_primary, the seat's LEADING
                                              # first-preference share. Flows track how fragmented the field is,
                                              # not how close the contest is: the 2CP margin's slope collapses

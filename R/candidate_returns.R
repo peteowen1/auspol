@@ -62,6 +62,22 @@ candidate_returns <- function(election_from, election_to, corpus = NULL) {
   PREVT <- C[C$election == election_from]
   if (!nrow(NOWT)) stop("no rows for election ", election_to, call. = FALSE)
   if (!nrow(PREVT)) stop("no rows for election ", election_from, call. = FALSE)
+  # A BY-ELECTION WINNER IS THE SITTING MEMBER (AUSPOL_BYELECTION_MP=1). The
+  # previous general election's `elected` flags are what every "same member"
+  # test below reads, so Speirs (Liberal member at sa2022, resigned, lost
+  # Black at the 2024 by-election, stood as IND in 2026) read as the RETURNING
+  # SITTING MEMBER of the IND class and the as-at xgb model paid him +5 points
+  # for it; Dighton, who actually held the seat, read as a newcomer. The
+  # winner row replaces the seat's elected flags; nothing else in PREVT moves.
+  if (identical(Sys.getenv("AUSPOL_BYELECTION_MP", "0"), "1")) {
+    bw <- tryCatch(byelection_winner_rows(election_from, election_to), error = function(e) NULL)
+    if (!is.null(bw) && nrow(bw) && "elected" %in% names(PREVT)) {
+      PREVT <- data.table::copy(PREVT)
+      PREVT[PREVT$seat %in% bw$seat, elected := FALSE]
+      add <- data.table::copy(bw)[, election := election_from]
+      PREVT <- data.table::rbindlist(list(PREVT, add), fill = TRUE)
+    }
+  }
 
   kf <- function(d) {
     sur <- surname_of(if ("surname" %in% names(d)) d$surname else NA_character_,
