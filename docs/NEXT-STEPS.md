@@ -157,8 +157,16 @@ had by-elections); `fit_seats_full.R` does not use any of them as a prior.
 
 **Combined rebuild DONE 2026-09-19 00:33, ledger v35 published**: pooled seat
 log loss 0.2689 -> 0.2667 (AEF 0.2851), TCP MAE 3.74 -> 3.69; sa2026 0.3269
--> 0.3062, nsw2023 0.2190 -> 0.2102; wa2025 worse 0.2581 -> 0.2713 (look
-at which wa seats moved). Day total v32 0.2735 -> v35 0.2667.
+-> 0.3062, nsw2023 0.2190 -> 0.2102; wa2025 worse 0.2581 -> 0.2713. Checked
+overnight: the wa2025 move is broad and small (Bateman, South Perth,
+Scarborough, Kalgoorlie, Riverton each 2-4 points less ALP; no seat
+flipped), i.e. the as-at xgb model retrained on a corpus whose base_pred
+changed in 17 by-election seats, not a WA-specific cause. Retrain
+sensitivity of that size is the noise floor of a single ledger delta.
+Day total v32 0.2735 -> v35 0.2667.
+
+**PR #51 (0.4.45): CI GREEN at 01:20 after the stale .Rd fix. READY TO MERGE
+(`gh pr merge 51 --squash`, no --delete-branch). Queued for Pete by rule.**
 
 **Remaining**:
 1. The flow pattern (ALP v GRN and
