@@ -363,7 +363,7 @@ nsw2023,Oxley,LNP,ALP,62.8,derived,ALP,LNP,41.3,0.843,31.5,51.6
 nsw2023,Parramatta,ALP,LNP,58.6,derived,ALP,LNP,52.6,1,38.8,66
 nsw2023,Penrith,ALP,LNP,51.6,derived,ALP,LNP,53.4,0.99,39.7,66.4
 nsw2023,Pittwater,LNP,IND,50.7,derived,LNP,IND,53.7,0.79,30,74.6
-nsw2023,Port Macquarie,"","",,"",ALP,LNP,34.3,0.982,25.2,44.4
+nsw2023,Port Macquarie,,,,intra-coalition-excluded,ALP,LNP,34.3,0.982,25.2,44.4
 nsw2023,Port Stephens,ALP,LNP,69,derived,ALP,LNP,59.9,0.977,49,69.4
 nsw2023,Prospect,ALP,LNP,58.7,derived,ALP,LNP,63,1,52.3,72.3
 nsw2023,Riverstone,ALP,LNP,53.7,derived,ALP,LNP,52.8,0.996,43.3,62
@@ -648,7 +648,7 @@ wa2025,Perth,ALP,LNP,71,derived,ALP,LNP,65.7,0.867,55.5,73.8
 wa2025,Pilbara,LNP,ALP,52.5,derived,ALP,LNP,51.9,0.655,40,63
 wa2025,Riverton,ALP,LNP,54.2,derived,ALP,LNP,47.5,0.975,36.9,57.7
 wa2025,Rockingham,ALP,LNP,61.8,derived,ALP,LNP,67.6,0.977,55.7,77.1
-wa2025,Roe,LNP,OTH,97.5,derived,LNP,LNP,47.3,0.472,29.1,67.9
+wa2025,Roe,,,,intra-coalition-excluded,LNP,LNP,47.3,0.472,29.1,67.9
 wa2025,Scarborough,ALP,LNP,54,derived,ALP,LNP,45.6,0.995,35.1,55.9
 wa2025,South Perth,ALP,LNP,50.5,derived,ALP,LNP,46.3,0.94,36,56.4
 wa2025,Southern River,ALP,LNP,73.4,derived,ALP,LNP,70.7,0.973,61.3,78.2

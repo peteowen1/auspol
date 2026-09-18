@@ -215,10 +215,13 @@
      <p class="sub prov"><b>TCP on real pairing</b> ("Ours err"/"AEF err" columns, and the matching headline stats)
      is a DIFFERENT question from ITG/AEF final two above: those score each side's own #1-guessed pairing, so a
      seat only counts if that guess happened to match reality (n=568 ours / 574 AEF of 660). This instead looks up,
-     for EVERY seat with a resolved real result (659 of 660 -- Port Macquarie nsw2023 is decided outright on
-     primary votes with no real two-candidate-preferred count to score against, excluded rather than faked;
-     the other 27 gap seats, all vic2022, were backfilled from AE Forecasts' own cached real-result data,
-     <code>scripts/build_aef7_tcp_backfill.R</code>), whichever party
+     for EVERY seat with a resolved real result (658 of 660 -- Port Macquarie nsw2023 and Roe wa2025 are
+     INTRA-COALITION contests, Liberal vs National, both classified to our single "LNP" bucket with no
+     second class to pair against; correctly excluded rather than forced into a pairing our own
+     classification cannot represent (Roe's reference row briefly carried a wrong, implausible one --
+     LNP vs OTH at 97.5%% -- before this check existed). 26 other gap seats, all vic2022, were backfilled
+     from AE Forecasts' own cached real-result data, <code>scripts/build_aef7_tcp_backfill.R</code>),
+     whichever party
      that side's own scenario table named as leader of the pairing that ACTUALLY happened -- even when that was not
      their #1 pick -- and compares that side's predicted share for that party against what it actually got.
      "TCP scenario log loss" is a further-back question: how much of the probability mass each side's own
