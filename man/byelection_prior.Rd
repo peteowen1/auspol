@@ -4,12 +4,16 @@
 \alias{byelection_prior}
 \title{Replace prior rows in the class-share matrix with by-election shares}
 \usage{
-byelection_prior(mat, election_from, election_to, table = NULL)
+byelection_prior(mat, election_from, election_to, table = NULL, weight = 1)
 }
 \arguments{
 \item{mat}{Prior share matrix, seats by classes, in points.}
 
 \item{election_from, election_to, table}{As in \code{\link[=byelections_between]{byelections_between()}}.}
+
+\item{weight}{Share of the by-election in the replaced row: 1 replaces it
+outright, 0.5 blends half and half with the general-election prior
+(\code{AUSPOL_BYELECTION_PRIOR=blend}).}
 }
 \value{
 \code{mat} with attribute \code{byelection} = list(applied, skipped, cases).
