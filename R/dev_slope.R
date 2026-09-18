@@ -121,6 +121,9 @@ dev_slopes_for <- function(parties, default = 1) {
 #'   every seat on `default`.
 #' @param same,new Named numeric vectors of slopes by class.
 #' @param default Slope for a class absent from `same`/`new`.
+#' @param major_departed Optional named numeric (ALP, LNP): the slope a major
+#'   party keeps on its deviation where `returns$mp_departed` is TRUE, from
+#'   [fit_major_departed_slope()]. `NULL` keeps majors at `default`.
 #' @param same_mp Optional named numeric vector of slopes by class, applied
 #'   where the returning candidate was the SITTING MEMBER. `NULL` (the
 #'   default) keeps the two-tier `same`/`new` behaviour byte-identical.
@@ -140,7 +143,23 @@ conditional_slopes <- function(cls, seats, returns,
                                new  = c(IND = 0.326, OTH_RIGHT = 0.325,
                                         GRN = 0.880, ONP = 0.545),
                                default = 1,
-                               same_mp = NULL) {
+                               same_mp = NULL, major_departed = NULL) {
+  # MAJOR-PARTY DEPARTURE TIER. ALP/LNP have no same/new table and always
+  # took `default` (1.0): a seat whose sitting member retired projected its
+  # full personal-vote-inflated base. Measured 2026-09-18: -2.8 points on
+  # 361 such cells, scaling with the vote. `major_departed` (fitted by
+  # fit_major_departed_slope(), gated by AUSPOL_MAJOR_DEPARTED) gives that
+  # class a slope on its deviation only where `returns$mp_departed` is TRUE.
+  if (!is.null(major_departed) && cls %in% names(major_departed) &&
+      !is.null(returns) && "mp_departed" %in% names(returns)) {
+    R0 <- data.table::as.data.table(returns)
+    h0 <- R0[R0$party == cls]
+    i0 <- match(seats, h0$seat)
+    dep <- !is.na(i0) & h0$mp_departed[i0]; dep[is.na(dep)] <- FALSE
+    out <- rep(as.numeric(default), length(seats))
+    out[dep] <- as.numeric(major_departed[[cls]])
+    return(out)
+  }
   # SITTING-MEMBER TIER, opt-in via `same_mp` (AUSPOL_MP_SLOPE=1 in the
   # harnesses). `same` above pools a returning MEMBER with a returning
   # also-ran; measured separately over 531 returning non-major candidacies
@@ -256,12 +275,12 @@ screened_slopes <- function(cls, seats, returns, permit, honour_departed = FALSE
                             new  = c(IND = 0.326, OTH_RIGHT = 0.325,
                                      GRN = 0.880, ONP = 0.545),
                             default = 1, same_mp = NULL,
-                            departed_rate = c(IND = 0.38)) {
+                            departed_rate = c(IND = 0.38), major_departed = NULL) {
   if (length(permit) != length(seats)) {
     stop("permit must be the same length as seats: ", length(permit),
          " vs ", length(seats), call. = FALSE)
   }
-  base <- conditional_slopes(cls, seats, returns, same, new, default, same_mp)
+  base <- conditional_slopes(cls, seats, returns, same, new, default, same_mp, major_departed)
   if (is.null(returns) || !cls %in% names(same) || !cls %in% names(new)) {
     return(base)   # class never fitted: conditional_slopes already left it at default
   }

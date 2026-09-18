@@ -640,3 +640,69 @@ fit_dispersion_slopes <- function(target_election, corpus = NULL, pairs = NULL,
   }
   list(same = SHIP_SAME, new = new_slopes, n = data.table::rbindlist(cov))
 }
+
+#' Fit the slope a major party keeps on its seat deviation when its sitting member departs
+#'
+#' Leave-target-out over every other pair. For ALP and LNP separately, rows
+#' where the class held the seat at the prior election and its member did
+#' not return under that label (`mp_departed` from [candidate_returns()]),
+#' regress `actual - level_now` on `prior - level_prev` through the origin,
+#' exactly the fit [fit_conditional_slopes()] does for the minor classes.
+#' Fewer than `min_n` rows for a class leaves it at 1 (the current
+#' behaviour). docs/plans/prereg-major-departed-slope-2026-09-18.md.
+#'
+#' @param target_election Pair excluded from the fit.
+#' @param corpus,pairs As in [fit_conditional_slopes()].
+#' @param min_n Minimum departed rows per class.
+#' @return list(slope = named numeric (ALP, LNP), n = named integer, rows).
+#' @export
+fit_major_departed_slope <- function(target_election, corpus = NULL, pairs = NULL, min_n = 40L) {
+  MAJ <- c("ALP", "LNP")
+  C <- corpus
+  if (is.null(C)) {
+    f <- file.path("output", "candidacies.csv")
+    if (!file.exists(f)) stop("fit_major_departed_slope() needs output/candidacies.csv", call. = FALSE)
+    C <- data.table::fread(f, showProgress = FALSE)
+  }
+  C <- data.table::as.data.table(C)
+  if (is.null(pairs)) pairs <- all_election_pairs()
+  pairs <- Filter(function(pr) !identical(pr$election, target_election), pairs)
+  state_level <- function(el) {
+    d <- C[C$election == el]
+    if (!nrow(d) || !all(c("votes", "tot") %in% names(d))) return(NULL)
+    d <- d[is.finite(d$votes)]
+    st <- unique(d[, list(seat, tot)]); den <- sum(st$tot, na.rm = TRUE)
+    if (!is.finite(den) || den <= 0) return(NULL)
+    d[, list(level = 100 * sum(votes, na.rm = TRUE) / den), by = party]
+  }
+  rows <- data.table::rbindlist(lapply(pairs, function(pr) {
+    lp <- state_level(pr$prev); ln <- state_level(pr$election)
+    if (is.null(lp) || is.null(ln)) return(NULL)
+    r <- tryCatch(candidate_returns(pr$prev, pr$election, corpus = C), error = function(e) NULL)
+    if (is.null(r) || !"mp_departed" %in% names(r)) return(NULL)
+    NOWT <- C[C$election == pr$election]
+    nowc <- NOWT[, list(actual_now = sum(pcv, na.rm = TRUE)), by = list(seat, party)]
+    P <- data.table::copy(C[C$election == pr$prev])[, .s := normalise_seat(seat)]
+    prevc <- P[, list(x = sum(pcv, na.rm = TRUE)), by = list(.s, party)]
+    m <- merge(r[r$party %in% MAJ, list(seat, party, mp_departed)], nowc, by = c("seat", "party"))
+    m[, .s := normalise_seat(seat)]
+    m <- merge(m, prevc, by = c(".s", "party"))
+    m <- merge(m, lp[, list(party, level_prev = level)], by = "party")
+    m <- merge(m, ln[, list(party, level_now  = level)], by = "party")
+    m[, pair := pr$election]
+    m[x > 0]
+  }), fill = TRUE)
+  slope <- c(ALP = 1, LNP = 1); n <- c(ALP = 0L, LNP = 0L)
+  if (!nrow(rows)) return(list(slope = slope, n = n, rows = rows))
+  rows[, dev := x - level_prev]; rows[, yy := actual_now - level_now]
+  for (cl in MAJ) {
+    sub <- rows[party == cl & mp_departed %in% TRUE]
+    n[[cl]] <- nrow(sub)
+    if (nrow(sub) < min_n) next
+    fit <- tryCatch(stats::lm(yy ~ 0 + dev, data = sub), error = function(e) NULL)
+    if (is.null(fit)) next
+    cm <- summary(fit)$coefficients
+    if (nrow(cm) && is.finite(cm[1, 1])) slope[[cl]] <- cm[1, 1]
+  }
+  list(slope = slope, n = n, rows = rows)
+}

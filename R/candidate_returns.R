@@ -158,6 +158,26 @@ candidate_returns <- function(election_from, election_to, corpus = NULL) {
   res <- merge(full, res, by = c("seat", "party"), all.x = TRUE)
   res[is.na(same), same := FALSE]
   res[is.na(same_mp), same_mp := FALSE]
+  # DID THIS CLASS HOLD THE SEAT, AND DID ITS MEMBER LEAVE? `mp_departed` is
+  # TRUE when the class had the elected member at `election_from` (under the
+  # target's seat name or its renamed form) and `same_mp` is FALSE -- a
+  # retirement, a defection to another label, or a loss at a by-election.
+  # Major parties lose a measured ~2.8 points of primary vote in exactly
+  # this case (docs/plans/prereg-major-departed-slope-2026-09-18.md) and
+  # had no tier for it. FALSE everywhere when the corpus has no `elected`.
+  if ("elected" %in% names(PREVT)) {
+    held <- unique(rbind(PREVT[PREVT$elected %in% TRUE, list(.s = .s,         party)],
+                         PREVT[PREVT$elected %in% TRUE, list(.s = .s_renamed, party)]))
+    held[, had_mp := TRUE]
+    smap <- unique(NOWT[, list(seat, .s)])
+    held <- merge(held, smap, by = ".s", allow.cartesian = TRUE)[, list(seat, party, had_mp)]
+    res <- merge(res, unique(held), by = c("seat", "party"), all.x = TRUE)
+    res[is.na(had_mp), had_mp := FALSE]
+    res[, mp_departed := had_mp & !same_mp]
+    res[, had_mp := NULL]
+  } else {
+    res[, mp_departed := FALSE]
+  }
   # DOES THE PRIOR ELECTION'S LEADING CANDIDATE OF THIS CLASS STAND HERE AGAIN,
   # under any label? `same` asks whether the TARGET's leading candidate has a
   # history; this asks the reverse -- whether the vote the class carries from

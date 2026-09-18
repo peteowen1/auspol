@@ -604,6 +604,14 @@ mat <- (function(m) {
               if (length(.a$skipped)) paste0("; SKIPPED ", paste(.a$skipped, collapse = ", ")) else ""))
   m2
 })(mat)
+# MAJOR-PARTY DEPARTURE SLOPE (AUSPOL_MAJOR_DEPARTED=1): docs/plans/prereg-major-departed-slope-2026-09-18.md
+.MAJDEP <- if (identical(Sys.getenv("AUSPOL_MAJOR_DEPARTED", "0"), "1")) tryCatch({
+  .fmd <- fit_major_departed_slope(TGT)
+  cat(sprintf("BF0m major-departed slope ALP %.3f (n=%d) LNP %.3f (n=%d), target excluded
+", .fmd$slope[["ALP"]], .fmd$n[["ALP"]], .fmd$slope[["LNP"]], .fmd$n[["LNP"]]))
+  .fmd$slope
+}, error = function(e) { cat(sprintf("BF0m! major-departed fit FAILED, majors keep slope 1: %s
+", conditionMessage(e))); NULL }) else NULL
 .tr <- attr(mat, "transfers"); if (!is.null(.tr)) cat(sprintf("TR1  transfers moved with the person: %d applied%s\n", .tr$applied, if (length(.tr$skipped)) paste0("; SKIPPED ", length(.tr$skipped), ": ", paste(utils::head(.tr$skipped, 5), collapse = ", ")) else ""))
 .own_x <- function(p, seats, x) {
   if (is.null(.own_prev)) return(x)
@@ -653,8 +661,8 @@ for (p in parties) {
     pv <- .permit[.permit$party == p, ]
     lut <- stats::setNames(as.logical(pv$permit), pv$seat)
     pm <- unname(lut[rownames(mat)]); pm[is.na(pm)] <- TRUE
-    screened_slopes(p, rownames(mat), .returns, pm, same_mp = .MP_SLOPE, honour_departed = .honour_departed, same = if (is.null(.fitsl)) formals(screened_slopes)$same else .fitsl$same, new = if (is.null(.fitsl)) formals(screened_slopes)$new else .fitsl$new)
-  } else if (.cond) conditional_slopes(p, rownames(mat), .returns, same_mp = .MP_SLOPE, same = if (is.null(.fitsl)) formals(conditional_slopes)$same else .fitsl$same, new = if (is.null(.fitsl)) formals(conditional_slopes)$new else .fitsl$new) else DEV_SLOPE[[p]]
+    screened_slopes(p, rownames(mat), .returns, pm, same_mp = .MP_SLOPE, major_departed = .MAJDEP, honour_departed = .honour_departed, same = if (is.null(.fitsl)) formals(screened_slopes)$same else .fitsl$same, new = if (is.null(.fitsl)) formals(screened_slopes)$new else .fitsl$new)
+  } else if (.cond) conditional_slopes(p, rownames(mat), .returns, same_mp = .MP_SLOPE, major_departed = .MAJDEP, same = if (is.null(.fitsl)) formals(conditional_slopes)$same else .fitsl$same, new = if (is.null(.fitsl)) formals(conditional_slopes)$new else .fitsl$new) else DEV_SLOPE[[p]]
   if (!is.null(.major_sl) && p %in% names(.major_sl$same) && !is.null(.returns)) {
     .r <- .returns[.returns$party == p]
     .is_same <- unname(stats::setNames(.r$same, .r$seat)[rownames(mat)])

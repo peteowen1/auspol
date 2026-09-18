@@ -35,6 +35,13 @@ PUBLISHED_FLAGS <- c(
                                              # "mean" ~0.36) before the departed decay applies to the rest. Morwell vic2022 (Northe, National ->
                                              # IND -> retired; Nationals 27.2 predicted vs 38.4). route_departed_origin(), all six harnesses +
                                              # fit_seats_full.R at the remove_transferred_votes() step. "0" = today's pro-rata release.
+  AUSPOL_MAJOR_DEPARTED      = "1",          # SHIPPED 2026-09-18 (docs/plans/prereg-major-departed-slope-2026-09-18.md): ALP/LNP seats
+                                             # whose sitting member did not re-stand get a fitted (leave-target-out) slope on their deviation
+                                             # from the statewide level instead of 1.0 -- base_pred over-predicts them by 2.8 points on 361
+                                             # cells, scaling with the vote. fit_major_departed_slope(), conditional_slopes(major_departed=).
+                                             # Measured base_pred-only, 20k sims, all 23 pairs: departed-cell error 5.37 -> 4.66 points
+                                             # (-0.71, SE 0.11), bias 2.7 -> 1.0; pooled seat log loss 0.2979 -> 0.2951, 14 of 23 pairs
+                                             # better; other classes in those seats unchanged. Parramatta 2.20 -> 1.47, Monaro 2.66 -> 1.98.
   AUSPOL_NOTIONAL            = "2",          # redistribution-adjusted (notional) prior for EVERY seat build_notional_baselines.R covers, not just brand-new names; upgraded from "1" (missing-seat fallback only) 2026-09-13 -- Antony Green's own booth-respread method, leakage-free. Currently a no-op under AUSPOL_XGB_PRIMARY=1 (which overrides the table this feeds) except the few cells XGB has no prediction for; shipped anyway because it is the methodologically correct baseline, not because it moves the pooled number -- docs/reviews/notional-prior-redistribution-2026-09-13.md
                                              # HOW FAR THIS ACTUALLY REACHES (2026-09-14, found by the review gate): the FEDERAL BACKTEST only. fit_seats_full.R -- the live Victorian forecast -- has no notional path at all, and build_notional_baselines.R reads the federal AEC polling-place download, so it cannot produce Victorian data. Nor does fit_xgb_primary_v6_final.R, which builds the model artifact xgb_primary_predict_live() serves, so output/xgb-primary-v6-final-cols.json carries no x_notional_adj either. Setting this flag does not change the published Victoria 2026 numbers; it changes what the federal backtest measures.
   AUSPOL_MP_SLOPE            = "1",          # sitting-member slope tier from output/mp-slope-by-*.csv

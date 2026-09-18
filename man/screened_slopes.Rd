@@ -14,7 +14,8 @@ screened_slopes(
   new = c(IND = 0.326, OTH_RIGHT = 0.325, GRN = 0.88, ONP = 0.545),
   default = 1,
   same_mp = NULL,
-  departed_rate = c(IND = 0.38)
+  departed_rate = c(IND = 0.38),
+  major_departed = NULL
 )
 }
 \arguments{
@@ -75,6 +76,10 @@ split on a well-powered sample, not the thin-data case CLAUDE.md's
 shrinkage caveat is about. Other classes fall back to the generic \code{new}
 rate (no departure-specific measurement exists for them yet -- MINOR
 retirements are only 2 corpus-wide, too thin to fit separately).}
+
+\item{major_departed}{Optional named numeric (ALP, LNP): the slope a major
+party keeps on its deviation where \code{returns$mp_departed} is TRUE, from
+\code{\link[=fit_major_departed_slope]{fit_major_departed_slope()}}. \code{NULL} keeps majors at \code{default}.}
 }
 \value{
 Numeric vector the length of \code{seats}.

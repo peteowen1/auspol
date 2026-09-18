@@ -78,6 +78,42 @@ the pre-registered primary criterion missed by 0.06 SE. **Switch
 `AUSPOL_DEPARTED_ORIGIN` is OFF**; re-decide when the corpus grows.
 `plans/prereg-departed-origin-return-2026-09-18.md`.
 
+**Flow pattern resolved to a DATA item, 2026-09-18 evening.** With our own
+flow tables run on the ACTUAL primaries, Footscray/Richmond/Brunswick/
+Pascoe Vale still give ALP 6-8 points too much, and South Brisbane 6 too
+little. One cell: Liberal/LNP preferences with ALP and GRN both alive.
+Measured from the transfer files: vic2018 58% to ALP, vic2022 35% (Liberal
+cards put Greens above Labor), qld2020 36%, qld2024 73% (Greens last),
+federal 59-73%. The card order is public before polling day and the model
+has no input for it. **OPEN: an HTV-order table** (election, party, seat or
+"all", ALP-above-GRN yes/no) at `external/reference/htv/`, and a flow row
+for that cell conditioned on it. For vic2026 this is worth ~8 points of 2CP
+in every inner-Melbourne ALP v GRN seat the moment the Liberal cards are
+published. Kooyong and Cottesloe are NOT flow (checked): teal primaries.
+
+**Also found: the xgb flow models are leave-one-election-out, not as-at**
+(`xgb-flows-v1-loo-<election>.model` trains on later elections). Same leak
+shape as the primary cache replaced today. OPEN: `fit_xgb_flows_asat.R`
+mirroring `fit_xgb_primary_asat.R`, as a stage of `rebuild_forecasts.sh`.
+
+**Major-party retirement discount, found and SHIPPED 2026-09-18 evening.**
+Across all 23 pairs, base_pred over-predicts an ALP/LNP class by 2.8
+points (n=361, SE 0.35) when its sitting member does not re-stand, +0.6
+when they do. Majors had no same/new tier at all (slope 1 always). Built:
+`mp_departed` in `candidate_returns()`, `fit_major_departed_slope()`
+(leave-target-out; ALP ~0.60, LNP ~0.65, stable across targets),
+`conditional_slopes(major_departed=)`, wired in all seven scripts behind
+`AUSPOL_MAJOR_DEPARTED` = 1. Measured: departed-cell error -0.71 points (SE 0.11), pooled
+log loss 0.2979 -> 0.2951, Parramatta 2.20 -> 1.47. `plans/prereg-major-departed-slope-2026-09-18.md`.
+
+**By-election results as the seat baseline -- OPEN, DATA.** Black sa2026:
+Dighton (ALP) won the 2024 by-election and held with 43.2; our baseline is
+sa2022 (Speirs LNP 50.1) so ALP starts at 34.7. Only two NSW by-elections
+are on disk (`build_nsw_byelection_prevpcv.R`, personal-vote fallback).
+**Live relevance**: vic2026's baseline is vic2022, and Prahran changed
+hands at a 2025 by-election (Mulgrave, Warrandyte, Narracan, Werribee also
+had by-elections); `fit_seats_full.R` does not use any of them as a prior.
+
 **Remaining**:
 1. The flow pattern (ALP v GRN and
    LNP v teal 2CPs over-favour the major by ~10 points: Footscray, Richmond,

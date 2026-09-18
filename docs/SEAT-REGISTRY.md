@@ -27,10 +27,12 @@ file is the durable copy.
   `reviews/minor-defector-two-rate-2026-09-17.md`. One residual observation
   for a possible minor-defector "conserve" rule: ONP kept 11.9 with a new
   candidate where we gave them 0.9 (all of Andrew's vote moved with him).
-- **South Brisbane** — Greens led the primary and lost on preferences; LNP
-  preferences in inner Brisbane flow to ALP over GRN more than the pooled
-  flow says. Pattern E in `reviews/worst-seats-five-patterns-2026-09-13.md`;
-  same family as Footscray/Richmond below (**OPEN**, preference flow).
+- **South Brisbane** — same how-to-vote mechanism as the Victorian ALP v
+  GRN seats, other direction. Our flow (learned from qld2020, when the LNP
+  put the Greens above Labor: 36% to ALP) on the ACTUAL 2024 primaries gives
+  ALP 50.1; the LNP put the Greens last in 2024 and 73% went to ALP, real
+  2CP 56.0. **OPEN, DATA needed** (the LNP card order). Pattern E in
+  `reviews/worst-seats-five-patterns-2026-09-13.md`.
 
 ## vic2022
 
@@ -50,13 +52,15 @@ file is the durable copy.
   xgb cache; under the honest as-at model the seat is back at 2.70.
   `reviews/departed-leader-honour-fix-2026-09-18.md`, pattern D in
   `reviews/worst-seats-five-patterns-2026-09-13.md`.
-- **Footscray, Richmond, Brunswick, Pascoe Vale** (ALP v GRN) — we over-
-  favour ALP by 9-11 points of 2CP given the real pairing (Footscray 65.8
-  predicted vs 54.2 real). Inner-Melbourne Liberal and minor preferences
-  flow to the Greens more than the pooled, margin-blind flow table says.
-  Richmond also: the Liberals did not run in 2018, so their 2022 re-entry
-  had no seat base (6.8 predicted, 18.8 actual). **OPEN**, pattern 3 (flow),
-  diagnosed 2026-09-18 and not yet fixed.
+- **Footscray, Richmond, Brunswick, Pascoe Vale** (ALP v GRN) — **OPEN,
+  DATA needed**, cause found 2026-09-18. Running our own flow tables on the
+  ACTUAL primaries still gives ALP 6-8 points too much 2CP in all four, so
+  it is the flow, not the primaries. The cell is Liberal preferences with
+  ALP and GRN both alive: 58% to ALP in vic2018 (what the table learned),
+  35% in vic2022, because the Liberals' 2022 how-to-vote cards put the
+  Greens above Labor in these seats. A card decision is public before the
+  election; we have no input for it. Richmond also: the Liberals did not
+  run in 2018, so their 2022 re-entry had no seat base (6.8 vs 18.8).
 - **Mornington** — **NOTHING TO FIX** on its own. We drew the real LNP v IND
   pairing 19% of the time, and the 2CP we report for it (IND 63.9) is the
   mean over the draws where the IND surged enough to reach it, so it is
@@ -109,9 +113,10 @@ file is the durable copy.
 - **Flynn** — LNP 31.5 vs 37.4 actual; we picked ALP in the real pairing.
   The 2022 LNP vote was Colin Boyce's first term; swing model only. No
   candidate-identity issue found. `reviews/flow-audit-fed2025-2026-09-05.md`.
-- **Kooyong** — IND 61.1 predicted vs 50.7 real in the IND v LNP pairing;
-  same over-favouring of the teal on preferences as the Greens seats above.
-  **OPEN**, flow.
+- **Kooyong** — IND 61.1 predicted vs 50.7 real in the IND v LNP pairing.
+  Checked 2026-09-18: our flow on the ACTUAL primaries gives IND 49.5, so
+  the flow is right and the miss is primaries (IND 37.2 vs 33.9) plus the
+  scenario conditioning. Teal pattern, **PARKED**.
 
 ## nsw2023
 
@@ -124,14 +129,17 @@ file is the durable copy.
   `reviews/aef7-worst-seats-2026-09-15.md`, `reviews/nsw-departed-member-2026-09-15.md`.
 - **Cabramatta** — ALP 58.3 base vs 41.3 actual. Nick Lalich retired; the
   new ALP candidate lost 17 points with an IND and a right-minor taking
-  them. The retirement discount is one flat rate regardless of how
-  prominent the member was (pattern A, `reviews/worst-seats-five-patterns-2026-09-13.md`).
-  **OPEN**, no candidate-level fix identified.
-- **Northern Tablelands** — LNP 66.3 base, xgb pulled it DOWN to 56.6,
-  actual 71.6 (Adam Marshall retired, the Nationals vote went up). The as-at
-  xgb model learned "rural incumbent retires, party loses ~10" and applied
-  it. A miss, not a bug. The IND we gave 10.7 got 3.0. **NOTHING TO FIX**
-  without a better retirement model.
+  them. Until 2026-09-18 the model had NO retirement discount for a major
+  party at all (majors always took slope 1); measured across the corpus a
+  departed sitting member costs 2.8 points on 361 cells. Fix built as
+  `AUSPOL_MAJOR_DEPARTED`, `plans/prereg-major-departed-slope-2026-09-18.md`.
+  Parramatta 2023 (Geoffrey Lee retired, LNP) is the same case.
+- **Northern Tablelands** — LNP 66.3 base_pred, the as-at xgb layer pulled
+  it DOWN to 56.6, actual 71.6. Adam Marshall DID re-stand in 2023
+  (`candidate_returns()` has `same_mp = TRUE`; the first registry entry
+  said he retired, wrong). So base_pred was 5 under and xgb made it 15
+  under; the IND we gave 10.7 got 3.0. **OPEN**, xgb-layer question: what
+  feature drove a 10-point cut on a sitting member in a safe seat (SHAP).
 - **Auburn, Parramatta, Heathcote** — western-Sydney swing to ALP far beyond
   the statewide swing (Auburn ALP 48.8 vs 60.1). Pattern 3 in the 2026-09-18
   dig (NSW landslide); same shape as Higgins/Tangney. **OPEN**, swing model.
@@ -159,7 +167,8 @@ file is the durable copy.
 
 ## wa2025
 
-- **Cottesloe** — LNP 67.2 predicted vs 55.5 real in the LNP v IND pairing;
-  teal preferences again. **OPEN**, flow.
+- **Cottesloe** — LNP 67.2 predicted vs 55.5 real in the LNP v IND pairing.
+  Our flow on the ACTUAL primaries gives 59.1, so 3.6 points is flow and
+  the rest is primaries (LNP 57.3 vs 50.7). Small; teal pattern, **PARKED**.
 - **Kalgoorlie** — wrong winner class in the TCP reference until the
   official WAEC distribution was parsed (2026-09-18). **DATA**.

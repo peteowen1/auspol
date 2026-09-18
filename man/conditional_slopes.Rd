@@ -11,7 +11,8 @@ conditional_slopes(
   same = c(IND = 0.907, OTH_RIGHT = 0.891, GRN = 0.994, ONP = 0.61),
   new = c(IND = 0.326, OTH_RIGHT = 0.325, GRN = 0.88, ONP = 0.545),
   default = 1,
-  same_mp = NULL
+  same_mp = NULL,
+  major_departed = NULL
 )
 }
 \arguments{
@@ -38,6 +39,10 @@ apart. Pooling shrinks an entrenched independent toward a ~5\% statewide
 IND average every cycle, which is where most of this model's fed2025 seat
 log-loss gap to AE Forecasts sits. Requires \code{returns} to carry a
 \code{same_mp} column, which \code{\link[=candidate_returns]{candidate_returns()}} now supplies.}
+
+\item{major_departed}{Optional named numeric (ALP, LNP): the slope a major
+party keeps on its deviation where \code{returns$mp_departed} is TRUE, from
+\code{\link[=fit_major_departed_slope]{fit_major_departed_slope()}}. \code{NULL} keeps majors at \code{default}.}
 }
 \value{
 Numeric vector the length of \code{seats}.
