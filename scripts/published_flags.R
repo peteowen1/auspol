@@ -171,6 +171,10 @@ PUBLISHED_FLAGS <- c(
                                              # candidate-identity test (same_mp, mp_departed, historic_elected), not the previous general
                                              # election's member. Black sa2026: Speirs read as the returning member of the IND class (+5 pts
                                              # from the xgb layer), Dighton as a newcomer. byelection_winner_rows(), candidate_returns().
+  AUSPOL_MINOR_DEFECT_CONSERVE = "0",        # MEASURING 2026-09-19 (docs/plans/prereg-minor-defector-conserve-2026-09-19.md): a minor-to-
+                                             # minor defector's ORIGIN class keeps a fitted leave-target-out share (median ~0.38, n=26) of
+                                             # their prior vote; the shipped path removed all of it (Mirani: One Nation 0.9 predicted, 11.9
+                                             # actual). fit_minor_defector_conserve(), applied inside personal_prior_vote() for every caller.
   AUSPOL_FLOW_FRAG           = "1",          # 1 = the flow model also sees lead_primary, the seat's LEADING
                                              # first-preference share. Flows track how fragmented the field is,
                                              # not how close the contest is: the 2CP margin's slope collapses
