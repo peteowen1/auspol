@@ -112,12 +112,16 @@ tcp_actual_f <- file.path(OUT, "aef7-tcp-actual.csv")
 if (file.exists(tcp_actual_f)) {
   tcpa <- fread(tcp_actual_f, showProgress = FALSE)
   tcpa <- tcpa[, .(pair, seat, our_tcp_actual_freq, our_tcp_pred_pct, our_tcp_actual_share,
-                    aef_tcp_actual_freq, aef_tcp_pred_pct, aef_tcp_actual_share)]
+                    our_tcp_pick, our_tcp_pick_pct,
+                    aef_tcp_actual_freq, aef_tcp_pred_pct, aef_tcp_actual_share,
+                    aef_tcp_pick, aef_tcp_pick_pct)]
   ALL <- merge(ALL, tcpa, by = c("pair","seat"), all.x = TRUE)
 } else {
   cat("AEFL6! output/aef7-tcp-actual.csv missing -- run scripts/build_aef7_tcp_actual.R first; actual-pairing TCP columns left NA\n")
   ALL[, `:=`(our_tcp_actual_freq = NA_real_, our_tcp_pred_pct = NA_real_, our_tcp_actual_share = NA_real_,
-             aef_tcp_actual_freq = NA_real_, aef_tcp_pred_pct = NA_real_, aef_tcp_actual_share = NA_real_)]
+             our_tcp_pick = NA_character_, our_tcp_pick_pct = NA_real_,
+             aef_tcp_actual_freq = NA_real_, aef_tcp_pred_pct = NA_real_, aef_tcp_actual_share = NA_real_,
+             aef_tcp_pick = NA_character_, aef_tcp_pick_pct = NA_real_)]
 }
 
 SEATS <- ALL[, .(
@@ -140,7 +144,8 @@ SEATS <- ALL[, .(
   aef_tcp_f1, aef_tcp_f2, aef_tcp_pct, aef_tcp_scenario_freq, aef_tcp_p05, aef_tcp_p95,
   our_tcp_f1, our_tcp_f2, our_tcp_pct, our_tcp_freq,
   our_tcp_actual_freq, our_tcp_pred_pct, our_tcp_actual_share,
-  aef_tcp_actual_freq, aef_tcp_pred_pct, aef_tcp_actual_share
+  aef_tcp_actual_freq, aef_tcp_pred_pct, aef_tcp_actual_share,
+  our_tcp_pick, our_tcp_pick_pct, aef_tcp_pick, aef_tcp_pick_pct
 )]
 # AEF'S OWN aef_p/aef_pred is already "AEF's favourite and AEF's probability
 # for it" (build_aef_comparison.R's read from aef_scores), so aef_p_fav ==

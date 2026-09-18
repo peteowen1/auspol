@@ -78,9 +78,26 @@ setnames(our_match, c("f1.y", "f2.y"), c("our_row_f1", "our_row_f2"))
 # the REAL winner f1.x's real share, so a named party that is the real
 # runner-up gets 100-f2cp instead) -- two different quantities, compared to
 # each other for the MAE, never substituted for one another.
+#
+# our_row_f1 is whichever of the real two finalists our OWN scenario table
+# happens to list first -- an arbitrary artefact of tcp_scenarios()'s own
+# row order, not "our predicted winner". f1_tcp_pct inherits that same
+# arbitrariness and can legitimately read under 50% (our_row_f1 is our
+# PREDICTED LOSER of this pairing) -- exactly the confusion Pete hit on
+# Wentworth fed2025 with AEF's data (documented on the ledger page itself)
+# and then on Mallee fed2022 with a second, related confusion (ITG
+# confidence there was 0.853 for a DIFFERENT pairing, LNP v IND, that our
+# top scenario guessed and which never happened -- see the changelog).
+# our_tcp_pick/our_tcp_pick_pct re-orient to "whichever of the real two
+# finalists we predicted to win, and what we gave them", always >=50%
+# by construction, like every other 2CP number on this page.
+our_match[, our_tcp_pick := fifelse(f1_tcp_pct >= 50, our_row_f1,
+                                     fifelse(our_row_f1 == f1.x, f2.x, f1.x))]
+our_match[, our_tcp_pick_pct := fifelse(f1_tcp_pct >= 50, f1_tcp_pct, 100 - f1_tcp_pct)]
 our_match <- our_match[, .(pair, seat, our_tcp_actual_freq = freq,
                             our_tcp_pred_pct = f1_tcp_pct,
-                            our_tcp_actual_share = actual_share_of(our_row_f1, f1.x, f2.x, f2cp))]
+                            our_tcp_actual_share = actual_share_of(our_row_f1, f1.x, f2.x, f2cp),
+                            our_tcp_pick, our_tcp_pick_pct)]
 setnames(our_match, "seat", "seat_m")
 ref <- merge(ref, our_match, by.x = c("pair", "seat"), by.y = c("pair", "seat_m"), all.x = TRUE)
 # a seat where our sim never once drew the real pairing has no row here at
@@ -131,7 +148,8 @@ aef_actual_one <- function(pr, code, official) {
     }
     if (is.null(matched)) {
       rows[[i]] <- data.table(seat = sn, aef_tcp_actual_freq = 0,
-                               aef_tcp_pred_pct = NA_real_, aef_tcp_actual_share = NA_real_)
+                               aef_tcp_pred_pct = NA_real_, aef_tcp_actual_share = NA_real_,
+                               aef_tcp_pick = NA_character_, aef_tcp_pick_pct = NA_real_)
       next
     }
     bmatch <- NULL
@@ -149,9 +167,19 @@ aef_actual_one <- function(pr, code, official) {
     # is the REAL winner off$f1's real share) -- kept as two columns, never
     # substituted for one another (this conflation was a bug caught before
     # this script's first real run, same mistake fixed on the "our" side above).
+    #
+    # matched$clsA is an arbitrary "party A" from AEF's own scenario-tuple
+    # ordering, not their predicted winner -- Wentworth fed2025 is the case
+    # already documented on the ledger page for this: "AEF pick: LNP" at
+    # 43.5% actually meant AEF favoured the OTHER finalist (IND) at 56.5%,
+    # correctly. aef_tcp_pick/aef_tcp_pick_pct re-orient to always name
+    # whichever of the real two finalists AEF favoured, always >=50%.
+    pick <- if (is.na(pct)) NA_character_ else if (pct >= 50) matched$clsA else matched$clsB
+    pick_pct <- if (is.na(pct)) NA_real_ else if (pct >= 50) pct else 100 - pct
     rows[[i]] <- data.table(seat = sn, aef_tcp_actual_freq = round(matched_freq, 4),
                              aef_tcp_pred_pct = pct,
-                             aef_tcp_actual_share = actual_share_of(matched$clsA, off$f1, off$f2, off$f2cp))
+                             aef_tcp_actual_share = actual_share_of(matched$clsA, off$f1, off$f2, off$f2cp),
+                             aef_tcp_pick = pick, aef_tcp_pick_pct = pick_pct)
   }
   out <- rbindlist(rows, fill = TRUE)
   out[, pair := pr]

@@ -199,19 +199,19 @@
      primary specifically, same convention as <b>Δ&nbsp;loss</b> (our seat log loss minus theirs). Notes save for
      everyone. <b>Final two</b> is the two-candidate count: official for the federal elections and South Australia;
      a starred value is one we derived from published preference flows, which reproduces the official pair in 43 of
-     47 SA seats and lands within 0.6 points when it does. <b>ITG final two</b> is OUR OWN top-frequency scenario
-     out of every final-two pairing our simulation drew: the pairing our model gave the highest chance of
-     occurring, and (<code>R/tcp_scenarios.R</code>) <b>ITG pick is defined as whichever party won the MAJORITY of
-     that pairing's own draws</b> &mdash; so <b>ITG TCP% is always &ge;50</b> by construction, it names our
-     predicted WINNER of the pairing. <b>ITG confidence</b> is how often our own simulation landed on that exact
-     pairing at all. <b>AEF final two</b> works differently and is NOT directly comparable pick-for-pick: it is
-     parsed from AE&nbsp;Forecasts' own cached scenario data (<code>seatTcpScenarios</code>/<code>seatTcpBands</code>),
-     and <b>"AEF pick" names a fixed party for that scenario, not necessarily the one AEF expects to win it</b> --
-     "AEF TCP%" is that named party's own share, which can sit UNDER 50, and when it does AEF's real prediction is
-     the OTHER party in the pairing. Wentworth fed2025 is the case that surfaced this: "AEF pick" reads LNP at
-     43.5%, which means AEF actually predicted IND (the other finalist) to win with ~56.5% -- correctly, since IND
-     won. "AEF confidence" is how often AEF's own simulation landed on that PAIRING occurring at all, independent
-     of who wins it.</p>
+     47 SA seats and lands within 0.6 points when it does.
+     <b>ITG final two</b> / <b>AEF final two</b> both answer the SAME question, given the REAL final two (the
+     "Led"/"Runner-up" columns): which of those two did that side predict to win, what did they give that party's
+     share, and how often did that side's OWN simulation draw this exact pairing at all. "Pick" is always one of the
+     two real finalists and "TCP%" is always &ge;50 by construction, like every other 2CP number on this page --
+     never a fixed "party A" from either side's raw scenario-tuple ordering, which is what these columns showed
+     before 18&nbsp;Sep&nbsp;2026 and could read UNDER 50 for the side's own actual favourite (AEF's Wentworth
+     fed2025 scenario named "LNP" at 43.5%, when AEF's real prediction was IND at ~56.5%, correctly, since IND won).
+     "Confidence" is how much of that side's OWN simulation drew this real pairing AT ALL -- independent of who it
+     thought would win it, and independent of whether this was that side's #1-most-likely scenario overall. Mallee
+     fed2022 is the case that motivated fixing this: our TOP scenario there was LNP v IND (0.853 confidence) but the
+     real pairing was LNP v ALP, which our simulation only drew 9.6% of the time -- "ITG confidence" now correctly
+     shows that 0.096, not the 0.853 belonging to a pairing that never happened.</p>
      <p class="sub prov"><b>TCP on real pairing</b> ("Ours err"/"AEF err" columns, and the matching headline stats)
      is a DIFFERENT question from ITG/AEF final two above: those score each side's own #1-guessed pairing, so a
      seat only counts if that guess happened to match reality (n=568 ours / 574 AEF of 660). This instead looks up,
@@ -233,8 +233,11 @@
      predicted SHARE within it was closer to the truth". Δ&nbsp;confidence is our TCP-scenario-freq minus AEF's,
      for that same real pairing, and reads the OPPOSITE way round: POSITIVE means WE put more of our own
      simulation's probability on the pairing that actually occurred, which is the good direction here, so it is
-     coloured on that basis rather than the page's usual sign convention. Mirani qld2024 is the case that prompted
-     this: Δ&nbsp;confidence +0.34 (we were far more sure OTH_RIGHT v LNP would be the final two, and it was) but
+     coloured on that basis rather than the page's usual sign convention. Since 18&nbsp;Sep&nbsp;2026's "ITG/AEF pick"
+     fix above, Δ&nbsp;confidence is literally "ITG confidence" minus "AEF confidence" as shown in the visible
+     columns -- no longer two different quantities hiding under similar names, which is what caused the Mallee
+     fed2022 confusion this same page records below. Mirani qld2024 is the case that prompted adding these Δ
+     columns in the first place: Δ&nbsp;confidence +0.34 (we were far more sure OTH_RIGHT v LNP would be the final two, and it was) but
      Δ&nbsp;TCP&nbsp;err about +1 (both sides misjudged the flow WITHIN that pairing by almost the same amount) --
      two very different failure shapes that the single combined "Ours err" number could not tell apart.</p>
      <p class="sub prov"><b>Primary RMSE (every party, weighted by actual share)</b> scores every party's predicted
@@ -247,7 +250,18 @@
   </details>
 
   <details class="provlog">
-    <summary>Provenance &amp; changelog <span class="n">(17 updates)</span></summary>
+    <summary>Provenance &amp; changelog <span class="n">(18 updates)</span></summary>
+    <p class="sub prov"><b>ITG/AEF pick fixed to always name the winner of the REAL pairing, Pete's request after
+       Mallee.</b> "AEF pick: ALP" at 36.8% looked broken -- Pete's math (2CP should always be &ge;50%) was right,
+       and the root cause was the same "party A" arbitrariness already flagged for Wentworth in this doc, just not
+       yet fixed: <code>our_tcp_f1</code>/<code>aef_tcp_f1</code> named an unlabelled position in each side's own
+       scenario-tuple ordering, not a predicted winner, and could legitimately read under 50. Worse, "ITG pick"/
+       "ITG confidence" were reporting each side's OWN TOP-SCENARIO pairing, which for Mallee was LNP v IND for us
+       -- a pairing that never happened, while the real one (LNP v ALP) was something our simulation only drew
+       9.6% of the time. <code>scripts/build_aef7_tcp_actual.R</code> now computes <code>our_tcp_pick</code>/
+       <code>aef_tcp_pick</code> (always one of the REAL two finalists, &ge;50% by construction) and the ledger's
+       "ITG/AEF final two" groups now show those, not the old top-scenario fields -- see "What the columns mean"
+       for the full rewrite.</p>
     <p class="sub prov"><b>Δ TCP err / Δ confidence columns added, Pete's request after the Mirani dig.</b> The
        existing "Ours err"/"AEF err" pair answers only "who was closer", which conflates two different failure
        shapes: calling the wrong final-two pairing versus calling the right pairing but the wrong split within it.
@@ -411,12 +425,12 @@ const COLS = [
   {k:"f1",     t:"Led",    cls:"pill-cell", sep:true},
   {k:"f2",     t:"Runner-up", cls:"pill-cell"},
   {k:"f2cp",   t:"Winner 2CP", num:true, dp:1},
-  {k:"our_tcp_f1",  t:"ITG pick", cls:"pill-cell", sep:true},
-  {k:"our_tcp_pct", t:"ITG TCP%", num:true, dp:1},
-  {k:"our_tcp_freq", t:"ITG confidence", num:true, dp:3},
-  {k:"aef_tcp_f1",  t:"AEF pick", cls:"pill-cell", sep:true},
-  {k:"aef_tcp_pct", t:"AEF TCP%", num:true, dp:1},
-  {k:"aef_tcp_scenario_freq", t:"AEF confidence", num:true, dp:3},
+  {k:"our_tcp_pick",  t:"ITG pick", cls:"pill-cell", sep:true},
+  {k:"our_tcp_pick_pct", t:"ITG TCP%", num:true, dp:1},
+  {k:"our_tcp_actual_freq", t:"ITG confidence", num:true, dp:3},
+  {k:"aef_tcp_pick",  t:"AEF pick", cls:"pill-cell", sep:true},
+  {k:"aef_tcp_pick_pct", t:"AEF TCP%", num:true, dp:1},
+  {k:"aef_tcp_actual_freq", t:"AEF confidence", num:true, dp:3},
   {k:"our_tcp_actual_err", t:"Ours err", num:true, sep:true, dp:1, miss:true},
   {k:"aef_tcp_actual_err", t:"AEF err",  num:true, dp:1, miss:true},
   {k:"tcp_err_delta",  t:"Δ TCP err",  num:true, dp:1, delta:true},
@@ -574,7 +588,7 @@ function render(){
     const k = key(r);
     return "<tr>" + COLS.map(c=>{
       const sep = c.sep ? " sep" : "";
-      if (c.k==="winner"||c.k==="fav"||c.k==="f1"||c.k==="f2"||c.k==="aef_tcp_f1") return r[c.k]
+      if (c.k==="winner"||c.k==="fav"||c.k==="f1"||c.k==="f2"||c.k==="our_tcp_pick"||c.k==="aef_tcp_pick") return r[c.k]
         ? `<td class="${(c.cls||"")+sep}"><span class="pill ${r[c.k]}">${r[c.k]}</span></td>`
         : `<td class="${(c.cls||"")+sep}" style="color:var(--ink-3)">—</td>`;
       if (c.k==="correct") return `<td class="${(c.cls||"")+sep}"><span class="mark ${r.correct?"y":"n"}">${r.correct?"✓":"✗"}</span></td>`;
