@@ -26,7 +26,11 @@ options(auspol.root = normalizePath("."))
 suppressMessages(library(data.table))
 
 OUT <- "output"
-ref <- fread(file.path(OUT, "aef7-final-two-and-tcp-reference.csv"), showProgress = FALSE)
+# na.strings: see build_aef7_tcp_official.R's note -- fwrite's default
+# na="" makes a blank field indistinguishable from a real empty string on
+# a plain fread(), which matters for the intra-coalition-excluded rows' NA
+# f1/f2/f2cp.
+ref <- fread(file.path(OUT, "aef7-final-two-and-tcp-reference.csv"), na.strings = c("NA", ""), showProgress = FALSE)
 tt <- fread(file.path(OUT, "aef7-tcp-truth-table.csv"), na.strings = c("NA", ""), showProgress = FALSE)
 
 vic_abc <- tt[pair == "vic2022" & !is.na(abc_tcp_f1), .(pair, seat, f1 = abc_tcp_f1, f2 = abc_tcp_f2, f2cp = abc_tcp_pct)]
@@ -50,5 +54,5 @@ if (nrow(changed_winner)) {
 cat("VABC3 fsrc breakdown after merge:\n")
 print(ref[, .N, by = .(pair, fsrc)][order(pair, fsrc)])
 
-fwrite(ref, file.path(OUT, "aef7-final-two-and-tcp-reference.csv"))
+fwrite(ref, file.path(OUT, "aef7-final-two-and-tcp-reference.csv"), na = "NA")
 cat(sprintf("VABC4 wrote %s\n", file.path(OUT, "aef7-final-two-and-tcp-reference.csv")))

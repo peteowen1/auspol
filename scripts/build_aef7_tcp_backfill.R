@@ -52,7 +52,11 @@ OUT <- "output"
 RAW <- file.path("external", "reference", "aef")
 RESULTS <- c(vic2022 = "2022vic", nsw2023 = "2023nsw")
 
-ref <- fread(file.path(OUT, "aef7-final-two-and-tcp-reference.csv"), showProgress = FALSE)
+# na.strings: a plain fread() reads fwrite's default blank-field NA back as
+# "" (a real empty string), not NA -- found 2026-09-18 when a downstream
+# is.na(f1) check silently passed on these rows. na="NA" on the write below
+# closes the loop.
+ref <- fread(file.path(OUT, "aef7-final-two-and-tcp-reference.csv"), na.strings = c("NA", ""), showProgress = FALSE)
 
 # ---- Detect and exclude every intra-Coalition top-two seat first, so the
 # fill step below never tries to resolve one of these. ----
@@ -110,5 +114,5 @@ ref[filled, on = c("pair", "seat"), `:=`(f1 = i.f1, f2 = i.f2, f2cp = i.f2cp, fs
 n_resolved_now <- sum(!(is.na(ref$f1) | is.na(ref$f2) | ref$f1 == "" | ref$f2 == ""))
 cat(sprintf("ATB3 reference file now has %d of %d seats with a resolved final-two\n", n_resolved_now, nrow(ref)))
 
-fwrite(ref, file.path(OUT, "aef7-final-two-and-tcp-reference.csv"))
+fwrite(ref, file.path(OUT, "aef7-final-two-and-tcp-reference.csv"), na = "NA")
 cat(sprintf("ATB4 wrote %s\n", file.path(OUT, "aef7-final-two-and-tcp-reference.csv")))

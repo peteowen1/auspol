@@ -40,7 +40,13 @@ suppressMessages(library(data.table)); suppressMessages(library(rvest))
 suppressMessages(library(xml2)); suppressMessages(library(jsonlite))
 
 OUT <- "output"
-ref <- fread(file.path(OUT, "aef7-final-two-and-tcp-reference.csv"), showProgress = FALSE)
+# na.strings restores true NA for the intra-coalition-excluded rows' blank
+# f1/f2/f2cp -- fwrite's default writes NA_character_ as an unquoted empty
+# field, which a default fread() reads back as "" (a real, non-missing
+# string), not NA. Any is.na(f1) check downstream silently passes on those
+# rows instead of catching them. Symmetric with the na="NA" on every write
+# of this file below.
+ref <- fread(file.path(OUT, "aef7-final-two-and-tcp-reference.csv"), na.strings = c("NA", ""), showProgress = FALSE)
 
 # ---- nsw2023: NSWEC distribution-of-preferences pages -----------------
 parse_nsw_dop <- function(fp) {
@@ -163,5 +169,5 @@ cat(sprintf("OFF2 nsw2023/qld2024/wa2025 'derived' rows: %d before, %d after (%d
 cat("OFF3 fsrc breakdown after merge:\n")
 print(ref[, .N, by = .(pair, fsrc)][order(pair, fsrc)])
 
-fwrite(ref, file.path(OUT, "aef7-final-two-and-tcp-reference.csv"))
+fwrite(ref, file.path(OUT, "aef7-final-two-and-tcp-reference.csv"), na = "NA")
 cat(sprintf("OFF4 wrote %s\n", file.path(OUT, "aef7-final-two-and-tcp-reference.csv")))

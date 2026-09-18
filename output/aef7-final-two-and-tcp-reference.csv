@@ -1,661 +1,661 @@
 pair,seat,f1,f2,f2cp,fsrc,aef_tcp_f1,aef_tcp_f2,aef_tcp_pct,aef_tcp_scenario_freq,aef_tcp_p05,aef_tcp_p95
-fed2022,Adelaide,ALP,LNP,61.9,official,ALP,LNP,61.6,0.994,53.1,68.8
-fed2022,Aston,LNP,ALP,52.8,official,ALP,LNP,42.4,0.997,32.9,51.7
-fed2022,Ballarat,ALP,LNP,63,official,ALP,LNP,60.1,0.993,50.3,68.6
-fed2022,Banks,LNP,ALP,53.2,official,ALP,LNP,49.8,0.997,40.2,58.4
-fed2022,Barker,LNP,ALP,66.6,official,ALP,LNP,36.6,0.943,28,45.3
-fed2022,Barton,ALP,LNP,65.5,official,ALP,LNP,62.7,0.997,53.7,70
-fed2022,Bass,LNP,ALP,51.4,official,ALP,LNP,53.6,0.995,39.2,66.8
-fed2022,Bean,ALP,LNP,62.9,official,ALP,LNP,62.6,0.938,55.2,69
-fed2022,Bendigo,ALP,LNP,62.1,official,ALP,LNP,60.1,0.978,50.7,68.1
-fed2022,Bennelong,ALP,LNP,51,official,ALP,LNP,49.1,0.999,39.7,57.8
-fed2022,Berowra,LNP,ALP,59.8,official,ALP,LNP,39.7,0.978,31.8,47.3
-fed2022,Blair,ALP,LNP,55.2,official,ALP,LNP,55,0.915,45.9,62.9
-fed2022,Blaxland,ALP,LNP,64.9,official,ALP,LNP,68.8,0.977,57.9,77.4
-fed2022,Bonner,LNP,ALP,53.4,official,ALP,LNP,46.2,0.996,37.4,54.5
-fed2022,Boothby,ALP,LNP,53.3,official,ALP,LNP,55,0.964,46.3,62.7
-fed2022,Bowman,LNP,ALP,55.5,official,ALP,LNP,45,0.991,35,55
-fed2022,Braddon,LNP,ALP,58,official,ALP,LNP,50.4,0.942,36.5,63.8
-fed2022,Bradfield,LNP,IND,54.2,official,ALP,LNP,38,0.734,31.1,45.4
-fed2022,Brand,ALP,LNP,66.7,official,ALP,LNP,63.5,0.974,53.8,71.4
-fed2022,Brisbane,GRN,LNP,53.7,official,ALP,LNP,49.3,0.662,41.2,57.3
-fed2022,Bruce,ALP,LNP,56.6,official,ALP,LNP,59.5,0.999,50.1,67.5
-fed2022,Burt,ALP,LNP,65.2,official,ALP,LNP,61.7,0.994,53.3,68.7
-fed2022,Calare,LNP,IND,59.7,official,ALP,LNP,41.3,0.891,33.2,49.5
-fed2022,Calwell,ALP,LNP,62.4,official,ALP,LNP,70.2,0.989,59.7,78.4
-fed2022,Canberra,ALP,GRN,62.2,official,ALP,LNP,69,0.55,62.2,74.8
-fed2022,Canning,LNP,ALP,53.6,official,ALP,LNP,46.6,0.993,36.4,56.2
-fed2022,Capricornia,LNP,ALP,56.6,official,ALP,LNP,42.6,0.973,32.5,52.9
-fed2022,Casey,LNP,ALP,51.5,official,ALP,LNP,49.3,0.923,40.2,57.9
-fed2022,Chifley,ALP,LNP,63.5,official,ALP,LNP,67,0.96,57,74.9
-fed2022,Chisholm,ALP,LNP,56.4,official,ALP,LNP,51.3,0.996,42.2,59.7
-fed2022,Clark,IND,ALP,70.8,official,ALP,IND,32.7,0.652,20.8,47.2
-fed2022,Cook,LNP,ALP,62.4,official,ALP,LNP,36.5,0.996,28.2,44.4
-fed2022,Cooper,ALP,GRN,58.7,official,ALP,GRN,63.3,0.667,46.1,74.8
-fed2022,Corangamite,ALP,LNP,57.6,official,ALP,LNP,54.9,0.999,45.9,62.9
-fed2022,Corio,ALP,LNP,62.8,official,ALP,LNP,62.2,0.997,52.9,69.9
-fed2022,Cowan,ALP,LNP,60.8,official,ALP,LNP,57.6,0.997,48.8,65.3
-fed2022,Cowper,LNP,IND,52.3,official,ALP,LNP,42,0.598,34.2,50
-fed2022,Cunningham,ALP,LNP,64.7,official,ALP,LNP,65.3,0.986,56.6,72.2
-fed2022,Curtin,IND,LNP,51.3,official,LNP,IND,49.5,0.808,34.5,61.7
-fed2022,Dawson,LNP,ALP,60.4,official,ALP,LNP,41.9,0.969,32,51.9
-fed2022,Deakin,LNP,ALP,50.2,official,ALP,LNP,47.4,0.998,38.8,55.6
-fed2022,Dickson,LNP,ALP,51.7,official,ALP,LNP,48.1,0.996,38.9,56.7
-fed2022,Dobell,ALP,LNP,56.5,official,ALP,LNP,56.3,0.997,46.3,65
-fed2022,Dunkley,ALP,LNP,56.3,official,ALP,LNP,56.6,0.998,47.2,64.8
-fed2022,Durack,LNP,ALP,54.3,official,ALP,LNP,42.3,0.992,34.2,49.8
-fed2022,Eden-Monaro,ALP,LNP,58.2,official,ALP,LNP,56.9,0.994,47.3,65.4
-fed2022,Fadden,LNP,ALP,60.6,official,ALP,LNP,39.5,0.972,31,48.1
-fed2022,Fairfax,LNP,ALP,59,official,ALP,LNP,40.6,0.943,31.5,50
-fed2022,Farrer,LNP,ALP,66.4,official,ALP,LNP,34.6,0.955,27.3,41.8
-fed2022,Fenner,ALP,LNP,65.7,official,ALP,LNP,63.1,0.997,55.7,69.7
-fed2022,Fisher,LNP,ALP,58.7,official,ALP,LNP,41.9,0.969,33,50.8
-fed2022,Flinders,LNP,ALP,56.7,official,ALP,LNP,48.1,0.86,39.2,56.6
-fed2022,Flynn,LNP,ALP,53.8,official,ALP,LNP,47.2,0.959,38.3,55.4
-fed2022,Forde,LNP,ALP,54.2,official,ALP,LNP,46.3,0.988,36,56
-fed2022,Forrest,LNP,ALP,54.3,official,ALP,LNP,41.2,0.973,33.3,48.8
-fed2022,Fowler,IND,ALP,51.6,official,ALP,IND,61,0.524,40.7,76.4
-fed2022,Franklin,ALP,LNP,63.7,official,ALP,LNP,65.2,0.972,53,75.2
-fed2022,Fraser,ALP,LNP,66.5,official,ALP,LNP,65.5,0.995,57,72.6
-fed2022,Fremantle,ALP,LNP,66.9,official,ALP,LNP,61.2,0.989,53,68
-fed2022,Gellibrand,ALP,LNP,61.5,official,ALP,LNP,64.6,0.98,55.1,72.4
-fed2022,Gilmore,ALP,LNP,50.2,official,ALP,LNP,57.7,0.989,46.6,67.5
-fed2022,Gippsland,LNP,ALP,70.6,official,ALP,LNP,36.2,0.994,27.1,45.8
-fed2022,Goldstein,IND,LNP,52.9,official,LNP,IND,49.2,0.828,35,62.9
-fed2022,Gorton,ALP,LNP,60,official,ALP,LNP,65.5,0.99,56.8,72.5
-fed2022,Grayndler,ALP,GRN,67.1,official,ALP,GRN,65.2,0.742,48.9,76
-fed2022,Greenway,ALP,LNP,61.5,official,ALP,LNP,57.8,0.992,47.6,66.6
-fed2022,Grey,LNP,ALP,60.1,official,ALP,LNP,42.4,0.589,33.7,50.9
-fed2022,Griffith,GRN,LNP,60.5,official,ALP,LNP,56.2,0.739,47.1,64.6
-fed2022,Groom,LNP,IND,56.9,official,ALP,LNP,36.8,0.799,28.3,45.7
-fed2022,Hasluck,ALP,LNP,56,official,ALP,LNP,50.2,0.997,41.8,57.8
-fed2022,Hawke,ALP,LNP,57.6,official,ALP,LNP,60.6,0.927,51.6,67.9
-fed2022,Herbert,LNP,ALP,61.8,official,ALP,LNP,43.7,0.89,34.5,52.6
-fed2022,Higgins,ALP,LNP,52.1,official,ALP,LNP,48.6,0.633,40.9,56.6
-fed2022,Hindmarsh,ALP,LNP,58.9,official,ALP,LNP,60.8,0.998,51.1,69
-fed2022,Hinkler,LNP,ALP,60.1,official,ALP,LNP,40,0.69,31.5,48.6
-fed2022,Holt,ALP,LNP,57.1,official,ALP,LNP,59.8,0.997,49.8,68.2
-fed2022,Hotham,ALP,LNP,64.3,official,ALP,LNP,63,0.999,53.4,70.8
-fed2022,Hughes,LNP,ALP,57,official,ALP,LNP,45.6,0.546,37,53.8
-fed2022,Hume,LNP,ALP,57.7,official,ALP,LNP,42.4,0.909,34.1,50.4
-fed2022,Hunter,ALP,LNP,54,official,ALP,LNP,59,0.702,47.6,68.3
-fed2022,Indi,IND,LNP,58.9,official,LNP,IND,44.7,0.908,26.3,60.5
-fed2022,Isaacs,ALP,LNP,56.9,official,ALP,LNP,56.3,0.999,46.1,65
-fed2022,Jagajaga,ALP,LNP,62.3,official,ALP,LNP,58.3,0.998,49,66.3
-fed2022,Kennedy,OTH_RIGHT,LNP,63.1,official,LNP,OTH_RIGHT,37.6,0.481,23.1,53.6
-fed2022,Kingsford Smith,ALP,LNP,64.5,official,ALP,LNP,62.4,0.996,53.3,69.7
-fed2022,Kingston,ALP,LNP,66.4,official,ALP,LNP,65.2,0.989,56.5,72.3
-fed2022,Kooyong,IND,LNP,52.9,official,LNP,IND,50.3,0.619,34.9,61.6
-fed2022,La Trobe,LNP,ALP,58.7,official,ALP,LNP,47.3,0.998,38.1,55.9
-fed2022,Lalor,ALP,LNP,62.8,official,ALP,LNP,64,0.997,52.2,73.6
-fed2022,Leichhardt,LNP,ALP,53.4,official,ALP,LNP,48.6,0.97,37.6,59.5
-fed2022,Lilley,ALP,LNP,60.5,official,ALP,LNP,54.8,0.996,45.4,63.4
-fed2022,Lindsay,LNP,ALP,56.3,official,ALP,LNP,49.6,0.998,39.7,58.5
-fed2022,Lingiari,ALP,LNP,50.9,official,ALP,LNP,57.9,0.99,48.1,66.9
-fed2022,Longman,LNP,ALP,53.1,official,ALP,LNP,48.4,0.993,39.5,56.7
-fed2022,Lyne,LNP,ALP,63.8,official,ALP,LNP,41.6,0.98,32.8,49.8
-fed2022,Lyons,ALP,LNP,50.9,official,ALP,LNP,57.3,0.997,43,70.3
-fed2022,Macarthur,ALP,LNP,58.5,official,ALP,LNP,63.8,0.984,52.2,73.3
-fed2022,Mackellar,IND,LNP,52.5,official,LNP,IND,52.3,0.864,36.8,63.5
-fed2022,Macnamara,ALP,LNP,62.2,official,ALP,LNP,57.8,0.719,50,64.9
-fed2022,Macquarie,ALP,LNP,57.8,official,ALP,LNP,55.1,0.998,45.8,63.1
-fed2022,Makin,ALP,LNP,60.8,official,ALP,LNP,63.1,0.993,53.7,70.8
-fed2022,Mallee,LNP,ALP,69,official,ALP,LNP,36.8,0.956,29.3,44.6
-fed2022,Maranoa,LNP,ALP,72.1,official,ALP,LNP,28.5,0.911,21.5,36
-fed2022,Maribyrnong,ALP,LNP,62.4,official,ALP,LNP,63.2,0.995,52.7,71.7
-fed2022,Mayo,IND,LNP,62.3,official,LNP,IND,41.9,0.801,26.4,56.7
-fed2022,McEwen,ALP,LNP,53.3,official,ALP,LNP,57.3,0.998,46.7,66.6
-fed2022,McMahon,ALP,LNP,59.5,official,ALP,LNP,60.8,0.992,52.2,67.8
-fed2022,McPherson,LNP,ALP,59.3,official,ALP,LNP,41.5,0.982,31.2,52.4
-fed2022,Melbourne,GRN,ALP,60.2,official,ALP,GRN,39.9,0.564,24.7,60.9
-fed2022,Menzies,LNP,ALP,50.7,official,ALP,LNP,46.5,0.997,37.2,55.2
-fed2022,Mitchell,LNP,ALP,60.7,official,ALP,LNP,37.5,0.997,29.2,45.5
-fed2022,Monash,LNP,ALP,52.9,official,ALP,LNP,45.8,0.876,36.3,55.1
-fed2022,Moncrieff,LNP,ALP,61.2,official,ALP,LNP,36.3,0.978,28.5,44.3
-fed2022,Moore,LNP,ALP,50.7,official,ALP,LNP,45.2,0.992,36.3,53.6
-fed2022,Moreton,ALP,LNP,59.1,official,ALP,LNP,55,0.986,46.1,63.1
-fed2022,New England,LNP,ALP,66.4,official,ALP,LNP,37.9,0.955,30.2,45.1
-fed2022,Newcastle,ALP,LNP,68,official,ALP,LNP,67.3,0.929,58.4,74.5
-fed2022,Nicholls,LNP,IND,53.8,official,LNP,IND,52.3,0.528,34.1,66.9
-fed2022,North Sydney,IND,LNP,52.9,official,LNP,IND,49.2,0.535,36.7,61
-fed2022,O'Connor,LNP,ALP,57,official,ALP,LNP,39.5,0.977,31.6,47.3
-fed2022,Oxley,ALP,LNP,61.6,official,ALP,LNP,59.8,0.989,48,70
-fed2022,Page,LNP,ALP,60.7,official,ALP,LNP,46.8,0.814,37.2,56.4
-fed2022,Parkes,LNP,ALP,67.8,official,ALP,LNP,40.3,0.977,32.1,48.1
-fed2022,Parramatta,ALP,LNP,54.6,official,ALP,LNP,57.8,0.998,48.2,65.9
-fed2022,Paterson,ALP,LNP,53.3,official,ALP,LNP,60.2,0.985,49.6,69.4
-fed2022,Pearce,ALP,LNP,59,official,ALP,LNP,53.8,0.993,44.3,62
-fed2022,Perth,ALP,LNP,64.8,official,ALP,LNP,59.5,0.967,51.2,66.8
-fed2022,Petrie,LNP,ALP,54.4,official,ALP,LNP,45.4,0.998,36.1,54.1
-fed2022,Rankin,ALP,LNP,59.1,official,ALP,LNP,59.6,0.991,49.6,68
-fed2022,Reid,ALP,LNP,55.2,official,ALP,LNP,52.3,0.998,41.8,61.8
-fed2022,Richmond,ALP,LNP,58.2,official,ALP,LNP,58.9,0.912,50,66.7
-fed2022,Riverina,LNP,ALP,64.8,official,ALP,LNP,37.2,0.872,29.6,44.8
-fed2022,Robertson,ALP,LNP,52.3,official,ALP,LNP,51.2,0.999,41.9,59.6
-fed2022,Ryan,GRN,LNP,52.6,official,ALP,LNP,46.3,0.729,38.2,54.5
-fed2022,Scullin,ALP,LNP,65.6,official,ALP,LNP,71,0.984,60.9,78.8
-fed2022,Shortland,ALP,LNP,55.8,official,ALP,LNP,60.3,0.976,50.4,68.6
-fed2022,Solomon,ALP,LNP,59.4,official,ALP,LNP,57.3,0.997,47.5,66.2
-fed2022,Spence,ALP,LNP,62.9,official,ALP,LNP,65.6,0.989,56.5,72.9
-fed2022,Sturt,LNP,ALP,50.5,official,ALP,LNP,47.5,0.997,38.6,55.6
-fed2022,Swan,ALP,LNP,58.8,official,ALP,LNP,55,0.998,46,62.8
-fed2022,Sydney,ALP,GRN,66.7,official,ALP,LNP,71.1,0.846,63.8,76.8
-fed2022,Tangney,ALP,LNP,52.4,official,ALP,LNP,46,0.997,37.7,53.8
-fed2022,Wannon,LNP,IND,53.9,official,ALP,LNP,42.2,0.849,34.2,50.2
-fed2022,Warringah,IND,LNP,61,official,LNP,IND,39.2,0.981,26.4,52.3
-fed2022,Watson,ALP,LNP,65.1,official,ALP,LNP,68.4,0.994,58.2,76.5
-fed2022,Wentworth,IND,LNP,54.2,official,LNP,IND,51.8,0.987,39.7,62.4
-fed2022,Werriwa,ALP,LNP,55.8,official,ALP,LNP,59.6,0.989,50,67.6
-fed2022,Whitlam,ALP,LNP,60.1,official,ALP,LNP,65.9,0.962,57.5,72.4
-fed2022,Wide Bay,LNP,ALP,61.3,official,ALP,LNP,40.8,0.934,30.6,51.6
-fed2022,Wills,ALP,GRN,58.6,official,ALP,GRN,55,0.876,37.1,69.4
-fed2022,Wright,LNP,ALP,60.9,official,ALP,LNP,39.6,0.972,31.5,47.7
-fed2025,Adelaide,ALP,LNP,69.1,official,ALP,LNP,61,0.853,53.1,67.8
-fed2025,Aston,ALP,LNP,53.4,official,ALP,LNP,48.5,0.954,38.7,57.9
-fed2025,Ballarat,ALP,LNP,60.7,official,ALP,LNP,61.2,0.946,53.1,68.5
-fed2025,Banks,ALP,LNP,52.4,official,ALP,LNP,47.5,0.979,38.9,55.2
-fed2025,Barker,LNP,ALP,63,official,ALP,LNP,33.2,0.848,25.5,40.8
-fed2025,Barton,ALP,LNP,66,official,ALP,LNP,60.6,0.99,52,67.7
-fed2025,Bass,ALP,LNP,58,official,ALP,LNP,47.8,0.921,34.5,61.8
-fed2025,Bean,ALP,IND,50.3,official,ALP,LNP,63.3,0.948,58.4,67.9
-fed2025,Bendigo,ALP,LNP,51.4,official,ALP,LNP,59.8,0.923,51.1,67.3
-fed2025,Bennelong,ALP,LNP,59.3,official,ALP,LNP,51.8,0.988,42.5,60.4
-fed2025,Berowra,LNP,ALP,51.6,official,ALP,LNP,42.8,0.747,35.3,50
-fed2025,Blair,ALP,LNP,55.7,official,ALP,LNP,54.9,0.769,46.8,62
-fed2025,Blaxland,ALP,LNP,71.9,official,ALP,LNP,63,0.897,52.4,71.8
-fed2025,Bonner,ALP,LNP,55,official,ALP,LNP,46.6,0.838,38.9,54
-fed2025,Boothby,ALP,LNP,61.1,official,ALP,LNP,54.2,0.958,46.2,61.6
-fed2025,Bowman,LNP,ALP,52.4,official,ALP,LNP,43.7,0.918,34.7,52.8
-fed2025,Braddon,ALP,LNP,57.2,official,ALP,LNP,45.3,0.957,33.4,57.5
-fed2025,Bradfield,IND,LNP,50,official,LNP,IND,49.2,0.95,27.5,66.9
-fed2025,Brand,ALP,LNP,66.9,official,ALP,LNP,65.9,0.938,56.8,73.6
-fed2025,Brisbane,ALP,LNP,59,official,LNP,GRN,48.1,0.618,32.2,60
-fed2025,Bruce,ALP,LNP,64.6,official,ALP,LNP,53.8,0.984,45.1,61.7
-fed2025,Bullwinkel,ALP,LNP,50.5,official,ALP,LNP,52.1,0.898,43.5,59.9
-fed2025,Burt,ALP,LNP,65.7,official,ALP,LNP,62.2,0.956,53.9,69.5
-fed2025,Calare,IND,LNP,56.8,official,IND,LNP,50,0.794,31.8,73.1
-fed2025,Calwell,ALP,IND,55.1,official,ALP,LNP,59.7,0.887,48.1,69.7
-fed2025,Canberra,ALP,GRN,69.5,official,ALP,LNP,72.1,0.499,67.3,76.4
-fed2025,Canning,LNP,ALP,56.6,official,ALP,LNP,48,0.992,37.9,58
-fed2025,Capricornia,LNP,ALP,55.8,official,ALP,LNP,43,0.943,33.6,52.3
-fed2025,Casey,LNP,ALP,52.9,official,ALP,LNP,46.1,0.735,38,54.1
-fed2025,Chifley,ALP,LNP,69.8,official,ALP,LNP,63.6,0.919,54.1,71.5
-fed2025,Chisholm,ALP,LNP,55.7,official,ALP,LNP,52.6,0.98,43.6,60.8
-fed2025,Clark,IND,ALP,70.4,official,LNP,IND,34.9,0.595,18.4,51.1
-fed2025,Cook,LNP,ALP,57.2,official,ALP,LNP,38.3,0.956,30.4,45.8
-fed2025,Cooper,ALP,GRN,59.7,official,ALP,GRN,58.9,0.819,42.1,73.9
-fed2025,Corangamite,ALP,LNP,58,official,ALP,LNP,55.4,0.941,47,62.9
-fed2025,Corio,ALP,LNP,63.2,official,ALP,LNP,60.4,0.946,51.7,67.8
-fed2025,Cowan,ALP,LNP,63.6,official,ALP,LNP,59.8,0.972,51.1,67.5
-fed2025,Cowper,LNP,IND,52.5,official,IND,LNP,51.6,0.873,32.7,73
-fed2025,Cunningham,ALP,LNP,67.5,official,ALP,LNP,65.8,0.691,58,71.9
-fed2025,Curtin,IND,LNP,53.3,official,LNP,IND,46.2,0.895,22.8,64.9
-fed2025,Dawson,LNP,ALP,61.8,official,ALP,LNP,38.5,0.899,30,47.4
-fed2025,Deakin,ALP,LNP,52.8,official,ALP,LNP,48.1,0.922,40.1,55.9
-fed2025,Dickson,ALP,LNP,56,official,ALP,LNP,48.2,0.931,41,55.3
-fed2025,Dobell,ALP,LNP,59.4,official,ALP,LNP,56.1,0.978,46.8,64.4
-fed2025,Dunkley,ALP,LNP,57.1,official,ALP,LNP,53.8,0.983,45,61.7
-fed2025,Durack,LNP,ALP,60.2,official,ALP,LNP,44.6,0.846,36.4,52.5
-fed2025,Eden-Monaro,ALP,LNP,57.2,official,ALP,LNP,57,0.986,48.4,64.9
-fed2025,Fadden,LNP,ALP,56.9,official,ALP,LNP,38.9,0.819,31.3,46.7
-fed2025,Fairfax,LNP,ALP,53.2,official,ALP,LNP,41.3,0.727,33.2,49.6
-fed2025,Farrer,LNP,IND,56.2,official,ALP,LNP,34.4,0.678,27.9,41.2
-fed2025,Fenner,ALP,LNP,72.1,official,ALP,LNP,65.9,0.968,61,70.5
-fed2025,Fisher,LNP,ALP,56,official,ALP,LNP,41.5,0.747,33.7,49.5
-fed2025,Flinders,LNP,IND,52.3,official,ALP,LNP,42.2,0.506,34.6,50
-fed2025,Flynn,LNP,ALP,60.2,official,ALP,LNP,44.8,0.88,36.9,52
-fed2025,Forde,ALP,LNP,51.8,official,ALP,LNP,45.7,0.908,36.7,54.4
-fed2025,Forrest,LNP,ALP,52.2,official,ALP,LNP,46.3,0.774,38.1,54.3
-fed2025,Fowler,IND,ALP,52.7,official,ALP,IND,45.7,0.898,26,63.2
-fed2025,Franklin,ALP,IND,57.8,official,ALP,LNP,62.1,0.899,49.9,72.9
-fed2025,Fraser,ALP,GRN,59.2,official,ALP,LNP,64.8,0.86,57,71.4
-fed2025,Fremantle,ALP,IND,50.7,official,ALP,LNP,65.4,0.546,57.5,72.1
-fed2025,Gellibrand,ALP,LNP,65.1,official,ALP,LNP,59.4,0.963,50.3,67.1
-fed2025,Gilmore,ALP,LNP,55.1,official,ALP,LNP,51.7,0.955,41.7,61.5
-fed2025,Gippsland,LNP,ALP,69.4,official,ALP,LNP,29.2,0.798,22,37.9
-fed2025,Goldstein,LNP,IND,50.1,official,LNP,IND,47.1,0.974,24.4,64.1
-fed2025,Gorton,ALP,LNP,60.3,official,ALP,LNP,57.5,0.964,49.2,64.8
-fed2025,Grayndler,ALP,GRN,66.9,official,ALP,GRN,65.9,0.785,49.8,78.4
-fed2025,Greenway,ALP,LNP,63.8,official,ALP,LNP,57.4,0.989,47.4,66.1
-fed2025,Grey,LNP,ALP,54.6,official,ALP,LNP,40.6,0.775,32.9,48.5
-fed2025,Griffith,ALP,GRN,60.6,official,LNP,GRN,41.4,0.576,28,53.5
-fed2025,Groom,LNP,IND,55.7,official,ALP,LNP,36.5,0.527,29,44.5
-fed2025,Hasluck,ALP,LNP,66,official,ALP,LNP,60.6,0.977,52.2,67.9
-fed2025,Hawke,ALP,LNP,57.6,official,ALP,LNP,57,0.965,48.6,64.2
-fed2025,Herbert,LNP,ALP,63.4,official,ALP,LNP,39.1,0.92,30.4,48.2
-fed2025,Hindmarsh,ALP,LNP,66.3,official,ALP,LNP,58,0.962,49,65.9
-fed2025,Hinkler,LNP,ALP,56.3,official,ALP,LNP,41.1,0.9,33.1,48.9
-fed2025,Holt,ALP,LNP,64,official,ALP,LNP,56,0.989,46.6,64.2
-fed2025,Hotham,ALP,LNP,66.9,official,ALP,LNP,59.6,0.99,50.5,67.2
-fed2025,Hughes,ALP,LNP,53.1,official,ALP,LNP,46.3,0.887,37.9,54.3
-fed2025,Hume,LNP,ALP,58.1,official,ALP,LNP,43.2,0.793,35.3,50.8
-fed2025,Hunter,ALP,ONP,59,official,ALP,LNP,57,0.778,47.2,65.9
-fed2025,Indi,IND,LNP,58.6,official,LNP,IND,42.4,0.957,21.7,60.2
-fed2025,Isaacs,ALP,LNP,64.3,official,ALP,LNP,57.5,0.992,48.1,65.6
-fed2025,Jagajaga,ALP,LNP,62.9,official,ALP,LNP,59.8,0.94,51.2,67.3
-fed2025,Kennedy,OTH_RIGHT,LNP,65.8,official,LNP,OTH_RIGHT,38,0.657,18.6,58
-fed2025,Kingsford Smith,ALP,LNP,67.2,official,ALP,LNP,62.9,0.942,54.7,69.7
-fed2025,Kingston,ALP,LNP,70.7,official,ALP,LNP,65.1,0.958,57,71.8
-fed2025,Kooyong,IND,LNP,50.7,official,LNP,IND,48.4,0.993,26.3,63.7
-fed2025,La Trobe,LNP,ALP,52.1,official,ALP,LNP,40.7,0.963,32.4,49.3
-fed2025,Lalor,ALP,LNP,63.2,official,ALP,LNP,60.5,0.973,49.5,69.9
-fed2025,Leichhardt,ALP,LNP,56.1,official,ALP,LNP,47.9,0.878,37.7,58.1
-fed2025,Lilley,ALP,LNP,64.5,official,ALP,LNP,59.6,0.933,50.1,67.9
-fed2025,Lindsay,LNP,ALP,52.8,official,ALP,LNP,44.6,0.961,35.5,53.2
-fed2025,Lingiari,ALP,LNP,58.1,official,ALP,LNP,53,0.987,42.2,63.5
-fed2025,Longman,LNP,ALP,50.1,official,ALP,LNP,47,0.977,37.6,56.1
-fed2025,Lyne,LNP,ALP,59.8,official,ALP,LNP,37.2,0.722,30,44.4
-fed2025,Lyons,ALP,LNP,61.6,official,ALP,LNP,50.1,0.893,38.4,62
-fed2025,Macarthur,ALP,LNP,65.6,official,ALP,LNP,59.8,0.964,48.7,69.2
-fed2025,Mackellar,IND,LNP,55.7,official,LNP,IND,45.2,0.989,23.6,62.7
-fed2025,Macnamara,ALP,LNP,61.8,official,LNP,GRN,44.5,0.451,29.6,56.2
-fed2025,Macquarie,ALP,LNP,57.7,official,ALP,LNP,55.8,0.992,46.7,63.6
-fed2025,Makin,ALP,LNP,64.7,official,ALP,LNP,59.9,0.978,51.2,67.5
-fed2025,Mallee,LNP,ALP,69,official,ALP,LNP,30.9,0.661,24.3,38.1
-fed2025,Maranoa,LNP,ONP,70.1,official,ALP,LNP,28.2,0.615,22,35
-fed2025,Maribyrnong,ALP,LNP,62.6,official,ALP,LNP,59.4,0.983,49.7,67.6
-fed2025,Mayo,IND,ALP,64.9,official,LNP,IND,39.4,0.681,17.8,58.3
-fed2025,McEwen,ALP,LNP,54.8,official,ALP,LNP,51.7,0.945,42,60.8
-fed2025,McMahon,ALP,LNP,59,official,ALP,LNP,60.3,0.811,52.3,66.7
-fed2025,McPherson,LNP,ALP,54.4,official,ALP,LNP,42.5,0.553,33.6,52.3
-fed2025,Melbourne,ALP,GRN,53,official,ALP,GRN,42.9,0.697,27.9,64.3
-fed2025,Menzies,ALP,LNP,51.1,official,ALP,LNP,47.5,0.927,38.8,55.9
-fed2025,Mitchell,LNP,ALP,53.8,official,ALP,LNP,39.4,0.962,31.5,46.8
-fed2025,Monash,LNP,ALP,54.1,official,ALP,LNP,45.5,0.49,37.9,52.9
-fed2025,Moncrieff,LNP,ALP,58.8,official,ALP,LNP,39.1,0.763,31.8,46.6
-fed2025,Moore,ALP,LNP,52.9,official,ALP,LNP,49.3,0.837,40.5,57.8
-fed2025,Moreton,ALP,LNP,66.1,official,ALP,LNP,57.5,0.916,49.3,64.8
-fed2025,New England,LNP,ALP,67.1,official,ALP,LNP,35.5,0.849,28.6,42.1
-fed2025,Newcastle,ALP,GRN,65.8,official,ALP,LNP,67.1,0.618,59,73.5
-fed2025,Nicholls,LNP,ALP,64.4,official,ALP,LNP,32.6,0.911,25.5,39.6
-fed2025,O'Connor,LNP,ALP,63.3,official,ALP,LNP,42.9,0.788,35,51.1
-fed2025,Oxley,ALP,LNP,69.2,official,ALP,LNP,60.9,0.92,50.3,69.9
-fed2025,Page,LNP,ALP,59.3,official,ALP,LNP,40.5,0.643,32.1,49.8
-fed2025,Parkes,LNP,ALP,63,official,ALP,LNP,32.9,0.776,26.1,39.9
-fed2025,Parramatta,ALP,LNP,62.5,official,ALP,LNP,54.8,0.984,46.1,62.1
-fed2025,Paterson,ALP,LNP,56.9,official,ALP,LNP,53.4,0.916,44,62.4
-fed2025,Pearce,ALP,LNP,56.4,official,ALP,LNP,58.8,0.973,49.3,67
-fed2025,Perth,ALP,LNP,66.5,official,ALP,LNP,63.2,0.881,54.8,70.5
-fed2025,Petrie,ALP,LNP,51.2,official,ALP,LNP,45.5,0.955,37.1,53.5
-fed2025,Rankin,ALP,LNP,65.6,official,ALP,LNP,58.7,0.949,49.8,66.4
-fed2025,Reid,ALP,LNP,62,official,ALP,LNP,56.5,0.968,46.4,65.5
-fed2025,Richmond,ALP,LNP,60,official,ALP,LNP,58.2,0.356,50.1,65
-fed2025,Riverina,LNP,ALP,62.6,official,ALP,LNP,40.6,0.854,33.1,47.8
-fed2025,Robertson,ALP,LNP,59.4,official,ALP,LNP,53.6,0.981,44.6,61.7
-fed2025,Ryan,GRN,LNP,53.3,official,LNP,GRN,48.2,0.762,31.8,60.7
-fed2025,Scullin,ALP,LNP,64.3,official,ALP,LNP,63.9,0.899,53.1,72.7
-fed2025,Shortland,ALP,LNP,61.5,official,ALP,LNP,56.1,0.962,47,64
-fed2025,Solomon,ALP,LNP,51.3,official,ALP,LNP,57.5,0.909,47.1,67.1
-fed2025,Spence,ALP,LNP,65.3,official,ALP,LNP,62.7,0.816,54.6,69.4
-fed2025,Sturt,ALP,LNP,56.6,official,ALP,LNP,48.6,0.887,40.5,56.3
-fed2025,Swan,ALP,LNP,64,official,ALP,LNP,60.1,0.976,51.2,67.8
-fed2025,Sydney,ALP,GRN,70.9,official,ALP,GRN,64,0.705,47.1,77.3
-fed2025,Tangney,ALP,LNP,57,official,ALP,LNP,53.8,0.996,45.1,61.9
-fed2025,Wannon,LNP,IND,53.3,official,LNP,IND,52.9,0.936,31.4,69.6
-fed2025,Warringah,IND,LNP,61.2,official,LNP,IND,41.1,0.938,23.9,57.2
-fed2025,Watson,ALP,IND,66.5,official,ALP,LNP,64.8,0.771,55.2,72.6
-fed2025,Wentworth,IND,LNP,58.3,official,LNP,IND,43.5,0.984,24.4,60
-fed2025,Werriwa,ALP,LNP,56.8,official,ALP,LNP,55.5,0.959,46.8,62.9
-fed2025,Whitlam,ALP,LNP,56.2,official,ALP,LNP,57.5,0.923,49.5,64.1
-fed2025,Wide Bay,LNP,ALP,57.6,official,ALP,LNP,39.3,0.827,30.2,49.2
-fed2025,Wills,ALP,GRN,51.4,official,ALP,GRN,52.7,0.838,36.1,70.1
-fed2025,Wright,LNP,ALP,58,official,ALP,LNP,39.2,0.673,32.1,46.5
-nsw2023,Albury,LNP,ALP,66.3,official,ALP,LNP,38.7,0.97,29,49
-nsw2023,Auburn,ALP,LNP,74,official,ALP,LNP,71,0.972,57.6,81.3
-nsw2023,Ballina,GRN,LNP,57.7,official,LNP,GRN,41.2,0.641,27.2,55.3
-nsw2023,Balmain,GRN,ALP,51.8,official,ALP,GRN,41.1,0.909,22.2,67.4
-nsw2023,Bankstown,ALP,LNP,70.3,official,ALP,LNP,73.9,0.938,64.3,81.3
-nsw2023,Barwon,IND,LNP,66,official,LNP,IND,38.3,0.73,17.4,57
-nsw2023,Bathurst,LNP,ALP,73.6,official,ALP,LNP,35.9,0.896,26.3,46.3
-nsw2023,Bega,ALP,LNP,60.4,official,ALP,LNP,53.2,0.96,42.1,63.6
-nsw2023,Blacktown,ALP,LNP,69.1,official,ALP,LNP,70.8,0.982,61.5,78.3
-nsw2023,Blue Mountains,ALP,LNP,71.9,official,ALP,LNP,68.6,0.941,57,77.7
-nsw2023,Cabramatta,ALP,LNP,61.8,official,ALP,LNP,69.5,0.906,58.1,77.9
-nsw2023,Camden,ALP,LNP,53,official,ALP,LNP,47,0.999,32.3,61.9
-nsw2023,Campbelltown,ALP,LNP,73.3,official,ALP,LNP,69.3,0.973,59.1,77.6
-nsw2023,Canterbury,ALP,LNP,75.8,official,ALP,LNP,70.1,0.95,57.6,79.5
-nsw2023,Castle Hill,LNP,ALP,60.9,official,ALP,LNP,33.3,0.977,24.2,43.4
-nsw2023,Cessnock,ALP,ONP,73.4,official,ALP,LNP,76.4,0.95,67.5,83.2
-nsw2023,Charlestown,ALP,LNP,71.1,official,ALP,LNP,68.3,0.995,58.1,76.7
-nsw2023,Clarence,LNP,ALP,64.2,official,ALP,LNP,40.9,0.816,31,51.4
-nsw2023,Coffs Harbour,LNP,ALP,63.2,official,ALP,LNP,42.8,0.747,33,53.1
-nsw2023,Coogee,ALP,LNP,62.3,official,ALP,LNP,59.5,0.987,49.1,68.9
-nsw2023,Cootamundra,LNP,ALP,82.1,official,ALP,LNP,28.1,0.946,20,37.3
-nsw2023,Cronulla,LNP,ALP,63.8,official,ALP,LNP,35.1,0.99,25.3,46
-nsw2023,Davidson,LNP,ALP,63.9,official,ALP,LNP,32.6,0.782,24.1,42.6
-nsw2023,Drummoyne,LNP,ALP,51.3,official,ALP,LNP,43.2,0.998,29.2,58.1
-nsw2023,Dubbo,LNP,ALP,68.6,official,ALP,LNP,35.1,0.772,26.2,45.2
-nsw2023,East Hills,ALP,LNP,51.7,official,ALP,LNP,53.2,0.977,41.8,63.9
-nsw2023,Epping,LNP,ALP,54.8,official,ALP,LNP,44.8,0.976,34.3,55.3
-nsw2023,Fairfield,ALP,LNP,70.9,official,ALP,LNP,69.5,0.962,58.3,78.2
-nsw2023,Gosford,ALP,LNP,65.4,official,ALP,LNP,62.2,0.966,51.7,71.4
-nsw2023,Goulburn,LNP,ALP,51.3,official,ALP,LNP,51.3,0.998,40.3,61.7
-nsw2023,Granville,ALP,LNP,71.5,official,ALP,LNP,63.1,0.979,51.7,72.9
-nsw2023,Hawkesbury,LNP,ALP,59.8,official,ALP,LNP,40.3,0.847,30.4,51
-nsw2023,Heathcote,ALP,LNP,60,official,ALP,LNP,56.3,0.999,45.3,66.3
-nsw2023,Heffron,ALP,LNP,73.3,official,ALP,LNP,69.7,0.535,60,77.2
-nsw2023,Holsworthy,LNP,ALP,50.4,official,ALP,LNP,49.5,0.989,38.6,59.9
-nsw2023,Hornsby,LNP,ALP,58,official,ALP,LNP,39.1,0.811,29.8,49.3
-nsw2023,Keira,ALP,LNP,74.2,official,ALP,LNP,72.3,0.872,62.6,79.8
-nsw2023,Kiama,IND,ALP,50.8,official,ALP,IND,39.8,0.697,26.1,61.1
-nsw2023,Kogarah,ALP,LNP,68.3,official,ALP,LNP,56.5,0.977,42.5,69.4
-nsw2023,Lake Macquarie,IND,ALP,74.1,official,ALP,IND,34.7,0.964,20.7,52.5
-nsw2023,Lane Cove,LNP,ALP,55.5,official,ALP,LNP,41.6,0.705,31.9,51.9
-nsw2023,Lismore,ALP,LNP,65,official,ALP,LNP,57.8,0.712,47.6,66.9
-nsw2023,Liverpool,ALP,LNP,58.4,official,ALP,LNP,70,0.977,59.4,78.5
-nsw2023,Londonderry,ALP,LNP,63.7,official,ALP,LNP,58.4,1,47.5,68.1
-nsw2023,Macquarie Fields,ALP,LNP,69.9,official,ALP,LNP,68.4,0.999,58.1,76.9
-nsw2023,Maitland,ALP,LNP,68.6,official,ALP,LNP,68.2,0.941,51.6,80.9
-nsw2023,Manly,LNP,IND,54.9,official,LNP,IND,53.7,0.498,28.1,71.6
-nsw2023,Maroubra,ALP,LNP,68.7,official,ALP,LNP,64.2,0.994,53.8,73.2
-nsw2023,Miranda,LNP,ALP,52.4,official,ALP,LNP,41.5,0.984,30.3,53
-nsw2023,Monaro,ALP,LNP,52.3,official,ALP,LNP,46.9,0.953,30.3,64.2
-nsw2023,Mount Druitt,ALP,LNP,72.4,official,ALP,LNP,72.7,0.997,63.1,80.4
-nsw2023,Murray,IND,LNP,66,official,LNP,IND,45.9,0.997,19.9,67.8
-nsw2023,Myall Lakes,LNP,ALP,65.8,official,ALP,LNP,46.6,0.871,36.1,57.1
-nsw2023,Newcastle,ALP,LNP,72.6,official,ALP,LNP,71.1,0.824,61.3,78.6
-nsw2023,Newtown,GRN,ALP,62.1,official,ALP,GRN,39.5,0.983,19.2,68.7
-nsw2023,North Shore,LNP,IND,55.7,official,LNP,IND,54.2,0.784,25,72.3
-nsw2023,Northern Tablelands,LNP,ALP,83.8,official,ALP,LNP,20.4,0.794,14.3,28.2
-nsw2023,Oatley,LNP,ALP,50.8,official,ALP,LNP,49.4,0.983,38.5,59.8
-nsw2023,Orange,IND,LNP,71.9,official,LNP,IND,39.5,0.992,22.2,61.3
-nsw2023,Oxley,LNP,ALP,62.8,official,ALP,LNP,41.3,0.843,31.5,51.6
-nsw2023,Parramatta,ALP,LNP,58.5,official,ALP,LNP,52.6,1,38.8,66
-nsw2023,Penrith,ALP,LNP,51.6,official,ALP,LNP,53.4,0.99,39.7,66.4
-nsw2023,Pittwater,LNP,IND,50.7,official,LNP,IND,53.7,0.79,30,74.6
-nsw2023,Port Macquarie,"","",,intra-coalition-excluded,ALP,LNP,34.3,0.982,25.2,44.4
-nsw2023,Port Stephens,ALP,LNP,69,official,ALP,LNP,59.9,0.977,49,69.4
-nsw2023,Prospect,ALP,LNP,58.7,official,ALP,LNP,63,1,52.3,72.3
-nsw2023,Riverstone,ALP,LNP,53.7,official,ALP,LNP,52.8,0.996,43.3,62
-nsw2023,Rockdale,ALP,LNP,65.4,official,ALP,LNP,64.6,1,54.9,72.9
-nsw2023,Ryde,LNP,ALP,50,official,ALP,LNP,48.6,0.999,37.7,58.9
-nsw2023,Shellharbour,ALP,IND,67.1,official,ALP,LNP,71.8,0.948,61.5,79.8
-nsw2023,South Coast,ALP,LNP,53.8,official,ALP,LNP,43.7,0.954,32.9,54.6
-nsw2023,Strathfield,ALP,LNP,63,official,ALP,LNP,61.8,0.999,50.9,71.6
-nsw2023,Summer Hill,ALP,GRN,66.3,official,ALP,GRN,67.3,0.668,48.3,79.9
-nsw2023,Swansea,ALP,LNP,65.4,official,ALP,LNP,64.1,0.999,53.3,73.1
-nsw2023,Sydney,IND,ALP,65.6,official,ALP,IND,39.3,0.498,17.4,55.7
-nsw2023,Tamworth,LNP,IND,65.8,official,ALP,LNP,26.9,0.624,19.3,35.9
-nsw2023,Terrigal,LNP,ALP,51.2,official,ALP,LNP,44,0.997,33.6,54.6
-nsw2023,The Entrance,ALP,LNP,57.8,official,ALP,LNP,60.4,0.999,49.5,69.9
-nsw2023,Tweed,LNP,ALP,53.6,official,ALP,LNP,50.6,0.985,40,60.9
-nsw2023,Upper Hunter,LNP,ALP,53.8,official,ALP,LNP,53.6,0.942,42.6,63.8
-nsw2023,Vaucluse,LNP,IND,62.9,official,ALP,LNP,35.7,0.55,27.1,45.9
-nsw2023,Wagga Wagga,IND,LNP,72.4,official,LNP,IND,35.8,0.883,16.6,53.9
-nsw2023,Wakehurst,IND,LNP,54.5,official,LNP,IND,51.2,0.738,29.6,74.9
-nsw2023,Wallsend,ALP,LNP,81.8,official,ALP,LNP,78.8,0.822,70.5,84.9
-nsw2023,Willoughby,LNP,IND,52.6,official,LNP,IND,53.4,0.654,28.6,74.9
-nsw2023,Wollondilly,IND,LNP,51.5,official,LNP,IND,51.4,0.517,19.7,70.8
-nsw2023,Wollongong,ALP,LNP,74.3,official,ALP,LNP,76,0.941,67,82.9
-nsw2023,Wyong,ALP,LNP,69.8,official,ALP,LNP,70.5,0.996,60.6,78.6
-qld2024,Algester,ALP,LNP,57.5,official,ALP,LNP,61.1,0.968,50.8,70.2
-qld2024,Aspley,ALP,LNP,50,official,ALP,LNP,47.7,0.992,36.8,58.5
-qld2024,Bancroft,ALP,LNP,56,official,ALP,LNP,55.4,0.985,45,65
-qld2024,Barron River,LNP,ALP,53.7,official,ALP,LNP,48.4,0.954,38.1,58.8
-qld2024,Bonney,LNP,ALP,63.7,official,ALP,LNP,36.4,0.979,27.2,46.5
-qld2024,Broadwater,LNP,ALP,71.3,official,ALP,LNP,29.2,0.956,21.2,38.4
-qld2024,Buderim,LNP,ALP,59.3,official,ALP,LNP,39.6,0.895,30.3,49.6
-qld2024,Bulimba,ALP,LNP,58.1,official,ALP,LNP,57.1,0.978,45.7,67.7
-qld2024,Bundaberg,ALP,LNP,51.5,official,ALP,LNP,45.8,0.979,33.1,58.9
-qld2024,Bundamba,ALP,LNP,63.8,official,ALP,LNP,64.9,0.904,55,73.3
-qld2024,Burdekin,LNP,ALP,65.8,official,ALP,LNP,39.1,0.886,27.4,52.2
-qld2024,Burleigh,LNP,ALP,62.8,official,ALP,LNP,45.4,0.924,34.1,57.4
-qld2024,Burnett,LNP,ALP,65.4,official,ALP,LNP,35.4,0.963,26.3,45.2
-qld2024,Cairns,ALP,LNP,52.5,official,ALP,LNP,50.4,0.982,36.4,64
-qld2024,Callide,LNP,ALP,73.2,official,ALP,LNP,28.4,0.89,20.7,37.5
-qld2024,Caloundra,LNP,ALP,51.8,official,ALP,LNP,48.9,0.967,37.3,60.2
-qld2024,Capalaba,LNP,ALP,51.9,official,ALP,LNP,52.9,0.993,42.4,62.8
-qld2024,Chatsworth,LNP,ALP,58.5,official,ALP,LNP,43.8,0.988,32.3,55.9
-qld2024,Clayfield,LNP,ALP,53.5,official,ALP,LNP,44,0.722,34.2,54.5
-qld2024,Condamine,LNP,ALP,73.6,official,ALP,LNP,26.7,0.952,19,35.9
-qld2024,Cook,LNP,ALP,55,official,ALP,LNP,51.8,0.852,36.3,66.6
-qld2024,Coomera,LNP,ALP,60,official,ALP,LNP,43.9,0.969,33.9,54.1
-qld2024,Cooper,ALP,LNP,61.2,official,LNP,GRN,44.4,0.653,29.1,58.2
-qld2024,Currumbin,LNP,ALP,62.3,official,ALP,LNP,44.6,0.885,34.5,54.7
-qld2024,Everton,LNP,ALP,55.3,official,ALP,LNP,40.5,0.988,30.4,51.1
-qld2024,Ferny Grove,ALP,LNP,57.9,official,ALP,LNP,53.5,0.973,42.8,63.7
-qld2024,Gaven,ALP,LNP,50.7,official,ALP,LNP,52.1,0.99,41.5,62.2
-qld2024,Gladstone,ALP,LNP,59.2,official,ALP,LNP,68.7,0.923,58.5,77
-qld2024,Glass House,LNP,ALP,60.2,official,ALP,LNP,43.4,0.883,33.6,53.7
-qld2024,Greenslopes,ALP,LNP,59.8,official,ALP,LNP,58.8,0.575,50.1,66.6
-qld2024,Gregory,LNP,ALP,71,official,ALP,LNP,29.6,0.971,21.3,39
-qld2024,Gympie,LNP,ALP,64.8,official,ALP,LNP,36.1,0.986,26.7,46.4
-qld2024,Hervey Bay,LNP,ALP,58.4,official,ALP,LNP,47.1,0.993,36.4,57.7
-qld2024,Hill,OTH_RIGHT,LNP,63.7,official,LNP,OTH_RIGHT,35.4,0.664,19,59.3
-qld2024,Hinchinbrook,OTH_RIGHT,LNP,63.2,official,LNP,OTH_RIGHT,41.8,0.828,20.5,62.9
-qld2024,Inala,ALP,LNP,62.6,official,ALP,LNP,65.2,0.964,55.2,73.7
-qld2024,Ipswich,ALP,LNP,58.9,official,ALP,LNP,60,0.974,49.6,69
-qld2024,Ipswich West,ALP,LNP,53.9,official,ALP,LNP,50.8,0.978,40.4,60.7
-qld2024,Jordan,ALP,LNP,60,official,ALP,LNP,60.6,0.974,50.3,69.7
-qld2024,Kawana,LNP,ALP,62.7,official,ALP,LNP,35.8,0.974,26.7,45.7
-qld2024,Keppel,LNP,ALP,60.5,official,ALP,ONP,51.4,0.47,32.6,66.7
-qld2024,Kurwongbah,ALP,LNP,55.9,official,ALP,LNP,55.9,0.985,45.4,65.4
-qld2024,Lockyer,LNP,ALP,69.2,official,ALP,LNP,33.5,0.953,24.4,43.7
-qld2024,Logan,ALP,LNP,54.3,official,ALP,LNP,56.6,0.986,46.2,66.1
-qld2024,Lytton,ALP,LNP,53,official,ALP,LNP,58.6,0.979,48.3,67.7
-qld2024,Macalister,ALP,LNP,51.9,official,ALP,LNP,52.6,0.981,42.2,62.5
-qld2024,Mackay,LNP,ALP,60.2,official,ALP,LNP,51.1,0.991,39.9,61.9
-qld2024,Maiwar,GRN,LNP,53.4,official,LNP,GRN,44.8,0.934,27.9,58.9
-qld2024,Mansfield,ALP,LNP,54.9,official,ALP,LNP,49.5,0.992,39.9,58.7
-qld2024,Maroochydore,LNP,ALP,60.9,official,ALP,LNP,36.8,0.833,28,46.7
-qld2024,Maryborough,LNP,ALP,52.8,official,ALP,LNP,56.3,0.974,45.4,66.4
-qld2024,McConnel,ALP,LNP,58.8,official,LNP,GRN,44,0.631,29,57.9
-qld2024,Mermaid Beach,LNP,ALP,63.1,official,ALP,LNP,40.8,0.932,31.2,51
-qld2024,Miller,ALP,LNP,60.6,official,ALP,LNP,58.6,0.778,48.4,67.8
-qld2024,Mirani,LNP,OTH_RIGHT,51,official,LNP,OTH_RIGHT,43.9,0.474,19.2,64.3
-qld2024,Moggill,LNP,ALP,55.6,official,LNP,GRN,60,0.529,40.5,72.8
-qld2024,Morayfield,ALP,LNP,57.1,official,ALP,LNP,60.2,0.975,49.8,69.4
-qld2024,Mount Ommaney,ALP,LNP,57.4,official,ALP,LNP,57,0.988,46.2,66.9
-qld2024,Mudgeeraba,LNP,ALP,63.9,official,ALP,LNP,35.6,0.922,26.7,45.5
-qld2024,Mulgrave,LNP,ALP,52.7,official,ALP,LNP,56.7,0.819,47.4,65.1
-qld2024,Mundingburra,LNP,ALP,59.2,official,ALP,LNP,49.7,0.918,39.5,59.4
-qld2024,Murrumba,ALP,LNP,59.8,official,ALP,LNP,53.9,0.966,44,63
-qld2024,Nanango,LNP,ALP,72.9,official,ALP,LNP,32.8,0.926,23.9,42.9
-qld2024,Nicklin,LNP,ALP,52.7,official,ALP,LNP,46.8,0.873,36.9,56.9
-qld2024,Ninderry,LNP,ALP,60.5,official,ALP,LNP,40.8,0.931,31.3,51
-qld2024,Noosa,IND,LNP,58.5,official,LNP,IND,42.9,0.931,21.5,61.6
-qld2024,Nudgee,ALP,LNP,62,official,ALP,LNP,58.2,0.973,48.5,66.9
-qld2024,Oodgeroo,LNP,ALP,61.8,official,ALP,LNP,39.8,0.981,30.3,49.8
-qld2024,Pine Rivers,ALP,LNP,50.7,official,ALP,LNP,49.9,0.991,39.5,59.8
-qld2024,Pumicestone,LNP,ALP,50.4,official,ALP,LNP,51.8,0.991,41.1,61.9
-qld2024,Redcliffe,LNP,ALP,52.9,official,ALP,LNP,48.7,0.988,37.1,60.2
-qld2024,Redlands,LNP,ALP,51.9,official,ALP,LNP,46.4,0.975,35.6,57.3
-qld2024,Rockhampton,LNP,ALP,51.8,official,ALP,LNP,51.6,0.627,41,61.7
-qld2024,Sandgate,ALP,LNP,59.6,official,ALP,LNP,59.2,0.971,47.7,69.1
-qld2024,Scenic Rim,LNP,ALP,66.1,official,ALP,LNP,33.5,0.951,24.6,43.7
-qld2024,South Brisbane,ALP,GRN,56,official,LNP,GRN,36.9,0.518,25,49
-qld2024,Southern Downs,LNP,ONP,68.6,official,ALP,LNP,31.4,0.961,22.7,41.3
-qld2024,Southport,LNP,ALP,61.1,official,ALP,LNP,39.7,0.98,30.1,49.9
-qld2024,Springwood,ALP,LNP,52.1,official,ALP,LNP,50,0.985,36.2,63.4
-qld2024,Stafford,ALP,LNP,55.3,official,ALP,LNP,57.5,0.95,47,66.9
-qld2024,Stretton,ALP,LNP,59.5,official,ALP,LNP,57.5,0.986,47.1,67
-qld2024,Surfers Paradise,LNP,ALP,73.1,official,ALP,LNP,29.6,0.886,21.9,38.6
-qld2024,Theodore,LNP,ALP,63,official,ALP,LNP,41.9,0.987,32.1,52.2
-qld2024,Thuringowa,LNP,ALP,59.9,official,ALP,LNP,48.2,0.899,37.6,58.7
-qld2024,Toohey,ALP,LNP,59,official,ALP,LNP,59.3,0.987,48.6,68.9
-qld2024,Toowoomba North,LNP,ALP,66.5,official,ALP,LNP,38,0.986,27.1,50.2
-qld2024,Toowoomba South,LNP,ALP,63,official,ALP,LNP,35.2,0.96,25.8,45.8
-qld2024,Townsville,LNP,ALP,55.6,official,ALP,LNP,48.4,0.924,37.4,59.7
-qld2024,Traeger,OTH_RIGHT,LNP,63.7,official,LNP,OTH_RIGHT,32.7,0.602,17.3,55.3
-qld2024,Warrego,LNP,ALP,77.8,official,ALP,LNP,23.2,0.87,16.2,31.7
-qld2024,Waterford,ALP,LNP,61.2,official,ALP,LNP,59.4,0.983,49.1,68.7
-qld2024,Whitsunday,LNP,ALP,68.5,official,ALP,LNP,41.1,0.983,28.6,54.8
-qld2024,Woodridge,ALP,LNP,68.3,official,ALP,LNP,70.2,0.936,60.4,78
-sa2026,Adelaide,ALP,LNP,66.9,official,ALP,LNP,64.4,0.755,51.7,76.1
-sa2026,Badcoe,ALP,ONP,70.9,official,ALP,LNP,70.3,0.483,58.1,80.4
-sa2026,Black,ALP,ONP,65.5,official,ALP,ONP,59.7,0.512,37.6,74.2
-sa2026,Bragg,LNP,ALP,58.5,official,ALP,LNP,49.8,0.862,36.8,63.7
-sa2026,Chaffey,LNP,ONP,55.9,official,LNP,ONP,50.9,0.655,27.3,69.7
-sa2026,Cheltenham,ALP,ONP,68,official,ALP,ONP,70.5,0.747,48,82.2
-sa2026,Colton,ALP,LNP,60.1,official,ALP,LNP,54.8,0.865,41.3,68.4
-sa2026,Croydon,ALP,ONP,79.7,official,ALP,ONP,73.1,0.545,52.1,84.1
-sa2026,Davenport,ALP,ONP,66.4,official,ALP,LNP,61.6,0.746,48.5,73.8
-sa2026,Dunstan,ALP,LNP,58.4,official,ALP,LNP,58.7,0.706,45.8,71.4
-sa2026,Elder,ALP,LNP,69.1,official,ALP,LNP,63.2,0.666,50.3,75.1
-sa2026,Elizabeth,ALP,ONP,54.7,official,ALP,ONP,61.7,0.965,36,78.6
-sa2026,Enfield,ALP,ONP,69,official,ALP,ONP,68.1,0.6,46,80.5
-sa2026,Finniss,IND,LNP,55.1,official,LNP,IND,41.1,0.294,21.4,59.7
-sa2026,Flinders,LNP,ONP,59.2,official,IND,ONP,55.6,0.34,31.3,77.2
-sa2026,Florey,ALP,ONP,65.9,official,ALP,ONP,62.6,0.918,38.1,77.6
-sa2026,Gibson,ALP,LNP,63.7,official,ALP,LNP,60.8,0.732,47.6,73.2
-sa2026,Giles,ALP,ONP,58.5,official,ALP,ONP,67.1,0.981,44,80.2
-sa2026,Hammond,ONP,ALP,54.9,official,ALP,LNP,50.7,0.33,37.6,64.7
-sa2026,Hartley,ALP,LNP,53.9,official,ALP,LNP,54,0.873,40.6,67.5
-sa2026,Heysen,LNP,ALP,50.5,official,ALP,LNP,54.1,0.366,41.1,67.4
-sa2026,Hurtle Vale,ALP,ONP,60.2,official,ALP,ONP,68.4,0.819,45.4,81.1
-sa2026,Kaurna,ALP,ONP,62.2,official,ALP,ONP,67,0.916,42.3,80.8
-sa2026,Kavel,IND,ALP,60.6,official,ALP,IND,46.7,0.399,19.1,66.3
-sa2026,King,ALP,ONP,55.7,official,ALP,ONP,61.4,0.589,38.2,76.1
-sa2026,Lee,ALP,ONP,59.5,official,ALP,ONP,63.8,0.706,40.4,77.8
-sa2026,Light,ALP,ONP,51.2,official,ALP,ONP,65.5,0.895,40.6,80.2
-sa2026,MacKillop,ONP,LNP,50.8,official,LNP,ONP,54.6,0.435,30.8,73
-sa2026,Mawson,ALP,ONP,57.9,official,ALP,ONP,62.8,0.785,39,77.5
-sa2026,Morialta,ALP,LNP,58.6,official,ALP,LNP,57.5,0.787,44,70.8
-sa2026,Morphett,ALP,LNP,50.7,official,ALP,LNP,52.9,0.684,39.8,66.4
-sa2026,Mount Gambier,IND,ONP,59.9,official,ALP,IND,41.8,0.312,20.2,61.3
-sa2026,Narungga,ONP,LNP,50.2,official,ALP,IND,42,0.433,24.3,57.7
-sa2026,Newland,ALP,ONP,61.4,official,ALP,LNP,63.5,0.607,50.5,75.8
-sa2026,Ngadjuri,ONP,ALP,56.6,official,ALP,LNP,50.3,0.372,37.2,64
-sa2026,Playford,ALP,ONP,66.9,official,ALP,ONP,65,0.942,39.8,79.7
-sa2026,Port Adelaide,ALP,ONP,65.1,official,ALP,ONP,66.7,0.918,42.5,80.6
-sa2026,Ramsay,ALP,ONP,62.9,official,ALP,ONP,64.7,0.98,37.9,80.9
-sa2026,Reynell,ALP,ONP,60.8,official,ALP,ONP,67.6,0.888,43.3,80.5
-sa2026,Schubert,LNP,ALP,67.6,official,ALP,LNP,44.9,0.491,32.2,59
-sa2026,Stuart,IND,ONP,56.5,official,IND,ONP,58,0.531,34.5,75.8
-sa2026,Taylor,ALP,ONP,54.3,official,ALP,ONP,60.3,0.951,35.1,77.6
-sa2026,Torrens,ALP,ONP,65.4,official,ALP,ONP,65.5,0.618,43.4,78.5
-sa2026,Unley,ALP,LNP,56.9,official,ALP,LNP,56,0.493,43.1,68.6
-sa2026,Waite,ALP,LNP,69.5,official,ALP,GRN,58.8,0.425,43.2,72.3
-sa2026,West Torrens,ALP,ONP,73.7,official,ALP,GRN,66.3,0.604,48.2,79.3
-sa2026,Wright,ALP,ONP,62.5,official,ALP,ONP,65.2,0.75,42.4,78.7
-vic2022,Albert Park,ALP,LNP,61.2,abc-scrape,ALP,LNP,61,0.695,50.2,70.6
-vic2022,Bass,ALP,LNP,50.2,abc-scrape,ALP,LNP,47.9,0.95,37,58.9
-vic2022,Bayswater,ALP,LNP,54.2,abc-scrape,ALP,LNP,50.8,0.992,39.9,61.8
-vic2022,Bellarine,ALP,LNP,58.5,abc-scrape,ALP,LNP,58.7,0.895,48.2,68.6
-vic2022,Benambra,LNP,IND,50.9,abc-scrape,LNP,IND,49.1,0.524,29.1,68.3
-vic2022,Bendigo East,ALP,LNP,60.8,abc-scrape,ALP,LNP,60,0.972,47.8,71.2
-vic2022,Bendigo West,ALP,LNP,64.6,abc-scrape,ALP,LNP,66.4,0.948,55,76
-vic2022,Bentleigh,ALP,LNP,58,abc-scrape,ALP,LNP,59.3,0.968,47.2,70.3
-vic2022,Box Hill,ALP,LNP,57.2,abc-scrape,ALP,LNP,54.2,0.968,43.5,64.9
-vic2022,Brighton,LNP,ALP,55.1,abc-scrape,LNP,IND,48.9,0.485,28.4,65
-vic2022,Broadmeadows,ALP,LNP,65.5,abc-scrape,ALP,LNP,72.4,0.975,58.2,82.9
-vic2022,Brunswick,GRN,ALP,63.5,abc-scrape,ALP,GRN,35.7,0.88,18.8,61.7
-vic2022,Bulleen,LNP,ALP,55.9,abc-scrape,ALP,LNP,42.6,0.956,32.5,53.2
-vic2022,Bundoora,ALP,LNP,62.7,abc-scrape,ALP,LNP,65.2,0.988,55.1,74.1
-vic2022,Carrum,ALP,LNP,59.8,abc-scrape,ALP,LNP,58.5,0.992,46.1,69.8
-vic2022,Caulfield,LNP,ALP,52.1,abc-scrape,ALP,LNP,49.7,0.481,39.5,60
-vic2022,Clarinda,ALP,LNP,60.2,abc-scrape,ALP,LNP,63.8,0.965,53,73.1
-vic2022,Cranbourne,ALP,LNP,59,abc-scrape,ALP,LNP,56.1,0.993,43.5,68
-vic2022,Croydon,LNP,ALP,51.4,abc-scrape,ALP,LNP,47.7,0.986,36.7,58.8
-vic2022,Dandenong,ALP,LNP,68.3,abc-scrape,ALP,LNP,69.1,0.998,58.1,78.2
-vic2022,Eildon,LNP,ALP,57,abc-scrape,ALP,LNP,46.5,0.952,35.8,57.5
-vic2022,Eltham,ALP,LNP,59,abc-scrape,ALP,LNP,56.8,0.999,44,68.6
-vic2022,Essendon,ALP,LNP,62.5,abc-scrape,ALP,LNP,65.2,0.937,54.7,74.4
-vic2022,Euroa,LNP,ALP,59.9,abc-scrape,ALP,LNP,33.7,0.996,24.3,44.3
-vic2022,Evelyn,LNP,ALP,55.4,abc-scrape,ALP,LNP,44.7,0.988,33.7,56
-vic2022,Footscray,ALP,GRN,54.2,abc-scrape,ALP,LNP,72.9,0.574,62,81
-vic2022,Frankston,ALP,LNP,58.7,abc-scrape,ALP,LNP,58.7,0.991,47.1,69.3
-vic2022,Geelong,ALP,LNP,64.7,abc-scrape,ALP,LNP,58.8,0.91,48.2,68.5
-vic2022,Gippsland East,LNP,ALP,74.6,abc-scrape,ALP,LNP,28.6,0.923,20.4,38.6
-vic2022,Gippsland South,LNP,ALP,65.6,abc-scrape,ALP,LNP,33.3,0.852,22.1,48.2
-vic2022,Hastings,ALP,LNP,51.4,abc-scrape,ALP,LNP,46.6,0.987,35.6,57.8
-vic2022,Hawthorn,LNP,ALP,51.7,abc-scrape,LNP,IND,45.4,0.42,27.4,62.3
-vic2022,Ivanhoe,ALP,LNP,62.8,abc-scrape,ALP,LNP,60.9,0.981,50.4,70.4
-vic2022,Kew,LNP,ALP,54,abc-scrape,LNP,IND,47.7,0.596,27.7,64.7
-vic2022,Kororoit,ALP,LNP,64.5,abc-scrape,ALP,LNP,69.1,0.982,57.3,78
-vic2022,Lara,ALP,LNP,65.9,abc-scrape,ALP,LNP,65.6,0.945,54.8,74.9
-vic2022,Lowan,LNP,ALP,71.6,abc-scrape,ALP,LNP,27.4,0.868,19.4,37.1
-vic2022,Macedon,ALP,LNP,59.5,abc-scrape,ALP,LNP,59.7,0.96,48.4,69.8
-vic2022,Malvern,LNP,ALP,58.1,abc-scrape,ALP,LNP,42.1,0.854,31.6,53.6
-vic2022,Melbourne,GRN,ALP,60.2,abc-scrape,ALP,GRN,36.7,0.757,21.7,57.7
-vic2022,Melton,ALP,LNP,54.6,abc-scrape,ALP,IND,47.9,0.712,26.4,66.6
-vic2022,Mildura,LNP,IND,51.2,abc-scrape,LNP,IND,44,0.99,21.6,62.6
-vic2022,Mill Park,ALP,LNP,61.6,abc-scrape,ALP,LNP,70.5,0.998,58.3,79.7
-vic2022,Monbulk,ALP,LNP,57.6,abc-scrape,ALP,LNP,53.6,0.981,42.7,64.1
-vic2022,Mordialloc,ALP,LNP,58.2,abc-scrape,ALP,LNP,62,0.989,50.5,72.2
-vic2022,Mornington,LNP,IND,50.7,abc-scrape,LNP,IND,52.2,0.508,31.1,68.9
-vic2022,Morwell,LNP,ALP,54.4,abc-scrape,ALP,LNP,48.5,0.884,37.2,59.5
-vic2022,Mulgrave,ALP,IND,60.8,abc-scrape,ALP,IND,57.7,0.693,36.2,73.8
-vic2022,Murray Plains,LNP,ALP,73.4,abc-scrape,ALP,LNP,24.2,0.808,17.1,33.2
-vic2022,Narre Warren North,ALP,LNP,58.7,abc-scrape,ALP,LNP,56.2,0.994,45.1,66.6
-vic2022,Narre Warren South,ALP,LNP,58.3,abc-scrape,ALP,LNP,58.7,0.991,47.6,68.8
-vic2022,Nepean,LNP,ALP,56.4,abc-scrape,ALP,LNP,46.9,0.982,35.9,58.1
-vic2022,Niddrie,ALP,LNP,56.7,abc-scrape,ALP,LNP,59.8,1,49.7,68.9
-vic2022,Northcote,ALP,GRN,50.2,abc-scrape,ALP,GRN,41.7,0.97,23,64.3
-vic2022,Oakleigh,ALP,LNP,63.5,abc-scrape,ALP,LNP,64,0.966,53.3,73.4
-vic2022,Ovens Valley,LNP,ALP,67.8,abc-scrape,ALP,LNP,36.4,0.986,26.6,47.4
-vic2022,Pascoe Vale,ALP,GRN,52,abc-scrape,ALP,GRN,49.2,0.811,31.5,66.7
-vic2022,Polwarth,LNP,ALP,51.8,abc-scrape,ALP,LNP,46.4,0.934,35.7,57.6
-vic2022,Prahran,GRN,LNP,62,abc-scrape,LNP,GRN,43.4,0.748,32.2,55.3
-vic2022,Preston,ALP,GRN,52.1,abc-scrape,ALP,GRN,58.9,0.5,44,71
-vic2022,Richmond,GRN,ALP,57.3,abc-scrape,ALP,GRN,42.6,0.905,24.1,65.4
-vic2022,Ringwood,ALP,LNP,57.5,abc-scrape,ALP,LNP,51.8,0.991,40.6,62.9
-vic2022,Ripon,ALP,LNP,53,abc-scrape,ALP,LNP,50.4,0.967,41.4,59.3
-vic2022,Rowville,LNP,ALP,53.7,abc-scrape,ALP,LNP,44.6,0.989,33.7,56.3
-vic2022,Sandringham,LNP,ALP,55,abc-scrape,ALP,LNP,46.2,0.814,34.3,58.4
-vic2022,Shepparton,LNP,IND,56.8,abc-scrape,LNP,IND,45.2,0.988,20.6,62.6
-vic2022,South Barwon,ALP,LNP,59.8,abc-scrape,ALP,LNP,53.5,0.998,42.8,64
-vic2022,South-West Coast,LNP,ALP,58,abc-scrape,ALP,LNP,44,0.803,33.8,54.6
-vic2022,St Albans,ALP,LNP,59.6,abc-scrape,ALP,LNP,66.4,0.967,54.1,75.9
-vic2022,Sunbury,ALP,LNP,56.4,abc-scrape,ALP,LNP,61.8,0.989,51,71.5
-vic2022,Sydenham,ALP,LNP,58.8,abc-scrape,ALP,LNP,63.8,0.998,52.2,73.6
-vic2022,Tarneit,ALP,LNP,62.3,abc-scrape,ALP,LNP,64.3,0.981,53.2,73.8
-vic2022,Thomastown,ALP,LNP,65.8,abc-scrape,ALP,LNP,75.3,0.994,63.7,84.1
-vic2022,Warrandyte,LNP,ALP,54.3,abc-scrape,ALP,LNP,44.7,0.973,32.8,57.5
-vic2022,Wendouree,ALP,LNP,61.9,abc-scrape,ALP,LNP,59.6,0.964,48.4,69.7
-vic2022,Werribee,ALP,LNP,60.9,abc-scrape,ALP,LNP,61,0.507,50.1,70.6
-vic2022,Williamstown,ALP,LNP,63.4,abc-scrape,ALP,LNP,67,0.79,56.9,75.5
-vic2022,Yan Yean,ALP,LNP,54.3,abc-scrape,ALP,LNP,57.6,1,44.7,69.1
-wa2025,Albany,LNP,ALP,56.3,official,ALP,LNP,47.2,0.678,35.9,58.4
-wa2025,Armadale,ALP,LNP,68.8,official,ALP,LNP,73,0.979,64.1,80
-wa2025,Balcatta,ALP,LNP,64.5,official,ALP,LNP,61.8,0.929,51.4,70.6
-wa2025,Baldivis,ALP,LNP,66.7,official,ALP,LNP,74.9,0.9,66.3,81.5
-wa2025,Bassendean,ALP,IND,65.7,official,ALP,LNP,69.8,0.718,60.2,77
-wa2025,Bateman,ALP,LNP,53.3,official,ALP,LNP,43.1,0.899,33,53.4
-wa2025,Belmont,ALP,LNP,69.3,official,ALP,LNP,66.4,0.963,56.4,74.6
-wa2025,Bicton,ALP,LNP,59.3,official,ALP,LNP,51.3,0.988,40.5,61.3
-wa2025,Bunbury,ALP,LNP,57.1,official,ALP,LNP,57.7,0.961,42.9,70.7
-wa2025,Butler,ALP,LNP,64.7,official,ALP,LNP,70.2,0.945,60.8,77.8
-wa2025,Cannington,ALP,LNP,67.9,official,ALP,LNP,67.6,0.985,57.8,75.6
-wa2025,Carine,LNP,ALP,57.6,official,ALP,LNP,40.4,0.98,30.3,50.7
-wa2025,Central Wheatbelt,LNP,ALP,73.3,official,ALP,LNP,26.8,0.68,18.2,37
-wa2025,Churchlands,LNP,ALP,51.1,official,ALP,LNP,38.6,0.73,29.2,48.8
-wa2025,Cockburn,ALP,LNP,67.8,official,ALP,LNP,66,0.996,56.6,73.8
-wa2025,Collie-Preston,ALP,LNP,54.3,official,ALP,LNP,60.7,0.71,49.2,70.8
-wa2025,Cottesloe,LNP,IND,55.5,official,LNP,GRN,68.4,0.763,52,79.3
-wa2025,Darling Range,ALP,LNP,55.1,official,ALP,LNP,51.1,0.987,39,62.3
-wa2025,Dawesville,ALP,LNP,51.3,official,ALP,LNP,49.4,0.974,37.8,60.7
-wa2025,Forrestfield,ALP,LNP,54.1,official,ALP,LNP,58.5,0.974,47.9,67.8
-wa2025,Fremantle,ALP,IND,50.9,official,ALP,GRN,55.5,0.574,37.2,71.6
-wa2025,Geraldton,LNP,ALP,64.1,official,ALP,LNP,45.5,0.579,34.1,56.9
-wa2025,Hillarys,ALP,LNP,60.1,official,ALP,LNP,55.2,0.998,44.3,64.9
-wa2025,Jandakot,ALP,LNP,56.4,official,ALP,LNP,51.5,0.993,40.5,61.5
-wa2025,Joondalup,ALP,LNP,56.3,official,ALP,LNP,60.8,0.967,50.3,69.8
-wa2025,Kalamunda,LNP,ALP,50.1,official,ALP,LNP,48.5,0.953,38,58.7
-wa2025,Kalgoorlie,ALP,LNP,51.6,official,ALP,LNP,46.9,0.735,35.4,58.2
-wa2025,Kimberley,ALP,LNP,64,official,ALP,LNP,58.6,0.786,47.2,68.7
-wa2025,Kingsley,ALP,LNP,53.5,official,ALP,LNP,51.6,0.999,40.8,61.6
-wa2025,Kwinana,ALP,LNP,75,official,ALP,LNP,78.7,0.79,71,84.4
-wa2025,Landsdale,ALP,LNP,59.6,official,ALP,LNP,60.7,0.998,50.1,69.8
-wa2025,Mandurah,ALP,LNP,59.5,official,ALP,LNP,61,0.995,46.9,73.1
-wa2025,Maylands,ALP,LNP,72.4,official,ALP,LNP,65.7,0.83,56.1,73.5
-wa2025,Midland,ALP,LNP,60.9,official,ALP,LNP,62.6,0.911,52.3,71.4
-wa2025,Morley,ALP,LNP,62,official,ALP,LNP,64.7,0.97,54.5,73.1
-wa2025,Mount Lawley,ALP,LNP,60.7,official,ALP,LNP,56,0.955,45.4,65.6
-wa2025,Murray-Wellington,LNP,ALP,51.7,official,ALP,LNP,52.3,0.95,40.9,63.1
-wa2025,Nedlands,LNP,ALP,52.7,official,ALP,LNP,39.6,0.728,30,49.7
-wa2025,Perth,ALP,LNP,71,official,ALP,LNP,65.7,0.867,55.5,73.8
-wa2025,Pilbara,ALP,LNP,50.6,official,ALP,LNP,51.9,0.655,40,63
-wa2025,Riverton,ALP,LNP,54.2,official,ALP,LNP,47.5,0.975,36.9,57.7
-wa2025,Rockingham,ALP,LNP,61.8,official,ALP,LNP,67.6,0.977,55.7,77.1
-wa2025,Roe,"","",,intra-coalition-excluded,LNP,LNP,47.3,0.472,29.1,67.9
-wa2025,Scarborough,ALP,LNP,55,official,ALP,LNP,45.6,0.995,35.1,55.9
-wa2025,South Perth,ALP,LNP,51.6,official,ALP,LNP,46.3,0.94,36,56.4
-wa2025,Southern River,ALP,LNP,73.3,official,ALP,LNP,70.7,0.973,61.3,78.2
-wa2025,Swan Hills,ALP,LNP,58.4,official,ALP,LNP,62.9,0.984,52.5,71.7
-wa2025,Thornlie,ALP,IND,64,official,ALP,LNP,67.2,0.892,57.2,75.2
-wa2025,Vasse,LNP,ALP,63.4,official,ALP,LNP,31.4,0.704,22.2,42.2
-wa2025,Victoria Park,ALP,LNP,66.7,official,ALP,LNP,66,0.926,57.2,73.3
-wa2025,Wanneroo,ALP,LNP,62.5,official,ALP,LNP,65.1,0.99,54.9,73.6
-wa2025,Warren-Blackwood,LNP,ALP,51.8,official,GRN,LNP,35.4,0.385,24.4,51.9
-wa2025,West Swan,ALP,LNP,71.2,official,ALP,LNP,73.8,0.916,65.1,80.7
+"fed2022","Adelaide","ALP","LNP",61.9,"official","ALP","LNP",61.6,0.994,53.1,68.8
+"fed2022","Aston","LNP","ALP",52.8,"official","ALP","LNP",42.4,0.997,32.9,51.7
+"fed2022","Ballarat","ALP","LNP",63,"official","ALP","LNP",60.1,0.993,50.3,68.6
+"fed2022","Banks","LNP","ALP",53.2,"official","ALP","LNP",49.8,0.997,40.2,58.4
+"fed2022","Barker","LNP","ALP",66.6,"official","ALP","LNP",36.6,0.943,28,45.3
+"fed2022","Barton","ALP","LNP",65.5,"official","ALP","LNP",62.7,0.997,53.7,70
+"fed2022","Bass","LNP","ALP",51.4,"official","ALP","LNP",53.6,0.995,39.2,66.8
+"fed2022","Bean","ALP","LNP",62.9,"official","ALP","LNP",62.6,0.938,55.2,69
+"fed2022","Bendigo","ALP","LNP",62.1,"official","ALP","LNP",60.1,0.978,50.7,68.1
+"fed2022","Bennelong","ALP","LNP",51,"official","ALP","LNP",49.1,0.999,39.7,57.8
+"fed2022","Berowra","LNP","ALP",59.8,"official","ALP","LNP",39.7,0.978,31.8,47.3
+"fed2022","Blair","ALP","LNP",55.2,"official","ALP","LNP",55,0.915,45.9,62.9
+"fed2022","Blaxland","ALP","LNP",64.9,"official","ALP","LNP",68.8,0.977,57.9,77.4
+"fed2022","Bonner","LNP","ALP",53.4,"official","ALP","LNP",46.2,0.996,37.4,54.5
+"fed2022","Boothby","ALP","LNP",53.3,"official","ALP","LNP",55,0.964,46.3,62.7
+"fed2022","Bowman","LNP","ALP",55.5,"official","ALP","LNP",45,0.991,35,55
+"fed2022","Braddon","LNP","ALP",58,"official","ALP","LNP",50.4,0.942,36.5,63.8
+"fed2022","Bradfield","LNP","IND",54.2,"official","ALP","LNP",38,0.734,31.1,45.4
+"fed2022","Brand","ALP","LNP",66.7,"official","ALP","LNP",63.5,0.974,53.8,71.4
+"fed2022","Brisbane","GRN","LNP",53.7,"official","ALP","LNP",49.3,0.662,41.2,57.3
+"fed2022","Bruce","ALP","LNP",56.6,"official","ALP","LNP",59.5,0.999,50.1,67.5
+"fed2022","Burt","ALP","LNP",65.2,"official","ALP","LNP",61.7,0.994,53.3,68.7
+"fed2022","Calare","LNP","IND",59.7,"official","ALP","LNP",41.3,0.891,33.2,49.5
+"fed2022","Calwell","ALP","LNP",62.4,"official","ALP","LNP",70.2,0.989,59.7,78.4
+"fed2022","Canberra","ALP","GRN",62.2,"official","ALP","LNP",69,0.55,62.2,74.8
+"fed2022","Canning","LNP","ALP",53.6,"official","ALP","LNP",46.6,0.993,36.4,56.2
+"fed2022","Capricornia","LNP","ALP",56.6,"official","ALP","LNP",42.6,0.973,32.5,52.9
+"fed2022","Casey","LNP","ALP",51.5,"official","ALP","LNP",49.3,0.923,40.2,57.9
+"fed2022","Chifley","ALP","LNP",63.5,"official","ALP","LNP",67,0.96,57,74.9
+"fed2022","Chisholm","ALP","LNP",56.4,"official","ALP","LNP",51.3,0.996,42.2,59.7
+"fed2022","Clark","IND","ALP",70.8,"official","ALP","IND",32.7,0.652,20.8,47.2
+"fed2022","Cook","LNP","ALP",62.4,"official","ALP","LNP",36.5,0.996,28.2,44.4
+"fed2022","Cooper","ALP","GRN",58.7,"official","ALP","GRN",63.3,0.667,46.1,74.8
+"fed2022","Corangamite","ALP","LNP",57.6,"official","ALP","LNP",54.9,0.999,45.9,62.9
+"fed2022","Corio","ALP","LNP",62.8,"official","ALP","LNP",62.2,0.997,52.9,69.9
+"fed2022","Cowan","ALP","LNP",60.8,"official","ALP","LNP",57.6,0.997,48.8,65.3
+"fed2022","Cowper","LNP","IND",52.3,"official","ALP","LNP",42,0.598,34.2,50
+"fed2022","Cunningham","ALP","LNP",64.7,"official","ALP","LNP",65.3,0.986,56.6,72.2
+"fed2022","Curtin","IND","LNP",51.3,"official","LNP","IND",49.5,0.808,34.5,61.7
+"fed2022","Dawson","LNP","ALP",60.4,"official","ALP","LNP",41.9,0.969,32,51.9
+"fed2022","Deakin","LNP","ALP",50.2,"official","ALP","LNP",47.4,0.998,38.8,55.6
+"fed2022","Dickson","LNP","ALP",51.7,"official","ALP","LNP",48.1,0.996,38.9,56.7
+"fed2022","Dobell","ALP","LNP",56.5,"official","ALP","LNP",56.3,0.997,46.3,65
+"fed2022","Dunkley","ALP","LNP",56.3,"official","ALP","LNP",56.6,0.998,47.2,64.8
+"fed2022","Durack","LNP","ALP",54.3,"official","ALP","LNP",42.3,0.992,34.2,49.8
+"fed2022","Eden-Monaro","ALP","LNP",58.2,"official","ALP","LNP",56.9,0.994,47.3,65.4
+"fed2022","Fadden","LNP","ALP",60.6,"official","ALP","LNP",39.5,0.972,31,48.1
+"fed2022","Fairfax","LNP","ALP",59,"official","ALP","LNP",40.6,0.943,31.5,50
+"fed2022","Farrer","LNP","ALP",66.4,"official","ALP","LNP",34.6,0.955,27.3,41.8
+"fed2022","Fenner","ALP","LNP",65.7,"official","ALP","LNP",63.1,0.997,55.7,69.7
+"fed2022","Fisher","LNP","ALP",58.7,"official","ALP","LNP",41.9,0.969,33,50.8
+"fed2022","Flinders","LNP","ALP",56.7,"official","ALP","LNP",48.1,0.86,39.2,56.6
+"fed2022","Flynn","LNP","ALP",53.8,"official","ALP","LNP",47.2,0.959,38.3,55.4
+"fed2022","Forde","LNP","ALP",54.2,"official","ALP","LNP",46.3,0.988,36,56
+"fed2022","Forrest","LNP","ALP",54.3,"official","ALP","LNP",41.2,0.973,33.3,48.8
+"fed2022","Fowler","IND","ALP",51.6,"official","ALP","IND",61,0.524,40.7,76.4
+"fed2022","Franklin","ALP","LNP",63.7,"official","ALP","LNP",65.2,0.972,53,75.2
+"fed2022","Fraser","ALP","LNP",66.5,"official","ALP","LNP",65.5,0.995,57,72.6
+"fed2022","Fremantle","ALP","LNP",66.9,"official","ALP","LNP",61.2,0.989,53,68
+"fed2022","Gellibrand","ALP","LNP",61.5,"official","ALP","LNP",64.6,0.98,55.1,72.4
+"fed2022","Gilmore","ALP","LNP",50.2,"official","ALP","LNP",57.7,0.989,46.6,67.5
+"fed2022","Gippsland","LNP","ALP",70.6,"official","ALP","LNP",36.2,0.994,27.1,45.8
+"fed2022","Goldstein","IND","LNP",52.9,"official","LNP","IND",49.2,0.828,35,62.9
+"fed2022","Gorton","ALP","LNP",60,"official","ALP","LNP",65.5,0.99,56.8,72.5
+"fed2022","Grayndler","ALP","GRN",67.1,"official","ALP","GRN",65.2,0.742,48.9,76
+"fed2022","Greenway","ALP","LNP",61.5,"official","ALP","LNP",57.8,0.992,47.6,66.6
+"fed2022","Grey","LNP","ALP",60.1,"official","ALP","LNP",42.4,0.589,33.7,50.9
+"fed2022","Griffith","GRN","LNP",60.5,"official","ALP","LNP",56.2,0.739,47.1,64.6
+"fed2022","Groom","LNP","IND",56.9,"official","ALP","LNP",36.8,0.799,28.3,45.7
+"fed2022","Hasluck","ALP","LNP",56,"official","ALP","LNP",50.2,0.997,41.8,57.8
+"fed2022","Hawke","ALP","LNP",57.6,"official","ALP","LNP",60.6,0.927,51.6,67.9
+"fed2022","Herbert","LNP","ALP",61.8,"official","ALP","LNP",43.7,0.89,34.5,52.6
+"fed2022","Higgins","ALP","LNP",52.1,"official","ALP","LNP",48.6,0.633,40.9,56.6
+"fed2022","Hindmarsh","ALP","LNP",58.9,"official","ALP","LNP",60.8,0.998,51.1,69
+"fed2022","Hinkler","LNP","ALP",60.1,"official","ALP","LNP",40,0.69,31.5,48.6
+"fed2022","Holt","ALP","LNP",57.1,"official","ALP","LNP",59.8,0.997,49.8,68.2
+"fed2022","Hotham","ALP","LNP",64.3,"official","ALP","LNP",63,0.999,53.4,70.8
+"fed2022","Hughes","LNP","ALP",57,"official","ALP","LNP",45.6,0.546,37,53.8
+"fed2022","Hume","LNP","ALP",57.7,"official","ALP","LNP",42.4,0.909,34.1,50.4
+"fed2022","Hunter","ALP","LNP",54,"official","ALP","LNP",59,0.702,47.6,68.3
+"fed2022","Indi","IND","LNP",58.9,"official","LNP","IND",44.7,0.908,26.3,60.5
+"fed2022","Isaacs","ALP","LNP",56.9,"official","ALP","LNP",56.3,0.999,46.1,65
+"fed2022","Jagajaga","ALP","LNP",62.3,"official","ALP","LNP",58.3,0.998,49,66.3
+"fed2022","Kennedy","OTH_RIGHT","LNP",63.1,"official","LNP","OTH_RIGHT",37.6,0.481,23.1,53.6
+"fed2022","Kingsford Smith","ALP","LNP",64.5,"official","ALP","LNP",62.4,0.996,53.3,69.7
+"fed2022","Kingston","ALP","LNP",66.4,"official","ALP","LNP",65.2,0.989,56.5,72.3
+"fed2022","Kooyong","IND","LNP",52.9,"official","LNP","IND",50.3,0.619,34.9,61.6
+"fed2022","La Trobe","LNP","ALP",58.7,"official","ALP","LNP",47.3,0.998,38.1,55.9
+"fed2022","Lalor","ALP","LNP",62.8,"official","ALP","LNP",64,0.997,52.2,73.6
+"fed2022","Leichhardt","LNP","ALP",53.4,"official","ALP","LNP",48.6,0.97,37.6,59.5
+"fed2022","Lilley","ALP","LNP",60.5,"official","ALP","LNP",54.8,0.996,45.4,63.4
+"fed2022","Lindsay","LNP","ALP",56.3,"official","ALP","LNP",49.6,0.998,39.7,58.5
+"fed2022","Lingiari","ALP","LNP",50.9,"official","ALP","LNP",57.9,0.99,48.1,66.9
+"fed2022","Longman","LNP","ALP",53.1,"official","ALP","LNP",48.4,0.993,39.5,56.7
+"fed2022","Lyne","LNP","ALP",63.8,"official","ALP","LNP",41.6,0.98,32.8,49.8
+"fed2022","Lyons","ALP","LNP",50.9,"official","ALP","LNP",57.3,0.997,43,70.3
+"fed2022","Macarthur","ALP","LNP",58.5,"official","ALP","LNP",63.8,0.984,52.2,73.3
+"fed2022","Mackellar","IND","LNP",52.5,"official","LNP","IND",52.3,0.864,36.8,63.5
+"fed2022","Macnamara","ALP","LNP",62.2,"official","ALP","LNP",57.8,0.719,50,64.9
+"fed2022","Macquarie","ALP","LNP",57.8,"official","ALP","LNP",55.1,0.998,45.8,63.1
+"fed2022","Makin","ALP","LNP",60.8,"official","ALP","LNP",63.1,0.993,53.7,70.8
+"fed2022","Mallee","LNP","ALP",69,"official","ALP","LNP",36.8,0.956,29.3,44.6
+"fed2022","Maranoa","LNP","ALP",72.1,"official","ALP","LNP",28.5,0.911,21.5,36
+"fed2022","Maribyrnong","ALP","LNP",62.4,"official","ALP","LNP",63.2,0.995,52.7,71.7
+"fed2022","Mayo","IND","LNP",62.3,"official","LNP","IND",41.9,0.801,26.4,56.7
+"fed2022","McEwen","ALP","LNP",53.3,"official","ALP","LNP",57.3,0.998,46.7,66.6
+"fed2022","McMahon","ALP","LNP",59.5,"official","ALP","LNP",60.8,0.992,52.2,67.8
+"fed2022","McPherson","LNP","ALP",59.3,"official","ALP","LNP",41.5,0.982,31.2,52.4
+"fed2022","Melbourne","GRN","ALP",60.2,"official","ALP","GRN",39.9,0.564,24.7,60.9
+"fed2022","Menzies","LNP","ALP",50.7,"official","ALP","LNP",46.5,0.997,37.2,55.2
+"fed2022","Mitchell","LNP","ALP",60.7,"official","ALP","LNP",37.5,0.997,29.2,45.5
+"fed2022","Monash","LNP","ALP",52.9,"official","ALP","LNP",45.8,0.876,36.3,55.1
+"fed2022","Moncrieff","LNP","ALP",61.2,"official","ALP","LNP",36.3,0.978,28.5,44.3
+"fed2022","Moore","LNP","ALP",50.7,"official","ALP","LNP",45.2,0.992,36.3,53.6
+"fed2022","Moreton","ALP","LNP",59.1,"official","ALP","LNP",55,0.986,46.1,63.1
+"fed2022","New England","LNP","ALP",66.4,"official","ALP","LNP",37.9,0.955,30.2,45.1
+"fed2022","Newcastle","ALP","LNP",68,"official","ALP","LNP",67.3,0.929,58.4,74.5
+"fed2022","Nicholls","LNP","IND",53.8,"official","LNP","IND",52.3,0.528,34.1,66.9
+"fed2022","North Sydney","IND","LNP",52.9,"official","LNP","IND",49.2,0.535,36.7,61
+"fed2022","O'Connor","LNP","ALP",57,"official","ALP","LNP",39.5,0.977,31.6,47.3
+"fed2022","Oxley","ALP","LNP",61.6,"official","ALP","LNP",59.8,0.989,48,70
+"fed2022","Page","LNP","ALP",60.7,"official","ALP","LNP",46.8,0.814,37.2,56.4
+"fed2022","Parkes","LNP","ALP",67.8,"official","ALP","LNP",40.3,0.977,32.1,48.1
+"fed2022","Parramatta","ALP","LNP",54.6,"official","ALP","LNP",57.8,0.998,48.2,65.9
+"fed2022","Paterson","ALP","LNP",53.3,"official","ALP","LNP",60.2,0.985,49.6,69.4
+"fed2022","Pearce","ALP","LNP",59,"official","ALP","LNP",53.8,0.993,44.3,62
+"fed2022","Perth","ALP","LNP",64.8,"official","ALP","LNP",59.5,0.967,51.2,66.8
+"fed2022","Petrie","LNP","ALP",54.4,"official","ALP","LNP",45.4,0.998,36.1,54.1
+"fed2022","Rankin","ALP","LNP",59.1,"official","ALP","LNP",59.6,0.991,49.6,68
+"fed2022","Reid","ALP","LNP",55.2,"official","ALP","LNP",52.3,0.998,41.8,61.8
+"fed2022","Richmond","ALP","LNP",58.2,"official","ALP","LNP",58.9,0.912,50,66.7
+"fed2022","Riverina","LNP","ALP",64.8,"official","ALP","LNP",37.2,0.872,29.6,44.8
+"fed2022","Robertson","ALP","LNP",52.3,"official","ALP","LNP",51.2,0.999,41.9,59.6
+"fed2022","Ryan","GRN","LNP",52.6,"official","ALP","LNP",46.3,0.729,38.2,54.5
+"fed2022","Scullin","ALP","LNP",65.6,"official","ALP","LNP",71,0.984,60.9,78.8
+"fed2022","Shortland","ALP","LNP",55.8,"official","ALP","LNP",60.3,0.976,50.4,68.6
+"fed2022","Solomon","ALP","LNP",59.4,"official","ALP","LNP",57.3,0.997,47.5,66.2
+"fed2022","Spence","ALP","LNP",62.9,"official","ALP","LNP",65.6,0.989,56.5,72.9
+"fed2022","Sturt","LNP","ALP",50.5,"official","ALP","LNP",47.5,0.997,38.6,55.6
+"fed2022","Swan","ALP","LNP",58.8,"official","ALP","LNP",55,0.998,46,62.8
+"fed2022","Sydney","ALP","GRN",66.7,"official","ALP","LNP",71.1,0.846,63.8,76.8
+"fed2022","Tangney","ALP","LNP",52.4,"official","ALP","LNP",46,0.997,37.7,53.8
+"fed2022","Wannon","LNP","IND",53.9,"official","ALP","LNP",42.2,0.849,34.2,50.2
+"fed2022","Warringah","IND","LNP",61,"official","LNP","IND",39.2,0.981,26.4,52.3
+"fed2022","Watson","ALP","LNP",65.1,"official","ALP","LNP",68.4,0.994,58.2,76.5
+"fed2022","Wentworth","IND","LNP",54.2,"official","LNP","IND",51.8,0.987,39.7,62.4
+"fed2022","Werriwa","ALP","LNP",55.8,"official","ALP","LNP",59.6,0.989,50,67.6
+"fed2022","Whitlam","ALP","LNP",60.1,"official","ALP","LNP",65.9,0.962,57.5,72.4
+"fed2022","Wide Bay","LNP","ALP",61.3,"official","ALP","LNP",40.8,0.934,30.6,51.6
+"fed2022","Wills","ALP","GRN",58.6,"official","ALP","GRN",55,0.876,37.1,69.4
+"fed2022","Wright","LNP","ALP",60.9,"official","ALP","LNP",39.6,0.972,31.5,47.7
+"fed2025","Adelaide","ALP","LNP",69.1,"official","ALP","LNP",61,0.853,53.1,67.8
+"fed2025","Aston","ALP","LNP",53.4,"official","ALP","LNP",48.5,0.954,38.7,57.9
+"fed2025","Ballarat","ALP","LNP",60.7,"official","ALP","LNP",61.2,0.946,53.1,68.5
+"fed2025","Banks","ALP","LNP",52.4,"official","ALP","LNP",47.5,0.979,38.9,55.2
+"fed2025","Barker","LNP","ALP",63,"official","ALP","LNP",33.2,0.848,25.5,40.8
+"fed2025","Barton","ALP","LNP",66,"official","ALP","LNP",60.6,0.99,52,67.7
+"fed2025","Bass","ALP","LNP",58,"official","ALP","LNP",47.8,0.921,34.5,61.8
+"fed2025","Bean","ALP","IND",50.3,"official","ALP","LNP",63.3,0.948,58.4,67.9
+"fed2025","Bendigo","ALP","LNP",51.4,"official","ALP","LNP",59.8,0.923,51.1,67.3
+"fed2025","Bennelong","ALP","LNP",59.3,"official","ALP","LNP",51.8,0.988,42.5,60.4
+"fed2025","Berowra","LNP","ALP",51.6,"official","ALP","LNP",42.8,0.747,35.3,50
+"fed2025","Blair","ALP","LNP",55.7,"official","ALP","LNP",54.9,0.769,46.8,62
+"fed2025","Blaxland","ALP","LNP",71.9,"official","ALP","LNP",63,0.897,52.4,71.8
+"fed2025","Bonner","ALP","LNP",55,"official","ALP","LNP",46.6,0.838,38.9,54
+"fed2025","Boothby","ALP","LNP",61.1,"official","ALP","LNP",54.2,0.958,46.2,61.6
+"fed2025","Bowman","LNP","ALP",52.4,"official","ALP","LNP",43.7,0.918,34.7,52.8
+"fed2025","Braddon","ALP","LNP",57.2,"official","ALP","LNP",45.3,0.957,33.4,57.5
+"fed2025","Bradfield","IND","LNP",50,"official","LNP","IND",49.2,0.95,27.5,66.9
+"fed2025","Brand","ALP","LNP",66.9,"official","ALP","LNP",65.9,0.938,56.8,73.6
+"fed2025","Brisbane","ALP","LNP",59,"official","LNP","GRN",48.1,0.618,32.2,60
+"fed2025","Bruce","ALP","LNP",64.6,"official","ALP","LNP",53.8,0.984,45.1,61.7
+"fed2025","Bullwinkel","ALP","LNP",50.5,"official","ALP","LNP",52.1,0.898,43.5,59.9
+"fed2025","Burt","ALP","LNP",65.7,"official","ALP","LNP",62.2,0.956,53.9,69.5
+"fed2025","Calare","IND","LNP",56.8,"official","IND","LNP",50,0.794,31.8,73.1
+"fed2025","Calwell","ALP","IND",55.1,"official","ALP","LNP",59.7,0.887,48.1,69.7
+"fed2025","Canberra","ALP","GRN",69.5,"official","ALP","LNP",72.1,0.499,67.3,76.4
+"fed2025","Canning","LNP","ALP",56.6,"official","ALP","LNP",48,0.992,37.9,58
+"fed2025","Capricornia","LNP","ALP",55.8,"official","ALP","LNP",43,0.943,33.6,52.3
+"fed2025","Casey","LNP","ALP",52.9,"official","ALP","LNP",46.1,0.735,38,54.1
+"fed2025","Chifley","ALP","LNP",69.8,"official","ALP","LNP",63.6,0.919,54.1,71.5
+"fed2025","Chisholm","ALP","LNP",55.7,"official","ALP","LNP",52.6,0.98,43.6,60.8
+"fed2025","Clark","IND","ALP",70.4,"official","LNP","IND",34.9,0.595,18.4,51.1
+"fed2025","Cook","LNP","ALP",57.2,"official","ALP","LNP",38.3,0.956,30.4,45.8
+"fed2025","Cooper","ALP","GRN",59.7,"official","ALP","GRN",58.9,0.819,42.1,73.9
+"fed2025","Corangamite","ALP","LNP",58,"official","ALP","LNP",55.4,0.941,47,62.9
+"fed2025","Corio","ALP","LNP",63.2,"official","ALP","LNP",60.4,0.946,51.7,67.8
+"fed2025","Cowan","ALP","LNP",63.6,"official","ALP","LNP",59.8,0.972,51.1,67.5
+"fed2025","Cowper","LNP","IND",52.5,"official","IND","LNP",51.6,0.873,32.7,73
+"fed2025","Cunningham","ALP","LNP",67.5,"official","ALP","LNP",65.8,0.691,58,71.9
+"fed2025","Curtin","IND","LNP",53.3,"official","LNP","IND",46.2,0.895,22.8,64.9
+"fed2025","Dawson","LNP","ALP",61.8,"official","ALP","LNP",38.5,0.899,30,47.4
+"fed2025","Deakin","ALP","LNP",52.8,"official","ALP","LNP",48.1,0.922,40.1,55.9
+"fed2025","Dickson","ALP","LNP",56,"official","ALP","LNP",48.2,0.931,41,55.3
+"fed2025","Dobell","ALP","LNP",59.4,"official","ALP","LNP",56.1,0.978,46.8,64.4
+"fed2025","Dunkley","ALP","LNP",57.1,"official","ALP","LNP",53.8,0.983,45,61.7
+"fed2025","Durack","LNP","ALP",60.2,"official","ALP","LNP",44.6,0.846,36.4,52.5
+"fed2025","Eden-Monaro","ALP","LNP",57.2,"official","ALP","LNP",57,0.986,48.4,64.9
+"fed2025","Fadden","LNP","ALP",56.9,"official","ALP","LNP",38.9,0.819,31.3,46.7
+"fed2025","Fairfax","LNP","ALP",53.2,"official","ALP","LNP",41.3,0.727,33.2,49.6
+"fed2025","Farrer","LNP","IND",56.2,"official","ALP","LNP",34.4,0.678,27.9,41.2
+"fed2025","Fenner","ALP","LNP",72.1,"official","ALP","LNP",65.9,0.968,61,70.5
+"fed2025","Fisher","LNP","ALP",56,"official","ALP","LNP",41.5,0.747,33.7,49.5
+"fed2025","Flinders","LNP","IND",52.3,"official","ALP","LNP",42.2,0.506,34.6,50
+"fed2025","Flynn","LNP","ALP",60.2,"official","ALP","LNP",44.8,0.88,36.9,52
+"fed2025","Forde","ALP","LNP",51.8,"official","ALP","LNP",45.7,0.908,36.7,54.4
+"fed2025","Forrest","LNP","ALP",52.2,"official","ALP","LNP",46.3,0.774,38.1,54.3
+"fed2025","Fowler","IND","ALP",52.7,"official","ALP","IND",45.7,0.898,26,63.2
+"fed2025","Franklin","ALP","IND",57.8,"official","ALP","LNP",62.1,0.899,49.9,72.9
+"fed2025","Fraser","ALP","GRN",59.2,"official","ALP","LNP",64.8,0.86,57,71.4
+"fed2025","Fremantle","ALP","IND",50.7,"official","ALP","LNP",65.4,0.546,57.5,72.1
+"fed2025","Gellibrand","ALP","LNP",65.1,"official","ALP","LNP",59.4,0.963,50.3,67.1
+"fed2025","Gilmore","ALP","LNP",55.1,"official","ALP","LNP",51.7,0.955,41.7,61.5
+"fed2025","Gippsland","LNP","ALP",69.4,"official","ALP","LNP",29.2,0.798,22,37.9
+"fed2025","Goldstein","LNP","IND",50.1,"official","LNP","IND",47.1,0.974,24.4,64.1
+"fed2025","Gorton","ALP","LNP",60.3,"official","ALP","LNP",57.5,0.964,49.2,64.8
+"fed2025","Grayndler","ALP","GRN",66.9,"official","ALP","GRN",65.9,0.785,49.8,78.4
+"fed2025","Greenway","ALP","LNP",63.8,"official","ALP","LNP",57.4,0.989,47.4,66.1
+"fed2025","Grey","LNP","ALP",54.6,"official","ALP","LNP",40.6,0.775,32.9,48.5
+"fed2025","Griffith","ALP","GRN",60.6,"official","LNP","GRN",41.4,0.576,28,53.5
+"fed2025","Groom","LNP","IND",55.7,"official","ALP","LNP",36.5,0.527,29,44.5
+"fed2025","Hasluck","ALP","LNP",66,"official","ALP","LNP",60.6,0.977,52.2,67.9
+"fed2025","Hawke","ALP","LNP",57.6,"official","ALP","LNP",57,0.965,48.6,64.2
+"fed2025","Herbert","LNP","ALP",63.4,"official","ALP","LNP",39.1,0.92,30.4,48.2
+"fed2025","Hindmarsh","ALP","LNP",66.3,"official","ALP","LNP",58,0.962,49,65.9
+"fed2025","Hinkler","LNP","ALP",56.3,"official","ALP","LNP",41.1,0.9,33.1,48.9
+"fed2025","Holt","ALP","LNP",64,"official","ALP","LNP",56,0.989,46.6,64.2
+"fed2025","Hotham","ALP","LNP",66.9,"official","ALP","LNP",59.6,0.99,50.5,67.2
+"fed2025","Hughes","ALP","LNP",53.1,"official","ALP","LNP",46.3,0.887,37.9,54.3
+"fed2025","Hume","LNP","ALP",58.1,"official","ALP","LNP",43.2,0.793,35.3,50.8
+"fed2025","Hunter","ALP","ONP",59,"official","ALP","LNP",57,0.778,47.2,65.9
+"fed2025","Indi","IND","LNP",58.6,"official","LNP","IND",42.4,0.957,21.7,60.2
+"fed2025","Isaacs","ALP","LNP",64.3,"official","ALP","LNP",57.5,0.992,48.1,65.6
+"fed2025","Jagajaga","ALP","LNP",62.9,"official","ALP","LNP",59.8,0.94,51.2,67.3
+"fed2025","Kennedy","OTH_RIGHT","LNP",65.8,"official","LNP","OTH_RIGHT",38,0.657,18.6,58
+"fed2025","Kingsford Smith","ALP","LNP",67.2,"official","ALP","LNP",62.9,0.942,54.7,69.7
+"fed2025","Kingston","ALP","LNP",70.7,"official","ALP","LNP",65.1,0.958,57,71.8
+"fed2025","Kooyong","IND","LNP",50.7,"official","LNP","IND",48.4,0.993,26.3,63.7
+"fed2025","La Trobe","LNP","ALP",52.1,"official","ALP","LNP",40.7,0.963,32.4,49.3
+"fed2025","Lalor","ALP","LNP",63.2,"official","ALP","LNP",60.5,0.973,49.5,69.9
+"fed2025","Leichhardt","ALP","LNP",56.1,"official","ALP","LNP",47.9,0.878,37.7,58.1
+"fed2025","Lilley","ALP","LNP",64.5,"official","ALP","LNP",59.6,0.933,50.1,67.9
+"fed2025","Lindsay","LNP","ALP",52.8,"official","ALP","LNP",44.6,0.961,35.5,53.2
+"fed2025","Lingiari","ALP","LNP",58.1,"official","ALP","LNP",53,0.987,42.2,63.5
+"fed2025","Longman","LNP","ALP",50.1,"official","ALP","LNP",47,0.977,37.6,56.1
+"fed2025","Lyne","LNP","ALP",59.8,"official","ALP","LNP",37.2,0.722,30,44.4
+"fed2025","Lyons","ALP","LNP",61.6,"official","ALP","LNP",50.1,0.893,38.4,62
+"fed2025","Macarthur","ALP","LNP",65.6,"official","ALP","LNP",59.8,0.964,48.7,69.2
+"fed2025","Mackellar","IND","LNP",55.7,"official","LNP","IND",45.2,0.989,23.6,62.7
+"fed2025","Macnamara","ALP","LNP",61.8,"official","LNP","GRN",44.5,0.451,29.6,56.2
+"fed2025","Macquarie","ALP","LNP",57.7,"official","ALP","LNP",55.8,0.992,46.7,63.6
+"fed2025","Makin","ALP","LNP",64.7,"official","ALP","LNP",59.9,0.978,51.2,67.5
+"fed2025","Mallee","LNP","ALP",69,"official","ALP","LNP",30.9,0.661,24.3,38.1
+"fed2025","Maranoa","LNP","ONP",70.1,"official","ALP","LNP",28.2,0.615,22,35
+"fed2025","Maribyrnong","ALP","LNP",62.6,"official","ALP","LNP",59.4,0.983,49.7,67.6
+"fed2025","Mayo","IND","ALP",64.9,"official","LNP","IND",39.4,0.681,17.8,58.3
+"fed2025","McEwen","ALP","LNP",54.8,"official","ALP","LNP",51.7,0.945,42,60.8
+"fed2025","McMahon","ALP","LNP",59,"official","ALP","LNP",60.3,0.811,52.3,66.7
+"fed2025","McPherson","LNP","ALP",54.4,"official","ALP","LNP",42.5,0.553,33.6,52.3
+"fed2025","Melbourne","ALP","GRN",53,"official","ALP","GRN",42.9,0.697,27.9,64.3
+"fed2025","Menzies","ALP","LNP",51.1,"official","ALP","LNP",47.5,0.927,38.8,55.9
+"fed2025","Mitchell","LNP","ALP",53.8,"official","ALP","LNP",39.4,0.962,31.5,46.8
+"fed2025","Monash","LNP","ALP",54.1,"official","ALP","LNP",45.5,0.49,37.9,52.9
+"fed2025","Moncrieff","LNP","ALP",58.8,"official","ALP","LNP",39.1,0.763,31.8,46.6
+"fed2025","Moore","ALP","LNP",52.9,"official","ALP","LNP",49.3,0.837,40.5,57.8
+"fed2025","Moreton","ALP","LNP",66.1,"official","ALP","LNP",57.5,0.916,49.3,64.8
+"fed2025","New England","LNP","ALP",67.1,"official","ALP","LNP",35.5,0.849,28.6,42.1
+"fed2025","Newcastle","ALP","GRN",65.8,"official","ALP","LNP",67.1,0.618,59,73.5
+"fed2025","Nicholls","LNP","ALP",64.4,"official","ALP","LNP",32.6,0.911,25.5,39.6
+"fed2025","O'Connor","LNP","ALP",63.3,"official","ALP","LNP",42.9,0.788,35,51.1
+"fed2025","Oxley","ALP","LNP",69.2,"official","ALP","LNP",60.9,0.92,50.3,69.9
+"fed2025","Page","LNP","ALP",59.3,"official","ALP","LNP",40.5,0.643,32.1,49.8
+"fed2025","Parkes","LNP","ALP",63,"official","ALP","LNP",32.9,0.776,26.1,39.9
+"fed2025","Parramatta","ALP","LNP",62.5,"official","ALP","LNP",54.8,0.984,46.1,62.1
+"fed2025","Paterson","ALP","LNP",56.9,"official","ALP","LNP",53.4,0.916,44,62.4
+"fed2025","Pearce","ALP","LNP",56.4,"official","ALP","LNP",58.8,0.973,49.3,67
+"fed2025","Perth","ALP","LNP",66.5,"official","ALP","LNP",63.2,0.881,54.8,70.5
+"fed2025","Petrie","ALP","LNP",51.2,"official","ALP","LNP",45.5,0.955,37.1,53.5
+"fed2025","Rankin","ALP","LNP",65.6,"official","ALP","LNP",58.7,0.949,49.8,66.4
+"fed2025","Reid","ALP","LNP",62,"official","ALP","LNP",56.5,0.968,46.4,65.5
+"fed2025","Richmond","ALP","LNP",60,"official","ALP","LNP",58.2,0.356,50.1,65
+"fed2025","Riverina","LNP","ALP",62.6,"official","ALP","LNP",40.6,0.854,33.1,47.8
+"fed2025","Robertson","ALP","LNP",59.4,"official","ALP","LNP",53.6,0.981,44.6,61.7
+"fed2025","Ryan","GRN","LNP",53.3,"official","LNP","GRN",48.2,0.762,31.8,60.7
+"fed2025","Scullin","ALP","LNP",64.3,"official","ALP","LNP",63.9,0.899,53.1,72.7
+"fed2025","Shortland","ALP","LNP",61.5,"official","ALP","LNP",56.1,0.962,47,64
+"fed2025","Solomon","ALP","LNP",51.3,"official","ALP","LNP",57.5,0.909,47.1,67.1
+"fed2025","Spence","ALP","LNP",65.3,"official","ALP","LNP",62.7,0.816,54.6,69.4
+"fed2025","Sturt","ALP","LNP",56.6,"official","ALP","LNP",48.6,0.887,40.5,56.3
+"fed2025","Swan","ALP","LNP",64,"official","ALP","LNP",60.1,0.976,51.2,67.8
+"fed2025","Sydney","ALP","GRN",70.9,"official","ALP","GRN",64,0.705,47.1,77.3
+"fed2025","Tangney","ALP","LNP",57,"official","ALP","LNP",53.8,0.996,45.1,61.9
+"fed2025","Wannon","LNP","IND",53.3,"official","LNP","IND",52.9,0.936,31.4,69.6
+"fed2025","Warringah","IND","LNP",61.2,"official","LNP","IND",41.1,0.938,23.9,57.2
+"fed2025","Watson","ALP","IND",66.5,"official","ALP","LNP",64.8,0.771,55.2,72.6
+"fed2025","Wentworth","IND","LNP",58.3,"official","LNP","IND",43.5,0.984,24.4,60
+"fed2025","Werriwa","ALP","LNP",56.8,"official","ALP","LNP",55.5,0.959,46.8,62.9
+"fed2025","Whitlam","ALP","LNP",56.2,"official","ALP","LNP",57.5,0.923,49.5,64.1
+"fed2025","Wide Bay","LNP","ALP",57.6,"official","ALP","LNP",39.3,0.827,30.2,49.2
+"fed2025","Wills","ALP","GRN",51.4,"official","ALP","GRN",52.7,0.838,36.1,70.1
+"fed2025","Wright","LNP","ALP",58,"official","ALP","LNP",39.2,0.673,32.1,46.5
+"nsw2023","Albury","LNP","ALP",66.3,"official","ALP","LNP",38.7,0.97,29,49
+"nsw2023","Auburn","ALP","LNP",74,"official","ALP","LNP",71,0.972,57.6,81.3
+"nsw2023","Ballina","GRN","LNP",57.7,"official","LNP","GRN",41.2,0.641,27.2,55.3
+"nsw2023","Balmain","GRN","ALP",51.8,"official","ALP","GRN",41.1,0.909,22.2,67.4
+"nsw2023","Bankstown","ALP","LNP",70.3,"official","ALP","LNP",73.9,0.938,64.3,81.3
+"nsw2023","Barwon","IND","LNP",66,"official","LNP","IND",38.3,0.73,17.4,57
+"nsw2023","Bathurst","LNP","ALP",73.6,"official","ALP","LNP",35.9,0.896,26.3,46.3
+"nsw2023","Bega","ALP","LNP",60.4,"official","ALP","LNP",53.2,0.96,42.1,63.6
+"nsw2023","Blacktown","ALP","LNP",69.1,"official","ALP","LNP",70.8,0.982,61.5,78.3
+"nsw2023","Blue Mountains","ALP","LNP",71.9,"official","ALP","LNP",68.6,0.941,57,77.7
+"nsw2023","Cabramatta","ALP","LNP",61.8,"official","ALP","LNP",69.5,0.906,58.1,77.9
+"nsw2023","Camden","ALP","LNP",53,"official","ALP","LNP",47,0.999,32.3,61.9
+"nsw2023","Campbelltown","ALP","LNP",73.3,"official","ALP","LNP",69.3,0.973,59.1,77.6
+"nsw2023","Canterbury","ALP","LNP",75.8,"official","ALP","LNP",70.1,0.95,57.6,79.5
+"nsw2023","Castle Hill","LNP","ALP",60.9,"official","ALP","LNP",33.3,0.977,24.2,43.4
+"nsw2023","Cessnock","ALP","ONP",73.4,"official","ALP","LNP",76.4,0.95,67.5,83.2
+"nsw2023","Charlestown","ALP","LNP",71.1,"official","ALP","LNP",68.3,0.995,58.1,76.7
+"nsw2023","Clarence","LNP","ALP",64.2,"official","ALP","LNP",40.9,0.816,31,51.4
+"nsw2023","Coffs Harbour","LNP","ALP",63.2,"official","ALP","LNP",42.8,0.747,33,53.1
+"nsw2023","Coogee","ALP","LNP",62.3,"official","ALP","LNP",59.5,0.987,49.1,68.9
+"nsw2023","Cootamundra","LNP","ALP",82.1,"official","ALP","LNP",28.1,0.946,20,37.3
+"nsw2023","Cronulla","LNP","ALP",63.8,"official","ALP","LNP",35.1,0.99,25.3,46
+"nsw2023","Davidson","LNP","ALP",63.9,"official","ALP","LNP",32.6,0.782,24.1,42.6
+"nsw2023","Drummoyne","LNP","ALP",51.3,"official","ALP","LNP",43.2,0.998,29.2,58.1
+"nsw2023","Dubbo","LNP","ALP",68.6,"official","ALP","LNP",35.1,0.772,26.2,45.2
+"nsw2023","East Hills","ALP","LNP",51.7,"official","ALP","LNP",53.2,0.977,41.8,63.9
+"nsw2023","Epping","LNP","ALP",54.8,"official","ALP","LNP",44.8,0.976,34.3,55.3
+"nsw2023","Fairfield","ALP","LNP",70.9,"official","ALP","LNP",69.5,0.962,58.3,78.2
+"nsw2023","Gosford","ALP","LNP",65.4,"official","ALP","LNP",62.2,0.966,51.7,71.4
+"nsw2023","Goulburn","LNP","ALP",51.3,"official","ALP","LNP",51.3,0.998,40.3,61.7
+"nsw2023","Granville","ALP","LNP",71.5,"official","ALP","LNP",63.1,0.979,51.7,72.9
+"nsw2023","Hawkesbury","LNP","ALP",59.8,"official","ALP","LNP",40.3,0.847,30.4,51
+"nsw2023","Heathcote","ALP","LNP",60,"official","ALP","LNP",56.3,0.999,45.3,66.3
+"nsw2023","Heffron","ALP","LNP",73.3,"official","ALP","LNP",69.7,0.535,60,77.2
+"nsw2023","Holsworthy","LNP","ALP",50.4,"official","ALP","LNP",49.5,0.989,38.6,59.9
+"nsw2023","Hornsby","LNP","ALP",58,"official","ALP","LNP",39.1,0.811,29.8,49.3
+"nsw2023","Keira","ALP","LNP",74.2,"official","ALP","LNP",72.3,0.872,62.6,79.8
+"nsw2023","Kiama","IND","ALP",50.8,"official","ALP","IND",39.8,0.697,26.1,61.1
+"nsw2023","Kogarah","ALP","LNP",68.3,"official","ALP","LNP",56.5,0.977,42.5,69.4
+"nsw2023","Lake Macquarie","IND","ALP",74.1,"official","ALP","IND",34.7,0.964,20.7,52.5
+"nsw2023","Lane Cove","LNP","ALP",55.5,"official","ALP","LNP",41.6,0.705,31.9,51.9
+"nsw2023","Lismore","ALP","LNP",65,"official","ALP","LNP",57.8,0.712,47.6,66.9
+"nsw2023","Liverpool","ALP","LNP",58.4,"official","ALP","LNP",70,0.977,59.4,78.5
+"nsw2023","Londonderry","ALP","LNP",63.7,"official","ALP","LNP",58.4,1,47.5,68.1
+"nsw2023","Macquarie Fields","ALP","LNP",69.9,"official","ALP","LNP",68.4,0.999,58.1,76.9
+"nsw2023","Maitland","ALP","LNP",68.6,"official","ALP","LNP",68.2,0.941,51.6,80.9
+"nsw2023","Manly","LNP","IND",54.9,"official","LNP","IND",53.7,0.498,28.1,71.6
+"nsw2023","Maroubra","ALP","LNP",68.7,"official","ALP","LNP",64.2,0.994,53.8,73.2
+"nsw2023","Miranda","LNP","ALP",52.4,"official","ALP","LNP",41.5,0.984,30.3,53
+"nsw2023","Monaro","ALP","LNP",52.3,"official","ALP","LNP",46.9,0.953,30.3,64.2
+"nsw2023","Mount Druitt","ALP","LNP",72.4,"official","ALP","LNP",72.7,0.997,63.1,80.4
+"nsw2023","Murray","IND","LNP",66,"official","LNP","IND",45.9,0.997,19.9,67.8
+"nsw2023","Myall Lakes","LNP","ALP",65.8,"official","ALP","LNP",46.6,0.871,36.1,57.1
+"nsw2023","Newcastle","ALP","LNP",72.6,"official","ALP","LNP",71.1,0.824,61.3,78.6
+"nsw2023","Newtown","GRN","ALP",62.1,"official","ALP","GRN",39.5,0.983,19.2,68.7
+"nsw2023","North Shore","LNP","IND",55.7,"official","LNP","IND",54.2,0.784,25,72.3
+"nsw2023","Northern Tablelands","LNP","ALP",83.8,"official","ALP","LNP",20.4,0.794,14.3,28.2
+"nsw2023","Oatley","LNP","ALP",50.8,"official","ALP","LNP",49.4,0.983,38.5,59.8
+"nsw2023","Orange","IND","LNP",71.9,"official","LNP","IND",39.5,0.992,22.2,61.3
+"nsw2023","Oxley","LNP","ALP",62.8,"official","ALP","LNP",41.3,0.843,31.5,51.6
+"nsw2023","Parramatta","ALP","LNP",58.5,"official","ALP","LNP",52.6,1,38.8,66
+"nsw2023","Penrith","ALP","LNP",51.6,"official","ALP","LNP",53.4,0.99,39.7,66.4
+"nsw2023","Pittwater","LNP","IND",50.7,"official","LNP","IND",53.7,0.79,30,74.6
+"nsw2023","Port Macquarie",NA,NA,NA,"intra-coalition-excluded","ALP","LNP",34.3,0.982,25.2,44.4
+"nsw2023","Port Stephens","ALP","LNP",69,"official","ALP","LNP",59.9,0.977,49,69.4
+"nsw2023","Prospect","ALP","LNP",58.7,"official","ALP","LNP",63,1,52.3,72.3
+"nsw2023","Riverstone","ALP","LNP",53.7,"official","ALP","LNP",52.8,0.996,43.3,62
+"nsw2023","Rockdale","ALP","LNP",65.4,"official","ALP","LNP",64.6,1,54.9,72.9
+"nsw2023","Ryde","LNP","ALP",50,"official","ALP","LNP",48.6,0.999,37.7,58.9
+"nsw2023","Shellharbour","ALP","IND",67.1,"official","ALP","LNP",71.8,0.948,61.5,79.8
+"nsw2023","South Coast","ALP","LNP",53.8,"official","ALP","LNP",43.7,0.954,32.9,54.6
+"nsw2023","Strathfield","ALP","LNP",63,"official","ALP","LNP",61.8,0.999,50.9,71.6
+"nsw2023","Summer Hill","ALP","GRN",66.3,"official","ALP","GRN",67.3,0.668,48.3,79.9
+"nsw2023","Swansea","ALP","LNP",65.4,"official","ALP","LNP",64.1,0.999,53.3,73.1
+"nsw2023","Sydney","IND","ALP",65.6,"official","ALP","IND",39.3,0.498,17.4,55.7
+"nsw2023","Tamworth","LNP","IND",65.8,"official","ALP","LNP",26.9,0.624,19.3,35.9
+"nsw2023","Terrigal","LNP","ALP",51.2,"official","ALP","LNP",44,0.997,33.6,54.6
+"nsw2023","The Entrance","ALP","LNP",57.8,"official","ALP","LNP",60.4,0.999,49.5,69.9
+"nsw2023","Tweed","LNP","ALP",53.6,"official","ALP","LNP",50.6,0.985,40,60.9
+"nsw2023","Upper Hunter","LNP","ALP",53.8,"official","ALP","LNP",53.6,0.942,42.6,63.8
+"nsw2023","Vaucluse","LNP","IND",62.9,"official","ALP","LNP",35.7,0.55,27.1,45.9
+"nsw2023","Wagga Wagga","IND","LNP",72.4,"official","LNP","IND",35.8,0.883,16.6,53.9
+"nsw2023","Wakehurst","IND","LNP",54.5,"official","LNP","IND",51.2,0.738,29.6,74.9
+"nsw2023","Wallsend","ALP","LNP",81.8,"official","ALP","LNP",78.8,0.822,70.5,84.9
+"nsw2023","Willoughby","LNP","IND",52.6,"official","LNP","IND",53.4,0.654,28.6,74.9
+"nsw2023","Wollondilly","IND","LNP",51.5,"official","LNP","IND",51.4,0.517,19.7,70.8
+"nsw2023","Wollongong","ALP","LNP",74.3,"official","ALP","LNP",76,0.941,67,82.9
+"nsw2023","Wyong","ALP","LNP",69.8,"official","ALP","LNP",70.5,0.996,60.6,78.6
+"qld2024","Algester","ALP","LNP",57.5,"official","ALP","LNP",61.1,0.968,50.8,70.2
+"qld2024","Aspley","ALP","LNP",50,"official","ALP","LNP",47.7,0.992,36.8,58.5
+"qld2024","Bancroft","ALP","LNP",56,"official","ALP","LNP",55.4,0.985,45,65
+"qld2024","Barron River","LNP","ALP",53.7,"official","ALP","LNP",48.4,0.954,38.1,58.8
+"qld2024","Bonney","LNP","ALP",63.7,"official","ALP","LNP",36.4,0.979,27.2,46.5
+"qld2024","Broadwater","LNP","ALP",71.3,"official","ALP","LNP",29.2,0.956,21.2,38.4
+"qld2024","Buderim","LNP","ALP",59.3,"official","ALP","LNP",39.6,0.895,30.3,49.6
+"qld2024","Bulimba","ALP","LNP",58.1,"official","ALP","LNP",57.1,0.978,45.7,67.7
+"qld2024","Bundaberg","ALP","LNP",51.5,"official","ALP","LNP",45.8,0.979,33.1,58.9
+"qld2024","Bundamba","ALP","LNP",63.8,"official","ALP","LNP",64.9,0.904,55,73.3
+"qld2024","Burdekin","LNP","ALP",65.8,"official","ALP","LNP",39.1,0.886,27.4,52.2
+"qld2024","Burleigh","LNP","ALP",62.8,"official","ALP","LNP",45.4,0.924,34.1,57.4
+"qld2024","Burnett","LNP","ALP",65.4,"official","ALP","LNP",35.4,0.963,26.3,45.2
+"qld2024","Cairns","ALP","LNP",52.5,"official","ALP","LNP",50.4,0.982,36.4,64
+"qld2024","Callide","LNP","ALP",73.2,"official","ALP","LNP",28.4,0.89,20.7,37.5
+"qld2024","Caloundra","LNP","ALP",51.8,"official","ALP","LNP",48.9,0.967,37.3,60.2
+"qld2024","Capalaba","LNP","ALP",51.9,"official","ALP","LNP",52.9,0.993,42.4,62.8
+"qld2024","Chatsworth","LNP","ALP",58.5,"official","ALP","LNP",43.8,0.988,32.3,55.9
+"qld2024","Clayfield","LNP","ALP",53.5,"official","ALP","LNP",44,0.722,34.2,54.5
+"qld2024","Condamine","LNP","ALP",73.6,"official","ALP","LNP",26.7,0.952,19,35.9
+"qld2024","Cook","LNP","ALP",55,"official","ALP","LNP",51.8,0.852,36.3,66.6
+"qld2024","Coomera","LNP","ALP",60,"official","ALP","LNP",43.9,0.969,33.9,54.1
+"qld2024","Cooper","ALP","LNP",61.2,"official","LNP","GRN",44.4,0.653,29.1,58.2
+"qld2024","Currumbin","LNP","ALP",62.3,"official","ALP","LNP",44.6,0.885,34.5,54.7
+"qld2024","Everton","LNP","ALP",55.3,"official","ALP","LNP",40.5,0.988,30.4,51.1
+"qld2024","Ferny Grove","ALP","LNP",57.9,"official","ALP","LNP",53.5,0.973,42.8,63.7
+"qld2024","Gaven","ALP","LNP",50.7,"official","ALP","LNP",52.1,0.99,41.5,62.2
+"qld2024","Gladstone","ALP","LNP",59.2,"official","ALP","LNP",68.7,0.923,58.5,77
+"qld2024","Glass House","LNP","ALP",60.2,"official","ALP","LNP",43.4,0.883,33.6,53.7
+"qld2024","Greenslopes","ALP","LNP",59.8,"official","ALP","LNP",58.8,0.575,50.1,66.6
+"qld2024","Gregory","LNP","ALP",71,"official","ALP","LNP",29.6,0.971,21.3,39
+"qld2024","Gympie","LNP","ALP",64.8,"official","ALP","LNP",36.1,0.986,26.7,46.4
+"qld2024","Hervey Bay","LNP","ALP",58.4,"official","ALP","LNP",47.1,0.993,36.4,57.7
+"qld2024","Hill","OTH_RIGHT","LNP",63.7,"official","LNP","OTH_RIGHT",35.4,0.664,19,59.3
+"qld2024","Hinchinbrook","OTH_RIGHT","LNP",63.2,"official","LNP","OTH_RIGHT",41.8,0.828,20.5,62.9
+"qld2024","Inala","ALP","LNP",62.6,"official","ALP","LNP",65.2,0.964,55.2,73.7
+"qld2024","Ipswich","ALP","LNP",58.9,"official","ALP","LNP",60,0.974,49.6,69
+"qld2024","Ipswich West","ALP","LNP",53.9,"official","ALP","LNP",50.8,0.978,40.4,60.7
+"qld2024","Jordan","ALP","LNP",60,"official","ALP","LNP",60.6,0.974,50.3,69.7
+"qld2024","Kawana","LNP","ALP",62.7,"official","ALP","LNP",35.8,0.974,26.7,45.7
+"qld2024","Keppel","LNP","ALP",60.5,"official","ALP","ONP",51.4,0.47,32.6,66.7
+"qld2024","Kurwongbah","ALP","LNP",55.9,"official","ALP","LNP",55.9,0.985,45.4,65.4
+"qld2024","Lockyer","LNP","ALP",69.2,"official","ALP","LNP",33.5,0.953,24.4,43.7
+"qld2024","Logan","ALP","LNP",54.3,"official","ALP","LNP",56.6,0.986,46.2,66.1
+"qld2024","Lytton","ALP","LNP",53,"official","ALP","LNP",58.6,0.979,48.3,67.7
+"qld2024","Macalister","ALP","LNP",51.9,"official","ALP","LNP",52.6,0.981,42.2,62.5
+"qld2024","Mackay","LNP","ALP",60.2,"official","ALP","LNP",51.1,0.991,39.9,61.9
+"qld2024","Maiwar","GRN","LNP",53.4,"official","LNP","GRN",44.8,0.934,27.9,58.9
+"qld2024","Mansfield","ALP","LNP",54.9,"official","ALP","LNP",49.5,0.992,39.9,58.7
+"qld2024","Maroochydore","LNP","ALP",60.9,"official","ALP","LNP",36.8,0.833,28,46.7
+"qld2024","Maryborough","LNP","ALP",52.8,"official","ALP","LNP",56.3,0.974,45.4,66.4
+"qld2024","McConnel","ALP","LNP",58.8,"official","LNP","GRN",44,0.631,29,57.9
+"qld2024","Mermaid Beach","LNP","ALP",63.1,"official","ALP","LNP",40.8,0.932,31.2,51
+"qld2024","Miller","ALP","LNP",60.6,"official","ALP","LNP",58.6,0.778,48.4,67.8
+"qld2024","Mirani","LNP","OTH_RIGHT",51,"official","LNP","OTH_RIGHT",43.9,0.474,19.2,64.3
+"qld2024","Moggill","LNP","ALP",55.6,"official","LNP","GRN",60,0.529,40.5,72.8
+"qld2024","Morayfield","ALP","LNP",57.1,"official","ALP","LNP",60.2,0.975,49.8,69.4
+"qld2024","Mount Ommaney","ALP","LNP",57.4,"official","ALP","LNP",57,0.988,46.2,66.9
+"qld2024","Mudgeeraba","LNP","ALP",63.9,"official","ALP","LNP",35.6,0.922,26.7,45.5
+"qld2024","Mulgrave","LNP","ALP",52.7,"official","ALP","LNP",56.7,0.819,47.4,65.1
+"qld2024","Mundingburra","LNP","ALP",59.2,"official","ALP","LNP",49.7,0.918,39.5,59.4
+"qld2024","Murrumba","ALP","LNP",59.8,"official","ALP","LNP",53.9,0.966,44,63
+"qld2024","Nanango","LNP","ALP",72.9,"official","ALP","LNP",32.8,0.926,23.9,42.9
+"qld2024","Nicklin","LNP","ALP",52.7,"official","ALP","LNP",46.8,0.873,36.9,56.9
+"qld2024","Ninderry","LNP","ALP",60.5,"official","ALP","LNP",40.8,0.931,31.3,51
+"qld2024","Noosa","IND","LNP",58.5,"official","LNP","IND",42.9,0.931,21.5,61.6
+"qld2024","Nudgee","ALP","LNP",62,"official","ALP","LNP",58.2,0.973,48.5,66.9
+"qld2024","Oodgeroo","LNP","ALP",61.8,"official","ALP","LNP",39.8,0.981,30.3,49.8
+"qld2024","Pine Rivers","ALP","LNP",50.7,"official","ALP","LNP",49.9,0.991,39.5,59.8
+"qld2024","Pumicestone","LNP","ALP",50.4,"official","ALP","LNP",51.8,0.991,41.1,61.9
+"qld2024","Redcliffe","LNP","ALP",52.9,"official","ALP","LNP",48.7,0.988,37.1,60.2
+"qld2024","Redlands","LNP","ALP",51.9,"official","ALP","LNP",46.4,0.975,35.6,57.3
+"qld2024","Rockhampton","LNP","ALP",51.8,"official","ALP","LNP",51.6,0.627,41,61.7
+"qld2024","Sandgate","ALP","LNP",59.6,"official","ALP","LNP",59.2,0.971,47.7,69.1
+"qld2024","Scenic Rim","LNP","ALP",66.1,"official","ALP","LNP",33.5,0.951,24.6,43.7
+"qld2024","South Brisbane","ALP","GRN",56,"official","LNP","GRN",36.9,0.518,25,49
+"qld2024","Southern Downs","LNP","ONP",68.6,"official","ALP","LNP",31.4,0.961,22.7,41.3
+"qld2024","Southport","LNP","ALP",61.1,"official","ALP","LNP",39.7,0.98,30.1,49.9
+"qld2024","Springwood","ALP","LNP",52.1,"official","ALP","LNP",50,0.985,36.2,63.4
+"qld2024","Stafford","ALP","LNP",55.3,"official","ALP","LNP",57.5,0.95,47,66.9
+"qld2024","Stretton","ALP","LNP",59.5,"official","ALP","LNP",57.5,0.986,47.1,67
+"qld2024","Surfers Paradise","LNP","ALP",73.1,"official","ALP","LNP",29.6,0.886,21.9,38.6
+"qld2024","Theodore","LNP","ALP",63,"official","ALP","LNP",41.9,0.987,32.1,52.2
+"qld2024","Thuringowa","LNP","ALP",59.9,"official","ALP","LNP",48.2,0.899,37.6,58.7
+"qld2024","Toohey","ALP","LNP",59,"official","ALP","LNP",59.3,0.987,48.6,68.9
+"qld2024","Toowoomba North","LNP","ALP",66.5,"official","ALP","LNP",38,0.986,27.1,50.2
+"qld2024","Toowoomba South","LNP","ALP",63,"official","ALP","LNP",35.2,0.96,25.8,45.8
+"qld2024","Townsville","LNP","ALP",55.6,"official","ALP","LNP",48.4,0.924,37.4,59.7
+"qld2024","Traeger","OTH_RIGHT","LNP",63.7,"official","LNP","OTH_RIGHT",32.7,0.602,17.3,55.3
+"qld2024","Warrego","LNP","ALP",77.8,"official","ALP","LNP",23.2,0.87,16.2,31.7
+"qld2024","Waterford","ALP","LNP",61.2,"official","ALP","LNP",59.4,0.983,49.1,68.7
+"qld2024","Whitsunday","LNP","ALP",68.5,"official","ALP","LNP",41.1,0.983,28.6,54.8
+"qld2024","Woodridge","ALP","LNP",68.3,"official","ALP","LNP",70.2,0.936,60.4,78
+"sa2026","Adelaide","ALP","LNP",66.9,"official","ALP","LNP",64.4,0.755,51.7,76.1
+"sa2026","Badcoe","ALP","ONP",70.9,"official","ALP","LNP",70.3,0.483,58.1,80.4
+"sa2026","Black","ALP","ONP",65.5,"official","ALP","ONP",59.7,0.512,37.6,74.2
+"sa2026","Bragg","LNP","ALP",58.5,"official","ALP","LNP",49.8,0.862,36.8,63.7
+"sa2026","Chaffey","LNP","ONP",55.9,"official","LNP","ONP",50.9,0.655,27.3,69.7
+"sa2026","Cheltenham","ALP","ONP",68,"official","ALP","ONP",70.5,0.747,48,82.2
+"sa2026","Colton","ALP","LNP",60.1,"official","ALP","LNP",54.8,0.865,41.3,68.4
+"sa2026","Croydon","ALP","ONP",79.7,"official","ALP","ONP",73.1,0.545,52.1,84.1
+"sa2026","Davenport","ALP","ONP",66.4,"official","ALP","LNP",61.6,0.746,48.5,73.8
+"sa2026","Dunstan","ALP","LNP",58.4,"official","ALP","LNP",58.7,0.706,45.8,71.4
+"sa2026","Elder","ALP","LNP",69.1,"official","ALP","LNP",63.2,0.666,50.3,75.1
+"sa2026","Elizabeth","ALP","ONP",54.7,"official","ALP","ONP",61.7,0.965,36,78.6
+"sa2026","Enfield","ALP","ONP",69,"official","ALP","ONP",68.1,0.6,46,80.5
+"sa2026","Finniss","IND","LNP",55.1,"official","LNP","IND",41.1,0.294,21.4,59.7
+"sa2026","Flinders","LNP","ONP",59.2,"official","IND","ONP",55.6,0.34,31.3,77.2
+"sa2026","Florey","ALP","ONP",65.9,"official","ALP","ONP",62.6,0.918,38.1,77.6
+"sa2026","Gibson","ALP","LNP",63.7,"official","ALP","LNP",60.8,0.732,47.6,73.2
+"sa2026","Giles","ALP","ONP",58.5,"official","ALP","ONP",67.1,0.981,44,80.2
+"sa2026","Hammond","ONP","ALP",54.9,"official","ALP","LNP",50.7,0.33,37.6,64.7
+"sa2026","Hartley","ALP","LNP",53.9,"official","ALP","LNP",54,0.873,40.6,67.5
+"sa2026","Heysen","LNP","ALP",50.5,"official","ALP","LNP",54.1,0.366,41.1,67.4
+"sa2026","Hurtle Vale","ALP","ONP",60.2,"official","ALP","ONP",68.4,0.819,45.4,81.1
+"sa2026","Kaurna","ALP","ONP",62.2,"official","ALP","ONP",67,0.916,42.3,80.8
+"sa2026","Kavel","IND","ALP",60.6,"official","ALP","IND",46.7,0.399,19.1,66.3
+"sa2026","King","ALP","ONP",55.7,"official","ALP","ONP",61.4,0.589,38.2,76.1
+"sa2026","Lee","ALP","ONP",59.5,"official","ALP","ONP",63.8,0.706,40.4,77.8
+"sa2026","Light","ALP","ONP",51.2,"official","ALP","ONP",65.5,0.895,40.6,80.2
+"sa2026","MacKillop","ONP","LNP",50.8,"official","LNP","ONP",54.6,0.435,30.8,73
+"sa2026","Mawson","ALP","ONP",57.9,"official","ALP","ONP",62.8,0.785,39,77.5
+"sa2026","Morialta","ALP","LNP",58.6,"official","ALP","LNP",57.5,0.787,44,70.8
+"sa2026","Morphett","ALP","LNP",50.7,"official","ALP","LNP",52.9,0.684,39.8,66.4
+"sa2026","Mount Gambier","IND","ONP",59.9,"official","ALP","IND",41.8,0.312,20.2,61.3
+"sa2026","Narungga","ONP","LNP",50.2,"official","ALP","IND",42,0.433,24.3,57.7
+"sa2026","Newland","ALP","ONP",61.4,"official","ALP","LNP",63.5,0.607,50.5,75.8
+"sa2026","Ngadjuri","ONP","ALP",56.6,"official","ALP","LNP",50.3,0.372,37.2,64
+"sa2026","Playford","ALP","ONP",66.9,"official","ALP","ONP",65,0.942,39.8,79.7
+"sa2026","Port Adelaide","ALP","ONP",65.1,"official","ALP","ONP",66.7,0.918,42.5,80.6
+"sa2026","Ramsay","ALP","ONP",62.9,"official","ALP","ONP",64.7,0.98,37.9,80.9
+"sa2026","Reynell","ALP","ONP",60.8,"official","ALP","ONP",67.6,0.888,43.3,80.5
+"sa2026","Schubert","LNP","ALP",67.6,"official","ALP","LNP",44.9,0.491,32.2,59
+"sa2026","Stuart","IND","ONP",56.5,"official","IND","ONP",58,0.531,34.5,75.8
+"sa2026","Taylor","ALP","ONP",54.3,"official","ALP","ONP",60.3,0.951,35.1,77.6
+"sa2026","Torrens","ALP","ONP",65.4,"official","ALP","ONP",65.5,0.618,43.4,78.5
+"sa2026","Unley","ALP","LNP",56.9,"official","ALP","LNP",56,0.493,43.1,68.6
+"sa2026","Waite","ALP","LNP",69.5,"official","ALP","GRN",58.8,0.425,43.2,72.3
+"sa2026","West Torrens","ALP","ONP",73.7,"official","ALP","GRN",66.3,0.604,48.2,79.3
+"sa2026","Wright","ALP","ONP",62.5,"official","ALP","ONP",65.2,0.75,42.4,78.7
+"vic2022","Albert Park","ALP","LNP",61.2,"abc-scrape","ALP","LNP",61,0.695,50.2,70.6
+"vic2022","Bass","ALP","LNP",50.2,"abc-scrape","ALP","LNP",47.9,0.95,37,58.9
+"vic2022","Bayswater","ALP","LNP",54.2,"abc-scrape","ALP","LNP",50.8,0.992,39.9,61.8
+"vic2022","Bellarine","ALP","LNP",58.5,"abc-scrape","ALP","LNP",58.7,0.895,48.2,68.6
+"vic2022","Benambra","LNP","IND",50.9,"abc-scrape","LNP","IND",49.1,0.524,29.1,68.3
+"vic2022","Bendigo East","ALP","LNP",60.8,"abc-scrape","ALP","LNP",60,0.972,47.8,71.2
+"vic2022","Bendigo West","ALP","LNP",64.6,"abc-scrape","ALP","LNP",66.4,0.948,55,76
+"vic2022","Bentleigh","ALP","LNP",58,"abc-scrape","ALP","LNP",59.3,0.968,47.2,70.3
+"vic2022","Box Hill","ALP","LNP",57.2,"abc-scrape","ALP","LNP",54.2,0.968,43.5,64.9
+"vic2022","Brighton","LNP","ALP",55.1,"abc-scrape","LNP","IND",48.9,0.485,28.4,65
+"vic2022","Broadmeadows","ALP","LNP",65.5,"abc-scrape","ALP","LNP",72.4,0.975,58.2,82.9
+"vic2022","Brunswick","GRN","ALP",63.5,"abc-scrape","ALP","GRN",35.7,0.88,18.8,61.7
+"vic2022","Bulleen","LNP","ALP",55.9,"abc-scrape","ALP","LNP",42.6,0.956,32.5,53.2
+"vic2022","Bundoora","ALP","LNP",62.7,"abc-scrape","ALP","LNP",65.2,0.988,55.1,74.1
+"vic2022","Carrum","ALP","LNP",59.8,"abc-scrape","ALP","LNP",58.5,0.992,46.1,69.8
+"vic2022","Caulfield","LNP","ALP",52.1,"abc-scrape","ALP","LNP",49.7,0.481,39.5,60
+"vic2022","Clarinda","ALP","LNP",60.2,"abc-scrape","ALP","LNP",63.8,0.965,53,73.1
+"vic2022","Cranbourne","ALP","LNP",59,"abc-scrape","ALP","LNP",56.1,0.993,43.5,68
+"vic2022","Croydon","LNP","ALP",51.4,"abc-scrape","ALP","LNP",47.7,0.986,36.7,58.8
+"vic2022","Dandenong","ALP","LNP",68.3,"abc-scrape","ALP","LNP",69.1,0.998,58.1,78.2
+"vic2022","Eildon","LNP","ALP",57,"abc-scrape","ALP","LNP",46.5,0.952,35.8,57.5
+"vic2022","Eltham","ALP","LNP",59,"abc-scrape","ALP","LNP",56.8,0.999,44,68.6
+"vic2022","Essendon","ALP","LNP",62.5,"abc-scrape","ALP","LNP",65.2,0.937,54.7,74.4
+"vic2022","Euroa","LNP","ALP",59.9,"abc-scrape","ALP","LNP",33.7,0.996,24.3,44.3
+"vic2022","Evelyn","LNP","ALP",55.4,"abc-scrape","ALP","LNP",44.7,0.988,33.7,56
+"vic2022","Footscray","ALP","GRN",54.2,"abc-scrape","ALP","LNP",72.9,0.574,62,81
+"vic2022","Frankston","ALP","LNP",58.7,"abc-scrape","ALP","LNP",58.7,0.991,47.1,69.3
+"vic2022","Geelong","ALP","LNP",64.7,"abc-scrape","ALP","LNP",58.8,0.91,48.2,68.5
+"vic2022","Gippsland East","LNP","ALP",74.6,"abc-scrape","ALP","LNP",28.6,0.923,20.4,38.6
+"vic2022","Gippsland South","LNP","ALP",65.6,"abc-scrape","ALP","LNP",33.3,0.852,22.1,48.2
+"vic2022","Hastings","ALP","LNP",51.4,"abc-scrape","ALP","LNP",46.6,0.987,35.6,57.8
+"vic2022","Hawthorn","LNP","ALP",51.7,"abc-scrape","LNP","IND",45.4,0.42,27.4,62.3
+"vic2022","Ivanhoe","ALP","LNP",62.8,"abc-scrape","ALP","LNP",60.9,0.981,50.4,70.4
+"vic2022","Kew","LNP","ALP",54,"abc-scrape","LNP","IND",47.7,0.596,27.7,64.7
+"vic2022","Kororoit","ALP","LNP",64.5,"abc-scrape","ALP","LNP",69.1,0.982,57.3,78
+"vic2022","Lara","ALP","LNP",65.9,"abc-scrape","ALP","LNP",65.6,0.945,54.8,74.9
+"vic2022","Lowan","LNP","ALP",71.6,"abc-scrape","ALP","LNP",27.4,0.868,19.4,37.1
+"vic2022","Macedon","ALP","LNP",59.5,"abc-scrape","ALP","LNP",59.7,0.96,48.4,69.8
+"vic2022","Malvern","LNP","ALP",58.1,"abc-scrape","ALP","LNP",42.1,0.854,31.6,53.6
+"vic2022","Melbourne","GRN","ALP",60.2,"abc-scrape","ALP","GRN",36.7,0.757,21.7,57.7
+"vic2022","Melton","ALP","LNP",54.6,"abc-scrape","ALP","IND",47.9,0.712,26.4,66.6
+"vic2022","Mildura","LNP","IND",51.2,"abc-scrape","LNP","IND",44,0.99,21.6,62.6
+"vic2022","Mill Park","ALP","LNP",61.6,"abc-scrape","ALP","LNP",70.5,0.998,58.3,79.7
+"vic2022","Monbulk","ALP","LNP",57.6,"abc-scrape","ALP","LNP",53.6,0.981,42.7,64.1
+"vic2022","Mordialloc","ALP","LNP",58.2,"abc-scrape","ALP","LNP",62,0.989,50.5,72.2
+"vic2022","Mornington","LNP","IND",50.7,"abc-scrape","LNP","IND",52.2,0.508,31.1,68.9
+"vic2022","Morwell","LNP","ALP",54.4,"abc-scrape","ALP","LNP",48.5,0.884,37.2,59.5
+"vic2022","Mulgrave","ALP","IND",60.8,"abc-scrape","ALP","IND",57.7,0.693,36.2,73.8
+"vic2022","Murray Plains","LNP","ALP",73.4,"abc-scrape","ALP","LNP",24.2,0.808,17.1,33.2
+"vic2022","Narre Warren North","ALP","LNP",58.7,"abc-scrape","ALP","LNP",56.2,0.994,45.1,66.6
+"vic2022","Narre Warren South","ALP","LNP",58.3,"abc-scrape","ALP","LNP",58.7,0.991,47.6,68.8
+"vic2022","Nepean","LNP","ALP",56.4,"abc-scrape","ALP","LNP",46.9,0.982,35.9,58.1
+"vic2022","Niddrie","ALP","LNP",56.7,"abc-scrape","ALP","LNP",59.8,1,49.7,68.9
+"vic2022","Northcote","ALP","GRN",50.2,"abc-scrape","ALP","GRN",41.7,0.97,23,64.3
+"vic2022","Oakleigh","ALP","LNP",63.5,"abc-scrape","ALP","LNP",64,0.966,53.3,73.4
+"vic2022","Ovens Valley","LNP","ALP",67.8,"abc-scrape","ALP","LNP",36.4,0.986,26.6,47.4
+"vic2022","Pascoe Vale","ALP","GRN",52,"abc-scrape","ALP","GRN",49.2,0.811,31.5,66.7
+"vic2022","Polwarth","LNP","ALP",51.8,"abc-scrape","ALP","LNP",46.4,0.934,35.7,57.6
+"vic2022","Prahran","GRN","LNP",62,"abc-scrape","LNP","GRN",43.4,0.748,32.2,55.3
+"vic2022","Preston","ALP","GRN",52.1,"abc-scrape","ALP","GRN",58.9,0.5,44,71
+"vic2022","Richmond","GRN","ALP",57.3,"abc-scrape","ALP","GRN",42.6,0.905,24.1,65.4
+"vic2022","Ringwood","ALP","LNP",57.5,"abc-scrape","ALP","LNP",51.8,0.991,40.6,62.9
+"vic2022","Ripon","ALP","LNP",53,"abc-scrape","ALP","LNP",50.4,0.967,41.4,59.3
+"vic2022","Rowville","LNP","ALP",53.7,"abc-scrape","ALP","LNP",44.6,0.989,33.7,56.3
+"vic2022","Sandringham","LNP","ALP",55,"abc-scrape","ALP","LNP",46.2,0.814,34.3,58.4
+"vic2022","Shepparton","LNP","IND",56.8,"abc-scrape","LNP","IND",45.2,0.988,20.6,62.6
+"vic2022","South Barwon","ALP","LNP",59.8,"abc-scrape","ALP","LNP",53.5,0.998,42.8,64
+"vic2022","South-West Coast","LNP","ALP",58,"abc-scrape","ALP","LNP",44,0.803,33.8,54.6
+"vic2022","St Albans","ALP","LNP",59.6,"abc-scrape","ALP","LNP",66.4,0.967,54.1,75.9
+"vic2022","Sunbury","ALP","LNP",56.4,"abc-scrape","ALP","LNP",61.8,0.989,51,71.5
+"vic2022","Sydenham","ALP","LNP",58.8,"abc-scrape","ALP","LNP",63.8,0.998,52.2,73.6
+"vic2022","Tarneit","ALP","LNP",62.3,"abc-scrape","ALP","LNP",64.3,0.981,53.2,73.8
+"vic2022","Thomastown","ALP","LNP",65.8,"abc-scrape","ALP","LNP",75.3,0.994,63.7,84.1
+"vic2022","Warrandyte","LNP","ALP",54.3,"abc-scrape","ALP","LNP",44.7,0.973,32.8,57.5
+"vic2022","Wendouree","ALP","LNP",61.9,"abc-scrape","ALP","LNP",59.6,0.964,48.4,69.7
+"vic2022","Werribee","ALP","LNP",60.9,"abc-scrape","ALP","LNP",61,0.507,50.1,70.6
+"vic2022","Williamstown","ALP","LNP",63.4,"abc-scrape","ALP","LNP",67,0.79,56.9,75.5
+"vic2022","Yan Yean","ALP","LNP",54.3,"abc-scrape","ALP","LNP",57.6,1,44.7,69.1
+"wa2025","Albany","LNP","ALP",56.3,"official","ALP","LNP",47.2,0.678,35.9,58.4
+"wa2025","Armadale","ALP","LNP",68.8,"official","ALP","LNP",73,0.979,64.1,80
+"wa2025","Balcatta","ALP","LNP",64.5,"official","ALP","LNP",61.8,0.929,51.4,70.6
+"wa2025","Baldivis","ALP","LNP",66.7,"official","ALP","LNP",74.9,0.9,66.3,81.5
+"wa2025","Bassendean","ALP","IND",65.7,"official","ALP","LNP",69.8,0.718,60.2,77
+"wa2025","Bateman","ALP","LNP",53.3,"official","ALP","LNP",43.1,0.899,33,53.4
+"wa2025","Belmont","ALP","LNP",69.3,"official","ALP","LNP",66.4,0.963,56.4,74.6
+"wa2025","Bicton","ALP","LNP",59.3,"official","ALP","LNP",51.3,0.988,40.5,61.3
+"wa2025","Bunbury","ALP","LNP",57.1,"official","ALP","LNP",57.7,0.961,42.9,70.7
+"wa2025","Butler","ALP","LNP",64.7,"official","ALP","LNP",70.2,0.945,60.8,77.8
+"wa2025","Cannington","ALP","LNP",67.9,"official","ALP","LNP",67.6,0.985,57.8,75.6
+"wa2025","Carine","LNP","ALP",57.6,"official","ALP","LNP",40.4,0.98,30.3,50.7
+"wa2025","Central Wheatbelt","LNP","ALP",73.3,"official","ALP","LNP",26.8,0.68,18.2,37
+"wa2025","Churchlands","LNP","ALP",51.1,"official","ALP","LNP",38.6,0.73,29.2,48.8
+"wa2025","Cockburn","ALP","LNP",67.8,"official","ALP","LNP",66,0.996,56.6,73.8
+"wa2025","Collie-Preston","ALP","LNP",54.3,"official","ALP","LNP",60.7,0.71,49.2,70.8
+"wa2025","Cottesloe","LNP","IND",55.5,"official","LNP","GRN",68.4,0.763,52,79.3
+"wa2025","Darling Range","ALP","LNP",55.1,"official","ALP","LNP",51.1,0.987,39,62.3
+"wa2025","Dawesville","ALP","LNP",51.3,"official","ALP","LNP",49.4,0.974,37.8,60.7
+"wa2025","Forrestfield","ALP","LNP",54.1,"official","ALP","LNP",58.5,0.974,47.9,67.8
+"wa2025","Fremantle","ALP","IND",50.9,"official","ALP","GRN",55.5,0.574,37.2,71.6
+"wa2025","Geraldton","LNP","ALP",64.1,"official","ALP","LNP",45.5,0.579,34.1,56.9
+"wa2025","Hillarys","ALP","LNP",60.1,"official","ALP","LNP",55.2,0.998,44.3,64.9
+"wa2025","Jandakot","ALP","LNP",56.4,"official","ALP","LNP",51.5,0.993,40.5,61.5
+"wa2025","Joondalup","ALP","LNP",56.3,"official","ALP","LNP",60.8,0.967,50.3,69.8
+"wa2025","Kalamunda","LNP","ALP",50.1,"official","ALP","LNP",48.5,0.953,38,58.7
+"wa2025","Kalgoorlie","ALP","LNP",51.6,"official","ALP","LNP",46.9,0.735,35.4,58.2
+"wa2025","Kimberley","ALP","LNP",64,"official","ALP","LNP",58.6,0.786,47.2,68.7
+"wa2025","Kingsley","ALP","LNP",53.5,"official","ALP","LNP",51.6,0.999,40.8,61.6
+"wa2025","Kwinana","ALP","LNP",75,"official","ALP","LNP",78.7,0.79,71,84.4
+"wa2025","Landsdale","ALP","LNP",59.6,"official","ALP","LNP",60.7,0.998,50.1,69.8
+"wa2025","Mandurah","ALP","LNP",59.5,"official","ALP","LNP",61,0.995,46.9,73.1
+"wa2025","Maylands","ALP","LNP",72.4,"official","ALP","LNP",65.7,0.83,56.1,73.5
+"wa2025","Midland","ALP","LNP",60.9,"official","ALP","LNP",62.6,0.911,52.3,71.4
+"wa2025","Morley","ALP","LNP",62,"official","ALP","LNP",64.7,0.97,54.5,73.1
+"wa2025","Mount Lawley","ALP","LNP",60.7,"official","ALP","LNP",56,0.955,45.4,65.6
+"wa2025","Murray-Wellington","LNP","ALP",51.7,"official","ALP","LNP",52.3,0.95,40.9,63.1
+"wa2025","Nedlands","LNP","ALP",52.7,"official","ALP","LNP",39.6,0.728,30,49.7
+"wa2025","Perth","ALP","LNP",71,"official","ALP","LNP",65.7,0.867,55.5,73.8
+"wa2025","Pilbara","ALP","LNP",50.6,"official","ALP","LNP",51.9,0.655,40,63
+"wa2025","Riverton","ALP","LNP",54.2,"official","ALP","LNP",47.5,0.975,36.9,57.7
+"wa2025","Rockingham","ALP","LNP",61.8,"official","ALP","LNP",67.6,0.977,55.7,77.1
+"wa2025","Roe",NA,NA,NA,"intra-coalition-excluded","LNP","LNP",47.3,0.472,29.1,67.9
+"wa2025","Scarborough","ALP","LNP",55,"official","ALP","LNP",45.6,0.995,35.1,55.9
+"wa2025","South Perth","ALP","LNP",51.6,"official","ALP","LNP",46.3,0.94,36,56.4
+"wa2025","Southern River","ALP","LNP",73.3,"official","ALP","LNP",70.7,0.973,61.3,78.2
+"wa2025","Swan Hills","ALP","LNP",58.4,"official","ALP","LNP",62.9,0.984,52.5,71.7
+"wa2025","Thornlie","ALP","IND",64,"official","ALP","LNP",67.2,0.892,57.2,75.2
+"wa2025","Vasse","LNP","ALP",63.4,"official","ALP","LNP",31.4,0.704,22.2,42.2
+"wa2025","Victoria Park","ALP","LNP",66.7,"official","ALP","LNP",66,0.926,57.2,73.3
+"wa2025","Wanneroo","ALP","LNP",62.5,"official","ALP","LNP",65.1,0.99,54.9,73.6
+"wa2025","Warren-Blackwood","LNP","ALP",51.8,"official","GRN","LNP",35.4,0.385,24.4,51.9
+"wa2025","West Swan","ALP","LNP",71.2,"official","ALP","LNP",73.8,0.916,65.1,80.7

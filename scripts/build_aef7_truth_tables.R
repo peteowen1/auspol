@@ -139,7 +139,9 @@ cat(sprintf("TT1 ABC scrape covers %d of %d AEF7 pairs so far (%s); the rest are
             n_scraped_pairs, length(AEF7), paste(basename(abc_dirs), collapse = ", ")))
 
 # ================= TCP TRUTH TABLE ========================================
-ref <- fread(file.path(OUT, "aef7-final-two-and-tcp-reference.csv"), showProgress = FALSE)
+# na.strings: see the note by this file's own fwrite() below -- the same
+# blank-vs-NA round-trip trap applies on the way IN from the reference file.
+ref <- fread(file.path(OUT, "aef7-final-two-and-tcp-reference.csv"), na.strings = c("NA", ""), showProgress = FALSE)
 
 itg_tcp <- rbindlist(lapply(AEF7, function(pr) {
   g <- list.files(OUT, pattern = sprintf("^backtest-%s-ourtcp-", pr), full.names = TRUE)
