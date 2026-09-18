@@ -26,6 +26,17 @@ not a commit, not a plan file — that it is not happening and why.
 
 ---
 
+## 2026-09-18/19
+
+| ask | status |
+|---|---|
+| *"aef7 artifact should be same as production ... same parameter in the models! Just built at different times so we'll need to save 7 xgb (one as at the start of each election) ... forecasts ... saved into a forecasts table where one row is a candidate in a given election"* (2026-09-18) | **SHIPPED** (PR #50). `scripts/rebuild_forecasts.sh`, one primary and one flow xgb model per election trained on earlier elections only (`AUSPOL_XGB_PRIMARY_OOF` -> as-at file, `AUSPOL_FLOW_ASAT`), `output/forecasts.csv` (11,991 candidate rows, 19 elections) and `forecasts-seats.csv`. Ledger v32 onward is built by it. |
+| *"primary RMSE should always be actual weighted"* (2026-09-18) | **SHIPPED**: the headline in `fit_xgb_primary_asat.R`, `build_forecasts_table.R` and the ledger card is weighted by actual share; the ledger card had been comparing AEF against our pre-xgb baseline and now compares the shipped model (4.74 vs 5.42). |
+| *"can we have an election seat registry that we update with all our research?"* (2026-09-18) | **SHIPPED**: `docs/SEAT-REGISTRY.md`, one entry per investigated seat with the verdict; Mirani recorded in his words. |
+| *"do we have a document that shows all stages of the pipeline"* (2026-09-18) | **SHIPPED**: `docs/PIPELINE.md`. |
+| *"do all three then one combined rerun"* -- how-to-vote cards, by-elections, per-state swing (2026-09-18) | **SHIPPED** (PR #51 open): `AUSPOL_HTV_FLOW` and `AUSPOL_BYELECTION_PRIOR=blend`; the per-state swing was already in since 2026-09-15 (`AUSPOL_STATE_DEV`). Ledger v35 0.2667. Still to do on by-elections: the windows before 2019 are not fetched; vic2026 needs its how-to-vote row when the cards are published. |
+| *"keep working through all the worst seats ... test theories"* (2026-09-18) | **IN PROGRESS**, the standing loop. Shipped from it: `AUSPOL_MAJOR_DEPARTED`, `AUSPOL_MAJOR_SLOPE`. Measured and left off: `AUSPOL_DEPARTED_ORIGIN` (Morwell rule, 0.06 SE short). Parked at his direction: the teal/independent under-prediction (pattern 2). |
+
 ## 2026-09-15 later
 
 | ask | status |

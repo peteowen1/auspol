@@ -77,3 +77,16 @@ _tmp_*.R
 # then rerun the parser. Source: Wikipedia, CC BY-SA 4.0.
 !external/reference/wikipedia/
 !external/reference/wikipedia/vic2026-candidates.csv
+
+# Two hand-maintained reference tables the model reads as INPUTS (2026-09-18),
+# same reasoning as the candidates table above: small, factual, and a fresh
+# clone must have them or the corresponding switch silently does nothing.
+#   external/reference/htv/liberal-alp-grn-order.csv -- the Liberal how-to-
+#     vote order for ALP-v-GRN seats per election (AUSPOL_HTV_FLOW).
+#   external/reference/byelections/byelection-results.csv -- candidate-level
+#     first preferences at by-elections (Wikipedia, CC BY-SA 4.0), the seat
+#     baseline where one occurred between two general elections.
+!external/reference/htv/
+!external/reference/htv/liberal-alp-grn-order.csv
+!external/reference/byelections/
+!external/reference/byelections/byelection-results.csv

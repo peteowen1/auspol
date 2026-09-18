@@ -116,7 +116,7 @@ SEATS <- ALL[, .(
   pair, seat,
   winner = actual, fav, correct = (our_pred == actual),
   our_p_win = our_p, our_p_fav,
-  aef_p_win = aef_p, aef_p_fav = aef_p,     # AEF only ever names one favourite; see note below
+  aef_p_win = aef_p, aef_p_fav = if ("aef_p_fav" %in% names(ALL)) aef_p_fav else aef_p,   # favourite's own probability (pred_p) since 2026-09-19
   our_fp_win = our_primary, aef_fp_win = aef_primary, act_fp_win = actual_primary,
   miss = actual_primary - our_primary,
   aef_miss = actual_primary - aef_primary,

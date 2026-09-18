@@ -836,6 +836,16 @@ for (K in PAIRS) {
   # THE VOTE MOVES WITH THE PERSON: what .own_x() substitutes into the new
   # class below is taken out of the class it came from here (Hunter 2022,
   # Kennedy 2013). remove_transferred_votes() is a no-op when .own_prev is NULL.
+  # BY-ELECTION AS THE SEAT BASELINE (AUSPOL_BYELECTION_PRIOR=1): a by-election between the two
+  # general elections where both majors stood replaces the seat's prior row (R/byelection_prior.R,
+  # external/reference/byelections/byelection-results.csv). docs/plans/prereg-byelection-prior-2026-09-18.md
+  if (Sys.getenv("AUSPOL_BYELECTION_PRIOR", "0") %in% c("1", "blend")) {
+    mat <- tryCatch(byelection_prior(mat, ea, eb, weight = if (identical(Sys.getenv("AUSPOL_BYELECTION_PRIOR"), "blend")) 0.5 else 1), error = function(e) { cat(sprintf("BF0b! by-election prior FAILED, prior kept: %s\n", conditionMessage(e))); mat })
+    .by <- attr(mat, "byelection")
+    if (!is.null(.by)) cat(sprintf("BF0b by-election prior: %d seat(s) replaced%s%s\n", length(.by$applied),
+                                  if (length(.by$applied)) paste0(" (", paste(.by$applied, collapse = ", "), ")") else "",
+                                  if (length(.by$skipped)) paste0("; SKIPPED ", paste(.by$skipped, collapse = ", ")) else ""))
+  }
   mat <- remove_transferred_votes(mat, .own_prev)
   mat <- (function(m) {
     # A DEPARTED DEFECTOR'S VOTE GOES HOME (AUSPOL_DEPARTED_ORIGIN: "1" = leave-
@@ -1760,12 +1770,16 @@ for (X in out_all) {
       surge_mu_arg <- .xs$surge_mu; surge_sd_arg <- .xs$surge_sd
     }
   }
+  # HOW-TO-VOTE CARD (AUSPOL_HTV_FLOW=1): the Liberal-excluded, ALP+GRN-alive flow rows follow the recorded
+  # card order for this election (R/htv_flow.R, external/reference/htv/liberal-alp-grn-order.csv).
+  .htv_ov <- if (identical(Sys.getenv("AUSPOL_HTV_FLOW", "0"), "1")) tryCatch(htv_flow_override(.xgb_flow_ov, X$fm, sprintf("fed%d", K$to), rownames(X$shares)),
+    error = function(e) { cat(sprintf("HTV9! how-to-vote override FAILED, flow rows unchanged: %s\n", conditionMessage(e))); .xgb_flow_ov }) else .xgb_flow_ov
   sim <- simulate_seat_contests(level_sd = .level_sd, sd_override = SD_OVR, level_mult = .lm(X$shares), X$shares, X$fm, party_sd = psd, seat_sd = sd_w * SEAT_SD_MULT,
                                 n_sims = N_SIMS, smooth = SMOOTH, seed = SEED,
                                 shrink = shrink_arg, surge_h = surge_arg, surge_party = surge_party_arg,
                                 surge_from_zero = identical(Sys.getenv("AUSPOL_SURGE_FROM_ZERO", "0"), "1"),
                                 surge_mu = surge_mu_arg, surge_sd = surge_sd_arg,
-                                party_cor = PARTY_COR, statewide_draws = X$sw_draws, conditional_override = .xgb_flow_ov, conditional_override_sd = attr(.xgb_flow_ov, "sd"),
+                                party_cor = PARTY_COR, statewide_draws = X$sw_draws, conditional_override = .htv_ov, conditional_override_sd = attr(.htv_ov, "sd"),
                                 fallback_smooth = FB_SMOOTH, shrink_k = SHRINK_K, flow_sd = FLOW_SD)
   # OUR OWN final-two scenario frequencies -- see tcp_scenarios(). Uses
   # sprintf("fed%d", K$to) rather than `eb` to match how this harness names

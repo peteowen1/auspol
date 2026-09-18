@@ -1,6 +1,6 @@
 # Data registry
 
-**Generated 2026-09-15 by `scripts/build_data_registry.R`. Do not hand-edit** --
+**Generated 2026-09-19 by `scripts/build_data_registry.R`. Do not hand-edit** --
 rerun the script instead. Regenerate it whenever you add or fetch data.
 
 This file exists because the same data has been declared missing three
@@ -67,8 +67,8 @@ cannot pass as a working one.
   - e.g. booths/fed2016-NSW.csv, booths/fed2019-SA.csv, booths/fed2019-VIC.csv, booths/fed2022-NSW.csv
 - **vec/** -- 547 files, 19.9 MB
   - e.g. 2010/cdx-vec.txt, 2010/dop-AlbertPark.html, 2010/dop-BallaratEast.html, 2010/dop-BallaratWest.html
-- **nsw/** -- 292 files, 9.8 MB
-  - e.g. dop-sample.html, dop/index-SG1901.html, dop/index-SG2301.html, dop/index-SGE2015.html
+- **nsw/** -- 294 files, 9.9 MB
+  - e.g. byelections/SB1602-orange-fp.html, byelections/SB1801-wagga-wagga-fp.html, dop-sample.html, dop/index-SG1901.html
 - **ecsa/** -- 9 files, 2.9 MB. **1 ZERO-BYTE: ha-2018-03-17.json**
   - e.g. ha-2018-03-17.json, ha-2022-03-19.json, ha-2026-03-21.json, ha-change-2022-03-19.json
 - **ecq/** -- 10 files, 57.0 MB

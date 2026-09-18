@@ -1,3 +1,25 @@
+# auspol 0.4.45
+
+**Two inputs the model never had, and one more slope tier, all pre-registered
+and measured base_pred-only before the full rebuild decided the ledger.**
+
+- `AUSPOL_HTV_FLOW` (shipped): the Liberal how-to-vote card order for
+  ALP-v-Greens seats (`external/reference/htv/liberal-alp-grn-order.csv`,
+  `R/htv_flow.R`) selects the Liberal-excluded ALP:GRN flow row, 36% or 61%
+  to ALP, fitted leave-target-out. Real-pairing 2CP error on those seats
+  6.19 -> 5.08 points. vic2026 needs its row when the cards are published.
+- `AUSPOL_BYELECTION_PRIOR = "blend"` (shipped): a by-election between the two
+  general elections where both majors stood is blended half-and-half into the
+  seat's prior (`external/reference/byelections/byelection-results.csv`, 26
+  by-elections, `R/byelection_prior.R`). Full replacement refused (+0.59);
+  the blend 2.78 -> 2.44 on 17 seats.
+- `AUSPOL_MAJOR_SLOPE` (shipped): every non-departed ALP/LNP cell regresses
+  toward the statewide level (fitted ~0.95/0.89).
+- `AUSPOL_FLOW_ASAT` (shipped): flow xgb models trained on earlier elections
+  only (`scripts/fit_xgb_flows_asat.R`, stage 4b, resumable, config-hashed).
+- `scripts/rebuild_forecasts.sh` runs harnesses two at a time under 10GB free.
+- Ledger v34 -> v35: pooled seat log loss 0.2689 -> 0.2667 (AEF 0.2851).
+
 # auspol 0.4.44
 
 **The AEF-7 ledger is now built by the production pipeline, frozen "as at"

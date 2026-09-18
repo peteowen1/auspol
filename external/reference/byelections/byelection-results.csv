@@ -1,0 +1,443 @@
+region,seat,date,candidate,party_raw,votes,pct,source
+vic,Prahran,2025-02-08,Rachel Westaway,Liberal,11443,36.19,https://en.wikipedia.org/wiki/2025_Prahran_state_by-election
+vic,Prahran,2025-02-08,Angelica Di Camillo,Greens,11442,36.19,https://en.wikipedia.org/wiki/2025_Prahran_state_by-election
+vic,Prahran,2025-02-08,Tony Lupton,Independent,4021,12.72,https://en.wikipedia.org/wiki/2025_Prahran_state_by-election
+vic,Prahran,2025-02-08,Nathan Chisholm,Independent,1672,5.29,https://en.wikipedia.org/wiki/2025_Prahran_state_by-election
+vic,Prahran,2025-02-08,Faith Fuhrer,Animal Justice,879,2.78,https://en.wikipedia.org/wiki/2025_Prahran_state_by-election
+vic,Prahran,2025-02-08,Janine Hendry,Independent,505,1.60,https://en.wikipedia.org/wiki/2025_Prahran_state_by-election
+vic,Prahran,2025-02-08,Buzz Billman,Independent,465,1.47,https://en.wikipedia.org/wiki/2025_Prahran_state_by-election
+vic,Prahran,2025-02-08,Dennis Bilic,Sustainable Australia,430,1.36,https://en.wikipedia.org/wiki/2025_Prahran_state_by-election
+vic,Prahran,2025-02-08,Genevieve Gilbert,Family First,340,1.08,https://en.wikipedia.org/wiki/2025_Prahran_state_by-election
+vic,Prahran,2025-02-08,Mark Dessau,Libertarian,292,0.92,https://en.wikipedia.org/wiki/2025_Prahran_state_by-election
+vic,Prahran,2025-02-08,Alan Menadue,Independent,126,0.40,https://en.wikipedia.org/wiki/2025_Prahran_state_by-election
+vic,Werribee,2025-02-08,John Lister,Labor,12168,28.89,https://en.wikipedia.org/wiki/2025_Werribee_state_by-election
+vic,Werribee,2025-02-08,Steve Murphy,Liberal,12207,28.98,https://en.wikipedia.org/wiki/2025_Werribee_state_by-election
+vic,Werribee,2025-02-08,Paul Hopper,Independent,6134,14.56,https://en.wikipedia.org/wiki/2025_Werribee_state_by-election
+vic,Werribee,2025-02-08,Rifai A. Raheem,Greens,3190,7.57,https://en.wikipedia.org/wiki/2025_Werribee_state_by-election
+vic,Werribee,2025-02-08,Sue Munro,Victorian Socialists,3008,7.14,https://en.wikipedia.org/wiki/2025_Werribee_state_by-election
+vic,Werribee,2025-02-08,Xavier Menta,Legalise Cannabis,2316,5.50,https://en.wikipedia.org/wiki/2025_Werribee_state_by-election
+vic,Werribee,2025-02-08,Matt Emerson,Family First,1827,4.34,https://en.wikipedia.org/wiki/2025_Werribee_state_by-election
+vic,Werribee,2025-02-08,Shohre Mansouri Jajaee,Animal Justice,401,0.95,https://en.wikipedia.org/wiki/2025_Werribee_state_by-election
+vic,Werribee,2025-02-08,Munish Joshi,Independent,352,0.84,https://en.wikipedia.org/wiki/2025_Werribee_state_by-election
+vic,Werribee,2025-02-08,Aidan McLindon,Independent,270,0.64,https://en.wikipedia.org/wiki/2025_Werribee_state_by-election
+vic,Werribee,2025-02-08,Aijaz Moinuddin,Independent,164,0.39,https://en.wikipedia.org/wiki/2025_Werribee_state_by-election
+vic,Werribee,2025-02-08,Kodei Mulcahy,Independent,80,0.19,https://en.wikipedia.org/wiki/2025_Werribee_state_by-election
+vic,Mulgrave,2023-11-18,Eden Foster,Labor,14481,40.18,https://en.wikipedia.org/wiki/2023_Mulgrave_state_by-election
+vic,Mulgrave,2023-11-18,Courtney Mann,Liberal,7817,21.69,https://en.wikipedia.org/wiki/2023_Mulgrave_state_by-election
+vic,Mulgrave,2023-11-18,Ian Cook,Independent,6780,18.81,https://en.wikipedia.org/wiki/2023_Mulgrave_state_by-election
+vic,Mulgrave,2023-11-18,Rhonda Garad,Greens,2153,5.97,https://en.wikipedia.org/wiki/2023_Mulgrave_state_by-election
+vic,Mulgrave,2023-11-18,Kelly Cvetkova,Victorian Socialists,1315,3.65,https://en.wikipedia.org/wiki/2023_Mulgrave_state_by-election
+vic,Mulgrave,2023-11-18,Jane Foreman,Family First,1111,3.08,https://en.wikipedia.org/wiki/2023_Mulgrave_state_by-election
+vic,Mulgrave,2023-11-18,Ethelyn King,Libertarian,1046,2.90,https://en.wikipedia.org/wiki/2023_Mulgrave_state_by-election
+vic,Mulgrave,2023-11-18,Tina Theodossopoulou,Independent,662,1.84,https://en.wikipedia.org/wiki/2023_Mulgrave_state_by-election
+vic,Mulgrave,2023-11-18,Bronwyn Currie,Animal Justice,403,1.12,https://en.wikipedia.org/wiki/2023_Mulgrave_state_by-election
+vic,Mulgrave,2023-11-18,Celeste Ackerly,Sustainable Australia,276,0.77,https://en.wikipedia.org/wiki/2023_Mulgrave_state_by-election
+vic,Warrandyte,2023-08-26,Nicole Werner,Liberal,21921,57.3,https://en.wikipedia.org/wiki/2023_Warrandyte_state_by-election
+vic,Warrandyte,2023-08-26,Tomas Lightbody,Greens,7130,18.6,https://en.wikipedia.org/wiki/2023_Warrandyte_state_by-election
+vic,Warrandyte,2023-08-26,Cary de Wit,Democratic Labour,2204,5.8,https://en.wikipedia.org/wiki/2023_Warrandyte_state_by-election
+vic,Warrandyte,2023-08-26,Maya Tesa,Independent,1556,4.1,https://en.wikipedia.org/wiki/2023_Warrandyte_state_by-election
+vic,Warrandyte,2023-08-26,Colleen Bolger,Victorian Socialists,1459,3.8,https://en.wikipedia.org/wiki/2023_Warrandyte_state_by-election
+vic,Warrandyte,2023-08-26,Richard Griffith-Jones,Family First,1073,2.8,https://en.wikipedia.org/wiki/2023_Warrandyte_state_by-election
+vic,Warrandyte,2023-08-26,Jack Corcoran,Sustainable Australia,1030,2.7,https://en.wikipedia.org/wiki/2023_Warrandyte_state_by-election
+vic,Warrandyte,2023-08-26,Greg Cheesman,Freedom,846,2.2,https://en.wikipedia.org/wiki/2023_Warrandyte_state_by-election
+vic,Warrandyte,2023-08-26,Wai Man Raymond Chow,Independent,694,1.8,https://en.wikipedia.org/wiki/2023_Warrandyte_state_by-election
+vic,Warrandyte,2023-08-26,Morgan Ranieri,Independent,168,0.4,https://en.wikipedia.org/wiki/2023_Warrandyte_state_by-election
+vic,Warrandyte,2023-08-26,Alan Max Menadue,Independent,121,0.3,https://en.wikipedia.org/wiki/2023_Warrandyte_state_by-election
+vic,Warrandyte,2023-08-26,Philip Jenkins,Independent,77,0.2,https://en.wikipedia.org/wiki/2023_Warrandyte_state_by-election
+vic,Narracan,2023-01-28,Wayne Farnham,Liberal,16741,45.0,https://en.wikipedia.org/wiki/2023_Narracan_state_supplementary_election
+vic,Narracan,2023-01-28,Alyssa Weaver,Greens,4132,11.1,https://en.wikipedia.org/wiki/2023_Narracan_state_supplementary_election
+vic,Narracan,2023-01-28,Tony Wolfe,Independent,4110,11.0,https://en.wikipedia.org/wiki/2023_Narracan_state_supplementary_election
+vic,Narracan,2023-01-28,Sophia Camille De Wit,Democratic Labour,2641,7.1,https://en.wikipedia.org/wiki/2023_Narracan_state_supplementary_election
+vic,Narracan,2023-01-28,Leonie Blackwell,Freedom,2254,6.1,https://en.wikipedia.org/wiki/2023_Narracan_state_supplementary_election
+vic,Narracan,2023-01-28,Casey Murphy,One Nation,2246,6.0,https://en.wikipedia.org/wiki/2023_Narracan_state_supplementary_election
+vic,Narracan,2023-01-28,Annemarie McCabe,Independent,1437,3.9,https://en.wikipedia.org/wiki/2023_Narracan_state_supplementary_election
+vic,Narracan,2023-01-28,Michael Abelman,Liberal Democrats,1325,3.6,https://en.wikipedia.org/wiki/2023_Narracan_state_supplementary_election
+vic,Narracan,2023-01-28,Brendan Clarke,Family First,1089,2.9,https://en.wikipedia.org/wiki/2023_Narracan_state_supplementary_election
+vic,Narracan,2023-01-28,Austin Cram,Animal Justice,849,2.3,https://en.wikipedia.org/wiki/2023_Narracan_state_supplementary_election
+vic,Narracan,2023-01-28,Ian Honey,Independent,381,1.0,https://en.wikipedia.org/wiki/2023_Narracan_state_supplementary_election
+vic,Nepean,2026-05-02,Anthony Marsh,Liberal,15682,38.7,https://en.wikipedia.org/wiki/2026_Nepean_state_by-election
+vic,Nepean,2026-05-02,Darren Hercus,One Nation,9941,24.5,https://en.wikipedia.org/wiki/2026_Nepean_state_by-election
+vic,Nepean,2026-05-02,Tracee Hutchison,Independent,8533,21.0,https://en.wikipedia.org/wiki/2026_Nepean_state_by-election
+vic,Nepean,2026-05-02,Sianan Healy,Greens,3805,9.4,https://en.wikipedia.org/wiki/2026_Nepean_state_by-election
+vic,Nepean,2026-05-02,Renee Thompson,Legalise Cannabis,1192,2.9,https://en.wikipedia.org/wiki/2026_Nepean_state_by-election
+vic,Nepean,2026-05-02,Reade Smith,Sustainable Australia,721,1.8,https://en.wikipedia.org/wiki/2026_Nepean_state_by-election
+vic,Nepean,2026-05-02,Peter Angelico,Libertarian,505,1.2,https://en.wikipedia.org/wiki/2026_Nepean_state_by-election
+vic,Nepean,2026-05-02,Milton Wilde,EMI - Reform,166,0.4,https://en.wikipedia.org/wiki/2026_Nepean_state_by-election
+fed,Aston,2023-04-01,Mary Doyle,Labor,37318,40.87,https://en.wikipedia.org/wiki/2023_Aston_by-election
+fed,Aston,2023-04-01,Roshena Campbell,Liberal,35680,39.07,https://en.wikipedia.org/wiki/2023_Aston_by-election
+fed,Aston,2023-04-01,Angelica Di Camillo,Greens,9256,10.14,https://en.wikipedia.org/wiki/2023_Aston_by-election
+fed,Aston,2023-04-01,Maya Tesa,Independent,6426,7.04,https://en.wikipedia.org/wiki/2023_Aston_by-election
+fed,Aston,2023-04-01,Owen Miller,Fusion,2637,2.89,https://en.wikipedia.org/wiki/2023_Aston_by-election
+fed,Fadden,2023-07-15,Cameron Caldwell,Liberal National,43554,49.08,https://en.wikipedia.org/wiki/2023_Fadden_by-election
+fed,Fadden,2023-07-15,Letitia Del Fabbro,Labor,19580,22.06,https://en.wikipedia.org/wiki/2023_Fadden_by-election
+fed,Fadden,2023-07-15,Sandy Roach,One Nation,7896,8.90,https://en.wikipedia.org/wiki/2023_Fadden_by-election
+fed,Fadden,2023-07-15,Suzette Luyken,Legalise Cannabis,6424,7.24,https://en.wikipedia.org/wiki/2023_Fadden_by-election
+fed,Fadden,2023-07-15,Scott Turner,Greens,5477,6.17,https://en.wikipedia.org/wiki/2023_Fadden_by-election
+fed,Fadden,2023-07-15,Belinda Jones,Independent,931,1.05,https://en.wikipedia.org/wiki/2023_Fadden_by-election
+fed,Fadden,2023-07-15,Marnie Laree Davis,Indigenous-Aboriginal,895,1.01,https://en.wikipedia.org/wiki/2023_Fadden_by-election
+fed,Fadden,2023-07-15,Stewart Brooker,Independent,805,0.91,https://en.wikipedia.org/wiki/2023_Fadden_by-election
+fed,Fadden,2023-07-15,Quentin Bye,Sustainable Australia,779,0.88,https://en.wikipedia.org/wiki/2023_Fadden_by-election
+fed,Fadden,2023-07-15,Kevin Young,Independent,641,0.72,https://en.wikipedia.org/wiki/2023_Fadden_by-election
+fed,Fadden,2023-07-15,James Tayler,Federation,607,0.68,https://en.wikipedia.org/wiki/2023_Fadden_by-election
+fed,Fadden,2023-07-15,Chris Simpson,Democrats,589,0.66,https://en.wikipedia.org/wiki/2023_Fadden_by-election
+fed,Fadden,2023-07-15,Jan Pukallus,Citizens,570,0.64,https://en.wikipedia.org/wiki/2023_Fadden_by-election
+fed,Dunkley,2024-03-02,Jodie Belyea,Labor,37418,41.07,https://en.wikipedia.org/wiki/2024_Dunkley_by-election
+fed,Dunkley,2024-03-02,Nathan Conroy,Liberal,35746,39.23,https://en.wikipedia.org/wiki/2024_Dunkley_by-election
+fed,Dunkley,2024-03-02,Alex Breskin,Greens,5798,6.36,https://en.wikipedia.org/wiki/2024_Dunkley_by-election
+fed,Dunkley,2024-03-02,Darren Bergwerf,Independent,4315,4.74,https://en.wikipedia.org/wiki/2024_Dunkley_by-election
+fed,Dunkley,2024-03-02,Bronwyn Currie,Animal Justice,2818,3.09,https://en.wikipedia.org/wiki/2024_Dunkley_by-election
+fed,Dunkley,2024-03-02,Chrysten Abraham,Libertarian,2246,2.47,https://en.wikipedia.org/wiki/2024_Dunkley_by-election
+fed,Dunkley,2024-03-02,Reem Yunis,Victorian Socialists,1529,1.68,https://en.wikipedia.org/wiki/2024_Dunkley_by-election
+fed,Dunkley,2024-03-02,Heath McKenzie,Democrats,1242,1.36,https://en.wikipedia.org/wiki/2024_Dunkley_by-election
+fed,Cook,2024-04-13,Simon Kennedy,Liberal,53799,62.67,https://en.wikipedia.org/wiki/2024_Cook_by-election
+fed,Cook,2024-04-13,Martin Moore,Greens,14120,16.45,https://en.wikipedia.org/wiki/2024_Cook_by-election
+fed,Cook,2024-04-13,Natasha Brown,Animal Justice,5841,6.80,https://en.wikipedia.org/wiki/2024_Cook_by-election
+fed,Cook,2024-04-13,Vinay Kolhatkar,Libertarian,5117,5.96,https://en.wikipedia.org/wiki/2024_Cook_by-election
+fed,Cook,2024-04-13,Roger Woodward,Independent,4920,5.73,https://en.wikipedia.org/wiki/2024_Cook_by-election
+fed,Cook,2024-04-13,Simone Gagatam,Sustainable Australia,2054,2.39,https://en.wikipedia.org/wiki/2024_Cook_by-election
+nsw,Upper Hunter,2021-05-22,Dave Layzell,National,14805,31.20,https://en.wikipedia.org/wiki/2021_Upper_Hunter_state_by-election
+nsw,Upper Hunter,2021-05-22,Jeff Drayton,Labor,10055,21.19,https://en.wikipedia.org/wiki/2021_Upper_Hunter_state_by-election
+nsw,Upper Hunter,2021-05-22,Dale McNamara,One Nation,5845,12.32,https://en.wikipedia.org/wiki/2021_Upper_Hunter_state_by-election
+nsw,Upper Hunter,2021-05-22,Sue Gilroy,Shooters Fishers and Farmers,5676,11.96,https://en.wikipedia.org/wiki/2021_Upper_Hunter_state_by-election
+nsw,Upper Hunter,2021-05-22,Kirsty O'Connell,Independent,4176,8.80,https://en.wikipedia.org/wiki/2021_Upper_Hunter_state_by-election
+nsw,Upper Hunter,2021-05-22,Tracy Norman,Independent,1951,4.11,https://en.wikipedia.org/wiki/2021_Upper_Hunter_state_by-election
+nsw,Upper Hunter,2021-05-22,Sue Abbott,Greens,1648,3.47,https://en.wikipedia.org/wiki/2021_Upper_Hunter_state_by-election
+nsw,Upper Hunter,2021-05-22,Steven Reynolds,Independent,1027,2.16,https://en.wikipedia.org/wiki/2021_Upper_Hunter_state_by-election
+nsw,Upper Hunter,2021-05-22,Eva Pears,Liberal Democrats,698,1.47,https://en.wikipedia.org/wiki/2021_Upper_Hunter_state_by-election
+nsw,Upper Hunter,2021-05-22,Kate Fraser,Independent,644,1.36,https://en.wikipedia.org/wiki/2021_Upper_Hunter_state_by-election
+nsw,Upper Hunter,2021-05-22,Michael Dello-Iacovo,Animal Justice,397,0.84,https://en.wikipedia.org/wiki/2021_Upper_Hunter_state_by-election
+nsw,Upper Hunter,2021-05-22,Calum Blair,Sustainable Australia,375,0.79,https://en.wikipedia.org/wiki/2021_Upper_Hunter_state_by-election
+nsw,Upper Hunter,2021-05-22,Archie Lea,Independent,156,0.33,https://en.wikipedia.org/wiki/2021_Upper_Hunter_state_by-election
+nsw,Bega,2022-02-12,Michael Holland,Labor,21361,43.16,https://en.wikipedia.org/wiki/2022_Bega_state_by-election
+nsw,Bega,2022-02-12,Fiona Kotvojs,Liberal,19165,38.72,https://en.wikipedia.org/wiki/2022_Bega_state_by-election
+nsw,Bega,2022-02-12,Peter Haggar,Greens,3453,6.98,https://en.wikipedia.org/wiki/2022_Bega_state_by-election
+nsw,Bega,2022-02-12,Victor Hazir,Shooters Fishers Farmers,2312,4.67,https://en.wikipedia.org/wiki/2022_Bega_state_by-election
+nsw,Bega,2022-02-12,Jeffrey Hawkins,Independent,1379,2.79,https://en.wikipedia.org/wiki/2022_Bega_state_by-election
+nsw,Bega,2022-02-12,Karin Geiselhart,Sustainable Australia,1011,2.04,https://en.wikipedia.org/wiki/2022_Bega_state_by-election
+nsw,Bega,2022-02-12,Ursula Bennett,Independent,811,1.64,https://en.wikipedia.org/wiki/2022_Bega_state_by-election
+nsw,Monaro,2022-02-12,Nichole Overall,National,21728,45.96,https://en.wikipedia.org/wiki/2022_Monaro_state_by-election
+nsw,Monaro,2022-02-12,Bryce Wilson,Labor,15102,31.95,https://en.wikipedia.org/wiki/2022_Monaro_state_by-election
+nsw,Monaro,2022-02-12,Catherine Moore,Greens,4178,8.84,https://en.wikipedia.org/wiki/2022_Monaro_state_by-election
+nsw,Monaro,2022-02-12,Andrew Thaler,Independent,2986,6.32,https://en.wikipedia.org/wiki/2022_Monaro_state_by-election
+nsw,Monaro,2022-02-12,James Holgate,Sustainable Australia,1920,4.06,https://en.wikipedia.org/wiki/2022_Monaro_state_by-election
+nsw,Monaro,2022-02-12,Frankie Seymour,Animal Justice,1361,2.88,https://en.wikipedia.org/wiki/2022_Monaro_state_by-election
+nsw,Strathfield,2022-02-12,Jason Yat-Sen Li,Labor,18034,41.05,https://en.wikipedia.org/wiki/2022_Strathfield_state_by-election
+nsw,Strathfield,2022-02-12,Bridget Sakr,Liberal,15921,36.24,https://en.wikipedia.org/wiki/2022_Strathfield_state_by-election
+nsw,Strathfield,2022-02-12,Elizabeth Farrelly,Independent,4328,9.85,https://en.wikipedia.org/wiki/2022_Strathfield_state_by-election
+nsw,Strathfield,2022-02-12,Courtney Buckley,Greens,2930,6.67,https://en.wikipedia.org/wiki/2022_Strathfield_state_by-election
+nsw,Strathfield,2022-02-12,Ellie Robertson,Sustainable Australia,1795,4.09,https://en.wikipedia.org/wiki/2022_Strathfield_state_by-election
+nsw,Strathfield,2022-02-12,Rohan Laxmanalal,Animal Justice,920,2.09,https://en.wikipedia.org/wiki/2022_Strathfield_state_by-election
+nsw,Willoughby,2022-02-12,Tim James,Liberal,18949,43.50,https://en.wikipedia.org/wiki/2022_Willoughby_state_by-election
+nsw,Willoughby,2022-02-12,Larissa Penn,Independent,12920,29.66,https://en.wikipedia.org/wiki/2022_Willoughby_state_by-election
+nsw,Willoughby,2022-02-12,Lynne Saville,Greens,5892,13.53,https://en.wikipedia.org/wiki/2022_Willoughby_state_by-election
+nsw,Willoughby,2022-02-12,Penny Hackett,Reason,2576,5.91,https://en.wikipedia.org/wiki/2022_Willoughby_state_by-election
+nsw,Willoughby,2022-02-12,William Bourke,Sustainable Australia,2122,4.87,https://en.wikipedia.org/wiki/2022_Willoughby_state_by-election
+nsw,Willoughby,2022-02-12,Samuel Gunning,Liberal Democrats,1104,2.53,https://en.wikipedia.org/wiki/2022_Willoughby_state_by-election
+qld,Stretton,2021-07-24,James Martin,Labor,14314,56.39,https://en.wikipedia.org/wiki/2021_Stretton_state_by-election
+qld,Stretton,2021-07-24,Jim Bellos,Liberal National,8322,32.78,https://en.wikipedia.org/wiki/2021_Stretton_state_by-election
+qld,Stretton,2021-07-24,Andrea Wildin,Greens,1654,6.52,https://en.wikipedia.org/wiki/2021_Stretton_state_by-election
+qld,Stretton,2021-07-24,Jasmine Melhop,Informed Medical Options,616,2.43,https://en.wikipedia.org/wiki/2021_Stretton_state_by-election
+qld,Stretton,2021-07-24,Suzanne Clarke,Animal Justice,478,1.88,https://en.wikipedia.org/wiki/2021_Stretton_state_by-election
+qld,Callide,2022-06-18,Bryson Head,Liberal National,13059,50.33,https://en.wikipedia.org/wiki/2022_Callide_state_by-election
+qld,Callide,2022-06-18,Bronwyn Dendle,Labor,5020,19.35,https://en.wikipedia.org/wiki/2022_Callide_state_by-election
+qld,Callide,2022-06-18,Sharon Lohse,One Nation,3704,14.28,https://en.wikipedia.org/wiki/2022_Callide_state_by-election
+qld,Callide,2022-06-18,Adam Burling,Katter's Australian,2517,9.70,https://en.wikipedia.org/wiki/2022_Callide_state_by-election
+qld,Callide,2022-06-18,Fabrice Jarry,Legalise Cannabis,1223,4.71,https://en.wikipedia.org/wiki/2022_Callide_state_by-election
+qld,Callide,2022-06-18,Paula Gilbard,Animal Justice,424,1.63,https://en.wikipedia.org/wiki/2022_Callide_state_by-election
+qld,Inala,2024-03-16,Margie Nightingale,Labor,10216,37.23,https://en.wikipedia.org/wiki/2024_Inala_state_by-election
+qld,Inala,2024-03-16,Trang Yen,Liberal National,8059,29.37,https://en.wikipedia.org/wiki/2024_Inala_state_by-election
+qld,Inala,2024-03-16,Navdeep Singh Sidhu,Greens,2790,10.17,https://en.wikipedia.org/wiki/2024_Inala_state_by-election
+qld,Inala,2024-03-16,Linh Nguyen,Independent,2502,9.12,https://en.wikipedia.org/wiki/2024_Inala_state_by-election
+qld,Inala,2024-03-16,Nayda Hernandez,Independent,1320,4.81,https://en.wikipedia.org/wiki/2024_Inala_state_by-election
+qld,Inala,2024-03-16,Nigel Quinlan,Legalise Cannabis,1046,3.81,https://en.wikipedia.org/wiki/2024_Inala_state_by-election
+qld,Inala,2024-03-16,Chris Simpson,Independent,986,3.60,https://en.wikipedia.org/wiki/2024_Inala_state_by-election
+qld,Inala,2024-03-16,Edward Carroll,Independent,519,1.89,https://en.wikipedia.org/wiki/2024_Inala_state_by-election
+qld,Ipswich West,2024-03-16,Darren Zanow,Liberal National,11676,39.53,https://en.wikipedia.org/wiki/2024_Ipswich_West_state_by_election
+qld,Ipswich West,2024-03-16,Wendy Bourne,Labor,10349,35.04,https://en.wikipedia.org/wiki/2024_Ipswich_West_state_by_election
+qld,Ipswich West,2024-03-16,Melody Lindsay,Legalise Cannabis,4302,14.57,https://en.wikipedia.org/wiki/2024_Ipswich_West_state_by_election
+qld,Ipswich West,2024-03-16,Mark Bone,One Nation,3206,10.86,https://en.wikipedia.org/wiki/2024_Ipswich_West_state_by_election
+sa,Bragg,2022-07-02,Jack Batty,Liberal,11070,50.5,https://en.wikipedia.org/wiki/2022_Bragg_state_by-election
+sa,Bragg,2022-07-02,Alice Rolls,Labor,6574,30.0,https://en.wikipedia.org/wiki/2022_Bragg_state_by-election
+sa,Bragg,2022-07-02,Jim Bastiras,Greens,3261,14.9,https://en.wikipedia.org/wiki/2022_Bragg_state_by-election
+sa,Bragg,2022-07-02,Daryl McCann,Family First,505,2.3,https://en.wikipedia.org/wiki/2022_Bragg_state_by-election
+sa,Bragg,2022-07-02,James Hol,Liberal Democrats,347,1.6,https://en.wikipedia.org/wiki/2022_Bragg_state_by-election
+sa,Bragg,2022-07-02,Neil Aitchison,Independent,175,0.8,https://en.wikipedia.org/wiki/2022_Bragg_state_by-election
+sa,Dunstan,2024-03-23,Anna Finizio,Liberal,9334,43.5,https://en.wikipedia.org/wiki/2024_Dunstan_state_by-election
+sa,Dunstan,2024-03-23,Cressida O'Hanlon,Labor,6896,32.1,https://en.wikipedia.org/wiki/2024_Dunstan_state_by-election
+sa,Dunstan,2024-03-23,Katie McCusker,Greens,4116,19.2,https://en.wikipedia.org/wiki/2024_Dunstan_state_by-election
+sa,Dunstan,2024-03-23,Frankie Bray,Animal Justice,682,3.2,https://en.wikipedia.org/wiki/2024_Dunstan_state_by-election
+sa,Dunstan,2024-03-23,Nicole Hissey,Australian Family,440,2.0,https://en.wikipedia.org/wiki/2024_Dunstan_state_by-election
+sa,Black,2024-11-16,Alex Dighton,Labor,10248,47.9,https://en.wikipedia.org/wiki/2024_Black_state_by-election
+sa,Black,2024-11-16,Amanda Wilson,Liberal,7300,34.1,https://en.wikipedia.org/wiki/2024_Black_state_by-election
+sa,Black,2024-11-16,Sarah Luscombe,Greens,2799,13.1,https://en.wikipedia.org/wiki/2024_Black_state_by-election
+sa,Black,2024-11-16,Jonathan Parkin,Australian Family,1069,5.0,https://en.wikipedia.org/wiki/2024_Black_state_by-election
+wa,North West Central,2022-08-08,Merome Beard,National,2042,40.2,https://en.wikipedia.org/wiki/2022_North_West_Central_state_by-election
+wa,North West Central,2022-08-08,Will Baston,Liberal,1353,26.6,https://en.wikipedia.org/wiki/2022_North_West_Central_state_by-election
+wa,North West Central,2022-08-08,Niels Glahn-Bertelsen,Greens,635,12.5,https://en.wikipedia.org/wiki/2022_North_West_Central_state_by-election
+wa,North West Central,2022-08-08,Leanne Lockyer,Legalise Cannabis,269,5.3,https://en.wikipedia.org/wiki/2022_North_West_Central_state_by-election
+wa,North West Central,2022-08-08,Andrea Randle,Western Australia Party,202,4.0,https://en.wikipedia.org/wiki/2022_North_West_Central_state_by-election
+wa,North West Central,2022-08-08,Gerald Laurent,One Nation,197,3.9,https://en.wikipedia.org/wiki/2022_North_West_Central_state_by-election
+wa,North West Central,2022-08-08,Anthony Fels,Western Australia Party,108,2.1,https://en.wikipedia.org/wiki/2022_North_West_Central_state_by-election
+wa,North West Central,2022-08-08,Aaron Horsman,No Mandatory Vaccination,82,1.6,https://en.wikipedia.org/wiki/2022_North_West_Central_state_by-election
+wa,North West Central,2022-08-08,Peter Dunne,Independent,55,1.1,https://en.wikipedia.org/wiki/2022_North_West_Central_state_by-election
+wa,North West Central,2022-08-08,Peter Baker,Small Business Party,55,1.1,https://en.wikipedia.org/wiki/2022_North_West_Central_state_by-election
+wa,North West Central,2022-08-08,Tony Stokes,Independent,44,0.9,https://en.wikipedia.org/wiki/2022_North_West_Central_state_by-election
+wa,North West Central,2022-08-08,Jake McCoull,Liberal Democrats,42,0.8,https://en.wikipedia.org/wiki/2022_North_West_Central_state_by-election
+wa,Rockingham,2023-06-08,Magenta Marshall,Labor,10791,49.33,https://en.wikipedia.org/wiki/2023_Rockingham_state_by-election
+wa,Rockingham,2023-06-08,Peter Hudson,Liberal,3868,17.73,https://en.wikipedia.org/wiki/2023_Rockingham_state_by-election
+wa,Rockingham,2023-06-08,Hayley Edwards,Independent,3488,15.95,https://en.wikipedia.org/wiki/2023_Rockingham_state_by-election
+wa,Rockingham,2023-06-08,Rae Cottam,Legalise Cannabis,1487,6.80,https://en.wikipedia.org/wiki/2023_Rockingham_state_by-election
+wa,Rockingham,2023-06-08,Madeleine De Jong,Greens,1081,4.94,https://en.wikipedia.org/wiki/2023_Rockingham_state_by-election
+wa,Rockingham,2023-06-08,Mike Crichton,Australian Christians,534,2.44,https://en.wikipedia.org/wiki/2023_Rockingham_state_by-election
+wa,Rockingham,2023-06-08,Janetia Knapp,Western Australia Party,262,1.20,https://en.wikipedia.org/wiki/2023_Rockingham_state_by-election
+wa,Rockingham,2023-06-08,Clive Gallety,Independent,193,0.88,https://en.wikipedia.org/wiki/2023_Rockingham_state_by-election
+wa,Rockingham,2023-06-08,Peter Dunne,Independent,170,0.78,https://en.wikipedia.org/wiki/2023_Rockingham_state_by-election
+fed,Eden-Monaro,2020-07-04,Fiona Kotvojs,Liberal,36388,38.33,https://en.wikipedia.org/wiki/2020_Eden-Monaro_by-election
+fed,Eden-Monaro,2020-07-04,Kristy McBain,Labor,34073,35.89,https://en.wikipedia.org/wiki/2020_Eden-Monaro_by-election
+fed,Eden-Monaro,2020-07-04,Trevor Hicks,National,6052,6.38,https://en.wikipedia.org/wiki/2020_Eden-Monaro_by-election
+fed,Eden-Monaro,2020-07-04,Cathy Griff,Greens,5385,5.67,https://en.wikipedia.org/wiki/2020_Eden-Monaro_by-election
+fed,Eden-Monaro,2020-07-04,Matthew Stadtmiller,Shooters Fishers Farmers,5066,5.34,https://en.wikipedia.org/wiki/2020_Eden-Monaro_by-election
+fed,Eden-Monaro,2020-07-04,Michael Balderstone,HEMP,2154,2.27,https://en.wikipedia.org/wiki/2020_Eden-Monaro_by-election
+fed,Eden-Monaro,2020-07-04,Karen Porter,Independent,1218,1.28,https://en.wikipedia.org/wiki/2020_Eden-Monaro_by-election
+fed,Eden-Monaro,2020-07-04,James Jansson,Science,1071,1.13,https://en.wikipedia.org/wiki/2020_Eden-Monaro_by-election
+fed,Eden-Monaro,2020-07-04,Joy Angel,Sustainable Australia,944,0.99,https://en.wikipedia.org/wiki/2020_Eden-Monaro_by-election
+fed,Eden-Monaro,2020-07-04,Dean McCrae,Liberal Democrats,651,0.69,https://en.wikipedia.org/wiki/2020_Eden-Monaro_by-election
+fed,Eden-Monaro,2020-07-04,James Holgate,Independent,636,0.67,https://en.wikipedia.org/wiki/2020_Eden-Monaro_by-election
+fed,Eden-Monaro,2020-07-04,Narelle Storey,Christian Democrats,614,0.65,https://en.wikipedia.org/wiki/2020_Eden-Monaro_by-election
+fed,Eden-Monaro,2020-07-04,Riccardo Bosi,Independent,513,0.54,https://en.wikipedia.org/wiki/2020_Eden-Monaro_by-election
+fed,Eden-Monaro,2020-07-04,Jason Potter,Federation,170,0.18,https://en.wikipedia.org/wiki/2020_Eden-Monaro_by-election
+fed,Groom,2020-11-28,Garth Hamilton,Liberal National,51534,59.83,https://en.wikipedia.org/wiki/2020_Groom_by-election
+fed,Groom,2020-11-28,Chris Meibusch,Labor,23500,27.28,https://en.wikipedia.org/wiki/2020_Groom_by-election
+fed,Groom,2020-11-28,Sandra Jephcott,Sustainable Australia,6716,7.80,https://en.wikipedia.org/wiki/2020_Groom_by-election
+fed,Groom,2020-11-28,Craig Farquharson,Liberal Democrats,4391,5.10,https://en.wikipedia.org/wiki/2020_Groom_by-election
+fed,New England,2017-12-02,Barnaby Joyce,National,57016,64.92,https://en.wikipedia.org/wiki/2017_New_England_by-election
+fed,New England,2017-12-02,David Ewings,Labor,9764,11.12,https://en.wikipedia.org/wiki/2017_New_England_by-election
+fed,New England,2017-12-02,Rob Taber,Independent,5959,6.79,https://en.wikipedia.org/wiki/2017_New_England_by-election
+fed,New England,2017-12-02,Peter Wills,Greens,3824,4.35,https://en.wikipedia.org/wiki/2017_New_England_by-election
+fed,New England,2017-12-02,Richard Stretton,Christian Democrats,2129,2.42,https://en.wikipedia.org/wiki/2017_New_England_by-election
+fed,New England,2017-12-02,Pete Mailler,CountryMinded,2112,2.40,https://en.wikipedia.org/wiki/2017_New_England_by-election
+fed,New England,2017-12-02,Meow-Ludo Meow-Meow,Science,1183,1.35,https://en.wikipedia.org/wiki/2017_New_England_by-election
+fed,New England,2017-12-02,Jeff Madden,Independent,1145,1.30,https://en.wikipedia.org/wiki/2017_New_England_by-election
+fed,New England,2017-12-02,Skyla Wagstaff,Animal Justice,930,1.06,https://en.wikipedia.org/wiki/2017_New_England_by-election
+fed,New England,2017-12-02,William Bourke,Sustainable Australia,628,0.72,https://en.wikipedia.org/wiki/2017_New_England_by-election
+fed,New England,2017-12-02,Andrew Potts,Affordable Housing,605,0.69,https://en.wikipedia.org/wiki/2017_New_England_by-election
+fed,New England,2017-12-02,Dean Carter,Independent,590,0.67,https://en.wikipedia.org/wiki/2017_New_England_by-election
+fed,New England,2017-12-02,Tristam Smyth,Liberal Democrats,515,0.59,https://en.wikipedia.org/wiki/2017_New_England_by-election
+fed,New England,2017-12-02,Ian Britza,Country,494,0.56,https://en.wikipedia.org/wiki/2017_New_England_by-election
+fed,New England,2017-12-02,Donald Cranney,Rise Up Australia,365,0.42,https://en.wikipedia.org/wiki/2017_New_England_by-election
+fed,New England,2017-12-02,Warwick Stacey,Seniors United,342,0.39,https://en.wikipedia.org/wiki/2017_New_England_by-election
+fed,New England,2017-12-02,Jamie McIntyre,21st Century,222,0.25,https://en.wikipedia.org/wiki/2017_New_England_by-election
+fed,Bennelong,2017-12-16,John Alexander,Liberal,37898,45.04,https://en.wikipedia.org/wiki/2017_Bennelong_by-election
+fed,Bennelong,2017-12-16,Kristina Keneally,Labor,30085,35.75,https://en.wikipedia.org/wiki/2017_Bennelong_by-election
+fed,Bennelong,2017-12-16,Justin Alick,Greens,5688,6.76,https://en.wikipedia.org/wiki/2017_Bennelong_by-election
+fed,Bennelong,2017-12-16,Joram Richa,Conservatives,3609,4.29,https://en.wikipedia.org/wiki/2017_Bennelong_by-election
+fed,Bennelong,2017-12-16,Gui Dong Cao,Christian Democrats,2626,3.12,https://en.wikipedia.org/wiki/2017_Bennelong_by-election
+fed,Bennelong,2017-12-16,James Jansson,Science,1041,1.24,https://en.wikipedia.org/wiki/2017_Bennelong_by-election
+fed,Bennelong,2017-12-16,Wesley Folitarik,Sustainable Australia,995,1.18,https://en.wikipedia.org/wiki/2017_Bennelong_by-election
+fed,Bennelong,2017-12-16,Anthony Ziebell,Affordable Housing,742,0.88,https://en.wikipedia.org/wiki/2017_Bennelong_by-election
+fed,Bennelong,2017-12-16,Tony Robinson,Liberty Alliance,719,0.85,https://en.wikipedia.org/wiki/2017_Bennelong_by-election
+fed,Bennelong,2017-12-16,Chris Golding,Progressives,426,0.51,https://en.wikipedia.org/wiki/2017_Bennelong_by-election
+fed,Bennelong,2017-12-16,James Platter,People's Party,186,0.22,https://en.wikipedia.org/wiki/2017_Bennelong_by-election
+fed,Bennelong,2017-12-16,Anthony Fels,Non-Custodial Parents,132,0.16,https://en.wikipedia.org/wiki/2017_Bennelong_by-election
+fed,Batman,2018-03-17,Ged Kearney,Labor,36840,43.14,https://en.wikipedia.org/wiki/2018_Batman_by-election
+fed,Batman,2018-03-17,Alex Bhathal,Greens,33725,39.49,https://en.wikipedia.org/wiki/2018_Batman_by-election
+fed,Batman,2018-03-17,Kevin Bailey,Conservatives,5471,6.41,https://en.wikipedia.org/wiki/2018_Batman_by-election
+fed,Batman,2018-03-17,Miranda Smith,Animal Justice,2528,2.96,https://en.wikipedia.org/wiki/2018_Batman_by-election
+fed,Batman,2018-03-17,Yvonne Gentle,Rise Up Australia,2217,2.60,https://en.wikipedia.org/wiki/2018_Batman_by-election
+fed,Batman,2018-03-17,Teresa van Lieshout,Independent,1245,1.46,https://en.wikipedia.org/wiki/2018_Batman_by-election
+fed,Batman,2018-03-17,Debbie Robinson,Liberty Alliance,1186,1.39,https://en.wikipedia.org/wiki/2018_Batman_by-election
+fed,Batman,2018-03-17,Mark McDonald,Sustainable Australia,951,1.11,https://en.wikipedia.org/wiki/2018_Batman_by-election
+fed,Batman,2018-03-17,Adrian Whitehead,Independent,745,0.87,https://en.wikipedia.org/wiki/2018_Batman_by-election
+fed,Batman,2018-03-17,Tegan Burns,People's Party,496,0.58,https://en.wikipedia.org/wiki/2018_Batman_by-election
+fed,Braddon,2018-07-28,Brett Whiteley,Liberal,24645,39.26,https://en.wikipedia.org/wiki/2018_Braddon_by-election
+fed,Braddon,2018-07-28,Justine Keay,Labor,23218,36.98,https://en.wikipedia.org/wiki/2018_Braddon_by-election
+fed,Braddon,2018-07-28,Craig Garland,Independent,6633,10.57,https://en.wikipedia.org/wiki/2018_Braddon_by-election
+fed,Braddon,2018-07-28,Brett Neal,Shooters Fishers Farmers,2984,4.75,https://en.wikipedia.org/wiki/2018_Braddon_by-election
+fed,Braddon,2018-07-28,Jarrod Edwards,Greens,2518,4.01,https://en.wikipedia.org/wiki/2018_Braddon_by-election
+fed,Braddon,2018-07-28,Donna Gibbons,Independent,1533,2.44,https://en.wikipedia.org/wiki/2018_Braddon_by-election
+fed,Braddon,2018-07-28,Joshua Boag,Liberal Democrats,828,1.32,https://en.wikipedia.org/wiki/2018_Braddon_by-election
+fed,Braddon,2018-07-28,Bruno Strangio,People's Party,421,0.67,https://en.wikipedia.org/wiki/2018_Braddon_by-election
+fed,Fremantle,2018-07-28,Josh Wilson,Labor,33277,52.62,https://en.wikipedia.org/wiki/2018_Fremantle_by-election
+fed,Fremantle,2018-07-28,Dorinda Cox,Greens,10456,16.53,https://en.wikipedia.org/wiki/2018_Fremantle_by-election
+fed,Fremantle,2018-07-28,John Gray,Liberal Democrats,8916,14.10,https://en.wikipedia.org/wiki/2018_Fremantle_by-election
+fed,Fremantle,2018-07-28,Mark Staer,Christians,3350,5.30,https://en.wikipedia.org/wiki/2018_Fremantle_by-election
+fed,Fremantle,2018-07-28,Katrina Love,Animal Justice,3297,5.21,https://en.wikipedia.org/wiki/2018_Fremantle_by-election
+fed,Fremantle,2018-07-28,Jason Spanbroek,Independent,3239,5.12,https://en.wikipedia.org/wiki/2018_Fremantle_by-election
+fed,Fremantle,2018-07-28,James Harfouche,People's Party,708,1.12,https://en.wikipedia.org/wiki/2018_Fremantle_by-election
+fed,Longman,2018-07-28,Susan Lamb,Labor,35203,39.84,https://en.wikipedia.org/wiki/2018_Longman_by-election
+fed,Longman,2018-07-28,Trevor Ruthenberg,Liberal National,26170,29.61,https://en.wikipedia.org/wiki/2018_Longman_by-election
+fed,Longman,2018-07-28,Matthew Stephen,One Nation,14061,15.91,https://en.wikipedia.org/wiki/2018_Longman_by-election
+fed,Longman,2018-07-28,Gavin Behrens,Greens,4264,4.83,https://en.wikipedia.org/wiki/2018_Longman_by-election
+fed,Longman,2018-07-28,Jackie Perkins,Independent,2379,2.69,https://en.wikipedia.org/wiki/2018_Longman_by-election
+fed,Longman,2018-07-28,Lloyd Russell,Liberal Democrats,1762,1.99,https://en.wikipedia.org/wiki/2018_Longman_by-election
+fed,Longman,2018-07-28,Blair Verrier,Country,1387,1.57,https://en.wikipedia.org/wiki/2018_Longman_by-election
+fed,Longman,2018-07-28,Gregory Bell,Democratic Labour,1043,1.18,https://en.wikipedia.org/wiki/2018_Longman_by-election
+fed,Longman,2018-07-28,James Noonan,Science,970,1.10,https://en.wikipedia.org/wiki/2018_Longman_by-election
+fed,Longman,2018-07-28,Jim Saleam,Australia First,709,0.80,https://en.wikipedia.org/wiki/2018_Longman_by-election
+fed,Longman,2018-07-28,John Reece,People's Party,420,0.48,https://en.wikipedia.org/wiki/2018_Longman_by-election
+fed,Mayo,2018-07-28,Rebekha Sharkie,Centre Alliance,39369,44.37,https://en.wikipedia.org/wiki/2018_Mayo_by-election
+fed,Mayo,2018-07-28,Georgina Downer,Liberal,33219,37.44,https://en.wikipedia.org/wiki/2018_Mayo_by-election
+fed,Mayo,2018-07-28,Major Sumner,Greens,7898,8.90,https://en.wikipedia.org/wiki/2018_Mayo_by-election
+fed,Mayo,2018-07-28,Reg Coutts,Labor,5370,6.05,https://en.wikipedia.org/wiki/2018_Mayo_by-election
+fed,Mayo,2018-07-28,Tracey-Lee Cane,Christian Democrats,1348,1.52,https://en.wikipedia.org/wiki/2018_Mayo_by-election
+fed,Mayo,2018-07-28,Stephen Humble,Liberal Democrats,809,0.91,https://en.wikipedia.org/wiki/2018_Mayo_by-election
+fed,Mayo,2018-07-28,Kelsie Harfouche,People's Party,716,0.81,https://en.wikipedia.org/wiki/2018_Mayo_by-election
+fed,Wentworth,2018-10-20,Kerryn Phelps,Independent,22219,29.19,https://en.wikipedia.org/wiki/2018_Wentworth_by-election
+fed,Wentworth,2018-10-20,Dave Sharma,Liberal,32795,43.08,https://en.wikipedia.org/wiki/2018_Wentworth_by-election
+fed,Wentworth,2018-10-20,Tim Murray,Labor,8777,11.53,https://en.wikipedia.org/wiki/2018_Wentworth_by-election
+fed,Wentworth,2018-10-20,Dominic Wy Kanak,Greens,6543,8.59,https://en.wikipedia.org/wiki/2018_Wentworth_by-election
+fed,Wentworth,2018-10-20,Licia Heath,Independent,1721,2.26,https://en.wikipedia.org/wiki/2018_Wentworth_by-election
+fed,Wentworth,2018-10-20,Angela Vithoulkas,Independent,822,1.08,https://en.wikipedia.org/wiki/2018_Wentworth_by-election
+fed,Wentworth,2018-10-20,Andrea Leong,Science,516,0.68,https://en.wikipedia.org/wiki/2018_Wentworth_by-election
+fed,Wentworth,2018-10-20,Shayne Higson,Voluntary Euthanasia,493,0.65,https://en.wikipedia.org/wiki/2018_Wentworth_by-election
+fed,Wentworth,2018-10-20,Deb Doyle,Animal Justice,421,0.55,https://en.wikipedia.org/wiki/2018_Wentworth_by-election
+fed,Wentworth,2018-10-20,Kay Dunne,Sustainable Australia,413,0.54,https://en.wikipedia.org/wiki/2018_Wentworth_by-election
+fed,Wentworth,2018-10-20,Robert Callanan,Katter's Australian,381,0.50,https://en.wikipedia.org/wiki/2018_Wentworth_by-election
+fed,Wentworth,2018-10-20,Samuel Gunning,Liberal Democrats,351,0.46,https://en.wikipedia.org/wiki/2018_Wentworth_by-election
+fed,Wentworth,2018-10-20,Barry Keldoulis,Arts,305,0.40,https://en.wikipedia.org/wiki/2018_Wentworth_by-election
+fed,Wentworth,2018-10-20,Tony Robinson,Liberty Alliance,154,0.20,https://en.wikipedia.org/wiki/2018_Wentworth_by-election
+fed,Wentworth,2018-10-20,Ben Forsyth,Justice,133,0.17,https://en.wikipedia.org/wiki/2018_Wentworth_by-election
+fed,Wentworth,2018-10-20,Steven Georgantis,People's Party,82,0.11,https://en.wikipedia.org/wiki/2018_Wentworth_by-election
+qld,Bundamba,2020-03-28,Lance McCallum,Labor,9134,42.2,https://en.wikipedia.org/wiki/2020_Bundamba_state_by-election
+qld,Bundamba,2020-03-28,Sharon Bell,One Nation,6006,27.7,https://en.wikipedia.org/wiki/2020_Bundamba_state_by-election
+qld,Bundamba,2020-03-28,Robert Shearman,Liberal National,3589,16.6,https://en.wikipedia.org/wiki/2020_Bundamba_state_by-election
+qld,Bundamba,2020-03-28,Danielle Mutton,Greens,2924,13.5,https://en.wikipedia.org/wiki/2020_Bundamba_state_by-election
+qld,Currumbin,2020-03-28,Laura Gerber,Liberal National,10071,43.8,https://en.wikipedia.org/wiki/2020_Currumbin_state_by-election
+qld,Currumbin,2020-03-28,Kaylee Campradt,Labor,8790,38.2,https://en.wikipedia.org/wiki/2020_Currumbin_state_by-election
+qld,Currumbin,2020-03-28,Sally Spain,Greens,2530,11.0,https://en.wikipedia.org/wiki/2020_Currumbin_state_by-election
+qld,Currumbin,2020-03-28,Nicholas Bettany,One Nation,1594,6.9,https://en.wikipedia.org/wiki/2020_Currumbin_state_by-election
+nsw,Wagga Wagga,2018-09-08,Julia Ham,Liberal,12031,25.5,https://en.wikipedia.org/wiki/2018_Wagga_Wagga_state_by-election
+nsw,Wagga Wagga,2018-09-08,Joe McGirr,Independent,12003,25.4,https://en.wikipedia.org/wiki/2018_Wagga_Wagga_state_by-election
+nsw,Wagga Wagga,2018-09-08,Dan Hayes,Country Labor,11197,23.7,https://en.wikipedia.org/wiki/2018_Wagga_Wagga_state_by-election
+nsw,Wagga Wagga,2018-09-08,Paul Funnell,Independent,5028,10.6,https://en.wikipedia.org/wiki/2018_Wagga_Wagga_state_by-election
+nsw,Wagga Wagga,2018-09-08,Seb McDonagh,Shooters Fishers Farmers,4682,9.9,https://en.wikipedia.org/wiki/2018_Wagga_Wagga_state_by-election
+nsw,Wagga Wagga,2018-09-08,Ray Goodlass,Greens,1377,2.9,https://en.wikipedia.org/wiki/2018_Wagga_Wagga_state_by-election
+nsw,Wagga Wagga,2018-09-08,Tom Arentz,Christian Democrats,900,1.9,https://en.wikipedia.org/wiki/2018_Wagga_Wagga_state_by-election
+fed,Lyne,2008-09-06,Rob Oakeshott,Independent,47306,63.80,https://en.wikipedia.org/wiki/2008_Lyne_by-election
+fed,Lyne,2008-09-06,Rob Drew,National,16964,22.88,https://en.wikipedia.org/wiki/2008_Lyne_by-election
+fed,Lyne,2008-09-06,Susie Russell,Greens,5206,7.02,https://en.wikipedia.org/wiki/2008_Lyne_by-election
+fed,Lyne,2008-09-06,Bob Smith,Fishing Party,2566,3.46,https://en.wikipedia.org/wiki/2008_Lyne_by-election
+fed,Lyne,2008-09-06,Michael O'Donohue,Democratic Labor,853,1.15,https://en.wikipedia.org/wiki/2008_Lyne_by-election
+fed,Lyne,2008-09-06,Barry Wright,Independent,582,0.78,https://en.wikipedia.org/wiki/2008_Lyne_by-election
+fed,Lyne,2008-09-06,Stewart Scott-Irving,Independent,400,0.54,https://en.wikipedia.org/wiki/2008_Lyne_by-election
+fed,Lyne,2008-09-06,Graeme Muldoon,Citizens Electoral Council,270,0.36,https://en.wikipedia.org/wiki/2008_Lyne_by-election
+fed,Mayo,2008-09-06,Jamie Briggs,Liberal,30651,41.28,https://en.wikipedia.org/wiki/2008_Mayo_by-election
+fed,Mayo,2008-09-06,Lynton Vonow,Greens,15851,21.35,https://en.wikipedia.org/wiki/2008_Mayo_by-election
+fed,Mayo,2008-09-06,Di Bell,Independent,12081,16.27,https://en.wikipedia.org/wiki/2008_Mayo_by-election
+fed,Mayo,2008-09-06,Bob Day,Family First,8468,11.40,https://en.wikipedia.org/wiki/2008_Mayo_by-election
+fed,Mayo,2008-09-06,Mary Brewerton,Independent,1868,2.52,https://en.wikipedia.org/wiki/2008_Mayo_by-election
+fed,Mayo,2008-09-06,Bill Spragg,Independent,1545,2.08,https://en.wikipedia.org/wiki/2008_Mayo_by-election
+fed,Mayo,2008-09-06,David McCabe,Democratic Labor,1426,1.92,https://en.wikipedia.org/wiki/2008_Mayo_by-election
+fed,Mayo,2008-09-06,Andrew Castrique,Democrats,923,1.24,https://en.wikipedia.org/wiki/2008_Mayo_by-election
+fed,Mayo,2008-09-06,Rachael Barons,Climate Conservatives,725,0.98,https://en.wikipedia.org/wiki/2008_Mayo_by-election
+fed,Mayo,2008-09-06,Mathew Keizer,One Nation,503,0.68,https://en.wikipedia.org/wiki/2008_Mayo_by-election
+fed,Mayo,2008-09-06,Malcolm Ronald King,Independent,219,0.29,https://en.wikipedia.org/wiki/2008_Mayo_by-election
+fed,Gippsland,2008-06-28,Darren Chester,National,32971,39.60,https://en.wikipedia.org/wiki/2008_Gippsland_by-election
+fed,Gippsland,2008-06-28,Darren McCubbin,Labor,23652,28.41,https://en.wikipedia.org/wiki/2008_Gippsland_by-election
+fed,Gippsland,2008-06-28,Rohan Fitzgerald,Liberal,17249,20.72,https://en.wikipedia.org/wiki/2008_Gippsland_by-election
+fed,Gippsland,2008-06-28,Malcolm McKelvie,Greens,5862,7.04,https://en.wikipedia.org/wiki/2008_Gippsland_by-election
+fed,Gippsland,2008-06-28,Ben Buckley,Liberty & Democracy,3518,4.23,https://en.wikipedia.org/wiki/2008_Gippsland_by-election
+fed,Griffith,2014-02-08,Bill Glasson,Liberal National,34491,44.38,https://en.wikipedia.org/wiki/2014_Griffith_by-election
+fed,Griffith,2014-02-08,Terri Butler,Labor,30023,38.63,https://en.wikipedia.org/wiki/2014_Griffith_by-election
+fed,Griffith,2014-02-08,Geoff Ebbs,Greens,7635,9.82,https://en.wikipedia.org/wiki/2014_Griffith_by-election
+fed,Griffith,2014-02-08,Melanie Thomas,Pirate,1172,1.51,https://en.wikipedia.org/wiki/2014_Griffith_by-election
+fed,Griffith,2014-02-08,Ray Sawyer,Katter's Australian,821,1.06,https://en.wikipedia.org/wiki/2014_Griffith_by-election
+fed,Griffith,2014-02-08,Christopher Williams,Family First,729,0.94,https://en.wikipedia.org/wiki/2014_Griffith_by-election
+fed,Griffith,2014-02-08,Timothy Lawrence,Stable Population,666,0.86,https://en.wikipedia.org/wiki/2014_Griffith_by-election
+fed,Griffith,2014-02-08,Travis Windsor,Independent,656,0.84,https://en.wikipedia.org/wiki/2014_Griffith_by-election
+fed,Griffith,2014-02-08,Anthony Ackroyd,Bullet Train,602,0.77,https://en.wikipedia.org/wiki/2014_Griffith_by-election
+fed,Griffith,2014-02-08,Karel Boele,Independent,504,0.65,https://en.wikipedia.org/wiki/2014_Griffith_by-election
+fed,Griffith,2014-02-08,Anne Reid,Secular,424,0.55,https://en.wikipedia.org/wiki/2014_Griffith_by-election
+fed,Canning,2015-09-19,Andrew Hastie,Liberal,39712,46.92,https://en.wikipedia.org/wiki/2015_Canning_by-election
+fed,Canning,2015-09-19,Matt Keogh,Labor,30096,35.56,https://en.wikipedia.org/wiki/2015_Canning_by-election
+fed,Canning,2015-09-19,Vanessa Rauland,Greens,4967,5.87,https://en.wikipedia.org/wiki/2015_Canning_by-election
+fed,Canning,2015-09-19,Vimal Sharma,Palmer United,2600,3.07,https://en.wikipedia.org/wiki/2015_Canning_by-election
+fed,Canning,2015-09-19,Jamie van Burgel,Christians,2433,2.87,https://en.wikipedia.org/wiki/2015_Canning_by-election
+fed,Canning,2015-09-19,Katrina Love,Animal Justice,1195,1.41,https://en.wikipedia.org/wiki/2015_Canning_by-election
+fed,Canning,2015-09-19,Michelle Allen,Pirate,775,0.92,https://en.wikipedia.org/wiki/2015_Canning_by-election
+fed,Canning,2015-09-19,Greg Smith,Defence Veterans,690,0.82,https://en.wikipedia.org/wiki/2015_Canning_by-election
+fed,Canning,2015-09-19,Jim McCourt,Family First,623,0.74,https://en.wikipedia.org/wiki/2015_Canning_by-election
+fed,Canning,2015-09-19,Teresa van Lieshout,Independent,539,0.64,https://en.wikipedia.org/wiki/2015_Canning_by-election
+fed,Canning,2015-09-19,Angela Smith,Sustainable Population,513,0.61,https://en.wikipedia.org/wiki/2015_Canning_by-election
+fed,Canning,2015-09-19,Connor Whittle,Liberal Democrats,492,0.58,https://en.wikipedia.org/wiki/2015_Canning_by-election
+nsw,Canterbury,2016-11-12,Sophie Cotsis,Labor,27993,65.5,https://en.wikipedia.org/wiki/2016_Canterbury_state_by-election
+nsw,Canterbury,2016-11-12,Branka Kouroushis,Christian Democrats,8397,19.6,https://en.wikipedia.org/wiki/2016_Canterbury_state_by-election
+nsw,Canterbury,2016-11-12,Kristian Bodell,Greens,6393,14.9,https://en.wikipedia.org/wiki/2016_Canterbury_state_by-election
+nsw,Orange,2016-11-12,Scott Barrett,National,15267,31.58,https://en.wikipedia.org/wiki/2016_Orange_state_by-election
+nsw,Orange,2016-11-12,Philip Donato,Shooters Fishers Farmers,11487,23.76,https://en.wikipedia.org/wiki/2016_Orange_state_by-election
+nsw,Orange,2016-11-12,Bernard Fitzsimon,Country Labor,8865,18.34,https://en.wikipedia.org/wiki/2016_Orange_state_by-election
+nsw,Orange,2016-11-12,Scott Munro,Independent,4527,9.36,https://en.wikipedia.org/wiki/2016_Orange_state_by-election
+nsw,Orange,2016-11-12,Kevin Duffy,Independent,3182,6.58,https://en.wikipedia.org/wiki/2016_Orange_state_by-election
+nsw,Orange,2016-11-12,Janelle Bicknell,Greens,2739,5.67,https://en.wikipedia.org/wiki/2016_Orange_state_by-election
+nsw,Orange,2016-11-12,Dianne Decker,Christian Democrats,1633,3.38,https://en.wikipedia.org/wiki/2016_Orange_state_by-election
+nsw,Orange,2016-11-12,Ian Donald,Independent,644,1.33,https://en.wikipedia.org/wiki/2016_Orange_state_by-election
+nsw,Wollongong,2016-11-12,Paul Scully,Labor,23588,48.1,https://en.wikipedia.org/wiki/2016_Wollongong_state_by-election
+nsw,Wollongong,2016-11-12,Gordon Bradbery,Independent,16707,34.0,https://en.wikipedia.org/wiki/2016_Wollongong_state_by-election
+nsw,Wollongong,2016-11-12,Cath Blakey,Greens,5216,10.6,https://en.wikipedia.org/wiki/2016_Wollongong_state_by-election
+nsw,Wollongong,2016-11-12,Joe Rossi,Shooters Fishers Farmers,1793,3.7,https://en.wikipedia.org/wiki/2016_Wollongong_state_by-election
+nsw,Wollongong,2016-11-12,Colleen Baxter,Christian Democrats,1769,3.6,https://en.wikipedia.org/wiki/2016_Wollongong_state_by-election
+nsw,Gosford,2017-04-08,Liesl Tesch,Labor,22931,49.5,https://en.wikipedia.org/wiki/2017_Gosford_state_by-election
+nsw,Gosford,2017-04-08,Jilly Pilon,Liberal,14208,30.7,https://en.wikipedia.org/wiki/2017_Gosford_state_by-election
+nsw,Gosford,2017-04-08,Abigail Boyd,Greens,3454,7.5,https://en.wikipedia.org/wiki/2017_Gosford_state_by-election
+nsw,Gosford,2017-04-08,Larry Freeman,Shooters Fishers Farmers,2378,5.1,https://en.wikipedia.org/wiki/2017_Gosford_state_by-election
+nsw,Gosford,2017-04-08,Skyla Wagstaff,Animal Justice,1841,4.0,https://en.wikipedia.org/wiki/2017_Gosford_state_by-election
+nsw,Gosford,2017-04-08,Andrew Church,Christian Democrats,1475,3.2,https://en.wikipedia.org/wiki/2017_Gosford_state_by-election
+nsw,Blacktown,2017-10-14,Stephen Bali,Labor,31031,71.6,https://en.wikipedia.org/wiki/2017_Blacktown_state_by-election
+nsw,Blacktown,2017-10-14,Josh Green,Christian Democrats,6540,15.1,https://en.wikipedia.org/wiki/2017_Blacktown_state_by-election
+nsw,Blacktown,2017-10-14,Chris Winslow,Greens,3825,8.8,https://en.wikipedia.org/wiki/2017_Blacktown_state_by-election
+nsw,Blacktown,2017-10-14,Vivek Singha,Independent,1966,4.5,https://en.wikipedia.org/wiki/2017_Blacktown_state_by-election
+nsw,Cootamundra,2017-10-14,Steph Cooke,National,21093,46.2,https://en.wikipedia.org/wiki/2017_Cootamundra_state_by-election
+nsw,Cootamundra,2017-10-14,Charlie Sheahan,Labor,10930,24.0,https://en.wikipedia.org/wiki/2017_Cootamundra_state_by-election
+nsw,Cootamundra,2017-10-14,Matthew Stadtmiller,Shooters Fishers Farmers,10621,23.3,https://en.wikipedia.org/wiki/2017_Cootamundra_state_by-election
+nsw,Cootamundra,2017-10-14,Philip Langfield,Christian Democrats,1273,2.8,https://en.wikipedia.org/wiki/2017_Cootamundra_state_by-election
+nsw,Cootamundra,2017-10-14,Jeffrey Passlow,Greens,1238,2.7,https://en.wikipedia.org/wiki/2017_Cootamundra_state_by-election
+nsw,Cootamundra,2017-10-14,Jim Saleam,Independent,453,1.0,https://en.wikipedia.org/wiki/2017_Cootamundra_state_by-election
+nsw,Murray,2017-10-14,Austin Evans,National,18548,40.7,https://en.wikipedia.org/wiki/2017_Murray_state_by-election
+nsw,Murray,2017-10-14,Helen Dalton,Shooters Fishers Farmers,14332,31.5,https://en.wikipedia.org/wiki/2017_Murray_state_by-election
+nsw,Murray,2017-10-14,Michael Kidd,Labor,9324,20.5,https://en.wikipedia.org/wiki/2017_Murray_state_by-election
+nsw,Murray,2017-10-14,Brian Mills,Independent,1363,3.0,https://en.wikipedia.org/wiki/2017_Murray_state_by-election
+nsw,Murray,2017-10-14,Peter Robinson,Independent,1072,2.4,https://en.wikipedia.org/wiki/2017_Murray_state_by-election
+nsw,Murray,2017-10-14,Ray Goodlass,Greens,912,2.0,https://en.wikipedia.org/wiki/2017_Murray_state_by-election
+vic,Polwarth,2015-10-31,Richard Riordan,Liberal,17798,49.6,https://en.wikipedia.org/wiki/2015_Polwarth_state_by-election
+vic,Polwarth,2015-10-31,Joe Miles,Greens,5715,15.9,https://en.wikipedia.org/wiki/2015_Polwarth_state_by-election
+vic,Polwarth,2015-10-31,David O'Brien,National,4292,12.0,https://en.wikipedia.org/wiki/2015_Polwarth_state_by-election
+vic,Polwarth,2015-10-31,Carmel Kavanagh,Democratic Labour,2911,8.1,https://en.wikipedia.org/wiki/2015_Polwarth_state_by-election
+vic,Polwarth,2015-10-31,Meredith Doig,Sex Party,2140,6.0,https://en.wikipedia.org/wiki/2015_Polwarth_state_by-election
+vic,Polwarth,2015-10-31,Melinda Cass,Country,2043,5.7,https://en.wikipedia.org/wiki/2015_Polwarth_state_by-election
+vic,Polwarth,2015-10-31,Geoff Rogers,Christians,575,1.6,https://en.wikipedia.org/wiki/2015_Polwarth_state_by-election
+vic,Polwarth,2015-10-31,Brendan Eckel,Independent,373,1.0,https://en.wikipedia.org/wiki/2015_Polwarth_state_by-election
+vic,South-West Coast,2015-10-31,Roma Britnell,Liberal,15486,40.0,https://en.wikipedia.org/wiki/2015_South-West_Coast_state_by-election
+vic,South-West Coast,2015-10-31,Roy Reekie,Independent,6512,16.8,https://en.wikipedia.org/wiki/2015_South-West_Coast_state_by-election
+vic,South-West Coast,2015-10-31,Michael Neoh,National,5581,14.4,https://en.wikipedia.org/wiki/2015_South-West_Coast_state_by-election
+vic,South-West Coast,2015-10-31,Jim Doukas,Country,4005,10.3,https://en.wikipedia.org/wiki/2015_South-West_Coast_state_by-election
+vic,South-West Coast,2015-10-31,Thomas Campbell,Greens,2938,7.6,https://en.wikipedia.org/wiki/2015_South-West_Coast_state_by-election
+vic,South-West Coast,2015-10-31,Swampy Marsh,Independent,1137,2.9,https://en.wikipedia.org/wiki/2015_South-West_Coast_state_by-election
+vic,South-West Coast,2015-10-31,Pete Smith,Independent Liberal,695,1.8,https://en.wikipedia.org/wiki/2015_South-West_Coast_state_by-election
+vic,South-West Coast,2015-10-31,Rodney Van de Hoef,Independent,677,1.7,https://en.wikipedia.org/wiki/2015_South-West_Coast_state_by-election
+vic,South-West Coast,2015-10-31,Michael McCluskey,Independent,616,1.6,https://en.wikipedia.org/wiki/2015_South-West_Coast_state_by-election
+vic,South-West Coast,2015-10-31,Lillian Len,Christians,579,1.5,https://en.wikipedia.org/wiki/2015_South-West_Coast_state_by-election
+vic,South-West Coast,2015-10-31,Jennifer Gamble,Animal Justice,490,1.3,https://en.wikipedia.org/wiki/2015_South-West_Coast_state_by-election
+wa,Vasse,2014-09-03,Libby Mettam,Liberal,8805,44.3,https://en.wikipedia.org/wiki/2014_Vasse_state_by-election
+wa,Vasse,2014-09-03,Peter Gordon,National,5656,28.5,https://en.wikipedia.org/wiki/2014_Vasse_state_by-election
+wa,Vasse,2014-09-03,Michael Baldock,Greens,3567,18.0,https://en.wikipedia.org/wiki/2014_Vasse_state_by-election
+wa,Vasse,2014-09-03,Peter Johnson,Independent,873,4.4,https://en.wikipedia.org/wiki/2014_Vasse_state_by-election
+wa,Vasse,2014-09-03,Wayne Barnett,Christians,686,3.5,https://en.wikipedia.org/wiki/2014_Vasse_state_by-election
+wa,Vasse,2014-09-03,Teresa van Lieshout,Independent,274,1.4,https://en.wikipedia.org/wiki/2014_Vasse_state_by-election
+wa,Cottesloe,2018-02-05,David Honey,Liberal,10872,59.9,https://en.wikipedia.org/wiki/2018_Cottesloe_state_by-election
+wa,Cottesloe,2018-02-05,Greg Boland,Greens,3555,19.6,https://en.wikipedia.org/wiki/2018_Cottesloe_state_by-election
+wa,Cottesloe,2018-02-05,Ron Norris,Western Australia Party,1636,9.0,https://en.wikipedia.org/wiki/2018_Cottesloe_state_by-election
+wa,Cottesloe,2018-02-05,Michael Tucak,Independent,977,5.4,https://en.wikipedia.org/wiki/2018_Cottesloe_state_by-election
+wa,Cottesloe,2018-02-05,Cam Tinley,Micro Business,605,3.3,https://en.wikipedia.org/wiki/2018_Cottesloe_state_by-election
+wa,Cottesloe,2018-02-05,Michael Thomas,Independent,402,2.2,https://en.wikipedia.org/wiki/2018_Cottesloe_state_by-election
+wa,Cottesloe,2018-02-05,Dmitry Malov,Independent,112,0.6,https://en.wikipedia.org/wiki/2018_Cottesloe_state_by-election
+wa,Darling Range,2018-05-08,Alyssa Hayden,Liberal,8418,34.5,https://en.wikipedia.org/wiki/2018_Darling_Range_state_by-election
+wa,Darling Range,2018-05-08,Tania Lawrence,Labor,7809,32.0,https://en.wikipedia.org/wiki/2018_Darling_Range_state_by-election
+wa,Darling Range,2018-05-08,Rod Caddies,One Nation,1894,7.8,https://en.wikipedia.org/wiki/2018_Darling_Range_state_by-election
+wa,Darling Range,2018-05-08,Anthony Pyle,Greens,1427,5.8,https://en.wikipedia.org/wiki/2018_Darling_Range_state_by-election
+wa,Darling Range,2018-05-08,Russell Goodrick,Western Australia Party,1413,5.8,https://en.wikipedia.org/wiki/2018_Darling_Range_state_by-election
+wa,Darling Range,2018-05-08,Eric Eikelboom,Christians,1145,4.7,https://en.wikipedia.org/wiki/2018_Darling_Range_state_by-election
+wa,Darling Range,2018-05-08,Stuart Ostle,Shooters Fishers Farmers,1112,4.6,https://en.wikipedia.org/wiki/2018_Darling_Range_state_by-election
+wa,Darling Range,2018-05-08,Jehni Thomas-Wurth,Animal Justice,803,3.3,https://en.wikipedia.org/wiki/2018_Darling_Range_state_by-election
+wa,Darling Range,2018-05-08,Doug Shaw,Independent,146,0.6,https://en.wikipedia.org/wiki/2018_Darling_Range_state_by-election
+wa,Darling Range,2018-05-08,George O'Byrne,Independent,137,0.5,https://en.wikipedia.org/wiki/2018_Darling_Range_state_by-election
+wa,Darling Range,2018-05-08,John Watt,Fluoride Free WA,106,0.4,https://en.wikipedia.org/wiki/2018_Darling_Range_state_by-election

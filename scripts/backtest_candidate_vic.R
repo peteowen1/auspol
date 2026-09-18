@@ -514,6 +514,16 @@ for (K in PAIRS) {
   }
   .split <- split_slope_context(.ea, .eb)
   .own_prev <- if (.cond) tryCatch(personal_prior_vote(.ea, .eb, major_discount = .defect, minor_discount = .minor_disc, minor_discount_loser = .minor_disc_loser), error = function(e) { cat(sprintf("BV1p! personal_prior_vote() FAILED; class-level bases kept and NO transfer removed: %s\n", conditionMessage(e))); NULL }) else NULL
+  # BY-ELECTION AS THE SEAT BASELINE (AUSPOL_BYELECTION_PRIOR=1): a by-election between the two
+  # general elections where both majors stood replaces the seat's prior row (R/byelection_prior.R,
+  # external/reference/byelections/byelection-results.csv). docs/plans/prereg-byelection-prior-2026-09-18.md
+  if (Sys.getenv("AUSPOL_BYELECTION_PRIOR", "0") %in% c("1", "blend")) {
+    mat <- tryCatch(byelection_prior(mat, .ea, .eb, weight = if (identical(Sys.getenv("AUSPOL_BYELECTION_PRIOR"), "blend")) 0.5 else 1), error = function(e) { cat(sprintf("BF0b! by-election prior FAILED, prior kept: %s\n", conditionMessage(e))); mat })
+    .by <- attr(mat, "byelection")
+    if (!is.null(.by)) cat(sprintf("BF0b by-election prior: %d seat(s) replaced%s%s\n", length(.by$applied),
+                                  if (length(.by$applied)) paste0(" (", paste(.by$applied, collapse = ", "), ")") else "",
+                                  if (length(.by$skipped)) paste0("; SKIPPED ", paste(.by$skipped, collapse = ", ")) else ""))
+  }
   mat <- remove_transferred_votes(mat, .own_prev)  # the vote moves with the person; see personal_prior_vote()
   mat <- (function(m) {
     # A DEPARTED DEFECTOR'S VOTE GOES HOME (AUSPOL_DEPARTED_ORIGIN: "1" = leave-
@@ -917,10 +927,14 @@ for (K in PAIRS) {
         surge_mu_arg <- .xs$surge_mu; surge_sd_arg <- .xs$surge_sd
       }
     }
+    # HOW-TO-VOTE CARD (AUSPOL_HTV_FLOW=1): the Liberal-excluded, ALP+GRN-alive flow rows follow the recorded
+    # card order for this election (R/htv_flow.R, external/reference/htv/liberal-alp-grn-order.csv).
+    .htv_ov <- if (identical(Sys.getenv("AUSPOL_HTV_FLOW", "0"), "1")) tryCatch(htv_flow_override(.xgb_flow_ov, fm, sprintf("vic%d", K$to), rownames(shares)),
+      error = function(e) { cat(sprintf("HTV9! how-to-vote override FAILED, flow rows unchanged: %s\n", conditionMessage(e))); .xgb_flow_ov }) else .xgb_flow_ov
     sim <- simulate_seat_contests(level_sd = .level_sd, sd_override = SD_OVR, level_mult = .lm(shares), shares, fm, party_sd = psd,
                                   seat_sd = sp$sd_within * SEAT_SD_MULT, n_sims = N_SIMS,
                                   smooth = SMOOTH, seed = SEED, party_cor = PARTY_COR,
-                                  shrink = SHRINK, conditional_override = .xgb_flow_ov, conditional_override_sd = attr(.xgb_flow_ov, "sd"),
+                                  shrink = SHRINK, conditional_override = .htv_ov, conditional_override_sd = attr(.htv_ov, "sd"),
                                   fallback_smooth = FB_SMOOTH, shrink_k = SHRINK_K, flow_sd = FLOW_SD,
                                 surge_h = surge_arg, surge_party = surge_party_arg,
                                 surge_from_zero = identical(Sys.getenv("AUSPOL_SURGE_FROM_ZERO", "0"), "1"), surge_mu = surge_mu_arg, surge_sd = surge_sd_arg)

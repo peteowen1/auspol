@@ -491,6 +491,16 @@ for (K in PAIRS) {
                       collapse = ", ")) else ""))
     }
   }
+  # BY-ELECTION AS THE SEAT BASELINE (AUSPOL_BYELECTION_PRIOR=1): a by-election between the two
+  # general elections where both majors stood replaces the seat's prior row (R/byelection_prior.R,
+  # external/reference/byelections/byelection-results.csv). docs/plans/prereg-byelection-prior-2026-09-18.md
+  if (Sys.getenv("AUSPOL_BYELECTION_PRIOR", "0") %in% c("1", "blend")) {
+    mat <- tryCatch(byelection_prior(mat, el_from, el_to, weight = if (identical(Sys.getenv("AUSPOL_BYELECTION_PRIOR"), "blend")) 0.5 else 1), error = function(e) { cat(sprintf("BF0b! by-election prior FAILED, prior kept: %s\n", conditionMessage(e))); mat })
+    .by <- attr(mat, "byelection")
+    if (!is.null(.by)) cat(sprintf("BF0b by-election prior: %d seat(s) replaced%s%s\n", length(.by$applied),
+                                  if (length(.by$applied)) paste0(" (", paste(.by$applied, collapse = ", "), ")") else "",
+                                  if (length(.by$skipped)) paste0("; SKIPPED ", paste(.by$skipped, collapse = ", ")) else ""))
+  }
   mat <- remove_transferred_votes(mat, .own_prev)
   mat <- (function(m) {
     # A DEPARTED DEFECTOR'S VOTE GOES HOME (AUSPOL_DEPARTED_ORIGIN: "1" = leave-
@@ -730,11 +740,15 @@ for (K in PAIRS) {
       surge_mu_arg <- .xs$surge_mu; surge_sd_arg <- .xs$surge_sd
     }
   }
+  # HOW-TO-VOTE CARD (AUSPOL_HTV_FLOW=1): the Liberal-excluded, ALP+GRN-alive flow rows follow the recorded
+  # card order for this election (R/htv_flow.R, external/reference/htv/liberal-alp-grn-order.csv).
+  .htv_ov <- if (identical(Sys.getenv("AUSPOL_HTV_FLOW", "0"), "1")) tryCatch(htv_flow_override(.xgb_flow_ov, fm, el_to, rownames(shares)),
+    error = function(e) { cat(sprintf("HTV9! how-to-vote override FAILED, flow rows unchanged: %s\n", conditionMessage(e))); .xgb_flow_ov }) else .xgb_flow_ov
   sim <- simulate_seat_contests(level_sd = .level_sd, sd_override = SD_OVR, level_mult = .lm(shares), shares, fm, party_sd = psd,
                                 seat_sd = sd_used * SEAT_SD_MULT,
                                 n_sims = N_SIMS, smooth = SMOOTH, seed = SEED,
                                 shrink = SHRINK, fallback_smooth = FB_SMOOTH, shrink_k = SHRINK_K,
-                                conditional_override = .xgb_flow_ov, conditional_override_sd = attr(.xgb_flow_ov, "sd"),
+                                conditional_override = .htv_ov, conditional_override_sd = attr(.htv_ov, "sd"),
                                 # WA passed only the SCALAR surge_h and never
                                 # surge_party/mu/sd, because it has no salience
                                 # corpus and so never had surge-v2 -- a

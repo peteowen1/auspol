@@ -153,6 +153,20 @@ PUBLISHED_FLAGS <- c(
                                              # elections only (scripts/fit_xgb_flows_asat.R, output/xgb-flows-v1-asat-<election>.model),
                                              # not the leave-one-election-out model that sees later elections. Same leak, same fix as
                                              # AUSPOL_XGB_PRIMARY_OOF. Not a scored change: an honest number replacing a leaked one.
+  AUSPOL_HTV_FLOW            = "1",          # SHIPPED 2026-09-18 (docs/plans/prereg-htv-flow-2026-09-18.md): the Liberal how-to-vote card
+                                             # order for ALP-v-GRN seats (external/reference/htv/liberal-alp-grn-order.csv) selects the
+                                             # Liberal-excluded, ALP+GRN-alive flow row -- 35% to ALP when the card puts Greens above Labor,
+                                             # ~61% otherwise, both fitted leave-target-out from the transfer files. R/htv_flow.R. Measured
+                                             # base_pred-only, 20k sims: real-pairing 2CP error on ALP-v-GRN seats 6.19 -> 5.08 (n=26, SE
+                                             # 0.32), other pairings unchanged, pooled log loss 0.2945 -> 0.2938. No entry for an election
+                                             # (wa, sa, vic2026 until the cards are out) = unchanged.
+  AUSPOL_BYELECTION_PRIOR    = "blend",      # SHIPPED 2026-09-18 as a HALF BLEND (docs/plans/prereg-byelection-prior-2026-09-18.md): a by-election held
+                                             # between the two general elections, where both majors stood, replaces that seat's prior row
+                                             # (external/reference/byelections/byelection-results.csv, R/byelection_prior.R). Black sa2026,
+                                             # Werribee/Mulgrave for the live vic2026 run. A by-election a major skipped is not used. Full
+                                             # replacement ("1") was REFUSED: protest swings revert (Inala, Ipswich West, Upper Hunter), error
+                                             # +0.59 on 17 seats. "blend" = half by-election, half general election: error 2.78 -> 2.44 (SE
+                                             # 0.24), pooled log loss 0.2945 -> 0.2936. Black 34.2 -> ~38 on ALP (actual 43.0).
   AUSPOL_FLOW_FRAG           = "1",          # 1 = the flow model also sees lead_primary, the seat's LEADING
                                              # first-preference share. Flows track how fragmented the field is,
                                              # not how close the contest is: the 2CP margin's slope collapses

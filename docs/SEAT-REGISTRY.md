@@ -27,6 +27,11 @@ file is the durable copy.
   `reviews/minor-defector-two-rate-2026-09-17.md`. One residual observation
   for a possible minor-defector "conserve" rule: ONP kept 11.9 with a new
   candidate where we gave them 0.9 (all of Andrew's vote moved with him).
+- **Inala, Ipswich West, Stretton, Callide** (by-elections 2021-24) —
+  full replacement by the by-election baseline is WRONG here: Inala's
+  2024 by-election put ALP at 37 and the general put them back at 47;
+  Ipswich West's LNP 40 fell to 34. Protest swings revert. 2026-09-18,
+  `plans/prereg-byelection-prior-2026-09-18.md`.
 - **South Brisbane** — same how-to-vote mechanism as the Victorian ALP v
   GRN seats, other direction. Our flow (learned from qld2020, when the LNP
   put the Greens above Labor: 36% to ALP) on the ACTUAL 2024 primaries gives
@@ -148,6 +153,11 @@ file is the durable copy.
 - **Auburn, Parramatta, Heathcote** — western-Sydney swing to ALP far beyond
   the statewide swing (Auburn ALP 48.8 vs 60.1). Pattern 3 in the 2026-09-18
   dig (NSW landslide); same shape as Higgins/Tangney. **OPEN**, swing model.
+- **Bega, Monaro, Strathfield, Upper Hunter** (by-elections 2021-22) —
+  the 2022 by-election baseline helps Bega (ALP 34.2 -> 44.4 vs 45.1) and
+  Monaro but hurts Upper Hunter (the 2021 One Nation and Shooters protest
+  vote reverted). Half of the by-election evidence, not all of it, is the
+  live question. 2026-09-18.
 - **Port Macquarie** (and **wa2025 Roe**) — Liberal v National final two;
   `classify_party()` puts both in one LNP class so no TCP can be scored. AEF
   has the identical limitation. **PARKED** (Pete, 2026-09-18), excluded from
@@ -159,9 +169,14 @@ file is the durable copy.
   Alex Dighton won the 2024 by-election, then held in 2026 (43.2) with
   Speirs back as an IND (14.1). Our base_pred has ALP 34.7 (no by-election
   in the baseline) and IND 16.6, and the as-at xgb model then pushed the
-  IND to 27.4. Two things: by-election results are knowable and unused as
-  the seat baseline; and the xgb IND boost is worth a SHAP look. Pattern C
-  in `reviews/worst-seats-five-patterns-2026-09-13.md`.
+  IND to 27.4. Tested 2026-09-18 with the 2024 by-election (Dighton ALP
+  47.9) as the seat baseline (`AUSPOL_BYELECTION_PRIOR`): Black itself
+  improves (ALP 34.2 -> 41.6 vs 43.0 actual, log loss down) but full
+  replacement fails across the 17 by-election seats because protest
+  swings revert (see Inala, Ipswich West below); a half blend is the
+  declared follow-up. `plans/prereg-byelection-prior-2026-09-18.md`. The
+  xgb IND boost is still worth a SHAP look. Pattern C in
+  `reviews/worst-seats-five-patterns-2026-09-13.md`.
 - **Kavel** — Dan Cregan (Liberal 48.1 in 2022, IND 50.5 in 2022 as a
   defector) fell to 21.4 as the One Nation surge took the right vote. We
   gave him 45. AEF gave 21.7. The One Nation surge in SA is the parked

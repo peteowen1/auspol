@@ -63,9 +63,24 @@ run_wave() {  # $1 = XGB_PRIMARY value, $2 = log tag, then "harness:ENV=val" spe
   for p in "${pids[@]}"; do wait "$p" || fail=1; done
   if [ "$fail" -ne 0 ]; then echo "!! a harness failed -- see $LOG/${tag}_*.log"; exit 1; fi
 }
+free_gb() { local v; v=$(powershell.exe -Command "[int]((Get-CimInstance Win32_OperatingSystem).FreePhysicalMemory/1MB)" 2>/dev/null | tr -d '\r\n'); case "$v" in ""|*[!0-9]*) echo 0 ;; *) echo "$v" ;; esac; }
 run6() {  # $1 = XGB_PRIMARY value, $2 = log tag -- all 23 pairs across the six harnesses
-  run_wave "$1" "$2" fed wa vic nsw:AUSPOL_NSW_PAIR=2023 qld:AUSPOL_QLD_PAIR=2024 sa:AUSPOL_SA_PAIR=2026
-  run_wave "$1" "$2" nsw:AUSPOL_NSW_PAIR=2019 qld:AUSPOL_QLD_PAIR=2020 sa:AUSPOL_SA_PAIR=2022
+  # Six harnesses in parallel need ~10GB free at 20,000 sims (fed peaks ~2.3GB). On
+  # 2026-09-18 23:40 a six-wide wave was killed by the memory watchdog with 4GB free
+  # (Chrome + other Claude sessions held the rest); waves of two fit. Measured, not
+  # guessed: the threshold is what the killed and the surviving runs had.
+  local fg; fg=$(free_gb)
+  if [ "${fg:-0}" -ge 10 ]; then
+    run_wave "$1" "$2" fed wa vic nsw:AUSPOL_NSW_PAIR=2023 qld:AUSPOL_QLD_PAIR=2024 sa:AUSPOL_SA_PAIR=2026
+    run_wave "$1" "$2" nsw:AUSPOL_NSW_PAIR=2019 qld:AUSPOL_QLD_PAIR=2020 sa:AUSPOL_SA_PAIR=2022
+  else
+    echo "!! only ${fg}GB free -- running the harnesses two at a time (slower, survives the memory watchdog)"
+    run_wave "$1" "$2" fed vic
+    run_wave "$1" "$2" wa nsw:AUSPOL_NSW_PAIR=2023
+    run_wave "$1" "$2" qld:AUSPOL_QLD_PAIR=2024 sa:AUSPOL_SA_PAIR=2026
+    run_wave "$1" "$2" nsw:AUSPOL_NSW_PAIR=2019 qld:AUSPOL_QLD_PAIR=2020
+    run_wave "$1" "$2" sa:AUSPOL_SA_PAIR=2022
+  fi
 }
 
 stage "1-harnesses-base_pred"; run6 0 s1; done_stage "1-harnesses-base_pred"
@@ -86,3 +101,8 @@ total=0; for k in "${!TT[@]}"; do total=$(( total + TT[$k] )); done
 for k in $(printf '%s\n' "${!TT[@]}" | sort); do printf '  %-26s %6ds  %3d%%\n' "$k" "${TT[$k]}" $(( 100 * TT[$k] / total )); done
 echo "  total: ${total}s"
 grep -h "^XA4  pooled\|^FT1\|^AEFL5" "$LOG/s4_asat.log" "$LOG/s7_forecasts.log" "$LOG/s8_ledger.log" 2>/dev/null || true
+# THE INPUTS THAT CAN SILENTLY DO NOTHING, said out loud at the end: a missing how-to-vote or
+# by-election table, a fit that could not be made, a seat that did not match. Review gate 2026-09-19.
+echo; echo "=== input-switch coverage (stage 6 logs) ==="
+grep -h "^HTV0!\|^HTV9!\|^BF0b!\|^BF0o!\|^BF0m!\|SKIPPED" "$LOG"/s6_*.log 2>/dev/null | sort | uniq -c | sort -rn | head -20 || true
+grep -h "^HTV1\|^BF0b " "$LOG"/s6_*.log 2>/dev/null | sed "s/ (.*//" | sort | uniq -c | head -30 || true
