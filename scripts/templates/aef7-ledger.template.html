@@ -250,7 +250,25 @@
   </details>
 
   <details class="provlog">
-    <summary>Provenance &amp; changelog <span class="n">(19 updates)</span></summary>
+    <summary>Provenance &amp; changelog <span class="n">(20 updates)</span></summary>
+    <p class="sub prov"><b>Two major-party slope tiers shipped from the worst-seat pass, 18 Sep 2026 evening.</b> Working
+       through the worst seats on v32 with the pipeline now trustworthy: (1) a major party whose sitting member did not
+       re-stand was over-predicted by 2.8 points on 361 seat-elections (SE 0.35), because ALP and Liberal/National classes
+       had NO same/new slope tier at all -- they always projected their full base. <code>AUSPOL_MAJOR_DEPARTED</code>: a
+       fitted, leave-target-out slope (ALP 0.60, LNP 0.65) on the deviation from the statewide level for those cells.
+       Measured base_pred-only: their error 5.37 &rarr; 4.66 points (SE 0.11), Parramatta 2.20 &rarr; 1.47, Monaro 2.66
+       &rarr; 1.98. (2) every OTHER major-party cell regresses toward the level too (a major predicted under 15 lands 3.4
+       higher on average, over 55 lands 1.6 lower): <code>AUSPOL_MAJOR_SLOPE</code>, fitted 0.95 / 0.89. Both
+       pre-registered, both cleared their criteria, both in this full 20,000-sim rebuild. <b>Pooled seat log loss 0.2735
+       &rarr; 0.2715</b> (AEF 0.2851); winner-primary RMSE 5.94 &rarr; 5.52; weighted primary RMSE 4.79 &rarr; 4.75.
+       Per pair: fed2022 0.2821&rarr;0.2762, nsw2023 0.2309&rarr;0.2225, vic2022 0.2605&rarr;0.2537, sa2026 0.3234&rarr;0.3196,
+       fed2025 flat, qld2024 0.3446&rarr;0.3493, wa2025 0.2630&rarr;0.2711. Also tested and left OFF: routing a departed
+       defector's vote back to their origin party (Morwell 1.86 &rarr; 1.03 but 15 cases missed the criterion by 0.06 SE).
+       Also found and NOT yet in this build: the flow model was leave-one-election-out (sees later elections); an as-at
+       version is trained and shipped and lands in the next rebuild. And a data gap behind Footscray/Richmond/Brunswick/
+       South Brisbane: Liberal how-to-vote cards flipped their ALP-v-Greens order between elections (58% to ALP in
+       vic2018, 35% in vic2022) and the model has no input for it. Every seat's verdict is now in
+       <code>docs/SEAT-REGISTRY.md</code>.</p>
     <p class="sub prov"><b>This page is now built by the PRODUCTION pipeline, frozen "as at" each election. Pete's
        rule, 18 Sep 2026: one pipeline, not two.</b> Until now the backtests behind every number here read a static
        leave-one-election-out xgb cache that (a) trained on elections AFTER the one being predicted and (b) froze an

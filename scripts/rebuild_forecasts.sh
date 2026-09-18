@@ -13,6 +13,8 @@
 #      diagnostic now, not what ships)
 #   4. fit_xgb_primary_asat.R                   -> one model per election, "as
 #      at" the day before it, and the predictions file the harnesses read
+#   4b. fit_xgb_flows_asat.R                 -> one flow model per election from earlier
+#      elections only (read under AUSPOL_FLOW_ASAT=1; skips models already current)
 #   5. fit_xgb_primary_v6_final.R               -> the PRODUCTION model, same
 #      recipe, cutoff = now, same features vintage
 #   6. six harnesses at shipped flags (AUSPOL_XGB_PRIMARY=1 reading the as-at
@@ -70,6 +72,7 @@ stage "1-harnesses-base_pred"; run6 0 s1; done_stage "1-harnesses-base_pred"
 stage "2-pool-sharedetail";    Rscript scripts/pool_sharedetail.R      > "$LOG/s2_pool.log" 2>&1; done_stage "2-pool-sharedetail"
 stage "3-features";            Rscript scripts/fit_xgb_primary_v6.R    > "$LOG/s3_v6.log"   2>&1; done_stage "3-features"
 stage "4-asat-models";         Rscript scripts/fit_xgb_primary_asat.R  > "$LOG/s4_asat.log" 2>&1; done_stage "4-asat-models"
+stage "4b-asat-flow-models";   Rscript scripts/fit_xgb_flows_asat.R    > "$LOG/s4b_flows.log" 2>&1; done_stage "4b-asat-flow-models"
 stage "5-production-model";    Rscript scripts/fit_xgb_primary_v6_final.R > "$LOG/s5_final.log" 2>&1; done_stage "5-production-model"
 stage "6-harnesses-shipped";   run6 1 s6; done_stage "6-harnesses-shipped"
 stage "7-pool-and-forecasts";  Rscript scripts/pool_backtests.R        > "$LOG/s7_pool.log" 2>&1

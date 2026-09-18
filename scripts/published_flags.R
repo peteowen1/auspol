@@ -149,6 +149,10 @@ PUBLISHED_FLAGS <- c(
                                              #
                                              # Costs ~3x runtime per pair. Set to "0" to revert; no other change
                                              # needed. docs/reviews/xgb-primary-x-flows-2x2-2026-09-11.md
+  AUSPOL_FLOW_ASAT           = "1",          # SHIPPED 2026-09-18: the per-election flow model the harnesses read is trained on EARLIER
+                                             # elections only (scripts/fit_xgb_flows_asat.R, output/xgb-flows-v1-asat-<election>.model),
+                                             # not the leave-one-election-out model that sees later elections. Same leak, same fix as
+                                             # AUSPOL_XGB_PRIMARY_OOF. Not a scored change: an honest number replacing a leaked one.
   AUSPOL_FLOW_FRAG           = "1",          # 1 = the flow model also sees lead_primary, the seat's LEADING
                                              # first-preference share. Flows track how fragmented the field is,
                                              # not how close the contest is: the 2CP margin's slope collapses

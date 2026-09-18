@@ -91,7 +91,14 @@ for that cell conditioned on it. For vic2026 this is worth ~8 points of 2CP
 in every inner-Melbourne ALP v GRN seat the moment the Liberal cards are
 published. Kooyong and Cottesloe are NOT flow (checked): teal primaries.
 
-**Also found: the xgb flow models are leave-one-election-out, not as-at**
+**Ledger v33 published from the full rebuild with both tiers (18:55): seat
+log loss 0.2735 -> 0.2715 (AEF 0.2851), winner-primary RMSE 5.94 -> 5.52.**
+
+**Flow models now as-at, SHIPPED 2026-09-18 evening** (`AUSPOL_FLOW_ASAT` = 1,
+`scripts/fit_xgb_flows_asat.R`, stage 4b of the driver, 21 models; resumable
+and skips models already current). Not in v33; the next rebuild carries it.
+
+**Was: the xgb flow models are leave-one-election-out, not as-at**
 (`xgb-flows-v1-loo-<election>.model` trains on later elections). Same leak
 shape as the primary cache replaced today. OPEN: `fit_xgb_flows_asat.R`
 mirroring `fit_xgb_primary_asat.R`, as a stage of `rebuild_forecasts.sh`.

@@ -6,6 +6,21 @@
 # existed. The feature COLUMNS file is shared -- a variant that changed the
 # feature set would need its own, and this is asserted rather than assumed
 # by the column check `predict()` already performs on the matrix it is given.
+# Which as-at flow model applies, or NULL when AUSPOL_FLOW_ASAT is off.
+# AUSPOL_FLOW_ASAT=1 prefers output/xgb-flows-v1-asat-<election>.model; when
+# the election has none (fewer than AUSPOL_ASAT_MIN_PAIRS earlier elections)
+# this returns "__none__" and the override returns NULL, so the pooled flow
+# table applies -- the same failure-open path as a missing model today.
+.flow_asat_model <- function(target_election) {
+  if (!identical(Sys.getenv("AUSPOL_FLOW_ASAT", "0"), "1")) return(NULL)
+  f <- sprintf("output/xgb-flows-v1-asat-%s.model", target_election)
+  if (file.exists(f)) {
+    cat(sprintf("XF9  as-at flow model for %s: %s\n", target_election, f))
+    return(f)
+  }
+  cat(sprintf("XF9  no as-at flow model for %s (too few earlier elections) -- pooled flow table applies\n", target_election))
+  "__none__"
+}
 .flow_model_tag <- function() {
   t <- Sys.getenv("AUSPOL_FLOW_MODEL_TAG", "")
   if (nzchar(t)) paste0("-", t) else ""
@@ -41,10 +56,17 @@ xgb_flow_conditional_for <- function(target_election, prev_election, region, min
   # comment for why the all-data model is a leaked backtest.
   loo_f   <- sprintf("output/xgb-flows-v1%s-loo-%s.model", .flow_model_tag(), target_election)
   model_f <- if (file.exists(loo_f)) loo_f else "output/xgb-flows-v1-final.model"
-  if (!identical(model_f, loo_f))
+  # AS-AT (AUSPOL_FLOW_ASAT=1, shipped 2026-09-18): the leave-one-election-out
+  # model still trains on LATER elections; scripts/fit_xgb_flows_asat.R
+  # writes one model per election from earlier elections only. The earliest
+  # four elections have no as-at model and use the pooled flow table.
+  .asat <- .flow_asat_model(target_election)
+  if (!is.null(.asat)) model_f <- .asat
+  if (is.null(.asat) && !identical(model_f, loo_f))
     cat(sprintf("XF9! %s not found -- falling back to the ALL-DATA model, which SAW %s in training. This arm is LEAKED; run scripts/fit_xgb_flows_loo.R.\n",
                 loo_f, target_election))
   cols_f  <- "output/xgb-flows-v1-final-cols.json"
+  if (identical(model_f, "__none__")) return(NULL)
   if (!file.exists(model_f) || !file.exists(cols_f)) {
     cat(sprintf("XF9! %s / %s missing -- run scripts/fit_xgb_flows_v1.R; AUSPOL_XGB_FLOWS ignored\n", model_f, cols_f))
     return(NULL)
@@ -164,7 +186,10 @@ xgb_flow_conditional_override_for <- function(shares, target_election, prev_elec
   cols_f  <- "output/xgb-flows-v1-final-cols.json"
   feat_f  <- "output/xgb-flows-v1-features.csv"
   model_f <- if (file.exists(loo_f)) loo_f else "output/xgb-flows-v1-final.model"
-  if (identical(model_f, loo_f)) {
+  .asat <- .flow_asat_model(target_election)
+  if (!is.null(.asat)) {
+    model_f <- .asat
+  } else if (identical(model_f, loo_f)) {
     cat(sprintf("XF9  leave-one-election-out flow model for %s: %s\n", target_election, loo_f))
   } else {
     # NOT EVERY MISSING LOO MODEL IS A LEAK. An election with no transfer file
@@ -186,6 +211,7 @@ xgb_flow_conditional_override_for <- function(shares, target_election, prev_elec
                   target_election))
     }
   }
+  if (identical(model_f, "__none__")) return(NULL)
   if (!file.exists(model_f) || !file.exists(cols_f) || !file.exists(feat_f)) {
     cat(sprintf("XF9! model/cols/features file missing -- run scripts/fit_xgb_flows_v1.R; AUSPOL_XGB_FLOWS per-seat override skipped\n"))
     return(NULL)
