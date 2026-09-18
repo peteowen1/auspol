@@ -14,7 +14,7 @@
 **Needs you, in order:**
 1. **Merge PR #51** (0.4.45; CI green 01:20 after a stale `.Rd` fix):
    `gh pr merge 51 --squash` (never `--delete-branch`). PR #50 merged 23:00.
-2. **Full rebuild for v36** once memory allows (`bash scripts/rebuild_forecasts.sh`,
+2. **Full rebuild for v37** (v36 was the AEF-confidence column fix only): NOT run overnight -- free memory sat at 3.8-7 GB with other sessions' R jobs and browsers holding the rest (checked 00:30, 01:15, 02:30). Run it once memory allows (`bash scripts/rebuild_forecasts.sh`,
    ~25 min six-wide, ~40 min two-wide; it now checks free memory itself).
    The by-election table grew overnight from 26 to 44 by-elections (every
    window back to 2008; 34 usable), and the blend measured on 17 now covers
