@@ -41,10 +41,20 @@ params <- list(objective = "reg:squarederror", eta = 0.05, max_depth = 4,
 # fit_xgb_primary_asat.R avoids by running CV per target; kept here to stay
 # byte-comparable with the LOO models it replaces. Noted, not hidden.
 man_f <- file.path(OUT, "xgb-flows-asat-manifest.csv")
-best_n <- NULL
+# THE CACHE KEY IS NOT JUST THE FEATURE FILE. A params or CV-setting change
+# here leaves feat_f untouched, so an mtime-only check would reuse models
+# trained under the old settings and print a normal-looking no-op (review
+# gate, 2026-09-18). The manifest records this hash; a mismatch refits.
+CONFIG_KEY <- digest::digest(list(params = params, nrounds_cap = 1000L, early_stop = 30L, min_pairs = MIN_PAIRS, feat_cols = feat_cols))
+best_n <- NULL; cache_ok <- FALSE
 if (file.exists(man_f) && file.mtime(man_f) > file.mtime(feat_f) && !identical(Sys.getenv("AUSPOL_ASAT_FORCE"), "1")) {
-  best_n <- unique(fread(man_f, showProgress = FALSE)$nrounds)[1]
-  cat(sprintf("XFA2 nrounds %d (from the manifest, feature file unchanged)\n", best_n))
+  M0 <- fread(man_f, showProgress = FALSE)
+  if ("config_key" %in% names(M0) && all(M0$config_key == CONFIG_KEY)) {
+    best_n <- unique(M0$nrounds)[1]; cache_ok <- TRUE
+    cat(sprintf("XFA2 nrounds %d (from the manifest; feature file and training config unchanged)\n", best_n))
+  } else {
+    cat("XFA2 manifest is from a different training config (params/CV/features) -- refitting every model\n")
+  }
 }
 if (is.null(best_n) || !is.finite(best_n)) {
   set.seed(42)
@@ -68,7 +78,7 @@ for (e in elections) {
   # models x ~1000 rounds); the feature file changes only when
   # fit_xgb_flows_v1.R reruns, so a rebuild normally pays nothing here.
   # Delete the .model files (or touch the feature file) to force a refit.
-  if (file.exists(f) && file.mtime(f) > file.mtime(feat_f) && !identical(Sys.getenv("AUSPOL_ASAT_FORCE"), "1")) {
+  if (cache_ok && file.exists(f) && file.mtime(f) > file.mtime(feat_f) && !identical(Sys.getenv("AUSPOL_ASAT_FORCE"), "1")) {
     m <- xgb.load(f)
     cat(sprintf("XFA3= %-8s current (model newer than %s), not refitted\n", e, basename(feat_f)))
   } else {
@@ -82,7 +92,7 @@ for (e in elections) {
   cat(sprintf("XFA3 %-8s (%s): %2d prior elections, %5d rows; RMSE on this election %.4f\n",
               e, dates[[e]], length(prior), sum(keep), sqrt(mean((pe - y[te])^2))))
   manifest[[e]] <- data.table(election = e, date = as.character(dates[[e]]), n_prior = length(prior),
-                              n_train = sum(keep), nrounds = best_n, file = basename(f))
+                              n_train = sum(keep), nrounds = best_n, file = basename(f), config_key = CONFIG_KEY)
 }
 M <- rbindlist(manifest)
 fwrite(M, file.path(OUT, "xgb-flows-asat-manifest.csv"))

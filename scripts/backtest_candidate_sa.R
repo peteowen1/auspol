@@ -597,7 +597,7 @@ mat <- (function(m) {
   # A DEPARTED DEFECTOR'S VOTE GOES HOME (AUSPOL_DEPARTED_ORIGIN: "1" = leave-
   # target-out median share, "mean" = mean). docs/plans/prereg-departed-origin-return-2026-09-18.md
   .dor <- Sys.getenv("AUSPOL_DEPARTED_ORIGIN", "0")
-  if (!.dor %in% c("1", "mean")) return(m)
+  if (!.dor %in% c("1", "mean")) { if (!.dor %in% c("0", "")) cat(sprintf("BF0o! AUSPOL_DEPARTED_ORIGIN=%s is not a mode (\"1\" or \"mean\") -- treated as OFF\n", .dor)); return(m) }
   .fdo <- tryCatch(fit_departed_origin_return(TGT, stat = if (.dor == "mean") "mean" else "median"),
                    error = function(e) { cat(sprintf("BF0o! departed-origin fit FAILED, nothing routed: %s
 ", conditionMessage(e))); NULL })

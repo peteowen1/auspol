@@ -47,6 +47,7 @@ if (!length(files)) stop("No backtest files in ", OUT)
 # no trace, in the one script whose entire job is to be the trustworthy
 # cross-election number. Each drop reason is now named (PB0!), and the
 # completeness check below (PB2c) catches a pair missing ENTIRELY.
+skipped_files <- data.table(file = character(0), mtime = as.POSIXct(character(0)))
 rows <- rbindlist(lapply(files, function(f) {
   d <- tryCatch(fread(f, showProgress = FALSE), error = function(e) {
     cat(sprintf("PB0! %s: unreadable (%s) -- dropped\n", basename(f), conditionMessage(e)))
@@ -73,12 +74,14 @@ rows <- rbindlist(lapply(files, function(f) {
       # with no sibling is a run still in flight (or one killed before it
       # finished), and its flag is unknown. Unknown is not "scored".
       cat(sprintf("PB0  %s: no sibling sharedetail yet (run in flight or incomplete) -- skipped\n", basename(f)))
+      skipped_files <<- rbind(skipped_files, data.table(file = f, mtime = file.mtime(f)))
       return(NULL)
     }
     s1 <- fread(sib[1], showProgress = FALSE, nrows = 1)
     if ("xgb_primary_on" %in% names(s1) && s1$xgb_primary_on[1] != 1L) {
       cat(sprintf("PB0  %s: sibling sharedetail has xgb_primary_on=%s (a base_pred-only stage-1 run) -- not a forecast, skipped\n",
                   basename(f), s1$xgb_primary_on[1]))
+      skipped_files <<- rbind(skipped_files, data.table(file = f, mtime = file.mtime(f)))
       return(NULL)
     }
   }
@@ -110,6 +113,18 @@ if (length(.missing)) {
 # arms of the same pair must never be averaged together, which is what globbing
 # everything would silently do.
 pick <- rows[, .(mtime = max(mtime)), by = pair]
+# A SKIPPED FILE NEWER THAN THE CHOSEN ONE IS SAID OUT LOUD. The sibling
+# guard above drops in-flight or base_pred-only win files, and the newest
+# SURVIVING file is then pooled -- which is right while a rebuild is
+# running, and wrong if the newest run crashed between its win file and
+# its sharedetail (review gate, 2026-09-18). Both look the same from here.
+if (nrow(skipped_files)) {
+  for (pr in pick$pair) {
+    nf <- skipped_files[grepl(paste0("(^|[^a-z])", sub("[0-9]{4}$", "", pr), "|", pr), basename(skipped_files$file)) & skipped_files$mtime > pick[pair == pr]$mtime]
+    if (nrow(nf)) cat(sprintf("PB2s! %s: pooled file is older than %d skipped file(s) (in flight, incomplete, or xgb off): %s\n",
+                              pr, nrow(nf), paste(basename(nf$file), collapse = ", ")))
+  }
+}
 rows <- merge(rows, pick, by = c("pair", "mtime"))
 # A pair can still tie on mtime across two arms; keep one file per pair.
 keep <- rows[, .(file = file[1]), by = pair]
