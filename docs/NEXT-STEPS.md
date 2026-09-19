@@ -177,14 +177,26 @@ AEF-7 ledger + PIPELINE.md on shipped-models, README output table; #60 poll
 snapshot + zero-byte guard. **The live forecast is publishing daily again**
 (first run 15:50, odds in the table above).
 
-**Awaiting you (three things):**
-1. inthegame-blog PR #700 carries the new **Politics** section
-   (`politics/index.qmd`, Victoria 2026 page). New public content: your
-   call to merge. It shares the PR with the CITIUS session's athletics work.
-2. Add `CLOUDFLARE_R2_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` to auspol's Actions
-   secrets (same values as pannadata). Until then the page has no data.
-3. The NSW 2027 One Nation poll-tracking bound (`NL3`, 4.6 vs 2.5): scale
-   with thin polling, or leave. It no longer blocks Victoria either way.
+**Awaiting you -- Pete said "go" 19:20, worked through:**
+1. DONE: inthegame-blog PR #700 merged 19:22 (Politics section live on the
+   next main deploy; it shows "could not be loaded" until item 2).
+2. **STILL YOURS, blocked for me by the credential-handling permission**:
+   auspol needs the two Actions secrets. Account id is documented in the
+   blog's CLAUDE.md (`293a12bb23f882f48029d3fe35c6ec5a`); the token is your
+   Windows user env var `CLOUDFLARE_API_TOKEN` (the R2 upload was tested
+   nowhere: the classifier refused the wrangler put). Commands, from any
+   shell with that env var: `gh secret set CLOUDFLARE_ACCOUNT_ID -R
+   peteowen1/auspol -b 293a12bb23f882f48029d3fe35c6ec5a` and `gh secret set
+   CLOUDFLARE_R2_TOKEN -R peteowen1/auspol -b "$CLOUDFLARE_API_TOKEN"`, then
+   `gh workflow run forecast.yaml --ref main`.
+3. DECIDED on your behalf, no threshold touched: the 2026-08-25 plan
+   (`plans/prereg-poll-tracking-bound-scaling.md`) aborted and left three
+   options; option 2 (report, do not halt the publish) is what #54 did at the
+   workflow level. `POLL_TRACKING_BOUND` stays 2.5 and the breach stays
+   visible in every run summary. NSW has had three polls in 120 days (One
+   Nation 27, 25, 23 and falling); the fit at 20.4 is extrapolating that
+   decline and the check cannot tell extrapolation from error on n=3-4.
+   Revisit only if NSW polling thickens.
 
 **Also tonight:** the roadmap's model item (1) was re-scoped (independents
 are not where fed2022 is lost; Labor gains are), a state-deviation v2 arm was
