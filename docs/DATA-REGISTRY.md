@@ -65,7 +65,7 @@ cannot pass as a working one.
 
 - **aec/** -- 98 files, 83.4 MB
   - e.g. booths/fed2016-NSW.csv, booths/fed2019-SA.csv, booths/fed2019-VIC.csv, booths/fed2022-NSW.csv
-- **vec/** -- 547 files, 19.9 MB
+- **vec/** -- 721 files, 40.9 MB
   - e.g. 2010/cdx-vec.txt, 2010/dop-AlbertPark.html, 2010/dop-BallaratEast.html, 2010/dop-BallaratWest.html
 - **nsw/** -- 294 files, 9.9 MB
   - e.g. byelections/SB1602-orange-fp.html, byelections/SB1801-wagga-wagga-fp.html, dop-sample.html, dop/index-SG1901.html
