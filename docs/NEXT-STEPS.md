@@ -12,20 +12,24 @@
 | TCP MAE, real pairing | 3.78 | 3.69 | 3.63 |
 
 **2026-09-19 morning (Pete: "work through all the next steps")**: PR #51
-MERGED 09:31; v37 rebuild started 09:33 (two-wide, memory). Built and
-pre-registered, both OFF pending their base_pred-only arms after the rebuild:
+MERGED 09:31; v37 rebuild started 09:33 (two-wide, memory). Both measured
+11:10 and SHIPPED (v38 rebuild started 11:11):
 - `AUSPOL_BYELECTION_MP`: the by-election winner is the sitting member for
   every candidate-identity test (Black: Speirs had read as the IND class's
   returning member, +5 pts from the xgb layer; Wentworth fed2019: Phelps).
   `plans/prereg-byelection-mp-2026-09-19.md`, `byelection-winners.csv` (89).
+  Result: 12 changed-member seats' cell error 5.39 -> 4.87 (SE 0.27), pooled
+  log loss 0.2920 -> 0.2906. SHIPPED.
 - `AUSPOL_MINOR_DEFECT_CONSERVE`: a minor-to-minor defector's origin class
   keeps a fitted share (median 0.38, n=26) of their vote; Mirani ONP 0.9 ->
   12.2 (actual 11.9). `plans/prereg-minor-defector-conserve-2026-09-19.md`.
+  Result: 26 origin cells 3.98 -> 2.56 (SE 0.69), new class +0.10 (SE 0.18),
+  pooled log loss flat. SHIPPED.
 - Liberal vic2026 cards: nothing announced yet (searched 19 Sep).
 
 **Needs you, in order:**
 1. ~~Merge PR #51~~ DONE 09:31.
-2. **Full rebuild for v37** (v36 was the AEF-confidence column fix only): NOT run overnight -- free memory sat at 3.8-7 GB with other sessions' R jobs and browsers holding the rest (checked 00:30, 01:15, 02:30). Run it once memory allows (`bash scripts/rebuild_forecasts.sh`,
+2. ~~Full rebuild for v37~~ DONE 10:13 (v37 published: 0.2673, flat vs v35). v38 with the two new switches running from 11:11 (`bash scripts/rebuild_forecasts.sh`,
    ~25 min six-wide, ~40 min two-wide; it now checks free memory itself).
    The by-election table grew overnight from 26 to 44 by-elections (every
    window back to 2008; 34 usable), and the blend measured on 17 now covers

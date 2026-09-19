@@ -24,9 +24,11 @@ file is the durable copy.
   close (ALP lost comfortably), and that mistake happened to help them. A
   lucky miss on their side, not a model gap on ours. Don't reopen unless the
   question is different. Earlier digs: `reviews/mirani-party-defection-2026-09-16.md`,
-  `reviews/minor-defector-two-rate-2026-09-17.md`. One residual observation
-  for a possible minor-defector "conserve" rule: ONP kept 11.9 with a new
-  candidate where we gave them 0.9 (all of Andrew's vote moved with him).
+  `reviews/minor-defector-two-rate-2026-09-17.md`. The residual
+  observation (ONP kept 11.9 with a new candidate where we gave them 0.9)
+  became a rule 2026-09-19: `AUSPOL_MINOR_DEFECT_CONSERVE` (shipped) keeps
+  a fitted 0.38 of a minor-to-minor defector's vote with the origin class;
+  Mirani ONP now 11.4. `plans/prereg-minor-defector-conserve-2026-09-19.md`.
 - **Inala, Ipswich West, Stretton, Callide** (by-elections 2021-24) —
   full replacement by the by-election baseline is WRONG here: Inala's
   2024 by-election put ALP at 37 and the general put them back at 47;
@@ -174,8 +176,13 @@ file is the durable copy.
   improves (ALP 34.2 -> 41.6 vs 43.0 actual, log loss down) but full
   replacement fails across the 17 by-election seats because protest
   swings revert (see Inala, Ipswich West below); a half blend is the
-  declared follow-up. `plans/prereg-byelection-prior-2026-09-18.md`. The
-  xgb IND boost is still worth a SHAP look. Pattern C in
+  declared follow-up (SHIPPED as a half blend). SHAP on the xgb IND boost
+  (2026-09-19): Speirs was read as the IND class's RETURNING SITTING MEMBER
+  (+2.2) plus `historic_elected_i` (+2.9), because the returns logic took
+  the member from sa2022 and knew nothing about the 2024 by-election.
+  Fixed: `AUSPOL_BYELECTION_MP` (shipped 2026-09-19) makes the by-election
+  winner the sitting member; Dighton is now the returning ALP member.
+  `plans/prereg-byelection-mp-2026-09-19.md`. Pattern C in
   `reviews/worst-seats-five-patterns-2026-09-13.md`.
 - **Kavel** — Dan Cregan (Liberal 48.1 in 2022, IND 50.5 in 2022 as a
   defector) fell to 21.4 as the One Nation surge took the right vote. We
