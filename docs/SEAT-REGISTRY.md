@@ -108,8 +108,10 @@ file is the durable copy.
   +10.5 / +8.9 / +9.3 / +4.9 in the shipped v38 run WITH `AUSPOL_STATE_DEV`
   on (it added ~+0.6: slope 0.17 on a polled deviation of +3.5). WA's
   15-seat mean miss is +5.5. The 2021 WA state landslide (`state_elec_dev`
-  +5.2) is not used by the shipped form. **OPEN**,
-  `plans/prereg-state-deviation-v2-2026-09-19.md`. Checked 2026-09-19.
+  +5.2) is not used by the shipped form. Tested 2026-09-19 as
+  `AUSPOL_STATE_DEV=2` (`plans/prereg-state-deviation-v2-2026-09-19.md`):
+  REFUSED -- moved Tangney +0.3, over-corrected WA 2025 instead. **OPEN**,
+  needs more state-election data (Tasmania) or a seat-type mechanism.
 - **Chisholm, Reid, Bennelong (fed2022)** — Labor under by 9.2 / 8.1 / 2.4;
   Victoria and NSW had no state-level miss that year, so this is seat
   type (the 2022 swing in Chinese-Australian electorates), roadmap item

@@ -214,3 +214,47 @@ harness alone needs ~6. Runs: fed pairs, shipped flags, 20,000 sims, arm
 `AUSPOL_STATE_DEV=2` vs the stage-6 baseline already on disk, then the six
 shuffle draws on the best pair. Estimated 40 minutes of compute once memory
 allows.
+
+# RESULT, 2026-09-19 18:55: REFUSED
+
+Federal harness, shipped flags plus `AUSPOL_STATE_DEV=2`, 20,000 sims, arm
+`a8aa01d-g0e8c044` against the shipped v38 stage-6 run `a8e6433-gb7d70a9`.
+
+**Primary (state-year sd of the mean Labor primary miss, lower is better):**
+base 2.814 -> v2 2.777, delta -0.036, jackknife SE over 7 elections 0.050.
+**NOT MET** (needs more than one SE).
+
+**Do-no-harm (pooled federal seat log loss, 1,051 seats, lower is better):**
+base 0.2529 -> v2 0.2545, +0.0016 (SE by pair 0.0019: inside one SE, so
+not a breach on its own). Per pair: fed2019 -0.0061, fed2022 -0.0021,
+fed2016 -0.0004, fed2013 +0.0018, fed2010 +0.0039, fed2007 +0.0052,
+**fed2025 +0.0090** (bound +0.010; the pair the plan flagged).
+
+**Dry-run cases, Labor predicted (base -> v2) vs actual:**
+
+| seat | pair | actual | base | v2 |
+|---|---|--:|--:|--:|
+| Tangney | fed2022 | 38.1 | 27.6 | 27.9 |
+| Pearce | fed2022 | 42.8 | 33.9 | 34.2 |
+| Hasluck | fed2022 | 39.7 | 30.4 | 30.6 |
+| Tangney | fed2025 | 42.5 | 42.2 | 38.0 |
+| Pearce | fed2025 | 40.1 | 47.1 | 43.1 |
+| Hasluck | fed2025 | 48.4 | 48.3 | 44.4 |
+
+WA 2022 moved +0.3 (below the +1.5 floor: with WA 2022 out of training the
+penalty search chose lambda 300 and the state-election term was 0.08). WA
+2025 moved -4.4 on the state mean (the -3.6 miss became +0.8), which is the
+over-trust case the smoke test predicted: seat by seat it fixed Pearce and
+broke Tangney and Hasluck, and the pair's log loss rose 0.009. Tasmania, ACT
+and NT unchanged in every pair (21 of 21 zero), as required.
+
+Shuffle control not run: it exists to validate a win, and there is none.
+
+**Verdict: REFUSE. `AUSPOL_STATE_DEV` stays "1".** The mechanism is built
+and switchable; what it lacks is evidence. The state-election term has one
+landslide behind it, and a leave-one-out fit says so by swinging between
+0.08 and 0.37. It becomes testable again when the corpus gains Tasmanian
+state elections (seven of the twelve worst state-years) or a second WA-sized
+case. The fed2025 builder fix (state-years no longer dropped after 2022)
+stays, because it is a data correctness fix that the shipped mode does not
+read yet but will the day 2025 state polls appear in the anchor.
