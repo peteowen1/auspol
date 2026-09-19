@@ -1,3 +1,19 @@
+# auspol 0.4.48
+
+**The daily live forecast had not published for over a week.** Every
+`forecast.yaml` run on record failed after the Victorian forecast had
+completed, because a NSW 2027 poll-tracking check (`NL3`) made `run_all.R`
+exit non-zero; and the CI run had no `output/candidacies.csv`, so every
+candidate-identity mechanism was silently off there.
+
+- `candidacies.csv` ships with the models (`promote_rebuild.R`, the
+  `shipped-models` release) and the workflow downloads and row-checks it.
+- A validation-only failure in `run_all.R` is now a workflow warning; the
+  publish step is gated on the Victorian outputs having been written by
+  this run.
+- Narracan's January 2023 supplementary election is its 2022 baseline, so
+  the live forecast simulates all 88 seats and calls 45 a majority.
+
 # auspol 0.4.47
 
 **Productionisation.** The daily live forecast was found running on models

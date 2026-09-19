@@ -89,6 +89,19 @@ and published 12:48 (`scripts/promote_rebuild.R`, driver stage 9 under
 `AUSPOL_PUBLISH=1`, `forecast.yaml` fails when the manifest is >14 days
 old); vic2026 flow fallback fixed (future election -> all-data model).
 
+**Found 13:30 while triggering the daily job: the live forecast has NOT
+refreshed for at least a week.** Every `forecast.yaml` run on record (8 of
+8, scheduled and manual) failed, on a NSW 2027 poll-tracking breach (`NL3`:
+One Nation fitted 4.6 points off its 90-day poll average, bound 2.5 -- the
+same near-zero-prior surge shape as the Victorian WATCH item) that made
+`run_all.R` exit non-zero AFTER the Victorian forecast had run fine. And
+the CI run had no `output/candidacies.csv` (built from raw commission files
+CI never fetches), so every candidate-identity mechanism was off there.
+Fixed: candidacies.csv ships with the models; a validation-only failure
+warns instead of blocking; the publish step checks the Victorian outputs
+were written by this run. The NSW ONP bound itself is Pete's open
+judgement (`POLL_TRACKING_BOUND` scaling), unchanged.
+
 **Model, in order**: (1) independent emergence (fed2022 is the whole AEF
 loss; parked, now biggest); (2) One Nation in Victoria (polls 27%, Nepean
 by-election 24.5%; concentration fitted on one election); (3) final-two
