@@ -124,6 +124,36 @@ cases the prior is for.
 the shipped vic2022 backtest's predicted primaries as the prior in
 rehearsal 2, and the afternoon forecast on the night.
 
+## Dress rehearsal 2, prior + projection, 2026-09-19 22:15
+
+`R/booth_projection.R` now holds the matching, the projection and the
+precision-weighted combination (`combine_prior_projection()`, projection sd
+from `booth_projection_sd()`, interpolated through rehearsal 1's RMSEs).
+`scripts/booth_rehearsal2_vic2022.R`: prior = the shipped vic2022 backtest's
+predicted primaries (the forecast recipe as-at the day before, 78 seats),
+prior sd = that backtest's residual sd by class (ALP 4.4, LNP 4.4, GRN 2.5).
+Error on the final ALP/LNP/GRN share, points, lower is better; leader = the
+seat's first-preference leader called correctly, of the 78 seats with a prior.
+
+| night vote counted | prior alone | projection alone | posterior |
+|--:|--:|--:|--:|
+| 0% | 68 / 3.12 | | 68 / 3.12 |
+| 10% | 68 / 3.12 | 76 / 2.06 | 75 / 1.72 |
+| 25% | 68 / 3.12 | 75 / 1.60 | 75 / 1.36 |
+| 50% | 68 / 3.12 | 77 / 1.48 | 77 / 1.25 |
+| 100% | 68 / 3.12 | 77 / 0.20 | 77 / 0.19 |
+
+Cells are `leaders correct / major-share MAE`. The posterior beats the
+projection on share error at every fraction and matches it on leaders; both
+beat the afternoon prior from the first 10% of the night vote. That is the
+plan's second hard requirement, met on shares (the log-loss form needs win
+probabilities, which need the preference re-simulation, next).
+
+**Next**: re-simulate each seat's preference count from the posterior
+primaries with the shipped flow model (win probabilities and 2CP), then the
+chamber aggregation with the forecast's statewide correlation, then the
+feed parser once VEC publishes the 2026 configuration.
+
 ## Timeline
 
 - October: fetch and parse 2022 booths; matching; replay harness; first

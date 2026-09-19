@@ -33,7 +33,11 @@ send). Scope:
 replay harness `booth_replay_vic2022.R` passes the identity check and, with no
 prior, calls the first-preference leader right in 85-87 of 87 seats from 10%
 counted, major shares within 1.5 points at half the night vote (table in the
-plan). Next: the prior/posterior layer.
+plan). **Rehearsal 2 (22:15)**: prior (vic2022 backtest) + projection beats
+both alone: major-share MAE 3.12 (prior) -> 1.72 at 10% counted -> 1.25 at
+50%; leaders 68 -> 77 of 78. `R/booth_projection.R`. Next: re-simulate the
+preference count from the posterior primaries (win probabilities), chamber
+aggregation, then the VEC feed parser.
 
 1. Data: 2022 booth-level first preferences and TCP per voting centre
    (VEC "votes by voting centre"; `external/reference/vec/2010, 2014, 2018`
