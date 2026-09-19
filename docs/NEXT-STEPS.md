@@ -123,8 +123,23 @@ was null in this first JSON (the script read the local manifest path
 only; fixed on dev, ships with the next PR).
 
 
-**Model, in order**: (1) independent emergence (fed2022 is the whole AEF
-loss; parked, now biggest); (2) One Nation in Victoria (polls 27%, Nepean
+**Model, in order**: (1) ~~independent emergence~~ **RE-SCOPED 17:45**: the
+ledger says we are AHEAD of AEF on all 36 independent winners (16.7 vs
+19.7 log loss) and level on fed2022's; fed2022's +6.0 gap is **Labor
+gains** (77 seats: ours 17.7 vs AEF 8.7), half of them a WA state-level
+miss (+5.5 mean Labor primary error across 15 seats with the shipped
+state correction on) and half a seat-type miss (Chisholm, Reid, Higgins,
+Bennelong). So (1) is now `plans/prereg-state-deviation-v2-2026-09-19.md`
+(prior state election as a second predictor; covers TAS/ACT/NT, which
+hold 7 of the 12 worst state-years -- CORRECTED: not coverable, no TAS/ACT/NT
+elections in the corpus). **Run 18:50 and REFUSED**: state-year miss sd
+2.814 -> 2.777 (SE 0.050); pooled fed log loss +0.0016; fed2025 +0.009 (WA
+2025 over-corrected: the state-election term rests on one landslide). WA
+2022 moved +0.3 on a +5.5 miss. Mechanism built (`AUSPOL_STATE_DEV=2`),
+off. Fixed on the way: the feature builder dropped every post-2022
+state-year. Next candidate for the WA/Tangney miss: Tasmanian/other state
+results as data (item for the data list), or item (4) seat type. Teal
+emergence stays parked. (2) One Nation in Victoria (polls 27%, Nepean
 by-election 24.5%; concentration fitted on one election); (3) final-two
 flow for the other excluded-party cells; (4) seat-swing beyond statewide;
 (5) probability calibration by band.
@@ -142,10 +157,41 @@ pannadata/torpdata; Settings > Secrets and variables > Actions). Run
 so the release publish is unaffected but the blog page shows "could not be
 loaded" until the secrets exist and the next daily run uploads. Ledger + PIPELINE.md public since 16:54 (PR #59): https://github.com/peteowen1/auspol/releases/download/shipped-models/aef7-ledger.html and .../PIPELINE.md, rebuilt by stage 8/9. Still open: seat map, per-seat cards.
 
-**Data/infra**: snapshot the poll source into our release; VEC media feed
-registration; candidate list on 9 Nov; data registry regen in CI with an
-empty-column failure; row-add routine + calendar reminder for the two hand
-tables (Liberal card release).
+**Data/infra**: poll-source snapshot DONE (PR #60: `polls-vic-snapshot.csv`
+on forecast-latest + `poll_source.sha` in the JSON); zero-byte input guard
+DONE in the workflow (PR #60) INSTEAD of regenerating the data registry on
+CI -- the registry describes the dev machine's disk and a CI checkout has
+only the anchor, election results and models, so a CI-built registry would
+be wrong about everything else. Still open: VEC media feed registration;
+candidate list on 9 Nov; row-add routine + calendar reminder for the two
+hand tables (Liberal card release); empty-column failure in the registry
+script itself (run locally).
+
+### End of day 2026-09-19, for Pete
+
+**Shipped (all merged to main, all reviewed):** #54 daily forecast unblocked
+(candidacies.csv with the models, validation breach = warning); #55
+build_page 88 seats; #56 workflow token can create the release; #57 R2
+upload + manifest path; #58 R2 step skips until secrets exist; #59 public
+AEF-7 ledger + PIPELINE.md on shipped-models, README output table; #60 poll
+snapshot + zero-byte guard. **The live forecast is publishing daily again**
+(first run 15:50, odds in the table above).
+
+**Awaiting you (three things):**
+1. inthegame-blog PR #700 carries the new **Politics** section
+   (`politics/index.qmd`, Victoria 2026 page). New public content: your
+   call to merge. It shares the PR with the CITIUS session's athletics work.
+2. Add `CLOUDFLARE_R2_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` to auspol's Actions
+   secrets (same values as pannadata). Until then the page has no data.
+3. The NSW 2027 One Nation poll-tracking bound (`NL3`, 4.6 vs 2.5): scale
+   with thin polling, or leave. It no longer blocks Victoria either way.
+
+**Also tonight:** the roadmap's model item (1) was re-scoped (independents
+are not where fed2022 is lost; Labor gains are), a state-deviation v2 arm was
+pre-registered, built, run and REFUSED (`plans/prereg-state-deviation-v2-2026-09-19.md`).
+**Next model item needs you**: (4) seat-type swing (Chisholm/Reid/Higgins/
+Bennelong 2022) -- design it together on those rows, per the CLAUDE.md rule.
+
 
 **Election night**: booth-level live model (match reporting booths to
 vic2022, project uncounted with tonight's forecast as prior, analytic

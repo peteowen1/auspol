@@ -104,6 +104,18 @@ file is the durable copy.
   18.6 actual, right-minor 9.3 vs 5.9. **OPEN**; the ALP under-prediction in
   safe National seats is worth a look alongside the swing-beyond-statewide
   seats.
+- **Tangney, Pearce, Hasluck, Swan (WA 2022)** — Labor primary under by
+  +10.5 / +8.9 / +9.3 / +4.9 in the shipped v38 run WITH `AUSPOL_STATE_DEV`
+  on (it added ~+0.6: slope 0.17 on a polled deviation of +3.5). WA's
+  15-seat mean miss is +5.5. The 2021 WA state landslide (`state_elec_dev`
+  +5.2) is not used by the shipped form. Tested 2026-09-19 as
+  `AUSPOL_STATE_DEV=2` (`plans/prereg-state-deviation-v2-2026-09-19.md`):
+  REFUSED -- moved Tangney +0.3, over-corrected WA 2025 instead. **OPEN**,
+  needs more state-election data (Tasmania) or a seat-type mechanism.
+- **Chisholm, Reid, Bennelong (fed2022)** — Labor under by 9.2 / 8.1 / 2.4;
+  Victoria and NSW had no state-level miss that year, so this is seat
+  type (the 2022 swing in Chinese-Australian electorates), roadmap item
+  (4). **OPEN**, no plan yet.
 - **Higgins, Tangney** — the swing to ALP beat the statewide swing by 6-11
   points (Higgins ALP 22.2 base vs 28.5). Pattern A (state swing, federal).
   **OPEN** in the sense that only a seat-level swing model fixes it; no

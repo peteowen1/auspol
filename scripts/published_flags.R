@@ -507,7 +507,7 @@ PUBLISHED_FLAGS <- c(
                                              # 1,989 seats, so both read one class-and-urbanity axis from opposite
                                              # ends. It recovered 71% of the gain and refused the mechanism
                                              # (prereg-education-residual-correction-2026-09-15.md, RESULT).
-  AUSPOL_STATE_DEV           = "1",          # ADOPTED 2026-09-15. Corrects a federal seat's primaries for how its STATE
+  AUSPOL_STATE_DEV           = "1",          # "2" = v2 arm (plans/prereg-state-deviation-v2-2026-09-19.md), NOT shipped. ADOPTED 2026-09-15. Corrects a federal seat's primaries for how its STATE
                                              # is moving against the national swing. Pete's diagnosis: WA 2022 swung to
                                              # Labor far harder than the country, mean ALP per-seat primary error +6.43
                                              # over 15 seats, positive in 14 of them.

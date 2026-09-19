@@ -75,6 +75,77 @@ state_deviation_b <- function(cls, exclude_pair,
   sum(S$dev * S$err) / den
 }
 
+#' Two-predictor state-deviation coefficients (v2)
+#'
+#' Arm of `docs/plans/prereg-state-deviation-v2-2026-09-19.md`. Same
+#' leave-target-out, one-row-per-state-year residual table as
+#' [state_deviation_b()], regressed on BOTH `state_poll_dev` and the decayed
+#' prior state-election swing `state_elec_dev * exp(-gap / 24)`, by ridge
+#' with the penalty chosen leave-one-election-out on the state-year table.
+#' A state-year with neither source is dropped from the fit and gets no
+#' correction at apply time.
+#'
+#' @inheritParams state_deviation_b
+#' @param lambdas Ridge penalty grid.
+#' @return Named numeric `c(b_poll, b_elec, lambda, n)`, or `NA`s when too
+#'   little to fit.
+#' @export
+state_deviation_b2 <- function(cls, exclude_pair,
+                               oof = "output/xgb-primary-v6-oof-predictions.csv",
+                               dev = "output/state-deviation-features.csv",
+                               shuffle = 0L,
+                               lambdas = c(1, 3, 10, 30, 100, 300)) {
+  na2 <- c(b_poll = NA_real_, b_elec = NA_real_, lambda = NA_real_, n = NA_real_)
+  if (!file.exists(oof) || !file.exists(dev)) return(na2)
+  O <- data.table::fread(oof, showProgress = FALSE)
+  D <- data.table::fread(dev, showProgress = FALSE)
+  D <- .sd_shuffle(D, shuffle)
+  .cls <- cls; .ex <- exclude_pair
+  O <- O[O$party == .cls & grepl("^fed", O$pair) & O$pair != .ex]
+  if (!nrow(O)) return(na2)
+  keep <- c("pair", "seat", "state", "state_poll_dev", "state_poll_n", "state_elec_dev", "state_elec_gap")
+  if (!all(keep %in% names(D))) return(na2)
+  M <- merge(O, unique(D[, keep, with = FALSE]), by = c("pair", "seat"))
+  if (!nrow(M)) return(na2)
+  M[, .resid := actual_share - xgb_pred]
+  M[, .x1 := ifelse(state_poll_n > 0, state_poll_dev, 0)]
+  M[, .x2 := .sd_elec_term(state_elec_dev, state_elec_gap)]
+  S <- M[, .(err = mean(.resid), x1 = .SD$.x1[1L], x2 = .SD$.x2[1L]), by = c("pair", "state")]
+  S <- S[x1 != 0 | x2 != 0]
+  if (nrow(S) < 6 || length(unique(S$pair)) < 3) return(na2)
+  X <- cbind(S$x1, S$x2); y <- S$err
+  ridge <- function(X, y, lam) {
+    XtX <- crossprod(X) + diag(lam, ncol(X))
+    # a collinear or near-empty design must not kill the run: it scores Inf
+    # in the penalty search and NA if it is the final fit
+    tryCatch(as.numeric(solve(XtX, crossprod(X, y))), error = function(e) rep(NA_real_, ncol(X)))
+  }
+  # penalty by leave-one-ELECTION-out, the independent unit
+  sse <- vapply(lambdas, function(lam) {
+    sum(vapply(unique(S$pair), function(pr) {
+      tr <- S$pair != pr
+      b <- ridge(X[tr, , drop = FALSE], y[tr], lam)
+      if (anyNA(b)) return(Inf)
+      sum((y[!tr] - X[!tr, , drop = FALSE] %*% b)^2)
+    }, numeric(1)))
+  }, numeric(1))
+  if (!any(is.finite(sse))) return(na2)
+  lam <- lambdas[which.min(sse)]
+  b <- ridge(X, y, lam)
+  if (anyNA(b)) return(na2)
+  c(b_poll = b[1], b_elec = b[2], lambda = lam, n = nrow(S))
+}
+
+#' The decayed prior-state-election term
+#' @param elec_dev,gap Columns of the state-deviation table.
+#' @keywords internal
+.sd_elec_term <- function(elec_dev, gap) {
+  ed <- suppressWarnings(as.numeric(elec_dev)); g <- suppressWarnings(as.numeric(gap))
+  out <- ifelse(is.finite(ed) & is.finite(g) & g < 999, ed * exp(-g / 24), 0)
+  out[!is.finite(out)] <- 0
+  out
+}
+
 #' Permute which state each seat sits in, within its election
 #'
 #' The honest null for this mechanism. It leaves every state's deviation value
@@ -115,11 +186,14 @@ state_deviation_b <- function(cls, exclude_pair,
 #'   `shares` untouched and says so -- the mechanism is federal by construction.
 #' @param classes Which classes to correct.
 #' @param dev,shuffle See [state_deviation_b()].
+#' @param mode 1 = shipped polls-only form; 2 = [state_deviation_b2()] (v2 arm).
 #' @return The corrected matrix, rows renormalised to their original totals.
 #' @export
 state_deviation_apply <- function(shares, pair, classes = c("ALP", "LNP"),
                                   dev = "output/state-deviation-features.csv",
-                                  shuffle = 0L) {
+                                  shuffle = 0L, mode = 1L) {
+  mode <- suppressWarnings(as.integer(mode))
+  if (identical(mode, 2L)) return(.state_deviation_apply2(shares, pair, classes, dev, shuffle))
   if (!grepl("^fed", pair)) {
     cat(sprintf("SD1  %s is not a federal election; state-deviation correction not applicable\n", pair))
     return(shares)
@@ -181,5 +255,49 @@ state_deviation_apply <- function(shares, pair, classes = c("ALP", "LNP"),
               if (identical(as.integer(shuffle), 0L)) "" else
                 sprintf(", SHUFFLED CONTROL seed=%s", shuffle),
               paste(applied, collapse = ", ")))
+  shares
+}
+
+# v2 apply: two predictors, five states, seats with neither source untouched.
+.state_deviation_apply2 <- function(shares, pair, classes, dev, shuffle) {
+  if (!grepl("^fed", pair)) {
+    cat(sprintf("SD1  %s is not a federal election; state-deviation correction not applicable\n", pair))
+    return(shares)
+  }
+  if (!file.exists(dev)) { cat("SD1! state-deviation features missing; correction SKIPPED\n"); return(shares) }
+  D <- data.table::fread(dev, showProgress = FALSE)
+  D <- .sd_shuffle(D, shuffle)
+  .p <- pair
+  keep <- c("seat", "state", "state_poll_dev", "state_poll_n", "state_elec_dev", "state_elec_gap")
+  if (!all(keep %in% names(D))) { cat("SD1! v2 needs state_elec_dev/gap columns; correction SKIPPED\n"); return(shares) }
+  D <- unique(D[D$pair == .p, keep, with = FALSE])
+  if (!nrow(D)) { cat(sprintf("SD1! no state-deviation rows for %s; correction SKIPPED\n", pair)); return(shares) }
+  i <- match(rownames(shares), D$seat); ok <- !is.na(i)
+  x1 <- rep(0, nrow(shares)); x2 <- rep(0, nrow(shares))
+  x1[ok] <- ifelse(D$state_poll_n[i[ok]] > 0, suppressWarnings(as.numeric(D$state_poll_dev[i[ok]])), 0)
+  x2[ok] <- .sd_elec_term(D$state_elec_dev[i[ok]], D$state_elec_gap[i[ok]])
+  x1[!is.finite(x1)] <- 0; x2[!is.finite(x2)] <- 0
+  live <- ok & (x1 != 0 | x2 != 0)
+  if (!any(live)) { cat(sprintf("SD1! v2: no seat of %s has a state poll or a fresh state election; correction SKIPPED\n", pair)); return(shares) }
+  tot <- rowSums(shares); applied <- character(0); skipped <- character(0)
+  for (cl in intersect(classes, colnames(shares))) {
+    b <- state_deviation_b2(cl, pair, dev = dev, shuffle = shuffle)
+    if (!all(is.finite(b[c("b_poll", "b_elec")]))) { skipped <- c(skipped, cl); next }
+    shares[, cl] <- pmax(0, shares[, cl] + b[["b_poll"]] * x1 + b[["b_elec"]] * x2)
+    applied <- c(applied, sprintf("%s b_poll=%+.4f b_elec=%+.4f (lambda %g, n %d)", cl,
+                                  b[["b_poll"]], b[["b_elec"]], b[["lambda"]], as.integer(b[["n"]])))
+  }
+  if (length(skipped)) cat(sprintf("SD1! v2 %s: not enough training rows, no correction applied\n", paste(skipped, collapse = ", ")))
+  if (!length(applied)) { cat(sprintf("SD1! v2: no class could be fitted for %s; correction SKIPPED\n", pair)); return(shares) }
+  rs <- rowSums(shares); k <- rs > 0
+  shares[k, ] <- shares[k, ] * (tot[k] / rs[k])
+  st <- unique(D$state[i[live]])
+  # per-state term sizes, so the plan's dry-run cases can be read off the log
+  ps <- unique(data.table::data.table(state = D$state[i[live]], x1 = round(x1[live], 2), x2 = round(x2[live], 2)))
+  cat(sprintf("SD1  v2 state-deviation ON for %s (%d of %d seats, states %s%s): %s | terms %s\n",
+              pair, sum(live), length(live), paste(sort(st), collapse = "/"),
+              if (identical(as.integer(shuffle), 0L)) "" else sprintf(", SHUFFLED CONTROL seed=%s", shuffle),
+              paste(applied, collapse = ", "),
+              paste(sprintf("%s poll %+.2f elec %+.2f", ps$state, ps$x1, ps$x2), collapse = "; ")))
   shares
 }
