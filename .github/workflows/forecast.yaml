@@ -318,6 +318,25 @@ jobs:
           set -e
           gh release view forecast-latest >/dev/null 2>&1 || gh release create forecast-latest -t "Latest forecast (auto-updated)" -n "Assets are replaced by the daily forecast workflow; the release date is the tag's, not the data's. Read built_at inside forecast-vic2026.json."
           gh release upload forecast-latest output/forecast-vic2026.json output/forecast-history.csv output/seat-probs-vic-2026.csv output/seat-shares-vic-2026.csv output/victoria-2026.html --clobber
+      - name: Publish the forecast to R2 for the ITG page
+        # The blog (inthegame-blog) fetches every dataset client-side from the
+        # inthegame-data R2 bucket; its CSP does not allow github.com, so the
+        # release alone is not enough. Same mechanism as pannadata/torpdata's
+        # build-blog-data workflows (wrangler r2 object put, 5-minute cache).
+        # Public URL: https://pub-ee4bf5b599a047f9ac2b9facc1587008.r2.dev/auspol/forecast-vic2026.json
+        if: success()
+        shell: bash
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_R2_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -e
+          npm install -g wrangler >/dev/null 2>&1
+          for f in output/forecast-vic2026.json output/forecast-history.csv output/seat-probs-vic-2026.csv output/seat-shares-vic-2026.csv; do
+            case "$f" in *.json) ct=application/json ;; *) ct=text/csv ;; esac
+            wrangler r2 object put "inthegame-data/auspol/$(basename "$f")" --file "$f" --content-type "$ct" --cache-control "public, max-age=300" --remote
+            echo "OK $(basename "$f")"
+          done
       - name: Upload outputs
         if: always()
         uses: actions/upload-artifact@v4
