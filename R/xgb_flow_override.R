@@ -18,8 +18,25 @@
     cat(sprintf("XF9  as-at flow model for %s: %s\n", target_election, f))
     return(f)
   }
-  cat(sprintf("XF9  no as-at flow model for %s (too few earlier elections) -- pooled flow table applies\n", target_election))
-  "__none__"
+  # No as-at model. Two reasons, two different right answers:
+  #  - an EARLY election (fewer than the minimum earlier elections to train
+  #    on): every model on disk has seen it or later -> pooled table, "__none__";
+  #  - a FUTURE election (the live forecast, vic2026): the all-data model is
+  #    trained entirely on elections before it, which IS as-at -> NULL, so the
+  #    caller keeps the final model. Found 2026-09-19: the first version sent
+  #    the live Victorian forecast to the pooled table.
+  dates <- tryCatch(election_dates(), error = function(e) NULL)
+  asat <- list.files("output", pattern = "^xgb-flows-v1-asat-.*[.]model$")
+  asat_el <- sub("^xgb-flows-v1-asat-(.*)[.]model$", "\\1", asat)
+  asat_el <- asat_el[asat_el %in% names(dates)]
+  later_exists <- !is.null(dates) && target_election %in% names(dates) && length(asat_el) > 0 &&
+    any(dates[asat_el] > dates[[target_election]])
+  if (later_exists) {
+    cat(sprintf("XF9  no as-at flow model for %s (too few earlier elections) -- pooled flow table applies\n", target_election))
+    return("__none__")
+  }
+  cat(sprintf("XF9  no as-at flow model for %s and no later election on disk: the all-data model is trained only on earlier elections and is used\n", target_election))
+  NULL
 }
 .flow_model_tag <- function() {
   t <- Sys.getenv("AUSPOL_FLOW_MODEL_TAG", "")
