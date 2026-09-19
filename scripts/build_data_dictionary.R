@@ -72,7 +72,9 @@ for (p in f) {
   h <- hdr(p)
   ec <- tryCatch({
     d <- fread(p, showProgress = FALSE)
-    names(d)[vapply(d, function(x) all(is.na(x) | (is.character(x) & !nzchar(x))), logical(1))]
+    # all() over zero rows is TRUE (review 2026-09-20): a zero-row file is a
+    # different defect, caught by the registry's size column, not this check
+    if (!nrow(d)) character(0) else names(d)[vapply(d, function(x) all(is.na(x) | (is.character(x) & !nzchar(x))), logical(1))]
   }, error = function(e) character(0))
   if (length(ec)) empty_cols <- c(empty_cols, sprintf("%s: %s", basename(p), paste(ec, collapse = ", ")))
   L <- c(L, sprintf("| `%s` | %s | %s |", basename(p),

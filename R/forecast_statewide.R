@@ -191,6 +191,10 @@ forecast_statewide_or_oracle <- function(region, year, election_date, parties, s
                                          on_fail = c("stop", "skip")) {
   if (!identical(mode, "1")) return(st_b)
   on_fail <- match.arg(on_fail)
+  # A class in the target's statewide but not the caller's party list (a new
+  # entrant) must still get a forecast level, or it would be dropped from the
+  # returned vector; the union here means the five call sites cannot differ.
+  parties <- union(parties, names(st_b))
   fc <- tryCatch(
     forecast_statewide_for(region, year, election_date, parties, st_a,
                            fundamentals_loo_table(),

@@ -16,7 +16,10 @@ forecast statewide misses by 1.3 to 3.9 points per class per election and
 the seats inherit it: **the statewide forecast is now the biggest lever**
 (model item 0 below). wa2021 has no fittable trend and is not scored.
 Models retrained on predictive base_pred are on `shipped-models` and feed
-the daily forecast from 20 Sep. Public copy:
+the daily forecast from 20 Sep. Disclosed: v39 ran before a review fix
+(the wrapper now unions the target's classes into the forecast), so
+vic2022's One Nation cells read 0.0 (actual mean 0.2; negligible); the next
+rebuild picks it up. Public copy:
 https://github.com/peteowen1/auspol/releases/download/shipped-models/aef7-ledger.html
 
 **Live forecast** (`forecast-latest` release, rebuilt 06:00 Melbourne daily,
