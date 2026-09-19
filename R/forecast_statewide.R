@@ -166,3 +166,52 @@ fundamentals_loo_table <- function() {
   data.table::data.table(year = m$data$year, region = m$data$region,
                          fund = m$data$actual - m$loo_errors)
 }
+
+#' Replace a harness's oracle statewide with the forecast when asked
+#'
+#' One block for all six harnesses (until 2026-09-19 fed and sa each carried
+#' their own copy and nsw/qld/vic/wa had none: `docs/MODEL-REGISTRY.md`'s one
+#' OPEN GAP). Under `AUSPOL_FORECAST_MODE=1` the statewide the seats swing
+#' toward is [forecast_statewide_for()]'s poll-and-fundamentals projection as
+#' at the day before; otherwise `st_b`, the target election's own counted
+#' result, is returned unchanged (the oracle, kept only so a plain run stays
+#' byte-identical while the switch is measured).
+#'
+#' @param region,year,election_date,parties,st_a,n_sims,seed As
+#'   [forecast_statewide_for()].
+#' @param st_b Named numeric, the oracle statewide.
+#' @param code The harness's log prefix (e.g. `"BV0"`).
+#' @param mode `Sys.getenv("AUSPOL_FORECAST_MODE")` by default.
+#' @return Named numeric on `names(st_b)`, with attribute `oracle` (the
+#'   replaced values) when the forecast was used.
+#' @export
+forecast_statewide_or_oracle <- function(region, year, election_date, parties, st_a, st_b,
+                                         code = "BX0", n_sims = 20000L, seed = 42L,
+                                         mode = Sys.getenv("AUSPOL_FORECAST_MODE", "0"),
+                                         on_fail = c("stop", "skip")) {
+  if (!identical(mode, "1")) return(st_b)
+  on_fail <- match.arg(on_fail)
+  fc <- tryCatch(
+    forecast_statewide_for(region, year, election_date, parties, st_a,
+                           fundamentals_loo_table(),
+                           data.table::fread(file.path("output", "projection-mix.csv"), showProgress = FALSE),
+                           n_sims = n_sims, seed = seed),
+    error = function(e) e)
+  if (inherits(fc, "error")) {
+    # A cycle too thin to fit a trend (wa2021: four polls in 180 days, none
+    # earlier in the term) has NO forecast statewide. In a multi-pair harness
+    # the honest treatment is to skip the pair loudly, never to fall back to
+    # the oracle -- that would score a leak as a forecast.
+    if (on_fail == "stop") stop(conditionMessage(fc), call. = FALSE)
+    cat(sprintf("%s! no forecast statewide for %s%d (%s) -- pair SKIPPED in forecast mode, not scored\n",
+                code, region, year, conditionMessage(fc)))
+    return(NULL)
+  }
+  keep <- intersect(names(fc$st_fc), names(st_b))
+  out <- fc$st_fc[keep]
+  cat(sprintf("%s  forecast statewide replaces the oracle for %s%d. Mean |error| %.2f pts over %d classes: %s\n",
+              code, region, year, mean(abs(out - st_b[keep]), na.rm = TRUE), length(out),
+              paste(sprintf("%s %.1f(%.1f)", keep, out, st_b[keep]), collapse = " ")))
+  attr(out, "oracle") <- st_b[keep]
+  out
+}

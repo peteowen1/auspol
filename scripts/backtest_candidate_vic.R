@@ -383,6 +383,11 @@ for (K in PAIRS) {
   mat <- 100 * mat / rowSums(mat)
   sa <- fa[, .(v = sum(votes)), by = party][, setNames(100 * v / sum(v), party)]
   sb <- fb[, .(v = sum(votes)), by = party][, setNames(100 * v / sum(v), party)]
+  # AUSPOL_FORECAST_MODE=1: the statewide the seats swing toward is PREDICTED
+  # from polls as at the day before, not read off this election (R/forecast_statewide.R).
+  sb <- forecast_statewide_or_oracle("vic", K$to, VIC_DATE[[as.character(K$to)]], colnames(mat), sa, sb,
+                                     code = "BV0", n_sims = N_SIMS, seed = as.integer(Sys.getenv("AUSPOL_SEED", "42")), on_fail = "skip")
+  if (is.null(sb)) next   # thin cycle: no forecast statewide, pair not scored in forecast mode
   # RE-ENTRY PRIOR, docs/plans/prereg-reentry-prior-2026-09-07.md. A class
   # contesting this seat but not the last one has no prior share, so swinging
   # zero forward leaves approximately zero -- 1,418 seat-class rows across the

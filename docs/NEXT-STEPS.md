@@ -103,12 +103,16 @@ aggregation, then the VEC feed parser.
 
 ## Harness and pipeline hygiene
 
-- `AUSPOL_FORECAST_MODE` exists in fed and sa only; nsw/qld/vic/wa still swing
-  toward the ACTUAL statewide (registry's one OPEN GAP). Wiring, core is in
-  `R/forecast_statewide.R`.
-- Re-measure the xgb challengers with TIME-FORWARD folds: the as-at models
-  (PR #50) already train on earlier elections only, so check whether this is
-  now moot before running anything.
+- **DONE 22:50**: `AUSPOL_FORECAST_MODE` wired into nsw/qld/vic/wa through one
+  shared block (`forecast_statewide_or_oracle()`), proven on all four at 2,000
+  sims (forecast statewide error 1.3-2.4 pts per class; wa2021 has no
+  fittable trend and is skipped loudly), and the published default FLIPPED
+  to 1 (Pete's ruling: predictive throughout). **Ledger v39 rebuild under
+  it pending** -- expect worse, honest numbers. The old note that the two
+  modes tie with xgb on was true of the static-OOF path only; the production
+  base_margin path carries the statewide through.
+- CLOSED: time-forward folds -- the as-at models (`fit_xgb_primary_asat.R`,
+  `fit_xgb_flows_asat.R`) train only on elections dated before the target.
 - Audit other 0-filled xgb features for the NA-fill fix; any new column to
   `fit_xgb_primary_v6.R` costs ~0.014 pooled RMSE (placebo floor).
 - Package functions read bare relative paths (`surge_hazard_for()`); should
@@ -128,10 +132,12 @@ aggregation, then the VEC feed parser.
 - Tasmanian (and ACT/NT) state election results into the corpus.
 - Row-add routine for the two hand tables (HTV order, by-election winners)
   plus a calendar reminder.
-- Data registry script: fail on a 100%-empty column (run locally; CI now
-  refuses zero-byte inputs instead of regenerating the registry).
-- Victoria 2022 seat TCP truth is cached but unparsed
-  (`external/elections/cache/vec-2022-vic/*-results.html`); federal exists.
+- DONE 22:40: `build_data_dictionary.R` reads every processed file in full
+  and FAILS on a 100%-empty column (none today).
+- DONE 22:35: vic2022 TCP truth upgraded to the VEC's official 2CP totals for
+  74 seats (`build_aef7_tcp_vic_from_vec.R`); 12 ABC-scrape rows disagreed
+  (Shepparton by 4 points). The VEC page's pair is its indicative count, not
+  the distribution's final two (Hawthorn, Kew, Mulgrave kept from the ABC).
 - Federal results as a correlated signal for state seat lean: needs
   seat-boundary matching (`external/reference/boundaries/` has CED 2016).
 - GDELT parked (needs a GCP project); Census 2006/2001 have no bulk pack.

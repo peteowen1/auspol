@@ -329,21 +329,18 @@ PUBLISHED_FLAGS <- c(
                                              # median seats 9 -> 10 (90%: 3-18 -> 4-20). Pete's call: publish
                                              # the pooled estimate, not SA's point value alone.
                                              # docs/reviews/onp-concentration-validated-2026-09-09.md
-  AUSPOL_FORECAST_MODE       = "0",          # harness-only: 1 = the statewide the seats swing toward is PREDICTED
-                                             # from the poll trend plus leave-one-out fundamentals, instead of read
-                                             # off the election being scored. Implemented in backtest_candidate_fed.R
-                                             # and _sa.R only; nsw/qld/vic/wa still use the actual result and are
-                                             # tracked as an open gap in docs/NEXT-STEPS.md.
-                                             #
-                                             # DEFAULT "0" IS NOT AN ENDORSEMENT. Pete's ruling 2026-09-11 is that a
-                                             # forecast must be predictive throughout, and the default is 0 only
-                                             # because four harnesses cannot yet honour it -- flipping it would
-                                             # silently mean two different things across the six. The xgb primary's
-                                             # own statewide feature IS already leakage-free (AUSPOL_LEVEL_MODE),
-                                             # which is the part that reaches the published forecast.
-                                             # Measured cost where implemented: federal +0.0047 pooled seat log loss,
-                                             # sa2026 0.3640 -> 0.4756 with the xgb primary OFF (with it on the
-                                             # statewide swing never reaches the output, so the two modes tie).
+  AUSPOL_FORECAST_MODE       = "1",          # harness-only: 1 = the statewide the seats swing toward is PREDICTED
+                                             # from the poll trend plus leave-one-out fundamentals as at the day
+                                             # before, instead of read off the election being scored (the oracle).
+                                             # FLIPPED TO 1 ON 2026-09-19: Pete's ruling of 2026-09-11 is that a
+                                             # forecast must be predictive throughout; the default stayed 0 only
+                                             # while four harnesses could not honour it. All six now share one
+                                             # block, R/forecast_statewide.R forecast_statewide_or_oracle(); a cycle
+                                             # too thin to fit a trend (wa2021) is SKIPPED loudly, never scored
+                                             # on the oracle. This matters in the production pipeline because
+                                             # base_pred carries the statewide into the xgb layer via base_margin;
+                                             # the old static-OOF override path hid it. The ledger rebuilt under
+                                             # this flag is v39; expect it to read WORSE than v38 and be honest.
   # AUSPOL_NSW_THIN_WALK is deliberately NOT registered here. scripts/fit_nsw.R
   # does not source this file -- only fit_seats_full.R and the six backtest
   # harnesses (via harness_defaults.R) do -- so an entry here would be

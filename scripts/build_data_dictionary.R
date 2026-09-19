@@ -62,13 +62,26 @@ L <- c(L, "## Processed election data (`external/elections/`)", "")
 f <- sort(list.files(ED, pattern = "[.]csv$", full.names = TRUE))
 grp <- sub("^([a-z]+).*$", "\\1", basename(f))
 L <- c(L, "| file | rows | columns |", "|---|---:|---|")
+# A COLUMN THAT LANDS 100% EMPTY MUST FAIL THE BUILD (global rule: a column
+# can be present, correctly typed and 0% populated for months while every
+# schema check passes -- 4,978,201 meet names were lost that way in
+# citiusverse). Every processed file is read in full and any column with no
+# non-missing value is listed here and makes this script exit non-zero.
+empty_cols <- character(0)
 for (p in f) {
   h <- hdr(p)
+  ec <- tryCatch({
+    d <- fread(p, showProgress = FALSE)
+    names(d)[vapply(d, function(x) all(is.na(x) | (is.character(x) & !nzchar(x))), logical(1))]
+  }, error = function(e) character(0))
+  if (length(ec)) empty_cols <- c(empty_cols, sprintf("%s: %s", basename(p), paste(ec, collapse = ", ")))
   L <- c(L, sprintf("| `%s` | %s | %s |", basename(p),
                     format(nrows_of(p), big.mark = ","),
-                    if (h$ok) paste0("`", paste(h$cols, collapse = "`, `"), "`") else "unreadable"))
+                    paste0(if (h$ok) paste0("`", paste(h$cols, collapse = "`, `"), "`") else "unreadable",
+                           if (length(ec)) sprintf(" **EMPTY: %s**", paste(ec, collapse = ", ")) else "")))
 }
 L <- c(L, "")
+if (length(empty_cols)) cat("DD8! columns that are 100% empty:\n  ", paste(empty_cols, collapse = "\n   "), "\n")
 
 # ---- raw commission downloads ----------------------------------------------
 L <- c(L, "## Raw downloads (`external/reference/`)", "",
@@ -145,3 +158,4 @@ L <- c(L, "", sprintf("_(%d `backtest-*.csv` arm outputs omitted; they share one
 
 writeLines(L, OUT)
 cat(sprintf("DD9  wrote %s (%d lines)\n", OUT, length(L)))
+if (length(empty_cols)) stop("DD8! ", length(empty_cols), " processed file(s) carry a 100% empty column (listed above); the dictionary was written but this build FAILS")

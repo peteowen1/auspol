@@ -528,84 +528,84 @@ pair,seat,f1,f2,f2cp,fsrc,aef_tcp_f1,aef_tcp_f2,aef_tcp_pct,aef_tcp_scenario_fre
 "sa2026","Waite","ALP","LNP",69.5,"official","ALP","GRN",58.8,0.425,43.2,72.3
 "sa2026","West Torrens","ALP","ONP",73.7,"official","ALP","GRN",66.3,0.604,48.2,79.3
 "sa2026","Wright","ALP","ONP",62.5,"official","ALP","ONP",65.2,0.75,42.4,78.7
-"vic2022","Albert Park","ALP","LNP",61.2,"abc-scrape","ALP","LNP",61,0.695,50.2,70.6
-"vic2022","Bass","ALP","LNP",50.2,"abc-scrape","ALP","LNP",47.9,0.95,37,58.9
-"vic2022","Bayswater","ALP","LNP",54.2,"abc-scrape","ALP","LNP",50.8,0.992,39.9,61.8
-"vic2022","Bellarine","ALP","LNP",58.5,"abc-scrape","ALP","LNP",58.7,0.895,48.2,68.6
-"vic2022","Benambra","LNP","IND",50.9,"abc-scrape","LNP","IND",49.1,0.524,29.1,68.3
-"vic2022","Bendigo East","ALP","LNP",60.8,"abc-scrape","ALP","LNP",60,0.972,47.8,71.2
-"vic2022","Bendigo West","ALP","LNP",64.6,"abc-scrape","ALP","LNP",66.4,0.948,55,76
-"vic2022","Bentleigh","ALP","LNP",58,"abc-scrape","ALP","LNP",59.3,0.968,47.2,70.3
-"vic2022","Box Hill","ALP","LNP",57.2,"abc-scrape","ALP","LNP",54.2,0.968,43.5,64.9
-"vic2022","Brighton","LNP","ALP",55.1,"abc-scrape","LNP","IND",48.9,0.485,28.4,65
-"vic2022","Broadmeadows","ALP","LNP",65.5,"abc-scrape","ALP","LNP",72.4,0.975,58.2,82.9
-"vic2022","Brunswick","GRN","ALP",63.5,"abc-scrape","ALP","GRN",35.7,0.88,18.8,61.7
-"vic2022","Bulleen","LNP","ALP",55.9,"abc-scrape","ALP","LNP",42.6,0.956,32.5,53.2
-"vic2022","Bundoora","ALP","LNP",62.7,"abc-scrape","ALP","LNP",65.2,0.988,55.1,74.1
-"vic2022","Carrum","ALP","LNP",59.8,"abc-scrape","ALP","LNP",58.5,0.992,46.1,69.8
-"vic2022","Caulfield","LNP","ALP",52.1,"abc-scrape","ALP","LNP",49.7,0.481,39.5,60
-"vic2022","Clarinda","ALP","LNP",60.2,"abc-scrape","ALP","LNP",63.8,0.965,53,73.1
-"vic2022","Cranbourne","ALP","LNP",59,"abc-scrape","ALP","LNP",56.1,0.993,43.5,68
-"vic2022","Croydon","LNP","ALP",51.4,"abc-scrape","ALP","LNP",47.7,0.986,36.7,58.8
-"vic2022","Dandenong","ALP","LNP",68.3,"abc-scrape","ALP","LNP",69.1,0.998,58.1,78.2
-"vic2022","Eildon","LNP","ALP",57,"abc-scrape","ALP","LNP",46.5,0.952,35.8,57.5
-"vic2022","Eltham","ALP","LNP",59,"abc-scrape","ALP","LNP",56.8,0.999,44,68.6
-"vic2022","Essendon","ALP","LNP",62.5,"abc-scrape","ALP","LNP",65.2,0.937,54.7,74.4
-"vic2022","Euroa","LNP","ALP",59.9,"abc-scrape","ALP","LNP",33.7,0.996,24.3,44.3
-"vic2022","Evelyn","LNP","ALP",55.4,"abc-scrape","ALP","LNP",44.7,0.988,33.7,56
-"vic2022","Footscray","ALP","GRN",54.2,"abc-scrape","ALP","LNP",72.9,0.574,62,81
-"vic2022","Frankston","ALP","LNP",58.7,"abc-scrape","ALP","LNP",58.7,0.991,47.1,69.3
-"vic2022","Geelong","ALP","LNP",64.7,"abc-scrape","ALP","LNP",58.8,0.91,48.2,68.5
-"vic2022","Gippsland East","LNP","ALP",74.6,"abc-scrape","ALP","LNP",28.6,0.923,20.4,38.6
-"vic2022","Gippsland South","LNP","ALP",65.6,"abc-scrape","ALP","LNP",33.3,0.852,22.1,48.2
-"vic2022","Hastings","ALP","LNP",51.4,"abc-scrape","ALP","LNP",46.6,0.987,35.6,57.8
+"vic2022","Albert Park","ALP","LNP",60.9,"vec-official","ALP","LNP",61,0.695,50.2,70.6
+"vic2022","Bass","ALP","LNP",50.3,"vec-official","ALP","LNP",47.9,0.95,37,58.9
+"vic2022","Bayswater","ALP","LNP",54.1,"vec-official","ALP","LNP",50.8,0.992,39.9,61.8
+"vic2022","Bellarine","ALP","LNP",56.9,"vec-official","ALP","LNP",58.7,0.895,48.2,68.6
+"vic2022","Benambra","LNP","IND",51.1,"vec-official","LNP","IND",49.1,0.524,29.1,68.3
+"vic2022","Bendigo East","ALP","LNP",60.9,"vec-official","ALP","LNP",60,0.972,47.8,71.2
+"vic2022","Bendigo West","ALP","LNP",64.3,"vec-official","ALP","LNP",66.4,0.948,55,76
+"vic2022","Bentleigh","ALP","LNP",58,"vec-official","ALP","LNP",59.3,0.968,47.2,70.3
+"vic2022","Box Hill","ALP","LNP",56.8,"vec-official","ALP","LNP",54.2,0.968,43.5,64.9
+"vic2022","Brighton","LNP","ALP",54.2,"vec-official","LNP","IND",48.9,0.485,28.4,65
+"vic2022","Broadmeadows","ALP","LNP",65.5,"vec-official","ALP","LNP",72.4,0.975,58.2,82.9
+"vic2022","Brunswick","GRN","ALP",63.5,"vec-official","ALP","GRN",35.7,0.88,18.8,61.7
+"vic2022","Bulleen","LNP","ALP",55.9,"vec-official","ALP","LNP",42.6,0.956,32.5,53.2
+"vic2022","Bundoora","ALP","LNP",62.7,"vec-official","ALP","LNP",65.2,0.988,55.1,74.1
+"vic2022","Carrum","ALP","LNP",59.9,"vec-official","ALP","LNP",58.5,0.992,46.1,69.8
+"vic2022","Caulfield","LNP","ALP",52.1,"vec-official","ALP","LNP",49.7,0.481,39.5,60
+"vic2022","Clarinda","ALP","LNP",60.4,"vec-official","ALP","LNP",63.8,0.965,53,73.1
+"vic2022","Cranbourne","ALP","LNP",59,"vec-official","ALP","LNP",56.1,0.993,43.5,68
+"vic2022","Croydon","LNP","ALP",51.3,"vec-official","ALP","LNP",47.7,0.986,36.7,58.8
+"vic2022","Dandenong","ALP","LNP",69.1,"vec-official","ALP","LNP",69.1,0.998,58.1,78.2
+"vic2022","Eildon","LNP","ALP",57.1,"vec-official","ALP","LNP",46.5,0.952,35.8,57.5
+"vic2022","Eltham","ALP","LNP",58.7,"vec-official","ALP","LNP",56.8,0.999,44,68.6
+"vic2022","Essendon","ALP","LNP",63,"vec-official","ALP","LNP",65.2,0.937,54.7,74.4
+"vic2022","Euroa","LNP","ALP",59.9,"vec-official","ALP","LNP",33.7,0.996,24.3,44.3
+"vic2022","Evelyn","LNP","ALP",55.2,"vec-official","ALP","LNP",44.7,0.988,33.7,56
+"vic2022","Footscray","ALP","GRN",54.3,"vec-official","ALP","LNP",72.9,0.574,62,81
+"vic2022","Frankston","ALP","LNP",58.7,"vec-official","ALP","LNP",58.7,0.991,47.1,69.3
+"vic2022","Geelong","ALP","LNP",63.8,"vec-official","ALP","LNP",58.8,0.91,48.2,68.5
+"vic2022","Gippsland East","LNP","ALP",73.9,"vec-official","ALP","LNP",28.6,0.923,20.4,38.6
+"vic2022","Gippsland South","LNP","ALP",65.2,"vec-official","ALP","LNP",33.3,0.852,22.1,48.2
+"vic2022","Hastings","ALP","LNP",51.2,"vec-official","ALP","LNP",46.6,0.987,35.6,57.8
 "vic2022","Hawthorn","LNP","ALP",51.7,"abc-scrape","LNP","IND",45.4,0.42,27.4,62.3
-"vic2022","Ivanhoe","ALP","LNP",62.8,"abc-scrape","ALP","LNP",60.9,0.981,50.4,70.4
+"vic2022","Ivanhoe","ALP","LNP",62.8,"vec-official","ALP","LNP",60.9,0.981,50.4,70.4
 "vic2022","Kew","LNP","ALP",54,"abc-scrape","LNP","IND",47.7,0.596,27.7,64.7
-"vic2022","Kororoit","ALP","LNP",64.5,"abc-scrape","ALP","LNP",69.1,0.982,57.3,78
-"vic2022","Lara","ALP","LNP",65.9,"abc-scrape","ALP","LNP",65.6,0.945,54.8,74.9
-"vic2022","Lowan","LNP","ALP",71.6,"abc-scrape","ALP","LNP",27.4,0.868,19.4,37.1
-"vic2022","Macedon","ALP","LNP",59.5,"abc-scrape","ALP","LNP",59.7,0.96,48.4,69.8
-"vic2022","Malvern","LNP","ALP",58.1,"abc-scrape","ALP","LNP",42.1,0.854,31.6,53.6
-"vic2022","Melbourne","GRN","ALP",60.2,"abc-scrape","ALP","GRN",36.7,0.757,21.7,57.7
-"vic2022","Melton","ALP","LNP",54.6,"abc-scrape","ALP","IND",47.9,0.712,26.4,66.6
-"vic2022","Mildura","LNP","IND",51.2,"abc-scrape","LNP","IND",44,0.99,21.6,62.6
-"vic2022","Mill Park","ALP","LNP",61.6,"abc-scrape","ALP","LNP",70.5,0.998,58.3,79.7
-"vic2022","Monbulk","ALP","LNP",57.6,"abc-scrape","ALP","LNP",53.6,0.981,42.7,64.1
-"vic2022","Mordialloc","ALP","LNP",58.2,"abc-scrape","ALP","LNP",62,0.989,50.5,72.2
-"vic2022","Mornington","LNP","IND",50.7,"abc-scrape","LNP","IND",52.2,0.508,31.1,68.9
-"vic2022","Morwell","LNP","ALP",54.4,"abc-scrape","ALP","LNP",48.5,0.884,37.2,59.5
+"vic2022","Kororoit","ALP","LNP",64.2,"vec-official","ALP","LNP",69.1,0.982,57.3,78
+"vic2022","Lara","ALP","LNP",66.2,"vec-official","ALP","LNP",65.6,0.945,54.8,74.9
+"vic2022","Lowan","LNP","ALP",71.6,"vec-official","ALP","LNP",27.4,0.868,19.4,37.1
+"vic2022","Macedon","ALP","LNP",59.5,"vec-official","ALP","LNP",59.7,0.96,48.4,69.8
+"vic2022","Malvern","LNP","ALP",58.3,"vec-official","ALP","LNP",42.1,0.854,31.6,53.6
+"vic2022","Melbourne","GRN","ALP",60.2,"vec-official","ALP","GRN",36.7,0.757,21.7,57.7
+"vic2022","Melton","ALP","LNP",54.4,"vec-official","ALP","IND",47.9,0.712,26.4,66.6
+"vic2022","Mildura","LNP","IND",51.3,"vec-official","LNP","IND",44,0.99,21.6,62.6
+"vic2022","Mill Park","ALP","LNP",61.4,"vec-official","ALP","LNP",70.5,0.998,58.3,79.7
+"vic2022","Monbulk","ALP","LNP",57.6,"vec-official","ALP","LNP",53.6,0.981,42.7,64.1
+"vic2022","Mordialloc","ALP","LNP",58,"vec-official","ALP","LNP",62,0.989,50.5,72.2
+"vic2022","Mornington","LNP","IND",50.7,"vec-official","LNP","IND",52.2,0.508,31.1,68.9
+"vic2022","Morwell","LNP","ALP",54.7,"vec-official","ALP","LNP",48.5,0.884,37.2,59.5
 "vic2022","Mulgrave","ALP","IND",60.8,"abc-scrape","ALP","IND",57.7,0.693,36.2,73.8
-"vic2022","Murray Plains","LNP","ALP",73.4,"abc-scrape","ALP","LNP",24.2,0.808,17.1,33.2
-"vic2022","Narre Warren North","ALP","LNP",58.7,"abc-scrape","ALP","LNP",56.2,0.994,45.1,66.6
-"vic2022","Narre Warren South","ALP","LNP",58.3,"abc-scrape","ALP","LNP",58.7,0.991,47.6,68.8
-"vic2022","Nepean","LNP","ALP",56.4,"abc-scrape","ALP","LNP",46.9,0.982,35.9,58.1
-"vic2022","Niddrie","ALP","LNP",56.7,"abc-scrape","ALP","LNP",59.8,1,49.7,68.9
-"vic2022","Northcote","ALP","GRN",50.2,"abc-scrape","ALP","GRN",41.7,0.97,23,64.3
-"vic2022","Oakleigh","ALP","LNP",63.5,"abc-scrape","ALP","LNP",64,0.966,53.3,73.4
-"vic2022","Ovens Valley","LNP","ALP",67.8,"abc-scrape","ALP","LNP",36.4,0.986,26.6,47.4
-"vic2022","Pascoe Vale","ALP","GRN",52,"abc-scrape","ALP","GRN",49.2,0.811,31.5,66.7
-"vic2022","Polwarth","LNP","ALP",51.8,"abc-scrape","ALP","LNP",46.4,0.934,35.7,57.6
-"vic2022","Prahran","GRN","LNP",62,"abc-scrape","LNP","GRN",43.4,0.748,32.2,55.3
-"vic2022","Preston","ALP","GRN",52.1,"abc-scrape","ALP","GRN",58.9,0.5,44,71
-"vic2022","Richmond","GRN","ALP",57.3,"abc-scrape","ALP","GRN",42.6,0.905,24.1,65.4
-"vic2022","Ringwood","ALP","LNP",57.5,"abc-scrape","ALP","LNP",51.8,0.991,40.6,62.9
-"vic2022","Ripon","ALP","LNP",53,"abc-scrape","ALP","LNP",50.4,0.967,41.4,59.3
-"vic2022","Rowville","LNP","ALP",53.7,"abc-scrape","ALP","LNP",44.6,0.989,33.7,56.3
-"vic2022","Sandringham","LNP","ALP",55,"abc-scrape","ALP","LNP",46.2,0.814,34.3,58.4
-"vic2022","Shepparton","LNP","IND",56.8,"abc-scrape","LNP","IND",45.2,0.988,20.6,62.6
-"vic2022","South Barwon","ALP","LNP",59.8,"abc-scrape","ALP","LNP",53.5,0.998,42.8,64
+"vic2022","Murray Plains","LNP","ALP",72.9,"vec-official","ALP","LNP",24.2,0.808,17.1,33.2
+"vic2022","Narre Warren North","ALP","LNP",59.2,"vec-official","ALP","LNP",56.2,0.994,45.1,66.6
+"vic2022","Narre Warren South","ALP","LNP",58.5,"vec-official","ALP","LNP",58.7,0.991,47.6,68.8
+"vic2022","Nepean","LNP","ALP",56.7,"vec-official","ALP","LNP",46.9,0.982,35.9,58.1
+"vic2022","Niddrie","ALP","LNP",57.1,"vec-official","ALP","LNP",59.8,1,49.7,68.9
+"vic2022","Northcote","ALP","GRN",50.2,"vec-official","ALP","GRN",41.7,0.97,23,64.3
+"vic2022","Oakleigh","ALP","LNP",63.5,"vec-official","ALP","LNP",64,0.966,53.3,73.4
+"vic2022","Ovens Valley","LNP","ALP",68,"vec-official","ALP","LNP",36.4,0.986,26.6,47.4
+"vic2022","Pascoe Vale","ALP","GRN",52.4,"vec-official","ALP","GRN",49.2,0.811,31.5,66.7
+"vic2022","Polwarth","LNP","ALP",51.8,"vec-official","ALP","LNP",46.4,0.934,35.7,57.6
+"vic2022","Prahran","GRN","LNP",62.3,"vec-official","LNP","GRN",43.4,0.748,32.2,55.3
+"vic2022","Preston","ALP","GRN",52.2,"vec-official","ALP","GRN",58.9,0.5,44,71
+"vic2022","Richmond","GRN","ALP",57.2,"vec-official","ALP","GRN",42.6,0.905,24.1,65.4
+"vic2022","Ringwood","ALP","LNP",58.3,"vec-official","ALP","LNP",51.8,0.991,40.6,62.9
+"vic2022","Ripon","ALP","LNP",53,"vec-official","ALP","LNP",50.4,0.967,41.4,59.3
+"vic2022","Rowville","LNP","ALP",53.7,"vec-official","ALP","LNP",44.6,0.989,33.7,56.3
+"vic2022","Sandringham","LNP","ALP",55.1,"vec-official","ALP","LNP",46.2,0.814,34.3,58.4
+"vic2022","Shepparton","LNP","IND",52.7,"vec-official","LNP","IND",45.2,0.988,20.6,62.6
+"vic2022","South Barwon","ALP","LNP",59.8,"vec-official","ALP","LNP",53.5,0.998,42.8,64
 "vic2022","South-West Coast","LNP","ALP",58,"abc-scrape","ALP","LNP",44,0.803,33.8,54.6
-"vic2022","St Albans","ALP","LNP",59.6,"abc-scrape","ALP","LNP",66.4,0.967,54.1,75.9
-"vic2022","Sunbury","ALP","LNP",56.4,"abc-scrape","ALP","LNP",61.8,0.989,51,71.5
-"vic2022","Sydenham","ALP","LNP",58.8,"abc-scrape","ALP","LNP",63.8,0.998,52.2,73.6
-"vic2022","Tarneit","ALP","LNP",62.3,"abc-scrape","ALP","LNP",64.3,0.981,53.2,73.8
-"vic2022","Thomastown","ALP","LNP",65.8,"abc-scrape","ALP","LNP",75.3,0.994,63.7,84.1
-"vic2022","Warrandyte","LNP","ALP",54.3,"abc-scrape","ALP","LNP",44.7,0.973,32.8,57.5
-"vic2022","Wendouree","ALP","LNP",61.9,"abc-scrape","ALP","LNP",59.6,0.964,48.4,69.7
-"vic2022","Werribee","ALP","LNP",60.9,"abc-scrape","ALP","LNP",61,0.507,50.1,70.6
-"vic2022","Williamstown","ALP","LNP",63.4,"abc-scrape","ALP","LNP",67,0.79,56.9,75.5
-"vic2022","Yan Yean","ALP","LNP",54.3,"abc-scrape","ALP","LNP",57.6,1,44.7,69.1
+"vic2022","St Albans","ALP","LNP",59.4,"vec-official","ALP","LNP",66.4,0.967,54.1,75.9
+"vic2022","Sunbury","ALP","LNP",56.4,"vec-official","ALP","LNP",61.8,0.989,51,71.5
+"vic2022","Sydenham","ALP","LNP",58.7,"vec-official","ALP","LNP",63.8,0.998,52.2,73.6
+"vic2022","Tarneit","ALP","LNP",62.6,"vec-official","ALP","LNP",64.3,0.981,53.2,73.8
+"vic2022","Thomastown","ALP","LNP",66,"vec-official","ALP","LNP",75.3,0.994,63.7,84.1
+"vic2022","Warrandyte","LNP","ALP",54.2,"vec-official","ALP","LNP",44.7,0.973,32.8,57.5
+"vic2022","Wendouree","ALP","LNP",63.5,"vec-official","ALP","LNP",59.6,0.964,48.4,69.7
+"vic2022","Werribee","ALP","LNP",60.5,"vec-official","ALP","LNP",61,0.507,50.1,70.6
+"vic2022","Williamstown","ALP","LNP",62.6,"vec-official","ALP","LNP",67,0.79,56.9,75.5
+"vic2022","Yan Yean","ALP","LNP",54.5,"vec-official","ALP","LNP",57.6,1,44.7,69.1
 "wa2025","Albany","LNP","ALP",56.3,"official","ALP","LNP",47.2,0.678,35.9,58.4
 "wa2025","Armadale","ALP","LNP",68.8,"official","ALP","LNP",73,0.979,64.1,80
 "wa2025","Balcatta","ALP","LNP",64.5,"official","ALP","LNP",61.8,0.929,51.4,70.6
