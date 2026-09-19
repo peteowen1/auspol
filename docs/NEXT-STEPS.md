@@ -134,7 +134,13 @@ flow for the other excluded-party cells; (4) seat-swing beyond statewide;
 blog's CSP only allows its R2 origin); blog page `politics/index.qmd`
 (chamber odds, hung/One Nation balance-of-power, all 88 seats with
 candidates) on inthegame-blog dev, riding in the CITIUS session's PR #700
--- **AWAITING PETE** (new public section; not self-merged). Still open:
+-- **AWAITING PETE** (new public section; not self-merged).
+**ALSO AWAITING PETE: the R2 upload needs two repo secrets auspol does not
+have** -- `CLOUDFLARE_R2_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` (same values as
+pannadata/torpdata; Settings > Secrets and variables > Actions). Run
+35426679784 failed on exactly that; the step now warns and skips instead,
+so the release publish is unaffected but the blog page shows "could not be
+loaded" until the secrets exist and the next daily run uploads. Still open:
 seat map, per-seat cards, publish the AEF-7 ledger and PIPELINE.md.
 
 **Data/infra**: snapshot the poll source into our release; VEC media feed

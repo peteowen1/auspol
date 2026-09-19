@@ -331,8 +331,16 @@ jobs:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: |
           set -e
-          # Fail fast rather than let wrangler wait on an interactive login.
-          [ -n "$CLOUDFLARE_API_TOKEN" ] && [ -n "$CLOUDFLARE_ACCOUNT_ID" ] || { echo "::error::CLOUDFLARE_R2_TOKEN / CLOUDFLARE_ACCOUNT_ID secrets missing"; exit 1; }
+          # The secrets do not exist on this repo yet (2026-09-19: first run
+          # failed here; they live on pannadata/torpdata and Pete has to add
+          # them under Settings > Secrets > Actions). Until then this step
+          # warns and skips rather than turning every daily run red: the
+          # release publish above has already happened, so nothing is lost
+          # except the blog feed. Never let wrangler wait on an interactive login.
+          if [ -z "$CLOUDFLARE_API_TOKEN" ] || [ -z "$CLOUDFLARE_ACCOUNT_ID" ]; then
+            echo "::warning::CLOUDFLARE_R2_TOKEN / CLOUDFLARE_ACCOUNT_ID secrets not set on this repo -- R2 upload skipped, the ITG page has no data"
+            exit 0
+          fi
           # Pinned: an unpinned global install of a CLI that holds an API token
           # is a supply-chain hole (commit security review, 2026-09-19).
           npm install -g wrangler@4.135.0 >/dev/null 2>&1
