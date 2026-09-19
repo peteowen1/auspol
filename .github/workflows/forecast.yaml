@@ -331,7 +331,9 @@ jobs:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: |
           set -e
-          npm install -g wrangler >/dev/null 2>&1
+          # Pinned: an unpinned global install of a CLI that holds an API token
+          # is a supply-chain hole (commit security review, 2026-09-19).
+          npm install -g wrangler@4.135.0 >/dev/null 2>&1
           for f in output/forecast-vic2026.json output/forecast-history.csv output/seat-probs-vic-2026.csv output/seat-shares-vic-2026.csv; do
             case "$f" in *.json) ct=application/json ;; *) ct=text/csv ;; esac
             wrangler r2 object put "inthegame-data/auspol/$(basename "$f")" --file "$f" --content-type "$ct" --cache-control "public, max-age=300" --remote
