@@ -41,3 +41,14 @@ the same party won the by-election change only the person's key.
 
 Unacceptable-win clause: if the gain is Black alone and the other ten are
 flat or worse, it is not a rule, it is one seat.
+
+## Result, 2026-09-19 11:10 (base_pred only, 20,000 sims, one harness at a time)
+
+| metric | before | after | delta | SE |
+|---|---|---|---|---|
+| 12 changed-member seats, 81 class cells, mean abs primary error | 5.388 | 4.874 | **-0.514** | 0.271 |
+| non-target cells (n=14,065) | 2.4486 | 2.4486 | 0 | |
+| pooled seat log loss, 22 pairs scored | 0.2920 | 0.2906 | -0.0031/pair | 0.0022 |
+
+15 of 22 pairs better. **Verdict: criterion met at 1.9 SE, do-no-harm met
+(improved), SHIPPED** (`AUSPOL_BYELECTION_MP = "1"`).
