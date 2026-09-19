@@ -33,6 +33,15 @@ Current live target is **Victoria, 28 November 2026**.
 
 The forecast is published as a self-contained page — see `build_page.R`.
 
+**Where the outputs live** (release-as-data-bus; the release *date* is the
+tag's, read `built_at` / `MANIFEST.json` for the data's):
+
+| what | where |
+|---|---|
+| Today's forecast: `forecast-vic2026.json`, `forecast-history.csv`, seat probabilities and shares, the HTML page | [`forecast-latest` release](https://github.com/peteowen1/auspol/releases/tag/forecast-latest), rebuilt 06:00 Melbourne daily by `.github/workflows/forecast.yaml` |
+| The models the forecast runs on, their scoreboard, and the **AEF-7 ledger** (`aef7-ledger.html`: our model against AE Forecasts on 660 seats across seven elections, seat by seat) | [`shipped-models` release](https://github.com/peteowen1/auspol/releases/tag/shipped-models), promoted by `scripts/rebuild_forecasts.sh` stage 9 |
+| How the pipeline fits together, stage by stage | [`docs/PIPELINE.md`](docs/PIPELINE.md) |
+
 **There is no second seat model.** `fit_seats.R` / `simulate_seats()` (statewide
 draw + regional block + per-seat residual, two-party only) is **retired**: it
 cannot elect a minor party or an independent, and South Australia elected four
