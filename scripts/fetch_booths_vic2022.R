@@ -79,6 +79,19 @@ parse_vc <- function(f, district, kind) {
     return(out[0])
   }
   if (!isTRUE(all(ours == tot))) stop("FB4! ", district, " ", kind, ": parsed totals ", paste(ours, collapse = ","), " vs page ", paste(tot, collapse = ","))
+  # ROW-WIDE CHECK (review gate 2026-09-19): `cands` and `tot` are built from
+  # the same column index, so a candidate whose name cell is blank would drop
+  # out of BOTH sides and the check above could not see it. The page's own
+  # "Total votes polled" column is independent of that index: every other
+  # numeric column (candidates, mis-sorts, informal) must sum to it.
+  tot_row <- body[[which(vapply(body, function(cl) tolower(cl[1]) == "total", logical(1)))[1]]]
+  tv <- which(tolower(party_row) == "total votes polled")
+  if (length(tv) == 1) {
+    allnum <- suppressWarnings(as.integer(gsub(",", "", tot_row[-1])))
+    others <- sum(allnum[-(tv - 1)], na.rm = TRUE); polled <- allnum[tv - 1]
+    if (!isTRUE(others == polled)) stop("FB4! ", district, " ", kind, ": columns sum to ", others, " but Total votes polled is ", polled,
+                                        " -- a column was dropped (blank name cell?) or gained")
+  } else cat("FB4  ", district, " ", kind, ": no 'Total votes polled' column, row-wide check skipped\n", sep = "")
   out
 }
 
