@@ -62,12 +62,13 @@ seat_rows <- lapply(shares$seat, function(s) {
 
 # chamber block from the simulation totals
 q <- function(x) as.list(round(stats::quantile(x, c(0.05, 0.25, 0.5, 0.75, 0.95)), 1))
+row_max <- do.call(pmax, as.list(sims[, ..parties]))   # once, not once per party
 chamber <- lapply(parties, function(p) list(party = p, expected = round(mean(sims[[p]]), 2),
                                             p_majority = round(mean(sims[[p]] >= majority), 4),
-                                            p_most_seats = round(mean(sims[[p]] == apply(as.matrix(sims[, ..parties]), 1, max)), 4),
+                                            p_most_seats = round(mean(sims[[p]] == row_max), 4),
                                             quantiles = q(sims[[p]])))
 names(chamber) <- parties
-hung <- mean(apply(as.matrix(sims[, ..parties]), 1, max) < majority)
+hung <- mean(row_max < majority)
 maj_l <- if ("LNP" %in% parties) sims$LNP else 0; maj_a <- if ("ALP" %in% parties) sims$ALP else 0
 onp <- if ("ONP" %in% parties) sims$ONP else 0
 # One Nation balance of power: no majority, and One Nation's seats would carry the larger major over the line
@@ -78,7 +79,8 @@ man <- if (file.exists(man_f)) jsonlite::fromJSON(man_f) else NULL
 doc <- list(
   election = "vic2026", election_date = "2026-11-28", built_at = format(Sys.time(), "%Y-%m-%dT%H:%M:%S%z"),
   git_sha = gitsha, models_promoted_at = if (!is.null(man)) man$promoted_at else NULL,
-  chamber_seats = CHAMBER, seats_simulated = n_seats, seats_not_simulated = excluded, majority = majority, n_sims = nrow(sims),
+  chamber_seats = CHAMBER, seats_simulated = n_seats, seats_not_simulated = I(excluded),   # I(): always a JSON array, even for one seat
+  majority = majority, n_sims = nrow(sims),
   chamber = list(parties = chamber, p_hung = round(hung, 4), p_onp_balance_of_power = round(onp_bop, 4)),
   seats = seat_rows)
 out_f <- file.path(OUT, "forecast-vic2026.json")
