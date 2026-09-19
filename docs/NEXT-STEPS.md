@@ -89,7 +89,7 @@ and published 12:48 (`scripts/promote_rebuild.R`, driver stage 9 under
 `AUSPOL_PUBLISH=1`, `forecast.yaml` fails when the manifest is >14 days
 old); vic2026 flow fallback fixed (future election -> all-data model).
 
-**Found 13:30 while triggering the daily job: the live forecast has NOT
+**FIXED 15:50 (PRs #54, #55, #56). Found 13:30 while triggering the daily job: the live forecast had NOT
 refreshed for at least a week.** Every `forecast.yaml` run on record (8 of
 8, scheduled and manual) failed, on a NSW 2027 poll-tracking breach (`NL3`:
 One Nation fitted 4.6 points off its 90-day poll average, bound 2.5 -- the
@@ -101,6 +101,27 @@ Fixed: candidacies.csv ships with the models; a validation-only failure
 warns instead of blocking; the publish step checks the Victorian outputs
 were written by this run. The NSW ONP bound itself is Pete's open
 judgement (`POLL_TRACKING_BOUND` scaling), unchanged.
+Three runs to get there: #54 (candidacies + non-blocking breach), #55
+(`build_page.R` still hand-assigned Narracan and refused 88 seats), #56
+(workflow token needed `contents: write` to create the release).
+
+**First live forecast on the `forecast-latest` release** (run 35424679591,
+built 2026-09-19T05:50Z at git 864f150, 20,000 sims, 88 of 88 seats).
+Expected seats and probabilities; `P(maj)` is the chance of 45 or more:
+
+| party | expected | 5%-95% | P(maj) | P(most seats) |
+|---|---|---|---|---|
+| LNP | 36.1 | 25-50 | 0.140 | 0.495 |
+| ALP | 35.5 | 21-49 | 0.136 | 0.533 |
+| ONP | 11.0 | 4-20 | 0 | 0.002 |
+| GRN | 5.3 | 3-8 | 0 | 0 |
+
+P(hung) 0.724; P(One Nation holds the balance of power) 0.704. The
+17 Sep local run had ALP 36.2 / LNP 32.9 / ONP 12.4 -- the move is polls
+(fetched fresh on CI) plus the 88th seat, not code. `models_promoted_at`
+was null in this first JSON (the script read the local manifest path
+only; fixed on dev, ships with the next PR).
+
 
 **Model, in order**: (1) independent emergence (fed2022 is the whole AEF
 loss; parked, now biggest); (2) One Nation in Victoria (polls 27%, Nepean

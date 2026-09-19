@@ -72,8 +72,13 @@ onp <- if ("ONP" %in% parties) sims$ONP else 0
 # One Nation balance of power: no majority, and One Nation's seats would carry the larger major over the line
 onp_bop <- mean(pmax(maj_l, maj_a) < majority & pmax(maj_l, maj_a) + onp >= majority & onp > 0)
 gitsha <- tryCatch(trimws(system2("git", c("rev-parse", "--short", "HEAD"), stdout = TRUE)), error = function(e) NA_character_)
-man_f <- file.path(OUT, "shipped", "MANIFEST.json")
-man <- if (file.exists(man_f)) jsonlite::fromJSON(man_f) else NULL
+# Locally promote_rebuild.R writes output/shipped/MANIFEST.json; on CI the
+# workflow downloads the release's copy to output/MANIFEST.json. Read whichever
+# exists (the first live JSON had models_promoted_at null for this reason).
+man_f <- Filter(file.exists, c(file.path(OUT, "shipped", "MANIFEST.json"), file.path(OUT, "MANIFEST.json")))
+man <- if (length(man_f)) jsonlite::fromJSON(man_f[1]) else NULL
+if (is.null(man)) cat("FJ1! no MANIFEST.json found -- models_promoted_at will be null
+")
 doc <- list(
   election = "vic2026", election_date = "2026-11-28", built_at = format(Sys.time(), "%Y-%m-%dT%H:%M:%S%z"),
   git_sha = gitsha, models_promoted_at = if (!is.null(man)) man$promoted_at else NULL,
