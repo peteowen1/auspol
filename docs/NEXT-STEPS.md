@@ -29,6 +29,12 @@ Plan written: `docs/plans/election-night-booth-model.md` (VEC publishes an XML
 feed down to voting centre; 2022 per-booth files exist per district; dress
 rehearsal = replay vic2022; the VEC email is drafted there for Pete to
 send). Scope:
+**Done 22:05**: 2022 and 2018 booth data fetched and parsed (`fetch_booths_vic2022.R`);
+replay harness `booth_replay_vic2022.R` passes the identity check and, with no
+prior, calls the first-preference leader right in 85-87 of 87 seats from 10%
+counted, major shares within 1.5 points at half the night vote (table in the
+plan). Next: the prior/posterior layer.
+
 1. Data: 2022 booth-level first preferences and TCP per voting centre
    (VEC "votes by voting centre"; `external/reference/vec/2010, 2014, 2018`
    hold the older FPV-by-VC files, 2022's is in

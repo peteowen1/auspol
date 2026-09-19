@@ -81,6 +81,49 @@ seat (a correctness check on the parser and the matching), and at 50%
 counted the log loss must beat the afternoon forecast's (otherwise the
 update is adding noise, not information).
 
+## Dress rehearsal 1, projection layer only, 2026-09-19 22:05
+
+Built: `scripts/fetch_booths_vic2022.R` (2022 from the results site's
+HTML voting-centre pages, 87 districts, 1,729 ordinary booths; 2018 from the
+historical-results blob, 87 districts, 1,837 booths; Ripon 2018 publishes
+booth rows as zeros after its recount and is skipped) and
+`scripts/booth_replay_vic2022.R`. Two source traps found on the way: the
+per-district `.xls` blob is not versioned by election (Nepean's was the
+2026 by-election), and the 2CP pages count slightly more declaration votes
+than the first-preference pages in 14 districts (later vintage; up to 2.2%
+in Werribee). First preferences are the projection's source.
+
+Reference 2018, live 2022, booths matched by name in-district (1,314) then
+by unique name statewide across the redistribution (586): **78.3% of the
+2022 vote matched**. Simulated report order (small ordinary booths first,
+then early votes, then postals). No forecast prior. Error is on the final
+ALP/LNP/GRN first-preference share, points, lower is better; leader = the
+seat's first-preference leader called correctly, of 87.
+
+| night vote counted | share of ALL votes | leader correct | major MAE | major RMSE |
+|--:|--:|--:|--:|--:|
+| 10% | 8.6% | 86 | 2.01 | 2.63 |
+| 25% | 22.4% | 85 | 1.55 | 1.93 |
+| 50% | 34.6% | 87 | 1.45 | 1.77 |
+| 75% | 34.6% | 87 | 1.45 | 1.77 |
+| 100% | 95.0% | 87 | 0.20 | 0.26 |
+
+The 50% and 75% rows are identical because early votes are one unit per
+district (49.5% of the vote) and land all at once in this ordering; the
+VEC feed may report early-vote centres separately, which would smooth
+that. With every unit counted the projection equals the final in every
+seat and class (the parser and matching identity check).
+
+Worst seats at 50%: Richmond (Greens 39.4 projected vs 34.7; the Liberals
+did not stand in 2018 so their 2022 vote has no booth swing to follow),
+Werribee and Tarneit (Labor under by 4 to 5, outer-west early votes ran
+differently from the ordinary booths), Melbourne, Berwick. These are the
+cases the prior is for.
+
+**Next**: the prior/posterior layer (`scripts/booth_update_vic.R`), using
+the shipped vic2022 backtest's predicted primaries as the prior in
+rehearsal 2, and the afternoon forecast on the night.
+
 ## Timeline
 
 - October: fetch and parse 2022 booths; matching; replay harness; first

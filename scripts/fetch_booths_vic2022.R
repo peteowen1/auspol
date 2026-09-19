@@ -44,8 +44,10 @@ decl_map <- c("absent votes" = "absent", "early votes" = "early", "postal votes"
 parse_vc <- function(f, district, kind) {
   h <- paste(readLines(f, warn = FALSE, encoding = "UTF-8"), collapse = "\n")
   if (!grepl("</html>", h, fixed = TRUE)) stop("FB3! ", district, " ", kind, ": page truncated (no closing tag)")
-  tbl <- regmatches(h, regexpr("(?s)<table.*?</table>", h, perl = TRUE))
-  if (!length(tbl)) stop("FB3! ", district, " ", kind, ": no table")
+  tbls <- regmatches(h, gregexpr("(?s)<table.*?</table>", h, perl = TRUE))[[1]]
+  tbl <- tbls[grepl("Voting Centres", tbls, ignore.case = TRUE)]     # 2018 pages carry two summary tables first
+  if (!length(tbl)) stop("FB3! ", district, " ", kind, ": no voting-centre table")
+  tbl <- tbl[1]
   rows <- regmatches(tbl, gregexpr("(?s)<tr.*?</tr>", tbl, perl = TRUE))[[1]]
   cells <- lapply(rows, function(r) {
     cc <- regmatches(r, gregexpr("(?s)<t[hd][^>]*>.*?</t[hd]>", r, perl = TRUE))[[1]]
@@ -70,10 +72,18 @@ parse_vc <- function(f, district, kind) {
   out <- rbindlist(out)
   if (is.null(tot)) stop("FB4! ", district, " ", kind, ": no Total row")
   ours <- out[, .(v = sum(votes, na.rm = TRUE)), by = candidate]$v
+  if (all(ours == 0) && any(tot > 0)) {
+    # Ripon 2018 (a recount): every booth row published as zero, only the
+    # Total carries votes. No booth reference exists for that district.
+    cat("FB4! ", district, " ", kind, ": booth rows all zero against a non-zero Total -- no booth-level data, district SKIPPED\n", sep = "")
+    return(out[0])
+  }
   if (!isTRUE(all(ours == tot))) stop("FB4! ", district, " ", kind, ": parsed totals ", paste(ours, collapse = ","), " vs page ", paste(tot, collapse = ","))
   out
 }
 
+years <- strsplit(Sys.getenv("AUSPOL_BOOTH_YEARS", "2022,2018"), ",")[[1]]
+if ("2022" %in% years) {
 FP <- list(); TCP <- list(); fetched <- 0L
 for (pg in pages) {
   slug <- sub("-results[.]html$", "", basename(pg))
@@ -103,3 +113,32 @@ sh <- FP[, .(votes = sum(votes, na.rm = TRUE)), by = booth_type][, share := roun
 cat("FB6  statewide share of the first-preference vote by vote type:\n"); print(sh)
 fwrite(FP, "output/booths-vic2022.csv"); fwrite(TCP, "output/booths-vic2022-2cp.csv")
 cat("FB7  wrote output/booths-vic2022.csv and output/booths-vic2022-2cp.csv\n")
+}
+
+# ---- 2018: the dress-rehearsal REFERENCE, from the historical-results blob ----
+# The container lists publicly; per district there are
+# fpvbyvotingcentre<slug>district.html and tcpbyvotingcentre<slug>district.html
+# with the same table shape (after two summary tables). Parties are upper case
+# there; the harness classifies them with classify_party() anyway.
+if ("2018" %in% years) {
+  BLOB <- "https://itsitecoreblobvecprd01.blob.core.windows.net/public-files/historical-results/state2018"
+  RAW18 <- "external/reference/vec/2018/booths"; dir.create(RAW18, showWarnings = FALSE, recursive = TRUE)
+  lst <- tempfile(fileext = ".xml")
+  utils::download.file("https://itsitecoreblobvecprd01.blob.core.windows.net/public-files?restype=container&comp=list&prefix=historical-results/state2018/tcpbyvotingcentre&maxresults=1000", lst, quiet = TRUE)
+  ll <- paste(readLines(lst, warn = FALSE), collapse = "")
+  slugs <- unique(sub("^tcpbyvotingcentre(.*)district[.]html$", "\\1", regmatches(ll, gregexpr("tcpbyvotingcentre[a-z-]+district[.]html", ll))[[1]]))
+  stopifnot(length(slugs) >= 85)
+  FP18 <- list(); TCP18 <- list(); f18 <- 0L
+  for (s in slugs) {
+    district <- gsub("\\b([a-z])", "\\U\\1", gsub("-", " ", s), perl = TRUE)
+    f_f <- file.path(RAW18, paste0(s, "-fp.html")); f_t <- file.path(RAW18, paste0(s, "-2cp.html"))
+    f18 <- f18 + polite_get(sprintf("%s/fpvbyvotingcentre%sdistrict.html", BLOB, s), f_f) +
+                 polite_get(sprintf("%s/tcpbyvotingcentre%sdistrict.html", BLOB, s), f_t)
+    FP18[[s]] <- parse_vc(f_f, district, "fp"); TCP18[[s]] <- parse_vc(f_t, district, "2cp")
+  }
+  FP18 <- rbindlist(FP18); TCP18 <- rbindlist(TCP18)
+  cat(sprintf("FB8  2018: %d districts, %d new downloads; FP %d rows (%d ordinary booths), 2CP %d rows\n",
+              uniqueN(FP18$district), f18, nrow(FP18), uniqueN(FP18[booth_type == "ordinary", .(district, booth)]), nrow(TCP18)))
+  fwrite(FP18, "output/booths-vic2018.csv"); fwrite(TCP18, "output/booths-vic2018-2cp.csv")
+  cat("FB9  wrote output/booths-vic2018.csv and output/booths-vic2018-2cp.csv\n")
+}
