@@ -1,3 +1,19 @@
+# auspol 0.4.47
+
+**Productionisation.** The daily live forecast was found running on models
+promoted 2026-09-11, eight days behind the code.
+
+- `scripts/promote_rebuild.R` promotes the rebuild driver's models and
+  scoreboard; `rebuild_forecasts.sh` stage 9 (`AUSPOL_PUBLISH=1`) publishes
+  them to the `shipped-models` release; the daily workflow warns past 3 days
+  and fails past 14 when the manifest is stale.
+- Live-forecast fix: under `AUSPOL_FLOW_ASAT` a future election (vic2026)
+  now uses the all-data flow model instead of falling to the pooled table.
+- `scripts/build_forecast_json.R` (a `run_all.R` stage): the forecast as one
+  JSON document (seats, chamber odds, P(hung), P(One Nation balance of
+  power), 88-seat chamber with the non-simulated seat named) plus a
+  per-build history table, published to a `forecast-latest` release.
+
 # auspol 0.4.46
 
 - `AUSPOL_BYELECTION_MP` (shipped): the by-election winner is the seat's
