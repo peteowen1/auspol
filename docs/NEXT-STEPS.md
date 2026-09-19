@@ -129,9 +129,13 @@ by-election 24.5%; concentration fitted on one election); (3) final-two
 flow for the other excluded-party cells; (4) seat-swing beyond statewide;
 (5) probability calibration by band.
 
-**Productionise on ITG**: forecast JSON + daily snapshot table as release
-assets; blog page (seat map, chamber odds incl. One Nation balance of
-power, per-seat candidate cards); publish the AEF-7 ledger and PIPELINE.md.
+**Productionise on ITG**: DONE 16:30 -- forecast JSON + history on the
+`forecast-latest` release AND on R2 (`inthegame-data/auspol/`, PR #57; the
+blog's CSP only allows its R2 origin); blog page `politics/index.qmd`
+(chamber odds, hung/One Nation balance-of-power, all 88 seats with
+candidates) on inthegame-blog dev, riding in the CITIUS session's PR #700
+-- **AWAITING PETE** (new public section; not self-merged). Still open:
+seat map, per-seat cards, publish the AEF-7 ledger and PIPELINE.md.
 
 **Data/infra**: snapshot the poll source into our release; VEC media feed
 registration; candidate list on 9 Nov; data registry regen in CI with an
