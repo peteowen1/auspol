@@ -142,10 +142,38 @@ pannadata/torpdata; Settings > Secrets and variables > Actions). Run
 so the release publish is unaffected but the blog page shows "could not be
 loaded" until the secrets exist and the next daily run uploads. Ledger + PIPELINE.md public since 16:54 (PR #59): https://github.com/peteowen1/auspol/releases/download/shipped-models/aef7-ledger.html and .../PIPELINE.md, rebuilt by stage 8/9. Still open: seat map, per-seat cards.
 
-**Data/infra**: snapshot the poll source into our release; VEC media feed
-registration; candidate list on 9 Nov; data registry regen in CI with an
-empty-column failure; row-add routine + calendar reminder for the two hand
-tables (Liberal card release).
+**Data/infra**: poll-source snapshot DONE (PR #60: `polls-vic-snapshot.csv`
+on forecast-latest + `poll_source.sha` in the JSON); zero-byte input guard
+DONE in the workflow (PR #60) INSTEAD of regenerating the data registry on
+CI -- the registry describes the dev machine's disk and a CI checkout has
+only the anchor, election results and models, so a CI-built registry would
+be wrong about everything else. Still open: VEC media feed registration;
+candidate list on 9 Nov; row-add routine + calendar reminder for the two
+hand tables (Liberal card release); empty-column failure in the registry
+script itself (run locally).
+
+### End of day 2026-09-19, for Pete
+
+**Shipped (all merged to main, all reviewed):** #54 daily forecast unblocked
+(candidacies.csv with the models, validation breach = warning); #55
+build_page 88 seats; #56 workflow token can create the release; #57 R2
+upload + manifest path; #58 R2 step skips until secrets exist; #59 public
+AEF-7 ledger + PIPELINE.md on shipped-models, README output table; #60 poll
+snapshot + zero-byte guard. **The live forecast is publishing daily again**
+(first run 15:50, odds in the table above).
+
+**Awaiting you (three things):**
+1. inthegame-blog PR #700 carries the new **Politics** section
+   (`politics/index.qmd`, Victoria 2026 page). New public content: your
+   call to merge. It shares the PR with the CITIUS session's athletics work.
+2. Add `CLOUDFLARE_R2_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` to auspol's Actions
+   secrets (same values as pannadata). Until then the page has no data.
+3. The NSW 2027 One Nation poll-tracking bound (`NL3`, 4.6 vs 2.5): scale
+   with thin polling, or leave. It no longer blocks Victoria either way.
+
+**Next in the roadmap:** model item (1) independent emergence, starting
+with a pre-registration (`docs/plans/prereg-independent-emergence-2026-09-19.md`).
+
 
 **Election night**: booth-level live model (match reporting booths to
 vic2022, project uncounted with tonight's forecast as prior, analytic
