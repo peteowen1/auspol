@@ -12,7 +12,13 @@ candidate-identity mechanism was silently off there.
   publish step is gated on the Victorian outputs having been written by
   this run.
 - Narracan's January 2023 supplementary election is its 2022 baseline, so
-  the live forecast simulates all 88 seats and calls 45 a majority.
+  the live forecast simulates all 88 seats and calls 45 a majority;
+  `build_page.R` asserts all 88 instead of hand-assigning Narracan.
+- The AEF-7 ledger is public: `scripts/build_aef7_ledger_html.R` (rebuild
+  stage 8) writes `output/aef7-ledger.html`, uploaded with `docs/PIPELINE.md`
+  to the `shipped-models` release; README links every published output.
+- The forecast JSON and CSVs are also uploaded to the `inthegame-data` R2
+  bucket for the blog's Politics page (needs two repo secrets Pete has to add).
 
 # auspol 0.4.47
 

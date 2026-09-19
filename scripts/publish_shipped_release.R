@@ -46,7 +46,10 @@ if (!identical(head_sha, man$git_sha)) {
 # what is published is exactly what was checksummed.
 models <- file.path(OUT, man$models$file)
 extra <- c(file.path(SHIP, c("MANIFEST.json", "pooled-backtest.csv", "pooled-sharedetail.csv")),
-           file.path(OUT, "seat-probs-vic-2026.csv"))
+           file.path(OUT, "seat-probs-vic-2026.csv"),
+           # the public AEF-7 ledger and the pipeline description, so the
+           # comparison and the method travel with the models they describe
+           file.path(OUT, "aef7-ledger.html"), file.path("docs", "PIPELINE.md"))
 loo <- grep("xgb-flows-v1-loo-.*[.]model$", models, value = TRUE)
 rest <- setdiff(models, loo)
 
@@ -59,6 +62,9 @@ if (length(loo)) {
   if (!file.exists(zipf)) stop("could not build ", zipf)
 }
 payload <- c(extra, rest, if (length(loo)) zipf)
+gone <- payload[!file.exists(payload)]
+if (length(gone)) cat(sprintf("PR2! missing asset(s), NOT uploaded: %s
+", paste(basename(gone), collapse = ", ")))
 payload <- payload[file.exists(payload)]
 cat(sprintf("PR2  %d asset(s), %.1f MB total\n", length(payload),
             sum(file.size(payload)) / 1048576))
