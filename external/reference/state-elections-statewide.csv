@@ -1,0 +1,19 @@
+region,election_date,party,primary_pct,source
+tas,2006-03-18,ALP,49.27,derived from 2010 swing on en.wikipedia.org/wiki/2010_Tasmanian_state_election
+tas,2006-03-18,LNP,31.82,derived from 2010 swing on en.wikipedia.org/wiki/2010_Tasmanian_state_election
+tas,2006-03-18,GRN,16.64,derived from 2010 swing on en.wikipedia.org/wiki/2010_Tasmanian_state_election
+tas,2010-03-20,ALP,36.88,en.wikipedia.org/wiki/2010_Tasmanian_state_election
+tas,2010-03-20,LNP,38.99,en.wikipedia.org/wiki/2010_Tasmanian_state_election
+tas,2010-03-20,GRN,21.61,en.wikipedia.org/wiki/2010_Tasmanian_state_election
+tas,2014-03-15,ALP,27.33,derived from 2018 swing on en.wikipedia.org/wiki/2018_Tasmanian_state_election
+tas,2014-03-15,LNP,51.22,derived from 2018 swing on en.wikipedia.org/wiki/2018_Tasmanian_state_election
+tas,2014-03-15,GRN,13.83,derived from 2018 swing on en.wikipedia.org/wiki/2018_Tasmanian_state_election
+tas,2018-03-03,ALP,32.63,en.wikipedia.org/wiki/2018_Tasmanian_state_election
+tas,2018-03-03,LNP,50.26,en.wikipedia.org/wiki/2018_Tasmanian_state_election
+tas,2018-03-03,GRN,10.30,en.wikipedia.org/wiki/2018_Tasmanian_state_election
+tas,2021-05-01,ALP,28.20,derived from 2024 swing on en.wikipedia.org/wiki/2024_Tasmanian_state_election
+tas,2021-05-01,LNP,48.72,derived from 2024 swing on en.wikipedia.org/wiki/2024_Tasmanian_state_election
+tas,2021-05-01,GRN,12.38,derived from 2024 swing on en.wikipedia.org/wiki/2024_Tasmanian_state_election
+tas,2024-03-23,ALP,29.00,en.wikipedia.org/wiki/2024_Tasmanian_state_election
+tas,2024-03-23,LNP,36.67,en.wikipedia.org/wiki/2024_Tasmanian_state_election
+tas,2024-03-23,GRN,13.89,en.wikipedia.org/wiki/2024_Tasmanian_state_election

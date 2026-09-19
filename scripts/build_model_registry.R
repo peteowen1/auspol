@@ -142,6 +142,36 @@ for (sw in names(COMMENT_ONLY)) {
 # row; update this when a gap is fixed or a new one is found by rerunning
 # this script and diffing its output.
 CLASSIFY <- list(
+  AUSPOL_NOTIONAL = paste(
+    "SHIPPED (2) and FEDERAL-BACKTEST-ONLY by design: the redistribution-adjusted (notional) prior only exists",
+    "where build_notional_baselines.R has a table (federal). State harnesses have no notional table to read, so",
+    "'no' there is a data fact, not a parity gap. docs/reviews/notional-prior-redistribution-2026-09-13.md"),
+  AUSPOL_NSW_THIN_WALK = paste(
+    "NOT A PUBLISHED-CONFIG SWITCH: read by scripts/fit_nsw.R (the NSW poll-trend validation stage), which does",
+    "not source published_flags.R. The comment block in published_flags.R says why it is deliberately unregistered."),
+  AUSPOL_ONP_CONC_SD = paste(
+    "SHIPPED 2026-09-14 ('auto') for the harnesses that model a One Nation seat concentration from federal",
+    "booth-transposed votes: qld and sa (where One Nation contests every seat). fed/nsw/vic/wa have no ONP",
+    "concentration mechanism, and fit_seats_full.R has its own live ONP path; a gap only if One Nation's",
+    "Victorian seat spread is ever driven from this switch (the VIC2022 IND-coupling regression is the reason it",
+    "is not: docs/reviews/sa2026-onp-base-pred-diagnosis-2026-09-14.md)."),
+  AUSPOL_SD_DEPARTED = paste(
+    "UNDER TEST, default 0, not adopted: widens the per-cell sd for major-party cells whose previous winner is",
+    "off the ballot. Read inside R/xgb_primary_sd_override.R, reached by the fed and nsw harnesses that call it;",
+    "the other four never call the sd override at all (see AUSPOL_XGB_PRIMARY_SD). plans/prereg-departed-member-width-2026-09-16.md"),
+  AUSPOL_XGB_PRIMARY_SD = paste(
+    "OFF (0). The xgb spread model's per-cell sd, read in R/xgb_primary_sd_override.R and wired into fed and",
+    "nsw only. With the switch off nothing reaches any output, so the four unwired harnesses are not a live",
+    "parity gap; if it is ever adopted the wiring must be ported to all six in the same commit (CLAUDE.md rule)."),
+  AUSPOL_XGB_PRIMARY_SD_CLASSES = paste(
+    "Companion of AUSPOL_XGB_PRIMARY_SD (which classes it widens); read only inside R/xgb_primary_sd_override.R,",
+    "so inert wherever that switch is off. Same wiring status as its parent."),
+  AUSPOL_XGB_PRIMARY_SD_SRC = paste(
+    "Companion of AUSPOL_XGB_PRIMARY_SD (the OOF file it reads); read only inside R/xgb_primary_sd_override.R.",
+    "Same wiring status as its parent."),
+  AUSPOL_XGB_SURGE_SRC = paste(
+    "Companion of AUSPOL_XGB_SURGE (which emergence model file to read: v5 candidate-level); read only inside",
+    "R/xgb_surge_override.R, so it reaches exactly the harnesses that honour AUSPOL_XGB_SURGE."),
   AUSPOL_BYELECTION_MP = paste(
     "SHIPPED 2026-09-19 (plans/prereg-byelection-mp-2026-09-19.md). Read inside R/candidate_returns.R at the top",
     "of candidate_returns(): a by-election winner (external/reference/byelections/byelection-winners.csv) is the",

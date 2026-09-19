@@ -117,8 +117,7 @@ aggregation, then the VEC feed parser.
   `fit_xgb_primary_v6.R` costs ~0.014 pooled RMSE (placebo floor).
 - Package functions read bare relative paths (`surge_hazard_for()`); should
   resolve via `getOption("auspol.root")`.
-- `MODEL-REGISTRY.md` has four switches marked UNEXPLAINED (classify them in
-  `build_model_registry.R`).
+- DONE 23:20: every switch in `MODEL-REGISTRY.md` is classified (was 12 unexplained).
 - Fresh clone needs `scripts/fit_mp_slope.R` before `AUSPOL_MP_SLOPE=1`
   works (deliberate: no silent fallback).
 - Diagnosed, not built: widening simulated variance for the majors' floor
@@ -129,7 +128,11 @@ aggregation, then the VEC feed parser.
 
 - VEC feed: email drafted in the booth-model plan, **Pete to send**
   (communication@vec.vic.gov.au); 2026 configuration not yet published.
-- Tasmanian (and ACT/NT) state election results into the corpus.
+- Tasmanian statewide primaries 2006-2024 are now a hand table
+  (`external/reference/state-elections-statewide.csv`, Wikipedia, tracked).
+  Still to do: read it in `build_state_deviation_features.R` so `state_elec_dev`
+  exists for TAS (Hare-Clark, so no seat rows; only the statewide swing is
+  usable), then re-run the state-deviation v2 plan. ACT/NT not yet tabled.
 - Row-add routine for the two hand tables (HTV order, by-election winners)
   plus a calendar reminder.
 - DONE 22:40: `build_data_dictionary.R` reads every processed file in full
