@@ -25,15 +25,18 @@ source("scripts/published_flags.R")
 # commission files CI never fetches, so without this asset the live forecast
 # on CI ran with EVERY candidate-identity mechanism off (found 2026-09-19 in
 # the failed daily run's log: "candidate_returns() needs output/candidacies.csv").
-models <- c("xgb-primary-v6-final.model", "xgb-primary-v6-final-cols.json",
-            "xgb-flows-v1-final.model", "xgb-flows-v1-final-cols.json", "xgb-flows-v1-features.csv",
-            "candidacies.csv")
+# It is NOT a trained model, so it is kept out of the staleness comparison
+# below (review gate): build_candidacies.R runs on its own schedule, and a
+# fresh candidacies.csv must not make the scoreboard look older than the models.
+trained <- c("xgb-primary-v6-final.model", "xgb-primary-v6-final-cols.json",
+             "xgb-flows-v1-final.model", "xgb-flows-v1-final-cols.json", "xgb-flows-v1-features.csv")
+models <- c(trained, "candidacies.csv")
 mf <- file.path(OUT, models)
 miss <- models[!file.exists(mf)]
 if (length(miss)) stop("model file(s) missing -- run scripts/rebuild_forecasts.sh first: ", paste(miss, collapse = ", "))
 pb_f <- file.path(OUT, "pooled-backtest.csv")
 if (!file.exists(pb_f)) stop("output/pooled-backtest.csv missing -- run scripts/rebuild_forecasts.sh first")
-newest_model <- max(file.mtime(mf))
+newest_model <- max(file.mtime(file.path(OUT, trained)))
 if (file.mtime(pb_f) < newest_model)
   stop(sprintf("pooled-backtest.csv (%s) is OLDER than the newest model (%s): the scoreboard does not describe these models. Rerun the rebuild.",
                format(file.mtime(pb_f), "%Y-%m-%d %H:%M"), format(newest_model, "%Y-%m-%d %H:%M")))
