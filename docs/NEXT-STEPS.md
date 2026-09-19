@@ -80,6 +80,34 @@ ledger v36 (AEF confidence column corrected), scraper now persists per pair.
 No merges, no heavy runs (free memory sat at 3-7GB under Chrome and 18
 other Claude sessions; the driver now falls back to two-wide waves).
 
+## Roadmap 2026-09-19 (Pete: "work your way through these")
+
+**Done today**: PR #51 and #52 merged; v37 and v38 published (0.2657 vs
+AEF 0.2851); `AUSPOL_BYELECTION_MP` and `AUSPOL_MINOR_DEFECT_CONSERVE`
+shipped; **the live forecast's models were 8 days stale** -- re-promoted
+and published 12:48 (`scripts/promote_rebuild.R`, driver stage 9 under
+`AUSPOL_PUBLISH=1`, `forecast.yaml` fails when the manifest is >14 days
+old); vic2026 flow fallback fixed (future election -> all-data model).
+
+**Model, in order**: (1) independent emergence (fed2022 is the whole AEF
+loss; parked, now biggest); (2) One Nation in Victoria (polls 27%, Nepean
+by-election 24.5%; concentration fitted on one election); (3) final-two
+flow for the other excluded-party cells; (4) seat-swing beyond statewide;
+(5) probability calibration by band.
+
+**Productionise on ITG**: forecast JSON + daily snapshot table as release
+assets; blog page (seat map, chamber odds incl. One Nation balance of
+power, per-seat candidate cards); publish the AEF-7 ledger and PIPELINE.md.
+
+**Data/infra**: snapshot the poll source into our release; VEC media feed
+registration; candidate list on 9 Nov; data registry regen in CI with an
+empty-column failure; row-add routine + calendar reminder for the two hand
+tables (Liberal card release).
+
+**Election night**: booth-level live model (match reporting booths to
+vic2022, project uncounted with tonight's forecast as prior, analytic
+update); dress rehearsal = replay vic2022 in time order. Start October.
+
 ## OPEN, 2026-09-18: intra-Coalition (Liberal vs National) seats have no TCP winner class
 
 `classify_party()` buckets Liberal and National as one "LNP" class everywhere
