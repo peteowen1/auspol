@@ -123,8 +123,16 @@ was null in this first JSON (the script read the local manifest path
 only; fixed on dev, ships with the next PR).
 
 
-**Model, in order**: (1) independent emergence (fed2022 is the whole AEF
-loss; parked, now biggest); (2) One Nation in Victoria (polls 27%, Nepean
+**Model, in order**: (1) ~~independent emergence~~ **RE-SCOPED 17:45**: the
+ledger says we are AHEAD of AEF on all 36 independent winners (16.7 vs
+19.7 log loss) and level on fed2022's; fed2022's +6.0 gap is **Labor
+gains** (77 seats: ours 17.7 vs AEF 8.7), half of them a WA state-level
+miss (+5.5 mean Labor primary error across 15 seats with the shipped
+state correction on) and half a seat-type miss (Chisholm, Reid, Higgins,
+Bennelong). So (1) is now `plans/prereg-state-deviation-v2-2026-09-19.md`
+(prior state election as a second predictor; covers TAS/ACT/NT, which
+hold 7 of the 12 worst state-years and get nothing today). Written, NOT
+run (memory). Teal emergence stays parked. (2) One Nation in Victoria (polls 27%, Nepean
 by-election 24.5%; concentration fitted on one election); (3) final-two
 flow for the other excluded-party cells; (4) seat-swing beyond statewide;
 (5) probability calibration by band.
