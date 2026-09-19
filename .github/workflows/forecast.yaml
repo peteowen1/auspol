@@ -24,10 +24,14 @@ on:
         default: false
 
 permissions:
-  contents: read
+  # contents: write is for the "Publish the forecast" step, which uploads the
+  # day's outputs to the forecast-latest release (release-as-data-bus). The
+  # first run with that step failed on "HTTP 403: Resource not accessible by
+  # integration" under contents: read (2026-09-19, run 35423528402). Releases
+  # are the only thing written; the workflow never pushes to a branch.
+  contents: write
   # Needed only by the "Raise an alarm" step below, which opens or updates one
-  # tracking issue when a SCHEDULED run fails. Narrowed from read-all rather
-  # than widened: everything else here still only reads.
+  # tracking issue when a SCHEDULED run fails.
   issues: write
 
 concurrency:
