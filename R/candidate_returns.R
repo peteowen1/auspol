@@ -76,7 +76,7 @@ candidate_returns <- function(election_from, election_to, corpus = NULL) {
     if (!is.null(bw) && nrow(bw)) {
       if ("elected" %in% names(PREVT)) {
         PREVT <- data.table::copy(PREVT)
-        PREVT[PREVT$seat %in% bw$seat, elected := FALSE]
+        PREVT[normalise_seat(PREVT$seat) %in% normalise_seat(bw$seat), elected := FALSE]   # normalised key, same as the joins below
         add <- data.table::copy(bw)[, election := election_from]
         PREVT <- data.table::rbindlist(list(PREVT, add), fill = TRUE)
         cat(sprintf("CDR1 by-election member override %s -> %s: %d seat(s) (%s)\n", election_from, election_to, nrow(bw),

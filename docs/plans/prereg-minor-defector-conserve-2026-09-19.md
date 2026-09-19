@@ -59,3 +59,10 @@ class had no candidate or a token one). The wa2005 One Nation cases are
 all zero-delta, so the unacceptable-win clause does not bite.
 **Verdict: criterion met at 2.1 SE, both do-no-harm checks inside one SE,
 SHIPPED** (`AUSPOL_MINOR_DEFECT_CONSERVE = "1"`).
+
+Review note (2026-09-19): when the defector was the origin class's only
+candidate at the prior election, `kept` is the origin class's whole vote
+at the next election, i.e. the replacement candidate's vote. That is the
+quantity the rule conserves (the party brand's residual), so it is the
+intended measurement, not a bug -- but it means `frac` is a party-brand
+retention, not a personal-vote split.
