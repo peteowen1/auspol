@@ -23,12 +23,10 @@ shares <- fread(f_shares, showProgress = FALSE)
 sims   <- fread(f_sims, showProgress = FALSE)
 stopifnot(nrow(probs) > 0, nrow(shares) > 0, nrow(sims) > 1000)
 parties <- setdiff(names(sims), "seat")
-# THE CHAMBER, not the simulated seat count: the Legislative Assembly has 88
-# seats and a majority is 45. fit_seats_full.R simulates 87 -- Narracan's
-# 2022 poll was deferred (a candidate's death) and the pipeline has no 2022
-# baseline for it; its January 2023 supplementary result sits in the
-# by-election table and wiring it in is an open item. Until then the page
-# must say 87 of 88 simulated, and must not call 44 a majority.
+# THE CHAMBER: 88 seats, majority 45. Since 2026-09-19 fit_seats_full.R
+# simulates all 88 (Narracan via its January 2023 supplementary baseline);
+# seats_not_simulated stays in the document so a page can say so if a seat
+# ever drops out again.
 CHAMBER <- as.integer(Sys.getenv("AUSPOL_CHAMBER_SEATS", "88")); majority <- CHAMBER %/% 2 + 1
 n_seats <- nrow(shares)
 cand_f0 <- file.path("external", "reference", "wikipedia", "vic2026-candidates.csv")
