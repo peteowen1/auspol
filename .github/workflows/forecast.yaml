@@ -166,12 +166,21 @@ jobs:
           # STALENESS: the models must not lag the code. 2026-09-19: they were
           # eight days and ~40 commits behind main and nobody noticed. Warn
           # loudly past 3 days; fail past 14 (a rebuild takes 25 minutes).
-          gh release download shipped-models -p MANIFEST.json -D output --clobber
-          promoted=$(python3 -c "import json;print(json.load(open('output/MANIFEST.json'))['promoted_at'][:10])")
-          age=$(( ( $(date +%s) - $(date -d "$promoted" +%s) ) / 86400 ))
-          echo "shipped models promoted $promoted ($age days ago)"
-          if [ "$age" -gt 14 ]; then echo "::error::shipped models are $age days old -- run scripts/rebuild_forecasts.sh with AUSPOL_PUBLISH=1"; exit 1; fi
-          if [ "$age" -gt 3 ]; then echo "::warning::shipped models are $age days old"; fi
+          # A missing or unreadable manifest degrades to a warning, never a
+          # failed forecast (review gate, 2026-09-19).
+          if gh release download shipped-models -p MANIFEST.json -D output --clobber 2>/dev/null; then
+            promoted=$(python3 -c "import json;print(json.load(open('output/MANIFEST.json'))['promoted_at'][:10])" 2>/dev/null) || promoted=""
+            if [ -n "$promoted" ]; then
+              age=$(( ( $(date +%s) - $(date -d "$promoted" +%s) ) / 86400 ))
+              echo "shipped models promoted $promoted ($age days ago)"
+              if [ "$age" -gt 14 ]; then echo "::error::shipped models are $age days old -- run scripts/rebuild_forecasts.sh with AUSPOL_PUBLISH=1"; exit 1; fi
+              if [ "$age" -gt 3 ]; then echo "::warning::shipped models are $age days old"; fi
+            else
+              echo "::warning::could not read promoted_at from MANIFEST.json -- staleness unchecked"
+            fi
+          else
+            echo "::warning::shipped-models release has no MANIFEST.json -- staleness unchecked"
+          fi
           # A truncated or absent download must fail HERE, loudly, rather than
           # surfacing as a fallback line in a log nobody reads. This repo has
           # already lost a seat to a 65536-byte partial download that passed a
@@ -278,6 +287,19 @@ jobs:
           } >> "$GITHUB_STEP_SUMMARY"
 
       # Kept so a human can download and eyeball the page before publishing it.
+      - name: Publish the forecast to the forecast-latest release
+        # release-as-data-bus: the ITG page fetches these by fixed URL. The
+        # history table is downloaded first so each build appends to it.
+        if: success()
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -e
+          gh release view forecast-latest >/dev/null 2>&1 || gh release create forecast-latest -t "Latest forecast (auto-updated)" -n "Assets are replaced by the daily forecast workflow; the release date is the tag's, not the data's. Read built_at inside forecast-vic2026.json."
+          gh release download forecast-latest -p forecast-history.csv -D output --clobber 2>/dev/null || true
+          Rscript scripts/build_forecast_json.R
+          gh release upload forecast-latest output/forecast-vic2026.json output/forecast-history.csv output/seat-probs-vic-2026.csv output/seat-shares-vic-2026.csv output/victoria-2026.html --clobber
       - name: Upload outputs
         if: always()
         uses: actions/upload-artifact@v4
