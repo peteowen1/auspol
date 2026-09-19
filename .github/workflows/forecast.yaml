@@ -1,13 +1,11 @@
 name: Forecast refresh
 
-# Runs the whole pipeline against fresh poll data and reports what it found.
-#
-# It deliberately does NOT publish. A forecast that republishes unattended is
-# one bad input away from putting a confident wrong number in front of people,
-# and this page has already shipped broken once (three charts silently not
-# drawing) and could once have rendered a fabricated "0% chance of a majority".
-# So: run it, check it, show the numbers and the diff, and leave publishing to
-# a human. Revisit once it has proven itself over a few cycles.
+# Runs the whole pipeline against fresh poll data and PUBLISHES the result to
+# the forecast-latest release (and, once the secrets exist, the inthegame-data
+# R2 bucket for the blog). Publishing became unattended on 2026-09-19; the
+# guards that make that tolerable are below: the models must be recent, every
+# input must be non-empty, the Victorian outputs must have been written by
+# THIS run, and a validation breach elsewhere is a warning, not a publish.
 
 on:
   schedule:
@@ -66,6 +64,10 @@ jobs:
             external/aus-polling-analyser
           git -C external/aus-polling-analyser sparse-checkout set analysis
           echo "anchor at $(git -C external/aus-polling-analyser rev-parse --short HEAD)"
+          # Recorded into forecast-vic2026.json (poll_source) and the poll file
+          # is snapshotted onto the release, so any day's forecast can be
+          # reproduced from what it actually read (roadmap 2026-09-19).
+          echo "AUSPOL_ANCHOR_SHA=$(git -C external/aus-polling-analyser rev-parse HEAD)" >> "$GITHUB_ENV"
           ls external/aus-polling-analyser/analysis/Data/poll-data-*.csv
 
       # Election-commission results for the candidate-level seat model. Both
@@ -228,6 +230,17 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
 
+      # A zero-byte input passes file.exists() and every size floor below it;
+      # this repo lost a seat to a truncated download once. Fail before the
+      # pipeline reads anything (roadmap 2026-09-19, data registry rule).
+      - name: Refuse zero-byte inputs
+        shell: bash
+        run: |
+          # Scoped to what the pipeline reads: the anchor's own tree carries
+          # unrelated zero-byte files (old-elections.csv, temp.txt), so only the poll files are checked there.
+          empty=$(find external/aus-polling-analyser/analysis/Data/poll-data-*.csv external/elections output -type f -size 0 2>/dev/null || true)
+          if [ -n "$empty" ]; then echo "::error::zero-byte input file(s):"; echo "$empty"; exit 1; fi
+          echo "no zero-byte files among the poll data, election results or downloaded models"
       - name: Run the pipeline
         id: run
         run: |
@@ -317,7 +330,10 @@ jobs:
         run: |
           set -e
           gh release view forecast-latest >/dev/null 2>&1 || gh release create forecast-latest -t "Latest forecast (auto-updated)" -n "Assets are replaced by the daily forecast workflow; the release date is the tag's, not the data's. Read built_at inside forecast-vic2026.json."
-          gh release upload forecast-latest output/forecast-vic2026.json output/forecast-history.csv output/seat-probs-vic-2026.csv output/seat-shares-vic-2026.csv output/victoria-2026.html --clobber
+          # Poll-source snapshot: the anchor's Victorian poll file exactly as
+          # this run read it, plus the anchor commit it came from.
+          cp external/aus-polling-analyser/analysis/Data/poll-data-vic.csv output/polls-vic-snapshot.csv
+          gh release upload forecast-latest output/forecast-vic2026.json output/forecast-history.csv output/seat-probs-vic-2026.csv output/seat-shares-vic-2026.csv output/victoria-2026.html output/polls-vic-snapshot.csv --clobber
       - name: Publish the forecast to R2 for the ITG page
         # The blog (inthegame-blog) fetches every dataset client-side from the
         # inthegame-data R2 bucket; its CSP does not allow github.com, so the

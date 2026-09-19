@@ -82,6 +82,10 @@ if (is.null(man)) cat("FJ1! no MANIFEST.json found -- models_promoted_at will be
 doc <- list(
   election = "vic2026", election_date = "2026-11-28", built_at = format(Sys.time(), "%Y-%m-%dT%H:%M:%S%z"),
   git_sha = gitsha, models_promoted_at = if (!is.null(man)) man$promoted_at else NULL,
+  # which commit of d-j-hirst/aus-polling-analyser the polls came from (set by
+  # the workflow; NULL locally). The poll file itself is polls-vic-snapshot.csv on the release.
+  poll_source = list(repo = "d-j-hirst/aus-polling-analyser",
+                     sha = if (nzchar(Sys.getenv("AUSPOL_ANCHOR_SHA"))) Sys.getenv("AUSPOL_ANCHOR_SHA") else NULL),
   chamber_seats = CHAMBER, seats_simulated = n_seats, seats_not_simulated = I(excluded),   # I(): always a JSON array, even for one seat
   majority = majority, n_sims = nrow(sims),
   chamber = list(parties = chamber, p_hung = round(hung, 4), p_onp_balance_of_power = round(onp_bop, 4)),

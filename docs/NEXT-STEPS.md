@@ -140,8 +140,7 @@ have** -- `CLOUDFLARE_R2_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` (same values as
 pannadata/torpdata; Settings > Secrets and variables > Actions). Run
 35426679784 failed on exactly that; the step now warns and skips instead,
 so the release publish is unaffected but the blog page shows "could not be
-loaded" until the secrets exist and the next daily run uploads. Still open:
-seat map, per-seat cards, publish the AEF-7 ledger and PIPELINE.md.
+loaded" until the secrets exist and the next daily run uploads. Ledger + PIPELINE.md public since 16:54 (PR #59): https://github.com/peteowen1/auspol/releases/download/shipped-models/aef7-ledger.html and .../PIPELINE.md, rebuilt by stage 8/9. Still open: seat map, per-seat cards.
 
 **Data/infra**: snapshot the poll source into our release; VEC media feed
 registration; candidate list on 9 Nov; data registry regen in CI with an
