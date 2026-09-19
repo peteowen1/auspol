@@ -62,6 +62,30 @@ candidate_returns <- function(election_from, election_to, corpus = NULL) {
   PREVT <- C[C$election == election_from]
   if (!nrow(NOWT)) stop("no rows for election ", election_to, call. = FALSE)
   if (!nrow(PREVT)) stop("no rows for election ", election_from, call. = FALSE)
+  # A BY-ELECTION WINNER IS THE SITTING MEMBER (AUSPOL_BYELECTION_MP=1). The
+  # previous general election's `elected` flags are what every "same member"
+  # test below reads, so Speirs (Liberal member at sa2022, resigned, lost
+  # Black at the 2024 by-election, stood as IND in 2026) read as the RETURNING
+  # SITTING MEMBER of the IND class and the as-at xgb model paid him +5 points
+  # for it; Dighton, who actually held the seat, read as a newcomer. The
+  # winner row replaces the seat's elected flags; nothing else in PREVT moves.
+  if (identical(Sys.getenv("AUSPOL_BYELECTION_MP", "0"), "1")) {
+    bw <- tryCatch(byelection_winner_rows(election_from, election_to),
+                   error = function(e) { cat(sprintf("CDR1! by-election member override FAILED for %s -> %s, previous election's members kept: %s\n",
+                                                     election_from, election_to, conditionMessage(e))); NULL })
+    if (!is.null(bw) && nrow(bw)) {
+      if ("elected" %in% names(PREVT)) {
+        PREVT <- data.table::copy(PREVT)
+        PREVT[normalise_seat(PREVT$seat) %in% normalise_seat(bw$seat), elected := FALSE]   # normalised key, same as the joins below
+        add <- data.table::copy(bw)[, election := election_from]
+        PREVT <- data.table::rbindlist(list(PREVT, add), fill = TRUE)
+        cat(sprintf("CDR1 by-election member override %s -> %s: %d seat(s) (%s)\n", election_from, election_to, nrow(bw),
+                    paste(sprintf("%s=%s", bw$seat, bw$party), collapse = ", ")))
+      } else {
+        cat(sprintf("CDR1! by-election winners exist for %s -> %s but the corpus has no `elected` column -- override skipped\n", election_from, election_to))
+      }
+    }
+  }
 
   kf <- function(d) {
     sur <- surname_of(if ("surname" %in% names(d)) d$surname else NA_character_,
@@ -761,6 +785,22 @@ personal_prior_vote <- function(election_from, election_to, corpus = NULL,
   # 2010 did the same into OTH_RIGHT for 2013. NA when nothing moves.
   if (!"transfer" %in% names(out)) out[, transfer := NA_real_]
   out[!is.na(own_prev_pcv) & is.na(transfer), transfer := .own_prev_pcv_full]
+  # MINOR-TO-MINOR CONSERVE (AUSPOL_MINOR_DEFECT_CONSERVE=1): the origin
+  # class keeps a fitted share of the defector's own prior vote instead of
+  # losing all of it. Fitted leave-target-out inside this function so every
+  # caller (six harnesses, fit_seats_full.R) gets it without a new argument.
+  if (identical(Sys.getenv("AUSPOL_MINOR_DEFECT_CONSERVE", "0"), "1")) {
+    .mm <- !is.na(out$own_prev_pcv) & !is.na(out$prev_party) & !out$prev_party %in% MAJ &
+           !out$party %in% MAJ & out$prev_party != out$party & is.finite(out$transfer)
+    if (any(.mm)) {
+      .fc <- tryCatch(fit_minor_defector_conserve(election_to, corpus = C),
+                      error = function(e) { cat(sprintf("PPV1! minor-to-minor conserve fit FAILED, full transfer kept: %s\n", conditionMessage(e))); NULL })
+      if (!is.null(.fc) && !is.null(.fc$frac) && is.finite(.fc$frac)) {
+        out[.mm, transfer := transfer * (1 - .fc$frac)]
+        cat(sprintf("PPV1 minor-to-minor conserve: origin keeps %.2f of the defector's vote (n=%d, target excluded), %d row(s)\n", .fc$frac, .fc$n, sum(.mm)))
+      } else if (!is.null(.fc)) cat(sprintf("PPV1! minor-to-minor conserve: only %d case(s) to fit from (need 8) -- full transfer kept\n", .fc$n))
+    }
+  }
   out[is.na(prev_party) | prev_party == party, `:=`(transfer = NA_real_, prev_party = NA_character_)]
   out[, .own_prev_pcv_full := NULL]
   out[, list(seat, party, own_prev_pcv, prev_party, transfer)]
@@ -1225,4 +1265,51 @@ route_departed_origin <- function(mat, election_from, election_to, frac, corpus 
   }
   attr(mat, "departed_origin") <- list(applied = applied, skipped = skipped, cases = d)
   mat
+}
+
+#' Fit how much of a minor-to-minor defector's vote stays with the origin party
+#'
+#' Leave-target-out over every other pair. For each candidate who stood
+#' for one minor class (GRN/ONP/OTH_RIGHT/OTH, at least `min_pcv` points)
+#' and then for a different non-major class in the same seat, the share
+#' of their own prior vote the ORIGIN class still received at the next
+#' election beyond its statewide swing, clipped to `[0, 1]`; the median.
+#' Measured 2026-09-19 on 26 cases: median 0.38, mean 0.55 (SE 0.12); the
+#' shipped minor-to-minor path removed all of it (Mirani's One Nation kept
+#' 11.9 where we gave 0.9). docs/plans/prereg-minor-defector-conserve-2026-09-19.md.
+#'
+#' @param target_election Pair excluded from the fit.
+#' @param corpus,pairs As in [fit_defector_discount()].
+#' @param min_pcv,min_n Minimum prior vote per case; minimum cases to fit.
+#' @return list(frac, n, cases); `frac` NULL below `min_n`.
+#' @export
+fit_minor_defector_conserve <- function(target_election, corpus = NULL, pairs = NULL, min_pcv = 5, min_n = 8L) {
+  C <- .corpus_or_load(corpus, "fit_minor_defector_conserve")
+  MAJ <- c("ALP", "LNP", "NAT"); MINOR <- c("GRN", "ONP", "OTH_RIGHT", "OTH")
+  kf <- function(d) match_key(surname_of(if ("surname" %in% names(d)) d$surname else NA_character_,
+                                         if ("name" %in% names(d)) d$name else NA_character_),
+                              given_of(if ("given" %in% names(d)) d$given else NA_character_,
+                                       if ("name" %in% names(d)) d$name else NA_character_), "initial")
+  C <- data.table::copy(C)[, .k := kf(.SD), .SDcols = names(C)]
+  if (is.null(pairs)) pairs <- all_election_pairs()
+  ST <- C[, list(v = sum(votes, na.rm = TRUE)), by = list(election, party)][, share := 100 * v / sum(v), by = election]
+  cs <- function(el, s, p) { v <- C[C$election == el & C$seat == s & C$party == p, sum(pcv, na.rm = TRUE)]; if (length(v)) v else 0 }
+  rows <- data.table::rbindlist(lapply(pairs, function(pr) {
+    if (identical(pr$election, target_election)) return(NULL)
+    a <- C[C$election == pr$prev & C$party %in% MINOR & C$pcv >= min_pcv & nzchar(C$.k), list(seat, .k, prev_party = party, prev_pcv = pcv)]
+    b <- C[C$election == pr$election & !C$party %in% MAJ & nzchar(C$.k), list(seat, .k, party)]
+    m <- merge(a, b, by = c("seat", ".k"))[prev_party != party]
+    if (!nrow(m)) return(NULL)
+    m[, origin_now := mapply(cs, pr$election, seat, prev_party)]
+    m[, origin_cls_prev := mapply(cs, pr$prev, seat, prev_party)]
+    m[, ratio := mapply(function(p) { a1 <- ST[ST$election == pr$election & ST$party == p]$share; b1 <- ST[ST$election == pr$prev & ST$party == p]$share
+                                      if (length(a1) && length(b1) && b1 > 0) a1 / b1 else NA_real_ }, prev_party)]
+    m[, pair := pr$election]
+    m[is.finite(ratio)]
+  }), fill = TRUE)
+  if (!nrow(rows)) return(list(frac = NULL, n = 0L, cases = rows))
+  rows[, kept := origin_now - (origin_cls_prev - prev_pcv) * ratio]
+  rows[, frac := pmin(1, pmax(0, kept / prev_pcv))]
+  if (nrow(rows) < min_n) return(list(frac = NULL, n = nrow(rows), cases = rows))
+  list(frac = stats::median(rows$frac), n = nrow(rows), cases = rows)
 }

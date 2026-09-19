@@ -167,6 +167,19 @@ PUBLISHED_FLAGS <- c(
                                              # replacement ("1") was REFUSED: protest swings revert (Inala, Ipswich West, Upper Hunter), error
                                              # +0.59 on 17 seats. "blend" = half by-election, half general election: error 2.78 -> 2.44 (SE
                                              # 0.24), pooled log loss 0.2945 -> 0.2936. Black 34.2 -> ~38 on ALP (actual 43.0).
+  AUSPOL_BYELECTION_MP       = "1",          # SHIPPED 2026-09-19: the by-election WINNER is the seat's sitting member for every
+                                             # candidate-identity test (same_mp, mp_departed, historic_elected), not the previous general
+                                             # election's member. Black sa2026: Speirs read as the returning member of the IND class (+5 pts
+                                             # from the xgb layer), Dighton as a newcomer. byelection_winner_rows(), candidate_returns().
+                                             # Measured base_pred-only, 20k sims: the 12 changed-member seats' cell error 5.39 -> 4.87 (SE
+                                             # 0.27); pooled log loss 0.2920 -> 0.2906, 15 of 22 pairs better; other cells unchanged.
+  AUSPOL_MINOR_DEFECT_CONSERVE = "1",        # SHIPPED 2026-09-19 (docs/plans/prereg-minor-defector-conserve-2026-09-19.md): a minor-to-
+                                             # minor defector's ORIGIN class keeps a fitted leave-target-out share (median ~0.38, n=26) of
+                                             # their prior vote; the shipped path removed all of it (Mirani: One Nation 0.9 predicted, 11.9
+                                             # actual). fit_minor_defector_conserve(), applied inside personal_prior_vote() for every caller.
+                                             # Measured base_pred-only, 20k sims, 26 origin cells: error 3.98 -> 2.56 (SE 0.69); the
+                                             # defector's new class +0.10 (SE 0.18); pooled log loss -0.0003 (SE 0.0004). Mirani ONP 0.9
+                                             # -> 11.4 (11.9), Lockyer 0 -> 9.5 (13.3), Hunter 5.0 -> 11.2 (10.0); Orange/Miranda worse.
   AUSPOL_FLOW_FRAG           = "1",          # 1 = the flow model also sees lead_primary, the seat's LEADING
                                              # first-preference share. Flows track how fragmented the field is,
                                              # not how close the contest is: the 2CP margin's slope collapses

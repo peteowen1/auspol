@@ -1,0 +1,93 @@
+region,seat,date,winner_party_raw,prev_party_raw,source
+fed,Farrer,2026-05-09,One Nation,Liberal,https://en.wikipedia.org/wiki/List_of_Australian_federal_by-elections
+fed,Cook,2024-04-13,Liberal,Liberal,https://en.wikipedia.org/wiki/List_of_Australian_federal_by-elections
+fed,Dunkley,2024-03-02,Labor,Labor,https://en.wikipedia.org/wiki/List_of_Australian_federal_by-elections
+fed,Fadden,2023-07-15,Liberal National,Liberal National,https://en.wikipedia.org/wiki/List_of_Australian_federal_by-elections
+fed,Aston,2023-04-01,Labor,Liberal,https://en.wikipedia.org/wiki/List_of_Australian_federal_by-elections
+fed,Groom,2020-11-28,Liberal National,Liberal National,https://en.wikipedia.org/wiki/List_of_Australian_federal_by-elections
+fed,Eden-Monaro,2020-07-04,Labor,Labor,https://en.wikipedia.org/wiki/List_of_Australian_federal_by-elections
+fed,Wentworth,2018-10-20,Independent,Liberal,https://en.wikipedia.org/wiki/List_of_Australian_federal_by-elections
+fed,Braddon,2018-07-28,Labor,Labor,https://en.wikipedia.org/wiki/List_of_Australian_federal_by-elections
+fed,Fremantle,2018-07-28,Labor,Labor,https://en.wikipedia.org/wiki/List_of_Australian_federal_by-elections
+fed,Longman,2018-07-28,Labor,Labor,https://en.wikipedia.org/wiki/List_of_Australian_federal_by-elections
+fed,Mayo,2018-07-28,Centre Alliance,Centre Alliance,https://en.wikipedia.org/wiki/List_of_Australian_federal_by-elections
+fed,Perth,2018-07-28,Labor,Labor,https://en.wikipedia.org/wiki/List_of_Australian_federal_by-elections
+fed,Batman,2018-03-17,Labor,Labor,https://en.wikipedia.org/wiki/List_of_Australian_federal_by-elections
+fed,Bennelong,2017-12-16,Liberal,Liberal,https://en.wikipedia.org/wiki/List_of_Australian_federal_by-elections
+fed,New England,2017-12-02,National,National,https://en.wikipedia.org/wiki/List_of_Australian_federal_by-elections
+fed,North Sydney,2015-12-05,Liberal,Liberal,https://en.wikipedia.org/wiki/List_of_Australian_federal_by-elections
+fed,Canning,2015-09-19,Liberal,Liberal,https://en.wikipedia.org/wiki/List_of_Australian_federal_by-elections
+fed,Griffith,2014-02-08,Labor,Labor,https://en.wikipedia.org/wiki/List_of_Australian_federal_by-elections
+fed,Higgins,2009-12-05,Liberal,Liberal,https://en.wikipedia.org/wiki/List_of_Australian_federal_by-elections
+fed,Bradfield,2009-12-05,Liberal,Liberal,https://en.wikipedia.org/wiki/List_of_Australian_federal_by-elections
+fed,Lyne,2008-09-06,Independent,National,https://en.wikipedia.org/wiki/List_of_Australian_federal_by-elections
+fed,Mayo,2008-09-06,Liberal,Liberal,https://en.wikipedia.org/wiki/List_of_Australian_federal_by-elections
+fed,Gippsland,2008-06-28,National,National,https://en.wikipedia.org/wiki/List_of_Australian_federal_by-elections
+nsw,Northern Tablelands,2013-05-25,National,Independent,https://en.wikipedia.org/wiki/List_of_New_South_Wales_state_by-elections
+nsw,Miranda,2013-10-19,Labor,Liberal,https://en.wikipedia.org/wiki/List_of_New_South_Wales_state_by-elections
+nsw,Newcastle,2014-10-25,Labor,Liberal,https://en.wikipedia.org/wiki/List_of_New_South_Wales_state_by-elections
+nsw,Charlestown,2014-10-25,Labor,Liberal,https://en.wikipedia.org/wiki/List_of_New_South_Wales_state_by-elections
+nsw,Canterbury,2016-11-12,Labor,Labor,https://en.wikipedia.org/wiki/List_of_New_South_Wales_state_by-elections
+nsw,Orange,2016-11-12,Shooters Fishers Farmers,National,https://en.wikipedia.org/wiki/List_of_New_South_Wales_state_by-elections
+nsw,Wollongong,2016-11-12,Labor,Labor,https://en.wikipedia.org/wiki/List_of_New_South_Wales_state_by-elections
+nsw,Gosford,2017-04-08,Labor,Labor,https://en.wikipedia.org/wiki/List_of_New_South_Wales_state_by-elections
+nsw,Manly,2017-04-08,Liberal,Liberal,https://en.wikipedia.org/wiki/List_of_New_South_Wales_state_by-elections
+nsw,North Shore,2017-04-08,Liberal,Liberal,https://en.wikipedia.org/wiki/List_of_New_South_Wales_state_by-elections
+nsw,Blacktown,2017-10-14,Labor,Labor,https://en.wikipedia.org/wiki/List_of_New_South_Wales_state_by-elections
+nsw,Cootamundra,2017-10-14,National,National,https://en.wikipedia.org/wiki/List_of_New_South_Wales_state_by-elections
+nsw,Murray,2017-10-14,National,National,https://en.wikipedia.org/wiki/List_of_New_South_Wales_state_by-elections
+nsw,Wagga Wagga,2018-09-08,Independent,Liberal,https://en.wikipedia.org/wiki/List_of_New_South_Wales_state_by-elections
+nsw,Upper Hunter,2021-05-22,National,National,https://en.wikipedia.org/wiki/List_of_New_South_Wales_state_by-elections
+nsw,Bega,2022-02-12,Labor,Liberal,https://en.wikipedia.org/wiki/List_of_New_South_Wales_state_by-elections
+nsw,Monaro,2022-02-12,National,National,https://en.wikipedia.org/wiki/List_of_New_South_Wales_state_by-elections
+nsw,Strathfield,2022-02-12,Labor,Labor,https://en.wikipedia.org/wiki/List_of_New_South_Wales_state_by-elections
+nsw,Willoughby,2022-02-12,Liberal,Liberal,https://en.wikipedia.org/wiki/List_of_New_South_Wales_state_by-elections
+nsw,Northern Tablelands,2024-06-22,National,National,https://en.wikipedia.org/wiki/List_of_New_South_Wales_state_by-elections
+nsw,Pittwater,2024-10-19,Independent,Liberal,https://en.wikipedia.org/wiki/List_of_New_South_Wales_state_by-elections
+nsw,Epping,2024-10-19,Liberal,Liberal,https://en.wikipedia.org/wiki/List_of_New_South_Wales_state_by-elections
+nsw,Hornsby,2024-10-19,Liberal,Liberal,https://en.wikipedia.org/wiki/List_of_New_South_Wales_state_by-elections
+nsw,Port Macquarie,2025-03-15,Liberal,Liberal,https://en.wikipedia.org/wiki/List_of_New_South_Wales_state_by-elections
+nsw,Kiama,2025-09-13,Labor,Independent,https://en.wikipedia.org/wiki/List_of_New_South_Wales_state_by-elections
+vic,Kororoit,2008-06-28,Labor,Labor,https://en.wikipedia.org/wiki/List_of_Victorian_state_by-elections
+vic,Altona,2010-02-13,Labor,Labor,https://en.wikipedia.org/wiki/List_of_Victorian_state_by-elections
+vic,Niddrie,2012-03-24,Labor,Labor,https://en.wikipedia.org/wiki/List_of_Victorian_state_by-elections
+vic,Melbourne,2012-07-21,Labor,Labor,https://en.wikipedia.org/wiki/List_of_Victorian_state_by-elections
+vic,Lyndhurst,2013-04-27,Labor,Labor,https://en.wikipedia.org/wiki/List_of_Victorian_state_by-elections
+vic,Gippsland South,2015-03-14,National,National,https://en.wikipedia.org/wiki/List_of_Victorian_state_by-elections
+vic,Polwarth,2015-10-31,Liberal,Liberal,https://en.wikipedia.org/wiki/List_of_Victorian_state_by-elections
+vic,South-West Coast,2015-10-31,Liberal,Liberal,https://en.wikipedia.org/wiki/List_of_Victorian_state_by-elections
+vic,Northcote,2017-11-18,Greens,Labor,https://en.wikipedia.org/wiki/List_of_Victorian_state_by-elections
+vic,Narracan,2023-01-28,Liberal,Liberal,https://en.wikipedia.org/wiki/List_of_Victorian_state_by-elections
+vic,Warrandyte,2023-08-26,Liberal,Liberal,https://en.wikipedia.org/wiki/List_of_Victorian_state_by-elections
+vic,Mulgrave,2023-11-18,Labor,Labor,https://en.wikipedia.org/wiki/List_of_Victorian_state_by-elections
+vic,Prahran,2025-02-08,Liberal,Independent,https://en.wikipedia.org/wiki/List_of_Victorian_state_by-elections
+vic,Werribee,2025-02-08,Labor,Labor,https://en.wikipedia.org/wiki/List_of_Victorian_state_by-elections
+vic,Nepean,2026-05-02,Liberal,Liberal,https://en.wikipedia.org/wiki/List_of_Victorian_state_by-elections
+qld,Toowoomba South,2016-07-16,Liberal National,Liberal National,https://en.wikipedia.org/wiki/List_of_Queensland_state_by-elections
+qld,Bundamba,2020-03-28,Labor,Labor,https://en.wikipedia.org/wiki/List_of_Queensland_state_by-elections
+qld,Currumbin,2020-03-28,Liberal National,Liberal National,https://en.wikipedia.org/wiki/List_of_Queensland_state_by-elections
+qld,Stretton,2021-07-24,Labor,Labor,https://en.wikipedia.org/wiki/List_of_Queensland_state_by-elections
+qld,Callide,2022-06-18,Liberal National,Liberal National,https://en.wikipedia.org/wiki/List_of_Queensland_state_by-elections
+qld,Inala,2024-03-16,Labor,Labor,https://en.wikipedia.org/wiki/List_of_Queensland_state_by-elections
+qld,Ipswich West,2024-03-16,Liberal National,Labor,https://en.wikipedia.org/wiki/List_of_Queensland_state_by-elections
+qld,Hinchinbrook,2025-11-29,Liberal National,Katter's Australian,https://en.wikipedia.org/wiki/List_of_Queensland_state_by-elections
+qld,Stafford,2026-05-16,Labor,Independent,https://en.wikipedia.org/wiki/List_of_Queensland_state_by-elections
+sa,Cheltenham,2019-02-09,Labor,Labor,https://en.wikipedia.org/wiki/List_of_South_Australian_state_by-elections
+sa,Enfield,2019-02-09,Labor,Labor,https://en.wikipedia.org/wiki/List_of_South_Australian_state_by-elections
+sa,Bragg,2022-07-02,Liberal,Liberal,https://en.wikipedia.org/wiki/List_of_South_Australian_state_by-elections
+sa,Dunstan,2024-03-23,Labor,Liberal,https://en.wikipedia.org/wiki/List_of_South_Australian_state_by-elections
+sa,Black,2024-11-16,Labor,Liberal,https://en.wikipedia.org/wiki/List_of_South_Australian_state_by-elections
+wa,Nedlands,2001-02-23,Liberal,Liberal,https://en.wikipedia.org/wiki/List_of_Western_Australian_state_by-elections
+wa,Merredin,2001-10-17,National,National,https://en.wikipedia.org/wiki/List_of_Western_Australian_state_by-elections
+wa,Victoria Park,2006-01-16,Labor,Labor,https://en.wikipedia.org/wiki/List_of_Western_Australian_state_by-elections
+wa,Peel,2006-11-10,Labor,Labor,https://en.wikipedia.org/wiki/List_of_Western_Australian_state_by-elections
+wa,Murdoch,2008-01-17,Liberal,Liberal,https://en.wikipedia.org/wiki/List_of_Western_Australian_state_by-elections
+wa,Fremantle,2009-04-03,Greens,Labor,https://en.wikipedia.org/wiki/List_of_Western_Australian_state_by-elections
+wa,Willagee,2009-10-02,Labor,Labor,https://en.wikipedia.org/wiki/List_of_Western_Australian_state_by-elections
+wa,Armadale,2010-07-19,Labor,Labor,https://en.wikipedia.org/wiki/List_of_Western_Australian_state_by-elections
+wa,Vasse,2014-09-03,Liberal,Liberal,https://en.wikipedia.org/wiki/List_of_Western_Australian_state_by-elections
+wa,Cottesloe,2018-02-05,Liberal,Liberal,https://en.wikipedia.org/wiki/List_of_Western_Australian_state_by-elections
+wa,Darling Range,2018-05-08,Liberal,Independent,https://en.wikipedia.org/wiki/List_of_Western_Australian_state_by-elections
+wa,North West Central,2022-08-08,National,National,https://en.wikipedia.org/wiki/List_of_Western_Australian_state_by-elections
+wa,Rockingham,2023-06-08,Labor,Labor,https://en.wikipedia.org/wiki/List_of_Western_Australian_state_by-elections
+wa,Secret Harbour,2026-07-07,One Nation,Labor,https://en.wikipedia.org/wiki/List_of_Western_Australian_state_by-elections

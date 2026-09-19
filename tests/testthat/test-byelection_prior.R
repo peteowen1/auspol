@@ -24,3 +24,12 @@ test_that("byelection_prior replaces only usable seats present in the matrix, an
   expect_match(a$skipped, "Prahran")
   expect_identical(unclass(byelection_prior(m, "vic2022", "vic2026", table = tab))[1:6], unclass(m)[1:6])
 })
+
+test_that("byelection_winner_rows names the by-election winner as an elected candidacy row", {
+  res <- data.frame(region = "sa", seat = "Black", date = as.Date("2024-11-16"), candidate = c("Alex Dighton", "Amanda Wilson"),
+                    party_raw = c("Labor", "Liberal"), votes = c(10248, 7300), pct = c(47.9, 34.1), source = "t", stringsAsFactors = FALSE)
+  win <- data.frame(region = "sa", seat = "Black", date = as.Date("2024-11-16"), winner_party_raw = "Labor", prev_party_raw = "Liberal", source = "t", stringsAsFactors = FALSE)
+  b <- byelection_winner_rows("sa2022", "sa2026", results = res, winners = win)
+  expect_equal(nrow(b), 1L); expect_equal(b$party, "ALP"); expect_equal(b$surname, "DIGHTON"); expect_true(b$elected)
+  expect_equal(nrow(byelection_winner_rows("vic2022", "vic2026", results = res, winners = win)), 0L)
+})
