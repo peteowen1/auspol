@@ -13,7 +13,8 @@ vs 5.42, TCP MAE 3.70 vs 3.63. Public copy:
 https://github.com/peteowen1/auspol/releases/download/shipped-models/aef7-ledger.html
 
 **Live forecast** (`forecast-latest` release, rebuilt 06:00 Melbourne daily,
-also on R2 `inthegame-data/auspol/` for inthegame.blog/politics/). First run
+also on R2 `inthegame-data/auspol/` for **inthegame.blog/politics/, live with
+data since 21:35** after Pete set the two secrets). First run
 2026-09-19 15:50: LNP 36.1 expected seats, ALP 35.5, ONP 11.0, GRN 5.3;
 P(hung) 0.72, P(One Nation balance of power) 0.70. 88 of 88 seats.
 
@@ -24,7 +25,10 @@ new pattern no prior election teaches; Banks shares the census profile and
 did not move). Both that pattern and the WA-type state miss are observable
 on the night from booth swings, so the effort goes there.
 
-Scope, to be planned in `docs/plans/election-night-booth-model.md`:
+Plan written: `docs/plans/election-night-booth-model.md` (VEC publishes an XML
+feed down to voting centre; 2022 per-booth files exist per district; dress
+rehearsal = replay vic2022; the VEC email is drafted there for Pete to
+send). Scope:
 1. Data: 2022 booth-level first preferences and TCP per voting centre
    (VEC "votes by voting centre"; `external/reference/vec/2010, 2014, 2018`
    hold the older FPV-by-VC files, 2022's is in
@@ -109,7 +113,8 @@ Scope, to be planned in `docs/plans/election-night-booth-model.md`:
 
 ## Data and infra
 
-- VEC media feed registration (part of the booth-model plan above).
+- VEC feed: email drafted in the booth-model plan, **Pete to send**
+  (communication@vec.vic.gov.au); 2026 configuration not yet published.
 - Tasmanian (and ACT/NT) state election results into the corpus.
 - Row-add routine for the two hand tables (HTV order, by-election winners)
   plus a calendar reminder.
