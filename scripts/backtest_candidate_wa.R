@@ -333,6 +333,10 @@ for (K in PAIRS) {
   A <- wide(fa); B <- wide(fb)
   sa <- fa[, .(v = sum(votes)), by = party][, setNames(100 * v / sum(v), party)]
   sb <- fb[, .(v = sum(votes)), by = party][, setNames(100 * v / sum(v), party)]
+  # AUSPOL_FORECAST_MODE=1: predicted statewide, not the oracle (R/forecast_statewide.R).
+  sb <- forecast_statewide_or_oracle("wa", K$to, WA_DATE[[as.character(K$to)]], union(colnames(A), names(sb)), sa, sb,
+                                     code = "BW0", n_sims = N_SIMS, seed = as.integer(Sys.getenv("AUSPOL_SEED", "42")), on_fail = "skip")
+  if (is.null(sb)) next   # thin cycle: no forecast statewide, pair not scored in forecast mode
 
   parties <- union(colnames(A), names(sb))
   mat <- matrix(0, nrow = nrow(A), ncol = length(parties),

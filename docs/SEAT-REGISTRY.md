@@ -196,6 +196,20 @@ file is the durable copy.
   winner the sitting member; Dighton is now the returning ALP member.
   `plans/prereg-byelection-mp-2026-09-19.md`. Pattern C in
   `reviews/worst-seats-five-patterns-2026-09-13.md`.
+- **Waite** — sa2026 IND 33.5 predicted vs 2.9 actual (ledger v39). Duluk
+  (19.7) and Holmes-Ross (14.6) both left; Gargett polled 2.9. candidate_returns
+  had the leader departing correctly, but sa2026's salience coverage is 8%,
+  below the screen's 10% floor, and a silent screen returned PERMIT for every
+  candidate -- which since 6 Sep means slope 1.0 for a new leader and no
+  departed decay. Same defect in fed2007, fed2010, vic2014. Fix pre-registered:
+  `plans/prereg-screen-silent-not-permit-2026-09-20.md`. **OPEN, fix queued**
+  behind rebuild v40. Checked 2026-09-20.
+- **Kogarah** — nsw2023 ALP 44.0 vs 60.6: Chris Minns' own seat in the election
+  that made him Premier. Beyond the statewide miss (-4.8 Labor) this is a
+  party-leader's-seat effect the model has no term for. Lismore (Saffin, ALP
+  24.6 vs 44.4 after the floods) is a personal-vote outlier of the same size.
+  **OPEN**: a leader's-seat term needs a hand table of leaders per election;
+  candidate for a pre-registration once the statewide forecast is settled.
 - **Kavel** — Dan Cregan (Liberal 48.1 in 2022, IND 50.5 in 2022 as a
   defector) fell to 21.4 as the One Nation surge took the right vote. We
   gave him 45. AEF gave 21.7. The One Nation surge in SA is the parked

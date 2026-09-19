@@ -378,6 +378,9 @@ mat <- as.matrix(wide[, -1, with = FALSE]); rownames(mat) <- wide$seat
 mat <- 100 * mat / rowSums(mat)
 st_a <- fa[, .(v = sum(votes)), by = party][, setNames(100 * v / sum(v), party)]
 st_b <- fb[, .(v = sum(votes)), by = party][, setNames(100 * v / sum(v), party)]
+# AUSPOL_FORECAST_MODE=1: predicted statewide, not the oracle (R/forecast_statewide.R).
+st_b <- forecast_statewide_or_oracle("qld", PAIR$to, PAIR$asof, colnames(mat), st_a, st_b,
+                                     code = "BQ0", n_sims = N_SIMS, seed = as.integer(Sys.getenv("AUSPOL_SEED", "42")))
 # RE-ENTRY PRIOR, docs/plans/prereg-reentry-prior-2026-09-07.md. A class
 # contesting this seat but not the last one has no prior share, so swinging
 # zero forward leaves approximately zero -- 1,418 seat-class rows across the

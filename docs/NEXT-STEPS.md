@@ -7,9 +7,19 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30.
 
 ## Where things stand
 
-Ledger v38 (660 AEF-7 seats, production pipeline, 20,000 sims; lower is
-better): seat log loss **0.2657 vs AEF 0.2851**, weighted primary RMSE 4.75
-vs 5.42, TCP MAE 3.70 vs 3.63. Public copy:
+**Ledger v39, 2026-09-20 00:36, the first that is predictive throughout**
+(660 AEF-7 seats, production pipeline, 20,000 sims; lower is better): seat
+log loss **0.3012 vs AEF 0.2851** (v38 read 0.2657 because four harnesses
+swung toward the counted statewide, an oracle), weighted primary RMSE 5.22
+vs 5.42 (still ours), TCP MAE 4.04 vs 3.63, accuracy 87.3% vs 86.8%. The
+forecast statewide misses by 1.3 to 3.9 points per class per election and
+the seats inherit it: **the statewide forecast is now the biggest lever**
+(model item 0 below). wa2021 has no fittable trend and is not scored.
+Models retrained on predictive base_pred are on `shipped-models` and feed
+the daily forecast from 20 Sep. Disclosed: v39 ran before a review fix
+(the wrapper now unions the target's classes into the forecast), so
+vic2022's One Nation cells read 0.0 (actual mean 0.2; negligible); the next
+rebuild picks it up. Public copy:
 https://github.com/peteowen1/auspol/releases/download/shipped-models/aef7-ledger.html
 
 **Live forecast** (`forecast-latest` release, rebuilt 06:00 Melbourne daily,
@@ -71,6 +81,12 @@ aggregation, then the VEC feed parser.
 
 ## Model, open (triaged 2026-09-19; nothing here blocks Victoria)
 
+- **(0) The statewide forecast as at the day before** now decides the ledger.
+  Per-class error 1.3-3.9 points; WA 2017 (Labor 31.7 forecast, 42.2 actual)
+  and nsw2023 (Labor 31.3 vs 37.0) are the worst. Every seat inherits it, so
+  a point here is worth more than any seat mechanism. Start by walking the
+  worst cycles' poll-trend fits with Pete (the "design with Pete" rule).
+
 - **NSW variance / per-seat `seat_sd`** — design-with-Pete item: the 11 wrong
   nsw seats went to a different beneficiary every time, arguing for seat-level
   uncertainty over class widening; means a `src/seat_sim_core.cpp` change.
@@ -103,18 +119,21 @@ aggregation, then the VEC feed parser.
 
 ## Harness and pipeline hygiene
 
-- `AUSPOL_FORECAST_MODE` exists in fed and sa only; nsw/qld/vic/wa still swing
-  toward the ACTUAL statewide (registry's one OPEN GAP). Wiring, core is in
-  `R/forecast_statewide.R`.
-- Re-measure the xgb challengers with TIME-FORWARD folds: the as-at models
-  (PR #50) already train on earlier elections only, so check whether this is
-  now moot before running anything.
+- **DONE 22:50**: `AUSPOL_FORECAST_MODE` wired into nsw/qld/vic/wa through one
+  shared block (`forecast_statewide_or_oracle()`), proven on all four at 2,000
+  sims (forecast statewide error 1.3-2.4 pts per class; wa2021 has no
+  fittable trend and is skipped loudly), and the published default FLIPPED
+  to 1 (Pete's ruling: predictive throughout). **Ledger v39 rebuild under
+  it pending** -- expect worse, honest numbers. The old note that the two
+  modes tie with xgb on was true of the static-OOF path only; the production
+  base_margin path carries the statewide through.
+- CLOSED: time-forward folds -- the as-at models (`fit_xgb_primary_asat.R`,
+  `fit_xgb_flows_asat.R`) train only on elections dated before the target.
 - Audit other 0-filled xgb features for the NA-fill fix; any new column to
   `fit_xgb_primary_v6.R` costs ~0.014 pooled RMSE (placebo floor).
 - Package functions read bare relative paths (`surge_hazard_for()`); should
   resolve via `getOption("auspol.root")`.
-- `MODEL-REGISTRY.md` has four switches marked UNEXPLAINED (classify them in
-  `build_model_registry.R`).
+- DONE 23:20: every switch in `MODEL-REGISTRY.md` is classified (was 12 unexplained).
 - Fresh clone needs `scripts/fit_mp_slope.R` before `AUSPOL_MP_SLOPE=1`
   works (deliberate: no silent fallback).
 - Diagnosed, not built: widening simulated variance for the majors' floor
@@ -125,13 +144,19 @@ aggregation, then the VEC feed parser.
 
 - VEC feed: email drafted in the booth-model plan, **Pete to send**
   (communication@vec.vic.gov.au); 2026 configuration not yet published.
-- Tasmanian (and ACT/NT) state election results into the corpus.
+- Tasmanian statewide primaries 2006-2024 are now a hand table
+  (`external/reference/state-elections-statewide.csv`, Wikipedia, tracked).
+  Still to do: read it in `build_state_deviation_features.R` so `state_elec_dev`
+  exists for TAS (Hare-Clark, so no seat rows; only the statewide swing is
+  usable), then re-run the state-deviation v2 plan. ACT/NT not yet tabled.
 - Row-add routine for the two hand tables (HTV order, by-election winners)
   plus a calendar reminder.
-- Data registry script: fail on a 100%-empty column (run locally; CI now
-  refuses zero-byte inputs instead of regenerating the registry).
-- Victoria 2022 seat TCP truth is cached but unparsed
-  (`external/elections/cache/vec-2022-vic/*-results.html`); federal exists.
+- DONE 22:40: `build_data_dictionary.R` reads every processed file in full
+  and FAILS on a 100%-empty column (none today).
+- DONE 22:35: vic2022 TCP truth upgraded to the VEC's official 2CP totals for
+  74 seats (`build_aef7_tcp_vic_from_vec.R`); 12 ABC-scrape rows disagreed
+  (Shepparton by 4 points). The VEC page's pair is its indicative count, not
+  the distribution's final two (Hawthorn, Kew, Mulgrave kept from the ABC).
 - Federal results as a correlated signal for state seat lean: needs
   seat-boundary matching (`external/reference/boundaries/` has CED 2016).
 - GDELT parked (needs a GCP project); Census 2006/2001 have no bulk pack.

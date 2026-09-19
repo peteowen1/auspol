@@ -39,6 +39,15 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 export AUSPOL_N_SIMS="${AUSPOL_N_SIMS:-20000}"
 export AUSPOL_POOL_MIN_SIMS="${AUSPOL_POOL_MIN_SIMS:-$AUSPOL_N_SIMS}"
+# Pairs no harness can score under the published flags: wa2021 has no fittable
+# poll trend, so forecast mode (published 1 since 2026-09-19) skips it and the
+# pooling stages must not fall back to a stale file. Remove it from this default
+# when WA 2017-2021 polling reaches the anchor.
+export AUSPOL_SKIP_PAIRS="${AUSPOL_SKIP_PAIRS:-wa2021}"
+# AUSPOL_REBUILD_FROM=<n> resumes at stage n (1-9), e.g. after a later stage failed
+# with the harness outputs already fresh on disk. Default 1 = everything.
+FROM="${AUSPOL_REBUILD_FROM:-1}"
+at_least() { [ "$FROM" -le "$1" ]; }
 if [ "$AUSPOL_N_SIMS" -lt 20000 ]; then echo "!! AUSPOL_N_SIMS=$AUSPOL_N_SIMS: exploratory run, its models must not ship"; fi
 LOG="output/rebuild-forecasts-logs"; mkdir -p "$LOG"
 declare -A T0 TT
@@ -85,18 +94,18 @@ run6() {  # $1 = XGB_PRIMARY value, $2 = log tag -- all 23 pairs across the six 
   fi
 }
 
-stage "1-harnesses-base_pred"; run6 0 s1; done_stage "1-harnesses-base_pred"
-stage "2-pool-sharedetail";    Rscript scripts/pool_sharedetail.R      > "$LOG/s2_pool.log" 2>&1; done_stage "2-pool-sharedetail"
-stage "3-features";            Rscript scripts/fit_xgb_primary_v6.R    > "$LOG/s3_v6.log"   2>&1; done_stage "3-features"
-stage "4-asat-models";         Rscript scripts/fit_xgb_primary_asat.R  > "$LOG/s4_asat.log" 2>&1; done_stage "4-asat-models"
-stage "4b-asat-flow-models";   Rscript scripts/fit_xgb_flows_asat.R    > "$LOG/s4b_flows.log" 2>&1; done_stage "4b-asat-flow-models"
-stage "5-production-model";    Rscript scripts/fit_xgb_primary_v6_final.R > "$LOG/s5_final.log" 2>&1; done_stage "5-production-model"
-stage "6-harnesses-shipped";   run6 1 s6; done_stage "6-harnesses-shipped"
-stage "7-pool-and-forecasts";  Rscript scripts/pool_backtests.R        > "$LOG/s7_pool.log" 2>&1
-                               Rscript scripts/build_forecasts_table.R > "$LOG/s7_forecasts.log" 2>&1; done_stage "7-pool-and-forecasts"
-stage "8-ledger";              Rscript scripts/build_aef_comparison.R  > "$LOG/s8_comp.log" 2>&1   # aef-comparison-full.csv, the ledger's seat-probability input -- was missing from the first draft, so the ledger's log loss came out identical to the run before (2026-09-18)
+if at_least 1; then stage "1-harnesses-base_pred"; run6 0 s1; done_stage "1-harnesses-base_pred"; fi
+if at_least 2; then stage "2-pool-sharedetail";    Rscript scripts/pool_sharedetail.R      > "$LOG/s2_pool.log" 2>&1; done_stage "2-pool-sharedetail"; fi
+if at_least 3; then stage "3-features";            Rscript scripts/fit_xgb_primary_v6.R    > "$LOG/s3_v6.log"   2>&1; done_stage "3-features"; fi
+if at_least 4; then stage "4-asat-models";         Rscript scripts/fit_xgb_primary_asat.R  > "$LOG/s4_asat.log" 2>&1; done_stage "4-asat-models"; fi
+if at_least 4; then stage "4b-asat-flow-models";   Rscript scripts/fit_xgb_flows_asat.R    > "$LOG/s4b_flows.log" 2>&1; done_stage "4b-asat-flow-models"; fi
+if at_least 5; then stage "5-production-model";    Rscript scripts/fit_xgb_primary_v6_final.R > "$LOG/s5_final.log" 2>&1; done_stage "5-production-model"; fi
+if at_least 6; then stage "6-harnesses-shipped";   run6 1 s6; done_stage "6-harnesses-shipped"; fi
+if at_least 7; then stage "7-pool-and-forecasts";  Rscript scripts/pool_backtests.R        > "$LOG/s7_pool.log" 2>&1
+                               Rscript scripts/build_forecasts_table.R > "$LOG/s7_forecasts.log" 2>&1; done_stage "7-pool-and-forecasts"; fi
+if at_least 8; then stage "8-ledger";              Rscript scripts/build_aef_comparison.R  > "$LOG/s8_comp.log" 2>&1   # aef-comparison-full.csv, the ledger's seat-probability input -- was missing from the first draft, so the ledger's log loss came out identical to the run before (2026-09-18)
                                Rscript scripts/build_aef7_tcp_actual.R > "$LOG/s8_tcp.log" 2>&1
-                               Rscript scripts/build_aef7_ledger_data.R > "$LOG/s8_ledger.log" 2>&1; Rscript scripts/build_aef7_ledger_html.R > "$LOG/s8_ledger_html.log" 2>&1; done_stage "8-ledger"
+                               Rscript scripts/build_aef7_ledger_data.R > "$LOG/s8_ledger.log" 2>&1; Rscript scripts/build_aef7_ledger_html.R > "$LOG/s8_ledger_html.log" 2>&1; done_stage "8-ledger"; fi
 
 # 9. PROMOTE AND PUBLISH (AUSPOL_PUBLISH=1). The daily forecast workflow downloads
 # the `shipped-models` release; on 2026-09-19 it was found eight days behind the

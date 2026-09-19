@@ -101,6 +101,17 @@ rows <- rbindlist(lapply(files, function(f) {
         pred_share, actual_share, xgb_on = xgb_on)]
 }))
 if (!nrow(rows)) stop("No readable sharedetail files")
+# PAIRS DELIBERATELY NOT SCORED THIS RUN (AUSPOL_SKIP_PAIRS, comma-separated).
+# A harness that skips a pair writes nothing for it, so "newest file per pair"
+# would silently pick up a STALE run of a different vintage -- wa2021 under
+# forecast mode (no fittable trend, 2026-09-19) surfaced the old oracle-mode,
+# xgb-on file here and stopped the pool. Dropped loudly instead.
+.skip <- trimws(strsplit(Sys.getenv("AUSPOL_SKIP_PAIRS", ""), ",")[[1]]); .skip <- .skip[nzchar(.skip)]
+if (length(.skip)) {
+  cat(sprintf("%s! AUSPOL_SKIP_PAIRS: dropping %s (%d row(s)) -- not scored this run\n", "PS0",
+              paste(.skip, collapse = ", "), sum(rows$pair %in% .skip)))
+  rows <- rows[!rows$pair %in% .skip]
+}
 
 # NEWEST FILE PER PAIR -- two arms of the same pair must never blend, exactly
 # the reason pool_backtests.R does this.
