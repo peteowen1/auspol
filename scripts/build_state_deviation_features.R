@@ -79,10 +79,19 @@ cat(sprintf("SD3  state-election prior: %d rows, %d with a signal inside 24 mont
             nrow(SE), sum(is.finite(SE$state_swing) & SE$months_gap < 24)))
 
 # ---- fit each, LEAVE-ONE-ELECTION-OUT, and emit per-state predictions ------
+# UNION of state-years, not ST's. The anchor's results table stops at 2022,
+# so an all.x merge from it silently dropped every fed2025 state-year: the
+# 2025 WA state election (Labor -18.5, two months before federal polling day)
+# was sitting in state-swing-prior.csv and reached nobody, and every fed2025
+# row in the output read 0 / 999 / 0. Found 2026-09-19 by the v2 plan's smoke
+# test. A state-year with no ACTUAL result (2025 today) still gets its
+# predictors; actual_dev is NA there and every fit below filters on it.
 A <- merge(ST[, .(year, state, actual_dev)], RP[, .(year, state, poll_dev, n_polls)],
-           by = c("year", "state"), all.x = TRUE)
+           by = c("year", "state"), all = TRUE)
 A <- merge(A, SE[, .(year, state = tolower(state), state_swing, months_gap)],
-           by = c("year", "state"), all.x = TRUE)
+           by = c("year", "state"), all = TRUE)
+cat(sprintf("SD3  state-years with predictors but no actual result yet: %s\n",
+            paste(unique(A[!is.finite(actual_dev), paste0(year, "-", state)]), collapse = " ")))
 A[!is.finite(months_gap) | months_gap >= 24, state_swing := NA_real_]
 
 # RAW QUANTITIES, NOT PRE-FITTED PREDICTIONS. Pete's point, and he is right.
@@ -116,11 +125,11 @@ set(PRED, which(!is.finite(PRED$state_elec_gap)), "state_elec_gap", 999)
 set(PRED, which(!is.finite(PRED$state_poll_n)), "state_poll_n", 0L)
 
 cat("\nSD4  the two predictions against what actually happened, worst deviations first:\n")
-print(head(PRED[order(-abs(actual_dev)), .(year, state,
+print(head(PRED[is.finite(actual_dev)][order(-abs(actual_dev)), .(year, state,
       polls_say = round(state_poll_dev, 1), state_el_says = round(state_elec_dev, 1),
       actual = round(actual_dev, 1))], 12))
 for (v in c("state_poll_dev", "state_elec_dev")) {
-  nz <- PRED[PRED[[v]] != 0]
+  nz <- PRED[PRED[[v]] != 0 & is.finite(actual_dev)]
   if (nrow(nz) > 5)
     cat(sprintf("SD4  %-15s r = %+.3f over %d state-years\n", v,
                 stats::cor(nz[[v]], nz$actual_dev), nrow(nz)))

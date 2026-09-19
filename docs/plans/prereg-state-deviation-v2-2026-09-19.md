@@ -1,4 +1,4 @@
-# Pre-registration: state-deviation v2 (prior state election as a second predictor, all eight states)
+# Pre-registration: state-deviation v2 (prior state election as a second predictor, five states)
 
 Written 2026-09-19 evening, arms NOT yet run (machine under 10 GB free). Replaces
 the roadmap's "model item (1) independent emergence" as the first model item,
@@ -175,6 +175,37 @@ uses a state election held AFTER that federal polling day (leakage through
 - fed2022 TAS, fed2010 TAS, fed2025 NT: untouched by construction; report
   them unchanged as the proof that the mechanism did not leak into states it
   has no data for.
+
+## Smoke test of the fit itself, before any harness run (18:40)
+
+Built as `state_deviation_b2()` (ridge, penalty grid 1-300 chosen leave-one-
+election-out; unit-tested on planted data). Fitting the builder revealed a
+bug: `build_state_deviation_features.R` started from the anchor's results
+table, which ends in 2022, so EVERY fed2025 state-year had been emitted as
+0 / 999 / 0 -- the 2025 WA state election never reached the file. Fixed
+(union of state-years); the shipped mode 1 is unaffected because fed2025
+still has no state polls.
+
+Coefficients and the Labor correction each arm would add, from the real
+tables, leave-target-out:
+
+| target | b_poll | b_elec | lambda | WA add | other adds |
+|---|--:|--:|--:|--:|---|
+| fed2022 | +0.088 | +0.079 | 300 | **+1.1** | sa +0.5, qld +0.3, vic -0.4 |
+| fed2025 | +0.205 | +0.369 | 1 | **-6.3** | qld -2.0 |
+| fed2019 | +0.266 | +0.164 | 100 | | |
+
+Two things to say before running. (1) WA 2022 gets +1.1, under the +1.5
+dry-run floor set above: when the target is out of the training table the
+penalty search shrinks the state-election term hard, because WA 2022 was
+most of its evidence. (2) When WA 2022 IS in training (target fed2025) the
+term is trusted at 0.37 and WA 2025 gets -6.3 against a -3.0 miss: an
+overshoot of the same size as the miss, so fed2025 may not improve and
+could breach do-no-harm. **Both are the plan working as written**: the
+state-election term rests on one landslide, and a leave-one-out fit says so
+by flipping between distrust and over-trust. The expected outcome is now
+REFUSE unless the harness run says otherwise; running it anyway is the
+point of pre-registering.
 
 ## Not run yet
 

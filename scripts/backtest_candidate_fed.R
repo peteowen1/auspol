@@ -1461,10 +1461,11 @@ for (K in PAIRS) {
   # were tried as MODEL features and cost 3.8740 -> 3.9297 pooled RMSE because
   # non-federal cells got filler values a tree read as a jurisdiction label;
   # applying it after the fact touches no non-federal cell at all.
-  if (identical(Sys.getenv("AUSPOL_STATE_DEV", "0"), "1")) {
+  if (Sys.getenv("AUSPOL_STATE_DEV", "0") %in% c("1", "2")) {
     shares <- state_deviation_apply(
       shares, sprintf("fed%d", K$to),
-      shuffle = Sys.getenv("AUSPOL_STATE_DEV_SHUFFLE", "0"))
+      shuffle = Sys.getenv("AUSPOL_STATE_DEV_SHUFFLE", "0"),
+      mode = Sys.getenv("AUSPOL_STATE_DEV"))   # 2 = prereg-state-deviation-v2-2026-09-19.md
   }
   keep <- intersect(rownames(shares), win$seat)
   shares <- shares[keep, , drop = FALSE]

@@ -9,7 +9,8 @@ state_deviation_apply(
   pair,
   classes = c("ALP", "LNP"),
   dev = "output/state-deviation-features.csv",
-  shuffle = 0L
+  shuffle = 0L,
+  mode = 1L
 )
 }
 \arguments{
@@ -21,6 +22,8 @@ state_deviation_apply(
 \item{classes}{Which classes to correct.}
 
 \item{dev, shuffle}{See \code{\link[=state_deviation_b]{state_deviation_b()}}.}
+
+\item{mode}{1 = shipped polls-only form; 2 = \code{\link[=state_deviation_b2]{state_deviation_b2()}} (v2 arm).}
 }
 \value{
 The corrected matrix, rows renormalised to their original totals.
