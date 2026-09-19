@@ -45,6 +45,14 @@ Each stage is one script; the driver times them and prints the split.
 | 6 | six harnesses at shipped flags | 1, 2, 3, 4 | `output/backtest-*-allprobs-*.csv` etc: seat probabilities | step 3 now reads the as-at file from stage 4 via `published_flags.R` |
 | 7 | `pool_backtests.R`, `build_forecasts_table.R` | | `output/pooled-backtest.csv`; `output/forecasts.csv` (one row per candidate per election, 11,991 rows), `output/forecasts-seats.csv` | the persisted forecasts and the pooled scoreboard |
 | 8 | `build_aef_comparison.R`, `build_aef7_tcp_actual.R`, `build_aef7_ledger_data.R` | | `output/aef-comparison-full.csv`, `output/aef7-tcp-actual.csv`, `output/aef7-ledger-data.json` + `-summary.json` | the ledger's inputs. Substitute the two JSON files into `scripts/templates/aef7-ledger.template.html` and republish |
+| 9 | `promote_rebuild.R`, `publish_shipped_release.R` (only with `AUSPOL_PUBLISH=1` and 20,000 sims) | | `output/shipped/MANIFEST.json`; the `shipped-models` GitHub release | the daily forecast workflow downloads these; the manifest's date is what its staleness check reads |
+
+**The daily live forecast** (`.github/workflows/forecast.yaml`, 06:00
+Melbourne): fetches polls and election data, downloads the shipped models,
+runs `run_all.R` (which ends with `fit_seats_full.R`, `build_page.R` and
+`build_forecast_json.R`), and publishes `forecast-vic2026.json`,
+`forecast-history.csv`, seat probabilities, seat shares and the HTML page to
+the `forecast-latest` release. The site reads those by fixed URL.
 
 Stages 1 and 6 each run two waves, because nsw, qld and sa score one pair
 per run (`AUSPOL_NSW_PAIR`, `AUSPOL_QLD_PAIR`, `AUSPOL_SA_PAIR`); fed, wa and

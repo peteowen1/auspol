@@ -288,6 +288,24 @@ cat(sprintf("flow matrix: %d exclusions, %d cells at n>=3 of %d observed\n",
 
 # ---- 2. each seat's 2022 first preferences, as class shares ----------------
 fp <- fread(file.path(PREF, "vec-2022-vic-firstprefs.csv"))
+# A SUPPLEMENTARY ELECTION IS THE SEAT'S GENERAL ELECTION HELD LATE. Narracan's
+# 2022 poll was deferred by a candidate's death and held on 28 January 2023;
+# the VEC file has no Narracan row, so until 2026-09-19 the forecast simulated
+# 87 of 88 seats and the Legislative Assembly's majority line was mis-set.
+# The by-election results table carries the supplementary result at
+# candidate level; a seat absent from the general-election file whose
+# by-election falls in the window is appended here as its 2022 baseline.
+.sup <- tryCatch({
+  bt <- byelection_table(); dts <- election_dates()
+  bt[bt$region == "vic" & !bt$seat %in% unique(fp$seat) & bt$date > dts[["vic2022"]] & bt$date < dts[["vic2026"]]]
+}, error = function(e) NULL)
+if (!is.null(.sup) && nrow(.sup)) {
+  add <- .sup[, .(votes = sum(votes)), by = .(seat, party)]
+  fp <- rbind(fp[, .(seat, party, votes)], add, fill = TRUE)
+  cat(sprintf("SUP1 supplementary election(s) appended as the 2022 baseline: %s
+",
+              paste(unique(add$seat), collapse = ", ")))
+}
 w <- dcast(fp, seat ~ party, value.var = "votes", fill = 0)
 mat22 <- as.matrix(w[, -1]); rownames(mat22) <- w$seat
 mat22 <- 100 * mat22 / rowSums(mat22)
@@ -298,12 +316,11 @@ cat(sprintf("seats with 2022 first preferences: %d\n", nrow(mat22)))
 # A FLOOR, not just a printed number. The seat count reached the simulation as
 # a cat() line nobody is obliged to read, so a join or a missing first-
 # preference row that dropped a seat would print a different, equally
-# plausible figure and quietly simulate a smaller chamber. 87 is Victoria's
-# 88 districts less Narracan, whose 2022 poll was deferred by a candidate's
-# death.
-if (nrow(mat22) < 87L) {
-  stop("Only ", nrow(mat22), " seats have 2022 first preferences; 87 expected ",
-       "(88 districts less Narracan). A seat has been lost upstream.")
+# plausible figure and quietly simulate a smaller chamber. 88 districts:
+# 87 from the VEC file plus Narracan's supplementary election (above).
+if (nrow(mat22) < 88L) {
+  stop("Only ", nrow(mat22), " seats have 2022 first preferences; 88 expected ",
+       "(87 from the VEC file plus Narracan's supplementary election from the by-election table). A seat has been lost upstream.")
 }
 
 # ---- 3. statewide 2026, from the model rather than assumed -----------------
