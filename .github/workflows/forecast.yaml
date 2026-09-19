@@ -163,6 +163,9 @@ jobs:
             gh release download shipped-models -p "$f" -D output --clobber
           done
           ls -l output/xgb-*
+          # The forecast history table lives on the forecast-latest release;
+          # fetch it BEFORE run_all.R so build_forecast_json.R appends one row.
+          gh release download forecast-latest -p forecast-history.csv -D output --clobber 2>/dev/null || echo "no forecast-history.csv yet (first run)"
           # STALENESS: the models must not lag the code. 2026-09-19: they were
           # eight days and ~40 commits behind main and nobody noticed. Warn
           # loudly past 3 days; fail past 14 (a rebuild takes 25 minutes).
@@ -297,8 +300,6 @@ jobs:
         run: |
           set -e
           gh release view forecast-latest >/dev/null 2>&1 || gh release create forecast-latest -t "Latest forecast (auto-updated)" -n "Assets are replaced by the daily forecast workflow; the release date is the tag's, not the data's. Read built_at inside forecast-vic2026.json."
-          gh release download forecast-latest -p forecast-history.csv -D output --clobber 2>/dev/null || true
-          Rscript scripts/build_forecast_json.R
           gh release upload forecast-latest output/forecast-vic2026.json output/forecast-history.csv output/seat-probs-vic-2026.csv output/seat-shares-vic-2026.csv output/victoria-2026.html --clobber
       - name: Upload outputs
         if: always()
