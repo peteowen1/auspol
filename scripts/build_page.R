@@ -342,28 +342,20 @@ if (all(present)) {
 
   # ---- the PUBLISHED seat forecast, from the candidate-level model --------
   #
-  # The candidate model covers 87 seats. Narracan is absent: its 2022 election
-  # failed after a candidate died and the January 2023 supplementary went
-  # uncontested by Labor, so it has no ordinary first preferences to swing.
-  # The seat file records it LNP-held on a -13.0 two-party margin with the
-  # projection moving further against Labor, and both external forecasts have
-  # it Coalition-held, so it is assigned to the Coalition -- i.e. it adds ZERO
-  # to Labor's total.
-  #
-  # Stated here, checked below, and reported on the page rather than buried:
-  # publishing a seat total that silently omits a seat is exactly the class of
-  # error this repo keeps finding.
-  NARRACAN_ALP <- 0L
+  # The candidate model covers all 88 seats since 2026-09-19: Narracan's
+  # January 2023 supplementary election (its 2022 poll was deferred after a
+  # candidate died) is appended as its 2022 baseline by fit_seats_full.R
+  # (SUP1 line). Before that it was absent and this block assigned it to the
+  # Coalition by hand. A seat still missing now is a NAME MISMATCH, which
+  # would publish as zero, so coverage is asserted at exactly 88.
   covered <- length(unique(wp$seat))
-  n_missing <- 88L - covered
-  if (n_missing != 1L) {
-    stop("The candidate model covers ", covered, " of 88 seats; the Narracan ",
-         "adjustment assumes exactly one is missing. Re-check before publishing.")
+  if (covered != 88L) {
+    stop("The candidate model covers ", covered, " of 88 seats; every seat must ",
+         "be simulated (Narracan via its supplementary baseline). Re-check before publishing.")
   }
-  tot <- full_tot$ALP + NARRACAN_ALP
-  cat(sprintf("published seat forecast: candidate-level model, %d seats + %s
-",
-              covered, "Narracan assigned to the Coalition"))
+  tot <- full_tot$ALP
+  cat(sprintf("published seat forecast: candidate-level model, %d of 88 seats
+", covered))
   cat(sprintf("  ALP median %d (90%% %d-%d); two-party model says %d -- cross-check only
 ",
               as.integer(stats::median(tot)),
@@ -384,13 +376,12 @@ if (all(present)) {
   # What must NOT be read as zero is a seat whose NAME failed to match, which
   # looks identical after the join. The two are told apart by seat coverage,
   # not by the ALP row: every seat the model ran must appear in `wp` under some
-  # party. Narracan is the one seat it never ran.
+  # party.
   unseen <- setdiff(seat_rows$seat, unique(wp$seat))
-  if (!identical(sort(unseen), "Narracan")) {
+  if (length(unseen)) {
     stop("These pendulum seats appear nowhere in ", sp_f, ": ",
          paste(sort(unseen), collapse = ", "),
-         ". Only Narracan may be absent; anything else means the seat names do ",
-         "not match, and their probabilities would silently publish as zero.")
+         ". The seat names do not match, and their probabilities would silently publish as zero.")
   }
   seat_rows[is.na(p), p := 0]
   seat_rows[, p := round(p, 3)]
