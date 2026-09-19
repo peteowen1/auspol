@@ -70,12 +70,20 @@ candidate_returns <- function(election_from, election_to, corpus = NULL) {
   # for it; Dighton, who actually held the seat, read as a newcomer. The
   # winner row replaces the seat's elected flags; nothing else in PREVT moves.
   if (identical(Sys.getenv("AUSPOL_BYELECTION_MP", "0"), "1")) {
-    bw <- tryCatch(byelection_winner_rows(election_from, election_to), error = function(e) NULL)
-    if (!is.null(bw) && nrow(bw) && "elected" %in% names(PREVT)) {
-      PREVT <- data.table::copy(PREVT)
-      PREVT[PREVT$seat %in% bw$seat, elected := FALSE]
-      add <- data.table::copy(bw)[, election := election_from]
-      PREVT <- data.table::rbindlist(list(PREVT, add), fill = TRUE)
+    bw <- tryCatch(byelection_winner_rows(election_from, election_to),
+                   error = function(e) { cat(sprintf("CDR1! by-election member override FAILED for %s -> %s, previous election's members kept: %s\n",
+                                                     election_from, election_to, conditionMessage(e))); NULL })
+    if (!is.null(bw) && nrow(bw)) {
+      if ("elected" %in% names(PREVT)) {
+        PREVT <- data.table::copy(PREVT)
+        PREVT[PREVT$seat %in% bw$seat, elected := FALSE]
+        add <- data.table::copy(bw)[, election := election_from]
+        PREVT <- data.table::rbindlist(list(PREVT, add), fill = TRUE)
+        cat(sprintf("CDR1 by-election member override %s -> %s: %d seat(s) (%s)\n", election_from, election_to, nrow(bw),
+                    paste(sprintf("%s=%s", bw$seat, bw$party), collapse = ", ")))
+      } else {
+        cat(sprintf("CDR1! by-election winners exist for %s -> %s but the corpus has no `elected` column -- override skipped\n", election_from, election_to))
+      }
     }
   }
 
@@ -785,11 +793,12 @@ personal_prior_vote <- function(election_from, election_to, corpus = NULL,
     .mm <- !is.na(out$own_prev_pcv) & !is.na(out$prev_party) & !out$prev_party %in% MAJ &
            !out$party %in% MAJ & out$prev_party != out$party & is.finite(out$transfer)
     if (any(.mm)) {
-      .fc <- tryCatch(fit_minor_defector_conserve(election_to, corpus = C), error = function(e) NULL)
+      .fc <- tryCatch(fit_minor_defector_conserve(election_to, corpus = C),
+                      error = function(e) { cat(sprintf("PPV1! minor-to-minor conserve fit FAILED, full transfer kept: %s\n", conditionMessage(e))); NULL })
       if (!is.null(.fc) && !is.null(.fc$frac) && is.finite(.fc$frac)) {
         out[.mm, transfer := transfer * (1 - .fc$frac)]
         cat(sprintf("PPV1 minor-to-minor conserve: origin keeps %.2f of the defector's vote (n=%d, target excluded), %d row(s)\n", .fc$frac, .fc$n, sum(.mm)))
-      } else cat("PPV1! minor-to-minor conserve: no fitted share (too few cases) -- full transfer kept\n")
+      } else if (!is.null(.fc)) cat(sprintf("PPV1! minor-to-minor conserve: only %d case(s) to fit from (need 8) -- full transfer kept\n", .fc$n))
     }
   }
   out[is.na(prev_party) | prev_party == party, `:=`(transfer = NA_real_, prev_party = NA_character_)]
