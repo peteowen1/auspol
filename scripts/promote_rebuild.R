@@ -21,8 +21,13 @@ suppressMessages(devtools::load_all(quiet = TRUE))
 OUT <- "output"; SHIP <- file.path(OUT, "shipped")
 source("scripts/published_flags.R")
 
+# candidacies.csv ships with the models: build_candidacies.R needs raw
+# commission files CI never fetches, so without this asset the live forecast
+# on CI ran with EVERY candidate-identity mechanism off (found 2026-09-19 in
+# the failed daily run's log: "candidate_returns() needs output/candidacies.csv").
 models <- c("xgb-primary-v6-final.model", "xgb-primary-v6-final-cols.json",
-            "xgb-flows-v1-final.model", "xgb-flows-v1-final-cols.json", "xgb-flows-v1-features.csv")
+            "xgb-flows-v1-final.model", "xgb-flows-v1-final-cols.json", "xgb-flows-v1-features.csv",
+            "candidacies.csv")
 mf <- file.path(OUT, models)
 miss <- models[!file.exists(mf)]
 if (length(miss)) stop("model file(s) missing -- run scripts/rebuild_forecasts.sh first: ", paste(miss, collapse = ", "))

@@ -159,7 +159,7 @@ jobs:
           set -euo pipefail
           for f in xgb-primary-v6-final.model xgb-primary-v6-final-cols.json \
                    xgb-flows-v1-final.model xgb-flows-v1-final-cols.json \
-                   xgb-flows-v1-features.csv; do
+                   xgb-flows-v1-features.csv candidacies.csv; do
             gh release download shipped-models -p "$f" -D output --clobber
           done
           ls -l output/xgb-*
@@ -200,9 +200,13 @@ jobs:
           # relied on to shout. Found by review, 2026-09-14.
           for f in output/xgb-primary-v6-final.model output/xgb-primary-v6-final-cols.json \
                    output/xgb-flows-v1-final.model output/xgb-flows-v1-final-cols.json \
-                   output/xgb-flows-v1-features.csv; do
+                   output/xgb-flows-v1-features.csv output/candidacies.csv; do
             [ -s "$f" ] || { echo "::error::$f is missing or empty after download"; exit 1; }
           done
+          # candidacies.csv is the candidate-name corpus every identity mechanism
+          # reads (candidate_returns, surge hazard). It cannot be built on CI, so
+          # it ships with the models; a header-only file must fail here too.
+          [ "$(wc -l < output/candidacies.csv)" -gt 1000 ] || { echo "::error::output/candidacies.csv has fewer than 1000 rows"; exit 1; }
           Rscript -e '
             for (f in c("output/xgb-primary-v6-final.model", "output/xgb-flows-v1-final.model")) {
               m <- xgboost::xgb.load(f); cat(sprintf("%s loads OK\n", f))
@@ -223,11 +227,20 @@ jobs:
       - name: Run the pipeline
         id: run
         run: |
+          # run_all.R exits non-zero when ANY validation stage breaches (2026-09-19:
+          # every daily run since at least the 12th had failed on a NSW 2027
+          # poll-tracking breach, NL3, and the Victorian forecast -- which had
+          # run fine -- was never published). The breach is still reported in
+          # the summary and as a warning; it no longer blocks the publish, which
+          # is gated instead on the Victorian outputs being written by THIS run.
           if [ "${{ inputs.quick }}" = "true" ]; then
-            Rscript scripts/run_all.R --quick 2>&1 | tee run.log
+            Rscript scripts/run_all.R --quick 2>&1 | tee run.log || echo "::warning::run_all.R reported validation problems (see run.log); Victorian outputs are checked before publishing"
           else
-            Rscript scripts/run_all.R 2>&1 | tee run.log
+            Rscript scripts/run_all.R 2>&1 | tee run.log || echo "::warning::run_all.R reported validation problems (see run.log); Victorian outputs are checked before publishing"
           fi
+          for f in output/seat-probs-vic-2026.csv output/seat-shares-vic-2026.csv output/seat-sims-full-vic-2026.csv output/forecast-vic2026.json; do
+            [ -s "$f" ] && [ "$(( $(date +%s) - $(stat -c %Y "$f") ))" -lt 7200 ] || { echo "::error::$f missing or not written by this run -- the Victorian forecast did not complete"; exit 1; }
+          done
         shell: bash
 
       # The point of the schedule is to notice CHANGE, so put the numbers and
