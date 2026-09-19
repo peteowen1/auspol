@@ -152,6 +152,7 @@ and fundamentals stage, upstream of the seat model entirely.
 | *"maybe we predict IND primary with a different xgboost from other parties"* | `v7e` — poll-anchored (ALP/LNP/NAT/GRN/ONP) and candidate-driven (IND/OTH/OTH_RIGHT) fitted separately. |
 | *"why is ONP in the IND model"* | Pete was right; corrected. It had been moved on a 0.0045 pooled-RMSE difference (noise) while its own class RMSE got worse. |
 | *"understand why salience is high when it shouldn't be"* | A real bug, found and fixed. [reviews/salience-percentile-fix-2026-09-12.md](reviews/salience-percentile-fix-2026-09-12.md). |
+| *"go! work your way through - Awaiting you ... keep working through next steps md and triaging and cleaning as you go - dont stop until all the next steps are worked through - i trust your triage"* (2026-09-19 evening) | Blog PR #700 MERGED; Cloudflare secrets set by Pete (`!` commands) and the forecast re-run; NL3 bound DECIDED (report, do not halt); seat-type swing PARKED for the election-night booth model (Pete chose option b); hub rewritten 47KB -> ~12KB with every live item carried (`backlog/journal-2026-09-19-hub-snapshot.md`); `DECISIONS.md` created. **Open from it:** the booth model itself (plan next). |
 
 Primary model, leave-one-pair-out RMSE: **3.9201 → 3.8489** pooled, **4.908 →
 4.667** on independents. Seat-level measurement in progress.
