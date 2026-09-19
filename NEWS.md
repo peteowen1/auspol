@@ -1,3 +1,19 @@
+# auspol 0.4.46
+
+- `AUSPOL_BYELECTION_MP` (shipped): the by-election winner is the seat's
+  sitting member for every candidate-identity test (`byelection-winners.csv`,
+  89 by-elections; `byelection_winner_rows()`, `candidate_returns()`). Black
+  sa2026 had paid Speirs +5 points as the "returning member" of the IND class.
+  12 changed-member seats' cell error 5.39 -> 4.87 (SE 0.27).
+- `AUSPOL_MINOR_DEFECT_CONSERVE` (shipped): a minor-to-minor defector's origin
+  class keeps a fitted leave-target-out share (median 0.38, n=26) of their
+  vote; the path had removed all of it. 26 origin cells 3.98 -> 2.56 (SE 0.69).
+- By-election results table completed (44 by-elections, every window back to
+  2008); ledger v37 flat (0.2673), v38 with the two rules 0.2657 (AEF 0.2851).
+- Ledger: the AEF favourite's probability column now shows `pred_p`, not
+  P(actual winner). ABC seat-guide scraper persists after every pair.
+- Hub slimmed 71KB -> 38KB (`docs/backlog/journal-2026-09-13-to-18.md`).
+
 # auspol 0.4.45
 
 **Two inputs the model never had, and one more slope tier, all pre-registered

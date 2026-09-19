@@ -2,14 +2,14 @@
 
 ## MORNING READ, 2026-09-19 — overnight on the queue; PR #51 green and ready to merge
 
-**Where things stand** (ledger v35, https://claude.ai/artifact/3YAUawbwdQBn96Bi5nqF4A,
+**Where things stand** (ledger v38, https://claude.ai/artifact/3YAUawbwdQBn96Bi5nqF4A,
 660 AEF-7 seats, production pipeline, 20,000 sims; lower is better):
 
-| | v32 (18 Sep, start) | v35 (19 Sep 00:33) | AEF |
+| | v32 (18 Sep, start) | v38 (19 Sep 11:45) | AEF |
 |---|---|---|---|
-| seat log loss | 0.2735 | 0.2667 | 0.2851 |
-| weighted primary RMSE | 4.79 | 4.74 | 5.42 |
-| TCP MAE, real pairing | 3.78 | 3.69 | 3.63 |
+| seat log loss | 0.2735 | 0.2657 (v38) | 0.2851 |
+| weighted primary RMSE | 4.79 | 4.75 | 5.42 |
+| TCP MAE, real pairing | 3.78 | 3.70 | 3.63 |
 
 **2026-09-19 morning (Pete: "work through all the next steps")**: PR #51
 MERGED 09:31; v37 rebuild started 09:33 (two-wide, memory). Both measured
@@ -29,7 +29,7 @@ MERGED 09:31; v37 rebuild started 09:33 (two-wide, memory). Both measured
 
 **Needs you, in order:**
 1. ~~Merge PR #51~~ DONE 09:31.
-2. ~~Full rebuild for v37~~ DONE 10:13 (v37 published: 0.2673, flat vs v35). v38 with the two new switches running from 11:11 (`bash scripts/rebuild_forecasts.sh`,
+2. ~~Full rebuild for v37~~ DONE 10:13 (v37 published: 0.2673, flat vs v35). v38 DONE 11:43: 0.2657, best so far; qld2024 0.3602 -> 0.3456, sa2026 -> 0.3072; Mirani itself worse (LNP renormalised down) though qld2024 better -- registry (`bash scripts/rebuild_forecasts.sh`,
    ~25 min six-wide, ~40 min two-wide; it now checks free memory itself).
    The by-election table grew overnight from 26 to 44 by-elections (every
    window back to 2008; 34 usable), and the blend measured on 17 now covers
