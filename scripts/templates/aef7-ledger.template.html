@@ -250,7 +250,20 @@
   </details>
 
   <details class="provlog">
-    <summary>Provenance &amp; changelog <span class="n">(25 updates)</span></summary>
+    <summary>Provenance &amp; changelog <span class="n">(26 updates)</span></summary>
+    <p class="sub prov"><b>v39, 20 Sep 2026, 00:36: the first ledger that is predictive throughout.</b> Until tonight four of the
+       six backtest harnesses (nsw, qld, vic, wa) swung every seat toward the election's own COUNTED statewide vote, an
+       oracle no forecast has; fed and sa carried a predictive path behind <code>AUSPOL_FORECAST_MODE</code> and the
+       default stayed 0. Pete's ruling of 11 Sep is that a forecast must be predictive throughout. All six now share one
+       block (<code>forecast_statewide_or_oracle()</code>: poll trend plus leave-one-out fundamentals as at the day
+       before) and the published default is 1. The cost is real and this is the honest number: seat log loss
+       <b>0.2657 &rarr; 0.3012</b> against AE Forecasts' 0.2851, so AEF now leads on log loss; weighted primary RMSE
+       4.75 &rarr; 5.22 (AEF 5.42, still ours), TCP MAE 3.70 &rarr; 4.04 (AEF 3.63), accuracy 87.3% vs 86.8%. The
+       forecast statewide missed by 1.3 to 3.9 points per class per election (WA 2017's landslide worst); the seats
+       inherit that. wa2021 has no fittable poll trend and is no longer scored anywhere (<code>AUSPOL_SKIP_PAIRS</code>).
+       The vic2022 TCP truth also moved to the VEC's official two-candidate totals for 74 seats (12 ABC-scrape rows were
+       off, Shepparton by 4 points).</p>
+
     <p class="sub prov"><b>Two more candidate-identity rules, 19 Sep 2026, 11:50.</b> (1) <b>The by-election winner is the
        sitting member.</b> SHAP on Black sa2026 showed the as-at xgb model paying David Speirs (resigned, lost the seat at
        the 2024 by-election, stood as IND) +2.2 for "same sitting member" and +2.9 for "historically elected", because the

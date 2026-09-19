@@ -7,9 +7,16 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30.
 
 ## Where things stand
 
-Ledger v38 (660 AEF-7 seats, production pipeline, 20,000 sims; lower is
-better): seat log loss **0.2657 vs AEF 0.2851**, weighted primary RMSE 4.75
-vs 5.42, TCP MAE 3.70 vs 3.63. Public copy:
+**Ledger v39, 2026-09-20 00:36, the first that is predictive throughout**
+(660 AEF-7 seats, production pipeline, 20,000 sims; lower is better): seat
+log loss **0.3012 vs AEF 0.2851** (v38 read 0.2657 because four harnesses
+swung toward the counted statewide, an oracle), weighted primary RMSE 5.22
+vs 5.42 (still ours), TCP MAE 4.04 vs 3.63, accuracy 87.3% vs 86.8%. The
+forecast statewide misses by 1.3 to 3.9 points per class per election and
+the seats inherit it: **the statewide forecast is now the biggest lever**
+(model item 0 below). wa2021 has no fittable trend and is not scored.
+Models retrained on predictive base_pred are on `shipped-models` and feed
+the daily forecast from 20 Sep. Public copy:
 https://github.com/peteowen1/auspol/releases/download/shipped-models/aef7-ledger.html
 
 **Live forecast** (`forecast-latest` release, rebuilt 06:00 Melbourne daily,
@@ -70,6 +77,12 @@ aggregation, then the VEC feed parser.
 - **28 November 2026**: election night.
 
 ## Model, open (triaged 2026-09-19; nothing here blocks Victoria)
+
+- **(0) The statewide forecast as at the day before** now decides the ledger.
+  Per-class error 1.3-3.9 points; WA 2017 (Labor 31.7 forecast, 42.2 actual)
+  and nsw2023 (Labor 31.3 vs 37.0) are the worst. Every seat inherits it, so
+  a point here is worth more than any seat mechanism. Start by walking the
+  worst cycles' poll-trend fits with Pete (the "design with Pete" rule).
 
 - **NSW variance / per-seat `seat_sd`** — design-with-Pete item: the 11 wrong
   nsw seats went to a different beneficiary every time, arguing for seat-level
