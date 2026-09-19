@@ -62,6 +62,9 @@ if (length(loo)) {
   if (!file.exists(zipf)) stop("could not build ", zipf)
 }
 payload <- c(extra, rest, if (length(loo)) zipf)
+gone <- payload[!file.exists(payload)]
+if (length(gone)) cat(sprintf("PR2! missing asset(s), NOT uploaded: %s
+", paste(basename(gone), collapse = ", ")))
 payload <- payload[file.exists(payload)]
 cat(sprintf("PR2  %d asset(s), %.1f MB total\n", length(payload),
             sum(file.size(payload)) / 1048576))
