@@ -80,16 +80,44 @@ Worst twelve:
 | fed2007 | nsw | +3.80 | 49 |
 | fed2025 | wa | -3.63 | 15 |
 
-Seven of the twelve are Tasmania, ACT or NT: **the states the shipped
-mechanism cannot touch**, because it needs state polls and the anchor has
-none for them. Tasmania has a state election inside 24 months of most
-federal polls (2010, 2014, 2018, 2021, 2024), so `state_elec_dev` exists
-there. That is the gap this plan targets.
+Seven of the twelve are Tasmania, ACT or NT, which NEITHER predictor can
+reach: the anchor has no state polls for them, and our candidate corpus
+holds no Tasmanian, ACT or NT elections (`output/state-swing-prior.csv`
+has rows for NSW, VIC, QLD, SA, WA only). **Corrected 18:05, before any
+run**: the first draft of this plan said Tasmania was coverable through
+`state_elec_dev`. It is not. Those seven state-years stay out of reach until
+Tasmanian state results are fetched, which is a data item, not this plan.
+
+What IS reachable and untouched today: state-years where the prior state
+election is fresh. From `state-swing-prior.csv`, `state_swing` (that state
+election's Labor primary swing) against `fed_dev` (the federal state-level
+Labor miss the shipped model then made):
+
+| pair | state | state swing | months | federal miss |
+|---|---|--:|--:|--:|
+| fed2022 | wa | +17.7 | 14 | +7.8 |
+| fed2025 | wa | -18.5 | 2 | -3.0 |
+| fed2022 | sa | +7.2 | 2 | -0.2 |
+| fed2022 | qld | +4.1 | 19 | +1.5 |
+| fed2019 | vic | +4.8 | 6 | +2.7 |
+| fed2019 | nsw | -0.8 | 2 | -1.0 |
+| fed2013 | wa | -2.7 | 6 | +2.2 |
+| fed2025 | qld | -7.0 | 6 | +1.6 |
+| fed2016 | vic | +1.8 | 19 | -0.6 |
+| fed2025 | nsw | +3.7 | 25 | -0.2 |
+
+Ten state-years inside about two years, both WA landslides among them and
+pointing the right way, two (fed2013 WA, fed2025 QLD) pointing the wrong
+way. The eye says a slope near 0.2 with real scatter; the fit below will say
+what it is. **fed2025 gets its first correction of any kind from this**:
+the shipped form skips it entirely for want of 2025 state polls, and WA
+2025 (-3.0 on 15 seats, state election two months earlier at -18.5) is the
+cleanest case in the table.
 
 ## The arm
 
 `AUSPOL_STATE_DEV=2`: same leave-target-out, one-row-per-state-year fit, but
-on two predictors with shrinkage, applied to all eight states:
+on two predictors with shrinkage, over the five states that have either source:
 
     err_sy = b1 * state_poll_dev_sy + b2 * w(gap_sy) * state_elec_dev_sy
 
@@ -101,17 +129,15 @@ second term acts; where it has no recent state election, only the first.
 The Labor and Coalition corrections are applied to primaries exactly as
 `state_deviation_apply()` does today; nothing outside `^fed` is touched.
 
-**Predicted size, stated before running.** The shipped form removes ~28% of
-state-year variance where polls exist. Adding the state-election term at
-r = 0.77 on the thin n = 10 where it is fresh, and giving TAS/ACT/NT a
-correction for the first time, should take the state-year miss sd from 2.79
-toward ~2.3. Translating through the previous plan's realised ratio
-(0.0045 log loss per ~0.4 points of state-year sd), the expected pooled
-federal move is **-0.002 to -0.005**. fed2022 WA specifically: `state_elec_dev`
-for WA 2022 is +5.2 (the 2021 state landslide, 14 months old, w = 0.56) so
-the added term is worth roughly +1.5 to +2.5 on Tangney -- **still not the
-+10.5 miss**. Say that now: this plan cannot close WA 2022. It is aimed at
-the seven Tasmania/ACT/NT state-years and at halving, not removing, WA.
+**Predicted size, stated before running.** The state-election term has
+ten usable state-years and an eyeballed slope near 0.2 on swings of 4 to 18
+points, so it is worth 1 to 4 primary points where it fires and nothing
+elsewhere. WA 2022: 0.2 x 17.7 x w(14 months) = +2.0 on a +5.5 state-level
+miss (Tangney's own miss is +10.5). WA 2025: about -2.5 on a -3.0 miss. So:
+**halve WA in both directions, close nothing else**, and expect the pooled
+federal move to be **-0.001 to -0.004** -- smaller than the polls-only step,
+because it touches two large state-years and a few small ones. Say now that
+this cannot fix Tangney and is not aimed at Tasmania.
 
 ## Criterion (committed before any run)
 
@@ -134,20 +160,21 @@ uses a state election held AFTER that federal polling day (leakage through
 
 ## Dry run of the criterion on known cases
 
-- fed2022 TAS (miss -5.63, 5 seats): the 2021 Tasmanian election was a
-  Liberal win with Labor down; `state_elec_dev` negative, 14 months old.
-  Should move the right way. If it does not, the decay or the sign convention
-  in the builder is wrong, not the idea.
-- fed2019 QLD (-5.83, 30 seats): state polls said Labor 49-55, actual 41.6;
-  the 2017 Queensland election (Labor +1) is 18 months old and mildly
-  positive. Both predictors point the wrong way. **This pair must get worse
-  under the arm**; the do-no-harm bound is what stops it from being fatal.
-- fed2010 TAS (+7.66): the March 2010 state election was 5 months before,
-  Labor -12 there while federal Labor held; a negative state term would push
-  Bass/Braddon the WRONG way. This is the case that argues the state-election
-  term should be shrunk hard. If the arm passes only because of this cell
-  going right by accident, the shuffle control will not show it -- so also
-  report the arm with TAS excluded.
+- fed2022 WA (+7.8 miss, prior +17.7 at 14 months): must move Labor up in
+  all 15 seats by 1.5 to 3 points. If it moves less than 1, the decay or the
+  ridge penalty has crushed it; if more than 4, the fit is chasing this one
+  cell and the leave-target-out step is broken.
+- fed2025 WA (-3.0, prior -18.5 at 2 months): must move Labor DOWN. This is
+  the pair that currently gets no correction at all; it is also the pair
+  where our ledger lead over AEF is largest, so the do-no-harm bound on
+  fed2025 matters most here.
+- fed2025 QLD (+1.6, prior -7.0 at 6 months) and fed2013 WA (+2.2, prior
+  -2.7): both move the WRONG way by about a point. They are the cost, and
+  they are in the table before the run so they cannot be explained away
+  after it.
+- fed2022 TAS, fed2010 TAS, fed2025 NT: untouched by construction; report
+  them unchanged as the proof that the mechanism did not leak into states it
+  has no data for.
 
 ## Not run yet
 
