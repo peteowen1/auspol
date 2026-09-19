@@ -23,6 +23,8 @@
 #      forecasts-seats.csv, and the pooled scoreboard
 #   8. build_aef_comparison.R + build_aef7_tcp_actual.R + build_aef7_ledger_data.R
 #      -> ledger JSON
+#   9. (AUSPOL_PUBLISH=1) promote_rebuild.R + publish_shipped_release.R -> the
+#      shipped-models release the daily forecast job downloads
 #
 # AUSPOL_N_SIMS defaults to 20000 -- the DECIDING run, because stage 3 trains
 # on base_pred, which is a simulation mean, and pool_sharedetail.R refuses
@@ -95,6 +97,17 @@ stage "7-pool-and-forecasts";  Rscript scripts/pool_backtests.R        > "$LOG/s
 stage "8-ledger";              Rscript scripts/build_aef_comparison.R  > "$LOG/s8_comp.log" 2>&1   # aef-comparison-full.csv, the ledger's seat-probability input -- was missing from the first draft, so the ledger's log loss came out identical to the run before (2026-09-18)
                                Rscript scripts/build_aef7_tcp_actual.R > "$LOG/s8_tcp.log" 2>&1
                                Rscript scripts/build_aef7_ledger_data.R > "$LOG/s8_ledger.log" 2>&1; done_stage "8-ledger"
+
+# 9. PROMOTE AND PUBLISH (AUSPOL_PUBLISH=1). The daily forecast workflow downloads
+# the `shipped-models` release; on 2026-09-19 it was found eight days behind the
+# code. A rebuild that ships is not shipped until the release carries it, so the
+# driver does it, gated so an exploratory run cannot publish by accident.
+if [ "${AUSPOL_PUBLISH:-0}" = "1" ] && [ "$AUSPOL_N_SIMS" -ge 20000 ]; then
+  stage "9-promote-publish";  Rscript scripts/promote_rebuild.R > "$LOG/s9_promote.log" 2>&1 && Rscript scripts/publish_shipped_release.R > "$LOG/s9_publish.log" 2>&1; done_stage "9-promote-publish"
+  grep -h "^PA5\|^PR4  uploaded\|^PR1!" "$LOG/s9_promote.log" "$LOG/s9_publish.log" || true
+elif [ "${AUSPOL_PUBLISH:-0}" = "1" ]; then
+  echo "!! AUSPOL_PUBLISH=1 ignored: exploratory sims (AUSPOL_N_SIMS=$AUSPOL_N_SIMS) must not ship"
+fi
 
 echo; echo "=== stage split (seconds) ==="
 total=0; for k in "${!TT[@]}"; do total=$(( total + TT[$k] )); done

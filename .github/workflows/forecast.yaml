@@ -163,6 +163,15 @@ jobs:
             gh release download shipped-models -p "$f" -D output --clobber
           done
           ls -l output/xgb-*
+          # STALENESS: the models must not lag the code. 2026-09-19: they were
+          # eight days and ~40 commits behind main and nobody noticed. Warn
+          # loudly past 3 days; fail past 14 (a rebuild takes 25 minutes).
+          gh release download shipped-models -p MANIFEST.json -D output --clobber
+          promoted=$(python3 -c "import json;print(json.load(open('output/MANIFEST.json'))['promoted_at'][:10])")
+          age=$(( ( $(date +%s) - $(date -d "$promoted" +%s) ) / 86400 ))
+          echo "shipped models promoted $promoted ($age days ago)"
+          if [ "$age" -gt 14 ]; then echo "::error::shipped models are $age days old -- run scripts/rebuild_forecasts.sh with AUSPOL_PUBLISH=1"; exit 1; fi
+          if [ "$age" -gt 3 ]; then echo "::warning::shipped models are $age days old"; fi
           # A truncated or absent download must fail HERE, loudly, rather than
           # surfacing as a fallback line in a log nobody reads. This repo has
           # already lost a seat to a 65536-byte partial download that passed a
