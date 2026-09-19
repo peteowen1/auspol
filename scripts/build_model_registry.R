@@ -142,6 +142,38 @@ for (sw in names(COMMENT_ONLY)) {
 # row; update this when a gap is fixed or a new one is found by rerunning
 # this script and diffing its output.
 CLASSIFY <- list(
+  AUSPOL_BYELECTION_MP = paste(
+    "SHIPPED 2026-09-19 (plans/prereg-byelection-mp-2026-09-19.md). Read inside R/candidate_returns.R at the top",
+    "of candidate_returns(): a by-election winner (external/reference/byelections/byelection-winners.csv) is the",
+    "sitting member for every identity test. Reaches all six harnesses and fit_seats_full.R through that function."),
+  AUSPOL_MINOR_DEFECT_CONSERVE = paste(
+    "SHIPPED 2026-09-19 (plans/prereg-minor-defector-conserve-2026-09-19.md). Read inside personal_prior_vote()",
+    "in R/candidate_returns.R: a minor-to-minor defector's origin class keeps a fitted share (~0.38) of the vote.",
+    "Reaches every harness and fit_seats_full.R through that function, not by a direct harness read."),
+  AUSPOL_SALIENCE_PCTILE_NZ = paste(
+    "SHIPPED 2026-09-12 (b7b5839): R/salience_surge.R ranks the salience percentile among NON-ZERO values only",
+    "(docs/reviews/salience-percentile-fix-2026-09-12.md). Read in R/, reaches every caller of the surge model."),
+  AUSPOL_XGB_SEATPREV_NAFILL = paste(
+    "SHIPPED 2026-09-13/18: seat_outperf and seat_prev_pcv NA cells are filled with 0 at feature-build time",
+    "(scripts/fit_xgb_primary_v6.R), so the switch is baked into the trained model artifact; no harness reads it."),
+  AUSPOL_DEFECT_CONSERVE = paste(
+    "SHIPPED (default 1) and read inside R/candidate_returns.R's personal_prior_vote(), not by any harness",
+    "directly, so the registry's grep sees it nowhere: a major-party defector's unclaimed vote stays with the",
+    "origin class instead of vanishing. Reaches every harness and fit_seats_full.R through that one function.",
+    "scripts/prereg_major_defector_verify.R proves =0 is byte-identical to the pre-switch behaviour."),
+  AUSPOL_FLOW_ASAT = paste(
+    "SHIPPED 2026-09-18 and read inside R/xgb_flow_override.R (.flow_asat_model()), never by a harness",
+    "directly: the per-election flow model is the as-at file output/xgb-flows-v1-asat-<election>.model when",
+    "one exists, the all-data model for a future election (vic2026), and skipped only if a LATER election's",
+    "as-at model exists. Reaches all six harnesses and fit_seats_full.R through that function."),
+  AUSPOL_HISTORIC_ELECTED_BACKFILL = paste(
+    "SHIPPED 2026-09-15 on judgement (costs 0.0141 pooled RMSE in the backtest, but vic2026 is never a",
+    "training pair so the 62 returning members can only move the live forecast, which the backtest cannot",
+    "see). Read ONCE at build time by scripts/build_candidacies.R and baked into output/candidacies.csv, so no harness reads it at runtime; reversible by rebuilding candidacies with the flag off."),
+  AUSPOL_NB_TARGET = paste(
+    "NOT A MODEL SWITCH: an argument to scripts/build_notional_baselines.R (which federal election year to build",
+    "notional post-redistribution baselines for). Reads NO everywhere by construction; listed in published_flags.R",
+    "only as documentation of how to rebuild the notional table."),
   AUSPOL_HONOUR_DEPARTED = paste(
     "SHIPPED 2026-09-18 (flipped 0->1). A departed non-major class leader's vote base decays toward a",
     "measured 0.38 retention rate, gated on prior_leader_returns==FALSE (not candidate_returns()'s `same`,",
