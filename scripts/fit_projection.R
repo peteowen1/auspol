@@ -30,7 +30,11 @@ suppressMessages(devtools::load_all(quiet = TRUE))
 suppressMessages(library(data.table))
 
 dir.create("output", showWarnings = FALSE)
-HORIZONS <- c(30, 90, 180, 365, 730)
+# 1, 7 and 14 added 2026-09-20: without them every horizon under 30 days took the
+# 30-day weight (trend 0.60), so the day-before backtests mixed a campaign-long
+# trend 40/60 with a fundamentals prior that had seen no poll at all.
+# docs/plans/prereg-projection-mix-short-horizons-2026-09-20.md
+HORIZONS <- c(1, 7, 14, 30, 90, 180, 365, 730)
 
 # ---- Stage 1: fundamentals ----
 fdat <- build_fundamentals_data()

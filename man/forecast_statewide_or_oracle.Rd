@@ -14,7 +14,8 @@ forecast_statewide_or_oracle(
   code = "BX0",
   n_sims = 20000L,
   seed = 42L,
-  mode = Sys.getenv("AUSPOL_FORECAST_MODE", "0")
+  mode = Sys.getenv("AUSPOL_FORECAST_MODE", "0"),
+  on_fail = c("stop", "skip")
 )
 }
 \arguments{
@@ -26,6 +27,10 @@ forecast_statewide_or_oracle(
 \item{code}{The harness's log prefix (e.g. \code{"BV0"}).}
 
 \item{mode}{\code{Sys.getenv("AUSPOL_FORECAST_MODE")} by default.}
+
+\item{on_fail}{\code{"stop"} (default) or \code{"skip"}: what to do when no trend can be
+fitted. \code{"skip"} prints a loud line and returns \code{NULL} so a multi-pair
+harness can drop the pair; it never falls back to the oracle.}
 }
 \value{
 Named numeric on \code{names(st_b)}, with attribute \code{oracle} (the

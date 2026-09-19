@@ -182,6 +182,9 @@ fundamentals_loo_table <- function() {
 #' @param st_b Named numeric, the oracle statewide.
 #' @param code The harness's log prefix (e.g. `"BV0"`).
 #' @param mode `Sys.getenv("AUSPOL_FORECAST_MODE")` by default.
+#' @param on_fail `"stop"` (default) or `"skip"`: what to do when no trend can be
+#'   fitted. `"skip"` prints a loud line and returns `NULL` so a multi-pair
+#'   harness can drop the pair; it never falls back to the oracle.
 #' @return Named numeric on `names(st_b)`, with attribute `oracle` (the
 #'   replaced values) when the forecast was used.
 #' @export
