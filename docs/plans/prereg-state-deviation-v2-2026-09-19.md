@@ -258,3 +258,12 @@ state elections (seven of the twelve worst state-years) or a second WA-sized
 case. The fed2025 builder fix (state-years no longer dropped after 2022)
 stays, because it is a data correctness fix that the shipped mode does not
 read yet but will the day 2025 state polls appear in the anchor.
+
+**Disclosed after the run (review gate, 19:00):** the feature builder still
+zeroed `state_elec_dev` at 24 months, so the arm as run was a 24-month cliff
+with decay inside it, not the smooth decay registered above. The cells that
+differ are the stale ones (fed2025 NSW at 25 months, SA at 37; fed2022 NSW
+38, VIC 42; fed2019 WA 26; fed2016 WA 40), each of which would have received
+a term of under 0.4 x swing x 0.35. The refusal rests on WA 2022 (14 months)
+and WA 2025 (2 months), both inside the window and unaffected, so the run
+is not repeated. The builder now emits the raw swing at any gap.

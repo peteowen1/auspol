@@ -92,7 +92,11 @@ A <- merge(A, SE[, .(year, state = tolower(state), state_swing, months_gap)],
            by = c("year", "state"), all = TRUE)
 cat(sprintf("SD3  state-years with predictors but no actual result yet: %s\n",
             paste(unique(A[!is.finite(actual_dev), paste0(year, "-", state)]), collapse = " ")))
-A[!is.finite(months_gap) | months_gap >= 24, state_swing := NA_real_]
+# The raw swing is kept at ANY gap and the gap is emitted beside it: the
+# consumer decides the decay (v2 uses exp(-gap/24)). Until 2026-09-19 this
+# line zeroed the swing at 24 months, which made v2's decay dead code past
+# that point (review gate). Mode 1 never reads this column.
+A[!is.finite(months_gap), state_swing := NA_real_]
 
 # RAW QUANTITIES, NOT PRE-FITTED PREDICTIONS. Pete's point, and he is right.
 #
