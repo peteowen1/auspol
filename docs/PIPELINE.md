@@ -63,6 +63,26 @@ vic score all their pairs in one run.
 deciding run is the default 20,000. Measured 2026-09-18 at 5,000 sims:
 stages 2 to 5 took 10 minutes, stage 6 about 5, stages 7 and 8 under 2.
 
+## C0. How to test a theory (the fast loop, 2026-09-20)
+
+1. **Smoke, minutes**: `bash scripts/smoke_pair.sh <harness> [year] [AUSPOL_X=1 ...]`
+   runs one harness with the xgb layer off at 500 sims (the base_pred point
+   estimate is deterministic, so sims do not matter) and prints, against the
+   last rebuild's stage-1 file, which cells moved, each class's RMSE before
+   and after, and the biggest moves. If the named seats do not move the
+   right way here, there is nothing to rebuild.
+2. **Decide, ~40 minutes awake**: `AUSPOL_PUBLISH=1 bash scripts/rebuild_forecasts.sh`
+   (stage 1 now runs at 2,000 sims, `AUSPOL_STAGE1_SIMS`; only stage 6 needs
+   20,000). Pre-register the criterion first. `AUSPOL_REBUILD_FROM=<n>`
+   resumes after a failed stage; `AUSPOL_SKIP_PAIRS` names pairs no harness
+   can score.
+3. **Ledger**: stage 8 writes `output/aef7-ledger.html`; stage 9 publishes
+   it with the models. The per-seat inputs for a worst-seat pass are
+   `output/aef7-ledger-data.json` (660 rows) and the stage-6 sharedetail.
+
+Not yet cached: the as-at primary models (stage 4, ~4 min) retrain every
+run; the flow models (4b) skip when their config hash is unchanged.
+
 ## C. Where the switches live
 
 `scripts/published_flags.R` is the only list of what ships. The six

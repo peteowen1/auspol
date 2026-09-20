@@ -94,8 +94,13 @@ run6() {  # $1 = XGB_PRIMARY value, $2 = log tag -- all 23 pairs across the six 
   fi
 }
 
-if at_least 1; then stage "1-harnesses-base_pred"; run6 0 s1; done_stage "1-harnesses-base_pred"; fi
-if at_least 2; then stage "2-pool-sharedetail";    Rscript scripts/pool_sharedetail.R      > "$LOG/s2_pool.log" 2>&1; done_stage "2-pool-sharedetail"; fi
+# STAGE 1 AT REDUCED SIMS. The sharedetail point estimate (base_pred) is
+# deterministic -- seat_share_rmse(shares, fb) on the pre-simulation matrix --
+# so 20,000 draws buy nothing here; the draws matter at stage 6. 2,000 keeps
+# the totals/allprobs files it also writes sane and cuts stage 1 by ~80%.
+# pool_sharedetail's sims floor follows it for this stage only.
+if at_least 1; then stage "1-harnesses-base_pred"; AUSPOL_N_SIMS="${AUSPOL_STAGE1_SIMS:-2000}" run6 0 s1; done_stage "1-harnesses-base_pred"; fi
+if at_least 2; then stage "2-pool-sharedetail";    AUSPOL_POOL_MIN_SIMS="${AUSPOL_STAGE1_SIMS:-2000}" Rscript scripts/pool_sharedetail.R      > "$LOG/s2_pool.log" 2>&1; done_stage "2-pool-sharedetail"; fi
 if at_least 3; then stage "3-features";            Rscript scripts/fit_xgb_primary_v6.R    > "$LOG/s3_v6.log"   2>&1; done_stage "3-features"; fi
 if at_least 4; then stage "4-asat-models";         Rscript scripts/fit_xgb_primary_asat.R  > "$LOG/s4_asat.log" 2>&1; done_stage "4-asat-models"; fi
 if at_least 4; then stage "4b-asat-flow-models";   Rscript scripts/fit_xgb_flows_asat.R    > "$LOG/s4b_flows.log" 2>&1; done_stage "4b-asat-flow-models"; fi

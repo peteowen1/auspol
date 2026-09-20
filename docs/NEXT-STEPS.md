@@ -125,6 +125,15 @@ aggregation, then the VEC feed parser.
 
 ## Harness and pipeline hygiene
 
+- **DONE 10:40, Pete's ask ("optimise the test-a-theory pipeline")**: the fast
+  loop is `scripts/smoke_pair.sh` + `smoke_diff.R` (one harness, xgb off, 500
+  sims, diff against the last rebuild's stage-1 file: ~4 min); the rebuild's
+  stage 1 runs at 2,000 sims (base_pred is deterministic), ~10 min saved per
+  rebuild; `PIPELINE.md` C0. First use: the screen-silence fix on sa2026,
+  all-cell RMSE 4.93 -> 4.20 in four minutes. Still to cache: the as-at
+  primary models (stage 4 retrains 19 models every run; a config hash like
+  the flow models' would skip them when inputs are unchanged).
+
 - **DONE 22:50**: `AUSPOL_FORECAST_MODE` wired into nsw/qld/vic/wa through one
   shared block (`forecast_statewide_or_oracle()`), proven on all four at 2,000
   sims (forecast statewide error 1.3-2.4 pts per class; wa2021 has no
