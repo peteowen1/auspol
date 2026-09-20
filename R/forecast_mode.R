@@ -179,6 +179,13 @@ statewide_draws_as_at <- function(region, year, as_at, election_date, parties,
   if (is.finite(fp_extra_sd) && fp_extra_sd > 0) {
     sd <- sqrt(sd^2 + fp_extra_sd^2)
   }
+  # A CLASS THE POLLS DO NOT TRACK DRAWS EXACTLY ZERO. It has mean 0 here and
+  # is refilled downstream from the Other bucket (forecast_statewide_for()),
+  # so noise around zero, floored at 0.1 and renormalised, is phantom vote:
+  # N(0, 2.85) floored averages 1.1 points PER CLASS, and nsw2023's three
+  # unpolled classes took 3.4 points off the polled ones (Labor -1.2) before
+  # any anchoring. docs/plans/prereg-phantom-minor-vote-2026-09-20.md.
+  sd[folded] <- 0
 
   if (!is.null(seed)) set.seed(seed)
   K <- length(parties)
