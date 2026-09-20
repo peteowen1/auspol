@@ -78,8 +78,10 @@ plan, **Pete to send**; To Do reminder set).
   19.7 log loss). Wave term blocked (`reviews/wave-term-blocked-2026-09-07.md`).
 - **Final-two flow for excluded-party cells; calibration by band** (roadmap
   items 3 and 5, unstarted).
-- Smaller: WA breaks out NAT and nothing merges it into LNP's trend (OTH
-  bias +1.71); intra-Coalition seats have no TCP class (2 of 660, AEF has the
+- WA Nationals: FOUND 14:00, the trend's `NAT` series fell into the OTH
+  remainder (Coalition ~6 low, Other ~6 high, every WA backtest). Fixed in
+  `statewide_draws_as_at()` (`plans/prereg-poll-series-class-fold-2026-09-20.md`),
+  WA smoke running. Smaller: intra-Coalition seats have no TCP class (2 of 660, AEF has the
   same limit; zero vic2026 seats affected today); Centre Alliance/SA-BEST
   read as OTH not IND (Pete's call); Orange/Wagga `own_prev_pcv` NA for
   by-election winners (needs a feature, fallback fill refused); the statewide
@@ -95,14 +97,9 @@ stage 1 at 2,000 sims, as-at model cache, `tidy_output.R`); bare output paths
 routed through `out_path()`.
 
 Still open:
-- Fresh clone needs `scripts/fit_mp_slope.R` before `AUSPOL_MP_SLOPE=1`
-  works (deliberate: no silent fallback). Add to `PIPELINE.md` setup.
 - Diagnosed, not built: widening simulated variance for the majors' floor
   seats (`sd_override` into the WA harness); WA personal-vote transfer helps
   Pilbara and hurts WA overall (one seed).
-- base_pred has a slight simulation dependence somewhere beyond the statewide
-  level (WA cells moved 0.08-0.11 between 2,000 and 20,000 sims after the
-  level was pinned); find it or accept it.
 
 ## Data and infra
 

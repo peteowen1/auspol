@@ -150,6 +150,24 @@ statewide_draws_as_at <- function(region, year, as_at, election_date, parties,
     band <- (r$hi95[1] - r$lo95[1]) / (2 * 1.96)
     if (is.finite(band) && band > 0) sd[[p]] <- band
   }
+  # A FITTED SERIES WHOSE PARTY IS NOT A SIMULATION CLASS MUST LAND IN ITS
+  # CLASS, or it vanishes into the OTH remainder below. WA polls carry the
+  # Nationals as their own column (`NAT FP`) while the seat model's class is
+  # LNP (classify_party folds them): until 2026-09-20 the WA statewide
+  # forecast dropped NAT's ~6 points from LNP and handed them to OTH (wa2017
+  # forecast LNP 35.4 / OTH 16.3 against actual 36.6 / ~5). Folded here by
+  # class, with the bands combined in quadrature.
+  extra <- setdiff(fp_parties, parties)
+  for (q in extra) {
+    cls <- tryCatch(classify_party(name = q, code = q), error = function(e) NA_character_)
+    if (is.na(cls) || !cls %in% parties || cls == "OTH") next
+    r <- last[last$party == q, ]
+    if (!nrow(r) || !is.finite(r$mean[1])) next
+    mu[[cls]] <- mu[[cls]] + r$mean[1]
+    band <- (r$hi95[1] - r$lo95[1]) / (2 * 1.96)
+    if (is.finite(band) && band > 0) sd[[cls]] <- sqrt(sd[[cls]]^2 + band^2)
+    cat(sprintf("FM1  %s%d: fitted series %s (%.1f) folded into class %s\n", region, year, q, r$mean[1], cls))
+  }
   if ("OTH" %in% parties) {
     # everything unfitted lands here, so its mean absorbs the remainder
     mu[["OTH"]] <- max(0.1, 100 - sum(mu[setdiff(parties, "OTH")]))
