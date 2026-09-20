@@ -267,3 +267,17 @@ differ are the stale ones (fed2025 NSW at 25 months, SA at 37; fed2022 NSW
 a term of under 0.4 x swing x 0.35. The refusal rests on WA 2022 (14 months)
 and WA 2025 (2 months), both inside the window and unaffected, so the run
 is not repeated. The builder now emits the raw swing at any gap.
+
+## Tasmania added, smoke only (2026-09-20 13:30)
+
+The statewide Labor primaries for six Tasmanian elections (hand table) now
+give `state_elec_dev` for TAS (fed2010 -12.4 at 5 months, fed2019 +5.3,
+fed2022 -4.4, fed2025 +0.8). Smoke on fed2022 alone (`smoke_pair.sh fed
+AUSPOL_STATE_DEV=2 AUSPOL_FED_PAIRS=2022`, base_pred only): **worse**, all
+cells RMSE 3.814 -> 3.888, Labor 5.06 -> 5.30, Coalition 3.63 -> 3.82. The
+extra state-years flipped the state-election coefficient's sign for the
+Coalition: every WA Coalition cell moved UP by 1.7-2.1 points against a
+state that swung hard to Labor. The fed-dev correlation over all 24
+state-years is +0.22 (t = 1.0). Not shipped; the mechanism stays off. The
+statewide-forecast walk with Pete is the right next step, not more
+predictors on this one.

@@ -116,8 +116,9 @@ and the VEC email.
 Still open:
 - VEC feed: 2026 configuration not yet published; **Pete to send the email**
   drafted in the booth-model plan.
-- Read the Tasmanian table in `build_state_deviation_features.R` so
-  `state_elec_dev` exists for TAS, then re-run the state-deviation v2 plan.
+- DONE 13:30: Tasmania is in the state-swing prior. Smoke of the v2 arm with
+  it: worse (fed2022 RMSE 3.81 -> 3.89, the Coalition coefficient flipped
+  sign). Off; recorded in the v2 plan.
 - Federal results as a correlated signal for state seat lean: needs
   seat-boundary matching (`external/reference/boundaries/` has CED 2016).
 - GDELT parked (needs a GCP project); Census 2006/2001 have no bulk pack.

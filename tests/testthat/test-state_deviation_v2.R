@@ -53,11 +53,14 @@ test_that("state_deviation_apply mode 2 leaves a seat with neither source untouc
   f_oof <- file.path(td, "oof.csv"); f_dev <- file.path(td, "dev.csv")
   data.table::fwrite(oof, f_oof); data.table::fwrite(dev, f_dev)
   sh <- matrix(c(30, 30, 30, 40, 40, 40, 30, 30, 30), 3, dimnames = list(c("A", "B", "C"), c("ALP", "LNP", "GRN")))
-  out <- withr::with_dir(td, {
-    # state_deviation_b2 is called with dev = f_dev but oof at its default path: put it there
-    dir.create("output"); file.copy(f_oof, "output/xgb-primary-v6-oof-predictions.csv")
-    state_deviation_apply(sh, "fed2022", classes = "ALP", dev = f_dev, mode = 2)
-  })
+  # state_deviation_b2 reads the OOF file at out_path()'s default, which resolves
+  # through pkg_root(): point the root at the temp dir so the test reads ITS
+  # file and never the real output/ (on CI there is none; locally the real one
+  # made this test pass for the wrong reason until 2026-09-20).
+  withr::local_options(list(auspol.root = td))
+  file.create(file.path(td, "DESCRIPTION"))   # pkg_root() only honours a root that carries one
+  dir.create(file.path(td, "output")); file.copy(f_oof, file.path(td, "output", "xgb-primary-v6-oof-predictions.csv"))
+  out <- state_deviation_apply(sh, "fed2022", classes = "ALP", dev = f_dev, mode = 2)
   expect_equal(unname(out["C", ]), unname(sh["C", ]))          # tas: no poll, no fresh election
   expect_gt(out["A", "ALP"], sh["A", "ALP"])                   # wa: both terms positive
   expect_equal(rowSums(out), rowSums(sh))

@@ -52,7 +52,7 @@ test_that("salience_permit_for returns NULL when the file has no such election",
   # output/salience-v6.csv, which case 21ddafb onward this test suite must not
   # clobber.
   td <- withr::local_tempdir()
-  withr::local_dir(td)
+  withr::local_dir(td); local_output_root(td)
   dir.create("output")
   data.table::fwrite(data.table::data.table(election = "x", seat = "A", party = "IND",
     jump = 1, prev_party = 0), "output/salience-v6.csv")
@@ -61,7 +61,7 @@ test_that("salience_permit_for returns NULL when the file has no such election",
 
 test_that("salience_permit_for finds a matching election", {
   td <- withr::local_tempdir()
-  withr::local_dir(td)
+  withr::local_dir(td); local_output_root(td)
   dir.create("output")
   data.table::fwrite(data.table::data.table(election = "x", seat = "A", party = "IND",
     jump = 1, prev_party = 0), "output/salience-v6.csv")
@@ -80,7 +80,7 @@ test_that("returning is matched PER CANDIDATE, not broadcast to the whole class"
   # it. A third, unrelated firing candidate lifts registration above the 10%
   # floor so the screen is not inert and the distinction is observable.
   td <- withr::local_tempdir()
-  withr::local_dir(td)
+  withr::local_dir(td); local_output_root(td)
   dir.create("output")
   data.table::fwrite(data.table::data.table(
     election = "x0", seat = "A", party = "IND",
@@ -106,7 +106,7 @@ test_that("a candidacies row with a missing seat name does not poison other rows
   # `governed` (and therefore `permit`) for candidates with no relation to the
   # NA row at all. Regression test for that specific failure.
   td <- withr::local_tempdir()
-  withr::local_dir(td)
+  withr::local_dir(td); local_output_root(td)
   dir.create("output")
   data.table::fwrite(data.table::data.table(
     election = "x0", seat = c(NA_character_, "B"), party = c("IND", "IND"),
@@ -130,7 +130,7 @@ test_that("a renamed seat does not turn a landslide incumbent into a fresh emerg
   # gets" up alongside genuine emergences in the 25-44% range). Regression
   # test using the exact real-world case, via the SEAT_RENAMES lookup.
   td <- withr::local_tempdir()
-  withr::local_dir(td)
+  withr::local_dir(td); local_output_root(td)
   dir.create("output")
   data.table::fwrite(data.table::data.table(
     election = "x0", seat = "Denison", party = "IND",
@@ -156,7 +156,7 @@ test_that("a new major-party candidate in their own party's safe seat is not gov
   # introduced by the widening: a week-old silent regression nothing had
   # re-validated against since the majors fetch landed.
   td <- withr::local_tempdir()
-  withr::local_dir(td)
+  withr::local_dir(td); local_output_root(td)
   dir.create("output")
   data.table::fwrite(data.table::data.table(
     election = "x0", seat = "Safeseat", party = "LNP",
@@ -183,7 +183,7 @@ test_that("a returning member is excluded even when neither election crosses a s
   # OLD class-level prev_party threshold excluded him anyway, by accident,
   # for an unrelated reason.
   td <- withr::local_tempdir()
-  withr::local_dir(td)
+  withr::local_dir(td); local_output_root(td)
   dir.create("output")
   data.table::fwrite(data.table::data.table(
     election = "x0", seat = "Denison", party = "IND",
@@ -207,7 +207,7 @@ test_that("prev_party for IND is this candidate's own prior vote, not another IN
   # excluded from the governed population: her recorded prev_party was
   # Kerryn Phelps' 32.4% from 2019, not her own (genuinely 0).
   td <- withr::local_tempdir()
-  withr::local_dir(td)
+  withr::local_dir(td); local_output_root(td)
   dir.create("output")
   data.table::fwrite(data.table::data.table(
     election = "x0", seat = "Someseat", party = "IND",
