@@ -158,6 +158,7 @@ statewide_draws_as_at <- function(region, year, as_at, election_date, parties,
   # forecast LNP 35.4 / OTH 16.3 against actual 36.6 / ~5). Folded here by
   # class, with the bands combined in quadrature.
   extra <- setdiff(fp_parties, parties)
+  folded_into <- list()   # class -> named shares folded in, for the anchoring's implied two-party
   for (q in extra) {
     cls <- tryCatch(classify_party(name = q, code = q), error = function(e) NA_character_)
     if (is.na(cls) || !cls %in% parties || cls == "OTH") next
@@ -166,6 +167,7 @@ statewide_draws_as_at <- function(region, year, as_at, election_date, parties,
     mu[[cls]] <- mu[[cls]] + r$mean[1]
     band <- (r$hi95[1] - r$lo95[1]) / (2 * 1.96)
     if (is.finite(band) && band > 0) sd[[cls]] <- sqrt(sd[[cls]]^2 + band^2)
+    folded_into[[cls]] <- c(folded_into[[cls]], stats::setNames(r$mean[1], q))
     cat(sprintf("FM1  %s%d: fitted series %s (%.1f) folded into class %s\n", region, year, q, r$mean[1], cls))
   }
   if ("OTH" %in% parties) {
@@ -212,6 +214,13 @@ statewide_draws_as_at <- function(region, year, as_at, election_date, parties,
     implied <- draws[, "ALP"] +
       rowSums(vapply(minors, function(p) draws[, p] * flow_of(p),
                      numeric(n_sims)))
+    # A series folded into LNP (WA's NAT) still sends its own flow to Labor;
+    # without this its preferences vanished from `implied` and the anchoring
+    # over-corrected Labor upward (wa2001 smoke, 2026-09-20).
+    for (cls in names(folded_into)) if (cls == "LNP") for (q in names(folded_into[[cls]])) {
+      share_of_col <- if (isTRUE(mu[[cls]] > 0)) folded_into[[cls]][[q]] / mu[[cls]] else 0
+      implied <- implied + draws[, cls] * share_of_col * flow_of(q)
+    }
     target <- stats::rnorm(n_sims, tpp_target$mean, tpp_target$sd)
     d <- target - implied
     draws[, "ALP"] <- pmax(0.1, draws[, "ALP"] + d)

@@ -50,6 +50,9 @@ plan, **Pete to send**; To Do reminder set).
 ## Model, open (triaged 2026-09-19; nothing here blocks Victoria)
 
 - **(0) The statewide forecast as at the day before** now decides the ledger.
+  Audited per pair 2026-09-20 (`reviews/statewide-forecast-audit-2026-09-20.md`,
+  `scripts/audit_statewide_forecast.R`): worst wa2001, wa2017, fed2019,
+  wa2005, nsw2023; three walk-through questions written for Pete.
   Per-class error 1.3-3.9 points; WA 2017 (Labor 31.7 forecast, 42.2 actual)
   and nsw2023 (Labor 31.3 vs 37.0) are the worst. Every seat inherits it, so
   a point here is worth more than any seat mechanism. Start by walking the
