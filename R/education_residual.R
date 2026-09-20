@@ -84,8 +84,8 @@
 #' @export
 education_residual_b <- function(cls, exclude_pair,
                                  feature = "yr12_pct",
-                                 oof = "output/xgb-primary-v6-oof-predictions.csv",
-                                 census = "output/census-features.csv",
+                                 oof = out_path("xgb-primary-v6-oof-predictions.csv"),
+                                 census = out_path("census-features.csv"),
                                  shuffle = 0L) {
   if (!file.exists(oof) || !file.exists(census)) return(NA_real_)
   O <- data.table::fread(oof, showProgress = FALSE)
@@ -129,7 +129,7 @@ education_residual_b <- function(cls, exclude_pair,
 education_residual_apply <- function(shares, pair,
                                      classes = c("ONP", "OTH_RIGHT", "GRN"),
                                      feature = "yr12_pct",
-                                     census = "output/census-features.csv",
+                                     census = out_path("census-features.csv"),
                                      shuffle = 0L) {
   if (!file.exists(census)) {
     cat("ER1! census features missing; education residual correction SKIPPED\n")

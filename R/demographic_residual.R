@@ -43,8 +43,8 @@
 demographic_residual_fit <- function(cls, exclude_pair,
                                      features = DEMO_FEATURES,
                                      alphas = c(0, 0.25, 0.5, 0.75, 1),
-                                     oof = "output/xgb-primary-v6-oof-predictions.csv",
-                                     census = "output/census-features.csv",
+                                     oof = out_path("xgb-primary-v6-oof-predictions.csv"),
+                                     census = out_path("census-features.csv"),
                                      shuffle = 0L) {
   if (!requireNamespace("glmnet", quietly = TRUE)) {
     cat("DR0! glmnet not installed; demographic correction unavailable\n")
@@ -165,7 +165,7 @@ DEMO_FEATURES <- c("yr12_pct", "born_aus_pct", "indig_pct", "over55_pct",
 demographic_residual_apply <- function(shares, pair,
                                        classes = c("ONP", "OTH_RIGHT", "GRN"),
                                        features = DEMO_FEATURES,
-                                       census = "output/census-features.csv",
+                                       census = out_path("census-features.csv"),
                                        shuffle = 0L) {
   if (!file.exists(census)) {
     cat("DR1! census features missing; demographic correction SKIPPED\n")

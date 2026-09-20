@@ -13,7 +13,7 @@
 # table applies -- the same failure-open path as a missing model today.
 .flow_asat_model <- function(target_election) {
   if (!identical(Sys.getenv("AUSPOL_FLOW_ASAT", "0"), "1")) return(NULL)
-  f <- sprintf("output/xgb-flows-v1-asat-%s.model", target_election)
+  f <- out_path(sprintf("xgb-flows-v1-asat-%s.model", target_election))
   if (file.exists(f)) {
     cat(sprintf("XF9  as-at flow model for %s: %s\n", target_election, f))
     return(f)
@@ -71,8 +71,8 @@
 xgb_flow_conditional_for <- function(target_election, prev_election, region, min_events = 3L) {
   # Same leave-one-election-out rule as the per-seat version below -- see its
   # comment for why the all-data model is a leaked backtest.
-  loo_f   <- sprintf("output/xgb-flows-v1%s-loo-%s.model", .flow_model_tag(), target_election)
-  model_f <- if (file.exists(loo_f)) loo_f else "output/xgb-flows-v1-final.model"
+  loo_f   <- out_path(sprintf("xgb-flows-v1%s-loo-%s.model", .flow_model_tag(), target_election))
+  model_f <- if (file.exists(loo_f)) loo_f else out_path("xgb-flows-v1-final.model")
   # AS-AT (AUSPOL_FLOW_ASAT=1, shipped 2026-09-18): the leave-one-election-out
   # model still trains on LATER elections; scripts/fit_xgb_flows_asat.R
   # writes one model per election from earlier elections only. The earliest
@@ -82,13 +82,13 @@ xgb_flow_conditional_for <- function(target_election, prev_election, region, min
   if (is.null(.asat) && !identical(model_f, loo_f))
     cat(sprintf("XF9! %s not found -- falling back to the ALL-DATA model, which SAW %s in training. This arm is LEAKED; run scripts/fit_xgb_flows_loo.R.\n",
                 loo_f, target_election))
-  cols_f  <- "output/xgb-flows-v1-final-cols.json"
+  cols_f  <- out_path("xgb-flows-v1-final-cols.json")
   if (identical(model_f, "__none__")) return(NULL)
   if (!file.exists(model_f) || !file.exists(cols_f)) {
     cat(sprintf("XF9! %s / %s missing -- run scripts/fit_xgb_flows_v1.R; AUSPOL_XGB_FLOWS ignored\n", model_f, cols_f))
     return(NULL)
   }
-  feat_f <- "output/xgb-flows-v1-features.csv"
+  feat_f <- out_path("xgb-flows-v1-features.csv")
   if (!file.exists(feat_f)) {
     cat(sprintf("XF9! %s missing -- run scripts/fit_xgb_flows_v1.R; AUSPOL_XGB_FLOWS ignored\n", feat_f))
     return(NULL)
@@ -120,7 +120,7 @@ xgb_flow_conditional_for <- function(target_election, prev_election, region, min
 
   # Statewide-average primary shares for the TARGET election, as a
   # (deliberately not per-seat) proxy for to_primary/from_primary.
-  cf <- "output/candidacies.csv"
+  cf <- out_path("candidacies.csv")
   state_share <- stats::setNames(rep(0, length(CLASSES)), CLASSES)
   if (file.exists(cf)) {
     C <- data.table::fread(cf, showProgress = FALSE)
@@ -199,10 +199,10 @@ xgb_flow_conditional_override_for <- function(shares, target_election, prev_elec
   # scripts/fit_xgb_flows_loo.R writes one model per held-out election; prefer
   # it, and say loudly when falling back, because a silent fallback is a
   # leaked backtest that reads as a good result.
-  loo_f   <- sprintf("output/xgb-flows-v1%s-loo-%s.model", .flow_model_tag(), target_election)
-  cols_f  <- "output/xgb-flows-v1-final-cols.json"
-  feat_f  <- "output/xgb-flows-v1-features.csv"
-  model_f <- if (file.exists(loo_f)) loo_f else "output/xgb-flows-v1-final.model"
+  loo_f   <- out_path(sprintf("xgb-flows-v1%s-loo-%s.model", .flow_model_tag(), target_election))
+  cols_f  <- out_path("xgb-flows-v1-final-cols.json")
+  feat_f  <- out_path("xgb-flows-v1-features.csv")
+  model_f <- if (file.exists(loo_f)) loo_f else out_path("xgb-flows-v1-final.model")
   .asat <- .flow_asat_model(target_election)
   if (!is.null(.asat)) {
     model_f <- .asat
@@ -375,7 +375,7 @@ xgb_flow_conditional_override_for <- function(shares, target_election, prev_elec
   # runs 2.7 to 17.5 points depending on sample size, survivor count and
   # staleness.
   if (identical(Sys.getenv("AUSPOL_FLOW_CELL_SD", "0"), "1")) {
-    dm_f <- "output/flow-drift-v1.model"; dc_f <- "output/flow-drift-v1-cols.json"
+    dm_f <- out_path("flow-drift-v1.model"); dc_f <- out_path("flow-drift-v1-cols.json")
     if (!file.exists(dm_f) || !file.exists(dc_f)) {
       stop("AUSPOL_FLOW_CELL_SD=1 but output/flow-drift-v1.model is missing. ",
            "Run scripts/fit_flow_drift.R first. Refusing rather than returning ",

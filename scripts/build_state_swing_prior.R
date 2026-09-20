@@ -62,7 +62,7 @@ DATES <- c(
   wa1996="1996-12-14",  wa2001="2001-02-10",  wa2005="2005-02-26", wa2008="2008-09-06",
   wa2013="2013-03-09",  wa2017="2017-03-11",  wa2021="2021-03-13", wa2025="2025-03-08")
 DATES <- as.Date(DATES)
-ST <- c(NSW="nsw", VIC="vic", QLD="qld", SA="sa", WA="wa")
+ST <- c(NSW="nsw", VIC="vic", QLD="qld", SA="sa", WA="wa", TAS="tas")
 
 alp_share <- function(el) {
   d <- C[C$election == el & is.finite(votes) & is.finite(tot)]
@@ -87,6 +87,20 @@ SW <- rbindlist(lapply(st_els, function(el) {
              alp_prev = if (is.na(prev)) NA_real_ else alp_share(prev))
 }))
 SW[, state_swing := alp - alp_prev]
+# TASMANIA has no seat corpus here (Hare-Clark), but its statewide Labor primary
+# is a hand table (external/reference/state-elections-statewide.csv, Wikipedia,
+# 2006-2024). Only the statewide swing is needed for this prior, so it joins
+# the same table in the same shape (2026-09-20).
+tas_f <- file.path("external", "reference", "state-elections-statewide.csv")
+if (file.exists(tas_f)) {
+  TS <- fread(tas_f, showProgress = FALSE)[region == "tas" & party == "ALP"][order(election_date)]
+  TS[, `:=`(state_el = paste0("tas", substr(election_date, 1, 4)), region = "tas", date = as.Date(election_date),
+            alp = primary_pct, alp_prev = shift(primary_pct), prev_el = shift(paste0("tas", substr(election_date, 1, 4))))]
+  TS[, state_swing := alp - alp_prev]
+  SW <- rbind(SW, TS[, .(state_el, region, date, prev_el, alp, alp_prev, state_swing)], fill = TRUE)
+  cat(sprintf("SS1  Tasmania added from the hand table: %d elections, %d with a swing
+", nrow(TS), sum(is.finite(TS$state_swing))))
+}
 cat(sprintf("SS1  %d state elections, %d with a computable swing\n",
             nrow(SW), sum(is.finite(SW$state_swing))))
 print(SW[is.finite(state_swing), .(state_el, date, alp = round(alp, 1),

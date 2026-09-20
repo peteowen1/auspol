@@ -48,7 +48,7 @@ xgb_primary_sd_matrix <- function(shares, target_election, floor_sd = NA_real_) 
     cat("XD9! shares has no rownames -- cannot build a per-cell sd override\n")
     return(NULL)
   }
-  f <- Sys.getenv("AUSPOL_XGB_PRIMARY_SD_SRC", "output/xgb-primary-sd-oof.csv")
+  f <- Sys.getenv("AUSPOL_XGB_PRIMARY_SD_SRC", out_path("xgb-primary-sd-oof.csv"))
   if (!file.exists(f)) {
     cat(sprintf("XD9! %s missing -- run scripts/fit_xgb_primary_sd.R; AUSPOL_XGB_PRIMARY_SD ignored\n", f))
     return(NULL)
@@ -101,7 +101,7 @@ xgb_primary_sd_matrix <- function(shares, target_election, floor_sd = NA_real_) 
   # docs/plans/prereg-departed-member-width-2026-09-16.md
   n_dep <- 0L
   if (identical(Sys.getenv("AUSPOL_SD_DEPARTED", "0"), "1")) {
-    df <- "output/retirement-derived.csv"
+    df <- out_path("retirement-derived.csv")
     if (!file.exists(df)) {
       # LOUD, not silent. A missing file here would leave the arm looking like
       # the baseline and read as "no effect", which is the failure mode

@@ -77,7 +77,7 @@ xgb_surge_params_for <- function(shares, target_election, live = FALSE) {
   }
   # AUSPOL_XGB_SURGE_SRC names the file, so the v4 and v5 models can be run
   # against each other without editing code. Registered in published_flags.R.
-  oof_f <- Sys.getenv("AUSPOL_XGB_SURGE_SRC", "output/xgb-emergence-v5-seat.csv")
+  oof_f <- Sys.getenv("AUSPOL_XGB_SURGE_SRC", out_path("xgb-emergence-v5-seat.csv"))
   if (!file.exists(oof_f)) {
     cat(sprintf("XS9! %s missing -- run scripts/fit_xgb_emergence_v5.R; AUSPOL_XGB_SURGE ignored\n", oof_f))
     return(NULL)

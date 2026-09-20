@@ -19,7 +19,9 @@
 set -euo pipefail
 H="${1:?harness: fed nsw qld sa vic wa}"; shift || true
 PAIR="${1:-}"; if [[ -n "$PAIR" && "$PAIR" =~ ^[0-9]{4}$ ]]; then shift; else PAIR=""; fi
-export AUSPOL_XGB_PRIMARY=0 AUSPOL_SMOKE_SIMS="${AUSPOL_SMOKE_SIMS:-500}" AUSPOL_N_SIMS="$AUSPOL_SMOKE_SIMS"
+export AUSPOL_XGB_PRIMARY=0
+export AUSPOL_SMOKE_SIMS="${AUSPOL_SMOKE_SIMS:-500}"   # two lines: bash expands a whole line before assigning, so one line reads it unbound under set -u
+export AUSPOL_N_SIMS="$AUSPOL_SMOKE_SIMS"
 case "$H" in nsw) [ -n "$PAIR" ] && export AUSPOL_NSW_PAIR="$PAIR" ;; qld) [ -n "$PAIR" ] && export AUSPOL_QLD_PAIR="$PAIR" ;; sa) [ -n "$PAIR" ] && export AUSPOL_SA_PAIR="$PAIR" ;; esac
 for kv in "$@"; do export "$kv"; done
 LOG="output/smoke-$H${PAIR:+-$PAIR}.log"

@@ -107,3 +107,16 @@ record_fetch <- function(source, dataset, url, rows) {
   utils::write.csv(rbind(old, row), path, row.names = FALSE)
   invisible(path)
 }
+
+#' A path under the repository's output/ directory
+#'
+#' Package functions used to read `"output/..."` relative to the working
+#' directory, which is the repo root for every script and `tests/testthat`
+#' for the test suite -- so two tests guarded on `file.exists("output/...")`
+#' skipped unconditionally on every machine (found 2026-09-07). Every default
+#' now resolves through [pkg_root()] (2026-09-20).
+#'
+#' @param ... Path components under `output/`.
+#' @return A file path (not checked for existence).
+#' @export
+out_path <- function(...) file.path(pkg_root(), "output", ...)

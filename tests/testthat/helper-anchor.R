@@ -46,3 +46,15 @@ with_package_root <- function(code) {
                         winslash = "/", mustWork = FALSE)
   withr::with_dir(root, code)
 }
+
+# Since 2026-09-20 package functions read output/ through out_path(), which
+# resolves via pkg_root(): the auspol.root option when that directory carries a
+# DESCRIPTION, else the working directory chain. A test that stages its own
+# synthetic output/ in a temp dir must therefore make that dir the root, or the
+# function under test reads the REAL corpus (locally) or nothing (CI). Call
+# after withr::local_dir(td).
+local_output_root <- function(td, .env = parent.frame()) {
+  withr::local_options(list(auspol.root = td), .local_envir = .env)
+  file.create(file.path(td, "DESCRIPTION"))
+  invisible(td)
+}
