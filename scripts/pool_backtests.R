@@ -108,6 +108,20 @@ if (length(.skip)) {
               paste(.skip, collapse = ", "), sum(rows$pair %in% .skip)))
   rows <- rows[!rows$pair %in% .skip]
 }
+# SIMS FLOOR (review gate 2026-09-20): stage 1 now runs at 2,000 sims and its
+# files are tagged -n2000-; win/allprobs/totals ARE sim-dependent, so a
+# stage-1 file must never be scored here even if it is the newest for its
+# pair (stage 6 failed or was skipped). Files under the floor are dropped
+# loudly; the default floor is the deciding run's 20,000.
+.floor <- as.integer(Sys.getenv("AUSPOL_POOL_MIN_SIMS", "20000"))
+.nsims <- suppressWarnings(as.integer(sub("^.*-n([0-9]+)-.*$", "\1", basename(rows$file))))
+.nsims[!grepl("-n[0-9]+-", basename(rows$file))] <- 20000L
+if (any(.nsims < .floor, na.rm = TRUE)) {
+  cat(sprintf("%s! %d row(s) from %d file(s) under the %d-sim floor dropped: %s
+", "PB0", sum(.nsims < .floor, na.rm = TRUE),
+              length(unique(rows$file[.nsims < .floor])), .floor, paste(unique(basename(rows$file[.nsims < .floor])), collapse = ", ")))
+  rows <- rows[!(.nsims < .floor)]
+}
 
 # COMPLETENESS, not just presence: a pair dropped entirely (not just a stale
 # file) is invisible to every check below, which only look at what IS there.
