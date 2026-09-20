@@ -16,6 +16,9 @@ file is the durable copy.
 
 ## qld2024
 
+- **Maryborough** — ALP 0.951, LNP won; ALP 45.1 vs 38.6, ONP 10.0 vs 15.4.
+  The One Nation surge in a regional seat ate the Labor primary. **OPEN**,
+  tails (ONP concentration).
 - **Mirani** — **NOTHING TO FIX** (Pete, 2026-09-18). Stephen Andrew
   (elected One Nation 2020, ran KAP 2024) lost to the LNP. Our primary for
   him matched AEF's, our confidence in the real LNP v KAP pairing was
@@ -129,6 +132,12 @@ file is the durable copy.
 
 ## fed2025
 
+- **Braddon** — the ledger's costliest single seat (v42): LNP 0.950 to win, Labor
+  won; LNP 46.1 predicted vs 31.7 real, ALP 25.7 vs 39.5. A 14-point primary
+  miss with the sitting Liberal (Gavin Pearce) retired and Tasmania's own
+  swing not carried by the federal model (state-swing group). One of six
+  95%+ favourites that lost, which together are the whole log-loss gap to
+  AEF (`reviews/statewide-forecast-audit-2026-09-20.md`). **OPEN**, tails.
 - **Flynn** — LNP 31.5 vs 37.4 actual; we picked ALP in the real pairing.
   The 2022 LNP vote was Colin Boyce's first term; swing model only. No
   candidate-identity issue found. `reviews/flow-audit-fed2025-2026-09-05.md`.
@@ -139,6 +148,11 @@ file is the durable copy.
 
 ## nsw2023
 
+- **Parramatta (tail entry, v42)** — LNP 0.964 (AEF 0.717), Labor won; LNP
+  50.5 vs 35.5 real, ALP 31.9 vs 47.0. A 15-point miss on both majors:
+  the statewide Labor -4.8 plus a retired sitting Liberal plus western
+  Sydney's over-swing. Costliest nsw2023 seat in log loss (3.33 vs AEF
+  0.33). **OPEN**, statewide walk first.
 - **Wakehurst, Pittwater, Kiama** (plus fed2022 Curtin, Goldstein, North
   Sydney, Mackellar) — independents we under-predict by 15-23 points where
   they win. Pattern 2 (teal/IND emergence). **PARKED** by Pete 2026-09-18
@@ -222,6 +236,10 @@ file is the durable copy.
 
 ## wa2025
 
+- **Bateman** — LNP 0.958 (AEF 0.964), Labor won; LNP 46.6 vs 40.4 real, ALP
+  29.8 vs 40.2. Both sides missed it; a 10-point Labor primary miss in a
+  seat the statewide (which we got right, 0.45 miss) does not explain.
+  Personal-vote or local swing. **OPEN**, tails.
 - **Cottesloe** — LNP 67.2 predicted vs 55.5 real in the LNP v IND pairing.
   Our flow on the ACTUAL primaries gives 59.1, so 3.6 points is flow and
   the rest is primaries (LNP 57.3 vs 50.7). Small; teal pattern, **PARKED**.
