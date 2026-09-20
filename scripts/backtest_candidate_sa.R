@@ -638,7 +638,7 @@ if (identical(Sys.getenv("AUSPOL_MAJOR_DEPARTED", "0"), "1") || identical(Sys.ge
   if (.screened && !is.null(.permit)) {
     pv <- .permit[.permit$party == p, ]
     lut <- stats::setNames(as.logical(pv$permit), pv$seat)
-    pm <- unname(lut[seats]); pm[is.na(pm)] <- TRUE
+    pm <- unname(lut[seats]); # a missing permit row is NOT a permit (NA = silent; 2026-09-20)
     return(screened_slopes(p, seats, .returns, pm, same_mp = .MP_SLOPE, major_departed = .MAJDEP, major_present = .MAJPRES, honour_departed = .honour_departed, same = if (is.null(.fitsl)) formals(screened_slopes)$same else .fitsl$same, new = if (is.null(.fitsl)) formals(screened_slopes)$new else .fitsl$new))
   }
   if (.cond && !is.null(.returns)) return(conditional_slopes(p, seats, .returns, same_mp = .MP_SLOPE, major_departed = .MAJDEP, major_present = .MAJPRES, same = if (is.null(.fitsl)) formals(conditional_slopes)$same else .fitsl$same, new = if (is.null(.fitsl)) formals(conditional_slopes)$new else .fitsl$new))

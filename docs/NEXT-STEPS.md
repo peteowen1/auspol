@@ -7,6 +7,12 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30.
 
 ## Where things stand
 
+**Ledger v40, 2026-09-20 10:10** (projection mix fitted at 1/7/14 days): seat
+log loss **0.2992 vs AEF 0.2851**, wRMSE 5.19 vs 5.42, TCP MAE 3.96 vs 3.63,
+accuracy 88.0% vs 86.8%. nsw2023 -0.051, fed2025 +0.019: the mix change
+missed its own bar and breached do-no-harm on fed2025, kept provisionally
+on structural grounds, **Pete's call** (`plans/prereg-projection-mix-short-horizons-2026-09-20.md`).
+
 **Ledger v39, 2026-09-20 00:36, the first that is predictive throughout**
 (660 AEF-7 seats, production pipeline, 20,000 sims; lower is better): seat
 log loss **0.3012 vs AEF 0.2851** (v38 read 0.2657 because four harnesses

@@ -16,7 +16,9 @@
 #' A field where almost nobody registers carries no information, and treating
 #' silence as evidence there would be wrong. South Australia had 7 of 111
 #' candidates fire; federal elections have a third. Below `min_fire` the screen
-#' returns all-permit, which reproduces the unscreened model exactly.
+#' returns `NA` for every governed candidate: it is silent, and
+#' [screened_slopes()] then behaves as the unscreened conditional model plus
+#' the departed-leader rule (ungoverned candidates stay `TRUE`).
 #'
 #' @param jump Numeric campaign-salience values, one per candidate.
 #' @param governed Logical: is this candidate one the screen speaks about? A
@@ -65,8 +67,16 @@ salience_screen <- function(jump, governed, min_fire = 0.10, min_jump = 0.03) {
   # isolation.
   registered <- jump > 0
   fired <- jump >= min_jump
-  # DECIDED FROM THE FIELD, with no outcome data.
-  if (mean(registered) < min_fire) return(rep(TRUE, length(jump)))
+  # DECIDED FROM THE FIELD, with no outcome data. Below the floor the screen
+  # is SILENT and says so with NA -- not TRUE. Until 2026-09-20 it returned
+  # all-TRUE "to reproduce the unscreened model", which stopped being what a
+  # permit meant on 2026-09-06: screened_slopes() gives a permitted new leader
+  # slope 1.0 and switches the departed-leader decay off, so four elections
+  # (fed2007, fed2010, sa2026, vic2014) ran with every new independent keeping
+  # the old one's whole vote. docs/plans/prereg-screen-silent-not-permit-2026-09-20.md
+  # Ungoverned candidates (sitting members, surging classes) stay TRUE: the
+  # screen never speaks about them and the surge path relies on that.
+  if (mean(registered) < min_fire) return(ifelse(governed, NA, TRUE))
   # Silence is only evidence about candidates the screen governs.
   !governed | fired
 }
@@ -371,9 +381,10 @@ salience_permit_for <- function(election, prev_election, region,
   if (is.null(SAL)) return(NULL)
   surging <- attr(SAL, "surging")
   SAL[, permit := salience_screen(jump, governed)]
-  cat(sprintf("SP1  %s screen: registration %.0f%% | governed %d | permitted %d of governed | surging: %s\n",
+  cat(sprintf("SP1  %s screen: registration %.0f%% | governed %d | permitted %d of governed%s | surging: %s\n",
               election, 100 * salience_registration(SAL$jump), sum(SAL$governed),
-              sum(SAL$permit[SAL$governed]),
+              sum(SAL$permit[SAL$governed] %in% TRUE),
+              if (all(is.na(SAL$permit[SAL$governed]))) " (SCREEN SILENT: below the coverage floor)" else "",
               if (length(surging)) paste(surging, collapse = ",") else "none"))
   SAL[, .(seat, party, permit)]
 }

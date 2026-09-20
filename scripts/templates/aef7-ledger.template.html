@@ -250,7 +250,14 @@
   </details>
 
   <details class="provlog">
-    <summary>Provenance &amp; changelog <span class="n">(26 updates)</span></summary>
+    <summary>Provenance &amp; changelog <span class="n">(27 updates)</span></summary>
+    <p class="sub prov"><b>v40, 20 Sep 2026, 10:10: the projection mix now has horizons under 30 days.</b> Every day-before
+       backtest had taken the 30-day weight (trend 0.60, fundamentals 0.40) because the mix table started at 30 days.
+       Fitted at 1, 7 and 14 days too (leave-one-election-out, 42 elections): w(1) = 0.72. Seat log loss 0.3012 &rarr;
+       <b>0.2992</b> (AEF 0.2851), weighted primary RMSE 5.19 (AEF 5.42), TCP MAE 3.96 (AEF 3.63), accuracy 88.0%.
+       nsw2023 &minus;0.051, fed2025 +0.019: the change missed its own pre-registered bar and is kept provisionally on
+       structural grounds, flagged for Pete.</p>
+
     <p class="sub prov"><b>v39, 20 Sep 2026, 00:36: the first ledger that is predictive throughout.</b> Until tonight four of the
        six backtest harnesses (nsw, qld, vic, wa) swung every seat toward the election's own COUNTED statewide vote, an
        oracle no forecast has; fed and sa carried a predictive path behind <code>AUSPOL_FORECAST_MODE</code> and the
