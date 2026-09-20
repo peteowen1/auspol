@@ -179,6 +179,14 @@ statewide_draws_as_at <- function(region, year, as_at, election_date, parties,
   if (is.finite(fp_extra_sd) && fp_extra_sd > 0) {
     sd <- sqrt(sd^2 + fp_extra_sd^2)
   }
+  # KNOWN, LEFT IN: a class the polls do not track has mean 0 here, is drawn
+  # from N(0, 2.85), floored at 0.1 and renormalised, so it carries about 1.1
+  # points of phantom vote per class, paid by the polled classes (nsw2023's
+  # three unpolled classes cost Labor 1.2 points before any anchoring).
+  # Zeroing it (`sd[folded] <- 0`) removed the majors' statewide bias and
+  # still lost on rebuild v43 (ledger 0.2943 -> 0.3022), because the phantom
+  # vote offsets the anchoring below pushing the Coalition up. The two must
+  # change together. docs/plans/prereg-phantom-minor-vote-2026-09-20.md.
 
   if (!is.null(seed)) set.seed(seed)
   K <- length(parties)
