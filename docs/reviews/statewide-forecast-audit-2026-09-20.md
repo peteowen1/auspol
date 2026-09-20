@@ -65,6 +65,32 @@ Question: whether to add a "polling error is correlated within a cycle"
 term to the seat simulation so a miss like this moves all seats together
 (it already partly does through the shared statewide draw).
 
+## The TCP MAE gap is the same miss (added 15:20, ledger v42)
+
+Two-candidate-preferred MAE on the ledger's definition (seats where the
+side named the actual final two; points, lower is better), ours vs AEF,
+with the mean signed error of our named candidate (negative = we had
+them too low):
+
+| pair | n ours | n AEF | ours | AEF | gap | our signed mean |
+|---|--:|--:|--:|--:|--:|--:|
+| nsw2023 | 77 | 83 | 6.36 | 4.32 | **+2.04** | **-2.02** |
+| fed2022 | 136 | 141 | 3.24 | 2.96 | +0.28 | +0.66 |
+| qld2024 | 88 | 87 | 3.32 | 3.08 | +0.24 | +0.55 |
+| vic2022 | 69 | 73 | 3.15 | 3.06 | +0.09 | +1.10 |
+| fed2025 | 133 | 132 | 4.17 | 4.13 | +0.03 | +0.07 |
+| wa2025 | 48 | 47 | 4.25 | 4.26 | -0.01 | -0.06 |
+| sa2026 | 35 | 37 | 4.08 | 4.52 | -0.44 | -1.42 |
+| all | 586 | 600 | 3.99 | 3.63 | +0.36 | +0.02 |
+
+nsw2023 alone is 157 of the 211 seat-points of gap. Its ten worst seats
+(Parramatta +16, Heathcote +15, Kogarah -14, Auburn -14, Granville -12,
+Canterbury -12, Port Stephens -12, Lismore -12, Heffron -11, Wallsend
+-10) are Labor too low across western Sydney and the Hunter, which is the
+statewide Labor -4.8 above wearing a seat mask. So the roadmap's TCP item
+(final-two flow for excluded-party cells) is not where the TCP gap is;
+the nsw2023 statewide walk is.
+
 ## What this audit does not say
 
 It does not decompose the seat-level miss beyond the statewide one (that is

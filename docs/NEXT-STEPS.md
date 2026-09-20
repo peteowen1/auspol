@@ -83,7 +83,9 @@ plan, **Pete to send**; To Do reminder set).
   PARKED by Pete. Overall we lead AEF on independents (36 winners: 16.7 vs
   19.7 log loss). Wave term blocked (`reviews/wave-term-blocked-2026-09-07.md`).
 - **Final-two flow for excluded-party cells; calibration by band** (roadmap
-  items 3 and 5, unstarted).
+  items 3 and 5, unstarted). Item 3 demoted 15:20: the whole TCP MAE gap
+  to AEF is nsw2023 (+2.04 on 77 seats, 157 of 211 gap points), Labor too
+  low across western Sydney, i.e. item (0) again (audit review, last table).
 - WA Nationals fold: SHIPPED in v42 (held for Pete: WA primary RMSE 5.46 ->
   5.34, WA seat log loss +0.004, wa2001 Labor now over-forecast through the
   anchoring's asymmetry, which is the next thing to look at in the statewide
@@ -114,14 +116,12 @@ dictionary fails on a 100%-empty column; vic2022 TCP truth from VEC official
 totals (74 seats); Tasmanian statewide primaries hand table; district-to-
 region table (`external/reference/vec/vic-district-regions.csv`) in the
 forecast JSON and on the blog page; To Do reminders for 9 Nov, the HTV row
-and the VEC email.
+and the VEC email; Tasmania in the state-swing prior (the v2 arm with it is
+still worse, off).
 
 Still open:
 - VEC feed: 2026 configuration not yet published; **Pete to send the email**
   drafted in the booth-model plan.
-- DONE 13:30: Tasmania is in the state-swing prior. Smoke of the v2 arm with
-  it: worse (fed2022 RMSE 3.81 -> 3.89, the Coalition coefficient flipped
-  sign). Off; recorded in the v2 plan.
 - Federal results as a correlated signal for state seat lean: needs
   seat-boundary matching (`external/reference/boundaries/` has CED 2016).
 - GDELT parked (needs a GCP project); Census 2006/2001 have no bulk pack.
