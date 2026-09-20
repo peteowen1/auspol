@@ -202,8 +202,10 @@ file is the durable copy.
   below the screen's 10% floor, and a silent screen returned PERMIT for every
   candidate -- which since 6 Sep means slope 1.0 for a new leader and no
   departed decay. Same defect in fed2007, fed2010, vic2014. Fix pre-registered:
-  `plans/prereg-screen-silent-not-permit-2026-09-20.md`. **OPEN, fix queued**
-  behind rebuild v40. Checked 2026-09-20.
+  `plans/prereg-screen-silent-not-permit-2026-09-20.md`. Fix built and run
+  (v41): Waite IND 38.4 -> 18.4 (actual 2.9), Kavel 46 -> 26.9 (21.4), but
+  sa2026's seat log loss did not fall; refused on criterion, Pete's call.
+  **OPEN**. Checked 2026-09-20 11:20.
 - **Kogarah** — nsw2023 ALP 44.0 vs 60.6: Chris Minns' own seat in the election
   that made him Premier. Beyond the statewide miss (-4.8 Labor) this is a
   party-leader's-seat effect the model has no term for. Lismore (Saffin, ALP

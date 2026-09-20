@@ -250,7 +250,15 @@
   </details>
 
   <details class="provlog">
-    <summary>Provenance &amp; changelog <span class="n">(27 updates)</span></summary>
+    <summary>Provenance &amp; changelog <span class="n">(28 updates)</span></summary>
+    <p class="sub prov"><b>v41, 20 Sep 2026, 11:03: a silent salience screen is no longer a permit.</b> Below 10% coverage
+       (fed2007, fed2010, sa2026, vic2014) the screen had permitted every candidate, and a missing permit row counted as
+       a permit everywhere; since 6 Sep a permit means a new leader keeps the whole prior base and no departed leader
+       decays. Waite sa2026's independent fell 33.5 &rarr; 18.4 (real 2.9), Kavel 38.1 &rarr; 26.9 (21.4). Seat log loss
+       0.2992 &rarr; <b>0.2921</b> (AEF 0.2851), weighted primary RMSE 5.18 (AEF 5.42), TCP MAE 3.98 (AEF 3.63).
+       sa2026's own seat log loss did not fall (0.294 &rarr; 0.304, SE 0.07), so the change failed its pre-registered
+       criterion and is held for Pete's decision; the ledger shown is v41.</p>
+
     <p class="sub prov"><b>v40, 20 Sep 2026, 10:10: the projection mix now has horizons under 30 days.</b> Every day-before
        backtest had taken the 30-day weight (trend 0.60, fundamentals 0.40) because the mix table started at 30 days.
        Fitted at 1, 7 and 14 days too (leave-one-election-out, 42 elections): w(1) = 0.72. Seat log loss 0.3012 &rarr;

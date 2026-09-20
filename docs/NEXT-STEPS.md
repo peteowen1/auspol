@@ -7,6 +7,12 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30.
 
 ## Where things stand
 
+**Ledger v41, 2026-09-20 11:03** (silent screen is NA, not a permit): seat log
+loss **0.2921 vs AEF 0.2851**, wRMSE 5.18 vs 5.42, TCP MAE 3.98 vs 3.63. The
+target (sa2026) did not improve on log loss and the change reached every
+election, so it FAILED its own criterion; kept on dev unmerged, **Pete's
+call** together with v40 (`plans/prereg-screen-silent-not-permit-2026-09-20.md`).
+
 **Ledger v40, 2026-09-20 10:10** (projection mix fitted at 1/7/14 days): seat
 log loss **0.2992 vs AEF 0.2851**, wRMSE 5.19 vs 5.42, TCP MAE 3.96 vs 3.63,
 accuracy 88.0% vs 86.8%. nsw2023 -0.051, fed2025 +0.019: the mix change
