@@ -5,7 +5,16 @@ it stood before this rewrite: `backlog/journal-2026-09-19-hub-snapshot.md`).
 Decisions: `docs/DECISIONS.md`. Every seat verdict: `docs/SEAT-REGISTRY.md`.
 Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30.
 
-## Where things stand (2026-09-20 15:00)
+## Where things stand (2026-09-20 17:10)
+
+**Handover, 20 Sep evening.** Ledger v42 is current (v43, the phantom-vote
+fix alone, was refused: 0.3022). Local `output/` ledger files are v43's
+until the next rebuild; the release and artifact are v42. The next model
+arm is pre-registered and unbuilt: `plans/prereg-anchor-implied-tpp-2026-09-20.md`
+(anchor to the draws' own implied two-party + zero phantom vote, behind
+`AUSPOL_ANCHOR_IMPLIED`; smoke nsw2023, all WA, federal; rebuild v44 decides).
+The machine's memory watchdog kills background wrappers below ~5 GB free:
+run the rebuild and R CMD check one at a time, never together.
 
 **Ledger v42** (660 AEF-7 seats, predictive throughout, 20,000 sims; lower
 is better): seat log loss **0.2943 vs AEF 0.2851**, weighted primary RMSE
