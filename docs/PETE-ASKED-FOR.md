@@ -26,6 +26,13 @@ not a commit, not a plan file — that it is not happening and why.
 
 ---
 
+## 2026-09-20
+
+| ask | status |
+|---|---|
+| *"work through our worst seats by delta primary now that we know we fully look at forecast not oracle ... update seat registry as you go and keep improving delta primary"* (overnight) | **IN PROGRESS.** Worst seats by delta primary traced to the day-before statewide level (nsw2023 Labor -4.8, wa2017 -7.0): audit of every pair in `reviews/statewide-forecast-audit-2026-09-20.md`, three cycles to walk with him. Shipped from it: WA Nationals poll series folded into the Coalition (ledger v42, primary 5.18 -> 5.15, log loss 0.2921 -> 0.2943 within noise, held for him). Registry updated (Waite, Kavel, Kogarah, Lismore, WA 2022 seats). |
+| *"have we optimised our test-a-theory pipeline ... smoke test rather than full rebuild, cached data, optimised storage"* | **SHIPPED**: `scripts/smoke_pair.sh` + `smoke_diff.R` (4 min vs 70), stage 1 at 2,000 sims, as-at model cache (18 of 22 reused on a no-change rerun), `tidy_output.R` (0.84 GB archived), `AUSPOL_REBUILD_FROM` resume. `docs/PIPELINE.md` C0. |
+
 ## 2026-09-18/19
 
 | ask | status |

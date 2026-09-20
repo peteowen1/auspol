@@ -250,7 +250,16 @@
   </details>
 
   <details class="provlog">
-    <summary>Provenance &amp; changelog <span class="n">(28 updates)</span></summary>
+    <summary>Provenance &amp; changelog <span class="n">(29 updates)</span></summary>
+    <p class="sub prov"><b>v42, 20 Sep 2026, 14:21: a poll series with no simulation class now lands in its class.</b> WA polls
+       track the Nationals separately; the trend fitted a <code>NAT</code> series that matched no class, so its 2.4-6.2
+       points fell into the "Other" remainder and every WA backtest forecast the Coalition about six points low
+       (wa2017 day-before: Coalition 35.3 &rarr; 38.3 against 36.6 actual, Other 16.3 &rarr; 10.3). fed2016's Nick
+       Xenophon Team series folds into IND the same way. Weighted primary RMSE 5.18 &rarr; <b>5.15</b> (AEF 5.42); seat
+       log loss 0.2921 &rarr; <b>0.2943</b> (AEF 0.2851), with no per-election move larger than its own standard error
+       (wa2025 0.276 &rarr; 0.284, SE 0.05). The pre-registered WA log-loss bar was not met, so like v40 and v41 this is
+       held for Pete's decision; the ledger shown is v42. TCP MAE 3.99 (AEF 3.63).</p>
+
     <p class="sub prov"><b>v41, 20 Sep 2026, 11:03: a silent salience screen is no longer a permit.</b> Below 10% coverage
        (fed2007, fed2010, sa2026, vic2014) the screen had permitted every candidate, and a missing permit row counted as
        a permit everywhere; since 6 Sep a permit means a new leader keeps the whole prior base and no departed leader

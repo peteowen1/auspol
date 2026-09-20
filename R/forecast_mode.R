@@ -216,7 +216,12 @@ statewide_draws_as_at <- function(region, year, as_at, election_date, parties,
                      numeric(n_sims)))
     # A series folded into LNP (WA's NAT) still sends its own flow to Labor;
     # without this its preferences vanished from `implied` and the anchoring
-    # over-corrected Labor upward (wa2001 smoke, 2026-09-20).
+    # over-corrected Labor upward (wa2001 smoke, 2026-09-20). Deliberately
+    # Coalition-only: the general form (series flow minus its class's rate,
+    # for any class) was smoked on the only other fold, fed2016 NXT -> IND,
+    # and moved every SA seat the wrong way (RMSE 4.154 -> 4.172), because a
+    # party with no transfer history has only a pooled guess for a flow.
+    # docs/plans/prereg-poll-series-class-fold-2026-09-20.md.
     for (cls in names(folded_into)) if (cls == "LNP") for (q in names(folded_into[[cls]])) {
       share_of_col <- if (isTRUE(mu[[cls]] > 0)) folded_into[[cls]][[q]] / mu[[cls]] else 0
       implied <- implied + draws[, cls] * share_of_col * flow_of(q)
