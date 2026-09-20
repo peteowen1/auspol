@@ -136,9 +136,11 @@ aggregation, then the VEC feed parser.
   sims, diff against the last rebuild's stage-1 file: ~4 min); the rebuild's
   stage 1 runs at 2,000 sims (base_pred is deterministic), ~10 min saved per
   rebuild; `PIPELINE.md` C0. First use: the screen-silence fix on sa2026,
-  all-cell RMSE 4.93 -> 4.20 in four minutes. Still to cache: the as-at
-  primary models (stage 4 retrains 19 models every run; a config hash like
-  the flow models' would skip them when inputs are unchanged).
+  all-cell RMSE 4.93 -> 4.20 in four minutes. 11:50: the as-at primary
+  models now skip when their inputs' hash is unchanged (18 of 22 reused on a
+  no-change rerun; stage 4 ~4 min -> seconds); the forecast statewide level
+  is pinned to 20,000 draws so base_pred no longer jitters with the harness
+  sim count.
 
 - **DONE 22:50**: `AUSPOL_FORECAST_MODE` wired into nsw/qld/vic/wa through one
   shared block (`forecast_statewide_or_oracle()`), proven on all four at 2,000

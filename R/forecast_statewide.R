@@ -199,10 +199,14 @@ forecast_statewide_or_oracle <- function(region, year, election_date, parties, s
   # returned vector; the union here means the five call sites cannot differ.
   parties <- union(parties, names(st_b))
   fc <- tryCatch(
+    # ALWAYS 20,000 draws for the statewide level, whatever the harness's own
+    # sim count: st_fc is colMeans(draws), so at 2,000 sims base_pred jittered
+    # by ~0.1 point between otherwise identical runs (seen in the v40 -> v41
+    # stage-1 comparison on the untouched WA pairs). The draws are cheap.
     forecast_statewide_for(region, year, election_date, parties, st_a,
                            fundamentals_loo_table(),
                            data.table::fread(file.path("output", "projection-mix.csv"), showProgress = FALSE),
-                           n_sims = n_sims, seed = seed),
+                           n_sims = max(n_sims, 20000L), seed = seed),
     error = function(e) e)
   if (inherits(fc, "error")) {
     # A cycle too thin to fit a trend (wa2021: four polls in 180 days, none
