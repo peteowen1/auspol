@@ -65,3 +65,28 @@ Disposition: a class the polls put at zero should draw zero; the fix
 removes 0.7 points of systematic major-party under-forecast. The
 remaining asymmetry (Coalition now high where Labor is right) is the
 anchoring's, which is the next arm. Rebuild v43 decides the ledger.
+
+# RESULT, rebuild v43 (2026-09-20 16:13): REFUSED, reverted
+
+Ledger (660 seats, lower is better): seat log loss 0.2943 -> **0.3022**
+(AEF 0.2851), weighted primary RMSE 5.15 -> 5.18, TCP MAE 3.99 -> 4.08.
+Per pair, v42 -> v43: wa2025 0.284 -> 0.361 (+0.077), sa2026 +0.018,
+fed2025 +0.009, nsw2023 0.293 -> 0.301 (+0.008), qld2024 -0.003,
+vic2022 -0.012, fed2022 -0.004. All-seat pooled over 20 pairs 0.3326 ->
+0.3357.
+
+The smokes were right about the primaries (nsw2023 and federal all-class
+RMSE both fell) and wrong about what matters: removing the phantom vote
+raised the Coalition's statewide level everywhere it was already high
+(the audit's +0.28 signed miss), and at 20,000 sims with the xgb layer on
+that cost more seats than the Labor correction won. wa2025, where the
+Coalition was over-forecast before the fix, is the clearest case.
+
+**What this says**: the phantom vote was real, but it had been partly
+compensating for the anchoring pushing the Coalition up (the same
+asymmetry seen on wa2001 after the Nationals fold). Removing one leg of a
+compensating pair is a regression until the other leg is fixed. The line
+is reverted; the mechanism stays documented here and in the code comment,
+and the anchoring arm must be designed with it (the two are one change).
+Stage 9 did not run, so the release and artifact still carry v42; the
+local `output/` ledger files are v43 until the next rebuild.
