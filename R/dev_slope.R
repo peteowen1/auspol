@@ -340,8 +340,13 @@ screened_slopes <- function(cls, seats, returns, permit, honour_departed = FALSE
   # unrelated 2-3%. `prior_leader_returns` asks the right question directly:
   # did THE LEADER specifically come back, under any label, anywhere in this
   # seat -- decoupled from whether some other class member also happened to.
-  departed <- honour_departed & !plr & !permit
+  # A permit is only a permit when it is TRUE. NA (the screen is silent for
+  # this election, or the seat-class has no row) is not permission: the 1.0
+  # carry-forward needs a real signal, and the departed-leader decay must not
+  # be switched off by the absence of one (2026-09-20).
+  permitted <- permit %in% TRUE
+  departed <- honour_departed & !plr & !permitted
   dep_rate <- if (cls %in% names(departed_rate)) departed_rate[[cls]] else new[[cls]]
-  ifelse(!is_same & permit, 1.0,
+  ifelse(!is_same & permitted, 1.0,
          ifelse(departed, dep_rate, base))
 }

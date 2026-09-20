@@ -55,6 +55,8 @@ topped South Australia on 14.1\%.
 A field where almost nobody registers carries no information, and treating
 silence as evidence there would be wrong. South Australia had 7 of 111
 candidates fire; federal elections have a third. Below \code{min_fire} the screen
-returns all-permit, which reproduces the unscreened model exactly.
+returns \code{NA} for every governed candidate: it is silent, and
+\code{\link[=screened_slopes]{screened_slopes()}} then behaves as the unscreened conditional model plus
+the departed-leader rule (ungoverned candidates stay \code{TRUE}).
 }
 

@@ -419,7 +419,11 @@ xgb_primary_predict_live <- function(shares, mat22, a22, state_mean, returns,
     # "No claim" defaults to PROTECT (permit=1), not "verified safe" -- see
     # the identical fix and reasoning in scripts/fit_xgb_primary_v4.R and
     # docs/reviews/xgb-primary-flag-bugfixes-2026-09-10.md.
-    rows[, permit := ifelse(is.na(idx), 1L, SAL$permit[idx])]
+    # Since 2026-09-20 a silent screen returns NA, so any(permit_v == 1) is NA
+    # for a seat-class where every governed row is silent; the training
+    # scripts fill that NA with 1 after building SAL, and the live path must
+    # agree with what the model was trained on (review gate, 2026-09-20).
+    rows[, permit := ifelse(is.na(idx) | is.na(SAL$permit[idx]), 1L, SAL$permit[idx])]
     cat(sprintf("XG5  salience corpus found for %s: %d of %d seat-classes matched\n",
                 target_election, sum(!is.na(idx)), nrow(rows)))
   } else {

@@ -42,6 +42,11 @@ if (!is.null(cands) && !"party" %in% names(cands)) {
   suppressMessages(devtools::load_all(quiet = TRUE)); cands[, party := classify_party(party_raw)]
 }
 
+# Legislative Council region per district (external/reference/vec/vic-district-regions.csv,
+# Wikipedia, tracked): the ITG page groups the seat table and a map by it.
+reg_f <- file.path("external", "reference", "vec", "vic-district-regions.csv")
+REG <- if (file.exists(reg_f)) fread(reg_f, showProgress = FALSE) else NULL
+region_of <- function(s) if (is.null(REG)) NULL else { r <- REG[district == s]$region; if (length(r)) r[1] else NULL }
 # per-seat block
 seat_rows <- lapply(shares$seat, function(s) {
   pr <- probs[seat == s]; sh <- shares[seat == s]
@@ -55,7 +60,7 @@ seat_rows <- lapply(shares$seat, function(s) {
          sitting = if (!is.null(cands) && length(nm)) isTRUE(cands[seat == s & party == p]$sitting[1]) else NULL)
   })
   ps <- ps[order(-vapply(ps, `[[`, numeric(1), "win_prob"))]
-  list(seat = s, favourite = ps[[1]]$party, favourite_prob = ps[[1]]$win_prob, parties = ps)
+  list(seat = s, region = region_of(s), favourite = ps[[1]]$party, favourite_prob = ps[[1]]$win_prob, parties = ps)
 })
 
 # chamber block from the simulation totals

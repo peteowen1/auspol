@@ -948,7 +948,7 @@ for (K in PAIRS) {
       pv <- permit_tbl[permit_tbl$party == p, ]
       lut <- stats::setNames(as.logical(pv$permit), pv$seat)
       pm <- unname(lut[seats])
-      pm[is.na(pm)] <- TRUE
+      # a missing permit row is NOT a permit (NA = silent; 2026-09-20)
       return(screened_slopes(p, seats, returns, pm, same_mp = .MP_SLOPE, major_departed = .MAJDEP, major_present = .MAJPRES, honour_departed = .honour_departed, same = if (is.null(.fitsl)) formals(screened_slopes)$same else .fitsl$same, new = if (is.null(.fitsl)) formals(screened_slopes)$new else .fitsl$new))
     }
     if (cond && !is.null(returns))

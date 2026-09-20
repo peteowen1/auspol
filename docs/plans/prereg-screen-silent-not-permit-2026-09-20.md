@@ -75,3 +75,49 @@ v40 (the projection-mix rebuild) is running as this is written; editing
 `R/` mid-rebuild would put two vintages inside one run, so the fix is
 applied only after v40 completes, then v41 is rebuilt and scored against
 v40 on the criterion above.
+
+# RESULT, 2026-09-20 11:20 (rebuild v41 vs v40; lower is better)
+
+Smoke first (`smoke_pair.sh sa 2026`, 4 minutes, base_pred only): sa2026
+all-cell RMSE 4.93 -> 4.20, IND 7.49 -> 4.98, Waite IND 38.4 -> 23.4, Kavel
+46.0 -> 30.9, Mount Gambier IND 42.7 -> 26.3 (actual 37.6: over-corrected).
+
+Deciding rebuild:
+
+| | v40 | v41 | AEF |
+|---|--:|--:|--:|
+| AEF-7 seat log loss (660) | 0.2992 | **0.2921** | 0.2851 |
+| weighted primary RMSE | 5.19 | 5.18 | 5.42 |
+| TCP MAE | 3.96 | 3.98 | 3.63 |
+| pooled log loss, 22 pairs | 0.3356 | 0.3359 | |
+| **sa2026 seat log loss** | 0.2942 | **0.3044** (jackknife SE 0.071) | |
+
+**Primary criterion NOT MET**: sa2026's log loss rose 0.010, inside one SE
+but the wrong way, while its first preferences got much better (the smoke
+above; Waite IND 18.4 after the xgb layer, Kavel 26.9). The seat winners
+in sa2026 turn on One Nation's spread, which this fix does not touch, and
+the xgb layer partly undoes the base_pred move.
+
+**Do-no-harm premise was WRONG, disclosed**: the plan said 19 pairs would be
+byte-identical in stage 1. They are not: fed2013 moved up to 18.7 points in
+a cell, qld2024 15.1, fed2025 11.0, nsw2023 7.2. The third part of the fix
+(`pm[is.na(pm)] <- TRUE` removed at six call sites) changes every
+seat-class that has no permit row at all, in every election, and those are
+common. That is the same defect in another guise (a missing row was a
+permit, so a new leader there carried the whole prior base), but the plan
+did not size it, so the identity check cannot be claimed. The tiny WA moves
+(0.08-0.11) show base_pred also has a slight simulation dependence at
+2,000 versus 20,000 sims, worth its own note.
+
+Per pair (log loss, v40 -> v41): qld2024 0.3855 -> 0.3286, nsw2019 0.4006
+-> 0.3440, fed2016 -0.012, wa2025 -0.014, wa2017 -0.019; fed2019 +0.029,
+sa2022 +0.031, wa2013 +0.090, fed2013 +0.012, fed2010 +0.009.
+
+**Verdict: REFUSED on the pre-registered criterion; kept on dev, NOT merged,
+Pete's call**, for the same reason as the projection-mix change: the
+semantics it replaces ("no evidence of a campaign is evidence of one") are
+indefensible, and the ledger, the primary RMSE and the smoke all move the
+right way, but the target election's seat log loss did not and the plan
+mis-stated the blast radius. The v41 models are on `shipped-models`
+(stage 9 publishes automatically) and are the better ledger; say the word
+and v40's are restored by rerunning the rebuild from main.

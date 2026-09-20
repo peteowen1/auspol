@@ -5,65 +5,33 @@ it stood before this rewrite: `backlog/journal-2026-09-19-hub-snapshot.md`).
 Decisions: `docs/DECISIONS.md`. Every seat verdict: `docs/SEAT-REGISTRY.md`.
 Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30.
 
-## Where things stand
+## Where things stand (2026-09-20 12:10)
 
-**Ledger v39, 2026-09-20 00:36, the first that is predictive throughout**
-(660 AEF-7 seats, production pipeline, 20,000 sims; lower is better): seat
-log loss **0.3012 vs AEF 0.2851** (v38 read 0.2657 because four harnesses
-swung toward the counted statewide, an oracle), weighted primary RMSE 5.22
-vs 5.42 (still ours), TCP MAE 4.04 vs 3.63, accuracy 87.3% vs 86.8%. The
-forecast statewide misses by 1.3 to 3.9 points per class per election and
-the seats inherit it: **the statewide forecast is now the biggest lever**
-(model item 0 below). wa2021 has no fittable trend and is not scored.
-Models retrained on predictive base_pred are on `shipped-models` and feed
-the daily forecast from 20 Sep. Disclosed: v39 ran before a review fix
-(the wrapper now unions the target's classes into the forecast), so
-vic2022's One Nation cells read 0.0 (actual mean 0.2; negligible); the next
-rebuild picks it up. Public copy:
+**Ledger v41** (660 AEF-7 seats, predictive throughout, 20,000 sims; lower
+is better): seat log loss **0.2921 vs AEF 0.2851**, weighted primary RMSE
+5.18 vs 5.42, TCP MAE 3.98 vs 3.63, accuracy 88.0% vs 86.8%. Public copy:
 https://github.com/peteowen1/auspol/releases/download/shipped-models/aef7-ledger.html
+History: v38 0.2657 (oracle statewide), v39 0.3012 (predictive), v40 0.2992
+(mix at short horizons), v41 0.2921 (silent screen is not a permit); the
+last two missed their own pre-registered bars and Pete kept them (DECISIONS,
+2026-09-20). **The day-before statewide forecast is the biggest lever**: it
+misses by 1.3-3.9 points per class per election and every seat inherits it.
 
-**Live forecast** (`forecast-latest` release, rebuilt 06:00 Melbourne daily,
-also on R2 `inthegame-data/auspol/` for **inthegame.blog/politics/, live with
-data since 21:35** after Pete set the two secrets). First run
-2026-09-19 15:50: LNP 36.1 expected seats, ALP 35.5, ONP 11.0, GRN 5.3;
-P(hung) 0.72, P(One Nation balance of power) 0.70. 88 of 88 seats.
+**Live forecast**: `forecast-latest` release daily 06:00 Melbourne, mirrored
+to R2 for inthegame.blog/politics/ (live). 20 Sep run pending on v41 models.
 
-## NOW: the election-night booth model (Pete, 2026-09-19 21:15: option b)
+## NOW: the election-night booth model (Pete, 2026-09-19: option b)
 
-Seat-type swing pre-election is PARKED (Chisholm/Reid/Bennelong 2022 was a
-new pattern no prior election teaches; Banks shares the census profile and
-did not move). Both that pattern and the WA-type state miss are observable
-on the night from booth swings, so the effort goes there.
-
-Plan written: `docs/plans/election-night-booth-model.md` (VEC publishes an XML
-feed down to voting centre; 2022 per-booth files exist per district; dress
-rehearsal = replay vic2022; the VEC email is drafted there for Pete to
-send). Scope:
-**Done 22:05**: 2022 and 2018 booth data fetched and parsed (`fetch_booths_vic2022.R`);
-replay harness `booth_replay_vic2022.R` passes the identity check and, with no
-prior, calls the first-preference leader right in 85-87 of 87 seats from 10%
-counted, major shares within 1.5 points at half the night vote (table in the
-plan). **Rehearsal 2 (22:15)**: prior (vic2022 backtest) + projection beats
-both alone: major-share MAE 3.12 (prior) -> 1.72 at 10% counted -> 1.25 at
-50%; leaders 68 -> 77 of 78. `R/booth_projection.R`. Next: re-simulate the
-preference count from the posterior primaries (win probabilities), chamber
-aggregation, then the VEC feed parser.
-
-1. Data: 2022 booth-level first preferences and TCP per voting centre
-   (VEC "votes by voting centre"; `external/reference/vec/2010, 2014, 2018`
-   hold the older FPV-by-VC files, 2022's is in
-   `external/elections/cache/vec-2022-vic/*-dist.html`, 163 files unparsed
-   for booths).
-2. Matching: reporting booths to their 2022 counterparts (name + district;
-   new/merged booths fall back to district-level swing).
-3. Update: tonight's forecast as the prior for every seat; each booth's
-   swing updates the seat's expected result with a booth-size-weighted
-   analytic posterior; uncounted booths projected from matched swing by
-   booth type (pre-poll, postal, ordinary).
-4. Feed: how VEC publishes results on the night (media feed registration or
-   the results site's per-district pages); what cadence.
-5. Dress rehearsal: replay vic2022 in time order and score against the
-   final result, before November.
+Plan and both rehearsals: `docs/plans/election-night-booth-model.md`. Built:
+2022 + 2018 booth data (`fetch_booths_vic2022.R`), matching + projection +
+prior combination (`R/booth_projection.R`, tested), replay harness. Rehearsal
+2: prior + projection beats both alone (major-share MAE 3.12 -> 1.25 at half
+the night vote; leaders 68 -> 77 of 78). Seat-type swing pre-election is
+PARKED (a new 2022 pattern no prior election teaches).
+Next: re-simulate the preference count from posterior primaries (win
+probabilities), chamber aggregation with the forecast's correlation, VEC
+feed parser once the 2026 configuration is published (email drafted in the
+plan, **Pete to send**; To Do reminder set).
 
 ## Dated, cannot move
 
@@ -119,6 +87,17 @@ aggregation, then the VEC feed parser.
 
 ## Harness and pipeline hygiene
 
+- **DONE 10:40, Pete's ask ("optimise the test-a-theory pipeline")**: the fast
+  loop is `scripts/smoke_pair.sh` + `smoke_diff.R` (one harness, xgb off, 500
+  sims, diff against the last rebuild's stage-1 file: ~4 min); the rebuild's
+  stage 1 runs at 2,000 sims (base_pred is deterministic), ~10 min saved per
+  rebuild; `PIPELINE.md` C0. First use: the screen-silence fix on sa2026,
+  all-cell RMSE 4.93 -> 4.20 in four minutes. 11:50: the as-at primary
+  models now skip when their inputs' hash is unchanged (18 of 22 reused on a
+  no-change rerun; stage 4 ~4 min -> seconds); the forecast statewide level
+  is pinned to 20,000 draws so base_pred no longer jitters with the harness
+  sim count.
+
 - **DONE 22:50**: `AUSPOL_FORECAST_MODE` wired into nsw/qld/vic/wa through one
   shared block (`forecast_statewide_or_oracle()`), proven on all four at 2,000
   sims (forecast statewide error 1.3-2.4 pts per class; wa2021 has no
@@ -129,8 +108,13 @@ aggregation, then the VEC feed parser.
   base_margin path carries the statewide through.
 - CLOSED: time-forward folds -- the as-at models (`fit_xgb_primary_asat.R`,
   `fit_xgb_flows_asat.R`) train only on elections dated before the target.
-- Audit other 0-filled xgb features for the NA-fill fix; any new column to
-  `fit_xgb_primary_v6.R` costs ~0.014 pooled RMSE (placebo floor).
+- DONE 12:15: audited every xgb feature for zero placeholders. Beyond the
+  known binary flags nothing else is 0-filled; five candidate-identity
+  columns (`soph_party_i`, `retirement_i`, `is_incumbent_party_i`,
+  `soph_cand_i`, `prev_swing`) are 52% NA and rely on xgboost's native
+  missing handling, which is correct and should stay NA. `permit` now
+  carries NA where the screen is silent; same treatment. Any new column
+  costs ~0.014 pooled RMSE (placebo floor).
 - Package functions read bare relative paths (`surge_hazard_for()`); should
   resolve via `getOption("auspol.root")`.
 - DONE 23:20: every switch in `MODEL-REGISTRY.md` is classified (was 12 unexplained).

@@ -91,3 +91,33 @@ election (46.5 two-party, a Coalition win, from twelve years of Coalition
 incumbency), and no leave-one-out fit will remove it. The seat-level
 remainder (Labor winners under by ~2.7 beyond the statewide) is a
 separate item. Ledger rebuild launched 01:47.
+
+# RESULT, 2026-09-20 10:15 (rebuild v40 vs v39; lower is better)
+
+| | v39 | v40 | AEF |
+|---|--:|--:|--:|
+| AEF-7 seat log loss (660) | 0.3012 | 0.2992 | 0.2851 |
+| weighted primary RMSE | 5.22 | 5.19 | 5.42 |
+| TCP MAE | 4.04 | 3.96 | 3.63 |
+| accuracy | 87.3% | 88.0% | 86.8% |
+| pooled log loss, all 22 pairs | 0.3349 | 0.3356 | |
+
+Per pair (seat log loss): nsw2023 0.3376 -> 0.2867 (**-0.051**), fed2022
+0.2819 -> 0.2750, sa2026 0.3234 -> 0.3007, vic2022 0.2664 -> 0.2706,
+**fed2025 0.2768 -> 0.2953 (+0.019)**, fed2019 0.2717 -> 0.3065 (+0.035,
+not a ledger pair), wa2025 0.2905 -> 0.2896.
+
+**Criterion NOT MET** (-0.002 against a -0.005 bar) and **do-no-harm
+BREACHED** on fed2025 (+0.019 against 0.010). The mechanism did what was
+predicted where the polls were right (NSW 2023) and cost where the final
+polls were wrong (2019 and 2025 federal): more trend weight at the day
+before is a bet on the polls, and the leave-one-out fit says that bet
+wins on average by 0.09 points of two-party MAE, which the seat log loss
+on seven elections does not confirm.
+
+**Kept, provisionally, on structural grounds, and flagged to Pete rather
+than decided alone**: the alternative is not a measured setting but the
+accident of extrapolating the 30-day weight to the day before. Reverting
+would restore a wash on the ledger and a 0.051 penalty on nsw2023 for no
+principled reason. If Pete prefers the criterion to rule, the revert is
+one line (`HORIZONS` in `scripts/fit_projection.R`) and one rebuild.

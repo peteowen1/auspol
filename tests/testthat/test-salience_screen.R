@@ -18,13 +18,14 @@ test_that("a field below the registration threshold makes the screen INERT", {
   # South Australia: 7 of 111 fired. Treating silence as evidence there would
   # refuse four One Nation winners riding a 19.9-point party surge.
   j <- c(rep(0, 95), 1, 2, 3, 4, 5)          # 5% register
-  expect_true(all(salience_screen(j, rep(TRUE, 100))))
+  expect_true(all(is.na(salience_screen(j, rep(TRUE, 100)))))   # silent, not permitted (2026-09-20)
+  expect_true(all(salience_screen(j, rep(FALSE, 100))))            # ungoverned: still no claim, still TRUE
 })
 
 test_that("the threshold is a boundary, not an approximation", {
   j <- c(rep(1, 10), rep(0, 90))             # exactly 10%
   expect_false(all(salience_screen(j, rep(TRUE, 100), min_fire = 0.10)))
-  expect_true(all(salience_screen(j, rep(TRUE, 100), min_fire = 0.11)))
+  expect_true(all(is.na(salience_screen(j, rep(TRUE, 100), min_fire = 0.11))))
 })
 
 test_that("a non-finite jump is treated as silence, not propagated", {

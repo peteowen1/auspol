@@ -93,6 +93,18 @@ params <- list(objective = "reg:squarederror", eta = 0.05, max_depth = 4,
 git_hash <- tryCatch(system2("git", c("rev-parse", "--short", "HEAD"), stdout = TRUE), error = function(e) NA_character_)
 built_at <- format(Sys.time(), "%Y-%m-%d %H:%M:%S")
 
+# SKIP-IF-CURRENT (2026-09-20, the fast loop): a target's model depends only on
+# its training rows, its own rows, the feature list, the params and the
+# base-margin mode. Hash those; if the previous manifest carries the same key
+# and the model file exists, reuse the saved predictions instead of the
+# ~15 s xgb.cv + train. A rebuild that changes one election's base_pred then
+# retrains only the targets dated after it. AUSPOL_ASAT_FORCE=1 retrains all.
+man_f <- file.path(OUT, "xgb-primary-asat-manifest.csv"); pred_f <- file.path(OUT, "xgb-primary-asat-predictions.csv")
+OLDM <- if (file.exists(man_f)) fread(man_f, showProgress = FALSE) else NULL
+OLDP <- if (file.exists(pred_f)) fread(pred_f, showProgress = FALSE) else NULL
+if (!is.null(OLDM) && !"input_key" %in% names(OLDM)) OLDM <- NULL
+.force <- identical(Sys.getenv("AUSPOL_ASAT_FORCE", "0"), "1")
+n_cached <- 0L
 preds <- list(); manifest <- list()
 for (tg in targets) {
   t0 <- Sys.time()
@@ -105,11 +117,24 @@ for (tg in targets) {
                                  train_pairs = paste(train_pairs, collapse = ";"), n_train_rows = 0L,
                                  nrounds = NA_integer_, n_features = length(feat_cols),
                                  rmse_base = NA_real_, rmse_asat = NA_real_,
-                                 model_file = NA_character_, git_hash = git_hash, built_at = built_at)
+                                 model_file = NA_character_, git_hash = git_hash, built_at = built_at, input_key = NA_character_)
     next
   }
   TR <- ALL[pair %in% train_pairs]
   TE <- ALL[pair == tg]
+  key <- digest::digest(list(params, feat_cols, .base_margin_mode,
+                             as.data.frame(TR[, c(id_cols, feat_cols), with = FALSE]),
+                             as.data.frame(TE[, c(id_cols, feat_cols), with = FALSE])))
+  mf <- file.path(MDIR, paste0(tg, ".ubj"))
+  if (!.force && !is.null(OLDM) && !is.null(OLDP) && tg %in% OLDM$target && identical(OLDM[target == tg]$input_key[1], key) &&
+      file.exists(mf) && nrow(OLDP[pair == tg]) == nrow(TE)) {
+    preds[[tg]] <- OLDP[pair == tg]; manifest[[tg]] <- OLDM[target == tg][1]
+    n_cached <- n_cached + 1L
+    cat(sprintf("XA2  %s (%s): CACHED, inputs unchanged (key %s) | RMSE base %.4f -> as-at %.4f
+", tg, cutoff,
+                substr(key, 1, 8), manifest[[tg]]$rmse_base, manifest[[tg]]$rmse_asat))
+    next
+  }
   Xtr <- as.matrix(TR[, ..feat_cols]); ytr <- TR$actual_share
   Xte <- as.matrix(TE[, ..feat_cols])
   dtr <- xgb.DMatrix(data = Xtr, label = ytr, missing = NA)
@@ -127,7 +152,6 @@ for (tg in targets) {
   dte <- xgb.DMatrix(data = Xte, missing = NA)
   setinfo(dte, "base_margin", TE$base_pred)
   p <- pmax(0, predict(m, dte))
-  mf <- file.path(MDIR, paste0(tg, ".ubj"))
   xgb.save(m, mf)
   rb <- sqrt(mean((TE$base_pred - TE$actual_share)^2))
   ra <- sqrt(mean((p - TE$actual_share)^2))
@@ -140,11 +164,13 @@ for (tg in targets) {
                                train_pairs = paste(train_pairs, collapse = ";"), n_train_rows = nrow(TR),
                                nrounds = nr, n_features = length(feat_cols),
                                rmse_base = rb, rmse_asat = ra,
-                               model_file = mf, git_hash = git_hash, built_at = built_at)
+                               model_file = mf, git_hash = git_hash, built_at = built_at, input_key = key)
 }
 writeLines(feat_cols, file.path(MDIR, "feat_cols.txt"))
 saveRDS(params, file.path(MDIR, "params.rds"))
 
+cat(sprintf("XA3  %d of %d targets reused from cache (AUSPOL_ASAT_FORCE=1 to retrain all)
+", n_cached, length(targets)))
 P <- rbindlist(preds); M <- rbindlist(manifest)
 fwrite(P, file.path(OUT, "xgb-primary-asat-predictions.csv"), na = "NA")
 fwrite(M, file.path(OUT, "xgb-primary-asat-manifest.csv"), na = "NA")
