@@ -66,6 +66,18 @@ plan, **Pete to send**; To Do reminder set).
   2.0). Calibration by band otherwise identical to AEF (roadmap item 5
   DONE, audit review last section). The lever is the simulation's tail,
   not the mean: why under 5% for the loser where AEF had 8-28%.
+  **nsw2023 walked with Pete (16:10)**: the trend was right (54.2 vs
+  54.3); Labor's 4.4-point fall is three steps: phantom vote for unpolled
+  classes (-1.2), the first-preference-implied two-party sitting 1.0
+  above the published-TPP trend (-1.1), the fundamentals' pull (-2.1).
+  Arms run: drop `fed_aligned` REFUSED (fundamentals LOO MAE +0.54);
+  phantom-vote fix REFUSED on rebuild v43 (ledger 0.2943 -> 0.3022,
+  wa2025 +0.077) because it had been compensating the anchoring's
+  Coalition push. **Next: the anchoring arm designed WITH the phantom fix
+  as one change** (anchor to the draws' own implied two-party, not the
+  published-TPP series; then remove the phantom vote); smoke nsw2023,
+  wa2001, wa2025 before any rebuild. Plans: `prereg-fundamentals-drop-
+  fed-aligned-2026-09-20.md`, `prereg-phantom-minor-vote-2026-09-20.md`.
 
 - **NSW variance / per-seat `seat_sd`** — design-with-Pete item: the 11 wrong
   nsw seats went to a different beneficiary every time, arguing for seat-level
