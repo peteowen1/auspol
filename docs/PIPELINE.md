@@ -63,6 +63,17 @@ vic score all their pairs in one run.
 deciding run is the default 20,000. Measured 2026-09-18 at 5,000 sims:
 stages 2 to 5 took 10 minutes, stage 6 about 5, stages 7 and 8 under 2.
 
+## B2. Fresh clone
+
+`output/` is gitignored. Before any harness or the live forecast runs on a
+fresh clone: `Rscript scripts/fit_mp_slope.R` (writes
+`output/mp-slope-by-target.csv` and `-by-class.csv`; `AUSPOL_MP_SLOPE=1`
+errors without them, deliberately), `Rscript scripts/build_candidacies.R`
+(needs the commission downloads under `external/`), and `gh release
+download shipped-models` for the models. Package functions resolve
+`output/` through `out_path()` (the repo root), so scripts can run from
+anywhere.
+
 ## C0. How to test a theory (the fast loop, 2026-09-20)
 
 1. **Smoke, minutes**: `bash scripts/smoke_pair.sh <harness> [year] [AUSPOL_X=1 ...]`

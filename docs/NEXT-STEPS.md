@@ -5,20 +5,23 @@ it stood before this rewrite: `backlog/journal-2026-09-19-hub-snapshot.md`).
 Decisions: `docs/DECISIONS.md`. Every seat verdict: `docs/SEAT-REGISTRY.md`.
 Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30.
 
-## Where things stand (2026-09-20 12:10)
+## Where things stand (2026-09-20 15:00)
 
-**Ledger v41** (660 AEF-7 seats, predictive throughout, 20,000 sims; lower
-is better): seat log loss **0.2921 vs AEF 0.2851**, weighted primary RMSE
-5.18 vs 5.42, TCP MAE 3.98 vs 3.63, accuracy 88.0% vs 86.8%. Public copy:
+**Ledger v42** (660 AEF-7 seats, predictive throughout, 20,000 sims; lower
+is better): seat log loss **0.2943 vs AEF 0.2851**, weighted primary RMSE
+5.15 vs 5.42, TCP MAE 3.99 vs 3.63, accuracy 87.7% vs 86.8%. Public copy:
 https://github.com/peteowen1/auspol/releases/download/shipped-models/aef7-ledger.html
 History: v38 0.2657 (oracle statewide), v39 0.3012 (predictive), v40 0.2992
-(mix at short horizons), v41 0.2921 (silent screen is not a permit); the
-last two missed their own pre-registered bars and Pete kept them (DECISIONS,
-2026-09-20). **The day-before statewide forecast is the biggest lever**: it
-misses by 1.3-3.9 points per class per election and every seat inherits it.
+(mix at short horizons), v41 0.2921 (silent screen is not a permit), v42
+0.2943 (WA Nationals poll series folded into the Coalition; primary better,
+seat log loss +0.002 within noise, **held for Pete** like v40/v41,
+`plans/prereg-poll-series-class-fold-2026-09-20.md`). **The day-before
+statewide forecast is the biggest lever**: audit of every pair in
+`reviews/statewide-forecast-audit-2026-09-20.md`, three cycles to walk with
+Pete (wa2017, nsw2023, fed2019).
 
 **Live forecast**: `forecast-latest` release daily 06:00 Melbourne, mirrored
-to R2 for inthegame.blog/politics/ (live). 20 Sep run pending on v41 models.
+to R2 for inthegame.blog/politics/ (live). 20 Sep run pending on v42 models.
 
 ## NOW: the election-night booth model (Pete, 2026-09-19: option b)
 
@@ -50,6 +53,9 @@ plan, **Pete to send**; To Do reminder set).
 ## Model, open (triaged 2026-09-19; nothing here blocks Victoria)
 
 - **(0) The statewide forecast as at the day before** now decides the ledger.
+  Audited per pair 2026-09-20 (`reviews/statewide-forecast-audit-2026-09-20.md`,
+  `scripts/audit_statewide_forecast.R`): worst wa2001, wa2017, fed2019,
+  wa2005, nsw2023; three walk-through questions written for Pete.
   Per-class error 1.3-3.9 points; WA 2017 (Labor 31.7 forecast, 42.2 actual)
   and nsw2023 (Labor 31.3 vs 37.0) are the worst. Every seat inherits it, so
   a point here is worth more than any seat mechanism. Start by walking the
@@ -78,8 +84,10 @@ plan, **Pete to send**; To Do reminder set).
   19.7 log loss). Wave term blocked (`reviews/wave-term-blocked-2026-09-07.md`).
 - **Final-two flow for excluded-party cells; calibration by band** (roadmap
   items 3 and 5, unstarted).
-- Smaller: WA breaks out NAT and nothing merges it into LNP's trend (OTH
-  bias +1.71); intra-Coalition seats have no TCP class (2 of 660, AEF has the
+- WA Nationals fold: SHIPPED in v42 (held for Pete: WA primary RMSE 5.46 ->
+  5.34, WA seat log loss +0.004, wa2001 Labor now over-forecast through the
+  anchoring's asymmetry, which is the next thing to look at in the statewide
+  walk). Smaller: intra-Coalition seats have no TCP class (2 of 660, AEF has the
   same limit; zero vic2026 seats affected today); Centre Alliance/SA-BEST
   read as OTH not IND (Pete's call); Orange/Wagga `own_prev_pcv` NA for
   by-election winners (needs a feature, fallback fill refused); the statewide
@@ -95,14 +103,9 @@ stage 1 at 2,000 sims, as-at model cache, `tidy_output.R`); bare output paths
 routed through `out_path()`.
 
 Still open:
-- Fresh clone needs `scripts/fit_mp_slope.R` before `AUSPOL_MP_SLOPE=1`
-  works (deliberate: no silent fallback). Add to `PIPELINE.md` setup.
 - Diagnosed, not built: widening simulated variance for the majors' floor
   seats (`sd_override` into the WA harness); WA personal-vote transfer helps
   Pilbara and hurts WA overall (one seed).
-- base_pred has a slight simulation dependence somewhere beyond the statewide
-  level (WA cells moved 0.08-0.11 between 2,000 and 20,000 sims after the
-  level was pinned); find it or accept it.
 
 ## Data and infra
 
@@ -126,6 +129,10 @@ Still open:
 
 ## Awaiting Pete
 
+- **Ledger v42 (WA Nationals fold): keep or revert?** Primary better (5.18
+  -> 5.15), seat log loss 0.2921 -> 0.2943, every per-pair move inside its
+  SE. Recommendation: keep (a dropped poll series is a bug), and treat the
+  wa2001 Labor over-forecast as the anchoring question for the statewide walk.
 - **Repo public?** Two outward-facing things to be deliberate about:
   `docs/plans/product-features.md` names competitors; the scorecard names
   pollsters. Poll data is the anchor's and not republished; ask permission
