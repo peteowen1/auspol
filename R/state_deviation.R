@@ -43,8 +43,8 @@ NULL
 #' @return Single coefficient, or `NA_real_` when there is too little to fit.
 #' @export
 state_deviation_b <- function(cls, exclude_pair,
-                              oof = "output/xgb-primary-v6-oof-predictions.csv",
-                              dev = "output/state-deviation-features.csv",
+                              oof = out_path("xgb-primary-v6-oof-predictions.csv"),
+                              dev = out_path("state-deviation-features.csv"),
                               shuffle = 0L) {
   if (!file.exists(oof) || !file.exists(dev)) return(NA_real_)
   O <- data.table::fread(oof, showProgress = FALSE)
@@ -91,8 +91,8 @@ state_deviation_b <- function(cls, exclude_pair,
 #'   little to fit.
 #' @export
 state_deviation_b2 <- function(cls, exclude_pair,
-                               oof = "output/xgb-primary-v6-oof-predictions.csv",
-                               dev = "output/state-deviation-features.csv",
+                               oof = out_path("xgb-primary-v6-oof-predictions.csv"),
+                               dev = out_path("state-deviation-features.csv"),
                                shuffle = 0L,
                                lambdas = c(1, 3, 10, 30, 100, 300)) {
   na2 <- c(b_poll = NA_real_, b_elec = NA_real_, lambda = NA_real_, n = NA_real_)
@@ -190,7 +190,7 @@ state_deviation_b2 <- function(cls, exclude_pair,
 #' @return The corrected matrix, rows renormalised to their original totals.
 #' @export
 state_deviation_apply <- function(shares, pair, classes = c("ALP", "LNP"),
-                                  dev = "output/state-deviation-features.csv",
+                                  dev = out_path("state-deviation-features.csv"),
                                   shuffle = 0L, mode = 1L) {
   mode <- suppressWarnings(as.integer(mode))
   if (identical(mode, 2L)) return(.state_deviation_apply2(shares, pair, classes, dev, shuffle))

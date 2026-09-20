@@ -8,8 +8,8 @@ education_residual_b(
   cls,
   exclude_pair,
   feature = "yr12_pct",
-  oof = "output/xgb-primary-v6-oof-predictions.csv",
-  census = "output/census-features.csv",
+  oof = out_path("xgb-primary-v6-oof-predictions.csv"),
+  census = out_path("census-features.csv"),
   shuffle = 0L
 )
 }

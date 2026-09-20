@@ -60,7 +60,7 @@
 #'   federal signal.
 #' @export
 education_order <- function(pair, seats,
-                            file = "output/census-features.csv") {
+                            file = out_path("census-features.csv")) {
   if (!file.exists(file)) {
     return(rep(NA_real_, length(seats)))
   }

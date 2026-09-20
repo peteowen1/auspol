@@ -87,64 +87,41 @@ plan, **Pete to send**; To Do reminder set).
 
 ## Harness and pipeline hygiene
 
-- **DONE 10:40, Pete's ask ("optimise the test-a-theory pipeline")**: the fast
-  loop is `scripts/smoke_pair.sh` + `smoke_diff.R` (one harness, xgb off, 500
-  sims, diff against the last rebuild's stage-1 file: ~4 min); the rebuild's
-  stage 1 runs at 2,000 sims (base_pred is deterministic), ~10 min saved per
-  rebuild; `PIPELINE.md` C0. First use: the screen-silence fix on sa2026,
-  all-cell RMSE 4.93 -> 4.20 in four minutes. 11:50: the as-at primary
-  models now skip when their inputs' hash is unchanged (18 of 22 reused on a
-  no-change rerun; stage 4 ~4 min -> seconds); the forecast statewide level
-  is pinned to 20,000 draws so base_pred no longer jitters with the harness
-  sim count.
+Closed 2026-09-19/20 (detail in DECISIONS and the plans): forecast mode in all
+six harnesses; time-forward folds (as-at models already train on earlier
+elections only); registry fully classified; zero-placeholder audit (the
+52%-NA identity columns stay NA for xgboost); the fast loop (`smoke_pair.sh`,
+stage 1 at 2,000 sims, as-at model cache, `tidy_output.R`); bare output paths
+routed through `out_path()`.
 
-- **DONE 22:50**: `AUSPOL_FORECAST_MODE` wired into nsw/qld/vic/wa through one
-  shared block (`forecast_statewide_or_oracle()`), proven on all four at 2,000
-  sims (forecast statewide error 1.3-2.4 pts per class; wa2021 has no
-  fittable trend and is skipped loudly), and the published default FLIPPED
-  to 1 (Pete's ruling: predictive throughout). **Ledger v39 rebuild under
-  it pending** -- expect worse, honest numbers. The old note that the two
-  modes tie with xgb on was true of the static-OOF path only; the production
-  base_margin path carries the statewide through.
-- CLOSED: time-forward folds -- the as-at models (`fit_xgb_primary_asat.R`,
-  `fit_xgb_flows_asat.R`) train only on elections dated before the target.
-- DONE 12:15: audited every xgb feature for zero placeholders. Beyond the
-  known binary flags nothing else is 0-filled; five candidate-identity
-  columns (`soph_party_i`, `retirement_i`, `is_incumbent_party_i`,
-  `soph_cand_i`, `prev_swing`) are 52% NA and rely on xgboost's native
-  missing handling, which is correct and should stay NA. `permit` now
-  carries NA where the screen is silent; same treatment. Any new column
-  costs ~0.014 pooled RMSE (placebo floor).
-- Package functions read bare relative paths (`surge_hazard_for()`); should
-  resolve via `getOption("auspol.root")`.
-- DONE 23:20: every switch in `MODEL-REGISTRY.md` is classified (was 12 unexplained).
+Still open:
 - Fresh clone needs `scripts/fit_mp_slope.R` before `AUSPOL_MP_SLOPE=1`
-  works (deliberate: no silent fallback).
+  works (deliberate: no silent fallback). Add to `PIPELINE.md` setup.
 - Diagnosed, not built: widening simulated variance for the majors' floor
   seats (`sd_override` into the WA harness); WA personal-vote transfer helps
   Pilbara and hurts WA overall (one seed).
+- base_pred has a slight simulation dependence somewhere beyond the statewide
+  level (WA cells moved 0.08-0.11 between 2,000 and 20,000 sims after the
+  level was pinned); find it or accept it.
 
 ## Data and infra
 
-- VEC feed: email drafted in the booth-model plan, **Pete to send**
-  (communication@vec.vic.gov.au); 2026 configuration not yet published.
-- Tasmanian statewide primaries 2006-2024 are now a hand table
-  (`external/reference/state-elections-statewide.csv`, Wikipedia, tracked).
-  Still to do: read it in `build_state_deviation_features.R` so `state_elec_dev`
-  exists for TAS (Hare-Clark, so no seat rows; only the statewide swing is
-  usable), then re-run the state-deviation v2 plan. ACT/NT not yet tabled.
-- Row-add routine for the two hand tables (HTV order, by-election winners)
-  plus a calendar reminder.
-- DONE 22:40: `build_data_dictionary.R` reads every processed file in full
-  and FAILS on a 100%-empty column (none today).
-- DONE 22:35: vic2022 TCP truth upgraded to the VEC's official 2CP totals for
-  74 seats (`build_aef7_tcp_vic_from_vec.R`); 12 ABC-scrape rows disagreed
-  (Shepparton by 4 points). The VEC page's pair is its indicative count, not
-  the distribution's final two (Hawthorn, Kew, Mulgrave kept from the ABC).
+Closed 2026-09-19/20: poll snapshot + zero-byte guard on every run; the data
+dictionary fails on a 100%-empty column; vic2022 TCP truth from VEC official
+totals (74 seats); Tasmanian statewide primaries hand table; district-to-
+region table (`external/reference/vec/vic-district-regions.csv`) in the
+forecast JSON and on the blog page; To Do reminders for 9 Nov, the HTV row
+and the VEC email.
+
+Still open:
+- VEC feed: 2026 configuration not yet published; **Pete to send the email**
+  drafted in the booth-model plan.
+- Read the Tasmanian table in `build_state_deviation_features.R` so
+  `state_elec_dev` exists for TAS, then re-run the state-deviation v2 plan.
 - Federal results as a correlated signal for state seat lean: needs
   seat-boundary matching (`external/reference/boundaries/` has CED 2016).
 - GDELT parked (needs a GCP project); Census 2006/2001 have no bulk pack.
-- ITG page: seat map and per-seat candidate cards (the table is live).
+- ITG page: a seat map (regions are in the JSON now) and per-seat cards.
 
 ## Awaiting Pete
 

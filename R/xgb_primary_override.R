@@ -27,7 +27,7 @@ xgb_primary_override <- function(shares, pair_label, enabled = NULL) {
   # the live forecast ran v6 -- the two numbers were never about the same
   # model. Both files carry the same 22 pairs and 13,314 (seat, party) rows;
   # v6's is a column superset. AUSPOL_XGB_PRIMARY_OOF names a different file.
-  f <- Sys.getenv("AUSPOL_XGB_PRIMARY_OOF", "output/xgb-primary-asat-predictions.csv")
+  f <- Sys.getenv("AUSPOL_XGB_PRIMARY_OOF", out_path("xgb-primary-asat-predictions.csv"))
   if (!file.exists(f)) {
     cat(sprintf("XG1! %s missing; AUSPOL_XGB_PRIMARY ignored\n", f))
     return(shares)
@@ -45,7 +45,7 @@ xgb_primary_override <- function(shares, pair_label, enabled = NULL) {
   # than blocks, but it warns EVERY TIME the cache is older than a file
   # that could plausibly have changed its content.
   .oof_deps <- c("R/candidate_returns.R", "R/dev_slope.R", "R/salience_screen.R",
-                 "scripts/fit_xgb_primary_v6.R", "scripts/fit_xgb_primary_asat.R", "output/candidacies.csv")
+                 "scripts/fit_xgb_primary_v6.R", "scripts/fit_xgb_primary_asat.R", out_path("candidacies.csv"))
   .oof_deps <- .oof_deps[file.exists(.oof_deps)]
   if (length(.oof_deps)) {
     .stale <- .oof_deps[file.mtime(.oof_deps) > file.mtime(f)]
@@ -173,8 +173,8 @@ xgb_primary_predict_live <- function(shares, mat22, a22, state_mean, returns,
                                       enabled = NULL) {
   if (is.null(enabled)) enabled <- identical(Sys.getenv("AUSPOL_XGB_PRIMARY_LIVE", "0"), "1")
   if (!isTRUE(enabled)) return(shares)
-  model_f <- "output/xgb-primary-v6-final.model"
-  cols_f  <- "output/xgb-primary-v6-final-cols.json"
+  model_f <- out_path("xgb-primary-v6-final.model")
+  cols_f  <- out_path("xgb-primary-v6-final-cols.json")
   if (!file.exists(model_f) || !file.exists(cols_f)) {
     cat(sprintf("XG4! %s / %s missing -- run scripts/fit_xgb_primary_v6_final.R; shares unchanged\n", model_f, cols_f))
     return(shares)
@@ -185,7 +185,7 @@ xgb_primary_predict_live <- function(shares, mat22, a22, state_mean, returns,
   MAJ <- c("ALP", "LNP", "NAT")
   target_election <- sprintf("%s%d", region, year)
   prev_election    <- sprintf("%s%d", region, prev_year)
-  cf <- "output/candidacies.csv"
+  cf <- out_path("candidacies.csv")
   n_prev <- NULL; agg_now <- NULL
   if (file.exists(cf)) {
     C <- data.table::fread(cf, showProgress = FALSE)

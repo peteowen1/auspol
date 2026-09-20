@@ -14,7 +14,11 @@ files <- files[!grepl("pooled", files)]
 # and the reference is the newest file with NO sim tag (a default 20,000-sim
 # run: the last rebuild's stage 1).
 sims <- Sys.getenv("AUSPOL_SMOKE_SIMS", "500")
-smoke <- files[grepl(sprintf("-n%s-", sims), files)]; ref <- files[!grepl("-n[0-9]+-", files)]
+smoke <- files[grepl(sprintf("-n%s-", sims), files)]
+# the reference is any xgb-off file NOT at the smoke sim count: the rebuild's
+# stage 1 runs at 2,000 sims since 2026-09-20 (tagged -n2000-), older ones at
+# the untagged 20,000
+ref <- files[!grepl(sprintf("-n%s-", sims), files)]
 if (!length(smoke)) stop("SD0! no smoke sharedetail (-n", sims, "-) for ", H)
 smoke <- smoke[which.max(file.mtime(smoke))]
 S <- fread(smoke, showProgress = FALSE)

@@ -9,7 +9,7 @@ demographic_residual_apply(
   pair,
   classes = c("ONP", "OTH_RIGHT", "GRN"),
   features = DEMO_FEATURES,
-  census = "output/census-features.csv",
+  census = out_path("census-features.csv"),
   shuffle = 0L
 )
 }

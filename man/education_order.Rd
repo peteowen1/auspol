@@ -4,7 +4,7 @@
 \alias{education_order}
 \title{Order seats by how favourable they are to a right-minor party}
 \usage{
-education_order(pair, seats, file = "output/census-features.csv")
+education_order(pair, seats, file = out_path("census-features.csv"))
 }
 \arguments{
 \item{pair}{Election label, e.g. \code{"qld2020"}, matching \code{census-features.csv}.}

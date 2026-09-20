@@ -71,7 +71,7 @@
 #'   qualifies. `NULL` if the prior file is missing.
 #' @export
 state_swing_adjustment <- function(pair, seat_state, max_gap_months = 24) {
-  f <- Sys.getenv("AUSPOL_STATE_SWING_SRC", "output/state-swing-prior.csv")
+  f <- Sys.getenv("AUSPOL_STATE_SWING_SRC", out_path("state-swing-prior.csv"))
   if (!file.exists(f)) {
     cat(sprintf("SS9! %s missing -- run scripts/build_state_swing_prior.R; AUSPOL_STATE_SWING ignored\n", f))
     return(NULL)

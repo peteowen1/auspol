@@ -8,7 +8,7 @@ state_deviation_apply(
   shares,
   pair,
   classes = c("ALP", "LNP"),
-  dev = "output/state-deviation-features.csv",
+  dev = out_path("state-deviation-features.csv"),
   shuffle = 0L,
   mode = 1L
 )

@@ -7,8 +7,8 @@
 state_deviation_b2(
   cls,
   exclude_pair,
-  oof = "output/xgb-primary-v6-oof-predictions.csv",
-  dev = "output/state-deviation-features.csv",
+  oof = out_path("xgb-primary-v6-oof-predictions.csv"),
+  dev = out_path("state-deviation-features.csv"),
   shuffle = 0L,
   lambdas = c(1, 3, 10, 30, 100, 300)
 )

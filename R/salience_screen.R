@@ -245,7 +245,7 @@ governed_population <- function(election, prev_election, region,
   # ERROR, matching candidate_returns(). Both used to fall through the same
   # silent tryCatch, and a truncated corpus would have filed every returning
   # candidate as a fresh emergence with nothing in the log.
-  cf <- "output/candidacies.csv"
+  cf <- out_path("candidacies.csv")
   C <- if (file.exists(cf)) data.table::fread(cf, showProgress = FALSE) else NULL
   if (is.null(C)) message("salience screen: no ", cf,
                           " -- every candidate treated as not personally returning")

@@ -9,8 +9,8 @@ demographic_residual_fit(
   exclude_pair,
   features = DEMO_FEATURES,
   alphas = c(0, 0.25, 0.5, 0.75, 1),
-  oof = "output/xgb-primary-v6-oof-predictions.csv",
-  census = "output/census-features.csv",
+  oof = out_path("xgb-primary-v6-oof-predictions.csv"),
+  census = out_path("census-features.csv"),
   shuffle = 0L
 )
 }
