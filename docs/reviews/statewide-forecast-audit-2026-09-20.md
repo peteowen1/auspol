@@ -127,6 +127,59 @@ under 5% when AEF gave 8-28%. Ties to the open variance items (majors'
 floor-seat variance, NSW `seat_sd`) and to the state-deviation term for
 federal pairs.
 
+## nsw2023 walked end to end (16:10, `scratchpad/walk_nsw2023.R`)
+
+**The polls the trend saw**, last month (Labor two-party as published, then
+first preferences): Newspoll 52.0 (36/37), Freshwater 53.0 (39/37), Morgan
+52.5 and 53.5, Resolve 52.5 (38/38), Freshwater 53.0 (37/37), Newspoll
+54.5 (38/35). 32 polls in the cycle, the last dated 21 March.
+
+**The trend at the cutoff**: Labor 36.5 (band 34.2-38.9), Coalition 34.7,
+Greens 10.6, Other 16.1; two-party 54.2. **The count: Labor 37.0,
+Coalition 35.4, two-party 54.3.** The trend was right to half a point.
+
+**The fundamentals said 46.5**, a Coalition win. The row: Labor in
+opposition 12 years, Labor governing federally (`fed_aligned = 1`), prior
+two-party 48.0. Ridge fit on 61 elections, lambda 2.89, intercept 50.6;
+contributions in points of Labor two-party:
+
+| feature | value | beta (per sd) | points |
+|---|--:|--:|--:|
+| is_incumbent | 0 | +2.61 | -3.11 |
+| fed_aligned | 1 | -2.43 | -3.22 |
+| govt_years | 0 | -3.43 | +3.13 |
+| opp_years | 12 | +0.67 | +1.90 |
+| prev1 | 48.0 | +2.43 | -0.97 |
+| prev_avg | 49.0 | +0.38 | -0.23 |
+
+Leave-one-out 46.5 (in-sample 48.1). The corpus's own long-opposition
+cases say the opposite of the fit: after 8+ years out, Labor's swing was
+nsw1995 +1.5, nsw2019 +2.3, nsw2023 +6.3, sa2002 +0.6, wa2001 +8.1,
+wa2017 +12.8, wa1993 -3.1, mean +4.1; the ridge gives `opp_years` +1.9
+and cancels it with `fed_aligned` -3.2 (state Labor punished for federal
+Labor governing).
+
+**The mix at one day**: w(trend) = 0.72, fitted on 42 elections where the
+trend's day-before MAE is 1.75 and the fundamentals' 2.69 (mix 1.64, LOO
+1.66). Projection 0.72 x 54.2 + 0.28 x 46.5 = **52.0**.
+
+**The anchoring then moved first preferences to hit 52.0**: Labor 36.5 ->
+32.1 (actual 37.0), Coalition 34.7 -> 36.8 (35.4). The whole nsw2023 miss
+(-4.8 Labor, +1.4 Coalition) is this step; the trend itself would have
+scored 0.5 and 0.7.
+
+Three questions, in order of leverage:
+
+1. **`fed_aligned`** is the largest negative and the shakiest theory (a
+   federal-drag term fitted across 61 elections of mixed vintage). Its
+   leave-one-out value is not known; a pre-registered arm drops it and
+   scores the 42 mix elections on day-before MAE.
+2. **The anchoring takes 4.4 points off Labor and gives the Coalition 2.1**
+   for a 2.1-point two-party move: the asymmetry already seen on wa2001.
+   Why not a symmetric split, or a move in proportion to each party's band?
+3. **The 0.72 weight** is the 42-election optimum and is not the problem on
+   its own; a fundamentals model that is less wrong on long oppositions is.
+
 ## What this audit does not say
 
 It does not decompose the seat-level miss beyond the statewide one (that is
