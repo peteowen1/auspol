@@ -60,6 +60,12 @@ plan, **Pete to send**; To Do reminder set).
   and nsw2023 (Labor 31.3 vs 37.0) are the worst. Every seat inherits it, so
   a point here is worth more than any seat mechanism. Start by walking the
   worst cycles' poll-trend fits with Pete (the "design with Pete" rule).
+  **15:35: the ledger log-loss gap is six 95%+ favourites that lost**
+  (Tangney, Braddon, Parramatta, Maryborough, South Brisbane, Bateman:
+  8.1 points against AEF, total gap 6.1; the other 654 seats are ahead by
+  2.0). Calibration by band otherwise identical to AEF (roadmap item 5
+  DONE, audit review last section). The lever is the simulation's tail,
+  not the mean: why under 5% for the loser where AEF had 8-28%.
 
 - **NSW variance / per-seat `seat_sd`** — design-with-Pete item: the 11 wrong
   nsw seats went to a different beneficiary every time, arguing for seat-level

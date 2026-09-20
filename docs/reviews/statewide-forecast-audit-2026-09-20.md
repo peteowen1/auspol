@@ -91,6 +91,42 @@ statewide Labor -4.8 above wearing a seat mask. So the roadmap's TCP item
 (final-two flow for excluded-party cells) is not where the TCP gap is;
 the nsw2023 statewide walk is.
 
+## Calibration by band: the log-loss gap is six near-certain seats (added 15:35)
+
+Favourite's stated win probability against how often the favourite won,
+660 ledger seats (roadmap item 5). Both sides are calibrated band by band;
+the one difference is the top band.
+
+| band | ours n | ours hit (mean p) | AEF n | AEF hit (mean p) |
+|---|--:|--:|--:|--:|
+| 0.40-0.60 | 48 | 0.56 (0.54) | 53 | 0.55 (0.53) |
+| 0.60-0.80 | 91 | 0.66 (0.71) | 112 | 0.67 (0.71) |
+| 0.80-0.95 | 166 | 0.87 (0.89) | 142 | 0.87 (0.89) |
+| 0.95+ | 354 | **0.98** (0.98) | 352 | **1.00** (0.99) |
+
+Six of our 95%+ favourites lost; one of AEF's did (Bateman wa2025, which
+both missed). Log loss per seat, ours vs AEF (lower is better):
+
+| pair | seat | we said | AEF said | winner | ours | AEF |
+|---|---|--:|--:|---|--:|--:|
+| fed2022 | Tangney | LNP 0.951 | 0.916 | ALP | 3.10 | 2.48 |
+| fed2025 | Braddon | LNP 0.950 | 0.848 | ALP | 4.00 | 2.04 |
+| nsw2023 | Parramatta | LNP 0.964 | 0.717 | ALP | 3.33 | 0.33 |
+| qld2024 | Maryborough | ALP 0.951 | 0.938 | LNP | 3.08 | 2.90 |
+| qld2024 | South Brisbane | GRN 0.984 | 0.836 | ALP | 4.39 | 1.82 |
+| wa2025 | Bateman | LNP 0.958 | 0.964 | ALP | 3.17 | 3.43 |
+
+Net 8.1 log-loss points against AEF from these six, against a total gap of
+6.1 (0.0092 x 660); the other 654 seats are ahead of AEF by 2.0. Two are
+the state-swing group (Tangney, Braddon: a WA and a Tasmanian swing the
+federal model did not carry), Parramatta is the nsw2023 statewide miss
+again, South Brisbane is a Greens seat lost on Labor preferences flowing
+the other way. **The ledger is decided in the tails**: the question is not
+the mean forecast in these seats but why the simulation gave the loser
+under 5% when AEF gave 8-28%. Ties to the open variance items (majors'
+floor-seat variance, NSW `seat_sd`) and to the state-deviation term for
+federal pairs.
+
 ## What this audit does not say
 
 It does not decompose the seat-level miss beyond the statewide one (that is
