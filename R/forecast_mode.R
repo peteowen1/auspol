@@ -187,6 +187,12 @@ statewide_draws_as_at <- function(region, year, as_at, election_date, parties,
   # still lost on rebuild v43 (ledger 0.2943 -> 0.3022), because the phantom
   # vote offsets the anchoring below pushing the Coalition up. The two must
   # change together. docs/plans/prereg-phantom-minor-vote-2026-09-20.md.
+  #
+  # AUSPOL_ANCHOR_IMPLIED=1 is that joint change (the arm pre-registered in
+  # docs/plans/prereg-anchor-implied-tpp-2026-09-20.md): unpolled classes draw
+  # exactly zero here, and the anchoring below takes its trend input from the
+  # draws' own implied two-party rather than the published TPP series.
+  anchor_implied <- identical(Sys.getenv("AUSPOL_ANCHOR_IMPLIED", "0"), "1")
 
   if (!is.null(seed)) set.seed(seed)
   K <- length(parties)
@@ -203,17 +209,14 @@ statewide_draws_as_at <- function(region, year, as_at, election_date, parties,
   # CLAUDE.md records twice.
   draws <- pmax(draws, 0.1)
   colnames(draws) <- parties
+  if (anchor_implied && length(folded)) {
+    draws[, folded] <- 0
+    cat(sprintf("AI1  %s%d: unpolled classes drawn at exactly zero: %s\n",
+                region, year, paste(folded, collapse = ", ")))
+  }
   draws <- draws / rowSums(draws) * 100
 
-  if (is.function(tpp_target)) tpp_target <- tpp_target(tr$tpp)
   if (!is.null(tpp_target)) {
-    if (!all(c("mean", "sd") %in% names(tpp_target)) ||
-        !is.finite(tpp_target$mean) || !is.finite(tpp_target$sd) ||
-        tpp_target$sd <= 0) {
-      stop("tpp_target must supply a finite `mean` and a positive `sd`. A ",
-           "zero or missing sd would anchor every draw to one two-party value ",
-           "and remove the uncertainty this function exists to carry.")
-    }
     flow_of <- function(p) {
       f <- fl$flow_alp[fl$party == p]
       if (length(f)) f[1] / 100 else 0.489
@@ -233,6 +236,23 @@ statewide_draws_as_at <- function(region, year, as_at, election_date, parties,
     for (cls in names(folded_into)) if (cls == "LNP") for (q in names(folded_into[[cls]])) {
       share_of_col <- if (isTRUE(mu[[cls]] > 0)) folded_into[[cls]][[q]] / mu[[cls]] else 0
       implied <- implied + draws[, cls] * share_of_col * flow_of(q)
+    }
+    # The mix's trend input: the published TPP series by default; under the
+    # arm, the two-party these draws already imply, so the anchoring spends
+    # nothing reconciling two estimates of one quantity and applies only the
+    # fundamentals' pull. Both printed, so the arm shows what it changed.
+    trend_in <- if (anchor_implied) mean(implied) else tr$tpp
+    if (anchor_implied) {
+      cat(sprintf("AI2  %s%d: mix trend input = implied %.2f (published TPP series %.2f, gap %+.2f)\n",
+                  region, year, mean(implied), tr$tpp, mean(implied) - tr$tpp))
+    }
+    if (is.function(tpp_target)) tpp_target <- tpp_target(trend_in)
+    if (!all(c("mean", "sd") %in% names(tpp_target)) ||
+        !is.finite(tpp_target$mean) || !is.finite(tpp_target$sd) ||
+        tpp_target$sd <= 0) {
+      stop("tpp_target must supply a finite `mean` and a positive `sd`. A ",
+           "zero or missing sd would anchor every draw to one two-party value ",
+           "and remove the uncertainty this function exists to carry.")
     }
     target <- stats::rnorm(n_sims, tpp_target$mean, tpp_target$sd)
     d <- target - implied

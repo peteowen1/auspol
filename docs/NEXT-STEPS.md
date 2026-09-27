@@ -5,6 +5,18 @@ it stood before this rewrite: `backlog/journal-2026-09-19-hub-snapshot.md`).
 Decisions: `docs/DECISIONS.md`. Every seat verdict: `docs/SEAT-REGISTRY.md`.
 Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30.
 
+## 2026-09-27
+
+v42 KEPT (Pete). No model freeze: keep improving to 28 Nov, each change a
+ledger version. Production fixes: 21 Sep publish failure (`fit_seats.R`
+sprintf) fixed and the retired two-party model removed from `run_all.R`
+(refresh run 36321725267 green); history `built_at` drift fixed; ITG page's
+false "beats the benchmark on log loss" claim corrected, blog PR #743
+awaiting Pete's merge (the merge was blocked for me). Open for the page:
+`build_page.R:263` still takes pendulum rows from `simulate_seats()`; seat
+map, per-seat cards, forecast-over-time chart. In flight: the
+`AUSPOL_ANCHOR_IMPLIED` arm (built in both paths, off).
+
 ## Where things stand (2026-09-20 17:40)
 
 **Ledger v42** (660 AEF-7 seats, predictive throughout, 20,000 sims; lower
@@ -123,14 +135,9 @@ Still open:
 
 ## Awaiting Pete
 
-- **Ledger v42 (WA Nationals fold): keep or revert?** Primary better (5.18
-  -> 5.15), seat log loss 0.2921 -> 0.2943, every per-pair move inside its
-  SE. Recommendation: keep (a dropped poll series is a bug), and treat the
-  wa2001 Labor over-forecast as the anchoring question for the statewide walk.
-- **Repo public?** Two outward-facing things to be deliberate about:
-  `docs/plans/product-features.md` names competitors; the scorecard names
-  pollsters. Poll data is the anchor's and not republished; ask permission
-  before going public.
+- **The repo is ALREADY public** (found 2026-09-27; this item used to ask
+  whether to make it so). `docs/plans/product-features.md` names competitors
+  and the scorecard names pollsters: is that fine as it stands?
 - The four improvement-quiz questions (`ANCHOR-MODEL.md`, "Honest
   assessment"); two now have measured answers.
 - Market odds or seat polls as an exogenous input for new independents: a

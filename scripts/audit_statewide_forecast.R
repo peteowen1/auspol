@@ -37,10 +37,11 @@ for (pr in P) {
       cls = cl, forecast = round(fc$st_fc[[cl]], 2), actual = round(act[[cl]], 2), miss = round(fc$st_fc[[cl]] - act[[cl]], 2))
 }
 A <- rbindlist(rows)
-fwrite(A, "output/statewide-forecast-audit.csv")
+AUDIT_F <- sprintf("output/statewide-forecast-audit%s.csv", Sys.getenv("AUSPOL_AUDIT_TAG", ""))
+fwrite(A, AUDIT_F)
 cat("SA1  day-before statewide forecast miss (forecast - actual, first-preference points) by pair and class; lower |miss| is better\n")
 W <- dcast(A[cls %in% c("ALP", "LNP", "GRN", "ONP")], pair + n_polls + trend_tpp + fund_tpp + w_trend ~ cls, value.var = "miss")
 print(W[order(pair)])
 cat("SA2  mean |miss| over ALP/LNP/GRN by pair, worst first:\n")
 print(A[cls %in% c("ALP", "LNP", "GRN"), .(mean_abs_miss = round(mean(abs(miss)), 2), alp_miss = round(miss[cls == "ALP"], 2)), by = pair][order(-mean_abs_miss)])
-cat("SA3  wrote output/statewide-forecast-audit.csv\n")
+cat(sprintf("SA3  wrote %s (AUSPOL_ANCHOR_IMPLIED=%s)\n", AUDIT_F, Sys.getenv("AUSPOL_ANCHOR_IMPLIED", "0")))

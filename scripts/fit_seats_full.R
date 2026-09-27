@@ -500,8 +500,8 @@ days_out <- as.integer(cycles[region == "vic" & year == 2026, end] - Sys.Date())
 fdat <- build_fundamentals_data(); m_tpp <- fit_fundamentals(fdat, "@TPP")
 live <- build_fundamentals_data(polled_only = FALSE, require_actual = FALSE)
 kf <- live$region == "vic" & live$year == 2026 & live$party == "@TPP"
-pj <- project_result(now$tpp, predict_fundamentals(m_tpp, live[which(kf), ]),
-                     mix, days_out)
+fund_now <- predict_fundamentals(m_tpp, live[which(kf), ])
+pj <- project_result(now$tpp, fund_now, mix, days_out)
 growth <- pj$sd / ((tppr$hi95 - tppr$lo95) / (2 * 1.96))
 cat(sprintf("projected ALP two-party %.2f (95%%: %.2f-%.2f), %d days out, sd x%.2f\n",
             pj$mean, pj$lo95, pj$hi95, days_out, growth))
@@ -1173,6 +1173,17 @@ flow_of <- function(p) {
 minors <- setdiff(parties, c("ALP", "LNP"))
 implied <- sw_draws[, "ALP"] +
   rowSums(vapply(minors, function(p) sw_draws[, p] * flow_of(p), numeric(N_SIMS)))
+# AUSPOL_ANCHOR_IMPLIED=1 (arm, plans/prereg-anchor-implied-tpp-2026-09-20.md):
+# the mix's trend input becomes the two-party these draws already imply, not
+# the trend's published TPP series, so the anchoring applies only the
+# fundamentals' pull. Same change as R/forecast_mode.R, minus its phantom-vote
+# half: here an unpolled class draws around its seat mean (line ~1141), not 0.
+if (identical(Sys.getenv("AUSPOL_ANCHOR_IMPLIED", "0"), "1")) {
+  pj_pub <- pj
+  pj <- project_result(mean(implied), fund_now, mix, days_out)
+  cat(sprintf("AI2  vic2026: mix trend input = implied %.2f (published TPP %.2f); projection %.2f -> %.2f\n",
+              mean(implied), now$tpp, pj_pub$mean, pj$mean))
+}
 target <- stats::rnorm(N_SIMS, pj$mean, pj$sd)
 d <- target - implied
 sw_draws[, "ALP"] <- pmax(0.1, sw_draws[, "ALP"] + d)

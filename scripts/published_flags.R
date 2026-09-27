@@ -603,7 +603,8 @@ PUBLISHED_FLAGS <- c(
                                              # v6 must run before v7: v7 loads its persisted feature matrix as its base,
                                              # including the notional-prior x_notional_adj column. Set to "" to fall
                                              # back to plain v6 (output/xgb-primary-v6-oof-predictions.csv).
-  AUSPOL_FLOW_SHRINK_K       = "0"           # data-weighted flow-cell smoothing -- REFUSED 2026-09-10, worse pooled at every tested k (0.339-0.354 vs baseline 0.339); helps Ballarat's own cell exactly as designed but federal/WA dominate the aggregate. docs/reviews/flow-cell-shrinkage-REFUSED-2026-09-10.md
+  AUSPOL_FLOW_SHRINK_K       = "0",          # data-weighted flow-cell smoothing -- REFUSED 2026-09-10, worse pooled at every tested k (0.339-0.354 vs baseline 0.339); helps Ballarat's own cell exactly as designed but federal/WA dominate the aggregate. docs/reviews/flow-cell-shrinkage-REFUSED-2026-09-10.md
+  AUSPOL_ANCHOR_IMPLIED      = "0"           # ARM, not shipped (plans/prereg-anchor-implied-tpp-2026-09-20.md): "1" feeds the two-party mix the draws' OWN flow-implied two-party instead of the trend's published TPP series, so the anchoring applies only the fundamentals' pull; in the backtests it also zeroes unpolled classes (the phantom vote). Live Victoria gets the first half only -- its unpolled classes draw from their seat mean, not from 0 +/- 2.85.
 )
 
 # Apply to whatever the caller left unset. Returns the names it set.
