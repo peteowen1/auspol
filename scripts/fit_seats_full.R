@@ -1185,7 +1185,19 @@ if (identical(Sys.getenv("AUSPOL_ANCHOR_IMPLIED", "0"), "1")) {
               mean(implied), now$tpp, pj_pub$mean, pj$mean))
 }
 target <- stats::rnorm(N_SIMS, pj$mean, pj$sd)
-d <- target - implied
+# AUSPOL_ANCHOR_EXHAUST=1: implied two-party net of exhausted ballots, as in
+# R/forecast_mode.R (plans/prereg-anchor-exhaust-2026-09-27.md). Victoria's
+# flows carry no exhaust, so this is inert here by construction; it is wired
+# so the live and backtest anchoring stay one recipe.
+ex_share <- .exhaust_shares(fl, minors)
+if (identical(Sys.getenv("AUSPOL_ANCHOR_EXHAUST", "0"), "1") && any(ex_share > 0)) {
+  lost <- vapply(minors, function(p) sw_draws[, p] * ex_share[[p]], numeric(N_SIMS))
+  den <- 100 - rowSums(lost)
+  implied <- 100 * (implied - rowSums(sweep(lost, 2, vapply(minors, flow_of, 1), "*"))) / den
+  d <- (target - implied) * den / 100
+} else {
+  d <- target - implied
+}
 sw_draws[, "ALP"] <- pmax(0.1, sw_draws[, "ALP"] + d)
 sw_draws[, "LNP"] <- pmax(0.1, sw_draws[, "LNP"] - d)
 sw_draws <- sw_draws / rowSums(sw_draws) * 100

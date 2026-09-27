@@ -56,3 +56,28 @@ Coalition falls by the same; every non-NSW pair is byte-identical.
 **What would make a win unacceptable**: an improvement in one NSW pair paired
 with a worsening in the other (a units fix should move both the same way),
 or any movement outside NSW.
+
+## RESULT (added 2026-09-27 after running; everything above is unedited)
+
+Audit `output/statewide-forecast-audit-ae1.csv` against `-base27sep.csv`,
+same code, `AUSPOL_ANCHOR_EXHAUST=1` only.
+
+1. **Guard: PASS.** 130 of 130 non-NSW cells identical.
+2. **Primary: FAILS on the pre-registered unacceptable condition.** The four
+   ALP/LNP cells' mean |miss| falls 2.197 -> 1.883, but the two pairs move
+   in opposite directions: nsw2023 mean |miss| ALP/LNP/GRN 2.257 -> 1.317
+   (ALP -4.83 -> -3.35, LNP +1.41 -> -0.07), nsw2019 1.027 -> 1.547
+   (ALP -0.51 -> +0.78, LNP -2.04 -> -3.33). The fix moves ~1.3 points of
+   first preference from the Coalition to Labor in both, as predicted.
+
+Why nsw2019 worsens: its Coalition was already 2.04 low before the fix,
+because the unpolled classes are over-forecast (IND 7.61 vs 4.77 actual,
+OTH_RIGHT 5.68 vs 4.99). The exhaustion bug was partly offsetting that. In
+nsw2023 the unpolled classes miss the other way round (OTH_RIGHT +4.30,
+IND -2.35).
+
+Verdict: arm stays OFF, per the rule. The units defect is real and remains
+in the code behind the flag. It cannot ship on its own while the unpolled
+classes' statewide level is wrong, because that error is what it was
+offsetting in 2019. Next: how unpolled classes get their statewide level in
+`forecast_statewide_for()` (the columns it replaces for folded classes).
