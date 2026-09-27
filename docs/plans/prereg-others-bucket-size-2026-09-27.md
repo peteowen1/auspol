@@ -54,3 +54,33 @@ where the bucket shrinks. Live Victoria: OTH/IND/OTH_RIGHT fall, majors rise.
 or after the one it is applied to (each run prints the pairs and n it used);
 the primary passing only because of one pair (reported with the largest
 single mover removed).
+
+## RESULT (added 2026-09-28 after running; everything above is unedited)
+
+History `output/others-bucket-history.csv` from the switch-off audit
+(`-base27sepB`); arm audit `-ob1`. Leakage condition held: every pair's `k`
+used only earlier elections (printed as `OB2`, latest pair always before the
+target; wa2001 n=0 and wa2005 n=1 got k=1 as specified).
+
+1. **Primary: FAILS.** Mean |bucket size error| over 22 pairs 2.010 ->
+   1.783, change -0.228, paired SE 0.238 (t -0.96); the bar was -1 SE.
+   The unacceptable-win check (largest mover removed) was meant to stop a
+   win carried by one pair, and is NOT used to rescue a failure: without
+   fed2007 the change is -0.373, SE 0.197.
+2. Do no harm: PASS. Mean |miss| ALP/LNP/GRN 1.758 -> 1.740 (SE 0.042);
+   ALP signed -0.76 -> -0.55, LNP -0.68 -> -0.42.
+
+What sank it: fed2007, k = 1.323 fitted on two WA elections (wa2001,
+wa2005, both under-forecast), size error 2.02 -> 4.85. With n = 2 the
+weight `w = m^2 / (m^2 + se^2)` came out 0.97 because two same-sign points
+give a small `se` that is itself barely estimated. From ~12 earlier
+elections on, the correction helps in every pair whose bucket was
+over-forecast: nsw2023 -1.86, vic2022 -1.68, sa2022 -1.49, nsw2019 -1.22,
+sa2026 -1.12, fed2019 -1.02. It hurts the three recent pairs whose bucket
+was already right (fed2022 +1.31, fed2025 +1.03, wa2025 +1.39).
+
+Verdict: stays OFF. Live `fit_seats_full.R` was NOT wired (the arm did not
+pass); the switch exists in the backtest path only, registered off in
+`published_flags.R`. A v2 would need a small-n weight that does not trust an
+`se` from two points; that is motivated by this result and has to be
+pre-registered as such, not slipped in as a fix.

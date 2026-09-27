@@ -217,6 +217,21 @@ statewide_draws_as_at <- function(region, year, as_at, election_date, parties,
   }
   draws <- draws / rowSums(draws) * 100
 
+  # AUSPOL_OTHERS_SCALE=1: the unpolled "others" bucket (OTH plus every folded
+  # class) shrunk by the poll overstatement measured on elections held BEFORE
+  # this one; the share removed goes back to the polled classes, and the
+  # anchoring below then re-balances Labor and Coalition to the two-party
+  # target. docs/plans/prereg-others-bucket-size-2026-09-27.md.
+  if (identical(Sys.getenv("AUSPOL_OTHERS_SCALE", "0"), "1")) {
+    ob <- others_bucket_scale(election_date)
+    bucket <- intersect(c("OTH", folded), parties)
+    before_b <- mean(rowSums(draws[, bucket, drop = FALSE]))
+    draws <- others_bucket_apply(draws, bucket, ob$k)
+    cat(sprintf("OB2  %s%d: others bucket x%.3f (n %d earlier elections, latest %s; w %.2f): %.2f -> %.2f\n",
+                region, year, ob$k, ob$n, if (ob$n) utils::tail(ob$pairs, 1) else "none",
+                ob$w, before_b, mean(rowSums(draws[, bucket, drop = FALSE]))))
+  }
+
   if (!is.null(tpp_target)) {
     flow_of <- function(p) {
       f <- fl$flow_alp[fl$party == p]

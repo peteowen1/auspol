@@ -34,7 +34,12 @@ for (pr in P) {
   for (cl in intersect(names(fc$st_fc), names(act)))
     rows[[length(rows) + 1]] <- data.table(pair = el, region = reg, n_polls = fc$n_polls, trend_tpp = round(fc$tpp, 2),
       fund_tpp = round(fc$fund, 2), w_trend = round(w, 2), anchored_tpp = round(fc$implied_tpp, 2),
-      cls = cl, forecast = round(fc$st_fc[[cl]], 2), actual = round(act[[cl]], 2), miss = round(fc$st_fc[[cl]] - act[[cl]], 2))
+      cls = cl, forecast = round(fc$st_fc[[cl]], 2), actual = round(act[[cl]], 2), miss = round(fc$st_fc[[cl]] - act[[cl]], 2),
+      # the unpolled "others" bucket (OTH plus every class folded into it), and
+      # the switch state, so scripts/build_others_bucket_history.R can refuse a
+      # run whose bucket was already corrected
+      in_bucket = cl %in% c("OTH", fc$folded),
+      others_scale = Sys.getenv("AUSPOL_OTHERS_SCALE", "0"))
 }
 A <- rbindlist(rows)
 AUDIT_F <- sprintf("output/statewide-forecast-audit%s.csv", Sys.getenv("AUSPOL_AUDIT_TAG", ""))
