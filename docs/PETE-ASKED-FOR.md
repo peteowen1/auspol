@@ -26,6 +26,13 @@ not a commit, not a plan file — that it is not happening and why.
 
 ---
 
+## 2026-09-27
+
+| ask | status |
+|---|---|
+| *"lets work through all our next steps and get to a point where we're happy having our predictions productionised on the website at ITG"* | **IN PROGRESS.** Done: the page's false claim that we beat the benchmark on seat log loss corrected (blog `150f8cb1`, PR pending review); the 21 Sep publish failure fixed (`8cedc65`) and the retired two-party model taken out of the daily run (`38242bf`); history `built_at` format drift fixed (`7b380b8`). Open: `build_page.R` still reads `simulate_seats()` for pendulum rows; seat map, per-seat cards, forecast-over-time chart on the page. |
+| *"weve still got ages of time ... should be improving the model over the next month getting it as good as possible - and just noting improvements made"* | **STANDING.** No model freeze before 28 Nov. Every shipped change is logged as a ledger version (v42 is current) with its before/after numbers. |
+
 ## 2026-09-20
 
 | ask | status |
