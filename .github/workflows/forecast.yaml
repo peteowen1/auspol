@@ -374,7 +374,6 @@ jobs:
             output/victoria-2026.html
             output/vic-page-data.json
             output/projection-mix.csv
-            output/seats-vic-2026.csv
             run.log
           retention-days: 30
           if-no-files-found: warn
