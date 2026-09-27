@@ -44,3 +44,23 @@ live Victoria's others total goes 12.65 (remainder) -> ~10.8.
 **What would make a win unacceptable**: the primary passing only because of
 one pair (reported with the largest mover removed); any pair where OTH had
 no fitted series changing at all (the rule must not touch them).
+
+## RESULT (added 2026-09-28 after running; everything above is unedited)
+
+Audit `-cp1` against `-base27sepB`, same code. 21 of 22 pairs had a fitted
+OTH series (`CP1` lines; fitted sums 94.75 to 102.94); wa2005 had none and
+is byte-identical (the out-of-scope check holds).
+
+1. **Primary: FAILS.** Mean |bucket size error| 2.010 -> 2.005, change
+   -0.005, paired SE 0.357 (t -0.02). Largest mover removed (wa2001):
+   -0.230, SE 0.291, also fails. It fixes 12 pairs (fed2019 -2.37, sa2022
+   -1.99, qld2024 -1.66, nsw2023 -1.64, wa2017 -1.56) and badly worsens
+   others (wa2001 +4.72, fed2022 +3.13, fed2016 +2.45, wa2025 +0.94).
+2. Do no harm: PASS. Mean |miss| ALP/LNP/GRN 1.758 -> 1.813 (+0.055, SE
+   0.084). Majors' bias nearly gone: ALP -0.76 -> -0.30, LNP -0.68 -> -0.11.
+
+**The hypothesis that the remainder rule causes the +2 others bias is
+refuted as a general explanation**: the polls' own fitted OTH is sometimes
+further from the result than the remainder was. Verdict: stays OFF; the
+rebuild (criterion 3) is not reached. The live level-parity question goes
+back to Pete with this result.

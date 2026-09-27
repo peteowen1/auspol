@@ -170,7 +170,21 @@ statewide_draws_as_at <- function(region, year, as_at, election_date, parties,
     folded_into[[cls]] <- c(folded_into[[cls]], stats::setNames(r$mean[1], q))
     cat(sprintf("FM1  %s%d: fitted series %s (%.1f) folded into class %s\n", region, year, q, r$mean[1], cls))
   }
-  if ("OTH" %in% parties) {
+  close_prop <- identical(Sys.getenv("AUSPOL_CLOSE_PROPORTIONAL", "0"), "1")
+  if (close_prop && "OTH" %in% fp_parties && "OTH" %in% parties) {
+    # AUSPOL_CLOSE_PROPORTIONAL=1: the trend fits each party separately, so the
+    # endpoints need not sum to 100. Rescale every fitted class, OTH included,
+    # by 100 / sum -- derive_tpp()'s normalisation -- rather than dumping the
+    # shortfall into OTH, which put ~2 points too many into the others bucket
+    # in 17 of 22 elections. docs/plans/prereg-close-proportional-2026-09-28.md.
+    fitted_cls <- names(mu)[mu > 0]
+    raw_sum <- sum(mu[fitted_cls])
+    mu[fitted_cls] <- mu[fitted_cls] * 100 / raw_sum
+    # the series folded into a class are part of its mean; keep their share of it
+    folded_into <- lapply(folded_into, function(v) v * 100 / raw_sum)
+    cat(sprintf("CP1  %s%d: fitted endpoints summed %.2f, rescaled to 100 (OTH %.2f)\n",
+                region, year, raw_sum, mu[["OTH"]]))
+  } else if ("OTH" %in% parties) {
     # everything unfitted lands here, so its mean absorbs the remainder
     mu[["OTH"]] <- max(0.1, 100 - sum(mu[setdiff(parties, "OTH")]))
   }

@@ -547,7 +547,13 @@ LEVEL_ANCHOR <- identical(Sys.getenv("AUSPOL_LIVE_LEVEL_ANCHOR", "0"), "1")
 # THEN anchor, or the shift is computed on a level no seat ever sees.
 ll_sum_raw <- sum(state_mean)
 if (LEVEL_ANCHOR && "OTH" %in% names(state_mean)) {
-  state_mean[["OTH"]] <- max(0.1, 100 - sum(state_mean[setdiff(names(state_mean), "OTH")]))
+  if (identical(Sys.getenv("AUSPOL_CLOSE_PROPORTIONAL", "0"), "1")) {
+    # as R/forecast_mode.R under the same switch: rescale every class, not
+    # just OTH (plans/prereg-close-proportional-2026-09-28.md)
+    state_mean <- state_mean * 100 / sum(state_mean)
+  } else {
+    state_mean[["OTH"]] <- max(0.1, 100 - sum(state_mean[setdiff(names(state_mean), "OTH")]))
+  }
 }
 ll_before <- ll_implied(state_mean * 100 / sum(state_mean))
 ll_delta <- pj$mean - ll_before
