@@ -522,6 +522,49 @@ cat(sprintf("FP sd mode: %s; statewide sds %.2f-%.2f (trend %.2f-%.2f)
 state_mean <- setNames(sw$mean, sw$party)
 state_sd   <- setNames(sw$sd_proj, sw$party)
 
+# ---- LL1: the statewide LEVEL anchored to the projection, as the backtests do
+# The backtests hand the seats colMeans() of the ANCHORED draws
+# (forecast_statewide_or_oracle()), so their level implies the projected
+# two-party. Here the seats are built from `state_mean`, and the draws'
+# anchoring further down moves only the draws -- whose mean
+# simulate_seat_contests() subtracts (R/seat_sim.R:970) -- so the fundamentals
+# pull never reached a seat and the ledger scored a recipe this script did not
+# run. Shifting Labor and the Coalition here, with the same flows the draws'
+# anchoring uses, makes the two the same recipe. Before AUSPOL_FORCE_FP on
+# purpose: a forced vote must stay where it was forced.
+# docs/plans/prereg-live-level-anchor-2026-09-28.md.
+ll_flow <- function(p) { f <- fl$flow_alp[fl$party == p]; if (length(f)) f[1] / 100 else 0.489 }
+ll_implied <- function(sm) {
+  mnr <- setdiff(names(sm), c("ALP", "LNP"))
+  sm[["ALP"]] + sum(vapply(mnr, function(p) sm[[p]] * ll_flow(p), numeric(1)))
+}
+LEVEL_ANCHOR <- identical(Sys.getenv("AUSPOL_LIVE_LEVEL_ANCHOR", "0"), "1")
+# The trend fits each party separately, so its endpoints need not sum to 100
+# (97.93 on 2026-09-28). The seat shares are renormalised later, so the level
+# they actually carry is this one rescaled -- which implied 48.90 two-party
+# where the raw sum read 47.88. The backtests close the total by making OTH the
+# remainder (R/forecast_mode.R, `mu[["OTH"]] <- 100 - sum(...)`); do the same,
+# THEN anchor, or the shift is computed on a level no seat ever sees.
+ll_sum_raw <- sum(state_mean)
+if (LEVEL_ANCHOR && "OTH" %in% names(state_mean)) {
+  state_mean[["OTH"]] <- max(0.1, 100 - sum(state_mean[setdiff(names(state_mean), "OTH")]))
+}
+ll_before <- ll_implied(state_mean * 100 / sum(state_mean))
+ll_delta <- pj$mean - ll_before
+if (LEVEL_ANCHOR) {
+  state_mean[["ALP"]] <- state_mean[["ALP"]] + ll_delta
+  state_mean[["LNP"]] <- state_mean[["LNP"]] - ll_delta
+}
+cat(sprintf("LL1  statewide level %s: trend endpoints sum %.2f (OTH now %.2f, sum %.2f); trend implies %.2f two-party, projection %.2f; ALP %+.2f, LNP %+.2f first preference; now implies %.2f\n",
+            if (LEVEL_ANCHOR) "ANCHORED" else "NOT anchored (AUSPOL_LIVE_LEVEL_ANCHOR=0)",
+            ll_sum_raw, state_mean[["OTH"]], sum(state_mean),
+            ll_before, pj$mean, if (LEVEL_ANCHOR) ll_delta else 0,
+            if (LEVEL_ANCHOR) -ll_delta else 0, ll_implied(state_mean * 100 / sum(state_mean))))
+if (LEVEL_ANCHOR && abs(ll_implied(state_mean) - pj$mean) > 0.01) {
+  stop("LL1 FAILED: the anchored level implies ", round(ll_implied(state_mean), 3),
+       " two-party against a projection of ", round(pj$mean, 3), ".")
+}
+
 # ---- where a party's extra votes come from ----------------------------------
 # South Australia, March 2026, is the only completed election where One Nation
 # moved on the scale Victoria is forecasting, and it says where the votes came
@@ -1140,6 +1183,24 @@ if (!identical(COR_MODE, "off") && nzchar(COR_MODE)) {
 mu <- vapply(parties, function(p) {
   if (is.na(state_mean[p])) mean(shares[, p]) else state_mean[[p]]
 }, numeric(1))
+# LL3. THE OTHERS BUCKET WAS COUNTED TWICE HERE: state_mean[["OTH"]] is the
+# whole unpolled total, which the seat shares above split into OTH, IND and
+# OTH_RIGHT (scale_to), yet the draws took the WHOLE total for OTH and added
+# IND and OTH_RIGHT on top -- ~7 points renormalised away, shrinking every
+# class's spread and putting the draws' two-party ~1 point off the level
+# (LL2 read -1.0 with the level anchored). The backtests split the bucket
+# with its total preserved (R/forecast_statewide.R), so this is the same
+# recipe. docs/plans/prereg-live-level-anchor-2026-09-28.md (amendment).
+DRAW_BUCKET_FIX <- identical(Sys.getenv("AUSPOL_LIVE_DRAW_BUCKET", "1"), "1")
+if (DRAW_BUCKET_FIX && length(unmodelled) && !is.na(state_mean["OTH"])) {
+  for (p in intersect(c(unmodelled, "OTH"), parties)) mu[[p]] <- a22[[p]] * scale_to
+  if (!all(is.finite(mu))) stop("LL3: a bucket class has no 2022 share to split by: ",
+                                paste(names(mu)[!is.finite(mu)], collapse = ", "))
+  cat(sprintf("LL3  others bucket in the draws split, not double-counted: %s (sum %.2f = state OTH %.2f)\n",
+              paste(sprintf("%s %.2f", intersect(c(unmodelled, "OTH"), parties),
+                            mu[intersect(c(unmodelled, "OTH"), parties)]), collapse = ", "),
+              sum(mu[intersect(c(unmodelled, "OTH"), parties)]), state_mean[["OTH"]]))
+}
 if (is.null(sw_cor)) {
   sw_draws <- vapply(parties, function(p)
     pmax(0.1, stats::rnorm(N_SIMS, mu[[p]], psd[[p]])), numeric(N_SIMS))
@@ -1198,6 +1259,10 @@ if (identical(Sys.getenv("AUSPOL_ANCHOR_EXHAUST", "0"), "1") && any(ex_share > 0
 } else {
   d <- target - implied
 }
+# With LL1 on, the level already implies the projection, so this mean shift
+# should be ~0; with it off it is the whole trend-to-projection gap.
+cat(sprintf("LL2  draws' anchoring mean shift %+.3f (LL1 %s)\n", mean(d),
+            if (LEVEL_ANCHOR) "on" else "off"))
 sw_draws[, "ALP"] <- pmax(0.1, sw_draws[, "ALP"] + d)
 sw_draws[, "LNP"] <- pmax(0.1, sw_draws[, "LNP"] - d)
 sw_draws <- sw_draws / rowSums(sw_draws) * 100
