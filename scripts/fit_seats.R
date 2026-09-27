@@ -84,7 +84,9 @@ zero <- simulate_seats(seats26, tpp_mean = PREV_TPP, tpp_sd = 0,
                        prev_tpp = PREV_TPP, seat_sd = within_sd,
                        region_sd = region_sd, n_sims = 20000, seed = 1)
 med0 <- stats::median(zero$seats_won)
-cat(sprintf("S1  at zero swing: median %d classic seats (2022 actual %d of %d)  diff %+d\n",
+# %g, not %d: a median over an even number of sims can land on x.5, and
+# sprintf("%d") on a non-whole double throws.
+cat(sprintf("S1  at zero swing: median %g classic seats (2022 actual %d of %d)  diff %+g\n",
             med0, PREV_SEATS, CHAMBER, med0 - PREV_SEATS))
 stopifnot(abs(med0 - PREV_SEATS) <= 3)
 stopifnot(zero$n_classic + zero$n_nonclassic == CHAMBER)
@@ -175,7 +177,9 @@ sim <- simulate_seats(seats26, pj$mean, pj$sd, PREV_TPP, within_sd,
 total_alp <- sim$alp_total
 q <- stats::quantile(total_alp, c(0.05, 0.25, 0.5, 0.75, 0.95))
 
-cat(sprintf("ALP seats: median %d  (50%%: %d-%d, 90%%: %d-%d)  of %d\n",
+# Quantiles interpolate between sims, so they are not always whole numbers;
+# %d on one threw here and took down the whole 21 Sep forecast publish.
+cat(sprintf("ALP seats: median %g  (50%%: %g-%g, 90%%: %g-%g)  of %d\n",
             q[3], q[2], q[4], q[1], q[5], CHAMBER))
 cat(sprintf("P(ALP majority, %d+ seats) = %.1f%%\n",
             MAJORITY, 100 * mean(total_alp >= MAJORITY)))
