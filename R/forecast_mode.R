@@ -170,7 +170,14 @@ statewide_draws_as_at <- function(region, year, as_at, election_date, parties,
     folded_into[[cls]] <- c(folded_into[[cls]], stats::setNames(r$mean[1], q))
     cat(sprintf("FM1  %s%d: fitted series %s (%.1f) folded into class %s\n", region, year, q, r$mean[1], cls))
   }
-  close_prop <- identical(Sys.getenv("AUSPOL_CLOSE_PROPORTIONAL", "0"), "1")
+  # AUSPOL_LEVEL_RECIPE=live scores the LIVE forecast's recipe in the
+  # backtests (Pete 2026-09-28: "test live on back test ... use the method
+  # that performs best"): the level is the trend endpoints rescaled to 100
+  # (the live seat shares are renormalised) and NOT anchored to the
+  # projection (the live anchoring reaches only the draws' spread).
+  # docs/plans/prereg-level-recipe-2026-09-28.md.
+  live_recipe <- identical(Sys.getenv("AUSPOL_LEVEL_RECIPE", "anchored"), "live")
+  close_prop <- live_recipe || identical(Sys.getenv("AUSPOL_CLOSE_PROPORTIONAL", "0"), "1")
   if (close_prop && "OTH" %in% fp_parties && "OTH" %in% parties) {
     # AUSPOL_CLOSE_PROPORTIONAL=1: the trend fits each party separately, so the
     # endpoints need not sum to 100. Rescale every fitted class, OTH included,
@@ -246,6 +253,10 @@ statewide_draws_as_at <- function(region, year, as_at, election_date, parties,
                 ob$w, before_b, mean(rowSums(draws[, bucket, drop = FALSE]))))
   }
 
+  if (live_recipe && !is.null(tpp_target)) {
+    cat(sprintf("LR1  %s%d: live recipe, level NOT anchored (trend TPP %.2f)\n", region, year, tr$tpp))
+    tpp_target <- NULL
+  }
   if (!is.null(tpp_target)) {
     flow_of <- function(p) {
       f <- fl$flow_alp[fl$party == p]
