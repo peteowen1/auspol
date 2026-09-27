@@ -14,8 +14,24 @@ sprintf) fixed and the retired two-party model removed from `run_all.R`
 false "beats the benchmark on log loss" claim corrected, blog PR #743
 awaiting Pete's merge (the merge was blocked for me). Open for the page:
 `build_page.R:263` still takes pendulum rows from `simulate_seats()`; seat
-map, per-seat cards, forecast-over-time chart. In flight: the
-`AUSPOL_ANCHOR_IMPLIED` arm (built in both paths, off).
+map, per-seat cards, forecast-over-time chart.
+
+Statewide-level arms 27-28 Sep, all measured on the 22-pair audit and left
+OFF (results appended to each prereg): `AUSPOL_ANCHOR_IMPLIED` (t -0.77),
+`AUSPOL_ANCHOR_EXHAUST` (NSW units bug is real; nsw2023 better, nsw2019
+worse), `AUSPOL_OTHERS_SCALE` (t -0.96; small-n weight flaw at fed2007).
+The unpolled "others" bucket is the common thread: too big in 17 of 22
+(mean |size error| 2.01) and split badly by last election's mix (3.39).
+The SPLIT is a design-with-Pete item on real rows.
+
+**Parity gap found 2026-09-28, not yet fixed**: live `fit_seats_full.R`
+takes its statewide LEVEL from the raw trend endpoints (`state_mean`,
+line ~522); its two-party anchoring moves only the draws, whose mean
+`simulate_seat_contests()` subtracts (`R/seat_sim.R:970`). The backtests'
+level is the ANCHORED mean (`forecast_statewide_or_oracle`). So the ledger
+scores a fundamentals pull production does not apply. Size today: ~0.04
+points of Labor first preference (trend implies 48.02, projection 47.98),
+but it varies by cycle.
 
 ## Where things stand (2026-09-20 17:40)
 
