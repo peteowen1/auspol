@@ -260,7 +260,14 @@ statewide_draws_as_at <- function(region, year, as_at, election_date, parties,
   bt <- candidate_bucket_total(paste0(region, year), bt_bucket)
   if (!is.null(bt)) {
     b_now <- mean(rowSums(draws[, bt_bucket, drop = FALSE]))
-    draws <- others_bucket_apply(draws, bt_bucket, bt / b_now)
+    target_bt <- bt
+    if (identical(Sys.getenv("AUSPOL_BUCKET_TOTAL", "poll"), "blend")) {
+      bl <- bucket_total_blend(election_date)
+      target_bt <- b_now + bl$w * (bt - b_now)
+      cat(sprintf("BT2  %s%d: blend w %.2f (w_hat %.2f, se %.2f, n %d earlier pairs, latest %s) -> total %.2f\n",
+                  region, year, bl$w, bl$w_hat, bl$se, bl$n, bl$latest, target_bt))
+    }
+    draws <- others_bucket_apply(draws, bt_bucket, target_bt / b_now)
     cat(sprintf("BT1  %s%d: bucket total from candidate model %.2f (polls left %.2f)\n",
                 region, year, bt, b_now))
   }

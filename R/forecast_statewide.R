@@ -217,7 +217,7 @@ candidate_bucket_ratio <- function(election, bucket) {
 #' @return A single number (share points), or `NULL`.
 #' @export
 candidate_bucket_total <- function(election, bucket) {
-  if (!identical(Sys.getenv("AUSPOL_BUCKET_TOTAL", "poll"), "cand")) return(NULL)
+  if (!Sys.getenv("AUSPOL_BUCKET_TOTAL", "poll") %in% c("cand", "blend")) return(NULL)
   sf <- out_path("minor-class-shares-resid.csv")
   if (!file.exists(sf)) stop("AUSPOL_BUCKET_TOTAL=cand needs ", sf, " (scripts/fit_minor_candidates.R).")
   cs <- data.table::fread(sf, showProgress = FALSE)
@@ -231,6 +231,40 @@ candidate_bucket_total <- function(election, bucket) {
     return(NULL)
   }
   sum(pred)
+}
+
+#' How far to move the bucket total from the polls toward the candidate model
+#'
+#' For `AUSPOL_BUCKET_TOTAL=blend`: least squares of `actual - poll` on
+#' `cand - poll` over pairs dated strictly before `before`, shrunk by
+#' `w_hat^2 / (w_hat^2 + se^2)` and clamped to 0..1. Under 3 earlier pairs the
+#' standard error is not estimable and the weight is 0 (the poll total).
+#' docs/plans/prereg-bucket-total-blend-2026-09-28.md.
+#'
+#' @param before Date of the election being forecast.
+#' @param hist data.table (pair, date, poll_total, cand_total, actual); read
+#'   from `output/bucket-total-history.csv` when NULL.
+#' @return list: `w`, `w_hat`, `se`, `n`, `latest` (last pair used).
+#' @export
+bucket_total_blend <- function(before, hist = NULL) {
+  before <- as.Date(before)
+  if (is.null(hist)) {
+    f <- out_path("bucket-total-history.csv")
+    if (!file.exists(f)) stop("output/bucket-total-history.csv is missing (scripts/build_bucket_total_history.R).")
+    hist <- data.table::fread(f, showProgress = FALSE)
+  }
+  h <- hist[as.Date(hist$date) < before, ]
+  n <- nrow(h)
+  latest <- if (n) h$pair[which.max(as.Date(h$date))] else NA_character_
+  if (n < 3L) return(list(w = 0, w_hat = NA_real_, se = NA_real_, n = n, latest = latest))
+  dc <- h$cand_total - h$poll_total
+  da <- h$actual - h$poll_total
+  ss <- sum(dc^2)
+  if (!isTRUE(ss > 0)) return(list(w = 0, w_hat = NA_real_, se = NA_real_, n = n, latest = latest))
+  w_hat <- sum(dc * da) / ss
+  se <- sqrt(sum((da - w_hat * dc)^2) / (n - 1)) / sqrt(ss)
+  w <- min(1, max(0, w_hat)) * w_hat^2 / (w_hat^2 + se^2)
+  list(w = w, w_hat = w_hat, se = se, n = n, latest = latest)
 }
 
 #' Leave-one-out fundamentals, fitted once per run

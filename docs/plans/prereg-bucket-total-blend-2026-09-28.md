@@ -36,3 +36,24 @@ failed on exactly this (fed2007 trusted two points).
 
 **Unacceptable**: any `w` fitted on a pair on or after its target (each
 pair prints n and the latest pair used); a win carried by one pair.
+
+## RESULT (added 2026-09-28 after running; the text above is unedited)
+
+History: 20 pairs (`output/bucket-total-history.csv`). Leakage held (`BT2`
+prints n and the latest pair, always earlier). `w` settles near 0.30 from
+~10 earlier pairs (w_hat ~0.33, se ~0.12).
+
+1. **Primary FAILS**: mean |bucket size error| 2.013 -> 1.895 (-0.118, SE
+   0.224, t -0.53). Without sa2026 -0.261 (SE 0.181), but that check guards
+   against a win carried by one pair and is not used to rescue a failure.
+   Better in 10 (fed2016 -2.14, nsw2023 -1.71, nsw2019 -1.14), worse in 5
+   (sa2026 +2.89, wa2025 +1.72, qld2020 +0.83).
+2. Do no harm: PASS (1.758 -> 1.747; ALP -0.76 -> -0.60, LNP -0.68 -> -0.46).
+
+Stays OFF. **Cause of sa2026 found**: the candidate model's naive baseline
+carries a candidate's previous vote across a change of party, and several
+2022 Liberal candidates ran as independents in 2026 (McBride predicted 62.3
+vs 14.8 actual, Speirs 50.1 vs 14.1, Gargett 34.2 vs 2.9, Hall-Evans 34.1 vs
+1.9; SA IND mean 15.3 predicted vs 7.9 actual). Fixed in the candidate model
+first (`prereg-minor-candidate-defectors-2026-09-28.md`), then this blend is
+re-run unchanged.
