@@ -39,3 +39,20 @@ side by 2.4 points and the challenger by 0.9.
 **Unacceptable**: any change to rows outside the two majors in departed
 seats beyond what refitting the trees implies (reported as the share of
 rows whose prediction moved more than 0.5).
+
+## RESULT, xgb arm (rebuild D vs v44, 2026-09-28; the text above is unedited)
+
+Applied (`DS1`: 187 own, 187 opposing rows in the training features).
+Seat log loss 0.2881 -> **0.2902** (+0.0021, SE by seat 0.0021, t 1.01;
+by election 0.0043): **FAILS** (must not rise). Weighted primary RMSE
+5.038 -> 5.014, TCP MAE 3.90 -> 3.89. Per election: nsw2023 -0.013,
+fed2022 -0.002, wa2025 -0.001, qld2024 +0.005, fed2025 +0.005, vic2022
++0.006, sa2026 +0.024.
+
+Named targets barely moved: challenger residual in departed seats 1.58 ->
+1.39; Parramatta/Monaro/Camden/Heathcote Labor +0.1 each. The xgb layer
+learns a small correction on `base_pred`, and the miss is in `base_pred`
+(incumbent side -2.4 there). **Stays OFF.** Next: the `base_pred` arm,
+on the COMPLETED retirement data (`external/reference/retirements/`,
+Pete 2026-09-28: complete the field, do not route around it), separating
+retirement from lost preselection.
