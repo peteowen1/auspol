@@ -427,8 +427,14 @@ if (file.exists(vf)) {
   if (all(c("seat", "cand", "party", "fp_votes") %in% names(v))) {
     # `party` here is ALREADY a classify_party() class, not a raw party name.
     # Re-classifying it would be a second pass over its own output; harmless for
-    # most values but not something to rely on silently.
-    v <- v[, .(seat, name = cand, party_raw = party, votes = as.numeric(fp_votes),
+    # most values but not something to rely on silently. The VEC's own name
+    # arrives as `party_raw` since 2026-09-28 (fetch_preferences_vic.R); a file
+    # from before that falls back to the class, and says so.
+    if (!"party_raw" %in% names(v)) {
+      cat("BC4! vic2022 candidate file has no party_raw; minor parties carry only their class. Rerun scripts/fetch_preferences_vic.R.\n")
+      v[, party_raw := party]
+    }
+    v <- v[, .(seat, name = cand, party_raw, votes = as.numeric(fp_votes),
                party = party, surname = NA_character_, given = NA_character_,
                elected = NA, election = "vic2022", region = "vic", year = 2022)]
     parts[["vic2022"]] <- v

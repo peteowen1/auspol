@@ -1,6 +1,6 @@
 # Data dictionary
 
-**Generated 2026-09-19 by `scripts/build_data_dictionary.R`. Do not hand-edit.**
+**Generated 2026-09-28 by `scripts/build_data_dictionary.R`. Do not hand-edit.**
 
 Companion to `docs/DATA-REGISTRY.md`. The registry answers *do we have this
 file*; this answers *do we have this field*. Four wrong "we don't have it"
@@ -44,7 +44,7 @@ column does not exist.**
 | `vec-2018-vic-firstprefs.csv` | 403 | `seat`, `party`, `votes` |
 | `vec-2018-vic-transfers.csv` | 600 | `election`, `seat`, `round`, `from`, `to`, `votes` |
 | `vec-2018-vic-winners.csv` | 88 | `seat`, `winner` |
-| `vec-2022-vic-candidates.csv` | 731 | `seat`, `cand`, `party`, `fp_votes` |
+| `vec-2022-vic-candidates.csv` | 731 | `seat`, `cand`, `party`, `party_raw`, `fp_votes` |
 | `vec-2022-vic-firstprefs.csv` | 508 | `seat`, `party`, `votes` |
 | `vec-2022-vic-transfers.csv` | 1,956 | `election`, `seat`, `round`, `from`, `to`, `votes`, `to_n` |
 | `vec-2022-vic-winners.csv` | 87 | `seat`, `winner` |
@@ -89,7 +89,12 @@ The originals, before any aggregation. **This is where dropped columns live.**
 |---|---:|---|
 | `elected-2023.csv` | 93 | `slug`, `label` |
 
-- **vec/** — no CSVs (see registry for other formats)
+### vec/
+
+| file | rows | columns |
+|---|---:|---|
+| `vic-district-regions.csv` | 88 | `district`, `region` |
+
 ### ecsa/
 
 | file | rows | columns |
@@ -156,5 +161,5 @@ processed extract. Every one is recoverable without a new fetch.
 | `cal-fed-m2.5.csv` | 886 | `seat`, `actual`, `prob`, `pred`, `pred_p`, `pair` |
 | `cal-fed-m4.0.csv` | 886 | `seat`, `actual`, `prob`, `pred`, `pred_p`, `pair` |
 
-_(6920 `backtest-*.csv` arm outputs omitted; they share one shape.)_
+_(2204 `backtest-*.csv` arm outputs omitted; they share one shape.)_
 

@@ -1,6 +1,6 @@
 # Data registry
 
-**Generated 2026-09-19 by `scripts/build_data_registry.R`. Do not hand-edit** --
+**Generated 2026-09-28 by `scripts/build_data_registry.R`. Do not hand-edit** --
 rerun the script instead. Regenerate it whenever you add or fetch data.
 
 This file exists because the same data has been declared missing three
@@ -44,7 +44,7 @@ cannot pass as a working one.
 | `vec-2018-vic-firstprefs.csv` | 8 KB |
 | `vec-2018-vic-transfers.csv` | 20 KB |
 | `vec-2018-vic-winners.csv` | 1 KB |
-| `vec-2022-vic-candidates.csv` | 28 KB |
+| `vec-2022-vic-candidates.csv` | 41 KB |
 | `vec-2022-vic-firstprefs.csv` | 10 KB |
 | `vec-2022-vic-transfers.csv` | 71 KB |
 | `vec-2022-vic-winners.csv` | 1 KB |
@@ -65,7 +65,7 @@ cannot pass as a working one.
 
 - **aec/** -- 98 files, 83.4 MB
   - e.g. booths/fed2016-NSW.csv, booths/fed2019-SA.csv, booths/fed2019-VIC.csv, booths/fed2022-NSW.csv
-- **vec/** -- 897 files, 42.0 MB
+- **vec/** -- 898 files, 42.0 MB
   - e.g. 2010/cdx-vec.txt, 2010/dop-AlbertPark.html, 2010/dop-BallaratEast.html, 2010/dop-BallaratWest.html
 - **nsw/** -- 294 files, 9.9 MB
   - e.g. byelections/SB1602-orange-fp.html, byelections/SB1801-wagga-wagga-fp.html, dop-sample.html, dop/index-SG1901.html
