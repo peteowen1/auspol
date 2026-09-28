@@ -375,11 +375,31 @@ fit_conditional_slopes <- function(target_election, corpus = NULL, pairs = NULL,
     m <- merge(m, ln[, list(party, level_now  = level)], by = "party")
     m[, pair := pr$election]; m[x > 0]
   }), fill = TRUE)
-  if (is.null(rows) || !nrow(rows)) return(list(same = SHIP_SAME, new = SHIP_NEW, n = NULL))
+  # AUSPOL_SHIP_TIME_FORWARD=1 (default): the SHIP_* constants were fitted on
+  # every election, so using them as the fallback carried later elections into
+  # early ones (and into ONP's returning-candidate cell in 4 ledger elections).
+  # The fallback is now the tier's POOLED slope over all minor classes from the
+  # same earlier-elections rows, else 1. plans/prereg-ship-fallback-time-forward-2026-09-29.md.
+  ship_tf <- !identical(Sys.getenv("AUSPOL_SHIP_TIME_FORWARD", "1"), "0")
+  if (ship_tf) {
+    ones <- stats::setNames(rep(1, length(SHIP_SAME)), names(SHIP_SAME))
+    if (is.null(rows) || !nrow(rows)) return(list(same = ones, new = ones, n = NULL))
+  } else if (is.null(rows) || !nrow(rows)) return(list(same = SHIP_SAME, new = SHIP_NEW, n = NULL))
 
   rows[, dev := x - level_prev]
   rows[, yy  := actual_now - level_now]
   same <- SHIP_SAME; new <- SHIP_NEW
+  if (ship_tf) {
+    tier_pool <- function(sub) {
+      if (nrow(sub) < min_n) return(1)
+      f <- tryCatch(stats::lm(yy ~ 0 + dev, data = sub), error = function(e) NULL)
+      cm <- if (is.null(f)) NULL else summary(f)$coefficients
+      if (is.null(cm) || !nrow(cm) || !is.finite(cm[1, 1])) 1 else cm[1, 1]
+    }
+    pool_same <- tier_pool(rows[party %in% names(SHIP_SAME) & n_returning > 0])
+    pool_new  <- tier_pool(rows[party %in% names(SHIP_SAME) & n_returning == 0])
+    same[] <- pool_same; new[] <- pool_new
+  }
   counts <- list()
   for (cl in names(SHIP_SAME)) {
     for (tier in c("same", "new")) {
