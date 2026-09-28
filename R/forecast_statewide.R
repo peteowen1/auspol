@@ -205,6 +205,34 @@ candidate_bucket_ratio <- function(election, bucket) {
   NULL
 }
 
+#' The unpolled bucket's total from the per-candidate model
+#'
+#' Sum of the per-candidate model's predicted statewide shares (`pred_naive`,
+#' time-forward) over the bucket classes, for `AUSPOL_BUCKET_TOTAL=cand`.
+#' `NULL` when off or when any bucket class lacks a prediction.
+#' docs/plans/prereg-bucket-total-candidates-2026-09-28.md.
+#'
+#' @param election Label such as `"nsw2023"`.
+#' @param bucket Class names in the bucket.
+#' @return A single number (share points), or `NULL`.
+#' @export
+candidate_bucket_total <- function(election, bucket) {
+  if (!identical(Sys.getenv("AUSPOL_BUCKET_TOTAL", "poll"), "cand")) return(NULL)
+  sf <- out_path("minor-class-shares-resid.csv")
+  if (!file.exists(sf)) stop("AUSPOL_BUCKET_TOTAL=cand needs ", sf, " (scripts/fit_minor_candidates.R).")
+  cs <- data.table::fread(sf, showProgress = FALSE)
+  el_arg <- election   # never the bare argument inside `[` (NSE trap)
+  pr <- cs[cs$election == el_arg, ]
+  if (anyDuplicated(pr$cls)) stop("candidate_bucket_total(): duplicate class rows for ", el_arg)
+  pred <- stats::setNames(pr$pred_naive, pr$cls)[bucket]
+  if (!all(is.finite(pred))) {
+    cat(sprintf("BT1! %s: no candidate-model share for %s; bucket total left to the polls\n", el_arg,
+                paste(bucket[!is.finite(pred)], collapse = ", ")))
+    return(NULL)
+  }
+  sum(pred)
+}
+
 #' Leave-one-out fundamentals, fitted once per run
 #'
 #' Convenience wrapper so every harness builds the same held-out table the same

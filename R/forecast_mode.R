@@ -253,6 +253,18 @@ statewide_draws_as_at <- function(region, year, as_at, election_date, parties,
                 ob$w, before_b, mean(rowSums(draws[, bucket, drop = FALSE]))))
   }
 
+  # AUSPOL_BUCKET_TOTAL=cand: the bucket's TOTAL from the per-candidate model,
+  # applied before the anchoring so Labor and Coalition are rebalanced to the
+  # two-party target afterwards. plans/prereg-bucket-total-candidates-2026-09-28.md.
+  bt_bucket <- intersect(c("OTH", folded), parties)
+  bt <- candidate_bucket_total(paste0(region, year), bt_bucket)
+  if (!is.null(bt)) {
+    b_now <- mean(rowSums(draws[, bt_bucket, drop = FALSE]))
+    draws <- others_bucket_apply(draws, bt_bucket, bt / b_now)
+    cat(sprintf("BT1  %s%d: bucket total from candidate model %.2f (polls left %.2f)\n",
+                region, year, bt, b_now))
+  }
+
   if (live_recipe && !is.null(tpp_target)) {
     cat(sprintf("LR1  %s%d: live recipe, level NOT anchored (trend TPP %.2f)\n", region, year, tr$tpp))
     tpp_target <- NULL
