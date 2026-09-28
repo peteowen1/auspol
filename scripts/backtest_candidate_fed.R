@@ -1039,6 +1039,11 @@ for (K in PAIRS) {
         if (isTRUE(base_share > 0)) prior_sh / base_share
         else rep(1 / length(bucket), length(bucket)),
         bucket)
+      # AUSPOL_BUCKET_SPLIT: the per-candidate model's split, shared with
+      # R/forecast_statewide.R. Reaches the draws here AND the level below,
+      # where the pinning otherwise scales every class by one factor.
+      cand_ratio <- candidate_bucket_ratio(paste0("fed", K$to), bucket)
+      if (!is.null(cand_ratio)) ratio <- cand_ratio
       # EVERY DRAW, not just the point estimate. simulate_seat_contests()
       # requires statewide_draws to cover every column in `parties` or it
       # errors, so an unmodelled class needs its own draw column, not just a
@@ -1242,10 +1247,29 @@ for (K in PAIRS) {
           }
           mat[, p] <- mat[, p] * scale_to; st_a[[p]] <- st_a[[p]] * scale_to
         }
+      } else if (!is.null(cand_ratio)) {
+        # Per-class level from the candidate split: the bucket's forecast total
+        # (base_share * scale_to) times the class's predicted ratio. A class
+        # with no prior vote cannot be scaled up from zero seat shares, so it
+        # keeps the common factor, and that is printed.
+        bucket_total <- base_share * scale_to
+        for (p in setdiff(c(unmodelled, "OTH"), done_lvl)) {
+          prior_p <- st_a[p]
+          if (length(prior_p) == 1L && is.finite(prior_p) && prior_p > 0) {
+            scale_p <- bucket_total * cand_ratio[[p]] / prior_p
+          } else {
+            scale_p <- scale_to
+            cat(sprintf("BS2! fed%d %s: no prior vote to scale; common factor kept\n", K$to, p))
+          }
+          mat[, p] <- mat[, p] * scale_p; st_a[[p]] <- st_a[[p]] * scale_p
+        }
+        cat(sprintf("BS2  fed%d level by candidate split: %s\n", K$to,
+                    paste(sprintf("%s %.2f", bucket, unlist(st_a[bucket])), collapse = ", ")))
       } else {
       for (p in setdiff(unmodelled, done_lvl)) { mat[, p] <- mat[, p] * scale_to; st_a[[p]] <- st_a[[p]] * scale_to }
       }
-      st_a[["OTH"]] <- st_a[["OTH"]] * scale_to
+      if (is.null(cand_ratio) || identical(Sys.getenv("AUSPOL_IND_TREND", "0"), "1"))
+        st_a[["OTH"]] <- st_a[["OTH"]] * scale_to
       for (p in bucket) st_fc[[p]] <- st_a[[p]]
       cat(sprintf("BF0  fed%d minor field scaled x%.2f: %s at prior %.1f%% -> forecast %.1f%%\n",
                   K$to, scale_to, paste(bucket, collapse = "+"),

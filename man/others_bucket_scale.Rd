@@ -24,8 +24,8 @@ STRICTLY BEFORE \code{before}, so a backtest never learns from its own or a
 later result.
 }
 \details{
-On log ratios \code{r = log(actual / forecast)}, \code{k = exp(w * mean(r))} with
-\code{w = m^2 / (m^2 + se^2)}: the mean is kept in proportion to how clearly it
+On log ratios, log(actual / forecast), \code{k = exp(w * m)} where \code{m} is their
+mean and \code{w = m^2 / (m^2 + se^2)}: the mean is kept in proportion to how clearly it
 stands out from its own noise, so a bias that is not yet distinguishable
 from zero is barely applied. Fewer than two earlier elections give \code{k = 1}.
 docs/plans/prereg-others-bucket-size-2026-09-27.md.

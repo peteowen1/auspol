@@ -117,25 +117,8 @@ forecast_statewide_for <- function(region, year, election_date, parties, st_a,
     # (scripts/fit_minor_candidates.R, MC2). Any bucket class without a
     # prediction falls back to the prior-ratio split for the whole pair.
     # docs/plans/prereg-bucket-split-candidates-2026-09-28.md.
-    split_mode <- Sys.getenv("AUSPOL_BUCKET_SPLIT", "prior")
-    if (split_mode %in% c("cand_resid", "cand_naive")) {
-      sf <- out_path("minor-class-shares-resid.csv")
-      if (!file.exists(sf)) stop("AUSPOL_BUCKET_SPLIT=", split_mode, " needs ", sf,
-                                 " (scripts/fit_minor_candidates.R).")
-      cs <- data.table::fread(sf, showProgress = FALSE)
-      el_arg <- paste0(region, year)
-      col <- if (split_mode == "cand_resid") "pred_resid" else "pred_naive"
-      pr <- cs[cs$election == el_arg, ]
-      pred <- stats::setNames(pr[[col]], pr$cls)[bucket]
-      if (all(is.finite(pred)) && sum(pred) > 0) {
-        ratio <- stats::setNames(pred / sum(pred), bucket)
-        cat(sprintf("BS1  %s: bucket split by candidate model (%s): %s\n", el_arg, split_mode,
-                    paste(sprintf("%s %.2f", bucket, ratio), collapse = ", ")))
-      } else {
-        cat(sprintf("BS1! %s: no candidate-model share for %s; prior-ratio split kept\n", el_arg,
-                    paste(bucket[!is.finite(pred)], collapse = ", ")))
-      }
-    }
+    cr <- candidate_bucket_ratio(paste0(region, year), bucket)
+    if (!is.null(cr)) ratio <- cr
     # EVERY DRAW, not just the point estimate. simulate_seat_contests() requires
     # statewide_draws to cover every column in `parties` or it errors, so an
     # unmodelled class needs its own draw column. There is no genuine trend draw
@@ -178,6 +161,48 @@ forecast_statewide_for <- function(region, year, election_date, parties, st_a,
   list(st_fc = st_fc, draws = sw_draws, folded = FC$folded, n_polls = FC$n_polls,
        tpp = FC$tpp, fund = fr, anchor_mean = FC$anchor$mean,
        implied_tpp = FC$implied_tpp)
+}
+
+#' Split ratios for the unpolled bucket from the per-candidate model
+#'
+#' Under `AUSPOL_BUCKET_SPLIT = cand_resid / cand_naive`, returns each bucket
+#' class's share of the bucket as predicted by the per-candidate minor-party
+#' model (`scripts/fit_minor_candidates.R`, time-forward: each election
+#' predicted by models fitted on earlier elections). `NULL` under the default
+#' `prior`, or when any bucket class lacks a prediction (the caller then keeps
+#' the previous election's ratios, and this says so). One function for the
+#' shared statewide block and the federal harness's own copy, so the two
+#' cannot drift. docs/plans/prereg-bucket-split-candidates-2026-09-28.md.
+#'
+#' @param election Label such as `"vic2022"`.
+#' @param bucket Class names in the bucket.
+#' @return Named numeric ratios summing to 1, or `NULL`.
+#' @export
+candidate_bucket_ratio <- function(election, bucket) {
+  split_mode <- Sys.getenv("AUSPOL_BUCKET_SPLIT", "prior")
+  if (!split_mode %in% c("cand_resid", "cand_naive")) return(NULL)
+  sf <- out_path("minor-class-shares-resid.csv")
+  if (!file.exists(sf)) stop("AUSPOL_BUCKET_SPLIT=", split_mode, " needs ", sf,
+                             " (scripts/fit_minor_candidates.R).")
+  cs <- data.table::fread(sf, showProgress = FALSE)
+  col <- if (split_mode == "cand_resid") "pred_resid" else "pred_naive"
+  # A differently-named local, NEVER the bare argument: `election` is also a
+  # column, and data.table binds a bare name inside `[` to the column, so
+  # `cs$election == election` was always TRUE and every class took the FIRST
+  # election's share (caught by the fed2025 smoke: IND 0.18 instead of 0.44).
+  el_arg <- election
+  pr <- cs[cs$election == el_arg, ]
+  if (anyDuplicated(pr$cls)) stop("candidate_bucket_ratio(): duplicate class rows for ", el_arg)
+  pred <- stats::setNames(pr[[col]], pr$cls)[bucket]
+  if (all(is.finite(pred)) && sum(pred) > 0) {
+    ratio <- stats::setNames(pred / sum(pred), bucket)
+    cat(sprintf("BS1  %s: bucket split by candidate model (%s): %s\n", election, split_mode,
+                paste(sprintf("%s %.2f", bucket, ratio), collapse = ", ")))
+    return(ratio)
+  }
+  cat(sprintf("BS1! %s: no candidate-model share for %s; prior-ratio split kept\n", election,
+              paste(bucket[!is.finite(pred)], collapse = ", ")))
+  NULL
 }
 
 #' Leave-one-out fundamentals, fitted once per run

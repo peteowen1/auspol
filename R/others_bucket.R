@@ -6,8 +6,8 @@
 #' STRICTLY BEFORE `before`, so a backtest never learns from its own or a
 #' later result.
 #'
-#' On log ratios `r = log(actual / forecast)`, `k = exp(w * mean(r))` with
-#' `w = m^2 / (m^2 + se^2)`: the mean is kept in proportion to how clearly it
+#' On log ratios, log(actual / forecast), `k = exp(w * m)` where `m` is their
+#' mean and `w = m^2 / (m^2 + se^2)`: the mean is kept in proportion to how clearly it
 #' stands out from its own noise, so a bias that is not yet distinguishable
 #' from zero is barely applied. Fewer than two earlier elections give `k = 1`.
 #' docs/plans/prereg-others-bucket-size-2026-09-27.md.
