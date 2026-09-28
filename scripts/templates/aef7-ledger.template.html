@@ -250,7 +250,14 @@
   </details>
 
   <details class="provlog">
-    <summary>Provenance &amp; changelog <span class="n">(31 updates)</span></summary>
+    <summary>Provenance &amp; changelog <span class="n">(32 updates)</span></summary>
+    <p class="sub prov"><b>v46, 28 Sep 2026: the model can now see who holds every seat.</b> For 13 of the 22
+       training elections (every federal election to 2016, Queensland 2020, Victoria 2014 and 2018, and Western
+       Australia before 2025) the seat model had no record of which party held a seat or whether its member was
+       retiring, because those fields came from files that only cover recent elections. Both are now rebuilt
+       from the election results themselves, by-elections and a completed list of retiring members, and agree
+       with the original files 98.9% and 97.0% of the time where both exist. Seat log loss is unchanged within
+       noise (0.2815 &rarr; 0.2822, AEF 0.2851); weighted primary RMSE improves to <b>4.95</b> (AEF 5.42).</p>
     <p class="sub prov"><b>v45, 28 Sep 2026: every fitted constant now learns only from earlier elections.</b> A
        second correction the same day. The per-election models had been made time-forward on 19 September, but
        about a dozen constants fitted inside the baseline (how a seat's vote moves with the state, what a

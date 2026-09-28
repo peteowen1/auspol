@@ -385,7 +385,7 @@ for (pr in PAIRS) {
   # (scripts/build_seat_context.R, validated 98.9% / 97.0% against the seat
   # file where both exist). Blanks only; seat-file values are never replaced.
   # plans/prereg-seat-context-complete-2026-09-28.md.
-  if (identical(Sys.getenv("AUSPOL_SEAT_CONTEXT_FILL", "0"), "1")) {
+  if (identical(Sys.getenv("AUSPOL_SEAT_CONTEXT_FILL", "1"), "1")) {
     SCX <- fread(out_path("seat-context.csv"), showProgress = FALSE)
     scx <- SCX[SCX$pair == pr$election, list(.s = s, cx_class = incumbent_class, cx_ret = retiring)]
     m[, .s := normalise_seat(seat)]

@@ -40,3 +40,22 @@ untouched), behind `AUSPOL_SEAT_CONTEXT_FILL=1`.
 Rebuild against v45: seat log loss (ledger, 0.2815) and the all-22 pooled
 (0.3193) reported; ships if the all-22 pooled does not rise (the 13 filled
 pairs are older, so the pooled number is the primary measure here).
+
+## RESULT and AMENDMENT (2026-09-28; the text above is unedited)
+
+Validation PASSED: incumbent class 98.9%, retiring 97.0% agreement over 971
+seats where the seat file has values (disagreements: mid-term party
+switchers, and the Shooters, which the seat file files as IND). First-term
+flags agree 73-98% and were NOT filled. The fill reached 12 training pairs
+(incumbent missing on major rows 46.1% -> 0.0%).
+
+Rebuild F vs v45: all 16 elections in forecasts-seats.csv, 1,590 seats,
+seat log loss 0.2984 -> 0.2987 (+0.0003; mean per-election change -0.0012,
+SE 0.0027; better in 8, worse in 4, the 4 earliest unchanged). Ledger 0.2815
+-> 0.2822. Weighted primary RMSE 4.978 -> 4.947, TCP MAE 3.86 -> 3.85.
+
+**By the bar as written it fails (the pooled number rose by 0.0003).
+AMENDMENT, stated as such: Pete chose to ship it** (2026-09-28) because it is
+the correct data, it removes the "blank incumbent = older election" label the
+trees could split on, the log-loss change is noise, and primary error
+improves. Ships as ledger v46.
