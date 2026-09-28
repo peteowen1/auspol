@@ -380,6 +380,22 @@ for (pr in PAIRS) {
               soph_cand = NA, soph_party = NA, prev_swing = NA_real_,
               is_incumbent_party = NA)]
   }
+  # AUSPOL_SEAT_CONTEXT_FILL=1: where the seat file has no value (13 of 22
+  # pairs), incumbent party and retiring come from our own corpus
+  # (scripts/build_seat_context.R, validated 98.9% / 97.0% against the seat
+  # file where both exist). Blanks only; seat-file values are never replaced.
+  # plans/prereg-seat-context-complete-2026-09-28.md.
+  if (identical(Sys.getenv("AUSPOL_SEAT_CONTEXT_FILL", "0"), "1")) {
+    SCX <- fread(out_path("seat-context.csv"), showProgress = FALSE)
+    scx <- SCX[SCX$pair == pr$election, list(.s = s, cx_class = incumbent_class, cx_ret = retiring)]
+    m[, .s := normalise_seat(seat)]
+    m <- merge(m, scx, by = ".s", all.x = TRUE)
+    n_fill <- sum(is.na(m$is_incumbent_party) & !is.na(m$cx_class))
+    m[is.na(is_incumbent_party) & !is.na(cx_class), is_incumbent_party := party == cx_class]
+    m[is.na(retirement) & !is.na(cx_ret), retirement := cx_ret]
+    m[, c(".s", "cx_class", "cx_ret") := NULL]
+    if (n_fill) cat(sprintf("SCF  %s: incumbent/retiring filled from seat-context for %d rows\n", pr$election, n_fill))
+  }
 
   cand_now <- C[C$election == pr$election]
   cand_now[, historic_elected_l := toupper(as.character(historic_elected)) %in% c("Y", "TRUE", "1")]
