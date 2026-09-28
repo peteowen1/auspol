@@ -67,3 +67,31 @@ removed).
 If it passes, the next step is wiring it into the statewide bucket split
 in both paths (backtests and live), measured by a rebuild, as a separate
 pre-registered change.
+
+## RESULT v1 and a VISIBLE ADDITION (2026-09-28; the text above is unedited)
+
+v1 (xgboost from scratch, per-election CV folds), 21 pairs with 2+ earlier
+elections (wa1996/wa2001 not fitted): mean |statewide class share error|
+current 1.506 -> **1.541** (+0.035, SE 0.343): **primary FAILS**. Candidate
+RMSE xgb 5.055 vs naive 5.289. The naive baseline's sums: **1.115** (-0.391,
+SE 0.216, t -1.81, better in 14 of 21). Signed bias by class (forecast
+minus actual): xgb IND -0.61, OTH_RIGHT +1.01; naive IND +0.04, OTH_RIGHT
++0.03.
+
+Added AFTER seeing v1, so motivated by its result and weaker evidence than a
+pre-registered win: **v2 = xgboost fitted as a correction on the naive
+prediction** (`base_margin = naive`), the architecture every other model in
+this repo uses; CV changed to 5 folds grouped by election (runtime). Same
+criterion. The naive sum is reported beside it as the fallback. Whichever is
+carried forward, the deciding measurement is the rebuild when it is wired in.
+
+## RESULT v2 (2026-09-28)
+
+`AUSPOL_MC_ARM=resid`, 5 grouped folds: candidate RMSE xgb **4.948** vs
+naive 5.289. Mean |statewide class share error| over 21 pairs: current
+1.506 -> **1.171** (-0.335, paired SE 0.214, t -1.56): **PASSES** the
+criterion as added after v1. Largest mover removed (sa2022): -0.242, SE
+0.203, passes. The naive sums remain slightly better on the group total
+(1.115). Next: wire the bucket split to candidate sums in both paths, v2
+and naive as two arms, a rebuild deciding (separate pre-registration).
+Runtime 5 minutes (was 9); not instrumented per stage.
