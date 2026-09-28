@@ -67,8 +67,71 @@ RP <- rbindlist(lapply(raw, function(l) {
              prev_tpp = as.numeric(x[4]), agg = as.numeric(x[7]),
              n_polls = sum(is.finite(polls)))
 }))
-RP <- merge(RP, natl, by = "year")
-RP[, poll_dev := (agg - prev_tpp) - natl_swing]
+# ---- 2025 onward: Newspoll quarterly state breakdowns ----------------------
+# The anchor's region-polls-fed.csv stops at 2022, so every fed2025 state read
+# 0. external/reference/polls/newspoll-quarterly/breakdowns.csv carries the
+# state two-party from each quarterly release (scripts/fetch_poll_breakdowns.R).
+# For a federal election with no anchor rows: the aggregate is the latest
+# Newspoll release ending before polling day, every pre-election release in
+# the year before counts toward n_polls, and prev_tpp is the state's result
+# at the previous federal election.
+NQ_F <- "external/reference/polls/newspoll-quarterly/breakdowns.csv"
+fed_dates <- election_dates()[grepl("^fed", names(election_dates()))]
+if (file.exists(NQ_F)) {
+  NQ <- fread(NQ_F, showProgress = FALSE)[dimension == "state" & party == "ALP" & is.finite(tpp_alp)]
+  for (el in names(fed_dates)) {
+    y <- as.integer(sub("^fed", "", el)); ed <- as.Date(fed_dates[[el]])
+    if (y %in% RP$year) next
+    q <- NQ[as.Date(period_end) < ed & as.Date(period_end) >= ed - 365]
+    if (!nrow(q)) next
+    py <- max(T$year[T$year < y])
+    prv <- T[T$year == py & T$state != "all", .(state = tolower(state), prev_tpp = tpp)]
+    lat <- q[pollster == "Newspoll"][as.Date(period_end) == max(as.Date(period_end))]
+    add <- merge(lat[, .(state = tolower(group), agg = tpp_alp)],
+                 q[, .(n_polls = .N), by = .(state = tolower(group))], by = "state")
+    add <- merge(add, prv, by = "state")
+    add[, year := y]
+    RP <- rbind(RP, add[, .(year, state, prev_tpp, agg, n_polls)], fill = TRUE)
+    cat(sprintf("SD2b %s: %d state rows from Newspoll quarterly (latest release ending %s): %s\n", el, nrow(add),
+                max(as.Date(lat$period_end)), paste(sprintf("%s %s", add$state, add$agg), collapse = ", ")))
+  }
+}
+
+# ---- the NATIONAL reference: POLLS, not the result -------------------------
+# Until 2026-09-28 this subtracted `natl_swing` from tpp-fed-regions.csv, the
+# ACTUAL national swing at the election being predicted -- so the feature was
+# the state-vs-nation poll difference PLUS that election's national polling
+# error, known only after the count (a leak in every federal backtest;
+# docs/plans/prereg-state-dev-leak-fix-2026-09-28.md). The reference is now the
+# federal trend's two-party the day before polling day, minus the previous
+# election's actual national two-party, both knowable in advance.
+# AUSPOL_STATE_POLL_NATL=actual rebuilds the old feature, for comparison only.
+NATL_MODE <- Sys.getenv("AUSPOL_STATE_POLL_NATL", "polls")
+natl_poll <- rbindlist(lapply(sort(unique(RP$year)), function(y) {
+  el <- paste0("fed", y); ed <- as.Date(fed_dates[el])
+  if (is.na(ed)) return(NULL)
+  prev_nat <- T[T$state == "all" & T$year == max(T$year[T$year < y]), tpp]
+  cycles <- load_election_cycles(); polls <- load_polls("fed")
+  pri <- load_prior_results(); kp <- pri$region == "fed" & pri$year == y
+  priors <- stats::setNames(pri$prev1[which(kp)], pri$party[which(kp)])
+  cyc <- cycles[cycles$region == "fed" & cycles$year == y, ]
+  fl <- flows_for(load_preference_flows(), y, "fed", as_of = if (nrow(cyc)) min(cyc$start) else ed - 1,
+                  cycles = cycles, quiet = TRUE)
+  tr <- tryCatch(suppressMessages(trend_as_at(polls, y, cycles, ed - 1, priors, fl)), error = function(e) NULL)
+  if (is.null(tr)) return(data.table(year = y, natl_poll_swing = NA_real_))
+  cp <- cycle_polls(polls, y, cycles)
+  # the trend's OWN poll count against an independent count of polls dated
+  # before polling day (re-applying trend_as_at()'s filter could never fire)
+  if (tr$n_polls > sum(cp$date <= ed - 1)) stop("SD2c! a poll on or after polling day reached fed", y)
+  data.table(year = y, natl_poll_tpp = tr$tpp, natl_prev_tpp = prev_nat, natl_poll_swing = tr$tpp - prev_nat)
+}), fill = TRUE)
+RP <- merge(RP, natl, by = "year", all.x = TRUE)
+RP <- merge(RP, natl_poll, by = "year", all.x = TRUE)
+RP[, poll_dev_actual := (agg - prev_tpp) - natl_swing]
+RP[, poll_dev := if (NATL_MODE == "actual") poll_dev_actual else (agg - prev_tpp) - natl_poll_swing]
+cat(sprintf("SD2c national reference: %s. Per election, polled national swing vs actual (the error the old feature carried):\n", NATL_MODE))
+print(unique(RP[, .(year, natl_poll_tpp = round(natl_poll_tpp, 2), polled_swing = round(natl_poll_swing, 2),
+                    actual_swing = natl_swing, error_leaked = round(natl_poll_swing - natl_swing, 2))]))
 cat(sprintf("SD2  region-polls: %d state-years, %d-%d, poll counts %d-%d\n",
             nrow(RP), min(RP$year), max(RP$year), min(RP$n_polls), max(RP$n_polls)))
 

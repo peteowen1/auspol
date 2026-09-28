@@ -133,8 +133,12 @@ Specific traps, all of which have bitten:
   all entries called `x` while only one was accounted for. 15 of 100 votes
   vanished with nothing reported. Validate names are unique at the boundary.
 - **Leakage**: anything in the backtest must use only what was knowable before
-  the election being predicted — flows, hyperparameters, `as_of` dates. Three
-  instances, one introduced while fixing another.
+  the election being predicted — flows, hyperparameters, `as_of` dates. Four
+  instances, one introduced while fixing another. The fourth (2026-09-28) sat
+  in a SHIPPED feature for two weeks: `state_poll_dev` subtracted the ACTUAL
+  national swing, so it carried each federal election's national polling
+  error (4.09 points in 2019). **A "results" file is an outcome even when
+  the column is called `swing`: check what every subtracted reference IS.**
 - **Guards that cannot fail**: `all()` over an empty set is `TRUE`, `which()`
   drops `NA`, `NA <= 0` is `NA`, and `data.table` silently drops a column
   assigned `NULL`. A check with an `| is.na(x)` escape hatch passes on exactly
