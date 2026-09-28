@@ -81,3 +81,16 @@ in the code behind the flag. It cannot ship on its own while the unpolled
 classes' statewide level is wrong, because that error is what it was
 offsetting in 2019. Next: how unpolled classes get their statewide level in
 `forecast_statewide_for()` (the columns it replaces for folded classes).
+
+## RE-TEST on ledger v44 (added 2026-09-28 BEFORE running; above unedited)
+
+Motivated by v44: nsw2019's worsening was attributed to the over-forecast
+unpolled classes, which the candidate bucket split (`cand_naive`) now
+changes. Same guard and primary criterion as above (non-NSW cells identical;
+ALP and LNP improve on average over nsw2019+nsw2023 and neither pair's mean
+|miss| ALP/LNP/GRN rises), both arms run with `AUSPOL_BUCKET_SPLIT=cand_naive`.
+
+RE-TEST RESULT: identical to the first test (guard PASS; nsw2023 2.257 ->
+1.317, nsw2019 1.027 -> 1.547). The premise was wrong: the candidate split
+moves only the division of the unpolled bucket, never ALP/LNP, so nsw2019's
+Coalition shortfall (-2.04) is a LEVEL error the split cannot touch. Stays OFF.
