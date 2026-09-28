@@ -5,6 +5,28 @@ it stood before this rewrite: `backlog/journal-2026-09-19-hub-snapshot.md`).
 Decisions: `docs/DECISIONS.md`. Every seat verdict: `docs/SEAT-REGISTRY.md`.
 Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30.
 
+## 2026-09-28 (read this first)
+
+**Ledger v44 PUBLISHED 14:45** (`shipped-models`, manifest git c5e8337):
+seat log loss **0.2881** vs AEF 0.2851, weighted primary RMSE 5.04 vs 5.42,
+accuracy 88.0% vs 86.8%. Two changes: the `state_poll_dev` LEAK removed
+(it used the actual national swing) plus fed2025 Newspoll state rows; the
+others bucket split by the per-candidate model (`AUSPOL_BUCKET_SPLIT=cand_naive`)
+in all six harnesses. Live Victoria now anchors its level like the backtests
+(`AUSPOL_LIVE_LEVEL_ANCHOR=1`, Labor ~35 -> ~31 seats from the 29 Sep run).
+
+Open, in order:
+1. **9 Nov**: wire the candidate split into LIVE `fit_seats_full.R` once
+   the VEC candidate list exists (`fit_minor_candidates.R` on vic2026 rows).
+2. Federal-in-state polling as a second signal for state elections (route 2);
+   crosstabs x census for seats (route 3, design with Pete on real rows).
+   Data fetched: `external/reference/polls/` (Newspoll quarterly, DemosAU).
+3. The others bucket's TOTAL is still too small/large by ~2 (size arms
+   refused: `prereg-others-bucket-size`, `prereg-close-proportional`).
+4. `build_page.R:263` still reads `simulate_seats()` for the pendulum.
+5. Blog PR **#747** (politics-only benchmark sentence, v44 numbers) awaits
+   Pete's merge; #743 now also carries match-chains work.
+
 ## 2026-09-27
 
 v42 KEPT (Pete). No model freeze: keep improving to 28 Nov, each change a
