@@ -56,3 +56,10 @@ SHIP_SAME / SHIP_NEW slopes, fitted on EVERY election including later ones;
 J replaced them with an honest estimate shrunk toward 1. So part of v46's
 recent-pair score may rest on that remaining leak. Next: count how often the
 ledger pairs use a SHIP_* fallback, and refit those constants time-forward.
+
+CHECKED (same night): the SHIP_* fallback is used by only 4 of 56 minor
+slope cells across the 7 ledger elections, all ONP returning candidates
+(31-38 rows: fed2022, nsw2023, qld2024, vic2022). So the leaked constant
+explains at most the ONP cell (plausibly part of wa2025/nsw2023), not J's
+whole ledger loss; the rest is shrinkage moving well-measured recent slopes
+toward 1. The ONP_same constant (0.610) should still be refit time-forward.
