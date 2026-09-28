@@ -40,3 +40,27 @@ separate change, noted, not bundled into a leak fix).
   pair precedes 2026), proving the fix touches backtests only.
 - Rebuild against v44 (0.2881): the new number is the honest ledger and is
   logged whatever it is, per election.
+
+## RESULT (rebuild E vs v44, same code otherwise; 2026-09-28)
+
+Applied: departed-slope training rows now grow with time (fed2007 n=6 ->
+fed2025 n=137, was ~140 for every target), early pairs fall to the
+`min_n` default (slope 1.000) -- the cliff noted above, a separate change.
+Live vic2026 slope fit identical under both settings.
+
+| | seat log loss | weighted primary RMSE | TCP MAE |
+|---|---|---|---|
+| v44 (leaky constants) | 0.2881 | 5.038 | 3.90 |
+| **E (time-forward)** | **0.2815** | **4.978** | **3.86** |
+| AEF | 0.2851 | 5.424 | 3.63 |
+
+E minus v44 -0.0065 (SE by seat 0.0029, t -2.24; by election 0.0052), 6 of
+7 ledger elections better (wa2025 -0.034, nsw2023 -0.020, sa2026 -0.010,
+qld2024 -0.008, fed2025 -0.006, vic2022 -0.004; fed2022 +0.011).
+
+Anchor check (an improvement from removing a leak is suspect by default):
+over all 16 elections in forecasts-seats.csv, 7 of 11 before 2019 got WORSE
+(fed2007 +0.017, fed2013 +0.028, vic2014 +0.045, vic2018 +0.030, fed2019
++0.022), which is what losing future information should do; WA improved
+(wa2001 -0.094, wa2017 -0.060, wa2025 -0.034). **Ships as ledger v45**, the
+first ledger ahead of AEF on seat log loss.
