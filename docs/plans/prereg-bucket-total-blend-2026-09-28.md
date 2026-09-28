@@ -57,3 +57,17 @@ vs 14.8 actual, Speirs 50.1 vs 14.1, Gargett 34.2 vs 2.9, Hall-Evans 34.1 vs
 1.9; SA IND mean 15.3 predicted vs 7.9 actual). Fixed in the candidate model
 first (`prereg-minor-candidate-defectors-2026-09-28.md`), then this blend is
 re-run unchanged.
+
+## RE-RUN on candidate model v3, and the rebuild (2026-09-28)
+
+With v3's totals (defectors and newcomers as personal votes) and v44's v2
+split: audit size error 2.013 -> 1.566 (-0.447, SE 0.249, t -1.79), PASSES
+criterion 1; majors 1.758 -> 1.687 (do no harm PASS); split 1.285 -> 1.231.
+Pairing v2 split with v3 total was chosen after seeing the audits (stated).
+
+**Rebuild B3 (v44 + blend) FAILS criterion 3**: seat log loss 0.2893 vs
+v44 0.2881 (+0.0012, SE by seat 0.0027, t 0.45); weighted primary RMSE
+5.038 -> 5.009 (better); TCP MAE 3.91. Per election: wa2025 +0.036 (the
+pair the blend moved the wrong way, +2.47 in the audit), qld2024 +0.007,
+fed2025 +0.002, vic2022 +0.001, sa2026 -0.000, fed2022 -0.008, nsw2023
+-0.009. **Stays OFF; v44 stands.** Outputs in `output/rebuild-B3/`.
