@@ -5,7 +5,21 @@ it stood before this rewrite: `backlog/journal-2026-09-19-hub-snapshot.md`).
 Decisions: `docs/DECISIONS.md`. Every seat verdict: `docs/SEAT-REGISTRY.md`.
 Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30.
 
-## 2026-09-28 late (read this first)
+## 2026-09-29 00:30 (read this first)
+
+Still published: **ledger v46** (0.2822 vs AEF 0.2851). Local `output/` is
+rebuild J's (refused). Refused since v46, each in its prereg with numbers:
+sitting-member shift (G), margin fill (H), margin from one source (I, a
+tie; margin work stopped), slope shrinkage toward 1 (J: early elections
+better, ledger 0.2878). Open, in order:
+1. Refit the hardcoded `SHIP_SAME/SHIP_NEW` slopes (`R/split_slope.R:330`)
+   time-forward; ONP returning-candidate cells use them in 4 ledger
+   elections (fitted on every election, a remaining leak).
+2. nsw2023 statewide Labor miss (-4.8) with the Newspoll state breakdowns.
+3. Two-candidate margin (the one measure AEF leads: 3.63 vs 3.85).
+4. 9 Nov: live candidate split.
+
+## 2026-09-28 late
 
 **Published: ledger v46** (0.2822 vs AEF 0.2851; all-22 pooled 0.3193;
 primary RMSE 4.95). Local `output/` holds rebuild G's files (REFUSED: the
