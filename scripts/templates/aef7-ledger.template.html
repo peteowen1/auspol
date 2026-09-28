@@ -250,7 +250,17 @@
   </details>
 
   <details class="provlog">
-    <summary>Provenance &amp; changelog <span class="n">(30 updates)</span></summary>
+    <summary>Provenance &amp; changelog <span class="n">(31 updates)</span></summary>
+    <p class="sub prov"><b>v45, 28 Sep 2026: every fitted constant now learns only from earlier elections.</b> A
+       second correction the same day. The per-election models had been made time-forward on 19 September, but
+       about a dozen constants fitted inside the baseline (how a seat's vote moves with the state, what a
+       returning or departing member is worth, the how-to-vote card effect, the historical preference-flow rates)
+       still learned from every election except the one being forecast, including later ones: fed2007's
+       departed-member slope was fitted on 140 seats, almost all from after 2007. Each now uses only elections
+       held before the one it forecasts. The live Victorian forecast is unaffected (every past election precedes
+       it). Older federal and Victorian elections score worse without the borrowed hindsight, as they should;
+       Western Australian and the recent elections score better, and the ledger improves: seat log loss 0.2881
+       &rarr; <b>0.2815</b> (AEF 0.2851), weighted primary RMSE <b>4.98</b> (AEF 5.42).</p>
     <p class="sub prov"><b>v44, 28 Sep 2026: a leak removed, and the minor-party vote split by candidate.</b> Two
        changes, each pre-registered and measured by matched rebuilds. First, a correction: the federal state-polling
        feature had been measuring each state against the election's ACTUAL national swing, so it carried that
