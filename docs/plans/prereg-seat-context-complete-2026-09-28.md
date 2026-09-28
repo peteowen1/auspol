@@ -89,3 +89,12 @@ estimate exists), so the trees see one measure of the feature in every era.
 Same criterion as rebuild H: ships only if neither the ledger (v46 0.2822)
 nor the all-elections figure (0.2987 over forecasts-seats.csv) rises beyond
 noise and at least one falls. If it fails too, margin work stops.
+
+**Rebuild I (margin from one source, incl. live) vs v46: a tie, FAILS the bar
+("at least one falls"); margin work STOPS as pre-registered.** Ledger
+0.2822 -> 0.2823 (SE by seat 0.0014, t 0.13); all 16 elections 0.2987 ->
+0.2991 (per-election mean +0.0011, SE 0.0014, better in 6); weighted primary
+RMSE 4.947 -> 4.972. One source removed rebuild H's harm (consistent with the
+two-measures explanation), but margin adds nothing the model's existing
+features (previous primaries, incumbent) do not already carry. Code stays
+behind `AUSPOL_SEAT_CONTEXT_MARGIN` (default "0").
