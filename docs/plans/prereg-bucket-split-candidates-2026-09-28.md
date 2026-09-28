@@ -70,3 +70,20 @@ B minus C -0.0041 (SE by seat 0.0026, t -1.60; by election 0.0056, t
 qld2024 +0.001, fed2025 +0.006, nsw2023 +0.006. **Criterion 2 PASSES**
 (log loss did not rise). Best ledger of the day, below the published v42
 (0.2943). Live Victoria still waits for nominations (9 Nov).
+
+## RESULT, rebuild B2: the split in ALL six harnesses (2026-09-28)
+
+Federal wired (`6826f13`): `BS1`/`BS2` for all 7 federal pairs.
+
+| | seat log loss | weighted primary RMSE | TCP MAE |
+|---|---|---|---|
+| C (leak-free baseline) | 0.2963 | 5.083 | 3.95 |
+| B (state harnesses only) | 0.2921 | 5.029 | 3.95 |
+| **B2 (all harnesses)** | **0.2881** | **5.038** | **3.90** |
+| AEF | 0.2851 | 5.424 | 3.63 |
+
+B2 minus C -0.0082 (SE by seat 0.0028, t -2.96; by election 0.0052, t
+-2.03), better in 6 of 7: vic2022 -0.037, sa2026 -0.020, qld2024 -0.010,
+wa2025 -0.006, fed2025 -0.003, fed2022 -0.001, nsw2023 +0.002.
+**SHIPS: `AUSPOL_BUCKET_SPLIT` default -> `cand_naive` (backtests). Ledger
+v44 = rebuild B2.** Live Victoria waits for the 9 Nov candidate list.
