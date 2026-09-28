@@ -295,6 +295,20 @@ xgb_primary_predict_live <- function(shares, mat22, a22, state_mean, returns,
     sf[, incumbent_class := ifelse(incumbent %in% c("LIB", "NAT", "LNP"), "LNP", incumbent)]
     idx <- match(rows$seat, sf$seat)
     rows[, margin := sf$margin[idx]]
+    # AUSPOL_SEAT_CONTEXT_MARGIN=all: the same estimated two-party margin the
+    # training features carry (scripts/build_seat_context.R), one source for
+    # every election. plans/prereg-seat-context-complete-2026-09-28.md.
+    if (identical(Sys.getenv("AUSPOL_SEAT_CONTEXT_MARGIN", "0"), "all")) {
+      .tf <- out_path("seat-tpp-estimates.csv")
+      if (!file.exists(.tf)) stop("AUSPOL_SEAT_CONTEXT_MARGIN=all needs ", .tf, " (scripts/build_seat_context.R)")
+      .tp <- data.table::fread(.tf, showProgress = FALSE)
+      .prev_lab <- paste0(region, prev_year)
+      .tp <- .tp[.tp$election == .prev_lab]
+      .est <- .tp$tpp[match(normalise_seat(rows$seat), .tp$s)] - 50
+      rows[is.finite(.est), margin := .est[is.finite(.est)]]
+      cat(sprintf("SC9  %s: margin from our %s two-party estimate for %d of %d rows\n",
+                  paste0(region, year), .prev_lab, sum(is.finite(.est)), nrow(rows)))
+    }
     rows[, fed_swing := sf$fed_swing[idx]]
     rows[, retirement_i := as.integer(sf$retirement[idx])]
     rows[, soph_cand_i := as.integer(sf$soph_cand[idx])]

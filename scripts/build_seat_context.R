@@ -131,6 +131,7 @@ tpp_of <- function(el) {
 all_el <- unique(C$election)
 TPP <- rbindlist(lapply(all_el, function(el) { t <- tpp_of(el); if (is.null(t)) NULL else t[, election := el] }))
 cat(sprintf("SC7  two-party estimates: %d seat-elections over %d elections\n", nrow(TPP), uniqueN(TPP$election)))
+fwrite(TPP, "output/seat-tpp-estimates.csv")   # read by the live forecast under AUSPOL_SEAT_CONTEXT_MARGIN=all
 prev_of <- setNames(sapply(pairs, `[[`, "prev"), sapply(pairs, `[[`, "election"))
 ord <- unique(C[, .(election, region, edate)])[order(region, edate)]
 ord[, prev := shift(election), by = region]

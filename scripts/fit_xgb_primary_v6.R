@@ -397,8 +397,13 @@ for (pr in PAIRS) {
     # AUSPOL_SEAT_CONTEXT_MARGIN=1: Labor's estimated two-party margin at the
     # previous election (validated r 0.984, mean |diff| 1.64 against the seat
     # file). Previous swing is NOT filled (r 0.875, below the 0.9 bar).
-    if (identical(Sys.getenv("AUSPOL_SEAT_CONTEXT_MARGIN", "0"), "1"))
+    .mmode <- Sys.getenv("AUSPOL_SEAT_CONTEXT_MARGIN", "0")
+    if (identical(.mmode, "1"))
       m[is.na(margin) & is.finite(cx_margin), margin := cx_margin]
+    # "all": our estimate EVERYWHERE it exists (one source of truth), the seat
+    # file only where no estimate does; the live forecast does the same.
+    if (identical(.mmode, "all"))
+      m[is.finite(cx_margin), margin := cx_margin]
     m[, c(".s", "cx_class", "cx_ret", "cx_margin") := NULL]
     if (n_fill) cat(sprintf("SCF  %s: incumbent/retiring filled from seat-context for %d rows\n", pr$election, n_fill))
   }
