@@ -52,3 +52,21 @@ Without the largest mover: resid -1.696 (SE 0.620, sa2022 out), naive
 3.04 -> 4.35, fed2019 0.01 -> 1.59.
 
 **Criterion 1 PASSES; `cand_naive` goes to the rebuild** (criterion 2).
+
+## RESULT, criterion 2 (rebuild B vs rebuild C, same code, 2026-09-28)
+
+Applied to the STATE harnesses only: the federal harness builds its statewide
+in its own block (`backtest_candidate_fed.R` ~line 1018), not through
+`forecast_statewide_for()`, so fed pairs had no `BS1` lines -- a parity gap,
+to be wired and re-measured (rebuild B2).
+
+| | seat log loss | weighted primary RMSE | TCP MAE |
+|---|---|---|---|
+| C (leak-free baseline) | 0.2963 | 5.083 | 3.95 |
+| **B (C + cand_naive, state pairs)** | **0.2921** | **5.029** | 3.95 |
+
+B minus C -0.0041 (SE by seat 0.0026, t -1.60; by election 0.0056, t
+-1.04): vic2022 **-0.0374**, sa2026 -0.006, wa2025 -0.005, fed2022 -0.005,
+qld2024 +0.001, fed2025 +0.006, nsw2023 +0.006. **Criterion 2 PASSES**
+(log loss did not rise). Best ledger of the day, below the published v42
+(0.2943). Live Victoria still waits for nominations (9 Nov).
