@@ -110,6 +110,32 @@ forecast_statewide_for <- function(region, year, election_date, parties, st_a,
       if (isTRUE(base_share > 0)) prior / base_share
       else rep(1 / length(bucket), length(bucket)),
       bucket)
+    # AUSPOL_BUCKET_SPLIT = cand_resid / cand_naive: split the bucket by the
+    # per-candidate model's predicted class shares for THIS election instead of
+    # the previous election's mix (the bucket's total is unchanged). Each share
+    # comes from a model fitted on earlier elections only
+    # (scripts/fit_minor_candidates.R, MC2). Any bucket class without a
+    # prediction falls back to the prior-ratio split for the whole pair.
+    # docs/plans/prereg-bucket-split-candidates-2026-09-28.md.
+    split_mode <- Sys.getenv("AUSPOL_BUCKET_SPLIT", "prior")
+    if (split_mode %in% c("cand_resid", "cand_naive")) {
+      sf <- out_path("minor-class-shares-resid.csv")
+      if (!file.exists(sf)) stop("AUSPOL_BUCKET_SPLIT=", split_mode, " needs ", sf,
+                                 " (scripts/fit_minor_candidates.R).")
+      cs <- data.table::fread(sf, showProgress = FALSE)
+      el_arg <- paste0(region, year)
+      col <- if (split_mode == "cand_resid") "pred_resid" else "pred_naive"
+      pr <- cs[cs$election == el_arg, ]
+      pred <- stats::setNames(pr[[col]], pr$cls)[bucket]
+      if (all(is.finite(pred)) && sum(pred) > 0) {
+        ratio <- stats::setNames(pred / sum(pred), bucket)
+        cat(sprintf("BS1  %s: bucket split by candidate model (%s): %s\n", el_arg, split_mode,
+                    paste(sprintf("%s %.2f", bucket, ratio), collapse = ", ")))
+      } else {
+        cat(sprintf("BS1! %s: no candidate-model share for %s; prior-ratio split kept\n", el_arg,
+                    paste(bucket[!is.finite(pred)], collapse = ", ")))
+      }
+    }
     # EVERY DRAW, not just the point estimate. simulate_seat_contests() requires
     # statewide_draws to cover every column in `parties` or it errors, so an
     # unmodelled class needs its own draw column. There is no genuine trend draw
