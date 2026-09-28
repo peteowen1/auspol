@@ -65,7 +65,7 @@ if (nrow(e)) {
 # ---- raw commission downloads ----------------------------------------------
 L <- c(L, "## Raw commission downloads (`external/reference/`)\n")
 for (d in c("aec", "vec", "nsw", "ecsa", "ecq", "waec", "trends",
-            "boundaries", "census", "correspondences", "aef")) {
+            "boundaries", "census", "correspondences", "aef", "polls")) {
   p <- file.path("external", "reference", d)
   if (!dir.exists(p)) next
   f <- list.files(p, recursive = TRUE)

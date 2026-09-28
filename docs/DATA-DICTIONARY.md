@@ -106,6 +106,13 @@ The originals, before any aggregation. **This is where dropped columns live.**
 
 - **ecq/** — no CSVs (see registry for other formats)
 - **waec/** — no CSVs (see registry for other formats)
+### polls/
+
+| file | rows | columns |
+|---|---:|---|
+| `demosau/crosstabs.csv` | 991 | `poll_id`, `fieldwork_start`, `fieldwork_end`, `jurisdiction`, `sample_n`, `question`, `dimension`, `group`, `response`, `pct`, `source_url` |
+| `newspoll-quarterly/breakdowns.csv` | 106 | `pollster`, `period_start`, `period_end`, `published`, `sample_n`, `dimension`, `group`, `party`, `fp`, `tpp_alp`, `source_url` |
+
 ## Columns we download and DROP
 
 Each row is a field present in the raw download and absent from the
@@ -161,5 +168,5 @@ processed extract. Every one is recoverable without a new fetch.
 | `cal-fed-m2.5.csv` | 886 | `seat`, `actual`, `prob`, `pred`, `pred_p`, `pair` |
 | `cal-fed-m4.0.csv` | 886 | `seat`, `actual`, `prob`, `pred`, `pred_p`, `pair` |
 
-_(2204 `backtest-*.csv` arm outputs omitted; they share one shape.)_
+_(2222 `backtest-*.csv` arm outputs omitted; they share one shape.)_
 

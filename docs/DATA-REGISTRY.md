@@ -85,6 +85,8 @@ cannot pass as a working one.
   - e.g. abs-sed/CG_CED_2016_CED_2021.csv, abs-sed/CG_SED_2016_SED_2021.csv, abs-sed/CG_SED_2021_SED_2022.csv, abs-sed/CG_SED_2022_SED_2024.csv
 - **aef/** -- 17 files, 4.8 MB
   - e.g. 2022fed-results.json, 2022fed-summary.json, 2022sa-results.json, 2022sa-summary.json
+- **polls/** -- 44 files, 17.9 MB. **1 ZERO-BYTE: crosstabs-ambiguous.txt**
+  - e.g. demosau/crosstabs-ambiguous.txt, demosau/crosstabs.csv, demosau/raw/fed-2026-01.pdf, demosau/raw/fed-2026-01b.pdf
 
 ## Candidate-level corpus (`output/candidacies.csv`)
 
