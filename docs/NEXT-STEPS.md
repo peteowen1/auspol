@@ -5,6 +5,32 @@ it stood before this rewrite: `backlog/journal-2026-09-19-hub-snapshot.md`).
 Decisions: `docs/DECISIONS.md`. Every seat verdict: `docs/SEAT-REGISTRY.md`.
 Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30.
 
+## 2026-09-28 evening (read this first)
+
+**Ledger v45 PUBLISHED 18:23** (manifest git 79515af): seat log loss
+**0.2815** vs AEF 0.2851 (first time ahead), primary RMSE 4.98 vs 5.42,
+TCP MAE 3.86 vs 3.63. **All-22-election pooled 0.3193** (v44's 0.3072 was
+flattered by hindsight). Measure every change against BOTH numbers.
+v45 = v44 + every constant inside base_pred time-forward
+(`AUSPOL_TIME_FORWARD_FITS`, `R/time_forward.R`).
+
+Measured and OFF today (each recorded in its prereg): anchor-implied,
+exhaust (twice), others-bucket size, proportional closure, candidate
+bucket total, shrunk blend (audit pass, rebuild fail 0.2893), departed-member
+xgb features (0.2902; the miss is in base_pred).
+
+Open, in order:
+1. **base_pred sitting-member effect** on the COMPLETED retirement data
+   (`external/reference/retirements/retirements.csv`, 393 rows, 30
+   elections): incumbent party +1.93 under-called when the member stays,
+   -1.00 when they retire; retired and lost-preselection look alike (n 9).
+2. Replace the `min_n` cliffs in the time-forward fits with shrinkage
+   (early pairs now snap to slope 1.000 below 40 rows).
+3. 9 Nov: wire the candidate split live (`fit_minor_candidates.R` v3 exists).
+4. Newspoll/DemosAU data (`external/reference/polls/`): federal-in-state
+   signal for state elections; crosstabs x census (design with Pete).
+5. Blog PR **#747** (v45 numbers) awaits Pete's merge.
+
 ## 2026-09-28 (read this first)
 
 **Ledger v44 PUBLISHED 14:45** (`shipped-models`, manifest git c5e8337):
