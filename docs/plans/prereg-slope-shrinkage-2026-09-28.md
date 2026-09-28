@@ -40,3 +40,19 @@ slope at 0.313 from 6 seats in 2 earlier elections: a 2-cluster standard
 error is too unreliable to shrink with. Changed before any rebuild: at least
 3 elections (else 1), and the variance is the LARGER of the cluster-robust
 and ordinary estimates. Nothing had been scored when this was changed.
+
+## RESULT (rebuild J vs v46, 2026-09-29; the text above is unedited)
+
+Ledger seat log loss 0.2822 -> **0.2878** (+0.0056, SE by seat 0.0017,
+t 3.23; by election 0.0035); all 16 elections 0.2987 -> 0.2991 seat-weighted
+(per-election mean +0.0031, SE 0.0031, better in 6); weighted primary RMSE
+4.947 -> 4.984. **FAILS; stays OFF.**
+
+Named early targets mostly improved (fed2007 -0.005, fed2010 -0.007, fed2013
+-0.002, vic2014 -0.009, fed2016 -0.020; wa2005 +0.009, wa2013 +0.033); the
+recent pairs got worse (wa2025 +0.025, nsw2023 +0.010, fed2025 +0.006).
+Likely reason, untested: in thin cells v46 falls back to the hardcoded
+SHIP_SAME / SHIP_NEW slopes, fitted on EVERY election including later ones;
+J replaced them with an honest estimate shrunk toward 1. So part of v46's
+recent-pair score may rest on that remaining leak. Next: count how often the
+ledger pairs use a SHIP_* fallback, and refit those constants time-forward.
