@@ -59,3 +59,15 @@ AMENDMENT, stated as such: Pete chose to ship it** (2026-09-28) because it is
 the correct data, it removes the "blank incumbent = older election" label the
 trees could split on, the log-loss change is noise, and primary error
 improves. Ships as ledger v46.
+
+## PHASE 2 (2026-09-28 late)
+
+Seat file definitions read from rows: `margin` = Labor's two-party vote
+against the Coalition minus 50, even where they were not the final two;
+`prev_swing` = its change at the previous election. Estimated per seat with
+derive_tpp()'s method (Labor primary plus each class's flow, non-exhausted
+total). Validation over the 10 pairs with seat files: margin r 0.984, mean
+|diff| 1.64 points (940 seats; every pair >= 0.970) -> PASSES the 0.9 bar,
+filled behind `AUSPOL_SEAT_CONTEXT_MARGIN`. Previous swing r 0.875 (786
+seats) and 69.5% coverage (redistributions break the two-back match) ->
+FAILS the bar, not filled. Rebuild H decides the margin fill against v46.

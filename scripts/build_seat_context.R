@@ -102,5 +102,62 @@ if (nrow(val)) {
   if (nrow(dis)) { cat("SC5  incumbent disagreements (first 12):\n"); print(dis[1:min(12, .N), .(pair, seat, ours = incumbent_class, seat_file = sf_class, by_election)]) }
   if (tot$incumbent < 0.90) stop("SC5! incumbent agreement below 90%; the derivation is not trustworthy enough to fill with")
 }
+# ---- PHASE 2: margin and previous swing ------------------------------------
+# The seat file's `margin` is Labor's two-party-preferred vote against the
+# Coalition minus 50, even where they were not the final two (Melbourne,
+# Greens-held: +25.0), and `prev_swing` is that figure's change at the previous
+# election. Estimated for every seat and election with the method the
+# published two-party series uses (derive_tpp()): Labor's primary plus each
+# other class's preferences at that election's flow rate, on the
+# non-exhausted total. Validated against the seat file below.
+cy <- load_election_cycles(); FA <- load_preference_flows()
+flow_map <- function(fl, cls) {
+  key <- switch(cls, GRN = "GRN", ONP = "ONP", OTH_RIGHT = if ("UAP" %in% fl$party) "UAP" else "OTH", "OTH")
+  r <- fl[fl$party == key]; if (!nrow(r)) r <- fl[fl$party == "OTH"]
+  if (!nrow(r)) return(c(flow = 0.5, ex = 0))
+  c(flow = r$flow_alp[1] / 100, ex = if ("exhaust" %in% names(r) && is.finite(r$exhaust[1])) r$exhaust[1] / 100 else 0)
+}
+tpp_of <- function(el) {
+  rg <- sub("[0-9]{4}$", "", el); yr <- as.integer(sub("^[a-z]+", "", el))
+  fl <- tryCatch(flows_for(FA, yr, rg, cycles = cy, quiet = TRUE), error = function(e) NULL)
+  if (is.null(fl)) return(NULL)
+  d <- C[election == el, .(v = sum(votes)), by = .(s, party)]
+  d[, share := 100 * v / sum(v), by = s]
+  mf <- rbindlist(lapply(unique(d$party), function(p) data.table(party = p, flow = flow_map(fl, p)[["flow"]], ex = flow_map(fl, p)[["ex"]])))
+  d <- merge(d, mf, by = "party")
+  d[, .(tpp = 100 * (sum(share[party == "ALP"]) + sum((share * flow * (1 - ex))[!party %in% c("ALP", "LNP")])) /
+             (sum(share[party %in% c("ALP", "LNP")]) + sum((share * (1 - ex))[!party %in% c("ALP", "LNP")]))), by = s]
+}
+all_el <- unique(C$election)
+TPP <- rbindlist(lapply(all_el, function(el) { t <- tpp_of(el); if (is.null(t)) NULL else t[, election := el] }))
+cat(sprintf("SC7  two-party estimates: %d seat-elections over %d elections\n", nrow(TPP), uniqueN(TPP$election)))
+prev_of <- setNames(sapply(pairs, `[[`, "prev"), sapply(pairs, `[[`, "election"))
+ord <- unique(C[, .(election, region, edate)])[order(region, edate)]
+ord[, prev := shift(election), by = region]
+pp_of <- setNames(ord$prev, ord$election)
+out[, `:=`(t_prev = TPP[.(out$prev, out$s), on = .(election, s), tpp],
+           t_pp = TPP[.(unname(pp_of[out$prev]), out$s), on = .(election, s), tpp])]
+out[, `:=`(margin_est = t_prev - 50, prev_swing_est = t_prev - t_pp)]
+out[, c("t_prev", "t_pp") := NULL]
+cat(sprintf("SC7  margin estimated for %.1f%% of seat-pairs, previous swing for %.1f%%\n",
+            100 * mean(is.finite(out$margin_est)), 100 * mean(is.finite(out$prev_swing_est))))
+if (nrow(val)) {
+  vm <- merge(out[, .(pair, s, margin_est, prev_swing_est)],
+              rbindlist(lapply(unique(val$pair), function(el) {
+                yr <- as.integer(sub("^[a-z]+", "", el)); rg <- sub("[0-9]{4}$", "", el)
+                sf <- as.data.table(load_seats(yr, rg)); sf[, .(pair = el, s = normalise_seat(seat), sf_margin = margin, sf_swing = prev_swing)] })),
+              by = c("pair", "s"))
+  vm <- vm[is.finite(margin_est) & is.finite(sf_margin)]
+  r_m <- vm[, cor(margin_est, sf_margin)]; mae_m <- vm[, mean(abs(margin_est - sf_margin))]
+  vs <- vm[is.finite(prev_swing_est) & is.finite(sf_swing)]
+  r_s <- if (nrow(vs) > 10) vs[, cor(prev_swing_est, sf_swing)] else NA_real_
+  cat(sprintf("SC8  margin vs seat file: r %.3f, mean |diff| %.2f points over %d seats | previous swing: r %.3f over %d seats\n",
+              r_m, mae_m, nrow(vm), r_s, nrow(vs)))
+  print(vm[, .(seats = .N, r_margin = round(cor(margin_est, sf_margin), 3), mae = round(mean(abs(margin_est - sf_margin)), 2)), by = pair])
+  if (!is.finite(r_m) || r_m < 0.9) cat("SC8! margin agreement below the pre-registered 0.9; margin will NOT be filled\n")
+  out[, margin_ok := is.finite(r_m) && r_m >= 0.9]
+  out[, swing_ok := is.finite(r_s) && r_s >= 0.9]
+}
+
 fwrite(out, "output/seat-context.csv")
 cat(sprintf("SC6  wrote output/seat-context.csv (%d rows)\n", nrow(out)))

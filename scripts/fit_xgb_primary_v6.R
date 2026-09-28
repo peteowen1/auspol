@@ -387,13 +387,19 @@ for (pr in PAIRS) {
   # plans/prereg-seat-context-complete-2026-09-28.md.
   if (identical(Sys.getenv("AUSPOL_SEAT_CONTEXT_FILL", "1"), "1")) {
     SCX <- fread(out_path("seat-context.csv"), showProgress = FALSE)
-    scx <- SCX[SCX$pair == pr$election, list(.s = s, cx_class = incumbent_class, cx_ret = retiring)]
+    scx <- SCX[SCX$pair == pr$election, list(.s = s, cx_class = incumbent_class, cx_ret = retiring,
+                                              cx_margin = if ("margin_est" %in% names(SCX)) margin_est else NA_real_)]
     m[, .s := normalise_seat(seat)]
     m <- merge(m, scx, by = ".s", all.x = TRUE)
     n_fill <- sum(is.na(m$is_incumbent_party) & !is.na(m$cx_class))
     m[is.na(is_incumbent_party) & !is.na(cx_class), is_incumbent_party := party == cx_class]
     m[is.na(retirement) & !is.na(cx_ret), retirement := cx_ret]
-    m[, c(".s", "cx_class", "cx_ret") := NULL]
+    # AUSPOL_SEAT_CONTEXT_MARGIN=1: Labor's estimated two-party margin at the
+    # previous election (validated r 0.984, mean |diff| 1.64 against the seat
+    # file). Previous swing is NOT filled (r 0.875, below the 0.9 bar).
+    if (identical(Sys.getenv("AUSPOL_SEAT_CONTEXT_MARGIN", "0"), "1"))
+      m[is.na(margin) & is.finite(cx_margin), margin := cx_margin]
+    m[, c(".s", "cx_class", "cx_ret", "cx_margin") := NULL]
     if (n_fill) cat(sprintf("SCF  %s: incumbent/retiring filled from seat-context for %d rows\n", pr$election, n_fill))
   }
 
