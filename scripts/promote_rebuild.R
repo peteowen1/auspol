@@ -43,6 +43,13 @@ if (file.mtime(pb_f) < newest_model)
 per <- fread(pb_f, showProgress = FALSE)
 known <- vapply(all_election_pairs(), `[[`, character(1), "election")
 missing <- setdiff(known, per$pair)
+# Pairs the rebuild skips ON PURPOSE (AUSPOL_SKIP_PAIRS, default wa2021: no
+# fittable poll trend) are not missing; the driver exports the same list.
+skip <- trimws(strsplit(Sys.getenv("AUSPOL_SKIP_PAIRS", "wa2021"), ",")[[1]])
+if (length(intersect(missing, skip)))
+  cat(sprintf("PA0  skipped by design (AUSPOL_SKIP_PAIRS), not required: %s\n",
+              paste(intersect(missing, skip), collapse = ", ")))
+missing <- setdiff(missing, skip)
 if (length(missing) && !identical(Sys.getenv("AUSPOL_ALLOW_PARTIAL_PROMOTE", "0"), "1"))
   stop("refusing to promote: pair(s) absent from the scoreboard: ", paste(missing, collapse = ", "))
 cat(sprintf("PA1  rebuild promotion: %d pairs scored, models newest %s\n", nrow(per), format(newest_model, "%Y-%m-%d %H:%M")))
