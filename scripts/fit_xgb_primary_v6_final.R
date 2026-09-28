@@ -36,6 +36,7 @@ ALL[, soph_cand_i := as.integer(soph_cand)]
 ALL[, soph_party_i := as.integer(soph_party)]
 ALL[, is_incumbent_party_i := as.integer(is_incumbent_party)]
 ALL[, historic_elected_i := as.integer(historic_elected_any)]
+add_departed_side(ALL, c("pair", "seat"))   # AUSPOL_XGB_DEPARTED_SIDE
 
 # FIXED, ALPHABETICAL (within each dummy block), WRITTEN TO DISK -- the live
 # path must build its feature row with these exact columns in this exact
@@ -75,6 +76,7 @@ feat_cols <- c("base_pred", "seat_prev_pcv", "seat_outperf", "level_prev", "leve
                "n_cand_prev", "n_cand_now", "same_i", "same_mp_i", "is_major_i",
                "margin", "fed_swing", "retirement_i", "soph_cand_i", "soph_party_i",
                "prev_swing", "is_incumbent_party_i", "own_prev_pcv",
+               if (identical(Sys.getenv("AUSPOL_XGB_DEPARTED_SIDE", "0"), "1")) c("own_departed_i", "opp_departed_i"),
                "historic_elected_i", "ballot_pos_min",
                "jump", "governed", "permit", "surge_h", "is_recipient",
                paste0("party_", party_levels), paste0("region_", region_levels))

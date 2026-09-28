@@ -330,6 +330,9 @@ xgb_primary_predict_live <- function(shares, mat22, a22, state_mean, returns,
   # built two blocks above from that same file. Using them directly is lower
   # risk than extending build_retirement_derived.py's hardcoded election-pair
   # map for an unconcluded election it was never designed to cover.
+  # Which side lost its member, the same helper the training scripts use
+  # (AUSPOL_XGB_DEPARTED_SIDE; plans/prereg-departed-member-sides-2026-09-28.md).
+  add_departed_side(rows, "seat")
   rows[, seat_outperf := seat_prev_pcv - level_prev]
   .outperf_gate <- !is.na(rows$retirement_i) & !is.na(rows$is_incumbent_party_i) &
                    rows$retirement_i == 1L & rows$is_incumbent_party_i == 1L

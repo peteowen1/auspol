@@ -518,6 +518,7 @@ ALL[, soph_cand_i := as.integer(soph_cand)]
 ALL[, soph_party_i := as.integer(soph_party)]
 ALL[, is_incumbent_party_i := as.integer(is_incumbent_party)]
 ALL[, historic_elected_i := as.integer(historic_elected_any)]
+add_departed_side(ALL, c("pair", "seat"))   # AUSPOL_XGB_DEPARTED_SIDE (plans/prereg-departed-member-sides-2026-09-28.md)
 
 # GATE seat_outperf to the one row it means anything for: the party that held
 # the seat, in a pair where its member is gone. Left ungated, it changed
@@ -616,6 +617,7 @@ feat_cols <- c("base_pred", "seat_prev_pcv", "seat_outperf", "level_prev",
                "n_cand_prev", "n_cand_now", "same_i", "same_mp_i", "is_major_i",
                "margin", "fed_swing", "retirement_i", "soph_cand_i", "soph_party_i",
                "prev_swing", "is_incumbent_party_i", "own_prev_pcv",
+               if (identical(Sys.getenv("AUSPOL_XGB_DEPARTED_SIDE", "0"), "1")) c("own_departed_i", "opp_departed_i"),
                "historic_elected_i", "ballot_pos_min",
                "jump", "governed", "permit", "surge_h", "is_recipient",
                paste0("party_", party_levels), paste0("region_", region_levels))
