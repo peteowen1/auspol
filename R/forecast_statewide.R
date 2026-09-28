@@ -181,7 +181,10 @@ forecast_statewide_for <- function(region, year, election_date, parties, st_a,
 candidate_bucket_ratio <- function(election, bucket) {
   split_mode <- Sys.getenv("AUSPOL_BUCKET_SPLIT", "prior")
   if (!split_mode %in% c("cand_resid", "cand_naive")) return(NULL)
-  sf <- out_path("minor-class-shares-resid.csv")
+  # The SPLIT reads the v2 candidate model (v44); v3 (defectors and newcomers
+  # treated as personal votes) divides worse but totals better, so each
+  # purpose names its source. plans/prereg-minor-candidate-defectors-2026-09-28.md.
+  sf <- out_path(Sys.getenv("AUSPOL_BUCKET_SPLIT_SRC", "minor-class-shares-v2.csv"))
   if (!file.exists(sf)) stop("AUSPOL_BUCKET_SPLIT=", split_mode, " needs ", sf,
                              " (scripts/fit_minor_candidates.R).")
   cs <- data.table::fread(sf, showProgress = FALSE)
@@ -218,7 +221,7 @@ candidate_bucket_ratio <- function(election, bucket) {
 #' @export
 candidate_bucket_total <- function(election, bucket) {
   if (!Sys.getenv("AUSPOL_BUCKET_TOTAL", "poll") %in% c("cand", "blend")) return(NULL)
-  sf <- out_path("minor-class-shares-resid.csv")
+  sf <- out_path(Sys.getenv("AUSPOL_BUCKET_TOTAL_SRC", "minor-class-shares-v3.csv"))
   if (!file.exists(sf)) stop("AUSPOL_BUCKET_TOTAL=cand needs ", sf, " (scripts/fit_minor_candidates.R).")
   cs <- data.table::fread(sf, showProgress = FALSE)
   el_arg <- election   # never the bare argument inside `[` (NSE trap)

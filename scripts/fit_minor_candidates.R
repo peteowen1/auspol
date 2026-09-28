@@ -91,15 +91,21 @@ feat <- function(m) {
   P <- if (is.na(pv)) C[0] else C[election == pv]
   prior_j <- C[juris == m$juris[1] & edate < ed]
   # candidate
-  own <- P[, .(own_prev = max(share)), by = nk]
-  own_s <- P[, .(own_prev_seat = max(share), held = any(elected %in% TRUE)), by = .(nk, seat)]
+  # v3: a vote is only the candidate's OWN if it was won as a non-major.
+  # A previous Labor/Coalition run is party vote (McBride: Liberal 62.3,
+  # then independent 14.8), so it is kept apart as its own feature.
+  # plans/prereg-minor-candidate-defectors-2026-09-28.md.
+  MAJ <- c("ALP", "LNP")
+  own <- P[!party %in% MAJ, .(own_prev = max(share)), by = nk]
+  own_s <- P[!party %in% MAJ, .(own_prev_seat = max(share), held = any(elected %in% TRUE)), by = .(nk, seat)]
+  own_maj <- P[party %in% MAJ, .(own_prev_major = max(share), held_major = any(elected %in% TRUE)), by = nk]
   runs <- prior_j[, .(n_prior = uniqueN(election)), by = nk]
   # federal history, matched on each row's OWN state (a federal target has
   # rows from every state): the candidate's latest earlier federal vote, and
   # the party's mean at the latest earlier federal election in that state
   fedp <- fed[edate < ed]
   fed_last <- if (nrow(fedp)) fedp[edate == max(edate)] else fedp
-  fed_own <- fedp[, .(fed_own = share[which.max(edate)], fed_date = max(edate)), by = nk]
+  fed_own <- fedp[!party %in% MAJ, .(fed_own = share[which.max(edate)], fed_date = max(edate)), by = nk]
   # party
   pp <- pty[election == pv, .(pk, p_prev_mean = p_mean, p_prev_seats = p_seats)]
   pn <- pty[election == el, .(pk, p_now_seats = p_seats)]
@@ -118,6 +124,7 @@ feat <- function(m) {
   x <- copy(m)
   x <- merge(x, own, by = "nk", all.x = TRUE)
   x <- merge(x, own_s, by = c("nk", "seat"), all.x = TRUE)
+  x <- merge(x, own_maj, by = "nk", all.x = TRUE)
   x <- merge(x, runs, by = "nk", all.x = TRUE)
   x <- merge(x, fed_own, by = "nk", all.x = TRUE)
   x <- merge(x, pp, by = "pk", all.x = TRUE)
@@ -134,7 +141,7 @@ feat <- function(m) {
   # MC2: the leakage assertion. Everything above reads elections before `ed`.
   srcs <- c(P$edate, prior_j$edate, fedp$edate)
   if (length(srcs) && any(srcs >= ed)) stop("MC2! a feature for ", el, " reads an election on or after it")
-  x[, `:=`(n_prior = fifelse(is.na(n_prior), 0L, n_prior), held = held %in% TRUE,
+  x[, `:=`(n_prior = fifelse(is.na(n_prior), 0L, n_prior), held = held %in% TRUE, held_major = held_major %in% TRUE,
            p_new = !is.na(pk) & is.na(p_seen), ran_fed = !is.na(fed_own),
            p_seat_ratio = p_now_seats / p_prev_seats, cls_cand_ratio = cls_cands_now / cls_cands_prev,
            has_prev_election = !is.na(pv))]
@@ -144,7 +151,7 @@ feat <- function(m) {
 Fx <- rbindlist(lapply(split(M, by = "election"), feat), fill = TRUE)
 cat(sprintf("MC2  features built for %d rows over %d elections; leakage assertion passed for every election\n",
             nrow(Fx), uniqueN(Fx$election)))
-FEATS <- c("own_prev", "own_prev_seat", "held", "n_prior", "fed_own", "ran_fed",
+FEATS <- c("own_prev", "own_prev_seat", "held", "own_prev_major", "held_major", "n_prior", "fed_own", "ran_fed",
            "p_prev_mean", "p_prev_seats", "p_now_seats", "p_seat_ratio", "p_new", "p_prev_seat", "p_fed_mean",
            "seat_prev_minor", "seat_prev_n", "seat_prev_cls", "n_minor_now", "n_cands_now", "n_cls_now",
            "cls_prev_state", "cls_cands_now", "cls_cands_prev", "cls_cand_ratio", "has_prev_election")
@@ -158,12 +165,21 @@ mm <- function(d) {
   cbind(X, IND = d$cls == "IND", OTH = d$cls == "OTH", OTH_RIGHT = d$cls == "OTH_RIGHT", ONP = d$cls == "ONP",
         fed = d$juris == "fed")
 }
-naive <- function(d) {
+# `ref` = the rows the baseline may learn from (the training elections): a
+# newcomer in a PERSONAL class (IND/OTH/OTH_RIGHT) gets the median first-run
+# share of that class there, never the seat's previous class vote, which
+# belonged to someone else (Gargett, Waite: 34.2 predicted, 2.9 actual). ONP
+# (institutional) keeps the party and seat fallbacks.
+naive <- function(d, ref) {
+  first <- ref[n_prior == 0 & is.na(own_prev), .(fr = stats::median(share)), by = cls]
+  fr <- setNames(first$fr, first$cls)[d$cls]
+  personal <- d$cls %in% c("IND", "OTH", "OTH_RIGHT")
+  seat_fb <- fifelse(!is.na(d$seat_prev_cls) & !is.na(d$n_cls_now), d$seat_prev_cls / pmax(1, d$n_cls_now), NA_real_)
   b <- fifelse(!is.na(d$own_prev_seat), d$own_prev_seat,
        fifelse(!is.na(d$own_prev), d$own_prev,
        fifelse(!is.na(d$p_prev_mean), d$p_prev_mean,
-       fifelse(!is.na(d$seat_prev_cls) & !is.na(d$n_cls_now), d$seat_prev_cls / pmax(1, d$n_cls_now), NA_real_))))
-  fifelse(is.na(b), stats::median(Fx$share), b)
+       fifelse(personal, fr, seat_fb))))
+  fifelse(is.na(b), stats::median(ref$share), b)
 }
 targets <- unique(Fx[, .(election, edate)])[order(edate)]
 oof <- list()
@@ -179,15 +195,15 @@ for (i in seq_len(nrow(targets))) {
   fold_of <- setNames(grp, el_tr)[tr$election]
   folds <- lapply(sort(unique(fold_of)), function(k) which(fold_of == k))
   # ARM "resid" (v2): the tree learns a correction on the naive prediction
-  if (ARM == "resid") xgboost::setinfo(dtr, "base_margin", naive(tr))
+  if (ARM == "resid") xgboost::setinfo(dtr, "base_margin", naive(tr, tr))
   prm <- list(objective = "reg:squarederror", eta = 0.05, max_depth = 4, subsample = 0.8,
               colsample_bytree = 0.8, min_child_weight = 5)
   cv <- xgboost::xgb.cv(prm, dtr, nrounds = 1500, folds = folds, early_stopping_rounds = 50, verbose = 0)
   nr <- cv$best_iteration %||% cv$early_stop$best_iteration
   fit <- xgboost::xgb.train(prm, dtr, nrounds = nr, verbose = 0)
   dte <- xgboost::xgb.DMatrix(mm(te))
-  if (ARM == "resid") xgboost::setinfo(dte, "base_margin", naive(te))
-  te[, `:=`(pred_xgb = pmax(0, predict(fit, dte)), pred_naive = naive(te), n_train_el = n_el, nrounds = nr)]
+  if (ARM == "resid") xgboost::setinfo(dte, "base_margin", naive(te, tr))
+  te[, `:=`(pred_xgb = pmax(0, predict(fit, dte)), pred_naive = naive(te, tr), n_train_el = n_el, nrounds = nr)]
   oof[[el]] <- te
   cat(sprintf("MC4  %-8s trained on %2d earlier elections (%5d rows), %4d rounds | RMSE xgb %.2f, naive %.2f\n",
               el, n_el, nrow(tr), nr, te[, sqrt(mean((pred_xgb - share)^2))], te[, sqrt(mean((pred_naive - share)^2))]))

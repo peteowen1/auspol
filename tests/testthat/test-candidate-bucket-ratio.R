@@ -7,7 +7,7 @@ test_that("candidate_bucket_ratio reads THIS election's row, not the first one",
     election = c("fed2004", "fed2004", "fed2025", "fed2025"),
     cls = c("IND", "OTH", "IND", "OTH"),
     pred_resid = c(1, 9, 6, 2), pred_naive = c(1, 9, 6, 2), arm = "resid"),
-    file.path(d, "output", "minor-class-shares-resid.csv"))
+    file.path(d, "output", "minor-class-shares-v2.csv"))
   withr::local_options(auspol.root = d)
   withr::local_envvar(AUSPOL_BUCKET_SPLIT = "cand_naive")
   r <- suppressMessages(capture.output(x <- candidate_bucket_ratio("fed2025", c("IND", "OTH"))))
