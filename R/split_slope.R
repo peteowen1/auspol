@@ -177,7 +177,7 @@ fit_split_slopes <- function(target_election, corpus = NULL, pairs = NULL,
   C <- data.table::as.data.table(C)
   MAJ <- c("ALP", "LNP", "NAT")
   if (is.null(pairs)) pairs <- all_election_pairs()
-  pairs <- Filter(function(pr) !identical(pr$election, target_election), pairs)
+  pairs <- fit_pairs_for(target_election, pairs)   # time-forward (plans/prereg-time-forward-constants-2026-09-28.md)
 
   state_level <- function(el) {
     d <- C[C$election == el]
@@ -346,7 +346,7 @@ fit_conditional_slopes <- function(target_election, corpus = NULL, pairs = NULL,
   }
   C <- data.table::as.data.table(C)
   if (is.null(pairs)) pairs <- all_election_pairs()
-  pairs <- Filter(function(pr) !identical(pr$election, target_election), pairs)
+  pairs <- fit_pairs_for(target_election, pairs)   # time-forward (plans/prereg-time-forward-constants-2026-09-28.md)
 
   state_level <- function(el) {
     d <- C[C$election == el]
@@ -437,7 +437,7 @@ fit_major_conditional_slopes <- function(target_election, corpus = NULL, pairs =
   }
   C <- data.table::as.data.table(C)
   if (is.null(pairs)) pairs <- all_election_pairs()
-  pairs <- Filter(function(pr) !identical(pr$election, target_election), pairs)
+  pairs <- fit_pairs_for(target_election, pairs)   # time-forward (plans/prereg-time-forward-constants-2026-09-28.md)
 
   state_level <- function(el) {
     d <- C[C$election == el]
@@ -579,7 +579,7 @@ fit_dispersion_slopes <- function(target_election, corpus = NULL, pairs = NULL,
   C <- data.table::as.data.table(C)
   if (is.null(pairs)) pairs <- all_election_pairs()
   target_pair <- Find(function(pr) identical(pr$election, target_election), pairs)
-  fit_pairs <- Filter(function(pr) !identical(pr$election, target_election), pairs)
+  fit_pairs <- fit_pairs_for(target_election, pairs)   # time-forward (plans/prereg-time-forward-constants-2026-09-28.md)
 
   new_tier_cell <- function(before, after, cls) {
     bb <- C[C$election == before & C$party == cls]
@@ -667,7 +667,7 @@ fit_major_departed_slope <- function(target_election, corpus = NULL, pairs = NUL
   }
   C <- data.table::as.data.table(C)
   if (is.null(pairs)) pairs <- all_election_pairs()
-  pairs <- Filter(function(pr) !identical(pr$election, target_election), pairs)
+  pairs <- fit_pairs_for(target_election, pairs)   # time-forward (plans/prereg-time-forward-constants-2026-09-28.md)
   state_level <- function(el) {
     d <- C[C$election == el]
     if (!nrow(d) || !all(c("votes", "tot") %in% names(d))) return(NULL)

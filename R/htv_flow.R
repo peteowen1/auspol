@@ -68,7 +68,7 @@ htv_observed_splits <- function(dir = file.path("external", "elections")) {
 fit_htv_flow_rows <- function(target_election, dir = file.path("external", "elections"), min_seats = 2L) {
   obs <- htv_observed_splits(dir)
   if (is.null(obs)) return(NULL)
-  obs <- obs[obs$election != target_election & obs$n_seats >= min_seats]
+  obs <- obs[elections_before(obs$election, target_election) & obs$n_seats >= min_seats]   # time-forward
   f <- function(lab) { s <- obs[obs$label == lab]; if (!nrow(s)) NA_real_ else sum(s$alp_share * s$n_seats) / sum(s$n_seats) }
   list(greens_above = f("greens_above"), labor_above = f("labor_above"), n = obs)
 }

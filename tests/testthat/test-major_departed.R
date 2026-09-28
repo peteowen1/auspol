@@ -28,11 +28,13 @@ test_that("conditional_slopes applies major_departed only to departed cells", {
   expect_equal(s2, c(0.8, 1))
 })
 
+# Targets after nsw2023 (vic2026): since 2026-09-28 fits are time-forward, so a
+# target dated before the only fixture pair (e.g. vic2022) correctly gets none.
 test_that("fit_major_departed_slope leaves the target out and needs min_n rows", {
   pairs <- list(list(election = "nsw2023", prev = "nsw2019"))
   f <- fit_major_departed_slope("nsw2023", corpus = corpus, pairs = pairs, min_n = 1L)
   expect_equal(unname(f$slope), c(1, 1)); expect_equal(unname(f$n), c(0L, 0L))
-  g <- suppressWarnings(fit_major_departed_slope("vic2022", corpus = corpus, pairs = pairs, min_n = 1L))
+  g <- suppressWarnings(fit_major_departed_slope("vic2026", corpus = corpus, pairs = pairs, min_n = 1L))
   expect_equal(g$n[["ALP"]], 1L); expect_true(is.finite(g$slope[["ALP"]]))
 })
 
@@ -42,7 +44,14 @@ test_that("major_present covers the non-departed cells and departed still wins",
   expect_equal(s, c(0.6, 0.9))
   expect_equal(conditional_slopes("ALP", c("Cabramatta", "Auburn"), r, major_present = c(ALP = 0.9)), c(1, 0.9))
   pairs <- list(list(election = "nsw2023", prev = "nsw2019"))
-  g <- suppressWarnings(fit_major_departed_slope("vic2022", corpus = corpus, pairs = pairs, min_n = 1L))
+  g <- suppressWarnings(fit_major_departed_slope("vic2026", corpus = corpus, pairs = pairs, min_n = 1L))
   expect_true(all(c("slope_present", "n_present") %in% names(g)))
   expect_equal(g$n_present[["ALP"]], 1L)
+})
+
+test_that("a pair dated after the target is not used (time-forward)", {
+  withr::local_envvar(AUSPOL_TIME_FORWARD_FITS = "1")
+  pairs <- list(list(election = "nsw2023", prev = "nsw2019"))
+  g <- suppressWarnings(fit_major_departed_slope("vic2022", corpus = corpus, pairs = pairs, min_n = 1L))
+  expect_equal(unname(g$n), c(0L, 0L))
 })

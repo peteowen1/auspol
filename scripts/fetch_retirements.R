@@ -64,7 +64,36 @@ PAGES <- c(
   wa2013  = "2013 Western Australian state election",
   wa2017  = "2017 Western Australian state election",
   wa2021  = "2021 Western Australian state election",
-  wa2025  = "2025 Western Australian state election"
+  wa2025  = "2025 Western Australian state election",
+
+  # -------------------------------------------------------------- GAP FILL --
+  # Eight elections (fed2004, fed2007, fed2010, sa2022, wa1996, wa2001,
+  # wa2005, wa2008) have no "Retiring members" section on their own election
+  # page. For these, per CLAUDE.md's "store the raw response" rule, we fetch
+  # and cache BOTH the "Members of ..." page for the term ENDING at that
+  # election (usually just a term-dates table, no reasons) and, where it
+  # exists, the "Candidates of ..." page (usually carries a "Retiring
+  # Members and Senators" list, sometimes with reasons, sometimes not). Where
+  # neither gives a reason, the reason was sourced from the individual
+  # member's own Wikipedia biography page (not cached here -- there are up to
+  # 23 per election -- see source_url on each hand-curated row below for the
+  # exact page a reason came from).
+  fed2004_members    = "Members of the Australian House of Representatives, 2001–2004",
+  fed2004_candidates = "Candidates of the 2004 Australian federal election",
+  fed2007_members    = "Members of the Australian House of Representatives, 2004–2007",
+  fed2007_candidates = "Candidates of the 2007 Australian federal election",
+  fed2010_members    = "Members of the Australian House of Representatives, 2007–2010",
+  fed2010_candidates = "Candidates of the 2010 Australian federal election",
+  sa2022_members     = "Members of the South Australian House of Assembly, 2018–2022",
+  sa2022_candidates  = "Candidates of the 2022 South Australian state election",
+  wa1996_members     = "Members of the Western Australian Legislative Assembly, 1993–1996",
+  wa1996_candidates  = "Candidates of the 1996 Western Australian state election",
+  wa2001_members     = "Members of the Western Australian Legislative Assembly, 1996–2001",
+  wa2001_candidates  = "Candidates of the 2001 Western Australian state election",
+  wa2005_members     = "Members of the Western Australian Legislative Assembly, 2001–2005",
+  wa2005_candidates  = "Candidates of the 2005 Western Australian state election",
+  wa2008_members     = "Members of the Western Australian Legislative Assembly, 2005–2008",
+  wa2008_candidates  = "Candidates of the 2008 Western Australian state election"
 )
 
 is_federal <- function(election) grepl("^fed", election)
@@ -259,6 +288,12 @@ ELECTION_SOURCE <- data.table(
 # nsw2023's real list lives on the candidates page, not the election page.
 ELECTION_SOURCE[election == "nsw2023", src_key := "nsw2023-candidates"]
 ELECTION_SOURCE <- ELECTION_SOURCE[election != "nsw2023-candidates"]
+# The 16 gap-fill "Members of ..."/"Candidates of ..." pages added above are
+# fetched (raw HTML cached) but never carry a "Retiring members" HEADING
+# themselves -- their data is hand-curated below (like nsw2015), sourced from
+# them plus individual member bio pages. Excluding them here stops
+# parse_election() attempting (and failing) to find a heading on each.
+ELECTION_SOURCE <- ELECTION_SOURCE[!grepl("_members$|_candidates$", election)]
 
 parsed <- list()
 for (i in seq_len(nrow(ELECTION_SOURCE))) {
@@ -307,6 +342,132 @@ nsw2015 <- data.table(
 )
 parsed[["nsw2015"]] <- nsw2015
 
+# ------------------------------------------------------ eight-election gap --
+# fed2004, fed2007, fed2010, sa2022, wa1996, wa2001, wa2005, wa2008 have no
+# "Retiring members" section on their own Wikipedia election page. Hand-
+# curated from the "Members of ..." / "Candidates of ..." pages fetched above
+# (external/reference/retirements/raw/*_members.html, *_candidates.html) plus
+# individual member biography pages where a page carried no reason of its
+# own -- each row's source_url is the specific page the reason came from.
+# LOWER HOUSE, sitting-at-dissolution members only: anyone replaced by a
+# pre-election by-election is excluded (their seat had a different incumbent
+# contesting), matching the scope of the Wikipedia-list parser above.
+CAND2004 <- "https://en.wikipedia.org/wiki/Candidates_of_the_2004_Australian_federal_election"
+CAND2007 <- "https://en.wikipedia.org/wiki/Candidates_of_the_2007_Australian_federal_election"
+CAND2010 <- "https://en.wikipedia.org/wiki/Candidates_of_the_2010_Australian_federal_election"
+CANDWA1996 <- "https://en.wikipedia.org/wiki/Candidates_of_the_1996_Western_Australian_state_election"
+
+gap_fill_txt <- r"(election|seat|member|party|reason|note|source_url
+fed2004|Kingsford Smith|Laurie Brereton|Labor|retired|Announced retirement from politics in June 2004|CAND2004
+fed2004|Prospect|Janice Crosio|Labor|retired|Retired at the 2004 election; no reason stated|CAND2004
+fed2004|Watson|Leo McLeay|Labor|retired|Retired from parliament at the 2004 election; no reason stated|CAND2004
+fed2004|Greenway|Frank Mossfield|Labor|retired|Retired at the 2004 election; no reason stated|CAND2004
+fed2004|Wakefield|Neil Andrew|Liberal|retired|Notified the PM in February 2004 he would not renominate, after redistribution turned his seat notionally Labor|CAND2004
+fed2004|La Trobe|Bob Charles|Liberal|retired|Retired at the 2004 election; no reason stated|CAND2004
+fed2004|Hindmarsh|Chris Gallus|Liberal|retired|Retired at the 2004 election, replaced as Liberal candidate by Simon Birmingham|CAND2004
+fed2004|Goldstein|David Kemp|Liberal|retired|Retired at the 2004 election; no reason stated|CAND2004
+fed2004|Tangney|Daryl Williams|Liberal|retired|Announced in April 2004 he would not contest the 2004 election|CAND2004
+fed2004|Bowman|Con Sciacca|Labor|contested_other_seat|After redistribution made Bowman notionally Liberal, contested the new Division of Bonner instead; Bowman itself continued and was contested by a different Labor candidate|https://en.wikipedia.org/wiki/Con_Sciacca
+fed2007|Brand|Kim Beazley|Labor|retired|Announced retirement 13 December 2006 after losing the Labor leadership|CAND2007
+fed2007|Isaacs|Ann Corcoran|Labor|lost_preselection|Lost preselection in March 2006|CAND2007
+fed2007|Cowan|Graham Edwards|Labor|retired|Announced retirement in January 2006|CAND2007
+fed2007|Blaxland|Michael Hatton|Labor|lost_preselection|Lost preselection in May 2007|CAND2007
+fed2007|Charlton|Kelly Hoare|Labor|lost_preselection|Lost preselection in May 2007|CAND2007
+fed2007|Fremantle|Carmen Lawrence|Labor|retired|Announced retirement in March 2007|CAND2007
+fed2007|Port Adelaide|Rod Sawford|Labor|retired|Announced retirement in August 2006|CAND2007
+fed2007|Maribyrnong|Bob Sercombe|Labor|retired|Announced retirement in February 2006|CAND2007
+fed2007|Cook|Bruce Baird|Liberal|retired|Announced retirement in April 2007|CAND2007
+fed2007|Mitchell|Alan Cadman|Liberal|lost_preselection|Withdrew candidacy in June 2007 while facing a likely preselection defeat|CAND2007
+fed2007|Makin|Trish Draper|Liberal|retired|Announced retirement in July 2006|CAND2007
+fed2007|Forde|Kay Elson|Liberal|retired|Announced retirement in October 2006|CAND2007
+fed2007|Leichhardt|Warren Entsch|Liberal|retired|Announced retirement in January 2006|CAND2007
+fed2007|Fadden|David Jull|Liberal|retired|Announced retirement in January 2007|CAND2007
+fed2007|Lindsay|Jackie Kelly|Liberal|retired|Announced retirement in May 2007|CAND2007
+fed2007|Forrest|Geoff Prosser|Liberal|retired|Announced retirement in June 2006|CAND2007
+fed2007|Grey|Barry Wakelin|Liberal|retired|Announced retirement in August 2006|CAND2007
+fed2007|Gwydir|John Anderson|National|retired|Announced retirement after stepping down as National Party leader|CAND2007
+fed2007|Page|Ian Causley|National|retired|Announced retirement in October 2006|CAND2007
+fed2007|Calare|Peter Andren|Independent|resigned_or_died_before|Stood down from Calare 29 March 2007 to contest the NSW Senate; abandoned that bid after a cancer diagnosis 10 August 2007; died 3 November 2007, after the 17 October dissolution and before the 24 November election; no by-election held|https://en.wikipedia.org/wiki/Peter_Andren
+fed2007|Franklin|Harry Quick|Independent|retired|Announced 12 August 2005 he would not contest the next election, citing factional disputes; expelled from Labor 20 August 2007 for non-payment of dues and sat as an independent until the election|https://en.wikipedia.org/wiki/Harry_Quick
+fed2010|Dawson|James Bidgood|Labor|retired|Announced retirement 5 February 2010|CAND2010
+fed2010|Bass|Jodie Campbell|Labor|retired|Announced retirement 30 October 2009|CAND2010
+fed2010|Macquarie|Bob Debus|Labor|retired|Announced retirement 5 June 2009|CAND2010
+fed2010|Canberra|Annette Ellis|Labor|retired|Announced retirement 22 January 2010|CAND2010
+fed2010|Throsby|Jennie George|Labor|retired|Announced retirement 19 November 2009|CAND2010
+fed2010|Fowler|Julia Irwin|Labor|retired|Announced retirement 14 September 2009|CAND2010
+fed2010|Denison|Duncan Kerr|Labor|retired|Announced retirement 10 September 2009|CAND2010
+fed2010|Fraser|Bob McMullan|Labor|retired|Announced retirement 19 January 2010|CAND2010
+fed2010|Robertson|Belinda Neal|Labor|lost_preselection|Lost preselection 6 March 2010, then announced retirement 29 July 2010|CAND2010
+fed2010|Chifley|Roger Price|Labor|retired|Announced retirement 19 March 2010|CAND2010
+fed2010|Melbourne|Lindsay Tanner|Labor|retired|Announced retirement 24 June 2010|CAND2010
+fed2010|McEwen|Fran Bailey|Liberal|retired|Announced retirement 7 October 2009|CAND2010
+fed2010|Macarthur|Pat Farmer|Liberal|lost_preselection|Lost preselection 30 October 2009, then announced retirement 15 February 2010|CAND2010
+fed2010|Kooyong|Petro Georgiou|Liberal|retired|Announced retirement 23 November 2008|CAND2010
+fed2010|Wannon|David Hawker|Liberal|retired|Announced retirement 1 June 2009|CAND2010
+fed2010|Herbert|Peter Lindsay|Liberal|retired|Announced retirement 27 January 2010|CAND2010
+fed2010|McPherson|Margaret May|Liberal|retired|Announced retirement 14 August 2009|CAND2010
+fed2010|Aston|Chris Pearce|Liberal|retired|Announced retirement 23 June 2009|CAND2010
+fed2010|Hughes|Danna Vale|Liberal|retired|Announced retirement 4 August 2009|CAND2010
+fed2010|Riverina|Kay Hull|National|retired|Announced retirement 6 April 2010|CAND2010
+fed2010|Greenway|Louise Markus|Liberal|contested_other_seat|Transferred to contest Macquarie instead of recontesting Greenway; Michelle Rowland won Greenway for Labor|https://en.wikipedia.org/wiki/Division_of_Greenway
+fed2010|Reid|Laurie Ferguson|Labor|contested_other_seat|Did not recontest Reid; transferred to contest Werriwa instead; John Murphy won the redrawn Reid|https://en.wikipedia.org/wiki/Division_of_Reid
+fed2010|Werriwa|Chris Hayes|Labor|contested_other_seat|Did not recontest Werriwa; transferred to contest Fowler instead; Laurie Ferguson won Werriwa|https://en.wikipedia.org/wiki/Division_of_Werriwa
+sa2022|Florey|Frances Bedford|Independent|contested_other_seat|Redistribution shifted her Florey base into Newland; contested Newland instead of Florey and came third; Florey was won by Labor|https://www.abc.net.au/news/2021-10-10/sa-independent-frances-bedford-moves-from-florey-to-newland/100527874
+sa2022|Frome|Geoff Brock|Independent|contested_other_seat|Redistribution moved his Port Pirie base into Stuart; contested and won Stuart rather than recontesting Frome, which was won by Liberal Penny Pratt|https://www.abc.net.au/news/2020-11-20/sa-electoral-redistribution-will-see-popular-mps-go-head-to-head/12901336
+sa2022|Taylor|Jon Gee|Labor|retired|Retiring Labor MP; did not recontest Taylor, succeeded by Nick Champion|https://en.wikipedia.org/wiki/Jon_Gee
+sa2022|Schubert|Stephan Knoll|Liberal|retired|Announced 1 December 2020 he would not contest the 2022 election, after resigning from Cabinet amid a since-cleared accommodation-allowance scandal|https://www.abc.net.au/news/2020-12-01/former-sa-transport-minister-stephan-knoll-to-quit/12940358
+sa2022|Flinders|Peter Treloar|Liberal|retired|Announced he would not seek re-election after three terms|https://www.stockjournal.com.au/story/7035866/treloar-to-retire-from-parliament/
+wa1996|Rockingham|Mike Barnett|Labor|retired|Retired from parliament at the 1996 election; no reason stated|https://en.wikipedia.org/wiki/Mike_Barnett_(politician)
+wa1996|Vasse|Barry Blaikie|Liberal|retired|Left parliament at the 1996 election, replaced by Bernie Masters, having been Father of the House|https://en.wikipedia.org/wiki/Barry_Blaikie
+wa1996|Balcatta|Nick Catania|Labor|contested_other_seat|Balcatta abolished in the 1996 redistribution; unsuccessfully contested the new seat of Yokine instead|https://en.wikipedia.org/wiki/Electoral_district_of_Balcatta
+wa1996|Marmion|Jim Clarko|Liberal|retired|Named on the Wikipedia 1996 retiring-members list; no reason stated|CANDWA1996
+wa1996|Armadale|Kay Hallahan|Labor|retired|Retired at the 1996 election, succeeded by Alannah MacTiernan|https://en.wikipedia.org/wiki/Kay_Hallahan
+wa1996|Thornlie|Yvonne Henderson|Labor|retired|Retired at the 1996 election; no reason stated|https://en.wikipedia.org/wiki/Yvonne_Henderson
+wa1996|Northern Rivers|Kevin Leahy|Labor|contested_other_seat|Seat redrawn/renamed Ningaloo in the 1994 redistribution; ran there as Labor candidate, led on primary vote but lost on two-party-preferred|https://en.wikipedia.org/wiki/Electoral_results_for_the_district_of_Ningaloo
+wa1996|Applecross|Richard Lewis|Liberal|retired|Retired at the 1996 election, did not contest|https://en.wikipedia.org/wiki/Richard_Lewis_(Australian_politician)
+wa1996|Mitchell|David Smith|Labor|retired|Remained in parliament until his retirement at the 1996 election|https://en.wikipedia.org/wiki/David_Smith_(Western_Australian_politician)
+wa1996|Wanneroo|Wayde Smith|Liberal|lost_preselection|Lost preselection for the 1996 election amid controversy over the operation of Wanneroo City Council|https://en.wikipedia.org/wiki/Wayde_Smith
+wa1996|Kenwick|Judyth Watson|Labor|contested_other_seat|Kenwick abolished in the 1996 redistribution; unsuccessfully contested the new seat of Southern River instead|https://en.wikipedia.org/wiki/Electoral_district_of_Kenwick
+wa2001|Girrawheen|Ted Cunningham|Labor|retired|Retired in 2001; no reason stated|https://en.wikipedia.org/wiki/Ted_Cunningham
+wa2001|Eyre|Julian Grill|Labor|retired|Retired from politics in 2001 and did not contest the 2001 election|https://en.wikipedia.org/wiki/Julian_Grill
+wa2001|Cockburn|Bill Thomas|Labor|retired|Stepped down from the front bench in 1999 and retired from politics in 2001|https://en.wikipedia.org/wiki/Bill_Thomas_(Australian_politician)
+wa2001|Perth|Diana Warnock|Labor|retired|Re-elected in 1996 but did not contest the February 2001 election; no reason stated|https://en.wikipedia.org/wiki/Diana_Warnock
+wa2001|Greenough|Kevin Minson|Liberal|retired|Stepped down from the front bench in 1997 and retired in 2001|https://en.wikipedia.org/wiki/Kevin_Minson
+wa2001|Innaloo|George Strickland|Liberal|retired|Listed on the Wikipedia 2001 retiring-members list; no reason stated|https://en.wikipedia.org/wiki/Candidates_of_the_2001_Western_Australian_state_election
+wa2001|Wagin|Bob Wiese|National|retired|Member for Wagin 1989-2001, listed as retiring; no reason stated, succeeded by Terry Waldron|https://en.wikipedia.org/wiki/Candidates_of_the_2001_Western_Australian_state_election
+wa2001|Kimberley|Ernie Bridge|Independent|retired|Retired at the 2001 election after 21 years representing Kimberley; no reason stated|https://en.wikipedia.org/wiki/Ernie_Bridge
+wa2005|Bassendean|Clive Brown|Labor|retired|Announced intention to retire in 2004, citing a desire to enter business|https://en.wikipedia.org/wiki/Clive_Brown
+wa2005|Murdoch|Mike Board|Liberal|retired|Retired from politics in 2005; no reason stated|https://en.wikipedia.org/wiki/Mike_Board
+wa2005|Murray|John Bradshaw|Liberal|retired|Served until his retirement in 2005; no reason stated|https://en.wikipedia.org/wiki/John_Bradshaw_(Australian_politician)
+wa2005|Kingsley|Cheryl Edwardes|Liberal|retired|Retired from politics in 2005; no reason stated|https://en.wikipedia.org/wiki/Cheryl_Edwardes
+wa2005|Dawesville|Arthur Marshall|Liberal|retired|Re-elected in 2001 and retired at the 2005 election; no reason stated|https://en.wikipedia.org/wiki/Arthur_Marshall_(Australian_politician)
+wa2005|Moore|Bill McNee|Liberal|retired|Retired in 2005; no reason stated|https://en.wikipedia.org/wiki/Bill_McNee
+wa2005|Ningaloo|Rod Sweetman|Liberal|lost_preselection|Ningaloo abolished (split into Murchison-Eyre and North West Coastal); chose to contest neither, instead unsuccessfully sought Liberal preselection in more winnable seats elsewhere|https://en.wikipedia.org/wiki/Rod_Sweetman
+wa2005|Roe|Ross Ainsworth|National|retired|Retired at the 2005 election; seat lost to Liberal candidate Graham Jacobs|https://en.wikipedia.org/wiki/Ross_Ainsworth
+wa2005|Stirling|Monty House|National|retired|Retired from politics in 2005; no reason stated|https://en.wikipedia.org/wiki/Monty_House
+wa2005|Pilbara|Larry Graham|Independent|retired|Retired from politics in 2005; no reason stated|https://en.wikipedia.org/wiki/Larry_Graham_(politician)
+wa2005|South Perth|Phillip Pendal|Independent|retired|Continued as independent member for South Perth until his retirement in 2005; no reason stated|https://en.wikipedia.org/wiki/Phillip_Pendal
+wa2008|Murchison-Eyre|John Bowler|Independent|contested_other_seat|Seat abolished in the 2008 redistribution and split between Eyre, Kalgoorlie, North West and Pilbara; stood in and won Kalgoorlie instead|https://en.wikipedia.org/wiki/Electoral_district_of_Murchison-Eyre
+wa2008|Kalgoorlie|Matt Birney|Liberal|retired|Announced 3 January 2008 he was quitting politics for the corporate world|https://en.wikipedia.org/wiki/Matt_Birney
+wa2008|Maylands|Judy Edwards|Labor|retired|Retired in 2008; Lisa Baker won preselection and the seat|https://en.wikipedia.org/wiki/Judy_Edwards
+wa2008|Carine|Katie Hodson-Thomas|Liberal|retired|Announced in January 2008 she would retire at the end of her term, following a leadership feud within the Liberal Party|https://en.wikipedia.org/wiki/Katie_Hodson-Thomas
+wa2008|Yokine|Bob Kucera|Labor|lost_preselection|Lost Labor preselection for the new seat of Mount Lawley to Karen Brown, resigned from Labor and announced his retirement|https://en.wikipedia.org/wiki/Bob_Kucera
+wa2008|Kenwick|Sheila McHale|Labor|retired|Announced in March 2008 she would retire and not contest the election|https://en.wikipedia.org/wiki/Sheila_McHale
+wa2008|Warren-Blackwood|Paul Omodei|Liberal|lost_preselection|After losing the party leadership, sought Legislative Council preselection once boundary changes made his seat marginal, was placed in an unwinnable LC position and resigned from the Liberal Party rather than contest the reconfigured seat|https://en.wikipedia.org/wiki/Paul_Omodei
+wa2008|Swan Hills|Jaye Radisich|Labor|other|Announced retirement to pursue postgraduate study and federal public policy interests, after concluding she would likely lose Labor preselection for the redistributed seat of West Swan|https://en.wikipedia.org/wiki/Jaye_Radisich
+wa2008|North West Coastal|Fred Riebeling|Labor|retired|Retired shortly before the 2008 election; Vince Catania won preselection for the vacant seat|https://en.wikipedia.org/wiki/Fred_Riebeling
+wa2008|Leschenault|Dan Sullivan|Liberal|contested_other_house|Quit the Liberal Party and unsuccessfully contested the Legislative Council South-West Region seat for Family First instead|https://en.wikipedia.org/wiki/Dan_Sullivan_(Australian_politician)
+wa2008|Avon|Max Trenorden|National|contested_other_house|Stood down from the Legislative Assembly just prior to the 2008 election and contested, and won, the Legislative Council Agricultural Region seat instead|https://en.wikipedia.org/wiki/Max_Trenorden
+)"
+
+gap_fill <- fread(text = gap_fill_txt, sep = "|", header = TRUE, quote = "")
+gap_fill[source_url == "CAND2004", source_url := CAND2004]
+gap_fill[source_url == "CAND2007", source_url := CAND2007]
+gap_fill[source_url == "CAND2010", source_url := CAND2010]
+gap_fill[source_url == "CANDWA1996", source_url := CANDWA1996]
+stopifnot(nrow(gap_fill) == 100, uniqueN(gap_fill$election) == 8)
+parsed[["gap_fill_8_elections"]] <- gap_fill
+
 all_rows <- rbindlist(parsed, use.names = TRUE, fill = TRUE)
 all_rows <- unique(all_rows, by = c("election", "seat", "member"))
 setorder(all_rows, election, seat)
@@ -319,5 +480,8 @@ message(sprintf("wrote %s: %d rows across %d elections", OUT_CSV, nrow(all_rows)
 print(all_rows[, .N, by = .(election)][order(election)])
 print(all_rows[, .N, by = .(reason)][order(-N)])
 
+# gap-fill "_members"/"_candidates" pages are hand-curated (never expected to
+# carry a "Retiring members" heading), so they're excluded from this check.
 no_list <- setdiff(names(PAGES), c("nsw2023-candidates", unique(all_rows$election)))
+no_list <- no_list[!grepl("_members$|_candidates$", no_list)]
 if (length(no_list)) message("No Wikipedia retiring-members list found for: ", paste(no_list, collapse = ", "))

@@ -95,7 +95,7 @@ education_residual_b <- function(cls, exclude_pair,
   # `.cls` and `.ex`, never the bare argument names: a name matching a column
   # inside `[` binds to the COLUMN, recorded eight times in CLAUDE.md.
   .cls <- cls; .ex <- exclude_pair
-  O <- O[O$party == .cls & O$pair != .ex]
+  O <- O[O$party == .cls & elections_before(O$pair, .ex)]   # time-forward
   if (!nrow(O)) return(NA_real_)
   C <- C[, c("pair", "seat", feature), with = FALSE]
   data.table::setnames(C, feature, ".f")

@@ -168,5 +168,5 @@ processed extract. Every one is recoverable without a new fetch.
 | `cal-fed-m1.5.csv` | 886 | `seat`, `actual`, `prob`, `pred`, `pred_p`, `pair` |
 | `cal-fed-m2.5.csv` | 886 | `seat`, `actual`, `prob`, `pred`, `pred_p`, `pair` |
 
-_(2846 `backtest-*.csv` arm outputs omitted; they share one shape.)_
+_(2893 `backtest-*.csv` arm outputs omitted; they share one shape.)_
 
