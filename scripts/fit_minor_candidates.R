@@ -207,6 +207,13 @@ seat_w <- unique(O[, .(election, seat, w)])
 cls_sum <- O[, .(m_xgb = sum(pred_xgb * w), m_naive = sum(pred_naive * w)), by = .(election, cls)]
 cls_sum <- merge(cls_sum, seat_w[, .(W = sum(w)), by = election], by = "election")
 cls_sum[, `:=`(m_xgb = m_xgb / W, m_naive = m_naive / W)]
+# The predicted statewide share of every minor class per election, for the
+# statewide bucket split (R/forecast_statewide.R, AUSPOL_BUCKET_SPLIT). NO
+# actual results in this file: it is what the harnesses read, and each row
+# was predicted by a model fitted on earlier elections only.
+fwrite(cls_sum[, .(election, cls, pred_resid = if (ARM == "resid") m_xgb else NA_real_,
+                   pred_naive = m_naive, arm = ARM)],
+       paste0("output/minor-class-shares-", ARM, ".csv"))
 A <- fread("output/statewide-forecast-audit-base27sepB.csv")[in_bucket == TRUE & cls %in% MINOR]
 S <- merge(A[, .(election = pair, cls, current = forecast, actual)], cls_sum, by = c("election", "cls"), all.x = TRUE)
 S[is.na(m_xgb), `:=`(m_xgb = 0, m_naive = 0)]   # a class with no candidates predicts zero
