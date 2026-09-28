@@ -536,6 +536,31 @@ ALL[, is_incumbent_party_i := as.integer(is_incumbent_party)]
 ALL[, historic_elected_i := as.integer(historic_elected_any)]
 add_departed_side(ALL, c("pair", "seat"))   # AUSPOL_XGB_DEPARTED_SIDE (plans/prereg-departed-member-sides-2026-09-28.md)
 
+# AUSPOL_SITTING_MEMBER_ADJ=1: a time-forward sitting-member shift on
+# base_pred for the two majors (R/sitting_member.R). base_pred is what every
+# as-at and production model starts from, so this reaches base_pred itself,
+# not only the xgb layer. base_pred_raw keeps the unadjusted value, and every
+# pair's shifts are fitted on EARLIER elections' raw residuals only; the
+# vic2026 row (all earlier elections) is what the live forecast applies.
+# plans/prereg-sitting-member-baseline-2026-09-28.md.
+ALL[, base_pred_raw := base_pred]
+if (identical(Sys.getenv("AUSPOL_SITTING_MEMBER_ADJ", "0"), "1")) {
+  ALL[, sm_group := sitting_member_group(ALL, c("pair", "seat"))]
+  SMT <- ALL[, list(pair, group = sm_group, resid = actual_share - base_pred_raw)]
+  SH <- rbindlist(lapply(c(unique(ALL$pair), "vic2026"), function(p) fit_sitting_member_shift(SMT, p)[, pair := p]))
+  fwrite(SH, file.path(OUT, "sitting-member-shift.csv"))
+  ALL <- merge(ALL, SH[, list(pair, sm_group = group, sm_shift = shift)], by = c("pair", "sm_group"), all.x = TRUE)
+  ALL[is.na(sm_shift), sm_shift := 0]
+  ALL[, base_pred := base_pred_raw + sm_shift]
+  for (p in unique(SH$pair)) {
+    s <- SH[SH$pair == p]
+    cat(sprintf("SM1  %s: inc_stays %+.2f (k %d), inc_gone %+.2f (k %d), ch_gone %+.2f (k %d)\n", p,
+                s[group == "inc_stays", shift], s[group == "inc_stays", k], s[group == "inc_gone", shift],
+                s[group == "inc_gone", k], s[group == "ch_gone", shift], s[group == "ch_gone", k]))
+  }
+  ALL[, c("sm_group", "sm_shift") := NULL]
+}
+
 # GATE seat_outperf to the one row it means anything for: the party that held
 # the seat, in a pair where its member is gone. Left ungated, it changed
 # predictions on 66.5% of ALL 13,739 rows (not just the 349 retirement
