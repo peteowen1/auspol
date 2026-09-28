@@ -39,3 +39,21 @@ comparison only.
 - Rebuild: report the ledger's seat log loss and primary RMSE before (rebuild
   A, 0.2951 / 5.198) and after, per federal pair. A rise is expected and is
   the honest number; it is logged, not reverted.
+
+## RESULT (2026-09-28, rebuild C against rebuild A on the same code)
+
+Applied: the fed harness's `SD1` lines differ from rebuild A's for every
+federal pair; fed2025's correction went from "SKIPPED" to ON for 139 of 152
+seats. Leaked national polling error removed (two-party points): 2007 1.54,
+2010 1.82, 2013 0.63, 2016 -0.60, 2019 4.09, 2022 1.69.
+
+| | seat log loss | weighted primary RMSE | TCP MAE |
+|---|---|---|---|
+| A (leaky) | 0.2951 | 5.198 | 4.05 |
+| **C (fixed)** | 0.2963 | **5.083** | **3.95** |
+
+Log loss C minus A +0.0011 (SE by seat 0.0028, t 0.40; by election 0.0047):
+fed2022 +0.008, fed2025 -0.014, nsw2023 -0.012, qld2024 +0.005, sa2026
++0.012, vic2022 +0.010, wa2025 +0.019. State pairs move because the as-at
+models train on all pairs pooled. **Ships as the new baseline**, as
+pre-registered. Outputs in `output/rebuild-C/`.
