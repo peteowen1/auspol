@@ -28,3 +28,13 @@ the shipped configuration (`AUSPOL_DISPERSION_SLOPE=0`); noted, not changed.
 Print which cells fall back and to what, per target. Rebuild against v46:
 ledger (0.2822) and all 16 elections (0.2987) reported per election; the
 number is logged whatever it is.
+
+## RESULT (rebuild K vs v46, 2026-09-29; the text above is unedited)
+
+Ledger seat log loss 0.2822 -> 0.2840 (+0.0018, SE by seat 0.0019, t 0.93;
+by election 0.0042); all 16 elections 0.2987 -> 0.3012 (per-election mean
++0.0035, SE 0.0020, better in 6); weighted primary RMSE 4.947 -> 4.986; TCP
+MAE 3.90. Per ledger election: sa2026 -0.011, qld2024 -0.007, vic2022
+-0.004, fed2022 -0.003, nsw2023 +0.003, fed2025 +0.011, wa2025 +0.021.
+The honest cost of removing the constants' hindsight. **Ships as ledger v47**
+(a leak fix, as pre-registered); still ahead of AEF (0.2851).

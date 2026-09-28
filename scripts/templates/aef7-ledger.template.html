@@ -250,7 +250,13 @@
   </details>
 
   <details class="provlog">
-    <summary>Provenance &amp; changelog <span class="n">(32 updates)</span></summary>
+    <summary>Provenance &amp; changelog <span class="n">(33 updates)</span></summary>
+    <p class="sub prov"><b>v47, 29 Sep 2026: one more constant stops borrowing from later elections.</b> When a
+       minor party has too few seats in a category to fit its own swing slope (for example returning One Nation
+       candidates, in four of the seven elections here), the model fell back on fixed slopes that had been fitted
+       on every election, later ones included. The fallback is now the slope pooled across minor parties from
+       earlier elections only. This costs a little, as removing hindsight should: seat log loss 0.2822 &rarr;
+       <b>0.2840</b> (AEF 0.2851), weighted primary RMSE 4.99 (AEF 5.42).</p>
     <p class="sub prov"><b>v46, 28 Sep 2026: the model can now see who holds every seat.</b> For 13 of the 22
        training elections (every federal election to 2016, Queensland 2020, Victoria 2014 and 2018, and Western
        Australia before 2025) the seat model had no record of which party held a seat or whether its member was

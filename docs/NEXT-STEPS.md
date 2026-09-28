@@ -5,7 +5,17 @@ it stood before this rewrite: `backlog/journal-2026-09-19-hub-snapshot.md`).
 Decisions: `docs/DECISIONS.md`. Every seat verdict: `docs/SEAT-REGISTRY.md`.
 Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30.
 
-## 2026-09-29 00:30 (read this first)
+## 2026-09-29 00:50 (read this first)
+
+**Published: ledger v47** (0.2840 vs AEF 0.2851; all-22 pooled 0.3214;
+primary RMSE 4.99). Local `output/` is rebuild K's = v47. The blog sentence
+still quotes v45/v46 (log loss 0.282, RMSE 4.98): update to 0.284 / 4.99 /
+87.x% on the next blog touch. pannaverse is running a ~3 h job from 00:43;
+check memory before the next rebuild. Open: (1) nsw2023 statewide Labor
+miss with the Newspoll state data; (2) the two-candidate margin (AEF 3.63 vs
+3.90); (3) 9 Nov live candidate split.
+
+## 2026-09-29 00:30
 
 Still published: **ledger v46** (0.2822 vs AEF 0.2851). Local `output/` is
 rebuild J's (refused). Refused since v46, each in its prereg with numbers:
