@@ -80,3 +80,12 @@ better in 4 of 16; weighted primary RMSE 4.947 -> 4.986; TCP MAE 3.85 ->
 recent pairs keep the seat file's figure (r 0.984 but not identical), so the
 trees see two measures of one feature split by era. Follow-up arm: our
 estimate for EVERY pair (one source of truth).
+
+## ADDED BEFORE RUNNING (2026-09-28 late): one source of truth for margin
+
+`AUSPOL_SEAT_CONTEXT_MARGIN=all`: every pair's margin, AND live vic2026's,
+comes from our estimate (the seat file's value is used only where no
+estimate exists), so the trees see one measure of the feature in every era.
+Same criterion as rebuild H: ships only if neither the ledger (v46 0.2822)
+nor the all-elections figure (0.2987 over forecasts-seats.csv) rises beyond
+noise and at least one falls. If it fails too, margin work stops.
