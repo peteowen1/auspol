@@ -5,7 +5,24 @@ it stood before this rewrite: `backlog/journal-2026-09-19-hub-snapshot.md`).
 Decisions: `docs/DECISIONS.md`. Every seat verdict: `docs/SEAT-REGISTRY.md`.
 Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30.
 
-## 2026-09-28 evening (read this first)
+## 2026-09-28 late (read this first)
+
+**Published: ledger v46** (0.2822 vs AEF 0.2851; all-22 pooled 0.3193;
+primary RMSE 4.95). Local `output/` holds rebuild G's files (REFUSED: the
+sitting-member shift); the release carries v46.
+
+**Measurement trap found:** `output/forecasts.csv` `xgb_pred` is RAW model
+output, not rescaled per seat (sums 78.7-113.2, mean 97.8); the simulation
+and ledger use rescaled shares. Use `xgb_pred_seat` (added) for any residual
+analysis. Today's D and G group residuals carried the artefact; their
+verdicts (ledger-based) stand.
+
+Open, in order: (1) finish seat context phase 2 (margin, previous swing;
+first-term flags' definition); (2) shrinkage instead of `min_n` cliffs in
+the time-forward fits; (3) nsw2023 statewide Labor miss with the Newspoll
+state data; (4) 9 Nov live candidate split.
+
+## 2026-09-28 evening
 
 **Ledger v45 PUBLISHED 18:23** (manifest git 79515af): seat log loss
 **0.2815** vs AEF 0.2851 (first time ahead), primary RMSE 4.98 vs 5.42,

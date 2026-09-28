@@ -64,3 +64,13 @@ group (~+1 to +2 points); the xgb layer had already over-corrected the
 baseline's departed-member bias. The lever is the majors' overall level
 (most likely the unpolled bucket still taking ~2 points from them), not a
 sitting-member term.
+
+**CORRECTION (same evening): the "Finding" paragraph above is WRONG.** The
+residuals were computed from `output/forecasts.csv`'s `xgb_pred`, which is
+the raw model output BEFORE each seat is rescaled to 100 (per-seat sums mean
+97.79, sd 4.20, range 78.7-113.2). Both prediction paths rescale before the
+simulation (`R/xgb_primary_override.R:83`, `:522`), and the ledger reads the
+rescaled shares. Rescaled, the majors' mean miss is ALP +0.26, LNP +0.03:
+there is no blanket under-call. The G verdict (FAIL) stands, because it rests
+on the ledger's log loss and primary RMSE, which use rescaled shares. The
+group residuals quoted for rebuilds D and G carry the same artefact.
