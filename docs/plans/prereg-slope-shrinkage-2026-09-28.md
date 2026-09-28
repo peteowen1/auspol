@@ -32,3 +32,11 @@ RMSE reported. The early elections (where the cliff bit) are the named
 targets: report fed2007-fed2013, vic2014, wa2005-wa2013 per election.
 Live vic2026 changes slightly (its slopes are also shrunk); its seat totals
 are printed before and after.
+
+## AMENDMENT BEFORE ANY MEASUREMENT (2026-09-28)
+
+Inspecting the fitted slopes (not outcomes) showed fed2007's departed Labor
+slope at 0.313 from 6 seats in 2 earlier elections: a 2-cluster standard
+error is too unreliable to shrink with. Changed before any rebuild: at least
+3 elections (else 1), and the variance is the LARGER of the cluster-robust
+and ordinary estimates. Nothing had been scored when this was changed.

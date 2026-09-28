@@ -373,7 +373,7 @@ fit_conditional_slopes <- function(target_election, corpus = NULL, pairs = NULL,
     m <- merge(m, prevc, by = c(".s", "party"))
     m <- merge(m, lp[, list(party, level_prev = level)], by = "party")
     m <- merge(m, ln[, list(party, level_now  = level)], by = "party")
-    m[x > 0]
+    m[, pair := pr$election]; m[x > 0]
   }), fill = TRUE)
   if (is.null(rows) || !nrow(rows)) return(list(same = SHIP_SAME, new = SHIP_NEW, n = NULL))
 
@@ -387,6 +387,11 @@ fit_conditional_slopes <- function(target_election, corpus = NULL, pairs = NULL,
              else                rows[party == cl & n_returning == 0]
       counts[[length(counts) + 1L]] <-
         data.table::data.table(party = cl, tier = tier, n = nrow(sub))
+      if (.slope_shrink_on()) {
+        v <- .shrunk_slope(sub, 1)
+        if (tier == "same") same[[cl]] <- v else new[[cl]] <- v
+        next
+      }
       if (nrow(sub) < min_n) next
       fit <- tryCatch(stats::lm(yy ~ 0 + dev, data = sub), error = function(e) NULL)
       if (is.null(fit)) next
@@ -464,7 +469,7 @@ fit_major_conditional_slopes <- function(target_election, corpus = NULL, pairs =
     m <- merge(m, prevc, by = c(".s", "party"))
     m <- merge(m, lp[, list(party, level_prev = level)], by = "party")
     m <- merge(m, ln[, list(party, level_now  = level)], by = "party")
-    m[x > 0]
+    m[, pair := pr$election]; m[x > 0]
   }), fill = TRUE)
   if (is.null(rows) || !nrow(rows)) return(list(same = FALLBACK, new = FALLBACK, n = NULL))
 
@@ -478,6 +483,11 @@ fit_major_conditional_slopes <- function(target_election, corpus = NULL, pairs =
              else                rows[party == cl & n_returning == 0]
       counts[[length(counts) + 1L]] <-
         data.table::data.table(party = cl, tier = tier, n = nrow(sub))
+      if (.slope_shrink_on()) {
+        v <- .shrunk_slope(sub, 1)
+        if (tier == "same") same[[cl]] <- v else new[[cl]] <- v
+        next
+      }
       if (nrow(sub) < min_n) next
       fit <- tryCatch(stats::lm(yy ~ 0 + dev, data = sub), error = function(e) NULL)
       if (is.null(fit)) next
@@ -641,6 +651,35 @@ fit_dispersion_slopes <- function(target_election, corpus = NULL, pairs = NULL,
   list(same = SHIP_SAME, new = new_slopes, n = data.table::rbindlist(cov))
 }
 
+# AUSPOL_SLOPE_SHRINK=1: a slope through the origin shrunk toward 1 (no
+# adjustment) by its precision, instead of a min_n cliff that jumps from the
+# fallback to the full estimate (fed2007's departed slope went 1.000 at n=6,
+# then 0.56 at n=41 once fits became time-forward). Precision is measured
+# ACROSS elections (cluster-robust by `pair`): seats in one election share a
+# swing, so the seat-level lm standard error overstates it. The target is 1,
+# not the hardcoded SHIP_* fallbacks, which were fitted on every election and
+# so would carry later elections into early ones.
+# docs/plans/prereg-slope-shrinkage-2026-09-28.md.
+.slope_shrink_on <- function() identical(Sys.getenv("AUSPOL_SLOPE_SHRINK", "0"), "1")
+.shrunk_slope <- function(sub, target = 1) {
+  sub <- sub[is.finite(sub$dev) & is.finite(sub$yy)]
+  G <- length(unique(sub$pair))
+  # At least 3 elections: a standard error from 2 clusters is itself too
+  # unreliable to trust (fed2007's departed slope came out 0.313 from 6 seats
+  # in 2 elections). And the LARGER of the cluster-robust and ordinary
+  # variance, so a lucky small spread cannot make a thin estimate look precise.
+  if (nrow(sub) < 3L || G < 3L || !isTRUE(sum(sub$dev^2) > 0)) return(target)
+  b <- sum(sub$dev * sub$yy) / sum(sub$dev^2)
+  e <- sub$yy - b * sub$dev
+  se2_cl <- sum(tapply(sub$dev * e, sub$pair, sum)^2) / sum(sub$dev^2)^2 * G / (G - 1)
+  se2_ols <- (sum(e^2) / max(1, nrow(sub) - 1)) / sum(sub$dev^2)
+  se2 <- max(se2_cl, se2_ols)
+  d <- b - target
+  if (!isTRUE(d^2 + se2 > 0)) return(target)
+  target + d * d^2 / (d^2 + se2)
+}
+
+
 #' Fit the slope a major party keeps on its seat deviation when its sitting member departs
 #'
 #' Leave-target-out over every other pair. For ALP and LNP separately, rows
@@ -698,6 +737,7 @@ fit_major_departed_slope <- function(target_election, corpus = NULL, pairs = NUL
   if (!nrow(rows)) return(list(slope = slope, n = n, slope_present = slope_present, n_present = n_present, rows = rows))
   rows[, dev := x - level_prev]; rows[, yy := actual_now - level_now]
   fit1 <- function(sub) {
+    if (.slope_shrink_on()) return(.shrunk_slope(sub, 1))
     if (nrow(sub) < min_n) return(NA_real_)
     fit <- tryCatch(stats::lm(yy ~ 0 + dev, data = sub), error = function(e) NULL)
     if (is.null(fit)) return(NA_real_)
