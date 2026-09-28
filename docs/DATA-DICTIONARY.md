@@ -162,11 +162,11 @@ processed extract. Every one is recoverable without a new fetch.
 | `booths-vic2018.csv` | 13,353 | `district`, `booth`, `booth_type`, `candidate`, `party`, `votes` |
 | `booths-vic2022-2cp.csv` | 4,328 | `district`, `booth`, `booth_type`, `candidate`, `party`, `votes` |
 | `booths-vic2022.csv` | 17,976 | `district`, `booth`, `booth_type`, `candidate`, `party`, `votes` |
+| `bucket-total-history.csv` | 20 | `pair`, `cand_total`, `poll_total`, `actual`, `date` |
 | `c3-widened-population.csv` | 4,168 | `election`, `region`, `seat`, `name`, `party`, `pcv`, `elected`, `own_prev_pcv`, `base`, `gated`, `xp`, `emergence` |
 | `cal-fed-m1.0.csv` | 886 | `seat`, `actual`, `prob`, `pred`, `pred_p`, `pair` |
 | `cal-fed-m1.5.csv` | 886 | `seat`, `actual`, `prob`, `pred`, `pred_p`, `pair` |
 | `cal-fed-m2.5.csv` | 886 | `seat`, `actual`, `prob`, `pred`, `pred_p`, `pair` |
-| `cal-fed-m4.0.csv` | 886 | `seat`, `actual`, `prob`, `pred`, `pred_p`, `pair` |
 
-_(2222 `backtest-*.csv` arm outputs omitted; they share one shape.)_
+_(2846 `backtest-*.csv` arm outputs omitted; they share one shape.)_
 
