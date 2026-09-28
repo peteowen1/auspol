@@ -538,7 +538,7 @@ ll_implied <- function(sm) {
   mnr <- setdiff(names(sm), c("ALP", "LNP"))
   sm[["ALP"]] + sum(vapply(mnr, function(p) sm[[p]] * ll_flow(p), numeric(1)))
 }
-LEVEL_ANCHOR <- identical(Sys.getenv("AUSPOL_LIVE_LEVEL_ANCHOR", "0"), "1")
+LEVEL_ANCHOR <- identical(Sys.getenv("AUSPOL_LIVE_LEVEL_ANCHOR", "1"), "1")
 # The trend fits each party separately, so its endpoints need not sum to 100
 # (97.93 on 2026-09-28). The seat shares are renormalised later, so the level
 # they actually carry is this one rescaled -- which implied 48.90 two-party
