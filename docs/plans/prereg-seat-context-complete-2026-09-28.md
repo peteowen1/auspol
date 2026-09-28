@@ -71,3 +71,12 @@ total). Validation over the 10 pairs with seat files: margin r 0.984, mean
 filled behind `AUSPOL_SEAT_CONTEXT_MARGIN`. Previous swing r 0.875 (786
 seats) and 69.5% coverage (redistributions break the two-back match) ->
 FAILS the bar, not filled. Rebuild H decides the margin fill against v46.
+
+**Rebuild H (margin fill) vs v46 (2026-09-28 late): FAILS, stays OFF.** Margin
+missing 0.3% after the fill (was ~50%). Ledger seat log loss 0.2822 -> 0.2843
+(+0.0021, SE by seat 0.0014, t 1.55); all 16 elections 0.2987 -> 0.3001,
+better in 4 of 16; weighted primary RMSE 4.947 -> 4.986; TCP MAE 3.85 ->
+3.88. Candidate reason, untested: the filled margins are our estimate while
+recent pairs keep the seat file's figure (r 0.984 but not identical), so the
+trees see two measures of one feature split by era. Follow-up arm: our
+estimate for EVERY pair (one source of truth).
