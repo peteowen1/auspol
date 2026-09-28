@@ -212,7 +212,7 @@ CAL_TAG <- paste0(
     sprintf("-psd%s", sub("[.]", "", format(as.numeric(Sys.getenv("AUSPOL_PARTY_SD")), nsmall = 2)))
   else "",
   if (SEAT_SD_MULT != 1) sprintf("-m%s", format(SEAT_SD_MULT, nsmall = 1)) else "",
-  if (identical(Sys.getenv("AUSPOL_SEAT_SWING_PORT", "0"), "1")) "-port" else "",
+  switch(Sys.getenv("AUSPOL_SEAT_SWING_PORT", "0"), "1" = "-port", "2" = "-port2", ""),
   if (N_SIMS != 20000L) sprintf("-n%d", N_SIMS) else "",
   if (!is.null(.level_sd)) sprintf("-lv%s", gsub("[.]", "", paste(format(.level_sd, nsmall=2), collapse="_"))) else "",
   # "-corraw" and "-cor" are DIFFERENT correlation matrices. Both used to tag
@@ -720,6 +720,12 @@ for (K in PAIRS) {
     }
   }
   shares <- xgb_primary_override(shares, sprintf("vic%d", K$to))
+  # Time-forward seat-swing port (AUSPOL_SEAT_SWING_PORT=2), AFTER the override,
+  # which would otherwise overwrite it. plans/prereg-seat-swing-port-v2-2026-09-29.md
+  # Only on top of the xgb layer: at AUSPOL_XGB_PRIMARY=0 (rebuild stage 1) these
+  # shares become base_pred, the xgb training input, and the port would count twice.
+  if (identical(Sys.getenv("AUSPOL_XGB_PRIMARY", "0"), "1"))
+    shares <- seat_swing_port_apply(shares, sprintf("vic%d", K$to))
 
   # EDUCATION RESIDUAL CORRECTION (AUSPOL_EDU_RESID, default 0).
   # Pre-registered in docs/plans/prereg-education-residual-correction-2026-09-15.md.

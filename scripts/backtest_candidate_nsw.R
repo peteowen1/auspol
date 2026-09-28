@@ -262,7 +262,7 @@ CAL_TAG <- paste0(
     sprintf("-psd%s", sub("[.]", "", format(as.numeric(Sys.getenv("AUSPOL_PARTY_SD")), nsmall = 2)))
   else "",
   if (SEAT_SD_MULT != 1) sprintf("-m%s", format(SEAT_SD_MULT, nsmall = 1)) else "",
-  if (identical(Sys.getenv("AUSPOL_SEAT_SWING_PORT", "0"), "1")) "-port" else "",
+  switch(Sys.getenv("AUSPOL_SEAT_SWING_PORT", "0"), "1" = "-port", "2" = "-port2", ""),
   # "-corraw" and "-cor" are DIFFERENT correlation matrices. Both used to tag
   # "-cor", so running the raw arm and then the shrunk one wrote the second
   # over the first and a before/after comparison compared an arm with itself.
@@ -810,6 +810,12 @@ if (PORT) {
 ")
 }
 shares <- xgb_primary_override(shares, TGT)
+# Time-forward seat-swing port (AUSPOL_SEAT_SWING_PORT=2), AFTER the override,
+# which would otherwise overwrite it. plans/prereg-seat-swing-port-v2-2026-09-29.md
+# Only on top of the xgb layer: at AUSPOL_XGB_PRIMARY=0 (rebuild stage 1) these
+# shares become base_pred, the xgb training input, and the port would count twice.
+if (identical(Sys.getenv("AUSPOL_XGB_PRIMARY", "0"), "1"))
+  shares <- seat_swing_port_apply(shares, TGT)
 
 # EDUCATION RESIDUAL CORRECTION (AUSPOL_EDU_RESID, default 0).
 # Pre-registered in docs/plans/prereg-education-residual-correction-2026-09-15.md.

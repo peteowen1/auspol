@@ -1114,6 +1114,9 @@ if (!is.null(shares_x)) {
   cat(sprintf("XG4!! xgb_primary_predict_live() FAILED%s -- shares UNCHANGED, shipped-only model used\n",
               .reason("xgb_live")))
 }
+# Time-forward seat-swing port (AUSPOL_SEAT_SWING_PORT=2), AFTER the override,
+# which would otherwise overwrite it. plans/prereg-seat-swing-port-v2-2026-09-29.md
+shares <- seat_swing_port_apply(shares, "vic2026")
 # THE SALIENCE POINT ESTIMATE REACHES THE PUBLISHED FORECAST, 2026-09-07.
 # It never had: the blend lived inline in the federal harness only, so every
 # figure this script published described a model without it while the federal
