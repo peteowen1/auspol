@@ -4,6 +4,7 @@ One line each: the decision, the one fact behind it, a link. Newest first.
 Created 2026-09-19 (the verse convention; auspol had none). Older decisions
 live in the plans they came from (`docs/plans/prereg-*.md` RESULT sections).
 
+- **2026-09-29 FOUND: the published v51 seat-poll weight was fitted on v50-era predictions.** `seat_poll_weight()` reads the PREVIOUS rebuild's `output/forecasts.csv`; rerunning stage 6 on v51's own gives ledger 0.2753 (published 0.2760), fed2022 w 0.53, fed2025 0.26. Any rebuild that moves earlier elections needs a second stage-6 pass. Fresh baseline: `output/rebuild-R2/`.
 - **2026-09-29 Public-only seat polls REFUSED (arms S and T); v51 stays.** T helps fed2025 (-0.0038, 2.1 SE; McMahon, Bullwinkel, Ryan all better) but fed2022 +0.0156 (1.5 SE) and ledger 0.2760 -> 0.2797: fed2022's weight rests on 9 fed2019 polls and jumps 0.45 -> 0.67. `plans/prereg-seat-poll-public-only-2026-09-29.md`.
 - **2026-09-29 Seat-poll "independent" = allowlist of public pollsters with no recorded sponsor (Pete, quiz).** A sponsor filter alone keeps McMahon's Compass poll; fed2022 records no sponsors at all. Arm not yet built.
 - **2026-09-29 Drop `fed_aligned` REFUSED again, time-forward.** Projection @1 day -0.039 (SE 0.080), all of it nsw2023; coefficient -2.4 to -3.3 at every cutoff since 2001, so the term is real. `plans/prereg-fundamentals-drop-fed-aligned-tf-2026-09-29.md`.

@@ -1,6 +1,6 @@
 # Pre-registration: compare seat polls only on the classes each poll names (`AUSPOL_SEAT_POLL_MATCH=perpoll`)
 
-Written 2026-09-29 19:10, before the rebuild. A CORRECTNESS defect in the
+Written 2026-09-29 18:55, before the rebuild. A CORRECTNESS defect in the
 shipped seat-poll blend (v50/v51), found tracing the public-only arms' fed2022
 losses.
 
