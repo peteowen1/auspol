@@ -39,6 +39,12 @@ output/*
 # scripts/build_aef7_ledger_data.R reads both; it does NOT regenerate them.
 !output/aef7-seat-groups.csv
 !output/aef7-final-two-and-tcp-reference.csv
+# The candidate-model bucket shares the shipped AUSPOL_BUCKET_SPLIT (v44) and
+# the AUSPOL_BUCKET_TOTAL arm read. Frozen outputs of scripts/fit_minor_candidates.R
+# (v2 = split, v3 = total, 2026-09-28); without them a clean checkout cannot run
+# rebuild stage 1 (pre-PR review, 2026-09-29). Refit, then refreeze under a new name.
+!output/minor-class-shares-v2.csv
+!output/minor-class-shares-v3.csv
 *.parquet
 *.rds
 

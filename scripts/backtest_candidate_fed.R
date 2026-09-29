@@ -1671,7 +1671,12 @@ for (X in out_all) {
   surge_mu_arg <- 15.6; surge_sd_arg <- 6.1
   if (SURGE_V2) {
     target_el <- paste0("fed", X$K$to)
-    train_pairs <- Filter(function(p) p$election != target_el, SURGE_V2_PAIRS)
+    # LEAK FIX 2026-09-29: by DATE, not name. `!= target` kept sa2026 (and every
+    # later pair) in the training set of every earlier target -- the leak SA fixed
+    # for itself on 2026-09-10 (backtest_candidate_sa.R) and never propagated.
+    train_pairs <- SURGE_V2_PAIRS[elections_before(vapply(SURGE_V2_PAIRS, `[[`, character(1), "election"), target_el)]
+    cat(sprintf("SV2t surge-v2 training pairs for %s (earlier only): %s
+", target_el, paste(vapply(train_pairs, `[[`, character(1), "election"), collapse = ", ")))
     hz <- tryCatch(
       surge_hazard_for(target_el, paste0("fed", X$K$from), "fed", train_pairs),
       error = function(e) { cat(sprintf("BF0v! surge-v2 failed for %s: %s\n", target_el, conditionMessage(e))); NULL })

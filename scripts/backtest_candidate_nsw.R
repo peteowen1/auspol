@@ -874,7 +874,12 @@ if (identical(Sys.getenv("AUSPOL_SALIENCE_SURGE_V2", "0"), "1")) {
     list(election = TGT, prev = PRV, region = "nsw"),
     list(election = "sa2026",  prev = "sa2022",  region = "sa"),
     list(election = "wa2008",  prev = "wa2005",  region = "wa"))
-  train_pairs <- Filter(function(p) p$election != TGT, v2_pairs)
+  # LEAK FIX 2026-09-29: by DATE, not name. `!= target` kept sa2026 (and every
+  # later pair) in the training set of every earlier target -- the leak SA fixed
+  # for itself on 2026-09-10 (backtest_candidate_sa.R) and never propagated.
+  train_pairs <- v2_pairs[elections_before(vapply(v2_pairs, `[[`, character(1), "election"), TGT)]
+  cat(sprintf("SV2t surge-v2 training pairs for %s (earlier only): %s
+", TGT, paste(vapply(train_pairs, `[[`, character(1), "election"), collapse = ", ")))
   hz <- tryCatch(surge_hazard_for(TGT, PRV, "nsw", train_pairs),
                  error = function(e) { cat(sprintf("BN0v! surge-v2 failed: %s\n", conditionMessage(e))); NULL })
   if (!is.null(hz)) {

@@ -811,7 +811,12 @@ for (K in PAIRS) {
       list(election = "nsw2023", prev = "nsw2019", region = "nsw"),
       list(election = "sa2026",  prev = "sa2022",  region = "sa"),
       list(election = "wa2008",  prev = "wa2005",  region = "wa"))
-    train_pairs <- Filter(function(p) p$election != .eb, v2_pairs)
+    # LEAK FIX 2026-09-29: by DATE, not name. `!= target` kept sa2026 (and every
+    # later pair) in the training set of every earlier target -- the leak SA fixed
+    # for itself on 2026-09-10 (backtest_candidate_sa.R) and never propagated.
+    train_pairs <- v2_pairs[elections_before(vapply(v2_pairs, `[[`, character(1), "election"), .eb)]
+    cat(sprintf("SV2t surge-v2 training pairs for %s (earlier only): %s
+", .eb, paste(vapply(train_pairs, `[[`, character(1), "election"), collapse = ", ")))
     hz <- tryCatch(surge_hazard_for(.eb, .ea, "vic", train_pairs),
                    error = function(e) { cat(sprintf("BV0v! surge-v2 failed for %s: %s\n", .eb, conditionMessage(e))); NULL })
     if (!is.null(hz)) {
