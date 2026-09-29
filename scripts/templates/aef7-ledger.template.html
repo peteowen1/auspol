@@ -250,7 +250,15 @@
   </details>
 
   <details class="provlog">
-    <summary>Provenance &amp; changelog <span class="n">(33 updates)</span></summary>
+    <summary>Provenance &amp; changelog <span class="n">(34 updates)</span></summary>
+    <p class="sub prov"><b>v48, 29 Sep 2026: state seats now carry how they swung at the last federal election.</b>
+       A seat that swung hard to Labor federally tends to swing further at the next state election than its
+       neighbours. Each Victorian, NSW, Queensland and South Australian seat's federal swing, rebuilt from booth
+       results onto state boundaries, now moves its Labor-versus-Coalition vote by a share learned only from
+       earlier state elections (0.32 for Victoria 2022, rising to 0.44 for Victoria 2026, where it applies live).
+       Building it found a data error: in 2025 the AEC's booth file reports a booth's whole vote as its swing
+       where it has no 2022 comparison, which had put Bendigo West's federal swing at +55 points. Seat log loss
+       0.2840 to 0.2756; federal and WA elections, where no such swing exists, are unchanged to the last digit.</p>
     <p class="sub prov"><b>v47, 29 Sep 2026: one more constant stops borrowing from later elections.</b> When a
        minor party has too few seats in a category to fit its own swing slope (for example returning One Nation
        candidates, in four of the seven elections here), the model fell back on fixed slopes that had been fitted

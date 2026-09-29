@@ -62,3 +62,18 @@ Rebuild against rebuild K (v47):
 - **Unacceptable even if it passes:** any change on a control election, or on fed/wa
   (both mean the switch leaked somewhere it should not reach).
 - **Reported regardless:** weighted primary RMSE and TCP MAE.
+
+## RESULT (rebuild L vs rebuild K/v47, 2026-09-29; the text above is unedited)
+
+Seat log loss, K -> L: qld2024 0.3190 -> 0.2773 (-0.0417, SE 0.0157);
+sa2022 0.3104 -> 0.2825 (-0.0279); sa2026 0.2756 -> 0.2567 (-0.0188, SE
+0.0112); vic2022 0.2356 -> 0.2283 (-0.0073, SE 0.0181); nsw2023 0.2680 ->
+0.2661 (-0.0020, SE 0.0184). Targeted (4 ledger elections, 306 seats) mean
+-0.0180, SE 0.0087. Controls byte-identical: 0 seats moved in all 7 federal,
+6 WA, vic2014, vic2018, nsw2019, qld2020. Ledger 0.2840 -> 0.2756 (-0.0083,
+SE 0.0040); weighted primary RMSE 4.986 -> 4.918; TCP MAE 3.90 -> 3.73;
+accuracy 87.7% -> 88.5%. All-22 pooled 0.3214 -> 0.3181.
+
+**Passes on every clause. Ships as ledger v48** (`AUSPOL_SEAT_SWING_PORT=2`
+the published default). Compared with `scripts/compare_rebuilds.R`, checked
+first K against K (0 moved, 0.3012 / 0.2840 reproduced).
