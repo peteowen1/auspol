@@ -1,6 +1,6 @@
 # Pre-registration: demographic correction for Labor and Greens, time-forward (`AUSPOL_DEMO_RESID=2`)
 
-Written 2026-09-29 21:50, before the rebuild. Pete chose this after walking
+Written 2026-09-29 22:18, before the rebuild. Pete chose this after walking
 five nsw2023 seats (Parramatta, Bankstown, Heathcote, Balmain, Dubbo):
 option 1, "build it for Greens and Labor only".
 
