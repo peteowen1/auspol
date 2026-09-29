@@ -35,7 +35,8 @@
 #' @param exclude_pair The pair being predicted; excluded from the fit entirely.
 #' @param features Census columns to offer the model.
 #' @param alphas Elastic-net mixing values to search. 0 is ridge, 1 is lasso.
-#' @param oof,census Source tables.
+#' @param oof,census Source tables. `oof` may be a path or a table with `pair`,
+#'   `seat`, `party`, `actual_share`, `xgb_pred`.
 #' @param shuffle Control seed; see [.er_shuffle()]. 0 is the real fit.
 #' @return A list with `b` (named coefficient vector), `alpha`, `lambda` and
 #'   `n` (training rows), or `NULL` when the class cannot be fitted.
@@ -50,8 +51,13 @@ demographic_residual_fit <- function(cls, exclude_pair,
     cat("DR0! glmnet not installed; demographic correction unavailable\n")
     return(NULL)
   }
-  if (!file.exists(oof) || !file.exists(census)) return(NULL)
-  O <- data.table::fread(oof, showProgress = FALSE)
+  if (!file.exists(census)) return(NULL)
+  if (is.data.frame(oof)) {
+    O <- data.table::as.data.table(oof)
+  } else {
+    if (!file.exists(oof)) return(NULL)
+    O <- data.table::fread(oof, showProgress = FALSE)
+  }
   C <- data.table::fread(census, showProgress = FALSE)
   feats <- intersect(features, names(C))
   if (!length(feats)) return(NULL)
@@ -96,6 +102,23 @@ demographic_residual_fit <- function(cls, exclude_pair,
   b <- cf[rownames(cf) != "(Intercept)", 1]
   names(b) <- rownames(cf)[rownames(cf) != "(Intercept)"]
   list(b = b, alpha = best$alpha, lambda = best$lambda, n = length(y))
+}
+
+#' The current model's seat misses, as the demographic fit's training table
+#'
+#' From `output/forecasts.csv`: every election's `xgb_pred_seat` comes from an
+#' as-at model trained on earlier elections only, so the misses are
+#' out-of-sample. Summed to one row per (election, seat, class). The fit still
+#' keeps only elections before the target ([elections_before()]).
+#' @return data.table `pair`, `seat`, `party`, `actual_share`, `xgb_pred`.
+#' @keywords internal
+.demo_training_current <- function() {
+  f <- out_path("forecasts.csv")
+  if (!file.exists(f)) stop("AUSPOL_DEMO_RESID=2 needs output/forecasts.csv (scripts/build_forecasts_table.R)")
+  x <- data.table::fread(f, showProgress = FALSE)
+  x <- x[is.finite(x$xgb_pred_seat) & is.finite(x$actual_share)]
+  x[, list(actual_share = sum(actual_share), xgb_pred = sum(xgb_pred_seat)),
+    by = list(pair = election, seat, party)]
 }
 
 #' The census columns offered to the demographic correction
@@ -166,7 +189,17 @@ demographic_residual_apply <- function(shares, pair,
                                        classes = c("ONP", "OTH_RIGHT", "GRN"),
                                        features = DEMO_FEATURES,
                                        census = out_path("census-features.csv"),
-                                       shuffle = 0L) {
+                                       shuffle = 0L,
+                                       oof = out_path("xgb-primary-v6-oof-predictions.csv")) {
+  # AUSPOL_DEMO_RESID="2" (plans/prereg-demographic-labor-greens-2026-09-29.md):
+  # Labor and Greens, learned from the CURRENT model's own time-forward misses
+  # in output/forecasts.csv rather than the frozen v6 file. Worked examples
+  # with Pete on nsw2023 showed the Liberal fit spreading large offsetting
+  # weights across correlated columns, so it is left out.
+  if (identical(Sys.getenv("AUSPOL_DEMO_RESID", "0"), "2")) {
+    if (missing(classes)) classes <- c("ALP", "GRN")
+    if (missing(oof)) oof <- .demo_training_current()
+  }
   if (!file.exists(census)) {
     cat("DR1! census features missing; demographic correction SKIPPED\n")
     return(shares)
@@ -213,7 +246,7 @@ demographic_residual_apply <- function(shares, pair,
   applied <- character(0)
   skipped <- character(0)
   for (cl in intersect(classes, colnames(shares))) {
-    fit <- demographic_residual_fit(cl, pair, features = usable,
+    fit <- demographic_residual_fit(cl, pair, features = usable, oof = oof,
                                     census = census, shuffle = shuffle)
     if (is.null(fit) || !length(fit$b)) { skipped <- c(skipped, paste0(cl, ": no fit")); next }
     bf <- intersect(names(fit$b), colnames(Z))

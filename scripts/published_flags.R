@@ -519,7 +519,7 @@ PUBLISHED_FLAGS <- c(
                                              # nothing else. fed2019 REGRESSES (+0.0110) because state polls failed the
                                              # same way national polls did that year -- an inherent property.
   AUSPOL_STATE_DEV_SHUFFLE   = "0",          # control: permutes which state each seat sits in, within its election.
-  AUSPOL_DEMO_RESID          = "0",          # 1 = Arm A of docs/plans/prereg-demographic-axis-2026-09-15.md:
+  AUSPOL_DEMO_RESID          = "0",          # 2 = Labor + Greens on the current model's time-forward misses (TESTING 2026-09-29, plans/prereg-demographic-labor-greens-2026-09-29.md); 1 = Arm A of docs/plans/prereg-demographic-axis-2026-09-15.md:
                                              # correct each seat's minor-party primary using ALL SEVEN census
                                              # columns under a leave-one-pair-out elastic net, instead of the one
                                              # hand-picked column the refused AUSPOL_EDU_RESID used. No intercept,

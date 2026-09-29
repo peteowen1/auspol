@@ -970,7 +970,7 @@ if (identical(Sys.getenv("AUSPOL_EDU_RESID", "0"), "1")) {
 # single hand-picked yr12_pct of the refused version above. Same position in
 # the pipeline, immediately after the override, so it corrects exactly the
 # shares that reach the simulation.
-if (identical(Sys.getenv("AUSPOL_DEMO_RESID", "0"), "1")) {
+if (Sys.getenv("AUSPOL_DEMO_RESID", "0") %in% c("1", "2")) {
   shares <- demographic_residual_apply(
     shares, TGT,
     shuffle = Sys.getenv("AUSPOL_DEMO_RESID_SHUFFLE", "0"))
