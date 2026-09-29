@@ -5,6 +5,27 @@ it stood before this rewrite: `backlog/journal-2026-09-19-hub-snapshot.md`).
 Decisions: `docs/DECISIONS.md`. Every seat verdict: `docs/SEAT-REGISTRY.md`.
 Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30.
 
+## 2026-09-29 12:15 (read this first)
+
+**Built: ledger v49** (0.2812 vs AEF 0.2851; all-22 pooled 0.3268; primary
+RMSE 4.96; TCP MAE 3.68). **Published release is still v48** until
+`AUSPOL_REBUILD_FROM=8 AUSPOL_PUBLISH=1 bash scripts/rebuild_forecasts.sh`
+runs (Pete; blocked for Claude as a production deploy). That publish also
+uploads `seat-swing-port-vic2026.csv`; until then the nightly forecast
+(which runs from `dev`, the default branch) prints `SP2!!` and runs unported.
+Local `output/` = rebuild M = v49; snapshots in `output/rebuild-{K,L,M}/`.
+PR #68 (dev -> main) open. Blog sentence quotes v45/v46: update to v49.
+
+Open, in order (retest list: `reviews/refused-arms-retest-audit-2026-09-29.md`):
+1. Calibration temperature (+2.85 SE on the 21 Aug model) remeasured on v49.
+2. Complete the 2025 no-prior divisions (Bendigo, Wannon, Nicholls,
+   Goldstein, Mackellar, Brisbane) so the port's seats stop resting on a
+   few fringe booths; shrink the port by booth coverage.
+3. Departed-member side features with the completed retirement data
+   (Parramatta, Heathcote, Camden).
+4. Federal seat polls (7,054 rows) as a seat-level feature.
+5. 9 Nov: live candidate split (v44's bucket split is backtest-only).
+
 ## 2026-09-29 00:50 (read this first)
 
 **Published: ledger v47** (0.2840 vs AEF 0.2851; all-22 pooled 0.3214;
