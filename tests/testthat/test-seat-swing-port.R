@@ -21,3 +21,20 @@ test_that("the port coefficient learns only from earlier state cycles", {
   expect_lt(tf$k, leaky$k)
   expect_true(tf$coef >= 0 && tf$coef < 1)
 })
+
+test_that("the port reads its shipped table when the sources are absent (the CI runner)", {
+  skip_if_not(file.exists(out_path("seat-tpp-estimates.csv")), "no seat TPP estimates")
+  skip_if_not(file.exists(file.path(election_data_path(), "fed-swing-transposed.csv")),
+              "no transposed federal swing")
+  cache <- out_path("seat-swing-port-vic2026.csv")
+  had <- file.exists(cache)
+  if (had) { bak <- tempfile(); file.copy(cache, bak) }
+  on.exit(if (had) file.copy(bak, cache, overwrite = TRUE) else unlink(cache), add = TRUE)
+  src <- seat_swing_port_table("vic2026", write = TRUE)
+  withr::local_options(auspol.elections_dir = tempfile("no-elections"))
+  shipped <- seat_swing_port_table("vic2026")
+  expect_equal(attr(shipped, "coef")$coef, attr(src, "coef")$coef)
+  expect_equal(shipped$fed_swing, src$fed_swing)
+  unlink(cache)
+  expect_error(seat_swing_port_table("vic2026"), "neither the sources")
+})

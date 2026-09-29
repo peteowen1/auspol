@@ -1116,7 +1116,14 @@ if (!is.null(shares_x)) {
 }
 # Time-forward seat-swing port (AUSPOL_SEAT_SWING_PORT=2), AFTER the override,
 # which would otherwise overwrite it. plans/prereg-seat-swing-port-v2-2026-09-29.md
-shares <- seat_swing_port_apply(shares, "vic2026")
+.shares_p <- .try("seat_swing_port", seat_swing_port_apply(shares, "vic2026"))
+if (!is.null(.shares_p)) {
+  shares <- .shares_p
+} else if (identical(Sys.getenv("AUSPOL_SEAT_SWING_PORT", "0"), "2")) {
+  cat(sprintf("SP2!! seat-swing port FAILED%s -- shares UNPORTED, the published forecast is not v48
+",
+              .reason("seat_swing_port")))
+}
 # THE SALIENCE POINT ESTIMATE REACHES THE PUBLISHED FORECAST, 2026-09-07.
 # It never had: the blend lived inline in the federal harness only, so every
 # figure this script published described a model without it while the federal

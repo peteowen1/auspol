@@ -14,7 +14,7 @@
 #' @export
 seat_swing_port_coef <- function(target_election) {
   fs <- data.table::fread(file.path(election_data_path(), "fed-swing-transposed.csv"), showProgress = FALSE)
-  fs[, label := paste0(region, cycle)]
+  fs$label <- paste0(fs$region, fs$cycle)
   tp <- data.table::fread(out_path("seat-tpp-estimates.csv"), showProgress = FALSE)
   d <- election_dates()
   cyc <- unique(fs$label)
@@ -45,6 +45,50 @@ seat_swing_port_coef <- function(target_election) {
   list(coef = b * b^2 / (b^2 + se2), k = G, n = nrow(rows), b = b, se = sqrt(se2))
 }
 
+#' The seat-swing port's inputs for one target: each seat's transposed federal
+#' swing plus the fitted coefficient
+#'
+#' Computed from `fed-swing-transposed.csv` and `output/seat-tpp-estimates.csv`
+#' when both exist (a developer machine). The daily GitHub run has neither, so
+#' the rebuild's promote step writes this table to
+#' `output/seat-swing-port-<target>.csv` and ships it with the models; it is
+#' read back when the sources are absent. Neither available is an error.
+#'
+#' @param target_election Label such as `"vic2026"`.
+#' @param write Write the table to `output/seat-swing-port-<target>.csv`.
+#' @return data.table (`seat`, `fed_swing`) with attribute `coef` (the list
+#'   from [seat_swing_port_coef()]).
+#' @export
+seat_swing_port_table <- function(target_election, write = FALSE) {
+  src_fs <- file.path(election_data_path(), "fed-swing-transposed.csv")
+  src_tp <- out_path("seat-tpp-estimates.csv")
+  cache <- out_path(sprintf("seat-swing-port-%s.csv", target_election))
+  if (file.exists(src_fs) && file.exists(src_tp)) {
+    cf <- seat_swing_port_coef(target_election)
+    fs <- data.table::fread(src_fs, showProgress = FALSE)
+    tb <- fs[paste0(fs$region, fs$cycle) == target_election, list(seat, fed_swing)]
+    if (write) {
+      out <- data.table::copy(tb)
+      out$coef <- cf$coef; out$coef_unshrunk <- cf$b; out$coef_se <- cf$se
+      out$cycles <- cf$k; out$n_fit <- cf$n
+      data.table::fwrite(out, cache)
+    }
+  } else if (file.exists(cache)) {
+    raw <- data.table::fread(cache, showProgress = FALSE)
+    if (!nrow(raw) || length(unique(raw$coef)) != 1L) stop(cache, " is empty or has more than one coefficient")
+    cf <- list(coef = raw$coef[1], k = raw$cycles[1], n = raw$n_fit[1],
+               b = raw$coef_unshrunk[1], se = raw$coef_se[1])
+    tb <- raw[, list(seat, fed_swing)]
+    cat(sprintf("SP2  %s: port inputs read from %s (sources absent)
+", target_election, basename(cache)))
+  } else {
+    stop("seat-swing port for ", target_election, ": neither the sources (", src_fs, ", ", src_tp,
+         ") nor the shipped table (", cache, ") exist")
+  }
+  attr(tb, "coef") <- cf
+  tb
+}
+
 #' Per-seat two-party adjustment from the time-forward seat-swing port
 #'
 #' @param target_election Label such as `"vic2022"`.
@@ -53,10 +97,9 @@ seat_swing_port_coef <- function(target_election) {
 #'   0 where a seat has no transposed federal swing.
 #' @export
 seat_swing_port_adj <- function(target_election, seats) {
-  cf <- seat_swing_port_coef(target_election)
-  fs <- data.table::fread(file.path(election_data_path(), "fed-swing-transposed.csv"), showProgress = FALSE)
-  fs <- fs[paste0(fs$region, fs$cycle) == target_election]
-  fsv <- fs$fed_swing[match(normalise_seat(seats), normalise_seat(fs$seat))]
+  tb <- seat_swing_port_table(target_election)
+  cf <- attr(tb, "coef")
+  fsv <- tb$fed_swing[match(normalise_seat(seats), normalise_seat(tb$seat))]
   adj <- rep(0, length(seats))
   ok <- is.finite(fsv)
   if (any(ok)) adj[ok] <- cf$coef * (fsv[ok] - mean(fsv[ok]))

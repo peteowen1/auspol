@@ -178,6 +178,7 @@ tpp_booths <- function(year) {
   # wrongly credited with explaining. Such a booth has no swing: drop it, and a
   # district left with none gets NA rather than a fabricated figure.
   pct_col <- grep("Labor.Party.Percentage", names(d), value = TRUE)[1]
+  if (is.na(pct_col)) stop("TPP booth file for ", year, " has no Labor percentage column, so no-prior booths cannot be detected. Columns: ", paste(names(d), collapse = ", "))
   own <- as.numeric(d[[pct_col]])
   no_prior <- is.finite(d$swing) & is.finite(own) &
     (abs(abs(d$swing) - own) < 0.005 | abs(abs(d$swing) - (100 - own)) < 0.005)
