@@ -1,6 +1,6 @@
 # Pre-registration: leader's own-seat bonus (`AUSPOL_LEADER_SEAT=1`)
 
-Written 2026-09-29 23:35, before the rebuild. Pete's theory test, then his
+Written 2026-09-29 23:08, before the rebuild. Pete's theory test, then his
 questions: does it differ by party, and for a sitting premier against a
 challenger?
 
@@ -44,3 +44,23 @@ harnesses; wired into live `fit_seats_full.R` and the shipped tables
 
 Ships with the demographic correction (passed today) in one combined rebuild
 and publish.
+
+## RESULT (rebuild X vs R2, 2026-09-29 23:26; the text above is unedited except its written-at time, corrected from a guessed 23:35 before the run finished)
+
+**Passes all checks; ships.**
+
+| check | R2 | X | change | SE |
+|---|--:|--:|--:|--:|
+| leader seats, mean abs error (primary, n 52) | 5.414 | 4.932 | -0.482 | 0.244 (2.0 SE) |
+| all rows primary RMSE (guard) | 4.2065 | 4.2030 | MSE -0.0295 | 0.0173 |
+| pooled seat log loss (guard, CR2) | 0.3434 | 0.3421 | -0.0009 | 0.0007 |
+| non-leader seats moved | | | 0 of 40 | |
+
+By role: head of government -0.438 (SE 0.264, n 22), opposition -0.042
+(SE 0.206, n 22), minor-party -1.812 (SE 1.251, n 8). AEF-7 ledger 0.2753 ->
+0.2756 (reported, not a criterion); accuracy unchanged.
+
+Known weakness, recorded not fixed: early targets have few earlier leaders,
+and method-of-moments tau^2 over three roles is unstable there (fed2016's
+minor bonus +11.24 from two cases). By vic2026 tau^2 is 0 and every role
+takes the pooled +2.33.
