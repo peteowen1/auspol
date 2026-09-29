@@ -1131,6 +1131,14 @@ if (!is.null(.shares_b)) {
   cat(sprintf("SPB!! seat-poll blend FAILED%s -- shares UNBLENDED
 ", .reason("seat_poll_blend")))
 }
+# Leader-seat bonus (AUSPOL_LEADER_SEAT), same position as in the harnesses
+# relative to the seat-poll blend. plans/prereg-leader-seat-2026-09-29.md
+.shares_l <- .try("leader_seat", leader_seat_apply(shares, "vic2026"))
+if (!is.null(.shares_l)) {
+  shares <- .shares_l
+} else if (identical(Sys.getenv("AUSPOL_LEADER_SEAT", "0"), "1")) {
+  cat(sprintf("LS1!! leader-seat bonus FAILED%s -- shares WITHOUT it\n", .reason("leader_seat")))
+}
 # THE SALIENCE POINT ESTIMATE REACHES THE PUBLISHED FORECAST, 2026-09-07.
 # It never had: the blend lived inline in the federal harness only, so every
 # figure this script published described a model without it while the federal

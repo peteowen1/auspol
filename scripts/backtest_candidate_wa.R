@@ -644,6 +644,8 @@ for (K in PAIRS) {
       shares, el_to,
       shuffle = Sys.getenv("AUSPOL_DEMO_RESID_SHUFFLE", "0"))
   }
+  # Leader-seat bonus (AUSPOL_LEADER_SEAT, plans/prereg-leader-seat-2026-09-29.md): a major party gains the time-forward bonus in its own leader's seat.
+  shares <- leader_seat_apply(shares, el_to)
   # DIAGNOSTIC DUMP, off unless asked. Writes the projected primary the model
   # actually simulates from, so a seat can be inspected without reconstructing
   # the pipeline by hand and getting it subtly wrong.

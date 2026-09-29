@@ -845,6 +845,8 @@ if (Sys.getenv("AUSPOL_DEMO_RESID", "0") %in% c("1", "2")) {
     shares, TGT,
     shuffle = Sys.getenv("AUSPOL_DEMO_RESID_SHUFFLE", "0"))
 }
+# Leader-seat bonus (AUSPOL_LEADER_SEAT, plans/prereg-leader-seat-2026-09-29.md): a major party gains the time-forward bonus in its own leader's seat.
+shares <- leader_seat_apply(shares, TGT)
 
 sp <- seat_swing_spread(seats, unname(state_tgt[["ALP"]] - state_prev[["ALP"]]))
 cat(sprintf("\nBT3  seat spread: within %.2f, between %.2f\n", sp$sd_within, sp$sd_between))

@@ -10,7 +10,8 @@ demographic_residual_apply(
   classes = c("ONP", "OTH_RIGHT", "GRN"),
   features = DEMO_FEATURES,
   census = out_path("census-features.csv"),
-  shuffle = 0L
+  shuffle = 0L,
+  oof = out_path("xgb-primary-v6-oof-predictions.csv")
 )
 }
 \arguments{

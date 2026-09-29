@@ -23,7 +23,8 @@ demographic_residual_fit(
 
 \item{alphas}{Elastic-net mixing values to search. 0 is ridge, 1 is lasso.}
 
-\item{oof, census}{Source tables.}
+\item{oof, census}{Source tables. \code{oof} may be a path or a table with \code{pair},
+\code{seat}, \code{party}, \code{actual_share}, \code{xgb_pred}.}
 
 \item{shuffle}{Control seed; see \code{\link[=.er_shuffle]{.er_shuffle()}}. 0 is the real fit.}
 }

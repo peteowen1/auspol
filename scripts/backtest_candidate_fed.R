@@ -1491,6 +1491,8 @@ for (K in PAIRS) {
       shares, sprintf("fed%d", K$to),
       shuffle = Sys.getenv("AUSPOL_DEMO_RESID_SHUFFLE", "0"))
   }
+  # Leader-seat bonus (AUSPOL_LEADER_SEAT, plans/prereg-leader-seat-2026-09-29.md): a major party gains the time-forward bonus in its own leader's seat.
+  shares <- leader_seat_apply(shares, sprintf("fed%d", K$to))
 
   # STATE-LEVEL SWING, Arm of docs/plans/prereg-state-deviation-2026-09-15.md
   # (AUSPOL_STATE_DEV, default 0). FEDERAL ONLY, and deliberately absent from
