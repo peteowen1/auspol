@@ -319,10 +319,22 @@ forecast_statewide_or_oracle <- function(region, year, election_date, parties, s
     # sim count: st_fc is colMeans(draws), so at 2,000 sims base_pred jittered
     # by ~0.1 point between otherwise identical runs (seen in the v40 -> v41
     # stage-1 comparison on the untouched WA pairs). The draws are cheap.
-    forecast_statewide_for(region, year, election_date, parties, st_a,
-                           fundamentals_loo_table(),
-                           data.table::fread(file.path("output", "projection-mix.csv"), showProgress = FALSE),
-                           n_sims = max(n_sims, 20000L), seed = seed),
+    # AUSPOL_FUND_TIME_FORWARD (default 1): fundamentals and mix from earlier
+    # elections only (plans/prereg-statewide-time-forward-2026-09-29.md).
+    if (identical(Sys.getenv("AUSPOL_FUND_TIME_FORWARD", "1"), "1")) {
+      ftf <- data.table::data.table(year = year, region = region, fund = fundamentals_tf(region, year))
+      mtf <- projection_mix_tf(region, year)
+      cat(sprintf("%sf time-forward statewide: fundamentals %.2f, day-before trend weight %.2f
+",
+                  code, ftf$fund, mtf$w[mtf$horizon == 1]))
+      forecast_statewide_for(region, year, election_date, parties, st_a, ftf, mtf,
+                             n_sims = max(n_sims, 20000L), seed = seed)
+    } else {
+      forecast_statewide_for(region, year, election_date, parties, st_a,
+                             fundamentals_loo_table(),
+                             data.table::fread(file.path("output", "projection-mix.csv"), showProgress = FALSE),
+                             n_sims = max(n_sims, 20000L), seed = seed)
+    },
     error = function(e) e)
   if (inherits(fc, "error")) {
     # A cycle too thin to fit a trend (wa2021: four polls in 180 days, none

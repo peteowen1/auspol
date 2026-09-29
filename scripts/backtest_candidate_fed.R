@@ -974,6 +974,15 @@ for (K in PAIRS) {
   if (FORECAST_MODE) {
     ed <- as.Date(FED_DATE[[as.character(K$to)]])
     fr <- FUND_LOO[year == K$to & region == "fed", fund]
+    # AUSPOL_FUND_TIME_FORWARD (default 1): earlier elections only.
+    .mix_k <- .mix
+    if (identical(Sys.getenv("AUSPOL_FUND_TIME_FORWARD", "1"), "1")) {
+      fr <- fundamentals_tf("fed", K$to)
+      .mix_k <- projection_mix_tf("fed", K$to)
+      cat(sprintf("BF0f time-forward statewide: fundamentals %.2f, day-before trend weight %.2f
+",
+                  fr, .mix_k$w[.mix_k$horizon == 1]))
+    }
     if (length(fr) != 1L || !is.finite(fr)) {
       stop("No leave-one-out fundamentals prediction for fed", K$to,
            ". Anchoring to a projection built on this election's own result ",
@@ -982,7 +991,7 @@ for (K in PAIRS) {
     # One day out. project_result() blends trend and fundamentals by horizon,
     # so the horizon must be the real one rather than a convenient default.
     tpp_fn <- function(trend_tpp) {
-      pj <- project_result(trend_tpp, fr, .mix, horizon = 1L)
+      pj <- project_result(trend_tpp, fr, .mix_k, horizon = 1L)
       list(mean = pj$mean, sd = pj$sd)
     }
     FC <- statewide_draws_as_at("fed", K$to, as_at = ed - 1, election_date = ed,
