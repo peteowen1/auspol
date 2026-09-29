@@ -10,7 +10,7 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30.
 **Published 18:15: ledger v51** = rebuild R, the statewide time-forward leak fix
 (0.2719 -> 0.2760 vs AEF 0.2851; nsw2023 better, vic2022 and fed2019 worse;
 RESULT in `plans/prereg-statewide-time-forward-2026-09-29.md`). Snapshot
-`output/rebuild-R/`. **Local `output/` is rebuild T's (REFUSED), not
+`output/rebuild-R/`; fresh v51 (weight refit on its own predictions) `output/rebuild-R2/`, ledger 0.2753. **Local `output/` is rebuild U's (REFUSED), not
 v51's**: rebuild from stage 6 with no arm env before any publish.
 
 Refused 18:40: public-only seat polls, arms S and T (snapshots
@@ -22,9 +22,12 @@ nsw2023; the term is real). nsw2023's remaining statewide gap is the
 fundamentals' honest error.
 
 Open, in order:
-1. PR #70 (v51; reviewed, CI passed) awaits merge. The seat-poll arm
-   commits after it (`4f3e4d5` on) are unreviewed and unpushed.
-2. Seat polls: T (public-only, one weight) with the weight shrunk harder
+1. PR #70 MERGED 18:39. The seat-poll arm commits after it (`4f3e4d5` on,
+   all flagged off) are unpushed; the public-only filter is reviewed, the
+   per-poll match is not. Review, then PR.
+2. Seat polls: THREE arms refused today (S, T, U: per-poll class match). The
+   open problem is the weight, fitted on one or two earlier elections. Park
+   unless a new data source adds earlier polled elections. Old item: T with the weight shrunk harder
    when it rests on one earlier election; NEW prereg. "Independent" =
    Pete's allowlist (`PUBLIC_SEAT_POLLSTERS`, no recorded sponsor).
 3. Change seats beyond the statewide miss (Parramatta, Heathcote): walk
