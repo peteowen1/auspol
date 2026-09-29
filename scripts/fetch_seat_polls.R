@@ -99,6 +99,7 @@ h2_stoplist_re <- "^(contents|see also|notes|references|external links|graphical
 # fetching and inspecting each page's heading structure directly.
 whole_page_seat <- c(fed2016 = TRUE, fed2019 = TRUE, fed2022 = TRUE, fed2025 = TRUE)
 
+failed <- character(0)
 for (key in names(pages)) {
   f <- file.path(raw_dir, paste0(key, ".html"))
   if (file.exists(f) && file.size(f) > 0) {
@@ -110,6 +111,7 @@ for (key in names(pages)) {
                     headers = c(`User-Agent` = ua), quiet = TRUE)
       TRUE
     }, error = function(e) { message("  FAILED: ", conditionMessage(e)); FALSE })
+    if (!ok) failed <- c(failed, key)
     Sys.sleep(1)
   }
 }
@@ -294,9 +296,9 @@ counts <- list()
 
 for (key in names(pages)) {
   f <- file.path(raw_dir, paste0(key, ".html"))
-  if (!file.exists(f) || file.size(f) == 0) { counts[[key]] <- 0L; next }
-  page <- tryCatch(read_html(f), error = function(e) NULL)
-  if (is.null(page)) { counts[[key]] <- 0L; next }
+  if (!file.exists(f) || file.size(f) == 0) { counts[[key]] <- NA_integer_; failed <- union(failed, key); next }
+  page <- tryCatch(read_html(f), error = function(e) { message("PARSE ERROR ", key, ": ", conditionMessage(e)); NULL })
+  if (is.null(page)) { counts[[key]] <- NA_integer_; failed <- union(failed, key); next }
   xml_remove(html_elements(page, "style, script, sup.reference"))
 
   nodes <- html_elements(page, "h2, h3, h4, table.wikitable, table.toccolours")
@@ -360,6 +362,7 @@ if (nrow(seat_polls)) {
 }
 write.csv(seat_polls, out_csv, row.names = FALSE, na = "")
 
+if (length(failed)) message("\nSPL0!! NOT CHECKED (fetch or parse failed; NA below, not a confirmed zero): ", paste(failed, collapse = ", "))
 message("\n---- seat polls found per election (distinct poll x seat) ----")
 for (key in names(pages)) message(sprintf("  %-8s %d", key, counts[[key]]))
 message("\nWrote ", nrow(seat_polls), " total rows (poll x party) to ", out_csv)

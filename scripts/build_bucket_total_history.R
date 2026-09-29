@@ -21,6 +21,8 @@ if (anyNA(H) || anyDuplicated(H$pair)) stop("BT1 lines did not parse cleanly")
 B <- fread(bf, showProgress = FALSE)
 if (any(as.character(B$others_scale) != "0")) stop(bf, " is not a switch-off run")
 act <- B[in_bucket == TRUE, .(actual = sum(actual)), by = pair]
+lost <- setdiff(H$pair, act$pair)
+if (length(lost)) stop("no actual bucket total for pair(s): ", paste(lost, collapse = ", "))
 H <- merge(H, act, by = "pair")
 H[, date := as.Date(unname(election_dates()[pair]))]
 if (anyNA(H$date)) stop("undated pair in the history")

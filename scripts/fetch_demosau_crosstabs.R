@@ -50,7 +50,10 @@ pdfs <- c(
 
 for (key in names(pdfs)) {
   f <- file.path(raw_dir, paste0(key, ".pdf"))
-  if (file.exists(f) && file.size(f) > 1000) {
+  # A size floor is not a completeness check (CLAUDE.md): an error page saved
+  # as .pdf passes it. Require the PDF magic bytes, else refetch.
+  is_pdf <- file.exists(f) && identical(readBin(f, "raw", 5L), charToRaw("%PDF-"))
+  if (is_pdf) {
     message("SKIP (already on disk): ", key)
   } else {
     message("Fetching: ", key)
@@ -113,7 +116,8 @@ meta_from_text <- function(pages_txt) {
 }
 
 parse_pdf <- function(path, poll_id, jurisdiction, source_url) {
-  pages <- tryCatch(pdf_text(path), error = function(e) NULL)
+  pages <- tryCatch(pdf_text(path), error = function(e) {
+    message("PDF READ FAILED ", basename(path), ": ", conditionMessage(e)); NULL })
   if (is.null(pages)) return(list(rows = data.frame(), ambiguous = character(0)))
   meta <- meta_from_text(pages)
   fw_match <- regmatches(meta$fieldwork_line, regexpr("[0-9]{1,2}.*?[0-9]{4}", meta$fieldwork_line, perl = TRUE))

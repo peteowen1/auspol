@@ -2,10 +2,20 @@
 # probability, clamped at 1e-6 as everywhere else), paired by seat, plus the
 # AEF-7 ledger summary. Usage: Rscript scripts/compare_rebuilds.R <dirA> <dirB>
 suppressMessages(library(data.table))
-a <- commandArgs(TRUE); A <- a[1]; B <- a[2]
+a <- commandArgs(TRUE)
+if (length(a) != 2L) stop("usage: Rscript scripts/compare_rebuilds.R <dirA> <dirB>")
+A <- a[1]; B <- a[2]
 ll <- function(d) {
   f <- fread(file.path(d, "forecasts-seats.csv"), showProgress = FALSE)
+  ks <- paste(f$election, f$seat)
+  nw <- setdiff(unique(ks), unique(ks[f$is_winner %in% TRUE]))
   w <- f[is_winner == TRUE, .(p = sum(win_prob)), by = .(election, seat)]
+  # A winner the model never listed scores at the floor, as in pool_backtests.R.
+  if (length(nw)) {
+    cat(sprintf("CR0f %s: %d seat(s) with no winner row scored at p = 0: %s\n",
+                basename(d), length(nw), paste(nw, collapse = ", ")))
+    w <- rbind(w, data.table(election = sub(" .*", "", nw), seat = sub("^[^ ]+ ", "", nw), p = 0))
+  }
   w[, ll := -log(pmax(1e-6, pmin(1, p)))][]
 }
 x <- merge(ll(A), ll(B), by = c("election", "seat"), suffixes = c("_a", "_b"))
