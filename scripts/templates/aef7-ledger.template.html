@@ -250,7 +250,13 @@
   </details>
 
   <details class="provlog">
-    <summary>Provenance &amp; changelog <span class="n">(34 updates)</span></summary>
+    <summary>Provenance &amp; changelog <span class="n">(35 updates)</span></summary>
+    <p class="sub prov"><b>v49, 29 Sep 2026: the breakthrough model stops learning from later elections.</b>
+       The model that estimates whether a new candidate breaks through was trained, in the backtests, partly on
+       elections after the one being predicted, including South Australia 2026 and its four One Nation winners.
+       It now learns only from earlier elections. The published Victorian forecast was never affected, since every
+       training election precedes it; the backtest scores were slightly flattered and are now honest. Seat log loss
+       0.2756 to 0.2812, still ahead of AE Forecasts' 0.2851; seats called right 88.5% to 88.6%.</p>
     <p class="sub prov"><b>v48, 29 Sep 2026: state seats now carry how they swung at the last federal election.</b>
        A seat that swung hard to Labor federally tends to swing further at the next state election than its
        neighbours. Each Victorian, NSW, Queensland and South Australian seat's federal swing, rebuilt from booth
