@@ -52,7 +52,7 @@ every leak fix has. After Y2, `build_level_pred.R` joins the rebuild pipeline
 before stage 3, so arm Z builds its level under its own recipe. The Y2-vs-Z
 rule above is unchanged.
 
-## RESULT, Y2 (full rebuild 08:46-09:21, stage-6 files in output/rebuild-Y2/sharedetail/) = v52
+## RESULT, Y2 (full rebuild 08:46-09:12, stage-6 files in output/rebuild-Y2/sharedetail/) = v52
 
 Against fresh v51 (R2): primary RMSE all rows 4.2065 -> 4.1924 (MSE -0.119,
 clustered SE 0.073); pooled seat log loss per-election mean -0.0010 (SE
@@ -62,3 +62,21 @@ ways from the retrained as-at models (fed2013 -0.030, vic2018 +0.051,
 fed2025 +0.019). Ships as v52 (leak fix). Note for scoring full rebuilds:
 stage 1 writes share-detail files with the same git tag as stage 6; score only
 files written after stage 6 starts.
+
+## RESULT, Z vs Y2 (full rebuild 09:13-09:32; stage-6 files in output/rebuild-Z/sharedetail/)
+
+**Refused on the primary.** Pooled seat log loss per-election mean +0.0003
+(SE 0.0091), 0.3411 -> 0.3430, better in 7 of 16: fails "must improve".
+Primary RMSE 4.1924 -> 4.1653 (passes); AEF-7 ledger 0.2726 -> 0.2672 (guard
+passes). Anchoring stays.
+
+The split is by era: Z better in wa2017 (-0.110), fed2019 (-0.041), vic2018
+(-0.015), wa2025 (-0.011) and the seven ledger elections together; worse in
+fed2007 (+0.031), wa2008 (+0.050), wa2013 (+0.029), wa2005 (+0.023), fed2016
+(+0.019), fed2013 (+0.018). Statewide level error, majors 2.71 -> 2.65;
+nsw2023 Labor 32.7 -> 36.1 (actual 37.0). A rule choosing by era would be
+chosen after seeing this, so it is not proposed.
+
+Caveat: "live" bundles two changes (no anchor AND proportional rescale to
+100), so this did not isolate the anchor. Queued: a new prereg for the anchor
+alone.

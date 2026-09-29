@@ -4,6 +4,8 @@ One line each: the decision, the one fact behind it, a link. Newest first.
 Created 2026-09-19 (the verse convention; auspol had none). Older decisions
 live in the plans they came from (`docs/plans/prereg-*.md` RESULT sections).
 
+- **2026-09-30 Poll trend without the fundamentals anchor (level recipe "live") REFUSED again, leak-free.** Pooled log loss +0.0003 (primary fails) though RMSE 4.19 -> 4.17 and ledger 0.2726 -> 0.2672: better in recent elections, worse in early ones. Bundles two changes; anchor-alone test queued. `plans/prereg-level-recipe-retest-2026-09-30.md`.
+- **2026-09-30 LEDGER v52 = rebuild Y2:** demographic correction + leader-seat bonus + level_pred leak fix. RMSE 4.2065 -> 4.1924, ledger 0.2753 -> 0.2726, accuracy 88.9%.
 - **2026-09-29 Leader-seat bonus PASSES (rebuild X).** Leader seats mean abs error 5.41 -> 4.93 (2.0 SE), all-rows RMSE and pooled log loss better, 0 non-leader seats moved. `plans/prereg-leader-seat-2026-09-29.md`.
 - **2026-09-29 Demographic correction (Labor + Greens) PASSES (rebuilds V, W).** RMSE 4.2065 -> 4.2052, ledger 0.2753 -> 0.2720, permutation control gains nothing. `plans/prereg-demographic-labor-greens-2026-09-29.md`.
 - **2026-09-29 v51 REPUBLISHED 21:13 with the seat-poll weight refit on its own predictions** (rebuild R2): ledger 0.2753 vs AEF 0.2851, primary RMSE 4.90, accuracy 88.2%, TCP MAE 3.80.
