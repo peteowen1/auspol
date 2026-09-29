@@ -10,9 +10,12 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30.
 **Published 18:15: ledger v51** = rebuild R, the statewide time-forward leak fix
 (0.2719 -> 0.2760 vs AEF 0.2851; nsw2023 better, vic2022 and fed2019 worse;
 RESULT in `plans/prereg-statewide-time-forward-2026-09-29.md`). Snapshot
-`output/rebuild-R/`. **IN FLIGHT from 18:17: rebuild S** (arm S of
-`plans/prereg-seat-poll-public-only-2026-09-29.md`, `output/rebuild-S.log`),
-so local `output/` is arm S's, not v51's: never publish from it unscored.
+`output/rebuild-R/`. **Local `output/` is rebuild T's (REFUSED), not
+v51's**: rebuild from stage 6 with no arm env before any publish.
+
+Refused 18:40: public-only seat polls, arms S and T (snapshots
+`output/rebuild-{S,T}/`). T passed fed2025 by 2.1 SE; fed2022 failed because
+its weight rests on 9 fed2019 polls (0.45 -> 0.67).
 
 Refused since: dropping `fed_aligned`, retested time-forward (all its gain is
 nsw2023; the term is real). nsw2023's remaining statewide gap is the
@@ -20,7 +23,8 @@ fundamentals' honest error.
 
 Open, in order:
 1. PR dev -> main for v51 (review + `check_like_ci.R` in progress 18:00).
-2. Seat polls: direct-poll weight on INDEPENDENT polls only. Sponsors now
+2. Seat polls: T (public-only, one weight) with the weight shrunk harder
+   when it rests on one earlier election; NEW prereg. Sponsors now
    recovered from Wikipedia footnotes (`client`, 34 polls; `8465ef8`).
    Needs Pete's definition of "independent": a sponsor filter alone drops
    Bullwinkel's JWS/Nationals polls but keeps McMahon's Compass poll (no
