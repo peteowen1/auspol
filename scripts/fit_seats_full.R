@@ -1131,6 +1131,15 @@ if (!is.null(.shares_b)) {
   cat(sprintf("SPB!! seat-poll blend FAILED%s -- shares UNBLENDED
 ", .reason("seat_poll_blend")))
 }
+# Demographic correction (AUSPOL_DEMO_RESID=2: Labor and Greens), same position
+# as in the harnesses. plans/prereg-demographic-labor-greens-2026-09-29.md
+.shares_d <- .try("demo_resid", if (Sys.getenv("AUSPOL_DEMO_RESID", "0") %in% c("1", "2"))
+  demographic_residual_apply(shares, "vic2026") else shares)
+if (!is.null(.shares_d)) {
+  shares <- .shares_d
+} else {
+  cat(sprintf("DR1!! demographic correction FAILED%s -- shares WITHOUT it\n", .reason("demo_resid")))
+}
 # Leader-seat bonus (AUSPOL_LEADER_SEAT), same position as in the harnesses
 # relative to the seat-poll blend. plans/prereg-leader-seat-2026-09-29.md
 .shares_l <- .try("leader_seat", leader_seat_apply(shares, "vic2026"))

@@ -183,6 +183,10 @@ DEMO_FEATURES <- c("yr12_pct", "born_aus_pct", "indig_pct", "over55_pct",
 #' @param pair The election being predicted.
 #' @param classes Which classes to correct.
 #' @param features,census,shuffle See [demographic_residual_fit()].
+#' @param oof Training table or path, passed to [demographic_residual_fit()].
+#' @param write_table Write the per-seat corrections to
+#'   `output/demo-resid-<pair>.csv`, the table the daily run applies when it
+#'   has no census features or forecasts table (mode "2").
 #' @return The corrected matrix, rows renormalised to their original totals.
 #' @export
 demographic_residual_apply <- function(shares, pair,
@@ -190,14 +194,35 @@ demographic_residual_apply <- function(shares, pair,
                                        features = DEMO_FEATURES,
                                        census = out_path("census-features.csv"),
                                        shuffle = 0L,
-                                       oof = out_path("xgb-primary-v6-oof-predictions.csv")) {
+                                       oof = out_path("xgb-primary-v6-oof-predictions.csv"),
+                                       write_table = FALSE) {
   # AUSPOL_DEMO_RESID="2" (plans/prereg-demographic-labor-greens-2026-09-29.md):
   # Labor and Greens, learned from the CURRENT model's own time-forward misses
   # in output/forecasts.csv rather than the frozen v6 file. Worked examples
   # with Pete on nsw2023 showed the Liberal fit spreading large offsetting
   # weights across correlated columns, so it is left out.
-  if (identical(Sys.getenv("AUSPOL_DEMO_RESID", "0"), "2")) {
+  mode2 <- identical(Sys.getenv("AUSPOL_DEMO_RESID", "0"), "2")
+  cache <- out_path(sprintf("demo-resid-%s.csv", pair))
+  if (mode2) {
     if (missing(classes)) classes <- c("ALP", "GRN")
+    # The daily run has neither the census features nor the forecasts table:
+    # it applies the per-seat corrections the promote step shipped.
+    if (!file.exists(census) || !file.exists(out_path("forecasts.csv"))) {
+      if (!file.exists(cache)) {
+        cat(sprintf("DR1! %s: no sources and no shipped %s; correction SKIPPED\n", pair, basename(cache)))
+        return(shares)
+      }
+      tb <- data.table::fread(cache, showProgress = FALSE)
+      tot <- rowSums(shares)
+      i <- match(tb$seat, rownames(shares)); j <- match(tb$class, colnames(shares))
+      ok <- !is.na(i) & !is.na(j)
+      shares[cbind(i[ok], j[ok])] <- pmax(0, shares[cbind(i[ok], j[ok])] + tb$adj[ok])
+      rs <- rowSums(shares); keep <- rs > 0
+      shares[keep, ] <- shares[keep, ] * (tot[keep] / rs[keep])
+      cat(sprintf("DR1  demographic correction ON for %s from %s (%d of %d rows matched)\n",
+                  pair, basename(cache), sum(ok), nrow(tb)))
+      return(shares)
+    }
     if (missing(oof)) oof <- .demo_training_current()
   }
   if (!file.exists(census)) {
@@ -245,6 +270,7 @@ demographic_residual_apply <- function(shares, pair,
   tot <- rowSums(shares)
   applied <- character(0)
   skipped <- character(0)
+  shipped <- list()
   for (cl in intersect(classes, colnames(shares))) {
     fit <- demographic_residual_fit(cl, pair, features = usable, oof = oof,
                                     census = census, shuffle = shuffle)
@@ -256,6 +282,7 @@ demographic_residual_apply <- function(shares, pair,
     # already exactly zero; this is belt and braces against a future column
     # whose default is not zero.
     adj[!cov_ok] <- 0
+    shipped[[cl]] <- data.table::data.table(seat = rownames(shares), class = cl, adj = adj)
     shares[, cl] <- pmax(0, shares[, cl] + adj)
     nz <- names(fit$b)[fit$b != 0]
     applied <- c(applied, sprintf("%s[a=%.2f n=%d: %s]", cl, fit$alpha, fit$n,
@@ -275,6 +302,10 @@ demographic_residual_apply <- function(shares, pair,
   rs <- rowSums(shares)
   keep <- rs > 0
   shares[keep, ] <- shares[keep, ] * (tot[keep] / rs[keep])
+  if (isTRUE(write_table)) {
+    data.table::fwrite(data.table::rbindlist(shipped), cache)
+    cat(sprintf("DR1  wrote %s (%d rows)\n", basename(cache), sum(vapply(shipped, nrow, 1L))))
+  }
   # The control announces itself, and coverage is never implicit: an experiment
   # that never ran looks exactly like an experiment with no effect.
   cat(sprintf("DR1  demographic correction ON for %s (%d of %d seats covered, %d columns%s)\n",

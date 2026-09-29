@@ -11,7 +11,8 @@ demographic_residual_apply(
   features = DEMO_FEATURES,
   census = out_path("census-features.csv"),
   shuffle = 0L,
-  oof = out_path("xgb-primary-v6-oof-predictions.csv")
+  oof = out_path("xgb-primary-v6-oof-predictions.csv"),
+  write_table = FALSE
 )
 }
 \arguments{
@@ -22,6 +23,12 @@ demographic_residual_apply(
 \item{classes}{Which classes to correct.}
 
 \item{features, census, shuffle}{See \code{\link[=demographic_residual_fit]{demographic_residual_fit()}}.}
+
+\item{oof}{Training table or path, passed to \code{\link[=demographic_residual_fit]{demographic_residual_fit()}}.}
+
+\item{write_table}{Write the per-seat corrections to
+\verb{output/demo-resid-<pair>.csv}, the table the daily run applies when it
+has no census features or forecasts table (mode "2").}
 }
 \value{
 The corrected matrix, rows renormalised to their original totals.
