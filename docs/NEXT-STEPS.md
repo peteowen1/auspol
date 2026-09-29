@@ -7,12 +7,12 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30.
 
 ## 2026-09-29 18:00 (read this first)
 
-**Built: ledger v51** = rebuild R, the statewide time-forward leak fix
+**Published 18:15: ledger v51** = rebuild R, the statewide time-forward leak fix
 (0.2719 -> 0.2760 vs AEF 0.2851; nsw2023 better, vic2022 and fed2019 worse;
 RESULT in `plans/prereg-statewide-time-forward-2026-09-29.md`). Snapshot
-`output/rebuild-R/`; local `output/` is rebuild R's. **Published release is
-still v50** until Pete runs `AUSPOL_REBUILD_FROM=8 AUSPOL_PUBLISH=1 bash
-scripts/rebuild_forecasts.sh`.
+`output/rebuild-R/`. **IN FLIGHT from 18:17: rebuild S** (arm S of
+`plans/prereg-seat-poll-public-only-2026-09-29.md`, `output/rebuild-S.log`),
+so local `output/` is arm S's, not v51's: never publish from it unscored.
 
 Refused since: dropping `fed_aligned`, retested time-forward (all its gain is
 nsw2023; the term is real). nsw2023's remaining statewide gap is the
