@@ -32,3 +32,20 @@ where one pooled weight helped fed2022 (-0.0443) and hurt fed2025 (+0.0095, SE
 - **and** the ledger does not worsen.
 - **Reported:** TCP MAE, primary RMSE, `w_d` / `w_m` / `k_t` per target.
 - **Unacceptable:** any unpolled election moving.
+
+## RESULT (rebuild Q vs P = v50, 2026-09-29; the text above is unedited)
+
+**Refused.** fed2025 (primary) 0.2957 -> 0.3400 (+0.0443, SE 0.0371): worse,
+not better. Ledger 0.2719 -> 0.2788 (+0.0070): the guard fails too. fed2022
+0.2611 -> 0.2517 (-0.0094) and sa2026 (Mount Gambier) -0.0132 improved;
+unpolled elections byte-identical; TCP MAE 3.791 -> 3.774. Weights: fed2025
+w_direct 0.768 / w_mrp 0.175; fed2022 0.450 both; sa2026 0.373 / 0.131.
+
+Why: the high direct weight trusts campaign-commissioned polls. McMahon
+(Labor won) 0.959 -> 0.030, Bullwinkel 0.504 -> 0.036, Ryan 0.729 -> 0.265;
+against Braddon 0.035 -> 0.537 and Banks 0.270 -> 0.517 improving. fed2025
+direct polls include Climate 200 (11 seats) and uComms (11), often for
+advocacy clients. **v50 (mode 1) stays.** Next, registered separately: the
+direct weight fitted on independent polls only, with commissioned polls
+(client named, or a campaign pollster) either excluded or given their own
+partially pooled weight.
