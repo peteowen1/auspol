@@ -171,6 +171,14 @@ parse_seat_table <- function(tab, election, seat, source_url) {
   if (is.null(raw) || nrow(raw) < 2) return(NULL)
   raw <- as.data.frame(lapply(raw, as.character), stringsAsFactors = FALSE)
   raw[is.na(raw)] <- ""
+  # Footnote sponsors (see the SPL2 step): one per row, then stripped so no
+  # other column's text changes.
+  client_re <- "\\s*\\{\\{CLIENT:([^}]*)\\}\\}"
+  row_client <- apply(raw, 1, function(r) {
+    m <- regmatches(r, regexpr("\\{\\{CLIENT:[^}]*\\}\\}", r))
+    if (length(m)) sub("^\\{\\{CLIENT:(.*)\\}\\}$", "\\1", m[1]) else NA_character_
+  })
+  raw[] <- lapply(raw, function(x) gsub(client_re, "", x))
 
   # Some tables (fed2016's per-state aggregate) open with a genuinely blank
   # spacer row before the real header -- find the first row that actually
@@ -206,6 +214,7 @@ parse_seat_table <- function(tab, election, seat, source_url) {
   if (data_start > nrow(raw)) return(NULL)
   header_rows <- if (data_start > hdr + 1) hdr:(data_start - 1) else hdr
   data <- raw[data_start:nrow(raw), , drop = FALSE]
+  row_client_data <- row_client[data_start:nrow(raw)]
 
   client_col <- find_col("^client$")
   sample_col <- find_col("sample")
@@ -250,7 +259,7 @@ parse_seat_table <- function(tab, election, seat, source_url) {
     seat_i <- if (!is.na(electorate_col) && nzchar(trimws(data[i, electorate_col]))) data[i, electorate_col] else seat
     dr <- parse_daterange(date_v)
     n  <- if (!is.na(sample_col)) sample_num(data[i, sample_col]) else NA_integer_
-    client_v <- if (!is.na(client_col)) data[i, client_col] else NA_character_
+    client_v <- if (!is.na(client_col) && nzchar(trimws(data[i, client_col]))) data[i, client_col] else row_client_data[i]
 
     # Some tables (e.g. fed2022/fed2025's per-state flat aggregate, where one
     # table covers many seats) carry MORE than 2 tcp columns because the
@@ -299,7 +308,25 @@ for (key in names(pages)) {
   if (!file.exists(f) || file.size(f) == 0) { counts[[key]] <- NA_integer_; failed <- union(failed, key); next }
   page <- tryCatch(read_html(f), error = function(e) { message("PARSE ERROR ", key, ": ", conditionMessage(e)); NULL })
   if (is.null(page)) { counts[[key]] <- NA_integer_; failed <- union(failed, key); next }
-  xml_remove(html_elements(page, "style, script, sup.reference"))
+  # Sponsors live in footnotes ("Commissioned by Climate 200"), which the
+  # sup.reference removal below would discard. Replace each footnote marker
+  # whose note names a sponsor with a {{CLIENT:...}} token in the cell text,
+  # read back into `client` by parse_seat_table(); other markers are removed.
+  notes <- html_elements(page, "span.mw-reference-text")
+  note_txt <- setNames(trimws(html_text2(notes)), sub("^mw-reference-text-", "", xml_attr(notes, "id")))
+  sups <- html_elements(page, "sup.reference")
+  sup_note <- sub("^.*#", "", xml_attr(html_element(sups, "a"), "href"))
+  sup_txt <- unname(note_txt[sup_note])
+  is_client <- !is.na(sup_txt) & grepl("commissioned (by|for)", sup_txt, ignore.case = TRUE)
+  for (k in which(is_client)) {
+    who <- sub("[.;](\\s.*)?$", "", trimws(sub("^.*?commissioned (by|for)\\s+(the\\s+)?", "", sup_txt[k], ignore.case = TRUE, perl = TRUE)))
+    # A sibling span, not xml_text<-: the marker's own [a]-style link text
+    # survives an in-place text set and glues itself onto the pollster name.
+    xml_add_sibling(sups[[k]], "span", paste0(" {{CLIENT:", who, "}}"))
+  }
+  message(sprintf("SPL2 %s: %d footnote markers name a sponsor", key, sum(is_client)))
+  xml_remove(sups)
+  xml_remove(html_elements(page, "style, script"))
 
   nodes <- html_elements(page, "h2, h3, h4, table.wikitable, table.toccolours")
   tags  <- html_name(nodes)

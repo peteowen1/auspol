@@ -5,6 +5,64 @@ it stood before this rewrite: `backlog/journal-2026-09-19-hub-snapshot.md`).
 Decisions: `docs/DECISIONS.md`. Every seat verdict: `docs/SEAT-REGISTRY.md`.
 Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30.
 
+## 2026-09-29 18:00 (read this first)
+
+**Built: ledger v51** = rebuild R, the statewide time-forward leak fix
+(0.2719 -> 0.2760 vs AEF 0.2851; nsw2023 better, vic2022 and fed2019 worse;
+RESULT in `plans/prereg-statewide-time-forward-2026-09-29.md`). Snapshot
+`output/rebuild-R/`; local `output/` is rebuild R's. **Published release is
+still v50** until Pete runs `AUSPOL_REBUILD_FROM=8 AUSPOL_PUBLISH=1 bash
+scripts/rebuild_forecasts.sh`.
+
+Refused since: dropping `fed_aligned`, retested time-forward (all its gain is
+nsw2023; the term is real). nsw2023's remaining statewide gap is the
+fundamentals' honest error.
+
+Open, in order:
+1. PR dev -> main for v51 (review + `check_like_ci.R` in progress 18:00).
+2. Seat polls: direct-poll weight on INDEPENDENT polls only. Sponsors now
+   recovered from Wikipedia footnotes (`client`, 34 polls; `8465ef8`).
+   Needs Pete's definition of "independent": a sponsor filter alone drops
+   Bullwinkel's JWS/Nationals polls but keeps McMahon's Compass poll (no
+   sponsor recorded); an allowlist of public pollsters drops both. fed2022's
+   page records no sponsors at all.
+3. Change seats beyond the statewide miss (Parramatta, Heathcote): walk
+   examples with Pete before any rule.
+4. PR #743 (inthegame-blog): Pete or that session merges it.
+
+## 2026-09-29 17:00
+
+**Published: ledger v50** (0.2719 vs AEF 0.2851; accuracy 88.9%; primary
+RMSE 4.89; TCP MAE 3.79, the one measure AEF leads at 3.63). `main` = PR #69.
+Snapshots: `output/rebuild-{K,L,M,N,P,Q,R}/` (P = v50; Q = refused MRP split,
+its harness files moved to `rebuild-Q/harness/`).
+
+**IN FLIGHT when the session closed: rebuild R** (full, launched 16:57,
+`output/rebuild-R.log`), the statewide time-forward leak fix
+(`plans/prereg-statewide-time-forward-2026-09-29.md`, `ac2bc1d`). First thing
+next session:
+1. Check `output/rebuild-R.log` reached "stage split"; snapshot to
+   `output/rebuild-R/`; `Rscript scripts/compare_rebuilds.R output/rebuild-P output/rebuild-R`
+   plus the per-ledger-election table; report nsw2023's FS1 line (was trend
+   54.17, projection 52.03, Labor primary 32.1 vs actual 37.0).
+2. A leak fix ships whatever it scores: RESULT section in the prereg, v51
+   changelog entry, then Pete publishes (`AUSPOL_REBUILD_FROM=8 AUSPOL_PUBLISH=1`).
+   Local `output/` is rebuild R's once it finishes, so do not publish before
+   scoring it.
+3. Review + PR dev -> main for 7766034..ac2bc1d.
+
+Open after that, in order:
+1. nsw2023: the remaining statewide drag is the fundamentals themselves
+   (46.2 vs actual ~54.3), not a leak -- retest dropping `fed_aligned`
+   time-forward (audit #1).
+2. Seat polls: direct-poll weight on INDEPENDENT polls only (commissioned
+   Climate 200 / uComms polls wrecked McMahon and Bullwinkel in the refused
+   split).
+3. Change seats beyond the statewide miss (Parramatta ~10, Heathcote ~9
+   points seat-specific): walk examples with Pete before any rule.
+4. PR #743 (inthegame-blog) carries the v50 sentence plus another session's
+   AFL work: Pete or that session merges it.
+
 ## 2026-09-29 12:15 (read this first)
 
 **Built: ledger v49** (0.2812 vs AEF 0.2851; all-22 pooled 0.3268; primary

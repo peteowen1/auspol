@@ -974,6 +974,15 @@ for (K in PAIRS) {
   if (FORECAST_MODE) {
     ed <- as.Date(FED_DATE[[as.character(K$to)]])
     fr <- FUND_LOO[year == K$to & region == "fed", fund]
+    # AUSPOL_FUND_TIME_FORWARD (default 1): earlier elections only.
+    .mix_k <- .mix
+    if (identical(Sys.getenv("AUSPOL_FUND_TIME_FORWARD", "1"), "1")) {
+      fr <- fundamentals_tf("fed", K$to)
+      .mix_k <- projection_mix_tf("fed", K$to)
+      cat(sprintf("BF0f time-forward statewide: fundamentals %.2f, day-before trend weight %.2f
+",
+                  fr, .mix_k$w[.mix_k$horizon == 1]))
+    }
     if (length(fr) != 1L || !is.finite(fr)) {
       stop("No leave-one-out fundamentals prediction for fed", K$to,
            ". Anchoring to a projection built on this election's own result ",
@@ -982,7 +991,7 @@ for (K in PAIRS) {
     # One day out. project_result() blends trend and fundamentals by horizon,
     # so the horizon must be the real one rather than a convenient default.
     tpp_fn <- function(trend_tpp) {
-      pj <- project_result(trend_tpp, fr, .mix, horizon = 1L)
+      pj <- project_result(trend_tpp, fr, .mix_k, horizon = 1L)
       list(mean = pj$mean, sd = pj$sd)
     }
     FC <- statewide_draws_as_at("fed", K$to, as_at = ed - 1, election_date = ed,
@@ -1279,7 +1288,7 @@ for (K in PAIRS) {
     cat(sprintf("BF0  fed%d forecast mode: %d polls to %s; folded into OTH: %s\n",
                 K$to, FC$n_polls, as.character(ed - 1),
                 if (length(FC$folded)) paste(FC$folded, collapse = ", ") else "none"))
-    cat(sprintf("BF0  trend TPP %.2f, fundamentals (LOO) %.2f, projection %.2f, draws realise %.2f\n",
+    cat(sprintf("BF0  trend TPP %.2f, fundamentals %.2f, projection %.2f, draws realise %.2f\n",
                 FC$tpp, fr, FC$anchor$mean, FC$implied_tpp))
     # MINOR-PARTY POLL OVERSTATEMENT, off by default (AUSPOL_MINOR_POLL_ADJ=1).
     # Polls overstate minor parties, and the model inherits it: fed2025 ONP was
