@@ -22,7 +22,7 @@ nsw2023; the term is real). nsw2023's remaining statewide gap is the
 fundamentals' honest error.
 
 Open, in order:
-1. Republish v51 with its fresh seat-poll weight (rebuild R2, 0.2753; the
+1. DONE 21:13: v51 republished with its fresh seat-poll weight (rebuild R2, 0.2753; the
    release carries R's stale-weight 0.2760). Local `output/` IS R2's now:
    `AUSPOL_REBUILD_FROM=8 AUSPOL_PUBLISH=1 bash scripts/rebuild_forecasts.sh`
    (Pete). PRs #70 and #71 merged; `main` = `dev`.
