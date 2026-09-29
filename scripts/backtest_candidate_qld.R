@@ -778,6 +778,11 @@ shares <- xgb_primary_override(shares, TGT)
 # shares become base_pred, the xgb training input, and the port would count twice.
 if (identical(Sys.getenv("AUSPOL_XGB_PRIMARY", "0"), "1"))
   shares <- seat_swing_port_apply(shares, TGT)
+# Seat-poll blend (AUSPOL_SEAT_POLL_BLEND), after the override and the port;
+# xgb layer only, so stage-1 base_pred never includes it.
+# plans/prereg-seat-poll-blend-2026-09-29.md
+if (identical(Sys.getenv("AUSPOL_XGB_PRIMARY", "0"), "1"))
+  shares <- seat_poll_blend_apply(shares, TGT)
 
 # EDUCATION RESIDUAL CORRECTION (AUSPOL_EDU_RESID, default 0).
 # Pre-registered in docs/plans/prereg-education-residual-correction-2026-09-15.md.

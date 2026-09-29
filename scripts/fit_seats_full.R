@@ -1124,6 +1124,13 @@ if (!is.null(.shares_p)) {
 ",
               .reason("seat_swing_port")))
 }
+.shares_b <- .try("seat_poll_blend", seat_poll_blend_apply(shares, "vic2026"))
+if (!is.null(.shares_b)) {
+  shares <- .shares_b
+} else if (Sys.getenv("AUSPOL_SEAT_POLL_BLEND", "0") %in% c("1", "2")) {
+  cat(sprintf("SPB!! seat-poll blend FAILED%s -- shares UNBLENDED
+", .reason("seat_poll_blend")))
+}
 # THE SALIENCE POINT ESTIMATE REACHES THE PUBLISHED FORECAST, 2026-09-07.
 # It never had: the blend lived inline in the federal harness only, so every
 # figure this script published described a model without it while the federal

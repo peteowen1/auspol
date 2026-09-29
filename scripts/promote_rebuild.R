@@ -34,7 +34,9 @@ trained <- c("xgb-primary-v6-final.model", "xgb-primary-v6-final-cols.json",
 # a local booth transpose and seat TPP estimates CI never builds, so the
 # coefficient and per-seat federal swing ship as a table.
 invisible(seat_swing_port_table("vic2026", write = TRUE))
-models <- c(trained, "candidacies.csv", "seat-swing-port-vic2026.csv")
+# Same for the seat-poll blend (v50): its poll file and forecasts table are local.
+invisible(seat_poll_blend_table("vic2026", write = TRUE))
+models <- c(trained, "candidacies.csv", "seat-swing-port-vic2026.csv", "seat-poll-blend-vic2026.csv")
 mf <- file.path(OUT, models)
 miss <- models[!file.exists(mf)]
 if (length(miss)) stop("model file(s) missing -- run scripts/rebuild_forecasts.sh first: ", paste(miss, collapse = ", "))

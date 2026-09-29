@@ -182,9 +182,43 @@ tpp_booths <- function(year) {
   own <- as.numeric(d[[pct_col]])
   no_prior <- is.finite(d$swing) & is.finite(own) &
     (abs(abs(d$swing) - own) < 0.005 | abs(abs(d$swing) - (100 - own)) < 0.005)
-  cat(sprintf("FSWN fed%d: %d of %d booths (%.1f%% of votes) carry no prior -- Swing equals a party's own share -- and are dropped\n",
+  cat(sprintf("FSWN fed%d: %d of %d booths (%.1f%% of votes) carry no prior -- Swing equals a party's own share\n",
               year, sum(no_prior), nrow(d),
               100 * sum(d$tot[no_prior], na.rm = TRUE) / sum(d$tot, na.rm = TRUE)))
+
+  # RECOVER what we can rather than drop it (complete incomplete data). The
+  # same PollingPlaceID in the previous election's file gives the booth's own
+  # earlier Labor share, so swing = now - then. Validated on booths the AEC
+  # DOES publish a swing for (2026-09-29): median gap 0.01-0.05 points, 95%
+  # within 0.5-1.2, across fed2019/2022/2025. Only where both booths are
+  # real: >= 100 votes each year and an earlier share strictly inside (0, 100)
+  # -- mobile and hospital teams and new pre-poll centres reuse IDs, and those
+  # produced +65 to +70 "swings" before this filter.
+  yrs <- as.integer(names(FED_ID))
+  prev_year <- max(c(NA_integer_, yrs[yrs < year]), na.rm = TRUE)
+  if (any(no_prior) && is.finite(prev_year)) {
+    pf <- file.path(RAW, sprintf("tpp-fed%d.csv", prev_year))
+    if (!file.exists(pf) || file.info(pf)$size < 100000) {
+      pid <- FED_ID[[as.character(prev_year)]]
+      utils::download.file(
+        sprintf("https://results.aec.gov.au/%d/Website/Downloads/HouseTppByPollingPlaceDownload-%d.csv", pid, pid),
+        pf, mode = "wb", quiet = TRUE, headers = c("User-Agent" = UA))
+    }
+    p <- fread(pf, skip = 1L, showProgress = FALSE)
+    setnames(p, make.names(names(p)))
+    p_pct <- grep("Labor.Party.Percentage", names(p), value = TRUE)[1]
+    p_tot <- grep("TotalVotes|Total.Votes", names(p), value = TRUE)[1]
+    if (is.na(p_pct) || is.na(p_tot)) stop("fed", prev_year, " TPP file lacks a Labor percentage or total column")
+    mi <- match(d$PollingPlaceID, p$PollingPlaceID)
+    prev_pct <- as.numeric(p[[p_pct]])[mi]
+    prev_n <- as.numeric(p[[p_tot]])[mi]
+    ok <- no_prior & is.finite(prev_pct) & prev_pct > 0 & prev_pct < 100 &
+      is.finite(prev_n) & prev_n >= 100 & d$tot >= 100
+    d$swing[ok] <- own[ok] - prev_pct[ok]
+    no_prior <- no_prior & !ok
+    cat(sprintf("FSWR fed%d: %d no-prior booths recovered from fed%d by booth ID (%.1f%% of all votes); %d dropped\n",
+                year, sum(ok), prev_year, 100 * sum(d$tot[ok]) / sum(d$tot), sum(no_prior)))
+  }
   d <- d[!no_prior]
 
   # A national mean this far from zero means the sign is still wrong, whichever
