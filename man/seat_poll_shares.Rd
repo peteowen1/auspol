@@ -4,7 +4,7 @@
 \alias{seat_poll_shares}
 \title{Seat polls as model classes, per seat, for one election}
 \usage{
-seat_poll_shares(election, days = 90, by_type = FALSE)
+seat_poll_shares(election, days = 90, by_type = FALSE, by_poll = FALSE)
 }
 \arguments{
 \item{election}{Label such as \code{"fed2022"}.}
@@ -12,6 +12,10 @@ seat_poll_shares(election, days = 90, by_type = FALSE)
 \item{days}{Fieldwork window before election day.}
 
 \item{by_type}{Keep MRP and direct polls apart (a \code{type} column).}
+
+\item{by_poll}{Return one row per poll and class (\code{seat}, \code{poll_id},
+\code{class}, \code{fp}, \code{mrp}), with every class a poll does not name as \code{REST}
+and each poll scaled to 100; input to \code{\link[=seat_poll_implied]{seat_poll_implied()}}.}
 }
 \value{
 data.table (\code{seat}, \code{class}, \code{poll}, \code{n_polls}, \code{n_mrp}, and \code{type}
