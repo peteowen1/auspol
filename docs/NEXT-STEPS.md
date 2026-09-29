@@ -5,6 +5,39 @@ it stood before this rewrite: `backlog/journal-2026-09-19-hub-snapshot.md`).
 Decisions: `docs/DECISIONS.md`. Every seat verdict: `docs/SEAT-REGISTRY.md`.
 Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30.
 
+## 2026-09-29 17:00 (read this first)
+
+**Published: ledger v50** (0.2719 vs AEF 0.2851; accuracy 88.9%; primary
+RMSE 4.89; TCP MAE 3.79, the one measure AEF leads at 3.63). `main` = PR #69.
+Snapshots: `output/rebuild-{K,L,M,N,P,Q,R}/` (P = v50; Q = refused MRP split,
+its harness files moved to `rebuild-Q/harness/`).
+
+**IN FLIGHT when the session closed: rebuild R** (full, launched 16:57,
+`output/rebuild-R.log`), the statewide time-forward leak fix
+(`plans/prereg-statewide-time-forward-2026-09-29.md`, `ac2bc1d`). First thing
+next session:
+1. Check `output/rebuild-R.log` reached "stage split"; snapshot to
+   `output/rebuild-R/`; `Rscript scripts/compare_rebuilds.R output/rebuild-P output/rebuild-R`
+   plus the per-ledger-election table; report nsw2023's FS1 line (was trend
+   54.17, projection 52.03, Labor primary 32.1 vs actual 37.0).
+2. A leak fix ships whatever it scores: RESULT section in the prereg, v51
+   changelog entry, then Pete publishes (`AUSPOL_REBUILD_FROM=8 AUSPOL_PUBLISH=1`).
+   Local `output/` is rebuild R's once it finishes, so do not publish before
+   scoring it.
+3. Review + PR dev -> main for 7766034..ac2bc1d.
+
+Open after that, in order:
+1. nsw2023: the remaining statewide drag is the fundamentals themselves
+   (46.2 vs actual ~54.3), not a leak -- retest dropping `fed_aligned`
+   time-forward (audit #1).
+2. Seat polls: direct-poll weight on INDEPENDENT polls only (commissioned
+   Climate 200 / uComms polls wrecked McMahon and Bullwinkel in the refused
+   split).
+3. Change seats beyond the statewide miss (Parramatta ~10, Heathcote ~9
+   points seat-specific): walk examples with Pete before any rule.
+4. PR #743 (inthegame-blog) carries the v50 sentence plus another session's
+   AFL work: Pete or that session merges it.
+
 ## 2026-09-29 12:15 (read this first)
 
 **Built: ledger v49** (0.2812 vs AEF 0.2851; all-22 pooled 0.3268; primary

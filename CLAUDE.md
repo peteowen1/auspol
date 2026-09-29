@@ -133,8 +133,11 @@ Specific traps, all of which have bitten:
   all entries called `x` while only one was accounted for. 15 of 100 votes
   vanished with nothing reported. Validate names are unique at the boundary.
 - **Leakage**: anything in the backtest must use only what was knowable before
-  the election being predicted — flows, hyperparameters, `as_of` dates. Four
-  instances, one introduced while fixing another. The fourth (2026-09-28) sat
+  the election being predicted — flows, hyperparameters, `as_of` dates. Six
+  instances, one introduced while fixing another. **Leave-one-out is NOT
+  time-forward**: a fit that holds out only the target still trains on every
+  LATER election (the surge-v2 pairs and the statewide fundamentals/mix,
+  both 2026-09-29, each with a comment calling LOO leak-free). The fourth (2026-09-28) sat
   in a SHIPPED feature for two weeks: `state_poll_dev` subtracted the ACTUAL
   national swing, so it carried each federal election's national polling
   error (4.09 points in 2019). **A "results" file is an outcome even when
