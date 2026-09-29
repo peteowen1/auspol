@@ -172,6 +172,7 @@ jobs:
           # before v48 lacks it, and fit_seats_full.R then runs unported and
           # prints SP2!! rather than failing the whole forecast.
           gh release download shipped-models -p seat-swing-port-vic2026.csv -D output --clobber             || echo "::warning::shipped-models has no seat-swing-port-vic2026.csv -- the forecast runs WITHOUT the v48 seat-swing port"
+          gh release download shipped-models -p seat-poll-blend-vic2026.csv -D output --clobber \n            || echo "::warning::shipped-models has no seat-poll-blend-vic2026.csv -- the forecast runs WITHOUT the v50 seat-poll blend"
           ls -l output/xgb-*
           # The forecast history table lives on the forecast-latest release;
           # fetch it BEFORE run_all.R so build_forecast_json.R appends one row.

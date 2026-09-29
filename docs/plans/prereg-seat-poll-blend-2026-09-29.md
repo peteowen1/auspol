@@ -47,3 +47,28 @@ byte-identical.
 - **Reported:** w per target with its SE and n; the targeted and
   ledger primary RMSE; and the worst-seat table (Curtin, Goldstein,
   Mackellar, North Sydney, Wentworth, Kooyong, Braddon) before and after.
+
+## RESULT (rebuild P vs N = v49, 2026-09-29; the text above is unedited)
+
+Weights: fed2022 0.450 (raw 0.472, se 0.104, 29 cells from fed2019), fed2025
+0.239 (se 0.052, 917 cells), sa2026 0.185; fed2019 and every unpolled
+election 0. Applied: fed2022 888 cells / 151 seats (mean |change| 1.30
+points), fed2025 856 / 150 (723 of them MRP-only; 0.70), sa2026 6 / 1 seat.
+
+- **Targeted (fed2022 + fed2025, 301 seats): -0.0175, SE 0.0102 (t -1.72). Passes.**
+- Ledger 0.2812 -> 0.2719 (-0.0094, SE 0.0048). Guard passes. Accuracy 88.6% ->
+  88.9%, weighted primary RMSE 4.956 -> 4.887, **TCP MAE 3.68 -> 3.79 (worse)**.
+- Controls byte-identical: nsw2023, qld2024, vic2022, wa2025 and every
+  unpolled election moved 0 seats. w below 0.9 throughout.
+- fed2022 0.3054 -> 0.2611 (-0.0443, SE 0.0189); **fed2025 0.2861 -> 0.2957
+  (+0.0095, SE 0.0068)**; sa2026 0.2856 -> 0.2658 (one seat).
+- Winner's probability: Goldstein 0.136 -> 0.365 (AEF 0.509), Curtin
+  0.096 -> 0.246 (0.445), Hughes 0.137 -> 0.557 (0.642), Mackellar 0.097 ->
+  0.208 (0.280), North Sydney 0.079 -> 0.144 (0.336), Mount Gambier 0.131 ->
+  0.333 (0.496).
+
+**Ships as ledger v50.** Not hidden: fed2025, whose polls are 85% MRP, got
+worse on a weight partly learned from direct seat polls, and the TCP margin
+worsened. Next test (registered separately): separate weights for MRP and
+direct polls. The ledger's `our_fp_win` column reads the pre-blend xgb
+prediction, so its per-seat primary "miss" does not show the blend.

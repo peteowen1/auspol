@@ -250,7 +250,15 @@
   </details>
 
   <details class="provlog">
-    <summary>Provenance &amp; changelog <span class="n">(35 updates)</span></summary>
+    <summary>Provenance &amp; changelog <span class="n">(36 updates)</span></summary>
+    <p class="sub prov"><b>v50, 29 Sep 2026: seat polls, for the first time.</b> Where a seat has been polled in the
+       90 days before the election, each party's vote is pulled part of the way toward the poll, by a weight learned
+       only from earlier elections' polls against their results (0.45 for 2022, learned from 2019; 0.24 for 2025).
+       It lifts the independents who broke through in 2022: Goldstein from a 14% chance to 37%, Curtin 10% to 25%,
+       and Hughes' Liberal from 14% to 56%. Seat log loss 0.2812 to 0.2719 against AE Forecasts' 0.2851. Not
+       everything improved: 2025, whose seat polls are mostly model-based estimates (MRP), got slightly worse, and
+       the final-two margin error rose from 3.68 to 3.79 points. Victoria 2026 has no seat poll in the window yet,
+       so the live forecast is unchanged until one appears.</p>
     <p class="sub prov"><b>v49, 29 Sep 2026: the breakthrough model stops learning from later elections.</b>
        The model that estimates whether a new candidate breaks through was trained, in the backtests, partly on
        elections after the one being predicted, including South Australia 2026 and its four One Nation winners.
