@@ -12,7 +12,8 @@ seat_poll_blend_table(target_election, write = FALSE)
 \item{write}{Write the shipped table.}
 }
 \value{
-data.table (\code{seat}, \code{class}, \code{poll}, \code{n_polls}, \code{n_mrp}) with attribute \code{w}.
+data.table (\code{seat}, \code{class}, \code{type}, \code{poll}, \code{n_polls}, \code{n_mrp}) with
+attribute \code{w} (pooled weight plus \code{w_direct}, \code{w_mrp}).
 }
 \description{
 Computed from the poll file and \code{output/forecasts.csv} when both exist; the

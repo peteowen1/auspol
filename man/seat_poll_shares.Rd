@@ -4,15 +4,19 @@
 \alias{seat_poll_shares}
 \title{Seat polls as model classes, per seat, for one election}
 \usage{
-seat_poll_shares(election, days = 90)
+seat_poll_shares(election, days = 90, by_type = FALSE)
 }
 \arguments{
 \item{election}{Label such as \code{"fed2022"}.}
 
 \item{days}{Fieldwork window before election day.}
+
+\item{by_type}{Keep MRP and direct polls apart (a \code{type} column).}
 }
 \value{
-data.table (\code{seat}, \code{class}, \code{poll}, \code{n_polls}, \code{n_mrp}), possibly empty.
+data.table (\code{seat}, \code{class}, \code{poll}, \code{n_polls}, \code{n_mrp}, and \code{type}
+when \code{by_type}), possibly empty. A release (pollster + dates) covering at
+least 20 seats counts as MRP, whatever its name.
 }
 \description{
 Reads \code{external/reference/polls/seat-polls/seat_polls.csv} (built by
