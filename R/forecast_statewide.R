@@ -156,7 +156,7 @@ forecast_statewide_for <- function(region, year, election_date, parties, st_a,
   cat(sprintf("FS1  %s%d forecast statewide: %d polls to %s; folded into OTH: %s\n",
               region, year, FC$n_polls, as.character(ed - 1),
               if (length(FC$folded)) paste(FC$folded, collapse = ", ") else "none"))
-  cat(sprintf("FS1  trend TPP %.2f, fundamentals (LOO) %.2f, projection %.2f, draws realise %.2f\n",
+  cat(sprintf("FS1  trend TPP %.2f, fundamentals %.2f, projection %.2f, draws realise %.2f\n",
               FC$tpp, fr, FC$anchor$mean, FC$implied_tpp))
   list(st_fc = st_fc, draws = sw_draws, folded = FC$folded, n_polls = FC$n_polls,
        tpp = FC$tpp, fund = fr, anchor_mean = FC$anchor$mean,

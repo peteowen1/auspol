@@ -1288,7 +1288,7 @@ for (K in PAIRS) {
     cat(sprintf("BF0  fed%d forecast mode: %d polls to %s; folded into OTH: %s\n",
                 K$to, FC$n_polls, as.character(ed - 1),
                 if (length(FC$folded)) paste(FC$folded, collapse = ", ") else "none"))
-    cat(sprintf("BF0  trend TPP %.2f, fundamentals (LOO) %.2f, projection %.2f, draws realise %.2f\n",
+    cat(sprintf("BF0  trend TPP %.2f, fundamentals %.2f, projection %.2f, draws realise %.2f\n",
                 FC$tpp, fr, FC$anchor$mean, FC$implied_tpp))
     # MINOR-PARTY POLL OVERSTATEMENT, off by default (AUSPOL_MINOR_POLL_ADJ=1).
     # Polls overstate minor parties, and the model inherits it: fed2025 ONP was
