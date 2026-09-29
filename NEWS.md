@@ -1,3 +1,11 @@
+# auspol 0.4.55
+
+**Ledger v51: statewide fundamentals and trend mix learn only from earlier elections** (leak fix; seat log loss 0.2719 -> 0.2760 against AE Forecasts' 0.2851, shipped as pre-registered).
+
+- `fundamentals_tf()`, `projection_mix_tf()` (`AUSPOL_FUND_TIME_FORWARD=1`); the live Victoria forecast is unchanged.
+- Seat polls carry their sponsor in `client`, recovered from Wikipedia footnotes.
+- Refused and recorded: dropping `fed_aligned` from the fundamentals, retested time-forward.
+
 # auspol 0.4.54
 
 **Ledger v49 and v50 reach `main`** (seat log loss 0.2719 against AE Forecasts' 0.2851).
