@@ -1,3 +1,17 @@
+# auspol 0.4.54
+
+**Ledger v49 and v50 reach `main`** (seat log loss 0.2719 against AE Forecasts' 0.2851).
+
+- **Seat-poll blend** (`AUSPOL_SEAT_POLL_BLEND=1`, v50): polled seats' primaries
+  move toward their seat polls by a weight learned from earlier elections only
+  (`R/seat_poll_blend.R`); its table ships with the models for the daily run.
+- **Booth-recovered federal swing:** 2025 booths with no AEC comparison are
+  matched to 2022 by booth ID (`transpose_fed_swing.R`), correcting the live
+  Bendigo seats.
+- Surge-v2 hazard trains only on earlier elections in every harness (v49 leak fix).
+- Refused and recorded: calibration temperature on v49; separate MRP/direct
+  poll weights.
+
 # auspol 0.4.53
 
 **Ledger v44 to v49 reach `main`.** Ledger seat log loss 0.2812 against AE
