@@ -21,6 +21,8 @@ Refused since: dropping `fed_aligned`, retested time-forward (all its gain is
 nsw2023; the term is real). nsw2023's remaining statewide gap is the
 fundamentals' honest error.
 
+IN FLIGHT 22:40: rebuild W, the permutation control for AUSPOL_DEMO_RESID=2 (rebuild V passed criteria 1-2: RMSE 4.2065 -> 4.2052, ledger 0.2753 -> 0.2720). `plans/prereg-demographic-labor-greens-2026-09-29.md`.
+
 Open, in order:
 1. DONE 21:13: v51 republished with its fresh seat-poll weight (rebuild R2, 0.2753; the
    release carries R's stale-weight 0.2760). Local `output/` IS R2's now:
@@ -144,6 +146,8 @@ exhaust (twice), others-bucket size, proportional closure, candidate
 bucket total, shrunk blend (audit pass, rebuild fail 0.2893), departed-member
 xgb features (0.2902; the miss is in base_pred).
 
+IN FLIGHT 22:40: rebuild W, the permutation control for AUSPOL_DEMO_RESID=2 (rebuild V passed criteria 1-2: RMSE 4.2065 -> 4.2052, ledger 0.2753 -> 0.2720). `plans/prereg-demographic-labor-greens-2026-09-29.md`.
+
 Open, in order:
 1. **base_pred sitting-member effect** on the COMPLETED retirement data
    (`external/reference/retirements/retirements.csv`, 393 rows, 30
@@ -165,6 +169,8 @@ accuracy 88.0% vs 86.8%. Two changes: the `state_poll_dev` LEAK removed
 others bucket split by the per-candidate model (`AUSPOL_BUCKET_SPLIT=cand_naive`)
 in all six harnesses. Live Victoria now anchors its level like the backtests
 (`AUSPOL_LIVE_LEVEL_ANCHOR=1`, Labor ~35 -> ~31 seats from the 29 Sep run).
+
+IN FLIGHT 22:40: rebuild W, the permutation control for AUSPOL_DEMO_RESID=2 (rebuild V passed criteria 1-2: RMSE 4.2065 -> 4.2052, ledger 0.2753 -> 0.2720). `plans/prereg-demographic-labor-greens-2026-09-29.md`.
 
 Open, in order:
 1. **9 Nov**: wire the candidate split into LIVE `fit_seats_full.R` once
