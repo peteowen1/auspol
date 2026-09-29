@@ -59,7 +59,7 @@ demographic_residual_fit <- function(cls, exclude_pair,
   # `.cls` and `.ex`, never the bare argument names: a symbol matching a column
   # binds to the COLUMN inside `[`, recorded eight times in CLAUDE.md.
   .cls <- cls; .ex <- exclude_pair
-  O <- O[O$party == .cls & O$pair != .ex]
+  O <- O[O$party == .cls & elections_before(O$pair, .ex)]   # time-forward
   if (!nrow(O)) return(NULL)
   M <- merge(O, C[, c("pair", "seat", feats), with = FALSE], by = c("pair", "seat"))
   if (nrow(M) < 100) return(NULL)

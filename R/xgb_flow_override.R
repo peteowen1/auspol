@@ -98,7 +98,7 @@ xgb_flow_conditional_for <- function(target_election, prev_election, region, min
   TR <- data.table::fread(feat_f, showProgress = FALSE)
   # LEAVE THE TARGET ELECTION OUT of the historical rate/n computation, same
   # discipline as the training script's own leave-one-election-out CV.
-  hist <- TR[TR$election != target_election]
+  hist <- TR[elections_before(TR$election, target_election)]   # time-forward inputs
 
   CLASSES <- c("ALP","GRN","IND","LNP","NAT","ONP","OTH","OTH_RIGHT")
   # Event-count-weighted mean of the observed share across every historical
@@ -236,7 +236,7 @@ xgb_flow_conditional_override_for <- function(shares, target_election, prev_elec
   model <- xgboost::xgb.load(model_f)
   feat_cols <- jsonlite::fromJSON(readLines(cols_f))
   TR <- data.table::fread(feat_f, showProgress = FALSE)
-  hist <- TR[TR$election != target_election]
+  hist <- TR[elections_before(TR$election, target_election)]   # time-forward inputs
 
   CLASSES <- c("ALP","GRN","IND","LNP","NAT","ONP","OTH","OTH_RIGHT")
   key_rates <- hist[, list(rate = stats::weighted.mean(get("y"), w = pmax(1, get("cond_n"))),

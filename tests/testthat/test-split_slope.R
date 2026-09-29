@@ -100,11 +100,21 @@ test_that("fit_conditional_slopes keeps the shipped constant for a too-thin cell
     election = c("e1","e2"), seat = c("A","A"), party = "IND",
     surname = c("X","X"), given = c("a","a"), pcv = c(20, 15),
     votes = c(2000, 1500), tot = 10000, name = NA_character_)
+  # Since 2026-09-29 the fallback is the tier's pooled slope from the same
+  # earlier-elections rows (1 when that is thin too), not the SHIP_* constants
+  # fitted on every election; "0" keeps the old constants for comparison.
+  withr::local_envvar(AUSPOL_SHIP_TIME_FORWARD = "1")
   r <- fit_conditional_slopes("zzz", corpus = d,
                               pairs = list(list(election = "e2", prev = "e1")),
                               min_n = 40L)
-  expect_equal(unname(r$same[["IND"]]), 0.907)   # untouched shipped value
-  expect_equal(unname(r$new[["IND"]]),  0.326)
+  expect_equal(unname(r$same[["IND"]]), 1)       # thin cell AND thin tier -> neutral
+  expect_equal(unname(r$new[["IND"]]),  1)
+  withr::local_envvar(AUSPOL_SHIP_TIME_FORWARD = "0")
+  r0 <- fit_conditional_slopes("zzz", corpus = d,
+                               pairs = list(list(election = "e2", prev = "e1")),
+                               min_n = 40L)
+  expect_equal(unname(r0$same[["IND"]]), 0.907)  # the old shipped constant
+  expect_equal(unname(r0$new[["IND"]]),  0.326)
 })
 
 test_that("fit_conditional_slopes excludes the target election", {

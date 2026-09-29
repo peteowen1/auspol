@@ -104,6 +104,23 @@ for (d in c("aec", "nsw", "vec", "ecsa", "ecq", "waec")) {
   L <- c(L, "")
 }
 
+# polls/ nests its derived CSVs one level down (external/reference/polls/<source>/*.csv),
+# unlike the flat aec/vec/nsw/etc directories above, so it gets its own recursive block.
+polls_dir <- file.path("external", "reference", "polls")
+if (dir.exists(polls_dir)) {
+  pf <- sort(list.files(polls_dir, pattern = "[.]csv$", full.names = TRUE, recursive = TRUE))
+  if (length(pf)) {
+    L <- c(L, "### polls/", "", "| file | rows | columns |", "|---|---:|---|")
+    for (p in pf) {
+      h <- hdr(p)
+      L <- c(L, sprintf("| `%s` | %s | %s |", sub("^external/reference/polls/", "", p),
+                        format(nrows_of(p), big.mark = ","),
+                        if (h$ok) paste0("`", paste(h$cols, collapse = "`, `"), "`") else "unreadable"))
+    }
+    L <- c(L, "")
+  }
+}
+
 # ---- THE DIFF: what the raw file has that the processed extract does not ----
 L <- c(L, "## Columns we download and DROP", "",
        "Each row is a field present in the raw download and absent from the",

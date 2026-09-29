@@ -110,6 +110,15 @@ forecast_statewide_for <- function(region, year, election_date, parties, st_a,
       if (isTRUE(base_share > 0)) prior / base_share
       else rep(1 / length(bucket), length(bucket)),
       bucket)
+    # AUSPOL_BUCKET_SPLIT = cand_resid / cand_naive: split the bucket by the
+    # per-candidate model's predicted class shares for THIS election instead of
+    # the previous election's mix (the bucket's total is unchanged). Each share
+    # comes from a model fitted on earlier elections only
+    # (scripts/fit_minor_candidates.R, MC2). Any bucket class without a
+    # prediction falls back to the prior-ratio split for the whole pair.
+    # docs/plans/prereg-bucket-split-candidates-2026-09-28.md.
+    cr <- candidate_bucket_ratio(paste0(region, year), bucket)
+    if (!is.null(cr)) ratio <- cr
     # EVERY DRAW, not just the point estimate. simulate_seat_contests() requires
     # statewide_draws to cover every column in `parties` or it errors, so an
     # unmodelled class needs its own draw column. There is no genuine trend draw
@@ -152,6 +161,113 @@ forecast_statewide_for <- function(region, year, election_date, parties, st_a,
   list(st_fc = st_fc, draws = sw_draws, folded = FC$folded, n_polls = FC$n_polls,
        tpp = FC$tpp, fund = fr, anchor_mean = FC$anchor$mean,
        implied_tpp = FC$implied_tpp)
+}
+
+#' Split ratios for the unpolled bucket from the per-candidate model
+#'
+#' Under `AUSPOL_BUCKET_SPLIT = cand_resid / cand_naive`, returns each bucket
+#' class's share of the bucket as predicted by the per-candidate minor-party
+#' model (`scripts/fit_minor_candidates.R`, time-forward: each election
+#' predicted by models fitted on earlier elections). `NULL` under the default
+#' `prior`, or when any bucket class lacks a prediction (the caller then keeps
+#' the previous election's ratios, and this says so). One function for the
+#' shared statewide block and the federal harness's own copy, so the two
+#' cannot drift. docs/plans/prereg-bucket-split-candidates-2026-09-28.md.
+#'
+#' @param election Label such as `"vic2022"`.
+#' @param bucket Class names in the bucket.
+#' @return Named numeric ratios summing to 1, or `NULL`.
+#' @export
+candidate_bucket_ratio <- function(election, bucket) {
+  split_mode <- Sys.getenv("AUSPOL_BUCKET_SPLIT", "prior")
+  if (!split_mode %in% c("cand_resid", "cand_naive")) return(NULL)
+  # The SPLIT reads the v2 candidate model (v44); v3 (defectors and newcomers
+  # treated as personal votes) divides worse but totals better, so each
+  # purpose names its source. plans/prereg-minor-candidate-defectors-2026-09-28.md.
+  sf <- out_path(Sys.getenv("AUSPOL_BUCKET_SPLIT_SRC", "minor-class-shares-v2.csv"))
+  if (!file.exists(sf)) stop("AUSPOL_BUCKET_SPLIT=", split_mode, " needs ", sf,
+                             " (scripts/fit_minor_candidates.R).")
+  cs <- data.table::fread(sf, showProgress = FALSE)
+  col <- if (split_mode == "cand_resid") "pred_resid" else "pred_naive"
+  # A differently-named local, NEVER the bare argument: `election` is also a
+  # column, and data.table binds a bare name inside `[` to the column, so
+  # `cs$election == election` was always TRUE and every class took the FIRST
+  # election's share (caught by the fed2025 smoke: IND 0.18 instead of 0.44).
+  el_arg <- election
+  pr <- cs[cs$election == el_arg, ]
+  if (anyDuplicated(pr$cls)) stop("candidate_bucket_ratio(): duplicate class rows for ", el_arg)
+  pred <- stats::setNames(pr[[col]], pr$cls)[bucket]
+  if (all(is.finite(pred)) && sum(pred) > 0) {
+    ratio <- stats::setNames(pred / sum(pred), bucket)
+    cat(sprintf("BS1  %s: bucket split by candidate model (%s): %s\n", election, split_mode,
+                paste(sprintf("%s %.2f", bucket, ratio), collapse = ", ")))
+    return(ratio)
+  }
+  cat(sprintf("BS1! %s: no candidate-model share for %s; prior-ratio split kept\n", election,
+              paste(bucket[!is.finite(pred)], collapse = ", ")))
+  NULL
+}
+
+#' The unpolled bucket's total from the per-candidate model
+#'
+#' Sum of the per-candidate model's predicted statewide shares (`pred_naive`,
+#' time-forward) over the bucket classes, for `AUSPOL_BUCKET_TOTAL=cand`.
+#' `NULL` when off or when any bucket class lacks a prediction.
+#' docs/plans/prereg-bucket-total-candidates-2026-09-28.md.
+#'
+#' @param election Label such as `"nsw2023"`.
+#' @param bucket Class names in the bucket.
+#' @return A single number (share points), or `NULL`.
+#' @export
+candidate_bucket_total <- function(election, bucket) {
+  if (!Sys.getenv("AUSPOL_BUCKET_TOTAL", "poll") %in% c("cand", "blend")) return(NULL)
+  sf <- out_path(Sys.getenv("AUSPOL_BUCKET_TOTAL_SRC", "minor-class-shares-v3.csv"))
+  if (!file.exists(sf)) stop("AUSPOL_BUCKET_TOTAL=cand needs ", sf, " (scripts/fit_minor_candidates.R).")
+  cs <- data.table::fread(sf, showProgress = FALSE)
+  el_arg <- election   # never the bare argument inside `[` (NSE trap)
+  pr <- cs[cs$election == el_arg, ]
+  if (anyDuplicated(pr$cls)) stop("candidate_bucket_total(): duplicate class rows for ", el_arg)
+  pred <- stats::setNames(pr$pred_naive, pr$cls)[bucket]
+  if (!all(is.finite(pred))) {
+    cat(sprintf("BT1! %s: no candidate-model share for %s; bucket total left to the polls\n", el_arg,
+                paste(bucket[!is.finite(pred)], collapse = ", ")))
+    return(NULL)
+  }
+  sum(pred)
+}
+
+#' How far to move the bucket total from the polls toward the candidate model
+#'
+#' For `AUSPOL_BUCKET_TOTAL=blend`: least squares of `actual - poll` on
+#' `cand - poll` over pairs dated strictly before `before`, shrunk by
+#' `w_hat^2 / (w_hat^2 + se^2)` and clamped to 0..1. Under 3 earlier pairs the
+#' standard error is not estimable and the weight is 0 (the poll total).
+#' docs/plans/prereg-bucket-total-blend-2026-09-28.md.
+#'
+#' @param before Date of the election being forecast.
+#' @param hist data.table (pair, date, poll_total, cand_total, actual); read
+#'   from `output/bucket-total-history.csv` when NULL.
+#' @return list: `w`, `w_hat`, `se`, `n`, `latest` (last pair used).
+#' @export
+bucket_total_blend <- function(before, hist = NULL) {
+  before <- as.Date(before)
+  if (is.null(hist)) {
+    f <- out_path("bucket-total-history.csv")
+    if (!file.exists(f)) stop("output/bucket-total-history.csv is missing (scripts/build_bucket_total_history.R).")
+    hist <- data.table::fread(f, showProgress = FALSE)
+  }
+  h <- hist[as.Date(hist$date) < before, ]
+  n <- nrow(h)
+  latest <- if (n) h$pair[which.max(as.Date(h$date))] else NA_character_
+  if (n < 3L) return(list(w = 0, w_hat = NA_real_, se = NA_real_, n = n, latest = latest))
+  dc <- h$cand_total - h$poll_total
+  da <- h$actual - h$poll_total
+  ss <- sum(dc^2)
+  if (!isTRUE(ss > 0)) return(list(w = 0, w_hat = NA_real_, se = NA_real_, n = n, latest = latest))
+  w_hat <- sum(dc * da) / ss
+  se <- sqrt(sum((da - w_hat * dc)^2) / (n - 1)) / sqrt(ss)
+  w <- min(1, max(0, w_hat)) * w_hat^2 / (w_hat^2 + se^2)
+  list(w = w, w_hat = w_hat, se = se, n = n, latest = latest)
 }
 
 #' Leave-one-out fundamentals, fitted once per run

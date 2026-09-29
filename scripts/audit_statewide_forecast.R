@@ -34,13 +34,19 @@ for (pr in P) {
   for (cl in intersect(names(fc$st_fc), names(act)))
     rows[[length(rows) + 1]] <- data.table(pair = el, region = reg, n_polls = fc$n_polls, trend_tpp = round(fc$tpp, 2),
       fund_tpp = round(fc$fund, 2), w_trend = round(w, 2), anchored_tpp = round(fc$implied_tpp, 2),
-      cls = cl, forecast = round(fc$st_fc[[cl]], 2), actual = round(act[[cl]], 2), miss = round(fc$st_fc[[cl]] - act[[cl]], 2))
+      cls = cl, forecast = round(fc$st_fc[[cl]], 2), actual = round(act[[cl]], 2), miss = round(fc$st_fc[[cl]] - act[[cl]], 2),
+      # the unpolled "others" bucket (OTH plus every class folded into it), and
+      # the switch state, so scripts/build_others_bucket_history.R can refuse a
+      # run whose bucket was already corrected
+      in_bucket = cl %in% c("OTH", fc$folded),
+      others_scale = Sys.getenv("AUSPOL_OTHERS_SCALE", "0"))
 }
 A <- rbindlist(rows)
-fwrite(A, "output/statewide-forecast-audit.csv")
+AUDIT_F <- sprintf("output/statewide-forecast-audit%s.csv", Sys.getenv("AUSPOL_AUDIT_TAG", ""))
+fwrite(A, AUDIT_F)
 cat("SA1  day-before statewide forecast miss (forecast - actual, first-preference points) by pair and class; lower |miss| is better\n")
 W <- dcast(A[cls %in% c("ALP", "LNP", "GRN", "ONP")], pair + n_polls + trend_tpp + fund_tpp + w_trend ~ cls, value.var = "miss")
 print(W[order(pair)])
 cat("SA2  mean |miss| over ALP/LNP/GRN by pair, worst first:\n")
 print(A[cls %in% c("ALP", "LNP", "GRN"), .(mean_abs_miss = round(mean(abs(miss)), 2), alp_miss = round(miss[cls == "ALP"], 2)), by = pair][order(-mean_abs_miss)])
-cat("SA3  wrote output/statewide-forecast-audit.csv\n")
+cat(sprintf("SA3  wrote %s (AUSPOL_ANCHOR_IMPLIED=%s)\n", AUDIT_F, Sys.getenv("AUSPOL_ANCHOR_IMPLIED", "0")))

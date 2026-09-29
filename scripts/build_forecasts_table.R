@@ -58,12 +58,17 @@ F[, election_date := election_dates(pair)[pair]]
 F[, region := sub("[0-9]+$", "", pair)]
 F[, err_base := abs(base_pred - actual_share)]
 F[, err_xgb  := abs(xgb_pred - actual_share)]
+# xgb_pred is the RAW model output; each seat's row does not sum to 100 (mean
+# 97.8, range 78.7-113.2 on 2026-09-28), and both prediction paths rescale it
+# to 100 before the simulation. An analysis of xgb_pred reads a ~1-point
+# under-call of both majors that is not in the forecast. Use xgb_pred_seat.
+F[, xgb_pred_seat := 100 * xgb_pred / sum(xgb_pred), by = .(pair, seat)]
 setnames(F, "pair", "election")
 setcolorder(F, c("election", "election_date", "region", "seat", "party", "candidate", "n_candidates",
-                 "base_pred", "xgb_pred", "actual_share", "err_base", "err_xgb",
+                 "base_pred", "xgb_pred", "xgb_pred_seat", "actual_share", "err_base", "err_xgb",
                  "model", "cutoff_date", "n_train_pairs", "built_at"))
 F <- F[, .(election, election_date, region, seat, party, candidate, n_candidates,
-           base_pred, xgb_pred, actual_share, err_base, err_xgb, model, cutoff_date, n_train_pairs, built_at)]
+           base_pred, xgb_pred, xgb_pred_seat, actual_share, err_base, err_xgb, model, cutoff_date, n_train_pairs, built_at)]
 setorder(F, election_date, seat, party)
 fwrite(F, file.path(OUT, "forecasts.csv"), na = "NA")
 cat(sprintf("FT1  wrote output/forecasts.csv: %d rows, %d elections, %d with a named candidate (%.1f%%)\n",

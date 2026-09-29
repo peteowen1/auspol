@@ -168,6 +168,10 @@ jobs:
                    xgb-flows-v1-features.csv candidacies.csv; do
             gh release download shipped-models -p "$f" -D output --clobber
           done
+          # The seat-swing port's table (v48). Tolerant: a release published
+          # before v48 lacks it, and fit_seats_full.R then runs unported and
+          # prints SP2!! rather than failing the whole forecast.
+          gh release download shipped-models -p seat-swing-port-vic2026.csv -D output --clobber             || echo "::warning::shipped-models has no seat-swing-port-vic2026.csv -- the forecast runs WITHOUT the v48 seat-swing port"
           ls -l output/xgb-*
           # The forecast history table lives on the forecast-latest release;
           # fetch it BEFORE run_all.R so build_forecast_json.R appends one row.
@@ -374,7 +378,6 @@ jobs:
             output/victoria-2026.html
             output/vic-page-data.json
             output/projection-mix.csv
-            output/seats-vic-2026.csv
             run.log
           retention-days: 30
           if-no-files-found: warn

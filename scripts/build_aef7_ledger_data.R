@@ -142,6 +142,17 @@ SEATS <- ALL[, .(
 # comparison.R only ever reads AEF's stated top pick. Not a bug in this
 # script; a real asymmetry in what the two sources publish.
 
+# act_fp_fav was the WINNER's actual primary (actual_primary), so in every
+# upset it showed the winner's number under the favourite's name (Parramatta
+# 2023: favourite LNP, "actual" 47.0 = Labor's). It is now the favourite's own
+# actual first-preference share, from the candidate corpus (2026-09-28).
+.cand <- fread(file.path(OUT, "candidacies.csv"), showProgress = FALSE)[is.finite(pcv)]
+.fav_act <- .cand[, .(act_fp_fav_true = sum(pcv)), by = .(pair = election, seat, fav = party)]
+SEATS <- merge(SEATS, .fav_act, by = c("pair", "seat", "fav"), all.x = TRUE)
+SEATS[, act_fp_fav := fifelse(fav == winner, act_fp_win, act_fp_fav_true)][, act_fp_fav_true := NULL]
+cat(sprintf("AEFL2b favourite's actual primary filled for %d of %d seats (%d upsets)\n",
+            SEATS[is.finite(act_fp_fav), .N], nrow(SEATS), SEATS[fav != winner, .N]))
+
 setorder(SEATS, pair, seat)
 out_path <- file.path(OUT, "aef7-ledger-data.json")
 write(toJSON(SEATS, dataframe = "rows", auto_unbox = TRUE, digits = 6), out_path)

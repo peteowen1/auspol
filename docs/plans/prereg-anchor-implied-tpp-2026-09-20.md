@@ -56,3 +56,32 @@ audit with fed2019 removed. If 1 and 2 pass and 3 fails, the arm stays
 off and the mix weight is re-examined against the implied series (the
 weight was fitted to the published series' error, which is not the same
 quantity).
+
+## RESULT, criterion 1 (added 2026-09-27; everything above is unedited)
+
+Built behind `AUSPOL_ANCHOR_IMPLIED` in `R/forecast_mode.R` (both halves) and
+`scripts/fit_seats_full.R` (implied-anchoring half only: live Victoria's
+unpolled classes draw around their seat mean, not 0 +/- 2.85, so it has no
+phantom vote to zero). Audit: `scripts/audit_statewide_forecast.R` with
+`AUSPOL_AUDIT_TAG`, both arms today on the same code
+(`output/statewide-forecast-audit-base27sep.csv`, `-ai1.csv`). The 20 Sep
+audit file is NOT the baseline: it was written while the v43 phantom-vote
+fix was live.
+
+- Mean |miss| ALP/LNP/GRN over 22 pairs: 1.758 -> 1.686, change -0.071,
+  paired SE 0.093 (t -0.77). **Bar was -1 SE: FAILS.**
+- Majors' mean signed miss: ALP -0.76 -> +0.22 (passes), LNP -0.68 -> +0.32
+  (fails the 0.3 bound by 0.02).
+- Without fed2019: -0.035, SE 0.090 (t -0.39); ALP +0.14, LNP +0.51.
+- 13 of 22 pairs improve. Biggest gains fed2019 -0.83, vic2022 -0.66,
+  vic2014 -0.50; biggest losses wa2005 +0.82, wa2025 +0.76, fed2022 +0.38,
+  nsw2019 +0.38.
+- Predictions checked: nsw2023's implied-vs-published gap was +1.42 and its
+  anchored two-party rose 52.01 -> 53.03 (predicted direction); fed2019 gap
+  -1.46, anchored 52.12 -> 51.07 (predicted direction).
+
+Verdict on the pre-registered rule: criterion 1 not met, arm stays OFF.
+The bias removal is real; the level gain is inside noise. The follow-up the
+pre-registration names (re-examine the mix weight against the implied
+series, since `w` was fitted to the published series' error) is the next
+version of this arm.

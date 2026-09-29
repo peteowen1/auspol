@@ -103,7 +103,10 @@ cat(sprintf("FJ2  wrote %s (%.0f KB)\n", out_f, file.size(out_f) / 1024))
 hist_f <- file.path(OUT, "forecast-history.csv")
 row <- data.table(built_at = doc$built_at, git_sha = gitsha, p_hung = round(hung, 4), p_onp_bop = round(onp_bop, 4))
 for (p in parties) { row[[paste0("exp_", p)]] <- round(mean(sims[[p]]), 2); row[[paste0("pmaj_", p)]] <- round(mean(sims[[p]] >= majority), 4) }
-H <- if (file.exists(hist_f)) rbind(fread(hist_f, showProgress = FALSE), row, fill = TRUE) else row
+# built_at read as text: left to guess, fread parses it as a datetime and
+# fwrite writes it back in another format, so the column's shape drifted
+# between days (26 Sep row) and would clash with the new character row.
+H <- if (file.exists(hist_f)) rbind(fread(hist_f, showProgress = FALSE, colClasses = list(character = "built_at")), row, fill = TRUE) else row
 fwrite(H, hist_f)
 cat(sprintf("FJ3  history now %d row(s): %s\n", nrow(H), paste(sprintf("%s %.1f", parties, unlist(row[, paste0("exp_", parties), with = FALSE])), collapse = ", ")))
 cat(sprintf("FJ3  P(hung) %.3f | P(One Nation balance of power) %.3f\n", hung, onp_bop))

@@ -94,6 +94,10 @@ for (i in seq_along(slug)) {
       party_rows[[length(party_rows) + 1L]] <- data.table(
         seat = seats[i], cand = c4[1],
         party = classify_party(c4[2]),
+        # The VEC's own party name, written through. Until 2026-09-28 only the
+        # class was kept, so vic2022 was the one state election with no minor
+        # party names (Freedom Party, DLP, Family First all read "OTH_RIGHT").
+        party_raw = trimws(gsub("&amp;", "&", c4[2], fixed = TRUE)),
         # First preferences are kept, not just the party label: projecting a
         # seat needs its 2022 vote by class, and rebuilding that from anywhere
         # else means a second source that can disagree with this one.

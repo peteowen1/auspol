@@ -231,7 +231,7 @@ CAL_TAG <- paste0(
   if (as.numeric(Sys.getenv("AUSPOL_ELASTIC_OVER", "0")) != 0)
     sprintf("-el%s", sub("[.]", "", format(as.numeric(Sys.getenv("AUSPOL_ELASTIC_OVER")), nsmall = 1)))
   else "",
-  if (identical(Sys.getenv("AUSPOL_SEAT_SWING_PORT", "0"), "1")) "-port" else "",
+  switch(Sys.getenv("AUSPOL_SEAT_SWING_PORT", "0"), "1" = "-port", "2" = "-port2", ""),
   # "-corraw" and "-cor" are DIFFERENT correlation matrices. Both used to tag
   # "-cor", so running the raw arm and then the shrunk one wrote the second
   # over the first and a before/after comparison compared an arm with itself.
@@ -772,6 +772,12 @@ if (PORT) {
   shares <- 100 * shares / rowSums(shares)
 }
 shares <- xgb_primary_override(shares, TGT)
+# Time-forward seat-swing port (AUSPOL_SEAT_SWING_PORT=2), AFTER the override,
+# which would otherwise overwrite it. plans/prereg-seat-swing-port-v2-2026-09-29.md
+# Only on top of the xgb layer: at AUSPOL_XGB_PRIMARY=0 (rebuild stage 1) these
+# shares become base_pred, the xgb training input, and the port would count twice.
+if (identical(Sys.getenv("AUSPOL_XGB_PRIMARY", "0"), "1"))
+  shares <- seat_swing_port_apply(shares, TGT)
 
 # EDUCATION RESIDUAL CORRECTION (AUSPOL_EDU_RESID, default 0).
 # Pre-registered in docs/plans/prereg-education-residual-correction-2026-09-15.md.
@@ -888,7 +894,12 @@ if (identical(Sys.getenv("AUSPOL_SALIENCE_SURGE_V2", "0"), "1")) {
     # informative one.
     list(election = "sa2026",  prev = "sa2022",  region = "sa"),
     list(election = "wa2008",  prev = "wa2005",  region = "wa"))
-  train_pairs <- Filter(function(p) p$election != TGT, v2_pairs)
+  # LEAK FIX 2026-09-29: by DATE, not name. `!= target` kept sa2026 (and every
+  # later pair) in the training set of every earlier target -- the leak SA fixed
+  # for itself on 2026-09-10 (backtest_candidate_sa.R) and never propagated.
+  train_pairs <- v2_pairs[elections_before(vapply(v2_pairs, `[[`, character(1), "election"), TGT)]
+  cat(sprintf("SV2t surge-v2 training pairs for %s (earlier only): %s
+", TGT, paste(vapply(train_pairs, `[[`, character(1), "election"), collapse = ", ")))
   hz <- tryCatch(surge_hazard_for(TGT, PRV, "qld", train_pairs),
                  error = function(e) { cat(sprintf("BQ0v! surge-v2 failed: %s\n", conditionMessage(e))); NULL })
   if (!is.null(hz)) {

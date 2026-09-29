@@ -671,7 +671,8 @@ combine_sd_override <- function(a, b) {
 reentry_apply_harness <- function(mat, fa, fb, state_share, target, pairs,
                                   code = "RE1") {
   if (!identical(Sys.getenv("AUSPOL_REENTRY", "0"), "1")) return(mat)
-  fit <- tryCatch(reentry_fit(Filter(function(z) z$election != target, pairs)),
+  # time-forward: fitted only on elections before the target
+  fit <- tryCatch(reentry_fit(fit_pairs_for(target, pairs)),
                   error = function(e) {
                     cat(sprintf("%s! reentry_fit() FAILED, prior NOT applied: %s
 ",

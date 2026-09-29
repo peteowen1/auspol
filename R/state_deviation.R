@@ -51,7 +51,7 @@ state_deviation_b <- function(cls, exclude_pair,
   D <- data.table::fread(dev, showProgress = FALSE)
   D <- .sd_shuffle(D, shuffle)
   .cls <- cls; .ex <- exclude_pair
-  O <- O[O$party == .cls & grepl("^fed", O$pair) & O$pair != .ex]
+  O <- O[O$party == .cls & grepl("^fed", O$pair) & elections_before(O$pair, .ex)]   # time-forward
   if (!nrow(O)) return(NA_real_)
   M <- merge(O, unique(D[, c("pair", "seat", "state", "state_poll_dev", "state_poll_n"),
                          with = FALSE]),
@@ -101,7 +101,7 @@ state_deviation_b2 <- function(cls, exclude_pair,
   D <- data.table::fread(dev, showProgress = FALSE)
   D <- .sd_shuffle(D, shuffle)
   .cls <- cls; .ex <- exclude_pair
-  O <- O[O$party == .cls & grepl("^fed", O$pair) & O$pair != .ex]
+  O <- O[O$party == .cls & grepl("^fed", O$pair) & elections_before(O$pair, .ex)]   # time-forward
   if (!nrow(O)) return(na2)
   keep <- c("pair", "seat", "state", "state_poll_dev", "state_poll_n", "state_elec_dev", "state_elec_gap")
   if (!all(keep %in% names(D))) return(na2)

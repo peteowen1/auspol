@@ -170,6 +170,23 @@ tpp_booths <- function(year) {
               year, if (swing_is_labor) "LABOR" else "the COALITION",
               if (swing_is_labor) "Labor" else "Coalition"))
 
+  # NO PRIOR, REPORTED AS A SWING. Where the AEC has no previous-election
+  # two-party figure for a booth it puts the booth's whole share in Swing (2025
+  # Bendigo, Axedale: Labor 37.62, Swing 37.62). Whole divisions do this in
+  # 2025 -- Wannon, Nicholls, Bendigo, Mackellar, Brisbane, Goldstein, 4.3% of
+  # votes -- and it produced Bendigo West +55.5, which the sign fix above was
+  # wrongly credited with explaining. Such a booth has no swing: drop it, and a
+  # district left with none gets NA rather than a fabricated figure.
+  pct_col <- grep("Labor.Party.Percentage", names(d), value = TRUE)[1]
+  if (is.na(pct_col)) stop("TPP booth file for ", year, " has no Labor percentage column, so no-prior booths cannot be detected. Columns: ", paste(names(d), collapse = ", "))
+  own <- as.numeric(d[[pct_col]])
+  no_prior <- is.finite(d$swing) & is.finite(own) &
+    (abs(abs(d$swing) - own) < 0.005 | abs(abs(d$swing) - (100 - own)) < 0.005)
+  cat(sprintf("FSWN fed%d: %d of %d booths (%.1f%% of votes) carry no prior -- Swing equals a party's own share -- and are dropped\n",
+              year, sum(no_prior), nrow(d),
+              100 * sum(d$tot[no_prior], na.rm = TRUE) / sum(d$tot, na.rm = TRUE)))
+  d <- d[!no_prior]
+
   # A national mean this far from zero means the sign is still wrong, whichever
   # way it was read. Federal two-party swings do not average 8 points.
   chk <- d[is.finite(swing) & is.finite(tot) & tot > 0]

@@ -938,7 +938,7 @@ fit_defector_discount <- function(target_election, corpus = NULL, min_n = 5L, pa
   rn <- seat_rename_map()
 
   if (is.null(pairs)) pairs <- all_election_pairs()
-  pairs <- Filter(function(pr) !identical(pr$election, target_election), pairs)
+  pairs <- fit_pairs_for(target_election, pairs)   # time-forward (plans/prereg-time-forward-constants-2026-09-28.md)
 
   ratios <- rbindlist(lapply(pairs, function(pr) {
     PREVT <- C[C$election == pr$prev]
@@ -1061,7 +1061,7 @@ fit_minor_defector_discount <- function(target_election, corpus = NULL, min_n = 
                                         if ("name" %in% names(d)) d$name else NA_character_),
                                "initial")
   if (is.null(pairs)) pairs <- all_election_pairs()
-  pairs <- Filter(function(pr) !identical(pr$election, target_election), pairs)
+  pairs <- fit_pairs_for(target_election, pairs)   # time-forward (plans/prereg-time-forward-constants-2026-09-28.md)
 
   ratios <- rbindlist(lapply(pairs, function(pr) {
     PREVT <- C[C$election == pr$prev]

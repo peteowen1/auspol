@@ -1,6 +1,6 @@
 # Data dictionary
 
-**Generated 2026-09-19 by `scripts/build_data_dictionary.R`. Do not hand-edit.**
+**Generated 2026-09-29 by `scripts/build_data_dictionary.R`. Do not hand-edit.**
 
 Companion to `docs/DATA-REGISTRY.md`. The registry answers *do we have this
 file*; this answers *do we have this field*. Four wrong "we don't have it"
@@ -44,7 +44,7 @@ column does not exist.**
 | `vec-2018-vic-firstprefs.csv` | 403 | `seat`, `party`, `votes` |
 | `vec-2018-vic-transfers.csv` | 600 | `election`, `seat`, `round`, `from`, `to`, `votes` |
 | `vec-2018-vic-winners.csv` | 88 | `seat`, `winner` |
-| `vec-2022-vic-candidates.csv` | 731 | `seat`, `cand`, `party`, `fp_votes` |
+| `vec-2022-vic-candidates.csv` | 731 | `seat`, `cand`, `party`, `party_raw`, `fp_votes` |
 | `vec-2022-vic-firstprefs.csv` | 508 | `seat`, `party`, `votes` |
 | `vec-2022-vic-transfers.csv` | 1,956 | `election`, `seat`, `round`, `from`, `to`, `votes`, `to_n` |
 | `vec-2022-vic-winners.csv` | 87 | `seat`, `winner` |
@@ -89,7 +89,12 @@ The originals, before any aggregation. **This is where dropped columns live.**
 |---|---:|---|
 | `elected-2023.csv` | 93 | `slug`, `label` |
 
-- **vec/** — no CSVs (see registry for other formats)
+### vec/
+
+| file | rows | columns |
+|---|---:|---|
+| `vic-district-regions.csv` | 88 | `district`, `region` |
+
 ### ecsa/
 
 | file | rows | columns |
@@ -101,6 +106,15 @@ The originals, before any aggregation. **This is where dropped columns live.**
 
 - **ecq/** — no CSVs (see registry for other formats)
 - **waec/** — no CSVs (see registry for other formats)
+### polls/
+
+| file | rows | columns |
+|---|---:|---|
+| `demosau/crosstabs.csv` | 991 | `poll_id`, `fieldwork_start`, `fieldwork_end`, `jurisdiction`, `sample_n`, `question`, `dimension`, `group`, `response`, `pct`, `source_url` |
+| `newspoll-quarterly/breakdowns.csv` | 169 | `pollster`, `period_start`, `period_end`, `published`, `sample_n`, `dimension`, `group`, `party`, `fp`, `tpp_alp`, `source_url` |
+| `seat-polls/seat_polls.csv` | 7,139 | `V1`, `V2`, `V3`, `V4`, `V5`, `V6`, `V7`, `V8`, `V9`, `V10`, `V11`, `V12`, `V13`, `V14`, `V15` |
+| `state-regional-splits/regional_splits.csv` | 266 | `V1`, `V2`, `V3`, `V4`, `V5`, `V6`, `V7`, `V8`, `V9`, `V10`, `V11`, `V12`, `V13` |
+
 ## Columns we download and DROP
 
 Each row is a field present in the raw download and absent from the
@@ -150,11 +164,11 @@ processed extract. Every one is recoverable without a new fetch.
 | `booths-vic2018.csv` | 13,353 | `district`, `booth`, `booth_type`, `candidate`, `party`, `votes` |
 | `booths-vic2022-2cp.csv` | 4,328 | `district`, `booth`, `booth_type`, `candidate`, `party`, `votes` |
 | `booths-vic2022.csv` | 17,976 | `district`, `booth`, `booth_type`, `candidate`, `party`, `votes` |
+| `bucket-total-history.csv` | 20 | `pair`, `cand_total`, `poll_total`, `actual`, `date` |
 | `c3-widened-population.csv` | 4,168 | `election`, `region`, `seat`, `name`, `party`, `pcv`, `elected`, `own_prev_pcv`, `base`, `gated`, `xp`, `emergence` |
 | `cal-fed-m1.0.csv` | 886 | `seat`, `actual`, `prob`, `pred`, `pred_p`, `pair` |
 | `cal-fed-m1.5.csv` | 886 | `seat`, `actual`, `prob`, `pred`, `pred_p`, `pair` |
 | `cal-fed-m2.5.csv` | 886 | `seat`, `actual`, `prob`, `pred`, `pred_p`, `pair` |
-| `cal-fed-m4.0.csv` | 886 | `seat`, `actual`, `prob`, `pred`, `pred_p`, `pair` |
 
-_(6920 `backtest-*.csv` arm outputs omitted; they share one shape.)_
+_(3748 `backtest-*.csv` arm outputs omitted; they share one shape.)_
 

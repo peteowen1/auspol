@@ -1,7 +1,7 @@
 # Run the whole pipeline, in the one order that works.
 #
 # The stages are not independent: fit_projection.R writes the mix table that
-# fit_seats.R and build_page.R both read, so running them out of order silently
+# fit_seats_full.R and build_page.R both read, so running them out of order silently
 # uses whatever was left in output/ from last time. That is exactly the class of
 # error this package spends its pre-registered checks guarding against, and it
 # was previously prevented only by remembering.
@@ -47,7 +47,11 @@ STAGES <- list(
   list(f = "scripts/fit_federal.R",    what = "federal cycles",          slow = TRUE,  target = FALSE),
   list(f = "scripts/fit_nsw.R",        what = "NSW cycles",              slow = TRUE,  target = FALSE),
   list(f = "scripts/fit_projection.R", what = "fundamentals + mix",      slow = FALSE),
-  list(f = "scripts/fit_seats.R",      what = "seat simulation (two-party)", slow = FALSE),
+  # scripts/fit_seats.R (the RETIRED two-party seat model) is not a stage.
+  # Nothing reads its outputs -- S5 in fit_seats_full.R was ported to an
+  # arithmetic check -- and on 21 Sep a print bug in it stopped the whole
+  # refresh before the published model ran. Retired code must not be able to
+  # break the forecast.
   # The statewide party covariance fit_seats_full.R draws from. It writes to
   # output/, which is NOT cached between CI runs the way external/elections is,
   # so it has to be a pipeline stage rather than a fetch step -- and it was
@@ -55,8 +59,7 @@ STAGES <- list(
   # output/statewide-cov.rds. Reads ten election pairs' first preferences and
   # nothing else; seconds, not minutes.
   list(f = "scripts/estimate_statewide_cov.R", what = "statewide covariance", slow = FALSE),
-  # Candidate-level seats. Runs AFTER fit_seats.R because its S5 check compares
-  # the two, and needs the election data fetched into external/elections --
+  # Candidate-level seats, the published forecast. Needs the election data fetched into external/elections --
   # it exits cleanly with instructions when that is absent, so a developer
   # without it still gets the rest of the pipeline.
   list(f = "scripts/fit_seats_full.R", what = "seat simulation (per seat)", slow = TRUE),

@@ -170,7 +170,28 @@ statewide_draws_as_at <- function(region, year, as_at, election_date, parties,
     folded_into[[cls]] <- c(folded_into[[cls]], stats::setNames(r$mean[1], q))
     cat(sprintf("FM1  %s%d: fitted series %s (%.1f) folded into class %s\n", region, year, q, r$mean[1], cls))
   }
-  if ("OTH" %in% parties) {
+  # AUSPOL_LEVEL_RECIPE=live scores the LIVE forecast's recipe in the
+  # backtests (Pete 2026-09-28: "test live on back test ... use the method
+  # that performs best"): the level is the trend endpoints rescaled to 100
+  # (the live seat shares are renormalised) and NOT anchored to the
+  # projection (the live anchoring reaches only the draws' spread).
+  # docs/plans/prereg-level-recipe-2026-09-28.md.
+  live_recipe <- identical(Sys.getenv("AUSPOL_LEVEL_RECIPE", "anchored"), "live")
+  close_prop <- live_recipe || identical(Sys.getenv("AUSPOL_CLOSE_PROPORTIONAL", "0"), "1")
+  if (close_prop && "OTH" %in% fp_parties && "OTH" %in% parties) {
+    # AUSPOL_CLOSE_PROPORTIONAL=1: the trend fits each party separately, so the
+    # endpoints need not sum to 100. Rescale every fitted class, OTH included,
+    # by 100 / sum -- derive_tpp()'s normalisation -- rather than dumping the
+    # shortfall into OTH, which put ~2 points too many into the others bucket
+    # in 17 of 22 elections. docs/plans/prereg-close-proportional-2026-09-28.md.
+    fitted_cls <- names(mu)[mu > 0]
+    raw_sum <- sum(mu[fitted_cls])
+    mu[fitted_cls] <- mu[fitted_cls] * 100 / raw_sum
+    # the series folded into a class are part of its mean; keep their share of it
+    folded_into <- lapply(folded_into, function(v) v * 100 / raw_sum)
+    cat(sprintf("CP1  %s%d: fitted endpoints summed %.2f, rescaled to 100 (OTH %.2f)\n",
+                region, year, raw_sum, mu[["OTH"]]))
+  } else if ("OTH" %in% parties) {
     # everything unfitted lands here, so its mean absorbs the remainder
     mu[["OTH"]] <- max(0.1, 100 - sum(mu[setdiff(parties, "OTH")]))
   }
@@ -187,6 +208,13 @@ statewide_draws_as_at <- function(region, year, as_at, election_date, parties,
   # still lost on rebuild v43 (ledger 0.2943 -> 0.3022), because the phantom
   # vote offsets the anchoring below pushing the Coalition up. The two must
   # change together. docs/plans/prereg-phantom-minor-vote-2026-09-20.md.
+  #
+  # AUSPOL_ANCHOR_IMPLIED=1 is that joint change (the arm pre-registered in
+  # docs/plans/prereg-anchor-implied-tpp-2026-09-20.md): unpolled classes draw
+  # exactly zero here, and the anchoring below takes its trend input from the
+  # draws' own implied two-party rather than the published TPP series.
+  anchor_implied <- identical(Sys.getenv("AUSPOL_ANCHOR_IMPLIED", "0"), "1")
+  anchor_exhaust <- identical(Sys.getenv("AUSPOL_ANCHOR_EXHAUST", "0"), "1")
 
   if (!is.null(seed)) set.seed(seed)
   K <- length(parties)
@@ -203,17 +231,52 @@ statewide_draws_as_at <- function(region, year, as_at, election_date, parties,
   # CLAUDE.md records twice.
   draws <- pmax(draws, 0.1)
   colnames(draws) <- parties
+  if (anchor_implied && length(folded)) {
+    draws[, folded] <- 0
+    cat(sprintf("AI1  %s%d: unpolled classes drawn at exactly zero: %s\n",
+                region, year, paste(folded, collapse = ", ")))
+  }
   draws <- draws / rowSums(draws) * 100
 
-  if (is.function(tpp_target)) tpp_target <- tpp_target(tr$tpp)
-  if (!is.null(tpp_target)) {
-    if (!all(c("mean", "sd") %in% names(tpp_target)) ||
-        !is.finite(tpp_target$mean) || !is.finite(tpp_target$sd) ||
-        tpp_target$sd <= 0) {
-      stop("tpp_target must supply a finite `mean` and a positive `sd`. A ",
-           "zero or missing sd would anchor every draw to one two-party value ",
-           "and remove the uncertainty this function exists to carry.")
+  # AUSPOL_OTHERS_SCALE=1: the unpolled "others" bucket (OTH plus every folded
+  # class) shrunk by the poll overstatement measured on elections held BEFORE
+  # this one; the share removed goes back to the polled classes, and the
+  # anchoring below then re-balances Labor and Coalition to the two-party
+  # target. docs/plans/prereg-others-bucket-size-2026-09-27.md.
+  if (identical(Sys.getenv("AUSPOL_OTHERS_SCALE", "0"), "1")) {
+    ob <- others_bucket_scale(election_date)
+    bucket <- intersect(c("OTH", folded), parties)
+    before_b <- mean(rowSums(draws[, bucket, drop = FALSE]))
+    draws <- others_bucket_apply(draws, bucket, ob$k)
+    cat(sprintf("OB2  %s%d: others bucket x%.3f (n %d earlier elections, latest %s; w %.2f): %.2f -> %.2f\n",
+                region, year, ob$k, ob$n, if (ob$n) utils::tail(ob$pairs, 1) else "none",
+                ob$w, before_b, mean(rowSums(draws[, bucket, drop = FALSE]))))
+  }
+
+  # AUSPOL_BUCKET_TOTAL=cand: the bucket's TOTAL from the per-candidate model,
+  # applied before the anchoring so Labor and Coalition are rebalanced to the
+  # two-party target afterwards. plans/prereg-bucket-total-candidates-2026-09-28.md.
+  bt_bucket <- intersect(c("OTH", folded), parties)
+  bt <- candidate_bucket_total(paste0(region, year), bt_bucket)
+  if (!is.null(bt)) {
+    b_now <- mean(rowSums(draws[, bt_bucket, drop = FALSE]))
+    target_bt <- bt
+    if (identical(Sys.getenv("AUSPOL_BUCKET_TOTAL", "poll"), "blend")) {
+      bl <- bucket_total_blend(election_date)
+      target_bt <- b_now + bl$w * (bt - b_now)
+      cat(sprintf("BT2  %s%d: blend w %.2f (w_hat %.2f, se %.2f, n %d earlier pairs, latest %s) -> total %.2f\n",
+                  region, year, bl$w, bl$w_hat, bl$se, bl$n, bl$latest, target_bt))
     }
+    draws <- others_bucket_apply(draws, bt_bucket, target_bt / b_now)
+    cat(sprintf("BT1  %s%d: bucket total from candidate model %.2f (polls left %.2f)\n",
+                region, year, bt, b_now))
+  }
+
+  if (live_recipe && !is.null(tpp_target)) {
+    cat(sprintf("LR1  %s%d: live recipe, level NOT anchored (trend TPP %.2f)\n", region, year, tr$tpp))
+    tpp_target <- NULL
+  }
+  if (!is.null(tpp_target)) {
     flow_of <- function(p) {
       f <- fl$flow_alp[fl$party == p]
       if (length(f)) f[1] / 100 else 0.489
@@ -234,8 +297,42 @@ statewide_draws_as_at <- function(region, year, as_at, election_date, parties,
       share_of_col <- if (isTRUE(mu[[cls]] > 0)) folded_into[[cls]][[q]] / mu[[cls]] else 0
       implied <- implied + draws[, cls] * share_of_col * flow_of(q)
     }
+    # AUSPOL_ANCHOR_EXHAUST=1: implied two-party NET OF EXHAUSTED BALLOTS, the
+    # basis derive_tpp() (R/tpp.R) puts the published series on and the NSW
+    # count, fundamentals and results all use. Without it, under optional
+    # preferential voting the anchoring compares a full-preferential number
+    # with an OPV target (nsw2019/nsw2023 gaps +1.58/+1.42).
+    # docs/plans/prereg-anchor-exhaust-2026-09-27.md. Flows with no exhaust
+    # (every non-NSW election) take the old path untouched.
+    denom <- 100
+    ex_share <- .exhaust_shares(fl, minors)
+    if (anchor_exhaust && any(ex_share > 0)) {
+      lost <- vapply(minors, function(p) draws[, p] * ex_share[[p]], numeric(n_sims))
+      denom <- 100 - rowSums(lost)
+      implied <- 100 * (implied - rowSums(sweep(lost, 2, vapply(minors, flow_of, 1), "*"))) / denom
+    }
+    # The mix's trend input: the published TPP series by default; under the
+    # arm, the two-party these draws already imply, so the anchoring spends
+    # nothing reconciling two estimates of one quantity and applies only the
+    # fundamentals' pull. Both printed, so the arm shows what it changed.
+    trend_in <- if (anchor_implied) mean(implied) else tr$tpp
+    if (anchor_implied) {
+      cat(sprintf("AI2  %s%d: mix trend input = implied %.2f (published TPP series %.2f, gap %+.2f)\n",
+                  region, year, mean(implied), tr$tpp, mean(implied) - tr$tpp))
+    }
+    if (is.function(tpp_target)) tpp_target <- tpp_target(trend_in)
+    if (!all(c("mean", "sd") %in% names(tpp_target)) ||
+        !is.finite(tpp_target$mean) || !is.finite(tpp_target$sd) ||
+        tpp_target$sd <= 0) {
+      stop("tpp_target must supply a finite `mean` and a positive `sd`. A ",
+           "zero or missing sd would anchor every draw to one two-party value ",
+           "and remove the uncertainty this function exists to carry.")
+    }
     target <- stats::rnorm(n_sims, tpp_target$mean, tpp_target$sd)
-    d <- target - implied
+    # A two-party gap on the non-exhausted total becomes a first-preference
+    # move of gap * denom / 100: moving ALP up and LNP down by the same amount
+    # leaves that denominator unchanged. denom is 100 without exhaustion.
+    d <- if (identical(denom, 100)) target - implied else (target - implied) * denom / 100
     draws[, "ALP"] <- pmax(0.1, draws[, "ALP"] + d)
     draws[, "LNP"] <- pmax(0.1, draws[, "LNP"] - d)
     draws <- draws / rowSums(draws) * 100
@@ -250,12 +347,31 @@ statewide_draws_as_at <- function(region, year, as_at, election_date, parties,
     if (length(f)) f[1] / 100 else 0.489
   }
   mnr <- setdiff(parties, c("ALP", "LNP"))
-  implied_tpp <- mean(draws[, "ALP"] +
-    rowSums(vapply(mnr, function(q) draws[, q] * flow_out(q), numeric(n_sims))))
+  num_out <- draws[, "ALP"] +
+    rowSums(vapply(mnr, function(q) draws[, q] * flow_out(q), numeric(n_sims)))
+  ex_out <- .exhaust_shares(fl, mnr)
+  implied_tpp <- if (anchor_exhaust && any(ex_out > 0)) {
+    lost <- vapply(mnr, function(q) draws[, q] * ex_out[[q]], numeric(n_sims))
+    mean(100 * (num_out - rowSums(sweep(lost, 2, vapply(mnr, flow_out, 1), "*"))) /
+           (100 - rowSums(lost)))
+  } else mean(num_out)
 
   list(draws = draws, folded = folded, n_polls = tr$n_polls, fp = tr$fp,
        tpp = tr$tpp, mu = mu, sd = sd, implied_tpp = implied_tpp,
        anchor = tpp_target)
+}
+
+# Share (0-1) of each party's first preferences that exhausts, from a flow
+# table's `exhaust` column (percent). A party with no row takes OTH's rate,
+# and 0 if OTH has none either -- the same fallback derive_tpp() uses.
+.exhaust_shares <- function(fl, parties) {
+  ex_col <- if ("exhaust" %in% names(fl)) fl$exhaust else rep(0, nrow(fl))
+  oth <- ex_col[fl$party == "OTH"]
+  oth <- if (length(oth) && is.finite(oth[1])) oth[1] else 0
+  vapply(parties, function(p) {
+    e <- ex_col[fl$party == p]
+    (if (length(e) && is.finite(e[1])) e[1] else oth) / 100
+  }, numeric(1))
 }
 
 #' Check seat totals against the per-seat probabilities that produced them

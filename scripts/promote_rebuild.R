@@ -30,7 +30,11 @@ source("scripts/published_flags.R")
 # fresh candidacies.csv must not make the scoreboard look older than the models.
 trained <- c("xgb-primary-v6-final.model", "xgb-primary-v6-final-cols.json",
              "xgb-flows-v1-final.model", "xgb-flows-v1-final-cols.json", "xgb-flows-v1-features.csv")
-models <- c(trained, "candidacies.csv")
+# The live seat-swing port's inputs (AUSPOL_SEAT_SWING_PORT=2): its sources are
+# a local booth transpose and seat TPP estimates CI never builds, so the
+# coefficient and per-seat federal swing ship as a table.
+invisible(seat_swing_port_table("vic2026", write = TRUE))
+models <- c(trained, "candidacies.csv", "seat-swing-port-vic2026.csv")
 mf <- file.path(OUT, models)
 miss <- models[!file.exists(mf)]
 if (length(miss)) stop("model file(s) missing -- run scripts/rebuild_forecasts.sh first: ", paste(miss, collapse = ", "))
@@ -43,6 +47,13 @@ if (file.mtime(pb_f) < newest_model)
 per <- fread(pb_f, showProgress = FALSE)
 known <- vapply(all_election_pairs(), `[[`, character(1), "election")
 missing <- setdiff(known, per$pair)
+# Pairs the rebuild skips ON PURPOSE (AUSPOL_SKIP_PAIRS, default wa2021: no
+# fittable poll trend) are not missing; the driver exports the same list.
+skip <- trimws(strsplit(Sys.getenv("AUSPOL_SKIP_PAIRS", "wa2021"), ",")[[1]])
+if (length(intersect(missing, skip)))
+  cat(sprintf("PA0  skipped by design (AUSPOL_SKIP_PAIRS), not required: %s\n",
+              paste(intersect(missing, skip), collapse = ", ")))
+missing <- setdiff(missing, skip)
 if (length(missing) && !identical(Sys.getenv("AUSPOL_ALLOW_PARTIAL_PROMOTE", "0"), "1"))
   stop("refusing to promote: pair(s) absent from the scoreboard: ", paste(missing, collapse = ", "))
 cat(sprintf("PA1  rebuild promotion: %d pairs scored, models newest %s\n", nrow(per), format(newest_model, "%Y-%m-%d %H:%M")))

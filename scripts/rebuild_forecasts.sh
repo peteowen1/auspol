@@ -117,8 +117,15 @@ if at_least 8; then stage "8-ledger";              Rscript scripts/build_aef_com
 # code. A rebuild that ships is not shipped until the release carries it, so the
 # driver does it, gated so an exploratory run cannot publish by accident.
 if [ "${AUSPOL_PUBLISH:-0}" = "1" ] && [ "$AUSPOL_N_SIMS" -ge 20000 ]; then
-  stage "9-promote-publish";  Rscript scripts/promote_rebuild.R > "$LOG/s9_promote.log" 2>&1 && Rscript scripts/publish_shipped_release.R > "$LOG/s9_publish.log" 2>&1; done_stage "9-promote-publish"
-  grep -h "^PA5\|^PR4  uploaded\|^PR1!" "$LOG/s9_promote.log" "$LOG/s9_publish.log" || true
+  # Old logs removed first: on 2026-09-28 a refused promote left the 20 Sep
+  # publish log in place and the grep below printed its "uploaded" line.
+  stage "9-promote-publish";  rm -f "$LOG/s9_promote.log" "$LOG/s9_publish.log"
+  if Rscript scripts/promote_rebuild.R > "$LOG/s9_promote.log" 2>&1 && Rscript scripts/publish_shipped_release.R > "$LOG/s9_publish.log" 2>&1; then
+    grep -h "^PA0\|^PA5\|^PR4  uploaded\|^PR1!" "$LOG/s9_promote.log" "$LOG/s9_publish.log" || true
+  else
+    echo "!! stage 9 FAILED -- nothing published; see $LOG/s9_promote.log / s9_publish.log"; tail -3 "$LOG/s9_promote.log" "$LOG/s9_publish.log" 2>/dev/null
+  fi
+  done_stage "9-promote-publish"
 elif [ "${AUSPOL_PUBLISH:-0}" = "1" ]; then
   echo "!! AUSPOL_PUBLISH=1 ignored: exploratory sims (AUSPOL_N_SIMS=$AUSPOL_N_SIMS) must not ship"
 fi

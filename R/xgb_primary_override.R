@@ -295,6 +295,20 @@ xgb_primary_predict_live <- function(shares, mat22, a22, state_mean, returns,
     sf[, incumbent_class := ifelse(incumbent %in% c("LIB", "NAT", "LNP"), "LNP", incumbent)]
     idx <- match(rows$seat, sf$seat)
     rows[, margin := sf$margin[idx]]
+    # AUSPOL_SEAT_CONTEXT_MARGIN=all: the same estimated two-party margin the
+    # training features carry (scripts/build_seat_context.R), one source for
+    # every election. plans/prereg-seat-context-complete-2026-09-28.md.
+    if (identical(Sys.getenv("AUSPOL_SEAT_CONTEXT_MARGIN", "0"), "all")) {
+      .tf <- out_path("seat-tpp-estimates.csv")
+      if (!file.exists(.tf)) stop("AUSPOL_SEAT_CONTEXT_MARGIN=all needs ", .tf, " (scripts/build_seat_context.R)")
+      .tp <- data.table::fread(.tf, showProgress = FALSE)
+      .prev_lab <- paste0(region, prev_year)
+      .tp <- .tp[.tp$election == .prev_lab]
+      .est <- .tp$tpp[match(normalise_seat(rows$seat), .tp$s)] - 50
+      rows[is.finite(.est), margin := .est[is.finite(.est)]]
+      cat(sprintf("SC9  %s: margin from our %s two-party estimate for %d of %d rows\n",
+                  paste0(region, year), .prev_lab, sum(is.finite(.est)), nrow(rows)))
+    }
     rows[, fed_swing := sf$fed_swing[idx]]
     rows[, retirement_i := as.integer(sf$retirement[idx])]
     rows[, soph_cand_i := as.integer(sf$soph_cand[idx])]
@@ -330,6 +344,9 @@ xgb_primary_predict_live <- function(shares, mat22, a22, state_mean, returns,
   # built two blocks above from that same file. Using them directly is lower
   # risk than extending build_retirement_derived.py's hardcoded election-pair
   # map for an unconcluded election it was never designed to cover.
+  # Which side lost its member, the same helper the training scripts use
+  # (AUSPOL_XGB_DEPARTED_SIDE; plans/prereg-departed-member-sides-2026-09-28.md).
+  add_departed_side(rows, "seat")
   rows[, seat_outperf := seat_prev_pcv - level_prev]
   .outperf_gate <- !is.na(rows$retirement_i) & !is.na(rows$is_incumbent_party_i) &
                    rows$retirement_i == 1L & rows$is_incumbent_party_i == 1L
@@ -467,6 +484,23 @@ xgb_primary_predict_live <- function(shares, mat22, a22, state_mean, returns,
   miss <- setdiff(feat_cols, names(rows))
   if (length(miss)) stop("xgb_primary_predict_live(): model expects columns not built here: ",
                           paste(miss, collapse = ", "))
+  # AUSPOL_SITTING_MEMBER_ADJ=1: the same sitting-member shift the training
+  # features carry (scripts/fit_xgb_primary_v6.R), for THIS election, fitted
+  # there on every earlier election. plans/prereg-sitting-member-baseline-2026-09-28.md.
+  if (identical(Sys.getenv("AUSPOL_SITTING_MEMBER_ADJ", "0"), "1")) {
+    .shf <- out_path("sitting-member-shift.csv")
+    .lab <- paste0(region, year)
+    if (!file.exists(.shf)) stop("AUSPOL_SITTING_MEMBER_ADJ=1 needs ", .shf, " (scripts/fit_xgb_primary_v6.R)")
+    .sh <- data.table::fread(.shf, showProgress = FALSE)
+    .sh <- .sh[.sh$pair == .lab]
+    if (!nrow(.sh)) stop("sitting-member-shift.csv has no row for ", .lab)
+    .g <- sitting_member_group(rows, "seat")
+    .add <- .sh$shift[match(.g, .sh$group)]
+    .add[is.na(.add)] <- 0
+    rows[, base_pred := base_pred + .add]
+    cat(sprintf("SM2  %s: sitting-member shift applied to %d rows (%s)\n", .lab, sum(.add != 0),
+                paste(sprintf("%s %+.2f", .sh$group, .sh$shift), collapse = ", ")))
+  }
   X <- as.matrix(rows[, ..feat_cols])
   # MUST MATCH fit_xgb_primary_v6_final.R's own training DMatrix exactly --
   # that script sets base_margin=base_pred whenever AUSPOL_XGB_BASE_MARGIN is
@@ -486,6 +520,8 @@ xgb_primary_predict_live <- function(shares, mat22, a22, state_mean, returns,
   # live (default is "2"), but AUSPOL_XGB_BASE_MARGIN=0 is exactly the value
   # someone sets to reproduce the pre-base_margin arm for a comparison.
   .margin <- if (.base_margin_mode %in% c("1", "2")) rows$base_pred else rep(0, nrow(rows))
+  # (the sitting-member shift, when on, was applied to rows$base_pred above,
+  # before the feature matrix was built)
   dtest <- xgboost::xgb.DMatrix(data = X, missing = NA)
   xgboost::setinfo(dtest, "base_margin", .margin)
   pred <- predict(model, dtest)
