@@ -15,3 +15,11 @@ test_that("the statewide mix and fundamentals learn only from earlier elections"
   expect_false(identical(projection_mix_tf("nsw", 2023L)$n, m$n))
   expect_true(is.finite(fundamentals_tf("nsw", 2023L)))
 })
+
+test_that("a leave-one-out value cached earlier does not answer a time-forward call", {
+  f <- tryCatch(build_fundamentals_data(), error = function(e) NULL)
+  skip_if(is.null(f), "no fundamentals data (anchor clone)")
+  loo <- withr::with_envvar(c(AUSPOL_TIME_FORWARD_FITS = "0"), fundamentals_tf("nsw", 2019L))
+  tf  <- withr::with_envvar(c(AUSPOL_TIME_FORWARD_FITS = "1"), fundamentals_tf("nsw", 2019L))
+  expect_false(isTRUE(all.equal(loo, tf)))
+})

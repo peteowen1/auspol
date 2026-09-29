@@ -14,14 +14,17 @@
 #' @return Numeric, or `NA` when fewer than 10 earlier elections exist.
 #' @export
 fundamentals_tf <- function(region, year) {
+  # The env var is in the key: elections_before() reads it, so a cached value
+  # from a leave-one-out call must not answer a time-forward one.
   key <- paste0(region, year)
-  if (!is.null(.fund_tf_cache[[key]])) return(.fund_tf_cache[[key]])
+  ck <- paste0(key, ":", Sys.getenv("AUSPOL_TIME_FORWARD_FITS", "1"))
+  if (!is.null(.fund_tf_cache[[ck]])) return(.fund_tf_cache[[ck]])
   if (is.null(.fund_tf_cache$data)) .fund_tf_cache$data <- build_fundamentals_data()
   d <- .fund_tf_cache$data
   lab <- paste0(d$region, d$year)
   target_rows <- which(lab == key & d$party == "@TPP")
   if (length(target_rows) != 1L) {
-    .fund_tf_cache[[key]] <- NA_real_
+    .fund_tf_cache[[ck]] <- NA_real_
     return(NA_real_)
   }
   earlier <- elections_before(lab, key)
@@ -31,7 +34,7 @@ fundamentals_tf <- function(region, year) {
     m <- fit_fundamentals(tr, "@TPP")
     out <- predict_fundamentals(m, d[target_rows, ])
   }
-  .fund_tf_cache[[key]] <- out
+  .fund_tf_cache[[ck]] <- out
   out
 }
 
@@ -60,7 +63,7 @@ fundamentals_tf_table <- function(keys = NULL) {
 #' @return A mix table as [fit_projection_mix()] returns.
 #' @export
 projection_mix_tf <- function(region, year) {
-  key <- paste0("mix:", region, year)
+  key <- paste0("mix:", region, year, ":", Sys.getenv("AUSPOL_TIME_FORWARD_FITS", "1"))
   if (!is.null(.fund_tf_cache[[key]])) return(.fund_tf_cache[[key]])
   f <- out_path("projection-data.csv")
   if (!file.exists(f)) stop("projection_mix_tf needs output/projection-data.csv (scripts/fit_projection.R)")
