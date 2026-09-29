@@ -22,14 +22,11 @@ nsw2023; the term is real). nsw2023's remaining statewide gap is the
 fundamentals' honest error.
 
 Open, in order:
-1. PR dev -> main for v51 (review + `check_like_ci.R` in progress 18:00).
+1. PR #70 (v51; reviewed, CI passed) awaits merge. The seat-poll arm
+   commits after it (`4f3e4d5` on) are unreviewed and unpushed.
 2. Seat polls: T (public-only, one weight) with the weight shrunk harder
-   when it rests on one earlier election; NEW prereg. Sponsors now
-   recovered from Wikipedia footnotes (`client`, 34 polls; `8465ef8`).
-   Needs Pete's definition of "independent": a sponsor filter alone drops
-   Bullwinkel's JWS/Nationals polls but keeps McMahon's Compass poll (no
-   sponsor recorded); an allowlist of public pollsters drops both. fed2022's
-   page records no sponsors at all.
+   when it rests on one earlier election; NEW prereg. "Independent" =
+   Pete's allowlist (`PUBLIC_SEAT_POLLSTERS`, no recorded sponsor).
 3. Change seats beyond the statewide miss (Parramatta, Heathcote): walk
    examples with Pete before any rule.
 4. PR #743 (inthegame-blog): Pete or that session merges it.
