@@ -16,5 +16,5 @@ list: \code{w}, \code{raw}, \code{se}, \code{n} (cells), \code{k} (earlier elect
 Least squares on earlier elections' polled (seat, class) cells: prediction
 \code{xgb_pred_seat} from \code{output/forecasts.csv}, target \code{actual_share}.
 \code{w = sum(dx*dy)/sum(dx^2)}, SE clustered on seat-election, shrunk
-\code{w*w^2/(w^2+se^2)}, clamped to \link{0, 1}; 0 with no earlier polled cells.
+\code{w*w^2/(w^2+se^2)}, clamped between 0 and 1; 0 with no earlier polled cells.
 }

@@ -48,7 +48,7 @@ seat_poll_shares <- function(election, days = 90, by_type = FALSE) {
 #' Least squares on earlier elections' polled (seat, class) cells: prediction
 #' `xgb_pred_seat` from `output/forecasts.csv`, target `actual_share`.
 #' `w = sum(dx*dy)/sum(dx^2)`, SE clustered on seat-election, shrunk
-#' `w*w^2/(w^2+se^2)`, clamped to [0, 1]; 0 with no earlier polled cells.
+#' `w*w^2/(w^2+se^2)`, clamped between 0 and 1; 0 with no earlier polled cells.
 #'
 #' @param target_election Label such as `"fed2025"`.
 #' @return list: `w`, `raw`, `se`, `n` (cells), `k` (earlier elections used).
