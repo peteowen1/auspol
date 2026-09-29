@@ -1,3 +1,26 @@
+# auspol 0.4.53
+
+**Ledger v44 to v49 reach `main`.** Ledger seat log loss 0.2812 against AE
+Forecasts' 0.2851 (lower is better), after four leak fixes that each made the
+score honest rather than better.
+
+- **Seat-swing port v2** (`AUSPOL_SEAT_SWING_PORT=2`, v48): each Victorian,
+  NSW, Queensland and SA seat's transposed federal swing moves its
+  Labor-v-Coalition vote by a coefficient learned from earlier state cycles
+  only, applied after the xgb override. Its table ships with the models
+  (`seat-swing-port-vic2026.csv`); without it the live run reports `SP2!!`
+  and runs unported rather than failing.
+- **Leak fixes:** `state_poll_dev` used the actual national swing (v44);
+  fitted constants were leave-target-out, now earlier-elections-only via
+  `elections_before()` / `fit_pairs_for()` (v45, v47); the surge-v2 hazard
+  trained on later elections in four harnesses (v49).
+- The AEC's 2025 booth two-party file reports a booth's whole share as its
+  swing where no 2022 comparison exists; `transpose_fed_swing.R` drops those.
+- Candidate-model bucket split (v44, backtests), seat-context fill (v46),
+  live level anchor.
+- New data: Wikipedia seat polls (federal 2016-2025), older poll state
+  breakdowns, state regional splits, retirements 2004-2026.
+
 # auspol 0.4.48
 
 **The daily live forecast had not published for over a week.** Every
