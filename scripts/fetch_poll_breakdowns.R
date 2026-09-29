@@ -28,6 +28,23 @@
 # Resolve Political Monitor's own site was not found to publish an open,
 # non-paywalled state-breakdown table in the same style; its numbers appear on
 # Poll Bludger only in prose (captured here where numeric).
+#
+# EXTENDED 2026-09-29 back to 2018: added 5 pre-2023 posts (2018-07-09,
+# 2019-12-26, 2020-12-26, 2021-04-06, 2021-07-12), each fetched and hand-read
+# off its own text file exactly like the 2023+ posts above. Two more genuine
+# posts were FOUND but not fetched/added this pass (a real time-boxing choice,
+# not a search failure): 2021-09-27 ("Jul-Sep 2021") and 2021-12-27 ("Oct-Dec
+# 2021") — both exist at pollbludger.net and would extend coverage to Dec 2021
+# if picked up later. 2016 and 2017 were searched for directly and no
+# Poll-Bludger "Newspoll breakdowns" post with a usable state LEVEL (as
+# opposed to a subscriber-only Australian-newspaper table) was found in that
+# window — search results for those years surfaced only vague prose
+# ("Queensland remained a headache") with no absolute level ever stated
+# outside The Australian's paywall, so 2016-2017 is a real gap, not
+# unsearched. The 2018-07-09 post itself says explicitly that "The Australian
+# provides comprehensive Newspoll tables if you're a subscriber" for anything
+# beyond the mainland-state TPP figures Poll Bludger's own prose repeats —
+# that subscriber content is the paywall CLAUDE.md says not to bypass.
 
 suppressPackageStartupMessages({
   library(utils)
@@ -43,6 +60,11 @@ ua <- "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like
 
 # key -> url. Keys encode publish date and (approximate) covered period.
 posts <- c(
+  "2018-07-09_apr-jun"   = "https://www.pollbludger.net/2018/07/09/newspoll-ipsos-state-breakdowns/",
+  "2019-12-26_nov-dec"   = "https://www.pollbludger.net/2019/12/26/newspoll-breakdowns-november-december-2019/",
+  "2020-12-26_aug-nov"   = "https://www.pollbludger.net/2020/12/26/newspoll-quarterly-breakdowns-august-to-november/",
+  "2021-04-06_jan-mar"   = "https://www.pollbludger.net/2021/04/06/newspoll-quarterly-breakdowns-january-to-march/",
+  "2021-07-12_apr-jun"   = "https://www.pollbludger.net/2021/07/12/newspoll-quarterly-breakdowns-april-to-june/",
   "2023-04-15_feb-apr"   = "https://www.pollbludger.net/2023/04/15/newspoll-breakdowns-february-to-april/",
   "2023-10-23_aug-oct"   = "https://www.pollbludger.net/2023/10/23/newspoll-quarterly-breakdowns-open-thread/",
   "2024-04-01_jan-mar"   = "https://www.pollbludger.net/2024/04/01/newspoll-quarterly-breakdowns-january-to-march-open-thread/",
@@ -108,6 +130,98 @@ add <- function(key, pollster, p_start, p_end, published, n, dim, group, party, 
     source_url = base_url(key), stringsAsFactors = FALSE
   )
 }
+
+## 2018-07-09: Newspoll + Ipsos quarterly state breakdowns, published 2018-07-09.
+## No exact fieldwork dates or sample_n stated on the page itself (only "quarterly
+## aggregate") -- left NA rather than guessed. Two pollsters in one post.
+k <- "2018-07-09_apr-jun"
+add(k, "Newspoll", NA, NA, "2018-07-09", NA, "state", "NSW", "ALP", tpp_alp = 52)
+add(k, "Newspoll", NA, NA, "2018-07-09", NA, "state", "VIC", "ALP", tpp_alp = 53)
+add(k, "Newspoll", NA, NA, "2018-07-09", NA, "state", "QLD", "ALP", tpp_alp = 53)
+add(k, "Newspoll", NA, NA, "2018-07-09", NA, "state", "WA",  "ALP", tpp_alp = 50)
+add(k, "Newspoll", NA, NA, "2018-07-09", NA, "state", "SA",  "ALP", tpp_alp = 51)
+add(k, "Ipsos", NA, NA, "2018-07-09", NA, "state", "NSW", "ALP", tpp_alp = 53)
+add(k, "Ipsos", NA, NA, "2018-07-09", NA, "state", "VIC", "ALP", tpp_alp = 56)
+add(k, "Ipsos", NA, NA, "2018-07-09", NA, "state", "QLD", "ALP", tpp_alp = 52)
+add(k, "Ipsos", NA, NA, "2018-07-09", NA, "state", "WA",  "ALP", tpp_alp = 47)
+## Ipsos "South Australia" figure is stated inclusive of the Northern Territory
+## in the source text ("52-48", SA+NT combined) -- recorded as group "SA+NT" so
+## it is never silently merged with a pure-SA figure from another pollster.
+add(k, "Ipsos", NA, NA, "2018-07-09", NA, "state", "SA+NT", "ALP", tpp_alp = 52)
+
+## 2019-12-26: Nov-Dec 2019 Newspoll breakdowns, n=4562, fieldwork from
+## 2019-11-07 (exact end date not stated -- left NA, not guessed at the
+## 2019-12-26 publish date).
+k <- "2019-12-26_nov-dec"
+add(k, "Newspoll", "2019-11-07", NA, "2019-12-26", 4562, "state", "QLD", "ALP", tpp_alp = 45)
+add(k, "Newspoll", "2019-11-07", NA, "2019-12-26", 4562, "state", "QLD", "LNP", fp = 40)
+add(k, "Newspoll", "2019-11-07", NA, "2019-12-26", 4562, "state", "QLD", "ALP", fp = 29)
+add(k, "Newspoll", "2019-11-07", NA, "2019-12-26", 4562, "state", "QLD", "ONP", fp = 13)
+add(k, "Newspoll", "2019-11-07", NA, "2019-12-26", 4562, "state", "QLD", "GRN", fp = 12)
+add(k, "Newspoll", "2019-11-07", NA, "2019-12-26", 4562, "state", "NSW", "ALP", tpp_alp = 49)
+add(k, "Newspoll", "2019-11-07", NA, "2019-12-26", 4562, "state", "NSW", "LNP", fp = 42)
+add(k, "Newspoll", "2019-11-07", NA, "2019-12-26", 4562, "state", "NSW", "ALP", fp = 35)
+add(k, "Newspoll", "2019-11-07", NA, "2019-12-26", 4562, "state", "NSW", "GRN", fp = 10)
+add(k, "Newspoll", "2019-11-07", NA, "2019-12-26", 4562, "state", "VIC", "ALP", tpp_alp = 53)
+add(k, "Newspoll", "2019-11-07", NA, "2019-12-26", 4562, "state", "VIC", "LNP", fp = 40)
+add(k, "Newspoll", "2019-11-07", NA, "2019-12-26", 4562, "state", "VIC", "ALP", fp = 38)
+add(k, "Newspoll", "2019-11-07", NA, "2019-12-26", 4562, "state", "VIC", "GRN", fp = 12)
+add(k, "Newspoll", "2019-11-07", NA, "2019-12-26", 4562, "age", "18-34", "ALP", tpp_alp = 57)
+add(k, "Newspoll", "2019-11-07", NA, "2019-12-26", 4562, "age", "35-49", "ALP", tpp_alp = 50)
+add(k, "Newspoll", "2019-11-07", NA, "2019-12-26", 4562, "age", "50-64", "ALP", tpp_alp = 49)
+add(k, "Newspoll", "2019-11-07", NA, "2019-12-26", 4562, "age", "65+",   "ALP", tpp_alp = 39)
+add(k, "Newspoll", "2019-11-07", NA, "2019-12-26", 4562, "income", "bottom", "ALP", tpp_alp = 53)
+add(k, "Newspoll", "2019-11-07", NA, "2019-12-26", 4562, "income", "lower-middle", "ALP", tpp_alp = 49)
+
+## 2020-12-26: Aug-Nov 2020 Newspoll (YouGov) breakdowns, n=8123. Exact
+## fieldwork start/end not stated beyond "August to November" -- left NA.
+k <- "2020-12-26_aug-nov"
+add(k, "Newspoll", NA, NA, "2020-12-26", 8123, "state", "NSW", "ALP", tpp_alp = 49)
+add(k, "Newspoll", NA, NA, "2020-12-26", 8123, "state", "VIC", "ALP", tpp_alp = 55)
+add(k, "Newspoll", NA, NA, "2020-12-26", 8123, "state", "QLD", "ALP", tpp_alp = 43)
+add(k, "Newspoll", NA, NA, "2020-12-26", 8123, "state", "WA",  "ALP", tpp_alp = 47)
+add(k, "Newspoll", NA, NA, "2020-12-26", 8123, "state", "SA",  "ALP", tpp_alp = 49)
+add(k, "Newspoll", NA, NA, "2020-12-26", 8123, "gender", "men",   "ALP", tpp_alp = 47)
+add(k, "Newspoll", NA, NA, "2020-12-26", 8123, "gender", "women", "ALP", tpp_alp = 51)
+add(k, "Newspoll", NA, NA, "2020-12-26", 8123, "age", "18-34", "ALP", tpp_alp = 61)
+add(k, "Newspoll", NA, NA, "2020-12-26", 8123, "age", "35-49", "ALP", tpp_alp = 50)
+add(k, "Newspoll", NA, NA, "2020-12-26", 8123, "age", "50-64", "ALP", tpp_alp = 45)
+add(k, "Newspoll", NA, NA, "2020-12-26", 8123, "age", "65+",   "ALP", tpp_alp = 38)
+add(k, "Newspoll", NA, NA, "2020-12-26", 8123, "language", "english-only",         "ALP", tpp_alp = 49)
+add(k, "Newspoll", NA, NA, "2020-12-26", 8123, "language", "non-english-speaking", "ALP", tpp_alp = 54)
+add(k, "Newspoll", NA, NA, "2020-12-26", 8123, "religion", "christian",  "ALP", tpp_alp = 41)
+add(k, "Newspoll", NA, NA, "2020-12-26", 8123, "religion", "no religion", "ALP", tpp_alp = 57)
+add(k, "Newspoll", NA, NA, "2020-12-26", 8123, "income", ">=150000", "ALP", tpp_alp = 45)
+
+## 2021-04-06: Jan-Mar 2021 Newspoll breakdowns. Sample sizes stated only for
+## the two smallest states (WA 628, SA 517); other states' n and exact
+## fieldwork dates not given -- left NA. WA's actual new TPP level is
+## described only as "has been reversed" from its prior 53-47 Coalition lead,
+## with no explicit new percentage stated, so WA is deliberately left out of
+## this quarter's rows rather than inferred as 47-53.
+k <- "2021-04-06_jan-mar"
+add(k, "Newspoll", NA, NA, "2021-04-06", NA,  "state", "NSW", "ALP", tpp_alp = 50)
+add(k, "Newspoll", NA, NA, "2021-04-06", NA,  "state", "VIC", "ALP", tpp_alp = 53)
+add(k, "Newspoll", NA, NA, "2021-04-06", NA,  "state", "QLD", "ALP", tpp_alp = 53)
+add(k, "Newspoll", NA, NA, "2021-04-06", 517, "state", "SA",  "ALP", tpp_alp = 55)
+add(k, "Newspoll", NA, NA, "2021-04-06", NA,  "gender", "men",   "ALP", tpp_alp = 51)
+add(k, "Newspoll", NA, NA, "2021-04-06", NA,  "gender", "women", "ALP", tpp_alp = 51)
+add(k, "Newspoll", NA, NA, "2021-04-06", NA,  "age", "18-34", "ALP", tpp_alp = 64)
+add(k, "Newspoll", NA, NA, "2021-04-06", NA,  "age", "65+",   "ALP", tpp_alp = 38)
+
+## 2021-07-12: Apr-Jun 2021 Newspoll breakdowns, n=6049 combined. Exact
+## fieldwork dates beyond "April through to June" not stated -- left NA.
+k <- "2021-07-12_apr-jun"
+add(k, "Newspoll", NA, NA, "2021-07-12", 6049, "state", "NSW", "ALP", tpp_alp = 50)
+add(k, "Newspoll", NA, NA, "2021-07-12", 6049, "state", "VIC", "ALP", tpp_alp = 53)
+add(k, "Newspoll", NA, NA, "2021-07-12", 6049, "state", "QLD", "ALP", tpp_alp = 47)
+add(k, "Newspoll", NA, NA, "2021-07-12", 6049, "state", "WA",  "ALP", tpp_alp = 53)
+add(k, "Newspoll", NA, NA, "2021-07-12", 6049, "state", "SA",  "ALP", tpp_alp = 54)
+add(k, "Newspoll", NA, NA, "2021-07-12", 6049, "age", "65+", "ALP", tpp_alp = 35)
+add(k, "Newspoll", NA, NA, "2021-07-12", 6049, "income", "lower-middle", "ALP", tpp_alp = 49)
+add(k, "Newspoll", NA, NA, "2021-07-12", 6049, "employment", "full-time", "ALP", tpp_alp = 51)
+add(k, "Newspoll", NA, NA, "2021-07-12", 6049, "employment", "part-time", "ALP", tpp_alp = 54)
+add(k, "Newspoll", NA, NA, "2021-07-12", 6049, "employment", "retired",   "ALP", tpp_alp = 39)
 
 ## 2023-04-15: Feb-Apr 2023 (3 polls, 2023-02-01 to 2023-04-03), n=4756
 k <- "2023-04-15_feb-apr"

@@ -1,6 +1,6 @@
 # Data dictionary
 
-**Generated 2026-09-28 by `scripts/build_data_dictionary.R`. Do not hand-edit.**
+**Generated 2026-09-29 by `scripts/build_data_dictionary.R`. Do not hand-edit.**
 
 Companion to `docs/DATA-REGISTRY.md`. The registry answers *do we have this
 file*; this answers *do we have this field*. Four wrong "we don't have it"
@@ -111,7 +111,9 @@ The originals, before any aggregation. **This is where dropped columns live.**
 | file | rows | columns |
 |---|---:|---|
 | `demosau/crosstabs.csv` | 991 | `poll_id`, `fieldwork_start`, `fieldwork_end`, `jurisdiction`, `sample_n`, `question`, `dimension`, `group`, `response`, `pct`, `source_url` |
-| `newspoll-quarterly/breakdowns.csv` | 106 | `pollster`, `period_start`, `period_end`, `published`, `sample_n`, `dimension`, `group`, `party`, `fp`, `tpp_alp`, `source_url` |
+| `newspoll-quarterly/breakdowns.csv` | 169 | `pollster`, `period_start`, `period_end`, `published`, `sample_n`, `dimension`, `group`, `party`, `fp`, `tpp_alp`, `source_url` |
+| `seat-polls/seat_polls.csv` | 7,139 | `V1`, `V2`, `V3`, `V4`, `V5`, `V6`, `V7`, `V8`, `V9`, `V10`, `V11`, `V12`, `V13`, `V14`, `V15` |
+| `state-regional-splits/regional_splits.csv` | 266 | `V1`, `V2`, `V3`, `V4`, `V5`, `V6`, `V7`, `V8`, `V9`, `V10`, `V11`, `V12`, `V13` |
 
 ## Columns we download and DROP
 
@@ -168,5 +170,5 @@ processed extract. Every one is recoverable without a new fetch.
 | `cal-fed-m1.5.csv` | 886 | `seat`, `actual`, `prob`, `pred`, `pred_p`, `pair` |
 | `cal-fed-m2.5.csv` | 886 | `seat`, `actual`, `prob`, `pred`, `pred_p`, `pair` |
 
-_(3007 `backtest-*.csv` arm outputs omitted; they share one shape.)_
+_(3748 `backtest-*.csv` arm outputs omitted; they share one shape.)_
 
