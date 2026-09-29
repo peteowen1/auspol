@@ -1,3 +1,11 @@
+# Public pollsters whose direct seat polls count as independent under
+# AUSPOL_SEAT_POLL_SOURCES="public" (Pete's allowlist choice, 2026-09-29).
+# Matched case-insensitively as regexes against the pollster name, so
+# "YouGov" covers "YouGov Galaxy" and "Freshwater" covers "Freshwater Strategy".
+PUBLIC_SEAT_POLLSTERS <- c("YouGov", "Galaxy", "Newspoll", "RedBridge", "DemosAU",
+                           "Freshwater", "EMRS", "Resolve", "Ipsos", "Essential",
+                           "Roy Morgan")
+
 #' Seat polls as model classes, per seat, for one election
 #'
 #' Reads `external/reference/polls/seat-polls/seat_polls.csv` (built by
@@ -37,6 +45,22 @@ seat_poll_shares <- function(election, days = 90, by_type = FALSE) {
   s$release <- paste(s$pollster, s$date_raw)
   cover <- s[, list(n_seats = data.table::uniqueN(seat_name)), by = release]
   s$is_mrp <- cover$n_seats[match(s$release, cover$release)] >= 20L
+  src <- Sys.getenv("AUSPOL_SEAT_POLL_SOURCES", "all")
+  if (!src %in% c("all", "public")) stop("AUSPOL_SEAT_POLL_SOURCES must be \"all\" or \"public\", not ", src)
+  if (src == "public") {
+    # Accent/RedBridge's MRP releases split their fieldwork dates by seat, so
+    # some fall under the 20-seat structural test; the name is reliable here.
+    s$is_mrp <- s$is_mrp | grepl("MRP", s$pollster, ignore.case = TRUE)
+    # plans/prereg-seat-poll-public-only-2026-09-29.md: MRP releases, plus
+    # direct polls by an allowlisted public pollster with no recorded sponsor.
+    sponsored <- !is.na(s$client) & nzchar(trimws(s$client))
+    public <- grepl(paste(PUBLIC_SEAT_POLLSTERS, collapse = "|"), s$pollster, ignore.case = TRUE)
+    keep_src <- s$is_mrp | (public & !sponsored)
+    n_all <- data.table::uniqueN(s$poll_id)
+    s <- s[which(keep_src)]
+    cat(sprintf("SPB0 %s: public pollsters only, %d of %d polls kept\n", el_arg, data.table::uniqueN(s$poll_id), n_all))
+    if (!nrow(s)) return(empty)
+  }
   per_poll <- s[, list(fp = sum(fp), mrp = is_mrp[1]), by = list(seat = seat_name, poll_id, class)]
   if (!by_type) return(per_poll[, list(poll = mean(fp), n_polls = .N, n_mrp = sum(mrp)), by = list(seat, class)])
   per_poll$type <- ifelse(per_poll$mrp, "mrp", "direct")
