@@ -39,3 +39,12 @@ Print the fundamentals and day-before weight per target. Full rebuild against
 v50 (the statewide feeds stage-1 base_pred); ledger and all elections
 reported per election; the statewide Labor two-party projection per target
 before and after.
+
+## AMENDMENT (2026-09-29, after rebuild R's stage 1 stopped; the text above is unedited)
+
+wa2001 (February 2001) has too few earlier elections carrying time-forward
+fundamentals to fit a mix, so its pair was skipped and stage 2 refused to pool
+a stale file. Rule added: when no mix can be fitted, the projection uses the
+poll trend alone (weight 1), with bias and spread from the earlier elections'
+own trend errors (these need no fundamentals). It does not favour any result:
+it applies only where the earlier evidence for mixing is absent.

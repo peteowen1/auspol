@@ -76,8 +76,25 @@ projection_mix_tf <- function(region, year) {
   p <- merge(p, el, by = c("region", "year"))
   p$fund_tpp <- p$fund_tf
   mix <- fit_projection_mix(p)
-  if (!nrow(mix) || !1L %in% mix$horizon)
-    stop("projection_mix_tf: too few earlier elections to fit a mix for ", region, year)
+  if (!nrow(mix) || !1L %in% mix$horizon) {
+    # AMENDMENT (plans/prereg-statewide-time-forward-2026-09-29.md): too few
+    # earlier elections carry time-forward fundamentals to fit a mix (wa2001).
+    # With no earlier evidence for mixing, use the poll trend alone (w = 1),
+    # its spread and bias measured on the earlier elections' trend errors,
+    # which need no fundamentals.
+    tr <- p[is.finite(p$trend_tpp) & is.finite(p$actual_tpp), ]
+    mix <- tr[, list(n = .N, w = 1, mae_mix = mean(abs(trend_tpp - actual_tpp)),
+                     mae_mix_loo = mean(abs(trend_tpp - actual_tpp)),
+                     mae_trend = mean(abs(trend_tpp - actual_tpp)), mae_fund = NA_real_,
+                     bias = mean(trend_tpp - actual_tpp), sd_err = stats::sd(trend_tpp - actual_tpp),
+                     sd_err_loo = stats::sd(trend_tpp - actual_tpp)), by = horizon]
+    mix <- mix[mix$n >= 3L, ]
+    if (!1L %in% mix$horizon)
+      stop("projection_mix_tf: too few earlier elections even for a trend-only projection for ", region, year)
+    cat(sprintf("FTF0 %s%d: too few earlier elections with fundamentals to fit a mix; trend only (w = 1) from %d earlier elections
+",
+                region, year, mix$n[mix$horizon == 1]))
+  }
   .fund_tf_cache[[key]] <- mix
   mix
 }
