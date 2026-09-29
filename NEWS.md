@@ -1,3 +1,10 @@
+# auspol 0.4.56
+
+No change to the published forecast. Seat-poll experiments, each measured and refused, kept behind flags:
+
+- `AUSPOL_SEAT_POLL_SOURCES=public`: public pollsters only (sponsor from `client`).
+- `AUSPOL_SEAT_POLL_MATCH=perpoll`: compare each poll only on the classes it names (`seat_poll_implied()`).
+
 # auspol 0.4.55
 
 **Ledger v51: statewide fundamentals and trend mix learn only from earlier elections** (leak fix; seat log loss 0.2719 -> 0.2760 against AE Forecasts' 0.2851, shipped as pre-registered).

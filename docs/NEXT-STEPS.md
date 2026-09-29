@@ -7,25 +7,29 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30.
 
 ## 2026-09-29 18:00 (read this first)
 
-**Built: ledger v51** = rebuild R, the statewide time-forward leak fix
+**Published 18:15: ledger v51** = rebuild R, the statewide time-forward leak fix
 (0.2719 -> 0.2760 vs AEF 0.2851; nsw2023 better, vic2022 and fed2019 worse;
 RESULT in `plans/prereg-statewide-time-forward-2026-09-29.md`). Snapshot
-`output/rebuild-R/`; local `output/` is rebuild R's. **Published release is
-still v50** until Pete runs `AUSPOL_REBUILD_FROM=8 AUSPOL_PUBLISH=1 bash
-scripts/rebuild_forecasts.sh`.
+`output/rebuild-R/`; fresh v51 (weight refit on its own predictions) `output/rebuild-R2/`, ledger 0.2753. **Local `output/` is rebuild U's (REFUSED), not
+v51's**: rebuild from stage 6 with no arm env before any publish.
+
+Refused 18:40: public-only seat polls, arms S and T (snapshots
+`output/rebuild-{S,T}/`). T passed fed2025 by 2.1 SE; fed2022 failed because
+its weight rests on 9 fed2019 polls (0.45 -> 0.67).
 
 Refused since: dropping `fed_aligned`, retested time-forward (all its gain is
 nsw2023; the term is real). nsw2023's remaining statewide gap is the
 fundamentals' honest error.
 
 Open, in order:
-1. PR dev -> main for v51 (review + `check_like_ci.R` in progress 18:00).
-2. Seat polls: direct-poll weight on INDEPENDENT polls only. Sponsors now
-   recovered from Wikipedia footnotes (`client`, 34 polls; `8465ef8`).
-   Needs Pete's definition of "independent": a sponsor filter alone drops
-   Bullwinkel's JWS/Nationals polls but keeps McMahon's Compass poll (no
-   sponsor recorded); an allowlist of public pollsters drops both. fed2022's
-   page records no sponsors at all.
+1. PR #70 MERGED 18:39. The seat-poll arm commits after it (`4f3e4d5` on,
+   all flagged off) are unpushed; the public-only filter is reviewed, the
+   per-poll match is not. Review, then PR.
+2. Seat polls: THREE arms refused today (S, T, U: per-poll class match). The
+   open problem is the weight, fitted on one or two earlier elections. Park
+   unless a new data source adds earlier polled elections. Old item: T with the weight shrunk harder
+   when it rests on one earlier election; NEW prereg. "Independent" =
+   Pete's allowlist (`PUBLIC_SEAT_POLLSTERS`, no recorded sponsor).
 3. Change seats beyond the statewide miss (Parramatta, Heathcote): walk
    examples with Pete before any rule.
 4. PR #743 (inthegame-blog): Pete or that session merges it.

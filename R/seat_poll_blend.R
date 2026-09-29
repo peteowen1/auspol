@@ -1,3 +1,11 @@
+# Public pollsters whose direct seat polls count as independent under
+# AUSPOL_SEAT_POLL_SOURCES="public" (Pete's allowlist choice, 2026-09-29).
+# Matched case-insensitively as regexes against the pollster name, so
+# "YouGov" covers "YouGov Galaxy" and "Freshwater" covers "Freshwater Strategy".
+PUBLIC_SEAT_POLLSTERS <- c("YouGov", "Galaxy", "Newspoll", "RedBridge", "DemosAU",
+                           "Freshwater", "EMRS", "Resolve", "Ipsos", "Essential",
+                           "Roy Morgan")
+
 #' Seat polls as model classes, per seat, for one election
 #'
 #' Reads `external/reference/polls/seat-polls/seat_polls.csv` (built by
@@ -9,11 +17,14 @@
 #' @param election Label such as `"fed2022"`.
 #' @param days Fieldwork window before election day.
 #' @param by_type Keep MRP and direct polls apart (a `type` column).
+#' @param by_poll Return one row per poll and class (`seat`, `poll_id`,
+#'   `class`, `fp`, `mrp`), with every class a poll does not name as `REST`
+#'   and each poll scaled to 100; input to [seat_poll_implied()].
 #' @return data.table (`seat`, `class`, `poll`, `n_polls`, `n_mrp`, and `type`
 #'   when `by_type`), possibly empty. A release (pollster + dates) covering at
 #'   least 20 seats counts as MRP, whatever its name.
 #' @export
-seat_poll_shares <- function(election, days = 90, by_type = FALSE) {
+seat_poll_shares <- function(election, days = 90, by_type = FALSE, by_poll = FALSE) {
   f <- file.path(pkg_root(), "external", "reference", "polls", "seat-polls", "seat_polls.csv")
   empty <- data.table::data.table(seat = character(0), class = character(0), poll = numeric(0),
                                   n_polls = integer(0), n_mrp = integer(0))
@@ -37,10 +48,91 @@ seat_poll_shares <- function(election, days = 90, by_type = FALSE) {
   s$release <- paste(s$pollster, s$date_raw)
   cover <- s[, list(n_seats = data.table::uniqueN(seat_name)), by = release]
   s$is_mrp <- cover$n_seats[match(s$release, cover$release)] >= 20L
+  src <- Sys.getenv("AUSPOL_SEAT_POLL_SOURCES", "all")
+  if (!src %in% c("all", "public")) stop("AUSPOL_SEAT_POLL_SOURCES must be \"all\" or \"public\", not ", src)
+  if (src == "public") {
+    # Accent/RedBridge's MRP releases split their fieldwork dates by seat, so
+    # some fall under the 20-seat structural test; the name is reliable here.
+    s$is_mrp <- s$is_mrp | grepl("MRP", s$pollster, ignore.case = TRUE)
+    # plans/prereg-seat-poll-public-only-2026-09-29.md: MRP releases, plus
+    # direct polls by an allowlisted public pollster with no recorded sponsor.
+    sponsored <- !is.na(s$client) & nzchar(trimws(s$client))
+    public <- grepl(paste(PUBLIC_SEAT_POLLSTERS, collapse = "|"), s$pollster, ignore.case = TRUE)
+    keep_src <- s$is_mrp | (public & !sponsored)
+    n_all <- data.table::uniqueN(s$poll_id)
+    s <- s[which(keep_src)]
+    cat(sprintf("SPB0 %s: public pollsters only, %d of %d polls kept\n", el_arg, data.table::uniqueN(s$poll_id), n_all))
+    if (!nrow(s)) return(empty)
+  }
+  if (by_poll) {
+    # Per-poll rows for seat_poll_implied(): only classes a poll NAMES are
+    # comparable with ours (ALP, LNP, GRN, and ONP / IND where reported). Its
+    # UAP, KAP and "Others" columns are catch-alls -- YouGov 2022's "OTH" is
+    # Katter's 43 in Kennedy and Zoe Daniel's 24 in Goldstein -- so they go
+    # to REST. Each poll is scaled to 100 over its reported rows first.
+    s$class[!s$class %in% c("ALP", "LNP", "GRN", "ONP", "IND")] <- "REST"
+    pp <- s[, list(fp = sum(fp), mrp = is_mrp[1]), by = list(seat = seat_name, poll_id, class)]
+    pp[, fp := 100 * fp / sum(fp), by = poll_id]
+    return(pp)
+  }
   per_poll <- s[, list(fp = sum(fp), mrp = is_mrp[1]), by = list(seat = seat_name, poll_id, class)]
   if (!by_type) return(per_poll[, list(poll = mean(fp), n_polls = .N, n_mrp = sum(mrp)), by = list(seat, class)])
   per_poll$type <- ifelse(per_poll$mrp, "mrp", "direct")
   per_poll[, list(poll = mean(fp), n_polls = .N, n_mrp = sum(mrp)), by = list(seat, class, type)]
+}
+
+#' Each seat poll as a full vector over OUR classes (per-poll match)
+#'
+#' For each poll, classes it names take its number; our remaining classes
+#' (share above 0) share its `REST` total in proportion to our own shares, so
+#' a catch-all "Others" is compared with what it actually contains. Named
+#' mass with no matching class of ours joins `REST`. The vectors are then
+#' averaged over a seat's polls. Pete's choice over a fixed four-class
+#' collapse, 2026-09-29: it keeps One Nation and independent numbers where a
+#' poll reports them. plans/prereg-seat-poll-per-poll-match-2026-09-29.md.
+#'
+#' @param pp From `seat_poll_shares(by_poll = TRUE)`.
+#' @param our data.table `seat`, `class`, `share` (our shares, any scale).
+#' @return data.table `seat`, `class`, `poll`, `n_polls`, `n_mrp`.
+#' @export
+seat_poll_implied <- function(pp, our) {
+  out <- data.table::data.table(seat = character(0), class = character(0), poll = numeric(0),
+                                n_polls = integer(0), n_mrp = integer(0))
+  if (!nrow(pp)) return(out)
+  our_seat <- normalise_seat(our$seat)
+  pp_seat <- normalise_seat(pp$seat)
+  ids <- unique(pp$poll_id)
+  vecs <- lapply(ids, function(id) {
+    r <- pp[which(pp$poll_id == id), ]
+    st <- pp_seat[which(pp$poll_id == id)][1]
+    o <- our[which(our_seat == st & is.finite(our$share) & our$share > 0), ]
+    if (!nrow(o)) return(NULL)
+    named <- r[r$class != "REST" & r$class %in% o$class, ]
+    rest_total <- 100 - sum(named$fp)
+    rest_cls <- setdiff(o$class, named$class)
+    v <- stats::setNames(numeric(nrow(o)), o$class)
+    v[named$class] <- named$fp
+    if (length(rest_cls)) {
+      w_rest <- o$share[match(rest_cls, o$class)]
+      v[rest_cls] <- max(0, rest_total) * w_rest / sum(w_rest)
+    }
+    data.table::data.table(seat = r$seat[1], class = names(v), poll = unname(v), mrp = r$mrp[1])
+  })
+  vv <- data.table::rbindlist(vecs)
+  if (!nrow(vv)) return(out)
+  vv[, list(poll = mean(poll), n_polls = .N, n_mrp = sum(mrp)), by = list(seat, class)]
+}
+
+#' Seat-poll cells for one election in the active match mode
+#'
+#' `AUSPOL_SEAT_POLL_MATCH` "class" (default, v50/v51): the poll's own class
+#' labels. "perpoll": [seat_poll_implied()] against `our`.
+#' @keywords internal
+.seat_poll_cells <- function(election, our) {
+  m <- Sys.getenv("AUSPOL_SEAT_POLL_MATCH", "class")
+  if (!m %in% c("class", "perpoll")) stop("AUSPOL_SEAT_POLL_MATCH must be \"class\" or \"perpoll\", not ", m)
+  if (m == "class") return(seat_poll_shares(election))
+  seat_poll_implied(seat_poll_shares(election, by_poll = TRUE), our)
 }
 
 #' Time-forward weight for pulling seat primaries toward seat polls
@@ -60,10 +152,10 @@ seat_poll_weight <- function(target_election) {
   els <- unique(f$election)
   els <- els[elections_before(els, target_election)]
   rows <- data.table::rbindlist(lapply(els, function(e) {
-    sp <- seat_poll_shares(e)
-    if (!nrow(sp)) return(NULL)
     fe <- f[f$election == e, list(seat = normalise_seat(seat), class = party,
                                   pred = xgb_pred_seat, actual = actual_share)]
+    sp <- .seat_poll_cells(e, data.table::data.table(seat = fe$seat, class = fe$class, share = fe$pred))
+    if (!nrow(sp)) return(NULL)
     sp$seat <- normalise_seat(sp$seat)
     m <- merge(sp, fe, by = c("seat", "class"))
     m <- m[is.finite(pred) & is.finite(actual) & pred > 0]
@@ -141,10 +233,23 @@ seat_poll_blend_apply <- function(shares, target_election) {
   if (!mode %in% c("1", "2")) return(shares)
   tb <- seat_poll_blend_table(target_election)
   w <- attr(tb, "w")
-  if (mode == "2") return(.seat_poll_blend_split(shares, tb, w, target_election))
+  perpoll <- identical(Sys.getenv("AUSPOL_SEAT_POLL_MATCH", "class"), "perpoll")
+  if (mode == "2") {
+    if (perpoll) stop("AUSPOL_SEAT_POLL_MATCH=perpoll is built for AUSPOL_SEAT_POLL_BLEND=1 only")
+    return(.seat_poll_blend_split(shares, tb, w, target_election))
+  }
   # Mode 1 (v50): one weight on the mean over every poll, MRP or direct.
   tb <- tb[, list(poll = sum(poll * n_polls) / sum(n_polls), n_polls = sum(n_polls), n_mrp = sum(n_mrp)),
            by = list(seat, class)]
+  if (perpoll) {
+    # Not yet in the shipped table the daily run reads: backtests only until
+    # it ships (plans/prereg-seat-poll-per-poll-match-2026-09-29.md).
+    our <- data.table::data.table(seat = rep(rownames(shares), ncol(shares)),
+                                  class = rep(colnames(shares), each = nrow(shares)),
+                                  share = as.vector(shares))
+    tb <- seat_poll_implied(seat_poll_shares(target_election, by_poll = TRUE), our)
+    cat(sprintf("SPB1 %s: per-poll match, %d implied cells\n", target_election, nrow(tb)))
+  }
   if (!nrow(tb) || w$w <= 0) {
     cat(sprintf("SPB  %s: no blend (w %.3f from %d earlier polled cells in %d elections; %d polled cells here)\n",
                 target_election, w$w, w$n, w$k, nrow(tb)))
