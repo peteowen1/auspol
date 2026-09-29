@@ -35,3 +35,30 @@ primaries to a two-party projection that gives the fundamentals 20% weight.
 Z ships if 1-3 hold; otherwise anchoring stays and the finding is recorded.
 Not tested here and queued: anchoring only at horizons where the blend beats
 the trend (7+ days), which matters for the live forecast before election day.
+
+## AMENDMENT (2026-09-30 08:55, after Y2 launched and before its stage 3; the text above is unedited)
+
+A second leak, found tracing step 3 of the nsw2023 Labor level (32.7
+statewide, 31.3 in the seat model): `output/level-pred.csv`, the `level_pred`
+xgb feature, was built by `scripts/build_level_pred.R` on LEAVE-ONE-OUT
+fundamentals and the all-elections mix, last on 13 Sep, and is not in the
+rebuild pipeline, so v51's time-forward fix never reached it. Rebuilt
+time-forward at 08:53 (before Y2's stage 3 reads it). Leak-free it is also
+more accurate: mean |level - actual| 2.06 -> 1.90 over 160 cells (majors 2.92
+-> 2.71); nsw2023 Labor 31.3 -> 32.7.
+
+So **Y2 = v52 config + this leak fix**, and ships whatever it scores, as
+every leak fix has. After Y2, `build_level_pred.R` joins the rebuild pipeline
+before stage 3, so arm Z builds its level under its own recipe. The Y2-vs-Z
+rule above is unchanged.
+
+## RESULT, Y2 (full rebuild 08:46-09:21, stage-6 files in output/rebuild-Y2/sharedetail/) = v52
+
+Against fresh v51 (R2): primary RMSE all rows 4.2065 -> 4.1924 (MSE -0.119,
+clustered SE 0.073); pooled seat log loss per-election mean -0.0010 (SE
+0.0047, better in 7 of 16); AEF-7 ledger 0.2753 -> 0.2726; TCP MAE 3.80 ->
+3.75; accuracy 88.2% -> 88.9%; leader seats 5.41 -> 4.97. Large moves both
+ways from the retrained as-at models (fed2013 -0.030, vic2018 +0.051,
+fed2025 +0.019). Ships as v52 (leak fix). Note for scoring full rebuilds:
+stage 1 writes share-detail files with the same git tag as stage 6; score only
+files written after stage 6 starts.
