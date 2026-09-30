@@ -26,3 +26,13 @@ test_that("the bonus lands on the leader's class and keeps the seat total", {
   b <- leader_seat_bonus("nsw2023")
   expect_lt(attr(b, "pooled")$n, nrow(leader_seats()[elections_before(leader_seats()$pair, "nsw2024")]))
 })
+
+test_that(".shift_cell moves the cell by exactly delta and keeps the row total", {
+  row <- c(ALP = 45, LNP = 35, GRN = 20)
+  r <- auspol:::.shift_cell(row, 1, 2.45)
+  expect_equal(unname(r["ALP"]), 47.45)                  # the full bonus, not 45 + 2.45 * 55 / 102.45
+  expect_equal(sum(r), 100)
+  expect_equal(unname(r["LNP"] / r["GRN"]), 35 / 20)     # the others pay in proportion
+  expect_equal(unname(auspol:::.shift_cell(row, 3, -30)["GRN"]), 0)    # floored at zero
+  expect_equal(unname(auspol:::.shift_cell(row, 1, 80)), c(100, 0, 0))  # capped at the row total
+})

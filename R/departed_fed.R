@@ -134,7 +134,7 @@ departed_fed_table <- function(target_election, write = FALSE) {
 #'
 #' A no-op unless `AUSPOL_DEPARTED_FED` is "1". In each seat whose sitting
 #' member left: `share += beta * (fed + k * gap - share)` for the member's
-#' class, the row rescaled to its previous total.
+#' class, the other classes giving up the difference in proportion.
 #' @param shares Matrix of primary shares, rownames = seats, colnames = classes.
 #' @param target_election Label.
 #' @return `shares`, adjusted.
@@ -154,11 +154,9 @@ departed_fed_apply <- function(shares, target_election) {
   for (r in seq_len(nrow(tb))) {
     i <- match(normalise_seat(tb$seat[r]), normalise_seat(rownames(shares))); j <- match(tb$class[r], colnames(shares))
     if (is.na(i) || is.na(j) || shares[i, j] <= 0) next
-    tot <- sum(shares[i, ])
     target <- tb$fed[r] + w$k * tb$gap[r]
     old <- shares[i, j]
-    shares[i, j] <- max(0, old + w$beta * (target - old))
-    shares[i, ] <- shares[i, ] * tot / sum(shares[i, ])
+    shares[i, ] <- .shift_cell(shares[i, ], j, w$beta * (target - old))
     moved <- c(moved, sprintf("%s %s %.1f->%.1f", tb$seat[r], tb$class[r], old, shares[i, j]))
   }
   cat(sprintf("DF1  %s: departed-member blend beta %.3f (raw %.3f, se %.3f), k %.2f, %d earlier cells; %s\n",
