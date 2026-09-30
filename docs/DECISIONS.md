@@ -4,6 +4,7 @@ One line each: the decision, the one fact behind it, a link. Newest first.
 Created 2026-09-19 (the verse convention; auspol had none). Older decisions
 live in the plans they came from (`docs/plans/prereg-*.md` RESULT sections).
 
+- **2026-09-30 v56: level recipe "live" SHIPS** (backtests now score the recipe the live forecast uses). On v55, all 22 elections: log loss -0.0024 (SE 0.0071, better in 12), RMSE 4.2111 -> 4.1617, ledger 0.2761 -> 0.2741. `plans/prereg-level-recipe-retest-2026-09-30.md`
 - **2026-09-30 CORRECTED: poll trend without the fundamentals anchor (level recipe "live", arm Z) PASSES over all 22 elections** (-0.0031, SE 0.0067, better in 13 of 22; all six NSW/Qld/SA better). Refused this morning on +0.0003 over 16, from a table with no NSW/Qld/SA seats. Re-measure on v55 before shipping. `plans/prereg-level-recipe-retest-2026-09-30.md`
 - **2026-09-30 FIXED: the reduced-sims floor in `pool_backtests.R` and `build_forecasts_table.R` never fired** (a back-reference written with one backslash, which R reads as a control character, so the sims count parsed as NA). Published numbers unchanged: stage-6 files were always newer, and the sibling check caught stage 1.
 - **2026-09-30 Departed member toward the booths' federal vote REFUSED again, at full size (A) and with a gap-dependent weight (B).** Departed seats' error 4.61 -> 4.79 (A), 5.17 (B); both help nsw2023/qld2024, hurt qld2020/sa2026. `plans/prereg-departed-fed-gap-2026-09-30.md`

@@ -110,3 +110,26 @@ the corrections on top. The live forecast already uses this recipe for its
 level (`R/forecast_mode.R:173`), so the backtests score a different recipe
 from what ships. Next: a full rebuild of v55 with `AUSPOL_LEVEL_RECIPE=live`,
 same criteria, all 22 elections.
+
+## RESULT ON v55, 2026-09-30 21:20: PASSES, ships as v56
+
+Full rebuild with `AUSPOL_LEVEL_RECIPE=live`
+(`output/snapshots/20260930-2115-72387b7-from1`) against v55 (stages 1-5 from
+`20260930-1607-33a848a-from1`, stage 6-8 `20260930-1807-3c1a1db-from6`).
+Scored from each run's own stage-6 allprobs, all 22 elections, 2,059
+seat-elections (the scorer refuses fewer than 22).
+
+| criterion (lower is better) | v55 | live | |
+|---|---|---|---|
+| 1. seat log loss, per-election mean change | | **-0.0024** (SE 0.0071) | better in 12 of 22; seat-weighted 0.3642 -> 0.3627 |
+| 2. primary RMSE, all 11,643 rows (points) | 4.2111 | **4.1617** | |
+| guard: ledger seat log loss (AEF 0.2851) | 0.2761 | 0.2741 | |
+| reported: ledger weighted primary RMSE | 4.926 | 4.953 | slightly worse |
+| reported: ledger accuracy | 88.94% | 88.64% | |
+
+Same era split as Z: better fed2010 -0.032, fed2019 -0.036, nsw2023 -0.026,
+vic2018 -0.019, wa2017 -0.110, wa2025 -0.023, and all four Qld/SA pairs;
+worse fed2007 +0.031, fed2013 +0.025, wa2008 +0.050, wa2013 +0.043, wa2005
++0.023, fed2025 +0.020, nsw2019 +0.014. **Passes both criteria and the
+guard.** `AUSPOL_LEVEL_RECIPE = "live"` in `published_flags.R`, so the
+backtests now score the recipe the live forecast uses.
