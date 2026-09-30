@@ -13,7 +13,7 @@ leader_seat_bonus(target_election)
 data.table \code{role}, \code{bonus}, \code{raw}, \code{se}, \code{n}, with attribute \code{pooled}.
 }
 \description{
-Seat-specific miss = actual minus as-at \code{xgb_pred_seat} (\code{output/forecasts.csv})
+Seat-specific miss = actual minus as-at \code{xgb_pred_seat} (\code{\link[=current_seat_predictions]{current_seat_predictions()}})
 less that class's median miss in that election, at leader seats of
 elections before the target. Each role's mean is shrunk toward the pooled
 mean by \code{tau^2 / (tau^2 + se_role^2)} (tau^2 = between-role variance, method

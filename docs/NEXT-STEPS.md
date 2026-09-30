@@ -7,7 +7,7 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30.
 
 ## 2026-09-30 09:40 (read this first)
 
-**v52 = rebuild Y2** (demographic correction for Labor + Greens, leader-seat
+**PUBLISHED 10:48: v52 = rebuild-V52** (0.2717 vs AEF 0.2851; RMSE 4.17; PR #72). Was: v52 = rebuild Y2 (demographic correction for Labor + Greens, leader-seat
 bonus, `level_pred` leak fix): RMSE 4.2065 -> 4.1924, ledger 0.2753 ->
 0.2726 (AEF 0.2851), accuracy 88.9%. **Not yet published.** Local `output/`
 was overwritten by the refused arm Z; restore rebuild `rebuild-V52` launched

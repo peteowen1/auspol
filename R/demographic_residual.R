@@ -106,16 +106,16 @@ demographic_residual_fit <- function(cls, exclude_pair,
 
 #' The current model's seat misses, as the demographic fit's training table
 #'
-#' From `output/forecasts.csv`: every election's `xgb_pred_seat` comes from an
-#' as-at model trained on earlier elections only, so the misses are
-#' out-of-sample. Summed to one row per (election, seat, class). The fit still
-#' keeps only elections before the target ([elections_before()]).
+#' From [current_seat_predictions()] (this rebuild's stage-4 as-at
+#' predictions): every election's `xgb_pred_seat` comes from an as-at model
+#' trained on earlier elections only, so the misses are out-of-sample. One row
+#' per (election, seat, class). The fit still keeps only elections before the
+#' target ([elections_before()]).
 #' @return data.table `pair`, `seat`, `party`, `actual_share`, `xgb_pred`.
 #' @keywords internal
 .demo_training_current <- function() {
-  f <- out_path("forecasts.csv")
-  if (!file.exists(f)) stop("AUSPOL_DEMO_RESID=2 needs output/forecasts.csv (scripts/build_forecasts_table.R)")
-  x <- data.table::fread(f, showProgress = FALSE)
+  x <- current_seat_predictions()
+  if (is.null(x)) stop("AUSPOL_DEMO_RESID=2 needs this rebuild's as-at predictions (output/xgb-primary-asat-predictions.csv)")
   x <- x[is.finite(x$xgb_pred_seat) & is.finite(x$actual_share)]
   x[, list(actual_share = sum(actual_share), xgb_pred = sum(xgb_pred_seat)),
     by = list(pair = election, seat, party)]
@@ -207,7 +207,7 @@ demographic_residual_apply <- function(shares, pair,
     if (missing(classes)) classes <- c("ALP", "GRN")
     # The daily run has neither the census features nor the forecasts table:
     # it applies the per-seat corrections the promote step shipped.
-    if (!file.exists(census) || !file.exists(out_path("forecasts.csv"))) {
+    if (!file.exists(census) || !.has_seat_predictions()) {
       if (!file.exists(cache)) {
         cat(sprintf("DR1! %s: no sources and no shipped %s; correction SKIPPED\n", pair, basename(cache)))
         return(shares)

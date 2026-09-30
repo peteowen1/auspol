@@ -40,7 +40,7 @@ leader_seats <- function() {
 
 #' Time-forward leader-seat bonus per role, partially pooled
 #'
-#' Seat-specific miss = actual minus as-at `xgb_pred_seat` (`output/forecasts.csv`)
+#' Seat-specific miss = actual minus as-at `xgb_pred_seat` ([current_seat_predictions()])
 #' less that class's median miss in that election, at leader seats of
 #' elections before the target. Each role's mean is shrunk toward the pooled
 #' mean by `tau^2 / (tau^2 + se_role^2)` (tau^2 = between-role variance, method
@@ -52,9 +52,8 @@ leader_seats <- function() {
 #' @return data.table `role`, `bonus`, `raw`, `se`, `n`, with attribute `pooled`.
 #' @export
 leader_seat_bonus <- function(target_election) {
-  fc <- out_path("forecasts.csv")
-  if (!file.exists(fc)) stop("leader_seat_bonus needs output/forecasts.csv (scripts/build_forecasts_table.R)")
-  f <- data.table::fread(fc, showProgress = FALSE)
+  f <- current_seat_predictions()
+  if (is.null(f)) stop("leader_seat_bonus needs this rebuild's as-at predictions (output/xgb-primary-asat-predictions.csv)")
   f <- f[is.finite(f$xgb_pred_seat) & is.finite(f$actual_share)]
   s <- f[, list(pred = sum(xgb_pred_seat), actual = sum(actual_share)), by = list(pair = election, seat, party)]
   s$r <- s$actual - s$pred
@@ -91,7 +90,7 @@ leader_seat_bonus <- function(target_election) {
 leader_seat_table <- function(target_election, write = FALSE) {
   cache <- out_path(sprintf("leader-seat-%s.csv", target_election))
   src <- file.path(pkg_root(), "external", "reference", "leaders", "leaders.csv")
-  if (file.exists(out_path("forecasts.csv")) && file.exists(src)) {
+  if (.has_seat_predictions() && file.exists(src)) {
     b <- leader_seat_bonus(target_election)
     ls <- leader_seats()
     .t <- target_election

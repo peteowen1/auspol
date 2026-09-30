@@ -10,9 +10,10 @@
 data.table \code{pair}, \code{seat}, \code{party}, \code{actual_share}, \code{xgb_pred}.
 }
 \description{
-From \code{output/forecasts.csv}: every election's \code{xgb_pred_seat} comes from an
-as-at model trained on earlier elections only, so the misses are
-out-of-sample. Summed to one row per (election, seat, class). The fit still
-keeps only elections before the target (\code{\link[=elections_before]{elections_before()}}).
+From \code{\link[=current_seat_predictions]{current_seat_predictions()}} (this rebuild's stage-4 as-at
+predictions): every election's \code{xgb_pred_seat} comes from an as-at model
+trained on earlier elections only, so the misses are out-of-sample. One row
+per (election, seat, class). The fit still keeps only elections before the
+target (\code{\link[=elections_before]{elections_before()}}).
 }
 \keyword{internal}

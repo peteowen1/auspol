@@ -1,3 +1,7 @@
+# auspol 0.4.58
+
+**Ledger v53**: the demographic correction and leader-seat bonus are applied once (v52 applied them in rebuild stage 1 as well, inside `base_pred`), and every post-xgb correction learns from this run's as-at predictions (`current_seat_predictions()`). Seat log loss 0.2722 against AE Forecasts' 0.2851.
+
 # auspol 0.4.57
 
 **Ledger v52** (seat log loss 0.2717 against AE Forecasts' 0.2851; primary RMSE 4.17).

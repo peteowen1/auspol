@@ -146,9 +146,8 @@ seat_poll_implied <- function(pp, our) {
 #' @return list: `w`, `raw`, `se`, `n` (cells), `k` (earlier elections used).
 #' @export
 seat_poll_weight <- function(target_election) {
-  fc <- out_path("forecasts.csv")
-  if (!file.exists(fc)) stop("seat_poll_weight needs output/forecasts.csv (scripts/build_forecasts_table.R)")
-  f <- data.table::fread(fc, showProgress = FALSE)
+  f <- current_seat_predictions()
+  if (is.null(f)) stop("seat_poll_weight needs this rebuild's as-at predictions (output/xgb-primary-asat-predictions.csv)")
   els <- unique(f$election)
   els <- els[elections_before(els, target_election)]
   rows <- data.table::rbindlist(lapply(els, function(e) {
@@ -189,7 +188,7 @@ seat_poll_weight <- function(target_election) {
 seat_poll_blend_table <- function(target_election, write = FALSE) {
   src <- file.path(pkg_root(), "external", "reference", "polls", "seat-polls", "seat_polls.csv")
   cache <- out_path(sprintf("seat-poll-blend-%s.csv", target_election))
-  if (file.exists(src) && file.exists(out_path("forecasts.csv"))) {
+  if (file.exists(src) && .has_seat_predictions()) {
     w <- seat_poll_weight(target_election)
     sw <- seat_poll_weights_split(target_election)
     w$w_direct <- sw$direct$w; w$w_mrp <- sw$mrp$w
@@ -282,7 +281,7 @@ seat_poll_blend_apply <- function(shares, target_election) {
 #' @export
 seat_poll_weights_split <- function(target_election) {
   pooled <- seat_poll_weight(target_election)
-  f <- data.table::fread(out_path("forecasts.csv"), showProgress = FALSE)
+  f <- current_seat_predictions()
   els <- unique(f$election)
   els <- els[elections_before(els, target_election)]
   rows <- data.table::rbindlist(lapply(els, function(e) {
