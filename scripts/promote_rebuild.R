@@ -40,6 +40,8 @@ invisible(seat_poll_blend_table("vic2026", write = TRUE))
 invisible(seat_poll_joint_table("vic2026", write = TRUE))
 # And the leader-seat bonus (AUSPOL_LEADER_SEAT): its bonus is fitted on the local forecasts table.
 invisible(leader_seat_table("vic2026", write = TRUE))
+# And the departed-member blend (AUSPOL_DEPARTED_FED): federal-booth primaries and weights.
+invisible(departed_fed_table("vic2026", write = TRUE))
 # And the demographic correction (AUSPOL_DEMO_RESID=2): its per-seat Labor and
 # Greens adjustments, since the daily run has neither census features nor the
 # forecasts table. Placeholder shares: only the adjustments are kept.
@@ -49,7 +51,7 @@ if (!length(.v26)) stop("census-features.csv has no vic2026 seats: the demograph
 invisible(withr::with_envvar(c(AUSPOL_DEMO_RESID = "2"), demographic_residual_apply(
   matrix(50, length(.v26), 2, dimnames = list(.v26, c("ALP", "GRN"))), "vic2026", write_table = TRUE)))
 models <- c(trained, "candidacies.csv", "seat-swing-port-vic2026.csv", "seat-poll-blend-vic2026.csv",
-            "leader-seat-vic2026.csv", "demo-resid-vic2026.csv", "seat-poll-joint-vic2026.csv")
+            "leader-seat-vic2026.csv", "demo-resid-vic2026.csv", "seat-poll-joint-vic2026.csv", "departed-fed-vic2026.csv")
 mf <- file.path(OUT, models)
 miss <- models[!file.exists(mf)]
 if (length(miss)) stop("model file(s) missing -- run scripts/rebuild_forecasts.sh first: ", paste(miss, collapse = ", "))

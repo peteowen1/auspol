@@ -17,8 +17,8 @@ data.table \code{seat}, \code{tpp_ours}.
 \description{
 \verb{(ALP + sum_p s_p f_p (1 - e_p)) / (ALP + LNP + sum_p s_p (1 - e_p))}, with
 each other class's flow to Labor \code{f_p} and exhaust \code{e_p} from
-\code{\link[=flows_for]{flows_for()}} at the year BEFORE the target (flows observed at the target
-election itself would leak). IND and OTH_RIGHT take the OTH flow when the
+\code{\link[=flows_for]{flows_for()}} over flows observed at elections dated BEFORE the target
+(\code{\link[=elections_before]{elections_before()}}; the target's own flows would leak). IND and OTH_RIGHT take the OTH flow when the
 region has none of their own.
 }
 \keyword{internal}

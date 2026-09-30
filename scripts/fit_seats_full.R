@@ -1140,6 +1140,8 @@ if (!is.null(.shares_d)) {
 } else {
   cat(sprintf("DR1!! demographic correction FAILED%s -- shares WITHOUT it\n", .reason("demo_resid")))
 }
+# Leader-seat bonus then departed-member blend (AUSPOL_DEPARTED_FED), same order
+# as the harnesses. plans/prereg-departed-fed-booths-2026-09-30.md
 # Leader-seat bonus (AUSPOL_LEADER_SEAT), same position as in the harnesses
 # relative to the seat-poll blend. plans/prereg-leader-seat-2026-09-29.md
 .shares_l <- .try("leader_seat", leader_seat_apply(shares, "vic2026"))
@@ -1147,6 +1149,13 @@ if (!is.null(.shares_l)) {
   shares <- .shares_l
 } else if (identical(Sys.getenv("AUSPOL_LEADER_SEAT", "0"), "1")) {
   cat(sprintf("LS1!! leader-seat bonus FAILED%s -- shares WITHOUT it\n", .reason("leader_seat")))
+}
+.shares_f <- .try("departed_fed", departed_fed_apply(shares, "vic2026"))
+if (!is.null(.shares_f)) {
+  shares <- .shares_f
+} else if (identical(Sys.getenv("AUSPOL_DEPARTED_FED", "0"), "1")) {
+  cat(sprintf("DF1!! departed-member blend FAILED%s -- shares WITHOUT it
+", .reason("departed_fed")))
 }
 # THE SALIENCE POINT ESTIMATE REACHES THE PUBLISHED FORECAST, 2026-09-07.
 # It never had: the blend lived inline in the federal harness only, so every

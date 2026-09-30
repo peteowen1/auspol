@@ -847,6 +847,8 @@ if (Sys.getenv("AUSPOL_DEMO_RESID", "0") %in% c("1", "2") && identical(Sys.geten
 }
 # Leader-seat bonus (AUSPOL_LEADER_SEAT, plans/prereg-leader-seat-2026-09-29.md): a major party gains the time-forward bonus in its own leader's seat.
 if (identical(Sys.getenv("AUSPOL_XGB_PRIMARY", "0"), "1")) shares <- leader_seat_apply(shares, TGT)
+# Departed member toward the same booths' federal vote (AUSPOL_DEPARTED_FED, plans/prereg-departed-fed-booths-2026-09-30.md); xgb layer only.
+if (identical(Sys.getenv("AUSPOL_XGB_PRIMARY", "0"), "1")) shares <- departed_fed_apply(shares, TGT)
 
 sp <- seat_swing_spread(seats, unname(state_tgt[["ALP"]] - state_prev[["ALP"]]))
 cat(sprintf("\nBT3  seat spread: within %.2f, between %.2f\n", sp$sd_within, sp$sd_between))
