@@ -7,6 +7,14 @@ if (length(a) != 2L) stop("usage: Rscript scripts/compare_rebuilds.R <dirA> <dir
 A <- a[1]; B <- a[2]
 ll <- function(d) {
   f <- fread(file.path(d, "forecasts-seats.csv"), showProgress = FALSE)
+  # A seat with NO RESULT (actual_winner empty) is not a miss: nsw2023's five
+  # 2021-redistribution seats are forecast under their old names and never
+  # meet a result. Scoring them at p = 0 would add 5 x 13.8 to nsw2023.
+  nores <- unique(paste(f$election, f$seat)[is.na(f$actual_winner) | !nzchar(f$actual_winner)])
+  if (length(nores)) {
+    cat(sprintf("CR0n %s: %d seat(s) with no result, not scored: %s\n", basename(d), length(nores), paste(nores, collapse = ", ")))
+    f <- f[!paste(election, seat) %in% nores]
+  }
   ks <- paste(f$election, f$seat)
   nw <- setdiff(unique(ks), unique(ks[f$is_winner %in% TRUE]))
   w <- f[is_winner == TRUE, .(p = sum(win_prob)), by = .(election, seat)]
