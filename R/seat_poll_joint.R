@@ -34,8 +34,8 @@ seat_poll_tpp <- function(election, days = 90) {
 #'
 #' `(ALP + sum_p s_p f_p (1 - e_p)) / (ALP + LNP + sum_p s_p (1 - e_p))`, with
 #' each other class's flow to Labor `f_p` and exhaust `e_p` from
-#' [flows_for()] at the year BEFORE the target (flows observed at the target
-#' election itself would leak). IND and OTH_RIGHT take the OTH flow when the
+#' [flows_for()] over flows observed at elections dated BEFORE the target
+#' ([elections_before()]; the target's own flows would leak). IND and OTH_RIGHT take the OTH flow when the
 #' region has none of their own.
 #'
 #' @param d data.table `seat`, `class`, `share` for one election.
@@ -43,7 +43,13 @@ seat_poll_tpp <- function(election, days = 90) {
 #' @return data.table `seat`, `tpp_ours`.
 #' @keywords internal
 .our_seat_tpp <- function(d, region, year) {
-  fl <- suppressMessages(flows_for(load_preference_flows(), year - 1L, region, quiet = TRUE))
+  # Time-forward BY DATE (Pete, 2026-09-30: "can't we use dates not years"):
+  # keep only flows observed at elections dated before the target, the same
+  # test every other time-forward fit uses, then take the latest per party.
+  all_fl <- load_preference_flows()
+  target_lab <- paste0(region, year)
+  before <- elections_before(paste0(all_fl$region, all_fl$year), target_lab)
+  fl <- suppressMessages(flows_for(all_fl[which(before), ], year, region, quiet = TRUE))
   fr <- function(p, col) {
     k <- match(p, fl$party)
     if (is.na(k)) k <- match("OTH", fl$party)

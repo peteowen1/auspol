@@ -37,3 +37,18 @@ AEF credits "adjustment towards seat polling" +2.35 two-party in Parramatta.
    1 SE; primary RMSE not worse by more than 1 SE.
 3. Reported: b1, b2 per target; nsw2023 Parramatta and Penrith; fed2016
    (two-party only); the like-for-like ledger.
+
+## AMENDMENT (2026-09-30 12:52, before any valid run; text above unedited)
+
+Two corrections. (1) The blend runs after the port and seat-poll position,
+i.e. BEFORE the demographic step, not after it. (2) A LEAK in the first build,
+found from Pete's question "can't we use dates not years": `.our_seat_tpp()`
+called `flows_for(year - 1)` without `as_of`, and `flows_for()` estimates
+unobserved flows from the latest five elections as of TODAY, so every target
+got the same flows (Greens 83.461, One Nation 33.730) including elections
+after it. Now filtered by date first (`elections_before()`), differing on 17
+of 18 targets. Rebuild J3 (launched 12:49) ran the leaky version and is
+discarded; the valid run is J4. Production paths were checked: the statewide
+draws (`R/forecast_mode.R:112`) and projection data (`R/projection.R:305`)
+pass `as_of` and are time-forward; the off-by-default NSW exhaustion arm
+(`backtest_candidate_nsw.R:1004`) uses the target's own flows and is noted.
