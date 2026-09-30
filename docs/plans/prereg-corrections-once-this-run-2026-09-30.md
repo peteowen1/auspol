@@ -1,6 +1,6 @@
 # Pre-registration: post-xgb corrections applied once, learned from this run (correctness fix)
 
-Written 2026-09-30 11:05, before the rebuild. A CORRECTNESS fix: ships
+Written 2026-09-30 10:53, before the rebuild. A CORRECTNESS fix: ships
 whatever it scores, as the leak fixes did.
 
 ## The two defects (both in published v52)
@@ -27,3 +27,15 @@ Full rebuild (v53 candidate) against published v52 (`output/rebuild-V52/`):
 pooled seat log loss, primary RMSE, AEF-7 ledger, leader seats, reported per
 election. Ships regardless; the numbers are recorded, not a gate. One check
 that must hold: stage-1 logs carry no `LS1` or `DR1  demographic` lines.
+
+## RESULT (rebuild-V53, 10:53-11:20; stage-6 files in output/rebuild-V53/sharedetail/) = v53
+
+Stage-1 check held: 0 `LS1` / `DR1` lines in `s1_*.log`. Against published
+v52: pooled seat log loss 0.3419 -> 0.3409 (-0.0017, SE 0.0017, better in 9
+of 16); primary RMSE 4.1698 -> 4.1771 (+0.061 MSE, SE 0.039); AEF-7 ledger
+0.2717 -> 0.2722; accuracy 88.6% -> 88.9%; leader seats mean abs error 4.69
+-> 5.00 (the doubled bonus had helped there: leaders out-poll us by more than
+one bonus). Against v51 every measure is better (log loss 0.3434 -> 0.3409,
+RMSE 4.2065 -> 4.1771, ledger 0.2753 -> 0.2722). Like for like against AEF
+(same 654 seats, four classes): weighted primary error 4.90 vs 5.63.
+Ships as v53. Follow-up worth a look: the leader bonus may be too small.
