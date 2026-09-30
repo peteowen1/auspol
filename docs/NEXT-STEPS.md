@@ -15,8 +15,9 @@ files are unchanged (PR #79). Forecast JSON has `p_most_seats_strict` and
 
 ITG Politics redesign data: BOTH BATCHES LIVE on R2 (PR #80, 01 Oct 00:37):
 per-seat `primary_q` / `final_two` in forecast-vic2026.json,
-`web/vic2022-results.json`, `web/vic2022-booths.json`. Not done: booth
-coordinates (VEC venue locations are not on disk).
+`web/vic2022-results.json`, `web/vic2022-booths.json` (with venue, address,
+lat/lon for all 1,729 polling places, PR #81, from the VEC's 2022
+voting-centre file). All requested blog data is delivered.
 
 ## 2026-09-30 18:30
 
