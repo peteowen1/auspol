@@ -16,5 +16,5 @@ list \code{w1}, \code{w2}, \code{b}, \code{se}, \code{n} (cells), \code{k} (elec
 On earlier elections' polled cells: \verb{actual - pred = b1 * (poll primary - pred) + b2 * s * (poll two-party - our two-party)}, s = +1 Labor, -1
 Coalition, 0 otherwise; a missing figure contributes 0. Through the origin,
 SE clustered on seat-election, each coefficient shrunk \code{b^3/(b^2+se^2)} and
-clamped to \link{0, 1}. Pete, 2026-09-30: let the fit decide the weight of each.
+clamped to between 0 and 1. Pete, 2026-09-30: let the fit decide the weight of each.
 }

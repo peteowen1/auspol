@@ -68,9 +68,9 @@ fed_booth_primaries <- function(election) {
 #'
 #' On departed seats of elections BEFORE the target: k = the pooled share of
 #' the gap that survived (`sum((actual - fed) * gap) / sum(gap^2)`, least
-#' squares through the origin, clamped to [0, 1]); the rule is `fed + k * gap`;
+#' squares through the origin, clamped to between 0 and 1); the rule is `fed + k * gap`;
 #' beta = least squares of `actual - pred` on `rule - pred`, SE clustered on
-#' election, shrunk `b^3/(b^2+se^2)` and clamped to [0, 1].
+#' election, shrunk `b^3/(b^2+se^2)` and clamped to between 0 and 1.
 #' @param target_election Label.
 #' @return list `k`, `beta`, `b`, `se`, `n`, `els`.
 #' @export

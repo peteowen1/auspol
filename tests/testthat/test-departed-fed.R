@@ -14,5 +14,6 @@ test_that("departed-member weights learn from state elections before the target 
   w <- departed_fed_weights("nsw2023")
   expect_false(any(w$els %in% c("nsw2023", "qld2024", "sa2026")))
   expect_false(any(grepl("^fed", w$els)))
-  expect_gte(w$beta, 0); expect_lte(w$beta, 1); expect_gte(w$k, 0); expect_lte(w$k, 1)
+  expect_gte(w$beta, 0); expect_lte(w$beta, 1)
+  if (is.finite(w$k)) { expect_gte(w$k, 0); expect_lte(w$k, 1) }   # k is NA when too little earlier data
 })

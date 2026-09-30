@@ -15,7 +15,7 @@ list \code{k}, \code{beta}, \code{b}, \code{se}, \code{n}, \code{els}.
 \description{
 On departed seats of elections BEFORE the target: k = the pooled share of
 the gap that survived (\code{sum((actual - fed) * gap) / sum(gap^2)}, least
-squares through the origin, clamped to \link{0, 1}); the rule is \code{fed + k * gap};
+squares through the origin, clamped to between 0 and 1); the rule is \code{fed + k * gap};
 beta = least squares of \code{actual - pred} on \code{rule - pred}, SE clustered on
-election, shrunk \code{b^3/(b^2+se^2)} and clamped to \link{0, 1}.
+election, shrunk \code{b^3/(b^2+se^2)} and clamped to between 0 and 1.
 }

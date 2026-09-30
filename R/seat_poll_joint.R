@@ -83,7 +83,7 @@ seat_poll_tpp <- function(election, days = 90) {
 #' pred) + b2 * s * (poll two-party - our two-party)`, s = +1 Labor, -1
 #' Coalition, 0 otherwise; a missing figure contributes 0. Through the origin,
 #' SE clustered on seat-election, each coefficient shrunk `b^3/(b^2+se^2)` and
-#' clamped to [0, 1]. Pete, 2026-09-30: let the fit decide the weight of each.
+#' clamped to between 0 and 1. Pete, 2026-09-30: let the fit decide the weight of each.
 #'
 #' @param target_election Label such as `"nsw2023"`.
 #' @return list `w1`, `w2`, `b`, `se`, `n` (cells), `k` (elections).
