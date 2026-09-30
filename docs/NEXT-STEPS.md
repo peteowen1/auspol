@@ -5,7 +5,22 @@ it stood before this rewrite: `backlog/journal-2026-09-19-hub-snapshot.md`).
 Decisions: `docs/DECISIONS.md`. Every seat verdict: `docs/SEAT-REGISTRY.md`.
 Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30.
 
-## 2026-09-30 14:30 (read this first)
+## 2026-09-30 16:30 (read this first)
+
+**v54 being shipped** (state-deviation fix; full rebuilds now reproduce).
+Refused this afternoon: joint seat-poll blend (J4), direct-only (J5), anchor
+alone (ZA), departed-member federal-booth blend (DF). Snapshots make restores
+instant; a harness queue cut stage 6 from 9.4 to 4.8 min at 3 slots.
+
+Next, in order:
+1. BY-ELECTION PRIOR skipped when a major did not stand (Lyne 2008; LIVE
+   Prahran 2025). Walk Prahran with Pete, decide how to fill the missing
+   major, then fix. Affects the live Victoria forecast.
+2. Leader bonus size (v53: leaders out-poll us by more than one bonus).
+3. Departed member: gap-dependent weight (DF was right in big-gap seats only).
+4. Split the federal harness (the 4.8-min stage-6 floor).
+
+## 2026-09-30 14:30
 
 **v53 published** (0.2722 vs AEF 0.2851). Refused today after v53: joint
 primary + two-party seat-poll blend (J4) and its direct-polls-only version
