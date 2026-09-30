@@ -1,3 +1,11 @@
+# auspol 0.4.62
+
+No change to the forecast. Data for the ITG seat pages:
+
+- `simulate_seat_contests(keep_fp = TRUE)` returns each draw's primaries (both engines, no extra random numbers); the forecast JSON adds per-party `primary_q` and per-seat `final_two` (likeliest pair, the leader's two-candidate share range, swing to flip).
+- `web/vic2022-results.json` and `web/vic2022-booths.json`: Victoria 2022 by district and by booth, from the VEC's own pages, uploaded to R2 daily.
+- `check_like_ci.R` skips R CMD check when the package files are unchanged; the forecast JSON has strict "most seats" and the tie share.
+
 # auspol 0.4.61
 
 **Ledger v56**: the statewide level comes from the poll trend without the fundamentals anchor, in the backtests and the live forecast alike (`AUSPOL_LEVEL_RECIPE = "live"`, `AUSPOL_LIVE_LEVEL_ANCHOR = "0"`). All 22 elections: seat log loss -0.0024, primary RMSE 4.21 -> 4.16; ledger 0.2741 against AE Forecasts' 0.2851. Live Victoria moves from a Coalition lead to a dead heat (Labor 33.8, Coalition 33.9 expected seats).
