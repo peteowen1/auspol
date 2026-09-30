@@ -69,3 +69,32 @@ seats' winners, and it does not ship. Also: if the gain comes only from
 the absent major's own cell while the independent's cell gets worse in
 Lyne (the case that prompted this), report that plainly rather than
 calling it a fix for Lyne.
+
+## Result, 2026-09-30 17:45: REFUSED (primary criterion fails), stays off
+
+Full rebuild `output/snapshots/20260930-1741-0cd4bdc-from1` against v54
+`20260930-1607-33a848a-from1`. All 13 seats filled (log lines `BYF1`,
+called `BF2` in that run before a code clash was fixed); 12 scoreable
+(North West Central abolished; Batman scored as Cooper).
+
+| measure (lower is better) | v54 | fill on | change |
+|---|---|---|---|
+| primary abs error, xgb layer, 77 cells, 12 seats (points) | 4.24 | 4.26 | +0.01, SE 0.49 |
+| primary abs error, base_pred, 82 cells (points) | 4.52 | 4.42 | -0.10, SE 0.47 |
+| seat log loss, 1,593 seats (all 22 pairs) | 0.3469 | 0.3389 | -0.0080, SE 0.0080 |
+| published ledger seat log loss, 660 seats | 0.2757 | 0.2746 | -0.0011 |
+| seat log loss, the 8 filled seats with a win probability | 1.834 | 0.251 | Lyne 13.82 -> 1.14 |
+
+Criterion 1 needed the xgb-layer error to fall by more than one SE; it
+rose 0.01. Lyne improved by 4.6 points a cell (Oakeshott 8.5 -> 24.5
+against 47.8, Nationals 49.4 -> 34.6 against 34.4) and is the whole of
+the log-loss gain; 9 of the other 11 seats got worse in the xgb layer
+(Fremantle +1.71, Canterbury +0.97, Vasse +0.87, Mayo +0.76). The pooled
+log-loss gain comes from Lyne plus retraining movement on 376 other seats
+that this rule does not touch directly, so it is not evidence for the rule.
+
+Unacceptable-win clause, as written: the gain is Lyne's independent cell,
+a real fix for Lyne, but not for by-elections a major skipped in general.
+Filling only where a non-major WON would select Lyne alone (every other
+winner of these 13 was a major): n = 1, chosen after seeing results, not
+testable here. `AUSPOL_BYELECTION_FILL` stays "0".

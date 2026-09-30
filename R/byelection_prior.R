@@ -116,7 +116,7 @@ byelection_prior <- function(mat, election_from, election_to, table = NULL, weig
     mat[st, ] <- (1 - weight) * mat[st, ] + weight * new
     applied <- c(applied, st)
   }
-  if (length(filled)) cat(sprintf("BF2  %s: by-election absent major filled in: %s\n", election_to, paste(filled, collapse = "; ")))
+  if (length(filled)) cat(sprintf("BYF1  %s: by-election absent major filled in: %s\n", election_to, paste(filled, collapse = "; ")))
   attr(mat, "byelection") <- list(applied = applied, skipped = skipped, filled = filled, cases = s)
   mat
 }
@@ -135,7 +135,7 @@ byelection_prior <- function(mat, election_from, election_to, table = NULL, weig
   reg <- sub("[0-9]{4}$", "", election_to)
   pol <- tryCatch(suppressMessages(load_polls(reg)), error = function(e) NULL)
   out <- stats::setNames(rep(0, length(parties)), parties)
-  if (is.null(pol)) { cat(sprintf("BF2! %s: no polls readable -- absent major filled at ZERO swing\n", election_to)); return(out) }
+  if (is.null(pol)) { cat(sprintf("BYF1! %s: no polls readable -- absent major filled at ZERO swing\n", election_to)); return(out) }
   d0 <- as.Date(date)
   win <- pol[which(pol$date <= d0 & pol$date > d0 - 90), ]
   pr <- tryCatch(load_prior_results(), error = function(e) NULL)
@@ -149,7 +149,7 @@ byelection_prior <- function(mat, election_from, election_to, table = NULL, weig
     }
     if (!is.finite(then)) then <- mean(mat[, p])
     if (is.finite(now)) out[p] <- now - then
-    else cat(sprintf("BF2! %s: no %s polls in the 90 days to %s -- zero swing\n", election_to, p, format(d0)))
+    else cat(sprintf("BYF1! %s: no %s polls in the 90 days to %s -- zero swing\n", election_to, p, format(d0)))
   }
   out
 }
