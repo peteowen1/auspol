@@ -52,3 +52,20 @@ discarded; the valid run is J4. Production paths were checked: the statewide
 draws (`R/forecast_mode.R:112`) and projection data (`R/projection.R:305`)
 pass `as_of` and are time-forward; the off-by-default NSW exhaustion arm
 (`backtest_candidate_nsw.R:1004`) uses the target's own flows and is noted.
+
+## RESULT (rebuild J4 vs v53, 13:00-13:11; J3 discarded for the flow leak)
+
+**Refused.** Polled seat-elections (357): log loss 0.3497 -> 0.3674 (+0.0177,
+SE 0.0080, better in 108). Guards also fail: pooled log loss 0.3409 ->
+0.3457; primary RMSE 4.1771 -> 4.1973 (+0.170 MSE, SE 0.041). AEF-7 ledger
+0.2722 -> 0.2839.
+
+By election (polled seats): nsw2023 -0.2027 (n 6; Parramatta's winner
+probability 0.111 -> 0.395), fed2019 -0.1223 (n 10), qld2020 -0.0512 (n 3);
+fed2025 +0.0459 (n 150), fed2022 +0.0132 (n 151), sa2026 +0.038 (n 1).
+Weights e.g. nsw2023 w_primary 0.20 / w_twoparty 0.38; fed2025 0.20 / 0.41.
+
+Reading: two-party figures help where polls are few and direct, and hurt
+where MRP releases dominate. A direct-polls-only two-party blend is the
+obvious next arm, but it was suggested by this result, so it needs its own
+prereg.
