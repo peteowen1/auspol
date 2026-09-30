@@ -60,6 +60,14 @@ LOG="output/rebuild-forecasts-logs"; mkdir -p "$LOG"
 if [ -n "${AUSPOL_REBUILD_ONLY:-}" ] && [ "$FROM" -lt 6 ]; then
   echo "!! AUSPOL_REBUILD_ONLY needs AUSPOL_REBUILD_FROM >= 6: stages 1-5 change every backtest"; exit 1
 fi
+# A typo ("nsw, qld", "vict") would otherwise quietly REUSE the harness it
+# meant to run: every name must be one of the six, comma-separated, no spaces.
+if [ -n "${AUSPOL_REBUILD_ONLY:-}" ]; then
+  for _h in ${AUSPOL_REBUILD_ONLY//,/ }; do
+    case "$_h" in fed|wa|vic|nsw|qld|sa) ;; *) echo "!! AUSPOL_REBUILD_ONLY: '$_h' is not one of fed,wa,vic,nsw,qld,sa"; exit 1 ;; esac
+  done
+  case "$AUSPOL_REBUILD_ONLY" in *" "*) echo "!! AUSPOL_REBUILD_ONLY: no spaces, e.g. nsw,qld"; exit 1 ;; esac
+fi
 # SNAPSHOT EVERYTHING THIS RUN WRITES (Pete, 2026-09-30: "shouldn't restoring be
 # instant?"). A marker is touched now; at the end every file under output/ newer
 # than it is copied to output/snapshots/<time>-<git>/, so switching back to an
