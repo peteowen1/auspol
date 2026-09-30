@@ -25,6 +25,19 @@ seat_poll_tpp <- function(election, days = 90) {
                ifelse(a %in% coal & b == "ALP", 100 - s$tcp_a, NA_real_))
   s$alp_tpp <- alp_share
   s$poll_id <- paste(s$seat_name, s$pollster, s$date_raw)
+  # AUSPOL_SEAT_POLL_TPP_SOURCE="direct" (plans/prereg-seat-poll-tpp-direct-2026-09-30.md):
+  # two-party figures from direct polls only, since MRP releases' two-party
+  # figures hurt fed2022/fed2025 in J4. MRP = a release covering >= 20 seats
+  # (the same structural test as seat_poll_shares()) or "MRP" in the name.
+  src <- Sys.getenv("AUSPOL_SEAT_POLL_TPP_SOURCE", "all")
+  if (!src %in% c("all", "direct")) stop("AUSPOL_SEAT_POLL_TPP_SOURCE must be \"all\" or \"direct\", not ", src)
+  if (src == "direct") {
+    rel <- paste(s$pollster, s$date_raw)
+    cover <- tapply(s$seat_name, rel, function(x) length(unique(x)))
+    is_mrp <- cover[rel] >= 20L | grepl("MRP", s$pollster, ignore.case = TRUE)
+    s <- s[which(!is_mrp)]
+    if (!nrow(s)) return(empty)
+  }
   pp <- unique(s[is.finite(s$alp_tpp), list(seat = seat_name, poll_id, alp_tpp)])
   if (!nrow(pp)) return(empty)
   pp[, list(tpp_poll = mean(alp_tpp), n_tpp = .N), by = seat]
