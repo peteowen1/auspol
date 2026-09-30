@@ -108,7 +108,7 @@ byelection_prior <- function(mat, election_from, election_to, table = NULL, weig
       put <- stats::setNames(pmax(0, mat[st, absent] + .byelection_swing(election_from, election_to, rows$date[1], absent, mat, swing)), absent)
       minors <- setdiff(names(new), c("ALP", "LNP"))
       pool <- sum(new[minors])
-      if (sum(put) >= pool) put <- put * pool / sum(put)   # cannot take more than the minors hold
+      if (sum(put) > 0 && sum(put) >= pool) put <- put * pool / sum(put)   # cannot take more than the minors hold
       if (pool > 0) new[minors] <- new[minors] * (pool - sum(put)) / pool
       new[absent] <- put
       filled <- c(filled, sprintf("%s (%s)", st, paste(sprintf("%s %.1f", absent, put), collapse = ", ")))
