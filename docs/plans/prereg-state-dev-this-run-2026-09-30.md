@@ -1,6 +1,6 @@
 # Pre-registration: state-deviation correction applied once, learned from this run (correctness fix)
 
-Written 2026-09-30 16:05, before the rebuild. Ships whatever it scores.
+Written 2026-09-30 15:45, before the rebuild. Ships whatever it scores.
 
 ## The defect (in published v53)
 
@@ -28,3 +28,20 @@ xgb layer only (stage 6), learning from this run's stage-4 as-at predictions
   byte-identical file (no dependence on a previous run).
 - Reported against v53 (the full restore, `output/rebuild-V53full/`): pooled
   seat log loss, primary RMSE, ledger, per federal election.
+
+## RESULT (full rebuild SD, 15:45-16:07) = v54
+
+Hard check held: rerunning the federal stage-1 harness afterwards gave a
+byte-identical file. Against the v53 full restore: pooled seat log loss
+0.3412 -> 0.3469 (per election +0.0034, SE 0.0043); primary RMSE 4.1852 ->
+4.2018; AEF-7 ledger 0.2712 -> 0.2757; accuracy 88.5% -> 88.9%. Ships as
+pre-registered (correctness fix).
+
+About half the log-loss rise is one seat at the floor: fed2010 Lyne, whose
+winner (Rob Oakeshott, IND, 47.8%) we give ~8.5% in BOTH versions; v53's
+simulation happened to land him ~1 win in 10,000, this one 0 in 20,000, and
+the floor (1e-6) turns that into +0.09 on fed2010. Not caused by this fix.
+The real defect: the by-election prior is SKIPPED when a major did not stand
+(Lyne 2008: Labor did not stand), so a by-election winner's vote is ignored;
+Victoria 2026's Prahran (2025 by-election, Labor did not stand, Liberal gain
+from the Greens) is in the same class. Queued, to design with Pete.
