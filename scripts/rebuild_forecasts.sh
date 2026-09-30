@@ -125,7 +125,13 @@ reuse_check() {  # $1 = "harness[:ENV=year]"
   local h="${1%%:*}" yr="" pat f
   [[ "$1" == *=* ]] && yr="${1##*=}"
   case "$h" in nsw|qld) pat="backtest-${h}${yr}-sharedetail-" ;; *) pat="backtest-${h}-sharedetail-" ;; esac
-  f=$(ls -t output/${pat}*.csv 2>/dev/null | grep -v -- '-n[0-9]*-' | head -1)
+  # SA's file names carry no election, so sa2022 and sa2026 would both match
+  # the newest SA file: take the newest whose own pair column is the one wanted.
+  f=""
+  local c
+  for c in $(ls -t output/${pat}*.csv 2>/dev/null | grep -v -- '-n[0-9]*-'); do
+    if [ -z "$yr" ] || [ "$(sed -n 2p "$c" | awk -F, '{print $5}' | tr -d '"\r')" = "${h}${yr}" ]; then f="$c"; break; fi
+  done
   if [ -z "$f" ] || [ ! "$f" -nt output/xgb-primary-asat-predictions.csv ] || ! sed -n 2p "$f" | grep -qE ',1\s*$'; then
     echo "!! AUSPOL_REBUILD_ONLY: cannot reuse ${1}: newest result '${f:-none}' is missing, older than this baseline's as-at predictions, or not an xgb-layer run -- run it too"
     exit 1
