@@ -45,6 +45,7 @@ newest_file <- function(pr, kind) {
   pat <- if (pr %in% names(JURIS_PREFIX)) sprintf("^backtest-%s-%s", JURIS_PREFIX[[pr]], kind)
          else sprintf("^backtest-fed-%s", kind)
   g <- list.files(OUT, pattern = pat, full.names = TRUE)
+  g <- g[!grepl("-n[0-9]+-", basename(g))]   # never a reduced-sims (stage-1) run; see build_aef_comparison.R
   if (!length(g)) return(NULL)
   g[which.max(file.mtime(g))]
 }
@@ -145,6 +146,7 @@ ref <- fread(file.path(OUT, "aef7-final-two-and-tcp-reference.csv"), na.strings 
 
 itg_tcp <- rbindlist(lapply(AEF7, function(pr) {
   g <- list.files(OUT, pattern = sprintf("^backtest-%s-ourtcp-", pr), full.names = TRUE)
+  g <- g[!grepl("-n[0-9]+-", basename(g))]
   if (!length(g)) return(NULL)
   x <- fread(g[which.max(file.mtime(g))], showProgress = FALSE)
   x[, .SD[which.max(freq)], by = seat][, .(pair = pr, seat, itg_tcp_f1 = f1, itg_tcp_f2 = f2,
