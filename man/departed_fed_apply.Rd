@@ -17,5 +17,5 @@ departed_fed_apply(shares, target_election)
 \description{
 A no-op unless \code{AUSPOL_DEPARTED_FED} is "1". In each seat whose sitting
 member left: \verb{share += beta * (fed + k * gap - share)} for the member's
-class, the row rescaled to its previous total.
+class, the other classes giving up the difference in proportion.
 }

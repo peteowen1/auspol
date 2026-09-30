@@ -106,11 +106,34 @@ leader_seat_table <- function(target_election, write = FALSE) {
   tb
 }
 
+#' Move one cell of a share row by `delta`, the rest of the row paying for it
+#'
+#' The cell ends exactly `delta` higher (floored at 0, capped at the row
+#' total), and every other cell is scaled in proportion so the row total is
+#' unchanged. Adding `delta` and then rescaling the WHOLE row instead hands
+#' back `delta * (s + delta) / (tot + delta)` of it: a leader on 45 given +2.45 kept
+#' only +1.32, and v54's leaders still beat the published forecast by 1.72
+#' points (n 52, SE 0.77). plans/prereg-leader-bonus-size-2026-09-30.md.
+#' @param row Named numeric row of shares.
+#' @param j Index of the cell to move.
+#' @param delta Points to add (negative to take away).
+#' @return `row`, same total.
+#' @keywords internal
+.shift_cell <- function(row, j, delta) {
+  tot <- sum(row); s <- row[j]
+  new <- min(tot, max(0, s + delta))
+  rest <- tot - s
+  if (rest > 0) row[-j] <- row[-j] * (tot - new) / rest
+  else if (tot - new > 0) return(row)   # nobody else holds a share to give: leave the row alone
+  row[j] <- new
+  row
+}
+
 #' Add the leader-seat bonus to each party in its own leader's seat
 #'
 #' A no-op unless `AUSPOL_LEADER_SEAT` is "1". The leader's class gains its
-#' role's bonus in the leader's seat; the row is rescaled to its previous
-#' total, so the others give up the points in proportion.
+#' role's bonus in the leader's seat, in full; the other classes give the
+#' points up in proportion ([.shift_cell()]).
 #'
 #' @param shares Matrix of primary shares, rownames = seats, colnames = classes.
 #' @param target_election Label such as `"nsw2023"`.
@@ -134,9 +157,7 @@ leader_seat_apply <- function(shares, target_election) {
   j <- match(tb$party, colnames(shares))
   hit <- which(!is.na(i) & !is.na(j) & is.finite(tb$bonus))
   for (h in hit) {
-    tot <- sum(shares[i[h], ])
-    shares[i[h], j[h]] <- max(0, shares[i[h], j[h]] + tb$bonus[h])
-    shares[i[h], ] <- shares[i[h], ] * tot / sum(shares[i[h], ])
+    shares[i[h], ] <- .shift_cell(shares[i[h], ], j[h], tb$bonus[h])
   }
   miss <- setdiff(seq_len(nrow(tb)), hit)
   cat(sprintf("LS1  %s: leader-seat bonus applied to %s%s\n", target_election,

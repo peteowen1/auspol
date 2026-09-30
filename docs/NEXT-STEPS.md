@@ -5,7 +5,24 @@ it stood before this rewrite: `backlog/journal-2026-09-19-hub-snapshot.md`).
 Decisions: `docs/DECISIONS.md`. Every seat verdict: `docs/SEAT-REGISTRY.md`.
 Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30.
 
-## 2026-09-30 16:30 (read this first)
+## 2026-09-30 18:30 (read this first)
+
+**v55 ready, not published**: leader-seat bonus applied at full size (it was
+half: the row rescale handed it back). Leader gap 1.72 -> 0.29, ledger 0.2757
+-> 0.2761 (AEF 0.2851). Snapshot `output/snapshots/20260930-1807-3c1a1db-from6`
+(on top of v54's stages 1-5, which are in `output/` now). Publish =
+`AUSPOL_REBUILD_FROM=8 AUSPOL_PUBLISH=1`, after the PR merges and on Pete's go.
+REFUSED: by-election fill for an absent major (`AUSPOL_BYELECTION_FILL`, off;
+only Lyne improved). `restore_snapshot.sh` now moves stray later files aside
+for a full snapshot (or `--strict`).
+
+Next, in order:
+1. Departed member: gap-dependent weight (DF was right in big-gap seats only).
+2. Split the federal harness (the 4.8-min stage-6 floor).
+3. Early WA pairs and fed2007/2010 get no leader bonus (as-at predictions
+   start at fed2010): extend the as-at corpus back if the data allows.
+
+## 2026-09-30 16:30
 
 **v54 being shipped** (state-deviation fix; full rebuilds now reproduce).
 Refused this afternoon: joint seat-poll blend (J4), direct-only (J5), anchor

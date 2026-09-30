@@ -105,6 +105,12 @@ newest_win_file <- function(pr) {
        else {
          g <- list.files(OUT, pattern = pat, full.names = TRUE)
          g <- g[!grepl("sharedetail|allprobs|totals", g)]
+         # NEVER a reduced-sims run: stage 1 (and any hand rerun of it) writes
+         # "-n2000-" files at AUSPOL_XGB_PRIMARY=0, i.e. base_pred without the
+         # xgb layer. On 2026-09-30 a hand rerun of federal stage 1 was the
+         # newest fed file and the published ledger scored fed2022/fed2025 on it
+         # (0.2853 instead of 0.2757) for two minutes.
+         g <- g[!grepl("-n[0-9]+-", basename(g))]
          # Newest file FOR THIS PAIR, not newest by prefix: the sa/nsw/qld
          # harnesses write one pair per run under the same "backtest-sa-"
          # name, so after rebuild_forecasts.sh's second wave (sa2022) the

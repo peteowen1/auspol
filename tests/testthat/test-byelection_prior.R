@@ -25,6 +25,20 @@ test_that("byelection_prior replaces only usable seats present in the matrix, an
   expect_identical(unclass(byelection_prior(m, "vic2022", "vic2026", table = tab))[1:6], unclass(m)[1:6])
 })
 
+test_that("fill gives an absent major its prior share plus swing, taken from the non-majors", {
+  m <- matrix(c(30, 30, 40, 40, 30, 30), 2, byrow = TRUE, dimnames = list(c("Prahran", "Elsewhere"), c("LNP", "ALP", "GRN")))
+  r <- byelection_prior(m, "sa2022", "sa2026", table = tab, fill = TRUE, swing = c(ALP = -10))
+  # by-election LNP 50 / GRN 50; ALP 30 - 10 = 20 comes out of GRN alone
+  expect_equal(unname(r["Prahran", ]), c(50, 20, 30))
+  expect_equal(sum(r["Prahran", ]), 100)
+  expect_true("Prahran" %in% attr(r, "byelection")$applied)
+  # off by default: skipped as before
+  expect_match(attr(byelection_prior(m, "sa2022", "sa2026", table = tab, fill = FALSE), "byelection")$skipped, "Prahran", all = FALSE)
+  # a swing larger than the minors hold is capped at what they hold
+  r2 <- byelection_prior(m, "sa2022", "sa2026", table = tab, fill = TRUE, swing = c(ALP = 40))
+  expect_equal(unname(r2["Prahran", ]), c(50, 50, 0))
+})
+
 test_that("byelection_winner_rows names the by-election winner as an elected candidacy row", {
   res <- data.frame(region = "sa", seat = "Black", date = as.Date("2024-11-16"), candidate = c("Alex Dighton", "Amanda Wilson"),
                     party_raw = c("Labor", "Liberal"), votes = c(10248, 7300), pct = c(47.9, 34.1), source = "t", stringsAsFactors = FALSE)

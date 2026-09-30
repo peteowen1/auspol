@@ -26,6 +26,12 @@ not a commit, not a plan file — that it is not happening and why.
 
 ---
 
+## 2026-09-30
+
+| ask | status |
+|---|---|
+| By-election where a major did not stand (Lyne 2008, Prahran 2025): quiz answer *"Fill in the missing party"* | **BUILT, OFF.** Refused 2026-09-30: primary error on the 12 seats +0.01 (SE 0.49); only Lyne improved. Told Pete in a message. `plans/prereg-byelection-fill-2026-09-30.md`. |
+
 ## 2026-09-29 evening
 
 | ask | status |

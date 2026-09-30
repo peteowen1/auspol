@@ -16,6 +16,6 @@ leader_seat_apply(shares, target_election)
 }
 \description{
 A no-op unless \code{AUSPOL_LEADER_SEAT} is "1". The leader's class gains its
-role's bonus in the leader's seat; the row is rescaled to its previous
-total, so the others give up the points in proportion.
+role's bonus in the leader's seat, in full; the other classes give the
+points up in proportion (\code{\link[=.shift_cell]{.shift_cell()}}).
 }

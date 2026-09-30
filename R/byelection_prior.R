@@ -10,7 +10,9 @@
 # the by-election's class shares when BOTH majors stood -- a by-election one
 # major skipped (Prahran 2025, Warrandyte 2023, North West Central 2022, no
 # Labor candidate) is not a usable baseline for a general election where
-# they will stand, and is skipped, saying so.
+# they will stand, and is skipped, saying so -- unless AUSPOL_BYELECTION_FILL
+# is on, which fills the absent major back in (18 of 54 by-elections skip a
+# major, four of them live Victorian seats).
 
 #' Read the by-election results table
 #'
@@ -72,28 +74,84 @@ byelections_between <- function(election_from, election_to, table = NULL) {
 #' @param weight Share of the by-election in the replaced row: 1 replaces it
 #'   outright, 0.5 blends half and half with the general-election prior
 #'   (`AUSPOL_BYELECTION_PRIOR=blend`).
-#' @return `mat` with attribute `byelection` = list(applied, skipped, cases).
+#' @param fill When a major skipped the by-election, use it anyway: the
+#'   absent major gets its row's share moved by the statewide swing to the
+#'   by-election date, taken proportionally from every non-major class
+#'   (`AUSPOL_BYELECTION_FILL=1`; plans/prereg-byelection-fill-2026-09-30.md).
+#' @param swing Optional named override of that swing (party -> points).
+#' @return `mat` with attribute `byelection` = list(applied, skipped, filled, cases).
 #' @export
-byelection_prior <- function(mat, election_from, election_to, table = NULL, weight = 1) {
+byelection_prior <- function(mat, election_from, election_to, table = NULL, weight = 1,
+                             fill = identical(Sys.getenv("AUSPOL_BYELECTION_FILL", "0"), "1"), swing = NULL) {
   s <- byelections_between(election_from, election_to, table = table)
   applied <- character(0); skipped <- character(0)
   if (identical(attr(s, "reason"), "no-table")) {
     attr(mat, "byelection") <- list(applied = applied, skipped = "NO TABLE -- nothing could apply", cases = s)
     return(mat)
   }
+  filled <- character(0)
   if (nrow(s)) for (st in unique(s$seat)) {
     rows <- s[s$seat == st]
-    if (!isTRUE(rows$both_majors[1])) { skipped <- c(skipped, sprintf("%s (a major did not stand)", st)); next }
+    if (!isTRUE(rows$both_majors[1]) && !fill) { skipped <- c(skipped, sprintf("%s (a major did not stand)", st)); next }
     if (!st %in% rownames(mat)) { skipped <- c(skipped, sprintf("%s (no such seat in the prior)", st)); next }
     new <- stats::setNames(rep(0, ncol(mat)), colnames(mat))
     known <- rows$party %in% names(new)
     new[rows$party[known]] <- rows$share[known]
     if (sum(new) <= 0) { skipped <- c(skipped, sprintf("%s (no class matched)", st)); next }
-    mat[st, ] <- (1 - weight) * mat[st, ] + weight * 100 * new / sum(new)
+    new <- 100 * new / sum(new)
+    if (!isTRUE(rows$both_majors[1])) {
+      # A major skipped it: give it back its general-election share moved by
+      # the statewide swing to the by-election date, taken proportionally
+      # from everyone who is not a major (they picked its vote up).
+      absent <- intersect(setdiff(c("ALP", "LNP"), rows$party), colnames(mat))
+      if (!length(absent)) { skipped <- c(skipped, sprintf("%s (absent major not a class of the prior)", st)); next }
+      put <- stats::setNames(pmax(0, mat[st, absent] + .byelection_swing(election_from, election_to, rows$date[1], absent, mat, swing)), absent)
+      minors <- setdiff(names(new), c("ALP", "LNP"))
+      pool <- sum(new[minors])
+      if (sum(put) > 0 && sum(put) >= pool) put <- put * pool / sum(put)   # cannot take more than the minors hold
+      if (pool > 0) new[minors] <- new[minors] * (pool - sum(put)) / pool
+      new[absent] <- put
+      filled <- c(filled, sprintf("%s (%s)", st, paste(sprintf("%s %.1f", absent, put), collapse = ", ")))
+    }
+    mat[st, ] <- (1 - weight) * mat[st, ] + weight * new
     applied <- c(applied, st)
   }
-  attr(mat, "byelection") <- list(applied = applied, skipped = skipped, cases = s)
+  if (length(filled)) cat(sprintf("BYF1  %s: by-election absent major filled in: %s\n", election_to, paste(filled, collapse = "; ")))
+  attr(mat, "byelection") <- list(applied = applied, skipped = skipped, filled = filled, cases = s)
   mat
+}
+
+#' Statewide swing to a party from the last general election to a date
+#'
+#' Mean of the region's polls in the 90 days to `date` minus the party's
+#' statewide share at `election_from` (the anchor's prior results; the
+#' unweighted seat mean of `mat` when that is missing). Zero, said out loud,
+#' when there are no polls to read.
+#' @param swing Optional named numeric override (party -> points), for tests.
+#' @return Named numeric, points, one per party.
+#' @keywords internal
+.byelection_swing <- function(election_from, election_to, date, parties, mat, swing = NULL) {
+  if (!is.null(swing)) return(stats::setNames(unname(swing[parties]), parties))
+  reg <- sub("[0-9]{4}$", "", election_to)
+  pol <- tryCatch(suppressMessages(load_polls(reg)), error = function(e) NULL)
+  out <- stats::setNames(rep(0, length(parties)), parties)
+  if (is.null(pol)) { cat(sprintf("BYF1! %s: no polls readable -- absent major filled at ZERO swing\n", election_to)); return(out) }
+  d0 <- as.Date(date)
+  win <- pol[which(pol$date <= d0 & pol$date > d0 - 90), ]
+  pr <- tryCatch(load_prior_results(), error = function(e) NULL)
+  yr_to <- as.integer(sub("^[a-z]+", "", election_to))
+  for (p in parties) {
+    now <- if (p %in% names(win)) mean(win[[p]], na.rm = TRUE) else NA_real_
+    then <- NA_real_
+    if (!is.null(pr)) {
+      k <- which(pr$year == yr_to & pr$region == reg & pr$party == p)
+      if (length(k)) then <- pr$prev1[k[1]]
+    }
+    if (!is.finite(then)) then <- mean(mat[, p])
+    if (is.finite(now)) out[p] <- now - then
+    else cat(sprintf("BYF1! %s: no %s polls in the 90 days to %s -- zero swing\n", election_to, p, format(d0)))
+  }
+  out
 }
 
 #' The by-election winner as the seat's sitting member
