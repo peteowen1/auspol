@@ -13,10 +13,10 @@ every daily run (PR #78). `check_like_ci.R` skips R CMD check when the package
 files are unchanged (PR #79). Forecast JSON has `p_most_seats_strict` and
 `p_tie_most` from the next daily run.
 
-ITG Politics redesign, second batch (Pete approved batch 1 of 2; ask before
-starting): per-seat 2CP margin and primary quantiles plus swing to flip;
-2022 district results (primaries and final 2CP from the VEC transfers);
-2022 booth results parsed from `external/reference/vec/2022/booths/*.html`.
+ITG Politics redesign data: BOTH BATCHES LIVE on R2 (PR #80, 01 Oct 00:37):
+per-seat `primary_q` / `final_two` in forecast-vic2026.json,
+`web/vic2022-results.json`, `web/vic2022-booths.json`. Not done: booth
+coordinates (VEC venue locations are not on disk).
 
 ## 2026-09-30 18:30
 

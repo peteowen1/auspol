@@ -13,8 +13,9 @@
 #   web/vic2022-booths.json  -- per district, one row per voting centre
 #     (type "venue") and per vote type ("vote_type": postal, early, absent,
 #     provisional, marked as voted) plus the venues' subtotal ("subtotal"):
-#     each candidate's first preferences and two-candidate votes. Venues plus
-#     vote types = the district. No coordinates yet.
+#     each candidate's first preferences and two-candidate votes; venues also
+#     carry venue, address, lat, lon from the VEC's voting-centre file.
+#     Venues plus vote types = the district.
 #
 # Checked against two independent sources before writing: district first
 # preferences against external/elections/vec-2022-vic-firstprefs.csv (by
@@ -127,6 +128,26 @@ bt[, fp_sum := vapply(fp_votes, function(v) sum(unlist(v)), numeric(1))]
 bt[, type := data.table::fifelse(name == "Ordinary votes total", "subtotal",
                   data.table::fifelse(grepl(" votes$", name), "vote_type", "venue"))]
 bt <- bt[!(name == "All Votes votes" & fp_sum == 0)]
+# Venue locations: the VEC's own 2022 voting-centre file (downloaded
+# 2026-10-01 from vec.vic.gov.au/electoral-boundaries/download-boundary-maps,
+# kept raw). A venue serving several districts is listed once with all of them
+# ("Albert Park District, Prahran District"), so it is split per district and
+# matched on district + location name. Every venue must match.
+vcf <- file.path("external", "reference", "vec", "2022", "voting-centre-locations-2022.xlsx")
+vc <- as.data.table(readxl::read_excel(vcf, sheet = "VC Locations"))
+vc <- vc[, .(seat = trimws(sub(" District$", "", trimws(unlist(strsplit(Electorates, ","))))),
+             name = VotingLocationName, venue = VenueName,
+             address = paste0(PhysicalAddressLine1, ", ", PhysicalSuburb), lat = Lat, lon = Long),
+         by = seq_len(nrow(vc))][, seq_len := NULL]
+key_of <- function(st, nm) paste(st, gsub("[^a-z0-9]", "", tolower(nm)))
+vc[, k := key_of(seat, name)]
+stopifnot(anyDuplicated(vc$k) == 0L)
+bt[, k := key_of(seat, name)]
+bt <- merge(bt, vc[, .(k, venue, address, lat, lon)], by = "k", all.x = TRUE)[, k := NULL]
+nloc <- bt[type == "venue", sum(is.finite(lat))]
+cat(sprintf("VR5  venue locations from the VEC file: %d of %d venues matched
+", nloc, bt[type == "venue", .N]))
+stopifnot(nloc == bt[type == "venue", .N])
 chk3 <- bt[type != "subtotal", .(rows = sum(fp_sum)), by = seat][
   , ref := vapply(seat, function(s) sum(res[[s]]$primary$votes), numeric(1))]
 chk4 <- bt[, .(v = sum(fp_sum[type == "venue"]), sub = sum(fp_sum[type == "subtotal"])), by = seat]
@@ -135,7 +156,10 @@ cat(sprintf("VR4  venues + vote types = district formal vote in %d of %d distric
             sum(chk3$rows == chk3$ref), nrow(chk3), sum(chk4$v == chk4$sub), nrow(chk4)))
 stopifnot(all(chk3$rows == chk3$ref), all(chk4$v == chk4$sub))
 write_json(lapply(split(bt, bt$seat), function(d) lapply(seq_len(nrow(d)), function(i)
-  list(booth = d$name[i], type = d$type[i], fp_votes = d$fp_votes[[i]], tcp_votes = if ("tcp_votes" %in% names(d)) d$tcp_votes[[i]] else NULL,
+  list(booth = d$name[i], type = d$type[i],
+       venue = if (d$type[i] == "venue") d$venue[i] else NULL, address = if (d$type[i] == "venue") d$address[i] else NULL,
+       lat = if (d$type[i] == "venue") round(d$lat[i], 5) else NULL, lon = if (d$type[i] == "venue") round(d$lon[i], 5) else NULL,
+       fp_votes = d$fp_votes[[i]], tcp_votes = if ("tcp_votes" %in% names(d)) d$tcp_votes[[i]] else NULL,
        informal = d$informal[i], total = d$total[i]))),
   "web/vic2022-booths.json", auto_unbox = TRUE, digits = NA, na = "null")
 cat(sprintf("VR3  wrote web/vic2022-results.json (%d districts, %.0f KB) and web/vic2022-booths.json (%d rows, %.0f KB)\n",
