@@ -11,9 +11,10 @@ SRC="external/reference/boundaries/SED_2022_AUST_GDA2020.shp"
 OUT="web/vic2026-districts.topojson"
 mkdir -p web
 # Victoria only; drop the ABS's non-geographic codes (no usual address,
-# migratory), which carry no polygon. The ABS name is "Albert Park (Southern
-# Metropolitan)": split into seat and region (upper-house region). Keep code; ~10% of vertices keeps
-# district shapes readable at page scale and the file well under 1 MB.
+# migratory), which carry no polygon. The ABS name reads "Albert Park
+# (Southern Metropolitan)": split it into seat and region (the upper-house
+# region). Keep code. ~10% of vertices keeps district shapes readable at page
+# scale and the file well under 1 MB (219 KB).
 npx -y mapshaper@0.6 "$SRC" \
   -filter "STE_NAME21 == 'Victoria' && !/No usual address|Migratory/i.test(SED_NAME22)" \
   -filter-fields SED_NAME22,SED_CODE22 \

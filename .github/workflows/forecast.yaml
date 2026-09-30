@@ -264,7 +264,7 @@ jobs:
           else
             Rscript scripts/run_all.R 2>&1 | tee run.log || echo "::warning::run_all.R reported validation problems (see run.log); Victorian outputs are checked before publishing"
           fi
-          for f in output/seat-probs-vic-2026.csv output/seat-shares-vic-2026.csv output/seat-sims-full-vic-2026.csv output/forecast-vic2026.json; do
+          for f in output/seat-probs-vic-2026.csv output/seat-shares-vic-2026.csv output/seat-sims-full-vic-2026.csv output/forecast-vic2026.json output/vic-page-data.json; do
             [ -s "$f" ] && [ "$(( $(date +%s) - $(stat -c %Y "$f") ))" -lt 7200 ] || { echo "::error::$f missing or not written by this run -- the Victorian forecast did not complete"; exit 1; }
           done
         shell: bash
