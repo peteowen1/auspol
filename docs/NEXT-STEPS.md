@@ -5,7 +5,23 @@ it stood before this rewrite: `backlog/journal-2026-09-19-hub-snapshot.md`).
 Decisions: `docs/DECISIONS.md`. Every seat verdict: `docs/SEAT-REGISTRY.md`.
 Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30.
 
-## 2026-09-30 09:40 (read this first)
+## 2026-09-30 14:30 (read this first)
+
+**v53 published** (0.2722 vs AEF 0.2851). Refused today after v53: joint
+primary + two-party seat-poll blend (J4) and its direct-polls-only version
+(J5); both help thinly polled state seats (Parramatta 0.11 -> 0.53) and hurt
+fed2025. Pipeline: rebuilds snapshot what they write (`output/snapshots/`,
+restore with `scripts/restore_snapshot.sh`, seconds); stage 6 runs a harness
+queue (9.4 -> 7.3 min at 2 slots, identical output; 3 slots at 6GB+). Seat
+polls now include NSW 2023 (district-polling section).
+
+Next, in order:
+1. Test the fundamentals anchor alone (arm Z bundled it with a rescale).
+2. Departed member: blend toward the same booths' federal vote.
+3. Leader bonus size (v53: leaders out-poll us by more than one bonus).
+4. Split the federal harness in two (the 4.8-min floor on stage 6).
+
+## 2026-09-30 09:40
 
 **PUBLISHED 11:47: v53 = rebuild-V53** (0.2722 vs AEF 0.2851; corrections applied once; PR #73; vic2026 leader bonus +2.45). Superseded: v52 = rebuild-V52 (0.2717 vs AEF 0.2851; RMSE 4.17; PR #72). Was: v52 = rebuild Y2 (demographic correction for Labor + Greens, leader-seat
 bonus, `level_pred` leak fix): RMSE 4.2065 -> 4.1924, ledger 0.2753 ->
