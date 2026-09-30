@@ -5,7 +5,30 @@ it stood before this rewrite: `backlog/journal-2026-09-19-hub-snapshot.md`).
 Decisions: `docs/DECISIONS.md`. Every seat verdict: `docs/SEAT-REGISTRY.md`.
 Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30.
 
-## 2026-09-29 18:00 (read this first)
+## 2026-09-30 09:40 (read this first)
+
+**v52 = rebuild Y2** (demographic correction for Labor + Greens, leader-seat
+bonus, `level_pred` leak fix): RMSE 4.2065 -> 4.1924, ledger 0.2753 ->
+0.2726 (AEF 0.2851), accuracy 88.9%. **Not yet published.** Local `output/`
+was overwritten by the refused arm Z; restore rebuild `rebuild-V52` launched
+09:33 (published config, full). Reviewed (no blockers).
+
+Next, in order:
+1. Score rebuild-V52 against Y2 (it learns its corrections from Z's
+   forecasts.csv, see 3), `check_like_ci.R`, regenerate
+   `docs/MODEL-REGISTRY.md`, PR, merge; Pete publishes
+   (`AUSPOL_REBUILD_FROM=8 AUSPOL_PUBLISH=1 bash scripts/rebuild_forecasts.sh`).
+2. Anchor alone (no proportional rescale): arm Z bundled both and was refused
+   on pooled log loss while winning RMSE and the ledger.
+3. PIPELINE: the demographic, leader-seat and seat-poll corrections learn from
+   the PREVIOUS rebuild's `output/forecasts.csv`, so a rebuild's result depends
+   on the one before it. Make them read this run's as-at predictions.
+4. NSW 2023 seat polls: Wikipedia's "Electoral district polling" section was
+   missed by `fetch_seat_polls.R` (0 rows); AEF used a Parramatta poll (+2.35).
+5. Departed member: blend toward the same booths' federal vote (Parramatta,
+   Wakehurst, Richmond, Mulgrave); prereg on top of v52.
+
+## 2026-09-29 18:00
 
 **Published 18:15: ledger v51** = rebuild R, the statewide time-forward leak fix
 (0.2719 -> 0.2760 vs AEF 0.2851; nsw2023 better, vic2022 and fed2019 worse;

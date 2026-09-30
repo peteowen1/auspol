@@ -119,7 +119,14 @@ leader_seat_table <- function(target_election, write = FALSE) {
 #' @export
 leader_seat_apply <- function(shares, target_election) {
   if (!identical(Sys.getenv("AUSPOL_LEADER_SEAT", "0"), "1")) return(shares)
-  tb <- leader_seat_table(target_election)
+  # Neither sources nor a shipped table (a fresh checkout's first rebuild):
+  # say so and run without the bonus, as the demographic step does, rather
+  # than crash the harness.
+  tb <- tryCatch(leader_seat_table(target_election), error = function(e) {
+    cat(sprintf("LS1! %s: leader-seat bonus SKIPPED -- %s\n", target_election, conditionMessage(e)))
+    NULL
+  })
+  if (is.null(tb)) return(shares)
   if (!nrow(tb)) {
     cat(sprintf("LS1  %s: no leaders with a seat here\n", target_election))
     return(shares)
