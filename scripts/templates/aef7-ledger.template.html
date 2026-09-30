@@ -691,7 +691,7 @@ function overall(){
   const stats = [
     {lab:"Seats", our:n, aef:null, n:null, fmt:v=>v},
     {lab:"Seat log loss", our:mean(SEATS,"ll"), aef:mean(SEATS,"aef_ll"), n:n, lower:true, fmt:v=>v.toFixed(4)},
-    {lab:"Primary RMSE (every party, weighted by actual share)",
+    {lab:"Primary RMSE (same seats, Labor / Coalition / Greens / rest, weighted by actual share)",
      our: pwrmse && pwrmse.our!=null ? pwrmse.our : null,
      aef: pwrmse && pwrmse.aef!=null ? pwrmse.aef : null,
      n: pwrmse ? `${pwrmse.our_n} cells` : null,
