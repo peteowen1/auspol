@@ -1,3 +1,10 @@
+# auspol 0.4.60
+
+**Ledger v55**: the leader-seat bonus is applied at full size. It was added and then the whole row rescaled, which handed about half back (`.shift_cell()`). Leaders' gap to the forecast 1.72 -> 0.29 points; seat log loss 0.2761 against AE Forecasts' 0.2851.
+
+- By-elections a major skipped can be filled back in (`AUSPOL_BYELECTION_FILL`, off: refused, only Lyne improved).
+- The ledger never picks a reduced-sims file; `restore_snapshot.sh` moves aside files a later run wrote.
+
 # auspol 0.4.59
 
 **Ledger v54**: the state-deviation correction runs once (it ran in rebuild stage 1 as well, and learned from the previous rebuild's file), so full rebuilds now reproduce. Seat log loss 0.2757 against AE Forecasts' 0.2851.
