@@ -1,3 +1,12 @@
+# auspol 0.4.59
+
+**Ledger v54**: the state-deviation correction runs once (it ran in rebuild stage 1 as well, and learned from the previous rebuild's file), so full rebuilds now reproduce. Seat log loss 0.2757 against AE Forecasts' 0.2851.
+
+- Rebuilds run harnesses from a queue and snapshot what they write (`scripts/restore_snapshot.sh`).
+- The ledger compares primary votes like for like (same seats, four classes).
+- NSW 2023 seat polls are parsed; the transpose saves its federal booth map.
+- Refused and kept behind flags: joint seat-poll blend, anchor alone, departed-member federal-booth blend.
+
 # auspol 0.4.58
 
 **Ledger v53**: the demographic correction and leader-seat bonus are applied once (v52 applied them in rebuild stage 1 as well, inside `base_pred`), and every post-xgb correction learns from this run's as-at predictions (`current_seat_predictions()`). Seat log loss 0.2722 against AE Forecasts' 0.2851.
