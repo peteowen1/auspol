@@ -52,6 +52,14 @@ FROM="${AUSPOL_REBUILD_FROM:-1}"
 at_least() { [ "$FROM" -le "$1" ]; }
 if [ "$AUSPOL_N_SIMS" -lt 20000 ]; then echo "!! AUSPOL_N_SIMS=$AUSPOL_N_SIMS: exploratory run, its models must not ship"; fi
 LOG="output/rebuild-forecasts-logs"; mkdir -p "$LOG"
+# AUSPOL_REBUILD_ONLY=nsw,qld,sa,vic reruns only those backtests at stage 6
+# and reuses the others' results -- for an arm whose change cannot reach them
+# (the departed-member arms touched nsw/qld/sa/vic and still paid ~7 minutes
+# for fed and wa). Stages 1-5 change every backtest's inputs, so it is only
+# allowed from stage 6; each reused result is checked in reuse_check().
+if [ -n "${AUSPOL_REBUILD_ONLY:-}" ] && [ "$FROM" -lt 6 ]; then
+  echo "!! AUSPOL_REBUILD_ONLY needs AUSPOL_REBUILD_FROM >= 6: stages 1-5 change every backtest"; exit 1
+fi
 # SNAPSHOT EVERYTHING THIS RUN WRITES (Pete, 2026-09-30: "shouldn't restoring be
 # instant?"). A marker is touched now; at the end every file under output/ newer
 # than it is copied to output/snapshots/<time>-<git>/, so switching back to an
@@ -98,8 +106,31 @@ run6() {  # $1 = XGB_PRIMARY value, $2 = log tag -- all 23 pairs across the six 
   local slots=2
   if [ "${fg:-0}" -ge 10 ]; then slots=6; elif [ "${fg:-0}" -ge 6 ]; then slots=3; fi
   echo "   ${fg}GB free -- ${slots} harness slots"
-  run_queue "$1" "$2" "$slots" fed wa vic nsw:AUSPOL_NSW_PAIR=2023 qld:AUSPOL_QLD_PAIR=2024 sa:AUSPOL_SA_PAIR=2026 \
-    qld:AUSPOL_QLD_PAIR=2020 nsw:AUSPOL_NSW_PAIR=2019 sa:AUSPOL_SA_PAIR=2022
+  local specs=(fed wa vic nsw:AUSPOL_NSW_PAIR=2023 qld:AUSPOL_QLD_PAIR=2024 sa:AUSPOL_SA_PAIR=2026
+               qld:AUSPOL_QLD_PAIR=2020 nsw:AUSPOL_NSW_PAIR=2019 sa:AUSPOL_SA_PAIR=2022)
+  if [ -n "${AUSPOL_REBUILD_ONLY:-}" ] && [ "$2" = "s6" ]; then
+    local keep=() s
+    for s in "${specs[@]}"; do
+      if [[ ",${AUSPOL_REBUILD_ONLY}," == *",${s%%:*},"* ]]; then keep+=("$s"); else reuse_check "$s"; fi
+    done
+    specs=("${keep[@]}")
+    echo "   AUSPOL_REBUILD_ONLY=${AUSPOL_REBUILD_ONLY}: running ${#specs[@]} of 9 backtest runs, reusing the rest"
+  fi
+  run_queue "$1" "$2" "$slots" "${specs[@]}"
+}
+# A SKIPPED backtest must already have a full-sims, xgb-layer result newer
+# than this baseline's as-at predictions (stage 4), or stage 7 would pool a
+# result from a different model with nothing to say so. Refuse instead.
+reuse_check() {  # $1 = "harness[:ENV=year]"
+  local h="${1%%:*}" yr="" pat f
+  [[ "$1" == *=* ]] && yr="${1##*=}"
+  case "$h" in nsw|qld) pat="backtest-${h}${yr}-sharedetail-" ;; *) pat="backtest-${h}-sharedetail-" ;; esac
+  f=$(ls -t output/${pat}*.csv 2>/dev/null | grep -v -- '-n[0-9]*-' | head -1)
+  if [ -z "$f" ] || [ ! "$f" -nt output/xgb-primary-asat-predictions.csv ] || ! sed -n 2p "$f" | grep -qE ',1\s*$'; then
+    echo "!! AUSPOL_REBUILD_ONLY: cannot reuse ${1}: newest result '${f:-none}' is missing, older than this baseline's as-at predictions, or not an xgb-layer run -- run it too"
+    exit 1
+  fi
+  echo "   reusing ${1}: $(basename "$f")"
 }
 run_queue() {  # $1 = XGB_PRIMARY, $2 = log tag, $3 = slots, then "harness:ENV=val" specs, longest first
   local xgb="$1" tag="$2" slots="$3"; shift 3
