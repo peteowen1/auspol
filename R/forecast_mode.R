@@ -174,8 +174,12 @@ statewide_draws_as_at <- function(region, year, as_at, election_date, parties,
   # backtests (Pete 2026-09-28: "test live on back test ... use the method
   # that performs best"): the level is the trend endpoints rescaled to 100
   # (the live seat shares are renormalised) and NOT anchored to the
-  # projection (the live anchoring reaches only the draws' spread).
-  # docs/plans/prereg-level-recipe-2026-09-28.md.
+  # projection. docs/plans/prereg-level-recipe-2026-09-28.md.
+  # CAUTION: the live script anchors its level too when
+  # AUSPOL_LIVE_LEVEL_ANCHOR is "1" (scripts/fit_seats_full.R, LL1), so this
+  # recipe matches the live forecast only with that switch at "0". The two
+  # ship together (v56, 2026-09-30); a comment here claiming the live anchor
+  # "reaches only the draws' spread" was stale from 2026-09-28 and misled.
   live_recipe <- identical(Sys.getenv("AUSPOL_LEVEL_RECIPE", "anchored"), "live")
   close_prop <- live_recipe || identical(Sys.getenv("AUSPOL_CLOSE_PROPORTIONAL", "0"), "1")
   if (close_prop && "OTH" %in% fp_parties && "OTH" %in% parties) {

@@ -4,12 +4,14 @@
 \alias{departed_fed_table}
 \title{Departed-member inputs for one target, computed or shipped}
 \usage{
-departed_fed_table(target_election, write = FALSE)
+departed_fed_table(target_election, write = FALSE, mode = .departed_fed_mode())
 }
 \arguments{
 \item{target_election}{Label such as \code{"vic2026"}.}
 
 \item{write}{Write \verb{output/departed-fed-<target>.csv} for the daily run.}
+
+\item{mode}{As \code{\link[=departed_fed_weights]{departed_fed_weights()}}; a shipped table for another mode is refused.}
 }
 \value{
 data.table \code{seat}, \code{class}, \code{prev}, \code{fed}, \code{gap} with attribute \code{w}.

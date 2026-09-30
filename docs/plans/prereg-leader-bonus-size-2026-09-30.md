@@ -70,3 +70,8 @@ row now reads -2.53: Bandt 2025 and Robbie Katter 2024 on n = 8.
 Early WA pairs (2001-2013) and fed2007/2010 get no bonus at all (n 0): the
 as-at predictions start at fed2010, so there are fewer than three earlier
 leader seats to learn from. That is time-forward, not a defect.
+
+**Correction, 20:10 the same day**: the "all 1,593 seats" row above came from
+`forecasts-seats.csv`, which lacked NSW, Queensland and SA (fixed:
+`build_forecasts_table.R`). Over all 22 pairs (`pooled-backtest.csv`, 2,054
+seat-elections): v54 0.3320 -> v55 0.3314 (-0.0006, SE 0.0005). Verdict unchanged.

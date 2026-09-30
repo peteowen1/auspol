@@ -80,3 +80,76 @@ chosen after seeing this, so it is not proposed.
 Caveat: "live" bundles two changes (no anchor AND proportional rescale to
 100), so this did not isolate the anchor. Queued: a new prereg for the anchor
 alone.
+
+## CORRECTION, 2026-09-30 20:40: Z PASSES criterion 1 over all 22 elections (the result above is left unedited)
+
+Criterion 1 asked for pooled seat log loss "over all matched elections". The
+tool used, `compare_rebuilds.R`, read `forecasts-seats.csv`, which until
+20:10 today held NO NSW, Queensland or SA seats (their allprobs files carry
+no `pair` column and `build_forecasts_table.R` dropped them silently). So the
++0.0003 above is over 16 of 22 elections.
+
+Rescored from Y2's and Z's own stage-6 allprobs files, still in `output/`
+(tags `ga91e234x`, `g631395a`; reduced-sims stage-1 files excluded; wa2021
+skipped as the rebuild does). 2,059 seat-elections, 22 elections. Seat log
+loss, lower is better, d = Z - Y2:
+
+| elections | per-election mean d | SE | Z better in |
+|---|---|---|---|
+| the 16 the old table held | +0.0003 | | (reproduces the figure above exactly) |
+| **all 22** | **-0.0031** | 0.0067 | **13 of 22** |
+| the 6 that were missing | nsw2019 -0.0009, nsw2023 -0.0269, qld2020 -0.0120, qld2024 -0.0074, sa2022 -0.0039, sa2026 -0.0218 | | 6 of 6 |
+
+Seat-weighted 0.3617 -> 0.3605. Criterion 2 (primary RMSE 4.1924 -> 4.1653)
+and the ledger guard (0.2726 -> 0.2672) passed as recorded. **Z passes every
+clause as written.** The era split above still holds within the federal and
+WA elections.
+
+What this does NOT do: ship Z. It was measured against v52; v53-v55 changed
+the corrections on top. The live forecast already uses this recipe for its
+level (`R/forecast_mode.R:173`), so the backtests score a different recipe
+from what ships. Next: a full rebuild of v55 with `AUSPOL_LEVEL_RECIPE=live`,
+same criteria, all 22 elections.
+
+## RESULT ON v55, 2026-09-30 21:20: PASSES, ships as v56
+
+Full rebuild with `AUSPOL_LEVEL_RECIPE=live`
+(`output/snapshots/20260930-2115-72387b7-from1`) against v55 (stages 1-5 from
+`20260930-1607-33a848a-from1`, stage 6-8 `20260930-1807-3c1a1db-from6`).
+Scored from each run's own stage-6 allprobs, all 22 elections, 2,059
+seat-elections (the scorer refuses fewer than 22).
+
+| criterion (lower is better) | v55 | live | |
+|---|---|---|---|
+| 1. seat log loss, per-election mean change | | **-0.0024** (SE 0.0071) | better in 12 of 22; seat-weighted 0.3642 -> 0.3627 |
+| 2. primary RMSE, all 11,643 rows (points) | 4.2111 | **4.1617** | |
+| guard: ledger seat log loss (AEF 0.2851) | 0.2761 | 0.2741 | |
+| reported: ledger weighted primary RMSE | 4.926 | 4.953 | slightly worse |
+| reported: ledger accuracy | 88.94% | 88.64% | |
+
+Same era split as Z: better fed2010 -0.032, fed2019 -0.036, nsw2023 -0.026,
+vic2018 -0.019, wa2017 -0.110, wa2025 -0.023, and all four Qld/SA pairs;
+worse fed2007 +0.031, fed2013 +0.025, wa2008 +0.050, wa2013 +0.043, wa2005
++0.023, fed2025 +0.020, nsw2019 +0.014. **Passes both criteria and the
+guard.** `AUSPOL_LEVEL_RECIPE = "live"` in `published_flags.R`, so the
+backtests now score the recipe the live forecast uses.
+
+**Amendment, 21:50 (a visible addition; the result above is unedited).** The
+review gate found that the live forecast has anchored its level since
+2026-09-28 (`AUSPOL_LIVE_LEVEL_ANCHOR = "1"`, `fit_seats_full.R` LL1), so
+"live" in the backtests alone would score a level the live forecast does not
+use. Parity needs `AUSPOL_LIVE_LEVEL_ANCHOR = "0"` with it. Live effect,
+`fit_seats_full.R` twice with `AUSPOL_OUT_SUFFIX` (20,000 sims each, polls to
+2026-09-09): statewide two-party 47.93 anchored -> 48.90 un-anchored (Labor
+first preference +0.97). Expected seats ALP 31.2 -> 34.7, Coalition 36.1 ->
+34.3; P(Labor more seats than the Coalition) 0.39 -> 0.53; Labor majority
+0.05 -> 0.11, Coalition majority 0.18 -> 0.12. HELD for Pete's decision.
+
+**Amendment 2, 22:10.** Second review: with the anchor off, `fit_seats_full.R`
+left `state_mean` at its raw sum (97.93), so One Nation's target and the xgb
+base margin read un-rescaled endpoints while the backtest recipe rescales
+every class. Fixed (`state_mean * 100 / sum` when not anchored). Live v56 as
+it ships (20,000 sims): ALP 33.8, Coalition 33.9, One Nation 15.1, Greens
+5.0 expected seats; P(Labor more seats) 0.51; majorities ALP 0.09,
+Coalition 0.12. v55 for comparison: 31.2 / 36.1 / 15.3 / 5.2; 0.39; 0.05 /
+0.18. Pete chose to ship (quiz, 21:55).

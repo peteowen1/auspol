@@ -1,3 +1,11 @@
+# auspol 0.4.61
+
+**Ledger v56**: the statewide level comes from the poll trend without the fundamentals anchor, in the backtests and the live forecast alike (`AUSPOL_LEVEL_RECIPE = "live"`, `AUSPOL_LIVE_LEVEL_ANCHOR = "0"`). All 22 elections: seat log loss -0.0024, primary RMSE 4.21 -> 4.16; ledger 0.2741 against AE Forecasts' 0.2851. Live Victoria moves from a Coalition lead to a dead heat (Labor 33.8, Coalition 33.9 expected seats).
+
+- `forecasts-seats.csv` now includes NSW, Queensland and SA seats; `compare_rebuilds.R` warns when a state is missing.
+- The reduced-sims floor in `pool_backtests.R` and `build_forecasts_table.R` now fires.
+- Refused and kept off: departed-member blend at full size and with a gap-dependent weight.
+
 # auspol 0.4.60
 
 **Ledger v55**: the leader-seat bonus is applied at full size. It was added and then the whole row rescaled, which handed about half back (`.shift_cell()`). Leaders' gap to the forecast 1.72 -> 0.29 points; seat log loss 0.2761 against AE Forecasts' 0.2851.
