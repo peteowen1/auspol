@@ -271,6 +271,11 @@
 #'   by `surge_party` receives the surge even at zero share in that draw. The
 #'   `surge_floor` still gates the DEFAULT rule (whoever is largest), which is
 #'   what it was written for.
+#' @param keep_fp If `TRUE`, also return `fp_draws`: every draw's primary
+#'   shares after noise and surge, before any preference is distributed,
+#'   normalised to 100 (an `n_sims` x seat x party array; `NA` where every
+#'   party fell to zero). For per-seat ranges on the published page. Draws no
+#'   random number, so every other output is identical with it on or off.
 #' @param engine `"auto"` (default), `"cpp"` or `"r"`. The compiled core
 #'   (`src/seat_sim_core.cpp`, 2026-09-07) reproduces the R loop byte for byte
 #'   -- same random numbers in the same order, sums in long double as R's
@@ -319,7 +324,7 @@
 #'   the final two survivors in each draw, `NA` for a seat uncontested down to
 #'   one party), `tcp_share` (n_sims x nseat, `tcp_winner`'s share of their
 #'   two-candidate-preferred total), `fallback_rate` (share of transfers with
-#'   no conditional cell).
+#'   no conditional cell), and `fp_draws` (`NULL` unless `keep_fp`).
 #'
 #'   `tcp_winner` is the COUNT winner, taken before the `shrink` coin toss
 #'   below can overrule which party is credited in `wins`/`totals` for that
@@ -344,7 +349,8 @@ simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
                                    surge_h = 0, surge_mu = 15.6, surge_sd = 6.1,
                                    surge_parties = NULL, surge_floor = 2,
                                    surge_party = NULL, surge_from_zero = FALSE,
-                                   engine = c("auto", "cpp", "r")) {
+                                   engine = c("auto", "cpp", "r"),
+                                   keep_fp = FALSE) {
   engine <- match.arg(engine)
   # SHRINK MAY BE PER-SEAT. A scalar applies the same rate everywhere and caps
   # EVERY seat at 1 - shrink/2 -- 0.9598 at shrink = 0.10, with no seat above
@@ -932,6 +938,10 @@ simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
                                dimnames = list(NULL, seat_names))
   tcp_share <- base::matrix(NA_real_, nrow = n_sims, ncol = nseat,
                             dimnames = list(NULL, seat_names))
+  # keep_fp: every draw's primaries after noise and surge, before any
+  # preference is distributed, normalised to 100 (n_sims x seat x party).
+  # Records only -- no random number is drawn for it.
+  fp_draws <- if (isTRUE(keep_fp)) array(NA_real_, c(n_sims, nseat, K), dimnames = list(NULL, seat_names, parties)) else NULL
   n_tx <- 0L; n_fb <- 0L
 
   if (!is.null(party_draws)) {
@@ -1169,10 +1179,11 @@ simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
                           pool_mat, !is.null(pool_pw), pw_mat,
                           as.numeric(FLOW_SD_BY), as.numeric(smooth), as.numeric(fallback_smooth),
                           as.numeric(shrink), ov_seat, ov_key, ov_mat,
-                          as.numeric(fallback_flow_sd), as.numeric(ov_sd))
+                          as.numeric(fallback_flow_sd), as.numeric(ov_sd), isTRUE(keep_fp))
     wins[] <- core$wins; totals[] <- core$totals
     tcp_winner[] <- parties[core$tcp_w]; tcp_runnerup[] <- parties[core$tcp_r]
     tcp_share[] <- core$tcp_share
+    if (isTRUE(keep_fp)) fp_draws[] <- core$fp
     n_fb <- as.integer(core$n_fb); n_tx <- as.integer(core$n_tx)
     n_recipient_fb_draw <- as.integer(core$n_recipient_fb_draw)
   } else {
@@ -1258,6 +1269,7 @@ simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
           }
         }
       }
+      if (!is.null(fp_draws)) { .fs <- sum(v); if (.fs > 0) fp_draws[s, i, ] <- 100 * v / .fs }
       alive <- which(v > 0)
       while (length(alive) > 2L) {
         from <- alive[which.min(v[alive])]
@@ -1415,7 +1427,8 @@ simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
        fallback_rate = if (n_tx) n_fb / n_tx else NA_real_,
        surge_recipient_fallback = n_recipient_fb,
        surge_recipient_fallback_draws = n_recipient_fb_draw,
-       engine = engine)
+       engine = engine,
+       fp_draws = fp_draws)
 }
 
 #' Per-class slope multipliers for [simulate_seat_contests()]

@@ -47,6 +47,31 @@ if (!is.null(cands) && !"party" %in% names(cands)) {
 reg_f <- file.path("external", "reference", "vec", "vic-district-regions.csv")
 REG <- if (file.exists(reg_f)) fread(reg_f, showProgress = FALSE) else NULL
 region_of <- function(s) if (is.null(REG)) NULL else { r <- REG[district == s]$region; if (length(r)) r[1] else NULL }
+# Per-seat ranges from fit_seats_full.R's own draws (2026-09-30): each party's
+# primary quantiles and the likeliest final two. Optional: a run without them
+# (an older fit) publishes the seat without these fields, and says so.
+prim_f <- file.path(OUT, sprintf("seat-primary-ranges-vic-2026%s.csv", SUF))
+tcp_f  <- file.path(OUT, sprintf("seat-tcp-ranges-vic-2026%s.csv", SUF))
+PRIM <- if (file.exists(prim_f)) fread(prim_f, showProgress = FALSE) else NULL
+TCPR <- if (file.exists(tcp_f)) fread(tcp_f, showProgress = FALSE) else NULL
+if (is.null(PRIM) || is.null(TCPR)) cat("FJ1! per-seat range files missing -- seats published WITHOUT primary_q / final_two
+")
+.qcols <- c("q05", "q25", "q50", "q75", "q95")
+prim_q <- function(st, pt) {
+  if (is.null(PRIM)) return(NULL)
+  r <- PRIM[which(PRIM$seat == st & PRIM$party == pt)]
+  if (!nrow(r)) return(NULL)
+  as.list(unlist(r[1, .qcols, with = FALSE]))
+}
+final_two <- function(st) {
+  if (is.null(TCPR)) return(NULL)
+  r <- TCPR[which(TCPR$seat == st)]
+  if (!nrow(r)) return(NULL)
+  list(leader = r$leader[1], other = r$other[1], p_pair = r$p_pair[1],
+       p_leader_wins_pair = r$p_leader_wins_pair[1],
+       leader_tcp = as.list(setNames(unlist(r[1, paste0("leader_tcp_", .qcols), with = FALSE]), .qcols)),
+       swing_to_flip = r$swing_to_flip[1])
+}
 # per-seat block
 seat_rows <- lapply(shares$seat, function(s) {
   pr <- probs[seat == s]; sh <- shares[seat == s]
@@ -56,11 +81,13 @@ seat_rows <- lapply(shares$seat, function(s) {
     list(party = p,
          win_prob = round(if (p %in% pr$party) pr[party == p]$prob else 0, 4),
          primary = round(sh[[p]], 2),
+         primary_q = prim_q(s, p),
          candidate = if (length(nm)) nm[1] else NULL,
          sitting = if (!is.null(cands) && length(nm)) isTRUE(cands[seat == s & party == p]$sitting[1]) else NULL)
   })
   ps <- ps[order(-vapply(ps, `[[`, numeric(1), "win_prob"))]
-  list(seat = s, region = region_of(s), favourite = ps[[1]]$party, favourite_prob = ps[[1]]$win_prob, parties = ps)
+  list(seat = s, region = region_of(s), favourite = ps[[1]]$party, favourite_prob = ps[[1]]$win_prob,
+       final_two = final_two(s), parties = ps)
 })
 
 # chamber block from the simulation totals
