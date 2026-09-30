@@ -35,7 +35,9 @@ NULL
 #'   how much of it comes out of the Coalition rather than the minors is an
 #'   empirical question, not an identity.
 #' @param exclude_pair The federal pair being predicted; excluded from the fit.
-#' @param oof,dev Source tables.
+#' @param oof Legacy path to a residual table; NULL (default) uses this
+#'   rebuild's as-at predictions ([.sd_training()]).
+#' @param dev Source table.
 #' @param shuffle Control seed. 0 is the real fit; any other integer permutes
 #'   which state each seat belongs to, within its election, destroying the
 #'   seat-to-state link while leaving every marginal and the whole procedure
@@ -43,11 +45,11 @@ NULL
 #' @return Single coefficient, or `NA_real_` when there is too little to fit.
 #' @export
 state_deviation_b <- function(cls, exclude_pair,
-                              oof = out_path("xgb-primary-v6-oof-predictions.csv"),
+                              oof = NULL,
                               dev = out_path("state-deviation-features.csv"),
                               shuffle = 0L) {
-  if (!file.exists(oof) || !file.exists(dev)) return(NA_real_)
-  O <- data.table::fread(oof, showProgress = FALSE)
+  O <- .sd_training(oof)
+  if (is.null(O) || !file.exists(dev)) return(NA_real_)
   D <- data.table::fread(dev, showProgress = FALSE)
   D <- .sd_shuffle(D, shuffle)
   .cls <- cls; .ex <- exclude_pair
@@ -91,13 +93,13 @@ state_deviation_b <- function(cls, exclude_pair,
 #'   little to fit.
 #' @export
 state_deviation_b2 <- function(cls, exclude_pair,
-                               oof = out_path("xgb-primary-v6-oof-predictions.csv"),
+                               oof = NULL,
                                dev = out_path("state-deviation-features.csv"),
                                shuffle = 0L,
                                lambdas = c(1, 3, 10, 30, 100, 300)) {
   na2 <- c(b_poll = NA_real_, b_elec = NA_real_, lambda = NA_real_, n = NA_real_)
-  if (!file.exists(oof) || !file.exists(dev)) return(na2)
-  O <- data.table::fread(oof, showProgress = FALSE)
+  O <- .sd_training(oof)
+  if (is.null(O) || !file.exists(dev)) return(na2)
   D <- data.table::fread(dev, showProgress = FALSE)
   D <- .sd_shuffle(D, shuffle)
   .cls <- cls; .ex <- exclude_pair
@@ -300,4 +302,25 @@ state_deviation_apply <- function(shares, pair, classes = c("ALP", "LNP"),
               paste(applied, collapse = ", "),
               paste(sprintf("%s poll %+.2f elec %+.2f", ps$state, ps$x1, ps$x2), collapse = "; ")))
   shares
+}
+
+#' Training table for the state-deviation fits: THIS rebuild's as-at predictions
+#'
+#' Was `output/xgb-primary-v6-oof-predictions.csv`, written at rebuild stage 3,
+#' so stage 1 read the PREVIOUS rebuild's file (full rebuilds did not reproduce:
+#' fed2010-2025 base_pred moved between identical runs), and it is leave-one-
+#' pair-out, so earlier elections' residuals came from models trained partly on
+#' later elections. Now [current_seat_predictions()]: stage-4 as-at
+#' predictions, time-forward, from this run. plans/prereg-state-dev-this-run-2026-09-30.md.
+#' @param oof A path (legacy) or NULL for this run's as-at predictions.
+#' @return data.table `pair`, `seat`, `party`, `actual_share`, `xgb_pred`, or NULL.
+#' @keywords internal
+.sd_training <- function(oof = NULL) {
+  if (!is.null(oof)) {
+    if (!file.exists(oof)) return(NULL)
+    return(data.table::fread(oof, showProgress = FALSE))
+  }
+  x <- current_seat_predictions()
+  if (is.null(x)) return(NULL)
+  x[, list(pair = election, seat, party, actual_share, xgb_pred = xgb_pred_seat)]
 }
