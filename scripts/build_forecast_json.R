@@ -66,10 +66,17 @@ seat_rows <- lapply(shares$seat, function(s) {
 # chamber block from the simulation totals
 q <- function(x) as.list(round(stats::quantile(x, c(0.05, 0.25, 0.5, 0.75, 0.95)), 1))
 row_max <- do.call(pmax, as.list(sims[, ..parties]))   # once, not once per party
+# p_most_seats counts a tie for most seats for EVERY tied party, so the
+# parties' values sum past 1 (by about the tie share). The ITG page shows the
+# majors side by side, where readers add them up: p_most_seats_strict counts
+# only outright leads, and p_tie_most (chamber level) is the rest.
+n_at_max <- Reduce(`+`, lapply(parties, function(p) sims[[p]] == row_max))
 chamber <- lapply(parties, function(p) list(party = p, expected = round(mean(sims[[p]]), 2),
                                             p_majority = round(mean(sims[[p]] >= majority), 4),
                                             p_most_seats = round(mean(sims[[p]] == row_max), 4),
+                                            p_most_seats_strict = round(mean(sims[[p]] == row_max & n_at_max == 1L), 4),
                                             quantiles = q(sims[[p]])))
+p_tie_most <- round(mean(n_at_max > 1L), 4)
 names(chamber) <- parties
 hung <- mean(row_max < majority)
 maj_l <- if ("LNP" %in% parties) sims$LNP else 0; maj_a <- if ("ALP" %in% parties) sims$ALP else 0
@@ -93,14 +100,14 @@ doc <- list(
                      sha = if (nzchar(Sys.getenv("AUSPOL_ANCHOR_SHA"))) Sys.getenv("AUSPOL_ANCHOR_SHA") else NULL),
   chamber_seats = CHAMBER, seats_simulated = n_seats, seats_not_simulated = I(excluded),   # I(): always a JSON array, even for one seat
   majority = majority, n_sims = nrow(sims),
-  chamber = list(parties = chamber, p_hung = round(hung, 4), p_onp_balance_of_power = round(onp_bop, 4)),
+  chamber = list(parties = chamber, p_hung = round(hung, 4), p_onp_balance_of_power = round(onp_bop, 4), p_tie_most = p_tie_most),
   seats = seat_rows)
-out_f <- file.path(OUT, "forecast-vic2026.json")
+out_f <- file.path(OUT, sprintf("forecast-vic2026%s.json", SUF))   # a suffixed (diagnostic) run never overwrites the published name
 writeLines(jsonlite::toJSON(doc, auto_unbox = TRUE, null = "null", digits = 4), out_f)
 cat(sprintf("FJ2  wrote %s (%.0f KB)\n", out_f, file.size(out_f) / 1024))
 
 # history: one row per build
-hist_f <- file.path(OUT, "forecast-history.csv")
+hist_f <- file.path(OUT, sprintf("forecast-history%s.csv", SUF))
 row <- data.table(built_at = doc$built_at, git_sha = gitsha, p_hung = round(hung, 4), p_onp_bop = round(onp_bop, 4))
 for (p in parties) { row[[paste0("exp_", p)]] <- round(mean(sims[[p]]), 2); row[[paste0("pmaj_", p)]] <- round(mean(sims[[p]] >= majority), 4) }
 # built_at read as text: left to guess, fread parses it as a datetime and
