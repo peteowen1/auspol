@@ -59,7 +59,13 @@ test_that("state_deviation_apply mode 2 leaves a seat with neither source untouc
   # made this test pass for the wrong reason until 2026-09-20).
   withr::local_options(list(auspol.root = td))
   file.create(file.path(td, "DESCRIPTION"))   # pkg_root() only honours a root that carries one
-  dir.create(file.path(td, "output")); file.copy(f_oof, file.path(td, "output", "xgb-primary-v6-oof-predictions.csv"))
+  # Since 2026-09-30 the fit learns from THIS rebuild's as-at predictions
+  # (current_seat_predictions() -> output/xgb-primary-asat-predictions.csv),
+  # which rescales each seat to 100: give every seat a second class so ALP's 30
+  # stays 30 (plans/prereg-state-dev-this-run-2026-09-30.md).
+  asat <- rbind(oof[, .(pair, seat, party, base_pred = xgb_pred, actual_share, xgb_pred)],
+                oof[, .(pair, seat, party = "LNP", base_pred = 70, actual_share = 100 - actual_share, xgb_pred = 70)])
+  dir.create(file.path(td, "output")); data.table::fwrite(asat, file.path(td, "output", "xgb-primary-asat-predictions.csv"))
   out <- state_deviation_apply(sh, "fed2022", classes = "ALP", dev = f_dev, mode = 2)
   expect_equal(unname(out["C", ]), unname(sh["C", ]))          # tas: no poll, no fresh election
   expect_gt(out["A", "ALP"], sh["A", "ALP"])                   # wa: both terms positive
