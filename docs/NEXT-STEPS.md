@@ -7,14 +7,14 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30.
 
 ## 2026-09-30 09:40 (read this first)
 
-**PUBLISHED 10:48: v52 = rebuild-V52** (0.2717 vs AEF 0.2851; RMSE 4.17; PR #72). Was: v52 = rebuild Y2 (demographic correction for Labor + Greens, leader-seat
+**PUBLISHED 11:47: v53 = rebuild-V53** (0.2722 vs AEF 0.2851; corrections applied once; PR #73; vic2026 leader bonus +2.45). Superseded: v52 = rebuild-V52 (0.2717 vs AEF 0.2851; RMSE 4.17; PR #72). Was: v52 = rebuild Y2 (demographic correction for Labor + Greens, leader-seat
 bonus, `level_pred` leak fix): RMSE 4.2065 -> 4.1924, ledger 0.2753 ->
 0.2726 (AEF 0.2851), accuracy 88.9%. **Not yet published.** Local `output/`
 was overwritten by the refused arm Z; restore rebuild `rebuild-V52` launched
 09:33 (published config, full). Reviewed (no blockers).
 
 Next, in order:
-1. Score rebuild-V52 against Y2 (it learns its corrections from Z's
+1. DONE (v52 then v53 published). Next: fix the ledger's weighted primary RMSE to compare common rows (it pairs 4,620 of ours with 3,578 of AEF's; like for like it is 4.90 vs 5.63). Was: score rebuild-V52 against Y2 (it learns its corrections from Z's
    forecasts.csv, see 3), `check_like_ci.R`, regenerate
    `docs/MODEL-REGISTRY.md`, PR, merge; Pete publishes
    (`AUSPOL_REBUILD_FROM=8 AUSPOL_PUBLISH=1 bash scripts/rebuild_forecasts.sh`).
