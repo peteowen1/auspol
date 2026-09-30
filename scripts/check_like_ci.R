@@ -152,8 +152,14 @@ cat("OK: no fitting script's default disagrees with what published_flags.R ships
     any(vapply(ign, function(re) any(grepl(re, anc, perl = TRUE, ignore.case = TRUE)), logical(1)))
   }, logical(1))
   keep <- sort(f[!ignored])
+  # Installed versions of everything DESCRIPTION depends on: an upgraded
+  # dependency can change the check's result with no file here changing.
+  d <- read.dcf("DESCRIPTION", fields = c("Depends", "Imports", "Suggests", "LinkingTo"))
+  deps <- unique(trimws(sub("\\(.*$", "", unlist(strsplit(paste(d[!is.na(d)], collapse = ","), ",")))))
+  deps <- sort(setdiff(deps[nzchar(deps)], "R"))
+  ver <- vapply(deps, function(p) tryCatch(as.character(utils::packageVersion(p)), error = function(e) "missing"), character(1))
   tf <- tempfile(); on.exit(unlink(tf))
-  writeLines(c(R.version.string, paste(keep, unname(tools::md5sum(keep)))), tf)
+  writeLines(c(R.version.string, paste(deps, ver), paste(keep, unname(tools::md5sum(keep)))), tf)
   list(hash = unname(tools::md5sum(tf)), n = length(keep))
 }
 .fp_file <- file.path("output", ".check-like-ci-last-clean.txt")
