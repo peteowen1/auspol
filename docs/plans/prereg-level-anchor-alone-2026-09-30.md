@@ -26,3 +26,18 @@ feeds stage-1 base_pred and level_pred)
 Same rule as arm Z, so the two are comparable: if this passes where Z failed,
 the rescale was the harm; if it fails the same way, the anchor itself helps
 early elections.
+
+## RESULT (full rebuild ZA, 14:43-15:01, three harness slots)
+
+**Refused: criterion 2 fails.** Pooled log loss per-election mean -0.0001
+(SE 0.0100, better in 5 of 16; overall 0.3409 -> 0.3419): a tie. Primary
+RMSE 4.1771 -> 4.1811 (worse). AEF-7 ledger 0.2722 -> 0.2730 (guard holds).
+Majors' statewide level error unchanged (2.71); nsw2023 Labor 32.7 -> 35.4
+(actual 37.0).
+
+Same era split as arm Z: better fed2019 -0.048, vic2018 -0.054, wa2017
+-0.110; worse fed2007 +0.031, fed2013 +0.016, fed2016 +0.017, wa2005 +0.023,
+wa2008 +0.050, wa2013 +0.037, fed2025 +0.019. So the proportional rescale was
+not the cause: the anchor itself helps the older elections (plausibly where
+polls were worse) and costs the recent ones. Anchoring stays. Next idea, its
+own prereg: an anchor weight that depends on the polls' own track record.
