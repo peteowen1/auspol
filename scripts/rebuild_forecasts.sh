@@ -52,6 +52,11 @@ FROM="${AUSPOL_REBUILD_FROM:-1}"
 at_least() { [ "$FROM" -le "$1" ]; }
 if [ "$AUSPOL_N_SIMS" -lt 20000 ]; then echo "!! AUSPOL_N_SIMS=$AUSPOL_N_SIMS: exploratory run, its models must not ship"; fi
 LOG="output/rebuild-forecasts-logs"; mkdir -p "$LOG"
+# SNAPSHOT EVERYTHING THIS RUN WRITES (Pete, 2026-09-30: "shouldn't restoring be
+# instant?"). A marker is touched now; at the end every file under output/ newer
+# than it is copied to output/snapshots/<time>-<git>/, so switching back to an
+# earlier run is scripts/restore_snapshot.sh (a copy), not a 10-minute rebuild.
+SNAP_MARK="output/.rebuild-start"; touch "$SNAP_MARK"
 declare -A T0 TT
 stage() { T0[$1]=$(date +%s); echo "=== [$1] $(date +%H:%M:%S) ==="; }
 done_stage() { TT[$1]=$(( $(date +%s) - T0[$1] )); echo "=== [$1] done in ${TT[$1]}s ==="; }
@@ -142,3 +147,10 @@ grep -h "^XA4  pooled\|^FT1\|^AEFL5" "$LOG/s4_asat.log" "$LOG/s7_forecasts.log" 
 echo; echo "=== input-switch coverage (stage 6 logs) ==="
 grep -h "^HTV0!\|^HTV9!\|^BF0b!\|^BF0o!\|^BF0m!\|SKIPPED" "$LOG"/s6_*.log 2>/dev/null | sort | uniq -c | sort -rn | head -20 || true
 grep -h "^HTV1\|^BF0b " "$LOG"/s6_*.log 2>/dev/null | sed "s/ (.*//" | sort | uniq -c | head -30 || true
+
+# Snapshot: every file this run wrote (see SNAP_MARK above), logs included.
+SNAP="output/snapshots/$(date +%Y%m%d-%H%M)-$(git rev-parse --short HEAD)-from${FROM}"
+mkdir -p "$SNAP"
+find output -type f -newer "$SNAP_MARK" -not -path "output/snapshots/*" -print0 |
+  while IFS= read -r -d '' f; do mkdir -p "$SNAP/$(dirname "${f#output/}")"; cp -p "$f" "$SNAP/${f#output/}"; done
+echo "SNAP1 wrote $(find "$SNAP" -type f | wc -l) files ($(du -sh "$SNAP" | cut -f1)) to $SNAP -- restore with: bash scripts/restore_snapshot.sh $SNAP"
