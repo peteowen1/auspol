@@ -144,3 +144,12 @@ use. Parity needs `AUSPOL_LIVE_LEVEL_ANCHOR = "0"` with it. Live effect,
 first preference +0.97). Expected seats ALP 31.2 -> 34.7, Coalition 36.1 ->
 34.3; P(Labor more seats than the Coalition) 0.39 -> 0.53; Labor majority
 0.05 -> 0.11, Coalition majority 0.18 -> 0.12. HELD for Pete's decision.
+
+**Amendment 2, 22:10.** Second review: with the anchor off, `fit_seats_full.R`
+left `state_mean` at its raw sum (97.93), so One Nation's target and the xgb
+base margin read un-rescaled endpoints while the backtest recipe rescales
+every class. Fixed (`state_mean * 100 / sum` when not anchored). Live v56 as
+it ships (20,000 sims): ALP 33.8, Coalition 33.9, One Nation 15.1, Greens
+5.0 expected seats; P(Labor more seats) 0.51; majorities ALP 0.09,
+Coalition 0.12. v55 for comparison: 31.2 / 36.1 / 15.3 / 5.2; 0.39; 0.05 /
+0.18. Pete chose to ship (quiz, 21:55).

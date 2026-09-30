@@ -554,6 +554,12 @@ if (LEVEL_ANCHOR && "OTH" %in% names(state_mean)) {
   } else {
     state_mean[["OTH"]] <- max(0.1, 100 - sum(state_mean[setdiff(names(state_mean), "OTH")]))
   }
+} else if (!LEVEL_ANCHOR) {
+  # Un-anchored (v56): the backtests' "live" recipe rescales EVERY fitted class
+  # by 100 / sum (R/forecast_mode.R, close_prop). Do the same here, or One
+  # Nation's target and the xgb base margin below read the raw endpoints
+  # (sum 97.93) while the backtests read them rescaled. Review gate 2026-09-30.
+  state_mean <- state_mean * 100 / sum(state_mean)
 }
 ll_before <- ll_implied(state_mean * 100 / sum(state_mean))
 ll_delta <- pj$mean - ll_before
