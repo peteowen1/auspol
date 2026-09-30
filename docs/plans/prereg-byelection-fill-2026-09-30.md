@@ -98,3 +98,9 @@ a real fix for Lyne, but not for by-elections a major skipped in general.
 Filling only where a non-major WON would select Lyne alone (every other
 winner of these 13 was a major): n = 1, chosen after seeing results, not
 testable here. `AUSPOL_BYELECTION_FILL` stays "0".
+
+**Correction, 20:10 the same day**: the "1,593 seats" and "8 filled seats with
+a win probability" rows came from `forecasts-seats.csv`, which lacked NSW,
+Queensland and SA (the four NSW filled seats were missing). The refusal rests
+on criterion 1 (primary error), which read the complete share files, so it
+stands.

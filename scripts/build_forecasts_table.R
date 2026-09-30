@@ -81,12 +81,35 @@ cat(sprintf("FT1  AEF-7 subset: %d rows | primary RMSE WEIGHTED by actual share:
 
 # ---- seat-level win probabilities: newest allprobs file per pair ------------
 files <- list.files(OUT, pattern = "^backtest-.*allprobs.*[.]csv$", full.names = TRUE)
+# The NSW, Queensland and SA harnesses write allprobs WITHOUT a pair column,
+# and until 2026-09-30 every such file was dropped here silently: this table
+# held federal, Victorian and WA seats only, so a change acting in NSW/QLD/SA
+# scored as "no seat moved". The pair comes from the sibling sharedetail
+# (same -a...-g... suffix), which always carries it (the SA file name has no
+# election in it); a file with neither is dropped, loudly.
+.pair_from_sibling <- function(f) {
+  suf <- regmatches(basename(f), regexpr("-a[0-9a-f]+-g[0-9a-f]+x?[.]csv$", basename(f)))
+  if (!length(suf)) return(NA_character_)
+  sib <- list.files(dirname(f), pattern = paste0("sharedetail.*", gsub("[.]", "[.]", suf), "$"), full.names = TRUE)
+  if (length(sib) != 1L) return(NA_character_)
+  p <- unique(fread(sib, select = "pair", showProgress = FALSE)$pair)
+  if (length(p) == 1L) as.character(p) else NA_character_
+}
+.dropped <- character(0)
 rows <- rbindlist(lapply(files, function(f) {
   d <- tryCatch(fread(f, showProgress = FALSE), error = function(e) NULL)
-  if (is.null(d) || !nrow(d) || !all(c("seat", "party", "prob", "actual", "pair") %in% names(d))) return(NULL)
+  if (is.null(d) || !nrow(d)) return(NULL)
+  if (!"pair" %in% names(d)) {
+    p <- .pair_from_sibling(f)
+    if (is.na(p)) { .dropped <<- c(.dropped, basename(f)); return(NULL) }
+    d[, pair := p]
+  }
+  if (!all(c("seat", "party", "prob", "actual", "pair") %in% names(d))) { .dropped <<- c(.dropped, basename(f)); return(NULL) }
   d[, .(file = f, mtime = file.mtime(f), pair = as.character(pair), seat, party, win_prob = prob,
         actual_winner = actual)]
 }), fill = TRUE)
+if (length(.dropped)) cat(sprintf("FT1! %d allprobs file(s) dropped (no pair column and no single-pair sibling sharedetail, or missing columns): %s\n",
+                                  length(.dropped), paste(head(.dropped, 10), collapse = ", ")))
 # PAIRS DELIBERATELY NOT SCORED THIS RUN (AUSPOL_SKIP_PAIRS, comma-separated).
 # A harness that skips a pair writes nothing for it, so "newest file per pair"
 # would silently pick up a STALE run of a different vintage -- wa2021 under

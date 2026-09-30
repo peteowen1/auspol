@@ -50,3 +50,42 @@ and sa2026 while qld2020 (the thin-evidence, clamped case) gets worse by
 more than it did under DF (3.30 -> 4.39), say so plainly in the result, and
 the clamp at thin evidence is the next thing to test, not a reason to tune
 B now.
+
+## RESULT, 2026-09-30 20:10: BOTH ARMS REFUSED (primary fails), flag stays "0"
+
+Arm A `output/snapshots/20260930-1916-ece9a1f-from6`, arm B
+`20260930-1959-ece9a1f-from6`, each against v55 (`20260930-1807-3c1a1db-from6`).
+
+Departed seats' incumbent-class primary, mean abs error (points, n 77, lower
+is better):
+
+| election | n | v55 | A: one weight, full size | B: weight by gap |
+|---|---|---|---|---|
+| nsw2023 | 14 | 4.45 | 3.94 | 4.04 |
+| qld2020 | 6 | 3.19 | 6.06 | 10.54 |
+| qld2024 | 9 | 5.21 | 4.77 | 4.32 |
+| sa2026 | 9 | 1.72 | 2.79 | 3.38 |
+| vic2022 | 15 | 3.61 | 3.49 | 3.47 |
+| all (nsw2019, sa2022, vic2018 unmoved: no earlier evidence) | 77 | 4.613 | 4.794 (+0.18, SE 0.19) | 5.174 (+0.56, SE 0.29) |
+
+Pooled seat log loss, 22 pairs, 2,054 seat-elections (`pooled-backtest.csv`):
+v55 0.3314; A 0.3322 (+0.0008, SE 0.0024); B 0.3360 (+0.0046, SE 0.0052).
+Ledger 0.2761 -> A 0.2725, B 0.2749.
+
+Both help nsw2023, qld2024 and vic2022 (Mulgrave qld2024 35.4 -> 32.9 in B,
+actual 24.2; Parramatta 49.1 -> 47.4, actual 35.5) and hurt qld2020 and sa2026.
+The unacceptable-win clause fired as written: B's qld2020 went 3.19 -> 10.54,
+far worse than DF's 4.39, because two earlier elections fit b1 2.04 and k 0
+and clamp every big-gap seat to a full move to the federal vote. sa2026 got
+worse in both arms with 68 earlier cells behind the weight, so thin evidence
+is not the whole story.
+
+Scoring defect found while doing this (fixed in the same commit):
+`output/forecasts-seats.csv` had held only federal, Victorian and WA seats,
+because the NSW, Queensland and SA harnesses write allprobs without a `pair`
+column and `build_forecasts_table.R` dropped them silently. My "all 1,593
+seats" figures today came from that table and could not see the three states
+where DF acts; the first DF result's "pooled log loss unchanged" may have too
+(not checked: its scorer is not saved); the
+22-pair numbers above come from `pooled-backtest.csv`, which was always
+complete. `scripts/compare_rebuilds.R` reads the incomplete table too.

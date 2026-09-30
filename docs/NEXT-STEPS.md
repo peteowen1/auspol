@@ -17,10 +17,15 @@ only Lyne improved). `restore_snapshot.sh` now moves stray later files aside
 for a full snapshot (or `--strict`).
 
 Next, in order:
-1. Departed member: gap-dependent weight (DF was right in big-gap seats only).
-2. Split the federal harness (the 4.8-min stage-6 floor).
-3. Early WA pairs and fed2007/2010 get no leader bonus (as-at predictions
+1. Split the federal harness (the 4.8-min stage-6 floor).
+2. Early WA pairs and fed2007/2010 get no leader bonus (as-at predictions
    start at fed2010): extend the as-at corpus back if the data allows.
+3. `scripts/compare_rebuilds.R` read a seat table without NSW/QLD/SA until
+   20:10 (fixed): re-check any refusal that rested on it alone.
+
+Departed member toward the booths' federal vote: REFUSED twice more at 20:10
+(full size, gap weight); it helps nsw2023/qld2024 and hurts qld2020/sa2026.
+Not queued again without a new idea for why sa2026 goes wrong.
 
 ## 2026-09-30 16:30
 

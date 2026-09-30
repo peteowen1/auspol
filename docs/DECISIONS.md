@@ -4,6 +4,8 @@ One line each: the decision, the one fact behind it, a link. Newest first.
 Created 2026-09-19 (the verse convention; auspol had none). Older decisions
 live in the plans they came from (`docs/plans/prereg-*.md` RESULT sections).
 
+- **2026-09-30 Departed member toward the booths' federal vote REFUSED again, at full size (A) and with a gap-dependent weight (B).** Departed seats' error 4.61 -> 4.79 (A), 5.17 (B); both help nsw2023/qld2024, hurt qld2020/sa2026. `plans/prereg-departed-fed-gap-2026-09-30.md`
+- **2026-09-30 FIXED: `forecasts-seats.csv` held no NSW, Queensland or SA seats** (their allprobs files have no `pair` column; dropped silently). Rebuild comparisons read from it could not see those states; `pooled-backtest.csv` was always complete.
 - **2026-09-30 v55: leader-seat bonus applied at full size (correctness fix).** Adding it then rescaling the whole row handed back about half; leader gap 1.72 -> 0.29 (n 52), ledger 0.2757 -> 0.2761. `plans/prereg-leader-bonus-size-2026-09-30.md`
 - **2026-09-30 By-election with an absent major, filled back in, REFUSED (`AUSPOL_BYELECTION_FILL` off).** xgb-layer error on the 12 seats +0.01 (SE 0.49); only Lyne improved (Oakeshott 8.5 -> 24.5), the only non-major winner of 13. `plans/prereg-byelection-fill-2026-09-30.md`
 - **2026-09-30 Poll trend without the fundamentals anchor (level recipe "live") REFUSED again, leak-free.** Pooled log loss +0.0003 (primary fails) though RMSE 4.19 -> 4.17 and ledger 0.2726 -> 0.2672: better in recent elections, worse in early ones. Bundles two changes; anchor-alone test queued. `plans/prereg-level-recipe-retest-2026-09-30.md`.
