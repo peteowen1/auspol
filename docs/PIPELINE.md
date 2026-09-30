@@ -86,7 +86,13 @@ anywhere.
    (stage 1 now runs at 2,000 sims, `AUSPOL_STAGE1_SIMS`; only stage 6 needs
    20,000). Pre-register the criterion first. `AUSPOL_REBUILD_FROM=<n>`
    resumes after a failed stage; `AUSPOL_SKIP_PAIRS` names pairs no harness
-   can score.
+   can score. For a stage-6-only arm that cannot reach some backtests,
+   `AUSPOL_REBUILD_FROM=6 AUSPOL_REBUILD_ONLY=nsw,qld,sa,vic` reruns only
+   those and reuses the rest (about half of stage 6 when fed and wa are
+   skipped); it refuses before stage 6, and refuses any reused result older
+   than the baseline's as-at predictions. A snapshot of such a run holds only
+   the backtests it ran, so score it from `output/` (or `pooled-backtest.csv`),
+   not from the snapshot alone.
 3. **Ledger**: stage 8 writes `output/aef7-ledger.html`; stage 9 publishes
    it with the models. The per-seat inputs for a worst-seat pass are
    `output/aef7-ledger-data.json` (660 rows) and the stage-6 sharedetail.

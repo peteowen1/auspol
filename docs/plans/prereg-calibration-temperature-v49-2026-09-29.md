@@ -57,3 +57,18 @@ Post hoc, NOT a finding: flattening helps all four WA elections it applied to
 WA-specific over-confidence is a hypothesis for a separately registered
 test, not a reason to revisit this one. Ship C (August) is closed: the
 over-confidence it fixed was cured by the model changes since.
+
+## RE-RUN ON v56 OVER ALL 22 ELECTIONS, 2026-09-30 22:40 (the text above is unedited)
+
+The result above used `forecasts-seats.csv` with no NSW, Queensland or SA
+seats. Re-run as registered on v56 (`output/snapshots/20260930-2115-72387b7-from1`),
+22 elections; 8 no-result or never-listed seats excluded (the three WA floor
+seats and nsw2023's five 2021-redistribution seats, which have no result).
+
+**No-go stands.** Per-election mean log-loss change -0.0013, SE 0.0041
+(t -0.33), better in 9 of 19 (the first three elections have fewer than 3
+earlier ones and keep a = 1). Guard fails too: fed2022 +0.0158. The
+exponent fitted on all seats is 0.954 (0.942 on 16), so the model is close
+to calibrated; the time-forward fits drift from 0.70 (fed2010) to 0.95
+(sa2026). Flattening still helps the early WA elections (wa2008 -0.055,
+wa2013 -0.027) and hurts fed2016/2019/2022.
