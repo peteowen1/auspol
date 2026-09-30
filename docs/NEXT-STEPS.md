@@ -17,7 +17,7 @@ only Lyne improved). `restore_snapshot.sh` now moves stray later files aside
 for a full snapshot (or `--strict`).
 
 Next, in order:
-0. v56 = level recipe "live" PASSED (21:20); snapshot `output/snapshots/20260930-2115-72387b7-from1` is what ships. PR, then publish on Pete's go. Then re-check the calibration-temperature no-go (16 elections only).
+0. **v56 PUBLISHED 22:06** (PR #76; ledger 0.2741 vs AEF 0.2851). Live level un-anchored: the next daily run moves Victoria to ALP 33.8 / Coalition 33.9 expected seats. Re-check the calibration-temperature no-go (16 elections only).
 1. Split the federal harness (the 4.8-min stage-6 floor).
 2. Early WA pairs and fed2007/2010 get no leader bonus (as-at predictions
    start at fed2010): extend the as-at corpus back if the data allows.
