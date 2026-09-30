@@ -276,6 +276,14 @@ statewide_draws_as_at <- function(region, year, as_at, election_date, parties,
     cat(sprintf("LR1  %s%d: live recipe, level NOT anchored (trend TPP %.2f)\n", region, year, tr$tpp))
     tpp_target <- NULL
   }
+  # AUSPOL_LEVEL_RECIPE=unanchored: the anchoring ALONE switched off, everything
+  # else as published (no proportional rescale). Arm Z's "live" bundled both,
+  # so its split by era could not be attributed.
+  # plans/prereg-level-anchor-alone-2026-09-30.md.
+  if (identical(Sys.getenv("AUSPOL_LEVEL_RECIPE", "anchored"), "unanchored") && !is.null(tpp_target)) {
+    cat(sprintf("LR2  %s%d: level NOT anchored, no rescale (trend TPP %.2f)\n", region, year, tr$tpp))
+    tpp_target <- NULL
+  }
   if (!is.null(tpp_target)) {
     flow_of <- function(p) {
       f <- fl$flow_alp[fl$party == p]

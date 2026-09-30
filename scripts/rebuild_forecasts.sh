@@ -52,6 +52,11 @@ FROM="${AUSPOL_REBUILD_FROM:-1}"
 at_least() { [ "$FROM" -le "$1" ]; }
 if [ "$AUSPOL_N_SIMS" -lt 20000 ]; then echo "!! AUSPOL_N_SIMS=$AUSPOL_N_SIMS: exploratory run, its models must not ship"; fi
 LOG="output/rebuild-forecasts-logs"; mkdir -p "$LOG"
+# SNAPSHOT EVERYTHING THIS RUN WRITES (Pete, 2026-09-30: "shouldn't restoring be
+# instant?"). A marker is touched now; at the end every file under output/ newer
+# than it is copied to output/snapshots/<time>-<git>/, so switching back to an
+# earlier run is scripts/restore_snapshot.sh (a copy), not a 10-minute rebuild.
+SNAP_MARK="output/.rebuild-start"; touch "$SNAP_MARK"
 declare -A T0 TT
 stage() { T0[$1]=$(date +%s); echo "=== [$1] $(date +%H:%M:%S) ==="; }
 done_stage() { TT[$1]=$(( $(date +%s) - T0[$1] )); echo "=== [$1] done in ${TT[$1]}s ==="; }
@@ -83,17 +88,50 @@ run6() {  # $1 = XGB_PRIMARY value, $2 = log tag -- all 23 pairs across the six 
   # (Chrome + other Claude sessions held the rest); waves of two fit. Measured, not
   # guessed: the threshold is what the killed and the surviving runs had.
   local fg; fg=$(free_gb)
-  if [ "${fg:-0}" -ge 10 ]; then
-    run_wave "$1" "$2" fed wa vic nsw:AUSPOL_NSW_PAIR=2023 qld:AUSPOL_QLD_PAIR=2024 sa:AUSPOL_SA_PAIR=2026
-    run_wave "$1" "$2" nsw:AUSPOL_NSW_PAIR=2019 qld:AUSPOL_QLD_PAIR=2020 sa:AUSPOL_SA_PAIR=2022
-  else
-    echo "!! only ${fg}GB free -- running the harnesses two at a time (slower, survives the memory watchdog)"
-    run_wave "$1" "$2" fed vic
-    run_wave "$1" "$2" wa nsw:AUSPOL_NSW_PAIR=2023
-    run_wave "$1" "$2" qld:AUSPOL_QLD_PAIR=2024 sa:AUSPOL_SA_PAIR=2026
-    run_wave "$1" "$2" nsw:AUSPOL_NSW_PAIR=2019 qld:AUSPOL_QLD_PAIR=2020
-    run_wave "$1" "$2" sa:AUSPOL_SA_PAIR=2022
-  fi
+  # A QUEUE, not fixed waves (Pete, 2026-09-30, "any other bottlenecks?"): the
+  # fixed pairs waited for their slower half, and the federal harness (7 pairs,
+  # ~4.8 min) left its partner idle -- 9.4 min of wall-clock for 13.9 min of
+  # work. Now the next harness starts as soon as a slot frees, longest first.
+  # Slots by free memory: 6 at >= 10GB (as before), 3 at >= 6GB (fed peaks
+  # ~2.3GB, the rest less), else 2. Two copies of one harness never run at
+  # once (nsw/qld/sa run twice, and they have never been run concurrently).
+  local slots=2
+  if [ "${fg:-0}" -ge 10 ]; then slots=6; elif [ "${fg:-0}" -ge 6 ]; then slots=3; fi
+  echo "   ${fg}GB free -- ${slots} harness slots"
+  run_queue "$1" "$2" "$slots" fed wa vic nsw:AUSPOL_NSW_PAIR=2023 qld:AUSPOL_QLD_PAIR=2024 sa:AUSPOL_SA_PAIR=2026 \
+    qld:AUSPOL_QLD_PAIR=2020 nsw:AUSPOL_NSW_PAIR=2019 sa:AUSPOL_SA_PAIR=2022
+}
+run_queue() {  # $1 = XGB_PRIMARY, $2 = log tag, $3 = slots, then "harness:ENV=val" specs, longest first
+  local xgb="$1" tag="$2" slots="$3"; shift 3
+  local pending=("$@") fail=0
+  declare -A running=()   # pid -> harness
+  while [ "${#pending[@]}" -gt 0 ] || [ "${#running[@]}" -gt 0 ]; do
+    # Launch what fits: a free slot and no copy of that harness already running.
+    local next=() launched=0
+    for spec in "${pending[@]}"; do
+      local h="${spec%%:*}" busy=0
+      for p in "${!running[@]}"; do [ "${running[$p]}" = "$h" ] && busy=1; done
+      if [ "${#running[@]}" -lt "$slots" ] && [ "$busy" -eq 0 ]; then
+        local envs="${spec#*:}"; [ "$envs" = "$spec" ] && envs=""
+        local name="$h"; [ -n "$envs" ] && name="${h}_${envs##*=}"
+        ( [ -n "$envs" ] && export "$envs"; AUSPOL_XGB_PRIMARY="$xgb" Rscript "scripts/backtest_candidate_${h}.R" ) \
+          > "$LOG/${tag}_${name}.log" 2>&1 &
+        running[$!]="$h"; launched=1
+      else
+        next+=("$spec")
+      fi
+    done
+    pending=("${next[@]}")
+    [ "${#running[@]}" -eq 0 ] && break
+    # Wait for any one harness; -p names the job reaped, so its slot is freed
+    # exactly once and its own exit status is the one checked (a second `wait`
+    # on a reaped pid would report "not a child" as a failure).
+    local done_pid="" st=0
+    wait -n -p done_pid "${!running[@]}" || st=$?
+    [ "$st" -ne 0 ] && { fail=1; echo "!! harness ${running[$done_pid]:-?} exited $st"; }
+    unset "running[$done_pid]"
+  done
+  if [ "$fail" -ne 0 ]; then echo "!! a harness failed -- see $LOG/${tag}_*.log"; exit 1; fi
 }
 
 # STAGE 1 AT REDUCED SIMS. The sharedetail point estimate (base_pred) is
@@ -142,3 +180,10 @@ grep -h "^XA4  pooled\|^FT1\|^AEFL5" "$LOG/s4_asat.log" "$LOG/s7_forecasts.log" 
 echo; echo "=== input-switch coverage (stage 6 logs) ==="
 grep -h "^HTV0!\|^HTV9!\|^BF0b!\|^BF0o!\|^BF0m!\|SKIPPED" "$LOG"/s6_*.log 2>/dev/null | sort | uniq -c | sort -rn | head -20 || true
 grep -h "^HTV1\|^BF0b " "$LOG"/s6_*.log 2>/dev/null | sed "s/ (.*//" | sort | uniq -c | head -30 || true
+
+# Snapshot: every file this run wrote (see SNAP_MARK above), logs included.
+SNAP="output/snapshots/$(date +%Y%m%d-%H%M)-$(git rev-parse --short HEAD)-from${FROM}"
+mkdir -p "$SNAP"
+find output -type f -newer "$SNAP_MARK" -not -path "output/snapshots/*" -print0 |
+  while IFS= read -r -d '' f; do mkdir -p "$SNAP/$(dirname "${f#output/}")"; cp -p "$f" "$SNAP/${f#output/}"; done
+echo "SNAP1 wrote $(find "$SNAP" -type f | wc -l) files ($(du -sh "$SNAP" | cut -f1)) to $SNAP -- restore with: bash scripts/restore_snapshot.sh $SNAP"

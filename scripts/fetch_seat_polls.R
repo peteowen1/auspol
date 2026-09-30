@@ -90,7 +90,9 @@ pages <- c(
 
 # h2/h3 section-heading keywords that mark a "these subsections are seat polls"
 # block, checked against every page above.
-seat_section_re <- "individual seat polling|electorate polling|polling for individual seats"
+# "Electoral district polling" is the heading on the NSW 2023 page (and others):
+# missing it lost 17 NSW 2023 seat polls, including the Parramatta poll AEF used.
+seat_section_re <- "individual seat polling|electorate polling|polling for individual seats|electoral district polling|district polling|seat polling"
 h2_stoplist_re <- "^(contents|see also|notes|references|external links|graphical summary)$"
 
 # The 4 dedicated "Electorate opinion polling for..." federal pages have no

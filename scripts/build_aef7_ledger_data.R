@@ -236,6 +236,32 @@ if (file.exists(aft_f) && exists("sdw")) {
     primary_wrmse$aef <- sqrt(sum(aftw$actual_share * (aftw$aef_fp_pred - aftw$actual_share)^2) / sum(aftw$actual_share))
     primary_wrmse$aef_n <- nrow(aftw)
   }
+  # LIKE FOR LIKE (2026-09-30). The two figures above are over DIFFERENT rows
+  # (ours ~4,620 candidate classes, AEF's ~3,578, since AEF publishes fewer
+  # parties per seat) and AEF's "OTH" is a catch-all while ours is one narrow
+  # class, so comparing them favoured us for the wrong reasons. The headline is
+  # now: seats present for both, both sides collapsed to ALP, LNP, GRN and REST
+  # (100 minus the three; AEF's four rescaled to 100 per seat), weighted by the
+  # actual share. The unmatched pair is kept, labelled, for continuity.
+  col4 <- function(d, v) {
+    d <- data.table::copy(d)
+    d[, cl := data.table::fifelse(party %in% c("ALP", "LNP", "GRN"), party, "REST")]
+    d[, .(x = sum(get(v))), by = .(pair, seat, cl)]
+  }
+  c_our <- col4(sdw, "pred_share"); c_act <- col4(sdw, "actual_share"); c_aef <- col4(aft, "aef_fp_pred")
+  c_aef[, x := 100 * x / sum(x), by = .(pair, seat)]
+  cm <- merge(merge(c_our[, .(pair, seat, cl, ours = x)], c_aef[, .(pair, seat, cl, aef = x)], by = c("pair", "seat", "cl")),
+              c_act[, .(pair, seat, cl, actual = x)], by = c("pair", "seat", "cl"))
+  full <- cm[, .N, by = .(pair, seat)][N == 4]
+  cm <- cm[paste(pair, seat) %in% paste(full$pair, full$seat)]
+  primary_wrmse_unmatched <- primary_wrmse
+  wr <- function(p) sqrt(sum(cm$actual * (p - cm$actual)^2) / sum(cm$actual))
+  primary_wrmse <- list(our = wr(cm$ours), aef = wr(cm$aef), our_n = nrow(cm), aef_n = nrow(cm),
+                        n_seats = nrow(full), method = "common seats; ALP, LNP, GRN, REST; weighted by actual share")
+  fwrite(cm, file.path(OUT, "aef7-primary-common.csv"))
+  cat(sprintf("AEFL9 weighted primary RMSE LIKE FOR LIKE (%d seats, %d rows): ours %.3f vs AEF %.3f | unmatched rows were ours %.3f (n=%d) vs AEF %.3f (n=%d)\n",
+              nrow(full), nrow(cm), primary_wrmse$our, primary_wrmse$aef,
+              primary_wrmse_unmatched$our, primary_wrmse_unmatched$our_n, primary_wrmse_unmatched$aef, primary_wrmse_unmatched$aef_n))
 } else {
   cat("AEFL8! output/aef7-fptrend.csv missing -- run scripts/build_aef_fptrend.R first; weighted primary RMSE (AEF) left NA\n")
 }
@@ -245,11 +271,12 @@ summary_stats <- list(
   seat_logloss = list(our = mean(SEATS$ll), aef = mean(SEATS$aef_ll), n = nrow(SEATS)),
   primary_rmse = list(our = primary_rmse$our, aef = primary_rmse$aef, n = primary_rmse$n),
   primary_wrmse = primary_wrmse,
+  primary_wrmse_unmatched = if (exists("primary_wrmse_unmatched")) primary_wrmse_unmatched else NULL,
   tcp_mae = tcp_mae,
   accuracy = list(our = mean(SEATS$correct), aef = mean(SEATS$aef_p_win >= 0.5), n = nrow(SEATS)))
 
 write(toJSON(summary_stats, auto_unbox = TRUE, digits = 4), file.path(OUT, "aef7-ledger-summary.json"))
-cat(sprintf("\nAEFL5 pooled summary: seat log loss ours %.4f vs AEF %.4f (n=%d) | primary RMSE (all parties, weighted) ours %.3f (n=%d) vs AEF %.3f (n=%d) | TCP MAE ours %.2f (n=%d) vs AEF %.2f (n=%d)\n",
+cat(sprintf("\nAEFL5 pooled summary: seat log loss ours %.4f vs AEF %.4f (n=%d) | primary RMSE (like for like: common seats, four classes, weighted) ours %.3f (n=%d) vs AEF %.3f (n=%d) | TCP MAE ours %.2f (n=%d) vs AEF %.2f (n=%d)\n",
             summary_stats$seat_logloss$our, summary_stats$seat_logloss$aef, summary_stats$seat_logloss$n,
             primary_wrmse$our, primary_wrmse$our_n, primary_wrmse$aef, primary_wrmse$aef_n,
             summary_stats$tcp_mae$our, summary_stats$tcp_mae$our_n, summary_stats$tcp_mae$aef, summary_stats$tcp_mae$aef_n))

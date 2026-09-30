@@ -236,7 +236,7 @@ tpp_booths <- function(year) {
   d[is.finite(swing) & is.finite(tot) & tot > 0]
 }
 
-res <- list()
+res <- list(); booth_maps <- list()
 for (J in JOBS) {
   bo <- tpp_booths(J$fed)
   built <- endsWith(J$corr, ".csv")
@@ -310,8 +310,18 @@ for (J in JOBS) {
               mean(agg$fed_swing), stats::sd(agg$fed_swing),
               min(agg$fed_swing), max(agg$fed_swing)))
   res[[length(res) + 1L]] <- agg
+  # The booth -> district join itself, kept so other features can use the SAME
+  # booths (fed-booth primaries for departed members,
+  # plans/prereg-departed-fed-booths-2026-09-30.md). Store the join, not only
+  # the aggregate it produced.
+  pid <- if ("place_id" %in% names(m)) m$place_id else m$PollingPlaceID
+  booth_maps[[length(booth_maps) + 1L]] <- unique(data.table(region = J$region, cycle = J$cycle, fed = J$fed,
+                                                             district = m$district, place_id = pid))
 }
 R <- rbindlist(res)
+BM <- rbindlist(booth_maps)
+fwrite(BM, file.path(OUT, "fed-booth-map.csv"))
+cat(sprintf("FSW3 wrote fed-booth-map.csv: %d booth-district rows over %d cycles\n", nrow(BM), uniqueN(BM[, .(region, cycle)])))
 
 # ---- validation: reproduce the two cycles that already have fed_swing -------
 cat("\nFSW2 validation -- does this reproduce the seat files' own fed_swing?\n")

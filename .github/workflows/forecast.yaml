@@ -175,6 +175,8 @@ jobs:
           gh release download shipped-models -p seat-poll-blend-vic2026.csv -D output --clobber || echo "::warning::shipped-models has no seat-poll-blend-vic2026.csv -- the forecast runs WITHOUT the v50 seat-poll blend"
           gh release download shipped-models -p leader-seat-vic2026.csv -D output --clobber || echo "::warning::shipped-models has no leader-seat-vic2026.csv -- the forecast runs WITHOUT the leader-seat bonus"
           gh release download shipped-models -p demo-resid-vic2026.csv -D output --clobber || echo "::warning::shipped-models has no demo-resid-vic2026.csv -- the forecast runs WITHOUT the demographic correction"
+          gh release download shipped-models -p seat-poll-joint-vic2026.csv -D output --clobber || echo "::warning::shipped-models has no seat-poll-joint-vic2026.csv -- AUSPOL_SEAT_POLL_BLEND=3 runs WITHOUT the joint blend"
+          gh release download shipped-models -p departed-fed-vic2026.csv -D output --clobber || echo "::warning::shipped-models has no departed-fed-vic2026.csv -- the forecast runs WITHOUT the departed-member blend"
           ls -l output/xgb-*
           # The forecast history table lives on the forecast-latest release;
           # fetch it BEFORE run_all.R so build_forecast_json.R appends one row.

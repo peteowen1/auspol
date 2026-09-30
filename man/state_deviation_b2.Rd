@@ -7,7 +7,7 @@
 state_deviation_b2(
   cls,
   exclude_pair,
-  oof = out_path("xgb-primary-v6-oof-predictions.csv"),
+  oof = NULL,
   dev = out_path("state-deviation-features.csv"),
   shuffle = 0L,
   lambdas = c(1, 3, 10, 30, 100, 300)
@@ -21,7 +21,10 @@ empirical question, not an identity.}
 
 \item{exclude_pair}{The federal pair being predicted; excluded from the fit.}
 
-\item{oof, dev}{Source tables.}
+\item{oof}{Legacy path to a residual table; NULL (default) uses this
+rebuild's as-at predictions (\code{\link[=.sd_training]{.sd_training()}}).}
+
+\item{dev}{Source table.}
 
 \item{shuffle}{Control seed. 0 is the real fit; any other integer permutes
 which state each seat belongs to, within its election, destroying the
