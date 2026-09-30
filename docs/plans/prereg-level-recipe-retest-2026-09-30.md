@@ -133,3 +133,14 @@ worse fed2007 +0.031, fed2013 +0.025, wa2008 +0.050, wa2013 +0.043, wa2005
 +0.023, fed2025 +0.020, nsw2019 +0.014. **Passes both criteria and the
 guard.** `AUSPOL_LEVEL_RECIPE = "live"` in `published_flags.R`, so the
 backtests now score the recipe the live forecast uses.
+
+**Amendment, 21:50 (a visible addition; the result above is unedited).** The
+review gate found that the live forecast has anchored its level since
+2026-09-28 (`AUSPOL_LIVE_LEVEL_ANCHOR = "1"`, `fit_seats_full.R` LL1), so
+"live" in the backtests alone would score a level the live forecast does not
+use. Parity needs `AUSPOL_LIVE_LEVEL_ANCHOR = "0"` with it. Live effect,
+`fit_seats_full.R` twice with `AUSPOL_OUT_SUFFIX` (20,000 sims each, polls to
+2026-09-09): statewide two-party 47.93 anchored -> 48.90 un-anchored (Labor
+first preference +0.97). Expected seats ALP 31.2 -> 34.7, Coalition 36.1 ->
+34.3; P(Labor more seats than the Coalition) 0.39 -> 0.53; Labor majority
+0.05 -> 0.11, Coalition majority 0.18 -> 0.12. HELD for Pete's decision.

@@ -80,7 +80,7 @@ fed_booth_primaries <- function(election) {
 #' @export
 departed_fed_weights <- function(target_election, mode = "1") {
   f <- current_seat_predictions()
-  zero <- list(k = NA_real_, beta = 0, b = NA_real_, se = NA_real_, n = 0L, els = character(0))
+  zero <- list(k = NA_real_, beta = 0, b0 = NA_real_, b1 = NA_real_, b = NA_real_, se = NA_real_, n = 0L, els = character(0))
   if (is.null(f)) return(zero)
   els <- unique(f$election)
   els <- els[elections_before(els, target_election) & !grepl("^fed", els)]
