@@ -750,11 +750,13 @@ for (K in PAIRS) {
   # single hand-picked yr12_pct of the refused version above. Same position in
   # the pipeline, immediately after the override, so it corrects exactly the
   # shares that reach the simulation.
-  if (identical(Sys.getenv("AUSPOL_DEMO_RESID", "0"), "1")) {
+  if (Sys.getenv("AUSPOL_DEMO_RESID", "0") %in% c("1", "2")) {
     shares <- demographic_residual_apply(
       shares, sprintf("vic%d", K$to),
       shuffle = Sys.getenv("AUSPOL_DEMO_RESID_SHUFFLE", "0"))
   }
+  # Leader-seat bonus (AUSPOL_LEADER_SEAT, plans/prereg-leader-seat-2026-09-29.md): a major party gains the time-forward bonus in its own leader's seat.
+  shares <- leader_seat_apply(shares, sprintf("vic%d", K$to))
 
   cat(sprintf("\nBV1  Victoria %d -> %d: %d districts scored, truth from %s\n",
               K$from, K$to, length(keep), truth_src))

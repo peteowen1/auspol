@@ -1,3 +1,12 @@
+# auspol 0.4.57
+
+**Ledger v52** (seat log loss 0.2717 against AE Forecasts' 0.2851; primary RMSE 4.17).
+
+- Demographic correction for Labor and Greens (`AUSPOL_DEMO_RESID=2`), live via `demo-resid-vic2026.csv`.
+- Leader's own-seat bonus (`AUSPOL_LEADER_SEAT=1`), per role, partially pooled; leaders from `scripts/fetch_leaders.R`.
+- Leak fix: `level_pred` built time-forward and rebuilt on every run.
+- Refused and recorded: poll trend without the fundamentals anchor.
+
 # auspol 0.4.56
 
 No change to the published forecast. Seat-poll experiments, each measured and refused, kept behind flags:

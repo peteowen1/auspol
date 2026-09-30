@@ -5,13 +5,36 @@ it stood before this rewrite: `backlog/journal-2026-09-19-hub-snapshot.md`).
 Decisions: `docs/DECISIONS.md`. Every seat verdict: `docs/SEAT-REGISTRY.md`.
 Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30.
 
-## 2026-09-29 18:00 (read this first)
+## 2026-09-30 09:40 (read this first)
+
+**v52 = rebuild Y2** (demographic correction for Labor + Greens, leader-seat
+bonus, `level_pred` leak fix): RMSE 4.2065 -> 4.1924, ledger 0.2753 ->
+0.2726 (AEF 0.2851), accuracy 88.9%. **Not yet published.** Local `output/`
+was overwritten by the refused arm Z; restore rebuild `rebuild-V52` launched
+09:33 (published config, full). Reviewed (no blockers).
+
+Next, in order:
+1. Score rebuild-V52 against Y2 (it learns its corrections from Z's
+   forecasts.csv, see 3), `check_like_ci.R`, regenerate
+   `docs/MODEL-REGISTRY.md`, PR, merge; Pete publishes
+   (`AUSPOL_REBUILD_FROM=8 AUSPOL_PUBLISH=1 bash scripts/rebuild_forecasts.sh`).
+2. Anchor alone (no proportional rescale): arm Z bundled both and was refused
+   on pooled log loss while winning RMSE and the ledger.
+3. PIPELINE: the demographic, leader-seat and seat-poll corrections learn from
+   the PREVIOUS rebuild's `output/forecasts.csv`, so a rebuild's result depends
+   on the one before it. Make them read this run's as-at predictions.
+4. NSW 2023 seat polls: Wikipedia's "Electoral district polling" section was
+   missed by `fetch_seat_polls.R` (0 rows); AEF used a Parramatta poll (+2.35).
+5. Departed member: blend toward the same booths' federal vote (Parramatta,
+   Wakehurst, Richmond, Mulgrave); prereg on top of v52.
+
+## 2026-09-29 18:00
 
 **Published 18:15: ledger v51** = rebuild R, the statewide time-forward leak fix
 (0.2719 -> 0.2760 vs AEF 0.2851; nsw2023 better, vic2022 and fed2019 worse;
 RESULT in `plans/prereg-statewide-time-forward-2026-09-29.md`). Snapshot
-`output/rebuild-R/`; fresh v51 (weight refit on its own predictions) `output/rebuild-R2/`, ledger 0.2753. **Local `output/` is rebuild U's (REFUSED), not
-v51's**: rebuild from stage 6 with no arm env before any publish.
+`output/rebuild-R/`; fresh v51 (weight refit on its own predictions) `output/rebuild-R2/`, ledger 0.2753. **Local `output/` was rebuild U's (REFUSED), not
+v51's** -- RESTORED 20:21, matches rebuild R2 exactly.
 
 Refused 18:40: public-only seat polls, arms S and T (snapshots
 `output/rebuild-{S,T}/`). T passed fed2025 by 2.1 SE; fed2022 failed because
@@ -21,18 +44,21 @@ Refused since: dropping `fed_aligned`, retested time-forward (all its gain is
 nsw2023; the term is real). nsw2023's remaining statewide gap is the
 fundamentals' honest error.
 
+IN FLIGHT 22:40: rebuild W, the permutation control for AUSPOL_DEMO_RESID=2 (rebuild V passed criteria 1-2: RMSE 4.2065 -> 4.2052, ledger 0.2753 -> 0.2720). `plans/prereg-demographic-labor-greens-2026-09-29.md`.
+
 Open, in order:
-1. PR #70 MERGED 18:39. The seat-poll arm commits after it (`4f3e4d5` on,
-   all flagged off) are unpushed; the public-only filter is reviewed, the
-   per-poll match is not. Review, then PR.
-2. Seat polls: THREE arms refused today (S, T, U: per-poll class match). The
-   open problem is the weight, fitted on one or two earlier elections. Park
-   unless a new data source adds earlier polled elections. Old item: T with the weight shrunk harder
-   when it rests on one earlier election; NEW prereg. "Independent" =
-   Pete's allowlist (`PUBLIC_SEAT_POLLSTERS`, no recorded sponsor).
+1. DONE 21:13: v51 republished with its fresh seat-poll weight (rebuild R2, 0.2753; the
+   release carries R's stale-weight 0.2760). Local `output/` IS R2's now:
+   `AUSPOL_REBUILD_FROM=8 AUSPOL_PUBLISH=1 bash scripts/rebuild_forecasts.sh`
+   (Pete). PRs #70 and #71 merged; `main` = `dev`.
+2. Seat polls: PARKED. Three arms refused (S, T, U). The open problem is the
+   weight, fitted on one or two earlier polled elections. Resume only with a
+   source adding earlier polled elections. "Independent" = Pete's allowlist.
 3. Change seats beyond the statewide miss (Parramatta, Heathcote): walk
    examples with Pete before any rule.
-4. PR #743 (inthegame-blog): Pete or that session merges it.
+4. PR #743 (inthegame-blog): its politics sentence quotes v50; update to v51
+   (RMSE 4.88 vs 5.42, accuracy 88.3% vs 86.8%, log loss 0.276 vs 0.285)
+   before merging. Review of that part unconfirmed.
 
 ## 2026-09-29 17:00
 
@@ -143,6 +169,8 @@ exhaust (twice), others-bucket size, proportional closure, candidate
 bucket total, shrunk blend (audit pass, rebuild fail 0.2893), departed-member
 xgb features (0.2902; the miss is in base_pred).
 
+IN FLIGHT 22:40: rebuild W, the permutation control for AUSPOL_DEMO_RESID=2 (rebuild V passed criteria 1-2: RMSE 4.2065 -> 4.2052, ledger 0.2753 -> 0.2720). `plans/prereg-demographic-labor-greens-2026-09-29.md`.
+
 Open, in order:
 1. **base_pred sitting-member effect** on the COMPLETED retirement data
    (`external/reference/retirements/retirements.csv`, 393 rows, 30
@@ -164,6 +192,8 @@ accuracy 88.0% vs 86.8%. Two changes: the `state_poll_dev` LEAK removed
 others bucket split by the per-candidate model (`AUSPOL_BUCKET_SPLIT=cand_naive`)
 in all six harnesses. Live Victoria now anchors its level like the backtests
 (`AUSPOL_LIVE_LEVEL_ANCHOR=1`, Labor ~35 -> ~31 seats from the 29 Sep run).
+
+IN FLIGHT 22:40: rebuild W, the permutation control for AUSPOL_DEMO_RESID=2 (rebuild V passed criteria 1-2: RMSE 4.2065 -> 4.2052, ledger 0.2753 -> 0.2720). `plans/prereg-demographic-labor-greens-2026-09-29.md`.
 
 Open, in order:
 1. **9 Nov**: wire the candidate split into LIVE `fit_seats_full.R` once

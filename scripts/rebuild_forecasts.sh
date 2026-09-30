@@ -8,7 +8,9 @@
 #      base_pred per (pair, seat, class), no xgb layer (the non-circular
 #      baseline; scripts/pool_sharedetail.R's header explains why this order)
 #   2. pool_sharedetail.R                       -> pooled-sharedetail.csv
-#   3. fit_xgb_primary_v6.R                     -> xgb-primary-features-v6.csv
+#   3. build_level_pred.R -> level-pred.csv (the level_pred feature: time-forward,
+#      rebuilt every run -- it was frozen at 13 Sep and missed the v51 leak fix),
+#      then fit_xgb_primary_v6.R                -> xgb-primary-features-v6.csv
 #      (fresh base_pred + every feature; its leave-one-out OOF file is a
 #      diagnostic now, not what ships)
 #   4. fit_xgb_primary_asat.R                   -> one model per election, "as
@@ -101,7 +103,7 @@ run6() {  # $1 = XGB_PRIMARY value, $2 = log tag -- all 23 pairs across the six 
 # pool_sharedetail's sims floor follows it for this stage only.
 if at_least 1; then stage "1-harnesses-base_pred"; AUSPOL_N_SIMS="${AUSPOL_STAGE1_SIMS:-2000}" run6 0 s1; done_stage "1-harnesses-base_pred"; fi
 if at_least 2; then stage "2-pool-sharedetail";    AUSPOL_POOL_MIN_SIMS="${AUSPOL_STAGE1_SIMS:-2000}" Rscript scripts/pool_sharedetail.R      > "$LOG/s2_pool.log" 2>&1; done_stage "2-pool-sharedetail"; fi
-if at_least 3; then stage "3-features";            Rscript scripts/fit_xgb_primary_v6.R    > "$LOG/s3_v6.log"   2>&1; done_stage "3-features"; fi
+if at_least 3; then stage "3-features";            Rscript scripts/build_level_pred.R > "$LOG/s3_level.log" 2>&1; Rscript scripts/fit_xgb_primary_v6.R    > "$LOG/s3_v6.log"   2>&1; done_stage "3-features"; fi
 if at_least 4; then stage "4-asat-models";         Rscript scripts/fit_xgb_primary_asat.R  > "$LOG/s4_asat.log" 2>&1; done_stage "4-asat-models"; fi
 if at_least 4; then stage "4b-asat-flow-models";   Rscript scripts/fit_xgb_flows_asat.R    > "$LOG/s4b_flows.log" 2>&1; done_stage "4b-asat-flow-models"; fi
 if at_least 5; then stage "5-production-model";    Rscript scripts/fit_xgb_primary_v6_final.R > "$LOG/s5_final.log" 2>&1; done_stage "5-production-model"; fi

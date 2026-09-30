@@ -26,6 +26,16 @@ not a commit, not a plan file — that it is not happening and why.
 
 ---
 
+## 2026-09-29 evening
+
+| ask | status |
+|---|---|
+| Seat polls from independent pollsters only (quiz: allowlist of public pollsters, no recorded sponsor) | **BUILT, OFF.** Arms S and T refused (fed2022 worse; its weight rests on 9 fed2019 polls). Told Pete in a message. `plans/prereg-seat-poll-public-only-2026-09-29.md`. |
+| Seat-poll catch-all "Others" matched per poll (quiz: per-poll match) | **BUILT, OFF.** Refused, ledger 0.2753 -> 0.2888. Told Pete in a message. `plans/prereg-seat-poll-per-poll-match-2026-09-29.md`. |
+| *"test your theories"* on Parramatta (region vs candidate) | **ANSWERED.** Both real, neither knowable enough before 2023: language slope 0.25 time-forward vs 0.70 that year; Donna Davis confirmed sitting Lord Mayor. |
+| Demographic correction for Labor and Greens (option 1 after five worked seats) | **PASSED, NOT YET LIVE.** Rebuild V: RMSE 4.2065 -> 4.2052, ledger 0.2753 -> 0.2720, permutation control gains nothing. Needs live wiring before it counts as shipped. `plans/prereg-demographic-labor-greens-2026-09-29.md`. |
+| Leader's own-seat bonus; *"does it matter what party they're a leader of ... incumbent and challenging leader?"*; *"candidate level over performance in general is that a thing?"* | **PASSED (rebuild X: leader seats mean abs error 5.41 -> 4.93, 2.0 SE), NOT YET PUBLISHED.** Bonus per role (head of government / opposition / minor-party), partially pooled; live wiring done. Candidate over-performance answered: does not persist after the model (slope 0.009, SE 0.021, n 1,370), no term added. `plans/prereg-leader-seat-2026-09-29.md`. |
+
 ## 2026-09-27
 
 | ask | status |

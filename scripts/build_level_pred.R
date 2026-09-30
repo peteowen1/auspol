@@ -63,8 +63,20 @@ for (pr in names(DATES)) {
   reg <- sub("[0-9]{4}$", "", pr); yr <- as.integer(sub("^[a-z]+", "", pr))
   st_a <- st_of(PREV[[pr]])
   if (is.null(st_a)) { cat(sprintf("LP0! %s: no prior statewide for %s -- skipped\n", pr, PREV[[pr]])); failed <- c(failed, pr); next }
+  # LEAK FIX 2026-09-30 (plans/prereg-level-recipe-retest-2026-09-30.md,
+  # amendment): this file fed every xgb model a statewide level built on
+  # LEAVE-ONE-OUT fundamentals and an all-elections mix, and was last rebuilt
+  # 13 Sep, so v51's time-forward fix (7766034) never reached it. Same switch
+  # and same inputs as forecast_statewide_or_oracle().
+  fl_p <- fl; mix_p <- mix
+  if (identical(Sys.getenv("AUSPOL_FUND_TIME_FORWARD", "1"), "1")) {
+    fl_p <- data.table(year = yr, region = reg, fund = fundamentals_tf(reg, yr))
+    mix_p <- projection_mix_tf(reg, yr)
+    cat(sprintf("LP1f %s: time-forward fundamentals %.2f, day-before trend weight %.2f\n",
+                pr, fl_p$fund, mix_p$w[mix_p$horizon == 1]))
+  }
   r <- tryCatch(
-    forecast_statewide_for(reg, yr, DATES[[pr]], CLASSES, st_a, fl, mix,
+    forecast_statewide_for(reg, yr, DATES[[pr]], CLASSES, st_a, fl_p, mix_p,
                            n_sims = 2000L, seed = 42L),
     error = function(e) { cat(sprintf("LP0! %s: %s\n", pr, conditionMessage(e))); NULL })
   if (is.null(r)) { failed <- c(failed, pr); next }

@@ -4,6 +4,11 @@ One line each: the decision, the one fact behind it, a link. Newest first.
 Created 2026-09-19 (the verse convention; auspol had none). Older decisions
 live in the plans they came from (`docs/plans/prereg-*.md` RESULT sections).
 
+- **2026-09-30 Poll trend without the fundamentals anchor (level recipe "live") REFUSED again, leak-free.** Pooled log loss +0.0003 (primary fails) though RMSE 4.19 -> 4.17 and ledger 0.2726 -> 0.2672: better in recent elections, worse in early ones. Bundles two changes; anchor-alone test queued. `plans/prereg-level-recipe-retest-2026-09-30.md`.
+- **2026-09-30 LEDGER v52 = rebuild Y2:** demographic correction + leader-seat bonus + level_pred leak fix. RMSE 4.2065 -> 4.1924, ledger 0.2753 -> 0.2726, accuracy 88.9%.
+- **2026-09-29 Leader-seat bonus PASSES (rebuild X).** Leader seats mean abs error 5.41 -> 4.93 (2.0 SE), all-rows RMSE and pooled log loss better, 0 non-leader seats moved. `plans/prereg-leader-seat-2026-09-29.md`.
+- **2026-09-29 Demographic correction (Labor + Greens) PASSES (rebuilds V, W).** RMSE 4.2065 -> 4.2052, ledger 0.2753 -> 0.2720, permutation control gains nothing. `plans/prereg-demographic-labor-greens-2026-09-29.md`.
+- **2026-09-29 v51 REPUBLISHED 21:13 with the seat-poll weight refit on its own predictions** (rebuild R2): ledger 0.2753 vs AEF 0.2851, primary RMSE 4.90, accuracy 88.2%, TCP MAE 3.80.
 - **2026-09-29 Per-poll class match REFUSED.** Ledger 0.2753 -> 0.2888: fixes Kennedy (0.71 -> 0.99) but fed2019, compared properly, gives fed2022 a weight of 0.002 and it loses the teal seats the commissioned IND polls were catching. `plans/prereg-seat-poll-per-poll-match-2026-09-29.md`.
 - **2026-09-29 FOUND: the published v51 seat-poll weight was fitted on v50-era predictions.** `seat_poll_weight()` reads the PREVIOUS rebuild's `output/forecasts.csv`; rerunning stage 6 on v51's own gives ledger 0.2753 (published 0.2760), fed2022 w 0.53, fed2025 0.26. Any rebuild that moves earlier elections needs a second stage-6 pass. Fresh baseline: `output/rebuild-R2/`.
 - **2026-09-29 Public-only seat polls REFUSED (arms S and T); v51 stays.** T helps fed2025 (-0.0038, 2.1 SE; McMahon, Bullwinkel, Ryan all better) but fed2022 +0.0156 (1.5 SE) and ledger 0.2760 -> 0.2797: fed2022's weight rests on 9 fed2019 polls and jumps 0.45 -> 0.67. `plans/prereg-seat-poll-public-only-2026-09-29.md`.

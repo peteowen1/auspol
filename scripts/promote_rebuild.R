@@ -36,7 +36,18 @@ trained <- c("xgb-primary-v6-final.model", "xgb-primary-v6-final-cols.json",
 invisible(seat_swing_port_table("vic2026", write = TRUE))
 # Same for the seat-poll blend (v50): its poll file and forecasts table are local.
 invisible(seat_poll_blend_table("vic2026", write = TRUE))
-models <- c(trained, "candidacies.csv", "seat-swing-port-vic2026.csv", "seat-poll-blend-vic2026.csv")
+# And the leader-seat bonus (AUSPOL_LEADER_SEAT): its bonus is fitted on the local forecasts table.
+invisible(leader_seat_table("vic2026", write = TRUE))
+# And the demographic correction (AUSPOL_DEMO_RESID=2): its per-seat Labor and
+# Greens adjustments, since the daily run has neither census features nor the
+# forecasts table. Placeholder shares: only the adjustments are kept.
+.csf <- data.table::fread(file.path(OUT, "census-features.csv"), showProgress = FALSE)
+.v26 <- unique(.csf$seat[.csf$pair == "vic2026"])
+if (!length(.v26)) stop("census-features.csv has no vic2026 seats: the demographic table cannot be written")
+invisible(withr::with_envvar(c(AUSPOL_DEMO_RESID = "2"), demographic_residual_apply(
+  matrix(50, length(.v26), 2, dimnames = list(.v26, c("ALP", "GRN"))), "vic2026", write_table = TRUE)))
+models <- c(trained, "candidacies.csv", "seat-swing-port-vic2026.csv", "seat-poll-blend-vic2026.csv",
+            "leader-seat-vic2026.csv", "demo-resid-vic2026.csv")
 mf <- file.path(OUT, models)
 miss <- models[!file.exists(mf)]
 if (length(miss)) stop("model file(s) missing -- run scripts/rebuild_forecasts.sh first: ", paste(miss, collapse = ", "))
