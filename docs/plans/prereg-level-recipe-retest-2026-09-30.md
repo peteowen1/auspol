@@ -80,3 +80,33 @@ chosen after seeing this, so it is not proposed.
 Caveat: "live" bundles two changes (no anchor AND proportional rescale to
 100), so this did not isolate the anchor. Queued: a new prereg for the anchor
 alone.
+
+## CORRECTION, 2026-09-30 20:40: Z PASSES criterion 1 over all 22 elections (the result above is left unedited)
+
+Criterion 1 asked for pooled seat log loss "over all matched elections". The
+tool used, `compare_rebuilds.R`, read `forecasts-seats.csv`, which until
+20:10 today held NO NSW, Queensland or SA seats (their allprobs files carry
+no `pair` column and `build_forecasts_table.R` dropped them silently). So the
++0.0003 above is over 16 of 22 elections.
+
+Rescored from Y2's and Z's own stage-6 allprobs files, still in `output/`
+(tags `ga91e234x`, `g631395a`; reduced-sims stage-1 files excluded; wa2021
+skipped as the rebuild does). 2,059 seat-elections, 22 elections. Seat log
+loss, lower is better, d = Z - Y2:
+
+| elections | per-election mean d | SE | Z better in |
+|---|---|---|---|
+| the 16 the old table held | +0.0003 | | (reproduces the figure above exactly) |
+| **all 22** | **-0.0031** | 0.0067 | **13 of 22** |
+| the 6 that were missing | nsw2019 -0.0009, nsw2023 -0.0269, qld2020 -0.0120, qld2024 -0.0074, sa2022 -0.0039, sa2026 -0.0218 | | 6 of 6 |
+
+Seat-weighted 0.3617 -> 0.3605. Criterion 2 (primary RMSE 4.1924 -> 4.1653)
+and the ledger guard (0.2726 -> 0.2672) passed as recorded. **Z passes every
+clause as written.** The era split above still holds within the federal and
+WA elections.
+
+What this does NOT do: ship Z. It was measured against v52; v53-v55 changed
+the corrections on top. The live forecast already uses this recipe for its
+level (`R/forecast_mode.R:173`), so the backtests score a different recipe
+from what ships. Next: a full rebuild of v55 with `AUSPOL_LEVEL_RECIPE=live`,
+same criteria, all 22 elections.

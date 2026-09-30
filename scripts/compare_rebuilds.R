@@ -20,6 +20,12 @@ ll <- function(d) {
 }
 x <- merge(ll(A), ll(B), by = c("election", "seat"), suffixes = c("_a", "_b"))
 cat(sprintf("CR0 %d seat-elections matched across %d elections\n", nrow(x), uniqueN(x$election)))
+# Snapshots before 2026-09-30 20:10 have a forecasts-seats.csv with no NSW,
+# Queensland or SA seats (build_forecasts_table.R dropped their allprobs), so
+# "all elections" here meant 16 of 22; arm Z was refused on that. Say so.
+.miss <- setdiff(c("nsw", "qld", "sa"), unique(sub("[0-9]+$", "", x$election)))
+if (length(.miss)) cat(sprintf("CR0! NO %s SEATS in this comparison: an 'all elections' figure below is NOT all elections. Rescore from the allprobs files or pooled-backtest.csv.\n",
+                               toupper(paste(.miss, collapse = "/"))))
 per <- x[, .(n = .N, ll_a = mean(ll_a), ll_b = mean(ll_b), d = mean(ll_b - ll_a),
              se = sd(ll_b - ll_a) / sqrt(.N), moved = sum(abs(p_b - p_a) > 1e-9)), by = election][order(election)]
 cat("CR1 seat log loss per election (lower is better); d = B - A, negative favours B; moved = seats whose winner probability changed\n")

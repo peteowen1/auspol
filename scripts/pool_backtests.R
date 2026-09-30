@@ -114,8 +114,12 @@ if (length(.skip)) {
 # pair (stage 6 failed or was skipped). Files under the floor are dropped
 # loudly; the default floor is the deciding run's 20,000.
 .floor <- as.integer(Sys.getenv("AUSPOL_POOL_MIN_SIMS", "20000"))
-.nsims <- suppressWarnings(as.integer(sub("^.*-n([0-9]+)-.*$", "\1", basename(rows$file))))
-.nsims[!grepl("-n[0-9]+-", basename(rows$file))] <- 20000L
+# No backslashes: this line used sub(..., "\\1") written with ONE backslash,
+# which R reads as the control character \001, so every tagged file parsed to
+# NA and this floor never fired (found 2026-09-30).
+.b <- basename(rows$file); .tok <- regexpr("-n[0-9]+-", .b)
+.nsims <- rep(20000L, length(.b))
+.nsims[.tok > 0] <- as.integer(gsub("[^0-9]", "", regmatches(.b, .tok)))
 if (any(.nsims < .floor, na.rm = TRUE)) {
   cat(sprintf("%s! %d row(s) from %d file(s) under the %d-sim floor dropped: %s
 ", "PB0", sum(.nsims < .floor, na.rm = TRUE),

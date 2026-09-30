@@ -17,6 +17,10 @@ only Lyne improved). `restore_snapshot.sh` now moves stray later files aside
 for a full snapshot (or `--strict`).
 
 Next, in order:
+0. FULL REBUILD of v55 with `AUSPOL_LEVEL_RECIPE=live` (arm Z passed on
+   correction over all 22 elections; the live forecast already uses this
+   level recipe). Same criteria as `prereg-level-recipe-retest`, 22 elections.
+   Also re-check the calibration-temperature no-go (16 elections only).
 1. Split the federal harness (the 4.8-min stage-6 floor).
 2. Early WA pairs and fed2007/2010 get no leader bonus (as-at predictions
    start at fed2010): extend the as-at corpus back if the data allows.
