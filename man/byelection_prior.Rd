@@ -4,7 +4,15 @@
 \alias{byelection_prior}
 \title{Replace prior rows in the class-share matrix with by-election shares}
 \usage{
-byelection_prior(mat, election_from, election_to, table = NULL, weight = 1)
+byelection_prior(
+  mat,
+  election_from,
+  election_to,
+  table = NULL,
+  weight = 1,
+  fill = identical(Sys.getenv("AUSPOL_BYELECTION_FILL", "0"), "1"),
+  swing = NULL
+)
 }
 \arguments{
 \item{mat}{Prior share matrix, seats by classes, in points.}
@@ -14,9 +22,16 @@ byelection_prior(mat, election_from, election_to, table = NULL, weight = 1)
 \item{weight}{Share of the by-election in the replaced row: 1 replaces it
 outright, 0.5 blends half and half with the general-election prior
 (\code{AUSPOL_BYELECTION_PRIOR=blend}).}
+
+\item{fill}{When a major skipped the by-election, use it anyway: the
+absent major gets its row's share moved by the statewide swing to the
+by-election date, taken proportionally from every non-major class
+(\code{AUSPOL_BYELECTION_FILL=1}; plans/prereg-byelection-fill-2026-09-30.md).}
+
+\item{swing}{Optional named override of that swing (party -> points).}
 }
 \value{
-\code{mat} with attribute \code{byelection} = list(applied, skipped, cases).
+\code{mat} with attribute \code{byelection} = list(applied, skipped, filled, cases).
 }
 \description{
 For every seat in \code{\link[=byelections_between]{byelections_between()}} with both majors standing and
