@@ -1127,7 +1127,7 @@ if (!is.null(.shares_p)) {
 .shares_b <- .try("seat_poll_blend", seat_poll_blend_apply(shares, "vic2026"))
 if (!is.null(.shares_b)) {
   shares <- .shares_b
-} else if (Sys.getenv("AUSPOL_SEAT_POLL_BLEND", "0") %in% c("1", "2")) {
+} else if (Sys.getenv("AUSPOL_SEAT_POLL_BLEND", "0") %in% c("1", "2", "3")) {
   cat(sprintf("SPB!! seat-poll blend FAILED%s -- shares UNBLENDED
 ", .reason("seat_poll_blend")))
 }

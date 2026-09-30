@@ -229,7 +229,13 @@ seat_poll_blend_table <- function(target_election, write = FALSE) {
 #' @export
 seat_poll_blend_apply <- function(shares, target_election) {
   mode <- Sys.getenv("AUSPOL_SEAT_POLL_BLEND", "0")
-  if (!mode %in% c("1", "2")) return(shares)
+  if (!mode %in% c("1", "2", "3")) return(shares)
+  if (mode == "3") {
+    # plans/prereg-seat-poll-joint-fp-tpp-2026-09-30.md: primary AND two-party
+    # seat-poll gaps, weights fitted jointly on earlier elections.
+    jt <- seat_poll_joint_table(target_election)
+    return(.seat_poll_blend_joint(shares, target_election, jt$w, jt$sp, jt$tp))
+  }
   tb <- seat_poll_blend_table(target_election)
   w <- attr(tb, "w")
   perpoll <- identical(Sys.getenv("AUSPOL_SEAT_POLL_MATCH", "class"), "perpoll")
