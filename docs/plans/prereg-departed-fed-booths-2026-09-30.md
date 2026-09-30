@@ -36,3 +36,20 @@ xgb layer only, after the leader-seat bonus; state harnesses and live.
    seat log loss and primary RMSE (all rows) not worse by more than 1 SE.
 3. Reported: k and beta per target; Parramatta, Wakehurst, Richmond, Mulgrave;
    ledger.
+
+## RESULT (rebuild DF vs the v53 full restore, 15:28-15:37)
+
+**Refused: the primary fails.** Departed seats' incumbent-class primary, mean
+abs error 4.553 -> 4.572 (+0.019, SE 0.122, better in 32 of 77). By election:
+qld2024 4.97 -> 4.44, nsw2023 4.30 -> 4.15, vic2022 3.80 -> 3.76; qld2020
+3.30 -> 4.39, sa2026 1.59 -> 1.87; vic2018, nsw2019, sa2022 unmoved (no
+earlier evidence). Pooled log loss and RMSE unchanged; AEF-7 ledger 0.2712 ->
+0.2689. Weights learned time-forward are small (nsw2023 beta 0.18, k 0.34):
+Parramatta 48.5 -> 47.6 (actual 35.5), Wakehurst 51.1 -> 50.6 (36.9).
+
+Reading: the rule is right in the big-gap seats and wrong in many small-gap
+ones, so one weight averages the two. A gap-dependent weight is the obvious
+follow-up, but it was suggested by this result, so it needs its own prereg.
+
+Also noted: the full v53 restore scored ledger 0.2712 against v53's 0.2722,
+so full rebuilds are not exactly reproducible (stage 1); stage-6 reruns are.
