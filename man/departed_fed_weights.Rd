@@ -4,13 +4,16 @@
 \alias{departed_fed_weights}
 \title{Time-forward share k of the gap kept, and blend weight beta, for departed seats}
 \usage{
-departed_fed_weights(target_election)
+departed_fed_weights(target_election, mode = "1")
 }
 \arguments{
 \item{target_election}{Label.}
+
+\item{mode}{\code{"1"} (one weight) or \code{"gap"} (weight linear in the gap).}
 }
 \value{
-list \code{k}, \code{beta}, \code{b}, \code{se}, \code{n}, \code{els}.
+list \code{k}, \code{beta}, \code{b}, \code{se}, \code{n}, \code{els}; for \code{"gap"} also \code{b0},
+\code{b1} (shrunk) with \code{beta} NA and \code{b}, \code{se} of length two.
 }
 \description{
 On departed seats of elections BEFORE the target: k = the pooled share of
@@ -18,4 +21,6 @@ the gap that survived (\code{sum((actual - fed) * gap) / sum(gap^2)}, least
 squares through the origin, clamped to between 0 and 1); the rule is \code{fed + k * gap};
 beta = least squares of \code{actual - pred} on \code{rule - pred}, SE clustered on
 election, shrunk \code{b^3/(b^2+se^2)} and clamped to between 0 and 1.
+With \code{mode = "gap"} the weight is \verb{b0 + b1 * |gap| / 10} instead, each
+coefficient fitted and shrunk the same way.
 }

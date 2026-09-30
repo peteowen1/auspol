@@ -1153,7 +1153,7 @@ if (!is.null(.shares_l)) {
 .shares_f <- .try("departed_fed", departed_fed_apply(shares, "vic2026"))
 if (!is.null(.shares_f)) {
   shares <- .shares_f
-} else if (identical(Sys.getenv("AUSPOL_DEPARTED_FED", "0"), "1")) {
+} else if (!identical(Sys.getenv("AUSPOL_DEPARTED_FED", "0"), "0")) {
   cat(sprintf("DF1!! departed-member blend FAILED%s -- shares WITHOUT it
 ", .reason("departed_fed")))
 }

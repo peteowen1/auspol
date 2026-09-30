@@ -47,7 +47,7 @@ if (identical(.flag("AUSPOL_SEAT_POLL_BLEND"), "3")) { invisible(seat_poll_joint
 # And the leader-seat bonus (AUSPOL_LEADER_SEAT): its bonus is fitted on the local forecasts table.
 invisible(leader_seat_table("vic2026", write = TRUE))
 # And the departed-member blend (AUSPOL_DEPARTED_FED): federal-booth primaries and weights.
-if (identical(.flag("AUSPOL_DEPARTED_FED"), "1")) { invisible(departed_fed_table("vic2026", write = TRUE)); .arm_tables <- c(.arm_tables, "departed-fed-vic2026.csv") }
+if (.flag("AUSPOL_DEPARTED_FED") %in% c("1", "gap")) { invisible(departed_fed_table("vic2026", write = TRUE, mode = .flag("AUSPOL_DEPARTED_FED"))); .arm_tables <- c(.arm_tables, "departed-fed-vic2026.csv") }
 # And the demographic correction (AUSPOL_DEMO_RESID=2): its per-seat Labor and
 # Greens adjustments, since the daily run has neither census features nor the
 # forecasts table. Placeholder shares: only the adjustments are kept.

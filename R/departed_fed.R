@@ -71,10 +71,14 @@ fed_booth_primaries <- function(election) {
 #' squares through the origin, clamped to between 0 and 1); the rule is `fed + k * gap`;
 #' beta = least squares of `actual - pred` on `rule - pred`, SE clustered on
 #' election, shrunk `b^3/(b^2+se^2)` and clamped to between 0 and 1.
+#' With `mode = "gap"` the weight is `b0 + b1 * |gap| / 10` instead, each
+#' coefficient fitted and shrunk the same way.
 #' @param target_election Label.
-#' @return list `k`, `beta`, `b`, `se`, `n`, `els`.
+#' @param mode `"1"` (one weight) or `"gap"` (weight linear in the gap).
+#' @return list `k`, `beta`, `b`, `se`, `n`, `els`; for `"gap"` also `b0`,
+#'   `b1` (shrunk) with `beta` NA and `b`, `se` of length two.
 #' @export
-departed_fed_weights <- function(target_election) {
+departed_fed_weights <- function(target_election, mode = "1") {
   f <- current_seat_predictions()
   zero <- list(k = NA_real_, beta = 0, b = NA_real_, se = NA_real_, n = 0L, els = character(0))
   if (is.null(f)) return(zero)
@@ -94,6 +98,25 @@ departed_fed_weights <- function(target_election) {
   k <- min(1, max(0, sum((rows$actual - rows$fed) * rows$gap) / sum(rows$gap^2)))
   dx <- (rows$fed + k * rows$gap) - rows$pred
   dy <- rows$actual - rows$pred
+  if (identical(mode, "gap")) {
+    # Weight linear in the gap's size, beta(g) = b0 + b1 * |g| / 10: the
+    # constant weight was right where members out-polled their own voters'
+    # federal vote by a lot, wrong where they barely did
+    # (plans/prereg-departed-fed-gap-2026-09-30.md). OLS through the origin
+    # on (dx, dx * |gap| / 10), sandwich SE clustered on election, each
+    # coefficient shrunk b^3 / (b^2 + se^2).
+    X <- cbind(dx, dx * abs(rows$gap) / 10)
+    XtXi <- tryCatch(solve(crossprod(X)), error = function(e) NULL)
+    if (is.null(XtXi)) return(modifyList(zero, list(k = k, n = nrow(rows), els = unique(rows$el))))
+    b <- drop(XtXi %*% crossprod(X, dy))
+    e <- dy - drop(X %*% b)
+    G <- length(unique(rows$el))
+    meat <- Reduce(`+`, lapply(split(seq_len(nrow(X)), rows$el), function(ix) {
+      u <- colSums(X[ix, , drop = FALSE] * e[ix]); tcrossprod(u) }))
+    se <- sqrt(diag(XtXi %*% meat %*% XtXi) * G / max(1, G - 1))
+    bs <- ifelse(is.finite(se) & se > 0, b * b^2 / (b^2 + se^2), 0)
+    return(list(k = k, beta = NA_real_, b0 = bs[1], b1 = bs[2], b = b, se = se, n = nrow(rows), els = unique(rows$el), mode = "gap"))
+  }
   b <- sum(dx * dy) / sum(dx^2)
   e <- dy - b * dx
   G <- length(unique(rows$el))
@@ -105,24 +128,30 @@ departed_fed_weights <- function(target_election) {
 #' Departed-member inputs for one target, computed or shipped
 #' @param target_election Label such as `"vic2026"`.
 #' @param write Write `output/departed-fed-<target>.csv` for the daily run.
+#' @param mode As [departed_fed_weights()]; a shipped table for another mode is refused.
 #' @return data.table `seat`, `class`, `prev`, `fed`, `gap` with attribute `w`.
 #' @export
-departed_fed_table <- function(target_election, write = FALSE) {
+departed_fed_table <- function(target_election, write = FALSE, mode = .departed_fed_mode()) {
   cache <- out_path(sprintf("departed-fed-%s.csv", target_election))
   if (.has_seat_predictions() && file.exists(file.path(pkg_root(), "external", "elections", "fed-booth-map.csv"))) {
-    w <- departed_fed_weights(target_election)
+    w <- departed_fed_weights(target_election, mode = mode)
     tb <- .departed_inputs(target_election)
     if (write) {
       out <- data.table::copy(tb)
       if (!nrow(out)) out <- data.table::data.table(seat = NA_character_, class = NA_character_, prev = NA_real_, fed = NA_real_, gap = NA_real_)
-      out$k <- w$k; out$beta <- w$beta; out$b <- w$b; out$se <- w$se; out$n <- w$n
+      out$k <- w$k; out$beta <- w$beta; out$n <- w$n
+      out$b0 <- if (is.null(w$b0)) NA_real_ else w$b0; out$b1 <- if (is.null(w$b1)) NA_real_ else w$b1
+      out$mode <- mode
       data.table::fwrite(out, cache)
     }
   } else if (file.exists(cache)) {
     raw <- data.table::fread(cache, showProgress = FALSE)
-    w <- list(k = raw$k[1], beta = raw$beta[1], b = raw$b[1], se = raw$se[1], n = raw$n[1])
+    if (!"mode" %in% names(raw) || !identical(as.character(raw$mode[1]), mode))
+      stop("shipped ", basename(cache), " was written for mode '", if ("mode" %in% names(raw)) raw$mode[1] else "1", "', this run asks for '", mode, "'")
+    w <- list(k = raw$k[1], beta = raw$beta[1], b0 = raw$b0[1], b1 = raw$b1[1], b = NA_real_, se = NA_real_, n = raw$n[1], mode = mode)
     tb <- raw[!is.na(raw$seat), list(seat, class, prev, fed, gap)]
-    cat(sprintf("DF0  %s: departed-member inputs read from %s (sources absent)\n", target_election, basename(cache)))
+    cat(sprintf("DF0  %s: departed-member inputs read from %s (sources absent)
+", target_election, basename(cache)))
   } else {
     stop("departed-member blend for ", target_election, ": neither the sources nor ", cache, " exist")
   }
@@ -130,9 +159,18 @@ departed_fed_table <- function(target_election, write = FALSE) {
   tb
 }
 
+#' The departed-member mode this run asks for
+#' @return `"0"` (off), `"1"` (one weight) or `"gap"` (weight linear in the gap).
+#' @keywords internal
+.departed_fed_mode <- function() {
+  m <- Sys.getenv("AUSPOL_DEPARTED_FED", "0")
+  if (!m %in% c("0", "1", "gap")) stop("AUSPOL_DEPARTED_FED must be 0, 1 or gap, not '", m, "'")
+  m
+}
+
 #' Pull a departed member's party toward the same booths' federal vote
 #'
-#' A no-op unless `AUSPOL_DEPARTED_FED` is "1". In each seat whose sitting
+#' A no-op unless `AUSPOL_DEPARTED_FED` is "1" or "gap". In each seat whose sitting
 #' member left: `share += beta * (fed + k * gap - share)` for the member's
 #' class, the other classes giving up the difference in proportion.
 #' @param shares Matrix of primary shares, rownames = seats, colnames = classes.
@@ -140,14 +178,21 @@ departed_fed_table <- function(target_election, write = FALSE) {
 #' @return `shares`, adjusted.
 #' @export
 departed_fed_apply <- function(shares, target_election) {
-  if (!identical(Sys.getenv("AUSPOL_DEPARTED_FED", "0"), "1")) return(shares)
-  tb <- tryCatch(departed_fed_table(target_election), error = function(e) {
-    cat(sprintf("DF1! %s: departed-member blend SKIPPED -- %s\n", target_election, conditionMessage(e))); NULL })
+  mode <- .departed_fed_mode()
+  if (identical(mode, "0")) return(shares)
+  tb <- tryCatch(departed_fed_table(target_election, mode = mode), error = function(e) {
+    cat(sprintf("DF1! %s: departed-member blend SKIPPED -- %s
+", target_election, conditionMessage(e))); NULL })
   if (is.null(tb)) return(shares)
   w <- attr(tb, "w")
-  if (!nrow(tb) || !is.finite(w$beta) || w$beta <= 0 || !is.finite(w$k)) {
-    cat(sprintf("DF1  %s: no departed-member blend (beta %.3f, k %s, %d earlier cells, %d departed seats here)\n",
-                target_election, w$beta, format(round(w$k, 2)), w$n, nrow(tb)))
+  beta_of <- if (identical(mode, "gap")) {
+    function(g) min(1, max(0, w$b0 + w$b1 * abs(g) / 10))
+  } else function(g) w$beta
+  usable <- if (identical(mode, "gap")) is.finite(w$b0) && is.finite(w$b1) else is.finite(w$beta) && w$beta > 0
+  if (!nrow(tb) || !usable || !is.finite(w$k)) {
+    cat(sprintf("DF1  %s: no departed-member blend (mode %s, k %s, %d earlier cells, %d departed seats here)
+",
+                target_election, mode, format(round(w$k, 2)), w$n, nrow(tb)))
     return(shares)
   }
   moved <- character(0)
@@ -156,10 +201,13 @@ departed_fed_apply <- function(shares, target_election) {
     if (is.na(i) || is.na(j) || shares[i, j] <= 0) next
     target <- tb$fed[r] + w$k * tb$gap[r]
     old <- shares[i, j]
-    shares[i, ] <- .shift_cell(shares[i, ], j, w$beta * (target - old))
-    moved <- c(moved, sprintf("%s %s %.1f->%.1f", tb$seat[r], tb$class[r], old, shares[i, j]))
+    bt <- beta_of(tb$gap[r])
+    shares[i, ] <- .shift_cell(shares[i, ], j, bt * (target - old))
+    moved <- c(moved, sprintf("%s %s gap %.1f beta %.2f %.1f->%.1f", tb$seat[r], tb$class[r], tb$gap[r], bt, old, shares[i, j]))
   }
-  cat(sprintf("DF1  %s: departed-member blend beta %.3f (raw %.3f, se %.3f), k %.2f, %d earlier cells; %s\n",
-              target_election, w$beta, w$b, w$se, w$k, w$n, if (length(moved)) paste(moved, collapse = "; ") else "no seat matched"))
+  wdesc <- if (identical(mode, "gap")) sprintf("beta = %.3f + %.3f x |gap|/10", w$b0, w$b1) else sprintf("beta %.3f", w$beta)
+  cat(sprintf("DF1  %s: departed-member blend (mode %s) %s, k %.2f, %d earlier cells; %s
+",
+              target_election, mode, wdesc, w$k, w$n, if (length(moved)) paste(moved, collapse = "; ") else "no seat matched"))
   shares
 }
