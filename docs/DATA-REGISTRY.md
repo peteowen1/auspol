@@ -1,6 +1,6 @@
 # Data registry
 
-**Generated 2026-09-30 by `scripts/build_data_registry.R`. Do not hand-edit** --
+**Generated 2026-10-01 by `scripts/build_data_registry.R`. Do not hand-edit** --
 rerun the script instead. Regenerate it whenever you add or fetch data.
 
 This file exists because the same data has been declared missing three
@@ -27,6 +27,7 @@ cannot pass as a working one.
 | `ecsa-2026-sa-onp-shares.csv` | 1 KB |
 | `ecsa-2026-sa-transfers.csv` | 44 KB |
 | `ecsa-sa-winners.csv` | 2 KB |
+| `fed-booth-map.csv` | 513 KB |
 | `fed-swing-transposed.csv` | 43 KB |
 | `federal-transposed-to-state.csv` | 178 KB |
 | `MANIFEST.csv` | 787 B |
@@ -65,7 +66,7 @@ cannot pass as a working one.
 
 - **aec/** -- 102 files, 87.9 MB
   - e.g. booths/fed2016-NSW.csv, booths/fed2016-VIC.csv, booths/fed2019-QLD.csv, booths/fed2019-SA.csv
-- **vec/** -- 898 files, 42.0 MB
+- **vec/** -- 899 files, 42.4 MB
   - e.g. 2010/cdx-vec.txt, 2010/dop-AlbertPark.html, 2010/dop-BallaratEast.html, 2010/dop-BallaratWest.html
 - **nsw/** -- 294 files, 9.9 MB
   - e.g. byelections/SB1602-orange-fp.html, byelections/SB1801-wagga-wagga-fp.html, dop-sample.html, dop/index-SG1901.html
