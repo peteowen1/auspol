@@ -5,6 +5,7 @@ Created 2026-09-19 (the verse convention; auspol had none). Older decisions
 live in the plans they came from (`docs/plans/prereg-*.md` RESULT sections).
 
 - **2026-09-30 Poll trend without the fundamentals anchor (level recipe "live") REFUSED again, leak-free.** Pooled log loss +0.0003 (primary fails) though RMSE 4.19 -> 4.17 and ledger 0.2726 -> 0.2672: better in recent elections, worse in early ones. Bundles two changes; anchor-alone test queued. `plans/prereg-level-recipe-retest-2026-09-30.md`.
+- **2026-09-30 Two-party seat polls, direct polls only, REFUSED (J5).** Polled seats +0.0046 (primary fails), fed2025 +0.040; nsw2023 -0.24 (Parramatta 0.11 -> 0.53). `plans/prereg-seat-poll-tpp-direct-2026-09-30.md`.
 - **2026-09-30 Joint primary + two-party seat-poll blend REFUSED (J4).** Polled seats 0.3497 -> 0.3674 (2.2 SE worse): helps nsw2023 (Parramatta 0.11 -> 0.40) and fed2019, hurts MRP-heavy fed2025/fed2022. Found and fixed on the way: preference flows chosen by year leaked future elections (Pete: use dates). `plans/prereg-seat-poll-joint-fp-tpp-2026-09-30.md`.
 - **2026-09-30 v53 PUBLISHED 11:47.** Primary vote like for like against AEF (same 654 seats, four classes): 4.90 vs 5.63 weighted; the ledger card's 4.90 vs 5.42 compares mismatched rows.
 - **2026-09-30 v53: demographic and leader corrections applied once (they were double-counted in v52) and all post-xgb corrections learn from this run.** Log loss 0.3419 -> 0.3409, ledger 0.2717 -> 0.2722, leader seats 4.69 -> 5.00. `plans/prereg-corrections-once-this-run-2026-09-30.md`.

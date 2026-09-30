@@ -22,3 +22,12 @@ Weights refitted jointly on earlier elections as before; flows by date.
 3. Guard: pooled seat log loss (CR2) and primary RMSE not worse by more than
    1 SE.
 4. Reported: weights per target, nsw2023 Parramatta and Penrith, ledger.
+
+## RESULT (rebuild J5 vs v53, 13:24-13:36)
+
+**Refused.** Polled seat-elections: 0.3497 -> 0.3543 (+0.0046, SE 0.0097,
+better in 197 of 357): the primary fails. The guard fails too: fed2022
+-0.0100 but fed2025 +0.0397. Primary RMSE flat (4.1771 -> 4.1777); ledger
+0.2722 -> 0.2768. nsw2023 -0.2426 (Parramatta 0.111 -> 0.532), fed2019
+-0.1199, qld2020 -0.0563. Two-party seat-poll figures help the thinly polled
+state elections and hurt fed2025 even from direct polls only; v53 stays.
