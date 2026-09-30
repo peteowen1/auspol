@@ -35,7 +35,8 @@ List seat_sim_core(NumericMatrix shares, int n_sims, int shift_mode,
                    NumericVector shrink,
                    IntegerVector ov_seat, IntegerVector ov_key, NumericMatrix ov_mat,
                    double fallback_flow_sd = 0,
-                   NumericVector ov_sd = NumericVector::create()) {
+                   NumericVector ov_sd = NumericVector::create(),
+                   bool keep_fp = false) {
   const int nseat = shares.nrow(), K = shares.ncol();
   // PER-SEAT CONDITIONAL OVERRIDE, sparse. The shared cell_mat is dense over
   // the key space but has no seat dimension; a per-seat dense table would be
@@ -60,6 +61,15 @@ List seat_sim_core(NumericMatrix shares, int n_sims, int shift_mode,
   const double pow2K = std::ldexp(1.0, K);   // 2^K, exact
   const int n_surge = surge_idx.size();
   const bool surge_any = n_surge > 0;
+  // KEEP_FP: each draw's primaries (after noise and surge, before any
+  // preference is distributed), normalised to 100, for per-seat ranges on the
+  // published page. Writes only; draws no random number, so every other
+  // output is unchanged. n_sims x nseat x K, column-major like an R array.
+  NumericVector fp;
+  if (keep_fp) {
+    fp = NumericVector((R_xlen_t) n_sims * nseat * K, NA_REAL);
+    fp.attr("dim") = IntegerVector::create(n_sims, nseat, K);
+  }
 
   std::vector<double> shift(K), z(K), v(K), base(K), sdc(K), p, w;
   std::vector<int> alive, cand;
@@ -116,6 +126,13 @@ List seat_sim_core(NumericMatrix shares, int n_sims, int shift_mode,
             }
           }
         }
+      }
+      if (keep_fp) {
+        long double fs = 0.0L;
+        for (int k = 0; k < K; ++k) fs += v[k];
+        const double fsum = (double) fs;
+        if (fsum > 0) for (int k = 0; k < K; ++k)
+          fp[(R_xlen_t) s + (R_xlen_t) n_sims * ((R_xlen_t) i + (R_xlen_t) nseat * k)] = 100.0 * v[k] / fsum;
       }
       // ---- eliminations ----
       alive.clear();
@@ -225,5 +242,6 @@ List seat_sim_core(NumericMatrix shares, int n_sims, int shift_mode,
   return List::create(_["wins"] = wins, _["totals"] = totals, _["tcp_w"] = tcp_w,
                       _["tcp_r"] = tcp_r, _["tcp_share"] = tcp_share,
                       _["n_fb"] = (double) n_fb, _["n_tx"] = (double) n_tx,
-                      _["n_recipient_fb_draw"] = (double) n_recipient_fb_draw);
+                      _["n_recipient_fb_draw"] = (double) n_recipient_fb_draw,
+                      _["fp"] = keep_fp ? (SEXP) fp : R_NilValue);
 }

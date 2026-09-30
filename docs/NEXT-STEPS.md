@@ -5,7 +5,20 @@ it stood before this rewrite: `backlog/journal-2026-09-19-hub-snapshot.md`).
 Decisions: `docs/DECISIONS.md`. Every seat verdict: `docs/SEAT-REGISTRY.md`.
 Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30.
 
-## 2026-09-30 18:30 (read this first)
+## 2026-09-30 23:45 (read this first)
+
+**v56 live** (first daily run 22:44: ALP 36.3, Coalition 36.2 expected seats).
+Map (`web/vic2026-districts.topojson`) and `vic-page-data.json` go to R2 with
+every daily run (PR #78). `check_like_ci.R` skips R CMD check when the package
+files are unchanged (PR #79). Forecast JSON has `p_most_seats_strict` and
+`p_tie_most` from the next daily run.
+
+ITG Politics redesign, second batch (Pete approved batch 1 of 2; ask before
+starting): per-seat 2CP margin and primary quantiles plus swing to flip;
+2022 district results (primaries and final 2CP from the VEC transfers);
+2022 booth results parsed from `external/reference/vec/2022/booths/*.html`.
+
+## 2026-09-30 18:30
 
 **v55 ready, not published**: leader-seat bonus applied at full size (it was
 half: the row rescale handed it back). Leader gap 1.72 -> 0.29, ledger 0.2757

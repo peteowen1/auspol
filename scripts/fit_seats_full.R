@@ -1443,7 +1443,8 @@ sim <- simulate_seat_contests(level_sd = .level_sd, level_mult = .lm(shares), sh
                               statewide_draws = sw_draws,
                               fallback_smooth = FB_SMOOTH, shrink_k = SHRINK_K, flow_sd = FLOW_SD,
                               surge_h = surge_arg, surge_party = surge_party_arg,
-                              surge_from_zero = identical(Sys.getenv("AUSPOL_SURGE_FROM_ZERO", "0"), "1"), surge_mu = surge_mu_arg, surge_sd = surge_sd_arg)
+                              surge_from_zero = identical(Sys.getenv("AUSPOL_SURGE_FROM_ZERO", "0"), "1"), surge_mu = surge_mu_arg, surge_sd = surge_sd_arg,
+                              keep_fp = TRUE)   # per-seat ranges for the page; draws no random number
 cat(sprintf("S6e  engine %s | surge recipient fell back: %d class(es) absent, %d seat-draws at zero share\n", sim$engine, sim$surge_recipient_fallback, sim$surge_recipient_fallback_draws))
 cat(sprintf("\nsimulated %d seats x %d runs in %.0fs | pooled fallback %.1f%%\n",
             nrow(shares), N_SIMS,
@@ -1518,6 +1519,45 @@ fwrite(data.table(seat = rownames(shares), as.data.table(shares)),
        sprintf("output/seat-shares-vic-2026%s.csv", OUT_SUFFIX))
 fwrite(wp, sprintf("output/seat-probs-vic-2026%s.csv", OUT_SUFFIX))
 fwrite(as.data.table(sim$totals), sprintf("output/seat-sims-full-vic-2026%s.csv", OUT_SUFFIX))
+# PER-SEAT RANGES for the ITG seat pages (2026-09-30), from this run's own
+# draws. Primaries: each party's share in every draw, after noise and surge and
+# before preferences, normalised to 100. Final two: the pairing drawn most often,
+# its leader (the member who wins it more often), the leader's two-candidate
+# share across the draws with that pairing, and the swing to flip -- the median
+# share minus 50, i.e. how far the leader's two-candidate vote must fall.
+.qs <- c(0.05, 0.25, 0.5, 0.75, 0.95)
+.qn <- c("q05", "q25", "q50", "q75", "q95")
+.fp <- sim$fp_draws
+stopifnot(!is.null(.fp), identical(dimnames(.fp)[[2]], rownames(shares)))
+.prim <- rbindlist(lapply(dimnames(.fp)[[2]], function(st) rbindlist(lapply(dimnames(.fp)[[3]], function(pt) {
+  x <- .fp[, st, pt]; x <- x[is.finite(x)]
+  if (!length(x) || mean(x) < 0.05) return(NULL)
+  data.table(seat = st, party = pt, mean = round(mean(x), 2), t(setNames(round(stats::quantile(x, .qs, names = FALSE), 2), .qn)))
+}))))
+.tcp <- rbindlist(lapply(seq_len(ncol(sim$tcp_winner)), function(j) {
+  w <- sim$tcp_winner[, j]; r <- sim$tcp_runnerup[, j]; sh2 <- sim$tcp_share[, j]
+  ok <- !is.na(w) & !is.na(r) & is.finite(sh2)
+  if (!any(ok)) return(NULL)
+  pair <- ifelse(w < r, paste(w, r, sep = "|"), paste(r, w, sep = "|"))
+  top <- names(which.max(table(pair[ok])))
+  k <- ok & pair == top
+  a <- strsplit(top, "|", fixed = TRUE)[[1]]
+  lead <- a[which.max(c(sum(w[k] == a[1]), sum(w[k] == a[2])))]
+  other <- setdiff(a, lead)
+  sl <- 100 * ifelse(w[k] == lead, sh2[k], 1 - sh2[k])
+  q <- stats::quantile(sl, .qs, names = FALSE)
+  data.table(seat = colnames(sim$tcp_winner)[j], leader = lead, other = other,
+             p_pair = round(mean(k), 4), p_leader_wins_pair = round(mean(w[k] == lead), 4),
+             t(setNames(round(q, 2), paste0("leader_tcp_", .qn))),
+             swing_to_flip = round(q[3] - 50, 2))
+}))
+stopifnot(nrow(.tcp) == nrow(shares), anyDuplicated(.prim[, .(seat, party)]) == 0L)
+fwrite(.prim, sprintf("output/seat-primary-ranges-vic-2026%s.csv", OUT_SUFFIX))
+fwrite(.tcp, sprintf("output/seat-tcp-ranges-vic-2026%s.csv", OUT_SUFFIX))
+cat(sprintf("RG1  per-seat ranges: %d party rows, %d seats with a final pair (median P(that pair) %.2f)
+",
+            nrow(.prim), nrow(.tcp), stats::median(.tcp$p_pair)))
+rm(.fp)
 cat(sprintf("
 wrote output/seat-probs-vic-2026%s.csv
 ", OUT_SUFFIX))

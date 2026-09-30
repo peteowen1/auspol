@@ -373,7 +373,7 @@ jobs:
           # seats-by-party ranges) is rebuilt by run_all.R every run; the
           # district map is static and committed (scripts/build_vic_districts_topojson.sh).
           # Both for the ITG Politics redesign, 2026-09-30.
-          for f in output/forecast-vic2026.json output/forecast-history.csv output/seat-probs-vic-2026.csv output/seat-shares-vic-2026.csv output/vic-page-data.json web/vic2026-districts.topojson; do
+          for f in output/forecast-vic2026.json output/forecast-history.csv output/seat-probs-vic-2026.csv output/seat-shares-vic-2026.csv output/vic-page-data.json web/vic2026-districts.topojson web/vic2022-results.json web/vic2022-booths.json; do
             case "$f" in *.json|*.topojson) ct=application/json ;; *) ct=text/csv ;; esac
             wrangler r2 object put "inthegame-data/auspol/$(basename "$f")" --file "$f" --content-type "$ct" --cache-control "public, max-age=300" --remote
             echo "OK $(basename "$f")"

@@ -623,3 +623,19 @@ test_that("an override row is smoothed as a MEASUREMENT, not as a pooled fallbac
   expect_equal(go("cpp"), 0.526)
   expect_equal(go("r"), 0.526)
 })
+
+test_that("keep_fp records each draw's primaries without changing any other output, identically in both engines", {
+  sh <- matrix(c(40, 30, 20, 35, 40, 25, 25, 30, 55), nrow = 3,
+               dimnames = list(c("A", "B", "C"), c("ALP", "LNP", "GRN")))
+  run <- function(eng, kf) simulate_seat_contests(sh, fake_matrix(), party_sd = c(ALP = 3, LNP = 3, GRN = 2),
+                                                  n_sims = 300, seed = 11, engine = eng, keep_fp = kf)
+  off <- run("cpp", FALSE); on <- run("cpp", TRUE); r <- run("r", TRUE)
+  for (x in c("win_prob", "totals", "tcp_share", "tcp_winner")) {
+    expect_identical(on[[x]], off[[x]])   # recording draws no random number
+    expect_identical(r[[x]], on[[x]])
+  }
+  expect_null(off$fp_draws)
+  expect_identical(dim(on$fp_draws), c(300L, 3L, 3L))
+  expect_identical(unname(on$fp_draws), unname(r$fp_draws))
+  expect_equal(range(apply(on$fp_draws, c(1, 2), sum)), c(100, 100))
+})

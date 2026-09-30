@@ -33,7 +33,8 @@ simulate_seat_contests(
   surge_floor = 2,
   surge_party = NULL,
   surge_from_zero = FALSE,
-  engine = c("auto", "cpp", "r")
+  engine = c("auto", "cpp", "r"),
+  keep_fp = FALSE
 )
 }
 \arguments{
@@ -359,6 +360,12 @@ what it was written for.}
 no \code{party_draws}, and a party count small enough for the dense cell
 tables. \code{"r"} is the reference implementation, kept so the identity can
 be re-proven (tests do) and for the two cases the core does not cover.}
+
+\item{keep_fp}{If \code{TRUE}, also return \code{fp_draws}: every draw's primary
+shares after noise and surge, before any preference is distributed,
+normalised to 100 (an \code{n_sims} x seat x party array; \code{NA} where every
+party fell to zero). For per-seat ranges on the published page. Draws no
+random number, so every other output is identical with it on or off.}
 }
 \value{
 List: \code{win_prob} (data.frame, one row per seat and party with a
@@ -367,7 +374,7 @@ probability), \code{totals} (matrix of seats won per party per simulation),
 the final two survivors in each draw, \code{NA} for a seat uncontested down to
 one party), \code{tcp_share} (n_sims x nseat, \code{tcp_winner}'s share of their
 two-candidate-preferred total), \code{fallback_rate} (share of transfers with
-no conditional cell).
+no conditional cell), and \code{fp_draws} (\code{NULL} unless \code{keep_fp}).
 
 \code{tcp_winner} is the COUNT winner, taken before the \code{shrink} coin toss
 below can overrule which party is credited in \code{wins}/\code{totals} for that
