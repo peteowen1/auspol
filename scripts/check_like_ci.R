@@ -133,8 +133,46 @@ cat("OK: no fitting script's default disagrees with what published_flags.R ships
 # second: a broken test suite should fail in seconds rather than after a build.
 # Skippable with --tests-only while iterating, but never before opening a PR --
 # that is exactly when it caught something.
-if (!"--tests-only" %in% commandArgs(trailingOnly = TRUE)) {
-  cat("\n=== R CMD check --as-cran (warnings are errors, as in CI) ===\n")
+#
+# SKIPPED WHEN THE PACKAGE IS BYTE-IDENTICAL TO THE LAST CLEAN CHECK (Pete,
+# 2026-09-30: four checks that day cost ~40 minutes, and two touched only
+# scripts/, web/, docs and workflows, which R CMD build never sees). The
+# fingerprint covers every file the build would include -- tracked and
+# untracked, .Rbuildignore applied the way R applies it (case-insensitive,
+# to every parent directory) -- plus the R version. Same fingerprint, same
+# tarball, same result. --force-check always runs it.
+.pkg_fingerprint <- function() {
+  f <- unique(c(system2("git", "ls-files", stdout = TRUE),
+                system2("git", c("ls-files", "--others", "--exclude-standard"), stdout = TRUE)))
+  f <- f[file.exists(f)]
+  ign <- trimws(readLines(".Rbuildignore", warn = FALSE)); ign <- ign[nzchar(ign) & !startsWith(ign, "#")]
+  ignored <- vapply(f, function(p) {
+    parts <- strsplit(p, "/", fixed = TRUE)[[1]]
+    anc <- vapply(seq_along(parts), function(i) paste(parts[seq_len(i)], collapse = "/"), character(1))
+    any(vapply(ign, function(re) any(grepl(re, anc, perl = TRUE, ignore.case = TRUE)), logical(1)))
+  }, logical(1))
+  keep <- sort(f[!ignored])
+  # Installed versions of everything DESCRIPTION depends on: an upgraded
+  # dependency can change the check's result with no file here changing.
+  d <- read.dcf("DESCRIPTION", fields = c("Depends", "Imports", "Suggests", "LinkingTo"))
+  deps <- unique(trimws(sub("\\(.*$", "", unlist(strsplit(paste(d[!is.na(d)], collapse = ","), ",")))))
+  deps <- sort(setdiff(deps[nzchar(deps)], "R"))
+  ver <- vapply(deps, function(p) tryCatch(as.character(utils::packageVersion(p)), error = function(e) "missing"), character(1))
+  tf <- tempfile(); on.exit(unlink(tf))
+  writeLines(c(R.version.string, paste(deps, ver), paste(keep, unname(tools::md5sum(keep)))), tf)
+  list(hash = unname(tools::md5sum(tf)), n = length(keep))
+}
+.fp_file <- file.path("output", ".check-like-ci-last-clean.txt")
+.args <- commandArgs(trailingOnly = TRUE)
+.fp <- if (!"--tests-only" %in% .args) .pkg_fingerprint() else NULL
+.last <- if (file.exists(.fp_file)) readLines(.fp_file, warn = FALSE) else character(0)
+if (!is.null(.fp) && !"--force-check" %in% .args && length(.last) && identical(.last[1], .fp$hash)) {
+  cat(sprintf("\n=== R CMD check SKIPPED: the %d files the package build includes are byte-identical to the last clean check (%s, %s). --force-check runs it anyway. ===\n",
+              .fp$n, substr(.fp$hash, 1, 10), if (length(.last) > 1) .last[2] else "?"))
+  cat("\nOK: package checks clean the way CI checks it (unchanged since the last clean check).\n")
+} else if (!"--tests-only" %in% .args) {
+  cat(sprintf("\n=== R CMD check --as-cran (warnings are errors, as in CI; %d package files, fingerprint %s) ===\n",
+              .fp$n, substr(.fp$hash, 1, 10)))
   if (!requireNamespace("rcmdcheck", quietly = TRUE)) {
     stop("rcmdcheck is not installed, so the half of CI that checks the ",
          "package cannot run here. Install it, or pass --tests-only and ",
@@ -153,4 +191,8 @@ if (!"--tests-only" %in% commandArgs(trailingOnly = TRUE)) {
     for (x in res$notes) cat("  - ", gsub("\n", "\n    ", x), "\n", sep = "")
   }
   cat("\nOK: package checks clean the way CI checks it.\n")
+  # Only a clean check is recorded: error_on = "warning" above has already
+  # stopped the script on anything worse.
+  dir.create(dirname(.fp_file), showWarnings = FALSE)
+  writeLines(c(.fp$hash, format(Sys.time(), "%Y-%m-%d %H:%M")), .fp_file)
 }

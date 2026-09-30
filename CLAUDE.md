@@ -20,6 +20,11 @@ Two PRs have already opened red for want of this: once because a change gave
 `.Rd` still documented a default the code had moved to a constant. The second
 time the script existed and was skipped.
 
+The slow half (`R CMD check`) skips itself when every file the package build
+includes is byte-identical to the last clean check (fingerprint in
+`output/.check-like-ci-last-clean.txt`; `--force-check` runs it anyway), so a
+push that touches only `scripts/`, docs or workflows costs the tests alone.
+
 `--tests-only` skips the slow half while iterating. **Never before any push
 to a branch that has an open PR** — not just before opening one. Three CI
 failures so far were `.Rd` files stale against a changed signature, and the
