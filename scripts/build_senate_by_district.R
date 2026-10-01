@@ -43,10 +43,16 @@ cat(sprintf("SB1  federal divisions: %d division-elections over %d elections\n",
 
 # ---- (a) state districts via the booth maps ----
 bm <- fread(election_data_path("fed-booth-map.csv"), showProgress = FALSE)
-q17f <- file.path("external", "reference", "correspondences", "booths-2017qld.csv")
-if (file.exists(q17f)) {
-  q17 <- fread(q17f, showProgress = FALSE)
-  bm <- rbind(bm, q17[, .(region = "qld", cycle = 2017L, fed = 2016L, district, place_id)], fill = TRUE)
+# Extra maps from scripts/build_extra_booth_maps.R (cycles the main
+# transposition does not cover). The federal election each one uses:
+EXTRA <- list(qld2017 = 2016L, wa2008 = 2007L, wa2017 = 2016L, wa2025 = 2022L, vic2014 = 2013L)
+for (el in names(EXTRA)) {
+  rg <- sub("[0-9]{4}$", "", el); yr <- as.integer(sub("^[a-z]+", "", el))
+  f <- file.path("external", "reference", "correspondences", sprintf("booths-%d%s.csv", yr, rg))
+  if (!file.exists(f)) { cat(sprintf("SB2! %s: no extra map (%s) -- run scripts/build_extra_booth_maps.R
+", el, basename(f))); next }
+  q <- fread(f, showProgress = FALSE)
+  bm <- rbind(bm, q[, .(region = rg, cycle = yr, fed = EXTRA[[el]], district, place_id)], fill = TRUE)
 }
 CY <- unique(bm[, .(region, cycle, fed)])
 dist <- rbindlist(lapply(seq_len(nrow(CY)), function(i) {

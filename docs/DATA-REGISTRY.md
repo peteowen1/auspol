@@ -64,8 +64,8 @@ cannot pass as a working one.
 
 ## Raw commission downloads (`external/reference/`)
 
-- **aec/** -- 102 files, 87.9 MB
-  - e.g. booths/fed2016-NSW.csv, booths/fed2016-VIC.csv, booths/fed2019-QLD.csv, booths/fed2019-SA.csv
+- **aec/** -- 1160 files, 623.5 MB
+  - e.g. booths/fed2016-NSW.csv, booths/fed2016-QLD.csv, booths/fed2016-VIC.csv, booths/fed2019-QLD.csv
 - **vec/** -- 899 files, 42.4 MB
   - e.g. 2010/cdx-vec.txt, 2010/dop-AlbertPark.html, 2010/dop-BallaratEast.html, 2010/dop-BallaratWest.html
 - **nsw/** -- 294 files, 9.9 MB
@@ -78,11 +78,11 @@ cannot pass as a working one.
   - e.g. app.html, app.min.js, config-loader.js, config.json
 - **trends/** -- 4673 files, 2.8 MB
   - e.g. 2019_anch2_Adrian_Wone_Susie_Beveridge_Will_Landers_Ammar_Khan.rds, 2019_anch2_Bill_Chandler_Susan_Moylan_Dave_Blake_Tim_Bohm.rds, 2019_anch2_Robert_Oakeshott_Helen_Haines_Zali_Steggall_Kerryn_Phelps.rds, 2019_anch2_Trevor_Jones_Colin_Butland_David_Norman_Thor_Prohaska.rds
-- **boundaries/** -- 47 files, 414.3 MB
+- **boundaries/** -- 60 files, 592.3 MB
   - e.g. CED_2016/CED_2016_AUST.dbf, CED_2016/CED_2016_AUST.prj, CED_2016/CED_2016_AUST.shp, CED_2016/CED_2016_AUST.shx
 - **census/** -- 20 files, 77.4 MB
   - e.g. 2016_GCP_CED_AUS.zip, 2016_GCP_SED_NSW.zip, 2016_GCP_SED_QLD.zip, 2016_GCP_SED_SA.zip
-- **correspondences/** -- 21 files, 1.3 MB
+- **correspondences/** -- 26 files, 1.5 MB
   - e.g. abs-sed/CG_CED_2016_CED_2021.csv, abs-sed/CG_SED_2016_SED_2021.csv, abs-sed/CG_SED_2021_SED_2022.csv, abs-sed/CG_SED_2022_SED_2024.csv
 - **aef/** -- 17 files, 4.8 MB
   - e.g. 2022fed-results.json, 2022fed-summary.json, 2022sa-results.json, 2022sa-summary.json
