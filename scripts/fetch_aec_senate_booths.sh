@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Every federal SENATE first-preference result by polling place, 2004-2025, every
+# Every federal SENATE first-preference result by polling place, 1998-2025, every
 # state and territory, from the AEC tally room. Raw files, never edited:
 #   external/reference/aec/booths/senate/fed<year>-<STATE>-SenateDivisionFirstPrefsByPollingPlaceDownload-<event>-<division>.csv
 #
@@ -40,6 +40,25 @@ for yr in 2004 2007 2010 2013 2016 2019 2022 2025; do
     echo "FAS1  fed$yr $st: $(printf '%s\n' $files | wc -l) divisions listed, $n fetched now"
   done
 done
+# 2004: the old results site keeps the same files as per-state zips under
+# /12246/results/External/ (not the division menus above).
+for st in $STATES; do
+  csv="$D/fed2004-$st-SenateStateFirstPrefsByPollingPlaceDownload-12246-$st.csv"
+  if [ -s "$csv" ]; then skip=$((skip+1)); continue; fi
+  z="$D/fed2004-$st-SenateStateFirstPrefsByPollingPlaceDownload-12246.zip"
+  if curl -sfL -A "$UA" -o "$z" "https://results.aec.gov.au/12246/results/External/SenateStateFirstPrefsByPollingPlaceDownload-12246-$st.zip"; then
+    unzip -o -q -j "$z" "*.csv" -d "$D/tmp04" && mv "$D/tmp04/"*.csv "$csv" && rm -rf "$D/tmp04"; got=$((got+1))
+  else fail=$((fail+1)); echo "FAS!  2004 $st failed"; fi
+done
+# 1998 and 2001: only in the AEC's election-statistics archives (raw
+# SPPVOTE / SCANDS: Senate votes by polling place NAME, no polling-place id).
+S="external/reference/aec/stats"; mkdir -p "$S"
+for f in aec-2001-election-statistics.zip aec-1993-1996-1998-election-statistics.zip; do
+  [ -s "$S/$f" ] || curl -sfL -A "$UA" -o "$S/$f" "https://www.aec.gov.au/About_AEC/Publications/statistics/files/$f" || { fail=$((fail+1)); echo "FAS!  $f failed"; }
+done
+unzip -o -q "$S/aec-2001-election-statistics.zip" "data/import/*" -d "$S/y2001" 2>/dev/null
+unzip -o -q "$S/aec-1993-1996-1998-election-statistics.zip" "data/import/tables98/SPPVOTE.TXT" "data/import/tables98/SCANDS.TXT" -d "$S/y9398" 2>/dev/null
+echo "FAS3  1998/2001 Senate by polling place: $(wc -l < "$S/y9398/data/import/tables98/SPPVOTE.TXT" 2>/dev/null) / $(wc -l < "$S/y2001/data/import/sppvote.txt" 2>/dev/null) rows"
 echo "FAS2  fetched $got, already on disk $skip, failed $fail"
 [ -n "$empty_menus" ] && echo "FAS2! menus listing no polling-place files:$empty_menus"
 exit 0
