@@ -737,6 +737,29 @@ if (ELASTIC > 0 && any(pinned)) {
   shares <- 100 * shares / rowSums(shares)
 }
 
+ONS_APPLIED <- FALSE
+# SENATE ONE NATION RULE (AUSPOL_ONP_ORDER = "senate", 2026-10-01). Each
+# seat's One Nation share from its own federal SENATE One Nation vote through
+# the curve of the most One-Nation-heavy EARLIER election (onp_senate_curve(),
+# time-forward), keeping the mean over the seats it applies to; the other
+# classes in a seat give up or take the difference in proportion. Same rule as
+# the live forecast (scripts/fit_seats_full.R), shared code in R/onp_senate.R.
+if (identical(Sys.getenv("AUSPOL_ONP_ORDER", "federal"), "senate") && "ONP" %in% colnames(shares)) {
+  .ons_seats <- rownames(shares)[shares[, "ONP"] > 0]
+  .ons_lk <- .ons_seats
+  if (identical(TGT, "sa2026")) .ons_lk[.ons_lk == "Frome"] <- "Ngadjuri"   # 2025 rename; the Senate table uses the new name
+  .ons <- onp_senate_alloc(.ons_seats, TGT, shares[.ons_seats, "ONP"], lookup = .ons_lk)
+  if (!is.null(.ons)) {
+    .oth <- setdiff(colnames(shares), "ONP")
+    for (.s in names(.ons)) {
+      .tot <- sum(shares[.s, ]); .rest <- sum(shares[.s, .oth])
+      if (.rest > 0) shares[.s, .oth] <- shares[.s, .oth] * (.tot - .ons[[.s]]) / .rest
+      shares[.s, "ONP"] <- .ons[[.s]]
+    }
+    ONS_APPLIED <- TRUE
+  }
+}
+
 # ZERO IND WHEREVER NOBODY ACTUALLY STOOD AT THE TARGET ELECTION. Ported from
 # backtest_candidate_fed.R (present there and in SA; missing here and in vic and
 # WA). Which classes contest a seat is nomination data, knowable before polling

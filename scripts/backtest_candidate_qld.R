@@ -675,6 +675,29 @@ if (length(absent_prev)) {
 # carries a hardcoded Frome -> Ngadjuri rename. Porting it would need a
 # Queensland transposition and its own pre-registration.
 
+ONS_APPLIED <- FALSE
+# SENATE ONE NATION RULE (AUSPOL_ONP_ORDER = "senate", 2026-10-01). Each
+# seat's One Nation share from its own federal SENATE One Nation vote through
+# the curve of the most One-Nation-heavy EARLIER election (onp_senate_curve(),
+# time-forward), keeping the mean over the seats it applies to; the other
+# classes in a seat give up or take the difference in proportion. Same rule as
+# the live forecast (scripts/fit_seats_full.R), shared code in R/onp_senate.R.
+if (identical(Sys.getenv("AUSPOL_ONP_ORDER", "federal"), "senate") && "ONP" %in% colnames(shares)) {
+  .ons_seats <- rownames(shares)[shares[, "ONP"] > 0]
+  .ons_lk <- .ons_seats
+  if (identical(TGT, "sa2026")) .ons_lk[.ons_lk == "Frome"] <- "Ngadjuri"   # 2025 rename; the Senate table uses the new name
+  .ons <- onp_senate_alloc(.ons_seats, TGT, shares[.ons_seats, "ONP"], lookup = .ons_lk)
+  if (!is.null(.ons)) {
+    .oth <- setdiff(colnames(shares), "ONP")
+    for (.s in names(.ons)) {
+      .tot <- sum(shares[.s, ]); .rest <- sum(shares[.s, .oth])
+      if (.rest > 0) shares[.s, .oth] <- shares[.s, .oth] * (.tot - .ons[[.s]]) / .rest
+      shares[.s, "ONP"] <- .ons[[.s]]
+    }
+    ONS_APPLIED <- TRUE
+  }
+}
+
 # ZERO IND WHERE NO INDEPENDENT STOOD. Ported from backtest_candidate_fed.R,
 # which got this fix today; this harness never had it.
 #
