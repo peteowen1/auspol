@@ -312,6 +312,27 @@ for (K in PAIRS) {
   # STATE NOTIONAL (AUSPOL_STATE_NOTIONAL, R/state_notional.R): on a pair preceded by a
   # redistribution the prior is rebuilt on the target's boundaries from booth results.
   .snp <- state_notional_prior("vic", K$from, K$to); if (!is.null(.snp)) fa <- .snp
+  # A SUPPLEMENTARY ELECTION IS THE SEAT'S GENERAL ELECTION HELD LATE -- the
+  # same rule fit_seats_full.R applies to the live forecast. Narracan 2022 was
+  # deferred by a candidate's death to 28 January 2023 and the VEC file has no
+  # row for it, so this harness silently scored 87 of 88 seats; AE Forecasts
+  # forecast it and the AEF-7 ledger counted 680 of 681 (found 2026-10-01).
+  # A by-election-table seat absent from the target file, held before the NEXT
+  # election, is appended as that seat's result.
+  .sup <- tryCatch({
+    bt <- byelection_table(); dts <- election_dates()
+    # single brackets: `[[` on a missing name THROWS (CLAUDE.md), so the last
+    # cycle's "no next election" must be an NA test, not an is.null() one
+    .nxt <- dts[sprintf("vic%d", K$to + 4L)]
+    .nxt_ok <- if (is.na(.nxt)) rep(TRUE, nrow(bt)) else bt$date < .nxt
+    bt[bt$region == "vic" & !bt$seat %in% unique(fb$seat) &
+         bt$date > dts[sprintf("vic%d", K$to)] & .nxt_ok]
+  }, error = function(e) { cat(sprintf("BVsup! by-election table unreadable: %s\n", conditionMessage(e))); NULL })
+  if (!is.null(.sup) && nrow(.sup)) {
+    fb <- rbind(fb, .sup[, .(votes = sum(votes)), by = .(seat, party)], fill = TRUE)
+    cat(sprintf("BVsup vic%d: supplementary election appended as the result: %s\n", K$to,
+                paste(unique(.sup$seat), collapse = ", ")))
+  }
   tx <- fread(file.path(P, sprintf("vec-%d-vic-transfers.csv", K$from)),
               showProgress = FALSE)
   # LEAKAGE GUARD, asserted on the source rather than on a filtered copy: a

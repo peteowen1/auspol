@@ -62,6 +62,11 @@ EARLY = re.compile(r'(?i)pre-?poll|early voting|all-districts')
 # Brunswick contest (Garrett, Vellotti) as the 2018 page; its rows are dropped,
 # and the district's votes come from the district results file instead.
 BAD_PAGES = {('vic2018', 'Brunswick')}
+# Districts whose general election was held late as a supplementary election and
+# so have no booth rows in the general-election file. They are still target
+# districts: the harness scores them from external/reference/byelections/
+# (Narracan 2022: candidate died, poll held 28 January 2023).
+SUPPLEMENTARY = {('vic', 2022): ['Narracan']}
 DISTRICT_FILE = {'vic': 'vec-{y}-vic-firstprefs.csv', 'nsw': 'nswec-{y}-nsw-firstprefs.csv',
                  'qld': 'ecq-{y}-qld-firstprefs.csv', 'sa': 'ecsa-{y}-sa-firstprefs.csv',
                  'wa': 'waec-{y}-wa-firstprefs.csv'}
@@ -190,7 +195,14 @@ def main():
     for rg, fy, ty in PAIRS:
         A, B = read_booths(f'{rg}{fy}'), read_booths(f'{rg}{ty}')
         if A is None or B is None:
-            print(f'NBS!  {rg}{fy}->{ty}: booth file missing ({"prior" if A is None else "target"}) -- skipped')
+            # Only a target whose election has not happened yet may be missing.
+            # Anything else is FATAL: on 2026-10-01 output/booths/ was moved aside
+            # and this script skipped every pair and still exited 0.
+            future = B is None and A is not None and ty >= 2026 and not os.path.exists(f'{BOOTHS}/{rg}{ty}-booth-fp.csv')
+            print(f'NBS!  {rg}{fy}->{ty}: booth file missing ({"prior" if A is None else "target"}) -- '
+                  + ('skipped (election not yet held)' if future else 'FATAL'))
+            if not future:
+                bad = True
             continue
         cls, miss = classify(A, f'{rg}{fy}', corpus)
         cls, relab = reconcile(cls, A, rg, fy)
@@ -202,7 +214,8 @@ def main():
             # district, most with zero votes, which would make every venue ambiguous
             if r['vote_type'] == 'ordinary' and int(r['votes']) > 0:
                 tgt[norm(r['booth'])].add(r['district'])
-        tdists = sorted({r['district'] for r in B} | {d for e, d in BAD_PAGES if e == f'{rg}{ty}'})
+        tdists = sorted({r['district'] for r in B} | {d for e, d in BAD_PAGES if e == f'{rg}{ty}'}
+                        | set(SUPPLEMENTARY.get((rg, ty), [])))
         # A target district with no polling-place rows (a recount page with only an
         # "all votes" total: Prahran 2014, Ripon 2018) can receive nothing by venue,
         # so its same-name prior district goes to it whole.

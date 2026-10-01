@@ -184,6 +184,15 @@ run_queue() {  # $1 = XGB_PRIMARY, $2 = log tag, $3 = slots, then "harness:ENV=v
 # so 20,000 draws buy nothing here; the draws matter at stage 6. 2,000 keeps
 # the totals/allprobs files it also writes sane and cuts stage 1 by ~80%.
 # pool_sharedetail's sims floor follows it for this stage only.
+# STATE NOTIONALS first (AUSPOL_STATE_NOTIONAL, v57): the harnesses read them as
+# the prior on redistribution pairs and stage 3 reads them for x_notional_adj.
+# Rebuilt every run from output/booths/ so they can never lag the booth data
+# (an input built outside this script goes stale: level-pred.csv, 2026-09-28).
+# Its own checks (class shares equal the district files; unchanged-boundary
+# pairs reproduce the actual result) fail the rebuild rather than warn.
+if at_least 1; then
+  python scripts/build_state_notionals.py > "$LOG/s1_notionals.log" 2>&1 || { echo "!! build_state_notionals.py failed its checks -- see $LOG/s1_notionals.log"; exit 1; }
+fi
 if at_least 1; then stage "1-harnesses-base_pred"; AUSPOL_N_SIMS="${AUSPOL_STAGE1_SIMS:-2000}" run6 0 s1; done_stage "1-harnesses-base_pred"; fi
 if at_least 2; then stage "2-pool-sharedetail";    AUSPOL_POOL_MIN_SIMS="${AUSPOL_STAGE1_SIMS:-2000}" Rscript scripts/pool_sharedetail.R      > "$LOG/s2_pool.log" 2>&1; done_stage "2-pool-sharedetail"; fi
 if at_least 3; then stage "3-features";            Rscript scripts/build_level_pred.R > "$LOG/s3_level.log" 2>&1; Rscript scripts/fit_xgb_primary_v6.R    > "$LOG/s3_v6.log"   2>&1; done_stage "3-features"; fi
