@@ -106,3 +106,19 @@ Victoria guard (not worse than v56 by more than one SE clustered on seat).
 Because this is the third arm on the same backtests, a pass that clears the
 bar only narrowly (primary class gains under one SE of their own change) is
 reported as such and is Pete's call, not an automatic ship.
+
+## RESULT, arm "dev", 2026-10-01 16:20: REFUSED on the Victoria guard -- line parked
+
+`output/snapshots/20261001-1602-2d95bdd-from3`. GRN 2.676 -> 2.655, OTH_RIGHT
+3.708 -> 3.544, all rows 4.1617 -> 4.1482, 22-election seat log loss -0.0080
+(SE 0.0070; mostly wa2017 -0.139), ledger 0.2741 -> 0.2714. Victoria +0.0149
+(SE 0.0106, 1.4 SE) -- fails its guard. Victorian Labor primary RMSE 5.23 ->
+5.84, as in arm "1".
+
+Three arms, one pattern: wherever the Senate helps the minor parties it costs
+Victorian Labor, and removing the majors' features removed the gains. Parked:
+a fourth variant chosen against these same backtests would be fitting the
+test. Kept behind AUSPOL_XGB_SENATE (off): all Senate booth data 1998-2025,
+booth maps for all 22 backtest elections (incl. WA venue matching), the shared
+code. Open question for a fresh idea: why Victorian Labor's state vote departs
+from its Senate geography unlike other states'.
