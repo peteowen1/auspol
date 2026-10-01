@@ -57,7 +57,7 @@ if (identical(.flag("AUSPOL_ONP_ORDER"), "senate")) {
 }
 # And the Senate geography features (AUSPOL_XGB_SENATE=1): Victoria's slice of
 # the district Senate table, which the daily run reads in place of the AEC files.
-if (.flag("AUSPOL_XGB_SENATE") %in% c("1", "minor")) {
+if (.flag("AUSPOL_XGB_SENATE") %in% c("1", "minor", "dev")) {
   .sd <- data.table::fread(file.path(OUT, "senate-by-district-class.csv"), showProgress = FALSE)
   .sdv <- .sd[.sd$region == "vic" & .sd$cycle == 2026]
   if (data.table::uniqueN(.sdv$district) != 88L) stop("senate-by-district-class.csv has ", data.table::uniqueN(.sdv$district), " vic2026 districts, not 88")

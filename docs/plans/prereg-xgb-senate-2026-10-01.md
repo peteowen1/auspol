@@ -97,3 +97,12 @@ runs far ahead of its Senate vote at state elections. Three arms on the same
 backtests is a garden of forking paths: a fourth must be pre-registered with
 the Victoria guard and judged by the same bar, and its result reported as the
 third attempt, not the first.
+
+## Arm "dev" (`AUSPOL_XGB_SENATE = "dev"`), registered 2026-10-01 15:40 before running -- THIRD attempt
+
+`senate_dev` only (each class's Senate share minus its mean over the pair's
+seats), every class, no `senate_pct`. Same criteria as arm "1" plus the
+Victoria guard (not worse than v56 by more than one SE clustered on seat).
+Because this is the third arm on the same backtests, a pass that clears the
+bar only narrowly (primary class gains under one SE of their own change) is
+reported as such and is Pete's call, not an automatic ship.
