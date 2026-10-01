@@ -79,3 +79,18 @@ NOT the notional: vic2014 base_pred improves (Coalition 4.88 -> 4.69, Labor 3.34
 prediction moves 57.0 -> 48.6 -- the vic2014 as-at model, trained on few
 earlier elections, reshuffled when wa2008 gained 21 seats and corrected priors.
 That instability is a property of the as-at models, recorded as a finding.
+
+## FINAL v57 run (with Narracan), 2026-10-02 00:05 -- passes; ships
+
+`output/snapshots/20261001-2353-a78e0ae-from1`, published switches only. All
+681 AEF-7 seats compared (coverage guard AC9). C1 -0.0109 (SE 0.0090); C2
+-0.0066 (SE 0.0040); C3 Victoria -0.0030 (SE 0.0062); C4 4.1617 -> 4.1501.
+Ledger 0.2741 (660 seats, AEF 0.2851) -> 0.2700 (681, AEF 0.2825); same 660
+seats 0.2741 -> 0.2735. Narracan: ours 0.96 LNP, AEF 0.95, LNP won.
+
+RUN-TO-RUN NOISE, recorded because it changes how every result is read: this
+run differs from the 18:23 run only by Narracan (one seat) and a retrain, yet
+the like-for-like AEF-7 change moved from -0.0050 to -0.0006. Retraining the
+as-at xgb models moves the ledger by ~0.005, the size of most tested effects.
+Until that noise is measured (same inputs, different seeds), a single-rebuild
+difference under ~0.005 is not evidence either way.
