@@ -56,3 +56,26 @@ Fixed in scripts/build_state_notionals.py (`reconcile()`; every pair's
 statewide class shares now equal the district file's). The deciding run is a
 rerun of the same command; criteria and clauses unchanged. Victoria's primary
 RMSE, which surfaced the bug, is reported alongside.
+
+## RESULT (deciding run), 2026-10-01 18:40: PASSES
+
+`output/snapshots/20261001-1823-2b63f47-from1` against v56.
+
+| criterion | result | bar |
+|---|---|---|
+| C1 redistribution pairs, seats in both (n 533) | -0.0153 log loss (SE 0.0096) | < 0 |
+| C2 all 22 elections, seats in both | -0.0085 (SE 0.0038) | not worse than +1 SE |
+| C3 Victoria, seats in both (n 239) | -0.0109 (SE 0.0098) | not worse than +1 SE |
+| C4 primary RMSE, rows in both (11,643) | 4.1617 -> 4.1438 | not worse by > 0.02 |
+| renamed seats | 65 newly scored; log loss below their pairs' same-name mean in every pair | unacceptable if > 2x |
+
+Ledger 0.2741 -> 0.2662 (AE Forecasts 0.2851 -> 0.2829: the seat set grew by
+60 scored seats, so the gap is the comparable figure: 0.0110 -> 0.0167).
+
+Reported alongside, as the amendment requires: Victoria's primary RMSE
+4.2976 -> 4.4567, almost all vic2014 in the xgb layer (Coalition 5.04 -> 6.59).
+NOT the notional: vic2014 base_pred improves (Coalition 4.88 -> 4.69, Labor 3.34
+-> 3.04), and Malvern's xgb inputs are identical in both runs while its as-at
+prediction moves 57.0 -> 48.6 -- the vic2014 as-at model, trained on few
+earlier elections, reshuffled when wa2008 gained 21 seats and corrected priors.
+That instability is a property of the as-at models, recorded as a finding.
