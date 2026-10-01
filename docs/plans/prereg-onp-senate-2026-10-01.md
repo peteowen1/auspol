@@ -46,3 +46,28 @@ Full rebuild with `AUSPOL_ONP_ORDER=senate` against v56
 Unacceptable-win clause: if the One Nation share error falls but seat log loss
 rises in SA 2026 or Qld 2024 by more than one SE, the spread is better and the
 seats are worse -- report it, do not ship it.
+
+## RESULT, 2026-10-01 13:10: REFUSED (the unacceptable-win clause fires), switch stays "federal"
+
+Full rebuild `output/snapshots/20261001-1259-540a65c-from1` against v56
+(`20260930-2115-72387b7-from1`).
+
+| measure (lower is better) | v56 | Senate rule |
+|---|---|---|
+| One Nation share RMSE, xgb layer, 276 contested seats | 5.42 | 5.00 (per-election MSE change -1.96, SE 2.48) |
+| One Nation share RMSE, base_pred | 5.69 | 5.22 |
+| seat log loss, 22 elections, per-election mean change | | +0.0010 (SE 0.0018) |
+| sa2026 seat log loss | 0.2376 | 0.2641 (+0.0265, SE 0.0160 by seat, **1.7 SE**) |
+| qld2024 seat log loss | 0.2736 | 0.2744 (0.1 SE) |
+| ledger (AEF 0.2851) | 0.2741 | 0.2765 |
+| primary RMSE, all rows | 4.1617 | 4.1737 |
+
+The share error falls (all of it Qld 2020, 6.59 -> 5.41) but SA 2026's seat
+log loss rises by 1.7 SE -- exactly the shape the clause names. Ngadjuri,
+which One Nation won, 0.695 -> 0.398. The allocation test that motivated this
+gave every rule the true statewide level and scored the spread alone; in the
+full model the xgb layer was already correcting One Nation's geography (the
+residual check found no Senate signal left in v56's One Nation errors), and
+SA 2026 had to use Qld 2017's curve (R2 0.66) rather than its own (0.87).
+Kept behind the switch: the Senate tables, R/onp_senate.R and the harness
+wiring.

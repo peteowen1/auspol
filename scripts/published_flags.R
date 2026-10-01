@@ -298,7 +298,7 @@ PUBLISHED_FLAGS <- c(
   AUSPOL_SIM_ENGINE          = "cpp",        # compiled core; proven byte-identical to the R engine on a full fed2022 run 2026-09-07 (45 s vs ~11 min)
   AUSPOL_SEED                = "42",
   AUSPOL_FP_SD_MODE          = "additive",
-  AUSPOL_ONP_ORDER           = "federal",
+  AUSPOL_ONP_ORDER           = "federal",    # "senate" REFUSED 2026-10-01 (plans/prereg-onp-senate-2026-10-01.md): SA 2026 seat log loss +1.7 SE.
   AUSPOL_ONP_FIX             = "1",
   AUSPOL_QLD_FLOWS           = "1",
   AUSPOL_WA_FLOWS            = "0",
