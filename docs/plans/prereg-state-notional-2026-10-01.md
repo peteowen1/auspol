@@ -41,3 +41,18 @@ Scoring a district the backtests silently dropped is a correctness fix (Pete's
 call on the federal equivalent, 2026-09-05), so this ships if 2-4 hold and the
 unacceptable clause does not fire, even if 1 is flat. If 1 is worse, it does not
 ship and comes back to Pete.
+
+## Amendment (visible addition, 2026-10-01 18:15): first run void -- builder bug
+
+The first rebuild (`output/snapshots/20261001-1756-2177e4a-from1`) passed every
+criterion as written (C1 -0.0184, SE 0.0099; C2 -0.0108, SE 0.0052; Victoria
++0.0058, 0.5 SE; RMSE 4.1617 -> 4.1384; ledger 0.2741 -> 0.2664 on a changed
+seat set) but is VOID: the notionals took party classes from the candidacy
+corpus, which labels some parties differently from the district files the
+harnesses score against (WA 2005's whole 5.2% minor-right vote became "other").
+Found because Victoria's primary RMSE rose 4.30 -> 4.57 and Malvern 2014's
+Coalition moved 57.0 -> 47.6 in the as-at model with near-identical inputs.
+Fixed in scripts/build_state_notionals.py (`reconcile()`; every pair's
+statewide class shares now equal the district file's). The deciding run is a
+rerun of the same command; criteria and clauses unchanged. Victoria's primary
+RMSE, which surfaced the bug, is reported alongside.

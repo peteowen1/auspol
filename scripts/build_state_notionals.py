@@ -67,8 +67,63 @@ DISTRICT_FILE = {'vic': 'vec-{y}-vic-firstprefs.csv', 'nsw': 'nswec-{y}-nsw-firs
                  'wa': 'waec-{y}-wa-firstprefs.csv'}
 
 
+def district_file(rg, y):
+    # SA 2018 has no ECSA district file; the harness reads the Wikipedia one.
+    if (rg, int(y)) == ('sa', 2018):
+        return 'external/elections/wikipedia-2018-sa-firstprefs.csv'
+    return 'external/elections/' + DISTRICT_FILE[rg].format(y=y)
+
+
+def district_table(rg, y):
+    out = collections.defaultdict(collections.Counter)
+    for r in csv.DictReader(open(district_file(rg, y), encoding='utf-8')):
+        out[seat_key(r['seat'])][r['party']] += int(float(r['votes']))
+    return out
+
+
+def reconcile(cls, rows, rg, y):
+    """Relabel candidates so each district's class totals equal the district
+    results file the harnesses score against. The corpus and those files
+    classify some parties differently (WA 2005: all 5.2% of minor-right votes
+    were "other" in the corpus), and a notional whose classes disagree with the
+    harness's own prior trains the xgb layer on mislabelled rows (2026-10-01:
+    vic2014's as-at model moved Malvern's Coalition from 57.0 to 47.6).
+    Two passes. First, every candidate whose corpus class appears in the
+    district file, with room left, keeps it. Then the rest, largest first, fill
+    whichever class still has the largest shortfall (WA Armadale 2005: the CDP,
+    Family First and CEC candidates, "other" in the corpus, together make the
+    file's 2,166 minor-right votes exactly). A one-pass greedy that sent each
+    leftover to the class with the nearest remaining total relabelled the
+    Greens candidate One Nation. Returns the relabelled map and the count."""
+    T = district_table(rg, y)
+    tot = collections.Counter()
+    for r in rows:
+        tot[(r['district'], r['candidate'], r['party_raw'])] += int(r['votes'])
+    out, moved = dict(cls), 0
+    by_d = collections.defaultdict(list)
+    for k, v in tot.items():
+        by_d[k[0]].append((v, k))
+    for d, cands in by_d.items():
+        room = collections.Counter(T.get(seat_key(d), {}))
+        if not room:
+            continue
+        left = []
+        for v, k in sorted(cands, reverse=True):
+            c = cls[k]
+            if c in room and room[c] >= 0.98 * v - 2:
+                room[c] -= v
+            else:
+                left.append((v, k))
+        for v, k in left:
+            alt = max(room, key=lambda q: room[q])
+            out[k] = alt
+            room[alt] -= v
+            moved += 1
+    return out, moved
+
+
 def district_classes(rg, y, district):
-    f = 'external/elections/' + DISTRICT_FILE[rg].format(y=y)
+    f = district_file(rg, y)
     out = collections.Counter()
     for r in csv.DictReader(open(f, encoding='utf-8')):
         if seat_key(r['seat']) == seat_key(district):
@@ -138,6 +193,7 @@ def main():
             print(f'NBS!  {rg}{fy}->{ty}: booth file missing ({"prior" if A is None else "target"}) -- skipped')
             continue
         cls, miss = classify(A, f'{rg}{fy}', corpus)
+        cls, relab = reconcile(cls, A, rg, fy)
         mv = sum(v for *_, v in miss)
         # target venue -> districts
         tgt = collections.defaultdict(set)
@@ -224,9 +280,22 @@ def main():
                 same = sum(v for d, v in s.items() if seat_key(d) == seat_key(D))
                 w.writerow([D, round(t), round(same / t, 4) if t else '', top[0], round(top[1] / t, 4) if t else '', len(s)])
         empty = [D for D in tdists if not N[D]]
+        # The notional's statewide class shares must equal the actual prior's:
+        # respreading moves votes between districts, never between classes.
+        T = district_table(rg, fy)
+        tA, tN = collections.Counter(), collections.Counter()
+        for c in T.values():
+            tA.update(c)
+        for c in N.values():
+            tN.update(c)
+        sa, sn = sum(tA.values()), sum(tN.values())
+        cdev = max(abs(100 * tA.get(q, 0) / sa - 100 * tN.get(q, 0) / sn) for q in set(tA) | set(tN))
+        print(f'NBS3  {rg} {fy}->{ty}: largest statewide class-share gap, notional v district file: {cdev:.2f} pts')
+        if cdev > 0.25:
+            bad = True
         print(f'NBS1  {rg} {fy}->{ty}: {len(tdists)} target districts ({len(boothless)} with no booth rows, filled by name: {sorted(boothless.values())}), {len(empty)} with no notional '
               f'{empty[:5]}; ordinary votes matched to a target booth {100 * matched / ordv:.1f}% (ordinary = {100 * ordv / allv:.0f}% of all); '
-              f'prior districts with no booth rows {[(d, D or 'DROPPED') for d, _, D in dropped]}; candidates unclassified {len(miss)} ({100 * mv / allv:.2f}% of votes) -> {f}')
+              f'prior districts with no booth rows {[(d, D or 'DROPPED') for d, _, D in dropped]}; candidates unclassified {len(miss)} ({100 * mv / allv:.2f}% of votes), relabelled to the district file {relab} -> {f}')
         if empty or 100 * mv / allv > 1:
             bad = True
         if (rg, fy, ty) in SAME_BOUNDARIES:
