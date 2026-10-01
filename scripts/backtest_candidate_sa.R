@@ -395,6 +395,9 @@ fb <- fread(file.path(P, PAIR$fp_to), showProgress = FALSE)
 # makes both file shapes safe, and is a no-op on the already-aggregated ones.
 fa <- fa[, .(votes = sum(votes)), by = .(seat, party)]
 fb <- fb[, .(votes = sum(votes)), by = .(seat, party)]
+# STATE NOTIONAL (AUSPOL_STATE_NOTIONAL, R/state_notional.R): on a pair preceded by a
+# redistribution the prior is rebuilt on the target's boundaries from booth results.
+.snp <- state_notional_prior("sa", PAIR$from, PAIR$to); if (!is.null(.snp)) fa <- .snp
 # Permanent guard, not a one-time fix: this aggregation exists because a
 # duplicate (seat, party) row silently made dcast() below COUNT candidates
 # instead of SUMMING their votes. Asserting uniqueness here means a future
@@ -799,6 +802,30 @@ if (ONP_CONC > 0) {
     }
   }
 }
+ONS_APPLIED <- FALSE
+# SENATE ONE NATION RULE (AUSPOL_ONP_ORDER = "senate", 2026-10-01). Each
+# seat's One Nation share from its own federal SENATE One Nation vote through
+# the curve of the most One-Nation-heavy EARLIER election (onp_senate_curve(),
+# time-forward), keeping the mean over the seats it applies to; the other
+# classes in a seat give up or take the difference in proportion. Same rule as
+# the live forecast (scripts/fit_seats_full.R), shared code in R/onp_senate.R.
+if (identical(Sys.getenv("AUSPOL_ONP_ORDER", "federal"), "senate") && "ONP" %in% colnames(shares)) {
+  .ons_seats <- rownames(shares)[shares[, "ONP"] > 0]
+  .ons_lk <- .ons_seats
+  if (identical(TGT, "sa2026")) .ons_lk[.ons_lk == "Frome"] <- "Ngadjuri"   # 2025 rename; the Senate table uses the new name
+  .ons <- onp_senate_alloc(.ons_seats, TGT, shares[.ons_seats, "ONP"], lookup = .ons_lk)
+  if (!is.null(.ons)) {
+    .oth <- setdiff(colnames(shares), "ONP")
+    for (.s in names(.ons)) {
+      .tot <- sum(shares[.s, ]); .rest <- sum(shares[.s, .oth])
+      if (.rest > 0) shares[.s, .oth] <- shares[.s, .oth] * (.tot - .ons[[.s]]) / .rest
+      shares[.s, "ONP"] <- .ons[[.s]]
+    }
+    ONS_APPLIED <- TRUE
+  }
+}
+if (isTRUE(ONS_APPLIED)) ONP_CONC <- 0   # the Senate rule replaces the House-rank concentration arm
+
 # Applied separately from the lookup above, because "auto" may have just
 # switched the arm off for a pair whose ordering signal does not exist.
 if (ONP_CONC > 0) {

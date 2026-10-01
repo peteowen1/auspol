@@ -184,6 +184,9 @@ for (pr in PAIRS) {
     .nbf <- file.path(OUT, "notional-baselines.csv")
     if (file.exists(.nbf)) {
       NB <- fread(.nbf, showProgress = FALSE)
+      # State redistributions too (AUSPOL_STATE_NOTIONAL, R/state_notional.R); empty when off.
+      if (!exists(".SNB")) .SNB <- state_notional_baselines()
+      if (nrow(.SNB)) NB <- rbind(NB, .SNB, fill = TRUE)
       nb_pair <- NB[election == pr$election & prior == pr$prev]
       if (nrow(nb_pair)) {
         nb_x <- nb_pair[, list(x_notional = sum(pcv, na.rm = TRUE)), by = list(seat, party)]
@@ -523,6 +526,17 @@ SURGE <- rbindlist(surge_rows, fill = TRUE)
 ALL <- merge(ALL, SURGE, by = c("pair","seat"), all.x = TRUE)
 ALL[, surge_h := ifelse(is.na(surge_h), 0, surge_h)]
 ALL[, is_recipient := as.integer(!is.na(recipient_party) & recipient_party == party)]
+# SENATE GEOGRAPHY (AUSPOL_XGB_SENATE=1, plans/prereg-xgb-senate-2026-10-01.md):
+# each party class's federal Senate share in the seat and its deviation from
+# the class's mean over the pair, time-forward (R/senate_features.R). NA where
+# no Senate booth data exists (fed2007, wa2001, wa2005, wa2013).
+if (Sys.getenv("AUSPOL_XGB_SENATE", "0") %in% c("1", "minor", "dev")) {
+  .sf <- senate_features(ALL[, .(pair, seat, party)], majors = !identical(Sys.getenv("AUSPOL_XGB_SENATE", "0"), "minor"))
+  ALL[, senate_pct := .sf$senate_pct]
+  ALL[, senate_dev := .sf$senate_dev]
+  cat(sprintf("XS1  Senate features ON: %.1f%% of %d rows carry a Senate share
+", 100 * mean(!is.na(ALL$senate_pct)), nrow(ALL)))
+}
 
 cat(sprintf("\nbuilt %d rows across %d pairs, %d cols\n", nrow(ALL), length(unique(ALL$pair)), ncol(ALL)))
 
@@ -672,6 +686,10 @@ feat_cols <- c("base_pred", "seat_prev_pcv", "seat_outperf", "level_prev",
                if (identical(Sys.getenv("AUSPOL_XGB_DEPARTED_SIDE", "0"), "1")) c("own_departed_i", "opp_departed_i"),
                "historic_elected_i", "ballot_pos_min",
                "jump", "governed", "permit", "surge_h", "is_recipient",
+               if (Sys.getenv("AUSPOL_XGB_SENATE", "0") %in% c("1", "minor")) c("senate_pct", "senate_dev"),
+               # "dev": the geography only, no raw Senate level (Victorian Labor runs far
+               # ahead of its Senate vote at state elections; the level misled arm "1")
+               if (identical(Sys.getenv("AUSPOL_XGB_SENATE", "0"), "dev")) "senate_dev",
                paste0("party_", party_levels), paste0("region_", region_levels))
 # AUSPOL_XGB_BASE_MARGIN: Pete's idea, 2026-09-17 -- base_pred already carries
 # the vast majority of the prediction (SHAP +16 to +22 of a typical row,

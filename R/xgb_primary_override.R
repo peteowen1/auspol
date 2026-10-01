@@ -481,6 +481,17 @@ xgb_primary_predict_live <- function(shares, mat22, a22, state_mean, returns,
   for (p in party_levels) rows[[paste0("party_", p)]] <- as.integer(rows$party == p)
   for (r in region_levels) rows[[paste0("region_", r)]] <- as.integer(region == r)
 
+  # Senate geography, when the shipped model was trained with it
+  # (AUSPOL_XGB_SENATE=1): the same R/senate_features.R the training used.
+  if (any(c("senate_pct", "senate_dev") %in% feat_cols)) {
+    .lp <- paste0(region, if (identical(region, "vic")) "2026" else "")
+    .sf <- senate_features(data.table::data.table(pair = .lp, seat = rows$seat, party = rows$party),
+                           majors = !identical(Sys.getenv("AUSPOL_XGB_SENATE", "0"), "minor"))
+    rows[, senate_pct := .sf$senate_pct]
+    rows[, senate_dev := .sf$senate_dev]
+    if (all(is.na(rows$senate_pct))) cat("XS1!! live Senate features ALL NA -- the model expects them; check output/senate-vic2026.csv shipped
+")
+  }
   miss <- setdiff(feat_cols, names(rows))
   if (length(miss)) stop("xgb_primary_predict_live(): model expects columns not built here: ",
                           paste(miss, collapse = ", "))

@@ -266,5 +266,23 @@ cat("\n=== the same split, by who won the seat ===\n")
 print(.sc[, .(seats = .N, our_prim_err = round(mean(our_pe), 2), aef_prim_err = round(mean(aef_pe), 2),
               prim_gap = round(mean(prim_gap), 2), ll_damage = round(sum(delta), 2)),
           by = .(won = actual)][order(-ll_damage)])
+# COVERAGE GUARD. The ledger compares only seats BOTH models forecast, and until
+# 2026-10-01 nothing said how many it was leaving out: 20 renamed districts
+# (NSW 2023, Vic 2022, WA 2025) and Narracan 2022 were silently absent for
+# weeks, because our harnesses dropped any district without a same-name prior.
+# Every AEF-7 seat AE Forecasts forecast must be in the comparison, or be named
+# here with the reason. A seat missing and not listed stops the build.
+AEF_ONLY_OK <- character(0)   # "pair:seat" entries we knowingly cannot score
+.aef_seats <- unique(aef_primary[, .(pair = sub("^([0-9]{4})([a-z]+)$", "\\2\\1", election), seat)])
+.ours <- unique(ALL[, .(pair, seat)])
+.cov <- merge(.aef_seats[, .(aef = .N), by = pair], .ours[, .(ours = .N), by = pair], by = "pair", all = TRUE)
+cat("\n=== AEF-7 coverage: seats AE Forecasts forecast, and how many are in this comparison ===\n")
+print(.cov)
+.miss <- .aef_seats[!.ours, on = c("pair", "seat")]
+.miss <- .miss[!paste0(.miss$pair, ":", .miss$seat) %in% AEF_ONLY_OK]
+if (nrow(.miss)) stop("AEF-7 seats AE Forecasts forecast but missing from the comparison (", nrow(.miss), "): ",
+                      paste0(.miss$pair, ":", .miss$seat, collapse = ", "),
+                      ". Score them, or list them in AEF_ONLY_OK with the reason.")
+cat(sprintf("AC9  coverage: all %d AEF-7 seats AE Forecasts forecast are compared\n", nrow(.aef_seats)))
 fwrite(ALL, file.path(OUT, "aef-comparison-full.csv"))
 cat(sprintf("\nwrote %s\n", file.path(OUT, "aef-comparison-full.csv")))

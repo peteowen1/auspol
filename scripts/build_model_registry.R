@@ -146,6 +146,15 @@ CLASSIFY <- list(
     "SHIPPED (2) and FEDERAL-BACKTEST-ONLY by design: the redistribution-adjusted (notional) prior only exists",
     "where build_notional_baselines.R has a table (federal). State harnesses have no notional table to read, so",
     "'no' there is a data fact, not a parity gap. docs/reviews/notional-prior-redistribution-2026-09-13.md"),
+  AUSPOL_STATE_NOTIONAL = paste(
+    "SHIPPED v57 and STATE-BACKTEST-ONLY by design: the state notional prior replaces the prior only on state",
+    "pairs preceded by a redistribution (STATE_REDISTRIBUTIONS, R/state_notional.R). The federal harness has its own",
+    "(AUSPOL_NOTIONAL), and the published Victoria forecast needs none: 2026 is fought on the 2022 boundaries.",
+    "plans/prereg-state-notional-2026-10-01.md"),
+  AUSPOL_XGB_SENATE = paste(
+    "OFF, REFUSED 2026-10-01 (three arms: all parties, minor only, geography only) -- each cost Victorian Labor or",
+    "lost the gains. Read only in fit_xgb_primary_v6.R and xgb_primary_override.R, so 'no' in the harness columns is",
+    "by design. plans/prereg-xgb-senate-2026-10-01.md"),
   AUSPOL_NSW_THIN_WALK = paste(
     "NOT A PUBLISHED-CONFIG SWITCH: read by scripts/fit_nsw.R (the NSW poll-trend validation stage), which does",
     "not source published_flags.R. The comment block in published_flags.R says why it is deliberately unregistered."),

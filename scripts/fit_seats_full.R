@@ -157,9 +157,9 @@ SEED        <- as.integer(Sys.getenv("AUSPOL_SEED", "42"))
 # overrides so the S6 default-run check below can see them. Defined only
 # further down, a toggle would change the published allocation with nothing in
 # the run log -- which is exactly what S6 exists to prevent.
-ONP_ORDER   <- Sys.getenv("AUSPOL_ONP_ORDER", "federal")   # federal | greens
+ONP_ORDER   <- Sys.getenv("AUSPOL_ONP_ORDER", "federal")   # federal | greens | senate
 ONP_FIX     <- Sys.getenv("AUSPOL_ONP_FIX", "1")           # 1 = compression fixed
-stopifnot(ONP_ORDER %in% c("federal", "greens"), ONP_FIX %in% c("0", "1"))
+stopifnot(ONP_ORDER %in% c("federal", "greens", "senate"), ONP_FIX %in% c("0", "1"))
 stopifnot(FP_SD_MODE %in% c("growth", "additive"))
 stopifnot(is.finite(SEED))
 
@@ -664,6 +664,30 @@ for (r in seq_along(ord)) {
     sa_ratio[lo] + (pos - (lo - 1)) * (sa_ratio[hi] - sa_ratio[lo])
 }
 
+# SENATE RULE (AUSPOL_ONP_ORDER = "senate", 2026-10-01, from Pete's chart).
+# Replaces both the ordering and the borrowed SA spread above: each seat's
+# share comes from its own 2025 SENATE One Nation vote through the log curve
+# of the most One-Nation-heavy earlier election (SA 2026), floored at that
+# fit's lowest Senate share, then scaled so the statewide level is unchanged.
+# Out of sample it nearly halves the error at a Victoria-like level (RMSE
+# 3.25 vs 5.28 on SA 2026 + Qld 2017); scripts/build_onp_senate.R has the
+# whole comparison. Table: output/onp-senate-vic2026.csv (ships with the models).
+if (identical(Sys.getenv("AUSPOL_ONP_ORDER", "federal"), "senate")) {
+  .os_f <- file.path("output", "onp-senate-vic2026.csv")
+  if (file.exists(.os_f)) {
+    .os <- fread(.os_f, showProgress = FALSE)
+    .os_v <- .os$senate_pct[match(rownames(mat22), .os$seat)]
+    if (anyNA(.os_v)) stop("onp-senate-vic2026.csv has no Senate share for: ", paste(rownames(mat22)[is.na(.os_v)], collapse = ", "))
+    .os_p <- .os$curve_a[1] + .os$curve_b[1] * log(pmax(.os_v, .os$floor_pct[1]))
+    if (any(!is.finite(.os_p)) || any(.os_p <= 0)) stop("Senate One Nation curve gave a non-positive share; floor or curve is wrong")
+    onp_ratio[] <- .os_p / mean(.os_p)
+    cat(sprintf("ONP1  One Nation by the SENATE rule (curve from %s, %d districts, R2 %.3f): ratio %.2f-%.2f, CV %.3f\n",
+                .os$source[1], .os$n_fit[1], .os$r2[1], min(onp_ratio), max(onp_ratio), stats::sd(onp_ratio) / mean(onp_ratio)))
+  } else {
+    cat("ONP1!! AUSPOL_ONP_ORDER=senate but output/onp-senate-vic2026.csv is missing -- One Nation allocated by the FEDERAL HOUSE rule instead\n")
+  }
+}
+
 # SENSITIVITY HANDLE on the single most load-bearing unvalidated number here.
 # `sa_ratio` sets how CONCENTRATED One Nation's vote is across seats, and
 # concentration decides how many seats it LEADS -- which, on South Australian
@@ -1084,7 +1108,7 @@ if (length(unmodelled) && !is.na(state_mean["OTH"])) {
 # adopted behaviour.
 ONP_ORDER <- Sys.getenv("AUSPOL_ONP_ORDER", "federal")   # federal | greens
 ONP_FIX   <- Sys.getenv("AUSPOL_ONP_FIX", "1")           # 1 = compression fixed
-stopifnot(ONP_ORDER %in% c("federal", "greens"))
+stopifnot(ONP_ORDER %in% c("federal", "greens", "senate"))
 cat(sprintf("ONP arms: ordering %s, compression fix %s
 ", ONP_ORDER, ONP_FIX))
 # A sanity bound, not a modelling choice: no district comes near it (the

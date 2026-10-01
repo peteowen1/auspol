@@ -102,13 +102,34 @@ if (file.exists(cf)) {
                  nrow(C), uniqueN(C$election), sum(!C$party %in% c("ALP","LNP","NAT") & C$breakout)))
 } else L <- c(L, "_not built yet -- run `scripts/build_candidacies.R`_\n")
 
+# ---- state booth results ----------------------------------------------------
+L <- c(L, "## State booth results (`output/booths/`)\n",
+       "Every state lower-house result by polling place, one schema:",
+       "`election,district,booth,vote_type,candidate,party_raw,votes,lat,lon,source_file`.",
+       "Built by `scripts/parse_booths_vic.py`, `parse_booths_nsw_qld.py`,",
+       "`parse_booths_sa_wa.py` from raw pages fetched by `fetch_vec_booths.py`,",
+       "`fetch_ecsa_booths_2018.sh` and the existing commission fetchers. Each",
+       "parser checks booth sums against the district results above.\n")
+bf <- list.files("output/booths", pattern = "-booth-(fp|tcp)[.]csv$", full.names = TRUE)
+if (length(bf)) {
+  B <- rbindlist(lapply(bf, function(f) {
+    x <- fread(f, showProgress = FALSE, select = c("district", "booth", "vote_type", "votes", "lat"))
+    data.table(file = basename(f), districts = uniqueN(x$district),
+               booths = uniqueN(x[x$vote_type == "ordinary", paste(district, booth)]),
+               rows = nrow(x), votes = sum(x$votes), with_coords = uniqueN(x[!is.na(x$lat), paste(district, booth)]))
+  }))
+  L <- c(L, "| file | districts | polling places | rows | votes | places with coordinates |",
+         "|---|---:|---:|---:|---:|---:|",
+         sprintf("| %s | %d | %d | %d | %d | %d |", B$file, B$districts, B$booths, B$rows, B$votes, B$with_coords), "")
+} else L <- c(L, "_not built yet -- run the three `scripts/parse_booths_*.py`_\n")
+
 # ---- known gaps, stated rather than implied ---------------------------------
 L <- c(L, "## Known gaps\n",
        "Listed so a gap is a recorded fact rather than something rediscovered:\n",
-       "- **SA 2018** -- `external/reference/ecsa/ha-2018-03-17.json` is **0 bytes**,",
-       "  a download that failed and was never noticed. Needs refetching.",
-       "- **Victoria 2014 / 2018** -- only per-district HTML in",
-       "  `external/reference/vec/2014` and `/2018`; no candidate extract yet.",
+       "- **WA 1996 / 2001 booths** -- every per-booth candidate cell in the WAEC",
+       "  JSON is 0, so no state booth results before 2005 (district totals exist).",
+       "- **SA 2026 booths** -- the ECSA change file repeats a declaration block in",
+       "  Black and King (district-level rows; polling places unaffected).",
        "- **Queensland 2020 / 2024** -- XML on disk, not yet parsed to candidates.",
        "- **WA** -- per-seat JSON back to 1996, not yet parsed to candidates.",
        "- **Google Trends** -- only ~63 of the corpus has a cached response, and",

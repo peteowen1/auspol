@@ -1,3 +1,12 @@
+# auspol 0.4.63
+
+v57. The backtests now score every district, including the ones a redistribution redrew or renamed:
+
+- `state_notional_prior()` and `STATE_REDISTRIBUTIONS`: on a state pair preceded by a redistribution, the previous result is rebuilt on the new boundaries from booth results (`scripts/build_state_notionals.py`, run at the start of every rebuild). Switch: `AUSPOL_STATE_NOTIONAL`, on.
+- `state_notional_baselines()` feeds the same notionals to the xgb notional feature.
+- Narracan 2022 is scored from its January 2023 supplementary election, and the AEF-7 ledger stops if any seat AE Forecasts forecast is missing: 681 of 681 compared, up from 660.
+- `senate_features()`: Senate geography per party class (switched off; refused).
+
 # auspol 0.4.62
 
 No change to the forecast. Data for the ITG seat pages:

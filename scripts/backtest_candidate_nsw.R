@@ -352,6 +352,9 @@ if (nzchar(Sys.getenv("AUSPOL_PARTY_COR", ""))) {
 
 fp_prev <- fread(file.path(PREF, sprintf("nswec-%d-nsw-firstprefs.csv", FROM)))
 fp_tgt  <- fread(file.path(PREF, sprintf("nswec-%d-nsw-firstprefs.csv", TO)))
+# STATE NOTIONAL (AUSPOL_STATE_NOTIONAL, R/state_notional.R): on a pair preceded by a
+# redistribution the prior is rebuilt on the target's boundaries from booth results.
+.snp <- state_notional_prior("nsw", FROM, TO); if (!is.null(.snp)) fp_prev <- .snp
 tx      <- fread(file.path(PREF, "nswec-nsw-transfers.csv"))
 
 # LEAKAGE GUARD. The whole point of using NSW is that the flow matrix predates
@@ -735,6 +738,29 @@ if (ELASTIC > 0 && any(pinned)) {
   if (length(oth)) shares[oth, ] <- 100 * shares[oth, , drop = FALSE] / rowSums(shares[oth, , drop = FALSE])
 } else {
   shares <- 100 * shares / rowSums(shares)
+}
+
+ONS_APPLIED <- FALSE
+# SENATE ONE NATION RULE (AUSPOL_ONP_ORDER = "senate", 2026-10-01). Each
+# seat's One Nation share from its own federal SENATE One Nation vote through
+# the curve of the most One-Nation-heavy EARLIER election (onp_senate_curve(),
+# time-forward), keeping the mean over the seats it applies to; the other
+# classes in a seat give up or take the difference in proportion. Same rule as
+# the live forecast (scripts/fit_seats_full.R), shared code in R/onp_senate.R.
+if (identical(Sys.getenv("AUSPOL_ONP_ORDER", "federal"), "senate") && "ONP" %in% colnames(shares)) {
+  .ons_seats <- rownames(shares)[shares[, "ONP"] > 0]
+  .ons_lk <- .ons_seats
+  if (identical(TGT, "sa2026")) .ons_lk[.ons_lk == "Frome"] <- "Ngadjuri"   # 2025 rename; the Senate table uses the new name
+  .ons <- onp_senate_alloc(.ons_seats, TGT, shares[.ons_seats, "ONP"], lookup = .ons_lk)
+  if (!is.null(.ons)) {
+    .oth <- setdiff(colnames(shares), "ONP")
+    for (.s in names(.ons)) {
+      .tot <- sum(shares[.s, ]); .rest <- sum(shares[.s, .oth])
+      if (.rest > 0) shares[.s, .oth] <- shares[.s, .oth] * (.tot - .ons[[.s]]) / .rest
+      shares[.s, "ONP"] <- .ons[[.s]]
+    }
+    ONS_APPLIED <- TRUE
+  }
 }
 
 # ZERO IND WHEREVER NOBODY ACTUALLY STOOD AT THE TARGET ELECTION. Ported from

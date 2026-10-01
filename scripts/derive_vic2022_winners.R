@@ -59,6 +59,32 @@ cat(sprintf("DW2  %d seats resolved | %d unresolved\n",
             sum(!is.na(res$winner)), sum(is.na(res$winner))))
 if (any(is.na(res$winner))) print(res[is.na(winner)], row.names = FALSE)
 
+# NARRACAN: the 2022 poll was deferred by a candidate's death and held as a
+# supplementary election on 28 January 2023, so it has no first preferences or
+# count in the files above and never got a winner here -- which made every
+# backtest score 87 of 88 seats and dropped it from the AEF-7 ledger (found
+# 2026-10-01). Its result is in the by-election table (Wikipedia, citing the
+# VEC): Wayne Farnham (Liberal) won 63.0-37.0 after preferences over an
+# independent. Taken from the table's first-preference leader and CHECKED
+# against who holds the seat now, so neither source is trusted alone.
+.bt <- byelection_table()
+.sup <- .bt[.bt$region == "vic" & .bt$date > as.Date("2022-11-26") & .bt$date < as.Date("2023-06-30") &
+              !.bt$seat %in% res$seat]
+for (.s in unique(.sup$seat)) {
+  .lead <- .sup[.sup$seat == .s][order(-votes)][1]
+  .now <- as.data.table(load_seats(2026, "vic"))
+  .now_w <- .now$incumbent[.now$seat == .s]
+  .coal <- function(x) ifelse(x %in% c("LNP", "LIB", "NAT"), "LNP", x)
+  # The leader is the winner only if they won on preferences too; the seat
+  # file's holder is a second, independent source for the same fact.
+  if (length(.now_w) != 1 || .coal(.now_w) != .coal(.lead$party))
+    stop("DW2s ", .s, ": supplementary first-preference leader (", .lead$party,
+         ") does not match the seat file's holder (", paste(.now_w, collapse = ","), ") -- resolve by hand")
+  res <- rbind(res, data.table(seat = .s, winner = .coal(.lead$party)), fill = TRUE)
+  cat(sprintf("DW2s %s: supplementary election winner %s (%s), matches the seat file's holder\n",
+              .s, .lead$candidate, .coal(.lead$party)))
+}
+
 cat("\nDW3  seats won, by class\n")
 print(res[!is.na(winner), .N, by = winner][order(-N)], row.names = FALSE)
 

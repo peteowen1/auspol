@@ -22,6 +22,9 @@ while IFS= read -r -d '' f; do rel="${f#$SNAP/}"; case "$rel" in /*|output/*) ec
 echo "RS1 restored $n files from $SNAP into output/"
 
 move=0; case "$SNAP" in *-from1) move=1;; esac; [ "$STRICT" = "--strict" ] && move=1
+# output/booths/ is skipped: it is an INPUT (parsed from raw commission pages by
+# scripts/parse_booths_*.py), not a rebuild output. A restore on 2026-10-01 moved
+# it aside and the notional builder then skipped every pair and still exited 0.
 ASIDE="output/.unrestored/$(date +%Y%m%d-%H%M%S)-$$"
 m=0; k=0; failed=0
 while IFS= read -r -d '' f; do rel="${f#output/}"; [ -e "$SNAP/$rel" ] && continue
@@ -30,12 +33,12 @@ while IFS= read -r -d '' f; do rel="${f#output/}"; [ -e "$SNAP/$rel" ] && contin
     mkdir -p "$ASIDE/$(dirname "$rel")"
     if mv "$f" "$ASIDE/$rel"; then m=$((m+1)); else failed=$((failed+1)); fi
   fi
-done < <(find output -type f -newer "$SNAP" -not -path "output/snapshots/*" -not -path "output/.unrestored/*" -print0)
+done < <(find output -type f -newer "$SNAP" -not -path "output/snapshots/*" -not -path "output/.unrestored/*" -not -path "output/booths/*" -print0)
 if [ "$move" = 1 ]; then
   [ "$m" -gt 0 ] && echo "RS2 moved $m file(s) written after the snapshot, and not in it, to $ASIDE"
   [ "$failed" -gt 0 ] && echo "RS2! $failed file(s) could NOT be moved (held open?) -- they will beat the restored files in newest-file pickers"
 elif [ "$k" -gt 0 ]; then
   echo "RS2! $k file(s) in output/ are newer than this partial snapshot and not in it; left in place (pass --strict to move them aside):"
-  find output -type f -newer "$SNAP" -not -path "output/snapshots/*" -not -path "output/.unrestored/*" | while IFS= read -r f; do [ -e "$SNAP/${f#output/}" ] || echo "   $f"; done | head -20
+  find output -type f -newer "$SNAP" -not -path "output/snapshots/*" -not -path "output/.unrestored/*" -not -path "output/booths/*" | while IFS= read -r f; do [ -e "$SNAP/${f#output/}" ] || echo "   $f"; done | head -20
 fi
 exit 0

@@ -328,6 +328,10 @@ if (length(miss)) {
 
 fa <- fread(file.path(P, PAIR$fa), showProgress = FALSE)
 fb <- fread(file.path(P, PAIR$fb), showProgress = FALSE)
+# STATE NOTIONAL (AUSPOL_STATE_NOTIONAL, R/state_notional.R): on a pair preceded by a
+# redistribution the prior is rebuilt on the target's boundaries from booth results.
+# Neither Queensland pair had one; called so the log says so.
+.snp <- state_notional_prior("qld", PAIR$from, PAIR$to); if (!is.null(.snp)) fa <- .snp
 # TGT_ not TGT inside the brackets: `election` is a column of the winners table
 # and a bare symbol on either side of == binds to the column, which is this
 # repo's most-repeated fault.
@@ -674,6 +678,29 @@ if (length(absent_prev)) {
 # it is keyed on `region == "sa"` in federal-transposed-to-state.csv and
 # carries a hardcoded Frome -> Ngadjuri rename. Porting it would need a
 # Queensland transposition and its own pre-registration.
+
+ONS_APPLIED <- FALSE
+# SENATE ONE NATION RULE (AUSPOL_ONP_ORDER = "senate", 2026-10-01). Each
+# seat's One Nation share from its own federal SENATE One Nation vote through
+# the curve of the most One-Nation-heavy EARLIER election (onp_senate_curve(),
+# time-forward), keeping the mean over the seats it applies to; the other
+# classes in a seat give up or take the difference in proportion. Same rule as
+# the live forecast (scripts/fit_seats_full.R), shared code in R/onp_senate.R.
+if (identical(Sys.getenv("AUSPOL_ONP_ORDER", "federal"), "senate") && "ONP" %in% colnames(shares)) {
+  .ons_seats <- rownames(shares)[shares[, "ONP"] > 0]
+  .ons_lk <- .ons_seats
+  if (identical(TGT, "sa2026")) .ons_lk[.ons_lk == "Frome"] <- "Ngadjuri"   # 2025 rename; the Senate table uses the new name
+  .ons <- onp_senate_alloc(.ons_seats, TGT, shares[.ons_seats, "ONP"], lookup = .ons_lk)
+  if (!is.null(.ons)) {
+    .oth <- setdiff(colnames(shares), "ONP")
+    for (.s in names(.ons)) {
+      .tot <- sum(shares[.s, ]); .rest <- sum(shares[.s, .oth])
+      if (.rest > 0) shares[.s, .oth] <- shares[.s, .oth] * (.tot - .ons[[.s]]) / .rest
+      shares[.s, "ONP"] <- .ons[[.s]]
+    }
+    ONS_APPLIED <- TRUE
+  }
+}
 
 # ZERO IND WHERE NO INDEPENDENT STOOD. Ported from backtest_candidate_fed.R,
 # which got this fix today; this harness never had it.

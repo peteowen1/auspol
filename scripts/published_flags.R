@@ -50,6 +50,7 @@ PUBLISHED_FLAGS <- c(
                                              # cell error 3.579 -> 3.530 (-0.049, SE 0.013), the 0-15 band -0.77; pooled log loss 0.2951 ->
                                              # 0.2957 (within 1 SE), accuracy 0.8878 -> 0.8902. New England ALP 12.7 -> 14.0 (actual 18.6).
   AUSPOL_NOTIONAL            = "2",          # redistribution-adjusted (notional) prior for EVERY seat build_notional_baselines.R covers, not just brand-new names; upgraded from "1" (missing-seat fallback only) 2026-09-13 -- Antony Green's own booth-respread method, leakage-free. Currently a no-op under AUSPOL_XGB_PRIMARY=1 (which overrides the table this feeds) except the few cells XGB has no prediction for; shipped anyway because it is the methodologically correct baseline, not because it moves the pooled number -- docs/reviews/notional-prior-redistribution-2026-09-13.md
+  AUSPOL_STATE_NOTIONAL      = "1",          # SHIPPED v57 2026-10-01: state redistributions -- prior rebuilt on the target's boundaries from booth results (R/state_notional.R, scripts/build_state_notionals.py); also feeds x_notional_adj. plans/prereg-state-notional-2026-10-01.md
                                              # HOW FAR THIS ACTUALLY REACHES (2026-09-14, found by the review gate): the FEDERAL BACKTEST only. fit_seats_full.R -- the live Victorian forecast -- has no notional path at all, and build_notional_baselines.R reads the federal AEC polling-place download, so it cannot produce Victorian data. Nor does fit_xgb_primary_v6_final.R, which builds the model artifact xgb_primary_predict_live() serves, so output/xgb-primary-v6-final-cols.json carries no x_notional_adj either. Setting this flag does not change the published Victoria 2026 numbers; it changes what the federal backtest measures.
   AUSPOL_MP_SLOPE            = "1",          # sitting-member slope tier from output/mp-slope-by-*.csv
   AUSPOL_DEFECT_DISCOUNT     = "1",          # major-party defector carries a fitted fraction of their vote
@@ -298,7 +299,8 @@ PUBLISHED_FLAGS <- c(
   AUSPOL_SIM_ENGINE          = "cpp",        # compiled core; proven byte-identical to the R engine on a full fed2022 run 2026-09-07 (45 s vs ~11 min)
   AUSPOL_SEED                = "42",
   AUSPOL_FP_SD_MODE          = "additive",
-  AUSPOL_ONP_ORDER           = "federal",
+  AUSPOL_XGB_SENATE          = "0",          # "1", "minor", "dev" all REFUSED 2026-10-01 (each costs Victorian Labor or loses the gains); parked. TESTED (plans/prereg-xgb-senate-2026-10-01.md): each party's federal Senate share in the seat (and its deviation from the class mean) as xgb features, time-forward, R/senate_features.R.
+  AUSPOL_ONP_ORDER           = "federal",    # "senate" REFUSED 2026-10-01 (plans/prereg-onp-senate-2026-10-01.md): SA 2026 seat log loss +1.7 SE.
   AUSPOL_ONP_FIX             = "1",
   AUSPOL_QLD_FLOWS           = "1",
   AUSPOL_WA_FLOWS            = "0",
