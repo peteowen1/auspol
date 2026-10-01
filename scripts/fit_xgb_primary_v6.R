@@ -527,8 +527,8 @@ ALL[, is_recipient := as.integer(!is.na(recipient_party) & recipient_party == pa
 # each party class's federal Senate share in the seat and its deviation from
 # the class's mean over the pair, time-forward (R/senate_features.R). NA where
 # no Senate booth data exists (fed2007, wa2001, wa2005, wa2013).
-if (identical(Sys.getenv("AUSPOL_XGB_SENATE", "0"), "1")) {
-  .sf <- senate_features(ALL[, .(pair, seat, party)])
+if (Sys.getenv("AUSPOL_XGB_SENATE", "0") %in% c("1", "minor")) {
+  .sf <- senate_features(ALL[, .(pair, seat, party)], majors = !identical(Sys.getenv("AUSPOL_XGB_SENATE", "0"), "minor"))
   ALL[, senate_pct := .sf$senate_pct]
   ALL[, senate_dev := .sf$senate_dev]
   cat(sprintf("XS1  Senate features ON: %.1f%% of %d rows carry a Senate share
@@ -683,7 +683,7 @@ feat_cols <- c("base_pred", "seat_prev_pcv", "seat_outperf", "level_prev",
                if (identical(Sys.getenv("AUSPOL_XGB_DEPARTED_SIDE", "0"), "1")) c("own_departed_i", "opp_departed_i"),
                "historic_elected_i", "ballot_pos_min",
                "jump", "governed", "permit", "surge_h", "is_recipient",
-               if (identical(Sys.getenv("AUSPOL_XGB_SENATE", "0"), "1")) c("senate_pct", "senate_dev"),
+               if (Sys.getenv("AUSPOL_XGB_SENATE", "0") %in% c("1", "minor")) c("senate_pct", "senate_dev"),
                paste0("party_", party_levels), paste0("region_", region_levels))
 # AUSPOL_XGB_BASE_MARGIN: Pete's idea, 2026-09-17 -- base_pred already carries
 # the vast majority of the prediction (SHAP +16 to +22 of a typical row,

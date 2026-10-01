@@ -58,3 +58,25 @@ stage-3 rebuild with the full tables, SAME criteria and clause; the
 unacceptable-win clause's "no-Senate elections" no longer exist, so it is
 checked on the elections that gained coverage instead (fed2007, wa2001,
 wa2005, wa2013): they must not get worse by more than one SE.
+
+## RESULT (full coverage, 98.8%), 2026-10-01 14:55 -- passes as written, NOT shipped
+
+`output/snapshots/20261001-1449-d4b2f74-from3` against v56. OTH_RIGHT 3.708 ->
+3.506, GRN 2.676 -> 2.619, OTH 2.239 -> 2.011, ONP 3.212 -> 3.030; ALP 5.200 ->
+5.296, LNP 5.431 -> 5.460; all rows 4.1617 -> 4.1206. Seat log loss, 22
+elections, -0.0007 (SE 0.0049, better in 9). Ledger 0.2741 -> 0.2716. The
+elections that gained coverage: 5.141 -> 5.069. Every clause passes.
+
+But Victoria, the live target, got worse: seat log loss +0.0323 over 239
+seats (SE 0.0126, 2.6 SE), every Victorian election worse; Victorian Labor
+primary RMSE 5.23 -> 5.89 (Northcote, Richmond, Hawthorn) while its Greens,
+Other and minor-right errors fell. That was not a pre-registered condition,
+and it is exactly the shape the first check predicted: no Senate signal for
+Labor or the Coalition, so their Senate shares add noise. Pete's call: test
+the minor parties only.
+
+## Arm "minor" (`AUSPOL_XGB_SENATE = "minor"`), registered 2026-10-01 15:00 before running
+
+Same features, NA for ALP/LNP/NAT rows. Same criteria, PLUS: Victoria's seat
+log loss (239 seats, three elections) must not be worse than v56's by more
+than one SE clustered on seat. Ships only if all hold.

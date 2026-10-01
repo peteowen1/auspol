@@ -17,9 +17,12 @@
 #'
 #' @param keys data.table with `pair`, `seat`, `party`.
 #' @param district,division The two tables; read from `output/` when `NULL`.
+#' @param majors If `FALSE`, Labor and the Coalition rows get `NA`
+#'   (`AUSPOL_XGB_SENATE = "minor"`): the first check found no Senate signal
+#'   for them, and with it on their Victorian primaries got worse.
 #' @return `keys` with `senate_pct` and `senate_dev` added (row order kept).
 #' @export
-senate_features <- function(keys, district = NULL, division = NULL) {
+senate_features <- function(keys, district = NULL, division = NULL, majors = TRUE) {
   out <- data.table::copy(data.table::as.data.table(keys))
   out[, `.ord` := .I]
   if (is.null(district)) {
@@ -63,6 +66,7 @@ senate_features <- function(keys, district = NULL, division = NULL) {
   # the class's mean over the pair's seats that have a Senate share for it
   out[, senate_dev := senate_pct - mean(senate_pct, na.rm = TRUE), by = c("pair", "party")]
   out[!is.finite(senate_dev), senate_dev := NA_real_]
+  if (!isTRUE(majors)) out[party %in% c("ALP", "LNP", "NAT"), `:=`(senate_pct = NA_real_, senate_dev = NA_real_)]
   data.table::setorder(out, `.ord`)
   out[, c("k", ".ord") := NULL]
   out[]

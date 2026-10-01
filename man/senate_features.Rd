@@ -4,12 +4,16 @@
 \alias{senate_features}
 \title{Federal Senate share of each party class, as xgb features}
 \usage{
-senate_features(keys, district = NULL, division = NULL)
+senate_features(keys, district = NULL, division = NULL, majors = TRUE)
 }
 \arguments{
 \item{keys}{data.table with \code{pair}, \code{seat}, \code{party}.}
 
 \item{district, division}{The two tables; read from \verb{output/} when \code{NULL}.}
+
+\item{majors}{If \code{FALSE}, Labor and the Coalition rows get \code{NA}
+(\code{AUSPOL_XGB_SENATE = "minor"}): the first check found no Senate signal
+for them, and with it on their Victorian primaries got worse.}
 }
 \value{
 \code{keys} with \code{senate_pct} and \code{senate_dev} added (row order kept).

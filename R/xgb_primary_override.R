@@ -485,7 +485,8 @@ xgb_primary_predict_live <- function(shares, mat22, a22, state_mean, returns,
   # (AUSPOL_XGB_SENATE=1): the same R/senate_features.R the training used.
   if (any(c("senate_pct", "senate_dev") %in% feat_cols)) {
     .lp <- paste0(region, if (identical(region, "vic")) "2026" else "")
-    .sf <- senate_features(data.table::data.table(pair = .lp, seat = rows$seat, party = rows$party))
+    .sf <- senate_features(data.table::data.table(pair = .lp, seat = rows$seat, party = rows$party),
+                           majors = !identical(Sys.getenv("AUSPOL_XGB_SENATE", "0"), "minor"))
     rows[, senate_pct := .sf$senate_pct]
     rows[, senate_dev := .sf$senate_dev]
     if (all(is.na(rows$senate_pct))) cat("XS1!! live Senate features ALL NA -- the model expects them; check output/senate-vic2026.csv shipped
