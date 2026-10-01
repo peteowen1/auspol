@@ -14,6 +14,22 @@ Add an entry whenever a seat is dug into, even if the answer is "nothing".
 The ledger's per-seat notes are the same information in the artifact; this
 file is the durable copy.
 
+## vic2026 (live forecast)
+
+- **Morwell** -- **NOTHING TO FIX** (Pete, 2026-10-01: *"that sounds about
+  right to be fair"*). One Nation ~34-36% comes almost entirely from the
+  allocation rule: Morwell has the highest 2025 federal One Nation vote of the
+  88 districts (15.2% in its booths), so it takes South Australia 2026's most
+  concentrated ratio, 1.63, times the statewide One Nation level (~20.6-21.1).
+  Its own 2022 state One Nation vote (6.1%) does not enter. v56's proportional
+  rescale adds ~0.7 before the xgb layer (final 34.4 -> 36.1) and flips the
+  favourite Coalition 0.55 -> One Nation 0.51: a coin flip either way.
+  Concentration as strong as SA's judged plausible; `AUSPOL_ONP_CV` stays unset.
+- **v56 favourite changes, 9 seats, all near coin flips** (0.38-0.55 before,
+  0.39-0.53 after): Bayswater, Cranbourne, Monbulk, Bendigo West, Narre Warren
+  North back to Labor (all Labor-held in 2022); Macedon, Morwell, Gippsland East
+  to One Nation and Mildura to the Coalition via the rescale.
+
 ## qld2024
 
 - **Maryborough** — ALP 0.951, LNP won; ALP 45.1 vs 38.6, ONP 10.0 vs 15.4.
