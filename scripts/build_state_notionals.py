@@ -104,13 +104,14 @@ def reconcile(cls, rows, rg, y):
     tot = collections.Counter()
     for r in rows:
         tot[(r['district'], r['candidate'], r['party_raw'])] += int(r['votes'])
-    out, moved = dict(cls), 0
+    out, moved, unreconciled = dict(cls), 0, []
     by_d = collections.defaultdict(list)
     for k, v in tot.items():
         by_d[k[0]].append((v, k))
     for d, cands in by_d.items():
         room = collections.Counter(T.get(seat_key(d), {}))
         if not room:
+            unreconciled.append(d)
             continue
         left = []
         for v, k in sorted(cands, reverse=True):
@@ -124,7 +125,7 @@ def reconcile(cls, rows, rg, y):
             out[k] = alt
             room[alt] -= v
             moved += 1
-    return out, moved
+    return out, moved, unreconciled
 
 
 def district_classes(rg, y, district):
@@ -205,7 +206,12 @@ def main():
                 bad = True
             continue
         cls, miss = classify(A, f'{rg}{fy}', corpus)
-        cls, relab = reconcile(cls, A, rg, fy)
+        cls, relab, unrec = reconcile(cls, A, rg, fy)
+        if unrec:
+            # a prior district missing from the district file keeps corpus labels
+            # that may disagree with the harness's classes -- the bug this exists for
+            print(f'NBS!  {rg}{fy}: {len(unrec)} booth district(s) absent from the district file, NOT reconciled: {unrec[:5]}')
+            bad = True
         mv = sum(v for *_, v in miss)
         # target venue -> districts
         tgt = collections.defaultdict(set)
@@ -247,7 +253,9 @@ def main():
             if e == f'{rg}{fy}':
                 same = [D for D in tdists if seat_key(D) == seat_key(d)]
                 if same:
-                    moved[(d, same[0])].update(district_classes(rg, fy, d))
+                    _dc = district_classes(rg, fy, d)
+                    moved[(d, same[0])].update(_dc)
+                    byname += sum(_dc.values())
                 print(f'NBS2  {rg}{fy} {d}: booth page wrong at source; district totals sent whole to {same or "NOTHING"}')
         # 3: spread the rest by where each prior district's matched votes went
         N = collections.defaultdict(collections.Counter)
@@ -266,6 +274,8 @@ def main():
                 same = [D for D in tdists if seat_key(D) == seat_key(d)]
                 dropped.append((d, sum(pv.values()), same[0] if same else None))
                 if not same:
+                    print(f'NBS!  {rg}{fy} {d}: no booth matched and no same-name target district -- {sum(pv.values())} votes LOST')
+                    bad = True
                     continue
                 outs, tot = {same[0]: 1.0}, 1.0
             for D, w in outs.items():
@@ -311,6 +321,10 @@ def main():
               f'prior districts with no booth rows {[(d, D or 'DROPPED') for d, _, D in dropped]}; candidates unclassified {len(miss)} ({100 * mv / allv:.2f}% of votes), relabelled to the district file {relab} -> {f}')
         if empty or 100 * mv / allv > 1:
             bad = True
+        # VOTE CONSERVATION: respreading moves votes, never creates or loses them.
+        if abs(sn - sa) > 0.001 * sa:
+            print(f'NBS!  {rg} {fy}->{ty}: notional holds {sn:.0f} votes against {sa:.0f} in the district file')
+            bad = True
         if (rg, fy, ty) in SAME_BOUNDARIES:
             act = collections.defaultdict(collections.Counter)
             for r in A:
@@ -324,8 +338,12 @@ def main():
                 e = max(abs(100 * a.get(p, 0) / ta - 100 * N[D].get(p, 0) / tn) for p in set(a) | set(N[D]))
                 errs.append((e, D))
             errs.sort(reverse=True)
+            # A check over nothing passes: require it to have compared nearly every seat.
+            if len(errs) < 0.9 * len(tdists):
+                print(f'NB-S! {rg} {fy}->{ty}: compared only {len(errs)} of {len(tdists)} seats')
+                bad = True
             mean = sum(e for e, _ in errs) / max(1, len(errs))
-            print(f'NB-S  {rg} {fy}->{ty} (same boundaries): largest party-share error per seat, mean {mean:.2f} pts, '
+            print(f'NB-S  {rg} {fy}->{ty} (same boundaries): largest party-share error per seat over {len(errs)} seats, mean {mean:.2f} pts, '
                   f'worst {[(D, round(e, 2)) for e, D in errs[:3]]}')
             if mean > 1.0:
                 bad = True

@@ -21,17 +21,20 @@ UA="Mozilla/5.0 (auspol research; github.com/peteowen1/auspol)"
 declare -A EV=([2004]=12246 [2007]=13745 [2010]=15508 [2013]=17496 [2016]=20499 [2019]=24310 [2022]=27966 [2025]=31496)
 STATES="NSW VIC QLD WA SA TAS ACT NT"
 got=0; skip=0; fail=0; empty_menus=""
-for yr in 2004 2007 2010 2013 2016 2019 2022 2025; do
+# 2004 is NOT in this loop: its division menus do not exist; the per-state zips below fetch it.
+for yr in 2007 2010 2013 2016 2019 2022 2025; do
   ev=${EV[$yr]}
   for st in $STATES; do
-    menu=$(curl -sL -A "$UA" "https://results.aec.gov.au/$ev/Website/SenateDivisionDownloadMenu-$ev-$st-Csv.htm")
+    menu=$(curl -sfL -A "$UA" "https://results.aec.gov.au/$ev/Website/SenateDivisionDownloadMenu-$ev-$st-Csv.htm") || { fail=$((fail+1)); echo "FAS!  menu fetch failed: fed$yr $st"; continue; }
     files=$(printf '%s' "$menu" | grep -oE "Downloads/SenateDivisionFirstPrefsByPollingPlaceDownload-$ev-[0-9]+\.csv" | sort -u)
     if [ -z "$files" ]; then empty_menus="$empty_menus fed$yr-$st"; continue; fi
     n=0
     for p in $files; do
       out="$D/fed$yr-$st-$(basename "$p")"
-      if [ -s "$out" ] && head -2 "$out" | grep -q "PollingPlace"; then skip=$((skip+1)); continue; fi
-      if curl -sfL -A "$UA" -o "$out" "https://results.aec.gov.au/$ev/Website/$p" && head -2 "$out" | grep -q "PollingPlace"; then
+      # complete = header present AND data rows after it (a body cut off after
+      # the header used to pass and was then skipped on every rerun)
+      if [ -s "$out" ] && head -2 "$out" | grep -q "PollingPlace" && [ "$(wc -l < "$out")" -gt 3 ]; then skip=$((skip+1)); continue; fi
+      if curl -sfL -A "$UA" -o "$out" "https://results.aec.gov.au/$ev/Website/$p" && head -2 "$out" | grep -q "PollingPlace" && [ "$(wc -l < "$out")" -gt 3 ]; then
         got=$((got+1)); n=$((n+1))
       else
         fail=$((fail+1)); echo "FAS!  failed: $p"; rm -f "$out"
@@ -56,9 +59,14 @@ S="external/reference/aec/stats"; mkdir -p "$S"
 for f in aec-2001-election-statistics.zip aec-1993-1996-1998-election-statistics.zip; do
   [ -s "$S/$f" ] || curl -sfL -A "$UA" -o "$S/$f" "https://www.aec.gov.au/About_AEC/Publications/statistics/files/$f" || { fail=$((fail+1)); echo "FAS!  $f failed"; }
 done
-unzip -o -q "$S/aec-2001-election-statistics.zip" "data/import/*" -d "$S/y2001" 2>/dev/null
-unzip -o -q "$S/aec-1993-1996-1998-election-statistics.zip" "data/import/tables98/SPPVOTE.TXT" "data/import/tables98/SCANDS.TXT" -d "$S/y9398" 2>/dev/null
+# Extract only when missing: re-extracting both archives every run made a rerun
+# that fetched nothing take 5.5 minutes (2026-10-02).
+[ -s "$S/y2001/data/import/sppvote.txt" ] || unzip -o -q "$S/aec-2001-election-statistics.zip" "data/import/*" -d "$S/y2001" 2>/dev/null
+[ -s "$S/y9398/data/import/tables98/SPPVOTE.TXT" ] || unzip -o -q "$S/aec-1993-1996-1998-election-statistics.zip" "data/import/tables98/SPPVOTE.TXT" "data/import/tables98/SCANDS.TXT" -d "$S/y9398" 2>/dev/null
 echo "FAS3  1998/2001 Senate by polling place: $(wc -l < "$S/y9398/data/import/tables98/SPPVOTE.TXT" 2>/dev/null) / $(wc -l < "$S/y2001/data/import/sppvote.txt" 2>/dev/null) rows"
 echo "FAS2  fetched $got, already on disk $skip, failed $fail"
 [ -n "$empty_menus" ] && echo "FAS2! menus listing no polling-place files:$empty_menus"
-exit 0
+# FAIL LOUDLY. This used to end in an unconditional `exit 0`, so a failed
+# download or an empty division menu left a partial Senate set that the
+# builders downstream read as complete.
+[ "$fail" -eq 0 ] && [ -z "$empty_menus" ]
