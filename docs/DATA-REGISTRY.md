@@ -1,6 +1,6 @@
 # Data registry
 
-**Generated 2026-10-01 by `scripts/build_data_registry.R`. Do not hand-edit** --
+**Generated 2026-10-02 by `scripts/build_data_registry.R`. Do not hand-edit** --
 rerun the script instead. Regenerate it whenever you add or fetch data.
 
 This file exists because the same data has been declared missing three
@@ -66,7 +66,7 @@ cannot pass as a working one.
 
 - **aec/** -- 1192 files, 870.6 MB
   - e.g. booths/fed2016-NSW.csv, booths/fed2016-QLD.csv, booths/fed2016-VIC.csv, booths/fed2019-QLD.csv
-- **vec/** -- 1604 files, 48.6 MB
+- **vec/** -- 2429 files, 73.5 MB
   - e.g. 2006/vc/fpv-albertpark.html, 2006/vc/fpv-altona.html, 2006/vc/fpv-ballarateast.html, 2006/vc/fpv-ballaratwest.html
 - **nsw/** -- 294 files, 9.9 MB
   - e.g. byelections/SB1602-orange-fp.html, byelections/SB1801-wagga-wagga-fp.html, dop-sample.html, dop/index-SG1901.html
@@ -78,7 +78,7 @@ cannot pass as a working one.
   - e.g. app.html, app.min.js, config-loader.js, config.json
 - **trends/** -- 4673 files, 2.8 MB
   - e.g. 2019_anch2_Adrian_Wone_Susie_Beveridge_Will_Landers_Ammar_Khan.rds, 2019_anch2_Bill_Chandler_Susan_Moylan_Dave_Blake_Tim_Bohm.rds, 2019_anch2_Robert_Oakeshott_Helen_Haines_Zali_Steggall_Kerryn_Phelps.rds, 2019_anch2_Trevor_Jones_Colin_Butland_David_Norman_Thor_Prohaska.rds
-- **boundaries/** -- 60 files, 592.3 MB
+- **boundaries/** -- 70 files, 683.1 MB
   - e.g. CED_2016/CED_2016_AUST.dbf, CED_2016/CED_2016_AUST.prj, CED_2016/CED_2016_AUST.shp, CED_2016/CED_2016_AUST.shx
 - **census/** -- 20 files, 77.4 MB
   - e.g. 2016_GCP_CED_AUS.zip, 2016_GCP_SED_NSW.zip, 2016_GCP_SED_QLD.zip, 2016_GCP_SED_SA.zip
