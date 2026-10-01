@@ -80,3 +80,20 @@ the minor parties only.
 Same features, NA for ALP/LNP/NAT rows. Same criteria, PLUS: Victoria's seat
 log loss (239 seats, three elections) must not be worse than v56's by more
 than one SE clustered on seat. Ships only if all hold.
+
+## RESULT, arm "minor", 2026-10-01 15:35: REFUSED
+
+`output/snapshots/20261001-1525-eaf85f1-from3`. Victoria guard passes (+0.0037,
+SE 0.0059, 0.6 SE) but the primary criterion fails: GRN 2.676 -> 2.682,
+OTH_RIGHT 3.708 -> 3.691; all-rows RMSE 4.1617 -> 4.1765 (worse); ledger 0.2741
+-> 0.2759. Blanking the majors removed the minor-party gains and still moved
+the majors (Victorian LNP 5.30 -> 5.81) through the row renormalisation. Neither
+arm ships; AUSPOL_XGB_SENATE stays "0".
+
+Not yet tried, and the obvious next candidate: `senate_dev` alone for every
+class (the geography net of the state level). The full arm's Victorian Labor
+damage plausibly comes from `senate_pct`, the raw level, since Victorian Labor
+runs far ahead of its Senate vote at state elections. Three arms on the same
+backtests is a garden of forking paths: a fourth must be pre-registered with
+the Victoria guard and judged by the same bar, and its result reported as the
+third attempt, not the first.
