@@ -55,6 +55,15 @@ if (identical(.flag("AUSPOL_ONP_ORDER"), "senate")) {
   if (!file.exists(file.path(OUT, "onp-senate-vic2026.csv"))) stop("AUSPOL_ONP_ORDER=senate but output/onp-senate-vic2026.csv is missing -- run scripts/build_onp_senate.R")
   .arm_tables <- c(.arm_tables, "onp-senate-vic2026.csv")
 }
+# And the Senate geography features (AUSPOL_XGB_SENATE=1): Victoria's slice of
+# the district Senate table, which the daily run reads in place of the AEC files.
+if (identical(.flag("AUSPOL_XGB_SENATE"), "1")) {
+  .sd <- data.table::fread(file.path(OUT, "senate-by-district-class.csv"), showProgress = FALSE)
+  .sdv <- .sd[.sd$region == "vic" & .sd$cycle == 2026]
+  if (data.table::uniqueN(.sdv$district) != 88L) stop("senate-by-district-class.csv has ", data.table::uniqueN(.sdv$district), " vic2026 districts, not 88")
+  data.table::fwrite(.sdv, file.path(OUT, "senate-vic2026.csv"))
+  .arm_tables <- c(.arm_tables, "senate-vic2026.csv")
+}
 # And the demographic correction (AUSPOL_DEMO_RESID=2): its per-seat Labor and
 # Greens adjustments, since the daily run has neither census features nor the
 # forecasts table. Placeholder shares: only the adjustments are kept.
