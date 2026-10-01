@@ -286,3 +286,6 @@ ask is in one place.
 | AEF primary alongside ours in the worst-seats table | `scripts/build_aef_comparison.R`, with a primary-vs-flow verdict per seat |
 | find who is running in vic2026 | `scripts/fetch_candidates_vic2026_prenomination.R` |
 | update docs, registries, artefacts, html | regenerated 2026-09-11 |
+| *"same for polling booths and local elections when we get round to em"* + *"booth level data should scrape it all so we can use in each election"* (2026-10-01) | **Booths: SHIPPED** -- every state's booth results parsed (`output/booths/`); first use is the state notional priors (v57). Per-party booth features (the Senate-style test) **not yet run**. **Local council elections: NOT STARTED** -- the VEC file store listing (`external/reference/vec/blobs/container-listing.json`) has Victorian council results; nothing fetched or tested. |
+| *"Not possible: WA 2013 ... and 2004 and earlier ... can you check this isnt possible by another method"* (2026-10-01) | **SHIPPED** -- 2004 and 1998 Senate booths from AEC archives; WA 2001/2005/2013 mapped by venue name (validated 97.6-98.9%). Senate features then REFUSED on three arms (Victoria worse), told to Pete. |
+
