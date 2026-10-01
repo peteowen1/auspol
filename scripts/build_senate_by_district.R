@@ -43,15 +43,19 @@ cat(sprintf("SB1  federal divisions: %d division-elections over %d elections\n",
 
 # ---- (a) state districts via the booth maps ----
 bm <- fread(election_data_path("fed-booth-map.csv"), showProgress = FALSE)
+bm[, place_id := as.character(place_id)]   # 1998 booths have text ids ("Division::Polling Place")
 # Extra maps from scripts/build_extra_booth_maps.R (cycles the main
 # transposition does not cover). The federal election each one uses:
-EXTRA <- list(qld2017 = 2016L, wa2008 = 2007L, wa2017 = 2016L, wa2025 = 2022L, vic2014 = 2013L)
+# wa2001/2005/2013 are VENUE-NAME maps (scripts/build_wa_name_maps.py, no boundary
+# files exist for those districts; validated 97.6-98.9% on wa2017/2025).
+EXTRA <- list(qld2017 = 2016L, wa2008 = 2007L, wa2017 = 2016L, wa2025 = 2022L, vic2014 = 2013L,
+              wa2001 = 1998L, wa2005 = 2004L, wa2013 = 2010L)
 for (el in names(EXTRA)) {
   rg <- sub("[0-9]{4}$", "", el); yr <- as.integer(sub("^[a-z]+", "", el))
   f <- file.path("external", "reference", "correspondences", sprintf("booths-%d%s.csv", yr, rg))
   if (!file.exists(f)) { cat(sprintf("SB2! %s: no extra map (%s) -- run scripts/build_extra_booth_maps.R
 ", el, basename(f))); next }
-  q <- fread(f, showProgress = FALSE)
+  q <- fread(f, showProgress = FALSE, colClasses = list(character = "place_id"))
   bm <- rbind(bm, q[, .(region = rg, cycle = yr, fed = EXTRA[[el]], district, place_id)], fill = TRUE)
 }
 CY <- unique(bm[, .(region, cycle, fed)])
@@ -60,7 +64,7 @@ dist <- rbindlist(lapply(seq_len(nrow(CY)), function(i) {
   m <- meta[meta$fed == fy & meta$st == toupper(rg)]
   if (!nrow(m)) { cat(sprintf("SB2! %s %d: no Senate files for fed %d\n", rg, cy, fy)); return(NULL) }
   x <- read_set(m$f)
-  b <- x[, .(v = sum(OrdinaryVotes)), by = .(place_id = PollingPlaceID, cls)]
+  b <- x[, .(v = sum(OrdinaryVotes)), by = .(place_id = as.character(PollingPlaceID), cls)]
   keep <- bm$region == rg & bm$cycle == cy & bm$fed == fy
   j <- merge(b, unique(bm[keep, .(district, place_id)]), by = "place_id")
   d <- j[, .(v = sum(v)), by = .(district, cls)][, senate_pct := 100 * v / sum(v), by = district]

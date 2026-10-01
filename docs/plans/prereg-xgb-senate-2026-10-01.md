@@ -37,3 +37,24 @@ Unacceptable-win clause: if the gain comes only from elections with Senate
 data while the NA elections (wa2001, wa2005, wa2013, fed2007) get worse by
 more than one SE, the feature is labelling jurisdictions, not adding
 geography -- report it, do not ship it.
+
+## Interim result (84.4% coverage), 2026-10-01 13:45 -- the text above is unedited
+
+Rebuild `output/snapshots/20261001-1340-f0af798-from3` against v56. Primary
+RMSE, xgb layer (points, lower is better): OTH_RIGHT 3.708 -> 3.611, GRN 2.676
+-> 2.642, OTH 2.239 -> 2.105, ALP 5.200 -> 5.241, all rows 4.1617 -> 4.1370.
+Seat log loss, 22 elections: -0.0023 (SE 0.0021, better in 11). Ledger 0.2741
+-> 0.2712, weighted primary RMSE 4.953 -> 4.806. The four no-Senate elections
+were not worse (5.141 -> 5.122). Passes every clause as written.
+
+## Amendment (visible addition): the deciding run uses 98.8% coverage
+
+Found DURING this run, by searching other sources at Pete's request: 2004
+Senate booths (old AEC results site), 1998 Senate booths (AEC statistics
+archive), and WA 2001/2005/2013 booth -> district maps by venue name
+(scripts/build_wa_name_maps.py, validated 97.6-98.9% on wa2017/wa2025 true
+maps). Coverage 84.4% -> 98.8%, every election covered. The deciding run is a
+stage-3 rebuild with the full tables, SAME criteria and clause; the
+unacceptable-win clause's "no-Senate elections" no longer exist, so it is
+checked on the elections that gained coverage instead (fed2007, wa2001,
+wa2005, wa2013): they must not get worse by more than one SE.
