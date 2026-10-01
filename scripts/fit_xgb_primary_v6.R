@@ -184,6 +184,9 @@ for (pr in PAIRS) {
     .nbf <- file.path(OUT, "notional-baselines.csv")
     if (file.exists(.nbf)) {
       NB <- fread(.nbf, showProgress = FALSE)
+      # State redistributions too (AUSPOL_STATE_NOTIONAL, R/state_notional.R); empty when off.
+      if (!exists(".SNB")) .SNB <- state_notional_baselines()
+      if (nrow(.SNB)) NB <- rbind(NB, .SNB, fill = TRUE)
       nb_pair <- NB[election == pr$election & prior == pr$prev]
       if (nrow(nb_pair)) {
         nb_x <- nb_pair[, list(x_notional = sum(pcv, na.rm = TRUE)), by = list(seat, party)]

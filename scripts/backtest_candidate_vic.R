@@ -309,6 +309,9 @@ for (K in PAIRS) {
 
   fa <- share_of(sprintf("vec-%d-vic-firstprefs.csv", K$from))
   fb <- share_of(sprintf("vec-%d-vic-firstprefs.csv", K$to))
+  # STATE NOTIONAL (AUSPOL_STATE_NOTIONAL, R/state_notional.R): on a pair preceded by a
+  # redistribution the prior is rebuilt on the target's boundaries from booth results.
+  .snp <- state_notional_prior("vic", K$from, K$to); if (!is.null(.snp)) fa <- .snp
   tx <- fread(file.path(P, sprintf("vec-%d-vic-transfers.csv", K$from)),
               showProgress = FALSE)
   # LEAKAGE GUARD, asserted on the source rather than on a filtered copy: a

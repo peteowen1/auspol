@@ -274,6 +274,9 @@ for (K in PAIRS) {
   if (is.null(fa) || is.null(fb)) {
     cat(sprintf("BW1  wa%d->%d: missing first preferences; skipped\n", K$from, K$to)); next
   }
+  # STATE NOTIONAL (AUSPOL_STATE_NOTIONAL, R/state_notional.R): on a pair preceded by a
+  # redistribution the prior is rebuilt on the target's boundaries from booth results.
+  .snp <- state_notional_prior("wa", K$from, K$to); if (!is.null(.snp)) fa <- .snp
   el_from <- sprintf("wa%d", K$from); el_to <- sprintf("wa%d", K$to)
   .MP_SLOPE <- NULL
   if (identical(Sys.getenv("AUSPOL_MP_SLOPE", "0"), "1")) {

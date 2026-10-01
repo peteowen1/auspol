@@ -352,6 +352,9 @@ if (nzchar(Sys.getenv("AUSPOL_PARTY_COR", ""))) {
 
 fp_prev <- fread(file.path(PREF, sprintf("nswec-%d-nsw-firstprefs.csv", FROM)))
 fp_tgt  <- fread(file.path(PREF, sprintf("nswec-%d-nsw-firstprefs.csv", TO)))
+# STATE NOTIONAL (AUSPOL_STATE_NOTIONAL, R/state_notional.R): on a pair preceded by a
+# redistribution the prior is rebuilt on the target's boundaries from booth results.
+.snp <- state_notional_prior("nsw", FROM, TO); if (!is.null(.snp)) fp_prev <- .snp
 tx      <- fread(file.path(PREF, "nswec-nsw-transfers.csv"))
 
 # LEAKAGE GUARD. The whole point of using NSW is that the flow matrix predates

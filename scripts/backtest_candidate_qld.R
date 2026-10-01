@@ -328,6 +328,10 @@ if (length(miss)) {
 
 fa <- fread(file.path(P, PAIR$fa), showProgress = FALSE)
 fb <- fread(file.path(P, PAIR$fb), showProgress = FALSE)
+# STATE NOTIONAL (AUSPOL_STATE_NOTIONAL, R/state_notional.R): on a pair preceded by a
+# redistribution the prior is rebuilt on the target's boundaries from booth results.
+# Neither Queensland pair had one; called so the log says so.
+.snp <- state_notional_prior("qld", PAIR$from, PAIR$to); if (!is.null(.snp)) fa <- .snp
 # TGT_ not TGT inside the brackets: `election` is a column of the winners table
 # and a bare symbol on either side of == binds to the column, which is this
 # repo's most-repeated fault.

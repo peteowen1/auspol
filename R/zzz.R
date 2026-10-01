@@ -52,7 +52,7 @@ globalVariables(c(
   "n_cand_now", "n_cand_prev", "n_prior", "n_returning", "name",
   "name_after", "name_before", "nonmajor_defended", "nonmajor_prev",
   "nonmajor_vacant", "now", "own_pcv", "own_prev_pcv", "p_hat", "pair",
-  "pct", "pcv", "pcv_after", "pcv_before", "permit", "permit_v", "pkey",
+  "pct", "pcv", "pcv_after", "pcv_before", "permit", "permit_v", "pkey", "prior",
   "pred_share", "prev", "prev_ind", "prev_party", "prev_swing",
   "prior_leader_returns", "prior_pcv", "ret_frac", "retirement",
   "retirement_i", "returner_vote", "safe", "safe_gap", "safe_mid", "same",

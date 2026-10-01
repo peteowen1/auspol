@@ -395,6 +395,9 @@ fb <- fread(file.path(P, PAIR$fp_to), showProgress = FALSE)
 # makes both file shapes safe, and is a no-op on the already-aggregated ones.
 fa <- fa[, .(votes = sum(votes)), by = .(seat, party)]
 fb <- fb[, .(votes = sum(votes)), by = .(seat, party)]
+# STATE NOTIONAL (AUSPOL_STATE_NOTIONAL, R/state_notional.R): on a pair preceded by a
+# redistribution the prior is rebuilt on the target's boundaries from booth results.
+.snp <- state_notional_prior("sa", PAIR$from, PAIR$to); if (!is.null(.snp)) fa <- .snp
 # Permanent guard, not a one-time fix: this aggregation exists because a
 # duplicate (seat, party) row silently made dcast() below COUNT candidates
 # instead of SUMMING their votes. Asserting uniqueness here means a future
