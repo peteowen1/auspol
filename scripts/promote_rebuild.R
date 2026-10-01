@@ -48,6 +48,13 @@ if (identical(.flag("AUSPOL_SEAT_POLL_BLEND"), "3")) { invisible(seat_poll_joint
 invisible(leader_seat_table("vic2026", write = TRUE))
 # And the departed-member blend (AUSPOL_DEPARTED_FED): federal-booth primaries and weights.
 if (.flag("AUSPOL_DEPARTED_FED") %in% c("1", "gap")) { invisible(departed_fed_table("vic2026", write = TRUE, mode = .flag("AUSPOL_DEPARTED_FED"))); .arm_tables <- c(.arm_tables, "departed-fed-vic2026.csv") }
+# And the Senate One Nation table (AUSPOL_ONP_ORDER=senate): the daily run has
+# no AEC Senate booths, so it reads Victoria's district Senate shares and the
+# curve from this file (written by scripts/build_onp_senate.R).
+if (identical(.flag("AUSPOL_ONP_ORDER"), "senate")) {
+  if (!file.exists(file.path(OUT, "onp-senate-vic2026.csv"))) stop("AUSPOL_ONP_ORDER=senate but output/onp-senate-vic2026.csv is missing -- run scripts/build_onp_senate.R")
+  .arm_tables <- c(.arm_tables, "onp-senate-vic2026.csv")
+}
 # And the demographic correction (AUSPOL_DEMO_RESID=2): its per-seat Labor and
 # Greens adjustments, since the daily run has neither census features nor the
 # forecasts table. Placeholder shares: only the adjustments are kept.
