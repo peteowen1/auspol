@@ -64,14 +64,14 @@ cannot pass as a working one.
 
 ## Raw commission downloads (`external/reference/`)
 
-- **aec/** -- 1160 files, 623.5 MB
+- **aec/** -- 1192 files, 870.6 MB
   - e.g. booths/fed2016-NSW.csv, booths/fed2016-QLD.csv, booths/fed2016-VIC.csv, booths/fed2019-QLD.csv
-- **vec/** -- 899 files, 42.4 MB
-  - e.g. 2010/cdx-vec.txt, 2010/dop-AlbertPark.html, 2010/dop-BallaratEast.html, 2010/dop-BallaratWest.html
+- **vec/** -- 1604 files, 48.6 MB
+  - e.g. 2006/vc/fpv-albertpark.html, 2006/vc/fpv-altona.html, 2006/vc/fpv-ballarateast.html, 2006/vc/fpv-ballaratwest.html
 - **nsw/** -- 294 files, 9.9 MB
   - e.g. byelections/SB1602-orange-fp.html, byelections/SB1801-wagga-wagga-fp.html, dop-sample.html, dop/index-SG1901.html
-- **ecsa/** -- 9 files, 2.9 MB. **1 ZERO-BYTE: ha-2018-03-17.json**
-  - e.g. ha-2018-03-17.json, ha-2022-03-19.json, ha-2026-03-21.json, ha-change-2022-03-19.json
+- **ecsa/** -- 104 files, 3.9 MB. **1 ZERO-BYTE: ha-2018-03-17.json**
+  - e.g. 2018/Adelaide.html, 2018/Adelaide2.html, 2018/Badcoe.html, 2018/Badcoe2.html
 - **ecq/** -- 10 files, 57.0 MB
   - e.g. elections.json, publicResults_SGE2024_ICCDiv4_Final.zip, publicResults_State2020_aurukun2020_Final.zip, qld2017-cdx.txt
 - **waec/** -- 947 files, 27.1 MB
@@ -82,7 +82,7 @@ cannot pass as a working one.
   - e.g. CED_2016/CED_2016_AUST.dbf, CED_2016/CED_2016_AUST.prj, CED_2016/CED_2016_AUST.shp, CED_2016/CED_2016_AUST.shx
 - **census/** -- 20 files, 77.4 MB
   - e.g. 2016_GCP_CED_AUS.zip, 2016_GCP_SED_NSW.zip, 2016_GCP_SED_QLD.zip, 2016_GCP_SED_SA.zip
-- **correspondences/** -- 26 files, 1.5 MB
+- **correspondences/** -- 29 files, 1.5 MB
   - e.g. abs-sed/CG_CED_2016_CED_2021.csv, abs-sed/CG_SED_2016_SED_2021.csv, abs-sed/CG_SED_2021_SED_2022.csv, abs-sed/CG_SED_2022_SED_2024.csv
 - **aef/** -- 17 files, 4.8 MB
   - e.g. 2022fed-results.json, 2022fed-summary.json, 2022sa-results.json, 2022sa-summary.json
@@ -129,14 +129,56 @@ NAMES live -- the per-seat results files carry `seat, party, votes` only.
 
 **Total: 18172 candidacies, 30 elections, NA non-major breakouts.**
 
+## State booth results (`output/booths/`)
+
+Every state lower-house result by polling place, one schema:
+`election,district,booth,vote_type,candidate,party_raw,votes,lat,lon,source_file`.
+Built by `scripts/parse_booths_vic.py`, `parse_booths_nsw_qld.py`,
+`parse_booths_sa_wa.py` from raw pages fetched by `fetch_vec_booths.py`,
+`fetch_ecsa_booths_2018.sh` and the existing commission fetchers. Each
+parser checks booth sums against the district results above.
+
+| file | districts | polling places | rows | votes | places with coordinates |
+|---|---:|---:|---:|---:|---:|
+| nsw2015-booth-fp.csv | 93 | 2900 | 22118 | 4404334 | 0 |
+| nsw2019-booth-fp.csv | 93 | 2516 | 20520 | 4551886 | 0 |
+| nsw2023-booth-fp.csv | 93 | 2620 | 20933 | 4701930 | 0 |
+| qld2017-booth-fp.csv | 93 | 13419 | 68148 | 2703941 | 1489 |
+| qld2020-booth-fp.csv | 93 | 1513 | 15186 | 2868324 | 1996 |
+| qld2020-booth-tcp.csv | 93 | 1513 | 4736 | 2868324 | 1996 |
+| qld2024-booth-fp.csv | 93 | 1356 | 12598 | 3105945 | 1761 |
+| qld2024-booth-tcp.csv | 93 | 1356 | 4452 | 3105945 | 1761 |
+| sa2018-booth-fp.csv | 47 | 701 | 4148 | 1048713 | 0 |
+| sa2018-booth-tcp.csv | 47 | 701 | 1496 | 1048713 | 0 |
+| sa2022-booth-fp.csv | 47 | 695 | 3904 | 1091173 | 0 |
+| sa2022-booth-tcp.csv | 47 | 695 | 1484 | 1091173 | 0 |
+| sa2026-booth-fp.csv | 47 | 694 | 11364 | 1116641 | 0 |
+| sa2026-booth-tcp.csv | 47 | 694 | 2738 | 1113989 | 0 |
+| vic2006-booth-fp.csv | 87 | 2059 | 12809 | 2931336 | 0 |
+| vic2006-booth-tcp.csv | 88 | 2092 | 4888 | 2965031 | 0 |
+| vic2010-booth-fp.csv | 88 | 1839 | 12985 | 3164729 | 0 |
+| vic2010-booth-tcp.csv | 88 | 1839 | 4558 | 3168259 | 0 |
+| vic2014-booth-fp.csv | 88 | 1786 | 13838 | 3355707 | 0 |
+| vic2014-booth-tcp.csv | 88 | 1786 | 4452 | 3359817 | 0 |
+| vic2018-booth-fp.csv | 88 | 1794 | 12861 | 3510905 | 0 |
+| vic2018-booth-tcp.csv | 88 | 1794 | 4468 | 3515878 | 0 |
+| vic2022-booth-fp.csv | 87 | 1729 | 17976 | 3617000 | 1729 |
+| vic2022-booth-tcp.csv | 87 | 1729 | 4328 | 3626239 | 1729 |
+| wa2005-booth-fp.csv | 57 | 877 | 7308 | 1071953 | 0 |
+| wa2008-booth-fp.csv | 59 | 855 | 5804 | 1089257 | 0 |
+| wa2013-booth-fp.csv | 59 | 853 | 5490 | 1184432 | 0 |
+| wa2017-booth-fp.csv | 59 | 811 | 7435 | 1321640 | 0 |
+| wa2021-booth-fp.csv | 59 | 795 | 8270 | 1411990 | 0 |
+| wa2025-booth-fp.csv | 59 | 802 | 6694 | 1527968 | 0 |
+
 ## Known gaps
 
 Listed so a gap is a recorded fact rather than something rediscovered:
 
-- **SA 2018** -- `external/reference/ecsa/ha-2018-03-17.json` is **0 bytes**,
-  a download that failed and was never noticed. Needs refetching.
-- **Victoria 2014 / 2018** -- only per-district HTML in
-  `external/reference/vec/2014` and `/2018`; no candidate extract yet.
+- **WA 1996 / 2001 booths** -- every per-booth candidate cell in the WAEC
+  JSON is 0, so no state booth results before 2005 (district totals exist).
+- **SA 2026 booths** -- the ECSA change file repeats a declaration block in
+  Black and King (district-level rows; polling places unaffected).
 - **Queensland 2020 / 2024** -- XML on disk, not yet parsed to candidates.
 - **WA** -- per-seat JSON back to 1996, not yet parsed to candidates.
 - **Google Trends** -- only ~63 of the corpus has a cached response, and
