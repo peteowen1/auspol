@@ -142,12 +142,12 @@ for (tg in targets) {
   # nrounds by grouped CV within the TRAINING set only -- the target never
   # touches the early-stopping decision either.
   fold_id <- match(TR$pair, sort(unique(TR$pair)))
-  set.seed(42)
+  set.seed(as.integer(Sys.getenv("AUSPOL_XGB_SEED", "42")))
   cv <- xgb.cv(params = params, data = dtr, nrounds = 2000,
                folds = split(seq_len(nrow(Xtr)), fold_id),
                early_stopping_rounds = 30, verbose = 0)
   nr <- cv$early_stop$best_iteration
-  set.seed(42)
+  set.seed(as.integer(Sys.getenv("AUSPOL_XGB_SEED", "42")))
   m <- xgb.train(params = params, data = dtr, nrounds = nr, verbose = 0)
   dte <- xgb.DMatrix(data = Xte, missing = NA)
   setinfo(dte, "base_margin", TE$base_pred)

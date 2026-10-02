@@ -114,14 +114,14 @@ if (.base_margin_mode %in% c("1", "2")) {
 }
 
 cat("running xgb.cv (grouped folds by election pair) to fix nrounds...\n")
-set.seed(42)
+set.seed(as.integer(Sys.getenv("AUSPOL_XGB_SEED", "42")))
 cv <- xgb.cv(params = params, data = dtrain, nrounds = 2000,
              folds = split(seq_len(nrow(X)), fold_id),
              early_stopping_rounds = 30, prediction = TRUE, verbose = 0)
 NROUNDS <- cv$early_stop$best_iteration
 cat(sprintf("CV best nrounds: %d\n", NROUNDS))
 
-set.seed(42)
+set.seed(as.integer(Sys.getenv("AUSPOL_XGB_SEED", "42")))
 final <- xgb.train(params = params, data = dtrain, nrounds = NROUNDS, verbose = 0)
 
 model_file <- file.path(OUT, "xgb-primary-v6-final.model")

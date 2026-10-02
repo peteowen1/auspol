@@ -57,7 +57,7 @@ if (file.exists(man_f) && file.mtime(man_f) > file.mtime(feat_f) && !identical(S
   }
 }
 if (is.null(best_n) || !is.finite(best_n)) {
-  set.seed(42)
+  set.seed(as.integer(Sys.getenv("AUSPOL_XGB_SEED", "42")))
   cv <- xgb.cv(params = params, data = xgb.DMatrix(X, label = y, missing = NA), nrounds = 1000,
                folds = split(seq_len(nrow(X)), match(TX$election, unique(TX$election))),
                early_stopping_rounds = 30, verbose = 0)
@@ -82,7 +82,7 @@ for (e in elections) {
     m <- xgb.load(f)
     cat(sprintf("XFA3= %-8s current (model newer than %s), not refitted\n", e, basename(feat_f)))
   } else {
-    set.seed(42)
+    set.seed(as.integer(Sys.getenv("AUSPOL_XGB_SEED", "42")))
     m <- xgb.train(params = params, data = xgb.DMatrix(X[keep, , drop = FALSE], label = y[keep], missing = NA),
                    nrounds = best_n, verbose = 0)
     xgb.save(m, f)

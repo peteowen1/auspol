@@ -789,7 +789,7 @@ params <- list(objective = "reg:squarederror", eta = 0.05, max_depth = 4,
                 subsample = 0.8, colsample_bytree = 0.8, min_child_weight = 5)
 
 cat("\nrunning xgb.cv, grouped folds by election pair (leave-one-pair-out), same params as v5...\n")
-set.seed(42)
+set.seed(as.integer(Sys.getenv("AUSPOL_XGB_SEED", "42")))
 cv <- xgb.cv(params = params, data = dtrain, nrounds = 2000, folds = split(seq_len(nrow(X)), fold_id),
              early_stopping_rounds = 30, prediction = TRUE, verbose = 0)
 

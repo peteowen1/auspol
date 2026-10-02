@@ -298,6 +298,7 @@ PUBLISHED_FLAGS <- c(
   AUSPOL_N_SIMS              = "20000",
   AUSPOL_SIM_ENGINE          = "cpp",        # compiled core; proven byte-identical to the R engine on a full fed2022 run 2026-09-07 (45 s vs ~11 min)
   AUSPOL_SEED                = "42",
+  AUSPOL_XGB_SEED            = "42",         # xgb training seed (fit_xgb_*); varied only to MEASURE how much an equally valid refit moves the metrics (plans/noise-floor-2026-10-02.md)
   AUSPOL_FP_SD_MODE          = "additive",
   AUSPOL_XGB_SENATE          = "0",          # "1", "minor", "dev" all REFUSED 2026-10-01 (each costs Victorian Labor or loses the gains); parked. TESTED (plans/prereg-xgb-senate-2026-10-01.md): each party's federal Senate share in the seat (and its deviation from the class mean) as xgb features, time-forward, R/senate_features.R.
   AUSPOL_XGB_COUNCIL         = "0",          # TESTING 2026-10-02: council history (mayor / councillor / stood and lost / council share) as xgb features, every state and federal row (R/council_features.R). plans/prereg-council-2026-10-02.md
