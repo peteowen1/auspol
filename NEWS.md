@@ -1,3 +1,12 @@
+# auspol 0.4.64
+
+v58.
+
+- Seed ensemble (`AUSPOL_XGB_ENSEMBLE = 3`): the xgb layer averages three seed-varied fits, in the backtests and the production model; refit noise on Victoria roughly halved.
+- `council_features()`: council election history (mayor, councillor, stood and lost, council share) for every state and federal candidate, from every state's council results; NA where no council data exists.
+- Every rebuild stage now runs the published configuration (the fit scripts apply `published_flags.R`); v57's xgb layer had missed the state notional feature.
+- Faster rebuilds: the time-forward fundamentals fit is cached on disk; stage 7 lists the output folder once.
+
 # auspol 0.4.63
 
 v57. The backtests now score every district, including the ones a redistribution redrew or renamed:

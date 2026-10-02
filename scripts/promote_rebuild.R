@@ -28,7 +28,11 @@ source("scripts/published_flags.R")
 # It is NOT a trained model, so it is kept out of the staleness comparison
 # below (review gate): build_candidacies.R runs on its own schedule, and a
 # fresh candidacies.csv must not make the scoreboard look older than the models.
+# Seed-ensemble members ship with the main model when the manifest lists any.
+.ens <- if (file.exists(file.path("output", "xgb-primary-v6-final-ensemble.json")))
+  jsonlite::fromJSON(readLines(file.path("output", "xgb-primary-v6-final-ensemble.json"), warn = FALSE)) else character(0)
 trained <- c("xgb-primary-v6-final.model", "xgb-primary-v6-final-cols.json",
+             "xgb-primary-v6-final-ensemble.json"[length(.ens) > 0], setdiff(.ens, "xgb-primary-v6-final.model"),
              "xgb-flows-v1-final.model", "xgb-flows-v1-final-cols.json", "xgb-flows-v1-features.csv")
 # The live seat-swing port's inputs (AUSPOL_SEAT_SWING_PORT=2): its sources are
 # a local booth transpose and seat TPP estimates CI never builds, so the
@@ -63,6 +67,16 @@ if (.flag("AUSPOL_XGB_SENATE") %in% c("1", "minor", "dev")) {
   if (data.table::uniqueN(.sdv$district) != 88L) stop("senate-by-district-class.csv has ", data.table::uniqueN(.sdv$district), " vic2026 districts, not 88")
   data.table::fwrite(.sdv, file.path(OUT, "senate-vic2026.csv"))
   .arm_tables <- c(.arm_tables, "senate-vic2026.csv")
+}
+# And the council history (AUSPOL_XGB_COUNCIL=1): Victoria 2026's candidates
+# only, which the daily run reads in place of every state's council results.
+if (identical(.flag("AUSPOL_XGB_COUNCIL"), "1")) {
+  .ch <- data.table::fread(file.path(OUT, "council-history.csv"), showProgress = FALSE)
+  .chv <- .ch[.ch$election == "vic2026"]
+  if (!nrow(.chv) || !any(toupper(as.character(.chv$council_elected)) == "TRUE"))
+    stop("council-history.csv has no vic2026 councillors -- rerun scripts/build_council_history.py")
+  data.table::fwrite(.chv, file.path(OUT, "council-history-vic2026.csv"))
+  .arm_tables <- c(.arm_tables, "council-history-vic2026.csv")
 }
 # And the demographic correction (AUSPOL_DEMO_RESID=2): its per-seat Labor and
 # Greens adjustments, since the daily run has neither census features nor the

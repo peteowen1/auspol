@@ -33,6 +33,10 @@ EPS <- 1e-6
 
 OUT <- "output"
 files <- list.files(OUT, pattern = "^backtest-.*[.]csv$", full.names = TRUE)
+# The directory listed ONCE: the sibling lookup below used to call list.files()
+# over the whole of output/ (7,000+ files) for every one of ~4,400 candidate
+# files. Same pattern, same order, searched in memory (2026-10-02).
+.all_sd <- grep("sharedetail", files, value = TRUE)
 files <- grep("-totals|allprobs|-seatsd|-diag", files, value = TRUE, invert = TRUE)
 if (!length(files)) stop("No backtest files in ", OUT)
 
@@ -68,7 +72,7 @@ rows <- rbindlist(lapply(files, function(f) {
   # scores here. (Added 2026-09-18 after the ledger silently mixed vintages.)
   suf <- regmatches(basename(f), regexpr("-a[0-9a-f]+-g[0-9a-f]+x?[.]csv$", basename(f)))
   if (length(suf)) {
-    sib <- list.files(OUT, pattern = paste0("sharedetail.*", sub("[.]csv$", "", suf), "[.]csv$"), full.names = TRUE)
+    sib <- grep(paste0("sharedetail.*", sub("[.]csv$", "", suf), "[.]csv$"), .all_sd, value = TRUE)
     if (!length(sib)) {
       # Every harness writes its sharedetail beside its win file; a win file
       # with no sibling is a run still in flight (or one killed before it

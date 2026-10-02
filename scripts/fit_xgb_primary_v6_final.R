@@ -21,6 +21,10 @@
 # iterate on named regressions afterward.
 options(auspol.root = normalizePath("."))
 suppressMessages(devtools::load_all(quiet = TRUE))
+# The published configuration for every switch the caller left unset: this
+# script reads switches only from the environment, so without this a plain run
+# used its own inline defaults, not what ships (v57's x_notional_adj, 2026-10-02).
+source("scripts/published_flags.R"); apply_published_flags()
 suppressMessages(library(data.table))
 suppressMessages(library(xgboost))
 
@@ -114,18 +118,33 @@ if (.base_margin_mode %in% c("1", "2")) {
 }
 
 cat("running xgb.cv (grouped folds by election pair) to fix nrounds...\n")
-set.seed(42)
+set.seed(as.integer(Sys.getenv("AUSPOL_XGB_SEED", "42")))
 cv <- xgb.cv(params = params, data = dtrain, nrounds = 2000,
              folds = split(seq_len(nrow(X)), fold_id),
              early_stopping_rounds = 30, prediction = TRUE, verbose = 0)
 NROUNDS <- cv$early_stop$best_iteration
 cat(sprintf("CV best nrounds: %d\n", NROUNDS))
 
-set.seed(42)
+set.seed(as.integer(Sys.getenv("AUSPOL_XGB_SEED", "42")))
 final <- xgb.train(params = params, data = dtrain, nrounds = NROUNDS, verbose = 0)
 
 model_file <- file.path(OUT, "xgb-primary-v6-final.model")
 xgb.save(final, model_file)
+# SEED ENSEMBLE (AUSPOL_XGB_ENSEMBLE = K): members 2..K beside the main model,
+# same rounds, seeds base+1..; listed in xgb-primary-v6-final-ensemble.json,
+# which the live forecast and the daily run read. K = 1 lists the main model
+# only, so a missing or 1-member manifest behaves exactly as before.
+.K <- max(1L, as.integer(Sys.getenv("AUSPOL_XGB_ENSEMBLE", "1")))
+.members <- basename(model_file)
+for (.k in seq_len(.K)[-1]) {
+  set.seed(as.integer(Sys.getenv("AUSPOL_XGB_SEED", "42")) + .k - 1L)
+  .mk <- xgb.train(params = params, data = dtrain, nrounds = NROUNDS, verbose = 0)
+  .fk <- file.path(OUT, sprintf("xgb-primary-v6-final-m%d.model", .k))
+  xgb.save(.mk, .fk); .members <- c(.members, basename(.fk))
+}
+writeLines(jsonlite::toJSON(.members), file.path(OUT, "xgb-primary-v6-final-ensemble.json"))
+cat(sprintf("ensemble: %d member(s): %s
+", length(.members), paste(.members, collapse = ", ")))
 cols_file <- file.path(OUT, "xgb-primary-v6-final-cols.json")
 writeLines(jsonlite::toJSON(feat_cols), cols_file)
 

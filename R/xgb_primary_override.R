@@ -180,6 +180,17 @@ xgb_primary_predict_live <- function(shares, mat22, a22, state_mean, returns,
     return(shares)
   }
   model <- xgboost::xgb.load(model_f)
+  # Seed ensemble (AUSPOL_XGB_ENSEMBLE): further members listed beside the main
+  # model; their raw predictions are averaged below. No manifest = one model.
+  .ens_f <- out_path("xgb-primary-v6-final-ensemble.json")
+  .extra <- list()
+  if (file.exists(.ens_f)) {
+    .mem <- jsonlite::fromJSON(readLines(.ens_f, warn = FALSE))
+    for (.f in setdiff(.mem, basename(model_f))) {
+      if (!file.exists(out_path(.f))) stop("xgb_primary_predict_live(): ensemble member ", .f, " listed but missing")
+      .extra[[.f]] <- xgboost::xgb.load(out_path(.f))
+    }
+  }
   feat_cols <- jsonlite::fromJSON(readLines(cols_f))
 
   MAJ <- c("ALP", "LNP", "NAT")
@@ -492,6 +503,15 @@ xgb_primary_predict_live <- function(shares, mat22, a22, state_mean, returns,
     if (all(is.na(rows$senate_pct))) cat("XS1!! live Senate features ALL NA -- the model expects them; check output/senate-vic2026.csv shipped
 ")
   }
+  # Council history (AUSPOL_XGB_COUNCIL=1): the same R/council_features.R.
+  if (any(grepl("^council_", feat_cols))) {
+    .lp <- paste0(region, if (identical(region, "vic")) "2026" else "")
+    .cf <- council_features(data.table::data.table(pair = .lp, seat = rows$seat, party = rows$party))
+    for (.cc in c("council_mayor", "council_elected", "council_lost", "council_pct")) rows[, (.cc) := .cf[[.cc]]]
+    if (!any(.cf$council_elected > 0 | .cf$council_mayor > 0))
+      cat("XC1!! live council features: no mayor or councillor found for", .lp, "-- check output/council-history.csv shipped
+")
+  }
   miss <- setdiff(feat_cols, names(rows))
   if (length(miss)) stop("xgb_primary_predict_live(): model expects columns not built here: ",
                           paste(miss, collapse = ", "))
@@ -536,6 +556,12 @@ xgb_primary_predict_live <- function(shares, mat22, a22, state_mean, returns,
   dtest <- xgboost::xgb.DMatrix(data = X, missing = NA)
   xgboost::setinfo(dtest, "base_margin", .margin)
   pred <- predict(model, dtest)
+  if (length(.extra)) {
+    for (.m in .extra) pred <- pred + predict(.m, dtest)
+    pred <- pred / (1 + length(.extra))
+    cat(sprintf("XG4e  live xgb: %d-model seed ensemble averaged
+", 1 + length(.extra)))
+  }
   rows[, xgb_pred := pmax(0, pred)]
 
   out <- shares

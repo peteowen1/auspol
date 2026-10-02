@@ -46,6 +46,14 @@ export AUSPOL_POOL_MIN_SIMS="${AUSPOL_POOL_MIN_SIMS:-$AUSPOL_N_SIMS}"
 # pooling stages must not fall back to a stale file. Remove it from this default
 # when WA 2017-2021 polling reaches the anchor.
 export AUSPOL_SKIP_PAIRS="${AUSPOL_SKIP_PAIRS:-wa2021}"
+# EVERY STAGE SEES THE PUBLISHED CONFIGURATION. Unset switches take their
+# scripts/published_flags.R value here, once, so the fit scripts (which read only
+# the environment) cannot fall back to a code default that differs from what
+# ships (v57's x_notional_adj, 2026-10-02). A switch the caller set wins.
+PUBFLAGS=$(Rscript scripts/export_published_flags.R) || { echo "!! export_published_flags.R failed"; exit 1; }
+eval "$PUBFLAGS"
+echo "   published switches exported for unset names: $(printf '%s
+' "$PUBFLAGS" | grep -c '^export')"
 # AUSPOL_REBUILD_FROM=<n> resumes at stage n (1-9), e.g. after a later stage failed
 # with the harness outputs already fresh on disk. Default 1 = everything.
 FROM="${AUSPOL_REBUILD_FROM:-1}"
@@ -192,6 +200,11 @@ run_queue() {  # $1 = XGB_PRIMARY, $2 = log tag, $3 = slots, then "harness:ENV=v
 # pairs reproduce the actual result) fail the rebuild rather than warn.
 if at_least 1; then
   python scripts/build_state_notionals.py > "$LOG/s1_notionals.log" 2>&1 || { echo "!! build_state_notionals.py failed its checks -- see $LOG/s1_notionals.log"; exit 1; }
+fi
+# COUNCIL HISTORY (AUSPOL_XGB_COUNCIL): read by stage 3 and the live forecast.
+# Rebuilt whenever stage 3 runs, from the parsed council results on disk.
+if at_least 3; then
+  python scripts/build_council_history.py > "$LOG/s3_council.log" 2>&1 || { echo "!! build_council_history.py failed -- see $LOG/s3_council.log"; exit 1; }
 fi
 if at_least 1; then stage "1-harnesses-base_pred"; AUSPOL_N_SIMS="${AUSPOL_STAGE1_SIMS:-2000}" run6 0 s1; done_stage "1-harnesses-base_pred"; fi
 if at_least 2; then stage "2-pool-sharedetail";    AUSPOL_POOL_MIN_SIMS="${AUSPOL_STAGE1_SIMS:-2000}" Rscript scripts/pool_sharedetail.R      > "$LOG/s2_pool.log" 2>&1; done_stage "2-pool-sharedetail"; fi
