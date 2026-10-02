@@ -45,3 +45,14 @@ direction, a small fraction of the miss.
 Not shipped. Note: federal only, so it would not have changed the Victorian
 forecast either way; it is one election (fed2025) of evidence, the slope
 learned from 9 state-years of fed2022.
+
+## OVERRIDE, 2026-10-02: SHIPPED as v60 by Pete's decision
+Pete chose to ship despite the unacceptable clause, after seeing the split:
+fed2025 seat log loss summed by state, Tasmania -1.864 (Braddon 4.06 -> 3.10,
+Bass 1.55 -> 1.05, Lyons 0.86 -> 0.49); every other state +0.108 over 145
+seats (Qld -0.892, NSW +1.041). Reasons on record: the slope was learned from
+fed2022 only, so the Tasmanian gain is out of sample; catching the one state
+that moved is the method's purpose; elsewhere the change is noise-sized
+(+0.0007 log loss per seat, +0.006 RMSE). The clause is NOT amended; this is
+an explicit override, visible as one. Federal only: the Victorian forecast is
+unchanged. Retest when another federal election with seat polls is scored.

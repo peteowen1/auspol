@@ -39,7 +39,7 @@ state, so the relative signal is zero by construction.
 Slope \code{b} per class, time-forward: earlier federal elections' state-years,
 predictions from \code{\link[=current_seat_predictions]{current_seat_predictions()}} (as the blend's weight),
 least squares through the origin, SE over state-years, shrunk
-\code{b * b^2 / (b^2 + se^2)} and clamped to \link{0, 1}.
+\code{b * b^2 / (b^2 + se^2)} and clamped between 0 and 1.
 }
 \section{Functions}{
 \itemize{

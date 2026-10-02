@@ -16,7 +16,7 @@
 #' Slope `b` per class, time-forward: earlier federal elections' state-years,
 #' predictions from [current_seat_predictions()] (as the blend's weight),
 #' least squares through the origin, SE over state-years, shrunk
-#' `b * b^2 / (b^2 + se^2)` and clamped to [0, 1].
+#' `b * b^2 / (b^2 + se^2)` and clamped between 0 and 1.
 #'
 #' @param shares Seat-by-class matrix of primaries (rows sum to 100).
 #' @param target_election Label such as `"fed2025"`.
@@ -24,7 +24,7 @@
 #' @return `shares`, shifted and renormalised.
 #' @export
 state_poll_pool_apply <- function(shares, target_election, classes = c("ALP", "LNP")) {
-  if (!identical(Sys.getenv("AUSPOL_STATE_POLL_POOL", "0"), "1")) return(shares)
+  if (!identical(Sys.getenv("AUSPOL_STATE_POLL_POOL", "1"), "1")) return(shares)
   if (!grepl("^fed", target_election)) return(shares)
   st_map <- .spp_states(target_election)
   if (is.null(st_map)) { cat("SPP! no seat-state map; state poll pool SKIPPED\n"); return(shares) }
