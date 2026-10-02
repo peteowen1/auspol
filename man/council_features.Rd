@@ -32,7 +32,9 @@ elections (n 117), mayors by +8.9 (n 9), federal councillors +1.8 (n 81);
 those who stood and lost were close to zero. plans/prereg-council-2026-10-02.md.
 
 A class with no matched candidate gets 0 on every column -- "no council record
-found", which is the same statement for every state and level, so it is not a
-subgroup label. Tas/ACT/NT federal candidates and council years with no
-source (SA before 2018, Qld before 2012) are also 0: recorded as a limit.
+found". But a SEAT with no council data at all (\code{council_coverage} FALSE: no
+council election in its state within the window -- fed2004, sa2018, WA before
+2008, and federal seats in Tas/ACT/NT) gets NA, not 0: a zero there would mean
+"old election" or "small territory" and a tree would use it as that label
+(review, 2026-10-02). xgboost treats NA as missing.
 }

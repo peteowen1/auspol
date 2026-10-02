@@ -1,3 +1,10 @@
+# auspol 0.4.65
+
+No change to the forecast.
+
+- `booth_features()` and `upset_floor_*()`: two tested-and-refused experiments, kept behind switches that are off (`AUSPOL_XGB_BOOTH`, `AUSPOL_UPSET_FLOOR`).
+- The live seed-ensemble log line is `XG4c`, so the daily run's log shows it.
+
 # auspol 0.4.64
 
 v58.

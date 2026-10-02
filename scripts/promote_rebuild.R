@@ -68,6 +68,19 @@ if (.flag("AUSPOL_XGB_SENATE") %in% c("1", "minor", "dev")) {
   data.table::fwrite(.sdv, file.path(OUT, "senate-vic2026.csv"))
   .arm_tables <- c(.arm_tables, "senate-vic2026.csv")
 }
+# And the upset-insurance eps table (AUSPOL_UPSET_FLOOR=1).
+if (identical(.flag("AUSPOL_UPSET_FLOOR"), "1")) {
+  if (!file.exists(file.path(OUT, "upset-floor-eps.csv"))) stop("AUSPOL_UPSET_FLOOR=1 but output/upset-floor-eps.csv is missing")
+  .arm_tables <- c(.arm_tables, "upset-floor-eps.csv")
+}
+# And the booth features (AUSPOL_XGB_BOOTH=1): Victoria 2026's slice.
+if (identical(.flag("AUSPOL_XGB_BOOTH"), "1")) {
+  .bt <- data.table::fread(file.path(OUT, "booth-features.csv"), showProgress = FALSE)
+  .btv <- .bt[.bt$pair == "vic2026"]
+  if (data.table::uniqueN(.btv$seat) < 80L) stop("booth-features.csv has ", data.table::uniqueN(.btv$seat), " vic2026 seats -- rerun scripts/build_booth_features.py")
+  data.table::fwrite(.btv, file.path(OUT, "booth-features-vic2026.csv"))
+  .arm_tables <- c(.arm_tables, "booth-features-vic2026.csv")
+}
 # And the council history (AUSPOL_XGB_COUNCIL=1): Victoria 2026's candidates
 # only, which the daily run reads in place of every state's council results.
 if (identical(.flag("AUSPOL_XGB_COUNCIL"), "1")) {
