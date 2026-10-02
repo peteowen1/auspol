@@ -26,3 +26,17 @@ UNACCEPTABLE: it zeroes a class that DID stand (any such cell is a bug, found
 by checking every zeroed cell with actual share > 0).
 Not touching the live forecast in this change: Victoria 2026 nominations close
 in November; fit_seats_full.R's handling is checked separately.
+
+## RESULT, 2026-10-03 00:45: FAILS guards 2 and 3 (primary passes)
+`output/snapshots/20261003-0035-a33fb31-from6` against v60.
+1. PRIMARY: final primary RMSE over the 1,313 affected seats 3.984 -> 3.833
+   (ALP bias -0.10 -> +0.61, LNP -0.82 -> -0.08, IND +0.45 -> -0.13): PASS.
+2. 22-election log loss 0.3434 -> 0.3454: FAIL (+0.0020, at the limit).
+3. nsw2019 +0.0356 (FAIL, limit 0.011); vic2018 +0.0103; 12 of the other 20
+   improve slightly.
+Unacceptable clause: 0 zeroed cells where the class stood -- does not fire.
+Cause: Barwon nsw2019 (Butler, SFF, won from ~5%) 9.903 -> 13.816, onto the
+1e-6 floor -- without it nsw2019 improves ~0.006; and Richmond vic2018, where
+the Liberals' phantom 10.8 was spread proportionally, mostly to Labor (lost)
+rather than the Greens (won). Proportional redistribution of the freed share
+is the untested design choice. Not shipped.
