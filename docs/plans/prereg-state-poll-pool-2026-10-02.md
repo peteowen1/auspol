@@ -30,3 +30,18 @@ So this is a test on ONE election (fed2025, 150 seats).
 3. GUARD: Victoria unchanged (federal only by construction; any change is a bug).
 UNACCEPTABLE: the RMSE gain comes from Tasmania alone while the other states
 get worse.
+
+## RESULT, 2026-10-02 22:20: REFUSED by the unacceptable clause
+`output/snapshots/20261002-2212-579df5c-from6` against v59.
+1. fed2025 final primary RMSE 3.431 -> 3.398 (-0.033 against a bar of 0.031):
+   PASS, barely.
+2. fed2025 seat log loss 0.3570 -> 0.3453; 22-election 0.3440 -> 0.3434: PASS.
+3. Victoria unchanged: PASS. Every other pair byte-identical.
+UNACCEPTABLE CLAUSE FIRES: by state, Tasmania 5.752 -> 5.008, Qld -0.168,
+SA -0.148, ACT -0.129, but NSW +0.153, NT +0.102, WA +0.040; every state but
+Tasmania 3.322 -> 3.328 (worse). The gain is Tasmania's.
+Braddon ALP 25.0 -> 26.9 (actual 39.5), Lyons 30.1 -> 31.9 (43.1): the right
+direction, a small fraction of the miss.
+Not shipped. Note: federal only, so it would not have changed the Victorian
+forecast either way; it is one election (fed2025) of evidence, the slope
+learned from 9 state-years of fed2022.
