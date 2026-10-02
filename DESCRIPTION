@@ -13,6 +13,7 @@ RoxygenNote: 7.3.3
 Depends: R (>= 4.3)
 Imports:
     data.table,
+    digest,
     Matrix,
     Rcpp,
     stats,

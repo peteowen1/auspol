@@ -35,6 +35,10 @@
 # Emits XA* codes.
 options(auspol.root = normalizePath("."))
 suppressMessages(devtools::load_all(quiet = TRUE))
+# The published configuration for every switch the caller left unset: this
+# script reads switches only from the environment, so without this a plain run
+# used its own inline defaults, not what ships (v57's x_notional_adj, 2026-10-02).
+source("scripts/published_flags.R"); apply_published_flags()
 suppressMessages(library(data.table))
 suppressMessages(library(xgboost))
 
