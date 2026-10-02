@@ -492,6 +492,15 @@ xgb_primary_predict_live <- function(shares, mat22, a22, state_mean, returns,
     if (all(is.na(rows$senate_pct))) cat("XS1!! live Senate features ALL NA -- the model expects them; check output/senate-vic2026.csv shipped
 ")
   }
+  # Council history (AUSPOL_XGB_COUNCIL=1): the same R/council_features.R.
+  if (any(grepl("^council_", feat_cols))) {
+    .lp <- paste0(region, if (identical(region, "vic")) "2026" else "")
+    .cf <- council_features(data.table::data.table(pair = .lp, seat = rows$seat, party = rows$party))
+    for (.cc in c("council_mayor", "council_elected", "council_lost", "council_pct")) rows[, (.cc) := .cf[[.cc]]]
+    if (!any(.cf$council_elected > 0 | .cf$council_mayor > 0))
+      cat("XC1!! live council features: no mayor or councillor found for", .lp, "-- check output/council-history.csv shipped
+")
+  }
   miss <- setdiff(feat_cols, names(rows))
   if (length(miss)) stop("xgb_primary_predict_live(): model expects columns not built here: ",
                           paste(miss, collapse = ", "))

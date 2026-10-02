@@ -100,11 +100,19 @@ def main():
             n += 1
         have.append(st)
         print(f'CH0  {st}: {n} council candidate rows')
-    S = [r for r in csv.DictReader(open('output/candidacies.csv', encoding='utf-8')) if r['region'] in have]
+    # Federal candidates too (matched against councils in their own state), or
+    # council history is a state-versus-federal label. Tas, ACT and NT councils
+    # are not collected, so their federal candidates get none (reported).
+    S = [r for r in csv.DictReader(open('output/candidacies.csv', encoding='utf-8'))
+         if r['region'] in have or (r['region'] == 'fed' and (r['state'] or '').lower() in have)]
+    nofed = sum(1 for r in csv.DictReader(open('output/candidacies.csv', encoding='utf-8'))
+                if r['region'] == 'fed' and (r['state'] or '').lower() not in have)
+    print(f'CH0  federal candidacies outside the collected states (Tas/ACT/NT): {nofed}, no council history')
     out, amb = [], 0
     unmatched_councils = collections.Counter()
     for r in S:
-        y, st = int(r['year']), r['region']
+        y = int(r['year'])
+        st = r['region'] if r['region'] != 'fed' else (r['state'] or '').lower()
         sur, giv = split_state(r['name'])
         hits = []
         # WA's state corpus records surnames only: match on surname, and only when
@@ -137,7 +145,7 @@ def main():
         w.writeheader()
         w.writerows(out)
     by = collections.Counter((o['election'][:-4], o['council_any'], o['council_elected']) for o in out)
-    for st in have:
+    for st in have + ['fed']:
         n = sum(v for k, v in by.items() if k[0] == st)
         a = sum(v for k, v in by.items() if k[0] == st and k[1])
         e = sum(v for k, v in by.items() if k[0] == st and k[2])

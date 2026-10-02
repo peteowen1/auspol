@@ -55,6 +55,30 @@ for (v in names(VINT)) {
   }
   cat(sprintf("LO1  SED %s done\n", v))
 }
+# FEDERAL divisions too: council history must exist for federal candidates or
+# it becomes a state-versus-federal label (CLAUDE.md, constant-in-subgroup).
+# Vintages on disk: ABS CED 2016 and 2021, the AEC's March 2025 national file.
+CVINT <- c("2016" = file.path(BD, "CED_2016_AUST.shp"), "2021" = file.path(BD, "CED_2021_AUST_GDA2020.shp"),
+           "2025" = file.path(BD, "AEC_2025", "AUS_ELB_region.shp"))
+lga_nat <- lga_all
+for (v in names(CVINT)) {
+  if (!file.exists(CVINT[[v]])) { cat(sprintf("LO0! CED %s missing
+", v)); next }
+  s <- st_read(CVINT[[v]], quiet = TRUE)
+  nc <- grep("^(CED_NAME|Elect_div|ELECT_DIV|Sortname)", names(s), value = TRUE)[1]
+  if (is.na(nc)) stop("no division-name column in ", CVINT[[v]], ": ", paste(names(s), collapse = ","))
+  s <- s[!grepl("Migratory|No usual address", s[[nc]]) & !st_is_empty(s), ]
+  s$district <- trimws(sub("[ ]*[(].*$", "", s[[nc]]))
+  s <- st_transform(s[, c("district", "geometry")], 3577); s$d_area <- as.numeric(st_area(s))
+  i <- suppressWarnings(st_intersection(st_buffer(s, 0), st_buffer(lga_nat, 0)))
+  i$a <- as.numeric(st_area(i))
+  d <- as.data.table(st_drop_geometry(i))[, .(region = "fed", sed_vintage = paste0("CED", v), district, lga = LGA_NAME21,
+                                              share_of_district = a / d_area, share_of_lga = a / l_area)]
+  ov[[paste("ced", v)]] <- d[share_of_district > 0.001]
+  cat(sprintf("LO1  CED %s done (%d divisions)
+", v, uniqueN(d$district)))
+}
+STATES <- c(STATES, fed = "Australia")
 OV <- rbindlist(ov)
 
 # pick, per state election, the vintage whose district names best cover its seats

@@ -526,6 +526,17 @@ SURGE <- rbindlist(surge_rows, fill = TRUE)
 ALL <- merge(ALL, SURGE, by = c("pair","seat"), all.x = TRUE)
 ALL[, surge_h := ifelse(is.na(surge_h), 0, surge_h)]
 ALL[, is_recipient := as.integer(!is.na(recipient_party) & recipient_party == party)]
+# COUNCIL HISTORY (AUSPOL_XGB_COUNCIL=1, plans/prereg-council-2026-10-02.md): was
+# a candidate of this class elected mayor, a councillor, or did they stand and
+# lose, at a council election before this one, in a council overlapping the seat
+# (R/council_features.R). Every state and federal row; 0 = no record found.
+if (identical(Sys.getenv("AUSPOL_XGB_COUNCIL", "0"), "1")) {
+  .cf <- council_features(ALL[, .(pair, seat, party)])
+  for (.cc in c("council_mayor", "council_elected", "council_lost", "council_pct")) ALL[, (.cc) := .cf[[.cc]]]
+  cat(sprintf("XC1  council features ON: %d rows; mayor %d, councillor %d, stood-and-lost %d
+",
+              nrow(ALL), sum(ALL$council_mayor), sum(ALL$council_elected), sum(ALL$council_lost)))
+}
 # SENATE GEOGRAPHY (AUSPOL_XGB_SENATE=1, plans/prereg-xgb-senate-2026-10-01.md):
 # each party class's federal Senate share in the seat and its deviation from
 # the class's mean over the pair, time-forward (R/senate_features.R). NA where
@@ -687,6 +698,7 @@ feat_cols <- c("base_pred", "seat_prev_pcv", "seat_outperf", "level_prev",
                "historic_elected_i", "ballot_pos_min",
                "jump", "governed", "permit", "surge_h", "is_recipient",
                if (Sys.getenv("AUSPOL_XGB_SENATE", "0") %in% c("1", "minor")) c("senate_pct", "senate_dev"),
+               if (identical(Sys.getenv("AUSPOL_XGB_COUNCIL", "0"), "1")) c("council_mayor", "council_elected", "council_lost", "council_pct"),
                # "dev": the geography only, no raw Senate level (Victorian Labor runs far
                # ahead of its Senate vote at state elections; the level misled arm "1")
                if (identical(Sys.getenv("AUSPOL_XGB_SENATE", "0"), "dev")) "senate_dev",
