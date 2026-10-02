@@ -5,7 +5,42 @@ it stood before this rewrite: `backlog/journal-2026-09-19-hub-snapshot.md`).
 Decisions: `docs/DECISIONS.md`. Every seat verdict: `docs/SEAT-REGISTRY.md`.
 Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30.
 
-## 2026-09-30 23:45 (read this first)
+## 2026-10-03 01:40 (read this first)
+
+**v61 live.** AEF-7 ledger 0.2677 vs AEF 0.2825 (681 seats); 22-election log
+loss 0.3413; all-row primary RMSE 4.044. v59 Climate 200/Voices endorsement,
+v60 state signal pooled from seat polls (federal only; Pete overrode its
+clause), v61 non-standing parties zeroed with their share sent by preference
+flows (backtests only so far). Refused tonight: state crosstabs (raw and
+relative), fuller council history. All in DECISIONS.md.
+
+Queue, in order:
+1. **Wire `zero_unnominated()` into `fit_seats_full.R` BEFORE Victorian
+   nominations close (November 2026; election 28 November 2026).** v61 is
+   backtest-only; the live forecast has no nominations to zero yet, but on the
+   day it must. Needs the live flow matrix. ~30 min.
+2. **Re-entry prior (`AUSPOL_REENTRY`, prereg 2026-09-07) was never decided and
+   is OFF.** Richmond 2022 Liberals got 0.0 (actual 18.8) because of it. Test
+   it: rebuild from stage 1 (~40 min), and check base_pred AND the xgb layer.
+3. **Overcalled independents**: Pascoe Vale 2022 (ours 33.6, AEF 12.9, actual
+   17.8), Geelong, Sandringham, Kavel 2026 (64.1 vs 45.5), Shepparton. Walk
+   Pascoe Vale end to end first (CLAUDE.md: one example row before any fit).
+   This group matters for Kew/Hawthorn 2026.
+4. **Federal harness is the rebuild's critical path** (431s alone; it runs its
+   7 pairs in sequence and logs no per-pair time). Instrument, then split by
+   pair. `AUSPOL_REBUILD_ONLY=fed` saves nothing until then.
+
+Not done on purpose: Tasmania 2025 has no statewide poll, so no state-poll
+fix can reach Braddon beyond v60's pooled seat-poll shift (25.0 -> 26.9 vs
+39.5 actual).
+
+What I got wrong tonight: I said fed2025 had no state-deviation data (it had
+Newspoll quarterly for five states; Pete pushed back); I guessed the seat-poll
+blend never reached Braddon (it did, weight 0.32); I ran three federal-only
+arms as full rebuilds (the federal-only mode existed, but would have saved
+only ~1.7 min each).
+
+## 2026-09-30 23:45
 
 **v56 live** (first daily run 22:44: ALP 36.3, Coalition 36.2 expected seats).
 Map (`web/vic2026-districts.topojson`) and `vic-page-data.json` go to R2 with
