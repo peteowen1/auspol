@@ -202,7 +202,9 @@ if at_least 1; then
   python scripts/build_state_notionals.py > "$LOG/s1_notionals.log" 2>&1 || { echo "!! build_state_notionals.py failed its checks -- see $LOG/s1_notionals.log"; exit 1; }
 fi
 # BOOTH FEATURES (AUSPOL_XGB_BOOTH): read by stage 3 and the live forecast.
-if at_least 3; then
+# Only when the switch is on: a refused feature must not be able to fail a
+# production rebuild on a bad input (review, 2026-10-02).
+if at_least 3 && [ "${AUSPOL_XGB_BOOTH:-0}" = "1" ]; then
   python scripts/build_booth_features.py > "$LOG/s3_booth.log" 2>&1 || { echo "!! build_booth_features.py failed -- see $LOG/s3_booth.log"; exit 1; }
 fi
 # COUNCIL HISTORY (AUSPOL_XGB_COUNCIL): read by stage 3 and the live forecast.
@@ -216,7 +218,7 @@ if at_least 3; then stage "3-features";            Rscript scripts/build_level_p
 if at_least 4; then stage "4-asat-models";         Rscript scripts/fit_xgb_primary_asat.R  > "$LOG/s4_asat.log" 2>&1; done_stage "4-asat-models"; fi
 if at_least 4; then stage "4b-asat-flow-models";   Rscript scripts/fit_xgb_flows_asat.R    > "$LOG/s4b_flows.log" 2>&1; done_stage "4b-asat-flow-models"; fi
 if at_least 5; then stage "5-production-model";    Rscript scripts/fit_xgb_primary_v6_final.R > "$LOG/s5_final.log" 2>&1; done_stage "5-production-model"; fi
-if at_least 6; then export AUSPOL_STAGE6_START=$(date +%s); stage "6-harnesses-shipped";   run6 1 s6; done_stage "6-harnesses-shipped"; fi
+if at_least 6; then export AUSPOL_STAGE6_START=$(date +%s); rm -rf output/upset-floor-raw; stage "6-harnesses-shipped";   run6 1 s6; done_stage "6-harnesses-shipped"; fi
 # 6b UPSET INSURANCE (AUSPOL_UPSET_FLOOR=1, R/upset_floor.R): mixes THIS run's
 # stage-6 win probabilities with a time-forward-fitted floor for minor
 # contenders, in place (raw copies kept), before anything scores them.

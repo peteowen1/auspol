@@ -25,6 +25,8 @@ upset_floor_fit(prob_actual, w_actual, has_floor, grid = UPSET_EPS_GRID)
 \item{w_actual}{The actual winner's floor weight in that seat (0 if none).}
 
 \item{has_floor}{Whether the seat had any minor contender (else unmixed).}
+
+\item{grid}{Candidate values of \code{eps} to choose from.}
 }
 \value{
 \code{probs} with \code{prob} mixed (a contender absent from \code{probs} is added).

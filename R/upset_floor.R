@@ -57,6 +57,7 @@ upset_floor_mix <- function(probs, shares, eps) {
 #' @param prob_actual Probability the simulation gave each seat's actual winner.
 #' @param w_actual The actual winner's floor weight in that seat (0 if none).
 #' @param has_floor Whether the seat had any minor contender (else unmixed).
+#' @param grid Candidate values of `eps` to choose from.
 #' @return The grid value minimising summed log loss (floored at 1e-6).
 #' @export
 upset_floor_fit <- function(prob_actual, w_actual, has_floor, grid = UPSET_EPS_GRID) {

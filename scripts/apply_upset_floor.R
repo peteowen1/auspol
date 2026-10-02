@@ -21,6 +21,9 @@ source("scripts/published_flags.R"); apply_published_flags()
 
 OUT <- "output"; RAW <- file.path(OUT, "upset-floor-raw"); dir.create(RAW, showWarnings = FALSE)
 since <- as.numeric(Sys.getenv("AUSPOL_STAGE6_START", "0"))
+# Without a stage-6 start time every historic allprobs file in output/ would
+# match, and all of them would be rewritten and counted in the fit (review).
+if (!is.finite(since) || since <= 0) stop("UF0! AUSPOL_STAGE6_START is not set -- run via rebuild_forecasts.sh, or set it to this run's stage-6 start (epoch seconds)")
 ap <- list.files(OUT, pattern = "^backtest-.*-allprobs-.*[.]csv$", full.names = TRUE)
 ap <- ap[!grepl("-n2000-", ap) & as.numeric(file.mtime(ap)) >= since]
 if (!length(ap)) stop("UF0! no stage-6 allprobs files at or after AUSPOL_STAGE6_START -- nothing to mix")
