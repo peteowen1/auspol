@@ -21,6 +21,24 @@ fundamentals_tf <- function(region, year) {
   if (!is.null(.fund_tf_cache[[ck]])) return(.fund_tf_cache[[ck]])
   if (is.null(.fund_tf_cache$data)) .fund_tf_cache$data <- build_fundamentals_data()
   d <- .fund_tf_cache$data
+  # DISK CACHE across processes. Each harness is its own R process, so the
+  # in-memory cache above starts cold in every one, and each refits this ridge
+  # (leave-one-out) model for every earlier election: 32% of a harness pair's
+  # time (profiled 2026-10-02, sa2026). Keyed on the data AND the fitting code,
+  # so a change to either starts a fresh cache directory. Stored at %.17g (exact
+  # round trip); written to a temp file then renamed, so parallel harnesses
+  # cannot read a half-written value.
+  cdir <- .fund_tf_disk_dir(d)
+  cf <- if (!is.na(cdir)) file.path(cdir, paste0(gsub("[^A-Za-z0-9]", "_", ck), ".txt")) else NA_character_
+  if (!is.na(cf) && file.exists(cf)) {
+    v <- suppressWarnings(as.numeric(readLines(cf, warn = FALSE)[1]))
+    if (length(v) == 1L) { .fund_tf_cache[[ck]] <- v; return(v) }
+  }
+  on.exit(if (!is.na(cf) && !is.null(.fund_tf_cache[[ck]])) {
+    tmp <- paste0(cf, ".", Sys.getpid(), ".tmp")
+    writeLines(sprintf("%.17g", .fund_tf_cache[[ck]]), tmp)
+    if (!file.rename(tmp, cf)) unlink(tmp)
+  }, add = TRUE)
   lab <- paste0(d$region, d$year)
   target_rows <- which(lab == key & d$party == "@TPP")
   if (length(target_rows) != 1L) {
@@ -36,6 +54,20 @@ fundamentals_tf <- function(region, year) {
   }
   .fund_tf_cache[[ck]] <- out
   out
+}
+
+# The cache directory for one version of the inputs and the fitting code
+# (AUSPOL_FUND_CACHE = "0" turns the disk cache off). Computed once per process.
+.fund_tf_disk_dir <- function(d) {
+  if (identical(Sys.getenv("AUSPOL_FUND_CACHE", "1"), "0")) return(NA_character_)
+  if (!is.null(.fund_tf_cache$disk_dir)) return(.fund_tf_cache$disk_dir)
+  h <- digest::digest(list(as.data.frame(d), deparse(fit_fundamentals), deparse(predict_fundamentals),
+                           deparse(ridge_loo), FUNDAMENTALS_FEATURES, deparse(elections_before),
+                           tryCatch(election_dates(), error = function(e) NULL)))
+  dir <- out_path(file.path("cache", "fundamentals-tf", substr(h, 1, 16)))
+  ok <- tryCatch({ dir.create(dir, recursive = TRUE, showWarnings = FALSE); dir.exists(dir) }, error = function(e) FALSE)
+  .fund_tf_cache$disk_dir <- if (isTRUE(ok)) dir else NA_character_
+  .fund_tf_cache$disk_dir
 }
 
 #' Time-forward fundamentals table in the shape harnesses expect
