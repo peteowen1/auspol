@@ -112,7 +112,8 @@ if (file.exists(NQ_F)) {
 # the mean over every pollster. Anchor years (2007-2022) keep the anchor's own
 # aggregate. prev_tpp as for Newspoll: the state's previous federal result.
 XP_F <- "external/reference/polls/state-federal/state-federal-polls.csv"
-if (identical(Sys.getenv("AUSPOL_STATE_POLL_EXTRA", "0"), "1")) {
+xp_years <- integer(0)
+if (Sys.getenv("AUSPOL_STATE_POLL_EXTRA", "0") %in% c("1", "2")) {
   if (!file.exists(XP_F)) stop("SD2d! AUSPOL_STATE_POLL_EXTRA=1 but ", XP_F, " is missing")
   XP <- fread(XP_F, showProgress = FALSE)
   XP <- XP[XP$scope == "state" & is.finite(suppressWarnings(as.numeric(XP$alp_tpp)))]
@@ -135,6 +136,7 @@ if (identical(Sys.getenv("AUSPOL_STATE_POLL_EXTRA", "0"), "1")) {
 ", el, st_j)); next }
       if (length(have)) RP <- RP[-have]
       RP <- rbind(RP, data.table(year = y, state = st_j, prev_tpp = pv, agg = agg_x$agg_x[j], n_polls = agg_x$n_x[j]), fill = TRUE)
+      xp_years <- union(xp_years, y)
       cat(sprintf("SD2d %s %s: %s from %d crosstab readings, mean ALP two-party %.2f
 ", el, st_j,
                   if (length(have)) "REPLACED" else "ADDED", agg_x$n_x[j], agg_x$agg_x[j]))
@@ -235,6 +237,27 @@ for (j in c("state_poll_dev", "state_elec_dev"))
 # a missing value xgboost would split on as if it meant something.
 set(PRED, which(!is.finite(PRED$state_elec_gap)), "state_elec_gap", 999)
 set(PRED, which(!is.finite(PRED$state_poll_n)), "state_poll_n", 0L)
+
+# AMENDMENT A2 (AUSPOL_STATE_POLL_EXTRA=2), added after arm 1 FAILED
+# (plans/prereg-state-polls-extra-2026-10-02.md): a 90-day all-pollster mean
+# lags a late national move, so in 2025 every state read low for Labor and the
+# correction pushed Labor down everywhere. Crosstabs identify a state RELATIVE
+# to the rest; in EVERY federal election (anchor years too), subtract the
+# seat-weighted mean of the state deviations, leaving the national level to
+# the national model.
+if (identical(Sys.getenv("AUSPOL_STATE_POLL_EXTRA", "0"), "2")) {
+  nseat <- unique(C[grepl("^fed", C$election), .(election, seat, state)])[, .(n_seats = .N), by = .(election, state)]
+  nseat[, `:=`(year = as.integer(sub("^fed", "", election)), state = tolower(state))]
+  for (yy in sort(unique(PRED$year))) {   # EVERY year, so one coefficient sees one definition
+    ii <- which(PRED$year == yy & PRED$state_poll_n > 0)
+    if (length(ii) < 2) next
+    w <- nseat$n_seats[match(paste(yy, PRED$state[ii]), paste(nseat$year, nseat$state))]
+    w[!is.finite(w)] <- 0
+    mu <- sum(w * PRED$state_poll_dev[ii]) / sum(w)
+    set(PRED, ii, "state_poll_dev", PRED$state_poll_dev[ii] - mu)
+    cat(sprintf("SD2e fed%d: state poll deviations made relative (seat-weighted mean %+.2f removed)\n", yy, mu))
+  }
+}
 
 cat("\nSD4  the two predictions against what actually happened, worst deviations first:\n")
 print(head(PRED[is.finite(actual_dev)][order(-abs(actual_dev)), .(year, state,
