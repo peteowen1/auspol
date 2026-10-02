@@ -530,7 +530,7 @@ PUBLISHED_FLAGS <- c(
                                              # nothing else. fed2019 REGRESSES (+0.0110) because state polls failed the
                                              # same way national polls did that year -- an inherent property.
   AUSPOL_STATE_POLL_EXTRA    = "0",          # TESTING 2026-10-02: every pollster's state crosstabs into the state-deviation features (scripts/build_state_deviation_features.R). plans/prereg-state-polls-extra-2026-10-02.md
-  AUSPOL_NOM_ZERO            = "0",          # TESTING 2026-10-03: zero every class with no candidate standing, after the xgb override, all six harnesses (R/nomination_zero.R). plans/prereg-nomination-zero-2026-10-03.md
+  AUSPOL_NOM_ZERO            = "2",          # SHIPPED v61 2026-10-03 (mode 2, freed share by flows): zero every class with no candidate standing, after the xgb override, all six harnesses (R/nomination_zero.R). plans/prereg-nomination-zero-2026-10-03.md
   AUSPOL_COUNCIL_EXTRA       = "0",          # TESTING 2026-10-02: NSW councils that ran their own elections + mayors chosen by councillors (scripts/build_council_history.py). plans/prereg-council-extra-2026-10-02.md
   AUSPOL_STATE_POLL_POOL     = "1",          # SHIPPED v60 2026-10-02 (Pete overrode the prereg clause): state signal pooled from seat polls, federal harness only, before the seat-poll blend (R/state_poll_pool.R). plans/prereg-state-poll-pool-2026-10-02.md
   AUSPOL_STATE_DEV_SHUFFLE   = "0",          # control: permutes which state each seat sits in, within its election.

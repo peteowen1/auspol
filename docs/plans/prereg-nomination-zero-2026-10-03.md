@@ -50,3 +50,19 @@ pooled flows, else proportional. Same criteria 1-3 and unacceptable clause,
 against v60. Flagged: Liberal preferences in inner Melbourne have often
 favoured Labor over the Greens, so flows may NOT fix Richmond 2018; and Barwon
 (a floor seat) may still decide guard 3.
+
+## RESULT, mode 2, 2026-10-03 01:20: PASSES -> v61
+`output/snapshots/20261003-0115-ca788a4-from6` against v60.
+1. PRIMARY: final primary RMSE over 1,313 affected seats 3.984 -> 3.774. PASS.
+2. 22-election log loss 0.3434 -> 0.3413. PASS.
+3. Worst single election wa2017 +0.0025 (limit 0.011); best wa2001 -0.0305,
+   nsw2019 -0.0145. PASS.
+Unacceptable clause: 0 zeroed cells where the class stood.
+Victoria 0.2654 -> 0.2649; ledger 0.2686 -> 0.2677. Flow source per zeroed
+cell: conditional on the seat's field almost everywhere, pooled otherwise,
+never proportional. Seats: Barwon nsw2019 9.903 -> 9.210, Richmond vic2018
+0.642 -> 0.569, Narracan vic2022 0.026 -> 0.005, Churchlands wa2008 0.104 ->
+0.006, Alfred Cove wa2001 5.860 -> 4.160.
+LIVE: fit_seats_full.R does not call it; Victoria 2026 nominations close in
+November, so the live forecast has nothing to zero until then. Wiring it into
+the live path is a follow-up before nominations close.

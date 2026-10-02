@@ -1,3 +1,8 @@
+# auspol 0.4.69
+
+- v61: every party with no candidate standing in a seat is zeroed after the xgb override (it had written phantom shares back, e.g. Labor 33.4 in Narracan 2022, which Labor did not contest), and its share goes where that party's voters go, by the preference-flow matrix (`AUSPOL_NOM_ZERO = "2"`, all six harnesses). 22-election log loss 0.3434 -> 0.3413; primary RMSE over the 1,313 affected seats 3.984 -> 3.774.
+- Tested and not shipped: proportional redistribution of the freed share (log loss worse); fuller council history (self-run NSW councils, council-chosen mayors).
+
 # auspol 0.4.68
 
 - v60: a state signal pooled from seat polls shifts every seat in a federal state (`AUSPOL_STATE_POLL_POOL`, on; federal only, Victoria unchanged). fed2025 seat log loss 0.3570 -> 0.3453, all of it Tasmania; shipped on Pete's override of the pre-registered clause.

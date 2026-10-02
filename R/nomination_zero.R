@@ -25,7 +25,7 @@
 #' @return `shares` with unnominated cells zeroed and rows renormalised to 100.
 #' @export
 zero_unnominated <- function(shares, target, label, code = "NZ1", flows = NULL) {
-  mode <- Sys.getenv("AUSPOL_NOM_ZERO", "0")
+  mode <- Sys.getenv("AUSPOL_NOM_ZERO", "2")
   if (!mode %in% c("1", "2")) return(shares)
   if (mode == "2" && is.null(flows)) cat(sprintf("%s! %s: AUSPOL_NOM_ZERO=2 but no flow matrix; freed share split proportionally\n", code, label))
   tg <- data.table::as.data.table(target)
