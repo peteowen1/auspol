@@ -39,3 +39,12 @@ E42 `20261002-1251-1221385-from4`, E7 `20261002-1303-1221385-from4`.
    22-election 0.0012 -> 0.0020 and ledger 0.0006 -> 0.0008 did not shrink:
    both runs also changed the SIMULATION seed, which the ensemble cannot
    average away. Stage 4 cost: 216 -> 226 s.
+
+## Note: published switches were not reaching the fit scripts (found 2026-10-02 14:00)
+
+The E42/E7 runs (and shipped v57) trained the xgb layer with x_notional_adj = 0
+for state pairs. Fixed in 0a481f6 (rebuild exports every unset published
+switch). Baseline B = ensemble + the fix: ledger 0.2682 -> 0.2648, primary RMSE
+4.1534 -> 4.1083, Victoria RMSE 4.4615 -> 4.2938, 22-election log loss 0.3408 ->
+0.3449 -- the last driven by two surprise winners reaching the 1e-6 floor
+(Barwon 2019 and Denison 2010, log loss 8.8 -> 13.8 each); 13 elections better, 9 worse.

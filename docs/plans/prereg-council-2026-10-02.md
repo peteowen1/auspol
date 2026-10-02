@@ -76,3 +76,18 @@ Criteria as arm A, with the Victoria guard written against the noise floor:
    seed range (E42 vs E7);
 4. primary RMSE all rows not worse by more than 0.01.
 The original arm A clause stays as written; this is a new test, not a re-read.
+
+## RESULT, arm A2 (fixed matcher, NA where no data), 2026-10-02 14:45: PASSES -- ships in v58
+
+The 13:45 A2 run is VOID (pre-review matcher: 28% false WA matches; zeros for
+no-data seats). Rerun on the fixed features against a baseline B rebuilt with
+the same code and the published switches exported (`20261002-1419-0a481f6-from3`).
+A2 `20261002-1435-0a481f6-from3`:
+1. targeted rows (n 1,514): RMSE 4.885 -> 4.813, per-seat summed squared error
+   -1.04 (SE 0.30) -- PASS. Mayors' mean signed error +4.91 -> +3.61,
+   councillors' +1.43 -> +1.09, stood-and-lost +0.17 -> +0.10.
+2. 22-election log loss 0.3449 -> 0.3444 -- PASS.
+3. Victoria 0.2717 -> 0.2696 (better) -- PASS.
+4. primary RMSE 4.1083 -> 4.0946 (better) -- PASS.
+Unacceptable clause: other classes in targeted seats 3.900 -> 3.892, does not fire.
+Ledger 0.2648 -> 0.2686 (inside its seed range of ~0.004).
