@@ -31,7 +31,8 @@ fundamentals_tf <- function(region, year) {
   cdir <- .fund_tf_disk_dir(d)
   cf <- if (!is.na(cdir)) file.path(cdir, paste0(gsub("[^A-Za-z0-9]", "_", ck), ".txt")) else NA_character_
   if (!is.na(cf) && file.exists(cf)) {
-    v <- suppressWarnings(as.numeric(readLines(cf, warn = FALSE)[1]))
+    # a file caught mid-rename by another harness reads as an error: recompute
+    v <- tryCatch(suppressWarnings(as.numeric(readLines(cf, warn = FALSE)[1])), error = function(e) numeric(0))
     if (length(v) == 1L) { .fund_tf_cache[[ck]] <- v; return(v) }
   }
   on.exit(if (!is.na(cf) && !is.null(.fund_tf_cache[[ck]])) {

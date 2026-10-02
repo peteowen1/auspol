@@ -17,3 +17,16 @@ test_that("council_features maps history to classes, mayor outranks councillor, 
   expect_equal(x$council_pct,     c(28.1, 10.2, 3, 0, 0))
   expect_true(all(x[4:5, c(council_mayor, council_elected, council_lost, council_pct)] == 0))  # no record -> 0, other year -> 0
 })
+
+test_that("council_features gives NA, not 0, where the seat has no council data at all", {
+  hist <- data.table::data.table(
+    election = c("fed2004", "vic2018"), seat = c("Lyne", "Mildura"), name = c("X, A", "CUPPER, Ali"),
+    party = c("IND", "IND"), council_any = c(FALSE, TRUE), council_elected = c(FALSE, TRUE),
+    council_mayor = c(FALSE, FALSE), council_pct = c(NA, 10.2), council_coverage = c(FALSE, TRUE))
+  keys <- data.table::data.table(pair = c("fed2004", "vic2018", "vic2018"), seat = c("Lyne", "Mildura", "Mildura"),
+                                 party = c("IND", "IND", "GRN"))
+  x <- council_features(keys, hist = hist)
+  expect_true(all(is.na(x[1, c(council_mayor, council_elected, council_lost, council_pct)])))  # no data -> NA
+  expect_equal(x$council_elected[2], 1)                                                         # covered, councillor
+  expect_equal(x$council_elected[3], 0)                                                         # covered, no record -> 0
+})

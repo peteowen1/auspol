@@ -46,6 +46,14 @@ export AUSPOL_POOL_MIN_SIMS="${AUSPOL_POOL_MIN_SIMS:-$AUSPOL_N_SIMS}"
 # pooling stages must not fall back to a stale file. Remove it from this default
 # when WA 2017-2021 polling reaches the anchor.
 export AUSPOL_SKIP_PAIRS="${AUSPOL_SKIP_PAIRS:-wa2021}"
+# EVERY STAGE SEES THE PUBLISHED CONFIGURATION. Unset switches take their
+# scripts/published_flags.R value here, once, so the fit scripts (which read only
+# the environment) cannot fall back to a code default that differs from what
+# ships (v57's x_notional_adj, 2026-10-02). A switch the caller set wins.
+PUBFLAGS=$(Rscript scripts/export_published_flags.R) || { echo "!! export_published_flags.R failed"; exit 1; }
+eval "$PUBFLAGS"
+echo "   published switches exported for unset names: $(printf '%s
+' "$PUBFLAGS" | grep -c '^export')"
 # AUSPOL_REBUILD_FROM=<n> resumes at stage n (1-9), e.g. after a later stage failed
 # with the harness outputs already fresh on disk. Default 1 = everything.
 FROM="${AUSPOL_REBUILD_FROM:-1}"

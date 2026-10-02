@@ -170,7 +170,12 @@ jobs:
           done
           # Seed-ensemble members (AUSPOL_XGB_ENSEMBLE): the manifest is optional
           # (a release without it is a single model); every member it lists must arrive.
-          if gh release download shipped-models -p xgb-primary-v6-final-ensemble.json -D output --clobber; then
+          # A release that LISTS the manifest must deliver it: a failed download
+          # would otherwise run one model while the backtests used K (review).
+          if gh release view shipped-models --json assets --jq '.assets[].name' | grep -qx 'xgb-primary-v6-final-ensemble.json'; then
+            gh release download shipped-models -p xgb-primary-v6-final-ensemble.json -D output --clobber || { echo "::error::ensemble manifest listed on the release but failed to download"; exit 1; }
+          fi
+          if [ -s output/xgb-primary-v6-final-ensemble.json ]; then
             for m in $(python3 -c "import json;print(' '.join(json.load(open('output/xgb-primary-v6-final-ensemble.json'))))"); do
               [ "$m" = "xgb-primary-v6-final.model" ] && continue
               gh release download shipped-models -p "$m" -D output --clobber

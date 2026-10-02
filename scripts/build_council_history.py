@@ -67,6 +67,22 @@ def cnorm(s):
     return SUCCESSOR.get(k, k)
 
 
+# Common short forms, so "Matt" on one roll and "Matthew" on the other still match.
+NICK = {'matt': 'matthew', 'mat': 'matthew', 'kath': 'katherine', 'kate': 'katherine', 'cathy': 'catherine',
+        'bob': 'robert', 'rob': 'robert', 'robbie': 'robert', 'bill': 'william', 'will': 'william',
+        'liz': 'elizabeth', 'beth': 'elizabeth', 'jim': 'james', 'jimmy': 'james', 'tony': 'anthony',
+        'mick': 'michael', 'mike': 'michael', 'steve': 'stephen', 'dave': 'david', 'pete': 'peter',
+        'chris': 'christopher', 'nick': 'nicholas', 'tom': 'thomas', 'ben': 'benjamin', 'dan': 'daniel',
+        'sam': 'samuel', 'sue': 'susan', 'jen': 'jennifer', 'jenny': 'jennifer', 'andy': 'andrew',
+        'greg': 'gregory', 'ken': 'kenneth', 'ron': 'ronald', 'don': 'donald', 'jo': 'joanne',
+        'pat': 'patrick', 'tim': 'timothy', 'phil': 'philip', 'col': 'colin', 'les': 'leslie', 'di': 'diane'}
+
+
+def gkey(g):
+    g = nk(g)
+    return NICK.get(g, g)
+
+
 def split_state(n):
     if ',' in n:
         a, b = n.split(',', 1)
@@ -94,7 +110,7 @@ def main():
         for r in csv.DictReader(open(f, encoding='utf-8')):
             r['state'] = st
             r['elected'] = 'True' if str(r['elected']).strip().lower() in ('true', '1', 'yes', 'y', 'elected') else 'False'
-            gv = nk((r['given'] or '').split()[0] if r['given'] else '')
+            gv = gkey((r['given'] or '').split()[0] if r['given'] else '')
             CR[(st, nk(r['surname']), gv)].append(r)
             CR[(st, nk(r['surname']), '*')].append(r)      # surname-only index (WA state names carry no given name)
             n += 1
@@ -104,23 +120,41 @@ def main():
     # council history is a state-versus-federal label. Tas, ACT and NT councils
     # are not collected, so their federal candidates get none (reported).
     S = [r for r in csv.DictReader(open('output/candidacies.csv', encoding='utf-8'))
-         if r['region'] in have or (r['region'] == 'fed' and (r['state'] or '').lower() in have)]
+         if r['region'] in have or r['region'] == 'fed']   # Tas/ACT/NT federal rows kept, coverage False
     nofed = sum(1 for r in csv.DictReader(open('output/candidacies.csv', encoding='utf-8'))
                 if r['region'] == 'fed' and (r['state'] or '').lower() not in have)
     print(f'CH0  federal candidacies outside the collected states (Tas/ACT/NT): {nofed}, no council history')
     out, amb = [], 0
+    # COVERAGE: which council election years exist per state. A candidacy with no
+    # council election in its state inside the window has NO DATA, which is not
+    # the same as "no council record found" -- council_features() makes it NA
+    # rather than 0, or the zeros label old elections and Tas/ACT/NT (review).
+    cyears = collections.defaultdict(set)
+    for (st_, _s, _g), rows_ in CR.items():
+        for c in rows_:
+            cyears[st_].add(int(c['year']))
     unmatched_councils = collections.Counter()
     for r in S:
         y = int(r['year'])
         st = r['region'] if r['region'] != 'fed' else (r['state'] or '').lower()
         sur, giv = split_state(r['name'])
+        # The corpus carries `surname` and `given` columns for most rows (WA's
+        # `name` is a bare surname but `given` is populated for 2,841 of 2,842):
+        # prefer them. A surname-only match produced 28% false WA matches
+        # (Rebecca Brown -> councillor Gary Brown); review 2026-10-02.
+        if (r.get('surname') or '').strip():
+            sur = nk(r['surname'])
+        if (r.get('given') or '').strip():
+            giv = nk(r['given'].split()[0])
         hits = []
         # WA's state corpus records surnames only: match on surname, and only when
         # exactly one person of that surname stood in an overlapping council.
-        pool = CR.get((st, sur, giv), []) if giv else CR.get((st, sur, '*'), [])
+        pool = CR.get((st, sur, gkey(giv)), []) if giv else CR.get((st, sur, '*'), [])
         for c in pool:
             cy = int(c['year'])
-            if not (y - 10 <= cy < y):
+            # Queensland's council elections are in March, before any Queensland
+            # state (Oct) or federal (May-Sep) election of the same year.
+            if not (y - 10 <= cy < y or (st == 'qld' and cy == y)):
                 continue
             o = OV.get((r['election'], nk(r['seat'])), {}).get(cnorm(c['council']))
             if o is None and OV.get((r['election'], nk(r['seat']))) and not any(cnorm(c['council']) in OV[k] for k in OV if k[0] == r['election']):
@@ -132,7 +166,8 @@ def main():
         if len({cnorm(h['council']) for h in hits}) > 1 or (not giv and len({nk(h['given']) for h in hits}) > 1):
             amb += 1
             hits = []
-        rec = dict(election=r['election'], seat=r['seat'], name=r['name'], party=r['party'],
+        cov = any((y - 10 <= cy < y) or (st == 'qld' and cy == y) for cy in cyears.get(st, ()))
+        rec = dict(election=r['election'], seat=r['seat'], name=r['name'], party=r['party'], council_coverage=cov,
                    council_any=bool(hits), council_elected=any(h['elected'] == 'True' for h in hits),
                    council_mayor=any(h.get('contest') == 'mayor' and h['elected'] == 'True' for h in hits),
                    council_pct='', council_year='', council_name='', n_council_runs=len(hits))

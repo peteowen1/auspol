@@ -15,9 +15,11 @@
 #' those who stood and lost were close to zero. plans/prereg-council-2026-10-02.md.
 #'
 #' A class with no matched candidate gets 0 on every column -- "no council record
-#' found", which is the same statement for every state and level, so it is not a
-#' subgroup label. Tas/ACT/NT federal candidates and council years with no
-#' source (SA before 2018, Qld before 2012) are also 0: recorded as a limit.
+#' found". But a SEAT with no council data at all (`council_coverage` FALSE: no
+#' council election in its state within the window -- fed2004, sa2018, WA before
+#' 2008, and federal seats in Tas/ACT/NT) gets NA, not 0: a zero there would mean
+#' "old election" or "small territory" and a tree would use it as that label
+#' (review, 2026-10-02). xgboost treats NA as missing.
 #'
 #' @param keys data.table with `pair`, `seat`, `party`.
 #' @param hist The council-history table; read from `output/` when `NULL`.
@@ -54,6 +56,16 @@ council_features <- function(keys, hist = NULL) {
   out <- merge(out, h, by = c("pair", "k", "party"), all.x = TRUE, sort = FALSE)
   for (cc in c("council_mayor", "council_elected", "council_lost", "council_pct"))
     data.table::set(out, which(is.na(out[[cc]])), cc, 0)
+  # seats with no council data at all -> NA (see above). A table built before
+  # the coverage column existed keeps the old all-zero behaviour.
+  if ("council_coverage" %in% names(hist_tab)) {
+    cov <- hist_tab[, list(covered = any(tf(council_coverage))), by = list(pair = election, k = normalise_seat(seat))]
+    out <- merge(out, cov, by = c("pair", "k"), all.x = TRUE, sort = FALSE)
+    nc <- which(is.na(out$covered) | !out$covered)
+    for (cc in c("council_mayor", "council_elected", "council_lost", "council_pct"))
+      data.table::set(out, nc, cc, NA_real_)
+    out[, covered := NULL]
+  }
   data.table::setorder(out, `.ord`)
   out[, c("k", ".ord") := NULL]
   out[]
