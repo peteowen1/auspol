@@ -620,7 +620,7 @@ for (K in PAIRS) {
   shares <- xgb_primary_override(shares, el_to)
   # Every class with no candidate standing is zeroed AFTER the override, which
   # otherwise writes its prediction back (plans/prereg-nomination-zero-2026-10-03.md).
-  shares <- zero_unnominated(shares, fb, el_to)
+  shares <- zero_unnominated(shares, fb, el_to, flows = fm)
   # Seat-poll blend (AUSPOL_SEAT_POLL_BLEND), after the override and the port;
   # xgb layer only, so stage-1 base_pred never includes it.
   # plans/prereg-seat-poll-blend-2026-09-29.md

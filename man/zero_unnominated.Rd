@@ -4,7 +4,7 @@
 \alias{zero_unnominated}
 \title{Zero every class with no candidate standing in a seat}
 \usage{
-zero_unnominated(shares, target, label, code = "NZ1")
+zero_unnominated(shares, target, label, code = "NZ1", flows = NULL)
 }
 \arguments{
 \item{shares}{Seat-by-class matrix of primaries.}
@@ -15,6 +15,9 @@ being predicted; a class with \code{votes > 0} in a seat had a candidate.}
 \item{label}{Election label for the log line.}
 
 \item{code}{Log code.}
+
+\item{flows}{The harness's \code{\link[=build_flow_matrix]{build_flow_matrix()}} result; with
+\code{AUSPOL_NOM_ZERO=2} the freed share follows it (else proportional).}
 }
 \value{
 \code{shares} with unnominated cells zeroed and rows renormalised to 100.

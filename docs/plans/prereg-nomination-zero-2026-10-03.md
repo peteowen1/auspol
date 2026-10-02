@@ -40,3 +40,13 @@ Cause: Barwon nsw2019 (Butler, SFF, won from ~5%) 9.903 -> 13.816, onto the
 the Liberals' phantom 10.8 was spread proportionally, mostly to Labor (lost)
 rather than the Greens (won). Proportional redistribution of the freed share
 is the untested design choice. Not shipped.
+
+## AMENDMENT: mode 2, freed share by preference flows (registered before running)
+Pete's choice, 2026-10-03, after the result above. `AUSPOL_NOM_ZERO = "2"`:
+the same zeroing, but each freed share goes where that class's voters go --
+the harness's own flow matrix (time-forward, already built for the count):
+the survivor-conditional cell for the seat's actual field, else the class's
+pooled flows, else proportional. Same criteria 1-3 and unacceptable clause,
+against v60. Flagged: Liberal preferences in inner Melbourne have often
+favoured Labor over the Greens, so flows may NOT fix Richmond 2018; and Barwon
+(a floor seat) may still decide guard 3.

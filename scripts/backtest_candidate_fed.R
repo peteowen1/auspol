@@ -1517,7 +1517,7 @@ for (K in PAIRS) {
   # Every class with no candidate standing is zeroed AFTER the override and the
   # state correction, both of which can write a share back into an empty cell
   # (plans/prereg-nomination-zero-2026-10-03.md).
-  shares <- zero_unnominated(shares, fb, sprintf("fed%d", K$to))
+  shares <- zero_unnominated(shares, fb, sprintf("fed%d", K$to), flows = fm)
   keep <- intersect(rownames(shares), win$seat)
   shares <- shares[keep, , drop = FALSE]
   truth <- setNames(win$winner, win$seat)[keep]

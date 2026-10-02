@@ -28,3 +28,20 @@ test_that("zero_unnominated is a no-op when the switch is off", {
   sh <- matrix(c(40, 60), nrow = 1, dimnames = list("A", c("ALP", "LNP")))
   expect_identical(zero_unnominated(sh, data.table::data.table(seat = "A", party = "LNP", votes = 1), "t"), sh)
 })
+
+test_that("mode 2 sends the freed share where the flow matrix says, conditional first", {
+  withr::local_envvar(AUSPOL_NOM_ZERO = "2")
+  sh <- matrix(c(40, 40, 10, 10), nrow = 1, dimnames = list("Richmond", c("ALP", "GRN", "LNP", "OTH")))
+  # Kew carries an LNP candidate, so LNP is a class the result table uses
+  tg <- data.table::data.table(seat = c("Richmond", "Richmond", "Richmond", "Kew"),
+                               party = c("ALP", "GRN", "OTH", "LNP"), votes = 1)
+  fl <- list(conditional = list("LNP|ALP+GRN+OTH" = c(ALP = 20, GRN = 70, OTH = 10)),
+             pooled = list(LNP = c(ALP = 90, GRN = 10)))
+  out <- zero_unnominated(sh, tg, "test", flows = fl)
+  expect_equal(unname(out[1, "LNP"]), 0)
+  expect_equal(unname(out[1, c("ALP", "GRN", "OTH")]), c(42, 47, 11))
+  fl2 <- list(conditional = list(), pooled = list(LNP = c(ALP = 90, GRN = 10)))
+  out2 <- zero_unnominated(sh, tg, "test", flows = fl2)   # pooled fallback, OTH gets none
+  expect_equal(unname(out2[1, c("ALP", "GRN", "OTH")]), c(49, 41, 10))
+  expect_equal(sum(out2), 100)
+})
