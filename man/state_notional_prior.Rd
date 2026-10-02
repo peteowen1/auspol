@@ -8,7 +8,7 @@ state_notional_prior(
   region,
   from,
   to,
-  mode = Sys.getenv("AUSPOL_STATE_NOTIONAL", "0")
+  mode = Sys.getenv("AUSPOL_STATE_NOTIONAL", "1")
 )
 }
 \arguments{

@@ -68,6 +68,11 @@ if (.flag("AUSPOL_XGB_SENATE") %in% c("1", "minor", "dev")) {
   data.table::fwrite(.sdv, file.path(OUT, "senate-vic2026.csv"))
   .arm_tables <- c(.arm_tables, "senate-vic2026.csv")
 }
+# And the endorsement table (AUSPOL_XGB_ENDORSE=1): small, shipped whole.
+if (identical(.flag("AUSPOL_XGB_ENDORSE"), "1")) {
+  if (!file.exists(file.path(OUT, "endorsement-features.csv"))) stop("AUSPOL_XGB_ENDORSE=1 but output/endorsement-features.csv is missing")
+  .arm_tables <- c(.arm_tables, "endorsement-features.csv")
+}
 # And the upset-insurance eps table (AUSPOL_UPSET_FLOOR=1).
 if (identical(.flag("AUSPOL_UPSET_FLOOR"), "1")) {
   if (!file.exists(file.path(OUT, "upset-floor-eps.csv"))) stop("AUSPOL_UPSET_FLOOR=1 but output/upset-floor-eps.csv is missing")

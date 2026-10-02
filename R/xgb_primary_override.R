@@ -505,6 +505,13 @@ xgb_primary_predict_live <- function(shares, mat22, a22, state_mean, returns,
     if (all(is.na(rows$senate_pct))) cat("XS1!! live Senate features ALL NA -- the model expects them; check output/senate-vic2026.csv shipped
 ")
   }
+  # Endorsement (AUSPOL_XGB_ENDORSE=1): the same R/endorsement_features.R.
+  if (any(c("c200", "voices") %in% feat_cols)) {
+    .lp <- paste0(region, if (identical(region, "vic")) "2026" else "")
+    .en <- endorsement_features(data.table::data.table(pair = .lp, seat = rows$seat, party = rows$party))
+    rows[, c200 := .en$c200]
+    rows[, voices := .en$voices]
+  }
   # Booth pattern (AUSPOL_XGB_BOOTH=1): the same R/booth_features.R.
   if (any(c("booth_spread", "early_gap") %in% feat_cols)) {
     .lp <- paste0(region, if (identical(region, "vic")) "2026" else "")

@@ -4,7 +4,7 @@
 \alias{state_notional_baselines}
 \title{Every state notional, in the shape of \code{output/notional-baselines.csv}}
 \usage{
-state_notional_baselines(mode = Sys.getenv("AUSPOL_STATE_NOTIONAL", "0"))
+state_notional_baselines(mode = Sys.getenv("AUSPOL_STATE_NOTIONAL", "1"))
 }
 \arguments{
 \item{mode}{As for \code{\link[=state_notional_prior]{state_notional_prior()}}.}

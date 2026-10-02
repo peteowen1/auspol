@@ -541,6 +541,17 @@ if (identical(Sys.getenv("AUSPOL_XGB_COUNCIL", "0"), "1")) {
 ",
               nrow(ALL), sum(ALL$council_mayor), sum(ALL$council_elected), sum(ALL$council_lost)))
 }
+# ENDORSEMENT (AUSPOL_XGB_ENDORSE=1, plans/prereg-endorsement-2026-10-02.md):
+# Climate 200 support and Voices-group endorsement announced before polling day
+# (R/endorsement_features.R).
+if (identical(Sys.getenv("AUSPOL_XGB_ENDORSE", "0"), "1")) {
+  .en <- endorsement_features(ALL[, .(pair, seat, party)])
+  ALL[, c200 := .en$c200]
+  ALL[, voices := .en$voices]
+  cat(sprintf("XE1  endorsement features ON: Climate 200 on %d rows, Voices on %d rows of %d
+",
+              sum(ALL$c200), sum(ALL$voices), nrow(ALL)))
+}
 # BOOTH PATTERN (AUSPOL_XGB_BOOTH=1, plans/prereg-booth-features-2026-10-02.md):
 # the class's spread across polling places and its early-vote gap at the
 # PREVIOUS election (R/booth_features.R); NA where no prior booth data.
@@ -715,6 +726,7 @@ feat_cols <- c("base_pred", "seat_prev_pcv", "seat_outperf", "level_prev",
                if (Sys.getenv("AUSPOL_XGB_SENATE", "0") %in% c("1", "minor")) c("senate_pct", "senate_dev"),
                if (identical(Sys.getenv("AUSPOL_XGB_COUNCIL", "0"), "1")) c("council_mayor", "council_elected", "council_lost", "council_pct"),
                if (identical(Sys.getenv("AUSPOL_XGB_BOOTH", "0"), "1")) c("booth_spread", "early_gap"),
+               if (identical(Sys.getenv("AUSPOL_XGB_ENDORSE", "0"), "1")) c("c200", "voices"),
                # "dev": the geography only, no raw Senate level (Victorian Labor runs far
                # ahead of its Senate vote at state elections; the level misled arm "1")
                if (identical(Sys.getenv("AUSPOL_XGB_SENATE", "0"), "dev")) "senate_dev",

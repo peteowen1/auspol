@@ -14,7 +14,7 @@ forecast_statewide_or_oracle(
   code = "BX0",
   n_sims = 20000L,
   seed = 42L,
-  mode = Sys.getenv("AUSPOL_FORECAST_MODE", "0"),
+  mode = Sys.getenv("AUSPOL_FORECAST_MODE", "1"),
   on_fail = c("stop", "skip")
 )
 }

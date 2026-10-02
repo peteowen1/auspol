@@ -304,6 +304,7 @@ PUBLISHED_FLAGS <- c(
   AUSPOL_XGB_SENATE          = "0",          # "1", "minor", "dev" all REFUSED 2026-10-01 (each costs Victorian Labor or loses the gains); parked. TESTED (plans/prereg-xgb-senate-2026-10-01.md): each party's federal Senate share in the seat (and its deviation from the class mean) as xgb features, time-forward, R/senate_features.R.
   AUSPOL_XGB_COUNCIL         = "1",          # SHIPPED v58 2026-10-02: council history (mayor / councillor / stood and lost / council share) as xgb features, every state and federal row (R/council_features.R). plans/prereg-council-2026-10-02.md
   AUSPOL_XGB_BOOTH           = "0",          # TESTING 2026-10-02: booth spread and early-vote gap from the previous election (R/booth_features.R). plans/prereg-booth-features-2026-10-02.md
+  AUSPOL_XGB_ENDORSE         = "0",          # TESTING 2026-10-02: Climate 200 / Voices endorsement as xgb features (R/endorsement_features.R). plans/prereg-endorsement-2026-10-02.md
   AUSPOL_UPSET_FLOOR         = "0",          # TESTING 2026-10-02: time-forward upset insurance for minor contenders (R/upset_floor.R, stage 6b). plans/prereg-upset-floor-2026-10-02.md
   AUSPOL_ONP_ORDER           = "federal",    # "senate" REFUSED 2026-10-01 (plans/prereg-onp-senate-2026-10-01.md): SA 2026 seat log loss +1.7 SE.
   AUSPOL_ONP_FIX             = "1",
