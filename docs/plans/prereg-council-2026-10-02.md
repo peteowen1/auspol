@@ -59,3 +59,20 @@ The trees absorbed only part of the effect: mayors' mean signed error +4.72
 no mayors in the data and few touched rows, so a +0.007 shift there is the
 size of the retrain noise seen on 2026-10-01 (~0.005 on the ledger); whether
 the guard caught harm or noise is UNKNOWN until that noise is measured.
+
+## Arm A2 (registered 2026-10-02 13:05, before running): council features on the seed ensemble
+
+Arm A's refusal turned on a Victoria change (+0.0072) inside the measured
+refit noise (Victoria range 0.011 across seeds). Re-test the SAME features on
+top of the 3-seed ensemble (`AUSPOL_XGB_ENSEMBLE=3`) if the ensemble ships, so
+the comparison is ensemble-without vs ensemble-with council features, both
+seed 42, rebuilt from stage 3.
+Criteria as arm A, with the Victoria guard written against the noise floor:
+1. targeted rows improve by more than 1 SE (as before);
+2. 22-election per-election log loss not worse by more than 0.0012 (the
+   single-seed range; the ensemble's own range, once measured, replaces it if
+   smaller);
+3. Victoria seat log loss not worse by more than the ensemble's measured
+   seed range (E42 vs E7);
+4. primary RMSE all rows not worse by more than 0.01.
+The original arm A clause stays as written; this is a new test, not a re-read.

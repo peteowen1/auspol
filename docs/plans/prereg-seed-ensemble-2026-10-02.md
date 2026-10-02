@@ -27,3 +27,15 @@ Compared with v57 (K=1, seed 42) and the K=1 seed-7 run (`20261002-1114-bfc14ff-
    loss and on primary RMSE (all rows). Reported for the ledger and 22
    elections too.
 Ships if 1 holds and 2 shows the spread reduced. Stage 4 time is reported.
+
+## RESULT, 2026-10-02 13:05: PASSES
+
+E42 `20261002-1251-1221385-from4`, E7 `20261002-1303-1221385-from4`.
+1. Accuracy, E42 vs v57: 22-election log loss 0.3422 -> 0.3408; primary RMSE
+   4.1507 -> 4.1534 (+0.0027, inside 0.01); ledger 0.2700 -> 0.2682; Victoria
+   0.2723 -> 0.2750 (inside noise). PASS.
+2. Noise, |E42-E7| vs |v57-seed7 K=1|: Victoria log loss 0.0041 -> 0.0018;
+   primary RMSE 0.0312 -> 0.0087; Victoria RMSE 0.0395 -> 0.0241. PASS.
+   22-election 0.0012 -> 0.0020 and ledger 0.0006 -> 0.0008 did not shrink:
+   both runs also changed the SIMULATION seed, which the ensemble cannot
+   average away. Stage 4 cost: 216 -> 226 s.
