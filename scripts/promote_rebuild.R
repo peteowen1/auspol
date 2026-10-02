@@ -68,6 +68,11 @@ if (.flag("AUSPOL_XGB_SENATE") %in% c("1", "minor", "dev")) {
   data.table::fwrite(.sdv, file.path(OUT, "senate-vic2026.csv"))
   .arm_tables <- c(.arm_tables, "senate-vic2026.csv")
 }
+# And the upset-insurance eps table (AUSPOL_UPSET_FLOOR=1).
+if (identical(.flag("AUSPOL_UPSET_FLOOR"), "1")) {
+  if (!file.exists(file.path(OUT, "upset-floor-eps.csv"))) stop("AUSPOL_UPSET_FLOOR=1 but output/upset-floor-eps.csv is missing")
+  .arm_tables <- c(.arm_tables, "upset-floor-eps.csv")
+}
 # And the booth features (AUSPOL_XGB_BOOTH=1): Victoria 2026's slice.
 if (identical(.flag("AUSPOL_XGB_BOOTH"), "1")) {
   .bt <- data.table::fread(file.path(OUT, "booth-features.csv"), showProgress = FALSE)

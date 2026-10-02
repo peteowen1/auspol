@@ -1536,6 +1536,22 @@ if (!chk5$ok) {
                chk5$sd_total, chk5$floor_sd))
 }
 
+# UPSET INSURANCE (AUSPOL_UPSET_FLOOR=1, R/upset_floor.R): the same mixture the
+# backtests use, with eps fitted on every backtest election (all precede 2026),
+# applied AFTER S5 because S5 checks the simulation's own consistency. eps is
+# ~0.003, so no seat moves by more than a third of a point; the chamber totals
+# remain the simulation's.
+if (identical(Sys.getenv("AUSPOL_UPSET_FLOOR", "0"), "1")) {
+  .uf <- out_path("upset-floor-eps.csv")
+  if (!file.exists(.uf)) stop("UF0! AUSPOL_UPSET_FLOOR=1 but output/upset-floor-eps.csv is missing (stage 6b / shipped-models)")
+  .eps <- data.table::fread(.uf)[pair == "vic2026", eps]
+  if (length(.eps) != 1L || !is.finite(.eps)) stop("UF0! upset-floor-eps.csv has no vic2026 row")
+  .sh <- data.table::data.table(seat = rep(rownames(shares), ncol(shares)),
+                                party = rep(colnames(shares), each = nrow(shares)), share = as.vector(shares))
+  wp <- upset_floor_mix(wp[, .(seat, party, prob)], .sh, .eps)
+  cat(sprintf("UF1  upset insurance: eps %.4f applied to %d seats' win probabilities
+", .eps, data.table::uniqueN(wp$seat)))
+}
 # The projected per-seat primaries the simulation runs on. Written out because
 # nothing else can reconstruct them without duplicating the projection above,
 # and a second copy of that logic would drift from this one.

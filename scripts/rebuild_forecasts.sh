@@ -216,7 +216,14 @@ if at_least 3; then stage "3-features";            Rscript scripts/build_level_p
 if at_least 4; then stage "4-asat-models";         Rscript scripts/fit_xgb_primary_asat.R  > "$LOG/s4_asat.log" 2>&1; done_stage "4-asat-models"; fi
 if at_least 4; then stage "4b-asat-flow-models";   Rscript scripts/fit_xgb_flows_asat.R    > "$LOG/s4b_flows.log" 2>&1; done_stage "4b-asat-flow-models"; fi
 if at_least 5; then stage "5-production-model";    Rscript scripts/fit_xgb_primary_v6_final.R > "$LOG/s5_final.log" 2>&1; done_stage "5-production-model"; fi
-if at_least 6; then stage "6-harnesses-shipped";   run6 1 s6; done_stage "6-harnesses-shipped"; fi
+if at_least 6; then export AUSPOL_STAGE6_START=$(date +%s); stage "6-harnesses-shipped";   run6 1 s6; done_stage "6-harnesses-shipped"; fi
+# 6b UPSET INSURANCE (AUSPOL_UPSET_FLOOR=1, R/upset_floor.R): mixes THIS run's
+# stage-6 win probabilities with a time-forward-fitted floor for minor
+# contenders, in place (raw copies kept), before anything scores them.
+if at_least 6 && [ "${AUSPOL_UPSET_FLOOR:-0}" = "1" ]; then
+  Rscript scripts/apply_upset_floor.R > "$LOG/s6b_upset.log" 2>&1 || { echo "!! apply_upset_floor.R failed -- see $LOG/s6b_upset.log"; exit 1; }
+  grep -E "^UF9" "$LOG/s6b_upset.log"
+fi
 if at_least 7; then stage "7-pool-and-forecasts";  Rscript scripts/pool_backtests.R        > "$LOG/s7_pool.log" 2>&1
                                Rscript scripts/build_forecasts_table.R > "$LOG/s7_forecasts.log" 2>&1; done_stage "7-pool-and-forecasts"; fi
 if at_least 8; then stage "8-ledger";              Rscript scripts/build_aef_comparison.R  > "$LOG/s8_comp.log" 2>&1   # aef-comparison-full.csv, the ledger's seat-probability input -- was missing from the first draft, so the ledger's log loss came out identical to the run before (2026-09-18)
