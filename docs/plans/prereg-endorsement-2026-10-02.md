@@ -31,3 +31,22 @@ against v58 (backtests `output/snapshots/20261002-1435-0a481f6-from3`).
 UNACCEPTABLE: the endorsed rows improve while the other classes in the same
 seats get worse by more than the endorsed rows' gain.
 Then: the live forecast run with and without, seat by seat (Kew, Hawthorn).
+
+## RESULT, 2026-10-02 19:45: PASSES
+
+`output/snapshots/20261002-1930-d7c53b7-from3` against v58.
+1. Climate 200 rows (n 71): RMSE 10.58 -> 9.18, per-seat -27.7 (SE 9.1); mean
+   signed error +6.98 -> +2.91 -- PASS.
+2. 22-election log loss 0.3444 -> 0.3440 -- PASS.
+3. Victoria 0.2696 -> 0.2654 (better) -- PASS.
+4. Primary RMSE all rows 4.0946 -> 4.0438 (better) -- PASS.
+Unacceptable clause: other classes in those seats 3.944 -> 3.917, does not fire.
+Ledger 0.2686 -> 0.2712 (inside its seed range).
+Behaviour: time-forward, it cannot see the 2022 wave (one backed candidate
+before it: Mackellar 2022 10.6 -> 10.8); it lifts later first-time teals
+(Pittwater 2023 7.7 -> 17.3, actual 35.9); it over-shoots teals once they are
+incumbents (Mackellar 2025 42.5 -> 48.2, actual 40.7; overlap with incumbency).
+LIVE (production model trained with the same 46 features): Hawthorn IND
+17.8 -> 20.5, win 0.11 -> 0.24; Kew 16.2 -> 19.1, win 0.02 -> 0.04; Mornington
+and Malvern unchanged until their candidates are nominated (corpus refresh
+after 9 Nov).
