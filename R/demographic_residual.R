@@ -201,7 +201,7 @@ demographic_residual_apply <- function(shares, pair,
   # in output/forecasts.csv rather than the frozen v6 file. Worked examples
   # with Pete on nsw2023 showed the Liberal fit spreading large offsetting
   # weights across correlated columns, so it is left out.
-  mode2 <- identical(Sys.getenv("AUSPOL_DEMO_RESID", "0"), "2")
+  mode2 <- identical(Sys.getenv("AUSPOL_DEMO_RESID", "2"), "2")
   cache <- out_path(sprintf("demo-resid-%s.csv", pair))
   if (mode2) {
     if (missing(classes)) classes <- c("ALP", "GRN")

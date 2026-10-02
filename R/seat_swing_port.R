@@ -122,7 +122,7 @@ seat_swing_port_adj <- function(target_election, seats) {
 #' @return `shares`, adjusted, or unchanged when `AUSPOL_SEAT_SWING_PORT` is not "2".
 #' @export
 seat_swing_port_apply <- function(shares, target_election) {
-  if (!identical(Sys.getenv("AUSPOL_SEAT_SWING_PORT", "0"), "2")) return(shares)
+  if (!identical(Sys.getenv("AUSPOL_SEAT_SWING_PORT", "2"), "2")) return(shares)
   stopifnot(all(c("ALP", "LNP") %in% colnames(shares)))
   adj <- seat_swing_port_adj(target_election, rownames(shares))
   stopifnot(all(is.finite(adj)))

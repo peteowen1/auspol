@@ -180,7 +180,7 @@ statewide_draws_as_at <- function(region, year, as_at, election_date, parties,
   # recipe matches the live forecast only with that switch at "0". The two
   # ship together (v56, 2026-09-30); a comment here claiming the live anchor
   # "reaches only the draws' spread" was stale from 2026-09-28 and misled.
-  live_recipe <- identical(Sys.getenv("AUSPOL_LEVEL_RECIPE", "anchored"), "live")
+  live_recipe <- identical(Sys.getenv("AUSPOL_LEVEL_RECIPE", "live"), "live")
   close_prop <- live_recipe || identical(Sys.getenv("AUSPOL_CLOSE_PROPORTIONAL", "0"), "1")
   if (close_prop && "OTH" %in% fp_parties && "OTH" %in% parties) {
     # AUSPOL_CLOSE_PROPORTIONAL=1: the trend fits each party separately, so the
@@ -284,7 +284,7 @@ statewide_draws_as_at <- function(region, year, as_at, election_date, parties,
   # else as published (no proportional rescale). Arm Z's "live" bundled both,
   # so its split by era could not be attributed.
   # plans/prereg-level-anchor-alone-2026-09-30.md.
-  if (identical(Sys.getenv("AUSPOL_LEVEL_RECIPE", "anchored"), "unanchored") && !is.null(tpp_target)) {
+  if (identical(Sys.getenv("AUSPOL_LEVEL_RECIPE", "live"), "unanchored") && !is.null(tpp_target)) {
     cat(sprintf("LR2  %s%d: level NOT anchored, no rescale (trend TPP %.2f)\n", region, year, tr$tpp))
     tpp_target <- NULL
   }

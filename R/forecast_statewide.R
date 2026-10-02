@@ -179,7 +179,7 @@ forecast_statewide_for <- function(region, year, election_date, parties, st_a,
 #' @return Named numeric ratios summing to 1, or `NULL`.
 #' @export
 candidate_bucket_ratio <- function(election, bucket) {
-  split_mode <- Sys.getenv("AUSPOL_BUCKET_SPLIT", "prior")
+  split_mode <- Sys.getenv("AUSPOL_BUCKET_SPLIT", "cand_naive")
   if (!split_mode %in% c("cand_resid", "cand_naive")) return(NULL)
   # The SPLIT reads the v2 candidate model (v44); v3 (defectors and newcomers
   # treated as personal votes) divides worse but totals better, so each
@@ -306,7 +306,7 @@ fundamentals_loo_table <- function() {
 #' @export
 forecast_statewide_or_oracle <- function(region, year, election_date, parties, st_a, st_b,
                                          code = "BX0", n_sims = 20000L, seed = 42L,
-                                         mode = Sys.getenv("AUSPOL_FORECAST_MODE", "0"),
+                                         mode = Sys.getenv("AUSPOL_FORECAST_MODE", "1"),
                                          on_fail = c("stop", "skip")) {
   if (!identical(mode, "1")) return(st_b)
   on_fail <- match.arg(on_fail)

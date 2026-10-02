@@ -275,7 +275,7 @@ surge_hazard_for <- function(target_election, target_prev, target_region,
   # "20 winners cannot support a continuous fit" -- was about predicting a
   # WINNER's vote from 20 points, a different problem from a conditional mean
   # over 1,920 governed candidates. Checked before writing this, not assumed.
-  if (identical(Sys.getenv("AUSPOL_SALIENCE_SMOOTH", "0"), "1")) {
+  if (identical(Sys.getenv("AUSPOL_SALIENCE_SMOOTH", "1"), "1")) {
     fitd <- TRB[is.finite(jump_pctile) & is.finite(pcv)]
     if (nrow(fitd) >= 50L) {
       tls <- function(q) log(pmax(1 - q, 1 / (2 * nrow(fitd))))

@@ -19,7 +19,7 @@
 #' @return The overridden matrix, or `shares` unchanged if not enabled.
 #' @export
 xgb_primary_override <- function(shares, pair_label, enabled = NULL) {
-  if (is.null(enabled)) enabled <- identical(Sys.getenv("AUSPOL_XGB_PRIMARY", "0"), "1")
+  if (is.null(enabled)) enabled <- identical(Sys.getenv("AUSPOL_XGB_PRIMARY", "1"), "1")
   if (!isTRUE(enabled)) return(shares)
   # DEFAULT TO v6, because v6 is what AUSPOL_XGB_PRIMARY_LIVE ships. The
   # unversioned filename is v1's (scripts/fit_xgb_primary_cv.R writes it), so
@@ -171,7 +171,7 @@ xgb_primary_predict_live <- function(shares, mat22, a22, state_mean, returns,
                                       own_prev = NULL, region = "vic",
                                       year = 2026L, prev_year = 2022L,
                                       enabled = NULL) {
-  if (is.null(enabled)) enabled <- identical(Sys.getenv("AUSPOL_XGB_PRIMARY_LIVE", "0"), "1")
+  if (is.null(enabled)) enabled <- identical(Sys.getenv("AUSPOL_XGB_PRIMARY_LIVE", "1"), "1")
   if (!isTRUE(enabled)) return(shares)
   model_f <- out_path("xgb-primary-v6-final.model")
   cols_f  <- out_path("xgb-primary-v6-final-cols.json")

@@ -69,7 +69,7 @@ candidate_returns <- function(election_from, election_to, corpus = NULL) {
   # SITTING MEMBER of the IND class and the as-at xgb model paid him +5 points
   # for it; Dighton, who actually held the seat, read as a newcomer. The
   # winner row replaces the seat's elected flags; nothing else in PREVT moves.
-  if (identical(Sys.getenv("AUSPOL_BYELECTION_MP", "0"), "1")) {
+  if (identical(Sys.getenv("AUSPOL_BYELECTION_MP", "1"), "1")) {
     bw <- tryCatch(byelection_winner_rows(election_from, election_to),
                    error = function(e) { cat(sprintf("CDR1! by-election member override FAILED for %s -> %s, previous election's members kept: %s\n",
                                                      election_from, election_to, conditionMessage(e))); NULL })
@@ -442,7 +442,7 @@ personal_prior_vote <- function(election_from, election_to, corpus = NULL,
   # first attempt changed only the fitting end, so the pooled rate was applied
   # to the same sitting members as before and the 12 losing cells the arm
   # exists for did not move at all. Caught by the plan's own R1.
-  .mode <- Sys.getenv("AUSPOL_DEFECT_POOLED", "0")
+  .mode <- Sys.getenv("AUSPOL_DEFECT_POOLED", "2")
   if (is.null(pooled)) pooled <- .mode %in% c("1", "2")
   # MODE 2 resolves the losing-candidate rate itself rather than making every
   # harness thread a second argument through -- six call sites, and the last
@@ -789,7 +789,7 @@ personal_prior_vote <- function(election_from, election_to, corpus = NULL,
   # class keeps a fitted share of the defector's own prior vote instead of
   # losing all of it. Fitted leave-target-out inside this function so every
   # caller (six harnesses, fit_seats_full.R) gets it without a new argument.
-  if (identical(Sys.getenv("AUSPOL_MINOR_DEFECT_CONSERVE", "0"), "1")) {
+  if (identical(Sys.getenv("AUSPOL_MINOR_DEFECT_CONSERVE", "1"), "1")) {
     .mm <- !is.na(out$own_prev_pcv) & !is.na(out$prev_party) & !out$prev_party %in% MAJ &
            !out$party %in% MAJ & out$prev_party != out$party & is.finite(out$transfer)
     if (any(.mm)) {
@@ -918,7 +918,7 @@ fit_defector_discount <- function(target_election, corpus = NULL, min_n = 5L, pa
   # intuitive. But the two groups are NOT separable (Wilcoxon p = 0.408), and
   # partial pooling puts weight 0.12 on the losing-candidate estimate, so the
   # data supports ONE rate for every defector rather than two or an exclusion.
-  if (is.null(pooled)) pooled <- Sys.getenv("AUSPOL_DEFECT_POOLED", "0") %in% c("1", "2")
+  if (is.null(pooled)) pooled <- Sys.getenv("AUSPOL_DEFECT_POOLED", "2") %in% c("1", "2")
   C <- corpus
   if (is.null(C)) {
     f <- file.path("output", "candidacies.csv")

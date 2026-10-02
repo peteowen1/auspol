@@ -229,6 +229,11 @@ test_that("major_discount gives a LOSING member's defection NOTHING -- deliberat
   # mean retention 2.32, sd 4.38 -- unusable, so this stays a documented
   # exclusion rather than a fitted number. candidate_returns() still reports
   # the identity match correctly; only the vote FLOOR is withheld.
+  # This documents the UNPOOLED mode. Since 2026-10-02 the package defaults
+  # follow published_flags.R (AUSPOL_DEFECT_POOLED "2" etc.), under which a
+  # losing defector does get a floor; pin the mode this test is about.
+  withr::local_envvar(c(AUSPOL_DEFECT_POOLED = "0", AUSPOL_BYELECTION_MP = "0",
+                        AUSPOL_MINOR_DEFECT_CONSERVE = "0"))
   d <- data.table::data.table(
     election = c("e1", "e2"), seat = "Kiama", party = c("LNP", "IND"),
     surname = "WARD", given = "Gareth", pcv = c(53.6, 38.8),

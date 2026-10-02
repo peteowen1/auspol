@@ -12,7 +12,7 @@
 # this returns "__none__" and the override returns NULL, so the pooled flow
 # table applies -- the same failure-open path as a missing model today.
 .flow_asat_model <- function(target_election) {
-  if (!identical(Sys.getenv("AUSPOL_FLOW_ASAT", "0"), "1")) return(NULL)
+  if (!identical(Sys.getenv("AUSPOL_FLOW_ASAT", "1"), "1")) return(NULL)
   f <- out_path(sprintf("xgb-flows-v1-asat-%s.model", target_election))
   if (file.exists(f)) {
     cat(sprintf("XF9  as-at flow model for %s: %s\n", target_election, f))

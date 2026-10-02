@@ -21,7 +21,7 @@
 #'   when the switch is off, the pair had no redistribution, or no notional
 #'   file exists (printed, so an arm that silently did nothing is visible).
 #' @export
-state_notional_prior <- function(region, from, to, mode = Sys.getenv("AUSPOL_STATE_NOTIONAL", "0")) {
+state_notional_prior <- function(region, from, to, mode = Sys.getenv("AUSPOL_STATE_NOTIONAL", "1")) {
   key <- sprintf("%s%d", region, as.integer(to))
   if (!identical(mode, "1")) return(NULL)
   if (!key %in% names(STATE_REDISTRIBUTIONS)) {
@@ -66,7 +66,7 @@ STATE_REDISTRIBUTIONS <- c(
 #' as it already sees federal ones. Empty when `AUSPOL_STATE_NOTIONAL` is off.
 #' @param mode As for [state_notional_prior()].
 #' @export
-state_notional_baselines <- function(mode = Sys.getenv("AUSPOL_STATE_NOTIONAL", "0")) {
+state_notional_baselines <- function(mode = Sys.getenv("AUSPOL_STATE_NOTIONAL", "1")) {
   if (!identical(mode, "1")) return(data.table::data.table())
   d <- election_data_path("notional")
   ff <- list.files(d, pattern = "^[a-z]+-[0-9]{4}-from-[0-9]{4}-firstprefs[.]csv$", full.names = TRUE)
