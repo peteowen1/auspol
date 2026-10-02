@@ -1,3 +1,8 @@
+# auspol 0.4.67
+
+- v59: Climate 200 / Voices endorsement as model features (`AUSPOL_XGB_ENDORSE`, on). Backed candidates' primary error 10.58 -> 9.18 RMSE; Victoria seat log loss 0.2696 -> 0.2654; all-row RMSE 4.095 -> 4.044. Live: Hawthorn independent 0.11 -> 0.24.
+- Package defaults now match `scripts/published_flags.R` (18 switches), and the CI drift guard scans `R/`.
+
 # auspol 0.4.66
 
 - The production model trains on the as-at backtest models' own feature list, so council history now reaches the live Victoria forecast (it was in the backtests only). v58's gain correctly attributed: stage 3 had built the model's features under code defaults rather than the published configuration.
