@@ -181,6 +181,8 @@ xgb_primary_predict_live <- function(shares, mat22, a22, state_mean, returns,
   }
   model <- xgboost::xgb.load(model_f)
   # Seed ensemble (AUSPOL_XGB_ENSEMBLE): further members listed beside the main
+  # (its log line is XG4c: run_all.R passes only codes with an a-c suffix to the
+  # Actions log, so "XG4e" was silently filtered on the first daily run)
   # model; their raw predictions are averaged below. No manifest = one model.
   .ens_f <- out_path("xgb-primary-v6-final-ensemble.json")
   .extra <- list()
@@ -559,7 +561,7 @@ xgb_primary_predict_live <- function(shares, mat22, a22, state_mean, returns,
   if (length(.extra)) {
     for (.m in .extra) pred <- pred + predict(.m, dtest)
     pred <- pred / (1 + length(.extra))
-    cat(sprintf("XG4e  live xgb: %d-model seed ensemble averaged
+    cat(sprintf("XG4c  live xgb: %d-model seed ensemble averaged
 ", 1 + length(.extra)))
   }
   rows[, xgb_pred := pmax(0, pred)]
