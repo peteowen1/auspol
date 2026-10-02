@@ -126,6 +126,7 @@ for (tg in targets) {
   # AUSPOL_XGB_SEED silently reused the previous seed's models (2026-10-02,
   # the noise-floor measurement's seed-99 run returned seed 7's predictions).
   key <- digest::digest(list(params, feat_cols, .base_margin_mode, Sys.getenv("AUSPOL_XGB_SEED", "42"),
+                             Sys.getenv("AUSPOL_XGB_ENSEMBLE", "1"),
                              as.data.frame(TR[, c(id_cols, feat_cols), with = FALSE]),
                              as.data.frame(TE[, c(id_cols, feat_cols), with = FALSE])))
   mf <- file.path(MDIR, paste0(tg, ".ubj"))
@@ -150,12 +151,23 @@ for (tg in targets) {
                folds = split(seq_len(nrow(Xtr)), fold_id),
                early_stopping_rounds = 30, verbose = 0)
   nr <- cv$early_stop$best_iteration
-  set.seed(as.integer(Sys.getenv("AUSPOL_XGB_SEED", "42")))
-  m <- xgb.train(params = params, data = dtr, nrounds = nr, verbose = 0)
+  # SEED ENSEMBLE (AUSPOL_XGB_ENSEMBLE = K, default 1 = unchanged): K models on
+  # the SAME rounds (the CV above, the expensive part, runs once) with seeds
+  # base, base+1, ...; raw predictions averaged, then floored at 0. An equally
+  # valid refit moved Victoria's log loss by up to 0.011 (plans/noise-floor-
+  # 2026-10-02.md); averaging K fits shrinks that by ~sqrt(K).
+  .K <- max(1L, as.integer(Sys.getenv("AUSPOL_XGB_ENSEMBLE", "1")))
+  .seed0 <- as.integer(Sys.getenv("AUSPOL_XGB_SEED", "42"))
   dte <- xgb.DMatrix(data = Xte, missing = NA)
   setinfo(dte, "base_margin", TE$base_pred)
-  p <- pmax(0, predict(m, dte))
-  xgb.save(m, mf)
+  .raw <- 0
+  for (.k in seq_len(.K)) {
+    set.seed(.seed0 + .k - 1L)
+    m <- xgb.train(params = params, data = dtr, nrounds = nr, verbose = 0)
+    .raw <- .raw + predict(m, dte) / .K
+    xgb.save(m, if (.k == 1L) mf else sub("[.]ubj$", sprintf("-m%d.ubj", .k), mf))
+  }
+  p <- pmax(0, .raw)
   rb <- sqrt(mean((TE$base_pred - TE$actual_share)^2))
   ra <- sqrt(mean((p - TE$actual_share)^2))
   cat(sprintf("XA2  %s (%s): %d prior pairs, %d rows, %d rounds | primary RMSE base %.4f -> as-at %.4f | %.0fs\n",

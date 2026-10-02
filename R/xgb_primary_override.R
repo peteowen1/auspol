@@ -180,6 +180,17 @@ xgb_primary_predict_live <- function(shares, mat22, a22, state_mean, returns,
     return(shares)
   }
   model <- xgboost::xgb.load(model_f)
+  # Seed ensemble (AUSPOL_XGB_ENSEMBLE): further members listed beside the main
+  # model; their raw predictions are averaged below. No manifest = one model.
+  .ens_f <- out_path("xgb-primary-v6-final-ensemble.json")
+  .extra <- list()
+  if (file.exists(.ens_f)) {
+    .mem <- jsonlite::fromJSON(readLines(.ens_f, warn = FALSE))
+    for (.f in setdiff(.mem, basename(model_f))) {
+      if (!file.exists(out_path(.f))) stop("xgb_primary_predict_live(): ensemble member ", .f, " listed but missing")
+      .extra[[.f]] <- xgboost::xgb.load(out_path(.f))
+    }
+  }
   feat_cols <- jsonlite::fromJSON(readLines(cols_f))
 
   MAJ <- c("ALP", "LNP", "NAT")
@@ -545,6 +556,12 @@ xgb_primary_predict_live <- function(shares, mat22, a22, state_mean, returns,
   dtest <- xgboost::xgb.DMatrix(data = X, missing = NA)
   xgboost::setinfo(dtest, "base_margin", .margin)
   pred <- predict(model, dtest)
+  if (length(.extra)) {
+    for (.m in .extra) pred <- pred + predict(.m, dtest)
+    pred <- pred / (1 + length(.extra))
+    cat(sprintf("XG4e  live xgb: %d-model seed ensemble averaged
+", 1 + length(.extra)))
+  }
   rows[, xgb_pred := pmax(0, pred)]
 
   out <- shares

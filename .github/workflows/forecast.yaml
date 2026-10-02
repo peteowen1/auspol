@@ -168,6 +168,15 @@ jobs:
                    xgb-flows-v1-features.csv candidacies.csv; do
             gh release download shipped-models -p "$f" -D output --clobber
           done
+          # Seed-ensemble members (AUSPOL_XGB_ENSEMBLE): the manifest is optional
+          # (a release without it is a single model); every member it lists must arrive.
+          if gh release download shipped-models -p xgb-primary-v6-final-ensemble.json -D output --clobber; then
+            for m in $(python3 -c "import json;print(' '.join(json.load(open('output/xgb-primary-v6-final-ensemble.json'))))"); do
+              [ "$m" = "xgb-primary-v6-final.model" ] && continue
+              gh release download shipped-models -p "$m" -D output --clobber
+              [ -s "output/$m" ] || { echo "::error::ensemble member $m missing after download"; exit 1; }
+            done
+          fi
           # The seat-swing port's table (v48). Tolerant: a release published
           # before v48 lacks it, and fit_seats_full.R then runs unported and
           # prints SP2!! rather than failing the whole forecast.

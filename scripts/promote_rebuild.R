@@ -28,7 +28,11 @@ source("scripts/published_flags.R")
 # It is NOT a trained model, so it is kept out of the staleness comparison
 # below (review gate): build_candidacies.R runs on its own schedule, and a
 # fresh candidacies.csv must not make the scoreboard look older than the models.
+# Seed-ensemble members ship with the main model when the manifest lists any.
+.ens <- if (file.exists(file.path("output", "xgb-primary-v6-final-ensemble.json")))
+  jsonlite::fromJSON(readLines(file.path("output", "xgb-primary-v6-final-ensemble.json"), warn = FALSE)) else character(0)
 trained <- c("xgb-primary-v6-final.model", "xgb-primary-v6-final-cols.json",
+             "xgb-primary-v6-final-ensemble.json"[length(.ens) > 0], setdiff(.ens, "xgb-primary-v6-final.model"),
              "xgb-flows-v1-final.model", "xgb-flows-v1-final-cols.json", "xgb-flows-v1-features.csv")
 # The live seat-swing port's inputs (AUSPOL_SEAT_SWING_PORT=2): its sources are
 # a local booth transpose and seat TPP estimates CI never builds, so the

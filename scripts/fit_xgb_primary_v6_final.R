@@ -126,6 +126,21 @@ final <- xgb.train(params = params, data = dtrain, nrounds = NROUNDS, verbose = 
 
 model_file <- file.path(OUT, "xgb-primary-v6-final.model")
 xgb.save(final, model_file)
+# SEED ENSEMBLE (AUSPOL_XGB_ENSEMBLE = K): members 2..K beside the main model,
+# same rounds, seeds base+1..; listed in xgb-primary-v6-final-ensemble.json,
+# which the live forecast and the daily run read. K = 1 lists the main model
+# only, so a missing or 1-member manifest behaves exactly as before.
+.K <- max(1L, as.integer(Sys.getenv("AUSPOL_XGB_ENSEMBLE", "1")))
+.members <- basename(model_file)
+for (.k in seq_len(.K)[-1]) {
+  set.seed(as.integer(Sys.getenv("AUSPOL_XGB_SEED", "42")) + .k - 1L)
+  .mk <- xgb.train(params = params, data = dtrain, nrounds = NROUNDS, verbose = 0)
+  .fk <- file.path(OUT, sprintf("xgb-primary-v6-final-m%d.model", .k))
+  xgb.save(.mk, .fk); .members <- c(.members, basename(.fk))
+}
+writeLines(jsonlite::toJSON(.members), file.path(OUT, "xgb-primary-v6-final-ensemble.json"))
+cat(sprintf("ensemble: %d member(s): %s
+", length(.members), paste(.members, collapse = ", ")))
 cols_file <- file.path(OUT, "xgb-primary-v6-final-cols.json")
 writeLines(jsonlite::toJSON(feat_cols), cols_file)
 
