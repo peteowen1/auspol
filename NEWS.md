@@ -1,3 +1,7 @@
+# auspol 0.4.66
+
+- The production model trains on the as-at backtest models' own feature list, so council history now reaches the live Victoria forecast (it was in the backtests only). v58's gain correctly attributed: stage 3 had built the model's features under code defaults rather than the published configuration.
+
 # auspol 0.4.65
 
 No change to the forecast.

@@ -76,14 +76,26 @@ for (r in region_levels) ALL[[paste0("region_", r)]] <- as.integer(ALL$region ==
 # unmitigated by that result. Leave it out until Victorian notional data
 # exists; if it is ever added here, xgb_primary_predict_live() must build the
 # column too, or the stop() guard in R/xgb_primary_override.R will fire.
-feat_cols <- c("base_pred", "seat_prev_pcv", "seat_outperf", "level_prev", "level_pred", "level_from_polls", "dev_prev",
-               "n_cand_prev", "n_cand_now", "same_i", "same_mp_i", "is_major_i",
-               "margin", "fed_swing", "retirement_i", "soph_cand_i", "soph_party_i",
-               "prev_swing", "is_incumbent_party_i", "own_prev_pcv",
-               if (identical(Sys.getenv("AUSPOL_XGB_DEPARTED_SIDE", "0"), "1")) c("own_departed_i", "opp_departed_i"),
-               "historic_elected_i", "ballot_pos_min",
-               "jump", "governed", "permit", "surge_h", "is_recipient",
-               paste0("party_", party_levels), paste0("region_", region_levels))
+# THE SAME FEATURE LIST AS THE AS-AT BACKTEST MODELS: stage 4 writes the exact
+# list it trained on (output/xgb-primary-asat/feat_cols.txt) and this production
+# model uses it verbatim. This used to be a hand-maintained list here, and it
+# drifted: v58's council features reached the backtests but never this model
+# (found 2026-10-02 walking the live Victoria forecast), so the published
+# forecast lacked what the backtests scored.
+.asat_cols_f <- file.path(OUT, "xgb-primary-asat", "feat_cols.txt")
+if (!file.exists(.asat_cols_f)) stop("F0! ", .asat_cols_f, " missing -- run stage 4 (fit_xgb_primary_asat.R) first")
+# Stale-list guard (review): a list older than the features this script reads
+# would silently drop a column stage 3 added since, recreating the drift.
+if (file.mtime(.asat_cols_f) < file.mtime(file.path(OUT, "xgb-primary-features-v6.csv")))
+  stop("F0! ", .asat_cols_f, " is older than xgb-primary-features-v6.csv -- rerun stage 4 before stage 5")
+feat_cols <- readLines(.asat_cols_f)
+if (!"base_pred" %in% feat_cols) stop("F0! the as-at list has no base_pred (AUSPOL_XGB_BASE_MARGIN=1?) -- production ships mode 2")
+for (.p in party_levels) if (!paste0("party_", .p) %in% names(ALL)) ALL[[paste0("party_", .p)]] <- as.integer(ALL$party == .p)
+for (.r in region_levels) if (!paste0("region_", .r) %in% names(ALL)) ALL[[paste0("region_", .r)]] <- as.integer(ALL$region == .r)
+.miss <- setdiff(feat_cols, names(ALL))
+if (length(.miss)) stop("F0! the as-at feature list has columns this script does not build: ", paste(.miss, collapse = ", "))
+cat(sprintf("F1  production features = the as-at list: %d columns
+", length(feat_cols)))
 X <- as.matrix(ALL[, ..feat_cols])
 y <- ALL$actual_share
 

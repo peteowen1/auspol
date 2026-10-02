@@ -40,6 +40,13 @@ E42 `20261002-1251-1221385-from4`, E7 `20261002-1303-1221385-from4`.
    both runs also changed the SIMULATION seed, which the ensemble cannot
    average away. Stage 4 cost: 216 -> 226 s.
 
+## CORRECTION (2026-10-02 evening, visible addition): the gain below is NOT x_notional_adj
+The as-at and production models exclude x_notional_adj. Comparing the feature
+files, the change between E42 and B is `level_pred` (14,023 of 14,487 rows, up
+to 3.9 points) and a few identity flags: stage 3 had been building features
+under code defaults (AUSPOL_LEVEL_RECIPE "anchored" vs published "live", and
+others), i.e. a train/serve mismatch in v56-v57 that the export fixed.
+
 ## Note: published switches were not reaching the fit scripts (found 2026-10-02 14:00)
 
 The E42/E7 runs (and shipped v57) trained the xgb layer with x_notional_adj = 0

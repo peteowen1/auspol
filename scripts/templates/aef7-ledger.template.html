@@ -258,9 +258,15 @@
        had been mayors were being under-predicted by about 9 points and councillors by about 3.6; for the candidates
        with a council record the error fell from 4.89 to 4.81 points. (2) <b>The xgb layer averages three fits</b>
        with different random seeds: an equally valid refit had been moving Victoria's seat log loss by up to 0.011,
-       which is larger than most effects tested; the ensemble roughly halves that. (3) <b>A fix:</b> the model-fitting
-       stages never read the published switches, so v57 trained without the state notional feature it had been tested
-       with. Seat log loss 0.2700 to 0.2686 against AE Forecasts' 0.2825 (all 681 seats); primary-vote error 4.15 to
+       which is larger than most effects tested; the ensemble roughly halves that. (3) <b>A fix, and the source of most of the gain:</b>
+       the stage that builds the model's training features never read the published configuration, so it computed
+       them under code defaults (the old statewide-level recipe, forecast mode, the defector and by-election rules)
+       while the live forecast used the published ones: the model was trained on features built differently from
+       those it was served. <i>Correction, same day: this was first described here as "restoring the state notional
+       feature"; that feature is excluded from these models, so it cannot have been the cause.</i> And a second
+       gap found the same evening and fixed: the live model's feature list was maintained separately and never
+       received the council features, so until then council history reached the backtests but not the live
+       forecast; it now uses the backtest models' own list. Seat log loss 0.2700 to 0.2686 against AE Forecasts' 0.2825 (all 681 seats); primary-vote error 4.15 to
        4.09 points over all 22 elections.</p>
     <p class="sub prov"><b>v57, 1 Oct 2026: every seat scored, including the redrawn ones.</b> A district redrawn or
        renamed by a redistribution had no previous result under its new name, so the backtests skipped it: 20 seats on
