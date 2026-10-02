@@ -49,6 +49,18 @@ zero_unnominated <- function(shares, target, label, code = "NZ1", flows = NULL) 
   }
   freed <- matrix(0, nrow(shares), ncol(shares), dimnames = dimnames(shares))
   for (cl in names(zcells)) { i <- zcells[[cl]]; freed[i, cl] <- shares[i, cl]; shares[i, cl] <- 0 }
+  # A row whose every predicted class had no candidate (the result table names
+  # only classes we never predicted there) would be left with nothing to hold
+  # the share -- 0/0 = NaN downstream. Keep it as it was, and say so.
+  empty <- which(rowSums(shares) <= 0 & rowSums(freed) > 0)
+  if (length(empty)) {
+    n0 <- n0 - sum(freed[empty, , drop = FALSE] > 0)
+    mass <- mass - sum(freed[empty, , drop = FALSE])
+    shares[empty, ] <- shares[empty, , drop = FALSE] + freed[empty, , drop = FALSE]
+    freed[empty, ] <- 0
+    cat(sprintf("%s! %s: %d seat(s) left with no standing class kept unchanged: %s\n", code, label,
+                length(empty), paste(rownames(shares)[empty], collapse = ", ")))
+  }
   if (mode == "2" && !is.null(flows)) {
     # Mode 2 (plans/prereg-nomination-zero-2026-10-03.md, amendment): the freed
     # share goes where that class's voters go, from the preference-flow matrix
@@ -70,7 +82,8 @@ zero_unnominated <- function(shares, target, label, code = "NZ1", flows = NULL) 
         how[[src]] <- how[[src]] + 1L
       }
     }
-    shares <- shares * (tot / rowSums(shares))
+    rs <- rowSums(shares); k <- rs > 0
+    shares[k, ] <- shares[k, , drop = FALSE] * (tot[k] / rs[k])
   } else {
     rs <- rowSums(shares); k <- rs > 0
     shares[k, ] <- 100 * shares[k, , drop = FALSE] / rs[k]

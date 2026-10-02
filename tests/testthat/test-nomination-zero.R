@@ -45,3 +45,17 @@ test_that("mode 2 sends the freed share where the flow matrix says, conditional 
   expect_equal(unname(out2[1, c("ALP", "GRN", "OTH")]), c(49, 41, 10))
   expect_equal(sum(out2), 100)
 })
+
+test_that("a seat left with no standing class is kept unchanged, never NaN (review, both modes)", {
+  sh <- matrix(c(50, 50, 0, 60, 40, 0), nrow = 2, byrow = TRUE,
+               dimnames = list(c("A", "B"), c("ALP", "LNP", "IND")))
+  tg <- data.table::data.table(seat = c("A", "B", "B"), party = c("IND", "ALP", "LNP"), votes = 1)
+  fl <- list(conditional = list(), pooled = list(ALP = c(LNP = 100), LNP = c(ALP = 100)))
+  for (m in c("1", "2")) {
+    withr::local_envvar(AUSPOL_NOM_ZERO = m)
+    out <- zero_unnominated(sh, tg, "test", flows = fl)
+    expect_true(all(is.finite(out)))
+    expect_equal(out["A", ], sh["A", ])
+    expect_equal(out["B", ], sh["B", ])
+  }
+})
