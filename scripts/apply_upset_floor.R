@@ -37,8 +37,8 @@ D <- rbindlist(lapply(ap, function(f) {
     a[, pair := s$pair[1]]
   }
   a[, file := f]
-  list(a = a, s = s[, .(pair, seat, party, share = pred_share)])
-})$a, fill = TRUE)
+  a
+}), fill = TRUE)
 S <- rbindlist(lapply(ap, function(f) {
   s <- fread(sub("-allprobs-", "-sharedetail-", f), showProgress = FALSE)
   s[, .(pair, seat, party, share = pred_share)]
@@ -87,13 +87,19 @@ for (f in ap) {
   wf <- sub("-allprobs-", "-", f)
   if (file.exists(wf)) {
     w0 <- fread(raw_of(wf), showProgress = FALSE)
-    o2 <- copy(out); if (!"pair" %in% names(o2)) o2[, pair := "x"]
+    # NSW's win files call the actual winner's probability `p`, not `prob`
+    pcol <- if ("prob" %in% names(w0)) "prob" else if ("p" %in% names(w0)) "p" else stop("UF0! ", basename(wf), ": no prob/p column")
+    if (pcol == "p") data.table::setnames(w0, "p", "prob")
+    # the real election for single-pair files (their allprobs has no pair column
+    # but the win file may: SA's does -- a placeholder here zeroed every SA seat)
+    o2 <- copy(out); if (!"pair" %in% names(o2)) o2[, pair := D[file == f, pair][1]]
     best <- o2[order(-prob)][, .SD[1], by = .(pair, seat)][, .(pair, seat, pred = party, pred_p = prob)]
     pact <- o2[is_actual == TRUE, .(prob = sum(prob)), by = .(pair, seat)]
     if (!"pair" %in% names(w0)) { best[, pair := NULL]; pact[, pair := NULL]; by <- "seat" } else by <- c("pair", "seat")
     w1 <- merge(merge(w0[, setdiff(names(w0), c("prob", "pred", "pred_p")), with = FALSE], pact, by = by, all.x = TRUE), best, by = by, all.x = TRUE)
     w1[is.na(prob), prob := 0]
     setcolorder(w1, intersect(names(w0), names(w1)))
+    if (pcol == "p") data.table::setnames(w1, "prob", "p")
     fwrite(w1, wf)
   }
 }
