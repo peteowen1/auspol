@@ -35,3 +35,14 @@ UNACCEPTABLE: the changed rows improve while the rest get worse by more than
 guard 4 allows.
 Then the live forecast with and without (Victoria; which candidates gain a
 mayor flag).
+
+## RESULT, 2026-10-03 00:15: FAILS
+`output/snapshots/20261003-0013-74b088e-from3` against v60 (config-identical
+`-2212-579df5c-from6`). 1. Changed rows (117, 94 seats): per-seat squared-error
+change -1.56 (SE 2.02) -- under 1 SE, FAIL. 2. 22-election 0.3434 -> 0.3458,
+FAIL. 3. Victoria 0.2654 -> 0.2678, FAIL. 4. all-row RMSE 4.0438 -> 4.0402.
+Ledger 0.2686 -> 0.2681. Dai Le fed2022 10.7 -> 12.2 (actual 29.5); Regan
+nsw2023 10.1 -> 11.2 (35.9). Not shipped; both data files stay as reference.
+Note: former mayors are also among the largest OVERCALLS (Pascoe Vale 2022
+18.0 vs 4.2, Geelong 2022 14.9 vs 3.2) -- local profile does not separate
+winners from also-rans on its own.
