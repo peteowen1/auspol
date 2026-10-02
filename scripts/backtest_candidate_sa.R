@@ -967,6 +967,9 @@ if (PORT) {
   shares <- 100 * shares / rowSums(shares)
 }
 shares <- xgb_primary_override(shares, TGT)
+# Every class with no candidate standing is zeroed AFTER the override, which
+# otherwise writes its prediction back (plans/prereg-nomination-zero-2026-10-03.md).
+shares <- zero_unnominated(shares, fb, TGT)
 # Time-forward seat-swing port (AUSPOL_SEAT_SWING_PORT=2), AFTER the override,
 # which would otherwise overwrite it. plans/prereg-seat-swing-port-v2-2026-09-29.md
 # Only on top of the xgb layer: at AUSPOL_XGB_PRIMARY=0 (rebuild stage 1) these
