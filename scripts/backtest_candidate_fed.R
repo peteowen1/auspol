@@ -1465,6 +1465,11 @@ for (K in PAIRS) {
   # Seat-poll blend (AUSPOL_SEAT_POLL_BLEND), after the override and the port;
   # xgb layer only, so stage-1 base_pred never includes it.
   # plans/prereg-seat-poll-blend-2026-09-29.md
+  # State signal pooled from seat polls (AUSPOL_STATE_POLL_POOL), BEFORE the
+  # blend so a polled seat is pulled only the remaining way to its own polls.
+  # plans/prereg-state-poll-pool-2026-10-02.md
+  if (identical(Sys.getenv("AUSPOL_XGB_PRIMARY", "0"), "1"))
+    shares <- state_poll_pool_apply(shares, sprintf("fed%d", K$to))
   if (identical(Sys.getenv("AUSPOL_XGB_PRIMARY", "0"), "1"))
     shares <- seat_poll_blend_apply(shares, sprintf("fed%d", K$to))
 

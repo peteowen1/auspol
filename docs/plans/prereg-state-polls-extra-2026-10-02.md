@@ -42,3 +42,18 @@ seat-weighted mean state deviation is subtracted, so the feature is relative
 unacceptable clause, against v59. Flagged in advance: it was designed after
 seeing arm 1 fail, and against what happened its correlation is lower than
 the shipped feature's (0.552 over 31 state-years against 0.620 over 30).
+
+## RESULT, A2, 2026-10-02 22:10: FAILS
+`output/snapshots/20261002-2201-c452887-from6` against v59. Seat log loss:
+fed2013 -0.0015, fed2016 +0.0021, fed2019 +0.0072, fed2022 +0.0026, fed2025
++0.0129; final primary RMSE worse in fed2019 (3.776 -> 3.899), fed2022
+(3.572 -> 3.697), fed2025 (3.431 -> 3.515). Ledger 0.2712 -> 0.2746. Removing
+each year's mean discards information the shipped feature uses: the state
+crosstabs' level against the national trend.
+
+## CONCLUSION: not shipped. The crosstab file stays on disk as reference data.
+Neither arm helps, and Tasmania 2025, the case that prompted this, has no
+statewide reading in the file at all. A version that gives the new readings to
+the shipped feature without changing its level (e.g. replacing Newspoll's
+2025 reading only when a pollster's house effect is removed against the
+national trend) is untested; that would be a new registration.
