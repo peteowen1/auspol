@@ -228,7 +228,7 @@ seat_poll_blend_table <- function(target_election, write = FALSE) {
 #' @return `shares`, blended.
 #' @export
 seat_poll_blend_apply <- function(shares, target_election) {
-  mode <- Sys.getenv("AUSPOL_SEAT_POLL_BLEND", "0")
+  mode <- Sys.getenv("AUSPOL_SEAT_POLL_BLEND", "1")
   if (!mode %in% c("1", "2", "3")) return(shares)
   if (mode == "3") {
     # plans/prereg-seat-poll-joint-fp-tpp-2026-09-30.md: primary AND two-party

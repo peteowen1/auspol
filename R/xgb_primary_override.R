@@ -19,7 +19,7 @@
 #' @return The overridden matrix, or `shares` unchanged if not enabled.
 #' @export
 xgb_primary_override <- function(shares, pair_label, enabled = NULL) {
-  if (is.null(enabled)) enabled <- identical(Sys.getenv("AUSPOL_XGB_PRIMARY", "0"), "1")
+  if (is.null(enabled)) enabled <- identical(Sys.getenv("AUSPOL_XGB_PRIMARY", "1"), "1")
   if (!isTRUE(enabled)) return(shares)
   # DEFAULT TO v6, because v6 is what AUSPOL_XGB_PRIMARY_LIVE ships. The
   # unversioned filename is v1's (scripts/fit_xgb_primary_cv.R writes it), so
@@ -171,7 +171,7 @@ xgb_primary_predict_live <- function(shares, mat22, a22, state_mean, returns,
                                       own_prev = NULL, region = "vic",
                                       year = 2026L, prev_year = 2022L,
                                       enabled = NULL) {
-  if (is.null(enabled)) enabled <- identical(Sys.getenv("AUSPOL_XGB_PRIMARY_LIVE", "0"), "1")
+  if (is.null(enabled)) enabled <- identical(Sys.getenv("AUSPOL_XGB_PRIMARY_LIVE", "1"), "1")
   if (!isTRUE(enabled)) return(shares)
   model_f <- out_path("xgb-primary-v6-final.model")
   cols_f  <- out_path("xgb-primary-v6-final-cols.json")
@@ -504,6 +504,13 @@ xgb_primary_predict_live <- function(shares, mat22, a22, state_mean, returns,
     rows[, senate_dev := .sf$senate_dev]
     if (all(is.na(rows$senate_pct))) cat("XS1!! live Senate features ALL NA -- the model expects them; check output/senate-vic2026.csv shipped
 ")
+  }
+  # Endorsement (AUSPOL_XGB_ENDORSE=1): the same R/endorsement_features.R.
+  if (any(c("c200", "voices") %in% feat_cols)) {
+    .lp <- paste0(region, if (identical(region, "vic")) "2026" else "")
+    .en <- endorsement_features(data.table::data.table(pair = .lp, seat = rows$seat, party = rows$party))
+    rows[, c200 := .en$c200]
+    rows[, voices := .en$voices]
   }
   # Booth pattern (AUSPOL_XGB_BOOTH=1): the same R/booth_features.R.
   if (any(c("booth_spread", "early_gap") %in% feat_cols)) {

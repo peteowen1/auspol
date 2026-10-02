@@ -140,7 +140,7 @@ leader_seat_table <- function(target_election, write = FALSE) {
 #' @return `shares`, adjusted.
 #' @export
 leader_seat_apply <- function(shares, target_election) {
-  if (!identical(Sys.getenv("AUSPOL_LEADER_SEAT", "0"), "1")) return(shares)
+  if (!identical(Sys.getenv("AUSPOL_LEADER_SEAT", "1"), "1")) return(shares)
   # Neither sources nor a shipped table (a fresh checkout's first rebuild):
   # say so and run without the bonus, as the demographic step does, rather
   # than crash the harness.

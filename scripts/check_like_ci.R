@@ -88,8 +88,13 @@ drift <- local({
   ex <- new.env()
   sys.source("scripts/published_flags.R", envir = ex)
   PF <- get("PUBLISHED_FLAGS", envir = ex)
-  fs <- setdiff(c(Sys.glob("scripts/fit_*.R"), Sys.glob("scripts/build_*.R")),
+  fs <- setdiff(c(Sys.glob("scripts/fit_*.R"), Sys.glob("scripts/build_*.R"), Sys.glob("R/*.R")),
                 "scripts/fit_seats_full.R")  # applies the flags itself
+  # R/ added 2026-10-02: package functions cannot apply the published flags, so
+  # their inline defaults ARE the behaviour of any run outside the rebuild. 18
+  # defaulted "off" for switches that ship on (AUSPOL_LEVEL_RECIPE "anchored"
+  # vs "live", ...), and stage 3 built the model's training features under
+  # them -- a train/serve mismatch in v56-v57.
   pat <- 'Sys\\.getenv\\(\\s*"(AUSPOL_[A-Z0-9_]+)"\\s*,\\s*"([^"]*)"\\s*\\)'
   out <- list()
   for (f in fs) {
@@ -103,7 +108,7 @@ drift <- local({
     # the first attempt disabled the call that way and the check stayed
     # quiet. Proving it fires needed a file with no call at all, which is
     # what the real pre-fix fit_xgb_flows_v1.R was.
-    if (any(grepl("apply_published_flags|harness_defaults", src))) next
+    if (!startsWith(f, "R/") && any(grepl("apply_published_flags|harness_defaults", src))) next
     for (hit in unlist(regmatches(src, gregexpr(pat, src)))) {
       g <- regmatches(hit, regexec(pat, hit))[[1]]
       if (!g[2] %in% names(PF)) next

@@ -201,6 +201,10 @@ run_queue() {  # $1 = XGB_PRIMARY, $2 = log tag, $3 = slots, then "harness:ENV=v
 if at_least 1; then
   python scripts/build_state_notionals.py > "$LOG/s1_notionals.log" 2>&1 || { echo "!! build_state_notionals.py failed its checks -- see $LOG/s1_notionals.log"; exit 1; }
 fi
+# ENDORSEMENT FEATURES (AUSPOL_XGB_ENDORSE): only when the switch is on.
+if at_least 3 && [ "${AUSPOL_XGB_ENDORSE:-0}" = "1" ]; then
+  python scripts/build_endorsement_features.py > "$LOG/s3_endorse.log" 2>&1 || { echo "!! build_endorsement_features.py failed -- see $LOG/s3_endorse.log"; exit 1; }
+fi
 # BOOTH FEATURES (AUSPOL_XGB_BOOTH): read by stage 3 and the live forecast.
 # Only when the switch is on: a refused feature must not be able to fail a
 # production rebuild on a bad input (review, 2026-10-02).
