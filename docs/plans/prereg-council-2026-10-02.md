@@ -44,3 +44,18 @@ correction would be moving votes between candidates wrongly).
 ## Decision
 
 Ships if all hold and the unacceptable clause does not fire.
+
+## RESULT, arm A, 2026-10-02 10:55: REFUSED on the Victoria guard
+
+`output/snapshots/20261002-1042-537a9b7-from3` against v57. C1 targeted rows
+(n 1,410): per-seat summed squared error -0.73 (SE 0.35), RMSE 4.954 -> 4.905
+-- passes. C2 all elections +0.0004 (SE 0.0016) -- passes. C4 all rows 4.1507
+-> 4.1446 -- passes. C3 Victoria +0.0072 (SE 0.0021, +3.4 SE) -- FAILS.
+Ledger 0.2700 -> 0.2709. Other classes in targeted seats 3.924 -> 3.929
+(unacceptable clause does not fire).
+
+The trees absorbed only part of the effect: mayors' mean signed error +4.72
+-> +3.29, councillors' +1.32 -> +1.04, stood-and-lost unchanged. Victoria has
+no mayors in the data and few touched rows, so a +0.007 shift there is the
+size of the retrain noise seen on 2026-10-01 (~0.005 on the ledger); whether
+the guard caught harm or noise is UNKNOWN until that noise is measured.
