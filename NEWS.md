@@ -1,3 +1,9 @@
+# auspol 0.4.68
+
+- v60: a state signal pooled from seat polls shifts every seat in a federal state (`AUSPOL_STATE_POLL_POOL`, on; federal only, Victoria unchanged). fed2025 seat log loss 0.3570 -> 0.3453, all of it Tasmania; shipped on Pete's override of the pre-registered clause.
+- Tested and not shipped: every pollster's state crosstabs, raw and made relative (both worse on fed2025). The 1,095 sourced readings stay as reference data.
+- `restore_snapshot.sh` no longer moves the hand-built state-deviation and endorsement tables aside.
+
 # auspol 0.4.67
 
 - v59: Climate 200 / Voices endorsement as model features (`AUSPOL_XGB_ENDORSE`, on). Backed candidates' primary error 10.58 -> 9.18 RMSE; Victoria seat log loss 0.2696 -> 0.2654; all-row RMSE 4.095 -> 4.044. Live: Hawthorn independent 0.11 -> 0.24.

@@ -529,6 +529,8 @@ PUBLISHED_FLAGS <- c(
                                              # call site, so this changes what the federal backtest measures and
                                              # nothing else. fed2019 REGRESSES (+0.0110) because state polls failed the
                                              # same way national polls did that year -- an inherent property.
+  AUSPOL_STATE_POLL_EXTRA    = "0",          # TESTING 2026-10-02: every pollster's state crosstabs into the state-deviation features (scripts/build_state_deviation_features.R). plans/prereg-state-polls-extra-2026-10-02.md
+  AUSPOL_STATE_POLL_POOL     = "1",          # SHIPPED v60 2026-10-02 (Pete overrode the prereg clause): state signal pooled from seat polls, federal harness only, before the seat-poll blend (R/state_poll_pool.R). plans/prereg-state-poll-pool-2026-10-02.md
   AUSPOL_STATE_DEV_SHUFFLE   = "0",          # control: permutes which state each seat sits in, within its election.
   AUSPOL_DEMO_RESID          = "2",          # SHIPPED 2026-09-29 (rebuilds V/W passed). 2 = Labor + Greens on the current model's time-forward misses (2026-09-29, plans/prereg-demographic-labor-greens-2026-09-29.md); 1 = Arm A of docs/plans/prereg-demographic-axis-2026-09-15.md:
                                              # correct each seat's minor-party primary using ALL SEVEN census

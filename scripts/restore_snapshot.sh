@@ -36,12 +36,12 @@ while IFS= read -r -d '' f; do rel="${f#output/}"; [ -e "$SNAP/$rel" ] && contin
     mkdir -p "$ASIDE/$(dirname "$rel")"
     if mv "$f" "$ASIDE/$rel"; then m=$((m+1)); else failed=$((failed+1)); fi
   fi
-done < <(find output -type f -newer "$SNAP" -not -path "output/snapshots/*" -not -path "output/.unrestored/*" -not -path "output/booths/*" -not -path "output/cache/*" -not -name "council-results-*.csv" -not -name "council-history*.csv" -not -name "lga-district-overlap*.csv" -not -name "senate-*.csv" -not -name "onp-senate-*.csv" -print0)
+done < <(find output -type f -newer "$SNAP" -not -path "output/snapshots/*" -not -path "output/.unrestored/*" -not -path "output/booths/*" -not -path "output/cache/*" -not -name "council-results-*.csv" -not -name "council-history*.csv" -not -name "lga-district-overlap*.csv" -not -name "senate-*.csv" -not -name "onp-senate-*.csv" -not -name "state-deviation-features*.csv" -not -name "endorsement-features.csv" -print0)
 if [ "$move" = 1 ]; then
   [ "$m" -gt 0 ] && echo "RS2 moved $m file(s) written after the snapshot, and not in it, to $ASIDE"
   [ "$failed" -gt 0 ] && echo "RS2! $failed file(s) could NOT be moved (held open?) -- they will beat the restored files in newest-file pickers"
 elif [ "$k" -gt 0 ]; then
   echo "RS2! $k file(s) in output/ are newer than this partial snapshot and not in it; left in place (pass --strict to move them aside):"
-  find output -type f -newer "$SNAP" -not -path "output/snapshots/*" -not -path "output/.unrestored/*" -not -path "output/booths/*" -not -path "output/cache/*" -not -name "council-results-*.csv" -not -name "council-history*.csv" -not -name "lga-district-overlap*.csv" -not -name "senate-*.csv" -not -name "onp-senate-*.csv" | while IFS= read -r f; do [ -e "$SNAP/${f#output/}" ] || echo "   $f"; done | head -20
+  find output -type f -newer "$SNAP" -not -path "output/snapshots/*" -not -path "output/.unrestored/*" -not -path "output/booths/*" -not -path "output/cache/*" -not -name "council-results-*.csv" -not -name "council-history*.csv" -not -name "lga-district-overlap*.csv" -not -name "senate-*.csv" -not -name "onp-senate-*.csv" -not -name "state-deviation-features*.csv" -not -name "endorsement-features.csv" | while IFS= read -r f; do [ -e "$SNAP/${f#output/}" ] || echo "   $f"; done | head -20
 fi
 exit 0
