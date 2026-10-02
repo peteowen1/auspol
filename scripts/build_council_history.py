@@ -95,6 +95,9 @@ def split_state(n):
     return (nk(t[-1]), nk(t[0])) if t else ('', '')
 
 
+EXTRA = os.environ.get('AUSPOL_COUNCIL_EXTRA', '0') == '1'
+
+
 def main():
     OV = collections.defaultdict(dict)
     for r in csv.DictReader(open('output/lga-district-overlap.csv', encoding='utf-8')):
@@ -116,6 +119,24 @@ def main():
             n += 1
         have.append(st)
         print(f'CH0  {st}: {n} council candidate rows')
+        # AUSPOL_COUNCIL_EXTRA=1 (plans/prereg-council-extra-2026-10-02.md):
+        # NSW councils that ran their OWN elections (Fairfield every year, 24
+        # council-years) are absent from the commission's files. Added only
+        # for a (year, council) the commission file lacks.
+        xf = 'external/reference/council/nsw-self-run.csv'
+        if st == 'nsw' and EXTRA and os.path.exists(xf):
+            seen = {(c['year'], cnorm(c['council'])) for k_, rs in CR.items() if k_[0] == 'nsw' for c in rs}
+            nx = 0
+            for r in csv.DictReader(open(xf, encoding='utf-8')):
+                if (r['year'], cnorm(r['council'])) in seen:
+                    continue
+                r['state'] = 'nsw'
+                r['elected'] = 'True' if str(r['elected']).strip().lower() in ('true', '1', 'yes', 'y', 'elected') else 'False'
+                gv = gkey((r['given'] or '').split()[0] if r['given'] else '')
+                CR[('nsw', nk(r['surname']), gv)].append(r)
+                CR[('nsw', nk(r['surname']), '*')].append(r)
+                nx += 1
+            print(f'CH0x nsw: {nx} rows added from councils that ran their own elections')
     # Federal candidates too (matched against councils in their own state), or
     # council history is a state-versus-federal label. Tas, ACT and NT councils
     # are not collected, so their federal candidates get none (reported).
@@ -124,6 +145,26 @@ def main():
     nofed = sum(1 for r in csv.DictReader(open('output/candidacies.csv', encoding='utf-8'))
                 if r['region'] == 'fed' and (r['state'] or '').lower() not in have)
     print(f'CH0  federal candidacies outside the collected states (Tas/ACT/NT): {nofed}, no council history')
+    # AUSPOL_COUNCIL_EXTRA=1: mayors chosen by their councillors are recorded
+    # nowhere in the commission files (Regan, Northern Beaches -> Wakehurst
+    # 2023, was a "councillor"). A term counts if it began in a year BEFORE the
+    # election year and within 10 years, in a council overlapping the seat.
+    MY = collections.defaultdict(list)
+    mf = 'external/reference/council/mayors.csv'
+    if EXTRA and os.path.exists(mf):
+        nm = 0
+        for r in csv.DictReader(open(mf, encoding='utf-8')):
+            try:
+                ty = int(str(r['term_start'])[:4])
+            except ValueError:
+                continue
+            st_m = (r['state'] or '').strip().lower()
+            MY[(st_m, nk(r['surname']), gkey(nk((r['given'] or '').split()[0] if r['given'] else '')))].append((ty, r['council']))
+            nm += 1
+        print(f'CH0m {nm} council-chosen mayor terms read from {mf}')
+    elif EXTRA:
+        print(f'CH0m! {mf} missing -- no council-chosen mayors this run')
+    n_mayor_added = 0
     out, amb = [], 0
     # COVERAGE: which council election years exist per state. A candidacy with no
     # council election in its state inside the window has NO DATA, which is not
@@ -166,11 +207,25 @@ def main():
         if len({cnorm(h['council']) for h in hits}) > 1 or (not giv and len({nk(h['given']) for h in hits}) > 1):
             amb += 1
             hits = []
+        mterms = []
+        if giv:
+            for ty, mc in MY.get((st, sur, gkey(giv)), []):
+                o = OV.get((r['election'], nk(r['seat'])), {}).get(cnorm(mc))
+                if y - 10 <= ty < y and o and (o[0] >= 0.05 or o[1] >= 0.05):
+                    mterms.append((ty, mc))
+        if len({cnorm(m[1]) for m in mterms}) > 1:
+            mterms = []
         cov = any((y - 10 <= cy < y) or (st == 'qld' and cy == y) for cy in cyears.get(st, ()))
         rec = dict(election=r['election'], seat=r['seat'], name=r['name'], party=r['party'], council_coverage=cov,
                    council_any=bool(hits), council_elected=any(h['elected'] == 'True' for h in hits),
-                   council_mayor=any(h.get('contest') == 'mayor' and h['elected'] == 'True' for h in hits),
+                   council_mayor=any(h.get('contest') == 'mayor' and h['elected'] == 'True' for h in hits) or bool(mterms),
                    council_pct='', council_year='', council_name='', n_council_runs=len(hits))
+        if mterms and not hits:
+            # a mayor is an elected councillor even where the ward results are missing
+            rec.update(council_any=True, council_elected=True, council_year=str(max(m[0] for m in mterms)),
+                       council_name=mterms[0][1])
+        if mterms and not any(h.get('contest') == 'mayor' and h['elected'] == 'True' for h in hits):
+            n_mayor_added += 1
         if hits:
             last = max(hits, key=lambda h: (int(h['year']), float(h['first_pref_pct'] or 0)))
             rec.update(council_pct=last['first_pref_pct'], council_year=last['year'], council_name=last['council'])
@@ -186,6 +241,8 @@ def main():
         e = sum(v for k, v in by.items() if k[0] == st and k[2])
         print(f'CH1  {st}: {n} state candidacies, {a} with council history ({e} elected councillors)')
     print(f'CH2  ambiguous (one name, several councils) dropped: {amb}')
+    if EXTRA:
+        print(f'CH2m candidacies newly flagged mayor from council-chosen terms: {n_mayor_added}')
     if unmatched_councils:
         print(f'CH3! council names absent from the LGA overlap table (never matchable): {len(unmatched_councils)}, '
               f'e.g. {list(unmatched_councils)[:6]}')
