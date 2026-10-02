@@ -87,10 +87,13 @@ files <- list.files(OUT, pattern = "^backtest-.*allprobs.*[.]csv$", full.names =
 # scored as "no seat moved". The pair comes from the sibling sharedetail
 # (same -a...-g... suffix), which always carries it (the SA file name has no
 # election in it); a file with neither is dropped, loudly.
+# Sharedetail files listed ONCE (the lookup below used to list the whole of
+# output/ for every allprobs file); same pattern, searched in memory.
+.all_sd <- list.files(OUT, pattern = "sharedetail.*[.]csv$", full.names = TRUE)
 .pair_from_sibling <- function(f) {
   suf <- regmatches(basename(f), regexpr("-a[0-9a-f]+-g[0-9a-f]+x?[.]csv$", basename(f)))
   if (!length(suf)) return(NA_character_)
-  sib <- list.files(dirname(f), pattern = paste0("sharedetail.*", gsub("[.]", "[.]", suf), "$"), full.names = TRUE)
+  sib <- grep(paste0("sharedetail.*", gsub("[.]", "[.]", suf), "$"), .all_sd[dirname(.all_sd) == dirname(f)], value = TRUE)
   if (length(sib) != 1L) return(NA_character_)
   p <- unique(fread(sib, select = "pair", showProgress = FALSE)$pair)
   if (length(p) == 1L) as.character(p) else NA_character_
