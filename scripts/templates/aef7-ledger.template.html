@@ -250,7 +250,25 @@
   </details>
 
   <details class="provlog">
-    <summary>Provenance &amp; changelog <span class="n">(42 updates)</span></summary>
+    <summary>Provenance &amp; changelog <span class="n">(44 updates)</span></summary>
+    <p class="sub prov"><b>v58, 2 Oct 2026: council history, a steadier model, and a missing input restored.</b>
+       Three changes. (1) <b>Council election history</b> for every state and federal candidate: whether they had been
+       elected mayor, elected a councillor, or stood and lost, in a council overlapping their seat, from every state's
+       council results (Victoria and NSW 2008-24, Queensland 2012-24, SA 2018 and 2022, WA 2005-23). Independents who
+       had been mayors were being under-predicted by about 9 points and councillors by about 3.6; for the candidates
+       with a council record the error fell from 4.89 to 4.81 points. (2) <b>The xgb layer averages three fits</b>
+       with different random seeds: an equally valid refit had been moving Victoria's seat log loss by up to 0.011,
+       which is larger than most effects tested; the ensemble roughly halves that. (3) <b>A fix:</b> the model-fitting
+       stages never read the published switches, so v57 trained without the state notional feature it had been tested
+       with. Seat log loss 0.2700 to 0.2686 against AE Forecasts' 0.2825 (all 681 seats); primary-vote error 4.15 to
+       4.09 points over all 22 elections.</p>
+    <p class="sub prov"><b>v57, 1 Oct 2026: every seat scored, including the redrawn ones.</b> A district redrawn or
+       renamed by a redistribution had no previous result under its new name, so the backtests skipped it: 20 seats on
+       this page that AE Forecasts had always forecast (NSW 2023, Victoria 2022, WA 2025), plus Narracan 2022, whose
+       election was a January 2023 supplementary. Each previous result is now rebuilt on the new boundaries from
+       booth results, matching polling places by venue name, and the page compares all 681 of the 681 seats. On the
+       20 new seats our log loss is 0.171 against AE Forecasts' 0.210. Seat log loss 0.2741 (660 seats) to 0.2700
+       (681 seats; on the same 660, 0.2735).</p>
     <p class="sub prov"><b>v56, 30 Sep 2026: the statewide vote comes from the polls alone.</b> Each party's
        statewide vote had been nudged so its implied two-party result matched a projection that mixes the poll trend
        with the fundamentals. Tested again with the fundamentals learning only from earlier elections, the polls
