@@ -122,7 +122,10 @@ for (tg in targets) {
   }
   TR <- ALL[pair %in% train_pairs]
   TE <- ALL[pair == tg]
-  key <- digest::digest(list(params, feat_cols, .base_margin_mode,
+  # The SEED is part of the key: without it a run that changed only
+  # AUSPOL_XGB_SEED silently reused the previous seed's models (2026-10-02,
+  # the noise-floor measurement's seed-99 run returned seed 7's predictions).
+  key <- digest::digest(list(params, feat_cols, .base_margin_mode, Sys.getenv("AUSPOL_XGB_SEED", "42"),
                              as.data.frame(TR[, c(id_cols, feat_cols), with = FALSE]),
                              as.data.frame(TE[, c(id_cols, feat_cols), with = FALSE])))
   mf <- file.path(MDIR, paste0(tg, ".ubj"))
