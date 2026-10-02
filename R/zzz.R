@@ -53,7 +53,7 @@ globalVariables(c(
   "name_after", "name_before", "nonmajor_defended", "nonmajor_prev",
   "nonmajor_vacant", "now", "own_pcv", "own_prev_pcv", "p_hat", "pair",
   "pct", "pcv", "pcv_after", "pcv_before", "permit", "permit_v", "pkey", "prior",
-  "council_mayor", "council_elected", "council_lost", "council_pct", "council_any", "council_coverage", "covered",
+  "booth_spread", "early_gap", "council_mayor", "council_elected", "council_lost", "council_pct", "council_any", "council_coverage", "covered",
   "pred_share", "prev", "prev_ind", "prev_party", "prev_swing",
   "prior_leader_returns", "prior_pcv", "ret_frac", "retirement",
   "retirement_i", "returner_vote", "safe", "safe_gap", "safe_mid", "same",

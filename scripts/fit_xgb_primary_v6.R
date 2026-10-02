@@ -541,6 +541,17 @@ if (identical(Sys.getenv("AUSPOL_XGB_COUNCIL", "0"), "1")) {
 ",
               nrow(ALL), sum(ALL$council_mayor), sum(ALL$council_elected), sum(ALL$council_lost)))
 }
+# BOOTH PATTERN (AUSPOL_XGB_BOOTH=1, plans/prereg-booth-features-2026-10-02.md):
+# the class's spread across polling places and its early-vote gap at the
+# PREVIOUS election (R/booth_features.R); NA where no prior booth data.
+if (identical(Sys.getenv("AUSPOL_XGB_BOOTH", "0"), "1")) {
+  .bf <- booth_features(ALL[, .(pair, seat, party)])
+  ALL[, booth_spread := .bf$booth_spread]
+  ALL[, early_gap := .bf$early_gap]
+  cat(sprintf("XB1  booth features ON: spread on %.1f%%, early gap on %.1f%% of %d rows
+",
+              100 * mean(!is.na(ALL$booth_spread)), 100 * mean(!is.na(ALL$early_gap)), nrow(ALL)))
+}
 # SENATE GEOGRAPHY (AUSPOL_XGB_SENATE=1, plans/prereg-xgb-senate-2026-10-01.md):
 # each party class's federal Senate share in the seat and its deviation from
 # the class's mean over the pair, time-forward (R/senate_features.R). NA where
@@ -703,6 +714,7 @@ feat_cols <- c("base_pred", "seat_prev_pcv", "seat_outperf", "level_prev",
                "jump", "governed", "permit", "surge_h", "is_recipient",
                if (Sys.getenv("AUSPOL_XGB_SENATE", "0") %in% c("1", "minor")) c("senate_pct", "senate_dev"),
                if (identical(Sys.getenv("AUSPOL_XGB_COUNCIL", "0"), "1")) c("council_mayor", "council_elected", "council_lost", "council_pct"),
+               if (identical(Sys.getenv("AUSPOL_XGB_BOOTH", "0"), "1")) c("booth_spread", "early_gap"),
                # "dev": the geography only, no raw Senate level (Victorian Labor runs far
                # ahead of its Senate vote at state elections; the level misled arm "1")
                if (identical(Sys.getenv("AUSPOL_XGB_SENATE", "0"), "dev")) "senate_dev",

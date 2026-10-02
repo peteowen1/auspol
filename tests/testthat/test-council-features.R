@@ -30,3 +30,14 @@ test_that("council_features gives NA, not 0, where the seat has no council data 
   expect_equal(x$council_elected[2], 1)                                                         # covered, councillor
   expect_equal(x$council_elected[3], 0)                                                         # covered, no record -> 0
 })
+
+test_that("booth_features maps by pair, seat and class and leaves the rest NA", {
+  tab <- data.table::data.table(pair = c("vic2022", "vic2022"), seat = c("Mildura", "Mildura"),
+                                party = c("IND", "ALP"), booth_spread = c(12.5, 6.1), early_gap = c(-3.2, 1.4))
+  keys <- data.table::data.table(pair = c("vic2022", "vic2022", "vic2018"), seat = c("Mildura", "Mildura", "Mildura"),
+                                 party = c("ALP", "GRN", "ALP"))
+  x <- booth_features(keys, tab = tab)
+  expect_identical(x$party, keys$party)
+  expect_equal(x$booth_spread, c(6.1, NA, NA))
+  expect_equal(x$early_gap, c(1.4, NA, NA))
+})
