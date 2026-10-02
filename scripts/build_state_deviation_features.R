@@ -132,13 +132,11 @@ if (Sys.getenv("AUSPOL_STATE_POLL_EXTRA", "0") %in% c("1", "2")) {
       have <- which(RP$year == y & RP$state == st_j)
       if (length(have) && y %in% anchor_years) next
       pv <- prv$prev_tpp[match(st_j, prv$state)]
-      if (!is.finite(pv)) { cat(sprintf("SD2d! %s %s: no previous result, skipped
-", el, st_j)); next }
+      if (!is.finite(pv)) { cat(sprintf("SD2d! %s %s: no previous result, skipped\n", el, st_j)); next }
       if (length(have)) RP <- RP[-have]
       RP <- rbind(RP, data.table(year = y, state = st_j, prev_tpp = pv, agg = agg_x$agg_x[j], n_polls = agg_x$n_x[j]), fill = TRUE)
       xp_years <- union(xp_years, y)
-      cat(sprintf("SD2d %s %s: %s from %d crosstab readings, mean ALP two-party %.2f
-", el, st_j,
+      cat(sprintf("SD2d %s %s: %s from %d crosstab readings, mean ALP two-party %.2f\n", el, st_j,
                   if (length(have)) "REPLACED" else "ADDED", agg_x$n_x[j], agg_x$agg_x[j]))
     }
   }
