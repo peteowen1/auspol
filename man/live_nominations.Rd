@@ -33,7 +33,7 @@ live_nominations(
 }
 \value{
 list(target = data.table(seat, party, votes) or NULL, reason = chr,
-warnings = chr).
+warnings = chr, class_counts = chr).
 }
 \description{
 The published forecast's candidate list is incomplete until nominations close
@@ -44,11 +44,17 @@ once a person says it is the final list:
 \itemize{
 \item \code{AUSPOL_NOM_LIVE=1}: the ONLY way the gate opens, meaning the VEC final
 list has been loaded into \code{output/candidacies.csv}.
-\item \code{"auto"} (default) and \code{"0"}: shut. \code{auto} says the list is provisional.
-With \verb{=1} the count floor (\code{min_ratio}) is a hard check: a list far smaller
-than the previous election's is a load error. Everything else is a WARNING
-returned in \verb{$warnings}: \verb{=1} before \code{closes}; ALP or LNP absent in some seats
-(they will be zeroed there, and a major party can genuinely not stand); a seat
-with no candidacy at all (left untouched).
+\item \code{"auto"} (default) and \code{"0"}: shut, quietly (\code{auto} says the list is
+provisional).
+\item anything else, or \code{1} and then a failure below: an ERROR, never a quiet
+no-op.
+With \verb{=1} the count floor (\code{min_ratio}) is a hard check (a final list far
+smaller than the previous election's is a load error), as are a missing
+\code{candidacies.csv}, no \code{election} rows, and no \code{prior} baseline. Everything
+else is a WARNING returned in \verb{$warnings}: \verb{=1} before \code{closes}; ALP or LNP
+absent in some seats (a major party can genuinely not stand; any predicted
+share there WILL be zeroed); any class standing in under
+\code{NOM_CLASS_WARN_RATIO} of its previous seat count; a seat with no candidacy at
+all (left untouched); candidacy seats matching no forecast seat.
 }
 }

@@ -7,7 +7,7 @@
 zero_unnominated_live(shares, flows, label = "vic2026", ...)
 }
 \arguments{
-\item{shares}{Seat-by-class matrix of primaries.}
+\item{shares}{Seat-by-class matrix of primaries, with rownames.}
 
 \item{flows}{The live \code{\link[=build_flow_matrix]{build_flow_matrix()}} result.}
 
@@ -19,7 +19,8 @@ zero_unnominated_live(shares, flows, label = "vic2026", ...)
 \code{shares}, unchanged unless \code{AUSPOL_NOM_LIVE=1} and the list passes the count floor.
 }
 \description{
-Wrapper the published forecast calls after the xgb live override, mirroring
-the harnesses' \code{zero_unnominated(shares, fb, ..., flows = fm)}. Always prints
-one \code{NZL} line: either what was applied or why nothing was.
+Wrapper the published forecast calls AFTER the last step that can add share
+to a cell, mirroring the harnesses' \code{zero_unnominated(shares, fb, ..., flows = fm)}. Always prints one \code{NZL} line: either what was applied or why
+nothing was. Errors (rather than a quiet no-op) whenever
+\code{\link[=nom_zero_requested]{nom_zero_requested()}} and zeroing cannot be applied.
 }

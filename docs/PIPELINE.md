@@ -105,3 +105,32 @@ run; the flow models (4b) skip when their config hash is unchanged.
 `scripts/published_flags.R` is the only list of what ships. The six
 harnesses and `fit_seats_full.R` both read it. `docs/MODEL-REGISTRY.md`
 (generated) shows which script honours which switch.
+
+## D. November procedure: switching on nomination zeroing (v61, published forecast)
+
+`fit_seats_full.R` zeroes parties with no candidate (and sends their share by
+preference flows) ONLY when `AUSPOL_NOM_LIVE=1`. The default `auto` never does,
+because the vic2026 list in `output/candidacies.csv` is provisional (Wikipedia,
+379 candidacies against vic2022's 731) until nominations close at noon on
+9 November 2026. Once the VEC publishes the final list:
+
+1. Load the VEC final list into `output/candidacies.csv` (vic2026 rows, party
+   classes from `classify_party()`, same `SURNAME, Given` names as the rest of
+   the file). Check the log's per-class line afterwards: `NZL ... candidacies per
+   class, seats now/vic2022`.
+2. Upload that `candidacies.csv` to the `shipped-models` release. The CI
+   forecast job does not read your working copy: it downloads `candidacies.csv`
+   from that release (`.github/workflows/forecast.yaml`, "Fetch the trained
+   models", about line 168).
+3. In `scripts/published_flags.R` change `AUSPOL_NOM_LIVE` from `"auto"` to `"1"`,
+   in a commit. This has to be the published value: setting `=1` only in the
+   environment makes `fit_seats_full.R` stop at its published-flags check (the
+   flag differs from `published_flags.R`) unless `AUSPOL_OUT_SUFFIX` is set, which
+   is what you want for a trial run and not for the published one.
+4. Run the forecast and read the `NZL` lines. Warnings name ALP/LNP seats with no
+   candidacy (a major party can genuinely not stand; those cells ARE zeroed), any
+   class standing in under 80% of its vic2022 seat count, and `=1` before
+   10 November. With `=1`, every failure STOPS the run (`NZL!!`): an unrecognised
+   value, missing `candidacies.csv`, no vic2026 rows, no vic2022 baseline, or
+   fewer than 85% of vic2022's candidacies (a load error). The run also checks, at
+   the final write, that no zeroed cell was revived by a later step.
