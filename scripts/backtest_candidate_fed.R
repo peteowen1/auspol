@@ -486,33 +486,56 @@ if (nzchar(.want)) {
 # ---- TIMING AND PER-PAIR RESUME (added 2026-10-03; changes no model output) ----
 # TM lines: each pair prints its own wall time and the percentage split by stage,
 # from Sys.time() deltas. Reading code finds defects; only a timer finds cost.
-# RESUME: every pair is saved to output/pair-cache/ the moment its simulation and
-# scoring finish, so a run killed at 90% leaves the earlier pairs on disk and the
-# next launch of the SAME arm skips them (projection AND simulation). The cache
-# key is CAL_TAG with the pair selection removed (AUSPOL_FED_PAIRS is in both the
-# "-p" suffix and the fingerprint hash, and a one-pair launch must be able to
-# reuse a pair a full launch saved), plus the size and mtime of the three corpus
-# files. It is only READ when the code is committed and clean (an "x" or "?" tag
-# does not say WHICH uncommitted edit a cached pair came from); it is still
-# WRITTEN then, and AUSPOL_FED_RESUME=0 forces a fresh run. The final
-# backtest-fed*.csv files are still assembled in PAIRS order from the per-pair
-# pieces, so their content is the same as an uninterrupted run.
-RESUME <- !identical(Sys.getenv("AUSPOL_FED_RESUME", "1"), "0") && !grepl("[x?]$", .code_tag)
-.pair_free_tag <- local({
-  t0 <- sub("^-p[0-9]+", "", CAL_TAG)
-  head_part <- substr(t0, 1L, nchar(t0) - nchar(.arm_fingerprint) - nchar(.code_tag))
-  paste0(head_part, .fp_hash(drop = "AUSPOL_FED_PAIRS"), .code_tag)
-})
-.corpus_stamp <- local({
-  fi <- file.info(file.path(P, c("aec-fed-firstprefs.csv", "aec-fed-transfers.csv", "aec-fed-winners.csv")))
-  paste(fi$size, as.numeric(fi$mtime), collapse = "|")
-})
+# RESUME (OPT-IN, AUSPOL_FED_RESUME=1; unset or anything else leaves this harness
+# exactly as it was: no cache read AND no cache write): every pair is saved to
+# output/pair-cache/ the moment its simulation and scoring finish, so a run
+# killed at 90% leaves the earlier pairs on disk and the next launch of the SAME
+# arm skips them (projection AND simulation). Helpers and their tests:
+# R/fed_cache.R, tests/testthat/test-fed-cache.R.
+#  - KEY: CAL_TAG with the pair selection removed (the "-p" suffix and the
+#    AUSPOL_FED_PAIRS part of the fingerprint; a one-pair launch must be able to
+#    reuse a pair a full launch saved) plus a STAMP (size+mtime, hashed) of every
+#    input that changes a result: the AEC corpus and the rest of
+#    external/elections, the xgb-primary files and as-at model directories,
+#    level-pred.csv, candidacies.csv, the salience / slope / baseline / insurgency
+#    / covariance files, external/reference, and every file of the anchor clone's
+#    analysis/Data (the polls).
+#  - READ AND WRITE ONLY when the code is provably the code that made the pair:
+#    a git tag exists and does not end in x or ?, AND the tree is clean over R/,
+#    scripts/, src/ (the C++ simulator) and DESCRIPTION. AUSPOL_DUMP_SHARES=1 also
+#    disables it (a resumed pair would not rewrite the dump files). The reason is
+#    printed as RS0 whenever resume was asked for.
+#  - SIDE FILES: the only per-pair file besides the four final CSVs is
+#    backtest-fedNNNN-ourtcp<CAL_TAG>.csv; its table is saved in the cache and
+#    re-written, under this launch's own CAL_TAG, when a pair is resumed.
+#  - The final backtest-fed*.csv files are still assembled in PAIRS order from the
+#    per-pair pieces, so their content is the same as an uninterrupted run.
+.resume_dec <- fed_resume_decision(
+  Sys.getenv("AUSPOL_FED_RESUME", ""), .code_tag,
+  if (identical(Sys.getenv("AUSPOL_FED_RESUME", ""), "1")) fed_tree_dirty() else NA,
+  Sys.getenv("AUSPOL_DUMP_SHARES", ""))
+RESUME <- .resume_dec$ok
+if (.resume_dec$requested)
+  cat(sprintf("RS0  pair resume cache %s: %s\n", if (RESUME) "ON" else "OFF", .resume_dec$reason))
+.pair_free_tag <- if (RESUME) fed_pair_free_tag(CAL_TAG, .arm_fingerprint, .code_tag,
+                                                .fp_hash(drop = "AUSPOL_FED_PAIRS")) else NA_character_
+.corpus_stamp <- if (RESUME) fed_input_stamp(
+  files = file.path(P, c("aec-fed-firstprefs.csv", "aec-fed-transfers.csv", "aec-fed-winners.csv")),
+  dirs = c(P, file.path("output", "xgb-primary-asat"), file.path("output", "xgb-primary-v6-models"),
+           file.path("external", "reference"), sub("/+$", "", anchor_data_path("", must_exist = FALSE))),
+  top = list(output = "^(xgb-primary-|level-pred|candidacies|salience-|seat-salience|mp-slope-|notional-baselines|projection-mix|fed-insurgency|statewide-cov)")) else NA_character_
+if (RESUME) cat(sprintf("RS0  input stamp %s over %d files (%d absent)\n", .corpus_stamp,
+                        attr(.corpus_stamp, "n"), attr(.corpus_stamp, "n_absent")))
 .pair_cache_file <- function(to) file.path("output", "pair-cache", sprintf("backtest-fed%d%s.rds", to, .pair_free_tag))
 .pair_cache_read <- function(to) {
+  if (!RESUME) return(NULL)
   f <- .pair_cache_file(to)
-  if (!RESUME || !file.exists(f)) return(NULL)
+  if (!file.exists(f)) return(NULL)
   z <- tryCatch(readRDS(f), error = function(e) NULL)
-  if (is.null(z) || !identical(z$stamp, .corpus_stamp) || !identical(z$tag, .pair_free_tag)) return(NULL)
+  if (!fed_cache_valid(z, .corpus_stamp, .pair_free_tag)) {
+    cat(sprintf("RS1! fed%d: cache %s exists but is stale or unreadable; recomputing\n", to, f))
+    return(NULL)
+  }
   z
 }
 .tm_last <- Sys.time(); .tm <- list()
@@ -1635,7 +1658,18 @@ for (K in PAIRS) {
                                           # the last would widen the wrong
                                           # pair's re-entry cells, silently,
                                           # with a plausible non-zero count.
-                                          REENTRY_CELLS = REENTRY_CELLS)
+                                          REENTRY_CELLS = REENTRY_CELLS,
+                                          # Carried per pair for the same reason
+                                          # (docs/reviews/party-cor-loop-leak-
+                                          # 2026-10-03.md): the bare PARTY_COR is
+                                          # the LAST projection iteration's matrix
+                                          # by the time the simulation loop reads
+                                          # it, so every pair but the last was
+                                          # simulated with another pair's matrix
+                                          # while the COV log line named its own.
+                                          # list() keeps a NULL, so the
+                                          # no-correlation arm round-trips.
+                                          PARTY_COR = PARTY_COR)
 }
 
 # THE FALLBACK IS TAKEN OVER EVERY PAIR, NOT JUST THE ONES IN THIS RUN.
@@ -1663,6 +1697,16 @@ for (X in out_all) {
   K <- X$K
   if (!is.null(X$cached)) {
     # Same appends, same order, as the end of a computed iteration.
+    # Plus the side file a computed pair writes (its ourtcp CSV), under THIS
+    # launch's CAL_TAG: the cache key drops the "-p" suffix and fingerprint, so
+    # without this a resumed pair would leave its file missing or stale.
+    .sf <- fed_rewrite_side_files(X$cached, K$to, CAL_TAG)
+    if (length(.sf)) {
+      cat(sprintf("BF3t  wrote %d seat/scenario rows to backtest-fed%d-ourtcp%s.csv (re-written from cache)\n",
+                  nrow(X$cached$scen), K$to, CAL_TAG))
+    } else {
+      cat(sprintf("BF3t! tcp_scenarios() returned no rows for fed%d -- ourtcp CSV NOT written (from cache)\n", K$to))
+    }
     res_all[[length(res_all) + 1L]] <- X$cached$res
     all_probs[[length(all_probs) + 1L]] <- X$cached$full
     share_detail[[length(share_detail) + 1L]] <- X$cached$share_detail
@@ -1682,6 +1726,16 @@ for (X in out_all) {
   # reassigns SD_OVR fresh when it runs; this reset is what makes that safe to
   # rely on even when salience does NOT run for a given configuration.
   SD_OVR <- NULL
+  # PARTY_COR for THIS pair, not the global the projection loop left behind (see
+  # the out_all payload above and docs/reviews/party-cor-loop-leak-2026-10-03.md).
+  # Dormant at published defaults (AUSPOL_FORECAST_MODE=1 gives the simulator
+  # non-NULL statewide_draws, which makes it ignore party_cor), live whenever a
+  # federal run sets AUSPOL_FORECAST_MODE=0 with AUSPOL_PARTY_COR on.
+  PARTY_COR <- X$PARTY_COR
+  fed_check_cor_pair(PARTY_COR, K$to)
+  if (nzchar(Sys.getenv("AUSPOL_PARTY_COR", "")))
+    cat(sprintf("COV2 fed%d simulated with party correlation (%s): %s\n", K$to, COR_MODE,
+                if (is.null(PARTY_COR)) "none" else attr(PARTY_COR, "cor_source")))
   sd_w <- if (is.finite(X$sd_w)) X$sd_w else fallback
   # STATEWIDE UNCERTAINTY, MEASURED. All four harnesses hardcoded 1.5 with no
   # derivation. The realised statewide first-preference error over 139
@@ -1994,15 +2048,19 @@ for (X in out_all) {
   cat(sprintf("TM2 fed%d: wall %.1fs (projection %.1fs + simulation %.1fs)\n", K$to, .wall, .wall - .p2, .p2))
   # PERSIST THIS PAIR NOW (see RESUME above): a kill after this point loses only
   # the pairs that had not finished.
-  tryCatch({
-    dir.create(file.path("output", "pair-cache"), showWarnings = FALSE, recursive = TRUE)
+  # Only when resume was asked for AND allowed (RS0). The user opted in, so a
+  # write that fails STOPS the run (fed_cache_save checks the rename) instead of
+  # printing a line nobody reads and discovering at the next launch that nothing
+  # was saved. `scen` is the ourtcp table, so a resume can re-write that file.
+  if (RESUME) {
     .cf <- .pair_cache_file(K$to)
-    saveRDS(list(res = res, full = full, share_detail = share_detail[[length(share_detail)]],
-                 tot = tot_all[[length(tot_all)]], sd_w = X$sd_w, wall = .wall,
-                 stamp = .corpus_stamp, tag = .pair_free_tag, saved = Sys.time()), paste0(.cf, ".tmp"))
-    file.rename(paste0(.cf, ".tmp"), .cf)   # a kill mid-write never leaves a half file
+    fed_cache_save(list(schema = FED_CACHE_SCHEMA, res = res, full = full,
+                        share_detail = share_detail[[length(share_detail)]],
+                        tot = tot_all[[length(tot_all)]], sd_w = X$sd_w, wall = .wall,
+                        scen = .scen, stamp = .corpus_stamp, tag = .pair_free_tag,
+                        saved = Sys.time()), .cf)   # tmp + rename: a kill mid-write never leaves a half file
     cat(sprintf("RS2  fed%d: saved %s\n", K$to, .cf))
-  }, error = function(e) cat(sprintf("RS2! fed%d: pair cache NOT written: %s\n", K$to, conditionMessage(e))))
+  }
 }
 
 cat(sprintf("\nTM3  per-pair wall seconds (projection + simulation; a resumed pair shows its original time): %s | total %.1fs\n",
