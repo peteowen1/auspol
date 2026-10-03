@@ -327,17 +327,21 @@ cat(sprintf("BS1f fallback_smooth %.2f | flow_sd %.2f
 # over another arm's per-seat output, silently, so a comparison read two copies
 # of the same run. This appends a short hash of every AUSPOL_* variable that is
 # set, so a NEW parameter cannot repeat that without anyone touching this line.
-.arm_fingerprint <- local({
+# `drop` is for the per-pair resume cache below, which must NOT depend on which
+# pairs this particular launch selected. The default (OUT_SUFFIX and the resume
+# switch only) is byte-for-byte the fingerprint this harness has always used.
+.fp_hash <- function(drop = character(0)) {
   e <- Sys.getenv()
   e <- e[grepl("^AUSPOL_", names(e)) & nzchar(e)]
-  e <- e[!names(e) %in% c("AUSPOL_OUT_SUFFIX")]
+  e <- e[!names(e) %in% c("AUSPOL_OUT_SUFFIX", "AUSPOL_FED_RESUME", drop)]
   if (!length(e)) "" else {
     s <- paste(sort(paste0(names(e), "=", e)), collapse = ";")
     sprintf("-a%s", substr(tolower(paste0(as.hexmode(
       sum(utils::head(utf8ToInt(s), 4000) * seq_along(utils::head(utf8ToInt(s), 4000)))
     ))), 1, 6))
   }
-})
+}
+.arm_fingerprint <- .fp_hash()
 CAL_TAG <- paste0(
   if (nzchar(Sys.getenv("AUSPOL_FED_PAIRS", ""))) sprintf("-p%s", gsub("[^0-9]", "", Sys.getenv("AUSPOL_FED_PAIRS"))) else "",
   if (!is.null(.level_sd)) sprintf("-lv%s", gsub("[.]", "", paste(format(.level_sd, nsmall=2), collapse="_"))) else "",
@@ -479,7 +483,63 @@ if (nzchar(.want)) {
               paste(vapply(PAIRS, function(k) k$to, numeric(1)), collapse = ", ")))
   if (!length(PAIRS)) stop("AUSPOL_FED_PAIRS matched no pair")
 }
+# ---- TIMING AND PER-PAIR RESUME (added 2026-10-03; changes no model output) ----
+# TM lines: each pair prints its own wall time and the percentage split by stage,
+# from Sys.time() deltas. Reading code finds defects; only a timer finds cost.
+# RESUME: every pair is saved to output/pair-cache/ the moment its simulation and
+# scoring finish, so a run killed at 90% leaves the earlier pairs on disk and the
+# next launch of the SAME arm skips them (projection AND simulation). The cache
+# key is CAL_TAG with the pair selection removed (AUSPOL_FED_PAIRS is in both the
+# "-p" suffix and the fingerprint hash, and a one-pair launch must be able to
+# reuse a pair a full launch saved), plus the size and mtime of the three corpus
+# files. It is only READ when the code is committed and clean (an "x" or "?" tag
+# does not say WHICH uncommitted edit a cached pair came from); it is still
+# WRITTEN then, and AUSPOL_FED_RESUME=0 forces a fresh run. The final
+# backtest-fed*.csv files are still assembled in PAIRS order from the per-pair
+# pieces, so their content is the same as an uninterrupted run.
+RESUME <- !identical(Sys.getenv("AUSPOL_FED_RESUME", "1"), "0") && !grepl("[x?]$", .code_tag)
+.pair_free_tag <- local({
+  t0 <- sub("^-p[0-9]+", "", CAL_TAG)
+  head_part <- substr(t0, 1L, nchar(t0) - nchar(.arm_fingerprint) - nchar(.code_tag))
+  paste0(head_part, .fp_hash(drop = "AUSPOL_FED_PAIRS"), .code_tag)
+})
+.corpus_stamp <- local({
+  fi <- file.info(file.path(P, c("aec-fed-firstprefs.csv", "aec-fed-transfers.csv", "aec-fed-winners.csv")))
+  paste(fi$size, as.numeric(fi$mtime), collapse = "|")
+})
+.pair_cache_file <- function(to) file.path("output", "pair-cache", sprintf("backtest-fed%d%s.rds", to, .pair_free_tag))
+.pair_cache_read <- function(to) {
+  f <- .pair_cache_file(to)
+  if (!RESUME || !file.exists(f)) return(NULL)
+  z <- tryCatch(readRDS(f), error = function(e) NULL)
+  if (is.null(z) || !identical(z$stamp, .corpus_stamp) || !identical(z$tag, .pair_free_tag)) return(NULL)
+  z
+}
+.tm_last <- Sys.time(); .tm <- list()
+.tm_reset <- function() { .tm_last <<- Sys.time(); .tm <<- list() }
+.tm_mark <- function(stage) {   # seconds since the previous mark, filed under `stage`
+  now <- Sys.time()
+  .tm[[stage]] <<- (if (is.null(.tm[[stage]])) 0 else .tm[[stage]]) + as.numeric(difftime(now, .tm_last, units = "secs"))
+  .tm_last <<- now
+}
+.tm_report <- function(label) {
+  tot <- sum(unlist(.tm))
+  cat(sprintf("TM %s stages (%.1fs): %s\n", label, tot,
+              paste(sprintf("%s %.1fs (%.0f%%)", names(.tm), unlist(.tm), 100 * unlist(.tm) / max(tot, 1e-9)), collapse = " | ")))
+  tot
+}
+pair_wall <- list()
+
 for (K in PAIRS) {
+  .zc <- .pair_cache_read(K$to)
+  if (!is.null(.zc)) {
+    cat(sprintf("RS1  fed%d: RESUMED from %s (originally %.1fs wall); projection and simulation skipped\n",
+                K$to, .pair_cache_file(K$to), .zc$wall))
+    seat_sds <- c(seat_sds, .zc$sd_w)
+    out_all[[length(out_all) + 1L]] <- list(K = K, cached = .zc)
+    next
+  }
+  .tm_reset()
   # Arm B default: NULL per pair, so it cannot leak from one pair to the next.
   SD_OVR <- NULL
 
@@ -493,6 +553,7 @@ for (K in PAIRS) {
                 K$to, COR_MODE, PARTY_COR["ONP", "LNP"],
                 attr(PARTY_COR, "cor_source")))
 
+  .tm_mark("setup+cor")
   ea <- sprintf("fed%d", K$from); eb <- sprintf("fed%d", K$to)
   fa <- FP[election == ea, .(votes = sum(votes)), by = .(seat, party)]
   fb <- FP[election == eb, .(votes = sum(votes)), by = .(seat, party)]
@@ -528,6 +589,7 @@ for (K in PAIRS) {
   stopifnot(nrow(tx) > 100L, all(.yrq(tx$election) < K$to))
   tx <- pool_configured_flows(tx, FED_DATE[[as.character(K$to)]])
   fm <- build_flow_matrix(tx, min_n = 3L)
+  .tm_mark("base+flows")
   # PER-CLASS FLOW POOLING, off by default (AUSPOL_FLOW_POOL_VOLATILE=1).
   # Pooling every class across two prior elections cuts raw flow error
   # (7.66 -> 7.35 points) but WORSENS the seat forecast, because it smooths
@@ -728,6 +790,7 @@ for (K in PAIRS) {
   # statewide_draws -- which is what fit_seats_full.R does and what no harness
   # has ever done. That is the point: every calibration figure this repo has
   # quoted describes a tighter variant than the model it ships.
+  .tm_mark("trend+pre-slope")
   DEV_SLOPE <- dev_slopes_for(union(colnames(mat), names(st_b)))
   # ARM C: slopes conditional on whether the SAME candidate stands again. A
   # single per-class slope averages two populations that behave nothing alike --
@@ -890,6 +953,7 @@ for (K in PAIRS) {
   }
   # ARM CS: arm C plus the salience screen, protecting the rare emergent that
   # arm C's harsh new-candidate slope crushed. See screened_slopes().
+  .tm_mark("slopes+returns+prior")
   .permit <- if (.screened) salience_permit_for(eb, ea, "fed") else NULL
   # `permit_tbl`, not `permit`: a parameter whose NAME is literally identical to
   # one of its own data.table columns ("permit") triggers a data.table $-typo
@@ -1461,6 +1525,7 @@ for (K in PAIRS) {
     }
   }
   shares <- 100 * shares / rowSums(shares)
+  .tm_mark("projection")
   shares <- xgb_primary_override(shares, sprintf("fed%d", K$to))
   # Seat-poll blend (AUSPOL_SEAT_POLL_BLEND), after the override and the port;
   # xgb layer only, so stage-1 base_pred never includes it.
@@ -1551,8 +1616,11 @@ for (K in PAIRS) {
          "the division names stopped matching.")
   }
 
+  .tm_mark("xgb-override+nomination")
   sd_w <- spread_for(K$to, unname(st_b[["ALP"]] - st_a[["ALP"]]))
   seat_sds <- c(seat_sds, sd_w)
+  .tm_mark("spread")
+  pair_wall[[as.character(K$to)]] <- .tm_report(sprintf("fed%d projection", K$to))
   out_all[[length(out_all) + 1L]] <- list(K = K, shares = shares, fm = fm,
                                           truth = truth, keep = keep,
                                           parties = parties, sd_w = sd_w,
@@ -1593,6 +1661,17 @@ cat(sprintf("\nBF2  seat_sd per pair: %s | fallback (median over all %d pairs) %
 res_all <- list(); tot_all <- list(); all_probs <- list(); share_detail <- list()
 for (X in out_all) {
   K <- X$K
+  if (!is.null(X$cached)) {
+    # Same appends, same order, as the end of a computed iteration.
+    res_all[[length(res_all) + 1L]] <- X$cached$res
+    all_probs[[length(all_probs) + 1L]] <- X$cached$full
+    share_detail[[length(share_detail) + 1L]] <- X$cached$share_detail
+    tot_all[[length(tot_all) + 1L]] <- X$cached$tot
+    pair_wall[[as.character(K$to)]] <- X$cached$wall
+    cat(sprintf("TM2 fed%d: wall %.1fs (from cache; this launch spent 0s)\n", K$to, X$cached$wall))
+    next
+  }
+  .tm_reset()
   # FED-1, docs/plans/harness-unification-2026-09-08.md. SD_OVR's ONLY other
   # reset (line ~430) is in the PROJECTION loop above, which finishes before
   # this loop starts -- so without this line, whatever the arm-H combine below
@@ -1782,6 +1861,7 @@ for (X in out_all) {
 ",
                 X$K$to, length(sn) - miss, length(sn), miss, SURGE_H, mean(surge_arg)))
   }
+  .tm_mark("surge+shrink setup")
   set.seed(SEED)
   # ARM H, docs/plans/prereg-reentry-flatratio-variance-2026-09-08.md. Widens
   # the SIMULATED uncertainty, not the point estimate, for cells that fell
@@ -1831,6 +1911,7 @@ for (X in out_all) {
   # card order for this election (R/htv_flow.R, external/reference/htv/liberal-alp-grn-order.csv).
   .htv_ov <- if (identical(Sys.getenv("AUSPOL_HTV_FLOW", "0"), "1")) tryCatch(htv_flow_override(.xgb_flow_ov, X$fm, sprintf("fed%d", K$to), rownames(X$shares)),
     error = function(e) { cat(sprintf("HTV9! how-to-vote override FAILED, flow rows unchanged: %s\n", conditionMessage(e))); .xgb_flow_ov }) else .xgb_flow_ov
+  .tm_mark("override setup")
   sim <- simulate_seat_contests(level_sd = .level_sd, sd_override = SD_OVR, level_mult = .lm(X$shares), X$shares, X$fm, party_sd = psd, seat_sd = sd_w * SEAT_SD_MULT,
                                 n_sims = N_SIMS, smooth = SMOOTH, seed = SEED,
                                 shrink = shrink_arg, surge_h = surge_arg, surge_party = surge_party_arg,
@@ -1838,6 +1919,7 @@ for (X in out_all) {
                                 surge_mu = surge_mu_arg, surge_sd = surge_sd_arg,
                                 party_cor = PARTY_COR, statewide_draws = X$sw_draws, conditional_override = .htv_ov, conditional_override_sd = attr(.htv_ov, "sd"),
                                 fallback_smooth = FB_SMOOTH, shrink_k = SHRINK_K, flow_sd = FLOW_SD)
+  .tm_mark("simulate_seat_contests")
   # OUR OWN final-two scenario frequencies -- see tcp_scenarios(). Uses
   # sprintf("fed%d", K$to) rather than `eb` to match how this harness names
   # the pair at its own write sites further down.
@@ -1905,8 +1987,26 @@ for (X in out_all) {
   tot_all[[length(tot_all) + 1L]] <- data.table::data.table(
     pair = sprintf("fed%d", K$to), as.data.table(sim$totals))
   res_all[[length(res_all) + 1L]] <- res
+  .tm_mark("scoring+tcp")
+  .p2 <- .tm_report(sprintf("fed%d simulation", K$to))
+  .wall <- (if (is.null(pair_wall[[as.character(K$to)]])) 0 else pair_wall[[as.character(K$to)]]) + .p2
+  pair_wall[[as.character(K$to)]] <- .wall
+  cat(sprintf("TM2 fed%d: wall %.1fs (projection %.1fs + simulation %.1fs)\n", K$to, .wall, .wall - .p2, .p2))
+  # PERSIST THIS PAIR NOW (see RESUME above): a kill after this point loses only
+  # the pairs that had not finished.
+  tryCatch({
+    dir.create(file.path("output", "pair-cache"), showWarnings = FALSE, recursive = TRUE)
+    .cf <- .pair_cache_file(K$to)
+    saveRDS(list(res = res, full = full, share_detail = share_detail[[length(share_detail)]],
+                 tot = tot_all[[length(tot_all)]], sd_w = X$sd_w, wall = .wall,
+                 stamp = .corpus_stamp, tag = .pair_free_tag, saved = Sys.time()), paste0(.cf, ".tmp"))
+    file.rename(paste0(.cf, ".tmp"), .cf)   # a kill mid-write never leaves a half file
+    cat(sprintf("RS2  fed%d: saved %s\n", K$to, .cf))
+  }, error = function(e) cat(sprintf("RS2! fed%d: pair cache NOT written: %s\n", K$to, conditionMessage(e))))
 }
 
+cat(sprintf("\nTM3  per-pair wall seconds (projection + simulation; a resumed pair shows its original time): %s | total %.1fs\n",
+            paste(sprintf("fed%s=%.1f", names(pair_wall), unlist(pair_wall)), collapse = " "), sum(unlist(pair_wall))))
 R <- rbindlist(res_all)
 cat(sprintf("\nBF4  pooled over %d division-elections across %d elections: accuracy %.1f%%, Brier %.4f\n",
             nrow(R), uniqueN(R$pair), 100 * mean(R$pred == R$actual),
