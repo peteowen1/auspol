@@ -838,7 +838,9 @@ if (PORT) {
 shares <- xgb_primary_override(shares, TGT)
 # Every class with no candidate standing is zeroed AFTER the override, which
 # otherwise writes its prediction back (plans/prereg-nomination-zero-2026-10-03.md).
-shares <- zero_unnominated(shares, fp_tgt, TGT, flows = fm)
+# AUSPOL_NOM_ZERO_ORDER (default "early" = this position); "late" runs it after
+# the salience block below instead (plans/prereg-zero-order-2026-10-03.md).
+shares <- zero_unnominated_at("early", shares, fp_tgt, TGT, flows = fm)
 # Time-forward seat-swing port (AUSPOL_SEAT_SWING_PORT=2), AFTER the override,
 # which would otherwise overwrite it. plans/prereg-seat-swing-port-v2-2026-09-29.md
 # Only on top of the xgb layer: at AUSPOL_XGB_PRIMARY=0 (rebuild stage 1) these
@@ -968,6 +970,14 @@ if (identical(Sys.getenv("AUSPOL_SALIENCE_SURGE_V2", "0"), "1")) {
                 surge_mu_arg, surge_sd_arg, hz$lambda, hz$n_train_winners))
   }
 }
+# AUSPOL_NOM_ZERO_ORDER="late": zero every class with no candidate AFTER the last
+# step that can revive one (port, demographic, leader, salience blend), OUTSIDE the
+# SURGE_V2/hz block so a NULL hz or SURGE_V2 off still zeroes, and BEFORE the first
+# reader of `shares` below (reentry_sd_matrix, the sd/flow overrides, the simulation).
+# `salience_sd_matrix()` inside the block above still read the unzeroed matrix.
+.nz_pre <- shares
+shares <- zero_unnominated_at("late", shares, fp_tgt, TGT, flows = fm)
+.nz_cells <- nomination_zeroed_cells(.nz_pre, shares)
   # ARM H, docs/plans/prereg-reentry-flatratio-variance-2026-09-08.md. Widens
   # the SIMULATED uncertainty, not the point estimate, for cells that fell
   # back to the flat re-entry ratio -- point-shrinkage was tried and refused
@@ -1133,6 +1143,7 @@ cat(sprintf("BT4  winner accuracy: %d of %d (%.1f%%)\n",
             100 * mean(res$pred == res$actual)))
 cat(sprintf("BT5  Brier (on the party that won): %.4f\n", mean((1 - res$p)^2)))
 eps <- 1e-6
+nom_zero_assert_late(shares, .nz_cells)  # "late" order only: a zeroed cell must still be 0 at the write
 .rr <- seat_share_rmse(shares, fp_tgt)  # the second metric: point-estimate seat-share RMSE vs actual
 cat(sprintf("BT5r  seat-share RMSE %.3f | MAE %.3f | by class %s | %d seats%s\n", .rr$rmse, .rr$mae,
             paste(sprintf("%s=%.2f", names(.rr$by_class), .rr$by_class), collapse = " "),
