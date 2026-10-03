@@ -60,23 +60,19 @@ PUBLISHED_FLAGS <- c(
   AUSPOL_SURGE_FROM_ZERO     = "0",          # 1 = a named recipient surges from zero share; docs/plans/prereg-recipient-at-zero-2026-09-07.md
   AUSPOL_SALIENCE_SMOOTH     = "1",          # exp_pcv/exp_sd from a monotone cubic on log(1-pctile), not six unequal bins; 0 = the old bands
   AUSPOL_SALIENCE_EXP_SD     = "0",          # 1 = a governed candidate's deviation sd is their salience band's, not level_sd; prereg-salience-expected-and-variance-2026-09-07.md
-                                             # *** OVERRIDDEN TO 1 BY TWO HARNESSES -- see the note below. ***
+                                             # (both switches run at 0 in every harness; see the note below.)
   AUSPOL_SALIENCE_EXPECTED   = "0",          # 1 = a governed candidate polls their salience band's expected vote; docs/plans/prereg-salience-expected-primary-2026-09-07.md
                                              #
-                                             # *** THESE TWO ARE NOT 0 EVERYWHERE. ***
-                                             # backtest_candidate_fed.R:78 and backtest_candidate_nsw.R:41 set BOTH to 1
-                                             # before sourcing harness_defaults.R, so federal and NSW harness runs use 1
-                                             # and vic/qld/sa/wa use the 0 above. That is deliberate and shipped -- arm C
-                                             # was scoped to the two jurisdictions where it helped (commit 01c8e1c,
-                                             # 2026-09-09, docs/reviews/salience-arm-federal-nsw-scoped-2026-09-09.md).
-                                             # fit_seats_full.R, the published forecast, uses the 0 above.
-                                             #
-                                             # RECORDED HERE because this file is supposed to be the one place you can
-                                             # read the configuration off. Without this note a reader concludes federal
-                                             # runs with the arm OFF, which is how a day of headline numbers went wrong
-                                             # on 2026-09-06. Found 2026-09-12 while chasing why fed2016 independents
-                                             # were predicted at ~14.7 against actuals of 1.5-7.6: that IS the shipped
-                                             # federal behaviour, not a bug, because this override is on.
+                                             # NOTE (2026-10-03): all harnesses now run both salience switches at the
+                                             # published 0, as does fit_seats_full.R. The "arm C" scoping of 2026-09-09
+                                             # (commit 01c8e1c: backtest_candidate_fed.R and backtest_candidate_nsw.R
+                                             # defaulted both to 1) was removed because a rebuild exports the published
+                                             # flags first, so the scoping never fired in the rebuild/ledger and hand
+                                             # runs differed from what was scored. See
+                                             # docs/reviews/fed-nsw-snapshot-gap-2026-10-03.md and
+                                             # docs/plans/prereg-salience-fed-nsw-onoff-2026-10-03.md. An explicit
+                                             # AUSPOL_SALIENCE_EXPECTED=1 AUSPOL_SALIENCE_EXP_SD=1 still selects arm C
+                                             # in any harness.
   AUSPOL_PARTY_COR           = "shrunk",     # correlated statewide deviations
   AUSPOL_LEVEL_MULT_IND      = "1",          # per-class multiplier on level_sd (IND); prereg-class-specific-variance, refused, stays 1
   AUSPOL_LEVEL_MULT_OTH      = "1",          # per-class multiplier on level_sd (other non-majors)

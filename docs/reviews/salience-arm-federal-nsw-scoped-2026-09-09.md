@@ -1,3 +1,5 @@
+> **Superseded 2026-10-03:** the fed/nsw harness defaults described here were removed (branch fix-harness-salience-defaults); see `docs/reviews/fed-nsw-snapshot-gap-2026-10-03.md` and `docs/plans/prereg-salience-fed-nsw-onoff-2026-10-03.md`.
+
 # Arm C (salience point estimate + variance): scoped to federal and NSW only
 
 2026-09-09, overnight. Applying the decision rule from

@@ -27,19 +27,17 @@
 
 options(auspol.root = normalizePath("."))
 suppressMessages(devtools::load_all(quiet = TRUE))
-# NSW-SCOPED DEFAULT, not a published_flags.R change. Arm C (salience point
-# estimate + variance, docs/plans/prereg-salience-expected-and-variance-
-# 2026-09-07.md) was measured 2026-09-09 across all five harnesses with a
-# salience corpus: federal and NSW both improve, Queensland/SA/Victoria all
-# get WORSE, SA and Victoria beyond the pre-registration's own 0.01
-# per-jurisdiction refusal bound. Victoria is the LIVE TARGET, so this is
-# NOT set in published_flags.R. Defaults ON here and in
-# backtest_candidate_fed.R only, before published_flags.R's own registry
-# runs, so an explicit caller override (either direction) still works.
-# docs/reviews/salience-arm-federal-nsw-scoped-2026-09-09.md has the full
-# jurisdiction table.
-if (!nzchar(Sys.getenv("AUSPOL_SALIENCE_EXPECTED", ""))) Sys.setenv(AUSPOL_SALIENCE_EXPECTED = "1")
-if (!nzchar(Sys.getenv("AUSPOL_SALIENCE_EXP_SD", ""))) Sys.setenv(AUSPOL_SALIENCE_EXP_SD = "1")
+# SALIENCE ARM C (expected vote + variance) -- NO LONGER DEFAULTED ON HERE.
+# backtest_candidate_fed.R and backtest_candidate_nsw.R used to set
+# AUSPOL_SALIENCE_EXPECTED=1 and AUSPOL_SALIENCE_EXP_SD=1 when unset (arm C,
+# docs/plans/prereg-salience-expected-and-variance-2026-09-07.md; scoped to
+# fed/nsw 2026-09-09, docs/reviews/salience-arm-federal-nsw-scoped-2026-09-09.md).
+# Removed 2026-10-03: it made hand runs differ from what the rebuild and the
+# ledger score (a rebuild exports the published flags first, so the default never
+# fired there). See docs/reviews/fed-nsw-snapshot-gap-2026-10-03.md and
+# docs/plans/prereg-salience-fed-nsw-onoff-2026-10-03.md. Both now run at the
+# published 0; an explicit AUSPOL_SALIENCE_EXPECTED=1 AUSPOL_SALIENCE_EXP_SD=1
+# still selects arm C.
 source("scripts/harness_defaults.R")  # published defaults for every unset AUSPOL_* switch; see that file
 suppressMessages(library(data.table))
 
