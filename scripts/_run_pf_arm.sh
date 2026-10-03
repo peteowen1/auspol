@@ -42,6 +42,9 @@ run () {  # run <label> <script> [extra env assignments...]
   echo "DONE $label rc=$?"
 }
 
+# NOTE 2026-10-03: bare fed/nsw runs below now score salience arm C OFF (published 0);
+# until the fix-harness-salience-defaults change they defaulted AUSPOL_SALIENCE_EXPECTED=1
+# and AUSPOL_SALIENCE_EXP_SD=1, so numbers from before then are not comparable.
 run fed   scripts/backtest_candidate_fed.R
 run nsw19 scripts/backtest_candidate_nsw.R AUSPOL_NSW_PAIR=2019
 run nsw23 scripts/backtest_candidate_nsw.R AUSPOL_NSW_PAIR=2023
