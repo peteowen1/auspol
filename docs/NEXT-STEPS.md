@@ -5,7 +5,40 @@ it stood before this rewrite: `backlog/journal-2026-09-19-hub-snapshot.md`).
 Decisions: `docs/DECISIONS.md`. Every seat verdict: `docs/SEAT-REGISTRY.md`.
 Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30.
 
-## 2026-10-04 overnight (READ THIS FIRST; Pete asleep, standing instruction to carry on)
+## 2026-10-04 morning (READ THIS FIRST): Pete's answers applied
+
+Pete answered four quizzes; all done on local `dev` (388eead), NOT yet pushed to origin:
+- **Salience arm C dropped, everything scores at the published 0**: `fix-harness-salience-defaults`
+  merged. Verified: a bare `nsw2019` and `fed2022` run equals the scored late arm in 0 cells.
+- **Zero-order LATE shipped** (`AUSPOL_NOM_ZERO_ORDER=late` in `published_flags.R`, R2 override recorded
+  in DECISIONS): `zero-order-late` merged and the flag flipped. A bare vic run reproduces the scored late
+  arm (1,672 of 1,672 cells, 0 ghost cells). The CI-equivalent check then caught that
+  `nom_zero_order()` still defaulted to "early"; fixed (388eead) and tests updated.
+- **PR #89 merged** into origin/dev (d6fccb3, merge commit, branch not deleted). It had no CI checks; the
+  evidence is the local check on its exact tip (afa6685). A PIPELINE.md conflict was resolved by keeping both
+  sections (D = refresh candidates, E = November nomination procedure).
+- **candidacies.csv uploaded** to the `shipped-models` release (2,544,749 -> 2,636,768 bytes; the previous
+  asset is in the session scratchpad `release-backup/`, identical to
+  `output/snapshots-candidacies-20261003-pre-abc.csv`). **Correction to my earlier warning:** the real
+  forecast script, run on the old and the new list, shows the shift is small: expected seats move by at
+  most 0.22 (ALP -0.22, ONP +0.07 to 13.21), one seat flips its most likely winner (Macedon, LNP to ALP),
+  largest win-probability change Clarinda ALP 0.85 -> 0.65. The forecast already assumed One Nation
+  everywhere and the zeroing gate is shut.
+
+**Checked on the merged result:** `scripts/check_like_ci.R --force-check` in a FRESH CLONE of dev
+at 388eead: 1,206 tests passed, 0 failed; R CMD check --as-cran 0 errors, 0 warnings, 3 notes. In the main
+tree the same check's tests pass (1,214) but `R CMD build` fails ("Build process failed") after about 6
+minutes. Likely cause (unproven): the two junctions from `.claude/worktrees/agent-a1a95ec956d574f8d/output`
+and `/external` into the main tree's output/ and external/, which did not exist when the check last passed
+there. Remove them (`cmd /c rmdir`, never a recursive delete) before running the check in the main tree.
+
+**Still open for Pete:** the scenario tool's two modelling choices (5a hold the party exactly at X, 5b others
+give way by regression), the departed-rate fallback (overnight choice, reversible), the departed-rate
+experiment (never run on real data; needs the retrain), the fed timing/resume branch
+(`fed-timing-resume-fixed` b21fb77: ran live, outputs identical; not yet through the review gate), pushing
+dev to origin and a dev -> main PR (needs the review gate on the whole diff).
+
+## 2026-10-04 overnight (Pete asleep, standing instruction to carry on; decisions 1, 2, 3 and 6 below are now answered above)
 
 **Decisions waiting for Pete (nothing below was merged, pushed, uploaded or flipped):**
 1. **Salience arm C for fed/nsw (ON vs OFF).** Pre-registered, measured
