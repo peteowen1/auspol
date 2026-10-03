@@ -11,7 +11,8 @@ fit_departed_rate(
   cls = "IND",
   permit_fn = NULL,
   fallback = NULL,
-  min_elections = .DR_MIN_ELECTIONS
+  min_elections = .DR_MIN_ELECTIONS,
+  pool_fn = dl_pool
 )
 }
 \arguments{
@@ -24,9 +25,11 @@ fit_departed_rate(
 \item{permit_fn}{\verb{function(election, prev_election, region)} returning
 \verb{seat, party, permit} or \code{NULL}; default \code{\link[=salience_permit_for]{salience_permit_for()}}.}
 
-\item{fallback}{Rate to return when under-supported; \code{NULL} computes it.}
+\item{fallback}{Rate to return when under-supported; \code{NULL} is the control value.}
 
-\item{min_elections}{Minimum earlier elections with a departed-branch row.}
+\item{min_elections}{Minimum earlier INFORMATIVE elections (>= 2 departed rows each).}
+
+\item{pool_fn}{Pooling function, \code{\link[=dl_pool]{dl_pool()}}; injectable for tests.}
 }
 \value{
 list(rate, fallback_used, fallback_reason, mu, tau2, G, n, elections,
@@ -45,10 +48,13 @@ but ONLY from elections dated strictly before \code{target_election} (\code{\lin
 Per earlier election: slope and variance (larger of the regression and a
 leave-one-seat-out jackknife variance). Between-election variance by
 DerSimonian-Laird (floored at 0.01^2), pooled mean \code{mu}, and the target uses \code{mu}
-clipped to \link{0, 1}. Fewer than 3 earlier elections with a departed-branch row returns
-\code{fallback} instead (default: the time-forward \code{new} slope for \code{cls} from
-\code{\link[=fit_conditional_slopes]{fit_conditional_slopes()}}, NOT 0.38, which is fitted on every election), and
-\code{fallback_reason} says why. No \code{min_n} cliff above that floor.
+clipped to \link{0, 1} (after a finiteness check: a non-finite pooled rate is an error).
+Per-election variances are floored at 1e-6 so an exact-fit election cannot get infinite
+weight. Only elections with at least 2 departed rows are informative: fewer than 3
+informative earlier elections returns \code{fallback} instead (default: the CONTROL value,
+\code{screened_slopes()}'s hardcoded 0.38; addendum 2026-10-04 item 3), and \code{fallback_reason}
+says "fallback to control (n informative elections = k)". One-row elections may still
+enter the pool but cannot satisfy the floor. No \code{min_n} cliff above that floor.
 
 Needs \code{AUSPOL_TIME_FORWARD_FITS} not \code{"0"}: under \code{"0"} the fit would be leave-one-out
 and read later elections, so this stops rather than leak.

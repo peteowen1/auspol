@@ -30,7 +30,9 @@ this run; nothing is fitted and a line says so.}
 \description{
 Reads \code{AUSPOL_DEPARTED_RATE}: \code{"0"} (default) or unset returns \code{NULL} (the caller
 keeps \code{screened_slopes()}'s own default, \code{c(IND = 0.38)}, byte-identically); \code{"fit"}
-uses \code{\link[=fit_departed_rate]{fit_departed_rate()}}; \code{"new"} uses the time-forward \code{new} slope alone (arm D).
+uses \code{\link[=fit_departed_rate]{fit_departed_rate()}} (control value 0.38 when under 3 informative earlier
+elections); \code{"new"} uses \code{fit_conditional_slopes()$new} for IND alone (arm D), with its own
+fallback behaviour stated on the DR0 line. A non-finite rate is never returned.
 \code{"fit_juris"} and \code{"fit_all"} are registered arms that are NOT implemented yet: they
 are a loud failure, never a silent no-op. Always prints one \code{DR0} line saying what was
 applied (value, rows, elections, tau, which fallback fired, elections used) so a run

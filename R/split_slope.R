@@ -782,6 +782,8 @@ fit_major_departed_slope <- function(target_election, corpus = NULL, pairs = NUL
 .DR_MIN_ELECTIONS <- 3L        # same floor as .shrunk_slope()
 .DR_TAU2_FLOOR    <- 0.01^2    # prereg section 3 step 2
 .DR_BIG_SE2       <- 1e4       # "huge" variance for an election with < 2 rows: ~zero weight
+.DR_SE2_FLOOR     <- 1e-6      # addendum 2026-10-04 item 2: an exact-fit election must not get infinite weight
+.DR_MIN_ROWS      <- 2L        # addendum item 1: an election needs >= 2 departed rows to count toward the floor
 
 # Statewide share (votes over valid votes in every seat) of every class at one election.
 .dr_state_level <- function(C, el) {
@@ -800,12 +802,21 @@ fit_major_departed_slope <- function(target_election, corpus = NULL, pairs = NUL
 .dr_pair_rows <- function(pr, C, cls, permit_fn) {
   lp <- .dr_state_level(C, pr$prev); ln <- .dr_state_level(C, pr$election)
   if (is.null(lp) || is.null(ln)) return(list(rows = NULL, why = "no state level"))
-  r <- tryCatch(candidate_returns(pr$prev, pr$election, corpus = C), error = function(e) NULL)
+  # An error drops the pair from the fit; it is LOGGED (message, not warning: R defers
+  # warnings to the end of a run), never swallowed.
+  r <- tryCatch(candidate_returns(pr$prev, pr$election, corpus = C), error = function(e) {
+    message(sprintf("DR1! pair %s -> %s DROPPED from the departed-rate fit: candidate_returns() failed: %s",
+                    pr$prev, pr$election, conditionMessage(e)))
+    NULL })
   if (is.null(r) || !"prior_leader_returns" %in% names(r)) return(list(rows = NULL, why = "no returns table"))
   region <- sub("[0-9]+$", "", pr$election)
-  pm <- NULL
-  utils::capture.output(pm <- tryCatch(permit_fn(pr$election, pr$prev, region), error = function(e) NULL))
-  if (is.null(pm)) return(list(rows = NULL, why = "no screen"))
+  pm <- NULL; permit_failed <- FALSE
+  utils::capture.output(pm <- tryCatch(permit_fn(pr$election, pr$prev, region), error = function(e) {
+    permit_failed <<- TRUE
+    message(sprintf("DR1! pair %s -> %s DROPPED from the departed-rate fit: salience screen failed: %s",
+                    pr$prev, pr$election, conditionMessage(e)))
+    NULL }))
+  if (is.null(pm)) return(list(rows = NULL, why = if (permit_failed) "screen error" else "no screen"))
   # masks computed OUTSIDE `[`, on differently-named locals (data.table NSE)
   want_cls <- cls
   r_idx <- which(r$party == want_cls)
@@ -850,6 +861,9 @@ fit_major_departed_slope <- function(target_election, corpus = NULL, pairs = NUL
   se2_jk <- if (length(b_i) >= 2L) (length(b_i) - 1L) / length(b_i) * sum((b_i - mean(b_i))^2) else 0
   se2 <- max(se2_ols, se2_jk)
   if (!is.finite(se2)) se2 <- .DR_BIG_SE2
+  # floor: an exact through-the-origin fit has regression variance 0 (and a jackknife of ~0),
+  # which would be infinite weight in 1 / se2
+  se2 <- max(se2, .DR_SE2_FLOOR)
   list(b = b, se2 = se2, n = n)
 }
 
@@ -866,6 +880,8 @@ dl_pool <- function(b, se2, tau2_floor = .DR_TAU2_FLOOR) {
   mu_fe <- sum(w_fe * b) / sum(w_fe)
   Q <- sum(w_fe * (b - mu_fe)^2)
   Cc <- sum(w_fe) - sum(w_fe^2) / sum(w_fe)
+  if (!all(is.finite(b)) || !all(is.finite(se2)) || any(se2 <= 0))
+    stop("dl_pool(): estimates must be finite with positive variances", call. = FALSE)
   tau2 <- if (G > 1L && isTRUE(Cc > 0)) max(tau2_floor, (Q - (G - 1L)) / Cc) else tau2_floor
   w <- 1 / (tau2 + se2)
   mu <- sum(w * b) / sum(w)
@@ -885,10 +901,13 @@ dl_pool <- function(b, se2, tau2_floor = .DR_TAU2_FLOOR) {
 #' Per earlier election: slope and variance (larger of the regression and a
 #' leave-one-seat-out jackknife variance). Between-election variance by
 #' DerSimonian-Laird (floored at 0.01^2), pooled mean `mu`, and the target uses `mu`
-#' clipped to [0, 1]. Fewer than 3 earlier elections with a departed-branch row returns
-#' `fallback` instead (default: the time-forward `new` slope for `cls` from
-#' [fit_conditional_slopes()], NOT 0.38, which is fitted on every election), and
-#' `fallback_reason` says why. No `min_n` cliff above that floor.
+#' clipped to [0, 1] (after a finiteness check: a non-finite pooled rate is an error).
+#' Per-election variances are floored at 1e-6 so an exact-fit election cannot get infinite
+#' weight. Only elections with at least 2 departed rows are informative: fewer than 3
+#' informative earlier elections returns `fallback` instead (default: the CONTROL value,
+#' `screened_slopes()`'s hardcoded 0.38; addendum 2026-10-04 item 3), and `fallback_reason`
+#' says "fallback to control (n informative elections = k)". One-row elections may still
+#' enter the pool but cannot satisfy the floor. No `min_n` cliff above that floor.
 #'
 #' Needs `AUSPOL_TIME_FORWARD_FITS` not `"0"`: under `"0"` the fit would be leave-one-out
 #' and read later elections, so this stops rather than leak.
@@ -898,14 +917,15 @@ dl_pool <- function(b, se2, tau2_floor = .DR_TAU2_FLOOR) {
 #' @param cls Party class, default `"IND"`.
 #' @param permit_fn `function(election, prev_election, region)` returning
 #'   `seat, party, permit` or `NULL`; default [salience_permit_for()].
-#' @param fallback Rate to return when under-supported; `NULL` computes it.
-#' @param min_elections Minimum earlier elections with a departed-branch row.
+#' @param fallback Rate to return when under-supported; `NULL` is the control value.
+#' @param min_elections Minimum earlier INFORMATIVE elections (>= 2 departed rows each).
+#' @param pool_fn Pooling function, [dl_pool()]; injectable for tests.
 #' @return list(rate, fallback_used, fallback_reason, mu, tau2, G, n, elections,
 #'   per_election, rows). `rate` is a length-1 numeric named `cls`.
 #' @export
 fit_departed_rate <- function(target_election, corpus = NULL, pairs = NULL, cls = "IND",
                               permit_fn = NULL, fallback = NULL,
-                              min_elections = .DR_MIN_ELECTIONS) {
+                              min_elections = .DR_MIN_ELECTIONS, pool_fn = dl_pool) {
   if (identical(Sys.getenv("AUSPOL_TIME_FORWARD_FITS", "1"), "0"))
     stop("fit_departed_rate() is time-forward only; AUSPOL_TIME_FORWARD_FITS=0 would read later elections", call. = FALSE)
   C <- corpus
@@ -920,7 +940,8 @@ fit_departed_rate <- function(target_election, corpus = NULL, pairs = NULL, cls 
   pairs_tf <- fit_pairs_for(target_election, pairs_in)   # strictly earlier elections only
   got <- lapply(pairs_tf, function(pr) .dr_pair_rows(pr, C, cls, permit_fn))
   rows <- data.table::rbindlist(lapply(got, `[[`, "rows"), fill = TRUE)
-  n_screened <- sum(vapply(got, function(g) !identical(g$why, "no screen"), logical(1)))
+  n_screened <- sum(vapply(got, function(g) !g$why %in% c("no screen", "screen error"), logical(1)))
+  n_dropped <- sum(vapply(got, function(g) g$why %in% c("no returns table", "screen error"), logical(1)))
   per <- data.table::data.table(election = character(), n = integer(), b = numeric(), se2 = numeric())
   if (nrow(rows)) {
     for (g in unique(rows$pair)) {
@@ -931,30 +952,48 @@ fit_departed_rate <- function(target_election, corpus = NULL, pairs = NULL, cls 
     }
   }
   G <- nrow(per)
-  base <- list(G = G, n = if (nrow(rows)) nrow(rows) else 0L, elections = per$election,
-               per_election = per, rows = rows, n_pairs = length(pairs_tf), n_screened = n_screened)
-  if (G < min_elections) {
+  # Only elections with >= 2 departed rows are informative (addendum item 1): a one-row
+  # election may sit in the pool (huge variance, ~zero weight) but cannot satisfy the floor.
+  G_inf <- sum(per$n >= .DR_MIN_ROWS)
+  base <- list(G = G, G_informative = G_inf, n = if (nrow(rows)) nrow(rows) else 0L, elections = per$election,
+               per_election = per, rows = rows, n_pairs = length(pairs_tf), n_screened = n_screened,
+               n_dropped = n_dropped)
+  if (G_inf < min_elections) {
+    # Fallback is the CONTROL value (arm A), not the run's `new` slope: that is
+    # fit_conditional_slopes()$new, which returns 1.0 under AUSPOL_SHIP_TIME_FORWARD=1
+    # for thin early targets, worse than 0.38 (addendum item 3).
     fb <- fallback
-    if (is.null(fb)) {
-      fc <- fit_conditional_slopes(target_election, corpus = C, pairs = pairs_in)
-      fb <- fc$new[[cls]]
-    }
+    if (is.null(fb)) fb <- control_rate(cls)
     return(c(list(rate = stats::setNames(fb, cls), fallback_used = TRUE,
-                  fallback_reason = sprintf("%d earlier election(s) with a departed-branch row, need %d", G, min_elections),
+                  fallback_reason = sprintf("fallback to control (n informative elections = %d)", G_inf),
                   mu = NA_real_, tau2 = NA_real_), base))
   }
-  pl <- dl_pool(per$b, per$se2)
+  pl <- pool_fn(per$b, per$se2)
+  # A non-finite pooled value is a failure, not a rate; clamp to [0, 1] only after this check.
+  if (length(pl$mu) != 1L || !is.finite(pl$mu) || !is.finite(pl$tau2))
+    stop(sprintf("fit_departed_rate(%s): pooled rate is not finite (mu = %s, tau2 = %s) from %d election(s)",
+                 target_election, format(pl$mu), format(pl$tau2), G), call. = FALSE)
   per[, b_shrunk := pl$b_shrunk]
   base$per_election <- per
   c(list(rate = stats::setNames(max(0, min(1, pl$mu)), cls), fallback_used = FALSE,
          fallback_reason = NA_character_, mu = pl$mu, tau2 = pl$tau2), base)
 }
 
+# The control value of the switch: screened_slopes()'s own default departed_rate for `cls`.
+# formals() hands back the unevaluated call c(IND = 0.38); eval() of that constant default.
+control_rate <- function(cls = "IND") {
+  d <- eval(formals(screened_slopes)$departed_rate)
+  if (!cls %in% names(d)) stop("screened_slopes() has no default departed_rate for class ", cls, call. = FALSE)
+  d[[cls]]
+}
+
 #' Apply the AUSPOL_DEPARTED_RATE switch for one target election
 #'
 #' Reads `AUSPOL_DEPARTED_RATE`: `"0"` (default) or unset returns `NULL` (the caller
 #' keeps `screened_slopes()`'s own default, `c(IND = 0.38)`, byte-identically); `"fit"`
-#' uses [fit_departed_rate()]; `"new"` uses the time-forward `new` slope alone (arm D).
+#' uses [fit_departed_rate()] (control value 0.38 when under 3 informative earlier
+#' elections); `"new"` uses `fit_conditional_slopes()$new` for IND alone (arm D), with its own
+#' fallback behaviour stated on the DR0 line. A non-finite rate is never returned.
 #' `"fit_juris"` and `"fit_all"` are registered arms that are NOT implemented yet: they
 #' are a loud failure, never a silent no-op. Always prints one `DR0` line saying what was
 #' applied (value, rows, elections, tau, which fallback fired, elections used) so a run
@@ -986,17 +1025,28 @@ departed_rate_for_harness <- function(target_election, mode = Sys.getenv("AUSPOL
   out <- tryCatch({
     if (!mode %in% c("fit", "new"))
       stop(sprintf("AUSPOL_DEPARTED_RATE=%s is not implemented (modes: 0, fit, new)", mode), call. = FALSE)
-    f <- fit_departed_rate(target_election, corpus = corpus, pairs = pairs, permit_fn = permit_fn, fallback = fallback)
     if (identical(mode, "new")) {
-      # arm D: no departed-specific rate at all, the time-forward `new` slope alone
+      # arm D: no departed-specific fit at all; whatever the code computes for the class's
+      # time-forward `new` slope. State plainly what that is: under AUSPOL_SHIP_TIME_FORWARD=1
+      # fit_conditional_slopes() returns 1.0 (no decay) when the pooled new tier has < 40 rows.
+      src <- if (is.null(fallback)) "fit_conditional_slopes()$new[[IND]], time-forward (1.0 = pooled new tier under 40 rows, SHIP_TIME_FORWARD fallback)" else "supplied value"
       fb <- if (is.null(fallback)) fit_conditional_slopes(target_election, corpus = corpus, pairs = pairs)$new[["IND"]] else fallback
-      f$rate <- stats::setNames(fb, "IND"); f$fallback_used <- TRUE; f$fallback_reason <- "arm new (no departed-specific rate)"
+      rate <- stats::setNames(fb, "IND")
+      if (length(rate) != 1L || !is.finite(rate[["IND"]]))
+        stop(sprintf("arm new produced a non-finite rate (%s)", format(rate)), call. = FALSE)
+      cat(sprintf("DR0 %s IND rate %.4f [arm new: NOT a departed-specific fit; own fallback behaviour: rate = %s]\n",
+                  target_election, rate[["IND"]], src))
+      return(rate)
     }
-    cat(sprintf("DR0 %s IND rate %.4f (%d rows, %d elections, tau2 %s, mu %s) [arm %s%s] elections used: %s\n",
-                target_election, f$rate[["IND"]], f$n, f$G,
+    f <- fit_departed_rate(target_election, corpus = corpus, pairs = pairs, permit_fn = permit_fn, fallback = fallback)
+    # never hand a non-finite value to screened_slopes()
+    if (length(f$rate) != 1L || !is.finite(f$rate[["IND"]]))
+      stop(sprintf("departed rate is not finite (%s)", format(f$rate)), call. = FALSE)
+    cat(sprintf("DR0 %s IND rate %.4f (%d rows, %d elections of which %d informative, tau2 %s, mu %s, screened %d of %d earlier pairs, %d dropped on error) [arm %s%s] elections used: %s\n",
+                target_election, f$rate[["IND"]], f$n, f$G, f$G_informative,
                 if (is.finite(f$tau2)) sprintf("%.4f", f$tau2) else "NA",
-                if (is.finite(f$mu)) sprintf("%.4f", f$mu) else "NA", mode,
-                if (isTRUE(f$fallback_used)) sprintf("; FALLBACK to time-forward new slope: %s", f$fallback_reason) else "",
+                if (is.finite(f$mu)) sprintf("%.4f", f$mu) else "NA", f$n_screened, f$n_pairs, f$n_dropped, mode,
+                if (isTRUE(f$fallback_used)) sprintf("; %s", f$fallback_reason) else "",
                 if (length(f$elections)) paste(f$elections, collapse = ",") else "none"))
     f$rate
   }, error = function(e) {

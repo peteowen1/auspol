@@ -380,3 +380,31 @@ vic2026 outcome exists.
 - The caller's "56 rows, median 0.261, mean 0.199, mean overcall 2.65 (SE 1.46)": my
   reconstruction gets 56 to 59 rows with mean overcall 2.0 to 2.2 (SE 1.4 to 1.5); the
   gap is selection and which file's final share was used, unreconciled.
+
+## Addendum 2026-10-04 (after code review of 369b271, BEFORE any arm has run; the clauses above are NOT edited)
+
+A read-only review of the implementation found three things. Recorded here as visible additions;
+the choice in item 3 was made by Claude overnight on Pete's behalf (he was asleep, standing
+instruction to carry on) and is reversible: Pete can overrule it in the morning.
+
+1. **Informative elections only.** An election with a single departed row carries no information
+   about the rate (its variance was set to 1e4, but it still counted toward the 3-election floor, so
+   three one-row elections could pass the floor and produce an unbounded raw ratio). Only elections
+   with at least 2 departed rows count toward the 3-election floor `G`. One-row elections may still
+   enter the pool with their huge variance, but cannot satisfy the floor.
+2. **A non-finite or out-of-range rate is a failure, not a value.** Per-election variances are
+   floored at a small positive number so a perfect-fit election cannot give infinite weight; if the
+   pooled rate is not finite the harness stops (or falls back as in item 3 with a loud log line);
+   the rate is clamped to [0, 1] only after being checked finite.
+3. **Fallback is the control value, not the run's `new` slope.** The prereg text said the fallback
+   (fewer than 3 informative earlier elections) is the time-forward `new` IND slope. In the code that
+   slope is `fit_conditional_slopes()$new[["IND"]]`, which under `AUSPOL_SHIP_TIME_FORWARD=1`
+   returns 1.0 (no decay) whenever the pooled new tier has under 40 rows, so early targets would
+   fall back to a rate of 1.0, which is WORSE than the hardcoded 0.38 control. Decision: the fallback
+   is the hardcoded 0.38 (arm A's value) and the DR0 line says "fallback to control (n informative
+   elections = k)". Consequence: arm B equals arm A for any target with fewer than 3 informative
+   earlier elections, which the prereg already warned could happen ("if G < 3 for most targets arm B
+   equals arm D"). Arm D ("new") keeps its definition as the code computes it and is reported with
+   its own fallback behaviour stated; it is no longer described as "departure treated as an ordinary
+   new candidate in this run" because with the published flags the run's ordinary new slope is the
+   hardcoded 0.326, not what `fit_conditional_slopes()` returns.
