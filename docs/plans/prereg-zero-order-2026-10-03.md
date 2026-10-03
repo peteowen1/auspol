@@ -379,3 +379,34 @@ wa2013 in the table above; nsw2019 and fed2022 here). The nsw late-vs-early diff
 above (max 0.656) came from the wrong configuration and are superseded by 0.051. The "NOT EVALUATED"
 list above is unchanged: the ship condition is still not met. The fix for the two harness default
 lines (delete them) is queued in `docs/NEXT-STEPS.md` item 6 and is not part of this change.
+
+## Result 2026-10-04: all 22 pairs scored (the decision rule is NOT satisfied; goes to Pete)
+
+Late arm = `zero-order-late` 9197982 at the shipped salience setting (0/0), all 22 pairs by hand runs;
+early arm = the v61 snapshot (shown reproducible in every harness). Scored by `scripts/compare_zero_order.R`
+(committed 95cf466 before reading). Full output: `docs/reviews/zero-order-22pair-2026-10-04.md`.
+
+| clause | result |
+|---|---|
+| R7 pairs/seats/cells equal | PASS: 22 pairs, 2,120 seat-elections, 14,487 cells |
+| C0 ghost cells in late | PASS: 0 (early arm: 2, Narracan vic2022 ALP and Giles sa2022 IND) |
+| C2 mean per-pair log loss delta | PASS: +0.00001 (guard +0.0020); both arms 0.3413 |
+| C3 worst pair | PASS: +0.00021 (qld2020); guard +0.011 |
+| C4 zeroed where the class stood | PASS: 0 |
+| R1 winner pushed to the floor | PASS: 0 |
+| R3 winner flips | PASS: 0 of 2,120 seats |
+| R4 port shape | PASS (from logs): SP2 mean/sd/range for nsw, qld, sa identical to the snapshot; vic by construction |
+| R6 fed cells moved for a non-nomination reason | PASS: 0 of 7,357 fed cells differ |
+| **R2 per-class bias grows > 2 SE** | **FAIL: ALP +0.0045 points (SE 0.0019), GRN +0.0020 points (SE 0.0010)** |
+| C1 | direction only (|A| = 2 cells): the two cells go to 0; Narracan's own squared error rises 386.8 -> 391.9 |
+| R5 absent-class list grows | not separately scored; the exempt cells (57: wa2005 OTH, wa2008 ONP) are the same as in the snapshot |
+
+Cells differing: 1,972 of 14,487 (13.6%) in 413 of 2,120 seat-elections; federal 0 of its 7 pairs,
+WA only wa2017. Top pick right 1,868 of 2,120 in both arms.
+
+R2 reads FAIL on movements of 0.0045 and 0.0020 percentage points because the paired-cell standard error
+is about 0.002; as written the clause fires on a shift of thousandths of a point. It is left as written.
+By the decision rule above, `AUSPOL_NOM_ZERO_ORDER` stays "early" and the refusal of R2 on an otherwise
+clean result goes to Pete (`clause-refusals-go-to-pete`). Recommendation for Pete, not an action taken:
+ship "late" (the change fixes two cells and moves nothing else by more than 0.05 points), and record the
+R2 override visibly in DECISIONS, since the live path (PR #89) already zeroes late.
