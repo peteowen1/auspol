@@ -38,8 +38,6 @@ suppressMessages(devtools::load_all(quiet = TRUE))
 # runs, so an explicit caller override (either direction) still works.
 # docs/reviews/salience-arm-federal-nsw-scoped-2026-09-09.md has the full
 # jurisdiction table.
-if (!nzchar(Sys.getenv("AUSPOL_SALIENCE_EXPECTED", ""))) Sys.setenv(AUSPOL_SALIENCE_EXPECTED = "1")
-if (!nzchar(Sys.getenv("AUSPOL_SALIENCE_EXP_SD", ""))) Sys.setenv(AUSPOL_SALIENCE_EXP_SD = "1")
 source("scripts/harness_defaults.R")  # published defaults for every unset AUSPOL_* switch; see that file
 suppressMessages(library(data.table))
 
