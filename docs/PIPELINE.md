@@ -105,3 +105,25 @@ run; the flow models (4b) skip when their config hash is unchanged.
 `scripts/published_flags.R` is the only list of what ships. The six
 harnesses and `fit_seats_full.R` both read it. `docs/MODEL-REGISTRY.md`
 (generated) shows which script honours which switch.
+
+## D. Refreshing the provisional vic2026 candidate list (until nominations close 9 Nov)
+
+`output/candidacies.csv` vic2026 rows are the UNION of Wikipedia
+(`external/reference/wikipedia/vic2026-candidates.csv`, from
+`scripts/parse_wikipedia_candidates.py`) and ABC's guide. Refresh the ABC half
+and rebuild, one line:
+
+```
+powershell.exe -Command 'Rscript "scripts/fetch_abc_vic2026_candidates.R"; Rscript "scripts/build_candidacies.R"'
+```
+
+The fetcher saves the raw page dated (`external/reference/abc-vic2026/candidates-YYYYMMDD.html`),
+refuses a page without `</html>`, and stops if parsed rows differ from the page's
+`<tr style="--pc` count. The build matches on seat + `match_key()`, keeps a
+`source` column (wiki / abc / both) and `party_conflict`, logs every class
+disagreement (BC10b), and refuses to overwrite `candidacies.csv` if any
+non-vic2026 line changed (BC11; previous file kept at
+`output/snapshots-candidacies-prev-build.csv`). It supplies NAMES ONLY: votes are
+NA, so `zero_unnominated()` (`AUSPOL_NOM_ZERO`) ignores these rows; they feed
+candidate features (`candidate_returns()`, `personal_prior_vote()`, salience),
+not zeroing. Wikipedia needs its own refresh (`parse_wikipedia_candidates.py`).

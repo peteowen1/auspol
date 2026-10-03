@@ -1,6 +1,6 @@
 # Data registry
 
-**Generated 2026-10-02 by `scripts/build_data_registry.R`. Do not hand-edit** --
+**Generated 2026-10-03 by `scripts/build_data_registry.R`. Do not hand-edit** --
 rerun the script instead. Regenerate it whenever you add or fetch data.
 
 This file exists because the same data has been declared missing three
@@ -68,25 +68,25 @@ cannot pass as a working one.
   - e.g. booths/fed2016-NSW.csv, booths/fed2016-QLD.csv, booths/fed2016-VIC.csv, booths/fed2019-QLD.csv
 - **vec/** -- 2429 files, 73.5 MB
   - e.g. 2006/vc/fpv-albertpark.html, 2006/vc/fpv-altona.html, 2006/vc/fpv-ballarateast.html, 2006/vc/fpv-ballaratwest.html
-- **nsw/** -- 294 files, 9.9 MB
-  - e.g. byelections/SB1602-orange-fp.html, byelections/SB1801-wagga-wagga-fp.html, dop-sample.html, dop/index-SG1901.html
-- **ecsa/** -- 104 files, 3.9 MB. **1 ZERO-BYTE: ha-2018-03-17.json**
+- **nsw/** -- 5885 files, 80.2 MB
+  - e.g. byelections/SB1602-orange-fp.html, byelections/SB1801-wagga-wagga-fp.html, council/2008/lgeindex.html, council/2008/pages/result.Albury.html
+- **ecsa/** -- 378 files, 61.2 MB. **1 ZERO-BYTE: ha-2018-03-17.json**
   - e.g. 2018/Adelaide.html, 2018/Adelaide2.html, 2018/Badcoe.html, 2018/Badcoe2.html
-- **ecq/** -- 10 files, 57.0 MB
-  - e.g. elections.json, publicResults_SGE2024_ICCDiv4_Final.zip, publicResults_State2020_aurukun2020_Final.zip, qld2017-cdx.txt
-- **waec/** -- 947 files, 27.1 MB
+- **ecq/** -- 1624 files, 101.8 MB
+  - e.g. council/2008/aurukunshire/councillor_summary.html, council/2008/aurukunshire/mayoral_summary.html, council/2008/balonneshire/councillor_summary.html, council/2008/balonneshire/mayoral_summary.html
+- **waec/** -- 1916 files, 49.0 MB
   - e.g. app.html, app.min.js, config-loader.js, config.json
 - **trends/** -- 4673 files, 2.8 MB
   - e.g. 2019_anch2_Adrian_Wone_Susie_Beveridge_Will_Landers_Ammar_Khan.rds, 2019_anch2_Bill_Chandler_Susan_Moylan_Dave_Blake_Tim_Bohm.rds, 2019_anch2_Robert_Oakeshott_Helen_Haines_Zali_Steggall_Kerryn_Phelps.rds, 2019_anch2_Trevor_Jones_Colin_Butland_David_Norman_Thor_Prohaska.rds
-- **boundaries/** -- 70 files, 683.1 MB
-  - e.g. CED_2016/CED_2016_AUST.dbf, CED_2016/CED_2016_AUST.prj, CED_2016/CED_2016_AUST.shp, CED_2016/CED_2016_AUST.shx
+- **boundaries/** -- 75 files, 770.5 MB
+  - e.g. AEC-2025-esri.zip, AEC_2025/AUS_ELB_region.dbf, AEC_2025/AUS_ELB_region.prj, AEC_2025/AUS_ELB_region.shp
 - **census/** -- 20 files, 77.4 MB
   - e.g. 2016_GCP_CED_AUS.zip, 2016_GCP_SED_NSW.zip, 2016_GCP_SED_QLD.zip, 2016_GCP_SED_SA.zip
 - **correspondences/** -- 29 files, 1.5 MB
   - e.g. abs-sed/CG_CED_2016_CED_2021.csv, abs-sed/CG_SED_2016_SED_2021.csv, abs-sed/CG_SED_2021_SED_2022.csv, abs-sed/CG_SED_2022_SED_2024.csv
 - **aef/** -- 17 files, 4.8 MB
   - e.g. 2022fed-results.json, 2022fed-summary.json, 2022sa-results.json, 2022sa-summary.json
-- **polls/** -- 84 files, 39.8 MB. **1 ZERO-BYTE: crosstabs-ambiguous.txt**
+- **polls/** -- 85 files, 40.1 MB. **1 ZERO-BYTE: crosstabs-ambiguous.txt**
   - e.g. demosau/crosstabs-ambiguous.txt, demosau/crosstabs.csv, demosau/raw/fed-2026-01.pdf, demosau/raw/fed-2026-01b.pdf
 
 ## Candidate-level corpus (`output/candidacies.csv`)
@@ -117,7 +117,7 @@ NAMES live -- the per-seat results files carry `seat, party, votes` only.
 | vic2014 | 88 | 545 | 91 | 9 |
 | vic2018 | 88 | 507 | 102 | 9 |
 | vic2022 | 87 | 731 | 119 | 13 |
-| vic2026 | 88 | 379 | 18 | NA |
+| vic2026 | 88 | 501 | 32 | NA |
 | wa1996 | 57 | 232 | 36 | 7 |
 | wa2001 | 57 | 366 | 89 | 12 |
 | wa2005 | 57 | 375 | 42 | 3 |
@@ -127,7 +127,7 @@ NAMES live -- the per-seat results files carry `seat, party, votes` only.
 | wa2021 | 59 | 463 | 17 | 0 |
 | wa2025 | 59 | 398 | 29 | 6 |
 
-**Total: 18172 candidacies, 30 elections, NA non-major breakouts.**
+**Total: 18294 candidacies, 30 elections, NA non-major breakouts.**
 
 ## State booth results (`output/booths/`)
 
