@@ -1144,6 +1144,8 @@ if (!is.null(shares_x)) {
   cat(sprintf("XG4!! xgb_primary_predict_live() FAILED%s -- shares UNCHANGED, shipped-only model used\n",
               .reason("xgb_live")))
 }
+# (v61 nomination zeroing runs after blend_salience_shares() below, the last step
+# that can add share to a cell -- see the NZL block there.)
 # Time-forward seat-swing port (AUSPOL_SEAT_SWING_PORT=2), AFTER the override,
 # which would otherwise overwrite it. plans/prereg-seat-swing-port-v2-2026-09-29.md
 .shares_p <- .try("seat_swing_port", seat_swing_port_apply(shares, "vic2026"))
@@ -1199,6 +1201,25 @@ shares <- blend_salience_shares(shares, if (exists(".hz")) .hz else NULL, surge_
 cat(sprintf("DS3b salience point estimate applied to %d (seat,party) cells%s\n",
             attr(shares, "cells"),
             if (is.null(if (exists(".hz")) .hz else NULL)) " (no corpus for vic2026 yet)" else ""))
+# v61 NOMINATION ZEROING, AFTER every step that can add share to a cell, with the
+# live flow matrix `fm`. Read from the function bodies 2026-10-03:
+#   CAN add share to a cell (pmax(0, x + adj), a blend toward a target, or a shift
+#   onto the leader's class): seat_swing_port_apply (ALP/LNP), demographic_residual_apply,
+#   leader_seat_apply (.shift_cell on the leader's class), blend_salience_shares
+#   (surge blend; pmax(shares, expected)).
+#   CANNOT (only touch cells already > 0, and rescale rows, so a 0 stays 0):
+#   seat_poll_blend_apply (all three modes), departed_fed_apply.
+# blend_salience_shares is the last step, so this sits straight after it. Placed
+# earlier (before the port), a positive adj revived a zeroed Labor cell.
+# A no-op, logged as NZL, unless AUSPOL_NOM_LIVE=1; with =1 any failure STOPS the
+# run. plans/prereg-nomination-zero-2026-10-03.md
+.nz_before <- shares
+shares <- tryCatch(zero_unnominated_live(shares, fm, "vic2026"), error = function(e) {
+  if (nom_zero_requested()) stop(conditionMessage(e), call. = FALSE)
+  cat(sprintf("NZL!! nomination zeroing FAILED (%s) -- shares WITHOUT it\n", conditionMessage(e)))
+  .nz_before
+})
+.nz_cells <- nomination_zeroed_cells(.nz_before, shares)
 cvf <- function(x) stats::sd(x) / mean(x)
 cat(sprintf("ONP allocation: target CV %.3f, delivered %.3f (previously compressed to 0.283)
 ",
@@ -1552,6 +1573,8 @@ if (identical(Sys.getenv("AUSPOL_UPSET_FLOOR", "0"), "1")) {
   cat(sprintf("UF1  upset insurance: eps %.4f applied to %d seats' win probabilities
 ", .eps, data.table::uniqueN(wp$seat)))
 }
+# Hard check: nothing after the nomination zeroing may have revived a cell it zeroed.
+assert_nomination_zeros(shares, .nz_cells)
 # The projected per-seat primaries the simulation runs on. Written out because
 # nothing else can reconstruct them without duplicating the projection above,
 # and a second copy of that logic would drift from this one.
