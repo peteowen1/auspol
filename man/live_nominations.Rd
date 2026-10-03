@@ -23,31 +23,32 @@ live_nominations(
 \item{corpus}{\code{candidacies.csv} data.table (seat, party, election); read from
 \code{output/candidacies.csv} when NULL.}
 
-\item{closes}{First date the \code{auto} gate opens (\code{NOM_GATE_DATE}).}
+\item{closes}{Date before which \verb{=1} logs a warning (\code{NOM_GATE_DATE}); never blocks.}
 
 \item{today}{Injectable for tests.}
 
-\item{min_ratio}{Completeness floor against the previous election's count.}
+\item{min_ratio}{Hard floor against the previous election's count.}
 
-\item{major}{Classes that must stand in every seat.}
+\item{major}{Classes whose absence from a seat is warned about.}
 }
 \value{
-list(target = data.table(seat, party, votes) or NULL, reason = chr).
+list(target = data.table(seat, party, votes) or NULL, reason = chr,
+warnings = chr).
 }
 \description{
 The published forecast's candidate list is incomplete until nominations close
 (vic2026 on Wikipedia: 379 candidacies against vic2022's 731; Labor in 74 of
 88 seats, and Labor will contest all 88). Treating a blank as "not standing"
 would zero parties that are about to nominate, so the table is only returned
-once it is plausibly the final list:
+once a person says it is the final list:
 \itemize{
-\item \code{AUSPOL_NOM_LIVE=0}: off.
-\item \code{"auto"} (default): only on or after \code{closes}, AND the list passes the
-completeness floor below.
-\item \code{"1"}: skips the date test only. The completeness floor always applies.
-Completeness: PRIMARY, ALP and LNP each have a candidacy in every seat of
-\code{seats} (the failing class and seat count are reported); SECONDARY, the list
-holds at least \code{min_ratio} of the previous election's candidacies, and every
-seat has some candidacy.
+\item \code{AUSPOL_NOM_LIVE=1}: the ONLY way the gate opens, meaning the VEC final
+list has been loaded into \code{output/candidacies.csv}.
+\item \code{"auto"} (default) and \code{"0"}: shut. \code{auto} says the list is provisional.
+With \verb{=1} the count floor (\code{min_ratio}) is a hard check: a list far smaller
+than the previous election's is a load error. Everything else is a WARNING
+returned in \verb{$warnings}: \verb{=1} before \code{closes}; ALP or LNP absent in some seats
+(they will be zeroed there, and a major party can genuinely not stand); a seat
+with no candidacy at all (left untouched).
 }
 }

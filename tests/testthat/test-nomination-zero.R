@@ -62,47 +62,6 @@ test_that("mode 2 sends the freed share where the flow matrix says, conditional 
 }
 .live_flows <- list(conditional = list(), pooled = list(GRN = c(ALP = 50, LNP = 50)))
 
-test_that("live: a complete post-close list zeroes the non-standing party and sends its share by flows", {
-  withr::local_envvar(AUSPOL_NOM_LIVE = "auto", AUSPOL_NOM_ZERO = "2")
-  fx <- .live_fixture(); sh <- .live_shares(fx$seats)
-  out <- zero_unnominated_live(sh, .live_flows, "vic2026", corpus = fx$corpus, today = as.Date("2026-11-10"))
-  expect_equal(unname(out["Narracan", "GRN"]), 0)
-  expect_output(zero_unnominated_live(sh, .live_flows, "vic2026", corpus = fx$corpus, today = as.Date("2026-11-10")), "applied: 3 cells changed")
-  expect_equal(unname(out["Narracan", c("ALP", "LNP", "IND")]), c(50, 40, 10))   # GRN 20 split 50/50 ALP/LNP
-  expect_equal(out["Richmond", ], sh["Richmond", ])                              # everyone stood
-  expect_equal(unname(rowSums(out)), c(100, 100, 100))
-})
-
-test_that("live: a no-op, saying so, with no nominations, before close, or on an incomplete list", {
-  withr::local_envvar(AUSPOL_NOM_LIVE = "auto", AUSPOL_NOM_ZERO = "2")
-  fx <- .live_fixture(); sh <- .live_shares(fx$seats)
-  # empty nominations: vic2022 rows only, no vic2026 candidacies at all
-  empty <- fx$corpus[fx$corpus$election == "vic2022"]
-  expect_output(out <- zero_unnominated_live(sh, .live_flows, "vic2026", corpus = empty, today = as.Date("2026-11-10")), "NOT applied")
-  expect_identical(out, sh)
-  # before nominations close, even with a full-looking list
-  expect_output(out <- zero_unnominated_live(sh, .live_flows, "vic2026", corpus = fx$corpus, today = as.Date("2026-10-03")), "not closed")
-  expect_identical(out, sh)
-  # partial list (the Wikipedia situation): 1 of 12 candidacies is far below the floor
-  part <- rbind(empty, fx$corpus[fx$corpus$election == "vic2026"][1])
-  expect_output(out <- zero_unnominated_live(sh, .live_flows, "vic2026", corpus = part, today = as.Date("2026-11-10")), "incomplete")
-  expect_identical(out, sh)
-  # switch off
-  withr::local_envvar(AUSPOL_NOM_LIVE = "0")
-  expect_output(out <- zero_unnominated_live(sh, .live_flows, "vic2026", corpus = fx$corpus, today = as.Date("2026-11-10")), "NOT applied")
-  expect_identical(out, sh)
-})
-
-test_that("live: AUSPOL_NOM_LIVE=1 skips the date test but never the completeness floor", {
-  withr::local_envvar(AUSPOL_NOM_LIVE = "1", AUSPOL_NOM_ZERO = "2")
-  fx <- .live_fixture(); sh <- .live_shares(fx$seats)
-  out <- zero_unnominated_live(sh, .live_flows, "vic2026", corpus = fx$corpus, today = as.Date("2026-10-03"))
-  expect_equal(unname(out["Narracan", "GRN"]), 0)
-  partial <- fx$corpus[!(fx$corpus$election == "vic2026" & fx$corpus$seat == "Kew")]
-  expect_output(out2 <- zero_unnominated_live(sh, .live_flows, "vic2026", corpus = partial, today = as.Date("2026-10-03")), "have no candidacy|incomplete")
-  expect_identical(out2, sh)
-})
-
 test_that("a seat left with no standing class is kept unchanged, never NaN (review, both modes)", {
   sh <- matrix(c(50, 50, 0, 60, 40, 0), nrow = 2, byrow = TRUE,
                dimnames = list(c("A", "B"), c("ALP", "LNP", "IND")))
@@ -117,40 +76,82 @@ test_that("a seat left with no standing class is kept unchanged, never NaN (revi
   }
 })
 
-test_that("live: AUSPOL_NOM_ZERO=0 on a complete list logs a no-op, never 'applied'", {
-  withr::local_envvar(AUSPOL_NOM_LIVE = "auto", AUSPOL_NOM_ZERO = "0")
+.nz_run <- function(sh, corpus, today = as.Date("2026-11-10")) {
+  txt <- paste(capture.output(out <- zero_unnominated_live(sh, .live_flows, "vic2026", corpus = corpus, today = today)), collapse = "\n")
+  list(out = out, txt = txt)
+}
+
+test_that("live: =1 with a complete list zeroes the non-standing party and sends its share by flows", {
+  withr::local_envvar(AUSPOL_NOM_LIVE = "1", AUSPOL_NOM_ZERO = "2")
   fx <- .live_fixture(); sh <- .live_shares(fx$seats)
-  txt <- paste(capture.output(out <- zero_unnominated_live(sh, .live_flows, "vic2026", corpus = fx$corpus, today = as.Date("2026-11-10"))), collapse = "\n")
-  expect_match(txt, "no-op: nothing changed")
-  expect_false(grepl("applied:", txt, fixed = TRUE))
-  expect_identical(out, sh)
+  r <- .nz_run(sh, fx$corpus)
+  expect_equal(unname(r$out["Narracan", "GRN"]), 0)
+  expect_equal(unname(r$out["Narracan", c("ALP", "LNP", "IND")]), c(50, 40, 10))   # GRN 20 split 50/50 ALP/LNP
+  expect_equal(r$out["Richmond", ], sh["Richmond", ])
+  expect_match(r$txt, "applied: 3 cells changed")
+  expect_false(grepl("WARNING", r$txt, fixed = TRUE))
 })
 
-test_that("live: a class absent from the nomination table is reported as skipped", {
-  withr::local_envvar(AUSPOL_NOM_LIVE = "auto", AUSPOL_NOM_ZERO = "2")
-  fx <- .live_fixture()
-  sh <- cbind(.live_shares(fx$seats), NAT = 0)
-  sh[, "NAT"] <- 5; sh[, "ALP"] <- 35
-  expect_output(zero_unnominated_live(sh, .live_flows, "vic2026", corpus = fx$corpus, today = as.Date("2026-11-10")),
-                "absent from the nomination table: NAT")
-})
-
-test_that("live: Labor missing in some seats keeps the gate closed even when the total count is above the floor", {
+test_that("live: auto never opens, even long after nominations closed", {
   withr::local_envvar(AUSPOL_NOM_LIVE = "auto", AUSPOL_NOM_ZERO = "2")
   fx <- .live_fixture(); sh <- .live_shares(fx$seats)
-  # drop Labor in Kew only: 10 of 12 candidacies vs 12 at vic2022 = 83%... so pad: see below
+  r <- .nz_run(sh, fx$corpus, today = as.Date("2027-01-01"))
+  expect_match(r$txt, "provisional list, set AUSPOL_NOM_LIVE=1 after loading the VEC final list")
+  expect_identical(r$out, sh)
+  withr::local_envvar(AUSPOL_NOM_LIVE = "0")
+  r0 <- .nz_run(sh, fx$corpus)
+  expect_match(r0$txt, "NOT applied")
+  expect_identical(r0$out, sh)
+})
+
+test_that("live: =1 with Labor absent in some seats and the count above the floor APPLIES, and names the seats", {
+  withr::local_envvar(AUSPOL_NOM_LIVE = "1", AUSPOL_NOM_ZERO = "2")
+  fx <- .live_fixture(); sh <- .live_shares(fx$seats)
   extra <- data.table::data.table(election = "vic2026", seat = rep("Kew", 3), party = c("IND", "OTH", "ONP"))
   c2 <- fx$corpus[!(fx$corpus$election == "vic2026" & fx$corpus$seat == "Kew" & fx$corpus$party == "ALP")]
   c2 <- rbind(c2, extra)
   expect_gt(sum(c2$election == "vic2026") / sum(c2$election == "vic2022"), 0.85)
-  txt <- paste(capture.output(out <- zero_unnominated_live(sh, .live_flows, "vic2026", corpus = c2, today = as.Date("2026-11-10"))), collapse = "\n")
-  expect_match(txt, "ALP has no candidacy in 1 of 3 seats")
-  expect_identical(out, sh)
+  r <- .nz_run(sh, c2)
+  expect_match(r$txt, "ALP has no candidacy in 1 of 3 seats and will be ZEROED there: kew")
+  expect_equal(unname(r$out["Kew", "ALP"]), 0)
+  expect_match(r$txt, "applied:")
 })
 
-test_that("live: the gate stays shut on 2026-11-09 and opens on 2026-11-10", {
-  withr::local_envvar(AUSPOL_NOM_LIVE = "auto", AUSPOL_NOM_ZERO = "2")
+test_that("live: =1 with a list under the count floor stays shut", {
+  withr::local_envvar(AUSPOL_NOM_LIVE = "1", AUSPOL_NOM_ZERO = "2")
   fx <- .live_fixture(); sh <- .live_shares(fx$seats)
-  expect_output(zero_unnominated_live(sh, .live_flows, "vic2026", corpus = fx$corpus, today = as.Date("2026-11-09")), "not closed")
-  expect_output(zero_unnominated_live(sh, .live_flows, "vic2026", corpus = fx$corpus, today = as.Date("2026-11-10")), "applied")
+  part <- rbind(fx$corpus[fx$corpus$election == "vic2022"], fx$corpus[fx$corpus$election == "vic2026"][1])
+  r <- .nz_run(sh, part)
+  expect_match(r$txt, "list too small")
+  expect_identical(r$out, sh)
+  r2 <- .nz_run(sh, fx$corpus[fx$corpus$election == "vic2022"])   # no vic2026 rows at all
+  expect_match(r2$txt, "NOT applied")
+  expect_identical(r2$out, sh)
+})
+
+test_that("live: =1 before the nomination-close date warns loudly but does not block", {
+  withr::local_envvar(AUSPOL_NOM_LIVE = "1", AUSPOL_NOM_ZERO = "2")
+  fx <- .live_fixture(); sh <- .live_shares(fx$seats)
+  early <- .nz_run(sh, fx$corpus, today = as.Date("2026-11-09"))
+  expect_match(early$txt, "WARNING AUSPOL_NOM_LIVE=1 set on 2026-11-09, before 2026-11-10")
+  expect_equal(unname(early$out["Narracan", "GRN"]), 0)
+  late <- .nz_run(sh, fx$corpus, today = as.Date("2026-11-10"))
+  expect_false(grepl("before 2026-11-10", late$txt, fixed = TRUE))
+})
+
+test_that("live: AUSPOL_NOM_ZERO=0 with the gate open logs a no-op, never 'applied'", {
+  withr::local_envvar(AUSPOL_NOM_LIVE = "1", AUSPOL_NOM_ZERO = "0")
+  fx <- .live_fixture(); sh <- .live_shares(fx$seats)
+  r <- .nz_run(sh, fx$corpus)
+  expect_match(r$txt, "no-op: nothing changed")
+  expect_false(grepl("applied:", r$txt, fixed = TRUE))
+  expect_identical(r$out, sh)
+})
+
+test_that("live: a class absent from the nomination table is reported as skipped", {
+  withr::local_envvar(AUSPOL_NOM_LIVE = "1", AUSPOL_NOM_ZERO = "2")
+  fx <- .live_fixture()
+  sh <- cbind(.live_shares(fx$seats), NAT = 5)
+  sh[, "ALP"] <- 35
+  expect_match(.nz_run(sh, fx$corpus)$txt, "absent from the nomination table: NAT")
 })

@@ -16,7 +16,7 @@ zero_unnominated_live(shares, flows, label = "vic2026", ...)
 \item{...}{passed on to \code{live_nominations()}.}
 }
 \value{
-\code{shares}, unchanged unless the live list is complete.
+\code{shares}, unchanged unless \code{AUSPOL_NOM_LIVE=1} and the list passes the count floor.
 }
 \description{
 Wrapper the published forecast calls after the xgb live override, mirroring
