@@ -46,6 +46,62 @@ test_that("mode 2 sends the freed share where the flow matrix says, conditional 
   expect_equal(sum(out2), 100)
 })
 
+.live_fixture <- function() {
+  seats <- c("Richmond", "Kew", "Narracan")
+  prior <- data.table::data.table(election = "vic2022", seat = rep(seats, each = 4),
+                                  party = rep(c("ALP", "LNP", "GRN", "IND"), 3))
+  # vic2026: Narracan has no ALP candidate; everything else stands. 11 of 12 = 92%.
+  now <- data.table::data.table(election = "vic2026", seat = rep(seats, each = 4),
+                                party = rep(c("ALP", "LNP", "GRN", "IND"), 3))
+  now <- now[!(now$seat == "Narracan" & now$party == "ALP")]
+  list(seats = seats, corpus = rbind(prior, now))
+}
+.live_shares <- function(seats) {
+  matrix(c(40, 30, 20, 10), nrow = 3, ncol = 4, byrow = TRUE,
+         dimnames = list(seats, c("ALP", "LNP", "GRN", "IND")))
+}
+.live_flows <- list(conditional = list(), pooled = list(ALP = c(LNP = 50, GRN = 50)))
+
+test_that("live: a complete post-close list zeroes the non-standing party and sends its share by flows", {
+  withr::local_envvar(AUSPOL_NOM_LIVE = "auto", AUSPOL_NOM_ZERO = "2")
+  fx <- .live_fixture(); sh <- .live_shares(fx$seats)
+  out <- zero_unnominated_live(sh, .live_flows, "vic2026", corpus = fx$corpus, today = as.Date("2026-11-10"))
+  expect_equal(unname(out["Narracan", "ALP"]), 0)
+  expect_equal(unname(out["Narracan", c("LNP", "GRN", "IND")]), c(50, 40, 10))   # ALP's 40 split 50/50 LNP/GRN
+  expect_equal(out["Richmond", ], sh["Richmond", ])                              # everyone stood
+  expect_equal(unname(rowSums(out)), c(100, 100, 100))
+})
+
+test_that("live: a no-op, saying so, with no nominations, before close, or on an incomplete list", {
+  withr::local_envvar(AUSPOL_NOM_LIVE = "auto", AUSPOL_NOM_ZERO = "2")
+  fx <- .live_fixture(); sh <- .live_shares(fx$seats)
+  # empty nominations: vic2022 rows only, no vic2026 candidacies at all
+  empty <- fx$corpus[fx$corpus$election == "vic2022"]
+  expect_output(out <- zero_unnominated_live(sh, .live_flows, "vic2026", corpus = empty, today = as.Date("2026-11-10")), "NOT applied")
+  expect_identical(out, sh)
+  # before nominations close, even with a full-looking list
+  expect_output(out <- zero_unnominated_live(sh, .live_flows, "vic2026", corpus = fx$corpus, today = as.Date("2026-10-03")), "not closed")
+  expect_identical(out, sh)
+  # partial list (the Wikipedia situation): 1 of 12 candidacies is far below the floor
+  part <- rbind(empty, fx$corpus[fx$corpus$election == "vic2026"][1])
+  expect_output(out <- zero_unnominated_live(sh, .live_flows, "vic2026", corpus = part, today = as.Date("2026-11-10")), "incomplete")
+  expect_identical(out, sh)
+  # switch off
+  withr::local_envvar(AUSPOL_NOM_LIVE = "0")
+  expect_output(out <- zero_unnominated_live(sh, .live_flows, "vic2026", corpus = fx$corpus, today = as.Date("2026-11-10")), "NOT applied")
+  expect_identical(out, sh)
+})
+
+test_that("live: AUSPOL_NOM_LIVE=1 skips the date test but never the completeness floor", {
+  withr::local_envvar(AUSPOL_NOM_LIVE = "1", AUSPOL_NOM_ZERO = "2")
+  fx <- .live_fixture(); sh <- .live_shares(fx$seats)
+  out <- zero_unnominated_live(sh, .live_flows, "vic2026", corpus = fx$corpus, today = as.Date("2026-10-03"))
+  expect_equal(unname(out["Narracan", "ALP"]), 0)
+  partial <- fx$corpus[!(fx$corpus$election == "vic2026" & fx$corpus$seat == "Kew")]
+  expect_output(out2 <- zero_unnominated_live(sh, .live_flows, "vic2026", corpus = partial, today = as.Date("2026-10-03")), "have no candidacy|incomplete")
+  expect_identical(out2, sh)
+})
+
 test_that("a seat left with no standing class is kept unchanged, never NaN (review, both modes)", {
   sh <- matrix(c(50, 50, 0, 60, 40, 0), nrow = 2, byrow = TRUE,
                dimnames = list(c("A", "B"), c("ALP", "LNP", "IND")))

@@ -96,3 +96,79 @@ zero_unnominated <- function(shares, target, label, code = "NZ1", flows = NULL) 
               if (length(skipped)) paste0(" | classes absent from the result table, untouched: ", paste(skipped, collapse = "/")) else ""))
   shares
 }
+
+#' Live nomination table for the target election, or NULL with the reason
+#'
+#' The published forecast's candidate list is incomplete until nominations close
+#' (vic2026 on Wikipedia: 379 candidacies against vic2022's 731; Labor in 74 of
+#' 88 seats, and Labor will contest all 88). Treating a blank as "not standing"
+#' would zero parties that are about to nominate, so the table is only returned
+#' once it is plausibly the final list:
+#'   * `AUSPOL_NOM_LIVE=0`: off.
+#'   * `"auto"` (default): only on or after `closes`, AND the list passes the
+#'     completeness floor below.
+#'   * `"1"`: skips the date test only. The completeness floor always applies.
+#' Floor: every seat in `seats` has at least one candidacy, and the list holds at
+#' least `min_ratio` of the previous election's candidacies.
+#'
+#' @param seats Seat names of the forecast (rownames of the share matrix).
+#' @param election,prior Corpus labels.
+#' @param corpus `candidacies.csv` data.table (seat, party, election); read from
+#'   `output/candidacies.csv` when NULL.
+#' @param closes Date nominations close (vic2026: noon, 9 November 2026).
+#' @param today Injectable for tests.
+#' @param min_ratio Completeness floor against the previous election's count.
+#' @return list(target = data.table(seat, party, votes) or NULL, reason = chr).
+#' @export
+live_nominations <- function(seats, election = "vic2026", prior = "vic2022", corpus = NULL,
+                             closes = as.Date("2026-11-09"), today = Sys.Date(), min_ratio = 0.85) {
+  mode <- Sys.getenv("AUSPOL_NOM_LIVE", "auto")
+  if (identical(mode, "0")) return(list(target = NULL, reason = "AUSPOL_NOM_LIVE=0"))
+  if (!mode %in% c("auto", "1")) return(list(target = NULL, reason = sprintf("AUSPOL_NOM_LIVE=%s not recognised (0, auto, 1)", mode)))
+  if (identical(mode, "auto") && today < closes)
+    return(list(target = NULL, reason = sprintf("nominations not closed until %s", format(closes))))
+  C <- corpus
+  if (is.null(C)) {
+    f <- file.path("output", "candidacies.csv")
+    if (!file.exists(f)) return(list(target = NULL, reason = "output/candidacies.csv missing"))
+    C <- data.table::fread(f, showProgress = FALSE, select = c("election", "seat", "party"))
+  }
+  C <- data.table::as.data.table(C)
+  elec <- C$election
+  keep_now <- !is.na(elec) & elec == election & !is.na(C$party)
+  now <- C[keep_now]
+  n_prior <- sum(!is.na(elec) & elec == prior)
+  if (!nrow(now)) return(list(target = NULL, reason = sprintf("no %s candidacies in the corpus", election)))
+  if (n_prior <= 0L) return(list(target = NULL, reason = sprintf("no %s candidacies to size completeness against", prior)))
+  ratio <- nrow(now) / n_prior
+  if (ratio < min_ratio)
+    return(list(target = NULL, reason = sprintf("list incomplete: %d candidacies vs %d at %s (%.0f%% < %.0f%% floor)",
+                                                nrow(now), n_prior, prior, 100 * ratio, 100 * min_ratio)))
+  missing_seats <- setdiff(normalise_seat(seats), normalise_seat(now$seat))
+  if (length(missing_seats))
+    return(list(target = NULL, reason = sprintf("%d seat(s) have no candidacy: %s", length(missing_seats),
+                                                paste(utils::head(missing_seats, 6), collapse = ", "))))
+  list(target = data.table::data.table(seat = now$seat, party = now$party, votes = 1),
+       reason = sprintf("%d candidacies (%.0f%% of %s)", nrow(now), 100 * ratio, prior))
+}
+
+#' Zero non-standing parties in the live forecast, or say why not
+#'
+#' Wrapper the published forecast calls after the xgb live override, mirroring
+#' the harnesses' `zero_unnominated(shares, fb, ..., flows = fm)`. Always prints
+#' one `NZL` line: either what was applied or why nothing was.
+#' @param shares Seat-by-class matrix of primaries.
+#' @param flows The live [build_flow_matrix()] result.
+#' @param label Election label (also the corpus label).
+#' @param ... passed on to `live_nominations()`.
+#' @return `shares`, unchanged unless the live list is complete.
+#' @export
+zero_unnominated_live <- function(shares, flows, label = "vic2026", ...) {
+  nm <- live_nominations(rownames(shares), election = label, ...)
+  if (is.null(nm$target)) {
+    cat(sprintf("NZL  %s: nomination zeroing NOT applied (%s); shares unchanged\n", label, nm$reason))
+    return(shares)
+  }
+  cat(sprintf("NZL  %s: nomination zeroing applied on %s\n", label, nm$reason))
+  zero_unnominated(shares, nm$target, label, flows = flows)
+}

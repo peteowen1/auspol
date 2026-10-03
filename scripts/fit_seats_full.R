@@ -1144,6 +1144,16 @@ if (!is.null(shares_x)) {
   cat(sprintf("XG4!! xgb_primary_predict_live() FAILED%s -- shares UNCHANGED, shipped-only model used\n",
               .reason("xgb_live")))
 }
+# v61 NOMINATION ZEROING, AFTER the xgb override (which would write a non-standing
+# party's prediction back), with the live flow matrix `fm`. A no-op, logged as NZL,
+# until the vic2026 candidate list is complete (R/nomination_zero.R live_nominations()).
+# plans/prereg-nomination-zero-2026-10-03.md
+.shares_nz <- .try("nom_zero", zero_unnominated_live(shares, fm, "vic2026"))
+if (!is.null(.shares_nz)) {
+  shares <- .shares_nz
+} else {
+  cat(sprintf("NZL!! nomination zeroing FAILED%s -- shares WITHOUT it\n", .reason("nom_zero")))
+}
 # Time-forward seat-swing port (AUSPOL_SEAT_SWING_PORT=2), AFTER the override,
 # which would otherwise overwrite it. plans/prereg-seat-swing-port-v2-2026-09-29.md
 .shares_p <- .try("seat_swing_port", seat_swing_port_apply(shares, "vic2026"))
