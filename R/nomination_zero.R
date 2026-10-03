@@ -251,17 +251,18 @@ assert_nomination_zeros <- function(shares, cells) {
 
 #' Where in the harness pipeline does nomination zeroing run?
 #'
-#' `AUSPOL_NOM_ZERO_ORDER`: `"early"` (the default, today's behaviour) zeroes
-#' right after the xgb override; `"late"` zeroes after the last step that can
-#' write a share back into a zeroed cell (seat-swing port, demographic
-#' correction, leader-seat bonus, salience blend), the same position the
-#' published forecast uses. Anything else is an error: an unrecognised value
-#' that silently fell back to `"early"` would be an arm that looks like it ran.
+#' `AUSPOL_NOM_ZERO_ORDER`: `"late"` (the default since 2026-10-04, what ships)
+#' zeroes after the last step that can write a share back into a zeroed cell
+#' (seat-swing port, demographic correction, leader-seat bonus, salience
+#' blend), the same position the published forecast uses; `"early"` (the order
+#' v61 was first measured on) zeroes right after the xgb override and lets those
+#' steps revive a zeroed cell. Anything else is an error: an unrecognised value
+#' that silently fell back to the other order would be an arm that looks like it ran.
 #' plans/prereg-zero-order-2026-10-03.md
 #' @return `"early"` or `"late"`.
 #' @export
 nom_zero_order <- function() {
-  o <- Sys.getenv("AUSPOL_NOM_ZERO_ORDER", "early")
+  o <- Sys.getenv("AUSPOL_NOM_ZERO_ORDER", "late")
   if (!o %in% c("early", "late"))
     stop(sprintf("NZO!! AUSPOL_NOM_ZERO_ORDER='%s' is not 'early' or 'late'", o), call. = FALSE)
   o

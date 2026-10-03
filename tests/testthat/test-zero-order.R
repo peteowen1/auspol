@@ -31,11 +31,11 @@
 }
 .zo_quiet <- function(expr) { out <- NULL; utils::capture.output(out <- force(expr)); out }
 
-test_that("nom_zero_order defaults to early, accepts late, and rejects anything else", {
+test_that("nom_zero_order defaults to late (what ships), accepts early, and rejects anything else", {
   withr::local_envvar(AUSPOL_NOM_ZERO_ORDER = NA)
-  expect_identical(nom_zero_order(), "early")
-  withr::local_envvar(AUSPOL_NOM_ZERO_ORDER = "late")
   expect_identical(nom_zero_order(), "late")
+  withr::local_envvar(AUSPOL_NOM_ZERO_ORDER = "early")
+  expect_identical(nom_zero_order(), "early")
   withr::local_envvar(AUSPOL_NOM_ZERO_ORDER = "lat")
   expect_error(nom_zero_order(), "NZO!!")
   expect_error(zero_unnominated_at("early", matrix(1), NULL, "t"), "NZO!!")  # a typo must not fall back to early
@@ -45,10 +45,11 @@ test_that("early order is byte-identical to the call order before the switch exi
   withr::local_envvar(AUSPOL_NOM_ZERO = "1", AUSPOL_NOM_ZERO_ORDER = "early")
   f <- .zo_fixture()
   expect_identical(.zo_quiet(.zo_pipeline(f)), .zo_quiet(.zo_old_pipeline(f)))
-  # and unset means early
+  # unset now means late, the shipped default
   withr::local_envvar(AUSPOL_NOM_ZERO_ORDER = NA)
-  expect_identical(.zo_quiet(.zo_pipeline(f)), .zo_quiet(.zo_old_pipeline(f)))
-  # the early helper is exactly the direct call
+  expect_identical(nom_zero_order(), "late")
+  # the early helper is exactly the direct call (pin the order: unset now means late)
+  withr::local_envvar(AUSPOL_NOM_ZERO_ORDER = "early")
   expect_identical(.zo_quiet(zero_unnominated_at("early", f$sh, f$tg, "t")),
                    .zo_quiet(zero_unnominated(f$sh, f$tg, "t")))
 })
