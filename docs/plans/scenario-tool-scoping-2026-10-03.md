@@ -461,3 +461,13 @@ measured.) About 0.25 MB per file for B (section 6), engine output in memory.
 8. Whether `docs/PETE-ASKED-FOR.md` already carries this request: the register
    must be updated by the session that owns it (repo rule), not by this scoping.
 9. R2 secrets present, and the current size of `forecast-vic2026.json` (not on disk).
+
+## Decisions 2026-10-04 (Pete, quiz)
+
+- **5a: hold the moved party exactly at X** (no statewide spread around X). Page wording: "if ONP gets exactly X%".
+  The engine may offer the usual spread as a toggle later; not in the first version.
+- **5b: the other parties give way by regression on the model's own draws** (shares sum to 100, works for all
+  four parties), not pro rata. The betas still have to be computed from the model's simulation draws (not done).
+- Earlier (2026-10-03): a LIVE slider, not a precomputed grid; the scoping's recommended path A' (seat-share
+  matrices at 2.5-point knots from the real R pipeline plus a JS port of the seat simulation in the browser)
+  is the one that gives a live slider without a server. Still NOT started: about 40-50 hours (a guess).
