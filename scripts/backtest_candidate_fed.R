@@ -1517,9 +1517,15 @@ for (K in PAIRS) {
   # Every class with no candidate standing is zeroed AFTER the override and the
   # state correction, both of which can write a share back into an empty cell
   # (plans/prereg-nomination-zero-2026-10-03.md).
+  # THIS CALL RUNS IN BOTH AUSPOL_NOM_ZERO_ORDER MODES (plans/prereg-zero-order-2026-10-03.md):
+  # the blend that can still revive a zero works on X$shares in the simulation loop below,
+  # where "late" adds a second call. The cells zeroed here are carried in out_all so the
+  # final-write check covers them too.
+  .nz_pre <- shares
   shares <- zero_unnominated(shares, fb, sprintf("fed%d", K$to), flows = fm)
   keep <- intersect(rownames(shares), win$seat)
   shares <- shares[keep, , drop = FALSE]
+  .nz_cells <- nomination_zeroed_cells(.nz_pre[keep, , drop = FALSE], shares)
   truth <- setNames(win$winner, win$seat)[keep]
 
   # DIAGNOSTIC DUMP: the POINT ESTIMATE (before any Monte Carlo/surge draw)
@@ -1557,6 +1563,7 @@ for (K in PAIRS) {
                                           truth = truth, keep = keep,
                                           parties = parties, sd_w = sd_w,
                                           sw_draws = sw_draws, fb = fb,
+                                          nz_cells = .nz_cells,
                                           # Carried per pair -- see the FED-2
                                           # finding in docs/plans/
                                           # harness-unification-2026-09-08.md.
@@ -1782,6 +1789,14 @@ for (X in out_all) {
 ",
                 X$K$to, length(sn) - miss, length(sn), miss, SURGE_H, mean(surge_arg)))
   }
+  # AUSPOL_NOM_ZERO_ORDER="late": a SECOND zeroing, on X$shares straight after the salience
+  # block (outside it, so a NULL hz or SURGE_V2 off still runs it). The call at the
+  # projection stage already ran; this one only undoes what blend_salience_shares() put back
+  # into a zeroed cell, and is a no-op on rows with nothing to undo. Code NZ1b so the
+  # per-pair NZ1 counts are not doubled. `salience_sd_matrix()` above read the unzeroed matrix.
+  .nz_pre <- X$shares
+  X$shares <- zero_unnominated_at("late", X$shares, X$fb, sprintf("fed%d", X$K$to), code = "NZ1b", flows = X$fm)
+  X$nz_cells <- rbind(X$nz_cells, nomination_zeroed_cells(.nz_pre, X$shares))
   set.seed(SEED)
   # ARM H, docs/plans/prereg-reentry-flatratio-variance-2026-09-08.md. Widens
   # the SIMULATED uncertainty, not the point estimate, for cells that fell
@@ -1881,6 +1896,7 @@ for (X in out_all) {
   # THE SECOND METRIC: seat-share RMSE of the point estimate the simulator was
   # handed, against the shares actually polled. Pete's objective (2026-09-06)
   # is overall seat log loss AND this, across every election forecast.
+  nom_zero_assert_late(X$shares[X$keep, , drop = FALSE], X$nz_cells)  # "late" order only: a zeroed cell must still be 0 at the write
   .rr <- seat_share_rmse(X$shares[X$keep, , drop = FALSE], X$fb)
   # PERSIST THE POINT ESTIMATE, not just the aggregate RMSE. Until 2026-09-09
   # "our predicted primary for seat X" required re-running the harness with a

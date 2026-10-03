@@ -620,7 +620,9 @@ for (K in PAIRS) {
   shares <- xgb_primary_override(shares, el_to)
   # Every class with no candidate standing is zeroed AFTER the override, which
   # otherwise writes its prediction back (plans/prereg-nomination-zero-2026-10-03.md).
-  shares <- zero_unnominated(shares, fb, el_to, flows = fm)
+  # AUSPOL_NOM_ZERO_ORDER (default "early" = this position); "late" runs it after
+  # leader_seat_apply below instead (plans/prereg-zero-order-2026-10-03.md).
+  shares <- zero_unnominated_at("early", shares, fb, el_to, flows = fm)
   # Seat-poll blend (AUSPOL_SEAT_POLL_BLEND), after the override and the port;
   # xgb layer only, so stage-1 base_pred never includes it.
   # plans/prereg-seat-poll-blend-2026-09-29.md
@@ -652,6 +654,12 @@ for (K in PAIRS) {
   }
   # Leader-seat bonus (AUSPOL_LEADER_SEAT, plans/prereg-leader-seat-2026-09-29.md): a major party gains the time-forward bonus in its own leader's seat.
   if (identical(Sys.getenv("AUSPOL_XGB_PRIMARY", "0"), "1")) shares <- leader_seat_apply(shares, el_to)
+  # AUSPOL_NOM_ZERO_ORDER="late": zero every class with no candidate AFTER the last
+  # step that can revive one. WA has no salience blend, so this is demographic_residual
+  # and leader_seat; it sits before the diagnostic dump and the `keep` subset below.
+  .nz_pre <- shares
+  shares <- zero_unnominated_at("late", shares, fb, el_to, flows = fm)
+  .nz_cells <- nomination_zeroed_cells(.nz_pre, shares)
   # DIAGNOSTIC DUMP, off unless asked. Writes the projected primary the model
   # actually simulates from, so a seat can be inspected without reconstructing
   # the pipeline by hand and getting it subtly wrong.
@@ -832,6 +840,7 @@ for (K in PAIRS) {
                   lo = qlogis(pmin(pmax(r$pred_p, eps), 1 - eps)))
   sl <- if (length(unique(z$y)) > 1)
     coef(glm(y ~ lo, data = z, family = binomial()))[["lo"]] else NA_real_
+  nom_zero_assert_late(shares, .nz_cells)  # "late" order only: a zeroed cell must still be 0 at the write
   .rr <- seat_share_rmse(shares, fb)  # the second metric: point-estimate seat-share RMSE vs actual
   share_detail[[length(share_detail) + 1L]] <-
     data.table::as.data.table(.rr$detail)[, pair := el_to]

@@ -249,6 +249,59 @@ assert_nomination_zeros <- function(shares, cells) {
   invisible(TRUE)
 }
 
+#' Where in the harness pipeline does nomination zeroing run?
+#'
+#' `AUSPOL_NOM_ZERO_ORDER`: `"early"` (the default, today's behaviour) zeroes
+#' right after the xgb override; `"late"` zeroes after the last step that can
+#' write a share back into a zeroed cell (seat-swing port, demographic
+#' correction, leader-seat bonus, salience blend), the same position the
+#' published forecast uses. Anything else is an error: an unrecognised value
+#' that silently fell back to `"early"` would be an arm that looks like it ran.
+#' plans/prereg-zero-order-2026-10-03.md
+#' @return `"early"` or `"late"`.
+#' @export
+nom_zero_order <- function() {
+  o <- Sys.getenv("AUSPOL_NOM_ZERO_ORDER", "early")
+  if (!o %in% c("early", "late"))
+    stop(sprintf("NZO!! AUSPOL_NOM_ZERO_ORDER='%s' is not 'early' or 'late'", o), call. = FALSE)
+  o
+}
+
+#' [zero_unnominated()] at one of its two harness positions
+#'
+#' Runs the zeroing only when `stage` is the configured [nom_zero_order()];
+#' otherwise returns `shares` untouched. With `stage = "early"` and the default
+#' order this is exactly the call the harnesses made before the switch existed.
+#' @param stage `"early"` (after the xgb override) or `"late"` (after the last
+#'   reviving step).
+#' @inheritParams zero_unnominated
+#' @return `shares`, zeroed if `stage` is the configured order.
+#' @export
+zero_unnominated_at <- function(stage, shares, target, label, code = "NZ1", flows = NULL) {
+  stopifnot(length(stage) == 1L, stage %in% c("early", "late"))
+  if (!identical(nom_zero_order(), stage)) return(shares)
+  zero_unnominated(shares, target, label, code = code, flows = flows)
+}
+
+#' The final-write check for `AUSPOL_NOM_ZERO_ORDER = "late"`
+#'
+#' A no-op in `"early"` mode, where a zeroed cell can legitimately be revived by
+#' a later step (the known leak this order switch exists to remove) and the
+#' check would fire on it. In `"late"` mode, stops if any cell the zeroing step
+#' zeroed is no longer exactly 0. Cells for seats no longer in `shares` (a
+#' pair's unscored seats, dropped before the write) are not checked.
+#' @param shares The share matrix the harness writes out.
+#' @param cells Output of [nomination_zeroed_cells()], or NULL.
+#' @return `TRUE` invisibly.
+#' @export
+nom_zero_assert_late <- function(shares, cells) {
+  if (!identical(nom_zero_order(), "late")) return(invisible(TRUE))
+  if (!is.null(cells) && nrow(cells)) {
+    cells <- cells[cells$seat %in% rownames(shares), , drop = FALSE]
+  }
+  assert_nomination_zeros(shares, cells)
+}
+
 #' Zero non-standing parties in the live forecast, or say why not
 #'
 #' Wrapper the published forecast calls AFTER the last step that can add share

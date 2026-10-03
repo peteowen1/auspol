@@ -746,7 +746,9 @@ for (K in PAIRS) {
   shares <- xgb_primary_override(shares, sprintf("vic%d", K$to))
   # Every class with no candidate standing is zeroed AFTER the override, which
   # otherwise writes its prediction back (plans/prereg-nomination-zero-2026-10-03.md).
-  shares <- zero_unnominated(shares, fb, sprintf("vic%d", K$to), flows = fm)
+  # AUSPOL_NOM_ZERO_ORDER (default "early" = this position); "late" runs it after
+  # the salience block below instead (plans/prereg-zero-order-2026-10-03.md).
+  shares <- zero_unnominated_at("early", shares, fb, sprintf("vic%d", K$to), flows = fm)
   # Time-forward seat-swing port (AUSPOL_SEAT_SWING_PORT=2), AFTER the override,
   # which would otherwise overwrite it. plans/prereg-seat-swing-port-v2-2026-09-29.md
   # Only on top of the xgb layer: at AUSPOL_XGB_PRIMARY=0 (rebuild stage 1) these
@@ -902,6 +904,14 @@ for (K in PAIRS) {
                   surge_mu_arg, surge_sd_arg, hz$lambda, hz$n_train_winners))
     }
   }
+  # AUSPOL_NOM_ZERO_ORDER="late": zero every class with no candidate AFTER the last
+  # step that can revive one (port, demographic, leader, salience blend), OUTSIDE the
+  # SURGE_V2/hz block so a NULL hz or SURGE_V2 off still zeroes, and BEFORE the first
+  # reader of `shares` below (reentry_sd_matrix, the sd/flow overrides, the simulation).
+  # `salience_sd_matrix()` inside the block above still read the unzeroed matrix.
+  .nz_pre <- shares
+  shares <- zero_unnominated_at("late", shares, fb, sprintf("vic%d", K$to), flows = fm)
+  .nz_cells <- nomination_zeroed_cells(.nz_pre, shares)
   # ARM H, docs/plans/prereg-reentry-flatratio-variance-2026-09-08.md. Widens
   # the SIMULATED uncertainty, not the point estimate, for cells that fell
   # back to the flat re-entry ratio -- point-shrinkage was tried and refused
@@ -1026,6 +1036,7 @@ for (K in PAIRS) {
                   lo = stats::qlogis(pmin(pmax(res$pred_p, eps), 1 - eps)))
   sl <- if (length(unique(z$y)) > 1)
     stats::coef(stats::glm(y ~ lo, data = z, family = stats::binomial()))[["lo"]] else NA_real_
+  nom_zero_assert_late(shares, .nz_cells)  # "late" order only: a zeroed cell must still be 0 at the write
   .rr <- seat_share_rmse(shares, fb)  # the second metric: point-estimate seat-share RMSE vs actual
   share_detail[[length(share_detail) + 1L]] <-
     data.table::as.data.table(.rr$detail)[, pair := sprintf("vic%d", K$to)]
