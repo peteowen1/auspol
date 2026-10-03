@@ -182,13 +182,23 @@ test_that("live: per-class seat counts are printed and a class far below vic2022
   expect_false(grepl("LNP stands in", r$txt, fixed = TRUE))
 })
 
-test_that("live: AUSPOL_NOM_ZERO=0 with the gate open logs a loud no-op, never 'applied'", {
-  withr::local_envvar(AUSPOL_NOM_LIVE = "1", AUSPOL_NOM_ZERO = "0")
+test_that("live: AUSPOL_NOM_LIVE=1 with AUSPOL_NOM_ZERO off (0, or any non-1/2) STOPS", {
   fx <- .live_fixture(); sh <- .live_shares(fx$seats)
-  r <- .nz_run(sh, fx$corpus)
-  expect_match(r$txt, "NZL!! vic2026: no-op: nothing changed", fixed = TRUE)
-  expect_false(grepl("applied:", r$txt, fixed = TRUE))
-  expect_identical(r$out, sh)
+  for (z in c("0", "3", "off")) {
+    withr::local_envvar(AUSPOL_NOM_LIVE = "1", AUSPOL_NOM_ZERO = z)
+    expect_match(.nz_err(sh, fx$corpus), "NZL!! AUSPOL_NOM_LIVE=1 asked for nomination zeroing but AUSPOL_NOM_ZERO", fixed = FALSE, info = z)
+  }
+})
+
+test_that("harness-style zero_unnominated() with AUSPOL_NOM_ZERO=0 stays a quiet no-op, and the auto/0 gate does too", {
+  withr::local_envvar(AUSPOL_NOM_LIVE = "auto", AUSPOL_NOM_ZERO = "0")
+  fx <- .live_fixture(); sh <- .live_shares(fx$seats)
+  tg <- data.table::data.table(seat = c("Richmond", "Kew"), party = c("ALP", "ALP"), votes = 1)
+  expect_no_error(out <- zero_unnominated(sh, tg, "harness"))
+  expect_identical(out, sh)
+  expect_identical(.nz_run(sh, fx$corpus)$out, sh)             # auto gate shut: no error with NOM_ZERO=0
+  withr::local_envvar(AUSPOL_NOM_LIVE = "0")
+  expect_identical(.nz_run(sh, fx$corpus)$out, sh)
 })
 
 test_that("live: a class absent from the nomination table is reported as skipped", {

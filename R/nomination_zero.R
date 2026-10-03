@@ -274,9 +274,11 @@ zero_unnominated_live <- function(shares, flows, label = "vic2026", ...) {
   cat(sprintf("NZL  %s: candidacies per class, seats now/%s: %s\n", label, "vic2022", nm$class_counts))
   zmode <- Sys.getenv("AUSPOL_NOM_ZERO", "2")
   if (!zmode %in% c("1", "2")) {
-    cat(sprintf("NZL!! %s: no-op: nothing changed (AUSPOL_NOM_ZERO=%s is not 1 or 2, though AUSPOL_NOM_LIVE=1 asked for zeroing; list was complete: %s)\n",
-                label, zmode, nm$reason))
-    return(shares)
+    # Zeroing was asked for (we are past the gate, so AUSPOL_NOM_LIVE=1) but the
+    # mode switch turns it off: contradictory, so stop. Only HERE, not in
+    # zero_unnominated(), whose AUSPOL_NOM_ZERO=0 is the harnesses' legitimate off switch.
+    .nz_stop(sprintf("AUSPOL_NOM_LIVE=1 asked for nomination zeroing but AUSPOL_NOM_ZERO='%s' is not 1 or 2 (it would turn zeroing off); set AUSPOL_NOM_ZERO=1 or 2, or AUSPOL_NOM_LIVE=0",
+                     zmode))
   }
   out <- zero_unnominated(shares, nm$target, label, flows = flows)
   zc <- nomination_zeroed_cells(shares, out)
