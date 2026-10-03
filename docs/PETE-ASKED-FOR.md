@@ -26,6 +26,19 @@ not a commit, not a plan file — that it is not happening and why.
 
 ---
 
+## 2026-10-03 evening
+
+| Request | Status |
+|---|---|
+| *"Can we have a seat predictions or like something you can tweak the sims where if you assume a certain primary how does it affect projections? ... show how well we think ONP would do at VIC26 say if we assume their primary is anywhere between say 10 points either side of current projection"* and *"Same for ALP/LNP/GRN I guess"* (for ITG as well as for us) | **NOT DONE; being scoped.** Asked while the salience ON/OFF measurement was running. Pete chose a LIVE slider over a precomputed grid (quiz, 2026-10-03 late); scoping agent running (`docs/plans/scenario-tool-scoping-2026-10-03.md`) to cost a true live engine versus a fine grid with interpolation that only looks live. Not to be substituted without telling Pete. |
+| *"Explain this sorry"* / measure fed+nsw salience ON vs OFF first (quiz) | **IN PROGRESS.** Prereg `docs/plans/prereg-salience-fed-nsw-onoff-2026-10-03.md` and comparison script committed (7c9ea34) before the ON arms ran. The 2026-09-09 scoping of arm C to fed/nsw never fired in the rebuild/ledger. |
+| *"see if there's any info we can use or helps validate our work"* (ABC's Victorian coverage) | **ANSWERED.** ABC publishes no forecast numbers or seat probabilities; its candidate list is ahead of ours (ALP +6 seats, LNP +13, GRN +9, ONP +48, IND +15). `docs/reviews/abc-vic-coverage-*-2026-10-03.md`. |
+| *"we should update provisional list as we go though! with either ABC data or wiki data or both"* | **BUILT, UNCOMMITTED.** 501 vic2026 rows, one per person per seat, both sources. Not yet in the published forecast: needs a commit, a release upload for CI, and a with/without forecast diff. LDP unconfirmed. |
+| Nomination gate: *"1 sounds good"* (manual final-list switch) | **SHIPPED in PR #89, unmerged, no CI reported.** `AUSPOL_NOM_LIVE=1` by hand; never opens on date alone. |
+| Stop vs carry on when `NOM_LIVE=1` but `NOM_ZERO` off (quiz) | **SHIPPED in PR #89:** stops with NZL!!. |
+| *"keep going through the list"* (the four next-steps items) | **IN PROGRESS.** 1 = PR #89. 2 = prep done, rebuild not run. 3 = traced and explained, refit prereg committed, implementation in progress. 4 = built, paused (cache blockers). |
+| Run the departed-rate refit direction-only (quiz) | **IN PROGRESS.** Prereg committed (9cc1876); the prereg's own INCONCLUSIVE rule ships nothing, contrary to how the option was worded to Pete. |
+
 ## 2026-10-02/03
 
 | Request | Status |

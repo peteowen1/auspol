@@ -5,7 +5,93 @@ it stood before this rewrite: `backlog/journal-2026-09-19-hub-snapshot.md`).
 Decisions: `docs/DECISIONS.md`. Every seat verdict: `docs/SEAT-REGISTRY.md`.
 Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30.
 
-## 2026-10-03 01:40 (read this first)
+## 2026-10-03 evening (read this first; supersedes the queue below where they differ)
+
+**State.** Nothing merged. PR #89 (`nomination-zero-live`, v61 zeroing in the
+published Victorian forecast, gated by hand) is open into `dev`; GitHub reported
+NO CI checks on it, so the only evidence is the local `check_like_ci.R`
+(afa6685: 1,185 tests, R CMD check 0 errors/0 warnings). Branches stacked on it,
+all local and unpushed: `zero-order-late` (9197982, six harnesses, default
+`early`), `departed-rate-refit` (in progress). `instrument-backtest-fed-timing`
+(ae91f62) is paused. Two prereg commits on `dev` (85bd96d zero order, 9cc1876
+departed rate), ahead of origin by 2.
+
+Queue, in order:
+1. **Read `docs/reviews/zero-order-step0-2026-10-03.md`** (baseline: which
+   snapshot reproduces 3.774 and 0.3413). If neither does, nothing downstream
+   can be read: stop and tell Pete. Then run the prereg's exploratory arms
+   (`docs/plans/prereg-zero-order-2026-10-03.md`, one harness-set per launch).
+2. **Departed-rate refit** (`docs/plans/prereg-departed-rate-refit-2026-10-03.md`):
+   Pete said run it direction-only. Its own rule: INCONCLUSIVE ships NOTHING and
+   keeps 0.38 (Pete was told "ships on correctness grounds"; the prereg governs).
+   The big overcalls (Geelong, Morwell, Mildura, Kavel 2026, Finniss) have a
+   permitted successor and are OUTSIDE its scope: **new item, not started.**
+3. **Simulation noise revives zeroed parties** (`R/seat_sim.R:1229`, `v <- base_v
+   + shift + rnorm(K, 0, sd_cell)`): the written shares are 0, the draws are not.
+   Measure how often a revived cell places or wins before masking it. Affects
+   every harness number, so it needs a prereg.
+4. **November, nomination day:** follow `docs/PIPELINE.md` section D (load the VEC
+   final list, upload `candidacies.csv` to the `shipped-models` release because
+   CI downloads it from there, set `AUSPOL_NOM_LIVE` to "1" in
+   `published_flags.R`). The live gate is MANUAL by Pete's choice; it never opens
+   on date alone.
+5. **Provisional candidate list (ABC + Wikipedia)** is built but UNCOMMITTED
+   (`scripts/build_candidacies.R`, `scripts/fetch_abc_vic2026_candidates.R`,
+   `output/candidacies.csv` 501 vic2026 rows, old file kept in `output/`). It
+   moves the next forecast (One Nation 30 -> 78 seats). Diff the forecast with and
+   without it before it publishes; LDP (4 rows) is OTH, probably OTH_RIGHT.
+
+6. **EXPLAINED 2026-10-03 21:40 (still to fix): `backtest_candidate_fed.R:78-79`
+   and `backtest_candidate_nsw.R:41-42` set `AUSPOL_SALIENCE_EXPECTED=1` and
+   `AUSPOL_SALIENCE_EXP_SD=1` when unset, BEFORE `harness_defaults.R` applies the
+   published "0" (`published_flags.R:62,64`).** A rebuild exports the published
+   flags first so it scores them at 0; a hand run exports nothing so it scores
+   them at 1. Confirmed by running both with the two switches at 0: nsw2019 0 of
+   651 cells differ from the v61 snapshot; all 7 fed pairs 0 of 7,357. So every
+   hand-run fed or nsw number so far is NOT the shipped configuration. The fix is
+   to delete those four lines (the published value then applies); it moves no
+   rebuild/ledger number. The old description follows, kept for the record: Full
+   7-pair fed run: fed2007 identical, then differing cells grow with the election
+   (fed2010 293 of 1,050; fed2016 768; fed2022 933 of 1,057, mean abs 0.31, max
+   4.31; fed2025 901). nsw2019: 455 of 651 (mean 0.19, max 1.45). vic, sa2022,
+   qld2020 and wa2013 reproduce exactly. NOT caused by: the pair subset (full run
+   gives the same fed2022 gap), the candidate-list merge (pre-merge file, same
+   455), the zero-order change (early arm equals dev's code exactly), the xgb
+   models (dated before the snapshot). Runs are deterministic. Suspect an input
+   that depends on history or the clock; unconfirmed. Until explained, v61
+   baseline numbers for nsw and fed cannot be assumed reproducible, which
+   matters for the departed-rate refit and any before/after on those harnesses.
+
+Corrections to the older items below:
+- **Item 3 below (overcalled independents) was mislabelled**: the Pascoe Vale
+  figures were the REST bucket. Sue Bolton polled 4.19, we called 18.42. The
+  19.01 `base_pred` is explained (`docs/reviews/pascoe-vale-base-pred-trace-2026-10-03.md`):
+  slope 0.38 gives 16.62, row renormalisation (scale ~1.12) gives 18.61, a
+  salience blend adds ~0.4. Not a bug; the fix is item 2/3 above.
+- **Re-entry prior (item 2 below)**: Richmond 2022 Liberals is almost certainly a
+  re-entry cell (not standing 2018, standing 2022); `BV1r` has never appeared in a
+  log. Rebuild still not run (`docs/reviews/reentry-prep-2026-10-03.md`).
+- **Federal `PARTY_COR`** is assigned per pair in one loop and read in a later
+  one, so a full fed run simulates every pair with the LAST pair's matrix
+  (`docs/reviews/party-cor-loop-leak-2026-10-03.md`). Dormant at published
+  defaults (`AUSPOL_FORECAST_MODE=1` makes `statewide_draws` set, which skips the
+  matrix); live only for fed with FORECAST_MODE=0. Two-line fix, not applied.
+  Other harnesses are fine.
+- **Federal timing cache** (`instrument-backtest-fed-timing`) has three blockers
+  (key misses `output/xgb-primary-v6-oof-predictions.csv`, as-at models,
+  candidacies and the anchor polls; resumed pairs never rewrite `-ourtcp`;
+  `PARTY_COR` leak above). Do not merge until fixed.
+- ABC's Victorian coverage has no forecast numbers to validate against
+  (`docs/reviews/abc-vic-coverage-*-2026-10-03.md`; names are from WebFetch
+  summaries and unverified; raw pages in `external/reference/abc-vic2026/`).
+
+What I got wrong today: I said four more harnesses shared the `PARTY_COR`
+leak (only fed does); I offered "ships on correctness grounds" for a prereg whose
+rule ships nothing when INCONCLUSIVE; and a reviewer subagent left the main
+tree's HEAD detached, so a prereg commit landed on no branch until I
+fast-forwarded `dev` to it (nothing lost).
+
+## 2026-10-03 01:40
 
 **v61 live.** AEF-7 ledger 0.2677 vs AEF 0.2825 (681 seats); 22-election log
 loss 0.3413; all-row primary RMSE 4.044. v59 Climate 200/Voices endorsement,
@@ -22,8 +108,15 @@ Queue, in order:
 2. **Re-entry prior (`AUSPOL_REENTRY`, prereg 2026-09-07) was never decided and
    is OFF.** Richmond 2022 Liberals got 0.0 (actual 18.8) because of it. Test
    it: rebuild from stage 1 (~40 min), and check base_pred AND the xgb layer.
-3. **Overcalled independents**: Pascoe Vale 2022 (ours 33.6, AEF 12.9, actual
-   17.8), Geelong, Sandringham, Kavel 2026 (64.1 vs 45.5), Shepparton. Walk
+3. **Overcalled independents** (CORRECTED 2026-10-03, walk in
+   `docs/reviews/overcalled-independents-walk-2026-10-03.md`): the Pascoe Vale
+   2022 figures below (ours 33.6, AEF 12.9, actual 17.8) are the REST bucket,
+   not an independent. Sue Bolton actually polled 4.19 and we called 18.42:
+   the 2018 independent class (32.88, nobody re-stood) was carried onto her via
+   `base_pred` (19.0); xgb takes ~1 point off. Next: stop carrying a class gap
+   onto a candidate when none of that class's earlier candidates re-stand,
+   tested in `base_pred` AND xgb. Other seats in this list may carry the same
+   REST-bucket slip (unchecked). Geelong, Sandringham, Kavel 2026 (64.1 vs 45.5), Shepparton. Walk
    Pascoe Vale end to end first (CLAUDE.md: one example row before any fit).
    This group matters for Kew/Hawthorn 2026.
 4. **Federal harness is the rebuild's critical path** (431s alone; it runs its
