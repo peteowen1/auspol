@@ -54,6 +54,17 @@ fix is with an agent (`fed-timing-resume-fixed`); the departed-rate experiment
 (needs retrain); simulation-noise revival of zeroed cells (`R/seat_sim.R:1229`,
 unmeasured); the scenario tool is scoped, not started.
 
+**Fed timing + resume cache (`fed-timing-resume-fixed`, b21fb77, unpushed, NOT yet through
+the review gate or check_like_ci):** the three blockers are fixed and it was run live
+for the first time: fed2022 three ways at the shipped salience setting (resume on, resume
+on again, resume unset). Run 2 logged `RS1 RESUMED` and re-wrote the `-ourtcp` file (38 s
+against 95 s); all five output files are byte-identical across the three runs; the fresh
+pair matches the v61 snapshot (0 of 1,057 cells differ), so it changes no output. The
+resume is now opt-in (`AUSPOL_FED_RESUME=1`), the key covers 19,594 input files. The
+`PARTY_COR` fix is dormant at published defaults. `FLOW_SD` has the same loop leak and is
+unfixed (dormant: `AUSPOL_FLOW_SD_BY_SOURCE` default 0). Not tested: more than one pair, and
+a kill mid-run.
+
 **Mistakes of mine tonight:** my first claim that four harnesses share the
 PARTY_COR leak (only fed does); a "ships on correctness grounds" wording for the
 departed-rate prereg that its own rule contradicts; a detached HEAD left by a
