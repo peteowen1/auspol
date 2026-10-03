@@ -356,3 +356,26 @@ signed bias), R3 (winner flips), R4 (port shape), R6, R7, C2, C3 (pooled log los
 needs the seat-probability files and all pairs), and the harness pairs not run (nsw2023, qld2024,
 sa2026, vic as one run, wa other 5 pairs, fed other 6 pairs). `AUSPOL_NOM_ZERO_ORDER` stays "early"
 in `published_flags.R`. The live path (fit_seats_full.R, PR #89) already zeroes late.
+
+## Correction to the partial result above (2026-10-03 late evening; the text above is NOT edited)
+
+Finding 3 above ("nsw2019 and fed2022 do not reproduce the v61 snapshot on dev's own code") is
+EXPLAINED and the nsw2019/fed2022 rows of Table 1 were run in the WRONG configuration.
+`backtest_candidate_fed.R:78-79` and `backtest_candidate_nsw.R:41-42` set `AUSPOL_SALIENCE_EXPECTED=1`
+and `AUSPOL_SALIENCE_EXP_SD=1` when unset, before `harness_defaults.R` applies the published "0"
+(`published_flags.R:62,64`); a rebuild exports the published flags first, a hand run does not.
+Confirmed: with both switches at 0, nsw2019 matches the v61 snapshot in 0 of 651 cells differing and
+all seven fed pairs in 0 of 7,357 (full `dev` run, 285 s).
+
+Re-run at the published setting (both switches 0), `zero-order-late` 9197982:
+
+| pair | early vs v61 snapshot, cells differing | late vs early, cells differing (max abs) | ghost cells early / late |
+|---|---|---|---|
+| nsw2019 | 0 of 651 | 202 (0.051) | 0 / 0 |
+| fed2022 | 0 of 1,057 | 0 (0.000) | 0 / 0 |
+
+So early mode is byte-identical to the v61 snapshot in all six harnesses (vic, sa2022, qld2020,
+wa2013 in the table above; nsw2019 and fed2022 here). The nsw late-vs-early differences in the table
+above (max 0.656) came from the wrong configuration and are superseded by 0.051. The "NOT EVALUATED"
+list above is unchanged: the ship condition is still not met. The fix for the two harness default
+lines (delete them) is queued in `docs/NEXT-STEPS.md` item 6 and is not part of this change.
