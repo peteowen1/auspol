@@ -238,3 +238,22 @@ with timestamp and code tag; confirm the tag shows the arm, not an older run) an
   only for the call sites; tests/ was only included in a file-list grep, which showed
   none).
 - Live wiring: fit_seats_full.R has no re-entry call; I did not design it.
+
+## Probe result 2026-10-04 (vic harness, base-pred stage, prior OFF vs ON)
+
+Run by hand on `dev` at published defaults with `AUSPOL_XGB_PRIMARY=0` (the base-pred stage, because the
+fill is overwritten at stage 6 by the cached xgb file), `AUSPOL_REENTRY=0` vs `AUSPOL_REENTRY=1
+AUSPOL_REENTRY_GAP=winsor`, 3 vic pairs, about 100 s each. Output files kept in the scratchpad, not in
+`output/`. Log line: `BV1r re-entry prior: 27 cell(s) filled | largest: Thomastown/IND 18.4,
+Sandringham/IND 14.3, Yuroke/IND 13.2`.
+
+- **Richmond 2022 Liberals IS a re-entry cell** (the open question above): pred 0.00 OFF, 24.27 ON, actual
+  18.77. Error 18.8 -> 5.5 points.
+- **The same fill overshoots badly elsewhere**: Thomastown 2014 IND 3.6 -> 15.8 (actual 5.1), Hawthorn
+  2018 IND 6.1 -> 17.5 (actual 0.9), Ovens Valley 2022 OTH 3.7 -> 13.3 (actual 2.5), Bendigo West 2022
+  IND 0.9 -> 10.4 (actual 3.3), Sandringham 2014 IND 4.5 -> 13.6 (actual 10.3, improves).
+- 689 of 1,672 cells differ between the arms (the row renormalisation spreads the fill).
+- Consistent with the prior refusal on the tail clause. NOT a ship decision: one harness, base-pred stage,
+  no xgb layer, no other harness, nothing scored against the pre-registered criterion. The fill is also
+  not wired into `fit_seats_full.R` (no mention of re-entry there), so it could not reach the published
+  forecast without new wiring.

@@ -5,7 +5,68 @@ it stood before this rewrite: `backlog/journal-2026-09-19-hub-snapshot.md`).
 Decisions: `docs/DECISIONS.md`. Every seat verdict: `docs/SEAT-REGISTRY.md`.
 Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30.
 
-## 2026-10-03 evening (read this first; supersedes the queue below where they differ)
+## 2026-10-04 overnight (READ THIS FIRST; Pete asleep, standing instruction to carry on)
+
+**Decisions waiting for Pete (nothing below was merged, pushed, uploaded or flipped):**
+1. **Salience arm C for fed/nsw (ON vs OFF).** Pre-registered, measured
+   (`docs/plans/prereg-salience-fed-nsw-onoff-2026-10-03.md`). Federal mean seat log
+   loss ON-OFF -0.0096 (SE 0.0074; -0.0023 without fed2010, which carries it); 5 of 6
+   teal seats rise; nsw about 0 (-0.0022 / +0.0014). Guard d (per-class bias) fails in
+   fed and both nsw pairs by 0.03-0.21 points (the guard is over-sensitive on paired
+   cells, left as written). By the rule arm C is dropped; a refused clause on a
+   favourable federal mean goes to you. Branch `fix-harness-salience-defaults`
+   (3a3be3c, ready, unmerged) makes everything score at the published 0. Flipping to ON
+   instead would move the fed/nsw ledger AND the xgb training pool that feeds
+   Victoria (not tested). Recommendation: merge the branch (OFF everywhere).
+2. **Zero-order "late" in the six harnesses** (`AUSPOL_NOM_ZERO_ORDER`, default
+   early). All 22 pairs scored: every clause passes except R2 (ALP +0.0045 points,
+   GRN +0.0020, on a paired SE of ~0.002); only 2 cells move materially (Narracan ALP,
+   Giles IND -> 0). `docs/reviews/zero-order-22pair-2026-10-04.md`. The rule sends the
+   R2 refusal to you. Recommendation: flip to late and record the override. It is a
+   correctness/parity change, not an accuracy gain. Branch `zero-order-late` (9197982).
+3. **PR #89** (live nomination zeroing, gated by hand) is open into dev with NO CI
+   checks reported. Local check_like_ci clean on afa6685. Merge when you are happy.
+4. **Scenario tool** (`docs/plans/scenario-tool-scoping-2026-10-03.md`): you chose a
+   live slider. The recommended path is precomputed seat-share matrices at 2.5-point
+   knots plus a JS port of the seat simulation in the browser (~40-50 h, guessed).
+   Two modelling choices need you: (5a) hold the moved party exactly at X (my
+   recommendation) or keep its usual +-2.5 statewide spread; (5b) other parties give
+   way by regression on the model's own draws (recommended) or pro rata.
+5. **Departed-rate refit fallback**, chosen overnight on your behalf: with fewer than
+   3 informative earlier elections the fit keeps the control 0.38 (the run's own `new`
+   slope can be 1.0 = no decay). Reversible; in the prereg addendum 2026-10-04.
+   Branch `departed-rate-refit` (256f328, reviewed twice, no blockers) is built but has
+   NEVER run on real data and its experiment needs the 4-step retrain.
+6. **candidacies.csv upload.** The ABC+Wikipedia merge is committed as CODE (fe460f2)
+   and built locally (501 vic2026 rows), but CI downloads candidacies.csv from the
+   `shipped-models` release, so the daily forecast does not see it until you upload
+   it. It moves the next forecast (One Nation 30 -> 78 seats). LDP (4 rows) is OTH,
+   probably OTH_RIGHT.
+
+**Shipped to dev tonight (commits only):** the two preregs and their addenda, the
+scoring scripts (`compare_zero_order.R`, `compare_salience_onoff.R`), the candidate-list
+merge code, the investigation reviews, the docs. **Fixed and measured:** v61 snapshot
+mismatch for nsw/fed explained (fed/nsw harness salience defaults); `PARTY_COR` loop
+leak found (fed only, dormant at published defaults); Pascoe Vale `base_pred` 19.01
+explained; re-entry probe (Richmond Liberals is a re-entry cell; the prior also
+overshoots on four others, so not a ship). **Not done:** the fed timing/resume cache
+fix is with an agent (`fed-timing-resume-fixed`); the departed-rate experiment
+(needs retrain); simulation-noise revival of zeroed cells (`R/seat_sim.R:1229`,
+unmeasured); the scenario tool is scoped, not started.
+
+**Mistakes of mine tonight:** my first claim that four harnesses share the
+PARTY_COR leak (only fed does); a "ships on correctness grounds" wording for the
+departed-rate prereg that its own rule contradicts; a detached HEAD left by a
+reviewer subagent put a prereg commit on no branch until I fast-forwarded dev (nothing
+lost); my first salience fix deleted lines that a documented, shipped decision
+depended on (caught in review before any PR).
+
+**Housekeeping:** the `zero-order-late` worktree's `output/` and `external/` are
+junctions into the main tree (made by Pete). Undo with `rmdir` on the two junctions
+(NOT a recursive delete), then rename the `.wt-orig` folders back. All hand-run
+outputs from tonight are in the session scratchpad, not in `output/`.
+
+## 2026-10-03 evening (superseded where it differs from the section above)
 
 **State.** Nothing merged. PR #89 (`nomination-zero-live`, v61 zeroing in the
 published Victorian forecast, gated by hand) is open into `dev`; GitHub reported
