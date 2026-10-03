@@ -308,3 +308,51 @@ Written BEFORE any arm of this change has run. Source: `docs/reviews/zero-order-
 5. **Not covered, said now.** The simulation draws can still revive a zeroed cell (`R/seat_sim.R:1229`);
    this change does not touch that. Which step revived Narracan and Giles is unconfirmed (needs a
    pre-zero dump); `late` is expected to fix both by construction, and (a) tests exactly that.
+
+## Result 2026-10-03 (PARTIAL; the Result placeholder above is left as written)
+
+Code: branch `zero-order-late` (9197982), switch `AUSPOL_NOM_ZERO_ORDER`, run from a worktree whose
+`output/` and `external/` were linked to the main tree's by hand (Pete). Published defaults, no
+overrides except the switch. Runs deterministic (nsw2019 early run twice: identical file hash).
+Not run: any arm at the 20,000-sim deciding setting beyond the defaults used here (the defaults
+may already be 20,000; not checked), and any score from the seat-probability files.
+
+Table 1: one pair per harness, early vs late, point estimates (`sharedetail`). Source: the
+`backtest-*-sharedetail-*` files of these runs. "Ghost" = actual share 0 and predicted share > 0.
+
+| pair | early == dev's own code | late vs early, cells differing (max abs) | ghost cells early / late |
+|---|---|---|---|
+| vic2014, vic2018, vic2022 | yes: 0 of 1,672 differ from the v61 snapshot | 487 (vic2022: 5, all Narracan) | 1 / 0 |
+| sa2022 | yes: 0 of 329 differ from the v61 snapshot | 112 (0.45) | 1 / 0 |
+| wa2013 | yes: 0 of 295 | 0 | 0 / 0 |
+| qld2020 | yes: 0 of 651 | 276 (0.030) | 0 / 0 |
+| nsw2019 | yes: 0 of 651 vs a run of dev's code (see finding 3) | 163 (0.656) | 0 / 0 |
+| fed2022 | yes: 0 of 1,057 vs a run of dev's code (see finding 3) | 0 | 0 / 0 |
+
+Findings.
+1. **C0 passes where a revival existed.** Narracan vic2022 ALP is 0.645 early and exactly 0 late;
+   Giles sa2022 IND is 0.43 early and exactly 0 late. Ghost cells 1 -> 0 in both. No other
+   ghost cell in the pairs run.
+2. **Early mode is byte-identical to dev's code in every harness run.** vic, sa, wa and qld match the
+   v61 snapshot exactly; nsw2019 and fed2022 match a fresh run of dev's own harness exactly.
+3. **Separate, older problem found: nsw2019 and fed2022 do NOT reproduce the v61 snapshot even on
+   dev's own code.** nsw2019: 455 of 651 cells differ (mean abs 0.19, max 1.45, Cootamundra GRN).
+   fed2022: 933 of 1,057 (mean abs 0.31, max 4.31; the fed run used AUSPOL_FED_PAIRS=2022, the
+   snapshot is a full 7-pair run, so a pair-subset difference is one possible cause). The candidate
+   list merge is NOT the cause (nsw2019 with the pre-merge candidacies file: same 455). Inputs
+   modified since the snapshot: only candidacies.csv. Cause UNCONFIRMED. This does not affect the
+   early-vs-late comparison (same code and inputs in both arms) but it means the v61 snapshot
+   cannot be assumed reproducible for nsw and fed.
+4. **The prereg's D3 ("byte-identical between arms where nothing is revived") cannot be run as
+   written:** every one of the 22 pairs zeroes cells, and zeroing before or after the port changes
+   the freed share slightly (vic2014 268 cells, qld2020 276). Only wa2013 and fed2022 were
+   identical between arms (no revival path and no ghost cells).
+5. **A cost, by hand arithmetic from the Narracan row:** the sum of squared primary errors in
+   Narracan goes 386.8 -> 391.9 (the correct 0.645 off Labor goes to classes the model already
+   over-calls). Rounding-sized; C1 is direction-only by the rule above.
+
+NOT EVALUATED, so the decision rule's ship condition is NOT met: R1 (floor events), R2 (per-class
+signed bias), R3 (winner flips), R4 (port shape), R6, R7, C2, C3 (pooled log loss over 22 pairs,
+needs the seat-probability files and all pairs), and the harness pairs not run (nsw2023, qld2024,
+sa2026, vic as one run, wa other 5 pairs, fed other 6 pairs). `AUSPOL_NOM_ZERO_ORDER` stays "early"
+in `published_flags.R`. The live path (fit_seats_full.R, PR #89) already zeroes late.
