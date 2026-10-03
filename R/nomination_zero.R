@@ -97,6 +97,10 @@ zero_unnominated <- function(shares, target, label, code = "NZ1", flows = NULL) 
   shares
 }
 
+# Nominations close at noon on 9 November 2026. The gate opens the day AFTER, so
+# a clock in any timezone cannot fire it before they have closed.
+NOM_GATE_DATE <- as.Date("2026-11-10")
+
 #' Live nomination table for the target election, or NULL with the reason
 #'
 #' The published forecast's candidate list is incomplete until nominations close
@@ -108,20 +112,24 @@ zero_unnominated <- function(shares, target, label, code = "NZ1", flows = NULL) 
 #'   * `"auto"` (default): only on or after `closes`, AND the list passes the
 #'     completeness floor below.
 #'   * `"1"`: skips the date test only. The completeness floor always applies.
-#' Floor: every seat in `seats` has at least one candidacy, and the list holds at
-#' least `min_ratio` of the previous election's candidacies.
+#' Completeness: PRIMARY, ALP and LNP each have a candidacy in every seat of
+#' `seats` (the failing class and seat count are reported); SECONDARY, the list
+#' holds at least `min_ratio` of the previous election's candidacies, and every
+#' seat has some candidacy.
 #'
 #' @param seats Seat names of the forecast (rownames of the share matrix).
 #' @param election,prior Corpus labels.
 #' @param corpus `candidacies.csv` data.table (seat, party, election); read from
 #'   `output/candidacies.csv` when NULL.
-#' @param closes Date nominations close (vic2026: noon, 9 November 2026).
+#' @param closes First date the `auto` gate opens (`NOM_GATE_DATE`).
+#' @param major Classes that must stand in every seat.
 #' @param today Injectable for tests.
 #' @param min_ratio Completeness floor against the previous election's count.
 #' @return list(target = data.table(seat, party, votes) or NULL, reason = chr).
 #' @export
 live_nominations <- function(seats, election = "vic2026", prior = "vic2022", corpus = NULL,
-                             closes = as.Date("2026-11-09"), today = Sys.Date(), min_ratio = 0.85) {
+                             closes = NOM_GATE_DATE, today = Sys.Date(), min_ratio = 0.85,
+                             major = c("ALP", "LNP")) {
   mode <- Sys.getenv("AUSPOL_NOM_LIVE", "auto")
   if (identical(mode, "0")) return(list(target = NULL, reason = "AUSPOL_NOM_LIVE=0"))
   if (!mode %in% c("auto", "1")) return(list(target = NULL, reason = sprintf("AUSPOL_NOM_LIVE=%s not recognised (0, auto, 1)", mode)))
@@ -140,7 +148,20 @@ live_nominations <- function(seats, election = "vic2026", prior = "vic2022", cor
   n_prior <- sum(!is.na(elec) & elec == prior)
   if (!nrow(now)) return(list(target = NULL, reason = sprintf("no %s candidacies in the corpus", election)))
   if (n_prior <= 0L) return(list(target = NULL, reason = sprintf("no %s candidacies to size completeness against", prior)))
+  # PRIMARY CHECK: both majors have a candidacy in EVERY seat. Labor and the
+  # Coalition contest every seat, so a gap is an unannounced candidate, never a
+  # decision not to stand. A raw count cannot see this: a list can pass any count
+  # floor while Labor is still missing from a dozen seats.
+  ns <- normalise_seat(seats)
+  for (cl in major) {
+    gap <- setdiff(ns, normalise_seat(now$seat[now$party == cl]))
+    if (length(gap))
+      return(list(target = NULL, reason = sprintf("list incomplete: %s has no candidacy in %d of %d seats (%s%s)",
+                                                  cl, length(gap), length(ns), paste(utils::head(gap, 4), collapse = ", "),
+                                                  if (length(gap) > 4) ", ..." else "")))
+  }
   ratio <- nrow(now) / n_prior
+  # SECONDARY CHECK: overall count against the previous election.
   if (ratio < min_ratio)
     return(list(target = NULL, reason = sprintf("list incomplete: %d candidacies vs %d at %s (%.0f%% < %.0f%% floor)",
                                                 nrow(now), n_prior, prior, 100 * ratio, 100 * min_ratio)))
@@ -169,6 +190,21 @@ zero_unnominated_live <- function(shares, flows, label = "vic2026", ...) {
     cat(sprintf("NZL  %s: nomination zeroing NOT applied (%s); shares unchanged\n", label, nm$reason))
     return(shares)
   }
-  cat(sprintf("NZL  %s: nomination zeroing applied on %s\n", label, nm$reason))
-  zero_unnominated(shares, nm$target, label, flows = flows)
+  zmode <- Sys.getenv("AUSPOL_NOM_ZERO", "2")
+  if (!zmode %in% c("1", "2")) {
+    cat(sprintf("NZL  %s: no-op: nothing changed (AUSPOL_NOM_ZERO=%s is not 1 or 2; list was complete: %s)\n",
+                label, zmode, nm$reason))
+    return(shares)
+  }
+  out <- zero_unnominated(shares, nm$target, label, flows = flows)
+  nchg <- sum(abs(out - shares) > 1e-9)
+  absent <- setdiff(colnames(shares), unique(nm$target$party))
+  note <- if (length(absent)) sprintf("; classes skipped, absent from the nomination table: %s", paste(absent, collapse = "/")) else ""
+  if (nchg > 0L) {
+    cat(sprintf("NZL  %s: applied: %d cells changed (%s)%s\n", label, nchg, nm$reason, note))
+  } else {
+    cat(sprintf("NZL  %s: no-op: nothing changed (every class in the forecast stands where it is predicted; %s)%s\n",
+                label, nm$reason, note))
+  }
+  out
 }

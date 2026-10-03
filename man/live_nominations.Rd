@@ -9,9 +9,10 @@ live_nominations(
   election = "vic2026",
   prior = "vic2022",
   corpus = NULL,
-  closes = as.Date("2026-11-09"),
+  closes = NOM_GATE_DATE,
   today = Sys.Date(),
-  min_ratio = 0.85
+  min_ratio = 0.85,
+  major = c("ALP", "LNP")
 )
 }
 \arguments{
@@ -22,11 +23,13 @@ live_nominations(
 \item{corpus}{\code{candidacies.csv} data.table (seat, party, election); read from
 \code{output/candidacies.csv} when NULL.}
 
-\item{closes}{Date nominations close (vic2026: noon, 9 November 2026).}
+\item{closes}{First date the \code{auto} gate opens (\code{NOM_GATE_DATE}).}
 
 \item{today}{Injectable for tests.}
 
 \item{min_ratio}{Completeness floor against the previous election's count.}
+
+\item{major}{Classes that must stand in every seat.}
 }
 \value{
 list(target = data.table(seat, party, votes) or NULL, reason = chr).
@@ -42,7 +45,9 @@ once it is plausibly the final list:
 \item \code{"auto"} (default): only on or after \code{closes}, AND the list passes the
 completeness floor below.
 \item \code{"1"}: skips the date test only. The completeness floor always applies.
-Floor: every seat in \code{seats} has at least one candidacy, and the list holds at
-least \code{min_ratio} of the previous election's candidacies.
+Completeness: PRIMARY, ALP and LNP each have a candidacy in every seat of
+\code{seats} (the failing class and seat count are reported); SECONDARY, the list
+holds at least \code{min_ratio} of the previous election's candidacies, and every
+seat has some candidacy.
 }
 }
