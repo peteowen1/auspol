@@ -276,3 +276,35 @@ No `AUSPOL_PUBLISH=1` from any of these.
 
 ## Result
 (not run)
+
+## Addendum 2026-10-03 (after step 0; the clauses above are NOT edited)
+
+Written BEFORE any arm of this change has run. Source: `docs/reviews/zero-order-step0-2026-10-03.md`
+(read-only, no harness run).
+
+1. **Baseline restated.** Use snapshot `20261003-0143-48f0233-from6` (identical to `0115-ca788a4`:
+   same backtest CSV hashes). 22-pair log loss reproduces: 0.3434 -> 0.3413 (2,120 seat-elections).
+   Affected-seat primary RMSE does NOT reproduce to the rounding shown: 3.961 -> 3.767 over 1,311
+   seats, against the registered 3.984 -> 3.774 over 1,313. The definition was not changed to force
+   a match. Step 0's gate "to the rounding shown" therefore FAILS on RMSE and is recorded as failed;
+   the restated figures are the baseline for any comparison here.
+2. **Wrong file named above.** `pooled-sharedetail.csv` in the from6 snapshots is the stale stage-2
+   xgb-off pool. Use the per-pair `backtest-<h>*-sharedetail-*.csv` files.
+3. **Size of the effect.** Only 2 cells are revived in the final output: Narracan vic2022 ALP
+   (33.37 -> 0.645) and Giles sa2022 IND (2.03 -> 0.43). 1,855 of 1,857 zeroed cells stay zero.
+   Federal has 0 ghost cells. So |A| = 2 cells in 2 seats; the MDE for C1 (22.7 MSE units) is far above
+   any plausible effect, so C1 is DIRECTION-ONLY by this prereg's own rule, and C2/C3 cannot falsify
+   anything with 2 changed seats. The decision rests on C0, C4 and R1-R7. This is a correctness and
+   live-path-parity change, not an accuracy claim.
+4. **Reduced run scope (an amendment; why stated, not left silent).** The exploratory arms for all six
+   harnesses are not run for accuracy: there is nothing to measure at 2 cells. Instead, at the same
+   sims and seed: (a) both arms (early, late) on vic (3 pairs) and sa (2 pairs), the harnesses with
+   the two revivals: C0 (zero ghost cells outside the by-design absent-class list) and the two named
+   cells must read 0 in `late` and be unchanged in `early`; (b) the D3 byte-identical check
+   (sharedetail and seat probabilities identical between arms) on one pair with no revival in each of
+   nsw, qld, wa and fed; D3 failing means the arms differ in something other than the order and the
+   run is invalid. The deciding 20,000-sim run is then `late` on the same harness set only if (a)
+   and (b) pass. Anything not run is listed as not run in the Result section.
+5. **Not covered, said now.** The simulation draws can still revive a zeroed cell (`R/seat_sim.R:1229`);
+   this change does not touch that. Which step revived Narracan and Giles is unconfirmed (needs a
+   pre-zero dump); `late` is expected to fix both by construction, and (a) tests exactly that.
