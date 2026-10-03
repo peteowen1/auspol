@@ -769,6 +769,8 @@ if (all(SLOPE == 1)) cat("DS1  all 1.000 -- uniform swing, output must be unchan
 .returns <- if (.cond) .try("returns", candidate_returns("vic2022", "vic2026")) else NULL
 .permit  <- if (.screened && !is.null(.returns))
               .try("permit", salience_permit_for("vic2026", "vic2022", "vic")) else NULL
+# AUSPOL_DEPARTED_RATE (default "0" = the hardcoded 0.38, byte-identical): time-forward refit of the departed-leader rate. Prints one DR0 line either way. docs/plans/prereg-departed-rate-refit-2026-10-03.md
+.DEPRATE <- departed_rate_for_harness("vic2026", active = .screened && .honour_departed && !is.null(.permit) && !is.null(.returns))
 if (.cond && is.null(.returns)) {
   cat(sprintf("DS2  arm CS requested but vic2026 has no candidate list yet -- FALLING BACK to uniform swing%s\n",
               .reason("returns")))
@@ -1047,6 +1049,7 @@ if (!is.null(.fitsl)) {
     pm <- unname(lut[seats]); # a missing permit row is NOT a permit (NA = silent; 2026-09-20)
     return(screened_slopes(p, seats, .returns, pm, same_mp = .MP_SLOPE, major_departed = .MAJDEP, major_present = .MAJPRES,
                             honour_departed = .honour_departed,
+                            departed_rate = if (is.null(.DEPRATE)) eval(formals(screened_slopes)$departed_rate) else .DEPRATE,
                             same = if (is.null(.fitsl)) formals(screened_slopes)$same else .fitsl$same,
                             new  = if (is.null(.fitsl)) formals(screened_slopes)$new  else .fitsl$new))
   }
