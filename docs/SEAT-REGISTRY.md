@@ -261,3 +261,18 @@ file is the durable copy.
   the rest is primaries (LNP 57.3 vs 50.7). Small; teal pattern, **PARKED**.
 - **Kalgoorlie** — wrong winner class in the TCP reference until the
   official WAEC distribution was parsed (2026-09-18). **DATA**.
+
+## Cross-seat: sitting independent retires (2026-10-04, hypothesis, NOT a finding)
+
+Triage of the worst-100 primary misses in `output/forecasts.csv` (built 2026-10-03).
+Pooled over 54 scored seats where an independent with 15%+ last time did not stand,
+the larger of the ALP/LNP under-calls is +0.68 points over same-election controls
+(95% CI -0.66 to +2.30): no bias, so the `AUSPOL_DEPARTED_ORIGIN` refusal stands.
+Post hoc subgroup, the independent was the SITTING member and RETIRED: Lyne 2013 +6.8,
+New England 2013 +9.7, Churchlands 2013 +33.0, Kalgoorlie 2013 +0.1, Indi 2019 +0.1
+(independent successor, no reversion). n=5 scored, smallest detectable effect about 5
+points, so a pre-registered test can only refuse. Three more exist but predate
+`forecasts.csv` (Calare 2007, Kimberley 2001, South Perth 2005; in the OOF file).
+Surname matching gave false positives, removed by hand: Mount Gambier 2022 (Troy Bell
+re-contested, IND 45.7), Frome 2022 and Florey 2022 (members MOVED seat, to Stuart and
+Newland: a different mechanism).
