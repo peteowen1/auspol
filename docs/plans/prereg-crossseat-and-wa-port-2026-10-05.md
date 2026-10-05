@@ -51,3 +51,19 @@ Score: `Rscript scripts/score_arm.R <baseline> <armB> 0.5 wa` (WA) and `... 0.5 
 
 Decision: an arm ships only if its primary passes and its guards hold; otherwise the switch stays off
 and the result goes to Pete. Amendments are visible additions below.
+
+## Arm A result (2026-10-05, `output/snapshots/20261005-2339-2424e08-from1`, 43 min) -- REFUSED, to Pete
+
+| Criterion | Result | Verdict |
+|---|---|---|
+| 1 PRIMARY (99 cells whose base_pred moved, 13 elections) | 4,306.7 -> 4,000.7 (-7%), SE 623.3 | FAIL |
+| 2 GUARD ledger | 0.2827 -> 0.2834 (SE 0.0016) | holds |
+| 3 GUARD whole table | RMSE 3.810 -> 3.811 (SE 0.109) | holds |
+
+Federal cells improved (fed2016 -494, fed2022 -451, fed2025 -121: Fowler IND 5.2 -> 13.6 vs 29.5,
+Cowper IND 6.9 -> 13.9 vs 29.6, Fremantle 2025 IND 14.1 -> 22.8 vs 23.0). The credit LOWERED two
+classes it should have left alone: sa2022 Stuart IND (Brock) 25.0 -> 18.2 (actual 48.5; +535) and
+wa2017 Baldivis IND 10.5 -> 7.2 (23.9). The credit (carry x prior = 22.4 for Brock) REPLACES the class
+base, so where the class already had more, the arm took it away. Seat log loss over 22 elections
+0.2903 -> 0.2918. The switch stays off. Cost: stages 1, 3 and 6 ran about twice as long, because the
+carry is refitted on every personal_prior_vote() call.
