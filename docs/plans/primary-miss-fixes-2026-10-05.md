@@ -31,6 +31,40 @@ information is NOT done.
 
 Fixing 1 makes the backtests measure what ships; expect IND/minor scores to get WORSE, not better.
 
+## Measured: two full rebuilds, 2026-10-05
+
+Baseline `f202527` (snapshot `output/snapshots/20261005-1545-f202527-from1`, 23m53s) against the four
+fixes at `7d2b36c` (`output/snapshots/20261005-1615-7d2b36c-from1`, 28m15s). Comparison script:
+session scratchpad `compare_rebuilds.R`.
+
+| Measure (lower is better) | Baseline | Fixed |
+|---|---|---|
+| Seat log loss, AEF-7 ledger (681 seats; AEF 0.2825) | 0.2796 | **0.2874** |
+| Primary RMSE like for like vs AEF (2,700 cells) | 4.846 | 4.866 |
+| Primary squared error, whole as-at table | 181,179 (11,905 rows) | 178,048 (12,023 rows; WA reclass adds OTH_RIGHT rows) |
+| Primary RMSE, whole table (points) | 3.901 | 3.848 |
+
+By class RMSE: OTH_RIGHT 3.474 -> 3.185, OTH 1.967 -> 1.807, IND 4.714 -> 4.636, LNP 4.803 -> 4.880
+(worse). By election: wa2013 -0.417, wa2025 -0.328, nsw2019 -0.326; fed2025 +0.091, fed2022 +0.050.
+1,070 matched rows moved more than 1 point; 548 moved closer to the actual.
+
+**Why seat log loss got worse: the leak was hiding the defector over-carry.** With the class leader
+chosen by the result, a sitting member who left their party and then lost badly was never the IND
+leader, because a better-performing newcomer in the same class was picked. With the leader chosen by
+prior vote, the defector leads and the model carries their old major-party vote:
+
+- fed2013 Dobell: Craig THOMSON (ALP member, 46.3 in 2010) stood as IND, got 4.0. The IND class went
+  9.1 -> 23.1 (actual class 12.2), ALP 39.0 -> 24.5 (actual 35.1).
+- fed2025 Monash: Russell BROADBENT (LNP member, 37.8 in 2022) stood as IND, got 10.2. IND class
+  25.3 -> 34.1 (actual 27.3), LNP 35.9 -> 26.2 (actual 31.8).
+
+These are cluster C's (b) defectors: fitted carry 0.355-0.435 against a realised median of 0.21 over
+7 federal cases. The defector carry is now the next fix, and the honest baseline is 0.2874.
+
+Named rows (xgb_pred baseline -> fixed, actual): Dobell 2016 IND 27.6 -> 15.9 (2.2); Narracan 2022
+ALP 1.4 -> 0.0 (0.0); Bruce 2025 OTH_RIGHT 11.0 -> 8.5 (8.2); Shepparton 2022 LNP 36.0 -> 36.8 (52.6).
+Unexplained: Casey fed2022 LNP 34.9 -> 23.5 (actual 36.5), a single-candidate class.
+
 ## Model changes (design with Pete on rows first)
 
 - **Person-history table** (A + B): one table of every person's earlier results across seats,
