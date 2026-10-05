@@ -1007,9 +1007,15 @@ if (file.exists(.wiki)) {
   # ---- ABC's guide (scripts/fetch_abc_vic2026_candidates.R) ------------------
   # ABC carries 489 candidacies to Wikipedia's 379 and has far more One Nation
   # candidates. The list is the UNION: a candidate either source names is in.
-  .abcf <- sort(list.files(file.path("external", "reference", "abc-vic2026"),
-                           pattern = "^abc-candidates-.*[.]csv$", full.names = TRUE),
-                decreasing = TRUE)
+  # NEWEST BY THE STAMP IN THE NAME, not by a plain string sort: the fetcher
+  # writes abc-candidates-YYYYMMDD.csv, then abc-candidates-YYYYMMDD-HHMM.csv
+  # for a same-day refetch that changed, and "20261003.csv" sorts AHEAD of
+  # "20261003-1405.csv". Not by mtime either: a clone or copy resets it.
+  .abcf <- list.files(file.path("external", "reference", "abc-vic2026"),
+                      pattern = "^abc-candidates-[0-9]{8}(-[0-9]{4})?[.]csv$", full.names = TRUE)
+  .abc_stamp <- sub("^abc-candidates-([0-9]{8})(-([0-9]{4}))?[.]csv$", "\\1\\3", basename(.abcf))
+  .abc_stamp <- ifelse(nchar(.abc_stamp) == 8L, paste0(.abc_stamp, "0000"), .abc_stamp)
+  .abcf <- .abcf[order(.abc_stamp, decreasing = TRUE)]
   V_abc_n <- 0L; n_both <- 0L; n_conf <- 0L; disagree <- NULL
   if (length(.abcf)) {
     Aabc <- fread(.abcf[1], showProgress = FALSE)
@@ -1348,6 +1354,16 @@ cat(sprintf("BC11 vic2026 rows after merge: %d (no duplicate seat+person)
 if (length(.emptyv)) stop("BC11! vic2026 required column(s) not fully populated: ", paste(.emptyv, collapse = ", "))
 .cv <- vapply(names(C), function(k) mean(!is.na(C[[k]]) & !(is.character(C[[k]]) & !nzchar(C[[k]]))), 0)
 .dead <- names(.cv)[.cv == 0]
+# party_ab and party_alt only ever come from ABC's list, so with no ABC file
+# (the documented Wikipedia-only fallback, announced at BC10a) they are empty by
+# construction. Exempt them in that case only, and say so.
+if (!any(.v$source %in% c("abc", "both"))) {
+  .exempt <- intersect(.dead, c("party_ab", "party_alt"))
+  if (length(.exempt))
+    cat(sprintf("BC11 no ABC rows: %s 100%% empty by construction (Wikipedia-only fallback), not a failure\n",
+                paste(.exempt, collapse = ", ")))
+  .dead <- setdiff(.dead, .exempt)
+}
 if (length(.dead)) stop("BC11! column(s) 100% empty after the union: ", paste(.dead, collapse = ", "))
 .cvv <- vapply(names(.v), function(k) mean(!is.na(.v[[k]])), 0)
 cat(sprintf("BC11 vic2026 column coverage (n=%d): %s\n", nrow(.v),
