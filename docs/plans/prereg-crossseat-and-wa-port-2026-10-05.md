@@ -106,3 +106,10 @@ wa2025 seat-winner log loss 0.2744 -> 0.2680 (-0.0064, paired SE 0.0117: 0.55 SE
 unchanged (coefficient 0 with the cliff). Every non-WA election byte-identical (1,778 seats, 0.2718 ->
 0.2718): no leak. Ledger 0.2827 -> 0.2822 (SE 0.0006). By the clause the switch stays off; the
 direction is right and nothing else moves, so the call goes to Pete.
+
+### Decision (2026-10-06): B1 SHIPPED on Pete's override of the 1-SE clause
+
+`AUSPOL_SEAT_SWING_PORT_WA = "2"` in `scripts/published_flags.R` and as the R/script default; cliff kept
+(`NOCLIFF = "0"`). Pete's reasoning: a weak, already-shrunk signal that cannot move anything outside WA
+is safe to include. Victoria 2026: mode 2 resolves to "0" for a non-WA target
+(`R/seat_swing_port.R:123`), so the live forecast and the GitHub runner never read the WA file.

@@ -210,7 +210,7 @@ CAL_TAG <- paste0(
   # audit this" because its grep only scans the harnesses and
   # fit_seats_full.R, never R/; that gap is real and separate.
   if (identical(Sys.getenv("AUSPOL_SD_DEPARTED", "0"), "1")) "-sddep" else "",
-  switch(Sys.getenv("AUSPOL_SEAT_SWING_PORT_WA", "0"), "1" = "-portwa1", "2" = "-portwa2", "3" = "-portwa3", ""),
+  switch(Sys.getenv("AUSPOL_SEAT_SWING_PORT_WA", "2"), "1" = "-portwa1", "2" = "-portwa2", "3" = "-portwa3", ""),
   if (identical(Sys.getenv("AUSPOL_SEAT_SWING_PORT_NOCLIFF", "0"), "1")) "-nocliff" else "",
   if (nzchar(Sys.getenv("AUSPOL_FLOW_MODEL_TAG", "")))
     sprintf("-fm%s", Sys.getenv("AUSPOL_FLOW_MODEL_TAG")) else "",
@@ -633,7 +633,7 @@ for (K in PAIRS) {
   # they get a zero adjustment; seat_swing_port_apply() prints the matched count.
   # PREREG PENDING: docs/plans/prereg-seat-swing-port-wa-2026-10-05.md (to be written before any run).
   if (identical(Sys.getenv("AUSPOL_XGB_PRIMARY", "0"), "1") &&
-      !identical(Sys.getenv("AUSPOL_SEAT_SWING_PORT_WA", "0"), "0"))
+      !identical(Sys.getenv("AUSPOL_SEAT_SWING_PORT_WA", "2"), "0"))
     shares <- seat_swing_port_apply(shares, el_to)
   # Seat-poll blend (AUSPOL_SEAT_POLL_BLEND), after the override and the port;
   # xgb layer only, so stage-1 base_pred never includes it.

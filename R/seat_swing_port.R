@@ -61,7 +61,7 @@ seat_swing_port_coef <- function(target_election) {
   se2_ols <- (sum(e^2) / max(1, nrow(rows) - 1)) / sum(rows$dev^2)
   se2 <- max(se2_cl, se2_ols)
   if (thin) se2 <- se2 * SEAT_SWING_NOCLIFF_SE_INFLATE^2
-  if (identical(Sys.getenv("AUSPOL_SEAT_SWING_PORT_WA", "0"), "3")) {
+  if (identical(Sys.getenv("AUSPOL_SEAT_SWING_PORT_WA", "2"), "3")) {
     return(seat_swing_port_state_shrunk(rows, sub("[0-9]{4}$", "", target_election), b, se2, G))
   }
   list(coef = b * b^2 / (b^2 + se2), k = G, n = nrow(rows), b = b, se = sqrt(se2))
@@ -119,7 +119,7 @@ SEAT_SWING_NOCLIFF_SE_INFLATE <- 2
 #'   targets) or `"0"`.
 #' @keywords internal
 seat_swing_port_wa_mode <- function(target_election) {
-  m <- Sys.getenv("AUSPOL_SEAT_SWING_PORT_WA", "0")
+  m <- Sys.getenv("AUSPOL_SEAT_SWING_PORT_WA", "2")
   if (m %in% c("1", "3") || (m == "2" && sub("[0-9]{4}$", "", target_election) == "wa")) m else "0"
 }
 
@@ -221,7 +221,7 @@ seat_swing_port_adj <- function(target_election, seats) {
 #' @export
 seat_swing_port_apply <- function(shares, target_election) {
   if (sub("[0-9]{4}$", "", target_election) == "wa") {
-    if (identical(Sys.getenv("AUSPOL_SEAT_SWING_PORT_WA", "0"), "0")) return(shares)
+    if (identical(Sys.getenv("AUSPOL_SEAT_SWING_PORT_WA", "2"), "0")) return(shares)
   } else if (!identical(Sys.getenv("AUSPOL_SEAT_SWING_PORT", "2"), "2")) return(shares)
   stopifnot(all(c("ALP", "LNP") %in% colnames(shares)))
   adj <- seat_swing_port_adj(target_election, rownames(shares))
