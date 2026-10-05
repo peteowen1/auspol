@@ -87,7 +87,8 @@
 #' @noRd
 .cs_match <- function(cand, H) {
   cand <- cand[!is.na(c_key)]
-  U <- unique(rbind(H[, list(c_sur, c_giv)], cand[, list(c_sur, c_giv)]))   # names known by the target election
+  U <- rbind(H[, list(c_sur, c_giv, c_state, qual = c_party %in% .CS_NONMAJ & is.finite(c_pcv) & (c_party == "IND" | c_el %in% TRUE | c_src == "byelection"))],
+             cand[, list(c_sur, c_giv, c_state, qual = FALSE)])   # names known by the target election
   # PERSONAL votes only (Pete 2026-10-05): won as an independent, or as a sitting member /
   # by-election winner of a non-major class. A non-member One Nation/OTH share is the party's.
   H <- H[!is.na(c_key) & c_party %in% .CS_NONMAJ & is.finite(c_pcv) &
@@ -105,13 +106,17 @@
   same_seat <- m$h_s == m$c_s | m$h_s == c_s2
   m <- m[!(m$h_src == "byelection" & same_seat)]   # AUSPOL_BYELEC_LEVEL owns these
   if (!nrow(m)) return(empty)
-  # AMBIGUOUS PERSON: someone else with the same surname and first initial but a different
-  # (3+ letter, non-prefix) first name is known by the target election. REFUSE, do not credit.
-  U <- U[nchar(c_giv) >= 3L]
-  grp <- split(U$c_giv, paste0(U$c_sur, "|", substr(U$c_giv, 1L, 1L)))
+  # AMBIGUOUS PERSON, refused only when it matters: a different-first-name namesake in the SAME STATE
+  # who (a) ALSO holds a qualifying personal prior, so the credit could belong to either, or (b) exists
+  # at all when this match relied on a prefix/nickname fold rather than an exact first name.
+  U <- U[nchar(c_giv) >= 3L & !is.na(c_state)]
+  grp <- split(U, paste0(U$c_sur, "|", substr(U$c_giv, 1L, 1L)))
   amb <- vapply(seq_len(nrow(m)), function(i) {
-    g <- unique(grp[[paste0(m$h_sur[i], "|", substr(m$c_giv[i], 1L, 1L))]])
-    any(!.cs_given_ok(g, m$c_giv[i]) & g != m$c_giv[i])
+    o <- grp[[paste0(m$h_sur[i], "|", substr(m$c_giv[i], 1L, 1L))]]
+    if (is.null(o)) return(FALSE)
+    o <- o[o$c_state == m$c_state[i] & !.cs_given_ok(o$c_giv, m$c_giv[i]) & o$c_giv != m$c_giv[i]]
+    if (!nrow(o)) return(FALSE)
+    any(o$qual) || m$c_giv[i] != m$h_giv[i]
   }, NA)
   refused <- m[amb, list(h_pcv = if (.N) max(h_pcv) else NA_real_), by = .id]
   m <- m[!m$.id %in% refused$.id]

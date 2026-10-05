@@ -10,7 +10,7 @@ cs_corpus <- function() {
     rbind(r(e, s, "Al", paste0("Alp", s), "ALP", 45, st), r(e, s, "Lee", paste0("Lnp", s), "LNP", 40, st))))
   rbind(
     maj("nsw2015", c("S1", "S2")), maj("nsw2019", c("S1", "S2")),
-    maj("nsw2023", c("S3", "S4", "S5", "S6", "S7", "S8", "S9", "S10", "S11")),
+    maj("nsw2023", c("S3", "S4", "S5", "S6", "S7", "S8", "S9", "S10", "S11", "S12")),
     maj("fed2016", c("F1", "F2", "FV"), "NSW")[1:4, ], maj("fed2025", "F9", "NSW"),
     r("nsw2015", "S1", "Sam", "Roe", "IND", 20),
     r("nsw2019", "S1", "Sam", "Roe", "IND", 20),            # same-seat returner: ratio 1
@@ -28,6 +28,11 @@ cs_corpus <- function() {
     r("nsw2023", "S8", "Pat", "Lee", "IND", 2),             # a second real cross-seat person
     r("fed2016", "F3", "Dana", "Boyd", "IND", 30, "NSW"),   # an unambiguous independent
     r("nsw2023", "S9", "Dana", "Boyd", "IND", 25),
+    r("fed2016", "F10", "Dean", "Boyd", "ONP", 2, "NSW"),   # irrelevant namesake: party-label prior only, so Dana is still credited
+    r("fed2016", "F6", "Jack", "Smith", "IND", 12, "NSW"),  # a namesake WITH a personal prior: Jane Smith becomes ambiguous
+    r("fed2016", "F7", "Jim", "Cole", "IND", 30, "NSW"),    # matched only through the Jim/James fold ...
+    r("fed2016", "F8", "Joe", "Cole", "ONP", 1, "NSW"),     # ... and a different-first-name namesake exists
+    r("nsw2023", "S12", "James", "Cole", "IND", 5),
     r("fed2016", "F4", "Ona", "Party", "ONP", 30, "NSW"),   # a party-label share as a NON-member
     r("nsw2023", "S10", "Ona", "Party", "ONP", 3),
     r("fed2016", "F5", "Sid", "Hill", "OTH_RIGHT", 30, "NSW", el = TRUE),   # a non-major SITTING MEMBER
@@ -69,7 +74,8 @@ test_that("a namesake, another state, a major-party vote and a later result are 
   expect_true(own(res, "S9") > 0)                # control: the check CAN fire on this corpus
   expect_true(is.na(own(res, "S4")))             # Jack SMITH is not Jane SMITH (same surname, same initial)
   expect_true(is.na(own(res, "S3")))             # and Jane is REFUSED too: the person match is ambiguous
-  expect_equal(nrow(auspol:::.cs_env$refused), 1L)   # Jane is the refused match
+  expect_equal(nrow(auspol:::.cs_env$refused), 3L)   # Jane and Jack Smith (each is the other's namesake with a personal prior) and James Cole (fold + namesake)
+  expect_true(is.na(own(res, "S12")))
   expect_true(is.na(own(res, "S5")))             # Kim VOSS earned it in Victoria
   expect_true(is.na(own(res, "S6")))             # Max ORR's 40 was an ALP vote
   expect_true(is.na(own(res, "S7")))             # Rae KING's 40 comes AFTER nsw2023
