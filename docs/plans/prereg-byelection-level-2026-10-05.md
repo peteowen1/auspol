@@ -61,3 +61,18 @@ goes to Pete. Amendments are visible additions below; nothing above is edited af
   higher level over-calls her (actual 33.0); this is the expected cost.
 - Lyne 2010 was skipped by the existing by-election baseline because Labor did not stand; this arm
   does not touch that baseline, only the personal vote.
+
+## Result (2026-10-05, arm `output/snapshots/20261005-2023-2bc7581-from1` vs `20261005-1825-28d4602-from1`) -- primary FAILS by its 2-SE clause; to Pete
+
+| Criterion | Result | Verdict |
+|---|---|---|
+| 1 PRIMARY (A, 5 winners) | 3,512.1 -> 982.6 (-72%), change -2,529.5, SE 1,318.5 = 1.92 SE | FAIL (2 SE needed; the 20% part passes) |
+| 2 SECONDARY (B, 9 majors that lost) | 805.5 -> 342.6 (-57%), SE 348.0 | holds |
+| 3 GUARD ledger log loss | 0.2827 -> 0.2822 (SE 0.0013) | holds (AEF 0.2825) |
+| 4 GUARD whole-table | RMSE 3.832 -> 3.819 (SE 0.238) | holds |
+| 5 DISQUALIFIER | Lyne 0.000 -> 0.792, Mayo 0.882 -> 0.951, Orange 0.008 -> 0.758, Wagga Wagga 0.394 -> 0.947 | does not fire |
+
+Cells: Lyne 9.0 -> 32.1 (47.8); Orange 17.5 -> 33.8 (56.2); Wagga Wagga 26.5 -> 35.6 (46.1); Wentworth
+23.9 -> 39.1 (33.0, the named cost); Mayo 40.6 -> 43.6 (34.2). Arm logged `BYL1`/`BYD1` in stage 1
+(Lyne 41.6). By the rules both switches stay off; the 2-SE clause was added after the scorer's noise
+dry run (-3%), and this arm is -72% at 1.92 SE, so the decision goes to Pete.
