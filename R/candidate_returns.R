@@ -337,7 +337,7 @@ candidate_returns <- function(election_from, election_to, corpus = NULL) {
   P <- data.table::copy(PREVT)
   P[normalise_seat(P$seat) %in% normalise_seat(bw$seat), elected := FALSE]
   add <- data.table::copy(bw)[, election := election_from]
-  add[, `:=`(.k = match_key(sur, giv, "initial"), .s = normalise_seat(seat))]
+  add[, `:=`(.k = match_key(sur, giv, "person"), .s = normalise_seat(seat))]
   data.table::rbindlist(list(P, add), fill = TRUE)
 }
 
