@@ -99,3 +99,10 @@ no retraining noise, so the bar is the paired seat SE, not 0.010). GUARD: every 
 seat-winner log loss byte-identical (any change means the switch leaked); ledger at most +1 SE.
 Expected from Arm B: wa2025 -0.0064, SE 0.0117, so INCONCLUSIVE is the likely outcome and is reported
 as such, not as a refusal of the idea.
+
+### Amendment B1 result (2026-10-06, `output/snapshots/20261006-0010-f1fc3f1-from6`, 8.7 min) -- INCONCLUSIVE, to Pete
+
+wa2025 seat-winner log loss 0.2744 -> 0.2680 (-0.0064, paired SE 0.0117: 0.55 SE); wa2013/wa2017
+unchanged (coefficient 0 with the cliff). Every non-WA election byte-identical (1,778 seats, 0.2718 ->
+0.2718): no leak. Ledger 0.2827 -> 0.2822 (SE 0.0006). By the clause the switch stays off; the
+direction is right and nothing else moves, so the call goes to Pete.
