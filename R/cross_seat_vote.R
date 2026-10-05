@@ -242,8 +242,13 @@ fit_cross_seat_carry <- function(target_election, corpus = NULL, pairs = NULL) {
   bd <- file.path("external", "reference", "byelections")
   bf <- if (dir.exists(bd)) sort(list.files(bd, full.names = TRUE)) else character(0)
   ev <- Sys.getenv(); ev <- ev[grepl("^AUSPOL_", names(ev)) & names(ev) != "AUSPOL_CROSS_SEAT_CACHE_DIR"]
+  # The CODE the cached value depends on, too (review 2026-10-06): editing a matching
+  # or classification helper must invalidate entries, not wait for a manual version bump.
+  fns <- c(".cs_match", "given_stem", "given_conflict", "match_key", "align_person_keys", "seat_rename_map",
+           "election_dates", "elections_before", "classify_party", "byelection_winner_rows", "fit_cross_seat_carry")
+  code <- lapply(fns, function(f) if (exists(f, mode = "function")) deparse(get(f, mode = "function")) else NULL)
   digest::digest(list(.CS_CACHE_VERSION, what, as.data.frame(corpus), all_election_pairs(),
-                      unname(tools::md5sum(bf)), ev[order(names(ev))], list(...)), algo = "xxhash64")
+                      unname(tools::md5sum(bf)), ev[order(names(ev))], code, list(...)), algo = "xxhash64")
 }
 
 # Memoise `compute()` under `key` (session environment, then disk). A corrupt or
