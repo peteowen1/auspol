@@ -107,6 +107,20 @@ test_that("class leader with no record anywhere: sitting member, then name order
   expect_equal(l2$surname, "ABLE")
 })
 
+test_that("a sitting member with no prior vote (by-election winner row) leads over name order", {
+  # ZED won a by-election: the override adds an elected row with no pcv, so
+  # there is no prior VOTE for anyone and only the sitting flag separates them.
+  # Name order alone would pick ABLE; the rule must pick ZED.
+  now  <- data.table::data.table(seat = "A", party = "IND", surname = c("ABLE", "ZED"),
+                                 name = NA_character_, pcv = c(60, 5))
+  prev <- data.table::data.table(seat = "A", party = "IND", surname = "ZED",
+                                 name = NA_character_, pcv = NA_real_, elected = TRUE)
+  l <- auspol:::.class_leader_rows(
+    data.table::copy(now)[,  `:=`(.k = tolower(surname), .s = "a")],
+    data.table::copy(prev)[, `:=`(.k = tolower(surname), .s = "a")])
+  expect_equal(l$surname, "ZED")
+})
+
 test_that("leading_candidate_returns matches candidate_returns when there is one candidate", {
   d <- data.table::data.table(
     election = c("e1", "e2"), seat = "A", party = "IND",

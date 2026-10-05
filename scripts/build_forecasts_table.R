@@ -69,7 +69,7 @@ setnames(F, "pair", "election")
 # Flows are the very matrices the harnesses zeroed with (saved at stage 6 by
 # nom_zero_save_flows(), time-forward by construction). Missing one STOPS the
 # build: proportional redistribution is the variant v61 refused.
-.nz_flows <- if (Sys.getenv("AUSPOL_NOM_ZERO", "2") == "2") nom_zero_load_flows(unique(F$election)) else NULL
+.nz_flows <- if (Sys.getenv("AUSPOL_NOM_ZERO", "2") == "2") nom_zero_load_flows(unique(F$election), newer_than = pf) else NULL
 F <- zero_unnominated_asat(F, flows = .nz_flows)
 setnames(F, "election", "pair")
 F[, err_base := abs(base_pred - actual_share)]

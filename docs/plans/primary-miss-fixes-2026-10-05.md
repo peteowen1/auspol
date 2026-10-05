@@ -18,6 +18,17 @@ squared error, the worst 500 are 45.8%. Four read-only Sonnet investigations, on
 | 3 | Salience permit lookup takes the FIRST row per seat when a class has 2+ candidates (Dobell 2016 IND permitted by row order) | `stats::setNames(as.logical(pv$permit), pv$seat)` in all six harnesses and `scripts/fit_seats_full.R:1048` | 239 conflicting (seat, class) cells over 22 pairs (agent C, not recounted) |
 | 4 | v61 nomination zeroing never applied in the as-at forecasts table, so `forecasts.csv` still scores parties that did not stand | `build_forecasts_table.R`, `fit_xgb_primary_asat.R` (no `zero_unnominated` call) | 95 cells actual 0, forecast >= 3: 1.45% of squared error |
 
+**Status 2026-10-05:** all four merged into local `dev` (c54973d, 56a8a01 + 19fa670, c0a3e85), not
+yet pushed (PR #90 open from `dev`). Bug 1 moved 1,214 of 11,532 (seat, class) leaders over 22 pairs;
+bug 3 moved 114 of 5,528 class permits (Dobell fed2016 IND now FALSE).
+
+**Still open, found while fixing bug 3: the salience data carries the same leak.**
+`output/salience-v6.csv` holds rows only for some candidates per class, apparently the one with the
+best ACTUAL result, so which candidate got a Trends series was chosen by the outcome. In 181
+classes the history-based leader has no salience row; the fix returns TRUE where the screen makes no
+claim and NA (never a permit) otherwise. Rebuilding the salience population on pre-election
+information is NOT done.
+
 Fixing 1 makes the backtests measure what ships; expect IND/minor scores to get WORSE, not better.
 
 ## Model changes (design with Pete on rows first)

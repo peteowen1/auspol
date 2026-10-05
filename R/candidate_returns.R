@@ -281,7 +281,7 @@ candidate_returns <- function(election_from, election_to, corpus = NULL) {
   P[.s %in% names(rn), .s_renamed := rn[.s]]
   pk <- unique(rbind(P[, list(.s = .s,         .k, pcv)],
                      P[, list(.s = .s_renamed, .k, pcv)]))
-  pk <- pk[, list(.prior_pcv = max(pcv)), by = list(.s, .k)]
+  pk <- pk[, list(.prior_pcv = if (.N) max(pcv) else NA_real_), by = list(.s, .k)]   # .N guard: data.table runs j once on an empty table
   sit <- if ("elected" %in% names(PREVT)) {
     S <- data.table::copy(PREVT[nzchar(PREVT$.k) & PREVT$elected %in% TRUE])
     S[, .s_renamed := .s]

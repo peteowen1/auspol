@@ -286,6 +286,7 @@ test_that("zero_unnominated_asat STOPS at mode 2 when an election has no flow ma
 
 test_that("harness-saved flows round-trip, and a missing file stops", {
   d <- withr::local_tempdir()
+  withr::local_envvar(AUSPOL_XGB_PRIMARY = "1")
   fl <- list(conditional = list(), pooled = list(ALP = c(GRN = 1)))
   nom_zero_save_flows(fl, "vic2022", dir = d)
   nom_zero_save_flows(NULL, "wa2025", dir = d)
@@ -293,6 +294,23 @@ test_that("harness-saved flows round-trip, and a missing file stops", {
   expect_identical(got$vic2022, fl)
   expect_true("wa2025" %in% names(got)); expect_null(got$wa2025)
   expect_error(nom_zero_load_flows("nsw2023", dir = d), "NZA!!")
+})
+
+test_that("a stale or off-config flows file stops the table", {
+  d <- withr::local_tempdir()
+  fl <- list(conditional = list(), pooled = list(ALP = c(GRN = 1)))
+  # saved by a stage-1 / hand run at AUSPOL_XGB_PRIMARY=0
+  withr::with_envvar(c(AUSPOL_XGB_PRIMARY = "0"), nom_zero_save_flows(fl, "vic2022", dir = d))
+  expect_error(nom_zero_load_flows("vic2022", dir = d), "AUSPOL_XGB_PRIMARY='0'")
+  # saved at stage 6, but OLDER than the predictions it would zero
+  withr::with_envvar(c(AUSPOL_XGB_PRIMARY = "1"), nom_zero_save_flows(fl, "vic2022", dir = d))
+  ref <- file.path(d, "preds.csv"); writeLines("x", ref)
+  Sys.setFileTime(nom_zero_flows_path("vic2022", d), Sys.time() - 3600)
+  expect_error(nom_zero_load_flows("vic2022", dir = d, newer_than = ref), "OLDER")
+  # fresh: passes
+  Sys.setFileTime(nom_zero_flows_path("vic2022", d), Sys.time() + 60)
+  utils::capture.output(got <- nom_zero_load_flows("vic2022", dir = d, newer_than = ref))
+  expect_identical(got$vic2022, fl)
 })
 
 test_that("zero_unnominated_asat uses the flow matrix when one is given", {

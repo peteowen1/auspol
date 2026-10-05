@@ -373,7 +373,7 @@ nom_zero_flows_path <- function(label, dir = "output") file.path(dir, sprintf("n
 nom_zero_save_flows <- function(fm, label, dir = "output") {
   p <- nom_zero_flows_path(label, dir)
   saveRDS(list(label = label, flows = fm, saved_at = format(Sys.time(), "%Y-%m-%d %H:%M:%S"),
-               xgb_primary = Sys.getenv("AUSPOL_XGB_PRIMARY", "")), p)
+               xgb_primary = Sys.getenv("AUSPOL_XGB_PRIMARY")), p)   # provenance only: what the saving run had set
   invisible(p)
 }
 
@@ -381,16 +381,33 @@ nom_zero_save_flows <- function(fm, label, dir = "output") {
 #'
 #' @param labels Election labels in the table.
 #' @param dir Output directory.
+#' @param newer_than Path of a file every flows file must be newer than (the
+#'   as-at predictions), or `NULL` to skip the freshness check.
+#' @param xgb_primary The `AUSPOL_XGB_PRIMARY` value the saving run must have
+#'   had (`"1"`, stage 6), or `NULL` to skip.
 #' @return Named list of flow matrices (an element may be NULL, see
 #'   [nom_zero_save_flows()]).
 #' @export
-nom_zero_load_flows <- function(labels, dir = "output") {
+nom_zero_load_flows <- function(labels, dir = "output", newer_than = NULL, xgb_primary = "1") {
   out <- list()
+  # A flows file is only trusted if a STAGE-6 run wrote it: newer than the as-at
+  # predictions it zeroes (`newer_than`, stage 4), and saved by a harness run at
+  # AUSPOL_XGB_PRIMARY = `xgb_primary`. Stage 1 (xgb 0) and any hand run write
+  # the same path, so existence alone would accept a stale or off-config matrix.
+  ref_t <- if (!is.null(newer_than)) file.mtime(newer_than) else NA
+  if (!is.null(newer_than) && is.na(ref_t))
+    stop(sprintf("NZA!! reference file for flows freshness not found: %s", newer_than), call. = FALSE)
   for (l in labels) {
     p <- nom_zero_flows_path(l, dir)
     if (!file.exists(p))
       stop(sprintf("NZA!! no saved flow matrix for %s (%s): run its harness (stage 6) first. Refusing to fall back to proportional redistribution, which v61 refused.", l, p), call. = FALSE)
+    if (!is.na(ref_t) && file.mtime(p) <= ref_t)
+      stop(sprintf("NZA!! flow matrix for %s (%s, %s) is OLDER than %s (%s): stale, rerun stage 6.", l, p,
+                   format(file.mtime(p)), basename(newer_than), format(ref_t)), call. = FALSE)
     o <- readRDS(p)
+    if (!is.null(xgb_primary) && !identical(o$xgb_primary, xgb_primary))
+      stop(sprintf("NZA!! flow matrix for %s was saved by a run at AUSPOL_XGB_PRIMARY='%s', expected '%s' (stage 6): a stage-1 or hand run overwrote it.",
+                   l, o$xgb_primary %||% "<missing>", xgb_primary), call. = FALSE)
     cat(sprintf("NZA  %s: flows from %s (saved %s)%s\n", l, basename(p), o$saved_at,
                 if (is.null(o$flows)) " -- harness had NO flow matrix, it split proportionally too" else ""))
     out[l] <- list(o$flows)

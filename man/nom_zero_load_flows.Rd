@@ -4,12 +4,23 @@
 \alias{nom_zero_load_flows}
 \title{Read the saved flow matrices for a set of elections, or stop}
 \usage{
-nom_zero_load_flows(labels, dir = "output")
+nom_zero_load_flows(
+  labels,
+  dir = "output",
+  newer_than = NULL,
+  xgb_primary = "1"
+)
 }
 \arguments{
 \item{labels}{Election labels in the table.}
 
 \item{dir}{Output directory.}
+
+\item{newer_than}{Path of a file every flows file must be newer than (the
+as-at predictions), or \code{NULL} to skip the freshness check.}
+
+\item{xgb_primary}{The \code{AUSPOL_XGB_PRIMARY} value the saving run must have
+had (\code{"1"}, stage 6), or \code{NULL} to skip.}
 }
 \value{
 Named list of flow matrices (an element may be NULL, see
