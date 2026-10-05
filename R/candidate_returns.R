@@ -1036,7 +1036,8 @@ fit_defector_discount <- function(target_election, corpus = NULL, min_n = 5L, pa
       , .SD[which.max(target_pcv)], by = .(.s, .k)]
     m <- merge(a, b, by = c(".s", ".k"))
     if (!nrow(m)) return(NULL)
-    m[, .(pair = pr$election, ratio = target_pcv / prior_pcv, was_mp)]
+    m[, .(pair = pr$election, ratio = target_pcv / prior_pcv, was_mp,
+          level = if (startsWith(pr$election, "fed")) "fed" else "state")]
   }), fill = TRUE)
 
   if (is.null(ratios) || nrow(ratios) < min_n) {
@@ -1057,10 +1058,37 @@ fit_defector_discount <- function(target_election, corpus = NULL, min_n = 5L, pa
   # and breached South Australia's floor -- the outcome check the shrinkage
   # rule prescribes when a pooled value looks wrong.
   med <- function(x) if (length(x)) stats::median(x, na.rm = TRUE) else NA_real_
+  mp <- med(ratios$ratio[ratios$was_mp %in% TRUE])
+  by_level <- NULL
+  # SITTING-MEMBER CARRY BY LEVEL (AUSPOL_DEFECT_BY_LEVEL=1, default 0),
+  # docs/plans/prereg-defector-by-level-2026-10-05.md. A federal member who
+  # leaves a major party keeps far less than a state one (2026-10-05, 18 cases:
+  # federal mean 0.23, state 0.56; docs/reviews/defector-carry-2026-10-05.md).
+  # Each level's median is partially pooled toward the all-level median,
+  # w = tau^2 / (tau^2 + se^2), tau^2 the between-level variance net of noise:
+  # with no separable gap (tau^2 <= 0) both levels get the pooled rate, so a
+  # thin level degrades to the old behaviour rather than falling off a cliff.
+  if (identical(Sys.getenv("AUSPOL_DEFECT_BY_LEVEL", "0"), "1")) {
+    R <- ratios[was_mp %in% TRUE & is.finite(ratio)]
+    lv <- R[, list(est = stats::median(ratio), n = .N,
+                   se = if (.N >= 2L) 1.2533 * stats::sd(ratio) / sqrt(.N) else Inf), by = level]
+    tau2 <- if (nrow(lv) >= 2L) max(0, stats::var(lv$est) - mean(pmin(lv$se, 1e6)^2)) else 0
+    lv[, w := ifelse(is.finite(se), tau2 / (tau2 + se^2), 0)]
+    lv[, shrunk := mp + w * (est - mp)]
+    by_level <- lv
+    tl <- if (startsWith(target_election, "fed")) "fed" else "state"
+    hit <- lv$shrunk[lv$level == tl]
+    cat(sprintf("DEF-L %s: sitting-member carry by level (pooled median %.3f, tau2 %.4f): %s -> using %s %.3f\n",
+                target_election, mp, tau2,
+                paste(sprintf("%s est %.3f n=%d se %.3f w %.2f shrunk %.3f", lv$level, lv$est, lv$n, lv$se, lv$w, lv$shrunk),
+                      collapse = "; "),
+                tl, if (length(hit)) hit else mp))
+    if (length(hit) == 1L && is.finite(hit)) mp <- hit
+  }
   list(discount       = med(ratios$ratio),
-       discount_mp    = med(ratios$ratio[ratios$was_mp %in% TRUE]),
+       discount_mp    = mp,
        discount_loser = med(ratios$ratio[ratios$was_mp %in% FALSE]),
-       n = nrow(ratios), cases = ratios)
+       n = nrow(ratios), cases = ratios, by_level = by_level)
 }
 
 #' Fit the minor-to-minor defector discount, leave-target-out
