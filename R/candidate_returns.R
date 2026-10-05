@@ -77,7 +77,7 @@ candidate_returns <- function(election_from, election_to, corpus = NULL) {
     if (!is.null(bw) && nrow(bw)) {
       if ("elected" %in% names(PREVT)) {
         # THE MAJOR THAT LOST THE SEAT AT THE BY-ELECTION STILL LOST ITS MEMBER
-        # (AUSPOL_BYELEC_DEPARTED=1, default 0; Pete 2026-10-05). Clearing the
+        # (AUSPOL_BYELEC_DEPARTED, SHIPPED "1"; Pete 2026-10-05). Clearing the
         # seat's elected flags below hid that, so `mp_departed` never fired for
         # the Coalition in Orange 2019 (over-called 45.8 vs 25.8). Recorded here,
         # before the flags are cleared, and re-added to `held` further down.
@@ -706,7 +706,7 @@ personal_prior_vote <- function(election_from, election_to, corpus = NULL,
   PTx <- rbind(PT[, .(.s, .k, pcv, party, .was_mp)],
                PT[.s != .s_renamed, .(.s = .s_renamed, .k, pcv, party, .was_mp)])
   # A NON-MAJOR BY-ELECTION WINNER IS A SITTING MEMBER WITH A VOTE
-  # (AUSPOL_BYELEC_LEVEL=1, default 0; docs/plans/prereg-byelection-level-2026-10-05.md).
+  # (AUSPOL_BYELEC_LEVEL, SHIPPED "1"; docs/plans/prereg-byelection-level-2026-10-05.md).
   # PT is the raw previous general election, so a by-election winner had no row
   # here and own_prev_pcv stayed NA (Donato, McGirr, Oakeshott). Credit them the
   # level sitting non-major members typically hold, fitted time-forward
@@ -1113,7 +1113,7 @@ fit_defector_discount <- function(target_election, corpus = NULL, min_n = 5L, pa
   med <- function(x) if (length(x)) stats::median(x, na.rm = TRUE) else NA_real_
   mp <- med(ratios$ratio[ratios$was_mp %in% TRUE])
   by_level <- NULL
-  # SITTING-MEMBER CARRY BY LEVEL (AUSPOL_DEFECT_BY_LEVEL=1, default 0),
+  # SITTING-MEMBER CARRY BY LEVEL (AUSPOL_DEFECT_BY_LEVEL, SHIPPED "2" = federal only; "1" both levels, refused),
   # docs/plans/prereg-defector-by-level-2026-10-05.md. A federal member who
   # leaves a major party keeps far less than a state one (2026-10-05, 18 cases:
   # federal mean 0.23, state 0.56; docs/reviews/defector-carry-2026-10-05.md).
