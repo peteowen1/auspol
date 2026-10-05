@@ -562,3 +562,18 @@ test_that("fit_minor_defector_conserve measures the origin class's kept share, l
   expect_equal(f$n, 1L); expect_equal(f$frac, 12 / 30, tolerance = 1e-6)   # ONP statewide 30 -> 12 is the class itself: expected 0 + kept 12
   expect_null(fit_minor_defector_conserve("qld2024", corpus = corpus, pairs = pairs, min_n = 1L)$frac)
 })
+
+test_that("defector carry by level: federal targets get their own rate, state targets keep the pooled one", {
+  f <- out_path("candidacies.csv")
+  skip_if_not(file.exists(f), "no candidacies corpus")
+  C <- data.table::fread(f, showProgress = FALSE)
+  fit <- function(mode, t) withr::with_envvar(c(AUSPOL_DEFECT_BY_LEVEL = mode), {
+    utils::capture.output(r <- fit_defector_discount(t, corpus = C)); r$discount_mp })
+  # a state target is untouched by mode 2 (the live Victorian forecast)
+  expect_identical(fit("2", "vic2026"), fit("0", "vic2026"))
+  # a federal target with enough earlier federal cases moves to the lower federal rate
+  expect_lt(fit("2", "fed2025"), fit("0", "fed2025"))
+  # one earlier federal case: not separable, so the pooled rate is kept (no NaN, no cliff)
+  expect_identical(fit("2", "fed2010"), fit("0", "fed2010"))
+  expect_true(is.finite(fit("2", "fed2013")))
+})

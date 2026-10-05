@@ -55,6 +55,9 @@ stopifnot(nrow(T) >= 5)
 k <- c("election", "seat", "party")
 M <- merge(merge(unique(T[, ..k]), FA[, c(k, "xgb_pred", "actual_share"), with = FALSE], by = k),
            FB[, c(k, "xgb_pred"), with = FALSE], by = k, suffixes = c("_a", "_b"))
+miss <- fsetdiff(unique(T[, ..k]), M[, ..k])
+if (nrow(miss)) stop("DL2! ", nrow(miss), " target cell(s) not found in both forecasts tables (class label mismatch?): ",
+                     paste(do.call(paste, miss), collapse = "; "))
 M[, d := (actual_share - xgb_pred_b)^2 - (actual_share - xgb_pred_a)^2]
 D <- sum(M$d); se <- sd(M$d) * sqrt(nrow(M))
 cat(sprintf("\nDL2 PRIMARY: target-cell squared error baseline %.1f -> arm %.1f, change %.1f, SE %.1f (n=%d cells) => %s\n",
@@ -88,7 +91,7 @@ Q <- merge(merge(win, SA[, .(election, seat, party, p_a = win_prob, is_winner)],
            SB[, .(election, seat, party, p_b = win_prob)], by = c("election", "seat", "party"))
 Q <- Q[is_winner %in% c(TRUE, 1, "TRUE")]
 cat(sprintf("\nDL5 DISQUALIFIER defectors who won (n=%d): ", nrow(Q)))
-if (!nrow(Q)) cat("none in the forecast seats file -- unverifiable, reported as such\n") else {
+if (!nrow(Q)) cat("none found in the forecast seats file\nDL5 => UNVERIFIABLE (counts as FIRES: an absent check is not a pass)\n") else {
   print(Q[, .(election, seat, party, p_a = round(p_a, 3), p_b = round(p_b, 3))], row.names = FALSE)
   cat(sprintf("DL5 => %s\n", if (any(Q$p_b < Q$p_a - 0.05)) "FIRES" else "does not fire"))
 }
