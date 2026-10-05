@@ -1068,7 +1068,12 @@ fit_defector_discount <- function(target_election, corpus = NULL, min_n = 5L, pa
   # w = tau^2 / (tau^2 + se^2), tau^2 the between-level variance net of noise:
   # with no separable gap (tau^2 <= 0) both levels get the pooled rate, so a
   # thin level degrades to the old behaviour rather than falling off a cliff.
-  if (identical(Sys.getenv("AUSPOL_DEFECT_BY_LEVEL", "0"), "1")) {
+  # Mode "2" (Amendment 1, Pete 2026-10-05): federal targets only; a state target
+  # keeps the pooled rate, because the state rate was fitted from as few as 3
+  # cases and the small-n se let it through almost unshrunk (Hillarys wa2017
+  # 21.7 -> 43.9, actual 20.1).
+  .dbl <- Sys.getenv("AUSPOL_DEFECT_BY_LEVEL", "0")
+  if (.dbl %in% c("1", "2")) {
     R <- ratios[was_mp %in% TRUE & is.finite(ratio)]
     lv <- R[, list(est = stats::median(ratio), n = .N,
                    se = if (.N >= 2L) 1.2533 * stats::sd(ratio) / sqrt(.N) else Inf), by = level]
@@ -1077,12 +1082,12 @@ fit_defector_discount <- function(target_election, corpus = NULL, min_n = 5L, pa
     lv[, shrunk := mp + w * (est - mp)]
     by_level <- lv
     tl <- if (startsWith(target_election, "fed")) "fed" else "state"
-    hit <- lv$shrunk[lv$level == tl]
+    hit <- if (.dbl == "2" && tl == "state") mp else lv$shrunk[lv$level == tl]
     cat(sprintf("DEF-L %s: sitting-member carry by level (pooled median %.3f, tau2 %.4f): %s -> using %s %.3f\n",
                 target_election, mp, tau2,
                 paste(sprintf("%s est %.3f n=%d se %.3f w %.2f shrunk %.3f", lv$level, lv$est, lv$n, lv$se, lv$w, lv$shrunk),
                       collapse = "; "),
-                tl, if (length(hit)) hit else mp))
+                if (.dbl == "2" && tl == "state") "state (mode 2: pooled)" else tl, if (length(hit)) hit else mp))
     if (length(hit) == 1L && is.finite(hit)) mp <- hit
   }
   list(discount       = med(ratios$ratio),

@@ -107,3 +107,20 @@ worse (Hillarys wa2017 21.7 -> 43.9 vs 20.1; MacKillop sa2026 26.7 -> 35.3 vs 14
 cases (wa2017: est 0.693, se 0.152 from a 3-point sd, weight 0.83), so the shrinkage does not pull it
 back; the se formula is overconfident at tiny n. Calare's disqualifier fired while Gee's primary moved
 TOWARD his actual (13.6 over -> 6.2 over). Switch stays off; the split goes to Pete.
+
+## Amendment 1 (2026-10-05, AFTER the result above -- post hoc, chosen by Pete)
+
+The original clauses above are unedited. This arm was chosen after seeing that the federal cells all
+improved and three state cells got worse, so it favours the later answer and is marked as such.
+
+**Change:** `AUSPOL_DEFECT_BY_LEVEL=2`: federal targets get the shrunk federal rate exactly as in
+mode 1; state targets keep today's pooled rate (byte-identical to the switch off for every state pair).
+The state rate needs a small-n-safe standard error before it gets its own rate; not in this arm.
+
+**Criteria:** the same four, the same scorer, the same baseline. Expected by construction: the state
+cells match the baseline, so the primary is driven by the five federal cells.
+
+**Pete's override, on the record:** criterion 4 is waived for Calare fed2025 (Andrew Gee, won). In
+mode 1 his win probability fell 0.980 -> 0.899 while his primary forecast moved TOWARD his actual
+(52.1 -> 45.7, actual 39.5). Pete chose this arm knowing that. The disqualifier still applies to every
+other defector who won; if any of them loses more than 0.05, the arm does not ship.
