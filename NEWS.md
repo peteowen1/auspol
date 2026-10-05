@@ -1,3 +1,10 @@
+# auspol 0.4.71
+
+- Backtests no longer choose whose personal history counts by the actual result: a class's leading candidate is the one with the best prior vote in the seat, then the sitting member, then name order. This was a look-ahead leak; fixing it moved seat log loss 0.2796 -> 0.2874 and exposed the over-carry below.
+- Members who leave a major party: a federal target now gets its own shrunk carry of their old vote (about 0.16-0.23 instead of 0.31-0.44; `AUSPOL_DEFECT_BY_LEVEL = "2"`). Defector cells' squared error -23%; seat log loss 0.2874 -> 0.2827 (AE Forecasts 0.2825). State targets, including Victoria 2026, are unchanged.
+- Western Australian candidates are classified from the full party name (wa2001 One Nation restored; agreement with the official results in every seat). "Stop The Greens" is no longer classed as Greens.
+- One salience permit per class leader instead of the first row; the as-at forecasts table applies v61 nomination zeroing with each harness's own flows.
+
 # auspol 0.4.70
 
 - Nomination zeroing runs `late`, after the last step that can bring a zero back (`AUSPOL_NOM_ZERO_ORDER = "late"`, the `nom_zero_order()` default; Pete's override of clause R2). It reaches the published Victorian forecast only once the VEC final list is loaded (`AUSPOL_NOM_LIVE = 1`, after nominations close on 9 Nov). Until then the gate stays shut.
