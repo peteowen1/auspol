@@ -213,6 +213,16 @@ CLASSIFY <- list(
     "NOT A MODEL SWITCH: an argument to scripts/build_notional_baselines.R (which federal election year to build",
     "notional post-redistribution baselines for). Reads NO everywhere by construction; listed in published_flags.R",
     "only as documentation of how to rebuild the notional table."),
+  AUSPOL_DEPARTED_HOLD = paste(
+    "REFUSED 2026-10-05, switch kept OFF. Holds a departed leader's decayed class cell fixed through the",
+    "final renormalisation (the 0.38 was measured on final shares but applied before renormalising, so the",
+    "effective retention was 0.6-0.7). Wired in fed/nsw/qld/sa/vic and fit_seats_full.R; WA is not wired for",
+    "the same reason as AUSPOL_HONOUR_DEPARTED (backtest_candidate_wa.R has no screened_slopes() call).",
+    "docs/plans/prereg-departed-hold-fixed-2026-10-04.md, docs/reviews/departed-hold-sweep-2026-10-05.md."),
+  AUSPOL_DEPARTED_HOLD_MIN_PRIOR = paste(
+    "Arm B of AUSPOL_DEPARTED_HOLD (post hoc, Amendment 1): hold only classes whose prior seat share is at",
+    "least this many points (15 = the retention review's population). Also refused; default 0 = arm A.",
+    "WA not wired, as for AUSPOL_DEPARTED_HOLD."),
   AUSPOL_HONOUR_DEPARTED = paste(
     "SHIPPED 2026-09-18 (flipped 0->1). A departed non-major class leader's vote base decays toward a",
     "measured 0.38 retention rate, gated on prior_leader_returns==FALSE (not candidate_returns()'s `same`,",

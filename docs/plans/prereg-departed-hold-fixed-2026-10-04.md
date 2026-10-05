@@ -124,3 +124,30 @@ refusal on a favourable headline mean goes to Pete, not to me.
 
 None. Any later amendment is added below this line with the original text
 above left unedited.
+
+### Amendment 1, 2026-10-05, written AFTER the arm-A sweep and labelled as post hoc
+
+Arm A (hold every class where the decay fires) was swept over 16 pairs
+(`reviews/departed-hold-sweep-2026-10-05.md`). Clause 1 passed; clause 3b
+(weighted RMSE +1.4 SE) and the independent-win-probability disqualifier failed, so by
+the rule above arm A stays off. Pete asked why and whether it can be improved.
+
+What the sweep showed: 2,872 held cells, of which 101 (3.5%) are classes with a prior seat
+share of 15% or more, the population the 0.38 was measured on
+(`reviews/departed-leader-retention-2026-09-15.md`, "polled 15% or more at the previous
+election"). On those 101 cells the hold improved the error (5.74 -> 5.31) and the weighted
+squared error (-478). Almost all of the damage is in classes under 15% (Kennedy fed2013
+OTH_RIGHT alone is +8,882 of the +15,050 total).
+
+**Arm B** (declared now, NOT before the sweep): `AUSPOL_DEPARTED_HOLD=1` with
+`AUSPOL_DEPARTED_HOLD_MIN_PRIOR=15`, holding a cell only where the class's prior seat share
+(`mat`, the row-normalised prior matrix) is at least 15. The 15 comes from the retention
+review's population, not from tuning on the sweep. Everything else is as above: the same
+clauses, the same disqualifiers, the same decision rule.
+
+Limits, stated so they cannot be hidden later: arm B was chosen after seeing arm A's
+per-cell results on these same 16 pairs, so passing clauses 3b and the win-probability test
+is partly by construction. It is an EXPLORATORY result, not a confirmation. Independent
+support is the 305-case retention measurement, not the sweep. The retrained-xgb arm and the
+20,000-simulation deciding run remain required before any ship. `mat` is row-normalised, so
+a cell near 15 can sit on the other side of the line from the raw candidacy sum.

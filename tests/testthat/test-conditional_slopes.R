@@ -119,3 +119,65 @@ test_that("screened_slopes: departure decay fires even when is_same is TRUE (Mor
   # for this shape) behaviour -- the "same" slope, not the new one.
   expect_equal(screened_slopes("IND", seats, returns, permit = FALSE), 0.907)
 })
+
+test_that("screened_slopes flags the seats the departed decay fired in, and not permitted ones", {
+  seats <- c("s1", "s2", "s3", "s4")
+  returns <- data.table::data.table(seat = seats, party = "IND",
+                                    same = c(FALSE, FALSE, FALSE, TRUE), same_mp = FALSE,
+                                    prior_leader_returns = c(FALSE, FALSE, TRUE, TRUE))
+  # s1 departed, no permit -> decays; s2 departed but permitted -> uniform, NOT flagged;
+  # s3 leader returned; s4 returning
+  sl <- screened_slopes("IND", seats, returns, permit = c(FALSE, TRUE, FALSE, FALSE), honour_departed = TRUE, with_flags = TRUE)
+  expect_equal(unname(attr(sl, "departed")), c(TRUE, FALSE, FALSE, FALSE))
+  expect_equal(sl[[1]], 0.38)
+  off <- screened_slopes("IND", seats, returns, permit = c(FALSE, TRUE, FALSE, FALSE), honour_departed = FALSE, with_flags = TRUE)
+  expect_false(any(attr(off, "departed")))
+})
+
+test_that("renorm_hold keeps a held cell at its value and scales only the others", {
+  # New England 2013 after the slope step (scratchpad walk): row totals 58.8
+  m <- rbind(NE = c(ALP = 4.9, GRN = 1.9, IND = 21.1, LNP = 26.5, ONP = 0.6, OTH_RIGHT = 3.8))
+  h <- matrix(FALSE, nrow(m), ncol(m), dimnames = dimnames(m)); h[, "IND"] <- TRUE
+  old <- 100 * m / rowSums(m)
+  expect_equal(old[, "IND"], 100 * 21.1 / sum(m), ignore_attr = TRUE)   # the problem: ~35.9
+  new <- renorm_hold(m, h)
+  expect_equal(unname(new[, "IND"]), 21.1)
+  expect_equal(sum(new), 100)
+  # the others keep their relative proportions
+  expect_equal(unname(new[, "LNP"] / new[, "ALP"]), 26.5 / 4.9)
+})
+
+test_that("renorm_hold is byte-identical to plain renormalisation where nothing is held", {
+  m <- rbind(a = c(A = 30, B = 20, C = 10), b = c(A = 5, B = 40, C = 15), c = c(A = 25, B = 25, C = 25))
+  plain <- 100 * m / rowSums(m)
+  h <- matrix(FALSE, nrow(m), ncol(m), dimnames = dimnames(m)); h["b", "B"] <- TRUE
+  out <- renorm_hold(m, h)
+  expect_identical(unname(out[c("a", "c"), ]), unname(plain[c("a", "c"), ]))
+  expect_equal(out["b", "B"], 40)
+  expect_identical(unname(renorm_hold(m, NULL)), unname(plain))
+  expect_identical(unname(renorm_hold(m, h & FALSE)), unname(plain))
+})
+
+test_that("renorm_hold falls back and names the seat when the others are zero or the hold reaches 100", {
+  m <- rbind(z = c(A = 0, B = 40), w = c(A = 10, B = 120), n = c(A = 10, B = 30))
+  h <- matrix(FALSE, nrow(m), ncol(m), dimnames = dimnames(m)); h[, "B"] <- TRUE
+  out <- renorm_hold(m, h)
+  expect_identical(unname(out["z", ]), unname((100 * m / rowSums(m))["z", ]))
+  expect_identical(unname(out["w", ]), unname((100 * m / rowSums(m))["w", ]))
+  expect_setequal(attr(out, "skipped"), c("z", "w"))
+  expect_equal(out["n", "B"], 30)
+  expect_error(renorm_hold(m, h[1:2, ]), "dim")
+})
+
+test_that("with_flags = FALSE (the default) returns exactly what it always did", {
+  returns <- data.table::data.table(seat = "s1", party = "IND", same = FALSE, same_mp = FALSE,
+                                    prior_leader_returns = FALSE)
+  expect_null(attr(screened_slopes("IND", "s1", returns, permit = FALSE, honour_departed = TRUE), "departed"))
+  expect_identical(screened_slopes("IND", "s1", returns, permit = FALSE, honour_departed = TRUE),
+                   screened_slopes("IND", "s1", returns, permit = FALSE, honour_departed = TRUE, with_flags = FALSE))
+})
+
+test_that("renorm_hold refuses a non-logical held matrix rather than coercing it", {
+  m <- rbind(a = c(A = 30, B = 20))
+  expect_error(renorm_hold(m, m * 0 + 1), "logical")
+})

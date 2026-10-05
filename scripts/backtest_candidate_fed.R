@@ -732,6 +732,8 @@ for (K in PAIRS) {
   # the bigger, corpus-wide measurement (89 departure cases across 19 pairs,
   # 2026-09-13) can be re-run and re-decided, not silently re-shipped.
   .honour_departed <- Sys.getenv("AUSPOL_HONOUR_DEPARTED", "0") %in% c("1", "TRUE", "true")
+  .departed_hold <- Sys.getenv("AUSPOL_DEPARTED_HOLD", "0") %in% c("1", "TRUE", "true")   # docs/plans/prereg-departed-hold-fixed-2026-10-04.md
+  .hold_min <- as.numeric(Sys.getenv("AUSPOL_DEPARTED_HOLD_MIN_PRIOR", "0"))   # arm B (amendment 2026-10-05): hold only classes with at least this prior seat share
   .returns <- if (.cond) tryCatch(candidate_returns(ea, eb), error = function(e) {
     cat(sprintf("BF1c! conditional slopes unavailable for %s->%s: %s
 ", ea, eb,
@@ -942,7 +944,7 @@ for (K in PAIRS) {
       lut <- stats::setNames(as.logical(pv$permit), pv$seat)
       pm <- unname(lut[seats])
       # a missing permit row is NOT a permit (NA = silent; 2026-09-20)
-      return(screened_slopes(p, seats, returns, pm, same_mp = .MP_SLOPE, major_departed = .MAJDEP, major_present = .MAJPRES, honour_departed = .honour_departed, same = if (is.null(.fitsl)) formals(screened_slopes)$same else .fitsl$same, new = if (is.null(.fitsl)) formals(screened_slopes)$new else .fitsl$new))
+      return(screened_slopes(p, seats, returns, pm, same_mp = .MP_SLOPE, major_departed = .MAJDEP, major_present = .MAJPRES, honour_departed = .honour_departed, with_flags = .departed_hold, same = if (is.null(.fitsl)) formals(screened_slopes)$same else .fitsl$same, new = if (is.null(.fitsl)) formals(screened_slopes)$new else .fitsl$new))
     }
     if (cond && !is.null(returns))
       return(conditional_slopes(p, seats, returns, same_mp = .MP_SLOPE, major_departed = .MAJDEP, major_present = .MAJPRES, same = if (is.null(.fitsl)) formals(conditional_slopes)$same else .fitsl$same, new = if (is.null(.fitsl)) formals(conditional_slopes)$new else .fitsl$new))
@@ -956,6 +958,7 @@ for (K in PAIRS) {
                 paste0(" | not contested here: ",
                        paste(attr(DEV_SLOPE, "absent"), collapse=",")) else ""))
   parties <- colnames(mat); shares <- mat
+  HELD <- matrix(FALSE, nrow(mat), ncol(mat), dimnames = dimnames(mat))
   # Per-class national LEVEL rescale, so a class whose level was re-forecast
   # (AUSPOL_IND_SALIENCE) also reaches the seats where .own_x() substitutes a
   # returning candidate's OWN prior vote. Without this the uplift is applied
@@ -1396,6 +1399,7 @@ for (K in PAIRS) {
     for (p in parties) {
       prev <- if (p %in% names(st_a)) st_a[[p]] else 0
       .sl <- .fed_slope(p, rownames(mat), .cond, .screened, .returns, .permit)
+      .hd <- attr(.sl, "departed"); if (.departed_hold && !is.null(.hd)) HELD[, p] <- ((.hd %in% TRUE) & (mat[, p] >= .hold_min)) %in% TRUE
       .s_p <- if (p %in% names(lvl_scale)) lvl_scale[[p]] else 1
       shares[, p] <- if (is.null(.split)) dev_slope(.own_x(p, rownames(mat), mat[, p] / .s_p) * .s_p,
                                prev, st_fc[[p]], .sl) else
@@ -1405,6 +1409,7 @@ for (K in PAIRS) {
   } else {
     for (p in parties) if (p %in% names(st_b) && p %in% names(st_a)) {
       .sl <- .fed_slope(p, rownames(mat), .cond, .screened, .returns, .permit)
+      .hd <- attr(.sl, "departed"); if (.departed_hold && !is.null(.hd)) HELD[, p] <- ((.hd %in% TRUE) & (mat[, p] >= .hold_min)) %in% TRUE
       .s_p <- if (p %in% names(lvl_scale)) lvl_scale[[p]] else 1
       shares[, p] <- if (is.null(.split)) dev_slope(.own_x(p, rownames(mat), mat[, p] / .s_p) * .s_p,
                                st_a[[p]], st_b[[p]], .sl) else
@@ -1453,7 +1458,13 @@ for (K in PAIRS) {
                   K$to, length(zeroed), paste(sort(zeroed), collapse = ", ")))
     }
   }
-  shares <- 100 * shares / rowSums(shares)
+  if (.departed_hold) {
+    shares <- renorm_hold(shares, HELD)
+    cat(sprintf("BF0h  departed hold: %d cell(s) held in %d seat(s)%s\n", sum(HELD), sum(rowSums(HELD) > 0),
+                if (length(attr(shares, "skipped"))) paste0(" | not held (others zero or hold >= 100): ", paste(attr(shares, "skipped"), collapse = ", ")) else ""))
+    attr(shares, "skipped") <- NULL
+    if (nzchar(Sys.getenv("AUSPOL_DEPARTED_HOLD_DUMP"))) { .w <- which(HELD, arr.ind = TRUE); utils::write.csv(data.frame(seat = rownames(HELD)[.w[, 1]], party = colnames(HELD)[.w[, 2]]), Sys.getenv("AUSPOL_DEPARTED_HOLD_DUMP"), row.names = FALSE) }   # which cells were held, for the scoring script
+  } else shares <- 100 * shares / rowSums(shares)
   shares <- xgb_primary_override(shares, sprintf("fed%d", K$to))
   # Seat-poll blend (AUSPOL_SEAT_POLL_BLEND), after the override and the port;
   # xgb layer only, so stage-1 base_pred never includes it.

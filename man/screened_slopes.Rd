@@ -16,7 +16,8 @@ screened_slopes(
   same_mp = NULL,
   departed_rate = c(IND = 0.38),
   major_departed = NULL,
-  major_present = NULL
+  major_present = NULL,
+  with_flags = FALSE
 )
 }
 \arguments{
@@ -84,6 +85,10 @@ party keeps on its deviation where \code{returns$mp_departed} is TRUE, from
 
 \item{major_present}{Optional named numeric (ALP, LNP): the slope every
 other ALP/LNP cell keeps on its deviation. \code{NULL} keeps \code{default}.}
+
+\item{with_flags}{If TRUE, the return carries attribute \code{departed}: the seats
+where the departed-leader decay fired (for \code{\link[=renorm_hold]{renorm_hold()}}). Default FALSE
+leaves the return exactly as it was.}
 }
 \value{
 Numeric vector the length of \code{seats}.

@@ -273,6 +273,9 @@ conditional_slopes <- function(cls, seats, returns,
 #'   shrinkage caveat is about. Other classes fall back to the generic `new`
 #'   rate (no departure-specific measurement exists for them yet -- MINOR
 #'   retirements are only 2 corpus-wide, too thin to fit separately).
+#' @param with_flags If TRUE, the return carries attribute `departed`: the seats
+#'   where the departed-leader decay fired (for [renorm_hold()]). Default FALSE
+#'   leaves the return exactly as it was.
 #' @param permit Logical vector the length of `seats`, from
 #'   [salience_screen()]: does the screen allow this seat's candidate of `cls`
 #'   to emerge?
@@ -286,7 +289,7 @@ screened_slopes <- function(cls, seats, returns, permit, honour_departed = FALSE
                                      GRN = 0.880, ONP = 0.545),
                             default = 1, same_mp = NULL,
                             departed_rate = c(IND = 0.38), major_departed = NULL,
-                            major_present = NULL) {
+                            major_present = NULL, with_flags = FALSE) {
   if (length(permit) != length(seats)) {
     stop("permit must be the same length as seats: ", length(permit),
          " vs ", length(seats), call. = FALSE)
@@ -347,6 +350,57 @@ screened_slopes <- function(cls, seats, returns, permit, honour_departed = FALSE
   permitted <- permit %in% TRUE
   departed <- honour_departed & !plr & !permitted
   dep_rate <- if (cls %in% names(departed_rate)) departed_rate[[cls]] else new[[cls]]
-  ifelse(!is_same & permitted, 1.0,
-         ifelse(departed, dep_rate, base))
+  out <- ifelse(!is_same & permitted, 1.0,
+                ifelse(departed, dep_rate, base))
+  # Which seats the departed-leader decay fired in, for AUSPOL_DEPARTED_HOLD:
+  # the harnesses hold those cells fixed through renormalisation
+  # (`renorm_hold()`). `departed` already excludes `permitted` seats, so a seat
+  # that took the 1.0 uniform path is never flagged.
+  # docs/plans/prereg-departed-hold-fixed-2026-10-04.md.
+  if (with_flags) attr(out, "departed") <- departed
+  out
+}
+
+#' Renormalise seat rows to 100 while holding some cells fixed
+#'
+#' `100 * shares / rowSums(shares)` scales EVERY cell, including one that was
+#' just decayed on purpose. A departed leader's class is cut to the measured
+#' 0.38 of its base (`screened_slopes(departed_rate=)`), the row then sums to
+#' far less than 100, and the plain renormalisation scales the decayed cell
+#' back up: New England 2013 ended at an effective 0.69, not 0.38. This holds
+#' the flagged cells at their current value and scales only the other cells,
+#' by one common factor per row, to fill what is left.
+#'
+#' Rows with no held cell, rows whose other cells sum to zero, and rows whose
+#' held cells already reach 100 get exactly the plain renormalisation (same
+#' expression, so byte-identical). The last two are named in `attr(, "skipped")`.
+#'
+#' @param shares Numeric matrix, seats by classes, in points.
+#' @param held Logical matrix of the same shape and dimnames, TRUE where the
+#'   cell is held. `NULL`, or all FALSE, gives the plain renormalisation.
+#' @return `shares` renormalised, with attribute `skipped` (seat names).
+#' @export
+renorm_hold <- function(shares, held = NULL) {
+  out <- 100 * shares / rowSums(shares)
+  if (is.null(held)) return(out)
+  if (!is.logical(held)) stop("renorm_hold(): held must be a logical matrix, not ", typeof(held), call. = FALSE)
+  if (!any(held, na.rm = TRUE)) return(out)
+  attr(out, "skipped") <- character(0)
+  if (!identical(dim(held), dim(shares))) {
+    stop("renorm_hold(): held has dim ", paste(dim(held), collapse = "x"),
+         " but shares has ", paste(dim(shares), collapse = "x"), call. = FALSE)
+  }
+  held <- held & !is.na(held)
+  hs <- rowSums(shares * held)
+  os <- rowSums(shares * !held)
+  want <- rowSums(held) > 0
+  ok <- want & os > 0 & hs < 100
+  ok[is.na(ok)] <- FALSE
+  if (any(ok)) {
+    fill <- (100 - hs[ok]) / os[ok]
+    out[ok, ] <- ifelse(held[ok, , drop = FALSE], shares[ok, , drop = FALSE],
+                        shares[ok, , drop = FALSE] * fill)
+  }
+  attr(out, "skipped") <- rownames(shares)[want & !ok]
+  out
 }
