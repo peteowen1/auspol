@@ -241,3 +241,66 @@ test_that("the end-of-run assertion fails when a step after the zeroing revives 
   expect_silent(assert_nomination_zeros(right, cells2))
   expect_silent(assert_nomination_zeros(wrong, NULL))
 })
+
+# ---- as-at forecasts table (build_forecasts_table.R) -------------------------
+.asat_fixture <- function() {
+  # raw xgb rows: do NOT sum to 100 (74 here, like Narracan's real 73.96).
+  # Narracan: Labor did not stand. Richmond: everyone stood, so untouched.
+  data.table::data.table(
+    election = "vic2022",
+    seat = c(rep("Narracan", 4), rep("Richmond", 3)),
+    party = c("ALP", "LNP", "GRN", "IND", "ALP", "LNP", "GRN"),
+    xgb_pred = c(24, 38, 4, 8, 40, 20, 30),
+    actual_share = c(0, 50, 15, 35, 33, 30, 37))
+}
+
+test_that("zero_unnominated_asat zeroes the absent class, keeps each raw seat total, leaves other seats alone", {
+  withr::local_envvar(AUSPOL_NOM_ZERO = "1")
+  f <- .asat_fixture()
+  out <- suppressMessages(utils::capture.output(r <- zero_unnominated_asat(f, allow_proportional = TRUE)))
+  expect_equal(r[seat == "Narracan" & party == "ALP", xgb_pred], 0)
+  expect_equal(r[seat == "Narracan", sum(xgb_pred)], 74)           # raw total, not 100
+  expect_equal(r[seat == "Narracan" & party == "LNP", xgb_pred], 38 / 50 * 74)
+  expect_identical(r[seat == "Richmond", xgb_pred], f[seat == "Richmond", xgb_pred])
+  expect_equal(r$xgb_pred_prezero, f$xgb_pred)
+})
+
+test_that("zero_unnominated_asat is byte-identical with the switch off", {
+  withr::local_envvar(AUSPOL_NOM_ZERO = "0")
+  f <- .asat_fixture()
+  expect_identical(zero_unnominated_asat(f), f)
+})
+
+test_that("zero_unnominated_asat does nothing when every class stood (a broken target must not zero)", {
+  withr::local_envvar(AUSPOL_NOM_ZERO = "2")
+  f <- .asat_fixture(); f$actual_share <- pmax(f$actual_share, 1)
+  utils::capture.output(r <- zero_unnominated_asat(f, allow_proportional = TRUE))
+  expect_equal(r$xgb_pred, f$xgb_pred)
+})
+
+test_that("zero_unnominated_asat STOPS at mode 2 when an election has no flow matrix", {
+  withr::local_envvar(AUSPOL_NOM_ZERO = "2")
+  expect_error(zero_unnominated_asat(.asat_fixture()), "NZA!!.*vic2022")
+  expect_error(zero_unnominated_asat(.asat_fixture(), flows = list(fed2022 = list())), "NZA!!.*vic2022")
+})
+
+test_that("harness-saved flows round-trip, and a missing file stops", {
+  d <- withr::local_tempdir()
+  fl <- list(conditional = list(), pooled = list(ALP = c(GRN = 1)))
+  nom_zero_save_flows(fl, "vic2022", dir = d)
+  nom_zero_save_flows(NULL, "wa2025", dir = d)
+  utils::capture.output(got <- nom_zero_load_flows(c("vic2022", "wa2025"), dir = d))
+  expect_identical(got$vic2022, fl)
+  expect_true("wa2025" %in% names(got)); expect_null(got$wa2025)
+  expect_error(nom_zero_load_flows("nsw2023", dir = d), "NZA!!")
+})
+
+test_that("zero_unnominated_asat uses the flow matrix when one is given", {
+  withr::local_envvar(AUSPOL_NOM_ZERO = "2")
+  f <- .asat_fixture()
+  fl <- list(vic2022 = list(conditional = list(), pooled = list(ALP = c(GRN = 0.9, LNP = 0.1))))
+  utils::capture.output(r <- zero_unnominated_asat(f, flows = fl))
+  expect_equal(r[seat == "Narracan" & party == "GRN", xgb_pred], 4 + 24 * 0.9)
+  expect_equal(r[seat == "Narracan" & party == "LNP", xgb_pred], 38 + 24 * 0.1)
+  expect_equal(r[seat == "Narracan", sum(xgb_pred)], 74)
+})

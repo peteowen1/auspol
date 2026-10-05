@@ -658,6 +658,7 @@ for (K in PAIRS) {
   # step that can revive one. WA has no salience blend, so this is demographic_residual
   # and leader_seat; it sits before the diagnostic dump and the `keep` subset below.
   .nz_pre <- shares
+  nom_zero_save_flows(fm, el_to)   # the as-at forecasts table zeroes with this same fm
   shares <- zero_unnominated_at("late", shares, fb, el_to, flows = fm)
   .nz_cells <- nomination_zeroed_cells(.nz_pre, shares)
   # DIAGNOSTIC DUMP, off unless asked. Writes the projected primary the model
