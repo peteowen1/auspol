@@ -81,7 +81,7 @@ candidate_returns <- function(election_from, election_to, corpus = NULL) {
         # seat's elected flags below hid that, so `mp_departed` never fired for
         # the Coalition in Orange 2019 (over-called 45.8 vs 25.8). Recorded here,
         # before the flags are cleared, and re-added to `held` further down.
-        if (identical(Sys.getenv("AUSPOL_BYELEC_DEPARTED", "0"), "1")) {
+        if (identical(Sys.getenv("AUSPOL_BYELEC_DEPARTED", "1"), "1")) {
           L <- PREVT[PREVT$elected %in% TRUE & normalise_seat(PREVT$seat) %in% normalise_seat(bw$seat) &
                        PREVT$party %in% c("ALP", "LNP", "NAT")]
           L <- L[!paste(normalise_seat(L$seat), L$party) %in% paste(normalise_seat(bw$seat), bw$party)]
@@ -704,7 +704,7 @@ personal_prior_vote <- function(election_from, election_to, corpus = NULL,
   # here and own_prev_pcv stayed NA (Donato, McGirr, Oakeshott). Credit them the
   # level sitting non-major members typically hold, fitted time-forward
   # (fit_sitting_minor_level()), NOT their by-election share.
-  if (identical(Sys.getenv("AUSPOL_BYELEC_LEVEL", "0"), "1") &&
+  if (identical(Sys.getenv("AUSPOL_BYELEC_LEVEL", "1"), "1") &&
       identical(Sys.getenv("AUSPOL_BYELECTION_MP", "1"), "1")) {
     bw <- tryCatch(byelection_winner_rows(election_from, election_to), error = function(e) NULL)
     if (!is.null(bw) && nrow(bw)) {

@@ -3,6 +3,7 @@
 - Backtests no longer choose whose personal history counts by the actual result: a class's leading candidate is the one with the best prior vote in the seat, then the sitting member, then name order. This was a look-ahead leak; fixing it moved seat log loss 0.2796 -> 0.2874 and exposed the over-carry below.
 - Members who leave a major party: a federal target now gets its own shrunk carry of their old vote (about 0.16-0.23 instead of 0.31-0.44; `AUSPOL_DEFECT_BY_LEVEL = "2"`). Defector cells' squared error -23%; seat log loss 0.2874 -> 0.2827 (AE Forecasts 0.2825). State targets, including Victoria 2026, are unchanged.
 - Western Australian candidates are classified from the full party name (wa2001 One Nation restored; agreement with the official results in every seat). "Stop The Greens" is no longer classed as Greens.
+- A non-major by-election winner is credited the level sitting non-major members typically hold at their next election (about 40%, `fit_sitting_minor_level()`), and a major that lost the seat at a by-election keeps its 'member departed' flag (`AUSPOL_BYELEC_LEVEL`, `AUSPOL_BYELEC_DEPARTED`). Lyne 2010 9.0 -> 32.1 (actual 47.8), Orange 2019 17.5 -> 33.8 (56.2); seat log loss 0.2827 -> 0.2822. Victoria 2026 unchanged.
 - One salience permit per class leader instead of the first row; the as-at forecasts table applies v61 nomination zeroing with each harness's own flows.
 
 # auspol 0.4.70

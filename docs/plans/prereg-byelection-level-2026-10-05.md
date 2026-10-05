@@ -76,3 +76,11 @@ Cells: Lyne 9.0 -> 32.1 (47.8); Orange 17.5 -> 33.8 (56.2); Wagga Wagga 26.5 -> 
 23.9 -> 39.1 (33.0, the named cost); Mayo 40.6 -> 43.6 (34.2). Arm logged `BYL1`/`BYD1` in stage 1
 (Lyne 41.6). By the rules both switches stay off; the 2-SE clause was added after the scorer's noise
 dry run (-3%), and this arm is -72% at 1.92 SE, so the decision goes to Pete.
+
+## Decision (2026-10-05): SHIPPED on Pete's override of clause 1
+
+Pete chose to ship both switches knowing the primary is 1.92 SE against the 2-SE clause (the clause
+was added after the noise dry run; this arm is -72% on its cells, every guard held, the disqualifier
+did not fire). `AUSPOL_BYELEC_LEVEL = "1"` and `AUSPOL_BYELEC_DEPARTED = "1"` in
+`scripts/published_flags.R` and as package defaults. Victoria 2026: 0 of 451 (seat, class) cells
+change inputs (all six vic2022 -> vic2026 by-elections were won by a major; Prahran's loser was GRN).

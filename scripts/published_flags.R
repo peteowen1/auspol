@@ -209,8 +209,8 @@ PUBLISHED_FLAGS <- c(
                                              # new one. The retired statewide path takes the statewide maximum
                                              # and says so. docs/plans/prereg-flow-fragmentation-2026-09-15.md
   AUSPOL_DEFECT_POOLED       = "2",          # 2 = separate member (0.282) / losing-candidate (0.142) defector rates.
-  AUSPOL_BYELEC_LEVEL        = "0",          # PREREG PENDING (docs/plans/prereg-byelection-level-2026-10-05.md): a non-major by-election winner is credited the median next-election share of sitting non-major members (~41), fitted time-forward, instead of no own vote.
-  AUSPOL_BYELEC_DEPARTED     = "0",          # PREREG PENDING (same plan): a major that lost the seat at a by-election keeps its 'member departed' flag at the next general election.
+  AUSPOL_BYELEC_LEVEL        = "1",          # SHIPPED 2026-10-05 (Pete override of the 2-SE clause; -72% on the winners) (docs/plans/prereg-byelection-level-2026-10-05.md): a non-major by-election winner is credited the median next-election share of sitting non-major members (~41), fitted time-forward, instead of no own vote.
+  AUSPOL_BYELEC_DEPARTED     = "1",          # SHIPPED 2026-10-05 (same plan): a major that lost the seat at a by-election keeps its 'member departed' flag at the next general election.
   AUSPOL_DEFECT_BY_LEVEL     = "2",          # SHIPPED 2026-10-05: 2 = federal targets get their own shrunk sitting-member defector carry (~0.16-0.23), states keep the pooled rate; 1 = federal and state rates (REFUSED); 0 = one all-level median. PREREG (docs/plans/prereg-defector-by-level-2026-10-05.md): sitting-member defector carry pooled by federal vs state with shrinkage (federal ~0.2, state ~0.4-0.6) instead of one all-level median.
                                              # ADOPTED BY PETE ON MECHANISM 2026-09-09, not on the criterion: the arm
                                              # missed its own primary bar (t -2.04 vs 2.08) but passed R1 in both arms,
