@@ -47,58 +47,9 @@ get_json <- function(path, cache) {
   jsonlite::fromJSON(f, simplifyVector = FALSE)
 }
 
-# WESTERN AUSTRALIA PUBLISHES A CODE AND NO PARTY NAME. classify_party() works
-# mostly on names, so a bare code reaches none of its rules and lands in OTH --
-# silently, because OTH is a legitimate class rather than an error. In 2025
-# that swallowed the Nationals' six won seats, 27 independents, the Shooters in
-# 26 districts and Australian Christians in 54.
-#
-# So each code is expanded to a party NAME before classifying. The values are
-# not invented: they are the strings the WAEC itself publishes in
-# LASeatsByParty, and WF1c refuses any that is not. That check cannot prove a
-# code means a particular name -- only that the name is the commission's own --
-# which is why the declared-seat anchor in WF5 exists as well.
-WA_PARTY <- c(
-  # 1996-2008 the commission wrote "Australian Labor Party" and "NATIONAL
-  # PARTY"; from 2013 "WA Labor" and "THE NATIONALS". The spelling moves, so
-  # WF1c checks names against the union across elections, not one election.
-  ALP    = "Australian Labor Party", LIB  = "Liberal Party",
-  NP     = "NATIONAL PARTY",         NAT  = "THE NATIONALS",
-  NATS   = "The Nationals WA",       GRN  = "The Greens (WA)",
-  IND    = "Independent",
-  # One Nation appears under THREE codes across the eight elections, which is
-  # the single most important thing this map gets right: PHO in 2001 is 54
-  # candidates and ONP in 2005 is 45, and either one lost to OTH would remove
-  # most of the One Nation preference evidence Western Australia exists to add.
-  PHO    = "Pauline Hanson's ONE NATION",
-  ONP    = "ONE NATION",
-  PHON   = "Pauline Hanson's One Nation",
-  # Christian and other minor-right.
-  AC     = "Australian Christians",  ACP  = "Australian Christians",
-  CDP    = "Christian Democratic Party WA",
-  CTA    = "Call To Australia (WA)", FFP  = "Family First",
-  CEC    = "CITIZENS ELECTORAL COUNCIL",
-  NCO    = "New Country Party",      AFP  = "Australia First Party",
-  SFF    = "SFFPWA",                 SFFP = "Shooters, Fishers and Farmers",
-  LDP    = "Liberal Democrats",      Libertarian = "Libertarian",
-  # Everything below lands in OTH, and does so deliberately rather than by
-  # falling through: see WF6, which prints the OTH members every run.
-  AD     = "Australian Democrats",   DEM  = "Australian Democrats",
-  AJP    = "Animal Justice Party",   AMP  = "Australian Marijuana Party",
-  APP    = "The Australian People's Party",
-  ARP    = "Australian Reform Party WA",
-  CLM    = "CALM Resistance Movement",
-  FLUX   = "Flux The System!",       LCWA = "Legalise Cannabis Party WA",
-  LFC    = "Liberals For Climate",   MBP  = "Micro Business Party",
-  SA     = "Socialist Alliance",
-  SAPSOC = "SUSTAINABLE AUSTRALIA PARTY - STOP OVERDEVELOPMENT / CORRUPTION",
-  SPPk   = "Stop Pedophiles! Protect kiddies!",
-  WAP    = "WESTERN AUSTRALIA PARTY",
-  # NO MANDATORY VACCINATION ran 59 candidates in 2021 and WAxit 48. Both are
-  # right-populist in flavour and both sit in OTH because no rule names them.
-  # Moving them is a modelling decision with real consequences for the OTH row
-  # of the flow matrix, so it is left for a measured one rather than taken here.
-  NMV    = "NO MANDATORY VACCINATION", WAXIT = "WAxit")
+# WA_PARTY (code -> party name) lives in R/wa_party.R, the ONE copy, shared with
+# scripts/build_candidacies.R so the candidate corpus and these results classify
+# alike. See that file for why a bare code cannot be classified directly.
 
 # One spelling for both sides of the join. The distribution writes an
 # independent as a bare surname and upper-cases every party code; the candidate
