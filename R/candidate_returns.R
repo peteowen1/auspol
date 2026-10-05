@@ -1078,7 +1078,7 @@ fit_defector_discount <- function(target_election, corpus = NULL, min_n = 5L, pa
     lv <- R[, list(est = stats::median(ratio), n = .N,
                    se = if (.N >= 2L) 1.2533 * stats::sd(ratio) / sqrt(.N) else Inf), by = level]
     tau2 <- if (nrow(lv) >= 2L) max(0, stats::var(lv$est) - mean(pmin(lv$se, 1e6)^2)) else 0
-    lv[, w := ifelse(is.finite(se), tau2 / (tau2 + se^2), 0)]
+    lv[, w := ifelse(is.finite(se) & (tau2 + se^2) > 0, tau2 / (tau2 + se^2), 0)]   # 0/0 (no spread, no gap) -> pooled
     lv[, shrunk := mp + w * (est - mp)]
     by_level <- lv
     tl <- if (startsWith(target_election, "fed")) "fed" else "state"
