@@ -83,3 +83,19 @@ retraining noise) was stricter than this run needed; recorded, not changed.
 
 Reading: WA gains a little; removing the cliff hurts the two early targets it switched on. Both
 switches stay off.
+
+## Amendment B1 (2026-10-06, post hoc, Pete "go"): WA only, cliff kept
+
+The original Arm B clauses above are unedited. Chosen after seeing Arm B: WA improved slightly and the
+no-cliff rule hurt vic2018/qld2020.
+
+**Change:** `AUSPOL_SEAT_SWING_PORT_WA=2` (WA targets get the port, fitted with WA's cycles pooled in;
+the four other states untouched), `AUSPOL_SEAT_SWING_PORT_NOCLIFF=0` (cliff kept). With the cliff,
+wa2013 and wa2017 get 0, so in practice the arm reaches wa2025 (59 seats; dry-run coefficient 0.369).
+Run from stage 6 (no xgb retraining), baseline as before.
+
+**Criteria:** PRIMARY: wa2025 seat-winner log loss falls by more than 1 paired SE (stage-6 runs carry
+no retraining noise, so the bar is the paired seat SE, not 0.010). GUARD: every non-WA election's
+seat-winner log loss byte-identical (any change means the switch leaked); ledger at most +1 SE.
+Expected from Arm B: wa2025 -0.0064, SE 0.0117, so INCONCLUSIVE is the likely outcome and is reported
+as such, not as a refusal of the idea.
