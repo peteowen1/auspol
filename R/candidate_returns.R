@@ -250,6 +250,77 @@ candidate_returns <- function(election_from, election_to, corpus = NULL) {
   res[]
 }
 
+#' Pick ONE leading candidate per (seat, party class) from what was knowable
+#' BEFORE the election being predicted
+#'
+#' Before 2026-10-05 the leader was the row with the highest `pcv` at the
+#' TARGET election, i.e. the ACTUAL result: in a backtest the outcome chose
+#' whose personal history counted, and live (target `pcv` NA) the choice was
+#' arbitrary. Pete's rule (2026-10-05): the leader of a class in a seat is the
+#' candidate with the highest PRIOR personal vote in that seat at the previous
+#' election, under any party label. Ties, and classes where nobody has a
+#' record, go to the sitting member (prior `elected` flag, with the
+#' by-election winner override applied), then to name order, so the choice is
+#' deterministic and never reads the target election's `pcv`.
+#'
+#' The discounts for a switched label (major/minor defector rates) are NOT
+#' applied here; callers apply them afterwards to whoever leads.
+#'
+#' @param NOWT Target-election rows carrying `.k` (match key), `.s`
+#'   (normalised seat), `seat`, `party`, `name`. Its `pcv` is never read.
+#' @param PREVT Previous-election rows carrying `.k`, `.s`, `pcv`, optionally
+#'   `elected` (already by-election adjusted by the caller).
+#' @return The rows of `NOWT` with a non-empty `.k`, one per (seat, party),
+#'   with added columns `.prior_pcv` (NA = no record) and `.sitting`.
+#' @keywords internal
+#' @noRd
+.class_leader_rows <- function(NOWT, PREVT) {
+  rn <- seat_rename_map()
+  P <- data.table::copy(PREVT[nzchar(PREVT$.k) & is.finite(PREVT$pcv)])
+  P[, .s_renamed := .s]
+  P[.s %in% names(rn), .s_renamed := rn[.s]]
+  pk <- unique(rbind(P[, list(.s = .s,         .k, pcv)],
+                     P[, list(.s = .s_renamed, .k, pcv)]))
+  pk <- pk[, list(.prior_pcv = max(pcv)), by = list(.s, .k)]
+  sit <- if ("elected" %in% names(PREVT)) {
+    S <- data.table::copy(PREVT[nzchar(PREVT$.k) & PREVT$elected %in% TRUE])
+    S[, .s_renamed := .s]
+    S[.s %in% names(rn), .s_renamed := rn[.s]]
+    unique(rbind(S[, list(.s = .s, .k)], S[, list(.s = .s_renamed, .k)]))[, .sitting := TRUE]
+  } else data.table::data.table(.s = character(0), .k = character(0), .sitting = logical(0))
+  L <- data.table::copy(NOWT[nzchar(NOWT$.k)])
+  L[, .row := .I]
+  L <- merge(L, pk,  by = c(".s", ".k"), all.x = TRUE)
+  L <- merge(L, sit, by = c(".s", ".k"), all.x = TRUE)
+  L[is.na(.sitting), .sitting := FALSE]
+  L[, .po := ifelse(is.na(.prior_pcv), -Inf, .prior_pcv)]
+  L[, .sit_i := -as.integer(.sitting)]
+  L[, .po := -.po]
+  L[, .nm := if ("name" %in% names(L)) ifelse(is.na(name), "", as.character(name)) else ""]
+  data.table::setorderv(L, c("seat", "party", ".po", ".sit_i", ".k", ".nm", ".row"))
+  L <- L[, .SD[1L], by = list(seat, party)]
+  L[, c(".po", ".sit_i", ".nm", ".row") := NULL]
+  L[]
+}
+
+# The by-election-adjusted previous-election table, silently. `candidate_returns()`
+# applies the same override inline (and logs it); `leading_candidate_returns()`
+# and `personal_prior_vote()` need the same sitting-member flags to break leader
+# ties and read PREVT otherwise unchanged.
+.prev_with_byelection_mp <- function(PREVT, election_from, election_to) {
+  if (!identical(Sys.getenv("AUSPOL_BYELECTION_MP", "1"), "1") ||
+      !"elected" %in% names(PREVT)) return(PREVT)
+  bw <- tryCatch(byelection_winner_rows(election_from, election_to), error = function(e) NULL)
+  if (is.null(bw) || !nrow(bw)) return(PREVT)
+  sur <- surname_of(bw$surname, bw$name)
+  giv <- given_of(bw$given, bw$name)
+  P <- data.table::copy(PREVT)
+  P[normalise_seat(P$seat) %in% normalise_seat(bw$seat), elected := FALSE]
+  add <- data.table::copy(bw)[, election := election_from]
+  add[, `:=`(.k = match_key(sur, giv, "initial"), .s = normalise_seat(seat))]
+  data.table::rbindlist(list(P, add), fill = TRUE)
+}
+
 #' Does the LEADING candidate of a class personally return, not just anyone in it?
 #'
 #' `candidate_returns()` answers "does ANY candidate of this class in this seat
@@ -306,9 +377,11 @@ leading_candidate_returns <- function(election_from, election_to, corpus = NULL)
   NOWT[,  .s := normalise_seat(seat)]
   PREVT[, .s := normalise_seat(seat)]
 
-  # The LEADING row per (seat, party): highest current pcv.
-  data.table::setorder(NOWT, seat, party, -pcv)
-  lead <- NOWT[nzchar(.k), .SD[1], by = .(seat, party)]
+  # The LEADING row per (seat, party): highest PRIOR personal vote in this seat,
+  # then the sitting member, then name order. NEVER the target election's pcv --
+  # that is the actual result (see .class_leader_rows()).
+  PREVT <- .prev_with_byelection_mp(PREVT, election_from, election_to)
+  lead <- .class_leader_rows(NOWT, PREVT)
 
   # Match both spellings of a renamed seat -- see the matching comment in
   # candidate_returns() above; same fault, same fix, kept in sync because
@@ -532,8 +605,10 @@ personal_prior_vote <- function(election_from, election_to, corpus = NULL,
   # queued, not built. scripts/candidate_scenario.R still demonstrates the
   # underlying gap (Holmes-Ross's history is genuinely invisible under
   # leader-only matching); the fix for it just isn't this.
-  data.table::setorder(NOWT, seat, party, -pcv)
-  lead <- NOWT[nzchar(.k), .SD[1], by = .(seat, party)]
+  # CHOSEN BY PRIOR PERSONAL VOTE, not the target election's pcv (the actual
+  # result): see .class_leader_rows(). Only `lead`'s identity columns are used
+  # below; the prior-record columns it also carries are ignored.
+  lead <- .class_leader_rows(NOWT, .prev_with_byelection_mp(PREVT, election_from, election_to))
 
   # EXCLUDE A PRIOR MAJOR-PARTY REGISTRATION by default. Nick McBride won
   # MacKillop as LNP with 62.3% in 2022, then re-contested as IND in 2026 and

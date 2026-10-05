@@ -1045,7 +1045,7 @@ if (!is.null(.fitsl)) {
 .vic_slope <- function(p, seats) {
   if (.screened && !is.null(.permit) && !is.null(.returns)) {
     pv <- .permit[.permit$party == p, ]
-    lut <- stats::setNames(as.logical(pv$permit), pv$seat)
+    lut <- .permit_lut(pv)
     pm <- unname(lut[seats]); # a missing permit row is NOT a permit (NA = silent; 2026-09-20)
     return(screened_slopes(p, seats, .returns, pm, same_mp = .MP_SLOPE, major_departed = .MAJDEP, major_present = .MAJPRES,
                             honour_departed = .honour_departed, with_flags = .departed_hold,

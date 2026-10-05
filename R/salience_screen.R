@@ -386,5 +386,97 @@ salience_permit_for <- function(election, prev_election, region,
               sum(SAL$permit[SAL$governed] %in% TRUE),
               if (all(is.na(SAL$permit[SAL$governed]))) " (SCREEN SILENT: below the coverage floor)" else "",
               if (length(surging)) paste(surging, collapse = ",") else "none"))
+  SAL <- .collapse_permit_to_leader(SAL, election, prev_election, surging)
   SAL[, .(seat, party, permit)]
+}
+
+# ONE permit per (seat, party class): the permit of the class's LEADER, as
+# chosen by .class_leader_rows() (highest prior personal vote in the seat, then
+# the sitting member, then name order -- never the target election's result).
+# The table is per candidate, and the harnesses key it by seat alone, so a class
+# holding a TRUE and a FALSE candidate used to be permitted by ROW ORDER
+# (fed2016 Dobell IND: Stephenson TRUE, Baker FALSE). Pete's rule 2026-10-05:
+# one rule for the leader, one source for it.
+#
+# A class whose leader has no row in output/salience-v6.csv (it holds only some
+# candidates per class) gets TRUE if the screen makes no claim about them
+# (surging class, or the leader stood here last time), else NA (silent; an NA
+# permit is never a permit downstream), counted and logged. With no
+# corpus the leader cannot be named and the class takes the first candidate by
+# name order, logged -- still deterministic, never row order.
+.collapse_permit_to_leader <- function(SAL, election, prev_election, surging = character(0)) {
+  ns <- function(x) gsub("[^a-z0-9]", "", tolower(x))
+  SAL <- data.table::copy(SAL)
+  SAL[, .sk := ns(seat)]
+  if (!"keyword" %in% names(SAL)) SAL[, keyword := NA_character_]
+  SAL[, .kw := ns(ifelse(is.na(keyword), "", keyword))]
+  cf <- file.path("output", "candidacies.csv")
+  lead_kw <- NULL
+  if (file.exists(cf)) {
+    C <- data.table::fread(cf, showProgress = FALSE)
+    ee <- election; pe <- prev_election
+    NOWT <- C[C$election == ee]; PREVT <- C[C$election == pe]
+    if (nrow(NOWT) && nrow(PREVT)) {
+      kf <- function(d) {
+        sur <- surname_of(if ("surname" %in% names(d)) d$surname else NA_character_,
+                          if ("name" %in% names(d)) d$name else NA_character_)
+        giv <- given_of(if ("given" %in% names(d)) d$given else NA_character_,
+                        if ("name" %in% names(d)) d$name else NA_character_)
+        match_key(sur, giv, "initial")
+      }
+      NOWT  <- data.table::copy(NOWT)[,  `:=`(.k = kf(.SD), .s = normalise_seat(seat))]
+      PREVT <- data.table::copy(PREVT)[, `:=`(.k = kf(.SD), .s = normalise_seat(seat))]
+      L <- .class_leader_rows(NOWT, .prev_with_byelection_mp(PREVT, prev_election, election))
+      L[, .kw := ns(search_form(if ("given" %in% names(L)) given else NA_character_,
+                                if ("surname" %in% names(L)) surname else NA_character_,
+                                if ("name" %in% names(L)) name else NA_character_))]
+      L[, .sk := ns(seat)]
+      lead_kw <- unique(L[, list(.sk, party, .kw, .is_leader = TRUE)])
+      lead_ret <- unique(L[, list(.sk, party, .ret = !is.na(.prior_pcv))])
+    }
+  }
+  if (is.null(lead_kw)) {
+    cat(sprintf("SP2! %s: no corpus to name class leaders; permit taken from the first candidate by name order\n", election))
+    data.table::setorder(SAL, .sk, party, .kw)
+    out <- SAL[, .SD[1L], by = list(.sk, party)]
+  } else {
+    M <- merge(SAL, lead_kw, by = c(".sk", "party", ".kw"), all.x = TRUE)
+    M[is.na(.is_leader), .is_leader := FALSE]
+    cls <- unique(SAL[, list(.sk, party)])
+    out <- M[.is_leader == TRUE]
+    # One row per class even if two SAL rows carry the same leader keyword.
+    data.table::setorder(out, .sk, party, .kw)
+    out <- out[, .SD[1L], by = list(.sk, party)]
+    miss <- cls[!out, on = c(".sk", "party")]
+    if (nrow(miss)) {
+      # output/salience-v6.csv holds only some candidates of a class, so the
+      # leader can have no reading. The screen then cannot speak about them:
+      # ungoverned -- a surging class, or a leader who stood in this seat last
+      # time (`ret`) -- is TRUE, exactly as governed_population() defines it;
+      # anyone else is NA (silent, never a permit).
+      first_seat <- SAL[, list(seat = seat[1L]), by = list(.sk)]
+      miss <- merge(miss, first_seat, by = ".sk")
+      miss <- merge(miss, lead_ret, by = c(".sk", "party"), all.x = TRUE)
+      miss[, permit := if (isTRUE(.ret) || party %in% surging) TRUE else NA, by = list(.sk, party)]
+      cat(sprintf("SP2! %s: %d class(es) whose leader has no salience row -> permit TRUE for %d (surging class or returning leader), NA for %d\n",
+                  election, nrow(miss), sum(miss$permit %in% TRUE), sum(is.na(miss$permit))))
+      miss[, keyword := NA_character_]
+      out <- data.table::rbindlist(list(out[, list(seat, party, permit, keyword)],
+                                        miss[, list(seat, party, permit, keyword)]), fill = TRUE)
+    }
+  }
+  stopifnot(!anyDuplicated(out[, list(seat, party)]))
+  out[, list(seat, party, permit, keyword)]
+}
+
+# The seat -> permit lookup every harness builds. A repeated seat inside ONE
+# class means the table was not collapsed to a leader, and `setNames()[seats]`
+# would silently take the first row; stop instead.
+.permit_lut <- function(pv) {
+  if (anyDuplicated(pv$seat)) {
+    stop(sprintf("permit table has %d duplicated seat(s) within one class (e.g. %s): the lookup would pick by row order",
+                 sum(duplicated(pv$seat)), paste(utils::head(unique(pv$seat[duplicated(pv$seat)]), 3), collapse = ", ")),
+         call. = FALSE)
+  }
+  stats::setNames(as.logical(pv$permit), pv$seat)
 }
