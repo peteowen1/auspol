@@ -13,7 +13,9 @@ seat_swing_port_apply(shares, target_election)
 \item{target_election}{Label such as \code{"vic2022"}.}
 }
 \value{
-\code{shares}, adjusted, or unchanged when \code{AUSPOL_SEAT_SWING_PORT} is not "2".
+\code{shares}, adjusted, or unchanged when the port is off for this
+target: \code{AUSPOL_SEAT_SWING_PORT} is not "2" (WA targets: when
+\code{AUSPOL_SEAT_SWING_PORT_WA} is "0").
 }
 \description{
 Moves \code{adj} points from LNP to Labor per seat (\code{seat_swing_port_adj()}) and

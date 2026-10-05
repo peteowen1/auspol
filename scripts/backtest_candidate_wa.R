@@ -210,6 +210,8 @@ CAL_TAG <- paste0(
   # audit this" because its grep only scans the harnesses and
   # fit_seats_full.R, never R/; that gap is real and separate.
   if (identical(Sys.getenv("AUSPOL_SD_DEPARTED", "0"), "1")) "-sddep" else "",
+  switch(Sys.getenv("AUSPOL_SEAT_SWING_PORT_WA", "2"), "1" = "-portwa1", "2" = "-portwa2", "3" = "-portwa3", ""),
+  if (identical(Sys.getenv("AUSPOL_SEAT_SWING_PORT_NOCLIFF", "0"), "1")) "-nocliff" else "",
   if (nzchar(Sys.getenv("AUSPOL_FLOW_MODEL_TAG", "")))
     sprintf("-fm%s", Sys.getenv("AUSPOL_FLOW_MODEL_TAG")) else "",
   if (SURGE_H > 0) "-surge" else "", .arm_fingerprint, .code_tag)
@@ -568,15 +570,9 @@ for (K in PAIRS) {
   # vote across at the defection discount, 17.996 points, and without this line
   # that number is computed, reported as "applied", and never reaches the IND
   # column the model then scores.
-  .own_x <- function(p, seats, x) {
-    if (is.null(.own_prev)) return(x)
-    ov <- .own_prev[.own_prev$party == p, ]
-    if (!nrow(ov)) return(x)
-    v <- stats::setNames(ov$own_prev_pcv, ov$seat)[seats]
-    hit <- !is.na(v)
-    x[hit] <- unname(v[hit])
-    x
-  }
+  # Shared with every harness and fit_seats_full.R: own_prev_substitute() (R/candidate_returns.R).
+  # A cross-seat credit (AUSPOL_CROSS_SEAT_VOTE) can only RAISE the class base, never lower it.
+  .own_x <- function(p, seats, x) own_prev_substitute(.own_prev, p, seats, x)
   for (p in parties) {
     from_pc <- if (p %in% names(sa)) sa[[p]] else 0
     to_pc   <- if (p %in% names(sb)) sb[[p]] else 0
@@ -623,6 +619,16 @@ for (K in PAIRS) {
   # AUSPOL_NOM_ZERO_ORDER (default "early" = this position); "late" runs it after
   # leader_seat_apply below instead (plans/prereg-zero-order-2026-10-03.md).
   shares <- zero_unnominated_at("early", shares, fb, el_to, flows = fm)
+  # Time-forward seat-swing port for WA (AUSPOL_SEAT_SWING_PORT_WA, default "0"
+  # = off, byte-identical), AFTER the override like the other four harnesses.
+  # Only on top of the xgb layer: at AUSPOL_XGB_PRIMARY=0 these shares become
+  # base_pred and the port would count twice. wa2001 and wa2005 have no
+  # transposed federal swing (no booth two-party file for fed1998/fed2004), so
+  # they get a zero adjustment; seat_swing_port_apply() prints the matched count.
+  # PREREG PENDING: docs/plans/prereg-seat-swing-port-wa-2026-10-05.md (to be written before any run).
+  if (identical(Sys.getenv("AUSPOL_XGB_PRIMARY", "0"), "1") &&
+      !identical(Sys.getenv("AUSPOL_SEAT_SWING_PORT_WA", "2"), "0"))
+    shares <- seat_swing_port_apply(shares, el_to)
   # Seat-poll blend (AUSPOL_SEAT_POLL_BLEND), after the override and the port;
   # xgb layer only, so stage-1 base_pred never includes it.
   # plans/prereg-seat-poll-blend-2026-09-29.md
@@ -658,6 +664,7 @@ for (K in PAIRS) {
   # step that can revive one. WA has no salience blend, so this is demographic_residual
   # and leader_seat; it sits before the diagnostic dump and the `keep` subset below.
   .nz_pre <- shares
+  nom_zero_save_flows(fm, el_to)   # the as-at forecasts table zeroes with this same fm
   shares <- zero_unnominated_at("late", shares, fb, el_to, flows = fm)
   .nz_cells <- nomination_zeroed_cells(.nz_pre, shares)
   # DIAGNOSTIC DUMP, off unless asked. Writes the projected primary the model

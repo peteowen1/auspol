@@ -874,15 +874,9 @@ for (K in PAIRS) {
     }
   }
   .tr <- attr(mat, "transfers"); if (!is.null(.tr)) cat(sprintf("TR1  transfers moved with the person: %d applied%s\n", .tr$applied, if (length(.tr$skipped)) paste0("; SKIPPED ", length(.tr$skipped), ": ", paste(utils::head(.tr$skipped, 5), collapse = ", ")) else ""))
-  .own_x <- function(p, seats, x) {
-    if (is.null(.own_prev)) return(x)
-    ov <- .own_prev[.own_prev$party == p, ]
-    v <- stats::setNames(ov$own_prev_pcv, ov$seat)[seats]
-    out <- x
-    hit <- !is.na(v)
-    out[hit] <- unname(v[hit])
-    out
-  }
+  # Shared with every harness and fit_seats_full.R: own_prev_substitute() (R/candidate_returns.R).
+  # A cross-seat credit (AUSPOL_CROSS_SEAT_VOTE) can only RAISE the class base, never lower it.
+  .own_x <- function(p, seats, x) own_prev_substitute(.own_prev, p, seats, x)
   # ARM CS: arm C plus the salience screen, protecting the rare emergent that
   # arm C's harsh new-candidate slope crushed. See screened_slopes().
   .permit <- if (.screened) salience_permit_for(eb, ea, "fed") else NULL
@@ -941,7 +935,7 @@ for (K in PAIRS) {
   .fed_slope <- function(p, seats, cond, screened, returns, permit_tbl) {
     if (screened && !is.null(permit_tbl)) {
       pv <- permit_tbl[permit_tbl$party == p, ]
-      lut <- stats::setNames(as.logical(pv$permit), pv$seat)
+      lut <- .permit_lut(pv)
       pm <- unname(lut[seats])
       # a missing permit row is NOT a permit (NA = silent; 2026-09-20)
       return(screened_slopes(p, seats, returns, pm, same_mp = .MP_SLOPE, major_departed = .MAJDEP, major_present = .MAJPRES, honour_departed = .honour_departed, with_flags = .departed_hold, same = if (is.null(.fitsl)) formals(screened_slopes)$same else .fitsl$same, new = if (is.null(.fitsl)) formals(screened_slopes)$new else .fitsl$new))
@@ -1799,6 +1793,7 @@ for (X in out_all) {
   # into a zeroed cell, and is a no-op on rows with nothing to undo. Code NZ1b so the
   # per-pair NZ1 counts are not doubled. `salience_sd_matrix()` above read the unzeroed matrix.
   .nz_pre <- X$shares
+  nom_zero_save_flows(X$fm, sprintf("fed%d", X$K$to))   # the as-at forecasts table zeroes with this same fm
   X$shares <- zero_unnominated_at("late", X$shares, X$fb, sprintf("fed%d", X$K$to), code = "NZ1b", flows = X$fm)
   X$nz_cells <- rbind(X$nz_cells, nomination_zeroed_cells(.nz_pre, X$shares))
   set.seed(SEED)

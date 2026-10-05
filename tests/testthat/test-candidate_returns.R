@@ -44,6 +44,36 @@ test_that("a DIFFERENT person in the same seat is still new", {
   expect_false(r[seat == "A" & party == "IND"]$same)
 })
 
+test_that("two different people sharing surname and initial are NOT joined (Casey fed2022)", {
+  # Trevor SMITH (OTH_RIGHT, 2.0%) was matched to the sitting member Tony SMITH
+  # (LNP, 45.2%), inventing a returning sitting member / defector.
+  C <- data.table::data.table(
+    election = c("e1", "e1", "e2", "e2"),
+    seat = "Casey", party = c("LNP", "ALP", "LNP", "OTH_RIGHT"),
+    surname = c("SMITH", "JONES", "BROWN", "SMITH"),
+    given = c("Tony", "Ann", "Pat", "Trevor"),
+    name = NA_character_, pcv = c(45.2, 40, 40, 2), elected = c(TRUE, FALSE, FALSE, FALSE))
+  r <- candidate_returns("e1", "e2", C)
+  expect_false(r[party == "OTH_RIGHT"]$same)
+  expect_false(r[party == "OTH_RIGHT"]$same_mp)
+  expect_false(leading_candidate_returns("e1", "e2", C)[party == "OTH_RIGHT"]$leader_same)
+  # control: the same table with Tony as the new candidate IS joined
+  C2 <- data.table::copy(C)[election == "e2" & party == "OTH_RIGHT", given := "Tony"]
+  expect_true(candidate_returns("e1", "e2", C2)[party == "OTH_RIGHT"]$same_mp)
+})
+
+test_that("a nickname pair and an initial-only row are still joined across a class change", {
+  C <- data.table::data.table(
+    election = c("e1", "e2", "e1", "e2"),
+    seat = c("A", "A", "B", "B"), party = c("LNP", "IND", "LNP", "IND"),
+    surname = c("WEBB", "WEBB", "ZED", "ZED"),
+    given = c("Thomas", "Tom", "J", "John"),
+    name = NA_character_, pcv = c(45, 30, 40, 20), elected = c(TRUE, FALSE, TRUE, FALSE))
+  r <- candidate_returns("e1", "e2", C)
+  expect_true(r[seat == "A" & party == "IND"]$same)   # Tom / Thomas
+  expect_true(r[seat == "B" & party == "IND"]$same)   # J / John via align_person_keys
+})
+
 test_that("a missing corpus column is an error rather than a silent FALSE", {
   expect_error(candidate_returns("e1", "e2", data.table::data.table(x = 1)), "lacks")
 })
@@ -65,20 +95,60 @@ test_that("seat names are matched across differing conventions", {
   expect_equal(r$seat, "Albert Park")   # the TARGET election's spelling
 })
 
-test_that("leading_candidate_returns follows the TOP candidate, not any candidate", {
-  # A minor candidate matches a prior name; the actual front-runner is new.
-  # Class-level candidate_returns() would say TRUE; the leader-level fact is
-  # what a slope should key on.
-  d <- data.table::data.table(
-    election = c(rep("e1", 2), rep("e2", 2)),
+test_that("leading_candidate_returns picks the leader by PRIOR vote, never the target election's result", {
+  # CHANGED 2026-10-05: this test used to assert that the candidate with the
+  # largest TARGET pcv (the actual result) was the leader, which let the
+  # outcome choose whose history counted. The leader is now the class member
+  # with the highest prior personal vote in the seat. Frontrunner (40 at e2)
+  # is new; Pat Minor (3 at e1) has a record and leads; Sam Other never
+  # returns. Flipping the target pcv must change nothing.
+  mk <- function(p) data.table::data.table(
+    election = c(rep("e1", 2), rep("e2", 3)),
     seat = "A", party = "IND",
-    surname = c("MINOR", "OTHER", "FRONTRUNNER", "MINOR"),
-    given = c("Pat", "Sam", "Alex", "Pat"),
-    pcv = c(3, 20, 40, 2), name = NA_character_)
+    surname = c("MINOR", "OTHER", "FRONTRUNNER", "MINOR", "NEWBIE"),
+    given = c("Pat", "Sam", "Alex", "Pat", "Kim"),
+    pcv = c(3, 20, p), name = NA_character_)
+  d <- mk(c(40, 2, 1))
   cr <- candidate_returns("e1", "e2", d)
-  expect_true(cr[seat == "A" & party == "IND"]$same)   # class-level: TRUE (Pat Minor matches)
+  expect_true(cr[seat == "A" & party == "IND"]$same)
   lr <- leading_candidate_returns("e1", "e2", d)
-  expect_false(lr[seat == "A" & party == "IND"]$leader_same)  # leader Frontrunner is new
+  expect_true(lr[seat == "A" & party == "IND"]$leader_same)
+  lr2 <- leading_candidate_returns("e1", "e2", mk(c(1, 2, 40)))
+  expect_equal(lr2$leader_same, lr$leader_same)
+  expect_equal(personal_prior_vote("e1", "e2", d)$own_prev_pcv,
+               personal_prior_vote("e1", "e2", mk(c(1, 2, 40)))$own_prev_pcv)
+})
+
+test_that("class leader with no record anywhere: sitting member, then name order, never target pcv", {
+  d <- data.table::data.table(
+    election = c("e1", "e2", "e2"), seat = "A", party = "IND",
+    surname = c("OLDHAND", "ZED", "ABLE"), given = c("Sam", "Zoe", "Amy"),
+    pcv = c(10, 5, 50), name = NA_character_, elected = c(TRUE, NA, NA))
+  # nobody at e2 has a record -> name order: ABLE (not the 50% actual winner by luck: flip it)
+  d[election == "e2", pcv := c(50, 5)]
+  l1 <- auspol:::.class_leader_rows(
+    data.table::copy(d[election == "e2"])[, `:=`(.k = tolower(surname), .s = "a")],
+    data.table::copy(d[election == "e1"])[, `:=`(.k = tolower(surname), .s = "a")])
+  d[election == "e2", pcv := c(5, 50)]
+  l2 <- auspol:::.class_leader_rows(
+    data.table::copy(d[election == "e2"])[, `:=`(.k = tolower(surname), .s = "a")],
+    data.table::copy(d[election == "e1"])[, `:=`(.k = tolower(surname), .s = "a")])
+  expect_equal(l1$surname, "ABLE")
+  expect_equal(l2$surname, "ABLE")
+})
+
+test_that("a sitting member with no prior vote (by-election winner row) leads over name order", {
+  # ZED won a by-election: the override adds an elected row with no pcv, so
+  # there is no prior VOTE for anyone and only the sitting flag separates them.
+  # Name order alone would pick ABLE; the rule must pick ZED.
+  now  <- data.table::data.table(seat = "A", party = "IND", surname = c("ABLE", "ZED"),
+                                 name = NA_character_, pcv = c(60, 5))
+  prev <- data.table::data.table(seat = "A", party = "IND", surname = "ZED",
+                                 name = NA_character_, pcv = NA_real_, elected = TRUE)
+  l <- auspol:::.class_leader_rows(
+    data.table::copy(now)[,  `:=`(.k = tolower(surname), .s = "a")],
+    data.table::copy(prev)[, `:=`(.k = tolower(surname), .s = "a")])
+  expect_equal(l$surname, "ZED")
 })
 
 test_that("leading_candidate_returns matches candidate_returns when there is one candidate", {
@@ -155,8 +225,11 @@ test_that("personal_prior_vote follows the LEADING candidate, not any candidate 
     surname = c("MINOR", "OTHER", "FRONTRUNNER", "MINOR"),
     given = c("Pat", "Sam", "Alex", "Pat"),
     pcv = c(3, 20, 40, 2), name = NA_character_)
+  # CHANGED 2026-10-05: the leader is chosen by prior vote, so Minor (3% at e1)
+  # now leads and his own history is the one used -- the old expectation (NA)
+  # encoded the look-ahead (Frontrunner leading because he WON e2).
   r <- personal_prior_vote("e1", "e2", d)
-  expect_true(is.na(r[seat == "A" & party == "IND"]$own_prev_pcv))
+  expect_equal(r[seat == "A" & party == "IND"]$own_prev_pcv, 3)
 })
 
 test_that("personal_prior_vote is NA, not an error, when the leader is not on the prior ballot at all", {
@@ -518,4 +591,19 @@ test_that("fit_minor_defector_conserve measures the origin class's kept share, l
   f <- fit_minor_defector_conserve("vic2022", corpus = corpus, pairs = pairs, min_n = 1L)
   expect_equal(f$n, 1L); expect_equal(f$frac, 12 / 30, tolerance = 1e-6)   # ONP statewide 30 -> 12 is the class itself: expected 0 + kept 12
   expect_null(fit_minor_defector_conserve("qld2024", corpus = corpus, pairs = pairs, min_n = 1L)$frac)
+})
+
+test_that("defector carry by level: federal targets get their own rate, state targets keep the pooled one", {
+  f <- out_path("candidacies.csv")
+  skip_if_not(file.exists(f), "no candidacies corpus")
+  C <- data.table::fread(f, showProgress = FALSE)
+  fit <- function(mode, t) withr::with_envvar(c(AUSPOL_DEFECT_BY_LEVEL = mode), {
+    utils::capture.output(r <- fit_defector_discount(t, corpus = C)); r$discount_mp })
+  # a state target is untouched by mode 2 (the live Victorian forecast)
+  expect_identical(fit("2", "vic2026"), fit("0", "vic2026"))
+  # a federal target with enough earlier federal cases moves to the lower federal rate
+  expect_lt(fit("2", "fed2025"), fit("0", "fed2025"))
+  # one earlier federal case: not separable, so the pooled rate is kept (no NaN, no cliff)
+  expect_identical(fit("2", "fed2010"), fit("0", "fed2010"))
+  expect_true(is.finite(fit("2", "fed2013")))
 })

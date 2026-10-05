@@ -1,6 +1,6 @@
 # Data registry
 
-**Generated 2026-10-03 by `scripts/build_data_registry.R`. Do not hand-edit** --
+**Generated 2026-10-06 by `scripts/build_data_registry.R`. Do not hand-edit** --
 rerun the script instead. Regenerate it whenever you add or fetch data.
 
 This file exists because the same data has been declared missing three
@@ -28,6 +28,7 @@ cannot pass as a working one.
 | `ecsa-2026-sa-transfers.csv` | 44 KB |
 | `ecsa-sa-winners.csv` | 2 KB |
 | `fed-booth-map.csv` | 513 KB |
+| `fed-swing-transposed-wa.csv` | 15 KB |
 | `fed-swing-transposed.csv` | 43 KB |
 | `federal-transposed-to-state.csv` | 178 KB |
 | `MANIFEST.csv` | 787 B |
@@ -82,7 +83,7 @@ cannot pass as a working one.
   - e.g. AEC-2025-esri.zip, AEC_2025/AUS_ELB_region.dbf, AEC_2025/AUS_ELB_region.prj, AEC_2025/AUS_ELB_region.shp
 - **census/** -- 20 files, 77.4 MB
   - e.g. 2016_GCP_CED_AUS.zip, 2016_GCP_SED_NSW.zip, 2016_GCP_SED_QLD.zip, 2016_GCP_SED_SA.zip
-- **correspondences/** -- 29 files, 1.5 MB
+- **correspondences/** -- 31 files, 1.6 MB
   - e.g. abs-sed/CG_CED_2016_CED_2021.csv, abs-sed/CG_SED_2016_SED_2021.csv, abs-sed/CG_SED_2021_SED_2022.csv, abs-sed/CG_SED_2022_SED_2024.csv
 - **aef/** -- 17 files, 4.8 MB
   - e.g. 2022fed-results.json, 2022fed-summary.json, 2022sa-results.json, 2022sa-summary.json

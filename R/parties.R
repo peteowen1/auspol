@@ -113,6 +113,10 @@ classify_party <- function(name, code = NULL) {
   # Liberal Democrats are not the Liberal Party; checked before "liberal".
   set(grepl("liberal democrat|libertarian", n), "OTH_RIGHT")
   set(grepl("liberal|national", n), "LNP")
+  # "Outdoor Recreation Party (Stop The Greens)" (fed2016 Forrest) is AGAINST the
+  # Greens and contains the word. Caught 2026-10-05; the only such name among the
+  # 2,000+ distinct party_raw strings in the corpus containing "green".
+  set(grepl("stop the greens|anti[- ]green", n), "OTH")
   set(grepl("green", n), "GRN")
   set(grepl("one nation|hanson", n), "ONP")
   # "Palmer United Party" and "United Australia Party" are the same movement

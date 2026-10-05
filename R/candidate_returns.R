@@ -69,12 +69,24 @@ candidate_returns <- function(election_from, election_to, corpus = NULL) {
   # SITTING MEMBER of the IND class and the as-at xgb model paid him +5 points
   # for it; Dighton, who actually held the seat, read as a newcomer. The
   # winner row replaces the seat's elected flags; nothing else in PREVT moves.
+  .lost <- NULL
   if (identical(Sys.getenv("AUSPOL_BYELECTION_MP", "1"), "1")) {
     bw <- tryCatch(byelection_winner_rows(election_from, election_to),
                    error = function(e) { cat(sprintf("CDR1! by-election member override FAILED for %s -> %s, previous election's members kept: %s\n",
                                                      election_from, election_to, conditionMessage(e))); NULL })
     if (!is.null(bw) && nrow(bw)) {
       if ("elected" %in% names(PREVT)) {
+        # THE MAJOR THAT LOST THE SEAT AT THE BY-ELECTION STILL LOST ITS MEMBER
+        # (AUSPOL_BYELEC_DEPARTED, SHIPPED "1"; Pete 2026-10-05). Clearing the
+        # seat's elected flags below hid that, so `mp_departed` never fired for
+        # the Coalition in Orange 2019 (over-called 45.8 vs 25.8). Recorded here,
+        # before the flags are cleared, and re-added to `held` further down.
+        if (identical(Sys.getenv("AUSPOL_BYELEC_DEPARTED", "1"), "1")) {
+          L <- PREVT[PREVT$elected %in% TRUE & normalise_seat(PREVT$seat) %in% normalise_seat(bw$seat) &
+                       PREVT$party %in% c("ALP", "LNP", "NAT")]
+          L <- L[!paste(normalise_seat(L$seat), L$party) %in% paste(normalise_seat(bw$seat), bw$party)]
+          if (nrow(L)) .lost <- unique(L[, list(seat, party)])
+        }
         PREVT <- data.table::copy(PREVT)
         PREVT[normalise_seat(PREVT$seat) %in% normalise_seat(bw$seat), elected := FALSE]   # normalised key, same as the joins below
         add <- data.table::copy(bw)[, election := election_from]
@@ -92,10 +104,11 @@ candidate_returns <- function(election_from, election_to, corpus = NULL) {
                       if ("name" %in% names(d)) d$name else NA_character_)
     giv <- given_of(if ("given" %in% names(d)) d$given else NA_character_,
                     if ("name" %in% names(d)) d$name else NA_character_)
-    match_key(sur, giv, "initial")
+    match_key(sur, giv, "person")
   }
   NOWT  <- data.table::copy(NOWT)[,  .k := kf(.SD), .SDcols = names(NOWT)]
   PREVT <- data.table::copy(PREVT)[, .k := kf(.SD), .SDcols = names(PREVT)]
+  align_person_keys(NOWT, PREVT); align_person_keys(PREVT, NOWT)
 
   # JOIN ON A NORMALISED SEAT KEY. The corpus is not internally consistent:
   # vic2014 and vic2018 store seats as "albertpark" while vic2022 stores
@@ -192,6 +205,13 @@ candidate_returns <- function(election_from, election_to, corpus = NULL) {
   if ("elected" %in% names(PREVT)) {
     held <- unique(rbind(PREVT[PREVT$elected %in% TRUE, list(.s = .s,         party)],
                          PREVT[PREVT$elected %in% TRUE, list(.s = .s_renamed, party)]))
+    if (!is.null(.lost)) {
+      .rn <- seat_rename_map(); .ls <- normalise_seat(.lost$seat)
+      held <- unique(rbind(held, data.table::data.table(.s = .ls, party = .lost$party),
+                           data.table::data.table(.s = ifelse(.ls %in% names(.rn), unname(.rn[.ls]), .ls), party = .lost$party)))
+      cat(sprintf("BYD1 %s -> %s: major(s) that lost the seat at a by-election keep their departed flag: %s\n",
+                  election_from, election_to, paste(sprintf("%s=%s", .lost$seat, .lost$party), collapse = ", ")))
+    }
     held[, had_mp := TRUE]
     smap <- unique(NOWT[, list(seat, .s)])
     held <- merge(held, smap, by = ".s", allow.cartesian = TRUE)[, list(seat, party, had_mp)]
@@ -250,6 +270,77 @@ candidate_returns <- function(election_from, election_to, corpus = NULL) {
   res[]
 }
 
+#' Pick ONE leading candidate per (seat, party class) from what was knowable
+#' BEFORE the election being predicted
+#'
+#' Before 2026-10-05 the leader was the row with the highest `pcv` at the
+#' TARGET election, i.e. the ACTUAL result: in a backtest the outcome chose
+#' whose personal history counted, and live (target `pcv` NA) the choice was
+#' arbitrary. Pete's rule (2026-10-05): the leader of a class in a seat is the
+#' candidate with the highest PRIOR personal vote in that seat at the previous
+#' election, under any party label. Ties, and classes where nobody has a
+#' record, go to the sitting member (prior `elected` flag, with the
+#' by-election winner override applied), then to name order, so the choice is
+#' deterministic and never reads the target election's `pcv`.
+#'
+#' The discounts for a switched label (major/minor defector rates) are NOT
+#' applied here; callers apply them afterwards to whoever leads.
+#'
+#' @param NOWT Target-election rows carrying `.k` (match key), `.s`
+#'   (normalised seat), `seat`, `party`, `name`. Its `pcv` is never read.
+#' @param PREVT Previous-election rows carrying `.k`, `.s`, `pcv`, optionally
+#'   `elected` (already by-election adjusted by the caller).
+#' @return The rows of `NOWT` with a non-empty `.k`, one per (seat, party),
+#'   with added columns `.prior_pcv` (NA = no record) and `.sitting`.
+#' @keywords internal
+#' @noRd
+.class_leader_rows <- function(NOWT, PREVT) {
+  rn <- seat_rename_map()
+  P <- data.table::copy(PREVT[nzchar(PREVT$.k) & is.finite(PREVT$pcv)])
+  P[, .s_renamed := .s]
+  P[.s %in% names(rn), .s_renamed := rn[.s]]
+  pk <- unique(rbind(P[, list(.s = .s,         .k, pcv)],
+                     P[, list(.s = .s_renamed, .k, pcv)]))
+  pk <- pk[, list(.prior_pcv = if (.N) max(pcv) else NA_real_), by = list(.s, .k)]   # .N guard: data.table runs j once on an empty table
+  sit <- if ("elected" %in% names(PREVT)) {
+    S <- data.table::copy(PREVT[nzchar(PREVT$.k) & PREVT$elected %in% TRUE])
+    S[, .s_renamed := .s]
+    S[.s %in% names(rn), .s_renamed := rn[.s]]
+    unique(rbind(S[, list(.s = .s, .k)], S[, list(.s = .s_renamed, .k)]))[, .sitting := TRUE]
+  } else data.table::data.table(.s = character(0), .k = character(0), .sitting = logical(0))
+  L <- data.table::copy(NOWT[nzchar(NOWT$.k)])
+  L[, .row := .I]
+  L <- merge(L, pk,  by = c(".s", ".k"), all.x = TRUE)
+  L <- merge(L, sit, by = c(".s", ".k"), all.x = TRUE)
+  L[is.na(.sitting), .sitting := FALSE]
+  L[, .po := ifelse(is.na(.prior_pcv), -Inf, .prior_pcv)]
+  L[, .sit_i := -as.integer(.sitting)]
+  L[, .po := -.po]
+  L[, .nm := if ("name" %in% names(L)) ifelse(is.na(name), "", as.character(name)) else ""]
+  data.table::setorderv(L, c("seat", "party", ".po", ".sit_i", ".k", ".nm", ".row"))
+  L <- L[, .SD[1L], by = list(seat, party)]
+  L[, c(".po", ".sit_i", ".nm", ".row") := NULL]
+  L[]
+}
+
+# The by-election-adjusted previous-election table, silently. `candidate_returns()`
+# applies the same override inline (and logs it); `leading_candidate_returns()`
+# and `personal_prior_vote()` need the same sitting-member flags to break leader
+# ties and read PREVT otherwise unchanged.
+.prev_with_byelection_mp <- function(PREVT, election_from, election_to) {
+  if (!identical(Sys.getenv("AUSPOL_BYELECTION_MP", "1"), "1") ||
+      !"elected" %in% names(PREVT)) return(PREVT)
+  bw <- tryCatch(byelection_winner_rows(election_from, election_to), error = function(e) NULL)
+  if (is.null(bw) || !nrow(bw)) return(PREVT)
+  sur <- surname_of(bw$surname, bw$name)
+  giv <- given_of(bw$given, bw$name)
+  P <- data.table::copy(PREVT)
+  P[normalise_seat(P$seat) %in% normalise_seat(bw$seat), elected := FALSE]
+  add <- data.table::copy(bw)[, election := election_from]
+  add[, `:=`(.k = match_key(sur, giv, "person"), .s = normalise_seat(seat))]
+  data.table::rbindlist(list(P, add), fill = TRUE)
+}
+
 #' Does the LEADING candidate of a class personally return, not just anyone in it?
 #'
 #' `candidate_returns()` answers "does ANY candidate of this class in this seat
@@ -299,16 +390,21 @@ leading_candidate_returns <- function(election_from, election_to, corpus = NULL)
                       if ("name" %in% names(d)) d$name else NA_character_)
     giv <- given_of(if ("given" %in% names(d)) d$given else NA_character_,
                     if ("name" %in% names(d)) d$name else NA_character_)
-    match_key(sur, giv, "initial")
+    match_key(sur, giv, "person")
   }
   NOWT  <- data.table::copy(NOWT)[,  .k := kf(.SD), .SDcols = names(NOWT)]
   PREVT <- data.table::copy(PREVT)[, .k := kf(.SD), .SDcols = names(PREVT)]
   NOWT[,  .s := normalise_seat(seat)]
   PREVT[, .s := normalise_seat(seat)]
 
-  # The LEADING row per (seat, party): highest current pcv.
-  data.table::setorder(NOWT, seat, party, -pcv)
-  lead <- NOWT[nzchar(.k), .SD[1], by = .(seat, party)]
+  # The LEADING row per (seat, party): highest PRIOR personal vote in this seat,
+  # then the sitting member, then name order. NEVER the target election's pcv --
+  # that is the actual result (see .class_leader_rows()).
+  PREVT <- .prev_with_byelection_mp(PREVT, election_from, election_to)
+  # Align AFTER the by-election winner rows are appended, so a bare-initial
+  # current row can meet them too.
+  align_person_keys(NOWT, PREVT); align_person_keys(PREVT, NOWT)
+  lead <- .class_leader_rows(NOWT, PREVT)
 
   # Match both spellings of a renamed seat -- see the matching comment in
   # candidate_returns() above; same fault, same fix, kept in sync because
@@ -496,10 +592,11 @@ personal_prior_vote <- function(election_from, election_to, corpus = NULL,
                       if ("name" %in% names(d)) d$name else NA_character_)
     giv <- given_of(if ("given" %in% names(d)) d$given else NA_character_,
                     if ("name" %in% names(d)) d$name else NA_character_)
-    match_key(sur, giv, "initial")
+    match_key(sur, giv, "person")
   }
   NOWT  <- data.table::copy(NOWT)[,  .k := kf(.SD), .SDcols = names(NOWT)]
   PREVT <- data.table::copy(PREVT)[, .k := kf(.SD), .SDcols = names(PREVT)]
+  align_person_keys(NOWT, PREVT); align_person_keys(PREVT, NOWT)
   NOWT[,  .s := normalise_seat(seat)]
   PREVT[, .s := normalise_seat(seat)]
 
@@ -532,8 +629,12 @@ personal_prior_vote <- function(election_from, election_to, corpus = NULL,
   # queued, not built. scripts/candidate_scenario.R still demonstrates the
   # underlying gap (Holmes-Ross's history is genuinely invisible under
   # leader-only matching); the fix for it just isn't this.
-  data.table::setorder(NOWT, seat, party, -pcv)
-  lead <- NOWT[nzchar(.k), .SD[1], by = .(seat, party)]
+  # CHOSEN BY PRIOR PERSONAL VOTE, not the target election's pcv (the actual
+  # result): see .class_leader_rows(). Only `lead`'s identity columns are used
+  # below; the prior-record columns it also carries are ignored.
+  PREVB <- .prev_with_byelection_mp(PREVT, election_from, election_to)
+  align_person_keys(NOWT, PREVB); align_person_keys(PREVB, NOWT)   # AFTER the by-election rows are added
+  lead <- .class_leader_rows(NOWT, PREVB)
 
   # EXCLUDE A PRIOR MAJOR-PARTY REGISTRATION by default. Nick McBride won
   # MacKillop as LNP with 62.3% in 2022, then re-contested as IND in 2026 and
@@ -604,6 +705,32 @@ personal_prior_vote <- function(election_from, election_to, corpus = NULL,
   PT[, .was_mp := .prev_was_mp]
   PTx <- rbind(PT[, .(.s, .k, pcv, party, .was_mp)],
                PT[.s != .s_renamed, .(.s = .s_renamed, .k, pcv, party, .was_mp)])
+  # A NON-MAJOR BY-ELECTION WINNER IS A SITTING MEMBER WITH A VOTE
+  # (AUSPOL_BYELEC_LEVEL, SHIPPED "1"; docs/plans/prereg-byelection-level-2026-10-05.md).
+  # PT is the raw previous general election, so a by-election winner had no row
+  # here and own_prev_pcv stayed NA (Donato, McGirr, Oakeshott). Credit them the
+  # level sitting non-major members typically hold, fitted time-forward
+  # (fit_sitting_minor_level()), NOT their by-election share.
+  if (identical(Sys.getenv("AUSPOL_BYELEC_LEVEL", "1"), "1") &&
+      identical(Sys.getenv("AUSPOL_BYELECTION_MP", "1"), "1")) {
+    bw <- tryCatch(byelection_winner_rows(election_from, election_to), error = function(e) NULL)
+    if (!is.null(bw) && nrow(bw)) {
+      bw <- data.table::as.data.table(bw)[!party %in% MAJ]
+      if (nrow(bw)) {
+        lv <- fit_sitting_minor_level(election_to, corpus = C)
+        if (is.finite(lv$level)) {
+          B <- data.table::copy(bw)[, `:=`(.k = kf(.SD), .s = normalise_seat(seat))]
+          B[, .s2 := ifelse(.s %in% names(rn), unname(rn[.s]), .s)]
+          B <- B[nzchar(.k)]
+          align_person_keys(B, NOWT)   # kf() is the "person" key; a bare-initial winner borrows its namesake's stem
+          PTx <- rbind(PTx, B[, .(.s, .k, pcv = lv$level, party, .was_mp = TRUE)],
+                       B[.s != .s2, .(.s = .s2, .k, pcv = lv$level, party, .was_mp = TRUE)])
+          cat(sprintf("BYL1 %s -> %s: %d non-major by-election winner(s) credited the sitting non-major level %.1f (n=%d earlier cases): %s\n",
+                      election_from, election_to, nrow(B), lv$level, lv$n, paste(sprintf("%s=%s", B$seat, B$party), collapse = ", ")))
+        } else cat(sprintf("BYL1! %s: no earlier sitting non-major cases; by-election winners keep no own vote\n", election_to))
+      }
+    }
+  }
   # if (.N) guards max(): when the ONLY prior row for a (.s, .k) group is a
   # major party, filtering it out can leave that group with zero rows, and
   # max() over nothing warns "no non-missing arguments" and returns -Inf.
@@ -775,6 +902,14 @@ personal_prior_vote <- function(election_from, election_to, corpus = NULL,
       out[, c("def_pcv", "def_party", "def_was_mp", "cls_pcv") := NULL]
     }
   }
+  # CROSS-SEAT / CROSS-JURISDICTION PERSONAL VOTE (AUSPOL_CROSS_SEAT_VOTE, default
+  # "1", shipped 2026-10-06 after its prereg; R/cross_seat_vote.R). A class leader still without an own
+  # vote after every same-seat mechanism above is credited carry x their best
+  # earlier NON-MAJOR result anywhere (other seat, state vs federal, skipped
+  # cycle, by-election), time-forward and person-matched.
+  if (identical(Sys.getenv("AUSPOL_CROSS_SEAT_VOTE", "1"), "1")) {
+    out <- .apply_cross_seat_credit(out, NOWT, PREVT, C, election_from, election_to)
+  }
   # THE VOTE MOVES WITH THE PERSON. `transfer` is how much of the prior class's
   # seat base this candidate's own vote was, and `prev_party` which class held
   # it. A caller that substitutes `own_prev_pcv` into the new class MUST also
@@ -803,7 +938,46 @@ personal_prior_vote <- function(election_from, election_to, corpus = NULL,
   }
   out[is.na(prev_party) | prev_party == party, `:=`(transfer = NA_real_, prev_party = NA_character_)]
   out[, .own_prev_pcv_full := NULL]
-  out[, list(seat, party, own_prev_pcv, prev_party, transfer)]
+  keep <- c("seat", "party", "own_prev_pcv", "prev_party", "transfer",
+            if ("own_prev_source" %in% names(out)) "own_prev_source")
+  out[, ..keep]
+}
+
+#' Substitute a returning candidate's own previous vote into a class base
+#'
+#' The one shared implementation of every harness's `.own_x()` (six backtest
+#' harnesses and `fit_seats_full.R`). For class `p`, a seat whose `own_prev` row has
+#' a finite `own_prev_pcv` takes that value IN PLACE of the class base `x`, except
+#' that a row marked `own_prev_source == "cross_seat"` (the
+#' `AUSPOL_CROSS_SEAT_VOTE` credit for a person who earned a vote in another
+#' seat or jurisdiction) may only RAISE the base: the result is
+#' `max(x, own_prev_pcv)`. A person arriving from elsewhere adds to what the class
+#' already had in this seat; replacing a stronger own-history base with the smaller
+#' credit lowered Stuart (sa2022 IND 25.0 to 18.2, actual 48.5) and Baldivis (wa2017).
+#' Without an `own_prev_source` column (switch off) this is exactly the old
+#' wholesale replacement.
+#'
+#' @param own_prev [personal_prior_vote()]'s output, or `NULL`.
+#' @param p Party class.
+#' @param seats Seat names, aligned with `x`.
+#' @param x Numeric class base for `seats`, in the same units as `own_prev_pcv`.
+#' @return `x` with the substitutions applied.
+#' @export
+own_prev_substitute <- function(own_prev, p, seats, x) {
+  if (is.null(own_prev)) return(x)
+  ov <- own_prev[own_prev$party == p, ]
+  if (!nrow(ov)) return(x)
+  v <- stats::setNames(ov$own_prev_pcv, ov$seat)[seats]
+  out <- x
+  hit <- !is.na(v)
+  new <- unname(v[hit])
+  if ("own_prev_source" %in% names(ov)) {
+    cs <- stats::setNames(ov$own_prev_source, ov$seat)[seats][hit] %in% "cross_seat"
+    old <- x[hit]
+    new[cs] <- ifelse(is.na(old[cs]), new[cs], pmax(old[cs], new[cs]))
+  }
+  out[hit] <- new
+  out
 }
 
 #' Take a transferred personal vote OUT of the class it came from
@@ -934,7 +1108,7 @@ fit_defector_discount <- function(target_election, corpus = NULL, min_n = 5L, pa
                                           if ("name" %in% names(d)) d$name else NA_character_),
                                given_of(if ("given" %in% names(d)) d$given else NA_character_,
                                         if ("name" %in% names(d)) d$name else NA_character_),
-                               "initial")
+                               "person")
   rn <- seat_rename_map()
 
   if (is.null(pairs)) pairs <- all_election_pairs()
@@ -946,6 +1120,7 @@ fit_defector_discount <- function(target_election, corpus = NULL, min_n = 5L, pa
     if (!nrow(PREVT) || !nrow(NOWT)) return(NULL)
     PREVT <- data.table::copy(PREVT)[, `:=`(.k = kk(.SD), .s = normalise_seat(seat))]
     NOWT  <- data.table::copy(NOWT)[,  `:=`(.k = kk(.SD), .s = normalise_seat(seat))]
+    align_person_keys(NOWT, PREVT); align_person_keys(PREVT, NOWT)
     if (!"elected" %in% names(PREVT)) return(NULL)
     PREVT[, .s_renamed := .s]
     PREVT[.s %in% names(rn), .s_renamed := rn[.s]]
@@ -961,7 +1136,8 @@ fit_defector_discount <- function(target_election, corpus = NULL, min_n = 5L, pa
       , .SD[which.max(target_pcv)], by = .(.s, .k)]
     m <- merge(a, b, by = c(".s", ".k"))
     if (!nrow(m)) return(NULL)
-    m[, .(pair = pr$election, ratio = target_pcv / prior_pcv, was_mp)]
+    m[, .(pair = pr$election, ratio = target_pcv / prior_pcv, was_mp,
+          level = if (startsWith(pr$election, "fed")) "fed" else "state")]
   }), fill = TRUE)
 
   if (is.null(ratios) || nrow(ratios) < min_n) {
@@ -982,10 +1158,95 @@ fit_defector_discount <- function(target_election, corpus = NULL, min_n = 5L, pa
   # and breached South Australia's floor -- the outcome check the shrinkage
   # rule prescribes when a pooled value looks wrong.
   med <- function(x) if (length(x)) stats::median(x, na.rm = TRUE) else NA_real_
+  mp <- med(ratios$ratio[ratios$was_mp %in% TRUE])
+  by_level <- NULL
+  # SITTING-MEMBER CARRY BY LEVEL (AUSPOL_DEFECT_BY_LEVEL, SHIPPED "2" = federal only; "1" both levels, refused),
+  # docs/plans/prereg-defector-by-level-2026-10-05.md. A federal member who
+  # leaves a major party keeps far less than a state one (2026-10-05, 18 cases:
+  # federal mean 0.23, state 0.56; docs/reviews/defector-carry-2026-10-05.md).
+  # Each level's median is partially pooled toward the all-level median,
+  # w = tau^2 / (tau^2 + se^2), tau^2 the between-level variance net of noise:
+  # with no separable gap (tau^2 <= 0) both levels get the pooled rate, so a
+  # thin level degrades to the old behaviour rather than falling off a cliff.
+  # Mode "2" (Amendment 1, Pete 2026-10-05): federal targets only; a state target
+  # keeps the pooled rate, because the state rate was fitted from as few as 3
+  # cases and the small-n se let it through almost unshrunk (Hillarys wa2017
+  # 21.7 -> 43.9, actual 20.1).
+  .dbl <- Sys.getenv("AUSPOL_DEFECT_BY_LEVEL", "2")   # SHIPPED 2026-10-05 (Amendment 1); "0" = one all-level median
+  if (.dbl %in% c("1", "2")) {
+    R <- ratios[was_mp %in% TRUE & is.finite(ratio)]
+    lv <- R[, list(est = stats::median(ratio), n = .N,
+                   se = if (.N >= 2L) 1.2533 * stats::sd(ratio) / sqrt(.N) else Inf), by = level]
+    tau2 <- if (nrow(lv) >= 2L) max(0, stats::var(lv$est) - mean(pmin(lv$se, 1e6)^2)) else 0
+    lv[, w := ifelse(is.finite(se) & (tau2 + se^2) > 0, tau2 / (tau2 + se^2), 0)]   # 0/0 (no spread, no gap) -> pooled
+    lv[, shrunk := mp + w * (est - mp)]
+    by_level <- lv
+    tl <- if (startsWith(target_election, "fed")) "fed" else "state"
+    hit <- if (.dbl == "2" && tl == "state") mp else lv$shrunk[lv$level == tl]
+    cat(sprintf("DEF-L %s: sitting-member carry by level (pooled median %.3f, tau2 %.4f): %s -> using %s %.3f\n",
+                target_election, mp, tau2,
+                paste(sprintf("%s est %.3f n=%d se %.3f w %.2f shrunk %.3f", lv$level, lv$est, lv$n, lv$se, lv$w, lv$shrunk),
+                      collapse = "; "),
+                if (.dbl == "2" && tl == "state") "state (mode 2: pooled)" else tl, if (length(hit)) hit else mp))
+    if (length(hit) == 1L && is.finite(hit)) mp <- hit
+  }
   list(discount       = med(ratios$ratio),
-       discount_mp    = med(ratios$ratio[ratios$was_mp %in% TRUE]),
+       discount_mp    = mp,
        discount_loser = med(ratios$ratio[ratios$was_mp %in% FALSE]),
-       n = nrow(ratios), cases = ratios)
+       n = nrow(ratios), cases = ratios, by_level = by_level)
+}
+
+#' The vote share a sitting non-major member typically holds at their next election
+#'
+#' A NON-MAJOR by-election winner (Oakeshott, Lyne 2008; Donato, Orange 2016;
+#' McGirr, Wagga Wagga 2018) is the sitting member at the next general election
+#' but has no general-election vote of their own, so [personal_prior_vote()]
+#' gave them nothing and the model predicted 7.7, 20.9 and 25.5 against 47.8,
+#' 56.2 and 46.1. Their by-election share is a poor stand-in (crowded fields,
+#' absent majors: 23.8 -> 49.2 in Orange, 63.8 -> 47.2 in Lyne). Pete chose
+#' (2026-10-05) to credit the level sitting non-major members typically hold:
+#' the median next-election share of every member elected in a non-major class
+#' (IND, OTH, OTH_RIGHT, ONP) who stood again in the same seat, time-forward.
+#' Measured on the five winners: RMSE 24.1 (nothing) -> 6.9 (this level), against
+#' 16.5 for the by-election share; a federal/state split was not separable
+#' (docs/reviews/byelection-level-2026-10-05.md).
+#'
+#' @param target_election Election being predicted; only pairs strictly before
+#'   it are used ([fit_pairs_for()]).
+#' @param corpus Optional candidacy table; `output/candidacies.csv` when `NULL`.
+#' @param pairs Optional pair list, as from [all_election_pairs()].
+#' @return A list: `level` (median next-election share, or `NA` with no cases),
+#'   `n`, `cases`.
+#' @export
+fit_sitting_minor_level <- function(target_election, corpus = NULL, pairs = NULL) {
+  C <- corpus
+  if (is.null(C)) C <- data.table::fread(file.path("output", "candidacies.csv"), showProgress = FALSE)
+  C <- data.table::as.data.table(C)
+  NONMAJ <- c("IND", "OTH", "OTH_RIGHT", "ONP")
+  kk <- function(d) match_key(surname_of(if ("surname" %in% names(d)) d$surname else NA_character_, d$name),
+                               given_of(if ("given" %in% names(d)) d$given else NA_character_, d$name), "person")
+  rn <- seat_rename_map()
+  if (is.null(pairs)) pairs <- all_election_pairs()
+  pairs <- fit_pairs_for(target_election, pairs)
+  cases <- data.table::rbindlist(lapply(pairs, function(pr) {
+    P <- C[C$election == pr$prev]; N <- C[C$election == pr$election]
+    if (!nrow(P) || !nrow(N) || !"elected" %in% names(P)) return(NULL)
+    P <- data.table::copy(P)
+    P[, `:=`(.k = kk(.SD), .s = normalise_seat(seat))]
+    N <- data.table::copy(N)[, `:=`(.k = kk(.SD), .s = normalise_seat(seat))]
+    align_person_keys(N, P); align_person_keys(P, N)   # per pair, over the full election tables
+    P <- P[P$elected %in% TRUE & P$party %in% NONMAJ]
+    if (!nrow(P)) return(NULL)
+    P[, .s2 := ifelse(.s %in% names(rn), unname(rn[.s]), .s)]
+    a <- unique(rbind(P[nzchar(.k), list(.s, .k, prior_pcv = pcv)], P[nzchar(.k), list(.s = .s2, .k, prior_pcv = pcv)]))
+    b <- N[nzchar(.k), list(next_pcv = max(pcv)), by = list(.s, .k)]
+    m <- merge(a, b, by = c(".s", ".k"))
+    if (!nrow(m)) return(NULL)
+    m[, pair := pr$election][]
+  }), fill = TRUE)
+  if (is.null(cases) || !nrow(cases)) return(list(level = NA_real_, n = 0L, cases = cases))
+  cases <- unique(cases, by = c("pair", ".k", ".s"))
+  list(level = stats::median(cases$next_pcv), n = nrow(cases), cases = cases)
 }
 
 #' Fit the minor-to-minor defector discount, leave-target-out
@@ -1059,7 +1320,7 @@ fit_minor_defector_discount <- function(target_election, corpus = NULL, min_n = 
                                           if ("name" %in% names(d)) d$name else NA_character_),
                                given_of(if ("given" %in% names(d)) d$given else NA_character_,
                                         if ("name" %in% names(d)) d$name else NA_character_),
-                               "initial")
+                               "person")
   if (is.null(pairs)) pairs <- all_election_pairs()
   pairs <- fit_pairs_for(target_election, pairs)   # time-forward (plans/prereg-time-forward-constants-2026-09-28.md)
 
@@ -1069,6 +1330,7 @@ fit_minor_defector_discount <- function(target_election, corpus = NULL, min_n = 
     if (!nrow(PREVT) || !nrow(NOWT)) return(NULL)
     PREVT <- data.table::copy(PREVT)[, `:=`(.k = kk(.SD), .s = normalise_seat(seat))]
     NOWT  <- data.table::copy(NOWT)[,  `:=`(.k = kk(.SD), .s = normalise_seat(seat))]
+    align_person_keys(NOWT, PREVT); align_person_keys(PREVT, NOWT)
     if (!"elected" %in% names(PREVT)) return(NULL)
     a <- PREVT[nzchar(.k) & !party %in% MAJ & pcv >= min_prior,
                .(.s, .k, prior_pcv = pcv, prior_party = party, was_mp = elected %in% TRUE)][
@@ -1174,12 +1436,22 @@ departed_defectors <- function(election_from, election_to, corpus = NULL, min_pc
   kf <- function(d) match_key(surname_of(if ("surname" %in% names(d)) d$surname else NA_character_,
                                          if ("name" %in% names(d)) d$name else NA_character_),
                               given_of(if ("given" %in% names(d)) d$given else NA_character_,
-                                       if ("name" %in% names(d)) d$name else NA_character_), "initial")
+                                       if ("name" %in% names(d)) d$name else NA_character_), "person")
   C <- data.table::copy(C)[, .k := kf(.SD), .SDcols = names(C)]
   dates <- election_dates()
   C[, .d := dates[election]]
-  PREVT <- C[C$election == election_from & !C$party %in% MAJ & nzchar(C$.k)]
-  NOWT  <- C[C$election == election_to]
+  # ALIGN PER ELECTION PAIR (plus the earlier major-party history), never over the
+  # whole corpus: a corpus-wide pass lets a LATER election change an earlier key.
+  P0 <- data.table::copy(C[C$election == election_from])
+  N0 <- data.table::copy(C[C$election == election_to])
+  d_from <- dates[[election_from]]
+  H0 <- data.table::copy(C[C$party %in% MAJ & C$.d < d_from & nzchar(C$.k)])
+  if (nrow(P0) && nrow(N0)) {
+    align_person_keys(N0, P0); align_person_keys(P0, N0)
+    align_person_keys(H0, P0); align_person_keys(P0, H0)   # a stemless given borrows its same-seat namesake's stem
+  }
+  PREVT <- P0[!P0$party %in% MAJ & nzchar(P0$.k)]
+  NOWT  <- N0
   empty <- data.table::data.table(seat = character(0), party = character(0), origin = character(0),
                                   name = character(0), lead_pcv = numeric(0))
   if (!nrow(PREVT) || !nrow(NOWT)) return(empty)
@@ -1187,8 +1459,7 @@ departed_defectors <- function(election_from, election_to, corpus = NULL, min_pc
   lead <- lead[lead$lead_pcv >= min_pcv & lead$seat %in% NOWT$seat &
                  !paste(lead$seat, lead$.k) %in% paste(NOWT$seat, NOWT$.k)]
   if (!nrow(lead)) return(empty)
-  d_from <- dates[[election_from]]
-  H <- C[C$party %in% MAJ & C$.d < d_from & nzchar(C$.k), .(seat, .k, party, .d)]
+  H <- H0[, .(seat, .k, party, .d)]
   H <- H[order(-.d)][, .SD[1L], by = .(seat, .k)][, .(seat, .k, origin = party)]
   out <- merge(lead, H, by = c("seat", ".k"))
   out[, .(seat, party, origin, name, lead_pcv)]
@@ -1289,15 +1560,19 @@ fit_minor_defector_conserve <- function(target_election, corpus = NULL, pairs = 
   kf <- function(d) match_key(surname_of(if ("surname" %in% names(d)) d$surname else NA_character_,
                                          if ("name" %in% names(d)) d$name else NA_character_),
                               given_of(if ("given" %in% names(d)) d$given else NA_character_,
-                                       if ("name" %in% names(d)) d$name else NA_character_), "initial")
+                                       if ("name" %in% names(d)) d$name else NA_character_), "person")
   C <- data.table::copy(C)[, .k := kf(.SD), .SDcols = names(C)]
   if (is.null(pairs)) pairs <- all_election_pairs()
   ST <- C[, list(v = sum(votes, na.rm = TRUE)), by = list(election, party)][, share := 100 * v / sum(v), by = election]
   cs <- function(el, s, p) { v <- C[C$election == el & C$seat == s & C$party == p, sum(pcv, na.rm = TRUE)]; if (length(v)) v else 0 }
   rows <- data.table::rbindlist(lapply(pairs, function(pr) {
     if (identical(pr$election, target_election)) return(NULL)
-    a <- C[C$election == pr$prev & C$party %in% MINOR & C$pcv >= min_pcv & nzchar(C$.k), list(seat, .k, prev_party = party, prev_pcv = pcv)]
-    b <- C[C$election == pr$election & !C$party %in% MAJ & nzchar(C$.k), list(seat, .k, party)]
+    # Align within THIS pair only (time-forward: no other election's rows can move a key).
+    P0 <- data.table::copy(C[C$election == pr$prev]); N0 <- data.table::copy(C[C$election == pr$election])
+    if (!nrow(P0) || !nrow(N0)) return(NULL)
+    align_person_keys(N0, P0); align_person_keys(P0, N0)
+    a <- P0[P0$party %in% MINOR & P0$pcv >= min_pcv & nzchar(P0$.k), list(seat, .k, prev_party = party, prev_pcv = pcv)]
+    b <- N0[!N0$party %in% MAJ & nzchar(N0$.k), list(seat, .k, party)]
     m <- merge(a, b, by = c("seat", ".k"))[prev_party != party]
     if (!nrow(m)) return(NULL)
     m[, origin_now := mapply(cs, pr$election, seat, prev_party)]

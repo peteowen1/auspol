@@ -349,3 +349,134 @@ zero_unnominated_live <- function(shares, flows, label = "vic2026", ...) {
   }
   out
 }
+
+#' Where a harness leaves the flow matrix its nomination zeroing used
+#' @param label Election label, e.g. `"vic2022"`.
+#' @param dir Output directory.
+#' @return File path.
+#' @export
+nom_zero_flows_path <- function(label, dir = "output") file.path(dir, sprintf("nomzero-flows-%s.rds", label))
+
+#' Save the flow matrix a harness hands to [zero_unnominated_at()]
+#'
+#' Each harness builds its own time-forward `fm` (its own prior election, source
+#' file and pooling), and there is no shared constructor. Rather than re-derive
+#' six recipes in the forecasts table, the harness writes the very object it
+#' zeroes with, beside the zeroing call, and [zero_unnominated_asat()] reads it.
+#' An `fm` of NULL (WA with no transfers) is saved as NULL: the harness then
+#' split proportionally itself, and the table says so.
+#' @param fm The harness's [build_flow_matrix()] result, or NULL.
+#' @param label Election label.
+#' @param dir Output directory.
+#' @return `invisible(path)`.
+#' @export
+nom_zero_save_flows <- function(fm, label, dir = "output") {
+  p <- nom_zero_flows_path(label, dir)
+  saveRDS(list(label = label, flows = fm, saved_at = format(Sys.time(), "%Y-%m-%d %H:%M:%S"),
+               xgb_primary = Sys.getenv("AUSPOL_XGB_PRIMARY")), p)   # provenance only: what the saving run had set
+  invisible(p)
+}
+
+#' Read the saved flow matrices for a set of elections, or stop
+#'
+#' @param labels Election labels in the table.
+#' @param dir Output directory.
+#' @param newer_than Path of a file every flows file must be newer than (the
+#'   as-at predictions), or `NULL` to skip the freshness check.
+#' @param xgb_primary The `AUSPOL_XGB_PRIMARY` value the saving run must have
+#'   had (`"1"`, stage 6), or `NULL` to skip.
+#' @return Named list of flow matrices (an element may be NULL, see
+#'   [nom_zero_save_flows()]).
+#' @export
+nom_zero_load_flows <- function(labels, dir = "output", newer_than = NULL, xgb_primary = "1") {
+  out <- list()
+  # A flows file is only trusted if a STAGE-6 run wrote it: newer than the as-at
+  # predictions it zeroes (`newer_than`, stage 4), and saved by a harness run at
+  # AUSPOL_XGB_PRIMARY = `xgb_primary`. Stage 1 (xgb 0) and any hand run write
+  # the same path, so existence alone would accept a stale or off-config matrix.
+  ref_t <- if (!is.null(newer_than)) file.mtime(newer_than) else NA
+  if (!is.null(newer_than) && is.na(ref_t))
+    stop(sprintf("NZA!! reference file for flows freshness not found: %s", newer_than), call. = FALSE)
+  for (l in labels) {
+    p <- nom_zero_flows_path(l, dir)
+    if (!file.exists(p))
+      stop(sprintf("NZA!! no saved flow matrix for %s (%s): run its harness (stage 6) first. Refusing to fall back to proportional redistribution, which v61 refused.", l, p), call. = FALSE)
+    if (!is.na(ref_t) && file.mtime(p) <= ref_t)
+      stop(sprintf("NZA!! flow matrix for %s (%s, %s) is OLDER than %s (%s): stale, rerun stage 6.", l, p,
+                   format(file.mtime(p)), basename(newer_than), format(ref_t)), call. = FALSE)
+    o <- readRDS(p)
+    if (!is.null(xgb_primary) && !identical(o$xgb_primary, xgb_primary))
+      stop(sprintf("NZA!! flow matrix for %s was saved by a run at AUSPOL_XGB_PRIMARY='%s', expected '%s' (stage 6): a stage-1 or hand run overwrote it.",
+                   l, o$xgb_primary %||% "<missing>", xgb_primary), call. = FALSE)
+    cat(sprintf("NZA  %s: flows from %s (saved %s)%s\n", l, basename(p), o$saved_at,
+                if (is.null(o$flows)) " -- harness had NO flow matrix, it split proportionally too" else ""))
+    out[l] <- list(o$flows)
+  }
+  out
+}
+
+#' Nomination zeroing for the as-at forecasts table
+#'
+#' `output/forecasts.csv` is built from the as-at XGBoost predictions
+#' (`scripts/fit_xgb_primary_asat.R`), which never passed through
+#' [zero_unnominated()]: the six harnesses and `fit_seats_full.R` zero a class
+#' that did not stand, the table did not, so it still scored vic2022 Narracan
+#' Labor at 23.9 when Labor did not contest (actual 0). 95 cells with actual 0
+#' and forecast >= 3 were 1.45% of the table's squared error (2026-10-05,
+#' docs/reviews/worst-overcalls-2026-10-05.md, bug 4).
+#'
+#' Applied at the same point as the harnesses' late step: the xgb prediction is
+#' final (`pmax(0, raw)`) and nothing later in this table adds share to a cell.
+#' It honours `AUSPOL_NOM_ZERO` (`0` leaves the table byte-identical), and the
+#' freed share is split by each election's `flows`, the matrix its harness used
+#' (see [nom_zero_save_flows()]). Which classes stood is read from the election's own result
+#' rows (`actual_share > 0`), the same table the harnesses pass as `fb`; a seat
+#' with no finite result is left untouched. Each seat's raw total is preserved.
+#'
+#' @param F data.table with `election`, `seat`, `party`, `xgb_pred`,
+#'   `actual_share`.
+#' @param flows Named list of [build_flow_matrix()] results keyed by election
+#'   label, from [nom_zero_load_flows()]. Required at `AUSPOL_NOM_ZERO=2`.
+#' @param allow_proportional Let an election without flows split the freed
+#'   share proportionally (tests only; v61 refused that variant).
+#' @return A copy of `F` with `xgb_pred` zeroed where no candidate stood, and a
+#'   new column `xgb_pred_prezero` holding the value before (absent when
+#'   `AUSPOL_NOM_ZERO` is off, so the off table is unchanged).
+#' @export
+zero_unnominated_asat <- function(F, flows = NULL, allow_proportional = FALSE) {
+  F <- data.table::copy(data.table::as.data.table(F))
+  mode <- Sys.getenv("AUSPOL_NOM_ZERO", "2")
+  if (!mode %in% c("1", "2")) return(F)   # off: no column added either
+  if (mode == "2" && !allow_proportional) {
+    miss <- setdiff(unique(F$election), names(flows))
+    if (length(miss))
+      stop(sprintf("NZA!! AUSPOL_NOM_ZERO=2 needs a flow matrix per election; missing for: %s (v61 refused proportional redistribution)",
+                   paste(miss, collapse = ", ")), call. = FALSE)
+  }
+  F[, "xgb_pred_prezero" := F$xgb_pred]
+  for (el in unique(F$election)) {
+    idx <- which(F$election == el)
+    d <- F[idx]
+    ok <- is.finite(d$xgb_pred)
+    if (!any(ok)) next
+    seats <- unique(d$seat); classes <- unique(d$party)
+    m <- matrix(0, length(seats), length(classes), dimnames = list(seats, classes))
+    m[cbind(match(d$seat[ok], seats), match(d$party[ok], classes))] <- d$xgb_pred[ok]
+    st <- is.finite(d$actual_share) & d$actual_share > 0
+    tg <- data.table::data.table(seat = d$seat[st], party = d$party[st], votes = 1)
+    m2 <- zero_unnominated(m, tg, el, code = "NZA", flows = flows[[el]])
+    # zero_unnominated() renormalises a row to 100 when it splits the freed share
+    # proportionally; these rows are RAW xgb output (they do not sum to 100, the
+    # classes the model never predicts are absent), so put each touched row back
+    # to its own total and leave every untouched row exactly as it was.
+    touched <- rowSums(m > 0 & m2 == 0) > 0
+    rs2 <- rowSums(m2)
+    k <- touched & rs2 > 0
+    m2[k, ] <- m2[k, , drop = FALSE] * (rowSums(m)[k] / rs2[k])
+    m2[!touched, ] <- m[!touched, , drop = FALSE]
+    new <- m2[cbind(match(d$seat, seats), match(d$party, classes))]
+    new[!ok] <- d$xgb_pred[!ok]
+    data.table::set(F, idx, "xgb_pred", new)
+  }
+  F
+}

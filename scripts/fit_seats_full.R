@@ -926,15 +926,9 @@ if (.cond && !is.null(.returns)) {
                 sum(is.finite(.own_prev$own_prev_pcv))))
   }
 }
-.own_x <- function(p, seats, x) {
-  if (is.null(.own_prev)) return(x)
-  ov <- .own_prev[.own_prev$party == p, ]
-  v <- stats::setNames(ov$own_prev_pcv, ov$seat)[seats]
-  out <- x
-  hit <- !is.na(v)
-  out[hit] <- unname(v[hit])
-  out
-}
+# Shared with every harness: own_prev_substitute() (R/candidate_returns.R). A cross-seat
+# credit (AUSPOL_CROSS_SEAT_VOTE) can only RAISE the class base, never lower it.
+.own_x <- function(p, seats, x) own_prev_substitute(.own_prev, p, seats, x)
 # ARM SURGE-V2, ON by default since 2026-09-04 -- see R/salience_surge.R,
 # docs/plans/prereg-salience-surge-v2.md, docs/reviews/surge-v2-widened-and-majors-bug-2026-09-04.md,
 # docs/reviews/surge-v2-person-level-prevparty-2026-09-04.md,
@@ -1045,7 +1039,7 @@ if (!is.null(.fitsl)) {
 .vic_slope <- function(p, seats) {
   if (.screened && !is.null(.permit) && !is.null(.returns)) {
     pv <- .permit[.permit$party == p, ]
-    lut <- stats::setNames(as.logical(pv$permit), pv$seat)
+    lut <- .permit_lut(pv)
     pm <- unname(lut[seats]); # a missing permit row is NOT a permit (NA = silent; 2026-09-20)
     return(screened_slopes(p, seats, .returns, pm, same_mp = .MP_SLOPE, major_departed = .MAJDEP, major_present = .MAJPRES,
                             honour_departed = .honour_departed, with_flags = .departed_hold,

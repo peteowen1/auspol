@@ -71,3 +71,40 @@ test_that("all three combined-name layouts are read correctly", {
   expect_equal(search_form(NA, NA, "Zoe DANIEL"), "Zoe Daniel")       # surname last
   expect_equal(search_form(NA, NA, "Kate Ellis"), "Kate Ellis")       # no case signal
 })
+
+test_that("given_conflict separates Trevor from Tony but not nickname pairs", {
+  expect_true(given_conflict("Trevor", "Tony"))
+  expect_true(given_conflict("cheryl", "colin"))
+  expect_false(given_conflict("Mike", "Michael"))
+  expect_false(given_conflict("Kate", "Katherine"))
+  expect_false(given_conflict("Rob", "Robert"))
+  expect_false(given_conflict("Jim", "James"))     # nickname table: raw "ji" vs "ja" would split
+  expect_false(given_conflict("Tom", "Thomas"))    # nickname table: "to" vs "th"
+  expect_false(given_conflict("Bill", "Billy"))
+  expect_false(given_conflict("Dan", "Daniel"))
+})
+
+test_that("a missing name or a bare initial never conflicts", {
+  expect_false(given_conflict("", "John"))
+  expect_false(given_conflict(NA, "John"))
+  expect_false(given_conflict("J", "John"))
+  expect_false(given_conflict("JB", "John"))   # a run of initials is not a name
+  expect_equal(given_stem(c("JB", "J", NA, "Trevor", "jim")), c("", "", "", "tr", "ja"))
+})
+
+test_that("match_key person rule agrees with given_conflict on the initial key", {
+  g1 <- c("Trevor", "Tony", "Mike", "Kate", "Jim", "J")
+  g2 <- c("Tony", "Trevor", "Michael", "Katherine", "James", "John")
+  same_key <- match_key("smith", g1, "person") == match_key("smith", g2, "person")
+  expect_equal(same_key, c(FALSE, FALSE, TRUE, TRUE, TRUE, FALSE))  # J vs John needs align_person_keys()
+})
+
+test_that("align_person_keys lets an initial-only row meet its one namesake, not two", {
+  k <- function(g) data.table::data.table(seat = "Mallee", .k = match_key("zigouras", g, "person"))
+  A <- k("J"); B <- k("John")
+  align_person_keys(A, B)
+  expect_equal(A$.k, B$.k)
+  B2 <- rbind(k("John"), k("Jack"))      # two stemmed namesakes: ambiguous, left alone
+  A2 <- k("J"); align_person_keys(A2, B2)
+  expect_false(A2$.k %in% B2$.k)
+})

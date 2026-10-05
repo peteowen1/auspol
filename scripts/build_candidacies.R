@@ -41,7 +41,9 @@ local({
 suppressMessages(library(data.table))
 
 `%||%` <- function(x, y) if (is.null(x)) y else x
-OUT <- "output/candidacies.csv"
+# AUSPOL_CAND_OUT redirects the write (and the BC11 previous-build snapshot beside
+# it) so a trial rebuild can be diffed without touching output/.
+OUT <- Sys.getenv("AUSPOL_CAND_OUT", "output/candidacies.csv")
 parts <- list()
 
 # ---- FEDERAL 2007-2025 ------------------------------------------------------
@@ -478,11 +480,20 @@ for (y in wa_years) {
   w[is.na(party_raw) | party_raw == "", party_raw := "Independent"]
   # WA SUPPLIES ABBREVIATIONS, NOT NAMES: "ALP", "LIB", "GRN", "NAT", "PHON".
   # Passing those as classify_party()'s NAME argument sent every one of them to
-  # OTH, which read as ~115 "non-major breakouts" per 57-seat election -- about
-  # two per seat, i.e. both majors counted as minor. Nothing errored; the only
-  # tell was that the count was impossible. Pass them as the ABBREVIATION, which
-  # is what fetch_preferences_fed.R does with PartyAb.
-  w[, `:=`(party = classify_party(party_raw, party_raw), surname = NA_character_,
+  # OTH (~115 "non-major breakouts" per election). Passing them as the
+  # ABBREVIATION fixed the majors but still missed any code classify_party()'s
+  # code rules do not know: PHO (One Nation 2001, 54 candidates), AC/ACP, CDP,
+  # FFP, SFFP, LDP, CEC went to OTH, so wa2001 had no One Nation at all and
+  # OTH_RIGHT existed only in wa2025 -- while the per-seat results
+  # (fetch_preferences_wa.R) classed the same candidates correctly. Both now go
+  # through WA_PARTY (R/wa_party.R, one copy) and classify the full NAME. A code
+  # with no WA_PARTY entry falls back to the abbreviation rule and, if that also
+  # gives OTH, is printed (BC5!) rather than silently becoming OTH.
+  wc <- wa_classify_codes(w$party_raw)
+  if (length(wc$unmapped))
+    cat(sprintf("BC5! wa%d: party code(s) with no WA_PARTY name and no code rule, left OTH: %s\n",
+                y, paste(wc$unmapped, collapse = ", ")))
+  w[, `:=`(party = wc$party, surname = NA_character_,
            given = NA_character_, elected = NA,
            election = sprintf("wa%d", y), region = "wa", year = y)]
 
@@ -1334,7 +1345,7 @@ setcolorder(C, intersect(c("election", "region", "year", "seat", "name",
 # plus one empty field per new column); otherwise another source changed under
 # us and the run stops BEFORE overwriting. AUSPOL_CAND_ALLOW_OTHER_CHANGE=1
 # overrides, for a deliberate rebuild of an older election.
-PREV <- "output/snapshots-candidacies-prev-build.csv"
+PREV <- file.path(dirname(OUT), "snapshots-candidacies-prev-build.csv")
 .cov <- function(D, label) {
   v <- D[election == "vic2026"]
   cls <- c("ALP", "LNP", "GRN", "ONP", "IND")

@@ -152,7 +152,8 @@ C[, cls := party]        # already our own classify_party() output -- see
                          # build_emergence_cases_v2.R for why re-deriving it
                          # here breaks vic2022.
 C[, sn := normalise_seat(seat)]
-C[, pk := match_key(surname_of(surname, name), given_of(given, name), "initial")]
+C[, pk := match_key(surname_of(surname, name), given_of(given, name), "person")]
+align_person_keys(C, col = "pk")  # stemless given borrows its same-seat namesake's stem
 PREV <- setNames(vapply(PAIRS, function(p) p$prev, ""), vapply(PAIRS, function(p) p$election, ""))
 
 cand_rows <- list()

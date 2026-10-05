@@ -166,3 +166,22 @@ test_that("the Country Liberals are the Coalition and Country Labor is not", {
   expect_equal(classify_party("Country Labor Party", "CLP"), "ALP")
   expect_equal(classify_party("Australian Labor Party (Northern Territory) Branch"), "ALP")
 })
+
+test_that("an anti-Greens party is not the Greens", {
+  expect_equal(classify_party("Outdoor Recreation Party (Stop The Greens)", "ODR"), "OTH")
+  expect_equal(classify_party("Australian Greens", "GRN"), "GRN")
+  expect_equal(classify_party("The Greens (WA)"), "GRN")
+})
+
+test_that("WA codes classify through WA_PARTY, and an unknown code is reported", {
+  r <- wa_classify_codes(c("PHO", "ONP", "PHON", "AC", "ACP", "SFFP", "ALP", "LIB",
+                           "AJP", NA, "", "Independent"))
+  expect_equal(r$party, c("ONP", "ONP", "ONP", "OTH_RIGHT", "OTH_RIGHT", "OTH_RIGHT",
+                          "ALP", "LNP", "OTH", "IND", "IND", "IND"))
+  expect_length(r$unmapped, 0L)
+  # A deliberately broken input: a code that is neither mapped nor a name.
+  bad <- wa_classify_codes(c("ALP", "ZZZQ", "ZZZQ", "PHO"))
+  expect_equal(bad$unmapped, "ZZZQ")
+  expect_equal(bad$party, c("ALP", "OTH", "OTH", "ONP"))
+  expect_false(anyNA(wa_classify_codes(names(WA_PARTY))$party))
+})

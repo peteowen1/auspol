@@ -42,8 +42,9 @@ for (k in seq_len(nrow(E))) {
              by = "seat", all.x = TRUE)
   D[is.na(now), now := 0][is.na(prev), prev := 0]
   D[, same := vapply(seat, function(s) {
-    x <- match_key(NOWT [seat == s & party == "IND", sur], NOWT [seat == s & party == "IND", giv], "initial")
-    y <- match_key(PREVT[seat == s & party == "IND", sur], PREVT[seat == s & party == "IND", giv], "initial")
+    # "person" not "initial": Trevor/Tony SMITH are two people (R/names.R given_conflict)
+    x <- match_key(NOWT [seat == s & party == "IND", sur], NOWT [seat == s & party == "IND", giv], "person")
+    y <- match_key(PREVT[seat == s & party == "IND", sur], PREVT[seat == s & party == "IND", giv], "person")
     any(nzchar(x) & x %in% y[nzchar(y)])
   }, TRUE)]
   D[, `:=`(pair = paste0(rg, yr), region = rg)]

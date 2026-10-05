@@ -636,15 +636,9 @@ if (identical(Sys.getenv("AUSPOL_MAJOR_DEPARTED", "0"), "1") || identical(Sys.ge
   }
 }
 .tr <- attr(mat, "transfers"); if (!is.null(.tr)) cat(sprintf("TR1  transfers moved with the person: %d applied%s\n", .tr$applied, if (length(.tr$skipped)) paste0("; SKIPPED ", length(.tr$skipped), ": ", paste(utils::head(.tr$skipped, 5), collapse = ", ")) else ""))
-.own_x <- function(p, seats, x) {
-  if (is.null(.own_prev)) return(x)
-  ov <- .own_prev[.own_prev$party == p, ]
-  v <- stats::setNames(ov$own_prev_pcv, ov$seat)[seats]
-  out <- x
-  hit <- !is.na(v)
-  out[hit] <- unname(v[hit])
-  out
-}
+# Shared with every harness and fit_seats_full.R: own_prev_substitute() (R/candidate_returns.R).
+# A cross-seat credit (AUSPOL_CROSS_SEAT_VOTE) can only RAISE the class base, never lower it.
+.own_x <- function(p, seats, x) own_prev_substitute(.own_prev, p, seats, x)
 # ARM CS: arm C plus the salience screen. Arm C alone was refused -- its harsh
 # new-candidate slope (~0.33) is fitted on ~300 candidates who are overwhelmingly
 # no-hopers, so it crushed the rare emergent toward the mean. The screen
@@ -683,7 +677,7 @@ for (p in parties) {
   d_state <- state_tgt[[p]] - state_prev[[p]]
   sl <- if (.screened) {
     pv <- .permit[.permit$party == p, ]
-    lut <- stats::setNames(as.logical(pv$permit), pv$seat)
+    lut <- .permit_lut(pv)
     pm <- unname(lut[rownames(mat)]); # a missing permit row is NOT a permit (NA = silent; 2026-09-20)
     screened_slopes(p, rownames(mat), .returns, pm, same_mp = .MP_SLOPE, major_departed = .MAJDEP, major_present = .MAJPRES, honour_departed = .honour_departed, with_flags = .departed_hold, same = if (is.null(.fitsl)) formals(screened_slopes)$same else .fitsl$same, new = if (is.null(.fitsl)) formals(screened_slopes)$new else .fitsl$new)
   } else if (.cond) conditional_slopes(p, rownames(mat), .returns, same_mp = .MP_SLOPE, major_departed = .MAJDEP, major_present = .MAJPRES, same = if (is.null(.fitsl)) formals(conditional_slopes)$same else .fitsl$same, new = if (is.null(.fitsl)) formals(conditional_slopes)$new else .fitsl$new) else DEV_SLOPE[[p]]
@@ -986,6 +980,7 @@ if (identical(Sys.getenv("AUSPOL_SALIENCE_SURGE_V2", "0"), "1")) {
 # reader of `shares` below (reentry_sd_matrix, the sd/flow overrides, the simulation).
 # `salience_sd_matrix()` inside the block above still read the unzeroed matrix.
 .nz_pre <- shares
+nom_zero_save_flows(fm, TGT)   # the as-at forecasts table zeroes with this same fm
 shares <- zero_unnominated_at("late", shares, fp_tgt, TGT, flows = fm)
 .nz_cells <- nomination_zeroed_cells(.nz_pre, shares)
   # ARM H, docs/plans/prereg-reentry-flatratio-variance-2026-09-08.md. Widens

@@ -194,17 +194,118 @@ given_of <- function(given, name) {
 #'
 #' @param sur Character vector of surnames, from [surname_of()].
 #' @param giv Character vector of first given names, from [given_of()].
-#' @param rule One of `"surname"`, `"initial"`, `"full"`.
+#' * `"person"` — `"initial"` plus the first two letters of the given name,
+#'   nicknames folded ([given_stem()]), so Trevor SMITH and Tony SMITH get
+#'   different keys while Mike/Michael and Jim/James still share one. Every
+#'   cross-election person join in `R/` uses this; see [given_conflict()] and
+#'   [align_person_keys()] (a bare initial still joins its one namesake).
+#' @param rule One of `"surname"`, `"initial"`, `"full"`, `"person"`.
 #' @return Character vector of match keys.
 #' @export
-match_key <- function(sur, giv, rule = c("initial", "surname", "full")) {
+match_key <- function(sur, giv, rule = c("initial", "surname", "full", "person")) {
   rule <- match.arg(rule)
   sur <- tolower(gsub("[^A-Za-z]", "", sur))
+  stem <- given_stem(giv)
   giv <- tolower(gsub("[^A-Za-z]", "", giv))
+  ini <- ifelse(nzchar(giv), paste0(sur, "|", substr(giv, 1, 1)), sur)
   switch(rule,
          surname = sur,
-         initial = ifelse(nzchar(giv), paste0(sur, "|", substr(giv, 1, 1)), sur),
-         full    = ifelse(nzchar(giv), paste0(sur, "|", giv), sur))
+         initial = ini,
+         full    = ifelse(nzchar(giv), paste0(sur, "|", giv), sur),
+         # `initial` plus the conflict check of given_conflict(): two rows share
+         # a "person" key exactly when their `initial` keys agree and
+         # given_conflict() is FALSE. Used by every cross-election person join.
+         person  = ifelse(nzchar(stem), paste0(ini, "|", stem), ini))
+}
+
+#' Nickname table for [given_stem()]
+#'
+#' Maps a nickname to the formal name whose first two letters it is compared
+#' as. Only nicknames whose first TWO letters differ from the formal name's
+#' matter (the initial must already agree for the loose key to join at all), so
+#' Kate/Katherine, Mike/Michael and Rob/Robert need no entry.
+#' @noRd
+.given_nicknames <- c(
+  jim = "james", jimmy = "james", jimbo = "james",
+  tom = "thomas", tommy = "thomas")
+# Deliberately NOT folded: Jack (John or Jacob), Meg (Margaret or Megan), Harry
+# (Henry, Harold or Harrison). Each has two legitimate formal names that differ
+# in their first two letters, so any fold would split one of them.
+
+#' First two letters of a given name, nicknames folded to the formal name
+#'
+#' The unit [given_conflict()] compares. `NA`, `""` or a single letter (an
+#' initial such as `"J"`) give `""`, meaning "not enough to tell".
+#'
+#' @param giv Character vector of first given names (any case, punctuation ok).
+#' @return Lower-case character vector, `""` where fewer than two letters.
+#' @export
+given_stem <- function(giv) {
+  g <- tolower(gsub("[^A-Za-z]", "", ifelse(is.na(giv), "", giv)))
+  # A run of initials ("JB", "JRM") is not a name: no vowel, three letters or fewer.
+  g[nchar(g) <= 3L & !grepl("[aeiouy]", g)] <- ""
+  hit <- g %in% names(.given_nicknames)
+  g[hit] <- unname(.given_nicknames[g[hit]])
+  ifelse(nchar(g) >= 2L, substr(g, 1L, 2L), "")
+}
+
+#' Let a stemless person key borrow the stem of its one same-seat namesake
+#'
+#' `match_key(rule = "person")` appends [given_stem()] to the surname-initial
+#' key, so a row whose given name is only an initial ("J N ZIGOURAS", "JB
+#' MYERS") would no longer meet "John ZIGOURAS" in the next election. Those
+#' rows carry no evidence of a conflict, so they must still join. For every row
+#' of `A` whose `.k` has no stem, if `B` holds exactly one distinct stemmed key
+#' with the same surname-initial base in the same (normalised) seat, `A$.k` is
+#' replaced by it. Two or more candidates for the base: left alone (ambiguous,
+#' no join is invented). Modifies `A` by reference. Seat names are compared with
+#' [normalise_seat()] only, so a stemless row in a renamed seat is not aligned.
+#'
+#' @param A A `data.table` with `.k` (from `match_key(rule = "person")`) and `seat`.
+#' @param B Table to borrow from; defaults to `A` itself (corpus-wide tables).
+#' @param col Name of the key column in both tables.
+#' @return `A`, invisibly.
+#' @export
+align_person_keys <- function(A, B = A, col = ".k") {
+  ka <- A[[col]]
+  need <- which(!is.na(ka) & nchar(ka) - nchar(gsub("|", "", ka, fixed = TRUE)) == 1L)
+  if (!length(need)) return(invisible(A))
+  kb <- B[[col]]
+  keep <- which(!is.na(kb) & nchar(kb) - nchar(gsub("|", "", kb, fixed = TRUE)) == 2L)
+  if (!length(keep)) return(invisible(A))
+  bt <- unique(data.table::data.table(s = normalise_seat(B$seat[keep]), full = kb[keep]))
+  bt[, base := sub("\\|[^|]*$", "", full)]
+  bt <- bt[, list(full = full[1L], nfull = .N), by = list(s, base)]
+  bt <- bt[bt$nfull == 1L]
+  nx <- data.table::data.table(row = need, s = normalise_seat(A$seat[need]), base = ka[need])
+  mm <- merge(nx, bt[, list(s, base, full)], by = c("s", "base"), all.x = TRUE, sort = FALSE)
+  mm <- mm[!is.na(mm$full)]
+  if (nrow(mm)) {
+    ka[mm$row] <- mm$full
+    data.table::set(A, j = col, value = ka)
+  }
+  invisible(A)
+}
+
+#' Do two first given names rule out being the same person?
+#'
+#' The surname-plus-initial key in [match_key()] is deliberately loose (it
+#' survives Kate/Katherine and Mike/Michael) but it also joins Trevor SMITH to
+#' Tony SMITH. `TRUE` only when BOTH names carry at least two letters and their
+#' first two letters (after folding common nicknames, see [given_stem()])
+#' disagree: Trevor/Tony ("tr" vs "to") conflict; Mike/Michael, Kate/Katherine,
+#' Rob/Robert and Jim/James do not. A missing name or a bare initial never
+#' conflicts, so the check can only REMOVE a join the loose key would have made
+#' between two clearly named people. `match_key(rule = "person")` applies it
+#' inside the key, so a plain key join honours it.
+#'
+#' @param g1,g2 Character vectors of first given names, recycled together.
+#' @return Logical vector, `TRUE` where the names conflict.
+#' @export
+given_conflict <- function(g1, g2) {
+  s1 <- given_stem(g1)
+  s2 <- given_stem(g2)
+  nzchar(s1) & nzchar(s2) & s1 != s2
 }
 
 #' Normalise a seat name for cross-election joins, case/punctuation only

@@ -1,3 +1,14 @@
+# auspol 0.4.71
+
+- Backtests no longer choose whose personal history counts by the actual result: a class's leading candidate is the one with the best prior vote in the seat, then the sitting member, then name order. This was a look-ahead leak; fixing it moved seat log loss 0.2796 -> 0.2874 and exposed the over-carry below.
+- Members who leave a major party: a federal target now gets its own shrunk carry of their old vote (about 0.16-0.23 instead of 0.31-0.44; `AUSPOL_DEFECT_BY_LEVEL = "2"`). Defector cells' squared error -23%; seat log loss 0.2874 -> 0.2827 (AE Forecasts 0.2825). State targets, including Victoria 2026, are unchanged.
+- Western Australian candidates are classified from the full party name (wa2001 One Nation restored; agreement with the official results in every seat). "Stop The Greens" is no longer classed as Greens.
+- A non-major by-election winner is credited the level sitting non-major members typically hold at their next election (about 40%, `fit_sitting_minor_level()`), and a major that lost the seat at a by-election keeps its 'member departed' flag (`AUSPOL_BYELEC_LEVEL`, `AUSPOL_BYELEC_DEPARTED`). Lyne 2010 9.0 -> 32.1 (actual 47.8), Orange 2019 17.5 -> 33.8 (56.2); seat log loss 0.2827 -> 0.2822. Victoria 2026 unchanged.
+- A personal vote won in another seat or jurisdiction (as an independent, or by a sitting non-major member or by-election winner) now follows the person at a fitted, shrunk carry of about 0.47, and can only raise a class (`AUSPOL_CROSS_SEAT_VOTE`). Fowler 2022 (Dai Le) 5.2 -> 14.0, Cowper 2016 (Oakeshott) 6.9 -> 13.9; seat log loss 0.2822 -> 0.2809. Live: Essendon independent (Oscar Yildiz) credited 11.1.
+- Different people who share a surname and first initial are no longer joined (Tony and Trevor Smith, Casey 2022).
+- Western Australia gets the federal-swing seat nudge, for WA elections only (`AUSPOL_SEAT_SWING_PORT_WA = "2"`).
+- One salience permit per class leader instead of the first row; the as-at forecasts table applies v61 nomination zeroing with each harness's own flows.
+
 # auspol 0.4.70
 
 - Nomination zeroing runs `late`, after the last step that can bring a zero back (`AUSPOL_NOM_ZERO_ORDER = "late"`, the `nom_zero_order()` default; Pete's override of clause R2). It reaches the published Victorian forecast only once the VEC final list is loaded (`AUSPOL_NOM_LIVE = 1`, after nominations close on 9 Nov). Until then the gate stays shut.
