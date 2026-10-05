@@ -20,18 +20,21 @@
 #
 # Emits FSW* codes.
 
-options(auspol.root = normalizePath("."))
+# AUSPOL_DATA_ROOT (default ".") lets a worktree read the main checkout's
+# external/ and output/ data; TRANSPOSE_OUT redirects every write.
+DATA_ROOT <- Sys.getenv("AUSPOL_DATA_ROOT", ".")
+options(auspol.root = normalizePath(DATA_ROOT))
 suppressMessages(devtools::load_all(quiet = TRUE))
 suppressMessages(library(data.table))
 
 UA <- paste("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
             "(KHTML, like Gecko) Chrome/120 Safari/537.36")
-RAW <- file.path("external", "reference", "aec", "booths")
-CORR <- file.path("external", "aus-polling-analyser", "analysis", "Federal-State")
-OUT <- election_data_path()
+RAW <- file.path(DATA_ROOT, "external", "reference", "aec", "booths")
+CORR <- file.path(DATA_ROOT, "external", "aus-polling-analyser", "analysis", "Federal-State")
+OUT <- Sys.getenv("TRANSPOSE_OUT", election_data_path())
 dir.create(RAW, showWarnings = FALSE, recursive = TRUE)
 
-FED_ID <- c("2013" = 17496, "2016" = 20499, "2019" = 24310,
+FED_ID <- c("2007" = 13745, "2010" = 15508, "2013" = 17496, "2016" = 20499, "2019" = 24310,
             "2022" = 27966, "2025" = 31496)
 
 # (correspondence, region, state cycle, the federal election that PRECEDED it)
@@ -78,7 +81,7 @@ FED_ID <- c("2013" = 17496, "2016" = 20499, "2019" = 24310,
 # the mean absolute difference barely moves, which is the signature of a few
 # large outliers rather than a uniform loss, and those have not been identified.
 CORR_SOURCE <- Sys.getenv("CORR_SOURCE", "shipped")
-BUILT <- file.path("external", "reference", "correspondences")
+BUILT <- file.path(DATA_ROOT, "external", "reference", "correspondences")
 SHIPPED_JOBS <- list(
   list(corr = "booths-2018vic.txt", region = "vic", cycle = 2018, fed = 2016),
   list(corr = "booths-2019nsw.txt", region = "nsw", cycle = 2019, fed = 2016),
@@ -106,6 +109,29 @@ JOBS <- c(if (CORR_SOURCE == "built") BUILT_JOBS else SHIPPED_JOBS,
                list(corr = "booths-2026vic.txt", region = "vic", cycle = 2026, fed = 2025),
                list(corr = "booths-2026sa.txt",  region = "sa",  cycle = 2026, fed = 2025),
                list(corr = "booths-2027nsw.txt", region = "nsw", cycle = 2027, fed = 2025)))
+# ---- WESTERN AUSTRALIA (2026-10-05, Pete: "why is WA special?") ----------------
+# WA was left out only because no booth -> WA-district correspondence had been
+# built. TRANSPOSE_REGION=wa runs ONLY these jobs and writes
+# fed-swing-transposed-wa.csv / fed-booth-map-wa.csv, leaving the four-state
+# files untouched. WA votes in March, so the federal election that PRECEDES a
+# WA poll is: wa2008 <- fed2007, wa2013 <- fed2010, wa2017 <- fed2016,
+# wa2021 <- fed2019, wa2025 <- fed2022.
+# Every file is built from coordinates (scripts/build_wa_swing_correspondences.R
+# for 2013 and 2021; build_extra_booth_maps.R for 2008, 2017, 2025) and joins on
+# PollingPlaceID. NOT POSSIBLE: wa2005 <- fed2004 and wa2001 <- fed1998 (no
+# two-party-by-booth file on disk for either federal election).
+# wa2013 is the one approximation: no ABS state boundary vintage describes the
+# 2011 WA redistribution, so it uses SED_2011 (the 2007 boundaries) with the four
+# 2011 renames applied.
+WA_JOBS <- list(
+  list(corr = "booths-2008wa.csv",       region = "wa", cycle = 2008, fed = 2007),
+  list(corr = "booths-2013wa-coord.csv", region = "wa", cycle = 2013, fed = 2010),
+  list(corr = "booths-2017wa.csv",       region = "wa", cycle = 2017, fed = 2016),
+  list(corr = "booths-2021wa.csv",       region = "wa", cycle = 2021, fed = 2019),
+  list(corr = "booths-2025wa.csv",       region = "wa", cycle = 2025, fed = 2022))
+WA_ONLY <- identical(Sys.getenv("TRANSPOSE_REGION", ""), "wa")
+if (WA_ONLY) JOBS <- WA_JOBS
+WA_CORR_DIR <- Sys.getenv("WA_CORR_DIR", BUILT)   # where the 2013 and 2021 files were written
 cat(sprintf("FSWC correspondence source for the four historical cycles: %s\n",
             toupper(CORR_SOURCE)))
 
@@ -246,8 +272,9 @@ for (J in JOBS) {
     # is a real gap -- a booth whose TPP was not published -- and is counted
     # rather than dropped, because a district losing half its booths silently
     # is precisely what the name-matching path used to do.
-    corr <- fread(file.path(BUILT, J$corr), showProgress = FALSE)
-    m <- merge(corr[, .(district, place_id)], bo,
+    cf <- file.path(if (WA_ONLY && file.exists(file.path(WA_CORR_DIR, J$corr))) WA_CORR_DIR else BUILT, J$corr)
+    corr <- fread(cf, showProgress = FALSE)
+    m <- merge(if (WA_ONLY) unique(corr[, .(district, place_id)]) else corr[, .(district, place_id)], bo,
                by.x = "place_id", by.y = "PollingPlaceID")
     lost <- nrow(corr) - nrow(m)
     cat(sprintf("FSW0 %s: joined on PollingPlaceID, %d of %d booths matched%s\n",
@@ -320,8 +347,28 @@ for (J in JOBS) {
 }
 R <- rbindlist(res)
 BM <- rbindlist(booth_maps)
-fwrite(BM, file.path(OUT, "fed-booth-map.csv"))
-cat(sprintf("FSW3 wrote fed-booth-map.csv: %d booth-district rows over %d cycles\n", nrow(BM), uniqueN(BM[, .(region, cycle)])))
+SFX <- if (WA_ONLY) "-wa" else ""
+fwrite(BM, file.path(OUT, sprintf("fed-booth-map%s.csv", SFX)))
+cat(sprintf("FSW3 wrote fed-booth-map%s.csv: %d booth-district rows over %d cycles\n", SFX, nrow(BM), uniqueN(BM[, .(region, cycle)])))
+
+if (WA_ONLY) {
+  # No published WA fed_swing exists to reproduce, so the check is the anchor:
+  # the transposed districts against the WA-wide vote-weighted booth swing at
+  # the same federal election (both from the AEC Swing column, so they must
+  # roughly agree).
+  for (J in JOBS) {
+    wa <- tpp_booths(J$fed)[StateAb == "WA"]
+    a <- R[region == J$region & cycle == J$cycle]
+    cat(sprintf("FSWA %s%d <- fed%d: WA-wide booth swing %+.2f (%d booths); %d districts, mean %+.2f, sd %.2f, range %+.1f..%+.1f; booths per district min %d median %d\n",
+                J$region, J$cycle, J$fed, sum(wa$swing * wa$tot) / sum(wa$tot), nrow(wa),
+                nrow(a), mean(a$fed_swing), stats::sd(a$fed_swing),
+                min(a$fed_swing), max(a$fed_swing), min(a$booths), as.integer(stats::median(a$booths))))
+  }
+  fwrite(R, file.path(OUT, "fed-swing-transposed-wa.csv"))
+  cat(sprintf("\nFSW3 wrote %s: %d district-cycles across %d WA cycles\n",
+              file.path(OUT, "fed-swing-transposed-wa.csv"), nrow(R), uniqueN(R[, .(region, cycle)])))
+  quit(save = "no", status = 0)
+}
 
 # ---- validation: reproduce the two cycles that already have fed_swing -------
 cat("\nFSW2 validation -- does this reproduce the seat files' own fed_swing?\n")

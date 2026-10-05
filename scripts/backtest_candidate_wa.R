@@ -210,6 +210,8 @@ CAL_TAG <- paste0(
   # audit this" because its grep only scans the harnesses and
   # fit_seats_full.R, never R/; that gap is real and separate.
   if (identical(Sys.getenv("AUSPOL_SD_DEPARTED", "0"), "1")) "-sddep" else "",
+  switch(Sys.getenv("AUSPOL_SEAT_SWING_PORT_WA", "0"), "1" = "-portwa1", "2" = "-portwa2", ""),
+  if (identical(Sys.getenv("AUSPOL_SEAT_SWING_PORT_NOCLIFF", "0"), "1")) "-nocliff" else "",
   if (nzchar(Sys.getenv("AUSPOL_FLOW_MODEL_TAG", "")))
     sprintf("-fm%s", Sys.getenv("AUSPOL_FLOW_MODEL_TAG")) else "",
   if (SURGE_H > 0) "-surge" else "", .arm_fingerprint, .code_tag)
@@ -623,6 +625,16 @@ for (K in PAIRS) {
   # AUSPOL_NOM_ZERO_ORDER (default "early" = this position); "late" runs it after
   # leader_seat_apply below instead (plans/prereg-zero-order-2026-10-03.md).
   shares <- zero_unnominated_at("early", shares, fb, el_to, flows = fm)
+  # Time-forward seat-swing port for WA (AUSPOL_SEAT_SWING_PORT_WA, default "0"
+  # = off, byte-identical), AFTER the override like the other four harnesses.
+  # Only on top of the xgb layer: at AUSPOL_XGB_PRIMARY=0 these shares become
+  # base_pred and the port would count twice. wa2001 and wa2005 have no
+  # transposed federal swing (no booth two-party file for fed1998/fed2004), so
+  # they get a zero adjustment; seat_swing_port_apply() prints the matched count.
+  # PREREG PENDING: docs/plans/prereg-seat-swing-port-wa-2026-10-05.md (to be written before any run).
+  if (identical(Sys.getenv("AUSPOL_XGB_PRIMARY", "0"), "1") &&
+      !identical(Sys.getenv("AUSPOL_SEAT_SWING_PORT_WA", "0"), "0"))
+    shares <- seat_swing_port_apply(shares, el_to)
   # Seat-poll blend (AUSPOL_SEAT_POLL_BLEND), after the override and the port;
   # xgb layer only, so stage-1 base_pred never includes it.
   # plans/prereg-seat-poll-blend-2026-09-29.md

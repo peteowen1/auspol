@@ -9,11 +9,23 @@
 #' (`fed-swing-transposed.csv`), shrunk toward 0 by its precision across
 #' cycles (at least 3 cycles, else 0). docs/plans/prereg-seat-swing-port-v2-2026-09-29.md.
 #'
+#' Two switches, both default off (this function is unchanged when both are):
+#' * `AUSPOL_SEAT_SWING_PORT_WA`: "1" adds the five Western Australian cycles
+#'   (`fed-swing-transposed-wa.csv`, built by `scripts/transpose_fed_swing.R`
+#'   with `TRANSPOSE_REGION=wa`) to every target's pooled fit; "2" adds them only
+#'   when the target is itself a WA election, so no other target moves.
+#' * `AUSPOL_SEAT_SWING_PORT_NOCLIFF`: "1" replaces the "fewer than 3 earlier
+#'   cycles gives 0" cliff with pure shrinkage. With 1 or 2 earlier cycles the
+#'   cluster-robust error cannot be estimated, so the error is the ordinary
+#'   seat-level one (or the cluster one with two cycles, whichever is larger)
+#'   multiplied by `SEAT_SWING_NOCLIFF_SE_INFLATE` (2): a thin fit gets a
+#'   quarter of the weight its own error would give it, not zero.
+#'
 #' @param target_election Label such as `"vic2022"`.
 #' @return list: `coef`, `k` (earlier cycles), `n` (seats), `b` (unshrunk), `se`.
 #' @export
 seat_swing_port_coef <- function(target_election) {
-  fs <- data.table::fread(file.path(election_data_path(), "fed-swing-transposed.csv"), showProgress = FALSE)
+  fs <- seat_swing_port_fs(target_election)
   fs$label <- paste0(fs$region, fs$cycle)
   tp <- data.table::fread(out_path("seat-tpp-estimates.csv"), showProgress = FALSE)
   d <- election_dates()
@@ -36,13 +48,52 @@ seat_swing_port_coef <- function(target_election) {
   }), fill = TRUE)
   if (!nrow(rows)) return(list(coef = 0, k = 0L, n = 0L, b = NA_real_, se = NA_real_))
   G <- length(unique(rows$pair))
-  if (G < 3L) return(list(coef = 0, k = G, n = nrow(rows), b = NA_real_, se = NA_real_))
+  thin <- G < 3L
+  noc <- identical(Sys.getenv("AUSPOL_SEAT_SWING_PORT_NOCLIFF", "0"), "1")
+  if (thin && !noc) return(list(coef = 0, k = G, n = nrow(rows), b = NA_real_, se = NA_real_))
   b <- sum(rows$dev * rows$yy) / sum(rows$dev^2)
   e <- rows$yy - b * rows$dev
-  se2_cl <- sum(tapply(rows$dev * e, rows$pair, sum)^2) / sum(rows$dev^2)^2 * G / (G - 1)
+  # One cycle has no between-cycle spread to cluster on (G / (G - 1) is infinite).
+  se2_cl <- if (G >= 2L) sum(tapply(rows$dev * e, rows$pair, sum)^2) / sum(rows$dev^2)^2 * G / (G - 1) else 0
   se2_ols <- (sum(e^2) / max(1, nrow(rows) - 1)) / sum(rows$dev^2)
   se2 <- max(se2_cl, se2_ols)
+  if (thin) se2 <- se2 * SEAT_SWING_NOCLIFF_SE_INFLATE^2
   list(coef = b * b^2 / (b^2 + se2), k = G, n = nrow(rows), b = b, se = sqrt(se2))
+}
+
+#' Standard-error multiplier for a port fit on fewer than 3 earlier cycles
+#' (`AUSPOL_SEAT_SWING_PORT_NOCLIFF=1`). A judgement, not a fitted constant:
+#' with at most two cycles the cluster-robust error is unidentified, and 2 means
+#' a thin fit carries a quarter of the weight its own error would give it.
+#' @export
+SEAT_SWING_NOCLIFF_SE_INFLATE <- 2
+
+#' Whether the port includes Western Australia for a target
+#' @param target_election Label such as `"wa2025"`.
+#' @return `"1"` (WA cycles pooled for every target), `"2"` (WA only for WA
+#'   targets) or `"0"`.
+#' @keywords internal
+seat_swing_port_wa_mode <- function(target_election) {
+  m <- Sys.getenv("AUSPOL_SEAT_SWING_PORT_WA", "0")
+  if (m == "1" || (m == "2" && sub("[0-9]{4}$", "", target_election) == "wa")) m else "0"
+}
+
+#' The transposed federal swing table the port reads for one target
+#'
+#' `fed-swing-transposed.csv`, plus the WA table when
+#' `AUSPOL_SEAT_SWING_PORT_WA` asks for it. The WA file defaults to
+#' `fed-swing-transposed-wa.csv` beside the main one; `AUSPOL_SEAT_SWING_WA_FILE`
+#' points elsewhere. A missing WA file is an error, never a silent skip.
+#' @param target_election Label such as `"wa2025"`.
+#' @keywords internal
+seat_swing_port_fs <- function(target_election) {
+  fs <- data.table::fread(file.path(election_data_path(), "fed-swing-transposed.csv"), showProgress = FALSE)
+  if (seat_swing_port_wa_mode(target_election) != "0") {
+    f <- Sys.getenv("AUSPOL_SEAT_SWING_WA_FILE", file.path(election_data_path(), "fed-swing-transposed-wa.csv"))
+    if (!file.exists(f)) stop("AUSPOL_SEAT_SWING_PORT_WA is on but ", f, " does not exist; run scripts/transpose_fed_swing.R with TRANSPOSE_REGION=wa")
+    fs <- data.table::rbindlist(list(fs, data.table::fread(f, showProgress = FALSE)), fill = TRUE)
+  }
+  fs
 }
 
 #' The seat-swing port's inputs for one target: each seat's transposed federal
@@ -65,7 +116,7 @@ seat_swing_port_table <- function(target_election, write = FALSE) {
   cache <- out_path(sprintf("seat-swing-port-%s.csv", target_election))
   if (file.exists(src_fs) && file.exists(src_tp)) {
     cf <- seat_swing_port_coef(target_election)
-    fs <- data.table::fread(src_fs, showProgress = FALSE)
+    fs <- seat_swing_port_fs(target_election)
     tb <- fs[paste0(fs$region, fs$cycle) == target_election, list(seat, fed_swing)]
     if (write) {
       out <- data.table::copy(tb)
@@ -119,10 +170,14 @@ seat_swing_port_adj <- function(target_election, seats) {
 #' @param shares Matrix of primary shares, rownames = seats, columns include
 #'   `ALP` and `LNP`.
 #' @param target_election Label such as `"vic2022"`.
-#' @return `shares`, adjusted, or unchanged when `AUSPOL_SEAT_SWING_PORT` is not "2".
+#' @return `shares`, adjusted, or unchanged when the port is off for this
+#'   target: `AUSPOL_SEAT_SWING_PORT` is not "2" (WA targets: when
+#'   `AUSPOL_SEAT_SWING_PORT_WA` is "0").
 #' @export
 seat_swing_port_apply <- function(shares, target_election) {
-  if (!identical(Sys.getenv("AUSPOL_SEAT_SWING_PORT", "2"), "2")) return(shares)
+  if (sub("[0-9]{4}$", "", target_election) == "wa") {
+    if (identical(Sys.getenv("AUSPOL_SEAT_SWING_PORT_WA", "0"), "0")) return(shares)
+  } else if (!identical(Sys.getenv("AUSPOL_SEAT_SWING_PORT", "2"), "2")) return(shares)
   stopifnot(all(c("ALP", "LNP") %in% colnames(shares)))
   adj <- seat_swing_port_adj(target_election, rownames(shares))
   stopifnot(all(is.finite(adj)))

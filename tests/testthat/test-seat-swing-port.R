@@ -38,3 +38,80 @@ test_that("the port reads its shipped table when the sources are absent (the CI 
   unlink(cache)
   expect_error(seat_swing_port_table("vic2026"), "neither the sources")
 })
+
+# ---- WA pooling and the no-cliff rule (AUSPOL_SEAT_SWING_PORT_WA / _NOCLIFF) ----
+# A synthetic world, so these run on CI (no anchor data): vic2014/18/22 state
+# results and vic2018/22 transposed federal swings, plus wa2008/13/17 and wa2013/17.
+# The state swing is 0.5 x the federal deviation plus noise, so b is about 0.5.
+local_port_fixture <- function(env = parent.frame()) {
+  root <- withr::local_tempdir(.local_envir = env)
+  dir.create(file.path(root, "output")); dir.create(file.path(root, "elections"))
+  writeLines("Package: fixture", file.path(root, "DESCRIPTION"))
+  withr::local_options(auspol.root = root, auspol.elections_dir = file.path(root, "elections"), .local_envir = env)
+  set.seed(7)
+  seats <- sprintf("seat%02d", 1:30)
+  mk_fs <- function(rg, cy) data.table::data.table(seat = seats, fed_swing = stats::rnorm(30, 2, 3), region = rg, cycle = cy)
+  fs_main <- rbind(mk_fs("vic", 2018), mk_fs("vic", 2022))
+  fs_wa <- rbind(mk_fs("wa", 2013), mk_fs("wa", 2017))
+  tpp <- data.table::rbindlist(lapply(c("vic2014", "vic2018", "vic2022", "wa2008", "wa2013", "wa2017"),
+                                      function(e) data.table::data.table(s = seats, tpp = 50, election = e)))
+  # tpp of a cycle = previous tpp + 0.5 x its federal deviation + noise
+  for (z in list(list("vic2018", "vic2014", fs_main), list("vic2022", "vic2018", fs_main),
+                 list("wa2013", "wa2008", fs_wa), list("wa2017", "wa2013", fs_wa))) {
+    f <- z[[3]][paste0(z[[3]]$region, z[[3]]$cycle) == z[[1]]]
+    prev <- tpp$tpp[tpp$election == z[[2]]]
+    tpp$tpp[tpp$election == z[[1]]] <- prev + 0.5 * (f$fed_swing - mean(f$fed_swing)) + stats::rnorm(30, 0, 2)
+  }
+  data.table::fwrite(tpp, file.path(root, "output", "seat-tpp-estimates.csv"))
+  data.table::fwrite(fs_main, file.path(root, "elections", "fed-swing-transposed.csv"))
+  data.table::fwrite(fs_wa, file.path(root, "elections", "fed-swing-transposed-wa.csv"))
+  invisible(root)
+}
+
+test_that("NOCLIFF off leaves a thin fit at 0; on, it is shrunk by an error doubled, not cut off", {
+  local_port_fixture()
+  withr::local_envvar(AUSPOL_SEAT_SWING_PORT_NOCLIFF = "0", AUSPOL_SEAT_SWING_PORT_WA = "0")
+  off <- seat_swing_port_coef("vic2022")           # one earlier cycle (vic2018)
+  expect_equal(off$k, 1L); expect_equal(off$coef, 0); expect_true(is.na(off$b))
+  withr::local_envvar(AUSPOL_SEAT_SWING_PORT_NOCLIFF = "1")
+  on <- seat_swing_port_coef("vic2022")
+  expect_gt(on$b, 0.2)                              # the planted 0.5 is recovered, loosely
+  expect_gt(on$coef, 0); expect_lt(on$coef, on$b)   # shrunk toward 0, never past it
+  expect_equal(on$coef, on$b * on$b^2 / (on$b^2 + on$se^2))
+  # Proven to bite: the inflation is what makes the weight smaller than the plain one.
+  plain_se <- on$se / SEAT_SWING_NOCLIFF_SE_INFLATE
+  expect_lt(on$coef, on$b * on$b^2 / (on$b^2 + plain_se^2))
+  # No earlier cycle at all is still 0: shrinkage needs something to shrink.
+  expect_equal(seat_swing_port_coef("vic2018")$coef, 0)
+})
+
+test_that("WA cycles pool into other targets only at mode 1, and into WA targets at mode 2", {
+  local_port_fixture()
+  withr::local_envvar(AUSPOL_SEAT_SWING_PORT_NOCLIFF = "1")
+  withr::local_envvar(AUSPOL_SEAT_SWING_PORT_WA = "0")
+  base_vic <- seat_swing_port_coef("vic2022"); base_wa <- seat_swing_port_coef("wa2017")
+  withr::local_envvar(AUSPOL_SEAT_SWING_PORT_WA = "2")
+  expect_identical(seat_swing_port_coef("vic2022"), base_vic)   # untouched
+  wa_own <- seat_swing_port_coef("wa2017")
+  expect_gt(wa_own$k, base_wa$k)
+  withr::local_envvar(AUSPOL_SEAT_SWING_PORT_WA = "1")
+  expect_identical(seat_swing_port_coef("wa2017"), wa_own)
+  # A missing WA file is an error, never a silent fall back to the old fit.
+  withr::local_envvar(AUSPOL_SEAT_SWING_WA_FILE = file.path(tempdir(), "no-such-wa-file.csv"))
+  expect_error(seat_swing_port_coef("vic2022"), "does not exist")
+})
+
+test_that("seat_swing_port_apply for a WA target needs AUSPOL_SEAT_SWING_PORT_WA, not AUSPOL_SEAT_SWING_PORT", {
+  local_port_fixture()
+  m <- matrix(rep(c(40, 35, 25), 30), nrow = 30, byrow = TRUE,
+              dimnames = list(sprintf("seat%02d", 1:30), c("ALP", "LNP", "OTH")))
+  withr::local_envvar(AUSPOL_SEAT_SWING_PORT = "2", AUSPOL_SEAT_SWING_PORT_NOCLIFF = "1",
+                      AUSPOL_SEAT_SWING_PORT_WA = "0")
+  expect_identical(seat_swing_port_apply(m, "wa2017"), m)       # shipped port on, WA off: no-op
+  withr::local_envvar(AUSPOL_SEAT_SWING_PORT = "0", AUSPOL_SEAT_SWING_PORT_WA = "2")
+  out <- utils::capture.output(adj <- seat_swing_port_apply(m, "wa2017"))
+  expect_false(isTRUE(all.equal(adj, m)))
+  expect_equal(unname(rowSums(adj)), rep(100, 30))
+  # Victoria ignores the WA switch.
+  expect_identical(seat_swing_port_apply(m, "vic2022"), m)
+})

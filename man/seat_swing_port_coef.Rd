@@ -22,3 +22,18 @@ origin on the seat's transposed federal swing relative to its cycle's mean
 (\code{fed-swing-transposed.csv}), shrunk toward 0 by its precision across
 cycles (at least 3 cycles, else 0). docs/plans/prereg-seat-swing-port-v2-2026-09-29.md.
 }
+\details{
+Two switches, both default off (this function is unchanged when both are):
+\itemize{
+\item \code{AUSPOL_SEAT_SWING_PORT_WA}: "1" adds the five Western Australian cycles
+(\code{fed-swing-transposed-wa.csv}, built by \code{scripts/transpose_fed_swing.R}
+with \code{TRANSPOSE_REGION=wa}) to every target's pooled fit; "2" adds them only
+when the target is itself a WA election, so no other target moves.
+\item \code{AUSPOL_SEAT_SWING_PORT_NOCLIFF}: "1" replaces the "fewer than 3 earlier
+cycles gives 0" cliff with pure shrinkage. With 1 or 2 earlier cycles the
+cluster-robust error cannot be estimated, so the error is the ordinary
+seat-level one (or the cluster one with two cycles, whichever is larger)
+multiplied by \code{SEAT_SWING_NOCLIFF_SE_INFLATE} (2): a thin fit gets a
+quarter of the weight its own error would give it, not zero.
+}
+}
