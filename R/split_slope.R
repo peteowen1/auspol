@@ -53,10 +53,11 @@ returning_vote_fraction <- function(election_from, election_to, corpus = NULL) {
                       if ("name" %in% names(d)) d$name else NA_character_)
     giv <- given_of(if ("given" %in% names(d)) d$given else NA_character_,
                     if ("name" %in% names(d)) d$name else NA_character_)
-    match_key(sur, giv, "initial")
+    match_key(sur, giv, "person")
   }
   PREVT <- data.table::copy(PREVT)[, .k := kf(.SD), .SDcols = names(PREVT)]
   NOWT  <- data.table::copy(NOWT)[,  .k := kf(.SD), .SDcols = names(NOWT)]
+  align_person_keys(NOWT, PREVT); align_person_keys(PREVT, NOWT)
   PREVT[, .s := normalise_seat(seat)]
   NOWT[,  .s := normalise_seat(seat)]
   rn <- seat_rename_map()

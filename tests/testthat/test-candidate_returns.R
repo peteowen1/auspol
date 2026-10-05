@@ -44,6 +44,36 @@ test_that("a DIFFERENT person in the same seat is still new", {
   expect_false(r[seat == "A" & party == "IND"]$same)
 })
 
+test_that("two different people sharing surname and initial are NOT joined (Casey fed2022)", {
+  # Trevor SMITH (OTH_RIGHT, 2.0%) was matched to the sitting member Tony SMITH
+  # (LNP, 45.2%), inventing a returning sitting member / defector.
+  C <- data.table::data.table(
+    election = c("e1", "e1", "e2", "e2"),
+    seat = "Casey", party = c("LNP", "ALP", "LNP", "OTH_RIGHT"),
+    surname = c("SMITH", "JONES", "BROWN", "SMITH"),
+    given = c("Tony", "Ann", "Pat", "Trevor"),
+    name = NA_character_, pcv = c(45.2, 40, 40, 2), elected = c(TRUE, FALSE, FALSE, FALSE))
+  r <- candidate_returns("e1", "e2", C)
+  expect_false(r[party == "OTH_RIGHT"]$same)
+  expect_false(r[party == "OTH_RIGHT"]$same_mp)
+  expect_false(leading_candidate_returns("e1", "e2", C)[party == "OTH_RIGHT"]$leader_same)
+  # control: the same table with Tony as the new candidate IS joined
+  C2 <- data.table::copy(C)[election == "e2" & party == "OTH_RIGHT", given := "Tony"]
+  expect_true(candidate_returns("e1", "e2", C2)[party == "OTH_RIGHT"]$same_mp)
+})
+
+test_that("a nickname pair and an initial-only row are still joined across a class change", {
+  C <- data.table::data.table(
+    election = c("e1", "e2", "e1", "e2"),
+    seat = c("A", "A", "B", "B"), party = c("LNP", "IND", "LNP", "IND"),
+    surname = c("WEBB", "WEBB", "ZED", "ZED"),
+    given = c("Thomas", "Tom", "J", "John"),
+    name = NA_character_, pcv = c(45, 30, 40, 20), elected = c(TRUE, FALSE, TRUE, FALSE))
+  r <- candidate_returns("e1", "e2", C)
+  expect_true(r[seat == "A" & party == "IND"]$same)   # Tom / Thomas
+  expect_true(r[seat == "B" & party == "IND"]$same)   # J / John via align_person_keys
+})
+
 test_that("a missing corpus column is an error rather than a silent FALSE", {
   expect_error(candidate_returns("e1", "e2", data.table::data.table(x = 1)), "lacks")
 })

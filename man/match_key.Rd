@@ -4,14 +4,21 @@
 \alias{match_key}
 \title{Match key for one candidate, at a chosen strictness}
 \usage{
-match_key(sur, giv, rule = c("initial", "surname", "full"))
+match_key(sur, giv, rule = c("initial", "surname", "full", "person"))
 }
 \arguments{
 \item{sur}{Character vector of surnames, from \code{\link[=surname_of]{surname_of()}}.}
 
-\item{giv}{Character vector of first given names, from \code{\link[=given_of]{given_of()}}.}
+\item{giv}{Character vector of first given names, from \code{\link[=given_of]{given_of()}}.
+\itemize{
+\item \code{"person"} — \code{"initial"} plus the first two letters of the given name,
+nicknames folded (\code{\link[=given_stem]{given_stem()}}), so Trevor SMITH and Tony SMITH get
+different keys while Mike/Michael and Jim/James still share one. Every
+cross-election person join in \verb{R/} uses this; see \code{\link[=given_conflict]{given_conflict()}} and
+\code{\link[=align_person_keys]{align_person_keys()}} (a bare initial still joins its one namesake).
+}}
 
-\item{rule}{One of \code{"surname"}, \code{"initial"}, \code{"full"}.}
+\item{rule}{One of \code{"surname"}, \code{"initial"}, \code{"full"}, \code{"person"}.}
 }
 \value{
 Character vector of match keys.

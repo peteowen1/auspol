@@ -46,8 +46,9 @@ cases <- rbindlist(lapply(pairs, function(pr) {
   PT <- C[election == pr$prev]
   NT <- C[election == pr$election]
   if (!nrow(PT) || !nrow(NT)) return(NULL)
-  PT[, k := match_key(surname_of(surname, name), given_of(given, name), "initial")]
-  NT[, k := match_key(surname_of(surname, name), given_of(given, name), "initial")]
+  PT[, k := match_key(surname_of(surname, name), given_of(given, name), "person")]
+  NT[, k := match_key(surname_of(surname, name), given_of(given, name), "person")]
+  align_person_keys(PT, NT, col = "k"); align_person_keys(NT, PT, col = "k")
   PT[, sn := normalise_seat(seat)]
   NT[, sn := normalise_seat(seat)]
   winners <- PT[elected %in% TRUE & party %in% MAJ]
@@ -83,7 +84,7 @@ tenure_of <- function(seat_norm, key, start_election) {
     PT <- C[election == prev_el]
     if (!nrow(PT)) break
     PT2 <- copy(PT)
-    PT2[, k2 := match_key(surname_of(surname, name), given_of(given, name), "initial")]
+    PT2[, k2 := match_key(surname_of(surname, name), given_of(given, name), "person")]
     PT2[, sn2 := normalise_seat(seat)]
     hit <- PT2[sn2 == seat_norm & k2 == key & elected %in% TRUE]
     if (!nrow(hit)) break

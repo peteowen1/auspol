@@ -104,10 +104,11 @@ candidate_returns <- function(election_from, election_to, corpus = NULL) {
                       if ("name" %in% names(d)) d$name else NA_character_)
     giv <- given_of(if ("given" %in% names(d)) d$given else NA_character_,
                     if ("name" %in% names(d)) d$name else NA_character_)
-    match_key(sur, giv, "initial")
+    match_key(sur, giv, "person")
   }
   NOWT  <- data.table::copy(NOWT)[,  .k := kf(.SD), .SDcols = names(NOWT)]
   PREVT <- data.table::copy(PREVT)[, .k := kf(.SD), .SDcols = names(PREVT)]
+  align_person_keys(NOWT, PREVT); align_person_keys(PREVT, NOWT)
 
   # JOIN ON A NORMALISED SEAT KEY. The corpus is not internally consistent:
   # vic2014 and vic2018 store seats as "albertpark" while vic2022 stores
@@ -389,10 +390,11 @@ leading_candidate_returns <- function(election_from, election_to, corpus = NULL)
                       if ("name" %in% names(d)) d$name else NA_character_)
     giv <- given_of(if ("given" %in% names(d)) d$given else NA_character_,
                     if ("name" %in% names(d)) d$name else NA_character_)
-    match_key(sur, giv, "initial")
+    match_key(sur, giv, "person")
   }
   NOWT  <- data.table::copy(NOWT)[,  .k := kf(.SD), .SDcols = names(NOWT)]
   PREVT <- data.table::copy(PREVT)[, .k := kf(.SD), .SDcols = names(PREVT)]
+  align_person_keys(NOWT, PREVT); align_person_keys(PREVT, NOWT)
   NOWT[,  .s := normalise_seat(seat)]
   PREVT[, .s := normalise_seat(seat)]
 
@@ -588,10 +590,11 @@ personal_prior_vote <- function(election_from, election_to, corpus = NULL,
                       if ("name" %in% names(d)) d$name else NA_character_)
     giv <- given_of(if ("given" %in% names(d)) d$given else NA_character_,
                     if ("name" %in% names(d)) d$name else NA_character_)
-    match_key(sur, giv, "initial")
+    match_key(sur, giv, "person")
   }
   NOWT  <- data.table::copy(NOWT)[,  .k := kf(.SD), .SDcols = names(NOWT)]
   PREVT <- data.table::copy(PREVT)[, .k := kf(.SD), .SDcols = names(PREVT)]
+  align_person_keys(NOWT, PREVT); align_person_keys(PREVT, NOWT)
   NOWT[,  .s := normalise_seat(seat)]
   PREVT[, .s := normalise_seat(seat)]
 
@@ -1053,7 +1056,7 @@ fit_defector_discount <- function(target_election, corpus = NULL, min_n = 5L, pa
                                           if ("name" %in% names(d)) d$name else NA_character_),
                                given_of(if ("given" %in% names(d)) d$given else NA_character_,
                                         if ("name" %in% names(d)) d$name else NA_character_),
-                               "initial")
+                               "person")
   rn <- seat_rename_map()
 
   if (is.null(pairs)) pairs <- all_election_pairs()
@@ -1065,6 +1068,7 @@ fit_defector_discount <- function(target_election, corpus = NULL, min_n = 5L, pa
     if (!nrow(PREVT) || !nrow(NOWT)) return(NULL)
     PREVT <- data.table::copy(PREVT)[, `:=`(.k = kk(.SD), .s = normalise_seat(seat))]
     NOWT  <- data.table::copy(NOWT)[,  `:=`(.k = kk(.SD), .s = normalise_seat(seat))]
+    align_person_keys(NOWT, PREVT); align_person_keys(PREVT, NOWT)
     if (!"elected" %in% names(PREVT)) return(NULL)
     PREVT[, .s_renamed := .s]
     PREVT[.s %in% names(rn), .s_renamed := rn[.s]]
@@ -1262,7 +1266,7 @@ fit_minor_defector_discount <- function(target_election, corpus = NULL, min_n = 
                                           if ("name" %in% names(d)) d$name else NA_character_),
                                given_of(if ("given" %in% names(d)) d$given else NA_character_,
                                         if ("name" %in% names(d)) d$name else NA_character_),
-                               "initial")
+                               "person")
   if (is.null(pairs)) pairs <- all_election_pairs()
   pairs <- fit_pairs_for(target_election, pairs)   # time-forward (plans/prereg-time-forward-constants-2026-09-28.md)
 
@@ -1272,6 +1276,7 @@ fit_minor_defector_discount <- function(target_election, corpus = NULL, min_n = 
     if (!nrow(PREVT) || !nrow(NOWT)) return(NULL)
     PREVT <- data.table::copy(PREVT)[, `:=`(.k = kk(.SD), .s = normalise_seat(seat))]
     NOWT  <- data.table::copy(NOWT)[,  `:=`(.k = kk(.SD), .s = normalise_seat(seat))]
+    align_person_keys(NOWT, PREVT); align_person_keys(PREVT, NOWT)
     if (!"elected" %in% names(PREVT)) return(NULL)
     a <- PREVT[nzchar(.k) & !party %in% MAJ & pcv >= min_prior,
                .(.s, .k, prior_pcv = pcv, prior_party = party, was_mp = elected %in% TRUE)][
@@ -1377,8 +1382,9 @@ departed_defectors <- function(election_from, election_to, corpus = NULL, min_pc
   kf <- function(d) match_key(surname_of(if ("surname" %in% names(d)) d$surname else NA_character_,
                                          if ("name" %in% names(d)) d$name else NA_character_),
                               given_of(if ("given" %in% names(d)) d$given else NA_character_,
-                                       if ("name" %in% names(d)) d$name else NA_character_), "initial")
+                                       if ("name" %in% names(d)) d$name else NA_character_), "person")
   C <- data.table::copy(C)[, .k := kf(.SD), .SDcols = names(C)]
+  align_person_keys(C)   # stemless given (an initial) borrows its same-seat namesake's stem
   dates <- election_dates()
   C[, .d := dates[election]]
   PREVT <- C[C$election == election_from & !C$party %in% MAJ & nzchar(C$.k)]
@@ -1492,8 +1498,9 @@ fit_minor_defector_conserve <- function(target_election, corpus = NULL, pairs = 
   kf <- function(d) match_key(surname_of(if ("surname" %in% names(d)) d$surname else NA_character_,
                                          if ("name" %in% names(d)) d$name else NA_character_),
                               given_of(if ("given" %in% names(d)) d$given else NA_character_,
-                                       if ("name" %in% names(d)) d$name else NA_character_), "initial")
+                                       if ("name" %in% names(d)) d$name else NA_character_), "person")
   C <- data.table::copy(C)[, .k := kf(.SD), .SDcols = names(C)]
+  align_person_keys(C)
   if (is.null(pairs)) pairs <- all_election_pairs()
   ST <- C[, list(v = sum(votes, na.rm = TRUE)), by = list(election, party)][, share := 100 * v / sum(v), by = election]
   cs <- function(el, s, p) { v <- C[C$election == el & C$seat == s & C$party == p, sum(pcv, na.rm = TRUE)]; if (length(v)) v else 0 }

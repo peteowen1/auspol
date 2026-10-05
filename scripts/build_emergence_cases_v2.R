@@ -62,7 +62,8 @@ C[, sn := normalise_seat(seat)]
 # Person key: surname plus given initial, the same shape candidate_returns()
 # uses. Not the full name -- commissions are inconsistent about middle names
 # and capitalisation between elections.
-C[, pk := match_key(surname_of(surname, name), given_of(given, name), "initial")]
+C[, pk := match_key(surname_of(surname, name), given_of(given, name), "person")]
+align_person_keys(C, col = "pk")  # stemless given borrows its same-seat namesake's stem
 
 PREV <- c(fed2007="fed2004", fed2010="fed2007", fed2013="fed2010", fed2016="fed2013",
           fed2019="fed2016", fed2022="fed2019", fed2025="fed2022",
