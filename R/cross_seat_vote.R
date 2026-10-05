@@ -18,8 +18,12 @@
 #  * SAME STATE: a federal seat and a state seat match only when the federal
 #    seat lies in that state; a state-to-state or fed-to-fed move across
 #    states is refused too. Unknown state = refuse.
-#  * NON-MAJOR PRIOR ONLY (IND, OTH, OTH_RIGHT, ONP, or a non-major by-election
-#    win): a major-party vote is the party's (McBride). Greens neither side.
+#  * PERSONAL PRIOR ONLY (Pete 2026-10-05): a result won as IND, or as a sitting
+#    member (elected) or by-election winner of a non-major class. A non-member
+#    One Nation/OTH share stays with the party; a major-party vote is the
+#    party's (McBride). Greens neither side. Applies to the credit AND the carry fit.
+#  * AMBIGUOUS PERSON REFUSED: another person with the same surname and first
+#    initial but a different first name known by the target election = no credit.
 #  * Only a class leader with no same-seat identity at the previous election
 #    is credited (anyone with a same-seat record belongs to the existing
 #    machinery). Same-seat by-election winners are left to AUSPOL_BYELEC_LEVEL.
@@ -41,7 +45,8 @@
   data.table::data.table(
     c_election = d$election, c_seat = d$seat, c_s = normalise_seat(d$seat),
     c_sur = sur, c_giv = giv, c_stem = stem, c_key = ifelse(nzchar(stem), paste0(sur, "|", stem), NA_character_),
-    c_state = st, c_party = d$party, c_pcv = d$pcv, c_src = "general")
+    c_state = st, c_party = d$party, c_pcv = d$pcv, c_src = "general",
+    c_el = if ("elected" %in% names(d)) d$elected %in% TRUE else rep(FALSE, n))
 }
 
 #' @noRd
@@ -68,7 +73,7 @@
     if (!nrow(bw)) return(NULL)
     bw[, election := p$election]
     r <- .cs_prep(bw)
-    r[, `:=`(c_pcv = bw$pcv, c_src = "byelection")]
+    r[, `:=`(c_pcv = bw$pcv, c_src = "byelection", c_el = TRUE)]
     if (grepl("^fed", p$election)) r[, c_state := fed$c_state[match(c_s, fed$c_s)]]
     r
   })
@@ -82,7 +87,11 @@
 #' @noRd
 .cs_match <- function(cand, H) {
   cand <- cand[!is.na(c_key)]
-  H <- H[!is.na(c_key) & c_party %in% .CS_NONMAJ & is.finite(c_pcv)]
+  U <- unique(rbind(H[, list(c_sur, c_giv)], cand[, list(c_sur, c_giv)]))   # names known by the target election
+  # PERSONAL votes only (Pete 2026-10-05): won as an independent, or as a sitting member /
+  # by-election winner of a non-major class. A non-member One Nation/OTH share is the party's.
+  H <- H[!is.na(c_key) & c_party %in% .CS_NONMAJ & is.finite(c_pcv) &
+           (c_party == "IND" | c_el %in% TRUE | c_src == "byelection")]
   empty <- data.table::data.table(.id = integer(0), h_election = character(0), h_seat = character(0),
                                   h_party = character(0), h_pcv = numeric(0), h_src = character(0), n_hist = integer(0))
   if (!nrow(cand) || !nrow(H)) return(empty)
@@ -96,9 +105,22 @@
   same_seat <- m$h_s == m$c_s | m$h_s == c_s2
   m <- m[!(m$h_src == "byelection" & same_seat)]   # AUSPOL_BYELEC_LEVEL owns these
   if (!nrow(m)) return(empty)
+  # AMBIGUOUS PERSON: someone else with the same surname and first initial but a different
+  # (3+ letter, non-prefix) first name is known by the target election. REFUSE, do not credit.
+  U <- U[nchar(c_giv) >= 3L]
+  grp <- split(U$c_giv, paste0(U$c_sur, "|", substr(U$c_giv, 1L, 1L)))
+  amb <- vapply(seq_len(nrow(m)), function(i) {
+    g <- unique(grp[[paste0(m$h_sur[i], "|", substr(m$c_giv[i], 1L, 1L))]])
+    any(!.cs_given_ok(g, m$c_giv[i]) & g != m$c_giv[i])
+  }, NA)
+  refused <- m[amb, list(h_pcv = if (.N) max(h_pcv) else NA_real_), by = .id]
+  m <- m[!m$.id %in% refused$.id]
+  if (!nrow(m)) { empty <- data.table::copy(empty); attr(empty, "refused") <- refused; return(empty) }
   m[, n_hist := .N, by = .id]
   data.table::setorderv(m, c(".id", "h_pcv"), c(1L, -1L))
-  m[, .SD[1L], by = .id][, list(.id, h_election, h_seat, h_party, h_pcv, h_src, n_hist)]
+  res <- m[, .SD[1L], by = .id][, list(.id, h_election, h_seat, h_party, h_pcv, h_src, n_hist)]
+  attr(res, "refused") <- refused
+  res
 }
 
 # Weighted median.
@@ -113,9 +135,10 @@
 #' Of the vote a non-major candidate earned elsewhere, the fraction they
 #' keep when they stand with no same-seat history. Fitted TIME-FORWARD on
 #' the cross-seat cases themselves (every non-major candidate at an earlier
-#' election than `target_election` with a qualifying earlier non-major result
-#' in another seat, jurisdiction or skipped cycle, found by the same matching
-#' rules the credit uses), as the prior-weighted median of
+#' election, strictly before `target_election`, whose qualifying prior is a PERSONAL
+#' vote: won as IND, or as a sitting member or by-election winner of a non-major
+#' class; ambiguous namesakes refused; same matching rules as the credit), as the
+#' prior-weighted median of
 #' `realised / prior`. Weighting by the prior vote down-weights ratios taken on
 #' tiny denominators without a cut-off. It is then PARTIALLY POOLED toward the
 #' same-seat returning non-major ratio (same weighted median over consecutive
@@ -148,7 +171,7 @@ fit_cross_seat_carry <- function(target_election, corpus = NULL, pairs = NULL) {
     # same-seat returners (any party at the previous election): the existing machinery's
     P2 <- unique(rbind(P[!is.na(c_key), list(c_s, c_key)],
                        P[!is.na(c_key) & c_s %in% names(rn), list(c_s = unname(rn[c_s]), c_key)]))
-    Pn <- P[c_party %in% .CS_NONMAJ & is.finite(c_pcv) & !is.na(c_key)]
+    Pn <- P[c_party %in% .CS_NONMAJ & is.finite(c_pcv) & !is.na(c_key) & (c_party == "IND" | c_el)]   # personal votes only
     Pn2 <- unique(rbind(Pn[, list(c_s, c_key, prior = c_pcv)],
                         Pn[c_s %in% names(rn), list(c_s = unname(rn[c_s]), c_key, prior = c_pcv)]))
     Pn2 <- Pn2[, list(prior = max(prior)), by = list(c_s, c_key)]
@@ -193,7 +216,7 @@ fit_cross_seat_carry <- function(target_election, corpus = NULL, pairs = NULL) {
 #' @noRd
 .apply_cross_seat_credit <- function(out, NOWT, PREVT, C, election_from, election_to) {
   MAJ <- c("ALP", "LNP", "NAT")
-  .cs_env$last <- NULL
+  .cs_env$last <- NULL; .cs_env$refused <- NULL
   D <- .cs_prep(C)
   car <- tryCatch(fit_cross_seat_carry(election_to, corpus = C), error = function(e) {
     cat(sprintf("CSV1! carry fit FAILED, no cross-seat credit: %s\n", conditionMessage(e))); NULL })
@@ -216,14 +239,18 @@ fit_cross_seat_carry <- function(target_election, corpus = NULL, pairs = NULL) {
   H <- rbind(D[elections_before(c_election, election_to)],
              .cs_byelection_rows(D, list(election = election_to, prev = election_from), election_to), fill = TRUE)
   mt <- .cs_match(cand, H)
+  rf <- attr(mt, "refused")
+  if (!is.null(rf) && nrow(rf)) {
+    rc <- cand[match(rf$.id, cand$.id), list(seat, party, candidate = paste(c_giv, c_sur))]
+    .cs_env$refused <- cbind(rc, prior = rf$h_pcv)
+    cat(sprintf("CSV1 %s -> %s: %d ambiguous person match(es) REFUSED: %s
+", election_from, election_to, nrow(rc),
+                paste(sprintf("%s/%s %s", rc$seat, rc$party, rc$candidate), collapse = "; ")))
+  } else .cs_env$refused <- NULL
   if (!nrow(mt)) { cat(sprintf("CSV1 %s -> %s: carry %.3f (n=%d), no candidate credited\n", election_from, election_to, car$carry, car$n)); return(out) }
   mt <- merge(mt, cand[, list(.id, seat, party, c_giv, c_sur)], by = ".id")
   mt[, credit := car$carry * h_pcv]
-  # namesake risk: other people sharing surname and first initial but a conflicting first name
-  mt[, namesakes := vapply(seq_len(.N), function(i) {
-    o <- D[c_sur == mt$c_sur[i] & substr(c_giv, 1, 1) == substr(mt$c_giv[i], 1, 1)]
-    length(unique(o$c_giv[!is.na(o$c_giv) & nzchar(o$c_giv) & !.cs_given_ok(o$c_giv, mt$c_giv[i]) & o$c_giv != mt$c_giv[i]]))
-  }, 0L)]
+  mt[, namesakes := 0L]   # ambiguous people were refused inside .cs_match()
   # the class base the seat already had: never credit LESS than that
   cb <- PREVT[, list(cls_pcv = if (.N) max(pcv, na.rm = TRUE) else NA_real_), by = list(.s = normalise_seat(seat), party)]
   mt[, .s := normalise_seat(seat)]

@@ -3,14 +3,14 @@
 # R/cross_seat_vote.R, docs/reviews/cross-seat-personal-vote-2026-10-05.md.
 
 cs_corpus <- function() {
-  r <- function(e, seat, given, sur, party, pcv, state = NA_character_)
+  r <- function(e, seat, given, sur, party, pcv, state = NA_character_, el = FALSE)
     data.frame(election = e, seat = seat, name = paste(given, toupper(sur)), surname = toupper(sur), given = given,
-               party = party, pcv = pcv, state = state, elected = FALSE, stringsAsFactors = FALSE)
+               party = party, pcv = pcv, state = state, elected = el, stringsAsFactors = FALSE)
   maj <- function(e, seats, st = NA_character_) do.call(rbind, lapply(seats, function(s)
     rbind(r(e, s, "Al", paste0("Alp", s), "ALP", 45, st), r(e, s, "Lee", paste0("Lnp", s), "LNP", 40, st))))
   rbind(
     maj("nsw2015", c("S1", "S2")), maj("nsw2019", c("S1", "S2")),
-    maj("nsw2023", c("S3", "S4", "S5", "S6", "S7", "S8")),
+    maj("nsw2023", c("S3", "S4", "S5", "S6", "S7", "S8", "S9", "S10", "S11")),
     maj("fed2016", c("F1", "F2", "FV"), "NSW")[1:4, ], maj("fed2025", "F9", "NSW"),
     r("nsw2015", "S1", "Sam", "Roe", "IND", 20),
     r("nsw2019", "S1", "Sam", "Roe", "IND", 20),            # same-seat returner: ratio 1
@@ -25,7 +25,13 @@ cs_corpus <- function() {
     r("nsw2023", "S5", "Kim", "Voss", "IND", 4),            # Victorian record, NSW target
     r("nsw2023", "S6", "Max", "Orr", "IND", 5),             # prior was ALP
     r("nsw2023", "S7", "Rae", "King", "IND", 6),            # only a later result exists
-    r("nsw2023", "S8", "Pat", "Lee", "IND", 2))             # a second real cross-seat person
+    r("nsw2023", "S8", "Pat", "Lee", "IND", 2),             # a second real cross-seat person
+    r("fed2016", "F3", "Dana", "Boyd", "IND", 30, "NSW"),   # an unambiguous independent
+    r("nsw2023", "S9", "Dana", "Boyd", "IND", 25),
+    r("fed2016", "F4", "Ona", "Party", "ONP", 30, "NSW"),   # a party-label share as a NON-member
+    r("nsw2023", "S10", "Ona", "Party", "ONP", 3),
+    r("fed2016", "F5", "Sid", "Hill", "OTH_RIGHT", 30, "NSW", el = TRUE),   # a non-major SITTING MEMBER
+    r("nsw2023", "S11", "Sid", "Hill", "OTH_RIGHT", 4))
 }
 
 own <- function(res, seat, party = "IND") res$own_prev_pcv[res$seat == seat & res$party == party]
@@ -49,9 +55,9 @@ test_that("a candidate who won 30% as IND in a federal NSW seat is credited carr
   expect_equal(car$n, 1L)                       # the single earlier cross-seat case (Pat Lee)
   expect_equal(car$r_cross, 0.5); expect_equal(car$r_same, 1)
   expect_equal(car$w, 0)                        # one case has no standard error: all weight on the same-seat ratio
-  expect_equal(own(res, "S3"), car$carry * 30)
+  expect_equal(own(res, "S9"), car$carry * 30)   # Dana Boyd
   expect_equal(own(res, "S8"), car$carry * 20)  # Pat Lee's best prior (20, fed2016), credited again at nsw2023
-  expect_true(any(grepl("CSV1 nsw2019 -> nsw2023", lg)) && any(grepl("Jane Smith|jane smith", lg)))
+  expect_true(any(grepl("CSV1 nsw2019 -> nsw2023", lg)) && any(grepl("dana boyd", lg)))
   # the credited row leaves the other columns alone
   expect_true(is.na(res$prev_party[res$seat == "S3" & res$party == "IND"]) && is.na(res$transfer[res$seat == "S3" & res$party == "IND"]))
 })
@@ -60,11 +66,15 @@ test_that("a namesake, another state, a major-party vote and a later result are 
   C <- cs_corpus()
   withr::local_envvar(AUSPOL_CROSS_SEAT_VOTE = "1")
   utils::capture.output(res <- personal_prior_vote("nsw2019", "nsw2023", corpus = C))
-  expect_true(own(res, "S3") > 0)                # control: the check CAN fire on this corpus
+  expect_true(own(res, "S9") > 0)                # control: the check CAN fire on this corpus
   expect_true(is.na(own(res, "S4")))             # Jack SMITH is not Jane SMITH (same surname, same initial)
+  expect_true(is.na(own(res, "S3")))             # and Jane is REFUSED too: the person match is ambiguous
+  expect_equal(nrow(auspol:::.cs_env$refused), 1L)   # Jane is the refused match
   expect_true(is.na(own(res, "S5")))             # Kim VOSS earned it in Victoria
   expect_true(is.na(own(res, "S6")))             # Max ORR's 40 was an ALP vote
   expect_true(is.na(own(res, "S7")))             # Rae KING's 40 comes AFTER nsw2023
+  expect_true(is.na(own(res, "S10", "ONP")))     # a party-label (non-member) 30 stays with the party
+  expect_equal(own(res, "S11", "OTH_RIGHT"), auspol::fit_cross_seat_carry("nsw2023", corpus = C)$carry * 30)   # a non-major sitting member's 30 follows them
 })
 
 test_that("a later result never changes the carry fitted for an earlier target", {
