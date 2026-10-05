@@ -41,15 +41,17 @@ cs_corpus <- function() {
 
 own <- function(res, seat, party = "IND") res$own_prev_pcv[res$seat == seat & res$party == party]
 
-test_that("switch OFF (the default) credits nobody and matches the unset variable", {
+test_that("switch OFF credits nobody; the unset variable means ON (shipped 2026-10-06)", {
   C <- cs_corpus()
   withr::local_envvar(AUSPOL_CROSS_SEAT_VOTE = "0")
   off <- suppressMessages(utils::capture.output(a <- personal_prior_vote("nsw2019", "nsw2023", corpus = C)))
-  withr::local_envvar(AUSPOL_CROSS_SEAT_VOTE = NA)
-  utils::capture.output(b <- personal_prior_vote("nsw2019", "nsw2023", corpus = C))
-  expect_identical(a, b)
   expect_true(all(is.na(a$own_prev_pcv)))
   expect_false(any(grepl("CSV1", off)))
+  withr::local_envvar(AUSPOL_CROSS_SEAT_VOTE = "1")
+  utils::capture.output(on <- personal_prior_vote("nsw2019", "nsw2023", corpus = C))
+  withr::local_envvar(AUSPOL_CROSS_SEAT_VOTE = NA)
+  utils::capture.output(b <- personal_prior_vote("nsw2019", "nsw2023", corpus = C))
+  expect_identical(on, b)
 })
 
 test_that("a candidate who won 30% as IND in a federal NSW seat is credited carry x 30 in a state seat", {

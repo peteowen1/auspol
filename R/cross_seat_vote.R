@@ -1,4 +1,4 @@
-# Cross-seat / cross-jurisdiction personal vote (AUSPOL_CROSS_SEAT_VOTE, default "0").
+# Cross-seat / cross-jurisdiction personal vote (AUSPOL_CROSS_SEAT_VOTE, SHIPPED "1" 2026-10-06; prereg-crossseat-and-wa-port-2026-10-05.md Amendment A1).
 #
 # personal_prior_vote() looks at the SAME seat at the PREVIOUS election, so a
 # person who earned a personal vote somewhere else (another seat, state vs

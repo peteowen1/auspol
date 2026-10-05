@@ -129,3 +129,19 @@ after xgb and never reaches forecasts.csv).
 **Criteria:** exactly Arm A's three (primary < -2 SE and < -10% on base_pred-moved cells; ledger and
 whole table at most +1 SE). Named: the arm now cannot lower Stuart or Baldivis, so if those cells
 still worsen, that is xgb retraining and is reported separately.
+
+### Amendment A1 result (2026-10-06, `output/snapshots/20261006-0054-ff0a13d-from1`, 24 min) -- PASS, SHIPPED
+
+| Criterion | Result | Verdict |
+|---|---|---|
+| 1 PRIMARY (72 cells whose base_pred moved, 11 elections) | 2,977.6 -> 1,969.2 (-34%), SE 475.2 (2.1 SE) | PASS |
+| 2 GUARD ledger | 0.2822 -> 0.2809 (SE 0.0009) | holds (AEF 0.2825) |
+| 3 GUARD whole table | RMSE 3.810 -> 3.798 (SE 0.061) | holds |
+
+Seat-winner log loss, 22 elections: 0.2902 -> 0.2898. Fowler IND 5.2 -> 14.0 (29.5), Cowper IND 6.9 ->
+13.9 (29.6), Fremantle 2025 IND 14.1 -> 22.1 (23.0); Stuart and Baldivis no longer lowered. Largest cost
+nsw2023 +85 (Riverstone: Horan, flagged in advance as possibly a different person). The cache held stage
+1 at 336 s (667 s in Arm A). `AUSPOL_CROSS_SEAT_VOTE = "1"` in published_flags and as the default.
+Victoria 2026: 3 credits; the one that bites is Essendon IND (Oscar Yildiz, Pascoe Vale 2018 23.5 x
+0.47 = 11.1); two small One Nation credits from earlier independent runs (Bauch 2.9) cannot lower the
+class and are inert.
