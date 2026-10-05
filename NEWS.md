@@ -1,3 +1,10 @@
+# auspol 0.4.70
+
+- Nomination zeroing runs `late`, after the last step that can bring a zero back (`AUSPOL_NOM_ZERO_ORDER = "late"`, the `nom_zero_order()` default; Pete's override of clause R2). It reaches the published Victorian forecast only once the VEC final list is loaded (`AUSPOL_NOM_LIVE = 1`, after nominations close on 9 Nov). Until then the gate stays shut.
+- Provisional vic2026 candidate list: the union of Wikipedia and ABC, one row per person per seat. Expected seats move by at most 0.22, and one seat changes its most likely winner (Macedon, LNP to ALP). The newest ABC list is chosen by the stamp in its file name, so a same-day refetch is used.
+- Scenario tool for holding a party at a chosen share.
+- Tested and not shipped: the departed-hold, which holds a departed leader's decayed share fixed (`AUSPOL_DEPARTED_HOLD`, off), and the time-forward refit of the departed rate.
+
 # auspol 0.4.69
 
 - v61: every party with no candidate standing in a seat is zeroed after the xgb override (it had written phantom shares back, e.g. Labor 33.4 in Narracan 2022, which Labor did not contest), and its share goes where that party's voters go, by the preference-flow matrix (`AUSPOL_NOM_ZERO = "2"`, all six harnesses). 22-election log loss 0.3434 -> 0.3413; primary RMSE over the 1,313 affected seats 3.984 -> 3.774.
