@@ -91,13 +91,36 @@ test_that("returning is matched PER CANDIDATE, not broadcast to the whole class"
     keyword = c("John Smith", "Amy Jones", "Someone Else"),
     jump = c(0, 0, 5), prev_party = c(0, 0, 0)),
     "output/salience-v6.csv")
-  r <- salience_permit_for("x", "x0", "xx")
-  expect_equal(nrow(r), 3L)
+  # The per-candidate verdict lives in governed_population().
+  g <- governed_population("x", "x0", "xx")
   # John Smith personally returns -> ungoverned -> permitted even though silent
-  expect_true(r$permit[r$seat == "A"][1])
+  expect_false(g$governed[g$keyword == "John Smith"])
   # Amy Jones is genuinely new -> governed, silent, and registration is 33% ->
   # refused, which is exactly the distinction the class-level bug erased
-  expect_false(r$permit[r$seat == "A"][2])
+  expect_true(g$governed[g$keyword == "Amy Jones"])
+  # CHANGED 2026-10-05: salience_permit_for() is now ONE row per (seat, class),
+  # the permit of the class LEADER (highest prior vote in the seat). The old
+  # assertion expected a row per candidate, which the harnesses then collapsed
+  # by row order. Here John Smith (prior 50) leads, so seat A is permitted
+  # whatever order the salience rows come in.
+  data.table::fwrite(data.table::data.table(
+    election = "x", seat = c("A", "A"), party = "IND", name = c("Jones, Amy", "Smith, John"),
+    surname = c("Jones", "Smith"), given = c("Amy", "John"), pcv = c(30, 20)),
+    "output/candidacies.csv", append = TRUE)
+  r <- salience_permit_for("x", "x0", "xx")
+  expect_equal(nrow(r), 2L)
+  expect_false(anyDuplicated(r[, .(seat, party)]) > 0)
+  expect_true(r$permit[r$seat == "A"])
+  # And never row order: reverse the salience rows, same answer
+  sal <- data.table::fread("output/salience-v6.csv")
+  data.table::fwrite(sal[rev(seq_len(nrow(sal)))], "output/salience-v6.csv")
+  r2 <- salience_permit_for("x", "x0", "xx")
+  expect_true(r2$permit[r2$seat == "A"])
+})
+
+test_that(".permit_lut stops on a duplicated seat instead of picking by row order", {
+  expect_error(auspol:::.permit_lut(data.frame(seat = c("D", "D"), permit = c(TRUE, FALSE))), "duplicated")
+  expect_equal(unname(auspol:::.permit_lut(data.frame(seat = c("D", "E"), permit = c(TRUE, FALSE)))), c(TRUE, FALSE))
 })
 
 test_that("a candidacies row with a missing seat name does not poison other rows to NA", {
