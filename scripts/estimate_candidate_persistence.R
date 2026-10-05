@@ -43,6 +43,9 @@ for (k in seq_len(nrow(E))) {
     # SAME PERSON: a surname standing for this class in this seat at both.
     # Surname only, exactly -- a six-character full-name prefix once matched
     # Daniel POLLOCK to Zoe DANIEL and recorded her debut as a re-run.
+    # FROZEN DIAGNOSTIC, deliberately NOT converted: this script compares the match
+    # rules against each other, so "initial" must stay here as the loose baseline
+    # ("person" is the rule the model code uses; see R/names.R).
     for (rl in c("surname", "initial", "full")) {
       set(D, j = paste0("same_", rl), value = vapply(D$seat, function(s) {
         a <- match_key(NOWT [seat == s & party == cls, sur],
