@@ -38,7 +38,7 @@ own_prior_any_party <- function(target, prev) {
     surname_of(if ("surname" %in% names(d)) d$surname else NA_character_,
               if ("name" %in% names(d)) d$name else NA_character_),
     given_of(if ("given" %in% names(d)) d$given else NA_character_,
-            if ("name" %in% names(d)) d$name else NA_character_), "initial")
+            if ("name" %in% names(d)) d$name else NA_character_), "person")  # not "initial": Trevor/Tony SMITH are two people (R/names.R given_conflict); bare-initial rows are not aligned here
   NOWT <- copy(NOWT)[, .k := kf(.SD), .SDcols = names(NOWT)]
   PREVT <- copy(PREVT)[, .k := kf(.SD), .SDcols = names(PREVT)]
   NOWT[, .s := ns(seat)]; PREVT[, .s := ns(seat)]

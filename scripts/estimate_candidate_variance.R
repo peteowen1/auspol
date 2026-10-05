@@ -37,8 +37,9 @@ for (k in seq_len(nrow(E))) {
     D[is.na(now), now := 0][is.na(prev), prev := 0]
     if (nrow(D) < 30 || sum(D$prev > 0) < 10) next
     D[, same := vapply(seat, function(s) {
-      x <- match_key(NOWT [seat == s & party == cls, sur], NOWT [seat == s & party == cls, giv], "initial")
-      y <- match_key(PREVT[seat == s & party == cls, sur], PREVT[seat == s & party == cls, giv], "initial")
+      # "person" not "initial": Trevor/Tony SMITH are two people (R/names.R given_conflict)
+      x <- match_key(NOWT [seat == s & party == cls, sur], NOWT [seat == s & party == cls, giv], "person")
+      y <- match_key(PREVT[seat == s & party == cls, sur], PREVT[seat == s & party == cls, giv], "person")
       any(nzchar(x) & x %in% y[nzchar(y)])
     }, TRUE)]
     D[, `:=`(pair = paste0(rg, yr), class = cls)]

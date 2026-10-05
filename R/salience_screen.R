@@ -422,11 +422,13 @@ salience_permit_for <- function(election, prev_election, region,
                           if ("name" %in% names(d)) d$name else NA_character_)
         giv <- given_of(if ("given" %in% names(d)) d$given else NA_character_,
                         if ("name" %in% names(d)) d$name else NA_character_)
-        match_key(sur, giv, "initial")
+        match_key(sur, giv, "person")
       }
       NOWT  <- data.table::copy(NOWT)[,  `:=`(.k = kf(.SD), .s = normalise_seat(seat))]
       PREVT <- data.table::copy(PREVT)[, `:=`(.k = kf(.SD), .s = normalise_seat(seat))]
-      L <- .class_leader_rows(NOWT, .prev_with_byelection_mp(PREVT, prev_election, election))
+      PREVB <- .prev_with_byelection_mp(PREVT, prev_election, election)
+      align_person_keys(NOWT, PREVB); align_person_keys(PREVB, NOWT)   # after the by-election rows are added
+      L <- .class_leader_rows(NOWT, PREVB)
       L[, .kw := ns(search_form(if ("given" %in% names(L)) given else NA_character_,
                                 if ("surname" %in% names(L)) surname else NA_character_,
                                 if ("name" %in% names(L)) name else NA_character_))]

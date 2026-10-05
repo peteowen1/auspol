@@ -20,7 +20,7 @@ devtools::load_all("C:/dev/auspol", quiet = TRUE)
 C <- fread("C:/dev/auspol/output/candidacies.csv", showProgress = FALSE)
 MAJ <- c("ALP", "LNP", "NAT")
 kk <- function(d) match_key(surname_of(if ("surname" %in% names(d)) d$surname else NA_character_, d$name),
-                            given_of(if ("given" %in% names(d)) d$given else NA_character_, d$name), "initial")
+                            given_of(if ("given" %in% names(d)) d$given else NA_character_, d$name), "person")
 pairs <- all_election_pairs()
 tgt_el <- unique(FA$election)
 T <- rbindlist(lapply(pairs, function(pr) {
@@ -31,19 +31,12 @@ T <- rbindlist(lapply(pairs, function(pr) {
   # Black sa2026, was replaced at the 2024 by-election and was not sitting).
   P <- .prev_with_byelection_mp(P, pr$prev, pr$election)
   P[, `:=`(.k = kk(.SD), .s = normalise_seat(seat))]; N[, `:=`(.k = kk(.SD), .s = normalise_seat(seat))]
-  gv <- function(d) tolower(gsub("[^A-Za-z]", "", given_of(if ("given" %in% names(d)) d$given else NA_character_, d$name)))
-  P[, .g := gv(.SD)]; N[, .g := gv(.SD)]
-  m <- merge(P[nzchar(.k) & party %in% MAJ & elected %in% TRUE, .(.s, .k, prior_party = party, prior_pcv = pcv, prior_name = name, .g_p = .g)],
-             N[nzchar(.k) & !party %in% MAJ, .(.s, .k, seat, name, party, pcv, .g_n = .g)], by = c(".s", ".k"))
-  if (!nrow(m)) return(NULL)
   # A party switch is where a surname+initial collision is costly: it invents a
-  # defector (Trevor SMITH matched to the sitting Tony SMITH, Casey fed2022). Drop
-  # a match whose first names disagree in their first TWO letters; Mike/Michael and
-  # Kate/Katherine still match (R/names.R documents why the initial key is used).
-  bad <- nzchar(m$.g_p) & nzchar(m$.g_n) & substr(m$.g_p, 1, 2) != substr(m$.g_n, 1, 2)
-  if (any(bad)) cat(sprintf("DL1! %s: dropped %d first-name conflict(s): %s\n", pr$election, sum(bad),
-                            paste(sprintf("%s (%s) vs %s", m$prior_name[bad], m$.s[bad], m$name[bad]), collapse = "; ")))
-  m <- m[!bad]
+  # defector (Trevor SMITH matched to the sitting Tony SMITH, Casey fed2022). The
+  # "person" key (R/names.R: given_conflict() inside the key) drops those joins.
+  align_person_keys(N, P); align_person_keys(P, N)
+  m <- merge(P[nzchar(.k) & party %in% MAJ & elected %in% TRUE, .(.s, .k, prior_party = party, prior_pcv = pcv, prior_name = name)],
+             N[nzchar(.k) & !party %in% MAJ, .(.s, .k, seat, name, party, pcv)], by = c(".s", ".k"))
   if (!nrow(m)) return(NULL)
   m[, election := pr$election][]
 }))
