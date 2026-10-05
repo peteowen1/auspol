@@ -110,13 +110,17 @@
   # who (a) ALSO holds a qualifying personal prior, so the credit could belong to either, or (b) exists
   # at all when this match relied on a prefix/nickname fold rather than an exact first name.
   U <- U[nchar(c_giv) >= 3L & !is.na(c_state)]
-  grp <- split(U, paste0(U$c_sur, "|", substr(U$c_giv, 1L, 1L)))
+  # plain vectors, not split.data.table / per-row data.table subsetting: that was the
+  # dominant cost of a warm cross-seat call
+  u_giv <- U$c_giv; u_state <- U$c_state; u_qual <- U$qual
+  grp <- split(seq_len(nrow(U)), paste0(U$c_sur, "|", substr(u_giv, 1L, 1L)))
+  m_key <- paste0(m$h_sur, "|", substr(m$c_giv, 1L, 1L)); m_cgiv <- m$c_giv; m_cst <- m$c_state; m_hgiv <- m$h_giv
   amb <- vapply(seq_len(nrow(m)), function(i) {
-    o <- grp[[paste0(m$h_sur[i], "|", substr(m$c_giv[i], 1L, 1L))]]
+    o <- grp[[m_key[i]]]
     if (is.null(o)) return(FALSE)
-    o <- o[o$c_state == m$c_state[i] & !.cs_given_ok(o$c_giv, m$c_giv[i]) & o$c_giv != m$c_giv[i]]
-    if (!nrow(o)) return(FALSE)
-    any(o$qual) || m$c_giv[i] != m$h_giv[i]
+    o <- o[u_state[o] == m_cst[i] & !.cs_given_ok(u_giv[o], m_cgiv[i]) & u_giv[o] != m_cgiv[i]]
+    if (!length(o)) return(FALSE)
+    any(u_qual[o]) || m_cgiv[i] != m_hgiv[i]
   }, NA)
   refused <- m[amb, list(h_pcv = if (.N) max(h_pcv) else NA_real_), by = .id]
   m <- m[!m$.id %in% refused$.id]
@@ -214,16 +218,85 @@ fit_cross_seat_carry <- function(target_election, corpus = NULL, pairs = NULL) {
 
 .cs_env <- new.env(parent = emptyenv())
 
+# ---- MEMOISATION -----------------------------------------------------------
+# personal_prior_vote() runs inside every harness pair and every rebuild stage, and
+# the carry fit plus the by-election history rows are pure functions of (target
+# election, corpus, pairs, by-election tables, AUSPOL_* switches). Two layers: an
+# in-session environment, and a small on-disk RDS cache so the separate processes of
+# a rebuild share one fit. Bump .CS_CACHE_VERSION when the fitting code changes.
+.CS_CACHE_VERSION <- "cs-cache-1"
+.cs_memo <- new.env(parent = emptyenv())
+
+# Cache directory: the argument, else AUSPOL_CROSS_SEAT_CACHE_DIR, else output/cache/cross-seat.
+#' @noRd
+.cs_cache_dir <- function(cache_dir = NULL) {
+  if (!is.null(cache_dir)) return(cache_dir)
+  e <- Sys.getenv("AUSPOL_CROSS_SEAT_CACHE_DIR", "")
+  if (nzchar(e)) e else file.path("output", "cache", "cross-seat")
+}
+
+# What the cached value depends on, hashed: the corpus (every column), the election pair
+# list, the by-election source files, every AUSPOL_* switch and the cache version.
+#' @noRd
+.cs_fingerprint <- function(what, corpus, ...) {
+  bd <- file.path("external", "reference", "byelections")
+  bf <- if (dir.exists(bd)) sort(list.files(bd, full.names = TRUE)) else character(0)
+  ev <- Sys.getenv(); ev <- ev[grepl("^AUSPOL_", names(ev)) & names(ev) != "AUSPOL_CROSS_SEAT_CACHE_DIR"]
+  digest::digest(list(.CS_CACHE_VERSION, what, as.data.frame(corpus), all_election_pairs(),
+                      unname(tools::md5sum(bf)), ev[order(names(ev))], list(...)), algo = "xxhash64")
+}
+
+# Memoise `compute()` under `key` (session environment, then disk). A corrupt or
+# unreadable disk entry is recomputed; a failed write is reported, never fatal.
+#' @noRd
+.cs_cached <- function(key, compute, cache_dir = NULL, disk = TRUE) {
+  if (exists(key, envir = .cs_memo, inherits = FALSE)) return(get(key, envir = .cs_memo, inherits = FALSE))
+  f <- file.path(.cs_cache_dir(cache_dir), paste0(key, ".rds"))
+  val <- NULL
+  if (disk && file.exists(f)) val <- tryCatch(readRDS(f), error = function(e) NULL)
+  if (is.null(val)) {
+    val <- compute()
+    if (disk) tryCatch({
+      dir.create(dirname(f), recursive = TRUE, showWarnings = FALSE)
+      tmp <- tempfile(pattern = paste0(key, "-"), tmpdir = dirname(f), fileext = ".tmp")
+      saveRDS(val, tmp)
+      if (!file.rename(tmp, f)) { unlink(tmp); stop("rename failed") }
+    }, error = function(e) cat(sprintf("CSV1! cross-seat cache write failed (%s): %s\n", f, conditionMessage(e))))
+  }
+  assign(key, val, envir = .cs_memo)
+  val
+}
+
+#' Clear the in-session cross-seat memo (tests and benchmarks)
+#' @return Invisibly `NULL`.
+#' @export
+clear_cross_seat_cache <- function() {
+  rm(list = ls(.cs_memo, all.names = TRUE), envir = .cs_memo)
+  invisible(NULL)
+}
+
+#' @noRd
+.cs_carry_cached <- function(target_election, corpus, cache_dir = NULL) {
+  key <- .cs_fingerprint("carry", corpus, target_election)
+  .cs_cached(key, function() fit_cross_seat_carry(target_election, corpus = corpus), cache_dir)
+}
+
+#' @noRd
+.cs_byelection_cached <- function(D, corpus, extra_pair, cutoff_election, cache_dir = NULL) {
+  key <- .cs_fingerprint("byrows", corpus, extra_pair, cutoff_election)
+  .cs_cached(key, function() .cs_byelection_rows(D, extra_pair, cutoff_election), cache_dir)
+}
+
 # Called from personal_prior_vote() under AUSPOL_CROSS_SEAT_VOTE=1. `out` is the
 # per-(seat, party) leader table; credits only rows whose own_prev_pcv is still
 # NA in a non-major class. Returns `out`; the credit table is left in
 # .cs_env$last for the dry-run script.
 #' @noRd
-.apply_cross_seat_credit <- function(out, NOWT, PREVT, C, election_from, election_to) {
+.apply_cross_seat_credit <- function(out, NOWT, PREVT, C, election_from, election_to, cache_dir = NULL) {
   MAJ <- c("ALP", "LNP", "NAT")
   .cs_env$last <- NULL; .cs_env$refused <- NULL
-  D <- .cs_prep(C)
-  car <- tryCatch(fit_cross_seat_carry(election_to, corpus = C), error = function(e) {
+  D <- .cs_cached(.cs_fingerprint("prep", C), function() .cs_prep(C), disk = FALSE)
+  car <- tryCatch(.cs_carry_cached(election_to, C, cache_dir), error = function(e) {
     cat(sprintf("CSV1! carry fit FAILED, no cross-seat credit: %s\n", conditionMessage(e))); NULL })
   if (is.null(car)) return(out)
   if (!is.finite(car$carry)) {
@@ -242,7 +315,7 @@ fit_cross_seat_carry <- function(target_election, corpus = NULL, pairs = NULL) {
   cand <- cand[!paste(c_s, c_key) %in% paste(P2$c_s, P2$c_key)]
   if (!nrow(cand)) return(out)
   H <- rbind(D[elections_before(c_election, election_to)],
-             .cs_byelection_rows(D, list(election = election_to, prev = election_from), election_to), fill = TRUE)
+             .cs_byelection_cached(D, C, list(election = election_to, prev = election_from), election_to, cache_dir), fill = TRUE)
   mt <- .cs_match(cand, H)
   rf <- attr(mt, "refused")
   if (!is.null(rf) && nrow(rf)) {
@@ -270,7 +343,16 @@ fit_cross_seat_carry <- function(target_election, corpus = NULL, pairs = NULL) {
   if (!"transfer" %in% names(out)) out[, transfer := NA_real_]
   ch <- best[best$changed]
   idx <- match(paste(ch$seat, ch$party), paste(out$seat, out$party))
-  if (nrow(ch)) out[idx, `:=`(own_prev_pcv = ch$applied, prev_party = NA_character_, transfer = NA_real_)]
+  if (nrow(ch)) {
+    # own_prev_source marks a CROSS-SEAT credit. Every harness's .own_x() substitutes
+    # own_prev_pcv for the class base wholesale, which is right for a same-seat person
+    # but would LOWER a class whose own history is stronger (Stuart IND 25.0 -> 21.9). A
+    # cross-seat credit may only RAISE a class: own_prev_substitute() applies it as
+    # max(class base, credit). The column exists only when this switch credited something.
+    if (!"own_prev_source" %in% names(out)) out[, own_prev_source := NA_character_]
+    out[idx, `:=`(own_prev_pcv = ch$applied, prev_party = NA_character_, transfer = NA_real_,
+                  own_prev_source = "cross_seat")]
+  }
   .cs_env$last <- best[, list(seat, party, candidate = paste(c_giv, c_sur), source_election = h_election, source_seat = h_seat,
                               source = h_src, prior = h_pcv, carry = car$carry, credit, class_base = cls_pcv, own_prev_pcv = applied,
                               changed, namesakes, n_hist)]

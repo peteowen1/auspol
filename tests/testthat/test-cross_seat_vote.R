@@ -106,3 +106,67 @@ test_that("an unknown state refuses the match (fed row without a state)", {
   utils::capture.output(res <- personal_prior_vote("nsw2019", "nsw2023", corpus = C))
   expect_true(is.na(own(res, "S3")))
 })
+
+# ---- never lower a class -----------------------------------------------------
+test_that("own_prev_substitute: a cross-seat credit can only RAISE the class base; a same-seat value replaces it", {
+  op <- data.table::data.table(seat = c("A", "B", "C", "D"), party = "IND",
+                               own_prev_pcv = c(21.9, 21.9, 10, 7),
+                               own_prev_source = c("cross_seat", "cross_seat", NA, "cross_seat"))
+  x <- c(A = 25.0, B = 5.0, C = 30, D = NA, E = 12)
+  r <- own_prev_substitute(op, "IND", names(x), x)
+  expect_equal(unname(r), c(25.0, 21.9, 10, 7, 12))   # A not lowered; B raised; C same-seat replaces (as before); D NA base takes the credit
+  expect_equal(own_prev_substitute(NULL, "IND", names(x), x), x)
+  expect_equal(own_prev_substitute(op, "GRN", names(x), x), x)
+  # without the source column (switch off) it is the old wholesale replacement, even downward
+  op2 <- op[, !"own_prev_source"]
+  expect_equal(unname(own_prev_substitute(op2, "IND", names(x), x))[1:2], c(21.9, 21.9))
+})
+
+test_that("a cross-seat credit is marked own_prev_source = cross_seat; the column is absent with the switch off", {
+  C <- cs_corpus()
+  withr::local_envvar(AUSPOL_CROSS_SEAT_VOTE = "0", AUSPOL_CROSS_SEAT_CACHE_DIR = withr::local_tempdir())
+  utils::capture.output(off <- personal_prior_vote("nsw2019", "nsw2023", corpus = C))
+  expect_false("own_prev_source" %in% names(off))
+  withr::local_envvar(AUSPOL_CROSS_SEAT_VOTE = "1")
+  utils::capture.output(on <- personal_prior_vote("nsw2019", "nsw2023", corpus = C))
+  expect_equal(on$own_prev_source[on$seat == "S9" & on$party == "IND"], "cross_seat")
+  expect_true(all(is.na(on$own_prev_source[is.na(on$own_prev_pcv)])))
+})
+
+# ---- memoisation ------------------------------------------------------------
+test_that("the carry cache: a hit returns the identical result, and changing the corpus invalidates it", {
+  clear_cross_seat_cache()
+  d <- withr::local_tempdir()
+  withr::local_envvar(AUSPOL_CROSS_SEAT_CACHE_DIR = d, AUSPOL_CROSS_SEAT_VOTE = "1")
+  C <- cs_corpus()
+  nf <- function() length(list.files(d, pattern = "\\.rds$"))
+  a <- auspol:::.cs_carry_cached("nsw2023", C)
+  expect_identical(nf(), 1L)
+  expect_identical(auspol:::.cs_carry_cached("nsw2023", C), a)        # session hit
+  clear_cross_seat_cache()
+  expect_identical(auspol:::.cs_carry_cached("nsw2023", C), a)        # disk hit in a "new session"
+  expect_identical(nf(), 1L)                                          # nothing recomputed or rewritten
+  expect_equal(a, fit_cross_seat_carry("nsw2023", corpus = C))        # cached == uncached
+  # a different corpus (one earlier result changed) is a new key and a new fit
+  C2 <- C; C2$pcv[C2$election == "fed2016" & C2$surname == "LEE" & C2$party == "IND"] <- 40
+  b <- auspol:::.cs_carry_cached("nsw2023", C2)
+  expect_identical(nf(), 2L)
+  expect_false(isTRUE(all.equal(a$cases$prior, b$cases$prior)))
+  # a different target election and a different AUSPOL_ switch are different keys too
+  auspol:::.cs_carry_cached("nsw2019", C)
+  expect_identical(nf(), 3L)
+  withr::local_envvar(AUSPOL_TIME_FORWARD_FITS = "0")
+  auspol:::.cs_carry_cached("nsw2023", C)
+  expect_identical(nf(), 4L)
+})
+
+test_that("a corrupt cache file is recomputed, not trusted", {
+  clear_cross_seat_cache()
+  d <- withr::local_tempdir()
+  withr::local_envvar(AUSPOL_CROSS_SEAT_CACHE_DIR = d)
+  C <- cs_corpus()
+  a <- auspol:::.cs_carry_cached("nsw2023", C)
+  f <- list.files(d, full.names = TRUE, pattern = "\\.rds$"); writeLines("garbage", f)
+  clear_cross_seat_cache()
+  expect_equal(auspol:::.cs_carry_cached("nsw2023", C), a)
+})
