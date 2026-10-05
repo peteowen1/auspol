@@ -902,6 +902,14 @@ personal_prior_vote <- function(election_from, election_to, corpus = NULL,
       out[, c("def_pcv", "def_party", "def_was_mp", "cls_pcv") := NULL]
     }
   }
+  # CROSS-SEAT / CROSS-JURISDICTION PERSONAL VOTE (AUSPOL_CROSS_SEAT_VOTE, default
+  # "0", PREREG PENDING; R/cross_seat_vote.R). A class leader still without an own
+  # vote after every same-seat mechanism above is credited carry x their best
+  # earlier NON-MAJOR result anywhere (other seat, state vs federal, skipped
+  # cycle, by-election), time-forward and person-matched.
+  if (identical(Sys.getenv("AUSPOL_CROSS_SEAT_VOTE", "0"), "1")) {
+    out <- .apply_cross_seat_credit(out, NOWT, PREVT, C, election_from, election_to)
+  }
   # THE VOTE MOVES WITH THE PERSON. `transfer` is how much of the prior class's
   # seat base this candidate's own vote was, and `prev_party` which class held
   # it. A caller that substitutes `own_prev_pcv` into the new class MUST also
