@@ -22,9 +22,10 @@ A list: \code{carry} (NA with no cases), \code{r_cross}, \code{r_same}, \code{w}
 Of the vote a non-major candidate earned elsewhere, the fraction they
 keep when they stand with no same-seat history. Fitted TIME-FORWARD on
 the cross-seat cases themselves (every non-major candidate at an earlier
-election than \code{target_election} with a qualifying earlier non-major result
-in another seat, jurisdiction or skipped cycle, found by the same matching
-rules the credit uses), as the prior-weighted median of
+election, strictly before \code{target_election}, whose qualifying prior is a PERSONAL
+vote: won as IND, or as a sitting member or by-election winner of a non-major
+class; ambiguous namesakes refused; same matching rules as the credit), as the
+prior-weighted median of
 \code{realised / prior}. Weighting by the prior vote down-weights ratios taken on
 tiny denominators without a cut-off. It is then PARTIALLY POOLED toward the
 same-seat returning non-major ratio (same weighted median over consecutive
