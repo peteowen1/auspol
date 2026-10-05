@@ -67,3 +67,19 @@ wa2017 Baldivis IND 10.5 -> 7.2 (23.9). The credit (carry x prior = 22.4 for Bro
 base, so where the class already had more, the arm took it away. Seat log loss over 22 elections
 0.2903 -> 0.2918. The switch stays off. Cost: stages 1, 3 and 6 ran about twice as long, because the
 carry is refitted on every personal_prior_vote() call.
+
+## Arm B result (2026-10-05, `output/snapshots/20261005-2353-9a9e3dd-from6`) -- REFUSED, to Pete
+
+Run from stage 6 (`AUSPOL_REBUILD_FROM=6`): the port applies only at `AUSPOL_XGB_PRIMARY=1`
+(`backtest_candidate_vic.R:768`, `_wa.R:635`), so stages 1-5 are identical to the baseline by
+construction. 8.4 min instead of ~25. Consequence: no xgb retraining noise, so the 0.010 bar (set from
+retraining noise) was stricter than this run needed; recorded, not changed.
+
+| Criterion | Result | Verdict |
+|---|---|---|
+| 1 PRIMARY, WA reached (wa2013, wa2017, wa2025) | mean change -0.0032 per seat (wa2025 -0.0064 SE 0.0117, wa2017 -0.0034 SE 0.0020, wa2013 +0.0001) | FAIL (needs < -0.010) |
+| 2 GUARD other states (729 seats) | 0.2463 -> 0.2488: vic2018 +0.0107, qld2020 +0.0080 (no-cliff targets moved 0 -> pooled ~0.23), qld2024 +0.0029; nsw2023 -0.0020 | worse |
+| 3 GUARD ledger / whole table | 0.2827 -> 0.2823; RMSE unchanged | holds |
+
+Reading: WA gains a little; removing the cliff hurts the two early targets it switched on. Both
+switches stay off.
