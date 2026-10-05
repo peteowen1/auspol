@@ -113,3 +113,19 @@ direction is right and nothing else moves, so the call goes to Pete.
 (`NOCLIFF = "0"`). Pete's reasoning: a weak, already-shrunk signal that cannot move anything outside WA
 is safe to include. Victoria 2026: mode 2 resolves to "0" for a non-WA target
 (`R/seat_swing_port.R:123`), so the live forecast and the GitHub runner never read the WA file.
+
+## Amendment A1 (2026-10-06): cross-seat arm rerun after the never-lower fix
+
+The original Arm A clauses are unedited. The Arm A run had a defect, not a design choice: the
+cross-seat credit replaced the class base, so where the class already had more it was LOWERED
+(Stuart 25.0 -> 18.2, Baldivis 10.5 -> 7.2), the opposite of the design ("credit only where it beats
+the base"). Fixed in `own_prev_substitute()` (max(base, credit) for cross-seat credits, all seven
+`.own_x()` sites), and the carry fit is cached (warm call 1.4 s vs 1.0-1.4 s off; Arm A ran 43 min).
+
+**Change:** `AUSPOL_CROSS_SEAT_VOTE=1` at the fixed code. Full rebuild (it changes base_pred).
+**Baseline:** the shipped configuration including the WA nudge: `output/snapshots/20261006-0010-f1fc3f1-from6`
+for the seat files and the ledger (its forecasts.csv equals the f35d761 one: the WA nudge is applied
+after xgb and never reaches forecasts.csv).
+**Criteria:** exactly Arm A's three (primary < -2 SE and < -10% on base_pred-moved cells; ledger and
+whole table at most +1 SE). Named: the arm now cannot lower Stuart or Baldivis, so if those cells
+still worsen, that is xgb retraining and is reported separately.
