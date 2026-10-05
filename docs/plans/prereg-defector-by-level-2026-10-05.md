@@ -85,3 +85,25 @@ reportable outcome, and is not a refusal of the idea.
 Scoring the pre-fix rebuild against the bug-fix rebuild (both known): DL3 reproduces the ledger's
 0.2796 -> 0.2874 and reports BREACHED; DL4 reports the whole-table RMSE 3.909 -> 3.872 and HOLDS;
 DL1 drops the Casey name clash and Speirs (not sitting). So each check fires on a case where it should.
+
+## Result (2026-10-05, arm snapshot `output/snapshots/20261005-1756-986b89f-from1`) -- REFUSED by its criteria
+
+Scored with the committed scorer against `output/snapshots/20261005-1615-7d2b36c-from1`. The arm
+logged the dry-run rates (`DEF-L` lines in stage 1 and 6 logs, e.g. fed2013 0.230, wa2013 0.644).
+
+| Criterion | Result | Verdict |
+|---|---|---|
+| 1 PRIMARY, 14 cells | 2,162.7 -> 2,207.0, change +44.3, SE 750.6 | FAIL (within 1 SE: inconclusive) |
+| 2 GUARD ledger log loss | 0.2874 -> 0.2855, change -0.0019, clustered SE 0.0046 | holds |
+| 3 GUARD whole-table | RMSE 3.848 -> 3.853, mean sq change +0.040, SE 0.149 | holds |
+| 4 DISQUALIFIER | Calare fed2025 (Gee, won) 0.980 -> 0.899 | FIRES |
+
+The split named in advance as unacceptable happened: all five federal cells improved (Hughes 25.1 ->
+16.2 vs 7.4; Tangney 24.8 -> 15.6 vs 11.9; Dobell 23.1 -> 15.6 vs 12.2; Monash 34.1 -> 29.5 vs 27.3;
+Calare 52.1 -> 45.7 vs 39.5), the state survivors improved (Kavel 28.4 -> 31.0 vs 50.5, win probability
+0.80 -> 0.93; Kiama 25.9 -> 29.5 vs 38.8, 0.48 -> 0.76; Waite, Narungga), and three state cells got much
+worse (Hillarys wa2017 21.7 -> 43.9 vs 20.1; MacKillop sa2026 26.7 -> 35.3 vs 14.8; Morwell vic2018
+29.5 -> 37.5 vs 28.2). Cause of the state damage: the state rate for early targets is fitted from 3
+cases (wa2017: est 0.693, se 0.152 from a 3-point sd, weight 0.83), so the shrinkage does not pull it
+back; the se formula is overconfident at tiny n. Calare's disqualifier fired while Gee's primary moved
+TOWARD his actual (13.6 over -> 6.2 over). Switch stays off; the split goes to Pete.
