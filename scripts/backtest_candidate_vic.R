@@ -922,6 +922,7 @@ for (K in PAIRS) {
   # reader of `shares` below (reentry_sd_matrix, the sd/flow overrides, the simulation).
   # `salience_sd_matrix()` inside the block above still read the unzeroed matrix.
   .nz_pre <- shares
+  nom_zero_save_flows(fm, sprintf("vic%d", K$to))   # the as-at forecasts table zeroes with this same fm
   shares <- zero_unnominated_at("late", shares, fb, sprintf("vic%d", K$to), flows = fm)
   .nz_cells <- nomination_zeroed_cells(.nz_pre, shares)
   # ARM H, docs/plans/prereg-reentry-flatratio-variance-2026-09-08.md. Widens

@@ -257,7 +257,7 @@ test_that("the end-of-run assertion fails when a step after the zeroing revives 
 test_that("zero_unnominated_asat zeroes the absent class, keeps each raw seat total, leaves other seats alone", {
   withr::local_envvar(AUSPOL_NOM_ZERO = "1")
   f <- .asat_fixture()
-  out <- suppressMessages(utils::capture.output(r <- zero_unnominated_asat(f)))
+  out <- suppressMessages(utils::capture.output(r <- zero_unnominated_asat(f, allow_proportional = TRUE)))
   expect_equal(r[seat == "Narracan" & party == "ALP", xgb_pred], 0)
   expect_equal(r[seat == "Narracan", sum(xgb_pred)], 74)           # raw total, not 100
   expect_equal(r[seat == "Narracan" & party == "LNP", xgb_pred], 38 / 50 * 74)
@@ -274,8 +274,25 @@ test_that("zero_unnominated_asat is byte-identical with the switch off", {
 test_that("zero_unnominated_asat does nothing when every class stood (a broken target must not zero)", {
   withr::local_envvar(AUSPOL_NOM_ZERO = "2")
   f <- .asat_fixture(); f$actual_share <- pmax(f$actual_share, 1)
-  utils::capture.output(r <- zero_unnominated_asat(f))
+  utils::capture.output(r <- zero_unnominated_asat(f, allow_proportional = TRUE))
   expect_equal(r$xgb_pred, f$xgb_pred)
+})
+
+test_that("zero_unnominated_asat STOPS at mode 2 when an election has no flow matrix", {
+  withr::local_envvar(AUSPOL_NOM_ZERO = "2")
+  expect_error(zero_unnominated_asat(.asat_fixture()), "NZA!!.*vic2022")
+  expect_error(zero_unnominated_asat(.asat_fixture(), flows = list(fed2022 = list())), "NZA!!.*vic2022")
+})
+
+test_that("harness-saved flows round-trip, and a missing file stops", {
+  d <- withr::local_tempdir()
+  fl <- list(conditional = list(), pooled = list(ALP = c(GRN = 1)))
+  nom_zero_save_flows(fl, "vic2022", dir = d)
+  nom_zero_save_flows(NULL, "wa2025", dir = d)
+  utils::capture.output(got <- nom_zero_load_flows(c("vic2022", "wa2025"), dir = d))
+  expect_identical(got$vic2022, fl)
+  expect_true("wa2025" %in% names(got)); expect_null(got$wa2025)
+  expect_error(nom_zero_load_flows("nsw2023", dir = d), "NZA!!")
 })
 
 test_that("zero_unnominated_asat uses the flow matrix when one is given", {

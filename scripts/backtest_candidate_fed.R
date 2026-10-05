@@ -1799,6 +1799,7 @@ for (X in out_all) {
   # into a zeroed cell, and is a no-op on rows with nothing to undo. Code NZ1b so the
   # per-pair NZ1 counts are not doubled. `salience_sd_matrix()` above read the unzeroed matrix.
   .nz_pre <- X$shares
+  nom_zero_save_flows(X$fm, sprintf("fed%d", X$K$to))   # the as-at forecasts table zeroes with this same fm
   X$shares <- zero_unnominated_at("late", X$shares, X$fb, sprintf("fed%d", X$K$to), code = "NZ1b", flows = X$fm)
   X$nz_cells <- rbind(X$nz_cells, nomination_zeroed_cells(.nz_pre, X$shares))
   set.seed(SEED)

@@ -66,7 +66,11 @@ F[, region := sub("[0-9]+$", "", pair)]
 # prediction is kept as xgb_pred_prezero. 2026-10-05, bug 4 of
 # docs/plans/primary-miss-fixes-2026-10-05.md.
 setnames(F, "pair", "election")
-F <- zero_unnominated_asat(F)
+# Flows are the very matrices the harnesses zeroed with (saved at stage 6 by
+# nom_zero_save_flows(), time-forward by construction). Missing one STOPS the
+# build: proportional redistribution is the variant v61 refused.
+.nz_flows <- if (Sys.getenv("AUSPOL_NOM_ZERO", "2") == "2") nom_zero_load_flows(unique(F$election)) else NULL
+F <- zero_unnominated_asat(F, flows = .nz_flows)
 setnames(F, "election", "pair")
 F[, err_base := abs(base_pred - actual_share)]
 F[, err_xgb  := abs(xgb_pred - actual_share)]

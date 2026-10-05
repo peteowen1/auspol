@@ -1161,6 +1161,7 @@ if (identical(Sys.getenv("AUSPOL_SALIENCE_SURGE_V2", "0"), "1")) {
 # reader of `shares` below (reentry_sd_matrix, the sd/flow overrides, the simulation).
 # `salience_sd_matrix()` inside the block above still read the unzeroed matrix.
 .nz_pre <- shares
+nom_zero_save_flows(fm, TGT)   # the as-at forecasts table zeroes with this same fm
 shares <- zero_unnominated_at("late", shares, fb, TGT, flows = fm)
 .nz_cells <- nomination_zeroed_cells(.nz_pre, shares)
   # ARM H, docs/plans/prereg-reentry-flatratio-variance-2026-09-08.md. Widens

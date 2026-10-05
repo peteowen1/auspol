@@ -4,14 +4,17 @@
 \alias{zero_unnominated_asat}
 \title{Nomination zeroing for the as-at forecasts table}
 \usage{
-zero_unnominated_asat(F, flows = NULL)
+zero_unnominated_asat(F, flows = NULL, allow_proportional = FALSE)
 }
 \arguments{
 \item{F}{data.table with \code{election}, \code{seat}, \code{party}, \code{xgb_pred},
 \code{actual_share}.}
 
-\item{flows}{Optional named list of \code{\link[=build_flow_matrix]{build_flow_matrix()}} results keyed by
-election label.}
+\item{flows}{Named list of \code{\link[=build_flow_matrix]{build_flow_matrix()}} results keyed by election
+label, from \code{\link[=nom_zero_load_flows]{nom_zero_load_flows()}}. Required at \code{AUSPOL_NOM_ZERO=2}.}
+
+\item{allow_proportional}{Let an election without flows split the freed
+share proportionally (tests only; v61 refused that variant).}
 }
 \value{
 A copy of \code{F} with \code{xgb_pred} zeroed where no candidate stood, and a
@@ -31,8 +34,8 @@ docs/reviews/worst-overcalls-2026-10-05.md, bug 4).
 Applied at the same point as the harnesses' late step: the xgb prediction is
 final (\code{pmax(0, raw)}) and nothing later in this table adds share to a cell.
 It honours \code{AUSPOL_NOM_ZERO} (\code{0} leaves the table byte-identical), and the
-freed share is split by \code{flows} when given, else proportionally (the \verb{NZ1!}
-line says so). Which classes stood is read from the election's own result
+freed share is split by each election's \code{flows}, the matrix its harness used
+(see \code{\link[=nom_zero_save_flows]{nom_zero_save_flows()}}). Which classes stood is read from the election's own result
 rows (\code{actual_share > 0}), the same table the harnesses pass as \code{fb}; a seat
 with no finite result is left untouched. Each seat's raw total is preserved.
 }
