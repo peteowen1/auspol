@@ -349,3 +349,60 @@ zero_unnominated_live <- function(shares, flows, label = "vic2026", ...) {
   }
   out
 }
+
+#' Nomination zeroing for the as-at forecasts table
+#'
+#' `output/forecasts.csv` is built from the as-at XGBoost predictions
+#' (`scripts/fit_xgb_primary_asat.R`), which never passed through
+#' [zero_unnominated()]: the six harnesses and `fit_seats_full.R` zero a class
+#' that did not stand, the table did not, so it still scored vic2022 Narracan
+#' Labor at 23.9 when Labor did not contest (actual 0). 95 cells with actual 0
+#' and forecast >= 3 were 1.45% of the table's squared error (2026-10-05,
+#' docs/reviews/worst-overcalls-2026-10-05.md, bug 4).
+#'
+#' Applied at the same point as the harnesses' late step: the xgb prediction is
+#' final (`pmax(0, raw)`) and nothing later in this table adds share to a cell.
+#' It honours `AUSPOL_NOM_ZERO` (`0` leaves the table byte-identical), and the
+#' freed share is split by `flows` when given, else proportionally (the `NZ1!`
+#' line says so). Which classes stood is read from the election's own result
+#' rows (`actual_share > 0`), the same table the harnesses pass as `fb`; a seat
+#' with no finite result is left untouched. Each seat's raw total is preserved.
+#'
+#' @param F data.table with `election`, `seat`, `party`, `xgb_pred`,
+#'   `actual_share`.
+#' @param flows Optional named list of [build_flow_matrix()] results keyed by
+#'   election label.
+#' @return A copy of `F` with `xgb_pred` zeroed where no candidate stood, and a
+#'   new column `xgb_pred_prezero` holding the value before (absent when
+#'   `AUSPOL_NOM_ZERO` is off, so the off table is unchanged).
+#' @export
+zero_unnominated_asat <- function(F, flows = NULL) {
+  F <- data.table::copy(data.table::as.data.table(F))
+  if (!Sys.getenv("AUSPOL_NOM_ZERO", "2") %in% c("1", "2")) return(F)   # off: no column added either
+  F[, "xgb_pred_prezero" := F$xgb_pred]
+  for (el in unique(F$election)) {
+    idx <- which(F$election == el)
+    d <- F[idx]
+    ok <- is.finite(d$xgb_pred)
+    if (!any(ok)) next
+    seats <- unique(d$seat); classes <- unique(d$party)
+    m <- matrix(0, length(seats), length(classes), dimnames = list(seats, classes))
+    m[cbind(match(d$seat[ok], seats), match(d$party[ok], classes))] <- d$xgb_pred[ok]
+    st <- is.finite(d$actual_share) & d$actual_share > 0
+    tg <- data.table::data.table(seat = d$seat[st], party = d$party[st], votes = 1)
+    m2 <- zero_unnominated(m, tg, el, code = "NZA", flows = if (is.null(flows)) NULL else flows[[el]])
+    # zero_unnominated() renormalises a row to 100 when it splits the freed share
+    # proportionally; these rows are RAW xgb output (they do not sum to 100, the
+    # classes the model never predicts are absent), so put each touched row back
+    # to its own total and leave every untouched row exactly as it was.
+    touched <- rowSums(m > 0 & m2 == 0) > 0
+    rs2 <- rowSums(m2)
+    k <- touched & rs2 > 0
+    m2[k, ] <- m2[k, , drop = FALSE] * (rowSums(m)[k] / rs2[k])
+    m2[!touched, ] <- m[!touched, , drop = FALSE]
+    new <- m2[cbind(match(d$seat, seats), match(d$party, classes))]
+    new[!ok] <- d$xgb_pred[!ok]
+    data.table::set(F, idx, "xgb_pred", new)
+  }
+  F
+}

@@ -31,6 +31,9 @@
 options(auspol.root = normalizePath("."))
 suppressMessages(devtools::load_all(quiet = TRUE))
 suppressMessages(library(data.table))
+# Every switch the caller left unset takes its published value (as the harnesses
+# and fit_xgb_primary_asat.R do), so AUSPOL_NOM_ZERO below is what ships.
+source("scripts/published_flags.R"); apply_published_flags()
 
 OUT <- "output"
 AEF7 <- c("fed2022","fed2025","nsw2023","qld2024","sa2026","vic2022","wa2025")
@@ -56,6 +59,15 @@ F <- merge(F, M[, .(pair = target, model = basename(model_file), cutoff_date, n_
            by = "pair", all.x = TRUE)
 F[, election_date := election_dates(pair)[pair]]
 F[, region := sub("[0-9]+$", "", pair)]
+# v61 NOMINATION ZEROING (AUSPOL_NOM_ZERO, published_flags.R), which the harnesses
+# and fit_seats_full.R apply but this table never did: a class that did not stand
+# keeps its xgb prediction otherwise (vic2022 Narracan ALP 23.9, actual 0). Applied
+# to the final as-at xgb_pred, before err_xgb / xgb_pred_seat read it. The raw
+# prediction is kept as xgb_pred_prezero. 2026-10-05, bug 4 of
+# docs/plans/primary-miss-fixes-2026-10-05.md.
+setnames(F, "pair", "election")
+F <- zero_unnominated_asat(F)
+setnames(F, "election", "pair")
 F[, err_base := abs(base_pred - actual_share)]
 F[, err_xgb  := abs(xgb_pred - actual_share)]
 # xgb_pred is the RAW model output; each seat's row does not sum to 100 (mean
@@ -67,8 +79,14 @@ setnames(F, "pair", "election")
 setcolorder(F, c("election", "election_date", "region", "seat", "party", "candidate", "n_candidates",
                  "base_pred", "xgb_pred", "xgb_pred_seat", "actual_share", "err_base", "err_xgb",
                  "model", "cutoff_date", "n_train_pairs", "built_at"))
-F <- F[, .(election, election_date, region, seat, party, candidate, n_candidates,
-           base_pred, xgb_pred, xgb_pred_seat, actual_share, err_base, err_xgb, model, cutoff_date, n_train_pairs, built_at)]
+# xgb_pred_prezero (only present when the zeroing ran) goes LAST so no reader of
+# the earlier columns moves.
+.cols <- c("election", "election_date", "region", "seat", "party", "candidate", "n_candidates",
+           "base_pred", "xgb_pred", "xgb_pred_seat", "actual_share", "err_base", "err_xgb", "model", "cutoff_date", "n_train_pairs", "built_at",
+           intersect("xgb_pred_prezero", names(F)))
+F <- F[, .cols, with = FALSE]
+cat(sprintf("FT1  nomination zeroing (AUSPOL_NOM_ZERO=%s): %d cells changed\n", Sys.getenv("AUSPOL_NOM_ZERO", "2"),
+            if ("xgb_pred_prezero" %in% names(F)) sum(abs(F$xgb_pred - F$xgb_pred_prezero) > 1e-9) else 0L))
 setorder(F, election_date, seat, party)
 fwrite(F, file.path(OUT, "forecasts.csv"), na = "NA")
 cat(sprintf("FT1  wrote output/forecasts.csv: %d rows, %d elections, %d with a named candidate (%.1f%%)\n",
