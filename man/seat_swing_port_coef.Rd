@@ -28,7 +28,10 @@ Two switches, both default off (this function is unchanged when both are):
 \item \code{AUSPOL_SEAT_SWING_PORT_WA}: "1" adds the five Western Australian cycles
 (\code{fed-swing-transposed-wa.csv}, built by \code{scripts/transpose_fed_swing.R}
 with \code{TRANSPOSE_REGION=wa}) to every target's pooled fit; "2" adds them only
-when the target is itself a WA election, so no other target moves.
+when the target is itself a WA election, so no other target moves. "3" pools
+WA like "1" AND partially pools each state toward the all-state fit
+(\code{\link[=seat_swing_port_state_shrunk]{seat_swing_port_state_shrunk()}}); it acts on every state's harness and the
+live forecast, because they all call this function.
 \item \code{AUSPOL_SEAT_SWING_PORT_NOCLIFF}: "1" replaces the "fewer than 3 earlier
 cycles gives 0" cliff with pure shrinkage. With 1 or 2 earlier cycles the
 cluster-robust error cannot be estimated, so the error is the ordinary

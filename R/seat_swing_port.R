@@ -13,7 +13,10 @@
 #' * `AUSPOL_SEAT_SWING_PORT_WA`: "1" adds the five Western Australian cycles
 #'   (`fed-swing-transposed-wa.csv`, built by `scripts/transpose_fed_swing.R`
 #'   with `TRANSPOSE_REGION=wa`) to every target's pooled fit; "2" adds them only
-#'   when the target is itself a WA election, so no other target moves.
+#'   when the target is itself a WA election, so no other target moves. "3" pools
+#'   WA like "1" AND partially pools each state toward the all-state fit
+#'   ([seat_swing_port_state_shrunk()]); it acts on every state's harness and the
+#'   live forecast, because they all call this function.
 #' * `AUSPOL_SEAT_SWING_PORT_NOCLIFF`: "1" replaces the "fewer than 3 earlier
 #'   cycles gives 0" cliff with pure shrinkage. With 1 or 2 earlier cycles the
 #'   cluster-robust error cannot be estimated, so the error is the ordinary
@@ -43,7 +46,7 @@ seat_swing_port_coef <- function(target_election) {
     m <- merge(merge(a, b, by = "s"), f, by = "s")
     m <- m[is.finite(t_now) & is.finite(t_prev) & is.finite(fed_swing)]
     if (nrow(m) < 5L) return(NULL)
-    m[, `:=`(yy = (t_now - t_prev) - mean(t_now - t_prev), dev = fed_swing - mean(fed_swing), pair = lab)]
+    m[, `:=`(yy = (t_now - t_prev) - mean(t_now - t_prev), dev = fed_swing - mean(fed_swing), pair = lab, region = rg)]
     m
   }), fill = TRUE)
   if (!nrow(rows)) return(list(coef = 0, k = 0L, n = 0L, b = NA_real_, se = NA_real_))
@@ -58,7 +61,49 @@ seat_swing_port_coef <- function(target_election) {
   se2_ols <- (sum(e^2) / max(1, nrow(rows) - 1)) / sum(rows$dev^2)
   se2 <- max(se2_cl, se2_ols)
   if (thin) se2 <- se2 * SEAT_SWING_NOCLIFF_SE_INFLATE^2
+  if (identical(Sys.getenv("AUSPOL_SEAT_SWING_PORT_WA", "0"), "3")) {
+    return(seat_swing_port_state_shrunk(rows, sub("[0-9]{4}$", "", target_election), b, se2, G))
+  }
   list(coef = b * b^2 / (b^2 + se2), k = G, n = nrow(rows), b = b, se = sqrt(se2))
+}
+
+#' One state's port coefficient, partially pooled toward the all-state fit
+#'
+#' `AUSPOL_SEAT_SWING_PORT_WA=3`. Each state with earlier cycles gets its own
+#' through-the-origin fit `b_s` and error `se_s` (cluster-robust or ordinary,
+#' whichever is larger; with 1 or 2 cycles the ordinary one times
+#' `SEAT_SWING_NOCLIFF_SE_INFLATE`). The between-state variance is
+#' `tau2 = max(0, var(b_s) - mean(se_s^2))`, and the target state's estimate
+#' moves toward the pooled `mu`: `b* = mu + w (b_T - mu)`, `w = tau2 / (tau2 +
+#' se_T^2)`. A state with no earlier cycle gets `mu`. The usual shrink toward 0
+#' then runs on `b*`, with variance `w^2 se_T^2 + (1 - w)^2 se_mu^2`.
+#' @param rows Seat-level rows of the pooled fit, with `region`, `pair`, `dev`, `yy`.
+#' @param region The target's state, e.g. `"vic"`.
+#' @param mu,se2_mu,G The pooled fit's coefficient, squared error and cycle count.
+#' @return As [seat_swing_port_coef()], plus `b_own`, `mu`, `tau2`, `w`.
+#' @keywords internal
+seat_swing_port_state_shrunk <- function(rows, region, mu, se2_mu, G) {
+  fit1 <- function(r) {
+    g <- length(unique(r$pair))
+    b <- sum(r$dev * r$yy) / sum(r$dev^2)
+    e <- r$yy - b * r$dev
+    cl <- if (g >= 2L) sum(tapply(r$dev * e, r$pair, sum)^2) / sum(r$dev^2)^2 * g / (g - 1) else 0
+    s2 <- max(cl, (sum(e^2) / max(1, nrow(r) - 1)) / sum(r$dev^2))
+    if (g < 3L) s2 <- s2 * SEAT_SWING_NOCLIFF_SE_INFLATE^2
+    c(b = b, se2 = s2)
+  }
+  per <- do.call(rbind, lapply(split(rows, rows$region), fit1))
+  tau2 <- if (nrow(per) >= 2L) max(0, stats::var(per[, "b"]) - mean(per[, "se2"])) else 0
+  own <- if (region %in% rownames(per)) per[region, ] else c(b = NA_real_, se2 = NA_real_)
+  if (is.na(own[["b"]])) {
+    w <- 0; bs <- mu; v <- se2_mu
+  } else {
+    w <- tau2 / (tau2 + own[["se2"]])
+    bs <- mu + w * (own[["b"]] - mu)
+    v <- w^2 * own[["se2"]] + (1 - w)^2 * se2_mu
+  }
+  list(coef = bs * bs^2 / (bs^2 + v), k = G, n = nrow(rows), b = bs, se = sqrt(v),
+       b_own = unname(own[["b"]]), mu = mu, tau2 = tau2, w = w)
 }
 
 #' Standard-error multiplier for a port fit on fewer than 3 earlier cycles
@@ -75,7 +120,7 @@ SEAT_SWING_NOCLIFF_SE_INFLATE <- 2
 #' @keywords internal
 seat_swing_port_wa_mode <- function(target_election) {
   m <- Sys.getenv("AUSPOL_SEAT_SWING_PORT_WA", "0")
-  if (m == "1" || (m == "2" && sub("[0-9]{4}$", "", target_election) == "wa")) m else "0"
+  if (m %in% c("1", "3") || (m == "2" && sub("[0-9]{4}$", "", target_election) == "wa")) m else "0"
 }
 
 #' The transposed federal swing table the port reads for one target

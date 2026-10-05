@@ -210,7 +210,7 @@ CAL_TAG <- paste0(
   # audit this" because its grep only scans the harnesses and
   # fit_seats_full.R, never R/; that gap is real and separate.
   if (identical(Sys.getenv("AUSPOL_SD_DEPARTED", "0"), "1")) "-sddep" else "",
-  switch(Sys.getenv("AUSPOL_SEAT_SWING_PORT_WA", "0"), "1" = "-portwa1", "2" = "-portwa2", ""),
+  switch(Sys.getenv("AUSPOL_SEAT_SWING_PORT_WA", "0"), "1" = "-portwa1", "2" = "-portwa2", "3" = "-portwa3", ""),
   if (identical(Sys.getenv("AUSPOL_SEAT_SWING_PORT_NOCLIFF", "0"), "1")) "-nocliff" else "",
   if (nzchar(Sys.getenv("AUSPOL_FLOW_MODEL_TAG", "")))
     sprintf("-fm%s", Sys.getenv("AUSPOL_FLOW_MODEL_TAG")) else "",

@@ -22,20 +22,24 @@ arms <- list(
   list(nm = "+WA pool", wa = "1", nc = "0"),
   list(nm = "WA own",   wa = "2", nc = "0"),
   list(nm = "no cliff", wa = "0", nc = "1"),
-  list(nm = "both",     wa = "1", nc = "1"))
+  list(nm = "both",     wa = "1", nc = "1"),
+  list(nm = "mode3",    wa = "3", nc = "0"),
+  list(nm = "mode3+nc", wa = "3", nc = "1"))
 res <- rbindlist(lapply(arms, function(a) {
   Sys.setenv(AUSPOL_SEAT_SWING_PORT_WA = a$wa, AUSPOL_SEAT_SWING_PORT_NOCLIFF = a$nc)
   rbindlist(lapply(targets, function(tg) {
     cf <- seat_swing_port_coef(tg)
     data.table(arm = a$nm, target = tg, k = cf$k, n = cf$n, b = cf$b, se = cf$se, coef = cf$coef,
+               b_own = if (is.null(cf$b_own)) NA_real_ else cf$b_own, mu = if (is.null(cf$mu)) NA_real_ else cf$mu,
+               tau2 = if (is.null(cf$tau2)) NA_real_ else cf$tau2, w = if (is.null(cf$w)) NA_real_ else cf$w,
                weight = if (is.finite(cf$b) && cf$b != 0) cf$coef / cf$b else NA_real_)
   }))
 }))
 Sys.setenv(AUSPOL_SEAT_SWING_PORT_WA = "0", AUSPOL_SEAT_SWING_PORT_NOCLIFF = "0")
-res[, (c("b", "se", "coef", "weight")) := lapply(.SD, round, 3), .SDcols = c("b", "se", "coef", "weight")]
+res[, (c("b", "se", "coef", "weight", "b_own", "mu", "tau2", "w")) := lapply(.SD, round, 3), .SDcols = c("b", "se", "coef", "weight", "b_own", "mu", "tau2", "w")]
 for (a in arms) {
   cat(sprintf("\n== %s (WA=%s NOCLIFF=%s): coef = shrunk coefficient applied; b = unshrunk; weight = coef/b ==\n", a$nm, a$wa, a$nc))
-  print(res[arm == a$nm, .(target, k, n, b, se, coef, weight)], row.names = FALSE)
+  print(res[arm == a$nm, if (a$wa == "3") .(target, k, n, b_own, mu, tau2, w, b, se, coef) else .(target, k, n, b, se, coef, weight)], row.names = FALSE)
 }
 wide <- dcast(res, target ~ arm, value.var = "coef")[match(targets, target)]
 cat("\n== coefficient applied, by arm (0 = port does nothing) ==\n")

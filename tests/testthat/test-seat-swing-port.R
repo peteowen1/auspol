@@ -115,3 +115,57 @@ test_that("seat_swing_port_apply for a WA target needs AUSPOL_SEAT_SWING_PORT_WA
   # Victoria ignores the WA switch.
   expect_identical(seat_swing_port_apply(m, "vic2022"), m)
 })
+
+# ---- mode 3: each state partially pooled toward the all-state coefficient ----
+mk_rows <- function(spec, seed = 3) {
+  # spec: region = c(b, noise sd, cycles); 40 seats per cycle
+  set.seed(seed)
+  data.table::rbindlist(lapply(names(spec), function(rg) data.table::rbindlist(lapply(seq_len(spec[[rg]][3]), function(i) {
+    dev <- stats::rnorm(40, 0, 3)
+    data.table::data.table(region = rg, pair = paste0(rg, i), dev = dev,
+                           yy = spec[[rg]][1] * dev + stats::rnorm(40, 0, spec[[rg]][2]))
+  }))))
+}
+pooled <- function(r) {
+  b <- sum(r$dev * r$yy) / sum(r$dev^2); e <- r$yy - b * r$dev; g <- length(unique(r$pair))
+  c(b = b, se2 = max(sum(tapply(r$dev * e, r$pair, sum)^2) / sum(r$dev^2)^2 * g / (g - 1),
+                     sum(e^2) / (nrow(r) - 1) / sum(r$dev^2)))
+}
+
+test_that("mode 3: a precise own estimate barely moves, a noisy one moves toward the pooled fit", {
+  r <- mk_rows(list(a = c(0.2, 0.3, 6), b = c(0.5, 0.3, 6), c = c(0.8, 0.3, 6), d = c(0.9, 3, 1)))
+  p <- pooled(r)
+  precise <- seat_swing_port_state_shrunk(r, "b", p[["b"]], p[["se2"]], 21L)
+  noisy <- seat_swing_port_state_shrunk(r, "d", p[["b"]], p[["se2"]], 21L)
+  expect_gt(precise$tau2, 0)
+  expect_gt(precise$w, 0.9)
+  expect_lt(abs(precise$b - precise$b_own), 0.1 * abs(precise$b_own - p[["b"]]) + 0.02)
+  expect_lt(noisy$w, 0.5)
+  expect_lt(abs(noisy$b - p[["b"]]), abs(noisy$b_own - p[["b"]]))   # moved toward mu
+  expect_true(noisy$coef >= 0 && noisy$coef < noisy$b)               # still shrunk toward 0
+})
+
+test_that("mode 3: zero between-state variance gives every state the pooled coefficient", {
+  # Three states with IDENTICAL data, so their own coefficients are exactly equal.
+  r1 <- mk_rows(list(a = c(0.4, 3, 4)))
+  r <- data.table::rbindlist(lapply(c("a", "b", "c"), function(s) data.table::copy(r1)[, `:=`(region = s, pair = paste0(s, pair))]))
+  p <- pooled(r)
+  for (s in c("a", "b", "c")) {
+    z <- seat_swing_port_state_shrunk(r, s, p[["b"]], p[["se2"]], 12L)
+    expect_equal(z$tau2, 0); expect_equal(z$w, 0); expect_equal(z$b, p[["b"]])
+  }
+  # A state with no earlier cycles of its own also gets mu.
+  z <- seat_swing_port_state_shrunk(r, "zzz", p[["b"]], p[["se2"]], 12L)
+  expect_equal(z$b, p[["b"]]); expect_true(is.na(z$b_own))
+})
+
+test_that("mode 3 through seat_swing_port_coef: pools WA like mode 1, and off at 0", {
+  local_port_fixture()
+  withr::local_envvar(AUSPOL_SEAT_SWING_PORT_NOCLIFF = "1", AUSPOL_SEAT_SWING_PORT_WA = "1")
+  m1 <- seat_swing_port_coef("wa2017")
+  withr::local_envvar(AUSPOL_SEAT_SWING_PORT_WA = "3")
+  m3 <- seat_swing_port_coef("wa2017")
+  expect_equal(m3$k, m1$k); expect_true(all(c("b_own", "mu", "tau2", "w") %in% names(m3)))
+  withr::local_envvar(AUSPOL_SEAT_SWING_PORT_WA = "0")
+  expect_false("tau2" %in% names(seat_swing_port_coef("wa2017")))
+})
