@@ -59,24 +59,17 @@
 options(auspol.root = normalizePath("."))
 suppressMessages(devtools::load_all(quiet = TRUE))
 .harness_forecast_mode <- TRUE
-# FEDERAL-SCOPED DEFAULT, not a published_flags.R change. Arm C (salience
-# point estimate + variance, docs/plans/prereg-salience-expected-and-
-# variance-2026-09-07.md) was measured 2026-09-09 across all five harnesses
-# with a salience corpus: federal and NSW both improve, Queensland/SA/
-# Victoria all get WORSE, SA and Victoria beyond the pre-registration's own
-# 0.01 per-jurisdiction refusal bound. Victoria is the LIVE TARGET, so this
-# is NOT set in published_flags.R -- that would move the actual published
-# forecast in the wrong direction. It defaults ON here and in
-# backtest_candidate_nsw.R only, before published_flags.R's own registry
-# runs, so an explicit caller override (either direction) still works and
-# every other harness (including fit_seats_full.R) is untouched.
-# fed2022 specifically: the six 2022 teal seats moved from 2-6% win
-# probability to 3-36% -- still under-called on average, but no longer the
-# "essentially impossible" range that was the actual complaint.
-# docs/reviews/salience-arm-federal-nsw-scoped-2026-09-09.md has the full
-# jurisdiction table.
-if (!nzchar(Sys.getenv("AUSPOL_SALIENCE_EXPECTED", ""))) Sys.setenv(AUSPOL_SALIENCE_EXPECTED = "1")
-if (!nzchar(Sys.getenv("AUSPOL_SALIENCE_EXP_SD", ""))) Sys.setenv(AUSPOL_SALIENCE_EXP_SD = "1")
+# SALIENCE ARM C (expected vote + variance) -- NO LONGER DEFAULTED ON HERE.
+# backtest_candidate_fed.R and backtest_candidate_nsw.R used to set
+# AUSPOL_SALIENCE_EXPECTED=1 and AUSPOL_SALIENCE_EXP_SD=1 when unset (arm C,
+# docs/plans/prereg-salience-expected-and-variance-2026-09-07.md; scoped to
+# fed/nsw 2026-09-09, docs/reviews/salience-arm-federal-nsw-scoped-2026-09-09.md).
+# Removed 2026-10-03: it made hand runs differ from what the rebuild and the
+# ledger score (a rebuild exports the published flags first, so the default never
+# fired there). See docs/reviews/fed-nsw-snapshot-gap-2026-10-03.md and
+# docs/plans/prereg-salience-fed-nsw-onoff-2026-10-03.md. Both now run at the
+# published 0; an explicit AUSPOL_SALIENCE_EXPECTED=1 AUSPOL_SALIENCE_EXP_SD=1
+# still selects arm C.
 source("scripts/harness_defaults.R")  # published defaults for every unset AUSPOL_* switch; see that file
 suppressMessages(library(data.table))
 
@@ -739,6 +732,8 @@ for (K in PAIRS) {
   # the bigger, corpus-wide measurement (89 departure cases across 19 pairs,
   # 2026-09-13) can be re-run and re-decided, not silently re-shipped.
   .honour_departed <- Sys.getenv("AUSPOL_HONOUR_DEPARTED", "0") %in% c("1", "TRUE", "true")
+  .departed_hold <- Sys.getenv("AUSPOL_DEPARTED_HOLD", "0") %in% c("1", "TRUE", "true")   # docs/plans/prereg-departed-hold-fixed-2026-10-04.md
+  .hold_min <- as.numeric(Sys.getenv("AUSPOL_DEPARTED_HOLD_MIN_PRIOR", "0"))   # arm B (amendment 2026-10-05): hold only classes with at least this prior seat share
   .returns <- if (.cond) tryCatch(candidate_returns(ea, eb), error = function(e) {
     cat(sprintf("BF1c! conditional slopes unavailable for %s->%s: %s
 ", ea, eb,
@@ -949,7 +944,7 @@ for (K in PAIRS) {
       lut <- stats::setNames(as.logical(pv$permit), pv$seat)
       pm <- unname(lut[seats])
       # a missing permit row is NOT a permit (NA = silent; 2026-09-20)
-      return(screened_slopes(p, seats, returns, pm, same_mp = .MP_SLOPE, major_departed = .MAJDEP, major_present = .MAJPRES, honour_departed = .honour_departed, same = if (is.null(.fitsl)) formals(screened_slopes)$same else .fitsl$same, new = if (is.null(.fitsl)) formals(screened_slopes)$new else .fitsl$new))
+      return(screened_slopes(p, seats, returns, pm, same_mp = .MP_SLOPE, major_departed = .MAJDEP, major_present = .MAJPRES, honour_departed = .honour_departed, with_flags = .departed_hold, same = if (is.null(.fitsl)) formals(screened_slopes)$same else .fitsl$same, new = if (is.null(.fitsl)) formals(screened_slopes)$new else .fitsl$new))
     }
     if (cond && !is.null(returns))
       return(conditional_slopes(p, seats, returns, same_mp = .MP_SLOPE, major_departed = .MAJDEP, major_present = .MAJPRES, same = if (is.null(.fitsl)) formals(conditional_slopes)$same else .fitsl$same, new = if (is.null(.fitsl)) formals(conditional_slopes)$new else .fitsl$new))
@@ -963,6 +958,7 @@ for (K in PAIRS) {
                 paste0(" | not contested here: ",
                        paste(attr(DEV_SLOPE, "absent"), collapse=",")) else ""))
   parties <- colnames(mat); shares <- mat
+  HELD <- matrix(FALSE, nrow(mat), ncol(mat), dimnames = dimnames(mat))
   # Per-class national LEVEL rescale, so a class whose level was re-forecast
   # (AUSPOL_IND_SALIENCE) also reaches the seats where .own_x() substitutes a
   # returning candidate's OWN prior vote. Without this the uplift is applied
@@ -1403,6 +1399,7 @@ for (K in PAIRS) {
     for (p in parties) {
       prev <- if (p %in% names(st_a)) st_a[[p]] else 0
       .sl <- .fed_slope(p, rownames(mat), .cond, .screened, .returns, .permit)
+      .hd <- attr(.sl, "departed"); if (.departed_hold && !is.null(.hd)) HELD[, p] <- ((.hd %in% TRUE) & (mat[, p] >= .hold_min)) %in% TRUE
       .s_p <- if (p %in% names(lvl_scale)) lvl_scale[[p]] else 1
       shares[, p] <- if (is.null(.split)) dev_slope(.own_x(p, rownames(mat), mat[, p] / .s_p) * .s_p,
                                prev, st_fc[[p]], .sl) else
@@ -1412,6 +1409,7 @@ for (K in PAIRS) {
   } else {
     for (p in parties) if (p %in% names(st_b) && p %in% names(st_a)) {
       .sl <- .fed_slope(p, rownames(mat), .cond, .screened, .returns, .permit)
+      .hd <- attr(.sl, "departed"); if (.departed_hold && !is.null(.hd)) HELD[, p] <- ((.hd %in% TRUE) & (mat[, p] >= .hold_min)) %in% TRUE
       .s_p <- if (p %in% names(lvl_scale)) lvl_scale[[p]] else 1
       shares[, p] <- if (is.null(.split)) dev_slope(.own_x(p, rownames(mat), mat[, p] / .s_p) * .s_p,
                                st_a[[p]], st_b[[p]], .sl) else
@@ -1460,7 +1458,13 @@ for (K in PAIRS) {
                   K$to, length(zeroed), paste(sort(zeroed), collapse = ", ")))
     }
   }
-  shares <- 100 * shares / rowSums(shares)
+  if (.departed_hold) {
+    shares <- renorm_hold(shares, HELD)
+    cat(sprintf("BF0h  departed hold: %d cell(s) held in %d seat(s)%s\n", sum(HELD), sum(rowSums(HELD) > 0),
+                if (length(attr(shares, "skipped"))) paste0(" | not held (others zero or hold >= 100): ", paste(attr(shares, "skipped"), collapse = ", ")) else ""))
+    attr(shares, "skipped") <- NULL
+    if (nzchar(Sys.getenv("AUSPOL_DEPARTED_HOLD_DUMP"))) { .w <- which(HELD, arr.ind = TRUE); utils::write.csv(data.frame(seat = rownames(HELD)[.w[, 1]], party = colnames(HELD)[.w[, 2]]), Sys.getenv("AUSPOL_DEPARTED_HOLD_DUMP"), row.names = FALSE) }   # which cells were held, for the scoring script
+  } else shares <- 100 * shares / rowSums(shares)
   shares <- xgb_primary_override(shares, sprintf("fed%d", K$to))
   # Seat-poll blend (AUSPOL_SEAT_POLL_BLEND), after the override and the port;
   # xgb layer only, so stage-1 base_pred never includes it.
@@ -1517,9 +1521,15 @@ for (K in PAIRS) {
   # Every class with no candidate standing is zeroed AFTER the override and the
   # state correction, both of which can write a share back into an empty cell
   # (plans/prereg-nomination-zero-2026-10-03.md).
+  # THIS CALL RUNS IN BOTH AUSPOL_NOM_ZERO_ORDER MODES (plans/prereg-zero-order-2026-10-03.md):
+  # the blend that can still revive a zero works on X$shares in the simulation loop below,
+  # where "late" adds a second call. The cells zeroed here are carried in out_all so the
+  # final-write check covers them too.
+  .nz_pre <- shares
   shares <- zero_unnominated(shares, fb, sprintf("fed%d", K$to), flows = fm)
   keep <- intersect(rownames(shares), win$seat)
   shares <- shares[keep, , drop = FALSE]
+  .nz_cells <- nomination_zeroed_cells(.nz_pre[keep, , drop = FALSE], shares)
   truth <- setNames(win$winner, win$seat)[keep]
 
   # DIAGNOSTIC DUMP: the POINT ESTIMATE (before any Monte Carlo/surge draw)
@@ -1557,6 +1567,7 @@ for (K in PAIRS) {
                                           truth = truth, keep = keep,
                                           parties = parties, sd_w = sd_w,
                                           sw_draws = sw_draws, fb = fb,
+                                          nz_cells = .nz_cells,
                                           # Carried per pair -- see the FED-2
                                           # finding in docs/plans/
                                           # harness-unification-2026-09-08.md.
@@ -1782,6 +1793,14 @@ for (X in out_all) {
 ",
                 X$K$to, length(sn) - miss, length(sn), miss, SURGE_H, mean(surge_arg)))
   }
+  # AUSPOL_NOM_ZERO_ORDER="late": a SECOND zeroing, on X$shares straight after the salience
+  # block (outside it, so a NULL hz or SURGE_V2 off still runs it). The call at the
+  # projection stage already ran; this one only undoes what blend_salience_shares() put back
+  # into a zeroed cell, and is a no-op on rows with nothing to undo. Code NZ1b so the
+  # per-pair NZ1 counts are not doubled. `salience_sd_matrix()` above read the unzeroed matrix.
+  .nz_pre <- X$shares
+  X$shares <- zero_unnominated_at("late", X$shares, X$fb, sprintf("fed%d", X$K$to), code = "NZ1b", flows = X$fm)
+  X$nz_cells <- rbind(X$nz_cells, nomination_zeroed_cells(.nz_pre, X$shares))
   set.seed(SEED)
   # ARM H, docs/plans/prereg-reentry-flatratio-variance-2026-09-08.md. Widens
   # the SIMULATED uncertainty, not the point estimate, for cells that fell
@@ -1881,6 +1900,7 @@ for (X in out_all) {
   # THE SECOND METRIC: seat-share RMSE of the point estimate the simulator was
   # handed, against the shares actually polled. Pete's objective (2026-09-06)
   # is overall seat log loss AND this, across every election forecast.
+  nom_zero_assert_late(X$shares[X$keep, , drop = FALSE], X$nz_cells)  # "late" order only: a zeroed cell must still be 0 at the write
   .rr <- seat_share_rmse(X$shares[X$keep, , drop = FALSE], X$fb)
   # PERSIST THE POINT ESTIMATE, not just the aggregate RMSE. Until 2026-09-09
   # "our predicted primary for seat X" required re-running the harness with a

@@ -759,6 +759,8 @@ if (all(SLOPE == 1)) cat("DS1  all 1.000 -- uniform swing, output must be unchan
 .screened <- identical(.mode, "screened")
 # Off by default -- see the matching comment in backtest_candidate_fed.R.
 .honour_departed <- Sys.getenv("AUSPOL_HONOUR_DEPARTED", "0") %in% c("1", "TRUE", "true")
+.departed_hold <- Sys.getenv("AUSPOL_DEPARTED_HOLD", "0") %in% c("1", "TRUE", "true")   # docs/plans/prereg-departed-hold-fixed-2026-10-04.md
+.hold_min <- as.numeric(Sys.getenv("AUSPOL_DEPARTED_HOLD_MIN_PRIOR", "0"))   # arm B (amendment 2026-10-05)
 # EVERY caught fallback records WHY. "vic2026 has no candidates yet" and "a
 # bug in candidate_returns()" used to print the same line, so once nominations
 # close a real failure would have read as the expected pre-nomination gap.
@@ -1046,7 +1048,7 @@ if (!is.null(.fitsl)) {
     lut <- stats::setNames(as.logical(pv$permit), pv$seat)
     pm <- unname(lut[seats]); # a missing permit row is NOT a permit (NA = silent; 2026-09-20)
     return(screened_slopes(p, seats, .returns, pm, same_mp = .MP_SLOPE, major_departed = .MAJDEP, major_present = .MAJPRES,
-                            honour_departed = .honour_departed,
+                            honour_departed = .honour_departed, with_flags = .departed_hold,
                             same = if (is.null(.fitsl)) formals(screened_slopes)$same else .fitsl$same,
                             new  = if (is.null(.fitsl)) formals(screened_slopes)$new  else .fitsl$new))
   }
@@ -1059,10 +1061,12 @@ if (!is.null(.fitsl)) {
 
 parties <- colnames(mat22)
 shares <- mat22
+HELD <- matrix(FALSE, nrow(mat22), ncol(mat22), dimnames = dimnames(mat22))
 modelled <- intersect(parties, names(state_mean))
 for (p in setdiff(modelled, "ONP")) {
   # At SLOPE 1 (the fallback) this is mat22 + (state_mean - a22), unchanged.
-  shares[, p] <- dev_slope(.own_x(p, rownames(mat22), mat22[, p]), a22[[p]], state_mean[[p]], .vic_slope(p, rownames(mat22)))
+  .sl <- .vic_slope(p, rownames(mat22)); .hd <- attr(.sl, "departed"); if (.departed_hold && !is.null(.hd)) HELD[, p] <- ((.hd %in% TRUE) & (mat22[, p] >= .hold_min)) %in% TRUE
+  shares[, p] <- dev_slope(.own_x(p, rownames(mat22), mat22[, p]), a22[[p]], state_mean[[p]], .sl)
 }
 # The trend models five classes; the seat data carries seven, splitting OTH
 # into OTH, OTH_RIGHT and IND. Those three must be SCALED to the forecast OTH
@@ -1086,7 +1090,8 @@ if (length(unmodelled) && !is.na(state_mean["OTH"])) {
   # exactly mat22[, p] * scale_to as before.
   for (p in c(unmodelled, if ("OTH" %in% modelled) "OTH")) {
     tgt <- a22[[p]] * scale_to
-    shares[, p] <- dev_slope(.own_x(p, rownames(mat22), mat22[, p]) * scale_to, tgt, tgt, .vic_slope(p, rownames(mat22)))
+    .sl <- .vic_slope(p, rownames(mat22)); .hd <- attr(.sl, "departed"); if (.departed_hold && !is.null(.hd)) HELD[, p] <- ((.hd %in% TRUE) & (mat22[, p] >= .hold_min)) %in% TRUE
+    shares[, p] <- dev_slope(.own_x(p, rownames(mat22), mat22[, p]) * scale_to, tgt, tgt, .sl)
   }
   cat(sprintf("minor field scaled x%.2f: %s at 2022 %.1f%% -> forecast %.1f%%
 ",
@@ -1120,10 +1125,25 @@ if (ONP_FIX == "1") {
   other_cols <- setdiff(colnames(shares), "ONP")
   rest <- rowSums(shares[, other_cols, drop = FALSE])
   fill <- pmax(0, 100 - onp_target) / pmax(rest, 1e-9)
+  if (.departed_hold && any(HELD[, other_cols, drop = FALSE])) {
+    # Held cells (a departed leader's decayed class) keep their value; only the
+    # others are scaled to fill what ONP and the held cells leave.
+    # docs/plans/prereg-departed-hold-fixed-2026-10-04.md
+    hld <- HELD[, other_cols, drop = FALSE]
+    rest <- rowSums(shares[, other_cols, drop = FALSE] * !hld)
+    fill <- pmax(0, 100 - onp_target - rowSums(shares[, other_cols, drop = FALSE] * hld)) / pmax(rest, 1e-9)
+    for (p in other_cols) shares[, p] <- ifelse(HELD[, p], shares[, p], shares[, p] * fill)
+  } else
   for (p in other_cols) shares[, p] <- shares[, p] * fill
 }
 shares[, "ONP"] <- onp_target
-shares <- 100 * shares / rowSums(shares)
+if (.departed_hold) {
+  shares <- renorm_hold(shares, HELD)
+  cat(sprintf("DH0  departed hold: %d cell(s) held in %d seat(s)%s\n", sum(HELD), sum(rowSums(HELD) > 0),
+              if (length(attr(shares, "skipped"))) paste0(" | not held (others zero or hold >= 100): ", paste(attr(shares, "skipped"), collapse = ", ")) else ""))
+  attr(shares, "skipped") <- NULL
+  if (nzchar(Sys.getenv("AUSPOL_DEPARTED_HOLD_DUMP"))) { .w <- which(HELD, arr.ind = TRUE); utils::write.csv(data.frame(seat = rownames(HELD)[.w[, 1]], party = colnames(HELD)[.w[, 2]]), Sys.getenv("AUSPOL_DEPARTED_HOLD_DUMP"), row.names = FALSE) }   # which cells were held, for the scoring script
+} else shares <- 100 * shares / rowSums(shares)
 # XGBOOST PRIMARY CHALLENGER, v6 (AUSPOL_XGB_PRIMARY_LIVE). Best pooled seat
 # log loss of v1-v6, leave-one-pair-out: 0.3403 -> ~0.3071
 # (R/xgb_primary_override.R's own docstring carries the full detail and the
@@ -1144,6 +1164,8 @@ if (!is.null(shares_x)) {
   cat(sprintf("XG4!! xgb_primary_predict_live() FAILED%s -- shares UNCHANGED, shipped-only model used\n",
               .reason("xgb_live")))
 }
+# (v61 nomination zeroing runs after blend_salience_shares() below, the last step
+# that can add share to a cell -- see the NZL block there.)
 # Time-forward seat-swing port (AUSPOL_SEAT_SWING_PORT=2), AFTER the override,
 # which would otherwise overwrite it. plans/prereg-seat-swing-port-v2-2026-09-29.md
 .shares_p <- .try("seat_swing_port", seat_swing_port_apply(shares, "vic2026"))
@@ -1199,6 +1221,25 @@ shares <- blend_salience_shares(shares, if (exists(".hz")) .hz else NULL, surge_
 cat(sprintf("DS3b salience point estimate applied to %d (seat,party) cells%s\n",
             attr(shares, "cells"),
             if (is.null(if (exists(".hz")) .hz else NULL)) " (no corpus for vic2026 yet)" else ""))
+# v61 NOMINATION ZEROING, AFTER every step that can add share to a cell, with the
+# live flow matrix `fm`. Read from the function bodies 2026-10-03:
+#   CAN add share to a cell (pmax(0, x + adj), a blend toward a target, or a shift
+#   onto the leader's class): seat_swing_port_apply (ALP/LNP), demographic_residual_apply,
+#   leader_seat_apply (.shift_cell on the leader's class), blend_salience_shares
+#   (surge blend; pmax(shares, expected)).
+#   CANNOT (only touch cells already > 0, and rescale rows, so a 0 stays 0):
+#   seat_poll_blend_apply (all three modes), departed_fed_apply.
+# blend_salience_shares is the last step, so this sits straight after it. Placed
+# earlier (before the port), a positive adj revived a zeroed Labor cell.
+# A no-op, logged as NZL, unless AUSPOL_NOM_LIVE=1; with =1 any failure STOPS the
+# run. plans/prereg-nomination-zero-2026-10-03.md
+.nz_before <- shares
+shares <- tryCatch(zero_unnominated_live(shares, fm, "vic2026"), error = function(e) {
+  if (nom_zero_requested()) stop(conditionMessage(e), call. = FALSE)
+  cat(sprintf("NZL!! nomination zeroing FAILED (%s) -- shares WITHOUT it\n", conditionMessage(e)))
+  .nz_before
+})
+.nz_cells <- nomination_zeroed_cells(.nz_before, shares)
 cvf <- function(x) stats::sd(x) / mean(x)
 cat(sprintf("ONP allocation: target CV %.3f, delivered %.3f (previously compressed to 0.283)
 ",
@@ -1552,6 +1593,8 @@ if (identical(Sys.getenv("AUSPOL_UPSET_FLOOR", "0"), "1")) {
   cat(sprintf("UF1  upset insurance: eps %.4f applied to %d seats' win probabilities
 ", .eps, data.table::uniqueN(wp$seat)))
 }
+# Hard check: nothing after the nomination zeroing may have revived a cell it zeroed.
+assert_nomination_zeros(shares, .nz_cells)
 # The projected per-seat primaries the simulation runs on. Written out because
 # nothing else can reconstruct them without duplicating the projection above,
 # and a second copy of that logic would drift from this one.

@@ -879,6 +879,55 @@ if (length(WV)) {
 # fill above, i.e. the fill worked as a contamination detector. Left in, they
 # would count as seats in any per-seat rate and as unresolved seats in any
 # coverage check.
+# Name -> "SURNAME|G" key shared by BC10 (prior-class lookup) and BC9 (returning
+# members); formats and traps are documented at BC9 below.
+.key <- function(x) {
+  s <- trimws(gsub("[^A-Za-z, ]", "", as.character(x)))
+  sur <- character(length(s)); giv <- character(length(s))
+  for (i in seq_along(s)) {
+    v <- s[i]
+    if (grepl(",", v, fixed = TRUE)) {
+      sur[i] <- trimws(sub(",.*$", "", v)); giv[i] <- trimws(sub("^[^,]*,", "", v))
+      next
+    }
+    tk <- strsplit(v, "\\s+")[[1]]
+    tk <- tk[nzchar(tk)]
+    if (length(tk) == 0L) { sur[i] <- ""; giv[i] <- ""; next }
+    if (length(tk) == 1L) { sur[i] <- tk[1]; giv[i] <- ""; next }
+    # MAJORITY-uppercase, not byte-identical to toupper(). "McKAY" and
+    # "MacTIERNAN" are shouted surnames that are NOT equal to their own
+    # toupper(), so an exact test drops them into the given-first branch and
+    # INVERTS the row -- nsw2015 files "McKAY Jodi" under surname JODI while
+    # nsw2019 spells her "MCKAY" and files her correctly, so the same person
+    # gets two keys and her 2015 win stops counting as a prior win. 43 of
+    # 1,670 NSW rows carry a Mac/Mc surname. Found by review 2026-09-14.
+    #
+    # Counting letters handles any prefix casing without enumerating them.
+    # It still misses a name like "O'Brien" once the apostrophe is stripped
+    # (2 of 6 letters upper), which is genuinely ambiguous in a surname-first
+    # file and is left to the last-token fallback.
+    nup <- nchar(gsub("[^A-Z]", "", tk))
+    nlo <- nchar(gsub("[^a-z]", "", tk))
+    caps <- nup >= 2 & nup >= nlo
+    if (any(caps)) {
+      sur[i] <- tk[which(caps)[1]]
+      giv[i] <- paste(tk[!caps], collapse = " ")
+    } else {
+      sur[i] <- tk[length(tk)]
+      giv[i] <- paste(tk[-length(tk)], collapse = " ")
+    }
+  }
+  sur <- toupper(trimws(sur)); giv <- toupper(trimws(giv))
+  # A surname-only source (WA) can only ever be matched on the surname. That
+  # is a limit of the data, not a choice, so it is made explicit with an empty
+  # initial rather than arrived at by a parser accident -- and it carries a
+  # real collision risk between different people sharing a surname, which the
+  # BC9a line below quantifies.
+  out <- paste0(sur, "|", substr(giv, 1, 1))
+  out[!nzchar(sur)] <- NA_character_
+  out
+}
+
 # ---- BC10: Victoria 2026 candidates, from Wikipedia -------------------------
 #
 # The Victorian election is 28 November 2026 and nominations have NOT closed,
@@ -934,6 +983,8 @@ if (file.exists(.wiki)) {
   # Paolis" becomes "PAOLIS, Vincenzo De" -- which costs a match for those
   # candidates but never mis-assigns one, since both sides of any later
   # comparison get the same treatment.
+  .wname_orig <- W$name
+  W[, .wname := .wname_orig]
   .tok <- strsplit(trimws(W$name), "\\s+")
   W[, name := vapply(seq_len(.N), function(i) {
     t <- .tok[[i]]
@@ -942,14 +993,163 @@ if (file.exists(.wiki)) {
   }, character(1))]
   cat(sprintf("BC10 names normalised to 'SURNAME, Given' (e.g. %s)\n", W$name[1]))
 
-  V <- W[, list(election = "vic2026", region = "vic", year = 2026L,
+  # Match key BEFORE the name is rewritten above: seat + match_key() over the
+  # last token as surname and the first token as given name, the same last-token
+  # rule on both sides so "Vincenzo De Paolis" (Wikipedia) and ABC's family name
+  # "De Paolis" meet at "paolis|v".
+  .wtok <- strsplit(trimws(.wname_orig), "[[:space:]]+")
+  W[, `:=`(.sur = vapply(.wtok, function(t) t[length(t)], ""),
+           .giv = vapply(.wtok, function(t) if (length(t) > 1L) t[1L] else "", ""))]
+  W[, `:=`(source = "wiki", party_ab = NA_character_)]
+  W[, .key := paste(normalise_seat(seat), match_key(.sur, .giv, "initial"))]
+  W[, seat_wiki := seat]
+
+  # ---- ABC's guide (scripts/fetch_abc_vic2026_candidates.R) ------------------
+  # ABC carries 489 candidacies to Wikipedia's 379 and has far more One Nation
+  # candidates. The list is the UNION: a candidate either source names is in.
+  # NEWEST BY THE STAMP IN THE NAME, not by a plain string sort: the fetcher
+  # writes abc-candidates-YYYYMMDD.csv, then abc-candidates-YYYYMMDD-HHMM.csv
+  # for a same-day refetch that changed, and "20261003.csv" sorts AHEAD of
+  # "20261003-1405.csv". Not by mtime either: a clone or copy resets it.
+  .abcf <- list.files(file.path("external", "reference", "abc-vic2026"),
+                      pattern = "^abc-candidates-[0-9]{8}(-[0-9]{4})?[.]csv$", full.names = TRUE)
+  .abc_odd <- setdiff(list.files(file.path("external", "reference", "abc-vic2026"),
+                                 pattern = "^abc-candidates-.*[.]csv$"), basename(.abcf))
+  if (length(.abc_odd))
+    cat(sprintf("BC10a! IGNORED, name is not abc-candidates-YYYYMMDD[-HHMM].csv: %s\n",
+                paste(.abc_odd, collapse = ", ")))
+  .abc_stamp <- sub("^abc-candidates-([0-9]{8})(-([0-9]{4}))?[.]csv$", "\\1\\3", basename(.abcf))
+  .abc_stamp <- ifelse(nchar(.abc_stamp) == 8L, paste0(.abc_stamp, "0000"), .abc_stamp)
+  .abcf <- .abcf[order(.abc_stamp, decreasing = TRUE)]
+  V_abc_n <- 0L; n_both <- 0L; n_conf <- 0L; disagree <- NULL
+  if (length(.abcf)) {
+    Aabc <- fread(.abcf[1], showProgress = FALSE)
+    stopifnot(all(c("given", "surname", "party_abbrev", "seat", "fetched_at") %in% names(Aabc)),
+              nrow(Aabc) > 0L)   # a header-only file would otherwise pass as "no ABC rows"
+    cat(sprintf("BC10a ABC list: %s (%d rows, fetched_at %s)\n", basename(.abcf[1]),
+                nrow(Aabc), paste(unique(Aabc$fetched_at), collapse = ",")))
+    # Resolve the seat to Wikipedia's spelling; refuse a seat that does not resolve.
+    .smap <- stats::setNames(unique(W$seat), normalise_seat(unique(W$seat)))
+    .sk <- normalise_seat(Aabc$seat)
+    if (any(!.sk %in% names(.smap)))
+      stop("BC10a! ABC seat(s) not in the Wikipedia seat list: ",
+           paste(unique(Aabc$seat[!.sk %in% names(.smap)]), collapse = ", "))
+    Aabc[, seat := unname(.smap[.sk])]
+    # CLASSIFY with classify_party() and nothing else. ABC gives only an
+    # abbreviation. For abbreviations classify_party() has a code rule for (ALP,
+    # LIB, NAT, GRN, ONP, IND) the abbreviation is passed as the CODE. For the
+    # rest the full name is taken from the DATA, not invented: the Wikipedia
+    # party name of the people both sources name, used only if every one of
+    # them agrees. Anything with no such evidence stays an abbreviation, which
+    # classify_party() cannot place and files as OTH -- and is flagged below.
+    .coded <- c("ALP", "LIB", "NAT", "GRN", "ONP", "IND")
+    .nm_of <- list()
+    .ak <- Aabc[, paste(normalise_seat(seat),
+                        match_key(vapply(strsplit(surname, "[[:space:]]+"), function(t) t[length(t)], ""),
+                                  vapply(strsplit(given, "[[:space:]]+"), function(t) t[1L], ""), "initial"))]
+    Aabc[, .key := .ak]
+    .mm <- merge(Aabc[, .(.key, party_abbrev)], W[, .(.key, party_raw)], by = ".key")
+    for (ab in setdiff(unique(Aabc$party_abbrev), .coded)) {
+      pr <- unique(.mm$party_raw[.mm$party_abbrev == ab])
+      .nm_of[[ab]] <- if (length(pr) == 1L) pr else NA_character_
+    }
+    Aabc[, .pname := ifelse(party_abbrev %in% .coded, party_abbrev,
+                            unname(vapply(party_abbrev, function(a) {
+                              v <- .nm_of[[a]]; if (is.null(v) || is.na(v)) a else v }, "")))]
+    Aabc[, party := classify_party(.pname, ifelse(party_abbrev %in% .coded, party_abbrev, ""))]
+    cat("BC10a ABC abbreviation -> class (n rows; name used for classification):\n")
+    for (ab in sort(unique(Aabc$party_abbrev))) {
+      r <- Aabc[party_abbrev == ab]
+      cat(sprintf("       %-4s -> %-9s n=%-3d via %s\n", ab, r$party[1], nrow(r),
+                  if (ab %in% .coded) "classify_party() code rule" else if (!is.na(.nm_of[[ab]]))
+                    sprintf("Wikipedia name '%s' on %d matched people", .nm_of[[ab]], sum(.mm$party_abbrev == ab))
+                  else "NO name evidence: abbreviation only, unplaceable"))
+    }
+    .unpl <- names(.nm_of)[vapply(.nm_of, is.na, NA)]
+    if (length(.unpl))
+      cat(sprintf("BC10a! cannot place %s beyond OTH (no matched Wikipedia name); full-name rules might put them in OTH_RIGHT -- Pete to confirm\n",
+                  paste(.unpl, collapse = ", ")))
+    if (any(is.na(Aabc$party))) stop("BC10a! classify_party() returned NA for ABC rows")
+    Aabc[, name := sprintf("%s, %s", toupper(surname), given)]
+    Aabc[, `:=`(source = "abc", party_raw = party_abbrev, party_ab = party_abbrev)]
+    stopifnot(!anyDuplicated(Aabc$.key), !anyDuplicated(W$.key))
+    # Union. EACH PERSON APPEARS ONCE PER SEAT.
+    mm <- merge(W[, .(.key, w_party = party)], Aabc[, .(.key, a_party = party)], by = ".key")
+    mm[, agree := w_party == a_party]
+    n_both <- nrow(mm); n_conf <- sum(!mm$agree)
+    conf_keys <- mm$.key[!mm$agree]
+    disagree <- merge(W[.key %in% conf_keys, .(.key, seat, wiki_name = .wname, wiki_party = party_raw, wiki_class = party)],
+                      Aabc[.key %in% conf_keys, .(.key, abc_name = name, abc_abbrev = party_abbrev, abc_class = party)],
+                      by = ".key")
+    # GENERAL RULE for a class conflict (Pete 2026-10-03): if the person stood in
+    # an earlier election anywhere in this corpus (match_key on the same
+    # surname + first initial key as BC9), use the class they were given THERE
+    # (Victorian elections first, else any jurisdiction; most recent election; if that election gives them two classes, or no
+    # prior exists, fall back to Wikipedia's). The losing source's raw party
+    # string is kept in party_alt; the rule used is recorded in class_rule.
+    .pc <- C[election != "vic2026", .(.pk = .key(name), pclass = party, praw = party_raw, pel = election, pyr = year, pseat = seat, preg = region)]
+    .pc <- .pc[!is.na(.pk) & nzchar(sub("^[^|]*[|]", "", .pk))]
+    .prior <- function(nm) {
+      k <- .key(nm); h <- .pc[.pk == k]
+      if (!nrow(h)) return(list(cls = NA_character_, raw = NA_character_, rule = "wiki_default(no prior election)"))
+      # Same jurisdiction first (the VEC's label for an unregistered-party
+      # candidate is the one this election's list should agree with), else any
+      # jurisdiction; most recent election within the chosen pool.
+      if (any(h$preg == "vic")) h <- h[preg == "vic"]
+      h <- h[pyr == max(pyr)]
+      if (uniqueN(h$pclass) != 1L) return(list(cls = NA_character_, raw = NA_character_, rule = sprintf("wiki_default(prior %s ambiguous)", h$pel[1])))
+      list(cls = h$pclass[1], raw = h$praw[1], rule = sprintf("prior_corpus:%s %s=%s", h$pel[1], h$pseat[1], h$pclass[1]))
+    }
+    Wm <- W[, .(seat, name, party, party_raw, party_ab, source, .key)]
+    Am <- Aabc[, .(seat, name, party, party_raw, party_ab, source, .key)]
+    # People in both sources: ABC's name (explicit family name) and abbreviation;
+    # agreeing class -> Wikipedia's full party name.
+    both <- merge(Wm[.key %in% mm$.key], Am[.key %in% mm$.key][, .(.key, a_name = name, a_ab = party_ab, a_party = party, a_raw = party_raw)], by = ".key")
+    both[, `:=`(class_rule = "agree", party_alt = NA_character_, party_conflict = FALSE)]
+    for (i in which(both$party != both$a_party)) {
+      pr <- .prior(both$a_name[i]); w_cls <- both$party[i]; w_raw <- both$party_raw[i]
+      use <- if (!is.na(pr$cls) && pr$cls == both$a_party[i]) "abc" else if (!is.na(pr$cls) && pr$cls == w_cls) "wiki" else if (!is.na(pr$cls)) "prior" else "wiki"
+      alt <- sprintf("wiki:%s | abc:%s", w_raw, both$a_raw[i])
+      if (use == "abc") { both[i, `:=`(party = a_party, party_raw = a_raw, party_alt = w_raw)] }
+      else if (use == "wiki") { both[i, party_alt := both$a_raw[i]] }
+      else { both[i, `:=`(party = pr$cls, party_raw = pr$raw, party_alt = alt)] }
+      both[i, `:=`(class_rule = pr$rule, party_conflict = TRUE)]
+    }
+    both[, `:=`(name = a_name, party_ab = a_ab, source = "both")][, c("a_name", "a_ab", "a_party", "a_raw") := NULL]
+    U <- rbindlist(list(Wm[!.key %in% mm$.key][, `:=`(class_rule = "single_source", party_alt = NA_character_, party_conflict = FALSE)],
+                        Am[!.key %in% mm$.key][, `:=`(class_rule = "single_source", party_alt = NA_character_, party_conflict = FALSE)],
+                        both), use.names = TRUE)
+    V_abc_n <- nrow(Aabc)
+    # Every candidacy from either source must be accounted for.
+    stopifnot(nrow(U) == nrow(W) + nrow(Aabc) - n_both)
+    stopifnot(!anyDuplicated(U[, .(seat, .key)]))   # one row per person per seat
+    stopifnot(all(Aabc$.key %in% U$.key), all(W$.key %in% U$.key))
+  } else {
+    cat("BC10a! NO ABC candidate file found (external/reference/abc-vic2026/abc-candidates-*.csv): vic2026 is Wikipedia-only. Run scripts/fetch_abc_vic2026_candidates.R\n")
+    U <- W[, .(seat, name, party, party_raw, party_ab, source, .key)][, `:=`(party_conflict = FALSE, class_rule = "single_source", party_alt = NA_character_)]
+  }
+  V <- U[, list(election = "vic2026", region = "vic", year = 2026L,
                 seat = seat, name = name, party = party, party_raw = party_raw,
+                party_ab = party_ab, source = source, party_conflict = party_conflict,
+                class_rule = class_rule, party_alt = party_alt,
                 votes = NA_real_, pcv = NA_real_,
                 elected = NA, historic_elected = NA,
                 breakout = NA, swing = NA_real_,
                 ballot_position = NA_integer_, tot = NA_real_)]
-  cat(sprintf("BC10 vic2026: %d candidacies across %d seats from Wikipedia (%d sitting members marked)\n",
-              nrow(V), uniqueN(V$seat), sum(W$sitting %in% c(TRUE, "TRUE"))))
+  cat(sprintf("BC10 vic2026: %d candidacies across %d seats = Wikipedia %d + ABC %d - %d people in both (%d wiki, %d abc, %d both; %d with conflicting class resolved to ONE row each)\n",
+              nrow(V), uniqueN(V$seat), nrow(W), V_abc_n, n_both,
+              sum(V$source == "wiki"), sum(V$source == "abc"), sum(V$source == "both"), n_conf))
+  if (!is.null(disagree) && nrow(disagree)) {
+    cat("BC10b PARTY DISAGREEMENTS (same seat + surname + first initial, different class; ONE row kept, rule in class_rule, losing raw string in party_alt):
+")
+    .res <- U[party_conflict == TRUE, .(.key, kept = party, class_rule, party_alt)]
+    print(merge(disagree, .res, by = ".key")[order(seat), .(seat, wiki_name, wiki_party, wiki_class, abc_name, abc_abbrev, abc_class, kept, class_rule, party_alt)], row.names = FALSE)
+  }
+  # Columns a source does not carry are said so, never filled in silently.
+  cat("BC10c column provenance: Wikipedia lacks party_ab (abbreviation) and surname/given; ABC lacks the full party name (party_raw falls back to the abbreviation for ABC-only rows) and any vote data. votes, pcv, elected, historic_elected, breakout, swing, ballot_position, tot are NA by design for a future election. ABC's `Sitting MP` badge (",
+      if (exists("Aabc")) sum(Aabc$sitting_mp) else 0L, " rows) and Wikipedia's `sitting` flag are not carried: candidacies.csv has no sitting column.\n", sep = "")
+  .wnames_changed <- if (length(.abcf)) sum(both$name != W$name[match(both$.key, W$.key)]) else 0L
+  cat(sprintf("BC10c %d agreeing rows took ABC's family-name spelling instead of Wikipedia's last-token surname (multi-word surnames)\n", .wnames_changed))
   cat(sprintf("     by class: %s\n",
               paste(sprintf("%s=%d", names(table(V$party)), table(V$party)),
                     collapse = " ")))
@@ -1021,52 +1221,7 @@ if (any(council)) {
 #
 # So: comma wins if present; otherwise the ALL-CAPS token is the surname;
 # otherwise fall back to the last token.
-.key <- function(x) {
-  s <- trimws(gsub("[^A-Za-z, ]", "", as.character(x)))
-  sur <- character(length(s)); giv <- character(length(s))
-  for (i in seq_along(s)) {
-    v <- s[i]
-    if (grepl(",", v, fixed = TRUE)) {
-      sur[i] <- trimws(sub(",.*$", "", v)); giv[i] <- trimws(sub("^[^,]*,", "", v))
-      next
-    }
-    tk <- strsplit(v, "\\s+")[[1]]
-    tk <- tk[nzchar(tk)]
-    if (length(tk) == 0L) { sur[i] <- ""; giv[i] <- ""; next }
-    if (length(tk) == 1L) { sur[i] <- tk[1]; giv[i] <- ""; next }
-    # MAJORITY-uppercase, not byte-identical to toupper(). "McKAY" and
-    # "MacTIERNAN" are shouted surnames that are NOT equal to their own
-    # toupper(), so an exact test drops them into the given-first branch and
-    # INVERTS the row -- nsw2015 files "McKAY Jodi" under surname JODI while
-    # nsw2019 spells her "MCKAY" and files her correctly, so the same person
-    # gets two keys and her 2015 win stops counting as a prior win. 43 of
-    # 1,670 NSW rows carry a Mac/Mc surname. Found by review 2026-09-14.
-    #
-    # Counting letters handles any prefix casing without enumerating them.
-    # It still misses a name like "O'Brien" once the apostrophe is stripped
-    # (2 of 6 letters upper), which is genuinely ambiguous in a surname-first
-    # file and is left to the last-token fallback.
-    nup <- nchar(gsub("[^A-Z]", "", tk))
-    nlo <- nchar(gsub("[^a-z]", "", tk))
-    caps <- nup >= 2 & nup >= nlo
-    if (any(caps)) {
-      sur[i] <- tk[which(caps)[1]]
-      giv[i] <- paste(tk[!caps], collapse = " ")
-    } else {
-      sur[i] <- tk[length(tk)]
-      giv[i] <- paste(tk[-length(tk)], collapse = " ")
-    }
-  }
-  sur <- toupper(trimws(sur)); giv <- toupper(trimws(giv))
-  # A surname-only source (WA) can only ever be matched on the surname. That
-  # is a limit of the data, not a choice, so it is made explicit with an empty
-  # initial rather than arrived at by a parser accident -- and it carries a
-  # real collision risk between different people sharing a surname, which the
-  # BC9a line below quantifies.
-  out <- paste0(sur, "|", substr(giv, 1, 1))
-  out[!nzchar(sur)] <- NA_character_
-  out
-}
+# (.key() is defined above BC10 now: BC10 needs it to look up a person's prior class.)
 C[, .nm := .key(name)]
 # OFF BY DEFAULT, and that is a decision rather than caution.
 #
@@ -1172,7 +1327,69 @@ setcolorder(C, intersect(c("election", "region", "year", "seat", "name",
                            "breakout", "swing", "ballot_position",
                            "ordinary", "absent", "provisional", "prepoll",
                            "postal"), names(C)))
+
+# ---- BC11: guard the vic2026 union and prove nothing else moved --------------
+# PREV is the file this run is about to replace. Every NON-vic2026 line of the new
+# file must equal the old line (the union only appends columns, so an old line
+# plus one empty field per new column); otherwise another source changed under
+# us and the run stops BEFORE overwriting. AUSPOL_CAND_ALLOW_OTHER_CHANGE=1
+# overrides, for a deliberate rebuild of an older election.
+PREV <- "output/snapshots-candidacies-prev-build.csv"
+.cov <- function(D, label) {
+  v <- D[election == "vic2026"]
+  cls <- c("ALP", "LNP", "GRN", "ONP", "IND")
+  tot <- uniqueN(v$seat)
+  r <- vapply(cls, function(k) uniqueN(v$seat[v$party == k]), 1L)
+  n <- vapply(cls, function(k) sum(v$party == k), 1L)
+  cat(sprintf("BC11 %-7s vic2026 rows=%d seats=%d | seats with class (rows): %s\n", label, nrow(v), tot,
+              paste(sprintf("%s %d/%d (n=%d)", cls, r, tot, n), collapse = "  ")))
+}
+.old_exists <- file.exists(OUT)
+.old_v <- if (.old_exists) fread(OUT, showProgress = FALSE) else NULL
+if (!is.null(.old_v)) .cov(.old_v, "BEFORE")
+.cov(C, "AFTER")
+# Column coverage on the union: these must be fully populated for vic2026, and no
+# column of the whole file may be 100% empty.
+.v <- C[election == "vic2026"]
+.need <- c("election", "region", "year", "seat", "name", "party", "party_raw", "source", "party_conflict", "class_rule")
+if (anyDuplicated(data.table(seat = normalise_seat(.v$seat), k = .key(.v$name))))
+  stop("BC11! duplicate (seat, person) within vic2026: ", paste(unique(.v$name[duplicated(data.table(seat = normalise_seat(.v$seat), k = .key(.v$name)))]), collapse = "; "))
+cat(sprintf("BC11 vic2026 rows after merge: %d (no duplicate seat+person)
+", nrow(.v)))
+.emptyv <- .need[vapply(.need, function(k) any(is.na(.v[[k]]) | (is.character(.v[[k]]) & !nzchar(.v[[k]]))), NA)]
+if (length(.emptyv)) stop("BC11! vic2026 required column(s) not fully populated: ", paste(.emptyv, collapse = ", "))
+.cv <- vapply(names(C), function(k) mean(!is.na(C[[k]]) & !(is.character(C[[k]]) & !nzchar(C[[k]]))), 0)
+.dead <- names(.cv)[.cv == 0]
+# party_ab and party_alt only ever come from ABC's list, so with no ABC file
+# (the documented Wikipedia-only fallback, announced at BC10a) they are empty by
+# construction. Exempt them in that case only, and say so.
+if (!any(.v$source %in% c("abc", "both"))) {
+  .exempt <- intersect(.dead, c("party_ab", "party_alt"))
+  if (length(.exempt))
+    cat(sprintf("BC11 no ABC rows: %s 100%% empty by construction (Wikipedia-only fallback), not a failure\n",
+                paste(.exempt, collapse = ", ")))
+  .dead <- setdiff(.dead, .exempt)
+}
+if (length(.dead)) stop("BC11! column(s) 100% empty after the union: ", paste(.dead, collapse = ", "))
+.cvv <- vapply(names(.v), function(k) mean(!is.na(.v[[k]])), 0)
+cat(sprintf("BC11 vic2026 column coverage (n=%d): %s\n", nrow(.v),
+            paste(sprintf("%s %.0f%%", names(.cvv), 100 * .cvv), collapse = ", ")))
+cat(sprintf("BC11 vic2026 `source`: %s\n", paste(sprintf("%s=%d", names(table(.v$source)), table(.v$source)), collapse = " ")))
+if (.old_exists) invisible(file.copy(OUT, PREV, overwrite = TRUE))
 fwrite(C, OUT)
+if (.old_exists) {
+  o <- readLines(PREV, encoding = "UTF-8", warn = FALSE); nw <- readLines(OUT, encoding = "UTF-8", warn = FALSE)
+  n_new <- length(strsplit(nw[1], ",", fixed = TRUE)[[1]]) - length(strsplit(o[1], ",", fixed = TRUE)[[1]])
+  stopifnot(n_new >= 0L, startsWith(nw[1], o[1]))
+  ov <- o[-1][!startsWith(o[-1], "vic2026,")]; nv <- nw[-1][!startsWith(nw[-1], "vic2026,")]
+  same <- length(ov) == length(nv) && all(paste0(ov, strrep(",", n_new)) == nv)
+  cat(sprintf("BC11 non-vic2026 rows byte-identical to the previous file (+%d empty new column field(s)): %s  (n=%d old, %d new)\n",
+              n_new, same, length(ov), length(nv)))
+  if (!same && !identical(Sys.getenv("AUSPOL_CAND_ALLOW_OTHER_CHANGE"), "1")) {
+    file.copy(PREV, OUT, overwrite = TRUE)
+    stop("BC11! non-vic2026 rows changed: another source moved. Old file restored; set AUSPOL_CAND_ALLOW_OTHER_CHANGE=1 to accept.")
+  }
+}
 
 cat(sprintf("\nBC9  %d candidacies across %d elections -> %s\n",
             nrow(C), uniqueN(C$election), OUT))

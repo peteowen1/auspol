@@ -27,19 +27,17 @@
 
 options(auspol.root = normalizePath("."))
 suppressMessages(devtools::load_all(quiet = TRUE))
-# NSW-SCOPED DEFAULT, not a published_flags.R change. Arm C (salience point
-# estimate + variance, docs/plans/prereg-salience-expected-and-variance-
-# 2026-09-07.md) was measured 2026-09-09 across all five harnesses with a
-# salience corpus: federal and NSW both improve, Queensland/SA/Victoria all
-# get WORSE, SA and Victoria beyond the pre-registration's own 0.01
-# per-jurisdiction refusal bound. Victoria is the LIVE TARGET, so this is
-# NOT set in published_flags.R. Defaults ON here and in
-# backtest_candidate_fed.R only, before published_flags.R's own registry
-# runs, so an explicit caller override (either direction) still works.
-# docs/reviews/salience-arm-federal-nsw-scoped-2026-09-09.md has the full
-# jurisdiction table.
-if (!nzchar(Sys.getenv("AUSPOL_SALIENCE_EXPECTED", ""))) Sys.setenv(AUSPOL_SALIENCE_EXPECTED = "1")
-if (!nzchar(Sys.getenv("AUSPOL_SALIENCE_EXP_SD", ""))) Sys.setenv(AUSPOL_SALIENCE_EXP_SD = "1")
+# SALIENCE ARM C (expected vote + variance) -- NO LONGER DEFAULTED ON HERE.
+# backtest_candidate_fed.R and backtest_candidate_nsw.R used to set
+# AUSPOL_SALIENCE_EXPECTED=1 and AUSPOL_SALIENCE_EXP_SD=1 when unset (arm C,
+# docs/plans/prereg-salience-expected-and-variance-2026-09-07.md; scoped to
+# fed/nsw 2026-09-09, docs/reviews/salience-arm-federal-nsw-scoped-2026-09-09.md).
+# Removed 2026-10-03: it made hand runs differ from what the rebuild and the
+# ledger score (a rebuild exports the published flags first, so the default never
+# fired there). See docs/reviews/fed-nsw-snapshot-gap-2026-10-03.md and
+# docs/plans/prereg-salience-fed-nsw-onoff-2026-10-03.md. Both now run at the
+# published 0; an explicit AUSPOL_SALIENCE_EXPECTED=1 AUSPOL_SALIENCE_EXP_SD=1
+# still selects arm C.
 source("scripts/harness_defaults.R")  # published defaults for every unset AUSPOL_* switch; see that file
 suppressMessages(library(data.table))
 
@@ -478,6 +476,8 @@ DEV_SLOPE <- dev_slopes_for(union(parties, names(state_tgt)))
 .screened <- identical(Sys.getenv("AUSPOL_DEV_SLOPE_MODE", ""), "screened")
 # Off by default -- see the matching comment in backtest_candidate_fed.R.
 .honour_departed <- Sys.getenv("AUSPOL_HONOUR_DEPARTED", "0") %in% c("1", "TRUE", "true")
+.departed_hold <- Sys.getenv("AUSPOL_DEPARTED_HOLD", "0") %in% c("1", "TRUE", "true")   # docs/plans/prereg-departed-hold-fixed-2026-10-04.md
+.hold_min <- as.numeric(Sys.getenv("AUSPOL_DEPARTED_HOLD_MIN_PRIOR", "0"))   # arm B (amendment 2026-10-05): hold only classes with at least this prior seat share
 .returns <- if (.cond) candidate_returns(PRV, TGT) else NULL
 if (.cond) cat(sprintf("BN1c conditional slopes ON: %d of %d seat-classes have the same candidate returning
 ",
@@ -677,6 +677,7 @@ if (identical(Sys.getenv("AUSPOL_MAJOR_SLOPES", "0"), "1")) {
       paste(sprintf("%s=%.3f", names(.major_sl$new),  .major_sl$new),  collapse=" ")))
 }
 pinned <- matrix(FALSE, nrow(mat), ncol(mat), dimnames = dimnames(mat))
+HELD <- matrix(FALSE, nrow(mat), ncol(mat), dimnames = dimnames(mat))
 for (p in parties) {
   if (!p %in% names(state_tgt)) next
   d_state <- state_tgt[[p]] - state_prev[[p]]
@@ -684,8 +685,9 @@ for (p in parties) {
     pv <- .permit[.permit$party == p, ]
     lut <- stats::setNames(as.logical(pv$permit), pv$seat)
     pm <- unname(lut[rownames(mat)]); # a missing permit row is NOT a permit (NA = silent; 2026-09-20)
-    screened_slopes(p, rownames(mat), .returns, pm, same_mp = .MP_SLOPE, major_departed = .MAJDEP, major_present = .MAJPRES, honour_departed = .honour_departed, same = if (is.null(.fitsl)) formals(screened_slopes)$same else .fitsl$same, new = if (is.null(.fitsl)) formals(screened_slopes)$new else .fitsl$new)
+    screened_slopes(p, rownames(mat), .returns, pm, same_mp = .MP_SLOPE, major_departed = .MAJDEP, major_present = .MAJPRES, honour_departed = .honour_departed, with_flags = .departed_hold, same = if (is.null(.fitsl)) formals(screened_slopes)$same else .fitsl$same, new = if (is.null(.fitsl)) formals(screened_slopes)$new else .fitsl$new)
   } else if (.cond) conditional_slopes(p, rownames(mat), .returns, same_mp = .MP_SLOPE, major_departed = .MAJDEP, major_present = .MAJPRES, same = if (is.null(.fitsl)) formals(conditional_slopes)$same else .fitsl$same, new = if (is.null(.fitsl)) formals(conditional_slopes)$new else .fitsl$new) else DEV_SLOPE[[p]]
+  .hd <- attr(sl, "departed"); if (.departed_hold && !is.null(.hd)) HELD[, p] <- ((.hd %in% TRUE) & (mat[, p] >= .hold_min)) %in% TRUE
   if (!is.null(.major_sl) && p %in% names(.major_sl$same) && !is.null(.returns)) {
     .r <- .returns[.returns$party == p]
     .is_same <- unname(stats::setNames(.r$same, .r$seat)[rownames(mat)])
@@ -728,6 +730,7 @@ if (ELASTIC > 0) {
 }
 # Constrained renormalisation -- a cut cell must not get back a share of the
 # vote just removed from it.
+if (.departed_hold && ELASTIC > 0 && any(pinned)) stop("AUSPOL_DEPARTED_HOLD cannot be combined with ELASTIC pinning", call. = FALSE)
 if (ELASTIC > 0 && any(pinned)) {
   for (i in which(rowSums(pinned) > 0)) {
     keepc <- pinned[i, ]
@@ -736,6 +739,13 @@ if (ELASTIC > 0 && any(pinned)) {
   }
   oth <- which(rowSums(pinned) == 0)
   if (length(oth)) shares[oth, ] <- 100 * shares[oth, , drop = FALSE] / rowSums(shares[oth, , drop = FALSE])
+} else if (.departed_hold) {
+  shares <- renorm_hold(shares, HELD)
+  cat(sprintf("BH0  departed hold: %d cell(s) held in %d seat(s)%s
+", sum(HELD), sum(rowSums(HELD) > 0),
+              if (length(attr(shares, "skipped"))) paste0(" | not held (others zero or hold >= 100): ", paste(attr(shares, "skipped"), collapse = ", ")) else ""))
+  attr(shares, "skipped") <- NULL
+  if (nzchar(Sys.getenv("AUSPOL_DEPARTED_HOLD_DUMP"))) { .w <- which(HELD, arr.ind = TRUE); utils::write.csv(data.frame(seat = rownames(HELD)[.w[, 1]], party = colnames(HELD)[.w[, 2]]), Sys.getenv("AUSPOL_DEPARTED_HOLD_DUMP"), row.names = FALSE) }   # which cells were held, for the scoring script
 } else {
   shares <- 100 * shares / rowSums(shares)
 }
@@ -838,7 +848,9 @@ if (PORT) {
 shares <- xgb_primary_override(shares, TGT)
 # Every class with no candidate standing is zeroed AFTER the override, which
 # otherwise writes its prediction back (plans/prereg-nomination-zero-2026-10-03.md).
-shares <- zero_unnominated(shares, fp_tgt, TGT, flows = fm)
+# AUSPOL_NOM_ZERO_ORDER (default "early" = this position); "late" runs it after
+# the salience block below instead (plans/prereg-zero-order-2026-10-03.md).
+shares <- zero_unnominated_at("early", shares, fp_tgt, TGT, flows = fm)
 # Time-forward seat-swing port (AUSPOL_SEAT_SWING_PORT=2), AFTER the override,
 # which would otherwise overwrite it. plans/prereg-seat-swing-port-v2-2026-09-29.md
 # Only on top of the xgb layer: at AUSPOL_XGB_PRIMARY=0 (rebuild stage 1) these
@@ -968,6 +980,14 @@ if (identical(Sys.getenv("AUSPOL_SALIENCE_SURGE_V2", "0"), "1")) {
                 surge_mu_arg, surge_sd_arg, hz$lambda, hz$n_train_winners))
   }
 }
+# AUSPOL_NOM_ZERO_ORDER="late": zero every class with no candidate AFTER the last
+# step that can revive one (port, demographic, leader, salience blend), OUTSIDE the
+# SURGE_V2/hz block so a NULL hz or SURGE_V2 off still zeroes, and BEFORE the first
+# reader of `shares` below (reentry_sd_matrix, the sd/flow overrides, the simulation).
+# `salience_sd_matrix()` inside the block above still read the unzeroed matrix.
+.nz_pre <- shares
+shares <- zero_unnominated_at("late", shares, fp_tgt, TGT, flows = fm)
+.nz_cells <- nomination_zeroed_cells(.nz_pre, shares)
   # ARM H, docs/plans/prereg-reentry-flatratio-variance-2026-09-08.md. Widens
   # the SIMULATED uncertainty, not the point estimate, for cells that fell
   # back to the flat re-entry ratio -- point-shrinkage was tried and refused
@@ -1133,6 +1153,7 @@ cat(sprintf("BT4  winner accuracy: %d of %d (%.1f%%)\n",
             100 * mean(res$pred == res$actual)))
 cat(sprintf("BT5  Brier (on the party that won): %.4f\n", mean((1 - res$p)^2)))
 eps <- 1e-6
+nom_zero_assert_late(shares, .nz_cells)  # "late" order only: a zeroed cell must still be 0 at the write
 .rr <- seat_share_rmse(shares, fp_tgt)  # the second metric: point-estimate seat-share RMSE vs actual
 cat(sprintf("BT5r  seat-share RMSE %.3f | MAE %.3f | by class %s | %d seats%s\n", .rr$rmse, .rr$mae,
             paste(sprintf("%s=%.2f", names(.rr$by_class), .rr$by_class), collapse = " "),

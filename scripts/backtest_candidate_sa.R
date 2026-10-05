@@ -478,6 +478,8 @@ DEV_SLOPE <- dev_slopes_for(union(parties, names(st_b)))
   .screened <- identical(Sys.getenv("AUSPOL_DEV_SLOPE_MODE", ""), "screened")
   # Off by default -- see the matching comment in backtest_candidate_fed.R.
   .honour_departed <- Sys.getenv("AUSPOL_HONOUR_DEPARTED", "0") %in% c("1", "TRUE", "true")
+  .departed_hold <- Sys.getenv("AUSPOL_DEPARTED_HOLD", "0") %in% c("1", "TRUE", "true")   # docs/plans/prereg-departed-hold-fixed-2026-10-04.md
+  .hold_min <- as.numeric(Sys.getenv("AUSPOL_DEPARTED_HOLD_MIN_PRIOR", "0"))   # arm B (amendment 2026-10-05): hold only classes with at least this prior seat share
 .returns <- if (.cond) tryCatch(candidate_returns(PRV, TGT), error = function(e) {
   cat(sprintf("BS1c! conditional slopes unavailable: %s
 ", conditionMessage(e))); NULL }) else NULL
@@ -642,7 +644,7 @@ if (identical(Sys.getenv("AUSPOL_MAJOR_DEPARTED", "0"), "1") || identical(Sys.ge
     pv <- .permit[.permit$party == p, ]
     lut <- stats::setNames(as.logical(pv$permit), pv$seat)
     pm <- unname(lut[seats]); # a missing permit row is NOT a permit (NA = silent; 2026-09-20)
-    return(screened_slopes(p, seats, .returns, pm, same_mp = .MP_SLOPE, major_departed = .MAJDEP, major_present = .MAJPRES, honour_departed = .honour_departed, same = if (is.null(.fitsl)) formals(screened_slopes)$same else .fitsl$same, new = if (is.null(.fitsl)) formals(screened_slopes)$new else .fitsl$new))
+    return(screened_slopes(p, seats, .returns, pm, same_mp = .MP_SLOPE, major_departed = .MAJDEP, major_present = .MAJPRES, honour_departed = .honour_departed, with_flags = .departed_hold, same = if (is.null(.fitsl)) formals(screened_slopes)$same else .fitsl$same, new = if (is.null(.fitsl)) formals(screened_slopes)$new else .fitsl$new))
   }
   if (.cond && !is.null(.returns)) return(conditional_slopes(p, seats, .returns, same_mp = .MP_SLOPE, major_departed = .MAJDEP, major_present = .MAJPRES, same = if (is.null(.fitsl)) formals(conditional_slopes)$same else .fitsl$same, new = if (is.null(.fitsl)) formals(conditional_slopes)$new else .fitsl$new))
   DEV_SLOPE[[p]]
@@ -655,10 +657,12 @@ cat(sprintf("BS1d  dev slopes: %s%s
               paste0(" | not contested here: ",
                      paste(attr(DEV_SLOPE, "absent"), collapse=",")) else ""))
 pinned <- matrix(FALSE, nrow(mat), ncol(mat), dimnames = dimnames(mat))
+  HELD <- matrix(FALSE, nrow(mat), ncol(mat), dimnames = dimnames(mat))
 
 for (p in parties) if (p %in% names(st_b) && p %in% names(st_a)) {
   d_state <- st_b[[p]] - st_a[[p]]
   .sl <- .sa_slope(p, rownames(mat))
+  .hd <- attr(.sl, "departed"); if (.departed_hold && !is.null(.hd)) HELD[, p] <- ((.hd %in% TRUE) & (mat[, p] >= .hold_min)) %in% TRUE
   x_p <- .own_x(p, rownames(mat), mat[, p])
   val <- if (is.null(.split)) dev_slope(x_p, st_a[[p]], st_b[[p]], .sl) else
     split_dev_slope(x_p, .split$frac(p, rownames(mat)), st_a[[p]], st_b[[p]], .split$s_ret, .split$s_dep)
@@ -883,6 +887,7 @@ if ("IND" %in% colnames(shares)) {
 #
 # Where a cell was cut, it is PINNED at its elastic value and only the other
 # parties in that seat are scaled to fill the remainder.
+if (.departed_hold && ELASTIC > 0 && any(pinned)) stop("AUSPOL_DEPARTED_HOLD cannot be combined with ELASTIC pinning", call. = FALSE)
 if (ELASTIC > 0 && any(pinned)) {
   for (i in which(rowSums(pinned) > 0)) {
     keep <- pinned[i, ]
@@ -901,6 +906,13 @@ if (ELASTIC > 0 && any(pinned)) {
   }
   cat(sprintf("BS1e constrained renormalisation applied to %d seat(s)\n",
               sum(rowSums(pinned) > 0)))
+} else if (.departed_hold) {
+  shares <- renorm_hold(shares, HELD)
+  cat(sprintf("BH0  departed hold: %d cell(s) held in %d seat(s)%s
+", sum(HELD), sum(rowSums(HELD) > 0),
+              if (length(attr(shares, "skipped"))) paste0(" | not held (others zero or hold >= 100): ", paste(attr(shares, "skipped"), collapse = ", ")) else ""))
+  attr(shares, "skipped") <- NULL
+  if (nzchar(Sys.getenv("AUSPOL_DEPARTED_HOLD_DUMP"))) { .w <- which(HELD, arr.ind = TRUE); utils::write.csv(data.frame(seat = rownames(HELD)[.w[, 1]], party = colnames(HELD)[.w[, 2]]), Sys.getenv("AUSPOL_DEPARTED_HOLD_DUMP"), row.names = FALSE) }   # which cells were held, for the scoring script
 } else {
   shares <- 100 * shares / rowSums(shares)
 }
@@ -969,7 +981,9 @@ if (PORT) {
 shares <- xgb_primary_override(shares, TGT)
 # Every class with no candidate standing is zeroed AFTER the override, which
 # otherwise writes its prediction back (plans/prereg-nomination-zero-2026-10-03.md).
-shares <- zero_unnominated(shares, fb, TGT, flows = fm)
+# AUSPOL_NOM_ZERO_ORDER (default "early" = this position); "late" runs it after
+# the salience block below instead (plans/prereg-zero-order-2026-10-03.md).
+shares <- zero_unnominated_at("early", shares, fb, TGT, flows = fm)
 # Time-forward seat-swing port (AUSPOL_SEAT_SWING_PORT=2), AFTER the override,
 # which would otherwise overwrite it. plans/prereg-seat-swing-port-v2-2026-09-29.md
 # Only on top of the xgb layer: at AUSPOL_XGB_PRIMARY=0 (rebuild stage 1) these
@@ -1141,6 +1155,14 @@ if (identical(Sys.getenv("AUSPOL_SALIENCE_SURGE_V2", "0"), "1")) {
                 surge_mu_arg, surge_sd_arg, hz$lambda, hz$n_train_winners))
   }
 }
+# AUSPOL_NOM_ZERO_ORDER="late": zero every class with no candidate AFTER the last
+# step that can revive one (port, demographic, leader, salience blend), OUTSIDE the
+# SURGE_V2/hz block so a NULL hz or SURGE_V2 off still zeroes, and BEFORE the first
+# reader of `shares` below (reentry_sd_matrix, the sd/flow overrides, the simulation).
+# `salience_sd_matrix()` inside the block above still read the unzeroed matrix.
+.nz_pre <- shares
+shares <- zero_unnominated_at("late", shares, fb, TGT, flows = fm)
+.nz_cells <- nomination_zeroed_cells(.nz_pre, shares)
   # ARM H, docs/plans/prereg-reentry-flatratio-variance-2026-09-08.md. Widens
   # the SIMULATED uncertainty, not the point estimate, for cells that fell
   # back to the flat re-entry ratio -- point-shrinkage was tried and refused
@@ -1236,6 +1258,7 @@ z <- data.frame(y = as.integer(res$pred == res$actual),
                 lo = stats::qlogis(pmin(pmax(res$pred_p, eps), 1 - eps)))
 sl <- if (length(unique(z$y)) > 1)
   stats::coef(stats::glm(y ~ lo, data = z, family = stats::binomial()))[["lo"]] else NA_real_
+nom_zero_assert_late(shares, .nz_cells)  # "late" order only: a zeroed cell must still be 0 at the write
 .rr <- seat_share_rmse(shares, fb)  # the second metric: point-estimate seat-share RMSE vs actual
 cat(sprintf("BS2r  seat-share RMSE %.3f | MAE %.3f | by class %s | %d seats%s\n", .rr$rmse, .rr$mae,
             paste(sprintf("%s=%.2f", names(.rr$by_class), .rr$by_class), collapse = " "),

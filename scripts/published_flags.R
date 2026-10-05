@@ -29,6 +29,8 @@ PUBLISHED_FLAGS <- c(
   AUSPOL_LEVEL_SD            = "1.10,8.67",  # level-dependent seat variance, a + b*sqrt(p(1-p))
   AUSPOL_DEV_SLOPE_MODE      = "screened",   # candidate-conditional slopes + salience screen (arm CS)
   AUSPOL_HONOUR_DEPARTED     = "1",          # a departed class leader's base decays toward the measured 0.38 retention rate, independent of whether the screen separately permits a new emergence (0.907/1.0 previously applied even when the "same" candidate was an unrelated minor figure, e.g. Morwell/Tracie Lund masking Russell Northe's real departure). 2026-09-06's refusal conflated "departure" with "no new emergence" as one mechanism; re-measured 2026-09-18 on the fuller 593-case corpus -- docs/reviews/departed-leader-retention-2026-09-15.md, docs/reviews/departed-leader-honour-fix-2026-09-18.md. Isolated in base_pred: pooled log loss 0.2810->0.2801 (5 harnesses, n=1751), vic2022 alone 0.2789->0.2587, Morwell 3.049->1.877.
+  AUSPOL_DEPARTED_HOLD       = "0",          # REFUSED 2026-10-05 (docs/plans/prereg-departed-hold-fixed-2026-10-04.md, docs/reviews/departed-hold-sweep-2026-10-05.md): hold a departed leader's decayed cell fixed through renormalisation (the 0.38 was measured on final shares, applied before renormalising, effective 0.6-0.7). Both arms refused by the prereg; switch kept off, byte-identical when off.
+  AUSPOL_DEPARTED_HOLD_MIN_PRIOR = "0",     # arm B (post hoc): hold only classes with at least this prior seat share; 15 = the retention review's population. Refused too.
   AUSPOL_DEPARTED_ORIGIN     = "0",          # MEASURING 2026-09-18 (docs/plans/prereg-departed-origin-return-2026-09-18.md): when a departed
                                              # non-major class leader earlier stood for a major party in the seat, route a fitted share of
                                              # their prior vote back to that party in the prior matrix ("1" = leave-target-out median ~0.21,
@@ -60,23 +62,19 @@ PUBLISHED_FLAGS <- c(
   AUSPOL_SURGE_FROM_ZERO     = "0",          # 1 = a named recipient surges from zero share; docs/plans/prereg-recipient-at-zero-2026-09-07.md
   AUSPOL_SALIENCE_SMOOTH     = "1",          # exp_pcv/exp_sd from a monotone cubic on log(1-pctile), not six unequal bins; 0 = the old bands
   AUSPOL_SALIENCE_EXP_SD     = "0",          # 1 = a governed candidate's deviation sd is their salience band's, not level_sd; prereg-salience-expected-and-variance-2026-09-07.md
-                                             # *** OVERRIDDEN TO 1 BY TWO HARNESSES -- see the note below. ***
+                                             # (both switches run at 0 in every harness; see the note below.)
   AUSPOL_SALIENCE_EXPECTED   = "0",          # 1 = a governed candidate polls their salience band's expected vote; docs/plans/prereg-salience-expected-primary-2026-09-07.md
                                              #
-                                             # *** THESE TWO ARE NOT 0 EVERYWHERE. ***
-                                             # backtest_candidate_fed.R:78 and backtest_candidate_nsw.R:41 set BOTH to 1
-                                             # before sourcing harness_defaults.R, so federal and NSW harness runs use 1
-                                             # and vic/qld/sa/wa use the 0 above. That is deliberate and shipped -- arm C
-                                             # was scoped to the two jurisdictions where it helped (commit 01c8e1c,
-                                             # 2026-09-09, docs/reviews/salience-arm-federal-nsw-scoped-2026-09-09.md).
-                                             # fit_seats_full.R, the published forecast, uses the 0 above.
-                                             #
-                                             # RECORDED HERE because this file is supposed to be the one place you can
-                                             # read the configuration off. Without this note a reader concludes federal
-                                             # runs with the arm OFF, which is how a day of headline numbers went wrong
-                                             # on 2026-09-06. Found 2026-09-12 while chasing why fed2016 independents
-                                             # were predicted at ~14.7 against actuals of 1.5-7.6: that IS the shipped
-                                             # federal behaviour, not a bug, because this override is on.
+                                             # NOTE (2026-10-03): all harnesses now run both salience switches at the
+                                             # published 0, as does fit_seats_full.R. The "arm C" scoping of 2026-09-09
+                                             # (commit 01c8e1c: backtest_candidate_fed.R and backtest_candidate_nsw.R
+                                             # defaulted both to 1) was removed because a rebuild exports the published
+                                             # flags first, so the scoping never fired in the rebuild/ledger and hand
+                                             # runs differed from what was scored. See
+                                             # docs/reviews/fed-nsw-snapshot-gap-2026-10-03.md and
+                                             # docs/plans/prereg-salience-fed-nsw-onoff-2026-10-03.md. An explicit
+                                             # AUSPOL_SALIENCE_EXPECTED=1 AUSPOL_SALIENCE_EXP_SD=1 still selects arm C
+                                             # in any harness.
   AUSPOL_PARTY_COR           = "shrunk",     # correlated statewide deviations
   AUSPOL_LEVEL_MULT_IND      = "1",          # per-class multiplier on level_sd (IND); prereg-class-specific-variance, refused, stays 1
   AUSPOL_LEVEL_MULT_OTH      = "1",          # per-class multiplier on level_sd (other non-majors)
@@ -531,6 +529,8 @@ PUBLISHED_FLAGS <- c(
                                              # same way national polls did that year -- an inherent property.
   AUSPOL_STATE_POLL_EXTRA    = "0",          # TESTING 2026-10-02: every pollster's state crosstabs into the state-deviation features (scripts/build_state_deviation_features.R). plans/prereg-state-polls-extra-2026-10-02.md
   AUSPOL_NOM_ZERO            = "2",          # SHIPPED v61 2026-10-03 (mode 2, freed share by flows): zero every class with no candidate standing, after the xgb override, all six harnesses (R/nomination_zero.R). plans/prereg-nomination-zero-2026-10-03.md
+  AUSPOL_NOM_ZERO_ORDER      = "late",       # SHIPPED 2026-10-04 (Pete, overriding the R2 refusal: ALP +0.0045 / GRN +0.0020 points of bias on a paired SE of ~0.002; all 22 pairs, every other clause passed; docs/reviews/zero-order-22pair-2026-10-04.md): where the six harnesses run the v61 zeroing. "early" (the v61 measurement order) = right after the xgb override; "late" = after the last step that can write a share back into a zeroed cell (seat-swing port, demographic, leader, salience blend), as fit_seats_full.R already does. Harnesses only. plans/prereg-zero-order-2026-10-03.md
+  AUSPOL_NOM_LIVE            = "auto",       # v61 in the PUBLISHED Victorian forecast (fit_seats_full.R): zero non-standing parties ONLY when set to "1" by hand after the VEC final vic2026 list is loaded into candidacies.csv ("auto"/"0" stay shut; under "1" any failure to apply, or an unrecognised value, STOPS the run; needs >=85% of vic2022 candidacies; absent ALP/LNP seats are warned, not blocked). Runs after the last step that can add share to a cell. Logged as NZL. November procedure: docs/PIPELINE.md section D.
   AUSPOL_COUNCIL_EXTRA       = "0",          # TESTING 2026-10-02: NSW councils that ran their own elections + mayors chosen by councillors (scripts/build_council_history.py). plans/prereg-council-extra-2026-10-02.md
   AUSPOL_STATE_POLL_POOL     = "1",          # SHIPPED v60 2026-10-02 (Pete overrode the prereg clause): state signal pooled from seat polls, federal harness only, before the seat-poll blend (R/state_poll_pool.R). plans/prereg-state-poll-pool-2026-10-02.md
   AUSPOL_STATE_DEV_SHUFFLE   = "0",          # control: permutes which state each seat sits in, within its election.
