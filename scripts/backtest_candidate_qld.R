@@ -585,15 +585,9 @@ if (identical(Sys.getenv("AUSPOL_MAJOR_DEPARTED", "0"), "1") || identical(Sys.ge
   }
 }
 .tr <- attr(mat, "transfers"); if (!is.null(.tr)) cat(sprintf("TR1  transfers moved with the person: %d applied%s\n", .tr$applied, if (length(.tr$skipped)) paste0("; SKIPPED ", length(.tr$skipped), ": ", paste(utils::head(.tr$skipped, 5), collapse = ", ")) else ""))
-.own_x <- function(p, seats, x) {
-  if (is.null(.own_prev)) return(x)
-  ov <- .own_prev[.own_prev$party == p, ]
-  v <- stats::setNames(ov$own_prev_pcv, ov$seat)[seats]
-  out <- x
-  hit <- !is.na(v)
-  out[hit] <- unname(v[hit])
-  out
-}
+# Shared with every harness and fit_seats_full.R: own_prev_substitute() (R/candidate_returns.R).
+# A cross-seat credit (AUSPOL_CROSS_SEAT_VOTE) can only RAISE the class base, never lower it.
+.own_x <- function(p, seats, x) own_prev_substitute(.own_prev, p, seats, x)
 .permit <- if (.screened) salience_permit_for(TGT, PRV, "qld") else NULL
 .sa_slope <- function(p, seats) {
   if (.screened && !is.null(.permit)) {

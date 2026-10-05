@@ -938,7 +938,46 @@ personal_prior_vote <- function(election_from, election_to, corpus = NULL,
   }
   out[is.na(prev_party) | prev_party == party, `:=`(transfer = NA_real_, prev_party = NA_character_)]
   out[, .own_prev_pcv_full := NULL]
-  out[, list(seat, party, own_prev_pcv, prev_party, transfer)]
+  keep <- c("seat", "party", "own_prev_pcv", "prev_party", "transfer",
+            if ("own_prev_source" %in% names(out)) "own_prev_source")
+  out[, ..keep]
+}
+
+#' Substitute a returning candidate's own previous vote into a class base
+#'
+#' The one shared implementation of every harness's `.own_x()` (six backtest
+#' harnesses and `fit_seats_full.R`). For class `p`, a seat whose `own_prev` row has
+#' a finite `own_prev_pcv` takes that value IN PLACE of the class base `x`, except
+#' that a row marked `own_prev_source == "cross_seat"` (the
+#' `AUSPOL_CROSS_SEAT_VOTE` credit for a person who earned a vote in another
+#' seat or jurisdiction) may only RAISE the base: the result is
+#' `max(x, own_prev_pcv)`. A person arriving from elsewhere adds to what the class
+#' already had in this seat; replacing a stronger own-history base with the smaller
+#' credit lowered Stuart (sa2022 IND 25.0 to 18.2, actual 48.5) and Baldivis (wa2017).
+#' Without an `own_prev_source` column (switch off) this is exactly the old
+#' wholesale replacement.
+#'
+#' @param own_prev [personal_prior_vote()]'s output, or `NULL`.
+#' @param p Party class.
+#' @param seats Seat names, aligned with `x`.
+#' @param x Numeric class base for `seats`, in the same units as `own_prev_pcv`.
+#' @return `x` with the substitutions applied.
+#' @export
+own_prev_substitute <- function(own_prev, p, seats, x) {
+  if (is.null(own_prev)) return(x)
+  ov <- own_prev[own_prev$party == p, ]
+  if (!nrow(ov)) return(x)
+  v <- stats::setNames(ov$own_prev_pcv, ov$seat)[seats]
+  out <- x
+  hit <- !is.na(v)
+  new <- unname(v[hit])
+  if ("own_prev_source" %in% names(ov)) {
+    cs <- stats::setNames(ov$own_prev_source, ov$seat)[seats][hit] %in% "cross_seat"
+    old <- x[hit]
+    new[cs] <- ifelse(is.na(old[cs]), new[cs], pmax(old[cs], new[cs]))
+  }
+  out[hit] <- new
+  out
 }
 
 #' Take a transferred personal vote OUT of the class it came from
