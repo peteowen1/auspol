@@ -209,7 +209,7 @@ PUBLISHED_FLAGS <- c(
                                              # new one. The retired statewide path takes the statewide maximum
                                              # and says so. docs/plans/prereg-flow-fragmentation-2026-09-15.md
   AUSPOL_DEFECT_POOLED       = "2",          # 2 = separate member (0.282) / losing-candidate (0.142) defector rates.
-  AUSPOL_DEFECT_BY_LEVEL     = "0",          # 1 = federal and state rates (REFUSED 2026-10-05); 2 = federal only (Amendment 1, pending). PREREG (docs/plans/prereg-defector-by-level-2026-10-05.md): sitting-member defector carry pooled by federal vs state with shrinkage (federal ~0.2, state ~0.4-0.6) instead of one all-level median.
+  AUSPOL_DEFECT_BY_LEVEL     = "2",          # SHIPPED 2026-10-05: 2 = federal targets get their own shrunk sitting-member defector carry (~0.16-0.23), states keep the pooled rate; 1 = federal and state rates (REFUSED); 0 = one all-level median. PREREG (docs/plans/prereg-defector-by-level-2026-10-05.md): sitting-member defector carry pooled by federal vs state with shrinkage (federal ~0.2, state ~0.4-0.6) instead of one all-level median.
                                              # ADOPTED BY PETE ON MECHANISM 2026-09-09, not on the criterion: the arm
                                              # missed its own primary bar (t -2.04 vs 2.08) but passed R1 in both arms,
                                              # breached no floor, improved pooled log loss / Victoria / WA, and made only

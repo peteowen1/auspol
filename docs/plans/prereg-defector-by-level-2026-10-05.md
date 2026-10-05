@@ -124,3 +124,19 @@ cells match the baseline, so the primary is driven by the five federal cells.
 mode 1 his win probability fell 0.980 -> 0.899 while his primary forecast moved TOWARD his actual
 (52.1 -> 45.7, actual 39.5). Pete chose this arm knowing that. The disqualifier still applies to every
 other defector who won; if any of them loses more than 0.05, the arm does not ship.
+
+## Amendment 1 result (2026-10-05, snapshot `output/snapshots/20261005-1825-28d4602-from1`) -- SHIPPED
+
+| Criterion | Result | Verdict |
+|---|---|---|
+| 1 PRIMARY, 14 cells | 2,162.7 -> 1,660.8, change -501.9, SE 294.9 | PASS (1.7 SE) |
+| 2 GUARD ledger log loss | 0.2874 -> 0.2827, change -0.0047, clustered SE 0.0029 | holds (AEF 0.2825) |
+| 3 GUARD whole-table | RMSE 3.848 -> 3.832, mean sq change -0.128, SE 0.072 | holds |
+| 4 DISQUALIFIER | Calare 0.980 -> 0.892 (waived, Pete); Kiama 0.483 -> 0.550, Kavel 0.802 -> 0.780, Narungga 0.836 -> 0.834, Morwell 0.586 -> 0.583 | clear apart from the waiver |
+
+Federal cells: Hughes 25.1 -> 18.2 (actual 7.4), Tangney 24.8 -> 15.6 (11.9), Dobell 23.1 -> 15.6 (12.2),
+Monash 34.1 -> 29.1 (27.3), Calare 52.1 -> 45.4 (39.5); Ryan 2010 unchanged by construction. State
+cells use the identical rate; their small moves (Hillarys 21.7 -> 23.1, MacKillop 26.7 -> 29.1) come
+from the as-at xgb models retraining on the changed federal rows. `AUSPOL_DEFECT_BY_LEVEL = "2"` in
+`scripts/published_flags.R` and as the package default. Victoria 2026 is a state target: the live
+forecast's carry is unchanged.

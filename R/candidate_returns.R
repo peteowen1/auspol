@@ -1072,7 +1072,7 @@ fit_defector_discount <- function(target_election, corpus = NULL, min_n = 5L, pa
   # keeps the pooled rate, because the state rate was fitted from as few as 3
   # cases and the small-n se let it through almost unshrunk (Hillarys wa2017
   # 21.7 -> 43.9, actual 20.1).
-  .dbl <- Sys.getenv("AUSPOL_DEFECT_BY_LEVEL", "0")
+  .dbl <- Sys.getenv("AUSPOL_DEFECT_BY_LEVEL", "2")   # SHIPPED 2026-10-05 (Amendment 1); "0" = one all-level median
   if (.dbl %in% c("1", "2")) {
     R <- ratios[was_mp %in% TRUE & is.finite(ratio)]
     lv <- R[, list(est = stats::median(ratio), n = .N,
