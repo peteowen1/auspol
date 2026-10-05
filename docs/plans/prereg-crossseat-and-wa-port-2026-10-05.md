@@ -145,3 +145,21 @@ nsw2023 +85 (Riverstone: Horan, flagged in advance as possibly a different perso
 Victoria 2026: 3 credits; the one that bites is Essendon IND (Oscar Yildiz, Pascoe Vale 2018 23.5 x
 0.47 = 11.1); two small One Nation credits from earlier independent runs (Bauch 2.9) cannot lower the
 class and are inert.
+
+## Amendment B2 (2026-10-06, Pete): fully symmetric pooling, cliff kept
+
+Question from Pete: bring WA fully in line rather than isolate it. Shipped mode 2 uses WA's cycles only
+for WA's own coefficient; mode 1 pools all five states' cycles into every state's coefficient. Mode 1
+was only ever tested bundled with the no-cliff rule (Arm B), which caused the harm, so mode 1 alone is
+untested.
+
+**Change:** `AUSPOL_SEAT_SWING_PORT_WA=1`, `AUSPOL_SEAT_SWING_PORT_NOCLIFF=0`, run from stage 6 (the port
+applies only there). Baseline: the shipped configuration, `output/snapshots/20261006-0054-ff0a13d-from1`
+(cross-seat on, WA mode 2). Dry run of the coefficients under mode 1: vic2022 0.278, nsw2023 0.332,
+qld2024 0.364, sa2026 0.362, wa2025 0.369; vic2018/nsw2019/qld2020 stay 0 (cliff); live vic2026
+0.436 -> 0.374.
+
+**Decision rule (whichever scores better, Pete):** score seat-winner log loss (SA5) over every state
+election the port reaches (vic, nsw, qld, sa, wa). Mode 1 ships if its mean change is below 0 AND the
+ledger (SA3) is not worse by more than 1 SE; otherwise mode 2 stays. Reported either way with per-election
+changes and SEs; the live Victorian coefficient change (0.436 -> 0.374) is named in advance.
