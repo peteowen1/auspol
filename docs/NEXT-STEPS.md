@@ -5,6 +5,10 @@ it stood before this rewrite: `backlog/journal-2026-09-19-hub-snapshot.md`).
 Decisions: `docs/DECISIONS.md`. Every seat verdict: `docs/SEAT-REGISTRY.md`.
 Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30.
 
+## 2026-10-05 (READ FIRST): handover for the next session
+
+Full detail in `docs/HANDOVER-2026-10-05.md`. Short version: `dev` = origin/dev = 1fe9eb6, `dev` -> `main` PR NOT open. One review blocker left, `scripts/build_candidacies.R` BC10a (a same-day ABC refetch loses the sort to the plain-date file) plus the BC11 Wikipedia-only fallback. Departed-hold built and REFUSED (off). Pete wants: why it failed and whether it can be adjusted (widen the SD, add a successor-strength signal), a campaign-signal fix for the breakout misses (seat polls and endorsement already ship; funding data not found), and the other open misses (senior retiring MP, South Brisbane, Churchlands, Maryborough).
+
 ## 2026-10-04 morning (READ THIS FIRST): Pete's answers applied
 
 Pete answered four quizzes; all done on local `dev` (388eead), NOT yet pushed to origin:
