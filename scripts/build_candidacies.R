@@ -1013,13 +1013,19 @@ if (file.exists(.wiki)) {
   # "20261003-1405.csv". Not by mtime either: a clone or copy resets it.
   .abcf <- list.files(file.path("external", "reference", "abc-vic2026"),
                       pattern = "^abc-candidates-[0-9]{8}(-[0-9]{4})?[.]csv$", full.names = TRUE)
+  .abc_odd <- setdiff(list.files(file.path("external", "reference", "abc-vic2026"),
+                                 pattern = "^abc-candidates-.*[.]csv$"), basename(.abcf))
+  if (length(.abc_odd))
+    cat(sprintf("BC10a! IGNORED, name is not abc-candidates-YYYYMMDD[-HHMM].csv: %s\n",
+                paste(.abc_odd, collapse = ", ")))
   .abc_stamp <- sub("^abc-candidates-([0-9]{8})(-([0-9]{4}))?[.]csv$", "\\1\\3", basename(.abcf))
   .abc_stamp <- ifelse(nchar(.abc_stamp) == 8L, paste0(.abc_stamp, "0000"), .abc_stamp)
   .abcf <- .abcf[order(.abc_stamp, decreasing = TRUE)]
   V_abc_n <- 0L; n_both <- 0L; n_conf <- 0L; disagree <- NULL
   if (length(.abcf)) {
     Aabc <- fread(.abcf[1], showProgress = FALSE)
-    stopifnot(all(c("given", "surname", "party_abbrev", "seat", "fetched_at") %in% names(Aabc)))
+    stopifnot(all(c("given", "surname", "party_abbrev", "seat", "fetched_at") %in% names(Aabc)),
+              nrow(Aabc) > 0L)   # a header-only file would otherwise pass as "no ABC rows"
     cat(sprintf("BC10a ABC list: %s (%d rows, fetched_at %s)\n", basename(.abcf[1]),
                 nrow(Aabc), paste(unique(Aabc$fetched_at), collapse = ",")))
     # Resolve the seat to Wikipedia's spelling; refuse a seat that does not resolve.
