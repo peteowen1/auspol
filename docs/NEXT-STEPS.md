@@ -46,7 +46,7 @@ uncapped new-independent shrink.
 
 **Loose ends:** `scripts/quick_arm.R` was mid-build at wrap-up on branch
 `worktree-agent-a7292a0ea2f74a3eb` (uncommitted files in `.claude/worktrees/agent-a7292a0ea2f74a3eb`):
-check it finished and proved itself, review, merge, before the next arm. vic2026 Trends fetch at 121 files (two memory-watchdog kills; resumable,
+merged to dev 2026-10-07 (73d4bf8), NOT yet reviewed or on main: review it in the next PR. Usage: `Rscript scripts/quick_arm.R "AUSPOL_X=1" --pairs=vic2022,...` (~70 s per election with the baseline cached; ~7 min for all 22 cold; verdicts matched the full runs). Profile: setup+fitting is ~80% of a harness run, simulation ~20% -- caching harness setup is the next speedup. vic2026 Trends fetch at 121 files (two memory-watchdog kills; resumable,
 `AUSPOL_SALIENCE_SLEEP=15 Rscript scripts/fetch_salience_vic2026_full.R`); worktree branches of refused
 arms kept for reference.
 
