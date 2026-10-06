@@ -17,9 +17,12 @@ Plans: `plans/primary-miss-fixes-2026-10-05.md`, `plans/prereg-defector-by-level
 
 **Open, in order** (worst 30 rows on the published model: ~20 first-time breakouts, 4 non-major
 sitting members who surged further, 2 collapses, 3 with no prior to build from):
-1. Breakout mixture (with probability p a non-major row's share comes from the breakout distribution;
-   -0.030 log loss, 2.4 SE, in a proxy simulator): designed (`reviews/breakout-risk-design-2026-10-05.md`),
-   NOT built. Needs the real simulator (`R/seat_sim.R`), all six harnesses, prereg.
+1. Breakouts. Mixture BUILT (`R/breakout_mix.R`, `AUSPOL_BREAKOUT_MIX`, off) and REFUSED twice:
+   ungated it leaked probability from safe seats; gated at p >= 0.2 it was +0.0018 overall with fed2025
+   +0.023 (`plans/prereg-breakout-mix-gated-2026-10-06.md`). The signals are too weak, not the mechanism.
+   OPEN: state Google Trends salience (series on disk, never built; Sonnet agent building it behind
+   `AUSPOL_SALIENCE_STATE`, off, 2026-10-06); missing seat-poll primaries (Mayo 2016, Wakehurst,
+   Warringah 2019). Retry the gated mixture once the inputs improve.
 2. Sophomore surge for non-major sitting members (Brock, Cregan, Dametto, Donato): CLOSED, no separable
    surge, no adjustment (`reviews/sophomore-surge-2026-10-06.md`, 1a705d9).
 3. ITG page track record: auspol side MERGED (#92). Blog `e8ed902f` (page reads it; tie bands log loss
