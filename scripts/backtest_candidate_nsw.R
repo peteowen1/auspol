@@ -477,6 +477,11 @@ DEV_SLOPE <- dev_slopes_for(union(parties, names(state_tgt)))
 # Off by default -- see the matching comment in backtest_candidate_fed.R.
 .honour_departed <- Sys.getenv("AUSPOL_HONOUR_DEPARTED", "0") %in% c("1", "TRUE", "true")
 .departed_hold <- Sys.getenv("AUSPOL_DEPARTED_HOLD", "0") %in% c("1", "TRUE", "true")   # docs/plans/prereg-departed-hold-fixed-2026-10-04.md
+.succ_on <- Sys.getenv("AUSPOL_DEPARTED_SUCCESSOR", "0") %in% c("1", "TRUE", "true")   # docs/plans/prereg-departed-successor-flag-2026-10-07.md
+if (.succ_on && .departed_hold) stop("AUSPOL_DEPARTED_SUCCESSOR holds its own cells; do not combine it with AUSPOL_DEPARTED_HOLD", call. = FALSE)
+.SUCC_RATE <- departed_successor_rates(TGT)   # NULL when off: byte-identical
+if (.succ_on) { cat(sprintf("DSR1 departed successor rates: %d seat(s) for %s, held through renormalisation
+", length(.SUCC_RATE), TGT)); .departed_hold <- TRUE }
 .hold_min <- as.numeric(Sys.getenv("AUSPOL_DEPARTED_HOLD_MIN_PRIOR", "0"))   # arm B (amendment 2026-10-05): hold only classes with at least this prior seat share
 .returns <- if (.cond) candidate_returns(PRV, TGT) else NULL
 if (.cond) cat(sprintf("BN1c conditional slopes ON: %d of %d seat-classes have the same candidate returning
@@ -679,7 +684,7 @@ for (p in parties) {
     pv <- .permit[.permit$party == p, ]
     lut <- .permit_lut(pv)
     pm <- unname(lut[rownames(mat)]); # a missing permit row is NOT a permit (NA = silent; 2026-09-20)
-    screened_slopes(p, rownames(mat), .returns, pm, same_mp = .MP_SLOPE, major_departed = .MAJDEP, major_present = .MAJPRES, honour_departed = .honour_departed, with_flags = .departed_hold, same = if (is.null(.fitsl)) formals(screened_slopes)$same else .fitsl$same, new = if (is.null(.fitsl)) formals(screened_slopes)$new else .fitsl$new)
+    screened_slopes(p, rownames(mat), .returns, pm, same_mp = .MP_SLOPE, major_departed = .MAJDEP, major_present = .MAJPRES, honour_departed = .honour_departed, with_flags = .departed_hold, successor_rate = .SUCC_RATE, same = if (is.null(.fitsl)) formals(screened_slopes)$same else .fitsl$same, new = if (is.null(.fitsl)) formals(screened_slopes)$new else .fitsl$new)
   } else if (.cond) conditional_slopes(p, rownames(mat), .returns, same_mp = .MP_SLOPE, major_departed = .MAJDEP, major_present = .MAJPRES, same = if (is.null(.fitsl)) formals(conditional_slopes)$same else .fitsl$same, new = if (is.null(.fitsl)) formals(conditional_slopes)$new else .fitsl$new) else DEV_SLOPE[[p]]
   .hd <- attr(sl, "departed"); if (.departed_hold && !is.null(.hd)) HELD[, p] <- ((.hd %in% TRUE) & (mat[, p] >= .hold_min)) %in% TRUE
   if (!is.null(.major_sl) && p %in% names(.major_sl$same) && !is.null(.returns)) {

@@ -760,6 +760,11 @@ if (all(SLOPE == 1)) cat("DS1  all 1.000 -- uniform swing, output must be unchan
 # Off by default -- see the matching comment in backtest_candidate_fed.R.
 .honour_departed <- Sys.getenv("AUSPOL_HONOUR_DEPARTED", "0") %in% c("1", "TRUE", "true")
 .departed_hold <- Sys.getenv("AUSPOL_DEPARTED_HOLD", "0") %in% c("1", "TRUE", "true")   # docs/plans/prereg-departed-hold-fixed-2026-10-04.md
+.succ_on <- Sys.getenv("AUSPOL_DEPARTED_SUCCESSOR", "0") %in% c("1", "TRUE", "true")   # docs/plans/prereg-departed-successor-flag-2026-10-07.md
+if (.succ_on && .departed_hold) stop("AUSPOL_DEPARTED_SUCCESSOR holds its own cells; do not combine it with AUSPOL_DEPARTED_HOLD", call. = FALSE)
+.SUCC_RATE <- departed_successor_rates("vic2026")   # NULL when off: byte-identical
+if (.succ_on) { cat(sprintf("DSR1 departed successor rates: %d seat(s) for %s, held through renormalisation
+", length(.SUCC_RATE), "vic2026")); .departed_hold <- TRUE }
 .hold_min <- as.numeric(Sys.getenv("AUSPOL_DEPARTED_HOLD_MIN_PRIOR", "0"))   # arm B (amendment 2026-10-05)
 # EVERY caught fallback records WHY. "vic2026 has no candidates yet" and "a
 # bug in candidate_returns()" used to print the same line, so once nominations
@@ -1042,7 +1047,7 @@ if (!is.null(.fitsl)) {
     lut <- .permit_lut(pv)
     pm <- unname(lut[seats]); # a missing permit row is NOT a permit (NA = silent; 2026-09-20)
     return(screened_slopes(p, seats, .returns, pm, same_mp = .MP_SLOPE, major_departed = .MAJDEP, major_present = .MAJPRES,
-                            honour_departed = .honour_departed, with_flags = .departed_hold,
+                            honour_departed = .honour_departed, with_flags = .departed_hold, successor_rate = .SUCC_RATE,
                             same = if (is.null(.fitsl)) formals(screened_slopes)$same else .fitsl$same,
                             new  = if (is.null(.fitsl)) formals(screened_slopes)$new  else .fitsl$new))
   }

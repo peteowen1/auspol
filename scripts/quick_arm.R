@@ -92,7 +92,12 @@ if (clean_only) {
 dir.create(qd, recursive = TRUE, showWarnings = FALSE)
 
 # ---- identity of the inputs and the code --------------------------------------
-sig_files <- file.path(src_output, c("xgb-primary-asat-predictions.csv", "xgb-primary-v6-features.csv", "candidacies.csv"))
+# EVERY top-level input the slot copy takes (same filter as the copy below), not a
+# hand-picked few: with three named files, a new or refitted input elsewhere in
+# output/ (e.g. departed-successor-rates.csv, 2026-10-07) was never recopied into
+# the slots and never invalidated a cached baseline.
+sig_files <- list.files(src_output, full.names = TRUE)
+sig_files <- sort(sig_files[!dir.exists(sig_files) & !grepl("^backtest-", basename(sig_files))])
 input_sig <- paste(vapply(sig_files, function(f) if (file.exists(f)) sprintf("%s:%d:%d", basename(f), file.size(f), as.integer(file.mtime(f))) else paste0(basename(f), ":absent"), ""), collapse = "|")
 excl <- c(":(exclude)R/quick_arm.R", ":(exclude)scripts/quick_arm.R")
 head_sha <- sh("rev-parse", "--short=7", "HEAD")[1]

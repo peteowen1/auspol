@@ -219,6 +219,12 @@ CLASSIFY <- list(
     "effective retention was 0.6-0.7). Wired in fed/nsw/qld/sa/vic and fit_seats_full.R; WA is not wired for",
     "the same reason as AUSPOL_HONOUR_DEPARTED (backtest_candidate_wa.R has no screened_slopes() call).",
     "docs/plans/prereg-departed-hold-fixed-2026-10-04.md, docs/reviews/departed-hold-sweep-2026-10-05.md."),
+  AUSPOL_DEPARTED_SUCCESSOR = paste(
+    "UNDER TEST 2026-10-07, OFF. The departed-independent rate per seat, split by a hand-coded pre-election",
+    "successor flag (endorsed, local office, community group, former staffer) and fitted time-forward with",
+    "shrinkage; those cells held through renormalisation. Read via departed_successor_rates() (R/), so the",
+    "grep may show it UNEXPLAINED where it is wired. WA not wired (no screened_slopes() call).",
+    "docs/plans/prereg-departed-successor-flag-2026-10-07.md."),
   AUSPOL_DEPARTED_HOLD_MIN_PRIOR = paste(
     "Arm B of AUSPOL_DEPARTED_HOLD (post hoc, Amendment 1): hold only classes whose prior seat share is at",
     "least this many points (15 = the retention review's population). Also refused; default 0 = arm A.",
