@@ -428,6 +428,27 @@ SEAT_POLL_IND_MAP_KNOWN_FRAC <- 0.5
   cand <- names(oth_fp)[!has_ind[names(oth_fp)] & oth_fp >= SEAT_POLL_IND_MAP_MIN_OTH]
   seat_of <- s$seat_name[match(cand, s$poll_id)]
   cand <- cand[normalise_seat(seat_of) %in% ind_seats]
+  # CREDIBLE CONTENDER ONLY (Amendment 1, Pete 2026-10-06): the remap fired on polls
+  # whose OTH was not an independent (fed2025 McMahon 9.3 -> 23.5, actual 9.8; fed2022
+  # Richmond, Parkes, Lyne). Remap only where pre-election evidence says the seat's
+  # independent is a real contender: endorsed (Climate 200 or a Voices group,
+  # output/endorsement-features.csv) or the sitting independent member (elected IND
+  # at the previous election in that seat).
+  ef <- out_path("endorsement-features.csv")
+  endorsed <- if (file.exists(ef)) {
+    E <- data.table::fread(ef, showProgress = FALSE)
+    unique(normalise_seat(E$seat[E$pair == el & E$party == "IND" & (E$c200 %in% 1 | E$voices %in% 1)]))
+  } else character(0)
+  pr <- Filter(function(p) identical(p$election, el), all_election_pairs())
+  sitting <- if (length(pr)) {
+    Cp <- data.table::fread(cf, showProgress = FALSE, select = c("election", "seat", "party", "elected"))
+    unique(normalise_seat(Cp$seat[Cp$election == pr[[1]]$prev & Cp$party == "IND" & Cp$elected %in% TRUE]))
+  } else character(0)
+  sn0 <- normalise_seat(s$seat_name[match(cand, s$poll_id)])
+  cred <- sn0 %in% c(endorsed, sitting)
+  for (id in cand[!cred]) cat(sprintf("SPIM %s %s | %s | OTH %.1f NOT remapped: independent not endorsed and not sitting\n",
+                                      el, s$seat_name[match(id, s$poll_id)], id, oth_fp[id]))
+  cand <- cand[cred]
   # A non-independent candidate the model already knows explains a big OTH:
   # Katter's 43 in Kennedy 2022 (our OTH_RIGHT pred 45). Skip the seat when any
   # one non-major class of ours (OTH, OTH_RIGHT, ONP) already carries at least

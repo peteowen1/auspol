@@ -51,3 +51,12 @@ Nicholls 8.5 -> 13.9 (25.5); fed2022 IND cells -970. Losses: the OTH -> IND rema
 OTH is not an independent: fed2025 McMahon 9.3 -> 23.5 (9.8), fed2022 Richmond 5.8 -> 16.2 (5.6), Parkes
 4.2 -> 13.9 (2.5), Lyne 8.8 -> 16.9 (8.8); fed2025's 55 cells +384. The remap rule (IND blank, OTH >= 10,
 an IND candidate standing) is too loose. Switches stay off.
+
+## Amendment 1 (2026-10-06, after the result above; Pete chose it)
+
+The original clauses above are unedited. The remap now fires only where the seat's independent is a
+credible contender by pre-election evidence: endorsed by Climate 200 or a Voices group
+(`output/endorsement-features.csv`) or the sitting independent member (elected IND at the previous
+election in that seat). This drops the false remaps (fed2025 McMahon; fed2022 Richmond, Parkes, Lyne)
+and also Nicholls (not endorsed, not sitting), which the first run helped. Same switches, same
+criteria, same baseline, run from stage 6. Post hoc: it favours the later answer and is marked so.
