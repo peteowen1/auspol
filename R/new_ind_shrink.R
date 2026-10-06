@@ -12,14 +12,14 @@
 
 #' The validated `AUSPOL_NEW_IND_SHRINK` switch
 #'
-#' `"0"` off (also unset or empty), `"1"` on. Anything else is an error: a typo
+#' `"0"` off, `"1"` on (shipped 2026-10-06, so also unset or empty). Anything else is an error: a typo
 #' that quietly reads as off is an arm that never ran.
 #'
 #' @return `"0"` or `"1"`.
 #' @export
 new_ind_mode <- function() {
-  m <- Sys.getenv("AUSPOL_NEW_IND_SHRINK", "0")
-  if (!nzchar(m)) m <- "0"
+  m <- Sys.getenv("AUSPOL_NEW_IND_SHRINK", "1")
+  if (!nzchar(m)) m <- "1"   # empty = unset = the shipped value
   if (!m %in% c("0", "1"))
     stop("AUSPOL_NEW_IND_SHRINK must be \"0\" or \"1\"; got \"", m, "\"", call. = FALSE)
   m
@@ -269,9 +269,13 @@ new_ind_fit <- function(target, corpus = NULL, byelection = NULL, features = NUL
   t2 <- if (is.null(tau2)) tau2_hat else tau2
   tb$w <- ifelse(ok, t2 / (t2 + tb$se^2), 0)
   tb$w[!is.finite(tb$w)] <- 0
-  tb$factor <- pmin(1, pmax(0, pool[["k"]] + tb$w * (tb$k - pool[["k"]])))
+  # AUSPOL_NEW_IND_SHRINK_CAP: "1" bounds the factor to [0, 1] (only ever lowers a cell); "0" lets
+  # it rise where earlier elections under-called these candidates (federal and NSW: k ~1.5). Pete,
+  # 2026-10-06: a one-sided cap keeps only the half of a fix that helps.
+  .hi <- if (identical(Sys.getenv("AUSPOL_NEW_IND_SHRINK_CAP", "1"), "0")) Inf else 1
+  tb$factor <- pmin(.hi, pmax(0, pool[["k"]] + tb$w * (tb$k - pool[["k"]])))
   fac <- if (trg_region %in% tb$region) tb$factor[tb$region == trg_region]
-         else pmin(1, pmax(0, pool[["k"]]))
+         else pmin(.hi, pmax(0, pool[["k"]]))
   if (!quiet) {
     cat(sprintf("%s  fit for %s: %d cell(s) in %d election(s), pooled k %.3f (se %.3f, design effect %.2f), tau2 %.4f%s\n",
                 code, target, nrow(Tr), length(unique(Tr$election)), pool[["k"]], pool[["se"]],

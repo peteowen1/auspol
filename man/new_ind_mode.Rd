@@ -10,6 +10,6 @@ new_ind_mode()
 \code{"0"} or \code{"1"}.
 }
 \description{
-\code{"0"} off (also unset or empty), \code{"1"} on. Anything else is an error: a typo
+\code{"0"} off, \code{"1"} on (shipped 2026-10-06, so also unset or empty). Anything else is an error: a typo
 that quietly reads as off is an arm that never ran.
 }

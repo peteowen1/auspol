@@ -104,9 +104,9 @@ test_that("switch 0 returns the matrix itself without reading anything", {
   m <- matrix(c(50, 40, 10), 1, dimnames = list("A1", c("ALP", "LNP", "IND")))
   expect_identical(new_ind_shrink_apply(m, "vic2022", corpus = stop("must not be touched")), m)
   withr::local_envvar(AUSPOL_NEW_IND_SHRINK = NA)
-  expect_identical(new_ind_mode(), "0")
+  expect_identical(new_ind_mode(), "1")   # the shipped value
   withr::local_envvar(AUSPOL_NEW_IND_SHRINK = "")
-  expect_identical(new_ind_mode(), "0")
+  expect_identical(new_ind_mode(), "1")   # the shipped value
   withr::local_envvar(AUSPOL_NEW_IND_SHRINK = "yes")
   expect_error(new_ind_mode(), "must be")
 })
