@@ -575,6 +575,9 @@ PUBLISHED_FLAGS <- c(
                                              # protect a 0.014 number on elections already decided.
                                              # Was OFF from b2c5572 to e8c5eab, when the live path had no Victorian
                                              # candidate data and this would have made the 0-default a false claim.
+  AUSPOL_XGB_BASE_DELTA      = "0",          # measurement mode for targeted base_pred fixes; not a model change. "1" (harnesses only, inside xgb_primary_override()): a cell whose base share at the override differs from the same point of the stage-1 run (output/xgb-base-ref/<pair>.csv, recorded under AUSPOL_XGB_BASE_RECORD) by more than AUSPOL_XGB_BASE_DELTA_TOL is re-predicted by the FROZEN as-at trees (cached base_pred + that change, as both base_margin and the base_pred feature) instead of keeping the cached prediction; no retrain, so unrelated elections do not move.
+  AUSPOL_XGB_BASE_RECORD     = "0",          # measurement plumbing, not a model change: "1" makes the disabled override (stage 1, AUSPOL_XGB_PRIMARY=0) write its shares to output/xgb-base-ref/<pair>.csv, the reference AUSPOL_XGB_BASE_DELTA compares against. scripts/rebuild_forecasts.sh sets it for stage 1.
+  AUSPOL_XGB_BASE_DELTA_TOL  = "0.05",      # percentage points; cells whose base differs by no more than this keep the cached as-at prediction (later harness steps move base by dust). Only read when AUSPOL_XGB_BASE_DELTA = "1".
   AUSPOL_XGB_PRIMARY_OOF     = "output/xgb-primary-asat-predictions.csv",
                                              # harness-only: which predictions file the line above reads.
                                              # REPOINTED 2026-09-18 to the POINT-IN-TIME models
