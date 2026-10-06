@@ -211,8 +211,16 @@ seat_poll_blend_table <- function(target_election, write = FALSE) {
     w <- list(w = raw$w[1], raw = raw$w_raw[1], se = raw$w_se[1], n = raw$w_n[1], k = raw$w_k[1],
               w_direct = raw$w_direct[1], w_mrp = raw$w_mrp[1])
     if (.ind_weight_on()) {
-      if (!"w_ind" %in% names(raw)) stop(cache, " was written without AUSPOL_SEAT_POLL_IND_WEIGHT=1; rebuild it with the switch on")
-      w$w_ind <- raw$w_ind[1]; w$w_ind_raw <- raw$w_ind_raw[1]; w$w_ind_se <- raw$w_ind_se[1]; w$w_ind_n <- raw$w_ind_n[1]
+      if (!"w_ind" %in% names(raw)) {
+        # A table shipped before the IND weight existed (review 2026-10-06): stopping here
+        # made fit_seats_full.R publish with NO seat-poll blend at all, still green. Fall
+        # back to the class-blind weight for IND cells, loudly, until the table is re-promoted.
+        cat(sprintf("SPB!! %s was written without the IND weight (w_ind): IND cells use the class-blind weight %.3f. Re-promote it (scripts/promote_rebuild.R) to ship w_ind.\n",
+                    basename(cache), w$w))
+        w$w_ind <- w$w; w$w_ind_raw <- NA_real_; w$w_ind_se <- NA_real_; w$w_ind_n <- 0L
+      } else {
+        w$w_ind <- raw$w_ind[1]; w$w_ind_raw <- raw$w_ind_raw[1]; w$w_ind_se <- raw$w_ind_se[1]; w$w_ind_n <- raw$w_ind_n[1]
+      }
     }
     tb <- raw[!is.na(raw$seat), list(seat, class, type, poll, n_polls, n_mrp)]
     cat(sprintf("SPB  %s: blend inputs read from %s (sources absent)\n", target_election, basename(cache)))
@@ -438,7 +446,10 @@ SEAT_POLL_IND_MAP_KNOWN_FRAC <- 0.5
   endorsed <- if (file.exists(ef)) {
     E <- data.table::fread(ef, showProgress = FALSE)
     unique(normalise_seat(E$seat[E$pair == el & E$party == "IND" & (E$c200 %in% 1 | E$voices %in% 1)]))
-  } else character(0)
+  } else {
+    cat(sprintf("SPIM! %s: %s missing -- no seat counts as endorsed, so only sitting independents can be remapped\n", el, ef))
+    character(0)
+  }
   pr <- Filter(function(p) identical(p$election, el), all_election_pairs())
   sitting <- if (length(pr)) {
     Cp <- data.table::fread(cf, showProgress = FALSE, select = c("election", "seat", "party", "elected"))
