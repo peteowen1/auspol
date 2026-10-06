@@ -111,6 +111,21 @@ test_that("a missing reference file stops the run instead of comparing with the 
   expect_error(bd_run(fx$shares, "1"), "is missing")
 })
 
+test_that("recording a reference with the new-independent shrink switched on is refused", {
+  fx <- bd_root()
+  withr::local_envvar(AUSPOL_XGB_BASE_RECORD = "1", AUSPOL_XGB_PRIMARY = "0", AUSPOL_REENTRY = "0",
+                      AUSPOL_NEW_IND_SHRINK = "1")
+  expect_error(utils::capture.output(xgb_primary_override(fx$shares, "tst2020")), "AUSPOL_NEW_IND_SHRINK=0")
+  expect_false(file.exists(file.path(fx$root, "output", "xgb-base-ref", "tst2020.csv")))
+  withr::local_envvar(AUSPOL_XGB_BASE_RECORD = "0")
+  lg <- utils::capture.output(xgb_primary_override(fx$shares, "tst2020"))
+  expect_true(any(grepl("XG9!!.*AUSPOL_NEW_IND_SHRINK=1", lg)))
+  # all post-xgb switches off: recording works
+  withr::local_envvar(AUSPOL_XGB_BASE_RECORD = "1", AUSPOL_NEW_IND_SHRINK = "0")
+  utils::capture.output(xgb_primary_override(fx$shares, "tst2020"))
+  expect_true(file.exists(file.path(fx$root, "output", "xgb-base-ref", "tst2020.csv")))
+})
+
 test_that("recording a reference with the re-entry fill switched on is refused", {
   fx <- bd_root()
   withr::local_envvar(AUSPOL_XGB_BASE_RECORD = "1", AUSPOL_XGB_PRIMARY = "0", AUSPOL_REENTRY = "majors")

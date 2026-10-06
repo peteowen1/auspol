@@ -30,18 +30,22 @@ xgb_primary_override <- function(shares, pair_label, enabled = NULL) {
   if (is.null(enabled)) enabled <- identical(Sys.getenv("AUSPOL_XGB_PRIMARY", "1"), "1")
   if (!isTRUE(enabled)) {
     # A base built with a post-xgb fix switched on must not become the training
-    # base or the base-delta reference: the as-at trees would train on the fill and
+    # base or the base-delta reference: the as-at trees would train on the fix and
     # the stage-6 delta would read zero. rebuild_forecasts.sh pins stage 1 to
-    # AUSPOL_REENTRY=0; anything else that produces this base has to as well.
-    .post <- reentry_mode()
+    # every post-xgb switch off; anything else that produces this base has to as
+    # well. post_xgb_switches() is the ONE list of them (AUSPOL_REENTRY,
+    # AUSPOL_NEW_IND_SHRINK): add the next such switch there.
+    .post <- post_xgb_switches()
+    .post_txt <- paste0(names(.post), "=", .post, collapse = ", ")
     if (identical(Sys.getenv("AUSPOL_XGB_BASE_RECORD", "0"), "1")) {
-      if (!identical(.post, "0"))
-        stop(sprintf("AUSPOL_XGB_BASE_RECORD=1 with AUSPOL_REENTRY=%s: the reference would already contain the re-entry fill. Set AUSPOL_REENTRY=0 for stage 1.", .post),
+      if (length(.post))
+        stop(sprintf("AUSPOL_XGB_BASE_RECORD=1 with %s: the reference would already contain that fix. Set %s for stage 1.",
+                     .post_txt, paste0(names(.post), "=0", collapse = ", ")),
              call. = FALSE)
       xgb_base_ref_write(shares, pair_label)
-    } else if (!identical(.post, "0")) {
-      cat(sprintf("XG9!! %s: base built with AUSPOL_REENTRY=%s and the xgb override off -- if this run feeds xgb TRAINING (stage 1), the trees will learn the fill; stage 1 must run AUSPOL_REENTRY=0\n",
-                  pair_label, .post))
+    } else if (length(.post)) {
+      cat(sprintf("XG9!! %s: base built with %s and the xgb override off -- if this run feeds xgb TRAINING (stage 1), the trees will learn the fix; stage 1 must run with %s\n",
+                  pair_label, .post_txt, paste0(names(.post), "=0", collapse = " ")))
     }
     return(shares)
   }

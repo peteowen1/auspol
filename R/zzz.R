@@ -72,3 +72,6 @@ globalVariables(c("prior_party", ".own_prev_pcv_full", "freq"))
 # Added 2026-09-16: the per-cell flow-sd block's data.table column selection
 # in xgb_flow_conditional_override_for().
 globalVariables(c("..dcols"))
+
+# Added 2026-10-06: new_ind_shrink.R data.table NSE column names.
+globalVariables(c("skey", "n_ind", "tot", "ind", "cls", "pkey"))

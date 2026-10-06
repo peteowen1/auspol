@@ -972,6 +972,9 @@ if (PORT) {
   shares[, "LNP"] <- pmax(0, shares[, "LNP"] - adj)
   shares <- 100 * shares / rowSums(shares)
 }
+# AUSPOL_NEW_IND_SHRINK (POST-XGB, default "0" = this line is a no-op): a nameless
+# first-time sole independent is over-called at base. R/new_ind_shrink.R.
+shares <- new_ind_shrink_apply(shares, TGT, code = "BS1n")
 shares <- xgb_primary_override(shares, TGT)
 # Every class with no candidate standing is zeroed AFTER the override, which
 # otherwise writes its prediction back (plans/prereg-nomination-zero-2026-10-03.md).
