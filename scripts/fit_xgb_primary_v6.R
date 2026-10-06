@@ -552,6 +552,12 @@ if (identical(Sys.getenv("AUSPOL_XGB_ENDORSE", "0"), "1")) {
 ",
               sum(ALL$c200), sum(ALL$voices), nrow(ALL)))
 }
+# STATE SALIENCE (AUSPOL_SALIENCE_STATE=1, PREREG PENDING): level, rise, peak,
+# share-in-last-8-weeks and within-election percentiles of Google Trends interest,
+# rebuilt from the cached raw weekly series for STATE elections (R/salience_state.R,
+# scripts/build_state_salience.R). NA where a class has no series -- never a
+# constant. Switch 0 (default): add_state_salience() returns ALL untouched.
+ALL <- add_state_salience(ALL)
 # BOOTH PATTERN (AUSPOL_XGB_BOOTH=1, plans/prereg-booth-features-2026-10-02.md):
 # the class's spread across polling places and its early-vote gap at the
 # PREVIOUS election (R/booth_features.R); NA where no prior booth data.
@@ -727,6 +733,7 @@ feat_cols <- c("base_pred", "seat_prev_pcv", "seat_outperf", "level_prev",
                if (identical(Sys.getenv("AUSPOL_XGB_COUNCIL", "0"), "1")) c("council_mayor", "council_elected", "council_lost", "council_pct"),
                if (identical(Sys.getenv("AUSPOL_XGB_BOOTH", "0"), "1")) c("booth_spread", "early_gap"),
                if (identical(Sys.getenv("AUSPOL_XGB_ENDORSE", "0"), "1")) c("c200", "voices"),
+               if (identical(Sys.getenv("AUSPOL_SALIENCE_STATE", "0"), "1")) state_salience_cols(),
                # "dev": the geography only, no raw Senate level (Victorian Labor runs far
                # ahead of its Senate vote at state elections; the level misled arm "1")
                if (identical(Sys.getenv("AUSPOL_XGB_SENATE", "0"), "dev")) "senate_dev",

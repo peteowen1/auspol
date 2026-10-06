@@ -73,6 +73,11 @@ if (identical(.flag("AUSPOL_XGB_ENDORSE"), "1")) {
   if (!file.exists(file.path(OUT, "endorsement-features.csv"))) stop("AUSPOL_XGB_ENDORSE=1 but output/endorsement-features.csv is missing")
   .arm_tables <- c(.arm_tables, "endorsement-features.csv")
 }
+# And the state-salience table (AUSPOL_SALIENCE_STATE=1): small, shipped whole.
+if (identical(.flag("AUSPOL_SALIENCE_STATE"), "1")) {
+  if (!file.exists(file.path(OUT, "state-salience-features.csv"))) stop("AUSPOL_SALIENCE_STATE=1 but output/state-salience-features.csv is missing")
+  .arm_tables <- c(.arm_tables, "state-salience-features.csv")
+}
 # And the upset-insurance eps table (AUSPOL_UPSET_FLOOR=1).
 if (identical(.flag("AUSPOL_UPSET_FLOOR"), "1")) {
   if (!file.exists(file.path(OUT, "upset-floor-eps.csv"))) stop("AUSPOL_UPSET_FLOOR=1 but output/upset-floor-eps.csv is missing")

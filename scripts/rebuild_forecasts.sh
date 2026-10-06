@@ -205,6 +205,11 @@ fi
 if at_least 3 && [ "${AUSPOL_XGB_ENDORSE:-0}" = "1" ]; then
   python scripts/build_endorsement_features.py > "$LOG/s3_endorse.log" 2>&1 || { echo "!! build_endorsement_features.py failed -- see $LOG/s3_endorse.log"; exit 1; }
 fi
+# STATE SALIENCE (AUSPOL_SALIENCE_STATE): rebuilt from the cached raw Trends
+# series (no fetching) only when the switch is on.
+if at_least 3 && [ "${AUSPOL_SALIENCE_STATE:-0}" = "1" ]; then
+  Rscript scripts/build_state_salience.R > "$LOG/s3_state_salience.log" 2>&1 || { echo "!! build_state_salience.R failed -- see $LOG/s3_state_salience.log"; exit 1; }
+fi
 # BOOTH FEATURES (AUSPOL_XGB_BOOTH): read by stage 3 and the live forecast.
 # Only when the switch is on: a refused feature must not be able to fail a
 # production rebuild on a bad input (review, 2026-10-02).

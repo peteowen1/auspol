@@ -132,8 +132,10 @@ L <- c(L, "## Known gaps\n",
        "  Black and King (district-level rows; polling places unaffected).",
        "- **Queensland 2020 / 2024** -- XML on disk, not yet parsed to candidates.",
        "- **WA** -- per-seat JSON back to 1996, not yet parsed to candidates.",
-       "- **Google Trends** -- only ~63 of the corpus has a cached response, and",
-       "  every one is federal. No state candidacy has ever been queried.\n")
+       "- **Google Trends** -- 4,601 files cached in external/reference/trends/, federal AND",
+       "  state: v6_AU_<STATE>_* hold weekly series for 15 state elections (NSW, VIC, SA, QLD, WA).",
+       "  Built into output/state-salience-v1.csv by scripts/build_state_salience.R. WA series are",
+       "  surname-only queries and are not matched to candidacies.\n")
 
 writeLines(L, OUT)
 cat(sprintf("DR9  wrote %s (%d lines)\n", OUT, length(L)))

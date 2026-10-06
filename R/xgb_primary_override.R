@@ -516,6 +516,16 @@ xgb_primary_predict_live <- function(shares, mat22, a22, state_mean, returns,
     rows[, c200 := .en$c200]
     rows[, voices := .en$voices]
   }
+  # State salience (AUSPOL_SALIENCE_STATE=1): the same R/salience_state.R. The
+  # live Victoria 2026 pair has no cached series in the table, so these are NA
+  # and the model sees them as missing; said, not hidden.
+  if (any(state_salience_cols() %in% feat_cols)) {
+    .lp <- paste0(region, if (identical(region, "vic")) "2026" else "")
+    .ss <- state_salience_features(data.table::data.table(pair = .lp, seat = rows$seat, party = rows$party))
+    for (.cc in state_salience_cols()) rows[, (.cc) := .ss[[.cc]]]
+    if (all(is.na(rows$ss_level)) && all(is.na(rows$ss_jump_pctile)))
+      cat("XSS1!! live state salience features ALL NA for", .lp, "-- no cached series for this election; the model sees them as missing\n")
+  }
   # Booth pattern (AUSPOL_XGB_BOOTH=1): the same R/booth_features.R.
   if (any(c("booth_spread", "early_gap") %in% feat_cols)) {
     .lp <- paste0(region, if (identical(region, "vic")) "2026" else "")
