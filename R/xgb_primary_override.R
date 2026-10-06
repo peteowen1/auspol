@@ -17,10 +17,21 @@
 #'   in the oof-predictions file.
 #' @param enabled Logical; defaults to `AUSPOL_XGB_PRIMARY` env var == "1".
 #' @return The overridden matrix, or `shares` unchanged if not enabled.
+#'
+#' Two switches, both off by default and neither a model change.
+#' `AUSPOL_XGB_BASE_RECORD=1` (set by `scripts/rebuild_forecasts.sh` stage 1,
+#' where this function is disabled) writes the `shares` it is handed to
+#' `output/xgb-base-ref/<pair>.csv`. `AUSPOL_XGB_BASE_DELTA=1` (stage 6 style
+#' runs) compares this run's `shares` with that file and re-predicts only the
+#' cells that moved with the frozen as-at trees (`xgb_base_delta_apply()`), so
+#' a targeted `base_pred` fix is measured without retraining anything.
 #' @export
 xgb_primary_override <- function(shares, pair_label, enabled = NULL) {
   if (is.null(enabled)) enabled <- identical(Sys.getenv("AUSPOL_XGB_PRIMARY", "1"), "1")
-  if (!isTRUE(enabled)) return(shares)
+  if (!isTRUE(enabled)) {
+    if (identical(Sys.getenv("AUSPOL_XGB_BASE_RECORD", "0"), "1")) xgb_base_ref_write(shares, pair_label)
+    return(shares)
+  }
   # DEFAULT TO v6, because v6 is what AUSPOL_XGB_PRIMARY_LIVE ships. The
   # unversioned filename is v1's (scripts/fit_xgb_primary_cv.R writes it), so
   # until 2026-09-11 every backtest arm run under this flag measured v1 while
@@ -59,6 +70,10 @@ xgb_primary_override <- function(shares, pair_label, enabled = NULL) {
   if (!nrow(X)) {
     cat(sprintf("XG1! no xgb predictions for %s; shares unchanged\n", pair_label))
     return(shares)
+  }
+  # MEASUREMENT MODE (AUSPOL_XGB_BASE_DELTA=1): see xgb_base_delta_apply().
+  if (identical(Sys.getenv("AUSPOL_XGB_BASE_DELTA", "0"), "1")) {
+    X <- xgb_base_delta_apply(shares, X, pair_label, f)
   }
   out <- shares
   n_hit <- 0L; n_miss <- 0L
