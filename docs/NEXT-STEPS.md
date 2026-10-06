@@ -17,7 +17,7 @@ run is only for the shipping decision (memory `screen-fast-before-full-runs`).
 carry, post-xgb (PR #95; live Narracan Labor 4.4% -> 11.6%). Artifact:
 https://claude.ai/artifact/3YAUawbwdQBn96Bi5nqF4A (v59 changelog; winner-primary column fixed).
 
-**On `dev`, not yet on `main`/published** (needs review gate + PR + Pete's publish): new-independent
+**Merged to `main` (PR #96, 2026-10-07), NOT YET PUBLISHED** (Pete runs stage 9): new-independent
 shrink, capped (`AUSPOL_NEW_IND_SHRINK="1"`, prereg passed: changed cells 1,200 -> 1,035, 4 SE; ledger
 0.2741); the ledger winner-primary column fix (was showing base_pred: Goldstein 3.1 vs published 27.1);
 `AUSPOL_DEFECTOR_STATE` code (off). `output/` holds the matching state (ledger 0.2741).
@@ -44,7 +44,9 @@ live seat script; generalise `scripts/build_forecast_json.R` (hard-wired to vic2
 stage-1 retrain; state defector rate; per-jurisdiction others scale; class-by-jurisdiction calibration;
 uncapped new-independent shrink.
 
-**Loose ends:** vic2026 Trends fetch at 121 files (two memory-watchdog kills; resumable,
+**Loose ends:** `scripts/quick_arm.R` was mid-build at wrap-up on branch
+`worktree-agent-a7292a0ea2f74a3eb` (uncommitted files in `.claude/worktrees/agent-a7292a0ea2f74a3eb`):
+check it finished and proved itself, review, merge, before the next arm. vic2026 Trends fetch at 121 files (two memory-watchdog kills; resumable,
 `AUSPOL_SALIENCE_SLEEP=15 Rscript scripts/fetch_salience_vic2026_full.R`); worktree branches of refused
 arms kept for reference.
 
