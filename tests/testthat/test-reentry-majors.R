@@ -110,7 +110,9 @@ test_that("majors: reentry_apply_harness routes to it and does not fit the GLM",
 
 test_that("reentry_mode validates the switch", {
   withr::local_envvar(AUSPOL_REENTRY = NA)
-  expect_identical(reentry_mode(), "0")
+  expect_identical(reentry_mode(), "majors")   # the shipped value
+  withr::local_envvar(AUSPOL_REENTRY = "")
+  expect_identical(reentry_mode(), "majors")
   for (v in c("0", "1", "majors")) { withr::local_envvar(AUSPOL_REENTRY = v); expect_identical(reentry_mode(), v) }
   withr::local_envvar(AUSPOL_REENTRY = "major")
   expect_error(reentry_mode(), "must be")

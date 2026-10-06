@@ -1066,6 +1066,13 @@ if (!is.null(.fitsl)) {
 if (!identical(reentry_mode(), "0")) {   # "1" general prior (refused) | "majors" own history
   .re_sl <- tryCatch(reentry_standing_live(rownames(mat22), "vic2026", "vic2022"),
                      error = function(e) list(standing = NULL, reason = conditionMessage(e)))
+  # "majors" only FILLS a major that stands now, never zeroes, so the provisional
+  # list is safe before nominations close (Narracan 2026 Labor: 4.4% without it).
+  if (is.null(.re_sl$standing) && identical(reentry_mode(), "majors")) {
+    cat(sprintf("BV1r  full nomination list unavailable (%s); majors carry uses the provisional list\n", .re_sl$reason))
+    .re_sl <- reentry_standing_provisional(rownames(mat22), "vic2026")
+    cat(sprintf("BV1r  %s\n", .re_sl$reason))
+  }
   if (is.null(.re_sl$standing)) {
     cat(sprintf("BV1r!! AUSPOL_REENTRY=%s but no live nomination list (%s): re-entry prior NOT applied\n", reentry_mode(), .re_sl$reason))
   } else {

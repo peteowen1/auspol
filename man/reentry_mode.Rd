@@ -10,8 +10,9 @@ reentry_mode()
 One of \code{"0"}, \code{"1"}, \code{"majors"}.
 }
 \description{
-\code{"0"} off (also unset or empty), \code{"1"} the general GLM prior (refused,
+\code{"0"} off, \code{"1"} the general GLM prior (refused,
 \verb{docs/plans/prereg-reentry-prior-2026-09-07.md}), \code{"majors"} a major party's
-own history (\code{\link[=reentry_majors_fill]{reentry_majors_fill()}}). Anything else is an error: a typo that
+own history (\code{\link[=reentry_majors_fill]{reentry_majors_fill()}}; shipped 2026-10-06, so also unset or
+empty). Anything else is an error: a typo that
 quietly reads as off is an arm that never ran.
 }

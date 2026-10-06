@@ -16,6 +16,14 @@ in the oof-predictions file.}
 }
 \value{
 The overridden matrix, or \code{shares} unchanged if not enabled.
+
+Two switches, both off by default and neither a model change.
+\code{AUSPOL_XGB_BASE_RECORD=1} (set by \code{scripts/rebuild_forecasts.sh} stage 1,
+where this function is disabled) writes the \code{shares} it is handed to
+\verb{output/xgb-base-ref/<pair>.csv}. \code{AUSPOL_XGB_BASE_DELTA=1} (stage 6 style
+runs) compares this run's \code{shares} with that file and re-predicts only the
+cells that moved with the frozen as-at trees (\code{xgb_base_delta_apply()}), so
+a targeted \code{base_pred} fix is measured without retraining anything.
 }
 \description{
 The backtest counterpart of \code{\link[=xgb_primary_predict_live]{xgb_primary_predict_live()}}. Loads a

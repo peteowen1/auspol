@@ -653,16 +653,17 @@ combine_sd_override <- function(a, b) {
 
 #' The validated `AUSPOL_REENTRY` switch
 #'
-#' `"0"` off (also unset or empty), `"1"` the general GLM prior (refused,
+#' `"0"` off, `"1"` the general GLM prior (refused,
 #' `docs/plans/prereg-reentry-prior-2026-09-07.md`), `"majors"` a major party's
-#' own history ([reentry_majors_fill()]). Anything else is an error: a typo that
+#' own history ([reentry_majors_fill()]; shipped 2026-10-06, so also unset or
+#' empty). Anything else is an error: a typo that
 #' quietly reads as off is an arm that never ran.
 #'
 #' @return One of `"0"`, `"1"`, `"majors"`.
 #' @export
 reentry_mode <- function() {
-  m <- Sys.getenv("AUSPOL_REENTRY", "0")
-  if (!nzchar(m)) m <- "0"
+  m <- Sys.getenv("AUSPOL_REENTRY", "majors")
+  if (!nzchar(m)) m <- "majors"   # empty = unset = the shipped value
   if (!m %in% c("0", "1", "majors"))
     stop("AUSPOL_REENTRY must be \"0\", \"1\" or \"majors\"; got \"", m, "\"", call. = FALSE)
   m
@@ -897,6 +898,36 @@ all_election_pairs <- function() {
     list(election = "wa2017",  prev = "wa2013"),
     list(election = "wa2021",  prev = "wa2017"),
     list(election = "wa2025",  prev = "wa2021"))
+}
+
+#' Major-party candidates on the provisional live list, for the majors re-entry carry
+#'
+#' `AUSPOL_REENTRY="majors"` only ever FILLS a major class (ALP, LNP, GRN) that
+#' stands now and skipped the seat last time; it never zeroes anyone. So it can
+#' use the provisional candidate list in `output/candidacies.csv` before the full
+#' nomination list passes [live_nominations()]'s completeness floor: a missing
+#' candidate only means a cell is not filled yet. Narracan 2026 is the case:
+#' Labor did not stand in the 2023 supplementary election and the live forecast
+#' gave it 4.4% while waiting for nominations to close.
+#'
+#' @param seats Seat names of the forecast (rownames of the share matrix).
+#' @param label Election label in `output/candidacies.csv`.
+#' @param classes Classes read from the list.
+#' @return `list(standing, reason)`, as [reentry_standing_live()].
+#' @export
+reentry_standing_provisional <- function(seats, label = "vic2026",
+                                         classes = c("ALP", "LNP", "GRN")) {
+  f <- out_path("candidacies.csv")
+  if (!file.exists(f)) return(list(standing = NULL, reason = "output/candidacies.csv missing"))
+  cc <- data.table::fread(f, select = c("election", "seat", "party"), showProgress = FALSE)
+  lab <- label
+  cc <- cc[cc$election == lab & cc$party %in% classes, ]
+  idx <- match(normalise_seat(cc$seat), normalise_seat(seats))
+  keep <- !is.na(idx)
+  if (!any(keep)) return(list(standing = NULL, reason = sprintf("no %s major-party candidacies in the corpus", lab)))
+  list(standing = unique(data.frame(seat = seats[idx[keep]], party = cc$party[keep],
+                                    votes = 1, stringsAsFactors = FALSE)),
+       reason = sprintf("provisional corpus list, %s only (%d candidacies)", paste(classes, collapse = "/"), sum(keep)))
 }
 
 #' Who is standing at a live (not yet held) election, for the re-entry prior
