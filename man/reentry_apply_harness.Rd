@@ -4,7 +4,16 @@
 \alias{reentry_apply_harness}
 \title{One-call re-entry prior for a harness}
 \usage{
-reentry_apply_harness(mat, fa, fb, state_share, target, pairs, code = "RE1")
+reentry_apply_harness(
+  mat,
+  fa,
+  fb,
+  state_share,
+  target,
+  pairs,
+  code = "RE1",
+  corpus = NULL
+)
 }
 \arguments{
 \item{mat}{Seat-by-class share matrix.}
@@ -19,6 +28,9 @@ elections.}
 \item{pairs}{Every candidate pair for the fit.}
 
 \item{code}{Log prefix, e.g. \code{"BV1r"}.}
+
+\item{corpus}{Candidate-level history for \code{AUSPOL_REENTRY="majors"}
+(\code{output/candidacies.csv} shape); \code{NULL} reads that file. Unused otherwise.}
 }
 \value{
 \code{mat}, with attribute \code{"reentry"} when applied.

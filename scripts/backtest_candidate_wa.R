@@ -469,37 +469,14 @@ for (K in PAIRS) {
   # The prediction is a TARGET-election share, so it must NOT be swung again.
   # The cells are identified here, while `mat` still shows which are empty, and
   # written in AFTER dev_slope below.
-  .recells <- NULL
-  if (identical(Sys.getenv("AUSPOL_REENTRY", "0"), "1")) {
-    .rp <- Filter(function(z) z$election != el_to, REENTRY_PAIRS)
-    .rf <- tryCatch(reentry_fit(.rp), error = function(e) {
-      cat(sprintf("BW1r! reentry_fit() FAILED, prior NOT applied: %s
-",
-                  conditionMessage(e))); NULL })
-    if (!is.null(.rf)) {
-      # The nomination list goes IN to seat_lean, not just to the fill step:
-      # it is what separates defended from vacant non-major vote. Computed
-      # first for that reason.
-      .stand <- unique(fb[votes > 0, .(seat, party)])
-      # POSITIONS, which this harness alone was not passing. Without them
-      # flow_lean is NA for every Western Australian seat, so every class with
-      # a covariate fit failed the completeness check and only the flat-ratio
-      # classes ever filled. That is why Kimberley/ALP was the only large fill
-      # WA ever reported. Excluded from its own target like everywhere else.
-      .ln <- seat_lean(fa[, .(seat, party, pcv = 100 * votes / sum(votes)),
-                          by = seat][, .(seat, party, pcv)],
-                       positions = party_positions(exclude = el_to),
-                       standing = .stand)
-      .re <- attr(apply_reentry_prior(mat, .stand, .rf, .ln, sb), "reentry")
-      .recells <- .re
-      cat(sprintf("BW1r  re-entry prior: %d cell(s) filled%s
-", nrow(.re),
-                  if (nrow(.re)) paste0(" | largest: ",
-                    paste(utils::head(with(.re[order(-.re$value), ],
-                      sprintf("%s/%s %.1f", seat, party, value)), 3),
-                      collapse = ", ")) else ""))
-    }
-  }
+  # Shared, time-forward call (was a private leave-one-out copy that trained on
+  # LATER elections: reentry_fit(Filter(election != el_to)) -- a leak).
+  # reentry_apply_harness() fits on fit_pairs_for(), i.e. strictly earlier
+  # elections, builds seat_lean() with positions excluding the target, and prints
+  # the BW1r line. Same call as the vic/nsw/qld/sa/fed harnesses.
+  .recells <- attr(reentry_apply_harness(mat, fa, fb, sb, target = el_to,
+                                         pairs = REENTRY_PAIRS, code = "BW1r"),
+                   "reentry")
   # BY-ELECTION AS THE SEAT BASELINE (AUSPOL_BYELECTION_PRIOR=1): a by-election between the two
   # general elections where both majors stood replaces the seat's prior row (R/byelection_prior.R,
   # external/reference/byelections/byelection-results.csv). docs/plans/prereg-byelection-prior-2026-09-18.md

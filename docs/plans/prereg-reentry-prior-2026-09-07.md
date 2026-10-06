@@ -107,3 +107,25 @@ jurisdiction's log loss worsens by more than 0.01.
 - Whether the ratio should depend on WHY the party was absent — a deliberate
   abandonment of a hopeless seat is not the same as a redistribution artefact,
   and this pools them.
+
+## Run record (2026-10-06): first arm, written BEFORE it ran
+
+The criteria above are unedited. This arm was never run or decided (found 2026-10-03; Richmond vic2022
+Liberals 0.0 against 18.8). Changes since this prereg was written, none chosen after seeing a result:
+the WA harness's private copy fitted leave-one-out (trained on later elections) and now uses the shared
+time-forward `reentry_apply_harness()`; `fit_seats_full.R` is wired (live, needs `AUSPOL_NOM_LIVE=1`, so
+no live effect before nominations close 9 Nov). Arm: `AUSPOL_REENTRY=1`, rebuild from stage 1, baseline
+the shipped configuration plus the Kennedy seat-poll split (`e3033f0`). Scored with the criteria above
+plus `scripts/score_arm.R` (SA3 ledger, SA5 per election, SA6 overall) as guards.
+
+### Result (2026-10-06, `AUSPOL_REENTRY=1`, full rebuild from stage 1) -- REFUSED, switch stays "0"
+
+Fired in every harness (BF1r/BQ1r etc.: 28-148 cells per election, personal-vote cells protected).
+score_arm.R against base = shipped + Kennedy split (`output/snapshots/base-reentry`, verified identical):
+target-cell squared error 58,130 -> 78,685 (+35%, SE 2,956); whole-table RMSE 3.798 -> 4.057 (guard
+breached); seat-winner log loss over 22 elections +0.0061 (SE 0.0057); ledger 0.2738 unchanged.
+Helped wa2001 -0.029, wa2025 -0.023, sa2026 -0.018, vic2022 -0.015 (Richmond LNP 0.0 -> 22.6, actual
+18.8). Hurt qld2020 +0.111, wa2005 +0.084, wa2013 +0.028, wa2017 +0.025. qld2020 is One Nation
+re-entering safe Labor seats after skipping them in 2017: Woodridge ONP 42.8 (actual 10.6), Inala 31.2
+(4.5), Nudgee 30.2 (3.5) -- the `safe` term extrapolates where the class has no chance, in the year its
+statewide vote halved. output/ restored to the baseline afterwards (scores identical).
