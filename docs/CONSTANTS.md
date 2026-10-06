@@ -473,3 +473,12 @@ outright on sa2026, vic2022 and nsw2023.
 | `.BO_Q_K` | 10 | **CHOSEN prior strength**: the hard-row breakout quantiles shrunk toward all-row breakout quantiles by n / (n + 10). |
 | `.BO_P_CAP` | 0.5 | **CHOSEN** cap, from the review's recommendation pending recalibration on the real simulator (the review's top bin was over-confident, 44% vs 24%). |
 | xgboost settings | eta 0.05, depth 3, subsample 0.8, colsample 0.8, min_child_weight 2, lambda 5, up to 300 rounds, early stopping 25 | **COPIED** from the design review's classifier; rounds chosen by `xgb.cv` with folds grouped by election. |
+
+## Added 2026-10-06: state-level defector rate (`AUSPOL_DEFECTOR_STATE`, OFF)
+
+`R/defector_state.R`; design in `docs/reviews/state-defectors-2026-10-06.md`. Inert at the published `"0"`.
+
+| constant | value | status |
+|---|---|---|
+| `.DEFSTATE_K` | 3 | **CHOSEN prior strength** (the review measured it: carry bias +0.16 -> +0.05): the target level's sitting-member median is shrunk toward the all-level median by n / (n + 3) pseudo-cases. Replaces the min_n = 5 cliff. Not fitted; K could be estimated once there are enough cases per level to size between-level variance. |
+| cross-seat guards | sitting members only; same jurisdiction (federal: same state); full first name equal or one a prefix of the other; key unique among the previous election's major candidates and the target's candidates | **RULES**, not constants; every refusal is printed (`DFS2!`). |

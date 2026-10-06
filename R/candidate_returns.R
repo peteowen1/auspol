@@ -649,6 +649,7 @@ personal_prior_vote <- function(election_from, election_to, corpus = NULL,
   # other independent) is a much smaller behavioural jump for voters and is
   # not excluded.
   MAJ <- c("ALP", "LNP", "NAT")
+  .defstate_removals <- NULL   # AUSPOL_DEFECTOR_STATE cross-seat old-class removals (R/defector_state.R)
   # MAJOR-PARTY DEFECTORS, opt-in via `major_discount` (NULL = excluded, the
   # previous behaviour, byte-identical).
   #
@@ -898,6 +899,57 @@ personal_prior_vote <- function(election_from, election_to, corpus = NULL,
                prev_party   = def_party,
                transfer     = .transfer_amt)]
       out[, .transfer_amt := NULL]
+      if (.defstate_on()) {
+        # AUSPOL_DEFECTOR_STATE: a major-party candidate of ANOTHER seat of this jurisdiction who now
+        # stands non-major here (Bowler, D'Orazio). R/defector_state.R holds the guards; every
+        # match, refusal and removal is printed.
+        xm <- .defector_cross_seat_cases(PREVT, NOWT, election_to, pooled, MAJ)
+        rf <- attr(xm, "refused")
+        if (!is.null(rf) && nrow(rf))
+          cat(sprintf("DFS2! %s -> %s: %d cross-seat match(es) REFUSED: %s\n", election_from, election_to, nrow(rf),
+                      paste(sprintf("%s [%s]", rf$person, rf$why), collapse = "; ")))
+        if (nrow(xm)) {
+          ix <- match(paste(out$.s, out$.k), paste(xm$.s_new, xm$.k))
+          rate_x <- rep(major_discount, nrow(xm))
+          if (!is.null(loser_discount) && is.finite(loser_discount)) rate_x[xm$was_mp %in% FALSE] <- loser_discount
+          ok <- which(!is.na(ix) & is.na(out$own_prev_pcv) & !out$party %in% MAJ & is.na(out$def_pcv) &
+                        out$party == xm$party_new[ix])
+          if (length(ok)) {
+            if (!"own_prev_source" %in% names(out)) out[, own_prev_source := NA_character_]
+            carried <- xm$prior_pcv[ix[ok]] * rate_x[ix[ok]]
+            # the carried vote is the new seat's own, and its old class in THIS seat did not lose it:
+            # no transfer from this seat (the old seat's class gives it up, below)
+            data.table::set(out, i = ok, j = "own_prev_pcv", value = out$cls_pcv[ok] + carried)
+            data.table::set(out, i = ok, j = "prev_party", value = rep(NA_character_, length(ok)))
+            data.table::set(out, i = ok, j = "transfer", value = rep(NA_real_, length(ok)))
+            data.table::set(out, i = ok, j = "own_prev_source", value = rep("cross_seat", length(ok)))
+            rm_rows <- list()
+            for (jj in seq_along(ok)) {
+              xr <- xm[ix[ok[jj]]]
+              so <- NOWT$seat[normalise_seat(NOWT$seat) %in% c(xr$.s_old, if (xr$.s_old %in% names(rn)) unname(rn[xr$.s_old]))]
+              amt <- if (.conserve) carried[jj] else xr$prior_pcv
+              act <- "no removal (old seat not contested at the target election)"
+              if (length(so)) {
+                so <- so[1L]
+                if (any(out$seat == so & out$party == xr$party_new)) {
+                  act <- sprintf("no removal (a %s row already exists in %s)", xr$party_new, so)
+                } else {
+                  rm_rows[[length(rm_rows) + 1L]] <- data.table::data.table(
+                    seat = so, party = xr$party_new, own_prev_pcv = NA_real_, prev_party = xr$party_old,
+                    transfer = amt, own_prev_source = "cross_seat_removal")
+                  act <- sprintf("%.1f removed from %s %s", amt, so, xr$party_old)
+                }
+              }
+              cat(sprintf("DFS2 %s -> %s: %s %s %s %.1f%% (%s) -> %s %s %s: carry rate %.3f, %.1f carried onto class base %.1f; %s\n",
+                          election_from, election_to, xr$person, xr$seat_old, xr$party_old, xr$prior_pcv,
+                          if (isTRUE(xr$was_mp)) "sitting" else "not sitting", xr$seat_new, xr$party_new,
+                          sprintf("(actual %.1f)", xr$target_pcv), rate_x[ix[ok[jj]]], carried[jj],
+                          out$cls_pcv[ok[jj]], act))
+            }
+            if (length(rm_rows)) .defstate_removals <- data.table::rbindlist(rm_rows)
+          }
+        }
+      }
       out[, .rate := NULL]
       out[, c("def_pcv", "def_party", "def_was_mp", "cls_pcv") := NULL]
     }
@@ -940,7 +992,12 @@ personal_prior_vote <- function(election_from, election_to, corpus = NULL,
   out[, .own_prev_pcv_full := NULL]
   keep <- c("seat", "party", "own_prev_pcv", "prev_party", "transfer",
             if ("own_prev_source" %in% names(out)) "own_prev_source")
-  out[, ..keep]
+  res <- out[, ..keep]
+  if (!is.null(.defstate_removals) && nrow(.defstate_removals)) {
+    # rows whose only job is remove_transferred_votes(): own_prev_pcv NA, so nothing substitutes
+    res <- rbind(res, .defstate_removals[, ..keep], fill = TRUE)
+  }
+  res
 }
 
 #' Substitute a returning candidate's own previous vote into a class base
@@ -1110,6 +1167,7 @@ fit_defector_discount <- function(target_election, corpus = NULL, min_n = 5L, pa
                                         if ("name" %in% names(d)) d$name else NA_character_),
                                "person")
   rn <- seat_rename_map()
+  .dstate <- .defstate_on()   # AUSPOL_DEFECTOR_STATE (R/defector_state.R), default OFF
 
   if (is.null(pairs)) pairs <- all_election_pairs()
   pairs <- fit_pairs_for(target_election, pairs)   # time-forward (plans/prereg-time-forward-constants-2026-09-28.md)
@@ -1135,11 +1193,18 @@ fit_defector_discount <- function(target_election, corpus = NULL, min_n = 5L, pa
     b <- NOWT[nzchar(.k) & !party %in% MAJ, .(.s, .k, target_pcv = pcv)][
       , .SD[which.max(target_pcv)], by = .(.s, .k)]
     m <- merge(a, b, by = c(".s", ".k"))
+    if (.dstate) {
+      # AUSPOL_DEFECTOR_STATE: the same person in a DIFFERENT seat of the same jurisdiction is a
+      # case too (Bowler, D'Orazio), under the same guards the application uses.
+      xs <- .defector_cross_seat_cases(PREVT, NOWT, pr$election, pooled, MAJ, min_prior)
+      if (nrow(xs)) m <- rbind(m, xs[, list(.s = .s_new, .k, prior_pcv, was_mp, target_pcv)], fill = TRUE)
+    }
     if (!nrow(m)) return(NULL)
     m[, .(pair = pr$election, ratio = target_pcv / prior_pcv, was_mp,
           level = if (startsWith(pr$election, "fed")) "fed" else "state")]
   }), fill = TRUE)
 
+  if (.dstate) min_n <- 1L   # no cliff: the shrinkage below decides how much a thin sample is believed
   if (is.null(ratios) || nrow(ratios) < min_n) {
     # ALWAYS the same four fields, even here -- a caller that reads
     # $discount_loser on a list that only sometimes has it is one `&&` away
@@ -1173,7 +1238,23 @@ fit_defector_discount <- function(target_election, corpus = NULL, min_n = 5L, pa
   # cases and the small-n se let it through almost unshrunk (Hillarys wa2017
   # 21.7 -> 43.9, actual 20.1).
   .dbl <- Sys.getenv("AUSPOL_DEFECT_BY_LEVEL", "2")   # SHIPPED 2026-10-05 (Amendment 1); "0" = one all-level median
-  if (.dbl %in% c("1", "2")) {
+  dst <- NULL
+  disc_loser <- med(ratios$ratio[ratios$was_mp %in% FALSE])
+  if (.dstate) {
+    # AUSPOL_DEFECTOR_STATE: target-level median partially pooled toward the all-level median
+    # with K pseudo-cases; no cliff, NULL only with no sitting-member case anywhere earlier.
+    dst <- .defstate_rate(ratios, target_election)
+    mp <- if (is.finite(dst$rate)) dst$rate else NA_real_
+    loser_fallback <- !is.finite(disc_loser)   # no losing-candidate case earlier: the all-case median stands in, said in the log
+    if (loser_fallback) disc_loser <- stats::median(ratios$ratio[is.finite(ratios$ratio)])
+    cat(sprintf("DFS1 %s: sitting-member carry rate %s | level %s, n_level %d, n_pooled %d, level median %s, pooled median %s, w = n/(n+%d) = %.3f | %d case(s) in all (losers rate %.3f%s)\n",
+                target_election, if (is.finite(mp)) sprintf("%.3f", mp) else "NONE (no earlier sitting-member case)",
+                dst$level, dst$n_level, dst$n_pooled,
+                if (is.finite(dst$level_median)) sprintf("%.3f", dst$level_median) else "NA",
+                if (is.finite(dst$pooled)) sprintf("%.3f", dst$pooled) else "NA", as.integer(dst$K), dst$w,
+                nrow(ratios), disc_loser, if (loser_fallback) ", all-case fallback: no earlier losing-candidate case" else ""))
+  }
+  if (!.dstate && .dbl %in% c("1", "2")) {
     R <- ratios[was_mp %in% TRUE & is.finite(ratio)]
     lv <- R[, list(est = stats::median(ratio), n = .N,
                    se = if (.N >= 2L) 1.2533 * stats::sd(ratio) / sqrt(.N) else Inf), by = level]
@@ -1189,6 +1270,13 @@ fit_defector_discount <- function(target_election, corpus = NULL, min_n = 5L, pa
                       collapse = "; "),
                 if (.dbl == "2" && tl == "state") "state (mode 2: pooled)" else tl, if (length(hit)) hit else mp))
     if (length(hit) == 1L && is.finite(hit)) mp <- hit
+  }
+  if (.dstate) {
+    # mp NA (only losing candidates earlier): the all-case median is the pooled estimate, said so
+    if (!is.finite(mp)) { mp <- stats::median(ratios$ratio[is.finite(ratios$ratio)])
+      cat(sprintf("DFS1! %s: no sitting-member case; all-case median %.3f used for members\n", target_election, mp)) }
+    return(list(discount = med(ratios$ratio), discount_mp = mp, discount_loser = disc_loser,
+                n = nrow(ratios), cases = ratios, by_level = NULL, defector_state = dst))
   }
   list(discount       = med(ratios$ratio),
        discount_mp    = mp,
