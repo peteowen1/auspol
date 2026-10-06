@@ -34,7 +34,9 @@ simulate_seat_contests(
   surge_party = NULL,
   surge_from_zero = FALSE,
   engine = c("auto", "cpp", "r"),
-  keep_fp = FALSE
+  keep_fp = FALSE,
+  breakout_p = NULL,
+  breakout_q = NULL
 )
 }
 \arguments{
@@ -366,6 +368,23 @@ shares after noise and surge, before any preference is distributed,
 normalised to 100 (an \code{n_sims} x seat x party array; \code{NA} where every
 party fell to zero). For per-seat ranges on the published page. Draws no
 random number, so every other output is identical with it on or off.}
+
+\item{breakout_p}{Optional numeric matrix, the same shape (and, where
+given, dimnames) as \code{shares}: per-cell probability in \verb{[0, 1]} that the
+class BREAKS OUT in a draw. \code{NULL} (the default) and a matrix of zeros are
+both byte-identical to the previous behaviour: a cell at 0 draws no random
+number. Built by \code{\link[=breakout_mix_args]{breakout_mix_args()}} under \code{AUSPOL_BREAKOUT_MIX=1}.
+
+In each draw, after the seat noise and before any surge, each cell with
+\code{p > 0} draws \code{u}; if \code{u < p} its share is replaced by a draw from
+\code{breakout_q} (percent of the seat's total in that draw) and every other
+class is scaled by one common factor, so the seat total is unchanged.
+A MIXTURE, not a mean shift: docs/reviews/breakout-risk-design-2026-10-05.md.}
+
+\item{breakout_q}{Quantiles of the breakout share distribution, in percent,
+on an evenly spaced probability grid from 0 to 1 (length at least 2,
+non-decreasing, each in \verb{[0, 100)}); a breakout draws a uniform and
+interpolates linearly. Required when \code{breakout_p} has any cell above 0.}
 }
 \value{
 List: \code{win_prob} (data.frame, one row per seat and party with a
@@ -374,7 +393,8 @@ probability), \code{totals} (matrix of seats won per party per simulation),
 the final two survivors in each draw, \code{NA} for a seat uncontested down to
 one party), \code{tcp_share} (n_sims x nseat, \code{tcp_winner}'s share of their
 two-candidate-preferred total), \code{fallback_rate} (share of transfers with
-no conditional cell), and \code{fp_draws} (\code{NULL} unless \code{keep_fp}).
+no conditional cell), \code{fp_draws} (\code{NULL} unless \code{keep_fp}) and
+\code{breakout_draws} (seat-draws in which a breakout replaced a share).
 
 \code{tcp_winner} is the COUNT winner, taken before the \code{shrink} coin toss
 below can overrule which party is credited in \code{wins}/\code{totals} for that

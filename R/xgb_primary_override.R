@@ -454,6 +454,10 @@ xgb_primary_predict_live <- function(shares, mat22, a22, state_mean, returns,
     # scripts fill that NA with 1 after building SAL, and the live path must
     # agree with what the model was trained on (review gate, 2026-09-20).
     rows[, permit := ifelse(is.na(idx) | is.na(SAL$permit[idx]), 1L, SAL$permit[idx])]
+    # Whether the candidate HAS a salience row, for the breakout classifier
+    # (R/breakout_mix.R), which reads a missing row as unknown, not as zero.
+    # Not a model column: X below selects feat_cols only.
+    rows[, bo_sal_row := as.integer(!is.na(idx))]
     cat(sprintf("XG5  salience corpus found for %s: %d of %d seat-classes matched\n",
                 target_election, sum(!is.na(idx)), nrow(rows)))
   } else {
@@ -581,6 +585,9 @@ xgb_primary_predict_live <- function(shares, mat22, a22, state_mean, returns,
 ", 1 + length(.extra)))
   }
   rows[, xgb_pred := pmax(0, pred)]
+  # The finished pre-election feature rows, kept for the breakout classifier
+  # (AUSPOL_BREAKOUT_MIX, R/breakout_mix.R). Changes nothing returned here.
+  .bo_stash_live(target_election, rows)
 
   out <- shares
   for (p in parties) {

@@ -317,6 +317,21 @@
 #'   party the seat file does not carry would look exactly like an arm that made
 #'   no difference -- which is indistinguishable from an experiment that never
 #'   ran. See `docs/plans/prereg-class-specific-variance.md`.
+#' @param breakout_p Optional numeric matrix, the same shape (and, where
+#'   given, dimnames) as `shares`: per-cell probability in `[0, 1]` that the
+#'   class BREAKS OUT in a draw. `NULL` (the default) and a matrix of zeros are
+#'   both byte-identical to the previous behaviour: a cell at 0 draws no random
+#'   number. Built by [breakout_mix_args()] under `AUSPOL_BREAKOUT_MIX=1`.
+#'
+#'   In each draw, after the seat noise and before any surge, each cell with
+#'   `p > 0` draws `u`; if `u < p` its share is replaced by a draw from
+#'   `breakout_q` (percent of the seat's total in that draw) and every other
+#'   class is scaled by one common factor, so the seat total is unchanged.
+#'   A MIXTURE, not a mean shift: docs/reviews/breakout-risk-design-2026-10-05.md.
+#' @param breakout_q Quantiles of the breakout share distribution, in percent,
+#'   on an evenly spaced probability grid from 0 to 1 (length at least 2,
+#'   non-decreasing, each in `[0, 100)`); a breakout draws a uniform and
+#'   interpolates linearly. Required when `breakout_p` has any cell above 0.
 #' @param seed Optional RNG seed.
 #' @return List: `win_prob` (data.frame, one row per seat and party with a
 #'   probability), `totals` (matrix of seats won per party per simulation),
@@ -324,7 +339,8 @@
 #'   the final two survivors in each draw, `NA` for a seat uncontested down to
 #'   one party), `tcp_share` (n_sims x nseat, `tcp_winner`'s share of their
 #'   two-candidate-preferred total), `fallback_rate` (share of transfers with
-#'   no conditional cell), and `fp_draws` (`NULL` unless `keep_fp`).
+#'   no conditional cell), `fp_draws` (`NULL` unless `keep_fp`) and
+#'   `breakout_draws` (seat-draws in which a breakout replaced a share).
 #'
 #'   `tcp_winner` is the COUNT winner, taken before the `shrink` coin toss
 #'   below can overrule which party is credited in `wins`/`totals` for that
@@ -350,7 +366,8 @@ simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
                                    surge_parties = NULL, surge_floor = 2,
                                    surge_party = NULL, surge_from_zero = FALSE,
                                    engine = c("auto", "cpp", "r"),
-                                   keep_fp = FALSE) {
+                                   keep_fp = FALSE,
+                                   breakout_p = NULL, breakout_q = NULL) {
   engine <- match.arg(engine)
   # SHRINK MAY BE PER-SEAT. A scalar applies the same rate everywhere and caps
   # EVERY seat at 1 - shrink/2 -- 0.9598 at shrink = 0.10, with no seat above
@@ -1024,6 +1041,33 @@ simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
     if (any(so[ok] < 0)) stop("sd_override holds a negative standard deviation")
     sd_cell_pre[ok] <- so[ok]
   }
+  # BREAKOUT MIXTURE (AUSPOL_BREAKOUT_MIX). Resolved once to a plain matrix and
+  # a per-seat list of the cells that can break out, so the draw loop tests
+  # nothing for a seat without one and a NULL or all-zero matrix is the old run.
+  has_bo <- FALSE
+  bo_p <- base::matrix(0, 0L, K); bo_q <- numeric(0); bo_idx <- NULL
+  if (!is.null(breakout_p)) {
+    bp <- as.matrix(breakout_p)
+    if (!identical(dim(bp), dim(shares)))
+      stop("breakout_p must be ", nseat, " x ", K, " to match shares; got ", nrow(bp), " x ", ncol(bp))
+    if (!is.null(rownames(bp)) && !identical(rownames(bp), seat_names))
+      stop("breakout_p's row names must match shares' seats, in the same order")
+    if (!is.null(colnames(bp)) && !identical(colnames(bp), parties))
+      stop("breakout_p's column names must match shares' classes, in the same order")
+    if (!is.numeric(bp) || anyNA(bp) || any(!is.finite(bp)) || any(bp < 0) || any(bp > 1))
+      stop("breakout_p must be finite and in [0, 1] in every cell (NA is not 0: pass 0)")
+    if (any(bp > 0)) {
+      if (is.null(breakout_q) || !is.numeric(breakout_q) || length(breakout_q) < 2L ||
+          anyNA(breakout_q) || any(!is.finite(breakout_q)) || any(diff(breakout_q) < 0) ||
+          any(breakout_q < 0) || any(breakout_q >= 100))
+        stop("breakout_p > 0 needs breakout_q: >= 2 finite, non-decreasing quantiles in [0, 100)")
+      has_bo <- TRUE
+      bo_p <- unname(bp); storage.mode(bo_p) <- "double"
+      bo_q <- as.numeric(breakout_q)
+      bo_idx <- lapply(seq_len(nseat), function(i) which(bo_p[i, ] > 0))
+    }
+  }
+  n_bo <- 0L
   # "auto" reads AUSPOL_SIM_ENGINE (published_flags.R carries the shipped
   # value, "cpp" since the full-scale proof on 2026-09-07); AUSPOL_SIM_ENGINE=r
   # forces the reference loop, which is how the identity is re-proven.
@@ -1179,13 +1223,15 @@ simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
                           pool_mat, !is.null(pool_pw), pw_mat,
                           as.numeric(FLOW_SD_BY), as.numeric(smooth), as.numeric(fallback_smooth),
                           as.numeric(shrink), ov_seat, ov_key, ov_mat,
-                          as.numeric(fallback_flow_sd), as.numeric(ov_sd), isTRUE(keep_fp))
+                          as.numeric(fallback_flow_sd), as.numeric(ov_sd), isTRUE(keep_fp),
+                          has_bo, bo_p, bo_q)
     wins[] <- core$wins; totals[] <- core$totals
     tcp_winner[] <- parties[core$tcp_w]; tcp_runnerup[] <- parties[core$tcp_r]
     tcp_share[] <- core$tcp_share
     if (isTRUE(keep_fp)) fp_draws[] <- core$fp
     n_fb <- as.integer(core$n_fb); n_tx <- as.integer(core$n_tx)
     n_recipient_fb_draw <- as.integer(core$n_recipient_fb_draw)
+    n_bo <- as.integer(core$n_bo)
   } else {
   for (s in seq_len(n_sims)) {
     shift <- if (is.null(statewide_draws)) {
@@ -1228,6 +1274,25 @@ simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
       }
       v <- base_v + shift + stats::rnorm(K, 0, sd_cell)
       v[v < 0] <- 0
+      # BREAKOUT MIXTURE: with probability p this cell's share comes from the
+      # breakout distribution, the rest of the seat scaled by one factor so the
+      # total is unchanged. Same arithmetic, same order, as seat_sim_core.cpp.
+      # RNG order: one uniform per eligible cell, in column order, then one
+      # more per breakout that fires (vectorised here, the same order there).
+      if (has_bo && length(bo_idx[[i]])) for (k in bo_idx[[i]][stats::runif(length(bo_idx[[i]])) < bo_p[i, bo_idx[[i]]]]) {
+        .x <- stats::runif(1) * (length(bo_q) - 1)
+        .i0 <- floor(.x); .fr <- .x - .i0
+        .lo <- bo_q[.i0 + 1]; .hi <- if (.i0 + 2 <= length(bo_q)) bo_q[.i0 + 2] else .lo
+        .B <- .lo + .fr * (.hi - .lo)
+        .S <- sum(v); .rest <- .S - v[k]
+        if (.S > 0 && .rest > 0) {
+          .nv <- .B / 100 * .S
+          .f <- (.S - .nv) / .rest
+          v[-k] <- v[-k] * .f
+          v[k] <- .nv
+          n_bo <- n_bo + 1L
+        }
+      }
       # INSURGENCY SURGE. A fat tail, not a wider bell. Symmetric widening of
       # seat_sd was measured across 1.0-2.0 and "barely matters" -- no plausible
       # Gaussian flips a seat a major leads by 30 points, yet that is exactly
@@ -1428,7 +1493,8 @@ simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
        surge_recipient_fallback = n_recipient_fb,
        surge_recipient_fallback_draws = n_recipient_fb_draw,
        engine = engine,
-       fp_draws = fp_draws)
+       fp_draws = fp_draws,
+       breakout_draws = n_bo)
 }
 
 #' Per-class slope multipliers for [simulate_seat_contests()]
