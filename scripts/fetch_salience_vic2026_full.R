@@ -14,7 +14,11 @@ suppressMessages(library(data.table)); suppressMessages(library(gtrendsR))
 MAXKW <- 5L; SPAN <- 400L; GEO <- "AU-VIC"; ANCHOR <- "Daniel Andrews"
 SLEEP <- as.numeric(Sys.getenv("AUSPOL_SALIENCE_SLEEP", "4")); STOP_AFTER <- 3L
 CACHE <- file.path("external", "reference", "trends")
-TO <- Sys.Date(); FROM <- TO - SPAN; TODAY <- as.character(TO)
+# The window END is pinned (AUSPOL_SALIENCE_TO, default the first snapshot's date
+# 2026-10-06), so a rerun on a later day after a Google 429 resumes the SAME
+# snapshot and reuses its cached batches instead of re-keying every file. A new
+# snapshot is a deliberate choice: set AUSPOL_SALIENCE_TO to the new end date.
+TO <- as.Date(Sys.getenv("AUSPOL_SALIENCE_TO", "2026-10-06")); FROM <- TO - SPAN; TODAY <- as.character(Sys.Date())
 st <- new.env(); st$consec <- 0L; st$total <- 0L; st$failed <- character()
 
 qry <- function(kw) {
