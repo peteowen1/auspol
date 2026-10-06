@@ -749,3 +749,29 @@ all_election_pairs <- function() {
     list(election = "wa2021",  prev = "wa2017"),
     list(election = "wa2025",  prev = "wa2021"))
 }
+
+#' Who is standing at a live (not yet held) election, for the re-entry prior
+#'
+#' The backtest harnesses read the target election's nomination list from the
+#' results. A live forecast has no results, so this reads the loaded candidate
+#' list through [live_nominations()], which is gated by `AUSPOL_NOM_LIVE`
+#' (`0` and `auto` return no list, `1` reads `output/candidacies.csv`, anything
+#' else is an error). A caller gets `standing = NULL` plus a reason, never a
+#' silently empty list, so "no list yet" cannot be mistaken for "nobody stands".
+#'
+#' @param seats Seat names of the forecast (rownames of the share matrix).
+#' @param label,prior Election labels, as in [live_nominations()].
+#' @param ... passed on to [live_nominations()].
+#' @return `list(standing, reason)`; `standing` is a `data.frame` of `seat`
+#'   (spelled as in `seats`), `party` and `votes` (1), or `NULL`.
+#' @export
+reentry_standing_live <- function(seats, label = "vic2026", prior = "vic2022", ...) {
+  nm <- live_nominations(seats, election = label, prior = prior, ...)
+  if (is.null(nm$target)) return(list(standing = NULL, reason = nm$reason))
+  tg <- nm$target
+  idx <- match(normalise_seat(tg$seat), normalise_seat(seats))
+  keep <- !is.na(idx)
+  list(standing = data.frame(seat = seats[idx[keep]], party = tg$party[keep],
+                             votes = 1, stringsAsFactors = FALSE),
+       reason = nm$reason)
+}

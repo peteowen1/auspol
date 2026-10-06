@@ -1053,6 +1053,36 @@ if (!is.null(.fitsl)) {
   SLOPE[[p]]
 }
 
+# RE-ENTRY PRIOR (AUSPOL_REENTRY, default "0" = off; never decided, plans/prereg-reentry-prior-2026-09-07.md).
+# A class contesting a seat now that did not contest it in 2022 has no base, so
+# swinging zero forward leaves ~0 (vic2022 Richmond Liberals: predicted 0.0, actual
+# 18.8). The cells are identified HERE, pre-swing, while mat22 still shows which are
+# empty, fitted time-forward (reentry_apply_harness -> fit_pairs_for("vic2026")), and
+# landed POST-swing below with protect_personal_vote_cells(), the same shape as the
+# six backtest harnesses. Who is standing comes from the live nomination list
+# (AUSPOL_NOM_LIVE=1); without one nothing is filled, and that is printed.
+# Switch "0": this block is skipped and .re_cells stays NULL, so nothing below changes.
+.re_cells <- NULL
+if (identical(Sys.getenv("AUSPOL_REENTRY", "0"), "1")) {
+  .re_sl <- tryCatch(reentry_standing_live(rownames(mat22), "vic2026", "vic2022"),
+                     error = function(e) list(standing = NULL, reason = conditionMessage(e)))
+  if (is.null(.re_sl$standing)) {
+    cat(sprintf("BV1r!! AUSPOL_REENTRY=1 but no live nomination list (%s): re-entry prior NOT applied\n", .re_sl$reason))
+  } else {
+    # statewide share per class: the trend's classes as forecast, the unmodelled
+    # minor classes scaled with OTH exactly as the minor-field block below scales them
+    .re_state <- state_mean
+    .re_un <- setdiff(colnames(mat22), names(state_mean))
+    if (length(.re_un) && !is.na(state_mean["OTH"])) {
+      .re_sc <- state_mean[["OTH"]] / sum(a22[c(.re_un, "OTH")], na.rm = TRUE)
+      .re_state <- c(.re_state, setNames(a22[.re_un] * .re_sc, .re_un))
+    }
+    .re_cells <- attr(reentry_apply_harness(mat22, fp, .re_sl$standing, .re_state,
+                                            target = "vic2026", pairs = all_election_pairs(),
+                                            code = "BV1r"), "reentry")
+  }
+}
+
 parties <- colnames(mat22)
 shares <- mat22
 HELD <- matrix(FALSE, nrow(mat22), ncol(mat22), dimnames = dimnames(mat22))
@@ -1091,6 +1121,19 @@ if (length(unmodelled) && !is.na(state_mean["OTH"])) {
 ",
               scale_to, paste(c(unmodelled, "OTH"), collapse = "+"),
               base_share, state_mean[["OTH"]]))
+}
+# Re-entry prior lands here, on the POST-swing projection (see BV1r above): the
+# prediction is a target-election share, so it must not be swung a second time.
+# protect_personal_vote_cells() keeps .own_prev's identity-matched defector floor.
+# An ONP cell is overwritten by the ONP allocation below, so it is counted but moot.
+if (!is.null(.re_cells) && nrow(.re_cells)) {
+  .rc <- protect_personal_vote_cells(.re_cells, .own_prev)
+  .ri <- cbind(match(.rc$seat, rownames(shares)), match(.rc$party, colnames(shares)))
+  .rk <- stats::complete.cases(.ri)
+  shares[.ri[.rk, , drop = FALSE]] <- .rc$value[.rk]
+  cat(sprintf("BV1r  re-entry applied post-swing to %d cell(s)%s%s\n", sum(.rk),
+              if (nrow(.re_cells) - nrow(.rc)) sprintf(" | %d protected by own_prev", nrow(.re_cells) - nrow(.rc)) else "",
+              if (any(.rc$party[.rk] == "ONP")) " | ONP cells are then overridden by the ONP allocation" else ""))
 }
 # COMPRESSION FIX, separate from the ordering change and reported separately.
 # Setting One Nation and then dividing the whole row by its total shrank the
