@@ -55,6 +55,7 @@ xgb_primary_override <- function(shares, pair_label, enabled = NULL) {
     }
   }
   X <- data.table::fread(f, showProgress = FALSE)
+  X_all <- if (xcj_enabled()) X else NULL   # AUSPOL_XGB_CLASS_JUR_CAL history
   X <- X[X$pair == pair_label]
   if (!nrow(X)) {
     cat(sprintf("XG1! no xgb predictions for %s; shares unchanged\n", pair_label))
@@ -81,6 +82,13 @@ xgb_primary_override <- function(shares, pair_label, enabled = NULL) {
     n_hit <- n_hit + sum(hit); n_miss <- n_miss + sum(!hit)
   }
   out <- 100 * out / rowSums(out)
+  # AUSPOL_XGB_CLASS_JUR_CAL (R/xgb_class_jur_cal.R): time-forward per-(jurisdiction, class)
+  # shift of the xgb layer, from the as-at predictions of EARLIER elections only.
+  if (!is.null(X_all)) {
+    .fit <- xcj_fit(xcj_history(X_all), pair_label)
+    xcj_log(.fit, pair_label)
+    out <- xcj_shift_matrix(out, .fit)
+  }
   cat(sprintf("XG1  xgb primary override ON for %s: %d cells replaced, %d kept (no xgb prediction)\n",
               pair_label, n_hit, n_miss))
   out
@@ -596,6 +604,15 @@ xgb_primary_predict_live <- function(shares, mat22, a22, state_mean, returns,
     out[hit, p] <- v[hit]
   }
   out <- 100 * out / rowSums(out)
+  # AUSPOL_XGB_CLASS_JUR_CAL: the same correction as the backtests, fitted from the as-at
+  # predictions of every election dated before this one (R/xgb_class_jur_cal.R).
+  if (xcj_enabled()) {
+    .xf <- Sys.getenv("AUSPOL_XGB_PRIMARY_OOF", out_path("xgb-primary-asat-predictions.csv"))
+    if (!file.exists(.xf)) stop("AUSPOL_XGB_CLASS_JUR_CAL=1 needs ", .xf, " (scripts/fit_xgb_primary_asat.R)")
+    .fit <- xcj_fit(xcj_history(data.table::fread(.xf, showProgress = FALSE)), target_election)
+    xcj_log(.fit, target_election)
+    out <- xcj_shift_matrix(out, .fit)
+  }
   cat(sprintf("XG4  LIVE xgb v6 primary prediction ON for %s: %d seat-classes overridden\n", region, nrow(rows)))
   out
 }

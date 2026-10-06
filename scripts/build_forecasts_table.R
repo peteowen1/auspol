@@ -43,6 +43,11 @@ mf <- file.path(OUT, "xgb-primary-asat-manifest.csv")
 if (!file.exists(pf) || !file.exists(mf)) stop("FT0! run scripts/fit_xgb_primary_asat.R first")
 P <- fread(pf, na.strings = c("NA", ""), showProgress = FALSE)
 M <- fread(mf, na.strings = c("NA", ""), showProgress = FALSE)
+# AUSPOL_XGB_CLASS_JUR_CAL (R/xgb_class_jur_cal.R, default off): the per-(jurisdiction, class)
+# shift, each target fitted on earlier elections' as-at predictions only. Applied to the
+# raw as-at predictions BEFORE nomination zeroing, as the harnesses do (override, then zero).
+# Off: P is returned untouched.
+P <- xcj_apply_asat(P)
 C <- fread(file.path(OUT, "candidacies.csv"), showProgress = FALSE)
 
 # Leading candidate per (election, seat, class): highest actual primary. A
