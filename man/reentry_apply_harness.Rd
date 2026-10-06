@@ -4,7 +4,16 @@
 \alias{reentry_apply_harness}
 \title{One-call re-entry prior for a harness}
 \usage{
-reentry_apply_harness(mat, fa, fb, state_share, target, pairs, code = "RE1")
+reentry_apply_harness(
+  mat,
+  fa,
+  fb,
+  state_share,
+  target,
+  pairs,
+  code = "RE1",
+  corpus = NULL
+)
 }
 \arguments{
 \item{mat}{Seat-by-class share matrix.}

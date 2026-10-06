@@ -651,6 +651,146 @@ combine_sd_override <- function(a, b) {
   out
 }
 
+#' The validated `AUSPOL_REENTRY` switch
+#'
+#' `"0"` off (also unset or empty), `"1"` the general GLM prior (refused,
+#' `docs/plans/prereg-reentry-prior-2026-09-07.md`), `"majors"` a major party's
+#' own history ([reentry_majors_fill()]). Anything else is an error: a typo that
+#' quietly reads as off is an arm that never ran.
+#'
+#' @return One of `"0"`, `"1"`, `"majors"`.
+#' @export
+reentry_mode <- function() {
+  m <- Sys.getenv("AUSPOL_REENTRY", "0")
+  if (!nzchar(m)) m <- "0"
+  if (!m %in% c("0", "1", "majors"))
+    stop("AUSPOL_REENTRY must be \"0\", \"1\" or \"majors\"; got \"", m, "\"", call. = FALSE)
+  m
+}
+
+#' A major party's own history as its re-entry share
+#'
+#' Pete's decision 2026-10-06 after the general prior was refused (it filled
+#' One Nation at 30-43 in safe Labor Queensland 2020 seats). A MAJOR class
+#' (ALP, LNP, GRN only) that contests a seat now but did not contest it at the
+#' previous election (`mat` is at or below `eps`) is given its share at the most
+#' recent EARLIER election at which it did contest that seat, swung by the
+#' statewide change for the class between that election and the target:
+#' `dev_slope(old_seat_share, class_statewide_then, state_share[class], slope)`.
+#' Its own history, no regression. A seat with no earlier contest by the class
+#' under the same name (redistribution, new seat) is left unfilled and logged;
+#' there is no fallback to the GLM. ONP, IND and every other class are never
+#' filled.
+#'
+#' Time-forward: only elections dated strictly before `target` in the same
+#' region are read. The old seat share and the class statewide share both come
+#' from the candidacy corpus (votes summed by class within seat, and within the
+#' election), so the pair is on one footing.
+#'
+#' The value is a target-election share and, like the other re-entry modes, is
+#' written by the caller AFTER the swing and through
+#' [protect_personal_vote_cells()].
+#'
+#' @param mat Seat-by-class share matrix at the previous election.
+#' @param standing `data.frame` of `seat`,`party` standing at the target, or
+#'   `"seat|class"` keys.
+#' @param state_share Named projected statewide share per class at the target.
+#' @param target Target election label, e.g. `"vic2022"`.
+#' @param corpus Candidacy corpus; `output/candidacies.csv` when `NULL`.
+#' @param slope Named per-class slope; [dev_slopes_for()] when `NULL`.
+#' @param eps A cell at or below this counts as no prior vote.
+#' @param code Log prefix.
+#' @return `mat` with filled cells set and attribute `"reentry"`
+#'   (`seat, party, value, n, path = "majors", old_election, old_share,
+#'   level_prev, level_now`).
+#' @export
+reentry_majors_fill <- function(mat, standing, state_share, target,
+                                corpus = NULL, slope = NULL, eps = 0.01,
+                                code = "RE1") {
+  majors <- c("ALP", "LNP", "GRN")
+  if (is.data.frame(standing))
+    standing <- paste(standing$seat, standing$party, sep = "|")
+  empty <- data.frame(seat = character(0), party = character(0),
+                      value = numeric(0), n = integer(0), path = character(0),
+                      old_election = character(0), old_share = numeric(0),
+                      level_prev = numeric(0), level_now = numeric(0),
+                      stringsAsFactors = FALSE)
+  if (is.null(corpus)) {
+    f <- out_path("candidacies.csv")
+    if (!file.exists(f))
+      stop("reentry_majors_fill() needs output/candidacies.csv; run scripts/build_candidacies.R", call. = FALSE)
+    corpus <- data.table::fread(f, showProgress = FALSE)
+  }
+  C <- data.table::as.data.table(corpus)
+  region <- sub("[0-9]{4}$", "", target)
+  ed <- election_dates()
+  tdate <- as.Date(unname(ed[target]))
+  if (is.na(tdate)) {
+    yr <- suppressWarnings(as.integer(sub("^.*?([0-9]{4})$", "\\1", target)))
+    if (is.na(yr)) stop("reentry_majors_fill(): cannot date target '", target, "'", call. = FALSE)
+    tdate <- as.Date(sprintf("%d-07-01", yr))
+  }
+  els <- unique(C$election[C$region == region])
+  edate <- as.Date(unname(ed[els]))
+  # STRICTLY before the target, whatever AUSPOL_TIME_FORWARD_FITS says: this
+  # reads a seat's own past, there is no leave-one-out reading of that.
+  els <- els[!is.na(edate) & edate < tdate]
+  edate <- as.Date(unname(ed[els]))
+  hist <- C[C$election %in% els & C$party %in% majors, ]
+  hist <- hist[, list(votes = sum(votes, na.rm = TRUE)), by = c("election", "seat", "party")]
+  tot_seat <- C[C$election %in% els, list(tot = sum(votes, na.rm = TRUE)), by = c("election", "seat")]
+  tot_el   <- C[C$election %in% els, list(tot = sum(votes, na.rm = TRUE)), by = "election"]
+  hist <- merge(hist, tot_seat, by = c("election", "seat"))
+  hist[, `:=`(share = 100 * votes / tot, skey = normalise_seat(seat),
+              date = edate[match(election, els)])]
+  hist <- hist[is.finite(hist$share) & hist$share > eps, ]
+  lvl <- C[C$election %in% els & C$party %in% majors,
+           list(v = sum(votes, na.rm = TRUE)), by = c("election", "party")]
+  lvl <- merge(lvl, tot_el, by = "election")
+  lvl[, level := 100 * v / tot]
+  sl <- if (is.null(slope)) dev_slopes_for(majors) else slope
+
+  rows <- list(); n_none <- 0L
+  for (p in intersect(majors, intersect(colnames(mat), names(state_share)))) {
+    hit <- which(mat[, p] <= eps &
+                   paste(rownames(mat), p, sep = "|") %in% standing)
+    if (!length(hit)) next
+    if (!is.finite(state_share[[p]])) {
+      cat(sprintf("%s! majors re-entry: %s statewide share not finite, %d cell(s) NOT filled\n", code, p, length(hit)))
+      next
+    }
+    hp <- hist[hist$party == p, ]
+    for (sn in rownames(mat)[hit]) {
+      h <- hp[hp$skey == normalise_seat(sn), ]
+      if (!nrow(h)) {
+        n_none <- n_none + 1L
+        cat(sprintf("%s  majors re-entry NOT filled: %s | %s | no earlier contest by the class under this seat name before %s\n",
+                    code, sn, p, target))
+        next
+      }
+      h <- h[which.max(h$date), ]
+      lp <- lvl$level[lvl$election == h$election & lvl$party == p]
+      if (length(lp) != 1L || !is.finite(lp)) {
+        cat(sprintf("%s! majors re-entry NOT filled: %s | %s | no statewide level for %s\n", code, sn, p, h$election))
+        next
+      }
+      v <- dev_slope(h$share, lp, state_share[[p]], unname(sl[[p]]))
+      cat(sprintf("%s  majors re-entry FILLED: %s | %s | from %s | old share %.2f | level then %.2f -> now %.2f | value %.2f\n",
+                  code, sn, p, h$election, h$share, lp, state_share[[p]], v))
+      mat[sn, p] <- v
+      rows[[length(rows) + 1L]] <- data.frame(
+        seat = sn, party = p, value = v, n = NA_integer_, path = "majors",
+        old_election = h$election, old_share = h$share, level_prev = lp,
+        level_now = unname(state_share[[p]]), stringsAsFactors = FALSE)
+    }
+  }
+  re <- if (length(rows)) do.call(rbind, rows) else empty
+  cat(sprintf("%s  majors re-entry: %d cell(s) filled, %d with no earlier contest left unfilled\n",
+              code, nrow(re), n_none))
+  attr(mat, "reentry") <- re
+  mat
+}
+
 #' One-call re-entry prior for a harness
 #'
 #' Wraps [reentry_fit()], [seat_lean()] and [apply_reentry_prior()] so a harness
@@ -669,8 +809,15 @@ combine_sd_override <- function(a, b) {
 #' @return `mat`, with attribute `"reentry"` when applied.
 #' @export
 reentry_apply_harness <- function(mat, fa, fb, state_share, target, pairs,
-                                  code = "RE1") {
-  if (!identical(Sys.getenv("AUSPOL_REENTRY", "0"), "1")) return(mat)
+                                  code = "RE1", corpus = NULL) {
+  mode <- reentry_mode()
+  if (identical(mode, "0")) return(mat)
+  if (identical(mode, "majors")) {
+    fb_dt <- data.table::as.data.table(fb)
+    stand <- unique(fb_dt[fb_dt$votes > 0, list(seat, party)])
+    return(reentry_majors_fill(mat, stand, state_share, target,
+                               corpus = corpus, code = code))
+  }
   # time-forward: fitted only on elections before the target
   fit <- tryCatch(reentry_fit(fit_pairs_for(target, pairs)),
                   error = function(e) {

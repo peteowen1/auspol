@@ -1063,11 +1063,11 @@ if (!is.null(.fitsl)) {
 # (AUSPOL_NOM_LIVE=1); without one nothing is filled, and that is printed.
 # Switch "0": this block is skipped and .re_cells stays NULL, so nothing below changes.
 .re_cells <- NULL
-if (identical(Sys.getenv("AUSPOL_REENTRY", "0"), "1")) {
+if (!identical(reentry_mode(), "0")) {   # "1" general prior (refused) | "majors" own history
   .re_sl <- tryCatch(reentry_standing_live(rownames(mat22), "vic2026", "vic2022"),
                      error = function(e) list(standing = NULL, reason = conditionMessage(e)))
   if (is.null(.re_sl$standing)) {
-    cat(sprintf("BV1r!! AUSPOL_REENTRY=1 but no live nomination list (%s): re-entry prior NOT applied\n", .re_sl$reason))
+    cat(sprintf("BV1r!! AUSPOL_REENTRY=%s but no live nomination list (%s): re-entry prior NOT applied\n", reentry_mode(), .re_sl$reason))
   } else {
     # statewide share per class: the trend's classes as forecast, the unmodelled
     # minor classes scaled with OTH exactly as the minor-field block below scales them
