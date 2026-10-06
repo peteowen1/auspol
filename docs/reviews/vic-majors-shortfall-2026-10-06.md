@@ -148,3 +148,15 @@ Why it is a proposal, not evidence: I tested the cruder version, "rake each clas
 - "Metro versus regional" is untested; no field exists.
 - Live vic2026 effect of the proposal, the ONP regime, and whether the xgb shift behaves the same with ONP rows present, are untested.
 - Standard errors for the pooled rows cluster on seat-election (no seat repeated within an election); 3 elections cannot give a trustworthy between-election SE and I did not claim one.
+
+## Follow-up (2026-10-06): class-by-jurisdiction calibration built, not run
+
+Branch `worktree-agent-a6d092f16127ab44a` (`d2c47c2`, unmerged): `AUSPOL_XGB_CLASS_JUR_CAL` (off), a
+time-forward, shrunk post-xgb shift per (jurisdiction, class), wired at all three xgb paths, switch-0
+byte-identical. Dry run on the published as-at table (an estimate, not a rebuild): mean squared error
++0.29 points^2 (SE 0.15); 11 of 18 elections shifted, only fed2022 better (-0.76), qld2024 +2.07,
+fed2025 +1.38, fed2019 +0.95, nsw2023 +0.77; Victoria flat (vic2018 +0.03, vic2022 +0.08). Pooling
+across jurisdictions shrinks the Victoria-only IND bias to ~0 (tau^2 0.02 at vic2022, 0 at vic2026), and
+the shifts that fire (ALP, GRN, ONP) are taken back off the Coalition by renormalisation. Not run as an
+arm. The Victorian majors shortfall stays open: what remains is the statewide level (calibrated noise)
+and a per-seat IND over-call no pooled correction isolates.
