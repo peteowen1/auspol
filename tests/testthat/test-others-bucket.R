@@ -42,3 +42,65 @@ test_that("others_bucket_apply keeps each row total and scales only the bucket",
   expect_equal(unname(out[1, "ALP"] / out[1, "LNP"]), 40 / 35)
   expect_identical(others_bucket_apply(d, "OTH", 1), d)
 })
+
+.jur_hist <- function() {
+  data.table::data.table(
+    pair = c(paste0("vic", 2000 + 0:3), paste0("fed", 2000 + 0:3)),
+    date = as.Date("2000-01-01") + c(0:3, 0:3) * 365 + c(0, 0, 0, 0, 30, 30, 30, 30),
+    bucket_fc = 10,
+    bucket_act = c(7.0, 7.2, 6.9, 7.1, 10.4, 10.6, 10.5, 10.3))
+}
+
+test_that("others_bucket_scale_jur falls back to the pooled scale with no earlier election of the jurisdiction", {
+  h <- .jur_hist()
+  s <- others_bucket_scale_jur(as.Date("2010-01-01"), "nsw", h)
+  expect_equal(s$n_jur, 0L)
+  expect_equal(s$w, 0)
+  expect_equal(s$k, others_bucket_scale(as.Date("2010-01-01"), h)$k)
+  # no history at all: k = 1, no error
+  expect_equal(others_bucket_scale_jur(as.Date("1999-01-01"), "vic", h)$k, 1)
+})
+
+test_that("others_bucket_scale_jur is graceful with one earlier election of the jurisdiction", {
+  h <- .jur_hist()
+  one <- others_bucket_scale_jur(as.Date("2000-03-01"), "vic", h)  # one vic, one fed election before
+  expect_equal(one$n_jur, 1L)
+  expect_true(is.finite(one$k)); expect_gt(one$k, 0)
+  # a single earlier election overall: no noise estimate, so k = 1
+  expect_equal(others_bucket_scale_jur(as.Date("2000-01-15"), "vic", h)$k, 1)
+})
+
+test_that("others_bucket_scale_jur is time-forward", {
+  h <- .jur_hist()
+  s1 <- others_bucket_scale_jur(as.Date("2002-06-01"), "vic", h)
+  # a later election with a wild miss, in this jurisdiction and in another
+  h2 <- rbind(h, data.table::data.table(pair = c("vic2050", "fed2050"),
+                                        date = as.Date(c("2050-01-01", "2050-01-01")),
+                                        bucket_fc = 10, bucket_act = c(1, 30)))
+  s2 <- others_bucket_scale_jur(as.Date("2002-06-01"), "vic", h2)
+  expect_identical(s1[c("k", "w", "n", "n_jur", "tau2")], s2[c("k", "w", "n", "n_jur", "tau2")])
+  expect_false("vic2050" %in% s2$pairs)
+})
+
+test_that("others_bucket_scale_jur follows a jurisdiction whose bias differs from the pool", {
+  h <- .jur_hist()
+  before <- as.Date("2004-01-01")
+  sv <- others_bucket_scale_jur(before, "vic", h)
+  sf <- others_bucket_scale_jur(before, "fed", h)
+  pooled <- others_bucket_scale(before, h)$k
+  expect_lt(sv$k, pooled)   # vic bucket over-forecast: shrinks harder than the pool
+  expect_gt(sf$k, pooled)   # fed under-forecast: shrinks less
+  expect_gt(sv$w, 0.5)
+  expect_equal(sv$region, "vic")
+})
+
+test_that("AUSPOL_OTHERS_SCALE_JUR is off by default in both the registry and the code", {
+  pf_path <- testthat::test_path("..", "..", "scripts", "published_flags.R")
+  skip_if_not(file.exists(pf_path))   # the installed package and R CMD check carry no scripts/
+  pf <- readLines(pf_path, warn = FALSE)
+  line <- grep("^\\s*AUSPOL_OTHERS_SCALE_JUR\\s*=", pf, value = TRUE)
+  expect_length(line, 1L)
+  expect_match(line, "=\\s*\"0\"")
+  fm <- readLines(file.path(dirname(dirname(pf_path)), "R", "forecast_mode.R"), warn = FALSE)
+  expect_true(any(grepl("Sys.getenv(\"AUSPOL_OTHERS_SCALE_JUR\", \"0\")", fm, fixed = TRUE)))
+})

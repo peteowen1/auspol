@@ -561,6 +561,19 @@ if (LEVEL_ANCHOR && "OTH" %in% names(state_mean)) {
   # (sum 97.93) while the backtests read them rescaled. Review gate 2026-09-30.
   state_mean <- state_mean * 100 / sum(state_mean)
 }
+# AUSPOL_OTHERS_SCALE_JUR=1 (PREREG PENDING, off): the unpolled others bucket
+# (state_mean[["OTH"]] is the whole of it, see LL3) shrunk by Victoria's own
+# time-forward poll bias, partially pooled toward the all-jurisdiction value;
+# the share removed goes to the other classes in proportion, BEFORE the level
+# anchoring below, as the backtests do (R/forecast_mode.R OB3).
+if (identical(Sys.getenv("AUSPOL_OTHERS_SCALE_JUR", "0"), "1") && "OTH" %in% names(state_mean)) {
+  ob_j <- others_bucket_scale_jur(as.Date(VIC_2026), "vic")
+  sm_mat <- others_bucket_apply(matrix(state_mean, nrow = 1, dimnames = list(NULL, names(state_mean))),
+                                "OTH", ob_j$k)
+  cat(sprintf("OB3  vic2026: others bucket x%.3f by jurisdiction (vic n %d; w %.2f; pooled x%.3f): OTH %.2f -> %.2f\n",
+              ob_j$k, ob_j$n_jur, ob_j$w, ob_j$k_pooled, state_mean[["OTH"]], sm_mat[1, "OTH"]))
+  state_mean[] <- sm_mat[1, names(state_mean)]
+}
 ll_before <- ll_implied(state_mean * 100 / sum(state_mean))
 ll_delta <- pj$mean - ll_before
 if (LEVEL_ANCHOR) {

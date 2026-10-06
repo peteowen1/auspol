@@ -247,7 +247,22 @@ statewide_draws_as_at <- function(region, year, as_at, election_date, parties,
   # this one; the share removed goes back to the polled classes, and the
   # anchoring below then re-balances Labor and Coalition to the two-party
   # target. docs/plans/prereg-others-bucket-size-2026-09-27.md.
-  if (identical(Sys.getenv("AUSPOL_OTHERS_SCALE", "0"), "1")) {
+  # AUSPOL_OTHERS_SCALE_JUR=1 (PREREG PENDING, off): the same correction fitted
+  # per jurisdiction from that jurisdiction's own earlier elections, partially
+  # pooled toward the all-jurisdiction value (others_bucket_scale_jur()). It
+  # REPLACES the pooled scale when both are set, never stacks on it.
+  if (identical(Sys.getenv("AUSPOL_OTHERS_SCALE_JUR", "0"), "1")) {
+    ob <- others_bucket_scale_jur(election_date, region)
+    bucket <- intersect(c("OTH", folded), parties)
+    before_b <- mean(rowSums(draws[, bucket, drop = FALSE]))
+    draws <- others_bucket_apply(draws, bucket, ob$k)
+    cat(sprintf("OB3  %s%d: others bucket x%.3f by jurisdiction (%s: n %d, mean log ratio %s, se %s; tau2 %.4f; w %.2f; pooled x%.3f; %d earlier elections overall): %.2f -> %.2f\n",
+                region, year, ob$k, region, ob$n_jur,
+                if (is.finite(ob$m_jur)) sprintf("%+.3f", ob$m_jur) else "NA",
+                if (is.finite(ob$se_jur)) sprintf("%.3f", ob$se_jur) else "NA",
+                ob$tau2, ob$w, ob$k_pooled, ob$n, before_b,
+                mean(rowSums(draws[, bucket, drop = FALSE]))))
+  } else if (identical(Sys.getenv("AUSPOL_OTHERS_SCALE", "0"), "1")) {
     ob <- others_bucket_scale(election_date)
     bucket <- intersect(c("OTH", folded), parties)
     before_b <- mean(rowSums(draws[, bucket, drop = FALSE]))
