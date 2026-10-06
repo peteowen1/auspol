@@ -121,6 +121,9 @@ if (is.null(man)) cat("FJ1! no MANIFEST.json found -- models_promoted_at will be
 doc <- list(
   election = "vic2026", election_date = "2026-11-28", built_at = format(Sys.time(), "%Y-%m-%dT%H:%M:%S%z"),
   git_sha = gitsha, models_promoted_at = if (!is.null(man)) man$promoted_at else NULL,
+  # The track record the ITG page quotes, straight from the promoted models' manifest
+  # (AEF-7 ledger), so the page's numbers move with every publish instead of being typed in.
+  track_record = if (!is.null(man) && !is.null(man$aef7)) c(man$aef7, list(pairs = man$pairs, seat_elections = man$seat_elections)) else NULL,
   # which commit of d-j-hirst/aus-polling-analyser the polls came from (set by
   # the workflow; NULL locally). The poll file itself is polls-vic-snapshot.csv on the release.
   poll_source = list(repo = "d-j-hirst/aus-polling-analyser",

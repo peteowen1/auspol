@@ -5,7 +5,35 @@ it stood before this rewrite: `backlog/journal-2026-09-19-hub-snapshot.md`).
 Decisions: `docs/DECISIONS.md`. Every seat verdict: `docs/SEAT-REGISTRY.md`.
 Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30.
 
-## 2026-10-05 (READ FIRST): handover for the next session
+## 2026-10-06 (READ FIRST): primary-miss push, state of play
+
+**Shipped and published** (PRs #90, #91 merged; `shipped-models` release 2026-10-06 10:31 AEDT; daily
+forecast rerun 23:47Z): leader leak fix, WA party classes, permit per leader, table zeroing, federal
+defector carry, by-election winner level + departed flag, person matching (Tony/Trevor SMITH), WA
+federal-swing nudge (WA only), cross-seat personal vote. **Ledger seat log loss 0.2809 vs AE Forecasts
+0.2825** (was 0.2796 leaky, 0.2874 honest). Live Labor 34.3 expected seats.
+Plans: `plans/primary-miss-fixes-2026-10-05.md`, `plans/prereg-defector-by-level-2026-10-05.md`,
+`plans/prereg-byelection-level-2026-10-05.md`, `plans/prereg-crossseat-and-wa-port-2026-10-05.md`.
+
+**Open, in order** (worst 30 rows on the published model: ~20 first-time breakouts, 4 non-major
+sitting members who surged further, 2 collapses, 3 with no prior to build from):
+1. Breakout mixture (with probability p a non-major row's share comes from the breakout distribution;
+   -0.030 log loss, 2.4 SE, in a proxy simulator): designed (`reviews/breakout-risk-design-2026-10-05.md`),
+   NOT built. Needs the real simulator (`R/seat_sim.R`), all six harnesses, prereg.
+2. Sophomore surge for non-major sitting members (Brock, Cregan, Dametto, Donato): measurement agent
+   running 2026-10-06 (`reviews/sophomore-surge-2026-10-06.md`).
+3. ITG page track record: auspol `84b6858` (forecast JSON carries `track_record`) and blog `e8ed902f`
+   (page reads it; tie bands log loss 0.005, RMSE 0.2) committed on `dev`, NOT pushed; needs PRs.
+4. State-level defector rate: needs a small-n-safe SE first.
+5. Two local-only test failures pre-dating this work: `poll_data_age` (-25 days), two-party anchor test.
+6. Local poll clone `external/aus-polling-analyser` last commit 2026-09-25 (CI fetches its own).
+7. Rebuild speed: stage 6 for one region should use `AUSPOL_REBUILD_ONLY`; a stage-6-only arm takes
+   ~8 min, a full rebuild ~24 min (cross-seat carry is cached under `output/cache/cross-seat`).
+
+Refused and recorded: both-levels defector rate; WA with the cliff removed and fully symmetric WA pooling
+(the pooling lifts vic2018/qld2020 over the cliff); wider uncertainty for personal-vote rows.
+
+## 2026-10-05: handover (superseded by the block above)
 
 Full detail in `docs/HANDOVER-2026-10-05.md`. Short version: `dev` = origin/dev = 1fe9eb6, `dev` -> `main` PR NOT open. One review blocker left, `scripts/build_candidacies.R` BC10a (a same-day ABC refetch loses the sort to the plain-date file) plus the BC11 Wikipedia-only fallback. Departed-hold built and REFUSED (off). Pete wants: why it failed and whether it can be adjusted (widen the SD, add a successor-strength signal), a campaign-signal fix for the breakout misses (seat polls and endorsement already ship; funding data not found), and the other open misses (senior retiring MP, South Brisbane, Churchlands, Maryborough).
 
