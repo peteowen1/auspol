@@ -47,14 +47,22 @@ test_that("IND map leaves a seat alone when a known non-major class already expl
              polls("Bbb", "b", c("ALP", "LNP", "OTH"), c(30, 30, 24)))
   out <- capture.output(r <- .seat_poll_ind_map(s, "fedT"))
   # Katter-like: not remapped to IND, and the poll's OTH figure goes to the known class
+  # (the only class with an as-at prediction in Aaa, so all 40 of it)
   expect_equal(r$class[r$poll_id == "a" & r$fp == 40], "OTH_RIGHT")
+  expect_false(any(r$poll_id == "a" & r$class == "OTH"))
   expect_equal(r$class[r$poll_id == "b" & r$fp == 24], "IND")
   expect_true(any(grepl("Aaa .*NOT remapped", out)))
-  expect_true(any(grepl("Aaa .*OTH 40.0 -> OTH_RIGHT \\(known class", out)))
-  # a poll that already reports the known class keeps its OTH as OTH
-  s2 <- polls("Aaa", "z", c("ALP", "LNP", "OTH_RIGHT", "OTH"), c(30, 30, 30, 15))
+  expect_true(any(grepl("Aaa .*OTH 40.0 split by as-at expectation: OTH_RIGHT 40.0", out)))
+  # Kennedy 2022 shape: the poll already names part of the class (UAP 6); the rest of
+  # the expected share is unreported, so the OTH lump still goes there
+  s2 <- polls("Aaa", "z", c("ALP", "LNP", "OTH_RIGHT", "OTH"), c(20, 30, 6, 40))
   invisible(capture.output(r2 <- .seat_poll_known_class_map(s2, "fedT")))
-  expect_equal(r2$class[r2$fp == 15], "OTH")
+  expect_equal(sum(r2$fp[r2$class == "OTH_RIGHT"]), 46)
+  expect_equal(sum(r2$fp), sum(s2$fp))
+  # the poll already reports what we expect of the class: nothing is left to explain the OTH
+  s3 <- polls("Aaa", "y", c("ALP", "LNP", "OTH_RIGHT", "OTH"), c(25, 25, 38, 12))
+  invisible(capture.output(r3 <- .seat_poll_known_class_map(s3, "fedT")))
+  expect_identical(r3, s3)
 })
 
 test_that("the three switches reject anything but 0/1 and are no-ops at 0", {

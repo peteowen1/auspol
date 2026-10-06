@@ -487,31 +487,45 @@ SEAT_POLL_IND_MAP_KNOWN_FRAC <- 0.5
 }
 
 # A poll that files a KNOWN non-independent minor under OTH (Katter in Kennedy
-# 2022: YouGov MRP OTH 43, KAP is our OTH_RIGHT) left the KAP cell unpolled, and
-# once the fed2022 blend weight rose (Mayo 2016 added) the blend pulled KAP to
-# 19.5 (actual 46.1). Where one of our non-major classes (OTH_RIGHT, ONP) already
-# carries at least SEAT_POLL_IND_MAP_KNOWN_FRAC of the poll's OTH figure and the
-# poll gives that class no figure of its own, the OTH figure is that class's.
+# 2022: YouGov MRP OTH 43, KAP is our OTH_RIGHT) left the KAP cell polled at
+# only the UAP's 6, and once the fed2022 blend weight rose (Mayo 2016 added) the
+# blend pulled OTH_RIGHT to 19.5 (actual 46.1). The poll's OTH lumps together
+# whatever it does not name, so split it across OTH_RIGHT, ONP and OTH in
+# proportion to the share our as-at prediction expects of each BEYOND what the
+# poll already reports for that class. Kennedy: OTH_RIGHT expects 44.7, the
+# poll names 6, OTH expects ~0, so ~all of the 43 goes to OTH_RIGHT. Only where
+# a named class's unreported share is at least SEAT_POLL_IND_MAP_KNOWN_FRAC of
+# the OTH figure (a dominant known minor, not a scatter of small parties).
 # As-at predictions only (current_seat_predictions()), so nothing from the result.
 .seat_poll_known_class_map <- function(s, el, f = current_seat_predictions()) {
   if (is.null(f) || !any(f$election == el)) return(s)
-  fe <- f[f$election == el & f$party %in% c("OTH_RIGHT", "ONP")]
+  lump <- c("OTH_RIGHT", "ONP", "OTH")
+  fe <- f[f$election == el & f$party %in% lump]
   if (!nrow(fe)) return(s)
   fe$seat <- normalise_seat(fe$seat)
+  add <- list(); drop <- integer(0)
   for (id in unique(s$poll_id)) {
     r_oth <- which(s$poll_id == id & s$class == "OTH" & is.finite(s$fp))
     if (length(r_oth) != 1L || s$fp[r_oth] < SEAT_POLL_IND_MAP_MIN_OTH) next
-    sn <- normalise_seat(s$seat_name[r_oth])
-    cand <- fe[fe$seat == sn]
-    if (!nrow(cand)) next
-    best <- cand[which.max(cand$xgb_pred_seat)]
-    if (best$xgb_pred_seat < SEAT_POLL_IND_MAP_KNOWN_FRAC * s$fp[r_oth]) next
-    if (any(s$poll_id == id & s$class == best$party & is.finite(s$fp))) next   # poll already reports it
-    cat(sprintf("SPIM %s %s | %s | OTH %.1f -> %s (known class, as-at pred %.1f)\n",
-                el, s$seat_name[r_oth], id, s$fp[r_oth], best$party, best$xgb_pred_seat))
-    s$class[r_oth] <- best$party
+    oth_fig <- s$fp[r_oth]
+    fs <- fe[fe$seat == normalise_seat(s$seat_name[r_oth])]
+    if (!nrow(fs)) next
+    pred <- vapply(lump, function(k) sum(fs$xgb_pred_seat[fs$party == k]), numeric(1))
+    named <- vapply(lump, function(k) if (k == "OTH") 0 else
+      sum(s$fp[s$poll_id == id & s$class == k & is.finite(s$fp)]), numeric(1))
+    resid <- pmax(pred - named, 0)
+    if (max(resid[c("OTH_RIGHT", "ONP")]) < SEAT_POLL_IND_MAP_KNOWN_FRAC * oth_fig) next
+    part <- oth_fig * resid / sum(resid)
+    cat(sprintf("SPIM %s %s | %s | OTH %.1f split by as-at expectation: OTH_RIGHT %.1f, ONP %.1f, OTH %.1f\n",
+                el, s$seat_name[r_oth], id, oth_fig, part[["OTH_RIGHT"]], part[["ONP"]], part[["OTH"]]))
+    for (k in lump[part > 0]) {
+      row <- s[r_oth]; row$class <- k; row$fp <- part[[k]]
+      add[[length(add) + 1L]] <- row
+    }
+    drop <- c(drop, r_oth)
   }
-  s
+  if (!length(drop)) return(s)
+  rbind(s[-drop], data.table::rbindlist(add))
 }
 
 #' Direct-poll IND cells of a by-type blend table
