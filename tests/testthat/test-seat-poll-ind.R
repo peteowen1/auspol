@@ -8,6 +8,9 @@ fake_root <- function(preds = NULL) {
   data.table::fwrite(data.table::data.table(
     election = "fedT", seat = c("Aaa", "Bbb", "Ccc", "Ddd"), party = c("IND", "IND", "IND", "ALP")),
     file.path(r, "output", "candidacies.csv"))
+  # Aaa and Bbb's independents are endorsed (the credible-contender rule, Amendment 1); Ccc's is not.
+  data.table::fwrite(data.table::data.table(pair = "fedT", seat = c("Aaa", "Bbb"), party = "IND", c200 = 1L, voices = 0L),
+                     file.path(r, "output", "endorsement-features.csv"))
   if (!is.null(preds)) data.table::fwrite(preds, file.path(r, "output", "forecasts.csv"))
   withr::local_options(auspol.root = r, .local_envir = parent.frame())
   r
@@ -22,9 +25,12 @@ test_that("IND map moves a big OTH to IND only where the poll leaves IND blank a
     polls("Aaa", "a", c("ALP", "LNP", "IND", "OTH"), c(30, 30, NA, 24)),   # blank IND, big OTH, IND candidate: move
     polls("Bbb", "b", c("ALP", "LNP", "IND", "OTH"), c(30, 30, 20, 8)),    # poll reports IND: leave
     polls("Bbb", "c", c("ALP", "LNP", "OTH"), c(40, 40, 5)),               # small OTH: leave
-    polls("Ddd", "d", c("ALP", "LNP", "OTH"), c(30, 30, 24)))              # no IND candidate: leave
+    polls("Ddd", "d", c("ALP", "LNP", "OTH"), c(30, 30, 24)),              # no IND candidate: leave
+    polls("Ccc", "e", c("ALP", "LNP", "IND", "OTH"), c(30, 30, NA, 24)))   # IND neither endorsed nor sitting: leave
   out <- capture.output(r <- .seat_poll_ind_map(s, "fedT"))
   expect_equal(r$class[which(r$poll_id == "a" & r$fp == 24)], "IND")
+  expect_equal(r$class[r$poll_id == "e"], s$class[s$poll_id == "e"])
+  expect_true(any(grepl("Ccc .*not endorsed and not sitting", out)))
   expect_equal(r$class[r$poll_id == "b"], s$class[s$poll_id == "b"])
   expect_equal(r$class[r$poll_id == "c"], s$class[s$poll_id == "c"])
   expect_equal(r$class[r$poll_id == "d"], s$class[s$poll_id == "d"])
