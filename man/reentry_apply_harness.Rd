@@ -28,6 +28,9 @@ elections.}
 \item{pairs}{Every candidate pair for the fit.}
 
 \item{code}{Log prefix, e.g. \code{"BV1r"}.}
+
+\item{corpus}{Candidate-level history for \code{AUSPOL_REENTRY="majors"}
+(\code{output/candidacies.csv} shape); \code{NULL} reads that file. Unused otherwise.}
 }
 \value{
 \code{mat}, with attribute \code{"reentry"} when applied.

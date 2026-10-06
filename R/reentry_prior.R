@@ -806,6 +806,8 @@ reentry_majors_fill <- function(mat, standing, state_share, target,
 #' @param target Target election label, removed from the fit.
 #' @param pairs Every candidate pair for the fit.
 #' @param code Log prefix, e.g. `"BV1r"`.
+#' @param corpus Candidate-level history for `AUSPOL_REENTRY="majors"`
+#'   (`output/candidacies.csv` shape); `NULL` reads that file. Unused otherwise.
 #' @return `mat`, with attribute `"reentry"` when applied.
 #' @export
 reentry_apply_harness <- function(mat, fa, fb, state_share, target, pairs,
