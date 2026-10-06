@@ -165,7 +165,7 @@ jobs:
           set -euo pipefail
           for f in xgb-primary-v6-final.model xgb-primary-v6-final-cols.json \
                    xgb-flows-v1-final.model xgb-flows-v1-final-cols.json \
-                   xgb-flows-v1-features.csv candidacies.csv; do
+                   xgb-flows-v1-features.csv xgb-primary-v6-features.csv candidacies.csv; do
             gh release download shipped-models -p "$f" -D output --clobber
           done
           # Seed-ensemble members (AUSPOL_XGB_ENSEMBLE): the manifest is optional
@@ -235,7 +235,7 @@ jobs:
           # relied on to shout. Found by review, 2026-09-14.
           for f in output/xgb-primary-v6-final.model output/xgb-primary-v6-final-cols.json \
                    output/xgb-flows-v1-final.model output/xgb-flows-v1-final-cols.json \
-                   output/xgb-flows-v1-features.csv output/candidacies.csv; do
+                   output/xgb-flows-v1-features.csv output/xgb-primary-v6-features.csv output/candidacies.csv; do
             [ -s "$f" ] || { echo "::error::$f is missing or empty after download"; exit 1; }
           done
           # candidacies.csv is the candidate-name corpus every identity mechanism

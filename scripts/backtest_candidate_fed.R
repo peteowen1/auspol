@@ -1459,7 +1459,7 @@ for (K in PAIRS) {
     attr(shares, "skipped") <- NULL
     if (nzchar(Sys.getenv("AUSPOL_DEPARTED_HOLD_DUMP"))) { .w <- which(HELD, arr.ind = TRUE); utils::write.csv(data.frame(seat = rownames(HELD)[.w[, 1]], party = colnames(HELD)[.w[, 2]]), Sys.getenv("AUSPOL_DEPARTED_HOLD_DUMP"), row.names = FALSE) }   # which cells were held, for the scoring script
   } else shares <- 100 * shares / rowSums(shares)
-  # AUSPOL_NEW_IND_SHRINK (POST-XGB, default "0" = this line is a no-op): a nameless
+  # AUSPOL_NEW_IND_SHRINK (POST-XGB, shipped "1"; "0" makes this line a no-op): a nameless
   # first-time sole independent is over-called at base. R/new_ind_shrink.R.
   shares <- new_ind_shrink_apply(shares, sprintf("fed%d", K$to), code = "BF1n")
   shares <- xgb_primary_override(shares, sprintf("fed%d", K$to))

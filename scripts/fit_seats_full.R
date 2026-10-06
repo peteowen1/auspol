@@ -1200,10 +1200,15 @@ if (.departed_hold) {
 # feature in this script (.returns/.permit/.own_prev above) -- this now runs
 # inside the published forecast, so an unhandled error here would otherwise
 # crash the whole run rather than falling back to the shipped-only model.
-# AUSPOL_NEW_IND_SHRINK (POST-XGB, default "0" = a no-op): a nameless first-time sole
+# AUSPOL_NEW_IND_SHRINK (POST-XGB, shipped "1"): a nameless first-time sole
 # independent is over-called at base. Lands here, before the base reaches the
 # trees as base_margin, the same point as the re-entry fill. R/new_ind_shrink.R.
-shares <- new_ind_shrink_apply(shares, "vic2026", code = "BV1n")
+# Wrapped like every other optional input here: a missing features file must not
+# crash the daily forecast, and the fallback is printed, not silent.
+.nis <- .try("new_ind", new_ind_shrink_apply(shares, "vic2026", code = "BV1n"))
+if (!is.null(.nis)) shares <- .nis else if (!identical(new_ind_mode(), "0"))
+  cat(sprintf("BV1n!! new_ind_shrink_apply() FAILED%s -- the new-independent shrink is NOT applied to this forecast\n",
+              .reason("new_ind")))
 shares_x <- .try("xgb_live", xgb_primary_predict_live(shares, mat22, a22, state_mean, .returns,
                                                         own_prev = .own_prev_xgb, region = "vic"))
 if (!is.null(shares_x)) {

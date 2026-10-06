@@ -47,6 +47,9 @@ if (!identical(head_sha, man$git_sha)) {
 models <- file.path(OUT, man$models$file)
 extra <- c(file.path(SHIP, c("MANIFEST.json", "pooled-backtest.csv", "pooled-sharedetail.csv")),
            file.path(OUT, "seat-probs-vic-2026.csv"),
+           # AUSPOL_NEW_IND_SHRINK fits from it in the live forecast (fit_seats_full.R);
+           # the forecast workflow downloads it (review of the 2026-10-07 dev diff)
+           file.path(OUT, "xgb-primary-v6-features.csv"),
            # the public AEF-7 ledger and the pipeline description, so the
            # comparison and the method travel with the models they describe
            file.path(OUT, "aef7-ledger.html"), file.path("docs", "PIPELINE.md"))

@@ -972,7 +972,7 @@ if (PORT) {
   shares[, "LNP"] <- pmax(0, shares[, "LNP"] - adj)
   shares <- 100 * shares / rowSums(shares)
 }
-# AUSPOL_NEW_IND_SHRINK (POST-XGB, default "0" = this line is a no-op): a nameless
+# AUSPOL_NEW_IND_SHRINK (POST-XGB, shipped "1"; "0" makes this line a no-op): a nameless
 # first-time sole independent is over-called at base. R/new_ind_shrink.R.
 shares <- new_ind_shrink_apply(shares, TGT, code = "BS1n")
 shares <- xgb_primary_override(shares, TGT)
