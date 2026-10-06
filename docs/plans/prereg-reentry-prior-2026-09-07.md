@@ -107,3 +107,13 @@ jurisdiction's log loss worsens by more than 0.01.
 - Whether the ratio should depend on WHY the party was absent — a deliberate
   abandonment of a hopeless seat is not the same as a redistribution artefact,
   and this pools them.
+
+## Run record (2026-10-06): first arm, written BEFORE it ran
+
+The criteria above are unedited. This arm was never run or decided (found 2026-10-03; Richmond vic2022
+Liberals 0.0 against 18.8). Changes since this prereg was written, none chosen after seeing a result:
+the WA harness's private copy fitted leave-one-out (trained on later elections) and now uses the shared
+time-forward `reentry_apply_harness()`; `fit_seats_full.R` is wired (live, needs `AUSPOL_NOM_LIVE=1`, so
+no live effect before nominations close 9 Nov). Arm: `AUSPOL_REENTRY=1`, rebuild from stage 1, baseline
+the shipped configuration plus the Kennedy seat-poll split (`e3033f0`). Scored with the criteria above
+plus `scripts/score_arm.R` (SA3 ledger, SA5 per election, SA6 overall) as guards.
