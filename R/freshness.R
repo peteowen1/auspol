@@ -25,7 +25,10 @@
 poll_data_age <- function(region, as_of = Sys.Date()) {
   path <- anchor_data_path(sprintf("poll-data-%s.csv", region))
   polls <- suppressMessages(load_polls(region))
-  ok <- !is.na(polls$date)
+  # As at `as_of`: a poll dated after it did not exist yet. Without this a past
+  # `as_of` reported a NEGATIVE age once newer polls arrived (test-fold.R:161,
+  # -25 days on 2026-10-05).
+  ok <- !is.na(polls$date) & polls$date <= as_of
   # An all-NA date column means the parse broke upstream. max(na.rm = TRUE)
   # would return -Inf and every downstream comparison would then evaluate to
   # NA, which reads as "no problem" to the checks below rather than as the

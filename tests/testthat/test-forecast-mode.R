@@ -116,8 +116,23 @@ test_that("the seat-total check fails on each thing it exists to catch", {
   expect_error(check_seat_totals(c(0.5, 1.4), tot), "probabilities must lie")
 })
 
+test_that("the published live recipe does NOT anchor the level (v56, 2026-09-30)", {
+  skip_if_no_anchor()
+  withr::local_envvar(AUSPOL_LEVEL_RECIPE = "live")
+  seen <- NULL
+  invisible(utils::capture.output(statewide_draws_as_at(
+    region = "vic", year = 2022, as_at = "2022-11-25", election_date = "2022-11-26",
+    parties = c("ALP", "LNP", "GRN", "OTH"), n_sims = 500L, seed = 11L,
+    tpp_target = function(t) { seen <<- t; list(mean = t, sd = 1) })))
+  expect_null(seen)   # the anchor function is never consulted under the live recipe
+})
+
 test_that("the two-party anchor is applied and a degenerate one is refused", {
   skip_if_no_anchor()
+  # The anchored path is no longer the published recipe (AUSPOL_LEVEL_RECIPE="live"
+  # turns it off, scripts/published_flags.R), but backtest arms still use it, so it
+  # is tested under an explicit non-live recipe.
+  withr::local_envvar(AUSPOL_LEVEL_RECIPE = "anchored")
   P <- c("ALP", "LNP", "GRN", "OTH")
   args <- list(region = "vic", year = 2022, as_at = "2022-11-25",
                election_date = "2022-11-26", parties = P,
