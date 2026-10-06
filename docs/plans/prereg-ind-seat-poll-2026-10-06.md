@@ -60,3 +60,11 @@ credible contender by pre-election evidence: endorsed by Climate 200 or a Voices
 election in that seat). This drops the false remaps (fed2025 McMahon; fed2022 Richmond, Parkes, Lyne)
 and also Nicholls (not endorsed, not sitting), which the first run helped. Same switches, same
 criteria, same baseline, run from stage 6. Post hoc: it favours the later answer and is marked so.
+
+### Amendment 1 result (`output/snapshots/20261006-1503-ef0db08-from6`) -- REFUSED, to Pete
+
+PRIMARY 71 IND cells 4,272 -> 2,869 (-33%), SE 742 (1.9 SE): FAIL; SA6 0.2898 -> 0.2888 holds; ledger
+0.2809 -> 0.2757 holds; fed2025 +0.0055: DISQUALIFIER FIRES. The credible-contender rule removed the
+false remaps (fed2022 cells -1,414: Goldstein 13.5 -> 27.1, Wakehurst 14.4 -> 26.7, Kooyong 18.4 ->
+27.2). The fed2025 damage (49 cells +389; McMahon 9.3 -> 24.0 with no remap) comes from the IND-specific
+WEIGHT, which the build's dry run already showed hurts fed2025. Switches stay off.
