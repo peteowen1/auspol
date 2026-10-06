@@ -505,9 +505,17 @@ breakout_mix_args <- function(target, shares, enabled = NULL, frame = NULL) {
   pm[cbind(ri[ok], ci[ok])] <- P$p[ok]
   elig <- base::matrix(colnames(sh) %in% .BO_CLASSES, nrow(sh), ncol(sh), byrow = TRUE) & sh > 0 & sh < .BO_HARD
   pm[!elig] <- 0
+  # GATE (AUSPOL_BREAKOUT_MIX_MIN_P, default "0" = every eligible cell; 2026-10-06
+  # prereg). Ungated, thousands of tiny p values summed into real probability taken
+  # from safe seats (Churchlands 0.98 -> 0.81, Bean 0.94 -> 0.85; log loss worse in
+  # 4 of 5 pairs). The gate keeps the mixture only where the signal is strong.
+  min_p <- suppressWarnings(as.numeric(Sys.getenv("AUSPOL_BREAKOUT_MIX_MIN_P", "0")))
+  if (!is.finite(min_p) || min_p < 0 || min_p >= 1) stop("AUSPOL_BREAKOUT_MIX_MIN_P must be in [0, 1)")
+  n_cut <- sum(pm > 0 & pm < min_p)
+  pm[pm < min_p] <- 0
   n_el <- sum(elig); n_p <- sum(pm > 0)
-  cat(sprintf("BO1  %s breakout mixture ON: %d of %d eligible cells carry p (sum %.2f, max %.3f); %d of %d classifier rows matched a share cell; breakout q50 %.1f, q90 %.1f (n_hard %d, w %.2f)\n",
-              target, n_p, n_el, sum(pm), max(pm), sum(ok), nrow(P), q[51], q[91],
+  cat(sprintf("BO1  %s breakout mixture ON (gate p >= %.2f drops %d cells): %d of %d eligible cells carry p (sum %.2f, max %.3f); %d of %d classifier rows matched a share cell; breakout q50 %.1f, q90 %.1f (n_hard %d, w %.2f)\n",
+              target, min_p, n_cut, n_p, n_el, sum(pm), if (n_p) max(pm) else 0, sum(ok), nrow(P), q[51], q[91],
               attr(q, "n_hard"), attr(q, "w")))
   list(p = pm, q = as.numeric(q))
 }
