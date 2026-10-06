@@ -163,9 +163,11 @@ xgb_base_delta_apply <- function(shares, X, pair_label, f) {
     delta <- now - ref
     src <- sprintf("reference %s (%s)", basename(rf), format(file.mtime(rf), "%Y-%m-%d %H:%M"))
   } else {
-    delta <- now - base_old
-    src <- "NO REFERENCE FILE: comparing with the cached base_pred, which differs by later pipeline steps even at baseline (run stage 1 with AUSPOL_XGB_BASE_RECORD=1)"
-    cat(sprintf("XG9! %s missing; %s\n", rf, src))
+    # No silent fallback (review of 1c3f440): comparing with the cached base_pred
+    # moved 272 of 528 vic2022 cells at baseline, so a run without references
+    # would re-predict hundreds of cells and still look like a forecast.
+    stop(sprintf("AUSPOL_XGB_BASE_DELTA=1 but %s is missing: run stage 1 of scripts/rebuild_forecasts.sh (it records the references), or set AUSPOL_XGB_BASE_DELTA=0 to keep the cached as-at predictions", rf),
+         call. = FALSE)
   }
   base_new <- base_old + delta
   fin <- has & is.finite(delta)

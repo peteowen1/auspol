@@ -50,7 +50,7 @@ test_that("switch 0 is the old behaviour: cached predictions, renormalised to 10
 
 test_that("baseline: reference equal to this run's shares changes nothing, whatever the base looks like", {
   fx <- bd_root()
-  withr::local_envvar(AUSPOL_XGB_BASE_RECORD = "1", AUSPOL_XGB_PRIMARY = "0")
+  withr::local_envvar(AUSPOL_XGB_BASE_RECORD = "1", AUSPOL_XGB_PRIMARY = "0", AUSPOL_REENTRY = "0")
   # the harness shares are NOT the cached base (later pipeline steps move them):
   # offset them before recording, to mimic that; the delta must still be zero
   off <- fx$shares; off[, "GRN"] <- off[, "GRN"] + 3
@@ -65,7 +65,7 @@ test_that("baseline: reference equal to this run's shares changes nothing, whate
 
 test_that("a planted base change moves its own seat only, via the frozen trees", {
   fx <- bd_root()
-  withr::local_envvar(AUSPOL_XGB_BASE_RECORD = "1", AUSPOL_XGB_PRIMARY = "0")
+  withr::local_envvar(AUSPOL_XGB_BASE_RECORD = "1", AUSPOL_XGB_PRIMARY = "0", AUSPOL_REENTRY = "0")
   utils::capture.output(xgb_primary_override(fx$shares, "tst2020"))
   sh2 <- fx$shares
   sh2["S3", "GRN"] <- sh2["S3", "GRN"] + 12          # a fix fills 12 points into S3 GRN
@@ -93,7 +93,7 @@ test_that("a planted base change moves its own seat only, via the frozen trees",
 
 test_that("without the model the mode falls back to the labelled additive estimate", {
   fx <- bd_root()
-  withr::local_envvar(AUSPOL_XGB_BASE_RECORD = "1", AUSPOL_XGB_PRIMARY = "0")
+  withr::local_envvar(AUSPOL_XGB_BASE_RECORD = "1", AUSPOL_XGB_PRIMARY = "0", AUSPOL_REENTRY = "0")
   utils::capture.output(xgb_primary_override(fx$shares, "tst2020"))
   file.remove(file.path(fx$root, "output", "xgb-primary-asat", "tst2020.ubj"))
   sh2 <- fx$shares; sh2["S2", "ALP"] <- sh2["S2", "ALP"] + 8
@@ -106,9 +106,18 @@ test_that("without the model the mode falls back to the labelled additive estima
   expect_identical(on[setdiff(rownames(sh2), "S2"), ], base[setdiff(rownames(sh2), "S2"), ])
 })
 
-test_that("a missing reference file is announced, not silently trusted", {
+test_that("a missing reference file stops the run instead of comparing with the cached base", {
   fx <- bd_root()
-  on <- bd_run(fx$shares, "1"); lg <- attr(on, "log"); attr(on, "log") <- NULL
-  expect_true(any(grepl("NO REFERENCE FILE", lg)))
-  expect_equal(unname(rowSums(on)), rep(100, 6), tolerance = 1e-9)
+  expect_error(bd_run(fx$shares, "1"), "is missing")
+})
+
+test_that("recording a reference with the re-entry fill switched on is refused", {
+  fx <- bd_root()
+  withr::local_envvar(AUSPOL_XGB_BASE_RECORD = "1", AUSPOL_XGB_PRIMARY = "0", AUSPOL_REENTRY = "majors")
+  expect_error(utils::capture.output(xgb_primary_override(fx$shares, "tst2020")), "AUSPOL_REENTRY=0")
+  expect_false(file.exists(file.path(fx$root, "output", "xgb-base-ref", "tst2020.csv")))
+  # without recording it still runs, and says the base carries the fill
+  withr::local_envvar(AUSPOL_XGB_BASE_RECORD = "0")
+  lg <- utils::capture.output(xgb_primary_override(fx$shares, "tst2020"))
+  expect_true(any(grepl("XG9!!", lg)))
 })

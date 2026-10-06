@@ -29,7 +29,20 @@
 xgb_primary_override <- function(shares, pair_label, enabled = NULL) {
   if (is.null(enabled)) enabled <- identical(Sys.getenv("AUSPOL_XGB_PRIMARY", "1"), "1")
   if (!isTRUE(enabled)) {
-    if (identical(Sys.getenv("AUSPOL_XGB_BASE_RECORD", "0"), "1")) xgb_base_ref_write(shares, pair_label)
+    # A base built with a post-xgb fix switched on must not become the training
+    # base or the base-delta reference: the as-at trees would train on the fill and
+    # the stage-6 delta would read zero. rebuild_forecasts.sh pins stage 1 to
+    # AUSPOL_REENTRY=0; anything else that produces this base has to as well.
+    .post <- reentry_mode()
+    if (identical(Sys.getenv("AUSPOL_XGB_BASE_RECORD", "0"), "1")) {
+      if (!identical(.post, "0"))
+        stop(sprintf("AUSPOL_XGB_BASE_RECORD=1 with AUSPOL_REENTRY=%s: the reference would already contain the re-entry fill. Set AUSPOL_REENTRY=0 for stage 1.", .post),
+             call. = FALSE)
+      xgb_base_ref_write(shares, pair_label)
+    } else if (!identical(.post, "0")) {
+      cat(sprintf("XG9!! %s: base built with AUSPOL_REENTRY=%s and the xgb override off -- if this run feeds xgb TRAINING (stage 1), the trees will learn the fill; stage 1 must run AUSPOL_REENTRY=0\n",
+                  pair_label, .post))
+    }
     return(shares)
   }
   # DEFAULT TO v6, because v6 is what AUSPOL_XGB_PRIMARY_LIVE ships. The
