@@ -456,3 +456,18 @@ outright on sa2026, vic2022 and nsw2023.
 | `NOM_GATE_DATE = 2026-11-10` | `R/nomination_zero.R` | date | **WARNING-ONLY.** Nominations close noon 9 Nov 2026. `AUSPOL_NOM_LIVE=1` set before this date logs a loud warning that nominations may not have closed; it never blocks and `auto` no longer uses it. A calendar fact, not estimable. |
 | `AUSPOL_NOM_LIVE` | `R/nomination_zero.R`, `scripts/published_flags.R` | `"auto"` | **FIXED, meaning changed 2026-10-03.** Gate for v61 in the PUBLISHED Victorian forecast. Opens ONLY when set to `1` by hand, meaning the VEC final list has been loaded into `output/candidacies.csv`. `auto` (default) and `0` stay shut; `auto` logs "provisional list". Any other value, or any failure to apply under `1` (missing csv, no vic2026 rows, no vic2022 baseline, count floor, error in the step), STOPS the run. With `1`, ALP/LNP absent in some seats, or a seat with no candidacy, are logged warnings naming the seats (those classes WILL be zeroed there), not blocks. |
 | `NOM_CLASS_WARN_RATIO = 0.8` | `R/nomination_zero.R` | 0.8 | **DISPLAY THRESHOLD, not a model constant.** With `AUSPOL_NOM_LIVE=1`, a class standing in fewer than this share of its vic2022 seat count is named in a warning; nothing is blocked or changed by it. Cannot come from data (there is no distribution of final per-class seat counts); it only decides what gets flagged for a human to check. |
+
+## Breakout mixture (`AUSPOL_BREAKOUT_MIX`, built 2026-10-06, OFF)
+
+`R/breakout_mix.R`; design in `docs/reviews/breakout-risk-design-2026-10-05.md`. All inert at the published `"0"`.
+
+| constant | value | status |
+|---|---|---|
+| `.BO_CLASSES` | IND, OTH, OTH_RIGHT, ONP | **CHOSEN** (GRN left out as a different phenomenon, per the design review). |
+| `.BO_HARD` | 15 | **CHOSEN** in the design review: only rows predicted under 15 get the mixture (applying it to every row pulled expected winners down). Not fitted. |
+| `.BO_Y` | 20 | **CHOSEN**: the breakout definition (actual primary >= 20). The review also measured 25. |
+| `.BO_MIN_POS` | 5 | **FEASIBILITY FLOOR**, not a model constant: an xgboost classifier with fewer earlier breakouts than this is not fitted (fed2010, wa2013 and every earlier election get no p). |
+| `.BO_CAL_K` | 10 | **CHOSEN prior strength**: Platt calibration shrunk toward identity by npos / (npos + 10). |
+| `.BO_Q_K` | 10 | **CHOSEN prior strength**: the hard-row breakout quantiles shrunk toward all-row breakout quantiles by n / (n + 10). |
+| `.BO_P_CAP` | 0.5 | **CHOSEN** cap, from the review's recommendation pending recalibration on the real simulator (the review's top bin was over-confident, 44% vs 24%). |
+| xgboost settings | eta 0.05, depth 3, subsample 0.8, colsample 0.8, min_child_weight 2, lambda 5, up to 300 rounds, early stopping 25 | **COPIED** from the design review's classifier; rounds chosen by `xgb.cv` with folds grouped by election. |

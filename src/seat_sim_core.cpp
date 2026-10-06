@@ -36,7 +36,10 @@ List seat_sim_core(NumericMatrix shares, int n_sims, int shift_mode,
                    IntegerVector ov_seat, IntegerVector ov_key, NumericMatrix ov_mat,
                    double fallback_flow_sd = 0,
                    NumericVector ov_sd = NumericVector::create(),
-                   bool keep_fp = false) {
+                   bool keep_fp = false,
+                   bool has_bo = false,
+                   NumericMatrix bo_p = NumericMatrix(0, 0),
+                   NumericVector bo_q = NumericVector::create()) {
   const int nseat = shares.nrow(), K = shares.ncol();
   // PER-SEAT CONDITIONAL OVERRIDE, sparse. The shared cell_mat is dense over
   // the key space but has no seat dimension; a per-seat dense table would be
@@ -57,7 +60,12 @@ List seat_sim_core(NumericMatrix shares, int n_sims, int shift_mode,
   std::fill(tcp_w.begin(), tcp_w.end(), NA_INTEGER);
   std::fill(tcp_r.begin(), tcp_r.end(), NA_INTEGER);
   std::fill(tcp_share.begin(), tcp_share.end(), NA_REAL);
-  long long n_fb = 0, n_tx = 0, n_recipient_fb_draw = 0;
+  long long n_fb = 0, n_tx = 0, n_recipient_fb_draw = 0, n_bo = 0;
+  // BREAKOUT MIXTURE: per seat, the columns with p > 0, in column order (the
+  // R loop's which()). Empty for every seat when has_bo is false.
+  const int n_q = bo_q.size();
+  std::vector< std::vector<int> > bo_cols(has_bo ? nseat : 0);
+  if (has_bo) for (int i = 0; i < nseat; ++i) for (int k = 0; k < K; ++k) if (bo_p(i, k) > 0) bo_cols[i].push_back(k);
   const double pow2K = std::ldexp(1.0, K);   // 2^K, exact
   const int n_surge = surge_idx.size();
   const bool surge_any = n_surge > 0;
@@ -72,7 +80,7 @@ List seat_sim_core(NumericMatrix shares, int n_sims, int shift_mode,
   }
 
   std::vector<double> shift(K), z(K), v(K), base(K), sdc(K), p, w;
-  std::vector<int> alive, cand;
+  std::vector<int> alive, cand, bo_hit;
   alive.reserve(K); cand.reserve(K); p.reserve(K); w.reserve(K);
 
   RNGScope scope;
@@ -103,6 +111,37 @@ List seat_sim_core(NumericMatrix shares, int n_sims, int shift_mode,
         const double e = R::rnorm(0.0, sdc[k]);
         v[k] = base[k] + shift[k] + e;
         if (v[k] < 0) v[k] = 0;
+      }
+      // ---- breakout mixture (R/seat_sim.R, same RNG order and arithmetic) ----
+      // RNG order: one uniform per eligible cell in column order, THEN one more
+      // per breakout that fired -- the R loop draws the first set vectorised.
+      bo_hit.clear();
+      if (has_bo) for (size_t t = 0; t < bo_cols[i].size(); ++t) {
+        const int k = bo_cols[i][t];
+        if (R::runif(0.0, 1.0) < bo_p(i, k)) bo_hit.push_back(k);
+      }
+      for (size_t t = 0; t < bo_hit.size(); ++t) {
+        const int k = bo_hit[t];
+        {
+          const double x = R::runif(0.0, 1.0) * (double) (n_q - 1);
+          const double i0 = std::floor(x);
+          const double fr = x - i0;
+          const int ii = (int) i0;
+          const double lo = bo_q[ii];
+          const double hi = (ii + 1 < n_q) ? bo_q[ii + 1] : lo;
+          const double B = lo + fr * (hi - lo);
+          long double sv = 0.0L;
+          for (int kk = 0; kk < K; ++kk) sv += v[kk];
+          const double S = (double) sv;
+          const double rest = S - v[k];
+          if (S > 0 && rest > 0) {
+            const double nv = B / 100.0 * S;
+            const double f = (S - nv) / rest;
+            for (int kk = 0; kk < K; ++kk) if (kk != k) v[kk] = v[kk] * f;
+            v[k] = nv;
+            ++n_bo;
+          }
+        }
       }
       // ---- insurgency surge ----
       if (surge_h[i] > 0 && surge_any) {
@@ -243,5 +282,6 @@ List seat_sim_core(NumericMatrix shares, int n_sims, int shift_mode,
                       _["tcp_r"] = tcp_r, _["tcp_share"] = tcp_share,
                       _["n_fb"] = (double) n_fb, _["n_tx"] = (double) n_tx,
                       _["n_recipient_fb_draw"] = (double) n_recipient_fb_draw,
+                      _["n_bo"] = (double) n_bo,
                       _["fp"] = keep_fp ? (SEXP) fp : R_NilValue);
 }

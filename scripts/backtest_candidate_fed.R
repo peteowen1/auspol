@@ -1845,13 +1845,16 @@ for (X in out_all) {
   # card order for this election (R/htv_flow.R, external/reference/htv/liberal-alp-grn-order.csv).
   .htv_ov <- if (identical(Sys.getenv("AUSPOL_HTV_FLOW", "0"), "1")) tryCatch(htv_flow_override(.xgb_flow_ov, X$fm, sprintf("fed%d", K$to), rownames(X$shares)),
     error = function(e) { cat(sprintf("HTV9! how-to-vote override FAILED, flow rows unchanged: %s\n", conditionMessage(e))); .xgb_flow_ov }) else .xgb_flow_ov
+  # BREAKOUT MIXTURE (AUSPOL_BREAKOUT_MIX, R/breakout_mix.R): NULLs when off.
+  .bo <- breakout_mix_args(sprintf("fed%d", K$to), X$shares)
   sim <- simulate_seat_contests(level_sd = .level_sd, sd_override = SD_OVR, level_mult = .lm(X$shares), X$shares, X$fm, party_sd = psd, seat_sd = sd_w * SEAT_SD_MULT,
                                 n_sims = N_SIMS, smooth = SMOOTH, seed = SEED,
                                 shrink = shrink_arg, surge_h = surge_arg, surge_party = surge_party_arg,
                                 surge_from_zero = identical(Sys.getenv("AUSPOL_SURGE_FROM_ZERO", "0"), "1"),
                                 surge_mu = surge_mu_arg, surge_sd = surge_sd_arg,
                                 party_cor = PARTY_COR, statewide_draws = X$sw_draws, conditional_override = .htv_ov, conditional_override_sd = attr(.htv_ov, "sd"),
-                                fallback_smooth = FB_SMOOTH, shrink_k = SHRINK_K, flow_sd = FLOW_SD)
+                                fallback_smooth = FB_SMOOTH, shrink_k = SHRINK_K, flow_sd = FLOW_SD,
+                                breakout_p = .bo$p, breakout_q = .bo$q)
   # OUR OWN final-two scenario frequencies -- see tcp_scenarios(). Uses
   # sprintf("fed%d", K$to) rather than `eb` to match how this harness names
   # the pair at its own write sites further down.

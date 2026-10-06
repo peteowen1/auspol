@@ -933,6 +933,9 @@ for (K in PAIRS) {
                 .reentry_sd_k, attr(.re_sd, "n_set")))
     SD_OVR <- combine_sd_override(SD_OVR, .re_sd)
   }
+  # BREAKOUT MIXTURE (AUSPOL_BREAKOUT_MIX, R/breakout_mix.R): NULLs when off.
+  # Computed once, before the flow-uncertainty branch, so both calls get it.
+  .bo <- breakout_mix_args(sprintf("vic%d", K$to), shares)
   FLOW_UNC <- identical(Sys.getenv("AUSPOL_FLOW_UNC", "0"), "1")
   if (FLOW_UNC) {
     sds <- readRDS("output/flow-uncertainty-sd.rds")
@@ -955,6 +958,7 @@ for (K in PAIRS) {
       fmr <- build_flow_matrix(tx2, min_n = 3L)
       s1 <- simulate_seat_contests(level_sd = .level_sd, sd_override = SD_OVR, level_mult = .lm(shares), shares, fmr, party_sd = psd,
                                    seat_sd = sp$sd_within * SEAT_SD_MULT, n_sims = per,
+                                   breakout_p = .bo$p, breakout_q = .bo$q,
                                    smooth = SMOOTH, seed = SEED + r, shrink = SHRINK,
                                    fallback_smooth = FB_SMOOTH, shrink_k = SHRINK_K, flow_sd = FLOW_SD,
                                 surge_h = surge_arg, surge_party = surge_party_arg,
@@ -1002,6 +1006,7 @@ for (K in PAIRS) {
       error = function(e) { cat(sprintf("HTV9! how-to-vote override FAILED, flow rows unchanged: %s\n", conditionMessage(e))); .xgb_flow_ov }) else .xgb_flow_ov
     sim <- simulate_seat_contests(level_sd = .level_sd, sd_override = SD_OVR, level_mult = .lm(shares), shares, fm, party_sd = psd,
                                   seat_sd = sp$sd_within * SEAT_SD_MULT, n_sims = N_SIMS,
+                                  breakout_p = .bo$p, breakout_q = .bo$q,
                                   smooth = SMOOTH, seed = SEED, party_cor = PARTY_COR,
                                   shrink = SHRINK, conditional_override = .htv_ov, conditional_override_sd = attr(.htv_ov, "sd"),
                                   fallback_smooth = FB_SMOOTH, shrink_k = SHRINK_K, flow_sd = FLOW_SD,
