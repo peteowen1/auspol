@@ -129,3 +129,16 @@ Separate, not the proposal: `AUSPOL_DEFECT_CONSERVE=1` left 33.5 points at Kiama
 - wa2005 Vasse prior of 29.7 (a sitting member that low is suspicious; Masters' history not verified).
 - Which of the 12 state cases were disendorsed or scandal-driven.
 - Morley: D'Orazio is the same person per the name match; the Ballajura-to-Morley seat link was not verified.
+
+## Arm result (2026-10-06): `AUSPOL_DEFECTOR_STATE=1` REFUSED, switch stays "0"
+
+Built (branch merged as 8fafc84, off): no min_n cliff (state rate shrunk to the all-level median, 3
+pseudo-cases), cross-seat person match for sitting members within a state, old seat gives up the carry.
+Measured at stage 6 against the shipped snapshot `20261006-2141-1c3f440-from6` (snapshot of the arm:
+`20261006-2151-8fafc84-from6`): 22-election seat-winner log loss +0.0090 (SE 0.0056); ledger 0.2742 ->
+0.2763. Worse: wa2017 +0.121 (Hillarys over-carried), wa2008 +0.082 (Morley's over-call outweighs
+Kalgoorlie), fed2007 +0.052, sa2026 +0.026; better fed2010 -0.017. Not run end to end through the
+frozen trees for the elections with as-at models in this arm alone (stage 6 used the base-delta path).
+The realised carry is bimodal (0.24-0.31 vs 0.70-1.05) and nothing in the corpus yet separates the two
+groups; a single shrunk rate is confidently wrong for both. Next: find the separator (e.g. why the member
+left the party, whether the party disendorsed them, local salience, seat polls) before another rate.
