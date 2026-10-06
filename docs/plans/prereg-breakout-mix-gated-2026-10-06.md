@@ -47,3 +47,20 @@ The first stage-6 run stopped in the fed and wa harnesses: `breakout_p_for()` st
 early to have an as-at model (fed2007, wa2001). Fixed: a PAST election with no as-at rows gets no p and
 the mixture is off for that pair (logged `BO0!`/`BO1!`); the live election still stops. No criterion
 changed. The fed and wa harnesses are rerun at stage 6 with the fix; the other four ran with the arm on.
+
+## Result (2026-10-06, `output/snapshots/20261006-1216-cbbad56-from6`) -- REFUSED
+
+| Criterion | Result | Verdict |
+|---|---|---|
+| 1 PRIMARY (SA6, 22 elections) | 0.2898 -> 0.2917, change +0.0018, SE 0.0018 | FAIL (worse, within 1 SE) |
+| 2 GUARD ledger | 0.2809 -> 0.2856 (SE 0.0053) | holds |
+| 3 DISQUALIFIER (any election > +0.010) | fed2025 +0.0232, vic2014 +0.0121 | FIRES |
+
+Helped where it should: nsw2023 -0.0130 (Wakehurst), fed2019 -0.0042 (Warringah). Hurt more where the
+gate still let flagged non-breakouts through: fed2025 (several Voices-style independents at p >= 0.2
+who did not win), vic2014, vic2022 +0.0059, wa2025 +0.0044. The classifier's top band is over-confident
+(0.44 predicted vs 0.375 observed, n=16), and the signals do not separate breakouts from look-alikes
+well enough for a mixture to pay. The switch stays off; the code (classifier, distribution, simulator
+plumbing, gate) stays for when the inputs improve. The lever is better pre-election signals, not the
+mixture: build the state Trends series already on disk, recode council mayors (council-chosen mayors
+are FALSE today), add the missing seat-poll primaries (Mayo 2016, Wakehurst, Warringah 2019).
