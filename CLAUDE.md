@@ -427,6 +427,37 @@ So, concretely, when changing a harness:
    than leaving the gap silent — a silent gap is indistinguishable from an
    oversight the next time someone reads those numbers.
 
+### Screen with `scripts/quick_arm.R` first; the full 20k run is for the SHIPPING decision
+
+```
+Rscript scripts/quick_arm.R "AUSPOL_X=1 AUSPOL_Y=0" [--pairs=vic2022,nsw2023] [--sims=1000] [--base="AUSPOL_Z=1"]
+```
+
+Do not rerun all six harnesses at 20,000 simulations to find out whether a tweak
+is worth pursuing. Profiled 2026-10-07 (Victorian harness, three pairs): 500 sims
+144 s, 2,000 sims 148 s, 20,000 sims 183 s. **Simulation is ~20% of a harness run;
+the other 80% is fitting spread over dozens of functions with no hot spot**, so
+"fewer sims" alone buys little. What the screen does instead: one harness run per
+ELECTION (22 units, so an arm that touches one pair pays for one pair), a cached
+baseline shared by every arm, and baseline and arm on the same seed at the same
+low N (common random numbers), so an untouched pair is byte-identical and scores
+exactly 0. It runs in a scratch directory under `%TEMP%` (junctions to this
+checkout's `R/`, `scripts/`, `src/`, a copy of the `output/` inputs) and never
+writes to `output/`. It prints changed cells, squared error on them, seat-winner
+log loss per election and pooled (SE clustered on election), and the AEF-7
+ledger subset. Name `--pairs` when you know where the arm acts: a single pair
+with a cached baseline answers in about a minute; all 22 take about 7 minutes
+per arm (the baseline, ~7 minutes, is built once and then free). Checked
+2026-10-07 against the full 20k runs on three verdicts: same sign and size on
+all of them (DEFECTOR_STATE pooled +0.0085 against +0.0090, wa2017 +0.101
+against +0.121; the refused uncapped arm +0.0005 pooled, nsw2023 +0.0050).
+
+**Its limit:** it compares arm to baseline at N sims, not to the 20k snapshot, and
+floors winner probabilities at `0.5/N`, so a change that only moves seats with a
+winner probability under ~1/N is invisible to it. "WORSE" is a reason to stop;
+"within 1 SE" is not a clearance for anything that acts in the far tails. Run the
+full 20k arm (`AUSPOL_REBUILD_ONLY`, from stage 6) before shipping.
+
 ## The seat model is the candidate model. There is no second seat model.
 
 **`fit_seats_full.R` / `simulate_seat_contests()` is the forecast.** The
