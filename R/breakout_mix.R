@@ -381,8 +381,18 @@ breakout_p_for <- function(target, frame = NULL, live_rows = NULL, cache_dir = N
     o <- raw_one(tgt); te <- o$te; r <- o$r
   } else {
     if (is.null(live_rows)) live_rows <- get0(tgt, envir = .bo_live, inherits = FALSE)
-    if (is.null(live_rows)) stop("breakout_p_for(): ", tgt, " has no rows on disk and no live rows ",
-                                 "(xgb_primary_predict_live() stashes them; is AUSPOL_XGB_PRIMARY_LIVE on?)")
+    if (is.null(live_rows)) {
+      # A PAST election with no as-at rows is a backtest pair too early to have an
+      # as-at model (wa2001, fed2007): no p can be computed, so the mixture is off for
+      # that pair (breakout_mix_args() logs BO1!). Only the LIVE election must stop,
+      # because there a missing p would silently publish an unmixed forecast.
+      if (is.finite(edate_t) && edate_t < Sys.Date()) {
+        cat(sprintf("BO0! breakout_p_for(): %s has no as-at rows (too early for an as-at model) -- no breakout p for this pair\n", tgt))
+        return(NULL)
+      }
+      stop("breakout_p_for(): ", tgt, " has no rows on disk and no live rows ",
+           "(xgb_primary_predict_live() stashes them; is AUSPOL_XGB_PRIMARY_LIVE on?)")
+    }
     te <- .bo_live_frame(live_rows, tgt, edate_t, frame)
     te <- te[te$party %in% .BO_CLASSES]
     r <- .bo_raw_p(frame, te, edate_t)

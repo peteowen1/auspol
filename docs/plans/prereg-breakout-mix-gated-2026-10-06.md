@@ -40,3 +40,10 @@ the as-at models (stages 1-5) are unchanged by construction. Baseline: the shipp
 Ship (`AUSPOL_BREAKOUT_MIX=1`, `MIN_P=0.2` in `published_flags.R` and as defaults) only if 1 passes, 2
 holds and 3 does not fire; otherwise off, and the result goes to Pete. Named in advance: the gate
 drops Mayo 2016 and Goldstein 2022 (p 0.03), so they cannot improve; the arm is judged on the whole.
+
+## Note (2026-10-06, before any result was read)
+
+The first stage-6 run stopped in the fed and wa harnesses: `breakout_p_for()` stopped on pairs too
+early to have an as-at model (fed2007, wa2001). Fixed: a PAST election with no as-at rows gets no p and
+the mixture is off for that pair (logged `BO0!`/`BO1!`); the live election still stops. No criterion
+changed. The fed and wa harnesses are rerun at stage 6 with the fix; the other four ran with the arm on.
