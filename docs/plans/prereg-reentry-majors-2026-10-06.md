@@ -19,3 +19,14 @@ Arm: rebuild from stage 1 (the fill lands in base_pred, which the xgb layer trai
    than the filled cells (i.e. the xgb retrain moved unrelated seats materially).
 
 Ship if 1 passes, 2 and 3 hold and 4 does not fire; otherwise off and to Pete.
+
+## Result (2026-10-06, rebuild from stage 1) -- REFUSED, switch stays "0"
+
+Filled 4 cells (Richmond LNP 10.1 against 18.8 -- the forecast Liberal statewide fell 42.0 -> 31.4 since
+2014; sa2026 MacKillop, Mount Gambier, Narungga GRN 7.1-7.9). Churchlands wa2013 was NOT filled: the
+harness corpus has no earlier LNP contest under that name (the dry run used a wider history). Ledger
+0.2738 -> 0.2751 (SE 0.0010, guard breached); 22 elections +0.0016 (SE 0.0012). DISQUALIFIER 4 FIRES:
+elections with no filled cell moved -- wa2005 +0.041, wa2017 +0.011, fed2025 +0.005 -- so the xgb retrain
+from stage 1 moves unrelated seats by more than a 4-cell fix can show. The noise floor of a stage-1
+rebuild (switch 0 vs switch 0) was never measured; it should be before the next stage-1 arm.
+output/ restored to the baseline afterwards.
