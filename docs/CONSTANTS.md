@@ -482,3 +482,11 @@ outright on sa2026, vic2022 and nsw2023.
 |---|---|---|
 | `.DEFSTATE_K` | 3 | **CHOSEN prior strength** (the review measured it: carry bias +0.16 -> +0.05): the target level's sitting-member median is shrunk toward the all-level median by n / (n + 3) pseudo-cases. Replaces the min_n = 5 cliff. Not fitted; K could be estimated once there are enough cases per level to size between-level variance. |
 | cross-seat guards | sitting members only; same jurisdiction (federal: same state); full first name equal or one a prefix of the other; key unique among the previous election's major candidates and the target's candidates | **RULES**, not constants; every refusal is printed (`DFS2!`). |
+
+## New-independent shrink (AUSPOL_NEW_IND_SHRINK, OFF, prereg pending)
+
+| constant | value | status |
+|---|---|---|
+| `prior_max` in `new_ind_cells()` | 10 share points | **INHERITED from `docs/reviews/vic-ind-overcall-2026-10-06.md`** (its "departed class leader, class prior 10 or more" row is a different population with its own, refused, rule). A cell definition cut, not a fitted value; the data could set it (n of departed-leader cells is 12, too few to fit). |
+| the factor | fitted per target | **FROM DATA**: ratio of sums of actual to base_pred over earlier new-independent cells, partially pooled by jurisdiction (DerSimonian-Laird tau^2), bounded [0, 1]. No constant. |
+| design effect for a one-election jurisdiction | measured | **FROM DATA**: clustered SE / cell-level SE on the all-jurisdiction fit. |

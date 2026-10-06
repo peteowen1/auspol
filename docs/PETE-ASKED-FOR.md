@@ -26,6 +26,13 @@ not a commit, not a plan file — that it is not happening and why.
 
 ---
 
+## 2026-10-07
+
+| Request | Status |
+|---|---|
+| *"https://antonygreen.com.au/nsw2027-how-optional-preferential-voting-could-re-elect-the-minns-government/ <- new NSW state election blog released -- i want you to read through and analyse and compare to our current nsw27 projections (and work towards getting nsw27 in ITG)"* (2026-10-07, flagged for next session) | **IN PROGRESS.** Analysis and comparison: Sonnet agent running 2026-10-07, review to `docs/reviews/nsw2027-green-opv-2026-10-07.md`. NSW 2027 in ITG: **NOT DONE**, next session (needs a NSW 2027 seat forecast, not just the statewide trend in `output/trend-nsw-2027.csv`). |
+| *"surely we can smoke test stuff or fit on subsamples or smaller numbers to see if something works? weve gotta be smarter about this than tweaking something then waiting an hour"* (2026-10-07) | **IN PROGRESS.** `scripts/quick_arm.R` being built: profile, low-simulation reruns of only affected harnesses with common random numbers, proved against three full-run verdicts. |
+
 ## 2026-10-05
 
 | Request | Status |

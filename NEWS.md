@@ -1,3 +1,10 @@
+# auspol 0.4.75
+
+- An independent nobody has heard of (the only independent in the seat, with no earlier vote anywhere) is shrunk by a factor learned from earlier elections in the same state, capped so it only ever lowers. In practice this is Victoria, where such candidates had been over-called by about 3 points each in 2014, 2018 and 2022 (live Victoria 2026: factor 0.74 on 13 candidates). Backtest: changed cells' squared error 1,200 -> 1,035; seat log loss 0.2742 -> 0.2741. An uncapped version, raising these candidates where they were under-called (federal, NSW), was tested and refused: those groups mix a few strong candidates with many weak ones.
+- The AEF-7 ledger's winner-primary column showed the base projection instead of the published forecast (Goldstein 2022: 3.1 shown, 27.1 published). Fixed; the ledger page also carries a v59 changelog entry.
+- The daily forecast can no longer be stopped by a missing input for the new-independent shrink: the file it needs is published and downloaded, and a failure is printed and skipped.
+- Tested and not shipped: a state-level defector rate with cross-seat matching.
+
 # auspol 0.4.74
 
 - A major party (Labor, Coalition, Greens) returning to a seat it skipped last time starts from its own share at the last election it contested that seat, swung by the statewide change, instead of zero. Live Victoria 2026: Narracan Labor (no candidate at the 2023 supplementary election) 4.4% -> 10.0%. Backtest: Richmond 2022 Liberals 0.0 -> 5.2 (actual 18.8); seat log loss 0.2738 -> 0.2742 (within 1 SE). Applied after the xgb layer through the frozen as-at models, as the live forecast does, so the backtest models are not retrained on it.

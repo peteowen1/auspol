@@ -250,7 +250,25 @@
   </details>
 
   <details class="provlog">
-    <summary>Provenance &amp; changelog <span class="n">(44 updates)</span></summary>
+    <summary>Provenance &amp; changelog <span class="n">(45 updates)</span></summary>
+    <p class="sub prov"><b>v59, 3-6 Oct 2026: candidates who move, return or defect.</b>
+       A look-ahead leak fixed first: when one party ran two candidates, the model picked its "leader" using the
+       result being predicted. Removing it cost the honest amount, 0.2796 to 0.2874. Then, each pre-registered and
+       measured on all 22 past elections: <b>federal defectors</b> keep a fitted share of their old vote;
+       <b>by-election winners</b> count as the sitting member; a candidate's vote from <b>another seat or level</b>
+       carries with them (raising, never lowering, their class); <b>names</b> are matched on the person, not just
+       the surname; <b>WA</b> parties are classed the same way as everywhere else. Then <b>independents are read from
+       their seat polls</b>: Goldstein 2022 13.5 to 27.1 (actual 34.5), Wakehurst 2023 14.4 to 26.7 (35.9), shipped on
+       Pete's override of two near-misses (fed2025 slightly worse). A poll that files a known minor party under
+       "other" is split by what each minor class was expected to get: <b>Kennedy 2022 (Katter) 19.5 to 47.3</b>
+       (actual 46.1). A <b>major party returning to a seat it skipped</b> starts from its own last share there,
+       swung by the statewide change, instead of zero: Richmond 2022 Liberals 0.0 to 5.2 (18.8); live Victoria 2026,
+       Narracan Labor 4.4% to 11.6%. That last fix is scored by re-predicting only the changed seats through the
+       frozen as-at models, as the live forecast does; a rebuild with nothing changed now reproduces every number
+       exactly. Tested and refused, with reasons in <code>docs/</code>: a general re-entry prior (One Nation
+       over-filled in Queensland 2020), a state-level defector rate (defectors keep either about a quarter or
+       nearly all of their vote, and nothing yet tells which), a breakout mixture, per-state "others" scaling.
+       Seat log loss 0.2874 to <b>0.2742</b> against AE Forecasts' 0.2825.</p>
     <p class="sub prov"><b>v58, 2 Oct 2026: council history, a steadier model, and a missing input restored.</b>
        Three changes. (1) <b>Council election history</b> for every state and federal candidate: whether they had been
        elected mayor, elected a councillor, or stood and lost, in a council overlapping their seat, from every state's

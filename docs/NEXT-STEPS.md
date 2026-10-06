@@ -5,42 +5,48 @@ it stood before this rewrite: `backlog/journal-2026-09-19-hub-snapshot.md`).
 Decisions: `docs/DECISIONS.md`. Every seat verdict: `docs/SEAT-REGISTRY.md`.
 Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30.
 
-## 2026-10-06 (READ FIRST): primary-miss push, state of play
+## 2026-10-07 (READ FIRST): where things stand, next session's priorities
 
-**Shipped and published** (PRs #90, #91 merged; `shipped-models` release 2026-10-06 10:31 AEDT; daily
-forecast rerun 23:47Z): leader leak fix, WA party classes, permit per leader, table zeroing, federal
-defector carry, by-election winner level + departed flag, person matching (Tony/Trevor SMITH), WA
-federal-swing nudge (WA only), cross-seat personal vote. **Ledger seat log loss 0.2809 vs AE Forecasts
-0.2825** (was 0.2796 leaky, 0.2874 honest). Live Labor 34.3 expected seats.
-Plans: `plans/primary-miss-fixes-2026-10-05.md`, `plans/prereg-defector-by-level-2026-10-05.md`,
-`plans/prereg-byelection-level-2026-10-05.md`, `plans/prereg-crossseat-and-wa-port-2026-10-05.md`.
+**Pete's priorities for next session, in order:** (1) fix the top primary misses; (2) get the NSW 2027
+election onto ITG. **Work fast:** screen every tweak at share level (seconds) and with a low-sim,
+affected-harnesses-only arm (`scripts/quick_arm.R`, minutes) before any full 20k run; a full stage-6
+run is only for the shipping decision (memory `screen-fast-before-full-runs`).
 
-**Open, in order** (worst 30 rows on the published model: ~20 first-time breakouts, 4 non-major
-sitting members who surged further, 2 collapses, 3 with no prior to build from):
-1. Breakouts. Mixture BUILT (`R/breakout_mix.R`, `AUSPOL_BREAKOUT_MIX`, off) and REFUSED twice:
-   ungated it leaked probability from safe seats; gated at p >= 0.2 it was +0.0018 overall with fed2025
-   +0.023 (`plans/prereg-breakout-mix-gated-2026-10-06.md`). The signals are too weak, not the mechanism.
-   OPEN: state Google Trends salience (series on disk, never built; Sonnet agent building it behind
-   `AUSPOL_SALIENCE_STATE`, off, 2026-10-06); missing seat-poll primaries (Mayo 2016, Wakehurst,
-   Warringah 2019). Retry the gated mixture once the inputs improve.
-   vic2026 Trends: 91 of 501 candidates fetched 2026-10-06 before Google 429; rerun after several hours
-   with `AUSPOL_SALIENCE_SLEEP=15 Rscript scripts/fetch_salience_vic2026_full.R` (resumable; window
-   pinned to 2026-10-06 via AUSPOL_SALIENCE_TO). IND seat-poll arm: prereg `plans/prereg-ind-seat-poll-2026-10-06.md`, build running.
-2. Sophomore surge for non-major sitting members (Brock, Cregan, Dametto, Donato): CLOSED, no separable
-   surge, no adjustment (`reviews/sophomore-surge-2026-10-06.md`, 1a705d9).
-3. ITG page track record: auspol side MERGED (#92). Blog `e8ed902f` (page reads it; tie bands log loss
-   0.005, RMSE 0.2) is on the blog's `dev`; check it has a PR.
-4. State-level defector rate: a small-n-safe SE does NOT rescue it (dry run, reverted, af0c8ff); stays refused.
-5. Two local-only test failures: FIXED (6b82704).
-6. Local poll clone `external/aus-polling-analyser` last commit 2026-09-25 (CI fetches its own).
-7. Rebuild speed: stage 6 for one region should use `AUSPOL_REBUILD_ONLY`; a stage-6-only arm takes
-   ~8 min, a full rebuild ~24 min (cross-seat carry is cached under `output/cache/cross-seat`).
-8. Other open primary misses Pete named (`HANDOVER-2026-10-05.md`): senior retiring MP, South Brisbane,
-   Churchlands, Maryborough; and a campaign-signal fix for breakouts (seat polls and endorsement already
-   ship; funding data not found).
+**Published** (`shipped-models` 2026-10-06 11:13 UTC; live forecast rerun 11:16 UTC): AEF-7 ledger
+**0.2742** vs AE Forecasts 0.2825 (681 seats). Kennedy seat-poll split (PR #94) and the majors re-entry
+carry, post-xgb (PR #95; live Narracan Labor 4.4% -> 11.6%). Artifact:
+https://claude.ai/artifact/3YAUawbwdQBn96Bi5nqF4A (v59 changelog; winner-primary column fixed).
 
-Refused and recorded: both-levels defector rate; WA with the cliff removed and fully symmetric WA pooling
-(the pooling lifts vic2018/qld2020 over the cliff); wider uncertainty for personal-vote rows.
+**On `dev`, not yet on `main`/published** (needs review gate + PR + Pete's publish): new-independent
+shrink, capped (`AUSPOL_NEW_IND_SHRINK="1"`, prereg passed: changed cells 1,200 -> 1,035, 4 SE; ledger
+0.2741); the ledger winner-primary column fix (was showing base_pred: Goldstein 3.1 vs published 27.1);
+`AUSPOL_DEFECTOR_STATE` code (off). `output/` holds the matching state (ledger 0.2741).
+
+**1. Top primary misses** (AEF-7, ours vs AEF; `reviews/vic-ind-overcall-2026-10-06.md`):
+- Major-party winners under-called 8-11 points where we hand the share to independents/minors:
+  Bankstown nsw2023, Malvern vic2022, McMahon fed2025 (IND seat-poll weight), Kalkallo vic2022, Chifley,
+  Dawson, New England, Parkes. Over-calls: Traeger qld2024 (Katter's party 66.4 vs 49.3), Nicholls
+  fed2022 (LNP 55.3 vs 44.2).
+- Departed independents' class vote carried ~0.6 to an unrelated new person (Pascoe Vale, Waite, Kavel;
+  real retention 0.08-0.42). Next fix to screen.
+- Unknown new independents outside Victoria are a mix of a few strong (Pittwater) and many weak
+  (Bankstown 2.7): a single factor fails both ways; needs a candidate signal (seat polls, salience).
+- Defectors keep either ~25-30% or ~70-100% of their vote and nothing separates the groups yet
+  (`reviews/state-defectors-2026-10-06.md`); Kiama 2023 is the live example. Pilbara 2001 is
+  unforecastable time-forward.
+- Climate 200 flag adds +7 in Sandringham/Bellarine (learned from 21 federal rows).
+**2. NSW 2027 on ITG** (`reviews/nsw2027-green-opv-2026-10-07.md`, ~1-2 weeks): refresh the trend (stops
+2026-08-23); measure One Nation flows from NSW data (Green: 11.7% Labor / 26.1% Coalition / 62.2% exhausted;
+ours 25.5% Labor, federal-based); boundaries (2027 redistribution unchecked); provisional candidates; a NSW
+live seat script; generalise `scripts/build_forecast_json.R` (hard-wired to vic2026); the ITG page.
+
+**Refused today** (recorded in `docs/plans/` and DECISIONS): general re-entry prior; majors carry via
+stage-1 retrain; state defector rate; per-jurisdiction others scale; class-by-jurisdiction calibration;
+uncapped new-independent shrink.
+
+**Loose ends:** vic2026 Trends fetch at 121 files (two memory-watchdog kills; resumable,
+`AUSPOL_SALIENCE_SLEEP=15 Rscript scripts/fetch_salience_vic2026_full.R`); worktree branches of refused
+arms kept for reference.
 
 ## 2026-09-27 to 2026-10-05: archived sessions
 
