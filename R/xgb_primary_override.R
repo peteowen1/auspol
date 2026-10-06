@@ -72,7 +72,7 @@ xgb_primary_override <- function(shares, pair_label, enabled = NULL) {
     return(shares)
   }
   # MEASUREMENT MODE (AUSPOL_XGB_BASE_DELTA=1): see xgb_base_delta_apply().
-  if (identical(Sys.getenv("AUSPOL_XGB_BASE_DELTA", "0"), "1")) {
+  if (identical(Sys.getenv("AUSPOL_XGB_BASE_DELTA", "1"), "1")) {
     X <- xgb_base_delta_apply(shares, X, pair_label, f)
   }
   out <- shares
