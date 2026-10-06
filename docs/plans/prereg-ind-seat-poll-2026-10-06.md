@@ -35,3 +35,19 @@ Ship all three switches only if 1 passes, 2 and 3 hold and 4 does not fire; othe
 Named in advance: only fed2022 strongly supports an IND weight; fed2016 (Mayo) and nsw2023 (Wakehurst)
 gain only through the new primaries; Victoria 2026 has almost no seat polls today, so the live effect
 is near zero until Victorian seats are polled.
+
+## Result (2026-10-06, `output/snapshots/20261006-1434-e22bdc6-from6`, stage 6, 9.6 min) -- REFUSED, to Pete
+
+| Criterion | Result | Verdict |
+|---|---|---|
+| 1 PRIMARY (86 IND cells whose blended share moved > 0.5, stage-6 sharedetail) | 4,048 -> 3,091 (-24%), SE 791 (1.2 SE) | FAIL (needs 2 SE) |
+| 2 GUARD SA6 (22 elections) | 0.2898 -> 0.2889 (SE 0.0016) | holds |
+| 3 GUARD ledger | 0.2809 -> 0.2760 (SE 0.0044) | holds (AEF 0.2825) |
+| 4 DISQUALIFIER fed2025 | +0.0058 | FIRES (bar 0.005) |
+
+Per election: fed2022 -0.0178, nsw2023 -0.0150, sa2026 -0.0022; fed2025 +0.0058, fed2019 +0.0088.
+Gains: Goldstein 13.5 -> 27.1 (34.5), Wakehurst 14.4 -> 26.3 (35.9), Kooyong 18.4 -> 27.2 (40.5),
+Nicholls 8.5 -> 13.9 (25.5); fed2022 IND cells -970. Losses: the OTH -> IND remap fires where the poll's
+OTH is not an independent: fed2025 McMahon 9.3 -> 23.5 (9.8), fed2022 Richmond 5.8 -> 16.2 (5.6), Parkes
+4.2 -> 13.9 (2.5), Lyne 8.8 -> 16.9 (8.8); fed2025's 55 cells +384. The remap rule (IND blank, OTH >= 10,
+an IND candidate standing) is too loose. Switches stay off.
