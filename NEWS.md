@@ -1,3 +1,9 @@
+# auspol 0.4.73
+
+- A seat poll's "other" figure is split across One Nation, the minor right and other minor parties in proportion to what the pre-election forecast expects of each beyond what the poll already names. Fixes a regression from 0.4.72: Kennedy 2022 (Katter, filed as "other" by the poll) 19.5 -> 47.3 (actual 46.1). Seat log loss 0.2757 -> 0.2738 (AE Forecasts 0.2825); fed2025 slightly worse (+0.0048).
+- Re-entry prior wired into every harness and the live forecast, OFF: the WA harness's own copy trained on later elections and now uses the shared time-forward fit. Both the general prior and a majors-only carry were tested and refused (One Nation over-filled in Queensland 2020; retrain noise larger than a four-cell fix).
+- Tested and not shipped: per-jurisdiction "others" scale, class-by-jurisdiction xgb calibration. Reviews of major-party error, statewide spread (calibrated) and the Victorian majors shortfall.
+
 # auspol 0.4.72
 
 - Independents are read from their seat polls. When a poll files the independent under "other", that figure counts as the independent's where the seat's independent is endorsed or sitting; independents get their own time-forward seat-poll weight; the Mayo 2016 and Wakehurst primaries are added from published polls. Goldstein 2022 13.5 -> 27.1 (actual 34.5), Wakehurst 2023 14.4 -> 26.7 (35.9); seat log loss 0.2809 -> 0.2757 (AE Forecasts 0.2825). Shipped on Pete's override of two pre-registered near-misses (fed2025 slightly worse). No change to Victoria 2026 until its seats are polled.
