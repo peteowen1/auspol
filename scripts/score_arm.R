@@ -51,3 +51,9 @@ pe <- P[, .(seats = .N, ll_base = round(mean(ll_a), 4), ll_arm = round(mean(ll_b
 cat(sprintf("\nSA5 seat-winner log loss (lower is better), %d seats in %d elections%s: %.4f -> %.4f\n", nrow(P), uniqueN(P$election),
             if (is.null(reg)) "" else paste0(" [", paste(reg, collapse = ","), "]"), mean(P$ll_a), mean(P$ll_b)))
 print(pe, row.names = FALSE)
+# overall paired change with an SE clustered on election (seats within an election share a statewide draw)
+P[, dd := ll_b - ll_a]
+ce <- P[, .(s = sum(dd), n = .N), by = election]
+om <- sum(ce$s) / sum(ce$n); ose <- sqrt(nrow(ce) / (nrow(ce) - 1) * sum((ce$s - ce$n * om)^2)) / sum(ce$n)
+cat(sprintf("SA6 seat-winner log loss overall change %+.4f (SE %.4f, clustered on election, %d elections) => %s\n",
+            om, ose, nrow(ce), if (om < -ose) "BETTER by more than 1 SE" else if (om > ose) "WORSE by more than 1 SE" else "within 1 SE"))

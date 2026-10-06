@@ -1496,7 +1496,11 @@ if (identical(Sys.getenv("AUSPOL_XGB_FLOWS", "0"), "1")) {
 # card order for this election (R/htv_flow.R, external/reference/htv/liberal-alp-grn-order.csv).
 .htv_ov <- if (identical(Sys.getenv("AUSPOL_HTV_FLOW", "0"), "1")) tryCatch(htv_flow_override(.cond_ov, fm, "vic2026", rownames(shares)),
   error = function(e) { cat(sprintf("HTV9! how-to-vote override FAILED, flow rows unchanged: %s\n", conditionMessage(e))); .cond_ov }) else .cond_ov
+# BREAKOUT MIXTURE (AUSPOL_BREAKOUT_MIX, R/breakout_mix.R): NULLs when off.
+# Live, the classifier reads the feature rows xgb_primary_predict_live() built.
+.bo <- breakout_mix_args("vic2026", shares)
 sim <- simulate_seat_contests(level_sd = .level_sd, level_mult = .lm(shares), shares, fm, party_sd = psd, seat_sd = SEAT_SD, shrink = SHRINK,
+                              breakout_p = .bo$p, breakout_q = .bo$q,
                               n_sims = N_SIMS, smooth = SMOOTH, seed = SEED,
                               conditional_override = .htv_ov, conditional_override_sd = attr(.htv_ov, "sd"),
                               statewide_draws = sw_draws,

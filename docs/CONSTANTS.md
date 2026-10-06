@@ -35,6 +35,8 @@ number without anything failing.
 | ridge penalty | `fundamentals.R` | Fundamentals shrinkage | **ESTIMATED** — leave-one-election-out within the elections before the target (`fundamentals_tf()`, v51) |
 | `szc_sd_pts` | `trend.R` | Strength of the soft sum-to-zero constraint on house effects — how far the polling industry as a *whole* may sit from the truth | **ESTIMATED 2026-08-16 — now 1.5.** Chosen by held-out error over a pre-registered grid (`scripts/tune_szc.R`, check `G4`). See §6. |
 | `sigma_house_pts = 3` | `trend.R`, `hyperpars.R` | Prior sd on a single pollster's house effect | **TESTED 2026-08-16, KEPT.** Held-out error over a pre-registered grid is a smooth U with its minimum at exactly 3 (`scripts/tune_sigma_house.R`, check `G5`). See §6b. |
+| `SEAT_POLL_IND_MAP_MIN_OTH` | `seat_poll_blend.R` | 10 points: a poll's OTH figure at least this big, with IND blank and an IND candidate in the seat, is read as the independent (`AUSPOL_SEAT_POLL_IND_MAP`, off). | **CHOSEN** from the fed2022 YouGov table (genuine catch-all OTH 2-8; teals 17-24). Misses Bradfield (5) and Calare (11, excluded by the next constant). Could be estimated once more than one MRP house leaves IND blank. PREREG PENDING. |
+| `SEAT_POLL_IND_MAP_KNOWN_FRAC` | `seat_poll_blend.R` | 0.5: skip the remap when one of our OTH/OTH_RIGHT/ONP as-at predictions is at least this fraction of the poll's OTH figure (Katter in Kennedy). | **CHOSEN** by hand so Kennedy and Bass skip while Goldstein and Mackellar remap; as-at predictions only. Not fitted. PREREG PENDING. |
 | `PUBLIC_SEAT_POLLSTERS` | `seat_poll_blend.R` | Pollsters whose direct seat polls count as independent under `AUSPOL_SEAT_POLL_SOURCES="public"` | **CHOSEN BY PETE 2026-09-29** (allowlist over a sponsor-only filter); being tested, `plans/prereg-seat-poll-public-only-2026-09-29.md`. Not estimable: it is a definition. |
 | `k0 = 25` | `hyperpars.R` | Shrinkage of per-cycle sigmas toward pooled | **CANNOT BE TUNED ON FORECAST ERROR — it does not reach the forecast.** See §6c. |
 | `FP_EXTRA_SD = 2.419` | `fit_seats_full.R` | Statewide first-preference error the trend posterior does not contain, added in quadrature | **ESTIMATED, ADOPTED 2026-08-19.** Coverage of the raw band is 69.8% at a nominal 95%; the structure (additive in points, not multiplicative) was chosen by testing alternatives against the residuals, and the value is the two-party projection error pre-registered in `prereg-fp-widening-choice.md`. See `reviews/fp-widening-choice-2026-08-19.md`. |
@@ -456,3 +458,18 @@ outright on sa2026, vic2022 and nsw2023.
 | `NOM_GATE_DATE = 2026-11-10` | `R/nomination_zero.R` | date | **WARNING-ONLY.** Nominations close noon 9 Nov 2026. `AUSPOL_NOM_LIVE=1` set before this date logs a loud warning that nominations may not have closed; it never blocks and `auto` no longer uses it. A calendar fact, not estimable. |
 | `AUSPOL_NOM_LIVE` | `R/nomination_zero.R`, `scripts/published_flags.R` | `"auto"` | **FIXED, meaning changed 2026-10-03.** Gate for v61 in the PUBLISHED Victorian forecast. Opens ONLY when set to `1` by hand, meaning the VEC final list has been loaded into `output/candidacies.csv`. `auto` (default) and `0` stay shut; `auto` logs "provisional list". Any other value, or any failure to apply under `1` (missing csv, no vic2026 rows, no vic2022 baseline, count floor, error in the step), STOPS the run. With `1`, ALP/LNP absent in some seats, or a seat with no candidacy, are logged warnings naming the seats (those classes WILL be zeroed there), not blocks. |
 | `NOM_CLASS_WARN_RATIO = 0.8` | `R/nomination_zero.R` | 0.8 | **DISPLAY THRESHOLD, not a model constant.** With `AUSPOL_NOM_LIVE=1`, a class standing in fewer than this share of its vic2022 seat count is named in a warning; nothing is blocked or changed by it. Cannot come from data (there is no distribution of final per-class seat counts); it only decides what gets flagged for a human to check. |
+
+## Breakout mixture (`AUSPOL_BREAKOUT_MIX`, built 2026-10-06, OFF)
+
+`R/breakout_mix.R`; design in `docs/reviews/breakout-risk-design-2026-10-05.md`. All inert at the published `"0"`.
+
+| constant | value | status |
+|---|---|---|
+| `.BO_CLASSES` | IND, OTH, OTH_RIGHT, ONP | **CHOSEN** (GRN left out as a different phenomenon, per the design review). |
+| `.BO_HARD` | 15 | **CHOSEN** in the design review: only rows predicted under 15 get the mixture (applying it to every row pulled expected winners down). Not fitted. |
+| `.BO_Y` | 20 | **CHOSEN**: the breakout definition (actual primary >= 20). The review also measured 25. |
+| `.BO_MIN_POS` | 5 | **FEASIBILITY FLOOR**, not a model constant: an xgboost classifier with fewer earlier breakouts than this is not fitted (fed2010, wa2013 and every earlier election get no p). |
+| `.BO_CAL_K` | 10 | **CHOSEN prior strength**: Platt calibration shrunk toward identity by npos / (npos + 10). |
+| `.BO_Q_K` | 10 | **CHOSEN prior strength**: the hard-row breakout quantiles shrunk toward all-row breakout quantiles by n / (n + 10). |
+| `.BO_P_CAP` | 0.5 | **CHOSEN** cap, from the review's recommendation pending recalibration on the real simulator (the review's top bin was over-confident, 44% vs 24%). |
+| xgboost settings | eta 0.05, depth 3, subsample 0.8, colsample 0.8, min_child_weight 2, lambda 5, up to 300 rounds, early stopping 25 | **COPIED** from the design review's classifier; rounds chosen by `xgb.cv` with folds grouped by election. |

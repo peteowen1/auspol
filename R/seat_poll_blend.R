@@ -29,7 +29,7 @@ seat_poll_shares <- function(election, days = 90, by_type = FALSE, by_poll = FAL
   empty <- data.table::data.table(seat = character(0), class = character(0), poll = numeric(0),
                                   n_polls = integer(0), n_mrp = integer(0))
   if (!file.exists(f)) return(empty)
-  s <- data.table::fread(f, showProgress = FALSE)
+  s <- .read_seat_polls_file(f)
   el_arg <- election
   ed <- as.Date(unname(election_dates()[el_arg]))
   keep <- s$election == el_arg & s$row_type == "poll" & is.finite(s$fp) &
@@ -44,6 +44,7 @@ seat_poll_shares <- function(election, days = 90, by_type = FALSE, by_poll = FAL
              ifelse(p == "IND" | grepl("\\(IND\\)$", p), "IND",
              ifelse(p %in% c("UAP", "KAP"), "OTH_RIGHT", "OTH"))))))
   s$poll_id <- paste(s$seat_name, s$pollster, s$date_raw)
+  if (identical(Sys.getenv("AUSPOL_SEAT_POLL_IND_MAP", "1"), "1")) s <- .seat_poll_ind_map(s, el_arg)
   # MRP by STRUCTURE: YouGov's 2022 MRP is labelled plain "YouGov".
   s$release <- paste(s$pollster, s$date_raw)
   cover <- s[, list(n_seats = data.table::uniqueN(seat_name)), by = release]
@@ -192,6 +193,8 @@ seat_poll_blend_table <- function(target_election, write = FALSE) {
     w <- seat_poll_weight(target_election)
     sw <- seat_poll_weights_split(target_election)
     w$w_direct <- sw$direct$w; w$w_mrp <- sw$mrp$w
+    ind_on <- .ind_weight_on()
+    if (ind_on) { wi <- seat_poll_ind_weight(target_election); w$w_ind <- wi$w; w$w_ind_raw <- wi$raw; w$w_ind_se <- wi$se; w$w_ind_n <- wi$n }
     tb <- seat_poll_shares(target_election, by_type = TRUE)
     if (write) {
       out <- data.table::copy(tb)
@@ -199,6 +202,7 @@ seat_poll_blend_table <- function(target_election, write = FALSE) {
                                                     poll = NA_real_, n_polls = NA_integer_, n_mrp = NA_integer_)
       out$w <- w$w; out$w_raw <- w$raw; out$w_se <- w$se; out$w_n <- w$n; out$w_k <- w$k
       out$w_direct <- w$w_direct; out$w_mrp <- w$w_mrp
+      if (ind_on) { out$w_ind <- w$w_ind; out$w_ind_raw <- w$w_ind_raw; out$w_ind_se <- w$w_ind_se; out$w_ind_n <- w$w_ind_n }
       data.table::fwrite(out, cache)
     }
   } else if (file.exists(cache)) {
@@ -206,6 +210,18 @@ seat_poll_blend_table <- function(target_election, write = FALSE) {
     if (length(unique(raw$w)) != 1L) stop(cache, " has more than one weight")
     w <- list(w = raw$w[1], raw = raw$w_raw[1], se = raw$w_se[1], n = raw$w_n[1], k = raw$w_k[1],
               w_direct = raw$w_direct[1], w_mrp = raw$w_mrp[1])
+    if (.ind_weight_on()) {
+      if (!"w_ind" %in% names(raw)) {
+        # A table shipped before the IND weight existed (review 2026-10-06): stopping here
+        # made fit_seats_full.R publish with NO seat-poll blend at all, still green. Fall
+        # back to the class-blind weight for IND cells, loudly, until the table is re-promoted.
+        cat(sprintf("SPB!! %s was written without the IND weight (w_ind): IND cells use the class-blind weight %.3f. Re-promote it (scripts/promote_rebuild.R) to ship w_ind.\n",
+                    basename(cache), w$w))
+        w$w_ind <- w$w; w$w_ind_raw <- NA_real_; w$w_ind_se <- NA_real_; w$w_ind_n <- 0L
+      } else {
+        w$w_ind <- raw$w_ind[1]; w$w_ind_raw <- raw$w_ind_raw[1]; w$w_ind_se <- raw$w_ind_se[1]; w$w_ind_n <- raw$w_ind_n[1]
+      }
+    }
     tb <- raw[!is.na(raw$seat), list(seat, class, type, poll, n_polls, n_mrp)]
     cat(sprintf("SPB  %s: blend inputs read from %s (sources absent)\n", target_election, basename(cache)))
   } else {
@@ -239,10 +255,13 @@ seat_poll_blend_apply <- function(shares, target_election) {
   tb <- seat_poll_blend_table(target_election)
   w <- attr(tb, "w")
   perpoll <- identical(Sys.getenv("AUSPOL_SEAT_POLL_MATCH", "class"), "perpoll")
+  ind_on <- .ind_weight_on()
+  if (ind_on && perpoll) stop("AUSPOL_SEAT_POLL_IND_WEIGHT=1 needs AUSPOL_SEAT_POLL_MATCH=class (per-poll cells carry no direct/MRP type)")
   if (mode == "2") {
     if (perpoll) stop("AUSPOL_SEAT_POLL_MATCH=perpoll is built for AUSPOL_SEAT_POLL_BLEND=1 only")
     return(.seat_poll_blend_split(shares, tb, w, target_election))
   }
+  tb_type <- tb
   # Mode 1 (v50): one weight on the mean over every poll, MRP or direct.
   tb <- tb[, list(poll = sum(poll * n_polls) / sum(n_polls), n_polls = sum(n_polls), n_mrp = sum(n_mrp)),
            by = list(seat, class)]
@@ -255,7 +274,15 @@ seat_poll_blend_apply <- function(shares, target_election) {
     tb <- seat_poll_implied(seat_poll_shares(target_election, by_poll = TRUE), our)
     cat(sprintf("SPB1 %s: per-poll match, %d implied cells\n", target_election, nrow(tb)))
   }
-  if (!nrow(tb) || w$w <= 0) {
+  wvec <- rep(w$w, nrow(tb))
+  if (ind_on && nrow(tb)) {
+    ik <- .ind_direct_cells(tb, tb_type)
+    tb$poll[ik$row] <- ik$poll
+    wvec[ik$row] <- w$w_ind
+    cat(sprintf("SPIW %s: IND weight %.3f (raw %.3f, se %.3f, %d earlier direct IND cells; class-blind %.3f); %d IND cells on a direct poll\n",
+                target_election, w$w_ind, w$w_ind_raw, w$w_ind_se, w$w_ind_n, w$w, length(ik$row)))
+  }
+  if (!nrow(tb) || (w$w <= 0 && !(ind_on && is.finite(w$w_ind) && w$w_ind > 0))) {
     cat(sprintf("SPB  %s: no blend (w %.3f from %d earlier polled cells in %d elections; %d polled cells here)\n",
                 target_election, w$w, w$n, w$k, nrow(tb)))
     return(shares)
@@ -265,7 +292,7 @@ seat_poll_blend_apply <- function(shares, target_election) {
   ok <- !is.na(i) & !is.na(j)
   ok[ok] <- shares[cbind(i[ok], j[ok])] > 0
   before <- shares
-  shares[cbind(i[ok], j[ok])] <- shares[cbind(i[ok], j[ok])] + w$w * (tb$poll[ok] - shares[cbind(i[ok], j[ok])])
+  shares[cbind(i[ok], j[ok])] <- shares[cbind(i[ok], j[ok])] + wvec[ok] * (tb$poll[ok] - shares[cbind(i[ok], j[ok])])
   shares <- 100 * shares / rowSums(shares)
   cat(sprintf("SPB  %s: w %.3f (raw %.3f, se %.3f, %d cells in %d earlier elections); %d of %d polled cells applied across %d seats (%d MRP-only); mean |change| %.2f points\n",
               target_election, w$w, w$raw, w$se, w$n, w$k, sum(ok), nrow(tb),
@@ -334,6 +361,11 @@ seat_poll_weights_split <- function(target_election) {
   ok <- !is.na(i) & !is.na(j)
   ok[ok] <- base[cbind(i[ok], j[ok])] > 0
   wt <- ifelse(tb$type == "mrp", w$w_mrp, w$w_direct)
+  if (.ind_weight_on()) {
+    wt[tb$class == "IND" & tb$type == "direct"] <- w$w_ind
+    cat(sprintf("SPIW %s: IND weight %.3f (raw %.3f, se %.3f, %d earlier direct IND cells; direct %.3f)\n",
+                target_election, w$w_ind, w$w_ind_raw, w$w_ind_se, w$w_ind_n, w$w_direct))
+  }
   # Both types move from the SAME pre-blend share, so the order is irrelevant.
   for (r in which(ok)) {
     shares[i[r], j[r]] <- shares[i[r], j[r]] + wt[r] * (tb$poll[r] - base[i[r], j[r]])
@@ -345,4 +377,201 @@ seat_poll_weights_split <- function(target_election) {
               target_election, w$w_direct, w$w_mrp, w$w, sum(ok & tb$type == "direct"), sum(ok & tb$type == "mrp"),
               length(unique(i[ok])), mean(abs(shares - before)[unique(i[ok]), , drop = FALSE])))
   shares
+}
+
+.ind_weight_on <- function() {
+  v <- Sys.getenv("AUSPOL_SEAT_POLL_IND_WEIGHT", "1")
+  if (!v %in% c("0", "1")) stop("AUSPOL_SEAT_POLL_IND_WEIGHT must be \"0\" or \"1\", not ", v)
+  v == "1"
+}
+
+#' Seat-poll rows as read from disk, plus the hand-keyed primaries when asked
+#'
+#' `AUSPOL_SEAT_POLL_HANDKEYED` "1" appends
+#' `external/reference/polls/seat-polls/hand_keyed_primaries.csv`: primaries the
+#' Wikipedia tables lack (Mayo fed2016, Wakehurst nsw2023), each row carrying a
+#' `source` column. Same columns as the fetcher's file, so every reader treats
+#' them alike.
+#' @keywords internal
+.read_seat_polls_file <- function(f) {
+  s <- data.table::fread(f, showProgress = FALSE)
+  v <- Sys.getenv("AUSPOL_SEAT_POLL_HANDKEYED", "1")
+  if (!v %in% c("0", "1")) stop("AUSPOL_SEAT_POLL_HANDKEYED must be \"0\" or \"1\", not ", v)
+  if (v == "0") return(s)
+  hf <- file.path(dirname(f), "hand_keyed_primaries.csv")
+  if (!file.exists(hf)) stop("AUSPOL_SEAT_POLL_HANDKEYED=1 but ", hf, " is missing")
+  h <- data.table::fread(hf, showProgress = FALSE)
+  if (!nrow(h) || anyNA(h$source) || any(!nzchar(h$source))) stop(hf, " must have rows, each with a source")
+  cat(sprintf("SPHK hand-keyed seat-poll rows appended: %d (%s)\n", nrow(h),
+              paste(unique(paste(h$election, h$seat_name)), collapse = ", ")))
+  h$source <- NULL
+  data.table::rbindlist(list(s, h), use.names = TRUE, fill = TRUE)
+}
+
+# Minimum poll OTH figure (points) for it to be read as a named independent.
+# docs/CONSTANTS.md. A genuine catch-all OTH in these polls is typically 2-8.
+SEAT_POLL_IND_MAP_MIN_OTH <- 10
+# Skip the remap when one of our non-major classes already has this fraction of
+# the poll's OTH figure. 0.5: Kennedy (45 vs 43) and Bass (5.9 vs 10) skip;
+# Goldstein (4.9 vs 24) and Mackellar (4.4 vs 23) remap. docs/CONSTANTS.md.
+SEAT_POLL_IND_MAP_KNOWN_FRAC <- 0.5
+
+#' Move a poll's OTH figure to IND where the poll leaves IND blank
+#'
+#' Applies to one poll in one seat when: no finite IND figure in that poll,
+#' the summed OTH figure is at least `SEAT_POLL_IND_MAP_MIN_OTH`, and the
+#' election's candidate list (names only, no votes) has an IND candidate in
+#' the seat. Every remapped cell is printed (SPIM).
+#' @param s Poll rows with `class`, `poll_id`, `seat_name`, `fp`.
+#' @param election Label.
+#' @keywords internal
+.seat_poll_ind_map <- function(s, election) {
+  cf <- out_path("candidacies.csv")
+  if (!file.exists(cf)) stop("AUSPOL_SEAT_POLL_IND_MAP=1 needs ", cf)
+  C <- data.table::fread(cf, showProgress = FALSE, select = c("election", "seat", "party"))
+  el <- election
+  ind_seats <- unique(normalise_seat(C$seat[C$election == el & C$party == "IND"]))
+  has_ind <- tapply(s$class == "IND" & is.finite(s$fp), s$poll_id, any)
+  oth_fp <- tapply(ifelse(s$class == "OTH" & is.finite(s$fp), s$fp, 0), s$poll_id, sum)
+  cand <- names(oth_fp)[!has_ind[names(oth_fp)] & oth_fp >= SEAT_POLL_IND_MAP_MIN_OTH]
+  seat_of <- s$seat_name[match(cand, s$poll_id)]
+  cand <- cand[normalise_seat(seat_of) %in% ind_seats]
+  # CREDIBLE CONTENDER ONLY (Amendment 1, Pete 2026-10-06): the remap fired on polls
+  # whose OTH was not an independent (fed2025 McMahon 9.3 -> 23.5, actual 9.8; fed2022
+  # Richmond, Parkes, Lyne). Remap only where pre-election evidence says the seat's
+  # independent is a real contender: endorsed (Climate 200 or a Voices group,
+  # output/endorsement-features.csv) or the sitting independent member (elected IND
+  # at the previous election in that seat).
+  ef <- out_path("endorsement-features.csv")
+  endorsed <- if (file.exists(ef)) {
+    E <- data.table::fread(ef, showProgress = FALSE)
+    unique(normalise_seat(E$seat[E$pair == el & E$party == "IND" & (E$c200 %in% 1 | E$voices %in% 1)]))
+  } else {
+    cat(sprintf("SPIM! %s: %s missing -- no seat counts as endorsed, so only sitting independents can be remapped\n", el, ef))
+    character(0)
+  }
+  pr <- Filter(function(p) identical(p$election, el), all_election_pairs())
+  sitting <- if (length(pr)) {
+    Cp <- data.table::fread(cf, showProgress = FALSE, select = c("election", "seat", "party", "elected"))
+    unique(normalise_seat(Cp$seat[Cp$election == pr[[1]]$prev & Cp$party == "IND" & Cp$elected %in% TRUE]))
+  } else character(0)
+  sn0 <- normalise_seat(s$seat_name[match(cand, s$poll_id)])
+  cred <- sn0 %in% c(endorsed, sitting)
+  for (id in cand[!cred]) cat(sprintf("SPIM %s %s | %s | OTH %.1f NOT remapped: independent not endorsed and not sitting\n",
+                                      el, s$seat_name[match(id, s$poll_id)], id, oth_fp[id]))
+  cand <- cand[cred]
+  # A non-independent candidate the model already knows explains a big OTH:
+  # Katter's 43 in Kennedy 2022 (our OTH_RIGHT pred 45). Skip the seat when any
+  # one non-major class of ours (OTH, OTH_RIGHT, ONP) already carries at least
+  # SEAT_POLL_IND_MAP_KNOWN_FRAC of the poll's OTH figure. as-at predictions
+  # only, so nothing from the target election's result.
+  f <- current_seat_predictions()
+  if (!is.null(f) && any(f$election == el) && length(cand)) {
+    fe <- f[f$election == el & f$party %in% c("OTH", "OTH_RIGHT", "ONP")]
+    fe$seat <- normalise_seat(fe$seat)
+    big <- tapply(fe$xgb_pred_seat, fe$seat, max)
+    sn <- normalise_seat(s$seat_name[match(cand, s$poll_id)])
+    known <- !is.na(big[sn]) & big[sn] >= SEAT_POLL_IND_MAP_KNOWN_FRAC * oth_fp[cand]
+    for (id in cand[known]) cat(sprintf("SPIM %s %s | %s | OTH %.1f NOT remapped: known non-major class pred %.1f\n",
+                                        el, s$seat_name[match(id, s$poll_id)], id, oth_fp[id], big[sn[match(id, cand)]]))
+    cand <- cand[!known]
+  } else if (length(cand)) {
+    cat(sprintf("SPIM %s: no as-at predictions, known-candidate exclusion not applied\n", el))
+  }
+  if (!length(cand)) return(s)
+  hit <- which(s$class == "OTH" & s$poll_id %in% cand & is.finite(s$fp))
+  for (r in hit) cat(sprintf("SPIM %s %s | %s | OTH %.1f -> IND\n", election, s$seat_name[r], s$poll_id[r], s$fp[r]))
+  s$class[hit] <- "IND"
+  s
+}
+
+#' Direct-poll IND cells of a by-type blend table
+#'
+#' @param tb Pooled table (`seat`, `class`, `poll`, ...).
+#' @param tb_type By-type table (`seat`, `class`, `type`, `poll`).
+#' @return list `row` (rows of `tb`) and `poll` (mean over direct polls).
+#' @keywords internal
+.ind_direct_cells <- function(tb, tb_type) {
+  d <- tb_type[tb_type$class == "IND" & tb_type$type == "direct"]
+  row <- match(paste(d$seat, d$class), paste(tb$seat, tb$class))
+  keep <- !is.na(row)
+  list(row = row[keep], poll = d$poll[keep])
+}
+
+#' IND-specific seat-poll blend weight, time-forward and partially pooled
+#'
+#' Per earlier election `e` and class `c`, the least-squares slope `b_ec` of
+#' `actual - pred` on `poll - pred` over DIRECT-poll cells with a named
+#' candidate (`pred > 0`) (groups of at least 3 cells), SE clustered on seat.
+#' The class effect is `d_ec = b_ec - b_e`, where `b_e` is election `e`'s slope
+#' over all classes: election-wide swings in how far polls should be trusted
+#' (fed2022 high, fed2025 low) are the class-blind weight's business, not
+#' IND's. `tau^2 = max(0, mean(d_ec^2 - se_ec^2))` over all groups is how far a
+#' class's own slope genuinely strays from its election's; IND's precision-
+#' weighted mean `dbar` (SE `se_d`) moves the class-blind weight
+#' [seat_poll_weight()] by `k = tau^2 / (tau^2 + se_d^2)`:
+#' `w = w0 + k * dbar`, clamped to 0..1. No IND group of 3+ cells, or fewer
+#' than 3 groups to estimate `tau^2` from, keeps `w0`.
+#'
+#' @param target_election Label such as `"fed2022"`.
+#' @return list `w`, `raw` (IND's own pooled slope over earlier cells), `se`
+#'   (of `dbar`), `n` (earlier IND direct cells), `k` (earlier elections with
+#'   an IND group), `w0`, `dbar`, `tau2`, `shrink_k`.
+#' @export
+seat_poll_ind_weight <- function(target_election) {
+  pooled <- seat_poll_weight(target_election)
+  f <- current_seat_predictions()
+  if (is.null(f)) stop("seat_poll_ind_weight needs this rebuild's as-at predictions")
+  els <- unique(f$election)
+  els <- els[elections_before(els, target_election)]
+  rows <- data.table::rbindlist(lapply(els, function(e) {
+    sp <- seat_poll_shares(e, by_type = TRUE)
+    if (!nrow(sp)) return(NULL)
+    sp <- sp[sp$type == "direct"]
+    if (!nrow(sp)) return(NULL)
+    fe <- f[f$election == e, list(seat = normalise_seat(seat), class = party,
+                                  pred = xgb_pred_seat, actual = actual_share)]
+    sp$seat <- normalise_seat(sp$seat)
+    m <- merge(sp, fe, by = c("seat", "class"))
+    m <- m[is.finite(pred) & is.finite(actual) & pred > 0]
+    if (!nrow(m)) return(NULL)
+    m$el <- e
+    m
+  }), fill = TRUE)
+  w0 <- pooled$w
+  none <- list(w = w0, raw = NA_real_, se = NA_real_, n = 0L, k = 0L, w0 = w0,
+               dbar = NA_real_, tau2 = NA_real_, shrink_k = 0)
+  if (is.null(rows) || !nrow(rows)) return(none)
+  none$n <- sum(rows$class == "IND")
+  slope <- function(r) {
+    dx <- r$poll - r$pred; dy <- r$actual - r$pred
+    if (nrow(r) < 3L || sum(dx^2) <= 0) return(NULL)
+    b <- sum(dx * dy) / sum(dx^2); e <- dy - b * dx
+    G <- length(unique(r$seat))
+    list(b = b, se2 = sum(tapply(dx * e, r$seat, sum)^2) / sum(dx^2)^2 * G / max(1, G - 1))
+  }
+  g <- list()
+  for (e in unique(rows$el)) {
+    re <- rows[rows$el == e]
+    be <- slope(re)
+    if (is.null(be)) next
+    for (cl in unique(re$class)) {
+      bc <- slope(re[re$class == cl])
+      if (!is.null(bc)) g[[length(g) + 1L]] <- data.table::data.table(el = e, class = cl, n = sum(re$class == cl),
+                                                                     d = bc$b - be$b, se2 = bc$se2, b = bc$b)
+    }
+  }
+  if (!length(g)) return(none)
+  g <- data.table::rbindlist(g)
+  gi <- g[g$class == "IND"]
+  if (nrow(g) < 3L || !nrow(gi)) return(none)
+  tau2 <- max(0, mean(g$d^2 - g$se2))
+  wt <- 1 / pmax(gi$se2, 1e-6)
+  dbar <- sum(wt * gi$d) / sum(wt)
+  se_d2 <- 1 / sum(wt)
+  k <- if (tau2 + se_d2 > 0) tau2 / (tau2 + se_d2) else 0
+  ri <- rows[rows$class == "IND"]
+  dx <- ri$poll - ri$pred; dy <- ri$actual - ri$pred
+  list(w = min(1, max(0, w0 + k * dbar)), raw = sum(dx * dy) / sum(dx^2), se = sqrt(se_d2), n = nrow(ri),
+       k = nrow(gi), w0 = w0, dbar = dbar, tau2 = tau2, shrink_k = k)
 }

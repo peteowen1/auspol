@@ -1,6 +1,6 @@
 # Model registry
 
-**Generated 2026-10-05 by `scripts/build_model_registry.R`. Do not hand-edit** --
+**Generated 2026-10-06 by `scripts/build_model_registry.R`. Do not hand-edit** --
 rerun the script instead. Regenerate whenever a switch is added to
 `published_flags.R` or a harness's wiring changes.
 
@@ -31,21 +31,26 @@ All seven share one `R/` package core (`simulate_seat_contests()`,
 in which switches each one WIRES and which data source each reads, not in
 separate model code.
 
-## Switch parity (122 switches from `published_flags.R`, 7 entry points)
+## Switch parity (129 switches from `published_flags.R`, 7 entry points)
 
 | switch | fit_seats (published) | fed | nsw | qld | sa | vic | wa |
 |---|---|---|---|---|---|---|---|
 | `AUSPOL_ANCHOR_EXHAUST` | yes | NO | NO | NO | NO | NO | NO |
 | `AUSPOL_ANCHOR_IMPLIED` | yes | NO | NO | NO | NO | NO | NO |
 | `AUSPOL_ASAT_MIN_PAIRS` | NO | NO | NO | NO | NO | NO | NO |
+| `AUSPOL_BREAKOUT_MIX` | yes | yes | yes | yes | yes | yes | yes |
 | `AUSPOL_BUCKET_SPLIT` | NO | yes | NO | NO | NO | NO | NO |
 | `AUSPOL_BUCKET_TOTAL` | NO | NO | NO | NO | NO | NO | NO |
+| `AUSPOL_BYELEC_DEPARTED` | NO | NO | NO | NO | NO | NO | NO |
+| `AUSPOL_BYELEC_LEVEL` | NO | NO | NO | NO | NO | NO | NO |
 | `AUSPOL_BYELECTION_FILL` | NO | NO | NO | NO | NO | NO | NO |
 | `AUSPOL_BYELECTION_MP` | NO | NO | NO | NO | NO | NO | NO |
 | `AUSPOL_BYELECTION_PRIOR` | yes | yes | yes | yes | yes | yes | yes |
 | `AUSPOL_CLOSE_PROPORTIONAL` | yes | NO | NO | NO | NO | NO | NO |
 | `AUSPOL_COUNCIL_EXTRA` | NO | NO | NO | NO | NO | NO | NO |
 | `AUSPOL_COV_LOO` | NO | NO | NO | NO | NO | NO | NO |
+| `AUSPOL_CROSS_SEAT_VOTE` | yes | yes | yes | yes | yes | yes | yes |
+| `AUSPOL_DEFECT_BY_LEVEL` | NO | NO | NO | NO | NO | NO | NO |
 | `AUSPOL_DEFECT_CONSERVE` | NO | NO | NO | NO | NO | NO | NO |
 | `AUSPOL_DEFECT_DISCOUNT` | yes | yes | yes | yes | yes | yes | yes |
 | `AUSPOL_DEFECT_POOLED` | NO | NO | NO | NO | NO | NO | NO |
@@ -119,7 +124,9 @@ separate model code.
 | `AUSPOL_SEAT_POLL_SOURCES` | NO | NO | NO | NO | NO | NO | NO |
 | `AUSPOL_SEAT_POLL_TPP_SOURCE` | NO | NO | NO | NO | NO | NO | NO |
 | `AUSPOL_SEAT_SD_MULT` | yes | yes | yes | yes | yes | yes | yes |
-| `AUSPOL_SEAT_SWING_PORT` | yes | yes | yes | yes | yes | yes | NO |
+| `AUSPOL_SEAT_SWING_PORT` | yes | yes | yes | yes | yes | yes | yes |
+| `AUSPOL_SEAT_SWING_PORT_NOCLIFF` | NO | NO | NO | NO | NO | NO | yes |
+| `AUSPOL_SEAT_SWING_PORT_WA` | NO | NO | NO | NO | NO | NO | yes |
 | `AUSPOL_SEED` | yes | yes | yes | yes | yes | yes | yes |
 | `AUSPOL_SHIP_TIME_FORWARD` | NO | NO | NO | NO | NO | NO | NO |
 | `AUSPOL_SHRINK` | yes | yes | yes | yes | yes | yes | yes |
@@ -165,11 +172,14 @@ separate model code.
 - **`AUSPOL_ASAT_MIN_PAIRS`** (intentional / dead experiment): Training-time switch for scripts/fit_xgb_primary_asat.R only: the minimum number of earlier election pairs a target must have before it gets its own point-in-time model (default 4). Below it the target gets no model and no row in the predictions file, so the harness keeps base_pred for it and says so. Not a harness or forecast switch.
 - **`AUSPOL_BUCKET_SPLIT`** (**UNEXPLAINED -- audit this**): no classification recorded -- add one to CLASSIFY in scripts/build_model_registry.R
 - **`AUSPOL_BUCKET_TOTAL`** (**UNEXPLAINED -- audit this**): no classification recorded -- add one to CLASSIFY in scripts/build_model_registry.R
+- **`AUSPOL_BYELEC_DEPARTED`** (**UNEXPLAINED -- audit this**): no classification recorded -- add one to CLASSIFY in scripts/build_model_registry.R
+- **`AUSPOL_BYELEC_LEVEL`** (**UNEXPLAINED -- audit this**): no classification recorded -- add one to CLASSIFY in scripts/build_model_registry.R
 - **`AUSPOL_BYELECTION_FILL`** (**UNEXPLAINED -- audit this**): no classification recorded -- add one to CLASSIFY in scripts/build_model_registry.R
 - **`AUSPOL_BYELECTION_MP`** (**adopted, shared-function wiring**): SHIPPED 2026-09-19 (plans/prereg-byelection-mp-2026-09-19.md). Read inside R/candidate_returns.R at the top of candidate_returns(): a by-election winner (external/reference/byelections/byelection-winners.csv) is the sitting member for every identity test. Reaches all six harnesses and fit_seats_full.R through that function.
 - **`AUSPOL_CLOSE_PROPORTIONAL`** (**UNEXPLAINED -- audit this**): no classification recorded -- add one to CLASSIFY in scripts/build_model_registry.R
 - **`AUSPOL_COUNCIL_EXTRA`** (**UNEXPLAINED -- audit this**): no classification recorded -- add one to CLASSIFY in scripts/build_model_registry.R
 - **`AUSPOL_COV_LOO`** (intentional / dead experiment): Read inside R/statewide_cor.R, not per-harness -- universal in practice, absent from every harness script by design.
+- **`AUSPOL_DEFECT_BY_LEVEL`** (**UNEXPLAINED -- audit this**): no classification recorded -- add one to CLASSIFY in scripts/build_model_registry.R
 - **`AUSPOL_DEFECT_CONSERVE`** (**adopted, shared-function wiring**): SHIPPED (default 1) and read inside R/candidate_returns.R's personal_prior_vote(), not by any harness directly, so the registry's grep sees it nowhere: a major-party defector's unclaimed vote stays with the origin class instead of vanishing. Reaches every harness and fit_seats_full.R through that one function. scripts/prereg_major_defector_verify.R proves =0 is byte-identical to the pre-switch behaviour.
 - **`AUSPOL_DEFECT_POOLED`** (**adopted, shared-function wiring**): ADOPTED 2026-09-09 at "2" (docs/plans/prereg-defector-two-rate- 2026-09-09.md), by Pete on mechanism -- the arm missed its own primary bar (t -2.04 vs 2.08) but every directional indicator was favourable and R4 confirmed the published Victorian forecast is byte-identical (Victoria fields no major-party defector standing as a minor this cycle, so the mechanism does not fire there). Reaches fit_seats_full.R correctly: personal_prior_vote() self-resolves both rates from Sys.getenv() when the caller passes NULL, exactly so this did not need a seventh call site wired by hand -- the mistake that made the first pooled-arm run VOID earlier the same day.
 - **`AUSPOL_DEMO_RESID_SHUFFLE`** (intentional / dead experiment): Control, not an arm. Permutes which seat gets which seat's demographics within each election, at fit and at apply both, so every marginal and the whole procedure survive and only the seat-to-demographics link dies. Absent from fit_seats_full.R for the same reason its arm is: a control has no business in the published forecast. Calibrated on sa2026 -- 8 draws give mean 0.3576 against a 0.3577 baseline, sd 0.0013, so the null manufactures nothing and the real effect sits 8.9 sds out.
@@ -220,7 +230,8 @@ separate model code.
 - **`AUSPOL_SEAT_POLL_MATCH`** (**UNEXPLAINED -- audit this**): no classification recorded -- add one to CLASSIFY in scripts/build_model_registry.R
 - **`AUSPOL_SEAT_POLL_SOURCES`** (**UNEXPLAINED -- audit this**): no classification recorded -- add one to CLASSIFY in scripts/build_model_registry.R
 - **`AUSPOL_SEAT_POLL_TPP_SOURCE`** (**UNEXPLAINED -- audit this**): no classification recorded -- add one to CLASSIFY in scripts/build_model_registry.R
-- **`AUSPOL_SEAT_SWING_PORT`** (**UNEXPLAINED -- audit this**): no classification recorded -- add one to CLASSIFY in scripts/build_model_registry.R
+- **`AUSPOL_SEAT_SWING_PORT_NOCLIFF`** (**UNEXPLAINED -- audit this**): no classification recorded -- add one to CLASSIFY in scripts/build_model_registry.R
+- **`AUSPOL_SEAT_SWING_PORT_WA`** (**UNEXPLAINED -- audit this**): no classification recorded -- add one to CLASSIFY in scripts/build_model_registry.R
 - **`AUSPOL_SHIP_TIME_FORWARD`** (**UNEXPLAINED -- audit this**): no classification recorded -- add one to CLASSIFY in scripts/build_model_registry.R
 - **`AUSPOL_SIM_ENGINE`** (intentional / dead experiment): Read inside R/seat_sim.R's simulate_seat_contests(), not per-harness -- universal in practice.
 - **`AUSPOL_SITTING_MEMBER_ADJ`** (**UNEXPLAINED -- audit this**): no classification recorded -- add one to CLASSIFY in scripts/build_model_registry.R
@@ -286,4 +297,4 @@ MR3  no harness forces a switch away from its published value.
 
 ## Coverage check
 
-**MR2! 35 switch(es) have a non-universal row with NO recorded classification: AUSPOL_ANCHOR_EXHAUST, AUSPOL_ANCHOR_IMPLIED, AUSPOL_BUCKET_SPLIT, AUSPOL_BUCKET_TOTAL, AUSPOL_BYELECTION_FILL, AUSPOL_CLOSE_PROPORTIONAL, AUSPOL_COUNCIL_EXTRA, AUSPOL_DEPARTED_FED, AUSPOL_FUND_TIME_FORWARD, AUSPOL_LEVEL_RECIPE, AUSPOL_LIVE_DRAW_BUCKET, AUSPOL_LIVE_LEVEL_ANCHOR, AUSPOL_NOM_LIVE, AUSPOL_NOM_ZERO, AUSPOL_NOM_ZERO_ORDER, AUSPOL_OTHERS_SCALE, AUSPOL_SEAT_CONTEXT_FILL, AUSPOL_SEAT_CONTEXT_MARGIN, AUSPOL_SEAT_POLL_MATCH, AUSPOL_SEAT_POLL_SOURCES, AUSPOL_SEAT_POLL_TPP_SOURCE, AUSPOL_SEAT_SWING_PORT, AUSPOL_SHIP_TIME_FORWARD, AUSPOL_SITTING_MEMBER_ADJ, AUSPOL_SLOPE_SHRINK, AUSPOL_STATE_POLL_EXTRA, AUSPOL_STATE_POLL_POOL, AUSPOL_TIME_FORWARD_FITS, AUSPOL_UPSET_FLOOR, AUSPOL_XGB_BOOTH, AUSPOL_XGB_COUNCIL, AUSPOL_XGB_DEPARTED_SIDE, AUSPOL_XGB_ENDORSE, AUSPOL_XGB_ENSEMBLE, AUSPOL_XGB_SEED.** Add them to CLASSIFY in scripts/build_model_registry.R before trusting this table.
+**MR2! 39 switch(es) have a non-universal row with NO recorded classification: AUSPOL_ANCHOR_EXHAUST, AUSPOL_ANCHOR_IMPLIED, AUSPOL_BUCKET_SPLIT, AUSPOL_BUCKET_TOTAL, AUSPOL_BYELEC_DEPARTED, AUSPOL_BYELEC_LEVEL, AUSPOL_BYELECTION_FILL, AUSPOL_CLOSE_PROPORTIONAL, AUSPOL_COUNCIL_EXTRA, AUSPOL_DEFECT_BY_LEVEL, AUSPOL_DEPARTED_FED, AUSPOL_FUND_TIME_FORWARD, AUSPOL_LEVEL_RECIPE, AUSPOL_LIVE_DRAW_BUCKET, AUSPOL_LIVE_LEVEL_ANCHOR, AUSPOL_NOM_LIVE, AUSPOL_NOM_ZERO, AUSPOL_NOM_ZERO_ORDER, AUSPOL_OTHERS_SCALE, AUSPOL_SEAT_CONTEXT_FILL, AUSPOL_SEAT_CONTEXT_MARGIN, AUSPOL_SEAT_POLL_MATCH, AUSPOL_SEAT_POLL_SOURCES, AUSPOL_SEAT_POLL_TPP_SOURCE, AUSPOL_SEAT_SWING_PORT_NOCLIFF, AUSPOL_SEAT_SWING_PORT_WA, AUSPOL_SHIP_TIME_FORWARD, AUSPOL_SITTING_MEMBER_ADJ, AUSPOL_SLOPE_SHRINK, AUSPOL_STATE_POLL_EXTRA, AUSPOL_STATE_POLL_POOL, AUSPOL_TIME_FORWARD_FITS, AUSPOL_UPSET_FLOOR, AUSPOL_XGB_BOOTH, AUSPOL_XGB_COUNCIL, AUSPOL_XGB_DEPARTED_SIDE, AUSPOL_XGB_ENDORSE, AUSPOL_XGB_ENSEMBLE, AUSPOL_XGB_SEED.** Add them to CLASSIFY in scripts/build_model_registry.R before trusting this table.
