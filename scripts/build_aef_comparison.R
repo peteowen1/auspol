@@ -88,7 +88,21 @@ if (length(ARM_FILES)) {
                 max(sd_all$spread, na.rm = TRUE)))
   sd_all[, spread := NULL]
 } else {
-  sd_all <- fread(file.path(OUT, "pooled-sharedetail.csv"), showProgress = FALSE)
+  # The SCORED runs, not pooled-sharedetail.csv: pool_sharedetail.R builds that
+  # at stage 2 from the xgb-OFF stage-1 runs, so it is base_pred. Until
+  # 2026-10-06 the ledger's winner-primary column read it and showed Goldstein
+  # 2022 at 3.1 (base) while the published share was 27.1 and the win
+  # probability beside it came from the published run. Same rule as the
+  # weighted-RMSE card (build_aef7_ledger_data.R, fixed 2026-09-18).
+  source("scripts/ledger_inputs.R")
+  sd_all <- rbindlist(lapply(MAP$pair, function(pr) {
+    x <- run_table(pr, "sharedetail")
+    if (is.null(x)) stop(sprintf("AEF1! %s: no sharedetail from the scored run -- refusing to fall back to the stage-1 pool", pr))
+    if ("xgb_primary_on" %in% names(x)) x <- x[x$xgb_primary_on %in% c(TRUE, 1, "TRUE")]
+    if (!nrow(x)) stop(sprintf("AEF1! %s: the scored run's sharedetail has no xgb-on rows", pr))
+    x[, .(pred_share = mean(pred_share), actual_share = mean(actual_share)), by = .(seat, party)][, pair := pr]
+  }), use.names = TRUE)
+  cat(sprintf("AEF1  primary shares from the scored stage-6 runs: %d rows over %d pairs\n", nrow(sd_all), uniqueN(sd_all$pair)))
 }
 
 newest_win_file <- function(pr) {
