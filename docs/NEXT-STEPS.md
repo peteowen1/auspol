@@ -23,6 +23,9 @@ sitting members who surged further, 2 collapses, 3 with no prior to build from):
    OPEN: state Google Trends salience (series on disk, never built; Sonnet agent building it behind
    `AUSPOL_SALIENCE_STATE`, off, 2026-10-06); missing seat-poll primaries (Mayo 2016, Wakehurst,
    Warringah 2019). Retry the gated mixture once the inputs improve.
+   vic2026 Trends: 91 of 501 candidates fetched 2026-10-06 before Google 429; rerun after several hours
+   with `AUSPOL_SALIENCE_SLEEP=15 Rscript scripts/fetch_salience_vic2026_full.R` (resumable; window
+   pinned to 2026-10-06 via AUSPOL_SALIENCE_TO). IND seat-poll arm: prereg `plans/prereg-ind-seat-poll-2026-10-06.md`, build running.
 2. Sophomore surge for non-major sitting members (Brock, Cregan, Dametto, Donato): CLOSED, no separable
    surge, no adjustment (`reviews/sophomore-surge-2026-10-06.md`, 1a705d9).
 3. ITG page track record: auspol side MERGED (#92). Blog `e8ed902f` (page reads it; tie bands log loss
