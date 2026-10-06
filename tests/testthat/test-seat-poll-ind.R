@@ -46,9 +46,15 @@ test_that("IND map leaves a seat alone when a known non-major class already expl
   s <- rbind(polls("Aaa", "a", c("ALP", "LNP", "OTH"), c(30, 30, 40)),
              polls("Bbb", "b", c("ALP", "LNP", "OTH"), c(30, 30, 24)))
   out <- capture.output(r <- .seat_poll_ind_map(s, "fedT"))
-  expect_equal(r$class[r$poll_id == "a" & r$fp == 40], "OTH")
+  # Katter-like: not remapped to IND, and the poll's OTH figure goes to the known class
+  expect_equal(r$class[r$poll_id == "a" & r$fp == 40], "OTH_RIGHT")
   expect_equal(r$class[r$poll_id == "b" & r$fp == 24], "IND")
   expect_true(any(grepl("Aaa .*NOT remapped", out)))
+  expect_true(any(grepl("Aaa .*OTH 40.0 -> OTH_RIGHT \\(known class", out)))
+  # a poll that already reports the known class keeps its OTH as OTH
+  s2 <- polls("Aaa", "z", c("ALP", "LNP", "OTH_RIGHT", "OTH"), c(30, 30, 30, 15))
+  invisible(capture.output(r2 <- .seat_poll_known_class_map(s2, "fedT")))
+  expect_equal(r2$class[r2$fp == 15], "OTH")
 })
 
 test_that("the three switches reject anything but 0/1 and are no-ops at 0", {

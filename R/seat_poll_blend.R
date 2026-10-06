@@ -478,10 +478,39 @@ SEAT_POLL_IND_MAP_KNOWN_FRAC <- 0.5
   } else if (length(cand)) {
     cat(sprintf("SPIM %s: no as-at predictions, known-candidate exclusion not applied\n", el))
   }
-  if (!length(cand)) return(s)
-  hit <- which(s$class == "OTH" & s$poll_id %in% cand & is.finite(s$fp))
-  for (r in hit) cat(sprintf("SPIM %s %s | %s | OTH %.1f -> IND\n", election, s$seat_name[r], s$poll_id[r], s$fp[r]))
-  s$class[hit] <- "IND"
+  if (length(cand)) {
+    hit <- which(s$class == "OTH" & s$poll_id %in% cand & is.finite(s$fp))
+    for (r in hit) cat(sprintf("SPIM %s %s | %s | OTH %.1f -> IND\n", election, s$seat_name[r], s$poll_id[r], s$fp[r]))
+    s$class[hit] <- "IND"
+  }
+  .seat_poll_known_class_map(s, el, f)
+}
+
+# A poll that files a KNOWN non-independent minor under OTH (Katter in Kennedy
+# 2022: YouGov MRP OTH 43, KAP is our OTH_RIGHT) left the KAP cell unpolled, and
+# once the fed2022 blend weight rose (Mayo 2016 added) the blend pulled KAP to
+# 19.5 (actual 46.1). Where one of our non-major classes (OTH_RIGHT, ONP) already
+# carries at least SEAT_POLL_IND_MAP_KNOWN_FRAC of the poll's OTH figure and the
+# poll gives that class no figure of its own, the OTH figure is that class's.
+# As-at predictions only (current_seat_predictions()), so nothing from the result.
+.seat_poll_known_class_map <- function(s, el, f = current_seat_predictions()) {
+  if (is.null(f) || !any(f$election == el)) return(s)
+  fe <- f[f$election == el & f$party %in% c("OTH_RIGHT", "ONP")]
+  if (!nrow(fe)) return(s)
+  fe$seat <- normalise_seat(fe$seat)
+  for (id in unique(s$poll_id)) {
+    r_oth <- which(s$poll_id == id & s$class == "OTH" & is.finite(s$fp))
+    if (length(r_oth) != 1L || s$fp[r_oth] < SEAT_POLL_IND_MAP_MIN_OTH) next
+    sn <- normalise_seat(s$seat_name[r_oth])
+    cand <- fe[fe$seat == sn]
+    if (!nrow(cand)) next
+    best <- cand[which.max(cand$xgb_pred_seat)]
+    if (best$xgb_pred_seat < SEAT_POLL_IND_MAP_KNOWN_FRAC * s$fp[r_oth]) next
+    if (any(s$poll_id == id & s$class == best$party & is.finite(s$fp))) next   # poll already reports it
+    cat(sprintf("SPIM %s %s | %s | OTH %.1f -> %s (known class, as-at pred %.1f)\n",
+                el, s$seat_name[r_oth], id, s$fp[r_oth], best$party, best$xgb_pred_seat))
+    s$class[r_oth] <- best$party
+  }
   s
 }
 
