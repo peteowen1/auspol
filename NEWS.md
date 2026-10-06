@@ -1,3 +1,9 @@
+# auspol 0.4.74
+
+- A major party (Labor, Coalition, Greens) returning to a seat it skipped last time starts from its own share at the last election it contested that seat, swung by the statewide change, instead of zero. Live Victoria 2026: Narracan Labor (no candidate at the 2023 supplementary election) 4.4% -> 10.0%. Backtest: Richmond 2022 Liberals 0.0 -> 5.2 (actual 18.8); seat log loss 0.2738 -> 0.2742 (within 1 SE). Applied after the xgb layer through the frozen as-at models, as the live forecast does, so the backtest models are not retrained on it.
+- New measurement path (`AUSPOL_XGB_BASE_DELTA`): a fix to the base projection is scored by re-predicting only the changed seats through the frozen as-at models. A rebuild with nothing changed reproduces every number exactly; before this, retraining moved unrelated elections and refused every small targeted fix.
+- Tested and not shipped: the general re-entry prior (One Nation over-filled in Queensland 2020) and a state-level defector rate with cross-seat matching (defectors keep either about a quarter or nearly all of their vote, and nothing yet separates the two).
+
 # auspol 0.4.73
 
 - Built, off, not shipped (`AUSPOL_DEFECTOR_STATE = "0"`, pre-registration pending): the state-level defector carry without the `min_n = 5` cliff (target level's median shrunk toward the all-level median by n/(n+3)), a sitting member of one seat who stands non-major in another seat of the same jurisdiction treated as a defector (Bowler, Kalgoorlie 2008; D'Orazio, Morley), and the old seat's class giving up what they carry. Shared functions only: `fit_defector_discount()`, `personal_prior_vote()`; the six harnesses and `fit_seats_full.R` get it with no edit.
