@@ -510,7 +510,7 @@ SEAT_POLL_IND_MAP_KNOWN_FRAC <- 0.5
     oth_fig <- s$fp[r_oth]
     fs <- fe[fe$seat == normalise_seat(s$seat_name[r_oth])]
     if (!nrow(fs)) next
-    pred <- vapply(lump, function(k) sum(fs$xgb_pred_seat[fs$party == k]), numeric(1))
+    pred <- vapply(lump, function(k) sum(fs$xgb_pred_seat[fs$party == k], na.rm = TRUE), numeric(1))
     named <- vapply(lump, function(k) if (k == "OTH") 0 else
       sum(s$fp[s$poll_id == id & s$class == k & is.finite(s$fp)]), numeric(1))
     resid <- pmax(pred - named, 0)
