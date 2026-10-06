@@ -1,3 +1,9 @@
+# auspol 0.4.72
+
+- Independents are read from their seat polls. When a poll files the independent under "other", that figure counts as the independent's where the seat's independent is endorsed or sitting; independents get their own time-forward seat-poll weight; the Mayo 2016 and Wakehurst primaries are added from published polls. Goldstein 2022 13.5 -> 27.1 (actual 34.5), Wakehurst 2023 14.4 -> 26.7 (35.9); seat log loss 0.2809 -> 0.2757 (AE Forecasts 0.2825). Shipped on Pete's override of two pre-registered near-misses (fed2025 slightly worse). No change to Victoria 2026 until its seats are polled.
+- Tested and not shipped: a breakout mixture (ungated and gated), a state-level defector rate, a non-major "sophomore surge", wider uncertainty for personal-vote rows, and state Google Trends salience.
+- `poll_data_age()` respects its as-at date.
+
 # auspol 0.4.71
 
 - Built, off, not shipped (`AUSPOL_BREAKOUT_MIX = "0"`, pre-registration pending): a breakout mixture in the seat simulation. A non-major class predicted under 15 gets a time-forward, calibrated probability of reaching 20+ (`breakout_p_for()`); in that share of draws its primary comes from earlier breakouts' shares (`breakout_share_dist()`) and the rest of the seat is scaled down. `simulate_seat_contests()` gains `breakout_p`/`breakout_q` (both engines; `NULL` is byte-identical). Wired into the six harnesses and `fit_seats_full.R` through `breakout_mix_args()`.

@@ -44,7 +44,7 @@ seat_poll_shares <- function(election, days = 90, by_type = FALSE, by_poll = FAL
              ifelse(p == "IND" | grepl("\\(IND\\)$", p), "IND",
              ifelse(p %in% c("UAP", "KAP"), "OTH_RIGHT", "OTH"))))))
   s$poll_id <- paste(s$seat_name, s$pollster, s$date_raw)
-  if (identical(Sys.getenv("AUSPOL_SEAT_POLL_IND_MAP", "0"), "1")) s <- .seat_poll_ind_map(s, el_arg)
+  if (identical(Sys.getenv("AUSPOL_SEAT_POLL_IND_MAP", "1"), "1")) s <- .seat_poll_ind_map(s, el_arg)
   # MRP by STRUCTURE: YouGov's 2022 MRP is labelled plain "YouGov".
   s$release <- paste(s$pollster, s$date_raw)
   cover <- s[, list(n_seats = data.table::uniqueN(seat_name)), by = release]
@@ -372,7 +372,7 @@ seat_poll_weights_split <- function(target_election) {
 }
 
 .ind_weight_on <- function() {
-  v <- Sys.getenv("AUSPOL_SEAT_POLL_IND_WEIGHT", "0")
+  v <- Sys.getenv("AUSPOL_SEAT_POLL_IND_WEIGHT", "1")
   if (!v %in% c("0", "1")) stop("AUSPOL_SEAT_POLL_IND_WEIGHT must be \"0\" or \"1\", not ", v)
   v == "1"
 }
@@ -387,7 +387,7 @@ seat_poll_weights_split <- function(target_election) {
 #' @keywords internal
 .read_seat_polls_file <- function(f) {
   s <- data.table::fread(f, showProgress = FALSE)
-  v <- Sys.getenv("AUSPOL_SEAT_POLL_HANDKEYED", "0")
+  v <- Sys.getenv("AUSPOL_SEAT_POLL_HANDKEYED", "1")
   if (!v %in% c("0", "1")) stop("AUSPOL_SEAT_POLL_HANDKEYED must be \"0\" or \"1\", not ", v)
   if (v == "0") return(s)
   hf <- file.path(dirname(f), "hand_keyed_primaries.csv")

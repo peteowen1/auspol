@@ -68,3 +68,12 @@ PRIMARY 71 IND cells 4,272 -> 2,869 (-33%), SE 742 (1.9 SE): FAIL; SA6 0.2898 ->
 false remaps (fed2022 cells -1,414: Goldstein 13.5 -> 27.1, Wakehurst 14.4 -> 26.7, Kooyong 18.4 ->
 27.2). The fed2025 damage (49 cells +389; McMahon 9.3 -> 24.0 with no remap) comes from the IND-specific
 WEIGHT, which the build's dry run already showed hurts fed2025. Switches stay off.
+
+## Decision (2026-10-06): SHIPPED on Pete's override
+
+Pete chose to ship Amendment 1 as is, overriding both near-misses on the record: the primary at 1.9 SE
+against 2 SE (-33% on 71 IND cells) and the fed2025 disqualifier (+0.0055 against 0.005, from the
+IND-only weight; McMahon 9.3 -> 24.0). In exchange: the 2022 teals and Wakehurst read from their polls
+(Goldstein 13.5 -> 27.1, Wakehurst 14.4 -> 26.7, Kooyong 18.4 -> 27.2) and the ledger falls 0.2809 ->
+0.2757 (AEF 0.2825). All three switches "1" in `published_flags.R` and as R defaults. Live Victoria
+2026: no change (0 seats move > 0.02) until Victorian seats are polled.
