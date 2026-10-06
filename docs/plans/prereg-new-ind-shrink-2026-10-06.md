@@ -36,3 +36,13 @@ of the fix that would raise them is silently dropped. Arm: `AUSPOL_NEW_IND_SHRIN
 version changes. Decision rule: if the uncapped arm passes all four, it ships (it is the stronger version);
 if it fails where the capped one passed, the capped one ships and the failure is reported to Pete with the
 cells that drove it. Post hoc: chosen after seeing the capped result, and marked so.
+
+### Amendment 1 result (`output/snapshots/20261007-0005-a93153b-from6`): REFUSED, the capped version ships
+
+Uncapped factors 1.16-1.30 for federal and NSW targets. Changed independent cells 371 over 21 elections:
+squared error 7,273 -> 7,811 (+538, SE 198): primary FAILS. Ledger 0.2742 -> 0.2750; nsw2023 +0.0053
+and sa2022 +0.0071, fed2025 +0.0028. Outside Victoria the "unknown new independent" cells are a mix of a
+few strong, under-called candidates (Pittwater 21.4 vs 35.9 actual, Shellharbour, Nicholls) and many weak
+ones (Bankstown 2.7, Schubert 2.9, Hinkler 2.9); one factor raises both. Victoria's cells are consistently
+weak, which is why the shrink works there. Telling the strong ones apart needs a candidate signal (seat
+polls, salience), not a scale. `AUSPOL_NEW_IND_SHRINK_CAP` stays "1".
