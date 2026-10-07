@@ -55,3 +55,13 @@ test_that("departed_successor_rates is NULL when off and loud when on but unfitt
   expect_error(departed_successor_rates("vic2014", f), "no rows")   # never fitted
   expect_error(departed_successor_rates("vic2022", tempfile()), "needs")
 })
+
+test_that("departed_successor_mode validates the switch and picks the sitting file", {
+  withr::local_envvar(AUSPOL_DEPARTED_SUCCESSOR = "sitting")
+  expect_identical(departed_successor_mode(), "sitting")
+  expect_error(departed_successor_rates("vic2022"), "departed-sitting-rates.csv|--split=sitting")
+  withr::local_envvar(AUSPOL_DEPARTED_SUCCESSOR = "sittng")
+  expect_error(departed_successor_mode(), "must be")
+  withr::local_envvar(AUSPOL_DEPARTED_SUCCESSOR = "0")
+  expect_identical(departed_successor_mode(), "0")
+})

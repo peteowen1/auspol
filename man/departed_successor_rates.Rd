@@ -4,12 +4,12 @@
 \alias{departed_successor_rates}
 \title{Per-seat departed-independent rates for one target election}
 \usage{
-departed_successor_rates(target, path = "output/departed-successor-rates.csv")
+departed_successor_rates(target, path = NULL)
 }
 \arguments{
 \item{target}{Election label, e.g. \code{"vic2022"}.}
 
-\item{path}{The rates file.}
+\item{path}{The rates file; \code{NULL} picks the file for the switch's value.}
 }
 \value{
 Named numeric vector (names = seats), or \code{NULL} when the switch is off.
@@ -23,7 +23,10 @@ uses only cells whose polling day is strictly before T's, never a
 leave-one-out fit (\verb{docs/plans/prereg-departed-successor-flag-2026-10-07.md}).
 }
 \details{
-Off unless \code{AUSPOL_DEPARTED_SUCCESSOR} is \code{"1"}, and then \code{NULL} is never
+Off unless \code{AUSPOL_DEPARTED_SUCCESSOR} is \code{"1"} (rates split by the
+hand-coded successor flag) or \code{"sitting"} (split by whether the departed
+leader was the sitting member,
+\verb{docs/plans/prereg-departed-sitting-split-2026-10-07.md}), and then \code{NULL} is never
 returned silently: a missing file or a target with no rows is an error, so
 an arm that did not apply cannot look like an arm with no effect.
 }

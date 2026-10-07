@@ -479,11 +479,11 @@ DEV_SLOPE <- dev_slopes_for(union(parties, names(st_b)))
   # Off by default -- see the matching comment in backtest_candidate_fed.R.
   .honour_departed <- Sys.getenv("AUSPOL_HONOUR_DEPARTED", "0") %in% c("1", "TRUE", "true")
   .departed_hold <- Sys.getenv("AUSPOL_DEPARTED_HOLD", "0") %in% c("1", "TRUE", "true")   # docs/plans/prereg-departed-hold-fixed-2026-10-04.md
-  .succ_on <- Sys.getenv("AUSPOL_DEPARTED_SUCCESSOR", "0") %in% c("1", "TRUE", "true")   # docs/plans/prereg-departed-successor-flag-2026-10-07.md
+  .succ_on <- departed_successor_mode() != "0"   # docs/plans/prereg-departed-successor-flag-2026-10-07.md
   if (.succ_on && .departed_hold) stop("AUSPOL_DEPARTED_SUCCESSOR holds its own cells; do not combine it with AUSPOL_DEPARTED_HOLD", call. = FALSE)
   .SUCC_RATE <- departed_successor_rates(TGT)   # NULL when off: byte-identical
-  if (.succ_on) { cat(sprintf("DSR1 departed successor rates: %d seat(s) for %s, held through renormalisation
-", length(.SUCC_RATE), TGT)); .departed_hold <- TRUE }
+  if (.succ_on) { cat(sprintf("DSR1 departed successor rates (%s): %d seat(s) for %s, held through renormalisation
+", departed_successor_mode(), length(.SUCC_RATE), TGT)); .departed_hold <- TRUE }
   .hold_min <- as.numeric(Sys.getenv("AUSPOL_DEPARTED_HOLD_MIN_PRIOR", "0"))   # arm B (amendment 2026-10-05): hold only classes with at least this prior seat share
 .returns <- if (.cond) tryCatch(candidate_returns(PRV, TGT), error = function(e) {
   cat(sprintf("BS1c! conditional slopes unavailable: %s

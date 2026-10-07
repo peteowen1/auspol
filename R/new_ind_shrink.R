@@ -39,7 +39,7 @@ new_ind_mode <- function() {
 #' @export
 post_xgb_switches <- function() {
   cur <- c(AUSPOL_REENTRY = reentry_mode(), AUSPOL_NEW_IND_SHRINK = new_ind_mode(),
-           AUSPOL_DEPARTED_SUCCESSOR = if (Sys.getenv("AUSPOL_DEPARTED_SUCCESSOR", "0") %in% c("1", "TRUE", "true")) "1" else "0")
+           AUSPOL_DEPARTED_SUCCESSOR = departed_successor_mode())
   cur[cur != "0"]
 }
 
