@@ -31,7 +31,7 @@ FALLBACK_RATE <- 0.38   # formals(screened_slopes)$departed_rate, the shipped va
 COMPONENTS <- c("endorsed_by_departed", "local_office", "community_group", "former_staffer")
 
 inp <- fread("external/reference/successors/coding-input.csv")
-flg <- fread("external/reference/successors/departed-ind-successors.csv", colClasses = "character")
+flg <- fread(Sys.getenv("AUSPOL_SUCCESSOR_FLAGS", "external/reference/successors/departed-ind-successors.csv"), colClasses = "character")   # override for gate tests only
 cat(sprintf("coding input %d rows; flag file %d rows\n", nrow(inp), nrow(flg)))
 
 # ---- Gate 1: coverage ----
@@ -55,8 +55,17 @@ flg <- inp[, .(election, seat, candidate, election_date = as.Date(election_date)
                prior_mp_in_our_data)][flg, on = .(election, seat, candidate)]
 # Several sources are " | "-separated; the EARLIEST date must precede polling
 # day and NONE may be on or after it (a post-election source is not evidence).
+# Strict ISO only: as.Date() alone accepts "2022-03-05 (updated 2023-02-01)" on
+# its first ten characters, and "2022-3-5". A piece that is not exactly
+# YYYY-MM-DD becomes NA, which fails the gate.
 src_dates <- lapply(strsplit(ifelse(is.na(flg$source_date), "", flg$source_date), "\\s*\\|\\s*"),
-                    function(d) suppressWarnings(as.Date(d, format = "%Y-%m-%d")))
+                    function(d) {
+                      d <- trimws(d)
+                      ok <- grepl("^[0-9]{4}-[0-9]{2}-[0-9]{2}$", d)
+                      out <- rep(as.Date(NA), length(d))
+                      out[ok] <- as.Date(d[ok], format = "%Y-%m-%d")
+                      out
+                    })
 flg[, src_n := lengths(src_dates)]
 flg[, src_bad := vapply(seq_len(.N), function(i) {
   d <- src_dates[[i]]
@@ -85,15 +94,25 @@ if (AUDIT_ONLY) {
 
 # ---- Outcomes are read only past this line ----
 cells <- fread("output/departed-ind-successors.csv")
-cflag <- flg[, .(strong = any(any_true), has_mp = any(prior_mp_in_our_data %in% c("TRUE", TRUE))),
+# A candidate with every component UNKNOWN (no pre-election profile to read)
+# cannot be called weak: older elections have thinner sources, so treating
+# UNKNOWN as FALSE would mix era with flag quality. Such a cell is `unknown`
+# unless some candidate is TRUE, and is left out of both the fit and the arm.
+flg[, all_unknown := Reduce(`&`, lapply(COMPONENTS, function(cc) flg[[cc]] == "UNKNOWN"))]
+cflag <- flg[, .(strong = any(any_true), any_unknown = any(all_unknown),
+                 has_mp = any(prior_mp_in_our_data %in% c("TRUE", TRUE))),
              by = .(election, seat)]
 cells <- cflag[cells, on = .(election, seat)]
-stopifnot(!anyNA(cells$strong))
+stopifnot(!anyNA(cells$strong), !anyNA(cells$any_unknown))
 cells[, election_date := as.Date(unname(election_dates(election)))]
-cells[, group := ifelse(strong, "strong", "weak")]
-use <- cells[!cells$has_mp]
-cat(sprintf("cells %d; excluded (an IND is a sitting/former MP) %d; strong %d, weak %d (live %d)\n",
-            nrow(cells), sum(cells$has_mp), sum(use$strong), sum(!use$strong), sum(!use$scored)))
+cells[, group := ifelse(strong, "strong", ifelse(any_unknown, "unknown", "weak"))]
+use <- cells[!cells$has_mp & cells$group != "unknown"]
+cat(sprintf("cells %d; excluded: sitting/former MP %d, unknown (no profile, no TRUE) %d; strong %d, weak %d (live %d)\n",
+            nrow(cells), sum(cells$has_mp), sum(!cells$has_mp & cells$group == "unknown"),
+            sum(use$strong), sum(!use$strong), sum(!use$scored)))
+# Era balance, printed BEFORE any rate: if unknown or weak pile up in early
+# elections, the split partly measures source coverage, not the successor.
+print(cells[!cells$has_mp, .N, by = .(era = ifelse(year(election_date) < 2013, "before 2013", "2013 on"), group)][order(era, group)])
 
 ratio_fit <- function(d) {
   # Ratio-of-means retention with a cluster-on-election linearised SE.

@@ -112,10 +112,13 @@ test_that("switch 0 returns the matrix itself without reading anything", {
 })
 
 test_that("post_xgb_switches lists every active post-xgb switch", {
-  withr::local_envvar(AUSPOL_REENTRY = "0", AUSPOL_NEW_IND_SHRINK = "0")
+  withr::local_envvar(AUSPOL_REENTRY = "0", AUSPOL_NEW_IND_SHRINK = "0", AUSPOL_DEPARTED_SUCCESSOR = "0")
   expect_length(post_xgb_switches(), 0L)
   withr::local_envvar(AUSPOL_NEW_IND_SHRINK = "1")
   expect_identical(names(post_xgb_switches()), "AUSPOL_NEW_IND_SHRINK")
   withr::local_envvar(AUSPOL_REENTRY = "majors")
   expect_setequal(names(post_xgb_switches()), c("AUSPOL_REENTRY", "AUSPOL_NEW_IND_SHRINK"))
+  # The successor rate is post-xgb too: stage 1 must never train the trees on it.
+  withr::local_envvar(AUSPOL_DEPARTED_SUCCESSOR = "1")
+  expect_true("AUSPOL_DEPARTED_SUCCESSOR" %in% names(post_xgb_switches()))
 })

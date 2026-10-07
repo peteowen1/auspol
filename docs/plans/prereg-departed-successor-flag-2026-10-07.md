@@ -143,3 +143,33 @@ table goes to Pete.
 
 None. Any later amendment is added below this line, with the original text
 left unedited.
+
+### Amendment 1, 2026-10-07, written BEFORE any flag file has passed the gates or been joined to a result
+
+1. **Source.** The first coding (agent web search) was REJECTED on leakage
+   grounds and quarantined as
+   `external/reference/successors/departed-ind-successors.websearch-REJECTED-2026-10-07.csv`:
+   16 of its 26 TRUE rows had missing, vague or post-election source dates, and
+   the TRUEs concentrated on candidates later famous for winning (search
+   coverage follows the outcome). Flags are now coded ONLY from the ABC
+   election-guide seat page as archived by the Wayback Machine, using the latest
+   capture strictly before polling day (resolved through the archive's index with
+   a `to=` cap, served timestamp asserted), raw HTML kept under
+   `external/reference/successors/abc-guide-raw/`
+   (`scripts/fetch_abc_guide_snapshots.py`). The coder reads only the extracted
+   profile text, with no web access. One fixed source per seat makes effort equal
+   by construction, and a page saved before the vote cannot contain the result.
+2. **UNKNOWN is not weak.** A cell with no TRUE where any candidate is UNKNOWN on
+   every component (no guide, no pre-election capture, or no profile) is
+   `unknown`. It is excluded from the fit and from the arm, and keeps today's
+   behaviour. Treating it as weak would mix era with source coverage. The fit
+   prints the group counts by era (before 2013 / 2013 on) before any rate.
+3. **Dates strict ISO.** Each source date must be exactly `YYYY-MM-DD`.
+   Prompted by review (as.Date accepted trailing text).
+4. **Measured post-xgb.** "Deciding run at `AUSPOL_XGB_PRIMARY=0` plus the
+   retrained-xgb arm" is replaced by the path the 2026-10-06 shipped fixes used:
+   the arm runs at the published `AUSPOL_XGB_PRIMARY=1` with
+   `AUSPOL_XGB_BASE_DELTA=1`, which carries the base-layer change through the
+   cached as-at predictions. `AUSPOL_DEPARTED_SUCCESSOR` is registered in
+   `post_xgb_switches()` and set to 0 in `rebuild_forecasts.sh` stage 1, so the
+   trees never train on it. Criteria 1-4 and the disqualifiers are unchanged.
