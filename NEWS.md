@@ -1,3 +1,12 @@
+# auspol 0.4.76
+
+- A seat poll whose Liberal and National columns were one merged cell on Wikipedia no longer counts the Coalition twice (`AUSPOL_SEAT_POLL_COALITION_DEDUP`). Nicholls 2022 read as Coalition 82% and pulled the forecast to 55.3 against an actual 44.2; it was the only such poll in 1,210. Fixing it raises the seat-poll weight later elections learn, which costs Victoria-style MRP-heavy elections a little (federal 2025 share error +3%).
+- A seat-poll weight learned from a single seat now counts as no information (weight 0) instead of certainty. Federal 2019 had used weight 1.0 from one 2016 poll in Mayo; its seat log loss improves 0.2402 -> 0.2318.
+- Departed independents: the corpus-wide 0.38 retention rate (15 cases, measured on later elections too) is replaced by a rate fitted only on earlier elections (`AUSPOL_DEPARTED_SUCCESSOR`). Ledger 0.2741 -> 0.2739.
+- `scripts/quick_arm.R` screens a model change in minutes: only the affected elections, at low simulation counts, against a cached baseline on the same seed.
+- The published seat script runs for any target election (`AUSPOL_TARGET`, default Victoria 2026, which is byte-identical). New South Wales 2027 now runs end to end with a provisional candidate list, every by-election since 2023, and a corrected two-party prior. It is not published yet.
+- Tested and not shipped: seat polls from public pollsters only, polls read relative to their own release, a clustered leader-seat bonus, a sitting-independent first-defence term, and a trend that follows surging parties faster (the August poll-lag verdict stands).
+
 # auspol 0.4.75
 
 - An independent nobody has heard of (the only independent in the seat, with no earlier vote anywhere) is shrunk by a factor learned from earlier elections in the same state, capped so it only ever lowers. In practice this is Victoria, where such candidates had been over-called by about 3 points each in 2014, 2018 and 2022 (live Victoria 2026: factor 0.74 on 13 candidates). Backtest: changed cells' squared error 1,200 -> 1,035; seat log loss 0.2742 -> 0.2741. An uncapped version, raising these candidates where they were under-called (federal, NSW), was tested and refused: those groups mix a few strong candidates with many weak ones.
