@@ -5,6 +5,17 @@ it stood before this rewrite: `backlog/journal-2026-09-19-hub-snapshot.md`).
 Decisions: `docs/DECISIONS.md`. Every seat verdict: `docs/SEAT-REGISTRY.md`.
 Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30.
 
+## 2026-10-08 HANDOFF (READ FIRST)
+
+**Shipped and live:** PR #97 and PR #98 merged; `shipped-models` at `75dbda7` (AEF-7 ledger **0.2744** vs AEF 0.2825; pooled seat log loss 0.3249 over 2,120, was 0.3254); forecast refresh run 37700697788 green. In it: departed-successor rate, Nicholls Lib/Nat merged-cell dedup (ledger +0.0005, the fed2025 blend-weight cost Pete accepted), one-cluster blend weight = 0 (fed2019 0.2402 -> 0.2318). Victoria live is unchanged by the two seat-poll fixes until its first seat poll arrives (no polled cells today).
+
+**Open, in priority order:**
+1. **NSW 2027 on ITG** (`plans/nsw2027-itg-scope-2026-10-08.md`). Runs end to end: `AUSPOL_TARGET=nsw2027 AUSPOL_OUT_SUFFIX=-probe Rscript scripts/fit_seats_full.R` (probe: Labor median 47 of 93, Coalition 32). Still missing: census rows (DR1! skipped), council history, `build_forecast_json.R` nsw2027 entry + ITG page, a NSW step in promote/publish and the daily workflow. Accepted as is: One Nation trend ~5 under its polls (poll-lag verdict kept), sitting INDs -14 to -20 (SA 2026 says that is if anything too small).
+2. **fed2025 seat polls deserved weight ~0.13, got 0.55**: no pre-election signal found (fed2022 vs fed2025 disagreement 4.12 vs 3.80). Election-clustered SE checked, does nothing. Open.
+3. **Flows pool across states**: `FL0` (new, every run) shows vic2026 and nsw2027 with identical estimated flows (ONP 33.7, GRN 83.5): `estimate_flows_for()` "mean of last 5" looks region-blind. Check whether that is the backtested design before touching it.
+
+**Lessons recorded today:** memory `print-value-at-point-of-use` (the 25.5 flow claim). A hand run of `pool_backtests.R` overwrote the rebuild's scoreboard with a stale wa2021 file (23 pairs); restored from `output/snapshots/20261008-0945-75dbda7-from6` before publishing.
+
 ## 2026-10-07 evening HANDOFF (READ FIRST, Pete restarting)
 
 **For Pete, in order:**

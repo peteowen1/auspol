@@ -359,6 +359,14 @@ cycles <- load_election_cycles(); polls <- load_polls(REGION)
 pri <- load_prior_results(); kp <- pri$region == REGION & pri$year == YEAR
 priors <- setNames(pri$prev1[which(kp)], pri$party[which(kp)])
 fl <- flows_for(load_preference_flows(), YEAR, REGION, quiet = TRUE)
+# THE FLOWS THIS RUN USES, every run. flows_for() re-estimates each party's
+# flow from earlier elections, so the anchor file's number is not the one used:
+# on 2026-10-08 the anchor's NSW One Nation 25.5 was taken for the model's
+# value, which was 33.7, and an override was half-built before anyone printed it.
+cat(sprintf("FL0  %s flows used (to Labor %% / exhausted %%, source): %s\n", TGT,
+            paste(sprintf("%s %.1f/%.0f (%s)", fl$party, fl$flow_alp, fl$exhaust,
+                          if ("flow_source" %in% names(fl)) fl$flow_source else "as supplied"),
+                  collapse = "; ")))
 # DIAGNOSTIC ONLY, default 0. Shifts every party's flow-to-Labor by a fixed
 # number of POINTS, to size what getting the flows wrong is worth before
 # deciding whether to model flow uncertainty properly. Flows currently enter as
