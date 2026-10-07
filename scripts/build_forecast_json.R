@@ -33,10 +33,12 @@ ELECTIONS <- list(
     region_file = file.path("external", "reference", "vec", "vic-district-regions.csv")),
   nsw2027 = list(
     election = "nsw2027",
-    # Fourth Saturday of March 2027 (NSW fixed-term rule). NOT in election_dates()
-    # and the anchor's election-cycles.csv says 2027-03-20 for the cycle end; both
-    # disagree with / lack this. Confirm against the NSWEC writ date before publishing.
-    election_date = "2027-03-27",
+    # Saturday 13 March 2027, brought forward two weeks from the fixed-term date to
+    # avoid Easter (NSWEC Bulletin No. 2, 27 May 2026; Electoral Legislation
+    # Amendment (Elections) Act 2026). The anchor's election-cycles.csv still says
+    # 2027-03-20: do not take the date from there. Literal, not election_dates():
+    # this block runs before the package is loaded. Keep equal to R/election_dates.R.
+    election_date = "2027-03-13",
     chamber_seats = 93L,             # Legislative Assembly; all NSW harness years (2015/19/23) score 93 (docs/DATA-REGISTRY.md)
     majority = 47L,                  # 93 %/% 2 + 1
     file_tag = "nsw-2027",           # none of these inputs exist yet: the script stops naming them
