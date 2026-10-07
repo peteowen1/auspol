@@ -1,0 +1,952 @@
+{{short description|none}}
+{{Use Australian English|date=September 2026}}
+{{Use dmy dates|date=September 2026}}
+{{dynamic list}}
+The [[2027 New South Wales state election]] will be held on 13 March 2027 to elect all 93 seats of the [[New South Wales Legislative Assembly|Legislative Assembly]], as well as 21 out of the 42 [[New South Wales Legislative Council|Legislative Council]] seats. 
+
+Nominations for candidates are scheduled to close at 12:00 PM AEST on 24 February, 2027, and the [[NSW Electoral Commission]] is expected to declare the nominations the following day.<ref>{{Cite web |title=2027 NSW State election |url=https://elections.nsw.gov.au/elections/state-elections/2027-nsw-state-election |access-date=2026-08-17 |website=elections.nsw.gov.au |language=en-au}}</ref>
+
+== Retiring members ==
+The following members announced that they will not be contesting the 2027 election:
+
+=== Labor ===
+
+* [[Hugh McDermott (politician)|Hugh McDermott]] MP ([[Electoral district of Prospect|Prospect]]) – announced 1 October 2026<ref>{{Cite web |last=Maddison |first=Max |date=2026-10-01 |title=Veteran MP resigns as NSW Labor HQ targets male backbenchers |url=https://www.smh.com.au/politics/nsw/veteran-mp-resigns-as-nsw-labor-hq-targets-male-backbenchers-20261001-p6121v.html |access-date=2026-10-01 |website=The Sydney Morning Herald |language=en}}</ref>
+
+=== Liberal ===
+*[[James Griffin (Australian politician)|James Griffin]] MP ([[Electoral district of Manly|Manly]]) – announced 2 September 2026<ref>{{Cite web |last=Vince |first=Avi |date=2026-09-02 |title=Member for Manly, James Griffin, announces retirement |url=https://manlyobserver.com.au/member-for-manly-james-griffin-announces-retirement/ |access-date=2026-09-11 |website=Manly Observer |language=en-US}}</ref> 
+*[[Alister Henskens]] MP ([[Electoral district of Wahroonga|Wahroonga]]) – announced 11 September 2026<ref>{{Cite web |last=McSweeney |first=Jessica |date=2026-09-11 |title=Kellie Sloane loses second senior frontbencher in as many weeks |url=https://www.smh.com.au/politics/nsw/kellie-sloane-loses-second-senior-frontbencher-in-as-many-weeks-20260911-p60wm4.html |access-date=2026-09-11 |website=The Sydney Morning Herald |language=en}}</ref> 
+*[[Mark Taylor (Australian politician)|Mark Taylor]] MP ([[Electoral district of Winston Hills|Winston Hills]]) – announced 8 July 2026<ref>{{Cite web |last=Dodds |first=Troy |date=2026-07-08 |title=Winston Hills MP Mark Taylor won't contest the 2027 State Election - Parra News - Parramatta's Independent Voice |url=https://www.parranews.com.au/2026/07/winston-hills-mp-mark-taylor-wont-contest-the-2027-state-election/ |access-date=2026-09-11 |language=en-US}}</ref> 
+=== Greens ===
+*[[Tamara Smith]] MP ([[Electoral district of Ballina|Ballina]]) – announced 1 May 2026<ref>{{Cite web |last=Bruem |first=Rod |date=2026-05-01 |title=Ballina Greens MP Tamara Smith to exit politics after three terms |url=https://ballinanewsdaily.com.au/2026/05/ballina-greens-mp-tamara-smith-to-exit-politics-after-three-terms/ |access-date=2026-09-11 |website=Ballina News Daily |language=en-AU}}</ref>
+
+== Legislative Assembly ==
+Sitting members are shown in bold text. Successful candidates are highlighted in the relevant colour. Coalition candidates are denoted with (L) for Liberal Party and (N) for National Party.
+{{Sticky header}}
+{| class="wikitable sortable sticky-header-multi"
+! rowspan="2"| Electorate
+! rowspan="2"| Held by
+! [[Australian Labor Party (New South Wales Branch)|Labor]] candidate
+! [[Coalition (Australia)|Coalition]] candidate
+! [[Greens New South Wales|Greens]] candidate
+! [[Family First Party (2021)|Family First]] candidate
+! [[Libertarian Party (Australia)|Libertarian]] candidate
+! Other candidates
+|- bgcolor="#cccccc"
+! class="unsortable" {{Australian party style|Labor}}| 
+! class="unsortable" {{Australian party style|Libnat Coalition NSW}}| 
+! class="unsortable" {{Australian party style|Greens}}| 
+! class="unsortable" {{Australian party style|Family First}} |
+! class="unsortable" {{Australian party style|Libertarian}}| 
+! class="unsortable" style="background:#999999" |
+|-
+| [[Electoral district of Albury|Albury]]
+| [[New South Wales Liberal Party|Liberal]]
+|
+|
+|
+|Rebecca Scriven<ref>{{Cite web |title=Rebecca Scriven, Candidate for Albury |url=https://www.familyfirstparty.org.au/rebecca_scriven |access-date=2026-09-11 |website=Family First Party Australia |language=en}}</ref>
+|
+|Lucas Ellis ([[Sustainable Australia Party|SAP]])<ref>{{cite web|url=https://www.sustainableaustralia.org.au/2027_albury_nsw_election| title=2027 NSW Election - Albury | access-date=19 September 2026}}</ref>
+|-
+| [[Electoral district of Auburn|Auburn]]
+| [[Australian Labor Party (New South Wales Branch)|Labor]]
+|
+|
+|
+|
+| Mike Luo<ref name="LibertarianCandidates">{{Cite web |title=Our Candidates |url=https://www.lpnsw.org.au/state_candidates |access-date=2026-09-11 |website=Libertarian Party NSW |language=en}}</ref>
+| Jasmine Al-Rawi ([[New South Wales Soc|NSW Soc]])<ref>{{cite web | url=https://www.nswsocialists.org.au/candidates/jasmine-al-rawi| title=Jasmine Al-Rawi – NSW Socialists | access-date=11 September 2026}}</ref>
+|-
+| [[Electoral district of Badgerys Creek|Badgerys Creek]]
+| [[New South Wales Liberal Party|Liberal]]
+|
+|
+|
+|
+|
+|
+|-
+| [[Electoral district of Ballina|Ballina]]
+| {{Australian politics/name|Greens NSW}}
+| Janet Swain<ref>{{cite news |url=https://www.echo.net.au/2026/09/janet-swain-wins-labora-preselection-for-seat-of-ballina/ |access-date=18 September 2026 |archive-url=https://web.archive.org/web/20260909055546/https://www.echo.net.au/2026/09/janet-swain-wins-labora-preselection-for-seat-of-ballina/ |archive-date=9 September 2026 |url-status=live |title=Janet Swain wins Labor preselection for seat of Ballina |work=[[Byron Shire Echo]] |date=9 September 2026}}</ref>
+|
+| [[Mandy Nolan]]<ref>{{cite web | url=https://greens.org.au/nsw/person/mandy-nolan| title=Mandy Nolan, Candidate for Ballina | access-date=11 September 2026}}</ref>
+| Gushiv D'Arcy<ref>{{Cite web |title=Gushiv D'Arcy, Candidate for Ballina |url=https://www.familyfirstparty.org.au/gushivd |access-date=2026-09-11 |website=Family First Party Australia |language=en}}</ref>
+|
+|
+|-
+| [[Electoral district of Balmain|Balmain]]
+| {{Australian politics/name|Greens NSW}}
+|Philippa Scott<ref>{{Cite web |last=Fagan |first=Siena |date=2026-09-12 |title=Jiu-jitsu coach, stand-up comic, apiarist: Inside the surprise day jobs of Sydney’s councillors |url=https://www.smh.com.au/national/nsw/jiu-jitsu-coach-stand-up-comic-apiarist-inside-the-surprise-day-jobs-of-sydney-s-councillors-20260821-p60qeo.html |access-date=2026-09-13 |website=The Sydney Morning Herald |language=en}}</ref>
+|
+|'''[[Kobi Shetty]]'''<ref name=":4" />
+|
+|
+| Isaac Nellist ([[Socialist Alliance (Australia)|SAll]])<ref>{{cite web | url=https://socialist-alliance.org/candidates/isaac-nellist-balmain| title=Isaac Nellist for Balmain &#124; Socialist Alliance | access-date=11 September 2026}}</ref>
+|-
+| [[Electoral district of Bankstown|Bankstown]]
+| {{Australian politics/name|Labor}}
+|
+|
+|
+|
+|
+|
+|-
+| [[Electoral district of Barwon|Barwon]]
+| {{Australian politics/name|Independent}}
+|
+|
+|
+|
+|Sally Edwards<ref name="LibertarianCandidates" />
+|
+|-
+| [[Electoral district of Bathurst|Bathurst]]
+| [[New South Wales National Party|National]]
+|
+|
+|
+|Anthony Craig<ref>{{Cite web |title=Anthony Craig, Candidate for Bathurst |url=https://www.familyfirstparty.org.au/anthony_craig |access-date=2026-09-11 |website=Family First Party Australia |language=en}}</ref>
+|Gareth Houghton<ref name="LibertarianCandidates" />
+|
+|-
+|[[Electoral district of Bega|Bega]]
+|[[New South Wales Labor Party|Labor]]
+|
+|
+|
+|
+|
+|
+|-
+|[[Electoral district of Blacktown|Blacktown]]
+|[[New South Wales Labor Party|Labor]]
+|
+|
+|
+|
+|
+|Rishi Kapoor ([[Independent politician|Ind]])<ref name=":3">{{Cite web |title=NSW Electoral Commission Registers |url=https://registers.elections.nsw.gov.au/s/registers-of-candidates |access-date=2026-09-12 |website=registers.elections.nsw.gov.au}}</ref>
+|-
+|[[Electoral district of Blue Mountains|Blue Mountains]]
+|[[New South Wales Labor Party|Labor]]
+|
+|
+|
+|
+|
+|
+|-
+|[[Electoral district of Cabramatta|Cabramatta]]
+|[[New South Wales Labor Party|Labor]]
+|
+|
+|
+|
+|Victor Tey<ref name="LibertarianCandidates" />
+|
+|-
+|[[Electoral district of Camden|Camden]]
+|[[New South Wales Labor Party|Labor]]
+|
+|Mick Willing ([[New South Wales Liberal Party|L]])<ref>{{cite news |last=Soliman-Marron |url-status=live |first=Rihannon |title=Ex-NSW Police deputy commissioner Mick Willing to run for Liberals in Camden in 2027 state election |url=https://www.abc.net.au/news/2026-03-21/ex-senior-cop-mick-willing-liberal-camden-pick-for-2027-nsw-vote/106481802 |access-date=21 March 2026 |publisher=[[ABC News (Australia)|ABC News]] |date=21 March 2026 |archive-url=https://web.archive.org/web/20260321062703/https://www.abc.net.au/news/2026-03-21/ex-senior-cop-mick-willing-liberal-camden-pick-for-2027-nsw-vote/106481802 |archive-date=21 March 2026}}</ref>
+|
+|Jeremy Antcliffe<ref>{{Cite web |title=Jeremy Antcliffe, Candidate for Camden |url=https://www.familyfirstparty.org.au/jeremy_antcliffe |access-date=2026-09-11 |website=Family First Party Australia |language=en}}</ref>
+|
+|
+|-
+|[[Electoral district of Campbelltown|Campbelltown]]
+|[[New South Wales Labor Party|Labor]]
+|
+|
+|Jayden Rivera<ref>{{Cite web |title=Jayden Rivera, Candidate for Campbelltown |url=https://greens.org.au/nsw/person/jayden-rivera |access-date=2026-09-11 |website=greens.org.au |language=en}}</ref>
+|Lisa Kiss<ref>{{Cite web |title=Lisa Kiss, Candidate for Campbelltown |url=https://www.familyfirstparty.org.au/lisa_kiss |access-date=2026-09-11 |website=Family First Party Australia |language=en}}</ref>
+|
+|
+|-
+|[[Electoral district of Canterbury|Canterbury]]
+|[[New South Wales Labor Party|Labor]]
+|
+|
+|Conroy Blood<ref>{{Cite web |title=Conroy Blood, Candidate for Canterbury |url=https://greens.org.au/nsw/person/conroy-blood |access-date=2026-09-11 |website=greens.org.au |language=en}}</ref>
+|
+|Vanessa Hadchiti'''<ref name="LibertarianCandidates" />'''
+|Dylan Foster ([[Sustainable Australia Party|SAP]])<ref>{{cite web |url=https://www.sustainableaustralia.org.au/2027_canterbury_nsw_election| title=2027 NSW Election - Canterbury | access-date=19 September 2026}}</ref>
+|-
+|[[Electoral district of Castle Hill|Castle Hill]]
+|[[New South Wales Liberal Party|Liberal]]
+|
+|Peter Gangemi ([[New South Wales Liberal Party|L]])<ref>{{Cite web |title=Peter Gangemi |url=https://nswliberal.org.au/peter-gangemi |access-date=2026-09-11 |website=nswliberal.org.au |language=en}}</ref>
+|
+|
+|
+|
+|-
+|[[Electoral district of Cessnock|Cessnock]]
+|[[New South Wales Labor Party|Labor]]
+|
+|
+|
+|
+|James Szczepanski<ref name="LibertarianCandidates" />
+|Mike Newman ([[One Nation New South Wales|ONP]]) <ref name="OneNationLeader">{{cite news |work=[[The Sydney Morning Herald]] |access-date=28 August 2026 |url=https://www.smh.com.au/politics/nsw/one-nation-candidate-launches-broadside-on-nsw-liberal-leader-20260828-p60sgw.html |date=28 August 2026 |title=One Nation candidate launches broadside on NSW Liberal leader |url-access=subscription |first=Max |last=Maddison}}</ref>
+|-
+|[[Electoral district of Charlestown|Charlestown]]
+|[[New South Wales Labor Party|Labor]]
+|
+|
+|
+|Kim Farnham<ref>{{Cite web |title=Kim Farnham, Candidate for Charlestown |url=https://www.familyfirstparty.org.au/kim_farnham |access-date=2026-09-11 |website=Family First Party Australia |language=en}}</ref>
+|
+|
+|-
+|[[Electoral district of Clarence|Clarence]]
+|[[New South Wales National Party|National]]
+|
+|
+|
+|
+|
+|
+|-
+|[[Electoral district of Coffs Harbour|Coffs Harbour]]
+|[[New South Wales National Party|National]]
+|
+|
+|
+|Peter Ham<ref>{{Cite web |title=Peter Ham, Candidate for Coffs Harbour |url=https://www.familyfirstparty.org.au/peter_ham |access-date=2026-09-11 |website=Family First Party Australia |language=en}}</ref>
+|
+|
+|-
+|[[Electoral district of Coogee|Coogee]]
+|[[New South Wales Labor Party|Labor]]
+|
+|Carolyn Martin ([[New South Wales Liberal Party|L]])<ref>{{cite news |via=''[[The Daily Telegraph (Sydney)|The Daily Telegraph]]'' |url=https://www.heraldsun.com.au/news/nsw/liberal-randwick-councillor-carolyn-martin-to-contest-winnable-coogee-seat-in-state-election/news-story/804013bc73fb840b04c6348cf1c77577 |title=Liberal Randwick councillor Carolyn Martin to contest 'winnable' Coogee seat in state election |work=Southern Courier |first=Thomas |last=Sargeant |date=3 July 2026 |access-date=20 July 2026 |url-access=subscription}}</ref>
+|
+|
+|
+|Angela Dunnett ([[Sustainable Australia Party|SAP]])<ref>{{cite web|url=https://www.sustainableaustralia.org.au/2027_coogee_nsw_election| title=2027 NSW Election - Coogee | access-date=19 September 2026}}</ref>
+|-
+|[[Electoral district of Cootamundra|Cootamundra]]
+|[[New South Wales National Party|National]]
+|
+|
+|
+|
+|
+|
+|-
+|[[Electoral district of Cronulla|Cronulla]]
+|[[New South Wales Liberal Party|Liberal]]
+|
+|
+|
+|
+|
+|
+|-
+|[[Electoral district of Davidson|Davidson]]
+|[[New South Wales Liberal Party|Liberal]]
+|
+|
+|
+|
+|
+|
+|-
+|[[Electoral district of Drummoyne|Drummoyne]]
+|[[New South Wales Liberal Party|Liberal]]
+|
+|
+|
+|
+|
+|
+|-
+|[[Electoral district of Dubbo|Dubbo]]
+|[[New South Wales National Party|National]]
+|
+|
+|
+|
+|
+|
+|-
+|[[Electoral district of East Hills|East Hills]]
+|[[New South Wales Labor Party|Labor]]
+|
+|[[Wendy Lindsay]] ([[New South Wales Liberal Party|L]])<ref>{{cite web |url=https://nswliberal.org.au/news/wendy-lindsay-continues-standing-up-for-east-hills |access-date=20 July 2026 |archive-date=8 March 2026 |url-status=live |archive-url=https://web.archive.org/web/20260308185001/https://nswliberal.org.au/news/wendy-lindsay-continues-standing-up-for-east-hills |title=Wendy Lindsay continues standing up for East Hills |date=27 January 2026 |publisher=[[New South Wales Liberal Party]]}}</ref>
+|
+|Gemma Macaulay<ref>{{Cite web |title=Gemma Macaulay, Candidate for East Hills |url=https://www.familyfirstparty.org.au/gemma_macaulay |access-date=2026-09-11 |website=Family First Party Australia |language=en}}</ref>
+|
+|
+|-
+|[[Electoral district of Epping|Epping]]
+|[[New South Wales Liberal Party|Liberal]]
+|
+|
+|
+|
+|Rob Cribb<ref name="LibertarianCandidates" />
+|
+|-
+|[[Electoral district of Fairfield|Fairfield]]
+|[[New South Wales Labor Party|Labor]]
+|
+|
+|
+|
+|
+|
+|-
+|[[Electoral district of Gosford|Gosford]]
+|[[New South Wales Labor Party|Labor]]
+|
+|
+|Rhiannon Schembri<ref>{{Cite web |title=Rhiannon Schembri, Candidate for Gosford |url=https://greens.org.au/nsw/person/rhiannon-schembri |access-date=2026-09-16 |website=greens.org.au |language=en}}</ref>
+|
+|
+|Damian Phaserian-Dusk ([[Independent politician|Ind]])<ref name=":3" />
+|-
+|[[Electoral district of Goulburn|Goulburn]]
+|[[New South Wales Liberal Party|Liberal]]
+|
+|
+|
+|
+|Gregory Harris<ref name="LibertarianCandidates" />
+|Benjamin Gifford ([[Independent politician|Ind]])<ref name=":3" />
+|-
+|[[Electoral district of Granville|Granville]]
+|[[New South Wales Labor Party|Labor]]
+|
+|
+|
+|
+|[[Steve Christou]]<ref name="LibertarianCandidates" />
+|Alma Torlakovic ([[New South Wales Soc|NSW Soc]])<ref>{{Cite web |title=Alma Torlakovic – NSW Socialists |url=https://www.nswsocialists.org.au/candidates/alma-torlakovic |access-date=2026-09-11 |website=www.nswsocialists.org.au |language=en-AU}}</ref>
+|-
+|[[Electoral district of Hawkesbury|Hawkesbury]]
+|[[New South Wales Liberal Party|Liberal]]
+|
+|
+|
+|
+|
+|
+|-
+|[[Electoral district of Heathcote|Heathcote]]
+|[[New South Wales Labor Party|Labor]]
+|
+|
+|
+|
+|
+|
+|-
+|[[Electoral district of Heffron|Heffron]]
+|[[New South Wales Labor Party|Labor]]
+|
+|
+|
+|
+|
+|Rachel Evans ([[Socialist Alliance (Australia)|SAll]])<ref>{{Cite web |title=Rachel Evans for Heffron {{!}} Socialist Alliance |url=https://socialist-alliance.org/candidates/rachel-evans-heffron-0 |access-date=2026-09-11 |website=socialist-alliance.org |language=en}}</ref>
+|-
+|[[Electoral district of Holsworthy|Holsworthy]]
+|[[New South Wales Liberal Party|Liberal]]
+|
+|
+|
+|
+|
+|
+|-
+|[[Electoral district of Hornsby|Hornsby]]
+|[[New South Wales Liberal Party|Liberal]]
+|
+|
+|
+|
+|
+|
+|-
+|[[Electoral district of Keira|Keira]]
+|[[New South Wales Labor Party|Labor]]
+|Ryan Park {{Citation needed|date=September 2026|reason=no evidence provided of preselection}}
+|
+|
+|
+|
+|Kylie Flament ([[Independent politician|Ind]])<ref name=":3" />
+|-
+|[[Electoral district of Kellyville|Kellyville]]
+|[[New South Wales Liberal Party|Liberal]]
+|
+|
+|
+|
+|
+|
+|-
+|[[Electoral district of Kiama|Kiama]]
+|[[New South Wales Labor Party|Labor]]
+|Katelin McInerney {{Citation needed|date=September 2026|reason=no evidence provided of preselection}}
+|Serena Copley ([[New South Wales Liberal Party|L]])<ref>{{Cite web |title=Serena Copley |url=https://nswliberal.org.au/serena-copley |access-date=2026-09-11 |website=nswliberal.org.au |language=en}}</ref>
+|
+|
+|
+|
+|-
+|[[Electoral district of Kogarah|Kogarah]]
+|[[New South Wales Labor Party|Labor]]
+|'''[[Chris Minns]]'''<ref>{{Cite web |date=2026-03-02 |title=‘I won’t be here’: Minns puts expiry date on leadership |url=https://thenightly.com.au/politics/nsw-premier-chris-minns-says-2027-election-campaign-will-be-his-last-c-21804965 |access-date=2026-09-14 |website=The Nightly |language=en}}</ref>
+|
+|Yomna Touni<ref>{{Cite web |title=Yomna Touni, Candidate for Kogarah |url=https://greens.org.au/nsw/person/yomna-touni |access-date=2026-09-11 |website=greens.org.au |language=en}}</ref>
+|
+|
+|Wasim El-Haj ([[Independent politician|Ind]])<ref name=":3" />
+|-
+|[[Electoral district of Lake Macquarie|Lake Macquarie]]
+|[[Independent politicians in Australia|Independent]]
+|
+|
+|
+|
+|
+|
+|-
+|[[Electoral district of Lane Cove|Lane Cove]]
+|[[New South Wales Liberal Party|Liberal]]
+|
+|
+|
+|Kara-Lee Richards<ref>{{Cite web |title=Kara-Lee Richards, Candidate for Lane Cove |url=https://www.familyfirstparty.org.au/kara-lee_richards |access-date=2026-09-11 |website=Family First Party Australia |language=en}}</ref>
+|Graham Cribb<ref name="LibertarianCandidates" />
+|
+|-
+|[[Electoral district of Leppington|Leppington]]
+|[[New South Wales Labor Party|Labor]]
+|
+|
+|
+|
+|Sonia Qutami<ref name="LibertarianCandidates" />
+|
+|-
+|[[Electoral district of Lismore|Lismore]]
+|[[New South Wales Labor Party|Labor]]
+|
+|
+|Luke Robinson<ref>{{Cite web |title=Dr Luke Robinson, Candidate for Lismore |url=https://greens.org.au/nsw/person/dr-luke-robinson |access-date=2026-09-11 |website=greens.org.au |language=en}}</ref>
+|
+|Brenton Williams<ref name="LibertarianCandidates" />
+|
+|-
+|[[Electoral district of Liverpool|Liverpool]]
+|[[New South Wales Labor Party|Labor]]
+|
+|
+|Avery Howard<ref>{{Cite web |title=Avery Howard, Candidate for Liverpool |url=https://greens.org.au/nsw/person/avery-howard-0 |access-date=2026-09-11 |website=greens.org.au |language=en}}</ref>
+|
+|Adam Osman<ref name="LibertarianCandidates" />
+|
+|-
+|[[Electoral district of Londonderry|Londonderry]]
+|[[New South Wales Labor Party|Labor]]
+|
+|
+|
+|
+|
+|Gerals McCool ([[Independent politician|Ind]])<ref name=":3" /> <br /> [[Jim Saleam]] ([[Independent politician|Ind]]){{Citation needed|date=September 2026}}
+|-
+|[[Electoral district of Macquarie Fields|Macquarie Fields]]
+|[[New South Wales Labor Party|Labor]]
+|
+|
+|
+|
+|Michael Romeo<ref name="LibertarianCandidates" />
+|Muhamad Khalil ([[Independent politician|Ind]])<ref name=":3" />
+|-
+|[[Electoral district of Maitland|Maitland]]
+|[[New South Wales Labor Party|Labor]]
+|
+|
+|Paul Johns<ref>{{Cite web |title=Paul Johns, Candidate for Maitland |url=https://greens.org.au/nsw/person/paul-johns |access-date=2026-09-11 |website=greens.org.au |language=en}}</ref>
+|
+|
+|
+|-
+|[[Electoral district of Manly|Manly]]
+|[[New South Wales Liberal Party|Liberal]]
+|
+|Adelaide Cuneo<ref>{{cite news |work=[[The Sydney Morning Herald]] |url=https://www.smh.com.au/politics/nsw/the-liberal-party-is-drowning-this-29-year-old-rebel-wants-to-be-its-lifeboat-20261001-p611nl.html |url-access=subscription |access-date=1 October 2026 |date=1 October 2026 |first=Jessica |last=McSweeney |title=The Liberal Party is drowning. This 29-year-old ‘rebel’ wants to be its lifeboat}}</ref>
+|
+|
+|Nathan Thomson<ref name="LibertarianCandidates" />
+|Elouise Massa ([[Independent politicians in Australia|Ind]])<ref>{{cite news |url=https://www.smh.com.au/politics/nsw/i-am-not-the-same-person-how-tragedy-convinced-elouise-massa-to-run-for-parliament-20260904-p60uhz.html |url-access=subscription |access-date=6 September 2026 |date=6 September 2026 |title='I am not the same person': How tragedy convinced Elouise Massa to run for parliament |work=[[The Sydney Morning Herald]] |first=Alexandra |last=Smith}}</ref>
+|-
+|[[Electoral district of Maroubra|Maroubra]]
+|[[New South Wales Labor Party|Labor]]
+|
+|Kate Beaumont ([[New South Wales Liberal Party|L]])<ref>{{cite news |url=https://www.dailytelegraph.com.au/newslocal/southern-courier/liberal-candidate-kate-beaumont-to-challenge-michael-daley-for-maroubra/news-story/e8910eab8fc3db0db23f2ec802308e05 |access-date=31 July 2026 |date=30 July 2026 |work=Southern Courier |via=''[[The Daily Telegraph (Sydney)|The Daily Telegraph]]'' |title=Liberal candidate Kate Beaumont to challenge Michael Daley for Maroubra |url-access=subscription |first=Thomas |last=Sargeant}}</ref>
+|
+|
+|
+|
+|-
+|[[Electoral district of Miranda|Miranda]]
+|[[New South Wales Liberal Party|Liberal]]
+|Simon Earle<ref>{{cite web |publisher=[[New South Wales Labor Party|NSW Labor]] |url=https://www.nswlabor.org.au/simon_earle |title=Simon Earle- Labor Candidate for Miranda |access-date=14 August 2026}}</ref>
+|
+|
+|
+|
+|Sarah Coulon ([[Australian Democrats|Dem]])<ref name=":3" />
+|-
+|[[Electoral district of Monaro|Monaro]]
+|[[New South Wales Labor Party|Labor]]
+|
+|Mareeta Grundy ([[New South Wales National Party|N]])<ref>{{cite web |url=https://www.nswnationals.org.au/mareeta-grundy/ |access-date=14 August 2026 |title=Mareeta Grundy, The Nationals’ candidate for Monaro |publisher=[[New South Wales National Party|Nationals NSW]]}}</ref>
+|
+|
+|
+|Luke Downes ([[Independent politician|Ind]])<ref name=":3" /><br/>James Holgate ([[Sustainable Australia Party|SAP]])<ref>{{cite web|url=https://www.sustainableaustralia.org.au/2027_monaro_nsw_election| title=2027 NSW Election - Monaro | access-date=19 September 2026}}</ref>
+|-
+|[[Electoral district of Mount Druitt|Mount Druitt]]
+|[[New South Wales Labor Party|Labor]]
+|
+|
+|
+|Philip Finau<ref>{{Cite web |title=Philip Finau, Candidate for Mount Druitt |url=https://www.familyfirstparty.org.au/philip_finau |access-date=2026-09-11 |website=Family First Party Australia |language=en}}</ref>
+|
+|
+|-
+|[[Electoral district of Murray|Murray]]
+|[[Independent politicians in Australia|Independent]]
+|
+|
+|
+|
+|
+|
+|-
+|[[Electoral district of Myall Lakes|Myall Lakes]]
+|[[New South Wales National Party|National]]
+|
+|
+|
+|
+|
+|
+|-
+|[[Electoral district of Newcastle|Newcastle]]
+|[[New South Wales Labor Party|Labor]]
+|
+|
+|Lucinda Miller<ref name=":5">{{Cite web |last=newy.com.au |date=2026-08-26 |title=Greens name Newcastle and Wallsend candidates for 2027 state election |url=https://newy.com.au/2026/08/26/greens-name-newcastle-and-wallsend-candidates-for-2027-state-election/ |access-date=2026-09-13 |website=newy.com.au Newcastle News |language=en-AU}}</ref>
+|
+|
+|Steve O'Brien ([[Socialist Alliance (Australia)|SAll]])<ref>{{Cite web |title=Steve O'Brien for Newcastle {{!}} Socialist Alliance |url=https://socialist-alliance.org/candidates/steve-obrien-newcastle-0 |access-date=2026-09-11 |website=socialist-alliance.org |language=en}}</ref>
+|-
+|[[Electoral district of Newtown|Newtown]]
+|[[New South Wales Greens|Greens]]
+|
+|
+|'''[[Jenny Leong]]'''<ref name=":4" />
+|
+|Tan Hibbert<ref name="LibertarianCandidates" />
+|Shovan Bhattarai ([[New South Wales Soc|NSW Soc]])<ref name="HoniCandidates">{{cite news |work=[[Honi Soit]] |access-date=20 July 2026 |url=https://honisoit.com/2026/04/nsw-socialists-launch-2027-election-push-in-inner-west-seats/ |archive-url=https://web.archive.org/web/20260720061943/https://honisoit.com/2026/04/nsw-socialists-launch-2027-election-push-in-inner-west-seats/ |url-status=live |archive-date=20 July 2026 |date=21 April 2026 |first=James |last=Fitzgerald Sice |title=NSW Socialists preselect electoral candidates in Inner West seats}}</ref>
+|-
+|[[Electoral district of North Shore|North Shore]]
+|[[New South Wales Liberal Party|Liberal]]
+|
+|
+|
+|
+|
+|
+|-
+|[[Electoral district of Northern Tablelands|Northern Tablelands]]
+|[[New South Wales National Party|National]]
+|
+|
+|
+|
+|
+|
+|-
+|[[Electoral district of Oatley|Oatley]]
+|[[New South Wales Liberal Party|Liberal]]
+|Elaina Anzellotti<ref>{{cite news |work=[[St George & Sutherland Shire Leader]] |publisher=[[Australian Community Media]] |first=Jim |last=Gainsford |url=https://www.theleader.com.au/story/9249263/elaina-anzellotti-labor-candidate-for-oatley-eyes-2027-election/ |url-access=subscription |access-date=20 July 2026 |date=19 May 2026 |title=Teacher, councillor, candidate: Labor unveils pick for Oatley}}</ref>
+|
+|
+|Isaac Yakoubi<ref>{{Cite web |title=Isaac Yakoubi, Candidate for Oatley |url=https://www.familyfirstparty.org.au/isaac_yakoubi |access-date=2026-09-11 |website=Family First Party Australia |language=en}}</ref>
+|
+|
+|-
+|[[Electoral district of Orange|Orange]]
+|[[Independent politicians in Australia|Independent]]
+|
+|
+|
+|
+|
+|
+|-
+|[[Electoral district of Oxley|Oxley]]
+|[[New South Wales National Party|National]]
+|
+|
+|
+|Neil Ingleson<ref>{{Cite web |title=Neil Ingleson, Candidate for Oxley |url=https://www.familyfirstparty.org.au/neil_ingleson |access-date=2026-09-11 |website=Family First Party Australia |language=en}}</ref>
+|
+|David Booth ([[Independent politician|Ind]])<ref name=":3" />
+|-
+|[[Electoral district of Parramatta|Parramatta]]
+|[[New South Wales Labor Party|Labor]]
+|
+|
+|
+|Andrew McLachlan<ref>{{Cite web |title=Andrew McLachlan, Candidate for Parramatta |url=https://www.familyfirstparty.org.au/andrew_mclachlan |access-date=2026-09-11 |website=Family First Party Australia |language=en}}</ref>
+|
+|
+|-
+|[[Electoral district of Penrith|Penrith]]
+|[[New South Wales Labor Party|Labor]]
+|
+|
+|
+|Antony Emmanuel<ref>{{Cite web |title=Antony Emmanuel, Candidate for Penrith |url=https://www.familyfirstparty.org.au/antony_emmanuel_penrith |access-date=2026-09-11 |website=Family First Party Australia |language=en}}</ref>
+|Vanessa Pollak<ref name="LibertarianCandidates" />
+|
+|-
+|[[Electoral district of Pittwater|Pittwater]]
+|[[Independent politicians in Australia|Independent]]
+|
+|Michael Gencher ([[New South Wales Liberal Party|L]])<ref>{{Cite web |title=Michael Gencher |url=https://nswliberal.org.au/michael-gencher |access-date=2026-09-11 |website=nswliberal.org.au |language=en}}</ref>
+|
+|
+|Joshua Beer<ref name="LibertarianCandidates" />
+|'''[[Jacqui Scruby]]''' ([[Independent politician|Ind]])<ref name=":3" />
+|-
+|[[Electoral district of Port Macquarie|Port Macquarie]]
+|[[New South Wales Liberal Party|Liberal]]
+|
+|
+|
+|
+|
+|
+|-
+|[[Electoral district of Port Stephens|Port Stephens]]
+|[[New South Wales Labor Party|Labor]]
+|
+|
+|
+|
+|David Calder<ref name="LibertarianCandidates" />
+|
+|-
+|[[Electoral district of Prospect|Prospect]]
+|[[New South Wales Labor Party|Labor]]
+|
+|Kalvin Biag ([[New South Wales Liberal Party|L]])<ref>{{cite web |url=https://nswliberal.org.au/news/kalvin-biag-will-stand-up-for-prospect |publisher=[[New South Wales Liberal Party]] |access-date=20 July 2026 |date=25 May 2026 |title=Kalvin Biag will stand up for Prospect}}</ref>
+|
+|Pieter Swan<ref>{{Cite web |title=Pieter Swan, Candidate for Prospect |url=https://www.familyfirstparty.org.au/pieter_swan |access-date=2026-09-11 |website=Family First Party Australia |language=en}}</ref>
+|
+|
+|-
+|[[Electoral district of Riverstone|Riverstone]]
+|[[New South Wales Labor Party|Labor]]
+|
+|Mohit Kumar ([[New South Wales Liberal Party|L]])<ref>{{Cite web |title=Mohit Kumar |url=https://nswliberal.org.au/mohit-kumar |access-date=2026-09-11 |website=nswliberal.org.au |language=en}}</ref>
+|
+|
+|
+|Phillip Lipson ([[Independent politician|Ind]])<ref name=":3" />
+|-
+|[[Electoral district of Rockdale|Rockdale]]
+|[[New South Wales Labor Party|Labor]]
+|
+|
+|Dushy de Silva<ref>{{Cite web |title=Dushy De Silva, Candidate for Rockdale |url=https://greens.org.au/nsw/person/dushy-de-silva |access-date=2026-09-16 |website=greens.org.au |language=en}}</ref>
+|
+|
+|
+|-
+|[[Electoral district of Ryde|Ryde]]
+|[[New South Wales Liberal Party|Liberal]]
+|Lyndal Howison<ref>{{cite news |work=[[The Weekly Times]] |archive-url=https://web.archive.org/web/20260720063020/https://www.weeklytimes.com.au/nsw-labor-announces-lyndal-howison-as-first-state-election-candidate/ |archive-date=20 July 2026 |url-status=live |access-date=20 July 2026 |url=https://www.weeklytimes.com.au/nsw-labor-announces-lyndal-howison-as-first-state-election-candidate/ |title=NSW Labor announces Lyndal Howison as first state election candidate |date=27 May 2026}}</ref>
+|
+|
+|Andrew Amos<ref>{{Cite web |title=Andrew Amos, Candidate for Ryde |url=https://www.familyfirstparty.org.au/andrew_amos |access-date=2026-09-11 |website=Family First Party Australia |language=en}}</ref>
+|Meray Hajjar<ref name="LibertarianCandidates" />
+|
+|-
+|[[Electoral district of Shellharbour|Shellharbour]]
+|[[New South Wales Labor Party|Labor]]
+|Anna Watson {{Citation needed|date=September 2026|reason=no evidence provided of preselection}}
+|
+|
+|
+|
+|
+|-
+|[[Electoral district of South Coast|South Coast]]
+|[[New South Wales Labor Party|Labor]]
+|Liza Butler {{Citation needed|date=September 2026|reason=no evidence provided of preselection}}
+|
+|
+|
+|
+|
+|-
+|[[Electoral district of Strathfield|Strathfield]]
+|[[New South Wales Labor Party|Labor]]
+|
+|
+|
+|
+|
+|
+|-
+|[[Electoral district of Summer Hill|Summer Hill]]
+|[[New South Wales Labor Party|Labor]]
+|
+|
+|Izabella Antoniou<ref>{{Cite web |title=Izabella Antoniou, Candidate for Summer Hill |url=https://greens.org.au/nsw/person/izabella-antoniou |access-date=2026-09-11 |website=greens.org.au |language=en}}</ref>
+|
+|Dave Smith<ref name="LibertarianCandidates" />
+|Emma Norton ([[New South Wales Soc|NSW Soc]])<ref name="HoniCandidates" />
+|-
+|[[Electoral district of Swansea|Swansea]]
+|[[New South Wales Labor Party|Labor]]
+|
+|
+|
+|Matthew Reeves<ref>{{Cite web |title=Matthew Reeves, Candidate for Swansea |url=https://www.familyfirstparty.org.au/matthew_reeves |access-date=2026-09-11 |website=Family First Party Australia |language=en}}</ref>
+|
+|
+|-
+|[[Electoral district of Sydney|Sydney]]
+|[[Independent politicians in Australia|Independent]]
+|
+|
+|
+|
+|
+|'''[[Alex Greenwich]]'''  ([[Independent politician|Ind]])<ref>{{Cite web |title=Running Again in 2027 — Home |url=https://www.alexgreenwich.com/latest-news/running-again-in-2027/ |access-date=2026-09-13 |website=www.alexgreenwich.com |language=en}}</ref>
+Saman Iravani ([[Independent politician|Ind]])<ref name=":3"/><br/>Christopher Thomas ([[Sustainable Australia Party|SAP]])<ref>{{cite web|url=https://www.sustainableaustralia.org.au/2027_sydney_nsw_election| title=2027 NSW Election - Sydney | access-date=19 September 2026}}</ref>
+|-
+|[[Electoral district of Tamworth|Tamworth]]
+|[[New South Wales National Party|National]]
+|
+|
+|
+|
+|
+|Vanessa Phelps ([[Independent politician|Ind]])<ref name=":3" />
+Krystle Rowley ([[Independent politician|Ind]])<ref name=":3" />
+|-
+|[[Electoral district of Terrigal|Terrigal]]
+|[[New South Wales Liberal Party|Liberal]]
+|Sam Boughton<ref>{{Cite web |date=2026-09-10 |title=Boughton to run for Terrigal in State election |url=https://coastcommunitynews.com.au/central-coast/news/2026/09/boughton-to-run-for-terrigal-in-state-election/ |access-date=2026-09-13 |website=Central Coast News}}</ref>
+|
+|Rose Noble<ref>{{Cite web |title=Rose Noble, Candidate for Terrigal |url=https://greens.org.au/nsw/person/rose-noble |access-date=2026-09-16 |website=greens.org.au |language=en}}</ref>
+|
+|
+|
+|-
+|[[Electoral district of The Entrance|The Entrance]]
+|[[New South Wales Labor Party|Labor]]
+|
+|
+|
+|
+|
+|Carmen Jackson ([[Independent politician|Ind]])<ref name=":3" />
+Matthew Jeffrey ([[Independent politician|Ind]])<ref name=":3" />
+|-
+|[[Electoral district of Tweed|Tweed]]
+|[[New South Wales National Party|National]]
+|
+|
+|
+|
+|
+|
+|-
+|[[Electoral district of Upper Hunter|Upper Hunter]]
+|[[New South Wales National Party|National]]
+|
+|
+|
+|
+|
+|
+|-
+|[[Electoral district of Vaucluse|Vaucluse]]
+|[[New South Wales Liberal Party|Liberal]]
+|
+|
+|
+|Sri Affandi<ref>{{Cite web |title=Sri Affandi, Candidate for Vaucluse |url=https://www.familyfirstparty.org.au/sri_affandi |access-date=2026-09-11 |website=Family First Party Australia |language=en}}</ref>
+|
+|Evan Hughes ([[Independent politician|Ind]])<ref>{{Cite web |last=McSweeney |first=Jessica |date=2026-09-10 |title=‘A little bit suss’: Kellie Sloane claims 34-storey tower plans aimed at her |url=https://www.smh.com.au/politics/nsw/a-little-bit-suss-kellie-sloane-claims-34-storey-tower-plans-aimed-at-her-20260910-p60w6a.html |access-date=2026-09-11 |website=The Sydney Morning Herald |language=en}}</ref>
+|-
+|[[Electoral district of Wagga Wagga|Wagga Wagga]]
+|[[Independent politicians in Australia|Independent]]
+|
+|
+|
+|
+|
+|
+|-
+|[[Electoral district of Wahroonga|Wahroonga]]
+|[[New South Wales Liberal Party|Liberal]]
+|
+|
+|
+|
+|
+|
+|-
+|[[Electoral district of Wakehurst|Wakehurst]]
+|[[Independent politicians in Australia|Independent]]
+|
+|Philip Longley ([[New South Wales Liberal Party|L]])<ref>{{Cite web |title=Philip Longley |url=https://nswliberal.org.au/philip-longley |access-date=2026-09-11 |website=nswliberal.org.au |language=en}}</ref>
+|
+|
+|Sean Mcleod<ref name="LibertarianCandidates" />
+|
+|-
+|[[Electoral district of Wallsend|Wallsend]]
+|[[New South Wales Labor Party|Labor]]
+|
+|
+|Alex Ford<ref name=":5" />
+|
+|Geoffery Robertson<ref name="LibertarianCandidates" />
+|Kate Doherty ([[New South Wales Soc|NSW Soc]])<ref>{{Cite web |title=Kate Doherty – NSW Socialists |url=https://www.nswsocialists.org.au/candidates/kate-doherty |access-date=2026-09-11 |website=www.nswsocialists.org.au |language=en-AU}}</ref>
+|-
+|[[Electoral district of Willoughby|Willoughby]]
+|[[New South Wales Liberal Party|Liberal]]
+|
+|
+|
+|
+|
+|Michael Want ([[Sustainable Australia Party|SAP]])<ref>{{cite web|url=https://www.sustainableaustralia.org.au/2027_willoughby_nsw_election| title=2027 NSW Election - Willoughby | access-date=19 September 2026}}</ref>
+|-
+|[[Electoral district of Winston Hills|Winston Hills]]
+|[[New South Wales Liberal Party|Liberal]]
+|
+|
+|
+|
+|
+|Anthony Chadszinow ([[Sustainable Australia Party|SAP]])<ref>{{cite web|url=https://www.sustainableaustralia.org.au/2027_winston_hills_nsw_election| title=2027 NSW Election - Winston Hills | access-date=19 September 2026}}</ref>
+|-
+|[[Electoral district of Wollondilly|Wollondilly]]
+|[[Independent politicians in Australia|Independent]]
+|
+|
+|
+|
+|
+|
+|-
+|[[Electoral district of Wollongong|Wollongong]]
+|[[New South Wales Labor Party|Labor]]
+|Paul Scully {{Citation needed|date=September 2026|reason=no evidence provided of preselection}}
+|
+|
+|Alana Bartlett<ref>{{Cite web |title=Alana Bartlett, Candidate for Wollongong |url=https://www.familyfirstparty.org.au/alana_bartlett |access-date=2026-09-11 |website=Family First Party Australia |language=en}}</ref>
+|
+|Ryan Chapman ([[New South Wales Soc|NSW Soc]])<ref>{{Cite web |title=Ryan Chapman – NSW Socialists |url=https://www.nswsocialists.org.au/candidates/ryan-chapman |access-date=2026-09-11 |website=www.nswsocialists.org.au |language=en-AU}}</ref>
+|-
+|[[Electoral district of Wyong|Wyong]]
+|[[New South Wales Labor Party|Labor]]
+|
+|Ken Kozak ([[New South Wales Liberal Party|L]])<ref>{{Cite web |title=Ken Kozak |url=https://nswliberal.org.au/ken-kozak |access-date=2026-09-11 |website=nswliberal.org.au |language=en}}</ref>
+|
+|Jacob Harding-Davis<ref>{{Cite web |title=Jacob Harding-Davis, Candidate for Wyong |url=https://www.familyfirstparty.org.au/jacob_harding-davis |access-date=2026-09-11 |website=Family First Party Australia |language=en}}</ref>
+|
+|Xander McMillan ([[Independent politician|Ind]])<ref name=":3" />
+|}
+
+== Legislative Council ==
+Sitting members are shown in bold text.
+
+Half of the Legislative Council is not up for re-election. This includes eight Labor members ([[Courtney Houssos]], [[Rose Jackson]], [[Cameron Murphy]], [[Emily Suvaal]], [[John Graham (Australian politician)|John Graham]], [[Bob Nanva]], [[Stephen Lawrence (politician)|Stephen Lawrence]], and [[Sarah Kaine]]), five Liberal members ([[Natasha Maclaren-Jones]], [[Chris Rath]], [[Susan Carter]], [[Jacqui Munro]], and [[Rachel Merton]]), two National members ([[Scott Barrett (politician)|Scott Barrett]] and [[Ben Franklin (Australian politician)|Ben Franklin]]), two Greens members ([[Cate Faehrmann]] and [[Amanda Cohn]]), one Shooters and Fishers member ([[Robert Borsak]]), one Libertarian member ([[John Ruddick]]), one Legalise Cannabis member ([[Jeremy Buckingham]]), and independent member [[Mark Latham]], who was elected as a One Nation member.
+
+The Labor party is defending seven seats. The Liberal party is defending four seats. The National party is defending three seats. The Greens are defending two seats. The Shooters and Fishers, and the Animal Justice Party are each defending one seat. Independent members [[Tania Mihailuk]] and [[Rod Roberts (Australian politician)|Rod Roberts]], who were elected or appointed as One Nation members, have their terms expire in 2027.
+
+Tickets that elected at least one MLC are highlighted in the relevant colour. Successful candidates are identified with an asterisk (*).
+{| class="wikitable"
+![[Australian Labor Party (New South Wales Branch)|Labor]] candidates
+![[Coalition (Australia)|Coalition]] candidates
+![[Greens New South Wales|Greens]] candidates<ref name=":4">{{Cite web |title=NSW State Candidates {{!}} Greens NSW |url=https://greens.org.au/nsw/candidates/state |access-date=2026-09-11 |website=greens.org.au |language=en}}</ref>
+![[Family First Party (2021)|Family First]] candidates
+![[Libertarian Party (Australia)|Libertarian]] candidates<ref name="LibertarianCandidates" />
+|-
+| {{Australian party style|Labor}} | || {{Australian party style|Libnat Coalition NSW}} | || {{Australian party style|Greens}} | || {{Australian party style|Family First}} | || {{Australian party style|Libertarian}} |
+|-
+|
+* Mark Morey<ref name=":1">{{cite news |work=[[The Sydney Morning Herald]] |access-date=20 July 2026 |url=https://www.smh.com.au/politics/nsw/minns-faces-internal-push-for-action-on-poker-machines-20260524-p60037.html |url-access=subscription |title=Minns faces internal push for action on poker machines |first=Michael |last=McGowan |date=25 May 2026 |quote=Labor's newly preselected upper house candidate and Unions NSW boss Mark Morey}}</ref>
+|
+|
+* '''[[Abigail Boyd]]'''
+* '''[[Sue Higginson]]'''
+|
+* [[Lyle Shelton (lobbyist)|Lyle Shelton]]<ref>{{Cite web |title=Lyle Shelton, Legislative Council Candidate for New South Wales |url=https://www.familyfirstparty.org.au/lyle_shelton_nsw_2027 |access-date=2026-09-11 |website=Family First Party Australia |language=en}}</ref>
+|
+* Gemma Noiosi
+|-
+!{{Australian politics/name|Socialist Alliance}} candidates<ref name="SocialistAll">{{cite web |url=https://socialist-alliance.org/elections/people-planet-before-profit-2027-nsw-election-campaign#our-candidates |access-date=3 August 2026 |publisher=[[Socialist Alliance (Australia)|Socialist Alliance]] |title=People & planet before profit: 2027 NSW election campaign}}</ref>
+![[One Nation New South Wales|One Nation]] candidates
+![[Josh for NSW]] candidates
+![[Australian Christians (political party)|Australian Christians]] candidates
+!Other candidates
+|-
+| {{Australian party style|Socialist Alliance}} | || {{Australian party style|One Nation}} | || {{Australian party style|Josh for NSW}} | || {{Australian party style|Australian Christians}} | || {{Australian party style|Independent}} |
+|-
+|
+* Peter Boyle
+* Karyn Brown
+* Olivia Carney
+* Andrew Chuter
+* Paula Corvalan
+* Rohan Fraser
+* Pip Hinman
+* Gabrielle McCutcheon
+* Jim McIlroy
+* Ben Radford
+* Philippa Ryan
+* Arlo Valmai
+* James Wyner
+* Coral Wynter
+|
+* Stuart Bonds<ref name="OneNationLeader" />
+|
+* Joshua Kirsh<ref name=":2">{{cite news |last=Nivison |first=Jack |title=Jewish parliamentary hopeful says anti-Israel slogans 'incite violence' |url=https://www.theaustralian.com.au/breaking-news/jewish-parliamentary-hopeful-says-antiisrael-slogans-incite-violence/news-story/3b811027450dcc3915f6ba3b44fc0393?amp |access-date=21 March 2026 |work=[[The Australian]] |date=21 March 2026 |url-status=live |archive-url=https://ghostarchive.org/archive/20260720053551/https://www.theaustralian.com.au/breaking-news/jewish-parliamentary-hopeful-says-antiisrael-slogans-incite-violence/news-story/3b811027450dcc3915f6ba3b44fc0393?amp&nk=c7ee61cacb2cf53daf4457bb1f5639ce-1784525739 |archive-date=20 July 2026}}</ref>
+|
+* Asher Wolfson<ref name=":3" />
+|
+* Warren Grzic<ref name=":3" />
+* Cameron Macpherson<ref name=":3" />
+|}
+
+==References==
+{{reflist}}
+
+[[Category:2027 in New South Wales]]
+[[Category:2027 elections in Australia]]
+[[Category:Future elections in Australia]]
+[[Category:State elections in New South Wales]]

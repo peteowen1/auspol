@@ -153,6 +153,24 @@ OUT_SUFFIX  <- Sys.getenv("AUSPOL_OUT_SUFFIX", "")
 # difference that flips sign with the seed is Monte Carlo noise, which this
 # repo has already mistaken for a result once.
 SEED        <- as.integer(Sys.getenv("AUSPOL_SEED", "42"))
+# ---- TARGET ELECTION -----------------------------------------------------------
+# One published script for every live election (plans/nsw2027-itg-scope-2026-10-08.md).
+# AUSPOL_TARGET unset is vic2026, byte-identical to the Victoria-only script.
+# nsw2027 is wired for identity only: its Senate/booth/council tables and the
+# optional-preferential flow pooling are the next steps in that plan.
+.TARGETS <- list(
+  vic2026 = list(tgt = "vic2026", prev = "vic2022", region = "vic", year = 2026L,
+                 fp_file = "vec-2022-vic-firstprefs.csv", tx_file = "vec-2022-vic-transfers.csv", tx_recipe = "pooled",
+                 n_seats = 88L, out_stem = "vic-2026"),
+  nsw2027 = list(tgt = "nsw2027", prev = "nsw2023", region = "nsw", year = 2027L,
+                 fp_file = "nswec-2023-nsw-firstprefs.csv", tx_file = "nswec-nsw-transfers.csv", tx_recipe = "own_prev",
+                 n_seats = 93L, out_stem = "nsw-2027"))
+.tgt_arg <- Sys.getenv("AUSPOL_TARGET", "vic2026")
+if (!.tgt_arg %in% names(.TARGETS)) stop("AUSPOL_TARGET must be one of ", paste(names(.TARGETS), collapse = ", "), ", not ", .tgt_arg)
+TARGET <- .TARGETS[[.tgt_arg]]
+TGT <- TARGET$tgt; PREV <- TARGET$prev; REGION <- TARGET$region; YEAR <- TARGET$year
+cat(sprintf("TG0  target %s (previous %s, region %s, %d seats)
+", TGT, PREV, REGION, TARGET$n_seats))
 # Diagnostic arms for the One Nation allocation, declared HERE beside the other
 # overrides so the S6 default-run check below can see them. Defined only
 # further down, a toggle would change the published allocation with nothing in
@@ -177,9 +195,9 @@ FLOW_SD   <- as.numeric(Sys.getenv("AUSPOL_FLOW_SD", "0"))
 cat(sprintf("BS1f fallback_smooth %.2f | flow_sd %.2f\n", FB_SMOOTH, FLOW_SD))
 
 PREF <- election_data_path()          # external/elections, gitignored
-need <- file.path(PREF, c("vec-2022-vic-transfers.csv",
+need <- file.path(PREF, c(TARGET$tx_file,
                           "ecsa-2026-sa-transfers.csv",
-                          "vec-2022-vic-firstprefs.csv",
+                          TARGET$fp_file,
                           "ecsa-2026-sa-onp-shares.csv"))
 if (!all(file.exists(need))) {
   # Emitted WITH the check code so run_all.R's summary shows it. Without the
@@ -261,25 +279,38 @@ if (length(absent)) {
 # events instead of 18. Better data moving the answer is the system working.
 #
 # Set AUSPOL_QLD_FLOWS=0 to reproduce the pre-2026-08-21 forecast exactly.
-tx <- rbind(fread(file.path(PREF, "vec-2022-vic-transfers.csv")),
-            fread(file.path(PREF, "ecsa-2026-sa-transfers.csv")))
-if (!identical(Sys.getenv("AUSPOL_QLD_FLOWS", "1"), "0")) {
-  qf <- file.path(PREF, "ecq-qld-transfers.csv")
-  if (!file.exists(qf)) stop("Run scripts/fetch_preferences_qld.R first.")
-  tx <- rbind(tx, fread(qf), fill = TRUE)
-}
-# WESTERN AUSTRALIA, OFF BY DEFAULT. Against docs/plans/prereg-wa-flows.md,
-# which requires the backtest measurement before this ships. Seven admissible
-# elections, 1,634 exclusion events, taking One Nation's from 198 to 359.
-#
-# Routed through pool_external_flows() with the Victorian polling day, so the
-# same date guard the backtests use applies here rather than being assumed
-# unnecessary. The Queensland line above predates the helper and is left as it
-# is deliberately: it is on the published path, and the smallest diff that adds
-# Western Australia is the one least able to move the current forecast.
-VIC_2026 <- "2026-11-28"
-if (identical(Sys.getenv("AUSPOL_WA_FLOWS", "0"), "1")) {
-  tx <- pool_external_flows(tx, VIC_2026, "wa")
+if (identical(TARGET$tx_recipe, "own_prev")) {
+  # NSW IS OPTIONAL PREFERENTIAL: its own previous election only, never pooled with
+  # Queensland, South Australia or Western Australia (the NSW harness recipe,
+  # scripts/backtest_candidate_nsw.R; pooling Queensland cost nsw2023 0.194 of log score).
+  tx <- fread(file.path(PREF, TARGET$tx_file))
+  .p <- PREV
+  if (!.p %in% tx$election) stop("TG1! ", TARGET$tx_file, " has no ", .p, " transfers")
+  tx <- tx[tx$election == .p]
+  POLL_DAY <- format(as.Date(unname(election_dates()[TGT])))
+  cat(sprintf("TG1  %s flows: %d %s transfers only (own previous election, no pooling)
+", TGT, nrow(tx), .p))
+} else {
+  tx <- rbind(fread(file.path(PREF, TARGET$tx_file)),
+              fread(file.path(PREF, "ecsa-2026-sa-transfers.csv")))
+  if (!identical(Sys.getenv("AUSPOL_QLD_FLOWS", "1"), "0")) {
+    qf <- file.path(PREF, "ecq-qld-transfers.csv")
+    if (!file.exists(qf)) stop("Run scripts/fetch_preferences_qld.R first.")
+    tx <- rbind(tx, fread(qf), fill = TRUE)
+  }
+  # WESTERN AUSTRALIA, OFF BY DEFAULT. Against docs/plans/prereg-wa-flows.md,
+  # which requires the backtest measurement before this ships. Seven admissible
+  # elections, 1,634 exclusion events, taking One Nation's from 198 to 359.
+  #
+  # Routed through pool_external_flows() with the Victorian polling day, so the
+  # same date guard the backtests use applies here rather than being assumed
+  # unnecessary. The Queensland line above predates the helper and is left as it
+  # is deliberately: it is on the published path, and the smallest diff that adds
+  # Western Australia is the one least able to move the current forecast.
+  POLL_DAY <- format(as.Date(unname(election_dates()[TGT])))
+  if (identical(Sys.getenv("AUSPOL_WA_FLOWS", "0"), "1")) {
+    tx <- pool_external_flows(tx, POLL_DAY, "wa")
+  }
 }
 fm <- build_flow_matrix(tx, min_n = 3L)
 cat(sprintf("flow matrix: %d exclusions, %d cells at n>=3 of %d observed\n",
@@ -287,7 +318,7 @@ cat(sprintf("flow matrix: %d exclusions, %d cells at n>=3 of %d observed\n",
             nrow(fm$coverage)))
 
 # ---- 2. each seat's 2022 first preferences, as class shares ----------------
-fp <- fread(file.path(PREF, "vec-2022-vic-firstprefs.csv"))
+fp <- fread(file.path(PREF, TARGET$fp_file))
 # A SUPPLEMENTARY ELECTION IS THE SEAT'S GENERAL ELECTION HELD LATE. Narracan's
 # 2022 poll was deferred by a candidate's death and held on 28 January 2023;
 # the VEC file has no Narracan row, so until 2026-09-19 the forecast simulated
@@ -297,7 +328,7 @@ fp <- fread(file.path(PREF, "vec-2022-vic-firstprefs.csv"))
 # by-election falls in the window is appended here as its 2022 baseline.
 .sup <- tryCatch({
   bt <- byelection_table(); dts <- election_dates()
-  bt[bt$region == "vic" & !bt$seat %in% unique(fp$seat) & bt$date > dts[["vic2022"]] & bt$date < dts[["vic2026"]]]
+  bt[bt$region == REGION & !bt$seat %in% unique(fp$seat) & bt$date > dts[[PREV]] & bt$date < dts[[TGT]]]
 }, error = function(e) NULL)
 if (!is.null(.sup) && nrow(.sup)) {
   add <- .sup[, .(votes = sum(votes)), by = .(seat, party)]
@@ -318,16 +349,16 @@ cat(sprintf("seats with 2022 first preferences: %d\n", nrow(mat22)))
 # preference row that dropped a seat would print a different, equally
 # plausible figure and quietly simulate a smaller chamber. 88 districts:
 # 87 from the VEC file plus Narracan's supplementary election (above).
-if (nrow(mat22) < 88L) {
-  stop("Only ", nrow(mat22), " seats have 2022 first preferences; 88 expected ",
+if (nrow(mat22) < TARGET$n_seats) {
+  stop("Only ", nrow(mat22), " seats have ", PREV, " first preferences; ", TARGET$n_seats, " expected ",
        "(87 from the VEC file plus Narracan's supplementary election from the by-election table). A seat has been lost upstream.")
 }
 
 # ---- 3. statewide 2026, from the model rather than assumed -----------------
-cycles <- load_election_cycles(); polls <- load_polls("vic")
-pri <- load_prior_results(); kp <- pri$region == "vic" & pri$year == 2026
+cycles <- load_election_cycles(); polls <- load_polls(REGION)
+pri <- load_prior_results(); kp <- pri$region == REGION & pri$year == YEAR
 priors <- setNames(pri$prev1[which(kp)], pri$party[which(kp)])
-fl <- flows_for(load_preference_flows(), 2026, "vic", quiet = TRUE)
+fl <- flows_for(load_preference_flows(), YEAR, REGION, quiet = TRUE)
 # DIAGNOSTIC ONLY, default 0. Shifts every party's flow-to-Labor by a fixed
 # number of POINTS, to size what getting the flows wrong is worth before
 # deciding whether to model flow uncertainty properly. Flows currently enter as
@@ -396,7 +427,7 @@ cat(sprintf(paste0("S6  run config: seed %d, FP sd %s, flow %+.2f, ",
             if (default_run) "PASS" else
               paste("FAIL -- NOT A DEFAULT PUBLISH RUN; changed:",
                     paste(changed, collapse = ", "))))
-now <- trend_as_at(polls, 2026, cycles, Sys.Date(), priors, fl, with_series = TRUE)
+now <- trend_as_at(polls, YEAR, cycles, Sys.Date(), priors, fl, with_series = TRUE)
 
 # ---- S7: does the PUBLISHED trend follow the polls it was fitted to? --------
 #
@@ -420,7 +451,7 @@ now <- trend_as_at(polls, 2026, cycles, Sys.Date(), priors, fl, with_series = TR
 # non-zero on after the page is built -- a separate file from `L3-BREACH.txt`
 # and `NL3-BREACH.txt` on purpose, so a breach on the published cycle can
 # never be masked by, or overwrite, one on a cycle nobody publishes.
-S7_MARKER <- file.path("output", "S7-BREACH.txt")
+S7_MARKER <- file.path("output", if (TGT == "vic2026") "S7-BREACH.txt" else sprintf("S7-BREACH-%s.txt", TGT))   # run_all.R reads the vic2026 name
 
 # `now` is NULL on any of trend_as_at()'s several thin-cycle paths. Say which
 # quantity is missing rather than letting it surface as `stopifnot(length(fits)
@@ -428,7 +459,7 @@ S7_MARKER <- file.path("output", "S7-BREACH.txt")
 # lines below: `NULL$anything` is NULL in R, so a NULL fit propagates silently
 # until something unrelated trips over it.
 if (is.null(now)) {
-  stop("trend_as_at() returned NULL for Victoria 2026, so there is no trend ",
+  stop(sub("@T", TGT, "trend_as_at() returned NULL for @T, so there is no trend ", fixed = TRUE),
        "to publish, to check with S7, or to draw. Too few polls, no ALP ",
        "series, or the fit failed -- rerun it directly to see which.")
 }
@@ -496,10 +527,11 @@ if (length(s7_lines) && !default_run) {
 last <- as.data.table(now$series)[, .SD[which.max(date)], by = party]
 tppr <- last[party == "TPP_ALP"]
 mix <- fread("output/projection-mix.csv")
-days_out <- as.integer(cycles[region == "vic" & year == 2026, end] - Sys.Date())
+.reg <- REGION; .yr <- YEAR   # never a bare column-name symbol inside [ (CLAUDE.md, data.table NSE)
+days_out <- as.integer(cycles[cycles$region == .reg & cycles$year == .yr, end] - Sys.Date())
 fdat <- build_fundamentals_data(); m_tpp <- fit_fundamentals(fdat, "@TPP")
 live <- build_fundamentals_data(polled_only = FALSE, require_actual = FALSE)
-kf <- live$region == "vic" & live$year == 2026 & live$party == "@TPP"
+kf <- live$region == REGION & live$year == YEAR & live$party == "@TPP"
 fund_now <- predict_fundamentals(m_tpp, live[which(kf), ])
 pj <- project_result(now$tpp, fund_now, mix, days_out)
 growth <- pj$sd / ((tppr$hi95 - tppr$lo95) / (2 * 1.96))
@@ -647,7 +679,7 @@ sa_ratio <- sort(sa_fp$pct / mean(sa_fp$pct))
 # a state forecast near 20%, so nothing but shape transfers.
 fed_tr <- fread(file.path(PREF, "federal-transposed-to-state.csv"),
                 showProgress = FALSE)
-fed_onp <- fed_tr[region == "vic" & cycle == 2026 & party == "ONP", .(seat, pct)]
+fed_onp <- fed_tr[fed_tr$region == .reg & fed_tr$cycle == .yr & fed_tr$party == "ONP", .(seat, pct)]
 idx_v <- fed_onp$pct[match(rownames(mat22), fed_onp$seat)]
 if (anyNA(idx_v)) {
   stop("No transposed federal One Nation vote for: ",
@@ -673,18 +705,18 @@ for (r in seq_along(ord)) {
 # 3.25 vs 5.28 on SA 2026 + Qld 2017); scripts/build_onp_senate.R has the
 # whole comparison. Table: output/onp-senate-vic2026.csv (ships with the models).
 if (identical(Sys.getenv("AUSPOL_ONP_ORDER", "federal"), "senate")) {
-  .os_f <- file.path("output", "onp-senate-vic2026.csv")
+  .os_f <- file.path("output", sprintf("onp-senate-%s.csv", TGT))
   if (file.exists(.os_f)) {
     .os <- fread(.os_f, showProgress = FALSE)
     .os_v <- .os$senate_pct[match(rownames(mat22), .os$seat)]
-    if (anyNA(.os_v)) stop("onp-senate-vic2026.csv has no Senate share for: ", paste(rownames(mat22)[is.na(.os_v)], collapse = ", "))
+    if (anyNA(.os_v)) stop(basename(.os_f), " has no Senate share for: ", paste(rownames(mat22)[is.na(.os_v)], collapse = ", "))
     .os_p <- .os$curve_a[1] + .os$curve_b[1] * log(pmax(.os_v, .os$floor_pct[1]))
     if (any(!is.finite(.os_p)) || any(.os_p <= 0)) stop("Senate One Nation curve gave a non-positive share; floor or curve is wrong")
     onp_ratio[] <- .os_p / mean(.os_p)
     cat(sprintf("ONP1  One Nation by the SENATE rule (curve from %s, %d districts, R2 %.3f): ratio %.2f-%.2f, CV %.3f\n",
                 .os$source[1], .os$n_fit[1], .os$r2[1], min(onp_ratio), max(onp_ratio), stats::sd(onp_ratio) / mean(onp_ratio)))
   } else {
-    cat("ONP1!! AUSPOL_ONP_ORDER=senate but output/onp-senate-vic2026.csv is missing -- One Nation allocated by the FEDERAL HOUSE rule instead\n")
+    cat("ONP1!! AUSPOL_ONP_ORDER=senate but", .os_f, "is missing -- One Nation allocated by the FEDERAL HOUSE rule instead\n")
   }
 }
 
@@ -762,9 +794,9 @@ if (all(SLOPE == 1)) cat("DS1  all 1.000 -- uniform swing, output must be unchan
 .departed_hold <- Sys.getenv("AUSPOL_DEPARTED_HOLD", "0") %in% c("1", "TRUE", "true")   # docs/plans/prereg-departed-hold-fixed-2026-10-04.md
 .succ_on <- departed_successor_mode() != "0"   # docs/plans/prereg-departed-successor-flag-2026-10-07.md
 if (.succ_on && .departed_hold) stop("AUSPOL_DEPARTED_SUCCESSOR holds its own cells; do not combine it with AUSPOL_DEPARTED_HOLD", call. = FALSE)
-.SUCC_RATE <- departed_successor_rates("vic2026")   # NULL when off: byte-identical
+.SUCC_RATE <- departed_successor_rates(TGT)   # NULL when off: byte-identical
 if (.succ_on) { cat(sprintf("DSR1 departed successor rates (%s): %d seat(s) for %s, held through renormalisation
-", departed_successor_mode(), length(.SUCC_RATE), "vic2026")); .departed_hold <- TRUE }
+", departed_successor_mode(), length(.SUCC_RATE), TGT)); .departed_hold <- TRUE }
 .hold_min <- as.numeric(Sys.getenv("AUSPOL_DEPARTED_HOLD_MIN_PRIOR", "0"))   # arm B (amendment 2026-10-05)
 # EVERY caught fallback records WHY. "vic2026 has no candidates yet" and "a
 # bug in candidate_returns()" used to print the same line, so once nominations
@@ -773,11 +805,11 @@ if (.succ_on) { cat(sprintf("DSR1 departed successor rates (%s): %d seat(s) for 
 .try <- function(name, expr) tryCatch(expr, error = function(e) {
   assign(name, conditionMessage(e), envir = .why); NULL })
 .reason <- function(name) if (exists(name, envir = .why)) sprintf(" (%s)", get(name, envir = .why)) else ""
-.returns <- if (.cond) .try("returns", candidate_returns("vic2022", "vic2026")) else NULL
+.returns <- if (.cond) .try("returns", candidate_returns(PREV, TGT)) else NULL
 .permit  <- if (.screened && !is.null(.returns))
-              .try("permit", salience_permit_for("vic2026", "vic2022", "vic")) else NULL
+              .try("permit", salience_permit_for(TGT, PREV, REGION)) else NULL
 if (.cond && is.null(.returns)) {
-  cat(sprintf("DS2  arm CS requested but vic2026 has no candidate list yet -- FALLING BACK to uniform swing%s\n",
+  cat(sprintf(sub("@T", TGT, "DS2  arm CS requested but @T has no candidate list yet -- FALLING BACK to uniform swing%s\n", fixed = TRUE),
               .reason("returns")))
 } else if (.cond) {
   cat(sprintf("DS2  arm C ON: %d of %d seat-classes have the same candidate returning%s\n",
@@ -827,7 +859,7 @@ if (!identical(Sys.getenv("AUSPOL_DEFECT_DISCOUNT", "1"), "0")) .defect <- 0.282
 # Sydenham) being served the wrong value.
 .minor_disc <- NULL; .minor_disc_loser <- NULL
 if (!identical(Sys.getenv("AUSPOL_MINOR_DEFECT", "1"), "0")) {
-  .mfd <- tryCatch(fit_minor_defector_discount("vic2026"), error = function(e) {
+  .mfd <- tryCatch(fit_minor_defector_discount(TGT), error = function(e) {
     cat(sprintf("CAL! minor-defector fit FAILED, no discount applied: %s\n", conditionMessage(e)))
     list(discount = NULL, discount_mp = NULL, discount_loser = NULL, n = 0L)
   })
@@ -865,7 +897,7 @@ cat(sprintf("CAL  MP tier: %s | defector discount: %s | minor-defector discount:
 # pooled aggregate worse), so base_pred stays byte-identical to before this
 # fix regardless of AUSPOL_MINOR_DEFECT.
 .own_prev <- if (.cond && !is.null(.returns))
-  .try("own_prev", personal_prior_vote("vic2022", "vic2026", major_discount = .defect)) else NULL
+  .try("own_prev", personal_prior_vote(PREV, TGT, major_discount = .defect)) else NULL
 # THIS ONE FEEDS xgb_primary_predict_live()'s own_prev_pcv FEATURE ONLY --
 # mirrors fit_xgb_primary_v6.R:271's TRAINING call exactly: minor_discount,
 # and deliberately NO major_discount (training's xgb feature never gets one
@@ -875,7 +907,7 @@ cat(sprintf("CAL  MP tier: %s | defector discount: %s | minor-defector discount:
 # direction: applying a discount at serve time the model was never trained
 # to expect.
 .own_prev_xgb <- if (.cond && !is.null(.returns))
-  .try("own_prev_xgb", personal_prior_vote("vic2022", "vic2026", minor_discount = .minor_disc, minor_discount_loser = .minor_disc_loser)) else NULL
+  .try("own_prev_xgb", personal_prior_vote(PREV, TGT, minor_discount = .minor_disc, minor_discount_loser = .minor_disc_loser)) else NULL
 # THE VOTE MOVES WITH THE PERSON: .own_x() below substitutes a returning
 # candidate's own prior vote into their new class; this takes it out of the
 # class it came from. No-op until vic2026 nominations exist.
@@ -883,7 +915,7 @@ cat(sprintf("CAL  MP tier: %s | defector discount: %s | minor-defector discount:
 # general elections where both majors stood replaces the seat's prior row (R/byelection_prior.R,
 # external/reference/byelections/byelection-results.csv). docs/plans/prereg-byelection-prior-2026-09-18.md
 if (Sys.getenv("AUSPOL_BYELECTION_PRIOR", "0") %in% c("1", "blend")) {
-  mat22 <- tryCatch(byelection_prior(mat22, "vic2022", "vic2026", weight = if (identical(Sys.getenv("AUSPOL_BYELECTION_PRIOR"), "blend")) 0.5 else 1), error = function(e) { cat(sprintf("BF0b! by-election prior FAILED, prior kept: %s\n", conditionMessage(e))); mat22 })
+  mat22 <- tryCatch(byelection_prior(mat22, PREV, TGT, weight = if (identical(Sys.getenv("AUSPOL_BYELECTION_PRIOR"), "blend")) 0.5 else 1), error = function(e) { cat(sprintf("BF0b! by-election prior FAILED, prior kept: %s\n", conditionMessage(e))); mat22 })
   .by <- attr(mat22, "byelection")
   if (!is.null(.by)) cat(sprintf("BF0b by-election prior: %d seat(s) replaced%s%s\n", length(.by$applied),
                                 if (length(.by$applied)) paste0(" (", paste(.by$applied, collapse = ", "), ")") else "",
@@ -895,12 +927,12 @@ mat22 <- (function(m) {
   # target-out median share, "mean" = mean). docs/plans/prereg-departed-origin-return-2026-09-18.md
   .dor <- Sys.getenv("AUSPOL_DEPARTED_ORIGIN", "0")
   if (!.dor %in% c("1", "mean")) { if (!.dor %in% c("0", "")) cat(sprintf("BF0o! AUSPOL_DEPARTED_ORIGIN=%s is not a mode (\"1\" or \"mean\") -- treated as OFF\n", .dor)); return(m) }
-  .fdo <- tryCatch(fit_departed_origin_return("vic2026", stat = if (.dor == "mean") "mean" else "median"),
+  .fdo <- tryCatch(fit_departed_origin_return(TGT, stat = if (.dor == "mean") "mean" else "median"),
                    error = function(e) { cat(sprintf("BF0o! departed-origin fit FAILED, nothing routed: %s
 ", conditionMessage(e))); NULL })
   if (is.null(.fdo) || is.null(.fdo$frac)) { cat(sprintf("BF0o! departed-origin: %d case(s), no rate fitted, nothing routed
 ", if (is.null(.fdo)) 0L else .fdo$n)); return(m) }
-  m2 <- route_departed_origin(m, "vic2022", "vic2026", .fdo$frac)
+  m2 <- route_departed_origin(m, PREV, TGT, .fdo$frac)
   .a <- attr(m2, "departed_origin")
   cat(sprintf("BF0o departed-origin share %.3f from %d cases (target excluded): %d routed%s
 ", .fdo$frac, .fdo$n, .a$applied,
@@ -912,7 +944,7 @@ mat22 <- (function(m) {
 # docs/plans/prereg-major-present-slope-2026-09-18.md
 .MAJDEP <- NULL; .MAJPRES <- NULL
 if (identical(Sys.getenv("AUSPOL_MAJOR_DEPARTED", "0"), "1") || identical(Sys.getenv("AUSPOL_MAJOR_SLOPE", "0"), "1")) {
-  .fmd <- tryCatch(fit_major_departed_slope("vic2026"), error = function(e) { cat(sprintf("BF0m! major slope fit FAILED, majors keep slope 1: %s\n", conditionMessage(e))); NULL })
+  .fmd <- tryCatch(fit_major_departed_slope(TGT), error = function(e) { cat(sprintf("BF0m! major slope fit FAILED, majors keep slope 1: %s\n", conditionMessage(e))); NULL })
   if (!is.null(.fmd)) {
     if (identical(Sys.getenv("AUSPOL_MAJOR_DEPARTED", "0"), "1")) .MAJDEP <- .fmd$slope
     if (identical(Sys.getenv("AUSPOL_MAJOR_SLOPE", "0"), "1")) .MAJPRES <- .fmd$slope_present
@@ -965,9 +997,9 @@ if (.surge_v2_on) {
     list(election = "nsw2023", prev = "nsw2019", region = "nsw"),
     list(election = "sa2026",  prev = "sa2022",  region = "sa"),
     list(election = "wa2008",  prev = "wa2005",  region = "wa"))
-  .hz <- .try("hz", surge_hazard_for("vic2026", "vic2022", "vic", .v2_train_pairs))
+  .hz <- .try("hz", surge_hazard_for(TGT, PREV, REGION, .v2_train_pairs))
   if (is.null(.hz)) {
-    cat(sprintf("DS3  surge-v2 requested but vic2026 has no salience corpus yet -- FALLING BACK to flat surge_h%s\n",
+    cat(sprintf(sub("@T", TGT, "DS3  surge-v2 requested but @T has no salience corpus yet -- FALLING BACK to flat surge_h%s\n", fixed = TRUE),
                 .reason("hz")))
   } else {
     # `shares` does not exist yet at this point in the script -- it is first
@@ -1017,11 +1049,11 @@ if (.surge_scale != 1) {
   # vic2026 is not in all_election_pairs() (it names completed elections
   # only); add it here so the target's own "prev" seat history (vic2022) is
   # found, same as .returns above handles the same gap for candidate_returns().
-  .try("fitsl", fit_dispersion_slopes("vic2026", level_now = state_mean,
+  .try("fitsl", fit_dispersion_slopes(TGT, level_now = state_mean,
                                        pairs = c(all_election_pairs(),
-                                                 list(list(election = "vic2026", prev = "vic2022")))))
+                                                 list(list(election = TGT, prev = PREV)))))
 } else if (identical(Sys.getenv("AUSPOL_FIT_SLOPES", "0"), "1")) {
-  .try("fitsl", fit_conditional_slopes("vic2026"))
+  .try("fitsl", fit_conditional_slopes(TGT))
 } else NULL
 .slope_arm_requested <- identical(Sys.getenv("AUSPOL_DISPERSION_SLOPE", "0"), "1") ||
   identical(Sys.getenv("AUSPOL_FIT_SLOPES", "0"), "1")
@@ -1069,13 +1101,13 @@ if (!is.null(.fitsl)) {
 # Switch "0": this block is skipped and .re_cells stays NULL, so nothing below changes.
 .re_cells <- NULL
 if (!identical(reentry_mode(), "0")) {   # "1" general prior (refused) | "majors" own history
-  .re_sl <- tryCatch(reentry_standing_live(rownames(mat22), "vic2026", "vic2022"),
+  .re_sl <- tryCatch(reentry_standing_live(rownames(mat22), TGT, PREV),
                      error = function(e) list(standing = NULL, reason = conditionMessage(e)))
   # "majors" only FILLS a major that stands now, never zeroes, so the provisional
   # list is safe before nominations close (Narracan 2026 Labor: 4.4% without it).
   if (is.null(.re_sl$standing) && identical(reentry_mode(), "majors")) {
     cat(sprintf("BV1r  full nomination list unavailable (%s); majors carry uses the provisional list\n", .re_sl$reason))
-    .re_sl <- reentry_standing_provisional(rownames(mat22), "vic2026")
+    .re_sl <- reentry_standing_provisional(rownames(mat22), TGT)
     cat(sprintf("BV1r  %s\n", .re_sl$reason))
   }
   if (is.null(.re_sl$standing)) {
@@ -1090,7 +1122,7 @@ if (!identical(reentry_mode(), "0")) {   # "1" general prior (refused) | "majors
       .re_state <- c(.re_state, setNames(a22[.re_un] * .re_sc, .re_un))
     }
     .re_cells <- attr(reentry_apply_harness(mat22, fp, .re_sl$standing, .re_state,
-                                            target = "vic2026", pairs = all_election_pairs(),
+                                            target = TGT, pairs = all_election_pairs(),
                                             code = "BV1r"), "reentry")
   }
 }
@@ -1210,12 +1242,13 @@ if (.departed_hold) {
 # trees as base_margin, the same point as the re-entry fill. R/new_ind_shrink.R.
 # Wrapped like every other optional input here: a missing features file must not
 # crash the daily forecast, and the fallback is printed, not silent.
-.nis <- .try("new_ind", new_ind_shrink_apply(shares, "vic2026", code = "BV1n"))
+.nis <- .try("new_ind", new_ind_shrink_apply(shares, TGT, code = "BV1n"))
 if (!is.null(.nis)) shares <- .nis else if (!identical(new_ind_mode(), "0"))
   cat(sprintf("BV1n!! new_ind_shrink_apply() FAILED%s -- the new-independent shrink is NOT applied to this forecast\n",
               .reason("new_ind")))
 shares_x <- .try("xgb_live", xgb_primary_predict_live(shares, mat22, a22, state_mean, .returns,
-                                                        own_prev = .own_prev_xgb, region = "vic"))
+                                                        own_prev = .own_prev_xgb, region = REGION,
+                                                        year = YEAR, prev_year = as.integer(sub("^[a-z]+", "", PREV))))
 if (!is.null(shares_x)) {
   shares <- shares_x
 } else if (identical(Sys.getenv("AUSPOL_XGB_PRIMARY_LIVE", "0"), "1")) {
@@ -1226,7 +1259,7 @@ if (!is.null(shares_x)) {
 # that can add share to a cell -- see the NZL block there.)
 # Time-forward seat-swing port (AUSPOL_SEAT_SWING_PORT=2), AFTER the override,
 # which would otherwise overwrite it. plans/prereg-seat-swing-port-v2-2026-09-29.md
-.shares_p <- .try("seat_swing_port", seat_swing_port_apply(shares, "vic2026"))
+.shares_p <- .try("seat_swing_port", seat_swing_port_apply(shares, TGT))
 if (!is.null(.shares_p)) {
   shares <- .shares_p
 } else if (identical(Sys.getenv("AUSPOL_SEAT_SWING_PORT", "0"), "2")) {
@@ -1234,7 +1267,7 @@ if (!is.null(.shares_p)) {
 ",
               .reason("seat_swing_port")))
 }
-.shares_b <- .try("seat_poll_blend", seat_poll_blend_apply(shares, "vic2026"))
+.shares_b <- .try("seat_poll_blend", seat_poll_blend_apply(shares, TGT))
 if (!is.null(.shares_b)) {
   shares <- .shares_b
 } else if (Sys.getenv("AUSPOL_SEAT_POLL_BLEND", "0") %in% c("1", "2", "3")) {
@@ -1244,7 +1277,7 @@ if (!is.null(.shares_b)) {
 # Demographic correction (AUSPOL_DEMO_RESID=2: Labor and Greens), same position
 # as in the harnesses. plans/prereg-demographic-labor-greens-2026-09-29.md
 .shares_d <- .try("demo_resid", if (Sys.getenv("AUSPOL_DEMO_RESID", "0") %in% c("1", "2"))
-  demographic_residual_apply(shares, "vic2026") else shares)
+  demographic_residual_apply(shares, TGT) else shares)
 if (!is.null(.shares_d)) {
   shares <- .shares_d
 } else {
@@ -1254,13 +1287,13 @@ if (!is.null(.shares_d)) {
 # as the harnesses. plans/prereg-departed-fed-booths-2026-09-30.md
 # Leader-seat bonus (AUSPOL_LEADER_SEAT), same position as in the harnesses
 # relative to the seat-poll blend. plans/prereg-leader-seat-2026-09-29.md
-.shares_l <- .try("leader_seat", leader_seat_apply(shares, "vic2026"))
+.shares_l <- .try("leader_seat", leader_seat_apply(shares, TGT))
 if (!is.null(.shares_l)) {
   shares <- .shares_l
 } else if (identical(Sys.getenv("AUSPOL_LEADER_SEAT", "0"), "1")) {
   cat(sprintf("LS1!! leader-seat bonus FAILED%s -- shares WITHOUT it\n", .reason("leader_seat")))
 }
-.shares_f <- .try("departed_fed", departed_fed_apply(shares, "vic2026"))
+.shares_f <- .try("departed_fed", departed_fed_apply(shares, TGT))
 if (!is.null(.shares_f)) {
   shares <- .shares_f
 } else if (!identical(Sys.getenv("AUSPOL_DEPARTED_FED", "0"), "0")) {
@@ -1278,7 +1311,7 @@ shares <- blend_salience_shares(shares, if (exists(".hz")) .hz else NULL, surge_
                                 expected = .exp_mode > 0L)
 cat(sprintf("DS3b salience point estimate applied to %d (seat,party) cells%s\n",
             attr(shares, "cells"),
-            if (is.null(if (exists(".hz")) .hz else NULL)) " (no corpus for vic2026 yet)" else ""))
+            if (is.null(if (exists(".hz")) .hz else NULL)) sub("@T", TGT, " (no corpus for @T yet)", fixed = TRUE) else ""))
 # v61 NOMINATION ZEROING, AFTER every step that can add share to a cell, with the
 # live flow matrix `fm`. Read from the function bodies 2026-10-03:
 #   CAN add share to a cell (pmax(0, x + adj), a blend toward a target, or a shift
@@ -1292,7 +1325,7 @@ cat(sprintf("DS3b salience point estimate applied to %d (seat,party) cells%s\n",
 # A no-op, logged as NZL, unless AUSPOL_NOM_LIVE=1; with =1 any failure STOPS the
 # run. plans/prereg-nomination-zero-2026-10-03.md
 .nz_before <- shares
-shares <- tryCatch(zero_unnominated_live(shares, fm, "vic2026"), error = function(e) {
+shares <- tryCatch(zero_unnominated_live(shares, fm, TGT, prior = PREV), error = function(e) {
   if (nom_zero_requested()) stop(conditionMessage(e), call. = FALSE)
   cat(sprintf("NZL!! nomination zeroing FAILED (%s) -- shares WITHOUT it\n", conditionMessage(e)))
   .nz_before
@@ -1420,7 +1453,7 @@ implied <- sw_draws[, "ALP"] +
 if (identical(Sys.getenv("AUSPOL_ANCHOR_IMPLIED", "0"), "1")) {
   pj_pub <- pj
   pj <- project_result(mean(implied), fund_now, mix, days_out)
-  cat(sprintf("AI2  vic2026: mix trend input = implied %.2f (published TPP %.2f); projection %.2f -> %.2f\n",
+  cat(sprintf(sub("@T", TGT, "AI2  @T: mix trend input = implied %.2f (published TPP %.2f); projection %.2f -> %.2f\n", fixed = TRUE),
               mean(implied), now$tpp, pj_pub$mean, pj$mean))
 }
 target <- stats::rnorm(N_SIMS, pj$mean, pj$sd)
@@ -1551,18 +1584,18 @@ if (SHRINK > 0) cat(sprintf("CAL  calibration shrink %.2f applied
 # docs/reviews/xgb-primary-x-flows-2x2-2026-09-11.md
 .cond_ov <- NULL
 if (identical(Sys.getenv("AUSPOL_XGB_FLOWS", "0"), "1")) {
-  .cond_ov <- .try("xgb_flows", xgb_flow_conditional_override_for(shares, "vic2026", "vic2022", "vic"))
+  .cond_ov <- .try("xgb_flows", xgb_flow_conditional_override_for(shares, TGT, PREV, REGION))
   if (is.null(.cond_ov))
     cat(sprintf("XF4!! xgb_flow_conditional_override_for() FAILED%s -- flows UNCHANGED, shipped lookup table used\n",
                 .reason("xgb_flows")))
 }
 # HOW-TO-VOTE CARD (AUSPOL_HTV_FLOW=1): the Liberal-excluded, ALP+GRN-alive flow rows follow the recorded
 # card order for this election (R/htv_flow.R, external/reference/htv/liberal-alp-grn-order.csv).
-.htv_ov <- if (identical(Sys.getenv("AUSPOL_HTV_FLOW", "0"), "1")) tryCatch(htv_flow_override(.cond_ov, fm, "vic2026", rownames(shares)),
+.htv_ov <- if (identical(Sys.getenv("AUSPOL_HTV_FLOW", "0"), "1")) tryCatch(htv_flow_override(.cond_ov, fm, TGT, rownames(shares)),
   error = function(e) { cat(sprintf("HTV9! how-to-vote override FAILED, flow rows unchanged: %s\n", conditionMessage(e))); .cond_ov }) else .cond_ov
 # BREAKOUT MIXTURE (AUSPOL_BREAKOUT_MIX, R/breakout_mix.R): NULLs when off.
 # Live, the classifier reads the feature rows xgb_primary_predict_live() built.
-.bo <- breakout_mix_args("vic2026", shares)
+.bo <- breakout_mix_args(TGT, shares)
 sim <- simulate_seat_contests(level_sd = .level_sd, level_mult = .lm(shares), shares, fm, party_sd = psd, seat_sd = SEAT_SD, shrink = SHRINK,
                               breakout_p = .bo$p, breakout_q = .bo$q,
                               n_sims = N_SIMS, smooth = SMOOTH, seed = SEED,
@@ -1647,8 +1680,8 @@ if (!chk5$ok) {
 if (identical(Sys.getenv("AUSPOL_UPSET_FLOOR", "0"), "1")) {
   .uf <- out_path("upset-floor-eps.csv")
   if (!file.exists(.uf)) stop("UF0! AUSPOL_UPSET_FLOOR=1 but output/upset-floor-eps.csv is missing (stage 6b / shipped-models)")
-  .eps <- data.table::fread(.uf)[pair == "vic2026", eps]
-  if (length(.eps) != 1L || !is.finite(.eps)) stop("UF0! upset-floor-eps.csv has no vic2026 row")
+  .uf_t <- data.table::fread(.uf); .eps <- .uf_t$eps[.uf_t$pair == TGT]
+  if (length(.eps) != 1L || !is.finite(.eps)) stop("UF0! upset-floor-eps.csv has no ", TGT, " row")
   .sh <- data.table::data.table(seat = rep(rownames(shares), ncol(shares)),
                                 party = rep(colnames(shares), each = nrow(shares)), share = as.vector(shares))
   wp <- upset_floor_mix(wp[, .(seat, party, prob)], .sh, .eps)
@@ -1661,9 +1694,9 @@ assert_nomination_zeros(shares, .nz_cells)
 # nothing else can reconstruct them without duplicating the projection above,
 # and a second copy of that logic would drift from this one.
 fwrite(data.table(seat = rownames(shares), as.data.table(shares)),
-       sprintf("output/seat-shares-vic-2026%s.csv", OUT_SUFFIX))
-fwrite(wp, sprintf("output/seat-probs-vic-2026%s.csv", OUT_SUFFIX))
-fwrite(as.data.table(sim$totals), sprintf("output/seat-sims-full-vic-2026%s.csv", OUT_SUFFIX))
+       sprintf("output/seat-shares-%s%s.csv", TARGET$out_stem, OUT_SUFFIX))
+fwrite(wp, sprintf("output/seat-probs-%s%s.csv", TARGET$out_stem, OUT_SUFFIX))
+fwrite(as.data.table(sim$totals), sprintf("output/seat-sims-full-%s%s.csv", TARGET$out_stem, OUT_SUFFIX))
 # PER-SEAT RANGES for the ITG seat pages (2026-09-30), from this run's own
 # draws. Primaries: each party's share in every draw, after noise and surge and
 # before preferences, normalised to 100. Final two: the pairing drawn most often,
@@ -1697,8 +1730,8 @@ stopifnot(!is.null(.fp), identical(dimnames(.fp)[[2]], rownames(shares)))
              swing_to_flip = round(q[3] - 50, 2))
 }))
 stopifnot(nrow(.tcp) == nrow(shares), anyDuplicated(.prim[, .(seat, party)]) == 0L)
-fwrite(.prim, sprintf("output/seat-primary-ranges-vic-2026%s.csv", OUT_SUFFIX))
-fwrite(.tcp, sprintf("output/seat-tcp-ranges-vic-2026%s.csv", OUT_SUFFIX))
+fwrite(.prim, sprintf("output/seat-primary-ranges-%s%s.csv", TARGET$out_stem, OUT_SUFFIX))
+fwrite(.tcp, sprintf("output/seat-tcp-ranges-%s%s.csv", TARGET$out_stem, OUT_SUFFIX))
 cat(sprintf("RG1  per-seat ranges: %d party rows, %d seats with a final pair (median P(that pair) %.2f)
 ",
             nrow(.prim), nrow(.tcp), stats::median(.tcp$p_pair)))

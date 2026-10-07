@@ -313,19 +313,20 @@ nom_zero_assert_late <- function(shares, cells) {
 #' @param shares Seat-by-class matrix of primaries, with rownames.
 #' @param flows The live [build_flow_matrix()] result.
 #' @param label Election label (also the corpus label).
+#' @param prior The previous election's label, for the per-class seat counts.
 #' @param ... passed on to `live_nominations()`.
 #' @return `shares`, unchanged unless `AUSPOL_NOM_LIVE=1` and the list passes the count floor.
 #' @export
-zero_unnominated_live <- function(shares, flows, label = "vic2026", ...) {
+zero_unnominated_live <- function(shares, flows, label = "vic2026", prior = "vic2022", ...) {
   if (is.null(rownames(shares)))
     stop("NZL!! the share matrix has no rownames (seat names); nomination zeroing cannot match seats", call. = FALSE)
-  nm <- live_nominations(rownames(shares), election = label, ...)
+  nm <- live_nominations(rownames(shares), election = label, prior = prior, ...)
   if (is.null(nm$target)) {
     cat(sprintf("NZL  %s: nomination zeroing NOT applied (%s); shares unchanged\n", label, nm$reason))
     return(shares)
   }
   for (w in nm$warnings) cat(sprintf("NZL! %s: WARNING %s\n", label, w))
-  cat(sprintf("NZL  %s: candidacies per class, seats now/%s: %s\n", label, "vic2022", nm$class_counts))
+  cat(sprintf("NZL  %s: candidacies per class, seats now/%s: %s\n", label, prior, nm$class_counts))
   zmode <- Sys.getenv("AUSPOL_NOM_ZERO", "2")
   if (!zmode %in% c("1", "2")) {
     # Zeroing was asked for (we are past the gate, so AUSPOL_NOM_LIVE=1) but the

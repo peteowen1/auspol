@@ -170,7 +170,7 @@ seat_poll_weight <- function(target_election) {
   b <- sum(dx * dy) / sum(dx^2)
   e <- dy - b * dx
   G <- length(unique(rows$unit))
-  se2 <- sum(tapply(dx * e, rows$unit, sum)^2) / sum(dx^2)^2 * G / max(1, G - 1)
+  se2 <- .cluster_se2(sum(tapply(dx * e, rows$unit, sum)^2), sum(dx^2)^2, G)
   w <- min(1, max(0, b * b^2 / (b^2 + se2)))
   list(w = w, raw = b, se = sqrt(se2), n = nrow(rows), k = length(unique(rows$el)))
 }
@@ -335,7 +335,7 @@ seat_poll_weights_split <- function(target_election) {
     dx <- r$poll - r$pred; dy <- r$actual - r$pred
     b <- sum(dx * dy) / sum(dx^2); e <- dy - b * dx
     G <- length(unique(r$unit))
-    se2 <- sum(tapply(dx * e, r$unit, sum)^2) / sum(dx^2)^2 * G / max(1, G - 1)
+    se2 <- .cluster_se2(sum(tapply(dx * e, r$unit, sum)^2), sum(dx^2)^2, G)
     list(b = b, se = sqrt(se2), n = nrow(r))
   }
   d <- est("direct"); m <- est("mrp")
@@ -379,6 +379,25 @@ seat_poll_weights_split <- function(target_election) {
   shares
 }
 
+#' Cluster-robust variance `meat / bread * G / (G - 1)`, G clusters
+#'
+#' Returns `Inf` outright below two clusters. With ONE cluster the sandwich has nothing to compare and its
+#' score sum is ~0 by construction, so the old `G / max(1, G - 1)` returned a
+#' near-zero SE and the shrinkage passed the slope through untouched: fed2019's
+#' blend weight was 1.000, fitted on fed2016's single polled seat (Mayo),
+#' against a hindsight-best 0.29. One cluster is no information: `Inf`, so the
+#' shrunk weight is 0. `AUSPOL_SEAT_POLL_W_SINGLE_CLUSTER="legacy"` restores the
+#' old factor (screening only).
+#' @keywords internal
+.cluster_se2 <- function(meat, bread, G) {
+  v <- Sys.getenv("AUSPOL_SEAT_POLL_W_SINGLE_CLUSTER", "none")
+  if (!v %in% c("none", "legacy")) stop("AUSPOL_SEAT_POLL_W_SINGLE_CLUSTER must be \"none\" or \"legacy\", not ", v)
+  if (v == "legacy") return(meat / bread * G / max(1, G - 1))
+  # Inf directly, never meat * Inf: with one cluster the score sum is ~0 by
+  # construction and is often exactly 0, and 0 * Inf is NaN (review 2026-10-08).
+  if (G < 2) Inf else meat / bread * G / (G - 1)
+}
+
 .ind_weight_on <- function() {
   v <- Sys.getenv("AUSPOL_SEAT_POLL_IND_WEIGHT", "1")
   if (!v %in% c("0", "1")) stop("AUSPOL_SEAT_POLL_IND_WEIGHT must be \"0\" or \"1\", not ", v)
@@ -394,7 +413,7 @@ seat_poll_weights_split <- function(target_election) {
 #' them alike.
 #' @keywords internal
 .read_seat_polls_file <- function(f) {
-  s <- data.table::fread(f, showProgress = FALSE)
+  s <- .seat_poll_coalition_dedup(data.table::fread(f, showProgress = FALSE))
   v <- Sys.getenv("AUSPOL_SEAT_POLL_HANDKEYED", "1")
   if (!v %in% c("0", "1")) stop("AUSPOL_SEAT_POLL_HANDKEYED must be \"0\" or \"1\", not ", v)
   if (v == "0") return(s)
@@ -406,6 +425,44 @@ seat_poll_weights_split <- function(target_election) {
               paste(unique(paste(h$election, h$seat_name)), collapse = ", ")))
   h$source <- NULL
   data.table::rbindlist(list(s, h), use.names = TRUE, fill = TRUE)
+}
+
+# A complete poll's primaries sum to 100 within this many points (rounding).
+# docs/CONSTANTS.md.
+SEAT_POLL_TOTAL_TOL <- 5
+
+#' Drop a Coalition figure the fetcher copied from a merged Lib/Nat cell
+#'
+#' `rvest::html_table(fill = TRUE)` repeats a merged ("colspan") cell in every
+#' column it spans. Wikipedia's fed2022 YouGov table gives Nicholls one
+#' Coalition figure across its Lib and Nat columns, so the file holds Lib 41
+#' AND Nat 41, the poll sums to 141 and our LNP class read 82 (published
+#' 55.3 against an actual 44.2). A poll's Nat row is dropped when it equals
+#' the Lib row, the poll's total is above 105 with both, and 95 to 105
+#' without one. Genuine three-cornered contests (Bullwinkel fed2025: Lib 41,
+#' Nat 22) differ and are kept. `AUSPOL_SEAT_POLL_COALITION_DEDUP`; every drop
+#' is printed (SPCD).
+#' @keywords internal
+.seat_poll_coalition_dedup <- function(s) {
+  v <- Sys.getenv("AUSPOL_SEAT_POLL_COALITION_DEDUP", "1")
+  if (!v %in% c("0", "1")) stop("AUSPOL_SEAT_POLL_COALITION_DEDUP must be \"0\" or \"1\", not ", v)
+  # A file without the poll columns is not a seat-poll table; leave it to the caller.
+  if (v == "0" || !nrow(s) || !all(c("election", "seat", "pollster", "date_raw", "party", "fp", "row_type") %in% names(s))) return(s)
+  pid <- paste(s$election, s$seat, s$pollster, s$date_raw, sep = " | ")
+  pty <- toupper(trimws(s$party))
+  isp <- s$row_type == "poll" & is.finite(s$fp)
+  tot <- tapply(s$fp[isp], pid[isp], sum)
+  lib <- isp & pty == "LIB"
+  nat <- isp & pty == "NAT"
+  lib_fp <- s$fp[lib][match(pid, pid[lib])]
+  drop <- nat & is.finite(lib_fp) & s$fp == lib_fp
+  t_both <- tot[pid]
+  tol <- SEAT_POLL_TOTAL_TOL
+  drop <- drop & !is.na(t_both) & t_both > 100 + tol & abs(t_both - s$fp - 100) <= tol
+  for (k in which(drop)) cat(sprintf("SPCD %s: Nat %.1f duplicates Lib (merged cell); poll total %.1f -> %.1f
+",
+                                     pid[k], s$fp[k], t_both[[k]], t_both[[k]] - s$fp[k]))
+  s[!drop]
 }
 
 # Minimum poll OTH figure (points) for it to be read as a named independent.
@@ -591,7 +648,7 @@ seat_poll_ind_weight <- function(target_election) {
     if (nrow(r) < 3L || sum(dx^2) <= 0) return(NULL)
     b <- sum(dx * dy) / sum(dx^2); e <- dy - b * dx
     G <- length(unique(r$seat))
-    list(b = b, se2 = sum(tapply(dx * e, r$seat, sum)^2) / sum(dx^2)^2 * G / max(1, G - 1))
+    list(b = b, se2 = .cluster_se2(sum(tapply(dx * e, r$seat, sum)^2), sum(dx^2)^2, G))
   }
   g <- list()
   for (e in unique(rows$el)) {
@@ -606,6 +663,11 @@ seat_poll_ind_weight <- function(target_election) {
   }
   if (!length(g)) return(none)
   g <- data.table::rbindlist(g)
+  # A one-cluster group carries no information (se2 Inf): it must not enter
+  # tau2 (one Inf turns the mean to -Inf, so tau2 0 for every class) or dbar
+  # (all-Inf weights give 0/0). Review 2026-10-08.
+  g <- g[is.finite(g$se2)]
+  if (!nrow(g)) return(none)
   gi <- g[g$class == "IND"]
   if (nrow(g) < 3L || !nrow(gi)) return(none)
   tau2 <- max(0, mean(g$d^2 - g$se2))

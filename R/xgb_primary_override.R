@@ -533,7 +533,7 @@ xgb_primary_predict_live <- function(shares, mat22, a22, state_mean, returns,
   # Senate geography, when the shipped model was trained with it
   # (AUSPOL_XGB_SENATE=1): the same R/senate_features.R the training used.
   if (any(c("senate_pct", "senate_dev") %in% feat_cols)) {
-    .lp <- paste0(region, if (identical(region, "vic")) "2026" else "")
+    .lp <- paste0(region, year)
     .sf <- senate_features(data.table::data.table(pair = .lp, seat = rows$seat, party = rows$party),
                            majors = !identical(Sys.getenv("AUSPOL_XGB_SENATE", "0"), "minor"))
     rows[, senate_pct := .sf$senate_pct]
@@ -543,14 +543,14 @@ xgb_primary_predict_live <- function(shares, mat22, a22, state_mean, returns,
   }
   # Endorsement (AUSPOL_XGB_ENDORSE=1): the same R/endorsement_features.R.
   if (any(c("c200", "voices") %in% feat_cols)) {
-    .lp <- paste0(region, if (identical(region, "vic")) "2026" else "")
+    .lp <- paste0(region, year)
     .en <- endorsement_features(data.table::data.table(pair = .lp, seat = rows$seat, party = rows$party))
     rows[, c200 := .en$c200]
     rows[, voices := .en$voices]
   }
   # Booth pattern (AUSPOL_XGB_BOOTH=1): the same R/booth_features.R.
   if (any(c("booth_spread", "early_gap") %in% feat_cols)) {
-    .lp <- paste0(region, if (identical(region, "vic")) "2026" else "")
+    .lp <- paste0(region, year)
     .bf <- booth_features(data.table::data.table(pair = .lp, seat = rows$seat, party = rows$party))
     rows[, booth_spread := .bf$booth_spread]
     rows[, early_gap := .bf$early_gap]
@@ -559,10 +559,10 @@ xgb_primary_predict_live <- function(shares, mat22, a22, state_mean, returns,
   }
   # Council history (AUSPOL_XGB_COUNCIL=1): the same R/council_features.R.
   if (any(grepl("^council_", feat_cols))) {
-    .lp <- paste0(region, if (identical(region, "vic")) "2026" else "")
+    .lp <- paste0(region, year)
     .cf <- council_features(data.table::data.table(pair = .lp, seat = rows$seat, party = rows$party))
     for (.cc in c("council_mayor", "council_elected", "council_lost", "council_pct")) rows[, (.cc) := .cf[[.cc]]]
-    if (!any(.cf$council_elected > 0 | .cf$council_mayor > 0))
+    if (!any(.cf$council_elected > 0 | .cf$council_mayor > 0, na.rm = TRUE))
       cat("XC1!! live council features: no mayor or councillor found for", .lp, "-- check output/council-history.csv shipped
 ")
   }

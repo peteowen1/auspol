@@ -1,4 +1,4 @@
-"""Victorian 2026 Legislative Assembly candidates -> tidy (seat, name,
+"""Legislative Assembly candidates (vic2026 default; nsw2027 as argv[2]) -> tidy (seat, name,
 party_raw, sitting) rows for scripts/build_candidacies.R to classify.
 
 Emits the party NAME, not a class. classify_party() in R/parties.R is this
@@ -10,14 +10,26 @@ Column -> party name, and the (X) codes used in the Other column.
 """
 import re, json, csv, sys, collections
 
-SRC = "external/reference/wikipedia/vic2026-candidates.wikitext"
 OUT = sys.argv[1]
+# Which election: the second argument, default vic2026 (unchanged behaviour).
+ELECTION = sys.argv[2] if len(sys.argv) > 2 else "vic2026"
+SRC = f"external/reference/wikipedia/{ELECTION}-candidates.wikitext"
+# Named-party columns by position (0 = electorate, 1 = held by, 3 = Coalition,
+# 7 = Other), per election, because each page orders its party columns
+# differently: NSW 2027 has Family First and Libertarian where Victoria has
+# One Nation and the Socialists.
+NAMED_COLS = {
+    "vic2026": (("ALP", 2), ("GRN", 4), ("ONP", 5), ("SOC", 6)),
+    "nsw2027": (("ALP", 2), ("GRN", 4), ("FF", 5), ("LBT", 6)),
+}[ELECTION]
 
 COLNAME = {
     "ALP": "Australian Labor Party",
     "GRN": "Australian Greens",
     "ONP": "One Nation",
     "SOC": "Victorian Socialists",
+    "FF": "Family First",
+    "LBT": "Libertarian Party",
 }
 # Codes seen in the Other column and in the Coalition column.
 CODE = {
@@ -34,13 +46,19 @@ CODE = {
     # Party (thewestparty.org.au), running 7 western-suburbs seats, and "LBT"
     # is the Libertarian Party.
     "West": "The West Party", "LBT": "Libertarian Party",
+    # NSW 2027 page codes.
+    "SAP": "Sustainable Australia", "SAll": "Socialist Alliance",
+    "Dem": "Australian Democrats", "ONP": "One Nation",
 }
 
 txt = open(SRC, encoding="utf-8").read()
-start = txt.index("==Legislative Assembly==")
-end = txt.find("==Legislative Council==", start)
-if end == -1:
-    end = txt.find("== References ==", start)
+# Headings may carry spaces ("== Legislative Assembly ==" on the NSW page).
+m0 = re.search(r"==\s*Legislative Assembly\s*==", txt)
+if m0 is None:
+    raise SystemExit("no Legislative Assembly heading in " + SRC)
+start = m0.start()
+m1 = re.search(r"==\s*(Legislative Council|References)\s*==", txt[start + 5:])
+end = start + 5 + m1.start() if m1 else len(txt)
 sec = txt[start:end]
 table = sec[sec.index("{|"):sec.index("|}", sec.index("{|"))]
 
@@ -128,7 +146,7 @@ for r in table.split("\n|-"):
         rows.append({"seat": seat, "name": name, "party_raw": party_raw,
                      "sitting": "TRUE" if sitting else "FALSE"})
 
-    for key, idx in (("ALP", 2), ("GRN", 4), ("ONP", 5), ("SOC", 6)):
+    for key, idx in NAMED_COLS:
         nm, bold = vals[idx]
         add(re.sub(r"\s*\([^)]*\)\s*$", "", nm), COLNAME[key], bold)
 
@@ -160,3 +178,20 @@ print(f"\nREJECTED as leaked markup rather than a person: {len(rejected)}")
 for r in rejected:
     print("  ", r["seat"], "|", r["party_raw"], "|", r["name"][:60])
 print(f"\nwrote {OUT}")
+
+# RETIRING MEMBERS ("The following members announced that they will not be
+# contesting"), written beside the candidates as <election>-retiring.csv so the
+# presumed-sitting layer in build_candidacies.R can leave them out.
+mr = re.search(r"==\s*Retiring members\s*==(.*?)\n==\s*[A-Z]", txt, re.S)
+ret = []
+if mr:
+    for ln in mr.group(1).splitlines():
+        m = re.match(r"^\*\s*\[\[(?:[^|\]]*\|)?([^\]]+)\]\].*?Electoral district of ([^|\]]+)", ln)
+        if m:
+            ret.append({"seat": m.group(2).strip(), "name": m.group(1).strip()})
+rout = OUT.replace("-candidates.csv", "-retiring.csv")
+if rout != OUT:
+    rw = csv.DictWriter(open(rout, "w", newline="", encoding="utf-8"), fieldnames=["seat", "name"])
+    rw.writeheader()
+    rw.writerows(ret)
+    print(f"retiring members: {len(ret)} -> {rout}")

@@ -1,6 +1,6 @@
 # Data registry
 
-**Generated 2026-10-06 by `scripts/build_data_registry.R`. Do not hand-edit** --
+**Generated 2026-10-08 by `scripts/build_data_registry.R`. Do not hand-edit** --
 rerun the script instead. Regenerate it whenever you add or fetch data.
 
 This file exists because the same data has been declared missing three
@@ -77,7 +77,7 @@ cannot pass as a working one.
   - e.g. council/2008/aurukunshire/councillor_summary.html, council/2008/aurukunshire/mayoral_summary.html, council/2008/balonneshire/councillor_summary.html, council/2008/balonneshire/mayoral_summary.html
 - **waec/** -- 1916 files, 49.0 MB
   - e.g. app.html, app.min.js, config-loader.js, config.json
-- **trends/** -- 4692 files, 2.9 MB
+- **trends/** -- 4795 files, 3.0 MB
   - e.g. 2019_anch2_Adrian_Wone_Susie_Beveridge_Will_Landers_Ammar_Khan.rds, 2019_anch2_Bill_Chandler_Susan_Moylan_Dave_Blake_Tim_Bohm.rds, 2019_anch2_Robert_Oakeshott_Helen_Haines_Zali_Steggall_Kerryn_Phelps.rds, 2019_anch2_Trevor_Jones_Colin_Butland_David_Norman_Thor_Prohaska.rds
 - **boundaries/** -- 75 files, 770.5 MB
   - e.g. AEC-2025-esri.zip, AEC_2025/AUS_ELB_region.dbf, AEC_2025/AUS_ELB_region.prj, AEC_2025/AUS_ELB_region.shp
@@ -87,7 +87,7 @@ cannot pass as a working one.
   - e.g. abs-sed/CG_CED_2016_CED_2021.csv, abs-sed/CG_SED_2016_SED_2021.csv, abs-sed/CG_SED_2021_SED_2022.csv, abs-sed/CG_SED_2022_SED_2024.csv
 - **aef/** -- 17 files, 4.8 MB
   - e.g. 2022fed-results.json, 2022fed-summary.json, 2022sa-results.json, 2022sa-summary.json
-- **polls/** -- 85 files, 40.1 MB. **1 ZERO-BYTE: crosstabs-ambiguous.txt**
+- **polls/** -- 86 files, 40.1 MB. **1 ZERO-BYTE: crosstabs-ambiguous.txt**
   - e.g. demosau/crosstabs-ambiguous.txt, demosau/crosstabs.csv, demosau/raw/fed-2026-01.pdf, demosau/raw/fed-2026-01b.pdf
 
 ## Candidate-level corpus (`output/candidacies.csv`)
@@ -108,6 +108,7 @@ NAMES live -- the per-seat results files carry `seat, party, votes` only.
 | nsw2015 | 93 | 540 | 59 | 11 |
 | nsw2019 | 93 | 568 | 52 | 15 |
 | nsw2023 | 93 | 562 | 68 | 19 |
+| nsw2027 | 92 | 194 | 28 | NA |
 | qld2017 | 93 | 453 | 95 | 49 |
 | qld2020 | 93 | 597 | 69 | 13 |
 | qld2024 | 93 | 525 | 38 | 14 |
@@ -128,7 +129,7 @@ NAMES live -- the per-seat results files carry `seat, party, votes` only.
 | wa2021 | 59 | 463 | 17 | 0 |
 | wa2025 | 59 | 398 | 29 | 6 |
 
-**Total: 18294 candidacies, 30 elections, NA non-major breakouts.**
+**Total: 18488 candidacies, 31 elections, NA non-major breakouts.**
 
 ## State booth results (`output/booths/`)
 

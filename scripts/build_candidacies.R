@@ -1172,6 +1172,85 @@ if (file.exists(.wiki)) {
   C <- rbindlist(list(C, V), fill = TRUE)
 }
 
+# ---- BC12: NSW 2027 provisional candidates ----------------------------------
+#
+# Polling day 13 March 2027; nominations close weeks before it. Two layers,
+# NAMES ONLY like BC10 (no votes, pcv or elected flag):
+#
+#   1. Wikipedia's "Candidates of the 2027 New South Wales state election"
+#      (scripts/parse_wikipedia_candidates.py ... nsw2027, raw wikitext kept
+#      beside the CSV). On 2026-10-08 it named 116 candidates and only 8
+#      sitting members, so on its own it hid every incumbent from the model:
+#      Scruby (Pittwater) was forecast 8 points under her 2023 vote.
+#   2. PRESUMED SITTING: each seat's member, presumed to recontest unless
+#      Wikipedia lists them as retiring. The member is the 2023 winner (party
+#      from nswec-nsw-winners.csv; name = that party's top-polling candidate in
+#      the seat, because candidacies.csv flags a winner in only 68 of 93 nsw2023
+#      seats), replaced by any later by-election winner (byelection-winners.csv
+#      party, name from byelection-results.csv). Rows carry source
+#      "presumed_sitting" so they are never mistaken for an announced candidacy.
+#
+# A presumption, stated: most sitting members do recontest, and the error it
+# risks (one incumbent wrongly assumed to stand) is smaller than the one it
+# removes (every incumbent treated as gone). It is replaced wholesale by the
+# NSWEC list when nominations close.
+.nw <- file.path("external", "reference", "wikipedia", "nsw2027-candidates.csv")
+if (file.exists(.nw)) {
+  W2 <- fread(.nw, showProgress = FALSE)
+  stopifnot(all(c("seat", "name", "party_raw", "sitting") %in% names(W2)), nrow(W2) > 0L)
+  W2[, party := classify_party(party_raw)]
+  if (anyNA(W2$party)) stop("BC12! classify_party() returned NA for: ", paste(unique(W2$party_raw[is.na(W2$party)]), collapse = ", "))
+  .tok2 <- strsplit(trimws(W2$name), "[[:space:]]+")
+  W2[, name := vapply(.tok2, function(t) if (length(t) < 2L) toupper(t[1]) else
+    sprintf("%s, %s", toupper(t[length(t)]), paste(t[-length(t)], collapse = " ")), character(1))]
+  W2[, source := "wiki"]
+
+  # 2023 members: winning party per seat, that party's top-polling candidate.
+  .wn <- fread(file.path(election_data_path(), "nswec-nsw-winners.csv"), showProgress = FALSE)
+  .wn <- .wn[.wn$election == "nsw2023", list(seat, win_party = winner)]
+  .c23 <- C[C$election == "nsw2023", list(seat, name, party, party_raw, votes)]
+  .m23 <- merge(.c23, .wn, by = "seat")
+  .m23 <- .m23[.m23$party == .m23$win_party]
+  .m23 <- .m23[order(-.m23$votes)][!duplicated(seat)]
+  if (nrow(.m23) != 93L) stop("BC12! found a 2023 member for ", nrow(.m23), " of 93 NSW seats")
+  S2 <- .m23[, list(seat, name, party, party_raw)]
+
+  # By-election winners since nsw2023 replace the 2023 member.
+  .bw <- fread(file.path("external", "reference", "byelections", "byelection-winners.csv"), showProgress = FALSE)
+  .bw <- .bw[.bw$region == "nsw" & as.Date(.bw$date) > as.Date(unname(election_dates()["nsw2023"]))]
+  .br <- fread(file.path("external", "reference", "byelections", "byelection-results.csv"), showProgress = FALSE)
+  for (i in seq_len(nrow(.bw))) {
+    .st <- .bw$seat[i]; .dt <- .bw$date[i]; .wc <- classify_party(.bw$winner_party_raw[i])
+    r <- .br[.br$region == "nsw" & .br$seat == .st & as.character(.br$date) == as.character(.dt)]
+    r <- r[classify_party(r$party_raw) == .wc][order(-votes)]
+    if (!nrow(r)) stop("BC12! by-election ", .st, " ", .dt, ": no ", .wc, " candidate in byelection-results.csv")
+    .tk <- strsplit(trimws(r$candidate[1]), "[[:space:]]+")[[1]]
+    S2[S2$seat == .st, `:=`(name = sprintf("%s, %s", toupper(.tk[length(.tk)]), paste(.tk[-length(.tk)], collapse = " ")),
+                            party = .wc, party_raw = r$party_raw[1])]
+    cat(sprintf("BC12 by-election member: %s (%s) -> %s %s\n", .st, .dt, S2$name[S2$seat == .st], .wc))
+  }
+
+  # Announced retirements leave.
+  .rf <- file.path("external", "reference", "wikipedia", "nsw2027-retiring.csv")
+  .ret <- if (file.exists(.rf)) fread(.rf, showProgress = FALSE) else data.table(seat = character(0), name = character(0))
+  .gone <- normalise_seat(S2$seat) %in% normalise_seat(.ret$seat)
+  cat(sprintf("BC12 retiring (not presumed to stand): %s\n", if (any(.gone)) paste(S2$seat[.gone], collapse = ", ") else "none"))
+  S2 <- S2[!.gone]
+
+  # A member Wikipedia already lists in their seat is not added twice.
+  .k_w <- paste(normalise_seat(W2$seat), .key(W2$name))
+  .k_s <- paste(normalise_seat(S2$seat), .key(S2$name))
+  S2 <- S2[!.k_s %in% .k_w]
+  S2[, source := "presumed_sitting"]
+  V2 <- rbindlist(list(W2[, list(seat, name, party, party_raw, source)], S2), use.names = TRUE)
+  V2 <- V2[, list(election = "nsw2027", region = "nsw", year = 2027L, seat, name, party, party_raw, source,
+                  votes = NA_real_, pcv = NA_real_, elected = NA, historic_elected = NA,
+                  breakout = NA, swing = NA_real_, ballot_position = NA_integer_, tot = NA_real_)]
+  cat(sprintf("BC12 nsw2027: %d candidacies across %d seats = Wikipedia %d + presumed sitting %d (retiring removed %d)\n",
+              nrow(V2), uniqueN(V2$seat), nrow(W2), nrow(S2), sum(.gone)))
+  C <- rbindlist(list(C, V2), fill = TRUE)
+}
+
 council <- grepl(" (Shire|City|Regional|Council) Division ", C$seat)
 if (any(council)) {
   cat(sprintf("BC8  dropping %d local-council rows in %d pseudo-seats: %s\n",
@@ -1392,13 +1471,16 @@ if (.old_exists) {
   o <- readLines(PREV, encoding = "UTF-8", warn = FALSE); nw <- readLines(OUT, encoding = "UTF-8", warn = FALSE)
   n_new <- length(strsplit(nw[1], ",", fixed = TRUE)[[1]]) - length(strsplit(o[1], ",", fixed = TRUE)[[1]])
   stopifnot(n_new >= 0L, startsWith(nw[1], o[1]))
-  ov <- o[-1][!startsWith(o[-1], "vic2026,")]; nv <- nw[-1][!startsWith(nw[-1], "vic2026,")]
+  # vic2026 and nsw2027 are the provisional (pre-nomination) elections, rebuilt
+  # from their candidate lists every run; every other line must be unchanged.
+  .prov <- function(x) startsWith(x, "vic2026,") | startsWith(x, "nsw2027,")
+  ov <- o[-1][!.prov(o[-1])]; nv <- nw[-1][!.prov(nw[-1])]
   same <- length(ov) == length(nv) && all(paste0(ov, strrep(",", n_new)) == nv)
-  cat(sprintf("BC11 non-vic2026 rows byte-identical to the previous file (+%d empty new column field(s)): %s  (n=%d old, %d new)\n",
+  cat(sprintf("BC11 rows outside vic2026/nsw2027 byte-identical to the previous file (+%d empty new column field(s)): %s  (n=%d old, %d new)\n",
               n_new, same, length(ov), length(nv)))
   if (!same && !identical(Sys.getenv("AUSPOL_CAND_ALLOW_OTHER_CHANGE"), "1")) {
     file.copy(PREV, OUT, overwrite = TRUE)
-    stop("BC11! non-vic2026 rows changed: another source moved. Old file restored; set AUSPOL_CAND_ALLOW_OTHER_CHANGE=1 to accept.")
+    stop("BC11! rows outside vic2026/nsw2027 changed: another source moved. Old file restored; set AUSPOL_CAND_ALLOW_OTHER_CHANGE=1 to accept.")
   }
 }
 

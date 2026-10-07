@@ -9,8 +9,9 @@ test_that("the blend weight learns only from earlier elections", {
   skip_if_not(file.exists(out_path("forecasts.csv")), "no forecasts table")
   skip_if_not(file.exists(file.path(pkg_root(), "external", "reference", "polls", "seat-polls", "seat_polls.csv")),
               "no seat polls")
+  # fed2019 has one earlier polled seat (fed2016 Mayo, hand-keyed): one cluster is no information.
   expect_equal(seat_poll_weight("fed2019")$w, 0)
-  expect_equal(seat_poll_weight("fed2022")$k, 1L)
+  expect_equal(seat_poll_weight("fed2022")$k, 2L)   # fed2016 (Mayo) and fed2019
   withr::local_envvar(AUSPOL_TIME_FORWARD_FITS = "0")
   expect_gt(seat_poll_weight("fed2022")$k, 1L)
 })
