@@ -394,7 +394,7 @@ seat_poll_weights_split <- function(target_election) {
 #' them alike.
 #' @keywords internal
 .read_seat_polls_file <- function(f) {
-  s <- data.table::fread(f, showProgress = FALSE)
+  s <- .seat_poll_coalition_dedup(data.table::fread(f, showProgress = FALSE))
   v <- Sys.getenv("AUSPOL_SEAT_POLL_HANDKEYED", "1")
   if (!v %in% c("0", "1")) stop("AUSPOL_SEAT_POLL_HANDKEYED must be \"0\" or \"1\", not ", v)
   if (v == "0") return(s)
@@ -406,6 +406,44 @@ seat_poll_weights_split <- function(target_election) {
               paste(unique(paste(h$election, h$seat_name)), collapse = ", ")))
   h$source <- NULL
   data.table::rbindlist(list(s, h), use.names = TRUE, fill = TRUE)
+}
+
+# A complete poll's primaries sum to 100 within this many points (rounding).
+# docs/CONSTANTS.md.
+SEAT_POLL_TOTAL_TOL <- 5
+
+#' Drop a Coalition figure the fetcher copied from a merged Lib/Nat cell
+#'
+#' `rvest::html_table(fill = TRUE)` repeats a merged ("colspan") cell in every
+#' column it spans. Wikipedia's fed2022 YouGov table gives Nicholls one
+#' Coalition figure across its Lib and Nat columns, so the file holds Lib 41
+#' AND Nat 41, the poll sums to 141 and our LNP class read 82 (published
+#' 55.3 against an actual 44.2). A poll's Nat row is dropped when it equals
+#' the Lib row, the poll's total is above 105 with both, and 95 to 105
+#' without one. Genuine three-cornered contests (Bullwinkel fed2025: Lib 41,
+#' Nat 22) differ and are kept. `AUSPOL_SEAT_POLL_COALITION_DEDUP`; every drop
+#' is printed (SPCD).
+#' @keywords internal
+.seat_poll_coalition_dedup <- function(s) {
+  v <- Sys.getenv("AUSPOL_SEAT_POLL_COALITION_DEDUP", "1")
+  if (!v %in% c("0", "1")) stop("AUSPOL_SEAT_POLL_COALITION_DEDUP must be \"0\" or \"1\", not ", v)
+  # A file without the poll columns is not a seat-poll table; leave it to the caller.
+  if (v == "0" || !nrow(s) || !all(c("election", "seat", "pollster", "date_raw", "party", "fp", "row_type") %in% names(s))) return(s)
+  pid <- paste(s$election, s$seat, s$pollster, s$date_raw, sep = " | ")
+  pty <- toupper(trimws(s$party))
+  isp <- s$row_type == "poll" & is.finite(s$fp)
+  tot <- tapply(s$fp[isp], pid[isp], sum)
+  lib <- isp & pty == "LIB"
+  nat <- isp & pty == "NAT"
+  lib_fp <- s$fp[lib][match(pid, pid[lib])]
+  drop <- nat & is.finite(lib_fp) & s$fp == lib_fp
+  t_both <- tot[pid]
+  tol <- SEAT_POLL_TOTAL_TOL
+  drop <- drop & !is.na(t_both) & t_both > 100 + tol & abs(t_both - s$fp - 100) <= tol
+  for (k in which(drop)) cat(sprintf("SPCD %s: Nat %.1f duplicates Lib (merged cell); poll total %.1f -> %.1f
+",
+                                     pid[k], s$fp[k], t_both[[k]], t_both[[k]] - s$fp[k]))
+  s[!drop]
 }
 
 # Minimum poll OTH figure (points) for it to be read as a named independent.
