@@ -49,7 +49,7 @@ departed_successor_rates <- function(target, path = NULL) {
 #'   an error, so a typo cannot silently run the shipped model.
 #' @export
 departed_successor_mode <- function() {
-  v <- Sys.getenv("AUSPOL_DEPARTED_SUCCESSOR", "0")
+  v <- Sys.getenv("AUSPOL_DEPARTED_SUCCESSOR", "1")   # the shipped value (scripts/published_flags.R)
   if (v %in% c("", "0", "FALSE", "false")) return("0")
   if (v %in% c("1", "TRUE", "true")) return("1")
   if (identical(v, "sitting")) return("sitting")

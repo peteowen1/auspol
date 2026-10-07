@@ -191,6 +191,10 @@ jobs:
           gh release download shipped-models -p demo-resid-vic2026.csv -D output --clobber || echo "::warning::shipped-models has no demo-resid-vic2026.csv -- the forecast runs WITHOUT the demographic correction"
           gh release download shipped-models -p seat-poll-joint-vic2026.csv -D output --clobber || echo "::warning::shipped-models has no seat-poll-joint-vic2026.csv -- AUSPOL_SEAT_POLL_BLEND=3 runs WITHOUT the joint blend"
           gh release download shipped-models -p departed-fed-vic2026.csv -D output --clobber || echo "::warning::shipped-models has no departed-fed-vic2026.csv -- the forecast runs WITHOUT the departed-member blend"
+          # AUSPOL_DEPARTED_SUCCESSOR (published "1"): fit_seats_full.R stops without the rate
+          # table, and running with the switch off would trip its published-filename guard,
+          # so a missing table fails here, loudly, and yesterday's forecast stays live.
+          gh release download shipped-models -p departed-successor-rates.csv -D output --clobber || { echo "::error::shipped-models has no departed-successor-rates.csv -- promote_rebuild.R uploads it at stage 9; publish the rebuild before this runs"; exit 1; }
           gh release download shipped-models -p endorsement-features.csv -D output --clobber || echo "::warning::shipped-models has no endorsement-features.csv -- a model trained with AUSPOL_XGB_ENDORSE=1 gets all-zero endorsement features"
           gh release download shipped-models -p upset-floor-eps.csv -D output --clobber || echo "::warning::shipped-models has no upset-floor-eps.csv -- AUSPOL_UPSET_FLOOR=1 stops fit_seats_full.R (UF0!)"
           gh release download shipped-models -p booth-features-vic2026.csv -D output --clobber || echo "::warning::shipped-models has no booth-features-vic2026.csv -- a model trained with AUSPOL_XGB_BOOTH=1 gets NA booth features (XB1!!)"

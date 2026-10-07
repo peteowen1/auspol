@@ -73,6 +73,13 @@ if (identical(.flag("AUSPOL_XGB_ENDORSE"), "1")) {
   if (!file.exists(file.path(OUT, "endorsement-features.csv"))) stop("AUSPOL_XGB_ENDORSE=1 but output/endorsement-features.csv is missing")
   .arm_tables <- c(.arm_tables, "endorsement-features.csv")
 }
+# And the departed-independent rate table (AUSPOL_DEPARTED_SUCCESSOR, R/departed_successor.R):
+# fit_seats_full.R stops without it, so it must travel with the models.
+if (!.flag("AUSPOL_DEPARTED_SUCCESSOR") %in% c("", "0")) {
+  .ds_f <- if (identical(.flag("AUSPOL_DEPARTED_SUCCESSOR"), "sitting")) "departed-sitting-rates.csv" else "departed-successor-rates.csv"
+  if (!file.exists(file.path(OUT, .ds_f))) stop("AUSPOL_DEPARTED_SUCCESSOR is on but output/", .ds_f, " is missing -- run scripts/fit_departed_successor_rates.R")
+  .arm_tables <- c(.arm_tables, .ds_f)
+}
 # And the upset-insurance eps table (AUSPOL_UPSET_FLOOR=1).
 if (identical(.flag("AUSPOL_UPSET_FLOOR"), "1")) {
   if (!file.exists(file.path(OUT, "upset-floor-eps.csv"))) stop("AUSPOL_UPSET_FLOOR=1 but output/upset-floor-eps.csv is missing")
