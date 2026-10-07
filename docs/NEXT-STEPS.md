@@ -5,7 +5,28 @@ it stood before this rewrite: `backlog/journal-2026-09-19-hub-snapshot.md`).
 Decisions: `docs/DECISIONS.md`. Every seat verdict: `docs/SEAT-REGISTRY.md`.
 Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30.
 
-## 2026-10-07 (READ FIRST): where things stand, next session's priorities
+## 2026-10-07 afternoon (READ FIRST): what moved today
+
+- **PR #97 open, CI green, awaiting Pete's merge:** `quick_arm.R` plus seven review fixes, departed-successor
+  plumbing (off), dated forecast history on R2 (inthegame-blog#610; starts on the first scheduled run after
+  merge), `check_like_ci.R` clean-copy build. Later local `dev` commits are NOT pushed (they would join #97):
+  sitting split `fd99ced`, NSW forecast-JSON config `ad113fc`, NSW date `9e9a078`.
+- **The shipped 0.38 departed rate is LEAKED and mis-sized** (`reviews/departed-rate-provenance-2026-10-07.md`):
+  15 cases, not 305, no fitting script, and time-forward it is 0.17-0.34 for every earlier target. It is applied
+  to mostly non-sitting departed leaders, who keep 0.63 (66 cells) against 0.38 (12 sitting). Arm built:
+  `AUSPOL_DEPARTED_SUCCESSOR=sitting` (`plans/prereg-departed-sitting-split-2026-10-07.md`); screen in flight.
+- **Successor flag** (`plans/prereg-departed-successor-flag-2026-10-07.md` + Amendment 1): web-search coding
+  REJECTED for leakage and quarantined; recoding from pre-election ABC guide snapshots
+  (`scripts/fetch_abc_guide_snapshots.py`, raw under `external/reference/successors/abc-guide-raw/`). Fetch at
+  71/85 cells; cells cached before its gzip fix are suspect: delete `_cache/page_*` entries `{"none": true}` and
+  rerun `--redo-missing` once the running loop ends. Then code flags offline, audit 10, fit.
+- **NSW 2027:** polling day is **13 March 2027** (moved for Easter; NSWEC Bulletin 2), now in `election_dates()`.
+  The anchor's cycle file says 03-20: wrong. `build_forecast_json.R` takes `AUSPOL_FORECAST_ELECTION`. Upstream
+  anchor has no NSW poll after 2026-09-01, so a trend refresh gains one poll.
+- **Housekeeping for Pete:** 12 old worktrees in `.claude/worktrees/` (578 MB; `zero-order-late` has 4 modified
+  files); ~50 `AUSPOL_*` switches read in code but missing from `published_flags.R`, which `quick_arm.R` now refuses.
+
+## 2026-10-07 (morning): where things stand, next session's priorities
 
 **Pete's priorities for next session, in order:** (1) fix the top primary misses; (2) get the NSW 2027
 election onto ITG. **Work fast:** screen every tweak at share level (seconds) and with a low-sim,
