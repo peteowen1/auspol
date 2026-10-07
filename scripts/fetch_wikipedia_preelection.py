@@ -100,8 +100,9 @@ def fetch_rev(title, election_date, hops=0):
     r = revs[0]
     content = r["slots"]["main"]["content"]
     ts = r["timestamp"]
-    assert ts[:10] < election_date, "LEAK: revision %s of %r at %s is not before %s" % (
-        r["revid"], p["title"], ts, election_date)
+    if not (ts[:10] < election_date):
+        raise SystemExit("LEAK: revision %s of %r at %s is not before %s" % (   # not assert: python -O strips asserts
+            r["revid"], p["title"], ts, election_date))
     m = re.match(r"\s*#redirect\s*\[\[([^\]|#]+)", content, re.I)
     if m and hops < 3:  # redirect as it stood pre-election
         return fetch_rev(m.group(1).strip(), election_date, hops + 1)
@@ -350,7 +351,8 @@ def do_cell(election, date, seat, input_rows):
                          "rev_timestamp": r["ts"], "status": r["status"],
                          "bytes": len(r["content"].encode("utf-8")) if r["status"] == "ok" else ""})
         if r["status"] == "ok":
-            assert r["ts"][:10] < date
+            if not (r["ts"][:10] < date):
+                raise SystemExit('check failed: r["ts"][:10] < date')   # not assert: python -O strips asserts, and these guard leakage
             save_raw(election, seat, kd, r["title"], r["content"])
 
     seat_r = resolve_seat(election, seat, date)
@@ -401,7 +403,8 @@ def main():
     only = sys.argv[sys.argv.index("--only") + 1] if "--only" in sys.argv else None
     redo = "--redo" in sys.argv
     inp = read_csv(INPUT)
-    assert len(inp) == 143, "coding-input.csv row count %d != 143" % len(inp)
+    if not (len(inp) == 143):
+        raise SystemExit("coding-input.csv row count %d != 143" % len(inp))   # not assert: python -O strips asserts, and these guard leakage
     cells = {}
     for r in inp:
         cells.setdefault((r["election"], r["seat"]), (r["election_date"], []))[1].append(r)
@@ -420,10 +423,12 @@ def main():
                                      ", ".join("%s=%s" % (r["kind"], r["status"]) for r in rv)), flush=True)
     # completeness
     nrev = {(r["election"], r["seat"]) for r in revs}
-    assert all(c in nrev for c in cells) or only, "some cells have no revisions rows"
+    if not (all(c in nrev for c in cells) or only):
+        raise SystemExit("some cells have no revisions rows")   # not assert: python -O strips asserts, and these guard leakage
     for r in revs:
         if r["status"] == "ok":
-            assert r["rev_timestamp"][:10] < r["election_date"], "LEAK in saved row: %s" % r
+            if not (r["rev_timestamp"][:10] < r["election_date"]):
+                raise SystemExit("LEAK in saved row: %s" % r)   # not assert: python -O strips asserts, and these guard leakage
 
 
 if __name__ == "__main__":

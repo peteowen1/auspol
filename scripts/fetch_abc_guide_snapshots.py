@@ -112,7 +112,8 @@ def polling_day_compact(polling_date):
 def fetch_exact(original, ts, polling_date):
     """Fetch the exact capture raw.  Returns (status, served_ts, memento_ts, body).  Raises
     AssertionError if the requested timestamp is not before the cap."""
-    assert ts <= cap_for(polling_date), "requested ts %s not before polling day %s" % (ts, polling_date)
+    if not (ts <= cap_for(polling_date)):
+        raise SystemExit("requested ts %s not before polling day %s" % (ts, polling_date))   # not assert: python -O strips asserts, and these guard leakage
     st, fu, h, b = wb_get("http://web.archive.org/web/%sid_/%s" % (ts, original))
     m = re.search(r"/web/(\d{14})id_/", fu)
     served = m.group(1) if m else None
@@ -434,13 +435,18 @@ def main():
             reason = code
         if pg:
             if el in LIVE_ELECTIONS:
-                assert pg["capture_ts"] >= "20260101", "live fetch time sanity"
+                # A LIVE page is only pre-election if it is fetched before polling day:
+                # a rerun after the count would save a results page labelled pre-election.
+                if not pg["capture_ts"][:8] < polling_day_compact(pd_):
+                    raise SystemExit("LEAK: live fetch %s is not before polling day %s (%s %s)" % (pg["capture_ts"], pd_, el, seat))
             else:
-                assert pg["served_ts"] and pg["served_ts"][:8] < polling_day_compact(pd_), \
-                    "LEAK: served_ts %s not before polling day %s (%s %s)" % (pg["served_ts"], pd_, el, seat)
-                assert pg["served_ts"] == pg["capture_ts"]
+                if not (pg["served_ts"] and pg["served_ts"][:8] < polling_day_compact(pd_)):
+                    raise SystemExit("LEAK: served_ts %s not before polling day %s (%s %s)" % (pg["served_ts"], pd_, el, seat))   # not assert: python -O strips asserts, and these guard leakage
+                if not (pg["served_ts"] == pg["capture_ts"]):
+                    raise SystemExit('check failed: pg["served_ts"] == pg["capture_ts"]')   # not assert: python -O strips asserts, and these guard leakage
                 if pg.get("memento_ts"):
-                    assert pg["memento_ts"][:8] < polling_day_compact(pd_), "LEAK: memento " + pg["memento_ts"]
+                    if not (pg["memento_ts"][:8] < polling_day_compact(pd_)):
+                        raise SystemExit("LEAK: memento " + pg["memento_ts"])   # not assert: python -O strips asserts, and these guard leakage
             open(rawf, "wb").write(pg["body"])
             snaps[(el, seat)] = {"election": el, "seat": seat, "election_date": pd_, "url": pg["url"],
                                  "capture_ts": pg["capture_ts"], "served_ts": pg["served_ts"], "status": "ok",
@@ -452,10 +458,12 @@ def main():
         write_csv(SNAP, SNAP_COLS, [snaps[k] for k in cells if k in snaps])
 
     # ---- final hard check on every ok row, then bios
-    assert only or all(k in snaps for k in cells), "not every cell has a status yet"
+    if not (only or all(k in snaps for k in cells)):
+        raise SystemExit("not every cell has a status yet")   # not assert: python -O strips asserts, and these guard leakage
     for (el, seat), r in snaps.items():
         if r["status"] == "ok" and el not in LIVE_ELECTIONS:
-            assert r["served_ts"][:8] < polling_day_compact(r["election_date"]), "LEAK in snapshots.csv: %s %s" % (el, seat)
+            if not (r["served_ts"][:8] < polling_day_compact(r["election_date"])):
+                raise SystemExit("LEAK in snapshots.csv: %s %s" % (el, seat))   # not assert: python -O strips asserts, and these guard leakage
     for (el, seat), r in snaps.items():
         if r["status"] == "ok":
             r["page_warn"], r["warn_context"] = page_warn(open(os.path.join(RAW, "%s_%s.html" % (el, seat)), "rb").read())

@@ -59,6 +59,9 @@ test_that("departed_successor_rates is NULL when off and loud when on but unfitt
 test_that("departed_successor_mode validates the switch and picks the sitting file", {
   withr::local_envvar(AUSPOL_DEPARTED_SUCCESSOR = "sitting")
   expect_identical(departed_successor_mode(), "sitting")
+  # From an empty directory, so a real output/departed-sitting-rates.csv on a dev
+  # machine cannot make the "missing file" error vanish (it did not on CI).
+  withr::local_dir(withr::local_tempdir())
   expect_error(departed_successor_rates("vic2022"), "departed-sitting-rates.csv|--split=sitting")
   withr::local_envvar(AUSPOL_DEPARTED_SUCCESSOR = "sittng")
   expect_error(departed_successor_mode(), "must be")
