@@ -107,7 +107,7 @@ if (SITTING) {
     for (i in seq_len(nrow(pick))) with(pick[i], cat(sprintf(
       "\n[%d] %s %s -- %s (polling day %s)\n    components: %s\n    %s\n    dated %s: \"%s\"\n",
       i, election, seat, candidate, election_date,
-      paste(COMPONENTS[unlist(.SD[, COMPONENTS, with = FALSE]) == "TRUE"], collapse = ", "),
+      paste(COMPONENTS[vapply(COMPONENTS, function(cc) pick[[cc]][i] == "TRUE", logical(1))], collapse = ", "),
       source_url, source_date, quote)))
     quit(save = "no")
   }
