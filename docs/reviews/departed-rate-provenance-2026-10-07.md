@@ -55,3 +55,25 @@ real 0.63. Plausible, not tested.
 - The sitting / not-sitting split was formed AFTER seeing these numbers; any arm
   using it needs a prereg that says so.
 - Nothing here touches the successor flags, which are not yet coded.
+
+## Result: the sitting split, screened 2026-10-07 — REFUSED
+
+`scripts/quick_arm.R "AUSPOL_DEPARTED_SUCCESSOR=sitting" --slots=1` on the 13 non-WA elections with
+arm cells, 1,000 sims, common random numbers (`$TEMP/qa_sitting.log`; code fd99ced). Lower is better on
+every line.
+
+| measure | baseline -> arm | change |
+|---|---|---|
+| share squared error, 153 changed cells | 7178.2 -> 7397.9 | +219.7 (+3%), SE 614.8, clustered on 12 elections |
+| seat-winner log loss, 1,450 seats | 0.2848 -> 0.2851 | +0.0003, SE 0.0005 |
+| AEF-7 ledger subset, 529 of 681 seats | 0.2752 -> 0.2767 | **+0.0014, SE 0.0013: worse by more than 1 SE** |
+
+Only fed2013 gains (New England and Lyne: squared error -492.6, log loss -0.0025). sa2026 loses most
+(log loss +0.0123): Kavel and Mount Gambier's sitting members were followed by successors who kept
+0.43 and 0.59, which the ~0.35 sitting rate cuts. By the prereg's decision rule and the screen rule
+("WORSE is a reason to stop") the switch stays off; no 20k run. It goes to Pete as a refusal.
+
+What it shows: whether the departed member was sitting does not separate fading successors from
+holding ones; the successor does. That is the hand-coded flag's question (still open). The leak in the
+shipped 0.38 remains LIVE; the time-forward rates are lower than 0.38, so a plain time-forward
+swap would cut these same cells further and is unlikely to help either (untested).
