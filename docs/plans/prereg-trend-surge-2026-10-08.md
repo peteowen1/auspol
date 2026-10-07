@@ -55,3 +55,10 @@ before any ship decision, and Pete.
 - Victoria 2026's live statewide One Nation moves by more than 3 points: that
   would mean the arm acts on a party whose polls already track (S7 passes at
   1.94 there), and it gets reported before anything ships.
+
+## Outcome (added 2026-10-08, text above unedited): NOT BUILT
+
+Written without engaging `reviews/poll-lag-2026-08-19.md`, which had already
+pre-registered and refused raising One Nation on this evidence (refusal P3).
+Found before any code; Pete chose to keep that verdict. See the review's
+2026-10-08 addendum for SA 2026 as new evidence.
