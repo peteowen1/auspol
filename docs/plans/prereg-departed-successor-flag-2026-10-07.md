@@ -173,3 +173,25 @@ left unedited.
    cached as-at predictions. `AUSPOL_DEPARTED_SUCCESSOR` is registered in
    `post_xgb_switches()` and set to 0 in `rebuild_forecasts.sh` stage 1, so the
    trees never train on it. Criteria 1-4 and the disqualifiers are unchanged.
+
+### Amendment 2, 2026-10-07, written BEFORE any flag is coded (Pete chose to widen the source first)
+
+The ABC pre-election guide pages cover 38 of the 85 cells (33 with every candidate profiled):
+none for qld2020, vic2018, vic2022 (Pascoe Vale, Morwell), and little for NSW and WA. A
+second fixed source is added, read the same leak-proof way:
+
+- **Wikipedia, at the last revision strictly before polling day** (MediaWiki API,
+  `rvstart` = 23:59:59 UTC on the day before polling day, `rvdir=older`, `rvlimit=1`; the
+  revision timestamp is stored and asserted). For each cell: the seat's article; the
+  election's candidates-list article (seat section); and the article of each candidate
+  **only if the pre-election revision of one of those two pages links to it**. No title
+  search, which could reach an article created because the candidate won.
+- **Raw wikitext is kept**; the coder sees extracted text only, with no web access.
+- The coder reads both sources for every cell where both exist, and records which source
+  supports each TRUE. Coding rules, the dated-source gate and the audit are unchanged (a
+  revision timestamp is the source date).
+- Disclosed: candidate articles exist more often for prominent people. That is pre-election
+  prominence, a legitimate signal, not the outcome; but the flag can now partly measure
+  "has a Wikipedia article", and the review will report how many TRUEs rest on a
+  candidate article alone.
+- Fetched before any coding; cells with neither source stay `unknown` and are excluded.
