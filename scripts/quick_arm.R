@@ -127,6 +127,9 @@ input_sig <- quick_md5(paste(top_sig, sub_sig, sep = "##"))
 # CODE: everything a harness loads or compiles (R/, scripts/, src/ -- load_all() compiles
 # src/seat_sim_core.cpp -- plus DESCRIPTION and NAMESPACE), as the commit plus a digest of the
 # uncommitted diff and untracked files. This tool's own two files are excluded.
+# CONTENT, not the commit: the committed part is the blob hashes of those paths at HEAD
+# (`git ls-tree`), so a commit that touches only docs/ or other non-code files no longer
+# throws away every cached baseline (2026-10-07: several 7-minute rebuilds for doc notes).
 CODE_PATHS <- c("R", "scripts", "src", "DESCRIPTION", "NAMESPACE")
 excl <- c(":(exclude)R/quick_arm.R", ":(exclude)scripts/quick_arm.R")
 sh_checked <- function(...) {   # a git call that failed is an unreadable input, never an empty one
@@ -134,7 +137,12 @@ sh_checked <- function(...) {   # a git call that failed is an unreadable input,
   if (!is.null(attr(r, "status")) && attr(r, "status") != 0L) return(NULL)
   r
 }
-head_sha <- sh_checked("rev-parse", "--short=7", "HEAD")[1]
+# ls-tree takes plain paths, not :(exclude) pathspecs (it exits 128), so drop this tool's
+# own two files from the listing here instead.
+head_tree <- sh_checked("ls-tree", "-r", "HEAD", "--", CODE_PATHS)
+if (!is.null(head_tree)) head_tree <- head_tree[!grepl("\t(R|scripts)/quick_arm\\.R$", head_tree)]
+head_sha <- if (is.null(head_tree) || !length(head_tree)) NA_character_ else
+  paste0("t", substr(quick_md5(paste(head_tree, collapse = "\n")), 1, 7))
 diff_txt <- sh_checked("diff", "HEAD", "--", CODE_PATHS, excl)
 untracked <- sh_checked("ls-files", "--others", "--exclude-standard", "--", CODE_PATHS, excl)
 if (is.null(head_sha) || is.na(head_sha) || is.null(diff_txt) || is.null(untracked)) {
