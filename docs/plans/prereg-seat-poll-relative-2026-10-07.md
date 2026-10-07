@@ -58,3 +58,31 @@ only these plus fed2019, which has no MRP release and precedes both).
   before and after.
 - The refitted weight moving by more than 0.15 from the shipped weight
   without the per-pair numbers explaining it.
+
+## Result (added 2026-10-07, original text above unedited): REFUSED before the screen
+
+A share-level check (`seat_poll_shares()` with the arm on and off, `our` =
+`xgb_pred_seat` from `output/forecasts.csv`) removed the premise, so the
+quick_arm screen was not run (Pete's choice, option 1):
+
+- The release-wide Labor offsets against OUR pre-blend level are small:
+  -0.85 to +1.84 points across the six fed2025 releases (SPR1 lines). The
+  -6.81 figure in "Why" was measured against the ACTUAL result, not against
+  our model; the releases agreed with our level. The misses (Hunter,
+  Bennelong, Greenway) are seat-by-seat poll error.
+- fed2025 MRP cells (924), RMSE against actual, points: absolute polls 5.31,
+  release-relative 5.12, our xgb stage 3.55.
+- The "unacceptable" clause fired: the fed2022 YouGov IND offset was -6.69,
+  cutting Goldstein 24.0 -> 17.3 (actual 34.5) and Kooyong 28.0 -> 21.3
+  (actual 40.5).
+
+Code reverted (never committed). Separately, the public-only screen
+(`prereg-seat-poll-public-screen-2026-10-07.md`) was refused on its guard:
+AEF-7 ledger 0.2743 -> 0.2836 (+0.0093, SE 0.0087); fed2022 +0.0389,
+nsw2023 +0.0188, fed2025 -0.0093, fed2019 -0.0085; pooled 22 pairs +0.0024
+(SE 0.0030).
+
+What the two leave open: our model beat the fed2025 seat polls per seat
+(3.55 against 5.31) while the time-forward blend weight, fitted mostly on
+fed2022 where polls were good, trusted them. That is a per-election weight
+question, not a poll-level one.
