@@ -160,10 +160,10 @@ SEED        <- as.integer(Sys.getenv("AUSPOL_SEED", "42"))
 # optional-preferential flow pooling are the next steps in that plan.
 .TARGETS <- list(
   vic2026 = list(tgt = "vic2026", prev = "vic2022", region = "vic", year = 2026L,
-                 fp_file = "vec-2022-vic-firstprefs.csv", tx_file = "vec-2022-vic-transfers.csv",
+                 fp_file = "vec-2022-vic-firstprefs.csv", tx_file = "vec-2022-vic-transfers.csv", tx_recipe = "pooled",
                  n_seats = 88L, out_stem = "vic-2026"),
   nsw2027 = list(tgt = "nsw2027", prev = "nsw2023", region = "nsw", year = 2027L,
-                 fp_file = "nswec-2023-nsw-firstprefs.csv", tx_file = "nswec-nsw-transfers.csv",
+                 fp_file = "nswec-2023-nsw-firstprefs.csv", tx_file = "nswec-nsw-transfers.csv", tx_recipe = "own_prev",
                  n_seats = 93L, out_stem = "nsw-2027"))
 .tgt_arg <- Sys.getenv("AUSPOL_TARGET", "vic2026")
 if (!.tgt_arg %in% names(.TARGETS)) stop("AUSPOL_TARGET must be one of ", paste(names(.TARGETS), collapse = ", "), ", not ", .tgt_arg)
@@ -279,25 +279,38 @@ if (length(absent)) {
 # events instead of 18. Better data moving the answer is the system working.
 #
 # Set AUSPOL_QLD_FLOWS=0 to reproduce the pre-2026-08-21 forecast exactly.
-tx <- rbind(fread(file.path(PREF, TARGET$tx_file)),
-            fread(file.path(PREF, "ecsa-2026-sa-transfers.csv")))
-if (!identical(Sys.getenv("AUSPOL_QLD_FLOWS", "1"), "0")) {
-  qf <- file.path(PREF, "ecq-qld-transfers.csv")
-  if (!file.exists(qf)) stop("Run scripts/fetch_preferences_qld.R first.")
-  tx <- rbind(tx, fread(qf), fill = TRUE)
-}
-# WESTERN AUSTRALIA, OFF BY DEFAULT. Against docs/plans/prereg-wa-flows.md,
-# which requires the backtest measurement before this ships. Seven admissible
-# elections, 1,634 exclusion events, taking One Nation's from 198 to 359.
-#
-# Routed through pool_external_flows() with the Victorian polling day, so the
-# same date guard the backtests use applies here rather than being assumed
-# unnecessary. The Queensland line above predates the helper and is left as it
-# is deliberately: it is on the published path, and the smallest diff that adds
-# Western Australia is the one least able to move the current forecast.
-POLL_DAY <- format(as.Date(unname(election_dates()[TGT])))
-if (identical(Sys.getenv("AUSPOL_WA_FLOWS", "0"), "1")) {
-  tx <- pool_external_flows(tx, POLL_DAY, "wa")
+if (identical(TARGET$tx_recipe, "own_prev")) {
+  # NSW IS OPTIONAL PREFERENTIAL: its own previous election only, never pooled with
+  # Queensland, South Australia or Western Australia (the NSW harness recipe,
+  # scripts/backtest_candidate_nsw.R; pooling Queensland cost nsw2023 0.194 of log score).
+  tx <- fread(file.path(PREF, TARGET$tx_file))
+  .p <- PREV
+  if (!.p %in% tx$election) stop("TG1! ", TARGET$tx_file, " has no ", .p, " transfers")
+  tx <- tx[tx$election == .p]
+  POLL_DAY <- format(as.Date(unname(election_dates()[TGT])))
+  cat(sprintf("TG1  %s flows: %d %s transfers only (own previous election, no pooling)
+", TGT, nrow(tx), .p))
+} else {
+  tx <- rbind(fread(file.path(PREF, TARGET$tx_file)),
+              fread(file.path(PREF, "ecsa-2026-sa-transfers.csv")))
+  if (!identical(Sys.getenv("AUSPOL_QLD_FLOWS", "1"), "0")) {
+    qf <- file.path(PREF, "ecq-qld-transfers.csv")
+    if (!file.exists(qf)) stop("Run scripts/fetch_preferences_qld.R first.")
+    tx <- rbind(tx, fread(qf), fill = TRUE)
+  }
+  # WESTERN AUSTRALIA, OFF BY DEFAULT. Against docs/plans/prereg-wa-flows.md,
+  # which requires the backtest measurement before this ships. Seven admissible
+  # elections, 1,634 exclusion events, taking One Nation's from 198 to 359.
+  #
+  # Routed through pool_external_flows() with the Victorian polling day, so the
+  # same date guard the backtests use applies here rather than being assumed
+  # unnecessary. The Queensland line above predates the helper and is left as it
+  # is deliberately: it is on the published path, and the smallest diff that adds
+  # Western Australia is the one least able to move the current forecast.
+  POLL_DAY <- format(as.Date(unname(election_dates()[TGT])))
+  if (identical(Sys.getenv("AUSPOL_WA_FLOWS", "0"), "1")) {
+    tx <- pool_external_flows(tx, POLL_DAY, "wa")
+  }
 }
 fm <- build_flow_matrix(tx, min_n = 3L)
 cat(sprintf("flow matrix: %d exclusions, %d cells at n>=3 of %d observed\n",
@@ -1234,7 +1247,8 @@ if (!is.null(.nis)) shares <- .nis else if (!identical(new_ind_mode(), "0"))
   cat(sprintf("BV1n!! new_ind_shrink_apply() FAILED%s -- the new-independent shrink is NOT applied to this forecast\n",
               .reason("new_ind")))
 shares_x <- .try("xgb_live", xgb_primary_predict_live(shares, mat22, a22, state_mean, .returns,
-                                                        own_prev = .own_prev_xgb, region = REGION))
+                                                        own_prev = .own_prev_xgb, region = REGION,
+                                                        year = YEAR, prev_year = as.integer(sub("^[a-z]+", "", PREV))))
 if (!is.null(shares_x)) {
   shares <- shares_x
 } else if (identical(Sys.getenv("AUSPOL_XGB_PRIMARY_LIVE", "0"), "1")) {
