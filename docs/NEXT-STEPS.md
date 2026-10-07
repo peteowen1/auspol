@@ -30,7 +30,7 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30.
 review); sitting split REFUSED; hand-coded successor flag (leak-free ABC + Wikipedia pre-election text, 22/22
 audited) showed NO signal; three share-level screens (segment bias, band) found nothing to build; NSW 2027
 polling day is 13 March 2027; NSW One Nation flow to Labor is ~36% of live preferences, not 25.5%.
-Nothing is running. Worktree branch `worktree-agent-af6920da9ea2e5900` was cherry-picked to dev (ad113fc).
+Nothing is running. **Housekeeping done 2026-10-07:** 8 clean worktrees removed (branches kept; 599 -> 458 MB); kept: 3 locked by another session's agents (pid 36184), `zero-order-late` (4 modified, 2 untracked) and `agent-ab6831434e991d91a` (an untracked prereg draft that differs from dev's). NOT done, deliberately: registering the ~50 `AUSPOL_*` names that quick_arm refuses, because many are run controls (e.g. `AUSPOL_FED_PAIRS`) rather than model switches, and copying 50 code defaults by hand risks changing what the harnesses run; it needs a per-name pass. Worktree branch `worktree-agent-af6920da9ea2e5900` was cherry-picked to dev (ad113fc).
 
 ## 2026-10-07 afternoon: what moved today
 
