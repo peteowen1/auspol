@@ -10,6 +10,9 @@
 #   auspol/history/forecast-vic2026-<YYYY-MM-DD>.json   byte-identical copy, dated by built_at (UTC)
 #   auspol/history/vic-page-data-<YYYY-MM-DD>.json       byte-identical copy, dated by meta.as_of
 #   auspol/history/index-vic2026.json                    {"forecast": [...], "page_data": [...]}
+#   auspol/history/index-vic2026.backup.json             same, so a lost index is detected, not restarted
+# Dates: forecast entries use built_at's UTC date; page-data entries use
+# meta.as_of as the page builder writes it. They are separate lists, not a join.
 # Dated copies rather than a flattened table: every field the JSON carries is
 # kept, and a reader gets back exactly the shape it already parses.
 #
@@ -23,13 +26,14 @@
 #
 # Backends: R2 by default (read over the public URL, so the HTTP status is exact;
 # write with wrangler). HISTORY_LOCAL_DIR=<dir> reads and writes a local
-# directory instead, for tests (tests/history/test_publish_history.sh).
+# directory instead, for tests (scripts/test_publish_forecast_history.sh).
 set -euo pipefail
 
 FORECAST=${FORECAST:-output/forecast-vic2026.json}
 PAGEDATA=${PAGEDATA:-output/vic-page-data.json}
 PREFIX=auspol/history
 INDEX_KEY=$PREFIX/index-vic2026.json
+BACKUP_KEY=$PREFIX/index-vic2026.backup.json
 PUBLIC=${HISTORY_PUBLIC_BASE:-https://pub-ee4bf5b599a047f9ac2b9facc1587008.r2.dev}
 WORK=$(mktemp -d)
 trap 'rm -rf "$WORK"' EXIT
@@ -68,31 +72,40 @@ N_SEATS=$(jq '.seats | length' "$FORECAST")
 
 status=$(get_obj "$INDEX_KEY" "$WORK/old.json")
 if [ "$status" = absent ]; then
+  # The index is also kept as a backup copy. A 404 on the index while the
+  # backup exists means the index was deleted or is unreachable, not that there
+  # is no history: starting over would drop every earlier date from the index.
+  bstatus=$(get_obj "$BACKUP_KEY" "$WORK/backup.json")
+  if [ "$bstatus" != absent ]; then
+    echo "history: index 404 but its backup exists -- refusing to start a new index (restore $INDEX_KEY from $BACKUP_KEY)" >&2
+    exit 1
+  fi
   echo '{"forecast": [], "page_data": []}' > "$WORK/old.json"
-  echo "history: no index yet (404) -- starting one"
+  echo "history: no index and no backup yet (404) -- starting one"
 fi
 # A 200 must be a real index: both arrays present, every entry dated.
 jq -e '(.forecast | type == "array") and (.page_data | type == "array")
        and all(.forecast[], .page_data[]; (.as_at | type == "string"))' "$WORK/old.json" >/dev/null \
   || { echo "history: existing index is not a valid index, aborting" >&2; exit 1; }
-OLD_F=$(jq '.forecast | length' "$WORK/old.json")
-OLD_P=$(jq '.page_data | length' "$WORK/old.json")
+OLD_F=$(jq '[.forecast[].as_at] | unique | length' "$WORK/old.json")
+OLD_P=$(jq '[.page_data[].as_at] | unique | length' "$WORK/old.json")
 
 # Dated copies first, then the index, so the index never names a missing file.
 F_KEY=$PREFIX/forecast-vic2026-$F_DATE.json
-put_obj "$F_KEY" "$FORECAST" 31536000
+put_obj "$F_KEY" "$FORECAST" 3600
 jq --arg d "$F_DATE" --arg b "$F_BUILT" --arg s "$F_SHA" --arg k "$F_KEY" --argjson n "$N_SEATS" \
   '.forecast = ([.forecast[] | select(.as_at != $d)] + [{as_at: $d, built_at: $b, git_sha: $s, key: $k, n_seats: $n}] | sort_by(.as_at))' \
   "$WORK/old.json" > "$WORK/new.json"
 
 if [ -s "$PAGEDATA" ] && P_DATE=$(jq -er '.meta.as_of' "$PAGEDATA") && [[ "$P_DATE" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]]; then
   P_KEY=$PREFIX/vic-page-data-$P_DATE.json
-  put_obj "$P_KEY" "$PAGEDATA" 31536000
+  put_obj "$P_KEY" "$PAGEDATA" 3600
   jq --arg d "$P_DATE" --arg k "$P_KEY" \
     '.page_data = ([.page_data[] | select(.as_at != $d)] + [{as_at: $d, key: $k}] | sort_by(.as_at))' \
     "$WORK/new.json" > "$WORK/new2.json" && mv "$WORK/new2.json" "$WORK/new.json"
 else
-  echo "history: $PAGEDATA missing or has no meta.as_of -- page data not recorded this run" >&2
+  echo "::warning::history: $PAGEDATA missing or has no YYYY-MM-DD meta.as_of -- page data NOT recorded this run (forecast was)"
+  PAGE_MISSING=1
 fi
 
 NEW_F=$(jq '.forecast | length' "$WORK/new.json")
@@ -102,5 +115,9 @@ if [ "$NEW_F" -lt "$OLD_F" ] || [ "$NEW_P" -lt "$OLD_P" ]; then
   exit 1
 fi
 put_obj "$INDEX_KEY" "$WORK/new.json" 60
+put_obj "$BACKUP_KEY" "$WORK/new.json" 60
 echo "history: forecast $NEW_F date(s): $(jq -r '[.forecast[].as_at] | join(", ")' "$WORK/new.json")"
 echo "history: page data $NEW_P date(s): $(jq -r '[.page_data[].as_at] | join(", ")' "$WORK/new.json")"
+if [ -n "${GITHUB_STEP_SUMMARY:-}" ]; then
+  echo "Forecast history: $NEW_F forecast date(s), $NEW_P page-data date(s); latest $F_DATE${PAGE_MISSING:+ (page data MISSING this run)}" >> "$GITHUB_STEP_SUMMARY"
+fi
