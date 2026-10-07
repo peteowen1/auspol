@@ -5,7 +5,30 @@ it stood before this rewrite: `backlog/journal-2026-09-19-hub-snapshot.md`).
 Decisions: `docs/DECISIONS.md`. Every seat verdict: `docs/SEAT-REGISTRY.md`.
 Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30.
 
-## 2026-10-07 afternoon (READ FIRST): what moved today
+## 2026-10-07 evening HANDOFF (READ FIRST, Pete restarting)
+
+**For Pete, in order:**
+1. **PR #97** (https://github.com/peteowen1/auspol/pull/97): reviewed, CI green, NOT merged. Holds quick_arm,
+   successor plumbing (off at that point), the ITG forecast history (#610, dev 920573f + fixes 36ac92e) and
+   the check_like_ci fix. Merging starts the dated history on the next scheduled run.
+2. **Local `dev` is ~25 commits ahead of `origin/dev`, NOT pushed** (a push joins PR #97). Last: `ad079e1`
+   SHIPS `AUSPOL_DEPARTED_SUCCESSOR="1"` (time-forward departed rate replacing the leaked 0.38; deciding 20k
+   rebuild: ledger 0.2741 -> 0.2739, RMSE 5.121 -> 5.113; Pete overrode the two-seat clause). These later
+   commits are NOT code-reviewed yet: review them before pushing. `check_like_ci.R` passes on `ad079e1`.
+3. **Publish order matters:** after merge, run stage 9 (`AUSPOL_PUBLISH=1`) BEFORE the next daily run, or
+   the forecast workflow fails loudly: it needs `departed-successor-rates.csv` on `shipped-models`, which
+   `promote_rebuild.R` uploads. `output/` already holds the deciding rebuild (ledger 0.2739).
+4. **Nomination day (9 Nov):** refit the successor rates on the final candidate list
+   (`build_departed_successors.R` -> `build_successor_coding_input.R` -> fetch + code ->
+   `fit_departed_successor_rates.R`).
+
+**Results today (all written up in docs/reviews/*-2026-10-07.md):** 0.38 was 15 cases not 305 (provenance
+review); sitting split REFUSED; hand-coded successor flag (leak-free ABC + Wikipedia pre-election text, 22/22
+audited) showed NO signal; three share-level screens (segment bias, band) found nothing to build; NSW 2027
+polling day is 13 March 2027; NSW One Nation flow to Labor is ~36% of live preferences, not 25.5%.
+Nothing is running. Worktree branch `worktree-agent-af6920da9ea2e5900` was cherry-picked to dev (ad113fc).
+
+## 2026-10-07 afternoon: what moved today
 
 - **PR #97 open, CI green, awaiting Pete's merge:** `quick_arm.R` plus seven review fixes, departed-successor
   plumbing (off), dated forecast history on R2 (inthegame-blog#610; starts on the first scheduled run after
