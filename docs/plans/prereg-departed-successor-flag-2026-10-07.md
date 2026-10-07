@@ -195,3 +195,15 @@ second fixed source is added, read the same leak-proof way:
   "has a Wikipedia article", and the review will report how many TRUEs rest on a
   candidate article alone.
 - Fetched before any coding; cells with neither source stay `unknown` and are excluded.
+
+### Amendment 3, 2026-10-07, AFTER the screen: Pete overrode the two-seat clause
+
+The flag carried no signal (`docs/reviews/departed-successor-flag-result-2026-10-07.md`), so
+the arm reduced to a time-forward, held pooled rate. Screen (`quick_arm.R`, 1,000 sims, 10
+non-WA elections): squared error on 69 changed cells -17% (1.25 SE), seat log loss -0.0005
+(SE 0.0003, better by more than 1 SE), AEF-7 subset -0.0003 (within 1 SE); IND win probability
+where an IND won 0.712 -> 0.714 (disqualifier does not fire). **The "more than half the gain
+from two seats" disqualifier FIRES**: New England and Lyne fed2013 are 82% of the gain; the
+other 163 seats are -114 (net better; Waite and Mount Gambier improve, Warringah 2019 worsens).
+By the decision rule the switch stays off. **Pete overrode the clause** (quiz, 2026-10-07): the
+deciding 20,000-sim run goes ahead and decides on criteria 1-4. Recorded here, not edited above.
