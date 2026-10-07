@@ -451,7 +451,7 @@ now <- trend_as_at(polls, YEAR, cycles, Sys.Date(), priors, fl, with_series = TR
 # non-zero on after the page is built -- a separate file from `L3-BREACH.txt`
 # and `NL3-BREACH.txt` on purpose, so a breach on the published cycle can
 # never be masked by, or overwrite, one on a cycle nobody publishes.
-S7_MARKER <- file.path("output", "S7-BREACH.txt")
+S7_MARKER <- file.path("output", if (TGT == "vic2026") "S7-BREACH.txt" else sprintf("S7-BREACH-%s.txt", TGT))   # run_all.R reads the vic2026 name
 
 # `now` is NULL on any of trend_as_at()'s several thin-cycle paths. Say which
 # quantity is missing rather than letting it surface as `stopifnot(length(fits)

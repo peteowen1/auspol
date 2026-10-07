@@ -170,7 +170,7 @@ seat_poll_weight <- function(target_election) {
   b <- sum(dx * dy) / sum(dx^2)
   e <- dy - b * dx
   G <- length(unique(rows$unit))
-  se2 <- sum(tapply(dx * e, rows$unit, sum)^2) / sum(dx^2)^2 * .cluster_df(G)
+  se2 <- .cluster_se2(sum(tapply(dx * e, rows$unit, sum)^2), sum(dx^2)^2, G)
   w <- min(1, max(0, b * b^2 / (b^2 + se2)))
   list(w = w, raw = b, se = sqrt(se2), n = nrow(rows), k = length(unique(rows$el)))
 }
@@ -335,7 +335,7 @@ seat_poll_weights_split <- function(target_election) {
     dx <- r$poll - r$pred; dy <- r$actual - r$pred
     b <- sum(dx * dy) / sum(dx^2); e <- dy - b * dx
     G <- length(unique(r$unit))
-    se2 <- sum(tapply(dx * e, r$unit, sum)^2) / sum(dx^2)^2 * .cluster_df(G)
+    se2 <- .cluster_se2(sum(tapply(dx * e, r$unit, sum)^2), sum(dx^2)^2, G)
     list(b = b, se = sqrt(se2), n = nrow(r))
   }
   d <- est("direct"); m <- est("mrp")
@@ -379,9 +379,9 @@ seat_poll_weights_split <- function(target_election) {
   shares
 }
 
-#' Small-sample factor for a cluster-robust variance, G clusters
+#' Cluster-robust variance `meat / bread * G / (G - 1)`, G clusters
 #'
-#' `G / (G - 1)`. With ONE cluster the sandwich has nothing to compare and its
+#' Returns `Inf` outright below two clusters. With ONE cluster the sandwich has nothing to compare and its
 #' score sum is ~0 by construction, so the old `G / max(1, G - 1)` returned a
 #' near-zero SE and the shrinkage passed the slope through untouched: fed2019's
 #' blend weight was 1.000, fitted on fed2016's single polled seat (Mayo),
@@ -389,11 +389,13 @@ seat_poll_weights_split <- function(target_election) {
 #' shrunk weight is 0. `AUSPOL_SEAT_POLL_W_SINGLE_CLUSTER="legacy"` restores the
 #' old factor (screening only).
 #' @keywords internal
-.cluster_df <- function(G) {
+.cluster_se2 <- function(meat, bread, G) {
   v <- Sys.getenv("AUSPOL_SEAT_POLL_W_SINGLE_CLUSTER", "none")
   if (!v %in% c("none", "legacy")) stop("AUSPOL_SEAT_POLL_W_SINGLE_CLUSTER must be \"none\" or \"legacy\", not ", v)
-  if (v == "legacy") return(G / max(1, G - 1))
-  if (G < 2) Inf else G / (G - 1)
+  if (v == "legacy") return(meat / bread * G / max(1, G - 1))
+  # Inf directly, never meat * Inf: with one cluster the score sum is ~0 by
+  # construction and is often exactly 0, and 0 * Inf is NaN (review 2026-10-08).
+  if (G < 2) Inf else meat / bread * G / (G - 1)
 }
 
 .ind_weight_on <- function() {
@@ -646,7 +648,7 @@ seat_poll_ind_weight <- function(target_election) {
     if (nrow(r) < 3L || sum(dx^2) <= 0) return(NULL)
     b <- sum(dx * dy) / sum(dx^2); e <- dy - b * dx
     G <- length(unique(r$seat))
-    list(b = b, se2 = sum(tapply(dx * e, r$seat, sum)^2) / sum(dx^2)^2 * .cluster_df(G))
+    list(b = b, se2 = .cluster_se2(sum(tapply(dx * e, r$seat, sum)^2), sum(dx^2)^2, G))
   }
   g <- list()
   for (e in unique(rows$el)) {
@@ -661,6 +663,11 @@ seat_poll_ind_weight <- function(target_election) {
   }
   if (!length(g)) return(none)
   g <- data.table::rbindlist(g)
+  # A one-cluster group carries no information (se2 Inf): it must not enter
+  # tau2 (one Inf turns the mean to -Inf, so tau2 0 for every class) or dbar
+  # (all-Inf weights give 0/0). Review 2026-10-08.
+  g <- g[is.finite(g$se2)]
+  if (!nrow(g)) return(none)
   gi <- g[g$class == "IND"]
   if (nrow(g) < 3L || !nrow(gi)) return(none)
   tau2 <- max(0, mean(g$d^2 - g$se2))
