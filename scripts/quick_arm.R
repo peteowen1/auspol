@@ -49,6 +49,10 @@ stopifnot(is.finite(sims), sims >= 100, slots >= 1, slots <= 2)  # two R process
 if (!clean_only && !length(arm_env)) stop("usage: Rscript scripts/quick_arm.R \"AUSPOL_X=1 AUSPOL_Y=0\" [--pairs=..] [--sims=N] [--base=\"ENV\"]")
 # the arm and the baseline must differ, or this compares a run with itself
 arm_eff <- c(base_env[setdiff(names(base_env), names(arm_env))], arm_env)
+# a switch no harness reads is an arm that never ran: it must be in PUBLISHED_FLAGS (which is also
+# what HD1 reports). A typo stops here, before anything is copied or run.
+source("scripts/published_flags.R")
+quick_check_registered(c(names(arm_env), names(base_env)), names(PUBLISHED_FLAGS))
 
 # ---- where things live -------------------------------------------------------
 sh <- function(...) suppressWarnings(system2("git", c(...), stdout = TRUE, stderr = FALSE))
@@ -77,19 +81,27 @@ link_dir <- function(link, target) {
 }
 unlink_link <- function(link) {  # removes the junction only, never what it points at
   if (!dir.exists(link) && !file.exists(link)) return(invisible())
-  if (is_win) suppressWarnings(system2("cmd", c("/c", "rmdir", shQuote(gsub("/", "\\\\", link))), stdout = FALSE, stderr = FALSE)) else unlink(link)
+  r <- if (is_win) suppressWarnings(system2("cmd", c("/c", "rmdir", shQuote(gsub("/", "\\\\", link))), stdout = TRUE, stderr = TRUE)) else unlink(link)
+  if (dir.exists(link) || file.exists(link))
+    stop("quick_arm: could not remove link ", link, " (", paste(r, collapse = " "), "); not deleting anything under it")
+  invisible()
 }
 LINKS <- c("R", "src", "scripts")
+ALL_LINKS <- c(LINKS, "external")
 clean_root <- function(root) {
-  for (l in c(LINKS, "external")) unlink_link(file.path(root, l))
+  for (l in ALL_LINKS) unlink_link(file.path(root, l))
+  quick_assert_no_links(root, ALL_LINKS)   # the removal above actually worked
   if (dir.exists(file.path(root, "output"))) unlink(file.path(root, "output"), recursive = TRUE)
 }
 if (clean_only) {
-  for (r in list.files(qd, pattern = "^slot", full.names = TRUE)) clean_root(r)
+  quick_check_root(qd, create = FALSE)    # only a directory this tool made (marker file) is ever deleted
+  slots_found <- list.files(qd, pattern = "^slot", full.names = TRUE)
+  for (r in slots_found) clean_root(r)
+  for (r in slots_found) quick_assert_no_links(r, ALL_LINKS)
   unlink(qd, recursive = TRUE)
   cat("quick_arm: removed", qd, "(junctions removed first)\n"); quit(status = 0)
 }
-dir.create(qd, recursive = TRUE, showWarnings = FALSE)
+quick_check_root(qd, create = TRUE)       # refuses a directory without the marker that is not empty
 
 # ---- identity of the inputs and the code --------------------------------------
 # EVERY top-level input the slot copy takes (same filter as the copy below), not a
@@ -98,16 +110,45 @@ dir.create(qd, recursive = TRUE, showWarnings = FALSE)
 # the slots and never invalidated a cached baseline.
 sig_files <- list.files(src_output, full.names = TRUE)
 sig_files <- sort(sig_files[!dir.exists(sig_files) & !grepl("^backtest-", basename(sig_files))])
-input_sig <- paste(vapply(sig_files, function(f) if (file.exists(f)) sprintf("%s:%d:%d", basename(f), file.size(f), as.integer(file.mtime(f))) else paste0(basename(f), ":absent"), ""), collapse = "|")
+top_sig <- paste(vapply(sig_files, function(f) if (file.exists(f)) sprintf("%s:%d:%d", basename(f), file.size(f), as.integer(file.mtime(f))) else paste0(basename(f), ":absent"), ""), collapse = "|")
+# The six subdirectories the slot copy takes are inputs too (a refit model under xgb-primary-*
+# changes the forecast): recursive relative path, size, mtime, so a change invalidates both the
+# slot copy and every cache key. A missing or unreadable one changes the key every call.
+SUBDIRS <- c("booths", "cache", "shipped", "xgb-base-ref", "xgb-primary-asat", "xgb-primary-v6-models")
+sub_sig <- paste(vapply(SUBDIRS, function(d) paste0(d, "=", if (dir.exists(file.path(src_output, d))) quick_tree_sig(file.path(src_output, d)) else "absent"), ""), collapse = "|")
+input_sig <- quick_md5(paste(top_sig, sub_sig, sep = "##"))
+
+# CODE: everything a harness loads or compiles (R/, scripts/, src/ -- load_all() compiles
+# src/seat_sim_core.cpp -- plus DESCRIPTION and NAMESPACE), as the commit plus a digest of the
+# uncommitted diff and untracked files. This tool's own two files are excluded.
+CODE_PATHS <- c("R", "scripts", "src", "DESCRIPTION", "NAMESPACE")
 excl <- c(":(exclude)R/quick_arm.R", ":(exclude)scripts/quick_arm.R")
-head_sha <- sh("rev-parse", "--short=7", "HEAD")[1]
-dirty_txt <- c(sh("diff", "HEAD", "--", "R", "scripts", excl),
-               unlist(lapply(setdiff(sh("ls-files", "--others", "--exclude-standard", "--", "R", "scripts", excl), character(0)),
-                             function(f) c(f, readLines(f, warn = FALSE)))))
-code_hash <- if (length(dirty_txt)) { tf <- tempfile(); writeLines(dirty_txt, tf); sprintf("%sx%s", head_sha, substr(unname(tools::md5sum(tf)), 1, 8)) } else head_sha
+sh_checked <- function(...) {   # a git call that failed is an unreadable input, never an empty one
+  r <- suppressWarnings(system2("git", c(...), stdout = TRUE, stderr = FALSE))
+  if (!is.null(attr(r, "status")) && attr(r, "status") != 0L) return(NULL)
+  r
+}
+head_sha <- sh_checked("rev-parse", "--short=7", "HEAD")[1]
+diff_txt <- sh_checked("diff", "HEAD", "--", CODE_PATHS, excl)
+untracked <- sh_checked("ls-files", "--others", "--exclude-standard", "--", CODE_PATHS, excl)
+if (is.null(head_sha) || is.na(head_sha) || is.null(diff_txt) || is.null(untracked)) {
+  cat("quick_arm: WARNING git could not describe the code; the cache is bypassed for this call\n")
+  code_hash <- quick_unreadable("git")
+} else {
+  dirty_txt <- c(diff_txt, unlist(lapply(untracked, function(f) c(f, readLines(f, warn = FALSE)))))
+  code_hash <- if (length(dirty_txt)) sprintf("%sx%s", head_sha, substr(quick_md5(paste(dirty_txt, collapse = "\n")), 1, 8)) else head_sha
+}
+# EXTERNAL: the polling-anchor clone (HEAD plus its working-tree state) and the reference data
+# (recursive size+mtime). Anything unreadable changes the key.
+anchor_dir <- file.path(src_external, "aus-polling-analyser")
+external_id <- paste(c(
+  if (file.exists(file.path(anchor_dir, ".git"))) {
+    h <- sh_checked("-C", anchor_dir, "rev-parse", "HEAD"); st <- sh_checked("-C", anchor_dir, "status", "--porcelain")
+    if (is.null(h) || is.null(st)) quick_unreadable("anchor git") else paste0("anchor=", h[1], "/", quick_md5(paste(st, collapse = "\n")))
+  } else paste0("anchor-files=", quick_tree_sig(anchor_dir)),
+  paste0("reference=", quick_tree_sig(file.path(src_external, "reference"))), ""), collapse = ";")
 key_of <- function(env) {
-  s <- paste(c(code_hash, sims, input_sig, if (length(env)) paste0(names(env)[order(names(env))], "=", env[order(names(env))])), collapse = ";")
-  tf <- tempfile(); writeLines(s, tf); substr(unname(tools::md5sum(tf)), 1, 12)
+  quick_md5(paste(c("keyv2", code_hash, external_id, sims, input_sig, if (length(env)) paste0(names(env)[order(names(env))], "=", env[order(names(env))])), collapse = ";"))
 }
 key_base <- key_of(base_env); key_arm <- key_of(arm_eff)
 if (identical(key_base, key_arm)) stop("quick_arm: the arm sets nothing different from the baseline; there is nothing to compare")
@@ -131,7 +172,7 @@ ensure_root <- function(i) {
     fs <- list.files(src_output, full.names = TRUE)
     fs <- fs[!dir.exists(fs) & !grepl("^backtest-", basename(fs))]
     file.copy(fs, out, copy.date = TRUE)
-    for (d in c("booths", "cache", "shipped", "xgb-base-ref", "xgb-primary-asat", "xgb-primary-v6-models"))
+    for (d in SUBDIRS)
       if (dir.exists(file.path(src_output, d))) file.copy(file.path(src_output, d), out, recursive = TRUE, copy.date = TRUE)
     writeLines(input_sig, sigf)
     cat(sprintf("quick_arm: slot%d inputs copied from %s (%d files)\n", i, src_output, length(fs)))
@@ -156,7 +197,7 @@ for (i in seq_len(nrow(U))) for (role in c("base", "arm")) {
   key <- if (role == "base") key_base else key_arm
   if (!have(key, U$id[i])) tasks[[length(tasks) + 1L]] <- list(
     id = U$id[i], role = role, key = key, harness = U$harness[i], var = U$var[i], val = U$val[i],
-    env = if (role == "base") base_env else arm_eff, dir = cache_dir(key, U$id[i]), est = secs_guess(U$harness[i]))
+    env = if (role == "base") base_env else arm_eff, named = names(if (role == "base") base_env else arm_eff), dir = cache_dir(key, U$id[i]), est = secs_guess(U$harness[i]))
 }
 cat(sprintf("quick_arm: arm {%s} vs baseline {%s} at %d simulations, %d election(s), code %s\n",
             paste(paste0(names(arm_env), "=", arm_env), collapse = " "),
@@ -187,11 +228,12 @@ run_unit <- function(task) {
   # ...and PROVE it: the harness logs every switch the caller set (HD1); any name there that
   # this task did not set means another arm leaked into this one, and the run is refused.
   hd1 <- grep("^HD1 ", readLines(logf, warn = FALSE), value = TRUE)[1]
-  seen <- if (is.na(hd1)) character(0) else regmatches(hd1, gregexpr("AUSPOL_[A-Z0-9_]+(?==)", hd1, perl = TRUE))[[1]]
-  foreign <- setdiff(seen, names(env))
-  if (is.na(hd1) || length(foreign))
+  chk <- quick_hd1_check(hd1, names(env), task$named)   # (also: every switch the user NAMED must be listed, i.e. applied)
+  if (!chk$ok)
     return(list(id = task$id, role = task$role, ok = FALSE, secs = 0, status = -1L,
-                log = paste0(logf, if (is.na(hd1)) " (no HD1 line: cannot prove what was applied)" else paste(" (leaked switch(es):", paste(foreign, collapse = ","), ")"))))
+                log = paste0(logf, if (chk$no_hd1) " (no HD1 line: cannot prove what was applied)" else "",
+                             if (length(chk$foreign)) paste0(" (leaked switch(es): ", paste(chk$foreign, collapse = ","), ")") else "",
+                             if (length(chk$missing)) paste0(" (HD1 does not list the switch(es) you named: ", paste(chk$missing, collapse = ","), "; never applied)") else "")))
   new <- list.files(out, pattern = "^backtest-", full.names = TRUE)
   new <- new[file.mtime(new) >= t0 - 2]
   pick1 <- function(pat) { f <- new[grepl(pat, basename(new))]; if (length(f) != 1L) NA_character_ else f }
@@ -204,7 +246,7 @@ run_unit <- function(task) {
   unlink(new)   # the scratch output stays small and a later run cannot pick up this one's files
   secs <- as.numeric(difftime(Sys.time(), t0, units = "secs"))
   if (ok) saveRDS(list(secs = secs, harness = task$harness), file.path(task$dir, "meta.rds"))
-  list(id = task$id, role = task$role, ok = ok, secs = secs, status = status, log = logf)
+  list(id = task$id, role = task$role, ok = ok, secs = secs, status = status, log = logf, seen = chk$seen)
 }
 res <- list()
 if (length(tasks)) {
@@ -212,12 +254,19 @@ if (length(tasks)) {
   for (i in seq_along(tasks)) { tasks[[i]]$qd <- qd; tasks[[i]]$sims <- sims }
   cat(sprintf("quick_arm: running %d harness run(s) on %d process(es) (est %.0f s)\n", length(tasks), slots,
               sum(vapply(tasks, function(t) t$est, 0)) / slots))
+  # Compile ONCE here, in the slot the workers will load from (its src/ is a junction to the real
+  # src/), so the workers' load_all() finds an up-to-date DLL and none of them compiles concurrently.
+  cat("quick_arm: compiling once before the workers start\n")
+  pkgbuild::compile_dll(roots[1], quiet = TRUE)
   cl <- parallel::makeCluster(min(slots, length(tasks)))
+  parallel::clusterCall(cl, function(f) { source(f); NULL }, file.path(repo, "R", "quick_arm.R"))   # workers need quick_hd1_check()
   parallel::clusterApply(cl, seq_along(cl), function(i) { assign("SLOT", i, envir = globalenv()); NULL })
   res <- tryCatch(parallel::clusterApplyLB(cl, tasks, run_unit), finally = parallel::stopCluster(cl))
   for (r in res) cat(sprintf("  %-9s %-4s %s %5.0f s%s\n", r$id, r$role, if (r$ok) "ok " else "FAILED", r$secs,
                              if (r$ok) "" else paste0("  -> ", r$log)))
   if (!all(vapply(res, function(r) r$ok, NA))) stop("quick_arm: a harness run failed; see the log(s) above")
+  cat(sprintf("quick_arm: HD1 verified on %d run(s): every named switch is listed as applied and none leaked in (arm run saw: %s)\n", length(res),
+              paste(unique(unlist(lapply(res[vapply(res, function(r) r$role == "arm", NA)], function(r) r$seen))), collapse = " ")))
 }
 
 # ---- score --------------------------------------------------------------------
@@ -240,23 +289,31 @@ ll_res <- quick_seat_ll(as.data.frame(B_ap), as.data.frame(A_ap), eps = eps_q)
 per <- merge(sd_res$per_pair, ll_res$per_pair[, c("pair", "seats", "seats_changed", "ll_base", "ll_arm", "change")], by = "pair", all = TRUE)
 names(per)[names(per) == "change"] <- "ll_change"
 stopifnot(!anyNA(per$cells), !anyNA(per$seats))   # every election scored on both levels
-touched <- per[per$changed > 0 | per$seats_changed > 0, ]
-cat(sprintf("Q1  changed cells (|prediction moved| > 0.05): %d of %d, in %d of %d election(s); %d election(s) byte-identical to baseline\n",
-            sum(per$changed), sum(per$cells), nrow(touched), nrow(per), nrow(per) - nrow(touched)))
+# "byte-identical" is CHECKED, not inferred from the 0.05 tolerance: the largest absolute difference
+# over EVERY cell's predicted share and EVERY party's win probability, per election, must be exactly 0.
+md <- quick_max_diff(as.data.frame(B_sd), as.data.frame(A_sd), as.data.frame(B_ap), as.data.frame(A_ap))
+per <- merge(per, md, by = "pair", all = TRUE)
+stopifnot(!anyNA(per$max_diff))
+identical_pairs <- per$max_diff == 0
+touched <- per[!identical_pairs | per$changed > 0 | per$seats_changed > 0, ]
+cat(sprintf("Q1  changed cells (|predicted share moved| > 0.05 percentage points; pred_share is in percent): %d of %d, in %d of %d election(s)\n",
+            sum(per$changed), sum(per$cells), nrow(touched), nrow(per)))
+cat(sprintf("    byte-identical to baseline (max |difference| over every cell share [points] and every party win probability [0-1] is exactly 0): %d of %d election(s)%s\n",
+            sum(identical_pairs), nrow(per),
+            if (all(identical_pairs)) "" else sprintf("; largest difference elsewhere: %.6g share points, %.6g win probability", max(per$max_share_diff), max(per$max_prob_diff))))
 if (nrow(touched)) {
-  cat("    per election (changed cells; squared-error change on them, lower is better; seat-winner log loss change, lower is better):\n")
+  cat("    per election (changed cells; squared-error change on them, lower is better; seat-winner log loss change, lower is better; max_share_diff in points, max_prob_diff in 0-1):\n")
   tt <- touched[order(touched$ll_change, decreasing = TRUE), ]
   print(data.frame(election = tt$pair, cells = tt$cells, changed = tt$changed, sq_err_change = round(tt$sq_err_change, 1),
                    seats = tt$seats, seats_moved = tt$seats_changed, ll_base = round(tt$ll_base, 4), ll_arm = round(tt$ll_arm, 4),
-                   ll_change = round(tt$ll_change, 4)), row.names = FALSE)
+                   ll_change = round(tt$ll_change, 4), max_share_diff = signif(tt$max_share_diff, 4), max_prob_diff = signif(tt$max_prob_diff, 4)), row.names = FALSE)
 }
 p <- sd_res$primary
 if (is.na(p$se)) {
-  cat(sprintf("Q2  share-level squared error on the %d changed cell(s): NOT ASSESSABLE (fewer than 2)\n", p$n))
+  cat(sprintf("Q2  share-level squared error on the %d changed cell(s) in %d election(s): %s\n", p$n, p$clusters, quick_q2_verdict(p)))
 } else {
-  cat(sprintf("Q2  share-level squared error on %d changed cells: %.1f -> %.1f, change %+.1f (%+.0f%%), SE %.1f (cells as units) => %s\n",
-              p$n, p$base, p$arm, p$change, 100 * p$change / p$base, p$se,
-              if (p$change < -2 * p$se && p$change < -0.1 * p$base) "PASS (< -2 SE and < -10%)" else if (p$change > 2 * p$se) "WORSE by more than 2 SE" else "FAIL / not clear"))
+  cat(sprintf("Q2  share-level squared error on %d changed cells: %.1f -> %.1f, change %+.1f (%+.0f%%), SE %.1f (clustered on election, %d elections) => %s\n",
+              p$n, p$base, p$arm, p$change, 100 * p$change / p$base, p$se, p$clusters, quick_q2_verdict(p)))
 }
 o <- ll_res$overall
 cat(sprintf("Q3  seat-winner log loss (lower is better), %d seats in %d election(s): %.4f -> %.4f, change %+.4f (SE %.4f, clustered on election) => %s\n",

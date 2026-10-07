@@ -112,3 +112,91 @@ test_that("quick_word reads a change against its SE", {
   expect_match(quick_word(0.005, 0.01), "within")
   expect_match(quick_word(0.1, NA), "no SE")
 })
+
+# ---- review fixes (2026-10-07) ----------------------------------------------------
+
+test_that("Q2's SE is clustered on election, not on cells; one election is NOT ASSESSABLE", {
+  # 6 changed cells; 3 elections, each contributing one big and one small cell. The cell-level SE
+  # (old) treats the 6 as independent; the clustered SE is the spread of election totals.
+  b <- data.frame(pair = rep(c("e1", "e2", "e3"), each = 2), seat = paste0("s", 1:6), party = "ALP",
+                  pred_share = 40, actual_share = c(44, 43, 45, 44, 38, 37), stringsAsFactors = FALSE)
+  a <- b; a$pred_share <- b$pred_share + c(1, 1, 2, 2, -1, -1)
+  r <- quick_share_diff(b, a)
+  expect_equal(r$primary$n, 6L); expect_equal(r$primary$clusters, 3L)
+  d <- r$cells$d
+  expect_equal(r$primary$se, quick_clustered(d, r$cells$pair)$se * 6)
+  expect_false(isTRUE(all.equal(r$primary$se, stats::sd(d) * sqrt(6))))   # differs from the old cell-level SE
+  # all changed cells in ONE election: no clustered SE, so no verdict (the old code gave a PASS/WORSE here)
+  one <- b[b$pair == "e1", ]; one$pair <- "e1"; one <- rbind(one, transform(one, seat = c("s7", "s8")))
+  a1 <- one; a1$pred_share <- one$pred_share + c(1, 2, 1, 2)
+  r1 <- quick_share_diff(one, a1)
+  expect_equal(r1$primary$n, 4L); expect_true(is.na(r1$primary$se))
+  expect_match(quick_q2_verdict(r1$primary), "NOT ASSESSABLE")
+  expect_match(quick_q2_verdict(list(se = 1, change = 5, base = 10, n = 9, clusters = 3)), "WORSE")
+  expect_match(quick_q2_verdict(list(se = 1, change = -5, base = 10, n = 9, clusters = 3)), "PASS")
+  expect_match(quick_q2_verdict(list(se = 1, change = -0.5, base = 10, n = 9, clusters = 3)), "FAIL")
+})
+
+test_that("quick_max_diff is exactly 0 only when every share and every win probability matches", {
+  sd0 <- mk_sd(); sd0 <- rbind(sd0, transform(sd0[3, ], pair = "a2")); ap0 <- mk_ap()   # elections a1 and a2 on both levels
+  z <- quick_max_diff(sd0, sd0, ap0, ap0)
+  expect_equal(z$max_diff, c(0, 0))
+  # a 0.01-point share move is under the 0.05 'changed cell' tolerance, so the old Q1 called the election untouched
+  sd1 <- sd0; sd1$pred_share[2] <- sd1$pred_share[2] + 0.01
+  expect_equal(sum(quick_share_diff(sd0, sd1)$per_pair$changed), 0L)
+  m1 <- quick_max_diff(sd0, sd1, ap0, ap0)
+  expect_equal(m1$max_share_diff, c(0.01, 0)); expect_equal(m1$max_prob_diff, c(0, 0)); expect_equal(m1$max_diff > 0, c(TRUE, FALSE))
+  # a win-probability-only change (the winner log loss moves by < 1e-12, the old test): still not identical
+  ap1 <- ap0; ap1$prob[1] <- ap1$prob[1] + 1e-13; ap1$prob[2] <- ap1$prob[2] - 1e-13
+  expect_equal(quick_seat_ll(ap0, ap1)$per_pair$seats_changed, c(0L, 0L))
+  expect_gt(quick_max_diff(sd0, sd0, ap0, ap1)$max_prob_diff[1], 0)
+  # a party present in one allprobs and not the other counts as probability 0 there
+  ap2 <- ap0[!(ap0$seat == "s1" & ap0$party == "LNP"), ]
+  expect_equal(quick_max_diff(sd0, sd0, ap0, ap2)$max_prob_diff, c(0.2, 0))
+  # a share missing in one run is never 'identical'
+  expect_true(is.infinite(quick_max_diff(sd0, sd0[-1, ], ap0, ap0)$max_share_diff[1]))
+})
+
+test_that("switch validation: unregistered names stop, and HD1 must list every switch named", {
+  reg <- c("AUSPOL_NEW_IND_SHRINK", "AUSPOL_SHRINK", "AUSPOL_XGB_PRIMARY")
+  expect_silent(quick_check_registered(c("AUSPOL_NEW_IND_SHRINK"), reg))
+  expect_error(quick_check_registered("AUSPOL_NEW_IND_SHRNK", reg), "AUSPOL_NEW_IND_SHRNK")   # deliberate misspelling
+  hd1 <- "HD1  caller set 2 switch(es): AUSPOL_NEW_IND_SHRINK=0 AUSPOL_XGB_PRIMARY=1"
+  expect_true(quick_hd1_check(hd1, c("AUSPOL_NEW_IND_SHRINK", "AUSPOL_XGB_PRIMARY"), "AUSPOL_NEW_IND_SHRINK")$ok)
+  # named but never applied
+  r <- quick_hd1_check("HD1  caller set 1 switch(es): AUSPOL_XGB_PRIMARY=1", "AUSPOL_XGB_PRIMARY", c("AUSPOL_NEW_IND_SHRINK"))
+  expect_false(r$ok); expect_equal(r$missing, "AUSPOL_NEW_IND_SHRINK")
+  # leaked from an earlier task
+  r <- quick_hd1_check(hd1, "AUSPOL_XGB_PRIMARY", character(0))
+  expect_false(r$ok); expect_equal(r$foreign, "AUSPOL_NEW_IND_SHRINK")
+  expect_true(quick_hd1_check(NA_character_, "A", character(0))$no_hd1)
+  expect_false(quick_hd1_check(NA_character_, "A", character(0))$ok)
+})
+
+test_that("quick_tree_sig changes with any file, recursively, and never matches when unreadable", {
+  d <- tempfile("sig"); dir.create(file.path(d, "sub"), recursive = TRUE)
+  writeLines("a", file.path(d, "sub", "f.txt"))
+  s1 <- quick_tree_sig(d)
+  expect_equal(quick_tree_sig(d), s1)
+  writeLines("a longer file", file.path(d, "sub", "f.txt"))              # same name, deeper level, new size
+  expect_false(identical(quick_tree_sig(d), s1))
+  expect_false(identical(quick_tree_sig(file.path(d, "nope")), quick_tree_sig(file.path(d, "nope"))))
+  unlink(d, recursive = TRUE)
+})
+
+test_that("the scratch-root guards refuse unmarked directories and surviving junctions", {
+  d <- tempfile("root")
+  expect_error(quick_check_root(d, create = FALSE), "nothing to clean")
+  quick_check_root(d, create = TRUE)                                      # new: created and marked
+  expect_true(file.exists(file.path(d, ".quick-arm-root")))
+  expect_silent(quick_check_root(d, create = FALSE))
+  other <- tempfile("real"); dir.create(other); writeLines("x", file.path(other, "keep.txt"))
+  expect_error(quick_check_root(other, create = TRUE), "no .quick-arm-root marker")   # a real tree is not adopted
+  expect_error(quick_check_root(other, create = FALSE), "no .quick-arm-root marker")
+  expect_true(file.exists(file.path(other, "keep.txt")))
+  slot <- file.path(d, "slot1"); dir.create(file.path(slot, "R"), recursive = TRUE)   # a 'junction' that did not go away
+  expect_error(quick_assert_no_links(slot, c("R", "src")), "junction.s. still present")
+  unlink(file.path(slot, "R"), recursive = TRUE)
+  expect_silent(quick_assert_no_links(slot, c("R", "src")))
+  unlink(c(d, other), recursive = TRUE)
+})

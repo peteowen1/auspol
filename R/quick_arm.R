@@ -132,8 +132,11 @@ quick_seat_ll <- function(base_ap, arm_ap, eps = 1e-6) {
 #' @param tol A cell counts as changed when its prediction moves by more than this
 #'   many points (default 0.05, the tolerance `AUSPOL_XGB_BASE_DELTA` itself uses).
 #' @return `list(per_pair, primary, cells)`. `primary` is the squared error on the
-#'   changed cells: baseline, arm, change, and SE treating cells as the units
-#'   (`sd(d) * sqrt(n)`, as `scripts/score_arm.R` SA2).
+#'   changed cells: baseline, arm, change, and the SE of that TOTAL clustered on
+#'   election (cells share seats and seats share an election's statewide draw, so
+#'   the election is the unit, as [quick_clustered()] does for the log loss).
+#'   `se` is `NA` (not assessable) with changed cells in fewer than 2 elections;
+#'   `clusters` is the number of elections with a changed cell.
 #' @keywords internal
 #' @noRd
 quick_share_diff <- function(base_sd, arm_sd, tol = 0.05) {
@@ -162,9 +165,12 @@ quick_share_diff <- function(base_sd, arm_sd, tol = 0.05) {
   }))
   rownames(per) <- NULL
   m <- cells[cells$moved, ]
-  primary <- if (nrow(m) < 2) list(n = nrow(m), base = NA_real_, arm = NA_real_, change = NA_real_, se = NA_real_) else {
+  primary <- if (nrow(m) < 2) list(n = nrow(m), base = NA_real_, arm = NA_real_, change = NA_real_, se = NA_real_, clusters = length(unique(m$pair))) else {
     b <- sum((m$actual - m$base)^2)
-    list(n = nrow(m), base = b, arm = b + sum(m$d), change = sum(m$d), se = stats::sd(m$d) * sqrt(nrow(m)))
+    cl <- quick_clustered(m$d, m$pair)
+    # quick_clustered's se is for the MEAN; the change reported is the TOTAL over the n cells
+    list(n = nrow(m), base = b, arm = b + sum(m$d), change = sum(m$d),
+         se = if (is.na(cl$se)) NA_real_ else cl$se * nrow(m), clusters = cl$clusters)
   }
   list(per_pair = per, primary = primary, cells = cells)
 }
@@ -192,4 +198,163 @@ quick_ledger_ll <- function(seat_ll, ledger) {
 quick_word <- function(m, se) {
   if (is.na(se)) return("no SE (fewer than 2 elections)")
   if (m < -se) "BETTER by more than 1 SE" else if (m > se) "WORSE by more than 1 SE" else "within 1 SE"
+}
+
+#' Verdict for Q2 from [quick_share_diff()]'s `primary`
+#'
+#' Keeps the PASS / WORSE labels, on the election-clustered SE; with no SE
+#' (changed cells in fewer than 2 elections) there is no verdict.
+#' @param p The `primary` element of [quick_share_diff()].
+#' @return One string.
+#' @keywords internal
+#' @noRd
+quick_q2_verdict <- function(p) {
+  if (is.null(p$se) || is.na(p$se)) return("NOT ASSESSABLE (changed cells in fewer than 2 elections)")
+  if (p$change < -2 * p$se && p$change < -0.1 * p$base) "PASS (< -2 SE and < -10%)"
+  else if (p$change > 2 * p$se) "WORSE by more than 2 SE"
+  else "FAIL / not clear"
+}
+
+#' Largest absolute difference between baseline and arm, per election
+#'
+#' What "byte-identical to baseline" must rest on: every cell's predicted share
+#' AND every party's win probability, not just the cells that moved by more than
+#' the 0.05 reporting tolerance. A party with no allprobs row in one run has
+#' probability 0 there (it was never drawn); a share present in only one run, or
+#' NA in only one, counts as an infinite difference.
+#' @param base_sd,arm_sd Sharedetail tables (`pair`, `seat`, `party`, `pred_share`).
+#' @param base_ap,arm_ap Allprobs tables (`pair`, `seat`, `party`, `prob`).
+#' @return data.frame `pair`, `max_share_diff`, `max_prob_diff`, `max_diff`.
+#' @keywords internal
+#' @noRd
+quick_max_diff <- function(base_sd, arm_sd, base_ap, arm_ap) {
+  one <- function(a, b, val, absent_zero) {
+    for (x in list(a, b)) if (!all(c("pair", "seat", "party", val) %in% names(x)))
+      stop("quick_arm: table is missing one of pair, seat, party, ", val, call. = FALSE)
+    ka <- paste(a$pair, a$seat, a$party, sep = "\r"); kb <- paste(b$pair, b$seat, b$party, sep = "\r")
+    va <- tapply(a[[val]], ka, sum); vb <- tapply(b[[val]], kb, sum)
+    keys <- union(names(va), names(vb))
+    x <- as.numeric(va[keys]); y <- as.numeric(vb[keys])
+    if (absent_zero) { x[!keys %in% names(va)] <- 0; y[!keys %in% names(vb)] <- 0 }
+    d <- abs(x - y)
+    d[is.na(x) & is.na(y)] <- 0
+    d[is.na(d)] <- Inf
+    tapply(d, sub("\r.*$", "", keys), max)
+  }
+  s <- one(base_sd, arm_sd, "pred_share", FALSE)
+  p <- one(base_ap, arm_ap, "prob", TRUE)
+  pairs <- sort(union(names(s), names(p)))
+  ms <- as.numeric(s[pairs]); mp <- as.numeric(p[pairs])
+  ms[is.na(ms)] <- Inf; mp[is.na(mp)] <- Inf   # an election scored on one level only is not provably identical
+  data.frame(pair = pairs, max_share_diff = ms, max_prob_diff = mp, max_diff = pmax(ms, mp), stringsAsFactors = FALSE)
+}
+
+#' Stop on switches that are not registered in PUBLISHED_FLAGS
+#'
+#' The harnesses only read (and HD1 only reports) switches named in
+#' `scripts/published_flags.R`; a typo or an unregistered name is never read, so
+#' the arm would silently be the baseline.
+#' @param switches Character vector of switch names.
+#' @param registry Names of PUBLISHED_FLAGS.
+#' @return Invisibly `switches`; stops listing the unregistered ones.
+#' @keywords internal
+#' @noRd
+quick_check_registered <- function(switches, registry) {
+  bad <- setdiff(switches, registry)
+  if (length(bad))
+    stop("quick_arm: not a switch in PUBLISHED_FLAGS (scripts/published_flags.R), so no harness reads it: ",
+         paste(bad, collapse = ", "), call. = FALSE)
+  invisible(switches)
+}
+
+#' Check a harness log's HD1 line against what this run was told to set
+#'
+#' HD1 lists every PUBLISHED_FLAGS switch the caller set. A name there that this
+#' task did not set is a leak from an earlier task; a name the user named that is
+#' missing was never applied (or was set to the empty string).
+#' @param hd1 The HD1 line, or `NA` when the log has none.
+#' @param env_names Switch names this task was given.
+#' @param named Switch names the user named (arm and `--base`) that must appear.
+#' @return `list(ok, seen, foreign, missing, no_hd1)`.
+#' @keywords internal
+#' @noRd
+quick_hd1_check <- function(hd1, env_names, named) {
+  no_hd1 <- is.null(hd1) || length(hd1) == 0L || is.na(hd1[1])
+  seen <- if (no_hd1) character(0) else regmatches(hd1[1], gregexpr("AUSPOL_[A-Z0-9_]+(?==)", hd1[1], perl = TRUE))[[1]]
+  foreign <- setdiff(seen, env_names)
+  missing <- setdiff(named, seen)
+  list(ok = !no_hd1 && !length(foreign) && !length(missing), seen = seen, foreign = foreign, missing = missing, no_hd1 = no_hd1)
+}
+
+#' md5 of a string, 12 hex characters
+#' @keywords internal
+#' @noRd
+quick_md5 <- function(s) {
+  tf <- tempfile(); on.exit(unlink(tf)); writeLines(s, tf)
+  substr(unname(tools::md5sum(tf)), 1, 12)
+}
+
+#' A token that differs on every call, for an input that could not be read
+#'
+#' Folded into a cache key it cannot match a stored run: an unreadable input
+#' must invalidate the cache, never be ignored.
+#' @keywords internal
+#' @noRd
+quick_unreadable <- function(what) {
+  paste0("UNREADABLE(", what, "):", format(Sys.time(), "%Y%m%d%H%M%OS6"), ":", sample.int(1e9, 1))
+}
+
+#' Signature of every file under a directory: relative path, size, mtime (recursive)
+#' @param dir A directory.
+#' @return A 12-character digest, or an always-different token when `dir` or any file in it cannot be read.
+#' @keywords internal
+#' @noRd
+quick_tree_sig <- function(dir) {
+  if (!dir.exists(dir)) return(quick_unreadable(dir))
+  f <- sort(list.files(dir, recursive = TRUE, all.files = TRUE, no.. = TRUE))
+  if (!length(f)) return(quick_md5(paste0("empty:", dir)))
+  i <- file.info(file.path(dir, f))
+  if (anyNA(i$size) || anyNA(i$mtime)) return(quick_unreadable(dir))
+  quick_md5(paste(f, i$size, as.integer(i$mtime), sep = ":", collapse = "|"))
+}
+
+QUICK_MARKER <- ".quick-arm-root"
+
+#' Refuse to use or delete a directory quick_arm did not create
+#'
+#' @param dir The scratch root.
+#' @param create `TRUE` to create it (and write the marker) when absent or empty;
+#'   `FALSE` (for `--clean`) to require an existing marked directory.
+#' @return Invisibly `dir`; stops otherwise.
+#' @keywords internal
+#' @noRd
+quick_check_root <- function(dir, create = TRUE) {
+  mk <- file.path(dir, QUICK_MARKER)
+  if (file.exists(mk)) return(invisible(dir))
+  if (create && (!dir.exists(dir) || !length(list.files(dir, all.files = TRUE, no.. = TRUE)))) {
+    dir.create(dir, recursive = TRUE, showWarnings = FALSE)
+    if (!dir.exists(dir)) stop("quick_arm: cannot create ", dir, call. = FALSE)
+    writeLines("created by scripts/quick_arm.R; --clean only removes directories that carry this file", mk)
+    return(invisible(dir))
+  }
+  stop("quick_arm: ", dir, if (dir.exists(dir)) paste0(" exists but has no ", QUICK_MARKER,
+       " marker, so this tool did not create it; refusing to reuse or delete it (if it is an old scratch directory of this tool, remove its junctions with `cmd /c rmdir`, or touch the marker)")
+       else paste0(" does not exist (no ", QUICK_MARKER, " marker); nothing to clean"), call. = FALSE)
+}
+
+#' Stop unless none of the junction paths still exist as directories
+#'
+#' Called before any recursive `unlink` of a slot or the root: a junction that
+#' survived its `rmdir` would make `unlink(recursive = TRUE)` delete the checkout
+#' it points at.
+#' @param root A slot directory.
+#' @param links Names of the junction/symlink entries inside it.
+#' @keywords internal
+#' @noRd
+quick_assert_no_links <- function(root, links) {
+  live <- links[dir.exists(file.path(root, links))]
+  if (length(live))
+    stop("quick_arm: junction(s) still present in ", root, ": ", paste(live, collapse = ", "),
+         "; refusing a recursive delete that could follow them into the real tree", call. = FALSE)
+  invisible(TRUE)
 }
