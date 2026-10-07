@@ -191,6 +191,10 @@ jobs:
           gh release download shipped-models -p demo-resid-vic2026.csv -D output --clobber || echo "::warning::shipped-models has no demo-resid-vic2026.csv -- the forecast runs WITHOUT the demographic correction"
           gh release download shipped-models -p seat-poll-joint-vic2026.csv -D output --clobber || echo "::warning::shipped-models has no seat-poll-joint-vic2026.csv -- AUSPOL_SEAT_POLL_BLEND=3 runs WITHOUT the joint blend"
           gh release download shipped-models -p departed-fed-vic2026.csv -D output --clobber || echo "::warning::shipped-models has no departed-fed-vic2026.csv -- the forecast runs WITHOUT the departed-member blend"
+          # AUSPOL_DEPARTED_SUCCESSOR (published "1"): fit_seats_full.R stops without the rate
+          # table, and running with the switch off would trip its published-filename guard,
+          # so a missing table fails here, loudly, and yesterday's forecast stays live.
+          gh release download shipped-models -p departed-successor-rates.csv -D output --clobber || { echo "::error::shipped-models has no departed-successor-rates.csv -- promote_rebuild.R uploads it at stage 9; publish the rebuild before this runs"; exit 1; }
           gh release download shipped-models -p endorsement-features.csv -D output --clobber || echo "::warning::shipped-models has no endorsement-features.csv -- a model trained with AUSPOL_XGB_ENDORSE=1 gets all-zero endorsement features"
           gh release download shipped-models -p upset-floor-eps.csv -D output --clobber || echo "::warning::shipped-models has no upset-floor-eps.csv -- AUSPOL_UPSET_FLOOR=1 stops fit_seats_full.R (UF0!)"
           gh release download shipped-models -p booth-features-vic2026.csv -D output --clobber || echo "::warning::shipped-models has no booth-features-vic2026.csv -- a model trained with AUSPOL_XGB_BOOTH=1 gets NA booth features (XB1!!)"
@@ -398,6 +402,25 @@ jobs:
             wrangler r2 object put "inthegame-data/auspol/$(basename "$f")" --file "$f" --content-type "$ct" --cache-control "public, max-age=300" --remote
             echo "OK $(basename "$f")"
           done
+      - name: Keep a dated copy of the forecast on R2 (as-at history)
+        # inthegame-blog#610: the live files above are overwritten every day, so
+        # this keeps auspol/history/forecast-vic2026-<date>.json and
+        # vic-page-data-<date>.json plus index-vic2026.json. Runs AFTER the live
+        # publish and is non-fatal: a history failure never blocks the forecast.
+        # Rules and layout: scripts/publish_forecast_history.sh.
+        if: success()
+        continue-on-error: true
+        shell: bash
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_R2_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          if [ -z "$CLOUDFLARE_API_TOKEN" ] || [ -z "$CLOUDFLARE_ACCOUNT_ID" ]; then
+            echo "::warning::R2 secrets not set -- forecast history skipped"
+            exit 0
+          fi
+          command -v wrangler >/dev/null || npm install -g wrangler@4.135.0 >/dev/null 2>&1
+          bash scripts/publish_forecast_history.sh || { echo "::warning::forecast history step failed; the live forecast is unaffected"; exit 1; }
       - name: Upload outputs
         if: always()
         uses: actions/upload-artifact@v4

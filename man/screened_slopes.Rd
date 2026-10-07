@@ -17,7 +17,8 @@ screened_slopes(
   departed_rate = c(IND = 0.38),
   major_departed = NULL,
   major_present = NULL,
-  with_flags = FALSE
+  with_flags = FALSE,
+  successor_rate = NULL
 )
 }
 \arguments{
@@ -89,6 +90,13 @@ other ALP/LNP cell keeps on its deviation. \code{NULL} keeps \code{default}.}
 \item{with_flags}{If TRUE, the return carries attribute \code{departed}: the seats
 where the departed-leader decay fired (for \code{\link[=renorm_hold]{renorm_hold()}}). Default FALSE
 leaves the return exactly as it was.}
+
+\item{successor_rate}{Named numeric vector by seat, or \code{NULL} (default, the
+shipped behaviour exactly). For \code{cls == "IND"}, a seat named here takes
+this rate instead of \code{departed_rate} WHEN the departed decay fires, and
+only those seats are flagged in attribute \code{departed}, so a hold applies to
+them alone. From \code{\link[=departed_successor_rates]{departed_successor_rates()}};
+\verb{docs/plans/prereg-departed-successor-flag-2026-10-07.md}.}
 }
 \value{
 Numeric vector the length of \code{seats}.

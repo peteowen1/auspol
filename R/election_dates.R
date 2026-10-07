@@ -22,6 +22,9 @@ election_dates <- function(labels = NULL) {
     fed2013 = "2013-09-07", fed2016 = "2016-07-02", fed2019 = "2019-05-18",
     fed2022 = "2022-05-21", fed2025 = "2025-05-03",
     nsw2015 = "2015-03-28", nsw2019 = "2019-03-23", nsw2023 = "2023-03-25",
+    # Brought forward from the fixed-term 27 March to avoid Easter: NSWEC Bulletin
+    # No. 2 (27 May 2026), Electoral Legislation Amendment (Elections) Act 2026.
+    nsw2027 = "2027-03-13",
     qld2017 = "2017-11-25", qld2020 = "2020-10-31", qld2024 = "2024-10-26",
     sa2018  = "2018-03-17", sa2022  = "2022-03-19", sa2026  = "2026-03-21",
     vic2010 = "2010-11-27", vic2014 = "2014-11-29", vic2018 = "2018-11-24",

@@ -165,7 +165,7 @@ cat("OK: no fitting script's default disagrees with what published_flags.R ships
   ver <- vapply(deps, function(p) tryCatch(as.character(utils::packageVersion(p)), error = function(e) "missing"), character(1))
   tf <- tempfile(); on.exit(unlink(tf))
   writeLines(c(R.version.string, paste(deps, ver), paste(keep, unname(tools::md5sum(keep)))), tf)
-  list(hash = unname(tools::md5sum(tf)), n = length(keep))
+  list(hash = unname(tools::md5sum(tf)), n = length(keep), files = keep)
 }
 .fp_file <- file.path("output", ".check-like-ci-last-clean.txt")
 .args <- commandArgs(trailingOnly = TRUE)
@@ -183,7 +183,21 @@ if (!is.null(.fp) && !"--force-check" %in% .args && length(.last) && identical(.
          "package cannot run here. Install it, or pass --tests-only and ",
          "accept that CI may still fail.")
   }
-  res <- rcmdcheck::rcmdcheck(args = c("--no-manual", "--as-cran"),
+  # Check a CLEAN COPY holding only the files the build includes (the same list
+  # the fingerprint hashed). R CMD build copies the WHOLE directory before it
+  # applies .Rbuildignore: output/, external/ and .claude/worktrees/ (agent
+  # worktrees with full rebuild snapshots) made that copy take ~7 minutes, and on
+  # 2026-10-07 a snapshot path past Windows' 260-character limit failed it outright
+  # ("copying to build directory failed"). The checked files are identical; only
+  # the discarded bulk is skipped.
+  .src <- file.path(tempfile("check-like-ci-"), "auspol")
+  for (d in unique(dirname(.fp$files))) dir.create(file.path(.src, d), recursive = TRUE, showWarnings = FALSE)
+  .ok <- file.copy(.fp$files, file.path(.src, .fp$files), copy.date = TRUE)
+  if (!all(.ok)) stop("check_like_ci: could not copy ", sum(!.ok), " package file(s) to ", .src, ": ",
+                      paste(utils::head(.fp$files[!.ok], 5), collapse = ", "), call. = FALSE)
+  file.copy(".Rbuildignore", .src)
+  cat(sprintf("checking a clean copy of %d files in %s\n", length(.fp$files), .src))
+  res <- rcmdcheck::rcmdcheck(path = .src, args = c("--no-manual", "--as-cran"),
                               build_args = "--no-manual",
                               error_on = "warning", quiet = TRUE)
   cat(sprintf("errors %d   warnings %d   notes %d\n",

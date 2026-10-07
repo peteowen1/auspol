@@ -442,8 +442,12 @@ for (K in PAIRS) {
   # Off by default -- see the matching comment in backtest_candidate_fed.R.
   .honour_departed <- Sys.getenv("AUSPOL_HONOUR_DEPARTED", "0") %in% c("1", "TRUE", "true")
     .departed_hold <- Sys.getenv("AUSPOL_DEPARTED_HOLD", "0") %in% c("1", "TRUE", "true")   # docs/plans/prereg-departed-hold-fixed-2026-10-04.md
+    .succ_on <- departed_successor_mode() != "0"   # docs/plans/prereg-departed-successor-flag-2026-10-07.md
+    if (.succ_on && .departed_hold) stop("AUSPOL_DEPARTED_SUCCESSOR holds its own cells; do not combine it with AUSPOL_DEPARTED_HOLD", call. = FALSE)
     .hold_min <- as.numeric(Sys.getenv("AUSPOL_DEPARTED_HOLD_MIN_PRIOR", "0"))   # arm B (amendment 2026-10-05): hold only classes with at least this prior seat share
   .ea <- sprintf("vic%d", K$from); .eb <- sprintf("vic%d", K$to)
+    .SUCC_RATE <- departed_successor_rates(.eb)   # NULL when off: byte-identical
+    if (.succ_on) { cat(sprintf("DSR1 departed successor rates (%s): %d seat(s) for %s, held through renormalisation\n", departed_successor_mode(), length(.SUCC_RATE), .eb)); .departed_hold <- TRUE }
   .returns <- if (.cond) tryCatch(candidate_returns(.ea, .eb), error = function(e) {
     cat(sprintf("BV1c! conditional slopes unavailable: %s
 ", conditionMessage(e))); NULL }) else NULL
@@ -599,7 +603,7 @@ for (K in PAIRS) {
       pv <- .permit[.permit$party == p, ]
       lut <- .permit_lut(pv)
       pm <- unname(lut[seats]); # a missing permit row is NOT a permit (NA = silent; 2026-09-20)
-      return(screened_slopes(p, seats, .returns, pm, same_mp = .MP_SLOPE, major_departed = .MAJDEP, major_present = .MAJPRES, honour_departed = .honour_departed, with_flags = .departed_hold, same = if (is.null(.fitsl)) formals(screened_slopes)$same else .fitsl$same, new = if (is.null(.fitsl)) formals(screened_slopes)$new else .fitsl$new))
+      return(screened_slopes(p, seats, .returns, pm, same_mp = .MP_SLOPE, major_departed = .MAJDEP, major_present = .MAJPRES, honour_departed = .honour_departed, with_flags = .departed_hold, successor_rate = .SUCC_RATE, same = if (is.null(.fitsl)) formals(screened_slopes)$same else .fitsl$same, new = if (is.null(.fitsl)) formals(screened_slopes)$new else .fitsl$new))
     }
     if (.cond && !is.null(.returns)) return(conditional_slopes(p, seats, .returns, same_mp = .MP_SLOPE, major_departed = .MAJDEP, major_present = .MAJPRES, same = if (is.null(.fitsl)) formals(conditional_slopes)$same else .fitsl$same, new = if (is.null(.fitsl)) formals(conditional_slopes)$new else .fitsl$new))
     DEV_SLOPE[[p]]

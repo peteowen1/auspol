@@ -38,7 +38,8 @@ new_ind_mode <- function() {
 #'   var, value = its validated setting. Empty when everything is off.
 #' @export
 post_xgb_switches <- function() {
-  cur <- c(AUSPOL_REENTRY = reentry_mode(), AUSPOL_NEW_IND_SHRINK = new_ind_mode())
+  cur <- c(AUSPOL_REENTRY = reentry_mode(), AUSPOL_NEW_IND_SHRINK = new_ind_mode(),
+           AUSPOL_DEPARTED_SUCCESSOR = departed_successor_mode())
   cur[cur != "0"]
 }
 

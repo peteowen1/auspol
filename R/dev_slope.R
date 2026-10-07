@@ -276,6 +276,12 @@ conditional_slopes <- function(cls, seats, returns,
 #' @param with_flags If TRUE, the return carries attribute `departed`: the seats
 #'   where the departed-leader decay fired (for [renorm_hold()]). Default FALSE
 #'   leaves the return exactly as it was.
+#' @param successor_rate Named numeric vector by seat, or `NULL` (default, the
+#'   shipped behaviour exactly). For `cls == "IND"`, a seat named here takes
+#'   this rate instead of `departed_rate` WHEN the departed decay fires, and
+#'   only those seats are flagged in attribute `departed`, so a hold applies to
+#'   them alone. From [departed_successor_rates()];
+#'   `docs/plans/prereg-departed-successor-flag-2026-10-07.md`.
 #' @param permit Logical vector the length of `seats`, from
 #'   [salience_screen()]: does the screen allow this seat's candidate of `cls`
 #'   to emerge?
@@ -289,7 +295,8 @@ screened_slopes <- function(cls, seats, returns, permit, honour_departed = FALSE
                                      GRN = 0.880, ONP = 0.545),
                             default = 1, same_mp = NULL,
                             departed_rate = c(IND = 0.38), major_departed = NULL,
-                            major_present = NULL, with_flags = FALSE) {
+                            major_present = NULL, with_flags = FALSE,
+                            successor_rate = NULL) {
   if (length(permit) != length(seats)) {
     stop("permit must be the same length as seats: ", length(permit),
          " vs ", length(seats), call. = FALSE)
@@ -350,14 +357,27 @@ screened_slopes <- function(cls, seats, returns, permit, honour_departed = FALSE
   permitted <- permit %in% TRUE
   departed <- honour_departed & !plr & !permitted
   dep_rate <- if (cls %in% names(departed_rate)) departed_rate[[cls]] else new[[cls]]
+  # PER-SEAT SUCCESSOR RATE (AUSPOL_DEPARTED_SUCCESSOR). Fitted time-forward by
+  # whether the successor had a pre-election signal (endorsed, local office,
+  # community group, former staffer); seats not named keep `dep_rate`.
+  dep_seat <- rep(dep_rate, length(seats))
+  succ_hit <- rep(FALSE, length(seats))
+  if (!is.null(successor_rate) && identical(cls, "IND")) {
+    if (is.null(names(successor_rate)) || anyDuplicated(names(successor_rate)))
+      stop("successor_rate must be named by seat, uniquely", call. = FALSE)
+    m <- match(seats, names(successor_rate))
+    succ_hit <- !is.na(m)
+    dep_seat[succ_hit] <- unname(successor_rate)[m[succ_hit]]
+  }
   out <- ifelse(!is_same & permitted, 1.0,
-                ifelse(departed, dep_rate, base))
+                ifelse(departed, dep_seat, base))
   # Which seats the departed-leader decay fired in, for AUSPOL_DEPARTED_HOLD:
   # the harnesses hold those cells fixed through renormalisation
   # (`renorm_hold()`). `departed` already excludes `permitted` seats, so a seat
   # that took the 1.0 uniform path is never flagged.
-  # docs/plans/prereg-departed-hold-fixed-2026-10-04.md.
-  if (with_flags) attr(out, "departed") <- departed
+  # docs/plans/prereg-departed-hold-fixed-2026-10-04.md. With a successor rate,
+  # only the seats it names are held (the prereg's "byte-identical elsewhere").
+  if (with_flags) attr(out, "departed") <- if (is.null(successor_rate)) departed else departed & succ_hit
   out
 }
 
