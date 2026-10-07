@@ -15,7 +15,11 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30.
    SHIPS `AUSPOL_DEPARTED_SUCCESSOR="1"` (time-forward departed rate replacing the leaked 0.38; deciding 20k
    rebuild: ledger 0.2741 -> 0.2739, RMSE 5.121 -> 5.113; Pete overrode the two-seat clause). These later
    commits are NOT code-reviewed yet: review them before pushing. `check_like_ci.R` passes on `ad079e1`.
-3. **Publish order matters:** after merge, run stage 9 (`AUSPOL_PUBLISH=1`) BEFORE the next daily run, or
+   **Wrap-up review DONE (2 Sonnet reviewers, 2026-10-07):** no code breakage; fixes committed (live ABC fetch
+   now refuses a post-polling-day capture; leakage asserts raise). Two claimed blockers were tested and
+   REFUTED (a test said to fail locally passes; a "crashing" screen table printed fine). Backup of local dev:
+   `origin/dev-2026-10-07-unreviewed` (stale by the last few commits; local dev is authoritative).
+3. **Publish order matters (only once the ship commit `ad079e1` reaches main, NOT for PR #97):** run stage 9 (`AUSPOL_PUBLISH=1`) BEFORE the next daily run, or
    the forecast workflow fails loudly: it needs `departed-successor-rates.csv` on `shipped-models`, which
    `promote_rebuild.R` uploads. `output/` already holds the deciding rebuild (ledger 0.2739).
 4. **Nomination day (9 Nov):** refit the successor rates on the final candidate list
