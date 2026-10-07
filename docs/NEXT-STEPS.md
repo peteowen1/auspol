@@ -12,7 +12,7 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30.
 **Open, in priority order:**
 1. **NSW 2027 on ITG** (`plans/nsw2027-itg-scope-2026-10-08.md`). Runs end to end: `AUSPOL_TARGET=nsw2027 AUSPOL_OUT_SUFFIX=-probe Rscript scripts/fit_seats_full.R` (probe: Labor median 47 of 93, Coalition 32). Still missing: census rows (DR1! skipped), council history, `build_forecast_json.R` nsw2027 entry + ITG page, a NSW step in promote/publish and the daily workflow. Accepted as is: One Nation trend ~5 under its polls (poll-lag verdict kept), sitting INDs -14 to -20 (SA 2026 says that is if anything too small).
 2. **fed2025 seat polls deserved weight ~0.13, got 0.55**: no pre-election signal found (fed2022 vs fed2025 disagreement 4.12 vs 3.80). Election-clustered SE checked, does nothing. Open.
-3. **Flows pool across states**: `FL0` (new, every run) shows vic2026 and nsw2027 with identical estimated flows (ONP 33.7, GRN 83.5): `estimate_flows_for()` "mean of last 5" looks region-blind. Check whether that is the backtested design before touching it.
+3. ~~Flows pool across states~~ **CLOSED 2026-10-08, by design:** `R/flow_model.R` pools regions on purpose; same-region double weighting changed nothing (6.544 vs 6.541 MAE) and a state-vs-federal term was rejected (+1.10, se 1.90); `scripts/backtest_flows.R` re-races it as G3. Exhaust rates do differ by state (NSW ONP 57%).
 
 **Lessons recorded today:** memory `print-value-at-point-of-use` (the 25.5 flow claim). A hand run of `pool_backtests.R` overwrote the rebuild's scoreboard with a stale wa2021 file (23 pairs); restored from `output/snapshots/20261008-0945-75dbda7-from6` before publishing.
 
