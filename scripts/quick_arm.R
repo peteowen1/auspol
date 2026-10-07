@@ -53,6 +53,12 @@ arm_eff <- c(base_env[setdiff(names(base_env), names(arm_env))], arm_env)
 # what HD1 reports). A typo stops here, before anything is copied or run.
 source("scripts/published_flags.R")
 quick_check_registered(c(names(arm_env), names(base_env)), names(PUBLISHED_FLAGS))
+# quick_arm forces these on every run (run_unit), and a forced value silently wins over a
+# named one, so naming one would be an arm that never ran. Use --sims for the sim count.
+.forced <- intersect(c(names(arm_env), names(base_env)), c("AUSPOL_XGB_PRIMARY", "AUSPOL_SKIP_PAIRS", "AUSPOL_N_SIMS"))
+if (length(.forced))
+  stop("quick_arm: ", paste(.forced, collapse = ", "), " is set by quick_arm itself on every run and cannot be screened here",
+       if ("AUSPOL_N_SIMS" %in% .forced) " (use --sims=N)" else "", call. = FALSE)
 
 # ---- where things live -------------------------------------------------------
 sh <- function(...) suppressWarnings(system2("git", c(...), stdout = TRUE, stderr = FALSE))
