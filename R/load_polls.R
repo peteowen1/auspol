@@ -129,6 +129,42 @@ load_prior_results <- function() {
   for (col in paste0("prev", seq_len(n_prev))) {
     dt[, (col) := suppressWarnings(as.numeric(get(col)))]
   }
+  .apply_prior_corrections(dt)
+}
+
+#' Corrections to the anchor's prior-results table, applied and printed
+#'
+#' `external/reference/anchor-corrections/prior-results.csv` holds one row per
+#' wrong cell: `year`, `region`, `party`, `slot` (`prev1`...), the corrected
+#' `value`, the anchor's wrong value `was`, and a `source`. A cell still at
+#' `was` is corrected; a cell already at `value` means upstream fixed it (the row
+#' can go); anything else means upstream changed it to a third value and the
+#' correction stops rather than overwrite something it has not seen.
+#' 2026-10-08: nsw2027 `@TPP` prev1 carried the Coalition's 2023 primary
+#' (35.37) instead of Labor's 2023 two-party share (54.27).
+#' @keywords internal
+.apply_prior_corrections <- function(dt) {
+  f <- file.path(pkg_root(), "external", "reference", "anchor-corrections", "prior-results.csv")
+  if (!file.exists(f)) return(dt[])
+  cr <- data.table::fread(f, showProgress = FALSE)
+  if (!nrow(cr)) return(dt[])
+  for (i in seq_len(nrow(cr))) {
+    k <- which(dt$year == cr$year[i] & dt$region == cr$region[i] & dt$party == cr$party[i])
+    sl <- cr$slot[i]
+    if (length(k) != 1L || !sl %in% names(dt))
+      stop("PRC! prior-results correction ", cr$year[i], " ", cr$region[i], " ", cr$party[i], " ", sl, " matches ", length(k), " row(s)")
+    cur <- dt[[sl]][k]
+    if (isTRUE(abs(cur - cr$value[i]) < 0.005)) {
+      cat(sprintf("PRC  %d %s %s %s already %.2f upstream: this correction can be removed\n", cr$year[i], cr$region[i], cr$party[i], sl, cur))
+    } else if (isTRUE(abs(cur - cr$was[i]) < 0.005)) {
+      data.table::set(dt, i = k, j = sl, value = cr$value[i])
+      cat(sprintf("PRC  %d %s %s %s corrected %.2f -> %.2f (anchor value wrong; %s)\n",
+                  cr$year[i], cr$region[i], cr$party[i], sl, cr$was[i], cr$value[i], basename(f)))
+    } else {
+      stop("PRC! ", cr$year[i], " ", cr$region[i], " ", cr$party[i], " ", sl, " is ", cur, " upstream, neither the wrong value ",
+           cr$was[i], " nor the correction ", cr$value[i], ": re-check it")
+    }
+  }
   dt[]
 }
 
