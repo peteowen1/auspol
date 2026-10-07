@@ -11,7 +11,7 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30.
 1. **PR #97** (https://github.com/peteowen1/auspol/pull/97): reviewed, CI green, NOT merged. Holds quick_arm,
    successor plumbing (off at that point), the ITG forecast history (#610, dev 920573f + fixes 36ac92e) and
    the check_like_ci fix. Merging starts the dated history on the next scheduled run.
-2. **Local `dev` is ~25 commits ahead of `origin/dev`, NOT pushed** (a push joins PR #97). Last: `ad079e1`
+2. **Local `dev` is 19 commits ahead of `origin/dev`, NOT pushed** (a push joins PR #97). Last: `ad079e1`
    SHIPS `AUSPOL_DEPARTED_SUCCESSOR="1"` (time-forward departed rate replacing the leaked 0.38; deciding 20k
    rebuild: ledger 0.2741 -> 0.2739, RMSE 5.121 -> 5.113; Pete overrode the two-seat clause). These later
    commits are NOT code-reviewed yet: review them before pushing. `check_like_ci.R` passes on `ad079e1`.
