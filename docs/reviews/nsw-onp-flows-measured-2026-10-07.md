@@ -163,3 +163,15 @@ Plain reading:
 ## Next step for the model (not done here)
 
 Replace 25.5 with a shrunk estimate pooled over 2019 and 2023 (about 36, SE about 1.6, 28 seats) and split the flow into Labor, Coalition and "other" rather than forcing "other" into the Coalition. The exhaust rate of 57.0% can stay for 2027 on the 2023 evidence; the pooled 59.8% is the conservative alternative. Changing the anchor's carried-forward 2023 Greens and ONP rows (87.1 / 39.7 and 37.7 / 71.1) should go through the anchor's owner, since we do not edit that clone.
+
+## Leakage check on how the backtests read these flows (2026-10-07)
+
+- **Shipped path is clean.** `R/forecast_mode.R:110-113` reads flows with `as_of` = the cycle start;
+  at that date the target is not held, so `estimate_flows_for()` re-estimates every flow from earlier
+  elections only. A row measured at the target election (e.g. the anchor's nsw2023 row) is not used.
+- **Latent leak, OFF and unregistered:** `scripts/backtest_candidate_nsw.R:1058` (the
+  `AUSPOL_NSW_EXHAUST=1` arm) calls `flows_for(year = TO, estimate = FALSE)`, which takes the row
+  recorded AT the target election (`flows$year <= year` keeps it). The switch is not in
+  `scripts/published_flags.R`, so nothing that ships uses it, but any NSW result produced with it on
+  used post-election exhaustion rates. Fix before using it: read with `as_of` = cycle start as
+  forecast_mode does, and register the switch.
