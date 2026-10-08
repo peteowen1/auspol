@@ -111,8 +111,41 @@ if (identical(.flag("AUSPOL_XGB_COUNCIL"), "1")) {
 if (!length(.v26)) stop("census-features.csv has no vic2026 seats: the demographic table cannot be written")
 invisible(withr::with_envvar(c(AUSPOL_DEMO_RESID = "2"), demographic_residual_apply(
   matrix(50, length(.v26), 2, dimnames = list(.v26, c("ALP", "GRN"))), "vic2026", write_table = TRUE)))
+# NEW SOUTH WALES 2027 (AUSPOL_PUBLISH_NSW2027=1, off by default so Victoria's
+# promotion is unchanged until Pete turns NSW on; plans/nsw2027-itg-scope-2026-10-08.md).
+# The same per-target tables as Victoria above, written for nsw2027, plus the two
+# NSW election files fit_seats_full.R reads: the forecast workflow cannot fetch
+# them (pastvtr.elections.nsw.gov.au serves the GitHub runner a non-workbook,
+# forecast.yaml "Fetch election results"), so they travel on the release.
+.nsw_tables <- character(0)
+if (identical(Sys.getenv("AUSPOL_PUBLISH_NSW2027", "0"), "1")) {
+  invisible(seat_swing_port_table("nsw2027", write = TRUE))
+  invisible(seat_poll_blend_table("nsw2027", write = TRUE))
+  invisible(leader_seat_table("nsw2027", write = TRUE))
+  .csf_n <- data.table::fread(file.path(OUT, "census-features.csv"), showProgress = FALSE)
+  .n27 <- unique(.csf_n$seat[.csf_n$pair == "nsw2027"])
+  if (length(.n27) != 93L) stop("census-features.csv has ", length(.n27), " nsw2027 seats, not 93 -- rerun scripts/build_census_features.R")
+  invisible(withr::with_envvar(c(AUSPOL_DEMO_RESID = "2"), demographic_residual_apply(
+    matrix(50, length(.n27), 2, dimnames = list(.n27, c("ALP", "GRN"))), "nsw2027", write_table = TRUE)))
+  .nsw_tables <- c("seat-swing-port-nsw2027.csv", "seat-poll-blend-nsw2027.csv", "leader-seat-nsw2027.csv", "demo-resid-nsw2027.csv")
+  if (identical(.flag("AUSPOL_XGB_COUNCIL"), "1")) {
+    .chn <- data.table::fread(file.path(OUT, "council-history.csv"), showProgress = FALSE)
+    .chn <- .chn[.chn$election == "nsw2027"]
+    if (!nrow(.chn) || !any(toupper(as.character(.chn$council_elected)) == "TRUE"))
+      stop("council-history.csv has no nsw2027 councillors -- rerun scripts/build_lga_district_overlap.R then scripts/build_council_history.py")
+    data.table::fwrite(.chn, file.path(OUT, "council-history-nsw2027.csv"))
+    .nsw_tables <- c(.nsw_tables, "council-history-nsw2027.csv")
+  }
+  for (.f in c("nswec-2023-nsw-firstprefs.csv", "nswec-nsw-transfers.csv")) {
+    .src <- file.path(election_data_path(), .f)
+    if (!file.exists(.src)) stop("AUSPOL_PUBLISH_NSW2027=1 but ", .src, " is missing -- run scripts/fetch_preferences_nsw.R")
+    file.copy(.src, file.path(OUT, .f), overwrite = TRUE)
+    .nsw_tables <- c(.nsw_tables, .f)
+  }
+  cat(sprintf("PA7  nsw2027 tables: %s\n", paste(.nsw_tables, collapse = ", ")))
+}
 models <- c(trained, "candidacies.csv", "seat-swing-port-vic2026.csv", "seat-poll-blend-vic2026.csv",
-            "leader-seat-vic2026.csv", "demo-resid-vic2026.csv", .arm_tables)
+            "leader-seat-vic2026.csv", "demo-resid-vic2026.csv", .arm_tables, .nsw_tables)
 mf <- file.path(OUT, models)
 miss <- models[!file.exists(mf)]
 if (length(miss)) stop("model file(s) missing -- run scripts/rebuild_forecasts.sh first: ", paste(miss, collapse = ", "))

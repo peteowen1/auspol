@@ -31,15 +31,26 @@ council_features <- function(keys, hist = NULL) {
   out[, `.ord` := .I]
   if (is.null(hist)) {
     f <- out_path("council-history.csv")
-    # The daily run has only Victoria 2026's slice, shipped by promote_rebuild.R.
-    if (!file.exists(f) && file.exists(out_path("council-history-vic2026.csv"))) f <- out_path("council-history-vic2026.csv")
+    # The daily run has only the target election's slice, shipped by
+    # promote_rebuild.R (council-history-<pair>.csv): read the one for the pair
+    # asked for, not Victoria's by name, or an nsw2027 run reads vic2026 rows
+    # and every council feature comes back empty.
+    if (!file.exists(f)) {
+      .pr <- unique(as.character(out$pair))
+      .sl <- out_path(sprintf("council-history-%s.csv", .pr))
+      .sl <- .sl[file.exists(.sl)]
+      if (length(.sl)) {
+        hist <- data.table::rbindlist(lapply(.sl, data.table::fread, showProgress = FALSE), use.names = TRUE, fill = TRUE)
+        f <- .sl[1]
+      }
+    }
     if (!file.exists(f)) {
       cat("CF0! output/council-history.csv missing -- council features are all 0 (run scripts/build_council_history.py)\n")
       out[, `:=`(council_mayor = 0, council_elected = 0, council_lost = 0, council_pct = 0)]
       out[, `.ord` := NULL]
       return(out[])
     }
-    hist <- data.table::fread(f, showProgress = FALSE)
+    if (is.null(hist)) hist <- data.table::fread(f, showProgress = FALSE)
   }
   # hist_tab, not hist: a bare argument name inside `[` would bind to a column
   hist_tab <- data.table::as.data.table(hist)
