@@ -30,7 +30,7 @@ not a commit, not a plan file — that it is not happening and why.
 
 | Request | Status |
 |---|---|
-| Work through the night handoff queue in order (NSW hidden sections, prebuilt R image, Haiku leftovers, scripts/ in the build) | **(1) DATA SHIPPED, page pending:** PR #107; R2 serves `nsw2027-page-data.json`, regions on all 93 seats, `nsw2023-results/booths.json`; keys sent to the ITG session (blog flip + `seat.qmd` election switch are its job). **(2) NOT DONE, Pete's word** ("leave it open maybe a more advanced model in the future can find a fix"): measured, a slow runner's network, which an image would not avoid. **(3) SHIPPED** PR #108: one meaning per check code + ratchet test; 0 unexplained switches. Sentinel NOT built, asked Pete. **(4) SHIPPED** PR #107: scripts/ was never in the build; the version bump was the cause. |
+| Work through the night handoff queue in order (NSW hidden sections, prebuilt R image, Haiku leftovers, scripts/ in the build) | **(1) DATA SHIPPED, page pending:** PR #107; R2 serves `nsw2027-page-data.json`, regions on all 93 seats, `nsw2023-results/booths.json`; keys sent to the ITG session (blog flip + `seat.qmd` election switch are its job). **(2) NOT DONE, Pete's word** ("leave it open maybe a more advanced model in the future can find a fix"): measured, a slow runner's network, which an image would not avoid. **(3) SHIPPED** PR #108: one meaning per check code + ratchet test; 0 unexplained switches. Sentinel SHIPPED at Pete's choice ("Build the sentinel"): ops PRs #16/#17, first main run opened auspol #109. **(4) SHIPPED** PR #107: scripts/ was never in the build; the version bump was the cause. |
 
 ## 2026-10-08
 

@@ -33,8 +33,10 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30.
    (2026-10-09): 63 codes still printed by several files, 56
    the same check, 7 pre-registration clause ids left alone; 156 codes renamed; a ratchet test
    (`test-check-code-collisions.R` + `check-code-allowlist.csv`) stops new ones. All 50 switches now
-   carry a CLASSIFY note; `AUSPOL_UPSET_FLOOR` is the one genuinely OPEN GAP. Still open: a scheduled
-   Haiku sentinel running the four audits after each daily run (ops repo already has one).
+   carry a CLASSIFY note; `AUSPOL_UPSET_FLOOR` is the one genuinely OPEN GAP. Sentinel SHIPPED 2026-10-09 (ops PRs #16, #17):
+   daily after the ops health check, `ops/scripts/auspol-audit.sh` checks CONSTANTS.md and file:line citations
+   against code (Haiku, ~$0.01) and the published R2 JSON (deterministic); drift goes to auspol issue #109.
+   Treat each finding as a lead (about 4 in 5 right when spot-checked).
 4. ~~`check_like_ci.R` reruns R CMD check whenever scripts/ changes~~ **DONE 2026-10-09 (PR #107):** scripts/ was
    never in the build; the rerun came from the per-PR DESCRIPTION Version / NEWS.md bump, now out of the
    fingerprint (proven: the 0.4.85 bump skipped the slow half).
