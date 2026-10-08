@@ -5,59 +5,43 @@ it stood before this rewrite: `backlog/journal-2026-09-19-hub-snapshot.md`).
 Decisions: `docs/DECISIONS.md`. Every seat verdict: `docs/SEAT-REGISTRY.md`.
 Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30.
 
-## NEXT SESSION, FIRST: the primary-vote "what if" slider on ITG (Pete, 2026-10-08)
+## 2026-10-08 NIGHT HANDOFF (READ FIRST)
 
-Pete asked again 2026-10-08 whether the site has it: **it does not.** Scoped and
-decided on 2026-10-03/04 (`plans/scenario-tool-scoping-2026-10-03.md`, Decisions
-section): pick a party (ONP, ALP, LNP, GRN), set its STATEWIDE primary anywhere
-within 10 points either side of the projection; that party is held exactly at the
-value and the others give way by regression on the model's own draws; show expected
-seats per party, every seat's win probability, P(majority), P(hung), P(ONP balance of
-power). Live slider, not a precomputed grid (Pete's choice). Build NOT started.
-Starting points: `AUSPOL_FORCE_FP` (`fit_seats_full.R`, ONP-specific rebalance, ~142 s
-a run), the simulation itself is 17-25 s of that. Register row: `PETE-ASKED-FOR.md`
-2026-10-03. Should work for vic2026 and nsw2027 now that the script takes a target.
+**Needs Pete:** nothing blocking.
 
-**2026-10-08 progress (uncommitted on `dev` at time of writing):** stage 1 DONE.
-`AUSPOL_FORCE_FP` now does both of Pete's rules: `AUSPOL_FORCE_FP_RULE="draws"` (others give
-way by regression on the published run's statewide draws, `output/statewide-draw-betas-<stem>.csv`,
-written every run; forced party held exactly at X) and `"draws-polled"` (same regression, usual
-spread kept: "if X is POLLING x%"). Pete asked for a toggle between the two. Default output
-byte-identical (control run). 73 knot runs -> `output/scenario-knots-vic-2026.csv` (mode x party
-x 9 levels); polled-at-today reproduces the headline exactly. A run is 80 s, not 142.
-Preview page DONE (https://claude.ai/artifact/AuSRMYX1CFse9ssV3EwvY2: party, exact/polling toggle,
-seats, odds, own-vote comparison chart, seat by seat). Stage 2 JS engine DROPPED for now (knots +
-interpolation already feel live; Pete agreed 2026-10-08). Daily build: `scripts/build_scenarios.R`
-+ `combine_scenarios.py` -> `output/scenario-vic2026.json`, run by 8 parallel jobs in forecast.yaml
-after the refresh publishes (public repo, minutes are free, so no single-process refactor needed).
-Then: the ITG page (inthegame-blog session) reads `auspol/scenario-vic2026.json` from R2. **Daily-refresh requirement:** each run repeats ~35 s of slider-independent setup
-(by-election/defector fits, 13-33 s into the run); 72 runs a day must loop scenarios inside ONE
-R process or it costs ~100 min instead of ~60.
+**Live on ITG** (all checked to load; blog PRs #858-#861):
+- https://inthegame.blog/politics/what-if (Victoria) and `#election=nsw2027`: the what-if slider. Two readings
+  as a toggle: "gets exactly X" / "is polling X" (the second equals the headline at today's level, checked
+  every run by `combine_scenarios.py` SC7). Decisions in `DECISIONS.md` 2026-10-08.
+- https://inthegame.blog/politics/nsw: NSW 2027 forecast with district map.
+- Daily files on R2 `auspol/`: forecast-vic2026.json, forecast-nsw2027.json, scenario-vic2026.json,
+  scenario-nsw2027.json, nsw2027-districts.topojson. Last proving run 37770931865: green, publish step 45 s.
+- auspol PRs #100-#106 merged, each reviewed (Sonnet) and CI-green; `dev` = `main` in content.
 
-## ITG pages, state at 2026-10-08 night (READ FIRST)
-
-LIVE: https://inthegame.blog/politics/what-if (Victorian slider, blog #858), https://inthegame.blog/politics/nsw
-(NSW 2027, blog #859). auspol PRs #100-#105 merged today. Daily from the 06:00 run: forecast-vic2026.json,
-forecast-nsw2027.json (AUSPOL_PUBLISH_NSW2027=1), scenario-vic2026.json, scenario-nsw2027.json (16 parallel
-scenario jobs, checked against the published run), nsw2027-districts.topojson. All on R2 under auspol/.
-
-NSW page sections still hidden until auspol ships the file (then a one-line blog config change; tell the
-inthegame-blog session the R2 key):
-1. ~~what-if~~ scenario-nsw2027.json: shipped in #105 (first publish 2026-10-08 night, confirm 200 on R2).
-2. ~~district map~~ nsw2027-districts.topojson: LIVE, blog told.
-3. poll trend: a page-data JSON like `vic-page-data.json`.
-4. regions: a non-null `region` per seat (needs a NSW district-to-region table; build_forecast_json.R region_file is NA).
-5. the per-seat page.
-
-Queued, in order:
-1. ~~**publish-scenarios without R**~~ DONE 2026-10-08: `scripts/combine_scenarios.py` (stdlib), parity 0/144 with the R version.
-2. Haiku audit leftovers (verified live 2026-10-08): 185 check codes with two meanings (e.g. SP2 in
+**Queued, in order:**
+1. **NSW page pieces still hidden** (each is then a one-line blog config change; message the inthegame-blog
+   session the R2 key): poll trend (a page-data JSON like `vic-page-data.json`), regions (a NSW
+   district-to-region table; `build_forecast_json.R` region_file is NA), per-seat pages.
+2. **Scenario jobs wait 5-16 min each for GitHub's R install** (one straggler sets the run's length, ~60 min
+   end to end). A prebuilt R container image would remove it. Not urgent: nobody watches the 06:00 run.
+3. **Haiku audit leftovers** (verified live): 185 check codes with two meanings (e.g. SP2 in
    R/salience_screen.R:441 vs R/seat_swing_port.R:178); 50 switches MODEL-REGISTRY cannot explain; a
-   scheduled Haiku sentinel running the four checks after each daily run (ops repo already has one).
-3. check_like_ci.R reruns R CMD check whenever scripts/ changes (~5 min a push; 35 min today): consider
-   whether scripts/ belongs in the package build.
+   scheduled Haiku sentinel running the four audits after each daily run (ops repo already has one).
+4. `check_like_ci.R` reruns R CMD check whenever scripts/ changes (~5 min a push; ~40 min on 2026-10-08):
+   consider whether scripts/ belongs in the package build.
 
-## 2026-10-08 HANDOFF (READ FIRST)
+**Deliberately not done:** the in-browser simulator (scoping stage 2, ~40 h): the 2.5-point knots with
+interpolation already feel live; revisit only if Pete wants two sliders at once or finer steps.
+
+**What I got wrong today:** (1) a stale memory said auto mode blocks my merges; one denial on 2026-10-07 had
+been made a rule and Pete had merged by hand since. Corrected. (2) A review fix wrote a literal `
+` into
+forecast.yaml and was pushed to dev before I looked; caught and fixed before any PR (now always `bash -n` a
+workflow step after editing it). (3) The first knot runs reused one output suffix, overwriting the
+old-rule ONP=25 result before comparing it. (4) Two estimates were wrong: a run was 80 s, not 142; the
+daily setup repeat was not a problem at all once the jobs ran in parallel on free public-repo minutes.
+
+## 2026-10-08 MORNING HANDOFF (superseded above: NSW turned on, ITG pages built)
 
 **Needs Pete:** (a) turn NSW 2027 on when ready -- `AUSPOL_PUBLISH_NSW2027=1 Rscript scripts/promote_rebuild.R`, `Rscript scripts/publish_shipped_release.R`, set repository variable `AUSPOL_PUBLISH_NSW2027=1`, run "Forecast refresh" by hand and read the NSW step log (the first real runner test); (b) ask the `inthegame-blog` session to build the NSW page from `forecast-nsw2027.json` (same shape as `forecast-vic2026.json`).
 
