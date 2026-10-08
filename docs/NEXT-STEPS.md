@@ -5,6 +5,19 @@ it stood before this rewrite: `backlog/journal-2026-09-19-hub-snapshot.md`).
 Decisions: `docs/DECISIONS.md`. Every seat verdict: `docs/SEAT-REGISTRY.md`.
 Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30.
 
+## NEXT SESSION, FIRST: the primary-vote "what if" slider on ITG (Pete, 2026-10-08)
+
+Pete asked again 2026-10-08 whether the site has it: **it does not.** Scoped and
+decided on 2026-10-03/04 (`plans/scenario-tool-scoping-2026-10-03.md`, Decisions
+section): pick a party (ONP, ALP, LNP, GRN), set its STATEWIDE primary anywhere
+within 10 points either side of the projection; that party is held exactly at the
+value and the others give way by regression on the model's own draws; show expected
+seats per party, every seat's win probability, P(majority), P(hung), P(ONP balance of
+power). Live slider, not a precomputed grid (Pete's choice). Build NOT started.
+Starting points: `AUSPOL_FORCE_FP` (`fit_seats_full.R`, ONP-specific rebalance, ~142 s
+a run), the simulation itself is 17-25 s of that. Register row: `PETE-ASKED-FOR.md`
+2026-10-03. Should work for vic2026 and nsw2027 now that the script takes a target.
+
 ## 2026-10-08 HANDOFF (READ FIRST)
 
 **Shipped and live:** PR #97 and PR #98 merged; `shipped-models` at `75dbda7` (AEF-7 ledger **0.2744** vs AEF 0.2825; pooled seat log loss 0.3249 over 2,120, was 0.3254); forecast refresh run 37700697788 green. In it: departed-successor rate, Nicholls Lib/Nat merged-cell dedup (ledger +0.0005, the fed2025 blend-weight cost Pete accepted), one-cluster blend weight = 0 (fed2019 0.2402 -> 0.2318). Victoria live is unchanged by the two seat-poll fixes until its first seat poll arrives (no polled cells today).
