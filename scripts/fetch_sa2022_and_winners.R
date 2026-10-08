@@ -123,10 +123,10 @@ for (E in ELECTIONS) {
 
   st <- fp[, .(v = sum(votes)), by = party][, .(party, pct = 100 * v / sum(v))]
   setorder(st, -pct)
-  cat(sprintf("\nSF1  SA %d: %s formal votes across 47 seats\n", E$year,
+  cat(sprintf("\nFSI1  SA %d: %s formal votes across 47 seats\n", E$year,
               format(sum(fp$votes), big.mark = ",")))
   print(st[, .(party, pct = round(pct, 2))])
-  cat(sprintf("SF1  seats won: %s\n",
+  cat(sprintf("FSI1  seats won: %s\n",
               paste(sprintf("%s %d", names(table(win$winner)),
                             as.integer(table(win$winner))), collapse = ", ")))
 
@@ -142,7 +142,7 @@ for (E in ELECTIONS) {
              "A vote pool is missing or double-counted.")
       }
     }
-    cat("SF1  anchor check passes against the independently recorded shares.\n")
+    cat("FSI1  anchor check passes against the independently recorded shares.\n")
   }
 
   if (E$year == 2022L) {

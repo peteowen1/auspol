@@ -35,12 +35,12 @@ sf <- as.data.table(load_seats(2026L, "sa"))
 # NAME MATCH BEFORE ANYTHING ELSE. A silent partial join here would look like
 # a smaller sample rather than an error, and the sample is already small.
 miss_e <- setdiff(e$seat, sf$seat); miss_s <- setdiff(sf$seat, e$seat)
-cat(sprintf("\nSS1  ECSA %d districts, 2026sa.txt %d seats\n", nrow(e), nrow(sf)))
+cat(sprintf("\nSSA1  ECSA %d districts, 2026sa.txt %d seats\n", nrow(e), nrow(sf)))
 if (length(miss_e) || length(miss_s)) {
   stop("Names do not match. ECSA only: ", paste(miss_e, collapse = ", "),
        " | seat file only: ", paste(miss_s, collapse = ", "))
 }
-cat("SS1  every district name matches.\n")
+cat("SSA1  every district name matches.\n")
 
 d <- merge(e[, .(seat, alp_2pp, winner, runner_up)], sf, by = "seat")
 d[, alp_2pp := suppressWarnings(as.numeric(alp_2pp))]
@@ -51,25 +51,25 @@ d[, alp_2pp := suppressWarnings(as.numeric(alp_2pp))]
 d[, notional_alp_2pp := 50 + margin / 2]
 d[, swing := alp_2pp - notional_alp_2pp]
 
-cat(sprintf("\nSS2  districts with a Labor-versus-Liberal count: %d of %d\n",
+cat(sprintf("\nSSA2  districts with a Labor-versus-Liberal count: %d of %d\n",
             sum(is.finite(d$swing)), nrow(d)))
-cat("SS2  who made the final two, across all 47:\n")
+cat("SSA2  who made the final two, across all 47:\n")
 print(d[, .N, by = .(winner, runner_up)][order(-N)])
 
 # Does the seat file's own `classic` flag agree about which seats are two-party
 # contests? It was set before the election; the outcome is what actually
 # decided it, and the gap between the two is a result in itself.
-cat(sprintf("\nSS3  the seat file expected %d classic contests; %d delivered one\n",
+cat(sprintf("\nSSA3  the seat file expected %d classic contests; %d delivered one\n",
             sum(d$classic), sum(is.finite(d$swing))))
 broke <- d[classic == TRUE & !is.finite(swing)]
-cat(sprintf("SS3  %d seats were expected classic and were NOT (Liberal missed the final two):\n",
+cat(sprintf("SSA3  %d seats were expected classic and were NOT (Liberal missed the final two):\n",
             nrow(broke)))
 if (nrow(broke)) print(head(broke[, .(seat, margin, winner, runner_up)], 10))
 
 sc <- d[is.finite(swing)]
-cat(sprintf("\nSS4  on the %d scorable districts: mean swing %+.2f, sd %.2f\n",
+cat(sprintf("\nSSA4  on the %d scorable districts: mean swing %+.2f, sd %.2f\n",
             nrow(sc), mean(sc$swing), stats::sd(sc$swing)))
-cat(sprintf("SS4  those districts' mean prior Labor margin %+.2f, against %+.2f for the other %d\n",
+cat(sprintf("SSA4  those districts' mean prior Labor margin %+.2f, against %+.2f for the other %d\n",
             mean(sc$margin), mean(d[!is.finite(swing), margin]),
             nrow(d) - nrow(sc)))
 
@@ -95,19 +95,19 @@ tr[, `:=`(dev = actual - mean(actual), fed_c = fed_swing - mean(fed_swing)), by 
 
 for (meas in c("transposed", "published")) {
   x <- if (meas == "transposed") sc$transposed else sc$fed_swing
-  if (!all(is.finite(x))) { cat(sprintf("SS5  %s: not available\n", meas)); next }
+  if (!all(is.finite(x))) { cat(sprintf("SSA5  %s: not available\n", meas)); next }
   te <- data.table(dev = sc$dev, fed_c = x - mean(x))
   fit <- stats::lm(dev ~ fed_c, data = tr)
   mae <- mean(abs(te$dev - stats::predict(fit, newdata = te)))
   uni <- mean(abs(te$dev))
-  cat(sprintf("\nSS5  %-11s measure: uniform %.4f, with fed_swing %.4f, gain %+.4f\n",
+  cat(sprintf("\nSSA5  %-11s measure: uniform %.4f, with fed_swing %.4f, gain %+.4f\n",
               meas, uni, mae, uni - mae))
 }
 
-cat("\nSS6  G1 -- what this observation is for\n")
-cat("SS6  sa2026 is a SHORT-gap election (10 months) drawing on federal 2025,\n")
-cat("SS6  not federal 2022. If the short-gap advantage is real it should appear\n")
-cat("SS6  here. If it was federal 2022 being unusual, it should not.\n")
+cat("\nSSA6  G1 -- what this observation is for\n")
+cat("SSA6  sa2026 is a SHORT-gap election (10 months) drawing on federal 2025,\n")
+cat("SSA6  not federal 2022. If the short-gap advantage is real it should appear\n")
+cat("SSA6  here. If it was federal 2022 being unusual, it should not.\n")
 fwrite(sc[, .(seat, margin, notional_alp_2pp, alp_2pp, swing, dev, transposed,
               published = fed_swing)],
        file.path("output", "sa2026-scored.csv"))

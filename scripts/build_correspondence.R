@@ -98,7 +98,7 @@ booths <- function(fed_year, region) {
   d <- d[is.finite(Latitude) & is.finite(Longitude) &
            Latitude > -44 & Latitude < -9 &
            Longitude > 112 & Longitude < 154]
-  cat(sprintf("BC1  %s fed%d: %d polling places, %d inside Australia (%.1f%%)\n",
+  cat(sprintf("BCO1  %s fed%d: %d polling places, %d inside Australia (%.1f%%)\n",
               toupper(region), fed_year, n_all, nrow(d), 100 * nrow(d) / n_all))
   st_as_sf(d, coords = c("Longitude", "Latitude"), crs = 7844)
 }
@@ -140,20 +140,20 @@ assign_booths <- function(fed_year, region, shp = SHP) {
     a$district[miss] <- dis$district[near]
     a$dist_m[miss] <- as.numeric(
       st_distance(bo[miss, ], dis[near, ], by_element = TRUE))
-    cat(sprintf("BC1  %d booths outside every polygon: %.0fm median, %.0fm worst\n",
+    cat(sprintf("BCO1  %d booths outside every polygon: %.0fm median, %.0fm worst\n",
                 length(miss), stats::median(a$dist_m[miss]), max(a$dist_m[miss])))
   }
   # 2km is generous for a genuine boundary sliver and nowhere near the 698km
   # placeholder, so the threshold does not need to be tuned to survive.
   bad <- a[dist_m > 2000]
   if (nrow(bad)) {
-    cat(sprintf("BC1  DROPPING %d booths with no usable location (%.0fkm from any district):\n",
+    cat(sprintf("BCO1  DROPPING %d booths with no usable location (%.0fkm from any district):\n",
                 nrow(bad), max(bad$dist_m) / 1000))
     print(head(bad[, .(DivisionNm, PollingPlaceNm, km = round(dist_m / 1000, 1))], 4))
     a <- a[dist_m <= 2000]
   }
   vc <- vote_coverage(fed_year, region, a$PollingPlaceID)
-  cat(sprintf("BC1  placed booths carry %.1f%% of the two-party vote\n",
+  cat(sprintf("BCO1  placed booths carry %.1f%% of the two-party vote\n",
               100 * vc$kept / vc$all))
   if (vc$kept / vc$all < 0.9) {
     stop(toupper(region), " fed", fed_year, ": placed booths carry only ",
@@ -180,7 +180,7 @@ read_corr <- function(f) {
 # ---- THE VALIDATION --------------------------------------------------------
 # SED_2021 holds Victoria on 2018 boundaries and NSW on 2019 boundaries, the
 # vintages that booths-2018vic.txt and booths-2019nsw.txt describe.
-cat("\nBC2  reproduction test -- can coordinates recover a hand-built correspondence?\n")
+cat("\nBCO2  reproduction test -- can coordinates recover a hand-built correspondence?\n")
 ok <- TRUE
 for (V in list(list("vic", 2016L, "booths-2018vic.txt"),
                list("nsw", 2016L, "booths-2019nsw.txt"))) {
@@ -195,14 +195,14 @@ for (V in list(list("vic", 2016L, "booths-2018vic.txt"),
   m <- merge(mine[!booth %in% dup, .(booth, mine = district)],
              theirs[!booth %in% dup, .(booth, theirs = district)], by = "booth")
   agree <- mean(m$mine == m$theirs)
-  cat(sprintf("BC2  %s: %d comparable booths (%d ambiguous names excluded), agreement %.1f%%\n",
+  cat(sprintf("BCO2  %s: %d comparable booths (%d ambiguous names excluded), agreement %.1f%%\n",
               V[[3]], nrow(m), length(dup), 100 * agree))
   if (nrow(m) < 200L) {
-    cat("BC2  too few comparable booths to conclude anything\n"); ok <- FALSE
+    cat("BCO2  too few comparable booths to conclude anything\n"); ok <- FALSE
   }
   if (agree < 0.95) {
     ok <- FALSE
-    cat("BC2  DISAGREEMENTS, first 10:\n")
+    cat("BCO2  DISAGREEMENTS, first 10:\n")
     print(head(m[mine != theirs], 10))
   }
 }
@@ -211,13 +211,13 @@ if (!ok) {
        "It cannot be trusted on Queensland, where there is nothing to check it ",
        "against.")
 }
-cat("BC2  the method recovers both hand-built correspondences.\n")
+cat("BCO2  the method recovers both hand-built correspondences.\n")
 
 # ---- build the ones that do not exist --------------------------------------
 # Queensland votes in October, so the federal election preceding its 2020 poll
 # is 2019. QLD has had no redistribution since 2017, so SED_2021 is the right
 # vintage for both the 2020 and the 2024 state election.
-cat("\nBC3  building correspondences\n")
+cat("\nBCO3  building correspondences\n")
 # Every cycle the anchor ships a correspondence for is rebuilt here too, not
 # just the Queensland ones that were missing. The shipped files need 192 and 224
 # name-fallback matches respectively for Victoria; these need none, because a
@@ -237,7 +237,7 @@ for (J in list(list(region = "vic", cycle = 2018L, fed = 2016L, shp = SHP_2021),
   a <- assign_booths(J$fed, J$region, J$shp)
   want <- nrow(districts(J$region, J$shp))
   got <- uniqueN(a$district)
-  cat(sprintf("BC3  %s %d <- fed%d: %d booths across %d of %d districts\n",
+  cat(sprintf("BCO3  %s %d <- fed%d: %d booths across %d of %d districts\n",
               toupper(J$region), J$cycle, J$fed, nrow(a), got, want))
   # Written as != rather than < deliberately. The < form cannot fire when the
   # district set comes back empty, which is exactly the case it needed to catch.
@@ -261,5 +261,5 @@ for (J in list(list(region = "vic", cycle = 2018L, fed = 2016L, shp = SHP_2021),
   g <- file.path(OUT, sprintf("booths-%d%s.csv", J$cycle, J$region))
   fwrite(a[, .(district, division, booth, place_id, region = J$region,
                cycle = J$cycle, fed = J$fed)], g)
-  cat(sprintf("BC3  wrote %s and %s\n", f, g))
+  cat(sprintf("BCO3  wrote %s and %s\n", f, g))
 }

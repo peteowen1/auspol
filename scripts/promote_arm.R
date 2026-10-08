@@ -64,7 +64,7 @@ if (!identical(got[2], want_prim) || !identical(got[3], want_flow)) {
                       "Promote the arm that matches what ships, or change the flags first."),
                arm, want_prim, want_flow, got[2], got[3]))
 }
-cat(sprintf("PA1  arm %s matches published_flags.R (xgb primary %s, xgb flows %s), %d seed dir(s)\n",
+cat(sprintf("PAR1  arm %s matches published_flags.R (xgb primary %s, xgb flows %s), %d seed dir(s)\n",
             arm, want_prim, want_flow, length(dirs)))
 
 # ---- 2. this arm's own files, from its logs --------------------------------
@@ -263,5 +263,5 @@ writeLines(jsonlite::toJSON(man, auto_unbox = TRUE, pretty = TRUE),
            file.path(SHIP, "MANIFEST.json"))
 cat(sprintf("PA6  wrote %s/MANIFEST.json: git %s, %d model file(s) checksummed\n",
             SHIP, substr(gitsha, 1, 8), length(models)))
-cat("PA7  NOT done here, on purpose: re-running the published forecast, and publishing\n")
-cat("PA7  models/results off this machine. Both are deliberate acts -- see docs/NEXT-STEPS.md.\n")
+cat("PAR7  NOT done here, on purpose: re-running the published forecast, and publishing\n")
+cat("PAR7  models/results off this machine. Both are deliberate acts -- see docs/NEXT-STEPS.md.\n")

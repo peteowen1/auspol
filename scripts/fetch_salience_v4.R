@@ -37,7 +37,7 @@
 #
 # NO LEAKAGE: the window ends the day before polling day.
 #
-# Emits S4* codes.
+# Emits FSV4* codes.
 options(auspol.root = normalizePath("."))
 suppressMessages(devtools::load_all(quiet = TRUE))
 suppressMessages(library(data.table))
@@ -121,7 +121,7 @@ D[, prio := as.integer(PRIO[party])][is.na(prio), prio := 5L]
 setorder(D, seat, -prev_pcv, prio)
 S <- D[, .SD[1], by = seat]
 S <- S[!is.na(kw) & nzchar(kw)]
-cat(sprintf("S4-0 per-seat pick by %d non-major vote (ties -> party class)
+cat(sprintf("FSV4-0 per-seat pick by %d non-major vote (ties -> party class)
 ", prev_yr))
 
 # ORDER THE CHAIN BY PRIOR NON-MAJOR STRENGTH, not by seat name. Every batch is
@@ -139,10 +139,10 @@ PB <- C[region == rg & year == prev_yr & !party %in% MAJ,
 S <- merge(S, PB, by = "seat", all.x = TRUE)
 S[!is.finite(prev_nm), prev_nm := 0]
 setorder(S, -prev_nm)
-cat(sprintf("S4-0 chain ordered by %d non-major vote; starts with %s (%.1f%%)
+cat(sprintf("FSV4-0 chain ordered by %d non-major vote; starts with %s (%.1f%%)
 ",
             prev_yr, S$kw[1], S$prev_nm[1]))
-cat(sprintf("S4-1 %s: %d seats, one non-major each | 5 per query, chained\n",
+cat(sprintf("FSV4-1 %s: %d seats, one non-major each | 5 per query, chained\n",
             EL, nrow(S)))
 
 to <- as.Date(POLL[[EL]]) - 1
@@ -158,13 +158,13 @@ while (length(rest) && nb < MAX_BATCH) {
   s <- qry(c(ov, take), to)
   nb <- nb + 1L
   if (is.null(s)) {
-    cat(sprintf("S4!  batch failed; %d candidate(s) dropped\n", length(take)))
+    cat(sprintf("FSV4!  batch failed; %d candidate(s) dropped\n", length(take)))
     rest <- rest[-seq_along(take)]; next
   }
   m <- jump_of(s)
   ovv <- m[keyword == ov, jump]
   if (!length(ovv) || !is.finite(ovv) || ovv <= 0) {
-    cat(sprintf("S4!  overlap %s came back %.2f -- cannot rescale, %d dropped\n",
+    cat(sprintf("FSV4!  overlap %s came back %.2f -- cannot rescale, %d dropped\n",
                 ov, if (length(ovv)) ovv else NA_real_, length(take)))
     rest <- rest[-seq_along(take)]; next
   }
@@ -174,7 +174,7 @@ while (length(rest) && nb < MAX_BATCH) {
   rest <- rest[-seq_along(take)]
   Sys.sleep(SLEEP)
 }
-cat(sprintf("S4-2 %d batches | %d candidates on one scale | %d not reached\n",
+cat(sprintf("FSV4-2 %d batches | %d candidates on one scale | %d not reached\n",
             nb, nrow(acc), length(rest)))
 
 R <- merge(S[, .(seat, keyword = kw, party, pcv, elected)], acc, by = "keyword")

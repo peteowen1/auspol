@@ -72,10 +72,10 @@ derive <- function(d) {
            "High_yr_schl_comp_Yr_8_belw_P")
   # Tot_P_P is the denominator for FIVE of the seven features, so losing it
   # quietly would NA out most of a file's contribution with nothing on screen.
-  # Every other missing-column path here prints a CF0!/CF1! line; this one did
+  # Every other missing-column path here prints a BCE0!/CF1! line; this one did
   # not, which made it the least-defended fallback in the script. Review gate.
   if (!"Tot_P_P" %in% names(d)) {
-    cat("CF0! Tot_P_P absent -- born_aus, indig, over55, under35 and edu_25plus will be NA for this file\n")
+    cat("BCE0! Tot_P_P absent -- born_aus, indig, over55, under35 and edu_25plus will be NA for this file\n")
     tot <- rep(NA_real_, nrow(d))
   } else {
     tot <- as.numeric(d$Tot_P_P)
@@ -148,9 +148,9 @@ EXACT <- c("wa2021","vic2022","sa2022","nsw2023","qld2024","wa2025","sa2026",
 sed_rows <- list()
 for (el in names(VINTAGE)) {
   f <- file.path(CEN, sprintf("census-sed-2016-reaggregated-to-%s.csv", VINTAGE[[el]]))
-  if (!file.exists(f)) { cat(sprintf("CF0! %s: no census vintage %s\n", el, VINTAGE[[el]])); next }
+  if (!file.exists(f)) { cat(sprintf("BCE0! %s: no census vintage %s\n", el, VINTAGE[[el]])); next }
   d <- derive(fread(f, showProgress = FALSE))
-  if (!"final_name" %in% names(d)) { cat(sprintf("CF0! %s: no final_name column\n", el)); next }
+  if (!"final_name" %in% names(d)) { cat(sprintf("BCE0! %s: no final_name column\n", el)); next }
   # FILTER TO THE PAIR'S OWN STATE. Each reaggregated file covers all five
   # states (95 NSW, 90 VIC, 95 QLD, 49 SA, 50-58 WA), and seat names repeat
   # across them -- Murray exists in NSW and Victoria, Albert Park in Victoria
@@ -170,7 +170,7 @@ for (el in names(VINTAGE)) {
     keep_rows <- !is.na(d$final_code) &
                  substr(as.character(d$final_code), 1, 1) == PREFIX[[reg]]
     if (!any(keep_rows)) {
-      cat(sprintf("CF0! %s: no census rows with state prefix %s -- skipped\n", el, PREFIX[[reg]]))
+      cat(sprintf("BCE0! %s: no census rows with state prefix %s -- skipped\n", el, PREFIX[[reg]]))
       next
     }
     d <- d[keep_rows]
@@ -188,7 +188,7 @@ for (v in c("2021", "2016")) {
   if (!file.exists(f)) next
   d <- derive(fread(f, showProgress = FALSE))
   nm <- intersect(c("ced_name", "final_name", "seat"), names(d))
-  if (!length(nm)) { cat(sprintf("CF0! census-ced-%s.csv has no seat-name column (%s)\n",
+  if (!length(nm)) { cat(sprintf("BCE0! census-ced-%s.csv has no seat-name column (%s)\n",
                                  v, paste(head(names(d), 3), collapse = ", "))); next }
   fed_rows[[v]] <- data.table(vintage = v, seat = d[[nm[1]]])[, (FEATS) := d[, ..FEATS]][]
 }
@@ -444,7 +444,7 @@ by_pair <- J[, .(cov = mean(is.finite(yr12_pct)), matched = sum(is.finite(yr12_p
 if (any(by_pair$matched == 0)) {
   print(by_pair[matched == 0])
   stop("CF2! pair(s) matched ZERO census rows -- that election's cells become an ",
-       "all-NA block a tree can key on as a jurisdiction label. Check the CF0! ",
+       "all-NA block a tree can key on as a jurisdiction label. Check the BCE0! ",
        "lines above for a skipped vintage file, a missing final_name column, or ",
        "a state-prefix filter that removed everything.")
 }

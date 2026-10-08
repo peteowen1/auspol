@@ -60,7 +60,7 @@ for (i in 3:length(FED)) {
 }
 D <- rbindlist(rows)
 D <- D[is.finite(y) & is.finite(x_naive) & is.finite(x_inst)]
-cat(sprintf("SR1  %d (seat, party) rows across %d pairs\n", nrow(D), uniqueN(D$pair)))
+cat(sprintf("TSR1  %d (seat, party) rows across %d pairs\n", nrow(D), uniqueN(D$pair)))
 stopifnot(nrow(D) > 200)
 
 cluster_se <- function(form, data, cluster) {

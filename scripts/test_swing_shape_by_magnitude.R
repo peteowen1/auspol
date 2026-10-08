@@ -81,7 +81,7 @@ show <- function(f, term, lbl) {
   b / s
 }
 
-cat("\nSM2  CRITERION -- advantage on |d_state| (positive = proportional gains with size)\n")
+cat("\nTSS2  CRITERION -- advantage on |d_state| (positive = proportional gains with size)\n")
 f1 <- cluster_se(advantage ~ abs_state, D, D$cycle)
 r1 <- show(f1, "abs_state", "|d_state| alone")
 

@@ -53,7 +53,7 @@ T <- fread(file.path(ANCHOR, "tpp-fed-regions.csv"), header = FALSE,
 natl <- T[T$state == "all", .(year, natl_tpp = tpp, natl_swing = swing)]
 ST <- merge(T[T$state != "all"], natl, by = "year")
 ST[, actual_dev := swing - natl_swing]
-cat(sprintf("SD1  tpp-fed-regions: %d state-years, %d federal elections (%d-%d)\n",
+cat(sprintf("BSD1  tpp-fed-regions: %d state-years, %d federal elections (%d-%d)\n",
             nrow(ST), uniqueN(ST$year), min(ST$year), max(ST$year)))
 
 # ---- feature 1: state-level federal polls ---------------------------------

@@ -263,7 +263,7 @@ for (pr in PAIRS) {
   .minor_disc <- NULL; .minor_disc_loser <- NULL
   if (identical(Sys.getenv("AUSPOL_MINOR_DEFECT", "1"), "1")) {
     .mfd <- tryCatch(fit_minor_defector_discount(pr$election), error = function(e) {
-      cat(sprintf("XG9! minor-defector fit FAILED for %s: %s\n", pr$election, conditionMessage(e)))
+      cat(sprintf("FXC9! minor-defector fit FAILED for %s: %s\n", pr$election, conditionMessage(e)))
       NULL
     })
     if (!is.null(.mfd) && !is.null(.mfd$discount) && is.finite(.mfd$discount)) {
@@ -277,12 +277,12 @@ for (pr in PAIRS) {
       # (median 0.276, n=13, well-powered) applies to confirmed non-sitting
       # switchers.
       if (!is.null(.mfd$discount_loser) && is.finite(.mfd$discount_loser)) .minor_disc_loser <- .mfd$discount_loser
-      cat(sprintf("XG9  %s: minor-defector discount %.3f%s (n=%d leave-target-out cases)\n",
+      cat(sprintf("FXC9  %s: minor-defector discount %.3f%s (n=%d leave-target-out cases)\n",
                   pr$election, .minor_disc,
                   if (!is.null(.minor_disc_loser)) sprintf(" (unknown-status; sitting=NO DISCOUNT, non-sitting %.3f)", .minor_disc_loser) else "",
                   .mfd$n))
     } else {
-      cat(sprintf("XG9! %s: minor-defector discount NOT fit (n=%s), no discount applied\n",
+      cat(sprintf("FXC9! %s: minor-defector discount NOT fit (n=%s), no discount applied\n",
                   pr$election, if (is.null(.mfd)) "NULL" else .mfd$n))
     }
   }
@@ -548,7 +548,7 @@ if (identical(Sys.getenv("AUSPOL_XGB_ENDORSE", "0"), "1")) {
   .en <- endorsement_features(ALL[, .(pair, seat, party)])
   ALL[, c200 := .en$c200]
   ALL[, voices := .en$voices]
-  cat(sprintf("XE1  endorsement features ON: Climate 200 on %d rows, Voices on %d rows of %d
+  cat(sprintf("FXA1  endorsement features ON: Climate 200 on %d rows, Voices on %d rows of %d
 ",
               sum(ALL$c200), sum(ALL$voices), nrow(ALL)))
 }
@@ -616,7 +616,7 @@ if (identical(Sys.getenv("AUSPOL_SITTING_MEMBER_ADJ", "0"), "1")) {
   ALL[, base_pred := base_pred_raw + sm_shift]
   for (p in unique(SH$pair)) {
     s <- SH[SH$pair == p]
-    cat(sprintf("SM1  %s: inc_stays %+.2f (k %d), inc_gone %+.2f (k %d), ch_gone %+.2f (k %d)\n", p,
+    cat(sprintf("FX1  %s: inc_stays %+.2f (k %d), inc_gone %+.2f (k %d), ch_gone %+.2f (k %d)\n", p,
                 s[group == "inc_stays", shift], s[group == "inc_stays", k], s[group == "inc_gone", shift],
                 s[group == "inc_gone", k], s[group == "ch_gone", shift], s[group == "ch_gone", k]))
   }

@@ -50,10 +50,10 @@ report <- function(d, label) {
   }
 }
 
-cat(sprintf("SE1  %d rows, %d with a usable ratio\n\n",
+cat(sprintf("SEM1  %d rows, %d with a usable ratio\n\n",
             nrow(R), sum(is.finite(R$ratio))))
 
-cat("SE2  ratio distribution by group (usable rows only)\n")
+cat("SEM2  ratio distribution by group (usable rows only)\n")
 print(R[is.finite(ratio), .(n = .N,
                             zero = sum(ratio == 0),
                             median = round(median(ratio), 3),
@@ -61,7 +61,7 @@ print(R[is.finite(ratio), .(n = .N,
                             max = round(max(ratio), 3)), by = grp],
       row.names = FALSE)
 
-cat("\nSE3  AUC, cut four ways\n")
+cat("\nSEM3  AUC, cut four ways\n")
 report(R,                                   "all rows")
 report(R[anchor_type == "incumbent"],       "incumbent-anchored only")
 report(R[hand_added == FALSE],              "excluding the hand-added row")
@@ -72,12 +72,12 @@ report(R[anchor_type == "incumbent" & hand_added == FALSE &
            election %in% c("fed2016","fed2019","fed2022","fed2025")],
                                             "incumbent + no hand-add + 2016 on")
 
-cat("\nSE4  the winners, loudest first -- the seats this exists to fix\n")
+cat("\nSEM4  the winners, loudest first -- the seats this exists to fix\n")
 print(R[grp == "A_won"][order(-ratio)][,
         .(election, seat, name, pct = round(pcv, 1), our_p = round(our_p, 4),
           anchor, ratio = round(ratio, 3), anchor_type)], row.names = FALSE)
 
-cat("\nSE5  the loudest LOSERS -- false positives cost seats too\n")
+cat("\nSEM5  the loudest LOSERS -- false positives cost seats too\n")
 print(head(R[grp == "B_lost"][order(-ratio)][,
         .(election, seat, name, pct = round(pcv, 1),
           anchor, ratio = round(ratio, 3))], 10), row.names = FALSE)

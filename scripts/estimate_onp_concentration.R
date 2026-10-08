@@ -48,7 +48,7 @@ print(R[order(-statewide), .(file, statewide = round(statewide, 2),
                              sd_pts = round(sd_pts, 2), cv = round(cv, 3), held_out)])
 
 fit_set <- R[held_out == FALSE]
-cat(sprintf("\nCN1  fitting on %d elections, holding out %s\n", nrow(fit_set), HOLD_OUT))
+cat(sprintf("\nEOC1  fitting on %d elections, holding out %s\n", nrow(fit_set), HOLD_OUT))
 stopifnot(nrow(fit_set) >= 5)
 
 m <- stats::lm(log(sd_pts) ~ log(statewide), data = fit_set)

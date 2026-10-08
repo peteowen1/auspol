@@ -45,7 +45,7 @@ res <- rbindlist(lapply(PAIRS, function(P) {
   O <- OOF[election == P$el]
   if (!nrow(O)) return(NULL)
   tx <- fread(file.path(EL, P$file), showProgress = FALSE)[election == P$prev]
-  if (!nrow(tx)) { cat(sprintf("DR0! %s: no %s transfers -- skipped\n", P$el, P$prev)); return(NULL) }
+  if (!nrow(tx)) { cat(sprintf("DFV0! %s: no %s transfers -- skipped\n", P$el, P$prev)); return(NULL) }
   fm <- build_flow_matrix(tx, min_n = 3L)
   # The harness's own value for each row, by the key the simulator would look
   # up. NA where the table has no entry -- that is the fallback case and is
@@ -67,7 +67,7 @@ res <- rbindlist(lapply(PAIRS, function(P) {
 }))
 
 res[, `:=`(xgb_beats_real = real_table - xgb, xgb_beats_pooled = pooled_base - xgb)]
-cat("\nDR1  RMSE against the truth, on the rows the REAL harness table can answer. LOWER IS BETTER.\n")
+cat("\nDFV1  RMSE against the truth, on the rows the REAL harness table can answer. LOWER IS BETTER.\n")
 cat("     real_table = build_flow_matrix(previous election). pooled_base = the oof file's base_pred.\n")
 cat("     Positive xgb_beats_* means xgb is better than that baseline.\n")
 print(res[, .(election, rows, covered,

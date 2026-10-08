@@ -29,7 +29,7 @@
 # Google had throttled. Level, rise, peak, slope, volatility and time-to-peak
 # are all derivable from what is stored here.
 #
-# Emits S5* codes.
+# Emits FSC5* codes.
 options(auspol.root = normalizePath("."))
 suppressMessages(devtools::load_all(quiet = TRUE))
 suppressMessages(library(data.table))
@@ -76,7 +76,7 @@ qry <- function(kw) {
   # Sharkie and Wilkie. Only a request that SUCCEEDED and returned no series is
   # a real empty, and only that is cached.
   if (is.null(r)) {
-    cat(sprintf("S5!  request failed for %s -- NOT cached, will retry
+    cat(sprintf("FSC5!  request failed for %s -- NOT cached, will retry
 ",
                 paste(kw, collapse = ", ")))
     return(NULL)
@@ -151,7 +151,7 @@ pick <- function(el) {
   # duplicating a series across seats.
   setorder(S, kw, -prev_pcv)
   ndup <- nrow(S) - uniqueN(S$kw)
-  if (ndup > 0L) cat(sprintf("S5-0 %d duplicate search form(s) in %s, keeping the stronger\n",
+  if (ndup > 0L) cat(sprintf("FSC5-0 %d duplicate search form(s) in %s, keeping the stronger\n",
                              ndup, el))
   S <- S[, .SD[1], by = kw]
   PB <- C[region == rg & year == py & !party %in% MAJ,
@@ -160,18 +160,18 @@ pick <- function(el) {
   S[, `:=`(election = el, prev_party = prev_pcv)][]
 }
 S <- rbindlist(lapply(names(ELS), pick), fill = TRUE)
-cat(sprintf("S5-1 %d seat-candidacies across %s\n", nrow(S), paste(names(ELS), collapse = " + ")))
+cat(sprintf("FSC5-1 %d seat-candidacies across %s\n", nrow(S), paste(names(ELS), collapse = " + ")))
 
 # ORDER THE CHAIN BY PRIOR NON-MAJOR STRENGTH. Every batch is rescaled onto the
 # first, so a chain starting on five obscure names anchors the whole scale on
 # noise and every later rescale divides by it.
 KW <- unique(S[order(-prev_nm)]$kw)
-cat(sprintf("S5-1 %d distinct keywords | chain starts with %s\n", length(KW), KW[1]))
+cat(sprintf("FSC5-1 %d distinct keywords | chain starts with %s\n", length(KW), KW[1]))
 
 first <- qry(head(KW, MAXKW))
-if (is.null(first)) stop("S5!  first batch returned nothing; cannot anchor the chain")
+if (is.null(first)) stop("FSC5!  first batch returned nothing; cannot anchor the chain")
 gran <- as.integer(median(diff(sort(unique(first$date)))))
-cat(sprintf("S5-2 %d buckets, granularity %s -- weekly is REQUIRED for the long window\n",
+cat(sprintf("FSC5-2 %d buckets, granularity %s -- weekly is REQUIRED for the long window\n",
             uniqueN(first$date), if (gran >= 6) "WEEKLY" else "DAILY"))
 stopifnot(gran >= 6)
 
@@ -190,39 +190,39 @@ while (length(rest) && nb < MAX_BATCH) {
   s <- qry(c(ov, take))
   nb <- nb + 1L
   if (is.null(s)) {
-    cat(sprintf("S5!  batch %d failed; %d dropped\n", nb, length(take)))
+    cat(sprintf("FSC5!  batch %d failed; %d dropped\n", nb, length(take)))
     rest <- rest[-seq_along(take)]; next
   }
   m <- rbindlist(lapply(names(ELS), function(e) jump_at(s, ELS[[e]])[, election := e]))
   ovv <- max(m[keyword == ov, jump])
   if (!is.finite(ovv) || ovv <= 0) {
-    cat(sprintf("S5!  overlap %s came back %.2f -- cannot rescale, %d dropped\n",
+    cat(sprintf("FSC5!  overlap %s came back %.2f -- cannot rescale, %d dropped\n",
                 ov, ovv, length(take)))
     rest <- rest[-seq_along(take)]; next
   }
   sc <- max(pooled[keyword == ov, j]) / ovv
   acc <- rbind(acc, m[keyword != ov][, jump := jump * sc])
   rest <- rest[-seq_along(take)]
-  if (nb %% 5 == 0) cat(sprintf("S5-3 %d batches | %d left\n", nb, length(rest)))
+  if (nb %% 5 == 0) cat(sprintf("FSC5-3 %d batches | %d left\n", nb, length(rest)))
   Sys.sleep(SLEEP)
 }
-cat(sprintf("S5-3 %d batches | %d keywords scaled | %d not reached\n",
+cat(sprintf("FSC5-3 %d batches | %d keywords scaled | %d not reached\n",
             nb, uniqueN(acc$keyword), length(rest)))
 
 R <- merge(S[, .(election, seat, keyword = kw, party, pcv, elected, prev_party)],
            acc, by = c("keyword", "election"))
 R[, emerg := elected %in% TRUE & prev_party < 15]
 fwrite(R, "output/salience-v5.csv")
-cat(sprintf("\nS5-9 wrote output/salience-v5.csv (%d rows)\n", nrow(R)))
+cat(sprintf("\nFSC5-9 wrote output/salience-v5.csv (%d rows)\n", nrow(R)))
 
 for (e in names(ELS)) {
   E <- R[election == e]
   if (!nrow(E) || uniqueN(E$elected) < 2) next
   n1 <- sum(E$elected, na.rm = TRUE); n0 <- nrow(E) - n1; rk <- rank(E$jump)
-  cat(sprintf("S5-9 %s: %d rows | AUC %.3f | emergences %d | max jump %.2f\n", e, nrow(E),
+  cat(sprintf("FSC5-9 %s: %d rows | AUC %.3f | emergences %d | max jump %.2f\n", e, nrow(E),
       (sum(rk[which(E$elected)]) - n1*(n1+1)/2) / (n1*n0), sum(E$emerg), max(E$jump)))
 }
-cat("\nS5-9 THE BLOCKER CHECK: gate-eligible (prior party vote < 15%) max jump per election.\n")
+cat("\nFSC5-9 THE BLOCKER CHECK: gate-eligible (prior party vote < 15%) max jump per election.\n")
 cat("     v4 read 57.6 against 1.6, a 36x gap that no threshold could span.\n")
 print(R[prev_party < 15, .(eligible = .N, max_jump = round(max(jump), 2),
                            p90 = round(quantile(jump, .9), 2)), by = election], row.names = FALSE)

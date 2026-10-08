@@ -63,11 +63,11 @@ D <- merge(D, P, by = c("election", "seat"), all.x = TRUE)
 D[, won := elected == TRUE]
 
 nm <- D[!party %in% MAJ & !is.na(inc_name)]
-cat(sprintf("EM1  %d non-major candidacies with a known prior incumbent\n", nrow(nm)))
+cat(sprintf("BET1  %d non-major candidacies with a known prior incumbent\n", nrow(nm)))
 
 # ---- GROUP A: won, and we gave the winning party under 5% -------------------
 A <- nm[won == TRUE & is.finite(gave_winner) & gave_winner < 0.05]
-cat(sprintf("EM2  GROUP A -- won but we said under 5%%: %d\n", nrow(A)))
+cat(sprintf("BET2  GROUP A -- won but we said under 5%%: %d\n", nrow(A)))
 print(A[order(-pcv), .(election, seat, name, party, pct = round(pcv, 1),
                        our_p = round(gave_winner, 4),
                        incumbent = inc_name, inc_running)], row.names = FALSE)
@@ -79,7 +79,7 @@ print(A[order(-pcv), .(election, seat, name, party, pct = round(pcv, 1),
 set.seed(20260826L)
 B <- nm[won == FALSE & election %in% unique(A$election) & pcv >= 5]
 B <- B[sample(.N, min(.N, 2L * nrow(A)))]
-cat(sprintf("\nEM3  GROUP B -- stood, lost, polled >= 5%%: %d\n", nrow(B)))
+cat(sprintf("\nBET3  GROUP B -- stood, lost, polled >= 5%%: %d\n", nrow(B)))
 print(B[order(-pcv), .(election, seat, name, party, pct = round(pcv, 1),
                        incumbent = inc_name, inc_running)][1:min(20, nrow(B))],
       row.names = FALSE)

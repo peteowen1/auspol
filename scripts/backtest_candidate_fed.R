@@ -1263,11 +1263,11 @@ for (K in PAIRS) {
             scale_p <- bucket_total * cand_ratio[[p]] / prior_p
           } else {
             scale_p <- scale_to
-            cat(sprintf("BS2! fed%d %s: no prior vote to scale; common factor kept\n", K$to, p))
+            cat(sprintf("BCF2! fed%d %s: no prior vote to scale; common factor kept\n", K$to, p))
           }
           mat[, p] <- mat[, p] * scale_p; st_a[[p]] <- st_a[[p]] * scale_p
         }
-        cat(sprintf("BS2  fed%d level by candidate split: %s\n", K$to,
+        cat(sprintf("BCF2  fed%d level by candidate split: %s\n", K$to,
                     paste(sprintf("%s %.2f", bucket, unlist(st_a[bucket])), collapse = ", ")))
       } else {
       for (p in setdiff(unmodelled, done_lvl)) { mat[, p] <- mat[, p] * scale_to; st_a[[p]] <- st_a[[p]] * scale_to }
@@ -1742,7 +1742,7 @@ for (X in out_all) {
       if (!is.finite(.surge_scale) || .surge_scale <= 0) stop("AUSPOL_SURGE_SCALE must be a positive number")
       if (.surge_scale != 1) {
         surge_arg <- pmin(1, surge_arg * .surge_scale)
-        cat(sprintf("SC1  surge hazard x%.1f: mean %.4f, max %.4f, seats at the cap %d\n",
+        cat(sprintf("SHZ1  surge hazard x%.1f: mean %.4f, max %.4f, seats at the cap %d\n",
                     .surge_scale, mean(surge_arg), max(surge_arg), sum(surge_arg >= 1)))
       }
       cat(sprintf("BF0v %s: surge-v2 hazard for %d of %d seats (%d absent -> 0) | mean %.4f | mu %.2f sd %.2f | lambda %.1f | train winners %d\n",

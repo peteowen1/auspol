@@ -12,7 +12,7 @@ options(auspol.root = normalizePath("."))
 suppressMessages({ library(data.table); devtools::load_all(quiet = TRUE) })
 src <- sprintf("output/statewide-forecast-audit%s.csv", Sys.getenv("AUSPOL_AUDIT_TAG", ""))
 A <- fread(src, showProgress = FALSE)
-cat(sprintf("OB0  read %s: %d rows, %d pairs\n", src, nrow(A), uniqueN(A$pair)))
+cat(sprintf("BOB0  read %s: %d rows, %d pairs\n", src, nrow(A), uniqueN(A$pair)))
 if (!all(c("in_bucket", "others_scale") %in% names(A)))
   stop(src, " predates the in_bucket/others_scale columns; rerun the audit.")
 if (any(as.character(A$others_scale) != "0"))
@@ -27,5 +27,5 @@ if (H[, any(!is.finite(bucket_fc) | !is.finite(bucket_act) | bucket_fc <= 0 | bu
   stop("A non-positive or missing bucket value; a log ratio cannot be taken.")
 setorder(H, date)
 fwrite(H, "output/others-bucket-history.csv")
-cat(sprintf("OB1  wrote output/others-bucket-history.csv: %d elections %s to %s; bucket over-forecast in %d; mean forecast-actual %+.2f\n",
+cat(sprintf("BOB1  wrote output/others-bucket-history.csv: %d elections %s to %s; bucket over-forecast in %d; mean forecast-actual %+.2f\n",
             nrow(H), min(H$date), max(H$date), H[, sum(bucket_fc > bucket_act)], H[, mean(bucket_fc - bucket_act)]))

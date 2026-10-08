@@ -35,10 +35,10 @@ key <- c("s", "party", "pair")
 m <- merge(b[, c(key, "pred_share", "actual_share"), with = FALSE],
            a[, c(key, "pred_share"), with = FALSE],
            by = key, suffixes = c("_base", "_arm"))
-cat(sprintf("SS1  target cells scored under BOTH arms: %d (named in prereg: %d)\n",
+cat(sprintf("SSR1  target cells scored under BOTH arms: %d (named in prereg: %d)\n",
             nrow(m), nrow(cells)))
 if (nrow(m) < 0.9 * nrow(cells))
-  cat("SS1! coverage below 90% of the named cells -- prereg R5 says the run is VOID, not scored\n")
+  cat("SSR1! coverage below 90% of the named cells -- prereg R5 says the run is VOID, not scored\n")
 
 per <- m[, .(base = sqrt(mean((pred_share_base - actual_share)^2)),
              arm  = sqrt(mean((pred_share_arm  - actual_share)^2)), n = .N), by = pair]
@@ -114,6 +114,6 @@ byc[, delta := arm - base]
 cat("\nSS6  R1 -- target-cell improvement by class (the arm touches NON-MAJORS only)\n")
 print(byc[order(delta)], digits = 4)
 
-cat(sprintf("\nSS9  VERDICT under the committed rule: %s\n",
+cat(sprintf("\nSSR9  VERDICT under the committed rule: %s\n",
             if (crit1 && crit2 && !brk) "SHIP" else "DO NOT SHIP"))
-cat("SS9  (R2/R3 were cleared before implementation; R4 needs the published forecast rerun.)\n")
+cat("SSR9  (R2/R3 were cleared before implementation; R4 needs the published forecast rerun.)\n")

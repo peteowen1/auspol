@@ -65,7 +65,7 @@ GEO <- c(fed = "AU", vic = "AU-VIC", nsw = "AU-NSW", sa = "AU-SA",
 
 C <- fread("output/salience-corpus.csv", showProgress = FALSE)
 C <- C[election %in% names(POLL) & year >= MIN_YEAR]
-cat(sprintf("FS1  %d candidacies in %d elections at or after %d\n",
+cat(sprintf("FSA1  %d candidacies in %d elections at or after %d\n",
             nrow(C), uniqueN(C$election), MIN_YEAR))
 
 # Every breakout, plus N_CTRL non-breakouts per breakout drawn from the SAME
@@ -78,7 +78,7 @@ pick <- rbindlist(lapply(split(C, C$election), function(d) {
   k <- min(nrow(n), N_CTRL * max(1L, nrow(b)))
   rbind(b, if (k > 0) n[sample(.N, k)] else n[0])
 }))
-cat(sprintf("FS2  selected %d candidacies (%d breakouts, %d controls)\n",
+cat(sprintf("FSA2  selected %d candidacies (%d breakouts, %d controls)\n",
             nrow(pick), sum(pick$breakout), sum(!pick$breakout)))
 print(pick[, .(n = .N, breakouts = sum(breakout)), by = election][order(election)],
       row.names = FALSE)
@@ -89,7 +89,7 @@ for (el in unique(pick$election)) {
   to <- as.Date(POLL[[el]]) - 1
   from <- to - WINDOW
   anchor <- PM(POLL[[el]]); geo <- GEO[[sub("[0-9]+$", "", el)]]
-  cat(sprintf("FS3  %s: %d candidacies | geo %s | anchor %s | %s..%s\n",
+  cat(sprintf("FSA3  %s: %d candidacies | geo %s | anchor %s | %s..%s\n",
               el, nrow(d), geo, anchor, from, to))
   # Four keywords per query is gtrends' limit alongside the anchor.
   idx <- split(seq_len(nrow(d)), ceiling(seq_len(nrow(d)) / 4L))

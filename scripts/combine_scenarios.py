@@ -72,7 +72,7 @@ def r4(x):
 
 target = arg("target", os.environ.get("AUSPOL_TARGET", "vic2026"))
 if target not in CFGS:
-    die("SC0! unknown --target " + target)
+    die("CSC0! unknown --target " + target)
 cfg = CFGS[target]
 stem, maj = cfg["stem"], cfg["majority"]
 assert cfg["seats"] // 2 + 1 == maj
@@ -91,21 +91,21 @@ for f in sorted(os.listdir(OUT)):
     if m:
         keys.append({"file": f, "mode": m.group(1), "party": m.group(2), "off": float(m.group(3))})
 if not keys:
-    die("SC5! no scenario outputs for %s -- run scripts/build_scenarios.R first" % target)
+    die("CSC5! no scenario outputs for %s -- run scripts/build_scenarios.R first" % target)
 # Scenarios older than today's levels describe a different day's forecast.
 lvl_time = os.path.getmtime(lvl_f)
 stale = [k["file"] for k in keys if os.path.getmtime(os.path.join(OUT, k["file"])) < lvl_time]
 if stale:
-    die("SC5! %d scenario file(s) predate today's levels, e.g. %s" % (len(stale), stale[0]))
+    die("CSC5! %d scenario file(s) predate today's levels, e.g. %s" % (len(stale), stale[0]))
 
 offsets = [-10 + 2.5 * i for i in range(9)]
 want = [(m, p, o) for m in ("exact", "polled") for p in ("ONP", "ALP", "LNP", "GRN")
         for o in offsets if today[p] + o >= 0.5]
 have = {(k["mode"], k["party"], k["off"]) for k in keys}
 missing = [w for w in want if w not in have]
-print("SC5  %s: %d scenario(s) found, %d expected, %d missing" % (target, len(keys), len(want), len(missing)))
+print("CSC5  %s: %d scenario(s) found, %d expected, %d missing" % (target, len(keys), len(want), len(missing)))
 if missing and not partial:
-    die("SC5! missing scenarios: " + ", ".join("%s %s %+.1f" % w for w in missing))
+    die("CSC5! missing scenarios: " + ", ".join("%s %s %+.1f" % w for w in missing))
 
 pub_f = os.path.join(OUT, "seat-probs-%s.csv" % stem)
 pub_rows = read_csv(pub_f)
@@ -122,7 +122,7 @@ for k in keys:
     if classes is None:
         classes, n_sims = cls, len(sims)
     if cls != classes:
-        die("SC6! %s has classes %s" % (k["file"], ",".join(cls)))
+        die("CSC6! %s has classes %s" % (k["file"], ",".join(cls)))
     n = len(sims)
     ci = {c: i for i, c in enumerate(cls)}
     hung = bop = 0
@@ -138,7 +138,7 @@ for k in keys:
     pm = [[0] * len(cls) for _ in seat_names]
     for r in probs:
         if r["seat"] not in seat_ix:
-            die("SC6! %s: seat not in the published forecast" % k["file"])
+            die("CSC6! %s: seat not in the published forecast" % k["file"])
         pm[seat_ix[r["seat"]]][ci[r["party"]]] = int(rnd(float(r["prob"]) * 1000, 0))
     scen.append({
         "mode": k["mode"], "party": k["party"], "offset": k["off"],
@@ -167,12 +167,12 @@ if zero:
     for k in zero:
         f = os.path.join(OUT, k["file"].replace("seat-sims-full", "seat-probs", 1))
         same = same_probs(pub_rows, read_csv(f))
-        print("SC7  polled %s at today's level %s the published seat probabilities"
+        print("CSC7  polled %s at today's level %s the published seat probabilities"
               % (k["party"], "MATCHES" if same else "DOES NOT MATCH"))
         if not same:
-            die("SC7! %s differs from %s: the scenarios do not describe the published forecast" % (f, pub_f))
+            die("CSC7! %s differs from %s: the scenarios do not describe the published forecast" % (f, pub_f))
 else:
-    print("SC7! no polled offset-0 scenario, so nothing ties these scenarios to the published forecast")
+    print("CSC7! no polled offset-0 scenario, so nothing ties these scenarios to the published forecast")
 
 try:
     gitsha = subprocess.run(["git", "rev-parse", "--short", "HEAD"], capture_output=True,
@@ -188,4 +188,4 @@ doc = {
 out = os.path.join(OUT, "scenario-%s.json" % target)
 with open(out, "w", encoding="utf-8") as fh:
     json.dump(doc, fh, separators=(",", ":"))
-print("SC8  wrote %s: %d scenarios, %d seats, %.0f KB" % (out, len(scen), len(seat_names), os.path.getsize(out) / 1024))
+print("CSC8  wrote %s: %d scenarios, %d seats, %.0f KB" % (out, len(scen), len(seat_names), os.path.getsize(out) / 1024))

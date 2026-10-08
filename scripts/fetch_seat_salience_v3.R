@@ -33,7 +33,7 @@
 #
 # NO LEAKAGE: every window ends the day before polling day.
 #
-# Emits S3* codes.
+# Emits FSB3* codes.
 options(auspol.root = normalizePath("."))
 suppressMessages(devtools::load_all(quiet = TRUE))
 suppressMessages(library(data.table))
@@ -145,7 +145,7 @@ WANT <- Sys.getenv("AUSPOL_SALIENCE_SEATS", "")
 seats <- if (nzchar(WANT)) trimws(strsplit(WANT, ",")[[1]]) else {
   set.seed(20260826L); sample(sort(unique(D$seat)))
 }
-cat(sprintf("S3-1 %s: %d seats, non-majors only | 2 queries per seat\n", EL, length(seats)))
+cat(sprintf("FSB3-1 %s: %d seats, non-majors only | 2 queries per seat\n", EL, length(seats)))
 
 out <- list(); done <- 0L
 for (s in seats) {
@@ -166,19 +166,19 @@ for (s in seats) {
     done <- done + 1L
   }
   m <- seat_salience(d$kw, geo, POLL[[EL]])
-  if (is.null(m)) { cat(sprintf("S3!  %s: no data\n", s)); next }
+  if (is.null(m)) { cat(sprintf("FSB3!  %s: no data\n", s)); next }
   m <- merge(m, d[, .(keyword = kw, party, pcv, elected)], by = "keyword", all.x = TRUE)
   m[, `:=`(election = EL, seat = s)]
   m[, jump_cal := jump * scale]          # on the PM's scale, comparable across seats
   out[[s]] <- m
   Sys.sleep(SLEEP)
 }
-if (!length(out)) { cat("S3-9 nothing fetched\n"); quit(save = "no") }
+if (!length(out)) { cat("FSB3-9 nothing fetched\n"); quit(save = "no") }
 R <- rbindlist(out, fill = TRUE)
 fwrite(R, sprintf("output/seat-salience-v3-%s.csv", EL))
-cat(sprintf("\nS3-9 %d candidates across %d seats | %d with a usable scale\n",
+cat(sprintf("\nFSB3-9 %d candidates across %d seats | %d with a usable scale\n",
             nrow(R), uniqueN(R$seat), sum(is.finite(R$scale))))
-cat("S3-9 loudest 15 by calibrated jump\n")
+cat("FSB3-9 loudest 15 by calibrated jump\n")
 print(utils::head(R[order(-jump_cal),
       .(seat, keyword, party, pct = round(pcv, 1), won = elected,
         jump = round(jump, 2), jump_cal = signif(jump_cal, 3))], 15),

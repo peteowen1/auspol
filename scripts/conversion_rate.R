@@ -35,37 +35,37 @@ d <- merge(lead, win, by = "seat")
 stopifnot(nrow(d) == 47L)
 d[, converted := leader == winner]
 
-cat("\nCR1  South Australia 2026: who led on first preferences, and did they win?\n")
+cat("\nCRA1  South Australia 2026: who led on first preferences, and did they win?\n")
 tab <- d[, .(led = .N, won = sum(converted)), by = leader][order(-led)]
 tab[, rate := round(100 * won / led, 1)]
 print(tab)
-cat(sprintf("\nCR1  overall: %d of %d primary leads converted (%.1f%%)\n",
+cat(sprintf("\nCRA1  overall: %d of %d primary leads converted (%.1f%%)\n",
             sum(d$converted), nrow(d), 100 * mean(d$converted)))
 
 onp <- tab[leader == "ONP"]
 if (nrow(onp)) {
-  cat(sprintf("\nCR2  ONE NATION: led on primaries in %d of 47 seats, won %d -> %.1f%%\n",
+  cat(sprintf("\nCRA2  ONE NATION: led on primaries in %d of 47 seats, won %d -> %.1f%%\n",
               onp$led, onp$won, onp$rate))
 } else {
-  cat("\nCR2  One Nation led on primaries in NO South Australian seat.\n")
+  cat("\nCRA2  One Nation led on primaries in NO South Australian seat.\n")
 }
-cat("CR2  for comparison, on the SAME statistic:\n")
-cat("CR2    YouGov's Victorian MRP: leads in ~30 of 88, converts 17 -> ~57%\n")
-cat("CR2    ours at a 24% One Nation primary:            converts 8-9 -> ~45%\n")
+cat("CRA2  for comparison, on the SAME statistic:\n")
+cat("CRA2    YouGov's Victorian MRP: leads in ~30 of 88, converts 17 -> ~57%\n")
+cat("CRA2    ours at a 24% One Nation primary:            converts 8-9 -> ~45%\n")
 
 # Where One Nation's leads went instead. The mechanism is the point: a party
 # can lead on primaries in a third of the state and win almost nothing, and
 # that is not the model being timid, it is preferential voting.
 lost <- d[leader == "ONP" & !converted]
 if (nrow(lost)) {
-  cat(sprintf("\nCR3  the %d seats One Nation led and LOST, and who took them\n", nrow(lost)))
+  cat(sprintf("\nCRA3  the %d seats One Nation led and LOST, and who took them\n", nrow(lost)))
   print(lost[, .N, by = winner][order(-N)])
-  cat(sprintf("CR3  its leads there averaged %.1f%% of the primary vote\n",
+  cat(sprintf("CRA3  its leads there averaged %.1f%% of the primary vote\n",
               mean(lost$lead_pct)))
 }
 won <- d[leader == "ONP" & converted]
 if (nrow(won)) {
-  cat(sprintf("CR3  the %d it led and WON averaged %.1f%%\n",
+  cat(sprintf("CRA3  the %d it led and WON averaged %.1f%%\n",
               nrow(won), mean(won$lead_pct)))
 }
 

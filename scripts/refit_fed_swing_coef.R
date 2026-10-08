@@ -45,7 +45,7 @@ d[, tra_c := transposed - mean(transposed), by = election]
 d[, pub_c := ifelse(is.finite(published), published - mean(published[is.finite(published)]),
                     NA_real_), by = election]
 
-cat(sprintf("\nRF1  %d seats across %d elections\n", nrow(d), uniqueN(d$election)))
+cat(sprintf("\nRFS1  %d seats across %d elections\n", nrow(d), uniqueN(d$election)))
 print(d[, .(seats = .N, has_published = sum(is.finite(published)),
             baseline_mae = round(mean(abs(dev)), 3)), by = election])
 
@@ -62,16 +62,16 @@ loo <- function(dat, col) {
 
 # ---- arm B: transposed, four elections -------------------------------------
 B <- loo(d, "tra_c")
-cat("\nRF2  arm B -- transposed measure, coefficient fitted leave-one-election-out\n")
+cat("\nRFS2  arm B -- transposed measure, coefficient fitted leave-one-election-out\n")
 print(B[, .(election, n, coef = round(coef, 3), mae = round(mae, 3),
             uniform = round(uniform, 3), gain = round(uniform - mae, 4))])
-cat(sprintf("RF2  coefficient across folds: %.3f to %.3f  (S4: is it stable?)\n",
+cat(sprintf("RFS2  coefficient across folds: %.3f to %.3f  (S4: is it stable?)\n",
             min(B$coef), max(B$coef)))
 
 # ---- arm A: published, the two elections that have it ----------------------
 dp <- d[is.finite(published)]
 A <- loo(dp, "pub_c")
-cat(sprintf("\nRF3  arm A -- published measure, only %d seats across %d elections have it\n",
+cat(sprintf("\nRFS3  arm A -- published measure, only %d seats across %d elections have it\n",
             nrow(dp), uniqueN(dp$election)))
 print(A[, .(election, n, coef = round(coef, 3), mae = round(mae, 3),
             uniform = round(uniform, 3), gain = round(uniform - mae, 4))])
@@ -79,7 +79,7 @@ print(A[, .(election, n, coef = round(coef, 3), mae = round(mae, 3),
 # ---- comparison on the SAME seats, so the arms are commensurable -----------
 # Comparing a 4-election pooled MAE against a 2-election one would compare
 # different seats, so both are also scored on the 180 seats that have both.
-cat("\nRF4  head to head on the 180 seats that have BOTH measures\n")
+cat("\nRFS4  head to head on the 180 seats that have BOTH measures\n")
 both <- d[is.finite(published)]
 res <- rbindlist(lapply(unique(both$election), function(e) {
   te <- both[election == e]
@@ -97,7 +97,7 @@ print(res[, .(election, n, A = round(mae_A, 4), B = round(mae_B, 4),
 pa <- sum(res$mae_A * res$n) / sum(res$n)
 pb <- sum(res$mae_B * res$n) / sum(res$n)
 pc <- sum(res$mae_C * res$n) / sum(res$n)
-cat(sprintf("RF4  pooled: A %.4f | B %.4f | C %.4f\n", pa, pb, pc))
+cat(sprintf("RFS4  pooled: A %.4f | B %.4f | C %.4f\n", pa, pb, pc))
 
 # Paired per-seat difference, so the comparison carries a standard error.
 pd <- rbindlist(lapply(unique(both$election), function(e) {
@@ -108,7 +108,7 @@ pd <- rbindlist(lapply(unique(both$election), function(e) {
              b = abs(te$dev - stats::predict(fb, newdata = te)))
 }))
 dif <- pd$b - pd$a; se <- stats::sd(dif) / sqrt(length(dif))
-cat(sprintf("RF5  B minus A: %+.4f MAE, SE %.4f -> %+.2f SE (negative = B better)\n",
+cat(sprintf("RFS5  B minus A: %+.4f MAE, SE %.4f -> %+.2f SE (negative = B better)\n",
             mean(dif), se, mean(dif) / se))
 verdict <- if (min(pa, pb) >= pc) {
   "REMOVE the adjustment -- neither measure beats uniform swing"
@@ -116,5 +116,5 @@ verdict <- if (min(pa, pb) >= pc) {
   "KEEP A -- within 1 SE, and the status quo wins ties"
 } else if (mean(dif) < 0) "ADOPT B -- the transposed measure is better" else
   "KEEP A -- the published measure is better"
-cat(sprintf("\nRF6  verdict: %s\n", verdict))
+cat(sprintf("\nRFS6  verdict: %s\n", verdict))
 fwrite(res, file.path("output", "fed-swing-coef-refit.csv"))

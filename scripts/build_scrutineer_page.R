@@ -52,6 +52,6 @@ if (!grepl('id="csv-data"', page, fixed = TRUE)) {
 
 writeLines(page, OUT, useBytes = TRUE)
 n_rows <- length(readLines(CSV, warn = FALSE)) - 1L
-cat(sprintf("SP1  wrote %s: %d rows embedded, %.0f KB\n", OUT, n_rows,
+cat(sprintf("BSP1  wrote %s: %d rows embedded, %.0f KB\n", OUT, n_rows,
             file.info(OUT)$size / 1024))
-cat("SP2  publish with the Artifact tool: file_path =", OUT, "\n")
+cat("BSP2  publish with the Artifact tool: file_path =", OUT, "\n")

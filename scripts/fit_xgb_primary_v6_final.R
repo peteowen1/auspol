@@ -94,7 +94,7 @@ for (.p in party_levels) if (!paste0("party_", .p) %in% names(ALL)) ALL[[paste0(
 for (.r in region_levels) if (!paste0("region_", .r) %in% names(ALL)) ALL[[paste0("region_", .r)]] <- as.integer(ALL$region == .r)
 .miss <- setdiff(feat_cols, names(ALL))
 if (length(.miss)) stop("F0! the as-at feature list has columns this script does not build: ", paste(.miss, collapse = ", "))
-cat(sprintf("F1  production features = the as-at list: %d columns
+cat(sprintf("FXP1  production features = the as-at list: %d columns
 ", length(feat_cols)))
 X <- as.matrix(ALL[, ..feat_cols])
 y <- ALL$actual_share

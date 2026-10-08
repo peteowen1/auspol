@@ -153,10 +153,10 @@ forecast_statewide_for <- function(region, year, election_date, parties, st_a,
            paste(colnames(sw_draws)[duplicated(colnames(sw_draws))], collapse = ", "))
     st_fc <- colMeans(sw_draws)
   }
-  cat(sprintf("FS1  %s%d forecast statewide: %d polls to %s; folded into OTH: %s\n",
+  cat(sprintf("STA1  %s%d forecast statewide: %d polls to %s; folded into OTH: %s\n",
               region, year, FC$n_polls, as.character(ed - 1),
               if (length(FC$folded)) paste(FC$folded, collapse = ", ") else "none"))
-  cat(sprintf("FS1  trend TPP %.2f, fundamentals %.2f, projection %.2f, draws realise %.2f\n",
+  cat(sprintf("STA1  trend TPP %.2f, fundamentals %.2f, projection %.2f, draws realise %.2f\n",
               FC$tpp, fr, FC$anchor$mean, FC$implied_tpp))
   list(st_fc = st_fc, draws = sw_draws, folded = FC$folded, n_polls = FC$n_polls,
        tpp = FC$tpp, fund = fr, anchor_mean = FC$anchor$mean,
@@ -199,11 +199,11 @@ candidate_bucket_ratio <- function(election, bucket) {
   pred <- stats::setNames(pr[[col]], pr$cls)[bucket]
   if (all(is.finite(pred)) && sum(pred) > 0) {
     ratio <- stats::setNames(pred / sum(pred), bucket)
-    cat(sprintf("BS1  %s: bucket split by candidate model (%s): %s\n", election, split_mode,
+    cat(sprintf("FST1  %s: bucket split by candidate model (%s): %s\n", election, split_mode,
                 paste(sprintf("%s %.2f", bucket, ratio), collapse = ", ")))
     return(ratio)
   }
-  cat(sprintf("BS1! %s: no candidate-model share for %s; prior-ratio split kept\n", election,
+  cat(sprintf("FST1! %s: no candidate-model share for %s; prior-ratio split kept\n", election,
               paste(bucket[!is.finite(pred)], collapse = ", ")))
   NULL
 }
@@ -229,7 +229,7 @@ candidate_bucket_total <- function(election, bucket) {
   if (anyDuplicated(pr$cls)) stop("candidate_bucket_total(): duplicate class rows for ", el_arg)
   pred <- stats::setNames(pr$pred_naive, pr$cls)[bucket]
   if (!all(is.finite(pred))) {
-    cat(sprintf("BT1! %s: no candidate-model share for %s; bucket total left to the polls\n", el_arg,
+    cat(sprintf("BKT1! %s: no candidate-model share for %s; bucket total left to the polls\n", el_arg,
                 paste(bucket[!is.finite(pred)], collapse = ", ")))
     return(NULL)
   }

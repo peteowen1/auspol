@@ -26,7 +26,7 @@ if (!file.exists(MANF))
   stop("no ", MANF, " -- run scripts/promote_arm.R first; publishing an unpromoted tree would put unverified bytes behind the shipped name")
 
 man <- jsonlite::fromJSON(MANF)
-cat(sprintf("PR1  manifest: arm %s, git %s, promoted %s\n",
+cat(sprintf("PSR1  manifest: arm %s, git %s, promoted %s\n",
             man$arm, substr(man$git_sha, 1, 8), man$promoted_at))
 
 # REFUSE IF THE TREE HAS MOVED SINCE PROMOTION. Publishing models under a git
@@ -35,9 +35,9 @@ cat(sprintf("PR1  manifest: arm %s, git %s, promoted %s\n",
 head_sha <- tryCatch(trimws(system2("git", c("rev-parse", "HEAD"), stdout = TRUE)),
                      error = function(e) NA_character_)
 if (!identical(head_sha, man$git_sha)) {
-  cat(sprintf("PR1! HEAD is %s but the manifest was written at %s.\n",
+  cat(sprintf("PSR1! HEAD is %s but the manifest was written at %s.\n",
               substr(head_sha, 1, 8), substr(man$git_sha, 1, 8)))
-  cat("PR1! Re-run scripts/promote_arm.R so the published artifacts and the recorded SHA agree.\n")
+  cat("PSR1! Re-run scripts/promote_arm.R so the published artifacts and the recorded SHA agree.\n")
   if (!identical(Sys.getenv("AUSPOL_RELEASE_FORCE", "0"), "1"))
     stop("refusing to publish against a stale manifest; set AUSPOL_RELEASE_FORCE=1 only if you know why they differ")
 }
@@ -66,15 +66,15 @@ if (length(loo)) {
 }
 payload <- c(extra, rest, if (length(loo)) zipf)
 gone <- payload[!file.exists(payload)]
-if (length(gone)) cat(sprintf("PR2! missing asset(s), NOT uploaded: %s
+if (length(gone)) cat(sprintf("PSR2! missing asset(s), NOT uploaded: %s
 ", paste(basename(gone), collapse = ", ")))
 payload <- payload[file.exists(payload)]
-cat(sprintf("PR2  %d asset(s), %.1f MB total\n", length(payload),
+cat(sprintf("PSR2  %d asset(s), %.1f MB total\n", length(payload),
             sum(file.size(payload)) / 1048576))
 
 exists_rel <- system2("gh", c("release", "view", TAG), stdout = FALSE, stderr = FALSE) == 0
 if (!exists_rel) {
-  cat(sprintf("PR3  release %s does not exist -- create it once with `gh release create %s`, then re-run\n", TAG, TAG))
+  cat(sprintf("PSR3  release %s does not exist -- create it once with `gh release create %s`, then re-run\n", TAG, TAG))
   quit(status = 1)
 }
 rc <- system2("gh", c("release", "upload", TAG, shQuote(payload), "--clobber"))
