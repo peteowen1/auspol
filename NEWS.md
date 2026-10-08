@@ -1,3 +1,8 @@
+# auspol 0.4.81
+
+- New South Wales 2027 is published daily (turned on 2026-10-08), now to R2 as well as the release, so the ITG page can read it. First run: Labor 46.9 expected seats of 93, a 54% chance of a majority, hung parliament 46%.
+- `docs/CONSTANTS.md` code references refreshed: 14 of its `file:line` citations had drifted.
+
 # auspol 0.4.80
 
 - The daily what-if publish step installs only the two packages it uses, cutting about ten minutes from each morning's run.
