@@ -137,9 +137,13 @@ VINTAGE <- c(wa2021 = "2021", vic2022 = "2022", sa2022 = "2022", sa2026 = "2025"
              # census-sed-2016-reaggregated-to-2022.csv, and the only name that
              # differs between the two elections is Narracan, whose 2022 poll
              # was deferred rather than redistributed away.
-             vic2026 = "2022")
+             vic2026 = "2022",
+             # NSW 2027 keeps the 2021 redistribution's boundaries (NSW redraws
+             # after every second election), so nsw2023's 2022 reaggregation
+             # applies exactly. Added 2026-10-08 for the NSW live forecast.
+             nsw2027 = "2022")
 EXACT <- c("wa2021","vic2022","sa2022","nsw2023","qld2024","wa2025","sa2026",
-           "vic2026")
+           "vic2026", "nsw2027")
 
 sed_rows <- list()
 for (el in names(VINTAGE)) {
