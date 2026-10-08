@@ -34,6 +34,20 @@ Then: the ITG page (inthegame-blog session) reads `auspol/scenario-vic2026.json`
 (by-election/defector fits, 13-33 s into the run); 72 runs a day must loop scenarios inside ONE
 R process or it costs ~100 min instead of ~60.
 
+## ITG pages, state at 2026-10-08 evening
+
+LIVE: https://inthegame.blog/politics/what-if (Victorian slider, blog PR #858) and
+https://inthegame.blog/politics/nsw (NSW 2027 forecast, blog PR #859). NSW publishes daily
+(AUSPOL_PUBLISH_NSW2027=1 on the repo, R2 since PR #103).
+
+The NSW page hides five sections until auspol ships the file; each is then a one-line
+config change on the blog side (tell the inthegame-blog session the R2 key):
+1. what-if: `scenario-nsw2027.json` (add NSW to the scenario jobs; scripts already take --target=nsw2027). NEXT.
+2. district map: a topojson like `web/vic2026-districts.topojson` (objects.districts, `seat` property).
+3. poll trend: a page-data JSON like `vic-page-data.json`.
+4. regions: a non-null `region` per seat (needs a NSW district-to-region table; build_forecast_json.R region_file is NA).
+5. the per-seat page.
+
 ## 2026-10-08 HANDOFF (READ FIRST)
 
 **Needs Pete:** (a) turn NSW 2027 on when ready -- `AUSPOL_PUBLISH_NSW2027=1 Rscript scripts/promote_rebuild.R`, `Rscript scripts/publish_shipped_release.R`, set repository variable `AUSPOL_PUBLISH_NSW2027=1`, run "Forecast refresh" by hand and read the NSW step log (the first real runner test); (b) ask the `inthegame-blog` session to build the NSW page from `forecast-nsw2027.json` (same shape as `forecast-vic2026.json`).
