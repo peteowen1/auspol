@@ -429,14 +429,13 @@ CLASSIFY <- list(
   # Note-prefix rules matter (see the tag logic in the output loop): "SHIPPED"
   # prints as adopted, "FITTING-TIME" as a fitting switch, "OPEN GAP" as open.
   AUSPOL_ANCHOR_EXHAUST = paste(
-    "ARM, not shipped (default 0; plans/prereg-anchor-exhaust-2026-09-27.md). Read in R/forecast_mode.R",
-    "(statewide_draws_as_at(), which only the federal harness and fit_seats_full.R call) and in fit_seats_full.R.",
-    "No effect where flows carry no exhaust (every non-NSW election, live Victoria). Not a parity gap while off;",
-    "if adopted for NSW, note the nsw harness does not reach forecast_mode today (function-name grep)."),
+    "ARM, not shipped (default 0; plans/prereg-anchor-exhaust-2026-09-27.md). Wired everywhere: ",
+    "read in R/forecast_mode.R (statewide_draws_as_at()), which every harness and fit_seats_full.R reach: the five state harnesses and fit_seats_full.R through forecast_statewide_or_oracle() -> forecast_statewide_for() (R/forecast_statewide.R:81), the federal harness directly. \"No\" cells are the harness grep missing the R/ read, not drift (corrected 2026-10-09 after review). ",
+    "No effect where flows carry no exhaust (every non-NSW election, live Victoria)."),
   AUSPOL_ANCHOR_IMPLIED = paste(
-    "ARM, not shipped (default 0; plans/prereg-anchor-implied-tpp-2026-09-20.md). Same wiring as AUSPOL_ANCHOR_EXHAUST:",
-    "read in R/forecast_mode.R (federal harness + fit_seats_full.R) and fit_seats_full.R; scripts/audit_statewide_forecast.R",
-    "only prints it. The other five harnesses never call forecast_mode, so 'no' there is the arm's scope, not drift."),
+    "ARM, not shipped (default 0; plans/prereg-anchor-implied-tpp-2026-09-20.md). Wired everywhere: ",
+    "read in R/forecast_mode.R (statewide_draws_as_at()), which every harness and fit_seats_full.R reach: the five state harnesses and fit_seats_full.R through forecast_statewide_or_oracle() -> forecast_statewide_for() (R/forecast_statewide.R:81), the federal harness directly. \"No\" cells are the harness grep missing the R/ read, not drift (corrected 2026-10-09 after review). ",
+    "scripts/audit_statewide_forecast.R only prints it."),
   AUSPOL_BREAKOUT_MIX_MIN_P = paste(
     "PREREG PENDING, default 0 (= every eligible cell, i.e. no gate). Read inside breakout_mix_args() in R/breakout_mix.R,",
     "which all six harnesses and fit_seats_full.R call, so the harness grep cannot see it; it reaches all of them when set."),
@@ -478,9 +477,8 @@ CLASSIFY <- list(
     "SHIPPED as a leak fix (ledger v51, 2026-09-29). Read in R/forecast_statewide.R (reached by every harness and fit_seats_full.R),",
     "scripts/backtest_candidate_fed.R and scripts/build_level_pred.R. 'No' in the other harness columns is the grep missing the R/ read."),
   AUSPOL_LEVEL_RECIPE = paste(
-    "SHIPPED 2026-09-30 as v56 ('live'). Read only in R/forecast_mode.R (statewide_draws_as_at()), which fit_seats_full.R and the",
-    "federal harness call. The harness grep cannot see an R/ read. Whether the state harnesses honour 'live' through another",
-    "path was not traced."),
+    "SHIPPED 2026-09-30 as v56 ('live'). Wired everywhere: ",
+    "read in R/forecast_mode.R (statewide_draws_as_at()), which every harness and fit_seats_full.R reach: the five state harnesses and fit_seats_full.R through forecast_statewide_or_oracle() -> forecast_statewide_for() (R/forecast_statewide.R:81), the federal harness directly. \"No\" cells are the harness grep missing the R/ read, not drift (corrected 2026-10-09 after review)."),
   AUSPOL_LIVE_DRAW_BUCKET = paste(
     "SHIPPED 2026-09-28 as a parity fix, LIVE-ONLY by design: read only in fit_seats_full.R, where the live statewide draws split the",
     "unpolled bucket by its 2022 ratio. The harnesses use candidate_bucket_ratio() (AUSPOL_BUCKET_SPLIT) instead."),
@@ -558,9 +556,10 @@ CLASSIFY <- list(
     "SHIPPED as a leak fix (2026-09-28): every constant fitted inside base_pred learns only from earlier elections. Read in",
     "R/time_forward.R and R/fundamentals_tf.R (also part of cache keys), below the harness grep; reaches every entry point."),
   AUSPOL_UPSET_FLOOR = paste(
-    "OPEN GAP: TESTING, default 0, live-script only. Read in fit_seats_full.R (stage 6b) and scripts/promote_rebuild.R; no harness reads it.",
-    "Checked: published_flags.R comment ('time-forward upset insurance for minor contenders') and the two call sites; the reason no",
-    "harness scores it was not established, and docs/plans/prereg-upset-floor-2026-10-02.md was not read for it. Decide before adopting."),
+    "REFUSED 2026-10-02 (Brier guard: 0.0894 -> 0.0904 against a 0.0005 limit; plans/prereg-upset-floor-2026-10-02.md, ",
+    "DECISIONS.md 2026-10-02), default 0, code kept. Not a per-harness switch by design: it is stage 6b, applied by ",
+    "scripts/rebuild_forecasts.sh (scripts/apply_upset_floor.R) to the pooled harness output, and read live by ",
+    "fit_seats_full.R and scripts/promote_rebuild.R; so no harness reads it."),
   AUSPOL_XGB_BASE_DELTA = paste(
     "SHIPPED 2026-10-06 with AUSPOL_REENTRY='majors'. HARNESS-ONLY by design: read inside xgb_primary_override() (R/xgb_primary_override.R,",
     "R/xgb_base_delta.R); the live forecast gets the same effect through base_margin (xgb_primary_predict_live())."),
