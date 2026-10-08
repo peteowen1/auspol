@@ -634,10 +634,11 @@ jobs:
         with:
           r-version: release
           use-public-rspm: true
+      # combine_scenarios.R needs only these two; the package's full
+      # dependency set took ~10 of this job's 12 minutes (run 37735368376).
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
-          extra-packages: any::devtools, any::jsonlite
-          needs: check
+          packages: any::data.table, any::jsonlite
       # Inputs FIRST, scenarios second: combine_scenarios.R refuses scenario
       # files older than today's levels, and a download stamps files with the
       # time it lands.
