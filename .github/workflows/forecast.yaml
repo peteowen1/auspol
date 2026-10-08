@@ -588,6 +588,8 @@ jobs:
   # block or change it: the forced runs write suffixed files only.
   scenarios:
     needs: refresh
+    # A manual --quick run may skip the seat model the scenarios rerun.
+    if: ${{ !inputs.quick }}
     runs-on: ubuntu-latest
     timeout-minutes: 50
     strategy:
@@ -673,7 +675,10 @@ jobs:
   # that alarm: scheduled runs (or alarm_test), one reused issue, exact title.
   scenario-alarm:
     needs: [scenarios, publish-scenarios]
-    if: failure() && (github.event_name == 'schedule' || inputs.alarm_test)
+    # NOT failure(): at job level that is true when ANY ancestor failed, so a
+    # failed refresh would raise this alarm too, saying the forecast published
+    # (review, 2026-10-08). Only the scenario jobs' own results count.
+    if: always() && (needs.scenarios.result == 'failure' || needs.publish-scenarios.result == 'failure') && (github.event_name == 'schedule' || inputs.alarm_test)
     runs-on: ubuntu-latest
     steps:
       - name: Raise an alarm
