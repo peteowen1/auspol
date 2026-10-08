@@ -1559,6 +1559,8 @@ if (FORCE_HOLD_EXACT) {
         stats::cov(sw_draws[, j], sw_draws[, fp_party]) / stats::var(sw_draws[, fp_party]) * sp
     }
     sw_draws[, fp_party] <- mean(sw_draws[, fp_party])
+    if (max(abs(rowSums(sw_draws) - 100)) > 1e-6) stop("FP3: holding ", fp_party,
+      " broke the draws' row sums (max error ", signif(max(abs(rowSums(sw_draws) - 100)), 3), ")")
     cat(sprintf("FP3  %s held at %.2f in every draw (sd 0); rows sum %.2f-%.2f\n", fp_party,
                 sw_draws[1, fp_party], min(rowSums(sw_draws)), max(rowSums(sw_draws))))
   }
