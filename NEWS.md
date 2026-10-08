@@ -1,3 +1,8 @@
+# auspol 0.4.78
+
+- What-if runs (`AUSPOL_FORCE_FP`) now move the other parties the way the model's own statewide simulations move them, for any of One Nation, Labor, Coalition or Greens. Each point of One Nation costs the Coalition about 0.53 and Labor 0.17. Every run writes these rates to `output/statewide-draw-betas-<target>.csv`.
+- Two readings, set by `AUSPOL_FORCE_FP_RULE`: `draws` holds the party at exactly X in every simulation ("if One Nation gets X%"), `draws-polled` keeps the usual uncertainty around X ("if One Nation is polling X%"). The older South Australia rule is still there as `sa`. The published forecast is unchanged.
+
 # auspol 0.4.77
 
 - New South Wales 2027 has every feature table Victoria has: census rows for the demographic correction and council history (44 of 194 provisional candidacies have a council record). A publishing path is built but OFF (`AUSPOL_PUBLISH_NSW2027`): promotion ships the NSW tables and election files, and the daily workflow runs the NSW forecast after Victoria has published everywhere.
