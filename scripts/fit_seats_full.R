@@ -1822,5 +1822,5 @@ cat(sprintf("RG1  per-seat ranges: %d party rows, %d seats with a final pair (me
             nrow(.prim), nrow(.tcp), stats::median(.tcp$p_pair)))
 rm(.fp)
 cat(sprintf("
-wrote output/seat-probs-vic-2026%s.csv
-", OUT_SUFFIX))
+wrote output/seat-probs-%s%s.csv
+", TARGET$out_stem, OUT_SUFFIX))
