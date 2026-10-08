@@ -635,6 +635,26 @@ SA_RESPONSE <- c(LNP = -0.846, ALP = -0.123, IND = -0.086,
 # be read as a FUNCTION of the primary vote rather than only at today's point.
 # Nothing is forced by default.
 FORCE_FP <- Sys.getenv("AUSPOL_FORCE_FP", "")
+# The what-if slider's zero point: the level BEFORE any forcing.
+cat(sprintf("FP0  statewide primaries before forcing: %s\n",
+            paste(sprintf("%s %.2f", names(state_mean), state_mean), collapse = ", ")))
+# AUSPOL_FORCE_FP_RULE: "draws" (default, Pete 2026-10-04) moves the others by
+# the published run's own statewide-draw regression and holds the forced party
+# exactly at X in every draw ("if ONP GETS X%"); "draws-polled" uses the same
+# regression but keeps the usual statewide spread around X ("if ONP is POLLING
+# X%", Pete 2026-10-08: the slider offers both); "sa" is the older South
+# Australia response, ONP only, with the spread kept.
+.fp_rule <- Sys.getenv("AUSPOL_FORCE_FP_RULE", "draws")
+if (!.fp_rule %in% c("draws", "draws-polled", "sa")) stop("AUSPOL_FORCE_FP_RULE must be draws, draws-polled or sa, not ", .fp_rule)
+FORCE_DRAWS_RULE <- nzchar(FORCE_FP) && .fp_rule %in% c("draws", "draws-polled")
+FORCE_HOLD_EXACT <- FORCE_DRAWS_RULE && identical(.fp_rule, "draws")
+.forced_parties <- character(0)
+if (FORCE_DRAWS_RULE) {
+  .bf <- sprintf("output/statewide-draw-betas-%s.csv", TARGET$out_stem)
+  if (!file.exists(.bf)) stop("AUSPOL_FORCE_FP_RULE=draws needs ", .bf,
+                              ", written by a default run of this script. Run one first.")
+  .fp_betas <- fread(.bf, showProgress = FALSE)
+}
 if (nzchar(FORCE_FP)) {
   for (x in strsplit(strsplit(FORCE_FP, ",", fixed = TRUE)[[1]], "=", fixed = TRUE)) {
     fp_party <- trimws(x[1]); fp_target <- as.numeric(x[2])
@@ -643,6 +663,20 @@ if (nzchar(FORCE_FP)) {
            ". Known: ", paste(names(state_mean), collapse = ", "))
     }
     fp_delta <- fp_target - state_mean[[fp_party]]
+    if (FORCE_DRAWS_RULE) {
+      .fpb <- .fp_betas[.fp_betas$moved == fp_party]
+      if (!nrow(.fpb)) stop("No scenario betas for ", fp_party, " in ", .bf)
+      if (length(.forced_parties)) stop("AUSPOL_FORCE_FP_RULE=draws forces one party at a time")
+      state_mean[[fp_party]] <- fp_target
+      for (i in seq_len(nrow(.fpb))) {
+        q <- .fpb$class[i]
+        state_mean[[q]] <- max(0.1, state_mean[[q]] + fp_delta * .fpb$beta[i])
+      }
+      .forced_parties <- c(.forced_parties, fp_party)
+      cat(sprintf("FP1  forced %s to %.1f (was %.1f, %+.1f), others by the draws' regression\n",
+                  fp_party, fp_target, fp_target - fp_delta, fp_delta))
+      next
+    }
     resp <- SA_RESPONSE[intersect(names(SA_RESPONSE), names(state_mean))]
     resp <- resp[setdiff(names(resp), fp_party)]
     # Renormalised so the rebalance is exactly -delta and the total stays 100.
@@ -1493,6 +1527,42 @@ statewide draws anchored: two-party mean %.2f sd %.3f (projection %.2f / %.3f)
 ",
             mean(chk), sd(chk), pj$mean, pj$sd))
 stopifnot(abs(mean(chk) - pj$mean) < 0.3, abs(sd(chk) - pj$sd) < 0.3)
+
+# SCENARIO RESPONSE. How each class gives way when one party's statewide vote
+# moves, measured on THESE draws: beta = cov(other, moved) / var(moved), with the
+# OTH, IND and OTH_RIGHT columns summed into the trend's OTH class. Rows sum to
+# 100, so each moved party's betas sum to exactly -1. Written on every run;
+# AUSPOL_FORCE_FP_RULE="draws" reads the unsuffixed (published) copy. Pete's
+# choice for the what-if slider, plans/scenario-tool-scoping-2026-10-03.md 5b.
+.draw_class <- ifelse(parties %in% setdiff(modelled, "OTH"), parties, "OTH")
+.betas <- rbindlist(lapply(intersect(c("ALP", "LNP", "GRN", "ONP"), parties), function(p) {
+  b <- vapply(parties, function(j) stats::cov(sw_draws[, j], sw_draws[, p]) /
+                stats::var(sw_draws[, p]), numeric(1))
+  b <- b[parties != p]
+  data.table(moved = p, class = .draw_class[parties != p], beta = b)[
+    , .(beta = sum(beta)), by = .(moved, class)]
+}))
+.bsum <- .betas[, .(s = sum(beta)), by = moved]
+if (any(abs(.bsum$s + 1) > 1e-6)) stop("FP2: scenario betas do not sum to -1: ",
+                                       paste(.bsum$moved, round(.bsum$s, 4), collapse = ", "))
+fwrite(.betas, sprintf("output/statewide-draw-betas-%s%s.csv", TARGET$out_stem, OUT_SUFFIX))
+cat(sprintf("FP2  per point of ONP: %s\n", paste(sprintf("%s %+.3f",
+            .betas[moved == "ONP"]$class, .betas[moved == "ONP"]$beta), collapse = ", ")))
+# HOLD THE FORCED PARTY EXACTLY AT X (Pete, 5a): zero statewide spread for it,
+# and every other column takes its regression residual, which is the Gaussian
+# conditional given that party's level. Row sums stay 100.
+if (FORCE_HOLD_EXACT) {
+  for (fp_party in .forced_parties) {
+    sp <- sw_draws[, fp_party] - mean(sw_draws[, fp_party])
+    for (j in setdiff(parties, fp_party)) {
+      sw_draws[, j] <- sw_draws[, j] -
+        stats::cov(sw_draws[, j], sw_draws[, fp_party]) / stats::var(sw_draws[, fp_party]) * sp
+    }
+    sw_draws[, fp_party] <- mean(sw_draws[, fp_party])
+    cat(sprintf("FP3  %s held at %.2f in every draw (sd 0); rows sum %.2f-%.2f\n", fp_party,
+                sw_draws[1, fp_party], min(rowSums(sw_draws)), max(rowSums(sw_draws))))
+  }
+}
 
 t0 <- Sys.time()
 # CALIBRATION SHRINK. Measured on 1,187 seats across 10 elections in

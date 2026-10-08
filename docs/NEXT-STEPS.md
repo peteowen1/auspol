@@ -18,6 +18,18 @@ Starting points: `AUSPOL_FORCE_FP` (`fit_seats_full.R`, ONP-specific rebalance, 
 a run), the simulation itself is 17-25 s of that. Register row: `PETE-ASKED-FOR.md`
 2026-10-03. Should work for vic2026 and nsw2027 now that the script takes a target.
 
+**2026-10-08 progress (uncommitted on `dev` at time of writing):** stage 1 DONE.
+`AUSPOL_FORCE_FP` now does both of Pete's rules: `AUSPOL_FORCE_FP_RULE="draws"` (others give
+way by regression on the published run's statewide draws, `output/statewide-draw-betas-<stem>.csv`,
+written every run; forced party held exactly at X) and `"draws-polled"` (same regression, usual
+spread kept: "if X is POLLING x%"). Pete asked for a toggle between the two. Default output
+byte-identical (control run). 73 knot runs -> `output/scenario-knots-vic-2026.csv` (mode x party
+x 9 levels); polled-at-today reproduces the headline exactly. A run is 80 s, not 142.
+Next: (1) preview page from the knot table; (2) per-seat probabilities into it; (3) stage 2
+JS engine. **Daily-refresh requirement:** each run repeats ~35 s of slider-independent setup
+(by-election/defector fits, 13-33 s into the run); 72 runs a day must loop scenarios inside ONE
+R process or it costs ~100 min instead of ~60.
+
 ## 2026-10-08 HANDOFF (READ FIRST)
 
 **Needs Pete:** (a) turn NSW 2027 on when ready -- `AUSPOL_PUBLISH_NSW2027=1 Rscript scripts/promote_rebuild.R`, `Rscript scripts/publish_shipped_release.R`, set repository variable `AUSPOL_PUBLISH_NSW2027=1`, run "Forecast refresh" by hand and read the NSW step log (the first real runner test); (b) ask the `inthegame-blog` session to build the NSW page from `forecast-nsw2027.json` (same shape as `forecast-vic2026.json`).
