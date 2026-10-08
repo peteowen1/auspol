@@ -1,3 +1,8 @@
+# auspol 0.4.85
+
+- The ITG New South Wales page gets the data for its three hidden sections: district regions (`external/reference/nsw/nsw-district-regions.csv`, 9 regions), the poll-trend chart (`nsw2027-page-data.json`, from `scripts/build_trend_page_data.R`) and the per-seat pages' 2023 results and booths (`web/nsw2023-results.json`, `web/nsw2023-booths.json`). No forecast number changes.
+- `scripts/check_like_ci.R` no longer reruns the slow package check just because a merged PR bumped the version.
+
 # auspol 0.4.84
 
 - The what-if publish step runs in plain Python (`scripts/combine_scenarios.py`) instead of R, so it no longer waits up to 16 minutes for an R install. Same numbers as the R version (0 of 144 differences on the test set) and the same checks.
