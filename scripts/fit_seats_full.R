@@ -578,7 +578,7 @@ ll_implied <- function(sm) {
   mnr <- setdiff(names(sm), c("ALP", "LNP"))
   sm[["ALP"]] + sum(vapply(mnr, function(p) sm[[p]] * ll_flow(p), numeric(1)))
 }
-LEVEL_ANCHOR <- identical(Sys.getenv("AUSPOL_LIVE_LEVEL_ANCHOR", "1"), "1")
+LEVEL_ANCHOR <- identical(Sys.getenv("AUSPOL_LIVE_LEVEL_ANCHOR", "0"), "1")
 # The trend fits each party separately, so its endpoints need not sum to 100
 # (97.93 on 2026-09-28). The seat shares are renormalised later, so the level
 # they actually carry is this one rescaled -- which implied 48.90 two-party
@@ -781,7 +781,7 @@ if (identical(Sys.getenv("AUSPOL_ONP_ORDER", "federal"), "senate")) {
 # AUSPOL_ONP_CV rescales the ratio about 1 to hit a stated CV, so the seat range
 # can be reported at both ends of that bound instead of at one unvalidated
 # point. Unset leaves the shape exactly as measured.
-ONP_CV <- as.numeric(Sys.getenv("AUSPOL_ONP_CV", "0"))
+ONP_CV <- as.numeric(Sys.getenv("AUSPOL_ONP_CV", "0.365"))
 if (is.finite(ONP_CV) && ONP_CV > 0) {
   cur <- stats::sd(onp_ratio) / mean(onp_ratio)
   # VECTOR FIRST. pmax(0.02, x) drops x's NAMES, exactly as pmax(0.1, m) drops a
@@ -837,7 +837,7 @@ if (all(SLOPE == 1)) cat("DS1  all 1.000 -- uniform swing, output must be unchan
 .cond <- .mode %in% c("conditional", "screened")
 .screened <- identical(.mode, "screened")
 # Off by default -- see the matching comment in backtest_candidate_fed.R.
-.honour_departed <- Sys.getenv("AUSPOL_HONOUR_DEPARTED", "0") %in% c("1", "TRUE", "true")
+.honour_departed <- Sys.getenv("AUSPOL_HONOUR_DEPARTED", "1") %in% c("1", "TRUE", "true")
 .departed_hold <- Sys.getenv("AUSPOL_DEPARTED_HOLD", "0") %in% c("1", "TRUE", "true")   # docs/plans/prereg-departed-hold-fixed-2026-10-04.md
 .succ_on <- departed_successor_mode() != "0"   # docs/plans/prereg-departed-successor-flag-2026-10-07.md
 if (.succ_on && .departed_hold) stop("AUSPOL_DEPARTED_SUCCESSOR holds its own cells; do not combine it with AUSPOL_DEPARTED_HOLD", call. = FALSE)
@@ -961,7 +961,7 @@ cat(sprintf("CAL  MP tier: %s | defector discount: %s | minor-defector discount:
 # BY-ELECTION AS THE SEAT BASELINE (AUSPOL_BYELECTION_PRIOR=1): a by-election between the two
 # general elections where both majors stood replaces the seat's prior row (R/byelection_prior.R,
 # external/reference/byelections/byelection-results.csv). docs/plans/prereg-byelection-prior-2026-09-18.md
-if (Sys.getenv("AUSPOL_BYELECTION_PRIOR", "0") %in% c("1", "blend")) {
+if (Sys.getenv("AUSPOL_BYELECTION_PRIOR", "blend") %in% c("1", "blend")) {
   mat22 <- tryCatch(byelection_prior(mat22, PREV, TGT, weight = if (identical(Sys.getenv("AUSPOL_BYELECTION_PRIOR"), "blend")) 0.5 else 1), error = function(e) { cat(sprintf("BF0b! by-election prior FAILED, prior kept: %s\n", conditionMessage(e))); mat22 })
   .by <- attr(mat22, "byelection")
   if (!is.null(.by)) cat(sprintf("BF0b by-election prior: %d seat(s) replaced%s%s\n", length(.by$applied),
@@ -990,11 +990,11 @@ mat22 <- (function(m) {
 # ALP/LNP cell (AUSPOL_MAJOR_SLOPE). docs/plans/prereg-major-departed-slope-2026-09-18.md,
 # docs/plans/prereg-major-present-slope-2026-09-18.md
 .MAJDEP <- NULL; .MAJPRES <- NULL
-if (identical(Sys.getenv("AUSPOL_MAJOR_DEPARTED", "0"), "1") || identical(Sys.getenv("AUSPOL_MAJOR_SLOPE", "0"), "1")) {
+if (identical(Sys.getenv("AUSPOL_MAJOR_DEPARTED", "1"), "1") || identical(Sys.getenv("AUSPOL_MAJOR_SLOPE", "1"), "1")) {
   .fmd <- tryCatch(fit_major_departed_slope(TGT), error = function(e) { cat(sprintf("BF0m! major slope fit FAILED, majors keep slope 1: %s\n", conditionMessage(e))); NULL })
   if (!is.null(.fmd)) {
-    if (identical(Sys.getenv("AUSPOL_MAJOR_DEPARTED", "0"), "1")) .MAJDEP <- .fmd$slope
-    if (identical(Sys.getenv("AUSPOL_MAJOR_SLOPE", "0"), "1")) .MAJPRES <- .fmd$slope_present
+    if (identical(Sys.getenv("AUSPOL_MAJOR_DEPARTED", "1"), "1")) .MAJDEP <- .fmd$slope
+    if (identical(Sys.getenv("AUSPOL_MAJOR_SLOPE", "1"), "1")) .MAJPRES <- .fmd$slope_present
     cat(sprintf("BF0m major slopes, target excluded: departed ALP %.3f (n=%d) LNP %.3f (n=%d) [%s] | present ALP %.3f (n=%d) LNP %.3f (n=%d) [%s]\n",
                 .fmd$slope[["ALP"]], .fmd$n[["ALP"]], .fmd$slope[["LNP"]], .fmd$n[["LNP"]], if (is.null(.MAJDEP)) "off" else "ON",
                 .fmd$slope_present[["ALP"]], .fmd$n_present[["ALP"]], .fmd$slope_present[["LNP"]], .fmd$n_present[["LNP"]], if (is.null(.MAJPRES)) "off" else "ON"))
@@ -1298,7 +1298,7 @@ shares_x <- .try("xgb_live", xgb_primary_predict_live(shares, mat22, a22, state_
                                                         year = YEAR, prev_year = as.integer(sub("^[a-z]+", "", PREV))))
 if (!is.null(shares_x)) {
   shares <- shares_x
-} else if (identical(Sys.getenv("AUSPOL_XGB_PRIMARY_LIVE", "0"), "1")) {
+} else if (identical(Sys.getenv("AUSPOL_XGB_PRIMARY_LIVE", "1"), "1")) {
   cat(sprintf("XG4!! xgb_primary_predict_live() FAILED%s -- shares UNCHANGED, shipped-only model used\n",
               .reason("xgb_live")))
 }
@@ -1309,7 +1309,7 @@ if (!is.null(shares_x)) {
 .shares_p <- .try("seat_swing_port", seat_swing_port_apply(shares, TGT))
 if (!is.null(.shares_p)) {
   shares <- .shares_p
-} else if (identical(Sys.getenv("AUSPOL_SEAT_SWING_PORT", "0"), "2")) {
+} else if (identical(Sys.getenv("AUSPOL_SEAT_SWING_PORT", "2"), "2")) {
   cat(sprintf("SP2!! seat-swing port FAILED%s -- shares UNPORTED, the published forecast is not v48
 ",
               .reason("seat_swing_port")))
@@ -1317,13 +1317,13 @@ if (!is.null(.shares_p)) {
 .shares_b <- .try("seat_poll_blend", seat_poll_blend_apply(shares, TGT))
 if (!is.null(.shares_b)) {
   shares <- .shares_b
-} else if (Sys.getenv("AUSPOL_SEAT_POLL_BLEND", "0") %in% c("1", "2", "3")) {
+} else if (Sys.getenv("AUSPOL_SEAT_POLL_BLEND", "1") %in% c("1", "2", "3")) {
   cat(sprintf("SPB!! seat-poll blend FAILED%s -- shares UNBLENDED
 ", .reason("seat_poll_blend")))
 }
 # Demographic correction (AUSPOL_DEMO_RESID=2: Labor and Greens), same position
 # as in the harnesses. plans/prereg-demographic-labor-greens-2026-09-29.md
-.shares_d <- .try("demo_resid", if (Sys.getenv("AUSPOL_DEMO_RESID", "0") %in% c("1", "2"))
+.shares_d <- .try("demo_resid", if (Sys.getenv("AUSPOL_DEMO_RESID", "2") %in% c("1", "2"))
   demographic_residual_apply(shares, TGT) else shares)
 if (!is.null(.shares_d)) {
   shares <- .shares_d
@@ -1337,7 +1337,7 @@ if (!is.null(.shares_d)) {
 .shares_l <- .try("leader_seat", leader_seat_apply(shares, TGT))
 if (!is.null(.shares_l)) {
   shares <- .shares_l
-} else if (identical(Sys.getenv("AUSPOL_LEADER_SEAT", "0"), "1")) {
+} else if (identical(Sys.getenv("AUSPOL_LEADER_SEAT", "1"), "1")) {
   cat(sprintf("LS1!! leader-seat bonus FAILED%s -- shares WITHOUT it\n", .reason("leader_seat")))
 }
 .shares_f <- .try("departed_fed", departed_fed_apply(shares, TGT))
@@ -1668,7 +1668,7 @@ if (SHRINK > 0) cat(sprintf("CAL  calibration shrink %.2f applied
 # published run instead of falling back to the shipped flow table.
 # docs/reviews/xgb-primary-x-flows-2x2-2026-09-11.md
 .cond_ov <- NULL
-if (identical(Sys.getenv("AUSPOL_XGB_FLOWS", "0"), "1")) {
+if (identical(Sys.getenv("AUSPOL_XGB_FLOWS", "1"), "1")) {
   .cond_ov <- .try("xgb_flows", xgb_flow_conditional_override_for(shares, TGT, PREV, REGION))
   if (is.null(.cond_ov))
     cat(sprintf("XF4!! xgb_flow_conditional_override_for() FAILED%s -- flows UNCHANGED, shipped lookup table used\n",
@@ -1676,7 +1676,7 @@ if (identical(Sys.getenv("AUSPOL_XGB_FLOWS", "0"), "1")) {
 }
 # HOW-TO-VOTE CARD (AUSPOL_HTV_FLOW=1): the Liberal-excluded, ALP+GRN-alive flow rows follow the recorded
 # card order for this election (R/htv_flow.R, external/reference/htv/liberal-alp-grn-order.csv).
-.htv_ov <- if (identical(Sys.getenv("AUSPOL_HTV_FLOW", "0"), "1")) tryCatch(htv_flow_override(.cond_ov, fm, TGT, rownames(shares)),
+.htv_ov <- if (identical(Sys.getenv("AUSPOL_HTV_FLOW", "1"), "1")) tryCatch(htv_flow_override(.cond_ov, fm, TGT, rownames(shares)),
   error = function(e) { cat(sprintf("HTV9! how-to-vote override FAILED, flow rows unchanged: %s\n", conditionMessage(e))); .cond_ov }) else .cond_ov
 # BREAKOUT MIXTURE (AUSPOL_BREAKOUT_MIX, R/breakout_mix.R): NULLs when off.
 # Live, the classifier reads the feature rows xgb_primary_predict_live() built.

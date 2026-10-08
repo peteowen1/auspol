@@ -1,3 +1,7 @@
+# auspol 0.4.82
+
+- `scripts/published_flags.R` now lists every switch the published forecast reads: 12 that the code read with no entry there were added at the values they already ran at, and 13 defaults in `fit_seats_full.R` that contradicted the published value were corrected. The forecast is byte-identical.
+
 # auspol 0.4.81
 
 - New South Wales 2027 is published daily (turned on 2026-10-08), now to R2 as well as the release, so the ITG page can read it. First run: Labor 46.9 expected seats of 93, a 54% chance of a majority, hung parliament 46%.
