@@ -28,7 +28,7 @@ x 9 levels); polled-at-today reproduces the headline exactly. A run is 80 s, not
 Preview page DONE (https://claude.ai/artifact/AuSRMYX1CFse9ssV3EwvY2: party, exact/polling toggle,
 seats, odds, own-vote comparison chart, seat by seat). Stage 2 JS engine DROPPED for now (knots +
 interpolation already feel live; Pete agreed 2026-10-08). Daily build: `scripts/build_scenarios.R`
-+ `combine_scenarios.R` -> `output/scenario-vic2026.json`, run by 8 parallel jobs in forecast.yaml
++ `combine_scenarios.py` -> `output/scenario-vic2026.json`, run by 8 parallel jobs in forecast.yaml
 after the refresh publishes (public repo, minutes are free, so no single-process refactor needed).
 Then: the ITG page (inthegame-blog session) reads `auspol/scenario-vic2026.json` from R2. **Daily-refresh requirement:** each run repeats ~35 s of slider-independent setup
 (by-election/defector fits, 13-33 s into the run); 72 runs a day must loop scenarios inside ONE
@@ -50,9 +50,7 @@ inthegame-blog session the R2 key):
 5. the per-seat page.
 
 Queued, in order:
-1. **publish-scenarios without R**: it only reads CSVs and writes JSON, yet waits 5-16 min for setup-r +
-   packages (2026-10-08 night: 9 min on setup-r alone). Port combine_scenarios.R to Python (on the runner
-   already) or cache R; keep SC5/SC7 checks identical and prove them on a tampered file again.
+1. ~~**publish-scenarios without R**~~ DONE 2026-10-08: `scripts/combine_scenarios.py` (stdlib), parity 0/144 with the R version.
 2. Haiku audit leftovers (verified live 2026-10-08): 185 check codes with two meanings (e.g. SP2 in
    R/salience_screen.R:441 vs R/seat_swing_port.R:178); 50 switches MODEL-REGISTRY cannot explain; a
    scheduled Haiku sentinel running the four checks after each daily run (ops repo already has one).
