@@ -1,3 +1,7 @@
+# auspol 0.4.83
+
+- New South Wales gets the what-if slider's scenarios (`scenario-nsw2027.json`, daily while NSW publishes) and a district map (`web/nsw2027-districts.topojson`, 93 districts) for the ITG NSW page.
+
 # auspol 0.4.82
 
 - `scripts/published_flags.R` now lists every switch the published forecast reads: 12 that the code read with no entry there were added at the values they already ran at, and 13 defaults in `fit_seats_full.R` that contradicted the published value were corrected. The forecast is byte-identical.
