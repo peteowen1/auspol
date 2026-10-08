@@ -40,12 +40,12 @@ IND_SMALL <- c("sal_exp", "jump_pctile", "x", "ret_exp", "cand_all_new",
 SETS <- list(full = allf,
              medium = setdiff(allf, IND_DROP),
              small = intersect(IND_SMALL, allf))
-cat(sprintf("XC1  population: %d cells (%s) over %d pairs\n",
+cat(sprintf("CIF1  population: %d cells (%s) over %d pairs\n",
             nrow(FE), paste(CAND, collapse = "/"), uniqueN(FE$pair)))
 print(FE[, .(cells = .N,
              with_salience = sum(jump_pctile > 0),
              mean_actual = round(mean(actual_share), 1)), by = party][order(-cells)])
-cat(sprintf("XC1  feature counts -- full %d, medium %d, small %d\n",
+cat(sprintf("CIF1  feature counts -- full %d, medium %d, small %d\n",
             length(SETS$full), length(SETS$medium), length(SETS$small)))
 
 PAIRS <- sort(unique(FE$pair))

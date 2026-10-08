@@ -93,13 +93,13 @@ rows <- list()
 seat_file_hits <- 0L; seat_file_pairs <- character(0)
 for (pr in PAIRS) {
   lp <- state_level(pr$prev); ln <- state_level(pr$election)
-  if (is.null(lp) || is.null(ln)) { cat(sprintf("XG5! no state level for %s -> skip\n", pr$election)); next }
+  if (is.null(lp) || is.null(ln)) { cat(sprintf("FXB5! no state level for %s -> skip\n", pr$election)); next }
   prevc <- C[C$election == pr$prev][, list(x = sum(pcv, na.rm = TRUE), n_cand_prev = .N), by = list(seat, party)]
   nowc  <- C[C$election == pr$election][, list(n_cand_now = .N), by = list(seat, party)]
   ret <- tryCatch(candidate_returns(pr$prev, pr$election), error = function(e) NULL)
   pv  <- tryCatch(personal_prior_vote(pr$prev, pr$election), error = function(e) NULL)
   sd_pair <- SD[pair == pr$election]
-  if (!nrow(sd_pair)) { cat(sprintf("XG5! no sharedetail rows for %s -> skip\n", pr$election)); next }
+  if (!nrow(sd_pair)) { cat(sprintf("FXB5! no sharedetail rows for %s -> skip\n", pr$election)); next }
 
   m <- merge(sd_pair, prevc, by = c("seat", "party"), all.x = TRUE)
   m <- merge(m, nowc, by = c("seat", "party"), all.x = TRUE)

@@ -19,7 +19,7 @@ m <- merge(m, st, by = "seat")
 set.seed(7)
 pick <- rbind(m[breakout == TRUE], m[breakout == FALSE][sample(.N, min(12, .N))])
 pick <- unique(pick, by = "sname")
-cat(sprintf("G6 sample: %d candidates, %d breakouts, states: %s\n",
+cat(sprintf("GTS6 sample: %d candidates, %d breakouts, states: %s\n",
             nrow(pick), sum(pick$breakout), paste(sort(unique(pick$StateAb)), collapse = ",")))
 
 to <- as.Date("2022-05-20"); from <- to - 70
@@ -32,7 +32,7 @@ for (b in split(pick$sname, ceiling(seq_len(nrow(pick)) / 4))) {
     res_nat[[length(res_nat) + 1L]] <- data.table(sname = n, rel_nat = a[[n]])
 }
 N <- rbindlist(res_nat)
-trends_require_complete(pick$sname, N$sname, "G6 national")
+trends_require_complete(pick$sname, N$sname, "GTS6 national")
 
 # State-level.
 res_st <- list()
@@ -46,13 +46,13 @@ for (s in sort(unique(pick$StateAb))) {
   }
 }
 S <- rbindlist(res_st)
-trends_require_complete(pick$sname, S$sname, "G6 state-level")
+trends_require_complete(pick$sname, S$sname, "GTS6 state-level")
 
 trends_report()
 
 R <- merge(merge(S, N, by = "sname"), unique(pick[, .(sname, seat, pct, breakout)]), by = "sname")
 setorder(R, -rel_state)
-cat("\nG6 full comparison, all", nrow(R), "candidates present\n")
+cat("\nGTS6 full comparison, all", nrow(R), "candidates present\n")
 print(R[, .(sname, seat, state, nat = round(rel_nat, 4), state_lvl = round(rel_state, 4),
             pct = round(pct, 1), breakout)], nrows = 40)
 
@@ -60,13 +60,13 @@ auc <- function(col) {
   a <- R[breakout == TRUE][[col]]; b <- R[breakout == FALSE][[col]]
   mean(outer(a, b, ">") + 0.5 * outer(a, b, "=="))
 }
-cat(sprintf("\nG6 AUC national %.3f | AUC state-level %.3f | AUC max(nat,state) %.3f\n",
+cat(sprintf("\nGTS6 AUC national %.3f | AUC state-level %.3f | AUC max(nat,state) %.3f\n",
             auc("rel_nat"), auc("rel_state"),
             { R[, rel_max := pmax(rel_nat, rel_state)]; auc("rel_max") }))
 
-cat("\nG6 the three previously-missing regional cases\n")
+cat("\nGTS6 the three previously-missing regional cases\n")
 print(R[sname %in% c("Nicolette Boele", "Rob Priestly", "Caz Heise"),
         .(sname, seat, state, nat = round(rel_nat, 4), state_lvl = round(rel_state, 4))])
 
 fwrite(R, "output/ind-salience-state.csv")
-cat("\nG6 wrote output/ind-salience-state.csv\n")
+cat("\nGTS6 wrote output/ind-salience-state.csv\n")

@@ -73,26 +73,26 @@
 state_swing_adjustment <- function(pair, seat_state, max_gap_months = 24) {
   f <- Sys.getenv("AUSPOL_STATE_SWING_SRC", out_path("state-swing-prior.csv"))
   if (!file.exists(f)) {
-    cat(sprintf("SS9! %s missing -- run scripts/build_state_swing_prior.R; AUSPOL_STATE_SWING ignored\n", f))
+    cat(sprintf("PRI9! %s missing -- run scripts/build_state_swing_prior.R; AUSPOL_STATE_SWING ignored\n", f))
     return(NULL)
   }
   P <- data.table::fread(f, showProgress = FALSE)
   need <- c("pair", "state", "state_swing", "months_gap")
   if (!all(need %in% names(P))) {
-    cat(sprintf("SS9! %s lacks %s -- ignored\n", f, paste(setdiff(need, names(P)), collapse = ", ")))
+    cat(sprintf("PRI9! %s lacks %s -- ignored\n", f, paste(setdiff(need, names(P)), collapse = ", ")))
     return(NULL)
   }
   # NSE guard: `pair` is a column here, so the argument is copied to a
   # differently-named local before use. Tenth instance of that trap was today.
   want <- pair
   if (!"fed_dev" %in% names(P)) {
-    cat("SS9! state-swing-prior.csv has no fed_dev column -- cannot fit; run the builder\n")
+    cat("PRI9! state-swing-prior.csv has no fed_dev column -- cannot fit; run the builder\n")
     return(NULL)
   }
   train <- P[P$pair != want & is.finite(P$state_swing) & is.finite(P$fed_dev) &
              is.finite(P$months_gap) & P$months_gap < max_gap_months]
   if (nrow(train) < 6) {
-    cat(sprintf("SS9! only %d training observations for %s -- no adjustment applied\n",
+    cat(sprintf("PRI9! only %d training observations for %s -- no adjustment applied\n",
                 nrow(train), want))
     return(stats::setNames(rep(0, length(seat_state)), names(seat_state)))
   }
@@ -111,11 +111,11 @@ state_swing_adjustment <- function(pair, seat_state, max_gap_months = 24) {
   # between states are ours to set. Without this the whole country would shift
   # by the mean adjustment and the national anchor would be silently broken.
   out <- out - mean(out)
-  cat(sprintf("SS9  %s: state swing prior, slope %+.3f from %d obs (target excluded) | %d of %d seats adjusted\n",
+  cat(sprintf("PRI9  %s: state swing prior, slope %+.3f from %d obs (target excluded) | %d of %d seats adjusted\n",
               want, stats::coef(fit)[2], nrow(train), sum(hit), length(out)))
   if (nrow(tgt)) {
     o <- order(-abs(adj_by_state))
-    cat(sprintf("SS9  by state: %s\n",
+    cat(sprintf("PRI9  by state: %s\n",
                 paste(sprintf("%s %+.2f", names(adj_by_state)[o],
                               adj_by_state[o] - mean(out[hit])), collapse = " ")))
   }

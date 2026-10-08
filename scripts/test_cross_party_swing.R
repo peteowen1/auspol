@@ -62,7 +62,7 @@ for (rg in unique(meta$region)) {
 }
 D <- rbindlist(rows)
 D <- D[is.finite(y) & is.finite(x) & is.finite(own_base)]
-cat(sprintf("CP1  %d (district, major) observations, %d cycle-pairs, %d regions\n",
+cat(sprintf("TCW1  %d (district, major) observations, %d cycle-pairs, %d regions\n",
             nrow(D), uniqueN(D$cycle), uniqueN(D$region)))
 stopifnot(nrow(D) > 100, uniqueN(D$cycle) >= 8)
 

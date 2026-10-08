@@ -123,7 +123,7 @@ for (E in raw) {
   tcp <- pc[, .(election = el, seat = DivisionNm, party = party_class, votes = val)]
   tcp_all[[length(tcp_all) + 1L]] <- tcp
 
-  cat(sprintf("FT1  %s: %d transfer rows, %d divisions, %d winners, %s votes moved\n",
+  cat(sprintf("PTF1  %s: %d transfer rows, %d divisions, %d winners, %s votes moved\n",
               el, nrow(tx), uniqueN(tx$seat), nrow(w),
               format(sum(tx$votes), big.mark = ",")))
 }
@@ -131,7 +131,7 @@ for (E in raw) {
 tx <- rbindlist(tx_all); win <- rbindlist(win_all); tcp <- rbindlist(tcp_all)
 
 # ---- anchor checks ----------------------------------------------------------
-cat("\nFT2  seats won, by election -- these are the commission's own declarations\n")
+cat("\nPTF2  seats won, by election -- these are the commission's own declarations\n")
 print(dcast(win[, .N, by = .(election, winner)], winner ~ election,
             value.var = "N", fill = 0))
 

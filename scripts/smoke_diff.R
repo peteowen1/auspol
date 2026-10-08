@@ -28,16 +28,16 @@ R <- rbindlist(lapply(ref, function(f) { d <- fread(f, showProgress = FALSE); d[
 R <- R[pair %in% pairs & (!"xgb_primary_on" %in% names(R) | xgb_primary_on == 0 | is.na(xgb_primary_on))]
 if (!nrow(R)) stop("SD0! no xgb-off reference sharedetail for ", paste(pairs, collapse = ","))
 R <- R[, .SD[mtime == max(mtime)], by = pair]
-cat(sprintf("SD1  smoke %s vs reference %s\n", basename(smoke), paste(unique(R$file), collapse = ", ")))
+cat(sprintf("SDI1  smoke %s vs reference %s\n", basename(smoke), paste(unique(R$file), collapse = ", ")))
 M <- merge(S[pair %in% pairs, .(pair, seat, party, new = pred_share, actual = actual_share)],
            R[, .(pair, seat, party, old = pred_share)], by = c("pair", "seat", "party"))
 M[, d := new - old]
-cat(sprintf("SD2  %d cells compared, %d moved by more than 0.05 points, mean |move| %.3f\n", nrow(M), sum(abs(M$d) > 0.05), mean(abs(M$d))))
+cat(sprintf("SDI2  %d cells compared, %d moved by more than 0.05 points, mean |move| %.3f\n", nrow(M), sum(abs(M$d) > 0.05), mean(abs(M$d))))
 by <- M[, .(n = .N, moved = sum(abs(d) > 0.05), rmse_old = sqrt(mean((old - actual)^2)), rmse_new = sqrt(mean((new - actual)^2))), by = .(pair, party)]
 by[, delta := round(rmse_new - rmse_old, 3)]
-cat("SD3  per class RMSE against the actual result (points, lower is better; delta < 0 is an improvement)\n")
+cat("SDI3  per class RMSE against the actual result (points, lower is better; delta < 0 is an improvement)\n")
 print(by[order(pair, delta)][, .(pair, party, n, moved, rmse_old = round(rmse_old, 2), rmse_new = round(rmse_new, 2), delta)])
 tot <- M[, .(rmse_old = sqrt(mean((old - actual)^2)), rmse_new = sqrt(mean((new - actual)^2)))]
-cat(sprintf("SD3  all cells: RMSE %.3f -> %.3f (%+.3f)\n", tot$rmse_old, tot$rmse_new, tot$rmse_new - tot$rmse_old))
-cat("SD4  largest moves (old -> new, actual):\n")
+cat(sprintf("SDI3  all cells: RMSE %.3f -> %.3f (%+.3f)\n", tot$rmse_old, tot$rmse_new, tot$rmse_new - tot$rmse_old))
+cat("SDI4  largest moves (old -> new, actual):\n")
 print(M[order(-abs(d))][1:min(15, .N), .(pair, seat, party, old = round(old, 1), new = round(new, 1), actual = round(actual, 1), move = round(d, 1))])

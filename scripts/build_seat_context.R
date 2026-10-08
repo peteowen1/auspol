@@ -15,7 +15,7 @@
 # Phase 2 (margin, previous swing) is a separate build.
 #
 # VALIDATION before use: on pairs where load_seats() has values, agreement
-# must be >= 95% (SC5 prints it, and the script stops below 90% so a broken
+# must be >= 95% (CON5 prints it, and the script stops below 90% so a broken
 # derivation cannot be written as a fill).
 #
 # Writes output/seat-context.csv. Emits SC* codes.
@@ -38,7 +38,7 @@ win <- C[, {
   if (length(w) != 1L) w <- which.max(votes)
   .(win_class = party[w], win_nk = nk[w], win_name = name[w])
 }, by = .(election, region, s, edate)]
-cat(sprintf("SC1  winners: %d seat-elections over %d elections\n", nrow(win), uniqueN(win$election)))
+cat(sprintf("CON1  winners: %d seat-elections over %d elections\n", nrow(win), uniqueN(win$election)))
 
 BY <- fread("external/reference/byelections/byelection-winners.csv", showProgress = FALSE)
 BY[, `:=`(s = normalise_seat(seat), bdate = as.Date(date), by_class = classify_party(winner_party_raw))]
@@ -73,7 +73,7 @@ out <- rbindlist(lapply(pairs, function(pr) {
   x[, .(pair, prev, region, seat, s, incumbent_class, sitting_name, retiring, retire_reason, soph_cand, soph_party,
         by_election = !is.na(by_class), has_prev = !is.na(prev_class))]
 }), fill = TRUE)
-cat(sprintf("SC2  seat context: %d seat-pairs over %d pairs; previous winner found for %.1f%%\n",
+cat(sprintf("CON2  seat context: %d seat-pairs over %d pairs; previous winner found for %.1f%%\n",
             nrow(out), uniqueN(out$pair), 100 * mean(out$has_prev)))
 
 # ---- VALIDATION against the seat files where they exist --------------------
@@ -95,12 +95,12 @@ if (nrow(val)) {
                    retiring = round(mean(retiring == sf_ret, na.rm = TRUE), 3),
                    soph_cand = round(mean(soph_cand == sf_sc, na.rm = TRUE), 3),
                    soph_party = round(mean(soph_party == sf_sp, na.rm = TRUE), 3)), by = pair]
-  cat("SC5  agreement with the seat file where it exists (share of seats; 1.000 = identical):\n"); print(agree)
+  cat("CON5  agreement with the seat file where it exists (share of seats; 1.000 = identical):\n"); print(agree)
   tot <- val[, .(incumbent = mean(incumbent_class == sf_class, na.rm = TRUE), retiring = mean(retiring == sf_ret, na.rm = TRUE))]
-  cat(sprintf("SC5  overall: incumbent %.3f, retiring %.3f over %d seats\n", tot$incumbent, tot$retiring, nrow(val)))
+  cat(sprintf("CON5  overall: incumbent %.3f, retiring %.3f over %d seats\n", tot$incumbent, tot$retiring, nrow(val)))
   dis <- val[incumbent_class != sf_class]
-  if (nrow(dis)) { cat("SC5  incumbent disagreements (first 12):\n"); print(dis[1:min(12, .N), .(pair, seat, ours = incumbent_class, seat_file = sf_class, by_election)]) }
-  if (tot$incumbent < 0.90) stop("SC5! incumbent agreement below 90%; the derivation is not trustworthy enough to fill with")
+  if (nrow(dis)) { cat("CON5  incumbent disagreements (first 12):\n"); print(dis[1:min(12, .N), .(pair, seat, ours = incumbent_class, seat_file = sf_class, by_election)]) }
+  if (tot$incumbent < 0.90) stop("CON5! incumbent agreement below 90%; the derivation is not trustworthy enough to fill with")
 }
 # ---- PHASE 2: margin and previous swing ------------------------------------
 # The seat file's `margin` is Labor's two-party-preferred vote against the
@@ -161,4 +161,4 @@ if (nrow(val)) {
 }
 
 fwrite(out, "output/seat-context.csv")
-cat(sprintf("SC6  wrote output/seat-context.csv (%d rows)\n", nrow(out)))
+cat(sprintf("CON6  wrote output/seat-context.csv (%d rows)\n", nrow(out)))

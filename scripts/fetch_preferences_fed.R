@@ -95,7 +95,7 @@ for (E in ELECTIONS) {
             by = .(seat = DivisionNm, party = party_class)][votes > 0]
   agg[, election := sprintf("fed%d", E$year)]
   sh <- agg[, .(v = sum(votes)), by = party][, .(party, pct = 100 * v / sum(v))]
-  cat(sprintf("\nFD1  %d: %d divisions, %s formal votes\n", E$year,
+  cat(sprintf("\nFPF1  %d: %d divisions, %s formal votes\n", E$year,
               uniqueN(agg$seat), format(sum(agg$votes), big.mark = ",")))
   print(sh[order(-pct)][, .(party, pct = round(pct, 2))])
   # Anchor: a national ALP first preference outside 25-50% means the classifier
@@ -114,14 +114,14 @@ for (E in ELECTIONS) {
 
   dp <- read_aec(dpf); setnames(dp, make.names(names(dp)))
   tx_all[[length(tx_all) + 1L]] <- list(year = E$year, dt = dp)
-  cat(sprintf("FD1  %d preference-distribution rows, columns: %s\n", nrow(dp),
+  cat(sprintf("FPF1  %d preference-distribution rows, columns: %s\n", nrow(dp),
               paste(head(names(dp), 12), collapse = ", ")))
 }
 
 fp <- rbindlist(fp_all)
 fwrite(fp, file.path(OUT, "aec-fed-firstprefs.csv"))
-cat(sprintf("\nFD2  wrote %s: %d rows across %d elections, %d division-elections\n",
+cat(sprintf("\nFPF2  wrote %s: %d rows across %d elections, %d division-elections\n",
             file.path(OUT, "aec-fed-firstprefs.csv"), nrow(fp),
             uniqueN(fp$election), uniqueN(paste(fp$election, fp$seat))))
 saveRDS(tx_all, file.path(RAW, "dop-raw.rds"))
-cat("FD2  raw preference distributions cached; parsing them is the next step.\n")
+cat("FPF2  raw preference distributions cached; parsing them is the next step.\n")

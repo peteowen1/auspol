@@ -100,7 +100,7 @@ cat > "$T/realform.log" <<'EOF'
    CHECK FAILED: scripts/fit_seats_full.R (exit 1) after 9 s -- Error in eval(ei, envir) : S5 FAILED. Mean ALP total 39.49 against 32.10
 EOF
 set +e; sh "$SIG" "$T/realform.log" "$T/baseline" > "$T/out5e"; check "5e. real 'Error in <call> : msg' form -> fires" 1 $?; set -e
-grep -q "S5 FAILED" "$T/out5e" || { echo "   (did not extract the reason from the real R form)"; FAILED=1; }
+grep -q ": S5 FAILED" "$T/out5e" || { echo "   (did not extract the reason from the real R form)"; FAILED=1; }
 
 # 5f. Two DIFFERENT failures of the same script in the real form must not
 #     collapse to one token -- that was the whole point of carrying the reason.

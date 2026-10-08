@@ -130,7 +130,7 @@ for (i in seq_len(length(YRS) - 1L)) {
     merge(pa, pd, by = "seat")[, `:=`(arm = label, target = tgt_el)][]
   }
   all_scores[[length(all_scores) + 1L]] <- rbind(sc(A, "A"), sc(B, "B"))
-  cat(sprintf("FS1  %s: %d divisions scored\n", tgt_el, length(keep)))
+  cat(sprintf("SIF1  %s: %d divisions scored\n", tgt_el, length(keep)))
 }
 
 S <- rbindlist(all_scores)

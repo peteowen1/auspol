@@ -61,7 +61,7 @@ for (k in seq_len(nrow(E))) {
   }
 }
 A <- rbindlist(rows)
-cat(sprintf("CP1  %d pairs | %d classes | %d seat-observations\n",
+cat(sprintf("ECP1  %d pairs | %d classes | %d seat-observations\n",
             uniqueN(A$pair), uniqueN(A$class), nrow(A)))
 
 # WHICH MATCHING RULE? An empirical question, so all three are reported rather
@@ -78,7 +78,7 @@ fit_by <- function(col) {
   }, by = c("class", col)]
   setnames(t, col, "same")[]
 }
-cat("\nCP2  deviation slope by MATCHING RULE, split on whether the same person stood\n")
+cat("\nECP2  deviation slope by MATCHING RULE, split on whether the same person stood\n")
 for (rl in c("surname", "initial", "full")) {
   col <- paste0("same_", rl)
   cat(sprintf("\n   --- %-7s | matched 'same' in %d of %d seat-observations\n",
@@ -90,7 +90,7 @@ for (rl in c("surname", "initial", "full")) {
 T <- fit_by("same_initial")
 A[, same := same_initial]
 
-cat("\nCP3  is the difference real? per class, slope(same) - slope(new)\n")
+cat("\nECP3  is the difference real? per class, slope(same) - slope(new)\n")
 for (cls in unique(T$class)) {
   a <- T[class == cls & same == TRUE]; b <- T[class == cls & same == FALSE]
   if (!nrow(a) || !nrow(b)) next
@@ -99,7 +99,7 @@ for (cls in unique(T$class)) {
               if (abs(d/se) >= 2) "**" else ""))
 }
 
-cat("\nCP4  what it does to a seat that polled 30%% for this class last time\n")
+cat("\nECP4  what it does to a seat that polled 30%% for this class last time\n")
 for (cls in unique(T$class)) {
   for (s in c(TRUE, FALSE)) {
     r <- T[class == cls & same == s]; if (!nrow(r)) next

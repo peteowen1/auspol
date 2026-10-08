@@ -72,7 +72,7 @@ if (!file.exists(HTML) || file.info(HTML)$size < 3e5) {
   }
 }
 x <- paste(readLines(HTML, warn = FALSE, encoding = "UTF-8"), collapse = "\n")
-cat(sprintf("SW1  %s: %.1f MB\n", HTML, file.info(HTML)$size / 1e6))
+cat(sprintf("FPS1  %s: %.1f MB\n", HTML, file.info(HTML)$size / 1e6))
 
 `%||%` <- function(a, b) if (is.null(a)) b else a
 un_html <- function(s) {
@@ -96,7 +96,7 @@ heads <- gregexpr('<h3 id="[^"]*">[^<]*</h3>', x)[[1]]
 head_len <- attr(heads, "match.length")
 head_txt <- regmatches(x, gregexpr('<h3 id="[^"]*">[^<]*</h3>', x))[[1]]
 seat_names <- sub('^<h3 id="[^"]*">', "", sub("</h3>$", "", head_txt))
-cat(sprintf("SW2  %d district headings found\n", length(seat_names)))
+cat(sprintf("FPS2  %d district headings found\n", length(seat_names)))
 if (length(seat_names) != 47L)
   stop("South Australia had 47 districts in 2018 and this page has ", length(seat_names))
 
@@ -167,14 +167,14 @@ for (i in seq_along(seat_names)) {
 fp <- rbindlist(rows)
 if (fp[is.na(votes), .N])
   stop(fp[is.na(votes), .N], " candidates have no parsed vote count")
-cat(sprintf("SW3  %d candidates across %d seats\n", nrow(fp), uniqueN(fp$seat)))
+cat(sprintf("FPS3  %d candidates across %d seats\n", nrow(fp), uniqueN(fp$seat)))
 
 fp[, party := classify_party(party_raw)]
 fwrite(fp[order(seat, -votes)], file.path(OUT, "wikipedia-2018-sa-firstprefs.csv"))
-cat(sprintf("SW4  wrote %s\n", file.path(OUT, "wikipedia-2018-sa-firstprefs.csv")))
+cat(sprintf("FPS4  wrote %s\n", file.path(OUT, "wikipedia-2018-sa-firstprefs.csv")))
 
 st <- fp[, .(v = sum(votes)), by = party][, pct := round(100 * v / sum(v), 2)][order(-pct)]
-cat("\nSW5  statewide first preferences (Wikipedia, this fetch)\n")
+cat("\nFPS5  statewide first preferences (Wikipedia, this fetch)\n")
 print(st)
 
 # ANCHOR CHECK against external/aus-polling-analyser/analysis/Data/eventual-results.csv,
@@ -204,13 +204,13 @@ if (file.exists(anchor_f)) {
   if (length(bad))
     stop("sa2018 statewide totals disagree with the anchor's eventual-results.csv:\n  ",
          paste(bad, collapse = "\n  "))
-  cat(sprintf("SW6  anchor check passes: LNP %.2f/%.2f, ALP %.2f/%.2f, GRN %.2f/%.2f, OTH %.2f/%.2f\n",
+  cat(sprintf("FPS6  anchor check passes: LNP %.2f/%.2f, ALP %.2f/%.2f, GRN %.2f/%.2f, OTH %.2f/%.2f\n",
               st[party == "LNP", pct], anc18[series == "LNP FP", value],
               st[party == "ALP", pct], anc18[series == "ALP FP", value],
               st[party == "GRN", pct], anc18[series == "GRN FP", value],
               oth_got, oth_want))
 } else {
-  cat("SW6! anchor file not found at ", anchor_f, " -- skipped, NOT verified\n")
+  cat("FPS6! anchor file not found at ", anchor_f, " -- skipped, NOT verified\n")
 }
 
 win <- rbindlist(wins)
@@ -218,5 +218,5 @@ win[, winner := classify_party(winner_raw)]
 if (nrow(win) != 47L) stop("Parsed ", nrow(win), " winners, not 47")
 fwrite(win[order(seat), .(election, seat, winner)],
        file.path(OUT, "wikipedia-2018-sa-winners.csv"))
-cat(sprintf("\nSW7  wrote %s\n", file.path(OUT, "wikipedia-2018-sa-winners.csv")))
+cat(sprintf("\nFPS7  wrote %s\n", file.path(OUT, "wikipedia-2018-sa-winners.csv")))
 print(win[, .N, by = winner][order(-N)])

@@ -112,11 +112,11 @@ build_one <- function(p) {
 
 POP <- rbindlist(lapply(PAIRS, build_one), fill = TRUE)
 
-cat(sprintf("BW1  %d non-major rows across %d election-pairs\n", nrow(POP), length(PAIRS)))
-cat(sprintf("BW1  gated: %d | salience coverage on gated rows: %d (%.1f%%)\n",
+cat(sprintf("BCW1  %d non-major rows across %d election-pairs\n", nrow(POP), length(PAIRS)))
+cat(sprintf("BCW1  gated: %d | salience coverage on gated rows: %d (%.1f%%)\n",
             sum(POP$gated), sum(POP$gated & !is.na(POP$xp)),
             100 * mean(!is.na(POP[gated == TRUE]$xp))))
-cat(sprintf("BW1  emergences: %d across %d election clusters\n",
+cat(sprintf("BCW1  emergences: %d across %d election clusters\n",
             sum(POP$emergence), uniqueN(POP[emergence == TRUE]$election)))
 print(POP[, .(rows = .N, gated = sum(gated), emergences = sum(emergence)), by = election][order(election)])
 

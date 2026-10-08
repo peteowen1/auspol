@@ -42,7 +42,7 @@ if (!file.exists(model_file)) {
 stale <- !file.exists(FCACHE) ||
   file.info(FCACHE)$mtime < file.info(file.path(OUT, "candidacies.csv"))$mtime
 if (stale) {
-  cat("SF1  feature cache missing or stale -- rebuilding (fast, not a retrain)...\n")
+  cat("SFC1  feature cache missing or stale -- rebuilding (fast, not a retrain)...\n")
   system2("powershell.exe", c("-Command", shQuote(
     sprintf('$env:AUSPOL_XGB_SKIP_TRAIN=1; Rscript "%s"', "scripts/fit_xgb_primary_v6.R"))))
   if (!file.exists(FCACHE)) stop("Feature cache rebuild failed -- ", FCACHE, " still missing.", call. = FALSE)

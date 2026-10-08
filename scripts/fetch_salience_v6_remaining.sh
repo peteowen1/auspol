@@ -39,8 +39,8 @@ for el in "${ELECTIONS[@]}"; do
   # Coarse health check: count throttle-backoff lines and dropped-batch counts
   # for THIS election's run only (since the last START marker).
   section=$(awk -v e="START ${el}" '$0 ~ e{f=1} f' "$LOG")
-  throttle_hits=$(echo "$section" | grep -c "S6T " || true)
-  dropped=$(echo "$section" | grep "S6-2 stage 1:" | tail -1 | grep -oE "[0-9]+ dropped" | grep -oE "^[0-9]+" || echo 0)
+  throttle_hits=$(echo "$section" | grep -c "^FSD6T " || true)
+  dropped=$(echo "$section" | grep -E "^FSD6-2 .* stage 1:" | tail -1 | grep -oE "[0-9]+ dropped" | grep -oE "^[0-9]+" || echo 0)
 
   if [ "$throttle_hits" -gt 5 ] || { [ -n "$dropped" ] && [ "$dropped" -gt 20 ]; }; then
     gap=$((gap * 2))

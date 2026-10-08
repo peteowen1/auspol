@@ -79,7 +79,7 @@ for (rg in REGIONS) {
     # precondition for measuring bias against it.
     act_sum <- sum(act$actual)
     complete <- abs(act_sum - 100) <= 5
-    if (!complete) note(rg, y, "actuals incomplete (kept for OB2 only)")
+    if (!complete) note(rg, y, "actuals incomplete (kept for TOB2 only)")
 
     kp <- pri_all$region == rg & pri_all$year == y
     pr <- pri_all[which(kp), ]
@@ -220,7 +220,7 @@ if (sum(c(T1_FIRES, T2_FIRES, T3_FIRES)) == 0L) {
 }
 
 # ---------------------------------------------------------------------------
-# OB2  where did the published -3.60 come from?
+# TOB2  where did the published -3.60 come from?
 #
 # OB0 does not reproduce it, so the difference has to be explained rather than
 # shrugged at. The obvious suspect is the completeness filter, because a cycle
@@ -232,16 +232,16 @@ if (sum(c(T1_FIRES, T2_FIRES, T3_FIRES)) == 0L) {
 # This is diagnosis of a discrepancy, NOT a re-specification: the filter stays,
 # and OB0/T1-T3 above are unchanged.
 inc <- dt_all[complete == FALSE]
-cat(sprintf("\nOB2  %d (cycle, party) rows from %d cycles with INCOMPLETE actuals\n",
+cat(sprintf("\nTOB2  %d (cycle, party) rows from %d cycles with INCOMPLETE actuals\n",
             nrow(inc), uniqueN(inc[, .(region, year)])))
 if (nrow(inc)) {
-  cat(sprintf("OB2  their actuals sum to %.1f on average (complete cycles: %.1f)\n",
+  cat(sprintf("TOB2  their actuals sum to %.1f on average (complete cycles: %.1f)\n",
               mean(unique(inc[, .(region, year, act_sum)])$act_sum),
               mean(unique(dt[, .(region, year, act_sum)])$act_sum)))
   both <- dt_all[, .(n = .N, bias = mean(bias)), by = party][order(bias)]
-  cat("OB2  bias with NO completeness filter (this is what -3.60 looks like):\n")
+  cat("TOB2  bias with NO completeness filter (this is what -3.60 looks like):\n")
   print(both)
-  cat(sprintf("OB2  OTH bias: complete-only %+.2f, all cycles %+.2f, published %+.2f\n",
+  cat(sprintf("TOB2  OTH bias: complete-only %+.2f, all cycles %+.2f, published %+.2f\n",
               dt[party == "OTH", mean(bias)],
               dt_all[party == "OTH", mean(bias)], -3.60))
 }

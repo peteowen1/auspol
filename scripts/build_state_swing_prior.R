@@ -98,10 +98,10 @@ if (file.exists(tas_f)) {
             alp = primary_pct, alp_prev = shift(primary_pct), prev_el = shift(paste0("tas", substr(election_date, 1, 4))))]
   TS[, state_swing := alp - alp_prev]
   SW <- rbind(SW, TS[, .(state_el, region, date, prev_el, alp, alp_prev, state_swing)], fill = TRUE)
-  cat(sprintf("SS1  Tasmania added from the hand table: %d elections, %d with a swing
+  cat(sprintf("BSS1  Tasmania added from the hand table: %d elections, %d with a swing
 ", nrow(TS), sum(is.finite(TS$state_swing))))
 }
-cat(sprintf("SS1  %d state elections, %d with a computable swing\n",
+cat(sprintf("BSS1  %d state elections, %d with a computable swing\n",
             nrow(SW), sum(is.finite(SW$state_swing))))
 print(SW[is.finite(state_swing), .(state_el, date, alp = round(alp, 1),
                                    swing = round(state_swing, 1))][order(date)])
@@ -129,9 +129,9 @@ chk <- merge(rows[!is.na(state_el)], data.table(state_el = names(DATES), sd = DA
 chk[, fd := DATES[pair]]
 if (any(chk$sd >= chk$fd)) {
   print(chk[sd >= fd])
-  stop("SS2! a state election does not precede its federal polling day -- leakage")
+  stop("BSS2! a state election does not precede its federal polling day -- leakage")
 }
-cat(sprintf("SS2  leakage check passed: all %d attachments strictly precede polling day\n", nrow(chk)))
+cat(sprintf("BSS2  leakage check passed: all %d attachments strictly precede polling day\n", nrow(chk)))
 
 # The file is written AFTER fed_dev is computed below, not here -- consumers
 # need the outcome alongside the predictor so the slope can be refitted
@@ -153,26 +153,26 @@ A[, dev := sw - nsw_]
 
 M <- merge(A[, .(pair = election, state, dev)], rows, by = c("pair", "state"))
 M <- M[is.finite(dev) & is.finite(state_swing)]
-cat(sprintf("\nSS4  TEST: %d pair-state observations across %d federal elections\n",
+cat(sprintf("\nBSS4  TEST: %d pair-state observations across %d federal elections\n",
             nrow(M), uniqueN(M$pair)))
-cat("SS4  dev = how much more that state swung to Labor than the nation.\n")
-cat("SS4  state_swing = the preceding state election's own ALP swing.\n\n")
+cat("BSS4  dev = how much more that state swung to Labor than the nation.\n")
+cat("BSS4  state_swing = the preceding state election's own ALP swing.\n\n")
 print(M[order(-state_swing), .(pair, state, state_el, state_swing = round(state_swing, 1),
                                fed_dev = round(dev, 1), gap_months = round(months_gap))])
 ROWS <- merge(rows, A[, .(pair = election, state, fed_dev = dev)],
               by = c("pair", "state"), all.x = TRUE)
 fwrite(ROWS, file.path(OUT, "state-swing-prior.csv"))
-cat(sprintf("SS3  wrote %s/state-swing-prior.csv (%d rows, %d usable for fitting)\n",
+cat(sprintf("BSS3  wrote %s/state-swing-prior.csv (%d rows, %d usable for fitting)\n",
             OUT, nrow(ROWS), sum(is.finite(ROWS$state_swing) & is.finite(ROWS$fed_dev))))
 
-cat(sprintf("\nSS5  correlation = %+.3f (n=%d)\n", cor(M$state_swing, M$dev), nrow(M)))
+cat(sprintf("\nBSS5  correlation = %+.3f (n=%d)\n", cor(M$state_swing, M$dev), nrow(M)))
 fit <- lm(dev ~ state_swing, data = M)
-cat(sprintf("SS5  slope %+.3f (se %.3f, t = %.2f) | intercept %+.2f | R2 %.3f\n",
+cat(sprintf("BSS5  slope %+.3f (se %.3f, t = %.2f) | intercept %+.2f | R2 %.3f\n",
             coef(fit)[2], summary(fit)$coefficients[2, 2],
             summary(fit)$coefficients[2, 3], coef(fit)[1], summary(fit)$r.squared))
-cat("SS5  a slope near 0.4 would match the fed2022 eyeball; a t under 2 means the\n")
-cat("SS5  four-point pattern does not survive the full corpus.\n")
-cat("\nSS6  does the signal decay with the gap? same fit, split at 24 months:\n")
+cat("BSS5  a slope near 0.4 would match the fed2022 eyeball; a t under 2 means the\n")
+cat("BSS5  four-point pattern does not survive the full corpus.\n")
+cat("\nBSS6  does the signal decay with the gap? same fit, split at 24 months:\n")
 for (g in list(c(0, 24), c(24, 999))) {
   s <- M[months_gap >= g[1] & months_gap < g[2]]
   if (nrow(s) < 6) { cat(sprintf("   %2.0f-%3.0f months: n=%d, too few\n", g[1], g[2], nrow(s))); next }

@@ -27,7 +27,7 @@ add_departed_side <- function(dt, keys) {
                seat_dep, by = keys, all.x = TRUE)[order(.row)]
   opp <- tmp$seat_departed %in% TRUE & dt$party %in% majors & !(dt$is_incumbent_party_i %in% 1L)
   dt[, opp_departed_i := as.integer(opp)]
-  cat(sprintf("DS1  departed-member sides: own %d rows, opposing %d rows (of %d)\n",
+  cat(sprintf("DSI1  departed-member sides: own %d rows, opposing %d rows (of %d)\n",
               sum(dt$own_departed_i), sum(dt$opp_departed_i), nrow(dt)))
   dt
 }

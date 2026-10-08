@@ -55,18 +55,18 @@ for (k in seq_len(nrow(E))) {
                                        error = uniform_pred - pcv_now)]
 }
 R <- rbindlist(rows)
-cat(sprintf("PS1  %d party-switch cases across %d elections\n", nrow(R), uniqueN(R$election)))
+cat(sprintf("CSP1  %d party-switch cases across %d elections\n", nrow(R), uniqueN(R$election)))
 
-cat("\nPS2  every case, in full\n")
+cat("\nCSP2  every case, in full\n")
 print(R[order(-abs(error)), .(election, seat, from = party_prev, to = party_now,
       prev = round(pcv_prev,1), uniform_pred = round(uniform_pred,1),
       actual = round(pcv_now,1), error = round(error,1))], row.names = FALSE)
 
-cat(sprintf("\nPS3  mean error %.2f (uniform_pred - actual) | mean |error| %.2f | n %d\n",
+cat(sprintf("\nCSP3  mean error %.2f (uniform_pred - actual) | mean |error| %.2f | n %d\n",
             mean(R$error), mean(abs(R$error)), nrow(R)))
-cat(sprintf("PS3  over-predicted (uniform too high): %d | under-predicted: %d | exact: %d\n",
+cat(sprintf("CSP3  over-predicted (uniform too high): %d | under-predicted: %d | exact: %d\n",
             sum(R$error > 1), sum(R$error < -1), sum(abs(R$error) <= 1)))
-cat(sprintf("PS3  SE of the mean error: %.2f | t vs 0: %+.2f\n",
+cat(sprintf("CSP3  SE of the mean error: %.2f | t vs 0: %+.2f\n",
             sd(R$error)/sqrt(nrow(R)), mean(R$error)/(sd(R$error)/sqrt(nrow(R)))))
 
 cat("\nPS4  by DIRECTION of switch -- toward or away from a major party\n")

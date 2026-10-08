@@ -32,7 +32,7 @@ X <- fread(file.path(OUT, "xgb-primary-v6-oof-predictions.csv"), showProgress = 
 E <- fread(file.path(OUT, "emergence-cases.csv"), showProgress = FALSE)
 X[, emergent := as.integer(paste(pair, seat, party) %in% paste(E$pair, E$seat, E$party))]
 X[, region := sub("[0-9]{4}$", "", pair)]
-cat(sprintf("XE1  %d rows, %d pairs, %d emergences (%.2f%%)\n",
+cat(sprintf("FXE1  %d rows, %d pairs, %d emergences (%.2f%%)\n",
             nrow(X), uniqueN(X$pair), sum(X$emergent), 100 * mean(X$emergent)))
 
 # The gain an emergence actually delivered over what the primary model said.
@@ -62,7 +62,7 @@ fold <- match(X$pair, pairs)
 params <- list(objective = "binary:logistic", eval_metric = "logloss",
                eta = 0.05, max_depth = 4, subsample = 0.8,
                colsample_bytree = 0.8, min_child_weight = 10)
-cat("XE2  fitting the emergence hazard, grouped folds by pair...\n")
+cat("FXE2  fitting the emergence hazard, grouped folds by pair...\n")
 set.seed(42)
 cv <- xgb.cv(params = params, data = xgb.DMatrix(M, label = y), nrounds = 600,
              folds = split(seq_len(nrow(M)), fold), early_stopping_rounds = 30,
@@ -71,9 +71,9 @@ best_n <- max(cv$early_stop$best_iteration, 30L)
 X[, p_emerge := cv$cv_predict$pred[, 1]]
 auc <- function(s, l) { r <- rank(s); n1 <- sum(l); n0 <- sum(!l)
   (sum(r[l == 1]) - n1 * (n1 + 1) / 2) / (n1 * n0) }
-cat(sprintf("XE2  nrounds %d | out-of-fold AUC %.3f (0.50 = no signal)\n",
+cat(sprintf("FXE2  nrounds %d | out-of-fold AUC %.3f (0.50 = no signal)\n",
             best_n, auc(X$p_emerge, y)))
-cat("XE2  by class, against the best single feature found earlier (pred_share):\n")
+cat("FXE2  by class, against the best single feature found earlier (pred_share):\n")
 print(X[, .(n = .N, emerge = sum(emergent),
             auc_model = round(auc(p_emerge, emergent), 3),
             auc_pred_share = round(auc(pred_share, emergent), 3)),
@@ -91,9 +91,9 @@ tau2 <- max(stats::var(cls$m) - mean(cls$s^2 / cls$n), 0)
 cls[, w := tau2 / (tau2 + (s^2 / n))]
 cls[, mu_shrunk := pooled_mu + w * (m - pooled_mu)]
 cls[, sd_shrunk := pooled_sd + w * (s - pooled_sd)]
-cat(sprintf("\nXE3  conditional gain given emergence: pooled mean %.1f, sd %.1f (n=%d)\n",
+cat(sprintf("\nFXE3  conditional gain given emergence: pooled mean %.1f, sd %.1f (n=%d)\n",
             pooled_mu, pooled_sd, nrow(emg)))
-cat("XE3  per class, partially pooled -- w is how much the class's own estimate is trusted\n")
+cat("FXE3  per class, partially pooled -- w is how much the class's own estimate is trusted\n")
 print(cls[, .(party, n, raw_mean = round(m, 1), raw_sd = round(s, 1),
               w = round(w, 2), mu = round(mu_shrunk, 1), sd = round(sd_shrunk, 1))][order(-n)])
 
@@ -115,17 +115,17 @@ X[, z_new := (actual_share - mix_mean) / mix_sd]
 FOCUS <- c("IND", "GRN", "ONP", "OTH_RIGHT")
 rz <- function(v) sqrt(mean(v^2))
 em <- X[emergent == 1L]; ne <- X[emergent == 0L & party %in% FOCUS]
-cat("\nXE4  THE PRE-REGISTERED PRIMARY: rms_z on the 201 emergence rows. Target 1.00, pass bar 2.50.\n")
-cat(sprintf("XE4    before %.2f   after %.2f   (%% beyond z=2: %.1f -> %.1f)\n",
+cat("\nFXE4  THE PRE-REGISTERED PRIMARY: rms_z on the 201 emergence rows. Target 1.00, pass bar 2.50.\n")
+cat(sprintf("FXE4    before %.2f   after %.2f   (%% beyond z=2: %.1f -> %.1f)\n",
             rz(em$z_old), rz(em$z_new), 100 * mean(em$z_old > 2), 100 * mean(abs(em$z_new) > 2)))
-cat("\nXE5  GUARD 1: non-emergent minor rows must stay in [0.65, 1.25] and <=5% beyond z=2.\n")
-cat(sprintf("XE5    before %.2f   after %.2f   (%% beyond z=2: %.1f -> %.1f, n=%d)\n",
+cat("\nFXE5  GUARD 1: non-emergent minor rows must stay in [0.65, 1.25] and <=5% beyond z=2.\n")
+cat(sprintf("FXE5    before %.2f   after %.2f   (%% beyond z=2: %.1f -> %.1f, n=%d)\n",
             rz(ne$z_old), rz(ne$z_new), 100 * mean(ne$z_old > 2), 100 * mean(abs(ne$z_new) > 2), nrow(ne)))
-cat("\nXE6  GUARD 3: rms_z must improve in at least 6 of the 10 pairs holding an emergence win.\n")
+cat("\nFXE6  GUARD 3: rms_z must improve in at least 6 of the 10 pairs holding an emergence win.\n")
 byp <- em[, .(n = .N, before = rz(z_old), after = rz(z_new)), by = pair]
 byp[, better := after < before]
 print(byp[, .(pair, n, before = round(before, 2), after = round(after, 2), better)][order(-n)])
-cat(sprintf("XE6    improved in %d of %d pairs\n", sum(byp$better), nrow(byp)))
+cat(sprintf("FXE6    improved in %d of %d pairs\n", sum(byp$better), nrow(byp)))
 
 fwrite(X[, .(pair, seat, party, xgb_pred, actual_share, emergent, p_emerge,
              mu_shrunk, sd_shrunk, mix_mean, mix_sd, z_old, z_new)],
@@ -134,4 +134,4 @@ final <- xgb.train(params = params, data = xgb.DMatrix(M, label = y), nrounds = 
 xgb.save(final, file.path(OUT, "xgb-emergence-final.model"))
 writeLines(jsonlite::toJSON(feat), file.path(OUT, "xgb-emergence-cols.json"))
 fwrite(cls, file.path(OUT, "xgb-emergence-magnitude.csv"))
-cat(sprintf("\nXE7  wrote xgb-emergence-oof.csv, -final.model, -cols.json, -magnitude.csv\n"))
+cat(sprintf("\nFXE7  wrote xgb-emergence-oof.csv, -final.model, -cols.json, -magnitude.csv\n"))

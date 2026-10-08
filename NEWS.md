@@ -1,3 +1,8 @@
+# auspol 0.4.86
+
+- Every diagnostic check code now means one thing: 156 codes that meant different things in different files were renamed, and a test stops a new collision. Printed labels only; no forecast number changes.
+- `docs/MODEL-REGISTRY.md` explains every switch; none is left unexplained.
+
 # auspol 0.4.85
 
 - The ITG New South Wales page gets the data for its three hidden sections: district regions (`external/reference/nsw/nsw-district-regions.csv`, 9 regions), the poll-trend chart (`nsw2027-page-data.json`, from `scripts/build_trend_page_data.R`) and the per-seat pages' 2023 results and booths (`web/nsw2023-results.json`, `web/nsw2023-booths.json`). No forecast number changes.

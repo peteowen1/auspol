@@ -36,19 +36,19 @@ if (nrow(m) != nrow(off)) stop("Seats do not line up between arms.")
 v18 <- m[pair == "vic2018"]
 if (nrow(v18)) {
   d18 <- max(abs(v18$p_on - v18$p_off))
-  cat(sprintf("\nPR0  vic2018 (not portable): largest probability difference %.6f\n", d18))
+  cat(sprintf("\nSSS0  vic2018 (not portable): largest probability difference %.6f\n", d18))
   if (d18 > 1e-9) {
     stop("Victoria 2014->2018 cannot be ported, so the two arms must be ",
          "identical there. They differ by ", signif(d18, 3), ", which means ",
          "something other than the seat-swing port changed between runs.")
   }
-  cat("PR0  identical, as it must be. The comparison isolates the port.\n")
+  cat("SSS0  identical, as it must be. The comparison isolates the port.\n")
 }
 
 m[, `:=`(b_off = (1 - p_off)^2, b_on = (1 - p_on)^2)]
 m[, d := b_on - b_off]      # negative = the port is better
 
-cat("\nPR1  per election\n")
+cat("\nSSS1  per election\n")
 per <- m[, .(seats = .N,
              brier_off = mean(b_off), brier_on = mean(b_on),
              gain = mean(b_off) - mean(b_on)), by = pair]
@@ -56,7 +56,7 @@ print(per[, .(pair, seats, brier_off = round(brier_off, 5),
               brier_on = round(brier_on, 5), gain = round(gain, 5))])
 
 test <- m[pair != "vic2018"]
-cat(sprintf("\nPR2  testable set: %d seats across %d election(s): %s\n",
+cat(sprintf("\nSSS2  testable set: %d seats across %d election(s): %s\n",
             nrow(test), uniqueN(test$pair),
             paste(unique(test$pair), collapse = ", ")))
 
@@ -65,21 +65,21 @@ cat(sprintf("\nPR2  testable set: %d seats across %d election(s): %s\n",
 # because seats in a cycle share a flow matrix and the statewide draws.
 mean_d <- mean(test$d)
 se_seat <- stats::sd(test$d) / sqrt(nrow(test))
-cat(sprintf("PR3  paired Brier difference %+.5f (negative = port better)\n", mean_d))
-cat(sprintf("PR3  per-seat SE %.5f -> %+.2f SE  [comparable with round 1's -0.04]\n",
+cat(sprintf("SSS3  paired Brier difference %+.5f (negative = port better)\n", mean_d))
+cat(sprintf("SSS3  per-seat SE %.5f -> %+.2f SE  [comparable with round 1's -0.04]\n",
             se_seat, mean_d / se_seat))
 per_el <- test[, .(d = mean(d)), by = pair]
 if (nrow(per_el) > 1) {
   se_cl <- stats::sd(per_el$d) / sqrt(nrow(per_el))
-  cat(sprintf("PR3  election-clustered SE %.5f on %d df -> %+.2f SE  [the honest one]\n",
+  cat(sprintf("SSS3  election-clustered SE %.5f on %d df -> %+.2f SE  [the honest one]\n",
               se_cl, nrow(per_el) - 1L, mean_d / se_cl))
 } else {
-  cat("PR3  only ONE testable election here, so no clustered SE exists. NSW 2023\n")
-  cat("PR3  must be run separately and combined by hand; see PR6.\n")
+  cat("SSS3  only ONE testable election here, so no clustered SE exists. NSW 2023\n")
+  cat("SSS3  must be run separately and combined by hand; see PR6.\n")
 }
 
 # ---- zone 3 rule 2: direction consistency ----------------------------------
-cat("\nPR4  direction by election (zone 3 rule 2 needs the port ahead in most)\n")
+cat("\nSSS4  direction by election (zone 3 rule 2 needs the port ahead in most)\n")
 print(per_el[, .(pair, gain = round(-d, 5), port_better = d < 0)])
 
 # ---- zone 3 rule 4: the mechanism check, which can override everything ------

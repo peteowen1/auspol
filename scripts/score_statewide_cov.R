@@ -70,7 +70,7 @@ for (S in SRC) {
   }
 }
 els <- sort(unique(A$actual$pair))
-cat(sprintf("\nSC1  %d elections, arms A (independent) and B (correlated)\n", length(els)))
+cat(sprintf("\nSSC1  %d elections, arms A (independent) and B (correlated)\n", length(els)))
 if (!setequal(els, unique(B$actual$pair))) stop("The arms cover different elections.")
 
 # Log score of the ACTUAL total under the predicted distribution of totals.
@@ -109,19 +109,19 @@ sa <- score_arm(A, "A"); sb <- score_arm(B, "B")
 M <- merge(sa[, .(pair, A = logscore)], sb[, .(pair, B = logscore)], by = "pair")
 M[, gain := A - B]
 setorder(M, -gain)
-cat("\nSC2  log score of the ACTUAL seat total, per party, averaged\n")
+cat("\nSSC2  log score of the ACTUAL seat total, per party, averaged\n")
 print(M[, .(pair, A = round(A, 4), B = round(B, 4), gain = round(gain, 4))])
 
 se <- stats::sd(M$gain) / sqrt(nrow(M))
 z <- mean(M$gain) / se
-cat(sprintf("\nSC3  B beats A by %+.4f, clustered SE %.4f -> %+.2f SE (%d df)\n",
+cat(sprintf("\nSSC3  B beats A by %+.4f, clustered SE %.4f -> %+.2f SE (%d df)\n",
             mean(M$gain), se, z, nrow(M) - 1L))
-cat(sprintf("SC3  bar set in advance: +2 SE. Positive in %d of %d elections.\n",
+cat(sprintf("SSC3  bar set in advance: +2 SE. Positive in %d of %d elections.\n",
             sum(M$gain > 0), nrow(M)))
 
 # V4 needs the per-seat score not to degrade: a change that improves totals by
 # making individual seats worse is trading the thing the pendulum is for.
-cat("\nSC4  guard -- per-seat log score must not degrade by more than 1 SE\n")
+cat("\nSSC4  guard -- per-seat log score must not degrade by more than 1 SE\n")
 ps <- function(arm) {
   r <- list()
   for (S in SRC) {
@@ -139,10 +139,10 @@ if (!is.null(pa) && !is.null(pb)) {
   pm <- merge(pa, pb, by = "pair", suffixes = c("_A", "_B"))
   pm[, d := ls_A - ls_B]
   pse <- stats::sd(pm$d) / sqrt(nrow(pm))
-  cat(sprintf("SC4  per-seat: %+.4f, SE %.4f -> %+.2f SE (positive = B better)\n",
+  cat(sprintf("SSC4  per-seat: %+.4f, SE %.4f -> %+.2f SE (positive = B better)\n",
               mean(pm$d), pse, mean(pm$d) / pse))
 } else {
-  cat("SC4  per-seat comparison unavailable: one arm did not write per-seat output.\n")
+  cat("SSC4  per-seat comparison unavailable: one arm did not write per-seat output.\n")
 }
 
 verdict <- if (z > 2) {
@@ -152,8 +152,8 @@ verdict <- if (z > 2) {
 } else {
   sprintf("KEEP A -- B is %+.2f SE, short of the bar. The covariance is real; at this sample it does not pay for itself.", z)
 }
-cat(sprintf("\nSC5  verdict: %s\n", verdict))
-cat("SC5  V1 and V2 apply to any reading of this: One Nation's upside rising is\n")
-cat("SC5  the PREDICTED direction and is not evidence, and moving closer to\n")
-cat("SC5  YouGov must play no part.\n")
+cat(sprintf("\nSSC5  verdict: %s\n", verdict))
+cat("SSC5  V1 and V2 apply to any reading of this: One Nation's upside rising is\n")
+cat("SSC5  the PREDICTED direction and is not evidence, and moving closer to\n")
+cat("SSC5  YouGov must play no part.\n")
 fwrite(M, file.path("output", "statewide-cov-score.csv"))

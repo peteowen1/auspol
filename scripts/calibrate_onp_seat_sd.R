@@ -31,8 +31,8 @@ w <- dcast(sh, seat ~ party, value.var = "pct", fill = 0)
 stopifnot("GRN" %in% names(w), "ONP" %in% names(w))
 actual <- setNames(w$ONP, w$seat)
 grn <- setNames(w$GRN, w$seat)
-cat(sprintf("\nOS1  SA districts with first preferences: %d\n", nrow(w)))
-cat(sprintf("OS1  actual ONP: %.1f%% to %.1f%%, mean %.1f%%\n",
+cat(sprintf("\nCOS1  SA districts with first preferences: %d\n", nrow(w)))
+cat(sprintf("COS1  actual ONP: %.1f%% to %.1f%%, mean %.1f%%\n",
             min(actual), max(actual), mean(actual)))
 
 # The method, applied to SA exactly as fit_seats_full.R applies it to Victoria.
@@ -51,22 +51,22 @@ pred <- mean(actual) * ratio[names(actual)]
 resid <- pred - actual
 rmse <- sqrt(mean(resid^2))
 BOUND <- ceiling(rmse * 2) / 2
-cat(sprintf("\nOS2  RMSE of the allocation against SA = %.3f -> ONP_SEAT_SD = %.1f\n",
+cat(sprintf("\nCOS2  RMSE of the allocation against SA = %.3f -> ONP_SEAT_SD = %.1f\n",
             rmse, BOUND))
-cat(sprintf("OS2  mean |error| = %.3f;  worst seat off by %.1f points\n",
+cat(sprintf("COS2  mean |error| = %.3f;  worst seat off by %.1f points\n",
             mean(abs(resid)), max(abs(resid))))
-cat(sprintf("OS2  correlation predicted vs actual = %+.3f\n",
+cat(sprintf("COS2  correlation predicted vs actual = %+.3f\n",
             stats::cor(pred, actual)))
 
 # A uniform allocation is the thing the ordering claims to beat. If it does not,
 # the ordering is carrying no information and the uncertainty is the whole
 # spread, not the residual.
 rmse_flat <- sqrt(mean((mean(actual) - actual)^2))
-cat(sprintf("OS3  RMSE of a FLAT allocation = %.3f (ordering %s it by %.3f)\n",
+cat(sprintf("COS3  RMSE of a FLAT allocation = %.3f (ordering %s it by %.3f)\n",
             rmse_flat, if (rmse < rmse_flat) "beats" else "LOSES to",
             abs(rmse_flat - rmse)))
 
-cat(sprintf("\nOS4  plan's refusal condition (below %.1f): %s\n", FLOOR,
+cat(sprintf("\nCOS4  plan's refusal condition (below %.1f): %s\n", FLOOR,
             if (BOUND < FLOOR) "REFUSE -- the allocation would be claiming to be
      more precise than a measured share" else "ok, adopt"))
 

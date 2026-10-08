@@ -19,19 +19,25 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30.
 - auspol PRs #100-#106 merged, each reviewed (Sonnet) and CI-green; `dev` = `main` in content.
 
 **Queued, in order:**
-1. **NSW page pieces still hidden** (each is then a one-line blog config change; message the inthegame-blog
-   session the R2 key): poll trend (a page-data JSON like `vic-page-data.json`), regions (a NSW
-   district-to-region table; `build_forecast_json.R` region_file is NA), per-seat pages.
+1. **NSW page pieces: DATA LIVE on R2 2026-10-09 (PR #107, run 37781691910); blog side pending.** Keys
+   sent to the ITG session: `auspol/nsw2027-page-data.json` (poll trend), `region` on every seat of
+   forecast-nsw2027.json (9 hand regions, `external/reference/nsw/nsw-district-regions.csv`),
+   `auspol/nsw2023-results.json` + `nsw2023-booths.json` (seat pages; `seat.qmd` is hard-wired to vic and
+   needs an election switch). Early-voting venues have no coordinates (The Tally Room has none).
 2. **Scenario-job straggler, OPEN (Pete, 2026-10-09: "leave it open maybe a more advanced model in the future can
    find a fix").** Measured over 5 runs: setup median 33-42 s per job, but one job per run crawls (run 37770931865:
    setup-r 8.5 min AND the cached deps restore 15.5 min on the same runner; max 935 s, 514 s, 498 s, 256 s, 57 s).
    Both steps slow together, so it is the runner's network, and a prebuilt image would pull over the same network.
    Not built. Untried: a per-step timeout plus re-run of the one job; fewer, fatter matrix jobs.
-3. **Haiku audit leftovers** (verified live): 185 check codes with two meanings (e.g. SP2 in
-   R/salience_screen.R:441 vs R/seat_swing_port.R:178); 50 switches MODEL-REGISTRY cannot explain; a
-   scheduled Haiku sentinel running the four audits after each daily run (ops repo already has one).
-4. `check_like_ci.R` reruns R CMD check whenever scripts/ changes (~5 min a push; ~40 min on 2026-10-08):
-   consider whether scripts/ belongs in the package build.
+3. **Haiku audit leftovers**: the check-code collisions and the registry's unexplained switches are DONE
+   (2026-10-09): 63 codes still printed by several files, 56
+   the same check, 7 pre-registration clause ids left alone; 156 codes renamed; a ratchet test
+   (`test-check-code-collisions.R` + `check-code-allowlist.csv`) stops new ones. All 50 switches now
+   carry a CLASSIFY note; `AUSPOL_UPSET_FLOOR` is the one genuinely OPEN GAP. Still open: a scheduled
+   Haiku sentinel running the four audits after each daily run (ops repo already has one).
+4. ~~`check_like_ci.R` reruns R CMD check whenever scripts/ changes~~ **DONE 2026-10-09 (PR #107):** scripts/ was
+   never in the build; the rerun came from the per-PR DESCRIPTION Version / NEWS.md bump, now out of the
+   fingerprint (proven: the 0.4.85 bump skipped the slow half).
 
 **Deliberately not done:** the in-browser simulator (scoping stage 2, ~40 h): the 2.5-point knots with
 interpolation already feel live; revisit only if Pete wants two sliders at once or finer steps.

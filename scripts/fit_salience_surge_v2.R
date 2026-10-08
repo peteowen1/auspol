@@ -69,7 +69,7 @@ PAIRS <- list(
 
 POP <- surge_training_population(PAIRS)
 if (!nrow(POP)) stop("no governed candidates found -- has fed2019 salience been fetched? (output/salience-v6.csv)")
-cat(sprintf("FS1  governed population: %d candidates across %d elections | %d winners\n",
+cat(sprintf("FSS1  governed population: %d candidates across %d elections | %d winners\n",
             nrow(POP), uniqueN(POP$pair), sum(POP$elected)))
 print(POP[, .(n = .N, winners = sum(elected)), by = pair])
 
@@ -120,13 +120,13 @@ LOO <- rbindlist(lapply(outer_pairs, function(held) {
             ll = log_loss(test$elected, p_hat),
             ll_base = log_loss(test$elected, rep(base_rate, nrow(test))))
 }))
-cat("\nFS2  nested-LOO by election, ridge-penalised, governed population only:\n")
+cat("\nFSS2  nested-LOO by election, ridge-penalised, governed population only:\n")
 print(LOO)
-cat(sprintf("\nFS2  mean log loss: model %.4f vs base-rate-only %.4f\n",
+cat(sprintf("\nFSS2  mean log loss: model %.4f vs base-rate-only %.4f\n",
             mean(LOO$ll), mean(LOO$ll_base)))
 
 # ---- dry-run: known high-jump governed LOSERS must not run away -------------
-cat("\nFS3  dry-run: known high-jump governed candidates who LOST\n")
+cat("\nFSS3  dry-run: known high-jump governed candidates who LOST\n")
 full_lambda <- pick_lambda(outer_pairs)
 full_fit <- fit_ridge_std(POP, party_levels, full_lambda)
 dry <- POP[keyword %in% c("Ian Cook", "David Speirs")]
@@ -135,13 +135,13 @@ if (nrow(dry)) {
   print(dry[, .(pair, seat, keyword, party, jump_pctile = round(jump_pctile, 2),
                prev_party = round(prev_party, 1), pcv = round(pcv, 1), p_hat = round(p_hat, 3))])
 } else {
-  cat("FS3  neither found in the governed population -- check keyword spelling/coverage\n")
+  cat("FSS3  neither found in the governed population -- check keyword spelling/coverage\n")
 }
-cat(sprintf("FS3  full-population lambda chosen (nested LOO): %.1f\n", full_lambda))
+cat(sprintf("FSS3  full-population lambda chosen (nested LOO): %.1f\n", full_lambda))
 
 winners <- POP[elected == TRUE]
-cat(sprintf("\nFS4  pooled surge size from %d governed winners: mean pcv %.2f | sd pcv %.2f\n",
+cat(sprintf("\nFSS4  pooled surge size from %d governed winners: mean pcv %.2f | sd pcv %.2f\n",
             nrow(winners), mean(winners$pcv), sd(winners$pcv)))
 
 fwrite(POP, "output/salience-surge-v2-population.csv")
-cat(sprintf("\nFS9  wrote output/salience-surge-v2-population.csv: %d rows\n", nrow(POP)))
+cat(sprintf("\nFSS9  wrote output/salience-surge-v2-population.csv: %d rows\n", nrow(POP)))

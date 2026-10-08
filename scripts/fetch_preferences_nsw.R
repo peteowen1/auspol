@@ -63,7 +63,7 @@ for (s in SRC) {
   setnames(d, make.names(names(d)))
   stopifnot(all(c("District", "Formal.Informal", "Party.Acronym",
                   "Party.Name", "Final.FP.Votes") %in% names(d)))
-  cat(sprintf("\nNF1  %d: %d booth rows, %d districts\n",
+  cat(sprintf("\nFPN1  %d: %d booth rows, %d districts\n",
               s$year, nrow(d), uniqueN(d$District)))
 
   # Informal votes are not a party's first preferences and must not be counted
@@ -71,7 +71,7 @@ for (s in SRC) {
   # bucket them as OTH.
   n_all <- nrow(d)
   d <- d[Formal.Informal == "Formal"]
-  cat(sprintf("NF1  dropped %d informal rows, %d formal remain\n",
+  cat(sprintf("FPN1  dropped %d informal rows, %d formal remain\n",
               n_all - nrow(d), nrow(d)))
 
   d[, votes := as.numeric(Final.FP.Votes)]

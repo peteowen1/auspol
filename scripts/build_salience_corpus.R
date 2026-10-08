@@ -22,7 +22,7 @@ suppressMessages(devtools::load_all(quiet = TRUE))
 suppressMessages(library(data.table))
 
 C <- fread("output/candidacies.csv", showProgress = FALSE)
-cat(sprintf("SC1  %d candidacies, %d elections\n", nrow(C), uniqueN(C$election)))
+cat(sprintf("BSO1  %d candidacies, %d elections\n", nrow(C), uniqueN(C$election)))
 
 # Seat names come from six commissions with six spacing conventions, and the
 # Victorian 2014/2018 rows are unspaced filenames. Join on a normalised key and
@@ -44,12 +44,12 @@ W <- rbindlist(lapply(wf, function(f) {
   d[, .(election, seat, winner)]
 }), fill = TRUE)
 W[, seat_key := norm(seat)]
-cat(sprintf("SC2  %d winner rows across %d elections\n", nrow(W), uniqueN(W$election)))
+cat(sprintf("BSO2  %d winner rows across %d elections\n", nrow(W), uniqueN(W$election)))
 
 # ---- the winning CANDIDATE's name -------------------------------------------
 m <- merge(C, W[, .(election, seat_key, win_party = winner)],
            by = c("election", "seat_key"), all.x = TRUE)
-cat(sprintf("SC3  candidacies matched to a winning party: %d of %d (%.0f%%)\n",
+cat(sprintf("BSO3  candidacies matched to a winning party: %d of %d (%.0f%%)\n",
             sum(!is.na(m$win_party)), nrow(m), 100 * mean(!is.na(m$win_party))))
 # Report the RATE per election, not just which elections have any unmatched row.
 # The first version of this line printed "elections with NO winner data:
@@ -60,7 +60,7 @@ cat(sprintf("SC3  candidacies matched to a winning party: %d of %d (%.0f%%)\n",
 # reader looking for a missing file.
 um <- m[, .(rows = .N, unmatched = sum(is.na(win_party))), by = election][unmatched > 0]
 if (nrow(um)) {
-  cat("SC3  elections with unmatched seats:\n")
+  cat("BSO3  elections with unmatched seats:\n")
   for (i in seq_len(nrow(um)))
     cat(sprintf("       %-9s %d of %d unmatched%s\n", um$election[i],
                 um$unmatched[i], um$rows[i],
@@ -70,9 +70,9 @@ if (nrow(um)) {
 cands_of_winner <- m[!is.na(win_party) & party == win_party,
                      .(n = .N, name = name[1]), by = .(election, seat_key)]
 amb <- cands_of_winner[n > 1]
-cat(sprintf("SC4  seats where the winning party ran >1 candidate (dropped): %d\n", nrow(amb)))
+cat(sprintf("BSO4  seats where the winning party ran >1 candidate (dropped): %d\n", nrow(amb)))
 winner_name <- cands_of_winner[n == 1, .(election, seat_key, winner_name = name)]
-cat(sprintf("SC4  seat-elections with an identified winning candidate: %d\n",
+cat(sprintf("BSO4  seat-elections with an identified winning candidate: %d\n",
             nrow(winner_name)))
 
 # ---- sitting member = the previous election's winner in that seat -----------
@@ -87,22 +87,22 @@ prev_win <- merge(ord[, .(election, prev)],
 
 S <- merge(m, prev_win[, .(election, seat_key, sitting)],
            by = c("election", "seat_key"), all.x = TRUE)
-cat(sprintf("SC5  candidacies with a known sitting member: %d of %d (%.0f%%)\n",
+cat(sprintf("BSO5  candidacies with a known sitting member: %d of %d (%.0f%%)\n",
             sum(!is.na(S$sitting)), nrow(S), 100 * mean(!is.na(S$sitting))))
 
 # The gate EXCLUDES candidacies where the independent IS the sitting member:
 # that is incumbency, not emergence, and the ratio would be 1.0 by construction.
 S[, is_sitting := !is.na(sitting) & name == sitting]
 G <- S[!is.na(sitting) & !is_sitting & !party %in% c("ALP", "LNP", "NAT")]
-cat(sprintf("SC6  gate-eligible non-major candidacies: %d (%d breakouts)\n",
+cat(sprintf("BSO6  gate-eligible non-major candidacies: %d (%d breakouts)\n",
             nrow(G), sum(G$breakout)))
 print(G[, .(candidacies = .N, breakouts = sum(breakout)),
         by = .(region)][order(-breakouts)], row.names = FALSE)
 
 fwrite(G[, .(election, region, year, seat, name, party, pcv, breakout, sitting)],
        "output/salience-corpus.csv")
-cat(sprintf("\nSC9  wrote output/salience-corpus.csv: %d rows, %d breakouts\n",
+cat(sprintf("\nBSO9  wrote output/salience-corpus.csv: %d rows, %d breakouts\n",
             nrow(G), sum(G$breakout)))
-cat(sprintf("SC9  the corpus the AUC of 0.87 was measured on had 21 breakouts,\n"))
-cat(sprintf("SC9  all federal. This one spans %d elections in %d regions.\n",
+cat(sprintf("BSO9  the corpus the AUC of 0.87 was measured on had 21 breakouts,\n"))
+cat(sprintf("BSO9  all federal. This one spans %d elections in %d regions.\n",
             uniqueN(G$election), uniqueN(G$region)))

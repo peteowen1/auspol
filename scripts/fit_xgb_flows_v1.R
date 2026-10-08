@@ -129,7 +129,7 @@ TX <- merge(TX, sd_all[, .(election, seat, from_party = party, from_primary = ac
             by.x = c("election","seat","from"), by.y = c("election","seat","from_party"), all.x = TRUE)
 TX[, `:=`(to_primary = ifelse(is.na(to_primary), 0, to_primary),
           from_primary = ifelse(is.na(from_primary), 0, from_primary))]
-cat(sprintf("XF4  primary-share join: %d of %d rows matched for destination party\n",
+cat(sprintf("FXF4  primary-share join: %d of %d rows matched for destination party\n",
             sum(!is.na(TX$to_primary) & TX$to_primary > 0), nrow(TX)))
 
 # ---- 4b. the SEAT's shape, not just the two classes in this transfer -------

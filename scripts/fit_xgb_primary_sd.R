@@ -53,12 +53,12 @@ if (file.exists(.df)) {
   # NA, never 0: a seat we could not match is unknown, not "stood again", and
   # xgboost routes missing down its own branch. Filling it would recreate the
   # very label problem this column exists to remove.
-  cat(sprintf("SD0  departed_i joined: %d of %d rows (%.1f%%), %d departed\n",
+  cat(sprintf("FXD0  departed_i joined: %d of %d rows (%.1f%%), %d departed\n",
               sum(!is.na(FE$departed_i)), nrow(FE),
               100 * mean(!is.na(FE$departed_i)), sum(FE$departed_i == 1L, na.rm = TRUE)))
 } else {
   FE[, departed_i := NA_integer_]
-  cat(sprintf("SD0! %s missing -- run scripts/build_retirement_derived.py. departed_i is ALL NA, so this fit is the OLD feature set with one dead column, not the arm.\n", .df))
+  cat(sprintf("FXD0! %s missing -- run scripts/build_retirement_derived.py. departed_i is ALL NA, so this fit is the OLD feature set with one dead column, not the arm.\n", .df))
 }
 
 # level_now is the ACTUAL statewide share under AUSPOL_LEVEL_MODE="now" and a
