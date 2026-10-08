@@ -314,6 +314,21 @@ PUBLISHED_FLAGS <- c(
   AUSPOL_ONP_FIX             = "1",
   AUSPOL_QLD_FLOWS           = "1",
   AUSPOL_WA_FLOWS            = "0",
+  # Added 2026-10-08 (Haiku audit of every Sys.getenv("AUSPOL_ read on the published
+  # path): each was read by fit_seats_full.R or R/ with no entry here, breaking this
+  # file's rule. Values are the code defaults, so nothing that runs changes.
+  AUSPOL_SA_FLOWS            = "0",          # R/external_flows.R:150 (per-source switch, as QLD/WA above)
+  AUSPOL_QLD_CUTOFF          = "",           # R/external_flows.R:156: per-source date cap, empty = none
+  AUSPOL_WA_CUTOFF           = "",
+  AUSPOL_SA_CUTOFF           = "",
+  AUSPOL_WA_DROP_3C          = "0",          # R/external_flows.R:170, prereg-wa-three-cornered arm
+  AUSPOL_WA_DROP_LNP         = "0",          # R/external_flows.R:187, prereg-wa-flows refusal W2 arm
+  AUSPOL_FLOW_CELL_SD        = "0",          # R/xgb_flow_override.R:377
+  AUSPOL_FLOW_MODEL_TAG      = "",           # R/xgb_flow_override.R:42: suffixes the flow model filename; empty = the shipped model
+  AUSPOL_REENTRY_SPLIT       = "1",          # R/reentry_prior.R:129, reached via reentry_mode() at fit_seats_full.R:1150
+  AUSPOL_REENTRY_GAP         = "",           # R/reentry_prior.R:135
+  AUSPOL_REENTRY_LINK        = "log",        # R/reentry_prior.R:149
+  AUSPOL_REENTRY_WINSOR      = "0",          # R/reentry_prior.R:409
   AUSPOL_FLOW_SHIFT          = "0",
   AUSPOL_FORCE_FP            = "",
   AUSPOL_FORCE_FP_RULE       = "draws",      # Only read when AUSPOL_FORCE_FP is set (the what-if slider, Pete 2026-10-04): others give way by the published run's statewide-draw regression and the forced party is held exactly at X; "draws-polled" = same regression, usual spread kept around X; "sa" = the older SA 2026 response with spread kept.
