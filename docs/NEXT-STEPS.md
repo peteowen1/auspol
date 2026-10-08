@@ -28,25 +28,34 @@ x 9 levels); polled-at-today reproduces the headline exactly. A run is 80 s, not
 Preview page DONE (https://claude.ai/artifact/AuSRMYX1CFse9ssV3EwvY2: party, exact/polling toggle,
 seats, odds, own-vote comparison chart, seat by seat). Stage 2 JS engine DROPPED for now (knots +
 interpolation already feel live; Pete agreed 2026-10-08). Daily build: `scripts/build_scenarios.R`
-+ `combine_scenarios.R` -> `output/scenario-vic2026.json`, run by 8 parallel jobs in forecast.yaml
++ `combine_scenarios.py` -> `output/scenario-vic2026.json`, run by 8 parallel jobs in forecast.yaml
 after the refresh publishes (public repo, minutes are free, so no single-process refactor needed).
 Then: the ITG page (inthegame-blog session) reads `auspol/scenario-vic2026.json` from R2. **Daily-refresh requirement:** each run repeats ~35 s of slider-independent setup
 (by-election/defector fits, 13-33 s into the run); 72 runs a day must loop scenarios inside ONE
 R process or it costs ~100 min instead of ~60.
 
-## ITG pages, state at 2026-10-08 evening
+## ITG pages, state at 2026-10-08 night (READ FIRST)
 
-LIVE: https://inthegame.blog/politics/what-if (Victorian slider, blog PR #858) and
-https://inthegame.blog/politics/nsw (NSW 2027 forecast, blog PR #859). NSW publishes daily
-(AUSPOL_PUBLISH_NSW2027=1 on the repo, R2 since PR #103).
+LIVE: https://inthegame.blog/politics/what-if (Victorian slider, blog #858), https://inthegame.blog/politics/nsw
+(NSW 2027, blog #859). auspol PRs #100-#105 merged today. Daily from the 06:00 run: forecast-vic2026.json,
+forecast-nsw2027.json (AUSPOL_PUBLISH_NSW2027=1), scenario-vic2026.json, scenario-nsw2027.json (16 parallel
+scenario jobs, checked against the published run), nsw2027-districts.topojson. All on R2 under auspol/.
 
-The NSW page hides five sections until auspol ships the file; each is then a one-line
-config change on the blog side (tell the inthegame-blog session the R2 key):
-1. what-if: `scenario-nsw2027.json` (add NSW to the scenario jobs; scripts already take --target=nsw2027). NEXT.
-2. district map: a topojson like `web/vic2026-districts.topojson` (objects.districts, `seat` property).
+NSW page sections still hidden until auspol ships the file (then a one-line blog config change; tell the
+inthegame-blog session the R2 key):
+1. ~~what-if~~ scenario-nsw2027.json: shipped in #105 (first publish 2026-10-08 night, confirm 200 on R2).
+2. ~~district map~~ nsw2027-districts.topojson: LIVE, blog told.
 3. poll trend: a page-data JSON like `vic-page-data.json`.
 4. regions: a non-null `region` per seat (needs a NSW district-to-region table; build_forecast_json.R region_file is NA).
 5. the per-seat page.
+
+Queued, in order:
+1. ~~**publish-scenarios without R**~~ DONE 2026-10-08: `scripts/combine_scenarios.py` (stdlib), parity 0/144 with the R version.
+2. Haiku audit leftovers (verified live 2026-10-08): 185 check codes with two meanings (e.g. SP2 in
+   R/salience_screen.R:441 vs R/seat_swing_port.R:178); 50 switches MODEL-REGISTRY cannot explain; a
+   scheduled Haiku sentinel running the four checks after each daily run (ops repo already has one).
+3. check_like_ci.R reruns R CMD check whenever scripts/ changes (~5 min a push; 35 min today): consider
+   whether scripts/ belongs in the package build.
 
 ## 2026-10-08 HANDOFF (READ FIRST)
 

@@ -1,3 +1,7 @@
+# auspol 0.4.84
+
+- The what-if publish step runs in plain Python (`scripts/combine_scenarios.py`) instead of R, so it no longer waits up to 16 minutes for an R install. Same numbers as the R version (0 of 144 differences on the test set) and the same checks.
+
 # auspol 0.4.83
 
 - New South Wales gets the what-if slider's scenarios (`scenario-nsw2027.json`, daily while NSW publishes) and a district map (`web/nsw2027-districts.topojson`, 93 districts) for the ITG NSW page.
