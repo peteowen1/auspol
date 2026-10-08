@@ -485,7 +485,7 @@ jobs:
       # The what-if slider's jobs (below) rerun this exact forecast with one
       # party's vote forced. They need everything this job fetched and built,
       # and only once the Victorian forecast has published: the scenarios
-      # describe the published run, and combine_scenarios.R checks that.
+      # describe the published run, and combine_scenarios.py checks that.
       - name: Hand the scenario jobs their inputs
         if: success()
         uses: actions/upload-artifact@v4
@@ -602,7 +602,7 @@ jobs:
             gh issue create --title "$TITLE" --body "$BODY"
           fi
 
-  # ---- What-if slider (scripts/build_scenarios.R, combine_scenarios.R) -------
+  # ---- What-if slider (scripts/build_scenarios.R, combine_scenarios.py) -------
   # Pete's primary-vote slider for the ITG page: each of One Nation, Labor,
   # Coalition and Greens forced to nine statewide levels (10 points either side
   # of today, 2.5-point steps), read two ways (gets exactly X / is polling X).
@@ -653,19 +653,12 @@ jobs:
   publish-scenarios:
     needs: scenarios
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
-      - uses: r-lib/actions/setup-r@v2
-        with:
-          r-version: release
-          use-public-rspm: true
-      # combine_scenarios.R needs only these two; the package's full
-      # dependency set took ~10 of this job's 12 minutes (run 37735368376).
-      - uses: r-lib/actions/setup-r-dependencies@v2
-        with:
-          packages: any::data.table, any::jsonlite
-      # Inputs FIRST, scenarios second: combine_scenarios.R refuses scenario
+      # No R here: combine_scenarios.py is standard-library Python, so this job
+      # skips the 5-16 minute R install the scenario jobs need (2026-10-08).
+      # Inputs FIRST, scenarios second: combine_scenarios.py refuses scenario
       # files older than today's levels, and a download stamps files with the
       # time it lands.
       - uses: actions/download-artifact@v4
@@ -681,8 +674,8 @@ jobs:
         shell: bash
         run: |
           set -e
-          Rscript scripts/combine_scenarios.R --target=vic2026
-          if [ "${{ vars.AUSPOL_PUBLISH_NSW2027 }}" = "1" ]; then Rscript scripts/combine_scenarios.R --target=nsw2027; fi
+          python3 -I scripts/combine_scenarios.py --target=vic2026
+          if [ "${{ vars.AUSPOL_PUBLISH_NSW2027 }}" = "1" ]; then python3 -I scripts/combine_scenarios.py --target=nsw2027; fi
       - name: Publish to the forecast-latest release and R2
         shell: bash
         env:

@@ -14,7 +14,7 @@
 # read. Each scenario is a separate fit_seats_full.R process writing suffixed
 # files (-scn-<mode>-<party>-<offset>), so a killed batch keeps every scenario
 # it finished, and a rerun skips any whose outputs are newer than today's
-# levels. scripts/combine_scenarios.R turns the lot into one JSON.
+# levels. scripts/combine_scenarios.py turns the lot into one JSON.
 
 suppressMessages(library(data.table))
 args <- commandArgs(trailingOnly = TRUE)
