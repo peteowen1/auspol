@@ -316,6 +316,7 @@ PUBLISHED_FLAGS <- c(
   AUSPOL_WA_FLOWS            = "0",
   AUSPOL_FLOW_SHIFT          = "0",
   AUSPOL_FORCE_FP            = "",
+  AUSPOL_FORCE_FP_RULE       = "draws",      # Only read when AUSPOL_FORCE_FP is set (the what-if slider, Pete 2026-10-04): others give way by the published run's statewide-draw regression and the forced party is held exactly at X; "draws-polled" = same regression, usual spread kept around X; "sa" = the older SA 2026 response with spread kept.
   AUSPOL_ONP_CONC_SD         = "auto",      # BACKTEST-side One Nation seat concentration, SHIPPED 2026-09-14 on
                                              # Pete's call. Orders a state's seats by their own transposed FEDERAL
                                              # One Nation vote -- a fresher, independent signal than the seat's own

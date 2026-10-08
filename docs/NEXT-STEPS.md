@@ -18,18 +18,34 @@ Starting points: `AUSPOL_FORCE_FP` (`fit_seats_full.R`, ONP-specific rebalance, 
 a run), the simulation itself is 17-25 s of that. Register row: `PETE-ASKED-FOR.md`
 2026-10-03. Should work for vic2026 and nsw2027 now that the script takes a target.
 
+**2026-10-08 progress (uncommitted on `dev` at time of writing):** stage 1 DONE.
+`AUSPOL_FORCE_FP` now does both of Pete's rules: `AUSPOL_FORCE_FP_RULE="draws"` (others give
+way by regression on the published run's statewide draws, `output/statewide-draw-betas-<stem>.csv`,
+written every run; forced party held exactly at X) and `"draws-polled"` (same regression, usual
+spread kept: "if X is POLLING x%"). Pete asked for a toggle between the two. Default output
+byte-identical (control run). 73 knot runs -> `output/scenario-knots-vic-2026.csv` (mode x party
+x 9 levels); polled-at-today reproduces the headline exactly. A run is 80 s, not 142.
+Next: (1) preview page from the knot table; (2) per-seat probabilities into it; (3) stage 2
+JS engine. **Daily-refresh requirement:** each run repeats ~35 s of slider-independent setup
+(by-election/defector fits, 13-33 s into the run); 72 runs a day must loop scenarios inside ONE
+R process or it costs ~100 min instead of ~60.
+
 ## 2026-10-08 HANDOFF (READ FIRST)
 
-**Shipped and live:** PR #97 and PR #98 merged; `shipped-models` at `75dbda7` (AEF-7 ledger **0.2744** vs AEF 0.2825; pooled seat log loss 0.3249 over 2,120, was 0.3254); forecast refresh run 37700697788 green. In it: departed-successor rate, Nicholls Lib/Nat merged-cell dedup (ledger +0.0005, the fed2025 blend-weight cost Pete accepted), one-cluster blend weight = 0 (fed2019 0.2402 -> 0.2318). Victoria live is unchanged by the two seat-poll fixes until its first seat poll arrives (no polled cells today).
+**Needs Pete:** (a) turn NSW 2027 on when ready -- `AUSPOL_PUBLISH_NSW2027=1 Rscript scripts/promote_rebuild.R`, `Rscript scripts/publish_shipped_release.R`, set repository variable `AUSPOL_PUBLISH_NSW2027=1`, run "Forecast refresh" by hand and read the NSW step log (the first real runner test); (b) ask the `inthegame-blog` session to build the NSW page from `forecast-nsw2027.json` (same shape as `forecast-vic2026.json`).
+
+**Shipped and live:** PR #97 and PR #98 merged; PR #99 merged 2026-10-08 (NSW feature tables + publishing path, OFF; FL0; no live change, Victoria byte-identical); `shipped-models` at `75dbda7` (AEF-7 ledger **0.2744** vs AEF 0.2825; pooled seat log loss 0.3249 over 2,120, was 0.3254); forecast refresh run 37700697788 green. In it: departed-successor rate, Nicholls Lib/Nat merged-cell dedup (ledger +0.0005, the fed2025 blend-weight cost Pete accepted), one-cluster blend weight = 0 (fed2019 0.2402 -> 0.2318). Victoria live is unchanged by the two seat-poll fixes until its first seat poll arrives (no polled cells today).
 
 **Open, in priority order:**
-1. **NSW 2027 on ITG** (`plans/nsw2027-itg-scope-2026-10-08.md`). Runs end to end: `AUSPOL_TARGET=nsw2027 AUSPOL_OUT_SUFFIX=-probe Rscript scripts/fit_seats_full.R` (probe: Labor median 47 of 93, Coalition 32). Census rows DONE (2026-10-08, DR1 ON). Still missing: council history, `build_forecast_json.R` nsw2027 entry + ITG page, a NSW step in promote/publish and the daily workflow. Accepted as is: One Nation trend ~5 under its polls (poll-lag verdict kept), sitting INDs -14 to -20 (SA 2026 says that is if anything too small).
+1. **NSW 2027 on ITG** (`plans/nsw2027-itg-scope-2026-10-08.md`). Runs end to end: `AUSPOL_TARGET=nsw2027 AUSPOL_OUT_SUFFIX=-probe Rscript scripts/fit_seats_full.R` (probe: Labor median 47 of 93, Coalition 32). DONE 2026-10-08 (PR #99): census rows (DR1 ON), council history (44 of 194 candidacies; it only needed the candidate list), forecast JSON (probe: expected seats ALP 46.8, LNP 31.8, IND 7.2, ONP 4.4, GRN 2.8; P(hung) 0.46), promote/publish + workflow step (off). Still missing: the ITG page (other session), NSW 2027 leader rows in `external/reference/leaders/leaders.csv` (leader-seat table is empty, so no Minns/Opposition bonus). Accepted as is: One Nation trend ~5 under its polls (poll-lag verdict kept), sitting INDs -14 to -20 (SA 2026 says that is if anything too small).
 2. **fed2025 seat polls deserved weight ~0.13, got 0.55**: no pre-election signal found (fed2022 vs fed2025 disagreement 4.12 vs 3.80). Election-clustered SE checked, does nothing. Open.
 3. ~~Flows pool across states~~ **CLOSED 2026-10-08, by design:** `R/flow_model.R` pools regions on purpose; same-region double weighting changed nothing (6.544 vs 6.541 MAE) and a state-vs-federal term was rejected (+1.10, se 1.90); `scripts/backtest_flows.R` re-races it as G3. Exhaust rates do differ by state (NSW ONP 57%).
 
 4. **fit_seats_full.R has no per-stage timer**: probes ran 120-325 s each, 30+ min today. Time one run by stage (`~/.claude/lib/runtime_log.R`) before caching anything.
 
-**Lessons recorded today:** memory `print-value-at-point-of-use` (the 25.5 flow claim). A hand run of `pool_backtests.R` overwrote the rebuild's scoreboard with a stale wa2021 file (23 pairs); restored from `output/snapshots/20261008-0945-75dbda7-from6` before publishing.
+**What I got wrong today (so the next session does not repeat it):** the 25.5 One Nation flow (the model uses 33.7) and "council history is Victoria-only" (it covers every election since 2004) -- both stated from a file or script name without printing the value; memory `print-value-at-point-of-use`. A trend-surge prereg was written without reading `reviews/poll-lag-2026-08-19.md`, which had refused it. The release-relative seat-poll idea rested on a -6.8 Labor error measured against the result, not against our model.
+
+**Lessons recorded today:** A hand run of `pool_backtests.R` overwrote the rebuild's scoreboard with a stale wa2021 file (23 pairs); restored from `output/snapshots/20261008-0945-75dbda7-from6` before publishing.
 
 ## 2026-10-07 evening HANDOFF (READ FIRST, Pete restarting)
 
