@@ -164,5 +164,5 @@ age_days <- round(as.numeric(difftime(Sys.time(), as.POSIXct(RESULTS[, max(mtime
 cat(sprintf("PR3 wrote %s: %d rows, %d pairs, %d seats\n", out_path, nrow(RESULTS), uniqueN(RESULTS$pair), uniqueN(RESULTS$seat)))
 age_tbl <- RESULTS[, .(age_days = round(as.numeric(difftime(Sys.time(), max(as.POSIXct(mtime)), units = "days")), 1)), by = pair]
 setorder(age_tbl, -age_days)
-cat("PR4 freshness (days since this pair's file was written) -- oldest first:\n")
+cat("PRE4 freshness (days since this pair's file was written) -- oldest first:\n")
 print(age_tbl)

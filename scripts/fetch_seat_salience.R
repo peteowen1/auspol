@@ -175,7 +175,7 @@ if (nzchar(EL_ALL)) {
   # nine hand-picked seats are excluded from scoring separately.
   set.seed(20260826L)
   WANT <- WANT[sample(.N)]
-  cat(sprintf("SS0  %s: %d seats in SEEDED RANDOM order | max %d new per run
+  cat(sprintf("SAL0  %s: %d seats in SEEDED RANDOM order | max %d new per run
 ",
               EL_ALL, nrow(WANT), MAX_SEATS))
 } else {
@@ -223,7 +223,7 @@ for (i in seq_len(nrow(WANT))) {
   dropped <- max(0L, nrow(d) - MAXKW)
   d <- utils::head(d, MAXKW)
   if (dropped > 0L)
-    cat(sprintf("SS1  %s: %d low-priority candidate(s) not queried
+    cat(sprintf("SAL1  %s: %d low-priority candidate(s) not queried
 ", sn, dropped))
   probe <- gsub("[^A-Za-z0-9]", "_",
                 sprintf("ss-%s-%s-%s", geo, as.Date(POLL[[el]]) - 1,
@@ -235,7 +235,7 @@ for (i in seq_len(nrow(WANT))) {
   d[, sal := as.numeric(v[kw])]
   d[is.na(sal), sal := 0]
   d[, sal_share := 100 * sal / sum(sal)]
-  cat(sprintf("\nSS2  %s %s (%s)\n", el, sn, geo))
+  cat(sprintf("\nSAL2  %s %s (%s)\n", el, sn, geo))
   print(d[order(-sal_share), .(cand = kw, party, sal_share = round(sal_share, 1),
                                fp = round(pcv, 1), gap = round(sal_share - pcv, 1))],
         row.names = FALSE)
@@ -247,13 +247,13 @@ if (length(out)) {
   R <- rbindlist(out)
   fwrite(R, "output/seat-salience.csv")
   nm <- R[!party %in% c("ALP", "LNP", "NAT")]
-  cat(sprintf("\nSS9  %d candidates in %d seats -> output/seat-salience.csv\n",
+  cat(sprintf("\nSAL9  %d candidates in %d seats -> output/seat-salience.csv\n",
               nrow(R), uniqueN(paste(R$election, R$seat))))
   if (nrow(nm) > 2) {
     m <- summary(lm(pcv ~ sal_share, data = nm))
-    cat(sprintf("SS9  NON-MAJORS: fp ~ salience share, slope %+.2f (SE %.2f) | R2 %.3f | n %d\n",
+    cat(sprintf("SAL9  NON-MAJORS: fp ~ salience share, slope %+.2f (SE %.2f) | R2 %.3f | n %d\n",
                 coef(m)[2,1], coef(m)[2,2], m$r.squared, nrow(nm)))
-    cat(sprintf("SS9  mean |salience share - fp| for non-majors: %.1f points\n",
+    cat(sprintf("SAL9  mean |salience share - fp| for non-majors: %.1f points\n",
                 mean(abs(nm$sal_share - nm$pcv))))
   }
 }

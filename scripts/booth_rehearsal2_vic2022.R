@@ -26,7 +26,7 @@ S <- fread(sf, showProgress = FALSE)
 PRI <- S[pair == "vic2022", .(district = seat, cls = party, prior = pred_share)]
 sd_cls <- S[, .(sd_prior = sd(actual_share - pred_share)), by = .(cls = party)]
 PRI <- merge(PRI, sd_cls, by = "cls")
-cat(sprintf("BQ0  prior: vic2022 backtest primaries for %d seats (of %d with booths); prior sd by class: %s\n",
+cat(sprintf("BRV0  prior: vic2022 backtest primaries for %d seats (of %d with booths); prior sd by class: %s\n",
             uniqueN(PRI$district), uniqueN(Lc$district),
             paste(sprintf("%s %.2f", sd_cls$cls, sd_cls$sd_prior), collapse = ", ")))
 final <- Lc[, .(final = sum(v)), by = .(district, cls)]; final[, share_final := 100 * final / sum(final), by = district]
@@ -75,7 +75,7 @@ for (frac in c(0.0, 0.10, 0.25, 0.50, 1.00)) {
   }
 }
 Rt <- rbindlist(res)
-cat("BQ1  rehearsal 2 (vic2022, reference 2018, prior = shipped vic2022 backtest). Error on the final ALP/LNP/GRN share,\n")
+cat("BRV1  rehearsal 2 (vic2022, reference 2018, prior = shipped vic2022 backtest). Error on the final ALP/LNP/GRN share,\n")
 cat("     points, lower is better; leader = first-preference leader called correctly, of the seats with a prior\n")
 print(dcast(Rt, frac_of_night_vote ~ estimator, value.var = c("leader_correct", "major_mae")))
-fwrite(Rt, "output/booth-rehearsal2-vic2022.csv"); cat("BQ2  wrote output/booth-rehearsal2-vic2022.csv\n")
+fwrite(Rt, "output/booth-rehearsal2-vic2022.csv"); cat("BRV2  wrote output/booth-rehearsal2-vic2022.csv\n")

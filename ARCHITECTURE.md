@@ -451,6 +451,24 @@ was caught only against a number someone already knew.
   | `FW` | `compare_fp_widening.R` | which widening factor, against the pre-registered rule |
   | `PL` | `test_poll_lag.R` | does the trend's lag behind recent polls hurt |
 
+  **Collision ratchet (2026-10-09).** A sweep found 208 codes printed by more
+  than one file, 163 of them meaning different things in different files (`SP2` was
+  both the seat-swing port and the salience screen; `SC1` the surge-hazard line
+  in every harness and an unrelated line in each of five other scripts). Each
+  different-meaning pair was renamed in the less-referenced file (156 codes), so the codes
+  in the three tables above are unchanged except where noted here. The
+  `SC` prefix now belongs to `test_seat_probability_calibration.R` alone (its
+  `SC0`–`SC6`; the harnesses' surge-hazard line is `SHZ1`, the scenario and
+  corpus builders use their own prefixes). `tests/testthat/test-check-code-collisions.R`
+  rebuilds the code-to-files map from `R/` and `scripts/` and fails on any code
+  printed by two files that is not a row in `tests/testthat/check-code-allowlist.csv`.
+  The allowlist holds only (a) the same check printed from several entry points
+  (the six harnesses and `fit_seats_full.R`) and (b) pre-registration clause ids
+  (`C2`, `C3`, `R1`–`R3`, `T3`, `P4`), which name a different clause in each plan
+  and so are left alone. A new script takes a prefix nothing uses; that test is
+  the check, not this paragraph. The scan also reads `code = "XX1"` arguments and
+  `.py`/`.sh` scripts, which the grep below misses.
+
   Codes must be unique and `run_all.R` stops if two stages claim the same one
   — but only for stages. Adding a code to a standalone script means checking
   this table by hand, and **grepping for it is not enough**: three separate

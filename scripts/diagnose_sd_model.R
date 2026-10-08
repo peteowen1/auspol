@@ -50,9 +50,9 @@ D <- rbindlist(lapply(names(PAIRSETS), function(k) {
 stopifnot(nrow(D) > 0)
 D[, `:=`(ll_off = ll(p_off), ll_on = ll(p_on))]
 D[, d := ll_on - ll_off]          # negative = the SD model helped this seat
-cat(sprintf("XS1  %d seats across %d pairs (%s)\n",
+cat(sprintf("DSM1  %d seats across %d pairs (%s)\n",
             nrow(D), uniqueN(D$pair), paste(unique(D$harness), collapse = "/")))
-cat(sprintf("XS1  helped %d | unchanged %d | hurt %d | net %+.2f log-loss units\n",
+cat(sprintf("DSM1  helped %d | unchanged %d | hurt %d | net %+.2f log-loss units\n",
             sum(D$d < -1e-9), sum(abs(D$d) <= 1e-9), sum(D$d > 1e-9), sum(D$d)))
 
 cat("\nXS2  THE MECHANICAL TEST. Seats bucketed by the probability the BASELINE\n")

@@ -438,7 +438,7 @@ salience_permit_for <- function(election, prev_election, region,
     }
   }
   if (is.null(lead_kw)) {
-    cat(sprintf("SP2! %s: no corpus to name class leaders; permit taken from the first candidate by name order\n", election))
+    cat(sprintf("SCR2! %s: no corpus to name class leaders; permit taken from the first candidate by name order\n", election))
     data.table::setorder(SAL, .sk, party, .kw)
     out <- SAL[, .SD[1L], by = list(.sk, party)]
   } else {
@@ -460,7 +460,7 @@ salience_permit_for <- function(election, prev_election, region,
       miss <- merge(miss, first_seat, by = ".sk")
       miss <- merge(miss, lead_ret, by = c(".sk", "party"), all.x = TRUE)
       miss[, permit := if (isTRUE(.ret) || party %in% surging) TRUE else NA, by = list(.sk, party)]
-      cat(sprintf("SP2! %s: %d class(es) whose leader has no salience row -> permit TRUE for %d (surging class or returning leader), NA for %d\n",
+      cat(sprintf("SCR2! %s: %d class(es) whose leader has no salience row -> permit TRUE for %d (surging class or returning leader), NA for %d\n",
                   election, nrow(miss), sum(miss$permit %in% TRUE), sum(is.na(miss$permit))))
       miss[, keyword := NA_character_]
       out <- data.table::rbindlist(list(out[, list(seat, party, permit, keyword)],

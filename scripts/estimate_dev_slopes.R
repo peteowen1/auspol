@@ -58,18 +58,18 @@ for (rg in regions) {
 S <- rbindlist(out)
 fwrite(S, "output/dev-slopes-heldout.csv")
 
-cat("\nDS2  slope by class, with the scored region HELD OUT\n")
+cat("\nEDS2  slope by class, with the scored region HELD OUT\n")
 W <- dcast(S, party ~ held_out, value.var = "slope")
 num <- setdiff(names(W), "party")
 for (j in num) set(W, j = j, value = round(W[[j]], 3))
 print(W, row.names = FALSE)
 
-cat("\nDS3  is a slope of 1 rejected in every held-out fit? (t vs 1)\n")
+cat("\nEDS3  is a slope of 1 rejected in every held-out fit? (t vs 1)\n")
 T <- dcast(S, party ~ held_out, value.var = "t_vs_1")
 for (j in setdiff(names(T), "party")) set(T, j = j, value = round(T[[j]], 1))
 print(T, row.names = FALSE)
 
-cat("\nDS4  the spec string each harness should run with\n")
+cat("\nEDS4  the spec string each harness should run with\n")
 for (rg in regions) {
   v <- S[held_out == rg][order(party)]
   cat(sprintf("  %-4s %s\n", rg,

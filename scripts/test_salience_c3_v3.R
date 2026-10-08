@@ -4,7 +4,7 @@
 # output/c3-widened-population.csv (built by build_c3_widened_population.R,
 # which asserts every join is row-count-preserving).
 #
-# Emits CV3* codes.
+# Emits TSC3* codes.
 options(auspol.root = normalizePath("."))
 suppressMessages(devtools::load_all(quiet = TRUE))
 suppressMessages(library(data.table))
@@ -32,7 +32,7 @@ cat(sprintf("CV30 fitted on %d gated fed2022 rows | xp coef %+.4f (SE %.4f, t %+
             nrow(TR), cs["xp",1], cs["xp",2], cs["xp",3], cs["xp",4]))
 
 if (!file.exists("output/c3-widened-population.csv")) {
-  stop("CV3! run scripts/build_c3_widened_population.R first")
+  stop("TSC3! run scripts/build_c3_widened_population.R first")
 }
 POP <- fread("output/c3-widened-population.csv", showProgress = FALSE)
 POP[, pred := base]

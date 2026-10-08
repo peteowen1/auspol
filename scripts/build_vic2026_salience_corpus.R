@@ -36,7 +36,7 @@ live <- fread(live_f, showProgress = FALSE)
 need <- c("seat", "cand", "party", "sal_raw")
 miss <- setdiff(need, names(live))
 if (length(miss)) stop(live_f, " is missing column(s): ", paste(miss, collapse = ", "))
-cat(sprintf("BV1  %d live-salience rows read (%d seats, %d candidates)\n",
+cat(sprintf("BVS1  %d live-salience rows read (%d seats, %d candidates)\n",
             nrow(live), uniqueN(live$seat), uniqueN(live$cand)))
 
 # prev_party: the CLASS's own max(pcv) in the seat at the prior election
@@ -76,11 +76,11 @@ existing <- fread(sal_f, showProgress = FALSE)
 before_n <- nrow(existing)
 existing <- existing[existing$election != "vic2026"]
 dropped <- before_n - nrow(existing)
-if (dropped) cat(sprintf("BV2  removed %d stale vic2026 row(s) before re-appending (idempotent rerun)\n", dropped))
+if (dropped) cat(sprintf("BVS2  removed %d stale vic2026 row(s) before re-appending (idempotent rerun)\n", dropped))
 
 combined <- rbindlist(list(existing, out), fill = TRUE)
 fwrite(combined, sal_f)
-cat(sprintf("BV3  wrote %s: %d vic2026 rows added, %d total rows (was %d)\n",
+cat(sprintf("BVS3  wrote %s: %d vic2026 rows added, %d total rows (was %d)\n",
             sal_f, nrow(out), nrow(combined), before_n))
-cat(sprintf("BV3  by class: %s\n",
+cat(sprintf("BVS3  by class: %s\n",
             paste(sprintf("%s=%d", names(table(out$party)), as.integer(table(out$party))), collapse = " ")))

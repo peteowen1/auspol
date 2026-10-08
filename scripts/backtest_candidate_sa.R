@@ -1149,7 +1149,7 @@ if (identical(Sys.getenv("AUSPOL_SALIENCE_SURGE_V2", "0"), "1")) {
     if (!is.finite(.surge_scale) || .surge_scale <= 0) stop("AUSPOL_SURGE_SCALE must be a positive number")
     if (.surge_scale != 1) {
       surge_arg <- pmin(1, surge_arg * .surge_scale)
-      cat(sprintf("SC1  surge hazard x%.1f: mean %.4f, max %.4f, seats at the cap %d\n",
+      cat(sprintf("SHZ1  surge hazard x%.1f: mean %.4f, max %.4f, seats at the cap %d\n",
                   .surge_scale, mean(surge_arg), max(surge_arg), sum(surge_arg >= 1)))
     }
     cat(sprintf(paste0("BS0v ", TGT, ": surge-v2 hazard for %d of %d seats (%d absent -> 0) | mean %.4f | mu %.2f sd %.2f | lambda %.1f | train winners %d\n"),

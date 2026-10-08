@@ -24,9 +24,12 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30.
    district-to-region table; `build_forecast_json.R` region_file is NA), per-seat pages.
 2. **Scenario jobs wait 5-16 min each for GitHub's R install** (one straggler sets the run's length, ~60 min
    end to end). A prebuilt R container image would remove it. Not urgent: nobody watches the 06:00 run.
-3. **Haiku audit leftovers** (verified live): 185 check codes with two meanings (e.g. SP2 in
-   R/salience_screen.R:441 vs R/seat_swing_port.R:178); 50 switches MODEL-REGISTRY cannot explain; a
-   scheduled Haiku sentinel running the four audits after each daily run (ops repo already has one).
+3. **Haiku audit leftovers**: the check-code collisions and the registry's unexplained switches are DONE
+   (2026-10-09, branch worktree-agent-a35f67db58e1d5e98): 63 codes still printed by several files, 56
+   the same check, 7 pre-registration clause ids left alone; 156 codes renamed; a ratchet test
+   (`test-check-code-collisions.R` + `check-code-allowlist.csv`) stops new ones. All 50 switches now
+   carry a CLASSIFY note; `AUSPOL_UPSET_FLOOR` is the one genuinely OPEN GAP. Still open: a scheduled
+   Haiku sentinel running the four audits after each daily run (ops repo already has one).
 4. `check_like_ci.R` reruns R CMD check whenever scripts/ changes (~5 min a push; ~40 min on 2026-10-08):
    consider whether scripts/ belongs in the package build.
 

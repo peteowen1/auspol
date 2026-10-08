@@ -65,7 +65,7 @@ A180 <- loo(both, "pub_c")
 B180 <- loo(both, "tra_c")
 B441 <- loo(d, "tra_c")
 
-cat("\nDC1  the three numbers, each against its own sample's uniform swing\n")
+cat("\nDFA1  the three numbers, each against its own sample's uniform swing\n")
 res <- data.table(
   what = c("published, 180 seats", "transposed, 180 seats", "transposed, 441 seats"),
   seats = c(sum(A180$n), sum(B180$n), sum(B441$n)),
@@ -75,9 +75,9 @@ res[, gain_pct := 100 * (uniform - mae) / uniform]
 print(res[, .(what, seats, uniform = round(uniform, 4), mae = round(mae, 4),
               gain_pct = round(gain_pct, 1))])
 
-cat(sprintf("\nDC2  MEASURE costs %.1f points of gain (%.1f%% -> %.1f%%, same 180 seats)\n",
+cat(sprintf("\nDFA2  MEASURE costs %.1f points of gain (%.1f%% -> %.1f%%, same 180 seats)\n",
             res$gain_pct[1] - res$gain_pct[2], res$gain_pct[1], res$gain_pct[2]))
-cat(sprintf("DC2  SAMPLE  costs %.1f points of gain (%.1f%% -> %.1f%%, same measure)\n",
+cat(sprintf("DFA2  SAMPLE  costs %.1f points of gain (%.1f%% -> %.1f%%, same measure)\n",
             res$gain_pct[2] - res$gain_pct[3], res$gain_pct[2], res$gain_pct[3]))
 
 # ---- which elections behave which way --------------------------------------
@@ -85,26 +85,26 @@ per <- merge(B441[, .(election, n, mae, uniform)],
              unique(d[, .(election, gap_months, fed)]), by = "election")
 per[, gain := uniform - mae]
 setorder(per, gap_months)
-cat("\nDC3  per election, ordered by months between the federal poll and the state one\n")
+cat("\nDFA3  per election, ordered by months between the federal poll and the state one\n")
 print(per[, .(election, fed, gap_months, seats = n,
               dispersion = round(uniform, 3), gain = round(gain, 4))])
 
-cat("\nDC4  READ THIS AS A DESCRIPTION, NOT A TEST.\n")
-cat("DC4  The ordering below was noticed AFTER the results were seen, so it\n")
-cat("DC4  cannot be tested on the same five elections that suggested it. It is\n")
-cat("DC4  recorded because of what it implies for the live forecast, not\n")
-cat("DC4  because it is established.\n")
+cat("\nDFA4  READ THIS AS A DESCRIPTION, NOT A TEST.\n")
+cat("DFA4  The ordering below was noticed AFTER the results were seen, so it\n")
+cat("DFA4  cannot be tested on the same five elections that suggested it. It is\n")
+cat("DFA4  recorded because of what it implies for the live forecast, not\n")
+cat("DFA4  because it is established.\n")
 sh <- per[gap_months <= 12]; lo <- per[gap_months > 12]
-cat(sprintf("DC4  gap <= 12 months (%s): mean gain %+.4f\n",
+cat(sprintf("DFA4  gap <= 12 months (%s): mean gain %+.4f\n",
             paste(sh$election, collapse = ", "), mean(sh$gain)))
-cat(sprintf("DC4  gap >  12 months (%s): mean gain %+.4f\n",
+cat(sprintf("DFA4  gap >  12 months (%s): mean gain %+.4f\n",
             paste(lo$election, collapse = ", "), mean(lo$gain)))
-cat(sprintf("DC4  Spearman correlation between gap and gain: %+.2f (n = %d)\n",
+cat(sprintf("DFA4  Spearman correlation between gap and gain: %+.2f (n = %d)\n",
             stats::cor(per$gap_months, per$gain, method = "spearman"), nrow(per)))
 
-cat("\nDC5  what this means for the seat the model is actually forecasting\n")
-cat("DC5  SEAT_SWING_COEF was fitted on vic2022 and nsw2023 -- gaps of 6 and 10\n")
-cat("DC5  months, the two SHORTEST in the set. Victoria 2026 follows federal\n")
-cat("DC5  2025 by 18 months, which is longer than either and sits with the\n")
-cat("DC5  three elections where the adjustment did not help.\n")
+cat("\nDFA5  what this means for the seat the model is actually forecasting\n")
+cat("DFA5  SEAT_SWING_COEF was fitted on vic2022 and nsw2023 -- gaps of 6 and 10\n")
+cat("DFA5  months, the two SHORTEST in the set. Victoria 2026 follows federal\n")
+cat("DFA5  2025 by 18 months, which is longer than either and sits with the\n")
+cat("DFA5  three elections where the adjustment did not help.\n")
 fwrite(per, file.path("output", "fed-swing-gain-by-gap.csv"))

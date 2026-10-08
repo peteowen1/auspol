@@ -31,7 +31,7 @@ ft <- rbindlist(lapply(names(ARMS), function(a) rbindlist(lapply(tpp_lab, functi
   data.table(lab = l, arm = a, fund = r$fund, coef = r$coef)
 }))))
 ft <- merge(ft, data.table(lab = tpp_lab, actual = tpp$actual), by = "lab")
-cat(sprintf("RF1 time-forward fundamentals: %d of %d elections fitted per arm\n",
+cat(sprintf("RFA1 time-forward fundamentals: %d of %d elections fitted per arm\n",
             sum(is.finite(ft$fund[ft$arm == "base"])), length(tpp_lab)))
 
 pd <- fread(out_path("projection-data.csv"), showProgress = FALSE)
@@ -66,13 +66,13 @@ paired <- function(x, y, label) {
   invisible(d)
 }
 w <- dcast(ft, lab + actual ~ arm, value.var = "fund")
-cat("\nRF2 absolute error, lower is better; diff = drop - base (negative favours dropping)\n")
+cat("\nRFA2 absolute error, lower is better; diff = drop - base (negative favours dropping)\n")
 paired(w$base - w$actual, w$drop - w$actual, "fundamentals, time-forward")
 r1 <- res[horizon == 1L]
 paired(r1$err_base, r1$err_drop, "PRIMARY projection @1 day")
 paired(r1$err_base[r1$lab != "nsw2023"], r1$err_drop[r1$lab != "nsw2023"], "projection @1 day without nsw2023")
 r7 <- res[horizon == 730L]
 paired(r7$err_base, r7$err_drop, "projection @730 days")
-cat("\nRF3 nsw2023:\n"); print(r1[lab == "nsw2023"]); print(ft[lab == "nsw2023"])
-cat("\nRF4 fed_aligned coefficient (points of Labor 2PP per unit) by cutoff, state elections:\n")
+cat("\nRFA3 nsw2023:\n"); print(r1[lab == "nsw2023"]); print(ft[lab == "nsw2023"])
+cat("\nRFA4 fed_aligned coefficient (points of Labor 2PP per unit) by cutoff, state elections:\n")
 print(ft[arm == "base" & !grepl("^fed", lab) & is.finite(coef), list(lab, coef = round(coef, 2))])

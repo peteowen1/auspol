@@ -55,7 +55,7 @@ if (file.exists(f)) {
   cat("PL0  fetched and cached RAW series\n")
 }
 
-cat(sprintf("PL1  %d rows | %s to %s | %d buckets | granularity %s\n",
+cat(sprintf("PSL1  %d rows | %s to %s | %d buckets | granularity %s\n",
             nrow(s), min(s$date), max(s$date), uniqueN(s$date),
             if (as.integer(median(diff(sort(unique(s$date))))) >= 6) "WEEKLY" else "DAILY"))
 stopifnot(uniqueN(s$keyword) == length(KW))
@@ -70,15 +70,15 @@ jump_at <- function(poll, weeks = 8L) {
 J22 <- jump_at("2022-05-21"); J25 <- jump_at("2025-05-03")
 M <- merge(J22[, .(keyword, jump22 = jump)], J25[, .(keyword, jump25 = jump)], by = "keyword")
 
-cat("\nPL2  BOTH campaigns on ONE normalisation (no chaining, no anchor)\n")
+cat("\nPSL2  BOTH campaigns on ONE normalisation (no chaining, no anchor)\n")
 print(M[order(-jump22)], row.names = FALSE)
 
-cat("\nPL3  THE TEST: is fed2025 still ~30x compressed relative to fed2022?\n")
+cat("\nPSL3  THE TEST: is fed2025 still ~30x compressed relative to fed2022?\n")
 cat(sprintf("     old election-local scales: fed2022 eligible max 57.6 | fed2025 eligible max 1.6  (36x)\n"))
 cat(sprintf("     long window:               Ryan 2022 jump %.2f | Boele 2025 jump %.2f  (%.1fx)\n",
             M[keyword=="Monique Ryan", jump22], M[keyword=="Nicolette Boele", jump25],
             M[keyword=="Monique Ryan", jump22] / max(M[keyword=="Nicolette Boele", jump25], 1e-9)))
-cat("\nPL4  each candidate should peak in THEIR OWN election -- a sanity check the\n")
+cat("\nPSL4  each candidate should peak in THEIR OWN election -- a sanity check the\n")
 cat("     old method could not perform at all\n")
 pk <- s[, .SD[which.max(hits)], by = keyword][, .(keyword, peak_date = date, peak = hits)]
 print(pk[order(peak_date)], row.names = FALSE)

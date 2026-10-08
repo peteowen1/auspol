@@ -47,11 +47,11 @@ for (k in seq_len(nrow(E))) {
   }
 }
 A <- rbindlist(rows)
-cat(sprintf("CV1  %d pairs | %d seat-observations | same-candidate in %d\n",
+cat(sprintf("ECV1  %d pairs | %d seat-observations | same-candidate in %d\n",
             uniqueN(A$pair), nrow(A), sum(A$same)))
 
 # Residual around each group's OWN line: unexplained spread, not slope.
-cat("\nCV2  residual sd around each group's own fitted line\n")
+cat("\nECV2  residual sd around each group's own fitted line\n")
 T <- A[, {
   m <- stats::lm(now ~ prev, .SD)
   .(seats = .N, resid_sd = round(stats::sd(stats::residuals(m)), 2),
@@ -61,7 +61,7 @@ W <- dcast(T, class ~ same, value.var = c("seats", "resid_sd", "R2"))
 W[, multiplier := round(resid_sd_FALSE / resid_sd_TRUE, 2)]
 print(W, row.names = FALSE)
 
-cat("\nCV3  pooled across the minor classes, which is where it bites\n")
+cat("\nECV3  pooled across the minor classes, which is where it bites\n")
 M <- A[class %in% c("IND", "GRN", "ONP", "OTH_RIGHT")]
 for (s in c(TRUE, FALSE)) {
   m <- stats::lm(now ~ prev, M[same == s])
@@ -73,7 +73,7 @@ mm <- stats::sd(stats::residuals(stats::lm(now ~ prev, M[same == FALSE]))) /
       stats::sd(stats::residuals(stats::lm(now ~ prev, M[same == TRUE])))
 cat(sprintf("   POOLED MULTIPLIER %.2f  (a new candidate is this many times as uncertain)\n", mm))
 
-cat("\nCV4  the majors, as a control -- a party always fields someone, so the\n")
+cat("\nECV4  the majors, as a control -- a party always fields someone, so the\n")
 cat("     multiplier there should be near 1 and this checks the measure itself\n")
 J <- A[class %in% c("ALP", "LNP")]
 for (s in c(TRUE, FALSE)) {
@@ -92,7 +92,7 @@ for (s in c(TRUE, FALSE)) {
 #
 # Subtract it in variance: seat_sd(p) = sqrt(total(p)^2 - party_sd^2).
 PARTY_SD <- 1.5   # the published value in fit_seats_full.R
-cat("\nCV5  decomposing total residual sd into its seat-level part\n")
+cat("\nECV5  decomposing total residual sd into its seat-level part\n")
 B <- rbindlist(rows)
 B[, sw := mean(now) - mean(prev), by = .(pair, class)]
 B[, pred := pmax(0, prev + sw)][, resid := now - pred]

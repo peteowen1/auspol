@@ -80,10 +80,10 @@ def main():
     print(f'EN1 {len(rows)} endorsement rows; matched {used}; announced after polling day (dropped) {len(late)}; unmatched {len(unmatched)}')
     print(f'EN2 Climate 200-backed candidacies by election: {dict(sorted(by.items()))}')
     for u in unmatched:
-        print(f'EN0! no candidacy matched: {u}')
+        print(f'BEF0! no candidacy matched: {u}')
     n_match_target = sum(1 for e in rows if e['election'] in dates)
     if n_match_target and len(unmatched) > 0.10 * n_match_target:
-        print('EN0! more than 10% of endorsements unmatched -- fix names before using')
+        print('BEF0! more than 10% of endorsements unmatched -- fix names before using')
         sys.exit(1)
 
 

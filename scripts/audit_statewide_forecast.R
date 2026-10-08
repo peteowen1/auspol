@@ -22,13 +22,13 @@ for (pr in P) {
   # actual statewide first preferences by class, from the candidate corpus
   # (output/candidacies.csv carries votes per candidate for every scored election)
   ab <- CAND[election == el]; aa <- CAND[election == pr$prev]
-  if (!nrow(ab)) { cat("SA0! no candidacies for ", el, "
+  if (!nrow(ab)) { cat("ASF0! no candidacies for ", el, "
 "); next }
   act <- ab[, .(v = sum(votes, na.rm = TRUE)), by = party][, setNames(100 * v / sum(v), party)]
   st_a <- if (nrow(aa)) aa[, .(v = sum(votes, na.rm = TRUE)), by = party][, setNames(100 * v / sum(v), party)] else act
   parties <- union(names(act), c("ALP", "LNP", "GRN", "OTH"))
   fc <- tryCatch(suppressWarnings(forecast_statewide_for(reg, yr, ed, parties, st_a, fund, mix, n_sims = 20000, seed = 42)),
-                 error = function(e) { cat(sprintf("SA0! %s: %s\n", el, conditionMessage(e))); NULL })
+                 error = function(e) { cat(sprintf("ASF0! %s: %s\n", el, conditionMessage(e))); NULL })
   if (is.null(fc)) next
   w <- project_result(fc$tpp, fc$fund, mix, horizon = 1L)$w
   for (cl in intersect(names(fc$st_fc), names(act)))
@@ -44,9 +44,9 @@ for (pr in P) {
 A <- rbindlist(rows)
 AUDIT_F <- sprintf("output/statewide-forecast-audit%s.csv", Sys.getenv("AUSPOL_AUDIT_TAG", ""))
 fwrite(A, AUDIT_F)
-cat("SA1  day-before statewide forecast miss (forecast - actual, first-preference points) by pair and class; lower |miss| is better\n")
+cat("ASF1  day-before statewide forecast miss (forecast - actual, first-preference points) by pair and class; lower |miss| is better\n")
 W <- dcast(A[cls %in% c("ALP", "LNP", "GRN", "ONP")], pair + n_polls + trend_tpp + fund_tpp + w_trend ~ cls, value.var = "miss")
 print(W[order(pair)])
-cat("SA2  mean |miss| over ALP/LNP/GRN by pair, worst first:\n")
+cat("ASF2  mean |miss| over ALP/LNP/GRN by pair, worst first:\n")
 print(A[cls %in% c("ALP", "LNP", "GRN"), .(mean_abs_miss = round(mean(abs(miss)), 2), alp_miss = round(miss[cls == "ALP"], 2)), by = pair][order(-mean_abs_miss)])
-cat(sprintf("SA3  wrote %s (AUSPOL_ANCHOR_IMPLIED=%s)\n", AUDIT_F, Sys.getenv("AUSPOL_ANCHOR_IMPLIED", "0")))
+cat(sprintf("ASF3  wrote %s (AUSPOL_ANCHOR_IMPLIED=%s)\n", AUDIT_F, Sys.getenv("AUSPOL_ANCHOR_IMPLIED", "0")))

@@ -100,16 +100,16 @@ build_one <- function(pair_label, code) {
 all <- rbindlist(Map(build_one, names(PAIRS), unname(PAIRS)), fill = TRUE)
 stopifnot(nrow(all) > 0)
 
-cat(sprintf("AF1  parsed AEF seat FP bands: %d (seat, party) rows across %d pairs\n",
+cat(sprintf("BAF1  parsed AEF seat FP bands: %d (seat, party) rows across %d pairs\n",
             nrow(all), uniqueN(all$pair)))
 print(all[, .N, by = pair][order(pair)])
 
 na_cls <- all[is.na(aef_fp_class)]
 if (nrow(na_cls)) {
-  cat(sprintf("AF2  WARNING: %d rows have an unclassified party (classify_party returned NA)\n",
+  cat(sprintf("BAF2  WARNING: %d rows have an unclassified party (classify_party returned NA)\n",
               nrow(na_cls)))
   print(na_cls)
 }
 
 fwrite(all, file.path("output", "aef7-fp.csv"))
-cat(sprintf("AF3  wrote output/aef7-fp.csv (%d rows)\n", nrow(all)))
+cat(sprintf("BAF3  wrote output/aef7-fp.csv (%d rows)\n", nrow(all)))

@@ -54,9 +54,9 @@ read_arm_seed <- function(arm, seed) {
     grep("^(XG1!|XF9!|XS9!).*(ignored|unchanged|FAILED|missing)", ln, value = TRUE)
   }))
   if (length(ignored)) {
-    cat(sprintf("PF0!! %s: %d override(s) DID NOT APPLY -- this arm is not what its name says:\n",
+    cat(sprintf("PPA0!! %s: %d override(s) DID NOT APPLY -- this arm is not what its name says:\n",
                 basename(d), length(ignored)))
-    for (m in unique(ignored)) cat(sprintf("PF0!!   %s\n", substr(m, 1, 150)))
+    for (m in unique(ignored)) cat(sprintf("PPA0!!   %s\n", substr(m, 1, 150)))
     if (!identical(Sys.getenv("AUSPOL_ALLOW_INERT_ARM", "0"), "1"))
       stop("refusing to pool ", basename(d), ": an override this arm is named for did not run. ",
            "Fix the missing input, or set AUSPOL_ALLOW_INERT_ARM=1 if you know why it is inert.")
@@ -90,29 +90,29 @@ read_arm_seed <- function(arm, seed) {
     if (!length(cand)) next
     hit <- cand[abs(as.numeric(difftime(file.mtime(cand), file.mtime(lg), units = "secs"))) <= 2]
     if (length(hit) == 1L) {
-      cat(sprintf("PF0m %s/%s: log names no output file; matched %s by mtime (%s)\n",
+      cat(sprintf("PPA0m %s/%s: log names no output file; matched %s by mtime (%s)\n",
                   basename(d), basename(lg), basename(hit), format(file.mtime(hit), "%H:%M:%S")))
       fs <- c(fs, hit)
     } else if (length(hit) > 1L) {
-      cat(sprintf("PF0! %s/%s: log names no output file and %d files share its mtime -- NOT guessing; %s is dropped\n",
+      cat(sprintf("PPA0! %s/%s: log names no output file and %d files share its mtime -- NOT guessing; %s is dropped\n",
                   basename(d), basename(lg), length(hit), reg))
     } else {
-      cat(sprintf("PF0! %s/%s: log names no output file and none matches its mtime -- %s is dropped\n",
+      cat(sprintf("PPA0! %s/%s: log names no output file and none matches its mtime -- %s is dropped\n",
                   basename(d), basename(lg), reg))
     }
   }
   if (!length(fs)) return(NULL)
   rbindlist(lapply(fs, function(f) {
-    if (!file.exists(f)) { cat(sprintf("PF0! %s/%s: named in a log but not on disk -- dropped\n", arm, basename(f))); return(NULL) }
+    if (!file.exists(f)) { cat(sprintf("PPA0! %s/%s: named in a log but not on disk -- dropped\n", arm, basename(f))); return(NULL) }
     x <- tryCatch(fread(f, showProgress = FALSE), error = function(e) NULL)
-    if (is.null(x) || !nrow(x)) { cat(sprintf("PF0! %s/%s: unreadable or empty -- dropped\n", arm, basename(f))); return(NULL) }
+    if (is.null(x) || !nrow(x)) { cat(sprintf("PPA0! %s/%s: unreadable or empty -- dropped\n", arm, basename(f))); return(NULL) }
     pcol <- if ("prob" %in% names(x)) "prob" else if ("p" %in% names(x)) "p" else NA_character_
     if (is.na(pcol) || !all(c("pred","actual") %in% names(x))) {
-      cat(sprintf("PF0! %s/%s: missing prob/p/pred/actual -- dropped\n", arm, basename(f))); return(NULL)
+      cat(sprintf("PPA0! %s/%s: missing prob/p/pred/actual -- dropped\n", arm, basename(f))); return(NULL)
     }
     if (!"pair" %in% names(x)) {
       mm <- regmatches(basename(f), regexpr("(fed|vic|nsw|sa|qld|wa)[0-9]{4}", basename(f)))
-      if (!length(mm)) { cat(sprintf("PF0! %s/%s: no pair column and none in the name -- dropped\n", arm, basename(f))); return(NULL) }
+      if (!length(mm)) { cat(sprintf("PPA0! %s/%s: no pair column and none in the name -- dropped\n", arm, basename(f))); return(NULL) }
       x[, pair := mm]
     }
     x[, .(arm = arm, seed = seed, pair = as.character(pair),

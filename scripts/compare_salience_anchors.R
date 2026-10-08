@@ -35,7 +35,7 @@ suppressMessages(devtools::load_all(quiet = TRUE))
 suppressMessages(library(data.table))
 
 R <- fread("output/emergence-trends.csv", showProgress = FALSE)
-cat(sprintf("CA1  %d rows | %d won | columns: %s\n", nrow(R), sum(R$won),
+cat(sprintf("CSA1  %d rows | %d won | columns: %s\n", nrow(R), sum(R$won),
             paste(names(R), collapse = ", ")))
 
 # The paired fetcher now stores baselines; older cache entries do not. Report
@@ -72,7 +72,7 @@ auc_of <- function(v, won) {
   c((sum(rk[won]) - n1 * (n1 + 1) / 2) / (n1 * n0), n1, n0)
 }
 
-cat("\nCA2  AUC by statistic, on the UNBIASED sample\n")
+cat("\nCSA2  AUC by statistic, on the UNBIASED sample\n")
 res <- list()
 for (nm in names(stats)) {
   v <- eval(stats[[nm]], R)
@@ -85,7 +85,7 @@ for (nm in names(stats)) {
 # Incumbent-anchored only: a PM-fallback ratio is a different measurement and
 # pooling the two was flagged from the start.
 if ("anchor_type" %in% names(R)) {
-  cat("\nCA3  incumbent-anchored rows only\n")
+  cat("\nCSA3  incumbent-anchored rows only\n")
   I <- R[anchor_type == "incumbent"]
   for (nm in names(stats)) {
     v <- eval(stats[[nm]], I)

@@ -69,7 +69,7 @@ for (K in PAIRS) {
 }
 D <- rbindlist(rows)
 stopifnot(nrow(D) > 0)
-cat(sprintf("\nDS1  %d (seat, party) rows across %d pairs\n",
+cat(sprintf("\nFDS1  %d (seat, party) rows across %d pairs\n",
             nrow(D), uniqueN(D$pair)))
 
 # standardise demographics WITHIN pair, so a coefficient means the same thing
@@ -84,7 +84,7 @@ for (v in DEMOG) {
 
 fml <- stats::as.formula(paste("dev ~", paste(DEMOG, collapse = " + ")))
 
-cat("\nDS2  IN-SAMPLE fit per party (upper bound; not the criterion)\n")
+cat("\nFDS2  IN-SAMPLE fit per party (upper bound; not the criterion)\n")
 for (p in PARTIES) {
   d <- D[party == p]
   if (nrow(d) < 30) next
@@ -94,7 +94,7 @@ for (p in PARTIES) {
               stats::sd(stats::residuals(m)), stats::sd(d$dev)))
 }
 
-cat("\nDS3  LEAVE-ONE-ELECTION-OUT -- the honest number\n")
+cat("\nFDS3  LEAVE-ONE-ELECTION-OUT -- the honest number\n")
 cat("     Does predicting a pair's swing deviation from the OTHER pairs beat\n")
 cat("     predicting zero (which is what uniform swing does)?\n\n")
 res <- list()
