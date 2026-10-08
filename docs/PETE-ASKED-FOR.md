@@ -26,6 +26,17 @@ not a commit, not a plan file — that it is not happening and why.
 
 ---
 
+## 2026-10-08
+
+| Request | Status |
+|---|---|
+| "next steps?" -> merge #97, publish, refresh live (2026-10-07/08) | **SHIPPED.** #97 and #98 merged, `shipped-models` 75dbda7, live refresh green. |
+| Fix the top primary misses (priority 1, 2026-10-07) | **PARTLY SHIPPED.** Nicholls (data bug) and fed2019 weight shipped. Refused with numbers: public-only seat polls, release-relative blend, leader-bonus clustering, first-defence IND term. McMahon/fed2025 polls (blend weight per election): open, no pre-election signal found. |
+| NSW 2027 on ITG (priority 2; "go" 2026-10-08, option 1 = one published script) | **IN PROGRESS.** fit_seats_full.R takes AUSPOL_TARGET (Victoria byte-identical); NSW runs end to end with candidates, by-elections, corrected prior. NOT on ITG: census, council, JSON/page, daily step. |
+| Trend that follows surging One Nation (option 1 then 1, 2026-10-08) | **NOT DONE, Pete's choice:** the 2026-08-19 poll-lag verdict and its refusal P3 kept; SA 2026 recorded as new evidence. |
+| NSW One Nation flow: measured 35.1 vs anchor 25.5 ("1", then "dont we have a model for this?") | **NOT NEEDED:** `flows_for()` already estimates 33.7; override reverted. `FL0` now prints the flows used every run. |
+| "how did you miss the model ... make sure you dont miss that again" | **DONE:** memory `print-value-at-point-of-use` + always-on `FL0` line. |
+
 ## 2026-10-07
 
 | Request | Status |

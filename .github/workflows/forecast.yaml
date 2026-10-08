@@ -421,6 +421,31 @@ jobs:
           fi
           command -v wrangler >/dev/null || npm install -g wrangler@4.135.0 >/dev/null 2>&1
           bash scripts/publish_forecast_history.sh || { echo "::warning::forecast history step failed; the live forecast is unaffected"; exit 1; }
+      - name: NSW 2027 forecast (off until the repository variable AUSPOL_PUBLISH_NSW2027 is 1)
+        # Runs AFTER every Victorian publish step (release, R2 feed, dated R2 copy),
+        # so a NSW failure turns the run red and raises the alarm but cannot skip
+        # them (review 2026-10-08: placed before the R2 steps it would have). Same script, AUSPOL_TARGET=nsw2027 (plans/nsw2027-itg-scope-2026-10-08.md).
+        # Its per-target tables and the two NSW election files come from
+        # shipped-models (promote_rebuild.R with AUSPOL_PUBLISH_NSW2027=1): the
+        # runner cannot fetch NSWEC results itself.
+        if: success() && vars.AUSPOL_PUBLISH_NSW2027 == '1'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -e
+          for f in seat-swing-port-nsw2027.csv seat-poll-blend-nsw2027.csv leader-seat-nsw2027.csv demo-resid-nsw2027.csv council-history-nsw2027.csv; do
+            gh release download shipped-models -p "$f" -D output --clobber
+          done
+          mkdir -p external/elections
+          for f in nswec-2023-nsw-firstprefs.csv nswec-nsw-transfers.csv; do
+            gh release download shipped-models -p "$f" -D external/elections --clobber
+          done
+          gh release download forecast-latest -p forecast-history-nsw2027.csv -D output --clobber 2>/dev/null || echo "no forecast-history-nsw2027.csv yet (first run)"
+          AUSPOL_TARGET=nsw2027 Rscript scripts/fit_seats_full.R 2>&1 | tee run-nsw2027.log
+          AUSPOL_FORECAST_ELECTION=nsw2027 Rscript scripts/build_forecast_json.R
+          cp external/aus-polling-analyser/analysis/Data/poll-data-nsw.csv output/polls-nsw-snapshot.csv
+          gh release upload forecast-latest output/forecast-nsw2027.json output/forecast-history-nsw2027.csv output/seat-probs-nsw-2027.csv output/seat-shares-nsw-2027.csv output/polls-nsw-snapshot.csv --clobber
       - name: Upload outputs
         if: always()
         uses: actions/upload-artifact@v4

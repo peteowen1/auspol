@@ -1,3 +1,9 @@
+# auspol 0.4.77
+
+- New South Wales 2027 has every feature table Victoria has: census rows for the demographic correction and council history (44 of 194 provisional candidacies have a council record). A publishing path is built but OFF (`AUSPOL_PUBLISH_NSW2027`): promotion ships the NSW tables and election files, and the daily workflow runs the NSW forecast after Victoria has published everywhere.
+- The daily run's council features now read each election's own table; they had read Victoria's by name, which would have left New South Wales with none.
+- Every forecast run prints the preference flows it actually uses (`FL0`), because the flow file's number is not the one used: the model re-estimates it from earlier elections.
+
 # auspol 0.4.76
 
 - A seat poll whose Liberal and National columns were one merged cell on Wikipedia no longer counts the Coalition twice (`AUSPOL_SEAT_POLL_COALITION_DEDUP`). Nicholls 2022 read as Coalition 82% and pulled the forecast to 55.3 against an actual 44.2; it was the only such poll in 1,210. Fixing it raises the seat-poll weight later elections learn, which costs Victoria-style MRP-heavy elections a little (federal 2025 share error +3%).
