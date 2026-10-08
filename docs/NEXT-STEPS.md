@@ -25,8 +25,12 @@ written every run; forced party held exactly at X) and `"draws-polled"` (same re
 spread kept: "if X is POLLING x%"). Pete asked for a toggle between the two. Default output
 byte-identical (control run). 73 knot runs -> `output/scenario-knots-vic-2026.csv` (mode x party
 x 9 levels); polled-at-today reproduces the headline exactly. A run is 80 s, not 142.
-Next: (1) preview page from the knot table; (2) per-seat probabilities into it; (3) stage 2
-JS engine. **Daily-refresh requirement:** each run repeats ~35 s of slider-independent setup
+Preview page DONE (https://claude.ai/artifact/AuSRMYX1CFse9ssV3EwvY2: party, exact/polling toggle,
+seats, odds, own-vote comparison chart, seat by seat). Stage 2 JS engine DROPPED for now (knots +
+interpolation already feel live; Pete agreed 2026-10-08). Daily build: `scripts/build_scenarios.R`
++ `combine_scenarios.R` -> `output/scenario-vic2026.json`, run by 8 parallel jobs in forecast.yaml
+after the refresh publishes (public repo, minutes are free, so no single-process refactor needed).
+Then: the ITG page (inthegame-blog session) reads `auspol/scenario-vic2026.json` from R2. **Daily-refresh requirement:** each run repeats ~35 s of slider-independent setup
 (by-election/defector fits, 13-33 s into the run); 72 runs a day must loop scenarios inside ONE
 R process or it costs ~100 min instead of ~60.
 
