@@ -444,8 +444,10 @@ jobs:
           gh release download forecast-latest -p forecast-history-nsw2027.csv -D output --clobber 2>/dev/null || echo "no forecast-history-nsw2027.csv yet (first run)"
           AUSPOL_TARGET=nsw2027 Rscript scripts/fit_seats_full.R 2>&1 | tee run-nsw2027.log
           AUSPOL_FORECAST_ELECTION=nsw2027 Rscript scripts/build_forecast_json.R
+          # The poll-trend chart is optional on the page: a failure here must not hold back the seat forecast.
+          AUSPOL_FORECAST_ELECTION=nsw2027 Rscript scripts/build_trend_page_data.R || { echo "::error::NSW poll-trend page data failed; publishing the forecast without it (the R2 step fails the run afterwards)"; rm -f output/nsw2027-page-data.json; touch output/.nsw-trend-failed; }
           cp external/aus-polling-analyser/analysis/Data/poll-data-nsw.csv output/polls-nsw-snapshot.csv
-          gh release upload forecast-latest output/forecast-nsw2027.json output/forecast-history-nsw2027.csv output/seat-probs-nsw-2027.csv output/seat-shares-nsw-2027.csv output/polls-nsw-snapshot.csv --clobber
+          gh release upload forecast-latest output/forecast-nsw2027.json output/forecast-history-nsw2027.csv output/seat-probs-nsw-2027.csv output/seat-shares-nsw-2027.csv output/polls-nsw-snapshot.csv $( [ -f output/nsw2027-page-data.json ] && echo output/nsw2027-page-data.json ) --clobber
       - name: Publish the NSW 2027 forecast to R2 for the ITG page
         # The ITG page reads R2 only (its CSP blocks github.com), so the release
         # alone left the NSW page with no data (found 2026-10-08, first NSW run).
@@ -463,12 +465,17 @@ jobs:
             exit 0
           fi
           command -v wrangler >/dev/null || npm install -g wrangler@4.135.0 >/dev/null 2>&1
-          # The district map is static and committed (scripts/build_nsw_districts_topojson.sh).
-          for f in output/forecast-nsw2027.json output/forecast-history-nsw2027.csv output/seat-probs-nsw-2027.csv output/seat-shares-nsw-2027.csv web/nsw2027-districts.topojson; do
+          # The district map is static and committed (scripts/build_nsw_districts_topojson.sh),
+          # as are the 2023 results and booths (scripts/build_nsw2023_results_web.R).
+          for f in output/forecast-nsw2027.json output/forecast-history-nsw2027.csv output/seat-probs-nsw-2027.csv output/seat-shares-nsw-2027.csv output/nsw2027-page-data.json web/nsw2027-districts.topojson web/nsw2023-results.json web/nsw2023-booths.json; do
+            # Only the optional poll-trend file may be absent; anything else missing is a failure.
+            if [ "$f" = output/nsw2027-page-data.json ] && [ ! -f "$f" ]; then echo "::error::$f missing, not uploaded"; continue; fi
             case "$f" in *.json|*.topojson) ct=application/json ;; *) ct=text/csv ;; esac
             wrangler r2 object put "inthegame-data/auspol/$(basename "$f")" --file "$f" --content-type "$ct" --cache-control "public, max-age=300" --remote
             echo "OK $(basename "$f")"
           done
+          # The forecast is out; now raise the alarm if the chart was not (R2 still holds the previous day's).
+          if [ -f output/.nsw-trend-failed ]; then echo "::error::NSW poll-trend page data failed; the page shows the previous chart"; exit 1; fi
       - name: Upload outputs
         if: always()
         uses: actions/upload-artifact@v4

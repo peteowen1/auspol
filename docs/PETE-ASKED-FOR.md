@@ -26,6 +26,12 @@ not a commit, not a plan file — that it is not happening and why.
 
 ---
 
+## 2026-10-09
+
+| Request | Status |
+|---|---|
+| Work through the night handoff queue in order (NSW hidden sections, prebuilt R image, Haiku leftovers, scripts/ in the build) | **IN PROGRESS.** (1) NSW regions: 9 hand regions (Pete chose "~8 hand regions"), `external/reference/nsw/nsw-district-regions.csv`; poll trend: `scripts/build_trend_page_data.R` -> `nsw2027-page-data.json`; seat-page data (nsw2023 results/booths): Sonnet agent. Not live until merged, published and the blog config flipped. (2) Image: measured, NOT built, left open at Pete's word ("leave it open maybe a more advanced model in the future can find a fix"). (3) Sonnet agent on registry + check codes; sentinel not started. (4) scripts/ was never in the build; the real cause was the per-PR version bump, fixed in the fingerprint. |
+
 ## 2026-10-08
 
 | Request | Status |

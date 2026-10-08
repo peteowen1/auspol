@@ -69,7 +69,7 @@ cannot pass as a working one.
   - e.g. booths/fed2016-NSW.csv, booths/fed2016-QLD.csv, booths/fed2016-VIC.csv, booths/fed2019-QLD.csv
 - **vec/** -- 2429 files, 73.5 MB
   - e.g. 2006/vc/fpv-albertpark.html, 2006/vc/fpv-altona.html, 2006/vc/fpv-ballarateast.html, 2006/vc/fpv-ballaratwest.html
-- **nsw/** -- 5885 files, 80.2 MB
+- **nsw/** -- 5889 files, 81.0 MB
   - e.g. byelections/SB1602-orange-fp.html, byelections/SB1801-wagga-wagga-fp.html, council/2008/lgeindex.html, council/2008/pages/result.Albury.html
 - **ecsa/** -- 378 files, 61.2 MB. **1 ZERO-BYTE: ha-2018-03-17.json**
   - e.g. 2018/Adelaide.html, 2018/Adelaide2.html, 2018/Badcoe.html, 2018/Badcoe2.html
