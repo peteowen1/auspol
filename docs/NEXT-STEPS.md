@@ -22,8 +22,11 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30.
 1. **NSW page pieces still hidden** (each is then a one-line blog config change; message the inthegame-blog
    session the R2 key): poll trend (a page-data JSON like `vic-page-data.json`), regions (a NSW
    district-to-region table; `build_forecast_json.R` region_file is NA), per-seat pages.
-2. **Scenario jobs wait 5-16 min each for GitHub's R install** (one straggler sets the run's length, ~60 min
-   end to end). A prebuilt R container image would remove it. Not urgent: nobody watches the 06:00 run.
+2. **Scenario-job straggler, OPEN (Pete, 2026-10-09: "leave it open maybe a more advanced model in the future can
+   find a fix").** Measured over 5 runs: setup median 33-42 s per job, but one job per run crawls (run 37770931865:
+   setup-r 8.5 min AND the cached deps restore 15.5 min on the same runner; max 935 s, 514 s, 498 s, 256 s, 57 s).
+   Both steps slow together, so it is the runner's network, and a prebuilt image would pull over the same network.
+   Not built. Untried: a per-step timeout plus re-run of the one job; fewer, fatter matrix jobs.
 3. **Haiku audit leftovers** (verified live): 185 check codes with two meanings (e.g. SP2 in
    R/salience_screen.R:441 vs R/seat_swing_port.R:178); 50 switches MODEL-REGISTRY cannot explain; a
    scheduled Haiku sentinel running the four audits after each daily run (ops repo already has one).

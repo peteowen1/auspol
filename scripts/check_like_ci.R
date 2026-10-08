@@ -164,7 +164,20 @@ cat("OK: no fitting script's default disagrees with what published_flags.R ships
   deps <- sort(setdiff(deps[nzchar(deps)], "R"))
   ver <- vapply(deps, function(p) tryCatch(as.character(utils::packageVersion(p)), error = function(e) "missing"), character(1))
   tf <- tempfile(); on.exit(unlink(tf))
-  writeLines(c(R.version.string, paste(deps, ver), paste(keep, unname(tools::md5sum(keep)))), tf)
+  # The version bump that follows every merged PR (DESCRIPTION's Version line
+  # and its NEWS.md section) forced a full ~5-minute check on the next push
+  # every time, though neither can change what check reports (2026-10-09;
+  # scripts/ was already outside the build, so it was never the cause). So
+  # DESCRIPTION is hashed without its Version line and NEWS.md is not hashed.
+  # CI still checks both on every PR.
+  hashed <- setdiff(keep, "NEWS.md")
+  md5 <- unname(tools::md5sum(hashed))
+  if ("DESCRIPTION" %in% hashed) {
+    dl <- readLines("DESCRIPTION", warn = FALSE)
+    td <- tempfile(); writeLines(dl[!startsWith(dl, "Version:")], td)
+    md5[hashed == "DESCRIPTION"] <- unname(tools::md5sum(td)); unlink(td)
+  }
+  writeLines(c(R.version.string, paste(deps, ver), paste(hashed, md5)), tf)
   list(hash = unname(tools::md5sum(tf)), n = length(keep), files = keep)
 }
 .fp_file <- file.path("output", ".check-like-ci-last-clean.txt")

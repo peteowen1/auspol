@@ -444,8 +444,9 @@ jobs:
           gh release download forecast-latest -p forecast-history-nsw2027.csv -D output --clobber 2>/dev/null || echo "no forecast-history-nsw2027.csv yet (first run)"
           AUSPOL_TARGET=nsw2027 Rscript scripts/fit_seats_full.R 2>&1 | tee run-nsw2027.log
           AUSPOL_FORECAST_ELECTION=nsw2027 Rscript scripts/build_forecast_json.R
+          AUSPOL_FORECAST_ELECTION=nsw2027 Rscript scripts/build_trend_page_data.R   # the page's poll-trend chart
           cp external/aus-polling-analyser/analysis/Data/poll-data-nsw.csv output/polls-nsw-snapshot.csv
-          gh release upload forecast-latest output/forecast-nsw2027.json output/forecast-history-nsw2027.csv output/seat-probs-nsw-2027.csv output/seat-shares-nsw-2027.csv output/polls-nsw-snapshot.csv --clobber
+          gh release upload forecast-latest output/forecast-nsw2027.json output/forecast-history-nsw2027.csv output/seat-probs-nsw-2027.csv output/seat-shares-nsw-2027.csv output/nsw2027-page-data.json output/polls-nsw-snapshot.csv --clobber
       - name: Publish the NSW 2027 forecast to R2 for the ITG page
         # The ITG page reads R2 only (its CSP blocks github.com), so the release
         # alone left the NSW page with no data (found 2026-10-08, first NSW run).
@@ -464,7 +465,7 @@ jobs:
           fi
           command -v wrangler >/dev/null || npm install -g wrangler@4.135.0 >/dev/null 2>&1
           # The district map is static and committed (scripts/build_nsw_districts_topojson.sh).
-          for f in output/forecast-nsw2027.json output/forecast-history-nsw2027.csv output/seat-probs-nsw-2027.csv output/seat-shares-nsw-2027.csv web/nsw2027-districts.topojson; do
+          for f in output/forecast-nsw2027.json output/forecast-history-nsw2027.csv output/seat-probs-nsw-2027.csv output/seat-shares-nsw-2027.csv output/nsw2027-page-data.json web/nsw2027-districts.topojson; do
             case "$f" in *.json|*.topojson) ct=application/json ;; *) ct=text/csv ;; esac
             wrangler r2 object put "inthegame-data/auspol/$(basename "$f")" --file "$f" --content-type "$ct" --cache-control "public, max-age=300" --remote
             echo "OK $(basename "$f")"

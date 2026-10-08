@@ -45,7 +45,10 @@ ELECTIONS <- list(
     json_stem = "forecast-nsw2027",
     history_stem = "forecast-history-nsw2027",   # separate file: the shared name would mix NSW rows into Victoria's chart
     candidates_file = file.path("external", "reference", "wikipedia", "nsw2027-candidates.csv"),  # parse_wikipedia_candidates.py ... nsw2027 (2026-10-08)
-    region_file = NA_character_))    # no NSW district-to-region table in the repo; seats publish region = null
+    # Hand-coded 2026-10-09 (Pete chose ~8 hand regions): NSW has no upper-house
+    # regions, so these are Sydney in five parts plus four regional groups,
+    # assigned from each district's position (ABS SED 2022 boundaries).
+    region_file = file.path("external", "reference", "nsw", "nsw-district-regions.csv")))
 ELECTION <- Sys.getenv("AUSPOL_FORECAST_ELECTION", "vic2026")
 if (!ELECTION %in% names(ELECTIONS))
   stop("FJ0! unknown AUSPOL_FORECAST_ELECTION '", ELECTION, "'; known: ", paste(names(ELECTIONS), collapse = ", "))
@@ -89,6 +92,15 @@ if (!is.null(cands) && !"party" %in% names(cands)) {
 reg_f <- CFG$region_file
 REG <- if (!is.na(reg_f) && file.exists(reg_f)) fread(reg_f, showProgress = FALSE) else NULL
 region_of <- function(s) if (is.null(REG)) NULL else { r <- REG[district == s]$region; if (length(r)) r[1] else NULL }
+# A table that misses a district would publish region = null for it and the page
+# would drop it from its group silently: every published seat must have one.
+if (!is.null(REG)) {
+  if (anyDuplicated(REG$district)) stop("FJ0! ", reg_f, ": duplicated district(s) ", paste(REG$district[duplicated(REG$district)], collapse = ", "))
+  no_reg <- setdiff(shares$seat, REG$district)
+  if (length(no_reg)) stop("FJ0! ", reg_f, " has no region for ", length(no_reg), " seat(s): ", paste(no_reg, collapse = ", "))
+  cat(sprintf("FJ0 regions: %d of %d seats, %d regions
+", length(intersect(shares$seat, REG$district)), length(shares$seat), uniqueN(REG$region)))
+}
 # Per-seat ranges from fit_seats_full.R's own draws (2026-09-30): each party's
 # primary quantiles and the likeliest final two. Optional: a run without them
 # (an older fit) publishes the seat without these fields, and says so.
