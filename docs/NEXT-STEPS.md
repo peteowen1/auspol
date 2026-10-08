@@ -261,7 +261,7 @@ plan, **Pete to send**; To Do reminder set).
   carrying a class gap onto a candidate when none of that class's earlier candidates re-stand, in `base_pred`
   AND xgb. Bigger overcalls with a permitted successor (Geelong, Morwell, Mildura, Kavel, Finniss) are a
   separate item, not started; departed-hold refused.
-- **Simulation noise revives zeroed parties** (`R/seat_sim.R:1229`, `v <- base_v + shift + rnorm(K, 0, sd_cell)`):
+- **Simulation noise revives zeroed parties** (`R/seat_sim.R:1275`, `v <- base_v + shift + rnorm(K, 0, sd_cell)`):
   written shares are 0, draws are not. Measure how often a revived cell places or wins before masking it;
   affects every harness number, so it needs a prereg. Unmeasured.
 - **Departed-rate refit**: branch `departed-rate-refit` (256f328, reviewed twice) never run on real data; its
