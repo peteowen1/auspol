@@ -177,7 +177,8 @@ cat("OK: no fitting script's default disagrees with what published_flags.R ships
     td <- tempfile(); writeLines(dl[!startsWith(dl, "Version:")], td)
     md5[hashed == "DESCRIPTION"] <- unname(tools::md5sum(td)); unlink(td)
   }
-  writeLines(c(R.version.string, paste(deps, ver), paste(hashed, md5)), tf)
+  # .Rbuildignore excludes itself from `keep`, but it decides what is built, so hash it too.
+  writeLines(c(R.version.string, paste(deps, ver), paste(hashed, md5), readLines(".Rbuildignore", warn = FALSE)), tf)
   list(hash = unname(tools::md5sum(tf)), n = length(keep), files = keep)
 }
 .fp_file <- file.path("output", ".check-like-ci-last-clean.txt")
