@@ -464,8 +464,9 @@ jobs:
             exit 0
           fi
           command -v wrangler >/dev/null || npm install -g wrangler@4.135.0 >/dev/null 2>&1
-          # The district map is static and committed (scripts/build_nsw_districts_topojson.sh).
-          for f in output/forecast-nsw2027.json output/forecast-history-nsw2027.csv output/seat-probs-nsw-2027.csv output/seat-shares-nsw-2027.csv output/nsw2027-page-data.json web/nsw2027-districts.topojson; do
+          # The district map is static and committed (scripts/build_nsw_districts_topojson.sh),
+          # as are the 2023 results and booths (scripts/build_nsw2023_results_web.R).
+          for f in output/forecast-nsw2027.json output/forecast-history-nsw2027.csv output/seat-probs-nsw-2027.csv output/seat-shares-nsw-2027.csv output/nsw2027-page-data.json web/nsw2027-districts.topojson web/nsw2023-results.json web/nsw2023-booths.json; do
             case "$f" in *.json|*.topojson) ct=application/json ;; *) ct=text/csv ;; esac
             wrangler r2 object put "inthegame-data/auspol/$(basename "$f")" --file "$f" --content-type "$ct" --cache-control "public, max-age=300" --remote
             echo "OK $(basename "$f")"
