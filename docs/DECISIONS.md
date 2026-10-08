@@ -4,6 +4,7 @@ One line each: the decision, the one fact behind it, a link. Newest first.
 Created 2026-09-19 (the verse convention; auspol had none). Older decisions
 live in the plans they came from (`docs/plans/prereg-*.md` RESULT sections).
 
+- **2026-10-08 NSW 2027 publishing path built OFF (PR #99, `AUSPOL_PUBLISH_NSW2027`).** Census vintage and council history reach nsw2027 (other elections byte-identical); the daily run's council fallback now reads each election's own slice; the workflow's NSW step runs after every Victorian publish (review fix). Turning it on is Pete's call. [scope](plans/nsw2027-itg-scope-2026-10-08.md)
 - **2026-10-08 Trend surge switch NOT BUILT; poll-lag verdict (2026-08-19, refusal P3) kept by Pete.** NSW 2027 One Nation trend 19.8 vs polls 25.0; SA 2026 trend 20.3 vs polls 22.3 vs actual 22.9 (first under-call among near-zero priors; WA 2017 and NSW 2019 were over-calls). [review addendum](reviews/poll-lag-2026-08-19.md)
 - **2026-10-08 NSW 2027 sitting independents losing 14-20 points kept (not a bug).** SA 2026, the one One Nation surge: sitting INDs fell -11.7 on average against a predicted -6.6 (5 seats; Narungga 40.8 -> 17.0).
 - **2026-10-08 fit_seats_full.R takes AUSPOL_TARGET; NSW 2027 runs end to end** (vic2026 byte-identical). Provisional NSW candidate list (Wikipedia + presumed sitting), six NSW by-elections added, anchor nsw2027 two-party prior corrected 35.37 -> 54.27. [scope](plans/nsw2027-itg-scope-2026-10-08.md)
