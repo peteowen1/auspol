@@ -1,3 +1,7 @@
+# auspol 0.4.79
+
+- The what-if slider's scenarios are rebuilt every day: after the forecast publishes, eight parallel jobs rerun it with One Nation, Labor, the Coalition or the Greens forced to nine statewide levels, read both ways, and `scripts/combine_scenarios.R` publishes `scenario-vic2026.json` for the ITG page. The "polling" run at today's level must match the published forecast exactly, or nothing is published.
+
 # auspol 0.4.78
 
 - What-if runs (`AUSPOL_FORCE_FP`) now move the other parties the way the model's own statewide simulations move them, for any of One Nation, Labor, Coalition or Greens. Each point of One Nation costs the Coalition about 0.53 and Labor 0.17. Every run writes these rates to `output/statewide-draw-betas-<target>.csv`.
