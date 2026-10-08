@@ -638,6 +638,11 @@ FORCE_FP <- Sys.getenv("AUSPOL_FORCE_FP", "")
 # The what-if slider's zero point: the level BEFORE any forcing.
 cat(sprintf("FP0  statewide primaries before forcing: %s\n",
             paste(sprintf("%s %.2f", names(state_mean), state_mean), collapse = ", ")))
+if (!nzchar(Sys.getenv("AUSPOL_FORCE_FP", ""))) {
+  # scripts/build_scenarios.R steps each party 10 points either side of these.
+  fwrite(data.table(party = names(state_mean), level = unname(state_mean)),
+         sprintf("output/statewide-level-%s%s.csv", TARGET$out_stem, OUT_SUFFIX))
+}
 # AUSPOL_FORCE_FP_RULE: "draws" (default, Pete 2026-10-04) moves the others by
 # the published run's own statewide-draw regression and holds the forced party
 # exactly at X in every draw ("if ONP GETS X%"); "draws-polled" uses the same
