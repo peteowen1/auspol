@@ -1,3 +1,7 @@
+# auspol 0.4.80
+
+- The daily what-if publish step installs only the two packages it uses, cutting about ten minutes from each morning's run.
+
 # auspol 0.4.79
 
 - The what-if slider's scenarios are rebuilt every day: after the forecast publishes, eight parallel jobs rerun it with One Nation, Labor, the Coalition or the Greens forced to nine statewide levels, read both ways, and `scripts/combine_scenarios.R` publishes `scenario-vic2026.json` for the ITG page. The "polling" run at today's level must match the published forecast exactly, or nothing is published.
