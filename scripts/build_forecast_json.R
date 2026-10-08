@@ -41,10 +41,10 @@ ELECTIONS <- list(
     election_date = "2027-03-13",
     chamber_seats = 93L,             # Legislative Assembly; all NSW harness years (2015/19/23) score 93 (docs/DATA-REGISTRY.md)
     majority = 47L,                  # 93 %/% 2 + 1
-    file_tag = "nsw-2027",           # none of these inputs exist yet: the script stops naming them
+    file_tag = "nsw-2027",           # fit_seats_full.R with AUSPOL_TARGET=nsw2027 writes these
     json_stem = "forecast-nsw2027",
     history_stem = "forecast-history-nsw2027",   # separate file: the shared name would mix NSW rows into Victoria's chart
-    candidates_file = NA_character_, # no NSW 2027 candidate table exists (output/candidacies.csv has no nsw2027 rows)
+    candidates_file = file.path("external", "reference", "wikipedia", "nsw2027-candidates.csv"),  # parse_wikipedia_candidates.py ... nsw2027 (2026-10-08)
     region_file = NA_character_))    # no NSW district-to-region table in the repo; seats publish region = null
 ELECTION <- Sys.getenv("AUSPOL_FORECAST_ELECTION", "vic2026")
 if (!ELECTION %in% names(ELECTIONS))
