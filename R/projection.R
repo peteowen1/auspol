@@ -376,8 +376,12 @@ build_projection_data <- function(horizons = c(30, 90, 180, 365, 730),
         out[[length(out) + 1L]] <- data.table::data.table(
           year = y, region = rg, horizon = h, trend_tpp = r$tpp,
           actual_tpp = actual, n_polls = r$n_polls)
-        if (!is.null(r$poll_scores) && nrow(r$poll_scores))
-          scores[[length(scores) + 1L]] <- r$poll_scores[, `:=`(year = y, region = rg, horizon = h)]
+        # poll_scores carries a column `y` (the poll share), which a bare `y`
+        # inside `[` would bind to instead of the election year: copy first.
+        if (!is.null(r$poll_scores) && nrow(r$poll_scores)) {
+          .yr <- y; .rg <- rg; .h <- h
+          scores[[length(scores) + 1L]] <- r$poll_scores[, `:=`(year = .yr, region = .rg, horizon = .h)]
+        }
       }
       if (verbose) message(sprintf("  %s %d done", rg, y))
     }

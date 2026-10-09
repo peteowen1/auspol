@@ -508,5 +508,13 @@ message(sprintf("STAT2 primary-vote poll rows: %d; fieldwork_end parsed %d; samp
 bad <- pp[!is.na(sample_raw) & nzchar(sample_raw) & !sample_raw %in% c("—", "-") & is.na(sample_n)]
 if (nrow(bad)) { message("STAT3 sample_raw values that did NOT parse to a number (count by text):"); print(as.data.frame(head(bad[, .(n_rows = .N), by = .(text = sample_raw)][order(-n_rows)], 25))) }
 if (anyNA(pp$fieldwork_end)) { message("STAT4 primary poll rows with no parsed date:"); print(head(pp[is.na(fieldwork_end), .(page_key, date_raw)], 25)) }
+# A date after today is a year-inference failure, not a poll: 39 fed2028_opinion
+# headline rows (May-Aug 2025 polls) landed in 2027, plus 2 qld2028 rows (review gate, 2026-10-09). Fails
+# AFTER the write so the file can be inspected; root cause not yet diagnosed.
+fut <- wiki[row_type == "poll" & !is.na(fieldwork_end) & as.Date(fieldwork_end) > Sys.Date()]
+if (nrow(fut)) {
+  print(head(fut[, .(page_key, table_idx, date_raw, fieldwork_end)], 25))
+  stop(sprintf("STAT6! %d poll row(s) dated after today: year inference is wrong for them", nrow(fut)))
+}
 message("STAT5 per election: primary poll rows / with sample_n")
 print(pp[, .(rows = .N, with_sample = sum(!is.na(sample_n)), with_client = sum(!is.na(client))), by = .(region, election)][order(region, election)], nrows = 100)

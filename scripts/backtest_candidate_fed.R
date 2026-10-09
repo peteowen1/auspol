@@ -1860,7 +1860,7 @@ for (X in out_all) {
     error = function(e) { cat(sprintf("HTV9! how-to-vote override FAILED, flow rows unchanged: %s\n", conditionMessage(e))); .xgb_flow_ov }) else .xgb_flow_ov
   # BREAKOUT MIXTURE (AUSPOL_BREAKOUT_MIX, R/breakout_mix.R): NULLs when off.
   .bo <- breakout_mix_args(sprintf("fed%d", K$to), X$shares)
-  .imx <- ind_mixture_surge(sprintf("fed%d", K$to), rownames(shares), surge_arg, surge_mu_arg, surge_sd_arg, surge_party_arg, code = "BF1N")
+  .imx <- ind_mixture_surge(sprintf("fed%d", K$to), rownames(X$shares), surge_arg, surge_mu_arg, surge_sd_arg, surge_party_arg, code = "BF1N")
   surge_arg <- .imx$surge_h; surge_mu_arg <- .imx$surge_mu; surge_sd_arg <- .imx$surge_sd; surge_party_arg <- .imx$surge_party
   sim <- simulate_seat_contests(level_sd = .level_sd, sd_override = SD_OVR, level_mult = .lm(X$shares), X$shares, X$fm, party_sd = psd, seat_sd = sd_w * SEAT_SD_MULT,
                                 n_sims = N_SIMS, smooth = SMOOTH, seed = SEED,

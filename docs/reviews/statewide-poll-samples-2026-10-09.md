@@ -253,3 +253,7 @@ Five random matched national rows and five random matched state rows (seed 20261
 
 ---
 Row-level detail: `output/statewide-poll-samples.csv`; alias table: `external/reference/polls/statewide-samples/firm_alias.csv`; pages tried: `external/reference/polls/statewide-samples/pages_manifest.csv`.
+
+## Correction (review gate, 2026-10-09, after the result)
+
+The year inference in `scripts/fetch_statewide_poll_samples.R` dated 41 poll rows after today: 39 headline `fed2028_opinion` rows (the May-Aug 2025 post-election polls, put in 2027) and 2 on `qld2028_opinion`. Shifted back, 34 more federal anchors match with a sample size, and 2010+ coverage goes from 432 of 2,781 (15.5%) to 466 of 2,781 (16.8%). The gate bar was 50%, so the verdict stands. Root cause not diagnosed; the fetcher now stops (`STAT6!`) on any poll dated after today. Also found: a download failure of any kind (timeout, 429, 5xx) is recorded as a permanent 404 and never retried; all 22 pages marked not-found were checked and are real 404s today, and all 53 cached pages end in `</html>`, so this run is unaffected.

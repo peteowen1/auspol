@@ -114,4 +114,6 @@ Expectation on record: small or no effect; the within-cycle version of the recor
 - Bands: the estimated noise moves held-out coverage from 91.4% to 96.8% (closer to 95%) but makes the log predictive density WORSE, because the wider bands are too wide; the primary of the two band measures refuses.
 - The record arm is worse on both; the pollster that was accurate at the last election is not reliably accurate at the next.
 
+**Correction (review gate, 2026-10-09, after the result):** the "878 region-election clusters" and the SEs in the log density column are wrong. `build_projection_data()` stamped `year` with a bare `y` inside `poll_scores[...]`, which bound to the poll-share column `y`, so the SE was clustered on (region, poll share), nearly one cluster per poll, and is understated. Fixed in `R/projection.R`. The verdicts do not change: the bands route needs log density gain > SE, and all three gains are negative, so no SE can pass them; the accuracy route needs a positive MAE gain, and none has one. Not rerun.
+
 Equal weights and the fixed 1.7-point noise stay. Switches built, all off: `weights = "record"`, `sigmas = "pooled_tf"`.
