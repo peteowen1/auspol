@@ -126,14 +126,35 @@ pct_num <- function(x) {
 sample_num <- function(x) {
   x <- trimws(x)
   x[x %in% c("", "-", "—")] <- NA
-  suppressWarnings(as.integer(gsub("[^0-9]", "", x)))
+  # A RANGE ("500–700") is its midpoint. Stripping every non-digit glued it
+  # into 500700 (fed2019 Higgins, Flinders, Herbert, Lindsay: 2026-10-09).
+  # Only a DASH makes a range: thousands separators can be commas or thin /
+  # non-breaking spaces ("4 909", fed2025 Brisbane), which must not split.
+  vapply(x, function(v) {
+    if (is.na(v)) return(NA_integer_)
+    parts <- strsplit(v, "[-–‒‑—]")[[1]]
+    nums <- suppressWarnings(as.numeric(gsub("[^0-9]", "", parts)))
+    nums <- nums[is.finite(nums)]
+    if (!length(nums)) NA_integer_ else as.integer(round(mean(nums)))
+  }, integer(1), USE.NAMES = FALSE)
 }
 
 month_re <- "Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec"
 parse_daterange <- function(s) {
   s <- trimws(s)
   if (is.na(s) || s == "") return(list(start = NA_character_, end = NA_character_))
-  s2 <- gsub("–|‒|‑", "-", s) # normalise en/other dashes to hyphen
+  # "Early/Mid/Late May 2019": the 5th, 15th or 25th. Split on its hyphen
+  # ("Mid-May 2019") it parsed as 1 May, 17 days early for fed2019 Higgins.
+  third <- regmatches(s, regexec("^(Early|Mid|Late)[- ]+([A-Za-z]+ [0-9]{4})", s, ignore.case = TRUE))[[1]]
+  if (length(third) == 3) {
+    day <- c(early = 5, mid = 15, late = 25)[[tolower(third[2])]]
+    d <- suppressWarnings(as.Date(paste(day, third[3]), format = "%d %B %Y"))
+    if (is.na(d)) d <- suppressWarnings(as.Date(paste(day, third[3]), format = "%d %b %Y"))
+    if (!is.na(d)) return(list(start = as.character(d), end = as.character(d)))
+  }
+  # A comma list of days ("17, 21 March 2022") ends on its last day.
+  s <- sub("^[0-9]+(, *[0-9]+)*, *([0-9]+ )", "\\2", s)
+  s2 <- gsub("–|‒|‑|−", "-", s) # normalise en/other dashes and the minus sign ("22−23 Jun 2016") to hyphen
   parts <- trimws(strsplit(s2, "-")[[1]])
   parse_one <- function(p, fallback_year = NA) {
     p <- trimws(p)
