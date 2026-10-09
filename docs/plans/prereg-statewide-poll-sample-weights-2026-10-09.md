@@ -77,3 +77,12 @@ look nicer on the chart.
 ## Amendments
 
 (none yet; any change is added below this line with the original text left as is)
+
+## RESULT 2026-10-09: GATE FAILED, no arm built
+
+Scraped every Wikipedia national and state poll table (`scripts/fetch_statewide_poll_samples.R`, raw pages in `external/reference/polls/statewide-samples/raw/`) and joined to the anchor polls (`scripts/join_statewide_poll_samples.R`, all 6,093 rows kept; date/primary/region scrambles match 0-13 of 1,178). `docs/reviews/statewide-poll-samples-2026-10-09.md`.
+
+- Observed sample size on **432 of 2,781** 2010+ polls (**15.5%**, bar 50%). By region: fed 19%, vic 7%, nsw 4%, qld 8%, wa 7%, sa 9%. Wikipedia has no state poll page before Victoria 2022 and none for WA or SA; 10 elections have no poll rows at all.
+- Spread: interquartile range **1,242 to 1,698** (ratio **1.37**, bar 1.5); median 1,516, p10 1,033, p90 2,260.
+
+Both clauses refuse. Per the clause-refusal rule this goes to Pete; the arms are not built.
