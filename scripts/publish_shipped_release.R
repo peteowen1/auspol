@@ -52,7 +52,10 @@ extra <- c(file.path(SHIP, c("MANIFEST.json", "pooled-backtest.csv", "pooled-sha
            file.path(OUT, "xgb-primary-v6-features.csv"),
            # the public AEF-7 ledger and the pipeline description, so the
            # comparison and the method travel with the models they describe
-           file.path(OUT, "aef7-ledger.html"), file.path("docs", "PIPELINE.md"))
+           file.path(OUT, "aef7-ledger.html"), file.path("docs", "PIPELINE.md"),
+           # every published prediction, all pairs (build_published_predictions.R);
+           # the ledger page links to it by this name
+           file.path(OUT, "published-predictions.csv"))
 loo <- grep("xgb-flows-v1-loo-.*[.]model$", models, value = TRUE)
 rest <- setdiff(models, loo)
 

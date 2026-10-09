@@ -1,3 +1,4 @@
+<meta charset="utf-8">
 <!--
   AEF-7 Seat Ledger -- Pete's main day-to-day debugging tool, comparing our
   forecast against AE Forecasts seat by seat across the 7 elections we have
@@ -187,6 +188,8 @@
     h1{font-size:19px}
     .count{margin-left:0; width:100%}
   }
+[hidden]{display:none !important}
+a.seatjump{color:inherit;text-decoration:underline dotted;text-underline-offset:2px}
 </style>
 
 <div class="wrap">
@@ -250,7 +253,19 @@
   </details>
 
   <details class="provlog">
-    <summary>Provenance &amp; changelog <span class="n">(45 updates)</span></summary>
+    <summary>Provenance &amp; changelog <span class="n">(46 updates)</span></summary>
+    <p class="sub prov"><b>v60, 7-9 Oct 2026: seat polls that fade, and every candidate on this page.</b>
+       <b>Seat polls fade with age</b> instead of dropping out at 90 days: a poll's weight halves every 34 days
+       (fitted on earlier elections) and also depends on its sample size and kind (MRP, direct, sponsored), so
+       Warringah 2019's poll 98 days out now counts, as do 350 others the cut-off dropped. The blend weight starts from
+       a prior of 0.75, so the first elections with seat polls use them (Mayo 2016: Sharkie 3.2 to 18.6, actual 34.9).
+       Earlier in the week: a nameless first-time independent is shrunk by a factor fitted on earlier elections; a
+       departed member's vote passes to their successor at a rate fitted only on earlier elections, replacing a
+       0.38 that had been fitted on 15 cases including later ones; Nicholls' two Coalition candidates are no longer
+       counted twice. Seat log loss 0.2742 to <b>0.2733</b> against AE Forecasts' 0.2825.
+       <b>New view:</b> "Every candidate" lists every party's primary vote in every seat, ours, AEF's and the actual,
+       sortable by miss, because the biggest misses are often not the winner. The full file for all 22 elections
+       downloads from there.</p>
     <p class="sub prov"><b>v59, 3-6 Oct 2026: candidates who move, return or defect.</b>
        A look-ahead leak fixed first: when one party ran two candidates, the model picked its "leader" using the
        result being predicted. Removing it cost the honest amount, 0.2796 to 0.2874. Then, each pre-registered and
@@ -622,8 +637,15 @@
   <div class="strip" id="strip"></div>
 
   <div class="controls">
+    <div class="field"><label>Rows</label>
+      <div class="chips">
+        <button class="toggle" id="v-seat" aria-pressed="true">One per seat</button>
+        <button class="toggle" id="v-cand" aria-pressed="false">Every candidate</button>
+      </div></div>
     <div class="field"><label for="f-pair">Election</label>
       <select id="f-pair"><option value="">All seven</option></select></div>
+    <div class="field cand-only" hidden><label for="f-party">Candidate's party</label>
+      <select id="f-party"><option value="">Any party</option></select></div>
     <div class="field"><label for="f-win">Won by</label>
       <select id="f-win"><option value="">Any party</option></select></div>
     <div class="field"><label for="f-fav">We favoured</label>
@@ -641,7 +663,23 @@
     <div class="count" id="count"></div>
   </div>
 
-  <div class="tablewrap">
+  <div class="cand-only" hidden>
+    <p class="sub prov">Every party's primary vote in every seat, not just the winner's: the biggest misses are often
+      an over-called independent or an under-called minor party in a seat the winner was called right. Miss = actual
+      minus predicted, in points: positive means under-called, closer to 0 is better. &Delta; |miss| = our absolute
+      miss minus AEF's: negative means we were closer. AEF folds One Nation and minor-right into "other" in some
+      elections, so those rows show no AEF figure. Click a seat in the one-per-seat view to jump here.
+      Every published prediction for all 22 elections is <code>published-predictions.csv</code>:
+      <button class="toggle" id="dl-csv" type="button" hidden>Save the CSV</button>
+      <span id="dl-alt">on the <a href="https://github.com/peteowen1/auspol/releases/tag/shipped-models" target="_blank" rel="noopener">shipped-models release</a></span><span id="dl-msg" role="status"></span>.</p>
+  </div>
+  <div class="tablewrap cand-only" hidden>
+    <table>
+      <thead><tr class="hdr" id="chdr"></tr></thead>
+      <tbody id="cbody"></tbody>
+    </table>
+  </div>
+  <div class="tablewrap seat-only">
     <table>
       <thead>
         <tr class="grp">
@@ -666,6 +704,23 @@
 <script>
 const SEATS = __SEATS_JSON__;
 const SUMMARY = __SUMMARY_JSON__;
+// Every party class in every AEF-7 seat (scripts/build_published_predictions.R).
+const CANDS = __CANDS_JSON__;
+CANDS.forEach(c => {
+  c.miss = (c.actual!=null && c.ours!=null) ? +(c.actual - c.ours).toFixed(2) : null;
+  c.aef_miss = (c.actual!=null && c.aef!=null) ? +(c.actual - c.aef).toFixed(2) : null;
+  c.abs_miss = c.miss==null ? null : Math.abs(c.miss);
+  c.d_abs = (c.miss!=null && c.aef_miss!=null) ? +(Math.abs(c.miss) - Math.abs(c.aef_miss)).toFixed(2) : null;
+});
+const CCOLS = [
+  {k:"pair", t:"Election"}, {k:"seat", t:"Seat"}, {k:"party", t:"Party", pill:true},
+  {k:"candidate", t:"Candidate"}, {k:"won", t:"Won"},
+  {k:"p_win", t:"Ours P(win)", num:true, dp:3},
+  {k:"actual", t:"Actual %", num:true, dp:1}, {k:"ours", t:"Ours %", num:true, dp:1}, {k:"aef", t:"AEF %", num:true, dp:1},
+  {k:"miss", t:"Our miss", num:true, dp:1, miss:true}, {k:"aef_miss", t:"AEF miss", num:true, dp:1, miss:true},
+  {k:"abs_miss", t:"|Our miss|", num:true, dp:1}, {k:"d_abs", t:"Δ |miss|", num:true, dp:1, delta:true}
+];
+let view = "seat", cSortKey = "abs_miss", cSortDir = -1;
 
 const COLS = [
   {k:"pair",   t:"Election", cls:"pair fz fz1"},
@@ -746,7 +801,7 @@ const key = r => r.pair + "__" + r.seat.replace(/[^A-Za-z0-9]+/g, "-");
 SEATS.forEach(r => BYKEY.set(key(r), r));
 
 let sortKey = "dll", sortDir = -1;
-const F = {pair:"", win:"", fav:"", grp:"", q:"", wrong:false, beat:false, noted:false};
+const F = {pair:"", party:"", win:"", fav:"", grp:"", q:"", wrong:false, beat:false, noted:false};
 
 /* ---------- overall pooled stats ---------- */
 function overall(){
@@ -852,6 +907,7 @@ function render(){
       if (c.k==="winner"||c.k==="fav"||c.k==="f1"||c.k==="f2"||c.k==="our_tcp_pick"||c.k==="aef_tcp_pick") return r[c.k]
         ? `<td class="${(c.cls||"")+sep}"><span class="pill ${r[c.k]}">${r[c.k]}</span></td>`
         : `<td class="${(c.cls||"")+sep}" style="color:var(--ink-3)">—</td>`;
+      if (c.k==="seat") return `<td class="${(c.cls||"")+sep}"><a href="#" class="seatjump" data-pair="${r.pair}" data-seat="${esc(r.seat)}" title="Every candidate in this seat">${esc(r.seat)}</a></td>`;
       if (c.k==="correct") return `<td class="${(c.cls||"")+sep}"><span class="mark ${r.correct?"y":"n"}">${r.correct?"✓":"✗"}</span></td>`;
       if (c.k==="note") return `<td class="note${sep}"><textarea rows="1" data-k="${k}" placeholder="Add a note"
             aria-label="Note for ${r.seat}">${esc(notes.get(k)||"")}</textarea></td>`;
@@ -878,8 +934,98 @@ function render(){
   document.getElementById("count").textContent =
     shown ? `${shown} of ${SEATS.length} seats · ours ${o.toFixed(4)} · AEF ${a.toFixed(4)}` : "no seats match";
   wireNotes();
+  document.querySelectorAll("a.seatjump").forEach(a=>a.addEventListener("click", e=>{
+    e.preventDefault();
+    F.pair = a.dataset.pair; document.getElementById("f-pair").value = F.pair;
+    F.q = a.dataset.seat.toLowerCase(); document.getElementById("f-q").value = a.dataset.seat;
+    setView("cand");
+  }));
 }
 const esc = s => s.replace(/[&<>"]/g, m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[m]));
+
+/* ---------- every-candidate view ---------- */
+function cheader(){
+  document.getElementById("chdr").innerHTML = CCOLS.map(c=>{
+    const on = c.k===cSortKey;
+    return `<th data-k="${c.k}" class="${c.num?"num":""}"${on?` aria-sort="${cSortDir<0?"descending":"ascending"}"`:""}>${c.t}<span class="arrow">${on?(cSortDir<0?"▼":"▲"):"▲"}</span></th>`;
+  }).join("");
+  document.querySelectorAll("#chdr th").forEach(th=>th.addEventListener("click",()=>{
+    const k = th.dataset.k;
+    if (k === cSortKey) cSortDir = -cSortDir; else { cSortKey = k; cSortDir = (k==="seat"||k==="pair"||k==="party"||k==="candidate") ? 1 : -1; }
+    cheader(); crender();
+  }));
+}
+// The seat-level filters (won by, we favoured, failure group, called wrong, has
+// a note) apply through the seat's own ledger row; a class that neither stood
+// nor got 0.5 points from us is hidden as noise.
+function cvisible(){
+  return CANDS.filter(c=>{
+    const s = BYKEY.get(key(c)) || {};
+    return ((c.actual||0) > 0 || (c.ours||0) >= 0.5) &&
+      (!F.pair  || c.pair===F.pair) &&
+      (!F.party || c.party===F.party) &&
+      (!F.win   || s.winner===F.win) &&
+      (!F.fav   || s.fav===F.fav) &&
+      (!F.grp   || (F.grp==="*" ? !!s.grp : s.grp===F.grp)) &&
+      (!F.q     || c.seat.toLowerCase().includes(F.q) || (c.candidate||"").toLowerCase().includes(F.q)) &&
+      (!F.wrong || s.correct===false) &&
+      (!F.beat  || (c.d_abs!=null && c.d_abs>0)) &&
+      (!F.noted || (notes.get(key(c))||"").trim().length>0);
+  });
+}
+function crender(){
+  const rows = cvisible().sort((a,b)=>{
+    let x=a[cSortKey], y=b[cSortKey];
+    if (typeof x==="boolean"){ x=+x; y=+y; }
+    if (x==null) return 1; if (y==null) return -1;
+    return (x>y?1:x<y?-1:0)*cSortDir;
+  });
+  const shown = rows.slice(0, 1500);
+  document.getElementById("cbody").innerHTML = shown.map(c=>"<tr>" + CCOLS.map(col=>{
+    if (col.pill) return `<td><span class="pill ${c.party}">${c.party}</span></td>`;
+    if (col.k==="won") return `<td class="mark-cell">${c.won?'<span class="mark y">✓</span>':""}</td>`;
+    if (col.num){
+      let d = "";
+      if (col.delta && c[col.k]!=null) d = c[col.k]<0 ? " delta better" : (c[col.k]>0 ? " delta worse" : "");
+      if (col.miss && c[col.k]!=null) d = Math.abs(c[col.k])>=8 ? " delta worse" : "";
+      return `<td class="num${d}">${fmt(c[col.k], col.dp)}</td>`;
+    }
+    return `<td>${esc(String(c[col.k] ?? "—"))}</td>`;
+  }).join("") + "</tr>").join("");
+  const both = rows.filter(c=>c.miss!=null && c.aef_miss!=null);
+  const rmse = (rs,k) => Math.sqrt(rs.reduce((s,c)=>s+c[k]*c[k],0)/rs.length);
+  document.getElementById("count").textContent = rows.length
+    ? `${rows.length} candidate rows${rows.length>shown.length?` (first ${shown.length} shown)`:""} · primary RMSE on the ${both.length} rows AEF also has: ours ${both.length?rmse(both,"miss").toFixed(2):"—"} · AEF ${both.length?rmse(both,"aef_miss").toFixed(2):"—"} (points, lower is better)`
+    : "no candidates match";
+}
+function setView(v){
+  view = v;
+  document.getElementById("v-seat").setAttribute("aria-pressed", String(v==="seat"));
+  document.getElementById("v-cand").setAttribute("aria-pressed", String(v==="cand"));
+  document.querySelectorAll(".cand-only").forEach(e=>e.hidden = v!=="cand");
+  document.querySelectorAll(".seat-only").forEach(e=>e.hidden = v!=="seat");
+  refresh(); fit();
+}
+const refresh = () => view==="cand" ? crender() : render();
+
+/* ---------- CSV save (artifact view only; the file is published beside the page) ---------- */
+if (window.claude && claude.use) claude.use("downloads").then(dl=>{
+  if (!dl) return;
+  const btn = document.getElementById("dl-csv"), msg = document.getElementById("dl-msg");
+  btn.hidden = false; document.getElementById("dl-alt").hidden = true;
+  btn.addEventListener("click", async ()=>{
+    msg.textContent = "";
+    try {
+      const r = await fetch("published-predictions.csv");
+      if (!r.ok) throw {code:"missing", message:"the CSV is not published with this page"};
+      await dl.save({filename:"published-predictions.csv", data: await r.blob()});
+      msg.textContent = " (saved)";
+    } catch(e) {
+      if (e && e.code === "declined") return;
+      msg.textContent = " (could not save: " + ((e && (e.message || e.code)) || "error") + ")";
+    }
+  });
+});
 
 /* ---------- notes ---------- */
 let DB = null;
@@ -906,29 +1052,33 @@ async function save(k, text){
 PAIRS.forEach(p=>document.getElementById("f-pair").insertAdjacentHTML("beforeend",`<option>${p}</option>`));
 const GROUPS=[...new Set(SEATS.map(r=>r.grp).filter(Boolean))].sort();
 GROUPS.forEach(g=>document.getElementById("f-grp").insertAdjacentHTML("beforeend",`<option>${g}</option>`));
-document.getElementById("f-grp").addEventListener("change",e=>{F.grp=e.target.value; render();});
+document.getElementById("f-grp").addEventListener("change",e=>{F.grp=e.target.value; refresh();});
 PARTIES.forEach(p=>{
   document.getElementById("f-win").insertAdjacentHTML("beforeend",`<option>${p}</option>`);
   document.getElementById("f-fav").insertAdjacentHTML("beforeend",`<option>${p}</option>`);
 });
-document.getElementById("f-pair").addEventListener("change",e=>{F.pair=e.target.value; render();});
-document.getElementById("f-win").addEventListener("change",e=>{F.win=e.target.value; render();});
-document.getElementById("f-fav").addEventListener("change",e=>{F.fav=e.target.value; render();});
-document.getElementById("f-q").addEventListener("input",e=>{F.q=e.target.value.trim().toLowerCase(); render();});
+document.getElementById("f-pair").addEventListener("change",e=>{F.pair=e.target.value; refresh();});
+[...new Set(CANDS.map(c=>c.party))].sort().forEach(p=>document.getElementById("f-party").insertAdjacentHTML("beforeend",`<option>${p}</option>`));
+document.getElementById("f-party").addEventListener("change",e=>{F.party=e.target.value; refresh();});
+document.getElementById("v-seat").addEventListener("click",()=>setView("seat"));
+document.getElementById("v-cand").addEventListener("click",()=>setView("cand"));
+document.getElementById("f-win").addEventListener("change",e=>{F.win=e.target.value; refresh();});
+document.getElementById("f-fav").addEventListener("change",e=>{F.fav=e.target.value; refresh();});
+document.getElementById("f-q").addEventListener("input",e=>{F.q=e.target.value.trim().toLowerCase(); refresh();});
 [["t-wrong","wrong"],["t-beat","beat"],["t-noted","noted"]].forEach(([id,f])=>{
   document.getElementById(id).addEventListener("click",e=>{
-    F[f]=!F[f]; e.currentTarget.setAttribute("aria-pressed",String(F[f])); render();
+    F[f]=!F[f]; e.currentTarget.setAttribute("aria-pressed",String(F[f])); refresh();
   });
 });
 
 function fit(){
-  const w = document.querySelector('.tablewrap');
+  const w = [...document.querySelectorAll('.tablewrap')].find(e=>!e.hidden);
   if (!w) return;
   const top = w.getBoundingClientRect().top + window.scrollY - (window.scrollY||0);
   const h = Math.max(260, window.innerHeight - top - 46);
   document.documentElement.style.setProperty('--th', h + 'px');
 }
-overall(); strip(); header(); render(); fit();
+overall(); strip(); header(); cheader(); render(); fit();
 addEventListener('resize', fit);
 
 claude.use("db").then(db=>{
@@ -945,7 +1095,7 @@ claude.use("db").then(db=>{
       const t = (d.data()||{}).text || "";
       if (d.id !== skip && notes.get(d.id) !== t){ notes.set(d.id, t); changed = true; }
     });
-    if (changed) render();
+    if (changed) refresh();
   }, ()=>{ s.textContent = "Lost the shared notes connection; edits stay in this view."; s.className="dbstate"; });
 });
 </script>
