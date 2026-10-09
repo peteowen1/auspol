@@ -1,3 +1,7 @@
+# auspol 0.4.89
+
+- The NSW 2027 forecast now applies the leader-seat bonus: Chris Minns in Kogarah and Kellie Sloane in Vaucluse, +2.76 points each, the same fitted bonus Victoria's leaders get. The leaders list had stopped at NSW 2023.
+
 # auspol 0.4.88
 
 - No change to the published forecast. Four ideas for independents and statewide polls were built, measured and refused; their switches stay off: weighting statewide polls by sample size (only 16.8% of polls report one), by pollster track record, or by noise estimated from earlier elections; a typical-vote start for new independents (`AUSPOL_IND_TYPICAL`); a two-part independent mixture (`AUSPOL_IND_MIXTURE`, seat log loss +0.0332 over 22 elections); and a dedicated independent model.
