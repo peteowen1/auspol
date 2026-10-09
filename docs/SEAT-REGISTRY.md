@@ -60,6 +60,14 @@ file is the durable copy.
   2CP 56.0. **OPEN, DATA needed** (the LNP card order). Pattern E in
   `reviews/worst-seats-five-patterns-2026-09-13.md`.
 
+## vic2018
+
+Dug 2026-10-09 from run 0cbaa82 (`scripts/biggest_misses.R --pairs=vic2018`). The 2018 Labor landslide cluster (Liberal seats Labor won, our winner probability 0.04-0.23): about half is the STATEWIDE miss (Labor first preferences forecast 39.2 vs 42.9; poll trend two-party 54.2 vs 57.3 actual; across all 88 seats Labor under-called by 3.3 on average, in the cluster by 6.6). The rest is seat allocation, mainly independents over-called.
+
+- **Hawthorn** -- **OPEN** (IND over-call). Labor 22.5 vs 32.2. A nameless first-time independent (Grummet) got 7.4 from us, 0.9 actual; no independent stood in 2014. Same population as the new-independent shrink, which this run includes.
+- **Bass** -- **OPEN** (IND over-call). Labor 29.5 vs 40.2. Clare Le Serve (IND 10.8 in 2014) re-stood; we gave the IND class 17.5, more than her own prior, actual 6.5 (her 4.5).
+- **Nepean, Box Hill, Bayswater, Ringwood** -- **NOTHING TO FIX** in the seat model beyond the statewide poll miss: Labor under-called 3.9-6.1, Liberals over-called 1.5-5.0, no large minor-party error.
+
 ## vic2022
 
 - **Morwell** — **OPEN**, the biggest single seat in the corpus (log loss
@@ -276,3 +284,7 @@ points, so a pre-registered test can only refuse. Three more exist but predate
 Surname matching gave false positives, removed by hand: Mount Gambier 2022 (Troy Bell
 re-contested, IND 45.7), Frome 2022 and Florey 2022 (members MOVED seat, to Stuart and
 Newland: a different mechanism).
+
+## Cross-seat: Victorian independents over-called in every election (2026-10-09, measured)
+
+Run 0cbaa82 (new-independent shrink ON). Contested IND cells, ours minus actual, points (positive = over-called): single first-timers +1.9 / +4.3 / +2.6 (n 31 / 17 / 27; 2014 / 2018 / 2022), single who stood before +3.7 / +5.5 / +3.7 (n 4 / 11 / 9), seats with 2+ independents +0.5 / -2.8 / +3.8 (n 22 / 26 / 33; the few real surges pull the mean down). More than half of all IND cells are over-called by 3+ points each election. The statewide others-bucket scale was refused 2026-10-06 (`reviews/others-scale-by-jurisdiction-2026-10-06.md`: the gap "sits in the seat allocation"); this is that allocation. **OPEN.** Note: `candidacies.csv` `surname`/`given` are empty for every vic, nsw, qld row (sa 628 of 892); the model's name keys fall back to `name` (`R/names.R` surname_of/given_of use nzchar), so matching is unaffected, but any ad-hoc analysis must parse `name`.
