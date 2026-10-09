@@ -64,3 +64,7 @@ quick_arm, 22 pairs, 1,000 sims, vs shipped. Q2 = squared share error on changed
 A1's damage sits where independents won or came close: fed2022 +0.050, sa2026 +0.050, fed2025 +0.045, sa2022 +0.030, nsw2023 +0.027 (seat log loss). It fixes the typical over-called independent (vic2022 Pascoe Vale 18.6 -> 6.7, actual 4.2) but pulls down contenders (Benambra 22.4 -> 9.3, actual 31.7: a returning near-winner).
 
 A2 (base, mean) failed on fed2007 with an NA smearing factor (one-cell jurisdiction, undefined shift), so no verdict; fixed, not rerun. A4 not run.
+
+## Pete's follow-up (2026-10-09): a dedicated model on ALL inputs, scored on independent cells first
+
+`scripts/eval_ind_model.R`: time-forward xgboost per target on nominated independent cells (41 feature-table inputs plus the decay-weighted seat-poll figure, 108 polled cells), predicting the actual share. Pooled over 892 cells in 18 elections, RMSE: current xgb stage 6.38, current published 5.91, new 6.38; median absolute miss current 2.65, new 2.42; bias current +0.30, new -0.17. Ties the stage it would replace and loses to the published path; surges (Goldstein 2022 6.1 vs 34.5) carry it. Not built into the harnesses. A2/A4 (mean arms) left unrun: superseded. Pete chose to attack the SHAPE of the independent distribution in the simulation instead (option 2).
