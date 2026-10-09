@@ -86,3 +86,15 @@ Scraped every Wikipedia national and state poll table (`scripts/fetch_statewide_
 - Spread: interquartile range **1,242 to 1,698** (ratio **1.37**, bar 1.5); median 1,516, p10 1,033, p90 2,260.
 
 Both clauses refuse. Per the clause-refusal rule this goes to Pete; the arms are not built.
+
+## Amendment 1 (2026-10-09, after the gate failed, before any arm ran): two arms that need no sample size
+
+Pete chose to build the pollster track record and an estimated poll noise instead ("1"). Same criterion, guards and leakage rules as above, unchanged. Arms against the equal-weights, fixed-noise incumbent:
+
+- `weights = "record"`: each pollster's noise factor from its deviations from RESULTS at elections held before the cycle began (`firm_record_factors()`, `R/poll_record.R`): per poll and party (ALP, LNP, GRN), poll minus result minus the recency-weighted mean miss of all polls of that election (the shared miss is not a firm's record), recency weight halving every 30 days before polling day (`POLL_RECORD_HALFLIFE`), shrunk to the pool by 12 pseudo-polls (`POLL_RECORD_K`, as `estimate_firm_factors()`), as an sd ratio. All six regions' past elections count.
+- `sigmas = "pooled_tf"`: sigma_obs and sigma_rw by marginal likelihood over the region's cycles that ended on or before the cycle began (`poll_sigmas_time_forward()`); defaults kept when fewer than 2 earlier cycles or at a bound.
+- `both`: the two together.
+
+The bands half is scored on held-out polls: each horizon's fit scores the polls from its cutoff to the next shorter horizon's cutoff (`poll_predictive_scores()`), so no poll is scored twice per cycle. Log predictive density, SE clustered on (region, election).
+
+Expectation on record: small or no effect; the within-cycle version of the record arm measured 0.6% worse.
