@@ -24,16 +24,22 @@ PUBLIC_SEAT_POLLSTERS <- c("YouGov", "Galaxy", "Newspoll", "RedBridge", "DemosAU
 #'   when `by_type`), possibly empty. A release (pollster + dates) covering at
 #'   least 20 seats counts as MRP, whatever its name.
 #' @export
-seat_poll_shares <- function(election, days = 90, by_type = FALSE, by_poll = FALSE) {
+seat_poll_shares <- function(election, days = 90, by_type = FALSE, by_poll = FALSE, .raw = FALSE) {
   f <- file.path(pkg_root(), "external", "reference", "polls", "seat-polls", "seat_polls.csv")
   empty <- data.table::data.table(seat = character(0), class = character(0), poll = numeric(0),
                                   n_polls = integer(0), n_mrp = integer(0))
   if (!file.exists(f)) return(empty)
+  decay <- .seat_poll_decay_on()
+  if (decay && by_poll) stop("AUSPOL_SEAT_POLL_DECAY=1 is built for the class match only (AUSPOL_SEAT_POLL_MATCH=class)")
   s <- .read_seat_polls_file(f)
   el_arg <- election
   ed <- as.Date(unname(election_dates()[el_arg]))
+  # Polls after polling day are never read (that is leakage, not a window).
+  # The `days` window is the shipped hard cut; AUSPOL_SEAT_POLL_DECAY replaces
+  # it with a recency weight (.seat_poll_cell_weights()).
   keep <- s$election == el_arg & s$row_type == "poll" & is.finite(s$fp) &
-    !is.na(s$fieldwork_end) & as.Date(s$fieldwork_end) < ed & as.Date(s$fieldwork_end) >= ed - days
+    !is.na(s$fieldwork_end) & as.Date(s$fieldwork_end) < ed
+  if (!decay) keep <- keep & as.Date(s$fieldwork_end) >= ed - days
   s <- s[keep]
   if (!nrow(s)) return(empty)
   p <- toupper(trimws(s$party))
@@ -49,6 +55,10 @@ seat_poll_shares <- function(election, days = 90, by_type = FALSE, by_poll = FAL
   s$release <- paste(s$pollster, s$date_raw)
   cover <- s[, list(n_seats = data.table::uniqueN(seat_name)), by = release]
   s$is_mrp <- cover$n_seats[match(s$release, cover$release)] >= 20L
+  # AUSPOL_SEAT_POLL_MRP_NAME: the structural test misses an MRP release that
+  # covered fewer than 20 seats -- YouGov's final fed2025 MRP ("YouGov (MRP)",
+  # Bradfield 47.8, 4 days out) was filed as a direct poll. The name says MRP.
+  if (.seat_poll_mrp_name_on()) s$is_mrp <- s$is_mrp | grepl("MRP", s$pollster, ignore.case = TRUE)
   src <- Sys.getenv("AUSPOL_SEAT_POLL_SOURCES", "all")
   if (!src %in% c("all", "public")) stop("AUSPOL_SEAT_POLL_SOURCES must be \"all\" or \"public\", not ", src)
   if (src == "public") {
@@ -77,9 +87,138 @@ seat_poll_shares <- function(election, days = 90, by_type = FALSE, by_poll = FAL
     return(pp)
   }
   per_poll <- s[, list(fp = sum(fp), mrp = is_mrp[1]), by = list(seat = seat_name, poll_id, class)]
-  if (!by_type) return(per_poll[, list(poll = mean(fp), n_polls = .N, n_mrp = sum(mrp)), by = list(seat, class)])
+  if (!decay) {
+    if (!by_type) return(per_poll[, list(poll = mean(fp), n_polls = .N, n_mrp = sum(mrp)), by = list(seat, class)])
+    per_poll$type <- ifelse(per_poll$mrp, "mrp", "direct")
+    return(per_poll[, list(poll = mean(fp), n_polls = .N, n_mrp = sum(mrp)), by = list(seat, class, type)])
+  }
+  # DECAY: each poll's facts (days before polling day, seat sample size,
+  # sponsor), one row per poll.
+  pf <- s[, list(days = as.numeric(ed - as.Date(fieldwork_end[1])),
+                 n_seat = suppressWarnings(as.numeric(sample_n[1])),
+                 sponsored = !is.na(client[1]) & nzchar(trimws(client[1]))), by = poll_id]
+  per_poll <- merge(per_poll, pf, by = "poll_id")
+  # MRP sample sizes are the NATIONAL survey (YouGov fed2025: 10,822), not the seat's.
+  per_poll$n_seat[per_poll$mrp] <- NA_real_
+  per_poll$group <- ifelse(per_poll$mrp, "mrp", ifelse(per_poll$sponsored, "sponsored", "direct"))
+  if (.raw) return(per_poll)
+  per_poll$wt <- .seat_poll_cell_weights(per_poll, seat_poll_decay_params(el_arg))
   per_poll$type <- ifelse(per_poll$mrp, "mrp", "direct")
-  per_poll[, list(poll = mean(fp), n_polls = .N, n_mrp = sum(mrp)), by = list(seat, class, type)]
+  by_cols <- if (by_type) c("seat", "class", "type") else c("seat", "class")
+  per_poll[, list(poll = sum(wt * fp) / sum(wt), n_polls = .N, n_mrp = sum(mrp), wsum = sum(wt)), by = by_cols]
+}
+
+.seat_poll_decay_on <- function() {
+  v <- Sys.getenv("AUSPOL_SEAT_POLL_DECAY", "0")
+  if (!v %in% c("0", "1")) stop("AUSPOL_SEAT_POLL_DECAY must be \"0\" or \"1\", not ", v)
+  v == "1"
+}
+.seat_poll_mrp_name_on <- function() {
+  v <- Sys.getenv("AUSPOL_SEAT_POLL_MRP_NAME", "0")
+  if (!v %in% c("0", "1")) stop("AUSPOL_SEAT_POLL_MRP_NAME must be \"0\" or \"1\", not ", v)
+  v == "1"
+}
+
+# Constants of the seat-poll decay (docs/CONSTANTS.md). The half-life prior is
+# Pete's choice (2026-10-09, "60 days"); the rest make "weak prior" a number.
+SEAT_POLL_HALFLIFE_PRIOR <- 60     # days
+SEAT_POLL_HALFLIFE_LOGSD <- 0.7    # prior sd of log(half-life): 60 days, 2-sd range 15 to 245
+SEAT_POLL_FLOOR_PRIOR <- 16        # non-sampling error variance, points^2 (sd 4), before any data
+SEAT_POLL_FLOOR_K <- 10            # pseudo seat-elections pulling each group's floor to the pool
+SEAT_POLL_N_FALLBACK <- 600        # seat sample when no earlier direct poll records one
+
+#' Per-poll weight in a seat's poll average: recency times precision
+#'
+#' `wt = 0.5^(days / H) / (fp * (100 - fp) / n + floor[group])`: halves every
+#' `H` days before polling day, and is the inverse of the poll's error variance
+#' (sampling, from the seat sample `n`; MRP has none of its own, its error is
+#' all floor) plus a non-sampling floor for its group (`mrp`, `direct`,
+#' `sponsored`). A direct poll without a recorded sample takes `p$n_fill`.
+#' @keywords internal
+.seat_poll_cell_weights <- function(pp, p) {
+  n <- pp$n_seat
+  n[!pp$mrp & !is.finite(n)] <- p$n_fill
+  sv <- ifelse(pp$mrp, 0, pp$fp * (100 - pp$fp) / n)
+  0.5^(pp$days / p$H) / (sv + unname(p$floor[pp$group]))
+}
+
+.seat_poll_decay_cache <- new.env(parent = emptyenv())
+
+#' Time-forward decay parameters for the seat polls of one election
+#'
+#' Fitted on every EARLIER election's polls against its actual result (as
+#' [seat_poll_weight()] is): the non-sampling floor per group (`mrp`, `direct`,
+#' `sponsored`) is the recency-weighted mean of `(poll - actual)^2` minus
+#' sampling variance, each group shrunk toward the pooled floor by
+#' `SEAT_POLL_FLOOR_K` pseudo seat-elections and the pool toward
+#' `SEAT_POLL_FLOOR_PRIOR`; the half-life `H` maximises the Gaussian profile
+#' likelihood of the weighted seat averages' errors (one unit per
+#' seat-election) plus a log-normal prior around `SEAT_POLL_HALFLIFE_PRIOR`.
+#' Alternates the two three times. With no earlier polls, the priors alone.
+#'
+#' @param target_election Label such as `"fed2022"`.
+#' @return list `H`, `floor` (named by group), `n_fill`, `n_units`, `n_polls`.
+#' @export
+seat_poll_decay_params <- function(target_election) {
+  key <- paste(target_election, Sys.getenv("AUSPOL_SEAT_POLL_SOURCES", "all"), Sys.getenv("AUSPOL_SEAT_POLL_IND_MAP", "1"),
+               Sys.getenv("AUSPOL_SEAT_POLL_HANDKEYED", "1"), Sys.getenv("AUSPOL_SEAT_POLL_MRP_NAME", "0"))
+  if (!is.null(.seat_poll_decay_cache[[key]])) return(.seat_poll_decay_cache[[key]])
+  grp <- c("mrp", "direct", "sponsored")
+  prior <- list(H = SEAT_POLL_HALFLIFE_PRIOR, floor = stats::setNames(rep(SEAT_POLL_FLOOR_PRIOR, 3), grp),
+                n_fill = SEAT_POLL_N_FALLBACK, n_units = 0L, n_polls = 0L)
+  f <- current_seat_predictions()
+  els <- if (is.null(f)) character(0) else unique(f$election)
+  els <- els[elections_before(els, target_election)]
+  rows <- data.table::rbindlist(lapply(els, function(e) {
+    pp <- NULL
+    utils::capture.output(pp <- seat_poll_shares(e, .raw = TRUE))   # SPIM/SPHK lines once per target, not per earlier election
+    if (is.null(pp) || !nrow(pp) || !"poll_id" %in% names(pp)) return(NULL)
+    fe <- f[f$election == e, list(seat = normalise_seat(seat), class = party, actual = actual_share)]
+    pp$seat <- normalise_seat(pp$seat)
+    m <- merge(pp, fe, by = c("seat", "class"))
+    m <- m[is.finite(actual)]
+    if (!nrow(m)) return(NULL)
+    m$unit <- paste(e, m$seat)
+    m
+  }), fill = TRUE)
+  out <- prior
+  if (nrow(rows)) {
+    nd <- rows$n_seat[!rows$mrp & is.finite(rows$n_seat)]
+    n_fill <- if (length(nd)) stats::median(nd) else SEAT_POLL_N_FALLBACK
+    nn <- rows$n_seat; nn[!rows$mrp & !is.finite(nn)] <- n_fill
+    sv <- ifelse(rows$mrp, 0, rows$fp * (100 - rows$fp) / nn)
+    r2 <- (rows$fp - rows$actual)^2 - sv
+    H <- SEAT_POLL_HALFLIFE_PRIOR
+    grid <- exp(seq(log(7), log(730), length.out = 60))
+    U <- length(unique(rows$unit))
+    cell <- paste(rows$unit, rows$class)
+    for (it in 1:3) {
+      rec <- 0.5^(rows$days / H)
+      pool_n <- U
+      pool <- (pool_n * max(1, sum(rec * r2) / sum(rec)) + SEAT_POLL_FLOOR_K * SEAT_POLL_FLOOR_PRIOR) / (pool_n + SEAT_POLL_FLOOR_K)
+      fl <- vapply(grp, function(g) {
+        i <- rows$group == g
+        if (!any(i)) return(pool)
+        ng <- length(unique(rows$unit[i]))
+        raw <- max(1, sum(rec[i] * r2[i]) / sum(rec[i]))
+        (ng * raw + SEAT_POLL_FLOOR_K * pool) / (ng + SEAT_POLL_FLOOR_K)
+      }, numeric(1))
+      obj <- vapply(grid, function(h) {
+        w <- 0.5^(rows$days / h) / (sv + fl[rows$group])
+        avg <- tapply(w * rows$fp, cell, sum) / tapply(w, cell, sum)
+        act <- tapply(rows$actual, cell, `[`, 1)
+        sse <- sum((avg - act[names(avg)])^2)
+        0.5 * U * log(sse / length(avg)) + (log(h) - log(SEAT_POLL_HALFLIFE_PRIOR))^2 / (2 * SEAT_POLL_HALFLIFE_LOGSD^2)
+      }, numeric(1))
+      H <- grid[which.min(obj)]
+    }
+    out <- list(H = H, floor = fl, n_fill = n_fill, n_units = U, n_polls = length(unique(paste(rows$unit, rows$poll_id))))
+  }
+  cat(sprintf("SPD  %s seat-poll decay: half-life %.0f days, floor sd mrp %.2f / direct %.2f / sponsored %.2f points, n fill %.0f (%d earlier polls, %d seat-elections%s)\n",
+              target_election, out$H, sqrt(out$floor[["mrp"]]), sqrt(out$floor[["direct"]]), sqrt(out$floor[["sponsored"]]),
+              out$n_fill, out$n_polls, out$n_units, if (out$n_units == 0L) "; priors only" else ""))
+  .seat_poll_decay_cache[[key]] <- out
+  out
 }
 
 #' Each seat poll as a full vector over OUR classes (per-poll match)
@@ -224,7 +363,8 @@ seat_poll_blend_table <- function(target_election, write = FALSE) {
     if (write) {
       out <- data.table::copy(tb)
       if (!nrow(out)) out <- data.table::data.table(seat = NA_character_, class = NA_character_, type = NA_character_,
-                                                    poll = NA_real_, n_polls = NA_integer_, n_mrp = NA_integer_)
+                                                    poll = NA_real_, n_polls = NA_integer_, n_mrp = NA_integer_,
+                                                    wsum = if (.seat_poll_decay_on()) NA_real_ else NULL)
       out$w <- w$w; out$w_raw <- w$raw; out$w_se <- w$se; out$w_n <- w$n; out$w_k <- w$k
       out$w_direct <- w$w_direct; out$w_mrp <- w$w_mrp
       if (ind_on) { out$w_ind <- w$w_ind; out$w_ind_raw <- w$w_ind_raw; out$w_ind_se <- w$w_ind_se; out$w_ind_n <- w$w_ind_n }
@@ -247,7 +387,9 @@ seat_poll_blend_table <- function(target_election, write = FALSE) {
         w$w_ind <- raw$w_ind[1]; w$w_ind_raw <- raw$w_ind_raw[1]; w$w_ind_se <- raw$w_ind_se[1]; w$w_ind_n <- raw$w_ind_n[1]
       }
     }
-    tb <- raw[!is.na(raw$seat), list(seat, class, type, poll, n_polls, n_mrp)]
+    tb <- raw[!is.na(raw$seat), intersect(c("seat", "class", "type", "poll", "n_polls", "n_mrp", "wsum"), names(raw)), with = FALSE]
+    if (.seat_poll_decay_on() && !"wsum" %in% names(tb))
+      stop(basename(cache), " was written without the decay weights (wsum) but AUSPOL_SEAT_POLL_DECAY=1: re-promote it")
     cat(sprintf("SPB  %s: blend inputs read from %s (sources absent)\n", target_election, basename(cache)))
   } else {
     stop("seat-poll blend for ", target_election, ": neither the sources (", src,
@@ -288,7 +430,10 @@ seat_poll_blend_apply <- function(shares, target_election) {
   }
   tb_type <- tb
   # Mode 1 (v50): one weight on the mean over every poll, MRP or direct.
-  tb <- tb[, list(poll = sum(poll * n_polls) / sum(n_polls), n_polls = sum(n_polls), n_mrp = sum(n_mrp)),
+  # Types combine by poll count; under AUSPOL_SEAT_POLL_DECAY by their summed
+  # per-poll weights, so a stale MRP cannot outvote a fresh direct poll.
+  tb$agg_w <- if ("wsum" %in% names(tb)) tb$wsum else tb$n_polls
+  tb <- tb[, list(poll = sum(poll * agg_w) / sum(agg_w), n_polls = sum(n_polls), n_mrp = sum(n_mrp)),
            by = list(seat, class)]
   if (perpoll) {
     # Not yet in the shipped table the daily run reads: backtests only until
