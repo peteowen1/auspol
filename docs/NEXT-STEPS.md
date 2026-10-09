@@ -33,8 +33,10 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30.
    (2026-10-09): 63 codes still printed by several files, 56
    the same check, 7 pre-registration clause ids left alone; 156 codes renamed; a ratchet test
    (`test-check-code-collisions.R` + `check-code-allowlist.csv`) stops new ones. All 50 switches now
-   carry a CLASSIFY note; `AUSPOL_UPSET_FLOOR` is the one genuinely OPEN GAP. Still open: a scheduled
-   Haiku sentinel running the four audits after each daily run (ops repo already has one).
+   carry a CLASSIFY note; `AUSPOL_UPSET_FLOOR` is the one genuinely OPEN GAP. Sentinel SHIPPED 2026-10-09 (ops PRs #16, #17):
+   daily after the ops health check, `ops/scripts/auspol-audit.sh` checks CONSTANTS.md and file:line citations
+   against code (Haiku, ~$0.01) and the published R2 JSON (deterministic); drift goes to auspol issue #109.
+   Treat each finding as a lead (about 4 in 5 right when spot-checked).
 4. ~~`check_like_ci.R` reruns R CMD check whenever scripts/ changes~~ **DONE 2026-10-09 (PR #107):** scripts/ was
    never in the build; the rerun came from the per-PR DESCRIPTION Version / NEWS.md bump, now out of the
    fingerprint (proven: the 0.4.85 bump skipped the slow half).
@@ -261,7 +263,7 @@ plan, **Pete to send**; To Do reminder set).
   carrying a class gap onto a candidate when none of that class's earlier candidates re-stand, in `base_pred`
   AND xgb. Bigger overcalls with a permitted successor (Geelong, Morwell, Mildura, Kavel, Finniss) are a
   separate item, not started; departed-hold refused.
-- **Simulation noise revives zeroed parties** (`R/seat_sim.R:1229`, `v <- base_v + shift + rnorm(K, 0, sd_cell)`):
+- **Simulation noise revives zeroed parties** (`R/seat_sim.R:1275`, `v <- base_v + shift + rnorm(K, 0, sd_cell)`):
   written shares are 0, draws are not. Measure how often a revived cell places or wins before masking it;
   affects every harness number, so it needs a prereg. Unmeasured.
 - **Departed-rate refit**: branch `departed-rate-refit` (256f328, reviewed twice) never run on real data; its
