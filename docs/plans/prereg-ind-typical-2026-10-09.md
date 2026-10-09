@@ -51,3 +51,16 @@ All with `AUSPOL_NEW_IND_SHRINK=0`.
 ## Amendments
 
 (none)
+
+## RESULT so far (2026-10-09): arms A1 and A3 REFUSED; A2 and A4 not yet run
+
+quick_arm, 22 pairs, 1,000 sims, vs shipped. Q2 = squared share error on changed cells (lower is better); Q3 = pooled seat log loss.
+
+| arm | Q2 change | Q3 0.3094 -> | AEF-7 0.2743 -> | verdict |
+|---|---|---|---|---|
+| A1 base, median | +9% (worse > 2 SE) | 0.3190 (+0.0096, SE 0.0047) | 0.3037 | REFUSE |
+| A3 final, median | +8% (worse > 2 SE) | 0.3121 (+0.0027, SE 0.0037) | 0.2838 | REFUSE |
+
+A1's damage sits where independents won or came close: fed2022 +0.050, sa2026 +0.050, fed2025 +0.045, sa2022 +0.030, nsw2023 +0.027 (seat log loss). It fixes the typical over-called independent (vic2022 Pascoe Vale 18.6 -> 6.7, actual 4.2) but pulls down contenders (Benambra 22.4 -> 9.3, actual 31.7: a returning near-winner).
+
+A2 (base, mean) failed on fed2007 with an NA smearing factor (one-cell jurisdiction, undefined shift), so no verdict; fixed, not rerun. A4 not run.

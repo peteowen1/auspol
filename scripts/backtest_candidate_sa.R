@@ -980,7 +980,11 @@ if (PORT) {
 # AUSPOL_NEW_IND_SHRINK (POST-XGB, shipped "1"; "0" makes this line a no-op): a nameless
 # first-time sole independent is over-called at base. R/new_ind_shrink.R.
 shares <- new_ind_shrink_apply(shares, TGT, code = "BS1n")
+# AUSPOL_IND_TYPICAL (POST-XGB-TRAINING, off by default): non-sitting independents start from
+# the typical vote for their signals, before ("base") or after ("final") the frozen trees. R/ind_typical.R.
+shares <- ind_typical_apply(shares, TGT, stage = "base", code = "BS1T")
 shares <- xgb_primary_override(shares, TGT)
+shares <- ind_typical_apply(shares, TGT, stage = "final", code = "BS1T")
 # Every class with no candidate standing is zeroed AFTER the override, which
 # otherwise writes its prediction back (plans/prereg-nomination-zero-2026-10-03.md).
 # AUSPOL_NOM_ZERO_ORDER (default "early" = this position); "late" runs it after

@@ -1467,7 +1467,11 @@ for (K in PAIRS) {
   # AUSPOL_NEW_IND_SHRINK (POST-XGB, shipped "1"; "0" makes this line a no-op): a nameless
   # first-time sole independent is over-called at base. R/new_ind_shrink.R.
   shares <- new_ind_shrink_apply(shares, sprintf("fed%d", K$to), code = "BF1n")
+  # AUSPOL_IND_TYPICAL (POST-XGB-TRAINING, off by default): non-sitting independents start from
+  # the typical vote for their signals, before ("base") or after ("final") the frozen trees. R/ind_typical.R.
+  shares <- ind_typical_apply(shares, sprintf("fed%d", K$to), stage = "base", code = "BF1T")
   shares <- xgb_primary_override(shares, sprintf("fed%d", K$to))
+  shares <- ind_typical_apply(shares, sprintf("fed%d", K$to), stage = "final", code = "BF1T")
   # Seat-poll blend (AUSPOL_SEAT_POLL_BLEND), after the override and the port;
   # xgb layer only, so stage-1 base_pred never includes it.
   # plans/prereg-seat-poll-blend-2026-09-29.md
