@@ -40,7 +40,7 @@ new_ind_mode <- function() {
 post_xgb_switches <- function() {
   cur <- c(AUSPOL_REENTRY = reentry_mode(), AUSPOL_NEW_IND_SHRINK = new_ind_mode(),
            AUSPOL_DEPARTED_SUCCESSOR = departed_successor_mode(),
-           AUSPOL_IND_TYPICAL = ind_typical_mode())
+           AUSPOL_IND_TYPICAL = ind_typical_mode(), AUSPOL_IND_MIXTURE = ind_mixture_mode())
   cur[cur != "0"]
 }
 

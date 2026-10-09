@@ -852,6 +852,7 @@ shares <- new_ind_shrink_apply(shares, TGT, code = "BT1n")
 shares <- ind_typical_apply(shares, TGT, stage = "base", code = "BT1T")
 shares <- xgb_primary_override(shares, TGT)
 shares <- ind_typical_apply(shares, TGT, stage = "final", code = "BT1T")
+shares <- ind_mixture_apply(shares, TGT, code = "BT1M")  # AUSPOL_IND_MIXTURE (off by default). R/ind_mixture.R.
 # Every class with no candidate standing is zeroed AFTER the override, which
 # otherwise writes its prediction back (plans/prereg-nomination-zero-2026-10-03.md).
 # AUSPOL_NOM_ZERO_ORDER (default "early" = this position); "late" runs it after
@@ -1099,6 +1100,8 @@ if (.exhaust_on) {
   error = function(e) { cat(sprintf("HTV9! how-to-vote override FAILED, flow rows unchanged: %s\n", conditionMessage(e))); .xgb_flow_ov }) else .xgb_flow_ov
 # BREAKOUT MIXTURE (AUSPOL_BREAKOUT_MIX, R/breakout_mix.R): NULLs when off.
 .bo <- breakout_mix_args(TGT, shares)
+.imx <- ind_mixture_surge(TGT, rownames(shares), surge_arg, surge_mu_arg, surge_sd_arg, surge_party_arg, code = "BT1N")
+surge_arg <- .imx$surge_h; surge_mu_arg <- .imx$surge_mu; surge_sd_arg <- .imx$surge_sd; surge_party_arg <- .imx$surge_party
 sim <- simulate_seat_contests(level_sd = .level_sd, sd_override = SD_OVR, level_mult = .lm(shares), shares, fm, party_sd = psd, seat_sd = sp$sd_within * SEAT_SD_MULT,
                               breakout_p = .bo$p, breakout_q = .bo$q,
                               n_sims = N_SIMS, smooth = SMOOTH, seed = SEED, party_cor = PARTY_COR,

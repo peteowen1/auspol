@@ -81,3 +81,9 @@ A2 (base, mean) failed on fed2007 with an NA smearing factor (one-cell jurisdict
 ## Pete's follow-up (2026-10-09): a dedicated model on ALL inputs, scored on independent cells first
 
 `scripts/eval_ind_model.R`: time-forward xgboost per target on nominated independent cells (41 feature-table inputs plus the decay-weighted seat-poll figure, 108 polled cells), predicting the actual share. Pooled over 892 cells in 18 elections, RMSE: current xgb stage 6.38, current published 5.91, new 6.38; median absolute miss current 2.65, new 2.42; bias current +0.30, new -0.17. Ties the stage it would replace and loses to the published path; surges (Goldstein 2022 6.1 vs 34.5) carry it. Not built into the harnesses. A2/A4 (mean arms) left unrun: superseded. Pete chose to attack the SHAPE of the independent distribution in the simulation instead (option 2).
+
+## RESULT, Amendment 1 (A5 mixture): REFUSED
+
+quick_arm, 22 pairs, 1,000 sims. Seat log loss 0.3094 -> 0.3426 (+0.0332, SE 0.0158); AEF-7 0.2743 -> 0.3475; Q2 +86% (not a criterion). Worst fed2025 +0.19, wa2013 +0.19, fed2022 +0.12; better nsw2023 -0.027, vic2018 -0.016, nsw2019, fed2013. Cause: the shipped surge (surge-v2) is a rare WINNER surge (vic2022 mean chance 0.021, size 35.6 +/- 10.8, trained on 16 winners); the mixture's is a frequent SHARE surge (mean chance 0.22, size ~16) that takes votes from the winning major in a fifth of draws. Offline P(15+) calibration (Brier 0.0975 vs 0.1226) does not translate into seat outcomes.
+
+**Conclusion of the 2026-10-09 independent work:** the shipped path (xgb layer + surge-v2 winner surge) beat every alternative built today: typical-vote arms (A1, A3), a dedicated 41-input model (ties the xgb stage, loses to published), and the mixture (A5). The Victorian independent over-call (+1 to +3 points on typical cells) is the price of the hedge against surges that our inputs cannot see coming. All switches stay off.
