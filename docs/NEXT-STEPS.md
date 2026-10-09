@@ -7,7 +7,7 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30.
 
 ## 2026-10-09 HANDOFF (READ FIRST)
 
-**Needs Pete:** nothing blocking. One gate owed: 12 commits on `dev` are not on `main` and have NOT been through the review gate (statewide-poll arms, `AUSPOL_IND_TYPICAL`, `AUSPOL_IND_MIXTURE`, docs, `biggest_misses.R` MX2 fix; every new switch OFF, byte-identical when off). Next session: review gate, then PR.
+**Needs Pete:** nothing blocking. The 12-commit review gate is DONE: PR #111 merged 2026-10-09 (2 Sonnet reviewers; 3 fixes in `c5e9e0c`, none changed a recorded verdict).
 
 **Shipped and published today** (PR #110, `shipped-models` 2026-10-09 03:21 UTC, vic2026 + nsw2027 tables): seat-poll recency decay, 0.75 weight prior, MRP-name fix (full 20k, 6 polled pairs: 0.2705 -> 0.2675). AEF-7 ledger 0.2733 vs AEF 0.2825. `output/` holds the stage 6-8 rebuild of 897e7d5.
 
@@ -17,168 +17,22 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30.
 - Independents: typical-vote arms, dedicated 41-input model, two-part mixture. The shipped xgb + rare winner-surge beat all of them (`plans/prereg-ind-typical-2026-10-09.md`). The Victorian +1 to +3 independent over-call is the hedge, not a bug.
 
 **Queue, ranked:**
-1. Review gate + PR for the 12 unreviewed `dev` commits (~30 min).
+1. ~~Review gate + PR for the 12 unreviewed `dev` commits~~ DONE (PR #111). Open from it: the statewide poll scraper year-inference root cause (STAT6! stops on it); fetch failures recorded as permanent 404s.
 2. Nomination day 2026-11-09: refit successor rates on the final candidate list (`build_departed_successors.R` chain), re-run the live forecast; seat polls in the last 90 days now enter by decay automatically.
 3. OPEN seats with a known mechanism: Richmond/Footscray/Brunswick how-to-vote flows (SEAT-REGISTRY vic2022), Morwell departed-origin (re-decide when the corpus grows), Benambra-type returning near-winners (retention by prior size).
 
 Tools: misses via `scripts/biggest_misses.R` / skill `biggest-misses` (never `forecasts.csv`).
 
-## 2026-10-08 NIGHT HANDOFF (READ FIRST)
+## 2026-10-07 to 2026-10-08: archived handoffs
 
-**Needs Pete:** nothing blocking.
-
-**Live on ITG** (all checked to load; blog PRs #858-#861):
-- https://inthegame.blog/politics/what-if (Victoria) and `#election=nsw2027`: the what-if slider. Two readings
-  as a toggle: "gets exactly X" / "is polling X" (the second equals the headline at today's level, checked
-  every run by `combine_scenarios.py` SC7). Decisions in `DECISIONS.md` 2026-10-08.
-- https://inthegame.blog/politics/nsw: NSW 2027 forecast with district map.
-- Daily files on R2 `auspol/`: forecast-vic2026.json, forecast-nsw2027.json, scenario-vic2026.json,
-  scenario-nsw2027.json, nsw2027-districts.topojson. Last proving run 37770931865: green, publish step 45 s.
-- auspol PRs #100-#106 merged, each reviewed (Sonnet) and CI-green; `dev` = `main` in content.
-
-**Queued, in order:**
-1. **NSW page pieces: DATA LIVE on R2 2026-10-09 (PR #107, run 37781691910); blog side pending.** Keys
-   sent to the ITG session: `auspol/nsw2027-page-data.json` (poll trend), `region` on every seat of
-   forecast-nsw2027.json (9 hand regions, `external/reference/nsw/nsw-district-regions.csv`),
-   `auspol/nsw2023-results.json` + `nsw2023-booths.json` (seat pages; `seat.qmd` is hard-wired to vic and
-   needs an election switch). Early-voting venues have no coordinates (The Tally Room has none).
-2. **Scenario-job straggler, OPEN (Pete, 2026-10-09: "leave it open maybe a more advanced model in the future can
-   find a fix").** Measured over 5 runs: setup median 33-42 s per job, but one job per run crawls (run 37770931865:
-   setup-r 8.5 min AND the cached deps restore 15.5 min on the same runner; max 935 s, 514 s, 498 s, 256 s, 57 s).
-   Both steps slow together, so it is the runner's network, and a prebuilt image would pull over the same network.
-   Not built. Untried: a per-step timeout plus re-run of the one job; fewer, fatter matrix jobs.
-3. **Haiku audit leftovers**: the check-code collisions and the registry's unexplained switches are DONE
-   (2026-10-09): 63 codes still printed by several files, 56
-   the same check, 7 pre-registration clause ids left alone; 156 codes renamed; a ratchet test
-   (`test-check-code-collisions.R` + `check-code-allowlist.csv`) stops new ones. All 50 switches now
-   carry a CLASSIFY note; `AUSPOL_UPSET_FLOOR` is the one genuinely OPEN GAP. Sentinel SHIPPED 2026-10-09 (ops PRs #16, #17):
-   daily after the ops health check, `ops/scripts/auspol-audit.sh` checks CONSTANTS.md and file:line citations
-   against code (Haiku, ~$0.01) and the published R2 JSON (deterministic); drift goes to auspol issue #109.
-   Treat each finding as a lead (about 4 in 5 right when spot-checked).
-4. ~~`check_like_ci.R` reruns R CMD check whenever scripts/ changes~~ **DONE 2026-10-09 (PR #107):** scripts/ was
-   never in the build; the rerun came from the per-PR DESCRIPTION Version / NEWS.md bump, now out of the
-   fingerprint (proven: the 0.4.85 bump skipped the slow half).
-
-**Deliberately not done:** the in-browser simulator (scoping stage 2, ~40 h): the 2.5-point knots with
-interpolation already feel live; revisit only if Pete wants two sliders at once or finer steps.
-
-**What I got wrong today:** (1) a stale memory said auto mode blocks my merges; one denial on 2026-10-07 had
-been made a rule and Pete had merged by hand since. Corrected. (2) A review fix wrote a literal `
-` into
-forecast.yaml and was pushed to dev before I looked; caught and fixed before any PR (now always `bash -n` a
-workflow step after editing it). (3) The first knot runs reused one output suffix, overwriting the
-old-rule ONP=25 result before comparing it. (4) Two estimates were wrong: a run was 80 s, not 142; the
-daily setup repeat was not a problem at all once the jobs ran in parallel on free public-repo minutes.
-
-## 2026-10-08 MORNING HANDOFF (superseded above: NSW turned on, ITG pages built)
-
-**Needs Pete:** (a) turn NSW 2027 on when ready -- `AUSPOL_PUBLISH_NSW2027=1 Rscript scripts/promote_rebuild.R`, `Rscript scripts/publish_shipped_release.R`, set repository variable `AUSPOL_PUBLISH_NSW2027=1`, run "Forecast refresh" by hand and read the NSW step log (the first real runner test); (b) ask the `inthegame-blog` session to build the NSW page from `forecast-nsw2027.json` (same shape as `forecast-vic2026.json`).
-
-**Shipped and live:** PR #97 and PR #98 merged; PR #99 merged 2026-10-08 (NSW feature tables + publishing path, OFF; FL0; no live change, Victoria byte-identical); `shipped-models` at `75dbda7` (AEF-7 ledger **0.2744** vs AEF 0.2825; pooled seat log loss 0.3249 over 2,120, was 0.3254); forecast refresh run 37700697788 green. In it: departed-successor rate, Nicholls Lib/Nat merged-cell dedup (ledger +0.0005, the fed2025 blend-weight cost Pete accepted), one-cluster blend weight = 0 (fed2019 0.2402 -> 0.2318). Victoria live is unchanged by the two seat-poll fixes until its first seat poll arrives (no polled cells today).
-
-**Open, in priority order:**
-1. **NSW 2027 on ITG** (`plans/nsw2027-itg-scope-2026-10-08.md`). Runs end to end: `AUSPOL_TARGET=nsw2027 AUSPOL_OUT_SUFFIX=-probe Rscript scripts/fit_seats_full.R` (probe: Labor median 47 of 93, Coalition 32). DONE 2026-10-08 (PR #99): census rows (DR1 ON), council history (44 of 194 candidacies; it only needed the candidate list), forecast JSON (probe: expected seats ALP 46.8, LNP 31.8, IND 7.2, ONP 4.4, GRN 2.8; P(hung) 0.46), promote/publish + workflow step (off). Still missing: the ITG page (other session), NSW 2027 leader rows in `external/reference/leaders/leaders.csv` (leader-seat table is empty, so no Minns/Opposition bonus). Accepted as is: One Nation trend ~5 under its polls (poll-lag verdict kept), sitting INDs -14 to -20 (SA 2026 says that is if anything too small).
-2. **fed2025 seat polls deserved weight ~0.13, got 0.55**: no pre-election signal found (fed2022 vs fed2025 disagreement 4.12 vs 3.80). Election-clustered SE checked, does nothing. Open.
-3. ~~Flows pool across states~~ **CLOSED 2026-10-08, by design:** `R/flow_model.R` pools regions on purpose; same-region double weighting changed nothing (6.544 vs 6.541 MAE) and a state-vs-federal term was rejected (+1.10, se 1.90); `scripts/backtest_flows.R` re-races it as G3. Exhaust rates do differ by state (NSW ONP 57%).
-
-4. **fit_seats_full.R has no per-stage timer**: probes ran 120-325 s each, 30+ min today. Time one run by stage (`~/.claude/lib/runtime_log.R`) before caching anything.
-
-**What I got wrong today (so the next session does not repeat it):** the 25.5 One Nation flow (the model uses 33.7) and "council history is Victoria-only" (it covers every election since 2004) -- both stated from a file or script name without printing the value; memory `print-value-at-point-of-use`. A trend-surge prereg was written without reading `reviews/poll-lag-2026-08-19.md`, which had refused it. The release-relative seat-poll idea rested on a -6.8 Labor error measured against the result, not against our model.
-
-**Lessons recorded today:** A hand run of `pool_backtests.R` overwrote the rebuild's scoreboard with a stale wa2021 file (23 pairs); restored from `output/snapshots/20261008-0945-75dbda7-from6` before publishing.
-
-## 2026-10-07 evening HANDOFF (READ FIRST, Pete restarting)
-
-**For Pete, in order:**
-1. **PR #97** (https://github.com/peteowen1/auspol/pull/97): reviewed, CI green, NOT merged. Holds quick_arm,
-   successor plumbing (off at that point), the ITG forecast history (#610, dev 920573f + fixes 36ac92e) and
-   the check_like_ci fix. Merging starts the dated history on the next scheduled run.
-2. **Local `dev` is 19 commits ahead of `origin/dev`, NOT pushed** (a push joins PR #97). Last: `ad079e1`
-   SHIPS `AUSPOL_DEPARTED_SUCCESSOR="1"` (time-forward departed rate replacing the leaked 0.38; deciding 20k
-   rebuild: ledger 0.2741 -> 0.2739, RMSE 5.121 -> 5.113; Pete overrode the two-seat clause). These later
-   commits are NOT code-reviewed yet: review them before pushing. `check_like_ci.R` passes on `ad079e1`.
-   **Wrap-up review DONE (2 Sonnet reviewers, 2026-10-07):** no code breakage; fixes committed (live ABC fetch
-   now refuses a post-polling-day capture; leakage asserts raise). Two claimed blockers were tested and
-   REFUTED (a test said to fail locally passes; a "crashing" screen table printed fine). Backup of local dev:
-   `origin/dev-2026-10-07-unreviewed` (stale by the last few commits; local dev is authoritative).
-3. **Publish order matters (only once the ship commit `ad079e1` reaches main, NOT for PR #97):** run stage 9 (`AUSPOL_PUBLISH=1`) BEFORE the next daily run, or
-   the forecast workflow fails loudly: it needs `departed-successor-rates.csv` on `shipped-models`, which
-   `promote_rebuild.R` uploads. `output/` already holds the deciding rebuild (ledger 0.2739).
-4. **Nomination day (9 Nov):** refit the successor rates on the final candidate list
-   (`build_departed_successors.R` -> `build_successor_coding_input.R` -> fetch + code ->
-   `fit_departed_successor_rates.R`).
-
-**Results today (all written up in docs/reviews/*-2026-10-07.md):** 0.38 was 15 cases not 305 (provenance
-review); sitting split REFUSED; hand-coded successor flag (leak-free ABC + Wikipedia pre-election text, 22/22
-audited) showed NO signal; three share-level screens (segment bias, band) found nothing to build; NSW 2027
-polling day is 13 March 2027; NSW One Nation flow to Labor is ~36% of live preferences, not 25.5%.
-Nothing is running. **Housekeeping done 2026-10-07:** 8 clean worktrees removed (branches kept; 599 -> 458 MB); kept: 3 locked by another session's agents (pid 36184), `zero-order-late` (4 modified, 2 untracked) and `agent-ab6831434e991d91a` (an untracked prereg draft that differs from dev's). NOT done, deliberately: registering the ~50 `AUSPOL_*` names that quick_arm refuses, because many are run controls (e.g. `AUSPOL_FED_PAIRS`) rather than model switches, and copying 50 code defaults by hand risks changing what the harnesses run; it needs a per-name pass. Worktree branch `worktree-agent-af6920da9ea2e5900` was cherry-picked to dev (ad113fc).
-
-## 2026-10-07 afternoon: what moved today
-
-- **PR #97 open, CI green, awaiting Pete's merge:** `quick_arm.R` plus seven review fixes, departed-successor
-  plumbing (off), dated forecast history on R2 (inthegame-blog#610; starts on the first scheduled run after
-  merge), `check_like_ci.R` clean-copy build. Later local `dev` commits are NOT pushed (they would join #97):
-  sitting split `fd99ced`, NSW forecast-JSON config `ad113fc`, NSW date `9e9a078`.
-- **The shipped 0.38 departed rate is LEAKED and mis-sized** (`reviews/departed-rate-provenance-2026-10-07.md`):
-  15 cases, not 305, no fitting script, and time-forward it is 0.17-0.34 for every earlier target. It is applied
-  to mostly non-sitting departed leaders, who keep 0.63 (66 cells) against 0.38 (12 sitting). Arm built:
-  `AUSPOL_DEPARTED_SUCCESSOR=sitting` (`plans/prereg-departed-sitting-split-2026-10-07.md`); screen in flight.
-- **Successor flag** (`plans/prereg-departed-successor-flag-2026-10-07.md` + Amendment 1): web-search coding
-  REJECTED for leakage and quarantined; recoding from pre-election ABC guide snapshots
-  (`scripts/fetch_abc_guide_snapshots.py`, raw under `external/reference/successors/abc-guide-raw/`). Fetch at
-  71/85 cells; cells cached before its gzip fix are suspect: delete `_cache/page_*` entries `{"none": true}` and
-  rerun `--redo-missing` once the running loop ends. Then code flags offline, audit 10, fit.
-- **NSW 2027:** polling day is **13 March 2027** (moved for Easter; NSWEC Bulletin 2), now in `election_dates()`.
-  The anchor's cycle file says 03-20: wrong. `build_forecast_json.R` takes `AUSPOL_FORECAST_ELECTION`. Upstream
-  anchor has no NSW poll after 2026-09-01, so a trend refresh gains one poll.
-- **Housekeeping for Pete:** 12 old worktrees in `.claude/worktrees/` (578 MB; `zero-order-late` has 4 modified
-  files); ~50 `AUSPOL_*` switches read in code but missing from `published_flags.R`, which `quick_arm.R` now refuses.
-
-## 2026-10-07 (morning): where things stand, next session's priorities
-
-**Pete's priorities for next session, in order:** (1) fix the top primary misses; (2) get the NSW 2027
-election onto ITG. **Work fast:** screen every tweak at share level (seconds) and with a low-sim,
-affected-harnesses-only arm (`scripts/quick_arm.R`, minutes) before any full 20k run; a full stage-6
-run is only for the shipping decision (memory `screen-fast-before-full-runs`).
-
-**Published** (`shipped-models` 2026-10-06 11:13 UTC; live forecast rerun 11:16 UTC): AEF-7 ledger
-**0.2742** vs AE Forecasts 0.2825 (681 seats). Kennedy seat-poll split (PR #94) and the majors re-entry
-carry, post-xgb (PR #95; live Narracan Labor 4.4% -> 11.6%). Artifact:
-https://claude.ai/artifact/3YAUawbwdQBn96Bi5nqF4A (v59 changelog; winner-primary column fixed).
-
-**Merged to `main` (PR #96, 2026-10-07), NOT YET PUBLISHED** (Pete runs stage 9): new-independent
-shrink, capped (`AUSPOL_NEW_IND_SHRINK="1"`, prereg passed: changed cells 1,200 -> 1,035, 4 SE; ledger
-0.2741); the ledger winner-primary column fix (was showing base_pred: Goldstein 3.1 vs published 27.1);
-`AUSPOL_DEFECTOR_STATE` code (off). `output/` holds the matching state (ledger 0.2741).
-
-**1. Top primary misses** (AEF-7, ours vs AEF; `reviews/vic-ind-overcall-2026-10-06.md`):
-- Major-party winners under-called 8-11 points where we hand the share to independents/minors:
-  Bankstown nsw2023, Malvern vic2022, McMahon fed2025 (IND seat-poll weight), Kalkallo vic2022, Chifley,
-  Dawson, New England, Parkes. Over-calls: Traeger qld2024 (Katter's party 66.4 vs 49.3), Nicholls
-  fed2022 (LNP 55.3 vs 44.2).
-- Departed independents' class vote carried ~0.6 to an unrelated new person (Pascoe Vale, Waite, Kavel;
-  real retention 0.08-0.42). Next fix to screen.
-- Unknown new independents outside Victoria are a mix of a few strong (Pittwater) and many weak
-  (Bankstown 2.7): a single factor fails both ways; needs a candidate signal (seat polls, salience).
-- Defectors keep either ~25-30% or ~70-100% of their vote and nothing separates the groups yet
-  (`reviews/state-defectors-2026-10-06.md`); Kiama 2023 is the live example. Pilbara 2001 is
-  unforecastable time-forward.
-- Climate 200 flag adds +7 in Sandringham/Bellarine (learned from 21 federal rows).
-**2. NSW 2027 on ITG** (`reviews/nsw2027-green-opv-2026-10-07.md`, ~1-2 weeks): refresh the trend (stops
-2026-08-23); measure One Nation flows from NSW data (Green: 11.7% Labor / 26.1% Coalition / 62.2% exhausted;
-ours 25.5% Labor, federal-based); boundaries (2027 redistribution unchecked); provisional candidates; a NSW
-live seat script; generalise `scripts/build_forecast_json.R` (hard-wired to vic2026); the ITG page.
-
-**Refused today** (recorded in `docs/plans/` and DECISIONS): general re-entry prior; majors carry via
-stage-1 retrain; state defector rate; per-jurisdiction others scale; class-by-jurisdiction calibration;
-uncapped new-independent shrink.
-
-**Loose ends:** `scripts/quick_arm.R` was mid-build at wrap-up on branch
-`worktree-agent-a7292a0ea2f74a3eb` (uncommitted files in `.claude/worktrees/agent-a7292a0ea2f74a3eb`):
-merged to dev 2026-10-07 (73d4bf8), NOT yet reviewed or on main: review it in the next PR. Usage: `Rscript scripts/quick_arm.R "AUSPOL_X=1" --pairs=vic2022,...` (~70 s per election with the baseline cached; ~7 min for all 22 cold; verdicts matched the full runs). Profile: setup+fitting is ~80% of a harness run, simulation ~20% -- caching harness setup is the next speedup. vic2026 Trends fetch at 121 files (two memory-watchdog kills; resumable,
-`AUSPOL_SALIENCE_SLEEP=15 Rscript scripts/fetch_salience_vic2026_full.R`); worktree branches of refused
-arms kept for reference.
+Verbatim in `backlog/journal-2026-10-07-to-10-08.md`. Still OPEN from them:
+- OPEN: NSW 2027 page, blog side: seat pages need an election switch in ITG's `seat.qmd` (data on R2 since PR #107). Owned by the `inthegame-blog` session.
+- OPEN: scenario-job straggler (one matrix job per run crawls on the runner's network). Pete 2026-10-09: leave open. Untried: per-step timeout plus re-run; fewer, fatter jobs.
+- OPEN: `AUSPOL_UPSET_FLOOR` is the one switch with an unexplained registry gap. Audit sentinel drift goes to issue #109.
+- OPEN: fed2025 seat polls deserved weight ~0.13 and got 0.55; no pre-election signal found yet.
+- OPEN: `fit_seats_full.R` has no per-stage timer (probes 120-325 s); time one run by stage with `~/.claude/lib/runtime_log.R` before caching anything.
+- OPEN: ~50 `AUSPOL_*` names read in code that `quick_arm.R` refuses; needs a per-name pass (many are run controls, not model switches).
+- Not doing, by decision: the in-browser simulator (~40 h); the 2.5-point knots already feel live. Revisit if Pete wants two sliders at once.
 
 ## 2026-09-27 to 2026-10-05: archived sessions
 

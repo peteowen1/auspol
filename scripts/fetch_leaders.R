@@ -17,6 +17,7 @@ ELECTIONS <- c(
   fed2019 = "2019 Australian federal election", fed2022 = "2022 Australian federal election",
   fed2025 = "2025 Australian federal election",
   nsw2019 = "2019 New South Wales state election", nsw2023 = "2023 New South Wales state election",
+  nsw2027 = "2027 New South Wales state election",
   qld2020 = "2020 Queensland state election", qld2024 = "2024 Queensland state election",
   sa2022 = "2022 South Australian state election", sa2026 = "2026 South Australian state election",
   vic2014 = "2014 Victorian state election", vic2018 = "2018 Victorian state election",
