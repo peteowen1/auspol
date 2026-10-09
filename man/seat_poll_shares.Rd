@@ -4,18 +4,28 @@
 \alias{seat_poll_shares}
 \title{Seat polls as model classes, per seat, for one election}
 \usage{
-seat_poll_shares(election, days = 90, by_type = FALSE, by_poll = FALSE)
+seat_poll_shares(
+  election,
+  days = 90,
+  by_type = FALSE,
+  by_poll = FALSE,
+  .raw = FALSE
+)
 }
 \arguments{
 \item{election}{Label such as \code{"fed2022"}.}
 
-\item{days}{Fieldwork window before election day.}
+\item{days}{Fieldwork window before election day; ignored under
+\code{AUSPOL_SEAT_POLL_DECAY=1}, which weights by recency instead.}
 
 \item{by_type}{Keep MRP and direct polls apart (a \code{type} column).}
 
 \item{by_poll}{Return one row per poll and class (\code{seat}, \code{poll_id},
 \code{class}, \code{fp}, \code{mrp}), with every class a poll does not name as \code{REST}
 and each poll scaled to 100; input to \code{\link[=seat_poll_implied]{seat_poll_implied()}}.}
+
+\item{.raw}{Internal: under the decay, return one row per poll and class
+with its days out, seat sample and group, for \code{\link[=seat_poll_decay_params]{seat_poll_decay_params()}}.}
 }
 \value{
 data.table (\code{seat}, \code{class}, \code{poll}, \code{n_polls}, \code{n_mrp}, and \code{type}
@@ -25,7 +35,9 @@ least 20 seats counts as MRP, whatever its name.
 \description{
 Reads \code{external/reference/polls/seat-polls/seat_polls.csv} (built by
 \code{scripts/fetch_seat_polls.R}), keeps poll rows with a primary and fieldwork
-ending within \code{days} before election day, maps each party to a model class,
-sums within class per poll and averages over polls.
+ending before election day, maps each party to a model class, sums within
+class per poll and averages over polls: by recency and precision under
+\code{AUSPOL_SEAT_POLL_DECAY} (shipped 2026-10-09, \code{\link[=seat_poll_decay_params]{seat_poll_decay_params()}}),
+otherwise equally within the \code{days} window.
 docs/plans/prereg-seat-poll-blend-2026-09-29.md.
 }

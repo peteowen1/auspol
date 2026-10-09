@@ -10,12 +10,17 @@ PUBLIC_SEAT_POLLSTERS <- c("YouGov", "Galaxy", "Newspoll", "RedBridge", "DemosAU
 #'
 #' Reads `external/reference/polls/seat-polls/seat_polls.csv` (built by
 #' `scripts/fetch_seat_polls.R`), keeps poll rows with a primary and fieldwork
-#' ending within `days` before election day, maps each party to a model class,
-#' sums within class per poll and averages over polls.
+#' ending before election day, maps each party to a model class, sums within
+#' class per poll and averages over polls: by recency and precision under
+#' `AUSPOL_SEAT_POLL_DECAY` (shipped 2026-10-09, [seat_poll_decay_params()]),
+#' otherwise equally within the `days` window.
 #' docs/plans/prereg-seat-poll-blend-2026-09-29.md.
 #'
 #' @param election Label such as `"fed2022"`.
-#' @param days Fieldwork window before election day.
+#' @param days Fieldwork window before election day; ignored under
+#'   `AUSPOL_SEAT_POLL_DECAY=1`, which weights by recency instead.
+#' @param .raw Internal: under the decay, return one row per poll and class
+#'   with its days out, seat sample and group, for [seat_poll_decay_params()].
 #' @param by_type Keep MRP and direct polls apart (a `type` column).
 #' @param by_poll Return one row per poll and class (`seat`, `poll_id`,
 #'   `class`, `fp`, `mrp`), with every class a poll does not name as `REST`
@@ -110,7 +115,7 @@ seat_poll_shares <- function(election, days = 90, by_type = FALSE, by_poll = FAL
 }
 
 .seat_poll_decay_on <- function() {
-  v <- Sys.getenv("AUSPOL_SEAT_POLL_DECAY", "0")
+  v <- Sys.getenv("AUSPOL_SEAT_POLL_DECAY", "1")
   if (!v %in% c("0", "1")) stop("AUSPOL_SEAT_POLL_DECAY must be \"0\" or \"1\", not ", v)
   v == "1"
 }
@@ -172,7 +177,7 @@ seat_poll_model_var <- function(target_election) {
 }
 
 .seat_poll_mrp_name_on <- function() {
-  v <- Sys.getenv("AUSPOL_SEAT_POLL_MRP_NAME", "0")
+  v <- Sys.getenv("AUSPOL_SEAT_POLL_MRP_NAME", "1")
   if (!v %in% c("0", "1")) stop("AUSPOL_SEAT_POLL_MRP_NAME must be \"0\" or \"1\", not ", v)
   v == "1"
 }
@@ -226,7 +231,7 @@ SEAT_POLL_N_FALLBACK <- 600        # seat sample when no earlier direct poll rec
 #' @export
 seat_poll_decay_params <- function(target_election) {
   key <- paste(target_election, Sys.getenv("AUSPOL_SEAT_POLL_SOURCES", "all"), Sys.getenv("AUSPOL_SEAT_POLL_IND_MAP", "1"),
-               Sys.getenv("AUSPOL_SEAT_POLL_HANDKEYED", "1"), Sys.getenv("AUSPOL_SEAT_POLL_MRP_NAME", "0"),
+               Sys.getenv("AUSPOL_SEAT_POLL_HANDKEYED", "1"), Sys.getenv("AUSPOL_SEAT_POLL_MRP_NAME", "1"),
                Sys.getenv("AUSPOL_SEAT_POLL_FIRM_FLOOR", "0"))
   if (!is.null(.seat_poll_decay_cache[[key]])) return(.seat_poll_decay_cache[[key]])
   grp <- c("mrp", "direct", "sponsored")
@@ -394,7 +399,7 @@ seat_poll_weight <- function(target_election) {
   G <- length(unique(rows$unit))
   se2 <- .cluster_se2(sum(tapply(dx * e, rows$unit, sum)^2), sum(dx^2)^2, G)
   w <- if (is.null(pr)) {
-    b * b^2 / (b^2 + se2)   # shrunk toward 0 (shipped)
+    b * b^2 / (b^2 + se2)   # shrunk toward 0 (the pre-2026-10-09 behaviour)
   } else if (!is.finite(se2)) {
     pr[["mean"]]            # one cluster carries no information: the prior alone
   } else {
@@ -404,7 +409,7 @@ seat_poll_weight <- function(target_election) {
   list(w = min(1, max(0, w)), raw = b, se = sqrt(se2), n = nrow(rows), k = length(unique(rows$el)))
 }
 
-# AUSPOL_SEAT_POLL_PRIOR: "0" (shipped) shrinks the fitted weight toward 0, so
+# AUSPOL_SEAT_POLL_PRIOR: "0" (shipped until 2026-10-09; 0.75 since) shrinks the fitted weight toward 0, so
 # an election with no earlier polled cells blends nothing (fed2016 Mayo,
 # fed2019 Warringah: a poll had Steggall at 22.3 and the weight was 0). Any
 # other value is a prior mean for the weight, combined with the earlier
@@ -412,7 +417,7 @@ seat_poll_weight <- function(target_election) {
 # Pete's judgement (2026-10-09), knowingly informed by the fed2022 fit of 0.751:
 # a hindsight prior, recorded as such in docs/CONSTANTS.md.
 .seat_poll_prior <- function() {
-  v <- Sys.getenv("AUSPOL_SEAT_POLL_PRIOR", "0")
+  v <- Sys.getenv("AUSPOL_SEAT_POLL_PRIOR", "0.75")
   m <- suppressWarnings(as.numeric(v))
   if (!is.finite(m) || m < 0 || m > 1) stop("AUSPOL_SEAT_POLL_PRIOR must be a number in 0..1, not ", v)
   if (m == 0) return(NULL)
@@ -477,8 +482,13 @@ seat_poll_blend_table <- function(target_election, write = FALSE) {
       }
     }
     tb <- raw[!is.na(raw$seat), intersect(c("seat", "class", "type", "poll", "n_polls", "n_mrp", "wsum"), names(raw)), with = FALSE]
-    if (.seat_poll_decay_on() && !"wsum" %in% names(tb))
-      stop(basename(cache), " was written without the decay weights (wsum) but AUSPOL_SEAT_POLL_DECAY=1: re-promote it")
+    if (.seat_poll_decay_on() && !"wsum" %in% names(tb)) {
+      # A table shipped before the decay (2026-10-09): stopping here would make
+      # fit_seats_full.R publish with no seat-poll blend at all (the w_ind
+      # precedent above). Its window averages are used as they are, loudly.
+      cat(sprintf("SPB!! %s was written without the decay weights (wsum): its 90-day-window poll averages are used as they are. Re-promote it (scripts/promote_rebuild.R).\n",
+                  basename(cache)))
+    }
     cat(sprintf("SPB  %s: blend inputs read from %s (sources absent)\n", target_election, basename(cache)))
   } else {
     stop("seat-poll blend for ", target_election, ": neither the sources (", src,

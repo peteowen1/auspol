@@ -510,6 +510,23 @@ CLASSIFY <- list(
   AUSPOL_SEAT_POLL_COALITION_DEDUP = paste(
     "SHIPPED 2026-10-07 (data fix). Read in .read_seat_polls_file() in R/seat_poll_blend.R, which all six harnesses and fit_seats_full.R",
     "reach through the seat-poll blend; the weight fit and the blend see the same polls."),
+  AUSPOL_SEAT_POLL_DECAY = paste(
+    "SHIPPED 2026-10-09 (full 20k run with PRIOR and MRP_NAME: 0.2705 -> 0.2675 on the 6 polled elections). Read in seat_poll_shares()",
+    "in R/seat_poll_blend.R (.seat_poll_decay_on()), which every entry point reaches through the blend; the harness grep cannot see it."),
+  AUSPOL_SEAT_POLL_FIRM_FLOOR = paste(
+    "ARM, off: did not clear 2026-10-09 (moves 1 cell alone). Read in .seat_poll_cell_weights() and seat_poll_decay_params() in",
+    "R/seat_poll_blend.R; reaches every entry point through the blend."),
+  AUSPOL_SEAT_POLL_MRP_NAME = paste(
+    "SHIPPED 2026-10-09 with DECAY and PRIOR (data fix: an MRP release under 20 seats named MRP). Read in seat_poll_shares() in",
+    "R/seat_poll_blend.R; reaches every entry point through the blend."),
+  AUSPOL_SEAT_POLL_PRECISION_BLEND = paste(
+    "ARM, off: did not clear 2026-10-09 (+0.0000, SE 0.0037). Read in seat_poll_blend_apply() and seat_poll_blend_table() in",
+    "R/seat_poll_blend.R; needs AUSPOL_SEAT_POLL_DECAY=1."),
+  AUSPOL_SEAT_POLL_PRIOR = paste(
+    "SHIPPED 2026-10-09 at 0.75 (Pete's prior, same full run). Read in seat_poll_weight() via .seat_poll_prior() in R/seat_poll_blend.R,",
+    "which every entry point reaches through the blend."),
+  AUSPOL_SEAT_POLL_PRIOR_SD = paste(
+    "SHIPPED 2026-10-09 at 0.25, the prior's sd; read with AUSPOL_SEAT_POLL_PRIOR in .seat_poll_prior()."),
   AUSPOL_SEAT_POLL_HANDKEYED = paste(
     "SHIPPED 2026-10-06 (Pete override). Read in .read_seat_polls_file() in R/seat_poll_blend.R; reaches every entry point through the blend."),
   AUSPOL_SEAT_POLL_IND_MAP = paste(
