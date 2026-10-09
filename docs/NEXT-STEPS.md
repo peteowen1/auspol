@@ -27,7 +27,7 @@ Tools: misses via `scripts/biggest_misses.R` / skill `biggest-misses` (never `fo
 
 Verbatim in `backlog/journal-2026-10-07-to-10-08.md`. Still OPEN from them:
 - OPEN: NSW 2027 page, blog side: seat pages need an election switch in ITG's `seat.qmd` (data on R2 since PR #107). Owned by the `inthegame-blog` session.
-- OPEN: NSW 2027 leader rows missing from `external/reference/leaders/leaders.csv` (0 rows checked 2026-10-09), so no Minns/Opposition leader-seat bonus.
+- OPEN (publish only): NSW 2027 leader rows added 2026-10-09 (Minns/Kogarah, Sloane/Vaucluse, +2.76 each in `output/leader-seat-nsw2027.csv`). Reaches the live NSW forecast at the next `promote_rebuild.R` + `publish_shipped_release.R`; the shipped table is still header-only.
 - OPEN: scenario-job straggler (one matrix job per run crawls on the runner's network). Pete 2026-10-09: leave open. Untried: per-step timeout plus re-run; fewer, fatter jobs.
 - OPEN: `AUSPOL_UPSET_FLOOR` is the one switch with an unexplained registry gap. Audit sentinel drift goes to issue #109.
 - OPEN: fed2025 seat polls deserved weight ~0.13 and got 0.55; no pre-election signal found yet.
