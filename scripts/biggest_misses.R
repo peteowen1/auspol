@@ -102,8 +102,11 @@ for (g in unique(PB[pair %in% want_pairs]$git)) {
     cat(sprintf("MX2! run hash %s is not in this checkout's history -- cannot tell whether model code changed since\n", g))
   } else if (as.integer(n_since[1]) > 0) {
     cat(sprintf("MX2! %s commit(s) touched model code (R/, src/, harnesses, published flags) since run %s; numbers may not describe HEAD. Judge from the subjects whether any moves a backtest number:\n", n_since[1], g))
-    subj <- suppressWarnings(system2("git", c("log", "--format=     %h %s", paste0(g, "..HEAD"), "--", model_paths),
+    # system2() passes arguments unquoted, so a --format with spaces splits;
+    # the indent is added in R instead (2026-10-09: this printed blank lines).
+    subj <- suppressWarnings(system2("git", c("log", "--format=%h%x09%s", paste0(g, "..HEAD"), "--", model_paths),
                                      stdout = TRUE, stderr = FALSE))
+    subj <- paste0("     ", sub("\t", " ", subj))
     cat(paste(head(subj, 10), collapse = "\n"), if (length(subj) > 10) sprintf("\n     ... and %d more", length(subj) - 10), "\n", sep = "")
   } else {
     cat(sprintf("MX2  no model-code commit since run %s.\n", g))
@@ -179,7 +182,7 @@ if ("primary" %in% metrics && nrow(sd_all)) {
   P <- sd_all[is.finite(ours) & is.finite(actual)]
   P[, gap := actual - ours]
   P <- merge(P, cands, by = c("pair", "seat", "party"), all.x = TRUE)
-  cat(sprintf("\nBMP  primary: %d candidate-class rows, %d seats, %d pairs; RMSE %.3f points\n",
+  cat(sprintf("\nMXP  primary: %d candidate-class rows, %d seats, %d pairs; RMSE %.3f points\n",
               nrow(P), uniqueN(P[, .(pair, seat)]), uniqueN(P$pair), sqrt(mean(P$gap^2))))
   top <- lab(P[order(-abs(gap))][seq_len(min(top_n, .N))])[order(-abs(gap))]
   top[, `:=`(ours = round(ours, 1), actual = round(actual, 1), gap = round(gap, 1))]
@@ -195,7 +198,7 @@ if ("logloss" %in% metrics && nrow(ap_all)) {
                   p_actual = if (any(is_actual %in% TRUE)) sum(prob[is_actual %in% TRUE]) else 0,
                   fav = party[which.max(prob)], p_fav = max(prob)), by = .(pair, seat)]
   W[, ll := -log(pmax(p_actual, EPS))]
-  cat(sprintf("\nBML  log loss: %d seats, %d pairs; mean %.4f (lower is better); %d seat(s) gave the winner probability 0 (scored at the 1e-6 floor)\n",
+  cat(sprintf("\nMXL  log loss: %d seats, %d pairs; mean %.4f (lower is better); %d seat(s) gave the winner probability 0 (scored at the 1e-6 floor)\n",
               nrow(W), uniqueN(W$pair), mean(W$ll), sum(W$p_actual <= 0)))
   top <- lab(W[order(-ll)][seq_len(min(top_n, .N))])[order(-ll)]
   top[, `:=`(p_actual = round(p_actual, 3), p_fav = round(p_fav, 3), ll = round(ll, 2))]
@@ -211,9 +214,9 @@ if ("tcp" %in% metrics) {
   tp <- intersect(want_pairs, AEF7)
   ta_f <- file.path(OUT, "aef7-tcp-actual.csv")
   if (!length(tp)) {
-    cat("\nBMT  tcp: none of the selected pairs has a resolved official final two (AEF-7 only); skipped\n")
+    cat("\nMXT  tcp: none of the selected pairs has a resolved official final two (AEF-7 only); skipped\n")
   } else if (!file.exists(ta_f)) {
-    cat("\nBMT! tcp: output/aef7-tcp-actual.csv missing -- run scripts/build_aef7_tcp_actual.R\n")
+    cat("\nMXT! tcp: output/aef7-tcp-actual.csv missing -- run scripts/build_aef7_tcp_actual.R\n")
   } else {
     act <- fread(ta_f, select = c("pair", "seat", "f1", "f2", "f2cp"), showProgress = FALSE)[pair %in% tp & is.finite(f2cp)]
     sc <- rbindlist(lapply(tp, function(pr) {
@@ -226,7 +229,7 @@ if ("tcp" %in% metrics) {
     TC <- rbind(m1, m2)[, .SD[which.max(freq)], by = .(pair, seat)]
     TC[, gap := f2cp - pct]
     unpaired <- act[!TC, on = .(pair, seat)]
-    cat(sprintf("\nBMT  tcp: %d of %d seats with an official final two scored (%d pairs); MAE %.2f points; %d seat(s) whose real final two never appeared in our scenarios: %s\n",
+    cat(sprintf("\nMXT  tcp: %d of %d seats with an official final two scored (%d pairs); MAE %.2f points; %d seat(s) whose real final two never appeared in our scenarios: %s\n",
                 nrow(TC), nrow(act), uniqueN(TC$pair), mean(abs(TC$gap)), nrow(unpaired),
                 if (nrow(unpaired)) paste(head(paste(unpaired$pair, unpaired$seat), 12), collapse = ", ") else "none"))
     top <- lab(TC[order(-abs(gap))][seq_len(min(top_n, .N))])[order(-abs(gap))]
@@ -242,6 +245,6 @@ if ("tcp" %in% metrics) {
 if (length(long)) {
   L <- rbindlist(long, fill = TRUE)
   fwrite(L, file.path(OUT, "biggest-misses.csv"))
-  cat(sprintf("\nBMW  wrote output/biggest-misses.csv (%d rows: %s)\n", nrow(L),
+  cat(sprintf("\nMXW  wrote output/biggest-misses.csv (%d rows: %s)\n", nrow(L),
               paste(sprintf("%s %d", names(long), vapply(long, nrow, 1L)), collapse = ", ")))
 }
