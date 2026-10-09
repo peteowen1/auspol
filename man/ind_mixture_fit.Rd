@@ -17,7 +17,7 @@ fewer than 150 training cells.
 }
 \description{
 EM on every in-scope independent cell (nominated, not a sitting independent
-standing again; \code{\link[=.it_scope]{.it_scope()}}) of elections strictly before \code{target}. The
+standing again; \code{.it_scope()}) of elections strictly before \code{target}. The
 surge-chance logistic is a penalised fit (prior sd \code{IND_MIX_PRIOR_SD} on
 each non-intercept coefficient), so no one signal claims certainty from a
 handful of cases. Cached per target per process.

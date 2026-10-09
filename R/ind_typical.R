@@ -83,7 +83,7 @@ ind_typical_mode <- function() {
 #'
 #' On every IND cell of elections strictly before `target` in scope (an
 #' independent stood; not a sitting independent re-standing):
-#' `log(actual + 1)` regressed on the signals in [.it_design()]. Each signal's
+#' `log(actual + 1)` regressed on the signals in `.it_design()`. Each signal's
 #' coefficient is shrunk toward 0 by its own precision, `b * b^2 / (b^2 + se^2)`
 #' (SE clustered on election), the form [seat_poll_weight()] uses. Each
 #' jurisdiction's mean residual is an intercept shift shrunk by

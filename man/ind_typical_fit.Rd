@@ -17,7 +17,7 @@ list \code{beta} (shrunk), \code{beta_raw}, \code{se}, \code{region_shift}, \cod
 \description{
 On every IND cell of elections strictly before \code{target} in scope (an
 independent stood; not a sitting independent re-standing):
-\code{log(actual + 1)} regressed on the signals in \code{\link[=.it_design]{.it_design()}}. Each signal's
+\code{log(actual + 1)} regressed on the signals in \code{.it_design()}. Each signal's
 coefficient is shrunk toward 0 by its own precision, \code{b * b^2 / (b^2 + se^2)}
 (SE clustered on election), the form \code{\link[=seat_poll_weight]{seat_poll_weight()}} uses. Each
 jurisdiction's mean residual is an intercept shift shrunk by

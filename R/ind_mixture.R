@@ -42,7 +42,7 @@ ind_mixture_mode <- function() {
 #' Fit the independent mixture, time-forward
 #'
 #' EM on every in-scope independent cell (nominated, not a sitting independent
-#' standing again; [.it_scope()]) of elections strictly before `target`. The
+#' standing again; `.it_scope()`) of elections strictly before `target`. The
 #' surge-chance logistic is a penalised fit (prior sd `IND_MIX_PRIOR_SD` on
 #' each non-intercept coefficient), so no one signal claims certainty from a
 #' handful of cases. Cached per target per process.
