@@ -50,7 +50,20 @@ All with `AUSPOL_NEW_IND_SHRINK=0`.
 
 ## Amendments
 
-(none)
+### Amendment 1 (2026-10-09, before the arm ran): the mixture arm, judged on log loss
+
+Arm A5: `AUSPOL_IND_MIXTURE=1 AUSPOL_NEW_IND_SHRINK=0` (R/ind_mixture.R): each in-scope independent's share is set to
+the TYPICAL vote for its signals, and the seat's surge mechanism carries a fitted surge chance (penalised logistic,
+prior sd 1.5) and size (EM mixture, earlier elections only). Offline: P(15+) Brier 0.0975 vs 0.1226 flat; top band
+over-confident (86% predicted, 58% happened, 43 cells).
+
+Because the point is lowered on purpose and the surge is carried in the draws, squared share error on the point (Q2)
+is EXPECTED to rise and is NOT a criterion for this arm (A1 and A3 showed the same direction). Criterion, fixed now:
+
+- **Primary:** pooled seat-winner log loss over 22 pairs (quick_arm Q3) better by more than 1 SE clustered on election.
+- **Guard:** AEF-7 ledger subset (Q4) not worse by more than 1 SE; no pair scored on fewer seats.
+- **Reported whatever the verdict:** per-election log loss, and Q2 with this note.
+- A pass goes to the full 20,000-sim run and the live Victorian rows are read with Pete before anything ships.
 
 ## RESULT so far (2026-10-09): arms A1 and A3 REFUSED; A2 and A4 not yet run
 
