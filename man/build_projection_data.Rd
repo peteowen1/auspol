@@ -11,8 +11,9 @@ build_projection_data(
   min_polls = 8,
   nu = Inf,
   verbose = TRUE,
-  sigmas = c("default", "per_cycle"),
-  weights = c("equal", "firm_factors"),
+  sigmas = c("default", "per_cycle", "pooled_tf"),
+  weights = c("equal", "firm_factors", "record"),
+  score_polls = FALSE,
   ...
 )
 }
@@ -29,9 +30,12 @@ build_projection_data(
 
 \item{verbose}{Print progress (this is the slow step).}
 
-\item{sigmas}{Passed to \code{\link[=trend_as_at]{trend_as_at()}}: \code{"default"} or \code{"per_cycle"}.}
+\item{sigmas}{Passed to \code{\link[=trend_as_at]{trend_as_at()}}: \code{"default"}, \code{"per_cycle"} or \code{"pooled_tf"}.}
 
-\item{weights}{Passed to \code{\link[=trend_as_at]{trend_as_at()}}: \code{"equal"} or \code{"firm_factors"}.}
+\item{weights}{Passed to \code{\link[=trend_as_at]{trend_as_at()}}: \code{"equal"}, \code{"firm_factors"} or \code{"record"}.}
+
+\item{score_polls}{Also score each horizon's held-out polls (cutoff to the next shorter
+horizon's cutoff) with \code{\link[=poll_predictive_scores]{poll_predictive_scores()}}; returned as attribute \code{poll_scores}.}
 
 \item{...}{Passed through to \code{\link[=fit_trend]{fit_trend()}} via \code{\link[=fit_cycle_trends]{fit_cycle_trends()}}. This
 is how a prior is varied when tuning it by held-out error -- see

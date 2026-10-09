@@ -98,3 +98,20 @@ Pete chose to build the pollster track record and an estimated poll noise instea
 The bands half is scored on held-out polls: each horizon's fit scores the polls from its cutoff to the next shorter horizon's cutoff (`poll_predictive_scores()`), so no poll is scored twice per cycle. Log predictive density, SE clustered on (region, election).
 
 Expectation on record: small or no effect; the within-cycle version of the record arm measured 0.6% worse.
+
+## RESULT, Amendment 1 arms (2026-10-09): all three REFUSED
+
+`scripts/compare_poll_record.R`, regions fed/nsw/vic/qld, 195 election-horizon pairs in every arm, 0 errors, 14,234 held-out polls scored per arm (878 region-election clusters). Held-out MAE lower is better; log density higher is better.
+
+| arm | held-out MAE | MAE gain vs equal | log density per poll-party | gain vs equal (SE) | 95% cover of held-out polls | B2 / B3 | runtime |
+|---|---|---|---|---|---|---|---|
+| equal (incumbent) | 2.0659 | - | 0.0564 | - | 0.914 | 0.949 / 0.549 | 56 s |
+| record | 2.0728 | -0.0070 | 0.0549 | -0.0016 (0.0014) | 0.911 | 0.949 / 0.544 | 57 s |
+| noise (pooled_tf) | 2.0703 | -0.0044 | 0.0255 | -0.0309 (0.0176) | 0.968 | 0.949 / 0.544 | 1005 s first run (17.9x; ~1x from the disk cache) |
+| both | 2.0714 | -0.0055 | 0.0301 | -0.0263 (0.0167) | 0.966 | 0.949 / 0.549 | 56 s (cached) |
+
+- Accuracy: every arm is slightly worse, inside the 0.02 bar; none clears it.
+- Bands: the estimated noise moves held-out coverage from 91.4% to 96.8% (closer to 95%) but makes the log predictive density WORSE, because the wider bands are too wide; the primary of the two band measures refuses.
+- The record arm is worse on both; the pollster that was accurate at the last election is not reliably accurate at the next.
+
+Equal weights and the fixed 1.7-point noise stay. Switches built, all off: `weights = "record"`, `sigmas = "pooled_tf"`.
