@@ -14,8 +14,9 @@ trend_as_at(
   min_polls = 8,
   nu = Inf,
   with_series = FALSE,
-  sigmas = c("default", "per_cycle"),
-  weights = c("equal", "firm_factors"),
+  sigmas = c("default", "per_cycle", "pooled_tf"),
+  weights = c("equal", "firm_factors", "record"),
+  score_after = NULL,
   ...
 )
 }
@@ -50,12 +51,20 @@ defaults. \strong{Measured 2026-08-16 and the default won}: per-cycle gained
 0.0041 held-out MAE against a pre-registered 0.02 bar, for 33x the
 runtime, with no consistent pattern by horizon. Kept as a non-default,
 re-runnable comparison arm, not as a recommendation. See
-docs/reviews/backtest-model-comparison-2026-08-16.md.}
+docs/reviews/backtest-model-comparison-2026-08-16.md. \code{"pooled_tf"}
+estimates them by marginal likelihood over the region's cycles that ended
+before this one began (\code{\link[=poll_sigmas_time_forward]{poll_sigmas_time_forward()}}); arm, 2026-10-09.}
 
 \item{weights}{\code{"equal"} weights every poll the same -- what the published
 forecast does. \code{"firm_factors"} estimates each pollster's noise from this
 cycle's own residuals in a first pass and refits with those weights.
-Untested as of writing; see docs/plans/prereg-firm-factors.md.}
+Measured 0.6\% worse; see docs/plans/prereg-firm-factors.md. \code{"record"}
+uses each pollster's deviations from RESULTS at elections held before
+this cycle began (\code{\link[=firm_record_factors]{firm_record_factors()}}); arm, 2026-10-09.}
+
+\item{score_after}{\code{NULL}, or a Date: also score the cycle's polls dated
+after \code{as_at} up to it against this fit (\code{\link[=poll_predictive_scores]{poll_predictive_scores()}}),
+returned as \code{poll_scores}.}
 
 \item{...}{Passed through to \code{\link[=fit_trend]{fit_trend()}} via \code{\link[=fit_cycle_trends]{fit_cycle_trends()}}, which
 is how a prior is varied when tuning it by held-out error. Names this

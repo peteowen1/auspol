@@ -1,3 +1,8 @@
+# auspol 0.4.88
+
+- No change to the published forecast. Four ideas for independents and statewide polls were built, measured and refused; their switches stay off: weighting statewide polls by sample size (only 16.8% of polls report one), by pollster track record, or by noise estimated from earlier elections; a typical-vote start for new independents (`AUSPOL_IND_TYPICAL`); a two-part independent mixture (`AUSPOL_IND_MIXTURE`, seat log loss +0.0332 over 22 elections); and a dedicated independent model.
+- Fixes found in review: the poll-scoring table's `year` column held each poll's vote share (understated a reported standard error, no verdict changed); the federal backtest's mixture arm used the wrong seat names when several elections ran in one process; the statewide poll scraper now stops on polls dated in the future.
+
 # auspol 0.4.87
 
 - Seat polls fade with age instead of being cut off at 90 days. Each poll in a seat counts by how recent it is (its weight halves every 34 days for Victoria 2026, fitted on earlier elections) and how precise it is (seat sample size, plus a noise floor fitted separately for MRP, direct and sponsored polls). Warringah 2019's poll, 98 days out, now counts; so do 350 other polls the window dropped.

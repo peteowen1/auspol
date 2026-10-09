@@ -115,7 +115,7 @@ not apply. Recorded with worked examples under "Recurring hazards" in
 Specific traps, all of which have bitten:
 
 - **data.table NSE**: a function argument or local variable sharing a name with
-  a column, used bare inside `dt[...]`, binds to the column. **Eight times.**
+  a column, used bare inside `dt[...]`, binds to the column. **Nine times** (the ninth 2026-10-09: `cycles$year == year` in `poll_sigmas_time_forward()`, caught on its first run).
   data.table scopes the table's columns into the WHOLE `i` expression, so
   `raw[raw$election == election]` became `raw$election == raw$election`, always
   TRUE, and was caught only by a test querying a label that cannot exist. Fix:
@@ -544,8 +544,13 @@ published number for the flagship case untouched.
 **this is what gets published**. `fit_vic.R` fits with per-cycle volatility and
 per-pollster noise factors, and its output is required-but-not-read.
 
-The fuller model was measured and is **not** better: 0.2% held-out gain for 33×
-the runtime. Two reviewers with full repo access have reached opposite
+The fuller model was measured and is **not** better, piece by piece: per-cycle
+volatility 0.2% held-out gain for 33× the runtime; within-cycle per-pollster
+noise factors 0.6% WORSE; and (2026-10-09,
+`docs/plans/prereg-statewide-poll-sample-weights-2026-10-09.md`) pollster track
+record against past results, noise estimated from earlier cycles, and both
+together all refused (held-out MAE slightly worse; estimated noise over-covers).
+Sample sizes exist for only 15.5% of statewide polls. Two reviewers with full repo access have reached opposite
 conclusions about which one publishes, so state it explicitly when touching
 either.
 

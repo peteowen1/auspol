@@ -34,7 +34,9 @@
 #'   0.0041 held-out MAE against a pre-registered 0.02 bar, for 33x the
 #'   runtime, with no consistent pattern by horizon. Kept as a non-default,
 #'   re-runnable comparison arm, not as a recommendation. See
-#'   docs/reviews/backtest-model-comparison-2026-08-16.md.
+#'   docs/reviews/backtest-model-comparison-2026-08-16.md. `"pooled_tf"`
+#'   estimates them by marginal likelihood over the region's cycles that ended
+#'   before this one began ([poll_sigmas_time_forward()]); arm, 2026-10-09.
 #' @param ... Passed through to [fit_trend()] via [fit_cycle_trends()], which
 #'   is how a prior is varied when tuning it by held-out error. Names this
 #'   function binds itself -- `parties`, `overrides`, `polls`, `party`,
@@ -43,7 +45,12 @@
 #' @param weights `"equal"` weights every poll the same -- what the published
 #'   forecast does. `"firm_factors"` estimates each pollster's noise from this
 #'   cycle's own residuals in a first pass and refits with those weights.
-#'   Untested as of writing; see docs/plans/prereg-firm-factors.md.
+#'   Measured 0.6% worse; see docs/plans/prereg-firm-factors.md. `"record"`
+#'   uses each pollster's deviations from RESULTS at elections held before
+#'   this cycle began ([firm_record_factors()]); arm, 2026-10-09.
+#' @param score_after `NULL`, or a Date: also score the cycle's polls dated
+#'   after `as_at` up to it against this fit ([poll_predictive_scores()]),
+#'   returned as `poll_scores`.
 #' @param with_series Also return the full fitted series (`series`), in the
 #'   same long shape `fit_vic.R` writes: `party`, `date`, `mean`, `lo95`,
 #'   `hi95`, including `TPP_ALP`. The page needs this so its chart and its
@@ -56,8 +63,9 @@
 #' @export
 trend_as_at <- function(polls, year, cycles, as_at, priors, flows,
                         min_polls = 8, nu = Inf, with_series = FALSE,
-                        sigmas = c("default", "per_cycle"),
-                        weights = c("equal", "firm_factors"), ...) {
+                        sigmas = c("default", "per_cycle", "pooled_tf"),
+                        weights = c("equal", "firm_factors", "record"),
+                        score_after = NULL, ...) {
   sigmas <- match.arg(sigmas)
   weights <- match.arg(weights)
   firm_w <- NULL
@@ -124,6 +132,22 @@ trend_as_at <- function(polls, year, cycles, as_at, priors, flows,
     }), ps)
     overrides <- overrides[!vapply(overrides, is.null, TRUE)]
   }
+  # TIME-FORWARD POOLED NOISE (2026-10-09, prereg-statewide-poll-sample-weights
+  # Amendment 1): sigma_obs and sigma_rw by marginal likelihood over this
+  # region's cycles that ENDED on or before this cycle began, instead of the
+  # fixed 1.7-point default. A party without an estimate keeps the defaults.
+  if (identical(sigmas, "pooled_tf")) {
+    if (is.null(.poll_record_cache[["pri_all"]])) assign("pri_all", load_prior_results(), envir = .poll_record_cache)
+    overrides <- stats::setNames(lapply(ps, function(p)
+      poll_sigmas_time_forward(polls, year, p, cycles, .poll_record_cache[["pri_all"]])), ps)
+    overrides <- overrides[!vapply(overrides, is.null, TRUE)]
+  }
+  # POLLSTER TRACK RECORD (same amendment): noise factors from each firm's
+  # deviations from RESULTS at elections held before this cycle began.
+  if (identical(weights, "record")) {
+    fw <- firm_record_factors(attr(cp2, "cycle_start"))
+    if (length(fw)) firm_w <- fw
+  }
 
   # Per-pollster noise factors, estimated from THIS cycle's own residuals.
   #
@@ -166,7 +190,7 @@ trend_as_at <- function(polls, year, cycles, as_at, priors, flows,
     fit_cycle_trends(cp2, parties = ps,
                      priors = priors[intersect(names(priors), ps)],
                      overrides = overrides, firm_factors = firm_w,
-                     nu = nu, want_var = with_series, ...),
+                     nu = nu, want_var = with_series || !is.null(score_after), ...),
     error = function(e) NULL)
   if (is.null(fits)) return(NULL)
   if (any(vapply(fits, function(f) !all(is.finite(f$trend$mean)), TRUE))) {
@@ -179,6 +203,12 @@ trend_as_at <- function(polls, year, cycles, as_at, priors, flows,
   out <- list(tpp = end_of(tpp),
               fp = vapply(fits, function(f) end_of(f$trend), numeric(1)),
               n_polls = nrow(cp2))
+  # HELD-OUT POLLS: score the cycle's polls dated after `as_at` up to
+  # `score_after` (a Date) against this fit's predictive distribution.
+  if (!is.null(score_after)) {
+    pa <- cp[which(cp$date > as_at & cp$date <= score_after), ]
+    out$poll_scores <- poll_predictive_scores(fits, pa, firm_w)
+  }
 
   # The whole fitted series, on request, in the same long shape fit_vic.R
   # writes. The published page needs it: its headline comes from this fit,
@@ -232,8 +262,10 @@ trend_as_at <- function(polls, year, cycles, as_at, priors, flows,
 #'   own defaults: every default repeated here is a second copy that can drift
 #'   from the one in [fit_trend()], which is the hazard docs/CONSTANTS.md
 #'   exists to track. One default, in one place.
-#' @param sigmas Passed to [trend_as_at()]: `"default"` or `"per_cycle"`.
-#' @param weights Passed to [trend_as_at()]: `"equal"` or `"firm_factors"`.
+#' @param sigmas Passed to [trend_as_at()]: `"default"`, `"per_cycle"` or `"pooled_tf"`.
+#' @param weights Passed to [trend_as_at()]: `"equal"`, `"firm_factors"` or `"record"`.
+#' @param score_polls Also score each horizon's held-out polls (cutoff to the next shorter
+#'   horizon's cutoff) with [poll_predictive_scores()]; returned as attribute `poll_scores`.
 #' @param verbose Print progress (this is the slow step).
 #' @return data.table: `year`, `region`, `horizon`, `trend_tpp`, `actual_tpp`,
 #'   `n_polls`.
@@ -242,8 +274,9 @@ build_projection_data <- function(horizons = c(30, 90, 180, 365, 730),
                                   regions = c("fed", "nsw", "vic", "qld"),
                                   min_year = 1990, min_polls = 8,
                                   nu = Inf, verbose = TRUE,
-                                  sigmas = c("default", "per_cycle"),
-                                  weights = c("equal", "firm_factors"), ...) {
+                                  sigmas = c("default", "per_cycle", "pooled_tf"),
+                                  weights = c("equal", "firm_factors", "record"),
+                                  score_polls = FALSE, ...) {
   sigmas <- match.arg(sigmas)
   weights <- match.arg(weights)
   cycles <- load_election_cycles()
@@ -253,6 +286,7 @@ build_projection_data <- function(horizons = c(30, 90, 180, 365, 730),
   flows_all <- load_preference_flows()
 
   out <- list()
+  scores <- list()
   skipped <- list()
   note <- function(rg, y, h, reason, detail = NA_character_) {
     skipped[[length(skipped) + 1L]] <<- data.table::data.table(
@@ -318,9 +352,16 @@ build_projection_data <- function(horizons = c(30, 90, 180, 365, 730),
         # that started failing some elections would have quietly re-fitted the
         # mix weight and error spread on a shrunken, non-random subset, with no
         # symptom except a row count nothing compared against an expectation.
+        # Held-out polls for this horizon: from its cutoff to the next shorter
+        # horizon's cutoff (election day for the shortest), so no poll is
+        # scored twice for one cycle.
+        sh <- sort(horizons)
+        nxt <- sh[sh < h]
+        score_to <- if (!score_polls) NULL else if (length(nxt)) cyc$end[1] - max(nxt) else cyc$end[1] - 1
         r <- tryCatch(trend_as_at(polls, y, cycles, as_at, priors, fl,
                                   min_polls = min_polls, nu = nu,
-                                  sigmas = sigmas, weights = weights, ...),
+                                  sigmas = sigmas, weights = weights,
+                                  score_after = score_to, ...),
                       error = function(e) {
                         note(rg, y, h, "error", conditionMessage(e))
                         NULL
@@ -335,6 +376,12 @@ build_projection_data <- function(horizons = c(30, 90, 180, 365, 730),
         out[[length(out) + 1L]] <- data.table::data.table(
           year = y, region = rg, horizon = h, trend_tpp = r$tpp,
           actual_tpp = actual, n_polls = r$n_polls)
+        # poll_scores carries a column `y` (the poll share), which a bare `y`
+        # inside `[` would bind to instead of the election year: copy first.
+        if (!is.null(r$poll_scores) && nrow(r$poll_scores)) {
+          .yr <- y; .rg <- rg; .h <- h
+          scores[[length(scores) + 1L]] <- r$poll_scores[, `:=`(year = .yr, region = .rg, horizon = .h)]
+        }
       }
       if (verbose) message(sprintf("  %s %d done", rg, y))
     }
@@ -342,6 +389,7 @@ build_projection_data <- function(horizons = c(30, 90, 180, 365, 730),
   res <- data.table::rbindlist(out)
   skip <- data.table::rbindlist(skipped)
   data.table::setattr(res, "skipped", skip)
+  if (score_polls) data.table::setattr(res, "poll_scores", data.table::rbindlist(scores))
   n_err <- if (nrow(skip)) sum(skip$reason == "error") else 0L
   if (n_err > 0) {
     warning(sprintf(

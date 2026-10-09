@@ -756,7 +756,12 @@ for (K in PAIRS) {
   # AUSPOL_NEW_IND_SHRINK (POST-XGB, shipped "1"; "0" makes this line a no-op): a nameless
   # first-time sole independent is over-called at base. R/new_ind_shrink.R.
   shares <- new_ind_shrink_apply(shares, sprintf("vic%d", K$to), code = "BV1n")
+  # AUSPOL_IND_TYPICAL (POST-XGB-TRAINING, off by default): non-sitting independents start from
+  # the typical vote for their signals, before ("base") or after ("final") the frozen trees. R/ind_typical.R.
+  shares <- ind_typical_apply(shares, sprintf("vic%d", K$to), stage = "base", code = "BV1T")
   shares <- xgb_primary_override(shares, sprintf("vic%d", K$to))
+  shares <- ind_typical_apply(shares, sprintf("vic%d", K$to), stage = "final", code = "BV1T")
+  shares <- ind_mixture_apply(shares, sprintf("vic%d", K$to), code = "BV1M")  # AUSPOL_IND_MIXTURE (off by default). R/ind_mixture.R.
   # Every class with no candidate standing is zeroed AFTER the override, which
   # otherwise writes its prediction back (plans/prereg-nomination-zero-2026-10-03.md).
   # AUSPOL_NOM_ZERO_ORDER (default "early" = this position); "late" runs it after
@@ -963,6 +968,8 @@ for (K in PAIRS) {
         tx2[idx & to == "LNP", votes := pmax(0, votes * (1 - sh))]
       }
       fmr <- build_flow_matrix(tx2, min_n = 3L)
+      .imx <- ind_mixture_surge(sprintf("vic%d", K$to), rownames(shares), surge_arg, surge_mu_arg, surge_sd_arg, surge_party_arg, code = "BV1N")
+      surge_arg <- .imx$surge_h; surge_mu_arg <- .imx$surge_mu; surge_sd_arg <- .imx$surge_sd; surge_party_arg <- .imx$surge_party
       s1 <- simulate_seat_contests(level_sd = .level_sd, sd_override = SD_OVR, level_mult = .lm(shares), shares, fmr, party_sd = psd,
                                    seat_sd = sp$sd_within * SEAT_SD_MULT, n_sims = per,
                                    breakout_p = .bo$p, breakout_q = .bo$q,
@@ -1011,6 +1018,8 @@ for (K in PAIRS) {
     # card order for this election (R/htv_flow.R, external/reference/htv/liberal-alp-grn-order.csv).
     .htv_ov <- if (identical(Sys.getenv("AUSPOL_HTV_FLOW", "0"), "1")) tryCatch(htv_flow_override(.xgb_flow_ov, fm, sprintf("vic%d", K$to), rownames(shares)),
       error = function(e) { cat(sprintf("HTV9! how-to-vote override FAILED, flow rows unchanged: %s\n", conditionMessage(e))); .xgb_flow_ov }) else .xgb_flow_ov
+    .imx <- ind_mixture_surge(sprintf("vic%d", K$to), rownames(shares), surge_arg, surge_mu_arg, surge_sd_arg, surge_party_arg, code = "BV1N")
+    surge_arg <- .imx$surge_h; surge_mu_arg <- .imx$surge_mu; surge_sd_arg <- .imx$surge_sd; surge_party_arg <- .imx$surge_party
     sim <- simulate_seat_contests(level_sd = .level_sd, sd_override = SD_OVR, level_mult = .lm(shares), shares, fm, party_sd = psd,
                                   seat_sd = sp$sd_within * SEAT_SD_MULT, n_sims = N_SIMS,
                                   breakout_p = .bo$p, breakout_q = .bo$q,
