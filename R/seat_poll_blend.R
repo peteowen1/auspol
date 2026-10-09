@@ -164,15 +164,40 @@ seat_poll_weight <- function(target_election) {
     m$el <- e
     m
   }), fill = TRUE)
-  if (!nrow(rows)) return(list(w = 0, raw = NA_real_, se = NA_real_, n = 0L, k = 0L))
+  pr <- .seat_poll_prior()
+  if (!nrow(rows)) return(list(w = if (is.null(pr)) 0 else pr[["mean"]], raw = NA_real_, se = NA_real_, n = 0L, k = 0L))
   dx <- rows$poll - rows$pred
   dy <- rows$actual - rows$pred
   b <- sum(dx * dy) / sum(dx^2)
   e <- dy - b * dx
   G <- length(unique(rows$unit))
   se2 <- .cluster_se2(sum(tapply(dx * e, rows$unit, sum)^2), sum(dx^2)^2, G)
-  w <- min(1, max(0, b * b^2 / (b^2 + se2)))
-  list(w = w, raw = b, se = sqrt(se2), n = nrow(rows), k = length(unique(rows$el)))
+  w <- if (is.null(pr)) {
+    b * b^2 / (b^2 + se2)   # shrunk toward 0 (shipped)
+  } else if (!is.finite(se2)) {
+    pr[["mean"]]            # one cluster carries no information: the prior alone
+  } else {
+    # precision-weighted between the prior and the earlier elections' slope
+    (pr[["mean"]] / pr[["sd"]]^2 + b / se2) / (1 / pr[["sd"]]^2 + 1 / se2)
+  }
+  list(w = min(1, max(0, w)), raw = b, se = sqrt(se2), n = nrow(rows), k = length(unique(rows$el)))
+}
+
+# AUSPOL_SEAT_POLL_PRIOR: "0" (shipped) shrinks the fitted weight toward 0, so
+# an election with no earlier polled cells blends nothing (fed2016 Mayo,
+# fed2019 Warringah: a poll had Steggall at 22.3 and the weight was 0). Any
+# other value is a prior mean for the weight, combined with the earlier
+# elections' slope by precision, its sd from AUSPOL_SEAT_POLL_PRIOR_SD. 0.75 is
+# Pete's judgement (2026-10-09), knowingly informed by the fed2022 fit of 0.751:
+# a hindsight prior, recorded as such in docs/CONSTANTS.md.
+.seat_poll_prior <- function() {
+  v <- Sys.getenv("AUSPOL_SEAT_POLL_PRIOR", "0")
+  m <- suppressWarnings(as.numeric(v))
+  if (!is.finite(m) || m < 0 || m > 1) stop("AUSPOL_SEAT_POLL_PRIOR must be a number in 0..1, not ", v)
+  if (m == 0) return(NULL)
+  s <- suppressWarnings(as.numeric(Sys.getenv("AUSPOL_SEAT_POLL_PRIOR_SD", "0.25")))
+  if (!is.finite(s) || s <= 0) stop("AUSPOL_SEAT_POLL_PRIOR_SD must be a positive number")
+  c(mean = m, sd = s)
 }
 
 #' The seat-poll blend's inputs for one target, computed or shipped
