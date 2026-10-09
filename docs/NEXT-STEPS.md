@@ -5,12 +5,23 @@ it stood before this rewrite: `backlog/journal-2026-09-19-hub-snapshot.md`).
 Decisions: `docs/DECISIONS.md`. Every seat verdict: `docs/SEAT-REGISTRY.md`.
 Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30.
 
-## 2026-10-09: seat polls (READ FIRST)
+## 2026-10-09 HANDOFF (READ FIRST)
 
-- **PR #110 MERGED; NOT YET PUBLISHED.** Stage 9 was blocked by the permission classifier. Pete runs: `AUSPOL_PUBLISH=1 AUSPOL_REBUILD_FROM=9 bash scripts/rebuild_forecasts.sh`. Until then the daily run prints `SPB!!` and uses the old window-averaged seat-poll table (harmless: Victoria has no seat poll inside 90 days anyway).
-- `output/` holds the stage 6-8 rebuild of 897e7d5 (fed, nsw, sa rerun; ledger 0.2733).
-- Misses: `scripts/biggest_misses.R` / skill `biggest-misses`. Never rank from `forecasts.csv` (pre-seat-poll).
-- Statewide poll weighting: DONE and REFUSED (sample-size gate failed; record / estimated-noise arms worse). The fixed 1.7-point noise stays, now measured against a time-forward estimate rather than merely unestimated.
+**Needs Pete:** nothing blocking. One gate owed: 12 commits on `dev` are not on `main` and have NOT been through the review gate (statewide-poll arms, `AUSPOL_IND_TYPICAL`, `AUSPOL_IND_MIXTURE`, docs, `biggest_misses.R` MX2 fix; every new switch OFF, byte-identical when off). Next session: review gate, then PR.
+
+**Shipped and published today** (PR #110, `shipped-models` 2026-10-09 03:21 UTC, vic2026 + nsw2027 tables): seat-poll recency decay, 0.75 weight prior, MRP-name fix (full 20k, 6 polled pairs: 0.2705 -> 0.2675). AEF-7 ledger 0.2733 vs AEF 0.2825. `output/` holds the stage 6-8 rebuild of 897e7d5.
+
+**Refused today (built, off; do not re-run without a new idea):**
+- Statewide poll weighting: sample-size gate failed (15.5% coverage); pollster record / time-forward noise / both worse (`plans/prereg-statewide-poll-sample-weights-2026-10-09.md`).
+- Seat-poll precision blend and pollster floor (`DECISIONS.md` 2026-10-09).
+- Independents: typical-vote arms, dedicated 41-input model, two-part mixture. The shipped xgb + rare winner-surge beat all of them (`plans/prereg-ind-typical-2026-10-09.md`). The Victorian +1 to +3 independent over-call is the hedge, not a bug.
+
+**Queue, ranked:**
+1. Review gate + PR for the 12 unreviewed `dev` commits (~30 min).
+2. Nomination day 2026-11-09: refit successor rates on the final candidate list (`build_departed_successors.R` chain), re-run the live forecast; seat polls in the last 90 days now enter by decay automatically.
+3. OPEN seats with a known mechanism: Richmond/Footscray/Brunswick how-to-vote flows (SEAT-REGISTRY vic2022), Morwell departed-origin (re-decide when the corpus grows), Benambra-type returning near-winners (retention by prior size).
+
+Tools: misses via `scripts/biggest_misses.R` / skill `biggest-misses` (never `forecasts.csv`).
 
 ## 2026-10-08 NIGHT HANDOFF (READ FIRST)
 
