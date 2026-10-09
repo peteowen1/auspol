@@ -75,7 +75,11 @@ if (aef7_only) want_pairs <- intersect(want_pairs, AEF7)
 if (!length(want_pairs)) stop("no pairs left after --pairs/--aef7")
 
 # Which code produced these numbers, and has the model moved since?
-PB[, git := sub("^.*-g([0-9a-f]+)x?[.]csv$", "\\1", file)]
+PB[, git := sub("^.*-g([0-9a-f]+)[x?]?[.]csv$", "\\1", file)]
+# A harness tags its files -g<sha>x when R/ or scripts/ were dirty at run time
+# ("?" when git status failed): those runs include edits no commit holds, so a
+# clean commit count since <sha> proves nothing about them.
+PB[, dirty_run := grepl("-g[0-9a-f]+[x?][.]csv$", file)]
 PB[, hand_rerun := grepl("-p[0-9]{4}-", file)]
 cat(sprintf("MX1  %d pair(s) from %d run(s); run git hash(es): %s\n", length(want_pairs),
             uniqueN(PB[pair %in% want_pairs]$file), paste(unique(PB[pair %in% want_pairs]$git), collapse = ", ")))
@@ -84,6 +88,13 @@ if (any(PB[pair %in% want_pairs]$hand_rerun))
               paste(PB[pair %in% want_pairs & hand_rerun == TRUE]$pair, collapse = ", ")))
 model_paths <- c("R", "src", "scripts/published_flags.R", "scripts/harness_defaults.R",
                  "scripts/fit_seats_full.R", Sys.glob("scripts/backtest_candidate_*.R"))
+if (any(PB[pair %in% want_pairs]$dirty_run))
+  cat(sprintf("MX2! run(s) made from uncommitted code (file tag x or ?): %s -- the commit count below cannot vouch for them\n",
+              paste(PB[pair %in% want_pairs & dirty_run == TRUE]$pair, collapse = ", ")))
+wt_dirty <- suppressWarnings(system2("git", c("status", "--porcelain", "--", model_paths), stdout = TRUE, stderr = FALSE))
+if (length(wt_dirty))
+  cat(sprintf("MX2! %d uncommitted model-code change(s) in this checkout; the numbers below predate them:\n%s\n",
+              length(wt_dirty), paste0("     ", head(wt_dirty, 10), collapse = "\n")))
 for (g in unique(PB[pair %in% want_pairs]$git)) {
   n_since <- suppressWarnings(system2("git", c("rev-list", "--count", paste0(g, "..HEAD"), "--", model_paths),
                                       stdout = TRUE, stderr = FALSE))

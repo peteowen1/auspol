@@ -1,3 +1,12 @@
+# auspol 0.4.87
+
+- Seat polls fade with age instead of being cut off at 90 days. Each poll in a seat counts by how recent it is (its weight halves every 34 days for Victoria 2026, fitted on earlier elections) and how precise it is (seat sample size, plus a noise floor fitted separately for MRP, direct and sponsored polls). Warringah 2019's poll, 98 days out, now counts; so do 350 other polls the window dropped.
+- The seat-poll blend weight starts from Pete's prior of 0.75 instead of 0, so the first elections with seat polls use them (Mayo 2016: Sharkie 3.2 -> 18.6, actual 34.9).
+- A pollster release labelled MRP counts as MRP even when it covers fewer than 20 seats (YouGov's final 2025 release).
+- Together, on the six elections with seat polls (20,000 simulations): seat log loss 0.2705 -> 0.2675, 5 of 6 better. The other 16 elections do not change.
+- Seat-poll file: sample-size ranges read as their midpoint (500-700 had become 500700) and "Mid-May"-style dates parse (six polls had no date and were dropped).
+- New: `scripts/biggest_misses.R` ranks the biggest primary, two-party and seat log-loss misses from the newest published run, with each seat's registry verdict.
+
 # auspol 0.4.86
 
 - Every diagnostic check code now means one thing: 156 codes that meant different things in different files were renamed, and a test stops a new collision. Printed labels only; no forecast number changes.

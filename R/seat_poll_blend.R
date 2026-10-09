@@ -232,7 +232,7 @@ SEAT_POLL_N_FALLBACK <- 600        # seat sample when no earlier direct poll rec
 seat_poll_decay_params <- function(target_election) {
   key <- paste(target_election, Sys.getenv("AUSPOL_SEAT_POLL_SOURCES", "all"), Sys.getenv("AUSPOL_SEAT_POLL_IND_MAP", "1"),
                Sys.getenv("AUSPOL_SEAT_POLL_HANDKEYED", "1"), Sys.getenv("AUSPOL_SEAT_POLL_MRP_NAME", "1"),
-               Sys.getenv("AUSPOL_SEAT_POLL_FIRM_FLOOR", "0"))
+               Sys.getenv("AUSPOL_SEAT_POLL_FIRM_FLOOR", "0"), Sys.getenv("AUSPOL_SEAT_POLL_COALITION_DEDUP", "1"))
   if (!is.null(.seat_poll_decay_cache[[key]])) return(.seat_poll_decay_cache[[key]])
   grp <- c("mrp", "direct", "sponsored")
   prior <- list(H = SEAT_POLL_HALFLIFE_PRIOR, floor = stats::setNames(rep(SEAT_POLL_FLOOR_PRIOR, 3), grp),
@@ -561,6 +561,9 @@ seat_poll_blend_apply <- function(shares, target_election) {
     if (!.seat_poll_decay_on()) stop("AUSPOL_SEAT_POLL_PRECISION_BLEND=1 needs AUSPOL_SEAT_POLL_DECAY=1 (P is the decayed poll precision)")
     vm <- w$vm
     if (is.null(vm) || !"pooled" %in% names(vm)) stop("seat-poll blend for ", target_election, ": no model variance (vm) for the precision blend")
+    # A shipped table without decay weights leaves wsum = n_polls (a count, not
+    # a precision in 1/points^2), which would size every pull wrongly.
+    if (!"wsum" %in% names(tb_type)) stop("AUSPOL_SEAT_POLL_PRECISION_BLEND=1 needs a seat-poll table with decay weights (wsum): re-promote it")
     v <- unname(vm[tb$class]); v[!is.finite(v)] <- vm[["pooled"]]
     wvec <- v / (v + 1 / tb$wsum)
     cat(sprintf("SPPB %s: precision blend, pull median %.2f (range %.2f-%.2f) over %d cells; model sd by class %s\n",
