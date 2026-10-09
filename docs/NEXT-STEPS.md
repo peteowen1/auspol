@@ -5,6 +5,13 @@ it stood before this rewrite: `backlog/journal-2026-09-19-hub-snapshot.md`).
 Decisions: `docs/DECISIONS.md`. Every seat verdict: `docs/SEAT-REGISTRY.md`.
 Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30.
 
+## 2026-10-09: seat polls (READ FIRST)
+
+- **PR #110 MERGED; NOT YET PUBLISHED.** Stage 9 was blocked by the permission classifier. Pete runs: `AUSPOL_PUBLISH=1 AUSPOL_REBUILD_FROM=9 bash scripts/rebuild_forecasts.sh`. Until then the daily run prints `SPB!!` and uses the old window-averaged seat-poll table (harmless: Victoria has no seat poll inside 90 days anyway).
+- `output/` holds the stage 6-8 rebuild of 897e7d5 (fed, nsw, sa rerun; ledger 0.2733).
+- Misses: `scripts/biggest_misses.R` / skill `biggest-misses`. Never rank from `forecasts.csv` (pre-seat-poll).
+- Open, Pete to decide: statewide poll weighting (needs a sample-size scrape first, ~24-34 h); the fixed 1.7-point statewide poll noise (`R/trend.R:275-280`) is a hard-coded constant never estimated.
+
 ## 2026-10-08 NIGHT HANDOFF (READ FIRST)
 
 **Needs Pete:** nothing blocking.
