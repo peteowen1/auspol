@@ -153,3 +153,12 @@ a weak signal that hurts no guard is safe to include. The clauses and results ab
 is a decision against them, recorded as such. Shipped as `AUSPOL_IND_PERSON="final"`,
 `AUSPOL_IND_PERSON_CARRY="linear"`, `AUSPOL_IND_PERSON_DIR="lower"`, post-xgb (stage 1 runs it off), wired
 into fit_seats_full.R; the deciding 20,000-sim stage-6 rebuild on all 22 elections is reported below.
+
+### Defect found in the deciding run, fixed before it was scored (2026-10-10)
+
+The linear carry fitted on very few earlier cases went wild: wa2008 (n=4) 78.64 - 10.94 x record, which set
+North West's Fullarton 3.2 -> 0.0; fed2007 (n=3) 77.41 - 10.73 x record (changed no cell, by luck). The
+slope is the share of a person's earlier vote they keep, so it is bounded to [0, 1] -- the same bound the
+shipped new-independent factor uses -- and when the OLS slope falls outside it the slope is clamped and the
+intercept refitted as mean(actual - b x record), floored at 0. Fewer than 3 cases still keeps the ratio (a
+slope needs three points). The WA and federal stage-6 runs made before this fix are discarded and rerun.
