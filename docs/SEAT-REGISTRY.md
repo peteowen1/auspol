@@ -94,8 +94,10 @@ Dug 2026-10-09 from run 0cbaa82 (`scripts/biggest_misses.R --pairs=vic2018`). Th
   xgb cache; under the honest as-at model the seat is back at 2.70.
   `reviews/departed-leader-honour-fix-2026-09-18.md`, pattern D in
   `reviews/worst-seats-five-patterns-2026-09-13.md`.
-- **Footscray, Richmond, Brunswick, Pascoe Vale** (ALP v GRN) — **OPEN,
-  DATA needed**, cause found 2026-09-18. Running our own flow tables on the
+- **Footscray, Richmond, Brunswick, Pascoe Vale, Preston** (ALP v GRN) — **OPEN** (re-traced 2026-10-10:
+  no longer the card flow, which shipped as AUSPOL_HTV_FLOW the same day; now the Liberal PRIMARY, under-called
+  statewide by 3.1 because the day-before trend lagged the late polls -- `reviews/trend-lag-day-before-2026-10-10.md`).
+  Original 2026-09-18 note: Running our own flow tables on the
   ACTUAL primaries still gives ALP 6-8 points too much 2CP in all four, so
   it is the flow, not the primaries. The cell is Liberal preferences with
   ALP and GRN both alive: 58% to ALP in vic2018 (what the table learned),
