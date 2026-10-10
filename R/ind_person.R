@@ -156,6 +156,10 @@ ind_person_apply <- function(shares, target, stage = c("base", "final"), code = 
       fit_note <- sprintf("; linear carry %.2f + %.3f x record (n=%d earlier cases)", lf$a, lf$b, lf$n)
     } else fit_note <- sprintf("; linear carry: %d earlier case(s), ratio kept", lf$n)
   }
+  # Amendment 2: "lower" lets a record only LOWER the cell (the raising half was
+  # the unreliable one on the screen: Barker 2019). No size threshold.
+  dir <- Sys.getenv("AUSPOL_IND_PERSON_DIR", "both")
+  if (!dir %in% c("both", "lower")) stop("AUSPOL_IND_PERSON_DIR must be \"both\" or \"lower\", not ", dir)
   ci <- match("IND", colnames(shares))
   ri <- match(cells$skey, normalise_seat(rownames(shares)))
   out <- shares; n <- 0L; log <- character(0)
@@ -163,6 +167,7 @@ ind_person_apply <- function(shares, target, stage = c("base", "final"), code = 
     i <- ri[k]; old <- shares[i, ci]; tot <- sum(shares[i, ])
     if (old <= 0 || tot - old <= 0) next
     new <- min(cells$value[k], tot)
+    if (dir == "lower" && new >= old) next
     out[i, ] <- shares[i, ] * (tot - new) / (tot - old)
     out[i, ci] <- new
     n <- n + 1L
