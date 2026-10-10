@@ -5,21 +5,34 @@ it stood before this rewrite: `backlog/journal-2026-09-19-hub-snapshot.md`).
 Decisions: `docs/DECISIONS.md`. Every seat verdict: `docs/SEAT-REGISTRY.md`.
 Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30.
 
-## 2026-10-09 HANDOFF (READ FIRST)
+## 2026-10-10 HANDOFF (READ FIRST)
 
-**Needs Pete:** nothing blocking. The 12-commit review gate is DONE: PR #111 merged 2026-10-09 (2 Sonnet reviewers; 3 fixes in `c5e9e0c`, none changed a recorded verdict).
+**Needs Pete:** nothing blocking. All work is on `main` (PRs #111-#116, each reviewed, CI green).
 
-**Shipped and published today** (PR #110, `shipped-models` 2026-10-09 03:21 UTC, vic2026 + nsw2027 tables): seat-poll recency decay, 0.75 weight prior, MRP-name fix (full 20k, 6 polled pairs: 0.2705 -> 0.2675). AEF-7 ledger 0.2733 vs AEF 0.2825. `output/` holds the stage 6-8 rebuild of 897e7d5.
+**Shipped 2026-10-10, live:** `AUSPOL_IND_PERSON` (PR #116, on Pete's override after it missed its pre-registered
+bar; `plans/prereg-ind-person-2026-10-10.md`): a sole, non-sitting independent's own small earlier record can
+LOWER their vote. Deciding 20k run: 22-election seat log loss 0.3239 flat, AEF-7 ledger 0.2733 -> 0.2732 (AEF
+0.2825), Malvern 2022 IND 8.6 -> 1.7. Live forecast run 38040218574: Broadmeadows IND 5.4 -> 3.89.
+`shipped-models` republished from that run. Also today: seat-poll reads memoised (vic2026 run 102 -> 92 s,
+byte-identical); `output/published-predictions.csv` (every published prediction, 22 elections); the ledger
+artifact's every-candidate view (v53); NSW 2027 leader-seat bonus; candidate names HTML-decoded (no model effect).
 
-**Refused today (built, off; do not re-run without a new idea):**
-- Statewide poll weighting: sample-size gate failed (15.5% coverage); pollster record / time-forward noise / both worse (`plans/prereg-statewide-poll-sample-weights-2026-10-09.md`).
-- Seat-poll precision blend and pollster floor (`DECISIONS.md` 2026-10-09).
-- Independents: typical-vote arms, dedicated 41-input model, two-part mixture. The shipped xgb + rare winner-surge beat all of them (`plans/prereg-ind-typical-2026-10-09.md`). The Victorian +1 to +3 independent over-call is the hedge, not a bug.
+**Refused (built, off; do not re-run without a new idea):** the two-way person rule and its linear variant
+(large earlier records mislead both ways: Fowler 2022, Barker 2019); the never-stood "typical level" half
+(2026-10-09). Earlier refusals: statewide poll weighting, seat-poll precision blend, typical-vote / dedicated /
+mixture independent models (`plans/prereg-ind-typical-2026-10-09.md`).
 
 **Queue, ranked:**
-1. ~~Review gate + PR for the 12 unreviewed `dev` commits~~ DONE (PR #111). Open from it: the statewide poll scraper year-inference root cause (STAT6! stops on it); fetch failures recorded as permanent 404s.
-2. Nomination day 2026-11-09: refit successor rates on the final candidate list (`build_departed_successors.R` chain), re-run the live forecast; seat polls in the last 90 days now enter by decay automatically.
-3. OPEN seats with a known mechanism: Richmond/Footscray/Brunswick how-to-vote flows (SEAT-REGISTRY vic2022), Morwell departed-origin (re-decide when the corpus grows), Benambra-type returning near-winners (retention by prior size).
+1. OPEN: Richmond/Footscray/Brunswick how-to-vote flows (SEAT-REGISTRY vic2022) -- the top open seat problem, ~2 h.
+2. OPEN: nomination day **9 November 2026**: refit successor rates on the final candidate list
+   (`build_departed_successors.R` chain), rerun the live forecast. Victoria votes 28 November 2026.
+3. OPEN: miss-table seats traced but not fixed: Malvern 2022 (O'Brien under-called in base_pred), Bankstown 2023
+   (xgb cut ALP 55.8 -> 49.8); Parkes, New England, Dawson 2022, Traeger 2024, McMahon 2025 not yet traced.
+4. OPEN: statewide poll scraper year-inference root cause (STAT6! stops on it); fetch failures recorded as 404s.
+5. OPEN, small: `backtest_candidate_fed.R` writes all 7 pairs only at the end (a kill at 90% loses ~6 min).
+
+**Running jobs when memory is short:** Claude Code reaps background shells below ~4 GB available. Run stage 6
+harness by harness in the foreground, then `AUSPOL_REBUILD_FROM=7`; `AUSPOL_REBUILD_SLOTS=1` caps parallelism.
 
 Tools: misses via `scripts/biggest_misses.R` / skill `biggest-misses` (never `forecasts.csv`).
 
@@ -30,7 +43,6 @@ Verbatim in `backlog/journal-2026-10-07-to-10-08.md`. Still OPEN from them:
 - OPEN: scenario-job straggler (one matrix job per run crawls on the runner's network). Pete 2026-10-09: leave open. Untried: per-step timeout plus re-run; fewer, fatter jobs.
 - OPEN: `AUSPOL_UPSET_FLOOR` is the one switch with an unexplained registry gap. Audit sentinel drift goes to issue #109.
 - OPEN: fed2025 seat polls deserved weight ~0.13 and got 0.55; no pre-election signal found yet.
-- DONE 2026-10-10 (PRs #113, #114): `fit_seats_full.R` prints stage timings (SQ1/SQ2). vic2026 102 -> 92 s after memoising seat-poll reads (byte-identical). Next biggest: section 4 still 62 s (own_prev 10.5 s, xgb_live 8.3 s), simulation 19 s.
 - OPEN: ~50 `AUSPOL_*` names read in code that `quick_arm.R` refuses; needs a per-name pass (many are run controls, not model switches).
 - Not doing, by decision: the in-browser simulator (~40 h); the 2.5-point knots already feel live. Revisit if Pete wants two sliders at once.
 
