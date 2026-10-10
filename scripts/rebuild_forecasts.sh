@@ -121,6 +121,9 @@ run6() {  # $1 = XGB_PRIMARY value, $2 = log tag -- all 23 pairs across the six 
   # once (nsw/qld/sa run twice, and they have never been run concurrently).
   local slots=2
   if [ "${fg:-0}" -ge 10 ]; then slots=6; elif [ "${fg:-0}" -ge 6 ]; then slots=3; fi
+  # AUSPOL_REBUILD_SLOTS caps the slots (2026-10-10: 3.9GB available, fed peaks
+  # ~2.3GB, and two slots had been killed at 4GB free): 1 runs the harnesses serially.
+  if [ -n "${AUSPOL_REBUILD_SLOTS:-}" ] && [ "$AUSPOL_REBUILD_SLOTS" -lt "$slots" ]; then slots=$AUSPOL_REBUILD_SLOTS; fi
   echo "   ${fg}GB free -- ${slots} harness slots"
   local specs=(fed wa vic nsw:AUSPOL_NSW_PAIR=2023 qld:AUSPOL_QLD_PAIR=2024 sa:AUSPOL_SA_PAIR=2026
                qld:AUSPOL_QLD_PAIR=2020 nsw:AUSPOL_NSW_PAIR=2019 sa:AUSPOL_SA_PAIR=2022)
