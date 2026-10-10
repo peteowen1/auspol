@@ -55,3 +55,11 @@ only). With the fold, from the table, day-before MAE on ALP/LNP/GRN (lower is be
 vs average 1.58 (-0.32, SE 0.21, average better in 17); fewer than 5 polls 2.22 vs 1.90 (-0.32, SE 0.63, better in
 4 of 7); 5-9 polls -0.48 (SE 0.16, 6 of 7); 10+ polls -0.19 (SE 0.22, 7 of 8). The premise is not supported, nor
 refuted on 7 elections. To Pete before anything runs.
+
+## Amendment 1 (2026-10-10, after the dry run; Pete chose it from the numbers above)
+
+POST HOC, and marked so. Clauses above unedited. Clause 5's second condition (w above 0.9 on fewer than 5 polls)
+is WITHDRAWN: its stated evidence was WA before the Nationals were folded in, an artefact of the poll file, and
+with the fold the average is no worse on few polls (4 of 7 better, -0.32, SE 0.63). Clause 5's first condition
+(any single election's seat log loss worse by more than 0.02) stands, as do 1-4 and the ship rule. The fitted
+form is effectively "the 28-day average for ALP/LNP/GRN" (w 0.89-0.99); judged as such.
