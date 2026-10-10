@@ -485,6 +485,19 @@ CLASSIFY <- list(
   AUSPOL_LIVE_LEVEL_ANCHOR = paste(
     "OFF since 2026-09-30 (v56), LIVE-ONLY by design: read only in fit_seats_full.R. The un-anchored level scored better over all",
     "22 elections, and published_flags.R says backtests and live now both use the un-anchored recipe (AUSPOL_LEVEL_RECIPE='live')."),
+  AUSPOL_IND_PERSON_CARRY = paste(
+    "SHIPPED 'linear' 2026-10-10 with AUSPOL_IND_PERSON (Pete's override, plans/prereg-ind-person-2026-10-10.md). Read inside",
+    "R/ind_person.R, which all six harnesses and fit_seats_full.R call, so the harness grep cannot see it."),
+  AUSPOL_IND_PERSON_DIR = paste(
+    "SHIPPED 'lower' 2026-10-10 with AUSPOL_IND_PERSON. Read inside R/ind_person.R (all six harnesses and fit_seats_full.R)."),
+  AUSPOL_IND_TYPICAL = paste(
+    "ARM, REFUSED 2026-10-09 (plans/prereg-ind-typical-2026-10-09.md), off. In all six harnesses; NOT in fit_seats_full.R by",
+    "design: a refused arm is not wired into the published forecast."),
+  AUSPOL_IND_TYPICAL_STAT = paste(
+    "Sub-setting of the refused AUSPOL_IND_TYPICAL, read inside R/ind_typical.R; harness-only like its parent."),
+  AUSPOL_IND_MIXTURE = paste(
+    "ARM, REFUSED 2026-10-09 (seat log loss +0.0332 over 22 pairs), off. In all six harnesses; NOT in fit_seats_full.R by",
+    "design: a refused arm is not wired into the published forecast."),
   AUSPOL_NEW_IND_SHRINK_CAP = paste(
     "SHIPPED (default 1 = cap the new-independent factor at 1); the '0' arm is pending. Read inside R/new_ind_shrink.R, which all",
     "six harnesses and fit_seats_full.R call, so the harness grep cannot see it."),

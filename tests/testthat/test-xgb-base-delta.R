@@ -33,7 +33,7 @@ bd_root <- function(env = parent.frame()) {
 }
 
 bd_run <- function(shares, delta = "0", record = "0", ref = NULL, root = NULL) {
-  withr::local_envvar(AUSPOL_XGB_PRIMARY = "1", AUSPOL_XGB_BASE_DELTA = delta, AUSPOL_XGB_BASE_RECORD = record,
+  withr::local_envvar(AUSPOL_IND_PERSON = "0", AUSPOL_XGB_PRIMARY = "1", AUSPOL_XGB_BASE_DELTA = delta, AUSPOL_XGB_BASE_RECORD = record,
                       AUSPOL_XGB_BASE_DELTA_TOL = "0.05")
   out <- NULL
   lg <- utils::capture.output(out <- xgb_primary_override(shares, "tst2020")); attr(out, "log") <- lg
@@ -50,7 +50,7 @@ test_that("switch 0 is the old behaviour: cached predictions, renormalised to 10
 
 test_that("baseline: reference equal to this run's shares changes nothing, whatever the base looks like", {
   fx <- bd_root()
-  withr::local_envvar(AUSPOL_XGB_BASE_RECORD = "1", AUSPOL_DEPARTED_SUCCESSOR = "0", AUSPOL_XGB_PRIMARY = "0", AUSPOL_REENTRY = "0", AUSPOL_NEW_IND_SHRINK = "0")
+  withr::local_envvar(AUSPOL_IND_PERSON = "0", AUSPOL_XGB_BASE_RECORD = "1", AUSPOL_DEPARTED_SUCCESSOR = "0", AUSPOL_XGB_PRIMARY = "0", AUSPOL_REENTRY = "0", AUSPOL_NEW_IND_SHRINK = "0")
   # the harness shares are NOT the cached base (later pipeline steps move them):
   # offset them before recording, to mimic that; the delta must still be zero
   off <- fx$shares; off[, "GRN"] <- off[, "GRN"] + 3
@@ -65,7 +65,7 @@ test_that("baseline: reference equal to this run's shares changes nothing, whate
 
 test_that("a planted base change moves its own seat only, via the frozen trees", {
   fx <- bd_root()
-  withr::local_envvar(AUSPOL_XGB_BASE_RECORD = "1", AUSPOL_DEPARTED_SUCCESSOR = "0", AUSPOL_XGB_PRIMARY = "0", AUSPOL_REENTRY = "0", AUSPOL_NEW_IND_SHRINK = "0")
+  withr::local_envvar(AUSPOL_IND_PERSON = "0", AUSPOL_XGB_BASE_RECORD = "1", AUSPOL_DEPARTED_SUCCESSOR = "0", AUSPOL_XGB_PRIMARY = "0", AUSPOL_REENTRY = "0", AUSPOL_NEW_IND_SHRINK = "0")
   utils::capture.output(xgb_primary_override(fx$shares, "tst2020"))
   sh2 <- fx$shares
   sh2["S3", "GRN"] <- sh2["S3", "GRN"] + 12          # a fix fills 12 points into S3 GRN
@@ -93,7 +93,7 @@ test_that("a planted base change moves its own seat only, via the frozen trees",
 
 test_that("without the model the mode falls back to the labelled additive estimate", {
   fx <- bd_root()
-  withr::local_envvar(AUSPOL_XGB_BASE_RECORD = "1", AUSPOL_DEPARTED_SUCCESSOR = "0", AUSPOL_XGB_PRIMARY = "0", AUSPOL_REENTRY = "0", AUSPOL_NEW_IND_SHRINK = "0")
+  withr::local_envvar(AUSPOL_IND_PERSON = "0", AUSPOL_XGB_BASE_RECORD = "1", AUSPOL_DEPARTED_SUCCESSOR = "0", AUSPOL_XGB_PRIMARY = "0", AUSPOL_REENTRY = "0", AUSPOL_NEW_IND_SHRINK = "0")
   utils::capture.output(xgb_primary_override(fx$shares, "tst2020"))
   file.remove(file.path(fx$root, "output", "xgb-primary-asat", "tst2020.ubj"))
   sh2 <- fx$shares; sh2["S2", "ALP"] <- sh2["S2", "ALP"] + 8
@@ -113,7 +113,7 @@ test_that("a missing reference file stops the run instead of comparing with the 
 
 test_that("recording a reference with the new-independent shrink switched on is refused", {
   fx <- bd_root()
-  withr::local_envvar(AUSPOL_XGB_BASE_RECORD = "1", AUSPOL_DEPARTED_SUCCESSOR = "0", AUSPOL_XGB_PRIMARY = "0", AUSPOL_REENTRY = "0",
+  withr::local_envvar(AUSPOL_IND_PERSON = "0", AUSPOL_XGB_BASE_RECORD = "1", AUSPOL_DEPARTED_SUCCESSOR = "0", AUSPOL_XGB_PRIMARY = "0", AUSPOL_REENTRY = "0",
                       AUSPOL_NEW_IND_SHRINK = "1")
   expect_error(utils::capture.output(xgb_primary_override(fx$shares, "tst2020")), "AUSPOL_NEW_IND_SHRINK=0")
   expect_false(file.exists(file.path(fx$root, "output", "xgb-base-ref", "tst2020.csv")))
@@ -121,14 +121,14 @@ test_that("recording a reference with the new-independent shrink switched on is 
   lg <- utils::capture.output(xgb_primary_override(fx$shares, "tst2020"))
   expect_true(any(grepl("XG9!!.*AUSPOL_NEW_IND_SHRINK=1", lg)))
   # all post-xgb switches off: recording works
-  withr::local_envvar(AUSPOL_XGB_BASE_RECORD = "1", AUSPOL_DEPARTED_SUCCESSOR = "0", AUSPOL_NEW_IND_SHRINK = "0")
+  withr::local_envvar(AUSPOL_IND_PERSON = "0", AUSPOL_XGB_BASE_RECORD = "1", AUSPOL_DEPARTED_SUCCESSOR = "0", AUSPOL_NEW_IND_SHRINK = "0")
   utils::capture.output(xgb_primary_override(fx$shares, "tst2020"))
   expect_true(file.exists(file.path(fx$root, "output", "xgb-base-ref", "tst2020.csv")))
 })
 
 test_that("recording a reference with the re-entry fill switched on is refused", {
   fx <- bd_root()
-  withr::local_envvar(AUSPOL_XGB_BASE_RECORD = "1", AUSPOL_DEPARTED_SUCCESSOR = "0", AUSPOL_XGB_PRIMARY = "0", AUSPOL_REENTRY = "majors")
+  withr::local_envvar(AUSPOL_IND_PERSON = "0", AUSPOL_XGB_BASE_RECORD = "1", AUSPOL_DEPARTED_SUCCESSOR = "0", AUSPOL_XGB_PRIMARY = "0", AUSPOL_REENTRY = "majors")
   expect_error(utils::capture.output(xgb_primary_override(fx$shares, "tst2020")), "AUSPOL_REENTRY=0")
   expect_false(file.exists(file.path(fx$root, "output", "xgb-base-ref", "tst2020.csv")))
   # without recording it still runs, and says the base carries the fill
