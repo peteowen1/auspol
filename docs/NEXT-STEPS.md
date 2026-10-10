@@ -30,7 +30,7 @@ Verbatim in `backlog/journal-2026-10-07-to-10-08.md`. Still OPEN from them:
 - OPEN: scenario-job straggler (one matrix job per run crawls on the runner's network). Pete 2026-10-09: leave open. Untried: per-step timeout plus re-run; fewer, fatter jobs.
 - OPEN: `AUSPOL_UPSET_FLOOR` is the one switch with an unexplained registry gap. Audit sentinel drift goes to issue #109.
 - OPEN: fed2025 seat polls deserved weight ~0.13 and got 0.55; no pre-election signal found yet.
-- OPEN: `fit_seats_full.R` has no per-stage timer (probes 120-325 s); time one run by stage with `~/.claude/lib/runtime_log.R` before caching anything.
+- DONE 2026-10-10 (PRs #113, #114): `fit_seats_full.R` prints stage timings (SQ1/SQ2). vic2026 102 -> 92 s after memoising seat-poll reads (byte-identical). Next biggest: section 4 still 62 s (own_prev 10.5 s, xgb_live 8.3 s), simulation 19 s.
 - OPEN: ~50 `AUSPOL_*` names read in code that `quick_arm.R` refuses; needs a per-name pass (many are run controls, not model switches).
 - Not doing, by decision: the in-browser simulator (~40 h); the 2.5-point knots already feel live. Revisit if Pete wants two sliders at once.
 
