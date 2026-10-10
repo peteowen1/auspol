@@ -15,8 +15,21 @@
 #
 # Run from repo root:  powershell.exe -Command 'Rscript "scripts/fit_seats_full.R"'
 
+# PER-STAGE TIMER (SQ*). Probes ran 120-325 s and nothing said where the time
+# went (NEXT-STEPS 2026-10-08). .stage() closes the previous stage and opens the
+# next; .try() below also times each named sub-step. Table printed and written
+# to output/fit-seats-timing-<stem><suffix>.csv at the end.
+.tm <- new.env()
+.tm$rows <- list(); .tm$sub <- list(); .tm$cur <- "setup: load_all"; .tm$t <- .tm$t0 <- Sys.time()
+.stage <- function(name) {
+  now <- Sys.time()
+  .tm$rows[[length(.tm$rows) + 1L]] <- list(stage = .tm$cur, secs = as.numeric(difftime(now, .tm$t, units = "secs")))
+  .tm$cur <- name; .tm$t <- now
+  invisible(NULL)
+}
 options(auspol.root = normalizePath("."))
 suppressMessages(devtools::load_all(quiet = TRUE))
+.stage("setup: inputs and flags")
 # THE PUBLISHED CONFIGURATION lives in scripts/published_flags.R and nowhere
 # else. Every switch the caller left unset takes its value from there, so the
 # scattered Sys.getenv() defaults below are documentation, not behaviour.
@@ -153,6 +166,7 @@ OUT_SUFFIX  <- Sys.getenv("AUSPOL_OUT_SUFFIX", "")
 # difference that flips sign with the seed is Monte Carlo noise, which this
 # repo has already mistaken for a result once.
 SEED        <- as.integer(Sys.getenv("AUSPOL_SEED", "42"))
+.stage("TARGET ELECTION")
 # ---- TARGET ELECTION -----------------------------------------------------------
 # One published script for every live election (plans/nsw2027-itg-scope-2026-10-08.md).
 # AUSPOL_TARGET unset is vic2026, byte-identical to the Victoria-only script.
@@ -248,6 +262,7 @@ if (length(absent)) {
        paste0("  ", names(absent), "  <- run ", absent, collapse = "\n"))
 }
 
+.stage("1. flow matrix, from both elections")
 # ---- 1. flow matrix, from both elections -----------------------------------
 # Victoria is the right jurisdiction and supplies Greens, independent and
 # minor-right behaviour from 452 exclusions. It cannot speak to One Nation --
@@ -317,6 +332,7 @@ cat(sprintf("flow matrix: %d exclusions, %d cells at n>=3 of %d observed\n",
             uniqueN(tx[, .(election, seat, round)]), length(fm$conditional),
             nrow(fm$coverage)))
 
+.stage("2. each seat's 2022 first preferences, as class shares")
 # ---- 2. each seat's 2022 first preferences, as class shares ----------------
 fp <- fread(file.path(PREF, TARGET$fp_file))
 # A SUPPLEMENTARY ELECTION IS THE SEAT'S GENERAL ELECTION HELD LATE. Narracan's
@@ -354,6 +370,7 @@ if (nrow(mat22) < TARGET$n_seats) {
        "(87 from the VEC file plus Narracan's supplementary election from the by-election table). A seat has been lost upstream.")
 }
 
+.stage("3. statewide 2026, from the model rather than assumed")
 # ---- 3. statewide 2026, from the model rather than assumed -----------------
 cycles <- load_election_cycles(); polls <- load_polls(REGION)
 pri <- load_prior_results(); kp <- pri$region == REGION & pri$year == YEAR
@@ -437,6 +454,7 @@ cat(sprintf(paste0("S6  run config: seed %d, FP sd %s, flow %+.2f, ",
                     paste(changed, collapse = ", "))))
 now <- trend_as_at(polls, YEAR, cycles, Sys.Date(), priors, fl, with_series = TRUE)
 
+.stage("S7: does the PUBLISHED trend follow the polls it was fitted ")
 # ---- S7: does the PUBLISHED trend follow the polls it was fitted to? --------
 #
 # This check existed since 2026-08-18 and was wired into `fit_vic.R` (`L3`),
@@ -562,6 +580,7 @@ cat(sprintf("FP sd mode: %s; statewide sds %.2f-%.2f (trend %.2f-%.2f)
 state_mean <- setNames(sw$mean, sw$party)
 state_sd   <- setNames(sw$sd_proj, sw$party)
 
+.stage("LL1: the statewide LEVEL anchored to the projection, as the ")
 # ---- LL1: the statewide LEVEL anchored to the projection, as the backtests do
 # The backtests hand the seats colMeans() of the ANCHORED draws
 # (forecast_statewide_or_oracle()), so their level implies the projected
@@ -617,6 +636,7 @@ if (LEVEL_ANCHOR && abs(ll_implied(state_mean) - pj$mean) > 0.01) {
        " two-party against a projection of ", round(pj$mean, 3), ".")
 }
 
+.stage("where a party's extra votes come from")
 # ---- where a party's extra votes come from ----------------------------------
 # South Australia, March 2026, is the only completed election where One Nation
 # moved on the scale Victoria is forecasting, and it says where the votes came
@@ -698,6 +718,7 @@ if (nzchar(FORCE_FP)) {
                     collapse = ", "), sum(state_mean)))
 }
 
+.stage("4. project each seat's primaries")
 # ---- 4. project each seat's primaries --------------------------------------
 # Every party swings uniformly off its own 2022 seat share -- EXCEPT One
 # Nation, which polled 0.28% statewide in 2022 and has nothing to swing from.
@@ -849,8 +870,12 @@ if (.succ_on) { cat(sprintf("DSR1 departed successor rates (%s): %d seat(s) for 
 # bug in candidate_returns()" used to print the same line, so once nominations
 # close a real failure would have read as the expected pre-nomination gap.
 .why <- new.env()
-.try <- function(name, expr) tryCatch(expr, error = function(e) {
-  assign(name, conditionMessage(e), envir = .why); NULL })
+.try <- function(name, expr) {
+  .t1 <- Sys.time()
+  on.exit(.tm$sub[[length(.tm$sub) + 1L]] <- list(step = name, secs = as.numeric(difftime(Sys.time(), .t1, units = "secs"))), add = TRUE)
+  tryCatch(expr, error = function(e) {
+    assign(name, conditionMessage(e), envir = .why); NULL })
+}
 .reason <- function(name) if (exists(name, envir = .why)) sprintf(" (%s)", get(name, envir = .why)) else ""
 .returns <- if (.cond) .try("returns", candidate_returns(PREV, TGT)) else NULL
 .permit  <- if (.screened && !is.null(.returns))
@@ -1383,6 +1408,7 @@ cat(sprintf("ONP allocation: target CV %.3f, delivered %.3f (previously compress
 ",
             cvf(onp_target), cvf(shares[, "ONP"])))
 
+.stage("5. statewide draws, ANCHORED to the projection")
 # ---- 5. statewide draws, ANCHORED to the projection -------------------------
 # Drawing each party independently and renormalising destroys the
 # Labor-versus-Coalition covariance: measured, it reproduced only 60% of the
@@ -1571,6 +1597,7 @@ if (FORCE_HOLD_EXACT) {
   }
 }
 
+.stage("simulate seat contests")
 t0 <- Sys.time()
 # CALIBRATION SHRINK. Measured on 1,187 seats across 10 elections in
 # docs/reviews/calibration-2026-08-21.md: this model's calibration slope was
@@ -1706,6 +1733,7 @@ wp <- as.data.table(sim$win_prob)
 cat("\n=== seats where a non-major has >=10% ===\n")
 minor <- wp[party %in% c("GRN","ONP","IND","OTH","OTH_RIGHT") & prob >= 0.10]
 print(minor[order(-prob)], nrows = 40)
+.stage("S5, the seat-total sanity check")
 # ---- S5, the seat-total sanity check ---------------------------------------
 # THIS USED TO CALL simulate_seats() -- the RETIRED two-party seat model -- and
 # compare its ALP total against the candidate model's. CLAUDE.md forbids exactly
@@ -1824,3 +1852,16 @@ rm(.fp)
 cat(sprintf("
 wrote output/seat-probs-%s%s.csv
 ", TARGET$out_stem, OUT_SUFFIX))
+
+.stage("end")
+.tmt <- data.table::rbindlist(.tm$rows)[stage != "end"]
+.tot <- as.numeric(difftime(Sys.time(), .tm$t0, units = "secs"))
+.tmt[, pct := round(100 * secs / .tot, 1)][, secs := round(secs, 1)]
+cat(sprintf("\nSQ1  stage timings, %.0f s total (largest first):\n", .tot))
+print(.tmt[order(-secs)], row.names = FALSE)
+if (length(.tm$sub)) {
+  .tms <- data.table::rbindlist(.tm$sub)[, list(secs = round(sum(secs), 1), calls = .N), by = step][order(-secs)]
+  cat("SQ2  named sub-steps (.try), largest first:\n")
+  print(head(.tms, 15), row.names = FALSE)
+}
+fwrite(.tmt, sprintf("output/fit-seats-timing-%s%s.csv", TARGET$out_stem, OUT_SUFFIX))

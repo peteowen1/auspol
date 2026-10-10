@@ -234,7 +234,9 @@ if at_least 7; then stage "7-pool-and-forecasts";  Rscript scripts/pool_backtest
                                Rscript scripts/build_forecasts_table.R > "$LOG/s7_forecasts.log" 2>&1; done_stage "7-pool-and-forecasts"; fi
 if at_least 8; then stage "8-ledger";              Rscript scripts/build_aef_comparison.R  > "$LOG/s8_comp.log" 2>&1   # aef-comparison-full.csv, the ledger's seat-probability input -- was missing from the first draft, so the ledger's log loss came out identical to the run before (2026-09-18)
                                Rscript scripts/build_aef7_tcp_actual.R > "$LOG/s8_tcp.log" 2>&1
-                               Rscript scripts/build_aef7_ledger_data.R > "$LOG/s8_ledger.log" 2>&1; Rscript scripts/build_aef7_ledger_html.R > "$LOG/s8_ledger_html.log" 2>&1; done_stage "8-ledger"; fi
+                               Rscript scripts/build_aef7_ledger_data.R > "$LOG/s8_ledger.log" 2>&1
+                               Rscript scripts/build_published_predictions.R > "$LOG/s8_predictions.log" 2>&1 || { echo "!! build_published_predictions.R failed -- see $LOG/s8_predictions.log"; exit 1; }   # every published prediction, and the ledger's every-candidate view
+                               Rscript scripts/build_aef7_ledger_html.R > "$LOG/s8_ledger_html.log" 2>&1; done_stage "8-ledger"; fi
 
 # 9. PROMOTE AND PUBLISH (AUSPOL_PUBLISH=1). The daily forecast workflow downloads
 # the `shipped-models` release; on 2026-09-19 it was found eight days behind the

@@ -1,3 +1,9 @@
+# auspol 0.4.90
+
+- New: `output/published-predictions.csv` holds every published prediction in one file: every party in every seat across all 22 elections, with candidate, our primary, the actual, the miss, our win probability and AE Forecasts' primary where they have one. Rebuilt with the ledger.
+- The AEF-7 ledger has an "Every candidate" view sorted by miss, since the biggest misses are often not the winner, and the public copy no longer garbles its symbols.
+- `fit_seats_full.R` prints how long each stage took (SQ1/SQ2).
+
 # auspol 0.4.89
 
 - The NSW 2027 forecast now applies the leader-seat bonus: Chris Minns in Kogarah and Kellie Sloane in Vaucluse, +2.76 points each, the same fitted bonus Victoria's leaders get. The leaders list had stopped at NSW 2023.

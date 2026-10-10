@@ -7,17 +7,25 @@
 options(auspol.root = normalizePath("."))
 TPL <- "scripts/templates/aef7-ledger.template.html"
 SEATS <- "output/aef7-ledger-data.json"; SUMM <- "output/aef7-ledger-summary.json"
+CANDS <- "output/published-predictions-aef7.json"   # scripts/build_published_predictions.R
 for (f in c(TPL, SEATS, SUMM)) if (!file.exists(f)) stop("LH0! missing ", f, " -- run scripts/build_aef7_ledger_data.R first")
+if (!file.exists(CANDS)) stop("LH0! missing ", CANDS, " -- run scripts/build_published_predictions.R first")
 rd <- function(f) readChar(f, file.size(f), useBytes = TRUE)
-tpl <- rd(TPL); s <- rd(SEATS); u <- rd(SUMM)
+tpl <- rd(TPL); s <- rd(SEATS); u <- rd(SUMM); cj <- rd(CANDS)
+# Both views must describe the same runs: the candidate file is rebuilt from
+# ledger_inputs.R like the seat data, so an older one means a skipped stage.
+if (file.mtime(CANDS) < file.mtime(SEATS))
+  cat(sprintf("LH0! %s is older than %s -- rerun scripts/build_published_predictions.R\n", CANDS, SEATS))
 # the data must be newer than the template's inputs' vintage check upstream;
 # here only sanity: both parse as JSON with the expected top-level shape
 js <- jsonlite::fromJSON(s, simplifyVector = FALSE); ju <- jsonlite::fromJSON(u, simplifyVector = FALSE)
 if (!length(js)) stop("LH0! ", SEATS, " is empty")
-stopifnot(grepl("= __SEATS_JSON__;", tpl, fixed = TRUE), grepl("= __SUMMARY_JSON__;", tpl, fixed = TRUE))
+stopifnot(grepl("= __SEATS_JSON__;", tpl, fixed = TRUE), grepl("= __SUMMARY_JSON__;", tpl, fixed = TRUE),
+          grepl("= __CANDS_JSON__;", tpl, fixed = TRUE))
 out <- sub("= __SEATS_JSON__;", paste0("= ", s, ";"), tpl, fixed = TRUE)
 out <- sub("= __SUMMARY_JSON__;", paste0("= ", u, ";"), out, fixed = TRUE)
-if (grepl("= __SEATS_JSON__;|= __SUMMARY_JSON__;", out)) stop("LH0! placeholder survived substitution")
+out <- sub("= __CANDS_JSON__;", paste0("= ", cj, ";"), out, fixed = TRUE)
+if (grepl("= __SEATS_JSON__;|= __SUMMARY_JSON__;|= __CANDS_JSON__;", out)) stop("LH0! placeholder survived substitution")
 OUT <- "output/aef7-ledger.html"
 writeChar(out, OUT, eos = NULL, useBytes = TRUE)
 cat(sprintf("LH1  wrote %s (%.0f KB): %d seat rows, summary keys %s\n", OUT, file.size(OUT) / 1024,
