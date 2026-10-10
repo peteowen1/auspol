@@ -55,7 +55,9 @@ extra <- c(file.path(SHIP, c("MANIFEST.json", "pooled-backtest.csv", "pooled-sha
            file.path(OUT, "aef7-ledger.html"), file.path("docs", "PIPELINE.md"),
            # every published prediction, all pairs (build_published_predictions.R);
            # the ledger page links to it by this name
-           file.path(OUT, "published-predictions.csv"))
+           file.path(OUT, "published-predictions.csv"),
+           # AUSPOL_LEVEL_RECENT fits its blend constant on this (build_level_recent_table.R)
+           file.path(OUT, "level-recent.csv"))
 loo <- grep("xgb-flows-v1-loo-.*[.]model$", models, value = TRUE)
 rest <- setdiff(models, loo)
 

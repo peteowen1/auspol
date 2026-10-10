@@ -620,6 +620,15 @@ if (LEVEL_ANCHOR && "OTH" %in% names(state_mean)) {
   # (sum 97.93) while the backtests read them rescaled. Review gate 2026-09-30.
   state_mean <- state_mean * 100 / sum(state_mean)
 }
+# AUSPOL_LEVEL_RECENT (off unless "1"; plans/prereg-level-recent-blend-2026-10-10.md): ALP/LNP/GRN
+# toward the mean of the last 28 days of polls, the window ending TODAY (one ending on the
+# future polling day would hold nothing). Same function the harnesses call.
+# (.try() is defined further down, so the fallback is inline here.)
+.slr <- tryCatch(level_recent_apply(state_mean, TGT, REGION, as.Date(unname(election_dates()[TGT])),
+                                    code = "FSLR", as_at = Sys.Date()),
+                 error = function(e) { cat(sprintf("FSLR!! level_recent_apply() FAILED (%s) -- the statewide level is the trend alone\n",
+                                                   conditionMessage(e))); NULL })
+if (!is.null(.slr)) state_mean <- .slr
 ll_before <- ll_implied(state_mean * 100 / sum(state_mean))
 ll_delta <- pj$mean - ll_before
 if (LEVEL_ANCHOR) {

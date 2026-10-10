@@ -219,12 +219,15 @@ fi
 if at_least 3; then
   python scripts/build_council_history.py > "$LOG/s3_council.log" 2>&1 || { echo "!! build_council_history.py failed -- see $LOG/s3_council.log"; exit 1; }
 fi
-if at_least 1; then stage "1-harnesses-base_pred"; AUSPOL_XGB_BASE_RECORD=1 AUSPOL_REENTRY=0 AUSPOL_NEW_IND_SHRINK=0 AUSPOL_DEPARTED_SUCCESSOR=0 AUSPOL_IND_PERSON=0 AUSPOL_N_SIMS="${AUSPOL_STAGE1_SIMS:-2000}" run6 0 s1; done_stage "1-harnesses-base_pred"; fi
+if at_least 1; then stage "1-harnesses-base_pred"; AUSPOL_XGB_BASE_RECORD=1 AUSPOL_REENTRY=0 AUSPOL_NEW_IND_SHRINK=0 AUSPOL_DEPARTED_SUCCESSOR=0 AUSPOL_IND_PERSON=0 AUSPOL_LEVEL_RECENT=0 AUSPOL_N_SIMS="${AUSPOL_STAGE1_SIMS:-2000}" run6 0 s1; done_stage "1-harnesses-base_pred"; fi
 if at_least 2; then stage "2-pool-sharedetail";    AUSPOL_POOL_MIN_SIMS="${AUSPOL_STAGE1_SIMS:-2000}" Rscript scripts/pool_sharedetail.R      > "$LOG/s2_pool.log" 2>&1; done_stage "2-pool-sharedetail"; fi
 if at_least 3; then stage "3-features";            Rscript scripts/build_level_pred.R > "$LOG/s3_level.log" 2>&1; Rscript scripts/fit_xgb_primary_v6.R    > "$LOG/s3_v6.log"   2>&1; done_stage "3-features"; fi
 if at_least 4; then stage "4-asat-models";         Rscript scripts/fit_xgb_primary_asat.R  > "$LOG/s4_asat.log" 2>&1; done_stage "4-asat-models"; fi
 if at_least 4; then stage "4b-asat-flow-models";   Rscript scripts/fit_xgb_flows_asat.R    > "$LOG/s4b_flows.log" 2>&1; done_stage "4b-asat-flow-models"; fi
 if at_least 5; then stage "5-production-model";    Rscript scripts/fit_xgb_primary_v6_final.R > "$LOG/s5_final.log" 2>&1; done_stage "5-production-model"; fi
+# 5b the recent-poll level table (AUSPOL_LEVEL_RECENT): each election's UNBLENDED day-before trend, poll mean
+# and result, which the harnesses fit their blend constant on. Before stage 6, which reads it.
+if at_least 5; then Rscript scripts/build_level_recent_table.R > "$LOG/s5b_level_recent.log" 2>&1 || { echo "!! build_level_recent_table.R failed -- see $LOG/s5b_level_recent.log"; exit 1; }; fi
 if at_least 6; then export AUSPOL_STAGE6_START=$(date +%s); rm -rf output/upset-floor-raw; stage "6-harnesses-shipped";   run6 1 s6; done_stage "6-harnesses-shipped"; fi
 # 6b UPSET INSURANCE (AUSPOL_UPSET_FLOOR=1, R/upset_floor.R): mixes THIS run's
 # stage-6 win probabilities with a time-forward-fitted floor for minor

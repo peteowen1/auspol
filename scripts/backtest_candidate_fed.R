@@ -1334,6 +1334,10 @@ for (K in PAIRS) {
         }
       }
     }
+  # AUSPOL_LEVEL_RECENT (off unless "1"): the day-before ALP/LNP/GRN level toward the last 28 days of
+  # polls (R/level_recent.R). The federal harness builds st_fc itself rather than through
+  # forecast_statewide_or_oracle(), so the shared hook does not reach it; applied here, before any use.
+  if (FORECAST_MODE) st_fc <- level_recent_apply(st_fc, sprintf("fed%d", K$to), "fed", as.Date(FED_DATE[[as.character(K$to)]]), code = "BF0r")   # not `ed`: the minor-poll loop above reassigns it
   # FLOW AS A FUNCTION OF THE PARTY'S OWN PRIMARY, off by default
   # (AUSPOL_FLOW_ON_PRIMARY=1). Pete's idea, and the measurements back it.
   #

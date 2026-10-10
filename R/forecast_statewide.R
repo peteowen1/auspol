@@ -348,6 +348,9 @@ forecast_statewide_or_oracle <- function(region, year, election_date, parties, s
   }
   keep <- intersect(names(fc$st_fc), names(st_b))
   out <- fc$st_fc[keep]
+  # AUSPOL_LEVEL_RECENT (off unless "1"): the day-before level toward the last
+  # 28 days of polls (R/level_recent.R); the line below then scores the blend.
+  out <- level_recent_apply(out, sprintf("%s%d", region, year), region, election_date, code = paste0(code, "r"))
   cat(sprintf("%s  forecast statewide replaces the oracle for %s%d. Mean |error| %.2f pts over %d classes: %s\n",
               code, region, year, mean(abs(out - st_b[keep]), na.rm = TRUE), length(out),
               paste(sprintf("%s %.1f(%.1f)", keep, out, st_b[keep]), collapse = " ")))

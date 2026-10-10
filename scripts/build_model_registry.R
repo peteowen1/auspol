@@ -498,6 +498,9 @@ CLASSIFY <- list(
   AUSPOL_IND_MIXTURE = paste(
     "ARM, REFUSED 2026-10-09 (seat log loss +0.0332 over 22 pairs), off. In all six harnesses; NOT in fit_seats_full.R by",
     "design: a refused arm is not wired into the published forecast."),
+  AUSPOL_LEVEL_RECENT = paste(
+    "SHIPPED 2026-10-11 on Pete's override (plans/prereg-level-recent-blend-2026-10-10.md). Read inside R/level_recent.R, called from",
+    "forecast_statewide_or_oracle() (five harnesses), the federal harness (BF0r) and fit_seats_full.R (FSLR)."),
   AUSPOL_NEW_IND_SHRINK_CAP = paste(
     "SHIPPED (default 1 = cap the new-independent factor at 1); the '0' arm is pending. Read inside R/new_ind_shrink.R, which all",
     "six harnesses and fit_seats_full.R call, so the harness grep cannot see it."),

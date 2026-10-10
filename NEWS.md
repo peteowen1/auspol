@@ -1,3 +1,7 @@
+# auspol 0.4.94
+
+- The day-before statewide level for Labor, the Coalition and the Greens now leans on the last 28 days of polls (`AUSPOL_LEVEL_RECENT`), because the poll trend lagged late movement: Victoria 2022 had the Coalition at 31.4 against polls of 34.1 and a result of 34.5, which pushed Labor's two-candidate share 5-8 points too high in Richmond, Footscray, Brunswick, Preston and Pascoe Vale. Over 22 elections seat log loss 0.3239 -> 0.3172, AEF-7 ledger 0.2732 -> 0.2682; shipped on Pete's override (1.7 SE, and NSW 2019 worse by 0.045). No live effect until polls land in the final 28 days.
+
 # auspol 0.4.93
 
 - An independent with a small personal vote elsewhere is no longer handed the seat's generic independent level: their own record can lower their starting vote (`AUSPOL_IND_PERSON`, shipped on Pete's override after it missed its pre-registered bar). Malvern 2022 independent 8.6 -> 1.7 (actual 1.6). Seat log loss over 22 elections unchanged (0.3239); AEF-7 ledger 0.2733 -> 0.2732. Victoria 2026 today: Broadmeadows independent 5.4 -> 3.9.
