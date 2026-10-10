@@ -15,7 +15,7 @@
 #
 # Run from repo root:  powershell.exe -Command 'Rscript "scripts/fit_seats_full.R"'
 
-# PER-STAGE TIMER (TM*). Probes ran 120-325 s and nothing said where the time
+# PER-STAGE TIMER (SQ*). Probes ran 120-325 s and nothing said where the time
 # went (NEXT-STEPS 2026-10-08). .stage() closes the previous stage and opens the
 # next; .try() below also times each named sub-step. Table printed and written
 # to output/fit-seats-timing-<stem><suffix>.csv at the end.
@@ -1857,11 +1857,11 @@ wrote output/seat-probs-%s%s.csv
 .tmt <- data.table::rbindlist(.tm$rows)[stage != "end"]
 .tot <- as.numeric(difftime(Sys.time(), .tm$t0, units = "secs"))
 .tmt[, pct := round(100 * secs / .tot, 1)][, secs := round(secs, 1)]
-cat(sprintf("\nTM1  stage timings, %.0f s total (largest first):\n", .tot))
+cat(sprintf("\nSQ1  stage timings, %.0f s total (largest first):\n", .tot))
 print(.tmt[order(-secs)], row.names = FALSE)
 if (length(.tm$sub)) {
   .tms <- data.table::rbindlist(.tm$sub)[, list(secs = round(sum(secs), 1), calls = .N), by = step][order(-secs)]
-  cat("TM2  named sub-steps (.try), largest first:\n")
+  cat("SQ2  named sub-steps (.try), largest first:\n")
   print(head(.tms, 15), row.names = FALSE)
 }
 fwrite(.tmt, sprintf("output/fit-seats-timing-%s%s.csv", TARGET$out_stem, OUT_SUFFIX))

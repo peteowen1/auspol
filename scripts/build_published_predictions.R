@@ -88,7 +88,7 @@ if (mean(!is.na(stood$candidate)) < 0.98) stop("PP5! candidate names joined on u
 # a missing AEF value is often real; a pair where it is mostly missing is a join failure.
 ac <- stood[pair %in% AEF7, list(cov = mean(!is.na(aef))), by = pair]
 cat(sprintf("PP5  AEF primary present on classes that stood: %s\n", paste(sprintf("%s %.0f%%", ac$pair, 100 * ac$cov), collapse = ", ")))
-if (any(ac$cov < 0.5)) stop("PP5! AEF primaries joined on under half of one pair's standing classes -- check aef7-fptrend.csv")
+if (!nrow(ac) || any(ac$cov < 0.5)) stop("PP5! AEF primaries joined on under half of one pair's standing classes -- check aef7-fptrend.csv")
 no1 <- won_n[w != 1L]
 if (nrow(no1)) cat(sprintf("PP4! %d seat(s) without exactly one winning class in allprobs: %s\n", nrow(no1),
                            paste(sprintf("%s %s (%d)", no1$pair, no1$seat, no1$w), collapse = ", ")))
