@@ -1,3 +1,7 @@
+# auspol 0.4.91
+
+- The forecast runs about 10 seconds faster: seat-poll data is read once per run instead of once per call (the seat-poll step 28 to 17 seconds). Every output is byte-identical.
+
 # auspol 0.4.90
 
 - New: `output/published-predictions.csv` holds every published prediction in one file: every party in every seat across all 22 elections, with candidate, our primary, the actual, the miss, our win probability and AE Forecasts' primary where they have one. Rebuilt with the ledger.
