@@ -69,3 +69,22 @@ the matcher counts personal votes only (Pete's 2026-10-05 ruling, R/cross_seat_v
 reaches him. Sitting members are excluded wherever they now stand (code fixed in the dry run to match the
 scope above: Brock Stuart sa2022, Bedford Newland sa2022 had been included). Watched for clause 4: Fowler
 fed2022 Dai Le (record 25.9, set 12.5).
+
+## Result, arm A-final, screen (2026-10-10): primary FAILS on 6 elections
+
+`quick_arm.R "AUSPOL_IND_PERSON=final" --pairs=fed2016,fed2019,fed2022,fed2025,vic2022,qld2020 --slots=1`
+(the six elections with the most cells; the 22-election screen was killed for low memory before it ran).
+1,000 sims, baseline = shipped. 227 changed cells (the set IND cells plus the classes rescaled around them).
+
+1. PRIMARY: squared error on changed cells 3,916 -> 3,828 (-88, SE 218, 6 election clusters): FAILS (needs -2 SE).
+2. GUARD: seat log loss over these 6 elections 0.2831 -> 0.2830 (SE 0.0003): holds.
+3. GUARD: AEF-7 ledger subset (389 seats) 0.2981 -> 0.2978: holds.
+4. UNACCEPTABLE-WIN: no independent who won lost more than 0.10 win probability: does not fire.
+5. Named target: Malvern Stefanopoulos 8.6 -> 0.6 (actual 1.6).
+
+The split behind the flat total: of 39 IND cells moved by more than 0.5, 24 improve and 15 worsen (net
+squared error -6). Weak records cut to near zero are almost always right (Malvern -48.9, Wills -33.5,
+Tarneit -21.4, Goldstein 2019 -18.2); strong records halved by the single 0.48 carry are wrong (Fremantle
+2025, record 25.6, actual 23.0, set 12.1: +57.0; Fowler 2022 Dai Le, actual 29.5: +45.6; North Sydney
+2016 +26.5; Lyne 2025 +18.5), and one faded strong record was raised (Barker 2019, record 22.7, actual 2.9,
+set 11.5: +43.9). A single ratio cannot be right at both ends. Arms A-base and B not yet run. To Pete.
