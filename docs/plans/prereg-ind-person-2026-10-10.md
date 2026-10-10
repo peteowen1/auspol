@@ -162,3 +162,17 @@ slope is the share of a person's earlier vote they keep, so it is bounded to [0,
 shipped new-independent factor uses -- and when the OLS slope falls outside it the slope is clamped and the
 intercept refitted as mean(actual - b x record), floored at 0. Fewer than 3 cases still keeps the ratio (a
 slope needs three points). The WA and federal stage-6 runs made before this fix are discarded and rerun.
+
+### Deciding run (2026-10-10, 20,000 sims, all 22 elections, code ddbcedd; shipped on Pete's override)
+
+Stage 6 run harness by harness in the foreground (two background rebuilds were reaped for low memory),
+then `AUSPOL_REBUILD_FROM=7`. Every pooled pair is from this run (gddbcedd); the 8 elections the rule does
+not touch reproduce the shipped scores exactly.
+1. PRIMARY: 232 changed cells over 16 elections, squared error -169 (SE 286, clustered on election): fails
+   the 2-SE bar, as the screens did.
+2. GUARD: pooled seat log loss, 2,120 seat-elections, 0.3239 -> 0.3239: holds (largest moves fed2025
+   -0.0008, fed2022 +0.0004, vic2014 +0.0004, vic2022 -0.0004).
+3. GUARD: AEF-7 ledger 0.2733 -> 0.2732 against AEF 0.2825: holds.
+4. Does not fire.
+5. Malvern 2022 Stefanopoulos 8.6 -> 1.7 (actual 1.6). Also better: Albert Park 2018, Brunswick 2014, Wills
+   2016, Epping 2019, Auburn 2023. Worse: Fowler 2022 (Dai Le, +147), Davidson 2023 (+59), Lyne 2025.
