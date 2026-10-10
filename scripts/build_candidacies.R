@@ -41,6 +41,35 @@ local({
 suppressMessages(library(data.table))
 
 `%||%` <- function(x, y) if (is.null(x)) y else x
+# HTML ENTITIES IN SCRAPED TEXT (2026-10-10): vec-2022-vic-candidates.csv was
+# scraped from VEC pages and kept `&#39;`, so "O&#39;BRIEN, Michael" (Malvern
+# 2022) was a different person from "O'BRIEN, Michael" (2010-18) and Danny
+# O'Brien's 2022 result was not linked to his 2026 candidacy. Decoded where the
+# sources merge, before any name matching; BCH! stops the build if any survive.
+.decode_entities <- function(x) {
+  if (!is.character(x)) return(x)
+  hit <- !is.na(x) & grepl("&(#[0-9]+|#[xX][0-9a-fA-F]+|amp|quot|apos|lt|gt|nbsp);", x)
+  if (!any(hit)) return(x)
+  y <- x[hit]
+  for (m in unique(unlist(regmatches(y, gregexpr("&#[0-9]+;", y)))))
+    y <- gsub(m, intToUtf8(as.integer(gsub("[&#;]", "", m))), y, fixed = TRUE)
+  for (m in unique(unlist(regmatches(y, gregexpr("&#[xX][0-9a-fA-F]+;", y)))))
+    y <- gsub(m, intToUtf8(strtoi(sub("^&#[xX]", "", sub(";$", "", m)), 16L)), y, fixed = TRUE)
+  ent <- c("&quot;" = '"', "&apos;" = "'", "&lt;" = "<", "&gt;" = ">", "&nbsp;" = " ", "&amp;" = "&")
+  for (e in names(ent)) y <- gsub(e, ent[[e]], y, fixed = TRUE)   # &amp; last, so "&amp;#39;" is not double-decoded
+  x[hit] <- y
+  x
+}
+.decode_all <- function(D, label) {
+  n <- 0L
+  for (k in names(D)[vapply(D, is.character, logical(1))]) {
+    before <- D[[k]]; after <- .decode_entities(before)
+    ch <- sum(before != after, na.rm = TRUE)
+    if (ch) { data.table::set(D, j = k, value = after); n <- n + ch }
+  }
+  cat(sprintf("BCH  %s: %d HTML entit%s decoded\n", label, n, if (n == 1L) "y" else "ies"))
+  D
+}
 # AUSPOL_CAND_OUT redirects the write (and the BC11 previous-build snapshot beside
 # it) so a trial rebuild can be diffed without touching output/.
 OUT <- Sys.getenv("AUSPOL_CAND_OUT", "output/candidacies.csv")
@@ -790,6 +819,7 @@ for (y in c(2010, 2014, 2018)) {
 # ---- assemble ---------------------------------------------------------------
 if (!length(parts)) stop("no candidacy source produced rows")
 C <- rbindlist(parts, fill = TRUE)
+C <- .decode_all(C, "merged sources")
 # Federal rows carry surname/given; state rows carry a single name field.
 if (!"name" %in% names(C)) C[, name := NA_character_]
 C[is.na(name), name := trimws(paste(given, surname))]
@@ -1465,6 +1495,9 @@ if (length(.dead)) stop("BC11! column(s) 100% empty after the union: ", paste(.d
 cat(sprintf("BC11 vic2026 column coverage (n=%d): %s\n", nrow(.v),
             paste(sprintf("%s %.0f%%", names(.cvv), 100 * .cvv), collapse = ", ")))
 cat(sprintf("BC11 vic2026 `source`: %s\n", paste(sprintf("%s=%d", names(table(.v$source)), table(.v$source)), collapse = " ")))
+C <- .decode_all(C, "late sources (vic2026, nsw2027)")
+.left <- vapply(C, function(v) is.character(v) && any(grepl("&(#[0-9]+|#[xX][0-9a-fA-F]+|[a-zA-Z]+);", v)), logical(1))
+if (any(.left)) stop("BCH! HTML entity left after decoding in column(s): ", paste(names(C)[.left], collapse = ", "))
 if (.old_exists) invisible(file.copy(OUT, PREV, overwrite = TRUE))
 fwrite(C, OUT)
 if (.old_exists) {
