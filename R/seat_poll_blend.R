@@ -30,6 +30,37 @@ PUBLIC_SEAT_POLLSTERS <- c("YouGov", "Galaxy", "Newspoll", "RedBridge", "DemosAU
 #'   least 20 seats counts as MRP, whatever its name.
 #' @export
 seat_poll_shares <- function(election, days = 90, by_type = FALSE, by_poll = FALSE, .raw = FALSE) {
+  # MEMOISED (2026-10-10): one vic2026 blend table made 178 calls for 55
+  # distinct inputs, ~18 of its 27 s. The key holds EVERY AUSPOL_* variable
+  # (not a hand-picked list, which goes stale the day a switch is added) and
+  # the mtime and size of every file this reads, so an arm or a refreshed file
+  # is a different key. A copy is returned: callers may modify with `:=`.
+  # options(auspol.seat_poll_memo = FALSE) turns it off.
+  if (!isFALSE(getOption("auspol.seat_poll_memo"))) {
+    key <- .seat_poll_memo_key(election, days, by_type, by_poll, .raw)
+    hit <- .seat_poll_memo[[key]]
+    if (is.null(hit)) { hit <- .seat_poll_shares_impl(election, days, by_type, by_poll, .raw); assign(key, hit, envir = .seat_poll_memo) }
+    return(data.table::copy(hit))
+  }
+  .seat_poll_shares_impl(election, days, by_type, by_poll, .raw)
+}
+
+.seat_poll_memo <- new.env(parent = emptyenv())
+
+#' @keywords internal
+.seat_poll_memo_key <- function(election, days, by_type, by_poll, .raw) {
+  env <- Sys.getenv(); env <- env[startsWith(names(env), "AUSPOL_")]
+  sp <- file.path(pkg_root(), "external", "reference", "polls", "seat-polls")
+  files <- c(file.path(sp, c("seat_polls.csv", "hand_keyed_primaries.csv")),
+             out_path(c("candidacies.csv", "endorsement-features.csv", "xgb-primary-asat-predictions.csv", "forecasts.csv")))
+  fi <- file.info(files, extra_cols = FALSE)
+  paste(election, days, by_type, by_poll, .raw,
+        paste(names(env), env, sep = "=", collapse = "|"),
+        paste(format(as.numeric(fi$mtime), digits = 15), fi$size, collapse = "|"), sep = "#")
+}
+
+#' @keywords internal
+.seat_poll_shares_impl <- function(election, days = 90, by_type = FALSE, by_poll = FALSE, .raw = FALSE) {
   f <- file.path(pkg_root(), "external", "reference", "polls", "seat-polls", "seat_polls.csv")
   empty <- data.table::data.table(seat = character(0), class = character(0), poll = numeric(0),
                                   n_polls = integer(0), n_mrp = integer(0))
@@ -701,6 +732,19 @@ seat_poll_weights_split <- function(target_election) {
 #' them alike.
 #' @keywords internal
 .read_seat_polls_file <- function(f) {
+  # Read once per process per key (seat_poll_shares() calls this for every
+  # distinct election): same all-AUSPOL_* + file-stamp key, copy returned.
+  if (!isFALSE(getOption("auspol.seat_poll_memo"))) {
+    key <- paste("FILE", f, .seat_poll_memo_key("", 0, FALSE, FALSE, FALSE), sep = "#")
+    hit <- .seat_poll_memo[[key]]
+    if (is.null(hit)) { hit <- .read_seat_polls_file_impl(f); assign(key, hit, envir = .seat_poll_memo) }
+    return(data.table::copy(hit))
+  }
+  .read_seat_polls_file_impl(f)
+}
+
+#' @keywords internal
+.read_seat_polls_file_impl <- function(f) {
   s <- .seat_poll_coalition_dedup(data.table::fread(f, showProgress = FALSE))
   v <- Sys.getenv("AUSPOL_SEAT_POLL_HANDKEYED", "1")
   if (!v %in% c("0", "1")) stop("AUSPOL_SEAT_POLL_HANDKEYED must be \"0\" or \"1\", not ", v)
