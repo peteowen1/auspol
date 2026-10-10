@@ -63,3 +63,17 @@ is WITHDRAWN: its stated evidence was WA before the Nationals were folded in, an
 with the fold the average is no worse on few polls (4 of 7 better, -0.32, SE 0.63). Clause 5's first condition
 (any single election's seat log loss worse by more than 0.02) stands, as do 1-4 and the ship rule. The fitted
 form is effectively "the 28-day average for ALP/LNP/GRN" (w 0.89-0.99); judged as such.
+
+## Screen result (2026-10-10, quick_arm, 1,000 sims, all 22 elections, run in chunks of 3-4 elections)
+
+The first chunk came back byte-identical: the federal harness builds its level itself and never calls
+`forecast_statewide_or_oracle()`. Hooked there (`BF0r`, using the target's own date -- `ed` is reassigned by the
+minor-poll loop above it), then every chunk re-run. Lower is better throughout.
+1. PRIMARY: seat log loss, 2,120 seats, 0.3093 -> 0.3027 (-0.0066, SE 0.0035 clustered on election): 1.9 SE,
+   just short of 2 SE at screen precision. The deciding run is the full 20,000-sim stage 6.
+3. GUARD: AEF-7 ledger 0.2742 -> 0.2697 (-0.0045, SE 0.0031): holds (better).
+4. GUARD: Greens day-before level MAE 1.08 -> 1.09 (table, w ~1): holds.
+5. No election worse by more than 0.02 (worst wa2013 +0.0126, nsw2019 +0.0088, qld2024 +0.0069, fed2007
+   +0.0059): does not fire.
+Better in 15 of 22: wa2008 -0.093, qld2020 -0.038, wa2025 -0.022, vic2018 -0.020, wa2017 -0.012, fed2016
+-0.011, fed2025 -0.010, vic2022 -0.009 (the target). Share-level squared error on changed cells -2% (SE 5,075).
