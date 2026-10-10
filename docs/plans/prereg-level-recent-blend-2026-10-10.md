@@ -77,3 +77,16 @@ minor-poll loop above it), then every chunk re-run. Lower is better throughout.
    +0.0059): does not fire.
 Better in 15 of 22: wa2008 -0.093, qld2020 -0.038, wa2025 -0.022, vic2018 -0.020, wa2017 -0.012, fed2016
 -0.011, fed2025 -0.010, vic2022 -0.009 (the target). Share-level squared error on changed cells -2% (SE 5,075).
+
+## Deciding run (2026-10-11, 20,000 sims, all 22 elections, code e190cab): REFUSED on two clauses
+
+Stage 6 harness by harness in the foreground with `AUSPOL_LEVEL_RECENT=1`, then `AUSPOL_REBUILD_FROM=7`; every
+pooled pair from this run (ge190cab). Baseline: the shipped 20k run (gddbcedd, kept in a scratch backup).
+1. PRIMARY: seat log loss, 2,120 seats, 0.3239 -> 0.3172 (-0.0067, SE 0.0039 clustered on election): 1.7 SE,
+   FAILS the 2-SE bar. Better in 14 of 22 (wa2008 -0.080, qld2020 -0.038, vic2018 -0.023, wa2025 -0.022,
+   fed2013 -0.021, fed2025 -0.010, vic2022 -0.009).
+3. GUARD: AEF-7 ledger 0.2732 -> 0.2682 (AEF 0.2825): holds, better.
+5. FIRES: nsw2019 +0.0453 (> 0.02). Four polls in the window, whose mean moved the Coalition away from the result
+   (trend 41.1, polls 39.9, actual 41.6) -- the few-polls case Amendment 1 withdrew from this clause. The screen
+   at 1,000 sims showed +0.0088 there. Others worse: wa2013 +0.008, fed2007 +0.006, qld2024 +0.004.
+Off unless Pete overrides; the split goes to him.
