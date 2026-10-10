@@ -118,3 +118,18 @@ carry, ratio or line, fits both ends. Not tried, and not to be tried on these sa
 look at the same data): applying the rule to small records only. If revisited, it is judged on the 16
 unscreened elections first. Arms A-base and B were not run: A-final's failure is in which cells the rule
 touches and how much, which the stage does not change, and B adds the arm refused on 2026-10-09.
+
+## Amendment 2 (2026-10-10, after Amendment 1's result; Pete: go) -- records may only lower, judged on unseen elections
+
+POST HOC, and marked so. Clauses above unedited. "Small records only" written cliff-free: a record may only
+LOWER the cell (`new = min(old, a + b x record)`, `AUSPOL_IND_PERSON_DIR="lower"`), never raise it. There
+is no size threshold (Pete's no-hard-caps rule); a small record lowers because it says the person is weaker
+than the generic level, a large one rarely does. Pete has objected before to one-sided caps that keep only
+the helpful half of a fix (new-IND shrink, 2026-10-06); the case for it here is evidence, not convenience:
+the screen showed the raising half is the unreliable one (Barker 2019 +120), and that is stated so he can
+overrule it.
+Arm A2-final: `AUSPOL_IND_PERSON=final AUSPOL_IND_PERSON_CARRY=linear AUSPOL_IND_PERSON_DIR=lower`.
+JUDGED ONLY on the 16 elections not yet screened (fed2007, fed2010, fed2013, nsw2019, nsw2023, qld2024,
+sa2022, sa2026, vic2014, vic2018, wa2001, wa2005, wa2008, wa2013, wa2017, wa2025), with the same four
+criteria. The six already-seen elections are reported for completeness and cannot pass or fail it. Known in
+advance from the six: the rule still cuts Fowler 2022 (Dai Le), so clause 4 is checked on all 22.
