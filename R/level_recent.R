@@ -36,7 +36,11 @@ level_recent_avg <- function(region, election_date, days = 28L, as_at = election
   p <- data.table::as.data.table(suppressMessages(load_polls(region)))
   ed <- as.Date(election_date); aa <- min(as.Date(as_at), ed)
   w <- p[p$date < aa & p$date >= aa - days]
-  if ("NAT" %in% names(w)) w$LNP <- rowSums(cbind(w$LNP, w$NAT), na.rm = TRUE)
+  if ("NAT" %in% names(w)) {   # NA when a poll reports neither, not 0 (review 2026-10-11)
+    both_na <- is.na(w$LNP) & is.na(w$NAT)
+    w$LNP <- rowSums(cbind(w$LNP, w$NAT), na.rm = TRUE)
+    w$LNP[both_na] <- NA_real_
+  }
   avg <- vapply(.LR_CLS, function(k) if (nrow(w) && k %in% names(w)) mean(w[[k]], na.rm = TRUE) else NA_real_, 0)
   list(avg = avg, n = nrow(w))
 }

@@ -196,9 +196,10 @@ jobs:
           # so a missing table fails here, loudly, and yesterday's forecast stays live.
           gh release download shipped-models -p departed-successor-rates.csv -D output --clobber || { echo "::error::shipped-models has no departed-successor-rates.csv -- promote_rebuild.R uploads it at stage 9; publish the rebuild before this runs"; exit 1; }
           gh release download shipped-models -p endorsement-features.csv -D output --clobber || echo "::warning::shipped-models has no endorsement-features.csv -- a model trained with AUSPOL_XGB_ENDORSE=1 gets all-zero endorsement features"
-          # AUSPOL_LEVEL_RECENT (R/level_recent.R): the blend constant is fitted on this table; missing it
-          # makes fit_seats_full.R print FSLR!! and keep the trend level, so a warning, not a stop.
-          gh release download shipped-models -p level-recent.csv -D output --clobber || echo "::warning::shipped-models has no level-recent.csv -- AUSPOL_LEVEL_RECENT=1 falls back to the trend level (FSLR!!)"
+          # AUSPOL_LEVEL_RECENT (published "1", R/level_recent.R): the blend constant is fitted on this table.
+          # Without it fit_seats_full.R would print FSLR!! and quietly publish the unblended level once polls
+          # land in the final 28 days, so a missing table fails here and yesterday's forecast stays live.
+          gh release download shipped-models -p level-recent.csv -D output --clobber || { echo "::error::shipped-models has no level-recent.csv -- publish the rebuild (stage 9) before this runs"; exit 1; }
           gh release download shipped-models -p upset-floor-eps.csv -D output --clobber || echo "::warning::shipped-models has no upset-floor-eps.csv -- AUSPOL_UPSET_FLOOR=1 stops fit_seats_full.R (UF0!)"
           gh release download shipped-models -p booth-features-vic2026.csv -D output --clobber || echo "::warning::shipped-models has no booth-features-vic2026.csv -- a model trained with AUSPOL_XGB_BOOTH=1 gets NA booth features (XB1!!)"
           gh release download shipped-models -p council-history-vic2026.csv -D output --clobber || echo "::warning::shipped-models has no council-history-vic2026.csv -- a model trained with AUSPOL_XGB_COUNCIL=1 gets all-zero council features (XC1!!)"
