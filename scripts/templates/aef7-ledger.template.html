@@ -190,6 +190,18 @@
   }
 [hidden]{display:none !important}
 a.seatjump{color:inherit;text-decoration:underline dotted;text-underline-offset:2px}
+.candbar{display:flex; flex-wrap:wrap; align-items:center; gap:6px 18px; margin:-4px 0 10px}
+.candbar details.provlog{margin:0}
+.candbar .csvline{font-size:12.5px; color:var(--ink-2)}
+#scores-box{margin-bottom:4px}
+#ctable{min-width:980px}
+#ctable thead tr.hdr th{top:0}
+#ctable th:nth-child(1), #ctable td:nth-child(1){position:sticky; left:0; z-index:2; background:var(--surface); min-width:78px}
+#ctable th:nth-child(2), #ctable td:nth-child(2){position:sticky; left:78px; z-index:2; background:var(--surface); min-width:140px; font-weight:600;
+  box-shadow:6px 0 6px -6px rgba(19,24,32,.18)}
+#ctable thead th:nth-child(1), #ctable thead th:nth-child(2){z-index:4; background:var(--surface-2)}
+#ctable tbody tr:hover td{background:var(--surface-2)}
+@media (max-width:700px){ #ctable th, #ctable td{position:static !important; box-shadow:none !important} }
 </style>
 
 <div class="wrap">
@@ -633,8 +645,10 @@ a.seatjump{color:inherit;text-decoration:underline dotted;text-underline-offset:
        <code>docs/NEXT-STEPS.md</code>.</p>
   </details>
 
+  <details class="provlog fitwatch" id="scores-box" open><summary>Scores</summary>
   <div class="overall" id="overall"></div>
   <div class="strip" id="strip"></div>
+  </details>
 
   <div class="controls">
     <div class="field"><label>Rows</label>
@@ -663,18 +677,20 @@ a.seatjump{color:inherit;text-decoration:underline dotted;text-underline-offset:
     <div class="count" id="count"></div>
   </div>
 
-  <div class="cand-only" hidden>
+  <div class="candbar cand-only" hidden>
+    <details class="provlog fitwatch"><summary>What this view shows</summary>
     <p class="sub prov">Every party's primary vote in every seat, not just the winner's: the biggest misses are often
       an over-called independent or an under-called minor party in a seat the winner was called right. Miss = actual
       minus predicted, in points: positive means under-called, closer to 0 is better. &Delta; |miss| = our absolute
       miss minus AEF's: negative means we were closer. AEF folds One Nation and minor-right into "other" in some
-      elections, so those rows show no AEF figure. Click a seat in the one-per-seat view to jump here.
-      Every published prediction for all 22 elections is <code>published-predictions.csv</code>:
+      elections, so those rows show no AEF figure. Click a seat in the one-per-seat view to jump here.</p>
+    </details>
+    <span class="csvline"><code>published-predictions.csv</code>, all 22 elections:
       <button class="toggle" id="dl-csv" type="button" hidden>Save the CSV</button>
-      <span id="dl-alt">on the <a href="https://github.com/peteowen1/auspol/releases/tag/shipped-models" target="_blank" rel="noopener">shipped-models release</a></span><span id="dl-msg" role="status"></span>.</p>
+      <span id="dl-alt">on the <a href="https://github.com/peteowen1/auspol/releases/tag/shipped-models" target="_blank" rel="noopener">shipped-models release</a></span><span id="dl-msg" role="status"></span></span>
   </div>
   <div class="tablewrap cand-only" hidden>
-    <table>
+    <table id="ctable">
       <thead><tr class="hdr" id="chdr"></tr></thead>
       <tbody id="cbody"></tbody>
     </table>
@@ -1080,6 +1096,12 @@ function fit(){
 }
 overall(); strip(); header(); cheader(); render(); fit();
 addEventListener('resize', fit);
+// Collapsing a section gives its space to the table; the scores box remembers its state per viewer.
+document.querySelectorAll("details.fitwatch").forEach(d=>d.addEventListener("toggle", fit));
+(()=>{ const b = document.getElementById("scores-box");
+  try { if (localStorage.getItem("ledger.scores") === "closed") b.open = false; } catch(e) {}
+  b.addEventListener("toggle", ()=>{ try { localStorage.setItem("ledger.scores", b.open ? "open" : "closed"); } catch(e) {} });
+  fit(); })();
 
 claude.use("db").then(db=>{
   if (!db){ document.getElementById("dbstate").textContent =
