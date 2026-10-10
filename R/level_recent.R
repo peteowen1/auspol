@@ -12,12 +12,96 @@
 
 #' Is the recent-poll level blend on?
 #'
-#' @return `"1"` (shipped 2026-10-11) or `"0"` (off).
+#' @return `"1"` (shipped 2026-10-11: 28-day window), `"decay"` (every poll of
+#'   the cycle weighted by age, prereg Amendment 2) or `"0"` (off).
 #' @export
 level_recent_mode <- function() {
   v <- Sys.getenv("AUSPOL_LEVEL_RECENT", "1")
-  if (!v %in% c("0", "1")) stop("AUSPOL_LEVEL_RECENT must be \"0\" or \"1\", not ", v)
+  if (!v %in% c("0", "1", "decay")) stop("AUSPOL_LEVEL_RECENT must be \"0\", \"1\" or \"decay\", not ", v)
   v
+}
+
+.lr_poll_memo <- new.env(parent = emptyenv())
+
+# A region's polls with the Nationals folded into LNP (NA when neither is
+# reported), read once per process.
+#' @noRd
+.lr_polls <- function(region) {
+  if (!is.null(.lr_poll_memo[[region]])) return(.lr_poll_memo[[region]])
+  p <- data.table::as.data.table(suppressMessages(load_polls(region)))
+  if ("NAT" %in% names(p)) {
+    both_na <- is.na(p$LNP) & is.na(p$NAT)
+    p$LNP <- rowSums(cbind(p$LNP, p$NAT), na.rm = TRUE)
+    p$LNP[both_na] <- NA_real_
+  }
+  assign(region, p, envir = .lr_poll_memo)
+  p
+}
+
+#' Age-weighted mean of a cycle's polls (no window)
+#'
+#' Every poll fielded after `cycle_start` and before the as-at date counts,
+#' weighted `2^(-age / half_life)`, age in days before the as-at date.
+#'
+#' @param region Poll region.
+#' @param election_date Polling day.
+#' @param half_life Days.
+#' @param cycle_start The previous election's polling day.
+#' @param as_at End of the data (exclusive); polling day in the backtests, today live.
+#' @return list `avg` (named ALP/LNP/GRN) and `n_eff` (summed weights).
+#' @export
+level_recent_decay_avg <- function(region, election_date, half_life, cycle_start, as_at = election_date) {
+  p <- .lr_polls(region)
+  aa <- min(as.Date(as_at), as.Date(election_date))
+  w <- p[p$date < aa & p$date > as.Date(cycle_start)]
+  wt <- 2^(-as.numeric(aa - w$date) / half_life)
+  avg <- vapply(.LR_CLS, function(k) {
+    if (!nrow(w) || !k %in% names(w)) return(NA_real_)
+    ok <- is.finite(w[[k]]); if (!any(ok)) return(NA_real_)
+    sum(wt[ok] * w[[k]][ok]) / sum(wt[ok])
+  }, 0)
+  list(avg = avg, n_eff = sum(wt))
+}
+
+#' Half-life and blend constant for the decayed level, fitted on earlier elections
+#'
+#' Grid over the half-life (days) and `k`, minimising squared error of the
+#' blended ALP/LNP/GRN level against the actual over every election in `tab`
+#' dated before `target` (the unblended trend and actual come from `tab`).
+#'
+#' @param target Election label.
+#' @param tab `output/level-recent.csv` when NULL.
+#' @return list `half_life`, `k` (Inf with no earlier election), `n_el`.
+#' @export
+level_recent_decay_fit <- function(target, tab = NULL) {
+  if (is.null(tab)) {
+    f <- out_path("level-recent.csv")
+    if (!file.exists(f)) stop("AUSPOL_LEVEL_RECENT=decay needs ", f, " -- run scripts/build_level_recent_table.R")
+    tab <- data.table::fread(f, showProgress = FALSE)
+  }
+  d <- tab[elections_before(tab$election, target) & is.finite(tab$trend) & is.finite(tab$actual)]
+  if (!nrow(d)) return(list(half_life = NA_real_, k = Inf, n_el = 0L))
+  prs <- all_election_pairs(); prev <- stats::setNames(vapply(prs, `[[`, "", "prev"), vapply(prs, `[[`, "", "election"))
+  eds <- election_dates()
+  hs <- c(1, 1.5, 2, 3, 5, 7, 10, 14, 21, 30, 45, 60, 90, 150)
+  ks <- exp(seq(log(0.01), log(400), length.out = 90))
+  best <- list(sse = Inf)
+  for (h in hs) {
+    A <- data.table::rbindlist(lapply(unique(d$election), function(e) {
+      r <- level_recent_decay_avg(d$region[d$election == e][1], as.Date(unname(eds[e])), h, as.Date(unname(eds[prev[[e]]])))
+      data.table::data.table(election = e, cls = names(r$avg), avg = unname(r$avg), n_eff = r$n_eff)
+    }))
+    m <- merge(d[, list(election, cls, trend, actual)], A, by = c("election", "cls"))
+    m <- m[is.finite(m$avg) & m$n_eff > 0]
+    if (!nrow(m)) next
+    for (k in ks) {
+      w <- m$n_eff / (m$n_eff + k)
+      sse <- sum((m$trend + w * (m$avg - m$trend) - m$actual)^2)
+      if (sse < best$sse) best <- list(sse = sse, half_life = h, k = k)
+    }
+  }
+  if (!is.finite(best$sse)) return(list(half_life = NA_real_, k = Inf, n_el = 0L))
+  list(half_life = best$half_life, k = best$k, n_el = data.table::uniqueN(d$election))
 }
 
 #' Mean of the polls fielded in the 28 days before polling day
@@ -87,10 +171,23 @@ level_recent_k <- function(target, tab = NULL) {
 #' @export
 level_recent_apply <- function(levels, target, region, election_date, code = "LR0", tab = NULL,
                                as_at = election_date) {
-  if (!identical(level_recent_mode(), "1")) return(levels)
-  ra <- level_recent_avg(region, election_date, as_at = as_at)
-  kf <- level_recent_k(target, tab)
-  w <- if (ra$n > 0 && is.finite(kf$k)) ra$n / (ra$n + kf$k) else 0
+  mode <- level_recent_mode()
+  if (identical(mode, "0")) return(levels)
+  if (identical(mode, "decay")) {
+    fit <- .lr_decay_fit_cached(target, tab)
+    cs <- .lr_prev_date(target)
+    ra <- if (is.finite(fit$half_life) && !is.na(cs))
+      level_recent_decay_avg(region, election_date, fit$half_life, cs, as_at = as_at) else list(avg = stats::setNames(rep(NA_real_, 3), .LR_CLS), n_eff = 0)
+    n <- ra$n_eff; k <- fit$k
+    note <- sprintf("half-life %s days, n_eff %.2f, k %.2f (fitted on %d earlier elections)",
+                    if (is.finite(fit$half_life)) format(fit$half_life) else "-", n, k, fit$n_el)
+  } else {
+    ra <- level_recent_avg(region, election_date, as_at = as_at)
+    kf <- level_recent_k(target, tab)
+    n <- ra$n; k <- kf$k
+    note <- sprintf("%d polls in 28 days, k %.2f (fitted on %d earlier elections)", ra$n, kf$k, kf$n_el)
+  }
+  w <- if (n > 0 && is.finite(k)) n / (n + k) else 0
   out <- levels
   hit <- intersect(.LR_CLS, names(levels))
   hit <- hit[is.finite(ra$avg[hit])]
@@ -101,8 +198,28 @@ level_recent_apply <- function(levels, target, region, election_date, code = "LR
     out[hit] <- new
     if (length(oth) && sum(levels[oth]) > 0) out[oth] <- levels[oth] * max(0, sum(levels[oth]) - delta) / sum(levels[oth])
   }
-  cat(sprintf("%s  recent-poll level blend for %s: %d polls in 28 days, k %.2f (fitted on %d earlier elections), w %.2f: %s\n",
-              code, target, ra$n, kf$k, kf$n_el, w,
+  cat(sprintf("%s  recent-poll level blend (%s) for %s: %s, w %.2f: %s\n",
+              code, if (identical(mode, "decay")) "decay" else "28-day window", target, note, w,
               paste(sprintf("%s %.1f->%.1f (polls %.1f)", hit, levels[hit], out[hit], ra$avg[hit]), collapse = ", ")))
   out
+}
+
+.lr_fit_memo <- new.env(parent = emptyenv())
+#' @noRd
+.lr_decay_fit_cached <- function(target, tab = NULL) {
+  if (!is.null(tab)) return(level_recent_decay_fit(target, tab))
+  f <- out_path("level-recent.csv")
+  key <- paste(target, if (file.exists(f)) paste(file.info(f)$mtime, file.info(f)$size) else "none")
+  if (is.null(.lr_fit_memo[[key]])) assign(key, level_recent_decay_fit(target, NULL), envir = .lr_fit_memo)
+  .lr_fit_memo[[key]]
+}
+
+# The previous election's polling day in the target's region (works for live
+# targets that are not in all_election_pairs()).
+#' @noRd
+.lr_prev_date <- function(target) {
+  ed <- election_dates(); reg <- sub("[0-9]{4}$", "", target)
+  same <- ed[sub("[0-9]{4}$", "", names(ed)) == reg]
+  td <- as.Date(unname(ed[target])); d <- as.Date(unname(same)); d <- d[is.finite(d) & d < td]
+  if (!length(d)) NA else max(d)
 }

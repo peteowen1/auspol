@@ -116,3 +116,12 @@ Judged against the SHIPPED form ("1"), since the question is whether removing th
 3. GUARD: no single election worse than the shipped form by more than 0.02.
 Ship rule: "decay" replaces "1" if 1-3 hold (Pete's rule decides between two forms that score alike). Screen with
 quick_arm on all 22 first; the deciding run is the full 20,000-sim stage 6.
+
+### Amendment 2 dry run (before the screen; no seat outcome read)
+
+The joint fit runs to the edge of its grid: on (3 days, k 0.25) first, then, with the grid widened to 1 day and
+k 0.01, on half-life 1-1.5 days and k 0.01 for every target with history -- "the final poll or two, at nearly full
+weight". Coalition day-before level, trend -> decay (actual): fed2016 39.3 -> 42.3 (42.1), vic2022 31.4 -> 33.8
+(34.4), nsw2019 41.1 -> 41.0 (41.6), vic2018 37.8 -> 36.0 (35.2), sa2026 17.7 -> 17.0 (19.5). Live vic2026 on
+2026-10-11: newest poll 15 days old, weight 0.09. A boundary optimum leans hard on one or two polls; the
+pre-registered comparison against the shipped form decides.
