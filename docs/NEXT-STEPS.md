@@ -16,6 +16,8 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30.
 - Seat-poll precision blend and pollster floor (`DECISIONS.md` 2026-10-09).
 - Independents: typical-vote arms, dedicated 41-input model, two-part mixture. The shipped xgb + rare winner-surge beat all of them (`plans/prereg-ind-typical-2026-10-09.md`). The Victorian +1 to +3 independent over-call is the hedge, not a bug.
 
+**2026-10-10:** `AUSPOL_IND_PERSON` SHIPPED (PR #116, Pete's override; `plans/prereg-ind-person-2026-10-10.md`): an independent's own small record can lower their vote. Live from forecast run 38040218574 (Broadmeadows IND 5.4 -> 3.89); `shipped-models` republished (ledger 0.2732). Ledger artifact v53 has an every-candidate view and `output/published-predictions.csv`. OPEN from it: the full two-way rule and the never-stood half stay refused; `backtest_candidate_fed.R` writes all 7 pairs only at the end (a kill at 90% loses ~6 min); background rebuilds are reaped below ~4 GB free -- run stage 6 harness by harness in the foreground (`AUSPOL_REBUILD_SLOTS`).
+
 **Queue, ranked:**
 1. ~~Review gate + PR for the 12 unreviewed `dev` commits~~ DONE (PR #111). Open from it: the statewide poll scraper year-inference root cause (STAT6! stops on it); fetch failures recorded as permanent 404s.
 2. Nomination day 2026-11-09: refit successor rates on the final candidate list (`build_departed_successors.R` chain), re-run the live forecast; seat polls in the last 90 days now enter by decay automatically.
