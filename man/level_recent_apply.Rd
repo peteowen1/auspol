@@ -10,7 +10,8 @@ level_recent_apply(
   region,
   election_date,
   code = "LR0",
-  tab = NULL
+  tab = NULL,
+  as_at = election_date
 )
 }
 \arguments{
@@ -25,6 +26,8 @@ level_recent_apply(
 \item{code}{Log prefix.}
 
 \item{tab}{Optional pre-read table for \code{\link[=level_recent_k]{level_recent_k()}}.}
+
+\item{as_at}{Passed to \code{\link[=level_recent_avg]{level_recent_avg()}}.}
 }
 \value{
 \code{levels}, blended (attributes kept).

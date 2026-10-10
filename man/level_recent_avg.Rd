@@ -4,7 +4,7 @@
 \alias{level_recent_avg}
 \title{Mean of the polls fielded in the 28 days before polling day}
 \usage{
-level_recent_avg(region, election_date, days = 28L)
+level_recent_avg(region, election_date, days = 28L, as_at = election_date)
 }
 \arguments{
 \item{region}{Poll region (\code{"vic"}, \code{"fed"}, ...).}
@@ -12,6 +12,9 @@ level_recent_avg(region, election_date, days = 28L)
 \item{election_date}{Polling day (Date). Only polls fielded before it are read.}
 
 \item{days}{Window length in days.}
+
+\item{as_at}{End of the window (exclusive); polling day in the backtests, today
+for the live forecast (a window ending on a future polling day holds nothing).}
 }
 \value{
 list \code{avg} (named ALP/LNP/GRN, NA where absent) and \code{n} (polls in the window).

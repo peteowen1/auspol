@@ -225,6 +225,9 @@ if at_least 3; then stage "3-features";            Rscript scripts/build_level_p
 if at_least 4; then stage "4-asat-models";         Rscript scripts/fit_xgb_primary_asat.R  > "$LOG/s4_asat.log" 2>&1; done_stage "4-asat-models"; fi
 if at_least 4; then stage "4b-asat-flow-models";   Rscript scripts/fit_xgb_flows_asat.R    > "$LOG/s4b_flows.log" 2>&1; done_stage "4b-asat-flow-models"; fi
 if at_least 5; then stage "5-production-model";    Rscript scripts/fit_xgb_primary_v6_final.R > "$LOG/s5_final.log" 2>&1; done_stage "5-production-model"; fi
+# 5b the recent-poll level table (AUSPOL_LEVEL_RECENT): each election's UNBLENDED day-before trend, poll mean
+# and result, which the harnesses fit their blend constant on. Before stage 6, which reads it.
+if at_least 5; then Rscript scripts/build_level_recent_table.R > "$LOG/s5b_level_recent.log" 2>&1 || { echo "!! build_level_recent_table.R failed -- see $LOG/s5b_level_recent.log"; exit 1; }; fi
 if at_least 6; then export AUSPOL_STAGE6_START=$(date +%s); rm -rf output/upset-floor-raw; stage "6-harnesses-shipped";   run6 1 s6; done_stage "6-harnesses-shipped"; fi
 # 6b UPSET INSURANCE (AUSPOL_UPSET_FLOOR=1, R/upset_floor.R): mixes THIS run's
 # stage-6 win probabilities with a time-forward-fitted floor for minor

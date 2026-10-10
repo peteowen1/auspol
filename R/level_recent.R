@@ -28,12 +28,14 @@ level_recent_mode <- function() {
 #' @param region Poll region (`"vic"`, `"fed"`, ...).
 #' @param election_date Polling day (Date). Only polls fielded before it are read.
 #' @param days Window length in days.
+#' @param as_at End of the window (exclusive); polling day in the backtests, today
+#'   for the live forecast (a window ending on a future polling day holds nothing).
 #' @return list `avg` (named ALP/LNP/GRN, NA where absent) and `n` (polls in the window).
 #' @export
-level_recent_avg <- function(region, election_date, days = 28L) {
+level_recent_avg <- function(region, election_date, days = 28L, as_at = election_date) {
   p <- data.table::as.data.table(suppressMessages(load_polls(region)))
-  ed <- as.Date(election_date)
-  w <- p[p$date < ed & p$date >= ed - days]
+  ed <- as.Date(election_date); aa <- min(as.Date(as_at), ed)
+  w <- p[p$date < aa & p$date >= aa - days]
   if ("NAT" %in% names(w)) w$LNP <- rowSums(cbind(w$LNP, w$NAT), na.rm = TRUE)
   avg <- vapply(.LR_CLS, function(k) if (nrow(w) && k %in% names(w)) mean(w[[k]], na.rm = TRUE) else NA_real_, 0)
   list(avg = avg, n = nrow(w))
@@ -76,11 +78,13 @@ level_recent_k <- function(target, tab = NULL) {
 #' @param election_date Polling day.
 #' @param code Log prefix.
 #' @param tab Optional pre-read table for [level_recent_k()].
+#' @param as_at Passed to [level_recent_avg()].
 #' @return `levels`, blended (attributes kept).
 #' @export
-level_recent_apply <- function(levels, target, region, election_date, code = "LR0", tab = NULL) {
+level_recent_apply <- function(levels, target, region, election_date, code = "LR0", tab = NULL,
+                               as_at = election_date) {
   if (!identical(level_recent_mode(), "1")) return(levels)
-  ra <- level_recent_avg(region, election_date)
+  ra <- level_recent_avg(region, election_date, as_at = as_at)
   kf <- level_recent_k(target, tab)
   w <- if (ra$n > 0 && is.finite(kf$k)) ra$n / (ra$n + kf$k) else 0
   out <- levels
