@@ -983,8 +983,10 @@ shares <- new_ind_shrink_apply(shares, TGT, code = "BS1n")
 # AUSPOL_IND_TYPICAL (POST-XGB-TRAINING, off by default): non-sitting independents start from
 # the typical vote for their signals, before ("base") or after ("final") the frozen trees. R/ind_typical.R.
 shares <- ind_typical_apply(shares, TGT, stage = "base", code = "BS1T")
+shares <- ind_person_apply(shares, TGT, stage = "base", code = "BS1P")  # AUSPOL_IND_PERSON (off): an independent starts from their own record. R/ind_person.R.
 shares <- xgb_primary_override(shares, TGT)
 shares <- ind_typical_apply(shares, TGT, stage = "final", code = "BS1T")
+shares <- ind_person_apply(shares, TGT, stage = "final", code = "BS1P")  # AUSPOL_IND_PERSON (off): an independent starts from their own record. R/ind_person.R.
 shares <- ind_mixture_apply(shares, TGT, code = "BS1M")  # AUSPOL_IND_MIXTURE (off by default). R/ind_mixture.R.
 # Every class with no candidate standing is zeroed AFTER the override, which
 # otherwise writes its prediction back (plans/prereg-nomination-zero-2026-10-03.md).

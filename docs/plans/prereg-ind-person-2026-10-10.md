@@ -60,3 +60,12 @@ to Pete (memory `clause-refusals-go-to-pete`). Any amendment is added below, wit
 ## Dry run (to be filled in before the screen, without outcomes)
 
 How many cells each arm changes per election, and the two named targets' before/after values.
+
+Dry run (2026-10-10, before the screen; no outcomes read). Arm A sets 69 cells over 20 of 22 elections
+(none in wa2001, wa2013). The cross-seat carry is about 0.47-0.48 everywhere, so a person's record is roughly
+halved. Named targets: Malvern vic2022 Stefanopoulos 0.6 (Prahran 2014) -> 0.3; Bankstown nsw2023 Boddy is
+NOT a cell -- his one earlier run (Hunter fed2019, 0.67) was for a party, "OTH", not as an independent, and
+the matcher counts personal votes only (Pete's 2026-10-05 ruling, R/cross_seat_vote.R), so only arm B
+reaches him. Sitting members are excluded wherever they now stand (code fixed in the dry run to match the
+scope above: Brock Stuart sa2022, Bedford Newland sa2022 had been included). Watched for clause 4: Fowler
+fed2022 Dai Le (record 25.9, set 12.5).
