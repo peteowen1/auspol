@@ -12,7 +12,7 @@ ind_person_carry_fit(target, corpus = NULL)
 \item{corpus}{Optional pre-read candidacy table.}
 }
 \value{
-list \code{a}, \code{b}, \code{n}, \code{linear} (FALSE when fewer than 3 earlier cases;
+list \code{a}, \code{b} (bounded to \link{0, 1}), \code{n}, \code{bounded}, \code{linear} (FALSE when fewer than 3 earlier cases;
 the caller then keeps the ratio carry).
 }
 \description{

@@ -116,7 +116,7 @@ ind_person_cells <- function(target, corpus = NULL) {
 #'
 #' @param target Election label; nothing dated on or after it is read.
 #' @param corpus Optional pre-read candidacy table.
-#' @return list `a`, `b`, `n`, `linear` (FALSE when fewer than 3 earlier cases;
+#' @return list `a`, `b` (bounded to [0, 1]), `n`, `bounded`, `linear` (FALSE when fewer than 3 earlier cases;
 #'   the caller then keeps the ratio carry).
 #' @export
 ind_person_carry_fit <- function(target, corpus = NULL) {
@@ -127,7 +127,16 @@ ind_person_carry_fit <- function(target, corpus = NULL) {
   cs <- cs[elections_before(cs$election, target) & is.finite(cs$actual) & is.finite(cs$record)]
   if (nrow(cs) < 3L) return(list(a = NA_real_, b = NA_real_, n = nrow(cs), linear = FALSE))
   co <- stats::coef(stats::lm(actual ~ record, data = cs))
-  list(a = unname(co[1]), b = unname(co[2]), n = nrow(cs), linear = TRUE)
+  a <- unname(co[1]); b <- unname(co[2]); bounded <- FALSE
+  # The slope is the share of an earlier vote a person keeps: bounded to [0, 1]
+  # like the new-independent factor. Few cases can fit anything (wa2008, n=4:
+  # 78.6 - 10.9 x record); outside the bound, clamp and refit the intercept.
+  if (!is.finite(b) || b < 0 || b > 1) {
+    b <- min(max(if (is.finite(b)) b else 0, 0), 1)
+    a <- max(0, mean(cs$actual - b * cs$record))
+    bounded <- TRUE
+  }
+  list(a = a, b = b, n = nrow(cs), linear = TRUE, bounded = bounded)
 }
 
 #' Set each person-matched independent cell to carry x their own record
@@ -153,7 +162,8 @@ ind_person_apply <- function(shares, target, stage = c("base", "final"), code = 
     lf <- ind_person_carry_fit(target, corpus)
     if (lf$linear) {
       cells$value <- pmax(0, lf$a + lf$b * cells$record)
-      fit_note <- sprintf("; linear carry %.2f + %.3f x record (n=%d earlier cases)", lf$a, lf$b, lf$n)
+      fit_note <- sprintf("; linear carry %.2f + %.3f x record (n=%d earlier cases%s)", lf$a, lf$b, lf$n,
+                          if (isTRUE(lf$bounded)) ", slope bounded to [0,1]" else "")
     } else fit_note <- sprintf("; linear carry: %d earlier case(s), ratio kept", lf$n)
   }
   # Amendment 2: "lower" lets a record only LOWER the cell (the raising half was
