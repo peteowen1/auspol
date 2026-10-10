@@ -1,3 +1,8 @@
+# auspol 0.4.92
+
+- Candidate names scraped with web-page codes (`O&#39;BRIEN`) are decoded, and the candidate file build stops if any survive. No forecast number changes: name matching already ignored punctuation.
+- The AEF-7 ledger gives the table more room: scores and notes collapse, and the candidate table keeps Election and Seat in view.
+
 # auspol 0.4.91
 
 - The forecast runs about 10 seconds faster: seat-poll data is read once per run instead of once per call (the seat-poll step 28 to 17 seconds). Every output is byte-identical.
