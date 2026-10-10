@@ -35,28 +35,41 @@ seat_poll_shares <- function(election, days = 90, by_type = FALSE, by_poll = FAL
   # (not a hand-picked list, which goes stale the day a switch is added) and
   # the mtime and size of every file this reads, so an arm or a refreshed file
   # is a different key. A copy is returned: callers may modify with `:=`.
-  # options(auspol.seat_poll_memo = FALSE) turns it off.
-  if (!isFALSE(getOption("auspol.seat_poll_memo"))) {
-    key <- .seat_poll_memo_key(election, days, by_type, by_poll, .raw)
-    hit <- .seat_poll_memo[[key]]
-    if (is.null(hit)) { hit <- .seat_poll_shares_impl(election, days, by_type, by_poll, .raw); assign(key, hit, envir = .seat_poll_memo) }
-    return(data.table::copy(hit))
-  }
-  .seat_poll_shares_impl(election, days, by_type, by_poll, .raw)
+  # The lines the real call printed are replayed on a hit, so the output is
+  # the same as uncached. options(auspol.seat_poll_memo = FALSE) turns it off.
+  .seat_poll_memoised(.seat_poll_memo_key(election, days, by_type, by_poll, .raw),
+                      function() .seat_poll_shares_impl(election, days, by_type, by_poll, .raw))
 }
 
 .seat_poll_memo <- new.env(parent = emptyenv())
 
 #' @keywords internal
-.seat_poll_memo_key <- function(election, days, by_type, by_poll, .raw) {
+.seat_poll_memoised <- function(key, compute) {
+  if (isFALSE(getOption("auspol.seat_poll_memo"))) return(compute())
+  hit <- .seat_poll_memo[[key]]
+  if (is.null(hit)) {
+    val <- NULL
+    printed <- utils::capture.output(val <- compute())
+    hit <- list(val = val, printed = printed)
+    assign(key, hit, envir = .seat_poll_memo)
+  }
+  if (length(hit$printed)) cat(hit$printed, sep = "\n")
+  data.table::copy(hit$val)
+}
+
+# `extra` names further files whose stamps belong in the key (a caller's own
+# input, e.g. .read_seat_polls_file()'s `f` and the hand-keyed file beside it).
+#' @keywords internal
+.seat_poll_memo_key <- function(election, days, by_type, by_poll, .raw, extra = character(0)) {
   env <- Sys.getenv(); env <- env[startsWith(names(env), "AUSPOL_")]
   sp <- file.path(pkg_root(), "external", "reference", "polls", "seat-polls")
   files <- c(file.path(sp, c("seat_polls.csv", "hand_keyed_primaries.csv")),
-             out_path(c("candidacies.csv", "endorsement-features.csv", "xgb-primary-asat-predictions.csv", "forecasts.csv")))
+             out_path(c("candidacies.csv", "endorsement-features.csv", "xgb-primary-asat-predictions.csv", "forecasts.csv")),
+             extra)
   fi <- file.info(files, extra_cols = FALSE)
-  paste(election, days, by_type, by_poll, .raw,
+  paste(election, days, by_type, by_poll, .raw, pkg_root(),
         paste(names(env), env, sep = "=", collapse = "|"),
-        paste(format(as.numeric(fi$mtime), digits = 15), fi$size, collapse = "|"), sep = "#")
+        paste(files, format(as.numeric(fi$mtime), digits = 15), fi$size, collapse = "|"), sep = "#")
 }
 
 #' @keywords internal
@@ -734,13 +747,11 @@ seat_poll_weights_split <- function(target_election) {
 .read_seat_polls_file <- function(f) {
   # Read once per process per key (seat_poll_shares() calls this for every
   # distinct election): same all-AUSPOL_* + file-stamp key, copy returned.
-  if (!isFALSE(getOption("auspol.seat_poll_memo"))) {
-    key <- paste("FILE", f, .seat_poll_memo_key("", 0, FALSE, FALSE, FALSE), sep = "#")
-    hit <- .seat_poll_memo[[key]]
-    if (is.null(hit)) { hit <- .read_seat_polls_file_impl(f); assign(key, hit, envir = .seat_poll_memo) }
-    return(data.table::copy(hit))
-  }
-  .read_seat_polls_file_impl(f)
+  # `f` and its hand-keyed sibling are stamped themselves: a caller may pass
+  # any file (a test's tempfile), not only the repo copy (review, 2026-10-10).
+  key <- paste("FILE", f, .seat_poll_memo_key("", 0, FALSE, FALSE, FALSE,
+               extra = c(f, file.path(dirname(f), "hand_keyed_primaries.csv"))), sep = "#")
+  .seat_poll_memoised(key, function() .read_seat_polls_file_impl(f))
 }
 
 #' @keywords internal
