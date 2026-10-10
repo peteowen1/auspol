@@ -102,3 +102,19 @@ then all 22 elections if memory allows; a pass on the six alone is not a ship.
 What would make an apparent win unacceptable here, in advance: the fitted slope b above 1 (a record
 amplified, not discounted) on any target, or the intercept a above the new-independent level the cell had
 before (the rule would then raise every weak record, the opposite of the traced fault).
+
+### Amendment 1 result (screen, same 6 elections): FAILS. Both arms refused; AUSPOL_IND_PERSON stays off.
+
+1. PRIMARY: 169 changed cells, squared error 2,599 -> 2,719 (+120, SE 308): FAILS.
+2. GUARD: seat log loss 0.2831 -> 0.2829: holds. 3. GUARD: ledger subset 0.2981 -> 0.2980: holds.
+4. Does not fire. 5. Malvern: 1.37 (actual 1.6).
+Fitted slopes 0.25-0.64, intercepts 0.9-2.7 (neither unacceptable condition fired).
+
+Victoria improves under both carries (vic2022 -167 ratio, -161 linear); the federal failure is two seats in
+opposite directions: Fowler 2022 (Dai Le, record 25.9 in Cabramatta, won with 29.5; cut 15.0 -> 10.6, +147)
+and Barker 2019 (Gladigau, record 22.7 in Hammond SA 2018, polled 2.9; raised 8.3 -> 15.1, +120). A small
+record is reliable evidence of a weak candidate; a large record is noisy in both directions, so no single
+carry, ratio or line, fits both ends. Not tried, and not to be tried on these same six elections (a third
+look at the same data): applying the rule to small records only. If revisited, it is judged on the 16
+unscreened elections first. Arms A-base and B were not run: A-final's failure is in which cells the rule
+touches and how much, which the stage does not change, and B adds the arm refused on 2026-10-09.
