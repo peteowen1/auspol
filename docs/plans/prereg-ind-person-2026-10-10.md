@@ -88,3 +88,17 @@ Tarneit -21.4, Goldstein 2019 -18.2); strong records halved by the single 0.48 c
 2025, record 25.6, actual 23.0, set 12.1: +57.0; Fowler 2022 Dai Le, actual 29.5: +45.6; North Sydney
 2016 +26.5; Lyne 2025 +18.5), and one faded strong record was raised (Barker 2019, record 22.7, actual 2.9,
 set 11.5: +43.9). A single ratio cannot be right at both ends. Arms A-base and B not yet run. To Pete.
+
+## Amendment 1 (2026-10-10, after the A-final screen; Pete chose it from the split above) -- carry by record size
+
+POST HOC, and marked so: chosen after seeing that one ratio is right for tiny records and wrong for strong
+ones. The clauses above are unedited. `AUSPOL_IND_PERSON_CARRY="linear"` (default "ratio" = the arm above)
+replaces `carry x record` with `a + b x record`, floored at 0, where (a, b) is ordinary least squares of the
+actual vote on the record over EARLIER elections' person cells (the same `ind_person_cells()` definition,
+every election dated before the target, any jurisdiction; the actual is that person's own share there).
+Fewer than 3 earlier cases (two parameters need three points) falls back to the ratio. Arm A1-final:
+`AUSPOL_IND_PERSON=final AUSPOL_IND_PERSON_CARRY=linear`. Same four criteria, same six-election screen first,
+then all 22 elections if memory allows; a pass on the six alone is not a ship.
+What would make an apparent win unacceptable here, in advance: the fitted slope b above 1 (a record
+amplified, not discounted) on any target, or the intercept a above the new-independent level the cell had
+before (the rule would then raise every weak record, the opposite of the traced fault).
