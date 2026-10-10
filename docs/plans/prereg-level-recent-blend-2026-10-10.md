@@ -125,3 +125,13 @@ weight". Coalition day-before level, trend -> decay (actual): fed2016 39.3 -> 42
 (34.4), nsw2019 41.1 -> 41.0 (41.6), vic2018 37.8 -> 36.0 (35.2), sa2026 17.7 -> 17.0 (19.5). Live vic2026 on
 2026-10-11: newest poll 15 days old, weight 0.09. A boundary optimum leans hard on one or two polls; the
 pre-registered comparison against the shipped form decides.
+
+### Amendment 2 result (screen, quick_arm, 1,000 sims, all 22, decay vs the shipped 28-day form): REFUSED
+
+1. Seat log loss 0.3027 -> 0.2972 (-0.0056, SE 0.0060): holds (not worse).
+2. AEF-7 ledger 0.2697 -> 0.2775 (+0.0078, SE 0.0059): FAILS (worse by more than 1 SE).
+3. Single elections worse by more than 0.02: wa2013 +0.061, qld2024 +0.043, vic2014 +0.028: FAILS.
+The fitted half-life (1-1.5 days) leans on the final poll or two: large wins (wa2005 -0.113, wa2017 -0.095,
+vic2018 -0.043, fed2007 -0.043) and large losses, and the recent elections that make up the ledger mostly lose.
+The share-level curve (`scratchpad decay_curve.R`, lowest mean level error at 1-3 days) hid that variance. The
+shipped 28-day form stays, with its window still a hard cut (recorded in PETE-ASKED-FOR.md). To Pete.
