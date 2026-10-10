@@ -84,6 +84,52 @@ ind_person_cells <- function(target, corpus = NULL) {
                          value = car$carry * mt$h_pcv)
 }
 
+.ip_memo <- new.env(parent = emptyenv())
+
+# Every person cell in every election pair, with that person's actual share
+# there. Computed once per process per corpus.
+#' @noRd
+.ip_cases <- function(C) {
+  key <- .cs_fingerprint("ipcases", C)
+  if (!is.null(.ip_memo[[key]])) return(.ip_memo[[key]])
+  els <- vapply(all_election_pairs(), `[[`, "", "election")
+  rows <- lapply(els, function(e) {
+    x <- NULL
+    utils::capture.output(x <- ind_person_cells(e, C))
+    if (!nrow(x)) return(NULL)
+    .e <- e
+    a <- C[C$election == .e & C$party == "IND", list(seat, name, actual = pcv)]
+    m <- merge(x, a, by = c("seat", "name"))
+    if (nrow(m)) m$election <- .e
+    m
+  })
+  r <- data.table::rbindlist(rows, fill = TRUE)
+  assign(key, r, envir = .ip_memo)
+  r
+}
+
+#' The record-size carry for person-matched independents (Amendment 1)
+#'
+#' Ordinary least squares of a person's actual share on their earlier record,
+#' over the person cells of every election dated before `target`, so a tiny
+#' record and a strong one are not discounted by one ratio.
+#'
+#' @param target Election label; nothing dated on or after it is read.
+#' @param corpus Optional pre-read candidacy table.
+#' @return list `a`, `b`, `n`, `linear` (FALSE when fewer than 3 earlier cases;
+#'   the caller then keeps the ratio carry).
+#' @export
+ind_person_carry_fit <- function(target, corpus = NULL) {
+  C <- corpus
+  if (is.null(C)) C <- data.table::fread(out_path("candidacies.csv"), showProgress = FALSE)
+  cs <- .ip_cases(data.table::as.data.table(C))
+  if (!nrow(cs)) return(list(a = NA_real_, b = NA_real_, n = 0L, linear = FALSE))
+  cs <- cs[elections_before(cs$election, target) & is.finite(cs$actual) & is.finite(cs$record)]
+  if (nrow(cs) < 3L) return(list(a = NA_real_, b = NA_real_, n = nrow(cs), linear = FALSE))
+  co <- stats::coef(stats::lm(actual ~ record, data = cs))
+  list(a = unname(co[1]), b = unname(co[2]), n = nrow(cs), linear = TRUE)
+}
+
 #' Set each person-matched independent cell to carry x their own record
 #'
 #' A no-op unless `AUSPOL_IND_PERSON` equals `stage`. The cell is set, up or
@@ -100,6 +146,16 @@ ind_person_apply <- function(shares, target, stage = c("base", "final"), code = 
   stage <- match.arg(stage)
   if (!identical(ind_person_mode(), stage) || !"IND" %in% colnames(shares)) return(shares)
   cells <- ind_person_cells(target, corpus)
+  how <- Sys.getenv("AUSPOL_IND_PERSON_CARRY", "ratio")
+  if (!how %in% c("ratio", "linear")) stop("AUSPOL_IND_PERSON_CARRY must be \"ratio\" or \"linear\", not ", how)
+  fit_note <- ""
+  if (how == "linear" && nrow(cells)) {
+    lf <- ind_person_carry_fit(target, corpus)
+    if (lf$linear) {
+      cells$value <- pmax(0, lf$a + lf$b * cells$record)
+      fit_note <- sprintf("; linear carry %.2f + %.3f x record (n=%d earlier cases)", lf$a, lf$b, lf$n)
+    } else fit_note <- sprintf("; linear carry: %d earlier case(s), ratio kept", lf$n)
+  }
   ci <- match("IND", colnames(shares))
   ri <- match(cells$skey, normalise_seat(rownames(shares)))
   out <- shares; n <- 0L; log <- character(0)
@@ -110,10 +166,10 @@ ind_person_apply <- function(shares, target, stage = c("base", "final"), code = 
     out[i, ] <- shares[i, ] * (tot - new) / (tot - old)
     out[i, ci] <- new
     n <- n + 1L
-    log <- c(log, sprintf("%s %s %.1f -> %.1f (%s %s %.1f x %.2f)", cells$seat[k], cells$name[k], old, new,
-                          cells$record_election[k], cells$record_seat[k], cells$record[k], cells$carry[k]))
+    log <- c(log, sprintf("%s %s %.1f -> %.1f (%s %s record %.1f)", cells$seat[k], cells$name[k], old, new,
+                          cells$record_election[k], cells$record_seat[k], cells$record[k]))
   }
-  cat(sprintf("%s  person-not-seat independents (%s) for %s: %d cell(s) set from %d matched%s\n", code, stage, target, n,
-              nrow(cells), if (n) paste0(": ", paste(log, collapse = "; ")) else ""))
+  cat(sprintf("%s  person-not-seat independents (%s, %s carry) for %s: %d cell(s) set from %d matched%s%s\n", code, stage, how,
+              target, n, nrow(cells), fit_note, if (n) paste0(": ", paste(log, collapse = "; ")) else ""))
   out
 }
