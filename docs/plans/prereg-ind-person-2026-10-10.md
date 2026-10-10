@@ -133,3 +133,15 @@ JUDGED ONLY on the 16 elections not yet screened (fed2007, fed2010, fed2013, nsw
 sa2022, sa2026, vic2014, vic2018, wa2001, wa2005, wa2008, wa2013, wa2017, wa2025), with the same four
 criteria. The six already-seen elections are reported for completeness and cannot pass or fail it. Known in
 advance from the six: the rule still cuts Fowler 2022 (Dai Le), so clause 4 is checked on all 22.
+
+### Amendment 2 result (16 unscreened elections): primary FAILS; guards hold
+
+`quick_arm.R "AUSPOL_IND_PERSON=final AUSPOL_IND_PERSON_CARRY=linear AUSPOL_IND_PERSON_DIR=lower"`, the 16
+elections, 1,000 sims, one process.
+1. PRIMARY: 98 changed cells (11 of 16 elections), squared error 2,021 -> 1,948 (-73, -4%, SE 102): FAILS
+   (needs about -203).
+2. GUARD: seat log loss, 1,337 seats, 0.3248 -> 0.3247: holds. 3. GUARD: ledger subset (292 seats) 0.2426 ->
+   0.2425, better by more than 1 SE. 4. Largest win-probability move 0.017: does not fire.
+Better in 8 of 11 elections with changed cells (vic2018 -60, nsw2019 -34, vic2014 -26, wa2017 -16, sa2026
+-13, sa2022 -9, qld2024 -1), worse in wa2008 +50, nsw2023 +29, wa2025 +5, wa2005 +2. The direction holds
+out of sample; the size does not clear the pre-registered bar. Off unless Pete overrides (to Pete).
