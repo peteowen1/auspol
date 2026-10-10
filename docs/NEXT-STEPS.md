@@ -17,13 +17,16 @@ LOWER their vote. Deciding 20k run: 22-election seat log loss 0.3239 flat, AEF-7
 byte-identical); `output/published-predictions.csv` (every published prediction, 22 elections); the ledger
 artifact's every-candidate view (v53); NSW 2027 leader-seat bonus; candidate names HTML-decoded (no model effect).
 
+**Shipped 2026-10-11, live:** `AUSPOL_LEVEL_RECENT` (PR #118, Pete's override; `plans/prereg-level-recent-blend-2026-10-10.md`): the day-before ALP/LNP/GRN level leans on the last 28 days of polls. Deciding run: seat log loss 0.3239 -> 0.3172 (1.7 SE), ledger 0.2732 -> 0.2682 (AEF 0.2825); nsw2019 +0.045. `shipped-models` republished (with `level-recent.csv`; CI now fails without it); ledger artifact v54. No live effect until Victorian polls land in the final 28 days.
+
 **Refused (built, off; do not re-run without a new idea):** the two-way person rule and its linear variant
 (large earlier records mislead both ways: Fowler 2022, Barker 2019); the never-stood "typical level" half
 (2026-10-09). Earlier refusals: statewide poll weighting, seat-poll precision blend, typical-vote / dedicated /
 mixture independent models (`plans/prereg-ind-typical-2026-10-09.md`).
 
 **Queue, ranked:**
-1. OPEN: Richmond/Footscray/Brunswick how-to-vote flows (SEAT-REGISTRY vic2022) -- the top open seat problem, ~2 h.
+1. OPEN: poll coverage, AE files vs Wikipedia, deduplicated and matched by firm within a date tolerance (first pass: one Resolve SA 2026 poll missing from AE; scrape parsed nothing for fed2007/2010, nsw2019, WA 2001-13 -- fix those parses first). ~1 h.
+1b. OPEN: re-score Richmond/Footscray/Brunswick/Preston/Pascoe Vale 2022 after AUSPOL_LEVEL_RECENT; shrink the person-rule slope toward the ratio carry (Pete, 2026-10-11) instead of only bounding it; test recency/relevance-weighted fits.
 2. OPEN: nomination day **9 November 2026**: refit successor rates on the final candidate list
    (`build_departed_successors.R` chain), rerun the live forecast. Victoria votes 28 November 2026.
 3. OPEN: miss-table seats traced but not fixed: Malvern 2022 (O'Brien under-called in base_pred), Bankstown 2023
