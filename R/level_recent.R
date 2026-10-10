@@ -12,10 +12,10 @@
 
 #' Is the recent-poll level blend on?
 #'
-#' @return `"0"` (off, shipped) or `"1"`.
+#' @return `"1"` (shipped 2026-10-11) or `"0"` (off).
 #' @export
 level_recent_mode <- function() {
-  v <- Sys.getenv("AUSPOL_LEVEL_RECENT", "0")
+  v <- Sys.getenv("AUSPOL_LEVEL_RECENT", "1")
   if (!v %in% c("0", "1")) stop("AUSPOL_LEVEL_RECENT must be \"0\" or \"1\", not ", v)
   v
 }

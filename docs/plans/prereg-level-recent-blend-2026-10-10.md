@@ -90,3 +90,13 @@ pooled pair from this run (ge190cab). Baseline: the shipped 20k run (gddbcedd, k
    (trend 41.1, polls 39.9, actual 41.6) -- the few-polls case Amendment 1 withdrew from this clause. The screen
    at 1,000 sims showed +0.0088 there. Others worse: wa2013 +0.008, fed2007 +0.006, qld2024 +0.004.
 Off unless Pete overrides; the split goes to him.
+
+## PETE'S OVERRIDE (2026-10-11): ships despite the refusal
+
+Asked with the split above (quiz: leave off, recommended, or override). Pete chose "Override and ship": the ledger
+gain (0.2732 -> 0.2682) is the largest in weeks, and Victoria 2026 should have several polls in its final month,
+so the few-polls failure (nsw2019) is least likely where it matters. The clauses and results above stand as
+written; this is a decision against them. Shipped as `AUSPOL_LEVEL_RECENT="1"`, with rebuild stage 1 running it
+OFF so the as-at trees stay trained on the unblended base -- exactly the configuration the deciding run measured.
+Live: the window ends on the day of the run, so it acts only once polls land in the last 28 days (none for
+vic2026 on 2026-10-10).

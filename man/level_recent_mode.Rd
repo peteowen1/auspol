@@ -7,7 +7,7 @@
 level_recent_mode()
 }
 \value{
-\code{"0"} (off, shipped) or \code{"1"}.
+\code{"1"} (shipped 2026-10-11) or \code{"0"} (off).
 }
 \description{
 Is the recent-poll level blend on?
