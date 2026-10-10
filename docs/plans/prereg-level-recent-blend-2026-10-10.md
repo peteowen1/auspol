@@ -100,3 +100,19 @@ written; this is a decision against them. Shipped as `AUSPOL_LEVEL_RECENT="1"`, 
 OFF so the as-at trees stay trained on the unblended base -- exactly the configuration the deciding run measured.
 Live: the window ends on the day of the run, so it acts only once polls land in the last 28 days (none for
 vic2026 on 2026-10-10).
+
+## Amendment 2 (2026-10-11, after shipping; Pete: "I assume you did a decay and not a hard cap at 28 days")
+
+The shipped form uses a hard 28-day window, against Pete's standing no-hard-caps rule; recorded in
+`PETE-ASKED-FOR.md`. Written BEFORE the arm below ran. `AUSPOL_LEVEL_RECENT="decay"`: every poll of the current
+cycle (since the previous election) fielded before the as-at date counts, weighted 2^(-age/H); the level becomes
+(1 - w) x trend + w x the weighted poll mean, w = n_eff / (n_eff + k), n_eff the summed weights. H (half-life,
+days) and k are fitted jointly on EARLIER elections only, by squared error of the blended ALP/LNP/GRN level
+against the actual, over a grid. No window, no poll-count cut-off.
+
+Judged against the SHIPPED form ("1"), since the question is whether removing the cliff costs anything:
+1. PRIMARY: 22-election seat log loss no worse than the shipped form by more than 1 SE (clustered on election).
+2. GUARD: AEF-7 ledger no worse by more than 1 SE.
+3. GUARD: no single election worse than the shipped form by more than 0.02.
+Ship rule: "decay" replaces "1" if 1-3 hold (Pete's rule decides between two forms that score alike). Screen with
+quick_arm on all 22 first; the deciding run is the full 20,000-sim stage 6.
