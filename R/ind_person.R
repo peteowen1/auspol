@@ -116,7 +116,7 @@ ind_person_cells <- function(target, corpus = NULL) {
 #'
 #' @param target Election label; nothing dated on or after it is read.
 #' @param corpus Optional pre-read candidacy table.
-#' @return list `a`, `b` (bounded to [0, 1]), `n`, `bounded`, `linear` (FALSE when fewer than 3 earlier cases;
+#' @return list `a`, `b` (bounded to the range 0 to 1), `n`, `bounded`, `linear` (FALSE when fewer than 3 earlier cases;
 #'   the caller then keeps the ratio carry).
 #' @export
 ind_person_carry_fit <- function(target, corpus = NULL) {
