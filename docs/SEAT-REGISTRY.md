@@ -70,6 +70,14 @@ Dug 2026-10-09 from run 0cbaa82 (`scripts/biggest_misses.R --pairs=vic2018`). Th
 
 ## vic2022
 
+- **Malvern** -- **OPEN** (traced 2026-10-10). O'Brien (LNP, sitting since 2006)
+  52.5 actual vs 42.5 published; AEF 50.9. Two separate faults. (1) The
+  under-call is already in base_pred (44.0), so it is not the xgb layer.
+  (2) Steve Stefanopoulos (IND) 1.6 actual vs 8.6: base 5.0 with no IND in
+  2018, then the as-at xgb RAISED him to 8.3. The new-independent shrink did
+  not touch him: he is a "returning person" (0.61% in Prahran 2014), one of 9
+  vic2022 exclusions -- a sub-1% record that is evidence he is weak, read as
+  "not new". Minor right (Schmidt) 5.3 vs 1.6 and OTH 6.7 vs 2.5 likewise.
 - **Morwell** — **OPEN**, the biggest single seat in the corpus (log loss
   2.70 on the v32 ledger). Russell Northe won 2014 as a National (44.4),
   held 2018 as an independent (19.6), retired 2022. Our base_pred decays his
@@ -172,6 +180,14 @@ Dug 2026-10-09 from run 0cbaa82 (`scripts/biggest_misses.R --pairs=vic2018`). Th
 
 ## nsw2023
 
+- **Bankstown** -- **OPEN** (traced 2026-10-10). Dib (ALP) 59.4 actual vs
+  49.9 published; AEF 59.5. base_pred had ALP 55.8 and the as-at xgb CUT it to
+  49.8 while lifting OTH 3.6 -> 9.4 (actual 7.9). Max Boddy (IND) 2.7 vs 8.3:
+  base 9.5 carried the IND class's 2019 vote (Saud Abu-Samen 8.8, a different
+  person) to him. He IS a new-independent cell, but the nsw2023 shrink factor
+  is 1.000: earlier NSW new independents beat the model (k 1.57, one election)
+  and the shipped cap only lowers. The previous Labor member (Mihailuk) had
+  left the party; Dib is a new candidate.
 - **Parramatta (tail entry, v42)** — LNP 0.964 (AEF 0.717), Labor won; LNP
   50.5 vs 35.5 real, ALP 31.9 vs 47.0. A 15-point miss on both majors:
   the statewide Labor -4.8 plus a retired sitting Liberal plus western
