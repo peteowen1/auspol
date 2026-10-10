@@ -145,3 +145,11 @@ elections, 1,000 sims, one process.
 Better in 8 of 11 elections with changed cells (vic2018 -60, nsw2019 -34, vic2014 -26, wa2017 -16, sa2026
 -13, sa2022 -9, qld2024 -1), worse in wa2008 +50, nsw2023 +29, wa2025 +5, wa2005 +2. The direction holds
 out of sample; the size does not clear the pre-registered bar. Off unless Pete overrides (to Pete).
+
+## PETE'S OVERRIDE (2026-10-10): A2 ships despite the failed primary
+
+Asked with the split above (quiz: leave off, recommended, or override). Pete chose "Override and ship":
+a weak signal that hurts no guard is safe to include. The clauses and results above stand as written; this
+is a decision against them, recorded as such. Shipped as `AUSPOL_IND_PERSON="final"`,
+`AUSPOL_IND_PERSON_CARRY="linear"`, `AUSPOL_IND_PERSON_DIR="lower"`, post-xgb (stage 1 runs it off), wired
+into fit_seats_full.R; the deciding 20,000-sim stage-6 rebuild on all 22 elections is reported below.

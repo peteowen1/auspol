@@ -14,11 +14,11 @@
 
 #' Is the person-not-seat independent rule on, and where?
 #'
-#' @return `"0"` (off, shipped), `"base"` (before the frozen xgb trees) or
-#'   `"final"` (after them).
+#' @return `"final"` (shipped 2026-10-10, after the frozen xgb trees), `"base"`
+#'   (before them) or `"0"` (off).
 #' @export
 ind_person_mode <- function() {
-  v <- Sys.getenv("AUSPOL_IND_PERSON", "0")
+  v <- Sys.getenv("AUSPOL_IND_PERSON", "final")
   if (!v %in% c("0", "base", "final")) stop("AUSPOL_IND_PERSON must be \"0\", \"base\" or \"final\", not ", v)
   v
 }
@@ -146,7 +146,7 @@ ind_person_apply <- function(shares, target, stage = c("base", "final"), code = 
   stage <- match.arg(stage)
   if (!identical(ind_person_mode(), stage) || !"IND" %in% colnames(shares)) return(shares)
   cells <- ind_person_cells(target, corpus)
-  how <- Sys.getenv("AUSPOL_IND_PERSON_CARRY", "ratio")
+  how <- Sys.getenv("AUSPOL_IND_PERSON_CARRY", "linear")
   if (!how %in% c("ratio", "linear")) stop("AUSPOL_IND_PERSON_CARRY must be \"ratio\" or \"linear\", not ", how)
   fit_note <- ""
   if (how == "linear" && nrow(cells)) {
@@ -158,7 +158,7 @@ ind_person_apply <- function(shares, target, stage = c("base", "final"), code = 
   }
   # Amendment 2: "lower" lets a record only LOWER the cell (the raising half was
   # the unreliable one on the screen: Barker 2019). No size threshold.
-  dir <- Sys.getenv("AUSPOL_IND_PERSON_DIR", "both")
+  dir <- Sys.getenv("AUSPOL_IND_PERSON_DIR", "lower")
   if (!dir %in% c("both", "lower")) stop("AUSPOL_IND_PERSON_DIR must be \"both\" or \"lower\", not ", dir)
   ci <- match("IND", colnames(shares))
   ri <- match(cells$skey, normalise_seat(rownames(shares)))

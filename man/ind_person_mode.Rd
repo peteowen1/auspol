@@ -7,8 +7,8 @@
 ind_person_mode()
 }
 \value{
-\code{"0"} (off, shipped), \code{"base"} (before the frozen xgb trees) or
-\code{"final"} (after them).
+\code{"final"} (shipped 2026-10-10, after the frozen xgb trees), \code{"base"}
+(before them) or \code{"0"} (off).
 }
 \description{
 Is the person-not-seat independent rule on, and where?

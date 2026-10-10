@@ -1327,6 +1327,13 @@ if (!is.null(shares_x)) {
   cat(sprintf("XG4!! xgb_primary_predict_live() FAILED%s -- shares UNCHANGED, shipped-only model used\n",
               .reason("xgb_live")))
 }
+# AUSPOL_IND_PERSON (POST-XGB, shipped "final" 2026-10-10 on Pete's override,
+# plans/prereg-ind-person-2026-10-10.md): a sole, non-sitting independent's own
+# earlier record may LOWER their cell. Same point as the harnesses' "final" hook.
+.ipr <- .try("ind_person", ind_person_apply(shares, TGT, stage = "final", code = "FSIP"))
+if (!is.null(.ipr)) shares <- .ipr else if (!identical(ind_person_mode(), "0"))
+  cat(sprintf("FSIP!! ind_person_apply() FAILED%s -- the person-not-seat rule is NOT applied to this forecast\n",
+              .reason("ind_person")))
 # (v61 nomination zeroing runs after blend_salience_shares() below, the last step
 # that can add share to a cell -- see the NZL block there.)
 # Time-forward seat-swing port (AUSPOL_SEAT_SWING_PORT=2), AFTER the override,
