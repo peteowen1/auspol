@@ -1,3 +1,7 @@
+# auspol 0.4.93
+
+- An independent with a small personal vote elsewhere is no longer handed the seat's generic independent level: their own record can lower their starting vote (`AUSPOL_IND_PERSON`, shipped on Pete's override after it missed its pre-registered bar). Malvern 2022 independent 8.6 -> 1.7 (actual 1.6). Seat log loss over 22 elections unchanged (0.3239); AEF-7 ledger 0.2733 -> 0.2732. Victoria 2026 today: Broadmeadows independent 5.4 -> 3.9.
+
 # auspol 0.4.92
 
 - Candidate names scraped with web-page codes (`O&#39;BRIEN`) are decoded, and the candidate file build stops if any survive. No forecast number changes: name matching already ignored punctuation.
