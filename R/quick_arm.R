@@ -358,3 +358,28 @@ quick_assert_no_links <- function(root, links) {
          "; refusing a recursive delete that could follow them into the real tree", call. = FALSE)
   invisible(TRUE)
 }
+
+#' Content digest of the code ONE harness runs
+#'
+#' The harness script, everything under `R/` and `src/` (the package it
+#' `load_all()`s and compiles), `DESCRIPTION`, `NAMESPACE`, and the two shared
+#' scripts every harness sources. This tool's own files are excluded. Recorded
+#' with each cached election so a later call can tell "this harness's code is
+#' unchanged" (reuse with no re-run) from "changed somewhere" (needs a canary).
+#' An unreadable file returns an always-different token: it must invalidate.
+#' @param root Repository root.
+#' @param harness One of fed, wa, vic, nsw, qld, sa.
+#' @return A 12-character digest.
+#' @keywords internal
+#' @noRd
+quick_harness_code_sig <- function(root, harness) {
+  fl <- c(list.files(file.path(root, "R"), full.names = TRUE, recursive = TRUE),
+          list.files(file.path(root, "src"), full.names = TRUE, recursive = TRUE),
+          file.path(root, c("DESCRIPTION", "NAMESPACE", "scripts/harness_defaults.R", "scripts/published_flags.R",
+                            paste0("scripts/backtest_candidate_", harness, ".R"))))
+  fl <- sort(fl[!basename(fl) %in% "quick_arm.R" & !grepl("\\.(o|dll|so)$", fl)])
+  if (!length(fl) || !all(file.exists(fl))) return(quick_unreadable(paste0("code:", harness)))
+  h <- unname(tools::md5sum(fl))
+  if (anyNA(h)) return(quick_unreadable(paste0("code:", harness)))
+  quick_md5(paste(substring(fl, nchar(root) + 2L), h, sep = ":", collapse = "|"))
+}

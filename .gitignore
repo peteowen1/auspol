@@ -99,3 +99,6 @@ _tmp_*.R
 
 # python bytecode (scripts/fetch_abc_guide_snapshots.py)
 __pycache__/
+
+# Local deciding runs (scripts/deciding_run.ps1): logs and results, never committed
+deciding-runs/
