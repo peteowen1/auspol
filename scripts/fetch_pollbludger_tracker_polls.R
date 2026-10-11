@@ -15,22 +15,48 @@
 # re-fetched while on disk; every column is kept in the parsed file, trend columns included.
 # Writes external/reference/polls/statewide-samples/pollbludger_polls.csv.
 suppressPackageStartupMessages(library(data.table))
-base_dir <- "external/reference/polls/statewide-samples"
+base_dir <- Sys.getenv("AUSPOL_POLL_BASE", "external/reference/polls/statewide-samples")   # env override is a test hook
 raw_dir <- file.path(base_dir, "raw")
+source(file.path(dirname(sub("^--file=", "", grep("^--file=", commandArgs(FALSE), value = TRUE)[1])), "fetch_page_lib.R"))
+# A sheet is accepted only if it is whole: (1) the final line has as many fields as the header (a
+# cut-off download ends mid-row), (2) the newest poll is within 30 days before polling day (a
+# truncated or stale sheet stops early), (3) ALP and LNP are filled on >= 90% of poll rows.
+# Returns NA when fine, else the reason. The same check runs on a file already on disk.
+validate_sheet <- function(path, polling_day) {
+  if (!file.exists(path) || file.size(path) == 0) return("missing or empty")
+  nf <- tryCatch(utils::count.fields(path, sep = ",", quote = "\"", blank.lines.skip = TRUE), error = function(e) NULL)
+  if (is.null(nf) || length(nf) < 21) return("fewer than 21 lines or unreadable")
+  if (nf[length(nf)] != nf[1]) return(sprintf("final line has %d fields, header has %d (truncated)", nf[length(nf)], nf[1]))
+  d <- tryCatch(fread(path, encoding = "UTF-8", showProgress = FALSE), error = function(e) NULL)
+  if (is.null(d) || !all(c("DATE", "POLLSTER", "ALP", "LNP") %in% names(d))) return("expected columns DATE, POLLSTER, ALP, LNP not found")
+  d <- d[tolower(POLLSTER) != "election"]
+  dt <- as.Date(d$DATE, format = "%d/%m/%Y")
+  if (anyNA(dt)) return("unparseable dates")
+  gap <- as.integer(polling_day - max(dt))
+  if (gap < 0 || gap > 30) return(sprintf("newest poll is %d days before polling day (need 0 to 30)", gap))
+  cov <- mean(is.finite(suppressWarnings(as.numeric(d$ALP))) & is.finite(suppressWarnings(as.numeric(d$LNP))))
+  if (cov < 0.9) return(sprintf("ALP and LNP present on only %.0f%% of poll rows (need 90%%)", 100 * cov))
+  NA_character_
+}
 ua <- "Mozilla/5.0 auspol-research/1.0 (contact: fptpost@gmail.com)"
 sheets <- data.table(
   election = c("nsw2019", "vic2018"), region = c("nsw", "vic"),
   sheet_id = c("1zwqzVu5J3Xx0Rd8UzmV44PAIGN1ez1CLYGwEsdBfFe4", "1DN2V1AkSSUGrgqhzkraN9sBlVRZJq9jUV7PHC6BRapI"),
-  page = c("https://www.pollbludger.net/nsw2019/polltracker.htm", "https://www.pollbludger.net/vic2018/polltracker.htm"))
+  page = c("https://www.pollbludger.net/nsw2019/polltracker.htm", "https://www.pollbludger.net/vic2018/polltracker.htm"),
+  polling_day = as.Date(c("2019-03-23", "2018-11-24")))
 out <- list()
 for (i in seq_len(nrow(sheets))) {
   f <- file.path(raw_dir, sprintf("pollbludger_%s_sheet_gid0.csv", sheets$election[i]))
+  pd <- sheets$polling_day[i]
   if (!file.exists(f) || file.size(f) == 0) {
     message("Fetching ", sheets$election[i])
     url <- sprintf("https://docs.google.com/spreadsheets/d/%s/gviz/tq?tqx=out:csv&gid=0", sheets$sheet_id[i])
-    download.file(url, f, method = "libcurl", headers = c(`User-Agent` = ua), quiet = TRUE)
+    r <- fetch_page(url, f, ua, complete = function(p) is.na(validate_sheet(p, pd)))
+    if (r$status != "on_disk") stop(sprintf("%s sheet not saved: status %s (HTTP %s); nothing written to raw/", sheets$election[i], r$status, r$code))
     Sys.sleep(1)
   }
+  why <- validate_sheet(f, pd)
+  if (!is.na(why)) stop(sprintf("%s sheet on disk is not acceptable: %s", sheets$election[i], why))
   d <- fread(f, encoding = "UTF-8")
   stopifnot(all(c("DATE", "POLLSTER") %in% names(d)), nrow(d) > 20)
   d[, `:=`(election = sheets$election[i], region = sheets$region[i], source_url = sheets$page[i],

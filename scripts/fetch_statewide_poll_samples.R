@@ -32,7 +32,7 @@ suppressPackageStartupMessages({
   library(data.table)
 })
 
-base_dir <- "external/reference/polls/statewide-samples"
+base_dir <- Sys.getenv("AUSPOL_POLL_BASE", "external/reference/polls/statewide-samples")   # env override is a test hook
 raw_dir  <- file.path(base_dir, "raw")
 out_csv  <- file.path(base_dir, "statewide_polls_wiki.csv")
 man_csv  <- file.path(base_dir, "pages_manifest.csv")
@@ -89,28 +89,28 @@ pages[, url := paste0(wp, title)]
 
 # ---- download once -----------------------------------------------------------
 pages[, status := NA_character_]
+# A page is on disk only if it ends properly (closing </html>); HTTP 404/410 are remembered in a
+# marker, anything else is "fetch_failed" and retried next run. See scripts/fetch_page_lib.R.
+source(file.path(dirname(sub("^--file=", "", grep("^--file=", commandArgs(FALSE), value = TRUE)[1])), "fetch_page_lib.R"))
+only_keys <- Sys.getenv("AUSPOL_POLL_ONLY", "")   # test hook: restrict to these page keys
 for (i in seq_len(nrow(pages))) {
   f  <- file.path(raw_dir, paste0(pages$page_key[i], ".html"))
   nf <- file.path(raw_dir, paste0(pages$page_key[i], ".notfound"))
-  if (file.exists(f) && file.size(f) > 0) {
+  if (nzchar(only_keys) && !pages$page_key[i] %in% strsplit(only_keys, ",")[[1]]) { pages$status[i] <- "skipped_test"; next }
+  if (page_complete(f)) {
     pages$status[i] <- "on_disk"
-  } else if (file.exists(nf)) {
+  } else if (file.exists(nf) && grepl("^status=(404|410) ", readLines(nf, n = 1, warn = FALSE))) {
     pages$status[i] <- "not_found"
   } else {
+    # no page, no marker, a legacy marker ("404 or fetch failure": it never recorded the status), or an
+    # incomplete file: ask again and record what was actually said.
+    if (file.exists(f)) file.remove(f)
     message("Fetching: ", pages$page_key[i])
-    ok <- tryCatch({
-      suppressWarnings(download.file(pages$url[i], destfile = f, method = "libcurl",
-                                     headers = c(`User-Agent` = ua), quiet = TRUE))
-      file.exists(f) && file.size(f) > 0
-    }, error = function(e) FALSE)
-    if (ok) {
-      pages$status[i] <- "on_disk"
-    } else {
-      if (file.exists(f)) file.remove(f)
-      # HTTP 404 is a real answer ("no such page"); remember it so a re-run does not ask again.
-      writeLines(paste("404 or fetch failure", Sys.time()), nf)
-      pages$status[i] <- "not_found"
-    }
+    r <- fetch_page(pages$url[i], f, ua)
+    pages$status[i] <- r$status
+    if (r$status == "not_found") writeLines(sprintf("status=%d %s", r$code, format(Sys.time())), nf)
+    else if (file.exists(nf)) file.remove(nf)    # a stale marker that is not a 404/410 must not survive
+    if (r$status == "fetch_failed") message("  FETCH FAILED (status ", r$code, "): ", pages$page_key[i], " -- will retry next run")
     Sys.sleep(1)
   }
 }
@@ -275,9 +275,29 @@ role_of <- function(g) {
   else "other"
 }
 coalition_names <- c("L/NP", "LNP", "Coalition", "L/NP*", "LIB/NAT", "LIB+NAT", "C")
-parse_poll_table <- function(tab, page_key, region, election, kind, url, tidx, section) {
+# Every table's fate is logged in tbl_log: outcome is "parsed", a DELIBERATE refusal ("refused_nonvoting",
+# "skipped_small", "no_date_header") or a LOSS ("lost", "parse_error"). The run fails at the end on any loss.
+tbl_log <- list()
+note_tbl <- function(page_key, tidx, outcome, detail = "") {
+  tbl_log[[length(tbl_log) + 1L]] <<- data.table(page_key = page_key, table_idx = tidx, outcome = outcome, detail = detail)
+}
+# Independent of parse_poll_table: does this table have a date-like header cell (a "Date" cell in
+# the first four rows, or the blank-first-cell "Primary vote / TPP vote" group row)?
+has_date_header <- function(tab) {
   raw <- tryCatch(html_table(tab, header = FALSE, fill = TRUE), error = function(e) NULL)
-  if (is.null(raw) || nrow(raw) < 2 || ncol(raw) < 3) return(NULL)
+  if (is.null(raw)) return(NA)
+  for (r in seq_len(min(4L, nrow(raw)))) {
+    cl <- clean_ws(strip_fn(as.character(unlist(raw[r, ]))))
+    if (any(grepl("^dates?$", cl, ignore.case = TRUE))) return(TRUE)
+    if (length(cl) && !nzchar(cl[1]) && any(grepl("^(primary vote|2pp vote|tpp vote)", cl, ignore.case = TRUE))) return(TRUE)
+  }
+  FALSE
+}
+parse_poll_table <- function(tab, page_key, region, election, kind, url, tidx, section) {
+  refuse <- function(outcome, detail = "") { note_tbl(page_key, tidx, outcome, detail); NULL }
+  raw <- tryCatch(html_table(tab, header = FALSE, fill = TRUE), error = function(e) NULL)
+  if (is.null(raw)) return(refuse("parse_error", "html_table failed"))
+  if (nrow(raw) < 2 || ncol(raw) < 3) return(refuse("skipped_small", sprintf("%d x %d", nrow(raw), ncol(raw))))
   raw <- as.data.frame(lapply(raw, function(x) clean_ws(as.character(x))), stringsAsFactors = FALSE)
   raw[is.na(raw)] <- ""
   names(raw) <- paste0("V", seq_len(ncol(raw)))
@@ -297,7 +317,7 @@ parse_poll_table <- function(tab, page_key, region, election, kind, url, tidx, s
       }
     }
   }
-  if (is.na(r0)) return(NULL)
+  if (is.na(r0)) return(refuse("no_date_header"))
   # wa2008: the "Date" label sits on the PARTY row and the "Primary vote | 2PP vote" group row is
   # above it with a blank first cell. Promote the group row to be the header (Date is relabelled).
   if (r0 > 1L) {
@@ -309,7 +329,7 @@ parse_poll_table <- function(tab, page_key, region, election, kind, url, tidx, s
   dcol <- which(grepl("^dates?$", strip_fn(as.character(raw[r0, ])), ignore.case = TRUE))[1]
   dstart <- r0 + 1L     # first data row = first row whose date cell holds a digit or the word "election"
   while (dstart <= nrow(raw) && !grepl("[0-9]|election", raw[dstart, dcol], ignore.case = TRUE)) dstart <- dstart + 1L
-  if (dstart > nrow(raw)) return(NULL)
+  if (dstart > nrow(raw)) return(refuse("lost", "date header but no data row"))
   nh <- dstart - r0
   hdr <- lapply(r0:(dstart - 1L), function(r) strip_fn(as.character(raw[r, ])))
   g <- hdr[[1]]
@@ -332,7 +352,12 @@ parse_poll_table <- function(tab, page_key, region, election, kind, url, tidx, s
     mm <- Filter(function(x) length(x) == 2, mm)
     if (length(mm)) firm_default <- trimws(mm[[1]][2])
   }
-  if (!"date" %in% roles || (!"firm" %in% roles && is.na(firm_default))) return(NULL)
+  if (!"date" %in% roles) return(refuse("lost", "date header but no date role"))
+  if (!"firm" %in% roles && is.na(firm_default)) {
+    # A voting-intention table with no firm anywhere is a LOSS; a ratings/approval table is not.
+    if (any(roles %in% c("pv", "tpp"))) return(refuse("lost", "voting-intention table with no firm column or footer"))
+    return(refuse("refused_nonvoting", "no firm column or footer; no primary/2PP columns"))
+  }
   roles[duplicated(roles) & roles %in% c("date", "firm", "client", "sample", "mode", "seat")] <- "other"
   col_date <- which(roles == "date")[1]; col_firm <- which(roles == "firm")[1]
   col_cli <- which(roles == "client")[1]; col_smp <- which(roles == "sample")[1]
@@ -350,7 +375,7 @@ parse_poll_table <- function(tab, page_key, region, election, kind, url, tidx, s
   nms <- vapply(val_cols, function(j) { x <- cname(j); if (is.null(x)) "" else x }, "")
   nms <- make.unique(nms, sep = "_")
   data <- raw[dstart:nrow(raw), , drop = FALSE]
-  if (!nrow(data)) return(NULL)
+  if (!nrow(data)) return(refuse("lost", "no data rows"))
   rows <- list()
   for (i in seq_len(nrow(data))) {
     cells <- as.character(data[i, ])
@@ -383,7 +408,8 @@ parse_poll_table <- function(tab, page_key, region, election, kind, url, tidx, s
     r[, `:=`(.parts = list(pdts$parts), .year_given = pdts$year_given)]
     rows[[length(rows) + 1]] <- r
   }
-  if (!length(rows)) return(NULL)
+  if (!length(rows)) return(refuse("lost", "no row survived the spacer/event filters"))
+  note_tbl(page_key, tidx, "parsed")
   rbindlist(rows, fill = TRUE)
 }
 
@@ -424,12 +450,13 @@ for (i in which(dup)) pages$status[i] <- paste0("duplicate_of_", pages$page_key[
 
 # ---- parse every downloaded page --------------------------------------------
 all_pages <- list()
-pages[, `:=`(n_tables = NA_integer_, n_tables_parsed = NA_integer_, n_poll_rows = NA_integer_)]
+pages[, `:=`(n_tables = NA_integer_, n_tables_parsed = NA_integer_, n_poll_rows = NA_integer_, n_datelike = NA_integer_)]
+tbl_log <- list()   # drop the self-test tables logged above
 for (i in seq_len(nrow(pages))) {
   f <- file.path(raw_dir, paste0(pages$page_key[i], ".html"))
   if (pages$status[i] != "on_disk") next
   page <- tryCatch(read_html(f), error = function(e) { message("PARSE ERROR ", pages$page_key[i], ": ", conditionMessage(e)); NULL })
-  if (is.null(page)) next
+  if (is.null(page)) { pages$status[i] <- "parse_error"; next }
   # Footnote markers: replace each with a {{FN:note text}} token so the sponsor
   # ("Commissioned by ...") and any caveat on the row survive in footnote_raw.
   notes <- html_elements(page, "span.mw-reference-text")
@@ -459,8 +486,17 @@ for (i in seq_len(nrow(pages))) {
   tabs <- nodes[nm == "table"]
   parsed <- lapply(seq_along(tabs), function(t)
     tryCatch(parse_poll_table(tabs[[t]], pages$page_key[i], pages$region[i], pages$election[i], pages$kind[i], pages$url[i], t, sec[t]),
-             error = function(e) { message("  table ", t, " of ", pages$page_key[i], " failed: ", conditionMessage(e)); NULL }))
+             error = function(e) {
+               message("  table ", t, " of ", pages$page_key[i], " failed: ", conditionMessage(e))
+               note_tbl(pages$page_key[i], t, "parse_error", conditionMessage(e)); NULL }))
   pages$n_tables[i] <- length(tabs)
+  # Completeness: every table with a date-like header must have an outcome logged, parsed or refused.
+  dl <- which(vapply(tabs, function(tb) isTRUE(has_date_header(tb)), logical(1)))
+  logged <- Filter(function(x) x$page_key == pages$page_key[i], tbl_log)
+  logged_idx <- vapply(logged, function(x) x$table_idx, 0L)
+  unlogged <- setdiff(dl, logged_idx)
+  for (t in unlogged) note_tbl(pages$page_key[i], t, "lost", "date-like header but no outcome recorded")
+  pages$n_datelike[i] <- length(dl)
   ok <- !vapply(parsed, is.null, logical(1))
   pages$n_tables_parsed[i] <- sum(ok)
   if (any(ok)) {
@@ -580,7 +616,17 @@ meta <- c("page_key", "region", "election", "page_kind", "source_url", "table_id
           "sample_raw", "sample_n", "mode_raw", "seat_raw", "footnote_raw", "alp_fp", "lnp_fp", "lib_fp", "nat_fp", "alp_tpp")
 setcolorder(wiki, c(meta, setdiff(names(wiki), meta)))
 fwrite(wiki, out_csv)
-fwrite(pages[, .(page_key, region, election, kind, title, url, status, n_tables, n_tables_parsed, n_poll_rows)], man_csv)
+fwrite(pages[, .(page_key, region, election, kind, title, url, status, n_tables, n_datelike, n_tables_parsed, n_poll_rows)], man_csv)
+tl <- rbindlist(tbl_log, fill = TRUE)
+fwrite(tl, file.path(base_dir, "table_outcomes.csv"))
+# ---- LOUD FAILURES: nothing may be lost silently (written AFTER the outputs so they can be inspected) ----
+nd <- tl[, .N, by = outcome]
+message("TBL1 table outcomes: ", paste0(nd$outcome, "=", nd$N, collapse = ", "))
+bad_tbl <- tl[outcome %in% c("lost", "parse_error")]
+bad_pg  <- pages[status %in% c("fetch_failed", "parse_error")]
+if (nrow(bad_tbl)) { print(bad_tbl); message("TBL2 tables LOST or errored: ", nrow(bad_tbl)) }
+if (nrow(bad_pg))  { print(bad_pg[, .(page_key, status)]); message("TBL3 pages not fetched or not parsed: ", nrow(bad_pg)) }
+stopifnot("a poll table was lost, a parse failed, or a page could not be fetched -- see TBL2/TBL3 above" = !nrow(bad_tbl) && !nrow(bad_pg))
 
 message("\n---- pages ----")
 print(pages[, .(page_key, status, n_tables, n_tables_parsed, n_poll_rows)], nrows = 200)
