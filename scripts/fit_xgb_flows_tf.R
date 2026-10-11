@@ -96,6 +96,22 @@ for (e in elections) {
   man[[e]] <- data.table(election = e, n_prior = length(prior), n_train = sum(keep), nrounds = NROUNDS,
                          half_life = HL, rmse = sqrt(mean((pe - y[te])^2)), file = basename(f))
 }
+# ---- 3. live targets: elections not yet held, trained on every corpus row ------
+# Every corpus election precedes them, so the all-rows model IS as-at for them.
+# Named on the command line (default vic2026), never inferred from the date list.
+LIVE <- if (length(a) >= 3) strsplit(a[3], ",")[[1]] else "vic2026"
+for (e in LIVE) {
+  if (!e %in% names(dates)) stop("live target ", e, " has no election date")
+  if (!all(TF$election %in% names(dates)[dates < dates[[e]]]))
+    stop("live target ", e, ": the corpus holds elections on or after it, so an all-rows model would leak")
+  set.seed(as.integer(Sys.getenv("AUSPOL_XGB_SEED", "42")))
+  m <- xgb.train(params = params, data = xgb.DMatrix(X, label = y, missing = NA), nrounds = NROUNDS, verbose = 0)
+  f <- file.path(OUT, sprintf("xgb-flows-v1-%s-asat-%s.model", TAG, e))
+  xgb.save(m, f)
+  cat(sprintf("XFT5  %-8s LIVE: all %d corpus elections, %d rows -> %s\n", e, uniqueN(TF$election), nrow(TF), basename(f)))
+  man[[e]] <- data.table(election = e, n_prior = uniqueN(TF$election), n_train = nrow(TF), nrounds = NROUNDS,
+                         half_life = HL, rmse = NA_real_, file = basename(f))
+}
 M <- rbindlist(man)
 fwrite(M, file.path(OUT, sprintf("xgb-flows-%s-asat-manifest.csv", TAG)))
 cat(sprintf("\nXFT4  wrote %d as-at flow models (tag %s) and %s\n", nrow(M), TAG, basename(tf_feat_f)))
