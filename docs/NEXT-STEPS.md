@@ -18,11 +18,9 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30.
    (`AUSPOL_OTHERS_SCALE_JUR`), `worktree-agent-ad78f1dffe2279a6a` (`AUSPOL_SALIENCE_STATE`, 785 lines): prereg and
    screen, or close.
 
-**Running:** deciding run scheduled 22:30 2026-10-11, `deciding-runs/20261011-1854-decay20/` -- the shipped 20-day
-decay vs no blend, all 22 at 20k, code 2cd8892 (the measurement the 20-day ship never had). Read its marker FIRST:
-DONE -> `results.txt`; FAILED -> the reason inside; PENDING after 22:30 -> the task never started (logged off);
-RUNNING with no live pid in `started.txt` -> killed. It does NOT refresh the `shipped-models` scoreboard (needs a full
-`rebuild_forecasts.sh` pass), and the backtest's xgb level feature is frozen, so it understates what ships.
+**Decided 2026-10-11 23:40:** the decay20 deciding run (`deciding-runs/20261011-1854-decay20/`, DONE, all 22, 20k
+sims): shipped 20-day decay vs no blend, seat log loss 0.3163 -> 0.3110, -0.0053 (SE 0.0037), better by >1 SE; AEF-7
+subset -0.0022 (SE 0.0028). The shipped half-life stands. `shipped-models` scoreboard still describes the 28-day run.
 
 **Shipped 2026-10-11 evening (all reviewed, `check_like_ci` clean, on dev, NOT yet on main):**
 - Local deciding-run launcher `scripts/deciding_run.ps1` + `quick_arm.R --reuse` per-harness canary (merge 644467e).
@@ -48,7 +46,9 @@ seat-poll precision blend, typical-vote / dedicated / mixture independent models
 1. OPEN: Liberal<->One Nation flows (`reviews/lnp-onp-flows-by-election-2026-10-11.md`). (a) ON->Lib live median
    64.3% vs 69-75% since 2024. Recency weighting: screen 5.60 -> 4.96 pts flow error at 2 y half-life, but the
    inference-only arm (`AUSPOL_FLOW_RATE_HL=2`) was +0.0022 log loss on AEF-7 (1.2 SE worse; sa/qld better, fed2025
-   worse). NOT a refusal: retrain the flow trees on recency-weighted time-forward rate features, then rerun. (b) Lib->ON varies
+   worse). Retrained trees (`fit_xgb_flows_tf.R`, `AUSPOL_FLOW_TF=1`): tf0 +0.0060, tf2 +0.0025 (both within 1 SE);
+   fed2025 worse in every version (+0.023 to +0.031), fed2022/qld2024 better under tf2. NEXT: walk the fed2025 seats tf2
+   moved most before any further arm. (b) Lib->ON varies
    54-85% by election and moves statewide together; draw it once per simulation, not per seat. (c) no past Liberal
    card orders for ON vs ALP on disk; collect only if (a)/(b) leave a gap. Liberal 2026 card not published.
 2. OPEN: re-score Richmond/Footscray/Brunswick/Preston/Pascoe Vale 2022 after AUSPOL_LEVEL_RECENT; shrink the

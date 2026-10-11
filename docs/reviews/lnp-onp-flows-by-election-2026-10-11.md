@@ -82,3 +82,31 @@ on equal-weighted rates (`scripts/fit_xgb_flows_v1.R` builds `cond_rate` from ev
 included; `fit_xgb_flows_asat.R` reuses those features), so they already learned corrections relative to that
 feature and a recency-weighted input is a train/predict mismatch. The strong version rebuilds the training feature
 as a time-forward, recency-weighted rate and refits the as-at flow models, then reruns the arm.
+
+## Strong version: retrained flow trees (2026-10-11, late)
+
+`scripts/fit_xgb_flows_tf.R <tag> <half-life>` rebuilds the four rate features for each election's rows from
+EARLIER elections only, through `.flow_rates_tf()` (the same function prediction calls under
+`AUSPOL_FLOW_TF=1`), and trains one as-at model per election with the shipped params and nrounds (980). 2.5 min
+per tag. Two tags, so the two changes can be told apart: `tf0` (time-forward, equal weight) and `tf2`
+(time-forward, 2-year half-life). Both arms' logs show the tagged as-at model loaded and the time-forward line
+printed on all 7 elections; no baseline log does.
+
+Seat-winner log loss on AEF-7 (681 seats, 1,000 sims; lower is better; baseline 0.2723 = shipped):
+
+| election | inference-only HL=2 | tf0 | tf2 |
+|---|---|---|---|
+| fed2025 | +0.0086 | +0.0310 | +0.0234 |
+| vic2022 | +0.0044 | +0.0078 | +0.0043 |
+| sa2026 | -0.0037 | +0.0012 | +0.0042 |
+| nsw2023 | +0.0010 | +0.0006 | +0.0022 |
+| wa2025 | +0.0011 | -0.0047 | -0.0019 |
+| qld2024 | -0.0030 | -0.0021 | -0.0078 |
+| fed2022 | +0.0005 | -0.0060 | -0.0117 |
+| **pooled** | **+0.0022 (SE 0.0018)** | **+0.0060 (SE 0.0069)** | **+0.0025 (SE 0.0062)** |
+
+Reading: no version helps on the pooled number; tf2 beats tf0 (recency itself is worth about -0.0035 here, the
+direction the screen predicted), but taking the trees time-forward costs more than that on fed2025 in every
+version. fed2025 is the open question: its flows are the most accurately predicted by the recency screen, yet it
+moves the wrong way every time. Next: walk the fed2025 seats that moved most under tf2 (which flow, which way,
+who won) before any further arm. Not shipped; switches stay "0". No live vic2026 model was written.

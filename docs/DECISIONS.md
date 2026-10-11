@@ -4,6 +4,9 @@ One line each: the decision, the one fact behind it, a link. Newest first.
 Created 2026-09-19 (the verse convention; auspol had none). Older decisions
 live in the plans they came from (`docs/plans/prereg-*.md` RESULT sections).
 
+- **2026-10-11 The 20-day level decay stands (deciding run).** All 22 at 20k sims: seat log loss 0.3163 (no blend) -> 0.3110 (20-day decay), -0.0053, SE 0.0037 (`deciding-runs/20261011-1854-decay20/results.txt`).
+- **2026-10-11 Flow recency arms built, none shipped.** `AUSPOL_FLOW_RATE_HL`, `AUSPOL_FLOW_TF` (default "0"); AEF-7 pooled: inference-only +0.0022, retrained tf0 +0.0060, tf2 +0.0025, all fed2025-driven; open, not refused (`reviews/lnp-onp-flows-by-election-2026-10-11.md`).
+- **2026-10-11 Branches `fed-timing-resume-fixed` and `instrument-backtest-fed-timing` deleted, PR #33 closed (Pete).**
 - **2026-10-11 Own poll source step 1 shipped; the trend still reads AE until Pete decides step 2 (merge 89cd605).** Wikipedia cannot replace AE outright: fed2007, wa2001, nsw2019 have no usable tables, and in the final 30 days it holds 141 polls against AE's 233 (119 in both) (`reviews/own-poll-source-step1-2026-10-11.md`).
 - **2026-10-11 Deciding runs execute from a HEAD snapshot and default to all 22 (merge 644467e).** quick_arm's scratch links the live R/ and scripts/, so an edit during an overnight run reached it; and quick_arm alone defaults to AEF-7, so an unflagged "deciding" run scored 7 elections and wrote DONE (review finding) (`scripts/deciding_run.ps1`).
 - **2026-10-11 Branches `fed-timing-resume-fixed` / `instrument-backtest-fed-timing`: superseded, not ported (recommendation; deletion awaits Pete).** dev already builds PARTY_COR per pair (`backtest_candidate_fed.R:482`) and FLOW_SD is reassigned every pair; per-election processes in quick_arm replace the resume cache.
