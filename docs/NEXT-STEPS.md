@@ -45,12 +45,10 @@ the 10-day decay run (c633fd8).
 seat-poll precision blend, typical-vote / dedicated / mixture independent models (`plans/prereg-ind-typical-2026-10-09.md`).
 
 **Queue, ranked:**
-1. OPEN: Liberal<->One Nation flows. PRINTED 2026-10-11 from the objects `simulate_seat_contests()` receives
-   (live script cut before the call, `fm` + per-seat override): Lib->ON with only ALP+ON left, per-seat median 68.0%
-   (range 65.5-73.8, 88 seats; shared table 68.2); ON->Lib with only ALP+Lib left, median 64.3% (58.8-73.8). Real
-   counts: Secret Harbour Lib->ON 59.3% official (WA); Nepean ON->Lib 77.5% but vs an independent, no Labor, so
-   not the same contest. One real count per direction: no fix justified yet. The lever is the Liberal card: no
-   vic2026 how-to-vote entry exists (`HTV0`), and the HTV override only covers Liberal-excluded ALP+GRN rows.
+1. OPEN: Liberal<->One Nation flows (`reviews/lnp-onp-flows-by-election-2026-10-11.md`). (a) ON->Lib live median
+   64.3% vs 69-75% in every election since 2024: trace what pulls it down, try recency weighting. (b) Lib->ON varies
+   54-85% by election and moves statewide together; draw it once per simulation, not per seat. (c) no past Liberal
+   card orders for ON vs ALP on disk; collect only if (a)/(b) leave a gap. Liberal 2026 card not published.
 2. OPEN: re-score Richmond/Footscray/Brunswick/Preston/Pascoe Vale 2022 after AUSPOL_LEVEL_RECENT; shrink the
    person-rule slope toward the ratio carry (Pete, 2026-10-11); test recency/relevance-weighted fits.
 3. OPEN: nomination day **9 November 2026, 12 noon** (VEC-confirmed; Wikipedia's 13 Nov is a superseded draft):
