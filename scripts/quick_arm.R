@@ -284,9 +284,9 @@ if (length(tasks)) {
   # away 22 cached baseline runs, ~20 min per screen). An older baseline key whose inputs match in
   # everything but the code is adopted only after ONE of its elections, re-run here under the new
   # code, reproduces it byte for byte (sharedetail and allprobs). Any difference: no reuse.
-  # --no-reuse turns it off.
+  # OPT-IN with --reuse until it canaries every harness (plans/fast-iteration-plan-2026-10-11.md).
   need_base <- vapply(tasks, function(t) t$role == "base", NA)
-  if (any(need_base) && !("--no-reuse" %in% a)) {
+  if (any(need_base) && ("--reuse" %in% a)) {   # OPT-IN (review 2026-10-11): one canary cannot see edits to other harnesses
     mine <- key_parts_of(base_env)
     kd <- list.dirs(file.path(qd, "cache"), recursive = FALSE)
     kd <- kd[basename(kd) != key_base & file.exists(file.path(kd, "_key.rds"))]
