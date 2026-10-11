@@ -84,6 +84,15 @@ level_recent_decay_fit <- function(target, tab = NULL) {
   prs <- all_election_pairs(); prev <- stats::setNames(vapply(prs, `[[`, "", "prev"), vapply(prs, `[[`, "", "election"))
   eds <- election_dates()
   hs <- c(1, 1.5, 2, 3, 5, 7, 10, 14, 21, 30, 45, 60, 90, 150)
+  # AUSPOL_LEVEL_RECENT_HALFLIFE fixes the half-life (days) and fits only k
+  # (prereg Amendment 3: the free fit ran to 1 day and was too jumpy). Unset or
+  # "fit": the grid above.
+  hl <- Sys.getenv("AUSPOL_LEVEL_RECENT_HALFLIFE", "fit")
+  if (!identical(hl, "fit")) {
+    hv <- suppressWarnings(as.numeric(hl))
+    if (!is.finite(hv) || hv <= 0) stop("AUSPOL_LEVEL_RECENT_HALFLIFE must be \"fit\" or a positive number of days, not ", hl)
+    hs <- hv
+  }
   ks <- exp(seq(log(0.01), log(400), length.out = 90))
   best <- list(sse = Inf)
   for (h in hs) {
@@ -209,7 +218,7 @@ level_recent_apply <- function(levels, target, region, election_date, code = "LR
 .lr_decay_fit_cached <- function(target, tab = NULL) {
   if (!is.null(tab)) return(level_recent_decay_fit(target, tab))
   f <- out_path("level-recent.csv")
-  key <- paste(target, if (file.exists(f)) paste(file.info(f)$mtime, file.info(f)$size) else "none")
+  key <- paste(target, Sys.getenv("AUSPOL_LEVEL_RECENT_HALFLIFE", "fit"), if (file.exists(f)) paste(file.info(f)$mtime, file.info(f)$size) else "none")
   if (is.null(.lr_fit_memo[[key]])) assign(key, level_recent_decay_fit(target, NULL), envir = .lr_fit_memo)
   .lr_fit_memo[[key]]
 }
