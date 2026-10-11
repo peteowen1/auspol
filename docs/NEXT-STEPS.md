@@ -5,19 +5,22 @@ it stood before this rewrite: `backlog/journal-2026-09-19-hub-snapshot.md`).
 Decisions: `docs/DECISIONS.md`. Every seat verdict: `docs/SEAT-REGISTRY.md`.
 Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30.
 
-## 2026-10-10 HANDOFF (READ FIRST)
+## 2026-10-11 HANDOFF (READ FIRST)
 
-**Needs Pete:** nothing blocking. All work is on `main` (PRs #111-#116, each reviewed, CI green).
+**START HERE: `docs/plans/fast-iteration-plan-2026-10-11.md`** -- Pete wants ideas tested in minutes, deciding runs
+moved out of the session (GitHub Actions / scheduled), and the next session to ORCHESTRATE Sonnet agents to find
+why a test takes an hour. Testing one level idea took ~4 h on 2026-10-10/11.
 
-**Shipped 2026-10-10, live:** `AUSPOL_IND_PERSON` (PR #116, on Pete's override after it missed its pre-registered
-bar; `plans/prereg-ind-person-2026-10-10.md`): a sole, non-sitting independent's own small earlier record can
-LOWER their vote. Deciding 20k run: 22-election seat log loss 0.3239 flat, AEF-7 ledger 0.2733 -> 0.2732 (AEF
-0.2825), Malvern 2022 IND 8.6 -> 1.7. Live forecast run 38040218574: Broadmeadows IND 5.4 -> 3.89.
-`shipped-models` republished from that run. Also today: seat-poll reads memoised (vic2026 run 102 -> 92 s,
-byte-identical); `output/published-predictions.csv` (every published prediction, 22 elections); the ledger
-artifact's every-candidate view (v53); NSW 2027 leader-seat bonus; candidate names HTML-decoded (no model effect).
+**Needs Pete:** nothing blocking.
 
-**Shipped 2026-10-11, live:** `AUSPOL_LEVEL_RECENT` (PR #118, Pete's override; `plans/prereg-level-recent-blend-2026-10-10.md`): the day-before ALP/LNP/GRN level leans on the last 28 days of polls. Deciding run: seat log loss 0.3239 -> 0.3172 (1.7 SE), ledger 0.2732 -> 0.2682 (AEF 0.2825); nsw2019 +0.045. `shipped-models` republished (with `level-recent.csv`; CI now fails without it); ledger artifact v54. No live effect until Victorian polls land in the final 28 days.
+**Live:** `AUSPOL_IND_PERSON` (PR #116) and `AUSPOL_LEVEL_RECENT` (PR #118; now `decay`, half-life 20 days, on
+Pete's decision WITHOUT a measured run at 20 days -- `plans/prereg-level-recent-blend-2026-10-10.md`). Last measured:
+28-day window seat log loss 0.3172 / ledger 0.2682; 10-day decay 0.3181 / 0.2708 (fed2013 +0.025); no blend 0.3239.
+The `shipped-models` scoreboard describes the 28-day run; refresh it at the next full rebuild. `output/` holds the
+10-day decay run (c633fd8).
+
+**Owed to Pete (register):** an own poll source instead of AE Forecasts' files (`PETE-ASKED-FOR.md`, Wikipedia
+first; `scripts/check_poll_coverage.R` found 4 genuine final-month gaps; older Wikipedia pages do not parse yet).
 
 **Refused (built, off; do not re-run without a new idea):** the two-way person rule and its linear variant
 (large earlier records mislead both ways: Fowler 2022, Barker 2019); the never-stood "typical level" half
