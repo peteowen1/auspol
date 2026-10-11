@@ -28,7 +28,9 @@ level feature is frozen, so it understates what ships.
 and screen, or close. `worktree-agent-a4181ce1235917bd7` (NSW 2023 JSON for ITG) belongs to the NSW 2027 blog item.
 
 **OPEN, from the source scour (`reviews/source-scour-2026-10-11.md`):** the 2-8 Oct RedBridge poll is missing from
-the live forecast (AE file and our cache both end in September); print the Liberal/One Nation flows the published
+the live forecast (AE file ends in September; OUR source has it since 2026-10-11 20:30, when the vic2026 page was
+re-fetched and the 9 Oct copy kept as `raw/archive/vic2026_opinion.2026-10-09.html`; the scraper has no refresh flag,
+so a refresh is that manual archive-then-rerun until one is added); print the Liberal/One Nation flows the published
 forecast uses against Nepean (ON->Lib 77.5%) and Secret Harbour (Lib->ON 59-70%).
 
 **SHIPPED (merge 89cd605):** own poll source step 1 -- every election parsed or a recorded reason, two-way coverage,
