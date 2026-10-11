@@ -135,3 +135,12 @@ The fitted half-life (1-1.5 days) leans on the final poll or two: large wins (wa
 vic2018 -0.043, fed2007 -0.043) and large losses, and the recent elections that make up the ledger mostly lose.
 The share-level curve (`scratchpad decay_curve.R`, lowest mean level error at 1-3 days) hid that variance. The
 shipped 28-day form stays, with its window still a hard cut (recorded in PETE-ASKED-FOR.md). To Pete.
+
+## Amendment 3 (2026-10-11, Pete chose it after Amendment 2's refusal) -- fixed 10-day half-life
+
+POST HOC and a THIRD look at the same 22 elections: a pass is weaker evidence than the original design intended,
+and is recorded as such. `AUSPOL_LEVEL_RECENT=decay` with `AUSPOL_LEVEL_RECENT_HALFLIFE=10`: the half-life is FIXED
+at 10 days, chosen before running to match the shipped window's memory (a uniform 28-day window has mean poll age
+14 days; an exponential decay with mean age 14 has half-life 14 x ln 2 = 9.7), not fitted. k is still fitted
+time-forward. Cliff-free like Amendment 2, steadier than its 1-day fit. Same three criteria against the shipped
+28-day form, all 22 elections.
