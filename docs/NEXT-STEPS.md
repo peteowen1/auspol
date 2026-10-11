@@ -18,6 +18,16 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30.
    (`AUSPOL_OTHERS_SCALE_JUR`), `worktree-agent-ad78f1dffe2279a6a` (`AUSPOL_SALIENCE_STATE`, 785 lines): prereg and
    screen, or close.
 
+**Overnight 2026-10-12 (autonomous, Pete asleep) -- status as it moves:**
+- Flow-only score `scripts/score_flows_oracle.R` (actual primaries + each config's flows; event-level split error
+  and winner accuracy, all 22): RUNNING; result goes to `reviews/lnp-onp-flows-by-election-2026-10-11.md`.
+- Worktrees removed (merged, clean): a83f23..., a9339e..., afe07d... (+ branches). KEPT for Pete: ab68314...
+  (untracked `prereg-zero-order-2026-10-03.md` differs from dev's), a4181ce... (NSW 2023 ITG JSON commit d63f08e,
+  same message as dev's e0f4551 but a different patch), ab43fc4... (uncommitted poll-sample edits),
+  a1a95ec... `zero-order-late` (4 uncommitted changes).
+- `DECISIONS.md` 44,780 -> 39,078 chars (2026-09-19..28 archived to `backlog/journal-decisions-2026-09-19-to-09-28.md`).
+- dev -> main: tonight's flow code under review (Sonnet x2); PR to be opened, NOT merged.
+
 **Decided 2026-10-11 23:40:** the decay20 deciding run (`deciding-runs/20261011-1854-decay20/`, DONE, all 22, 20k
 sims): shipped 20-day decay vs no blend, seat log loss 0.3163 -> 0.3110, -0.0053 (SE 0.0037), better by >1 SE; AEF-7
 subset -0.0022 (SE 0.0028). The shipped half-life stands. `shipped-models` scoreboard still describes the 28-day run.

@@ -705,5 +705,26 @@ apply_published_flags <- function(flags = PUBLISHED_FLAGS) {
   # "published" coincide and nothing needs doing for it.
   unset <- setdiff(unset, names(flags)[!nzchar(flags)])
   if (length(unset)) do.call(Sys.setenv, as.list(flags[unset]))
+  validate_flow_arm()
   unset
+}
+
+# AUSPOL_FLOW_TF arms must fail HERE, at startup: inside the harnesses the flow
+# override sits in a tryCatch that turns any error into the pooled flow table,
+# so a misconfigured arm would score as neither the arm nor the shipped model
+# while its filename fingerprint says it is the arm (review 2026-10-12).
+validate_flow_arm <- function() {
+  if (!identical(Sys.getenv("AUSPOL_FLOW_TF", "0"), "1")) return(invisible(TRUE))
+  tag <- Sys.getenv("AUSPOL_FLOW_MODEL_TAG", "")
+  if (!nzchar(tag)) stop("AUSPOL_FLOW_TF=1 needs AUSPOL_FLOW_MODEL_TAG (models from scripts/fit_xgb_flows_tf.R)", call. = FALSE)
+  if (!identical(Sys.getenv("AUSPOL_XGB_FLOWS", "1"), "1"))
+    stop("AUSPOL_FLOW_TF=1 has no effect with AUSPOL_XGB_FLOWS off", call. = FALSE)
+  man <- file.path("output", sprintf("xgb-flows-%s-asat-manifest.csv", tag))
+  if (!file.exists(man)) stop("AUSPOL_FLOW_TF=1: no ", man, "; run scripts/fit_xgb_flows_tf.R ", tag, " <half-life>", call. = FALSE)
+  hl_trained <- unique(utils::read.csv(man)$half_life)
+  hl_now <- suppressWarnings(as.numeric(Sys.getenv("AUSPOL_FLOW_RATE_HL", "0")))
+  if (length(hl_trained) != 1L || !isTRUE(all.equal(hl_trained, hl_now)))
+    stop(sprintf("AUSPOL_FLOW_TF=1: tag %s was trained at half-life %s but AUSPOL_FLOW_RATE_HL is %s",
+                 tag, paste(hl_trained, collapse = "/"), Sys.getenv("AUSPOL_FLOW_RATE_HL", "0")), call. = FALSE)
+  invisible(TRUE)
 }

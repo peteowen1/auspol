@@ -266,6 +266,14 @@ xgb_flow_conditional_override_for <- function(shares, target_election, prev_elec
     }
   }
   if (identical(model_f, "__none__")) return(NULL)
+  # AUSPOL_FLOW_TF=1 FEEDS FEATURES ONLY THE TAGGED TREES WERE TRAINED ON. A
+  # mistyped or missing tag would otherwise fall through to the untagged
+  # all-data model above (which saw the target) while every log line still
+  # reads as the arm (review 2026-10-12).
+  if (identical(Sys.getenv("AUSPOL_FLOW_TF", "0"), "1") &&
+      !startsWith(basename(model_f), sprintf("xgb-flows-v1%s-asat-", .flow_model_tag())))
+    stop(sprintf("AUSPOL_FLOW_TF=1 with tag '%s' resolved to %s, not a tagged as-at model for %s. Run scripts/fit_xgb_flows_tf.R <tag> <half-life>.",
+                 Sys.getenv("AUSPOL_FLOW_MODEL_TAG"), basename(model_f), target_election), call. = FALSE)
   if (!file.exists(model_f) || !file.exists(cols_f) || !file.exists(feat_f)) {
     cat(sprintf("XF9! model/cols/features file missing -- run scripts/fit_xgb_flows_v1.R; AUSPOL_XGB_FLOWS per-seat override skipped\n"))
     return(NULL)
@@ -321,8 +329,8 @@ xgb_flow_conditional_override_for <- function(shares, target_election, prev_elec
     key_rates <- merge(key_rates, .rt$pool, by = c("from", "to"), all.x = TRUE)
     for (cc in c("cond_rate", "cond_n", "pool_rate", "pool_n"))
       data.table::set(key_rates, which(is.na(key_rates[[cc]])), cc, 0)
-    cat(sprintf("XF9  time-forward flow features (AUSPOL_FLOW_TF=1, half-life %s): %d keys, model tag %s\n",
-                if (is.finite(.hl) && .hl > 0) sprintf("%.2f y", .hl) else "none", nrow(key_rates), .flow_model_tag()))
+    cat(sprintf("XF9  time-forward flow features (AUSPOL_FLOW_TF=1, half-life %s): %d keys, model %s\n",
+                if (is.finite(.hl) && .hl > 0) sprintf("%.2f y", .hl) else "none", nrow(key_rates), basename(model_f)))
   } else {
     key_rates[, `:=`(cond_rate = rate, cond_n = n_cell, pool_rate = rate, pool_n = n_cell)]
   }
