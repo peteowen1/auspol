@@ -323,7 +323,10 @@ if (length(tasks)) {
     adopt <- function(old, ids, h) {
       for (u in ids) {
         dir.create(cache_dir(key_base, u), recursive = TRUE, showWarnings = FALSE)
-        file.copy(list.files(file.path(old, u), full.names = TRUE), cache_dir(key_base, u), overwrite = TRUE)
+        src <- list.files(file.path(old, u), full.names = TRUE)
+        src <- src[basename(src) != "meta.rds"]   # meta.rds is what `have()` tests: never copied, written below once the rest is in
+        if (!all(file.copy(src, cache_dir(key_base, u), overwrite = TRUE)))
+          stop("quick_arm: copying the reused baseline for ", u, " from ", basename(old), " failed", call. = FALSE)
         m <- readRDS(file.path(old, u, "meta.rds")); m$hcode <- unname(hcodes[h]); m$reused_from <- basename(old)
         saveRDS(m, file.path(cache_dir(key_base, u), "meta.rds"))   # written last: meta.rds is what `have()` tests
       }
@@ -335,7 +338,9 @@ if (length(tasks)) {
       ran <- NA_character_; tries <- 0L   # the canary is run once per harness; at most 2 older baselines are compared to it
       for (old in kd) {
         if (tries >= 2L) break
-        cov <- miss[file.exists(file.path(old, miss, "meta.rds"))]
+        # not ones adopted from an earlier old key in this loop (by exact code match): a weaker canary-only copy must not overwrite them
+        # (the canary already run stays in: a second old key is compared against that same run)
+        cov <- miss[file.exists(file.path(old, miss, "meta.rds")) & (miss %in% ran | !vapply(miss, function(u) have(key_base, u), NA))]
         if (!length(cov)) next
         oldh <- vapply(cov, function(u) { m <- readRDS(file.path(old, u, "meta.rds")); if (is.null(m$hcode)) NA_character_ else m$hcode }, "")
         same_code <- cov[!is.na(oldh) & oldh == unname(hcodes[h])]
@@ -390,7 +395,8 @@ if (length(tasks)) {
 
 # ---- score --------------------------------------------------------------------
 if (base_only) {
-  miss <- U$id[!vapply(U$id, function(u) have(key_base, u), NA)]
+  miss <- U$id[!vapply(U$id, function(u) have(key_base, u) &&
+                         all(file.exists(file.path(cache_dir(key_base, u), c("sharedetail.csv", "allprobs.csv")))), NA)]
   if (length(miss)) stop("quick_arm: baseline incomplete after the run: ", paste(miss, collapse = ", "))
   cat(sprintf("quick_arm: baseline %s complete for %d election(s); runtime %.0f s\n", key_base, nrow(U), as.numeric(difftime(Sys.time(), t_start, units = "secs"))))
   quit(status = 0)

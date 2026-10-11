@@ -15,19 +15,24 @@
 # Output lives in deciding-runs/<YYYYMMDD-HHMM>-<label>/ (gitignored; never output/):
 #   params.json  what was asked           log.txt      everything the run printed
 #   results.txt  the Q0..Q9 verdict lines started.txt  worker pid, parent pid, time
-#   DONE or FAILED   marker file, written last; its content is the exit code and time
-# The next session finds the newest folder with a DONE file and reads results.txt.
+#   DONE or FAILED   marker file, written last; its content is the exit code and time (and why)
+#   PENDING      scheduled, not started: past its time, the task never ran (logged off, asleep)
+#   RUNNING      started; with no DONE/FAILED and no live worker pid (started.txt), it was killed
+# The next session reads every folder's marker, not only the newest DONE one. DONE also requires
+# that the run scored exactly the elections asked for (quick_arm alone defaults to AEF-7).
 #
 # Limits: the task runs as you, "only when logged on" (a locked screen is fine; a
 # logged-out machine is not). The code is a detached worktree snapshot of HEAD (uncommitted
-# changes refuse), so edits during the run cannot reach it. Slots=1 because the machine is memory-tight; expect hours
+# changes refuse), so edits during the run cannot reach it. The fresh snapshot compiles src/ and copies
+# the inputs first: ~8 minutes before the first harness (measured 2026-10-11, 648 s for a 2-run
+# smoke). Slots=1 because the machine is memory-tight; expect hours
 # for the full 22 at 20,000 simulations. Nothing here is published or pushed.
 param(
   [string]$Arm = "",
   [string]$Base = "",
   [int]$Sims = 20000,
   [string]$Label = "run",
-  [string]$Pairs = "",
+  [string]$Pairs = "all",
   [string]$At = "",
   [switch]$Worker,
   [string]$RunDir = ""
@@ -37,36 +42,52 @@ $repo = Split-Path -Parent $PSScriptRoot
 
 if ($Worker) {
   # ---- runs inside the scheduled task ----------------------------------------
-  $p = Get-Content (Join-Path $RunDir "params.json") -Raw | ConvertFrom-Json
-  Set-Location $p.Code
-  $me = Get-CimInstance Win32_Process -Filter "ProcessId=$PID"
-  $par = Get-CimInstance Win32_Process -Filter "ProcessId=$($me.ParentProcessId)" -ErrorAction SilentlyContinue
-  "worker pid $PID; parent pid $($me.ParentProcessId) ($($par.Name)); started $(Get-Date -Format s)" |
-    Set-Content (Join-Path $RunDir "started.txt")
+  # EVERY path out of here leaves DONE or FAILED (a review found four throws before the old try that
+  # left neither). A run killed from outside (reboot, watchdog, 24 h limit) still cannot write one:
+  # RUNNING without DONE/FAILED and no live worker pid (started.txt) means it died.
   $log = Join-Path $RunDir "log.txt"
-  $rargs = @("scripts/quick_arm.R") + @($p.Arm -split "\s+" | Where-Object { $_ }) +
-    @("--sims=$($p.Sims)", "--slots=1", "--no-reuse")
-  if ($p.Base) { $rargs += "--base=$($p.Base)" }
-  if ($p.Pairs) { $rargs += "--pairs=$($p.Pairs)" }
-  $code = 1
+  $code = 1; $why = "worker failed before Rscript started"
   try {
+    Remove-Item (Join-Path $RunDir "PENDING") -ErrorAction SilentlyContinue
+    "started $(Get-Date -Format s)" | Set-Content (Join-Path $RunDir "RUNNING")
+    $p = Get-Content (Join-Path $RunDir "params.json") -Raw | ConvertFrom-Json
+    Set-Location $p.Code
+    $me = Get-CimInstance Win32_Process -Filter "ProcessId=$PID"
+    $par = Get-CimInstance Win32_Process -Filter "ProcessId=$($me.ParentProcessId)" -ErrorAction SilentlyContinue
+    "worker pid $PID; parent pid $($me.ParentProcessId) ($($par.Name)); started $(Get-Date -Format s)" |
+      Set-Content (Join-Path $RunDir "started.txt")
+    $rargs = @("scripts/quick_arm.R") + @($p.Arm -split "\s+" | Where-Object { $_ }) +
+      @("--sims=$($p.Sims)", "--slots=1", "--no-reuse", "--pairs=$($p.Pairs)")
+    if ($p.Base) { $rargs += "--base=$($p.Base)" }
     $ErrorActionPreference = "Continue"   # Rscript writes warnings to stderr; that is not a failure
     $env:AUSPOL_QUICK_DIR = $p.QuickDir
     # PowerShell + Rscript: arrow segfaults under Git Bash R
     # Out-File utf8, not *> (UTF-16 in PowerShell 5.1, which grep and the next session cannot search)
     & Rscript @rargs 2>&1 | ForEach-Object { "$_" } | Out-File $log -Encoding utf8
-    $code = $LASTEXITCODE
+    $code = $LASTEXITCODE; $why = "quick_arm exited $code"
+    $ErrorActionPreference = "Stop"
+    $all = @(Get-Content $log)
+    $i = ($all | Select-String -Pattern "^Q0" | Select-Object -First 1).LineNumber
+    # The election count scored must be the one asked for: quick_arm's own default is AEF-7, and a
+    # silently narrower run was the review's first blocker.
+    $want = if ($p.Pairs -eq "all") { 22 } else { @($p.Pairs -split ",").Count }
+    $got = if ($i -and $all[$i - 1] -match "in (\d+) election") { [int]$Matches[1] } else { -1 }
+    if ($code -eq 0 -and $i -and $got -eq $want) {
+      $hdr = @($all | Select-String -Pattern "^quick_arm: arm \{" | Select-Object -First 1 | ForEach-Object { $_.Line })
+      @("commit $($p.Commit)") + $hdr + $all[($i - 1)..($all.Count - 1)] | Set-Content (Join-Path $RunDir "results.txt")
+      if (-not (Test-Path (Join-Path $RunDir "results.txt"))) { throw "results.txt was not written" }
+      "exit 0 at $(Get-Date -Format s)" | Set-Content (Join-Path $RunDir "DONE")
+      $why = ""
+    } elseif ($code -eq 0) {
+      $code = 2; $why = "quick_arm exited 0 but scored $got election(s), asked for $want (Q0 line $(if ($i) { 'present' } else { 'missing' }))"
+    }
   } catch {
-    $_ | Out-String | Add-Content $log
+    $why = "$why; $($_ | Out-String)"
+    try { $why | Add-Content $log -Encoding utf8 } catch {}
   }
-  $all = Get-Content $log
-  $i = ($all | Select-String -Pattern "^Q0" | Select-Object -First 1).LineNumber
-  if ($code -eq 0 -and $i) {
-    $all[($i - 1)..($all.Count - 1)] | Set-Content (Join-Path $RunDir "results.txt")
-    "exit 0 at $(Get-Date -Format s)" | Set-Content (Join-Path $RunDir "DONE")
-  } else {
-    "exit $code at $(Get-Date -Format s); no results (see log.txt)" | Set-Content (Join-Path $RunDir "FAILED")
-  }
+  if ($why) { "exit $code at $(Get-Date -Format s): $why (see log.txt)" | Set-Content (Join-Path $RunDir "FAILED") }
+  Remove-Item (Join-Path $RunDir "RUNNING") -ErrorAction SilentlyContinue
+  if (-not $p) { exit $code }
   # Tidy up: quick_arm --clean removes the scratch junctions before the directory (never what they
   # point at); then the snapshot worktree. Failures here are logged, not fatal: the result is written.
   try {
@@ -74,6 +95,8 @@ if ($Worker) {
     & Rscript scripts/quick_arm.R --clean 2>&1 | ForEach-Object { "$_" } | Add-Content $log -Encoding utf8
     Set-Location $p.Repo
     & git -C $p.Repo worktree remove --force $p.Code 2>&1 | ForEach-Object { "$_" } | Add-Content $log -Encoding utf8
+    $work = Split-Path -Parent $p.Code
+    if (-not (Get-ChildItem $work -Force)) { Remove-Item $work }
   } catch { $_ | Out-String | Add-Content $log }
   try { Unregister-ScheduledTask -TaskName $p.TaskName -Confirm:$false } catch {}
   exit $code
@@ -110,7 +133,7 @@ $quickDir = Join-Path $work "scratch"
    TaskName = $task; QuickDir = $quickDir; Code = $snap; Repo = $repo } | ConvertTo-Json | Set-Content (Join-Path $RunDir "params.json")
 
 Write-Host "deciding run: arm {$Arm} vs baseline {$(if ($Base) { $Base } else { 'shipped' })}"
-Write-Host "  sims $Sims, pairs $(if ($Pairs) { $Pairs } else { 'all 22' }), slots 1, baseline reuse OFF"
+Write-Host "  sims $Sims, pairs $(if ($Pairs -eq 'all') { 'all 22' } else { $Pairs }), slots 1, baseline reuse OFF"
 Write-Host "  code $sha, snapshot $snap (edits to this checkout cannot reach the run)"
 Write-Host "  folder $RunDir"
 
@@ -126,6 +149,8 @@ $trigger = New-ScheduledTaskTrigger -Once -At $when
 $settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -StartWhenAvailable -ExecutionTimeLimit (New-TimeSpan -Hours 24)
 $principal = New-ScheduledTaskPrincipal -UserId ([Security.Principal.WindowsIdentity]::GetCurrent().Name) -LogonType Interactive -RunLevel Limited
 Register-ScheduledTask -TaskName $task -Action $action -Trigger $trigger -Settings $settings -Principal $principal | Out-Null
+# PENDING until the worker starts: one still here after its time means the task never ran (logged off, asleep).
+"scheduled for $(Get-Date $when -Format s); task $task" | Set-Content (Join-Path $RunDir "PENDING")
 if ($At) {
   Write-Host "scheduled task '$task' will start at $when. Check $RunDir for a DONE or FAILED file afterwards."
 } else {
