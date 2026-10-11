@@ -26,8 +26,11 @@ Number of names per class, 120 rows (agent A added `AUSPOL_FB_FLOW_SD`, read in 
 1. **Live and backtest MP-slope tiers differ (checked).** `fit_seats_full.R:925` keeps a party's sitting-member
    slope only when `n_member >= 8`; the six harnesses (`backtest_candidate_vic.R:481` and siblings) keep any
    finite one. Both drop GRN (harness via `AUSPOL_MP_SLOPE_GRN` default "0", live hard-coded), so that part
-   matches. A slope the backtest applies can be refused live, and the `>= 8` is a `min_n` cliff. OPEN: print
-   which parties each path keeps for vic2026 before deciding; any change is a model change.
+   matches. A slope the backtest applies can be refused live, and the `>= 8` is a `min_n` cliff. **Dormant
+   today (checked):** `output/mp-slope-by-class.csv` has IND n=53, OTH_RIGHT 14, GRN 21 (dropped anyway), and ONP
+   n=1 with no member slope (NA, dropped by both paths); the per-target file has n >= 13 for every finite row. It
+   bites only when a party's member count sits between 1 and 7 with a finite slope. Fix when touched: shrink
+   toward the also-ran slope instead of the cliff, in both paths.
 2. **Harness-only model switches, all off or at a constant, none in the registry**, so quick_arm cannot screen
    them and the parity table cannot see them: `AUSPOL_ELASTIC_OVER` / `_FALL`, `FLOW_PRIORS` (fed, default
    "1"), `FLOW_TREND`, `FLOW_SD_BY_SOURCE`, `FLOW_POOL_VOLATILE`, `IND_TREND`, `MINOR_POLL_ADJ`,
