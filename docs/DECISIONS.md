@@ -4,6 +4,10 @@ One line each: the decision, the one fact behind it, a link. Newest first.
 Created 2026-09-19 (the verse convention; auspol had none). Older decisions
 live in the plans they came from (`docs/plans/prereg-*.md` RESULT sections).
 
+- **2026-10-11 Iterate on AEF-7, ship on all 22 (Pete).** `quick_arm.R` defaults to the seven AEF-7 elections (681 of 2,120 seats); AEF-7 called all three level-blend verdicts, but the refusals that mattered came from outside it (wa2013, nsw2019), so the 22-election run stays the ship gate (`reviews/fast-iter-share-screen-2026-10-11.md`).
+- **2026-10-11 Deciding runs go to a LOCAL detached job, not GitHub Actions (Pete).** Actions needed a 140 MB inputs bundle on a public release, re-uploaded every rebuild; workflow parked at `reference/parked/deciding-run.yml.parked` (`reviews/fast-iter-ci-deciding-run-2026-10-11.md`).
+- **2026-10-11 Cross-seat cache keyed on the switches the fit READS (PR #119).** Every arm used to refit it (any AUSPOL_* var was in the key): vic2022 arm 106 -> 53 s, outputs byte-identical; the fit reads only AUSPOL_TIME_FORWARD_FITS (`reviews/fast-iter-profile-2026-10-11.md`).
+- **2026-10-11 Fewer sims is not a speed lever.** Simulation is 1.8 of 54 s (3%) of a 1,000-sim vic run; the time is fitting (`reviews/fast-iter-profile-2026-10-11.md`).
 - **2026-10-11 Level blend: 20-day age decay replaces the 28-day window (Pete's decision, unmeasured at 20 days).** Free-fitted 1-day decay refused (variance); 10-day tied the window (fed2013 +0.025) (`plans/prereg-level-recent-blend-2026-10-10.md`).
 - **2026-10-11 Day-before level leans on the last 28 days of polls: SHIPPED on Pete's override.** Trend lagged late polls (vic2022 Coalition 31.4 vs 34.1 vs 34.5); seat log loss -0.0067 (1.7 SE), ledger -0.0050, nsw2019 +0.045 (`plans/prereg-level-recent-blend-2026-10-10.md`).
 - **2026-10-10 Independent's own small record can lower their vote: SHIPPED on Pete's override.** Unseen-election screen -73 (SE 102), deciding run 0.3239 flat / ledger 0.2733 -> 0.2732; missed the 2-SE bar; two-way and linear-both-ways versions refused (`plans/prereg-ind-person-2026-10-10.md`).

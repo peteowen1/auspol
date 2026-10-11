@@ -7,17 +7,33 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30.
 
 ## 2026-10-11 HANDOFF (READ FIRST)
 
-**START HERE: `docs/plans/fast-iteration-plan-2026-10-11.md`** -- Pete wants ideas tested in minutes, deciding runs
-moved out of the session (GitHub Actions / scheduled), and the next session to ORCHESTRATE Sonnet agents to find
-why a test takes an hour. Testing one level idea took ~4 h on 2026-10-10/11.
+**Fast-iteration plan (`plans/fast-iteration-plan-2026-10-11.md`): Phase 1 done, Phase 2 half built.** Merged in PR #119:
+- statewide-level ideas: `scripts/screen_level_share.R`, ~10 s over all 22 elections, can stop an idea, never clear one
+  (its default `--ref=decay:10` matches the run now in `output/`; after the next full rebuild pass `--ref=decay:20`);
+- `quick_arm.R` defaults to the AEF-7 elections (`--pairs=all` for 22);
+- the cross-seat cache no longer refits on every arm (vic2022 arm 106 -> 53 s).
+Five investigation reports: `reviews/fast-iter-*-2026-10-11.md`.
 
-**Needs Pete:** nothing blocking.
+**IN FLIGHT at wrap-up (Sonnet agents, worktree branches, NOT reviewed or merged; check `git branch -a | grep worktree-agent`):**
+1. Local deciding-run launcher (`scripts/deciding_run.*`, detached, `--at HH:MM` for overnight, results in gitignored
+   `deciding-runs/`) + plan item 6 (per-harness canary so cached baselines are reused safely; fixes the crash after a
+   "differs" verdict). Review its two proofs before merging.
+2. Own poll source step 1: Wikipedia scrape completed for every election + coverage both ways + the swap proposal
+   (`reviews/own-poll-source-step1-2026-10-11.md`). Step 2 (switch the trend's input) is Pete's decision.
 
-**Live:** `AUSPOL_IND_PERSON` (PR #116) and `AUSPOL_LEVEL_RECENT` (PR #118; now `decay`, half-life 20 days, on
-Pete's decision WITHOUT a measured run at 20 days -- `plans/prereg-level-recent-blend-2026-10-10.md`). Last measured:
-28-day window seat log loss 0.3172 / ledger 0.2682; 10-day decay 0.3181 / 0.2708 (fed2013 +0.025); no blend 0.3239.
-The `shipped-models` scoreboard describes the 28-day run; refresh it at the next full rebuild. `output/` holds the
-10-day decay run (c633fd8).
+**Next speed-ups, ranked (from `reviews/fast-iter-profile-2026-10-11.md` / `-cacheable-`):** the same read-set key for
+the other fits (defectors, personal prior vote, departed slope, salience: ~25 s of a 54 s vic run); the seat-poll memo
+(`R/seat_poll_blend.R`) still keys on every switch; reuse-baseline-and-resimulate for spread/few-cell arms
+(`reviews/fast-iter-delta-resim-2026-10-11.md`). Known gap: the backtest's xgb level feature is frozen, so a harness
+level arm understates what ships (live run feeds the new level into it); unmeasured.
+
+**Needs Pete:** nothing blocking. Coming: the poll-source swap decision once step 1 reports.
+
+**Live:** `AUSPOL_IND_PERSON` (PR #116) and `AUSPOL_LEVEL_RECENT` (`decay`, half-life 20 days, on Pete's decision
+WITHOUT a measured run at 20 days -- `plans/prereg-level-recent-blend-2026-10-10.md`). Last measured: 28-day window seat
+log loss 0.3172 / ledger 0.2682; 10-day decay 0.3181 / 0.2708; no blend 0.3239. The `shipped-models` scoreboard
+describes the 28-day run; refresh it at the next full rebuild (the first job for the new local deciding run).
+`output/` holds the 10-day decay run (c633fd8).
 
 **Owed to Pete (register):** an own poll source instead of AE Forecasts' files (`PETE-ASKED-FOR.md`, Wikipedia
 first; `scripts/check_poll_coverage.R` found 4 genuine final-month gaps; older Wikipedia pages do not parse yet).
@@ -28,7 +44,7 @@ first; `scripts/check_poll_coverage.R` found 4 genuine final-month gaps; older W
 mixture independent models (`plans/prereg-ind-typical-2026-10-09.md`).
 
 **Queue, ranked:**
-1. OPEN: poll coverage, AE files vs Wikipedia, deduplicated and matched by firm within a date tolerance (first pass: one Resolve SA 2026 poll missing from AE; scrape parsed nothing for fed2007/2010, nsw2019, WA 2001-13 -- fix those parses first). ~1 h.
+1. IN FLIGHT (agent, see handoff): poll coverage, AE files vs Wikipedia, deduplicated and matched by firm within a date tolerance (first pass: one Resolve SA 2026 poll missing from AE; scrape parsed nothing for fed2007/2010, nsw2019, WA 2001-13 -- fix those parses first). ~1 h.
 1b. OPEN: re-score Richmond/Footscray/Brunswick/Preston/Pascoe Vale 2022 after AUSPOL_LEVEL_RECENT; shrink the person-rule slope toward the ratio carry (Pete, 2026-10-11) instead of only bounding it; test recency/relevance-weighted fits.
 2. OPEN: nomination day **9 November 2026**: refit successor rates on the final candidate list
    (`build_departed_successors.R` chain), rerun the live forecast. Victoria votes 28 November 2026.
