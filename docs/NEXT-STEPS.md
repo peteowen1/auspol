@@ -14,6 +14,10 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30.
    (fed2025 Labor -4.6 pts). Ship the better component (prereg + all-22 deciding run + a live vic2026 model first), or
    hold until the primary misses are fixed? LIVE IMPACT (tf2): ON->Lib 64.3 -> 72.2, Lib->ON 68.0 -> 73.4; seats
    ONP 14 -> 18, ALP 32 -> 30, LNP 35 -> 34 (medians). `reviews/lnp-onp-flows-by-election-2026-10-11.md`.
+0b. LEVEL BLEND (decision): same-code deciding run (`deciding-runs/20261012-0154-window28-vs-decay20/`, all 22 at
+   20k): the 28-day WINDOW beats the shipped 20-day DECAY, seat log loss 0.3110 -> 0.3096 (-0.0014, SE 0.0013) and
+   AEF-7 0.2710 -> 0.2682 (-0.0028, SE 0.0021); window better in 15 of 21 elections, worse in wa2017 (+0.032),
+   wa2008 (+0.009), vic2022 (+0.004), qld2020 (+0.003), sa2022 (+0.001). Switch `AUSPOL_LEVEL_RECENT` back to "1"?
 1. Own poll source STEP 2: should the trend read our Wikipedia/Poll Bludger file (layered: AE only where Wikipedia
    has nothing, i.e. fed2007, wa2001; Poll Bludger for nsw2019) instead of AE's files? Re-measure first: house effects
    keyed on AE firm labels ("Newspoll2"), the undecided rule (AE divides it out; write ours into CONSTANTS.md), the
@@ -38,8 +42,8 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30.
 - Full local rebuild at shipped flags (01:15-01:53, no publish; log `deciding-runs/rebuild-20261012-decay20.log`):
   all 22 seat log loss 0.3201 (2,120 seats; 6 floor seats carry 12.2%), AEF-7 ledger 0.2710 vs AEF 0.2825, primary
   RMSE like for like 4.771 vs 5.711. Earlier rebuilds: 28-day window 0.3172 / 0.2682, 10-day decay 0.3181. Not
-  like-for-like (code moved), so a same-code deciding run is RUNNING: `deciding-runs/20261012-0154-window28-vs-decay20/`
-  (arm = 28-day window, base = shipped 20-day decay, all 22 at 20k). Stage-1 as-at models were CACHED (inputs
+  like-for-like (code moved), so a same-code deciding run DONE: `deciding-runs/20261012-0154-window28-vs-decay20/`
+  (arm = 28-day window, base = shipped 20-day decay, all 22 at 20k; DONE, needs-Pete 0b). Stage-1 as-at models were CACHED (inputs
   unchanged): LEVEL_RECENT is off in stage 1, so the xgb layer never sees it.
 - Seat registry: wa2001 Pilbara/Kimberley, wa2008 Kalgoorlie (three of the six zero-probability winners) PARKED with causes.
 - `DECISIONS.md` 44,780 -> 39,078 chars (2026-09-19..28 archived to `backlog/journal-decisions-2026-09-19-to-09-28.md`).
