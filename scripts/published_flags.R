@@ -324,6 +324,7 @@ PUBLISHED_FLAGS <- c(
   AUSPOL_WA_DROP_3C          = "0",          # R/external_flows.R:170, prereg-wa-three-cornered arm
   AUSPOL_WA_DROP_LNP         = "0",          # R/external_flows.R:187, prereg-wa-flows refusal W2 arm
   AUSPOL_FLOW_CELL_SD        = "0",          # R/xgb_flow_override.R:377
+  AUSPOL_FLOW_RATE_HL        = "0",          # ARM, not shipped (2026-10-11): half-life in years for the historical flow rate fed to the per-seat flow model (R/xgb_flow_override.R, key_rates); "0" weights every earlier election equally. Screen: scripts/screen_flow_recency.py.
   AUSPOL_FLOW_MODEL_TAG      = "",           # R/xgb_flow_override.R:42: suffixes the flow model filename; empty = the shipped model
   AUSPOL_REENTRY_SPLIT       = "1",          # R/reentry_prior.R:129, reached via reentry_mode() at fit_seats_full.R:1150
   AUSPOL_REENTRY_GAP         = "",           # R/reentry_prior.R:135

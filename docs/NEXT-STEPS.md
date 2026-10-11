@@ -46,7 +46,9 @@ seat-poll precision blend, typical-vote / dedicated / mixture independent models
 
 **Queue, ranked:**
 1. OPEN: Liberal<->One Nation flows (`reviews/lnp-onp-flows-by-election-2026-10-11.md`). (a) ON->Lib live median
-   64.3% vs 69-75% in every election since 2024: trace what pulls it down, try recency weighting. (b) Lib->ON varies
+   64.3% vs 69-75% since 2024. Recency weighting: screen 5.60 -> 4.96 pts flow error at 2 y half-life, but the
+   inference-only arm (`AUSPOL_FLOW_RATE_HL=2`) was +0.0022 log loss on AEF-7 (1.2 SE worse; sa/qld better, fed2025
+   worse). NOT a refusal: retrain the flow trees on recency-weighted time-forward rate features, then rerun. (b) Lib->ON varies
    54-85% by election and moves statewide together; draw it once per simulation, not per seat. (c) no past Liberal
    card orders for ON vs ALP on disk; collect only if (a)/(b) leave a gap. Liberal 2026 card not published.
 2. OPEN: re-score Richmond/Footscray/Brunswick/Preston/Pascoe Vale 2022 after AUSPOL_LEVEL_RECENT; shrink the

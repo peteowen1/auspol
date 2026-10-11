@@ -239,7 +239,24 @@ xgb_flow_conditional_override_for <- function(shares, target_election, prev_elec
   hist <- TR[elections_before(TR$election, target_election)]   # time-forward inputs
 
   CLASSES <- c("ALP","GRN","IND","LNP","NAT","ONP","OTH","OTH_RIGHT")
-  key_rates <- hist[, list(rate = stats::weighted.mean(get("y"), w = pmax(1, get("cond_n"))),
+  # RECENCY (AUSPOL_FLOW_RATE_HL, years; "0" = every earlier election weighted
+  # equally, the previous behaviour). Flows trend: One Nation -> Liberal ran
+  # ~50% in 2004-2016 and 69-75% in every election since 2024. Time-forward
+  # screen (scripts/screen_flow_recency.py): vote-weighted error 5.60 points
+  # equal-weighted, 4.96 at a 1.5-2 year half-life, over 4,409 election-cells.
+  .hl <- suppressWarnings(as.numeric(Sys.getenv("AUSPOL_FLOW_RATE_HL", "0")))
+  .wt <- pmax(1, hist$cond_n)
+  if (is.finite(.hl) && .hl > 0) {
+    .d <- election_dates()
+    .age <- as.numeric(.d[[target_election]] - .d[hist$election]) / 365.25
+    if (anyNA(.age)) stop("AUSPOL_FLOW_RATE_HL: no election date for ",
+                          paste(unique(hist$election[is.na(.age)]), collapse = ", "))
+    .wt <- .wt * 0.5^(.age / .hl)
+    cat(sprintf("XF9  flow rates recency-weighted, half-life %.2f years (%d history rows, %d elections)\n",
+                .hl, nrow(hist), data.table::uniqueN(hist$election)))
+  }
+  hist[, rate_w := .wt]
+  key_rates <- hist[, list(rate = stats::weighted.mean(get("y"), w = get("rate_w")),
                             n = data.table::uniqueN(paste(get("election"), get("seat"), get("round")))),
                      by = c("from","surv","to")]
   key_n <- hist[, list(n_cell = data.table::uniqueN(paste(get("election"), get("seat"), get("round")))),
