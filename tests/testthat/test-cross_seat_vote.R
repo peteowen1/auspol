@@ -172,3 +172,60 @@ test_that("a corrupt cache file is recomputed, not trusted", {
   clear_cross_seat_cache()
   expect_equal(auspol:::.cs_carry_cached("nsw2023", C), a)
 })
+
+# ---- read-set keyed cache ---------------------------------------------------
+# The cache key holds the AUSPOL_* switches the computation READ (recorded at run time),
+# not every switch that is set. Synthetic computation: no corpus, no anchor clone.
+test_that("read-set cache: warm hit, irrelevant switch hits, a read switch misses", {
+  clear_cross_seat_cache()
+  d <- withr::local_tempdir()
+  withr::local_envvar(AUSPOL_CROSS_SEAT_CACHE_DIR = d, AUSPOL_RS_READ = "a", AUSPOL_RS_OTHER = NA)
+  n <- 0L
+  comp <- function() { n <<- n + 1L; paste0("v-", Sys.getenv("AUSPOL_RS_READ", "unset")) }
+  get1 <- function() auspol:::.cs_cached("rs-key", comp)
+  expect_identical(get1(), "v-a"); expect_identical(n, 1L)
+  expect_identical(get1(), "v-a"); expect_identical(n, 1L)          # 1: warm session hit
+  clear_cross_seat_cache()
+  expect_identical(get1(), "v-a"); expect_identical(n, 1L)          # 1: warm disk hit
+  withr::local_envvar(AUSPOL_RS_OTHER = "1")                          # 2: irrelevant switch
+  expect_identical(get1(), "v-a"); expect_identical(n, 1L)
+  withr::local_envvar(AUSPOL_RS_READ = "b")                           # 3: a switch it read
+  expect_identical(get1(), "v-b"); expect_identical(n, 2L)
+  withr::local_envvar(AUSPOL_RS_READ = "a")                           # both entries coexist
+  clear_cross_seat_cache()
+  expect_identical(get1(), "v-a"); expect_identical(n, 2L)
+  expect_identical(length(list.files(d, pattern = "^rs-key--.*\\.rds$")), 2L)
+})
+
+test_that("read-set cache: unset differs from a value, a gated read is recorded, no-name getenv means all", {
+  clear_cross_seat_cache()
+  d <- withr::local_tempdir()
+  withr::local_envvar(AUSPOL_CROSS_SEAT_CACHE_DIR = d, AUSPOL_RS_GATE = "0", AUSPOL_RS_INNER = "x")
+  n <- 0L
+  comp <- function() { n <<- n + 1L
+    if (identical(Sys.getenv("AUSPOL_RS_GATE", NA_character_), "1")) Sys.getenv("AUSPOL_RS_INNER", "") else "off" }
+  get1 <- function() auspol:::.cs_cached("rs-gate", comp)
+  get1(); get1(); expect_identical(n, 1L)
+  withr::local_envvar(AUSPOL_RS_INNER = "y"); get1(); expect_identical(n, 1L)   # gate closed: inner unread
+  withr::local_envvar(AUSPOL_RS_GATE = "1"); expect_identical(get1(), "y"); expect_identical(n, 2L)
+  withr::local_envvar(AUSPOL_RS_INNER = "z"); expect_identical(get1(), "z"); expect_identical(n, 3L)
+  withr::local_envvar(AUSPOL_RS_GATE = NA); get1(); expect_identical(n, 4L)     # unset differs from "0" (an empty value cannot be told from unset on Windows)
+  # a no-name Sys.getenv() records "every AUSPOL_* var"
+  k <- 0L
+  all_comp <- function() { k <<- k + 1L; length(Sys.getenv()) > 0 }
+  auspol:::.cs_cached("rs-all", all_comp); auspol:::.cs_cached("rs-all", all_comp); expect_identical(k, 1L)
+  withr::local_envvar(AUSPOL_RS_ANY = "1"); auspol:::.cs_cached("rs-all", all_comp); expect_identical(k, 2L)
+})
+
+test_that("read-set cache: the real carry fit hits under an unrelated switch and misses under one it reads", {
+  clear_cross_seat_cache()
+  d <- withr::local_tempdir()
+  withr::local_envvar(AUSPOL_CROSS_SEAT_CACHE_DIR = d, AUSPOL_LEVEL_RECENT = NA, AUSPOL_TIME_FORWARD_FITS = NA)
+  C <- cs_corpus()
+  nf <- function() length(list.files(d, pattern = "\\.rds$"))
+  a <- auspol:::.cs_carry_cached("nsw2023", C)
+  withr::local_envvar(AUSPOL_LEVEL_RECENT = "0")
+  expect_identical(auspol:::.cs_carry_cached("nsw2023", C), a); expect_identical(nf(), 1L)
+  withr::local_envvar(AUSPOL_TIME_FORWARD_FITS = "0")
+  auspol:::.cs_carry_cached("nsw2023", C); expect_identical(nf(), 2L)
+})

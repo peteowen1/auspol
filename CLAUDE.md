@@ -430,8 +430,17 @@ So, concretely, when changing a harness:
 ### Screen with `scripts/quick_arm.R` first; the full 20k run is for the SHIPPING decision
 
 ```
-Rscript scripts/quick_arm.R "AUSPOL_X=1 AUSPOL_Y=0" [--pairs=vic2022,nsw2023] [--sims=1000] [--base="AUSPOL_Z=1"]
+Rscript scripts/quick_arm.R "AUSPOL_X=1 AUSPOL_Y=0" [--pairs=vic2022,nsw2023|all] [--sims=1000] [--base="AUSPOL_Z=1"]
 ```
+
+**Iterate on AEF-7, ship on all 22** (Pete, 2026-10-11). With no `--pairs` the screen
+runs the seven AEF-7 elections (fed2022, fed2025, nsw2023, qld2024, sa2026, vic2022,
+wa2025; 681 of 2,120 seats). The shipping decision needs all 22 (`--pairs=all`), run
+outside the session. AEF-7 called all three level-blend verdicts of 2026-10-11, but the
+refusals that mattered came from outside it (wa2013 +0.061, nsw2019 +0.045), and the
+other 15 are the held-out guard against tuning to seven elections. For statewide-level
+ideas, `scripts/screen_level_share.R` (~10 s, all 22) comes first; it can stop an idea,
+never clear one.
 
 Do not rerun all six harnesses at 20,000 simulations to find out whether a tweak
 is worth pursuing. Profiled 2026-10-07 (Victorian harness, three pairs): 500 sims

@@ -1,3 +1,15 @@
+# auspol 0.4.95
+
+- The day-before level weights every poll of the campaign by age (half-life 20 days, Pete's choice) instead of a hard 28-day window; not separately measured at 20 days (the 10-day version tied the window).
+- `scripts/check_poll_coverage.R` compares AE Forecasts' poll files with Wikipedia (4 genuine final-month gaps).
+- `quick_arm.R --reuse` can reuse a cached baseline after a canary check (opt-in).
+
+# auspol 0.4.95
+
+- The day-before level now weights every poll of the campaign by age (half-life 20 days, Pete's choice) instead of a hard 28-day window. Not separately measured at 20 days; the 10-day version tied the window.
+- New `scripts/check_poll_coverage.R` compares AE Forecasts' poll files with Wikipedia (4 genuine final-month gaps found).
+- `quick_arm.R` can reuse a cached baseline across code edits after a canary check (`--reuse`, opt-in).
+
 # auspol 0.4.94
 
 - The day-before statewide level for Labor, the Coalition and the Greens now leans on the last 28 days of polls (`AUSPOL_LEVEL_RECENT`), because the poll trend lagged late movement: Victoria 2022 had the Coalition at 31.4 against polls of 34.1 and a result of 34.5, which pushed Labor's two-candidate share 5-8 points too high in Richmond, Footscray, Brunswick, Preston and Pascoe Vale. Over 22 elections seat log loss 0.3239 -> 0.3172, AEF-7 ledger 0.2732 -> 0.2682; shipped on Pete's override (1.7 SE, and NSW 2019 worse by 0.045). No live effect until polls land in the final 28 days.

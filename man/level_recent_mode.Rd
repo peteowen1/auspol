@@ -7,7 +7,8 @@
 level_recent_mode()
 }
 \value{
-\code{"1"} (shipped 2026-10-11) or \code{"0"} (off).
+\code{"decay"} (shipped 2026-10-11, 20-day half-life), \code{"1"} (28-day window, shipped earlier that day) or
+\code{"0"} (off).
 }
 \description{
 Is the recent-poll level blend on?

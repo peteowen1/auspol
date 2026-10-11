@@ -5,17 +5,22 @@ it stood before this rewrite: `backlog/journal-2026-09-19-hub-snapshot.md`).
 Decisions: `docs/DECISIONS.md`. Every seat verdict: `docs/SEAT-REGISTRY.md`.
 Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30.
 
-## 2026-10-10 HANDOFF (READ FIRST)
+## 2026-10-11 HANDOFF (READ FIRST)
 
-**Needs Pete:** nothing blocking. All work is on `main` (PRs #111-#116, each reviewed, CI green).
+**START HERE: `docs/plans/fast-iteration-plan-2026-10-11.md`** -- Pete wants ideas tested in minutes, deciding runs
+moved out of the session (GitHub Actions / scheduled), and the next session to ORCHESTRATE Sonnet agents to find
+why a test takes an hour. Testing one level idea took ~4 h on 2026-10-10/11.
 
-**Shipped 2026-10-10, live:** `AUSPOL_IND_PERSON` (PR #116, on Pete's override after it missed its pre-registered
-bar; `plans/prereg-ind-person-2026-10-10.md`): a sole, non-sitting independent's own small earlier record can
-LOWER their vote. Deciding 20k run: 22-election seat log loss 0.3239 flat, AEF-7 ledger 0.2733 -> 0.2732 (AEF
-0.2825), Malvern 2022 IND 8.6 -> 1.7. Live forecast run 38040218574: Broadmeadows IND 5.4 -> 3.89.
-`shipped-models` republished from that run. Also today: seat-poll reads memoised (vic2026 run 102 -> 92 s,
-byte-identical); `output/published-predictions.csv` (every published prediction, 22 elections); the ledger
-artifact's every-candidate view (v53); NSW 2027 leader-seat bonus; candidate names HTML-decoded (no model effect).
+**Needs Pete:** nothing blocking.
+
+**Live:** `AUSPOL_IND_PERSON` (PR #116) and `AUSPOL_LEVEL_RECENT` (PR #118; now `decay`, half-life 20 days, on
+Pete's decision WITHOUT a measured run at 20 days -- `plans/prereg-level-recent-blend-2026-10-10.md`). Last measured:
+28-day window seat log loss 0.3172 / ledger 0.2682; 10-day decay 0.3181 / 0.2708 (fed2013 +0.025); no blend 0.3239.
+The `shipped-models` scoreboard describes the 28-day run; refresh it at the next full rebuild. `output/` holds the
+10-day decay run (c633fd8).
+
+**Owed to Pete (register):** an own poll source instead of AE Forecasts' files (`PETE-ASKED-FOR.md`, Wikipedia
+first; `scripts/check_poll_coverage.R` found 4 genuine final-month gaps; older Wikipedia pages do not parse yet).
 
 **Refused (built, off; do not re-run without a new idea):** the two-way person rule and its linear variant
 (large earlier records mislead both ways: Fowler 2022, Barker 2019); the never-stood "typical level" half
@@ -23,7 +28,8 @@ artifact's every-candidate view (v53); NSW 2027 leader-seat bonus; candidate nam
 mixture independent models (`plans/prereg-ind-typical-2026-10-09.md`).
 
 **Queue, ranked:**
-1. OPEN: Richmond/Footscray/Brunswick how-to-vote flows (SEAT-REGISTRY vic2022) -- the top open seat problem, ~2 h.
+1. OPEN: poll coverage, AE files vs Wikipedia, deduplicated and matched by firm within a date tolerance (first pass: one Resolve SA 2026 poll missing from AE; scrape parsed nothing for fed2007/2010, nsw2019, WA 2001-13 -- fix those parses first). ~1 h.
+1b. OPEN: re-score Richmond/Footscray/Brunswick/Preston/Pascoe Vale 2022 after AUSPOL_LEVEL_RECENT; shrink the person-rule slope toward the ratio carry (Pete, 2026-10-11) instead of only bounding it; test recency/relevance-weighted fits.
 2. OPEN: nomination day **9 November 2026**: refit successor rates on the final candidate list
    (`build_departed_successors.R` chain), rerun the live forecast. Victoria votes 28 November 2026.
 3. OPEN: miss-table seats traced but not fixed: Malvern 2022 (O'Brien under-called in base_pred), Bankstown 2023

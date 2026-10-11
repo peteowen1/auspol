@@ -100,3 +100,78 @@ written; this is a decision against them. Shipped as `AUSPOL_LEVEL_RECENT="1"`, 
 OFF so the as-at trees stay trained on the unblended base -- exactly the configuration the deciding run measured.
 Live: the window ends on the day of the run, so it acts only once polls land in the last 28 days (none for
 vic2026 on 2026-10-10).
+
+## Amendment 2 (2026-10-11, after shipping; Pete: "I assume you did a decay and not a hard cap at 28 days")
+
+The shipped form uses a hard 28-day window, against Pete's standing no-hard-caps rule; recorded in
+`PETE-ASKED-FOR.md`. Written BEFORE the arm below ran. `AUSPOL_LEVEL_RECENT="decay"`: every poll of the current
+cycle (since the previous election) fielded before the as-at date counts, weighted 2^(-age/H); the level becomes
+(1 - w) x trend + w x the weighted poll mean, w = n_eff / (n_eff + k), n_eff the summed weights. H (half-life,
+days) and k are fitted jointly on EARLIER elections only, by squared error of the blended ALP/LNP/GRN level
+against the actual, over a grid. No window, no poll-count cut-off.
+
+Judged against the SHIPPED form ("1"), since the question is whether removing the cliff costs anything:
+1. PRIMARY: 22-election seat log loss no worse than the shipped form by more than 1 SE (clustered on election).
+2. GUARD: AEF-7 ledger no worse by more than 1 SE.
+3. GUARD: no single election worse than the shipped form by more than 0.02.
+Ship rule: "decay" replaces "1" if 1-3 hold (Pete's rule decides between two forms that score alike). Screen with
+quick_arm on all 22 first; the deciding run is the full 20,000-sim stage 6.
+
+### Amendment 2 dry run (before the screen; no seat outcome read)
+
+The joint fit runs to the edge of its grid: on (3 days, k 0.25) first, then, with the grid widened to 1 day and
+k 0.01, on half-life 1-1.5 days and k 0.01 for every target with history -- "the final poll or two, at nearly full
+weight". Coalition day-before level, trend -> decay (actual): fed2016 39.3 -> 42.3 (42.1), vic2022 31.4 -> 33.8
+(34.4), nsw2019 41.1 -> 41.0 (41.6), vic2018 37.8 -> 36.0 (35.2), sa2026 17.7 -> 17.0 (19.5). Live vic2026 on
+2026-10-11: newest poll 15 days old, weight 0.09. A boundary optimum leans hard on one or two polls; the
+pre-registered comparison against the shipped form decides.
+
+### Amendment 2 result (screen, quick_arm, 1,000 sims, all 22, decay vs the shipped 28-day form): REFUSED
+
+1. Seat log loss 0.3027 -> 0.2972 (-0.0056, SE 0.0060): holds (not worse).
+2. AEF-7 ledger 0.2697 -> 0.2775 (+0.0078, SE 0.0059): FAILS (worse by more than 1 SE).
+3. Single elections worse by more than 0.02: wa2013 +0.061, qld2024 +0.043, vic2014 +0.028: FAILS.
+The fitted half-life (1-1.5 days) leans on the final poll or two: large wins (wa2005 -0.113, wa2017 -0.095,
+vic2018 -0.043, fed2007 -0.043) and large losses, and the recent elections that make up the ledger mostly lose.
+The share-level curve (`scratchpad decay_curve.R`, lowest mean level error at 1-3 days) hid that variance. The
+shipped 28-day form stays, with its window still a hard cut (recorded in PETE-ASKED-FOR.md). To Pete.
+
+## Amendment 3 (2026-10-11, Pete chose it after Amendment 2's refusal) -- fixed 10-day half-life
+
+POST HOC and a THIRD look at the same 22 elections: a pass is weaker evidence than the original design intended,
+and is recorded as such. `AUSPOL_LEVEL_RECENT=decay` with `AUSPOL_LEVEL_RECENT_HALFLIFE=10`: the half-life is FIXED
+at 10 days, chosen before running to match the shipped window's memory (a uniform 28-day window has mean poll age
+14 days; an exponential decay with mean age 14 has half-life 14 x ln 2 = 9.7), not fitted. k is still fitted
+time-forward. Cliff-free like Amendment 2, steadier than its 1-day fit. Same three criteria against the shipped
+28-day form, all 22 elections.
+
+### Amendment 3 result (screen, 22 elections, 10-day decay vs the shipped 28-day form): ledger guard FAILS, narrowly
+
+1. Seat log loss 0.3027 -> 0.3013 (-0.0014, SE 0.0021): holds.
+2. AEF-7 ledger 0.2697 -> 0.2721 (+0.0024, SE 0.0014, 1.7 SE): FAILS.
+3. Worst single election wa2013 +0.0199 (limit 0.02), qld2024 +0.0095: holds.
+Essentially a tie with the window and far steadier than the 1-day fit: better on older elections (wa2017 -0.056,
+wa2008 -0.014, fed2007 -0.013), slightly worse on the recent ones in the ledger. By the ship rule the window stays;
+the choice between a cliff-free tie and the measured ledger edge goes to Pete.
+
+## PETE'S OVERRIDE (2026-10-11): the 10-day decay replaces the 28-day window
+
+Asked with Amendment 3's result (keep the window, recommended, or swap). Pete chose to swap: his no-hard-caps rule
+decides a near-tie (seat log loss -0.0014, SE 0.0021; ledger +0.0024, 1.7 SE, failing its guard). Shipped as
+`AUSPOL_LEVEL_RECENT="decay"`, `AUSPOL_LEVEL_RECENT_HALFLIFE="10"`; deciding 20k run reported below.
+
+### Deciding run for the 10-day decay (2026-10-11, 20,000 sims, 22 elections, code c633fd8)
+
+Against the 28-day window (the e190cab run): seat log loss 0.3172 -> 0.3181 (+0.0009, SE 0.0027), better in
+7 of 22: a tie. Ledger 0.2682 -> 0.2708 (the guard Pete overrode). NEW at full precision: fed2013 +0.0251, over the
+0.02 single-election limit the screen had not shown. Against no blend at all (this morning's gddbcedd run):
+0.3239 -> 0.3181 (-0.0058, SE 0.0046), better in 13 of 22. Back to Pete before shipping, since a clause his
+override did not cover now fires.
+
+## PETE'S DECISION (2026-10-11): half-life 20 days, accepted without a further run
+
+"i think 20 decay is optimal - just fit with that and accept it - if its slightly worse i dont mind." Shipped as
+`AUSPOL_LEVEL_RECENT=decay`, `AUSPOL_LEVEL_RECENT_HALFLIFE=20`, k still fitted on earlier elections. NOT measured
+at 20 days: the nearest measured points are the 10-day run above (a tie with the window) and the share-level
+curve (20 days sits between 14 and 21: level error ~1.64-1.71 vs the window's 1.67). The release scoreboard is
+left describing the last measured run until the next full rebuild.

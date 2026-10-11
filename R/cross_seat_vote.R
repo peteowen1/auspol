@@ -224,7 +224,7 @@ fit_cross_seat_carry <- function(target_election, corpus = NULL, pairs = NULL) {
 # election, corpus, pairs, by-election tables, AUSPOL_* switches). Two layers: an
 # in-session environment, and a small on-disk RDS cache so the separate processes of
 # a rebuild share one fit. Bump .CS_CACHE_VERSION when the fitting code changes.
-.CS_CACHE_VERSION <- "cs-cache-1"
+.CS_CACHE_VERSION <- "cs-cache-2"
 .cs_memo <- new.env(parent = emptyenv())
 
 # Cache directory: the argument, else AUSPOL_CROSS_SEAT_CACHE_DIR, else output/cache/cross-seat.
@@ -236,40 +236,115 @@ fit_cross_seat_carry <- function(target_election, corpus = NULL, pairs = NULL) {
 }
 
 # What the cached value depends on, hashed: the corpus (every column), the election pair
-# list, the by-election source files, every AUSPOL_* switch and the cache version.
+# list, the by-election source files, the code, and the cache version. With `env = TRUE`
+# (the default) every set AUSPOL_* switch is hashed in too. The disk/session cache of
+# `.cs_cached()` passes `env = FALSE` and instead RECORDS which switches the computation
+# actually reads (see .cs_note_reads), so an arm that changes an unrelated switch still hits.
 #' @noRd
-.cs_fingerprint <- function(what, corpus, ...) {
+.cs_fingerprint <- function(what, corpus, ..., env = TRUE) {
   bd <- file.path("external", "reference", "byelections")
   bf <- if (dir.exists(bd)) sort(list.files(bd, full.names = TRUE)) else character(0)
-  ev <- Sys.getenv(); ev <- ev[grepl("^AUSPOL_", names(ev)) & names(ev) != "AUSPOL_CROSS_SEAT_CACHE_DIR"]
+  ev <- if (env) {
+    e <- base::Sys.getenv(); e <- e[grepl("^AUSPOL_", names(e)) & !names(e) %in% .CS_IGNORED_VARS]
+    e[order(names(e))]
+  } else NULL
   # The CODE the cached value depends on, too (review 2026-10-06): editing a matching
   # or classification helper must invalidate entries, not wait for a manual version bump.
   fns <- c(".cs_match", "given_stem", "given_conflict", "match_key", "align_person_keys", "seat_rename_map",
-           "election_dates", "elections_before", "classify_party", "byelection_winner_rows", "fit_cross_seat_carry")
+           "election_dates", "elections_before", "classify_party", "byelection_winner_rows", "fit_cross_seat_carry",
+           ".cs_byelection_rows", ".cs_prep", ".cs_given_ok", "surname_of", "given_of", "fit_pairs_for")
   code <- lapply(fns, function(f) if (exists(f, mode = "function")) deparse(get(f, mode = "function")) else NULL)
   digest::digest(list(.CS_CACHE_VERSION, what, as.data.frame(corpus), all_election_pairs(),
-                      unname(tools::md5sum(bf)), ev[order(names(ev))], code, list(...)), algo = "xxhash64")
+                      unname(tools::md5sum(bf)), ev, code, list(...)), algo = "xxhash64")
 }
 
-# Memoise `compute()` under `key` (session environment, then disk). A corrupt or
-# unreadable disk entry is recomputed; a failed write is reported, never fatal.
+# ---- read-set recording -----------------------------------------------------
+# A cached computation is keyed by what it reads, not by every switch that happens to be
+# set. Package code reaches the environment through the shim below (it shadows
+# base::Sys.getenv inside this namespace), which notes every AUSPOL_* name read while a
+# recorder is active. Recorders nest: a read (or a cache hit that skips the reads) is
+# noted in every active recorder. A call with no names (Sys.getenv()) records "all".
+.CS_IGNORED_VARS <- "AUSPOL_CROSS_SEAT_CACHE_DIR"
+.cs_rec <- new.env(parent = emptyenv())
+.cs_rec$stack <- list()
+
+#' @noRd
+Sys.getenv <- function(x = NULL, unset = "", names = NA) {
+  if (length(.cs_rec$stack)) .cs_note_reads(x)
+  base::Sys.getenv(x, unset, names)
+}
+
+#' @noRd
+.cs_note_reads <- function(x, all = FALSE) {
+  if (is.null(x)) all <- TRUE else x <- x[startsWith(x, "AUSPOL_") & !x %in% .CS_IGNORED_VARS]
+  for (r in .cs_rec$stack) {
+    if (all) r$all <- TRUE else r$names[x] <- TRUE
+  }
+  invisible(NULL)
+}
+
+#' @noRd
+.cs_snapshot <- function(nms) {
+  nms <- sort(unique(nms))
+  v <- vapply(nms, function(n) base::Sys.getenv(n, unset = NA_character_), "")
+  names(v) <- nms
+  v
+}
+
+#' @noRd
+.cs_all_names <- function() {
+  n <- names(base::Sys.getenv())
+  n[startsWith(n, "AUSPOL_") & !n %in% .CS_IGNORED_VARS]
+}
+
+# An entry is a hit only when every switch it read still has the value it had.
+#' @noRd
+.cs_entry_ok <- function(e) {
+  if (!is.list(e) || is.null(e$reads) || !"value" %in% names(e)) return(FALSE)
+  now <- if (isTRUE(e$all)) .cs_snapshot(.cs_all_names()) else .cs_snapshot(names(e$reads))
+  identical(now, e$reads)
+}
+
+# Run compute() recording the switches it reads. Returns list(value, reads, all).
+#' @noRd
+.cs_record <- function(compute) {
+  r <- new.env(parent = emptyenv()); r$names <- list(); r$all <- FALSE
+  .cs_rec$stack <- c(.cs_rec$stack, list(r))
+  on.exit(.cs_rec$stack <- .cs_rec$stack[-length(.cs_rec$stack)], add = TRUE)
+  val <- compute()
+  all <- isTRUE(r$all)
+  nms <- if (all) .cs_all_names() else names(r$names)
+  list(value = val, reads = .cs_snapshot(nms), all = all)
+}
+
+# Memoise `compute()` under `key` (session environment, then disk). Each entry stores the
+# value with the AUSPOL_* switches the computation read and their values; a lookup hits
+# only an entry whose recorded switches all still match. Several entries per key coexist
+# (one file each, `<key>--<digest of the read set>.rds`, so processes never overwrite one
+# another). A corrupt or unreadable disk entry is recomputed; a failed write is reported,
+# never fatal.
 #' @noRd
 .cs_cached <- function(key, compute, cache_dir = NULL, disk = TRUE) {
-  if (exists(key, envir = .cs_memo, inherits = FALSE)) return(get(key, envir = .cs_memo, inherits = FALSE))
-  f <- file.path(.cs_cache_dir(cache_dir), paste0(key, ".rds"))
-  val <- NULL
-  if (disk && file.exists(f)) val <- tryCatch(readRDS(f), error = function(e) NULL)
-  if (is.null(val)) {
-    val <- compute()
-    if (disk) tryCatch({
-      dir.create(dirname(f), recursive = TRUE, showWarnings = FALSE)
-      tmp <- tempfile(pattern = paste0(key, "-"), tmpdir = dirname(f), fileext = ".tmp")
-      saveRDS(val, tmp)
-      if (!file.rename(tmp, f)) { unlink(tmp); stop("rename failed") }
-    }, error = function(e) cat(sprintf("CSV1! cross-seat cache write failed (%s): %s\n", f, conditionMessage(e))))
+  note <- function(e) { .cs_note_reads(names(e$reads), all = isTRUE(e$all)); e$value }
+  mem <- if (exists(key, envir = .cs_memo, inherits = FALSE)) get(key, envir = .cs_memo, inherits = FALSE) else list()
+  for (e in mem) if (.cs_entry_ok(e)) return(note(e))
+  dir <- .cs_cache_dir(cache_dir)
+  if (disk && dir.exists(dir)) {
+    for (f in list.files(dir, pattern = paste0("^", key, "--.*\\.rds$"), full.names = TRUE)) {
+      e <- tryCatch(readRDS(f), error = function(err) NULL)
+      if (.cs_entry_ok(e)) { assign(key, c(mem, list(e)), envir = .cs_memo); return(note(e)) }
+    }
   }
-  assign(key, val, envir = .cs_memo)
-  val
+  e <- .cs_record(compute)
+  if (disk) tryCatch({
+    f <- file.path(dir, paste0(key, "--", digest::digest(list(e$reads, e$all), algo = "xxhash64"), ".rds"))
+    dir.create(dirname(f), recursive = TRUE, showWarnings = FALSE)
+    tmp <- tempfile(pattern = paste0(key, "-"), tmpdir = dirname(f), fileext = ".tmp")
+    saveRDS(e, tmp)
+    if (!file.rename(tmp, f)) { unlink(tmp); stop("rename failed") }
+  }, error = function(err) cat(sprintf("CSV1! cross-seat cache write failed (%s): %s\n", dir, conditionMessage(err))))
+  assign(key, c(mem, list(e)), envir = .cs_memo)
+  e$value
 }
 
 #' Clear the in-session cross-seat memo (tests and benchmarks)
@@ -282,13 +357,13 @@ clear_cross_seat_cache <- function() {
 
 #' @noRd
 .cs_carry_cached <- function(target_election, corpus, cache_dir = NULL) {
-  key <- .cs_fingerprint("carry", corpus, target_election)
+  key <- .cs_fingerprint("carry", corpus, target_election, env = FALSE)
   .cs_cached(key, function() fit_cross_seat_carry(target_election, corpus = corpus), cache_dir)
 }
 
 #' @noRd
 .cs_byelection_cached <- function(D, corpus, extra_pair, cutoff_election, cache_dir = NULL) {
-  key <- .cs_fingerprint("byrows", corpus, extra_pair, cutoff_election)
+  key <- .cs_fingerprint("byrows", corpus, extra_pair, cutoff_election, env = FALSE)
   .cs_cached(key, function() .cs_byelection_rows(D, extra_pair, cutoff_election), cache_dir)
 }
 

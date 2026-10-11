@@ -1,0 +1,465 @@
+name: Deciding run
+
+# THE FULL 20,000-SIMULATION DECIDING RUN FOR A NAMED ARM, OUTSIDE THE SESSION.
+#
+# Why: the repo rule (CLAUDE.md) is that quick_arm.R screens and a full run decides, and the
+# full run took ~40 minutes in the foreground (plans/fast-iteration-plan-2026-10-11.md,
+# Phase 1 item 5). The repo is public, so Actions minutes are free: this fans the 22 elections
+# out as one job each, for BOTH the baseline and the arm (44 harness jobs), then pools.
+#
+# What one job does is exactly what scripts/quick_arm.R's run_unit() does, on a clean machine:
+# one harness (scripts/backtest_candidate_<h>.R), one election chosen by that harness's own
+# selector, AUSPOL_XGB_PRIMARY=1 (the as-at models, as in rebuild_forecasts.sh stage 6),
+# AUSPOL_SKIP_PAIRS=wa2021 and AUSPOL_N_SIMS=<sims> forced, every other AUSPOL_* switch
+# unset so the published configuration applies, then the harness's HD1 line is checked to
+# PROVE the named switches were applied and nothing else leaked in.
+#
+# Baseline and arm run the SAME code (one checkout, one commit), the SAME seed and the
+# SAME inputs, so paired differences are common-random-number differences.
+#
+# Run it:  gh workflow run deciding-run.yml --ref <branch> -f arm="AUSPOL_X=1 AUSPOL_Y=0"
+# One-pair dry run: add  -f pairs=vic2022 -f sims=500   (2 jobs, ~10 minutes)
+# Review and inputs list: docs/reviews/fast-iter-ci-deciding-run-2026-10-11.md
+#
+# NOT triggered by push or schedule, on purpose: it is a deliberate, named experiment.
+
+on:
+  workflow_dispatch:
+    inputs:
+      arm:
+        description: 'Arm switches, space separated, e.g. "AUSPOL_X=1 AUSPOL_Y=0"'
+        required: true
+        type: string
+      base:
+        description: 'Extra switches for the BASELINE (default empty = the shipped configuration)'
+        required: false
+        default: ''
+        type: string
+      sims:
+        description: "Simulations per election (the deciding run is 20000)"
+        required: false
+        default: "20000"
+        type: string
+      pairs:
+        description: 'Optional comma list to restrict the elections, e.g. "vic2022,fed2019" (default: all 22)'
+        required: false
+        default: ''
+        type: string
+      label:
+        description: "Short name for this run, used in artifact names and the summary"
+        required: false
+        default: "arm"
+        type: string
+      inputs_tag:
+        description: "Release holding backtest-inputs.tgz (the harness inputs that are not in git)"
+        required: false
+        default: "backtest-inputs"
+        type: string
+      anchor_sha:
+        description: "Pin the aus-polling-analyser commit (default: its current HEAD, resolved once so every job reads the same polls)"
+        required: false
+        default: ""
+        type: string
+      comment_on:
+        description: "Optional PR or issue number to post the results table on"
+        required: false
+        default: ""
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deciding-run-${{ github.run_id }}
+  cancel-in-progress: false
+
+env:
+  # Never interpolate user text into a script body: every input goes through env.
+  ARM: ${{ inputs.arm }}
+  BASE: ${{ inputs.base }}
+  SIMS: ${{ inputs.sims }}
+  PAIRS: ${{ inputs.pairs }}
+  LABEL: ${{ inputs.label }}
+
+jobs:
+  plan:
+    name: Plan (validate inputs, build the matrix)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    outputs:
+      matrix: ${{ steps.m.outputs.matrix }}
+      anchor_sha: ${{ steps.anchor.outputs.sha }}
+      n_units: ${{ steps.m.outputs.n_units }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Validate the inputs
+        shell: bash
+        run: |
+          set -euo pipefail
+          fail() { echo "::error::$1"; exit 1; }
+          [[ "$SIMS" =~ ^[0-9]+$ ]] && [ "$SIMS" -ge 100 ] || fail "sims must be an integer >= 100"
+          [[ "$LABEL" =~ ^[A-Za-z0-9_.-]{1,40}$ ]] || fail "label must be 1-40 characters of A-Za-z0-9_.-"
+          [ -n "$ARM" ] || fail "arm is empty: there is nothing to compare"
+          # NAME=value pairs only; values are restricted so nothing reaches a shell as code.
+          re='^AUSPOL_[A-Z0-9_]+=[A-Za-z0-9_.,:+-]*$'
+          for kv in $ARM $BASE; do
+            [[ "$kv" =~ $re ]] || fail "not an AUSPOL_NAME=value assignment: $kv"
+            name="${kv%%=*}"
+            # quick_arm.R forces these on every run; a named one would silently lose.
+            case "$name" in AUSPOL_XGB_PRIMARY|AUSPOL_SKIP_PAIRS|AUSPOL_N_SIMS)
+              fail "$name is set by this workflow itself (use the sims input for the simulation count)";; esac
+            # A switch no harness reads is an arm that never ran: it must be in PUBLISHED_FLAGS.
+            grep -qE "^[[:space:]]+${name}[[:space:]]*=" scripts/published_flags.R \
+              || fail "$name is not a switch in scripts/published_flags.R, so no harness reads it"
+          done
+          dup=$(for kv in $ARM; do echo "${kv%%=*}"; done | sort | uniq -d)
+          [ -z "$dup" ] || fail "switch set twice in arm: $dup"
+          [ "$(for kv in $ARM; do echo "${kv%%=*}=${kv#*=}"; done | sort)" != "$(for kv in $BASE; do echo "${kv%%=*}=${kv#*=}"; done | sort)" ] \
+            || fail "arm and base are identical"
+          echo "arm  : $ARM"
+          echo "base : ${BASE:-(shipped configuration)}"
+          echo "sims : $SIMS    pairs: ${PAIRS:-all 22}    code: $GITHUB_SHA"
+
+      - name: Resolve the polling anchor commit once
+        id: anchor
+        shell: bash
+        run: |
+          set -euo pipefail
+          sha="${{ inputs.anchor_sha }}"
+          if [ -z "$sha" ]; then
+            sha=$(git ls-remote https://github.com/d-j-hirst/aus-polling-analyser HEAD | cut -f1)
+          fi
+          [[ "$sha" =~ ^[0-9a-f]{40}$ ]] || { echo "::error::could not resolve a 40-character anchor sha (got '$sha')"; exit 1; }
+          echo "sha=$sha" >> "$GITHUB_OUTPUT"
+          echo "anchor $sha" >> "$GITHUB_STEP_SUMMARY"
+
+      # The 22 elections, same list as quick_units() in R/quick_arm.R: id, the harness, the
+      # environment variable that selects ONE election in that harness, and its value.
+      # A test below fails the plan if this list and quick_units() ever disagree.
+      - name: Build the matrix
+        id: m
+        shell: python
+        run: |
+          import json, os
+          units = []
+          def mk(h, var, years):
+              for y in years:
+                  units.append({"id": f"{h}{y}", "harness": h, "var": var, "val": str(y)})
+          mk("fed", "AUSPOL_FED_PAIRS", [2007, 2010, 2013, 2016, 2019, 2022, 2025])
+          mk("wa",  "AUSPOL_WA_PAIR",   [2001, 2005, 2008, 2013, 2017, 2025])
+          mk("vic", "AUSPOL_VIC_PAIR",  [2014, 2018, 2022])
+          mk("nsw", "AUSPOL_NSW_PAIR",  [2019, 2023])
+          mk("qld", "AUSPOL_QLD_PAIR",  [2020, 2024])
+          mk("sa",  "AUSPOL_SA_PAIR",   [2022, 2026])
+          assert len(units) == 22, len(units)
+          # cross-check against the R source of truth
+          src = open("R/quick_arm.R").read()
+          for u in units:
+              assert f'"{u["var"]}"' in src, f'{u["var"]} missing from quick_units() in R/quick_arm.R'
+          want = [p.strip() for p in os.environ.get("PAIRS", "").split(",") if p.strip()]
+          if want:
+              bad = sorted(set(want) - {u["id"] for u in units})
+              if bad:
+                  raise SystemExit(f"::error::unknown pair(s): {bad}")
+              units = [u for u in units if u["id"] in want]
+          include = [dict(u, role=r) for u in units for r in ("base", "arm")]
+          out = os.environ["GITHUB_OUTPUT"]
+          with open(out, "a") as f:
+              f.write("matrix=" + json.dumps({"include": include}) + "\n")
+              f.write(f"n_units={len(units)}\n")
+          print(f"{len(units)} election(s), {len(include)} harness jobs")
+
+  run:
+    name: ${{ matrix.role }} ${{ matrix.id }}
+    needs: plan
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.plan.outputs.matrix) }}
+    env:
+      GH_TOKEN: ${{ github.token }}
+      R_KEEP_PKG_SOURCE: yes
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - uses: r-lib/actions/setup-r@f9a764fea8d5c63df6ef9a5c7795bf7deb5d7e05 # v2
+        with:
+          r-version: release
+          use-public-rspm: true
+
+      # Same dependency setup as forecast.yaml (binary packages from RSPM, cached by the action).
+      - uses: r-lib/actions/setup-r-dependencies@f9a764fea8d5c63df6ef9a5c7795bf7deb5d7e05 # v2
+        with:
+          extra-packages: any::devtools, any::pkgbuild, any::jsonlite, any::glmnet, any::digest
+          needs: check
+
+      # The polling anchor: a separate public repo, never committed here. Pinned to the sha the
+      # plan job resolved, so the baseline job and the arm job of an election read identical polls.
+      - name: Fetch the anchor's poll data (pinned)
+        shell: bash
+        run: |
+          set -euo pipefail
+          git clone --filter=blob:none --no-checkout https://github.com/d-j-hirst/aus-polling-analyser external/aus-polling-analyser
+          git -C external/aus-polling-analyser sparse-checkout set analysis
+          git -C external/aus-polling-analyser checkout "${{ needs.plan.outputs.anchor_sha }}"
+          echo "anchor at $(git -C external/aus-polling-analyser rev-parse --short HEAD)"
+          ls external/aus-polling-analyser/analysis/Data/poll-data-*.csv | head -3
+
+      # Everything else the harnesses read that git does not hold: output/ top-level inputs and
+      # its six input subdirectories, external/elections, and the small external/reference
+      # directories. ONE asset, built from the developer's tree by the packaging command in
+      # docs/reviews/fast-iter-ci-deciding-run-2026-10-11.md (section "Packaging the inputs").
+      # NOT the shipped-models release: that carries the live-forecast inputs (final models,
+      # candidacies) but NOT the as-at predictions and models a stage-6 backtest reads.
+      - name: Fetch the harness inputs
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh release download "${{ inputs.inputs_tag }}" -p backtest-inputs.tgz -D "$RUNNER_TEMP" --clobber
+          gh release download "${{ inputs.inputs_tag }}" -p backtest-inputs.MANIFEST.txt -D "$RUNNER_TEMP" --clobber || true
+          [ -s "$RUNNER_TEMP/backtest-inputs.tgz" ] || { echo "::error::backtest-inputs.tgz missing or empty on release ${{ inputs.inputs_tag }}"; exit 1; }
+          tar -xzf "$RUNNER_TEMP/backtest-inputs.tgz"          # restores output/... and external/...
+          # Git-tracked files win over the bundle's copies: restore them so the checkout is the code of record.
+          git checkout -- external/reference output/mp-slope-by-class.csv 2>/dev/null || true
+          # Parse, do not measure: the repo has lost a seat to a 65536-byte truncated download.
+          Rscript -e '
+            need <- c("output/xgb-primary-asat-predictions.csv", "output/candidacies.csv", "output/level-recent.csv",
+                      "output/xgb-primary-v6-features.csv", "external/elections/MANIFEST.csv")
+            for (f in need) {
+              if (!file.exists(f) || file.size(f) == 0) stop("input missing or empty: ", f)
+              d <- data.table::fread(f, showProgress = FALSE)
+              if (!nrow(d)) stop(f, " parsed to zero rows")
+              cat(sprintf("%-48s %7d rows\n", f, nrow(d)))
+            }
+            for (d in c("output/xgb-primary-asat", "output/xgb-base-ref", "output/xgb-primary-v6-models", "output/shipped")) {
+              n <- length(list.files(d, recursive = TRUE)); if (n == 0) stop("input directory empty: ", d)
+              cat(sprintf("%-48s %7d files\n", d, n))
+            }'
+
+      - name: Run the harness
+        id: harness
+        shell: bash
+        env:
+          HARNESS: ${{ matrix.harness }}
+          PAIR_VAR: ${{ matrix.var }}
+          PAIR_VAL: ${{ matrix.val }}
+          ROLE: ${{ matrix.role }}
+        run: |
+          set -euo pipefail
+          # A CLEAN SLATE: no AUSPOL_* variable inherited from anywhere (quick_arm.R found a
+          # leaked switch once), then exactly this job's set.
+          for v in $(env | grep -oE '^AUSPOL_[A-Z0-9_]+' || true); do unset "$v"; done
+          if [ "$ROLE" = "base" ]; then
+            SET="$BASE"
+          else
+            # effective arm = base switches NOT overridden by the arm, then the arm (quick_arm.R: arm_eff)
+            SET=""
+            for kv in $BASE; do
+              n="${kv%%=*}"; skip=0
+              for a in $ARM; do [ "${a%%=*}" = "$n" ] && skip=1; done
+              [ $skip -eq 0 ] && SET="$SET $kv"
+            done
+            SET="$SET $ARM"
+          fi
+          NAMED=""
+          for kv in $SET; do export "$kv"; NAMED="$NAMED ${kv%%=*}"; done
+          export AUSPOL_XGB_PRIMARY=1 AUSPOL_SKIP_PAIRS=wa2021 AUSPOL_N_SIMS="$SIMS"
+          export "$PAIR_VAR=$PAIR_VAL"
+          echo "role=$ROLE election=${{ matrix.id }} harness=$HARNESS"
+          echo "switches named:${NAMED:- (none)}"
+          echo "forced: AUSPOL_XGB_PRIMARY=1 AUSPOL_SKIP_PAIRS=wa2021 AUSPOL_N_SIMS=$SIMS $PAIR_VAR=$PAIR_VAL"
+          printf '%s\n' "$NAMED" > "$RUNNER_TEMP/named.txt"
+          start=$(date +%s)
+          Rscript "scripts/backtest_candidate_${HARNESS}.R" 2>&1 | tee harness.log
+          echo "harness_seconds=$(( $(date +%s) - start ))" >> "$GITHUB_OUTPUT"
+
+      # PROVE what was applied: HD1 lists every published switch the caller set. A name there
+      # that this job did not set is a leak; a named switch missing from it never applied.
+      - name: Verify the switches (HD1) and collect the outputs
+        shell: Rscript {0}
+        env:
+          ROLE: ${{ matrix.role }}
+          ID: ${{ matrix.id }}
+        run: |
+          source("R/quick_arm.R")
+          log <- readLines("harness.log", warn = FALSE)
+          hd1 <- grep("^HD1 ", log, value = TRUE)[1]
+          named <- strsplit(trimws(readLines(file.path(Sys.getenv("RUNNER_TEMP"), "named.txt"))), "[[:space:]]+")[[1]]
+          named <- named[nzchar(named)]
+          env_names <- c(named, "AUSPOL_XGB_PRIMARY", "AUSPOL_SKIP_PAIRS", "AUSPOL_N_SIMS",
+                         grep("^AUSPOL_(FED_PAIRS|WA_PAIR|VIC_PAIR|NSW_PAIR|QLD_PAIR|SA_PAIR)$", names(Sys.getenv()), value = TRUE))
+          chk <- quick_hd1_check(hd1, env_names, named)
+          cat("HD1:", if (is.na(hd1)) "(absent)" else hd1, "\n")
+          if (!chk$ok) stop("HD1 check failed. no_hd1=", chk$no_hd1, " foreign=", paste(chk$foreign, collapse = ","),
+                            " missing=", paste(chk$missing, collapse = ","))
+          new <- list.files("output", pattern = "^backtest-", full.names = TRUE)
+          pick1 <- function(pat) { f <- new[grepl(pat, basename(new))]; if (length(f) != 1L) stop("expected exactly one ", pat, " file, found ", length(f)); f }
+          dir.create("res", showWarnings = FALSE)
+          sd_f <- pick1("-sharedetail"); ap_f <- pick1("-allprobs")
+          stopifnot(file.copy(sd_f, "res/sharedetail.csv"), file.copy(ap_f, "res/allprobs.csv"))
+          # coverage, not presence: the files must have rows and carry this election
+          sd <- data.table::fread("res/sharedetail.csv"); ap <- data.table::fread("res/allprobs.csv")
+          cat(sprintf("sharedetail %d rows, allprobs %d rows\n", nrow(sd), nrow(ap)))
+          if (!nrow(sd) || !nrow(ap)) stop("empty harness output")
+          hd2 <- grep("^HD2 ", log, value = TRUE)[1]
+          writeLines(c(paste("role", Sys.getenv("ROLE")), paste("id", Sys.getenv("ID")),
+                       paste("hd1", hd1), paste("hd2", hd2),
+                       paste("seconds", "${{ steps.harness.outputs.harness_seconds }}")), "res/meta.txt")
+          file.copy("harness.log", "res/run.log")
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: always()
+        with:
+          name: res-${{ matrix.role }}-${{ matrix.id }}
+          path: res/
+          if-no-files-found: error
+          retention-days: 30
+
+  score:
+    name: Pool and score
+    needs: [plan, run]
+    if: ${{ !cancelled() && needs.plan.result == 'success' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      issues: write
+      pull-requests: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - uses: r-lib/actions/setup-r@f9a764fea8d5c63df6ef9a5c7795bf7deb5d7e05 # v2
+        with:
+          r-version: release
+          use-public-rspm: true
+
+      - uses: r-lib/actions/setup-r-dependencies@f9a764fea8d5c63df6ef9a5c7795bf7deb5d7e05 # v2
+        with:
+          extra-packages: any::jsonlite
+          needs: check
+
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          pattern: res-*
+          path: res
+
+      # Only the AEF-7 ledger's seat list is needed from the inputs bundle (Q4); optional.
+      - name: Fetch the ledger seat list (optional)
+        shell: bash
+        run: |
+          gh release download "${{ inputs.inputs_tag }}" -p backtest-inputs.tgz -D "$RUNNER_TEMP" --clobber \
+            && tar -xzf "$RUNNER_TEMP/backtest-inputs.tgz" output/aef-comparison-full.csv \
+            || echo "::warning::no aef-comparison-full.csv: the AEF-7 ledger line (Q4) is skipped"
+
+      # The same paired scoring as the tail of scripts/quick_arm.R (R/quick_arm.R holds the
+      # functions), on 20,000-simulation runs. Two seat-log-loss floors are reported: 1e-6, the
+      # harnesses' own (what pool_backtests.R and the ledger use), and 0.5/N, quick_arm.R's, so
+      # the deciding run is comparable with the screen.
+      - name: Score
+        shell: Rscript {0}
+        env:
+          NEEDED: ${{ needs.plan.outputs.matrix }}
+          ANCHOR: ${{ needs.plan.outputs.anchor_sha }}
+        run: |
+          suppressMessages(library(data.table))
+          options(width = 220)
+          source("R/quick_arm.R")
+          sims <- as.integer(Sys.getenv("SIMS"))
+          m <- jsonlite::fromJSON(Sys.getenv("NEEDED"))$include
+          ids <- unique(m$id)
+          miss <- character(0)
+          for (r in c("base", "arm")) for (u in ids)
+            if (!file.exists(file.path("res", paste0("res-", r, "-", u), "sharedetail.csv"))) miss <- c(miss, paste(r, u))
+          if (length(miss)) {
+            cat("INCOMPLETE: no output from:", paste(miss, collapse = "; "), "\n")
+            cat("A pooled number over a shrunken set of elections is not a result. Failing.\n")
+            quit(status = 1)
+          }
+          rd <- function(role, file) rbindlist(lapply(ids, function(u) {
+            d <- fread(file.path("res", paste0("res-", role, "-", u), file), showProgress = FALSE)
+            if (!"pair" %in% names(d)) d$pair <- u     # nsw/qld/sa write no pair column: the unit IS the pair
+            if (!all(d$pair == u)) stop(file, " for ", u, " carries pair label(s) ", paste(unique(d$pair), collapse = ","))
+            d
+          }), fill = TRUE)
+          B_sd <- rd("base", "sharedetail.csv"); A_sd <- rd("arm", "sharedetail.csv")
+          B_ap <- rd("base", "allprobs.csv");    A_ap <- rd("arm", "allprobs.csv")
+          stopifnot(setequal(unique(B_sd$pair), unique(A_sd$pair)), nrow(B_sd) > 0)
+          # A run's HD2 (code tag) must be the same commit for every job.
+          hd2 <- unique(unlist(lapply(list.files("res", pattern = "meta.txt", recursive = TRUE, full.names = TRUE),
+                                      function(f) sub("^hd2 ", "", grep("^hd2 ", readLines(f), value = TRUE)))))
+          out <- character(0); say <- function(...) { s <- sprintf(...); cat(s); out <<- c(out, s) }
+          say("Deciding run: %d election(s), %d simulations, anchor %s\n", length(ids), sims, substr(Sys.getenv("ANCHOR"), 1, 10))
+          say("Code tags seen (must be one): %s\n", paste(hd2, collapse = " | "))
+          say("Q0  scored %d cells and %d seats in %d election(s): %s\n", nrow(B_sd), uniqueN(B_ap[, .(pair, seat)]), uniqueN(B_sd$pair),
+              paste(sort(unique(B_sd$pair)), collapse = " "))
+          sd_res <- quick_share_diff(as.data.frame(B_sd), as.data.frame(A_sd))
+          md <- quick_max_diff(as.data.frame(B_sd), as.data.frame(A_sd), as.data.frame(B_ap), as.data.frame(A_ap))
+          for (eps in c(1e-6, 0.5 / sims)) {
+            ll_res <- quick_seat_ll(as.data.frame(B_ap), as.data.frame(A_ap), eps = eps)
+            per <- merge(sd_res$per_pair, ll_res$per_pair[, c("pair", "seats", "seats_changed", "ll_base", "ll_arm", "change")], by = "pair", all = TRUE)
+            names(per)[names(per) == "change"] <- "ll_change"
+            per <- merge(per, md, by = "pair", all = TRUE)
+            say("\n==== seat-winner log loss floor eps = %.1e %s ====\n", eps, if (eps == 1e-6) "(the harnesses' own; pool_backtests.R)" else "(quick_arm.R's 0.5/N)")
+            say("Per election - cells/changed: share cells and those moved by > 0.05 points; sq_err_change: squared-error change on moved cells (lower is better);\n")
+            say("                ll_*: seat-winner log loss (lower is better); ll_change = arm minus base (negative is better).\n")
+            tt <- per[order(per$ll_change, decreasing = TRUE), ]
+            txt <- capture.output(print(data.frame(election = tt$pair, cells = tt$cells, changed = tt$changed,
+                       sq_err_change = round(tt$sq_err_change, 1), seats = tt$seats, seats_moved = tt$seats_changed,
+                       ll_base = round(tt$ll_base, 4), ll_arm = round(tt$ll_arm, 4), ll_change = round(tt$ll_change, 4),
+                       max_prob_diff = signif(tt$max_prob_diff, 3)), row.names = FALSE))
+            say("%s\n", paste(txt, collapse = "\n"))
+            p <- sd_res$primary; o <- ll_res$overall
+            say("Q2  share-level squared error on %d changed cells: %.1f -> %.1f, change %+.1f (SE %.1f, clustered on election, %d elections) => %s\n",
+                p$n, p$base, p$arm, p$change, p$se, p$clusters, quick_q2_verdict(p))
+            say("Q3  seat-winner log loss, %d seats in %d elections: %.4f -> %.4f, change %+.4f (SE %.4f, clustered on election) => %s\n",
+                o$n, o$clusters, ll_res$ll_base, ll_res$ll_arm, o$mean, o$se, quick_word(o$mean, o$se))
+            say("    worst single election: %s (%+.4f); best: %s (%+.4f)\n", tt$pair[1], tt$ll_change[1], tt$pair[nrow(tt)], tt$ll_change[nrow(tt)])
+            lg <- tryCatch(fread("output/aef-comparison-full.csv", select = c("pair", "seat"), showProgress = FALSE), error = function(e) NULL)
+            if (!is.null(lg)) {
+              L <- quick_ledger_ll(ll_res, as.data.frame(lg))
+              if (L$n == 0) say("Q4  AEF-7 ledger: none of its seats are in the elections scored here\n") else
+                say("Q4  AEF-7 ledger subset: %d of %d ledger seats scored, log loss %.4f -> %.4f, change %+.4f (SE %.4f) => %s\n",
+                    L$n, L$rows, L$ll_base, L$ll_arm, L$overall$mean, L$overall$se, quick_word(L$overall$mean, L$overall$se))
+            }
+          }
+          secs <- unlist(lapply(list.files("res", pattern = "meta.txt", recursive = TRUE, full.names = TRUE), function(f) {
+            l <- readLines(f); c(setNames(as.numeric(sub("seconds ", "", grep("^seconds ", l, value = TRUE))), sub("id ", "", grep("^id ", l, value = TRUE))))
+          }))
+          say("\nHarness seconds per job: median %.0f, max %.0f\n", median(secs, na.rm = TRUE), max(secs, na.rm = TRUE))
+          say("Pre-registered criteria are NOT applied here: read the table against the plan's committed clauses.\n")
+          writeLines(out, "deciding-run-results.txt")
+
+      - name: Job summary
+        if: always()
+        shell: bash
+        run: |
+          {
+            echo "## Deciding run: ${LABEL}"
+            echo
+            echo "- arm: \`${ARM}\`"
+            echo "- baseline: \`${BASE:-shipped configuration}\`"
+            echo "- simulations: ${SIMS}; elections: ${PAIRS:-all 22}; commit: \`${GITHUB_SHA::8}\`"
+            echo
+            echo '```'
+            cat deciding-run-results.txt 2>/dev/null || echo "(no results file: the score step did not complete)"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: always()
+        with:
+          name: deciding-run-results-${{ inputs.label }}
+          path: deciding-run-results.txt
+          if-no-files-found: warn
+
+      - name: Comment the table (optional)
+        if: ${{ inputs.comment_on != '' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          { echo "Deciding run \`${LABEL}\`: arm \`${ARM}\`, ${SIMS} sims, commit \`${GITHUB_SHA::8}\`"; echo; echo '```'; cat deciding-run-results.txt; echo '```'; echo; echo "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"; } > comment.md
+          gh issue comment "${{ inputs.comment_on }}" --body-file comment.md
