@@ -159,3 +159,11 @@ the choice between a cliff-free tie and the measured ledger edge goes to Pete.
 Asked with Amendment 3's result (keep the window, recommended, or swap). Pete chose to swap: his no-hard-caps rule
 decides a near-tie (seat log loss -0.0014, SE 0.0021; ledger +0.0024, 1.7 SE, failing its guard). Shipped as
 `AUSPOL_LEVEL_RECENT="decay"`, `AUSPOL_LEVEL_RECENT_HALFLIFE="10"`; deciding 20k run reported below.
+
+### Deciding run for the 10-day decay (2026-10-11, 20,000 sims, 22 elections, code c633fd8)
+
+Against the 28-day window (the e190cab run): seat log loss 0.3172 -> 0.3181 (+0.0009, SE 0.0027), better in
+7 of 22: a tie. Ledger 0.2682 -> 0.2708 (the guard Pete overrode). NEW at full precision: fed2013 +0.0251, over the
+0.02 single-election limit the screen had not shown. Against no blend at all (this morning's gddbcedd run):
+0.3239 -> 0.3181 (-0.0058, SE 0.0046), better in 13 of 22. Back to Pete before shipping, since a clause his
+override did not cover now fires.
