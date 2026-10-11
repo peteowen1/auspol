@@ -14,12 +14,14 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30.
 - the cross-seat cache no longer refits on every arm (vic2022 arm 106 -> 53 s).
 Five investigation reports: `reviews/fast-iter-*-2026-10-11.md`.
 
-**IN FLIGHT at wrap-up (Sonnet agents, worktree branches, NOT reviewed or merged; check `git branch -a | grep worktree-agent`):**
-1. Local deciding-run launcher (`scripts/deciding_run.*`, detached, `--at HH:MM` for overnight, results in gitignored
-   `deciding-runs/`) + plan item 6 (per-harness canary so cached baselines are reused safely; fixes the crash after a
-   "differs" verdict). Review its two proofs before merging.
-2. Own poll source step 1: Wikipedia scrape completed for every election + coverage both ways + the swap proposal
-   (`reviews/own-poll-source-step1-2026-10-11.md`). Step 2 (switch the trend's input) is Pete's decision.
+**SHIPPED 2026-10-11 evening (merge 644467e, reviewed, `check_like_ci` clean, two smoke runs DONE):** the local
+deciding-run launcher `scripts/deciding_run.ps1` (CLAUDE.md has usage; runs from a HEAD snapshot, all 22 by
+default) and plan item 6 (`quick_arm.R --reuse` per-harness canary, `--base-only`). First real job: the full
+rebuild/deciding run that refreshes the `shipped-models` scoreboard.
+
+**OPEN, agent died with no output:** own poll source step 1 (Wikipedia scrape for every election + coverage both
+ways + swap proposal; `reviews/own-poll-source-step1-2026-10-11.md` was never written). Restart it. Step 2
+(switch the trend's input) is Pete's decision.
 
 **Next speed-ups, ranked (from `reviews/fast-iter-profile-2026-10-11.md` / `-cacheable-`):** the same read-set key for
 the other fits (defectors, personal prior vote, departed slope, salience: ~25 s of a 54 s vic run); the seat-poll memo

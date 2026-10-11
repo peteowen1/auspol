@@ -480,8 +480,11 @@ refreshes baselines and exits; `--no-reuse` always wins. The deciding run never 
 one-shot Scheduled Task (parent is the Task Scheduler, so it outlives the session) that runs
 `quick_arm.R --slots=1 --no-reuse` at full size from a detached worktree snapshot of HEAD (it
 refuses uncommitted code, and edits made while it runs cannot reach it). Results land in
-`deciding-runs/<stamp>-<label>/` (gitignored): `results.txt`, `log.txt`, and a `DONE` or
-`FAILED` marker. Read the newest `DONE` folder next session; never touches `output/`.
+`deciding-runs/<stamp>-<label>/` (gitignored): `results.txt`, `log.txt`, and one marker:
+`DONE`, `FAILED` (with the reason), `PENDING` (never started: past its time means the machine
+was logged off) or `RUNNING` (no live pid in `started.txt` means it was killed). Check every
+folder's marker next session, not only the newest `DONE`. `-Pairs` defaults to `all`, and
+`DONE` requires the scored election count to equal the one asked for. Never touches `output/`.
 
 ## The seat model is the candidate model. There is no second seat model.
 
