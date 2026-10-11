@@ -13,7 +13,7 @@
 #' Is the recent-poll level blend on?
 #'
 #' @return `"decay"` (shipped 2026-10-11, 10-day half-life), `"1"` (28-day window, shipped earlier that day) or
-#'   the cycle weighted by age, prereg Amendment 2) or `"0"` (off).
+#'   `"0"` (off).
 #' @export
 level_recent_mode <- function() {
   v <- Sys.getenv("AUSPOL_LEVEL_RECENT", "decay")
