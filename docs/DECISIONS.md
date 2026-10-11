@@ -4,6 +4,7 @@ One line each: the decision, the one fact behind it, a link. Newest first.
 Created 2026-09-19 (the verse convention; auspol had none). Older decisions
 live in the plans they came from (`docs/plans/prereg-*.md` RESULT sections).
 
+- **2026-10-11 Level blend: 20-day age decay replaces the 28-day window (Pete's decision, unmeasured at 20 days).** Free-fitted 1-day decay refused (variance); 10-day tied the window (fed2013 +0.025) (`plans/prereg-level-recent-blend-2026-10-10.md`).
 - **2026-10-11 Day-before level leans on the last 28 days of polls: SHIPPED on Pete's override.** Trend lagged late polls (vic2022 Coalition 31.4 vs 34.1 vs 34.5); seat log loss -0.0067 (1.7 SE), ledger -0.0050, nsw2019 +0.045 (`plans/prereg-level-recent-blend-2026-10-10.md`).
 - **2026-10-10 Independent's own small record can lower their vote: SHIPPED on Pete's override.** Unseen-election screen -73 (SE 102), deciding run 0.3239 flat / ledger 0.2733 -> 0.2732; missed the 2-SE bar; two-way and linear-both-ways versions refused (`plans/prereg-ind-person-2026-10-10.md`).
 - **2026-10-10 Seat-poll reads memoised; fit_seats_full.R timed by stage.** Blend table 28.0 -> 16.5 s, outputs byte-identical (PRs #113, #114).

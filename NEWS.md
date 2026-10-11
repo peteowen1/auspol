@@ -1,5 +1,11 @@
 # auspol 0.4.95
 
+- The day-before level weights every poll of the campaign by age (half-life 20 days, Pete's choice) instead of a hard 28-day window; not separately measured at 20 days (the 10-day version tied the window).
+- `scripts/check_poll_coverage.R` compares AE Forecasts' poll files with Wikipedia (4 genuine final-month gaps).
+- `quick_arm.R --reuse` can reuse a cached baseline after a canary check (opt-in).
+
+# auspol 0.4.95
+
 - The day-before level now weights every poll of the campaign by age (half-life 20 days, Pete's choice) instead of a hard 28-day window. Not separately measured at 20 days; the 10-day version tied the window.
 - New `scripts/check_poll_coverage.R` compares AE Forecasts' poll files with Wikipedia (4 genuine final-month gaps found).
 - `quick_arm.R` can reuse a cached baseline across code edits after a canary check (`--reuse`, opt-in).
