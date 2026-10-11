@@ -167,3 +167,11 @@ Against the 28-day window (the e190cab run): seat log loss 0.3172 -> 0.3181 (+0.
 0.02 single-election limit the screen had not shown. Against no blend at all (this morning's gddbcedd run):
 0.3239 -> 0.3181 (-0.0058, SE 0.0046), better in 13 of 22. Back to Pete before shipping, since a clause his
 override did not cover now fires.
+
+## PETE'S DECISION (2026-10-11): half-life 20 days, accepted without a further run
+
+"i think 20 decay is optimal - just fit with that and accept it - if its slightly worse i dont mind." Shipped as
+`AUSPOL_LEVEL_RECENT=decay`, `AUSPOL_LEVEL_RECENT_HALFLIFE=20`, k still fitted on earlier elections. NOT measured
+at 20 days: the nearest measured points are the 10-day run above (a tie with the window) and the share-level
+curve (20 days sits between 14 and 21: level error ~1.64-1.71 vs the window's 1.67). The release scoreboard is
+left describing the last measured run until the next full rebuild.

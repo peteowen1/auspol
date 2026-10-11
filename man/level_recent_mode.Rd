@@ -7,7 +7,7 @@
 level_recent_mode()
 }
 \value{
-\code{"decay"} (shipped 2026-10-11, 10-day half-life), \code{"1"} (28-day window, shipped earlier that day) or
+\code{"decay"} (shipped 2026-10-11, 20-day half-life), \code{"1"} (28-day window, shipped earlier that day) or
 \code{"0"} (off).
 }
 \description{

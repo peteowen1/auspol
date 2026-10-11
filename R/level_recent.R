@@ -12,7 +12,7 @@
 
 #' Is the recent-poll level blend on?
 #'
-#' @return `"decay"` (shipped 2026-10-11, 10-day half-life), `"1"` (28-day window, shipped earlier that day) or
+#' @return `"decay"` (shipped 2026-10-11, 20-day half-life), `"1"` (28-day window, shipped earlier that day) or
 #'   `"0"` (off).
 #' @export
 level_recent_mode <- function() {
@@ -87,7 +87,7 @@ level_recent_decay_fit <- function(target, tab = NULL) {
   # AUSPOL_LEVEL_RECENT_HALFLIFE fixes the half-life (days) and fits only k
   # (prereg Amendment 3: the free fit ran to 1 day and was too jumpy). Unset or
   # "fit": the grid above.
-  hl <- Sys.getenv("AUSPOL_LEVEL_RECENT_HALFLIFE", "10")
+  hl <- Sys.getenv("AUSPOL_LEVEL_RECENT_HALFLIFE", "20")
   if (!identical(hl, "fit")) {
     hv <- suppressWarnings(as.numeric(hl))
     if (!is.finite(hv) || hv <= 0) stop("AUSPOL_LEVEL_RECENT_HALFLIFE must be \"fit\" or a positive number of days, not ", hl)
@@ -218,7 +218,7 @@ level_recent_apply <- function(levels, target, region, election_date, code = "LR
 .lr_decay_fit_cached <- function(target, tab = NULL) {
   if (!is.null(tab)) return(level_recent_decay_fit(target, tab))
   f <- out_path("level-recent.csv")
-  key <- paste(target, Sys.getenv("AUSPOL_LEVEL_RECENT_HALFLIFE", "10"), if (file.exists(f)) paste(file.info(f)$mtime, file.info(f)$size) else "none")
+  key <- paste(target, Sys.getenv("AUSPOL_LEVEL_RECENT_HALFLIFE", "20"), if (file.exists(f)) paste(file.info(f)$mtime, file.info(f)$size) else "none")
   if (is.null(.lr_fit_memo[[key]])) assign(key, level_recent_decay_fit(target, NULL), envir = .lr_fit_memo)
   .lr_fit_memo[[key]]
 }
