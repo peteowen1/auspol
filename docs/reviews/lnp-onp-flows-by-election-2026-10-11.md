@@ -157,3 +157,28 @@ flows are measurably better; the seat metric moves the other way because the old
 misses (fed2025, above). That is a decision for Pete, not a refusal: ship the better component and take the
 headline hit until the primary misses are fixed, or hold it. Before shipping either way: a prereg, an all-22
 deciding run, and a tagged live (vic2026) model, which `fit_xgb_flows_tf.R` does not yet write.
+
+## What tf2 does to the live Victorian forecast (2026-10-12, overnight)
+
+Live models written by `fit_xgb_flows_tf.R <tag> <hl> vic2026` (all 25 corpus elections, all earlier than
+polling day). Flows the live forecast would use (per-seat median, 88 seats, percent):
+
+| flow | shipped | tf0 | tf2 |
+|---|---|---|---|
+| ON -> Lib (ALP+LNP left) | 64.3 | 69.4 | 72.2 |
+| Lib -> ON (ALP+ONP left) | 68.0 | 70.0 | 73.4 |
+| GRN -> ALP (ALP+LNP left) | 79.2 | 79.3 | 79.0 |
+| GRN -> ALP (ALP+ONP left) | 68.8 | 78.0 | 71.1 |
+| ALP -> Lib (LNP+ONP left) | 64.2 | 57.7 | 55.3 |
+
+Full live run (`fit_seats_full.R`, published flags, output suffixes `-flowbase` / `-flowtf2`, files in
+`deciding-runs/20261012-live-flows-tf2/`), seats won, median (90% range):
+
+| party | published flows | tf2 flows |
+|---|---|---|
+| ALP | 32 (19-45) | 30 (17-42) |
+| LNP | 35 (24-50) | 34 (23-50) |
+| ONP | 14 (5-26) | 18 (8-30) |
+| GRN | 5 (3-8) | 5 (3-8) |
+
+The "published flows" column is today's code at published flags, not the forecast-latest release.

@@ -12,7 +12,8 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30.
    split error 14.21 -> 11.75 points, lower in all 18 elections; winners 1,724 -> 1,737-1,740 of 1,821) but the AEF-7
    seat log loss is flat-to-worse (+0.0025 to +0.0060, within 1 SE) because the old flows offset primary misses
    (fed2025 Labor -4.6 pts). Ship the better component (prereg + all-22 deciding run + a live vic2026 model first), or
-   hold until the primary misses are fixed? `reviews/lnp-onp-flows-by-election-2026-10-11.md`.
+   hold until the primary misses are fixed? LIVE IMPACT (tf2): ON->Lib 64.3 -> 72.2, Lib->ON 68.0 -> 73.4; seats
+   ONP 14 -> 18, ALP 32 -> 30, LNP 35 -> 34 (medians). `reviews/lnp-onp-flows-by-election-2026-10-11.md`.
 1. Own poll source STEP 2: should the trend read our Wikipedia/Poll Bludger file (layered: AE only where Wikipedia
    has nothing, i.e. fed2007, wa2001; Poll Bludger for nsw2019) instead of AE's files? Re-measure first: house effects
    keyed on AE firm labels ("Newspoll2"), the undecided rule (AE divides it out; write ours into CONSTANTS.md), the
