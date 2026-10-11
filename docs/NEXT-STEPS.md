@@ -13,7 +13,9 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30.
    seat log loss is flat-to-worse (+0.0025 to +0.0060, within 1 SE) because the old flows offset primary misses
    (fed2025 Labor -4.6 pts). Ship the better component (prereg + all-22 deciding run + a live vic2026 model first), or
    hold until the primary misses are fixed? LIVE IMPACT (tf2): ON->Lib 64.3 -> 72.2, Lib->ON 68.0 -> 73.4; seats
-   ONP 14 -> 18, ALP 32 -> 30, LNP 35 -> 34 (medians). `reviews/lnp-onp-flows-by-election-2026-10-11.md`.
+   ONP 14 -> 18, ALP 32 -> 30, LNP 35 -> 34 (medians). ALL-22 DECIDING RUN DONE (20k): seat log loss 0.3110 ->
+   0.3095 (-0.0016, SE 0.0033), AEF-7 +0.0026 (SE 0.0065): seat-neutral, better in 11 of 18 elections.
+   `reviews/lnp-onp-flows-by-election-2026-10-11.md`.
 0b. LEVEL BLEND (decision): same-code deciding run (`deciding-runs/20261012-0154-window28-vs-decay20/`, all 22 at
    20k): the 28-day WINDOW beats the shipped 20-day DECAY, seat log loss 0.3110 -> 0.3096 (-0.0014, SE 0.0013) and
    AEF-7 0.2710 -> 0.2682 (-0.0028, SE 0.0021); window better in 15 of 21 elections, worse in wa2017 (+0.032),

@@ -182,3 +182,13 @@ Full live run (`fit_seats_full.R`, published flags, output suffixes `-flowbase` 
 | GRN | 5 (3-8) | 5 (3-8) |
 
 The "published flows" column is today's code at published flags, not the forecast-latest release.
+
+## tf2 deciding run, all 22 at 20k (2026-10-12 03:10)
+
+`deciding-runs/20261012-0233-flows-tf2/` (arm `AUSPOL_FLOW_TF=1 AUSPOL_FLOW_MODEL_TAG=tf2 AUSPOL_FLOW_RATE_HL=2`,
+baseline shipped, code d8bf27f; tagged models and the time-forward line confirmed in the arm logs). Seat-winner log
+loss, lower is better: all 22 0.3110 -> 0.3095 (-0.0016, SE 0.0033); AEF-7 0.2710 -> 0.2736 (+0.0026, SE 0.0065).
+Both within 1 SE. Better in 11 of the 18 elections that changed (vic2018 -0.030, wa2008 -0.024, qld2020 -0.015,
+fed2016 -0.014, fed2022 -0.012), worse in 7 (fed2025 +0.025, fed2010 +0.016, fed2019 +0.015, wa2013 +0.015,
+vic2022 +0.004, sa2026 +0.002, nsw2023 +0.001). fed2007, sa2022, wa2001, wa2005 have no as-at flow model and
+are unchanged. Seat-neutral overall; the flow-only score is where tf2 clearly wins.
