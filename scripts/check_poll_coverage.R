@@ -28,9 +28,19 @@
 # Emits PC* codes. Run from the repo root; needs no package load.
 suppressMessages(library(data.table))
 source(file.path("R", "election_dates.R"))
-base <- file.path("external", "reference", "polls", "statewide-samples")
+base <- Sys.getenv("AUSPOL_POLL_BASE", file.path("external", "reference", "polls", "statewide-samples"))   # env overrides are test hooks
 W <- fread(file.path(base, "statewide_polls_wiki.csv"), showProgress = FALSE)
-J <- fread(file.path("output", "statewide-poll-samples.csv"), showProgress = FALSE)
+J <- fread(Sys.getenv("AUSPOL_COV_JOIN", file.path("output", "statewide-poll-samples.csv")), showProgress = FALSE)
+# ---- INPUT GUARDS: a stale or partial input must stop the run, not read as low coverage ----
+# (a) the join must have been built from THIS Wikipedia CSV: every Wikipedia row it matched must exist here.
+W[, wiki_id := paste(page_key, table_idx, row_in_table, sep = "/")]
+jm <- unique(J$wiki_id[J$matched %in% TRUE & nzchar(J$wiki_id)])
+missing_ids <- setdiff(jm, W$wiki_id)
+cat(sprintf("PCG1 join matched %d distinct Wikipedia rows; %d of them are absent from the current Wikipedia CSV\n", length(jm), length(missing_ids)))
+if (length(missing_ids)) stop("statewide-poll-samples.csv is stale: it matched Wikipedia rows that are not in the current statewide_polls_wiki.csv (e.g. ",
+                              paste(head(missing_ids, 3), collapse = ", "), "). Re-run scripts/join_statewide_poll_samples.R.")
+# (b) the undecided column must exist: treating a missing column as 0 would silently skip the rescaling.
+if (!"pv_UND" %in% names(W)) stop("column pv_UND is absent from statewide_polls_wiki.csv: the undecided rescaling cannot run, and treating undecided as 0 would hide it")
 
 # The 22 scored elections (quick_units() in R/quick_arm.R) and the election before each
 # (all_election_pairs() in R/reentry_prior.R). wa2021 is a pair but is NOT scored.
@@ -57,8 +67,13 @@ assign_election <- function(region, d) {
 }
 
 # ---- Wikipedia side ----------------------------------------------------------------
-W[, wiki_id := paste(page_key, table_idx, row_in_table, sep = "/")]
-W <- W[row_type == "poll" & table_type == "primary" & headline %in% TRUE & !is.na(fieldwork_end)]
+n_all_w <- nrow(W)
+W <- W[row_type == "poll" & table_type == "primary" & headline %in% TRUE]
+n_headline <- nrow(W)
+n_na_end <- sum(is.na(W$fieldwork_end))
+cat(sprintf("PCG2 Wikipedia rows %d; kept as headline primary-vote polls %d (dropped %d: results rows, seat/leader tables, sub-national tables); of those, NA fieldwork_end %d\n",
+            n_all_w, n_headline, n_all_w - n_headline, n_na_end))
+stopifnot("headline Wikipedia polls with no parsed date -- the scrape should have failed (STAT4)" = n_na_end == 0)
 W[, end := as.Date(fieldwork_end)]
 W[, lnp_any := fifelse(is.finite(lnp_fp), lnp_fp, fifelse(is.finite(lib_fp), lib_fp + fifelse(is.finite(nat_fp), nat_fp, 0), NA_real_))]
 W[, key := paste(region, tolower(firm), end, round(alp_fp, 1), round(lnp_any, 1))]
@@ -67,14 +82,36 @@ covered_keys <- unique(W$key[W$wiki_id %in% matched_ids])
 W[, covered := key %in% covered_keys]
 U <- unique(W, by = "key")                      # one row per distinct poll
 U[, election_w := assign_election(region, end)]
+# Rows outside every scored window: say which window they DO belong to (an unscored election such as
+# wa2021 or vic2026, or later than every known polling day), so a mislabelled scored poll cannot hide here.
+label_window <- function(reg, d) {
+  ed_reg <- sub("[0-9]+$", "", names(ed)); ed_day <- as.Date(unname(ed))
+  vapply(seq_along(d), function(k) {
+    ok <- which(ed_reg == reg[k] & ed_day >= d[k])
+    if (length(ok)) names(ed)[ok[which.min(ed_day[ok])]] else paste0("after last known ", reg[k], " election")
+  }, "")
+}
+drop_report <- function(tag, dt, region_col, date_col, label) {
+  if (!nrow(dt)) { cat(sprintf("%s  %s: 0 rows outside the scored windows\n", tag, label)); return(invisible()) }
+  lab <- label_window(dt[[region_col]], dt[[date_col]])
+  cat(sprintf("%s  %s: %d rows outside the scored windows, by the election window they fall in:\n", tag, label, nrow(dt)))
+  print(sort(table(lab), decreasing = TRUE))
+  stopifnot("a dropped row's window is a SCORED election -- assign_election() is wrong" = !any(lab %in% scored$election))
+}
+n_before_w <- nrow(U)
+drop_report("PCG3", U[is.na(election_w)], "region", "end", "Wikipedia distinct polls")
 U <- U[!is.na(election_w)]
+cat(sprintf("PCG3b Wikipedia distinct polls %d -> %d kept inside scored windows\n", n_before_w, nrow(U)))
 U[, days_out := as.integer(scored$polling_day[match(election_w, scored$election)] - end)]
 
 # ---- AE side -----------------------------------------------------------------------
 A <- copy(J)
 A[, MidDate := as.Date(MidDate)]
 A[, election_a := assign_election(region, MidDate)]
+n_before_a <- nrow(A)
+drop_report("PCG4", A[is.na(election_a)], "region", "MidDate", "AE polls")
 A <- A[!is.na(election_a)]
+cat(sprintf("PCG4b AE polls %d -> %d kept inside scored windows\n", n_before_a, nrow(A)))
 A[, days_out := as.integer(scored$polling_day[match(election_a, scored$election)] - MidDate)]
 A[, has_primary := is.finite(anchor_alp) & is.finite(anchor_lnp)]
 A[, matched := matched %in% TRUE]
@@ -120,7 +157,7 @@ fk <- function(x) {
 }
 und_num <- function(v) { v <- suppressWarnings(as.numeric(gsub("[^0-9.]", "", v))); v[!is.finite(v)] <- 0; v }
 Uw <- U[covered == FALSE]
-Uw[, `:=`(fk = fk(firm), f = 100 / (100 - (if ("pv_UND" %in% names(Uw)) und_num(pv_UND) else 0)))]
+Uw[, `:=`(fk = fk(firm), f = 100 / (100 - und_num(pv_UND)))]   # pv_UND presence was asserted above
 Ao <- A[matched == FALSE & has_primary]
 Ao[, `:=`(fk = fk(Firm), ae_row = .I)]
 cand <- merge(Uw[, .(wiki_key = key, region, fk, end, alp = alp_fp * f, lnp = lnp_any * f)],
@@ -145,10 +182,17 @@ stopifnot(sum(A$relaxed) == sum(U$relaxed))
 A[, `:=`(pb_matched = FALSE, arow = .I)]
 R[, `:=`(pb_polls = 0L, pb_matched_to_ae = 0L, ae_covered_wiki_or_pb = 0L, f30_pb_polls = 0L, f30_ae_covered_wiki_or_pb = 0L)]
 pbf <- file.path(base, "pollbludger_polls.csv")
-if (file.exists(pbf)) {
-  PB <- fread(pbf, showProgress = FALSE)[row_type == "poll" & is.finite(alp_fp) & is.finite(lnp_fp)]
+if (!file.exists(pbf)) stop(pbf, " is missing: run scripts/fetch_pollbludger_tracker_polls.R (a silent skip would read as no Poll Bludger coverage)")
+{
+  PB0 <- fread(pbf, showProgress = FALSE)[row_type == "poll"]
+  n_nofp <- sum(!(is.finite(PB0$alp_fp) & is.finite(PB0$lnp_fp)))
+  cat(sprintf("PCG5 Poll Bludger poll rows %d; without finite ALP and LNP primaries %d\n", nrow(PB0), n_nofp))
+  stopifnot("Poll Bludger rows without primaries -- the fetch script should have refused the sheet" = n_nofp == 0)
+  PB <- PB0
   PB[, date := as.Date(date)]
   PB[, election_p := assign_election(region, date)]
+  cat(sprintf("PCG6 Poll Bludger polls outside the scored windows: %d\n", sum(is.na(PB$election_p))))
+  stopifnot("Poll Bludger poll outside its election's window" = !anyNA(PB$election_p))
   PB <- PB[!is.na(election_p)]
   PB[, `:=`(fk = fk(POLLSTER), prow = .I,
             days_out = as.integer(scored$polling_day[match(election_p, scored$election)] - date))]
