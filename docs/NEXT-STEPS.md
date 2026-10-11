@@ -31,12 +31,14 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30.
 - `build_page.R` no longer runs the retired `simulate_seats()`: pendulum rows come from the seat file (same 83
   rows; tie order is decided after the merge, so the page is unchanged). Full page build not run locally: the
   staleness guards refuse until the next `run_all.R` (poll data re-fetched 2026-10-11).
-- Worktrees removed (merged, clean): a83f23..., a9339e..., afe07d... (+ branches). KEPT for Pete: ab68314...
-  (untracked `prereg-zero-order-2026-10-03.md` differs from dev's), a4181ce... (NSW 2023 ITG JSON commit d63f08e,
-  same message as dev's e0f4551 but a different patch), ab43fc4... (uncommitted poll-sample edits),
-  a1a95ec... `zero-order-late` (4 uncommitted changes).
+- Worktrees removed: a83f23, a9339e, afe07d, ab6831 (its untracked prereg was an older copy of dev's) and a4181c
+  (its NSW 2023 JSON commit is fully on dev as e0f4551). Branches deleted except `worktree-agent-a4181ce1235917bd7`
+  (needs `git branch -D`: content on dev, not an ancestor). KEPT for Pete: ab43fc4 (uncommitted poll-sample work, 3
+  files, +301/-124), a1a95ec `zero-order-late` (merged branch; 4 modified reference CSVs, +41 by-election rows).
+- Seat registry: wa2001 Pilbara/Kimberley, wa2008 Kalgoorlie (three of the six zero-probability winners) PARKED with causes.
 - `DECISIONS.md` 44,780 -> 39,078 chars (2026-09-19..28 archived to `backlog/journal-decisions-2026-09-19-to-09-28.md`).
-- dev -> main: every commit reviewed (Sonnet, 4 passes; all findings fixed), `check_like_ci` clean; PR opened, NOT merged.
+- dev -> main: PR #120, every commit reviewed (Sonnet, 4 passes; findings fixed), `check_like_ci` clean, CI PASS on 6a82da4.
+  NOT merged: Pete merges.
 - OPEN, small: test fixtures print `PPV1! minor-to-minor conserve fit FAILED ... object 'votes' not found` 6 times
   per test run (synthetic corpus lacks `votes`; R/candidate_returns.R:984). Pre-existing, tests pass; noise that
   could hide a real PPV1 failure.
