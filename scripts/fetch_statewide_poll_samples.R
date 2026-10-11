@@ -49,7 +49,7 @@ elections <- list(
   vic = c(2010, 2014, 2018, 2022, 2026),
   nsw = c(2011, 2015, 2019, 2023, 2027),
   qld = c(2012, 2015, 2017, 2020, 2024, 2028),
-  wa  = c(2008, 2013, 2017, 2021, 2025),
+  wa  = c(2001, 2005, 2008, 2013, 2017, 2021, 2025),
   sa  = c(2010, 2014, 2018, 2022, 2026)
 )
 pg <- list()
@@ -78,8 +78,8 @@ elec_dates <- rbindlist(list(
              election_date = as.Date(c("2011-03-26", "2015-03-28", "2019-03-23", "2023-03-25", "2027-03-27"))),
   data.table(region = "qld", year = c(2012, 2015, 2017, 2020, 2024, 2028),
              election_date = as.Date(c("2012-03-24", "2015-01-31", "2017-11-25", "2020-10-31", "2024-10-26", "2028-10-28"))),
-  data.table(region = "wa", year = c(2008, 2013, 2017, 2021, 2025),
-             election_date = as.Date(c("2008-09-06", "2013-03-09", "2017-03-11", "2021-03-13", "2025-03-08"))),
+  data.table(region = "wa", year = c(2001, 2005, 2008, 2013, 2017, 2021, 2025),
+             election_date = as.Date(c("2001-02-10", "2005-02-26", "2008-09-06", "2013-03-09", "2017-03-11", "2021-03-13", "2025-03-08"))),
   data.table(region = "sa", year = c(2010, 2014, 2018, 2022, 2026),
              election_date = as.Date(c("2010-03-20", "2014-03-15", "2018-03-17", "2022-03-19", "2026-03-21")))
 ))
@@ -176,16 +176,29 @@ parse_dates <- function(s) {
       return(list(start = d, end = d, year_given = TRUE, parts = NULL))
     }
   }
+  # "Oct-Dec 2012" / "Jan-Mar 2010": Newspoll's quarterly aggregate, two months and no day. It
+  # spans the whole quarter (first of month 1 to last of month 2), not "mid-December".
+  qm <- regmatches(s, regexec("^([A-Za-z]{3,9})\\.? *- *([A-Za-z]{3,9})\\.? +(\\d{4})$", s))[[1]]
+  if (length(qm) == 4) {
+    m1 <- month_idx[tolower(substr(qm[2], 1, 3))]; m2 <- month_idx[tolower(substr(qm[3], 1, 3))]
+    if (!is.na(m1) && !is.na(m2)) {
+      st <- as.Date(sprintf("%s-%02d-01", qm[4], m1))
+      en <- seq(as.Date(sprintf("%s-%02d-01", qm[4], m2)), by = "month", length.out = 2)[2] - 1
+      return(list(start = st, end = en, year_given = TRUE, parts = NULL))
+    }
+  }
   tok <- gregexpr("(?i)\\b(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\\b|\\b\\d{4}\\b|\\b\\d{1,2}(?:st|nd|rd|th)?\\b", s, perl = TRUE)
   tk <- regmatches(s, tok)[[1]]
   if (!length(tk)) return(na)
   days <- integer(0); mons <- integer(0); yrs <- integer(0)   # one entry per date
+  last_year <- NA_integer_  # most recent 4-digit year token, for a month-only date ("March 2021")
   pend <- integer(0)        # days still waiting for a month (day-first: "1-3 Mar")
   open_month <- NA_integer_ # month seen before its days (month-first: "Feb 3-10")
   open_used <- TRUE
   for (t in tk) {
     if (grepl("^\\d{4}$", t)) {
       yrs[is.na(yrs)] <- as.integer(t)
+      last_year <- as.integer(t)
     } else if (grepl("^[A-Za-z]", t)) {
       mo <- month_idx[tolower(substr(t, 1, 3))]
       if (is.na(mo)) next
@@ -199,7 +212,9 @@ parse_dates <- function(s) {
       else { mons <- c(mons, open_month); open_used <- TRUE }
     }
   }
-  if (!open_used) { days <- c(days, 15L); mons <- c(mons, open_month); yrs <- c(yrs, NA_integer_) }   # "Mar 2022": mid-month
+  # "Mar 2022": mid-month. The year token came AFTER the month, so it must be carried over here:
+  # appended as NA, "March 2021" was year-less and was inferred into 2019 (nsw2023 page, 2026-10-11).
+  if (!open_used) { days <- c(days, 15L); mons <- c(mons, open_month); yrs <- c(yrs, last_year) }
   if (!length(days) || anyNA(mons)) return(na)
   list(start = as.Date(NA), end = as.Date(NA), year_given = !anyNA(yrs),
        parts = list(d = days, m = mons, y = yrs))
@@ -234,6 +249,11 @@ local({
   chk("27–28 Nov, 4–5 Dec 2021", "2021-11-27", "2021-12-05")
   chk("Feb 3–10 2026", "2026-02-03", "2026-02-10")
   chk("30 Mar – Apr 5 2026", "2026-03-30", "2026-04-05")
+  chk("March 2021", "2021-03-15", "2021-03-15")                 # was read as year-less and inferred into 2019
+  chk("Mar 2022", "2022-03-15", "2022-03-15")
+  chk("Oct–Dec 2012", "2012-10-01", "2012-12-31")
+  chk("Jan-Mar 2010", "2010-01-01", "2010-03-31")
+  chk("2 – 4 Sep 2008", "2008-09-02", "2008-09-04")
   chk("24–28 Sep", "2026-09-24", "2026-09-28", 2026L)
   stopifnot(is.na(d("24–28 Sep")[1]))                       # no year, no default -> NA, not a guess
   stopifnot(identical(sample_num(c("1,000", "1000–1500", "1,000-1,500", "~800", "4 909", "4 909", "1 000",
@@ -266,7 +286,26 @@ parse_poll_table <- function(tab, page_key, region, election, kind, url, tidx, s
   is_hdr <- function(r) any(grepl("^dates?$", strip_fn(as.character(raw[r, ])), ignore.case = TRUE))
   r0 <- NA_integer_
   for (r in seq_len(min(4L, nrow(raw)))) if (is_hdr(r)) { r0 <- r; break }
+  # Older Newspoll tables (wa2013, sa2010, sa2014) have NO "Date" header: the first column's
+  # header cells are blank and the group row reads "Primary vote | TPP vote". Name that column
+  # "Date" so the rest of the parser treats it like any other table.
+  if (is.na(r0)) {
+    for (r in seq_len(min(4L, nrow(raw)))) {
+      cl <- strip_fn(as.character(raw[r, ]))
+      if (!nzchar(cl[1]) && any(grepl("^(primary vote|2pp vote|tpp vote)", cl, ignore.case = TRUE))) {
+        raw[r, 1] <- "Date"; r0 <- r; break
+      }
+    }
+  }
   if (is.na(r0)) return(NULL)
+  # wa2008: the "Date" label sits on the PARTY row and the "Primary vote | 2PP vote" group row is
+  # above it with a blank first cell. Promote the group row to be the header (Date is relabelled).
+  if (r0 > 1L) {
+    pr <- strip_fn(as.character(raw[r0 - 1L, ]))
+    if (!nzchar(pr[1]) && any(grepl("^(primary vote|2pp vote|tpp vote)", pr, ignore.case = TRUE))) {
+      raw[r0 - 1L, 1] <- "Date"; r0 <- r0 - 1L
+    }
+  }
   dcol <- which(grepl("^dates?$", strip_fn(as.character(raw[r0, ])), ignore.case = TRUE))[1]
   dstart <- r0 + 1L     # first data row = first row whose date cell holds a digit or the word "election"
   while (dstart <= nrow(raw) && !grepl("[0-9]|election", raw[dstart, dcol], ignore.case = TRUE)) dstart <- dstart + 1L
@@ -283,7 +322,17 @@ parse_poll_table <- function(tab, page_key, region, election, kind, url, tidx, s
     if (!is.na(k) && role_of(g[k]) == "pv") g[j] <- g[k]
   }
   roles <- vapply(g, role_of, "")
-  if (!"date" %in% roles || !"firm" %in% roles) return(NULL)
+  # No firm column (fed2010 Newspoll table, wa2008, wa2013, sa2010, sa2014): the table's last row is a
+  # footer "Polling conducted by Newspoll and published in The Australian". That names the firm for
+  # every row; firm_from records that it came from the footer, not a column.
+  firm_default <- NA_character_
+  if (!"firm" %in% roles) {
+    tail_txt <- unlist(raw[max(1L, nrow(raw) - 2L):nrow(raw), ], use.names = FALSE)
+    mm <- regmatches(tail_txt, regexec("[Pp]olling (?:was )?conducted by ([A-Za-z][A-Za-z&' -]*?)(?: and | for |,|\\.|$)", tail_txt, perl = TRUE))
+    mm <- Filter(function(x) length(x) == 2, mm)
+    if (length(mm)) firm_default <- trimws(mm[[1]][2])
+  }
+  if (!"date" %in% roles || (!"firm" %in% roles && is.na(firm_default))) return(NULL)
   roles[duplicated(roles) & roles %in% c("date", "firm", "client", "sample", "mode", "seat")] <- "other"
   col_date <- which(roles == "date")[1]; col_firm <- which(roles == "firm")[1]
   col_cli <- which(roles == "client")[1]; col_smp <- which(roles == "sample")[1]
@@ -305,7 +354,7 @@ parse_poll_table <- function(tab, page_key, region, election, kind, url, tidx, s
   rows <- list()
   for (i in seq_len(nrow(data))) {
     cells <- as.character(data[i, ])
-    dt_v <- cells[col_date]; fm_v <- cells[col_firm]
+    dt_v <- cells[col_date]; fm_v <- if (is.na(col_firm)) firm_default else cells[col_firm]
     nonblank <- cells[-col_date][nzchar(cells[-col_date])]
     # spacer / year separator / dated EVENT row ("Albanese replaces Shorten": one cell spanning
     # every column but the date): everything except the date is one repeated string or blank.
@@ -318,6 +367,7 @@ parse_poll_table <- function(tab, page_key, region, election, kind, url, tidx, s
       page_key = page_key, region = region, election = election, page_kind = kind, source_url = url,
       table_idx = tidx, section = section, table_type = table_type, row_in_table = i, row_type = row_type,
       date_raw = strip_fn(dt_v), firm_raw = strip_fn(fm_v),
+      firm_from = if (is.na(col_firm)) "table_footer" else "column",
       firm = trimws(gsub("\\s*\\[[^]]*\\]", "", strip_fn(fm_v))),
       client_raw = if (!is.na(col_cli)) strip_fn(cells[col_cli]) else NA_character_,
       sample_raw = if (!is.na(col_smp)) strip_fn(cells[col_smp]) else NA_character_,
@@ -336,6 +386,29 @@ parse_poll_table <- function(tab, page_key, region, election, kind, url, tidx, s
   if (!length(rows)) return(NULL)
   rbindlist(rows, fill = TRUE)
 }
+
+# ---- self-test of the table shapes added 2026-10-11 (known table in, known rows out) ------
+# (a) wa2013/sa2010/sa2014: no "Date" header, no firm column, firm named only by the footer row.
+# (b) wa2008: "Date" sits on the party row, the "Primary vote | 2PP vote" group row is above it.
+# (c) the same table with the footer removed has no firm anywhere and MUST be refused -- a
+#     table that named no firm would otherwise enter the file with a blank firm.
+local({
+  tr <- function(...) paste0("<tr>", paste0("<td>", c(...), "</td>", collapse = ""), "</tr>")
+  tbl <- function(rows) rvest::html_element(rvest::minimal_html(paste0("<table>", paste(rows, collapse = ""), "</table>")), "table")
+  foot <- tr(rep("Polling conducted by Newspoll and published in The Australian.", 6))
+  body <- c(tr("2013 election", "47.1%", "33.1%", "57.3%", "42.7%"),
+            tr("4–7 Mar 2013", "48%", "32%", "59.5%", "40.5%"),
+            tr("Oct–Dec 2012", "43%", "30%", "58%", "42%"))
+  hdr_a <- c(tr("", "Primary vote", "Primary vote", "TPP vote", "TPP vote"), tr("", "Lib", "ALP", "Lib/Nat", "ALP"))
+  hdr_b <- c(tr("", "Primary vote", "Primary vote", "2PP vote", "2PP vote"), tr("Date", "Lib", "ALP", "Lib/Nat", "ALP"))
+  go <- function(rows) parse_poll_table(tbl(rows), "t_a", "wa", "wa2013", "main", "u", 1L, "Polling")
+  a <- go(c(hdr_a, body, foot))
+  stopifnot(!is.null(a), nrow(a) == 3, all(a$firm == "Newspoll"), all(a$firm_from == "table_footer"),
+            identical(a$row_type, c("result", "poll", "poll")), a$table_type[1] == "primary")
+  b <- go(c(hdr_b, body, foot))
+  stopifnot(!is.null(b), nrow(b) == 3, identical(b$row_type, c("result", "poll", "poll")), b$table_type[1] == "primary")
+  stopifnot(is.null(go(c(hdr_a, body))), is.null(go(c(hdr_b, body))))   # no footer, no firm: refused
+})
 
 # Pages that resolve to the same canonical article (a "state election" opinion title that
 # redirects to the main article) are parsed once, so no poll is double counted.
@@ -434,7 +507,15 @@ for (pk in unique(wiki$page_key)) {
     for (r in rev(idx)) {
       p <- wiki$.parts[[r]]
       if (is.na(wiki$fieldwork_end[r]) && !is.null(p) && !wiki$.year_given[r]) {
-        if (!is.na(ref)) {
+        # The table sits under a year heading ("Voting intention > 2025"): that year is the answer.
+        # (Before this, fed2028's 2025 table was inferred into 2027 from the 2026 table's dates,
+        # which tripped STAT6 -- 39 rows, 2026-10-11.)
+        sy <- regmatches(wiki$section[r], regexec("(?:^|[ >])((?:19|20)[0-9]{2})$", wiki$section[r]))[[1]]
+        if (length(sy) == 2) {
+          d <- resolve_dates(p, as.integer(sy[2]))
+          set(wiki, r, "fieldwork_start", d$start); set(wiki, r, "fieldwork_end", d$end)
+          set(wiki, r, "year_inferred", TRUE)
+        } else if (!is.na(ref)) {
           y0 <- as.integer(format(ref, "%Y"))
           for (yy in y0 + 0:1) {
             d <- resolve_dates(p, yy)
@@ -464,7 +545,10 @@ wiki[, c(".parts", ".year_given") := NULL]
 # ---- parsed numbers ---------------------------------------------------------
 wiki[, sample_n := sample_num(sample_raw)]
 pick <- function(d, cands, prefix) {
-  cols <- intersect(paste0(prefix, cands), names(d))
+  # case-insensitive: the older tables say "Lib", "Nat", "Gre", the newer "LIB", "NAT"
+  nn <- names(d); want <- tolower(paste0(prefix, cands))
+  cols <- nn[tolower(nn) %in% want]
+  cols <- cols[order(match(tolower(cols), want))]
   if (!length(cols)) return(rep(NA_real_, nrow(d)))
   m <- vapply(cols, function(cn) pct_num(d[[cn]]), numeric(nrow(d)))
   if (is.null(dim(m))) m <- matrix(m, ncol = length(cols))
