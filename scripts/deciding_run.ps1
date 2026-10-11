@@ -24,8 +24,8 @@
 # Limits: the task runs as you, "only when logged on" (a locked screen is fine; a
 # logged-out machine is not). The code is a detached worktree snapshot of HEAD (uncommitted
 # changes refuse), so edits during the run cannot reach it. The fresh snapshot compiles src/ and copies
-# the inputs first: ~8 minutes before the first harness (measured 2026-10-11, 648 s for a 2-run
-# smoke). Slots=1 because the machine is memory-tight; expect hours
+# the inputs first (two 2-run vic2022 smokes on 2026-10-11 took 648 s and 210 s end to end; the
+# slow one shared the machine with other R work). Slots=1 because the machine is memory-tight; expect hours
 # for the full 22 at 20,000 simulations. Nothing here is published or pushed.
 param(
   [string]$Arm = "",
