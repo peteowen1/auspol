@@ -17,7 +17,8 @@
 #   output/xgb-flows-<tag>-asat-manifest.csv
 # Run: Rscript scripts/fit_xgb_flows_tf.R <tag> <half-life years, 0 = equal>
 # Read with AUSPOL_FLOW_TF=1 AUSPOL_FLOW_MODEL_TAG=<tag> AUSPOL_FLOW_RATE_HL=<same half-life>.
-# No live (vic2026) model is written: backtests only until an arm earns it.
+# Live targets (3rd argument, default vic2026) get a model trained on every corpus row,
+# refused if the corpus holds an election on or after them (section 3).
 options(auspol.root = normalizePath("."))
 suppressMessages(devtools::load_all(quiet = TRUE))
 suppressMessages(library(data.table))

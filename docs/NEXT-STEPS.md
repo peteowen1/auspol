@@ -36,7 +36,10 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30.
   same message as dev's e0f4551 but a different patch), ab43fc4... (uncommitted poll-sample edits),
   a1a95ec... `zero-order-late` (4 uncommitted changes).
 - `DECISIONS.md` 44,780 -> 39,078 chars (2026-09-19..28 archived to `backlog/journal-decisions-2026-09-19-to-09-28.md`).
-- dev -> main: tonight's flow code under review (Sonnet x2); PR to be opened, NOT merged.
+- dev -> main: every commit reviewed (Sonnet, 4 passes; all findings fixed), `check_like_ci` clean; PR opened, NOT merged.
+- OPEN, small: test fixtures print `PPV1! minor-to-minor conserve fit FAILED ... object 'votes' not found` 6 times
+  per test run (synthetic corpus lacks `votes`; R/candidate_returns.R:984). Pre-existing, tests pass; noise that
+  could hide a real PPV1 failure.
 
 **Decided 2026-10-11 23:40:** the decay20 deciding run (`deciding-runs/20261011-1854-decay20/`, DONE, all 22, 20k
 sims): shipped 20-day decay vs no blend, seat log loss 0.3163 -> 0.3110, -0.0053 (SE 0.0037), better by >1 SE; AEF-7
