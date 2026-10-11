@@ -35,6 +35,12 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30.
   (its NSW 2023 JSON commit is fully on dev as e0f4551). Branches deleted except `worktree-agent-a4181ce1235917bd7`
   (needs `git branch -D`: content on dev, not an ancestor). KEPT for Pete: ab43fc4 (uncommitted poll-sample work, 3
   files, +301/-124), a1a95ec `zero-order-late` (merged branch; 4 modified reference CSVs, +41 by-election rows).
+- Full local rebuild at shipped flags (01:15-01:53, no publish; log `deciding-runs/rebuild-20261012-decay20.log`):
+  all 22 seat log loss 0.3201 (2,120 seats; 6 floor seats carry 12.2%), AEF-7 ledger 0.2710 vs AEF 0.2825, primary
+  RMSE like for like 4.771 vs 5.711. Earlier rebuilds: 28-day window 0.3172 / 0.2682, 10-day decay 0.3181. Not
+  like-for-like (code moved), so a same-code deciding run is RUNNING: `deciding-runs/20261012-0154-window28-vs-decay20/`
+  (arm = 28-day window, base = shipped 20-day decay, all 22 at 20k). Stage-1 as-at models were CACHED (inputs
+  unchanged): LEVEL_RECENT is off in stage 1, so the xgb layer never sees it.
 - Seat registry: wa2001 Pilbara/Kimberley, wa2008 Kalgoorlie (three of the six zero-probability winners) PARKED with causes.
 - `DECISIONS.md` 44,780 -> 39,078 chars (2026-09-19..28 archived to `backlog/journal-decisions-2026-09-19-to-09-28.md`).
 - dev -> main: PR #120, every commit reviewed (Sonnet, 4 passes; findings fixed), `check_like_ci` clean, CI PASS on 6a82da4.
