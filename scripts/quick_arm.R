@@ -165,6 +165,14 @@ key_of <- function(env) {
   quick_md5(paste(c("keyv2", code_hash, external_id, sims, input_sig, if (length(env)) paste0(names(env)[order(names(env))], "=", env[order(names(env))])), collapse = ";"))
 }
 key_base <- key_of(base_env); key_arm <- key_of(arm_eff)
+# What each key was made of, so a later call can find a baseline that differs ONLY in code
+# (the canary below). Written once per key directory.
+key_parts_of <- function(env) list(code = code_hash, external = external_id, sims = sims, input = input_sig,
+                                   env = if (length(env)) paste0(names(env)[order(names(env))], "=", env[order(names(env))]) else character(0))
+for (.k in list(list(key_base, base_env), list(key_arm, arm_eff))) {
+  .d <- file.path(qd, "cache", .k[[1]]); dir.create(.d, recursive = TRUE, showWarnings = FALSE)
+  if (!file.exists(file.path(.d, "_key.rds"))) saveRDS(key_parts_of(.k[[2]]), file.path(.d, "_key.rds"))
+}
 if (identical(key_base, key_arm)) stop("quick_arm: the arm sets nothing different from the baseline; there is nothing to compare")
 
 # ---- scratch roots (one per concurrent process) --------------------------------
@@ -272,6 +280,47 @@ if (length(tasks)) {
   # src/), so the workers' load_all() finds an up-to-date DLL and none of them compiles concurrently.
   cat("quick_arm: compiling once before the workers start\n")
   pkgbuild::compile_dll(roots[1], quiet = TRUE)
+  # BASELINE REUSE ACROSS CODE EDITS (Pete, 2026-10-11: a code edit behind an arm-only switch threw
+  # away 22 cached baseline runs, ~20 min per screen). An older baseline key whose inputs match in
+  # everything but the code is adopted only after ONE of its elections, re-run here under the new
+  # code, reproduces it byte for byte (sharedetail and allprobs). Any difference: no reuse.
+  # --no-reuse turns it off.
+  need_base <- vapply(tasks, function(t) t$role == "base", NA)
+  if (any(need_base) && !("--no-reuse" %in% a)) {
+    mine <- key_parts_of(base_env)
+    kd <- list.dirs(file.path(qd, "cache"), recursive = FALSE)
+    kd <- kd[basename(kd) != key_base & file.exists(file.path(kd, "_key.rds"))]
+    kd <- kd[order(-as.numeric(file.mtime(kd)))]
+    same_but_code <- function(d) { p <- readRDS(file.path(d, "_key.rds"))
+      !identical(p$code, mine$code) && identical(p$external, mine$external) && identical(p$sims, mine$sims) &&
+        identical(p$input, mine$input) && identical(p$env, mine$env) }
+    kd <- kd[vapply(kd, same_but_code, NA)]
+    miss_ids <- vapply(tasks[need_base], function(t) t$id, "")
+    for (old in kd) {
+      cov <- miss_ids[file.exists(file.path(old, miss_ids, "meta.rds"))]
+      if (!length(cov)) next
+      secs_old <- vapply(cov, function(u) readRDS(file.path(old, u, "meta.rds"))$secs, 0)
+      canary <- cov[which.min(secs_old)]
+      ct <- tasks[need_base][[match(canary, miss_ids)]]
+      assign("SLOT", 1L, envir = globalenv())
+      cr <- run_unit(ct)
+      if (!cr$ok) stop("quick_arm: the canary baseline run failed; see ", cr$log)
+      tasks <- tasks[!vapply(tasks, function(t) t$role == "base" && t$id == canary, NA)]   # its run is cached either way
+      same <- cr$ok && all(vapply(c("sharedetail.csv", "allprobs.csv"), function(f)
+        file.exists(file.path(old, canary, f)) && file.exists(file.path(ct$dir, f)) &&
+          identical(unname(tools::md5sum(file.path(old, canary, f))), unname(tools::md5sum(file.path(ct$dir, f)))), NA))
+      if (same) {
+        for (u in setdiff(cov, canary)) { dir.create(cache_dir(key_base, u), recursive = TRUE, showWarnings = FALSE)
+          file.copy(list.files(file.path(old, u), full.names = TRUE), cache_dir(key_base, u), overwrite = TRUE) }
+        cat(sprintf("quick_arm: baseline REUSED from %s for %d election(s): canary %s re-ran byte-identical under the new code\n",
+                    basename(old), length(cov), canary))
+        tasks <- tasks[!vapply(tasks, function(t) t$role == "base" && t$id %in% cov, NA)]
+      } else cat(sprintf("quick_arm: baseline NOT reused from %s: canary %s differs under the new code\n", basename(old), canary))
+      break
+    }
+  }
+  if (!length(tasks)) cat("quick_arm: nothing left to run after baseline reuse\n")
+  if (length(tasks)) {
   cl <- parallel::makeCluster(min(slots, length(tasks)))
   parallel::clusterCall(cl, function(f) { source(f); NULL }, file.path(repo, "R", "quick_arm.R"))   # workers need quick_hd1_check()
   parallel::clusterApply(cl, seq_along(cl), function(i) { assign("SLOT", i, envir = globalenv()); NULL })
@@ -281,6 +330,7 @@ if (length(tasks)) {
   if (!all(vapply(res, function(r) r$ok, NA))) stop("quick_arm: a harness run failed; see the log(s) above")
   cat(sprintf("quick_arm: HD1 verified on %d run(s): every named switch is listed as applied and none leaked in (arm run saw: %s)\n", length(res),
               paste(unique(unlist(lapply(res[vapply(res, function(r) r$role == "arm", NA)], function(r) r$seen))), collapse = " ")))
+  }
 }
 
 # ---- score --------------------------------------------------------------------
