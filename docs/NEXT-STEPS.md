@@ -47,8 +47,8 @@ seat-poll precision blend, typical-vote / dedicated / mixture independent models
    64.3% vs 69-75% since 2024. Recency weighting: screen 5.60 -> 4.96 pts flow error at 2 y half-life, but the
    inference-only arm (`AUSPOL_FLOW_RATE_HL=2`) was +0.0022 log loss on AEF-7 (1.2 SE worse; sa/qld better, fed2025
    worse). Retrained trees (`fit_xgb_flows_tf.R`, `AUSPOL_FLOW_TF=1`): tf0 +0.0060, tf2 +0.0025 (both within 1 SE);
-   fed2025 worse in every version (+0.023 to +0.031), fed2022/qld2024 better under tf2. NEXT: walk the fed2025 seats tf2
-   moved most before any further arm. (b) Lib->ON varies
+   fed2025 worse in every version (+0.023 to +0.031): WALKED, its flows got more accurate; the old flows were offsetting
+   a 4.6-point Labor primary under-call. NEXT: a flow-only score (seat outcomes from ACTUAL primaries + predicted flows). (b) Lib->ON varies
    54-85% by election and moves statewide together; draw it once per simulation, not per seat. (c) no past Liberal
    card orders for ON vs ALP on disk; collect only if (a)/(b) leave a gap. Liberal 2026 card not published.
 2. OPEN: re-score Richmond/Footscray/Brunswick/Preston/Pascoe Vale 2022 after AUSPOL_LEVEL_RECENT; shrink the

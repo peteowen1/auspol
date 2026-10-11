@@ -110,3 +110,25 @@ direction the screen predicted), but taking the trees time-forward costs more th
 version. fed2025 is the open question: its flows are the most accurately predicted by the recency screen, yet it
 moves the wrong way every time. Next: walk the fed2025 seats that moved most under tf2 (which flow, which way,
 who won) before any further arm. Not shipped; switches stay "0". No live vic2026 model was written.
+
+## fed2025 walked (2026-10-12)
+
+The tf2 damage on fed2025 (+0.0234) is concentrated: the 10 worst seats carry +0.0140. Two shapes. Labor v Liberal
+seats Labor won (Forde, Leichhardt, Bass, Hughes) moved toward the Liberal; Liberal v independent seats the
+Liberal won (Monash, Flinders, Wannon, Goldstein) moved toward the independent.
+
+**The flows got MORE accurate, not less.** fed2025 rate feature vs actual, percent:
+
+| cell | shipped | tf2 | actual |
+|---|---|---|---|
+| GRN -> ALP (ALP+LNP left, 73 events) | 77.9 | 79.3 | 81.8 |
+| ONP -> LNP (ALP+LNP left, 25) | 63.3 | 66.5 | 71.4 |
+| IND -> ALP (ALP+LNP left, 16) | 53.8 | 55.5 | 63.0 |
+| ALP -> IND (IND+LNP left, 13) | 77.4 | 77.1 | 76.3 |
+
+**The cause is the primary vote.** The shipped fed2025 run under-calls Labor by 4.6 points on average (30.2
+predicted, 34.8 actual over 150 seats) and over-calls the Liberals by 2.2 (33.8 vs 31.6); Forde ALP 26.4 vs 34.2,
+Leichhardt 25.3 vs 36.5, Hughes 28.5 vs 39.0. Flows that under-sent right-wing preferences to the Liberals were
+partly offsetting that miss; correcting them removes the offset. A seat-level metric therefore cannot judge a
+flow change on fed2025 by itself. A flow change needs a flow-only score: seat outcomes given ACTUAL primaries
+and predicted flows (no such mode exists yet; grep for an oracle-primary switch found none).
