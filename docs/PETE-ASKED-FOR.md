@@ -100,7 +100,7 @@ not a commit, not a plan file — that it is not happening and why.
 | *"surely we have state level polling for all the federal polls as well? ... dont just collect tas collect ALL"* (2026-10-02) | **Collected, tested, REFUSED, Pete told.** No Tasmanian statewide reading exists for 2025. Seat polls pooled by state SHIPPED instead as v60 (Pete overrode its clause). |
 | Climate 200 / Voices flag for the "independent from nowhere" misses (Pete's choice, 2026-10-02) | **SHIPPED v59.** |
 | Fill the council gaps (Fairfield-style self-run councils, council-chosen mayors) (2026-10-02 "go") | **Collected, tested, REFUSED, Pete told** (prereg-council-extra-2026-10-02.md). |
-| *"what are the current biggest misses on the AEF7 ledger ... how can we fix them?"* (2026-10-03) | **Narracan fixed as v61** (non-standing parties zeroed, share by flows). **Richmond 2022 NOT DONE**: the re-entry prior is off and undecided -- queued. Overcalled independents (Pascoe Vale, Geelong, Kavel): NOT DONE, queued. |
+| *"what are the current biggest misses on the AEF7 ledger ... how can we fix them?"* (2026-10-03) | **Narracan fixed as v61** (non-standing parties zeroed, share by flows). **Richmond 2022: the re-entry prior SHIPPED 2026-10-06** (`AUSPOL_REENTRY="majors"`, `published_flags.R:678`), but Richmond's own predicted Liberal share has not been re-checked since (NEXT-STEPS queue item 2), so this stays open. Overcalled independents (Pascoe Vale, Geelong, Kavel): NOT DONE, queued. |
 
 ## 2026-09-30
 

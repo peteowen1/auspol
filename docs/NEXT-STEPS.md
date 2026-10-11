@@ -12,7 +12,7 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30.
    has nothing, i.e. fed2007, wa2001; Poll Bludger for nsw2019) instead of AE's files? Re-measure first: house effects
    keyed on AE firm labels ("Newspoll2"), the undecided rule (AE divides it out; write ours into CONSTANTS.md), the
    20-day half-life, exit polls. `reviews/own-poll-source-step1-2026-10-11.md`.
-2. Delete branches `fed-timing-resume-fixed` and `instrument-backtest-fed-timing`? Superseded (DECISIONS 2026-10-11).
+2. DONE 2026-10-11: branches `fed-timing-resume-fixed` (b21fb77) and `instrument-backtest-fed-timing` (ae91f62) deleted, PR #33 closed.
 3. Three built, OFF, prereg-never-written experiment branches from 2026-10-06 were untracked until now:
    `worktree-agent-a6d092f16127ab44a` (`AUSPOL_XGB_CLASS_JUR_CAL`), `worktree-agent-a9cb9eebe64bafa28`
    (`AUSPOL_OTHERS_SCALE_JUR`), `worktree-agent-ad78f1dffe2279a6a` (`AUSPOL_SALIENCE_STATE`, 785 lines): prereg and
@@ -45,9 +45,12 @@ the 10-day decay run (c633fd8).
 seat-poll precision blend, typical-vote / dedicated / mixture independent models (`plans/prereg-ind-typical-2026-10-09.md`).
 
 **Queue, ranked:**
-1. OPEN: print the Liberal->One Nation and One Nation->Liberal flows the published Victorian forecast USES (from the
-   object it consumes, not a file) against real counts: Nepean ON->Lib 77.5%, Secret Harbour Lib->ON 59-70% (scour
-   review). The biggest lever on One Nation's seat count. ~30 min.
+1. OPEN: Liberal<->One Nation flows. PRINTED 2026-10-11 from the objects `simulate_seat_contests()` receives
+   (live script cut before the call, `fm` + per-seat override): Lib->ON with only ALP+ON left, per-seat median 68.0%
+   (range 65.5-73.8, 88 seats; shared table 68.2); ON->Lib with only ALP+Lib left, median 64.3% (58.8-73.8). Real
+   counts: Secret Harbour Lib->ON 59.3% official (WA); Nepean ON->Lib 77.5% but vs an independent, no Labor, so
+   not the same contest. One real count per direction: no fix justified yet. The lever is the Liberal card: no
+   vic2026 how-to-vote entry exists (`HTV0`), and the HTV override only covers Liberal-excluded ALP+GRN rows.
 2. OPEN: re-score Richmond/Footscray/Brunswick/Preston/Pascoe Vale 2022 after AUSPOL_LEVEL_RECENT; shrink the
    person-rule slope toward the ratio carry (Pete, 2026-10-11); test recency/relevance-weighted fits.
 3. OPEN: nomination day **9 November 2026, 12 noon** (VEC-confirmed; Wikipedia's 13 Nov is a superseded draft):
@@ -90,26 +93,6 @@ Everything still open from them is folded into the standing sections below; noth
 - 2026-09-30 (five sections, v53 to v56) and 2026-09-29 (five sections, v47 to v52): ledger version history and refused arms. Live: seat polls PARKED, no leader bonus for early WA/fed2007-10 (Model open); corrections learn from the previous rebuild (Hygiene).
 - 2026-09-28 (three sections, v44 to v46) and 2026-09-27: statewide-level arms refused. Live: `min_n` cliffs and seat context phase 2 (Model open); ITG page items (Data and infra).
 
-## Where things stand (2026-09-20 17:40)
-
-**Ledger v42** (660 AEF-7 seats, predictive throughout, 20,000 sims; lower
-is better): seat log loss **0.2943 vs AEF 0.2851**, weighted primary RMSE
-5.15 vs 5.42, TCP MAE 3.99 vs 3.63, accuracy 87.7% vs 86.8%. Public copy:
-https://github.com/peteowen1/auspol/releases/download/shipped-models/aef7-ledger.html
-History v38-v42 and the held-for-Pete decisions: DECISIONS 2026-09-20.
-v43 (phantom-vote fix alone) REFUSED 0.3022; local `output/` ledger files
-are v43's until the next rebuild, release and artifact are v42.
-
-**Next model arm, pre-registered, unbuilt**:
-`plans/prereg-anchor-implied-tpp-2026-09-20.md` (anchor to the draws' own
-implied two-party + zero the phantom vote, one change behind
-`AUSPOL_ANCHOR_IMPLIED`; smoke nsw2023, all WA, federal; rebuild v44
-decides). Run the rebuild and `check_like_ci.R` one at a time: the memory
-watchdog kills background wrappers below ~5 GB free.
-
-**Live forecast**: `forecast-latest` release daily 06:00 Melbourne, mirrored
-to R2 for inthegame.blog/politics/ (live). 20 Sep run pending on v42 models.
-
 ## NOW: the election-night booth model (Pete, 2026-09-19: option b)
 
 Plan and both rehearsals: `docs/plans/election-night-booth-model.md`. Built:
@@ -150,7 +133,7 @@ plan, **Pete to send**; To Do reminder set).
   95%+ favourites that lost (calibration by band otherwise identical,
   roadmap item 5 DONE); the TCP gap is nsw2023; nsw2023 walked end to end
   (trend right, Labor's fall = phantom vote + published/implied two-party
-  gap + fundamentals). OPEN: the anchoring arm above; wa2017 and fed2019
+  gap + fundamentals). OPEN: the anchor-implied arm (`plans/prereg-anchor-implied-tpp-2026-09-20.md`, `AUSPOL_ANCHOR_IMPLIED`, still "0"; v44 scored other changes, no verdict on this arm found in DECISIONS); wa2017 and fed2019
   still to walk with Pete (questions in the review). Refused arms:
   `prereg-fundamentals-drop-fed-aligned`, `prereg-phantom-minor-vote`.
 
@@ -172,9 +155,6 @@ plan, **Pete to send**; To Do reminder set).
   (7 of the 12 worst state-years are TAS/ACT/NT).
 - **Surge v4 vs salience**: hazard AUC 0.936 vs 0.751 but over-dispersed;
   deciding seat-count test not run (`prereg-xgb-surge-parameters-v2`).
-- **Re-entry prior (`AUSPOL_REENTRY`, prereg 2026-09-07) was never decided and is OFF**: why Richmond 2022
-  Liberals got 0.0 (actual 18.8; a re-entry cell, not standing 2018). Rebuild from stage 1 (~40 min), test in
-  `base_pred` AND xgb (`reviews/reentry-prep-2026-10-03.md`). Request register: NOT DONE.
 - **Overcalled independents, NOT DONE** (Pascoe Vale: Sue Bolton polled 4.19, called 18.42, because the 2018
   independent class gap was carried onto her though nobody of that class re-stood; also Geelong, Sandringham,
   Kavel 2026, Shepparton; walk in `reviews/overcalled-independents-walk-2026-10-03.md`). Fix idea: stop
