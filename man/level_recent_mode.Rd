@@ -7,7 +7,7 @@
 level_recent_mode()
 }
 \value{
-\code{"1"} (shipped 2026-10-11: 28-day window), \code{"decay"} (every poll of
+\code{"decay"} (shipped 2026-10-11, 10-day half-life), \code{"1"} (28-day window, shipped earlier that day) or
 the cycle weighted by age, prereg Amendment 2) or \code{"0"} (off).
 }
 \description{

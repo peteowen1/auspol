@@ -153,3 +153,9 @@ time-forward. Cliff-free like Amendment 2, steadier than its 1-day fit. Same thr
 Essentially a tie with the window and far steadier than the 1-day fit: better on older elections (wa2017 -0.056,
 wa2008 -0.014, fed2007 -0.013), slightly worse on the recent ones in the ledger. By the ship rule the window stays;
 the choice between a cliff-free tie and the measured ledger edge goes to Pete.
+
+## PETE'S OVERRIDE (2026-10-11): the 10-day decay replaces the 28-day window
+
+Asked with Amendment 3's result (keep the window, recommended, or swap). Pete chose to swap: his no-hard-caps rule
+decides a near-tie (seat log loss -0.0014, SE 0.0021; ledger +0.0024, 1.7 SE, failing its guard). Shipped as
+`AUSPOL_LEVEL_RECENT="decay"`, `AUSPOL_LEVEL_RECENT_HALFLIFE="10"`; deciding 20k run reported below.
