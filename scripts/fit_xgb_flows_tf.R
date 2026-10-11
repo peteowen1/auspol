@@ -41,7 +41,7 @@ unknown <- setdiff(unique(TX$election), names(dates))
 if (length(unknown)) stop("election_dates() has no date for: ", paste(unknown, collapse = ", "))
 el_dates <- dates[TX$election]
 elections <- names(sort(dates[unique(TX$election)]))
-cat(sprintf("TF0  tag %s | half-life %s | %d rows, %d elections (%s..%s) | nrounds %d (shipped manifest) | min prior %d\n",
+cat(sprintf("XFT0  tag %s | half-life %s | %d rows, %d elections (%s..%s) | nrounds %d (shipped manifest) | min prior %d\n",
             TAG, if (HL > 0) sprintf("%.2f y", HL) else "none (equal weight)", nrow(TX), length(elections),
             elections[1], elections[length(elections)], NROUNDS, MIN_PAIRS))
 
@@ -65,12 +65,12 @@ for (e in elections) {
 TF <- rbindlist(rows_out, use.names = TRUE)
 for (cc in c("cond_rate", "cond_n", "pool_rate", "pool_n")) set(TF, which(is.na(TF[[cc]])), cc, 0)
 if (nrow(TF) != nrow(TX)) stop(sprintf("row count changed: %d -> %d", nrow(TX), nrow(TF)))
-cat(sprintf("TF1  rate columns rebuilt: cond_rate populated (>0 n) on %d of %d rows (%.1f%%); old LOO feature populated on %.1f%%\n",
+cat(sprintf("XFT1  rate columns rebuilt: cond_rate populated (>0 n) on %d of %d rows (%.1f%%); old LOO feature populated on %.1f%%\n",
             sum(TF$cond_n > 0), nrow(TF), 100 * mean(TF$cond_n > 0), 100 * mean(old$cond_n > 0)))
 # ANCHOR: One Nation -> Liberal, Labor and Liberal left, the cell that started this.
 .a <- TF[from == "ONP" & surv == "ALP+LNP" & to == "LNP", list(feature = round(100 * mean(cond_rate), 1),
                                                                actual = round(100 * sum(votes) / sum(event_votes), 1)), by = election]
-cat("TF2  ON -> Lib (ALP+LNP left): time-forward feature vs actual, percent\n"); print(.a[order(dates[election])])
+cat("XFT2  ON -> Lib (ALP+LNP left): time-forward feature vs actual, percent\n"); print(.a[order(dates[election])])
 tf_feat_f <- file.path(OUT, sprintf("xgb-flows-v1-%s-features.csv", TAG))
 fwrite(TF, tf_feat_f)
 
@@ -82,7 +82,7 @@ tf_dates <- dates[TF$election]
 man <- list()
 for (e in elections) {
   prior <- unique(TF$election[tf_dates < dates[[e]]])
-  if (length(prior) < MIN_PAIRS) { cat(sprintf("TF3! %-8s only %d prior election(s): no model\n", e, length(prior))); next }
+  if (length(prior) < MIN_PAIRS) { cat(sprintf("XFT3! %-8s only %d prior election(s): no model\n", e, length(prior))); next }
   keep <- TF$election %in% prior
   set.seed(as.integer(Sys.getenv("AUSPOL_XGB_SEED", "42")))
   m <- xgb.train(params = params, data = xgb.DMatrix(X[keep, , drop = FALSE], label = y[keep], missing = NA),
@@ -91,11 +91,11 @@ for (e in elections) {
   xgb.save(m, f)
   te <- TF$election == e
   pe <- pmax(0, predict(m, X[te, , drop = FALSE]))
-  cat(sprintf("TF3  %-8s %2d prior elections, %5d rows; RMSE on this election %.4f\n",
+  cat(sprintf("XFT3  %-8s %2d prior elections, %5d rows; RMSE on this election %.4f\n",
               e, length(prior), sum(keep), sqrt(mean((pe - y[te])^2))))
   man[[e]] <- data.table(election = e, n_prior = length(prior), n_train = sum(keep), nrounds = NROUNDS,
                          half_life = HL, rmse = sqrt(mean((pe - y[te])^2)), file = basename(f))
 }
 M <- rbindlist(man)
 fwrite(M, file.path(OUT, sprintf("xgb-flows-%s-asat-manifest.csv", TAG)))
-cat(sprintf("\nTF4  wrote %d as-at flow models (tag %s) and %s\n", nrow(M), TAG, basename(tf_feat_f)))
+cat(sprintf("\nXFT4  wrote %d as-at flow models (tag %s) and %s\n", nrow(M), TAG, basename(tf_feat_f)))

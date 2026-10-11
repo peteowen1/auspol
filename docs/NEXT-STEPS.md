@@ -8,6 +8,11 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30.
 ## 2026-10-11 HANDOFF (READ FIRST)
 
 **Needs Pete:**
+0. FLOWS (decision): retrained time-forward flow trees are clearly better FLOWS (flow-only score, actual primaries:
+   split error 14.21 -> 11.75 points, lower in all 18 elections; winners 1,724 -> 1,737-1,740 of 1,821) but the AEF-7
+   seat log loss is flat-to-worse (+0.0025 to +0.0060, within 1 SE) because the old flows offset primary misses
+   (fed2025 Labor -4.6 pts). Ship the better component (prereg + all-22 deciding run + a live vic2026 model first), or
+   hold until the primary misses are fixed? `reviews/lnp-onp-flows-by-election-2026-10-11.md`.
 1. Own poll source STEP 2: should the trend read our Wikipedia/Poll Bludger file (layered: AE only where Wikipedia
    has nothing, i.e. fed2007, wa2001; Poll Bludger for nsw2019) instead of AE's files? Re-measure first: house effects
    keyed on AE firm labels ("Newspoll2"), the undecided rule (AE divides it out; write ours into CONSTANTS.md), the
@@ -19,8 +24,12 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30.
    screen, or close.
 
 **Overnight 2026-10-12 (autonomous, Pete asleep) -- status as it moves:**
-- Flow-only score `scripts/score_flows_oracle.R` (actual primaries + each config's flows; event-level split error
-  and winner accuracy, all 22): RUNNING; result goes to `reviews/lnp-onp-flows-by-election-2026-10-11.md`.
+- Flow-only score `scripts/score_flows_oracle.R` built and run on all 22: result is Needs-Pete item 0.
+- Review findings fixed (c1419ea): a flow arm with a missing tag or mismatched half-life now stops at startup and
+  in the override, instead of silently scoring the pooled table or the leaky all-data model.
+- `build_page.R` no longer runs the retired `simulate_seats()`: pendulum rows come from the seat file (same 83
+  rows; tie order is decided after the merge, so the page is unchanged). Full page build not run locally: the
+  staleness guards refuse until the next `run_all.R` (poll data re-fetched 2026-10-11).
 - Worktrees removed (merged, clean): a83f23..., a9339e..., afe07d... (+ branches). KEPT for Pete: ab68314...
   (untracked `prereg-zero-order-2026-10-03.md` differs from dev's), a4181ce... (NSW 2023 ITG JSON commit d63f08e,
   same message as dev's e0f4551 but a different patch), ab43fc4... (uncommitted poll-sample edits),
@@ -239,8 +248,7 @@ Still open:
 - Federal results as a correlated signal for state seat lean: needs
   seat-boundary matching (`external/reference/boundaries/` has CED 2016).
 - GDELT parked (needs a GCP project); Census 2006/2001 have no bulk pack.
-- ITG page: a seat map (regions are in the JSON now), per-seat cards, a forecast-over-time chart, and
-  `build_page.R:263` still takes the pendulum rows from the retired `simulate_seats()`.
+- OPEN: ITG page: a seat map (regions are in the JSON now), per-seat cards, a forecast-over-time chart.
 - Provisional candidate list (`output/candidacies.csv`, ABC + Wikipedia, uploaded to the `shipped-models`
   release): LDP (4 rows) is classed OTH, probably OTH_RIGHT; confirm.
 

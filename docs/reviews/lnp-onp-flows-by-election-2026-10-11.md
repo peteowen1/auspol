@@ -132,3 +132,28 @@ Leichhardt 25.3 vs 36.5, Hughes 28.5 vs 39.0. Flows that under-sent right-wing p
 partly offsetting that miss; correcting them removes the offset. A seat-level metric therefore cannot judge a
 flow change on fed2025 by itself. A flow change needs a flow-only score: seat outcomes given ACTUAL primaries
 and predicted flows (no such mode exists yet; grep for an oracle-primary switch found none).
+
+## Flow-only score: the retrained trees are better flows (2026-10-12, overnight)
+
+`scripts/score_flows_oracle.R` takes the primary vote out: every seat's ACTUAL first preferences, each
+configuration's flows (per-seat override fed those actual primaries, then a time-forward pooled table, smoothing
+0.15). E = vote-weighted half-L1 error of the predicted split at every real exclusion (actual excluded party,
+actual survivors), points, lower is better. W = seats whose actual winner comes out of the count. Pooled over
+the 18 elections where every configuration loaded its own model (fed2007, sa2022, wa2001, wa2005 excluded: no
+as-at model, so all four fall to the same pooled table). 7,295 exclusions, 1,821 seats.
+
+| configuration | E (points) | W |
+|---|---|---|
+| shipped | 14.21 | 1,724 (94.7%) |
+| inference-only HL=2 | 14.10 | 1,726 |
+| tf0 (retrained, time-forward, equal weight) | **11.75** | 1,737 |
+| tf2 (retrained, time-forward, 2-year half-life) | 11.89 | **1,740** (95.6%) |
+
+tf0 and tf2 beat shipped on E in **all 18** elections (largest: fed2016 14.06 -> 9.74, fed2019 13.32 -> 9.83).
+Recency adds little once the trees are retrained; the gain is the training/prediction feature mismatch.
+
+**Reading against the seat test.** On AEF-7 seat log loss tf0 was +0.0060 and tf2 +0.0025 (within 1 SE). The
+flows are measurably better; the seat metric moves the other way because the old flows were offsetting primary
+misses (fed2025, above). That is a decision for Pete, not a refusal: ship the better component and take the
+headline hit until the primary misses are fixed, or hold it. Before shipping either way: a prereg, an all-22
+deciding run, and a tagged live (vic2026) model, which `fit_xgb_flows_tf.R` does not yet write.
