@@ -251,7 +251,8 @@ fit_cross_seat_carry <- function(target_election, corpus = NULL, pairs = NULL) {
   # The CODE the cached value depends on, too (review 2026-10-06): editing a matching
   # or classification helper must invalidate entries, not wait for a manual version bump.
   fns <- c(".cs_match", "given_stem", "given_conflict", "match_key", "align_person_keys", "seat_rename_map",
-           "election_dates", "elections_before", "classify_party", "byelection_winner_rows", "fit_cross_seat_carry")
+           "election_dates", "elections_before", "classify_party", "byelection_winner_rows", "fit_cross_seat_carry",
+           ".cs_byelection_rows", ".cs_prep", ".cs_given_ok", "surname_of", "given_of", "fit_pairs_for")
   code <- lapply(fns, function(f) if (exists(f, mode = "function")) deparse(get(f, mode = "function")) else NULL)
   digest::digest(list(.CS_CACHE_VERSION, what, as.data.frame(corpus), all_election_pairs(),
                       unname(tools::md5sum(bf)), ev, code, list(...)), algo = "xxhash64")

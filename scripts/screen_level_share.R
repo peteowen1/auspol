@@ -38,7 +38,7 @@ PAIRS <- strsplit(getarg("pairs", "window|none,decay:10|window,decay:fit|window"
 tab <- fread(out_path("level-recent.csv"), showProgress = FALSE)
 pp  <- fread(out_path("published-predictions.csv"), showProgress = FALSE)
 stopifnot(nrow(pp) > 0, all(c("pair", "seat", "party", "ours", "actual", "p_win", "won") %in% names(pp)))
-cat(sprintf("LS0  level table %d rows / %d elections; published predictions %d rows / %d elections / %d seats\n",
+cat(sprintf("LB0  level table %d rows / %d elections; published predictions %d rows / %d elections / %d seats\n",
             nrow(tab), uniqueN(tab$election), nrow(pp), uniqueN(pp$pair), uniqueN(paste(pp$pair, pp$seat))))
 
 # ---- level of an arm, per election -----------------------------------------------------------------
@@ -52,7 +52,7 @@ arm_env <- function(spec) {                       # sets the env switches the sh
 }
 arm_levels <- function(spec, verbose = FALSE) {    # list: election -> named c(ALP, LNP, GRN, OTH) after the blend
   arm_env(spec)
-  cat(sprintf("LS1  ARM %s applies AUSPOL_LEVEL_RECENT=%s AUSPOL_LEVEL_RECENT_HALFLIFE=%s\n", spec,
+  cat(sprintf("LB1  ARM %s applies AUSPOL_LEVEL_RECENT=%s AUSPOL_LEVEL_RECENT_HALFLIFE=%s\n", spec,
               Sys.getenv("AUSPOL_LEVEL_RECENT"), if (startsWith(spec, "decay")) Sys.getenv("AUSPOL_LEVEL_RECENT_HALFLIFE") else "(unused)"))
   out <- list(); logs <- character(0)
   for (e in unique(tab$election)) {
@@ -87,7 +87,7 @@ seat_loss <- function(P) {                        # P: pp-shaped with column pw 
 }
 base <- copy(pp); base[, pw := p_win]
 bl <- seat_loss(base)
-cat(sprintf("LS2  baseline pooled seat log loss %.4f over %d seats / %d elections (docs say 0.3181 for the 10-day run); ledger-flag seats %d\n",
+cat(sprintf("LB2  baseline pooled seat log loss %.4f over %d seats / %d elections (docs say 0.3181 for the 10-day run); ledger-flag seats %d\n",
             mean(bl$ll), nrow(bl), uniqueN(bl$pair), sum(bl$ledger)))
 
 cand <- pp[p_win > 0.001 & ours > 0]
@@ -95,7 +95,7 @@ cand[, lp := log(p_win)]
 cand[, `:=`(lp_c = lp - mean(lp), o_c = ours - mean(ours)), by = sid]
 cand <- cand[, .SD, .SDcols = c("lp_c", "o_c", "sid")][, n := .N, by = sid][n >= 2]
 BETA <- sum(cand$lp_c * cand$o_c) / sum(cand$o_c^2)
-cat(sprintf("LS3  BETA (log-odds per primary point, within-seat slope over %d candidates in %d seats, p_win>0.001) = %.3f; R2 = %.2f\n",
+cat(sprintf("LB3  BETA (log-odds per primary point, within-seat slope over %d candidates in %d seats, p_win>0.001) = %.3f; R2 = %.2f\n",
             nrow(cand), uniqueN(cand$sid), BETA, 1 - sum((cand$lp_c - BETA * cand$o_c)^2) / sum(cand$lp_c^2)))
 
 # ---- shifted predictions for a level arm relative to the reference ----------------------------------
@@ -153,7 +153,7 @@ arms <- unique(c(REF_ARM, unlist(strsplit(PAIRS, "|", fixed = TRUE))))
 lev <- setNames(lapply(arms, arm_levels), arms)
 
 report <- function(r, a, b, tag) {
-  cat(sprintf("\nLS4  %s: arm %s MINUS arm %s  (negative = %s better; %d elections, %d seats, %d ledger-flag seats)\n", tag, a, b, a, r$G, r$nseat, r$nled))
+  cat(sprintf("\nLB4  %s: arm %s MINUS arm %s  (negative = %s better; %d elections, %d seats, %d ledger-flag seats)\n", tag, a, b, a, r$G, r$nseat, r$nled))
   cat(sprintf("     seat log loss proxy, pooled change %+.4f (SE %.4f, clustered on election); better in %d of %d elections\n",
               r$pooled["D"], r$pooled["se"], r$nbetter, r$G))
   cat(sprintf("     worst single election %s %+.4f; best %s %+.4f\n", r$worst$election, r$worst$d, r$best$election, r$best$d))
@@ -176,12 +176,12 @@ for (pr in PAIRS) {
 
 # ---- controls: the screen must read ZERO where nothing changed and respond where something did --------
 rc <- compare(REF_ARM, REF_ARM, BETA, lev)
-cat(sprintf("\nLS5  control 1, reference vs itself: pooled %+.6f, worst %+.6f (must be exactly 0)\n", rc$pooled["D"], rc$worst$d))
+cat(sprintf("\nLB5  control 1, reference vs itself: pooled %+.6f, worst %+.6f (must be exactly 0)\n", rc$pooled["D"], rc$worst$d))
 r0 <- compare(arms[min(2, length(arms))], REF_ARM, 0, lev)
-cat(sprintf("LS5  control 2, BETA = 0 (no seat response): pooled %+.6f (must be exactly 0)\n", r0$pooled["D"]))
+cat(sprintf("LB5  control 2, BETA = 0 (no seat response): pooled %+.6f (must be exactly 0)\n", r0$pooled["D"]))
 bad <- lev[[REF_ARM]]; for (e in names(bad)) bad[[e]] <- bad[[e]] + c(ALP = -3, LNP = 3, GRN = 0, OTH = 0)
 lev$broken <- bad
 rb <- compare("broken", REF_ARM, BETA, lev)
-cat(sprintf("LS5  control 3, deliberately broken arm (LNP +3, ALP -3 everywhere): pooled %+.4f, worst %s %+.4f (must be clearly non-zero)\n",
+cat(sprintf("LB5  control 3, deliberately broken arm (LNP +3, ALP -3 everywhere): pooled %+.4f, worst %s %+.4f (must be clearly non-zero)\n",
             rb$pooled["D"], rb$worst$election, rb$worst$d))
-cat(sprintf("\nLS6  runtime %.1f s for %d arms and %d comparisons\n", as.numeric(difftime(Sys.time(), t0, units = "secs")), length(arms), length(PAIRS)))
+cat(sprintf("\nLB6  runtime %.1f s for %d arms and %d comparisons\n", as.numeric(difftime(Sys.time(), t0, units = "secs")), length(arms), length(PAIRS)))
