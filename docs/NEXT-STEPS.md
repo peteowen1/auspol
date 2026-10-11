@@ -7,67 +7,63 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30.
 
 ## 2026-10-11 HANDOFF (READ FIRST)
 
-**Fast-iteration plan (`plans/fast-iteration-plan-2026-10-11.md`): Phase 1 done, Phase 2 half built.** Merged in PR #119:
-- statewide-level ideas: `scripts/screen_level_share.R`, ~10 s over all 22 elections, can stop an idea, never clear one
-  (its default `--ref=decay:10` matches the run now in `output/`; after the next full rebuild pass `--ref=decay:20`);
-- `quick_arm.R` defaults to the AEF-7 elections (`--pairs=all` for 22);
-- the cross-seat cache no longer refits on every arm (vic2022 arm 106 -> 53 s).
-Five investigation reports: `reviews/fast-iter-*-2026-10-11.md`.
+**Needs Pete:**
+1. Own poll source STEP 2: should the trend read our Wikipedia/Poll Bludger file (layered: AE only where Wikipedia
+   has nothing, i.e. fed2007, wa2001; Poll Bludger for nsw2019) instead of AE's files? Re-measure first: house effects
+   keyed on AE firm labels ("Newspoll2"), the undecided rule (AE divides it out; write ours into CONSTANTS.md), the
+   20-day half-life, exit polls. `reviews/own-poll-source-step1-2026-10-11.md`.
+2. Delete branches `fed-timing-resume-fixed` and `instrument-backtest-fed-timing`? Superseded (DECISIONS 2026-10-11).
+3. Three built, OFF, prereg-never-written experiment branches from 2026-10-06 were untracked until now:
+   `worktree-agent-a6d092f16127ab44a` (`AUSPOL_XGB_CLASS_JUR_CAL`), `worktree-agent-a9cb9eebe64bafa28`
+   (`AUSPOL_OTHERS_SCALE_JUR`), `worktree-agent-ad78f1dffe2279a6a` (`AUSPOL_SALIENCE_STATE`, 785 lines): prereg and
+   screen, or close.
 
-**SHIPPED 2026-10-11 evening (merge 644467e, reviewed, `check_like_ci` clean, two smoke runs DONE):** the local
-deciding-run launcher `scripts/deciding_run.ps1` (CLAUDE.md has usage; runs from a HEAD snapshot, all 22 by
-default) and plan item 6 (`quick_arm.R --reuse` per-harness canary, `--base-only`).
-**SCHEDULED 22:30 2026-10-11:** `deciding-runs/20261011-1854-decay20/` -- the 20-day decay as shipped vs no blend,
-all 22 at 20k, code 2cd8892: the measurement the 20-day ship never had. Read its marker next session. It does NOT
-refresh the `shipped-models` scoreboard (that needs a full `rebuild_forecasts.sh` pass), and the backtest's xgb
-level feature is frozen, so it understates what ships.
+**Running:** deciding run scheduled 22:30 2026-10-11, `deciding-runs/20261011-1854-decay20/` -- the shipped 20-day
+decay vs no blend, all 22 at 20k, code 2cd8892 (the measurement the 20-day ship never had). Read its marker FIRST:
+DONE -> `results.txt`; FAILED -> the reason inside; PENDING after 22:30 -> the task never started (logged off);
+RUNNING with no live pid in `started.txt` -> killed. It does NOT refresh the `shipped-models` scoreboard (needs a full
+`rebuild_forecasts.sh` pass), and the backtest's xgb level feature is frozen, so it understates what ships.
 
-**OPEN, untracked until 2026-10-11:** three built, OFF, prereg-never-written experiment branches from 2026-10-06:
-`worktree-agent-a6d092f16127ab44a` (`AUSPOL_XGB_CLASS_JUR_CAL`), `worktree-agent-a9cb9eebe64bafa28`
-(`AUSPOL_OTHERS_SCALE_JUR`), `worktree-agent-ad78f1dffe2279a6a` (`AUSPOL_SALIENCE_STATE`, 785 lines). Decide: prereg
-and screen, or close. `worktree-agent-a4181ce1235917bd7` (NSW 2023 JSON for ITG) belongs to the NSW 2027 blog item.
+**Shipped 2026-10-11 evening (all reviewed, `check_like_ci` clean, on dev, NOT yet on main):**
+- Local deciding-run launcher `scripts/deciding_run.ps1` + `quick_arm.R --reuse` per-harness canary (merge 644467e).
+- Own poll source step 1: every election parsed or a recorded reason; fetch hardened (404 vs failure, `</html>`
+  check, lost tables fail the run); two-way coverage (merge 89cd605).
+- Source scour of Bonham, Poll Bludger, ABC, Antony Green, Wikipedia: `reviews/source-scour-2026-10-11.md`.
+- vic2026 Wikipedia poll page re-fetched 20:30: the 2-8 Oct RedBridge/Accent poll (Coal 30, ALP 24, ON 24, GRN 16,
+  n=1,008) is now in OUR source; AE's file still ends 2026-09-26, so the live forecast does not have it. 9 Oct copy
+  kept at `raw/archive/vic2026_opinion.2026-10-09.html`. No refresh flag yet: archive-then-rerun by hand.
+- Earlier today (PR #119): `screen_level_share.R` (~10 s, all 22; `--ref=decay:20` after the next full rebuild),
+  `quick_arm.R` defaults to AEF-7, cross-seat cache 106 -> 53 s. Reports: `reviews/fast-iter-*-2026-10-11.md`.
 
-**OPEN, from the source scour (`reviews/source-scour-2026-10-11.md`):** the 2-8 Oct RedBridge poll is missing from
-the live forecast (AE file ends in September; OUR source has it since 2026-10-11 20:30, when the vic2026 page was
-re-fetched and the 9 Oct copy kept as `raw/archive/vic2026_opinion.2026-10-09.html`; the scraper has no refresh flag,
-so a refresh is that manual archive-then-rerun until one is added); print the Liberal/One Nation flows the published
-forecast uses against Nepean (ON->Lib 77.5%) and Secret Harbour (Lib->ON 59-70%).
-
-**SHIPPED (merge 89cd605):** own poll source step 1 -- every election parsed or a recorded reason, two-way coverage,
-fetch hardened (404 vs failure, `</html>` check, lost tables fail the run). `reviews/own-poll-source-step1-2026-10-11.md`.
-**Needs Pete:** step 2, switching the trend's input from AE's files.
-
-**Next speed-ups, ranked (from `reviews/fast-iter-profile-2026-10-11.md` / `-cacheable-`):** the same read-set key for
-the other fits (defectors, personal prior vote, departed slope, salience: ~25 s of a 54 s vic run); the seat-poll memo
-(`R/seat_poll_blend.R`) still keys on every switch; reuse-baseline-and-resimulate for spread/few-cell arms
-(`reviews/fast-iter-delta-resim-2026-10-11.md`). Known gap: the backtest's xgb level feature is frozen, so a harness
-level arm understates what ships (live run feeds the new level into it); unmeasured.
-
-**Needs Pete:** nothing blocking. Coming: the poll-source swap decision once step 1 reports.
-
-**Live:** `AUSPOL_IND_PERSON` (PR #116) and `AUSPOL_LEVEL_RECENT` (`decay`, half-life 20 days, on Pete's decision
-WITHOUT a measured run at 20 days -- `plans/prereg-level-recent-blend-2026-10-10.md`). Last measured: 28-day window seat
-log loss 0.3172 / ledger 0.2682; 10-day decay 0.3181 / 0.2708; no blend 0.3239. The `shipped-models` scoreboard
-describes the 28-day run; refresh it at the next full rebuild (the first job for the new local deciding run).
-`output/` holds the 10-day decay run (c633fd8).
-
-**Owed to Pete (register):** an own poll source instead of AE Forecasts' files (`PETE-ASKED-FOR.md`, Wikipedia
-first; `scripts/check_poll_coverage.R` found 4 genuine final-month gaps; older Wikipedia pages do not parse yet).
+**Live model:** `AUSPOL_IND_PERSON` (PR #116) and `AUSPOL_LEVEL_RECENT=decay`, half-life 20 days (Pete's decision,
+unmeasured at 20 days until tonight's run). Last measured seat log loss (lower is better), all 22: 28-day window
+0.3172; 10-day decay 0.3181; no blend 0.3239. `shipped-models` scoreboard describes the 28-day run. `output/` holds
+the 10-day decay run (c633fd8).
 
 **Refused (built, off; do not re-run without a new idea):** the two-way person rule and its linear variant
-(large earlier records mislead both ways: Fowler 2022, Barker 2019); the never-stood "typical level" half
-(2026-10-09). Earlier refusals: statewide poll weighting, seat-poll precision blend, typical-vote / dedicated /
-mixture independent models (`plans/prereg-ind-typical-2026-10-09.md`).
+(Fowler 2022, Barker 2019); the never-stood "typical level" half (2026-10-09). Earlier: statewide poll weighting,
+seat-poll precision blend, typical-vote / dedicated / mixture independent models (`plans/prereg-ind-typical-2026-10-09.md`).
 
 **Queue, ranked:**
-1. IN FLIGHT (agent, see handoff): poll coverage, AE files vs Wikipedia, deduplicated and matched by firm within a date tolerance (first pass: one Resolve SA 2026 poll missing from AE; scrape parsed nothing for fed2007/2010, nsw2019, WA 2001-13 -- fix those parses first). ~1 h.
-1b. OPEN: re-score Richmond/Footscray/Brunswick/Preston/Pascoe Vale 2022 after AUSPOL_LEVEL_RECENT; shrink the person-rule slope toward the ratio carry (Pete, 2026-10-11) instead of only bounding it; test recency/relevance-weighted fits.
-2. OPEN: nomination day **9 November 2026**: refit successor rates on the final candidate list
-   (`build_departed_successors.R` chain), rerun the live forecast. Victoria votes 28 November 2026.
-3. OPEN: miss-table seats traced but not fixed: Malvern 2022 (O'Brien under-called in base_pred), Bankstown 2023
+1. OPEN: print the Liberal->One Nation and One Nation->Liberal flows the published Victorian forecast USES (from the
+   object it consumes, not a file) against real counts: Nepean ON->Lib 77.5%, Secret Harbour Lib->ON 59-70% (scour
+   review). The biggest lever on One Nation's seat count. ~30 min.
+2. OPEN: re-score Richmond/Footscray/Brunswick/Preston/Pascoe Vale 2022 after AUSPOL_LEVEL_RECENT; shrink the
+   person-rule slope toward the ratio carry (Pete, 2026-10-11); test recency/relevance-weighted fits.
+3. OPEN: nomination day **9 November 2026, 12 noon** (VEC-confirmed; Wikipedia's 13 Nov is a superseded draft):
+   refit successor rates on the final candidate list (`build_departed_successors.R` chain), rerun the live forecast.
+4. OPEN: miss-table seats traced but not fixed: Malvern 2022 (O'Brien under-called in base_pred), Bankstown 2023
    (xgb cut ALP 55.8 -> 49.8); Parkes, New England, Dawson 2022, Traeger 2024, McMahon 2025 not yet traced.
-4. DONE 2026-10-11 (89cd605): year inference under year headings (STAT6 no longer stops); fetch failures no longer cached as 404s.
-5. OPEN, small: `backtest_candidate_fed.R` writes all 7 pairs only at the end (a kill at 90% loses ~6 min).
+5. OPEN, speed (`reviews/fast-iter-profile-2026-10-11.md`): read-set cache keys for defectors, personal prior vote,
+   departed slope, salience (~25 s of a 54 s vic run); seat-poll memo keys on every switch; reuse-and-resimulate.
+6. OPEN, cleanup: `dev` -> `main` PR (17 files; review the diff first); `docs/DECISIONS.md` is 44,168 chars, past
+   40,000 (load `hub-slimming`); merged agent worktrees (`agent-a9339ef...`, `agent-afe07d...` and four older ones);
+   a `--refresh` flag for the poll scraper that archives automatically; `backtest_candidate_fed.R` writes all 7
+   pairs only at the end (mostly moot under quick_arm's one-election processes).
+
+**Corrections from this session:** I first said the decay20 deciding run would refresh the scoreboard (it does not);
+and that the poll scraper was Python (it is R). Three of five Haiku scour agents died on large pages and were rerun
+on Sonnet (memory `haiku-dies-on-web-pages`).
 
 **Running jobs when memory is short:** Claude Code reaps background shells below ~4 GB available. Run stage 6
 harness by harness in the foreground, then `AUSPOL_REBUILD_FROM=7`; `AUSPOL_REBUILD_SLOTS=1` caps parallelism.
