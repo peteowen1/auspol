@@ -22,7 +22,16 @@ all 22 at 20k, code 2cd8892: the measurement the 20-day ship never had. Read its
 refresh the `shipped-models` scoreboard (that needs a full `rebuild_forecasts.sh` pass), and the backtest's xgb
 level feature is frozen, so it understates what ships.
 
-**OPEN, agent died with no output:** own poll source step 1 (Wikipedia scrape for every election + coverage both
+**OPEN, untracked until 2026-10-11:** three built, OFF, prereg-never-written experiment branches from 2026-10-06:
+`worktree-agent-a6d092f16127ab44a` (`AUSPOL_XGB_CLASS_JUR_CAL`), `worktree-agent-a9cb9eebe64bafa28`
+(`AUSPOL_OTHERS_SCALE_JUR`), `worktree-agent-ad78f1dffe2279a6a` (`AUSPOL_SALIENCE_STATE`, 785 lines). Decide: prereg
+and screen, or close. `worktree-agent-a4181ce1235917bd7` (NSW 2023 JSON for ITG) belongs to the NSW 2027 blog item.
+
+**OPEN, from the source scour (`reviews/source-scour-2026-10-11.md`):** the 2-8 Oct RedBridge poll is missing from
+the live forecast (AE file and our cache both end in September); print the Liberal/One Nation flows the published
+forecast uses against Nepean (ON->Lib 77.5%) and Secret Harbour (Lib->ON 59-70%).
+
+**IN FLIGHT (agent fixing review findings):** own poll source step 1 (Wikipedia scrape for every election + coverage both
 ways + swap proposal; `reviews/own-poll-source-step1-2026-10-11.md` was never written). Restart it. Step 2
 (switch the trend's input) is Pete's decision.
 
