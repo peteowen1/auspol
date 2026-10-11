@@ -209,7 +209,7 @@ if (!file.exists(pbf)) stop(pbf, " is missing: run scripts/fetch_pollbludger_tra
     R[election == e, `:=`(pb_polls = sum(PB$election_p == e), pb_matched_to_ae = sum(PB$in_ae[PB$election_p == e]),
                           f30_pb_polls = sum(PB$election_p == e & PB$days_out <= 30))]
   }
-  cat(sprintf("PB2  Poll Bludger polls: %s; matched to an AE poll: %s\n",
+  cat(sprintf("PBT2 Poll Bludger polls: %s; matched to an AE poll: %s\n",
               paste(PB[, .N, by = election_p][, paste0(election_p, "=", N)], collapse = ", "),
               paste(PB[, sum(in_ae), by = election_p][, paste0(election_p, "=", V1)], collapse = ", ")))
 }

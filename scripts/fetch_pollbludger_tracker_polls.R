@@ -72,6 +72,6 @@ for (cn in c("ALP", "LNP", "GRN", "ALP2", "LNP2")) pb[[cn]] <- suppressWarnings(
 setnames(pb, c("ALP", "LNP", "GRN", "ALP2", "LNP2"), c("alp_fp", "lnp_fp", "grn_fp", "alp_tpp", "lnp_tpp"))
 setcolorder(pb, c("election", "region", "row_type", "date", "POLLSTER", "alp_fp", "lnp_fp", "grn_fp", "alp_tpp", "lnp_tpp"))
 fwrite(pb, file.path(base_dir, "pollbludger_polls.csv"))
-cat(sprintf("PB1  wrote %d rows (%d polls) to %s/pollbludger_polls.csv\n", nrow(pb), sum(pb$row_type == "poll"), base_dir))
+cat(sprintf("PBT1 wrote %d rows (%d polls) to %s/pollbludger_polls.csv\n", nrow(pb), sum(pb$row_type == "poll"), base_dir))
 print(pb[row_type == "poll", .(polls = .N, first = min(date), last = max(date), with_alp_lnp = sum(is.finite(alp_fp) & is.finite(lnp_fp))), by = election])
 print(pb[row_type == "poll", .N, by = .(election, POLLSTER)][order(election, -N)])
