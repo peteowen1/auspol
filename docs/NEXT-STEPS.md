@@ -16,8 +16,11 @@ Five investigation reports: `reviews/fast-iter-*-2026-10-11.md`.
 
 **SHIPPED 2026-10-11 evening (merge 644467e, reviewed, `check_like_ci` clean, two smoke runs DONE):** the local
 deciding-run launcher `scripts/deciding_run.ps1` (CLAUDE.md has usage; runs from a HEAD snapshot, all 22 by
-default) and plan item 6 (`quick_arm.R --reuse` per-harness canary, `--base-only`). First real job: the full
-rebuild/deciding run that refreshes the `shipped-models` scoreboard.
+default) and plan item 6 (`quick_arm.R --reuse` per-harness canary, `--base-only`).
+**SCHEDULED 22:30 2026-10-11:** `deciding-runs/20261011-1854-decay20/` -- the 20-day decay as shipped vs no blend,
+all 22 at 20k, code 2cd8892: the measurement the 20-day ship never had. Read its marker next session. It does NOT
+refresh the `shipped-models` scoreboard (that needs a full `rebuild_forecasts.sh` pass), and the backtest's xgb
+level feature is frozen, so it understates what ships.
 
 **OPEN, agent died with no output:** own poll source step 1 (Wikipedia scrape for every election + coverage both
 ways + swap proposal; `reviews/own-poll-source-step1-2026-10-11.md` was never written). Restart it. Step 2
