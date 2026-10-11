@@ -31,9 +31,9 @@ and screen, or close. `worktree-agent-a4181ce1235917bd7` (NSW 2023 JSON for ITG)
 the live forecast (AE file and our cache both end in September); print the Liberal/One Nation flows the published
 forecast uses against Nepean (ON->Lib 77.5%) and Secret Harbour (Lib->ON 59-70%).
 
-**IN FLIGHT (agent fixing review findings):** own poll source step 1 (Wikipedia scrape for every election + coverage both
-ways + swap proposal; `reviews/own-poll-source-step1-2026-10-11.md` was never written). Restart it. Step 2
-(switch the trend's input) is Pete's decision.
+**SHIPPED (merge 89cd605):** own poll source step 1 -- every election parsed or a recorded reason, two-way coverage,
+fetch hardened (404 vs failure, `</html>` check, lost tables fail the run). `reviews/own-poll-source-step1-2026-10-11.md`.
+**Needs Pete:** step 2, switching the trend's input from AE's files.
 
 **Next speed-ups, ranked (from `reviews/fast-iter-profile-2026-10-11.md` / `-cacheable-`):** the same read-set key for
 the other fits (defectors, personal prior vote, departed slope, salience: ~25 s of a 54 s vic run); the seat-poll memo
@@ -64,7 +64,7 @@ mixture independent models (`plans/prereg-ind-typical-2026-10-09.md`).
    (`build_departed_successors.R` chain), rerun the live forecast. Victoria votes 28 November 2026.
 3. OPEN: miss-table seats traced but not fixed: Malvern 2022 (O'Brien under-called in base_pred), Bankstown 2023
    (xgb cut ALP 55.8 -> 49.8); Parkes, New England, Dawson 2022, Traeger 2024, McMahon 2025 not yet traced.
-4. OPEN: statewide poll scraper year-inference root cause (STAT6! stops on it); fetch failures recorded as 404s.
+4. DONE 2026-10-11 (89cd605): year inference under year headings (STAT6 no longer stops); fetch failures no longer cached as 404s.
 5. OPEN, small: `backtest_candidate_fed.R` writes all 7 pairs only at the end (a kill at 90% loses ~6 min).
 
 **Running jobs when memory is short:** Claude Code reaps background shells below ~4 GB available. Run stage 6
