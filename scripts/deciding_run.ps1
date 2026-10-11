@@ -53,7 +53,8 @@ if ($Worker) {
     $ErrorActionPreference = "Continue"   # Rscript writes warnings to stderr; that is not a failure
     $env:AUSPOL_QUICK_DIR = $p.QuickDir
     # PowerShell + Rscript: arrow segfaults under Git Bash R
-    & Rscript @rargs *> $log
+    # Out-File utf8, not *> (UTF-16 in PowerShell 5.1, which grep and the next session cannot search)
+    & Rscript @rargs 2>&1 | ForEach-Object { "$_" } | Out-File $log -Encoding utf8
     $code = $LASTEXITCODE
   } catch {
     $_ | Out-String | Add-Content $log
@@ -70,9 +71,9 @@ if ($Worker) {
   # point at); then the snapshot worktree. Failures here are logged, not fatal: the result is written.
   try {
     $ErrorActionPreference = "Continue"
-    & Rscript scripts/quick_arm.R --clean *>> $log
+    & Rscript scripts/quick_arm.R --clean 2>&1 | ForEach-Object { "$_" } | Add-Content $log -Encoding utf8
     Set-Location $p.Repo
-    & git -C $p.Repo worktree remove --force $p.Code *>> $log
+    & git -C $p.Repo worktree remove --force $p.Code 2>&1 | ForEach-Object { "$_" } | Add-Content $log -Encoding utf8
   } catch { $_ | Out-String | Add-Content $log }
   try { Unregister-ScheduledTask -TaskName $p.TaskName -Confirm:$false } catch {}
   exit $code
@@ -100,7 +101,9 @@ $task = "auspol-deciding-$stamp-$Label"
 # checkout (quick_arm's own fallback); output/ inputs are copied into the scratch once, at setup.
 $work = Join-Path $env:TEMP "auspol-deciding\$stamp-$Label"
 $snap = Join-Path $work "code"
+$ErrorActionPreference = "Continue"   # PowerShell 5.1 turns git's progress line on stderr into a terminating error under Stop
 & git -C $repo worktree add --detach $snap HEAD 2>&1 | Out-Null
+$ErrorActionPreference = "Stop"
 if ($LASTEXITCODE -ne 0 -or -not (Test-Path (Join-Path $snap "DESCRIPTION"))) { Remove-Item $RunDir; throw "could not create the code snapshot at $snap" }
 $quickDir = Join-Path $work "scratch"
 @{ Arm = $Arm; Base = $Base; Sims = $Sims; Label = $Label; Pairs = $Pairs; At = $At; Commit = $sha;
