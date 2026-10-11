@@ -10,7 +10,8 @@ Wikipedia can replace AE's poll file for the recent elections that have a dedica
 Over the 22 scored elections, in the final 30 days before polling day (what the forecast level reads):
 
 - AE has 233 polls; Wikipedia has 141. 119 are the same poll in both (51% of AE's).
-- Wikipedia has 17 polls AE lacks (2 of them election-day exit polls, which are not forecasts and should be dropped).
+- Wikipedia has 17 rows AE lacks: 16 genuine single polls plus one four-month aggregate (qld2024 "Resolve Strategic", Jun to Sep 2024, dated by its
+  period end, 30 Sep). Two of the 16 are election-day exit polls, which are not forecasts and should be dropped.
 - AE has 114 polls Wikipedia lacks (101 with ALP and Coalition primaries).
 - The gap is concentrated: fed2007 and fed2010 (38 of the 114), the three WA elections that only have Newspoll's quarterly
   summary (7), and the state elections whose Wikipedia article carries a handful of polls (vic2018, nsw2019, sa2022, wa2025, qld2020).
@@ -38,8 +39,11 @@ The raw HTML was already cached, so the parser fixes needed no re-download; only
 
 Checks: the script's own self-tests grew (quarter dates, "March 2021", the 2 - 4 Sep spacing, and three synthetic tables: headerless,
 group-row-above, and the same table with the footer removed, which must be refused; all pass). Comparing old and new output for the
-4,024 rows present in both: primaries unchanged in every row; 239 dates changed, all of them the fed2028 2025 table (2027 to 2025)
-and two fed2022 rows ("Sep 2021" now ends on the 30th rather than the 15th).
+4,024 poll rows present in both (the old CSV was kept in a scratch copy and re-compared on 2026-10-11): ALP and Coalition primaries unchanged in
+every row; 245 fieldwork-end dates changed. 39 of them are the fed2028 page's 2025 table (2027 to 2025; that table has exactly 39 poll rows; a reviewer's
+figure of 44 under that heading could not be reproduced from the CSV). The other 206 are range or quarter
+rows ("Oct-Dec 2013", "Jul - Sep 2021") across nsw2011, vic2014, qld2015/2017/2024, sa2018, wa2017/2021, fed2022, vic2026, nsw2027 and qld2028 pages, which now end on the
+last day of the period instead of the 15th of the last month. **Aggregates use the period END as their date.** 326 rows are new (the six newly parsed elections plus wa2001/wa2005).
 
 ## Elections Wikipedia cannot cover, with the evidence
 
@@ -126,7 +130,7 @@ overlap is 1,139 + 136 = 1,275 AE polls, not 1,139. The rest of the 362 (226 Wik
 ### The final 30 days, Wikipedia polls AE lacks (17)
 
 fed2013: Essential 12 Aug, Essential 25 Aug, Morgan multi 25 Aug. fed2016: Essential 5 Jun, 19 Jun. fed2019: YouGov-Galaxy exit poll on polling day. fed2022: Ipsos 23 Apr,
-Essential 30 Apr, Ipsos 7 May (all three are the undecided case). fed2025: Essential 14 Apr (undecided case). qld2020: Roy Morgan 15 Oct. qld2024: Resolve 30 Sep. sa2026:
+Essential 30 Apr, Ipsos 7 May (all three are the undecided case). fed2025: Essential 14 Apr (undecided case). qld2020: Roy Morgan 15 Oct. qld2024: Resolve Strategic "30 Sep" (NOT a single poll: a Jun to Sep 2024 four-month aggregate, dated by its period end; so 16 genuine single polls in this list, not 17). sa2026:
 Resolve 16 Mar. vic2014: Roy Morgan 20 Nov. vic2022: Lonergan 6 Nov. wa2005: Newspoll 24 Feb. wa2017: Galaxy exit poll on polling day. Full list with sources:
 `output/poll-coverage-wiki-only.csv`. Not all of these are checked by hand; the join tolerances can miss a real match.
 
@@ -185,6 +189,24 @@ vic2018). For these the choices are: keep AE for the backtest history and use ou
 6. Results already measured on AE's file (for example the poll sample-weight refusal of 2026-10-09) describe AE's file only.
 7. Exit polls (YouGov-Galaxy 2019, Galaxy 2017) are on Wikipedia as polls on polling day; exclude them.
 Per CLAUDE.md ("a fix to one harness is a fix to all of them"), re-measure on all 22 pairs (AEF-7 screen first), not on the elections Wikipedia covers well.
+
+## First live case where our own source can be fresher than AE (dated note, 2026-10-11)
+
+A RedBridge/Accent poll fielded 2-8 Oct 2026 (n = 1,008; Coalition 30, Labor 24, One Nation 24, Greens 16), reported by Poll Bludger on 10 Oct, is in neither
+source today. Checked 2026-10-11: AE's `poll-data-vic.csv` ends at Freshwater 2026-09-26 (file stamped 2026-10-11 01:18, clone pulled 01:12 per the coordinator); our
+Wikipedia cache (`vic2026_opinion.html`, fetched 2026-10-09 14:31) has no "1,008" and its newest headline poll is Freshwater, fielded 24-28 Sep. So the poll is absent
+from our own file too, because the cache is two days old. Once the page is re-fetched (and only if Wikipedia has added it by then; unconfirmed) our file would be ahead of AE's. This
+is the argument for a live refresh of the own source, not a measured advantage: today neither source has it.
+
+## Hardening added after review (2026-10-11)
+
+- A fetch failure (timeout, 429, 5xx, DNS, a 200 with a truncated body) is now `fetch_failed`: no marker is written and the next run retries. Only 404/410 are cached,
+  and the marker now holds the status (`status=404 <time>`). All 24 old markers were re-requested: all 24 are 404, rewritten. `scripts/fetch_page_lib.R`.
+- A raw page counts as downloaded only if it contains `</html>`; downloads go to a tempfile and are moved into `raw/` after that check. All 46 pages on disk pass.
+- Every table with a date-like header must end up parsed or refused with a reason (`table_outcomes.csv`); an unexplained loss, a parse error or a failed fetch fails the run
+  at the end (after the outputs are written). Current run: 202 parsed, 227 no date header, 15 too small, 2 refused as non-voting (fed2019 table 1, nsw2023 table 1), 0 lost.
+- The coverage check now prints and asserts what each filter drops, and stops on a stale join, a missing `pv_UND` column, a missing Poll Bludger file, or Poll Bludger rows without primaries.
+- Poll Bludger sheets are saved only if whole: last line complete, newest poll within 30 days before polling day, ALP and LNP on at least 90% of poll rows.
 
 ## Not confirmed, and where I looked
 
