@@ -144,3 +144,12 @@ at 10 days, chosen before running to match the shipped window's memory (a unifor
 14 days; an exponential decay with mean age 14 has half-life 14 x ln 2 = 9.7), not fitted. k is still fitted
 time-forward. Cliff-free like Amendment 2, steadier than its 1-day fit. Same three criteria against the shipped
 28-day form, all 22 elections.
+
+### Amendment 3 result (screen, 22 elections, 10-day decay vs the shipped 28-day form): ledger guard FAILS, narrowly
+
+1. Seat log loss 0.3027 -> 0.3013 (-0.0014, SE 0.0021): holds.
+2. AEF-7 ledger 0.2697 -> 0.2721 (+0.0024, SE 0.0014, 1.7 SE): FAILS.
+3. Worst single election wa2013 +0.0199 (limit 0.02), qld2024 +0.0095: holds.
+Essentially a tie with the window and far steadier than the 1-day fit: better on older elections (wa2017 -0.056,
+wa2008 -0.014, fed2007 -0.013), slightly worse on the recent ones in the ledger. By the ship rule the window stays;
+the choice between a cliff-free tie and the measured ledger edge goes to Pete.
