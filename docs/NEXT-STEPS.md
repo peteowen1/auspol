@@ -5,37 +5,108 @@ it stood before this rewrite: `backlog/journal-2026-09-19-hub-snapshot.md`).
 Decisions: `docs/DECISIONS.md`. Every seat verdict: `docs/SEAT-REGISTRY.md`.
 Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30.
 
-## 2026-10-11 HANDOFF (READ FIRST)
+## 2026-10-12 HANDOFF (READ FIRST)
 
-**START HERE: `docs/plans/fast-iteration-plan-2026-10-11.md`** -- Pete wants ideas tested in minutes, deciding runs
-moved out of the session (GitHub Actions / scheduled), and the next session to ORCHESTRATE Sonnet agents to find
-why a test takes an hour. Testing one level idea took ~4 h on 2026-10-10/11.
+**Morning 2026-10-12 (Pete):**
+- FLOWS: tf2 SHIPPED on dev (Pete). `AUSPOL_FLOW_TF=1`, `AUSPOL_FLOW_RATE_HL=2`, `AUSPOL_FLOW_MODEL_TAG=tf2`;
+  rebuild stage 4c trains them; `promote_rebuild.R` ships the vic2026 model + manifest; `forecast.yaml` requires
+  them. **ORDER MATTERS: publish a rebuild (AUSPOL_PUBLISH=1) BEFORE merging to main**, or the daily forecast job
+  fails on the missing tf2 files (it fails loudly, yesterday's forecast stays live).
+- LEVEL BLEND: 20-day decay stays (Pete dislikes hard caps; the window's edge is ~1 SE). The real finding: k sits at
+  its grid FLOOR in both modes, so the blend weight is 0.89-1.00 and the trend is effectively discarded. OPEN, NEXT
+  BUILD: one poll-weighting model (age via a fitted random walk, sample size, pollster record, relevance incl.
+  federal polls' state breakdowns for state elections; no cut-offs). `reviews/poll-weighting-inventory-2026-10-12.md`.
+- Worktree ab43fc4 (poll-sample fetch): KEEP (Pete: re-review); verdict in that review; run
+  `check_poll_coverage.R`, review, commit. Worktree a1a95ec `zero-order-late`: nothing to commit (its 41 by-election
+  rows are identical in dev's gitignored copy); removal needs its `external`/`output` links deleted first (blocked
+  as destructive; Pete's call). Branch `worktree-agent-a4181ce1235917bd7` deleted.
+- PR #120: merge after today's changes land (Pete).
 
-**Needs Pete:** nothing blocking.
+**Needs Pete:**
+1. Own poll source STEP 2: should the trend read our Wikipedia/Poll Bludger file (layered: AE only where Wikipedia
+   has nothing, i.e. fed2007, wa2001; Poll Bludger for nsw2019) instead of AE's files? Re-measure first: house effects
+   keyed on AE firm labels ("Newspoll2"), the undecided rule (AE divides it out; write ours into CONSTANTS.md), the
+   20-day half-life, exit polls. `reviews/own-poll-source-step1-2026-10-11.md`.
+2. DONE 2026-10-11: branches `fed-timing-resume-fixed` (b21fb77) and `instrument-backtest-fed-timing` (ae91f62) deleted, PR #33 closed.
+3. Three built, OFF, prereg-never-written experiment branches from 2026-10-06 were untracked until now:
+   `worktree-agent-a6d092f16127ab44a` (`AUSPOL_XGB_CLASS_JUR_CAL`), `worktree-agent-a9cb9eebe64bafa28`
+   (`AUSPOL_OTHERS_SCALE_JUR`), `worktree-agent-ad78f1dffe2279a6a` (`AUSPOL_SALIENCE_STATE`, 785 lines): prereg and
+   screen, or close.
 
-**Live:** `AUSPOL_IND_PERSON` (PR #116) and `AUSPOL_LEVEL_RECENT` (PR #118; now `decay`, half-life 20 days, on
-Pete's decision WITHOUT a measured run at 20 days -- `plans/prereg-level-recent-blend-2026-10-10.md`). Last measured:
-28-day window seat log loss 0.3172 / ledger 0.2682; 10-day decay 0.3181 / 0.2708 (fed2013 +0.025); no blend 0.3239.
-The `shipped-models` scoreboard describes the 28-day run; refresh it at the next full rebuild. `output/` holds the
-10-day decay run (c633fd8).
+**Overnight 2026-10-12 (autonomous, Pete asleep) -- status as it moves:**
+- Flow-only score `scripts/score_flows_oracle.R` built and run on all 22: result is Needs-Pete item 0.
+- Review findings fixed (c1419ea): a flow arm with a missing tag or mismatched half-life now stops at startup and
+  in the override, instead of silently scoring the pooled table or the leaky all-data model.
+- `build_page.R` no longer runs the retired `simulate_seats()`: pendulum rows come from the seat file (same 83
+  rows; tie order is decided after the merge, so the page is unchanged). Full page build not run locally: the
+  staleness guards refuse until the next `run_all.R` (poll data re-fetched 2026-10-11).
+- Worktrees removed: a83f23, a9339e, afe07d, ab6831 (its untracked prereg was an older copy of dev's) and a4181c
+  (its NSW 2023 JSON commit is fully on dev as e0f4551). Branches deleted except `worktree-agent-a4181ce1235917bd7`
+  (needs `git branch -D`: content on dev, not an ancestor). KEPT for Pete: ab43fc4 (uncommitted poll-sample work, 3
+  files, +301/-124), a1a95ec `zero-order-late` (merged branch; 4 modified reference CSVs, +41 by-election rows).
+- Full local rebuild at shipped flags (01:15-01:53, no publish; log `deciding-runs/rebuild-20261012-decay20.log`):
+  all 22 seat log loss 0.3201 (2,120 seats; 6 floor seats carry 12.2%), AEF-7 ledger 0.2710 vs AEF 0.2825, primary
+  RMSE like for like 4.771 vs 5.711. Earlier rebuilds: 28-day window 0.3172 / 0.2682, 10-day decay 0.3181. Not
+  like-for-like (code moved), so a same-code deciding run DONE: `deciding-runs/20261012-0154-window28-vs-decay20/`
+  (arm = 28-day window, base = shipped 20-day decay, all 22 at 20k; DONE, needs-Pete 0b). Stage-1 as-at models were CACHED (inputs
+  unchanged): LEVEL_RECENT is off in stage 1, so the xgb layer never sees it.
+- Seat registry: wa2001 Pilbara/Kimberley, wa2008 Kalgoorlie (three of the six zero-probability winners) PARKED with causes.
+- `DECISIONS.md` 44,780 -> 39,078 chars (2026-09-19..28 archived to `backlog/journal-decisions-2026-09-19-to-09-28.md`).
+- dev -> main: PR #120, every commit reviewed (Sonnet, 4 passes; findings fixed), `check_like_ci` clean, CI PASS on 6a82da4.
+  NOT merged: Pete merges.
+- OPEN, small: test fixtures print `PPV1! minor-to-minor conserve fit FAILED ... object 'votes' not found` 6 times
+  per test run (synthetic corpus lacks `votes`; R/candidate_returns.R:984). Pre-existing, tests pass; noise that
+  could hide a real PPV1 failure.
 
-**Owed to Pete (register):** an own poll source instead of AE Forecasts' files (`PETE-ASKED-FOR.md`, Wikipedia
-first; `scripts/check_poll_coverage.R` found 4 genuine final-month gaps; older Wikipedia pages do not parse yet).
+**Decided 2026-10-11 23:40:** the decay20 deciding run (`deciding-runs/20261011-1854-decay20/`, DONE, all 22, 20k
+sims): shipped 20-day decay vs no blend, seat log loss 0.3163 -> 0.3110, -0.0053 (SE 0.0037), better by >1 SE; AEF-7
+subset -0.0022 (SE 0.0028). The shipped half-life stands. `shipped-models` scoreboard still describes the 28-day run.
+
+**Shipped 2026-10-11 evening (all reviewed, `check_like_ci` clean, on dev, NOT yet on main):**
+- Local deciding-run launcher `scripts/deciding_run.ps1` + `quick_arm.R --reuse` per-harness canary (merge 644467e).
+- Own poll source step 1: every election parsed or a recorded reason; fetch hardened (404 vs failure, `</html>`
+  check, lost tables fail the run); two-way coverage (merge 89cd605).
+- Source scour of Bonham, Poll Bludger, ABC, Antony Green, Wikipedia: `reviews/source-scour-2026-10-11.md`.
+- vic2026 Wikipedia poll page re-fetched 20:30: the 2-8 Oct RedBridge/Accent poll (Coal 30, ALP 24, ON 24, GRN 16,
+  n=1,008) is now in OUR source; AE's file still ends 2026-09-26, so the live forecast does not have it. 9 Oct copy
+  kept at `raw/archive/vic2026_opinion.2026-10-09.html`. No refresh flag yet: archive-then-rerun by hand.
+- Earlier today (PR #119): `screen_level_share.R` (~10 s, all 22; `--ref=decay:20` after the next full rebuild),
+  `quick_arm.R` defaults to AEF-7, cross-seat cache 106 -> 53 s. Reports: `reviews/fast-iter-*-2026-10-11.md`.
+
+**Live model:** `AUSPOL_IND_PERSON` (PR #116) and `AUSPOL_LEVEL_RECENT=decay`, half-life 20 days (Pete's decision,
+unmeasured at 20 days until tonight's run). Last measured seat log loss (lower is better), all 22: 28-day window
+0.3172; 10-day decay 0.3181; no blend 0.3239. `shipped-models` scoreboard describes the 28-day run. `output/` holds
+the 10-day decay run (c633fd8).
 
 **Refused (built, off; do not re-run without a new idea):** the two-way person rule and its linear variant
-(large earlier records mislead both ways: Fowler 2022, Barker 2019); the never-stood "typical level" half
-(2026-10-09). Earlier refusals: statewide poll weighting, seat-poll precision blend, typical-vote / dedicated /
-mixture independent models (`plans/prereg-ind-typical-2026-10-09.md`).
+(Fowler 2022, Barker 2019); the never-stood "typical level" half (2026-10-09). Earlier: statewide poll weighting,
+seat-poll precision blend, typical-vote / dedicated / mixture independent models (`plans/prereg-ind-typical-2026-10-09.md`).
 
 **Queue, ranked:**
-1. OPEN: poll coverage, AE files vs Wikipedia, deduplicated and matched by firm within a date tolerance (first pass: one Resolve SA 2026 poll missing from AE; scrape parsed nothing for fed2007/2010, nsw2019, WA 2001-13 -- fix those parses first). ~1 h.
-1b. OPEN: re-score Richmond/Footscray/Brunswick/Preston/Pascoe Vale 2022 after AUSPOL_LEVEL_RECENT; shrink the person-rule slope toward the ratio carry (Pete, 2026-10-11) instead of only bounding it; test recency/relevance-weighted fits.
-2. OPEN: nomination day **9 November 2026**: refit successor rates on the final candidate list
-   (`build_departed_successors.R` chain), rerun the live forecast. Victoria votes 28 November 2026.
-3. OPEN: miss-table seats traced but not fixed: Malvern 2022 (O'Brien under-called in base_pred), Bankstown 2023
+1. OPEN: Liberal<->One Nation flows (`reviews/lnp-onp-flows-by-election-2026-10-11.md`). (a) ON->Lib live median
+   64.3% vs 69-75% since 2024. Recency weighting: screen 5.60 -> 4.96 pts flow error at 2 y half-life, but the
+   inference-only arm (`AUSPOL_FLOW_RATE_HL=2`) was +0.0022 log loss on AEF-7 (1.2 SE worse; sa/qld better, fed2025
+   worse). Retrained trees (`fit_xgb_flows_tf.R`, `AUSPOL_FLOW_TF=1`): tf0 +0.0060, tf2 +0.0025 (both within 1 SE);
+   fed2025 worse in every version (+0.023 to +0.031): WALKED, its flows got more accurate; the old flows were offsetting
+   a 4.6-point Labor primary under-call. NEXT: a flow-only score (seat outcomes from ACTUAL primaries + predicted flows). (b) Lib->ON varies
+   54-85% by election and moves statewide together; draw it once per simulation, not per seat. (c) no past Liberal
+   card orders for ON vs ALP on disk; collect only if (a)/(b) leave a gap. Liberal 2026 card not published.
+2. OPEN: re-score Richmond/Footscray/Brunswick/Preston/Pascoe Vale 2022 after AUSPOL_LEVEL_RECENT; shrink the
+   person-rule slope toward the ratio carry (Pete, 2026-10-11); test recency/relevance-weighted fits.
+3. OPEN: nomination day **9 November 2026, 12 noon** (VEC-confirmed; Wikipedia's 13 Nov is a superseded draft):
+   refit successor rates on the final candidate list (`build_departed_successors.R` chain), rerun the live forecast.
+4. OPEN: miss-table seats traced but not fixed: Malvern 2022 (O'Brien under-called in base_pred), Bankstown 2023
    (xgb cut ALP 55.8 -> 49.8); Parkes, New England, Dawson 2022, Traeger 2024, McMahon 2025 not yet traced.
-4. OPEN: statewide poll scraper year-inference root cause (STAT6! stops on it); fetch failures recorded as 404s.
-5. OPEN, small: `backtest_candidate_fed.R` writes all 7 pairs only at the end (a kill at 90% loses ~6 min).
+5. OPEN, speed (`reviews/fast-iter-profile-2026-10-11.md`): read-set cache keys for defectors, personal prior vote,
+   departed slope, salience (~25 s of a 54 s vic run); seat-poll memo keys on every switch; reuse-and-resimulate.
+6. OPEN, cleanup: `dev` -> `main` PR (17 files; review the diff first); `docs/DECISIONS.md` is 44,168 chars, past
+   40,000 (load `hub-slimming`); merged agent worktrees (`agent-a9339ef...`, `agent-afe07d...` and four older ones);
+   a `--refresh` flag for the poll scraper that archives automatically; `backtest_candidate_fed.R` writes all 7
+   pairs only at the end (mostly moot under quick_arm's one-election processes).
+
+**Corrections from this session:** I first said the decay20 deciding run would refresh the scoreboard (it does not);
+and that the poll scraper was Python (it is R). Three of five Haiku scour agents died on large pages and were rerun
+on Sonnet (memory `haiku-dies-on-web-pages`).
 
 **Running jobs when memory is short:** Claude Code reaps background shells below ~4 GB available. Run stage 6
 harness by harness in the foreground, then `AUSPOL_REBUILD_FROM=7`; `AUSPOL_REBUILD_SLOTS=1` caps parallelism.
@@ -49,7 +120,9 @@ Verbatim in `backlog/journal-2026-10-07-to-10-08.md`. Still OPEN from them:
 - OPEN: scenario-job straggler (one matrix job per run crawls on the runner's network). Pete 2026-10-09: leave open. Untried: per-step timeout plus re-run; fewer, fatter jobs.
 - OPEN: `AUSPOL_UPSET_FLOOR` is the one switch with an unexplained registry gap. Audit sentinel drift goes to issue #109.
 - OPEN: fed2025 seat polls deserved weight ~0.13 and got 0.55; no pre-election signal found yet.
-- OPEN: ~50 `AUSPOL_*` names read in code that `quick_arm.R` refuses; needs a per-name pass (many are run controls, not model switches).
+- OPEN: 120 `AUSPOL_*` names read in code but unregistered, classified 2026-10-12 (`reviews/unregistered-switches-2026-10-12.md`):
+  33 MODEL / 24 RUN / 18 DIAG / 45 DEAD. Act on: live vs backtest MP-slope tier differs (live keeps a party only at
+  n_member >= 8, harnesses keep any); ~20 harness-only model switches to register or delete.
 - Not doing, by decision: the in-browser simulator (~40 h); the 2.5-point knots already feel live. Revisit if Pete wants two sliders at once.
 
 ## 2026-09-27 to 2026-10-05: archived sessions
@@ -61,26 +134,6 @@ Everything still open from them is folded into the standing sections below; noth
 - 2026-10-03 evening and 01:40: v61 zeroing, v59/v60 shipped. Live: re-entry prior undecided, overcalled independents, simulation-noise revival of zeroed cells (all Model open).
 - 2026-09-30 (five sections, v53 to v56) and 2026-09-29 (five sections, v47 to v52): ledger version history and refused arms. Live: seat polls PARKED, no leader bonus for early WA/fed2007-10 (Model open); corrections learn from the previous rebuild (Hygiene).
 - 2026-09-28 (three sections, v44 to v46) and 2026-09-27: statewide-level arms refused. Live: `min_n` cliffs and seat context phase 2 (Model open); ITG page items (Data and infra).
-
-## Where things stand (2026-09-20 17:40)
-
-**Ledger v42** (660 AEF-7 seats, predictive throughout, 20,000 sims; lower
-is better): seat log loss **0.2943 vs AEF 0.2851**, weighted primary RMSE
-5.15 vs 5.42, TCP MAE 3.99 vs 3.63, accuracy 87.7% vs 86.8%. Public copy:
-https://github.com/peteowen1/auspol/releases/download/shipped-models/aef7-ledger.html
-History v38-v42 and the held-for-Pete decisions: DECISIONS 2026-09-20.
-v43 (phantom-vote fix alone) REFUSED 0.3022; local `output/` ledger files
-are v43's until the next rebuild, release and artifact are v42.
-
-**Next model arm, pre-registered, unbuilt**:
-`plans/prereg-anchor-implied-tpp-2026-09-20.md` (anchor to the draws' own
-implied two-party + zero the phantom vote, one change behind
-`AUSPOL_ANCHOR_IMPLIED`; smoke nsw2023, all WA, federal; rebuild v44
-decides). Run the rebuild and `check_like_ci.R` one at a time: the memory
-watchdog kills background wrappers below ~5 GB free.
-
-**Live forecast**: `forecast-latest` release daily 06:00 Melbourne, mirrored
-to R2 for inthegame.blog/politics/ (live). 20 Sep run pending on v42 models.
 
 ## NOW: the election-night booth model (Pete, 2026-09-19: option b)
 
@@ -122,7 +175,7 @@ plan, **Pete to send**; To Do reminder set).
   95%+ favourites that lost (calibration by band otherwise identical,
   roadmap item 5 DONE); the TCP gap is nsw2023; nsw2023 walked end to end
   (trend right, Labor's fall = phantom vote + published/implied two-party
-  gap + fundamentals). OPEN: the anchoring arm above; wa2017 and fed2019
+  gap + fundamentals). OPEN: the anchor-implied arm (`plans/prereg-anchor-implied-tpp-2026-09-20.md`, `AUSPOL_ANCHOR_IMPLIED`, still "0"; v44 scored other changes, no verdict on this arm found in DECISIONS); wa2017 and fed2019
   still to walk with Pete (questions in the review). Refused arms:
   `prereg-fundamentals-drop-fed-aligned`, `prereg-phantom-minor-vote`.
 
@@ -144,9 +197,6 @@ plan, **Pete to send**; To Do reminder set).
   (7 of the 12 worst state-years are TAS/ACT/NT).
 - **Surge v4 vs salience**: hazard AUC 0.936 vs 0.751 but over-dispersed;
   deciding seat-count test not run (`prereg-xgb-surge-parameters-v2`).
-- **Re-entry prior (`AUSPOL_REENTRY`, prereg 2026-09-07) was never decided and is OFF**: why Richmond 2022
-  Liberals got 0.0 (actual 18.8; a re-entry cell, not standing 2018). Rebuild from stage 1 (~40 min), test in
-  `base_pred` AND xgb (`reviews/reentry-prep-2026-10-03.md`). Request register: NOT DONE.
 - **Overcalled independents, NOT DONE** (Pascoe Vale: Sue Bolton polled 4.19, called 18.42, because the 2018
   independent class gap was carried onto her though nobody of that class re-stood; also Geelong, Sandringham,
   Kavel 2026, Shepparton; walk in `reviews/overcalled-independents-walk-2026-10-03.md`). Fix idea: stop
@@ -221,8 +271,7 @@ Still open:
 - Federal results as a correlated signal for state seat lean: needs
   seat-boundary matching (`external/reference/boundaries/` has CED 2016).
 - GDELT parked (needs a GCP project); Census 2006/2001 have no bulk pack.
-- ITG page: a seat map (regions are in the JSON now), per-seat cards, a forecast-over-time chart, and
-  `build_page.R:263` still takes the pendulum rows from the retired `simulate_seats()`.
+- OPEN: ITG page: a seat map (regions are in the JSON now), per-seat cards, a forecast-over-time chart.
 - Provisional candidate list (`output/candidacies.csv`, ABC + Wikipedia, uploaded to the `shipped-models`
   release): LDP (4 rows) is classed OTH, probably OTH_RIGHT; confirm.
 

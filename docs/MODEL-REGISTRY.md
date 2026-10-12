@@ -1,6 +1,6 @@
 # Model registry
 
-**Generated 2026-10-11 by `scripts/build_model_registry.R`. Do not hand-edit** --
+**Generated 2026-10-12 by `scripts/build_model_registry.R`. Do not hand-edit** --
 rerun the script instead. Regenerate whenever a switch is added to
 `published_flags.R` or a harness's wiring changes.
 
@@ -31,7 +31,7 @@ All seven share one `R/` package core (`simulate_seat_contests()`,
 in which switches each one WIRES and which data source each reads, not in
 separate model code.
 
-## Switch parity (170 switches from `published_flags.R`, 7 entry points)
+## Switch parity (172 switches from `published_flags.R`, 7 entry points)
 
 | switch | fit_seats (published) | fed | nsw | qld | sa | vic | wa |
 |---|---|---|---|---|---|---|---|
@@ -75,9 +75,11 @@ separate model code.
 | `AUSPOL_FLOW_CELL_SD` | NO | yes | yes | yes | yes | yes | yes |
 | `AUSPOL_FLOW_FRAG` | NO | NO | NO | NO | NO | NO | NO |
 | `AUSPOL_FLOW_MODEL_TAG` | NO | yes | yes | yes | yes | yes | yes |
+| `AUSPOL_FLOW_RATE_HL` | NO | NO | NO | NO | NO | NO | NO |
 | `AUSPOL_FLOW_SD` | yes | yes | yes | yes | yes | yes | yes |
 | `AUSPOL_FLOW_SHIFT` | yes | NO | NO | NO | NO | NO | NO |
 | `AUSPOL_FLOW_SHRINK_K` | yes | yes | yes | yes | yes | yes | yes |
+| `AUSPOL_FLOW_TF` | NO | NO | NO | NO | NO | NO | NO |
 | `AUSPOL_FORCE_FP` | yes | NO | NO | NO | NO | NO | NO |
 | `AUSPOL_FORCE_FP_RULE` | yes | NO | NO | NO | NO | NO | NO |
 | `AUSPOL_FORECAST_MODE` | NO | yes | yes | yes | yes | yes | yes |
@@ -236,8 +238,10 @@ separate model code.
 - **`AUSPOL_FLOW_ASAT`** (**adopted, shared-function wiring**): SHIPPED 2026-09-18 and read inside R/xgb_flow_override.R (.flow_asat_model()), never by a harness directly: the per-election flow model is the as-at file output/xgb-flows-v1-asat-<election>.model when one exists, the all-data model for a future election (vic2026), and skipped only if a LATER election's as-at model exists. Reaches all six harnesses and fit_seats_full.R through that function.
 - **`AUSPOL_FLOW_CELL_SD`** (intentional / dead experiment): Read inside R/xgb_flow_override.R, not per-harness -- universal in practice (added to published_flags.R 2026-10-08 at its code default).
 - **`AUSPOL_FLOW_FRAG`** (**shipped, fitting-time switch (reaches harnesses via the artifact)**): SHIPPED 2026-09-15 and reads NO everywhere by construction: it is a FITTING-TIME switch, not a runtime one. Only scripts/fit_xgb_flows_v1.R reads it, where it decides whether lead_primary (the seat's leading first-preference share) enters feat_cols and so whether the column is baked into output/xgb-flows-v1-final-cols.json. Every harness and fit_seats_full.R then reads that JSON, never the environment, so the feature reaches them through the ARTIFACT. The parity question for this switch is therefore not 'does each harness honour it' but 'was the artifact refit with it', which the cols JSON answers: 40 features, lead_primary present. scripts/fit_xgb_flows_loo.R inherits the same list, so the 25 leave-one-election-out models must be refit in the same breath or a harness loads a 39-feature model against a 40-column matrix. Both were refit 2026-09-15. docs/plans/prereg-flow-fragmentation-2026-09-15.md
-- **`AUSPOL_FLOW_MODEL_TAG`** (intentional / dead experiment): Read inside R/xgb_flow_override.R, not per-harness -- universal in practice (added to published_flags.R 2026-10-08 at its code default).
+- **`AUSPOL_FLOW_MODEL_TAG`** (**adopted, shared-function wiring**): SHIPPED "tf2" 2026-10-12 with AUSPOL_FLOW_TF. Read inside R/xgb_flow_override.R, not per-harness -- universal in practice.
+- **`AUSPOL_FLOW_RATE_HL`** (**adopted, shared-function wiring**): SHIPPED "2" 2026-10-12 with AUSPOL_FLOW_TF. Read inside R/xgb_flow_override.R; must equal the tagged models' trained half-life.
 - **`AUSPOL_FLOW_SHIFT`** (intentional / dead experiment): Published-forecast-only (fit_seats_full.R shifts the statewide TPP fundamentals blend for the live Victorian projection); backtests inject real historical first preferences directly and have no fundamentals blend to shift. NOT federal-specific -- fit_seats_full.R is the Victorian forecast; corrected 2026-09-09, this comment previously said "federal" for every switch fit_seats_full.R alone reads, which is wrong for all six in this group.
+- **`AUSPOL_FLOW_TF`** (**adopted, shared-function wiring**): SHIPPED "1" 2026-10-12 (Pete). Read inside R/xgb_flow_override.R (every harness and fit_seats_full.R reach it through the flow override); validated at startup by validate_flow_arm() in published_flags.R.
 - **`AUSPOL_FORCE_FP`** (intentional / dead experiment): Published-forecast-only (fit_seats_full.R -- forces a first-preference override for the live Victorian forecast); no analogue in a backtest scored against real historical results.
 - **`AUSPOL_FORCE_FP_RULE`** (intentional / dead experiment): Published-forecast-only (fit_seats_full.R -- how the other parties give way under AUSPOL_FORCE_FP); a what-if switch with no analogue in a backtest.
 - **`AUSPOL_FORECAST_MODE`** (**OPEN GAP**): OPEN GAP, and the most consequential one in this table. 1 = the statewide the seats swing toward is PREDICTED from polls rather than read off the election being scored. Implemented in backtest_candidate_fed.R and _sa.R ONLY; nsw/qld/vic/wa still use the actual result, so their numbers answer a different question from federal's and are not comparable to a forecast. Default 0 because flipping it today would mean two different things across the six harnesses, NOT because the oracle statewide is endorsed -- Pete's ruling 2026-09-11 is that a forecast must be predictive throughout. Cost where measured: federal +0.0047 pooled seat log loss.
@@ -376,4 +380,4 @@ MR3  no harness forces a switch away from its published value.
 
 ## Coverage check
 
-MR2  every non-universal switch (133 of 170) has a recorded classification.
+MR2  every non-universal switch (135 of 172) has a recorded classification.

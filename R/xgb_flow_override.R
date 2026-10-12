@@ -1,9 +1,10 @@
 # MODEL VARIANT TAG, so an experimental retrain can be A/B'd against the
 # shipped models without overwriting them. `AUSPOL_FLOW_MODEL_TAG=w` reads
 # `output/xgb-flows-v1-w-loo-<election>.model` -- note the hyphen, which
-# .flow_model_tag() adds below; unset reads the shipped
-# `xgb-flows-v1-loo-<election>.model` and is byte-identical to before this
-# existed. The feature COLUMNS file is shared -- a variant that changed the
+# .flow_model_tag() adds below. Unset means the SHIPPED tag, "tf2" since
+# 2026-10-12 (the time-forward trees, scripts/fit_xgb_flows_tf.R); "none" is
+# the untagged leave-one-out-trained family (with AUSPOL_FLOW_TF=0). The
+# feature COLUMNS file is shared -- a variant that changed the
 # feature set would need its own, and this is asserted rather than assumed
 # by the column check `predict()` already performs on the matrix it is given.
 # Which as-at flow model applies, or NULL when AUSPOL_FLOW_ASAT is off.
@@ -13,7 +14,7 @@
 # table applies -- the same failure-open path as a missing model today.
 .flow_asat_model <- function(target_election) {
   if (!identical(Sys.getenv("AUSPOL_FLOW_ASAT", "1"), "1")) return(NULL)
-  f <- out_path(sprintf("xgb-flows-v1-asat-%s.model", target_election))
+  f <- out_path(sprintf("xgb-flows-v1%s-asat-%s.model", .flow_model_tag(), target_election))
   if (file.exists(f)) {
     cat(sprintf("XF9  as-at flow model for %s: %s\n", target_election, f))
     return(f)
@@ -26,8 +27,10 @@
   #    caller keeps the final model. Found 2026-09-19: the first version sent
   #    the live Victorian forecast to the pooled table.
   dates <- tryCatch(election_dates(), error = function(e) NULL)
-  asat <- list.files("output", pattern = "^xgb-flows-v1-asat-.*[.]model$")
-  asat_el <- sub("^xgb-flows-v1-asat-(.*)[.]model$", "\\1", asat)
+  .pre <- sprintf("xgb-flows-v1%s-asat-", .flow_model_tag())
+  asat <- list.files("output", pattern = "[.]model$")
+  asat <- asat[startsWith(asat, .pre)]
+  asat_el <- sub("[.]model$", "", substring(asat, nchar(.pre) + 1L))
   asat_el <- asat_el[asat_el %in% names(dates)]
   later_exists <- !is.null(dates) && target_election %in% names(dates) && length(asat_el) > 0 &&
     any(dates[asat_el] > dates[[target_election]])
@@ -39,8 +42,45 @@
   NULL
 }
 .flow_model_tag <- function() {
-  t <- Sys.getenv("AUSPOL_FLOW_MODEL_TAG", "")
-  if (nzchar(t)) paste0("-", t) else ""
+  t <- Sys.getenv("AUSPOL_FLOW_MODEL_TAG", "tf2")
+  # "none" = the untagged family. An empty value cannot say that on Windows,
+  # where setting a variable to "" unsets it and the shipped "tf2" applies.
+  if (nzchar(t) && !identical(t, "none")) paste0("-", t) else ""
+}
+
+# TIME-FORWARD FLOW RATE FEATURES (AUSPOL_FLOW_TF=1), one definition shared by
+# training (scripts/fit_xgb_flows_tf.R) and prediction (below), so the two
+# cannot drift apart. The shipped trees train on leave-one-election-out rates
+# (every OTHER election, later ones included) and predict from an earlier-only,
+# equal-weight mean of row shares: two different features under one name.
+#
+# `H`: flow-feature rows from elections before the target (columns election,
+# event_id, from, surv, to, votes). Votes are weighted 0.5^(age / hl) by years
+# before `target_date` (hl <= 0: every election equal). Returns
+# list(cond = from|surv|to rate and effective event count,
+#      pool = from|to rate over every survivor set, and its effective count).
+.flow_rates_tf <- function(H, target_date, hl, dates) {
+  age <- as.numeric(target_date - dates[H$election]) / 365.25
+  if (anyNA(age)) stop(".flow_rates_tf: no election date for ",
+                       paste(unique(H$election[is.na(age)]), collapse = ", "))
+  wt <- if (is.finite(hl) && hl > 0) 0.5^(age / hl) else rep(1, nrow(H))
+  D <- data.table::data.table(ev = H$event_id, f = H$from, s = H$surv, t = H$to,
+                              wv = wt * H$votes, w = wt)
+  ev_w <- unique(D[, c("ev", "f", "s", "w")])
+  cn <- ev_w[, list(cond_n = sum(get("w")), n_raw = .N), by = c("f", "s")]
+  ct <- D[, list(ct = sum(get("wv"))), by = c("f", "s")]
+  cond <- D[, list(cv = sum(get("wv"))), by = c("f", "s", "t")]
+  cond <- merge(merge(cond, ct, by = c("f", "s")), cn, by = c("f", "s"))
+  cond[, "cond_rate" := ifelse(get("ct") > 0, get("cv") / get("ct"), NA_real_)]
+  pn <- unique(ev_w[, c("ev", "f", "w")])[, list(pool_n = sum(get("w"))), by = "f"]
+  pt <- D[, list(pt = sum(get("wv"))), by = "f"]
+  pool <- D[, list(pv = sum(get("wv"))), by = c("f", "t")]
+  pool <- merge(merge(pool, pt, by = "f"), pn, by = "f")
+  pool[, "pool_rate" := ifelse(get("pt") > 0, get("pv") / get("pt"), NA_real_)]
+  data.table::setnames(cond, c("f", "s", "t"), c("from", "surv", "to"))
+  data.table::setnames(pool, c("f", "t"), c("from", "to"))
+  list(cond = cond[, c("from", "surv", "to", "cond_rate", "cond_n", "n_raw")],
+       pool = pool[, c("from", "to", "pool_rate", "pool_n")])
 }
 
 #' Build an xgb-flows-v1 conditional flow list for one target election
@@ -229,6 +269,14 @@ xgb_flow_conditional_override_for <- function(shares, target_election, prev_elec
     }
   }
   if (identical(model_f, "__none__")) return(NULL)
+  # AUSPOL_FLOW_TF=1 FEEDS FEATURES ONLY THE TAGGED TREES WERE TRAINED ON. A
+  # mistyped or missing tag would otherwise fall through to the untagged
+  # all-data model above (which saw the target) while every log line still
+  # reads as the arm (review 2026-10-12).
+  if (identical(Sys.getenv("AUSPOL_FLOW_TF", "1"), "1") &&
+      !startsWith(basename(model_f), sprintf("xgb-flows-v1%s-asat-", .flow_model_tag())))
+    stop(sprintf("AUSPOL_FLOW_TF=1 with tag '%s' resolved to %s, not a tagged as-at model for %s. Run scripts/fit_xgb_flows_tf.R <tag> <half-life>.",
+                 sub("^-", "", .flow_model_tag()), basename(model_f), target_election), call. = FALSE)
   if (!file.exists(model_f) || !file.exists(cols_f) || !file.exists(feat_f)) {
     cat(sprintf("XF9! model/cols/features file missing -- run scripts/fit_xgb_flows_v1.R; AUSPOL_XGB_FLOWS per-seat override skipped\n"))
     return(NULL)
@@ -239,7 +287,24 @@ xgb_flow_conditional_override_for <- function(shares, target_election, prev_elec
   hist <- TR[elections_before(TR$election, target_election)]   # time-forward inputs
 
   CLASSES <- c("ALP","GRN","IND","LNP","NAT","ONP","OTH","OTH_RIGHT")
-  key_rates <- hist[, list(rate = stats::weighted.mean(get("y"), w = pmax(1, get("cond_n"))),
+  # RECENCY (AUSPOL_FLOW_RATE_HL, years; shipped "2" since 2026-10-12; "0" =
+  # every earlier election weighted equally, the earlier behaviour). Flows trend: One Nation -> Liberal ran
+  # ~50% in 2004-2016 and 69-75% in every election since 2024. Time-forward
+  # screen (scripts/screen_flow_recency.py): vote-weighted error 5.60 points
+  # equal-weighted, 4.96 at a 1.5-2 year half-life, over 4,409 election-cells.
+  .hl <- suppressWarnings(as.numeric(Sys.getenv("AUSPOL_FLOW_RATE_HL", "2")))
+  .wt <- pmax(1, hist$cond_n)
+  if (is.finite(.hl) && .hl > 0) {
+    .d <- election_dates()
+    .age <- as.numeric(.d[[target_election]] - .d[hist$election]) / 365.25
+    if (anyNA(.age)) stop("AUSPOL_FLOW_RATE_HL: no election date for ",
+                          paste(unique(hist$election[is.na(.age)]), collapse = ", "))
+    .wt <- .wt * 0.5^(.age / .hl)
+    cat(sprintf("XF9  flow rates recency-weighted, half-life %.2f years (%d history rows, %d elections)\n",
+                .hl, nrow(hist), data.table::uniqueN(hist$election)))
+  }
+  hist[, rate_w := .wt]
+  key_rates <- hist[, list(rate = stats::weighted.mean(get("y"), w = get("rate_w")),
                             n = data.table::uniqueN(paste(get("election"), get("seat"), get("round")))),
                      by = c("from","surv","to")]
   key_n <- hist[, list(n_cell = data.table::uniqueN(paste(get("election"), get("seat"), get("round")))),
@@ -250,6 +315,27 @@ xgb_flow_conditional_override_for <- function(shares, target_election, prev_elec
   if (!nrow(key_rates)) {
     cat("XF9! no historical cell clears min_events -- AUSPOL_XGB_FLOWS per-seat override produced nothing\n")
     return(NULL)
+  }
+  # TIME-FORWARD FEATURES (AUSPOL_FLOW_TF=1): the rate columns the trees see
+  # come from .flow_rates_tf(), the definition scripts/fit_xgb_flows_tf.R
+  # trained on. Needs a model trained that way (AUSPOL_FLOW_MODEL_TAG naming
+  # it); the shipped trees learned the leave-one-election-out feature.
+  .tf <- identical(Sys.getenv("AUSPOL_FLOW_TF", "1"), "1")
+  if (.tf) {
+    if (!nzchar(.flow_model_tag()))
+      stop("AUSPOL_FLOW_TF=1 needs AUSPOL_FLOW_MODEL_TAG naming models trained by scripts/fit_xgb_flows_tf.R; ",
+           "the shipped trees were trained on a different rate feature", call. = FALSE)
+    .d_tf <- election_dates()
+    .rt <- .flow_rates_tf(hist, .d_tf[[target_election]], .hl, .d_tf)
+    key_rates <- merge(key_rates, .rt$cond[, c("from", "surv", "to", "cond_rate", "cond_n")],
+                       by = c("from", "surv", "to"), all.x = TRUE)
+    key_rates <- merge(key_rates, .rt$pool, by = c("from", "to"), all.x = TRUE)
+    for (cc in c("cond_rate", "cond_n", "pool_rate", "pool_n"))
+      data.table::set(key_rates, which(is.na(key_rates[[cc]])), cc, 0)
+    cat(sprintf("XF9  time-forward flow features (AUSPOL_FLOW_TF=1, half-life %s): %d keys, model %s\n",
+                if (is.finite(.hl) && .hl > 0) sprintf("%.2f y", .hl) else "none", nrow(key_rates), basename(model_f)))
+  } else {
+    key_rates[, `:=`(cond_rate = rate, cond_n = n_cell, pool_rate = rate, pool_n = n_cell)]
   }
   region_levels <- c("fed","nsw","qld","sa","vic","wa")
 
@@ -292,8 +378,7 @@ xgb_flow_conditional_override_for <- function(shares, target_election, prev_elec
   rows_list <- vector("list", length(seats))
   for (si in seq_along(seats)) {
     sh <- shares[si, ]
-    R <- key_rates[, list(from, surv, to, cond_rate = rate, cond_n = n_cell,
-                           pool_rate = rate, pool_n = n_cell)]
+    R <- key_rates[, list(from, surv, to, cond_rate, cond_n, pool_rate, pool_n)]
     R[, seat_i := si]
     R[, n_survivors := lengths(strsplit(surv, "+", fixed = TRUE))]
     # match() on a pre-built key vector, NOT merge()-then-positional-assign:

@@ -200,3 +200,23 @@ test_that("the scratch-root guards refuse unmarked directories and surviving jun
   expect_silent(quick_assert_no_links(slot, c("R", "src")))
   unlink(c(d, other), recursive = TRUE)
 })
+
+test_that("quick_harness_code_sig moves with the code a harness runs, not with this tool or another harness", {
+  root <- withr::local_tempdir()
+  for (d in c("R", "src", "scripts")) dir.create(file.path(root, d))
+  w <- function(path, txt) writeLines(txt, file.path(root, path))
+  w("DESCRIPTION", "Package: x"); w("NAMESPACE", ""); w("R/a.R", "f <- 1"); w("R/quick_arm.R", "q <- 1")
+  w("src/core.cpp", "int x;"); w("scripts/harness_defaults.R", ""); w("scripts/published_flags.R", "")
+  w("scripts/backtest_candidate_vic.R", "v <- 1"); w("scripts/backtest_candidate_wa.R", "w <- 1")
+  s0 <- quick_harness_code_sig(root, "vic")
+  expect_identical(quick_harness_code_sig(root, "vic"), s0)        # stable
+  w("R/quick_arm.R", "q <- 2"); w("scripts/backtest_candidate_wa.R", "w <- 2"); w("src/core.o", "obj")
+  expect_identical(quick_harness_code_sig(root, "vic"), s0)        # this tool, another harness, build products: no change
+  w("R/a.R", "f <- 2")
+  expect_false(identical(quick_harness_code_sig(root, "vic"), s0)) # package code: change
+  s1 <- quick_harness_code_sig(root, "vic")
+  w("scripts/backtest_candidate_vic.R", "v <- 2")
+  expect_false(identical(quick_harness_code_sig(root, "vic"), s1)) # its own harness script: change
+  file.remove(file.path(root, "scripts/backtest_candidate_vic.R"))
+  expect_false(identical(quick_harness_code_sig(root, "vic"), quick_harness_code_sig(root, "vic")))  # unreadable: never matches
+})

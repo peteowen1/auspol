@@ -288,6 +288,24 @@ Dug 2026-10-09 from run 0cbaa82 (`scripts/biggest_misses.R --pairs=vic2018`). Th
 - **Kalgoorlie** — wrong winner class in the TCP reference until the
   official WAEC distribution was parsed (2026-09-18). **DATA**.
 
+## wa2008
+
+- **Kalgoorlie** — Bowler (ALP, Murchison-Eyre 2005) won as IND, given 0 (IND 3.4 vs 34.0). The defector
+  block matches same seat AND same person, so a member moving seat is never matched. `AUSPOL_DEFECTOR_STATE`
+  adds the cross-seat match but was refused (+0.0090 over 22, carry is bimodal). **PARKED**,
+  `reviews/state-defectors-2026-10-06.md`.
+
+## wa2001
+
+- **Pilbara** — Graham (ALP 63.8 in 1996) won as IND 54.6, given 0. Time-forward, wa2001 has 0 earlier
+  defector cases, so the fit returns nothing (`BW0d! only 0 defector case(s)`); the old full-sample fit carried
+  17.6. Not estimable from earlier data; a prior would be the fix. **PARKED**, `reviews/state-defectors-2026-10-06.md`.
+- **Kimberley** — Labor won 42.2, given 0 (ALP 8.3 predicted). Checked against Wikipedia's district results
+  2026-10-12: no Labor candidate stood in 1996 (Bridge IND 33.8, Brian Martin IND 29.3), so Labor's base is 0 and
+  re-entry cannot fill it (`BW1r ... no earlier contest`, wa1996 is the first WA election in the corpus); the two
+  1996 independents' 63% swings forward to new independents (IND 37.3 predicted vs 10.7). Bridge's earlier Labor
+  membership predates the corpus. **PARKED**, corpus starts 1996.
+
 ## Cross-seat: sitting independent retires (2026-10-04, hypothesis, NOT a finding)
 
 Triage of the worst-100 primary misses in `output/forecasts.csv` (built 2026-10-03).

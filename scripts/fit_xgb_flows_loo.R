@@ -66,8 +66,15 @@ fold_id <- match(TX$election, elections)
 # reads under the same variable -- so a weighted retrain can be A/B'd against
 # the shipped models without overwriting them.
 WEIGHT_SCHEME <- Sys.getenv("AUSPOL_FLOW_WEIGHT", "")
-MODEL_TAG <- Sys.getenv("AUSPOL_FLOW_MODEL_TAG", "")
-tag_sfx <- if (nzchar(MODEL_TAG)) paste0("-", MODEL_TAG) else ""
+MODEL_TAG <- Sys.getenv("AUSPOL_FLOW_MODEL_TAG", "tf2")
+# The shipped tag (tf2, 2026-10-12) names TIME-FORWARD trees from
+# fit_xgb_flows_tf.R. This script trains the leave-one-out family, so writing
+# under that tag would put LOO-feature models where the time-forward ones are
+# looked for. Refuse; "none" (the untagged family) or a variant tag is the ask.
+if (file.exists(file.path("output", sprintf("xgb-flows-%s-asat-manifest.csv", MODEL_TAG))))
+  stop("AUSPOL_FLOW_MODEL_TAG=", MODEL_TAG, " names time-forward models (scripts/fit_xgb_flows_tf.R); ",
+       "set AUSPOL_FLOW_MODEL_TAG=none for the untagged leave-one-out models, or a variant tag")
+tag_sfx <- if (nzchar(MODEL_TAG) && !identical(MODEL_TAG, "none")) paste0("-", MODEL_TAG) else ""
 TX[, el_year := as.integer(sub("^[a-z]+", "", election))]
 if (nzchar(WEIGHT_SCHEME) && anyNA(TX$el_year))
   stop("AUSPOL_FLOW_WEIGHT set but a year could not be parsed from: ",

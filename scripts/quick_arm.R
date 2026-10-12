@@ -10,6 +10,10 @@
 #        --base="ENV" extra switches for the BASELINE (default: the shipped configuration)
 #        --slots=N   concurrent harness processes (default 2, the machine's limit)
 #        --clean     delete the scratch directory (junctions first) and exit
+#        --reuse     adopt cached baselines from an older code version where a per-harness canary
+#                    proves them unchanged (OPT-IN: a single canary election can miss an edit that
+#                    changes only another election of the same harness; --no-reuse always wins)
+#        --base-only build/refresh the cached baseline (with reuse) and exit; no arm, no scoring
 #
 # HOW IT WORKS (and why it is built this way: R/quick_arm.R header has the profile).
 #  1. One harness run per ELECTION (the harnesses already take a pair selector), so an
@@ -21,6 +25,15 @@
 #     and a touched pair differs only by what the arm changed.
 #  3. The baseline is CACHED, keyed on (git commit + uncommitted R/scripts diff,
 #     baseline switches, N, input files), and shared by every arm. Arms are cached too.
+#     After a CODE edit, an older baseline (same inputs/switches/N) is adopted per HARNESS
+#     (fed, wa, vic, nsw, qld, sa) only if that harness's own code is byte-identical
+#     (harness script + R/ + src/ + shared scripts) or one canary election of that
+#     harness, re-run now at the baseline config, reproduces the cached one byte for byte
+#     (sharedetail and allprobs). A harness whose canary differs rebuilds its baselines;
+#     the others are reused. OPT-IN with --reuse. Residual risk, SHOWN not
+#     theoretical (2026-10-11): an edit that changes only some elections of a harness. A cheap canary
+#     (vic2018) passed while vic2022 had changed; the canary is therefore the latest election, but
+#     the hole is not closed. The deciding run never reuses.
 #  4. Scored from the harness's own sharedetail (point predictions) and allprobs
 #     (seat win probabilities); the numbers are paired and clustered like
 #     scripts/score_arm.R (SA2, SA5/SA6, SA3).
@@ -46,7 +59,9 @@ arm_env <- quick_parse_env(paste(pos, collapse = " "))
 base_env <- quick_parse_env(flag("base", ""))
 sims <- as.integer(flag("sims", "1000")); slots <- as.integer(flag("slots", "2"))
 stopifnot(is.finite(sims), sims >= 100, slots >= 1, slots <= 2)  # two R processes at once is the machine's limit
-if (!clean_only && !length(arm_env)) stop("usage: Rscript scripts/quick_arm.R \"AUSPOL_X=1 AUSPOL_Y=0\" [--pairs=..] [--sims=N] [--base=\"ENV\"]")
+base_only <- "--base-only" %in% a
+reuse_on <- "--reuse" %in% a && !("--no-reuse" %in% a)
+if (!clean_only && !base_only && !length(arm_env)) stop("usage: Rscript scripts/quick_arm.R \"AUSPOL_X=1 AUSPOL_Y=0\" [--pairs=..] [--sims=N] [--base=\"ENV\"]")
 # the arm and the baseline must differ, or this compares a run with itself
 arm_eff <- c(base_env[setdiff(names(base_env), names(arm_env))], arm_env)
 # a switch no harness reads is an arm that never ran: it must be in PUBLISHED_FLAGS (which is also
@@ -169,11 +184,11 @@ key_base <- key_of(base_env); key_arm <- key_of(arm_eff)
 # (the canary below). Written once per key directory.
 key_parts_of <- function(env) list(code = code_hash, external = external_id, sims = sims, input = input_sig,
                                    env = if (length(env)) paste0(names(env)[order(names(env))], "=", env[order(names(env))]) else character(0))
-for (.k in list(list(key_base, base_env), list(key_arm, arm_eff))) {
+for (.k in c(list(list(key_base, base_env)), if (!base_only) list(list(key_arm, arm_eff)))) {
   .d <- file.path(qd, "cache", .k[[1]]); dir.create(.d, recursive = TRUE, showWarnings = FALSE)
   if (!file.exists(file.path(.d, "_key.rds"))) saveRDS(key_parts_of(.k[[2]]), file.path(.d, "_key.rds"))
 }
-if (identical(key_base, key_arm)) stop("quick_arm: the arm sets nothing different from the baseline; there is nothing to compare")
+if (!base_only && identical(key_base, key_arm)) stop("quick_arm: the arm sets nothing different from the baseline; there is nothing to compare")
 
 # ---- scratch roots (one per concurrent process) --------------------------------
 ensure_root <- function(i) {
@@ -218,13 +233,15 @@ if (nzchar(want)) {
 cache_dir <- function(key, id) file.path(qd, "cache", key, id)
 have <- function(key, id) file.exists(file.path(cache_dir(key, id), "meta.rds"))
 secs_guess <- function(h) if (h == "fed") 70 else if (h == "wa") 60 else 45
+hcodes <- sapply(unique(U$harness), function(h) quick_harness_code_sig(repo, h), USE.NAMES = TRUE)
 tasks <- list()
-for (i in seq_len(nrow(U))) for (role in c("base", "arm")) {
+for (i in seq_len(nrow(U))) for (role in c("base", if (!base_only) "arm")) {
   key <- if (role == "base") key_base else key_arm
   if (!have(key, U$id[i])) tasks[[length(tasks) + 1L]] <- list(
     id = U$id[i], role = role, key = key, harness = U$harness[i], var = U$var[i], val = U$val[i],
-    env = if (role == "base") base_env else arm_eff, named = names(if (role == "base") base_env else arm_eff), dir = cache_dir(key, U$id[i]), est = secs_guess(U$harness[i]))
+    env = if (role == "base") base_env else arm_eff, named = names(if (role == "base") base_env else arm_eff), dir = cache_dir(key, U$id[i]), est = secs_guess(U$harness[i]), hcode = unname(hcodes[U$harness[i]]))
 }
+if (base_only) cat("quick_arm: --base-only: refreshing the cached baseline for", nrow(U), "election(s); no arm, no scoring\n")
 cat(sprintf("quick_arm: arm {%s} vs baseline {%s} at %d simulations, %d election(s), code %s\n",
             paste(paste0(names(arm_env), "=", arm_env), collapse = " "),
             if (length(base_env)) paste(paste0(names(base_env), "=", base_env), collapse = " ") else "shipped",
@@ -232,6 +249,7 @@ cat(sprintf("quick_arm: arm {%s} vs baseline {%s} at %d simulations, %d election
 cat(sprintf("quick_arm: baseline cache %s: %d of %d elections cached | arm cache %s: %d of %d cached\n",
             key_base, sum(vapply(U$id, function(u) have(key_base, u), NA)), nrow(U),
             key_arm, sum(vapply(U$id, function(u) have(key_arm, u), NA)), nrow(U)))
+cat(sprintf("quick_arm: baseline reuse across code edits: %s\n", if (reuse_on) "ON (--reuse: per-harness canary on the latest election)" else "OFF (pass --reuse to adopt older baselines)"))
 
 # ---- run ----------------------------------------------------------------------
 run_unit <- function(task) {
@@ -271,7 +289,7 @@ run_unit <- function(task) {
   }
   unlink(new)   # the scratch output stays small and a later run cannot pick up this one's files
   secs <- as.numeric(difftime(Sys.time(), t0, units = "secs"))
-  if (ok) saveRDS(list(secs = secs, harness = task$harness), file.path(task$dir, "meta.rds"))
+  if (ok) saveRDS(list(secs = secs, harness = task$harness, hcode = task$hcode), file.path(task$dir, "meta.rds"))
   list(id = task$id, role = task$role, ok = ok, secs = secs, status = status, log = logf, seen = chk$seen)
 }
 res <- list()
@@ -285,12 +303,15 @@ if (length(tasks)) {
   cat("quick_arm: compiling once before the workers start\n")
   pkgbuild::compile_dll(roots[1], quiet = TRUE)
   # BASELINE REUSE ACROSS CODE EDITS (Pete, 2026-10-11: a code edit behind an arm-only switch threw
-  # away 22 cached baseline runs, ~20 min per screen). An older baseline key whose inputs match in
-  # everything but the code is adopted only after ONE of its elections, re-run here under the new
-  # code, reproduces it byte for byte (sharedetail and allprobs). Any difference: no reuse.
-  # OPT-IN with --reuse until it canaries every harness (plans/fast-iteration-plan-2026-10-11.md).
+  # away 22 cached baseline runs, ~20 min per screen). PER HARNESS TYPE: an older baseline key whose
+  # inputs match in everything but the code is adopted for harness h only if (a) h's own code signature
+  # (quick_harness_code_sig) equals the one recorded with those elections, or (b) ONE canary election
+  # of h, re-run now at the baseline config, reproduces the cached one byte for byte (sharedetail AND
+  # allprobs). A harness whose canary differs rebuilds its own baselines; the others are still reused.
+  # (A single canary for all six was refused in review 2026-10-11: it cannot see an edit that only
+  # another harness reaches.) The canary's run is cached under the new key either way.
   need_base <- vapply(tasks, function(t) t$role == "base", NA)
-  if (any(need_base) && ("--reuse" %in% a)) {   # OPT-IN (review 2026-10-11): one canary cannot see edits to other harnesses
+  if (any(need_base) && reuse_on) {
     mine <- key_parts_of(base_env)
     kd <- list.dirs(file.path(qd, "cache"), recursive = FALSE)
     kd <- kd[basename(kd) != key_base & file.exists(file.path(kd, "_key.rds"))]
@@ -299,28 +320,63 @@ if (length(tasks)) {
       !identical(p$code, mine$code) && identical(p$external, mine$external) && identical(p$sims, mine$sims) &&
         identical(p$input, mine$input) && identical(p$env, mine$env) }
     kd <- kd[vapply(kd, same_but_code, NA)]
-    miss_ids <- vapply(tasks[need_base], function(t) t$id, "")
-    for (old in kd) {
-      cov <- miss_ids[file.exists(file.path(old, miss_ids, "meta.rds"))]
-      if (!length(cov)) next
-      secs_old <- vapply(cov, function(u) readRDS(file.path(old, u, "meta.rds"))$secs, 0)
-      canary <- cov[which.min(secs_old)]
-      ct <- tasks[need_base][[match(canary, miss_ids)]]
-      assign("SLOT", 1L, envir = globalenv())
-      cr <- run_unit(ct)
-      if (!cr$ok) stop("quick_arm: the canary baseline run failed; see ", cr$log)
-      tasks <- tasks[!vapply(tasks, function(t) t$role == "base" && t$id == canary, NA)]   # its run is cached either way
-      same <- cr$ok && all(vapply(c("sharedetail.csv", "allprobs.csv"), function(f)
-        file.exists(file.path(old, canary, f)) && file.exists(file.path(ct$dir, f)) &&
-          identical(unname(tools::md5sum(file.path(old, canary, f))), unname(tools::md5sum(file.path(ct$dir, f)))), NA))
-      if (same) {
-        for (u in setdiff(cov, canary)) { dir.create(cache_dir(key_base, u), recursive = TRUE, showWarnings = FALSE)
-          file.copy(list.files(file.path(old, u), full.names = TRUE), cache_dir(key_base, u), overwrite = TRUE) }
-        cat(sprintf("quick_arm: baseline REUSED from %s for %d election(s): canary %s re-ran byte-identical under the new code\n",
-                    basename(old), length(cov), canary))
-        tasks <- tasks[!vapply(tasks, function(t) t$role == "base" && t$id %in% cov, NA)]
-      } else cat(sprintf("quick_arm: baseline NOT reused from %s: canary %s differs under the new code\n", basename(old), canary))
-      break
+    adopt <- function(old, ids, h) {
+      for (u in ids) {
+        dir.create(cache_dir(key_base, u), recursive = TRUE, showWarnings = FALSE)
+        src <- list.files(file.path(old, u), full.names = TRUE)
+        src <- src[basename(src) != "meta.rds"]   # meta.rds is what `have()` tests: never copied, written below once the rest is in
+        if (!all(file.copy(src, cache_dir(key_base, u), overwrite = TRUE)))
+          stop("quick_arm: copying the reused baseline for ", u, " from ", basename(old), " failed", call. = FALSE)
+        m <- readRDS(file.path(old, u, "meta.rds")); m$hcode <- unname(hcodes[h]); m$reused_from <- basename(old)
+        saveRDS(m, file.path(cache_dir(key_base, u), "meta.rds"))   # written last: meta.rds is what `have()` tests
+      }
+    }
+    drop_base <- function(ids) tasks <<- tasks[!vapply(tasks, function(t) t$role == "base" && t$id %in% ids, NA)]
+    for (h in unique(vapply(tasks[need_base], function(t) t$harness, ""))) {
+      nb <- tasks[vapply(tasks, function(t) t$role == "base" && t$harness == h, NA)]
+      miss <- vapply(nb, function(t) t$id, "")
+      ran <- NA_character_; tries <- 0L   # the canary is run once per harness; at most 2 older baselines are compared to it
+      for (old in kd) {
+        if (tries >= 2L) break
+        # not ones adopted from an earlier old key in this loop (by exact code match): a weaker canary-only copy must not overwrite them
+        # (the canary already run stays in: a second old key is compared against that same run)
+        cov <- miss[file.exists(file.path(old, miss, "meta.rds")) & (miss %in% ran | !vapply(miss, function(u) have(key_base, u), NA))]
+        if (!length(cov)) next
+        oldh <- vapply(cov, function(u) { m <- readRDS(file.path(old, u, "meta.rds")); if (is.null(m$hcode)) NA_character_ else m$hcode }, "")
+        same_code <- cov[!is.na(oldh) & oldh == unname(hcodes[h])]
+        if (length(same_code)) {
+          adopt(old, same_code, h); drop_base(same_code)
+          cat(sprintf("quick_arm: [%s] baseline REUSED from %s for %d election(s): this harness's code is unchanged\n", h, basename(old), length(same_code)))
+        }
+        ver <- setdiff(cov, same_code)
+        if (length(ver) < 2L) { if (length(ver)) cat(sprintf("quick_arm: [%s] %s rebuilds (a canary would cost as much as the run)\n", h, ver)); break }
+        secs_old <- vapply(ver, function(u) readRDS(file.path(old, u, "meta.rds"))$secs, 0)
+        # The canary is the LATEST election of the harness (most recent features, most seats): a canary
+        # chosen for being cheap was shown (2026-10-11 proof) to pass on vic2018 while vic2022 had changed.
+        yrs <- vapply(ver, function(u) as.numeric(nb[[match(u, miss)]]$val), 0)
+        canary <- if (!is.na(ran)) ran else ver[which.max(yrs)]
+        if (!canary %in% ver) break
+        ct <- nb[[match(canary, miss)]]
+        t_c <- Sys.time()
+        if (is.na(ran)) {
+          assign("SLOT", 1L, envir = globalenv())
+          cr <- run_unit(ct)
+          if (!cr$ok) stop("quick_arm: the canary baseline run failed; see ", cr$log)
+          drop_base(canary)   # its run is cached under the new key whatever the verdict
+          ran <- canary
+        }
+        tries <- tries + 1L
+        same <- all(vapply(c("sharedetail.csv", "allprobs.csv"), function(f)
+          file.exists(file.path(old, canary, f)) && file.exists(file.path(ct$dir, f)) &&
+            identical(unname(tools::md5sum(file.path(old, canary, f))), unname(tools::md5sum(file.path(ct$dir, f)))), NA))
+        if (same) {
+          others <- setdiff(ver, canary); adopt(old, others, h); drop_base(others)
+          cat(sprintf("quick_arm: [%s] baseline REUSED from %s for %d election(s): canary %s re-ran byte-identical under the new code (%.0f s)\n",
+                      h, basename(old), length(others) + 1L, canary, as.numeric(difftime(Sys.time(), t_c, units = "secs"))))
+        } else cat(sprintf("quick_arm: [%s] baseline NOT reused from %s: canary %s differs under the new code (%.0f s); %d election(s) rebuild\n",
+                           h, basename(old), canary, as.numeric(difftime(Sys.time(), t_c, units = "secs")), length(ver) - 1L))
+        if (same) break
+      }
     }
   }
   if (!length(tasks)) cat("quick_arm: nothing left to run after baseline reuse\n")
@@ -338,6 +394,19 @@ if (length(tasks)) {
 }
 
 # ---- score --------------------------------------------------------------------
+if (base_only) {
+  miss <- U$id[!vapply(U$id, function(u) have(key_base, u) &&
+                         all(file.exists(file.path(cache_dir(key_base, u), c("sharedetail.csv", "allprobs.csv")))), NA)]
+  if (length(miss)) stop("quick_arm: baseline incomplete after the run: ", paste(miss, collapse = ", "))
+  cat(sprintf("quick_arm: baseline %s complete for %d election(s); runtime %.0f s\n", key_base, nrow(U), as.numeric(difftime(Sys.time(), t_start, units = "secs"))))
+  quit(status = 0)
+}
+# Every file scoring reads must exist; a missing one is named here, not discovered mid-read
+# (2026-10-11 crash after a "differs" verdict).
+need_f <- as.vector(outer(c(key_base, key_arm), U$id, function(k, u) file.path(cache_dir(k, u), "sharedetail.csv")))
+need_f <- c(need_f, sub("sharedetail", "allprobs", need_f))
+if (!all(file.exists(need_f)))
+  stop("quick_arm: cached run file(s) missing before scoring: ", paste(head(need_f[!file.exists(need_f)], 6), collapse = "; "), call. = FALSE)
 rd <- function(key, file) rbindlist(lapply(U$id, function(u) {
   d <- fread(file.path(cache_dir(key, u), file), showProgress = FALSE)
   # nsw/qld/sa write no pair column in allprobs (one pair per run): the unit IS the pair.

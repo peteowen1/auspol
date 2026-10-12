@@ -1,8 +1,10 @@
-# auspol 0.4.95
+# auspol 0.4.96
 
-- The day-before level weights every poll of the campaign by age (half-life 20 days, Pete's choice) instead of a hard 28-day window; not separately measured at 20 days (the 10-day version tied the window).
-- `scripts/check_poll_coverage.R` compares AE Forecasts' poll files with Wikipedia (4 genuine final-month gaps).
-- `quick_arm.R --reuse` can reuse a cached baseline after a canary check (opt-in).
+- The 20-day level decay is now measured: over 22 elections it beats no blend, seat log loss 0.3163 -> 0.3110 (SE 0.0037). No change to the forecast.
+- New flow experiments, all off by default: recency-weighted flow rates (`AUSPOL_FLOW_RATE_HL`) and flow trees trained on time-forward rates (`AUSPOL_FLOW_TF`, models from `scripts/fit_xgb_flows_tf.R`). A misconfigured arm now stops instead of quietly scoring a different model.
+- New `scripts/score_flows_oracle.R` scores preference flows with the primary vote taken out. The time-forward trees cut flow error from 14.21 to 11.75 points over 18 elections; whether to ship them is undecided.
+- The Victorian page no longer runs the retired two-party seat model to draw its pendulum. The page is unchanged.
+- **The time-forward flow trees ship** (`AUSPOL_FLOW_TF=1`, tag `tf2`, 2-year half-life). Preference flows are learned only from elections before the one predicted, recent ones counting more. One Nation to Liberal in Victoria moves from 64% to 72%. The rebuild trains them at stage 4c and the daily forecast downloads the Victorian model; a published rebuild must precede the merge to main.
 
 # auspol 0.4.95
 

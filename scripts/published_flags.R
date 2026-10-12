@@ -324,7 +324,9 @@ PUBLISHED_FLAGS <- c(
   AUSPOL_WA_DROP_3C          = "0",          # R/external_flows.R:170, prereg-wa-three-cornered arm
   AUSPOL_WA_DROP_LNP         = "0",          # R/external_flows.R:187, prereg-wa-flows refusal W2 arm
   AUSPOL_FLOW_CELL_SD        = "0",          # R/xgb_flow_override.R:377
-  AUSPOL_FLOW_MODEL_TAG      = "",           # R/xgb_flow_override.R:42: suffixes the flow model filename; empty = the shipped model
+  AUSPOL_FLOW_TF             = "1",          # SHIPPED 2026-10-12 (Pete; docs/reviews/lnp-onp-flows-by-election-2026-10-11.md): "1" feeds the flow trees time-forward rate features from .flow_rates_tf() (R/xgb_flow_override.R), the definition scripts/fit_xgb_flows_tf.R trains on (rebuild stage 4c); needs AUSPOL_FLOW_MODEL_TAG naming those models. Flow-only split error 14.21 -> 11.89, all-22 seat log loss 0.3110 -> 0.3095 (SE 0.0033). "0" = the leave-one-out-trained trees.
+  AUSPOL_FLOW_RATE_HL        = "2",          # SHIPPED 2026-10-12 with AUSPOL_FLOW_TF: half-life in years for the historical flow rate fed to the per-seat flow model (R/xgb_flow_override.R, key_rates); "0" weights every earlier election equally. Must equal the half-life the tagged models were trained at (validate_flow_arm()).
+  AUSPOL_FLOW_MODEL_TAG      = "tf2",        # SHIPPED 2026-10-12: R/xgb_flow_override.R:42 suffixes the flow model filename; "tf2" = scripts/fit_xgb_flows_tf.R at half-life 2; "none" = the untagged leave-one-out-trained models (with AUSPOL_FLOW_TF=0)
   AUSPOL_REENTRY_SPLIT       = "1",          # R/reentry_prior.R:129, reached via reentry_mode() at fit_seats_full.R:1150
   AUSPOL_REENTRY_GAP         = "",           # R/reentry_prior.R:135
   AUSPOL_REENTRY_LINK        = "log",        # R/reentry_prior.R:149
@@ -703,5 +705,35 @@ apply_published_flags <- function(flags = PUBLISHED_FLAGS) {
   # "published" coincide and nothing needs doing for it.
   unset <- setdiff(unset, names(flags)[!nzchar(flags)])
   if (length(unset)) do.call(Sys.setenv, as.list(flags[unset]))
+  validate_flow_arm()
   unset
+}
+
+# AUSPOL_FLOW_TF arms must fail HERE, at startup: inside the harnesses the flow
+# override sits in a tryCatch that turns any error into the pooled flow table,
+# so a misconfigured arm would score as neither the arm nor the shipped model
+# while its filename fingerprint says it is the arm (review 2026-10-12).
+validate_flow_arm <- function() {
+  tag <- Sys.getenv("AUSPOL_FLOW_MODEL_TAG", PUBLISHED_FLAGS[["AUSPOL_FLOW_MODEL_TAG"]])
+  if (identical(tag, "none")) tag <- ""   # the untagged family (R/xgb_flow_override.R .flow_model_tag())
+  if (!identical(Sys.getenv("AUSPOL_FLOW_TF", PUBLISHED_FLAGS[["AUSPOL_FLOW_TF"]]), "1")) {
+    # The reverse mismatch, possible once tf2 shipped: an "off" arm that sets
+    # AUSPOL_FLOW_TF=0 but keeps the shipped tag would feed the leave-one-out
+    # rate features to trees trained on time-forward ones, and still look like
+    # the old model. The off arm must also set AUSPOL_FLOW_MODEL_TAG=none.
+    if (nzchar(tag) && file.exists(file.path("output", sprintf("xgb-flows-%s-asat-manifest.csv", tag))))
+      stop(sprintf("AUSPOL_FLOW_TF is off but AUSPOL_FLOW_MODEL_TAG=%s names time-forward models; set AUSPOL_FLOW_MODEL_TAG=none too", tag), call. = FALSE)
+    return(invisible(TRUE))
+  }
+  if (!nzchar(tag)) stop("AUSPOL_FLOW_TF=1 needs AUSPOL_FLOW_MODEL_TAG (models from scripts/fit_xgb_flows_tf.R)", call. = FALSE)
+  if (!identical(Sys.getenv("AUSPOL_XGB_FLOWS", "1"), "1"))
+    stop("AUSPOL_FLOW_TF=1 has no effect with AUSPOL_XGB_FLOWS off", call. = FALSE)
+  man <- file.path("output", sprintf("xgb-flows-%s-asat-manifest.csv", tag))
+  if (!file.exists(man)) stop("AUSPOL_FLOW_TF=1: no ", man, "; run scripts/fit_xgb_flows_tf.R ", tag, " <half-life>", call. = FALSE)
+  hl_trained <- unique(utils::read.csv(man)$half_life)
+  hl_now <- suppressWarnings(as.numeric(Sys.getenv("AUSPOL_FLOW_RATE_HL", PUBLISHED_FLAGS[["AUSPOL_FLOW_RATE_HL"]])))
+  if (length(hl_trained) != 1L || !isTRUE(all.equal(hl_trained, hl_now)))
+    stop(sprintf("AUSPOL_FLOW_TF=1: tag %s was trained at half-life %s but AUSPOL_FLOW_RATE_HL is %s",
+                 tag, paste(hl_trained, collapse = "/"), hl_now), call. = FALSE)
+  invisible(TRUE)
 }

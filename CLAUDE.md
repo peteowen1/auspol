@@ -467,6 +467,25 @@ winner probability under ~1/N is invisible to it. "WORSE" is a reason to stop;
 "within 1 SE" is not a clearance for anything that acts in the far tails. Run the
 full 20k arm (`AUSPOL_REBUILD_ONLY`, from stage 6) before shipping.
 
+**Baseline reuse after a code edit is OPT-IN (`--reuse`), per harness.** A cached baseline from
+an older code version is adopted for harness h (fed/wa/vic/nsw/qld/sa) only if h's own code is
+unchanged or a canary (the harness's latest election, re-run at the baseline config) is
+byte-identical (sharedetail and allprobs); otherwise only that harness rebuilds. It stays
+opt-in because one canary can miss an edit that moves only another election of the same
+harness: on 2026-10-11 a vic2018 canary passed while vic2022 had changed. `--base-only`
+refreshes baselines and exits; `--no-reuse` always wins. The deciding run never reuses.
+
+**The deciding run is a detached local job:** `powershell.exe -File scripts\deciding_run.ps1
+-Arm "AUSPOL_X=1" -Label name [-At 22:30] [-Base ..] [-Sims 20000] [-Pairs ..]` registers a
+one-shot Scheduled Task (parent is the Task Scheduler, so it outlives the session) that runs
+`quick_arm.R --slots=1 --no-reuse` at full size from a detached worktree snapshot of HEAD (it
+refuses uncommitted code, and edits made while it runs cannot reach it). Results land in
+`deciding-runs/<stamp>-<label>/` (gitignored): `results.txt`, `log.txt`, and one marker:
+`DONE`, `FAILED` (with the reason), `PENDING` (never started: past its time means the machine
+was logged off) or `RUNNING` (no live pid in `started.txt` means it was killed). Check every
+folder's marker next session, not only the newest `DONE`. `-Pairs` defaults to `all`, and
+`DONE` requires the scored election count to equal the one asked for. Never touches `output/`.
+
 ## The seat model is the candidate model. There is no second seat model.
 
 **`fit_seats_full.R` / `simulate_seat_contests()` is the forecast.** The

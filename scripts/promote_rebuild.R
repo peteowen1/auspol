@@ -34,6 +34,17 @@ source("scripts/published_flags.R")
 trained <- c("xgb-primary-v6-final.model", "xgb-primary-v6-final-cols.json",
              "xgb-primary-v6-final-ensemble.json"[length(.ens) > 0], setdiff(.ens, "xgb-primary-v6-final.model"),
              "xgb-flows-v1-final.model", "xgb-flows-v1-final-cols.json", "xgb-flows-v1-features.csv")
+# Time-forward flow trees (AUSPOL_FLOW_TF, shipped 2026-10-12): the live forecast
+# reads the tagged vic2026 model, and validate_flow_arm() refuses to start without
+# the manifest, so both ship with the models (rebuild stage 4c writes them).
+.ftf <- function(n) { v <- Sys.getenv(n, ""); if (nzchar(v)) v else as.character(PUBLISHED_FLAGS[[n]]) }
+if (identical(.ftf("AUSPOL_FLOW_TF"), "1")) {
+  .tag <- .ftf("AUSPOL_FLOW_MODEL_TAG")
+  if (!nzchar(.tag)) stop("AUSPOL_FLOW_TF=1 with no AUSPOL_FLOW_MODEL_TAG")
+  # nsw2027 too: the daily job runs fit_seats_full.R for it when AUSPOL_PUBLISH_NSW2027 is on.
+  trained <- c(trained, sprintf("xgb-flows-v1-%s-asat-%s.model", .tag, c("vic2026", "nsw2027")),
+               sprintf("xgb-flows-%s-asat-manifest.csv", .tag))
+}
 # The live seat-swing port's inputs (AUSPOL_SEAT_SWING_PORT=2): its sources are
 # a local booth transpose and seat TPP estimates CI never builds, so the
 # coefficient and per-seat federal swing ship as a table.

@@ -241,26 +241,16 @@ if (!is.finite(flow_z) || abs(flow_z) >= 2.5) {
 }
 
 seats26 <- load_seats(2026, "vic")
-sp22 <- seat_swing_spread(seats26, 55.00 - 57.60)
-sp18 <- seat_swing_spread(load_seats(2022, "vic"), 57.60 - 51.99)
-region_sd <- mean(c(sp22$sd_between, sp18$sd_between))
-within_sd <- mean(c(sp22$sd_within, sp18$sd_within))
-sim <- simulate_seats(seats26, pj$mean, pj$sd, 55.00, within_sd,
-                      region_sd = region_sd, n_sims = 50000, seed = 42)
-# The two-party simulation above is now a CROSS-CHECK ONLY (S5 compares the two
-# and the pendulum used to come from it). Nothing published is taken from it:
-# it cannot elect a minor party, which is the whole reason the candidate-level
-# model exists. `sim` is kept because S5 and the histogram-free sense checks
-# still read it.
-#
+# Pendulum positions (each classic seat's 2022 two-party share) come straight
+# from the seat file, which is just data. They used to be read off a run of the
+# retired two-party model, simulate_seats(), whose only other output here was a
+# "cross-check" total CLAUDE.md forbids keeping; ported 2026-10-12. The
+# PROBABILITY on each row comes from the candidate-level model, assigned below.
+# Row order here is immaterial: seat_rows is merged by seat, then sorted by tpp.
+.cl <- seats26[which(seats26$classic), ]
+bs <- data.table(seat = .cl$seat, seat_region = .cl$seat_region, alp_tpp_now = seat_alp_tpp(.cl))
 # `tot` is assigned further down from the candidate model, after its outputs are
 # read and the missing seat is accounted for.
-tpp_model_total <- sim$alp_total
-
-# Pendulum positions (each seat's 2022 two-party share) still come from the seat
-# file, which is just data. The PROBABILITY on each row now comes from the
-# candidate-level model, assigned below once its output is read.
-bs <- sim$by_seat[order(-alp_tpp_now)]
 
 # ---- candidate-level seat forecast, if the pipeline produced one ------------
 # fit_seats_full.R needs election data fetched into external/elections and is
@@ -356,12 +346,11 @@ if (all(present)) {
   tot <- full_tot$ALP
   cat(sprintf("published seat forecast: candidate-level model, %d of 88 seats
 ", covered))
-  cat(sprintf("  ALP median %d (90%% %d-%d); two-party model says %d -- cross-check only
+  cat(sprintf("  ALP median %d (90%% %d-%d)
 ",
               as.integer(stats::median(tot)),
               as.integer(stats::quantile(tot, 0.05)),
-              as.integer(stats::quantile(tot, 0.95)),
-              as.integer(stats::median(tpp_model_total))))
+              as.integer(stats::quantile(tot, 0.95))))
 
   # Pendulum probabilities from the candidate model. A seat where Labor never
   # wins has no row in `wp` at all, so absence means zero -- not missing.
