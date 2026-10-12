@@ -184,11 +184,30 @@ poll_layer <- function(ae, region, path = NULL, window = 4L) {
   }
   # matched: our numbers (where kept) under AE's label and date
   po <- pair_o[use_ours]; pa <- pair_a[use_ours]
+  # A party our row does not report (the page folded it into Others: the wa2017 table has no One Nation column)
+  # keeps AE's figure, and our Others gives that share back. Without this, layering blanked One Nation on the
+  # final WA 2017 polls and wa2017 seat log loss rose 0.086 (deciding run, 2026-10-12).
+  named_p <- setdiff(parties, "OTH")
+  for (p in named_p) {
+    fill <- !is.finite(ours[[p]][po]) & is.finite(ae[[p]][pa])
+    if (any(fill) && "OTH" %in% parties) ours$OTH[po[fill]] <- pmax(0, ours$OTH[po[fill]] - ae[[p]][pa[fill]])
+    ours[[p]][po[fill]] <- ae[[p]][pa[fill]]
+  }
   for (p in parties) ae[[p]][pa] <- ours[[p]][po]
   # unmatched ours: label of the same firm's nearest AE poll, else our own text
   extra <- ours[!used_o]
   n_suspect_dropped <- sum(extra$check == "suspect")
   extra <- extra[extra$check != "suspect"]   # no second copy to check against: a row that fails its own check is left out
+  # An unmatched row of ours missing a party that AE's polls within 60 days do report: its Others holds that
+  # party too, so Others is blanked rather than read as Others.
+  n_oth_blanked <- 0L
+  if (nrow(extra) && "OTH" %in% parties) for (p in setdiff(parties, c("OTH", "ALP", "LNP"))) {
+    miss <- which(!is.finite(extra[[p]]))
+    for (i in miss) {
+      near <- abs(as.integer(ae$date - extra$date[i])) <= 60
+      if (any(near) && mean(is.finite(ae[[p]][near])) >= 0.5 && is.finite(extra$OTH[i])) { extra$OTH[i] <- NA_real_; n_oth_blanked <- n_oth_blanked + 1L }
+    }
+  }
   if (nrow(extra)) {
     lab <- vapply(seq_len(nrow(extra)), function(i) {
       m <- which(ae$canon == extra$canon[i]); if (!length(m)) return(extra$firm_raw[i])
@@ -201,9 +220,9 @@ poll_layer <- function(ae, region, path = NULL, window = 4L) {
   data.table::setorderv(ae, "date")
   log <- list(region = region, ae_rows = sum(!used_a) + length(pair_a), ours = nrow(ours), matched = length(pair_o),
               ours_only = nrow(extra), ae_only = sum(!used_a), matched_differ_gt2 = sum(diff_big), differ = differ)
-  message(sprintf("PZ1 poll source layered [%s]: %d ours (%d matched to AE, %d ours only), %d AE only; %d matched polls differ by > 2 points on a major party (two-party check kept ours on %d, AE on %d); own check: %d swapped back, %d suspect (%d unmatched suspect dropped), %d without a two-party figure",
+  message(sprintf("PZ1 poll source layered [%s]: %d ours (%d matched to AE, %d ours only), %d AE only; %d matched polls differ by > 2 points on a major party (two-party check kept ours on %d, AE on %d); own check: %d swapped back, %d suspect (%d unmatched suspect dropped), %d without a two-party figure; %d unmatched rows had Others blanked (a party missing that nearby polls report)",
                   region, nrow(ours), length(pair_o), nrow(extra), sum(!used_a), sum(diff_big), sum(diff_big & use_ours), sum(diff_big & !use_ours),
-                  sum(ours$check == "swapped"), sum(ours$check == "suspect"), n_suspect_dropped, sum(ours$check == "no_tpp")))
+                  sum(ours$check == "swapped"), sum(ours$check == "suspect"), n_suspect_dropped, sum(ours$check == "no_tpp"), n_oth_blanked))
   data.table::setattr(ae, "parties", parties)
   data.table::setattr(ae, "layer_log", log)
   ae

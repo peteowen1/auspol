@@ -82,3 +82,23 @@ RMSE, 66 cells, 22 elections, lower is better: AE 2.319, layered **2.071** (-0.2
 file has the WA Greens near 1), wa2005 LNP 47.66 -> 44.24 (39.33), sa2026 ALP 38.38 -> 36.90 (37.62). vic2022 moves
 the wrong way by 0.3-0.5 on all three classes. Two-party tie-break: kept ours on 6 disagreeing pairs (every AE
 swap above), AE's on 23.
+
+### Amendment 2 (2026-10-12, AFTER the first deciding run): parser self-check, and a layering bug the guard caught
+
+Pete (on the AE-kept disputes): *"i want to eventually not use AEs at all - so why do we take AEs in these
+instances? can we fix the parser to take the right ones?"* Added before the first run finished: each row is checked
+against its own published two-party figure (normalised when it carries undecided), swapped back on strong evidence
+while One Nation is under 10, otherwise marked suspect (never wins a dispute; an unmatched suspect row is left
+out); matching prefers the closest numbers among same-date polls. Level effect vs the earlier layered screen:
+max 0.015.
+
+**First deciding run** (isolated worktree rebuild, code f18b032; `deciding-runs/rebuild-20261012-layered.log`;
+compared with `scripts/compare_rebuild_scores.R` against the 17:00 shipped rebuild): all 22 seat log loss 0.3171
+-> 0.3178 (+0.0007, SE 0.0037), within 1 SE. **The guard fired**: wa2017 +0.086, wa2008 +0.048. Big gains:
+nsw2019 -0.043, wa2005 -0.026. AEF-7 ledger 0.2739 -> 0.2778.
+
+Cause of wa2017, found before reporting: the wa2017 Wikipedia table has no One Nation column (folded into
+Others), and layering replaced AE's One Nation figures on the final polls (8-13%) with blanks. Fixed: a matched
+poll keeps AE's figure for a party our row lacks, and our Others gives that share back; an unmatched row of ours
+missing a party that AE's polls within 60 days report has its Others blanked. Second deciding run follows on the
+fixed code; both results stay recorded. The guard rule is unchanged.
