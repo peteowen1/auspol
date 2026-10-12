@@ -5,21 +5,24 @@ it stood before this rewrite: `backlog/journal-2026-09-19-hub-snapshot.md`).
 Decisions: `docs/DECISIONS.md`. Every seat verdict: `docs/SEAT-REGISTRY.md`.
 Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30.
 
-## 2026-10-11 HANDOFF (READ FIRST)
+## 2026-10-12 HANDOFF (READ FIRST)
+
+**Morning 2026-10-12 (Pete):**
+- FLOWS: tf2 SHIPPED on dev (Pete). `AUSPOL_FLOW_TF=1`, `AUSPOL_FLOW_RATE_HL=2`, `AUSPOL_FLOW_MODEL_TAG=tf2`;
+  rebuild stage 4c trains them; `promote_rebuild.R` ships the vic2026 model + manifest; `forecast.yaml` requires
+  them. **ORDER MATTERS: publish a rebuild (AUSPOL_PUBLISH=1) BEFORE merging to main**, or the daily forecast job
+  fails on the missing tf2 files (it fails loudly, yesterday's forecast stays live).
+- LEVEL BLEND: 20-day decay stays (Pete dislikes hard caps; the window's edge is ~1 SE). The real finding: k sits at
+  its grid FLOOR in both modes, so the blend weight is 0.89-1.00 and the trend is effectively discarded. OPEN, NEXT
+  BUILD: one poll-weighting model (age via a fitted random walk, sample size, pollster record, relevance incl.
+  federal polls' state breakdowns for state elections; no cut-offs). `reviews/poll-weighting-inventory-2026-10-12.md`.
+- Worktree ab43fc4 (poll-sample fetch): KEEP (Pete: re-review); verdict in that review; run
+  `check_poll_coverage.R`, review, commit. Worktree a1a95ec `zero-order-late`: nothing to commit (its 41 by-election
+  rows are identical in dev's gitignored copy); removal needs its `external`/`output` links deleted first (blocked
+  as destructive; Pete's call). Branch `worktree-agent-a4181ce1235917bd7` deleted.
+- PR #120: merge after today's changes land (Pete).
 
 **Needs Pete:**
-0. FLOWS (decision): retrained time-forward flow trees are clearly better FLOWS (flow-only score, actual primaries:
-   split error 14.21 -> 11.75 points, lower in all 18 elections; winners 1,724 -> 1,737-1,740 of 1,821) but the AEF-7
-   seat log loss is flat-to-worse (+0.0025 to +0.0060, within 1 SE) because the old flows offset primary misses
-   (fed2025 Labor -4.6 pts). Ship the better component (prereg + all-22 deciding run + a live vic2026 model first), or
-   hold until the primary misses are fixed? LIVE IMPACT (tf2): ON->Lib 64.3 -> 72.2, Lib->ON 68.0 -> 73.4; seats
-   ONP 14 -> 18, ALP 32 -> 30, LNP 35 -> 34 (medians). ALL-22 DECIDING RUN DONE (20k): seat log loss 0.3110 ->
-   0.3095 (-0.0016, SE 0.0033), AEF-7 +0.0026 (SE 0.0065): seat-neutral, better in 11 of 18 elections.
-   `reviews/lnp-onp-flows-by-election-2026-10-11.md`.
-0b. LEVEL BLEND (decision): same-code deciding run (`deciding-runs/20261012-0154-window28-vs-decay20/`, all 22 at
-   20k): the 28-day WINDOW beats the shipped 20-day DECAY, seat log loss 0.3110 -> 0.3096 (-0.0014, SE 0.0013) and
-   AEF-7 0.2710 -> 0.2682 (-0.0028, SE 0.0021); window better in 15 of 21 elections, worse in wa2017 (+0.032),
-   wa2008 (+0.009), vic2022 (+0.004), qld2020 (+0.003), sa2022 (+0.001). Switch `AUSPOL_LEVEL_RECENT` back to "1"?
 1. Own poll source STEP 2: should the trend read our Wikipedia/Poll Bludger file (layered: AE only where Wikipedia
    has nothing, i.e. fed2007, wa2001; Poll Bludger for nsw2019) instead of AE's files? Re-measure first: house effects
    keyed on AE firm labels ("Newspoll2"), the undecided rule (AE divides it out; write ours into CONSTANTS.md), the

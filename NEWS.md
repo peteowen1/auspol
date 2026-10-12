@@ -4,6 +4,7 @@
 - New flow experiments, all off by default: recency-weighted flow rates (`AUSPOL_FLOW_RATE_HL`) and flow trees trained on time-forward rates (`AUSPOL_FLOW_TF`, models from `scripts/fit_xgb_flows_tf.R`). A misconfigured arm now stops instead of quietly scoring a different model.
 - New `scripts/score_flows_oracle.R` scores preference flows with the primary vote taken out. The time-forward trees cut flow error from 14.21 to 11.75 points over 18 elections; whether to ship them is undecided.
 - The Victorian page no longer runs the retired two-party seat model to draw its pendulum. The page is unchanged.
+- **The time-forward flow trees ship** (`AUSPOL_FLOW_TF=1`, tag `tf2`, 2-year half-life). Preference flows are learned only from elections before the one predicted, recent ones counting more. One Nation to Liberal in Victoria moves from 64% to 72%. The rebuild trains them at stage 4c and the daily forecast downloads the Victorian model; a published rebuild must precede the merge to main.
 
 # auspol 0.4.95
 

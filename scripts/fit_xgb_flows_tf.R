@@ -16,14 +16,22 @@
 #   output/xgb-flows-v1-<tag>-asat-<election>.model
 #   output/xgb-flows-<tag>-asat-manifest.csv
 # Run: Rscript scripts/fit_xgb_flows_tf.R <tag> <half-life years, 0 = equal>
+#      (no arguments: the shipped tag and half-life from published_flags.R; rebuild stage 4c)
 # Read with AUSPOL_FLOW_TF=1 AUSPOL_FLOW_MODEL_TAG=<tag> AUSPOL_FLOW_RATE_HL=<same half-life>.
-# Live targets (3rd argument, default vic2026) get a model trained on every corpus row,
+# Live targets (3rd argument, default vic2026,nsw2027: the two forecasts the daily job runs) get a model trained on every corpus row,
 # refused if the corpus holds an election on or after them (section 3).
 options(auspol.root = normalizePath("."))
 suppressMessages(devtools::load_all(quiet = TRUE))
 suppressMessages(library(data.table))
 suppressMessages(library(xgboost))
 a <- commandArgs(TRUE)
+# No arguments (rebuild stage 4c): the tag and half-life the forecast ships with,
+# so the rebuild cannot train one variant while published_flags.R reads another.
+if (!length(a)) {
+  source("scripts/published_flags.R")
+  a <- c(PUBLISHED_FLAGS[["AUSPOL_FLOW_MODEL_TAG"]], PUBLISHED_FLAGS[["AUSPOL_FLOW_RATE_HL"]])
+  if (!identical(PUBLISHED_FLAGS[["AUSPOL_FLOW_TF"]], "1")) { cat("XFT0  AUSPOL_FLOW_TF is not shipped -- nothing to train\n"); quit(status = 0) }
+}
 if (length(a) < 2) stop("usage: Rscript scripts/fit_xgb_flows_tf.R <tag> <half-life years>")
 TAG <- a[1]; HL <- as.numeric(a[2])
 if (!nzchar(TAG) || !grepl("^[A-Za-z0-9]+$", TAG)) stop("tag must be alphanumeric")
@@ -99,8 +107,8 @@ for (e in elections) {
 }
 # ---- 3. live targets: elections not yet held, trained on every corpus row ------
 # Every corpus election precedes them, so the all-rows model IS as-at for them.
-# Named on the command line (default vic2026), never inferred from the date list.
-LIVE <- if (length(a) >= 3) strsplit(a[3], ",")[[1]] else "vic2026"
+# Named on the command line (default vic2026,nsw2027), never inferred from the date list.
+LIVE <- if (length(a) >= 3) strsplit(a[3], ",")[[1]] else c("vic2026", "nsw2027")
 for (e in LIVE) {
   if (!e %in% names(dates)) stop("live target ", e, " has no election date")
   if (!all(TF$election %in% names(dates)[dates < dates[[e]]]))

@@ -200,6 +200,17 @@ jobs:
           # Without it fit_seats_full.R would print FSLR!! and quietly publish the unblended level once polls
           # land in the final 28 days, so a missing table fails here and yesterday's forecast stays live.
           gh release download shipped-models -p level-recent.csv -D output --clobber || { echo "::error::shipped-models has no level-recent.csv -- publish the rebuild (stage 9) before this runs"; exit 1; }
+          # AUSPOL_FLOW_TF (published "1", shipped 2026-10-12): the tagged live flow models (vic2026, and
+          # nsw2027 for the NSW step below) and their manifest. fit_seats_full.R stops at startup without
+          # the manifest (validate_flow_arm) and the flow override stops without the model, so a missing
+          # file fails HERE with the reason.
+          FTF_TAG=$(Rscript -e 'source("scripts/published_flags.R"); cat(if (identical(PUBLISHED_FLAGS[["AUSPOL_FLOW_TF"]], "1")) PUBLISHED_FLAGS[["AUSPOL_FLOW_MODEL_TAG"]] else "")')
+          if [ -n "$FTF_TAG" ]; then
+            for f in "xgb-flows-v1-$FTF_TAG-asat-vic2026.model" "xgb-flows-v1-$FTF_TAG-asat-nsw2027.model" "xgb-flows-$FTF_TAG-asat-manifest.csv"; do
+              gh release download shipped-models -p "$f" -D output --clobber || { echo "::error::shipped-models has no $f -- publish a rebuild (stages 4c and 9) before this runs"; exit 1; }
+              [ -s "output/$f" ] || { echo "::error::output/$f is missing or empty after download"; exit 1; }
+            done
+          fi
           gh release download shipped-models -p upset-floor-eps.csv -D output --clobber || echo "::warning::shipped-models has no upset-floor-eps.csv -- AUSPOL_UPSET_FLOOR=1 stops fit_seats_full.R (UF0!)"
           gh release download shipped-models -p booth-features-vic2026.csv -D output --clobber || echo "::warning::shipped-models has no booth-features-vic2026.csv -- a model trained with AUSPOL_XGB_BOOTH=1 gets NA booth features (XB1!!)"
           gh release download shipped-models -p council-history-vic2026.csv -D output --clobber || echo "::warning::shipped-models has no council-history-vic2026.csv -- a model trained with AUSPOL_XGB_COUNCIL=1 gets all-zero council features (XC1!!)"

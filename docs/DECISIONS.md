@@ -4,6 +4,8 @@ One line each: the decision, the one fact behind it, a link. Newest first.
 Created 2026-09-19 (the verse convention; auspol had none). Older decisions
 live in the plans they came from (`docs/plans/prereg-*.md` RESULT sections).
 
+- **2026-10-12 Time-forward flow trees tf2 SHIPPED (Pete).** Flow-only score (actual primaries): split error 14.21 -> 11.89, lower in all 18 elections; all 22 at 20k seat log loss 0.3110 -> 0.3095 (SE 0.0033), seat-neutral; live ON->Lib 64 -> 72%, ONP median 14 -> 18 seats (`reviews/lnp-onp-flows-by-election-2026-10-11.md`). Rebuild stage 4c; publish before merging to main.
+- **2026-10-12 20-day level decay kept over the 28-day window (Pete: no hard caps).** Window 0.3110 -> 0.3096 (SE 0.0013) is ~1 SE; both fit k at the grid floor (blend weight 0.89-1.00), so the trend itself is the fault: next build is one poll-weighting model (`reviews/poll-weighting-inventory-2026-10-12.md`).
 - **2026-10-11 The 20-day level decay stands (deciding run).** All 22 at 20k sims: seat log loss 0.3163 (no blend) -> 0.3110 (20-day decay), -0.0053, SE 0.0037 (`deciding-runs/20261011-1854-decay20/results.txt`).
 - **2026-10-11 Flow recency arms built, none shipped.** `AUSPOL_FLOW_RATE_HL`, `AUSPOL_FLOW_TF` (default "0"); AEF-7 pooled: inference-only +0.0022, retrained tf0 +0.0060, tf2 +0.0025, all fed2025-driven; open, not refused (`reviews/lnp-onp-flows-by-election-2026-10-11.md`).
 - **2026-10-11 Branches `fed-timing-resume-fixed` and `instrument-backtest-fed-timing` deleted, PR #33 closed (Pete).**

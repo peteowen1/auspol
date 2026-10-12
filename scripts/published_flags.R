@@ -324,9 +324,9 @@ PUBLISHED_FLAGS <- c(
   AUSPOL_WA_DROP_3C          = "0",          # R/external_flows.R:170, prereg-wa-three-cornered arm
   AUSPOL_WA_DROP_LNP         = "0",          # R/external_flows.R:187, prereg-wa-flows refusal W2 arm
   AUSPOL_FLOW_CELL_SD        = "0",          # R/xgb_flow_override.R:377
-  AUSPOL_FLOW_TF             = "0",          # ARM, not shipped (2026-10-11): "1" feeds the flow trees time-forward rate features from .flow_rates_tf() (R/xgb_flow_override.R), the definition scripts/fit_xgb_flows_tf.R trains on; needs AUSPOL_FLOW_MODEL_TAG naming those models (tf0 equal weight, tf2 2-year half-life with AUSPOL_FLOW_RATE_HL=2).
-  AUSPOL_FLOW_RATE_HL        = "0",          # ARM, not shipped (2026-10-11): half-life in years for the historical flow rate fed to the per-seat flow model (R/xgb_flow_override.R, key_rates); "0" weights every earlier election equally. Screen: scripts/screen_flow_recency.py.
-  AUSPOL_FLOW_MODEL_TAG      = "",           # R/xgb_flow_override.R:42: suffixes the flow model filename; empty = the shipped model
+  AUSPOL_FLOW_TF             = "1",          # SHIPPED 2026-10-12 (Pete; docs/reviews/lnp-onp-flows-by-election-2026-10-11.md): "1" feeds the flow trees time-forward rate features from .flow_rates_tf() (R/xgb_flow_override.R), the definition scripts/fit_xgb_flows_tf.R trains on (rebuild stage 4c); needs AUSPOL_FLOW_MODEL_TAG naming those models. Flow-only split error 14.21 -> 11.89, all-22 seat log loss 0.3110 -> 0.3095 (SE 0.0033). "0" = the leave-one-out-trained trees.
+  AUSPOL_FLOW_RATE_HL        = "2",          # SHIPPED 2026-10-12 with AUSPOL_FLOW_TF: half-life in years for the historical flow rate fed to the per-seat flow model (R/xgb_flow_override.R, key_rates); "0" weights every earlier election equally. Must equal the half-life the tagged models were trained at (validate_flow_arm()).
+  AUSPOL_FLOW_MODEL_TAG      = "tf2",        # SHIPPED 2026-10-12: R/xgb_flow_override.R:42 suffixes the flow model filename; "tf2" = scripts/fit_xgb_flows_tf.R at half-life 2; empty = the leave-one-out-trained models
   AUSPOL_REENTRY_SPLIT       = "1",          # R/reentry_prior.R:129, reached via reentry_mode() at fit_seats_full.R:1150
   AUSPOL_REENTRY_GAP         = "",           # R/reentry_prior.R:135
   AUSPOL_REENTRY_LINK        = "log",        # R/reentry_prior.R:149

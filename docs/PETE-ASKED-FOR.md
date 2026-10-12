@@ -26,6 +26,14 @@ not a commit, not a plan file — that it is not happening and why.
 
 ---
 
+## 2026-10-12
+
+| Request | Status |
+|---|---|
+| Ship the tf2 time-forward flow trees ("Ship tf2") | **SHIPPED on dev** (`published_flags.R`: `AUSPOL_FLOW_TF=1`, `AUSPOL_FLOW_RATE_HL=2`, `AUSPOL_FLOW_MODEL_TAG=tf2`; rebuild stage 4c). Reaches the live site only after a published rebuild and the merge to main, in that order. |
+| Level blend: how do state and federal polls balance, how many polls in the window, and no hard caps (*"theres a reason i dont like hard caps"*) | **ANSWERED in chat 2026-10-12; 20-day decay kept.** Statewide polls only; federal polls never reach a state forecast; the blend's k sits at its grid floor, so the trend is effectively discarded. |
+| *"we can still do a LOT better on poll weighting stuff and this ties in with our other work"* (re-review the poll-sample worktree) | **NOT DONE, scoped:** `reviews/poll-weighting-inventory-2026-10-12.md`. One weight per poll (fitted random walk for age, sample size, pollster record, relevance incl. federal polls' state breakdowns), no cut-offs. Worktree ab43fc4 verdict: keep. Prereg not yet written. |
+
 ## 2026-10-09
 
 | Request | Status |

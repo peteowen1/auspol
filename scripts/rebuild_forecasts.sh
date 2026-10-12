@@ -17,6 +17,8 @@
 #      at" the day before it, and the predictions file the harnesses read
 #   4b. fit_xgb_flows_asat.R                 -> one flow model per election from earlier
 #      elections only (read under AUSPOL_FLOW_ASAT=1; skips models already current)
+#   4c. fit_xgb_flows_tf.R                   -> the same, on time-forward rate features, at
+#      the shipped AUSPOL_FLOW_MODEL_TAG (read under AUSPOL_FLOW_TF=1)
 #   5. fit_xgb_primary_v6_final.R               -> the PRODUCTION model, same
 #      recipe, cutoff = now, same features vintage
 #   6. six harnesses at shipped flags (AUSPOL_XGB_PRIMARY=1 reading the as-at
@@ -224,6 +226,9 @@ if at_least 2; then stage "2-pool-sharedetail";    AUSPOL_POOL_MIN_SIMS="${AUSPO
 if at_least 3; then stage "3-features";            Rscript scripts/build_level_pred.R > "$LOG/s3_level.log" 2>&1; Rscript scripts/fit_xgb_primary_v6.R    > "$LOG/s3_v6.log"   2>&1; done_stage "3-features"; fi
 if at_least 4; then stage "4-asat-models";         Rscript scripts/fit_xgb_primary_asat.R  > "$LOG/s4_asat.log" 2>&1; done_stage "4-asat-models"; fi
 if at_least 4; then stage "4b-asat-flow-models";   Rscript scripts/fit_xgb_flows_asat.R    > "$LOG/s4b_flows.log" 2>&1; done_stage "4b-asat-flow-models"; fi
+# 4c TIME-FORWARD FLOW MODELS (AUSPOL_FLOW_TF, shipped 2026-10-12): the tagged as-at models, vic2026's
+# included, at the shipped tag and half-life. After 4b, whose manifest gives nrounds.
+if at_least 4; then stage "4c-tf-flow-models";     Rscript scripts/fit_xgb_flows_tf.R      > "$LOG/s4c_flows_tf.log" 2>&1 || { echo "!! fit_xgb_flows_tf.R failed -- see $LOG/s4c_flows_tf.log"; exit 1; }; done_stage "4c-tf-flow-models"; fi
 if at_least 5; then stage "5-production-model";    Rscript scripts/fit_xgb_primary_v6_final.R > "$LOG/s5_final.log" 2>&1; done_stage "5-production-model"; fi
 # 5b the recent-poll level table (AUSPOL_LEVEL_RECENT): each election's UNBLENDED day-before trend, poll mean
 # and result, which the harnesses fit their blend constant on. Before stage 6, which reads it.
