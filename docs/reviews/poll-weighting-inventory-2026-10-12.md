@@ -99,3 +99,35 @@ Each poll is one observation in the trend. Its variance is:
    likelihood, clustered on cycle?
 3. **Federal relevance r (low power).** Fit pooled across states. Test on the state elections that follow a
    federal cycle: nsw2023, qld2024, sa2026, wa2025, vic2022.
+
+## Why the trend lags: house-effect centring, measured (2026-10-12, later)
+
+`scripts/diag_trend_lag.R`, 13 elections, 36 party-election cells (wa2021 has no trend). The day-before
+level's error against the result, in points; lower is better:
+
+| level | RMSE |
+|---|---|
+| published trend (`trend_as_at()`) | 1.91 |
+| trend + the house effect of each firm that polled in the last 28 days, each firm once | 1.81 |
+| the same, each late poll once | 1.83 |
+| raw mean of the last 28 days' polls | 1.74 |
+
+Worked example, Victoria 2022, Coalition primary: the trend ends at 32.2, the late polls average 34.1, and
+the result was 34.4.
+- The house effects are centred on a poll-count-weighted sum to zero.
+- Morgan (SMS 10 polls at -1.6, multi-mode 3 at -3.4) is 13 of the cycle's 31 polls, so Morgan largely
+  defines the centre.
+- Newspoll (+3.2), RedBridge (+1.7) and Freshwater (in "other firms", +3.1) dominate the final month, so the
+  trend marks those polls down.
+- Re-centring on the late firms gives 33.8.
+
+So about half of the trend's lag is centring. The rest is smoothing.
+
+**All of it is small next to the misses the polls share**, which no weighting of the same polls can fix:
+- federal 2019 Coalition: polls 38.3, result 42.0
+- federal 2022 Labor: polls 36.1, result 32.6
+- Queensland 2020 Labor: polls 36.7, result 39.6
+- Victoria 2018 Coalition: polls 37.9, result 35.2
+
+The second lever is a time-forward correction for those misses, if they have a repeatable direction by
+party or jurisdiction. Unmeasured.
