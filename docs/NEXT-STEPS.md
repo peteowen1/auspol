@@ -34,7 +34,7 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30.
 - FEDERAL BREAKDOWNS IN THE BLEND: SHIPPED r = 0.15 (Pete, 2026-10-12). Deciding run seat-neutral (+0.0001, SE
   0.0001). `output/fed-state-breakdowns.csv` built at rebuild stage 5b, published, downloaded by `forecast.yaml`
   (fails loudly without it). ORDER: publish a rebuild BEFORE merging to main. The source page is refetched by hand
-  (`fetch_statewide_poll_samples.R`); FS3! warns when the newest federal breakdown is over 45 days old.
+  (`fetch_statewide_poll_samples.R`); FK3! warns when the newest federal breakdown is over 45 days old.
 
 **Needs Pete:**
 1. Own poll source STEP 2: should the trend read our Wikipedia/Poll Bludger file (layered: AE only where Wikipedia
