@@ -31,7 +31,7 @@ All seven share one `R/` package core (`simulate_seat_contests()`,
 in which switches each one WIRES and which data source each reads, not in
 separate model code.
 
-## Switch parity (175 switches from `published_flags.R`, 7 entry points)
+## Switch parity (177 switches from `published_flags.R`, 7 entry points)
 
 | switch | fit_seats (published) | fed | nsw | qld | sa | vic | wa |
 |---|---|---|---|---|---|---|---|
@@ -97,6 +97,8 @@ separate model code.
 | `AUSPOL_IND_TYPICAL_STAT` | NO | NO | NO | NO | NO | NO | NO |
 | `AUSPOL_INSURGENCY_SHRINK` | yes | yes | NO | NO | NO | NO | NO |
 | `AUSPOL_LEADER_SEAT` | yes | yes | yes | yes | yes | yes | yes |
+| `AUSPOL_LEVEL_FED_GAP_HL` | NO | NO | NO | NO | NO | NO | NO |
+| `AUSPOL_LEVEL_FED_R` | NO | NO | NO | NO | NO | NO | NO |
 | `AUSPOL_LEVEL_MODE` | NO | NO | NO | NO | NO | NO | NO |
 | `AUSPOL_LEVEL_MULT_IND` | yes | yes | yes | yes | yes | yes | yes |
 | `AUSPOL_LEVEL_MULT_OTH` | yes | yes | yes | yes | yes | yes | yes |
@@ -259,6 +261,8 @@ separate model code.
 - **`AUSPOL_IND_TYPICAL`** (intentional / dead experiment): ARM, REFUSED 2026-10-09 (plans/prereg-ind-typical-2026-10-09.md), off. In all six harnesses; NOT in fit_seats_full.R by design: a refused arm is not wired into the published forecast.
 - **`AUSPOL_IND_TYPICAL_STAT`** (intentional / dead experiment): Sub-setting of the refused AUSPOL_IND_TYPICAL, read inside R/ind_typical.R; harness-only like its parent.
 - **`AUSPOL_INSURGENCY_SHRINK`** (intentional / dead experiment): Per-seat shrink experiment, REFUSED 2026-09-06 (worse than the scalar shrink on 5 of 6 federal pairs) -- see docs/NEXT-STEPS.md. Fed/fit_seats-only because that is as far as the experiment got before being set aside. Not adopted.
+- **`AUSPOL_LEVEL_FED_GAP_HL`** (intentional / dead experiment): Same prereg; only read when AUSPOL_LEVEL_FED_R > 0. Read inside R/level_recent.R -- universal in practice.
+- **`AUSPOL_LEVEL_FED_R`** (intentional / dead experiment): ARM 2026-10-12 (plans/prereg-federal-breakdowns-in-blend-2026-10-12.md), off at "0". Read inside R/level_recent.R, which every harness and fit_seats_full.R reach through the level blend -- universal in practice.
 - **`AUSPOL_LEVEL_MODE`** (intentional / dead experiment): Read by scripts/fit_xgb_primary_v6.R when the model is FITTED, not by any harness or by fit_seats_full.R at run time -- the choice is baked into the oof file and the saved model, so it shows as absent everywhere while governing every row of both. 'pred' (default) trains on a poll-based statewide projection; 'now' trains on the target election's actual result and is LEAKAGE, kept only so the cost stays measurable. The live path has always used a prediction (R/xgb_primary_override.R fills level_now from state_mean), so this made training match serving.
 - **`AUSPOL_LEVEL_RECENT`** (**adopted, shared-function wiring**): SHIPPED 2026-10-11 on Pete's override (plans/prereg-level-recent-blend-2026-10-10.md). Read inside R/level_recent.R, called from forecast_statewide_or_oracle() (five harnesses), the federal harness (BF0r) and fit_seats_full.R (FSLR).
 - **`AUSPOL_LEVEL_RECENT_HALFLIFE`** (**adopted, shared-function wiring**): SHIPPED "20" 2026-10-11 with AUSPOL_LEVEL_RECENT=decay (Pete's override). Read inside R/level_recent.R, called from the five state harnesses, the federal harness (BF0r) and fit_seats_full.R (FSLR).
@@ -386,4 +390,4 @@ MR3  no harness forces a switch away from its published value.
 
 ## Coverage check
 
-MR2  every non-universal switch (138 of 175) has a recorded classification.
+MR2  every non-universal switch (140 of 177) has a recorded classification.
