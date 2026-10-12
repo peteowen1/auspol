@@ -147,6 +147,9 @@ trend_prior_system <- function(prep, sigma_rw, sigma_house, anchor, szc_sd) {
   hj <- T_ + seq_len(J)
   add(hj, hj, rep(1 / sigma_house^2, J))
   wj <- prep$obs[, .N, by = j][order(j), N] / nrow(prep$obs)
+  # AUSPOL_TREND_SZC = "firms" (arm T3, docs/plans/prereg-responsive-trend-2026-10-12.md): each firm counts
+  # once in the sum-to-zero, so the busiest pollster no longer defines the centre. Default "polls" = as before.
+  if (identical(Sys.getenv("AUSPOL_TREND_SZC", "polls"), "firms")) wj <- rep(1 / J, J)
   w_szc <- 1 / szc_sd^2
   add(rep(hj, each = J), rep(hj, times = J), as.vector(outer(wj, wj)) * w_szc)
 

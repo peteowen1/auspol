@@ -88,3 +88,25 @@ That firm-equal centring is "fairer". That the chart looks smoother.
 ## Amendments
 
 (none yet; any change is added below this line with the original text left as is)
+
+### 2026-10-12, size check run: STOPPED before any arm, per the rule above
+
+`scripts/diag_level_mde.R`: 66 cells, 22 elections (wa2021 has no trend). Day-before level RMSE against the
+result, points, lower is better: trend 2.601, raw 28-day mean 2.111, shipped (20-day decay blend) 2.315.
+
+Paired differences, SE by delete-one-election jackknife:
+
+| difference | RMSE change | clustered SE |
+|---|---|---|
+| shipped minus raw 28-day mean | +0.204 | 0.420 |
+| shipped minus trend | -0.286 | 0.151 |
+| trend minus raw 28-day mean | +0.491 | 0.391 |
+
+Two findings, both reported to Pete instead of running arms:
+1. **The SE (0.15 to 0.42) is above the 0.10 threshold**, so the screen cannot see arm A's expected effect.
+2. **Arms A and B cannot reach the shipped level at all.** The blend weight on recent polls is 1.00 at the median
+   (1 - w median 0.000), so any change to the trend's centring moves the shipped day-before level by about zero.
+   They would only move the trend chart and earlier horizons. The prereg's primary metric measures the wrong
+   object for them.
+
+No arm run. Next design question for Pete, not decided here.

@@ -112,7 +112,17 @@ statewide_draws_as_at <- function(region, year, as_at, election_date, parties,
   fl <- flows_for(load_preference_flows(), year, region, as_of = as_of,
                   cycles = cycles, quiet = TRUE)
 
-  tr <- trend_as_at(polls, year, cycles, as_at, priors, fl, with_series = TRUE)
+  # Trend responsiveness arms (docs/plans/prereg-responsive-trend-2026-10-12.md). At the shipped
+  # values ("default", multiplier 1) the call is the one it always was: no extra argument is passed.
+  tr_sig <- Sys.getenv("AUSPOL_TREND_SIGMAS", "default")
+  rw_mult <- suppressWarnings(as.numeric(Sys.getenv("AUSPOL_TREND_RW_MULT", "1")))
+  if (!is.finite(rw_mult) || rw_mult <= 0) stop("AUSPOL_TREND_RW_MULT must be a positive number")
+  # pooled_tf sets sigma_rw per party through overrides, which would silently beat the multiplier
+  if (rw_mult != 1 && !identical(tr_sig, "default"))
+    stop("AUSPOL_TREND_RW_MULT and AUSPOL_TREND_SIGMAS=", tr_sig, " cannot be combined: the per-party sigmas would override the multiplier")
+  tr_extra <- if (rw_mult != 1) list(sigma_rw = rw_mult * default_sigmas("logit")[["sigma_rw"]]) else list()
+  tr <- do.call(trend_as_at, c(list(polls, year, cycles, as_at, priors, fl, with_series = TRUE,
+                                    sigmas = tr_sig), tr_extra))
   if (is.null(tr)) return(NULL)
 
   # SECOND LEAKAGE ASSERTION -- and the first version of this could not fail.

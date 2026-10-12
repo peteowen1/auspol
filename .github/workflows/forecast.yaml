@@ -200,6 +200,10 @@ jobs:
           # Without it fit_seats_full.R would print FSLR!! and quietly publish the unblended level once polls
           # land in the final 28 days, so a missing table fails here and yesterday's forecast stays live.
           gh release download shipped-models -p level-recent.csv -D output --clobber || { echo "::error::shipped-models has no level-recent.csv -- publish the rebuild (stage 9) before this runs"; exit 1; }
+          # AUSPOL_LEVEL_FED_R (published 0.15, 2026-10-12): the blend adds federal polls' state breakdowns from
+          # this file and stops without it, so a missing file fails here and yesterday's forecast stays live.
+          gh release download shipped-models -p fed-state-breakdowns.csv -D output --clobber || { echo "::error::shipped-models has no fed-state-breakdowns.csv -- publish the rebuild (stage 9) before this runs"; exit 1; }
+          test -s output/fed-state-breakdowns.csv || { echo "::error::fed-state-breakdowns.csv downloaded empty"; exit 1; }
           # AUSPOL_FLOW_TF (published "1", shipped 2026-10-12): the tagged live flow models (vic2026, and
           # nsw2027 for the NSW step below) and their manifest. fit_seats_full.R stops at startup without
           # the manifest (validate_flow_arm) and the flow override stops without the model, so a missing
