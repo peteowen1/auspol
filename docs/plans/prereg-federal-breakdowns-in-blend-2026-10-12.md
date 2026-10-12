@@ -122,3 +122,19 @@ so both results stay visible. The decision rule is unchanged.
 Live, F1: vic2026 ALP 24.6 to 24.5, LNP 28.9 to 28.8, GRN 13.6 to 13.7; nsw2027 ALP 30.3 to 29.3, LNP 24.2 to
 23.4, GRN 11.8 to 12.5. F1 passes, so per the rule it goes to the deciding run. With every r about 1 SE worse and
 F1 passing at 0.94 SE, this is reported to Pete as a knife-edge pass, whatever the seat result.
+
+## RESULT, deciding run (2026-10-12): F1 meets the ship rule; ship is Pete's call
+
+`deciding-runs/20261012-1524-fedr15/` (DONE, code 692dd47, all 22 at 20,000 sims, 29 min). 15 of 22 elections
+byte-identical; 7 changed (the five targets plus qld2020 and sa2022).
+
+- Pooled seat log loss (lower is better), 2,120 seats: 0.3095 -> 0.3095, +0.0001 (SE 0.0001). Rule: no worse
+  than +1 SE. **PASS.**
+- AEF-7 ledger, 681 seats: 0.2736 -> 0.2739, +0.0003 (SE 0.0004).
+- Per election, seat log loss change: wa2025 +0.0045, sa2026 +0.0009, vic2022 +0.0002, nsw2023 -0.0004,
+  qld2024 -0.0005, qld2020 -0.0012, sa2022 0.
+- Share squared error on the 493 changed cells: +1.3 (SE 43.6), flat.
+
+Read: seat-neutral, as expected from level moves of 0.3 points or less. The level screen leaned against (every r
+about 1 SE worse); the seat run is flat. Shipping rests on Pete's preference, and on the live nsw2027 move of about
+1 point (the unacceptable-win clause's spirit), so it goes to Pete.
