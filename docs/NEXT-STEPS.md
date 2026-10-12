@@ -31,6 +31,10 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30.
   2.315) and costs accuracy 90 days out; firm-equal centring does nothing. Poll weighting stays OPEN (Pete wants
   "a LOT better"): what is left is what the blend can carry (sample size, federal polls' state breakdowns) and the
   shared misses, not the trend.
+- FEDERAL BREAKDOWNS IN THE BLEND (Pete "Go"): `AUSPOL_LEVEL_FED_R` built, OFF. Screen (5 elections, 15 cells):
+  F1 r=0.15 +0.034 (SE 0.036) PASS at 0.94 SE; every r ~1 SE worse. Deciding run IN FLIGHT:
+  `deciding-runs/20261012-1524-fedr15/` (check DONE/FAILED). Live F1: vic2026 moves <= 0.1; nsw2027 ~1 point.
+  Needs Pete after the run: ship or not (`plans/prereg-federal-breakdowns-in-blend-2026-10-12.md`).
 
 **Needs Pete:**
 1. Own poll source STEP 2: should the trend read our Wikipedia/Poll Bludger file (layered: AE only where Wikipedia
