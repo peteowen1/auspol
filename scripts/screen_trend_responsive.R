@@ -23,7 +23,7 @@ tab <- fread(out_path("level-recent.csv"), showProgress = FALSE)
 cycles <- load_election_cycles(); pri <- load_prior_results(); eds <- election_dates()
 ELS <- setdiff(unique(tab$election), c("vic2026", "nsw2027"))
 if (nzchar(ONLY)) ELS <- intersect(ELS, strsplit(ONLY, ",")[[1]])
-cat(sprintf("TS0 %d elections; arms %s; walk grid %s; horizons %s days before\n", length(ELS),
+cat(sprintf("RT0 %d elections; arms %s; walk grid %s; horizons %s days before\n", length(ELS),
             paste(ARMS, collapse = ","), paste(MGRID, collapse = ","), paste(HORIZ, collapse = ",")))
 RW0 <- default_sigmas("logit")[["sigma_rw"]]
 
@@ -45,8 +45,8 @@ fit_one <- function(e, arm0, h) {
     Sys.setenv(AUSPOL_TREND_SIGMAS = if (arm == "T1") "pooled_tf" else "default",
                AUSPOL_TREND_RW_MULT = if (startsWith(arm, "m")) sub("^m", "", arm) else "1")
     sb <- share(e); fc <- NULL
-    utils::capture.output(fc <- tryCatch(forecast_statewide_or_oracle(region, yr, ed, names(sb), share(PREV[[e]]), sb, code = "TS", n_sims = 20000L, seed = 42L, on_fail = "skip"),
-                                         error = function(z) { cat("TS! ", e, arm, conditionMessage(z), "
+    utils::capture.output(fc <- tryCatch(forecast_statewide_or_oracle(region, yr, ed, names(sb), share(PREV[[e]]), sb, code = "RT", n_sims = 20000L, seed = 42L, on_fail = "skip"),
+                                         error = function(z) { cat("RT! ", e, arm, conditionMessage(z), "
 "); NULL }))
     Sys.setenv(AUSPOL_TREND_SIGMAS = "default", AUSPOL_TREND_RW_MULT = "1")
     if (is.null(fc)) return(NULL)
@@ -57,7 +57,7 @@ fit_one <- function(e, arm0, h) {
   if (arm == "T1") sg <- "pooled_tf"
   if (startsWith(arm, "m")) extra$sigma_rw <- as.numeric(sub("^m", "", arm)) * RW0
   tr <- tryCatch(suppressMessages(do.call(trend_as_at, c(list(polls, yr, cycles, ed - h, priors, fl, sigmas = sg), extra))),
-                 error = function(z) { cat("TS! ", e, arm, h, conditionMessage(z), "\n"); NULL })
+                 error = function(z) { cat("RT! ", e, arm, h, conditionMessage(z), "\n"); NULL })
   if (is.null(tr)) return(NULL)
   ks <- intersect(c("ALP", "LNP", "GRN", "ON", "OTH"), names(tr$fp))
   data.table(e = e, arm = arm0, h = h, k = ks, lev = unname(tr$fp[ks]))
@@ -68,15 +68,15 @@ arm_ids <- unique(arm_ids)
 # profile one unit before the loop
 todo <- CJ(e = ELS, arm = arm_ids, h = HORIZ)
 todo <- todo[!paste(todo$e, todo$arm, todo$h) %in% key_have]
-cat(sprintf("TS1 %d fits to run (%d cached)\n", nrow(todo), nrow(cache[, .N, by = .(e, arm, h)])))
+cat(sprintf("RT1 %d fits to run (%d cached)\n", nrow(todo), nrow(cache[, .N, by = .(e, arm, h)])))
 new <- list()
 for (i in seq_len(nrow(todo))) {
   ti <- Sys.time(); r <- fit_one(todo$e[i], todo$arm[i], todo$h[i])
-  if (i == 1) cat(sprintf("TS1 one fit (%s %s h=%d): %.1f s\n", todo$e[i], todo$arm[i], todo$h[i], as.numeric(Sys.time() - ti, units = "secs")))
+  if (i == 1) cat(sprintf("RT1 one fit (%s %s h=%d): %.1f s\n", todo$e[i], todo$arm[i], todo$h[i], as.numeric(Sys.time() - ti, units = "secs")))
   if (!is.null(r)) new[[length(new) + 1]] <- r
   if (i %% 25 == 0 || i == nrow(todo)) {
     cache <- rbind(cache, rbindlist(new)); new <- list(); fwrite(cache, CACHE)
-    cat(sprintf("TS1 %d/%d fits, %.0f s\n", i, nrow(todo), as.numeric(Sys.time() - t0, units = "secs")))
+    cat(sprintf("RT1 %d/%d fits, %.0f s\n", i, nrow(todo), as.numeric(Sys.time() - t0, units = "secs")))
   }
 }
 L <- cache[cache$e %in% ELS]
@@ -88,15 +88,15 @@ for (e0 in ELS) {
   d <- tab[tab$election == e0]; lv <- setNames(d$trend, d$cls)
   if (any(!is.finite(lv[c("ALP", "LNP", "GRN")]))) next
   lv <- c(lv[c("ALP", "LNP", "GRN")], OTH = 100 - sum(lv[c("ALP", "LNP", "GRN")]))
-  invisible(capture.output(res <- suppressWarnings(level_recent_apply(lv, e0, d$region[1], as.Date(unname(eds[e0])), code = "TS", tab = tab))))
+  invisible(capture.output(res <- suppressWarnings(level_recent_apply(lv, e0, d$region[1], as.Date(unname(eds[e0])), code = "RT", tab = tab))))
   inc[[e0]] <- data.table(e = e0, k = c("ALP", "LNP", "GRN"), inc = unname(res[c("ALP", "LNP", "GRN")]), actual = d$actual[match(c("ALP", "LNP", "GRN"), d$cls)])
 }
 INC <- rbindlist(inc)[is.finite(actual)]
-cat(sprintf("TS2 incumbent cells %d / %d elections (applies AUSPOL_LEVEL_RECENT=%s HL=%s)\n", nrow(INC), uniqueN(INC$e),
+cat(sprintf("RT2 incumbent cells %d / %d elections (applies AUSPOL_LEVEL_RECENT=%s HL=%s)\n", nrow(INC), uniqueN(INC$e),
             Sys.getenv("AUSPOL_LEVEL_RECENT"), Sys.getenv("AUSPOL_LEVEL_RECENT_HALFLIFE")))
 # sanity: cached T0 day-before must equal level-recent.csv's trend column (same code, same inputs)
 chk <- merge(L[L$arm == "m1" & L$h == 0, .(e, k, lev)], tab[, .(e = election, k = cls, trend)], by = c("e", "k"))
-cat(sprintf("TS2 T0 vs level-recent.csv trend: %d cells, max |diff| %.4f (expect ~0)\n", nrow(chk), max(abs(chk$lev - chk$trend))))
+cat(sprintf("RT2 T0 vs level-recent.csv trend: %d cells, max |diff| %.4f (expect ~0)\n", nrow(chk), max(abs(chk$lev - chk$trend))))
 
 wide <- function(hh) {   # e, k, actual, inc, and one column per arm at horizon hh
   W <- dcast(L[L$h == hh & L$k %in% c("ALP", "LNP", "GRN")], e + k ~ arm, value.var = "lev")
@@ -120,12 +120,15 @@ pick_for <- function(pfx) { mcols <- paste0(pfx, MGRID)
   past <- unique(D1$e)[as.Date(unname(eds[unique(D1$e)])) < cs]
   stopifnot(all(as.Date(unname(eds[past])) < cs))   # leakage assertion
   Dp <- D1[D1$e %in% past]
-  m <- if (length(past) < 3) 1 else MGRID[which.min(vapply(mcols, function(cc) rmse(Dp[[cc]], Dp$actual), 0))]
+  nmiss <- vapply(mcols, function(cc) sum(!is.finite(Dp[[cc]])), 0L)
+  if (any(nmiss > 0)) cat(sprintf("RT3! %s: past cells missing per grid point: %s (scored on what is there)
+", x, paste(nmiss, collapse = ",")))
+  m <- if (length(past) < 3) 1 else MGRID[which.min(vapply(mcols, function(cc) { ok <- is.finite(Dp[[cc]]); rmse(Dp[[cc]][ok], Dp$actual[ok]) }, 0))]
   data.table(e = x, m_pick = m, n_past = length(past))
 })) }
 pick <- pick_for("m")
 if ("cm1" %in% names(D1)) { pc <- pick_for("cm"); setnames(pc, "m_pick", "cm_pick"); pick <- merge(pick, pc[, .(e, cm_pick)], by = "e") }
-cat("TS3 T2 walk multiplier picked per target (time-forward):\n"); print(pick[order(as.Date(unname(eds[e])))])
+cat("RT3 T2 walk multiplier picked per target (time-forward):\n"); print(pick[order(as.Date(unname(eds[e])))])
 for (hh in HORIZ) {
   Dh <- wide(hh); Dh <- merge(Dh, pick, by = "e")
   Dh[, T2 := NA_real_]
@@ -134,7 +137,7 @@ for (hh in HORIZ) {
   if ("cm_pick" %in% names(Dh) && "cm1" %in% names(Dh)) { Dh[, T3 := NA_real_]
     for (mm in MGRID) { sel <- Dh$cm_pick == mm; Dh$T3[sel] <- Dh[[paste0("cm", mm)]][sel] } }
   arms_here <- intersect(c("T1", "T2", "T3", "cm1"), names(Dh))
-  cat(sprintf("\nTS4 horizon %d day(s) before: RMSE vs actual (points, lower better), %d cells / %d elections\n", hh, nrow(Dh), uniqueN(Dh$e)))
+  cat(sprintf("\nRT4 horizon %d day(s) before: RMSE vs actual (points, lower better), %d cells / %d elections\n", hh, nrow(Dh), uniqueN(Dh$e)))
   for (cc in c("T0", arms_here, if (hh == 0) c("inc", paste0("m", MGRID), paste0("cm", MGRID)))) if (cc %in% names(Dh)) cat(sprintf("     %-4s %.3f\n", cc, rmse(Dh[[cc]][is.finite(Dh[[cc]])], Dh$actual[is.finite(Dh[[cc]])])))
   for (a in arms_here) {
     r0 <- jk(Dh, a, "T0")
@@ -144,7 +147,7 @@ for (hh in HORIZ) {
     cat("\n")
   }
   if (hh == 0) {
-    cat("TS5 dry runs (day-before):\n")
+    cat("RT5 dry runs (day-before):\n")
     for (q in list(c("vic2022", "LNP"), c("sa2026", "ALP"), c("fed2019", "LNP"))) {
       rr <- Dh[Dh$e == q[1] & Dh$k == q[2]]
       if (nrow(rr)) cat(sprintf("     %s %s: T0 %.1f | T1 %s | T2 %s (m=%s) | shipped %.1f | actual %.1f\n", q[1], q[2], rr$T0,
@@ -156,5 +159,5 @@ for (hh in HORIZ) {
 }
 oth <- dcast(L[L$h == 0 & L$k %in% c("ON", "OTH")], e + k ~ arm, value.var = "lev")
 if (nrow(oth)) for (a in intersect(c("T1", paste0("m", MGRID[-1]), paste0("cm", MGRID)), names(oth)))
-  cat(sprintf("TS6 ON/OTH day-before max |%s - T0| %.2f points (report only)\n", a, max(abs(oth[[a]] - oth$m1), na.rm = TRUE)))
-cat(sprintf("TS9 done in %.0f s\n", as.numeric(Sys.time() - t0, units = "secs")))
+  cat(sprintf("RT6 ON/OTH day-before max |%s - T0| %.2f points (report only)\n", a, max(abs(oth[[a]] - oth$m1), na.rm = TRUE)))
+cat(sprintf("RT9 done in %.0f s\n", as.numeric(Sys.time() - t0, units = "secs")))
