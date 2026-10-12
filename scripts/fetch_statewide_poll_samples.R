@@ -389,7 +389,11 @@ parse_poll_table <- function(tab, page_key, region, election, kind, url, tidx, s
     # every column but the date): everything except the date is one repeated string or blank.
     if (!nzchar(dt_v) || length(unique(nonblank)) <= 1) next
     if (!grepl("[0-9]", dt_v)) next
-    row_type <- if (grepl("election", fm_v, ignore.case = TRUE) || grepl("election", dt_v, ignore.case = TRUE) ||
+    # Tested on the cell text WITHOUT its footnotes: a footnote such as "conducted ahead of the 2013 federal
+    # election" sits inside the firm cell, and testing the raw text typed 658 real polls (final-week Morgan,
+    # ReachTEL, Newspoll, Galaxy ...) as election results, which the loader then dropped (found 2026-10-13 by
+    # scripts/audit_ae_missing.R).
+    row_type <- if (grepl("election", strip_fn(fm_v), ignore.case = TRUE) || grepl("election", strip_fn(dt_v), ignore.case = TRUE) ||
                     any(grepl("^(20|19)[0-9]{2} election$", strip_fn(cells)))) "result" else "poll"
     pdts <- parse_dates(dt_v)
     r <- data.table(
