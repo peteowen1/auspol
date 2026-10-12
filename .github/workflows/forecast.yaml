@@ -211,8 +211,7 @@ jobs:
           # rebuild their rows; every other election keeps the published rows. Display only, so never fatal: on
           # any failure the pages use the published file, and the warning says so.
           if [ -s output/leader-ratings.csv ]; then
-            LT=$(mktemp -d)
-            if AUSPOL_POLL_BASE="$LT" AUSPOL_POLL_ONLY=vic2026_opinion,nsw2027_opinion,fed2028_leaders Rscript scripts/fetch_statewide_poll_samples.R > "$LT/fetch.log" 2>&1 \
+            if LT=$(mktemp -d) && AUSPOL_POLL_BASE="$LT" AUSPOL_POLL_ONLY=vic2026_opinion,nsw2027_opinion,fed2028_leaders Rscript scripts/fetch_statewide_poll_samples.R > "$LT/fetch.log" 2>&1 \
                && AUSPOL_LEADER_SRC="$LT/statewide_polls_wiki.csv" AUSPOL_LEADER_KEEP=output/leader-ratings.csv AUSPOL_LEADER_OUT="$LT/leader-ratings.csv" Rscript scripts/build_leader_ratings.R > "$LT/build.log" 2>&1 \
                && test -s "$LT/leader-ratings.csv"; then
               mv "$LT/leader-ratings.csv" output/leader-ratings.csv

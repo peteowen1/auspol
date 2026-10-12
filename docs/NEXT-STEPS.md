@@ -37,9 +37,9 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30.
 - LEADER RATINGS (Pete, 2026-10-12): as a model input REFUSED (`plans/prereg-leader-approval-miss-2026-10-12.md`;
   open: drift from months out, needs horizon scoring). On the pages: `leaders` key in the page JSON, PR #122 MERGED
   17:27 (0.4.98); `leader-ratings.csv` on shipped-models. First published JSON with it: 07:00 13 Oct, UNCHECKED.
-  The CHART is the blog's: briefed inthegame-blog-86 (not yet confirmed taken). Leader tables refresh only when
-  `fetch_statewide_poll_samples.R` refetches the live pages (cached raw pages are never refetched) and a rebuild
-  publishes: no daily refresh yet.
+  The CHART is the blog's: briefed inthegame-blog-86 (not yet confirmed taken). Daily refresh: forecast.yaml
+  refetches vic2026_opinion, nsw2027_opinion, fed2028_leaders each run (never fatal; first run 07:00 13 Oct, UNCHECKED:
+  look for "LK1k refreshed" in the log). Local `fetch_statewide_poll_samples.R` still never refetches a cached page.
 - FEDERAL BREAKDOWNS IN THE BLEND: SHIPPED r = 0.15 (Pete, 2026-10-12). Deciding run seat-neutral (+0.0001, SE
   0.0001). `output/fed-state-breakdowns.csv` built at rebuild stage 5b, published, downloaded by `forecast.yaml`
   (fails loudly without it). ORDER: publish a rebuild BEFORE merging to main. The source page is refetched by hand
