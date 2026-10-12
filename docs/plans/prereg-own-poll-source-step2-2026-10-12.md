@@ -102,3 +102,17 @@ Others), and layering replaced AE's One Nation figures on the final polls (8-13%
 poll keeps AE's figure for a party our row lacks, and our Others gives that share back; an unmatched row of ours
 missing a party that AE's polls within 60 days report has its Others blanked. Second deciding run follows on the
 fixed code; both results stay recorded. The guard rule is unchanged.
+
+## RESULT, second deciding run (2026-10-12/13, code 9059947): PASS; the guard fires on wa2008, explained
+
+`deciding-runs/rebuild-20261012-layered-run2.log`, scores `deciding-runs/pooled-backtest-layered-run2-9059947.csv`.
+All 22 seat log loss 0.3171 -> 0.3173 (+0.0002, SE 0.0028): no worse than +1 SE, PASS. AEF-7 ledger 0.2739 ->
+0.2768 (AEF 0.2825). wa2017 fixed (+0.086 in run 1, +0.004 now). Gains: nsw2019 -0.040, wa2005 -0.026, fed2010
+-0.008, qld2020 -0.008. Losses: wa2008 +0.048 (guard), wa2025 +0.017, fed2013 +0.016, wa2013 +0.014.
+
+**wa2008 (the guard):** its own polls are identical under both sources (64 rows, no difference) and so is its
+trend (ALP 42.78, LNP 44.03, GRN 10.75). Only the blended level differs: ALP 38.95 (AE) vs 41.18 (layered),
+actual 35.84. The blend constant is fitted on the elections before wa2008 (wa2001, wa2005, fed2007), and AE's
+wa2005 trend was badly wrong (Greens 1.2 against an actual 7.6), so on AE's data the fit learned to lean hard on
+recent polls, which happened to help wa2008. Corrected data, weaker lean, wa2008 worse. Reported to Pete per the
+guard rule.
