@@ -5,7 +5,7 @@
 # Writes output/<election>-page-data.json, e.g. output/nsw2027-page-data.json.
 # The blog (inthegame-blog politics/_forecast-body.qmd) reads exactly these
 # keys, in the same shapes as vic-page-data.json: trend, polls, fp_now,
-# meta$latest_poll, meta$n_polls_cycle, scorecard. Nothing else is written, so
+# meta$latest_poll, meta$n_polls_cycle, scorecard, leaders. Nothing else is written, so
 # nothing else can drift.
 #
 # ONE fit: the trend is trend_as_at() with the same inputs fit_seats_full.R
@@ -86,8 +86,12 @@ out <- list(
   meta = list(as_of = as.character(Sys.Date()), election = as.character(POLL_DAY),
               days_out = as.integer(POLL_DAY - Sys.Date()),
               latest_poll = as.character(max(cp$date)), n_polls_cycle = nrow(cp)),
-  trend = series, polls = pl, fp_now = fp_now, scorecard = scorecard)
-writeLines(toJSON(out, auto_unbox = TRUE, digits = 6, na = "null", null = "null"), OUT_F)
+  trend = series, polls = pl, fp_now = fp_now, scorecard = scorecard,
+  leaders = leader_page_data(ELECTION))   # display only (R/leader_ratings.R)
+json <- toJSON(out, auto_unbox = TRUE, digits = 6, na = "null", null = "null")
+# Same escaping as build_page.R: the leader rows carry text scraped from Wikipedia, and a page may inline this JSON.
+json <- gsub("&", "\\u0026", gsub(">", "\\u003e", gsub("<", "\\u003c", json, fixed = TRUE), fixed = TRUE), fixed = TRUE)
+writeLines(json, OUT_F)
 cat(sprintf("TP4  wrote %s (%.0f KB): fp_now %s\n", OUT_F, file.size(OUT_F) / 1024,
             paste(sprintf("%s %.1f", vapply(fp_now, `[[`, "", "party"),
                           vapply(fp_now, `[[`, 0, "m")), collapse = ", ")))

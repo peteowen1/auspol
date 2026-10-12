@@ -59,7 +59,9 @@ extra <- c(file.path(SHIP, c("MANIFEST.json", "pooled-backtest.csv", "pooled-sha
            # AUSPOL_LEVEL_RECENT fits its blend constant on this (build_level_recent_table.R)
            file.path(OUT, "level-recent.csv"),
            # AUSPOL_LEVEL_FED_R (shipped 0.15): federal polls' state breakdowns (build_fed_state_breakdowns.R)
-           file.path(OUT, "fed-state-breakdowns.csv"))
+           file.path(OUT, "fed-state-breakdowns.csv"),
+           # preferred premier and leader satisfaction for the forecast pages (build_leader_ratings.R)
+           file.path(OUT, "leader-ratings.csv"))
 loo <- grep("xgb-flows-v1-loo-.*[.]model$", models, value = TRUE)
 rest <- setdiff(models, loo)
 

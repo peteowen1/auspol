@@ -204,6 +204,9 @@ jobs:
           # this file and stops without it, so a missing file fails here and yesterday's forecast stays live.
           gh release download shipped-models -p fed-state-breakdowns.csv -D output --clobber || { echo "::error::shipped-models has no fed-state-breakdowns.csv -- publish the rebuild (stage 9) before this runs"; exit 1; }
           test -s output/fed-state-breakdowns.csv || { echo "::error::fed-state-breakdowns.csv downloaded empty"; exit 1; }
+          # Leader ratings for the page's leader charts (display only; the forecast does not read them).
+          gh release download shipped-models -p leader-ratings.csv -D output --clobber || echo "::warning::shipped-models has no leader-ratings.csv -- the pages are built without leader ratings"
+          if [ -e output/leader-ratings.csv ] && [ ! -s output/leader-ratings.csv ]; then echo "::warning::leader-ratings.csv downloaded empty -- removed, the pages are built without leader ratings"; rm -f output/leader-ratings.csv; fi
           # AUSPOL_FLOW_TF (published "1", shipped 2026-10-12): the tagged live flow models (vic2026, and
           # nsw2027 for the NSW step below) and their manifest. fit_seats_full.R stops at startup without
           # the manifest (validate_flow_arm) and the flow override stops without the model, so a missing

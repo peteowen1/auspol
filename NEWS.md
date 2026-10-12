@@ -1,3 +1,8 @@
+# auspol 0.4.98
+
+- **Leader ratings on the forecast pages** (Pete, 2026-10-12): preferred premier/PM, satisfaction and net satisfaction for every leader the polls ask about, plus AE's government-leader approval, under a new `leaders` key in the page data (`leader_page_data()`, `scripts/build_leader_ratings.R`). Display only: leader approval was tested as a forecast input and refused (`docs/plans/prereg-leader-approval-miss-2026-10-12.md`). The current federal term's leadership polling page is now fetched.
+- The page data escapes `<`, `>` and `&`, because scraped pollster names now reach a `<script>` block.
+
 # auspol 0.4.97
 
 - **Federal polls now count a little toward a state election** (`AUSPOL_LEVEL_FED_R=0.15`, Pete's choice). A federal poll's state breakdown joins the recent-poll level at 0.15 of a state poll of the same age, corrected by the state-minus-federal gap over the last 90 days. Seat-neutral over 22 elections (log loss +0.0001, SE 0.0001). Live Victoria moves 0.1 point or less; live NSW about 1 point, because it has few recent state polls. The data comes from `output/fed-state-breakdowns.csv` (`scripts/build_fed_state_breakdowns.R`, rebuild stage 5b), which the daily forecast downloads.

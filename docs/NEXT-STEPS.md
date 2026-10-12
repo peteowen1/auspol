@@ -31,6 +31,11 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30.
   2.315) and costs accuracy 90 days out; firm-equal centring does nothing. Poll weighting stays OPEN (Pete wants
   "a LOT better"): what is left is what the blend can carry (sample size, federal polls' state breakdowns) and the
   shared misses, not the trend.
+- PR #121 MERGED 2026-10-12 17:09 (0.4.97, CI pass on 0cbc52e) after the stage-5 publish rebuild
+  (`deciding-runs/rebuild-20261012-fedr15-publish.log`: all 22 0.3171, AEF-7 0.2739 vs 0.2825). First daily run
+  with the federal breakdowns: 07:00 13 Oct, UNCHECKED.
+- LEADER RATINGS (Pete, 2026-10-12): preferred premier/PM and approval, as site trends and as a model input.
+  NOT DONE; data on disk (AE `GLApp`/`GLDis`, Wikipedia leadership tables), see PETE-ASKED-FOR.
 - FEDERAL BREAKDOWNS IN THE BLEND: SHIPPED r = 0.15 (Pete, 2026-10-12). Deciding run seat-neutral (+0.0001, SE
   0.0001). `output/fed-state-breakdowns.csv` built at rebuild stage 5b, published, downloaded by `forecast.yaml`
   (fails loudly without it). ORDER: publish a rebuild BEFORE merging to main. The source page is refetched by hand

@@ -67,6 +67,10 @@ for (rg in names(elections)) for (yr in elections[[rg]]) {
   if (!is.na(main))
     pg[[length(pg) + 1]] <- data.table(page_key = paste0(key, "_main"), region = rg, election = key, kind = "main", title = main)
 }
+# The current federal term keeps its leadership polling (preferred PM, approval) on a page of its own; the
+# term's opinion page has no leadership section (2026-10-12, Pete asked for leader trends).
+pg[[length(pg) + 1]] <- data.table(page_key = "fed2028_leaders", region = "fed", election = "fed2028", kind = "opinion",
+                                   title = "Leadership_approval_opinion_polling_for_the_next_Australian_federal_election")
 pages <- rbindlist(pg)
 # Election dates (polling day). 2028 federal is a placeholder: it is only used as an upper bound.
 elec_dates <- rbindlist(list(
