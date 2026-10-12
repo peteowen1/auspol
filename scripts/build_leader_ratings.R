@@ -22,6 +22,7 @@ PARTY <- c(Albanese = "ALP", Allan = "ALP", Andrews = "ALP", Carroll = "ALP", Co
            Kirkup = "LNP", Marshall = "LNP", Mettam = "LNP", Morrison = "LNP", Napthine = "LNP", Newman = "LNP",
            Nicholls = "LNP", O_Farrell = "LNP", Perrottet = "LNP", Pesutto = "LNP", Sloane = "LNP",
            Speirs_Tarzia_Hurn = "LNP", Tarzia_Hurn = "LNP", Turnbull = "LNP", Wilson = "LNP",
+           Taylor = "LNP", Ley = "LNP", Hanson = "ON", Waters = "GRN",
            Pickering = "ON")
 # Party in government going into each election (the cycle the page's polls belong to).
 GOVT <- c(fed2013 = "ALP", fed2016 = "LNP", fed2019 = "LNP", fed2022 = "LNP", fed2025 = "ALP", fed2028 = "ALP",
@@ -49,10 +50,16 @@ SAT_RX1 <- "^x_(.+)_(Satisfied|Dissatisfied|Pos_|Neg_|DK|Don_t_Know|Don_t_know|U
 SAT_RX2 <- "^x_(Satisfied|Dissatisfied)_(.+)$"
 SAT_MEAS <- c(Satisfied = "satisfied", Pos_ = "satisfied", Dissatisfied = "dissatisfied", Neg_ = "dissatisfied",
               DK = "sat_dk", Don_t_Know = "sat_dk", Don_t_know = "sat_dk", Undecided = "sat_dk")
-UNDEC <- c("Don_t_know", "Don_t_Know", "Undecided")
+UNDEC <- c("Don_t_know", "Don_t_Know", "Undecided", "Unsure")
 fs <- as.Date(s$fieldwork_start); fe <- as.Date(s$fieldwork_end)
 s$mid <- as.Date(ifelse(is.finite(fs) & is.finite(fe) & fs <= fe, as.integer(fs) + (as.integer(fe) - as.integer(fs)) %/% 2L, as.integer(fe)), origin = "1970-01-01")
 rows <- list(); skipped <- character(0)
+# How many leaders the preferred-PM/premier question on each row named (2 = head to head, 3 = with a minor
+# leader): the same poll can carry both, e.g. Newspoll Oct 2026 Albanese 44 v Taylor 39, and Albanese 45 /
+# Hanson 30 / Taylor 25. A chart must not join the two.
+pref_cols <- grep(PREF_RX, grep("^x_", names(s), value = TRUE), value = TRUE)
+pref_cols <- pref_cols[!sub(PREF_RX, "\\2", pref_cols) %in% c(UNDEC, "Net", "Unsure")]
+s$n_named <- if (length(pref_cols)) rowSums(vapply(pref_cols, function(cc) is.finite(pct(s[[cc]])), logical(nrow(s)))) else 0L
 for (cc in grep("^x_", names(s), value = TRUE)) {
   v <- pct(s[[cc]]); has <- which(is.finite(v)); if (!length(has)) next
   meas <- NA_character_; who <- NA_character_
@@ -64,7 +71,8 @@ for (cc in grep("^x_", names(s), value = TRUE)) {
   else if (!who %in% names(PARTY)) { skipped <- c(skipped, sub("^x_", "", cc)); next }
   rows[[length(rows) + 1L]] <- data.table(election = s$election[has], region = s$region[has], page_key = s$page_key[has],
     section = s$section[has], date = s$mid[has], end = fe[has], firm = s$firm[has], sample_n = s$sample_n[has],
-    leader = who, measure = meas, value = v[has], source = "wikipedia")
+    leader = who, measure = meas, value = v[has], source = "wikipedia",
+    n_named = if (meas %in% c("preferred", "pref_undecided")) s$n_named[has] else NA_integer_)
 }
 L <- rbindlist(rows)
 L <- L[is.finite(L$date)]
@@ -77,7 +85,7 @@ sd <- dcast(L[L$measure %in% c("satisfied", "dissatisfied")], as.formula(paste(p
 sd <- sd[is.finite(sd$satisfied) & is.finite(sd$dissatisfied)]
 net <- merge(sd[, c(key, "satisfied", "dissatisfied"), with = FALSE], unique(L[, c(key, "region", "sample_n", "party", "role"), with = FALSE]), by = key)
 net <- net[, c(list(measure = "net_sat", value = satisfied - dissatisfied, source = "wikipedia"), .SD), .SDcols = c(key, "region", "sample_n", "party", "role")]
-L <- rbind(L, net, use.names = TRUE)
+L <- rbind(L, net, use.names = TRUE, fill = TRUE)
 # AE's government-leader approve / disapprove, by election cycle
 cycles <- load_election_cycles()
 ae <- rbindlist(lapply(c("fed", "nsw", "qld", "sa", "vic", "wa"), function(rg) {
@@ -92,7 +100,7 @@ ae <- rbindlist(lapply(c("fed", "nsw", "qld", "sa", "vic", "wa"), function(rg) {
 }))
 ae <- ae[is.finite(ae$value)]
 ae[, `:=`(source = "ae", role = "gov", party = NA_character_, page_key = NA_character_, section = NA_character_, sample_n = NA_real_)]
-L <- rbind(L, ae, use.names = TRUE)
+L <- rbind(L, ae, use.names = TRUE, fill = TRUE)
 setorder(L, region, election, date, leader, measure)
 
 cat(sprintf("LK2 %d rows: %d from Wikipedia leadership tables (%d pages), %d from AE approve/disapprove\n",

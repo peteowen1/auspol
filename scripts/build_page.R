@@ -478,7 +478,9 @@ out <- list(
                 sd = round(sd_err_loo, 2))],
   scorecard = card[, .(firm, polls = n_polls, lean = round(lean_pts, 2),
                        noise = round(noise_factor, 2), elections,
-                       mae = round(final_mae, 2))]
+                       mae = round(final_mae, 2))],
+  # preferred premier and leader satisfaction, display only (R/leader_ratings.R)
+  leaders = leader_page_data("vic2026")
 )
 json <- toJSON(out, auto_unbox = TRUE, digits = 6, na = "null")
 write(json, "output/vic-page-data.json")

@@ -235,6 +235,8 @@ if at_least 5; then stage "5-production-model";    Rscript scripts/fit_xgb_prima
 # The federal polls' state breakdowns the blend adds at AUSPOL_LEVEL_FED_R (shipped 0.15), first: the table's k fit reads them.
 if at_least 5; then Rscript scripts/build_fed_state_breakdowns.R > "$LOG/s5b_fed_breakdowns.log" 2>&1 || { echo "!! build_fed_state_breakdowns.R failed -- see $LOG/s5b_fed_breakdowns.log"; exit 1; }; fi
 if at_least 5; then Rscript scripts/build_level_recent_table.R > "$LOG/s5b_level_recent.log" 2>&1 || { echo "!! build_level_recent_table.R failed -- see $LOG/s5b_level_recent.log"; exit 1; }; fi
+# Leader ratings for the forecast pages (display only; published, downloaded by forecast.yaml).
+if at_least 5; then Rscript scripts/build_leader_ratings.R > "$LOG/s5b_leader_ratings.log" 2>&1 || { echo "!! build_leader_ratings.R failed -- see $LOG/s5b_leader_ratings.log"; exit 1; }; fi
 if at_least 6; then export AUSPOL_STAGE6_START=$(date +%s); rm -rf output/upset-floor-raw; stage "6-harnesses-shipped";   run6 1 s6; done_stage "6-harnesses-shipped"; fi
 # 6b UPSET INSURANCE (AUSPOL_UPSET_FLOOR=1, R/upset_floor.R): mixes THIS run's
 # stage-6 win probabilities with a time-forward-fitted floor for minor
