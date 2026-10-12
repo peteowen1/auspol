@@ -207,11 +207,28 @@ jobs:
           # Leader ratings for the page's leader charts (display only; the forecast does not read them).
           gh release download shipped-models -p leader-ratings.csv -D output --clobber || echo "::warning::shipped-models has no leader-ratings.csv -- the pages are built without leader ratings"
           if [ -e output/leader-ratings.csv ] && [ ! -s output/leader-ratings.csv ]; then echo "::warning::leader-ratings.csv downloaded empty -- removed, the pages are built without leader ratings"; rm -f output/leader-ratings.csv; fi
-          # Daily leader refresh: refetch the three live Wikipedia pages (Victoria, NSW, federal leadership) and
-          # rebuild their rows; every other election keeps the published rows. Display only, so never fatal: on
-          # any failure the pages use the published file, and the warning says so.
+          # Our own poll source (AUSPOL_POLL_SOURCE=layered, shipped 2026-10-13, R/poll_source.R): the trend reads
+          # our Wikipedia scrape layered over AE's file. The published full table (past elections, which the
+          # blend constant is fitted on) is required; the three live pages are then refetched and swapped in, so
+          # today's polls count. A failed refetch keeps the published table and says so.
+          mkdir -p output/polls-wiki
+          gh release download shipped-models -p statewide_polls_wiki.csv -p firm_alias.csv -D output/polls-wiki --clobber || { echo "::error::shipped-models has no statewide_polls_wiki.csv / firm_alias.csv -- publish the rebuild (stage 9) before this runs"; exit 1; }
+          test -s output/polls-wiki/statewide_polls_wiki.csv && test -s output/polls-wiki/firm_alias.csv || { echo "::error::poll table or firm aliases downloaded empty"; exit 1; }
+          LT=""
+          if LT=$(mktemp -d) && AUSPOL_POLL_BASE="$LT" AUSPOL_POLL_ONLY=vic2026_opinion,nsw2027_opinion,fed2028_leaders Rscript scripts/fetch_statewide_poll_samples.R > "$LT/fetch.log" 2>&1 \
+             && Rscript scripts/merge_live_poll_pages.R output/polls-wiki/statewide_polls_wiki.csv "$LT/statewide_polls_wiki.csv" "$LT/merged.csv" > "$LT/merge.log" 2>&1 \
+             && test -s "$LT/merged.csv"; then
+            mv "$LT/merged.csv" output/polls-wiki/statewide_polls_wiki.csv
+            grep -E "^PM" "$LT/merge.log" || true
+          else
+            echo "::warning::live poll pages not refreshed -- the forecast reads the published poll table (as of the last publish) plus AE's file"
+            tail -n 20 "$LT/fetch.log" "$LT/merge.log" 2>/dev/null || true
+          fi
+          # Daily leader refresh: rebuild the live pages' leader rows from the fetch above; every other election
+          # keeps the published rows. Display only, so never fatal: on any failure the pages use the published
+          # file, and the warning says so.
           if [ -s output/leader-ratings.csv ]; then
-            if LT=$(mktemp -d) && AUSPOL_POLL_BASE="$LT" AUSPOL_POLL_ONLY=vic2026_opinion,nsw2027_opinion,fed2028_leaders Rscript scripts/fetch_statewide_poll_samples.R > "$LT/fetch.log" 2>&1 \
+            if [ -n "$LT" ] && [ -s "$LT/statewide_polls_wiki.csv" ] \
                && AUSPOL_LEADER_SRC="$LT/statewide_polls_wiki.csv" AUSPOL_LEADER_KEEP=output/leader-ratings.csv AUSPOL_LEADER_OUT="$LT/leader-ratings.csv" Rscript scripts/build_leader_ratings.R > "$LT/build.log" 2>&1 \
                && test -s "$LT/leader-ratings.csv"; then
               mv "$LT/leader-ratings.csv" output/leader-ratings.csv

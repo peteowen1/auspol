@@ -1,5 +1,5 @@
-# Our own poll source, layered over AE's file (AUSPOL_POLL_SOURCE = "layered"; Pete, 2026-10-12).
-# docs/plans/prereg-own-poll-source-step2-2026-10-12.md. Off ("ae") until the deciding run ships it.
+# Our own poll source, layered over AE's file (AUSPOL_POLL_SOURCE = "layered", SHIPPED 2026-10-13; Pete).
+# docs/plans/prereg-own-poll-source-step2-2026-10-12.md. "ae" = AE's file alone.
 #
 # AE's poll-data-<region>.csv is hand-maintained: one column per party, undecided divided out, firm labels that
 # carry methodology eras ("Newspoll3", "SMS Morgan"). Our scrape (scripts/fetch_statewide_poll_samples.R) keeps
@@ -22,7 +22,7 @@
 #' @return `"ae"` or `"layered"`.
 #' @export
 poll_source_mode <- function() {
-  v <- Sys.getenv("AUSPOL_POLL_SOURCE", "ae")
+  v <- Sys.getenv("AUSPOL_POLL_SOURCE", "layered")
   if (!v %in% c("ae", "layered")) stop("AUSPOL_POLL_SOURCE must be \"ae\" or \"layered\", not ", v)
   v
 }
@@ -134,8 +134,16 @@ wiki_polls <- function(region, parties, path) {
 #' @return `ae`'s shape with our numbers on matched polls and our unmatched polls added; attribute `layer_log`.
 #' @export
 poll_layer <- function(ae, region, path = NULL, window = 4L) {
-  if (is.null(path)) path <- Sys.getenv("AUSPOL_POLL_WIKI", file.path(pkg_root(), "external", "reference", "polls", "statewide-samples", "statewide_polls_wiki.csv"))
-  if (!file.exists(path)) stop("AUSPOL_POLL_SOURCE=layered needs ", path, " (scripts/fetch_statewide_poll_samples.R; CI sets AUSPOL_POLL_WIKI)")
+  if (is.null(path)) {
+    # AUSPOL_POLL_WIKI, else the scrape folder (local), else output/polls-wiki/ (CI: the published file merged with
+    # that morning's fresh live pages by forecast.yaml; every job that gets output/ gets it too).
+    cands <- c(Sys.getenv("AUSPOL_POLL_WIKI", ""),
+               file.path(pkg_root(), "external", "reference", "polls", "statewide-samples", "statewide_polls_wiki.csv"),
+               out_path(file.path("polls-wiki", "statewide_polls_wiki.csv")))
+    cands <- cands[nzchar(cands) & file.exists(cands)]
+    path <- if (length(cands)) cands[1] else "statewide_polls_wiki.csv (not found)"
+  }
+  if (!file.exists(path)) stop("AUSPOL_POLL_SOURCE=layered needs statewide_polls_wiki.csv: set AUSPOL_POLL_WIKI, run scripts/fetch_statewide_poll_samples.R, or put it in output/polls-wiki/ (forecast.yaml does)")
   alias_f <- file.path(dirname(path), "firm_alias.csv")
   alias <- if (file.exists(alias_f)) data.table::fread(alias_f, showProgress = FALSE) else
     data.table::fread(file.path(pkg_root(), "external", "reference", "polls", "statewide-samples", "firm_alias.csv"), showProgress = FALSE)
