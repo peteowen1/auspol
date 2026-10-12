@@ -56,6 +56,11 @@ load_polls <- function(region = "fed") {
     out$gl_disapprove <- suppressWarnings(as.numeric(raw$GLDis))
   }
   data.table::setattr(out, "parties", parties)
+  # AUSPOL_POLL_SOURCE = "layered": our Wikipedia scrape over AE's file (R/poll_source.R). Default "ae".
+  if (identical(poll_source_mode(), "layered")) {
+    out <- poll_layer(out, region)
+    data.table::setattr(out, "parties", parties)
+  }
   data.table::setattr(out, "region", region)
 
   sanity_check_polls(out, region)
