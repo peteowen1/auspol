@@ -20,7 +20,13 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30.
   `check_poll_coverage.R`, review, commit. Worktree a1a95ec `zero-order-late`: nothing to commit (its 41 by-election
   rows are identical in dev's gitignored copy); removal needs its `external`/`output` links deleted first (blocked
   as destructive; Pete's call). Branch `worktree-agent-a4181ce1235917bd7` deleted.
-- PR #120: merge after today's changes land (Pete).
+- PR #120: MERGED 2026-10-12 13:54 (head 08d8aa4, CI pass) after the publish rebuild
+  (`deciding-runs/rebuild-20261012-tf2-publish.log`, EXIT=0): all 22 seat log loss 0.3170 (was 0.3201 at the
+  pre-tf2 rebuild), AEF-7 ledger 0.2736 vs AEF 0.2825; tf2 vic2026/nsw2027 models + manifest on `shipped-models`
+  (12:59). First daily `forecast.yaml` run on main with tf2: UNCHECKED.
+- POLL-LEVEL PREREG: size check STOPPED it before any arm (amendment in
+  `plans/prereg-poll-level-centring-2026-10-12.md`): clustered SE 0.15-0.42 > 0.10, and with w=1.00 the trend arms
+  cannot move the shipped level. Needs Pete: redesign question.
 
 **Needs Pete:**
 1. Own poll source STEP 2: should the trend read our Wikipedia/Poll Bludger file (layered: AE only where Wikipedia
