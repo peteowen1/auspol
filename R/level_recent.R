@@ -91,15 +91,24 @@ level_recent_fed_r <- function() {
   f <- file.path(pkg_root(), "external", "reference", "polls", "statewide-samples", "statewide_polls_wiki.csv")
   if (!file.exists(f)) stop("AUSPOL_LEVEL_FED_R > 0 needs ", f, " (scripts/fetch_statewide_poll_samples.R)")
   w <- data.table::fread(f, showProgress = FALSE)
-  w <- w[w$region == "fed" & grepl("^Sub-national polling > ", w$section)]
+  # Polls only: the tables also carry each federal election's actual result (row_type "result", 62 rows).
+  w <- w[w$region == "fed" & grepl("^Sub-national polling > ", w$section) & w$row_type == "poll"]
   pct <- function(x) suppressWarnings(as.numeric(sub("%", "", as.character(x))))
   gcols <- intersect(c("pv_Grn", "pv_GRN", "pv_Green", "pv_Gre"), names(w))
   grn <- if (length(gcols)) do.call(pmax, c(lapply(gcols, function(cc) pct(w[[cc]])), na.rm = TRUE)) else rep(NA_real_, nrow(w))
   lnp <- ifelse(is.finite(w$lnp_fp), w$lnp_fp,
                 ifelse(is.finite(w$lib_fp) | is.finite(w$nat_fp), rowSums(cbind(w$lib_fp, w$nat_fp), na.rm = TRUE), NA_real_))
+  # Dated at the fieldwork MIDPOINT: Newspoll's state figures are multi-month aggregates (up to 129 days), and
+  # dating them at the end would count three months of fieldwork as last week's poll.
+  fs <- as.Date(w$fieldwork_start); fe <- as.Date(w$fieldwork_end)
+  half <- as.integer(fe) - as.integer(fs)
+  mid <- ifelse(is.finite(fs) & is.finite(fe) & fs <= fe, as.integer(fs) + half %/% 2L, as.integer(fe))
   out <- data.table::data.table(st = unname(.LR_STATE_NAME[sub(" >.*", "", sub("^Sub-national polling > ", "", w$section))]),
-                                date = as.Date(w$fieldwork_end), ALP = as.numeric(w$alp_fp), LNP = lnp, GRN = grn)
+                                date = as.Date(mid, origin = "1970-01-01"), firm = w$firm, end = fe,
+                                ALP = as.numeric(w$alp_fp), LNP = lnp, GRN = grn)
   out <- out[!is.na(out$st) & is.finite(out$date) & is.finite(out$ALP)]
+  # The same poll appears more than once in some tables (18 extra copies): count it once.
+  out <- unique(out, by = c("st", "date", "end", "firm", "ALP", "LNP", "GRN"))
   if (!nrow(out)) stop("no federal state-breakdown rows parsed from ", f)
   assign("tab", out, envir = .lr_fed_memo)
   out
@@ -116,7 +125,9 @@ level_recent_fed_r <- function() {
   if (!is.finite(ghl) || ghl <= 0) stop("AUSPOL_LEVEL_FED_GAP_HL must be a positive number of days")
   fp <- .lr_fed_polls()
   reg <- region
-  f <- fp[fp$st == reg & fp$date < aa & fp$date > as.Date(cycle_start)]
+  # fieldwork END before the as-at date (the midpoint alone would admit a poll still in the field)
+  f <- fp[fp$st == reg & fp$end < aa & fp$date > as.Date(cycle_start)]
+  stopifnot(all(f$end < aa))
   if (!nrow(f)) return(NULL)
   wf <- 2^(-as.numeric(aa - f$date) / half_life)
   gf <- 2^(-as.numeric(aa - f$date) / ghl)
@@ -131,6 +142,8 @@ level_recent_fed_r <- function() {
     c(sum = r * sum(wf[okf] * (f[[k]][okf] + gap)), wt = r * sum(wf[okf]))
   })
   names(res) <- .LR_CLS
+  # n_eff counts every breakdown (all have ALP), the same convention as the state side, whose n_eff counts every
+  # poll whatever classes it reports. The per-class `wt` is what weights each class's mean.
   list(sum = vapply(res, `[[`, 0, "sum"), wt = vapply(res, `[[`, 0, "wt"), n_eff = r * sum(wf))
 }
 

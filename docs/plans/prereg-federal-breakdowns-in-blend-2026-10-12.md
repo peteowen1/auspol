@@ -100,3 +100,25 @@ seven). Not a bug; the dry-run sentence above was imprecise. The criterion is un
   this is reported to Pete under its spirit.
 - The data lean toward r = 0, within noise. Shipping F1 rests on Pete's preference that a federal poll should
   count a little; the deciding run checks it does no harm to seats.
+
+### Amendment 2 (2026-10-12, AFTER seeing the screen above): three data fixes from the review gate
+
+A Sonnet review of 1d6afc5 found three problems in the federal rows. Fixed in `R/level_recent.R`:
+1. 62 rows were each federal election's actual result (`row_type == "result"`), entering as polls. Dropped.
+2. 18 rows were exact duplicates of another row. Counted once.
+3. Newspoll's state figures are multi-month aggregates (up to 129 days of fieldwork) dated at their END. Now dated
+   at the fieldwork midpoint, and a poll is admitted only once its fieldwork has ENDED before the as-at date
+   (asserted), so the midpoint cannot admit a poll still in the field.
+
+439 polls remain (was 515 rows). These are corrections, not choices, but they were made after the first screen,
+so both results stay visible. The decision rule is unchanged.
+
+| arm | first screen (uncleaned) | rerun (cleaned) |
+|---|---|---|
+| F1 vs shipped | +0.036 (SE 0.048) PASS | +0.034 (SE 0.036) PASS, at 0.94 SE |
+| F2 vs shipped | +0.058 (SE 0.059) PASS | +0.029 (SE 0.028) FAIL, at 1.04 SE |
+| every r in the grid | worse, rising with r | worse by about 1 SE at every r (0.05: +0.010, SE 0.012; 1: +0.303, SE 0.248) |
+
+Live, F1: vic2026 ALP 24.6 to 24.5, LNP 28.9 to 28.8, GRN 13.6 to 13.7; nsw2027 ALP 30.3 to 29.3, LNP 24.2 to
+23.4, GRN 11.8 to 12.5. F1 passes, so per the rule it goes to the deciding run. With every r about 1 SE worse and
+F1 passing at 0.94 SE, this is reported to Pete as a knife-edge pass, whatever the seat result.
