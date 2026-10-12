@@ -63,3 +63,22 @@ downstream changes.
 ## Amendments
 
 (any change is added below this line with the original text left as is)
+
+### Amendment 1 (2026-10-12, before the screen): disagreeing copies of one poll
+
+Pete chose a tie-break over "ours always wins" after the first dry run showed both sources carry errors: AE has
+swapped rows (vic2026 RedBridge, qld2014 ReachTEL, fed2011-12 Essential) and our parser has some (the 2026
+federal tables split the Coalition into Liberal and National sub-columns). Rule: a matched pair that differs by
+more than 2 points on a major party keeps the row whose primaries better fit the poll's own published two-party
+figure (implied ALP two-party = ALP + 0.83 GRN + 0.35 ONP + 0.45 rest), by at least 1 point; otherwise AE's
+row. Also: duplicate rows of one poll on a page are counted once, and a small second "L/NP" cell is added as the
+Nationals only when it brings the row's primaries closer to 100.
+
+## RESULT, screen (2026-10-12)
+
+`scripts/screen_poll_source.R`, both sources in separate processes, blend refitted on each. Day-before level
+RMSE, 66 cells, 22 elections, lower is better: AE 2.319, layered **2.071** (-0.248, SE 0.360); trend alone -0.289
+(SE 0.307). Not worse, so it goes to the deciding run. Largest moves: wa2005 GRN 1.26 -> 6.49 (actual 7.57; AE's
+file has the WA Greens near 1), wa2005 LNP 47.66 -> 44.24 (39.33), sa2026 ALP 38.38 -> 36.90 (37.62). vic2022 moves
+the wrong way by 0.3-0.5 on all three classes. Two-party tie-break: kept ours on 6 disagreeing pairs (every AE
+swap above), AE's on 23.

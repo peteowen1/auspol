@@ -62,6 +62,15 @@ wiki_polls <- function(region, parties, path) {
                GRN = pick(c("pv_GRN", "pv_Green", "pv_Grn", "pv_Gre")),
                ONP = pick(c("pv_ONP", "pv_ON")), UAP = pick("pv_UAP"), SFF = pick("pv_SFF"), KAP = pick("pv_KAP"),
                SAB = pick("pv_SAB"), FF = pick("pv_FFP"), DEM = pick(c("pv_Dem", "pv_AD")), DLP = pick("pv_DLP"))
+  # Coalition split into Liberal and National sub-columns under one "L/NP" header (federal 2026 tables): the
+  # parser reads the Liberal cell as lnp_fp and the National cell as pv_L/NP_1. Add it only when the row's
+  # primaries then sum closer to 100 and the cell is small (under 12), so a two-party "L/NP" column is never
+  # mistaken for the Nationals.
+  lnp2 <- pick("pv_L/NP_1")
+  oth_cells <- rowSums(cbind(pick(c("pv_Others", "pv_OTH", "pv_Other", "pv_Oth")), pick("pv_IND"), pick("pv_UND")), na.rm = TRUE)
+  base_sum <- rowSums(cbind(suppressWarnings(as.numeric(w$alp_fp)), lnp, vals$GRN, vals$ONP, vals$UAP), na.rm = TRUE) + oth_cells
+  add_nat <- is.finite(lnp) & is.finite(lnp2) & lnp2 < 12 & abs(base_sum + lnp2 - 100) < abs(base_sum - 100)
+  lnp[add_nat] <- lnp[add_nat] + lnp2[add_nat]
   if (identical(region, "wa")) {   # load_polls() renames WA's LIB to LNP and keeps NAT apart
     vals$LNP <- ifelse(is.finite(lib), lib, ifelse(is.finite(lnp) & !is.finite(nat), lnp, NA_real_)); vals$NAT <- nat
   } else {
@@ -122,8 +131,28 @@ poll_layer <- function(ae, region, path = NULL, window = 4L) {
   differ <- if (any(diff_big)) data.table::data.table(date = ours$date[pair_o][diff_big], firm = ae$firm[pair_a][diff_big],
                                                       parties = paste(majors, collapse = "/"),
                                                       ours = fmt(ours, pair_o[diff_big]), ae = fmt(ae, pair_a[diff_big])) else NULL
-  # matched: our numbers under AE's label and date
-  for (p in parties) ae[[p]][pair_a] <- ours[[p]][pair_o]
+  # A pair that disagrees by more than 2 points: keep whichever row's primaries fit the poll's own published
+  # two-party figure better, by at least 1 point. Implied ALP two-party = ALP + 0.83 GRN + 0.35 ONP + 0.45 rest
+  # (rough national preference flows; only used to tell two copies of one poll apart, never as a forecast input).
+  # Undecidable (no published figure, or neither clearly closer): keep AE's row.
+  implied <- function(D, idx) {
+    g <- function(p) if (p %in% names(D)) D[[p]][idx] else rep(NA_real_, length(idx))
+    alp <- g("ALP"); lnp <- g("LNP"); grn <- g("GRN"); onp <- g("ONP")
+    rest <- 100 - alp - lnp - ifelse(is.finite(grn), grn, 0) - ifelse(is.finite(onp), onp, 0)
+    alp + 0.83 * ifelse(is.finite(grn), grn, 0) + 0.35 * ifelse(is.finite(onp), onp, 0) + 0.45 * pmax(rest, 0)
+  }
+  use_ours <- rep(TRUE, length(pair_o))
+  if (any(diff_big)) {
+    j <- which(diff_big)
+    tpp <- ae$tpp_published[pair_a[j]]; tpp[!is.finite(tpp)] <- ours$tpp_published[pair_o[j]][!is.finite(tpp)]
+    e_o <- abs(implied(ours, pair_o[j]) - tpp); e_a <- abs(implied(ae, pair_a[j]) - tpp)
+    use_ours[j] <- is.finite(e_o) & is.finite(e_a) & e_o + 1 <= e_a
+    if (!is.null(differ)) { differ$tpp <- tpp; differ$err_ours <- round(e_o, 1); differ$err_ae <- round(e_a, 1)
+                            differ$kept <- ifelse(use_ours[j], "ours", "ae") }
+  }
+  # matched: our numbers (where kept) under AE's label and date
+  po <- pair_o[use_ours]; pa <- pair_a[use_ours]
+  for (p in parties) ae[[p]][pa] <- ours[[p]][po]
   # unmatched ours: label of the same firm's nearest AE poll, else our own text
   extra <- ours[!used_o]
   if (nrow(extra)) {
@@ -138,8 +167,8 @@ poll_layer <- function(ae, region, path = NULL, window = 4L) {
   data.table::setorderv(ae, "date")
   log <- list(region = region, ae_rows = sum(!used_a) + length(pair_a), ours = nrow(ours), matched = length(pair_o),
               ours_only = nrow(extra), ae_only = sum(!used_a), matched_differ_gt2 = sum(diff_big), differ = differ)
-  message(sprintf("PS1 poll source layered [%s]: %d ours (%d matched to AE, %d ours only), %d AE only; %d matched polls differ by > 2 points on a major party",
-                  region, nrow(ours), length(pair_o), nrow(extra), sum(!used_a), sum(diff_big)))
+  message(sprintf("PS1 poll source layered [%s]: %d ours (%d matched to AE, %d ours only), %d AE only; %d matched polls differ by > 2 points on a major party (two-party check kept ours on %d, AE on %d)",
+                  region, nrow(ours), length(pair_o), nrow(extra), sum(!used_a), sum(diff_big), sum(diff_big & use_ours), sum(diff_big & !use_ours)))
   data.table::setattr(ae, "parties", parties)
   data.table::setattr(ae, "layer_log", log)
   ae
