@@ -62,3 +62,23 @@ fed2010 (21 of 27). vic2026 and nsw2027, the live ones, need AE for nothing in t
    raw page text for each AE-only poll's firm and date. That sizes parser work against source work.
 2. Then the sources: Poll Bludger's per-poll posts first (they quote full primaries), original releases where those fail.
 3. Firm eras: write our own label rules, test that house effects are no worse (a screen, then the deciding run).
+
+## Update, same night: the split found a parser bug, now fixed
+
+`scripts/audit_ae_missing.R` looked for each AE-only poll in every parsed row. 146 of them (39 in the final 30 days)
+were on the page but typed "result": the scraper tested the firm cell for the word "election" before stripping its
+footnotes, so "conducted ahead of the 2013 federal election" made a real poll a result. Fixed
+(`scripts/fetch_statewide_poll_samples.R`): result rows 768 -> 110, vic2026 page 118 -> 158 polls.
+
+After the fix: 1,426 of 3,136 polls (45%) carry only our numbers; **final 30 days 140 of 261 (54%)**. AE still
+needed (whole cycles | final 30 days): missing from a covered page 935 | 39 (770 | 37 in no parsed table at all:
+Essential, Morning Consult and Morgan's modes lead), no Wikipedia coverage 480 | 29, a party folded into Others
+284 | 50 (UAP 213, NXT 62, ON 18), disputes and suspect rows 11 | 3.
+
+Effect: live Victoria One Nation 18.08 -> 18.20 seats (the recovered polls were in AE already); day-before level
+screen 2.071 -> 2.074 (max cell move 1.33, wa2021, unscored). Pushed without a new deciding run; the next
+publish rebuild re-scores with these rows.
+
+Also (Pete asked): AE's repo calls its poll files "authored inputs", committed as "routine data update", with no
+source, sample size or client per poll; `provenance.json` holds file checksums only. Its numbers cannot be traced
+to a source, which is how the swapped RedBridge row went unnoticed.
