@@ -138,3 +138,10 @@ byte-identical; 7 changed (the five targets plus qld2020 and sa2022).
 Read: seat-neutral, as expected from level moves of 0.3 points or less. The level screen leaned against (every r
 about 1 SE worse); the seat run is flat. Shipping rests on Pete's preference, and on the live nsw2027 move of about
 1 point (the unacceptable-win clause's spirit), so it goes to Pete.
+
+## SHIPPED 2026-10-12 at r = 0.15 (Pete chose "Ship at r = 0.15")
+
+Asked with both the level lean (every r about 1 SE worse) and the live nsw2027 move (about 1 point) in the
+question. The blend now reads `output/fed-state-breakdowns.csv` (built from the Wikipedia table by
+`scripts/build_fed_state_breakdowns.R`, rebuild stage 5b, published, downloaded by the daily forecast); the
+screen reproduces its numbers exactly from that file.

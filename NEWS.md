@@ -1,3 +1,8 @@
+# auspol 0.4.97
+
+- **Federal polls now count a little toward a state election** (`AUSPOL_LEVEL_FED_R=0.15`, Pete's choice). A federal poll's state breakdown joins the recent-poll level at 0.15 of a state poll of the same age, corrected by the state-minus-federal gap over the last 90 days. Seat-neutral over 22 elections (log loss +0.0001, SE 0.0001). Live Victoria moves 0.1 point or less; live NSW about 1 point, because it has few recent state polls. The data comes from `output/fed-state-breakdowns.csv` (`scripts/build_fed_state_breakdowns.R`, rebuild stage 5b), which the daily forecast downloads.
+- Measured and refused: making the poll trend responsive enough to replace the recent-poll blend (`AUSPOL_TREND_SIGMAS`, `AUSPOL_TREND_RW_MULT`, `AUSPOL_TREND_SZC`, all off). A faster trend only catches up with the blend and is worse 90 days out.
+
 # auspol 0.4.96
 
 - The 20-day level decay is now measured: over 22 elections it beats no blend, seat log loss 0.3163 -> 0.3110 (SE 0.0037). No change to the forecast.

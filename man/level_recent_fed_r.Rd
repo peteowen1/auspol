@@ -10,7 +10,7 @@ level_recent_fed_r()
 Numeric r (0 = off).
 }
 \description{
-"0" (default) leaves the blend as shipped. A positive number r adds federal voting-intention polls' state
+SHIPPED 2026-10-12 at "0.15" (Pete). "0" leaves the blend without them. A positive number r adds federal voting-intention polls' state
 breakdowns to \code{\link[=level_recent_decay_avg]{level_recent_decay_avg()}} at weight r each, corrected by the state-minus-federal gap.
 docs/plans/prereg-federal-breakdowns-in-blend-2026-10-12.md.
 }

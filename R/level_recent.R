@@ -68,13 +68,13 @@ level_recent_decay_avg <- function(region, election_date, half_life, cycle_start
 
 #' Weight of a federal state breakdown against a state poll (AUSPOL_LEVEL_FED_R)
 #'
-#' "0" (default) leaves the blend as shipped. A positive number r adds federal voting-intention polls' state
+#' SHIPPED 2026-10-12 at "0.15" (Pete). "0" leaves the blend without them. A positive number r adds federal voting-intention polls' state
 #' breakdowns to [level_recent_decay_avg()] at weight r each, corrected by the state-minus-federal gap.
 #' docs/plans/prereg-federal-breakdowns-in-blend-2026-10-12.md.
 #' @return Numeric r (0 = off).
 #' @export
 level_recent_fed_r <- function() {
-  r <- suppressWarnings(as.numeric(Sys.getenv("AUSPOL_LEVEL_FED_R", "0")))
+  r <- suppressWarnings(as.numeric(Sys.getenv("AUSPOL_LEVEL_FED_R", "0.15")))
   if (!is.finite(r) || r < 0) stop("AUSPOL_LEVEL_FED_R must be a non-negative number")
   r
 }
@@ -83,13 +83,17 @@ level_recent_fed_r <- function() {
 .LR_STATE_NAME <- c("New South Wales" = "nsw", "Victoria" = "vic", "Queensland" = "qld",
                     "Western Australia" = "wa", "South Australia" = "sa", "Tasmania" = "tas")
 
-# Federal polls' state breakdowns (Wikipedia "Sub-national polling" tables), one row per poll and state,
-# columns st, date (fieldwork end), ALP, LNP, GRN. Read once per process.
-#' @noRd
-.lr_fed_polls <- function() {
-  if (!is.null(.lr_fed_memo$tab)) return(.lr_fed_memo$tab)
-  f <- file.path(pkg_root(), "external", "reference", "polls", "statewide-samples", "statewide_polls_wiki.csv")
-  if (!file.exists(f)) stop("AUSPOL_LEVEL_FED_R > 0 needs ", f, " (scripts/fetch_statewide_poll_samples.R)")
+#' Federal polls' state breakdowns, parsed from the Wikipedia poll table
+#'
+#' One row per poll and state from the "Sub-national polling" tables of the federal opinion-polling pages:
+#' `st`, `date` (fieldwork midpoint), `end` (fieldwork end), `firm`, `ALP`, `LNP`, `GRN`. Results rows dropped,
+#' duplicates counted once. `scripts/build_fed_state_breakdowns.R` writes it to
+#' `output/fed-state-breakdowns.csv`, which is what the blend reads (and what the release carries).
+#' @param f Path to `statewide_polls_wiki.csv` (`scripts/fetch_statewide_poll_samples.R`).
+#' @return data.table.
+#' @export
+fed_state_breakdowns_parse <- function(f) {
+  if (!file.exists(f)) stop("fed_state_breakdowns_parse(): ", f, " not found (scripts/fetch_statewide_poll_samples.R)")
   w <- data.table::fread(f, showProgress = FALSE)
   # Polls only: the tables also carry each federal election's actual result (row_type "result", 62 rows).
   w <- w[w$region == "fed" & grepl("^Sub-national polling > ", w$section) & w$row_type == "poll"]
@@ -110,6 +114,19 @@ level_recent_fed_r <- function() {
   # The same poll appears more than once in some tables (18 extra copies): count it once.
   out <- unique(out, by = c("st", "date", "end", "firm", "ALP", "LNP", "GRN"))
   if (!nrow(out)) stop("no federal state-breakdown rows parsed from ", f)
+  out
+}
+
+# The blend's copy: output/fed-state-breakdowns.csv, read once per process.
+#' @noRd
+.lr_fed_polls <- function() {
+  if (!is.null(.lr_fed_memo$tab)) return(.lr_fed_memo$tab)
+  f <- out_path("fed-state-breakdowns.csv")
+  if (!file.exists(f)) stop("AUSPOL_LEVEL_FED_R > 0 needs ", f, " -- run scripts/build_fed_state_breakdowns.R ",
+                            "(rebuild stage 5b; the forecast workflow downloads it from shipped-models)")
+  out <- data.table::fread(f, showProgress = FALSE)
+  out[, `:=`(date = as.Date(date), end = as.Date(end))]
+  if (!nrow(out) || !all(c("st", "date", "end", "ALP", "LNP", "GRN") %in% names(out))) stop(f, " is empty or lacks columns")
   assign("tab", out, envir = .lr_fed_memo)
   out
 }
@@ -302,7 +319,7 @@ level_recent_apply <- function(levels, target, region, election_date, code = "LR
 .lr_decay_fit_cached <- function(target, tab = NULL) {
   if (!is.null(tab)) return(level_recent_decay_fit(target, tab))
   f <- out_path("level-recent.csv")
-  key <- paste(target, Sys.getenv("AUSPOL_LEVEL_RECENT_HALFLIFE", "20"), Sys.getenv("AUSPOL_LEVEL_FED_R", "0"),
+  key <- paste(target, Sys.getenv("AUSPOL_LEVEL_RECENT_HALFLIFE", "20"), Sys.getenv("AUSPOL_LEVEL_FED_R", "0.15"),
                Sys.getenv("AUSPOL_LEVEL_FED_GAP_HL", "90"), if (file.exists(f)) paste(file.info(f)$mtime, file.info(f)$size) else "none")
   if (is.null(.lr_fit_memo[[key]])) assign(key, level_recent_decay_fit(target, NULL), envir = .lr_fit_memo)
   .lr_fit_memo[[key]]
