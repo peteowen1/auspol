@@ -206,6 +206,11 @@ run_queue() {  # $1 = XGB_PRIMARY, $2 = log tag, $3 = slots, then "harness:ENV=v
 if at_least 1; then
   python scripts/build_state_notionals.py > "$LOG/s1_notionals.log" 2>&1 || { echo "!! build_state_notionals.py failed its checks -- see $LOG/s1_notionals.log"; exit 1; }
 fi
+# BLUDGERTRACK POLL TABLES (AUSPOL_POLL_BT, 2026-10-13): every stage reads polls through load_polls(), so the
+# table is parsed from the raw XML on disk before anything else (no fetch; refetch by hand with --fetch=).
+if [ "${AUSPOL_POLL_BT:-1}" = "1" ]; then
+  Rscript scripts/build_bludgertrack_polls.R > "$LOG/s0_bludgertrack.log" 2>&1 || { echo "!! build_bludgertrack_polls.R failed -- see $LOG/s0_bludgertrack.log"; exit 1; }
+fi
 # ENDORSEMENT FEATURES (AUSPOL_XGB_ENDORSE): only when the switch is on.
 if at_least 3 && [ "${AUSPOL_XGB_ENDORSE:-0}" = "1" ]; then
   python scripts/build_endorsement_features.py > "$LOG/s3_endorse.log" 2>&1 || { echo "!! build_endorsement_features.py failed -- see $LOG/s3_endorse.log"; exit 1; }

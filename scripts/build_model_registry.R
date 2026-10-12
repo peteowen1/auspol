@@ -374,6 +374,8 @@ CLASSIFY <- list(
   AUSPOL_TREND_SZC = "REFUSED ARM 2026-10-12, same prereg (T3), off at \"polls\". Read inside R/trend.R, so it reaches every trend fit -- universal in practice.",
   AUSPOL_LEVEL_FED_R = "SHIPPED 0.15 2026-10-12 (Pete; plans/prereg-federal-breakdowns-in-blend-2026-10-12.md). Read inside R/level_recent.R, which every harness and fit_seats_full.R reach through the level blend -- universal in practice.",
   AUSPOL_LEVEL_FED_GAP_HL = "Same prereg; only read when AUSPOL_LEVEL_FED_R > 0. Read inside R/level_recent.R -- universal in practice.",
+  AUSPOL_POLL_SOURCE = "SHIPPED layered 2026-10-13 (Pete; plans/prereg-own-poll-source-step2-2026-10-12.md). Read inside load_polls() (R/load_polls.R), which every harness and fit_seats_full.R call -- universal in practice.",
+  AUSPOL_POLL_BT = "2026-10-13 (Pete: go): BludgerTrack poll tables join the layered source. Read inside poll_layer() (R/poll_source.R) via load_polls() -- universal in practice.",
   AUSPOL_FLOW_TF = "SHIPPED \"1\" 2026-10-12 (Pete). Read inside R/xgb_flow_override.R (every harness and fit_seats_full.R reach it through the flow override); validated at startup by validate_flow_arm() in published_flags.R.",
   AUSPOL_FLOW_RATE_HL = "SHIPPED \"2\" 2026-10-12 with AUSPOL_FLOW_TF. Read inside R/xgb_flow_override.R; must equal the tagged models' trained half-life.",
   AUSPOL_REENTRY_SPLIT = "Read inside R/reentry_prior.R, not per-harness -- universal in practice (added to published_flags.R 2026-10-08 at its code default).",

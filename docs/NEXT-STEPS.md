@@ -52,10 +52,11 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30.
   `.claude/worktrees/layered-run` (9 GB, the deciding-run copy) is safe to delete: Pete's call.
   2026-10-13 progress (`reviews/ae-dependence-audit-2026-10-13.md`): Poll Bludger posts fetched (1,890, final 90 days
   of every election) and BludgerTrack poll tables parsed (fed2025/fed2028/vic2026); rule extractor finds 40 of 98
-  AE-carrying final-month polls, 9% off by > 2 points held out. OPEN: (a) layer BludgerTrack's tables in for
-  fed2025/fed2028/vic2026 (they also carry Essential's undecided, which Wikipedia folds into Others); (b) language-model
-  extraction of the posts (the stronger version, not tried); (c) sub-state/upper-house section fix (2026-10-13) moves
-  sa2026: re-score at the next publish rebuild.
+  AE-carrying final-month polls, 9% off by > 2 points held out. DONE: BludgerTrack tables layered in
+  (`AUSPOL_POLL_BT=1`) with a duplicate-poll fix; `docs/POLL-REGISTRY.md` (rerun `build_poll_registry.R` after any
+  poll-source change). OPEN: (b) language-model extraction of the posts (the stronger version, not tried); (c) the
+  section fix and BludgerTrack/duplicate change move sa2026, vic2014, qld2020, fed2022: re-score all at the next
+  publish rebuild.
 
 **Needs Pete:**
 1. DONE 2026-10-13: own poll source step 2 shipped (PR #124).

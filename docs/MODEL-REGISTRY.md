@@ -1,6 +1,6 @@
 # Model registry
 
-**Generated 2026-10-12 by `scripts/build_model_registry.R`. Do not hand-edit** --
+**Generated 2026-10-13 by `scripts/build_model_registry.R`. Do not hand-edit** --
 rerun the script instead. Regenerate whenever a switch is added to
 `published_flags.R` or a harness's wiring changes.
 
@@ -31,7 +31,7 @@ All seven share one `R/` package core (`simulate_seat_contests()`,
 in which switches each one WIRES and which data source each reads, not in
 separate model code.
 
-## Switch parity (177 switches from `published_flags.R`, 7 entry points)
+## Switch parity (179 switches from `published_flags.R`, 7 entry points)
 
 | switch | fit_seats (published) | fed | nsw | qld | sa | vic | wa |
 |---|---|---|---|---|---|---|---|
@@ -129,6 +129,8 @@ separate model code.
 | `AUSPOL_ONP_ORDER` | yes | NO | yes | yes | yes | NO | NO |
 | `AUSPOL_OTHERS_SCALE` | NO | NO | NO | NO | NO | NO | NO |
 | `AUSPOL_PARTY_COR` | yes | yes | yes | yes | yes | yes | NO |
+| `AUSPOL_POLL_BT` | NO | NO | NO | NO | NO | NO | NO |
+| `AUSPOL_POLL_SOURCE` | NO | NO | NO | NO | NO | NO | NO |
 | `AUSPOL_QLD_CUTOFF` | NO | yes | NO | yes | yes | yes | NO |
 | `AUSPOL_QLD_FLOWS` | yes | yes | NO | yes | yes | yes | NO |
 | `AUSPOL_REENTRY` | yes | yes | yes | yes | yes | yes | yes |
@@ -283,6 +285,8 @@ separate model code.
 - **`AUSPOL_ONP_ORDER`** (intentional / dead experiment): Published-forecast-only (fit_seats_full.R -- One Nation allocation ordering for the live Victorian projection).
 - **`AUSPOL_OTHERS_SCALE`** (intentional / dead experiment): ARM, REFUSED 2026-09-28 (plans/prereg-others-bucket-size-2026-09-27.md). Backtest path only (R/forecast_mode.R, R/others_bucket.R); published_flags.R says the live script is deliberately not wired because it did not pass.
 - **`AUSPOL_PARTY_COR`** (intentional / dead experiment): WA deliberately excluded from the statewide party-correlation matrix -- cor(ALP, IND) flips sign there (docs/reviews/statewide-cov-loo-2026-09-07.md). Intentional, not a gap.
+- **`AUSPOL_POLL_BT`** (intentional / dead experiment): 2026-10-13 (Pete: go): BludgerTrack poll tables join the layered source. Read inside poll_layer() (R/poll_source.R) via load_polls() -- universal in practice.
+- **`AUSPOL_POLL_SOURCE`** (**adopted, shared-function wiring**): SHIPPED layered 2026-10-13 (Pete; plans/prereg-own-poll-source-step2-2026-10-12.md). Read inside load_polls() (R/load_polls.R), which every harness and fit_seats_full.R call -- universal in practice.
 - **`AUSPOL_QLD_CUTOFF`** (intentional / dead experiment): Read inside R/external_flows.R (pool_configured_flows), not per-harness -- universal in practice (added to published_flags.R 2026-10-08 at its code default).
 - **`AUSPOL_QLD_FLOWS`** (intentional / dead experiment): Self-referential no-op in the QLD harness itself ("use Queensland's own flows" is trivially true there) -- disclosed via its own `.inert` list. Genuinely absent from WA (uses AUSPOL_WA_FLOWS instead).
 - **`AUSPOL_REENTRY_GAP`** (intentional / dead experiment): Read inside R/reentry_prior.R, not per-harness -- universal in practice (added to published_flags.R 2026-10-08 at its code default).
@@ -390,4 +394,4 @@ MR3  no harness forces a switch away from its published value.
 
 ## Coverage check
 
-MR2  every non-universal switch (140 of 177) has a recorded classification.
+MR2  every non-universal switch (142 of 179) has a recorded classification.

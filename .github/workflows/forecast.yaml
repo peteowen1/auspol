@@ -225,6 +225,20 @@ jobs:
             echo "::warning::live poll pages not refreshed -- the forecast reads the published poll table (as of the last publish) plus AE's file"
             tail -n 20 "$LT/fetch.log" "$LT/merge.log" 2>/dev/null || true
           fi
+          # The Poll Bludger's poll tables (AUSPOL_POLL_BT, 2026-10-13): the published table is required (load_polls()
+          # stops without it); the two live cycles are then refetched and swapped in, fed2025 kept from the release.
+          gh release download shipped-models -p bludgertrack_polls.csv -D output/polls-wiki --clobber || { echo "::error::shipped-models has no bludgertrack_polls.csv -- publish the rebuild (stage 9) before this runs"; exit 1; }
+          test -s output/polls-wiki/bludgertrack_polls.csv || { echo "::error::bludgertrack_polls.csv downloaded empty"; exit 1; }
+          BT=""
+          if BT=$(mktemp -d) && AUSPOL_BT_RAW="$BT" AUSPOL_BT_OUT="$BT/bludgertrack_polls.csv" Rscript scripts/build_bludgertrack_polls.R --fetch=fed2028,vic2026 --keep=output/polls-wiki/bludgertrack_polls.csv > "$BT/build.log" 2>&1 \
+             && test -s "$BT/bludgertrack_polls.csv"; then
+            mv "$BT/bludgertrack_polls.csv" output/polls-wiki/bludgertrack_polls.csv
+            grep -E "^BK" "$BT/build.log" || true
+            if grep -q "^BK2!" "$BT/build.log"; then echo "::warning::$(grep '^BK2!' "$BT/build.log" | head -1)"; fi
+          else
+            echo "::warning::BludgerTrack tables not refreshed -- the forecast reads the published table (as of the last publish)"
+            tail -n 20 "$BT/build.log" 2>/dev/null || true
+          fi
           # Daily leader refresh: rebuild the live pages' leader rows from the fetch above; every other election
           # keeps the published rows. Display only, so never fatal: on any failure the pages use the published
           # file, and the warning says so.
