@@ -50,12 +50,15 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30.
   07:00 13 Oct, UNCHECKED (look for PM1/PZ1 lines and no "live poll pages not refreshed" warning).
   NEXT WORKSTREAM (Pete): move off AE entirely; five dependencies listed in PETE-ASKED-FOR. Worktree
   `.claude/worktrees/layered-run` (9 GB, the deciding-run copy) is safe to delete: Pete's call.
+  2026-10-13 progress (`reviews/ae-dependence-audit-2026-10-13.md`): Poll Bludger posts fetched (1,890, final 90 days
+  of every election) and BludgerTrack poll tables parsed (fed2025/fed2028/vic2026); rule extractor finds 40 of 98
+  AE-carrying final-month polls, 9% off by > 2 points held out. OPEN: (a) layer BludgerTrack's tables in for
+  fed2025/fed2028/vic2026 (they also carry Essential's undecided, which Wikipedia folds into Others); (b) language-model
+  extraction of the posts (the stronger version, not tried); (c) sub-state/upper-house section fix (2026-10-13) moves
+  sa2026: re-score at the next publish rebuild.
 
 **Needs Pete:**
-1. Own poll source STEP 2: should the trend read our Wikipedia/Poll Bludger file (layered: AE only where Wikipedia
-   has nothing, i.e. fed2007, wa2001; Poll Bludger for nsw2019) instead of AE's files? Re-measure first: house effects
-   keyed on AE firm labels ("Newspoll2"), the undecided rule (AE divides it out; write ours into CONSTANTS.md), the
-   20-day half-life, exit polls. `reviews/own-poll-source-step1-2026-10-11.md`.
+1. DONE 2026-10-13: own poll source step 2 shipped (PR #124).
 2. DONE 2026-10-11: branches `fed-timing-resume-fixed` (b21fb77) and `instrument-backtest-fed-timing` (ae91f62) deleted, PR #33 closed.
 3. Three built, OFF, prereg-never-written experiment branches from 2026-10-06 were untracked until now:
    `worktree-agent-a6d092f16127ab44a` (`AUSPOL_XGB_CLASS_JUR_CAL`), `worktree-agent-a9cb9eebe64bafa28`

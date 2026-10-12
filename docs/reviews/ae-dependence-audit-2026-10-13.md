@@ -102,3 +102,52 @@ So Poll Bludger is free text. Plan: fetch every day archive page in each cycle's
 about 40 minutes at one request a second), store the raw HTML, extract firm, fieldwork, sample and primaries from
 each post, and measure the extractor on the polls AE also has (AE as the answer key, before AE is dropped).
 Tally Room does not publish polls.
+
+## Poll Bludger fetched and scored (2026-10-13, later)
+
+**Fetch** (`scripts/fetch_pollbludger.R`): the site's five post sitemaps list all 4,935 posts back to July 2004, so
+only days with posts are requested. Each election's final 90 days: 1,890 posts on 1,302 day pages, all fetched
+(1,890 of 1,890 sitemap posts found on the pages), 25 minutes. Raw pages in
+`external/reference/polls/pollbludger/raw/days/`, manifest `days_manifest.csv`.
+
+**BludgerTrack poll tables** (`scripts/extract_bludgertrack.R`): BludgerTrack's "Poll data" tab is a structured table
+(start, end, pollster, mode, sample, primaries, undecided, published and respondent-allocated two-party, plus state,
+age, gender and other breakdowns) for three cycles only: fed2025 (345 national polls, May 2022 to May 2025),
+fed2028 (to 31 Aug 2026) and vic2026 (63 polls). Older cycles return 404; the 2019 file holds weekly trend points,
+not polls. Against the layered set it agrees almost exactly where both have a poll (424 federal polls carrying our
+Wikipedia numbers: mean gap 0.06 points), and it has 66 of the 195 polls in those cycles that still carry AE's
+numbers (fed 55 of 175, vic 11 of 20).
+
+**Bug it found, fixed:** `wiki_polls()` let sub-state tables (Inner Melbourne, Outer Melbourne, Regional SA,
+Brisbane), Legislative Council tables, "Voting consideration" and "Leader satisfaction" tables through as statewide
+polls: 85 rows on the sa2026, vic2026, nsw2027, qld2028 and fed2028 pages. Example: DemosAU Inner Melbourne, Feb
+2026, Greens 23, read as a statewide Greens 23. Fixed in `R/poll_source.R` (test `test-wiki-polls-sections.R`, which
+fails on the old list). Effect: day-before level screen 2.074 -> 2.072; only sa2026 moves (Labor error 0.99 -> 0.23,
+Greens 1.12 -> 1.50, Coalition 2.41 -> 2.27). Live trend, before -> after: Vic ON 21.03 -> 20.77, ALP 24.44 ->
+24.58 (polls in trend 102 -> 82); NSW ON 20.68 -> 22.21, ALP 31.54 -> 30.54 (56 -> 48). The next publish rebuild
+re-scores sa2026.
+
+**Also found, not fixed:** Wikipedia folds Essential's undecided (about 5%) into Others on the fed2028 page, so our
+13 Essential rows since May 2025 understate every party by about 5% of its share. BludgerTrack carries undecided
+separately and is the fix.
+
+**Post extractor** (`scripts/extract_pollbludger.R`, rules, version 3): one sentence at a time, pollster carried
+from earlier in the paragraph or the title, region from the post's WordPress categories, and sentences about
+subgroups, seats, exit polls, upper houses, issue questions or earlier polls skipped. Tuned on pages up to
+2017-03-05; pages after that held out.
+
+| pages | polls matched to the layered set | every party within 0.5 point | any party off by more than 2 |
+|---|---|---|---|
+| tuning (2004 to Mar 2017) | 174 | 146 (84%) | 14 (8%) |
+| held out (2017 to 2026) | 134 | 111 (83%) | 12 (9%) |
+
+Coverage of each election's final 30 days: 151 of 285 polls found (53%); of the 98 still carrying AE's numbers,
+40 found (fed2007 9 of 18, fed2010 10 of 18, nsw2015 10 of 14, fed2004 1 of 20). Several of the disagreements
+look like AE and Poll Bludger reporting different numbers for the same poll (Galaxy Vic Oct 2010 with Nationals
+added, Lonergan NSW Mar 2015); not checked against the original releases.
+
+**Reading:** the rules find about half the polls and get about 1 in 11 wrong by more than 2 points, so their
+numbers cannot replace AE's unchecked. They can serve as a third opinion on disputes and as a source for polls
+nobody else has, under the same two-party self-check our Wikipedia rows get. Reading the posts with a language
+model instead of rules is the stronger version and has not been tried (no API key on this machine; it would run
+as subagents).

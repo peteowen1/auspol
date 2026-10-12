@@ -49,8 +49,11 @@ poll_source_mode <- function() {
 wiki_polls <- function(region, parties, path) {
   w <- data.table::fread(path, showProgress = FALSE)
   reg <- region
+  # Statewide lower-house voting intention only. "Sub-state", "Legislative Council", "Voting consideration" and
+  # "Leader satisfaction" were missing until 2026-10-13: 85 rows (Inner Melbourne, Regional SA, upper-house votes)
+  # entered sa2026, vic2026 and nsw2027 as statewide polls, found by comparing against BludgerTrack's own table.
   keep <- w$row_type == "poll" & w$table_type == "primary" & w$region == reg &
-    !grepl("Sub-national|Subpopulation|Electorate|seat|Hypothetical|Exit|By gender|By age|By generation|By language|By country",
+    !grepl("Sub-national|Sub-state|Subpopulation|Electorate|seat|Hypothetical|Exit|By gender|By age|By generation|By language|By country|Legislative Council|Voting consideration|Leader satisfaction",
            w$section, ignore.case = TRUE) &
     !grepl("exit poll", paste(w$firm_raw, w$footnote_raw), ignore.case = TRUE)
   w <- w[keep]
