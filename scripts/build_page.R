@@ -480,9 +480,13 @@ out <- list(
                        noise = round(noise_factor, 2), elections,
                        mae = round(final_mae, 2))],
   # preferred premier and leader satisfaction, display only (R/leader_ratings.R)
-  leaders = leader_page_data("vic2026")
+  # NA, not NULL, when the table is missing: this toJSON() writes NULL as {} (truthy in the page's JS) and NA as null
+  leaders = { ld <- leader_page_data("vic2026"); if (is.null(ld)) NA else ld }
 )
 json <- toJSON(out, auto_unbox = TRUE, digits = 6, na = "null")
+# The JSON is spliced into a <script> block, and the leader rows carry text scraped from Wikipedia (pollster
+# names): escape <, > and & as \u escapes, which leaves the JSON value unchanged but cannot close the tag.
+json <- gsub("&", "\\u0026", gsub(">", "\\u003e", gsub("<", "\\u003c", json, fixed = TRUE), fixed = TRUE), fixed = TRUE)
 write(json, "output/vic-page-data.json")
 
 tpl <- paste(readLines("scripts/page-template.html", warn = FALSE),
