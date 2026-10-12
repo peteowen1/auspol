@@ -61,7 +61,11 @@ extra <- c(file.path(SHIP, c("MANIFEST.json", "pooled-backtest.csv", "pooled-sha
            # AUSPOL_LEVEL_FED_R (shipped 0.15): federal polls' state breakdowns (build_fed_state_breakdowns.R)
            file.path(OUT, "fed-state-breakdowns.csv"),
            # preferred premier and leader satisfaction for the forecast pages (build_leader_ratings.R)
-           file.path(OUT, "leader-ratings.csv"))
+           file.path(OUT, "leader-ratings.csv"),
+           # AUSPOL_POLL_SOURCE=layered (shipped 2026-10-13): our full Wikipedia poll table and firm aliases; the
+           # forecast job swaps in that morning's live pages (scripts/merge_live_poll_pages.R)
+           file.path("external", "reference", "polls", "statewide-samples", "statewide_polls_wiki.csv"),
+           file.path("external", "reference", "polls", "statewide-samples", "firm_alias.csv"))
 loo <- grep("xgb-flows-v1-loo-.*[.]model$", models, value = TRUE)
 rest <- setdiff(models, loo)
 

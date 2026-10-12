@@ -1,3 +1,7 @@
+# auspol 0.4.100
+
+- **The poll trend reads our own poll source**, our Wikipedia scrape layered over AE Forecasts' file (`AUSPOL_POLL_SOURCE=layered`, Pete's call). It corrects AE's swapped rows (RedBridge Victoria 2-8 Oct 2026 had the Greens and One Nation swapped) and adds polls AE lacks (Resolve 6-10 Oct). Each scraped row is checked against its own published two-party figure. Over 22 elections seat log loss is unchanged within noise (0.3171 -> 0.3173, SE 0.0028). The daily job refetches the live Victorian, NSW and federal pages. Moving off AE entirely is the next step.
+
 # auspol 0.4.99
 
 - The daily forecast job refetches the three live leadership polling pages (Victoria, NSW, federal) and refreshes their leader ratings, so the pages' leader charts stay current without a republish. Never fatal: on failure the published table is used.
