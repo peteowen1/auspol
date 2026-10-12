@@ -45,6 +45,12 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30.
   (fails loudly without it). ORDER: publish a rebuild BEFORE merging to main. The source page is refetched by hand
   (`fetch_statewide_poll_samples.R`); FK3! warns when the newest federal breakdown is over 45 days old.
 
+- OWN POLL SOURCE SHIPPED 2026-10-13 (PR #124, 0.4.100; published 00:14): the trend reads our Wikipedia scrape layered
+  over AE. Live Vic One Nation 12.6 -> 18.1 seats (AE's swapped RedBridge row corrected). First daily run with it:
+  07:00 13 Oct, UNCHECKED (look for PM1/PZ1 lines and no "live poll pages not refreshed" warning).
+  NEXT WORKSTREAM (Pete): move off AE entirely; five dependencies listed in PETE-ASKED-FOR. Worktree
+  `.claude/worktrees/layered-run` (9 GB, the deciding-run copy) is safe to delete: Pete's call.
+
 **Needs Pete:**
 1. Own poll source STEP 2: should the trend read our Wikipedia/Poll Bludger file (layered: AE only where Wikipedia
    has nothing, i.e. fed2007, wa2001; Poll Bludger for nsw2019) instead of AE's files? Re-measure first: house effects
