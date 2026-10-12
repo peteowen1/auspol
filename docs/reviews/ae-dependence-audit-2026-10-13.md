@@ -82,3 +82,23 @@ publish rebuild re-scores with these rows.
 Also (Pete asked): AE's repo calls its poll files "authored inputs", committed as "routine data update", with no
 source, sample size or client per poll; `provenance.json` holds file checksums only. Its numbers cannot be traced
 to a source, which is how the swapped RedBridge row went unnoticed.
+
+## Poll Bludger as the replacement source (checked 2026-10-13)
+
+The target: 71 final-month polls still carrying AE's numbers (`deciding-runs/ae-final-month-polls.csv`): fed2007 18,
+fed2010 21, the rest single digits per election (vic2018 4, wa2008 4, fed2022 4, nsw2019 3 ...). 12 of the 71 are
+two-party-only rows in AE (Morning Consult, Ipsos, some Essential) that do not feed the primary trend anyway.
+
+What Poll Bludger has, checked by hand:
+- **2018 on (pollbludger.net day archives, e.g. `/2018/11/22/`):** full primaries in the post text. Vic 21 Nov 2018:
+  "YouGov Galaxy ... Both parties on 40% primary; Greens 11%" (AE has the same), uComms/ReachTEL "Labor 39%,
+  Coalition 36%, Greens 10.4%", n = 1,239 (AE has 40.8 / 37.8: undecided divided out).
+- **2007 (the same site, day archives back to at least November 2007):** posts exist for the final-month polls
+  ("Newspoll: 52-48", "Morgan: 54.5-45.5", "Galaxy: 52-48 in marginals"), but primaries are often missing at the
+  time of the post: the 23 Nov 2007 Newspoll post says "a sample size of 2614, but no primary votes".
+- The Wayback Machine refused requests (HTTP 429), and the old Crikey blog address does not resolve.
+
+So Poll Bludger is free text. Plan: fetch every day archive page in each cycle's final 90 days (about 2,250 pages,
+about 40 minutes at one request a second), store the raw HTML, extract firm, fieldwork, sample and primaries from
+each post, and measure the extractor on the polls AE also has (AE as the answer key, before AE is dropped).
+Tally Room does not publish polls.
