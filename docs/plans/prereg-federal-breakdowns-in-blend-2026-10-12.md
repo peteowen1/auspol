@@ -73,3 +73,30 @@ shipped. SE by delete-one-election jackknife (5 clusters, a weak SE; said here s
 ## Amendments
 
 (any change is added below this line with the original text left as is)
+
+### Amendment 1 (2026-10-12, after the screen, before the deciding run): the "byte-identical" dry run was wrong
+
+qld2020 and sa2022 are not untouched: they have 5 and 7 federal breakdown rows in their cycles, at decayed weight
+0.06 and under 0.01 (the coverage table rounded them to look like zero). F1 moves them by at most 0.021 points.
+Every federal election, and every WA election before 2025, is unchanged (max change exactly 0 outside these
+seven). Not a bug; the dry-run sentence above was imprecise. The criterion is unchanged.
+
+## RESULT, screen (2026-10-12): F1 and F2 pass non-inferiority; every r is slightly worse on its point estimate
+
+`scripts/screen_fed_breakdowns.R` (7 s). Day-before level RMSE, 15 targeted cells, lower is better:
+
+| arm | RMSE | vs shipped (SE, 5 clusters) |
+|---|---|---|
+| shipped (no federal polls) | 1.188 | - |
+| F1 (r = 0.15) | 1.224 | +0.036 (0.048), PASS |
+| F2 (r fitted, shrunk; picked 0.15, 0.11, 0.09, 0.08, 0.21) | 1.245 | +0.058 (0.059), PASS |
+| r 0.05 / 0.1 / 0.25 / 0.5 / 1 | 1.198 / 1.210 / 1.254 / 1.338 / 1.504 | rises steadily with r |
+| F1 with a 180-day gap | 1.252 | +0.064 (0.071) |
+
+- vic2022 dry run: max change 0.05 (bar 0.6). Live vic2026 under F1: ALP 24.6 to 24.5, LNP 28.9 to 28.8, GRN 13.6
+  to 13.7, so the gap correction works (bar: within 1 point).
+- **Live nsw2027 moves more than 1 point** (ALP 30.3 to 29.1, LNP 24.2 to 23.2, GRN 11.8 to 12.6), because NSW has
+  few recent state polls (own weight 0.47 against 0.31 federal). The unacceptable-win clause names vic2026 only;
+  this is reported to Pete under its spirit.
+- The data lean toward r = 0, within noise. Shipping F1 rests on Pete's preference that a federal poll should
+  count a little; the deciding run checks it does no harm to seats.

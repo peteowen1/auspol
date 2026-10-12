@@ -55,12 +55,83 @@ level_recent_decay_avg <- function(region, election_date, half_life, cycle_start
   aa <- min(as.Date(as_at), as.Date(election_date))
   w <- p[p$date < aa & p$date > as.Date(cycle_start)]
   wt <- 2^(-as.numeric(aa - w$date) / half_life)
+  fed <- .lr_fed_part(region, aa, half_life, cycle_start, w)
   avg <- vapply(.LR_CLS, function(k) {
     if (!nrow(w) || !k %in% names(w)) return(NA_real_)
     ok <- is.finite(w[[k]]); if (!any(ok)) return(NA_real_)
-    sum(wt[ok] * w[[k]][ok]) / sum(wt[ok])
+    num <- sum(wt[ok] * w[[k]][ok]); den <- sum(wt[ok])
+    if (!is.null(fed) && is.finite(fed$sum[[k]])) { num <- num + fed$sum[[k]]; den <- den + fed$wt[[k]] }
+    num / den
   }, 0)
-  list(avg = avg, n_eff = sum(wt))
+  list(avg = avg, n_eff = sum(wt) + if (is.null(fed)) 0 else fed$n_eff)
+}
+
+#' Weight of a federal state breakdown against a state poll (AUSPOL_LEVEL_FED_R)
+#'
+#' "0" (default) leaves the blend as shipped. A positive number r adds federal voting-intention polls' state
+#' breakdowns to [level_recent_decay_avg()] at weight r each, corrected by the state-minus-federal gap.
+#' docs/plans/prereg-federal-breakdowns-in-blend-2026-10-12.md.
+#' @return Numeric r (0 = off).
+#' @export
+level_recent_fed_r <- function() {
+  r <- suppressWarnings(as.numeric(Sys.getenv("AUSPOL_LEVEL_FED_R", "0")))
+  if (!is.finite(r) || r < 0) stop("AUSPOL_LEVEL_FED_R must be a non-negative number")
+  r
+}
+
+.lr_fed_memo <- new.env(parent = emptyenv())
+.LR_STATE_NAME <- c("New South Wales" = "nsw", "Victoria" = "vic", "Queensland" = "qld",
+                    "Western Australia" = "wa", "South Australia" = "sa", "Tasmania" = "tas")
+
+# Federal polls' state breakdowns (Wikipedia "Sub-national polling" tables), one row per poll and state,
+# columns st, date (fieldwork end), ALP, LNP, GRN. Read once per process.
+#' @noRd
+.lr_fed_polls <- function() {
+  if (!is.null(.lr_fed_memo$tab)) return(.lr_fed_memo$tab)
+  f <- file.path(pkg_root(), "external", "reference", "polls", "statewide-samples", "statewide_polls_wiki.csv")
+  if (!file.exists(f)) stop("AUSPOL_LEVEL_FED_R > 0 needs ", f, " (scripts/fetch_statewide_poll_samples.R)")
+  w <- data.table::fread(f, showProgress = FALSE)
+  w <- w[w$region == "fed" & grepl("^Sub-national polling > ", w$section)]
+  pct <- function(x) suppressWarnings(as.numeric(sub("%", "", as.character(x))))
+  gcols <- intersect(c("pv_Grn", "pv_GRN", "pv_Green", "pv_Gre"), names(w))
+  grn <- if (length(gcols)) do.call(pmax, c(lapply(gcols, function(cc) pct(w[[cc]])), na.rm = TRUE)) else rep(NA_real_, nrow(w))
+  lnp <- ifelse(is.finite(w$lnp_fp), w$lnp_fp,
+                ifelse(is.finite(w$lib_fp) | is.finite(w$nat_fp), rowSums(cbind(w$lib_fp, w$nat_fp), na.rm = TRUE), NA_real_))
+  out <- data.table::data.table(st = unname(.LR_STATE_NAME[sub(" >.*", "", sub("^Sub-national polling > ", "", w$section))]),
+                                date = as.Date(w$fieldwork_end), ALP = as.numeric(w$alp_fp), LNP = lnp, GRN = grn)
+  out <- out[!is.na(out$st) & is.finite(out$date) & is.finite(out$ALP)]
+  if (!nrow(out)) stop("no federal state-breakdown rows parsed from ", f)
+  assign("tab", out, envir = .lr_fed_memo)
+  out
+}
+
+# The federal part of the decayed mean: per class, r * sum(w_f * (y_f + gap)) and r * sum(w_f). NULL when off,
+# for a federal target, or with no breakdown in the cycle. gap = state minus federal, decayed means with the
+# AUSPOL_LEVEL_FED_GAP_HL half-life (default 90 days), shrunk to 0 by n/(n+1), n = the smaller decayed weight.
+#' @noRd
+.lr_fed_part <- function(region, aa, half_life, cycle_start, state_polls) {
+  r <- level_recent_fed_r()
+  if (r <= 0 || identical(region, "fed")) return(NULL)
+  ghl <- suppressWarnings(as.numeric(Sys.getenv("AUSPOL_LEVEL_FED_GAP_HL", "90")))
+  if (!is.finite(ghl) || ghl <= 0) stop("AUSPOL_LEVEL_FED_GAP_HL must be a positive number of days")
+  fp <- .lr_fed_polls()
+  reg <- region
+  f <- fp[fp$st == reg & fp$date < aa & fp$date > as.Date(cycle_start)]
+  if (!nrow(f)) return(NULL)
+  wf <- 2^(-as.numeric(aa - f$date) / half_life)
+  gf <- 2^(-as.numeric(aa - f$date) / ghl)
+  gs <- 2^(-as.numeric(aa - state_polls$date) / ghl)
+  res <- lapply(.LR_CLS, function(k) {
+    okf <- is.finite(f[[k]])
+    oks <- if (k %in% names(state_polls)) is.finite(state_polls[[k]]) else rep(FALSE, nrow(state_polls))
+    if (!any(okf) || !any(oks)) return(c(sum = NA_real_, wt = 0))
+    gap <- sum(gs[oks] * state_polls[[k]][oks]) / sum(gs[oks]) - sum(gf[okf] * f[[k]][okf]) / sum(gf[okf])
+    n <- min(sum(gs[oks]), sum(gf[okf]))
+    gap <- gap * n / (n + 1)
+    c(sum = r * sum(wf[okf] * (f[[k]][okf] + gap)), wt = r * sum(wf[okf]))
+  })
+  names(res) <- .LR_CLS
+  list(sum = vapply(res, `[[`, 0, "sum"), wt = vapply(res, `[[`, 0, "wt"), n_eff = r * sum(wf))
 }
 
 #' Half-life and blend constant for the decayed level, fitted on earlier elections
@@ -218,7 +289,8 @@ level_recent_apply <- function(levels, target, region, election_date, code = "LR
 .lr_decay_fit_cached <- function(target, tab = NULL) {
   if (!is.null(tab)) return(level_recent_decay_fit(target, tab))
   f <- out_path("level-recent.csv")
-  key <- paste(target, Sys.getenv("AUSPOL_LEVEL_RECENT_HALFLIFE", "20"), if (file.exists(f)) paste(file.info(f)$mtime, file.info(f)$size) else "none")
+  key <- paste(target, Sys.getenv("AUSPOL_LEVEL_RECENT_HALFLIFE", "20"), Sys.getenv("AUSPOL_LEVEL_FED_R", "0"),
+               Sys.getenv("AUSPOL_LEVEL_FED_GAP_HL", "90"), if (file.exists(f)) paste(file.info(f)$mtime, file.info(f)$size) else "none")
   if (is.null(.lr_fit_memo[[key]])) assign(key, level_recent_decay_fit(target, NULL), envir = .lr_fit_memo)
   .lr_fit_memo[[key]]
 }
