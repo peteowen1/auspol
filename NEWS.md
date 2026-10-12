@@ -1,3 +1,7 @@
+# auspol 0.4.99
+
+- The daily forecast job refetches the three live leadership polling pages (Victoria, NSW, federal) and refreshes their leader ratings, so the pages' leader charts stay current without a republish. Never fatal: on failure the published table is used.
+
 # auspol 0.4.98
 
 - **Leader ratings on the forecast pages** (Pete, 2026-10-12): preferred premier/PM, satisfaction and net satisfaction for every leader the polls ask about, plus AE's government-leader approval, under a new `leaders` key in the page data (`leader_page_data()`, `scripts/build_leader_ratings.R`). Display only: leader approval was tested as a forecast input and refused (`docs/plans/prereg-leader-approval-miss-2026-10-12.md`). The current federal term's leadership polling page is now fetched.

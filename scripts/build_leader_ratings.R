@@ -9,8 +9,14 @@
 # Columns a page labels "Net" are dropped and recomputed, so every net uses one definition.
 options(auspol.root = normalizePath("."))
 suppressMessages(devtools::load_all(quiet = TRUE)); suppressMessages(library(data.table))
-SRC <- file.path("external", "reference", "polls", "statewide-samples", "statewide_polls_wiki.csv")
+# Daily refresh (forecast.yaml): AUSPOL_LEADER_SRC is a fresh parse of the live pages only, AUSPOL_LEADER_KEEP the
+# published full table, whose Wikipedia rows for every OTHER election are kept; AUSPOL_LEADER_OUT where to write.
+SRC <- Sys.getenv("AUSPOL_LEADER_SRC", file.path("external", "reference", "polls", "statewide-samples", "statewide_polls_wiki.csv"))
+KEEP <- Sys.getenv("AUSPOL_LEADER_KEEP", "")
+OUT <- Sys.getenv("AUSPOL_LEADER_OUT", out_path("leader-ratings.csv"))
 w <- fread(SRC, showProgress = FALSE)
+cat(sprintf("LK0 source %s (%d rows, pages %s)%s\n", SRC, nrow(w), paste(sort(unique(w$page_key)), collapse = ","),
+            if (nzchar(KEEP)) paste0("; keeping other elections from ", KEEP) else ""))
 
 # Party of every leader named in the tables. Fixed facts; Pickering checked against the archived vic2026 page
 # ("Warren Pickering becomes state leader of One Nation"). Speirs_Tarzia_Hurn is one column for three
@@ -31,8 +37,11 @@ GOVT <- c(fed2013 = "ALP", fed2016 = "LNP", fed2019 = "LNP", fed2022 = "LNP", fe
           sa2018 = "ALP", sa2022 = "LNP", sa2026 = "ALP",
           vic2014 = "LNP", vic2018 = "ALP", vic2022 = "ALP", vic2026 = "ALP",
           wa2017 = "LNP", wa2021 = "ALP", wa2025 = "ALP")
-# Audit GOVT against leaders.csv's head of government wherever it names one.
-ld <- fread(file.path("external", "reference", "leaders", "leaders.csv"), showProgress = FALSE)
+# Audit GOVT against leaders.csv's head of government wherever it names one (local builds; the CI runner has no
+# external/ folder, and the tables it audits are the same committed ones).
+LDF <- file.path("external", "reference", "leaders", "leaders.csv")
+if (!file.exists(LDF)) { cat("LK0 leaders.csv not here (CI): GOVT audit skipped; it runs on every local build\n"); ld <- data.table(election = character(), head_of_govt = character()) } else
+ld <- fread(LDF, showProgress = FALSE)
 hg <- unique(ld[nzchar(ld$head_of_govt) & ld$election %in% names(GOVT), .(election, head_of_govt)])
 hg[, surname := sub("^.* ", "", head_of_govt)][, surname := gsub("'", "_", surname)]
 hg[surname == "Farrell", surname := "O_Farrell"]
@@ -101,6 +110,17 @@ ae <- rbindlist(lapply(c("fed", "nsw", "qld", "sa", "vic", "wa"), function(rg) {
 ae <- ae[is.finite(ae$value)]
 ae[, `:=`(source = "ae", role = "gov", party = NA_character_, page_key = NA_character_, section = NA_character_, sample_n = NA_real_)]
 L <- rbind(L, ae, use.names = TRUE, fill = TRUE)
+if (nzchar(KEEP)) {
+  # Live refresh: fresh Wikipedia rows for the elections just parsed, the published rows for every other
+  # election. AE rows are always rebuilt here from the anchor files, so drop the published copies of them.
+  K <- fread(KEEP, showProgress = FALSE)
+  fresh <- unique(L$election[L$source == "wikipedia"])
+  kk <- K[K$source == "wikipedia" & !(K$election %in% fresh)]
+  for (cc in c("date", "end")) if (cc %in% names(kk)) kk[[cc]] <- as.Date(kk[[cc]])
+  L <- rbind(L, kk, use.names = TRUE, fill = TRUE)
+  cat(sprintf("LK1k refreshed %s from the live pages; kept %d published rows for %d other elections\n",
+              paste(sort(fresh), collapse = ","), nrow(kk), uniqueN(kk$election)))
+}
 setorder(L, region, election, date, leader, measure)
 
 cat(sprintf("LK2 %d rows: %d from Wikipedia leadership tables (%d pages), %d from AE approve/disapprove\n",
@@ -112,5 +132,5 @@ print(cov, nrows = 100)
 # Coverage, not presence
 if (!all(c("gov", "opp") %in% L$role[L$source == "wikipedia"])) stop("LK4! roles missing")
 if (any(L$value < 0 & L$measure != "net_sat") || any(L$value > 100)) stop("LK4! a share outside 0-100")
-fwrite(L, out_path("leader-ratings.csv"))
-cat(sprintf("LK5 wrote %s\n", out_path("leader-ratings.csv")))
+fwrite(L, OUT)
+cat(sprintf("LK5 wrote %s\n", OUT))
