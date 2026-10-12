@@ -78,6 +78,9 @@ sanity_check_polls <- function(polls, region) {
   sums <- rowSums(fp, na.rm = TRUE)
   # Modern polls (reporting >= 3 parties) should sum near 100
   modern <- rowSums(!is.na(fp)) >= 3
+  # A row whose Others is deliberately blank (R/poll_source.R: a party missing that nearby polls report) does not
+  # sum to 100 by design; the check is for parsing errors, so leave those rows out of it.
+  if ("OTH" %in% parties) modern <- modern & !is.na(polls$OTH)
   bad <- modern & (sums < 95 | sums > 105)
   message(sprintf(
     "polls[%s]: %d rows, %s to %s, %d firms; %d/%d modern rows with FP sums outside 95-105",

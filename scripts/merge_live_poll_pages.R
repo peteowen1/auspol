@@ -9,6 +9,11 @@ full <- fread(a[1], showProgress = FALSE, colClasses = "character")
 fresh <- fread(a[2], showProgress = FALSE, colClasses = "character")
 pages <- unique(fresh$page_key)
 if (!length(pages) || !nrow(fresh)) stop("PM0! the fresh parse is empty: ", a[2])
+expected <- strsplit(Sys.getenv("AUSPOL_LIVE_PAGES", ""), ",")[[1]]
+missing <- setdiff(expected[nzchar(expected)], pages)
+# A page that failed to fetch is absent from the fresh parse and keeps its published rows: say so (the workflow
+# turns this line into a warning), since its polls are then as old as the last publish.
+if (length(missing)) cat(sprintf("PM4! live pages not refreshed (kept as published): %s\n", paste(missing, collapse = ",")))
 kept <- full[!full$page_key %in% pages]
 out <- rbind(kept, fresh, use.names = TRUE, fill = TRUE)
 cat(sprintf("PM1 %d published rows kept; pages %s replaced: %d published rows -> %d fresh rows\n", nrow(kept), paste(pages, collapse = ","),

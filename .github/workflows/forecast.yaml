@@ -216,10 +216,11 @@ jobs:
           test -s output/polls-wiki/statewide_polls_wiki.csv && test -s output/polls-wiki/firm_alias.csv || { echo "::error::poll table or firm aliases downloaded empty"; exit 1; }
           LT=""
           if LT=$(mktemp -d) && AUSPOL_POLL_BASE="$LT" AUSPOL_POLL_ONLY=vic2026_opinion,nsw2027_opinion,fed2028_leaders Rscript scripts/fetch_statewide_poll_samples.R > "$LT/fetch.log" 2>&1 \
-             && Rscript scripts/merge_live_poll_pages.R output/polls-wiki/statewide_polls_wiki.csv "$LT/statewide_polls_wiki.csv" "$LT/merged.csv" > "$LT/merge.log" 2>&1 \
+             && AUSPOL_LIVE_PAGES=vic2026_opinion,nsw2027_opinion,fed2028_leaders Rscript scripts/merge_live_poll_pages.R output/polls-wiki/statewide_polls_wiki.csv "$LT/statewide_polls_wiki.csv" "$LT/merged.csv" > "$LT/merge.log" 2>&1 \
              && test -s "$LT/merged.csv"; then
             mv "$LT/merged.csv" output/polls-wiki/statewide_polls_wiki.csv
             grep -E "^PM" "$LT/merge.log" || true
+            if grep -q "^PM4!" "$LT/merge.log"; then echo "::warning::$(grep '^PM4!' "$LT/merge.log")"; fi
           else
             echo "::warning::live poll pages not refreshed -- the forecast reads the published poll table (as of the last publish) plus AE's file"
             tail -n 20 "$LT/fetch.log" "$LT/merge.log" 2>/dev/null || true
