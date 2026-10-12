@@ -26,9 +26,11 @@ options(auspol.root = normalizePath("."))
 suppressMessages(devtools::load_all(quiet = TRUE))
 suppressMessages(library(data.table))
 a <- commandArgs(TRUE)
+# "shipped" is the leave-one-out family that shipped until 2026-10-12 (tf2 since);
+# the label is kept so output/flow-oracle-score.csv reads as it did in the review.
 CONFIGS <- list(
-  shipped   = c(AUSPOL_FLOW_TF = "0", AUSPOL_FLOW_MODEL_TAG = "",    AUSPOL_FLOW_RATE_HL = "0"),
-  infer_hl2 = c(AUSPOL_FLOW_TF = "0", AUSPOL_FLOW_MODEL_TAG = "",    AUSPOL_FLOW_RATE_HL = "2"),
+  shipped   = c(AUSPOL_FLOW_TF = "0", AUSPOL_FLOW_MODEL_TAG = "none", AUSPOL_FLOW_RATE_HL = "0"),
+  infer_hl2 = c(AUSPOL_FLOW_TF = "0", AUSPOL_FLOW_MODEL_TAG = "none", AUSPOL_FLOW_RATE_HL = "2"),
   tf0       = c(AUSPOL_FLOW_TF = "1", AUSPOL_FLOW_MODEL_TAG = "tf0", AUSPOL_FLOW_RATE_HL = "0"),
   tf2       = c(AUSPOL_FLOW_TF = "1", AUSPOL_FLOW_MODEL_TAG = "tf2", AUSPOL_FLOW_RATE_HL = "2"))
 SMOOTH <- 0.15

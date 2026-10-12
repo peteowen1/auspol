@@ -1,9 +1,10 @@
 # MODEL VARIANT TAG, so an experimental retrain can be A/B'd against the
 # shipped models without overwriting them. `AUSPOL_FLOW_MODEL_TAG=w` reads
 # `output/xgb-flows-v1-w-loo-<election>.model` -- note the hyphen, which
-# .flow_model_tag() adds below; unset reads the shipped
-# `xgb-flows-v1-loo-<election>.model` and is byte-identical to before this
-# existed. The feature COLUMNS file is shared -- a variant that changed the
+# .flow_model_tag() adds below. Unset means the SHIPPED tag, "tf2" since
+# 2026-10-12 (the time-forward trees, scripts/fit_xgb_flows_tf.R); "none" is
+# the untagged leave-one-out-trained family (with AUSPOL_FLOW_TF=0). The
+# feature COLUMNS file is shared -- a variant that changed the
 # feature set would need its own, and this is asserted rather than assumed
 # by the column check `predict()` already performs on the matrix it is given.
 # Which as-at flow model applies, or NULL when AUSPOL_FLOW_ASAT is off.
@@ -41,8 +42,10 @@
   NULL
 }
 .flow_model_tag <- function() {
-  t <- Sys.getenv("AUSPOL_FLOW_MODEL_TAG", "")
-  if (nzchar(t)) paste0("-", t) else ""
+  t <- Sys.getenv("AUSPOL_FLOW_MODEL_TAG", "tf2")
+  # "none" = the untagged family. An empty value cannot say that on Windows,
+  # where setting a variable to "" unsets it and the shipped "tf2" applies.
+  if (nzchar(t) && !identical(t, "none")) paste0("-", t) else ""
 }
 
 # TIME-FORWARD FLOW RATE FEATURES (AUSPOL_FLOW_TF=1), one definition shared by
@@ -270,10 +273,10 @@ xgb_flow_conditional_override_for <- function(shares, target_election, prev_elec
   # mistyped or missing tag would otherwise fall through to the untagged
   # all-data model above (which saw the target) while every log line still
   # reads as the arm (review 2026-10-12).
-  if (identical(Sys.getenv("AUSPOL_FLOW_TF", "0"), "1") &&
+  if (identical(Sys.getenv("AUSPOL_FLOW_TF", "1"), "1") &&
       !startsWith(basename(model_f), sprintf("xgb-flows-v1%s-asat-", .flow_model_tag())))
     stop(sprintf("AUSPOL_FLOW_TF=1 with tag '%s' resolved to %s, not a tagged as-at model for %s. Run scripts/fit_xgb_flows_tf.R <tag> <half-life>.",
-                 Sys.getenv("AUSPOL_FLOW_MODEL_TAG"), basename(model_f), target_election), call. = FALSE)
+                 sub("^-", "", .flow_model_tag()), basename(model_f), target_election), call. = FALSE)
   if (!file.exists(model_f) || !file.exists(cols_f) || !file.exists(feat_f)) {
     cat(sprintf("XF9! model/cols/features file missing -- run scripts/fit_xgb_flows_v1.R; AUSPOL_XGB_FLOWS per-seat override skipped\n"))
     return(NULL)
@@ -284,12 +287,12 @@ xgb_flow_conditional_override_for <- function(shares, target_election, prev_elec
   hist <- TR[elections_before(TR$election, target_election)]   # time-forward inputs
 
   CLASSES <- c("ALP","GRN","IND","LNP","NAT","ONP","OTH","OTH_RIGHT")
-  # RECENCY (AUSPOL_FLOW_RATE_HL, years; "0" = every earlier election weighted
-  # equally, the previous behaviour). Flows trend: One Nation -> Liberal ran
+  # RECENCY (AUSPOL_FLOW_RATE_HL, years; shipped "2" since 2026-10-12; "0" =
+  # every earlier election weighted equally, the earlier behaviour). Flows trend: One Nation -> Liberal ran
   # ~50% in 2004-2016 and 69-75% in every election since 2024. Time-forward
   # screen (scripts/screen_flow_recency.py): vote-weighted error 5.60 points
   # equal-weighted, 4.96 at a 1.5-2 year half-life, over 4,409 election-cells.
-  .hl <- suppressWarnings(as.numeric(Sys.getenv("AUSPOL_FLOW_RATE_HL", "0")))
+  .hl <- suppressWarnings(as.numeric(Sys.getenv("AUSPOL_FLOW_RATE_HL", "2")))
   .wt <- pmax(1, hist$cond_n)
   if (is.finite(.hl) && .hl > 0) {
     .d <- election_dates()
@@ -317,7 +320,7 @@ xgb_flow_conditional_override_for <- function(shares, target_election, prev_elec
   # come from .flow_rates_tf(), the definition scripts/fit_xgb_flows_tf.R
   # trained on. Needs a model trained that way (AUSPOL_FLOW_MODEL_TAG naming
   # it); the shipped trees learned the leave-one-election-out feature.
-  .tf <- identical(Sys.getenv("AUSPOL_FLOW_TF", "0"), "1")
+  .tf <- identical(Sys.getenv("AUSPOL_FLOW_TF", "1"), "1")
   if (.tf) {
     if (!nzchar(.flow_model_tag()))
       stop("AUSPOL_FLOW_TF=1 needs AUSPOL_FLOW_MODEL_TAG naming models trained by scripts/fit_xgb_flows_tf.R; ",
