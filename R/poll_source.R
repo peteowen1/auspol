@@ -192,6 +192,11 @@ poll_layer <- function(ae, region, path = NULL, window = 4L) {
   }
   # matched: our numbers (where kept) under AE's label and date
   po <- pair_o[use_ours]; pa <- pair_a[use_ours]
+  # Provenance of every output row, for the move-off-AE audit (scripts/audit_ae_dependence.R): where its numbers
+  # came from, which parties AE had to fill, and whether the firm label is AE's.
+  ae$.prov <- "ae_only"
+  ae$.prov[pair_a] <- ifelse(use_ours, "ours", ifelse(diff_big, "ae_dispute", "ae_suspect"))
+  ae$.fill <- ""; ae$.label_ae <- TRUE
   # A party our row does not report (the page folded it into Others: the wa2017 table has no One Nation column)
   # keeps AE's figure, and our Others gives that share back. Without this, layering blanked One Nation on the
   # final WA 2017 polls and wa2017 seat log loss rose 0.086 (deciding run, 2026-10-12).
@@ -200,6 +205,7 @@ poll_layer <- function(ae, region, path = NULL, window = 4L) {
     fill <- !is.finite(ours[[p]][po]) & is.finite(ae[[p]][pa])
     if (any(fill) && "OTH" %in% parties) ours$OTH[po[fill]] <- pmax(0, ours$OTH[po[fill]] - ae[[p]][pa[fill]])
     ours[[p]][po[fill]] <- ae[[p]][pa[fill]]
+    ae$.fill[pa[fill]] <- paste0(ae$.fill[pa[fill]], p, " ")
   }
   for (p in parties) ae[[p]][pa] <- ours[[p]][po]
   # unmatched ours: label of the same firm's nearest AE poll, else our own text
@@ -223,9 +229,13 @@ poll_layer <- function(ae, region, path = NULL, window = 4L) {
     }, "")
     add <- data.table::data.table(date = extra$date, firm = lab, tpp_published = extra$tpp_published)
     for (p in parties) add[[p]] <- extra[[p]]
+    add$.prov <- ifelse(is.finite(extra$OTH) | !("OTH" %in% parties), "ours_only", "ours_only_oth_blank")
+    add$.fill <- ""; add$.label_ae <- lab != extra$firm_raw
     ae <- rbind(ae[, setdiff(names(ae), "canon"), with = FALSE], add, use.names = TRUE, fill = TRUE)
   } else ae <- ae[, setdiff(names(ae), "canon"), with = FALSE]
   data.table::setorderv(ae, "date")
+  prov <- data.table::data.table(date = ae$date, firm = ae$firm, source = ae$.prov, ae_filled = trimws(ae$.fill), label_from_ae = ae$.label_ae)
+  ae <- ae[, setdiff(names(ae), c(".prov", ".fill", ".label_ae")), with = FALSE]
   log <- list(region = region, ae_rows = sum(!used_a) + length(pair_a), ours = nrow(ours), matched = length(pair_o),
               ours_only = nrow(extra), ae_only = sum(!used_a), matched_differ_gt2 = sum(diff_big), differ = differ)
   message(sprintf("PZ1 poll source layered [%s]: %d ours (%d matched to AE, %d ours only), %d AE only; %d matched polls differ by > 2 points on a major party (two-party check kept ours on %d, AE on %d); own check: %d swapped back, %d suspect (%d unmatched suspect dropped), %d without a two-party figure; %d unmatched rows had Others blanked (a party missing that nearby polls report)",
@@ -233,5 +243,6 @@ poll_layer <- function(ae, region, path = NULL, window = 4L) {
                   sum(ours$check == "swapped"), sum(ours$check == "suspect"), n_suspect_dropped, sum(ours$check == "no_tpp"), n_oth_blanked))
   data.table::setattr(ae, "parties", parties)
   data.table::setattr(ae, "layer_log", log)
+  data.table::setattr(ae, "provenance", prov)
   ae
 }
