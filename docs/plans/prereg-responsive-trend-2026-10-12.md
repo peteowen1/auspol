@@ -76,3 +76,34 @@ most of the gap to the raw poll mean. T3 adds a little.
 ## Amendments
 
 (any change is added below this line with the original text left as is)
+
+## RESULT 2026-10-12: all three arms REFUSED; the blend stays
+
+`scripts/screen_trend_responsive.R`, 22 elections, 66 day-before cells (statewide forecast level, the shipped
+object; T0 reproduces `output/level-recent.csv` exactly, max diff 0.0000). Logs:
+`deciding-runs/trend-screen-20261012.log`, `deciding-runs/trend-screen-20261012-t3.log`. Day-before level RMSE
+against the result, points, lower is better; SE by delete-one-election jackknife.
+
+| arm | RMSE | vs T0 (SE) | vs shipped 2.315 (SE) | 90 days before vs T0 (SE) | verdict |
+|---|---|---|---|---|---|
+| T0 today's trend | 2.601 | - | +0.286 | - | control |
+| T1 pooled_tf noise | 2.522 | -0.079 (0.040) pass | +0.207 (0.162) FAIL | +0.017 (0.046) | refused: worse than shipped by >1 SE |
+| T2 walk x m, time-forward | 2.438 | -0.163 (0.082) pass | +0.123 (0.153) pass | +0.252 (0.162) FAIL | refused: 90-day guard |
+| T3 T2 + firm-equal centring | 2.436 | -0.165 (0.094) pass | +0.121 (0.162) pass | +0.207 (0.131) FAIL | refused: 90-day guard |
+
+Also (not arms): walk x16 alone 2.305, firm-equal centring alone 2.577 (-0.024 vs T0, SE 0.026), raw 28-day
+poll mean 2.111.
+
+What it says:
+- **A faster walk closes the lag, but only up to the shipped blend, never past it.** The best grid point (x16)
+  scores 2.305 against the shipped 2.315. T2 and T3 picked x16 for every target since 2020, which is the
+  top-of-grid clause too: "no smoothing" is the raw average by another name.
+- **The cost shows earlier in the campaign.** A trend that fast is worse 90 days out (+0.25), because it chases
+  noise all cycle. The blend keeps a smooth trend and uses the recent polls only at the end, which is why it wins.
+- **Firm-equal centring does almost nothing** (-0.02). The diagnostic's 1.91 to 1.81 came from centring on the
+  firms that polled LATE, which is a different thing: the late-firm mix, not the centring rule.
+- Dry runs: vic2022 LNP never reached 33 under any arm (best T3 31.8; shipped 33.4). sa2026 ALP moved down under
+  T2/T3 (37.0, actual 37.6). fed2019 LNP stayed more than 2 points short everywhere (best 39.3), so no leakage sign.
+
+No clause refusal to route: no arm beat the shipped level on its point estimate. The switches stay in the code
+at their off values (`AUSPOL_TREND_SIGMAS`, `AUSPOL_TREND_RW_MULT`, `AUSPOL_TREND_SZC`), registered as refused.

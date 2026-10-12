@@ -26,7 +26,11 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30.
   (12:59). First daily `forecast.yaml` run on main with tf2: UNCHECKED.
 - POLL-LEVEL PREREG: size check STOPPED it before any arm (amendment in
   `plans/prereg-poll-level-centring-2026-10-12.md`): clustered SE 0.15-0.42 > 0.10, and with w=1.00 the trend arms
-  cannot move the shipped level. Needs Pete: redesign question.
+  cannot move the shipped level. Pete chose "make the trend replace the blend": REFUSED, all three arms
+  (`plans/prereg-responsive-trend-2026-10-12.md`); the blend stays. A faster walk only reaches the blend (2.305 vs
+  2.315) and costs accuracy 90 days out; firm-equal centring does nothing. Poll weighting stays OPEN (Pete wants
+  "a LOT better"): what is left is what the blend can carry (sample size, federal polls' state breakdowns) and the
+  shared misses, not the trend.
 
 **Needs Pete:**
 1. Own poll source STEP 2: should the trend read our Wikipedia/Poll Bludger file (layered: AE only where Wikipedia
