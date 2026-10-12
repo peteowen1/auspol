@@ -76,3 +76,38 @@ sa2026 (+34, exact) is the dry run against it.
 ## Amendments
 
 (any change is added below this line with the original text left as is)
+
+### Amendment 1 (2026-10-12, AFTER the first screen): pooled predictor
+
+The first screen used AE's approval series alone, which for most state elections is 1-2 polls per window (SA
+2026 had none in the earlier window, so its x1 was forced to 0). A negative is only reportable from the strongest
+version, so `--pool` adds the Wikipedia tables' government-leader net satisfaction (614 readings, 2011 on), one
+reading per poll. Same rule, same prior. Post hoc and labelled as such.
+
+## RESULT 2026-10-12: both arms REFUSED, in both versions
+
+`scripts/screen_leader_approval.R` (`--pool` for the amendment). 22 elections. Day-before RMSE change against
+shipped (government-class 2.269 over 22 cells; ALP/LNP/GRN 2.319 over 66); lower is better; SE jackknife over
+elections:
+
+| arm | government class | all 66 cells | verdict |
+|---|---|---|---|
+| A1 change, AE only | +0.010 (SE 0.009) | +0.005 (SE 0.004) | refused: worse |
+| A2 level, AE only | +0.024 (SE 0.045) | +0.011 (SE 0.017) | refused: worse |
+| A1 change, pooled | +0.008 (SE 0.009) | +0.004 (SE 0.004) | refused: worse |
+| A2 level, pooled | +0.024 (SE 0.047) | +0.011 (SE 0.018) | refused: worse |
+
+- The size-check SE (0.009 for A1) is small because the shrunk correction is small; the point estimate, not the
+  noise, refuses.
+- **The federal cases contradict the idea.** fed2013: Rudd's return lifted approval 16.6 points over the
+  final months and Labor still fell 1.6 below its final polls. fed2016: Turnbull's approval fell 19.5 points and
+  the Coalition still beat its polls by 0.4.
+- The time-forward beta changed sign after the 10th election (-0.003 to +0.013): the instability clause fires as well.
+- Dry runs: vic2022 x1 -11.5 (falling, as expected) but the fitted beta at the time was near 0, so the
+  correction was -0.03 (direction right only in the pooled version); qld2024 +0.05 (right direction);
+  sa2026 +0.04 (under 0.2). The A2 level arm moves sa2026 by +0.75 the wrong way (popular premier, Labor
+  under its polls), which is the reading the dry run argued against.
+- Live, for information: vic2026 x1 +23 (Carroll's rise), which A1 would have turned into +0.3 for Labor.
+
+The leader-rating table stays (`output/leader-ratings.csv`) for the site and for the open question this test did
+not cover: drift from months out to polling day (option 2), which needs horizon scoring first.
