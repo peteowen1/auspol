@@ -10,6 +10,14 @@
 
 .ps_memo <- new.env(parent = emptyenv())
 
+# Implied ALP two-party share from primaries: ALP + 0.83 GRN + 0.35 ONP + 0.45 rest (rough national preference
+# flows). Used only to check a poll row against its own published two-party figure, never as a forecast input.
+#' @noRd
+.ps_implied <- function(alp, lnp, grn, onp) {
+  z <- function(x) ifelse(is.finite(x), x, 0)
+  alp + 0.83 * z(grn) + 0.35 * z(onp) + 0.45 * pmax(100 - alp - lnp - z(grn) - z(onp), 0)
+}
+
 #' Which poll source the trend reads
 #' @return `"ae"` or `"layered"`.
 #' @export
@@ -89,6 +97,27 @@ wiki_polls <- function(region, parties, path) {
     out$OTH <- pmax(0, 100 - s)
   }
   out$und <- u
+  # One copy per poll before the self-check, so a check can never split two copies of one poll apart.
+  dup <- duplicated(out, by = c("date", "end", "firm_raw", intersect(c("ALP", "LNP", "GRN", "ONP"), names(out))))
+  out <- out[!dup]; tpp_l_rows <- which(!dup)
+  # Published two-party figure, normalised: Essential publishes it with undecided left in (46 / 44, total 90).
+  tpp_l <- pick(c("tpp_L/NP", "tpp_LNP", "tpp_Lib/Nat", "tpp_L/NP_1"))[tpp_l_rows]
+  stopifnot(length(tpp_l) == nrow(out))
+  tsum <- out$tpp_published + tpp_l
+  norm <- is.finite(tsum) & tsum > 75 & tsum < 99
+  out$tpp_published[norm] <- 100 * out$tpp_published[norm] / tsum[norm]
+  # Self-check against the poll's own two-party figure, no AE needed. A row that fits only with Labor and the
+  # Coalition swapped is swapped back (Wikipedia's own row can be wrong: Galaxy Qld 17-18 Nov 2015 lists ALP 42 /
+  # LNP 37 beside ALP 49 two-party); a row that fits neither way is marked suspect.
+  e0 <- abs(.ps_implied(out$ALP, out$LNP, out$GRN, out$ONP) - out$tpp_published)
+  es <- abs(.ps_implied(out$LNP, out$ALP, out$GRN, out$ONP) - out$tpp_published)
+  # Swap only on strong evidence and while One Nation is small: the flow weights above are rough, and at One
+  # Nation 20+ they are too uncertain to tell a swap from a flow error (RedBridge Vic Oct 2026, ON 24, was wrongly
+  # "swapped" by a looser rule).
+  small_on <- !is.finite(out$ONP) | out$ONP < 10
+  swap <- is.finite(e0) & is.finite(es) & small_on & es < 1.5 & e0 > 5
+  if (any(swap)) { a <- out$ALP[swap]; out$ALP[swap] <- out$LNP[swap]; out$LNP[swap] <- a }
+  out$check <- ifelse(!is.finite(e0), "no_tpp", ifelse(swap, "swapped", ifelse(e0 > 5, "suspect", "ok")))
   out <- out[is.finite(out$ALP) & is.finite(out$LNP) & is.finite(out$date)]
   # The same poll can appear twice on a page (e.g. RedBridge 2-8 Oct 2026, vic2026): count it once.
   out <- unique(out, by = c("date", "end", "firm_raw", intersect(c("ALP", "LNP", "GRN", "ONP"), names(out))))
@@ -117,7 +146,11 @@ poll_layer <- function(ae, region, path = NULL, window = 4L) {
   # one-to-one matching, closest midpoints first
   cand <- ours[, list(oi = .I, canon, d_o = date)][ae[, list(ai = .I, canon, d_a = date)], on = "canon", allow.cartesian = TRUE, nomatch = NULL]
   cand <- cand[abs(as.integer(cand$d_o - cand$d_a)) <= window]
-  data.table::setorderv(cand[, gap := abs(as.integer(d_o - d_a))], "gap")
+  # Closest midpoints first, and among those the closest numbers: two Morgan polls (phone, face to face) can
+  # share a date, and pairing them crosswise compares different polls.
+  num <- abs(ours$ALP[cand$oi] - ae$ALP[cand$ai]) + abs(ours$LNP[cand$oi] - ae$LNP[cand$ai])
+  cand$score <- abs(as.integer(cand$d_o - cand$d_a)) + ifelse(is.finite(num), num, 50) / 2
+  data.table::setorderv(cand, "score")
   used_o <- logical(nrow(ours)); used_a <- logical(nrow(ae)); pair_o <- integer(0); pair_a <- integer(0)
   for (k in seq_len(nrow(cand))) {
     o <- cand$oi[k]; a <- cand$ai[k]
@@ -134,19 +167,18 @@ poll_layer <- function(ae, region, path = NULL, window = 4L) {
   # A pair that disagrees by more than 2 points: keep whichever row's primaries fit the poll's own published
   # two-party figure better, by at least 1 point. Implied ALP two-party = ALP + 0.83 GRN + 0.35 ONP + 0.45 rest
   # (rough national preference flows; only used to tell two copies of one poll apart, never as a forecast input).
-  # Undecidable (no published figure, or neither clearly closer): keep AE's row.
+  # Undecidable (no published figure, or neither clearly closer): keep AE's row. A row of ours that failed its own
+  # two-party check (wiki_polls(): "suspect") never wins.
   implied <- function(D, idx) {
     g <- function(p) if (p %in% names(D)) D[[p]][idx] else rep(NA_real_, length(idx))
-    alp <- g("ALP"); lnp <- g("LNP"); grn <- g("GRN"); onp <- g("ONP")
-    rest <- 100 - alp - lnp - ifelse(is.finite(grn), grn, 0) - ifelse(is.finite(onp), onp, 0)
-    alp + 0.83 * ifelse(is.finite(grn), grn, 0) + 0.35 * ifelse(is.finite(onp), onp, 0) + 0.45 * pmax(rest, 0)
+    .ps_implied(g("ALP"), g("LNP"), g("GRN"), g("ONP"))
   }
-  use_ours <- rep(TRUE, length(pair_o))
+  use_ours <- ours$check[pair_o] != "suspect"
   if (any(diff_big)) {
     j <- which(diff_big)
-    tpp <- ae$tpp_published[pair_a[j]]; tpp[!is.finite(tpp)] <- ours$tpp_published[pair_o[j]][!is.finite(tpp)]
+    tpp <- ours$tpp_published[pair_o[j]]; tpp[!is.finite(tpp)] <- ae$tpp_published[pair_a[j]][!is.finite(tpp)]
     e_o <- abs(implied(ours, pair_o[j]) - tpp); e_a <- abs(implied(ae, pair_a[j]) - tpp)
-    use_ours[j] <- is.finite(e_o) & is.finite(e_a) & e_o + 1 <= e_a
+    use_ours[j] <- use_ours[j] & is.finite(e_o) & is.finite(e_a) & e_o + 1 <= e_a
     if (!is.null(differ)) { differ$tpp <- tpp; differ$err_ours <- round(e_o, 1); differ$err_ae <- round(e_a, 1)
                             differ$kept <- ifelse(use_ours[j], "ours", "ae") }
   }
@@ -155,6 +187,8 @@ poll_layer <- function(ae, region, path = NULL, window = 4L) {
   for (p in parties) ae[[p]][pa] <- ours[[p]][po]
   # unmatched ours: label of the same firm's nearest AE poll, else our own text
   extra <- ours[!used_o]
+  n_suspect_dropped <- sum(extra$check == "suspect")
+  extra <- extra[extra$check != "suspect"]   # no second copy to check against: a row that fails its own check is left out
   if (nrow(extra)) {
     lab <- vapply(seq_len(nrow(extra)), function(i) {
       m <- which(ae$canon == extra$canon[i]); if (!length(m)) return(extra$firm_raw[i])
@@ -167,8 +201,9 @@ poll_layer <- function(ae, region, path = NULL, window = 4L) {
   data.table::setorderv(ae, "date")
   log <- list(region = region, ae_rows = sum(!used_a) + length(pair_a), ours = nrow(ours), matched = length(pair_o),
               ours_only = nrow(extra), ae_only = sum(!used_a), matched_differ_gt2 = sum(diff_big), differ = differ)
-  message(sprintf("PZ1 poll source layered [%s]: %d ours (%d matched to AE, %d ours only), %d AE only; %d matched polls differ by > 2 points on a major party (two-party check kept ours on %d, AE on %d)",
-                  region, nrow(ours), length(pair_o), nrow(extra), sum(!used_a), sum(diff_big), sum(diff_big & use_ours), sum(diff_big & !use_ours)))
+  message(sprintf("PZ1 poll source layered [%s]: %d ours (%d matched to AE, %d ours only), %d AE only; %d matched polls differ by > 2 points on a major party (two-party check kept ours on %d, AE on %d); own check: %d swapped back, %d suspect (%d unmatched suspect dropped), %d without a two-party figure",
+                  region, nrow(ours), length(pair_o), nrow(extra), sum(!used_a), sum(diff_big), sum(diff_big & use_ours), sum(diff_big & !use_ours),
+                  sum(ours$check == "swapped"), sum(ours$check == "suspect"), n_suspect_dropped, sum(ours$check == "no_tpp")))
   data.table::setattr(ae, "parties", parties)
   data.table::setattr(ae, "layer_log", log)
   ae
