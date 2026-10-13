@@ -85,3 +85,13 @@ Total auspol side about 8-11 working days, blog separate. A first honest number 
 4. Model parity bar before publishing: the live fed path must reproduce the harness fed2025 within noise (recommend yes, as a hard gate, because "two lists drift").
 5. Booth and Senate features: build federal versions, or publish with a measured-absence note (recommend measure absence in step 4 first).
 6. Launch scope: forecast + map first, what-if scenarios later (recommend), publish off by default behind a repo variable like NSW.
+
+## Decisions (Pete, 2026-10-13)
+
+1. **Publish, validate in parallel** (not a hard gate): a fed2028 page may go up labelled PROVISIONAL before the live
+   path is proven to reproduce `backtest_candidate_fed.R` on fed2025; the seat-by-seat match runs alongside and the
+   label comes off only when it passes.
+2. **Train federal flow models** (as-at, like the states), not AEC 2025 carried forward.
+3. **Placeholder polling day: May 2028** (typical timing), updated when the election is called.
+4. **DemosAU MRP enters as seat polls** through the existing seat-poll blend (`external/reference/polls/demosau/
+   mrp-seats.csv`), weighted by MRPs' past seat accuracy, as the YouGov MRP was for fed2022.
