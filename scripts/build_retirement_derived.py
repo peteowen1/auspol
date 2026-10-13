@@ -23,7 +23,7 @@ import csv, collections, re, json
 
 PREV = {'fed2010':'fed2007','fed2013':'fed2010','fed2016':'fed2013',
         'fed2019':'fed2016','fed2022':'fed2019','fed2025':'fed2022',
-        'nsw2019':'nsw2015','nsw2023':'nsw2019',
+        'nsw2015':'nsw2011','nsw2019':'nsw2015','nsw2023':'nsw2019',
         'qld2020':'qld2017','qld2024':'qld2020',
         'sa2022':'sa2018','sa2026':'sa2022',
         'vic2010':'vic2006','vic2014':'vic2010','vic2018':'vic2014','vic2022':'vic2018',

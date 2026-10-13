@@ -318,6 +318,10 @@ PREF   <- election_data_path()
 # by by-elections and carries the anchor's party classes rather than ours, so
 # it is a printed disagreement count and never the truth.
 NSW_PAIRS <- list(
+  # 2015 added 2026-10-13 (coverage program). Previous election nsw2011 on the pre-2013-redistribution
+  # boundaries; the prior is the booth-respread notional on the 2015 boundaries (STATE_REDISTRIBUTIONS,
+  # scripts/parse_booths_nsw2011.py then scripts/build_state_notionals.py). No 2015nsw.txt seat file exists.
+  "2015" = list(to = 2015L, from = 2011L, next_seats = 2019L),
   "2019" = list(to = 2019L, from = 2015L, next_seats = 2023L),
   "2023" = list(to = 2023L, from = 2019L, next_seats = 2027L))
 .k <- Sys.getenv("AUSPOL_NSW_PAIR", "2023")
@@ -354,6 +358,19 @@ fp_tgt  <- fread(file.path(PREF, sprintf("nswec-%d-nsw-firstprefs.csv", TO)))
 # redistribution the prior is rebuilt on the target's boundaries from booth results.
 .snp <- state_notional_prior("nsw", FROM, TO); if (!is.null(.snp)) fp_prev <- .snp
 tx      <- fread(file.path(PREF, "nswec-nsw-transfers.csv"))
+# The nsw2011 published distribution lives in its own file (nswec-2011-nsw-transfers.csv, the
+# NSWEC's SGE2011 pages) rather than the shared file, so it is appended HERE and only for a pair
+# that needs it: appending it to the shared file would also change the as-at flow models of
+# the later pairs (fit_xgb_flows_v1.R reads that file). Only PRV's rows are ever used below.
+.tx_extra <- file.path(PREF, sprintf("nswec-%d-nsw-transfers.csv", FROM))
+if (!PRV %in% tx$election && file.exists(.tx_extra)) {
+  .tx2 <- fread(.tx_extra)
+  stopifnot("extra transfer file has other columns" = identical(names(.tx2), names(tx)),
+            "extra transfer file is not the previous election" = all(.tx2$election == PRV))
+  tx <- rbind(tx, .tx2)
+  cat(sprintf("BT0e %d %s transfer rows appended from %s (not in the shared transfers file)\n",
+              nrow(.tx2), PRV, basename(.tx_extra)))
+}
 
 # LEAKAGE GUARD. The whole point of using NSW is that the flow matrix predates
 # the election being scored. Asserted, not assumed -- three leaks have entered
@@ -384,7 +401,15 @@ cat(sprintf("\nBT0  flow matrix from %d transfers, elections: %s\n",
 # finding about Queensland, it is this mistake showing up as data.
 fm <- build_flow_matrix(tx_prev, min_n = 3L)
 
-seats <- as.data.table(load_seats(TO, "nsw"))
+# SEAT FILE for the seat spread (seat_swing_spread: region and prev_swing only). The anchor ships no
+# 2015nsw.txt, so nsw2015 falls back to 2023nsw.txt, whose prev_swing is the 2019 swing. NOT 2019nsw.txt:
+# its prev_swing is the 2015 swing, i.e. the target election's own seat-level result. It is a variance
+# hyperparameter from a LATER election (the compromise the Queensland harness makes); announced, not absorbed.
+seats <- tryCatch(as.data.table(load_seats(TO, "nsw")), error = function(e) NULL)
+if (is.null(seats)) {
+  seats <- as.data.table(load_seats(2023L, "nsw"))
+  cat(sprintf("BN0s no %dnsw.txt seat file: seat spread taken from 2023nsw.txt (a later election, prev_swing = the 2019 swing)\n", TO))
+}
 
 # Per-seat 2019 shares as a matrix.
 w_prev <- dcast(fp_prev, seat ~ party, value.var = "votes", fill = 0)
@@ -394,7 +419,7 @@ mat <- 100 * mat / rowSums(mat)
 state_prev <- fp_prev[, .(v = sum(votes)), by = party][, setNames(100 * v / sum(v), party)]
 state_tgt <- fp_tgt[, .(v = sum(votes)), by = party][, setNames(100 * v / sum(v), party)]
 # AUSPOL_FORECAST_MODE=1: predicted statewide, not the oracle (R/forecast_statewide.R).
-state_tgt <- forecast_statewide_or_oracle("nsw", TO, c("2019" = "2019-03-23", "2023" = "2023-03-25")[[as.character(TO)]],
+state_tgt <- forecast_statewide_or_oracle("nsw", TO, c("2015" = "2015-03-28", "2019" = "2019-03-23", "2023" = "2023-03-25")[[as.character(TO)]],
                                           names(state_tgt), state_prev, state_tgt,
                                           code = "BN0", n_sims = N_SIMS, seed = as.integer(Sys.getenv("AUSPOL_SEED", "42")))
 # RE-ENTRY PRIOR, docs/plans/prereg-reentry-prior-2026-09-07.md. A class
