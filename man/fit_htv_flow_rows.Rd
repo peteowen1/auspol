@@ -11,7 +11,7 @@ fit_htv_flow_rows(
 )
 }
 \arguments{
-\item{target_election}{Election excluded from the fit.}
+\item{target_election}{Election whose splits are fitted from earlier elections.}
 
 \item{dir, min_seats}{See \code{\link[=htv_observed_splits]{htv_observed_splits()}}.}
 }
@@ -19,7 +19,10 @@ fit_htv_flow_rows(
 list(greens_above = ALP share, labor_above = ALP share, n = table).
 }
 \description{
-Leave-target-out mean of the observed splits with the same label, seat-
-weighted. Elections with fewer than \code{min_seats} qualifying seats are
-dropped as too thin to label.
+Time-forward mean of the observed splits with the same label, seat-
+weighted: only elections before \code{target_election} count (line below,
+\code{elections_before()}). Elections with fewer than \code{min_seats} qualifying
+seats are dropped as too thin to label. Every \verb{*-transfers.csv} in \code{dir}
+is read, so adding an older election's transfer file adds training data
+for every later target (2026-10-13: vec-2006, nswec-2011, aec-fed-2001).
 }
