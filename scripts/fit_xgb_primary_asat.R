@@ -218,6 +218,13 @@ for (tg in targets) {
                                nrounds = nr, n_features = length(feat_cols),
                                rmse_base = rb, rmse_asat = ra,
                                model_file = mf, git_hash = git_hash, built_at = built_at, input_key = key)
+  # CHECKPOINT after every trained target (2026-10-14): the run is ~25 min at 35 elections and wrote only at the
+  # end, so a kill at nsw2023 (01:34 that night) lost every target before it. Targets done so far, plus the previous
+  # files' rows for targets not reached yet, are written now; a rerun WITHOUT AUSPOL_ASAT_FORCE then reuses each
+  # finished target by its input key and trains only the rest.
+  .ck <- function(new, old, idcol) data.table::rbindlist(c(new, if (!is.null(old)) list(old[!old[[idcol]] %in% names(new)])), fill = TRUE)
+  fwrite(.ck(preds, OLDP, "pair"), pred_f, na = "NA")
+  fwrite(.ck(manifest, OLDM, "target"), man_f, na = "NA")
 }
 writeLines(feat_cols, file.path(MDIR, "feat_cols.txt"))
 saveRDS(params, file.path(MDIR, "params.rds"))
