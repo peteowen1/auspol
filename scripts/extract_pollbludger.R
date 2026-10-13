@@ -154,11 +154,33 @@ fwrite(pb, file.path(base, "pollbludger_polls.csv"))
 ## Stage 3: answer key. Match statewide rows to the layered set (firm, post date 1 day before to 10 days after the
 ## poll midpoint, closest numbers first). The cut-off between tuning and held-out pages is printed per row.
 alias <- fread("external/reference/polls/statewide-samples/firm_alias.csv", showProgress = FALSE)
-eds <- election_dates(); eds <- eds[eds >= as.Date("2004-07-01")]
+eds <- election_dates()
+# Polling days election_dates() does not carry yet (coverage program 2026-10-13; from memory, to be checked against
+# the commissions by track A and then moved into R/election_dates.R, the one source of truth).
+extra_eds <- c(fed2001 = "2001-11-10",
+  nsw2003 = "2003-03-22", nsw2007 = "2007-03-24", nsw2011 = "2011-03-26",
+  vic2002 = "2002-11-30", vic2006 = "2006-11-25",
+  qld2001 = "2001-02-17", qld2004 = "2004-02-07", qld2006 = "2006-09-09", qld2009 = "2009-03-21", qld2012 = "2012-03-24", qld2015 = "2015-01-31",
+  sa2002 = "2002-02-09", sa2006 = "2006-03-18", sa2010 = "2010-03-20", sa2014 = "2014-03-15",
+  tas2002 = "2002-07-20", tas2006 = "2006-03-18", tas2010 = "2010-03-20", tas2014 = "2014-03-15", tas2018 = "2018-03-03",
+  tas2021 = "2021-05-01", tas2024 = "2024-03-23", tas2025 = "2025-07-19",
+  nt2001 = "2001-08-18", nt2005 = "2005-06-18", nt2008 = "2008-08-09", nt2012 = "2012-08-25", nt2016 = "2016-08-27",
+  nt2020 = "2020-08-22", nt2024 = "2024-08-24",
+  act2001 = "2001-10-20", act2004 = "2004-10-16", act2008 = "2008-10-18", act2012 = "2012-10-20", act2016 = "2016-10-15",
+  act2020 = "2020-10-17", act2024 = "2024-10-19")
+extra_eds <- extra_eds[!names(extra_eds) %in% names(eds)]
+eds <- c(eds, stats::setNames(as.Date(extra_eds), names(extra_eds)))
+eds <- eds[eds >= as.Date("2004-07-01")]
+# Each post belongs to the NEXT election in its region (whole cycles, since --all fetches every post; the
+# coverage table below still reports each election's final 30 days).
 pb[, election := NA_character_]
-for (e in names(eds)) {
-  m <- pb$date >= eds[[e]] - 90 & pb$date <= eds[[e]] & pb$region_cat %in% sub("[0-9]+$", "", e)
-  pb[m & is.na(election), election := e]
+for (r in unique(na.omit(pb$region_cat))) {
+  er <- sort(eds[sub("[0-9]+$", "", names(eds)) == r])
+  if (!length(er)) next
+  m <- which(pb$region_cat == r)
+  k <- findInterval(as.integer(pb$date[m]), as.integer(er), left.open = TRUE) + 1L   # first polling day on or after the post
+  ok <- k <= length(er)
+  pb$election[m[ok]] <- names(er)[k[ok]]
 }
 pb[, region := sub("[0-9]+$", "", election)]
 pb[, half := fifelse(date <= as.Date("2017-03-05"), "tuning", "held_out")]

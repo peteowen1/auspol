@@ -23,7 +23,7 @@
 # for it appears on the page; otherwise the next archive page (/page/2/) is
 # fetched. The manifest records each day's sitemap and found post counts.
 #
-# Usage: Rscript scripts/fetch_pollbludger.R [--days=90] [--dry-run] [--max=N]
+# Usage: Rscript scripts/fetch_pollbludger.R [--days=90] [--all] [--dry-run] [--max=N]
 # Check codes: BG1 sitemap, BG2 plan, BG3 progress, BG4 summary, BG5! incomplete day.
 
 suppressPackageStartupMessages({ library(data.table); library(curl) })
@@ -96,7 +96,8 @@ for (k in seq_len(nrow(win))) {
   m <- posts$date >= win$start[k] & posts$date <= win$end[k]
   posts[m & is.na(election), election := win$election[k]]
 }
-want <- posts[!is.na(election)]
+# --all: every dated post since 2004, not only election windows (whole-cycle polls; coverage program 2026-10-13)
+want <- if ("--all" %in% args) posts else posts[!is.na(election)]
 day_tab <- want[, .(n_posts = .N, elections = paste(unique(election), collapse = ",")), by = date][order(date)]
 cat(sprintf("BG2 plan: %d posts on %d days across %d elections (window %d days)\n",
             nrow(want), nrow(day_tab), uniqueN(want$election), days))
