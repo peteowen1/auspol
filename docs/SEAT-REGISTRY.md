@@ -203,6 +203,10 @@ Dug 2026-10-09 from run 0cbaa82 (`scripts/biggest_misses.R --pairs=vic2018`). Th
 - **Hillarys** -- **OPEN** (2026-10-14). LNP won at p 0.004 (ALP favourite 0.50); Rob Johnson, the sitting member who
   left the Liberals, stood as IND. The defector carry (state rate 0.42-0.44 at this target) is the known lever; WA's own
   earlier cases carry 0.693 (`reviews/pooled-fits-inventory-2026-10-13.md`). Seat-level trace not yet done.
+  TRACED 2026-10-14 (`output/forecasts.csv`, run 4e03af5): the miss is in base_pred, and it is OVER-carry, not under.
+  base_pred Johnson (IND) 28.5 vs actual 20.1, Liberal (Katsambanis) 25.6 vs 39.6; xgb moves the Liberal DOWN to 22.6.
+  Final shares IND 28.4, LNP 24.6. So WA's higher own-carry 0.693 would make Hillarys worse; the Liberal kept far more
+  of Johnson's old vote than the model lets a party keep from a departing member. Same shape as wa2013 Churchlands.
 - **Murray-Wellington**, **Pilbara**, **Jandakot**, **Southern River**, **Kingsley** -- **OPEN** (2026-10-14). ALP gains
   called LNP at p 0.07-0.17: the size of the 2017 Labor swing under-called. Not traced to level vs seat swing.
 
