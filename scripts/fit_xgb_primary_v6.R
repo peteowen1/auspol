@@ -69,6 +69,9 @@ PAIRS <- list(
   # fixed the same day -- 0 of 219 candidates were recognised as returning.
   list(election = "sa2022",  prev = "sa2018",  region = "sa"),
   list(election = "sa2026",  prev = "sa2022",  region = "sa"),
+  list(election = "sa2010",  prev = "sa2006",  region = "sa"),   # added 2026-10-13 (coverage program)
+  list(election = "sa2014",  prev = "sa2010",  region = "sa"),
+  list(election = "sa2018",  prev = "sa2014",  region = "sa"),
   list(election = "vic2010", prev = "vic2006", region = "vic"),   # added 2026-10-13 (coverage program)
   list(election = "vic2014", prev = "vic2010", region = "vic"),
   list(election = "vic2018", prev = "vic2014", region = "vic"),

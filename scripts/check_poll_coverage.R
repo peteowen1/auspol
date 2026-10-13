@@ -48,11 +48,11 @@ scored <- data.table(
   election = c(paste0("fed", c(2007, 2010, 2013, 2016, 2019, 2022, 2025)),
                paste0("wa", c(2001, 2005, 2008, 2013, 2017, 2025)),
                paste0("vic", c(2010, 2014, 2018, 2022)), paste0("nsw", c(2019, 2023)),
-               paste0("qld", c(2012, 2015, 2017, 2020, 2024)), paste0("sa", c(2022, 2026))),
+               paste0("qld", c(2020, 2024)), paste0("sa", c(2010, 2014, 2018, 2022, 2026))),
   prev = c("fed2004", "fed2007", "fed2010", "fed2013", "fed2016", "fed2019", "fed2022",
            "wa1996", "wa2001", "wa2005", "wa2008", "wa2013", "wa2021",
            "vic2006", "vic2010", "vic2014", "vic2018", "nsw2015", "nsw2019",
-           "qld2009", "qld2012", "qld2015", "qld2017", "qld2020", "sa2018", "sa2022"))
+           "qld2017", "qld2020", "sa2006", "sa2010", "sa2014", "sa2018", "sa2022"))
 ed <- election_dates()
 scored[, `:=`(region = sub("[0-9]+$", "", election),
               polling_day = as.Date(unname(ed[election])), prev_day = as.Date(unname(ed[prev])))]

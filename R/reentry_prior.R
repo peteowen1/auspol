@@ -885,6 +885,13 @@ all_election_pairs <- function() {
     list(election = "nsw2015", prev = "nsw2011"),
     list(election = "nsw2019", prev = "nsw2015"),
     list(election = "nsw2023", prev = "nsw2019"),
+    # sa2014 and sa2018 added 2026-10-13 (coverage program; ECSA past-results pages and
+    # Wikipedia for 2018, scripts/build_sa_2010_2014_results.R). Each follows a redistribution
+    # and is scored on its name-matched districts only. They become training data for every
+    # LATER election's time-forward fits, so the pairs dated after 2014-03-15 move.
+    list(election = "sa2010",  prev = "sa2006"),
+    list(election = "sa2014",  prev = "sa2010"),
+    list(election = "sa2018",  prev = "sa2014"),
     # sa2022 added 2026-09-13. Scored by backtest_candidate_sa.R since the
     # candidate-name fix (docs/reviews/sa2022-missing-from-the-model-2026-
     # 09-12.md) but absent from this list -- the fifth place that gap lived.
