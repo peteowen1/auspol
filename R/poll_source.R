@@ -32,14 +32,46 @@ poll_source_mode <- function() {
 # Found 2026-10-13: Resolve's two-month Victorian polls sit 14-29 days apart across Wikipedia, AE and
 # BludgerTrack (Resolve Vic 24/41 was in the shipped set twice, as AE's 1 Mar 2025 and Wikipedia's 30 Mar);
 # outside the 4-day midpoint window they were counted twice.
+#
+# "Same primaries" is judged on the parties BOTH rows report: Labor and the Coalition must be present on both, the
+# Greens on both or on neither, and every party both give (also One Nation, and the Nationals where WA reports them
+# apart) must agree within 0.5. A party only one row reports is
+# not evidence either way: AE's WA Galaxy 3 Aug 2018 has no One Nation figure, Wikipedia's YouGov-Galaxy 12 Aug has 5.
 #' @noRd
 .ps_same_poll_far <- function(dd, a, b, ia, ib) {
-  eq <- function(p) {
-    x <- if (p %in% names(a)) a[[p]][ia] else rep(NA_real_, length(ia)); y <- if (p %in% names(b)) b[[p]][ib] else rep(NA_real_, length(ib))
-    !(is.finite(x) & is.finite(y)) | abs(x - y) <= 0.5
+  get <- function(D, p, i) if (p %in% names(D)) D[[p]][i] else rep(NA_real_, length(i))
+  ok <- abs(dd) <= 31L
+  for (p in c("ALP", "LNP")) {                 # required on both
+    x <- get(a, p, ia); y <- get(b, p, ib)
+    ok <- ok & is.finite(x) & is.finite(y) & abs(x - y) <= 0.5
   }
-  core <- abs(a$ALP[ia] - b$ALP[ib]) <= 0.5 & abs(a$LNP[ia] - b$LNP[ib]) <= 0.5
-  abs(dd) <= 31L & !is.na(core) & core & eq("GRN") & eq("ONP")
+  # The Greens: on both, or on neither (Newspoll's Queensland polls publish no Greens figure, and requiring the
+  # cell split AE's 15 May 2016 Newspoll from Wikipedia's 31 May copy of it). On one row only is too little to call.
+  x <- get(a, "GRN", ia); y <- get(b, "GRN", ib)
+  ok <- ok & ((is.finite(x) & is.finite(y) & abs(x - y) <= 0.5) | (!is.finite(x) & !is.finite(y)))
+  for (p in c("ONP", "NAT")) {                 # compared where both report
+    x <- get(a, p, ia); y <- get(b, p, ib)
+    ok <- ok & (!(is.finite(x) & is.finite(y)) | abs(x - y) <= 0.5)
+  }
+  ok & !is.na(ok)
+}
+
+# Firms one pollster files under two names: Galaxy ran WA's polls as "Galaxy" (AE) and Wikipedia calls the same
+# poll "YouGov-Galaxy", which firm_alias.csv canonicalises to "yougov". The two are paired only through the strict
+# same-primaries test above, never on the 4-day date window, because YouGov and Galaxy are otherwise separate firms.
+#' @noRd
+.ps_family <- function(canon) ifelse(canon == "yougov", "galaxy", canon)
+
+# Candidate pairs between poll tables `a` and `b` (both with canon and date): the same firm within the date window,
+# or the same poll dated differently, or the same pollster under two names (.ps_family).
+#' @noRd
+.ps_pair_candidates <- function(a, b, window) {
+  ca <- data.table::data.table(ai = seq_len(nrow(a)), fam = .ps_family(a$canon), can_a = a$canon, d_a = a$date)
+  cb <- data.table::data.table(bi = seq_len(nrow(b)), fam = .ps_family(b$canon), can_b = b$canon, d_b = b$date)
+  cand <- ca[cb, on = "fam", allow.cartesian = TRUE, nomatch = NULL]
+  dd <- as.integer(cand$d_a - cand$d_b)
+  far <- .ps_same_poll_far(dd, a, b, cand$ai, cand$bi)
+  cand[(cand$can_a == cand$can_b & abs(dd) <= window) | far]
 }
 
 # canonical firm name from external/reference/polls/statewide-samples/firm_alias.csv (regex -> canonical)
@@ -51,6 +83,25 @@ poll_source_mode <- function() {
     out[hit] <- alias$canonical[i]
   }
   ifelse(is.na(out), gsub("[^a-z]", "", f), out)
+}
+
+# Month ranges with no day: "Apr-Jun 2017", "Nov 2016-Jan 2017", "Oct-Dec 2017" (hyphen, en or em dash). start is
+# the first of the first month, end the last of the last; NA for anything else. Capped at 5 months.
+#' @noRd
+.ps_month_range <- function(x) {
+  x <- trimws(gsub("\\[[^]]*\\]", "", as.character(x)))
+  m <- regmatches(x, regexec("^([A-Za-z]{3,9})\\.? *(?:([0-9]{4}) *)?[-–—] *([A-Za-z]{3,9})\\.? +([0-9]{4})$", x, perl = TRUE))
+  mi <- function(s) match(tolower(substr(s, 1, 3)), c("jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"))
+  st <- en <- rep(as.Date(NA), length(x))
+  for (i in seq_along(x)) {
+    p <- m[[i]]; if (length(p) != 5) next
+    m1 <- mi(p[2]); m2 <- mi(p[4]); y1 <- if (nzchar(p[3])) p[3] else p[5]
+    if (is.na(m1) || is.na(m2)) next
+    s <- as.Date(sprintf("%s-%02d-01", y1, m1))
+    e <- seq(as.Date(sprintf("%s-%02d-01", p[5], m2)), by = "month", length.out = 2)[2] - 1
+    if (e >= s && as.integer(e - s) <= 155L) { st[i] <- s; en[i] <- e }
+  }
+  list(start = st, end = en)
 }
 
 #' Our voting-intention polls for one region, in load_polls()'s shape
@@ -72,9 +123,18 @@ wiki_polls <- function(region, parties, path) {
            w$section, ignore.case = TRUE) &
     !grepl("exit poll", paste(w$firm_raw, w$footnote_raw), ignore.case = TRUE)
   w <- w[keep]
+  # A month range ("Apr-Jun 2017", "Nov 2016-Jan 2017": Essential's and Newspoll's quarterly aggregates) has no
+  # day, so it is dated at the middle of its months and may be long; day-level fieldwork over 45 days is still
+  # refused. A range the scrape left undated is parsed here from its own text.
+  mr <- .ps_month_range(if ("date_raw" %in% names(w)) w$date_raw else rep(NA_character_, nrow(w)))
   fs <- as.Date(w$fieldwork_start); fe <- as.Date(w$fieldwork_end)
+  undated <- !is.finite(fe) & is.finite(mr$end)
+  if (any(undated)) {
+    w$fieldwork_start[undated] <- as.character(mr$start[undated]); w$fieldwork_end[undated] <- as.character(mr$end[undated])
+    fs <- as.Date(w$fieldwork_start); fe <- as.Date(w$fieldwork_end)
+  }
   span <- as.integer(fe - fs)
-  w <- w[is.finite(fe) & (is.na(span) | span <= 45L)]
+  w <- w[is.finite(fe) & (is.na(span) | span <= 45L | (is.finite(mr$end) & span <= 124L))]
   fs <- as.Date(w$fieldwork_start); fe <- as.Date(w$fieldwork_end)
   mid <- as.Date(ifelse(is.finite(fs) & fs <= fe, as.integer(fs) + (as.integer(fe) - as.integer(fs)) %/% 2L, as.integer(fe)), origin = "1970-01-01")
   pct <- function(x) suppressWarnings(as.numeric(gsub("[%,]", "", as.character(x))))
@@ -202,9 +262,8 @@ bludgertrack_polls <- function(region, parties, path) {
   if (is.null(bt) || !nrow(bt)) return(list(ours = wiki, log = c(bt = 0L, both = 0L, bt_only = 0L, differ_gt1 = 0L)))
   bt$origin <- "bludgertrack"
   wiki$canon <- .ps_canon(wiki$firm_raw, alias); bt$canon <- .ps_canon(bt$firm_raw, alias)
-  cand <- wiki[, list(wi = .I, canon, d_w = date)][bt[, list(bi = .I, canon, d_b = date)], on = "canon", allow.cartesian = TRUE, nomatch = NULL]
-  dd <- as.integer(cand$d_w - cand$d_b)
-  cand <- cand[abs(dd) <= window | .ps_same_poll_far(dd, wiki, bt, cand$wi, cand$bi)]
+  cand <- .ps_pair_candidates(wiki, bt, window)
+  data.table::setnames(cand, c("ai", "d_a", "bi", "d_b"), c("wi", "d_w", "bi", "d_b"))
   num <- abs(wiki$ALP[cand$wi] - bt$ALP[cand$bi]) + abs(wiki$LNP[cand$wi] - bt$LNP[cand$bi])
   cand$score <- abs(as.integer(cand$d_w - cand$d_b)) + ifelse(is.finite(num), num, 50) / 2
   data.table::setorderv(cand, "score")
@@ -333,9 +392,8 @@ poll_layer <- function(ae, region, path = NULL, window = 4L) {
   ae <- data.table::copy(ae)
   ae$canon <- .ps_canon(ae$firm, alias); ours$canon <- .ps_canon(ours$firm_raw, alias)
   # one-to-one matching, closest midpoints first
-  cand <- ours[, list(oi = .I, canon, d_o = date)][ae[, list(ai = .I, canon, d_a = date)], on = "canon", allow.cartesian = TRUE, nomatch = NULL]
-  dd <- as.integer(cand$d_o - cand$d_a)
-  cand <- cand[abs(dd) <= window | .ps_same_poll_far(dd, ours, ae, cand$oi, cand$ai)]
+  cand <- .ps_pair_candidates(ours, ae, window)
+  data.table::setnames(cand, c("ai", "d_a", "bi", "d_b"), c("oi", "d_o", "ai", "d_a"))
   # Closest midpoints first, and among those the closest numbers: two Morgan polls (phone, face to face) can
   # share a date, and pairing them crosswise compares different polls.
   num <- abs(ours$ALP[cand$oi] - ae$ALP[cand$ai]) + abs(ours$LNP[cand$oi] - ae$LNP[cand$ai])
