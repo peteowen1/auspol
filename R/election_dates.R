@@ -28,6 +28,9 @@ election_dates <- function(labels = NULL) {
     # No. 2 (27 May 2026), Electoral Legislation Amendment (Elections) Act 2026.
     nsw2027 = "2027-03-13",
     qld2009 = "2009-03-21", qld2012 = "2012-03-24", qld2015 = "2015-01-31",   # dates read from the ECQ results files (election date attribute)
+    # 2026-10-13: Northern Territory (pairs nt2016, nt2020, nt2024). 2012 from the
+    # NTEC results book's title page; 2016-2024 from Wikipedia's election articles.
+    nt2012  = "2012-08-25", nt2016  = "2016-08-27", nt2020  = "2020-08-22", nt2024  = "2024-08-24",
     qld2017 = "2017-11-25", qld2020 = "2020-10-31", qld2024 = "2024-10-26",
     sa2018  = "2018-03-17", sa2022  = "2022-03-19", sa2026  = "2026-03-21",
     sa2006  = "2006-03-18", sa2010  = "2010-03-20", sa2014  = "2014-03-15",   # 2026-10-13: sa2014 and sa2018 backtest pairs (ECSA past-results pages)

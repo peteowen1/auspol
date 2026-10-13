@@ -82,7 +82,14 @@ PAIRS <- list(
   list(election = "wa2013",  prev = "wa2008",  region = "wa"),
   list(election = "wa2017",  prev = "wa2013",  region = "wa"),
   list(election = "wa2021",  prev = "wa2017",  region = "wa"),
-  list(election = "wa2025",  prev = "wa2021",  region = "wa")
+  list(election = "wa2025",  prev = "wa2021",  region = "wa"),
+  # Northern Territory, added 2026-10-13 (scripts/backtest_candidate_nt.R). The
+  # rebuild does not run the NT harness yet (held out of the scoreboard), so there
+  # is no NT sharedetail and these three print "XG6! no sharedetail rows ... ->
+  # skip" below: listed so they join the moment the rebuild scores them.
+  list(election = "nt2016",  prev = "nt2012",  region = "nt"),
+  list(election = "nt2020",  prev = "nt2016",  region = "nt"),
+  list(election = "nt2024",  prev = "nt2020",  region = "nt")
 )
 # WA salience data DOES exist now, for six of the seven WA pairs -- this
 # comment was accurate for v1-v4 and became stale on 2026-08-27, when
@@ -107,7 +114,8 @@ PAIRS <- list(
 # jump statistic measures against, so his search interest was an elevated,
 # sustained story rather than a last-8-weeks spike. Measured before claiming
 # either way; see docs/reviews/ for the result.
-SAL_PAIRS <- Filter(function(p) !identical(p$election, "wa2001"), PAIRS)
+# The NT has no salience rows either (fetch_salience_v6.R never covered it).
+SAL_PAIRS <- Filter(function(p) !identical(p$election, "wa2001") && !identical(p$region, "nt"), PAIRS)
 SURGE_CANON <- list(
   list(election = "fed2010", prev = "fed2007", region = "fed"),
   list(election = "fed2013", prev = "fed2010", region = "fed"),

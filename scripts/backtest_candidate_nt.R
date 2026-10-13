@@ -1,0 +1,924 @@
+# Backtest the candidate-level seat model on the Northern Territory, 2012 -> 2024.
+#
+# THE SEVENTH HARNESS (2026-10-13). Built as a copy of backtest_candidate_wa.R,
+# the closest existing one (small chamber, redistributions, no anchor seat
+# file), so every published switch the WA harness honours this one honours the
+# same way. The rule in CLAUDE.md -- a fix to one harness is a fix to all of
+# them -- now covers seven files, not six.
+#
+# THREE PAIRS, 25 single-member divisions each: nt2016 (prev nt2012), nt2020
+# (prev nt2016), nt2024 (prev nt2020). Data: scripts/fetch_results_nt.R (NTEC
+# first preferences, distributions and winners), scripts/build_nt_polls.R
+# (statewide polls, external/reference/anchor-supplement/poll-data-nt.csv).
+#
+# NOTHING LEAKS. Each pair swings from the EARLIER election's division first
+# preferences, uses a flow matrix built from NTEC transfers at the earlier
+# election, and is scored against the NTEC's declared winners for the later one.
+#
+# FORECAST MODE USES THE THIN-CYCLE ESTIMATE. The statewide the seats swing
+# toward is predicted from the poll trend (AUSPOL_FORECAST_MODE=1, published),
+# and trend_as_at() needs 8 polls in a cycle. The NT has 2, 4 and 2 (BNT0n line
+# below) and the anchor has no NT fundamentals, so the published path fails and
+# forecast_statewide_or_oracle() falls to thin_cycle_statewide() (R/thin_cycle.R,
+# AUSPOL_THIN_CYCLE=1): the previous result moved by the cycle's polls, each
+# weighted by its noise. With AUSPOL_THIN_CYCLE=0 the pair is skipped -- never
+# scored from the actual result. AUSPOL_FORECAST_MODE=0 scores the seat model on
+# the ACTUAL statewide: a diagnostic of the seat layer only, not a forecast,
+# labelled so in its output filename (the arm fingerprint) and in BNT0o.
+#
+# NT-SPECIFIC CHOICES, each logged:
+#   * Redistributions. 2015 (for 2016): Greatorex abolished, Spillett created --
+#     Spillett has no prior and is not scored (24 of 25). 2019 (for 2020):
+#     Nhulunbuy became Mulka and Stuart became Gwoja (Wikipedia: "created ...
+#     replacing the electoral division of ..."); the prior row is RENAMED to
+#     the successor (BNT1n), boundary changes ignored. There is no NT notional
+#     file. Candidate-level matching (returning members) still keys on the seat
+#     name, so the incumbents of Mulka and Gwoja read as new candidates.
+#   * 2016 was optional preferential. The flow matrix for nt2016 comes from the
+#     full-preferential 2012 count, and nt2020's from the optional 2016 count
+#     with exhausted ballots dropped (ntec-nt-transfers-detail.csv keeps them).
+#     The simulator has no exhaustion; the winner is still the higher of the
+#     last two.
+#   * No seat file, no salience corpus, no census rows, no leaders rows for the
+#     NT: the same gaps WA has, each printed where it bites.
+#
+# Emits BNT* codes.
+
+options(auspol.root = normalizePath("."))
+suppressMessages(devtools::load_all(quiet = TRUE))
+source("scripts/harness_defaults.R")  # published defaults for every unset AUSPOL_* switch; see that file
+suppressMessages(library(data.table))
+
+# LEVEL-DEPENDENT SEAT VARIANCE, off by default. AUSPOL_LEVEL_SD="1.10,8.67"
+# makes the per-seat deviation sd = a + b*sqrt(p(1-p)) instead of a flat
+# seat_sd. Pre-registered in docs/plans/prereg-level-dependent-variance.md;
+# unset reproduces the published model exactly.
+.level_sd <- local({
+  # ADOPTED 2026-08-27. Default ON at the fitted values; AUSPOL_LEVEL_SD="off"
+  # reproduces the flat seat_sd exactly. See
+  # docs/reviews/level-variance-2026-08-27.md -- federal seats called 99%+ and
+  # LOST fall from 23 to 12 over 886 seat-elections, and Brier and log loss
+  # improve in every subset on both federal and NSW.
+  raw <- Sys.getenv("AUSPOL_LEVEL_SD", "1.10,8.67")
+  if (identical(tolower(raw), "off") || !nzchar(raw)) NULL else {
+    v <- suppressWarnings(as.numeric(strsplit(raw, ",")[[1]]))
+    if (length(v) != 2L || !all(is.finite(v)))
+      stop("AUSPOL_LEVEL_SD must be two finite numbers, e.g. 1.10,8.67")
+    v
+  }
+})
+cat(sprintf("LV1  level_sd: %s
+", if (is.null(.level_sd)) "OFF (flat seat_sd)" else
+            sprintf("a=%.2f b=%.2f", .level_sd[1], .level_sd[2])))
+
+# PER-CLASS SLOPE MULTIPLIER, both 1 by default so this is a no-op until an arm
+# sets it. AUSPOL_LEVEL_MULT_IND and AUSPOL_LEVEL_MULT_OTH scale level_sd's
+# slope for independents and for every other non-major; majors are never
+# touched. Pre-registered in docs/plans/prereg-class-specific-variance.md.
+#
+# WHY IT EXISTS. level_sd above ships ONE curve for every party, and the review
+# that adopted it measured that the seats it fixed were not the seats it
+# widened: on NSW the calibration slope went 0.565 -> 0.720 across all seats but
+# 0.959 -> 1.272 EXCLUDING seats an independent won. The majors were already
+# almost right and got widened past 1 anyway.
+.level_mult <- local({
+  g <- function(v) {
+    x <- suppressWarnings(as.numeric(Sys.getenv(v, "1")))
+    if (!is.finite(x) || x < 0) stop(v, " must be a finite, non-negative number")
+    x
+  }
+  c(ind = g("AUSPOL_LEVEL_MULT_IND"), oth = g("AUSPOL_LEVEL_MULT_OTH"))
+})
+# Printed unconditionally, including when it is off. An arm that silently did
+# not apply is indistinguishable from an arm that made no difference -- the
+# failure CLAUDE.md records under "an experiment that never ran".
+cat(sprintf("LV2  level_mult: %s
+",
+            if (all(.level_mult == 1)) "OFF (one curve for every class)" else
+              sprintf("IND x%.2f, other non-major x%.2f",
+                      .level_mult[["ind"]], .level_mult[["oth"]])))
+# Built per call site from that seat file's own columns, because
+# simulate_seat_contests() rejects a name that is not a share column.
+.lm <- function(sh) level_mult_for(colnames(sh), .level_mult[["ind"]],
+                                   .level_mult[["oth"]])
+
+
+P <- election_data_path()
+eps <- 1e-6
+
+SEAT_SD_MULT <- as.numeric(Sys.getenv("AUSPOL_SEAT_SD_MULT", "1"))
+if (!is.finite(SEAT_SD_MULT) || SEAT_SD_MULT <= 0)
+  stop("AUSPOL_SEAT_SD_MULT must be a positive number; got ", SEAT_SD_MULT)
+# NOT HERE, AND WHY (2026-09-07, narrowed 2026-09-08): surge-v2
+# (AUSPOL_SALIENCE_SURGE_V2, and with it AUSPOL_SURGE_SCALE and
+# AUSPOL_SURGE_RECIPIENT) and the screened slope mode's salience-permit step
+# need the candidate-level salience corpus (output/salience-v6.csv), which
+# has no WA rows. This paragraph used to also name
+# personal_prior_vote()/remove_transferred_votes() as blocked for the same
+# reason -- that stopped being true once WA's candidacies rows carried
+# names (see the AUSPOL_WA_TRANSFER block below); leaving the stale claim
+# here would have hidden that WA's true remaining parity gap is narrower
+# than this paragraph once said. Until the salience corpus covers WA, this
+# harness runs conditional-only slopes with a disclosed BW1c! line (below)
+# rather than silently claiming "screened."
+# PORTED FROM THE FEDERAL HARNESS 2026-09-06: simulate_seat_contests() computes
+# sd_cell from `level_sd` and IGNORES seat_sd whenever level_sd is given, and
+# level_sd is on by default, so `seat_sd * SEAT_SD_MULT` at the call site was
+# inert here while this printed "applied". The multiplier now scales whichever
+# spread is actually in force, and the message says which.
+if (SEAT_SD_MULT != 1) {
+  if (is.null(.level_sd)) {
+    cat(sprintf("CAL  seat_sd multiplier %.2f applied (flat seat_sd path)
+", SEAT_SD_MULT))
+  } else {
+    .level_sd <- .level_sd * SEAT_SD_MULT
+    cat(sprintf("CAL  spread multiplier %.2f applied to LEVEL_SD -> a=%.3f b=%.3f (seat_sd is inert here)
+",
+                SEAT_SD_MULT, .level_sd[1], .level_sd[2]))
+  }
+}
+N_SIMS  <- as.integer(Sys.getenv("AUSPOL_N_SIMS", "20000"))
+
+# The pair list lives in the package, not here -- see all_election_pairs().
+REENTRY_PAIRS <- all_election_pairs()
+
+# PORTED FROM THE FEDERAL HARNESS 2026-09-05, per this repo's rule that a fix
+# to one harness is a fix to all of them. Both default OFF, so the default path
+# is byte-identical until an arm sets them.
+#   AUSPOL_MP_SLOPE        -- returning MEMBER (0.954) vs returning also-ran
+#                             (0.800); the shipped slope pooled them at 0.907.
+#   AUSPOL_DEFECT_DISCOUNT -- IS wired here (see the AUSPOL_WA_TRANSFER
+#                             block below, `.defect`), despite an earlier
+#                             version of this comment claiming otherwise.
+#                             Corrected 2026-09-08: this harness DOES call
+#                             personal_prior_vote() once candidacies rows
+#                             carried names, and the stale claim survived
+#                             three lines below the code that disproved it.
+
+SHRINK  <- as.numeric(Sys.getenv("AUSPOL_SHRINK", "0"))
+SMOOTH  <- as.numeric(Sys.getenv("AUSPOL_SMOOTH", "0.15"))
+FB_SMOOTH <- as.numeric(Sys.getenv("AUSPOL_FALLBACK_SMOOTH", "0"))
+SHRINK_K  <- as.numeric(Sys.getenv("AUSPOL_FLOW_SHRINK_K", "0"))    # EXPERIMENTAL, docs/plans/prereg-flow-cell-shrinkage-2026-09-10.md
+FLOW_SD   <- as.numeric(Sys.getenv("AUSPOL_FLOW_SD", "0"))
+PARTY_SD  <- as.numeric(Sys.getenv("AUSPOL_PARTY_SD", "1.5"))
+SURGE_H   <- as.numeric(Sys.getenv("AUSPOL_SURGE_H", "0"))
+# WAS A HARDCODED LITERAL, ignoring AUSPOL_SEED entirely -- found 2026-09-09
+# checking every published switch against every harness directly. Every WA
+# run before this fix used 20260825L regardless of the env var, so it was
+# never actually part of any seed-robustness check the other five harnesses
+# went through (the "AUSPOL_SEED now works in every harness" claim recorded
+# 2026-09-07 was about the FIX, not verified per-harness -- this is the
+# harness it missed). Default kept at the same literal so nothing already
+# published moves silently; this harness's default (20260825L) still
+# differs from the other five's (42) and that is untouched here.
+SEED <- as.integer(Sys.getenv("AUSPOL_SEED", "20260825"))
+stopifnot(is.finite(SHRINK), SHRINK >= 0, SHRINK < 1)
+
+# ARM FINGERPRINT. CAL_TAG names the parameters someone remembered to add, and
+# twice now a new one was not: AUSPOL_LEVEL_SD and AUSPOL_DEV_SLOPE both wrote
+# over another arm's per-seat output, silently, so a comparison read two copies
+# of the same run. This appends a short hash of every AUSPOL_* variable that is
+# set, so a NEW parameter cannot repeat that without anyone touching this line.
+.arm_fingerprint <- local({
+  e <- Sys.getenv()
+  e <- e[grepl("^AUSPOL_", names(e)) & nzchar(e)]
+  e <- e[!names(e) %in% c("AUSPOL_OUT_SUFFIX")]
+  if (!length(e)) "" else {
+    s <- paste(sort(paste0(names(e), "=", e)), collapse = ";")
+    sprintf("-a%s", substr(tolower(paste0(as.hexmode(
+      sum(utils::head(utf8ToInt(s), 4000) * seq_along(utils::head(utf8ToInt(s), 4000)))
+    ))), 1, 6))
+  }
+})
+CAL_TAG <- paste0(
+  if (N_SIMS != 20000L) sprintf("-n%d", N_SIMS) else "",
+  if (!is.null(.level_sd)) sprintf("-lv%s", gsub("[.]", "", paste(format(.level_sd, nsmall=2), collapse="_"))) else "",
+  if (SHRINK != 0) sprintf("-sh%s", sub("0[.]", "", format(SHRINK, nsmall = 2))) else "",
+  if (PARTY_SD != 1.5) sprintf("-psd%s", sub("[.]", "", format(PARTY_SD, nsmall = 2))) else "",
+  if (FB_SMOOTH != 0) sprintf("-fb%s", sub("0[.]", "", format(FB_SMOOTH, nsmall = 2))) else "",
+  if (FLOW_SD != 0) sprintf("-fsd%s", sub("[.]", "", format(FLOW_SD, nsmall = 1))) else "",
+  # FLOW MODEL VARIANT in the fingerprint. Added 2026-09-16 after a federal
+  # A/B silently overwrote its own baseline: AUSPOL_FLOW_MODEL_TAG changes
+  # which model the run loads but did not change the output filename, so both
+  # arms wrote the same file and the second clobbered the first. That is the
+  # exact failure CAL_TAG exists to prevent -- this file's own header
+  # (backtest_candidate_fed.R, the "seat_sd sweep" note) records a sweep
+  # doing it to backtest-fed.csv and backtest-vic.csv on 2026-08-21, where it
+  # read as "+0.0000 difference" across all six federal elections. CLAUDE.md
+  # carries the general pattern, not that incident.
+  # Behaviour-changing switch, so it MUST alter the filename. Added
+  # 2026-09-16 -- the third switch in one session to change what a run does
+  # without changing what the run is called. CAL_TAG exists for exactly this.
+  if (identical(Sys.getenv("AUSPOL_FLOW_CELL_SD", "0"), "1")) "-cellsd" else "",
+  # AUSPOL_SD_DEPARTED widens the per-cell sd override to ALP/LNP cells in
+  # seats whose previous winner has left the ballot, inside
+  # xgb_primary_sd_matrix() (R/xgb_primary_sd_override.R:103) -- so it never
+  # appears in this file and a grep of the harness could not see it.
+  #
+  # THIS IS READABILITY, NOT A BUG FIX, and the commit that added it
+  # (d91dc9c) says otherwise. It claimed two arms differing only in this
+  # switch would overwrite each other's output file. They would not:
+  # .arm_fingerprint above hashes EVERY set AUSPOL_* variable, and
+  # apply_published_flags() sets every published switch before it runs, so
+  # the baseline hashes to -a614a9d and the SD_DEPARTED arm to -a614adc.
+  # Measured 2026-09-16, after the same wrong diagnosis had already been
+  # made once that night and corrected by git note on 4456aea. What this
+  # line actually buys is a filename that SAYS which arm it is instead of
+  # hiding it in an opaque six-character hash -- worth having, and not what
+  # was claimed. docs/MODEL-REGISTRY.md marks the switch "UNEXPLAINED --
+  # audit this" because its grep only scans the harnesses and
+  # fit_seats_full.R, never R/; that gap is real and separate.
+  if (identical(Sys.getenv("AUSPOL_SD_DEPARTED", "0"), "1")) "-sddep" else "",
+  # (AUSPOL_SEAT_SWING_PORT_WA is a WA-only switch; this harness ignores it.)
+  if (identical(Sys.getenv("AUSPOL_SEAT_SWING_PORT_NOCLIFF", "0"), "1")) "-nocliff" else "",
+  if (nzchar(Sys.getenv("AUSPOL_FLOW_MODEL_TAG", "")))
+    sprintf("-fm%s", Sys.getenv("AUSPOL_FLOW_MODEL_TAG")) else "",
+  if (SURGE_H > 0) "-surge" else "", .arm_fingerprint, .code_tag)
+
+cat(sprintf("BNT0  n_sims %d | shrink %.2f | party_sd %.2f | fb %.2f | flow_sd %.2f | surge %.4f\n",
+            N_SIMS, SHRINK, PARTY_SD, FB_SMOOTH, FLOW_SD, SURGE_H))
+
+# Polling day per election, from the package's one table (R/election_dates.R),
+# which decides which external flow sources a pair may see.
+YEARS <- c(2012, 2016, 2020, 2024)
+NT_DATE <- stats::setNames(format(election_dates(sprintf("nt%d", YEARS))), as.character(YEARS))
+stopifnot(names(NT_DATE) == format(as.Date(NT_DATE), "%Y"))
+PAIRS <- Map(function(a, b) list(from = a, to = b),
+             YEARS[-length(YEARS)], YEARS[-1])
+
+# SEATS RENAMED AT A REDISTRIBUTION: the prior row moves to the successor's name
+# so the seat is scored. Only renames where the successor was created
+# "replacing" the old division (Wikipedia, Electoral_division_of_Mulka and
+# _Gwoja, saved under external/reference/ntec/wikipedia/); boundary changes are
+# ignored, which is the cost of having no NT notional. Spillett (new in 2016)
+# replaced nobody, so it has no prior and is not scored.
+NT_RENAME <- list("2020" = c(Nhulunbuy = "Mulka", Stuart = "Gwoja"))
+
+# RESTRICT TO ONE OR MORE PAIRS, AUSPOL_NT_PAIR (default "" = all three).
+# Comma-separated target years, e.g. "2020" or "2020,2024". Same mechanism as
+# AUSPOL_WA_PAIR and the other harnesses' pair switches.
+.nt_pair_sel <- Sys.getenv("AUSPOL_NT_PAIR", "")
+if (nzchar(.nt_pair_sel)) {
+  .want <- trimws(strsplit(.nt_pair_sel, ",")[[1]])
+  .have <- vapply(PAIRS, function(p) as.character(p$to), character(1))
+  if (!all(.want %in% .have))
+    stop("AUSPOL_NT_PAIR must be one or more of ", paste(.have, collapse = ", "),
+         " (comma-separated), and included ", paste(setdiff(.want, .have), collapse = ", "))
+  PAIRS <- PAIRS[.have %in% .want]
+  cat(sprintf("BNT0p  AUSPOL_NT_PAIR restricts this run to: %s\n",
+              paste(vapply(PAIRS, function(p) sprintf("%d->%d", p$from, p$to), character(1)), collapse = ", ")))
+}
+
+share_of <- function(y) {
+  f <- file.path(P, sprintf("ntec-%d-nt-firstprefs.csv", y))
+  if (!file.exists(f)) return(NULL)
+  d <- fread(f, showProgress = FALSE)
+  d[, .(votes = sum(votes)), by = .(seat, party)]
+}
+
+.need_files <- c("ntec-nt-transfers.csv", "ntec-nt-winners.csv")
+.miss <- .need_files[!file.exists(file.path(P, .need_files))]
+if (length(.miss)) stop("BNT0! missing ", paste(.miss, collapse = ", "), " -- run scripts/fetch_results_nt.R")
+TX  <- fread(file.path(P, "ntec-nt-transfers.csv"), showProgress = FALSE)
+WIN <- fread(file.path(P, "ntec-nt-winners.csv"), showProgress = FALSE)
+cat(sprintf("BNT0  transfers on file: %s\n",
+            paste(TX[, .(n = uniqueN(paste(seat, round))), by = election][, sprintf("%s %d exclusions", election, n)], collapse = ", ")))
+
+# Statewide polls per cycle, printed for every pair BEFORE the forecast is
+# attempted, so a skipped pair says why in the poll count and not only in the
+# error the forecast path happens to hit first.
+.nt_polls <- tryCatch(load_polls("nt"), error = function(e) { cat(sprintf("BNT0n! load_polls(\"nt\") FAILED: %s\n", conditionMessage(e))); NULL })
+if (!identical(Sys.getenv("AUSPOL_FORECAST_MODE", "1"), "1"))
+  cat("BNT0o  AUSPOL_FORECAST_MODE is not 1: the seats swing toward the ACTUAL statewide result. Diagnostic of the seat layer only -- NOT a forecast.\n")
+
+res_all <- list(); ap_all <- list(); share_detail <- list()
+prev_spread <- NA_real_
+
+for (K in PAIRS) {
+  fa <- share_of(K$from); fb <- share_of(K$to)
+  if (is.null(fa) || is.null(fb)) {
+    cat(sprintf("BNT1  nt%d->%d: missing first preferences; skipped\n", K$from, K$to)); next
+  }
+  .rn <- NT_RENAME[[as.character(K$to)]]
+  if (!is.null(.rn)) {
+    .hit <- intersect(names(.rn), unique(fa$seat))
+    fa[fa$seat %in% .hit, seat := unname(.rn[seat])]
+    cat(sprintf("BNT1n nt%d->%d: prior renamed to the successor division (redistribution, boundaries ignored): %s\n",
+                K$from, K$to, paste(sprintf("%s -> %s", .hit, .rn[.hit]), collapse = ", ")))
+  }
+  if (!is.null(.nt_polls)) {
+    .cyc <- .nt_polls$date > as.Date(NT_DATE[[as.character(K$from)]]) & .nt_polls$date < as.Date(NT_DATE[[as.character(K$to)]])
+    cat(sprintf("BNT0n nt%d: %d statewide polls in the cycle (%d with Labor and CLP primaries); the trend needs 8\n",
+                K$to, sum(.cyc), sum(.cyc & is.finite(.nt_polls$ALP) & is.finite(.nt_polls$LNP))))
+  }
+  # STATE NOTIONAL (AUSPOL_STATE_NOTIONAL, R/state_notional.R): no NT notional
+  # exists, so this prints SNP0 and keeps the (renamed) prior.
+  .snp <- state_notional_prior("nt", K$from, K$to); if (!is.null(.snp)) fa <- .snp
+  el_from <- sprintf("nt%d", K$from); el_to <- sprintf("nt%d", K$to)
+  .MP_SLOPE <- NULL
+  if (identical(Sys.getenv("AUSPOL_MP_SLOPE", "0"), "1")) {
+    # Values are READ FROM DISK, per target election, never hard-coded. The first
+    # version of this tier carried c(IND = 0.954, OTH_RIGHT = 0.954, GRN = 0.994,
+    # ONP = 0.610) from an uncommitted fit that had seen the elections it was then
+    # scored on. Refitted leave-one-election-out (scripts/fit_mp_slope.R) the tier
+    # is real -- the member/also-ran gap is positive in 18 of 18 folds -- but three
+    # of those four numbers were wrong, and ONP's was the also-ran slope written
+    # into the member row over ZERO member observations.
+    .mpf <- Sys.getenv("AUSPOL_MP_SLOPE_FILE", "output/mp-slope-by-target.csv")
+    if (!file.exists(.mpf))
+      stop("AUSPOL_MP_SLOPE=1 needs ", .mpf, " -- run scripts/fit_mp_slope.R")
+    .mpt <- data.table::fread(.mpf, showProgress = FALSE)
+    .tgt <- el_to                       # copied to a differently-named local: a bare
+    .row <- .mpt[.mpt$target == .tgt & is.finite(.mpt$member), ]  # `target` inside
+    if (!nrow(.row))                                              # `[` would bind
+      stop("no leave-one-out MP slopes for ", .tgt, " in ", .mpf) # to the column
+    if (!identical(Sys.getenv("AUSPOL_MP_SLOPE_GRN", "0"), "1"))
+      .row <- .row[.row$party != "GRN", ]   # GRN's member/also-ran gap is ~0
+    .MP_SLOPE <- stats::setNames(as.numeric(.row$member), .row$party)
+  }
+  cat(sprintf("BNT1m  MP tier: %s
+  ",
+              if (is.null(.MP_SLOPE)) "OFF" else
+                paste(sprintf("%s=%.4f", names(.MP_SLOPE), .MP_SLOPE), collapse = " ")))
+
+  tx <- TX[election == el_from]
+  # LEAKAGE GUARD asserted on the SOURCE, not on the filtered copy: a table
+  # already filtered to one election trivially contains only that election, so
+  # asserting on it proves nothing. This checks the pair's date against every
+  # election the pooled source can add.
+  tx <- pool_configured_flows(tx, NT_DATE[[as.character(K$to)]])
+  fm <- if (nrow(tx)) build_flow_matrix(tx, min_n = 3L) else NULL
+  # NO STATEWIDE xgb_flow_conditional_for() CALL HERE ANY MORE. WA was the only
+  # harness that applied it, on top of the per-seat override it also applies at
+  # line ~556 -- so under AUSPOL_XGB_FLOWS, Western Australia was getting a
+  # different treatment from the other five harnesses, and the pooled arm mixed
+  # two things. Found 2026-09-11: 6 statewide rebuilds plus 7 per-seat
+  # overrides in WA's log, 0 statewide in fed/nsw/qld/sa/vic. The per-seat
+  # version supersedes the statewide one (it feeds each seat's OWN primary
+  # shares rather than a statewide average), so removing this leaves WA doing
+  # exactly what everyone else does. See "A fix to one harness is a fix to ALL
+  # of them" in CLAUDE.md -- this is that rule read backwards, an EXTRA
+  # parameter in one harness rather than a missing one, and it produces numbers
+  # that look like findings just the same.
+  if (is.null(fm))
+    cat(sprintf("BNT1  nt%d->%d: NO transfers for %s; flows fall back to uniform\n",
+                K$from, K$to, el_from))
+
+  # statewide shares, and the uniform swing they imply
+  wide <- function(d) {
+    m <- dcast(d, seat ~ party, value.var = "votes", fill = 0)
+    mm <- as.matrix(m[, -1]); rownames(mm) <- m$seat
+    100 * mm / rowSums(mm)
+  }
+  A <- wide(fa); B <- wide(fb)
+  sa <- fa[, .(v = sum(votes)), by = party][, setNames(100 * v / sum(v), party)]
+  sb <- fb[, .(v = sum(votes)), by = party][, setNames(100 * v / sum(v), party)]
+  # AUSPOL_FORECAST_MODE=1: predicted statewide, not the oracle (R/forecast_statewide.R).
+  sb <- forecast_statewide_or_oracle("nt", K$to, NT_DATE[[as.character(K$to)]], union(colnames(A), names(sb)), sa, sb,
+                                     code = "BNT0", n_sims = N_SIMS, seed = as.integer(Sys.getenv("AUSPOL_SEED", "42")), on_fail = "skip")
+  if (is.null(sb)) next   # thin cycle: no forecast statewide, pair not scored in forecast mode
+
+  parties <- union(colnames(A), names(sb))
+  mat <- matrix(0, nrow = nrow(A), ncol = length(parties),
+                dimnames = list(rownames(A), parties))
+  mat[, colnames(A)] <- A
+  DEV_SLOPE <- dev_slopes_for(parties)
+  # "screened" COUNTS TOO, as it does in the other five harnesses. The published
+  # value of AUSPOL_DEV_SLOPE_MODE is "screened", and this line tested for
+  # "conditional" alone -- so Western Australia ran the entire shipped
+  # configuration with candidate-conditional slopes OFF while every other
+  # harness had them ON, and its 361 seat-elections described a different
+  # model from the rest of the pooled table. Nothing errored; candidate_returns()
+  # was still called and its result then discarded. Found 2026-09-07.
+  .cond <- Sys.getenv("AUSPOL_DEV_SLOPE_MODE", "") %in% c("conditional", "screened")
+  # "screened" MODE IS HALF-HONOURED HERE, AND SAYS SO. The other five
+  # harnesses pair conditional slopes with salience_permit_for()/
+  # screened_slopes(), which protects a governed-silent candidate from the
+  # harsh new-candidate slope. WA has neither wired in at all -- a bare
+  # published-default run (AUSPOL_DEV_SLOPE_MODE="screened") silently ran
+  # conditional-only here with nothing in the log to say the salience screen
+  # never fired, the same shape as the missing-SA-shrink incident CLAUDE.md
+  # records: a harness silently can't act on a switch it was handed.
+  if (identical(Sys.getenv("AUSPOL_DEV_SLOPE_MODE", ""), "screened")) {
+    cat("BNT1c! screened mode requested but the NT harness has no salience_permit_for()/",
+        "screened_slopes() wiring; running conditional-only\n", sep = "")
+  }
+  # DECOUPLED FOR MEASUREMENT. .cond gates TWO independent mechanisms at once --
+  # candidate-conditional dev slopes (.returns, below) and the personal-vote
+  # transfer (.own_prev) -- so a single flag flip changes both together and
+  # NEXT-STEPS' item 4 could not tell them apart. AUSPOL_WA_TRANSFER unset
+  # keeps them coupled exactly as before (byte-identical default); set to "0"
+  # or "1" to force the transfer independently of the slope mode.
+  .xfer <- { v <- Sys.getenv("AUSPOL_NT_TRANSFER", ""); if (nzchar(v)) identical(v, "1") else .cond }
+  .returns <- if (.cond) tryCatch(candidate_returns(el_from, el_to), error = function(e) {
+    cat(sprintf("BNT1c! conditional slopes unavailable: %s
+", conditionMessage(e))); NULL }) else NULL
+
+  # THE VOTE MOVES WITH THE PERSON. Ported from the Victorian harness
+  # 2026-09-07. The header used to say personal_prior_vote() could not run
+  # here because "the WA commission files carry no candidate names" -- that is
+  # no longer true: every one of the 2,842 WA rows in output/candidacies.csv
+  # carries a name. Surnames only, which is weaker than a full name, but the
+  # match is within a single seat across two elections and that is enough.
+  #
+  # Three of the five worst-scored seats in the whole corpus are WA seats this
+  # fixes the mechanism for: GRAHAM won Pilbara for Labor in 1996 with 63.8%
+  # and as an INDEPENDENT in 2001 with 54.6%; BOWLER won Kalgoorlie as an
+  # independent in 2008 after sitting as Labor; and Kimberley ran the same
+  # shape in reverse. All three were given a probability of 0.000000, because
+  # the model read the previous election's PARTY shares and the independent
+  # column was empty.
+  # PORTED to fit_defector_discount() 2026-09-09 -- was a frozen 0.282 snapshot
+  # of one federal-only run; now pooled across all six jurisdictions, refit
+  # leave-this-target-out. See R/candidate_returns.R's docs.
+  .defect <- NULL
+  if (identical(Sys.getenv("AUSPOL_DEFECT_DISCOUNT", "0"), "1")) {
+    .fd <- tryCatch(fit_defector_discount(el_to), error = function(e) {
+    cat(sprintf("BNT0d! defector-discount fit FAILED, no discount applied: %s
+",
+                conditionMessage(e)))
+    list(discount = NULL, discount_mp = NULL, discount_loser = NULL, n = 0L)
+  })
+    if (is.null(.fd$discount)) {
+      cat(sprintf("BNT0d! only %d defector case(s) (need >=5); no discount applied\n", .fd$n))
+    } else {
+      cat(sprintf("BNT0d defector discount %.3f from %d cases (target excluded, pooled all jurisdictions)\n",
+                  .fd$discount, .fd$n))
+      .defect <- .fd$discount
+    }
+  }
+  # SPLIT SLOPE (AUSPOL_SPLIT_SLOPE=1, default OFF -- unset reproduces this
+  # harness byte-for-byte). Gives the returning and departed portions of a
+  # class's prior vote their own fitted slope instead of one slope chosen by
+  # a binary flag. docs/plans/prereg-partial-return-split-slope-2026-09-09.md
+  # FITTED CONDITIONAL SLOPES (AUSPOL_FIT_SLOPES=1, default OFF). Replaces the
+  # eight hardcoded same/new constants with a leave-this-target-out fit;
+  # structure untouched. docs/plans/prereg-fit-conditional-slopes-2026-09-09.md
+  .fitsl <- if (identical(Sys.getenv("AUSPOL_DISPERSION_SLOPE", "0"), "1"))
+    fit_dispersion_slopes(el_to)
+  else if (identical(Sys.getenv("AUSPOL_FIT_SLOPES", "0"), "1"))
+    fit_conditional_slopes(el_to) else NULL
+  if (!is.null(.fitsl)) cat(sprintf("FS1  fitted slopes | same %s | new %s
+",
+    paste(sprintf("%s=%.3f", names(.fitsl$same), .fitsl$same), collapse=" "),
+    paste(sprintf("%s=%.3f", names(.fitsl$new),  .fitsl$new),  collapse=" ")))
+  # MINOR-TO-MINOR DEFECTOR DISCOUNT reaching base_pred, not just the xgb
+  # feature -- docs/reviews/base-pred-blind-to-tonights-fixes-2026-09-16.md.
+  # Same shape as major_discount/.defect above.
+  .minor_disc <- NULL; .minor_disc_loser <- NULL
+  if (identical(Sys.getenv("AUSPOL_MINOR_DEFECT_BASE_PRED", "0"), "1")) {
+    .mfd <- tryCatch(fit_minor_defector_discount(el_to), error = function(e) {
+      cat(sprintf("BNT0n! minor-defector fit FAILED, no discount applied: %s\n", conditionMessage(e)))
+      list(discount = NULL, discount_mp = NULL, discount_loser = NULL, n = 0L)
+    })
+    if (is.null(.mfd$discount)) {
+      cat(sprintf("BNT0n! only %d minor-defector case(s) (need >=5); no discount applied\n", .mfd$n))
+    } else {
+      cat(sprintf("BNT0n minor-defector discount %.3f from %d cases (target excluded)\n", .mfd$discount, .mfd$n))
+      .minor_disc <- .mfd$discount
+      # REVISED 2026-09-18: a confirmed sitting-member switcher now gets NO
+      # discount (see personal_prior_vote()'s own doc) -- .minor_disc here
+      # is only the fallback rate for unknown sitting status.
+      if (!is.null(.mfd$discount_loser) && is.finite(.mfd$discount_loser)) {
+        .minor_disc_loser <- .mfd$discount_loser
+        cat(sprintf("BNT0n  two-rate: sitting-member NO DISCOUNT, non-sitting %.3f, unknown-status %.3f\n", .minor_disc_loser, .minor_disc))
+      }
+    }
+  }
+  .split <- split_slope_context(el_from, el_to)
+  .own_prev <- if (.xfer) tryCatch(personal_prior_vote(el_from, el_to, major_discount = .defect, minor_discount = .minor_disc, minor_discount_loser = .minor_disc_loser),
+                                   error = function(e) {
+                                     cat(sprintf("BNT1p! personal_prior_vote() FAILED; class-level bases kept and NO transfer removed: %s\n",
+                                                 conditionMessage(e))); NULL }) else NULL
+  # RE-ENTRY PRIOR, docs/plans/prereg-reentry-prior-2026-09-07.md. A class that
+  # contests this seat but did not contest it last time has no prior share, so
+  # swinging zero forward leaves approximately zero. Across the corpus that is
+  # 1,418 seat-class rows, and predicting zero for them costs 5.27 points of
+  # mean absolute error against 3.35 for this model.
+  #
+  # Kimberley 2001 is the case: Labor did not stand there in 1996, Carol Martin
+  # won it with 42.2%, and the model projected 2.1% and gave the winner
+  # 0.000000. Leakage-free -- who is standing comes from the nomination list,
+  # which this harness already reads to ZERO an independent column where nobody
+  # nominated. Same fact, opposite direction.
+  # The prediction is a TARGET-election share, so it must NOT be swung again.
+  # The cells are identified here, while `mat` still shows which are empty, and
+  # written in AFTER dev_slope below.
+  # Shared, time-forward call (was a private leave-one-out copy that trained on
+  # LATER elections: reentry_fit(Filter(election != el_to)) -- a leak).
+  # reentry_apply_harness() fits on fit_pairs_for(), i.e. strictly earlier
+  # elections, builds seat_lean() with positions excluding the target, and prints
+  # the BW1r line. Same call as the vic/nsw/qld/sa/fed harnesses.
+  .recells <- attr(reentry_apply_harness(mat, fa, fb, sb, target = el_to,
+                                         pairs = REENTRY_PAIRS, code = "BNT1r"),
+                   "reentry")
+  # BY-ELECTION AS THE SEAT BASELINE (AUSPOL_BYELECTION_PRIOR=1): a by-election between the two
+  # general elections where both majors stood replaces the seat's prior row (R/byelection_prior.R,
+  # external/reference/byelections/byelection-results.csv). docs/plans/prereg-byelection-prior-2026-09-18.md
+  if (Sys.getenv("AUSPOL_BYELECTION_PRIOR", "0") %in% c("1", "blend")) {
+    mat <- tryCatch(byelection_prior(mat, el_from, el_to, weight = if (identical(Sys.getenv("AUSPOL_BYELECTION_PRIOR"), "blend")) 0.5 else 1), error = function(e) { cat(sprintf("BF0b! by-election prior FAILED, prior kept: %s\n", conditionMessage(e))); mat })
+    .by <- attr(mat, "byelection")
+    if (!is.null(.by)) cat(sprintf("BF0b by-election prior: %d seat(s) replaced%s%s\n", length(.by$applied),
+                                  if (length(.by$applied)) paste0(" (", paste(.by$applied, collapse = ", "), ")") else "",
+                                  if (length(.by$skipped)) paste0("; SKIPPED ", paste(.by$skipped, collapse = ", ")) else ""))
+  }
+  mat <- remove_transferred_votes(mat, .own_prev)
+  mat <- (function(m) {
+    # A DEPARTED DEFECTOR'S VOTE GOES HOME (AUSPOL_DEPARTED_ORIGIN: "1" = leave-
+    # target-out median share, "mean" = mean). docs/plans/prereg-departed-origin-return-2026-09-18.md
+    .dor <- Sys.getenv("AUSPOL_DEPARTED_ORIGIN", "0")
+    if (!.dor %in% c("1", "mean")) { if (!.dor %in% c("0", "")) cat(sprintf("BF0o! AUSPOL_DEPARTED_ORIGIN=%s is not a mode (\"1\" or \"mean\") -- treated as OFF\n", .dor)); return(m) }
+    .fdo <- tryCatch(fit_departed_origin_return(el_to, stat = if (.dor == "mean") "mean" else "median"),
+                     error = function(e) { cat(sprintf("BF0o! departed-origin fit FAILED, nothing routed: %s
+  ", conditionMessage(e))); NULL })
+    if (is.null(.fdo) || is.null(.fdo$frac)) { cat(sprintf("BF0o! departed-origin: %d case(s), no rate fitted, nothing routed
+  ", if (is.null(.fdo)) 0L else .fdo$n)); return(m) }
+    m2 <- route_departed_origin(m, el_from, el_to, .fdo$frac)
+    .a <- attr(m2, "departed_origin")
+    cat(sprintf("BF0o departed-origin share %.3f from %d cases (target excluded): %d routed%s
+  ", .fdo$frac, .fdo$n, .a$applied,
+                if (length(.a$skipped)) paste0("; SKIPPED ", paste(.a$skipped, collapse = ", ")) else ""))
+    m2
+  })(mat)
+  # MAJOR-PARTY SLOPE TIERS: departed member (AUSPOL_MAJOR_DEPARTED, shipped) and every other
+  # ALP/LNP cell (AUSPOL_MAJOR_SLOPE). docs/plans/prereg-major-departed-slope-2026-09-18.md,
+  # docs/plans/prereg-major-present-slope-2026-09-18.md
+  .MAJDEP <- NULL; .MAJPRES <- NULL
+  if (identical(Sys.getenv("AUSPOL_MAJOR_DEPARTED", "0"), "1") || identical(Sys.getenv("AUSPOL_MAJOR_SLOPE", "0"), "1")) {
+    .fmd <- tryCatch(fit_major_departed_slope(el_to), error = function(e) { cat(sprintf("BF0m! major slope fit FAILED, majors keep slope 1: %s\n", conditionMessage(e))); NULL })
+    if (!is.null(.fmd)) {
+      if (identical(Sys.getenv("AUSPOL_MAJOR_DEPARTED", "0"), "1")) .MAJDEP <- .fmd$slope
+      if (identical(Sys.getenv("AUSPOL_MAJOR_SLOPE", "0"), "1")) .MAJPRES <- .fmd$slope_present
+      cat(sprintf("BF0m major slopes, target excluded: departed ALP %.3f (n=%d) LNP %.3f (n=%d) [%s] | present ALP %.3f (n=%d) LNP %.3f (n=%d) [%s]\n",
+                  .fmd$slope[["ALP"]], .fmd$n[["ALP"]], .fmd$slope[["LNP"]], .fmd$n[["LNP"]], if (is.null(.MAJDEP)) "off" else "ON",
+                  .fmd$slope_present[["ALP"]], .fmd$n_present[["ALP"]], .fmd$slope_present[["LNP"]], .fmd$n_present[["LNP"]], if (is.null(.MAJPRES)) "off" else "ON"))
+    }
+  }
+  .tr <- attr(mat, "transfers")
+  if (!is.null(.tr))
+    cat(sprintf("TR1  %s: transfers moved with the person: %d applied%s\n", el_to, .tr$applied,
+                if (length(.tr$skipped)) paste0("; SKIPPED ", length(.tr$skipped), ": ",
+                                                paste(utils::head(.tr$skipped, 5), collapse = ", ")) else ""))
+  if (.cond && !is.null(.returns))
+    cat(sprintf("BNT1c conditional slopes ON: %d of %d seat-classes returning
+",
+                sum(.returns$same), nrow(.returns)))
+  cat(sprintf("BNT1d  dev slopes: %s%s
+",
+              if (all(DEV_SLOPE == 1)) "all 1.000 (uniform swing)" else
+                paste(sprintf("%s=%.3f", names(DEV_SLOPE), DEV_SLOPE), collapse=" "),
+              if (length(attr(DEV_SLOPE, "absent")))
+                paste0(" | not contested here: ",
+                       paste(attr(DEV_SLOPE, "absent"), collapse=",")) else ""))
+  # THE OTHER HALF OF THE TRANSFER. remove_transferred_votes() above only strips
+  # a defector's vote from the party they LEFT, so it is not swung forward for
+  # a candidate who is not there. On its own that changes nothing for the seat:
+  # the party they JOINED still starts from its own class share, which for an
+  # independent column is usually zero. This substitutes the person's own prior
+  # vote as the base for their new class, which is what makes the mechanism
+  # visible. Ported from the Victorian harness, where it is `.own_x`.
+  #
+  # Pilbara 2001 is the case: personal_prior_vote() carries GRAHAM's 63.8% Labor
+  # vote across at the defection discount, 17.996 points, and without this line
+  # that number is computed, reported as "applied", and never reaches the IND
+  # column the model then scores.
+  # Shared with every harness and fit_seats_full.R: own_prev_substitute() (R/candidate_returns.R).
+  # A cross-seat credit (AUSPOL_CROSS_SEAT_VOTE) can only RAISE the class base, never lower it.
+  .own_x <- function(p, seats, x) own_prev_substitute(.own_prev, p, seats, x)
+  for (p in parties) {
+    from_pc <- if (p %in% names(sa)) sa[[p]] else 0
+    to_pc   <- if (p %in% names(sb)) sb[[p]] else 0
+    .sl <- if (.cond && !is.null(.returns)) conditional_slopes(p, rownames(mat), .returns, same_mp = .MP_SLOPE, major_departed = .MAJDEP, major_present = .MAJPRES, same = if (is.null(.fitsl)) formals(conditional_slopes)$same else .fitsl$same, new = if (is.null(.fitsl)) formals(conditional_slopes)$new else .fitsl$new) else DEV_SLOPE[[p]]
+    mat[, p] <- if (is.null(.split)) dev_slope(.own_x(p, rownames(mat), mat[, p]), from_pc, to_pc, .sl) else
+      split_dev_slope(.own_x(p, rownames(mat), mat[, p]), .split$frac(p, rownames(mat)), from_pc, to_pc, .split$s_ret, .split$s_dep)
+  }
+  # Re-entry prior lands here, on the post-swing projection. See BW1r above.
+  if (!is.null(.recells) && nrow(.recells)) {
+    # PERSONAL-VOTE PRIORITY, docs/plans/prereg-reentry-personal-vote-priority-
+    # 2026-09-08.md. .own_prev's identity-matched defector floor must not be
+    # overwritten by the generic re-entry GLM, which has no idea who the
+    # candidate is (Pilbara wa2001, Larry Graham, ALP -> IND, is this
+    # harness's own case).
+    .rc2 <- protect_personal_vote_cells(.recells, .own_prev)
+    .ri <- cbind(match(.rc2$seat, rownames(mat)),
+                 match(.rc2$party, colnames(mat)))
+    .rk <- stats::complete.cases(.ri)
+    mat[.ri[.rk, , drop = FALSE]] <- .rc2$value[.rk]
+    .protected <- nrow(.recells) - nrow(.rc2)
+    cat(sprintf("BNT1r  re-entry applied post-swing to %d cell(s)%s\n", sum(.rk),
+                if (.protected) sprintf(" | %d protected by own_prev", .protected) else ""))
+  }
+  # ZERO IND WHEREVER NOBODY ACTUALLY STOOD AT THE TARGET ELECTION. Ported from
+  # backtest_candidate_fed.R and backtest_candidate_sa.R; was missing here and
+  # in vic and NSW. Without it the model swings the PRIOR election's
+  # independent vote forward with no check anyone recontested -- found
+  # investigating NSW's Dubbo, which carried a retired independent's 28.4%
+  # forward though nobody stood to hold it.
+  if ("IND" %in% colnames(mat)) {
+    ind_seats <- fb[party == "IND" & votes > 0, unique(seat)]
+    no_ind <- setdiff(rownames(mat), ind_seats)
+    zeroed <- no_ind[mat[no_ind, "IND"] > 0]
+    mat[no_ind, "IND"] <- 0
+    if (length(zeroed)) {
+      cat(sprintf("BNT0  %s: zeroed IND in %d seat(s) with no independent nominated: %s\n",
+                  el_to, length(zeroed), paste(sort(zeroed), collapse = ", ")))
+    }
+  }
+  shares <- 100 * mat / rowSums(mat)
+  # AUSPOL_NEW_IND_SHRINK (POST-XGB, shipped "1"; "0" makes this line a no-op): a nameless
+  # first-time sole independent is over-called at base. R/new_ind_shrink.R.
+  shares <- new_ind_shrink_apply(shares, el_to, code = "BNT1n")
+  # AUSPOL_IND_TYPICAL (POST-XGB-TRAINING, off by default): non-sitting independents start from
+  # the typical vote for their signals, before ("base") or after ("final") the frozen trees. R/ind_typical.R.
+  shares <- ind_typical_apply(shares, el_to, stage = "base", code = "BNT1T")
+  shares <- ind_person_apply(shares, el_to, stage = "base", code = "BNT1P")  # AUSPOL_IND_PERSON (off): an independent starts from their own record. R/ind_person.R.
+  shares <- xgb_primary_override(shares, el_to)
+  shares <- ind_typical_apply(shares, el_to, stage = "final", code = "BNT1T")
+  shares <- ind_person_apply(shares, el_to, stage = "final", code = "BNT1P")  # AUSPOL_IND_PERSON (off): an independent starts from their own record. R/ind_person.R.
+  shares <- ind_mixture_apply(shares, el_to, code = "BNT1M")  # AUSPOL_IND_MIXTURE (off by default). R/ind_mixture.R.
+  # Every class with no candidate standing is zeroed AFTER the override, which
+  # otherwise writes its prediction back (plans/prereg-nomination-zero-2026-10-03.md).
+  # AUSPOL_NOM_ZERO_ORDER (default "early" = this position); "late" runs it after
+  # leader_seat_apply below instead (plans/prereg-zero-order-2026-10-03.md).
+  shares <- zero_unnominated_at("early", shares, fb, el_to, flows = fm)
+  # Time-forward seat-swing port, AFTER the override like the other harnesses
+  # and on the xgb layer only (at AUSPOL_XGB_PRIMARY=0 these shares become
+  # base_pred and the port would count twice). There is no transposed federal
+  # swing for the NT divisions, so seat_swing_port_apply() matches nothing and
+  # says so; called anyway so the log shows it, as WA's 2001/2005 pairs do.
+  if (identical(Sys.getenv("AUSPOL_XGB_PRIMARY", "0"), "1"))
+    shares <- seat_swing_port_apply(shares, el_to)
+  # Seat-poll blend (AUSPOL_SEAT_POLL_BLEND), after the override and the port;
+  # xgb layer only, so stage-1 base_pred never includes it.
+  # plans/prereg-seat-poll-blend-2026-09-29.md
+  if (identical(Sys.getenv("AUSPOL_XGB_PRIMARY", "0"), "1"))
+    shares <- seat_poll_blend_apply(shares, el_to)
+
+  # EDUCATION RESIDUAL CORRECTION (AUSPOL_EDU_RESID, default 0).
+  # Pre-registered in docs/plans/prereg-education-residual-correction-2026-09-15.md.
+  # Applied HERE, immediately after the override, so it corrects exactly the
+  # shares that reach the simulation. Leakage-free: the coefficient for this pair
+  # is fitted on every OTHER pair's out-of-fold residuals.
+  if (identical(Sys.getenv("AUSPOL_EDU_RESID", "0"), "1")) {
+    shares <- education_residual_apply(
+      shares, el_to,
+      feature = Sys.getenv("AUSPOL_EDU_RESID_FEATURE", "yr12_pct"),
+      shuffle = Sys.getenv("AUSPOL_EDU_RESID_SHUFFLE", "0"))
+  }
+
+  # DEMOGRAPHIC RESIDUAL CORRECTION, Arm A of
+  # docs/plans/prereg-demographic-axis-2026-09-15.md (AUSPOL_DEMO_RESID,
+  # default 0). All seven census columns under an elastic net, replacing the
+  # single hand-picked yr12_pct of the refused version above. Same position in
+  # the pipeline, immediately after the override, so it corrects exactly the
+  # shares that reach the simulation.
+  if (Sys.getenv("AUSPOL_DEMO_RESID", "0") %in% c("1", "2") && identical(Sys.getenv("AUSPOL_XGB_PRIMARY", "0"), "1")) {  # xgb layer only: at stage 1 it would enter base_pred and count twice
+    shares <- demographic_residual_apply(
+      shares, el_to,
+      shuffle = Sys.getenv("AUSPOL_DEMO_RESID_SHUFFLE", "0"))
+  }
+  # Leader-seat bonus (AUSPOL_LEADER_SEAT, plans/prereg-leader-seat-2026-09-29.md): a major party gains the time-forward bonus in its own leader's seat.
+  if (identical(Sys.getenv("AUSPOL_XGB_PRIMARY", "0"), "1")) shares <- leader_seat_apply(shares, el_to)
+  # AUSPOL_NOM_ZERO_ORDER="late": zero every class with no candidate AFTER the last
+  # step that can revive one. WA has no salience blend, so this is demographic_residual
+  # and leader_seat; it sits before the diagnostic dump and the `keep` subset below.
+  .nz_pre <- shares
+  nom_zero_save_flows(fm, el_to)   # the as-at forecasts table zeroes with this same fm
+  shares <- zero_unnominated_at("late", shares, fb, el_to, flows = fm)
+  .nz_cells <- nomination_zeroed_cells(.nz_pre, shares)
+  # DIAGNOSTIC DUMP, off unless asked. Writes the projected primary the model
+  # actually simulates from, so a seat can be inspected without reconstructing
+  # the pipeline by hand and getting it subtly wrong.
+  if (nzchar(Sys.getenv("AUSPOL_NT_DUMP_SHARES", ""))) {
+    .d <- data.table::as.data.table(shares, keep.rownames = "seat")
+    .d[, pair := el_to]
+    data.table::fwrite(.d, file.path("output", sprintf("nt-shares-%s.csv", el_to)))
+    cat(sprintf("BNTd  wrote output/nt-shares-%s.csv\n", el_to))
+  }
+
+  truth <- WIN[election == el_to, setNames(winner, seat)]
+  keep <- intersect(rownames(shares), names(truth))
+  cover <- length(keep) / nrow(shares)
+  # WA REDISTRIBUTES HARD, so seat names do not survive between elections: the
+  # 2008 one-vote-one-value reform leaves only 38 of 57 names from 2005, and
+  # 2001->2005 keeps 46 of 57. Winners coverage WITHIN each election is a clean
+  # 57/57 or 59/59 -- verified -- so this is name churn across the pair, not
+  # missing data.
+  #
+  # Aborting the run for one bad pair loses the six good ones, so report and
+  # continue, the same shape as the NL3 gate. The coverage is printed per pair
+  # AND written into the output, because a pair scored on two thirds of its
+  # chamber is not comparable with one scored on all of it, and a reader who
+  # cannot see that will pool them.
+  cat(sprintf("BNT1  nt%d->%d: %d of %d seats matched (%.0f%% coverage)%s\n",
+              K$from, K$to, length(keep), nrow(shares), 100 * cover,
+              if (cover < 0.8) "  <- REDUCED, redistribution" else ""))
+  if (cover < 0.55) {
+    cat(sprintf("BNT1  nt%d->%d: below 55%%, pair SKIPPED\n", K$from, K$to)); next
+  }
+  shares <- shares[keep, , drop = FALSE]
+
+  # SEAT SPREAD WITHOUT LEAKING. WA has no seat file, so the within-state spread
+  # of seat swings is measured from the PREVIOUS pair -- knowable before the
+  # election being predicted. The first pair has no predecessor and uses the
+  # repo's default of 3.5, which is stated in the output rather than buried.
+  sd_used <- if (is.na(prev_spread)) 3.5 else prev_spread
+  psd <- setNames(rep(PARTY_SD, ncol(shares)), colnames(shares))
+
+  # ARM H, docs/plans/prereg-reentry-flatratio-variance-2026-09-08.md. Widens
+  # the SIMULATED uncertainty, not the point estimate, for cells that fell
+  # back to the flat re-entry ratio -- point-shrinkage was tried and refused
+  # for these classes (docs/NEXT-STEPS.md 2026-09-08). Off by default
+  # (AUSPOL_REENTRY_SD_K=0). WA had NO sd_override plumbing at all before
+  # this -- the sixth harness-parity gap found this session (positions,
+  # salience and the seed were the other three) -- so SD_OVR is declared
+  # here rather than inherited from a salience block the way the other five
+  # harnesses have it.
+  SD_OVR <- NULL
+  .reentry_sd_k <- as.numeric(Sys.getenv("AUSPOL_REENTRY_SD_K", "0"))
+  if (.reentry_sd_k > 0) {
+    .re_sd <- reentry_sd_matrix(shares, .recells, .level_sd, .lm(shares), .reentry_sd_k)
+    cat(sprintf("RH1  re-entry sd widening ON (k=%.1f): %d cell(s)
+",
+                .reentry_sd_k, attr(.re_sd, "n_set")))
+    SD_OVR <- combine_sd_override(SD_OVR, .re_sd)
+  }
+
+  # EXPERIMENTAL, default OFF: xgb-flows-v1 PER-SEAT conditional override.
+  # docs/plans/prereg-xgb-flows-v1-2026-09-10.md. Needs `shares` (this seat's
+  # own primary shares), so it is built here rather than beside build_flow_matrix().
+  # XGB PER-CELL PRIMARY SD (AUSPOL_XGB_PRIMARY_SD). The replacement for the
+  # surge: instead of firing a jump at one candidate, be honestly WIDE on cells
+  # that could plausibly emerge and let the simulator's own tail carry it.
+  # Combined by taking the larger of the two, never added -- same convention as
+  # the salience and re-entry overrides above.
+  if (identical(Sys.getenv("AUSPOL_XGB_PRIMARY_SD", "0"), "1")) {
+    .xsd <- tryCatch(xgb_primary_sd_matrix(shares, el_to),
+                     error = function(e) {
+                       cat(sprintf("XD9! xgb primary sd FAILED: %s
+", conditionMessage(e))); NULL })
+    if (!is.null(.xsd)) SD_OVR <- combine_sd_override(SD_OVR, .xsd)
+  }
+  .xgb_flow_ov <- NULL
+  if (identical(Sys.getenv("AUSPOL_XGB_FLOWS", "0"), "1")) {
+    .xgb_flow_ov <- tryCatch(xgb_flow_conditional_override_for(shares, el_to, el_from, "nt"),
+                              error = function(e) { cat(sprintf("XF9! xgb flows per-seat FAILED: %s\n", conditionMessage(e))); NULL })
+  }
+  # XGB SURGE PARAMETERS (AUSPOL_XGB_SURGE). Replaces the salience-derived
+  # surge_h / surge_party / surge_mu / surge_sd with the emergence model's.
+  # No simulator change: all four are already per-seat vectors.
+  #
+  # RESET EVERY ITERATION, then override. The four defaults are assigned here
+  # unconditionally so this pair cannot inherit the previous pair's values, and
+  # the call site below reads these variables rather than testing exists(.xs).
+  #
+  # The earlier version left `.xs` unset except inside the flag-gated block and
+  # asked `exists(".xs") && !is.null(.xs)` at the call site. That works in a
+  # clean Rscript run and is fragile anywhere else: source this file twice in
+  # one session and a stale `.xs` from the previous run satisfies exists() and
+  # silently applies another pair's surge parameters. The other five harnesses
+  # all use the reset-then-override shape, and combine_sd_override() in
+  # R/reentry_prior.R already carries an explicit guard against exactly this
+  # ("a caller that left a PREVIOUS pair's matrix sitting in `a`"). Review gate.
+  surge_arg <- SURGE_H; surge_party_arg <- NULL
+  surge_mu_arg <- 15.6; surge_sd_arg <- 6.1
+  if (identical(Sys.getenv("AUSPOL_XGB_SURGE", "0"), "1")) {
+    .xs <- tryCatch(xgb_surge_params_for(shares, el_to),
+                    error = function(e) { cat(sprintf("XS9! xgb surge FAILED: %s
+  ", conditionMessage(e))); NULL })
+    if (!is.null(.xs)) {
+      surge_arg <- .xs$surge_h; surge_party_arg <- .xs$surge_party
+      surge_mu_arg <- .xs$surge_mu; surge_sd_arg <- .xs$surge_sd
+    }
+  }
+  # HOW-TO-VOTE CARD (AUSPOL_HTV_FLOW=1): the Liberal-excluded, ALP+GRN-alive flow rows follow the recorded
+  # card order for this election (R/htv_flow.R, external/reference/htv/liberal-alp-grn-order.csv).
+  .htv_ov <- if (identical(Sys.getenv("AUSPOL_HTV_FLOW", "0"), "1")) tryCatch(htv_flow_override(.xgb_flow_ov, fm, el_to, rownames(shares)),
+    error = function(e) { cat(sprintf("HTV9! how-to-vote override FAILED, flow rows unchanged: %s\n", conditionMessage(e))); .xgb_flow_ov }) else .xgb_flow_ov
+  # BREAKOUT MIXTURE (AUSPOL_BREAKOUT_MIX, R/breakout_mix.R): NULLs when off.
+  .bo <- breakout_mix_args(el_to, shares)
+  .imx <- ind_mixture_surge(el_to, rownames(shares), surge_arg, surge_mu_arg, surge_sd_arg, surge_party_arg, code = "BNT1N")
+  surge_arg <- .imx$surge_h; surge_mu_arg <- .imx$surge_mu; surge_sd_arg <- .imx$surge_sd; surge_party_arg <- .imx$surge_party
+  sim <- simulate_seat_contests(level_sd = .level_sd, sd_override = SD_OVR, level_mult = .lm(shares), shares, fm, party_sd = psd,
+                                seat_sd = sd_used * SEAT_SD_MULT,
+                                breakout_p = .bo$p, breakout_q = .bo$q,
+                                n_sims = N_SIMS, smooth = SMOOTH, seed = SEED,
+                                shrink = SHRINK, fallback_smooth = FB_SMOOTH, shrink_k = SHRINK_K,
+                                conditional_override = .htv_ov, conditional_override_sd = attr(.htv_ov, "sd"),
+                                # WA passed only the SCALAR surge_h and never
+                                # surge_party/mu/sd, because it has no salience
+                                # corpus and so never had surge-v2 -- a
+                                # documented parity gap. When AUSPOL_XGB_SURGE
+                                # arrived that became a silent no-op: the block
+                                # above computed all four per-seat vectors, the
+                                # log printed XS9 lines saying so, and the call
+                                # site threw them away. All seven WA pairs came
+                                # back byte-identical, which reads as "this
+                                # input does not matter" rather than "it never
+                                # reached the simulator". Caught 2026-09-11 by
+                                # noticing every WA delta was exactly 0.0000.
+                                #
+                                # The xgb surge needs no salience corpus, so
+                                # wiring it here also closes WA's long-standing
+                                # no-surge gap.
+                                flow_sd = FLOW_SD,
+                                surge_h = surge_arg,
+                                surge_party = surge_party_arg,
+                                surge_mu = surge_mu_arg,
+                                surge_sd = surge_sd_arg)
+
+# OUR OWN final-two scenario frequencies -- see tcp_scenarios(). Pete asked
+# 2026-09-16 whether we track how often a seat lands on each possible
+# head-to-head; simulate_seat_contests() already computes this per draw and
+# every harness discarded it. Written per pair so build_aef_tcp.R-style
+# tooling can compare against AEF's own seatTcpScenarios.
+  .scen <- tcp_scenarios(sim)
+  if (!is.null(.scen) && nrow(.scen)) {
+    fwrite(.scen, file.path("output", sprintf("backtest-%s-ourtcp%s.csv", el_to, CAL_TAG)))
+    cat(sprintf("BNT2t  wrote %d seat/scenario rows to backtest-%s-ourtcp%s.csv
+",
+                nrow(.scen), el_to, CAL_TAG))
+  } else {
+    # NOT silent. No file AND no message is indistinguishable from this
+    # script never having run for the pair -- the gap the data-registry
+    # discipline exists to make visible.
+    cat(sprintf("BNT2t! tcp_scenarios() returned no rows for %s -- ourtcp CSV NOT written
+", el_to))
+  }
+  cat(sprintf("BNT2e  engine %s | surge recipient fell back: %d class(es) absent, %d seat-draws at zero share\n", sim$engine, sim$surge_recipient_fallback, sim$surge_recipient_fallback_draws))
+  wp <- as.data.table(sim$win_prob)
+
+  pa <- merge(data.table(seat = keep, actual = unname(truth[keep])),
+              wp[, .(seat, party, prob)],
+              by.x = c("seat", "actual"), by.y = c("seat", "party"), all.x = TRUE)
+  pa[is.na(prob), prob := 0]
+  pr <- wp[, .SD[which.max(prob)], by = seat][, .(seat, pred = party, pred_p = prob)]
+  r <- merge(pa, pr, by = "seat")
+  r[, `:=`(pair = el_to, coverage = round(cover, 3))]
+  # Per-seat per-party probabilities, per pair. Parity with fed/sa/qld, which
+  # already write this; WA carries seven pairs and was entirely invisible to
+  # emergence analysis without it.
+  ap_all[[el_to]] <- {
+    .f <- merge(wp[, .(seat, party, prob)],
+                data.table(seat = keep, actual = unname(truth[keep])),
+                by = "seat", all.x = TRUE)
+    .f[, is_actual := party == actual]
+    .f[, pair := el_to][]
+  }
+  res_all[[el_to]] <- r
+
+  z <- data.frame(y = as.integer(r$pred == r$actual),
+                  lo = qlogis(pmin(pmax(r$pred_p, eps), 1 - eps)))
+  sl <- if (length(unique(z$y)) > 1)
+    coef(glm(y ~ lo, data = z, family = binomial()))[["lo"]] else NA_real_
+  nom_zero_assert_late(shares, .nz_cells)  # "late" order only: a zeroed cell must still be 0 at the write
+  .rr <- seat_share_rmse(shares, fb)  # the second metric: point-estimate seat-share RMSE vs actual
+  share_detail[[length(share_detail) + 1L]] <-
+    data.table::as.data.table(.rr$detail)[, pair := el_to]
+  cat(sprintf("BNT2r  seat-share RMSE %.3f | MAE %.3f | by class %s | %d seats%s\n", .rr$rmse, .rr$mae,
+              paste(sprintf("%s=%.2f", names(.rr$by_class), .rr$by_class), collapse = " "),
+              .rr$n_seats, if (.rr$n_dropped) sprintf(" (%d unmatched dropped)", .rr$n_dropped) else ""))
+  cat(sprintf("BNT2  %s: accuracy %d/%d (%.1f%%) | Brier %.4f | log %.4f | slope %.3f | seat_sd %.2f\n",
+              el_to, sum(r$pred == r$actual), nrow(r),
+              100 * mean(r$pred == r$actual), mean((1 - r$prob)^2),
+              -mean(log(pmax(r$prob, eps))), sl, sd_used))
+
+  # Spread for the NEXT pair: the realised sd of each seat's ALP swing here.
+  if ("ALP" %in% colnames(A) && "ALP" %in% colnames(B)) {
+    common <- intersect(rownames(A), rownames(B))
+    if (length(common) > 10) {
+      sw <- B[common, "ALP"] - A[common, "ALP"]
+      prev_spread <- sd(sw - mean(sw))
+    }
+  }
+}
+
+if (!length(res_all)) {
+  # EVERY PAIR SKIPPED IN FORECAST MODE is the expected outcome while the NT
+  # cycles carry 2-4 polls (BNT0n lines): exit cleanly, write NOTHING, and say so
+  # -- a rebuild must not die on it (rebuild_forecasts.sh lists the NT pairs in
+  # AUSPOL_SKIP_PAIRS), and no file means no stale score can be pooled. Outside
+  # forecast mode a pair always has a statewide, so an empty run is a real failure.
+  if (identical(Sys.getenv("AUSPOL_FORECAST_MODE", "1"), "1")) {
+    cat("BNT4! no NT pair scored: every pair was skipped (no fittable poll trend). Nothing written.\n")
+    quit(save = "no", status = 0)
+  }
+  stop("no NT pair produced a result")
+}
+R <- rbindlist(res_all)
+fwrite(R, file.path("output", sprintf("backtest-nt%s.csv", CAL_TAG)))
+.nt_ap <- rbindlist(ap_all, fill = TRUE)
+fwrite(.nt_ap, file.path("output", sprintf("backtest-nt-allprobs%s.csv", CAL_TAG)))
+cat(sprintf("BNT5  wrote the full probability table: %d rows over %d pair(s)
+",
+            nrow(.nt_ap), uniqueN(.nt_ap$pair)))
+# xgb_primary_on RECORDS WHETHER pred_share BELOW IS CIRCULAR -- see
+# backtest_candidate_sa.R's equivalent line for the full explanation.
+# pool_sharedetail.R refuses to pool a file with this column at 1.
+fwrite(rbindlist(share_detail, fill = TRUE)[, xgb_primary_on :=
+       as.integer(identical(Sys.getenv("AUSPOL_XGB_PRIMARY", "0"), "1"))],
+       file.path("output", sprintf("backtest-nt-sharedetail%s.csv", CAL_TAG)))
+cat(sprintf("\nBNT4  pooled over %d seat-elections across %d pairs: accuracy %.1f%%, Brier %.4f\n",
+            nrow(R), uniqueN(R$pair), 100 * mean(R$pred == R$actual),
+            mean((1 - R$prob)^2)))
+cat(sprintf("BNT5  wrote output/backtest-nt%s.csv\n", CAL_TAG))

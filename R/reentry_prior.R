@@ -914,7 +914,15 @@ all_election_pairs <- function() {
     list(election = "wa2013",  prev = "wa2008"),
     list(election = "wa2017",  prev = "wa2013"),
     list(election = "wa2021",  prev = "wa2017"),
-    list(election = "wa2025",  prev = "wa2021"))
+    list(election = "wa2025",  prev = "wa2021"),
+    # Northern Territory added 2026-10-13 (scripts/backtest_candidate_nt.R; NTEC
+    # results via scripts/fetch_results_nt.R). Not scored in forecast mode yet --
+    # 2-4 polls per cycle, no fittable trend -- so rebuild_forecasts.sh lists all
+    # three in AUSPOL_SKIP_PAIRS, as it does wa2021. Their candidacies still
+    # enter every later election's time-forward pooled fits from here on.
+    list(election = "nt2016",  prev = "nt2012"),
+    list(election = "nt2020",  prev = "nt2016"),
+    list(election = "nt2024",  prev = "nt2020"))
 }
 
 #' Major-party candidates on the provisional live list, for the majors re-entry carry

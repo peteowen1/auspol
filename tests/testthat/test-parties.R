@@ -160,6 +160,9 @@ test_that("the Country Liberals are the Coalition and Country Labor is not", {
   expect_equal(classify_party("C.L.P."), "LNP")
   expect_equal(classify_party("Country Liberal Party"), "LNP")
   expect_equal(classify_party("CLP-The Territory Party", "CLP"), "LNP")
+  # "1 Territory Party" (NT 2016) is a different, minor right party.
+  expect_equal(classify_party("1 Territory Party", "1TP"), "OTH_RIGHT")
+  expect_equal(classify_party("Country Liberal Party of the Northern Territory", "CLP"), "LNP")
 
   # And the other side of the collision is untouched.
   expect_equal(classify_party("Country Labor Party"), "ALP")

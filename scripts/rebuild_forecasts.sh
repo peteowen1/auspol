@@ -43,11 +43,10 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 export AUSPOL_N_SIMS="${AUSPOL_N_SIMS:-20000}"
 export AUSPOL_POOL_MIN_SIMS="${AUSPOL_POOL_MIN_SIMS:-$AUSPOL_N_SIMS}"
-# Pairs no harness can score under the published flags: wa2021 has no fittable
-# poll trend, so forecast mode (published 1 since 2026-09-19) skips it and the
-# pooling stages must not fall back to a stale file. Remove it from this default
-# when WA 2017-2021 polling reaches the anchor.
-export AUSPOL_SKIP_PAIRS="${AUSPOL_SKIP_PAIRS:-wa2021}"
+# Pairs to skip on purpose. Default none since 2026-10-13: wa2021 fits with our own poll layers, and the NT pairs
+# (and any cycle with too few polls for the trend) score through the thin-cycle estimate (AUSPOL_THIN_CYCLE,
+# R/thin_cycle.R). Pete, 2026-10-13: every new election joins the scoreboard and the pooled fits.
+export AUSPOL_SKIP_PAIRS="${AUSPOL_SKIP_PAIRS:-}"
 # EVERY STAGE SEES THE PUBLISHED CONFIGURATION. Unset switches take their
 # scripts/published_flags.R value here, once, so the fit scripts (which read only
 # the environment) cannot fall back to a code default that differs from what
@@ -129,7 +128,10 @@ run6() {  # $1 = XGB_PRIMARY value, $2 = log tag -- all 23 pairs across the six 
   echo "   ${fg}GB free -- ${slots} harness slots"
   local specs=(fed wa vic nsw:AUSPOL_NSW_PAIR=2023 qld:AUSPOL_QLD_PAIR=2024 sa:AUSPOL_SA_PAIR=2026
                qld:AUSPOL_QLD_PAIR=2020 nsw:AUSPOL_NSW_PAIR=2019 sa:AUSPOL_SA_PAIR=2022
-               sa:AUSPOL_SA_PAIR=2018 sa:AUSPOL_SA_PAIR=2014 sa:AUSPOL_SA_PAIR=2010)   # sa2018, sa2014, sa2010 added 2026-10-13 (coverage program)
+               sa:AUSPOL_SA_PAIR=2018 sa:AUSPOL_SA_PAIR=2014 sa:AUSPOL_SA_PAIR=2010
+               nsw:AUSPOL_NSW_PAIR=2015 nsw:AUSPOL_NSW_PAIR=2011
+               qld:AUSPOL_QLD_PAIR=2017 qld:AUSPOL_QLD_PAIR=2015 qld:AUSPOL_QLD_PAIR=2012
+               nt)   # 2026-10-13 coverage program: sa2010-2018, nsw2011/2015, qld2012-2017, and nt (all three NT pairs in one run, like wa)
   local n_specs=${#specs[@]}
   if [ -n "${AUSPOL_REBUILD_ONLY:-}" ] && [ "$2" = "s6" ]; then
     local keep=() s

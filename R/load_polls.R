@@ -6,14 +6,31 @@
 #' (`@TPP`, ALP share) is kept for display/validation only — forecasts derive
 #' TPP from first preferences, matching the anchor methodology.
 #'
-#' @param region One of "fed", "nsw", "vic", "qld", "wa", "sa".
+#' @param region One of "fed", "nsw", "vic", "qld", "wa", "sa" (the anchor's
+#'   files), or "nt", read from
+#'   `external/reference/anchor-supplement/poll-data-nt.csv` because the anchor
+#'   has no NT file (`scripts/build_nt_polls.R`).
 #' @return data.table with columns `date`, `firm`, `tpp_published`, one
 #'   numeric column per party, and — only when the source file carries them —
 #'   `gl_approve` and `gl_disapprove`. Sets attributes `parties` AND `region`;
 #'   the latter is relied on by [cycle_polls()] and [unfold_others()].
 #' @export
 load_polls <- function(region = "fed") {
-  path <- anchor_data_path(sprintf("poll-data-%s.csv", region))
+  # A REGION THE ANCHOR DOES NOT COVER (the Northern Territory, 2026-10-13) is
+  # read from our own file in the anchor's shape,
+  # external/reference/anchor-supplement/poll-data-<region>.csv, built from our
+  # Wikipedia scrape (scripts/build_nt_polls.R). The anchor file always wins
+  # where it exists, so no existing region can change here.
+  path <- anchor_data_path(sprintf("poll-data-%s.csv", region), must_exist = FALSE)
+  supplement <- FALSE
+  if (!file.exists(path)) {
+    sp <- file.path(pkg_root(), "external", "reference", "anchor-supplement", sprintf("poll-data-%s.csv", region))
+    if (!file.exists(sp)) path <- anchor_data_path(sprintf("poll-data-%s.csv", region))  # the anchor's own error
+    else {
+      path <- sp; supplement <- TRUE
+      message(sprintf("polls[%s]: no anchor poll file; reading our supplement %s", region, sp))
+    }
+  }
   raw <- data.table::fread(path, na.strings = c("#N/A", "", "NA"))
 
   party_cols <- grep(" FP$", names(raw), value = TRUE)
@@ -57,22 +74,26 @@ load_polls <- function(region = "fed") {
   }
   data.table::setattr(out, "parties", parties)
   # AUSPOL_POLL_SOURCE = "layered" (shipped): our Wikipedia scrape over AE's file (R/poll_source.R); "ae" = AE alone.
-  if (identical(poll_source_mode(), "layered")) {
+  # The supplement IS our Wikipedia scrape, so layering the scrape over it again
+  # would only re-match every poll to itself.
+  if (identical(poll_source_mode(), "layered") && !supplement) {
     out <- poll_layer(out, region)
     data.table::setattr(out, "parties", parties)
   }
   data.table::setattr(out, "region", region)
 
-  sanity_check_polls(out, region)
+  sanity_check_polls(out, region, min_rows = if (supplement) 1L else 101L)
   out
 }
 
 #' @keywords internal
-sanity_check_polls <- function(polls, region) {
+sanity_check_polls <- function(polls, region, min_rows = 101L) {
   parties <- attr(polls, "parties")
   n <- nrow(polls)
   dr <- range(polls$date, na.rm = TRUE)
-  stopifnot(n > 100, dr[1] >= as.Date("1940-01-01"), dr[2] <= Sys.Date() + 14)
+  # 101 rows for an anchor file (a truncated download reads as a thin one); a
+  # supplement region (the NT has 8 polls in 2012-2024) only has to be non-empty.
+  stopifnot(n >= min_rows, dr[1] >= as.Date("1940-01-01"), dr[2] <= Sys.Date() + 14)
 
   fp <- as.matrix(polls[, parties, with = FALSE])
   sums <- rowSums(fp, na.rm = TRUE)
