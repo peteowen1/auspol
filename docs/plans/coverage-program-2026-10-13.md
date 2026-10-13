@@ -49,6 +49,19 @@ Qld 2001-2017 (7); SA 2002-2018 (5); Tas, NT, ACT (none). Poll sources: `docs/PO
 
 ## Status log
 
+- 2026-10-13 ~12:20: wave 2a complete.
+  - Publish rebuild on the poll fixes: pooled seat log loss 0.3173 -> 0.3178 (+0.0005, SE 0.0014); vic2018 +0.0249
+    over the 0.02 guard (its own level moved 0.15 at the scraper fix; via retrained models). Pete: KEEP (bug fixes).
+  - AEC 2001 (150 divisions, transfers balanced) + ECQ first prefs 2004-2015 (`scripts/fetch_aec2001_ecq.R`,
+    `reviews/distributions-aec-ecq-2026-10-13.md`): all winners match the AE archive; ECQ has NO preference rounds
+    any year, TCP only partial 2004/2012 -> Qld flows must be estimated (Pete's decision). KAP class drifts OTH/OTH_RIGHT.
+  - Distributions (`scripts/fetch_state_distributions.R`, `reviews/distributions-state-2026-10-13.md`): Vic 2006 done
+    (49 seats, replay matches 49/49), NSW 2011 done from PDF countsheets (42 seats; 11 stopped at a majority). SA
+    2010/2014: ECSA pages have no distributions -> estimate.
+  - Leaders backfill: 45 proposed rows, 21 elections (`deciding-runs/leaders-backfill-proposed-2026-10-13.csv`,
+    `reviews/leaders-backfill-2026-10-13.md`); 6 elections lack a pre-election revision; needs a supplement path
+    because `fetch_leaders.R` overwrites hand rows.
+  - Poll Bludger: every post fetched (4,934 of 4,935; 2011-08-06 one post missing from its day page).
 - 2026-10-13 ~11:50: census done (`reviews/census-2006-2011-2026-10-13.md`): 7 G01 features; 2006 and 2011 DataPacks
   at CED and SED fetched (`external/reference/abs/raw/`, no login). **Finding, live in backtests:** older pairs carry a
   2016 or 2021 census vintage (fed2007 rows = 2016, `output/census-features.csv`), and the shipped
