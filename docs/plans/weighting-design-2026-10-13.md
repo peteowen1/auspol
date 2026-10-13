@@ -61,20 +61,23 @@ target and 0.50 for 2018; fed2007 rows ~0.18 for a 2022 target.
 Decisions pending (Pete). Nothing published from the vic2010 bundle; dev holds the vic2010 plumbing unpushed (it
 must publish with its rebuild).
 
-## Decisions (Pete, 2026-10-13)
+## Decisions (2026-10-13)
 
-1. **Training: decay + completeness.** Rows lose weight with age (half-life fitted time-forward, weak ~8-year prior)
-   and with thin features; no hard era cut.
-2. **Scoring: each election counts once, seats equal within it** (Pete's question: a Victorian state seat covers about
-   half the electors of a federal Victorian division, so seat-equal gives it ~2.3x the weight; elector-weighting would
-   swing the other way, one federal election = ~4 Victorian = ~14 SA). Seats within an election share one statewide
-   polling error, so the independent unit is the election; the clustered SE already treats it so. A voter-weighted
-   view is reported, not decisive.
-3. **The guard is replaced** (Pete: "a bug fix ... might improve 17 elections and harm 5 which is clearly good but
-   technically 'does harm'"): decide on the election-equal mean change in SE (beyond 1 SE = real); report the count of
-   elections better / worse; a single election harmed badly must be explained (cause traced, like Barwon 2019), then
-   Pete decides, never an automatic refusal.
-4. **Which elections:** AEF-7 primary while iterating; all 2010+ pairs the second view; pre-2010 reported only.
+1. **Training: decay + completeness** (DECIDED, Pete). Rows lose weight with age (half-life fitted time-forward, weak
+   ~8-year prior) and with thin features; no hard era cut.
+2. **Scoring weights: NOT DECIDED.** Pete asked whether seat-equal is fair (a Victorian state seat covers about half
+   the electors of a federal Victorian division, so seat-equal gives it ~2.3x the weight) and said he was not sure.
+   Claude's recommendation, not yet Pete's choice: each election counts once with seats equal within it, because seats
+   in one election share one statewide polling error (the independent unit is the election). Elector-weighting would
+   swing the other way (one federal election = ~4 Victorian = ~14 SA). Corrected 2026-10-13: an earlier version of this
+   section recorded the recommendation as decided. Until Pete chooses, `compare_rebuild_scores.R` prints both the
+   seat-pooled line (KX2, the rule in force) and the election-equal views (KX4).
+3. **The per-election guard is replaced** (Pete: "a bug fix ... might improve 17 elections and harm 5 which is clearly
+   good but technically 'does harm'"): report the count of elections better / worse; a single election harmed badly
+   must be explained (cause traced, like Barwon 2019), then Pete decides, never an automatic refusal. (Pete's point;
+   the exact replacement rule is Claude's proposal, to confirm.)
+4. **Which elections:** AEF-7 primary while iterating (Pete: "aef7 still priority for now"); 2010+ the second view;
+   pre-2010 reported only (Pete: "dont really care about pre 2010 ... ignore on model fit scoring or downweight").
 
 ## Next
 
