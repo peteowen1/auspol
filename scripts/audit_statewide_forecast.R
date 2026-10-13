@@ -13,7 +13,7 @@ dates <- election_dates()
 fund <- fundamentals_loo_table()
 mix <- fread("output/projection-mix.csv", showProgress = FALSE)
 CAND <- fread("output/candidacies.csv", showProgress = FALSE)[is.finite(votes)]
-skip <- trimws(strsplit(Sys.getenv("AUSPOL_SKIP_PAIRS", "wa2021"), ",")[[1]])
+skip <- trimws(strsplit(Sys.getenv("AUSPOL_SKIP_PAIRS", "wa2021,nt2016,nt2020,nt2024"), ",")[[1]])
 rows <- list()
 for (pr in P) {
   el <- pr$election; if (el %in% skip) next

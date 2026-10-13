@@ -25,6 +25,9 @@ election_dates <- function(labels = NULL) {
     # Brought forward from the fixed-term 27 March to avoid Easter: NSWEC Bulletin
     # No. 2 (27 May 2026), Electoral Legislation Amendment (Elections) Act 2026.
     nsw2027 = "2027-03-13",
+    # 2026-10-13: Northern Territory (pairs nt2016, nt2020, nt2024). 2012 from the
+    # NTEC results book's title page; 2016-2024 from Wikipedia's election articles.
+    nt2012  = "2012-08-25", nt2016  = "2016-08-27", nt2020  = "2020-08-22", nt2024  = "2024-08-24",
     qld2017 = "2017-11-25", qld2020 = "2020-10-31", qld2024 = "2024-10-26",
     sa2018  = "2018-03-17", sa2022  = "2022-03-19", sa2026  = "2026-03-21",
     vic2006 = "2006-11-25",   # 2026-10-13: previous election of the new vic2010 pair (Wikipedia infobox checked)

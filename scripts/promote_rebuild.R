@@ -171,7 +171,7 @@ known <- vapply(all_election_pairs(), `[[`, character(1), "election")
 missing <- setdiff(known, per$pair)
 # Pairs the rebuild skips ON PURPOSE (AUSPOL_SKIP_PAIRS, default wa2021: no
 # fittable poll trend) are not missing; the driver exports the same list.
-skip <- trimws(strsplit(Sys.getenv("AUSPOL_SKIP_PAIRS", "wa2021"), ",")[[1]])
+skip <- trimws(strsplit(Sys.getenv("AUSPOL_SKIP_PAIRS", "wa2021,nt2016,nt2020,nt2024"), ",")[[1]])
 if (length(intersect(missing, skip)))
   cat(sprintf("PA0  skipped by design (AUSPOL_SKIP_PAIRS), not required: %s\n",
               paste(intersect(missing, skip), collapse = ", ")))

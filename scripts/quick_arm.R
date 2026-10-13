@@ -257,7 +257,7 @@ run_unit <- function(task) {
   out <- file.path(root, "output")
   t0 <- Sys.time(); dir.create(task$dir, recursive = TRUE, showWarnings = FALSE)
   logf <- file.path(task$dir, "run.log")
-  env <- c(task$env, AUSPOL_XGB_PRIMARY = "1", AUSPOL_SKIP_PAIRS = "wa2021", AUSPOL_N_SIMS = as.character(task$sims))
+  env <- c(task$env, AUSPOL_XGB_PRIMARY = "1", AUSPOL_SKIP_PAIRS = "wa2021,nt2016,nt2020,nt2024", AUSPOL_N_SIMS = as.character(task$sims))
   env[task$var] <- task$val
   old_wd <- setwd(root)
   # A CLEAN SLATE EVERY RUN: this worker process runs many tasks in turn and a child

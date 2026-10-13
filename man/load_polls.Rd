@@ -7,7 +7,10 @@
 load_polls(region = "fed")
 }
 \arguments{
-\item{region}{One of "fed", "nsw", "vic", "qld", "wa", "sa".}
+\item{region}{One of "fed", "nsw", "vic", "qld", "wa", "sa" (the anchor's
+files), or "nt", read from
+\code{external/reference/anchor-supplement/poll-data-nt.csv} because the anchor
+has no NT file (\code{scripts/build_nt_polls.R}).}
 }
 \value{
 data.table with columns \code{date}, \code{firm}, \code{tpp_published}, one

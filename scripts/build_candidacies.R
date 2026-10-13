@@ -833,6 +833,28 @@ for (y in c(2010, 2014, 2018)) {
               y, nrow(v), uniqueN(v$seat), skipped))
 }
 
+# ---- NORTHERN TERRITORY 2012-2024 (added 2026-10-13) -------------------------
+# Official NTEC first preferences, parsed by scripts/fetch_results_nt.R into
+# ntec-<year>-nt-candidates.csv (seat, candidate "Given SURNAME", surname,
+# given, party_code, party_name, fp, class, elected, tcp). `class` is already a
+# classify_party() class and `elected` comes from the NTEC page's own "elected"
+# line (2016-2024) or the results book's Table 4 (2012), so the state winners
+# fill below leaves these rows alone. Pairs nt2016, nt2020, nt2024.
+for (y in c(2012L, 2016L, 2020L, 2024L)) {
+  nf <- file.path(election_data_path(), sprintf("ntec-%d-nt-candidates.csv", y))
+  if (!file.exists(nf)) { cat(sprintf("BC4  nt%d: MISSING %s (scripts/fetch_results_nt.R)\n", y, nf)); next }
+  nt <- fread(nf, showProgress = FALSE)
+  if (!all(c("seat", "candidate", "party_name", "fp", "class", "elected") %in% names(nt))) {
+    cat(sprintf("BC4! nt%d candidate file has unexpected columns; skipped\n", y)); next
+  }
+  nt <- nt[, .(seat, name = candidate, surname = toupper(surname), given, party_raw = party_name,
+               votes = as.numeric(fp), party = class, elected = as.logical(elected),
+               election = sprintf("nt%d", y), region = "nt", year = y)]
+  if (any(nt[, sum(elected), by = seat]$V1 != 1L)) stop("BC4! nt", y, ": a division without exactly one winner")
+  parts[[sprintf("nt%d", y)]] <- nt
+  cat(sprintf("BC4  nt%d: %d candidates in %d seats\n", y, nrow(nt), uniqueN(nt$seat)))
+}
+
 # ---- assemble ---------------------------------------------------------------
 if (!length(parts)) stop("no candidacy source produced rows")
 C <- rbindlist(parts, fill = TRUE)
