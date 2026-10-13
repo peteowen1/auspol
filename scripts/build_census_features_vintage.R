@@ -60,7 +60,20 @@ CENSUS_DATE <- c("2006" = "2006-08-08", "2011" = "2011-08-09",
 FEATS <- c("yr12_pct", "born_aus_pct", "indig_pct", "over55_pct",
            "under35_pct", "lang_other_pct", "edu_25plus_pct")
 # Name a pair here to force its census year (character, e.g. c(fed2016 = "2016")).
-PREF_OVERRIDE <- c()
+PREF_OVERRIDE <- c(
+  # nt2016 (27 Aug 2016) is 18 days AFTER census night (9 Aug 2016), but the 2016 data
+  # were not published until June 2017, so they were not available to anyone forecasting
+  # the election. Pete's rule is the census RELEASED before polling day: 2011.
+  nt2016 = "2011",
+  # qld2012 (24 Mar 2012): the 2011 census was taken 9 Aug 2011 but first published in
+  # June 2012, after this election. 2006 is the latest census released before polling day.
+  qld2012 = "2006")
+# Pairs added 2026-10-13 (the coverage program). Their polling days are not yet in
+# election_dates() on this branch, so they are given here and merged below.
+NEW_DATES <- c(nsw2011 = "2011-03-26", nsw2015 = "2015-03-28", qld2012 = "2012-03-24",
+               qld2015 = "2015-01-31", qld2017 = "2017-11-25", sa2010 = "2010-03-20",
+               sa2014 = "2014-03-15", sa2018 = "2018-03-17", nt2016 = "2016-08-27",
+               nt2020 = "2020-08-22", nt2024 = "2024-08-24")
 # Live pairs whose boundaries are the predecessor's (documented in
 # build_census_features.R: vic2026 = vic2022, nsw2027 = nsw2023).
 SAME_BOUNDS <- c(vic2026 = "vic2022", nsw2027 = "nsw2023")
@@ -203,10 +216,20 @@ for (v in c("2016", "2021")) {
   dc <- derive(cc)
   GEO <- rbind(GEO, data.table(census = v, kind = "ced", region = "fed",
         skey = seat_key(cc$seat), label = cc$seat)[, (FEATS) := dc[, FEATS, with = FALSE]][], fill = TRUE)
+  # Northern Territory (scripts/fetch_census_sed_nt.R): a separate file per vintage.
+  fnt <- file.path(CEN, sprintf("census-sed-%s-nt.csv", v))
+  if (file.exists(fnt)) {
+    sn <- fread(fnt, showProgress = FALSE)
+    sn <- sn[!grepl(.special, sn$seat, ignore.case = TRUE)]
+    sn <- sn[as.integer(sub("SED", "", sn$sed_code)) %% 10000L < 9000L]
+    dn <- derive(sn)
+    GEO <- rbind(GEO, data.table(census = v, kind = "sed", region = "nt",
+          skey = seat_key(sn$seat), label = sn$seat)[, (FEATS) := dn[, FEATS, with = FALSE]][], fill = TRUE)
+  }
 }
 # Tas / ACT / NT state districts are out of scope here (Hare-Clark seats are named
 # after federal divisions and would collide with them); mainland states only.
-GEO <- GEO[GEO$kind %in% c("ced", "ced04") | GEO$region %in% c("nsw", "vic", "qld", "sa", "wa")]
+GEO <- GEO[GEO$kind %in% c("ced", "ced04") | GEO$region %in% c("nsw", "vic", "qld", "sa", "wa", "nt")]
 dupg <- GEO[, .N, by = .(census, kind, region, skey)][N > 1]
 if (nrow(dupg)) { cat("CW2! duplicate geography keys, keeping first:\n"); print(dupg)
   GEO <- GEO[!duplicated(GEO[, .(census, kind, region, skey)])] }
@@ -220,7 +243,7 @@ stopifnot(GEO[kind == "ced" & census %in% c("2006", "2011", "2016"), .N, by = ce
 OLD <- fread(file.path(OUT, "census-features.csv"), showProgress = FALSE)
 CAND <- fread(file.path(OUT, "candidacies.csv"), showProgress = FALSE)
 PAIRS <- unique(c(vapply(all_election_pairs(), function(p) p$election, ""), "vic2010",
-                  unique(OLD$pair)))
+                  unique(OLD$pair), names(NEW_DATES)))
 cells <- unique(rbindlist(list(
   OLD[, .(pair, seat)],
   unique(data.table(pair = CAND$election, seat = CAND$seat))[pair %in% PAIRS])))
@@ -232,7 +255,8 @@ OLD[, real_census := ifelse(grepl("^(vic|nsw|qld|sa|wa)", pair), "2016", as.char
 cat(sprintf("CW3  %d cells over %d pairs (old file: %d cells, %d pairs; vic2010 new)\n",
             nrow(cells), uniqueN(cells$pair), nrow(OLD), uniqueN(OLD$pair)))
 
-ED <- election_dates(PAIRS)
+ED <- c(election_dates(setdiff(PAIRS, names(NEW_DATES))),
+        stats::setNames(as.Date(NEW_DATES), names(NEW_DATES)))[PAIRS]
 region_of_pair <- sub("[0-9]{4}$", "", PAIRS); names(region_of_pair) <- PAIRS
 pref_census <- function(p) {
   if (p %in% names(PREF_OVERRIDE)) return(list(y = PREF_OVERRIDE[[p]], why = "override"))
@@ -323,7 +347,7 @@ print(R[, .N, by = .(src = sub("\\d{4}", "YYYY", substr(vintage_note, 1, 60)))][
 
 # ---- validation vs the old file ----------------------------------------------
 cat("\nCW5  PROOF OF VINTAGE CHOICE: polling day against census day (3 pairs, plus every fallback is flagged)\n")
-for (p in c("fed2007", "vic2010", "nsw2019", "fed2016")) {
+for (p in c("fed2007", "vic2010", "nsw2019", "fed2016", "nsw2011", "qld2012", "nt2016", "nt2024")) {
   y <- unique(R$pref[R$pair == p])
   cat(sprintf("CW5  %-8s polling day %s | census used %s taken %s | census before election: %s\n",
               p, format(ED[[p]]), y, CENSUS_DATE[[y]], as.Date(CENSUS_DATE[[y]]) < ED[[p]]))
@@ -357,6 +381,24 @@ print(rbindlist(lapply(FEATS, function(f) {
 same <- chg[, Reduce(`&`, lapply(FEATS, function(f) abs(get(f) - get(paste0(f, "_old"))) < 1e-9))]
 cat(sprintf("CW7  rows whose census year changed but whose features are byte-equal to the old row: %d (expect 0)\n", sum(same, na.rm = TRUE)))
 
-fwrite(R[, c("pair", "seat", "vintage", "exact", FEATS, "vintage_note"), with = FALSE],
-       file.path(OUT, "census-features-vintage.csv"))
+OUTCOLS <- c("pair", "seat", "vintage", "exact", FEATS, "vintage_note")
+# AFTER THE SWAP, output/census-features.csv IS the vintage file, so OLD above is no longer
+# the pre-vintage file and source B (reaggregated rows) would re-derive the existing pairs
+# from already-vintaged rows. AUSPOL_CENSUS_VINTAGE_BASE names a copy of the vintage file
+# as it stood: its pairs are kept VERBATIM and only pairs absent from it are taken from R.
+BASE_F <- Sys.getenv("AUSPOL_CENSUS_VINTAGE_BASE", "")
+if (nzchar(BASE_F)) {
+  BASE <- fread(BASE_F, showProgress = FALSE)
+  add <- R[!pair %in% BASE$pair, OUTCOLS, with = FALSE]
+  cat(sprintf("CW9  base %s: %d rows, %d pairs kept verbatim; %d rows for %d new pairs taken from this build\n",
+              BASE_F, nrow(BASE), uniqueN(BASE$pair), nrow(add), uniqueN(add$pair)))
+  # Textual append: the base file's bytes are copied as they are, never re-serialised.
+  file.copy(BASE_F, file.path(OUT, "census-features-vintage.csv"), overwrite = TRUE)
+  fwrite(add, file.path(OUT, "census-features-vintage.csv"), append = TRUE, col.names = FALSE)
+  R <- rbind(BASE[, OUTCOLS, with = FALSE], add)
+} else fwrite(R[, OUTCOLS, with = FALSE], file.path(OUT, "census-features-vintage.csv"))
+# The rows for the pairs added 2026-10-13, on their own, for merging into a main
+# checkout whose census-features-vintage.csv has the older pairs.
+fwrite(R[pair %in% names(NEW_DATES), c("pair", "seat", "vintage", "exact", FEATS, "vintage_note"), with = FALSE],
+       file.path(OUT, "census-features-vintage-newpairs.csv"))
 cat(sprintf("\nCW8  wrote %s/census-features-vintage.csv (%d rows)\n", OUT, nrow(R)))
