@@ -873,6 +873,9 @@ all_election_pairs <- function() {
     list(election = "fed2019", prev = "fed2016"),
     list(election = "fed2022", prev = "fed2019"),
     list(election = "fed2025", prev = "fed2022"),
+    # vic2010 added 2026-10-13 (coverage program; official VEC 2006 first preferences and
+    # distributions). It becomes training data for every later election's time-forward fits.
+    list(election = "vic2010", prev = "vic2006"),
     list(election = "vic2014", prev = "vic2010"),
     list(election = "vic2018", prev = "vic2014"),
     list(election = "vic2022", prev = "vic2018"),

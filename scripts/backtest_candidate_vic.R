@@ -256,7 +256,11 @@ P <- election_data_path()
 # Legislative Council. The 2013 redistribution renamed 15 of the 88 districts,
 # so 2010 -> 2014 scores 73 seats, and the harness reports that coverage the
 # same way it does for the 2021 redistribution.
+# FOUR PAIRS since 2026-10-13: 2006 -> 2010 added (coverage program; official VEC 2006
+# first preferences and distributions, scripts/fetch_official_results_2000s.R and
+# fetch_state_distributions.R). 2006 and 2010 used the same 88 districts.
 PAIRS <- list(
+  list(from = 2006, to = 2010),
   list(from = 2010, to = 2014),
   list(from = 2014, to = 2018),
   list(from = 2018, to = 2022))
@@ -284,7 +288,7 @@ if (nzchar(.vic_pair_sel)) {
 # `if (K$to == 2018L) ... else ...`, which silently gave any third pair the
 # 2022 date -- a leakage bug the moment a pair was added, and one that nothing
 # downstream would have reported.
-VIC_DATE <- c("2014" = "2014-11-29", "2018" = "2018-11-24", "2022" = "2022-11-26")
+VIC_DATE <- c("2010" = "2010-11-27", "2014" = "2014-11-29", "2018" = "2018-11-24", "2022" = "2022-11-26")
 
 share_of <- function(f) {
   d <- fread(file.path(P, f), showProgress = FALSE)

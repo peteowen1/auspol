@@ -36,3 +36,39 @@ test_that(".shift_cell moves the cell by exactly delta and keeps the row total",
   expect_equal(unname(auspol:::.shift_cell(row, 3, -30)["GRN"]), 0)    # floored at zero
   expect_equal(unname(auspol:::.shift_cell(row, 1, 80)), c(100, 0, 0))  # capped at the row total
 })
+
+test_that("leaders-supplement.csv fills elections leaders.csv lacks, and leaders.csv wins on overlap", {
+  root <- withr::local_tempdir()
+  d <- file.path(root, "external", "reference", "leaders"); dir.create(d, recursive = TRUE)
+  cols <- c("election", "slot", "leader_clean", "party_clean", "leaders_seat_clean", "head_of_govt")
+  mk <- function(e, who, party, seat, hog) data.frame(election = e, slot = 1L, leader_clean = who, party_clean = party,
+                                                     leaders_seat_clean = seat, head_of_govt = hog)
+  data.table::fwrite(rbind(mk("xx2010", "Real Premier", "Australian Labor Party", "Realseat", "Real Premier")), file.path(d, "leaders.csv"))
+  sup <- rbind(mk("xx2010", "Overlap Loser", "Australian Labor Party", "Wrongseat", "Overlap Loser"),
+               mk("xx2001", "Old Premier", "Australian Labor Party", "Oldseat", "Old Premier"))
+  sup$source_url <- "u"; sup$source_date <- "2001-01-01"; sup$note <- "n"
+  sp <- file.path(d, "leaders-supplement.csv")
+  data.table::fwrite(sup, sp)
+  testthat::local_mocked_bindings(pkg_root = function() root)
+
+  ls <- suppressMessages(leader_seats())
+  expect_equal(ls$seat[ls$pair == "xx2001"], "Oldseat")            # (a) supplement fills a missing election
+  expect_equal(ls$role[ls$pair == "xx2001"], "gov")
+  expect_equal(ls$seat[ls$pair == "xx2010"], "Realseat")           # (b) leaders.csv wins on overlap
+  expect_false("Wrongseat" %in% ls$seat)
+  expect_output(read_leaders(), "1 rows used for 1 elections")
+
+  # (c) control: with no supplement the extra election is absent, so (a) can only pass through the merge.
+  file.remove(sp)
+  expect_false("xx2001" %in% leader_seats()$pair)
+
+  # A malformed supplement stops the run rather than being skipped.
+  data.table::fwrite(sup[, setdiff(names(sup), "note")], sp)
+  expect_error(read_leaders(), "columns differ")
+})
+
+test_that("fetch_leaders.R never writes the supplement file", {
+  src <- readLines(file.path(pkg_root(), "scripts", "fetch_leaders.R"), warn = FALSE)
+  src <- src[!grepl("^[[:space:]]*#", src)]
+  expect_false(any(grepl("supplement", src)))
+})

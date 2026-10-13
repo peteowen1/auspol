@@ -473,6 +473,23 @@ if (file.exists(vf)) {
   } else cat("BC4  vic2022: unexpected columns; skipped\n")
 } else cat(sprintf("BC4  vic2022: MISSING %s\n", vf))
 
+# ---- VICTORIA 2006 (added 2026-10-13, coverage program) ----------------------
+# Official VEC 2006 first preferences, parsed from the distribution pages by
+# scripts/fetch_official_results_2000s.R into vec-2006-vic-candidates.csv
+# (seat, candidate "SURNAME, Given", party_code, party_name, fp, class). `class`
+# is already a classify_party() class. Previous election of the new vic2010 pair.
+vf6 <- file.path(election_data_path(), "vec-2006-vic-candidates.csv")
+if (file.exists(vf6)) {
+  v6 <- fread(vf6, showProgress = FALSE)
+  if (all(c("seat", "candidate", "party_name", "fp", "class") %in% names(v6))) {
+    v6 <- v6[, .(seat, name = candidate, party_raw = ifelse(nzchar(party_name), party_name, "Independent"),
+                 votes = as.numeric(fp), party = class, surname = NA_character_, given = NA_character_,
+                 elected = NA, election = "vic2006", region = "vic", year = 2006)]
+    parts[["vic2006"]] <- v6
+    cat(sprintf("BC4  vic2006: %d candidates in %d seats\n", nrow(v6), uniqueN(v6$seat)))
+  } else cat("BC4! vic2006 candidate file has unexpected columns; skipped\n")
+} else cat(sprintf("BC4  vic2006: MISSING %s\n", vf6))
+
 # ---- WESTERN AUSTRALIA 1996-2025 --------------------------------------------
 # One JSON per seat per election, already on disk: sg{YEAR}-{CODE}.json, with
 # `resultsCandidates` carrying BALLOT_PAPER_NAME, PARTY_AFFILIATION and
@@ -861,7 +878,10 @@ for (rg in names(WINF)) {
 # 2022 included since 2026-08-27: derived from the VEC's own transfer file by
 # scripts/derive_vic2022_winners.R, replacing the 2026-seat-file proxy the
 # Victorian harness had been using. Victoria is the live target.
-for (y in c(2014L, 2018L, 2022L)) {
+# 2010 added 2026-10-13 (vic2010 pair; the file existed but was never loaded, so
+# vic2010 carried no elected flags; loading it also gives vic2014's returners
+# their 2010 incumbency).
+for (y in c(2010L, 2014L, 2018L, 2022L)) {
   f <- file.path(election_data_path(), sprintf("vec-%d-vic-winners.csv", y))
   if (!file.exists(f)) next
   w <- fread(f, showProgress = FALSE)

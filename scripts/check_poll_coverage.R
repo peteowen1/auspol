@@ -47,16 +47,16 @@ if (!"pv_UND" %in% names(W)) stop("column pv_UND is absent from statewide_polls_
 scored <- data.table(
   election = c(paste0("fed", c(2007, 2010, 2013, 2016, 2019, 2022, 2025)),
                paste0("wa", c(2001, 2005, 2008, 2013, 2017, 2025)),
-               paste0("vic", c(2014, 2018, 2022)), paste0("nsw", c(2019, 2023)),
+               paste0("vic", c(2010, 2014, 2018, 2022)), paste0("nsw", c(2019, 2023)),
                paste0("qld", c(2020, 2024)), paste0("sa", c(2022, 2026))),
   prev = c("fed2004", "fed2007", "fed2010", "fed2013", "fed2016", "fed2019", "fed2022",
            "wa1996", "wa2001", "wa2005", "wa2008", "wa2013", "wa2021",
-           "vic2010", "vic2014", "vic2018", "nsw2015", "nsw2019",
+           "vic2006", "vic2010", "vic2014", "vic2018", "nsw2015", "nsw2019",
            "qld2017", "qld2020", "sa2018", "sa2022"))
 ed <- election_dates()
 scored[, `:=`(region = sub("[0-9]+$", "", election),
               polling_day = as.Date(unname(ed[election])), prev_day = as.Date(unname(ed[prev])))]
-stopifnot(nrow(scored) == 22, !anyNA(scored$polling_day), !anyNA(scored$prev_day))
+stopifnot(nrow(scored) == 23, !anyNA(scored$polling_day), !anyNA(scored$prev_day))
 assign_election <- function(region, d) {
   out <- rep(NA_character_, length(d))
   for (i in seq_len(nrow(scored))) {

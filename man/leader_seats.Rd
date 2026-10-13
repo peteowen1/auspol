@@ -18,3 +18,8 @@ beside a Liberal leader is left out: the three measured (Trenorden, Grylls
 twice) carry no signal and their class is shared with the Liberal leader.
 "Liberals for Forests" (wa2001) is not the Liberal Party.
 }
+\details{
+Elections \code{leaders.csv} lacks (2001-2018 backfill) come from the hand-kept
+\code{leaders-supplement.csv} beside it, which \code{scripts/fetch_leaders.R} never
+writes; see \code{\link[=read_leaders]{read_leaders()}}.
+}
