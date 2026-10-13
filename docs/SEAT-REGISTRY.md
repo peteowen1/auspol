@@ -206,7 +206,7 @@ Dug 2026-10-09 from run 0cbaa82 (`scripts/biggest_misses.R --pairs=vic2018`). Th
   TRACED 2026-10-14 (`output/forecasts.csv`, run 4e03af5): the miss is in base_pred, and it is OVER-carry, not under.
   base_pred Johnson (IND) 28.5 vs actual 20.1, Liberal (Katsambanis) 25.6 vs 39.6; xgb moves the Liberal DOWN to 22.6.
   Final shares IND 28.4, LNP 24.6. So WA's higher own-carry 0.693 would make Hillarys worse; the Liberal kept far more
-  of Johnson's old vote than the model lets a party keep from a departing member. Same shape as wa2013 Churchlands.
+  of Johnson's old vote than the model lets a party keep from a departing member. Same shape as wa2013 Churchlands. Across all 52 defector cases there is NO overall over-carry (mean -0.35, SE 1.49; reviews/defector-overcarry-2026-10-14.md): Hillarys is a tail case.
 - **Murray-Wellington**, **Pilbara**, **Jandakot**, **Southern River**, **Kingsley** -- **OPEN** (2026-10-14). ALP gains
   called LNP at p 0.07-0.17: the size of the 2017 Labor swing under-called. Not traced to level vs seat swing.
 
