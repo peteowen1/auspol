@@ -49,6 +49,18 @@ Qld 2001-2017 (7); SA 2002-2018 (5); Tas, NT, ACT (none). Poll sources: `docs/PO
 
 ## Status log
 
+- 2026-10-13 ~12:45: wave 2b running.
+  - Wikipedia scraper extended to every election 2000+ incl. Tas/NT/ACT (old 34 pages byte-identical; new pages
+    gave 67 poll rows); older table layouts (vic2006, qld2006/2009, sa2006, nt2016, tas2014-2021) handed to a
+    parser agent (must keep the old pages identical).
+  - Flow estimator: design `plans/flow-estimation-from-results-2026-10-13.md`; build + validation agent running
+    (answer key = published distributions; pass bar fixed in the plan). Note: statewide flows today come from AE's
+    `preference-estimates.csv`, another AE dependency this replaces.
+  - Polling days 2000+: 31 of 38 remembered dates checked against Wikipedia infoboxes, all agree; 7 unchecked
+    (qld2012, qld2015, sa2002, tas2025, nt2001/2005/2008; Wikipedia rate-limited). Moving them into
+    `R/election_dates.R` is deferred to the first new pair, behind a byte-identical check on existing scores
+    (many functions read the full list to find "the previous election").
+  - Next for me: Poll Bludger extraction over all posts once the parser agent finishes (both read the wiki table).
 - 2026-10-13 ~12:20: wave 2a complete.
   - Publish rebuild on the poll fixes: pooled seat log loss 0.3173 -> 0.3178 (+0.0005, SE 0.0014); vic2018 +0.0249
     over the 0.02 guard (its own level moved 0.15 at the scraper fix; via retrained models). Pete: KEEP (bug fixes).

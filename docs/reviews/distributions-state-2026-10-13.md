@@ -1,7 +1,7 @@
 # State distributions of preferences: Vic 2006, NSW 2011, SA 2010 and 2014 (2026-10-13)
 
-Script: `scripts/fetch_state_distributions.R` (sections `vec`, `nswec`, `ecsa`; check codes `DD1x` Victoria,
-`DD2x` NSW, `DD3x` SA; "SQ" is taken by `fit_seats_full.R`). Re-running it fetches nothing already on disk
+Script: `scripts/fetch_state_distributions.R` (sections `vec`, `nswec`, `ecsa`; check codes `DQ1x` Victoria (renamed from DD, which build_data_dictionary.R uses),
+`DQ2x` NSW, `DQ3x` SA; "SQ" is taken by `fit_seats_full.R`). Re-running it fetches nothing already on disk
 (Penrith's PDF is retried each run, see NSW). Raw downloads sit under `external/reference/{vec,nswec,ecsa}/raw/<election>/`;
 outputs under `external/elections/` (gitignored with the rest of that folder).
 
