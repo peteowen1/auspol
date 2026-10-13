@@ -52,6 +52,8 @@ PAIRS <- list(
   list(election = "fed2019", prev = "fed2016", region = "fed"),
   list(election = "fed2022", prev = "fed2019", region = "fed"),
   list(election = "fed2025", prev = "fed2022", region = "fed"),
+  list(election = "nsw2011", prev = "nsw2007", region = "nsw"),   # added 2026-10-13 (coverage program)
+  list(election = "nsw2015", prev = "nsw2011", region = "nsw"),   # added 2026-10-13 (coverage program)
   list(election = "nsw2019", prev = "nsw2015", region = "nsw"),
   list(election = "nsw2023", prev = "nsw2019", region = "nsw"),
   list(election = "qld2020", prev = "qld2017", region = "qld"),

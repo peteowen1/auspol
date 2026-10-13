@@ -24,11 +24,11 @@ test_that("quick_parse_env accepts assignments and refuses anything else", {
   expect_error(quick_parse_env("AUSPOL_X=1 AUSPOL_X=0"), "set twice")
 })
 
-test_that("quick_units is the 24 scored elections, one harness run each, ids unique", {
+test_that("quick_units is the 25 scored elections, one harness run each, ids unique", {
   u <- quick_units()
-  expect_equal(nrow(u), 24L)   # 22 -> 23 on 2026-10-13: vic2010 added (coverage program); 24: wa2021 back in
+  expect_equal(nrow(u), 25L)   # 22 -> 23 on 2026-10-13: vic2010 added; 23 -> 24: nsw2015 added; 24 -> 25: nsw2011 added (coverage program)
   expect_false(anyDuplicated(u$id) > 0)
-  expect_true("wa2021" %in% u$id)                                # its trend fits since the month-range polls and dedup (2026-10-13)
+  expect_false("wa2021" %in% u$id)                               # no fittable poll trend; the rebuild skips it too
   expect_setequal(unique(u$harness), c("fed", "wa", "vic", "nsw", "qld", "sa"))
   expect_equal(u$var[u$id == "vic2022"], "AUSPOL_VIC_PAIR")
 })

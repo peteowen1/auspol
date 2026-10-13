@@ -129,6 +129,10 @@ ELS <- list(
                  anchor = "Kevin Rudd"),
   fed2016 = list(poll = "2016-07-02", geo = "AU", prev = "fed2013",
                  anchor = "Malcolm Turnbull"),
+  nsw2011 = list(poll = "2011-03-26", geo = "AU-NSW", prev = "nsw2007", # added 2026-10-13 (coverage program)
+                 anchor = "Kristina Keneally"),
+  nsw2015 = list(poll = "2015-03-28", geo = "AU-NSW", prev = "nsw2011", # added 2026-10-13 (coverage program)
+                 anchor = "Mike Baird"),
   nsw2019 = list(poll = "2019-03-23", geo = "AU-NSW", prev = "nsw2015", # (missing)
                  anchor = "Gladys Berejiklian"),
   sa2022  = list(poll = "2022-03-19", geo = "AU-SA", prev = "sa2018", # (missing)

@@ -38,7 +38,7 @@ BOOTHS = 'output/booths'
 OUT = 'external/elections/notional'
 # (region, from, to): every backtest pair with booth data at both ends.
 PAIRS = [('vic', 2010, 2014), ('vic', 2014, 2018), ('vic', 2018, 2022), ('vic', 2022, 2026),
-         ('nsw', 2015, 2019), ('nsw', 2019, 2023),
+         ('nsw', 2011, 2015), ('nsw', 2015, 2019), ('nsw', 2019, 2023),
          ('qld', 2017, 2020), ('qld', 2020, 2024),
          ('sa', 2018, 2022), ('sa', 2022, 2026),
          ('wa', 2005, 2008), ('wa', 2008, 2013), ('wa', 2013, 2017), ('wa', 2017, 2021), ('wa', 2021, 2025)]

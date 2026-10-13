@@ -879,6 +879,10 @@ all_election_pairs <- function() {
     list(election = "vic2014", prev = "vic2010"),
     list(election = "vic2018", prev = "vic2014"),
     list(election = "vic2022", prev = "vic2018"),
+    # nsw2011 added 2026-10-13 (previous election nsw2007, same 93 districts).
+    list(election = "nsw2011", prev = "nsw2007"),
+    # nsw2015 added 2026-10-13 (coverage program; previous election nsw2011, notional prior on the 2015 boundaries).
+    list(election = "nsw2015", prev = "nsw2011"),
     list(election = "nsw2019", prev = "nsw2015"),
     list(election = "nsw2023", prev = "nsw2019"),
     # sa2022 added 2026-09-13. Scored by backtest_candidate_sa.R since the
