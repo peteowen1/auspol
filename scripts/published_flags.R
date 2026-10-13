@@ -689,6 +689,9 @@ PUBLISHED_FLAGS <- c(
   AUSPOL_LEVEL_FED_GAP_HL    = "90",       # same prereg: half-life (days) of the state-minus-federal gap; fixed, not fitted (180 reported as sensitivity).
   AUSPOL_POLL_SOURCE         = "layered",  # SHIPPED 2026-10-13 (Pete; plans/prereg-own-poll-source-step2-2026-10-12.md): the trend reads our Wikipedia scrape layered over AE's file (R/poll_source.R). "ae" = AE's file alone. Deciding run all 22 +0.0002 (SE 0.0028); wa2008 guard explained.
   AUSPOL_TRAIN_SKIP_PAIRS    = "vic2010",  # 2026-10-13 (Pete): pairs scored but never training rows for the as-at and production vote-share models (fit_xgb_primary_asat.R, _v6_final.R); vic2010 as training data made later elections worse (per person, AEF-7 +0.0043 beyond 1 SE) until decay + completeness weights exist (plans/weighting-design-2026-10-13.md).
+  AUSPOL_TRAIN_DECAY_H       = "Inf",      # ARM 2026-10-13 (plans/prereg-training-weights-2026-10-13.md): half-life (years) of training-row weight by age before the target; "Inf" = off.
+  AUSPOL_TRAIN_COMPLETENESS  = "0",        # ARM, same prereg: "1" scales training rows by their share of non-missing features.
+  AUSPOL_TRAIN_DEMEAN        = "0",        # ARM, same prereg: "1" subtracts each training election's mean residual per party class from the label.
   AUSPOL_CENSUS_FILE         = "",         # DIAGNOSTIC 2026-10-13: path of an alternative census-features table (census_features_path()); "" = output/census-features.csv (published).
   AUSPOL_MP_SLOPE_FILE       = "output/mp-slope-by-target.csv",  # DIAGNOSTIC 2026-10-13: sitting-member slope table the harnesses read; point at an older copy to attribute a refit.
   AUSPOL_LEADERS_SUPPLEMENT  = "1",        # DIAGNOSTIC 2026-10-13: "0" = leaders.csv only (no pre-2019 supplement rows), to attribute the supplement.

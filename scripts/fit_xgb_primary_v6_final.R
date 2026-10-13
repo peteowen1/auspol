@@ -105,6 +105,20 @@ cat(sprintf("FXP1  production features = the as-at list: %d columns
 ", length(feat_cols)))
 X <- as.matrix(ALL[, ..feat_cols])
 y <- ALL$actual_share
+# Same training-row weights and labels as fit_xgb_primary_asat.R (plans/prereg-training-weights-2026-10-13.md), with
+# the cutoff at today: the production model serves the live elections.
+.decay_h <- suppressWarnings(as.numeric(Sys.getenv("AUSPOL_TRAIN_DECAY_H", "Inf"))); if (is.na(.decay_h) || .decay_h <= 0) .decay_h <- Inf
+.compl_on <- identical(Sys.getenv("AUSPOL_TRAIN_COMPLETENESS", "0"), "1")
+.demean_on <- identical(Sys.getenv("AUSPOL_TRAIN_DEMEAN", "0"), "1")
+if (.demean_on) y <- y - stats::ave(ALL$actual_share - ALL$base_pred, ALL$pair, ALL$party)
+.wfin <- rep(1, nrow(ALL))
+if (is.finite(.decay_h)) {
+  .age <- as.numeric(Sys.Date() - as.Date(election_dates(unique(ALL$pair))[ALL$pair])) / 365.25
+  .wfin <- .wfin * 0.5^(.age / .decay_h)
+}
+if (.compl_on) { .cmp <- rowMeans(!is.na(X)); .wfin <- .wfin * pmin(1, .cmp / stats::quantile(.cmp, 0.9)) }
+cat(sprintf("FXPw training weights: decay half-life %s years, completeness %s, demean %s | weight range %.2f-%.2f\n",
+            format(.decay_h), if (.compl_on) "ON" else "off", if (.demean_on) "ON" else "off", min(.wfin), max(.wfin)))
 
 params <- list(objective = "reg:squarederror", eta = 0.05, max_depth = 4,
                 subsample = 0.8, colsample_bytree = 0.8, min_child_weight = 5)
@@ -117,6 +131,7 @@ params <- list(objective = "reg:squarederror", eta = 0.05, max_depth = 4,
 pairs <- sort(unique(ALL$pair))
 fold_id <- match(ALL$pair, pairs)
 dtrain <- xgb.DMatrix(data = X, label = y, missing = NA)
+if (is.finite(.decay_h) || .compl_on) xgboost::setinfo(dtrain, "weight", .wfin)
 # MUST MATCH fit_xgb_primary_v6.R's AUSPOL_XGB_BASE_MARGIN (shipped 2026-09-17
 # at "2" -- base_margin set AND base_pred kept as a feature, both already true
 # of feat_cols above). Training this FINAL model without base_margin while the
