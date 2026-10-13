@@ -36,6 +36,13 @@ CAND <- fread("output/candidacies.csv", showProgress = FALSE)
 # without anyone remembering to add it.
 CAND[, juris := sub("[0-9]+$", "", election)]
 CAND[, yr := as.integer(sub("^[a-z]+", "", election))]
+# Live elections (vic2026, nsw2027) carry candidates but no votes yet: their shares are NaN, so they are
+# not pairs to fit on (found 2026-10-13: the script had stopped on all(is.finite(dev_now)) since live
+# candidacies were added, and output/mp-slope-by-target.csv had gone stale without anyone noticing).
+.counted <- CAND[, .(v = sum(votes, na.rm = TRUE)), by = election][v > 0, election]
+cat(sprintf("MP0e elections without counted votes, left out: %s\n",
+            paste(setdiff(unique(CAND$election), .counted), collapse = ", ")))
+CAND <- CAND[election %in% .counted]
 pairs <- rbindlist(lapply(split(unique(CAND[, .(juris, yr, election)]), by = "juris"), function(d) {
   d <- d[order(yr)]
   if (nrow(d) < 2L) return(NULL)
