@@ -31,7 +31,7 @@ All seven share one `R/` package core (`simulate_seat_contests()`,
 in which switches each one WIRES and which data source each reads, not in
 separate model code.
 
-## Switch parity (184 switches from `published_flags.R`, 7 entry points)
+## Switch parity (185 switches from `published_flags.R`, 7 entry points)
 
 | switch | fit_seats (published) | fed | nsw | qld | sa | vic | wa |
 |---|---|---|---|---|---|---|---|
@@ -190,6 +190,7 @@ separate model code.
 | `AUSPOL_SURGE_RECIPIENT` | yes | yes | yes | yes | yes | yes | yes |
 | `AUSPOL_SURGE_SCALE` | yes | yes | yes | yes | yes | yes | yes |
 | `AUSPOL_TIME_FORWARD_FITS` | NO | NO | NO | NO | NO | NO | NO |
+| `AUSPOL_TRAIN_SKIP_PAIRS` | NO | NO | NO | NO | NO | NO | NO |
 | `AUSPOL_TREND_RW_MULT` | NO | NO | NO | NO | NO | NO | NO |
 | `AUSPOL_TREND_SIGMAS` | NO | NO | NO | NO | NO | NO | NO |
 | `AUSPOL_TREND_SZC` | NO | NO | NO | NO | NO | NO | NO |
@@ -342,6 +343,7 @@ separate model code.
 - **`AUSPOL_STATE_POLL_POOL`** (**adopted, shared-function wiring**): SHIPPED v60 2026-10-02 (Pete overrode the prereg clause). FEDERAL-HARNESS-ONLY by design: pools a state signal from seat polls before the seat-poll blend (R/state_poll_pool.R); published_flags.R states 'federal harness only'. Only backtest_candidate_fed.R calls it.
 - **`AUSPOL_SURGE_FROM_ZERO`** (intentional / dead experiment): WA has no candidate-level salience corpus -- same exclusion as AUSPOL_SALIENCE_EXPECTED, intentional.
 - **`AUSPOL_TIME_FORWARD_FITS`** (**adopted, shared-function wiring**): SHIPPED as a leak fix (2026-09-28): every constant fitted inside base_pred learns only from earlier elections. Read in R/time_forward.R and R/fundamentals_tf.R (also part of cache keys), below the harness grep; reaches every entry point.
+- **`AUSPOL_TRAIN_SKIP_PAIRS`** (intentional / dead experiment): 2026-10-13 (Pete): pairs scored but kept out of the vote-share models' training rows; read by fit_xgb_primary_asat.R and fit_xgb_primary_v6_final.R (rebuild stages 4 and 5), not by the harnesses or fit_seats_full.R directly. Published vic2010.
 - **`AUSPOL_TREND_RW_MULT`** (intentional / dead experiment): REFUSED ARM 2026-10-12, same prereg, off at "1". Read inside R/forecast_mode.R -- universal in practice.
 - **`AUSPOL_TREND_SIGMAS`** (intentional / dead experiment): REFUSED ARM 2026-10-12 (plans/prereg-responsive-trend-2026-10-12.md), off at "default". Read inside R/forecast_mode.R (the statewide forecast every harness and fit_seats_full.R call), not per-harness -- universal in practice.
 - **`AUSPOL_TREND_SZC`** (intentional / dead experiment): REFUSED ARM 2026-10-12, same prereg (T3), off at "polls". Read inside R/trend.R, so it reaches every trend fit -- universal in practice.
@@ -404,4 +406,4 @@ MR3  no harness forces a switch away from its published value.
 
 ## Coverage check
 
-MR2  every non-universal switch (147 of 184) has a recorded classification.
+MR2  every non-universal switch (148 of 185) has a recorded classification.

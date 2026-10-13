@@ -31,6 +31,13 @@ suppressMessages(library(xgboost))
 OUT <- "output"
 ALL <- fread(file.path(OUT, "xgb-primary-features-v6.csv"), showProgress = FALSE)
 ALL <- ALL[is.finite(level_prev) & is.finite(level_pred)]
+# AUSPOL_TRAIN_SKIP_PAIRS (2026-10-13, Pete): pairs scored in the backtests but never used as training rows (same list
+# as fit_xgb_primary_asat.R), until the decay + completeness weights exist.
+.train_skip <- trimws(strsplit(Sys.getenv("AUSPOL_TRAIN_SKIP_PAIRS", ""), ",")[[1]]); .train_skip <- .train_skip[nzchar(.train_skip)]
+if (length(.train_skip)) {
+  cat(sprintf("XF0t AUSPOL_TRAIN_SKIP_PAIRS: dropping %d training row(s) of %s\n", sum(ALL$pair %in% .train_skip), paste(.train_skip, collapse = ", ")))
+  ALL <- ALL[!pair %in% .train_skip]
+}
 
 ALL[, same_i := as.integer(same)]
 ALL[, same_mp_i := as.integer(same_mp)]

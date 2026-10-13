@@ -110,10 +110,16 @@ if (!is.null(OLDM) && !"input_key" %in% names(OLDM)) OLDM <- NULL
 .force <- identical(Sys.getenv("AUSPOL_ASAT_FORCE", "0"), "1")
 n_cached <- 0L
 preds <- list(); manifest <- list()
+.train_skip <- trimws(strsplit(Sys.getenv("AUSPOL_TRAIN_SKIP_PAIRS", ""), ",")[[1]]); .train_skip <- .train_skip[nzchar(.train_skip)]
+if (length(.train_skip)) cat(sprintf("XA0t AUSPOL_TRAIN_SKIP_PAIRS: %s scored but never used as training rows\n", paste(.train_skip, collapse = ", ")))
 for (tg in targets) {
   t0 <- Sys.time()
   cutoff <- dates[[tg]]
   train_pairs <- names(dates)[dates < cutoff]
+  # AUSPOL_TRAIN_SKIP_PAIRS (2026-10-13, Pete): pairs SCORED but kept out of every target's training rows, until the
+  # decay + completeness weights exist (docs/plans/weighting-design-2026-10-13.md; vic2010 as training data made later
+  # elections worse per person, AEF-7 +0.0043 beyond 1 SE).
+  train_pairs <- setdiff(train_pairs, .train_skip)
   if (length(train_pairs) < MIN_PRIOR_PAIRS) {
     cat(sprintf("XA1! %s (%s): only %d prior pair(s) (< %d) -- NO model, harness keeps base_pred\n",
                 tg, cutoff, length(train_pairs), MIN_PRIOR_PAIRS))
