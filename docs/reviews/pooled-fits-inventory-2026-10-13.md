@@ -32,6 +32,52 @@ re-read line by line.
 | 11 | `.defstate_rate()`, R/defector_state.R **(read)** | Sitting-member defector carry under `AUSPOL_DEFECTOR_STATE` | Median, level (federal/state) shrunk with K = 3 pseudo-cases; unit = person | Yes (inputs from #1) | Per target, only when that switch is on (published `"0"`) | No: has its own pooling; `AUSPOL_POOL_BY_JURISDICTION` deliberately leaves it alone |
 | 12 | `departed_rate = c(IND = 0.38)` default in `screened_slopes()`, R/dev_slope.R **(survey)** | Departed independent leader's retention | Constant, measured offline (n = 305) | Superseded by #8 when `AUSPOL_DEPARTED_SUCCESSOR=1` (published) | Per target | No |
 
+## What the switch does to the defector carry (function level, 2026-10-13)
+
+Sitting-member defector carry (share of their old vote a sitting major-party
+member keeps after leaving the party), dev code vs switch `"1"`, time-forward,
+`output/candidacies.csv` as of 2026-10-13 21:56. Higher = more of the vote carried.
+
+| target | dev (`"0"`) | `"1"` | earlier sitting-member cases by jurisdiction |
+|---|---|---|---|
+| fed2025 | 0.181 | 0.283 | fed5 vic2 nsw2 sa6 qld9 wa4 nt7 |
+| fed2019 | 0.208 | 0.431 | fed4 vic2 nsw1 sa3 qld8 wa4 nt5 |
+| wa2017 | 0.424 | 0.418 | fed4 vic1 nsw1 qld5 wa3 nt5 |
+| nt2024 | 0.429 | 0.493 | fed5 vic2 nsw2 sa6 qld9 wa4 nt6 |
+| sa2026 | 0.435 | 0.573 | fed7 vic2 nsw2 sa6 qld9 wa4 nt7 |
+| vic2026 (live) | 0.424 | 0.424 | fed7 vic2 nsw2 sa8 qld9 wa4 nt7 |
+
+Findings:
+
+- **The premise that the Territory swamped Western Australia does not hold on
+  today's corpus.** wa2017's earlier state cases are 15, not 9: Queensland
+  2012/2015 added five as well. The Territory's median (0.566) is BELOW
+  Western Australia's own (0.693, three cases: 0.855, 0.693, 0.439). Pooling
+  by jurisdiction therefore cannot pull wa2017 down; it moves 0.424 -> 0.418.
+- **Between-jurisdiction variance is mostly estimated at zero** for wa2017-era
+  targets: the within-jurisdiction spread (sd ~0.33 on ratios between 0.07 and
+  1.30) swamps the gaps between medians, so every jurisdiction gets the common
+  centre.
+- **Federal targets lose the shipped federal rate.** `AUSPOL_DEFECT_BY_LEVEL=2`
+  gives federal targets ~0.18-0.21; the jurisdiction pooling, which replaces it,
+  gives 0.28-0.49, because federal is one group among seven and its four to seven
+  cases are not separable from the others at this noise. Turning the switch on
+  as built would undo a measured, shipped federal gain.
+
+WA harness, wa2017 only, 1,000 simulations, same seed (seat-winner log loss,
+lower is better; eps 1e-6):
+
+| path | `"0"` | `"1"` | Hillarys IND share (actual 20.1) | Hillarys P(LNP wins; LNP won) |
+|---|---|---|---|---|
+| shipped harness (xgb primary on, static as-at predictions), via `quick_arm.R` | 0.3976 | 0.3968 | 20.9 -> 20.5 | 0.169 -> 0.182 |
+| pre-xgb `base_pred` (`AUSPOL_XGB_PRIMARY=0`) | 0.4105 | 0.4085 | 28.1 -> 27.7 | 0.009 -> 0.010 |
+
+The shipped harness reads cached as-at xgb predictions, so a change to the
+defector carry reaches it only partly until `rebuild_forecasts.sh` refits them.
+The 28.7 for Hillarys quoted when this work was commissioned is close to the
+pre-xgb path's 28.1 here (which path it came from is unconfirmed). The switch does
+not fix it (27.7), because Western Australia's own earlier cases say carry is high.
+
 ## Not covered
 
 The survey did not classify every one of the ~170 `median(`/`mean(`/`lm(` hits
