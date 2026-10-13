@@ -293,6 +293,15 @@ poll_pb_on <- function() {
   identical(v, "1")
 }
 
+#' Whether a Poll Bludger row giving only a combined Coalition figure may confirm a row (AUSPOL_PB_COALITION_COMBINED)
+#' @return logical.
+#' @export
+poll_pb_combined_on <- function() {
+  v <- Sys.getenv("AUSPOL_PB_COALITION_COMBINED", "0")
+  if (!v %in% c("0", "1")) stop("AUSPOL_PB_COALITION_COMBINED must be \"0\" or \"1\", not ", v)
+  identical(v, "1")
+}
+
 # Poll Bludger as the named source for polls only AE had (AUSPOL_POLL_PB, 2026-10-13; reviews/pb-llm-extraction-
 # 2026-10-13.md). The posts were read by a model into pb_llm_polls.csv (scripts/build_pb_llm_polls.R); only rows whose
 # Labor and Coalition figures appear in their own quoted sentence are used. A row still carrying AE's numbers
@@ -306,11 +315,19 @@ poll_pb_on <- function() {
 .ps_pb_confirm <- function(ae, region, parties, path, alias) {
   b <- data.table::fread(path, colClasses = "character", showProgress = FALSE)
   reg <- region
-  b <- b[b$region == reg & b$stated == "TRUE"]
+  comb_on <- poll_pb_combined_on() && "NAT" %in% names(ae) && "stated_combined" %in% names(b)
+  # AUSPOL_PB_COALITION_COMBINED=1 (WA, where Liberal and National are kept apart): a row that states Labor and only a
+  # COMBINED Coalition figure may confirm a row when AE's Liberal + National is within 2 points of it. The split is
+  # never invented: AE's Liberal and National stay, only the other parties' figures are taken; origin "pollbludger+split".
+  comb_ok <- if (comb_on) b$stated_combined == "TRUE" & !is.finite(suppressWarnings(as.numeric(b$coalition_n))) else rep(FALSE, nrow(b))
+  b <- b[b$region == reg & (b$stated == "TRUE" | comb_ok)]
   n0 <- c(pb = nrow(b), confirmed = 0L, disagree = 0L)
   if (!nrow(b)) return(list(ae = ae, log = n0))
   num <- function(k) if (k %in% names(b)) suppressWarnings(as.numeric(b[[k]])) else rep(NA_real_, nrow(b))
   bv <- list(ALP = num("alp_n"), LNP = num("coalition_n"), GRN = num("greens_n"), ONP = num("one_nation_n"))
+  is_comb <- if (comb_on) !is.finite(bv$LNP) & is.finite(num("coalition_combined_n")) else rep(FALSE, nrow(b))
+  if (comb_on) bv$LNP <- ifelse(is_comb, num("coalition_combined_n"), bv$LNP)
+  nat_v <- if (comb_on) ifelse(is.finite(ae$NAT), ae$NAT, 0) else numeric(nrow(ae))
   und <- num("undecided_n"); sc <- 100 / (100 - ifelse(is.finite(und) & und > 0 & und < 50, und, 0))
   same_firm <- c(yougov = "galaxy", ucomms = "reachtel")
   cn <- function(f) { x <- .ps_canon(f, alias); ifelse(x %in% names(same_firm), same_firm[x], x) }
@@ -324,7 +341,10 @@ poll_pb_on <- function() {
   cand <- cand[!is.na(lag) & lag >= -1L & lag <= 45L]
   majors <- intersect(c("ALP", "LNP", "GRN", "ONP"), parties)
   dmax <- function(s) {
-    m <- sapply(majors, function(p) abs(bv[[p]][cand$p] * s - ae[[p]][ai[cand$a]]))
+    m <- sapply(majors, function(p) {
+      ref <- ae[[p]][ai[cand$a]]
+      if (p == "LNP" && comb_on) ref <- ifelse(is_comb[cand$p], ref + nat_v[ai[cand$a]], ref)
+      abs(bv[[p]][cand$p] * s - ref) })
     if (is.null(dim(m))) m <- matrix(m, nrow = nrow(cand))
     apply(m, 1, function(r) if (all(is.na(r))) NA_real_ else max(r, na.rm = TRUE))
   }
@@ -345,11 +365,12 @@ poll_pb_on <- function() {
     if (cand$d[k] > 2) { n0[["disagree"]] <- n0[["disagree"]] + 1L; next }
     r <- ai[a]; s <- if (cand$raw[k]) 1 else sc[p]
     for (q in setdiff(parties, "OTH")) {
+      if (q == "LNP" && is_comb[p]) next    # combined figure only: AE's Liberal/National split stays
       v <- if (q %in% names(bv)) bv[[q]][p] * s else NA_real_
       if (is.finite(v)) ae[[q]][r] <- v else if (is.finite(ae[[q]][r])) ae$.fill[r] <- paste0(ae$.fill[r], q, " ")
     }
     if ("OTH" %in% parties) ae$OTH[r] <- pmax(0, 100 - sum(unlist(lapply(setdiff(parties, "OTH"), function(q) ae[[q]][r])), na.rm = TRUE))
-    ae$.origin[r] <- "pollbludger"
+    ae$.origin[r] <- if (is_comb[p]) "pollbludger+split" else "pollbludger"
     n0[["confirmed"]] <- n0[["confirmed"]] + 1L
   }
   list(ae = ae, log = n0)

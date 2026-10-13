@@ -49,7 +49,7 @@ for (rg in unique(pairs$region)) {
                             wiki = sum(x$has_fp & x$origin %in% c("wiki", "wiki+bludgertrack") & !x$ae_filled),
                             bt = sum(x$has_fp & x$origin == "bludgertrack" & !x$ae_filled),
                             both = sum(x$has_fp & x$origin == "bludgertrack+wiki" & !x$ae_filled),
-                            pb = sum(x$has_fp & x$origin == "pollbludger" & !x$ae_filled),
+                            pb = sum(x$has_fp & x$origin %in% c("pollbludger", "pollbludger+split") & !x$ae_filled),
                             ae = sum(x$has_fp & x$origin == "ae"), ae_party = sum(x$has_fp & x$origin != "ae" & x$ae_filled),
                             label_ae = sum(x$has_fp & x$label_ae))
     a <- cnt(z); b <- cnt(f); names(b) <- paste0("f30_", names(b))

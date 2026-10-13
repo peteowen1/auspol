@@ -36,3 +36,22 @@ test_that("a post inside two polls' windows goes to the nearer poll, not the clo
   r <- .ps_pb_confirm(data.table::copy(ae), "fed", c("ALP", "LNP", "GRN", "OTH"), f, alias)
   expect_equal(r$ae$.origin, c("ae", "pollbludger"))
 })
+
+test_that("AUSPOL_PB_COALITION_COMBINED: a combined Coalition figure confirms on Liberal + National, keeps the split, and is off by default", {
+  alias <- data.table::data.table(pattern = "westpoll", canonical = "westpoll")
+  ae <- data.table::data.table(date = as.Date(rep("2008-03-01", 2)), firm = "Westpoll", ALP = 36, LNP = 40, NAT = 5, GRN = 9,
+                               OTH = 10, .origin = "ae", .fill = "")
+  ae$date[2] <- as.Date("2007-03-01")
+  # row 1: combined 45 vs Liberal 40 + National 5 = 45 (agrees); row 2: combined 48 vs 45 (off by 3: must not confirm)
+  pb <- data.table::data.table(region = "wa", stated = "FALSE", stated_combined = "TRUE", pollster = "Westpoll",
+                               post_date = c("2008-03-03", "2007-03-03"), alp_n = 36, coalition_n = NA, coalition_combined_n = c(45, 48),
+                               greens_n = 9, one_nation_n = NA, undecided_n = NA)
+  f <- tempfile(fileext = ".csv"); data.table::fwrite(pb, f)
+  parties <- c("ALP", "LNP", "NAT", "GRN", "OTH")
+  withr::with_envvar(c(AUSPOL_PB_COALITION_COMBINED = "0"), r0 <- .ps_pb_confirm(data.table::copy(ae), "wa", parties, f, alias))
+  expect_equal(r0$ae$.origin, c("ae", "ae"))
+  withr::with_envvar(c(AUSPOL_PB_COALITION_COMBINED = "1"), r1 <- .ps_pb_confirm(data.table::copy(ae), "wa", parties, f, alias))
+  expect_equal(r1$ae$.origin, c("pollbludger+split", "ae"))
+  expect_equal(c(r1$ae$LNP[1], r1$ae$NAT[1]), c(40, 5))
+  expect_equal(unname(r1$log[c("confirmed", "disagree")]), c(1L, 1L))
+})
