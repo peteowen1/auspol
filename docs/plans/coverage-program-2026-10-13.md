@@ -130,3 +130,10 @@ Qld 2001-2017 (7); SA 2002-2018 (5); Tas, NT, ACT (none). Poll sources: `docs/PO
   Poll Bludger batch 2 (22 agents) scored: vic2010 30/34 AEF-only polls confirmed, nsw2011 22/27, nsw2015 49/68,
   qld2012 21/24, sa2014 12/17; accuracy as batch 1 except fed2004 (6 off > 2). Not yet in pb_llm_polls.csv (rebuild
   reading it).
+- 2026-10-13 ~15:15: vic2010 bundle (Pete: fetch Trends first; one rebuild for vic2010 + census + leaders):
+  plumbing committed locally (59a953c, not pushed until the rebuild publishes); candidacies gain official VEC 2006
+  (459) and vic2010 winners; seat-context and retirement-derived rebuilt by hand; leaders supplement (44 rows);
+  vic2010 salience fetched and merged (266 rows, nearly all zero); Poll Bludger batch 2 in pb_llm_polls.csv (1,040
+  rows, 745 stated). Waiting on census-by-vintage, then one rebuild. Baseline for comparison:
+  `deciding-runs/rebuild-20261013-baseline-today-from5.log` (pooled 0.3207; Barwon 2019 at the floor, seat registry).
+  NSW dated forecast history shipped (70db9c8, ITG request).
