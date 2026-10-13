@@ -47,3 +47,10 @@ floor more often. Not used for log-loss decisions.
 Consequence for every pending result: a Victoria-only or ledger-only
 difference smaller than the seed range is not evidence. Proposed fix: average
 the xgb layer over several seeds (an ensemble) so the noise falls by ~sqrt(k).
+
+
+## Moved from DECISIONS.md (2026-10-13)
+
+Full original entry, kept verbatim when DECISIONS.md was shortened:
+
+- **2026-10-02 Rebuild speed-ups, results unchanged.** Fundamentals fit cached on disk (32% of each harness pair, profiled), stage 7 lists output/ once (88 -> 26 s). Full rebuild 1,247 -> 1,095 s at the same 2 harness slots; every result file byte-identical to v57 (`20261002-1230-18fc610-from1`). Rejected: 5,000 sims (saves 1.5-5 min, inflates log loss via the 1e-6 floor); parallel as-at fits (xgboost already uses all 24 cores). The binding constraint is free memory (53 GB committed on 31.5 GB, mostly outside auspol), which caps harness slots at 2. Noise floor measured (`plans/noise-floor-2026-10-02.md`): Victoria log loss moves up to 0.011 between equally valid refits.

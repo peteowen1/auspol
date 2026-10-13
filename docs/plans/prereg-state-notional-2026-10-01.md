@@ -94,3 +94,10 @@ the like-for-like AEF-7 change moved from -0.0050 to -0.0006. Retraining the
 as-at xgb models moves the ledger by ~0.005, the size of most tested effects.
 Until that noise is measured (same inputs, different seeds), a single-rebuild
 difference under ~0.005 is not evidence either way.
+
+
+## Moved from DECISIONS.md (2026-10-13)
+
+Full original entry, kept verbatim when DECISIONS.md was shortened:
+
+- **2026-10-01 v57: state notional priors SHIPPED (`AUSPOL_STATE_NOTIONAL=1`, Pete).** On state pairs after a redistribution the prior is rebuilt on the new boundaries from booth results matched by venue name (`scripts/build_state_notionals.py`). Pre-registered and passed: redrawn districts -0.0153 log loss, all 22 elections -0.0085 (SE 0.0038), Victoria -0.0109. Scores 65 districts the backtests silently dropped, including 20 AEF-7 seats AE Forecasts had always forecast; the AEF-7 ledger now covers all 681 seats (Narracan 2022 via its supplementary election) and stops if one goes missing. First run VOID (corpus party labels disagreed with the district files). `plans/prereg-state-notional-2026-10-01.md`

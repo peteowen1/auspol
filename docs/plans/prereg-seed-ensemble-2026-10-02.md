@@ -55,3 +55,10 @@ switch). Baseline B = ensemble + the fix: ledger 0.2682 -> 0.2648, primary RMSE
 4.1534 -> 4.1083, Victoria RMSE 4.4615 -> 4.2938, 22-election log loss 0.3408 ->
 0.3449 -- the last driven by two surprise winners reaching the 1e-6 floor
 (Barwon 2019 and Denison 2010, log loss 8.8 -> 13.8 each); 13 elections better, 9 worse.
+
+
+## Moved from DECISIONS.md (2026-10-13)
+
+Full original entry, kept verbatim when DECISIONS.md was shortened:
+
+- **2026-10-02 v58: seed ensemble + council history SHIPPED; published switches now reach every stage.** Ensemble (K=3, one CV + 3 trainings): fit-to-fit spread on Victoria log loss 0.0041 -> 0.0018, primary RMSE 0.031 -> 0.009; 22-election log loss 0.3422 -> 0.3408. Fix: stage 3 never read published_flags.R, so the xgb training features (statewide level recipe, forecast mode, defector/by-election rules) were built under code defaults while the live forecast used the published values -- a train/serve mismatch in v56-v57, and the main source of v58's gain (CORRECTED 2026-10-02 evening: first attributed to x_notional_adj, which the as-at and production models exclude). Second gap, same evening: the production model's hand-kept feature list never got the council features, so council history was in the backtests but not live until the production script took the as-at list verbatim. Council features (mayor / councillor / stood-and-lost / council share, every state and federal row, NA where no council data): targeted rows -1.04 per seat (SE 0.30), 22-election and Victoria not worse, primary RMSE 4.108 -> 4.095. A first council arm and a first re-test were refused / void (pre-review WA surname matching 28% false). `plans/prereg-seed-ensemble-2026-10-02.md`, `plans/prereg-council-2026-10-02.md`

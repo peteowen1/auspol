@@ -30,7 +30,16 @@ X <- X[dup == FALSE]
 cat(sprintf("PLX1 %s: %d polls extracted from posts\n", e, nrow(X)))
 alias <- fread("external/reference/polls/statewide-samples/firm_alias.csv", showProgress = FALSE)
 L <- suppressMessages(load_polls(rg)); P <- attr(L, "provenance")
-eds <- election_dates(); ed <- as.Date(eds[[e]])
+# Polling days election_dates() does not carry yet (checked against Wikipedia infoboxes 2026-10-13, 31 of 38 agree,
+# 7 unchecked); to move into R/election_dates.R with the first new pair.
+eds <- election_dates()
+extra_eds <- c(fed2001 = "2001-11-10", nsw2003 = "2003-03-22", nsw2007 = "2007-03-24", nsw2011 = "2011-03-26",
+  vic2002 = "2002-11-30", vic2006 = "2006-11-25", qld2001 = "2001-02-17", qld2004 = "2004-02-07", qld2006 = "2006-09-09",
+  qld2009 = "2009-03-21", qld2012 = "2012-03-24", qld2015 = "2015-01-31", sa2002 = "2002-02-09", sa2006 = "2006-03-18",
+  sa2010 = "2010-03-20", sa2014 = "2014-03-15", fed1998 = "1998-10-03")
+extra_eds <- extra_eds[!names(extra_eds) %in% names(eds)]
+eds <- c(eds, stats::setNames(as.Date(extra_eds), names(extra_eds)))
+ed <- as.Date(eds[[e]])
 prev <- max(eds[sub("[0-9]+$", "", names(eds)) == rg & eds < ed])
 K <- data.table(li = seq_len(nrow(L)), d = L$date, firm = L$firm, ALP = L$ALP, LNP = L$LNP, GRN = L$GRN,
                 ONP = if ("ONP" %in% names(L)) L$ONP else NA_real_, origin = P$origin)[d > prev & d <= ed & is.finite(ALP)]

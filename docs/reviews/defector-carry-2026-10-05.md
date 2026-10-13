@@ -275,3 +275,10 @@ model needs a chance of surviving, which this sample (6 survivors) cannot yet es
   verdicts, listed above.
 - I did not check in `R/` how the model's 0.355 to 0.435 is fitted beyond the figures in
   `docs/reviews/worst-overcalls-2026-10-05.md`.
+
+
+## Moved from DECISIONS.md (2026-10-13)
+
+Full original entry, kept verbatim when DECISIONS.md was shortened:
+
+- **2026-10-05 Defector carry by level: federal-only SHIPPED (`AUSPOL_DEFECT_BY_LEVEL=2`, Amendment 1, post hoc, Pete; Calare disqualifier waived by Pete).** Pete: *"model what performs best - is shrunk measure better than no carry? does it matter based on who they are?"* 18 cases: shrunk carry beats none (RMSE 14.2 vs 23.2); federal members keep 0.23, state 0.56. Mode 1 (both levels) REFUSED: federal cells all improved but the state rate, fitted on as few as 3 cases, wrecked Hillarys wa2017 (21.7 -> 43.9, actual 20.1), and Calare tripped the disqualifier. Mode 2 (federal only): 14 defector cells' squared error 2,163 -> 1,661 (-502, SE 295, PASS); ledger log loss 0.2874 -> 0.2827 (AEF 0.2825); whole-table RMSE 3.848 -> 3.832. Calare (Gee, won) 0.980 -> 0.892 waived on the record. Victoria 2026 is a state target, so the live forecast is unchanged by construction. Open: a small-n-safe standard error before states get their own rate. [prereg](plans/prereg-defector-by-level-2026-10-05.md), [review](reviews/defector-carry-2026-10-05.md)

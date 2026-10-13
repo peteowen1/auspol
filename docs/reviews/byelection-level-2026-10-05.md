@@ -381,3 +381,10 @@ right next step is an outcome check on the five rows once built, not a bigger si
   cannot support a split, not that fed and state are identical. Mean difference 0.8 points, SDs 8 to 12.
 - **False-match check** was a read of the names (the rule dropped 0 rows), not a lookup of each person. WA
   rows with no given name match on surname and seat only.
+
+
+## Moved from DECISIONS.md (2026-10-13)
+
+Full original entry, kept verbatim when DECISIONS.md was shortened:
+
+- **2026-10-05 By-election winners get the sitting non-major level; the major that lost keeps its departed flag: SHIPPED (`AUSPOL_BYELEC_LEVEL=1`, `AUSPOL_BYELEC_DEPARTED=1`; Pete overrode the 2-SE clause).** Winners (Lyne 2010, Orange, Wagga Wagga, Wentworth, Mayo) squared error -72% (1.92 SE vs 2 needed); win probability Lyne 0.00 -> 0.79, Orange 0.01 -> 0.76, Wagga 0.39 -> 0.95; majors that lost -57%; ledger 0.2827 -> 0.2822 (AEF 0.2825); Wentworth (Phelps lost) over-called 39.1 vs 33.0. Victoria 2026 unchanged. [prereg](plans/prereg-byelection-level-2026-10-05.md), [review](reviews/byelection-level-2026-10-05.md)

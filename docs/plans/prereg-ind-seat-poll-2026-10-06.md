@@ -77,3 +77,10 @@ IND-only weight; McMahon 9.3 -> 24.0). In exchange: the 2022 teals and Wakehurst
 (Goldstein 13.5 -> 27.1, Wakehurst 14.4 -> 26.7, Kooyong 18.4 -> 27.2) and the ledger falls 0.2809 ->
 0.2757 (AEF 0.2825). All three switches "1" in `published_flags.R` and as R defaults. Live Victoria
 2026: no change (0 seats move > 0.02) until Victorian seats are polled.
+
+
+## Moved from DECISIONS.md (2026-10-13)
+
+Full original entry, kept verbatim when DECISIONS.md was shortened:
+
+- **2026-10-06 Independents read from their seat polls: SHIPPED on Pete's override (`AUSPOL_SEAT_POLL_IND_MAP`, `_IND_WEIGHT`, `_HANDKEYED` = 1).** A poll's OTH figure counts as the independent's when the seat's independent is endorsed or sitting; independents get their own time-forward weight; Mayo 2016 and Wakehurst primaries hand-keyed with sources. -33% on 71 IND cells (1.9 SE vs 2) and fed2025 +0.0055 (vs 0.005), both overridden; ledger 0.2809 -> 0.2757. Breakout mixture REFUSED twice (signals too weak). [prereg](plans/prereg-ind-seat-poll-2026-10-06.md), [review](reviews/seat-polls-independents-2026-10-06.md)

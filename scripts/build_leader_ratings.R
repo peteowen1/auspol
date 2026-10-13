@@ -29,14 +29,21 @@ PARTY <- c(Albanese = "ALP", Allan = "ALP", Andrews = "ALP", Carroll = "ALP", Co
            Nicholls = "LNP", O_Farrell = "LNP", Perrottet = "LNP", Pesutto = "LNP", Sloane = "LNP",
            Speirs_Tarzia_Hurn = "LNP", Tarzia_Hurn = "LNP", Turnbull = "LNP", Wilson = "LNP",
            Taylor = "LNP", Ley = "LNP", Hanson = "ON", Waters = "GRN",
-           Pickering = "ON")
+           Pickering = "ON",
+           # Tasmania and the NT (pages added 2026-10-13; CLP counts as the Coalition class)
+           Bartlett = "ALP", Giddings = "ALP", Green = "ALP", White = "ALP", Winter = "ALP", Gunner = "ALP", Fyles = "ALP",
+           Lawler = "ALP", Hodgman = "LNP", Gutwein = "LNP", Rockliff = "LNP", Finocchiaro = "LNP", Mills = "LNP",
+           Higgins = "LNP")
 # Party in government going into each election (the cycle the page's polls belong to).
 GOVT <- c(fed2013 = "ALP", fed2016 = "LNP", fed2019 = "LNP", fed2022 = "LNP", fed2025 = "ALP", fed2028 = "ALP",
           nsw2011 = "ALP", nsw2019 = "LNP", nsw2023 = "LNP", nsw2027 = "ALP",
           qld2015 = "LNP", qld2017 = "ALP", qld2020 = "ALP", qld2024 = "ALP", qld2028 = "LNP",
           sa2018 = "ALP", sa2022 = "LNP", sa2026 = "ALP",
           vic2014 = "LNP", vic2018 = "ALP", vic2022 = "ALP", vic2026 = "ALP",
-          wa2017 = "LNP", wa2021 = "ALP", wa2025 = "ALP")
+          wa2017 = "LNP", wa2021 = "ALP", wa2025 = "ALP",
+          # added 2026-10-13 with the Tasmanian and NT pages (Bartlett ALP; Rockliff Liberal; Gunner ALP)
+          tas2010 = "ALP", tas2014 = "ALP", tas2018 = "LNP", tas2021 = "LNP", tas2024 = "LNP", tas2025 = "LNP",
+          nt2016 = "LNP", nt2020 = "ALP", nt2024 = "ALP")
 # Audit GOVT against leaders.csv's head of government wherever it names one (local builds; the CI runner has no
 # external/ folder, and the tables it audits are the same committed ones).
 LDF <- file.path("external", "reference", "leaders", "leaders.csv")
