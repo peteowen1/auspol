@@ -189,6 +189,11 @@ Dug 2026-10-09 from run 0cbaa82 (`scripts/biggest_misses.R --pairs=vic2018`). Th
   largely in the IND class (three unrelated new independents: Monks 8.1, Re 4.7, Bivoltsis 3.5) and spread to ALP/GRN,
   when it went to the returning Liberal. Two mechanisms: re-entry level for a major that sat out, and where a retired
   independent's vote goes. UNVERIFIED which dominates; IND favourite 0.93, LNP won at p 0.028.
+  STAGE (output/forecasts.csv, wa2013): the miss is entirely in base_pred (LNP 27.6, IND 29.3, ALP 26.7, GRN 16.4);
+  the xgb layer moves each class < 1.2 pts. base_pred keeps 43% of the retired independent's 67.3 in the IND class.
+  LEAD, UNVERIFIED (from memory): Constable was a Liberal before sitting as an independent -- the case
+  fit_departed_origin_return() (switch off) exists for; the corpus starts 2001, so her origin party may need hand-coding
+  from a pre-election source.
 - **Albany** -- **OPEN** (2026-10-14). ALP won (Peter Watson, sitting) at p 0.016, LNP favourite 0.984. Not investigated.
 - **Kimberley** -- **OPEN** (2026-10-14). ALP won at p 0.019; the sitting Labor member (Carol Martin) retired.
   Not investigated.
