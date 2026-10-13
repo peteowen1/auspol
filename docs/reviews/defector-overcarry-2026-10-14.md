@@ -40,3 +40,29 @@ SE is across cases.
   28.7 -> 39.6 (39.5). Right on two, wrong on two; not a fix candidate at n=6.
 - wa2017 Hillarys is a tail case, not a pattern. Its SEAT-REGISTRY note about WA's higher own-carry (0.693) still
   stands: raising it would make Hillarys worse.
+
+## Part 2: who holds their vote (2026-10-14, `scripts/diag_defector_holders.R`, `output/defector-holders.csv`)
+
+Retention = actual share / previous share. Over-call as above. Pre-election facts only.
+
+| electorate size (formal votes, previous election) | n | median retention | mean over-call (SE) |
+|---|---|---|---|
+| under 10k (all NT) | 8 | 0.65 | -8.3 (5.0) |
+| 10-30k | 25 | 0.44 | -0.4 (1.9) |
+| 30-60k | 13 | 0.42 | +1.2 (2.7) |
+| 60k+ (all federal) | 6 | 0.24 | +6.8 (3.7) |
+
+- **Electorate size is the one fact that moves the over-call**: Spearman over-call vs log formal votes +0.37
+  (p 0.007, n=52). The model gives a big-seat defector too much and a small-seat one too little. But size is almost
+  the same thing as jurisdiction here (NT at one end, federal at the other); within the non-NT state seats the
+  slope keeps its sign but is not distinguishable from zero (rho +0.22, p 0.19, n=38).
+- **Not separating**: times previously elected (Spearman with retention -0.08; counted from the corpus, 6 SA
+  members unmatched), previous share (+0.06), sitting member vs losing candidate (over-call +0.4 vs -1.7).
+- **Unmeasured and probably the real driver**: WHY they left. Holders include members who left on a local or
+  principled issue (Gee, Broadbent, Purick, Turner, Knuth, Bell, Cregan); collapsers include several who left under
+  a scandal or charge (Thomson, Ryan's Johnson, Speirs, McBride, Judge, Lee). Ward (Kiama, charged, held 0.72) breaks
+  it. This would need hand-coding from pre-election sources (memory: fixed pre-election sources).
+
+Candidate change, NOT built: let the sitting-member carry fall with electorate size (a slope on log formal votes,
+shrunk toward the current flat rate), which would address the federal +6.8 and the NT -8.3 together. Needs Pete to
+walk the rows first.
