@@ -15,7 +15,8 @@ hc_simulate(
   flows,
   leak = NULL,
   seed = NULL,
-  cand = NULL
+  cand = NULL,
+  defect = NULL
 )
 }
 \arguments{
@@ -51,6 +52,10 @@ count, a list by electorate of \verb{list(ballots = } \code{\link[=hc_prepare_ba
 (from \code{\link[=hc_split_expected]{hc_split_expected()}})\verb{, sdlog = } their noise\verb{)}; each draw splits
 every ticket's vote over its candidate slots (\code{\link[=hc_split_draw]{hc_split_draw()}}) and runs
 \code{\link[=hc_candidate_count]{hc_candidate_count()}}.}
+
+\item{defect}{Optional output of \code{\link[=hc_defector_moves]{hc_defector_moves()}}: sitting members who
+changed party, whose carried personal vote moves between priors.
+\code{NULL} (default) changes nothing.}
 }
 \value{
 \code{data.frame} electorate, cls, seats, prob: the forecast distribution

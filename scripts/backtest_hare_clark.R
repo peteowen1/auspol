@@ -153,7 +153,12 @@ run_one <- function(rg, yr) {
       cand[[e]] <- list(ballots = bl, split = sp, sdlog = spri$sdlog)
     }
   }
-  pr <- hc_simulate(target, base, unit_prev, sw$draws, prev_state, nsd, upri, fl, leak = lk, seed = seed + 1L, cand = cand)
+  # AUSPOL_HC_DEFECTOR (default "0", published "0"): a sitting member standing for another party takes
+  # rate x previous personal vote with them. The cases are listed either way (HCM2) so "0" shows what "1" would do.
+  dfx <- hc_defector_moves(cands_all, rg, yr, py)
+  if (!identical(Sys.getenv("AUSPOL_HC_DEFECTOR", "0"), "1")) dfx <- NULL
+  cat(sprintf("HCM2  %s%d AUSPOL_HC_DEFECTOR = %s\n", rg, yr, Sys.getenv("AUSPOL_HC_DEFECTOR", "0")))
+  pr <- hc_simulate(target, base, unit_prev, sw$draws, prev_state, nsd, upri, fl, leak = lk, seed = seed + 1L, cand = cand, defect = dfx)
   ps <- aggregate(pr$prob, pr[, c("electorate", "cls")], sum)
   stopifnot(all(abs(ps$x - 1) < 1e-9))
   cat("HCB3  PASS every electorate x class distribution sums to 1\n")
