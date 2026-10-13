@@ -10,6 +10,20 @@ Rcpp::Rostream<true>&  Rcpp::Rcout = Rcpp::Rcpp_cout_get();
 Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
+// hc_stv_cpp
+IntegerVector hc_stv_cpp(IntegerMatrix seq, NumericVector w, int ncand, int seats);
+RcppExport SEXP _auspol_hc_stv_cpp(SEXP seqSEXP, SEXP wSEXP, SEXP ncandSEXP, SEXP seatsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< IntegerMatrix >::type seq(seqSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type w(wSEXP);
+    Rcpp::traits::input_parameter< int >::type ncand(ncandSEXP);
+    Rcpp::traits::input_parameter< int >::type seats(seatsSEXP);
+    rcpp_result_gen = Rcpp::wrap(hc_stv_cpp(seq, w, ncand, seats));
+    return rcpp_result_gen;
+END_RCPP
+}
 // seat_sim_core
 List seat_sim_core(NumericMatrix shares, int n_sims, int shift_mode, NumericMatrix shift_mat, NumericVector sd_vec, NumericMatrix chol_t, NumericVector seat_sd_vec, bool has_level, NumericMatrix sd_cell_pre, NumericVector surge_h, IntegerVector surge_party_idx, IntegerVector surge_idx, double surge_floor, NumericVector surge_mu, NumericVector surge_sd, bool surge_from_zero, NumericMatrix cell_mat, LogicalVector cell_has, NumericMatrix ss_mat, LogicalVector ss_has, NumericMatrix pool_mat, bool has_pw, NumericMatrix pw_mat, NumericVector flow_sd_by, double smooth, double fallback_smooth, NumericVector shrink, IntegerVector ov_seat, IntegerVector ov_key, NumericMatrix ov_mat, double fallback_flow_sd, NumericVector ov_sd, bool keep_fp, bool has_bo, NumericMatrix bo_p, NumericVector bo_q);
 RcppExport SEXP _auspol_seat_sim_core(SEXP sharesSEXP, SEXP n_simsSEXP, SEXP shift_modeSEXP, SEXP shift_matSEXP, SEXP sd_vecSEXP, SEXP chol_tSEXP, SEXP seat_sd_vecSEXP, SEXP has_levelSEXP, SEXP sd_cell_preSEXP, SEXP surge_hSEXP, SEXP surge_party_idxSEXP, SEXP surge_idxSEXP, SEXP surge_floorSEXP, SEXP surge_muSEXP, SEXP surge_sdSEXP, SEXP surge_from_zeroSEXP, SEXP cell_matSEXP, SEXP cell_hasSEXP, SEXP ss_matSEXP, SEXP ss_hasSEXP, SEXP pool_matSEXP, SEXP has_pwSEXP, SEXP pw_matSEXP, SEXP flow_sd_bySEXP, SEXP smoothSEXP, SEXP fallback_smoothSEXP, SEXP shrinkSEXP, SEXP ov_seatSEXP, SEXP ov_keySEXP, SEXP ov_matSEXP, SEXP fallback_flow_sdSEXP, SEXP ov_sdSEXP, SEXP keep_fpSEXP, SEXP has_boSEXP, SEXP bo_pSEXP, SEXP bo_qSEXP) {
@@ -58,6 +72,7 @@ END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
+    {"_auspol_hc_stv_cpp", (DL_FUNC) &_auspol_hc_stv_cpp, 4},
     {"_auspol_seat_sim_core", (DL_FUNC) &_auspol_seat_sim_core, 36},
     {NULL, NULL, 0}
 };
