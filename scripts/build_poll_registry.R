@@ -51,11 +51,14 @@ for (rg in unique(pairs$region)) {
                             ae = sum(x$has_fp & x$origin == "ae"), ae_party = sum(x$has_fp & x$origin != "ae" & x$ae_filled),
                             label_ae = sum(x$has_fp & x$label_ae))
     a <- cnt(z); b <- cnt(f); names(b) <- paste0("f30_", names(b))
-    pbn <- if (is.null(PB)) NA_integer_ else {
-      fp <- f[has_fp == TRUE]
-      sum(vapply(seq_len(nrow(fp)), function(k) any(PB$region == rg & PB$poll_date == fp$date[k] & PB$firm == fp$firm[k]), TRUE))
-    }
-    rows[[e]] <- as.data.table(c(list(election = e, live = pairs$live[i], from = pairs$start[i] + 1, to = pairs$end[i]), a, b, list(f30_pb_post = pbn)))
+    pb_hit <- function(x) if (is.null(PB) || !nrow(x)) logical(nrow(x)) else
+      vapply(seq_len(nrow(x)), function(k) any(PB$region == rg & PB$poll_date == x$date[k] & PB$firm == x$firm[k]), TRUE)
+    fp <- f[has_fp == TRUE]; zp <- z[has_fp == TRUE & origin == "ae"]
+    pbn <- if (is.null(PB)) NA_integer_ else sum(pb_hit(fp))
+    # AE-only polls a Poll Bludger post confirms: the ones that could carry Poll Bludger's numbers instead of AE's
+    pb_ae <- if (is.null(PB)) NA_integer_ else sum(pb_hit(zp))
+    rows[[e]] <- as.data.table(c(list(election = e, live = pairs$live[i], from = pairs$start[i] + 1, to = pairs$end[i]), a, b,
+                                 list(f30_pb_post = pbn, ae_pb_post = pb_ae)))
     if (nrow(z)) firms[[e]] <- z[has_fp == TRUE, .N, by = .(firm)][order(-N)][, .(election = e, firms = paste(sprintf("%s %d", firm, N), collapse = ", "))]
   }
 }
@@ -67,20 +70,30 @@ fwrite(R, "output/poll-registry.csv")
 pct <- function(n, d) if (d > 0) sprintf("%d (%d%%)", n, round(100 * n / d)) else as.character(n)
 tab <- function(x, f30 = FALSE) {
   p <- if (f30) "f30_" else ""
-  hdr <- "| election | polls | Wikipedia | BludgerTrack | both | AE's numbers | AE filled a party | two-party only |"
+  hdr <- if (f30) "| election | polls | Wikipedia | BludgerTrack | both | AE's numbers | AE filled a party | two-party only |" else
+    "| election | polls | Wikipedia | BludgerTrack | both | AE's numbers | of which a Poll Bludger post confirms | AE filled a party | two-party only |"
   if (f30) hdr <- sub("two-party only \\|$", "two-party only | Poll Bludger post confirms |", hdr)
-  out <- c(hdr, paste0("|", strrep("---|", if (f30) 9 else 8)))
+  # the whole-cycle table's extra column: of the polls carrying AE's numbers, how many a Poll Bludger post confirms
+  out <- c(hdr, paste0("|", strrep("---|", 9)))
+  cell <- function(v, d) if (is.na(v)) "-" else pct(v, d)
   for (k in seq_len(nrow(x))) {
     g <- function(n) x[[paste0(p, n)]][k]
-    line <- sprintf("| %s%s | %d | %d | %d | %d | %s | %d | %d |", x$election[k], if (x$live[k]) " (live)" else "", g("polls"),
-                    g("wiki"), g("bt"), g("both"), pct(g("ae"), g("polls")), g("ae_party"), g("tpp_only"))
-    if (f30) line <- paste0(line, sprintf(" %s |", if (is.na(x$f30_pb_post[k])) "-" else pct(x$f30_pb_post[k], g("polls"))))
+    lab <- paste0(x$election[k], if (x$live[k]) " (live)" else "")
+    line <- if (f30)
+      sprintf("| %s | %d | %d | %d | %d | %s | %d | %d | %s |", lab, g("polls"), g("wiki"), g("bt"), g("both"),
+              pct(g("ae"), g("polls")), g("ae_party"), g("tpp_only"), cell(x$f30_pb_post[k], g("polls")))
+    else
+      sprintf("| %s | %d | %d | %d | %d | %s | %s | %d | %d |", lab, g("polls"), g("wiki"), g("bt"), g("both"),
+              pct(g("ae"), g("polls")), cell(x$ae_pb_post[k], g("ae")), g("ae_party"), g("tpp_only"))
     out <- c(out, line)
   }
   tot <- function(n) sum(x[[paste0(p, n)]])
-  totl <- sprintf("| **all** | %d | %d | %d | %d | %s | %d | %d |", tot("polls"), tot("wiki"), tot("bt"), tot("both"),
-                  pct(tot("ae"), tot("polls")), tot("ae_party"), tot("tpp_only"))
-  if (f30) totl <- paste0(totl, sprintf(" %s |", pct(sum(x$f30_pb_post, na.rm = TRUE), tot("polls"))))
+  totl <- if (f30)
+    sprintf("| **all** | %d | %d | %d | %d | %s | %d | %d | %s |", tot("polls"), tot("wiki"), tot("bt"), tot("both"),
+            pct(tot("ae"), tot("polls")), tot("ae_party"), tot("tpp_only"), pct(sum(x$f30_pb_post, na.rm = TRUE), tot("polls")))
+  else
+    sprintf("| **all** | %d | %d | %d | %d | %s | %s | %d | %d |", tot("polls"), tot("wiki"), tot("bt"), tot("both"),
+            pct(tot("ae"), tot("polls")), pct(sum(x$ae_pb_post, na.rm = TRUE), tot("ae")), tot("ae_party"), tot("tpp_only"))
   c(out, totl)
 }
 sc <- R[live == FALSE]
