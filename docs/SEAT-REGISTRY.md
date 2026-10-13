@@ -182,12 +182,13 @@ Dug 2026-10-09 from run 0cbaa82 (`scripts/biggest_misses.R --pairs=vic2018`). Th
 
 ## wa2013
 
-- **Churchlands** -- **OPEN** (2026-10-14, overnight). Liz Constable (IND, 67.3% in 2008) RETIRED in 2013 and the
-  retirement IS recorded (retirements.csv; retirement-derived wa2013 Churchlands = 1), yet the model made IND the
-  0.93 favourite; the Liberal (L'Estrange) won with 59.0%, and the three 2013 independents (Monks 8.1, Re 4.7,
-  Bivoltsis 3.5) are unrelated people. Reading, UNVERIFIED: the retired independent's vote reaches the IND CLASS and so
-  the new independents -- the "match on the person, not the class" pattern. Final 35-election rebuild 4e03af5,
-  `output/biggest-misses.csv`.
+- **Churchlands** -- **OPEN** (2026-10-14, overnight). Liz Constable (IND, 67.3% in 2008) RETIRED in 2013 (recorded:
+  retirements.csv; retirement-derived wa2013 Churchlands = 1). Predicted vs actual share: LNP 25.5 vs 59.0, IND 30.4 vs
+  16.3, ALP 25.7 vs 15.6, GRN 15.7 vs 7.7 (`backtest-wa-sharedetail-...-g4e03af5.csv`). The Liberals did NOT contest
+  Churchlands in 2008, so they re-enter with no seat history (re-entry prior), and the retired independent's vote is kept
+  largely in the IND class (three unrelated new independents: Monks 8.1, Re 4.7, Bivoltsis 3.5) and spread to ALP/GRN,
+  when it went to the returning Liberal. Two mechanisms: re-entry level for a major that sat out, and where a retired
+  independent's vote goes. UNVERIFIED which dominates; IND favourite 0.93, LNP won at p 0.028.
 - **Albany** -- **OPEN** (2026-10-14). ALP won (Peter Watson, sitting) at p 0.016, LNP favourite 0.984. Not investigated.
 - **Kimberley** -- **OPEN** (2026-10-14). ALP won at p 0.019; the sitting Labor member (Carol Martin) retired.
   Not investigated.
