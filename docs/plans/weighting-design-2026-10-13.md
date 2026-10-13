@@ -65,13 +65,13 @@ must publish with its rebuild).
 
 1. **Training: decay + completeness** (DECIDED, Pete). Rows lose weight with age (half-life fitted time-forward, weak
    ~8-year prior) and with thin features; no hard era cut.
-2. **Scoring weights: NOT DECIDED.** Pete asked whether seat-equal is fair (a Victorian state seat covers about half
-   the electors of a federal Victorian division, so seat-equal gives it ~2.3x the weight) and said he was not sure.
-   Claude's recommendation, not yet Pete's choice: each election counts once with seats equal within it, because seats
-   in one election share one statewide polling error (the independent unit is the election). Elector-weighting would
-   swing the other way (one federal election = ~4 Victorian = ~14 SA). Corrected 2026-10-13: an earlier version of this
-   section recorded the recommendation as decided. Until Pete chooses, `compare_rebuild_scores.R` prints both the
-   seat-pooled line (KX2, the rule in force) and the election-equal views (KX4).
+2. **Scoring weights: PER PERSON (DECIDED, Pete, 2026-10-13):** *"if anything seat equal isnt enough it needs to be per
+   person"*. Each seat counts in proportion to its voters (formal votes); since seats within an election are near
+   equal-size by law, this is each election weighted by its total formal votes. Consequence told to Pete: federal
+   elections carry ~68% of the AEF-7 score (fed2022 + fed2025 ~30M formal votes against ~14M for the five state
+   elections) and ~70% from 2010 on (approximate totals). The standard error stays clustered on the election (the
+   independent unit). History: Claude first recorded its own recommendation (each election counts once) as decided and
+   was corrected twice; election-equal is still printed as a secondary view.
 3. **The per-election guard is replaced** (Pete: "a bug fix ... might improve 17 elections and harm 5 which is clearly
    good but technically 'does harm'"): report the count of elections better / worse; a single election harmed badly
    must be explained (cause traced, like Barwon 2019), then Pete decides, never an automatic refusal. (Pete's point;

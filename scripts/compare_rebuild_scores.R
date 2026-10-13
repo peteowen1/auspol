@@ -35,15 +35,23 @@ votes <- tryCatch({
   cc <- fread("output/candidacies.csv", select = c("election", "votes"), showProgress = FALSE)
   cc[, .(v = sum(votes, na.rm = TRUE)), by = election]
 }, error = function(e) NULL)
+# DECIDING LINE (Pete, 2026-10-13): PER PERSON. Each election weighted by its total formal votes (seats within an
+# election are near equal-size by law, so this is per-person weighting); SE by jackknife over elections. The
+# election-equal mean is printed beside it as a secondary view.
 view <- function(lab, m) {
   if (nrow(m) < 2) { cat(sprintf("KX4 %-22s fewer than 2 elections\n", lab)); return(invisible()) }
-  d <- mean(m$change)
-  th <- vapply(seq_len(nrow(m)), function(i) mean(m$change[-i]), 0)
-  G <- nrow(m); se <- sqrt((G - 1) / G * sum((th - mean(th))^2))
+  G <- nrow(m)
+  w <- if (!is.null(votes)) votes$v[match(m$pair, votes$election)] else rep(NA_real_, G)
+  if (!all(is.finite(w) & w > 0)) { cat(sprintf("KX4! %s: formal votes missing for %s; cannot weight per person\n", lab,
+                                                paste(m$pair[!(is.finite(w) & w > 0)], collapse = ", "))); return(invisible()) }
+  wm <- function(i) sum(w[i] * m$change[i]) / sum(w[i])
+  d <- wm(seq_len(G))
+  th <- vapply(seq_len(G), function(i) wm(setdiff(seq_len(G), i)), 0)
+  se <- sqrt((G - 1) / G * sum((th - mean(th))^2))
   verdict <- if (d < -se) "BETTER (beyond 1 SE)" else if (d > se) "WORSE (beyond 1 SE)" else "within noise"
-  vw <- if (!is.null(votes)) { w <- votes$v[match(m$pair, votes$election)]; if (all(is.finite(w) & w > 0)) sum(w * m$change) / sum(w) else NA_real_ } else NA_real_
-  cat(sprintf("KX4 %-22s %2d elections | election-equal change %+.4f (SE %.4f) => %-20s | better %2d, worse %2d, same %2d | voter-weighted %+.4f\n",
-              lab, G, d, se, verdict, sum(m$change < -1e-6), sum(m$change > 1e-6), sum(abs(m$change) <= 1e-6), vw))
+  cat(sprintf("KX4 %-22s %2d elections | PER-PERSON change %+.4f (SE %.4f) => %-20s | better %2d, worse %2d, same %2d | election-equal %+.4f | federal share of weight %.0f%%\n",
+              lab, G, d, se, verdict, sum(m$change < -1e-6), sum(m$change > 1e-6), sum(abs(m$change) <= 1e-6),
+              mean(m$change), 100 * sum(w[grepl("^fed", m$pair)]) / sum(w)))
 }
 view("AEF-7 (primary)", M[pair %in% AEF7])
 view("2010 on (second)", M[year >= 2010])
