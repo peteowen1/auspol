@@ -27,3 +27,11 @@ something, save it for the morning". Trust does not extend to merges to main, de
   (1.060 vs block 0.802) because of zero-probability new independents; block count stays default.
 
 ## Log
+- 00:10 CI green (1938 passed; R CMD check 0/0/3 after fixing a non-ASCII regex dash and an Rd link); dev pushed (f7f475a).
+- 00:15 Publishing the rebuild was DENIED while Pete is away (production deploy). Rebuild at HEAD runs WITHOUT publish;
+  publish (stage 9, ~1 min) waits for Pete. RISK: the 07:00 daily run uses dev's code with the 18:20 release models.
+- 01:01 Rebuild at HEAD started (waited on memory: agents' R jobs).
+- 01:05 Tas/ACT polls agent: Tasmania 89 polls (EMRS mostly), ACT 3 polls total. Hare-Clark pooled log loss with polls
+  0.601 vs fallback 0.776 vs naive 0.974; tas2021 worse with polls. Sent back to use the thin-cycle estimate for tas2010
+  and the ACT, and to diagnose tas2021. Branch worktree-agent-a9cee86a0d479a556, merge after the rebuild.
+- Poll Bludger old-WA/fed2007 agent running; inputs agent (retirements/census/Trends) running.
