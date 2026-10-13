@@ -15,7 +15,7 @@ options(auspol.root = normalizePath("."))
 suppressMessages(devtools::load_all(quiet = TRUE))
 e <- commandArgs(TRUE)[1]; rg <- sub("[0-9]+$", "", e)
 # one file per election, or one per chunk (<e>-p<k>-polls.csv) when the posts were split for the reading agents
-fx <- list.files("deciding-runs/pb-llm", pattern = sprintf("^%s(-p[0-9]+)?-polls\\.csv$", e), full.names = TRUE)
+fx <- list.files(Sys.getenv("AUSPOL_PB_LLM_DIR", "deciding-runs/pb-llm"), pattern = sprintf("^%s(-p[0-9]+)?-polls\\.csv$", e), full.names = TRUE)
 if (!length(fx)) stop("PLX1! no extraction files for ", e)
 X <- rbindlist(lapply(fx, function(f) fread(f, colClasses = "character")[, src_file := basename(f)]), fill = TRUE)
 X[, post_date := as.Date(post_date)]
@@ -78,4 +78,4 @@ cat(sprintf("PLX3 AE-only polls confirmed: %d of %d; extracted polls with no mat
             sum(R$origin == "ae"), sum(K$origin == "ae"), sum(!ux)))
 print(R[order(-maxd)][1:min(10, nrow(R))])
 if (any(!ux)) { cat("\nExtracted, not in the key (new polls, or wrong):\n"); print(X[!ux, .(post_date, pollster, alp, coalition, greens, one_nation, undecided)]) }
-fwrite(R, sprintf("deciding-runs/pb-llm/%s-scored.csv", e))
+fwrite(R, file.path(Sys.getenv("AUSPOL_PB_LLM_DIR", "deciding-runs/pb-llm"), sprintf("%s-scored.csv", e)))

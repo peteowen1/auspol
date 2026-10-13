@@ -1,7 +1,7 @@
 # WA extractions (Liberal and National separate) -> the scorer's columns. load_polls("wa") keeps LIB as LNP and NAT
 # apart, so coalition := liberal; a combined-only figure cannot be split and is left blank (kept in coalition_combined).
 library(data.table)
-for (f in list.files("deciding-runs/pb-llm", pattern = "-wa-polls\\.csv$", full.names = TRUE)) {
+for (f in list.files(Sys.getenv("AUSPOL_PB_LLM_DIR", "deciding-runs/pb-llm"), pattern = "-wa-polls\\.csv$", full.names = TRUE)) {
   x <- as.data.table(read.csv(f, colClasses = "character", na.strings = ""))
   x[, coalition := liberal]
   out <- sub("-wa-polls\\.csv$", "-polls.csv", f)
