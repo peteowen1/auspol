@@ -500,6 +500,25 @@ hc_statewide_draws <- function(region, year, election_date, prev_state, state_sd
     return(list(draws = d, source = "polls", n_polls = fc$n_polls, reason = NA_character_))
   }
   if (is.null(reason)) reason <- "trend could not be fitted at the cutoff"
+  # THIN CYCLE (published switch AUSPOL_THIN_CYCLE, default "1"): the previous result moved by the
+  # cycle's polls, precision-weighted (R/thin_cycle.R). With no polls it returns the previous result
+  # unchanged, so the zero-poll elections come through the same function. The spread around the
+  # level is the same time-forward SD the plain fallback uses -- not a fitted posterior.
+  if (identical(Sys.getenv("AUSPOL_THIN_CYCLE", "1"), "1")) {
+    th <- tryCatch(thin_cycle_statewide(region, year, ed, cl, prev_state, code = "HCT"),
+                   error = function(e) { reason <<- paste0(reason, "; thin cycle: ", conditionMessage(e)); NULL })
+    if (!is.null(th)) {
+      npl <- as.integer(attr(th, "n_polls"))
+      cat(sprintf("HCS1  %s%d statewide THIN-CYCLE: previous result updated by %d poll(s) (trend not used: %s)\n",
+                  region, year, npl, substr(reason, 1, 100)))
+      if (!is.null(seed)) set.seed(seed)
+      d <- sapply(cl, function(k) th[[k]] + stats::rnorm(n_sims, 0, state_sd[[k]]))
+      d <- pmax(d, 0.05)
+      d <- d / rowSums(d) * 100
+      return(list(draws = d, source = if (npl > 0L) "thin-cycle" else "fallback: previous result",
+                  n_polls = npl, reason = reason))
+    }
+  }
   cat(sprintf(paste0("HCS1  %s%d statewide FALLBACK -- NOT POLLS: previous election's result (%s) with ",
                      "time-forward SD (%s). Reason polls were not used: %s\n"),
               region, year, paste(sprintf("%s %.1f", cl, prev_state[cl]), collapse = ", "),
