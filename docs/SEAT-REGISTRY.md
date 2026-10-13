@@ -213,6 +213,18 @@ Dug 2026-10-09 from run 0cbaa82 (`scripts/biggest_misses.R --pairs=vic2018`). Th
   against the 11:00 publish (pooled +0.0029). Not caused by the Poll Bludger layer (nsw2019 0.2500 with, 0.2525 without)
   nor the new NSW 2011 transfers (0 change, AUSPOL_HTV_EXCLUDE). An emergence the model cannot see; Murray (Shooters,
   p 0.04) is the same pattern. Still 13.82 in the 2026-10-14 35-election rebuild; Murray now 7.96 (p ~0.0003). `deciding-runs/rebuild-20261013-baseline-today-from5.log`, `output/biggest-misses.csv`.
+  2026-10-14: Barwon ALONE is nsw2019's +0.026 from the new-election inputs. Snapshot `20261014-0250-ecc1bb3-from4` gave
+  the Shooters 5e-05 (ll 9.9); `20261014-0448-4e03af5-from1` gave 0 (no allprobs row; floor 13.82), +0.042 over 93
+  seats. The other 92 seats improved, mean ll 0.2160 -> 0.1995 (-0.017).
+
+## sa2018
+
+- **Davenport**, **Adelaide**, **Elder**, **Morphett**, **Hartley** -- **OPEN** (2026-10-14). LNP won each; sa2018's
+  +0.025 from the new-election inputs (40 seats, mean ll 0.3146 -> 0.3393) is spread over these: predicted LNP share
+  fell 0.3 pts on average statewide on top of an existing 1.6-pt LNP under-call, most where IND or GRN rose (Davenport
+  IND +4.3 / LNP -2.8, Adelaide GRN +1.8 / LNP -1.6, Hartley IND +1.9 / LNP -1.5). Which input (salience, census,
+  retirements) is not isolated: a sa2018 screen with salience off waits on memory. Morphett (LNP p 0.06, IND fav 0.75)
+  and Newland/Elder/Colton are LNP under-calls already present before the inputs. Snapshots as nsw2019 above.
 
 ## nsw2023
 

@@ -1,5 +1,15 @@
 # Overnight queue, 2026-10-13/14 (Pete asleep; autonomous)
 
+## MORNING UPDATE (09:40-10:10, Pete on phone)
+
+- PUBLISHED the full-inputs state at 22:40 UTC (Pete: "you can run it"), dev pushed to aef4b30.
+- Found and fixed: the daily job's NSW 2027 step is on (repository variable since 10-08) but a plain publish skipped
+  the nsw2027 tables, so they were from 10-10. `AUSPOL_PUBLISH_NSW2027="1"` now in published_flags.R (6f2be85);
+  republished 22:55 UTC on Pete's OK, all 8 nsw2027 files fresh.
+- Daily run had NOT fired yet at 09:35 (GitHub's schedule lands 3-6 h late; recent runs 23:20-01:54 UTC).
+- nsw2019 +0.026: entirely Barwon (5e-05 -> 0); other 92 seats improved. sa2018 +0.025: LNP -0.3 pts broad, where
+  IND/GRN rose. Both in SEAT-REGISTRY.
+
 ## MORNING SUMMARY (written 05:25)
 
 **Needs Pete, in this order:**
