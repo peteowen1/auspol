@@ -885,6 +885,7 @@ all_election_pairs <- function() {
     # Wikipedia for 2018, scripts/build_sa_2010_2014_results.R). Each follows a redistribution
     # and is scored on its name-matched districts only. They become training data for every
     # LATER election's time-forward fits, so the pairs dated after 2014-03-15 move.
+    list(election = "sa2010",  prev = "sa2006"),
     list(election = "sa2014",  prev = "sa2010"),
     list(election = "sa2018",  prev = "sa2014"),
     # sa2022 added 2026-09-13. Scored by backtest_candidate_sa.R since the

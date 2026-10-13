@@ -135,6 +135,8 @@ ELS <- list(
                  anchor = "Steven Marshall"),
   # sa2014 / sa2018 added 2026-10-13 (coverage program); NOT FETCHED YET (Google Trends
   # throttles -- run once, detached, keep the raw series). Premier at both polls: Jay Weatherill.
+  sa2010  = list(poll = "2010-03-20", geo = "AU-SA", prev = "sa2006",
+                 anchor = "Mike Rann"),
   sa2014  = list(poll = "2014-03-15", geo = "AU-SA", prev = "sa2010",
                  anchor = "Jay Weatherill"),
   sa2018  = list(poll = "2018-03-17", geo = "AU-SA", prev = "sa2014",

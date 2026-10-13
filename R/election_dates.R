@@ -27,7 +27,7 @@ election_dates <- function(labels = NULL) {
     nsw2027 = "2027-03-13",
     qld2017 = "2017-11-25", qld2020 = "2020-10-31", qld2024 = "2024-10-26",
     sa2018  = "2018-03-17", sa2022  = "2022-03-19", sa2026  = "2026-03-21",
-    sa2010  = "2010-03-20", sa2014  = "2014-03-15",   # 2026-10-13: sa2014 and sa2018 backtest pairs (ECSA past-results pages)
+    sa2006  = "2006-03-18", sa2010  = "2010-03-20", sa2014  = "2014-03-15",   # 2026-10-13: sa2014 and sa2018 backtest pairs (ECSA past-results pages)
     vic2006 = "2006-11-25",   # 2026-10-13: previous election of the new vic2010 pair (Wikipedia infobox checked)
     vic2010 = "2010-11-27", vic2014 = "2014-11-29", vic2018 = "2018-11-24",
     vic2022 = "2022-11-26", vic2026 = "2026-11-28",

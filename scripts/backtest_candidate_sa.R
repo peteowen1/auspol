@@ -113,12 +113,20 @@ SA_PAIRS <- list(
   # (relative to election_data_path(), hence the "../"). `winners`/`winners_election`
   # name the file and label to read, because ecsa-sa-winners.csv holds 2022 and 2026 only.
   # `flow_est`: also feed the PREVIOUS election's estimated state flows
-  # (R/flow_estimate_events.R); AUSPOL_SA_FLOW_EST=0 turns it off.
+  # (R/flow_estimate.R, state_blend_flows); AUSPOL_SA_FLOW_EST=0 turns it off.
   "2018" = list(to = 2018L, from = 2014L,
                fp_from = "../reference/ecsa/sa-backtest/ecsa-2014-sa-candidates.csv",
                fp_to   = "wikipedia-2018-sa-firstprefs.csv",
                flow_from = "fed2016", flow_before = "2018-03-17",
                winners = "wikipedia-2018-sa-winners.csv",
+               match_seats = TRUE, flow_est = TRUE),
+  # sa2010 (prev sa2006): same 47 district names at both ends (the 2004 boundaries ran 2006 and
+  # 2010), so the match-seats rule should score all 47; it is kept so the coverage is logged.
+  "2010" = list(to = 2010L, from = 2006L,
+               fp_from = "../reference/ecsa/sa-backtest/ecsa-2006-sa-candidates.csv",
+               fp_to   = "../reference/ecsa/sa-backtest/ecsa-2010-sa-candidates.csv",
+               flow_from = "fed2007", flow_before = "2010-03-20",
+               winners = "../reference/ecsa/sa-backtest/ecsa-2010-sa-winners.csv",
                match_seats = TRUE, flow_est = TRUE),
   "2014" = list(to = 2014L, from = 2010L,
                fp_from = "../reference/ecsa/sa-backtest/ecsa-2010-sa-candidates.csv",
@@ -440,23 +448,20 @@ stopifnot(nrow(tx) > 100L, all(tx$election == FLOW_FROM))
 tx <- pool_configured_flows(tx, PAIR$flow_before)
 # STATE FLOWS FROM THE PREVIOUS ELECTION'S RESULTS (pairs with `flow_est` only).
 # South Australia publishes no distribution of preferences for 2010, 2014 or 2018, so
-# these pairs would otherwise run on federal events alone. R/flow_estimate_events.R
-# turns output/flows-estimated.csv's estimate for the PREVIOUS election (PRV, never
-# the target's own row: that one is built from the results being predicted) into
-# synthetic ALP-v-LNP exclusion events that join the federal ones.
+# these pairs would otherwise run on federal events alone. R/flow_estimate.R tilts them
+# toward the PREVIOUS election's blended estimate (PRV, never the target's own row:
+# that one is built from the results being predicted).
 .fe_on <- isTRUE(PAIR$flow_est) && !identical(Sys.getenv("AUSPOL_SA_FLOW_EST", "1"), "0")
 if (.fe_on) {
   stopifnot(PRV != TGT)
-  .fe <- estimated_flow_events(PRV, tx)
-  if (!nrow(.fe)) stop("BS1fe: no flow estimate for ", PRV, " in output/flows-estimated.csv")
-  .fes <- attr(.fe, "summary")
-  cat(sprintf("BS1fe state flow estimate from %s (previous election, never %s): %d synthetic events added to %d federal rows\n",
-              PRV, TGT, uniqueN(.fe$seat), nrow(tx)))
-  for (.i in seq_len(nrow(.fes)))
-    cat(sprintf("BS1fe   %-9s ALP %5.1f%% exhaust %4.1f%% | %2d events x %d ballots%s\n",
-                .fes$class[.i], .fes$flow_alp[.i], .fes$exhaust[.i], .fes$n_events[.i],
-                .fes$votes_per_event[.i], if (.fes$sized_from_reference[.i]) "" else " (no federal event of this class: overall mean)"))
-  tx <- rbind(tx, .fe, fill = TRUE)
+  # Same reader as the Queensland harness (R/flow_estimate.R): the PREVIOUS election's
+  # time-forward blended estimate (output/flows-state-blend.csv) tilts the Labor-versus-
+  # Coalition split of the federal event rows; state_blend_flows() refuses a row not
+  # strictly earlier than the target.
+  .est <- state_blend_flows(PRV, target = TGT)
+  cat(sprintf("BS1fe flows: %s event rows tilted to the %s blended estimate (%d classes; previous election, never %s)\n",
+              FLOW_FROM, PRV, nrow(.est), TGT))
+  tx <- flows_tilt_to_estimate(tx, .est, code = "BS1fe")
 } else {
   cat(sprintf("BS1fe state flow estimate OFF for %s (federal events only)\n", TGT))
 }

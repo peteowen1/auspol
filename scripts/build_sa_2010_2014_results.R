@@ -215,4 +215,46 @@ for (yr in c(2010L, 2014L)) {
   fwrite(w[, .(election = sprintf("sa%d", yr), seat, winner)],
          file.path(OUT, sprintf("ecsa-%d-sa-winners.csv", yr)))
 }
+# ---- sa2006 (prev of the sa2010 pair) ---------------------------------------------
+# ecsa-2006-sa-firstprefs-detail.csv (Jaensch's compilation of ECSA's 2006 results) is
+# already candidate-level with ECSA party classes. Two traps:
+#  1. NAMES are a FOURTH format, "SURNAME INITIALS": winners shouted ("LOMAX-SMITH JD"),
+#     the rest Title-case ("Carroll D"). Rewritten here as "SURNAME, INITIALS" so the
+#     comma rule every name helper already has (surname_of(), given_of(), .key(),
+#     name_key() in build_retirement_derived.py) reads it. A bare initials block is not a
+#     name: given_stem() already treats a <=3-letter vowel-free run as "no evidence".
+#  2. The file's `elected` flag is WRONG: it is blank for 7 seats and marks the Liberal in
+#     Hartley, Light, Mawson and Morialta, which Labor won (Portolesi, Piccolo, Bignell,
+#     Simmons). Winners are therefore taken from the AEF archive's TCP table (2006sa-tcp.csv,
+#     47 seats), the last-resort source, and cross-checked: its class totals must equal the
+#     real 2006 result (ALP 28; Liberal and Nationals 16; independents 3) and it must agree
+#     with ECSA's own TCP table in the 20 seats that table covers.
+d6 <- fread(file.path(EL, "ecsa-2006-sa-firstprefs-detail.csv"), showProgress = FALSE)
+stopifnot(uniqueN(d6$seat) == 47L, !anyNA(d6$votes))
+CODE_NAME[["NAT"]] <- "National Party of Australia (SA)"
+chk <- d6[nzchar(party_code) & party_code %in% names(CODE_NAME)]
+stopifnot(all(class_of_code(chk$party_code) == chk$party_class))   # ECSA's class agrees with ours wherever the code is known
+# "Scalzi G (J)": the bracket is the preferred name's initial (Joe); put it first so a later
+# "SCALZI, Joe" meets "SCALZI, JG" on surname + first initial.
+cand6 <- sub("^(.*) ([A-Z]{1,4}) \\(([A-Z])\\)$", "\\1 \\3\\2", d6$candidate)
+nm6 <- sub("^(.*) ([A-Z]{1,4})$", "\\1|\\2", cand6)
+stopifnot(all(grepl("|", nm6, fixed = TRUE)))
+sur6 <- toupper(sub("\\|.*$", "", nm6)); ini6 <- sub("^.*\\|", "", nm6)
+c6 <- d6[, .(seat = seat, name = sprintf("%s, %s", sur6, ini6),
+             party_raw = ifelse(nzchar(party_code), party_code, "IND"), party = party_class, votes = votes)]
+stopifnot(!anyDuplicated(c6[, .(seat, name)]))
+a6 <- fread(file.path(EL, "archive", "2006sa-tcp.csv"), showProgress = FALSE)
+w6 <- a6[, .SD[which.max(votes)], by = seat][, .(seat, winner = party)]
+stopifnot(nrow(w6) == 47L)
+tab6 <- table(w6$winner)
+cat(sprintf("ES1  sa2006 winners (AEF archive TCP): %s\n", paste(sprintf("%s %d", names(tab6), as.integer(tab6)), collapse = ", ")))
+stopifnot(tab6[["ALP"]] == 28L, tab6[["LNP"]] == 16L, tab6[["IND"]] == 3L)
+t6 <- fread(file.path(EL, "ecsa-2006-sa-tcp-detail.csv"), showProgress = FALSE)
+ow6 <- t6[, .SD[which.max(votes)], by = seat][, .(seat, ecsa = party_class)]
+mm6 <- merge(w6, ow6, by = "seat")
+cat(sprintf("ES2  sa2006: archive winners agree with ECSA's own TCP table in %d of %d seats\n", sum(mm6$winner == mm6$ecsa), nrow(mm6)))
+stopifnot(all(mm6$winner == mm6$ecsa))
+cat(sprintf("ES1  sa2006: %d districts, %d candidates, %s votes\n", uniqueN(c6$seat), nrow(c6), format(sum(c6$votes), big.mark = ",")))
+fwrite(c6, file.path(OUT, "ecsa-2006-sa-candidates.csv"))
+fwrite(w6[, .(election = "sa2006", seat, winner)], file.path(OUT, "ecsa-2006-sa-winners.csv"))
 cat("ES9  wrote", OUT, "\n")

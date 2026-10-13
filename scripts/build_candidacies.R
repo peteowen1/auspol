@@ -412,17 +412,70 @@ if (!file.exists(sa18f)) {
 # 2010 "SURNAME, Given" (comma), 2014 "SURNAME Given" (no comma, ALL-CAPS surname) --
 # neither is sa2018's given-first form, and .key()/surname_of() read both. Leave
 # surname/given NA like sa2022 so every consumer reads the combined `name`.
-for (.y in c(2010L, 2014L)) {
+for (.y in c(2006L, 2010L, 2014L)) {
   .f <- file.path("external", "reference", "ecsa", "sa-backtest", sprintf("ecsa-%d-sa-candidates.csv", .y))
   if (!file.exists(.f)) { cat(sprintf("BC2c sa%d: MISSING %s -- run scripts/build_sa_2010_2014_results.R\n", .y, .f)); next }
   .d <- fread(.f, showProgress = FALSE)
   if (uniqueN(.d$seat) != 47L) stop(sprintf("sa%d: %d seats in %s, not 47", .y, uniqueN(.d$seat), .f))
   if (anyNA(.d$votes) || anyDuplicated(.d[, .(seat, name)])) stop(sprintf("sa%d: missing votes or duplicate candidate in %s", .y, .f))
+  # sa2006 names are "SURNAME, INITIALS" (a fourth format, see build_sa_2010_2014_results.R).
+  # A sitting member re-standing under the ballot's PREFERRED name changes the first initial
+  # (Such RB -> Bob, Thompson MG -> Gay, Koutsantonis A -> Tom), which the surname + first
+  # initial key reads as a different person. So for each 2006 WINNER whose surname is the only
+  # one of that spelling in the same seat's 2010 field, with a different first initial, the 2010
+  # given name's initial is put first. Identity resolution of a sitting member, not an outcome.
+  if (.y == 2006L) {
+    .f10 <- file.path("external", "reference", "ecsa", "sa-backtest", "ecsa-2010-sa-candidates.csv")
+    .w6 <- fread(file.path("external", "reference", "ecsa", "sa-backtest", "ecsa-2006-sa-winners.csv"), showProgress = FALSE)
+    if (file.exists(.f10)) {
+      .c10 <- fread(.f10, showProgress = FALSE)
+      .sn <- function(x) tolower(gsub("[^A-Za-z]", "", sub(",.*$", "", x)))
+      .in <- function(x) toupper(substr(gsub("[^A-Za-z]", "", sub("^[^,]*,", "", x)), 1, 1))
+      .top <- .d[order(.d$seat, -.d$votes)]
+      .top <- merge(.top, .w6[, .(seat, winner)], by = "seat")[party == winner]
+      .top <- .top[!duplicated(seat)]
+      .fix <- character(0)
+      for (.i in seq_len(nrow(.top))) {
+        .s <- .top$seat[.i]; .cc <- .c10[.c10$seat == .s, ]
+        .m <- .cc[.sn(.cc$name) == .sn(.top$name[.i]), ]
+        if (nrow(.m) == 1L && .in(.m$name) != .in(.top$name[.i])) {
+          .old <- .top$name[.i]
+          .ini <- trimws(sub("^[^,]*,", "", .old))
+          .new <- sprintf("%s, %s%s", sub(",.*$", "", .old), .in(.m$name), sub(.in(.m$name), "", .ini, fixed = TRUE))
+          .d[.d$seat == .s & .d$name == .old, "name" := .new]
+          .fix <- c(.fix, sprintf("%s -> %s (2010: %s)", .old, .new, .m$name))
+        }
+      }
+      cat(sprintf("BC2e sa2006: %d sitting member(s) re-stood under a different first initial; initials reordered: %s\n",
+                  length(.fix), paste(.fix, collapse = "; ")))
+    }
+  }
   .d[, `:=`(surname = NA_character_, given = NA_character_, elected = NA,
             election = sprintf("sa%d", .y), region = "sa", year = .y)]
   parts[[sprintf("sa%d", .y)]] <- .d[, .(seat, surname, given, party_raw, votes, elected,
                                          party, election, region, year, name)]
   cat(sprintf("BC2c sa%d: %d candidates in %d seats\n", .y, nrow(.d), uniqueN(.d$seat)))
+}
+# RETURNER CHECK for the sa2006 -> sa2010 name bridge ("SURNAME, INITIALS" vs "SURNAME, Given"):
+# how many sa2006 WINNERS' surnames recur among sa2010 candidates (the real count of sitting MPs
+# who re-contested, up to namesakes), against how many the production person key actually joins.
+if (all(c("sa2006", "sa2010") %in% names(parts))) {
+  .w6 <- fread(file.path("external", "reference", "ecsa", "sa-backtest", "ecsa-2006-sa-winners.csv"), showProgress = FALSE)
+  .p6 <- parts[["sa2006"]]; .p10 <- parts[["sa2010"]]
+  .k <- function(d, rule) match_key(surname_of(rep(NA_character_, nrow(d)), d$name), given_of(rep(NA_character_, nrow(d)), d$name), rule)
+  .win6 <- .p6[.p6$votes > 0, ]
+  .win6 <- .win6[order(.win6$seat, -.win6$votes), ]
+  .win6 <- .win6[!duplicated(paste(.win6$seat, .win6$party)), ]
+  .win6 <- merge(.win6, .w6[, .(seat, winner)], by = "seat")
+  .win6 <- .win6[.win6$party == .win6$winner, ]
+  .win6 <- .win6[!duplicated(.win6$seat), ]
+  .s_hit <- .k(.win6, "surname") %in% .k(.p10, "surname")
+  .i_hit <- .k(.win6, "initial") %in% .k(.p10, "initial")
+  cat(sprintf("BC2d sa2006 -> sa2010: %d sitting members' surnames recur among the 2010 candidates (the real re-contesting count, up to namesakes); the surname+first-initial key joins %d of them\n",
+              sum(.s_hit), sum(.i_hit)))
+  if (sum(.s_hit) > sum(.i_hit))
+    cat(sprintf("BC2d! initial key misses (nickname or preferred-name initial): %s\n",
+                paste(.win6$name[.s_hit & !.i_hit], collapse = "; ")))
 }
 
 # ---- NEW SOUTH WALES 2019, 2023 ---------------------------------------------
@@ -916,7 +969,7 @@ if (file.exists(sa18w)) {
   WV[[length(WV) + 1L]] <- w[, .(election, seat, winner)]
 }
 # sa2010 / sa2014 winners: from each district's own TCP table (scripts/build_sa_2010_2014_results.R)
-for (.y in c(2010L, 2014L)) {
+for (.y in c(2006L, 2010L, 2014L)) {
   .wf <- file.path("external", "reference", "ecsa", "sa-backtest", sprintf("ecsa-%d-sa-winners.csv", .y))
   if (file.exists(.wf)) WV[[length(WV) + 1L]] <- fread(.wf, showProgress = FALSE)[, .(election, seat, winner)]
 }
