@@ -290,6 +290,8 @@ P <- election_data_path()
 # election's blended estimate (`flow_est_from`, output/flows-state-blend.csv;
 # R/flow_estimate.R). `flow_est_from` must equal the pair's own previous
 # election: the target's row is built from the results being predicted.
+#   2012  prev qld2009. As 2015: optional preferential, 89 districts at both ends (the 2008
+#         redistribution preceded 2009), flows from federal 2010 tilted to the qld2009 estimate.
 #   2015  prev qld2012. Optional preferential, so the estimate's exhaust is
 #         discarded (this harness has no exhaust path) and the conditional
 #         Labor share is used. 89 districts at both ends, no redistribution.
@@ -303,6 +305,13 @@ P <- election_data_path()
 # scripts/build_qld_2012_2015_inputs.R (the 2012 file there files Katter's party
 # under OTH_RIGHT like every other Queensland year; the older file files it as OTH).
 QLD_PAIRS <- list(
+  "2012" = list(to = 2012L, from = 2009L,
+                fa = "ecq-2009-qld-firstprefs.csv",
+                fb = "../reference/ecq/ecq-2012-qld-firstprefs-kapfix.csv",
+                flow_file = "aec-fed-transfers.csv", flow_from = "fed2010",
+                flow_est_from = "qld2009",
+                win_files = "../reference/ecq/ecq-qld-winners-2012-2015.csv",
+                partial_ok = FALSE, asof = "2012-03-24"),
   "2015" = list(to = 2015L, from = 2012L,
                 fa = "../reference/ecq/ecq-2012-qld-firstprefs-kapfix.csv",
                 fb = "ecq-2015-qld-firstprefs.csv",

@@ -715,7 +715,7 @@ if (!file.exists(q17f) || file.info(q17f)$size < 1e6) {
   }
 }
 
-# ---- QUEENSLAND 2012, 2015 ---------------------------------------------------
+# ---- QUEENSLAND 2009, 2012, 2015 ---------------------------------------------------
 # Previous elections of the qld2015 and qld2017 pairs. Read from the per-candidate table already
 # parsed from the commission's own results file (external/reference/ecq/raw/<year>/candidates.csv:
 # ballot name, party code, first-preference votes, and the declared member). ZZZ is an independent,
@@ -724,8 +724,8 @@ if (!file.exists(q17f) || file.info(q17f)$size < 1e6) {
 # OTH_RIGHT, so the name is written out in full here (same fix as scripts/build_qld_2012_2015_inputs.R).
 QLD_CODE_NAME <- c(ALP = "Australian Labor Party", LNP = "Liberal National Party",
                    GRN = "The Greens", ONP = "One Nation", KAP = "Katter's Australian Party",
-                   FFP = "Family First Party", PUP = "Palmer United Party", ZZZ = "Independent")
-for (yq in c(2012L, 2015L)) {
+                   FFP = "Family First Party", PUP = "Palmer United Party", DSQ = "DS4SEQ", ZZZ = "Independent")
+for (yq in c(2009L, 2012L, 2015L)) {
   fq <- file.path(ECQ, "raw", yq, "candidates.csv")
   if (!file.exists(fq)) { cat(sprintf("BC6  qld%d: MISSING %s\n", yq, fq)); next }
   cq <- fread(fq, showProgress = FALSE)

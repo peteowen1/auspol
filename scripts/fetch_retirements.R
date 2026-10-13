@@ -46,6 +46,7 @@ PAGES <- c(
   nsw2019 = "2019 New South Wales state election",
   nsw2023 = "2023 New South Wales state election",
   `nsw2023-candidates` = "Candidates of the 2023 New South Wales state election",
+  qld2012 = "2012 Queensland state election",   # added 2026-10-13 (coverage program); NOT yet fetched
   qld2015 = "2015 Queensland state election",   # added 2026-10-13 (coverage program); NOT yet fetched
   qld2017 = "2017 Queensland state election",
   qld2020 = "2020 Queensland state election",

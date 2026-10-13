@@ -26,7 +26,7 @@ test_that("quick_parse_env accepts assignments and refuses anything else", {
 
 test_that("quick_units is the 23 scored elections, one harness run each, ids unique", {
   u <- quick_units()
-  expect_equal(nrow(u), 25L)   # 22 -> 23 on 2026-10-13: vic2010 added; 23 -> 25: qld2015, qld2017 (coverage program)
+  expect_equal(nrow(u), 26L)   # 22 -> 23 on 2026-10-13: vic2010 added; 23 -> 26: qld2012, qld2015, qld2017 (coverage program)
   expect_false(anyDuplicated(u$id) > 0)
   expect_false("wa2021" %in% u$id)                               # no fittable poll trend; the rebuild skips it too
   expect_setequal(unique(u$harness), c("fed", "wa", "vic", "nsw", "qld", "sa"))
