@@ -113,3 +113,12 @@ Qld 2001-2017 (7); SA 2002-2018 (5); Tas, NT, ACT (none). Poll sources: `docs/PO
   fed/NSW/Vic agree with AE on almost every poll with primaries (12 off > 2 of ~270) and confirm 277 of 558 AE-only
   polls (rules: 78). WA not usable yet (Liberal/National split convention). Not in the model yet. Wikipedia scraper
   unfrozen (fed2010 +4 Morgan polls; level screen 2.059). Flow key fix agent still running.
+- 2026-10-13 ~13:50: official results 2000s (`reviews/official-results-2000s-2026-10-13.md`): VEC 2006 (88/88), ECSA
+  2006 (47/47), ECSA 2002 (45/47), ECQ 2001 (89/89), VEC 2002 two-party only; all within 10 votes of the AEF archive,
+  no winner differences. Still AEF archive (flagged): NSW 2003/2007 (NSWEC online starts 2011; Parliament sources
+  block scripts), Vic 2002 first preferences, SA 2002 Adelaide/Ashford.
+  vic2010 checklist (`reviews/add-pair-vic2010-checklist-2026-10-13.md`): found that `R/htv_flow.R` reads every
+  `*-transfers.csv`, so today's vec-2006 / nswec-2011 / aec-fed-2001 files already feed the (time-forward) how-to-vote
+  flow fit for every later election. Baseline rebuild on today's data running (`deciding-runs/rebuild-20261013-
+  baseline-today.log`), to measure today's unmeasured changes against the 11:00 publish and to fix the baseline
+  before vic2010 is added.
