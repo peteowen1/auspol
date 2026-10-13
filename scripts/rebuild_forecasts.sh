@@ -47,9 +47,9 @@ export AUSPOL_POOL_MIN_SIMS="${AUSPOL_POOL_MIN_SIMS:-$AUSPOL_N_SIMS}"
 # poll trend, so forecast mode (published 1 since 2026-09-19) skips it and the
 # pooling stages must not fall back to a stale file. Remove it from this default
 # when WA 2017-2021 polling reaches the anchor.
-# nt2016, nt2020, nt2024 (added 2026-10-13) likewise: 2-4 polls a cycle, no trend,
-# so backtest_candidate_nt.R skips every pair in forecast mode and is NOT in the
-# run6 specs below until an NT cycle reaches 8 polls (BNT0n prints the count).
+# nt2016, nt2020, nt2024 (added 2026-10-13): scoreable since the thin-cycle estimate
+# (AUSPOL_THIN_CYCLE, R/thin_cycle.R), but held OUT of the scoreboard and of the
+# run6 specs below until Pete decides whether the NT joins the pooled numbers.
 export AUSPOL_SKIP_PAIRS="${AUSPOL_SKIP_PAIRS:-wa2021,nt2016,nt2020,nt2024}"
 # EVERY STAGE SEES THE PUBLISHED CONFIGURATION. Unset switches take their
 # scripts/published_flags.R value here, once, so the fit scripts (which read only

@@ -75,10 +75,10 @@ PAIRS <- list(
   list(election = "wa2017",  prev = "wa2013",  region = "wa"),
   list(election = "wa2021",  prev = "wa2017",  region = "wa"),
   list(election = "wa2025",  prev = "wa2021",  region = "wa"),
-  # Northern Territory, added 2026-10-13 (scripts/backtest_candidate_nt.R). While
-  # its forecast-mode harness skips every pair (2-4 polls a cycle, no trend),
-  # there is no NT sharedetail and these three print "XG6! no sharedetail rows
-  # ... -> skip" below: listed so they join the moment the harness scores them.
+  # Northern Territory, added 2026-10-13 (scripts/backtest_candidate_nt.R). The
+  # rebuild does not run the NT harness yet (held out of the scoreboard), so there
+  # is no NT sharedetail and these three print "XG6! no sharedetail rows ... ->
+  # skip" below: listed so they join the moment the rebuild scores them.
   list(election = "nt2016",  prev = "nt2012",  region = "nt"),
   list(election = "nt2020",  prev = "nt2016",  region = "nt"),
   list(election = "nt2024",  prev = "nt2020",  region = "nt")

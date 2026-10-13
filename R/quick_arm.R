@@ -32,10 +32,10 @@ quick_units <- function() {
     mk("nsw", "AUSPOL_NSW_PAIR",  c(2019, 2023)),
     mk("qld", "AUSPOL_QLD_PAIR",  c(2020, 2024)),
     mk("sa",  "AUSPOL_SA_PAIR",   c(2022, 2026)))
-  # NOT HERE, like wa2021: nt2016/nt2020/nt2024 (scripts/backtest_candidate_nt.R,
-  # AUSPOL_NT_PAIR). Forecast mode skips all three (2-4 polls a cycle, no trend),
-  # so a unit would score nothing. Add mk("nt", "AUSPOL_NT_PAIR", ...) when an NT
-  # cycle reaches the trend's 8 polls.
+  # NOT HERE (yet): nt2016/nt2020/nt2024 (scripts/backtest_candidate_nt.R,
+  # AUSPOL_NT_PAIR). They score in forecast mode through the thin-cycle estimate
+  # (R/thin_cycle.R) but are held out of the pooled numbers until Pete decides;
+  # add mk("nt", "AUSPOL_NT_PAIR", c(2016, 2020, 2024)) then.
 }
 
 #' Parse "AUSPOL_X=1 AUSPOL_Y=0" into a named character vector

@@ -15,14 +15,16 @@
 # preferences, uses a flow matrix built from NTEC transfers at the earlier
 # election, and is scored against the NTEC's declared winners for the later one.
 #
-# FORECAST MODE SKIPS EVERY PAIR TODAY, LOUDLY. The statewide the seats swing
+# FORECAST MODE USES THE THIN-CYCLE ESTIMATE. The statewide the seats swing
 # toward is predicted from the poll trend (AUSPOL_FORECAST_MODE=1, published),
 # and trend_as_at() needs 8 polls in a cycle. The NT has 2, 4 and 2 (BNT0n line
-# below), and the anchor has no NT fundamentals, so forecast_statewide_or_oracle()
-# returns NULL and the pair is skipped -- never scored from the actual result.
-# AUSPOL_FORECAST_MODE=0 scores the seat model on the ACTUAL statewide: a
-# diagnostic of the seat layer only, not a forecast, and labelled so in its
-# output filename (the arm fingerprint) and in BNT0o.
+# below) and the anchor has no NT fundamentals, so the published path fails and
+# forecast_statewide_or_oracle() falls to thin_cycle_statewide() (R/thin_cycle.R,
+# AUSPOL_THIN_CYCLE=1): the previous result moved by the cycle's polls, each
+# weighted by its noise. With AUSPOL_THIN_CYCLE=0 the pair is skipped -- never
+# scored from the actual result. AUSPOL_FORECAST_MODE=0 scores the seat model on
+# the ACTUAL statewide: a diagnostic of the seat layer only, not a forecast,
+# labelled so in its output filename (the arm fingerprint) and in BNT0o.
 #
 # NT-SPECIFIC CHOICES, each logged:
 #   * Redistributions. 2015 (for 2016): Greatorex abolished, Spillett created --

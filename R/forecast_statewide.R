@@ -336,6 +336,34 @@ forecast_statewide_or_oracle <- function(region, year, election_date, parties, s
                              n_sims = max(n_sims, 20000L), seed = seed)
     },
     error = function(e) e)
+  # A THIN CYCLE GETS THE SHRINKAGE ESTIMATE, NOT A SKIP (AUSPOL_THIN_CYCLE,
+  # published "1", 2026-10-13). The trend needs 8 polls (trend_as_at()'s
+  # min_polls) and the anchor's fundamentals; a cycle without them used to have
+  # no forecast at all. thin_cycle_statewide() starts from the previous result
+  # with the time-forward historical spread of statewide swings and moves it by
+  # however many polls exist, each weighted by its noise. Reached ONLY when the
+  # published path fails for one of the three thin-cycle reasons below, so every
+  # cycle that fits today takes exactly the code above, unchanged.
+  thin_reason <- inherits(fc, "error") &&
+    grepl("No trend could be fitted|No leave-one-out fundamentals prediction|No prior results for region",
+          conditionMessage(fc))
+  if (thin_reason && identical(Sys.getenv("AUSPOL_THIN_CYCLE", "1"), "1")) {
+    th <- tryCatch(thin_cycle_statewide(region, year, election_date, parties, st_a, code = paste0(code, "t")),
+                   error = function(e) e)
+    if (!inherits(th, "error")) {
+      cat(sprintf("%s  thin cycle %s%d: published path failed (%s); shrinkage estimate used\n",
+                  code, region, year, conditionMessage(fc)))
+      keep <- intersect(names(th), names(st_b))
+      out <- th[keep]
+      cat(sprintf("%s  forecast statewide (THIN CYCLE) replaces the oracle for %s%d. Mean |error| %.2f pts over %d classes: %s\n",
+                  code, region, year, mean(abs(out - st_b[keep]), na.rm = TRUE), length(out),
+                  paste(sprintf("%s %.1f(%.1f)", keep, out, st_b[keep]), collapse = " ")))
+      attr(out, "oracle") <- st_b[keep]
+      attr(out, "thin") <- TRUE
+      return(out)
+    }
+    fc <- simpleError(paste0(conditionMessage(fc), "; thin-cycle estimate also failed: ", conditionMessage(th)))
+  }
   if (inherits(fc, "error")) {
     # A cycle too thin to fit a trend (wa2021: four polls in 180 days, none
     # earlier in the term) has NO forecast statewide. In a multi-pair harness
