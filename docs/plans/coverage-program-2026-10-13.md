@@ -122,3 +122,11 @@ Qld 2001-2017 (7); SA 2002-2018 (5); Tas, NT, ACT (none). Poll sources: `docs/PO
   flow fit for every later election. Baseline rebuild on today's data running (`deciding-runs/rebuild-20261013-
   baseline-today.log`), to measure today's unmeasured changes against the 11:00 publish and to fix the baseline
   before vic2010 is added.
+- 2026-10-13 ~15:00: (c) Hare-Clark prototype (`scripts/hare_clark_count.R`, `reviews/hare-clark-prototype-2026-10-13.md`)
+  reproduces the official ACT 2020 count exactly in all 5 electorates (182 counts; one 0.000002-vote residual in
+  Kurrajong). 2020 ballot files now only on the Wayback Machine (copy stored). Ties, bulk exclusion and mixed-value
+  parcels untested by 2020. Forecast route sketched: reweight real ballots to simulated candidate shares; estimate
+  8-11 sessions ACT, 4-6 more for Tas (no ballot files).
+  Poll Bludger batch 2 (22 agents) scored: vic2010 30/34 AEF-only polls confirmed, nsw2011 22/27, nsw2015 49/68,
+  qld2012 21/24, sa2014 12/17; accuracy as batch 1 except fed2004 (6 off > 2). Not yet in pb_llm_polls.csv (rebuild
+  reading it).
