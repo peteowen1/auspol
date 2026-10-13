@@ -105,7 +105,7 @@ pact <- NULL
 if (file.exists(act_f)) {
   A <- fread(act_f, colClasses = "character")
   pact <- data.table(MidDate = A$date, Firm = A$firm, Brand = "", `@TPP` = NA_real_,
-                     `LNP FP` = pct(A$lib), `ALP FP` = pct(A$alp), `GRN FP` = pct(A$grn), `OTH FP` = pct(A$oth),
+                     `LNP FP` = as.numeric(A$lib), `ALP FP` = as.numeric(A$alp), `GRN FP` = as.numeric(A$grn), `OTH FP` = as.numeric(A$oth),
                      Comments = sprintf("%s; %s", A$election, A$source))
   tot <- rowSums(as.matrix(pact[, c("LNP FP", "ALP FP", "GRN FP", "OTH FP"), with = FALSE]), na.rm = TRUE)
   bad <- abs(tot - 100) > 1.5

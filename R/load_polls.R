@@ -9,7 +9,9 @@
 #' @param region One of "fed", "nsw", "vic", "qld", "wa", "sa" (the anchor's
 #'   files), or "nt", read from
 #'   `external/reference/anchor-supplement/poll-data-nt.csv` because the anchor
-#'   has no NT file (`scripts/build_nt_polls.R`).
+#'   has no NT file (`scripts/build_nt_polls.R`), or "tas" / "act", read from
+#'   `poll-data-tas.csv` / `poll-data-act.csv` in the same folder
+#'   (`scripts/build_tas_act_polls.R`; the ACT file is three hand-keyed polls).
 #' @return data.table with columns `date`, `firm`, `tpp_published`, one
 #'   numeric column per party, and — only when the source file carries them —
 #'   `gl_approve` and `gl_disapprove`. Sets attributes `parties` AND `region`;
@@ -129,6 +131,16 @@ load_election_cycles <- function() {
   raw[, `:=`(year = as.integer(year), region = as.character(region),
              start = as.Date(start), end = as.Date(end))]
   out <- raw[!is.na(year) & !is.na(start) & !is.na(end)]
+  # Tasmania and the ACT (2026-10-14): the anchor has no cycles for them; ours are
+  # in the supplement (headerless year,region,start,end), added only for a
+  # (year, region) the anchor lacks.
+  sp <- file.path(pkg_root(), "external", "reference", "anchor-supplement", "election-cycles-extra.csv")
+  if (file.exists(sp)) {
+    ex <- data.table::fread(sp, header = FALSE, col.names = c("year", "region", "start", "end"), showProgress = FALSE)
+    ex[, `:=`(year = as.integer(year), region = as.character(region), start = as.Date(start), end = as.Date(end))]
+    ex <- ex[!paste(year, region) %in% paste(out$year, out$region)]
+    out <- rbind(out, ex[, names(out), with = FALSE], fill = TRUE)
+  }
   if (nrow(out) < 60) {
     warning(sprintf("election-cycles.csv parsed only %d rows - expected ~77",
                     nrow(out)))
@@ -145,6 +157,10 @@ load_election_cycles <- function() {
 #' @export
 load_prior_results <- function() {
   lines <- readLines(anchor_data_path("prior-results.csv"), warn = FALSE)
+  # Tasmania and the ACT (2026-10-14): rows in the anchor's shape from our own
+  # supplement (statewide first preferences, most recent election first).
+  sp <- file.path(pkg_root(), "external", "reference", "anchor-supplement", "prior-results-extra.csv")
+  if (file.exists(sp)) lines <- c(lines, readLines(sp, warn = FALSE))
   parts <- strsplit(lines, ",")
   parts <- parts[vapply(parts, length, 1L) >= 4]
   n_prev <- max(vapply(parts, length, 1L)) - 3L

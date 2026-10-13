@@ -109,8 +109,17 @@ statewide_draws_as_at <- function(region, year, as_at, election_date, parties,
   # leak arriving through the preferences rather than through the polls.
   cyc <- cycles[cycles$region == region & cycles$year == year, ]
   as_of <- if (nrow(cyc)) min(cyc$start) else as_at
-  fl <- flows_for(load_preference_flows(), year, region, as_of = as_of,
-                  cycles = cycles, quiet = TRUE)
+  fl <- tryCatch(
+    flows_for(load_preference_flows(), year, region, as_of = as_of, cycles = cycles, quiet = TRUE),
+    error = function(e) {
+      # Tasmania and the ACT (Hare-Clark, no two-party-preferred count) have no
+      # anchor flow rows. The first-preference trend does not need them; the
+      # two-party derivation inside trend_as_at() is already wrapped and returns
+      # NULL on an empty table. Any OTHER region reaching here still fails loudly.
+      if (!grepl("No preference flows at all", conditionMessage(e)) || !region %in% c("tas", "act")) stop(e)
+      message(sprintf("  statewide_draws_as_at(%s %d): no preference flows for this Hare-Clark region; first-preference trend only", region, year))
+      load_preference_flows()[0L]
+    })
 
   # Trend responsiveness arms (docs/plans/prereg-responsive-trend-2026-10-12.md). At the shipped
   # values ("default", multiplier 1) the call is the one it always was: no extra argument is passed.
