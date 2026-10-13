@@ -272,8 +272,11 @@ poll_pb_on <- function() {
   if (nrow(cand)) {
     d_raw <- dmax(1); d_sc <- dmax(sc[cand$p])
     cand[, `:=`(raw = !is.na(d_raw) & (is.na(d_sc) | d_raw <= d_sc), d = pmin(d_raw, d_sc, na.rm = TRUE))]
-    cand[, lagd := as.integer(dp[p] - ae$date[ai[a]])]
-    data.table::setorderv(cand, c("d", "lagd"))
+    cand[, lagd := abs(as.integer(dp[p] - ae$date[ai[a]]))]
+    # Agreeing pairs first, and among them the nearest date: a post can fall inside the window of two consecutive
+    # polls of one firm, and closest-numbers-first gave it to the wrong one (review of 45df511, 2026-10-13).
+    cand[, agree := is.finite(d) & d <= 2]
+    data.table::setorderv(cand, c("agree", "lagd", "d"), order = c(-1L, 1L, 1L))
   }
   ua <- logical(length(ai)); up <- logical(nrow(b))
   for (k in seq_len(nrow(cand))) {

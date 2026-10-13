@@ -53,3 +53,11 @@ final counts alone, then compare with the flows the distributions actually show.
 Estimated flows enter as a new file (`output/flows-estimated.csv`) read only for elections without a published
 distribution, flagged per row, and the move-off-AE audit counts AE's `preference-estimates.csv` as a dependency
 until every election reads ours.
+
+## Decision (Pete, 2026-10-13, after the revalidation)
+
+The estimator alone failed its pre-set bar on the plan set (6.22 vs 5.52 for borrowing). Federal flows need neither:
+the AEC's official two-party flow tables are used directly. For state elections with no published distribution:
+**blend the estimate with the nearest earlier published flows, the blend weight learned only from EARLIER elections
+with official flows** (time-forward, so never fitted on the election it serves). The 50/50 blend scored 1.87 vs 3.75
+(borrow) on the AEC federal key, but that weight was first scored on those cells, which the time-forward fit removes.

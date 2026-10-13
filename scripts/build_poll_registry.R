@@ -56,7 +56,7 @@ for (rg in unique(pairs$region)) {
       vapply(seq_len(nrow(x)), function(k) any(PB$region == rg & PB$poll_date == x$date[k] & PB$firm == x$firm[k]), TRUE)
     fp <- f[has_fp == TRUE]; zp <- z[has_fp == TRUE & origin == "ae"]
     pbn <- if (is.null(PB)) NA_integer_ else sum(pb_hit(fp))
-    # AE-only polls a Poll Bludger post confirms: the ones that could carry Poll Bludger's numbers instead of AE's
+    # AEF-only polls a Poll Bludger post confirms: the ones that could carry Poll Bludger's numbers instead of AE's
     pb_ae <- if (is.null(PB)) NA_integer_ else sum(pb_hit(zp))
     rows[[e]] <- as.data.table(c(list(election = e, live = pairs$live[i], from = pairs$start[i] + 1, to = pairs$end[i]), a, b,
                                  list(f30_pb_post = pbn, ae_pb_post = pb_ae)))
@@ -71,10 +71,10 @@ fwrite(R, "output/poll-registry.csv")
 pct <- function(n, d) if (d > 0) sprintf("%d (%d%%)", n, round(100 * n / d)) else as.character(n)
 tab <- function(x, f30 = FALSE) {
   p <- if (f30) "f30_" else ""
-  hdr <- if (f30) "| election | polls | Wikipedia | BludgerTrack | both | Poll Bludger posts | AE's numbers | AE filled a party | two-party only |" else
-    "| election | polls | Wikipedia | BludgerTrack | both | Poll Bludger posts | AE's numbers | of which a Poll Bludger post confirms | AE filled a party | two-party only |"
+  hdr <- if (f30) "| election | polls | Wikipedia | BludgerTrack | both | Poll Bludger posts | AEF's numbers | AEF filled a party | two-party only |" else
+    "| election | polls | Wikipedia | BludgerTrack | both | Poll Bludger posts | AEF's numbers | of which a Poll Bludger post confirms | AEF filled a party | two-party only |"
   if (f30) hdr <- sub("two-party only \\|$", "two-party only | Poll Bludger post confirms |", hdr)
-  # the whole-cycle table's extra column: of the polls carrying AE's numbers, how many a Poll Bludger post confirms
+  # the whole-cycle table's extra column: of the polls carrying AEF's numbers, how many a Poll Bludger post confirms
   out <- c(hdr, paste0("|", strrep("---|", 10)))
   cell <- function(v, d) if (is.na(v)) "-" else pct(v, d)
   for (k in seq_len(nrow(x))) {
@@ -107,9 +107,9 @@ md <- c("# Poll registry",
   "",
   "- **Wikipedia**: our scrape of the election's Wikipedia poll tables (`scripts/fetch_statewide_poll_samples.R`).",
   "- **BludgerTrack**: The Poll Bludger's own poll table (`scripts/build_bludgertrack_polls.R`; fed2025, fed2028, vic2026 only). **both**: the two agree it exists; BludgerTrack's row is kept.",
-  "- **Poll Bludger posts**: a poll only AE had, now carrying the figures a model read from a Poll Bludger post (stated in the post's own sentence; every major party within 2 points of AE's; `scripts/build_pb_llm_polls.R`, AUSPOL_POLL_PB).",
-  "- **AE's numbers**: AE Forecasts' hand-authored poll file, used where we have no copy of the poll, where AE won a dispute, or where our copy failed its own two-party check. Lower is better: the goal is zero.",
-  "- **AE filled a party**: our numbers, but one party (UAP, NXT, One Nation) came from AE because our source folds it into Others.",
+  "- **Poll Bludger posts**: a poll only AEF had, now carrying the figures a model read from a Poll Bludger post (stated in the post's own sentence; every major party within 2 points of AEF's; `scripts/build_pb_llm_polls.R`, AUSPOL_POLL_PB).",
+  "- **AEF's numbers**: AE Forecasts' hand-authored poll file, used where we have no copy of the poll, where AEF won a dispute, or where our copy failed its own two-party check. Lower is better: the goal is zero.",
+  "- **AEF filled a party**: our numbers, but one party (UAP, NXT, One Nation) came from AEF because our source folds it into Others.",
   "- **two-party only**: rows with no primaries; they do not feed the primary-vote trend.",
   "",
   sprintf("Scored elections: %d. Live cycles: %s.", nrow(sc), paste(R[live == TRUE]$election, collapse = ", ")),
@@ -131,5 +131,5 @@ md <- c("# Poll registry",
   "| AE Forecasts poll files | `external/aus-polling-analyser/` | hand-authored; being retired (`docs/reviews/ae-dependence-audit-2026-10-13.md`) |",
   "")
 writeLines(md, "docs/POLL-REGISTRY.md")
-cat(sprintf("RY2 wrote docs/POLL-REGISTRY.md and output/poll-registry.csv: %d elections (%d scored). Scored, whole cycle: %d polls, AE's numbers on %d; final 30 days: %d polls, AE's numbers on %d\n",
+cat(sprintf("RY2 wrote docs/POLL-REGISTRY.md and output/poll-registry.csv: %d elections (%d scored). Scored, whole cycle: %d polls, AEF's numbers on %d; final 30 days: %d polls, AEF's numbers on %d\n",
             nrow(R), nrow(sc), sum(sc$polls), sum(sc$ae), sum(sc$f30_polls), sum(sc$f30_ae)))

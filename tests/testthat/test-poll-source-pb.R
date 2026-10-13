@@ -25,3 +25,14 @@ test_that("Poll Bludger confirms agreeing AE rows and leaves the rest alone", {
   expect_equal(r$ae$.origin[4], "ae")
   expect_equal(unname(r$log[c("confirmed", "disagree")]), c(1L, 1L))
 })
+
+test_that("a post inside two polls' windows goes to the nearer poll, not the closer numbers (review of 45df511)", {
+  alias <- data.table::data.table(pattern = "newspoll", canonical = "newspoll")
+  ae <- data.table::data.table(date = as.Date(c("2010-03-01", "2010-03-15")), firm = "Newspoll",
+                               ALP = c(40, 41), LNP = c(42, 41), GRN = 10, OTH = c(8, 8), .origin = "ae", .fill = "")
+  pb <- data.table::data.table(region = "fed", stated = "TRUE", pollster = "Newspoll", post_date = "2010-03-17",
+                               alp_n = 40.1, coalition_n = 41.9, greens_n = 10, one_nation_n = NA, undecided_n = NA)
+  f <- tempfile(fileext = ".csv"); data.table::fwrite(pb, f)
+  r <- .ps_pb_confirm(data.table::copy(ae), "fed", c("ALP", "LNP", "GRN", "OTH"), f, alias)
+  expect_equal(r$ae$.origin, c("ae", "pollbludger"))
+})
