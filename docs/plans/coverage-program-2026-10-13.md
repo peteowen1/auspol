@@ -103,3 +103,7 @@ Qld 2001-2017 (7); SA 2002-2018 (5); Tas, NT, ACT (none). Poll sources: `docs/PO
   single-member path; polls very thin), then one Hare-Clark engine for ACT (every-ballot files) and Tas (best polls,
   weakest historical data). Dates and seat history partly from memory; NTEC site blocked the fetcher.
 - 2026-10-13 11:10: wave 1 launched; publish rebuild on today's poll fixes running (`deciding-runs/rebuild-20261013-pollfixes-publish.log`).
+- 2026-10-13 ~13:30: Poll Bludger read by Sonnet (17-agent workflow), `reviews/pb-llm-extraction-2026-10-13.md`:
+  fed/NSW/Vic agree with AE on almost every poll with primaries (12 off > 2 of ~270) and confirm 277 of 558 AE-only
+  polls (rules: 78). WA not usable yet (Liberal/National split convention). Not in the model yet. Wikipedia scraper
+  unfrozen (fed2010 +4 Morgan polls; level screen 2.059). Flow key fix agent still running.
