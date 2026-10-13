@@ -36,7 +36,7 @@
 #
 # RAW SERIES CACHED, per the keep-all-data rule.
 #
-# Emits FSD6* codes.
+# Emits FSV6* codes.
 options(auspol.root = normalizePath("."))
 suppressMessages(devtools::load_all(quiet = TRUE))
 suppressMessages(library(data.table))
@@ -206,9 +206,9 @@ qry <- function(kw, geo, from, to) {
       # (not just this one) slows down too.
       THROTTLE_STATE$consecutive <- THROTTLE_STATE$consecutive + 1L
       THROTTLE_STATE$total_throttled <- THROTTLE_STATE$total_throttled + 1L
-      if (THROTTLE_STATE$consecutive >= 4L) stop("FSD6STOP throttled 4x in a row; stopping cleanly, cache is on disk")
+      if (THROTTLE_STATE$consecutive >= 4L) stop("FSV6STOP throttled 4x in a row; stopping cleanly, cache is on disk")
       wait <- 30 * (2 ^ min(THROTTLE_STATE$consecutive, 5))
-      cat(sprintf("FSD6T  throttle signal (consecutive %d, total %d this run) -- backing off %ds\n",
+      cat(sprintf("FSV6T  throttle signal (consecutive %d, total %d this run) -- backing off %ds\n",
                   THROTTLE_STATE$consecutive, THROTTLE_STATE$total_throttled, wait))
       Sys.sleep(wait)
       throttled <- FALSE
@@ -229,7 +229,7 @@ qry <- function(kw, geo, from, to) {
     saveRDS(list(series = out, empty = FALSE, allzero = TRUE, fetched = Sys.Date()), f)
     return(out[])
   }
-  if (is.null(r)) { cat("FSD6!  request failed, NOT cached\n"); return(NULL) }
+  if (is.null(r)) { cat("FSV6!  request failed, NOT cached\n"); return(NULL) }
   if (is.null(r$interest_over_time)) { saveRDS(list(empty = TRUE), f); return(NULL) }
   d <- as.data.table(r$interest_over_time)
   d[, hits := suppressWarnings(as.numeric(gsub("<", "", hits)))][is.na(hits), hits := 0]
@@ -253,7 +253,7 @@ C <- fread("output/candidacies.csv", showProgress = FALSE)
 .fp6 <- fread("external/elections/vec-2006-vic-firstprefs.csv", showProgress = FALSE)
 .fp6[, pcv := 100 * votes / sum(votes), by = seat]
 .fp6 <- .fp6[, .(pcv = sum(pcv)), by = .(seat, party)]
-cat(sprintf("FSD6-V6 vic2006 prev rows: %d (seat,party) over %d seats\n", nrow(.fp6), uniqueN(.fp6$seat)))
+cat(sprintf("FSV6-V6 vic2006 prev rows: %d (seat,party) over %d seats\n", nrow(.fp6), uniqueN(.fp6$seat)))
 C <- rbindlist(list(C, .fp6[, .(region = "vic", year = 2006L, seat, party, pcv)]), fill = TRUE)
 PRIO <- c(IND = 1, GRN = 2, ONP = 3, OTH_RIGHT = 4, OTH = 5)
 all_rows <- list()
@@ -311,18 +311,18 @@ for (el in names(ELS)) {
         if (length(d) > 1L) gran <- as.integer(stats::median(diff(d)))
       }
       batches[[length(batches) + 1L]] <- jump_of(s, E$poll)
-      if (nb %% 20 == 0) cat(sprintf("FSD6-3 [%s] stage 1: %d batches | %d of %d done\n",
+      if (nb %% 20 == 0) cat(sprintf("FSV6-3 [%s] stage 1: %d batches | %d of %d done\n",
                                      label, nb, i, length(kws)))
       Sys.sleep(current_sleep())
     }
-    if (!length(batches)) { cat(sprintf("FSD6!  %s [%s]: nothing measured, skipped\n", el, label)); return(NULL) }
-    cat(sprintf("FSD6-2 [%s] stage 1: %d batches | granularity %s | %d dropped\n", label, nb,
+    if (!length(batches)) { cat(sprintf("FSV6!  %s [%s]: nothing measured, skipped\n", el, label)); return(NULL) }
+    cat(sprintf("FSV6-2 [%s] stage 1: %d batches | granularity %s | %d dropped\n", label, nb,
                 if (is.na(gran)) "?" else if (gran >= 26) "MONTHLY -- UNUSABLE"
                 else if (gran >= 6) "weekly" else "daily", failed))
 
     reps <- vapply(batches, function(b) b[which.max(jump), keyword], "")
     live <- vapply(batches, function(b) max(b$jump) > 0, TRUE)
-    cat(sprintf("FSD6-5 [%s] stage 2: linking %d live batches (%d silent throughout)\n",
+    cat(sprintf("FSV6-5 [%s] stage 2: linking %d live batches (%d silent throughout)\n",
                 label, sum(live), sum(!live)))
     scale <- rep(1, length(batches))
     if (sum(live) > 1L) {
@@ -337,7 +337,7 @@ for (el in names(ELS)) {
       # a request that cannot succeed.
       self_anchor <- rl == E$anchor
       if (any(self_anchor)) {
-        cat(sprintf("FSD6-6 [%s] anchor is its own batch's representative -- scale fixed at 1, no query\n", label))
+        cat(sprintf("FSV6-6 [%s] anchor is its own batch's representative -- scale fixed at 1, no query\n", label))
       }
       rl <- rl[!self_anchor]
       for (i in seq(1L, length(rl), by = MAXKW - 1L)) {
@@ -357,7 +357,7 @@ for (el in names(ELS)) {
           v <- link[keyword == reps[j], jump]
           own <- batches[[j]][keyword == reps[j], jump]
           if (!length(v) || !length(own) || own <= 0) {
-            cat(sprintf("FSD6!  [%s] no link for batch %d (rep '%s')\n", label, j, reps[j])); next
+            cat(sprintf("FSV6!  [%s] no link for batch %d (rep '%s')\n", label, j, reps[j])); next
           }
           scale[j] <- v / own
         }
@@ -367,7 +367,7 @@ for (el in names(ELS)) {
       batches[[j]][, .(keyword, jump = jump * scale[j])]))
     Rx <- merge(Sx[, .(election = el, seat, keyword = kw, party, pcv, elected,
                        prev_party = prev_pcv)], acc, by = "keyword")
-    cat(sprintf("FSD6-4 [%s] %s: %d scaled | %d distinct jump values | %d%% zero | max %.2f\n",
+    cat(sprintf("FSV6-4 [%s] %s: %d scaled | %d distinct jump values | %d%% zero | max %.2f\n",
                 label, el, nrow(Rx), uniqueN(round(Rx$jump, 3)),
                 round(100 * mean(Rx$jump <= 0)), max(Rx$jump)))
     Rx
@@ -405,12 +405,12 @@ for (el in names(ELS)) {
             .(prev_nm = max(pcv, na.rm = TRUE)), by = seat]
     S <- merge(S, PB, by = "seat", all.x = TRUE)[!is.finite(prev_nm), prev_nm := 0]
     setorder(S, -prev_nm)
-    cat(sprintf("\nFSD6-1 %s | geo %s | %s to %s | %d candidates\n",
+    cat(sprintf("\nFSV6-1 %s | geo %s | %s to %s | %d candidates\n",
                 el, E$geo, as.character(from), as.character(to), nrow(S)))
     Rnm <- run_pool(S, "nonmajor")
     if (!is.null(Rnm)) R_list$nonmajor <- Rnm
   } else {
-    cat(sprintf("FSD6!  no non-major candidates for %s\n", el))
+    cat(sprintf("FSV6!  no non-major candidates for %s\n", el))
   }
 
   if (INCLUDE_MAJORS) {
@@ -424,11 +424,11 @@ for (el in names(ELS)) {
       Dm[!is.finite(prev_pcv), prev_pcv := 0]
       setorder(Dm, kw, -pcv)
       Sm <- Dm[, .SD[1], by = kw]
-      cat(sprintf("\nFSD6-1M %s | majors | %d candidates\n", el, nrow(Sm)))
+      cat(sprintf("\nFSV6-1M %s | majors | %d candidates\n", el, nrow(Sm)))
       Rm <- run_pool(Sm, "majors")
       if (!is.null(Rm)) R_list$majors <- Rm
     } else {
-      cat(sprintf("FSD6!  no major candidates for %s\n", el))
+      cat(sprintf("FSV6!  no major candidates for %s\n", el))
     }
   }
 
@@ -453,6 +453,6 @@ for (el in names(ELS)) {
   keep <- if (!is.null(prev)) prev[election != el] else NULL
   OUT <- if (!is.null(keep) && nrow(keep)) rbindlist(list(keep, all_rows[[el]]), fill = TRUE) else all_rows[[el]]
   fwrite(OUT, f)
-  cat(sprintf("FSD6-9 wrote output/salience-v6-vic2010.csv (%d rows, %d elections) after %s\n",
+  cat(sprintf("FSV6-9 wrote output/salience-v6-vic2010.csv (%d rows, %d elections) after %s\n",
               nrow(OUT), uniqueN(OUT$election), el))
 }

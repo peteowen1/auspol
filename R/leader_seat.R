@@ -23,7 +23,9 @@ read_leaders <- function() {
     stop("leaders-supplement.csv columns differ from leaders.csv + source_url/source_date/note: missing ",
          paste(setdiff(need, names(S)), collapse = ","), "; extra ", paste(setdiff(names(S), need), collapse = ","))
   S <- S[!S$election %in% L$election, names(L), with = FALSE]
-  for (cn in names(L)) if (!identical(class(S[[cn]]), class(L[[cn]]))) data.table::set(S, j = cn, value = methods::as(S[[cn]], class(L[[cn]])[1]))
+  coerce_to <- function(x, cls) switch(cls, integer = as.integer(x), numeric = as.numeric(x), logical = as.logical(x),
+                                       character = as.character(x), as.character(x))
+  for (cn in names(L)) if (!identical(class(S[[cn]]), class(L[[cn]]))) data.table::set(S, j = cn, value = coerce_to(S[[cn]], class(L[[cn]])[1]))
   cat(sprintf("LS2  leaders-supplement.csv: %d rows used for %d elections absent from leaders.csv\n",
               nrow(S), length(unique(S$election))))
   rbind(L, S)

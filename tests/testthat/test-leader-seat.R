@@ -68,7 +68,9 @@ test_that("leaders-supplement.csv fills elections leaders.csv lacks, and leaders
 })
 
 test_that("fetch_leaders.R never writes the supplement file", {
-  src <- readLines(file.path(pkg_root(), "scripts", "fetch_leaders.R"), warn = FALSE)
+  f <- file.path(pkg_root(), "scripts", "fetch_leaders.R")
+  skip_if_not(file.exists(f), "scripts/ is not part of the package build (R CMD check, CI tests)")
+  src <- readLines(f, warn = FALSE)
   src <- src[!grepl("^[[:space:]]*#", src)]
   expect_false(any(grepl("supplement", src)))
 })
