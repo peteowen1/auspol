@@ -344,8 +344,11 @@ for (el in sort(unique(CA$election))) {
   # every division one winner, 25 divisions
   if (uniqueN(x$seat) != 25L) stop("NTR1! ", el, ": ", uniqueN(x$seat), " divisions, expected 25")
   if (any(x[, sum(elected), by = seat]$V1 != 1L)) stop("NTR1! ", el, ": a division without exactly one winner")
-  fwrite(x[, .(seat, candidate, surname, given, party_code, party_name, fp, class, elected, tcp)],
-         file.path(OUT, sprintf("ntec-%s-nt-candidates.csv", y)))
+  .cols <- c("seat", "candidate", "surname", "given", "party_code", "party_name", "fp", "class", "elected", "tcp")
+  # 2012's results book publishes no two-candidate-preferred figures, so its tcp column was 100% empty and failed the
+  # data dictionary's empty-column check (DD8!). A column with no data is left out, said here, rather than shipped empty.
+  if (all(is.na(x$tcp))) { cat(sprintf("NTR3 %s: tcp column dropped (no two-candidate-preferred figures in the source)\n", y)); .cols <- setdiff(.cols, "tcp") }
+  fwrite(x[, .cols, with = FALSE], file.path(OUT, sprintf("ntec-%s-nt-candidates.csv", y)))
   fp <- x[, .(votes = sum(fp)), by = .(seat, party = class)]
   fwrite(fp, file.path(OUT, sprintf("ntec-%s-nt-firstprefs.csv", y)))
   cat(sprintf("NTR2  %s: %d candidates, %d divisions, %s formal votes | %s\n", el, nrow(x), uniqueN(x$seat),

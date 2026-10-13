@@ -1,6 +1,6 @@
 # Data dictionary
 
-**Generated 2026-10-13 by `scripts/build_data_dictionary.R`. Do not hand-edit.**
+**Generated 2026-10-14 by `scripts/build_data_dictionary.R`. Do not hand-edit.**
 
 Companion to `docs/DATA-REGISTRY.md`. The registry answers *do we have this
 file*; this answers *do we have this field*. Four wrong "we don't have it"
@@ -57,16 +57,33 @@ column does not exist.**
 | `fed-swing-transposed.csv` | 870 | `seat`, `fed_swing`, `booths`, `votes`, `region`, `cycle`, `fed` |
 | `federal-transposed-to-state.csv` | 3,565 | `seat`, `party`, `votes`, `pct`, `region`, `cycle`, `fed_election` |
 | `MANIFEST.csv` | 5 | `source`, `dataset`, `url`, `rows`, `fetched_at` |
+| `nswec-2007-nsw-candidates.csv` | 537 | `seat`, `candidate`, `party`, `party_code`, `party_full`, `class`, `first_pref` |
+| `nswec-2007-nsw-firstprefs.csv` | 464 | `seat`, `party`, `votes` |
+| `nswec-2007-nsw-winners.csv` | 93 | `election`, `seat`, `code`, `winner`, `basis` |
+| `nswec-2011-nsw-candidates-supplement.csv` | 5 | `seat`, `candidate`, `party_code`, `class`, `first_pref` |
 | `nswec-2011-nsw-candidates.csv` | 493 | `seat`, `candidate`, `party`, `party_code`, `party_full`, `class`, `first_pref` |
 | `nswec-2011-nsw-checks.csv` | 92 | `seat`, `n_cand`, `counts`, `n_excluded`, `n_transfer_rows`, `fp_ok`, `elected_ok`, `elected`, `elected_cell_agrees`, `partial_distribution`, `final`, `tcp_note`, `tcp_max_abs_diff`, `problems` |
 | `nswec-2011-nsw-countsheets.csv` | 1,623 | `seat`, `candidate`, `party`, `class`, `kind`, `count`, `votes` |
+| `nswec-2011-nsw-firstprefs.csv` | 442 | `seat`, `party`, `votes` |
 | `nswec-2011-nsw-transfers-detail.csv` | 708 | `election`, `seat`, `round`, `count`, `from_name`, `from_party`, `from`, `votes_distributed`, `to_name`, `to_party`, `to`, `votes`, `to_progressive` |
 | `nswec-2011-nsw-transfers.csv` | 525 | `election`, `seat`, `round`, `from`, `to`, `votes` |
+| `nswec-2011-nsw-winners.csv` | 93 | `election`, `seat`, `code`, `winner`, `basis` |
 | `nswec-2015-nsw-firstprefs.csv` | 504 | `seat`, `party`, `votes` |
 | `nswec-2019-nsw-firstprefs.csv` | 467 | `seat`, `party`, `votes` |
 | `nswec-2023-nsw-firstprefs.csv` | 473 | `seat`, `party`, `votes` |
 | `nswec-nsw-transfers.csv` | 3,935 | `election`, `seat`, `round`, `from`, `to`, `votes` |
 | `nswec-nsw-winners.csv` | 279 | `election`, `seat`, `code`, `winner` |
+| `ntec-2012-nt-candidates.csv` | 86 | `seat`, `candidate`, `surname`, `given`, `party_code`, `party_name`, `fp`, `class`, `elected` |
+| `ntec-2012-nt-firstprefs.csv` | 83 | `seat`, `party`, `votes` |
+| `ntec-2016-nt-candidates.csv` | 115 | `seat`, `candidate`, `surname`, `given`, `party_code`, `party_name`, `fp`, `class`, `elected`, `tcp` |
+| `ntec-2016-nt-firstprefs.csv` | 91 | `seat`, `party`, `votes` |
+| `ntec-2020-nt-candidates.csv` | 111 | `seat`, `candidate`, `surname`, `given`, `party_code`, `party_name`, `fp`, `class`, `elected`, `tcp` |
+| `ntec-2020-nt-firstprefs.csv` | 98 | `seat`, `party`, `votes` |
+| `ntec-2024-nt-candidates.csv` | 80 | `seat`, `candidate`, `surname`, `given`, `party_code`, `party_name`, `fp`, `class`, `elected`, `tcp` |
+| `ntec-2024-nt-firstprefs.csv` | 75 | `seat`, `party`, `votes` |
+| `ntec-nt-transfers-detail.csv` | 763 | `election`, `seat`, `round`, `count`, `from_candidate`, `from_party`, `to_candidate`, `to_party`, `votes`, `excluded_total` |
+| `ntec-nt-transfers.csv` | 542 | `election`, `seat`, `round`, `from`, `to`, `votes`, `to_n` |
+| `ntec-nt-winners.csv` | 100 | `election`, `seat`, `winner` |
 | `vec-2002-vic-tcp.csv` | 176 | `seat`, `party`, `votes` |
 | `vec-2006-vic-candidates.csv` | 459 | `seat`, `candidate`, `party_code`, `party_name`, `fp`, `class` |
 | `vec-2006-vic-checks.csv` | 88 | `seat`, `n_cand`, `n_rounds`, `fp_match`, `replay_vs_after_table`, `replay_vs_final_row`, `final_two`, `final_two_votes`, `max_abs_diff_vs_tcp_table`, `no_dist_ok` |
@@ -147,13 +164,25 @@ The originals, before any aggregation. **This is where dropped columns live.**
 | `sa2026-districts.csv` | 47 | `seat`, `winner`, `runner_up`, `winner_2cp`, `alp_2pp`, `formal`, `fp_AFP`, `fp_AJP`, `fp_ALP`, `fp_FFP`, `fp_FGA`, `fp_GRN`, `fp_IND`, `fp_LCP`, `fp_LIB`, `fp_NAT`, `fp_ONP`, `fp_RCH`, `fp_SAB`, `fp_UVA` |
 | `sa2026-seats.csv` | 47 | `seat`, `winner`, `runner`, `win_2cp`, `onp_fp` |
 
-- **ecq/** — no CSVs (see registry for other formats)
+### ecq/
+
+| file | rows | columns |
+|---|---:|---|
+| `ecq-2012-qld-firstprefs-kapfix.csv` | 390 | `seat`, `party`, `votes` |
+| `ecq-qld-winners-2012-2015.csv` | 178 | `election`, `seat`, `winner` |
+
 - **waec/** — no CSVs (see registry for other formats)
 ### polls/
 
 | file | rows | columns |
 |---|---:|---|
+| `act-polls-handkeyed.csv` | 3 | `election`, `date`, `firm`, `alp`, `lib`, `grn`, `oth`, `source` |
+| `archive/archive_vs_ae_pairs.csv` | 134 | `firm`, `arch_mid`, `arch_end`, `ae_date`, `ae_firm`, `dALP`, `dLNP`, `dGRN`, `arch_ALP`, `ae_ALP`, `arch_LNP`, `ae_LNP`, `arch_tpp`, `ae_tpp`, `gt1` |
+| `archive/fed_archive_polls.csv` | 136 | `region`, `firm`, `fieldwork_start`, `fieldwork_end`, `ALP`, `LNP`, `GRN`, `ONP`, `DEM`, `FF`, `OTH`, `tpp_alp`, `sample`, `source` |
+| `archive/morgan_rows.csv` | 98 | `label`, `phone`, `start`, `end`, `LNP`, `NAT`, `ALP`, `DEM`, `GRN`, `FF`, `ONP`, `OTH`, `tpp_alp_say`, `tpp_alp_2004` |
+| `archive/newspoll_raw_rows.csv` | 156 | `start`, `end`, `file`, `LIB`, `NAT`, `LNP`, `ALP`, `GRN`, `OTH`, `tpp_lnp`, `tpp_alp` |
 | `demosau/crosstabs.csv` | 991 | `poll_id`, `fieldwork_start`, `fieldwork_end`, `jurisdiction`, `sample_n`, `question`, `dimension`, `group`, `response`, `pct`, `source_url` |
+| `demosau/mrp-seats.csv` | 150 | `release`, `fieldwork`, `state`, `division`, `fp_ALP`, `fp_LNP`, `fp_GRN`, `fp_ONP`, `fp_OTH`, `tcp_ALP`, `tcp_LNP`, `tcp_GRN`, `tcp_ONP`, `tcp_OTH`, `notional_leader`, `safety`, `win_ALP`, `win_LNP`, `win_GRN`, `win_ONP`, `win_OTH` |
 | `newspoll-quarterly/breakdowns.csv` | 169 | `pollster`, `period_start`, `period_end`, `published`, `sample_n`, `dimension`, `group`, `party`, `fp`, `tpp_alp`, `source_url` |
 | `pollbludger/bludgertrack_polls.csv` | 3,725 | `Id`, `start`, `end`, `median`, `pollster`, `mode`, `scope`, `sample`, `pmSAT`, `pmDIS`, `olSAT`, `olDIS`, `pmPREF`, `olPREF`, `ALP`, `LNC`, `GRN`, `PHON`, `UND`, `ALP2`, `LNC2`, `ALPra`, `LNCra`, `UNDra`, `cycle`, `section`, `file_stamp`, `ONP`, `start_date`, `end_date`, `median_date` |
 | `pollbludger/days_manifest.csv` | 3,694 | `V1`, `V2`, `V3`, `V4`, `V5`, `V6`, `V7` |
@@ -292,7 +321,7 @@ processed extract. Every one is recoverable without a new fetch.
 | `aef7-tcp-truth-table.csv` | 660 | `pair`, `seat`, `official_f1`, `official_f2`, `official_f2cp`, `official_fsrc`, `aef_tcp_f1`, `aef_tcp_pct`, `aef_tcp_freq`, `itg_tcp_f1`, `itg_tcp_f2`, `itg_tcp_pct`, `itg_tcp_freq`, `abc_tcp_f1`, `abc_tcp_f2`, `abc_tcp_pct` |
 | `aef7-tcp.csv` | 681 | `pair`, `seat`, `aef_tcp_f1`, `aef_tcp_f2`, `aef_tcp_pct`, `aef_tcp_scenario_freq`, `aef_tcp_p05`, `aef_tcp_p95` |
 | `anchor-k.csv` | 834 | `region`, `year`, `K`, `party`, `fitted`, `actual`, `prior`, `polls30`, `err`, `cyc` |
-| `biggest-misses.csv` | 93 | `metric`, `pair`, `seat`, `party`, `candidate`, `ours`, `actual`, `err` |
+| `biggest-misses.csv` | 297 | `metric`, `pair`, `seat`, `party`, `candidate`, `ours`, `actual`, `err` |
 | `bludgertrack-vs-layered.csv` | 541 | `region`, `bt_id`, `bt_cycle`, `date`, `firm`, `pollster_bt`, `mode_bt`, `sample_bt`, `source`, `und_bt`, `ALP_bt`, `ALP_layered`, `LNP_bt`, `LNP_layered`, `GRN_bt`, `GRN_layered`, `ONP_bt`, `ONP_layered`, `ALP_d`, `LNP_d`, `GRN_d`, `ONP_d` |
 | `booth-rehearsal2-vic2022.csv` | 15 | `frac_of_night_vote`, `estimator`, `leader_correct`, `n`, `major_mae`, `major_rmse` |
 | `booth-replay-vic2022.csv` | 5 | `frac_of_night_vote`, `mean_counted_share_of_all`, `fp_leader_correct`, `n`, `major_share_mae`, `major_share_rmse` |
@@ -300,5 +329,5 @@ processed extract. Every one is recoverable without a new fetch.
 | `booths-vic2018.csv` | 13,353 | `district`, `booth`, `booth_type`, `candidate`, `party`, `votes` |
 | `booths-vic2022-2cp.csv` | 4,328 | `district`, `booth`, `booth_type`, `candidate`, `party`, `votes` |
 
-_(8776 `backtest-*.csv` arm outputs omitted; they share one shape.)_
+_(10165 `backtest-*.csv` arm outputs omitted; they share one shape.)_
 
