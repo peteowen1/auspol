@@ -19,6 +19,10 @@ column does not exist.**
 | `aec-fed-tcp.csv` | 2,404 | `election`, `seat`, `party`, `votes` |
 | `aec-fed-transfers.csv` | 18,227 | `election`, `seat`, `round`, `from`, `to`, `votes` |
 | `aec-fed-winners.csv` | 1,202 | `election`, `seat`, `winner` |
+| `ecq-2001-qld-firstprefs-detail.csv` | 365 | `seat`, `party_code`, `party_name`, `party_class`, `votes`, `formal_votes`, `informal_votes`, `tcp_winner_votes`, `tcp_loser_votes`, `tcp_winner_pct`, `tcp_winner_code` |
+| `ecq-2001-qld-firstprefs.csv` | 330 | `seat`, `party`, `votes` |
+| `ecq-2001-qld-tcp-winner.csv` | 89 | `seat`, `party`, `votes` |
+| `ecq-2001-qld-tcp.csv` | 20 | `seat`, `party`, `votes` |
 | `ecq-2004-qld-firstprefs.csv` | 342 | `seat`, `party`, `votes` |
 | `ecq-2004-qld-tcp.csv` | 166 | `seat`, `party`, `votes` |
 | `ecq-2006-qld-firstprefs.csv` | 322 | `seat`, `party`, `votes` |
@@ -32,6 +36,14 @@ column does not exist.**
 | `ecq-2024-qld-firstprefs.csv` | 507 | `seat`, `party`, `votes` |
 | `ecq-qld-transfers.csv` | 2,739 | `election`, `seat`, `round`, `from`, `to`, `votes`, `to_n` |
 | `ecq-qld-winners.csv` | 186 | `election`, `seat`, `winner` |
+| `ecsa-2002-sa-firstprefs-detail.csv` | 286 | `seat`, `candidate`, `party_code`, `party_name`, `party_class`, `votes`, `pct`, `elected`, `formal_votes` |
+| `ecsa-2002-sa-firstprefs.csv` | 219 | `seat`, `party`, `votes` |
+| `ecsa-2002-sa-tcp-detail.csv` | 56 | `seat`, `candidate`, `party_code`, `party_name`, `party_class`, `votes`, `pct`, `elected` |
+| `ecsa-2002-sa-tcp.csv` | 56 | `seat`, `party`, `votes` |
+| `ecsa-2006-sa-firstprefs-detail.csv` | 269 | `seat`, `candidate`, `party_code`, `party_name`, `party_class`, `votes`, `pct`, `elected`, `formal_votes` |
+| `ecsa-2006-sa-firstprefs.csv` | 252 | `seat`, `party`, `votes` |
+| `ecsa-2006-sa-tcp-detail.csv` | 40 | `seat`, `candidate`, `party_code`, `party_name`, `party_class`, `votes`, `pct`, `elected` |
+| `ecsa-2006-sa-tcp.csv` | 40 | `seat`, `party`, `votes` |
 | `ecsa-2010-2014-sa-page-inventory.csv` | 89 | `year`, `district`, `fetched`, `n_tables`, `headers`, `looks_like_distribution` |
 | `ecsa-2010-sa-firstprefs-tcp.csv` | 420 | `year`, `district`, `table`, `candidate`, `party`, `votes` |
 | `ecsa-2014-sa-firstprefs-tcp.csv` | 272 | `year`, `district`, `table`, `candidate`, `party`, `votes` |
@@ -55,13 +67,14 @@ column does not exist.**
 | `nswec-2023-nsw-firstprefs.csv` | 473 | `seat`, `party`, `votes` |
 | `nswec-nsw-transfers.csv` | 3,935 | `election`, `seat`, `round`, `from`, `to`, `votes` |
 | `nswec-nsw-winners.csv` | 279 | `election`, `seat`, `code`, `winner` |
-| `vec-2002-vic-tcp.csv` | 198 | `seat`, `party`, `votes` |
+| `vec-2002-vic-tcp.csv` | 176 | `seat`, `party`, `votes` |
 | `vec-2006-vic-candidates.csv` | 459 | `seat`, `candidate`, `party_code`, `party_name`, `fp`, `class` |
 | `vec-2006-vic-checks.csv` | 88 | `seat`, `n_cand`, `n_rounds`, `fp_match`, `replay_vs_after_table`, `replay_vs_final_row`, `final_two`, `final_two_votes`, `max_abs_diff_vs_tcp_table`, `no_dist_ok` |
 | `vec-2006-vic-firstprefs-detail.csv` | 459 | `seat`, `candidate`, `party_code`, `party_name`, `party_class`, `votes` |
 | `vec-2006-vic-firstprefs.csv` | 415 | `seat`, `party`, `votes` |
+| `vec-2006-vic-tcp-basis.csv` | 176 | `seat`, `party`, `votes`, `basis` |
 | `vec-2006-vic-tcp-detail.csv` | 288 | `seat`, `source`, `candidate`, `party_code`, `party_name`, `party_class`, `votes` |
-| `vec-2006-vic-tcp.csv` | 183 | `seat`, `party`, `votes` |
+| `vec-2006-vic-tcp.csv` | 176 | `seat`, `party`, `votes` |
 | `vec-2006-vic-transfers-detail.csv` | 956 | `election`, `seat`, `round`, `order_excluded`, `from_name`, `from_party`, `from`, `to_name`, `to_party`, `to`, `votes`, `row_total` |
 | `vec-2006-vic-transfers.csv` | 524 | `election`, `seat`, `round`, `from`, `to`, `votes` |
 | `vec-2010-vic-firstprefs.csv` | 414 | `seat`, `party`, `votes` |
@@ -144,6 +157,9 @@ The originals, before any aggregation. **This is where dropped columns live.**
 | `newspoll-quarterly/breakdowns.csv` | 169 | `pollster`, `period_start`, `period_end`, `published`, `sample_n`, `dimension`, `group`, `party`, `fp`, `tpp_alp`, `source_url` |
 | `pollbludger/bludgertrack_polls.csv` | 3,725 | `Id`, `start`, `end`, `median`, `pollster`, `mode`, `scope`, `sample`, `pmSAT`, `pmDIS`, `olSAT`, `olDIS`, `pmPREF`, `olPREF`, `ALP`, `LNC`, `GRN`, `PHON`, `UND`, `ALP2`, `LNC2`, `ALPra`, `LNCra`, `UNDra`, `cycle`, `section`, `file_stamp`, `ONP`, `start_date`, `end_date`, `median_date` |
 | `pollbludger/days_manifest.csv` | 3,694 | `V1`, `V2`, `V3`, `V4`, `V5`, `V6`, `V7` |
+| `pollbludger/llm-extracted/fed2004-p1-polls.csv` | 30 | `post_id`, `post_date`, `pollster`, `fieldwork`, `sample`, `alp`, `coalition`, `greens`, `one_nation`, `others`, `undecided`, `alp_2pp`, `coalition_2pp`, `quote` |
+| `pollbludger/llm-extracted/fed2004-p2-polls.csv` | 22 | `post_id`, `post_date`, `pollster`, `fieldwork`, `sample`, `alp`, `coalition`, `greens`, `one_nation`, `others`, `undecided`, `alp_2pp`, `coalition_2pp`, `quote` |
+| `pollbludger/llm-extracted/fed2004-scored.csv` | 36 | `date`, `firm`, `origin`, `undecided_divided_out`, `ALP_x`, `ALP_k`, `LNP_x`, `LNP_k`, `GRN_x`, `GRN_k`, `maxd` |
 | `pollbludger/llm-extracted/fed2007-p1-polls.csv` | 29 | `post_id`, `post_date`, `pollster`, `fieldwork`, `sample`, `alp`, `coalition`, `greens`, `one_nation`, `others`, `undecided`, `alp_2pp`, `coalition_2pp`, `quote` |
 | `pollbludger/llm-extracted/fed2007-p2-polls.csv` | 28 | `post_id`, `post_date`, `pollster`, `fieldwork`, `sample`, `alp`, `coalition`, `greens`, `one_nation`, `others`, `undecided`, `alp_2pp`, `coalition_2pp`, `quote` |
 | `pollbludger/llm-extracted/fed2007-p3-polls.csv` | 17 | `post_id`, `post_date`, `pollster`, `fieldwork`, `sample`, `alp`, `coalition`, `greens`, `one_nation`, `others`, `undecided`, `alp_2pp`, `coalition_2pp`, `quote` |
@@ -156,12 +172,46 @@ The originals, before any aggregation. **This is where dropped columns live.**
 | `pollbludger/llm-extracted/fed2010-p5-polls.csv` | 55 | `post_id`, `post_date`, `pollster`, `fieldwork`, `sample`, `alp`, `coalition`, `greens`, `one_nation`, `others`, `undecided`, `alp_2pp`, `coalition_2pp`, `quote` |
 | `pollbludger/llm-extracted/fed2010-p6-polls.csv` | 43 | `post_id`, `post_date`, `pollster`, `fieldwork`, `sample`, `alp`, `coalition`, `greens`, `one_nation`, `others`, `undecided`, `alp_2pp`, `coalition_2pp`, `quote` |
 | `pollbludger/llm-extracted/fed2010-scored.csv` | 202 | `date`, `firm`, `origin`, `undecided_divided_out`, `ALP_x`, `ALP_k`, `LNP_x`, `LNP_k`, `GRN_x`, `GRN_k`, `maxd` |
+| `pollbludger/llm-extracted/nsw2011-p1-polls.csv` | 15 | `post_id`, `post_date`, `pollster`, `fieldwork`, `sample`, `alp`, `coalition`, `greens`, `one_nation`, `others`, `undecided`, `alp_2pp`, `coalition_2pp`, `quote` |
+| `pollbludger/llm-extracted/nsw2011-p2-polls.csv` | 17 | `post_id`, `post_date`, `pollster`, `fieldwork`, `sample`, `alp`, `coalition`, `greens`, `one_nation`, `others`, `undecided`, `alp_2pp`, `coalition_2pp`, `quote` |
+| `pollbludger/llm-extracted/nsw2011-p3-polls.csv` | 8 | `post_id`, `post_date`, `pollster`, `fieldwork`, `sample`, `alp`, `coalition`, `greens`, `one_nation`, `others`, `undecided`, `alp_2pp`, `coalition_2pp`, `quote` |
+| `pollbludger/llm-extracted/nsw2011-scored.csv` | 35 | `date`, `firm`, `origin`, `undecided_divided_out`, `ALP_x`, `ALP_k`, `LNP_x`, `LNP_k`, `GRN_x`, `GRN_k`, `maxd` |
+| `pollbludger/llm-extracted/nsw2015-p1-polls.csv` | 52 | `post_id`, `post_date`, `pollster`, `fieldwork`, `sample`, `alp`, `coalition`, `greens`, `one_nation`, `others`, `undecided`, `alp_2pp`, `coalition_2pp`, `quote` |
+| `pollbludger/llm-extracted/nsw2015-p2-polls.csv` | 0 | `post_id`, `post_date`, `pollster`, `fieldwork`, `sample`, `alp`, `coalition`, `greens`, `one_nation`, `others`, `undecided`, `alp_2pp`, `coalition_2pp`, `quote` |
+| `pollbludger/llm-extracted/nsw2015-scored.csv` | 49 | `date`, `firm`, `origin`, `undecided_divided_out`, `ALP_x`, `ALP_k`, `LNP_x`, `LNP_k`, `GRN_x`, `GRN_k`, `maxd` |
 | `pollbludger/llm-extracted/nsw2019-polls.csv` | 32 | `post_id`, `post_date`, `pollster`, `fieldwork`, `sample`, `alp`, `coalition`, `greens`, `one_nation`, `shooters`, `others`, `undecided`, `alp_2pp`, `coalition_2pp`, `quote` |
 | `pollbludger/llm-extracted/nsw2019-scored.csv` | 32 | `date`, `firm`, `origin`, `undecided_divided_out`, `ALP_x`, `ALP_k`, `LNP_x`, `LNP_k`, `GRN_x`, `GRN_k`, `maxd` |
+| `pollbludger/llm-extracted/nsw2023-polls.csv` | 25 | `post_id`, `post_date`, `pollster`, `fieldwork`, `sample`, `alp`, `coalition`, `greens`, `one_nation`, `others`, `undecided`, `alp_2pp`, `coalition_2pp`, `quote` |
+| `pollbludger/llm-extracted/nsw2023-scored.csv` | 23 | `date`, `firm`, `origin`, `undecided_divided_out`, `ALP_x`, `ALP_k`, `LNP_x`, `LNP_k`, `GRN_x`, `GRN_k`, `maxd` |
+| `pollbludger/llm-extracted/qld2009-polls.csv` | 8 | `post_id`, `post_date`, `pollster`, `fieldwork`, `sample`, `alp`, `coalition`, `greens`, `one_nation`, `others`, `undecided`, `alp_2pp`, `coalition_2pp`, `quote` |
+| `pollbludger/llm-extracted/qld2012-polls.csv` | 26 | `post_id`, `post_date`, `pollster`, `fieldwork`, `sample`, `alp`, `coalition`, `greens`, `one_nation`, `others`, `undecided`, `alp_2pp`, `coalition_2pp`, `quote` |
+| `pollbludger/llm-extracted/qld2012-scored.csv` | 24 | `date`, `firm`, `origin`, `undecided_divided_out`, `ALP_x`, `ALP_k`, `LNP_x`, `LNP_k`, `GRN_x`, `GRN_k`, `maxd` |
+| `pollbludger/llm-extracted/qld2015-p1-polls.csv` | 49 | `post_id`, `post_date`, `pollster`, `fieldwork`, `sample`, `alp`, `coalition`, `greens`, `one_nation`, `others`, `undecided`, `alp_2pp`, `coalition_2pp`, `quote` |
+| `pollbludger/llm-extracted/qld2015-p2-polls.csv` | 0 | `post_id`, `post_date`, `pollster`, `fieldwork`, `sample`, `alp`, `coalition`, `greens`, `one_nation`, `others`, `undecided`, `alp_2pp`, `coalition_2pp`, `quote` |
+| `pollbludger/llm-extracted/qld2015-scored.csv` | 44 | `date`, `firm`, `origin`, `undecided_divided_out`, `ALP_x`, `ALP_k`, `LNP_x`, `LNP_k`, `GRN_x`, `GRN_k`, `maxd` |
+| `pollbludger/llm-extracted/qld2017-polls.csv` | 42 | `post_id`, `post_date`, `pollster`, `fieldwork`, `sample`, `alp`, `coalition`, `greens`, `one_nation`, `others`, `undecided`, `alp_2pp`, `coalition_2pp`, `quote` |
+| `pollbludger/llm-extracted/qld2017-scored.csv` | 41 | `date`, `firm`, `origin`, `undecided_divided_out`, `ALP_x`, `ALP_k`, `LNP_x`, `LNP_k`, `GRN_x`, `GRN_k`, `maxd` |
+| `pollbludger/llm-extracted/qld2020-polls.csv` | 14 | `post_id`, `post_date`, `pollster`, `fieldwork`, `sample`, `alp`, `coalition`, `greens`, `one_nation`, `others`, `undecided`, `alp_2pp`, `coalition_2pp`, `quote` |
+| `pollbludger/llm-extracted/qld2020-scored.csv` | 14 | `date`, `firm`, `origin`, `undecided_divided_out`, `ALP_x`, `ALP_k`, `LNP_x`, `LNP_k`, `GRN_x`, `GRN_k`, `maxd` |
+| `pollbludger/llm-extracted/qld2024-polls.csv` | 29 | `post_id`, `post_date`, `pollster`, `fieldwork`, `sample`, `alp`, `coalition`, `greens`, `one_nation`, `others`, `undecided`, `alp_2pp`, `coalition_2pp`, `quote` |
+| `pollbludger/llm-extracted/qld2024-scored.csv` | 21 | `date`, `firm`, `origin`, `undecided_divided_out`, `ALP_x`, `ALP_k`, `LNP_x`, `LNP_k`, `GRN_x`, `GRN_k`, `maxd` |
+| `pollbludger/llm-extracted/sa2010-polls.csv` | 12 | `post_id`, `post_date`, `pollster`, `fieldwork`, `sample`, `alp`, `coalition`, `greens`, `one_nation`, `others`, `undecided`, `alp_2pp`, `coalition_2pp`, `quote` |
+| `pollbludger/llm-extracted/sa2010-scored.csv` | 11 | `date`, `firm`, `origin`, `undecided_divided_out`, `ALP_x`, `ALP_k`, `LNP_x`, `LNP_k`, `GRN_x`, `GRN_k`, `maxd` |
+| `pollbludger/llm-extracted/sa2014-polls.csv` | 21 | `post_id`, `post_date`, `pollster`, `fieldwork`, `sample`, `alp`, `coalition`, `greens`, `one_nation`, `others`, `undecided`, `alp_2pp`, `coalition_2pp`, `quote` |
+| `pollbludger/llm-extracted/sa2014-scored.csv` | 16 | `date`, `firm`, `origin`, `undecided_divided_out`, `ALP_x`, `ALP_k`, `LNP_x`, `LNP_k`, `GRN_x`, `GRN_k`, `maxd` |
+| `pollbludger/llm-extracted/sa2018-polls.csv` | 12 | `post_id`, `post_date`, `pollster`, `fieldwork`, `sample`, `alp`, `coalition`, `greens`, `one_nation`, `others`, `undecided`, `alp_2pp`, `coalition_2pp`, `quote` |
+| `pollbludger/llm-extracted/sa2018-scored.csv` | 8 | `date`, `firm`, `origin`, `undecided_divided_out`, `ALP_x`, `ALP_k`, `LNP_x`, `LNP_k`, `GRN_x`, `GRN_k`, `maxd` |
+| `pollbludger/llm-extracted/sa2022-polls.csv` | 8 | `post_id`, `post_date`, `pollster`, `fieldwork`, `sample`, `alp`, `coalition`, `greens`, `one_nation`, `others`, `undecided`, `alp_2pp`, `coalition_2pp`, `quote` |
+| `pollbludger/llm-extracted/sa2022-scored.csv` | 8 | `date`, `firm`, `origin`, `undecided_divided_out`, `ALP_x`, `ALP_k`, `LNP_x`, `LNP_k`, `GRN_x`, `GRN_k`, `maxd` |
+| `pollbludger/llm-extracted/vic2010-p1-polls.csv` | 10 | `post_id`, `post_date`, `pollster`, `fieldwork`, `sample`, `alp`, `coalition`, `greens`, `one_nation`, `others`, `undecided`, `alp_2pp`, `coalition_2pp`, `quote` |
+| `pollbludger/llm-extracted/vic2010-p2-polls.csv` | 23 | `post_id`, `post_date`, `pollster`, `fieldwork`, `sample`, `alp`, `coalition`, `greens`, `one_nation`, `others`, `undecided`, `alp_2pp`, `coalition_2pp`, `quote` |
+| `pollbludger/llm-extracted/vic2010-scored.csv` | 33 | `date`, `firm`, `origin`, `undecided_divided_out`, `ALP_x`, `ALP_k`, `LNP_x`, `LNP_k`, `GRN_x`, `GRN_k`, `maxd` |
 | `pollbludger/llm-extracted/vic2014-polls.csv` | 54 | `post_id`, `post_date`, `pollster`, `fieldwork`, `sample`, `alp`, `coalition`, `greens`, `one_nation`, `others`, `undecided`, `alp_2pp`, `coalition_2pp`, `quote` |
 | `pollbludger/llm-extracted/vic2014-scored.csv` | 50 | `date`, `firm`, `origin`, `undecided_divided_out`, `ALP_x`, `ALP_k`, `LNP_x`, `LNP_k`, `GRN_x`, `GRN_k`, `maxd` |
 | `pollbludger/llm-extracted/vic2018-polls.csv` | 31 | `post_id`, `post_date`, `pollster`, `fieldwork`, `sample`, `alp`, `coalition`, `greens`, `one_nation`, `others`, `undecided`, `alp_2pp`, `coalition_2pp`, `quote` |
 | `pollbludger/llm-extracted/vic2018-scored.csv` | 29 | `date`, `firm`, `origin`, `undecided_divided_out`, `ALP_x`, `ALP_k`, `LNP_x`, `LNP_k`, `GRN_x`, `GRN_k`, `maxd` |
+| `pollbludger/llm-extracted/vic2022-polls.csv` | 30 | `post_id`, `post_date`, `pollster`, `fieldwork`, `sample`, `alp`, `coalition`, `greens`, `one_nation`, `others`, `undecided`, `alp_2pp`, `coalition_2pp`, `quote` |
+| `pollbludger/llm-extracted/vic2022-scored.csv` | 29 | `date`, `firm`, `origin`, `undecided_divided_out`, `ALP_x`, `ALP_k`, `LNP_x`, `LNP_k`, `GRN_x`, `GRN_k`, `maxd` |
 | `pollbludger/llm-extracted/wa2005-polls.csv` | 8 | `post_id`, `post_date`, `pollster`, `fieldwork`, `sample`, `alp`, `liberal`, `nationals`, `coalition_combined`, `greens`, `one_nation`, `others`, `undecided`, `alp_2pp`, `lib_2pp`, `quote`, `coalition` |
 | `pollbludger/llm-extracted/wa2005-scored.csv` | 6 | `date`, `firm`, `origin`, `undecided_divided_out`, `ALP_x`, `ALP_k`, `LNP_x`, `LNP_k`, `GRN_x`, `GRN_k`, `maxd` |
 | `pollbludger/llm-extracted/wa2005-wa-polls.csv` | 8 | `post_id`, `post_date`, `pollster`, `fieldwork`, `sample`, `alp`, `liberal`, `nationals`, `coalition_combined`, `greens`, `one_nation`, `others`, `undecided`, `alp_2pp`, `lib_2pp`, `quote` |
@@ -178,7 +228,7 @@ The originals, before any aggregation. **This is where dropped columns live.**
 | `pollbludger/llm-extracted/wa2017-polls.csv` | 32 | `post_id`, `post_date`, `pollster`, `fieldwork`, `sample`, `alp`, `liberal`, `nationals`, `coalition_combined`, `greens`, `one_nation`, `others`, `undecided`, `alp_2pp`, `lib_2pp`, `quote`, `coalition` |
 | `pollbludger/llm-extracted/wa2017-scored.csv` | 22 | `date`, `firm`, `origin`, `undecided_divided_out`, `ALP_x`, `ALP_k`, `LNP_x`, `LNP_k`, `GRN_x`, `GRN_k`, `maxd` |
 | `pollbludger/llm-extracted/wa2017-wa-polls.csv` | 32 | `post_id`, `post_date`, `pollster`, `fieldwork`, `sample`, `alp`, `liberal`, `nationals`, `coalition_combined`, `greens`, `one_nation`, `others`, `undecided`, `alp_2pp`, `lib_2pp`, `quote` |
-| `pollbludger/pb_llm_polls.csv` | 588 | `post_id`, `post_date`, `pollster`, `fieldwork`, `sample`, `alp`, `coalition`, `greens`, `one_nation`, `others`, `undecided`, `alp_2pp`, `coalition_2pp`, `quote`, `malformed`, `src_file`, `shooters`, `liberal`, `nationals`, `coalition_combined`, `lib_2pp`, `cycle`, `region`, `alp_n`, `coalition_n`, `greens_n`, `one_nation_n`, `others_n`, `undecided_n`, `alp_2pp_n`, `coalition_2pp_n`, `sample_n`, `stated`, `dup` |
+| `pollbludger/pb_llm_polls.csv` | 1,040 | `post_id`, `post_date`, `pollster`, `fieldwork`, `sample`, `alp`, `coalition`, `greens`, `one_nation`, `others`, `undecided`, `alp_2pp`, `coalition_2pp`, `quote`, `malformed`, `src_file`, `shooters`, `liberal`, `nationals`, `coalition_combined`, `lib_2pp`, `cycle`, `region`, `alp_n`, `coalition_n`, `greens_n`, `one_nation_n`, `others_n`, `undecided_n`, `alp_2pp_n`, `coalition_2pp_n`, `sample_n`, `stated`, `dup` |
 | `pollbludger/pollbludger_polls.csv` | 2,139 | `post_id`, `date`, `title`, `categories`, `region_cat`, `para`, `sent`, `firm_raw`, `scope`, `ALP`, `LNP`, `COA`, `QLNP`, `LIB`, `NAT`, `GRN`, `ONP`, `UAP`, `NXT`, `sample_n`, `tpp_text`, `sentence` |
 | `pollbludger/post_index.csv` | 4,935 | `V1`, `V2`, `V3`, `V4`, `V5` |
 | `pollbludger/posts.csv` | 72,378 | `post_id`, `url`, `title`, `posted`, `categories`, `text`, `day_file`, `date` |
@@ -242,7 +292,7 @@ processed extract. Every one is recoverable without a new fetch.
 | `aef7-tcp-truth-table.csv` | 660 | `pair`, `seat`, `official_f1`, `official_f2`, `official_f2cp`, `official_fsrc`, `aef_tcp_f1`, `aef_tcp_pct`, `aef_tcp_freq`, `itg_tcp_f1`, `itg_tcp_f2`, `itg_tcp_pct`, `itg_tcp_freq`, `abc_tcp_f1`, `abc_tcp_f2`, `abc_tcp_pct` |
 | `aef7-tcp.csv` | 681 | `pair`, `seat`, `aef_tcp_f1`, `aef_tcp_f2`, `aef_tcp_pct`, `aef_tcp_scenario_freq`, `aef_tcp_p05`, `aef_tcp_p95` |
 | `anchor-k.csv` | 834 | `region`, `year`, `K`, `party`, `fitted`, `actual`, `prior`, `polls30`, `err`, `cyc` |
-| `biggest-misses.csv` | 2,120 | `metric`, `pair`, `seat`, `party`, `candidate`, `ours`, `actual`, `err` |
+| `biggest-misses.csv` | 93 | `metric`, `pair`, `seat`, `party`, `candidate`, `ours`, `actual`, `err` |
 | `bludgertrack-vs-layered.csv` | 541 | `region`, `bt_id`, `bt_cycle`, `date`, `firm`, `pollster_bt`, `mode_bt`, `sample_bt`, `source`, `und_bt`, `ALP_bt`, `ALP_layered`, `LNP_bt`, `LNP_layered`, `GRN_bt`, `GRN_layered`, `ONP_bt`, `ONP_layered`, `ALP_d`, `LNP_d`, `GRN_d`, `ONP_d` |
 | `booth-rehearsal2-vic2022.csv` | 15 | `frac_of_night_vote`, `estimator`, `leader_correct`, `n`, `major_mae`, `major_rmse` |
 | `booth-replay-vic2022.csv` | 5 | `frac_of_night_vote`, `mean_counted_share_of_all`, `fp_leader_correct`, `n`, `major_share_mae`, `major_share_rmse` |
@@ -250,5 +300,5 @@ processed extract. Every one is recoverable without a new fetch.
 | `booths-vic2018.csv` | 13,353 | `district`, `booth`, `booth_type`, `candidate`, `party`, `votes` |
 | `booths-vic2022-2cp.csv` | 4,328 | `district`, `booth`, `booth_type`, `candidate`, `party`, `votes` |
 
-_(8602 `backtest-*.csv` arm outputs omitted; they share one shape.)_
+_(8776 `backtest-*.csv` arm outputs omitted; they share one shape.)_
 

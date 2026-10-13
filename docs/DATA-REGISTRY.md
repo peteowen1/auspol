@@ -19,6 +19,10 @@ cannot pass as a working one.
 | `aec-fed-tcp.csv` | 63 KB |
 | `aec-fed-transfers.csv` | 610 KB |
 | `aec-fed-winners.csv` | 25 KB |
+| `ecq-2001-qld-firstprefs-detail.csv` | 26 KB |
+| `ecq-2001-qld-firstprefs.csv` | 7 KB |
+| `ecq-2001-qld-tcp-winner.csv` | 2 KB |
+| `ecq-2001-qld-tcp.csv` | 394 B |
 | `ecq-2004-qld-firstprefs.csv` | 7 KB |
 | `ecq-2004-qld-tcp.csv` | 3 KB |
 | `ecq-2006-qld-firstprefs.csv` | 7 KB |
@@ -32,6 +36,14 @@ cannot pass as a working one.
 | `ecq-2024-qld-firstprefs.csv` | 10 KB |
 | `ecq-qld-transfers.csv` | 97 KB |
 | `ecq-qld-winners.csv` | 4 KB |
+| `ecsa-2002-sa-firstprefs-detail.csv` | 18 KB |
+| `ecsa-2002-sa-firstprefs.csv` | 4 KB |
+| `ecsa-2002-sa-tcp-detail.csv` | 3 KB |
+| `ecsa-2002-sa-tcp.csv` | 1 KB |
+| `ecsa-2006-sa-firstprefs-detail.csv` | 18 KB |
+| `ecsa-2006-sa-firstprefs.csv` | 5 KB |
+| `ecsa-2006-sa-tcp-detail.csv` | 2 KB |
+| `ecsa-2006-sa-tcp.csv` | 756 B |
 | `ecsa-2010-2014-sa-page-inventory.csv` | 20 KB |
 | `ecsa-2010-sa-firstprefs-tcp.csv` | 22 KB |
 | `ecsa-2014-sa-firstprefs-tcp.csv` | 13 KB |
@@ -60,6 +72,7 @@ cannot pass as a working one.
 | `vec-2006-vic-checks.csv` | 6 KB |
 | `vec-2006-vic-firstprefs-detail.csv` | 36 KB |
 | `vec-2006-vic-firstprefs.csv` | 9 KB |
+| `vec-2006-vic-tcp-basis.csv` | 8 KB |
 | `vec-2006-vic-tcp-detail.csv` | 29 KB |
 | `vec-2006-vic-tcp.csv` | 4 KB |
 | `vec-2006-vic-transfers-detail.csv` | 125 KB |
@@ -98,13 +111,13 @@ cannot pass as a working one.
   - e.g. 2006/vc/fpv-albertpark.html, 2006/vc/fpv-altona.html, 2006/vc/fpv-ballarateast.html, 2006/vc/fpv-ballaratwest.html
 - **nsw/** -- 5889 files, 81.0 MB
   - e.g. byelections/SB1602-orange-fp.html, byelections/SB1801-wagga-wagga-fp.html, council/2008/lgeindex.html, council/2008/pages/result.Albury.html
-- **ecsa/** -- 469 files, 72.5 MB. **1 ZERO-BYTE: ha-2018-03-17.json**
+- **ecsa/** -- 470 files, 73.1 MB. **1 ZERO-BYTE: ha-2018-03-17.json**
   - e.g. 2018/Adelaide.html, 2018/Adelaide2.html, 2018/Badcoe.html, 2018/Badcoe2.html
-- **ecq/** -- 1650 files, 137.3 MB
+- **ecq/** -- 1651 files, 137.8 MB
   - e.g. council/2008/aurukunshire/councillor_summary.html, council/2008/aurukunshire/mayoral_summary.html, council/2008/balonneshire/councillor_summary.html, council/2008/balonneshire/mayoral_summary.html
 - **waec/** -- 1916 files, 49.0 MB
   - e.g. app.html, app.min.js, config-loader.js, config.json
-- **trends/** -- 4795 files, 3.0 MB
+- **trends/** -- 4852 files, 3.0 MB
   - e.g. 2019_anch2_Adrian_Wone_Susie_Beveridge_Will_Landers_Ammar_Khan.rds, 2019_anch2_Bill_Chandler_Susan_Moylan_Dave_Blake_Tim_Bohm.rds, 2019_anch2_Robert_Oakeshott_Helen_Haines_Zali_Steggall_Kerryn_Phelps.rds, 2019_anch2_Trevor_Jones_Colin_Butland_David_Norman_Thor_Prohaska.rds
 - **boundaries/** -- 75 files, 770.5 MB
   - e.g. AEC-2025-esri.zip, AEC_2025/AUS_ELB_region.dbf, AEC_2025/AUS_ELB_region.prj, AEC_2025/AUS_ELB_region.shp
@@ -114,7 +127,7 @@ cannot pass as a working one.
   - e.g. abs-sed/CG_CED_2016_CED_2021.csv, abs-sed/CG_SED_2016_SED_2021.csv, abs-sed/CG_SED_2021_SED_2022.csv, abs-sed/CG_SED_2022_SED_2024.csv
 - **aef/** -- 17 files, 4.8 MB
   - e.g. 2022fed-results.json, 2022fed-summary.json, 2022sa-results.json, 2022sa-summary.json
-- **polls/** -- 4013 files, 476.7 MB. **1 ZERO-BYTE: crosstabs-ambiguous.txt**
+- **polls/** -- 4073 files, 479.6 MB. **1 ZERO-BYTE: crosstabs-ambiguous.txt**
   - e.g. demosau/crosstabs-ambiguous.txt, demosau/crosstabs.csv, demosau/raw/fed-2026-01.pdf, demosau/raw/fed-2026-01b.pdf
 
 ## Candidate-level corpus (`output/candidacies.csv`)
@@ -142,6 +155,7 @@ NAMES live -- the per-seat results files carry `seat, party, votes` only.
 | sa2018 | 47 | 264 | 51 | 12 |
 | sa2022 | 47 | 240 | 20 | 6 |
 | sa2026 | 47 | 388 | 34 | 31 |
+| vic2006 | 88 | 459 | 43 | 7 |
 | vic2010 | 88 | 502 | 75 | 9 |
 | vic2014 | 88 | 545 | 91 | 9 |
 | vic2018 | 88 | 507 | 102 | 9 |
@@ -156,7 +170,7 @@ NAMES live -- the per-seat results files carry `seat, party, votes` only.
 | wa2021 | 59 | 463 | 17 | 0 |
 | wa2025 | 59 | 398 | 29 | 6 |
 
-**Total: 18488 candidacies, 31 elections, NA non-major breakouts.**
+**Total: 18947 candidacies, 32 elections, NA non-major breakouts.**
 
 ## State booth results (`output/booths/`)
 
