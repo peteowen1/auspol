@@ -751,6 +751,38 @@ if (!file.exists(q17f) || file.info(q17f)$size < 1e6) {
   }
 }
 
+# ---- QUEENSLAND 2009, 2012, 2015 ---------------------------------------------------
+# Previous elections of the qld2015 and qld2017 pairs. Read from the per-candidate table already
+# parsed from the commission's own results file (external/reference/ecq/raw/<year>/candidates.csv:
+# ballot name, party code, first-preference votes, and the declared member). ZZZ is an independent,
+# as in 2017 above. Party names come from the codes: the 2012 file names Katter's party "The
+# Australian Party", which classify_party() files under OTH where every other year files it
+# OTH_RIGHT, so the name is written out in full here (same fix as scripts/build_qld_2012_2015_inputs.R).
+QLD_CODE_NAME <- c(ALP = "Australian Labor Party", LNP = "Liberal National Party",
+                   GRN = "The Greens", ONP = "One Nation", KAP = "Katter's Australian Party",
+                   FFP = "Family First Party", PUP = "Palmer United Party", DSQ = "DS4SEQ", ZZZ = "Independent")
+for (yq in c(2009L, 2012L, 2015L)) {
+  fq <- file.path(ECQ, "raw", yq, "candidates.csv")
+  if (!file.exists(fq)) { cat(sprintf("BC6  qld%d: MISSING %s\n", yq, fq)); next }
+  cq <- fread(fq, showProgress = FALSE)
+  badq <- setdiff(unique(cq$code), names(QLD_CODE_NAME))
+  if (length(badq)) stop("qld", yq, " party code(s) with no name: ", paste(badq, collapse = ", "),
+                         ". Classifying them without a name would silently make them IND.")
+  if (cq[is.na(votes), .N]) stop("qld", yq, ": candidates with no primary vote count")
+  if (uniqueN(cq$seat) != 89L) stop("qld", yq, ": parsed ", uniqueN(cq$seat), " districts, not 89")
+  if (cq[ballot_name == declared, .N] != 89L) stop("qld", yq, ": declared members not 89")
+  cq <- cq[, .(seat, name = ballot_name, party_ab = code, votes = as.numeric(votes),
+               elected = ballot_name == declared)]
+  cq[, party_raw := unname(QLD_CODE_NAME[party_ab])]
+  cq[, `:=`(party = classify_party(party_raw, ifelse(party_ab == "ZZZ", "", party_ab)),
+            surname = NA_character_, given = NA_character_,
+            election = sprintf("qld%d", yq), region = "qld", year = yq)]
+  parts[[sprintf("qld%d", yq)]] <- cq[, .(seat, name, party_raw, votes, party, surname, given,
+                                          elected, election, region, year)]
+  cat(sprintf("BC6  qld%d: %d candidates in %d seats | classes %s\n", yq, nrow(cq), uniqueN(cq$seat),
+              paste(names(table(cq$party)), table(cq$party), sep = "=", collapse = " ")))
+}
+
 # ---- VICTORIA 2014, 2018 ----------------------------------------------------
 # One HTML page per district, already on disk. Each carries several tables; the
 # one wanted has columns Candidate / Party / 1st pref votes.

@@ -139,6 +139,12 @@ ELS <- list(
                  anchor = "Steven Marshall"),
   vic2014 = list(poll = "2014-11-29", geo = "AU-VIC", prev = "vic2010", # (missing)
                  anchor = "Denis Napthine"),
+  qld2012 = list(poll = "2012-03-24", geo = "AU-QLD", prev = "qld2009",   # added 2026-10-13 (coverage program); NOT yet fetched
+                 anchor = "Anna Bligh"),
+  qld2015 = list(poll = "2015-01-31", geo = "AU-QLD", prev = "qld2012",   # added 2026-10-13 (coverage program); NOT yet fetched
+                 anchor = "Campbell Newman"),
+  qld2017 = list(poll = "2017-11-25", geo = "AU-QLD", prev = "qld2015",   # added 2026-10-13 (coverage program); NOT yet fetched
+                 anchor = "Annastacia Palaszczuk"),
   qld2020 = list(poll = "2020-10-31", geo = "AU-QLD", prev = "qld2017", # (missing)
                  anchor = "Annastacia Palaszczuk"),
   qld2024 = list(poll = "2024-10-26", geo = "AU-QLD", prev = "qld2020",

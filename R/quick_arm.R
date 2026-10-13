@@ -30,7 +30,7 @@ quick_units <- function() {
     mk("wa",  "AUSPOL_WA_PAIR",   c(2001, 2005, 2008, 2013, 2017, 2021, 2025)),
     mk("vic", "AUSPOL_VIC_PAIR",  c(2010, 2014, 2018, 2022)),
     mk("nsw", "AUSPOL_NSW_PAIR",  c(2011, 2015, 2019, 2023)),
-    mk("qld", "AUSPOL_QLD_PAIR",  c(2020, 2024)),
+    mk("qld", "AUSPOL_QLD_PAIR",  c(2012, 2015, 2017, 2020, 2024)),
     mk("sa",  "AUSPOL_SA_PAIR",   c(2022, 2026)))
 }
 
