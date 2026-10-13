@@ -37,6 +37,7 @@ if (!is.null(PB)) {
 rows <- list(); firms <- list()
 for (rg in unique(pairs$region)) {
   L <- suppressMessages(load_polls(rg)); P <- attr(L, "provenance")
+  if (is.null(P)) { cat(sprintf("RY1 %s: no provenance (not layered); skipped\n", rg)); next }
   d <- data.table(date = L$date, firm = L$firm, has_fp = is.finite(L$ALP) & is.finite(L$LNP), source = P$source,
                   origin = P$origin, ae_filled = nzchar(P$ae_filled), label_ae = P$label_from_ae)
   cat(sprintf("RY1 %s: %d rows from load_polls()\n", rg, nrow(d)))
@@ -48,7 +49,7 @@ for (rg in unique(pairs$region)) {
                             wiki = sum(x$has_fp & x$origin %in% c("wiki", "wiki+bludgertrack") & !x$ae_filled),
                             bt = sum(x$has_fp & x$origin == "bludgertrack" & !x$ae_filled),
                             both = sum(x$has_fp & x$origin == "bludgertrack+wiki" & !x$ae_filled),
-                            pb = sum(x$has_fp & x$origin == "pollbludger" & !x$ae_filled),
+                            pb = sum(x$has_fp & x$origin %in% c("pollbludger", "pollbludger+split") & !x$ae_filled),
                             ae = sum(x$has_fp & x$origin == "ae"), ae_party = sum(x$has_fp & x$origin != "ae" & x$ae_filled),
                             label_ae = sum(x$has_fp & x$label_ae))
     a <- cnt(z); b <- cnt(f); names(b) <- paste0("f30_", names(b))

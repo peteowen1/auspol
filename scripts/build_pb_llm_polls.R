@@ -42,7 +42,7 @@ X[, cycle := sub("(-p[0-9]+)?-polls\\.csv$", "", src_file)]
 X[, region := sub("[0-9]+$", "", cycle)]
 X[, post_date := as.Date(post_date)]
 num <- function(v) suppressWarnings(as.numeric(v))
-for (k in c("alp", "coalition", "greens", "one_nation", "others", "undecided", "alp_2pp", "coalition_2pp", "sample"))
+for (k in c("alp", "coalition", "greens", "one_nation", "others", "undecided", "alp_2pp", "coalition_2pp", "sample", "coalition_combined"))
   if (k %in% names(X)) X[[paste0(k, "_n")]] <- num(gsub(",", "", X[[k]]))
 # a figure is stated when it appears in the quote as a whole number token ("40", "40.5"), not inside another number
 # ("40" is not stated by "40.5": a following "." must not start decimals)
@@ -51,6 +51,9 @@ in_quote <- function(v, q) is.finite(v) & mapply(function(x, s) grepl(sprintf("(
 stopifnot(in_quote(40, "Labor on 40 per cent"), !in_quote(40, "Labor on 40.5 per cent"), in_quote(40.5, "Labor 40.5%"),
           in_quote(40, "Labor 40."), !in_quote(4, "Greens 4.5"), !in_quote(40, "140 votes"))
 X[, stated := in_quote(alp_n, quote) & in_quote(coalition_n, quote)]
+# WA posts giving only a combined Coalition figure (AUSPOL_PB_COALITION_COMBINED): Labor and the combined figure both in the quote
+if (!"coalition_combined_n" %in% names(X)) X[, coalition_combined_n := NA_real_]
+X[, stated_combined := in_quote(alp_n, quote) & in_quote(coalition_combined_n, quote)]
 # a poll reported in two chunks: same pollster, same primaries, posts within 10 days
 setorder(X, region, post_date)
 key <- paste(X$region, tolower(X$pollster), X$alp_n, X$coalition_n)
