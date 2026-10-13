@@ -44,3 +44,6 @@ something, save it for the morning". Trust does not extend to merges to main, de
   day-before level MAE 2.558 -> 2.555. Old-WA AEF dependence is a floor (wa2005: 34 of 49 AEF polls predate the blog).
   LEAD: fed2007 takes 1 poll from Wikipedia though an "Opinion polling for the 2007 Australian federal election" page
   exists -- likely a parser miss; check after the rebuild.
+- 01:55 CORRECTION to the 01:50 lead: no "Opinion polling for the 2007 Australian federal election" page exists
+  (Wikipedia search: only the 2010 polling page and the 2007 election article). fed2007's 180 AEF-only polls need the
+  pollsters' own archives (Newspoll history, Roy Morgan archive) -- queued as a fetch job, not a parser fix.
