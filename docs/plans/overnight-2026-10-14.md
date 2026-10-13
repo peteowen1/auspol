@@ -47,3 +47,6 @@ something, save it for the morning". Trust does not extend to merges to main, de
 - 01:55 CORRECTION to the 01:50 lead: no "Opinion polling for the 2007 Australian federal election" page exists
   (Wikipedia search: only the 2010 polling page and the 2007 election article). fed2007's 180 AEF-only polls need the
   pollsters' own archives (Newspoll history, Roy Morgan archive) -- queued as a fetch job, not a parser fix.
+- 01:34 HEAD rebuild died silently in stage 4 (as-at fits, at nsw2023, no error line; agents' R jobs were running,
+  cause unconfirmed). Stage 4 wrote only at the end, so 13 min of fits were lost. FIXED (9e1ecf8): checkpoint after
+  every target, reuse by input key on rerun. Relaunched from stage 4.
