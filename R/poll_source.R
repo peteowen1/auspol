@@ -355,6 +355,74 @@ poll_pb_on <- function() {
   list(ae = ae, log = n0)
 }
 
+#' Whether pollsters' own archived tables join the layered source (AUSPOL_POLL_ARCHIVE, default "0")
+#' @return logical.
+#' @export
+poll_archive_on <- function() {
+  v <- Sys.getenv("AUSPOL_POLL_ARCHIVE", "0")
+  if (!v %in% c("0", "1")) stop("AUSPOL_POLL_ARCHIVE must be \"0\" or \"1\", not ", v)
+  identical(v, "1")
+}
+
+#' Polls read from the pollsters' own archives for one region, in wiki_polls()'s shape
+#'
+#' `external/reference/polls/archive/fed_archive_polls.csv` (built by `scripts/poll_archive/build.py`): Roy Morgan's
+#' own summary table and Newspoll's per-poll PDFs, 2004-10 to 2007-11. Columns `region, firm, fieldwork_start,
+#' fieldwork_end` and the shares as published (undecided already excluded by both pollsters); parties the file
+#' leaves blank are NA, and Others is the remainder of the parties `parties` names.
+#' @param region Poll region.
+#' @param parties The region's party columns in AE's file.
+#' @param path Path to the archive CSV.
+#' @return data.table like [wiki_polls()] (with `origin` "archive"), or `NULL` when the region has no rows.
+#' @export
+archive_polls <- function(region, parties, path) {
+  b <- data.table::fread(path, colClasses = "character", showProgress = FALSE)
+  reg <- region
+  b <- b[b$region == reg]
+  if (!nrow(b)) return(NULL)
+  n <- function(k) if (k %in% names(b)) suppressWarnings(as.numeric(b[[k]])) else rep(NA_real_, nrow(b))
+  fs <- as.Date(b$fieldwork_start); fe <- as.Date(b$fieldwork_end)
+  mid <- as.Date(ifelse(is.finite(fs) & fs <= fe, as.integer(fs) + (as.integer(fe) - as.integer(fs)) %/% 2L, as.integer(fe)), origin = "1970-01-01")
+  vals <- list(ALP = n("ALP"), LNP = n("LNP"), GRN = n("GRN"), ONP = n("ONP"), DEM = n("DEM"))
+  named <- setdiff(intersect(parties, names(vals)), "OTH")
+  out <- data.table::data.table(date = mid, end = fe, firm_raw = trimws(b$firm), tpp_published = n("tpp_alp"))
+  for (p in named) out[[p]] <- vals[[p]]
+  if ("OTH" %in% parties) out$OTH <- pmax(0, 100 - rowSums(as.matrix(out[, named, with = FALSE]), na.rm = TRUE))
+  out$und <- 0
+  e0 <- abs(.ps_implied(out$ALP, out$LNP, out$GRN, out$ONP) - out$tpp_published)
+  out$check <- ifelse(!is.finite(e0), "no_tpp", ifelse(e0 > 5, "suspect", "ok"))
+  out$origin <- "archive"
+  out <- out[is.finite(out$ALP) & is.finite(out$LNP) & is.finite(out$date)]
+  for (p in setdiff(parties, names(out))) out[[p]] <- NA_real_
+  out
+}
+
+# Archive polls join `ours` unless Wikipedia or BludgerTrack already has the poll (same pairing as poll_layer()):
+# a poll they have keeps their row. Returns the combined table and the count added.
+#' @noRd
+.ps_add_archive <- function(ours, arch, alias, window = 4L) {
+  if (is.null(arch) || !nrow(arch)) return(list(ours = ours, added = 0L, dup = 0L))
+  ours$canon <- .ps_canon(ours$firm_raw, alias); arch$canon <- .ps_canon(arch$firm_raw, alias)
+  dup <- logical(nrow(arch))
+  if (nrow(ours)) {
+    cand <- .ps_pair_candidates(arch, ours, window)
+    data.table::setnames(cand, c("ai", "d_a", "bi", "d_b"), c("ri", "d_r", "oi", "d_o"))
+    num <- abs(arch$ALP[cand$ri] - ours$ALP[cand$oi]) + abs(arch$LNP[cand$ri] - ours$LNP[cand$oi])
+    cand$score <- abs(as.integer(cand$d_r - cand$d_o)) + ifelse(is.finite(num), num, 50) / 2
+    data.table::setorderv(cand, "score")
+    uo <- logical(nrow(ours))
+    for (k in seq_len(nrow(cand))) {
+      r <- cand$ri[k]; o <- cand$oi[k]
+      if (dup[r] || uo[o]) next
+      dup[r] <- uo[o] <- TRUE
+    }
+  }
+  ours$canon <- NULL; arch$canon <- NULL
+  ours <- rbind(ours, arch[!dup], use.names = TRUE, fill = TRUE)
+  data.table::setorderv(ours, "date")
+  list(ours = ours, added = sum(!dup), dup = sum(dup))
+}
+
 #' Layer our polls over AE's for one region (see the file header)
 #'
 #' @param ae AE's polls as [load_polls()] reads them (before layering).
@@ -389,6 +457,16 @@ poll_layer <- function(ae, region, path = NULL, window = 4L) {
     mo <- .ps_merge_own(ours, bludgertrack_polls(region, parties, bc[1]), alias)
     ours <- mo$ours; bt_log <- mo$log
   } else ours$origin <- "wiki"
+  if (poll_archive_on()) {
+    # AUSPOL_POLL_ARCHIVE_FILE, else the tracked archive folder; no file or no rows for the region = nothing to add
+    ac <- c(Sys.getenv("AUSPOL_POLL_ARCHIVE_FILE", ""),
+            file.path(pkg_root(), "external", "reference", "polls", "archive", "fed_archive_polls.csv"))
+    ac <- ac[nzchar(ac) & file.exists(ac)]
+    if (!length(ac)) stop("AUSPOL_POLL_ARCHIVE=1 needs fed_archive_polls.csv: run scripts/poll_archive/build.py, set AUSPOL_POLL_ARCHIVE_FILE, or AUSPOL_POLL_ARCHIVE=0")
+    aa <- .ps_add_archive(ours, archive_polls(region, parties, ac[1]), alias)
+    ours <- aa$ours
+    if (aa$added + aa$dup > 0) message(sprintf("PZ4 pollster archives [%s]: %d archive polls, %d already in Wikipedia/BludgerTrack, %d added", region, aa$added + aa$dup, aa$dup, aa$added))
+  }
   ae <- data.table::copy(ae)
   ae$canon <- .ps_canon(ae$firm, alias); ours$canon <- .ps_canon(ours$firm_raw, alias)
   # one-to-one matching, closest midpoints first

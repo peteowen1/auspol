@@ -376,6 +376,7 @@ CLASSIFY <- list(
   AUSPOL_LEVEL_FED_GAP_HL = "Same prereg; only read when AUSPOL_LEVEL_FED_R > 0. Read inside R/level_recent.R -- universal in practice.",
   AUSPOL_POLL_SOURCE = "SHIPPED layered 2026-10-13 (Pete; plans/prereg-own-poll-source-step2-2026-10-12.md). Read inside load_polls() (R/load_polls.R), which every harness and fit_seats_full.R call -- universal in practice.",
   AUSPOL_POLL_BT = "2026-10-13 (Pete: go): BludgerTrack poll tables join the layered source. Read inside poll_layer() (R/poll_source.R) via load_polls() -- universal in practice.",
+  AUSPOL_POLL_ARCHIVE = "2026-10-14 (not shipped): pollster-archive polls (Morgan, Newspoll; fed 2004-2007) join the layered source. Read inside poll_layer() (R/poll_source.R) via load_polls() -- universal in practice.",
   AUSPOL_TRAIN_SKIP_PAIRS = "2026-10-13 (Pete): pairs scored but kept out of the vote-share models' training rows; read by fit_xgb_primary_asat.R and fit_xgb_primary_v6_final.R (rebuild stages 4 and 5), not by the harnesses or fit_seats_full.R directly. Published vic2010.",
   AUSPOL_CENSUS_FILE = "DIAGNOSTIC 2026-10-13: alternative census-features table via census_features_path() (R/demographic_residual.R), read by every demographic correction -- universal in practice; published empty.",
   AUSPOL_MP_SLOPE_FILE = "DIAGNOSTIC 2026-10-13: path of the sitting-member slope table; read in all six harnesses (published default output/mp-slope-by-target.csv).",
