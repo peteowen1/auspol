@@ -51,3 +51,15 @@ means the switch leaked into something else).
 
 The deciding weight in criterion 1 changes from per person to each election x sqrt(formal votes) (Pete,
 `plans/weighting-design-2026-10-13.md` revision). Per person is still printed and reported beside it.
+
+## Result and decision (2026-10-13 21:50; clauses above unedited)
+
+Against the published run (vic2010 skipped), sqrt-votes, change in seat log loss (negative = better):
+P1 decay x completeness AEF-7 +0.0018 (noise), 2010+ +0.0081 (worse); P2 decay AEF-7 +0.0011, 2010+ +0.0046 (worse);
+P3 demean AEF-7 -0.0117 (better, beyond 1 SE, 6/7), 2010+ -0.0026 (noise, 11/19); P4 demean + decay AEF-7 -0.0116
+(better, 7/7), 2010+ -0.0036 (noise, 13/19). Over 0.02 worse under P4: nsw2019 +0.059, wa2017 +0.028 -- both also
+worse in other vic2010-in-training arms (wa2017 in all four, nsw2019 in three), so attributed to vic2010 as training
+data, not to demeaning; NOT traced seat by seat (later arms overwrote the seat files).
+**Override, visible:** by criterion 1's letter P3 wins (by 0.0001, inside noise). Pete chose P4. Shipped:
+AUSPOL_TRAIN_DEMEAN=1, AUSPOL_TRAIN_DECAY_H=8, AUSPOL_TRAIN_SKIP_PAIRS="" (vic2010 back in training).
+Completeness weighting did not help (P1 vs P2) and is not shipped.
