@@ -1,3 +1,15 @@
+#' Path of the census-features table the demographic corrections read
+#'
+#' `output/census-features.csv` (since 2026-10-13: each pair's census taken before its election,
+#' `scripts/build_census_features_vintage.R`). AUSPOL_CENSUS_FILE (diagnostic) points at another table, e.g. the
+#' pre-vintage copy, to attribute the vintage change's effect.
+#' @return File path.
+#' @export
+census_features_path <- function() {
+  v <- Sys.getenv("AUSPOL_CENSUS_FILE", "")
+  if (nzchar(v)) v else out_path("census-features.csv")
+}
+
 #' Correct a primary prediction toward what DEMOGRAPHICS explain about its error
 #'
 #' Arm A of `docs/plans/prereg-demographic-axis-2026-09-15.md`. The
@@ -45,7 +57,7 @@ demographic_residual_fit <- function(cls, exclude_pair,
                                      features = DEMO_FEATURES,
                                      alphas = c(0, 0.25, 0.5, 0.75, 1),
                                      oof = out_path("xgb-primary-v6-oof-predictions.csv"),
-                                     census = out_path("census-features.csv"),
+                                     census = census_features_path(),
                                      shuffle = 0L) {
   if (!requireNamespace("glmnet", quietly = TRUE)) {
     cat("DR0! glmnet not installed; demographic correction unavailable\n")
@@ -192,7 +204,7 @@ DEMO_FEATURES <- c("yr12_pct", "born_aus_pct", "indig_pct", "over55_pct",
 demographic_residual_apply <- function(shares, pair,
                                        classes = c("ONP", "OTH_RIGHT", "GRN"),
                                        features = DEMO_FEATURES,
-                                       census = out_path("census-features.csv"),
+                                       census = census_features_path(),
                                        shuffle = 0L,
                                        oof = out_path("xgb-primary-v6-oof-predictions.csv"),
                                        write_table = FALSE) {

@@ -15,7 +15,8 @@ read_leaders <- function() {
   if (!file.exists(f)) stop("leader_seats needs ", f, " (scripts/fetch_leaders.R)")
   L <- data.table::fread(f, showProgress = FALSE)
   g <- file.path(d, "leaders-supplement.csv")
-  if (!file.exists(g)) return(L)
+  # AUSPOL_LEADERS_SUPPLEMENT=0 (diagnostic, 2026-10-13): leaders.csv only, to attribute the supplement's effect
+  if (!file.exists(g) || identical(Sys.getenv("AUSPOL_LEADERS_SUPPLEMENT", "1"), "0")) return(L)
   S <- data.table::fread(g, showProgress = FALSE)
   need <- c(names(L), "source_url", "source_date", "note")
   if (!setequal(names(S), need))

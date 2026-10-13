@@ -10,7 +10,7 @@ demographic_residual_fit(
   features = DEMO_FEATURES,
   alphas = c(0, 0.25, 0.5, 0.75, 1),
   oof = out_path("xgb-primary-v6-oof-predictions.csv"),
-  census = out_path("census-features.csv"),
+  census = census_features_path(),
   shuffle = 0L
 )
 }

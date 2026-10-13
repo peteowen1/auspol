@@ -913,7 +913,7 @@ for (K in PAIRS) {
   # filled with a number that was never measured.
   .MP_SLOPE <- NULL
   if (identical(Sys.getenv("AUSPOL_MP_SLOPE", "0"), "1")) {
-    .mpf <- "output/mp-slope-by-target.csv"
+    .mpf <- Sys.getenv("AUSPOL_MP_SLOPE_FILE", "output/mp-slope-by-target.csv")
     if (!file.exists(.mpf))
       stop("AUSPOL_MP_SLOPE=1 needs ", .mpf, " -- run scripts/fit_mp_slope.R")
     .mpt <- fread(.mpf, showProgress = FALSE)

@@ -455,7 +455,7 @@ if (.cond && !is.null(.returns))
     # is real -- the member/also-ran gap is positive in 18 of 18 folds -- but three
     # of those four numbers were wrong, and ONP's was the also-ran slope written
     # into the member row over ZERO member observations.
-    .mpf <- "output/mp-slope-by-target.csv"
+    .mpf <- Sys.getenv("AUSPOL_MP_SLOPE_FILE", "output/mp-slope-by-target.csv")
     if (!file.exists(.mpf))
       stop("AUSPOL_MP_SLOPE=1 needs ", .mpf, " -- run scripts/fit_mp_slope.R")
     .mpt <- data.table::fread(.mpf, showProgress = FALSE)
