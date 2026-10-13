@@ -500,6 +500,16 @@ outright on sa2026, vic2022 and nsw2023.
 | `.DEFSTATE_K` | 3 | **CHOSEN prior strength** (the review measured it: carry bias +0.16 -> +0.05): the target level's sitting-member median is shrunk toward the all-level median by n / (n + 3) pseudo-cases. Replaces the min_n = 5 cliff. Not fitted; K could be estimated once there are enough cases per level to size between-level variance. |
 | cross-seat guards | sitting members only; same jurisdiction (federal: same state); full first name equal or one a prefix of the other; key unique among the previous election's major candidates and the target's candidates | **RULES**, not constants; every refusal is printed (`DFS2!`). |
 
+### Jurisdiction pooling (`AUSPOL_POOL_BY_JURISDICTION`, published `"0"`)
+
+`R/pool_hierarchical.R`, `pool_by_group()`; inventory in `docs/reviews/pooled-fits-inventory-2026-10-13.md`. Inert at the published `"0"`.
+
+| constant | value | status |
+|---|---|---|
+| `prior_df` | 3 pseudo-degrees of freedom | **CHOSEN prior strength** (same 3 as `.DEFSTATE_K`): each jurisdiction's own spread is moderated toward the pooled within-jurisdiction spread, s_g^2 = (SS_g + 3 s^2) / (n_g - 1 + 3). Not fitted; with 1-9 cases per jurisdiction the variance of the variances cannot be estimated. `Inf` gives one common spread. |
+| `1.2533` | sqrt(pi/2) | **MATHEMATICAL**: large-sample standard error of a median relative to a mean under normal noise. |
+| between-jurisdiction variance tau^2 | fitted per call | **FITTED** (DerSimonian-Laird method of moments, floored at 0). |
+
 ## New-independent shrink (AUSPOL_NEW_IND_SHRINK, OFF, prereg pending)
 
 | constant | value | status |

@@ -1254,6 +1254,32 @@ fit_defector_discount <- function(target_election, corpus = NULL, min_n = 5L, pa
                 if (is.finite(dst$pooled)) sprintf("%.3f", dst$pooled) else "NA", as.integer(dst$K), dst$w,
                 nrow(ratios), disc_loser, if (loser_fallback) ", all-case fallback: no earlier losing-candidate case" else ""))
   }
+  # JURISDICTION POOLING (AUSPOL_POOL_BY_JURISDICTION=1, default "0" = the code below unchanged).
+  # Each rate is each jurisdiction's median partially pooled toward the precision-weighted
+  # mean of the jurisdiction medians (R/pool_hierarchical.R), so a jurisdiction with many
+  # cases (NT, 2026-10-13) cannot set the rate for every other one. Federal is one of the
+  # jurisdictions, so this supersedes the federal/state split of AUSPOL_DEFECT_BY_LEVEL.
+  # Not applied under AUSPOL_DEFECTOR_STATE, which has its own pooling.
+  .pbj <- pool_by_jurisdiction_on() && !.dstate
+  if (.pbj) {
+    tj <- jurisdiction_of(target_election)
+    pj <- function(sel) {
+      rr <- ratios[sel & is.finite(ratios$ratio)]
+      pool_by_group(rr$ratio, jurisdiction_of(rr$pair), tj)
+    }
+    p_mp <- pj(ratios$was_mp %in% TRUE)
+    p_lo <- pj(ratios$was_mp %in% FALSE)
+    p_all <- pj(rep(TRUE, nrow(ratios)))
+    cat(sprintf("DEF-J %s: sitting-member carry pooled by jurisdiction: %s (case median was %s)\n",
+                target_election, .pool_summary(p_mp), format(mp, digits = 3)))
+    cat(sprintf("DEF-J %s: losing-candidate rate pooled by jurisdiction: %s (case median was %s)\n",
+                target_election, .pool_summary(p_lo), format(disc_loser, digits = 3)))
+    return(list(discount       = if (is.finite(p_all$estimate)) p_all$estimate else med(ratios$ratio),
+                discount_mp    = if (is.finite(p_mp$estimate)) p_mp$estimate else mp,
+                discount_loser = if (is.finite(p_lo$estimate)) p_lo$estimate else disc_loser,
+                n = nrow(ratios), cases = ratios, by_level = NULL,
+                by_jurisdiction = list(mp = p_mp, loser = p_lo, all = p_all)))
+  }
   if (!.dstate && .dbl %in% c("1", "2")) {
     R <- ratios[was_mp %in% TRUE & is.finite(ratio)]
     lv <- R[, list(est = stats::median(ratio), n = .N,
@@ -1334,6 +1360,11 @@ fit_sitting_minor_level <- function(target_election, corpus = NULL, pairs = NULL
   }), fill = TRUE)
   if (is.null(cases) || !nrow(cases)) return(list(level = NA_real_, n = 0L, cases = cases))
   cases <- unique(cases, by = c("pair", ".k", ".s"))
+  if (pool_by_jurisdiction_on()) {   # AUSPOL_POOL_BY_JURISDICTION=1, R/pool_hierarchical.R
+    p <- pool_by_group(cases$next_pcv, jurisdiction_of(cases$pair), jurisdiction_of(target_election))
+    cat(sprintf("SMJ  %s sitting non-major level pooled by jurisdiction: %s\n", target_election, .pool_summary(p)))
+    return(list(level = p$estimate, n = nrow(cases), cases = cases, by_jurisdiction = p))
+  }
   list(level = stats::median(cases$next_pcv), n = nrow(cases), cases = cases)
 }
 
@@ -1447,6 +1478,21 @@ fit_minor_defector_discount <- function(target_election, corpus = NULL, min_n = 
   # 0.28-0.29 (sitting) vs 0.142 (losing). `discount` stays the POOLED rate
   # for a caller not using the two-rate mode, byte-identical to before this
   # split. docs/reviews/minor-defector-two-rate-2026-09-17.md.
+  # AUSPOL_POOL_BY_JURISDICTION=1 (median mode only): each rate is the target
+  # jurisdiction's median partially pooled across jurisdictions (R/pool_hierarchical.R).
+  if (pool_by_jurisdiction_on() && agg != "geomean") {
+    tj <- jurisdiction_of(target_election)
+    pj <- function(sel) {
+      rr <- ratios[sel & is.finite(ratios$ratio)]
+      p <- pool_by_group(rr$ratio, jurisdiction_of(rr$pair), tj)
+      cat(sprintf("MDJ  %s minor defector rate pooled by jurisdiction: %s\n", target_election, .pool_summary(p)))
+      p$estimate
+    }
+    return(list(discount       = pj(rep(TRUE, nrow(ratios))),
+                discount_mp    = pj(ratios$was_mp %in% TRUE),
+                discount_loser = pj(ratios$was_mp %in% FALSE),
+                n = nrow(ratios), cases = ratios))
+  }
   list(discount        = agg_fn(ratios$ratio),
        discount_mp     = agg_fn(ratios$ratio[ratios$was_mp %in% TRUE]),
        discount_loser  = agg_fn(ratios$ratio[ratios$was_mp %in% FALSE]),
