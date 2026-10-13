@@ -500,6 +500,25 @@ hc_statewide_draws <- function(region, year, election_date, prev_state, state_sd
     return(list(draws = d, source = "polls", n_polls = fc$n_polls, reason = NA_character_))
   }
   if (is.null(reason)) reason <- "trend could not be fitted at the cutoff"
+  # THIN CYCLE (published switch AUSPOL_THIN_CYCLE, default "1"): the previous result moved by the
+  # cycle's polls, precision-weighted (R/thin_cycle.R). With no polls it returns the previous result
+  # unchanged, so the zero-poll elections come through the same function. The spread around the
+  # level is the same time-forward SD the plain fallback uses -- not a fitted posterior.
+  if (identical(Sys.getenv("AUSPOL_THIN_CYCLE", "1"), "1")) {
+    th <- tryCatch(thin_cycle_statewide(region, year, ed, cl, prev_state, code = "HCT"),
+                   error = function(e) { reason <<- paste0(reason, "; thin cycle: ", conditionMessage(e)); NULL })
+    if (!is.null(th)) {
+      npl <- as.integer(attr(th, "n_polls"))
+      cat(sprintf("HCS1  %s%d statewide THIN-CYCLE: previous result updated by %d poll(s) (trend not used: %s)\n",
+                  region, year, npl, substr(reason, 1, 100)))
+      if (!is.null(seed)) set.seed(seed)
+      d <- sapply(cl, function(k) th[[k]] + stats::rnorm(n_sims, 0, state_sd[[k]]))
+      d <- pmax(d, 0.05)
+      d <- d / rowSums(d) * 100
+      return(list(draws = d, source = if (npl > 0L) "thin-cycle" else "fallback: previous result",
+                  n_polls = npl, reason = reason))
+    }
+  }
   cat(sprintf(paste0("HCS1  %s%d statewide FALLBACK -- NOT POLLS: previous election's result (%s) with ",
                      "time-forward SD (%s). Reason polls were not used: %s\n"),
               region, year, paste(sprintf("%s %.1f", cl, prev_state[cl]), collapse = ", "),
@@ -529,6 +548,9 @@ hc_statewide_draws <- function(region, year, election_date, prev_state, state_sd
 #' @param flows Transfer matrix for [hc_party_count()].
 #' @param leak Ticket leakage rates for [hc_party_count()], or `NULL`.
 #' @param seed Optional seed.
+#' @param defect Optional output of [hc_defector_moves()]: sitting members who
+#'   changed party, whose carried personal vote moves between priors.
+#'   `NULL` (default) changes nothing.
 #' @param cand `NULL` for the party-level block count. For the candidate-level
 #'   count, a list by electorate of `list(ballots = ` [hc_prepare_ballots()] or
 #'   [hc_synthetic_ballots()]`, split = ` expected within-ticket shares by unit
@@ -540,7 +562,7 @@ hc_statewide_draws <- function(region, year, election_date, prev_state, state_sd
 #'   electorate and class, long form) for statewide totals.
 #' @export
 hc_simulate <- function(target, base, unit_prev, state_draws, prev_state, noise_sd, unit_pri, flows,
-                        leak = NULL, seed = NULL, cand = NULL) {
+                        leak = NULL, seed = NULL, cand = NULL, defect = NULL) {
   cl <- c("ALP", "LNP", "GRN", "OTH")
   if (!is.null(seed)) set.seed(seed)
   n_sims <- nrow(state_draws)
@@ -566,6 +588,18 @@ hc_simulate <- function(target, base, unit_prev, state_draws, prev_state, noise_
       }
       unit_pri$p_new
     }, numeric(1))
+    # AUSPOL_HC_DEFECTOR: a sitting member standing for another party takes a share of their
+    # previous personal vote with them (hc_defector_moves()); the move is zero-sum.
+    if (!is.null(defect)) {
+      dd <- defect[defect$electorate == e & defect$same_electorate & defect$points > 0, , drop = FALSE]
+      for (i in seq_len(nrow(dd))) {
+        pts <- dd$points[i]
+        if (dd$from_cls[i] != "OTH") bshare[[dd$from_cls[i]]] <- max(0.05, bshare[[dd$from_cls[i]]] - pts)
+        else { kf <- match(dd$from_unit[i], tu$unit[oth]); if (!is.na(kf)) w[kf] <- max(0.01, w[kf] - pts) }
+        if (dd$to_cls[i] != "OTH") bshare[[dd$to_cls[i]]] <- bshare[[dd$to_cls[i]]] + pts
+        else { kt <- match(dd$to_unit[i], tu$unit[oth]); if (!is.na(kt)) w[kt] <- w[kt] + pts }
+      }
+    }
     if (length(oth)) bshare[["OTH"]] <- sum(w)
     noise <- sapply(cl, function(k) stats::rnorm(n_sims, 0, noise_sd[[k]]))
     sh <- sweep(swing + noise, 2, bshare, `+`)
@@ -612,6 +646,81 @@ hc_simulate <- function(target, base, unit_prev, state_draws, prev_state, noise_
   out <- do.call(rbind, res)
   attr(out, "draws") <- dr
   out
+}
+
+#' Sitting Hare-Clark members who stand for a different party or as independents
+#'
+#' Matches PEOPLE, never parties: a candidate elected at the previous election
+#' (by normalised name) who appears at the target election on a ticket of a
+#' different scoring class (ALP, LNP, GRN or OTH, [hc_score_class()]). Returns
+#' one row per case with the previous personal first-preference vote in points
+#' of the electorate's formal vote. `same_electorate` is FALSE when the person
+#' moved electorate (listed, never applied).
+#'
+#' @param cands `data.frame` of `output/hare-clark-candidates.csv`.
+#' @param region,year Target election.
+#' @param prev_year The previous election in the same region.
+#' @return `data.frame`: electorate, person, from_unit, from_cls, to_unit, to_cls,
+#'   prev_votes, prev_pv, target_electorate, same_electorate; `NULL` if none.
+#' @export
+hc_defector_cases <- function(cands, region, year, prev_year) {
+  key <- function(x) gsub("[[:space:]]+", " ", trimws(tolower(gsub("[^A-Za-z ]", "", x))))
+  # a plain data.frame: on a data.table the bare names `region`/`year` would bind to the COLUMNS
+  # inside `[`, making every comparison TRUE (this bit the first version of this function)
+  cands <- as.data.frame(cands)
+  want_region <- region; want_year <- year; want_prev <- prev_year
+  P <- cands[cands$region == want_region & cands$year == want_prev, ]
+  N <- cands[cands$region == want_region & cands$year == want_year, ]
+  if (!nrow(P) || !nrow(N)) return(NULL)
+  tot <- tapply(P$votes, P$electorate, sum)
+  P$k <- key(P$candidate); N$k <- key(N$candidate)
+  P <- P[P$elected %in% TRUE, ]
+  m <- merge(P, N, by = "k", suffixes = c("_p", "_n"))
+  m$from_cls <- hc_score_class(m$class_p); m$to_cls <- hc_score_class(m$class_n)
+  # a different TICKET, not only a different scoring class: Jacqui Lambie Network -> independent is
+  # OTH -> OTH but still moves a personal vote. Independents re-labelled between an IND/GRP/UNG
+  # ticket form are not defectors.
+  indep <- function(u) grepl("^(IND|GRP|UNG): ", u)
+  m <- m[m$unit_p != m$unit_n & !(indep(m$unit_p) & indep(m$unit_n)), ]
+  if (!nrow(m)) return(NULL)
+  unique(data.frame(electorate = m$electorate_p, person = m$candidate_p, from_unit = m$unit_p, from_cls = m$from_cls,
+             to_unit = m$unit_n, to_cls = m$to_cls, prev_votes = m$votes_p,
+             prev_pv = 100 * m$votes_p / as.numeric(tot[m$electorate_p]),
+             target_electorate = m$electorate_n, same_electorate = m$electorate_p == m$electorate_n,
+             stringsAsFactors = FALSE))
+}
+
+#' Share of a defecting sitting member's personal vote that moves with them
+#'
+#' For [hc_simulate()] under `AUSPOL_HC_DEFECTOR = "1"`. The rate is the
+#' sitting-member carry rate the single-member model already estimates
+#' time-forward ([fit_defector_discount()], `discount_mp`, the state-level
+#' pooled median -- the rate `fit_seats_full.R` uses for a sitting member who
+#' changes party), NOT tuned here. Each same-electorate case moves
+#' `rate * previous personal vote` points from the old party's prior to the new
+#' one's. Printed at point of use (HCM1).
+#'
+#' @inheritParams hc_defector_cases
+#' @return `data.frame` of the cases with `points` (and a `rate` attribute), or
+#'   `NULL` when none.
+#' @export
+hc_defector_moves <- function(cands, region, year, prev_year) {
+  cs <- hc_defector_cases(cands, region, year, prev_year)
+  tg <- sprintf("%s%d", region, year)
+  if (is.null(cs)) { cat(sprintf("HCM1  %s: no sitting member changed class\n", tg)); return(NULL) }
+  f <- fit_defector_discount(tg)
+  rate <- f$discount_mp
+  if (is.null(rate) || !is.finite(rate)) stop("hc_defector_moves(): no sitting-member carry rate fitted before ", tg)
+  cat(sprintf("HCM1  %s: sitting-member carry rate USED = %.3f (fit_defector_discount()$discount_mp, time-forward, %d earlier cases)\n",
+              tg, rate, f$n))
+  cs$points <- ifelse(cs$same_electorate, rate * cs$prev_pv, 0)
+  for (i in seq_len(nrow(cs)))
+    cat(sprintf("HCM1  %s %s: %s %s -> %s %s | previous personal vote %d = %.1f pts | %s\n", tg, cs$electorate[i], cs$person[i],
+                cs$from_cls[i], cs$to_cls[i], cs$to_unit[i], as.integer(cs$prev_votes[i]), cs$prev_pv[i],
+                if (cs$same_electorate[i]) sprintf("MOVES %.2f pts", cs$points[i])
+                else sprintf("NOT APPLIED (stands in %s)", cs$target_electorate[i])))
+  attr(cs, "rate") <- rate
+  cs
 }
 
 #' Log loss of a seat-count forecast
