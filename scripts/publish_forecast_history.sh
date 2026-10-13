@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Keep a dated copy of each published Victorian forecast, so the ITG pages can
+# Keep a dated copy of each published forecast (Victoria; NSW via ELECTION=nsw2027), so the ITG pages can
 # show the forecast "as at <date>" (peteowen1/inthegame-blog#610).
 #
 # The daily run overwrites auspol/forecast-vic2026.json and vic-page-data.json
@@ -29,11 +29,16 @@
 # directory instead, for tests (scripts/test_publish_forecast_history.sh).
 set -euo pipefail
 
-FORECAST=${FORECAST:-output/forecast-vic2026.json}
-PAGEDATA=${PAGEDATA:-output/vic-page-data.json}
+# ELECTION picks the election (default vic2026: keys unchanged). The Victorian
+# page-data file keeps its historical name vic-page-data; every other election
+# uses <election>-page-data (nsw2027 -> nsw2027-page-data-<date>.json).
+ELECTION=${ELECTION:-vic2026}
+if [ "$ELECTION" = vic2026 ]; then PD_STEM=vic-page-data; else PD_STEM=$ELECTION-page-data; fi
+FORECAST=${FORECAST:-output/forecast-$ELECTION.json}
+PAGEDATA=${PAGEDATA:-output/$PD_STEM.json}
 PREFIX=auspol/history
-INDEX_KEY=$PREFIX/index-vic2026.json
-BACKUP_KEY=$PREFIX/index-vic2026.backup.json
+INDEX_KEY=$PREFIX/index-$ELECTION.json
+BACKUP_KEY=$PREFIX/index-$ELECTION.backup.json
 PUBLIC=${HISTORY_PUBLIC_BASE:-https://pub-ee4bf5b599a047f9ac2b9facc1587008.r2.dev}
 WORK=$(mktemp -d)
 trap 'rm -rf "$WORK"' EXIT
@@ -91,14 +96,14 @@ OLD_F=$(jq '[.forecast[].as_at] | unique | length' "$WORK/old.json")
 OLD_P=$(jq '[.page_data[].as_at] | unique | length' "$WORK/old.json")
 
 # Dated copies first, then the index, so the index never names a missing file.
-F_KEY=$PREFIX/forecast-vic2026-$F_DATE.json
+F_KEY=$PREFIX/forecast-$ELECTION-$F_DATE.json
 put_obj "$F_KEY" "$FORECAST" 3600
 jq --arg d "$F_DATE" --arg b "$F_BUILT" --arg s "$F_SHA" --arg k "$F_KEY" --argjson n "$N_SEATS" \
   '.forecast = ([.forecast[] | select(.as_at != $d)] + [{as_at: $d, built_at: $b, git_sha: $s, key: $k, n_seats: $n}] | sort_by(.as_at))' \
   "$WORK/old.json" > "$WORK/new.json"
 
 if [ -s "$PAGEDATA" ] && P_DATE=$(jq -er '.meta.as_of' "$PAGEDATA") && [[ "$P_DATE" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]]; then
-  P_KEY=$PREFIX/vic-page-data-$P_DATE.json
+  P_KEY=$PREFIX/$PD_STEM-$P_DATE.json
   put_obj "$P_KEY" "$PAGEDATA" 3600
   jq --arg d "$P_DATE" --arg k "$P_KEY" \
     '.page_data = ([.page_data[] | select(.as_at != $d)] + [{as_at: $d, key: $k}] | sort_by(.as_at))' \

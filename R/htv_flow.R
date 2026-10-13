@@ -41,6 +41,9 @@ htv_order_table <- function(path = file.path("external", "reference", "htv", "li
 #' @export
 htv_observed_splits <- function(dir = file.path("external", "elections")) {
   fs <- list.files(dir, pattern = "-transfers[.]csv$", full.names = TRUE)
+  # AUSPOL_HTV_EXCLUDE: comma-separated transfer files to leave out (diagnostic; attribution of a new file's effect)
+  ex <- strsplit(Sys.getenv("AUSPOL_HTV_EXCLUDE", ""), ",")[[1]]
+  if (length(ex)) fs <- fs[!basename(fs) %in% trimws(ex)]
   if (!length(fs)) return(NULL)
   tx <- data.table::rbindlist(lapply(fs, function(f) {
     d <- data.table::fread(f, showProgress = FALSE)

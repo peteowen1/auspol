@@ -180,6 +180,14 @@ Dug 2026-10-09 from run 0cbaa82 (`scripts/biggest_misses.R --pairs=vic2018`). Th
   the flow is right and the miss is primaries (IND 37.2 vs 33.9) plus the
   scenario conditioning. Teal pattern, **PARKED**.
 
+## nsw2019
+
+- **Barwon** -- **OPEN** (2026-10-13). Shooters (OTH_RIGHT) won; the 2026-10-13 baseline rebuild gave them 0 of
+  20,000 simulations (LNP favourite 0.972), scored at the 1e-6 floor (13.82), which alone carries nsw2019's +0.042 move
+  against the 11:00 publish (pooled +0.0029). Not caused by the Poll Bludger layer (nsw2019 0.2500 with, 0.2525 without)
+  nor the new NSW 2011 transfers (0 change, AUSPOL_HTV_EXCLUDE). An emergence the model cannot see; Murray (Shooters,
+  p 0.04) is the same pattern. `deciding-runs/rebuild-20261013-baseline-today-from5.log`, `output/biggest-misses.csv`.
+
 ## nsw2023
 
 - **Bankstown** -- **OPEN** (traced 2026-10-10). Dib (ALP) 59.4 actual vs

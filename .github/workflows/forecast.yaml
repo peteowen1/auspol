@@ -544,6 +544,24 @@ jobs:
           done
           # The forecast is out; now raise the alarm if the chart was not (R2 still holds the previous day's).
           if [ -f output/.nsw-trend-failed ]; then echo "::error::NSW poll-trend page data failed; the page shows the previous chart"; exit 1; fi
+      - name: Keep a dated copy of the NSW 2027 forecast on R2 (as-at history)
+        # Same script and rules as the Victorian step above, ELECTION=nsw2027:
+        # auspol/history/forecast-nsw2027-<date>.json, nsw2027-page-data-<date>.json,
+        # index-nsw2027.json. After the live NSW files are published; non-fatal.
+        if: success() && vars.AUSPOL_PUBLISH_NSW2027 == '1'
+        continue-on-error: true
+        shell: bash
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_R2_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          ELECTION: nsw2027
+        run: |
+          if [ -z "$CLOUDFLARE_API_TOKEN" ] || [ -z "$CLOUDFLARE_ACCOUNT_ID" ]; then
+            echo "::warning::R2 secrets not set -- NSW forecast history skipped"
+            exit 0
+          fi
+          command -v wrangler >/dev/null || npm install -g wrangler@4.135.0 >/dev/null 2>&1
+          bash scripts/publish_forecast_history.sh || { echo "::warning::NSW forecast history step failed; the live forecast is unaffected"; exit 1; }
       - name: Upload outputs
         if: always()
         uses: actions/upload-artifact@v4
