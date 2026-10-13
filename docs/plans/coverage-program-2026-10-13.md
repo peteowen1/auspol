@@ -137,3 +137,8 @@ Qld 2001-2017 (7); SA 2002-2018 (5); Tas, NT, ACT (none). Poll sources: `docs/PO
   rows, 745 stated). Waiting on census-by-vintage, then one rebuild. Baseline for comparison:
   `deciding-runs/rebuild-20261013-baseline-today-from5.log` (pooled 0.3207; Barwon 2019 at the floor, seat registry).
   NSW dated forecast history shipped (70db9c8, ITG request).
+- 2026-10-13 ~15:30: bundle rebuild restarted. First try stopped: output/mp-slope-by-target.csv (built by
+  scripts/fit_mp_slope.R, NOT in the rebuild) had no vic2010 row, and the fitter had been failing since live
+  candidacies (no votes) were added: fixed (728f083). **OPEN, pre-existing:** fit_mp_slope.R is leave-one-election-out,
+  not time-forward (CLAUDE.md: LOO trains older targets on later elections); it feeds the shipped dev_slope tier.
+  Make it time-forward and re-measure, as its own step.
