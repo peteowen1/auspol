@@ -1,5 +1,38 @@
 # Overnight queue, 2026-10-13/14 (Pete asleep; autonomous)
 
+## MORNING SUMMARY (written 05:25)
+
+**Needs Pete, in this order:**
+1. **Publish.** Release still has the 18:20 (13 Oct) models. Two ready states:
+   - final, with full inputs (salience/census/retirements for the new elections): snapshot
+     `output/snapshots/20261014-0448-4e03af5-from1` = what is in output/ now. AEF-7 0.2657 vs AEF 0.2825.
+   - without those inputs: snapshot `output/snapshots/20261014-0250-ecc1bb3-from4`, AEF-7 0.2644.
+   Recommendation: the full-inputs state (qld2017 0.927 -> 0.602; 2010+ -0.0087 within noise; AEF-7 +0.0013 beyond
+   1 SE; nsw2019 +0.026, sa2018 +0.025 unexplained). Command: `AUSPOL_PUBLISH=1 AUSPOL_REBUILD_FROM=9 bash
+   scripts/rebuild_forecasts.sh`, then push dev (held back since f7f475a so the 07:00 run saw less new code).
+2. **Kill-by-name incident ~01:50**: an agent ran `taskkill /IM Rscript.exe` (PIDs 42792, 56328, owners unknown).
+   Check other sessions' overnight jobs. Memory saved so every brief now forbids it.
+3. **Decisions** (each built OFF or pending):
+   - `AUSPOL_THIN_CYCLE="1"` published by the NT agent: confirm.
+   - Census LOOKAHEAD rows (214 rows take a later census for renamed seats): keep or drop.
+   - `AUSPOL_HC_DEFECTOR` (Hare-Clark members who change ticket): pooled 0.525 -> 0.496, act2024 worse.
+   - `AUSPOL_POLL_ARCHIVE` (Morgan + Newspoll archives): fed2007 AEF polls 185 -> 66; scored effect unmeasured.
+   - `AUSPOL_PB_COALITION_COMBINED`: frees 4 WA polls; recommend leave off.
+4. **Daily run 07:00**: ran dev's new code against the OLD release; check `gh run list --workflow forecast.yaml`.
+5. Cleanup needing approval: ~10 agent worktrees under .claude/worktrees (all merged; several contain JUNCTIONS to
+   main's external/ -- remove with `git worktree remove`/rmdir, never rm -rf); `output/` holds 10,112 backtest files.
+
+**Shipped overnight (dev, local):** CI green (1938 tests, R CMD check clean); leak fixes; as-at fit checkpoints per
+target (a 01:34 kill had lost 13 min); inputs for the 12 new elections; Tas polls (89, EMRS mostly; ACT 3) and the
+Hare-Clark thin-cycle path (pooled 0.525 vs naive 0.974); pollster-archive, combined-Coalition and Hare-Clark defector
+switches (all OFF); registries regenerated; NT 2012 empty tcp column fixed; SEAT-REGISTRY entries for wa2013
+Churchlands (retired independent + Liberal re-entry), Hillarys, WA 2017 swing seats.
+
+**Failed / not done:** first poll-coverage agent stuck 5 h on setup (replaced); Poll Bludger second pass found
+little (posts hold no more); ACT has almost no polls anywhere; Newspoll 2005-07 gaps; wa2017/wa2013 regressions
+traced to seats but not fixed.
+
+
 Pete, 23:5x: "keep working through next steps on dev and making fixes and housekeeping ... if you need me for
 something, save it for the morning". Trust does not extend to merges to main, deletes, force-push or secret rotation.
 
@@ -65,3 +98,13 @@ something, save it for the morning". Trust does not extend to merges to main, de
   Newspoll Dec 2006 ALP 46/GRN 5 in two PDFs vs AEF 44/7). Off = byte-identical. Scored effect unmeasured. Agent's copy
   into main was denied by the permission check; the CSVs come via the branch merge instead. It also disclosed a
   `taskkill /IM python.exe` (only its own downloader was running). Empty dir left: external/reference/polls/archive.
+- 02:52 HEAD rebuild done (snapshot 20261014-0250-ecc1bb3-from4): leak fixes vs pre-fix 35 run, sqrt-votes +0.0002
+  everywhere, none worse > 0.02. AEF-7 0.2644 vs AEF 0.2825.
+- 03:00 Merged into dev: Hare-Clark polls/thin-cycle/defector, combined-Coalition, pollster archive (1960 tests pass).
+  Inputs data brought into output/ (backups deciding-runs/inputs-backup-20261014).
+- 03:05 Final rebuild: memory gate never opened (5.0 GB free, 6 needed); ran on 1 slot. Claude Code's memory guard
+  killed its wrapper shell at ~03:08 but the runner survived (orphan); watched the log. Done 04:48 (snapshot
+  20261014-0448-4e03af5-from1): AEF-7 0.2657; qld2017 -0.324; nsw2019 +0.026, sa2018 +0.025.
+- 05:00 Registries regenerated (poll registry: 2,965 polls, AEF's numbers on 712; final 30 days 286, AEF's on 20).
+  Data dictionary failed on NT 2012's empty tcp column -> fixed at the source.
+- 05:15 Worst seats in the regressed elections recorded in SEAT-REGISTRY (Churchlands measured).
