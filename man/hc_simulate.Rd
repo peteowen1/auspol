@@ -14,7 +14,8 @@ hc_simulate(
   unit_pri,
   flows,
   leak = NULL,
-  seed = NULL
+  seed = NULL,
+  cand = NULL
 )
 }
 \arguments{
@@ -43,6 +44,13 @@ their mean there; others get \code{unit_pri$p_new}.}
 \item{leak}{Ticket leakage rates for \code{\link[=hc_party_count]{hc_party_count()}}, or \code{NULL}.}
 
 \item{seed}{Optional seed.}
+
+\item{cand}{\code{NULL} for the party-level block count. For the candidate-level
+count, a list by electorate of \verb{list(ballots = } \code{\link[=hc_prepare_ballots]{hc_prepare_ballots()}} or
+\code{\link[=hc_synthetic_ballots]{hc_synthetic_ballots()}}\verb{, split = } expected within-ticket shares by unit
+(from \code{\link[=hc_split_expected]{hc_split_expected()}})\verb{, sdlog = } their noise\verb{)}; each draw splits
+every ticket's vote over its candidate slots (\code{\link[=hc_split_draw]{hc_split_draw()}}) and runs
+\code{\link[=hc_candidate_count]{hc_candidate_count()}}.}
 }
 \value{
 \code{data.frame} electorate, cls, seats, prob: the forecast distribution

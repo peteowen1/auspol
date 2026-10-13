@@ -19,11 +19,10 @@ hc_notional_from_booths(booths, units, prev_year, target_year)
 \code{coverage} (share of previous booth votes mapped).
 }
 \description{
-For an election whose electorates did not exist last time (ACT 2016), maps
-each previous-election ORDINARY polling place to the target electorate whose
-ballots it took in the target year, and returns the previous election's class
-shares there. Polling places used by more than one target electorate
-(pre-poll centres, postal, interstate) are dropped. Returned as a deviation
+For an election whose electorates did not exist last time (ACT 2016), shares
+each previous-election polling place out across the target electorates in
+proportion to the ballots it took for each of them in the target year, and
+returns the previous election's class shares so built. Returned as a deviation
 from the previous territory-wide booth share added to the previous
 territory-wide share of ALL votes, so declaration votes still set the level.
 }

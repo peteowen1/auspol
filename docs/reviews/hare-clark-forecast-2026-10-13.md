@@ -131,3 +131,67 @@ The ballot-based rates are worth about 0.15 of log loss over an uninformed prior
   `scripts/build_data_registry.R` from the main checkout after merge.
 - Tasmanian count exports for 2024 and 2025 (full distribution of preferences) are stored but not parsed; they
   would give Tasmanian transfer rates for 2025 onward.
+
+## Round 2 (same day): candidate-level count, Tasmanian transfer rates, polls
+
+### Changes
+- **Candidate-level count** (`R/hare_clark_candidates.R`, `src/hare_clark_stv.cpp`, arm `--count=candidate`).
+  Each ticket's simulated vote is split over anonymous candidate slots (its number one, number two, ...) by the
+  previous election's within-ticket shares shrunk toward equal (`lambda` and log-share noise fitted
+  time-forward); then an inclusive-Gregory candidate count (~10 ms) runs on ballot types. ACT: the previous
+  election's ballot file folded to slot sequences (`scripts/build_hare_clark_ballots.R`), re-weighted so each
+  slot's first preferences match the draw (ACT 2016 pools all 2012 ballots; a ticket with no ballots borrows
+  from tickets of its class). Tasmania has no ballot file: synthetic two-transfer-deep ballots from the party
+  transfer rates and ticket leakage (`hc_synthetic_ballots()`).
+- **Tasmanian transfer rates from Tasmania** (`scripts/build_hare_clark_tas_flows.R`, `hc_flows_from_counts()`):
+  733 transfers in the TEC 2024 and 2025 count exports (Table I, papers; every count conserves papers). tas2025
+  now uses the 2024 export; earlier Tasmanian elections still borrow the ACT ballots (no earlier export stored).
+- **Data fix:** the Tasmanian Nationals (2014, 2025) had been merged into the Liberal ticket because
+  `classify_party()` files them with the Coalition; they are now a separate minor-right ticket. This moved the
+  block-count tas2014 log loss from 1.489 to 1.749 (the earlier figure was flattered by the merge).
+
+### Oracle: the actual first preferences through each count (electorates reproduced)
+
+| Region | Electorates | Block count | Candidate count (previous ballots / synthetic, re-weighted) | Candidate count on that election's OWN ballots |
+|---|---|---|---|---|
+| ACT 2012-2024 | 18 | 9 | 13 | **18** |
+| Tasmania 2010-2025 | 30 | 28 | 26 | (no ballot files) |
+
+The fast candidate engine reproduces every ACT party result from that election's own ballots, so the
+inclusive-Gregory simplification costs nothing at party level. Re-using the previous election's ballots
+recovers 4 of the 9 ACT misses. In Tasmania the synthetic ballots lose 3 electorates the block count gets right
+(Braddon 2014, Lyons 2024, Bass 2025) and gain 1 (Franklin 2018).
+
+### Backtest, block vs candidate count (2,000 draws each, no polls; log loss lower is better)
+
+| Election | Naive | Block | Candidate |
+|---|---|---|---|
+| tas2010 | 1.020 | 0.672 | 0.676 |
+| tas2014 | 1.641 | 1.749 | 1.790 |
+| tas2018 | 0.819 | 0.402 | 0.392 |
+| tas2021 | 0.502 | 0.744 | 1.122 |
+| tas2024 | 1.940 | 1.271 | 2.062 |
+| tas2025 | 0.659 | 0.628 | 0.848 |
+| act2012 | 1.157 | 0.765 | 0.875 |
+| act2016 | 0.620 | 0.341 | 0.345 |
+| act2020 | 0.863 | 0.717 | 0.670 |
+| act2024 | 0.594 | 0.718 | 1.746 |
+| **Pooled (192 cells)** | **0.974** | **0.802** | **1.060** |
+
+**The candidate count loses pooled log loss, so the block count stays the default.** Almost all of the loss is
+five cells given probability exactly zero (each costs 13.8): two new ACT 2024 independents (Independents for
+Canberra in Kurrajong, Fiona Carrick in Murrumbidgee), independents in Clark 2021 and Braddon 2024, and
+Braddon 2014 Liberal 4. The block count has one such cell. Over the cells that are not at the floor the two are close (candidate about 0.72, block about 0.73), so the next step is a heavier tail for new and independent tickets
+in the candidate path, not abandoning it.
+
+### Tasmanian vs borrowed ACT transfer rates, tas2025
+
+| Count | Rates from ACT 2024 ballots | Rates from TEC 2024 count | Oracle electorates (ACT rates / TEC rates) |
+|---|---|---|---|
+| Block | 0.664 | **0.628** | 5 / 5 |
+| Candidate | 0.916 | **0.848** | 4 / 4 |
+
+### Polls
+The poll branch (`worktree-agent-a904c8a0ef0b375e8`) had no commits beyond the shared base when checked
+(three times over about 70 minutes), so there is no with-polls run. Every number here is still the
+previous-result fallback.

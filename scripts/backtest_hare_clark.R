@@ -32,8 +32,11 @@ arg <- function(name, default) {
 region_arg <- arg("region", "all"); year_arg <- arg("year", "all")
 n_sims <- as.integer(arg("sims", "5000")); flow_arm <- arg("flows", "data"); seed <- as.integer(arg("seed", "20261013"))
 fine <- identical(arg("flowclass", "4"), "6"); use_leak <- identical(arg("leak", "0"), "1")
-stopifnot(flow_arm %in% c("data", "prior", "neutral"), n_sims >= 100)
-arm_tag <- paste0(if (flow_arm == "data") "" else paste0("-", flow_arm), if (fine) "-fc6" else "", if (use_leak) "-leak" else "")
+count_arm <- arg("count", "block"); tas_src <- arg("tasflows", "tec")
+stopifnot(flow_arm %in% c("data", "prior", "neutral"), n_sims >= 100, count_arm %in% c("block", "candidate"),
+          tas_src %in% c("tec", "act"))
+arm_tag <- paste0(if (flow_arm == "data") "" else paste0("-", flow_arm), if (fine) "-fc6" else "", if (use_leak) "-leak" else "",
+                  if (count_arm == "candidate") "-cand" else "", if (tas_src == "act") "-tasact" else "")
 
 units <- fread("output/hare-clark-units.csv")
 flows_all <- fread("output/hare-clark-act-flows.csv")
@@ -43,7 +46,10 @@ cat(sprintf("HCB1  units %d rows, %d elections; ACT flow rows %d; booth rows %d\
 stopifnot(nrow(units) > 400, nrow(flows_all) > 1000)
 units[, cls := hc_score_class(class)]
 units[, fcls := hc_flow_class(class, fine)]
-leak_all <- if (use_leak) fread("output/hare-clark-act-leak.csv") else NULL
+leak_all <- fread("output/hare-clark-act-leak.csv")
+cands_all <- fread("output/hare-clark-candidates.csv")
+tas_fl <- if (file.exists("output/hare-clark-tas-flows.csv")) fread("output/hare-clark-tas-flows.csv") else NULL
+ballots_all <- if (count_arm == "candidate") fread("output/hare-clark-act-ballots.csv") else NULL
 el <- hare_clark_elections()
 todo <- el[!is.na(el$prev) & (region_arg == "all" | el$region == region_arg) &
              (year_arg == "all" | el$year == as.integer(year_arg)) & !(el$region == "tas" & el$year == 2006L), ]
@@ -102,7 +108,16 @@ run_one <- function(rg, yr) {
     fl <- hc_flows_from_ballots(as.data.frame(flows_all[year == fy]), fine = fine); fsrc <- sprintf("ACT %d ballots", fy)
     if (flow_arm == "neutral") { fl[, 1:4] <- fl[, 1:4] / rowSums(fl[, 1:4]); fl[, "EXH"] <- 0; fsrc <- paste(fsrc, "with exhaust set to 0") }
   }
-  lk <- if (use_leak && !is.na(fy)) hc_leak_from_ballots(as.data.frame(leak_all[year == fy]), fine = fine) else NULL
+  lk_all <- if (!is.na(fy)) hc_leak_from_ballots(as.data.frame(leak_all[year == fy]), fine = fine) else
+    stats::setNames(rep(0.2, 6), c("ALP", "LNP", "GRN", "RGT", "IND", "OTH"))
+  # Tasmania: its own count exports where one is dated before this election (2024 -> tas2025)
+  if (rg == "tas" && tas_src == "tec" && flow_arm == "data" && !is.null(tas_fl) && any(tas_fl$year < yr)) {
+    ty <- max(tas_fl$year[tas_fl$year < yr])
+    fl <- hc_flows_from_counts(as.data.frame(tas_fl[year == ty]), fine = fine)
+    lk_all <- attr(fl, "leak")
+    fsrc <- sprintf("Tasmanian TEC %d distribution of preferences", ty)
+  }
+  lk <- if (use_leak) lk_all else NULL
   if (fine) fsrc <- paste(fsrc, "(six transfer classes)")
   if (!is.null(lk)) fsrc <- paste(fsrc, "+ ticket leakage")
   cat(sprintf("HCB1  transfer rates: %s\n", fsrc)); print(round(fl, 3))
@@ -110,7 +125,35 @@ run_one <- function(rg, yr) {
   # statewide
   sw <- hc_statewide_draws(rg, yr, ed, prev_state, ssd, n_sims = n_sims, seed = seed)
   target <- as.data.frame(tg[, .(electorate, unit, cls, fcls, ncand, seats)])
-  pr <- hc_simulate(target, base, unit_prev, sw$draws, prev_state, nsd, upri, fl, leak = lk, seed = seed + 1L)
+  # candidate-level count inputs, per electorate
+  cand <- NULL; slot_actual <- NULL
+  if (count_arm == "candidate") {
+    spri <- hc_split_priors(cands_all, ed)
+    cat(sprintf("HCB1  within-ticket split: lambda %.2f, log-share SD %.2f (%d ticket pairs, time-forward)\n",
+                spri$lambda, spri$sdlog, spri$n_pairs))
+    pc <- cands_all[region == rg & year == py]
+    prev_class <- setNames(pv$class, pv$unit); prev_class <- prev_class[!duplicated(names(prev_class))]
+    cand <- list()
+    for (e in unique(target$electorate)) {
+      tu <- target[target$electorate == e, ]
+      sp <- hc_split_expected(tu, as.data.frame(pc[electorate == e, .(unit, votes)]),
+                              as.data.frame(pc[, .(unit, electorate, votes)]), spri)
+      if (rg == "act") {
+        b <- if (yr == 2016L) ballots_all[year == py] else ballots_all[year == py & electorate == e]
+        bl <- hc_prepare_ballots(b$seq, b$n, tu, prev_class)
+      } else {
+        bb <- base[base$electorate == e, ]
+        ush <- setNames(bb$share[match(tu$cls, bb$cls)], tu$unit)
+        oth <- tu$cls == "OTH"
+        ush[oth] <- vapply(tu$unit[oth], function(un) {
+          h <- unit_prev$share[unit_prev$electorate == e & unit_prev$unit == un]
+          if (length(h) == 1L) h else upri$p_new }, numeric(1))
+        bl <- hc_synthetic_ballots(tu, ush, fl, lk_all)
+      }
+      cand[[e]] <- list(ballots = bl, split = sp, sdlog = spri$sdlog)
+    }
+  }
+  pr <- hc_simulate(target, base, unit_prev, sw$draws, prev_state, nsd, upri, fl, leak = lk, seed = seed + 1L, cand = cand)
   ps <- aggregate(pr$prob, pr[, c("electorate", "cls")], sum)
   stopifnot(all(abs(ps$x - 1) < 1e-9))
   cat("HCB3  PASS every electorate x class distribution sums to 1\n")
@@ -135,6 +178,31 @@ run_one <- function(rg, yr) {
   ns <- as.data.table(hc_log_loss(as.data.frame(nv), actual))
   sc[ns, `:=`(naive_logloss = i.logloss, naive_mode = i.mode), on = c("electorate", "cls")]
   # oracle: the actual votes through the same count
+  if (count_arm == "candidate") {
+    ct <- cands_all[region == rg & year == yr]
+    ct[, rank := frank(-votes, ties.method = "first"), by = .(electorate, unit)]
+    oc <- list(); oo <- list()
+    for (e in unique(target$electorate)) {
+      tu <- target[target$electorate == e, ]
+      bl <- cand[[e]]$ballots
+      if (rg == "tas") bl <- hc_synthetic_ballots(tu, setNames(tg[electorate == e]$votes, tg[electorate == e]$unit), fl, lk_all)
+      sv <- ct[electorate == e]$votes[match(paste(bl$slots$unit, bl$slots$rank), paste(ct[electorate == e]$unit, ct[electorate == e]$rank))]
+      el1 <- hc_candidate_count(bl, sv, tu$seats[1])
+      oc[[e]] <- data.table(electorate = e, cls = bl$slots$cls, won = el1)
+      if (rg == "act") {
+        b <- ballots_all[year == yr & electorate == e]
+        pc_own <- setNames(tg$class, tg$unit); pc_own <- pc_own[!duplicated(names(pc_own))]
+        bo <- hc_prepare_ballots(b$seq, b$n, tu, pc_own)
+        oo[[e]] <- data.table(electorate = e, cls = bo$slots$cls, won = hc_candidate_count(bo, bo$B, tu$seats[1]))
+      }
+    }
+    orc <- rbindlist(oc)[, .(oracle = sum(won)), by = .(electorate, cls)]
+    sc[orc, oracle := i.oracle, on = c("electorate", "cls")]; sc[is.na(oracle), oracle := 0]
+    if (rg == "act") {
+      orc2 <- rbindlist(oo)[, .(oracle_own = sum(won)), by = .(electorate, cls)]
+      sc[orc2, oracle_own := i.oracle_own, on = c("electorate", "cls")]; sc[is.na(oracle_own), oracle_own := 0]
+    } else sc[, oracle_own := NA_real_]
+  } else {
   orc <- tg[, {
     w1 <- hc_party_count(votes, seats[1], fcls, fl, ncand = ncand, leak = lk)
     .(cls = cls, won = w1)
@@ -146,6 +214,7 @@ run_one <- function(rg, yr) {
       , .(oracle_own = sum(won)), by = .(electorate, cls)]
     sc[orc2, oracle_own := i.oracle_own, on = c("electorate", "cls")]; sc[is.na(oracle_own), oracle_own := 0]
   } else sc[, oracle_own := NA_real_]
+  }
   # statewide totals
   dr <- attr(pr, "draws")
   tot_draw <- Reduce(`+`, dr)

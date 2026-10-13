@@ -524,3 +524,6 @@ the table are the PRIORS each one is shrunk toward, which bind only when few ear
 | naive hit-rate prior | 0.6 with 20 pseudo-cells | **PRIOR** for the naive baseline's probability on "same seats as last time"; fitted from earlier pairs. |
 | floor on simulated shares | 0.05 points | **COMPUTATIONAL** (keeps a contesting class alive before renormalising). |
 | Tasmanian transfer rates | the latest ACT ballot file before polling day | **BORROWED**: Tasmania publishes no ballot files. The TEC 2024/2025 count exports (stored) would allow a Tasmanian estimate for 2025 onward; not built. |
+| `lambda0`, `sdlog0`, `n0` in `hc_split_priors()` | 0.7, 0.4, 20 | **PRIORS** for the within-ticket split (shrink toward equal; log-share noise); both fitted time-forward over every ticket that stood twice. |
+| synthetic ballot depth | two transfers, then exhausted | **CHOSEN** structure for Tasmania's synthetic ballots (no ballot files); the Tasmanian count exports could fit it. |
+| ballot slot depth | 20 preferences | **CHOSEN** cut in `scripts/build_hare_clark_ballots.R`. |

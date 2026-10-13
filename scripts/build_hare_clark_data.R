@@ -280,6 +280,10 @@ canon <- function(p) {
   s[s == "jln"] <- "jacquilambienetwork"
   s
 }
+# The Tasmanian Nationals (2014, 2025) ran their own ticket AGAINST the Liberals. classify_party() files them
+# with the Coalition (right for the federal path), which here merged them into the Liberal ticket -- one
+# bloc with the Liberals' and the Nationals' candidates. They are a separate minor-right ticket.
+cands[region == "tas" & class == "LNP" & grepl("national", tolower(party)), class := "OTH_RIGHT"]
 cands[, unit_raw := unit]
 cands[, unit := ifelse(class %in% c("ALP", "LNP", "GRN"), class,
                        ifelse(grepl("^(IND|UNG|GRP): ", unit), unit, canon(party)))]

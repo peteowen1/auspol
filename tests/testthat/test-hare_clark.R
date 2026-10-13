@@ -133,3 +133,51 @@ test_that("simulation returns a proper distribution per electorate and class", {
   # 40/38/14/8 of 5 seats: ALP and LNP 2 each most of the time
   expect_gt(pr$prob[pr$cls == "ALP" & pr$seats == 2], 0.5)
 })
+
+# ---- candidate-level count (R/hare_clark_candidates.R, src/hare_clark_stv.cpp) ----
+
+test_that("the candidate count elects at quota and passes a surplus on", {
+  # 100 ballots, 2 seats, quota 34. A 45 (all A>B), B 25, C 30: A's surplus of 11 lifts B to 36.
+  seq <- matrix(c(0L, 1L, 1L, -1L, 2L, -1L), ncol = 2, byrow = TRUE)
+  expect_equal(hc_stv_cpp(seq, c(45, 25, 30), 3L, 2L), c(1L, 1L, 0L))
+  # negative control: A's voters stop at A, so B is excluded and C takes the seat
+  seq2 <- matrix(c(0L, -1L, 1L, -1L, 2L, -1L), ncol = 2, byrow = TRUE)
+  expect_equal(hc_stv_cpp(seq2, c(45, 25, 30), 3L, 2L), c(1L, 0L, 1L))
+})
+
+test_that("ballot types are re-keyed to the tickets standing now, and a new ticket borrows ballots", {
+  seqs <- c("ALP#1>ALP#2>GRN#1", "ALP#2>ALP#1", "GRN#1>ALP#1", "xyz#1>GRN#1", "abc#1>LNP#1")
+  tg <- data.frame(unit = c("ALP", "GRN", "new"), ncand = c(2, 1, 1), cls = c("ALP", "GRN", "OTH"))
+  p <- hc_prepare_ballots(seqs, c(10, 5, 4, 3, 2), tg, c(ALP = "ALP", GRN = "GRN", xyz = "OTH", abc = "OTH"))
+  expect_equal(nrow(p$slots), 4L)
+  expect_true(all(p$B > 0))                         # every slot has ballots starting there
+  expect_false(any(p$mat >= 4L))
+  sv <- c(50, 20, 20, 10)
+  w <- p$base * sv[p$first + 1L] / p$B[p$first + 1L]
+  expect_equal(as.vector(tapply(w, p$first, sum)), sv)
+})
+
+test_that("synthetic ballots carry each slot's weight as probabilities", {
+  tg <- data.frame(unit = c("ALP", "LNP", "GRN"), ncand = c(3, 3, 2), cls = c("ALP", "LNP", "GRN"),
+                   fcls = c("ALP", "LNP", "GRN"))
+  p <- hc_synthetic_ballots(tg, c(ALP = 40, LNP = 45, GRN = 15), hc_flows_prior(0.2),
+                            c(ALP = 0.1, LNP = 0.1, GRN = 0.2, RGT = 0.3, IND = 0.5, OTH = 0.4))
+  expect_equal(as.vector(p$B), rep(1, 8), tolerance = 1e-9)
+  el <- hc_candidate_count(p, c(20, 12, 8, 25, 12, 8, 10, 5), 5L)
+  expect_equal(sum(el), 5L)
+})
+
+test_that("count-sheet transfer rates set aside papers that stayed in the ticket", {
+  rows <- data.frame(src_class = c("ALP", "ALP", "ALP", "GRN", "GRN"),
+                     to_class = c("SAME", "GRN", "EXH", "ALP", "SAME"), papers = c(800, 150, 50, 90, 10))
+  f <- hc_flows_from_counts(rows, prior_n = 0)
+  expect_equal(f["ALP", "GRN"], 0.75)
+  expect_equal(attr(f, "leak")[["ALP"]], 0.2)
+})
+
+test_that("a draw splits each ticket's vote over its slots, largest first", {
+  sl <- data.frame(unit = c("A", "A", "A", "B"), rank = c(1, 2, 3, 1))
+  v <- hc_split_draw(c(300, 50), c("A", "B"), sl, list(A = c(0.6, 0.3, 0.1), B = 1), 0.2)
+  expect_equal(sum(v[1:3]), 300); expect_equal(v[4], 50)
+  expect_true(all(diff(v[1:3]) <= 0))
+})

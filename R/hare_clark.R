@@ -529,12 +529,18 @@ hc_statewide_draws <- function(region, year, election_date, prev_state, state_sd
 #' @param flows Transfer matrix for [hc_party_count()].
 #' @param leak Ticket leakage rates for [hc_party_count()], or `NULL`.
 #' @param seed Optional seed.
+#' @param cand `NULL` for the party-level block count. For the candidate-level
+#'   count, a list by electorate of `list(ballots = ` [hc_prepare_ballots()] or
+#'   [hc_synthetic_ballots()]`, split = ` expected within-ticket shares by unit
+#'   (from [hc_split_expected()])`, sdlog = ` their noise`)`; each draw splits
+#'   every ticket's vote over its candidate slots ([hc_split_draw()]) and runs
+#'   [hc_candidate_count()].
 #' @return `data.frame` electorate, cls, seats, prob: the forecast distribution
 #'   of each class's seat count, plus attribute `draws` (per-draw seats by
 #'   electorate and class, long form) for statewide totals.
 #' @export
 hc_simulate <- function(target, base, unit_prev, state_draws, prev_state, noise_sd, unit_pri, flows,
-                        leak = NULL, seed = NULL) {
+                        leak = NULL, seed = NULL, cand = NULL) {
   cl <- c("ALP", "LNP", "GRN", "OTH")
   if (!is.null(seed)) set.seed(seed)
   n_sims <- nrow(state_draws)
@@ -580,9 +586,22 @@ hc_simulate <- function(target, base, unit_prev, state_draws, prev_state, noise_
       uv[, oth] <- ww * sh[, "OTH"]
     }
     seat_mat <- matrix(0L, n_sims, 4, dimnames = list(NULL, cl))
-    for (s in seq_len(n_sims)) {
-      won <- hc_party_count(uv[s, ], seats, tu$fcls, flows, ncand = tu$ncand, leak = leak)
-      seat_mat[s, ] <- vapply(cl, function(k) sum(won[tu$cls == k]), numeric(1))
+    ce <- if (!is.null(cand)) cand[[e]] else NULL
+    if (!is.null(cand) && is.null(ce)) stop("hc_simulate(): no candidate-count inputs for ", e)
+    if (is.null(ce)) {
+      for (s in seq_len(n_sims)) {
+        won <- hc_party_count(uv[s, ], seats, tu$fcls, flows, ncand = tu$ncand, leak = leak)
+        seat_mat[s, ] <- vapply(cl, function(k) sum(won[tu$cls == k]), numeric(1))
+      }
+    } else {
+      sl <- ce$ballots$slots
+      ui <- match(sl$unit, tu$unit)
+      if (anyNA(ui)) stop("hc_simulate(): ballot slot unit not standing in ", e)
+      for (s in seq_len(n_sims)) {
+        sv <- hc_split_draw(uv[s, ], tu$unit, sl, ce$split, ce$sdlog)
+        el <- hc_candidate_count(ce$ballots, sv, seats)
+        seat_mat[s, ] <- vapply(cl, function(k) sum(el[sl$cls == k]), numeric(1))
+      }
     }
     for (k in cl) {
       tab <- tabulate(seat_mat[, k] + 1L, nbins = seats + 1L) / n_sims
