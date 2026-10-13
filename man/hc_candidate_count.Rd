@@ -18,5 +18,5 @@ Integer 0/1 elected flag per slot.
 }
 \description{
 Scales each ballot type so the ballots starting at each candidate slot sum
-to that slot's votes, then counts (\code{\link[=hc_stv_cpp]{hc_stv_cpp()}}).
+to that slot's votes, then counts (\code{hc_stv_cpp()}, the internal C++ count in src/hare_clark_stv.cpp).
 }

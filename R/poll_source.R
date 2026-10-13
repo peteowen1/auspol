@@ -90,7 +90,7 @@ poll_source_mode <- function() {
 #' @noRd
 .ps_month_range <- function(x) {
   x <- trimws(gsub("\\[[^]]*\\]", "", as.character(x)))
-  m <- regmatches(x, regexec("^([A-Za-z]{3,9})\\.? *(?:([0-9]{4}) *)?[-–—] *([A-Za-z]{3,9})\\.? +([0-9]{4})$", x, perl = TRUE))
+  m <- regmatches(x, regexec("^([A-Za-z]{3,9})\\.? *(?:([0-9]{4}) *)?[-\u2013\u2014] *([A-Za-z]{3,9})\\.? +([0-9]{4})$", x, perl = TRUE))
   mi <- function(s) match(tolower(substr(s, 1, 3)), c("jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"))
   st <- en <- rep(as.Date(NA), length(x))
   for (i in seq_along(x)) {

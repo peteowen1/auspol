@@ -325,7 +325,7 @@ hc_synthetic_ballots <- function(target, unit_share, flows, leak) {
 #' Run a candidate-level count on re-weighted ballot types
 #'
 #' Scales each ballot type so the ballots starting at each candidate slot sum
-#' to that slot's votes, then counts ([hc_stv_cpp()]).
+#' to that slot's votes, then counts (`hc_stv_cpp()`, the internal C++ count in src/hare_clark_stv.cpp).
 #'
 #' @param prep From [hc_prepare_ballots()] or [hc_synthetic_ballots()].
 #' @param slot_votes First-preference votes per slot.
