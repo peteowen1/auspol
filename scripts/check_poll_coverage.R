@@ -46,17 +46,19 @@ if (!"pv_UND" %in% names(W)) stop("column pv_UND is absent from statewide_polls_
 # (all_election_pairs() in R/reentry_prior.R). wa2021 is a pair but is NOT scored.
 scored <- data.table(
   election = c(paste0("fed", c(2007, 2010, 2013, 2016, 2019, 2022, 2025)),
-               paste0("wa", c(2001, 2005, 2008, 2013, 2017, 2025)),
-               paste0("vic", c(2010, 2014, 2018, 2022)), paste0("nsw", c(2019, 2023)),
-               paste0("qld", c(2020, 2024)), paste0("sa", c(2010, 2014, 2018, 2022, 2026))),
+               paste0("wa", c(2001, 2005, 2008, 2013, 2017, 2021, 2025)),
+               paste0("vic", c(2010, 2014, 2018, 2022)), paste0("nsw", c(2011, 2015, 2019, 2023)),
+               paste0("qld", c(2012, 2015, 2017, 2020, 2024)), paste0("sa", c(2010, 2014, 2018, 2022, 2026)),
+               paste0("nt", c(2016, 2020, 2024))),
   prev = c("fed2004", "fed2007", "fed2010", "fed2013", "fed2016", "fed2019", "fed2022",
-           "wa1996", "wa2001", "wa2005", "wa2008", "wa2013", "wa2021",
-           "vic2006", "vic2010", "vic2014", "vic2018", "nsw2015", "nsw2019",
-           "qld2017", "qld2020", "sa2006", "sa2010", "sa2014", "sa2018", "sa2022"))
+           "wa1996", "wa2001", "wa2005", "wa2008", "wa2013", "wa2017", "wa2021",
+           "vic2006", "vic2010", "vic2014", "vic2018", "nsw2007", "nsw2011", "nsw2015", "nsw2019",
+           "qld2009", "qld2012", "qld2015", "qld2017", "qld2020", "sa2006", "sa2010", "sa2014", "sa2018", "sa2022",
+           "nt2012", "nt2016", "nt2020"))
 ed <- election_dates()
 scored[, `:=`(region = sub("[0-9]+$", "", election),
               polling_day = as.Date(unname(ed[election])), prev_day = as.Date(unname(ed[prev])))]
-stopifnot(nrow(scored) == 26, !anyNA(scored$polling_day), !anyNA(scored$prev_day))
+stopifnot(nrow(scored) == 35, !anyNA(scored$polling_day), !anyNA(scored$prev_day))
 assign_election <- function(region, d) {
   out <- rep(NA_character_, length(d))
   for (i in seq_len(nrow(scored))) {
