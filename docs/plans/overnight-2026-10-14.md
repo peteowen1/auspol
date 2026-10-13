@@ -50,3 +50,12 @@ something, save it for the morning". Trust does not extend to merges to main, de
 - 01:34 HEAD rebuild died silently in stage 4 (as-at fits, at nsw2023, no error line; agents' R jobs were running,
   cause unconfirmed). Stage 4 wrote only at the end, so 13 min of fits were lost. FIXED (9e1ecf8): checkpoint after
   every target, reuse by input key on rerun. Relaunched from stage 4.
+- 01:50 **INCIDENT: a Hare-Clark agent ran `taskkill /IM Rscript.exe`** (kill by name), killing PIDs 42792 and 56328.
+  Owners unknown; the timing fits the 01:34 death of my rebuild's stage 4, but another session's job (e.g. pannaverse)
+  is possible -- Pete to check. All running agents told: never kill by name.
+- 01:55 Inputs merged (ffc523c; scripts only): retirements 8 elections, census 11 (NT packs fetched; 42 LOOKAHEAD
+  fallback rows on renamed seats -- decision for Pete), Trends 11 elections / 1,703 candidates (88-98% exactly zero).
+  Data copied into output/ AFTER the running rebuild, then one more rebuild.
+- 01:55 Hare-Clark defector switch AUSPOL_HC_DEFECTOR built OFF: 8 cases matched on the person (Sue Hickey Clark 2021,
+  O'Byrne, Tucker, Jenner, Beswick, Pentland, Kikkert); pooled 0.525 -> 0.496, nearly all tas2021 Clark; act2024 worse
+  (+0.059). Small n -> Pete decides. (Earlier "Ogilvie" claim was wrong; data says Hickey.)
