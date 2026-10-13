@@ -104,7 +104,28 @@ SA_PAIRS <- list(
   "2022" = list(to = 2022L, from = 2018L,
                fp_from = "wikipedia-2018-sa-firstprefs.csv",
                fp_to   = "ecsa-2022-sa-firstprefs.csv",
-               flow_from = "fed2019", flow_before = "2022-03-19"))
+               flow_from = "fed2019", flow_before = "2022-03-19"),
+  # TWO PAIRS ADDED 2026-10-13 (coverage program). Both follow a REDISTRIBUTION and
+  # neither has a notional prior (no booth-level results for 2010/2014 on disk), so
+  # they score only the districts whose NAME exists at both ends and say so
+  # (`match_seats`; see BS1x below). Inputs are the new files built by
+  # scripts/build_sa_2010_2014_results.R under external/reference/ecsa/sa-backtest/
+  # (relative to election_data_path(), hence the "../"). `winners`/`winners_election`
+  # name the file and label to read, because ecsa-sa-winners.csv holds 2022 and 2026 only.
+  # `flow_est`: also feed the PREVIOUS election's estimated state flows
+  # (R/flow_estimate_events.R); AUSPOL_SA_FLOW_EST=0 turns it off.
+  "2018" = list(to = 2018L, from = 2014L,
+               fp_from = "../reference/ecsa/sa-backtest/ecsa-2014-sa-candidates.csv",
+               fp_to   = "wikipedia-2018-sa-firstprefs.csv",
+               flow_from = "fed2016", flow_before = "2018-03-17",
+               winners = "wikipedia-2018-sa-winners.csv",
+               match_seats = TRUE, flow_est = TRUE),
+  "2014" = list(to = 2014L, from = 2010L,
+               fp_from = "../reference/ecsa/sa-backtest/ecsa-2010-sa-candidates.csv",
+               fp_to   = "../reference/ecsa/sa-backtest/ecsa-2014-sa-candidates.csv",
+               flow_from = "fed2013", flow_before = "2014-03-15",
+               winners = "../reference/ecsa/sa-backtest/ecsa-2014-sa-winners.csv",
+               match_seats = TRUE, flow_est = TRUE))
 .k <- Sys.getenv("AUSPOL_SA_PAIR", "2026")
 if (!.k %in% names(SA_PAIRS)) {
   stop("AUSPOL_SA_PAIR must be one of ", paste(names(SA_PAIRS), collapse = ", "),
@@ -373,7 +394,8 @@ SD_OVR <- NULL
 SMOOTH <- 0.15; eps <- 1e-6
 P <- election_data_path()
 
-need <- c(PAIR$fp_from, PAIR$fp_to, "ecsa-sa-winners.csv", "aec-fed-transfers.csv")
+WIN_FILE <- if (is.null(PAIR$winners)) "ecsa-sa-winners.csv" else PAIR$winners
+need <- c(PAIR$fp_from, PAIR$fp_to, WIN_FILE, "aec-fed-transfers.csv")
 miss <- need[!file.exists(file.path(P, need))]
 if (length(miss)) {
   stop("Missing ", paste(miss, collapse = ", "), ". Run ",
@@ -408,7 +430,7 @@ stopifnot(!anyDuplicated(fa[, .(seat, party)]), !anyDuplicated(fb[, .(seat, part
 # SAME name; this repo's rule is to never risk it, even where (as here) TGT
 # and `election` do not actually collide. CLAUDE.md, data.table NSE.
 TGT_ <- TGT
-win <- fread(file.path(P, "ecsa-sa-winners.csv"),
+win <- fread(file.path(P, WIN_FILE),
              showProgress = FALSE)[election == TGT_, .(seat, winner)]
 tx <- fread(file.path(P, "aec-fed-transfers.csv"),
             showProgress = FALSE)[election == FLOW_FROM]
@@ -416,6 +438,28 @@ tx <- fread(file.path(P, "aec-fed-transfers.csv"),
 # which is the guard-that-cannot-fail pattern CLAUDE.md records.
 stopifnot(nrow(tx) > 100L, all(tx$election == FLOW_FROM))
 tx <- pool_configured_flows(tx, PAIR$flow_before)
+# STATE FLOWS FROM THE PREVIOUS ELECTION'S RESULTS (pairs with `flow_est` only).
+# South Australia publishes no distribution of preferences for 2010, 2014 or 2018, so
+# these pairs would otherwise run on federal events alone. R/flow_estimate_events.R
+# turns output/flows-estimated.csv's estimate for the PREVIOUS election (PRV, never
+# the target's own row: that one is built from the results being predicted) into
+# synthetic ALP-v-LNP exclusion events that join the federal ones.
+.fe_on <- isTRUE(PAIR$flow_est) && !identical(Sys.getenv("AUSPOL_SA_FLOW_EST", "1"), "0")
+if (.fe_on) {
+  stopifnot(PRV != TGT)
+  .fe <- estimated_flow_events(PRV, tx)
+  if (!nrow(.fe)) stop("BS1fe: no flow estimate for ", PRV, " in output/flows-estimated.csv")
+  .fes <- attr(.fe, "summary")
+  cat(sprintf("BS1fe state flow estimate from %s (previous election, never %s): %d synthetic events added to %d federal rows\n",
+              PRV, TGT, uniqueN(.fe$seat), nrow(tx)))
+  for (.i in seq_len(nrow(.fes)))
+    cat(sprintf("BS1fe   %-9s ALP %5.1f%% exhaust %4.1f%% | %2d events x %d ballots%s\n",
+                .fes$class[.i], .fes$flow_alp[.i], .fes$exhaust[.i], .fes$n_events[.i],
+                .fes$votes_per_event[.i], if (.fes$sized_from_reference[.i]) "" else " (no federal event of this class: overall mean)"))
+  tx <- rbind(tx, .fe, fill = TRUE)
+} else {
+  cat(sprintf("BS1fe state flow estimate OFF for %s (federal events only)\n", TGT))
+}
 fm <- build_flow_matrix(tx, min_n = 3L)
 cat(sprintf("\nBS1  flow matrix from %s: %d exclusions\n",
             FLOW_FROM, uniqueN(tx[, paste(seat, round)])))
@@ -759,12 +803,22 @@ if (identical(tolower(.conc_raw), "auto")) {
   .cc <- fread(.ccf, showProgress = FALSE)
   .tgt <- TGT                                  # copied to a differently-named
   .row <- .cc[.cc$pair == .tgt, ]              # local: a bare `pair` inside
-  if (!nrow(.row))                             # `[` would bind to the column
-    stop("AUSPOL_ONP_CONC_SD=auto has no row for ", .tgt, " in ", .ccf)
-  ONP_CONC <- .row$sd_pred[1]
-  cat(sprintf("BS1c ONP concentration SD from the fitted curve: %.2f for %s (statewide %.2f, %s)\n",
-              ONP_CONC, .tgt, .row$statewide[1],
-              if (isTRUE(.row$extrapolated[1])) "EXTRAPOLATED beyond the fitted range -- provisional" else "interpolated"))
+  # The curve table only has rows for elections where One Nation polled at least 1%
+  # statewide (scripts/estimate_onp_concentration.R, MIN_STATEWIDE). A target below that
+  # has nothing to concentrate -- sa2014 and sa2018, where One Nation did not stand --
+  # so the arm is skipped and SAID so; a missing row for a target ABOVE 1% is still an error.
+  .onp_tgt <- fb[party == "ONP", sum(votes)] / fb[, sum(votes)]
+  if (!nrow(.row) && .onp_tgt < 0.01) {
+    cat(sprintf("BS1c! ONP concentration SKIPPED for %s -- One Nation polled %.2f%% statewide in the target (curve has no row below 1%%)\n",
+                .tgt, 100 * .onp_tgt))
+  } else {
+    if (!nrow(.row))                             # `[` would bind to the column
+      stop("AUSPOL_ONP_CONC_SD=auto has no row for ", .tgt, " in ", .ccf)
+    ONP_CONC <- .row$sd_pred[1]
+    cat(sprintf("BS1c ONP concentration SD from the fitted curve: %.2f for %s (statewide %.2f, %s)\n",
+                ONP_CONC, .tgt, .row$statewide[1],
+                if (isTRUE(.row$extrapolated[1])) "EXTRAPOLATED beyond the fitted range -- provisional" else "interpolated"))
+  }
 } else {
   ONP_CONC <- as.numeric(.conc_raw)
 }
@@ -943,7 +997,23 @@ if (length(RENAMES)) {
 keep <- intersect(rownames(shares), win$seat)
 shares <- shares[keep, , drop = FALSE]
 truth <- setNames(win$winner, win$seat)[keep]
-if (length(keep) != 47L) {
+if (isTRUE(PAIR$match_seats)) {
+  # REDISTRIBUTION PAIRS (sa2014 after the 2012 redistribution, sa2018 after 2016): the
+  # seat set differs between the two elections and there is NO notional prior, so the
+  # rule is the Victorian harness's -- score the districts whose NAME exists at both ends
+  # and report the coverage. A same-name district may still have moved boundaries
+  # (UNVERIFIED which did); only a notional prior from booth-level results (not on disk
+  # for 2010 or 2014) would fix that. Seats new at the target are NOT scored, so a pair
+  # scored on 40 seats is not comparable with one scored on 47 (CLAUDE.md, WA note).
+  .tgt_only <- sort(setdiff(win$seat, rownames(shares)))
+  .prv_only <- sort(setdiff(rownames(mat), win$seat))
+  cat(sprintf("BS1x REDISTRIBUTION PAIR %s -> %s, no notional prior: scored %d of %d %s seats (name-matched)\n",
+              PRV, TGT, length(keep), nrow(win), TGT))
+  cat(sprintf("BS1x   in %s only (NOT scored, %d): %s\n", TGT, length(.tgt_only), paste(.tgt_only, collapse = ", ")))
+  cat(sprintf("BS1x   in %s only (dropped, %d): %s\n", PRV, length(.prv_only), paste(.prv_only, collapse = ", ")))
+  if (length(keep) < 30L)
+    stop("BS1x: only ", length(keep), " name-matched districts between ", PRV, " and ", TGT, "; refusing to score")
+} else if (length(keep) != 47L) {
   unmatched <- union(setdiff(win$seat, rownames(shares)), setdiff(rownames(shares), win$seat))
   stop("Only ", length(keep), " of 47 districts matched between the ", PRV, " first ",
        "preferences and the ", TGT, " winners after applying the rename map. ",
@@ -1034,7 +1104,18 @@ if (identical(Sys.getenv("AUSPOL_XGB_PRIMARY", "0"), "1")) shares <- leader_seat
 if (identical(Sys.getenv("AUSPOL_XGB_PRIMARY", "0"), "1")) shares <- departed_fed_apply(shares, TGT)
 
 # Per-seat spread from the seat file of the election being predicted.
-sp <- seat_swing_spread(as.data.table(load_seats(TO, "sa")),
+# THE SEAT FILE OF THE ELECTION BEING PREDICTED, where one exists. The anchor ships
+# 2022sa.txt and 2026sa.txt only, so sa2014 and sa2018 fall back to the EARLIEST file
+# (2022): a later election, which is the same compromise the Queensland harness makes
+# (BQ1s!) -- the spread is a variance hyperparameter, not a prediction, and it is announced.
+.sf <- tryCatch(as.data.table(load_seats(TO, "sa")), error = function(e) NULL)
+if (is.null(.sf)) {
+  .sf <- tryCatch(as.data.table(load_seats(2022L, "sa")), error = function(e) NULL)
+  if (is.null(.sf)) stop("No South Australian seat file for ", TO, " and none for 2022 either, so ",
+                         "there is no measured seat-swing spread to fall back on.")
+  cat(sprintf("BS1s! no %dsa.txt: seat-swing spread taken from the 2022 file\n", TO))
+}
+sp <- seat_swing_spread(.sf,
                         unname(st_b[["ALP"]] - st_a[["ALP"]]))
 # STATEWIDE UNCERTAINTY. 1.5 was hardcoded in all four harnesses; the realised
 # statewide first-preference error over 139 party-cycles is sd 2.33, so the

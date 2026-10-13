@@ -49,6 +49,7 @@ PAGES <- c(
   qld2017 = "2017 Queensland state election",
   qld2020 = "2020 Queensland state election",
   qld2024 = "2024 Queensland state election",
+  sa2014  = "2014 South Australian state election",   # added 2026-10-13, not yet fetched
   sa2018  = "2018 South Australian state election",
   sa2022  = "2022 South Australian state election",
   sa2026  = "2026 South Australian state election",

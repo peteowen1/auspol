@@ -405,6 +405,26 @@ if (!file.exists(sa18f)) {
   cat(sprintf("BC2b sa2018: %d candidates in %d seats\n", nrow(sa18), uniqueN(sa18$seat)))
 }
 
+# ---- SOUTH AUSTRALIA 2010 and 2014 (ECSA past-results pages, 2026-10-13) --------
+# Candidate-level files built by scripts/build_sa_2010_2014_results.R (the shared
+# external/elections/ecsa-20{10,14}-sa-firstprefs-tcp.csv are long-format, party-code
+# only and incomplete; that script completes and classifies them). Names are ECSA's own:
+# 2010 "SURNAME, Given" (comma), 2014 "SURNAME Given" (no comma, ALL-CAPS surname) --
+# neither is sa2018's given-first form, and .key()/surname_of() read both. Leave
+# surname/given NA like sa2022 so every consumer reads the combined `name`.
+for (.y in c(2010L, 2014L)) {
+  .f <- file.path("external", "reference", "ecsa", "sa-backtest", sprintf("ecsa-%d-sa-candidates.csv", .y))
+  if (!file.exists(.f)) { cat(sprintf("BC2c sa%d: MISSING %s -- run scripts/build_sa_2010_2014_results.R\n", .y, .f)); next }
+  .d <- fread(.f, showProgress = FALSE)
+  if (uniqueN(.d$seat) != 47L) stop(sprintf("sa%d: %d seats in %s, not 47", .y, uniqueN(.d$seat), .f))
+  if (anyNA(.d$votes) || anyDuplicated(.d[, .(seat, name)])) stop(sprintf("sa%d: missing votes or duplicate candidate in %s", .y, .f))
+  .d[, `:=`(surname = NA_character_, given = NA_character_, elected = NA,
+            election = sprintf("sa%d", .y), region = "sa", year = .y)]
+  parts[[sprintf("sa%d", .y)]] <- .d[, .(seat, surname, given, party_raw, votes, elected,
+                                         party, election, region, year, name)]
+  cat(sprintf("BC2c sa%d: %d candidates in %d seats\n", .y, nrow(.d), uniqueN(.d$seat)))
+}
+
 # ---- NEW SOUTH WALES 2019, 2023 ---------------------------------------------
 # The NSWEC workbook's "Data" sheet is one row per candidate PER VENUE, so it
 # must be aggregated to candidate level. Informal rows carry no candidate and
@@ -894,6 +914,11 @@ sa18w <- file.path(election_data_path(), "wikipedia-2018-sa-winners.csv")
 if (file.exists(sa18w)) {
   w <- fread(sa18w, showProgress = FALSE)
   WV[[length(WV) + 1L]] <- w[, .(election, seat, winner)]
+}
+# sa2010 / sa2014 winners: from each district's own TCP table (scripts/build_sa_2010_2014_results.R)
+for (.y in c(2010L, 2014L)) {
+  .wf <- file.path("external", "reference", "ecsa", "sa-backtest", sprintf("ecsa-%d-sa-winners.csv", .y))
+  if (file.exists(.wf)) WV[[length(WV) + 1L]] <- fread(.wf, showProgress = FALSE)[, .(election, seat, winner)]
 }
 if (length(WV)) {
   W <- unique(rbindlist(WV, fill = TRUE))

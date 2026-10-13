@@ -128,14 +128,16 @@ run6() {  # $1 = XGB_PRIMARY value, $2 = log tag -- all 23 pairs across the six 
   case "${AUSPOL_REBUILD_SLOTS:-}" in ""|*[!0-9]*|0) ;; *) [ "$AUSPOL_REBUILD_SLOTS" -lt "$slots" ] && slots=$AUSPOL_REBUILD_SLOTS ;; esac   # 0 or non-numeric: ignored (0 would hang run_queue)
   echo "   ${fg}GB free -- ${slots} harness slots"
   local specs=(fed wa vic nsw:AUSPOL_NSW_PAIR=2023 qld:AUSPOL_QLD_PAIR=2024 sa:AUSPOL_SA_PAIR=2026
-               qld:AUSPOL_QLD_PAIR=2020 nsw:AUSPOL_NSW_PAIR=2019 sa:AUSPOL_SA_PAIR=2022)
+               qld:AUSPOL_QLD_PAIR=2020 nsw:AUSPOL_NSW_PAIR=2019 sa:AUSPOL_SA_PAIR=2022
+               sa:AUSPOL_SA_PAIR=2018 sa:AUSPOL_SA_PAIR=2014)   # sa2018, sa2014 added 2026-10-13 (coverage program)
+  local n_specs=${#specs[@]}
   if [ -n "${AUSPOL_REBUILD_ONLY:-}" ] && [ "$2" = "s6" ]; then
     local keep=() s
     for s in "${specs[@]}"; do
       if [[ ",${AUSPOL_REBUILD_ONLY}," == *",${s%%:*},"* ]]; then keep+=("$s"); else reuse_check "$s"; fi
     done
     specs=("${keep[@]}")
-    echo "   AUSPOL_REBUILD_ONLY=${AUSPOL_REBUILD_ONLY}: running ${#specs[@]} of 9 backtest runs, reusing the rest"
+    echo "   AUSPOL_REBUILD_ONLY=${AUSPOL_REBUILD_ONLY}: running ${#specs[@]} of ${n_specs} backtest runs, reusing the rest"
   fi
   run_queue "$1" "$2" "$slots" "${specs[@]}"
 }

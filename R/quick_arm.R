@@ -31,7 +31,7 @@ quick_units <- function() {
     mk("vic", "AUSPOL_VIC_PAIR",  c(2010, 2014, 2018, 2022)),
     mk("nsw", "AUSPOL_NSW_PAIR",  c(2019, 2023)),
     mk("qld", "AUSPOL_QLD_PAIR",  c(2020, 2024)),
-    mk("sa",  "AUSPOL_SA_PAIR",   c(2022, 2026)))
+    mk("sa",  "AUSPOL_SA_PAIR",   c(2014, 2018, 2022, 2026)))
 }
 
 #' Parse "AUSPOL_X=1 AUSPOL_Y=0" into a named character vector

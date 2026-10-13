@@ -133,6 +133,12 @@ ELS <- list(
                  anchor = "Gladys Berejiklian"),
   sa2022  = list(poll = "2022-03-19", geo = "AU-SA", prev = "sa2018", # (missing)
                  anchor = "Steven Marshall"),
+  # sa2014 / sa2018 added 2026-10-13 (coverage program); NOT FETCHED YET (Google Trends
+  # throttles -- run once, detached, keep the raw series). Premier at both polls: Jay Weatherill.
+  sa2014  = list(poll = "2014-03-15", geo = "AU-SA", prev = "sa2010",
+                 anchor = "Jay Weatherill"),
+  sa2018  = list(poll = "2018-03-17", geo = "AU-SA", prev = "sa2014",
+                 anchor = "Jay Weatherill"),
   vic2014 = list(poll = "2014-11-29", geo = "AU-VIC", prev = "vic2010", # (missing)
                  anchor = "Denis Napthine"),
   qld2020 = list(poll = "2020-10-31", geo = "AU-QLD", prev = "qld2017", # (missing)
