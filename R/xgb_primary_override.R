@@ -527,7 +527,7 @@ xgb_primary_predict_live <- function(shares, mat22, a22, state_mean, returns,
   }
 
   party_levels <- c("ALP","GRN","IND","LNP","NAT","ONP","OTH","OTH_RIGHT")
-  region_levels <- c("fed","nsw","qld","sa","vic","wa")
+  region_levels <- c("fed","nsw","nt","qld","sa","vic","wa")   # nt 2026-10-13: a model trained with region_nt and a predictor without it skips silently
   for (p in party_levels) rows[[paste0("party_", p)]] <- as.integer(rows$party == p)
   for (r in region_levels) rows[[paste0("region_", r)]] <- as.integer(region == r)
 
