@@ -169,9 +169,11 @@ if (file.mtime(pb_f) < newest_model)
 per <- fread(pb_f, showProgress = FALSE)
 known <- vapply(all_election_pairs(), `[[`, character(1), "election")
 missing <- setdiff(known, per$pair)
-# Pairs the rebuild skips ON PURPOSE (AUSPOL_SKIP_PAIRS, default wa2021: no
-# fittable poll trend) are not missing; the driver exports the same list.
-skip <- trimws(strsplit(Sys.getenv("AUSPOL_SKIP_PAIRS", "wa2021"), ",")[[1]])
+# Pairs the rebuild skips ON PURPOSE (AUSPOL_SKIP_PAIRS, default none since
+# 2026-10-13; wa2021 was the one with no fittable poll trend) are not missing;
+# the driver exports the same list.
+skip <- trimws(strsplit(Sys.getenv("AUSPOL_SKIP_PAIRS", ""), ",")[[1]])
+skip <- skip[nzchar(skip)]
 if (length(intersect(missing, skip)))
   cat(sprintf("PA0  skipped by design (AUSPOL_SKIP_PAIRS), not required: %s\n",
               paste(intersect(missing, skip), collapse = ", ")))

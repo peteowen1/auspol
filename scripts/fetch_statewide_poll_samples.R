@@ -199,13 +199,15 @@ parse_dates <- function(s) {
   }
   # "Oct-Dec 2012" / "Jan-Mar 2010": Newspoll's quarterly aggregate, two months and no day. It
   # spans the whole quarter (first of month 1 to last of month 2), not "mid-December".
-  qm <- regmatches(s, regexec("^([A-Za-z]{3,9})\\.? *- *([A-Za-z]{3,9})\\.? +(\\d{4})$", s))[[1]]
-  if (length(qm) == 4) {
-    m1 <- month_idx[tolower(substr(qm[2], 1, 3))]; m2 <- month_idx[tolower(substr(qm[3], 1, 3))]
+  # "Nov 2016-Jan 2017" (across a year boundary) carries its own first year; otherwise both months share the last.
+  qm <- regmatches(s, regexec("^([A-Za-z]{3,9})\\.? *(?:(\\d{4}) *)?- *([A-Za-z]{3,9})\\.? +(\\d{4})$", s))[[1]]
+  if (length(qm) == 5) {
+    m1 <- month_idx[tolower(substr(qm[2], 1, 3))]; m2 <- month_idx[tolower(substr(qm[4], 1, 3))]
+    y1 <- if (nzchar(qm[3])) qm[3] else qm[5]
     if (!is.na(m1) && !is.na(m2)) {
-      st <- as.Date(sprintf("%s-%02d-01", qm[4], m1))
-      en <- seq(as.Date(sprintf("%s-%02d-01", qm[4], m2)), by = "month", length.out = 2)[2] - 1
-      return(list(start = st, end = en, year_given = TRUE, parts = NULL))
+      st <- as.Date(sprintf("%s-%02d-01", y1, m1))
+      en <- seq(as.Date(sprintf("%s-%02d-01", qm[5], m2)), by = "month", length.out = 2)[2] - 1
+      if (en >= st) return(list(start = st, end = en, year_given = TRUE, parts = NULL))
     }
   }
   tok <- gregexpr("(?i)\\b(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\\b|\\b\\d{4}\\b|\\b\\d{1,2}(?:st|nd|rd|th)?\\b", s, perl = TRUE)

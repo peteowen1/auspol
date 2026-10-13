@@ -43,11 +43,13 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 export AUSPOL_N_SIMS="${AUSPOL_N_SIMS:-20000}"
 export AUSPOL_POOL_MIN_SIMS="${AUSPOL_POOL_MIN_SIMS:-$AUSPOL_N_SIMS}"
-# Pairs no harness can score under the published flags: wa2021 has no fittable
-# poll trend, so forecast mode (published 1 since 2026-09-19) skips it and the
-# pooling stages must not fall back to a stale file. Remove it from this default
-# when WA 2017-2021 polling reaches the anchor.
-export AUSPOL_SKIP_PAIRS="${AUSPOL_SKIP_PAIRS:-wa2021}"
+# Pairs no harness can score under the published flags (default: none). A pair
+# whose statewide trend cannot be fitted is skipped by forecast mode (published 1
+# since 2026-09-19) and the pooling stages must not fall back to a stale file, so
+# name it here. wa2021 was the one until 2026-10-13, when quarterly month-range
+# polls (Essential "Apr-Jun 2017") and the Galaxy/YouGov-Galaxy duplicate fix gave
+# its trend enough polls to fit.
+export AUSPOL_SKIP_PAIRS="${AUSPOL_SKIP_PAIRS:-}"
 # EVERY STAGE SEES THE PUBLISHED CONFIGURATION. Unset switches take their
 # scripts/published_flags.R value here, once, so the fit scripts (which read only
 # the environment) cannot fall back to a code default that differs from what
