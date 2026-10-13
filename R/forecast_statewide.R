@@ -337,8 +337,8 @@ forecast_statewide_or_oracle <- function(region, year, election_date, parties, s
     },
     error = function(e) e)
   if (inherits(fc, "error")) {
-    # A cycle too thin to fit a trend (wa2021: four polls in 180 days, none
-    # earlier in the term) has NO forecast statewide. In a multi-pair harness
+    # A cycle too thin to fit a trend (wa2021 was one until 2026-10-13: four
+    # polls in 180 days, none earlier in the term) has NO forecast statewide. In a multi-pair harness
     # the honest treatment is to skip the pair loudly, never to fall back to
     # the oracle -- that would score a leak as a forecast.
     if (on_fail == "stop") stop(conditionMessage(fc), call. = FALSE)
