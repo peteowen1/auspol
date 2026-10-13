@@ -48,6 +48,7 @@ for (rg in unique(pairs$region)) {
                             wiki = sum(x$has_fp & x$origin %in% c("wiki", "wiki+bludgertrack") & !x$ae_filled),
                             bt = sum(x$has_fp & x$origin == "bludgertrack" & !x$ae_filled),
                             both = sum(x$has_fp & x$origin == "bludgertrack+wiki" & !x$ae_filled),
+                            pb = sum(x$has_fp & x$origin == "pollbludger" & !x$ae_filled),
                             ae = sum(x$has_fp & x$origin == "ae"), ae_party = sum(x$has_fp & x$origin != "ae" & x$ae_filled),
                             label_ae = sum(x$has_fp & x$label_ae))
     a <- cnt(z); b <- cnt(f); names(b) <- paste0("f30_", names(b))
@@ -70,29 +71,29 @@ fwrite(R, "output/poll-registry.csv")
 pct <- function(n, d) if (d > 0) sprintf("%d (%d%%)", n, round(100 * n / d)) else as.character(n)
 tab <- function(x, f30 = FALSE) {
   p <- if (f30) "f30_" else ""
-  hdr <- if (f30) "| election | polls | Wikipedia | BludgerTrack | both | AE's numbers | AE filled a party | two-party only |" else
-    "| election | polls | Wikipedia | BludgerTrack | both | AE's numbers | of which a Poll Bludger post confirms | AE filled a party | two-party only |"
+  hdr <- if (f30) "| election | polls | Wikipedia | BludgerTrack | both | Poll Bludger posts | AE's numbers | AE filled a party | two-party only |" else
+    "| election | polls | Wikipedia | BludgerTrack | both | Poll Bludger posts | AE's numbers | of which a Poll Bludger post confirms | AE filled a party | two-party only |"
   if (f30) hdr <- sub("two-party only \\|$", "two-party only | Poll Bludger post confirms |", hdr)
   # the whole-cycle table's extra column: of the polls carrying AE's numbers, how many a Poll Bludger post confirms
-  out <- c(hdr, paste0("|", strrep("---|", 9)))
+  out <- c(hdr, paste0("|", strrep("---|", 10)))
   cell <- function(v, d) if (is.na(v)) "-" else pct(v, d)
   for (k in seq_len(nrow(x))) {
     g <- function(n) x[[paste0(p, n)]][k]
     lab <- paste0(x$election[k], if (x$live[k]) " (live)" else "")
     line <- if (f30)
-      sprintf("| %s | %d | %d | %d | %d | %s | %d | %d | %s |", lab, g("polls"), g("wiki"), g("bt"), g("both"),
+      sprintf("| %s | %d | %d | %d | %d | %d | %s | %d | %d | %s |", lab, g("polls"), g("wiki"), g("bt"), g("both"), g("pb"),
               pct(g("ae"), g("polls")), g("ae_party"), g("tpp_only"), cell(x$f30_pb_post[k], g("polls")))
     else
-      sprintf("| %s | %d | %d | %d | %d | %s | %s | %d | %d |", lab, g("polls"), g("wiki"), g("bt"), g("both"),
+      sprintf("| %s | %d | %d | %d | %d | %d | %s | %s | %d | %d |", lab, g("polls"), g("wiki"), g("bt"), g("both"), g("pb"),
               pct(g("ae"), g("polls")), cell(x$ae_pb_post[k], g("ae")), g("ae_party"), g("tpp_only"))
     out <- c(out, line)
   }
   tot <- function(n) sum(x[[paste0(p, n)]])
   totl <- if (f30)
-    sprintf("| **all** | %d | %d | %d | %d | %s | %d | %d | %s |", tot("polls"), tot("wiki"), tot("bt"), tot("both"),
+    sprintf("| **all** | %d | %d | %d | %d | %d | %s | %d | %d | %s |", tot("polls"), tot("wiki"), tot("bt"), tot("both"), tot("pb"),
             pct(tot("ae"), tot("polls")), tot("ae_party"), tot("tpp_only"), pct(sum(x$f30_pb_post, na.rm = TRUE), tot("polls")))
   else
-    sprintf("| **all** | %d | %d | %d | %d | %s | %s | %d | %d |", tot("polls"), tot("wiki"), tot("bt"), tot("both"),
+    sprintf("| **all** | %d | %d | %d | %d | %d | %s | %s | %d | %d |", tot("polls"), tot("wiki"), tot("bt"), tot("both"), tot("pb"),
             pct(tot("ae"), tot("polls")), pct(sum(x$ae_pb_post, na.rm = TRUE), tot("ae")), tot("ae_party"), tot("tpp_only"))
   c(out, totl)
 }
@@ -106,6 +107,7 @@ md <- c("# Poll registry",
   "",
   "- **Wikipedia**: our scrape of the election's Wikipedia poll tables (`scripts/fetch_statewide_poll_samples.R`).",
   "- **BludgerTrack**: The Poll Bludger's own poll table (`scripts/build_bludgertrack_polls.R`; fed2025, fed2028, vic2026 only). **both**: the two agree it exists; BludgerTrack's row is kept.",
+  "- **Poll Bludger posts**: a poll only AE had, now carrying the figures a model read from a Poll Bludger post (stated in the post's own sentence; every major party within 2 points of AE's; `scripts/build_pb_llm_polls.R`, AUSPOL_POLL_PB).",
   "- **AE's numbers**: AE Forecasts' hand-authored poll file, used where we have no copy of the poll, where AE won a dispute, or where our copy failed its own two-party check. Lower is better: the goal is zero.",
   "- **AE filled a party**: our numbers, but one party (UAP, NXT, One Nation) came from AE because our source folds it into Others.",
   "- **two-party only**: rows with no primaries; they do not feed the primary-vote trend.",

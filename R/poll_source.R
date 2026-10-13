@@ -225,6 +225,74 @@ bludgertrack_polls <- function(region, parties, path) {
   list(ours = ours, log = c(bt = nrow(bt), both = length(pb), bt_only = sum(!ub), differ_gt1 = sum(d1, na.rm = TRUE)))
 }
 
+#' Whether polls read from Poll Bludger posts replace AE's numbers where they agree (AUSPOL_POLL_PB)
+#' @return logical.
+#' @export
+poll_pb_on <- function() {
+  v <- Sys.getenv("AUSPOL_POLL_PB", "1")
+  if (!v %in% c("0", "1")) stop("AUSPOL_POLL_PB must be \"0\" or \"1\", not ", v)
+  identical(v, "1")
+}
+
+# Poll Bludger as the named source for polls only AE had (AUSPOL_POLL_PB, 2026-10-13; reviews/pb-llm-extraction-
+# 2026-10-13.md). The posts were read by a model into pb_llm_polls.csv (scripts/build_pb_llm_polls.R); only rows whose
+# Labor and Coalition figures appear in their own quoted sentence are used. A row still carrying AE's numbers
+# (origin "ae") is matched to a post of the same firm published 1 day before to 45 days after the poll's midpoint
+# (Newspoll's state polls pool two or three months), closest numbers first; when every major party agrees within 2
+# points, the row takes Poll Bludger's numbers and origin "pollbludger". Agreement is tested with the post's
+# undecided kept and divided out, and the version that agreed is used, so this step changes where the numbers come
+# from, not the undecided convention (a separate, measured change). A party the post does not give keeps AE's figure
+# (recorded in ae_filled). Unmatched posts are not added: their dates are post dates.
+#' @noRd
+.ps_pb_confirm <- function(ae, region, parties, path, alias) {
+  b <- data.table::fread(path, colClasses = "character", showProgress = FALSE)
+  reg <- region
+  b <- b[b$region == reg & b$stated == "TRUE"]
+  n0 <- c(pb = nrow(b), confirmed = 0L, disagree = 0L)
+  if (!nrow(b)) return(list(ae = ae, log = n0))
+  num <- function(k) if (k %in% names(b)) suppressWarnings(as.numeric(b[[k]])) else rep(NA_real_, nrow(b))
+  bv <- list(ALP = num("alp_n"), LNP = num("coalition_n"), GRN = num("greens_n"), ONP = num("one_nation_n"))
+  und <- num("undecided_n"); sc <- 100 / (100 - ifelse(is.finite(und) & und > 0 & und < 50, und, 0))
+  same_firm <- c(yougov = "galaxy", ucomms = "reachtel")
+  cn <- function(f) { x <- .ps_canon(f, alias); ifelse(x %in% names(same_firm), same_firm[x], x) }
+  bc <- cn(b$pollster); dp <- as.Date(b$post_date)
+  ai <- which(ae$.origin == "ae" & is.finite(ae$ALP) & is.finite(ae$LNP))
+  if (!length(ai)) return(list(ae = ae, log = n0))
+  ac <- cn(ae$firm[ai])
+  cand <- data.table::CJ(a = seq_along(ai), p = seq_len(nrow(b)))
+  cand <- cand[ac[cand$a] == bc[cand$p]]
+  lag <- as.integer(dp[cand$p] - ae$date[ai[cand$a]])
+  cand <- cand[!is.na(lag) & lag >= -1L & lag <= 45L]
+  majors <- intersect(c("ALP", "LNP", "GRN", "ONP"), parties)
+  dmax <- function(s) {
+    m <- sapply(majors, function(p) abs(bv[[p]][cand$p] * s - ae[[p]][ai[cand$a]]))
+    if (is.null(dim(m))) m <- matrix(m, nrow = nrow(cand))
+    apply(m, 1, function(r) if (all(is.na(r))) NA_real_ else max(r, na.rm = TRUE))
+  }
+  if (nrow(cand)) {
+    d_raw <- dmax(1); d_sc <- dmax(sc[cand$p])
+    cand[, `:=`(raw = !is.na(d_raw) & (is.na(d_sc) | d_raw <= d_sc), d = pmin(d_raw, d_sc, na.rm = TRUE))]
+    cand[, lagd := as.integer(dp[p] - ae$date[ai[a]])]
+    data.table::setorderv(cand, c("d", "lagd"))
+  }
+  ua <- logical(length(ai)); up <- logical(nrow(b))
+  for (k in seq_len(nrow(cand))) {
+    a <- cand$a[k]; p <- cand$p[k]
+    if (ua[a] || up[p] || !is.finite(cand$d[k])) next
+    ua[a] <- up[p] <- TRUE
+    if (cand$d[k] > 2) { n0[["disagree"]] <- n0[["disagree"]] + 1L; next }
+    r <- ai[a]; s <- if (cand$raw[k]) 1 else sc[p]
+    for (q in setdiff(parties, "OTH")) {
+      v <- if (q %in% names(bv)) bv[[q]][p] * s else NA_real_
+      if (is.finite(v)) ae[[q]][r] <- v else if (is.finite(ae[[q]][r])) ae$.fill[r] <- paste0(ae$.fill[r], q, " ")
+    }
+    if ("OTH" %in% parties) ae$OTH[r] <- pmax(0, 100 - sum(unlist(lapply(setdiff(parties, "OTH"), function(q) ae[[q]][r])), na.rm = TRUE))
+    ae$.origin[r] <- "pollbludger"
+    n0[["confirmed"]] <- n0[["confirmed"]] + 1L
+  }
+  list(ae = ae, log = n0)
+}
+
 #' Layer our polls over AE's for one region (see the file header)
 #'
 #' @param ae AE's polls as [load_polls()] reads them (before layering).
@@ -345,6 +413,17 @@ poll_layer <- function(ae, region, path = NULL, window = 4L) {
     add$.fill <- ""; add$.label_ae <- lab != extra$firm_raw; add$.origin <- extra$origin
     ae <- rbind(ae[, setdiff(names(ae), "canon"), with = FALSE], add, use.names = TRUE, fill = TRUE)
   } else ae <- ae[, setdiff(names(ae), "canon"), with = FALSE]
+  pb_log <- c(pb = 0L, confirmed = 0L, disagree = 0L)
+  if (poll_pb_on()) {
+    pc <- c(Sys.getenv("AUSPOL_POLL_PB_FILE", ""), file.path(dirname(path), "pb_llm_polls.csv"),
+            file.path(pkg_root(), "external", "reference", "polls", "pollbludger", "pb_llm_polls.csv"))
+    pc <- pc[nzchar(pc) & file.exists(pc)]
+    if (!length(pc)) stop("AUSPOL_POLL_PB=1 needs pb_llm_polls.csv: run scripts/build_pb_llm_polls.R, set AUSPOL_POLL_PB_FILE, or AUSPOL_POLL_PB=0")
+    pr <- .ps_pb_confirm(ae, region, parties, pc[1], alias)
+    ae <- pr$ae; pb_log <- pr$log
+    if (pb_log[["pb"]] > 0) message(sprintf("PZ3 Poll Bludger posts [%s]: %d stated polls; %d rows that carried AE's numbers now carry Poll Bludger's (all major parties within 2 points); %d matched but disagree by more than 2 (AE kept)",
+                                            region, pb_log[["pb"]], pb_log[["confirmed"]], pb_log[["disagree"]]))
+  }
   data.table::setorderv(ae, "date")
   # origin: whose numbers the row carries (wiki, bludgertrack, both, or ae)
   prov <- data.table::data.table(date = ae$date, firm = ae$firm, source = ae$.prov, origin = ae$.origin,

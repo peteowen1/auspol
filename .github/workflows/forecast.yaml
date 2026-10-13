@@ -227,8 +227,8 @@ jobs:
           fi
           # The Poll Bludger's poll tables (AUSPOL_POLL_BT, 2026-10-13): the published table is required (load_polls()
           # stops without it); the two live cycles are then refetched and swapped in, fed2025 kept from the release.
-          gh release download shipped-models -p bludgertrack_polls.csv -D output/polls-wiki --clobber || { echo "::error::shipped-models has no bludgertrack_polls.csv -- publish the rebuild (stage 9) before this runs"; exit 1; }
-          test -s output/polls-wiki/bludgertrack_polls.csv || { echo "::error::bludgertrack_polls.csv downloaded empty"; exit 1; }
+          gh release download shipped-models -p bludgertrack_polls.csv -p pb_llm_polls.csv -D output/polls-wiki --clobber || { echo "::error::shipped-models has no bludgertrack_polls.csv / pb_llm_polls.csv -- publish the rebuild (stage 9) before this runs"; exit 1; }
+          test -s output/polls-wiki/bludgertrack_polls.csv && test -s output/polls-wiki/pb_llm_polls.csv || { echo "::error::a Poll Bludger table downloaded empty"; exit 1; }
           BT=""
           if BT=$(mktemp -d) && AUSPOL_BT_RAW="$BT" AUSPOL_BT_OUT="$BT/bludgertrack_polls.csv" Rscript scripts/build_bludgertrack_polls.R --fetch=fed2028,vic2026 --keep=output/polls-wiki/bludgertrack_polls.csv > "$BT/build.log" 2>&1 \
              && test -s "$BT/bludgertrack_polls.csv"; then

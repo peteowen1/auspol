@@ -67,7 +67,9 @@ extra <- c(file.path(SHIP, c("MANIFEST.json", "pooled-backtest.csv", "pooled-sha
            file.path("external", "reference", "polls", "statewide-samples", "statewide_polls_wiki.csv"),
            file.path("external", "reference", "polls", "statewide-samples", "firm_alias.csv"),
            # AUSPOL_POLL_BT (2026-10-13): The Poll Bludger's poll tables; the forecast job refetches the live cycles
-           file.path("external", "reference", "polls", "pollbludger", "bludgertrack_polls.csv"))
+           file.path("external", "reference", "polls", "pollbludger", "bludgertrack_polls.csv"),
+           # AUSPOL_POLL_PB (2026-10-13): polls a model read from Poll Bludger posts (historical cycles; no daily refresh)
+           file.path("external", "reference", "polls", "pollbludger", "pb_llm_polls.csv"))
 loo <- grep("xgb-flows-v1-loo-.*[.]model$", models, value = TRUE)
 rest <- setdiff(models, loo)
 
