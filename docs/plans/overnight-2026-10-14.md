@@ -40,3 +40,7 @@ something, save it for the morning". Trust does not extend to merges to main, de
   build AUSPOL_PB_COALITION_COMBINED (off) + measure. Branch worktree-agent-a8315975f4a90c716.
 - 01:30 Hare-Clark with thin-cycle polls (96a0478, branch a9cee86a): pooled 0.525 vs prev-only 0.776 vs naive 0.974;
   tas2021 Clark miss = Ogilvie (sitting member changed label), Hare-Clark has no defector handling -> morning item.
+- 01:50 Combined-Coalition PB path built OFF (552bc65, branch a8315975): frees 4 WA polls (wa2008 3, wa2017 1); WA
+  day-before level MAE 2.558 -> 2.555. Old-WA AEF dependence is a floor (wa2005: 34 of 49 AEF polls predate the blog).
+  LEAD: fed2007 takes 1 poll from Wikipedia though an "Opinion polling for the 2007 Australian federal election" page
+  exists -- likely a parser miss; check after the rebuild.
