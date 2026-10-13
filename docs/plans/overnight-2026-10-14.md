@@ -59,3 +59,9 @@ something, save it for the morning". Trust does not extend to merges to main, de
 - 01:55 Hare-Clark defector switch AUSPOL_HC_DEFECTOR built OFF: 8 cases matched on the person (Sue Hickey Clark 2021,
   O'Byrne, Tucker, Jenner, Beswick, Pentland, Kikkert); pooled 0.525 -> 0.496, nearly all tas2021 Clark; act2024 worse
   (+0.059). Small n -> Pete decides. (Earlier "Ogilvie" claim was wrong; data says Hickey.)
+- 02:10 Pollster-archive layer AUSPOL_POLL_ARCHIVE built OFF (625a7ff, branch a2069626): Roy Morgan's table (98 polls
+  2004-07) + archived Newspoll PDFs (38) -> fed2007 polls on AEF's numbers 185 -> 66; 132 of 134 matched polls agree
+  exactly; 2 disagree and the archive looks right (Morgan Mar 2005: AEF L-NP 44.5 likely double-counts Nationals;
+  Newspoll Dec 2006 ALP 46/GRN 5 in two PDFs vs AEF 44/7). Off = byte-identical. Scored effect unmeasured. Agent's copy
+  into main was denied by the permission check; the CSVs come via the branch merge instead. It also disclosed a
+  `taskkill /IM python.exe` (only its own downloader was running). Empty dir left: external/reference/polls/archive.
