@@ -30,8 +30,50 @@ Qld 2001-2017 (7); SA 2002-2018 (5); Tas, NT, ACT (none). Poll sources: `docs/PO
 3. 2000-2009 the same way, if the sources allow.
 4. Tas/NT/ACT per track C's recommendation (NT single-member fits the current model; Tas and ACT are Hare-Clark).
 
+## Decisions (Pete, 2026-10-13)
+
+- Flows where no preference distribution exists: **estimate from that election's own results** (seat first
+  preferences against two-candidate results), not borrowed from another election.
+- Inputs missing before ~2016 (census 2006/2011, older leaders): **complete the data**, so old elections run the full
+  published model.
+
+## Wave 2a: data gathering (launched 2026-10-13 ~11:35, Sonnet, new files only while the rebuild runs)
+
+| agent | output |
+|---|---|
+| AE archived results -> our schema, cross-checked | `scripts/build_archived_results.R`, `external/elections/archive/` |
+| distributions: VEC 2006, NSWEC 2011, ECSA 2010/2014 | raw + parsed transfers, `docs/reviews/distributions-state-2026-10-13.md` |
+| distributions: AEC 2001, ECQ 2004-2017 | raw + parsed, `docs/reviews/distributions-aec-ecq-2026-10-13.md` |
+| census 2006/2011 by electorate | `docs/reviews/census-2006-2011-2026-10-13.md` + fetched raw |
+| leaders file pre-2019 | `docs/reviews/leaders-backfill-2026-10-13.md` + proposed rows |
+
 ## Status log
 
+- 2026-10-13 ~11:50: census done (`reviews/census-2006-2011-2026-10-13.md`): 7 G01 features; 2006 and 2011 DataPacks
+  at CED and SED fetched (`external/reference/abs/raw/`, no login). **Finding, live in backtests:** older pairs carry a
+  2016 or 2021 census vintage (fed2007 rows = 2016, `output/census-features.csv`), and the shipped
+  `AUSPOL_DEMO_RESID=2` reads all seven columns, so its backtest gain on pre-2016 pairs includes look-ahead (the live
+  forecast is unaffected: vic2026 uses 2021). Fix = the census preceding each election (2006 for 2007-2010, 2011 for
+  2011-2015), then re-measure DEMO_RESID. Mapping: federal CEDs direct; state SEDs need reaggregation where boundaries
+  moved (older boundary files not on disk). 2001-2002 elections: 2001 census, deferred (nice-to-have range).
+- 2026-10-13 ~11:45: archived results ingested (`scripts/build_archived_results.R`, `external/elections/archive/`,
+  148 files; check `reviews/archived-results-check-2026-10-13.md`): 28 elections cross-checked, 1,986 of 2,635 seats
+  exact on every party class, 5 winner mismatches of 2,542 (nsw2015 Prospect an archive error: Labor won it, from
+  memory; the other 4 are labels: Shooters as OTH, IND as OTH). fed2010 archive has 124 of 150 seats. Use: first
+  preferences for elections we lack; official files win where both exist.
+- 2026-10-13 ~11:40: track B done (`reviews/wiki-poll-pages-2026-10-13.md`, `deciding-runs/wiki-poll-pages-2026-10-13.csv`,
+  178 rows): dedicated polling pages exist only for fed 2010+, Tas 2025, NT 2020, SA 2026, Vic 2026, NSW 2027, Qld
+  2028, ACT next; everything else is in the main article. 14 elections with Wikipedia polls never fetched (Vic 2006,
+  Qld 2006/2009, SA 2006, Tas 2010-2025, NT 2020 ...). No table at all: fed 2001, NSW 2003/2007/2019, Vic 2002, Qld
+  2001/2004, SA 2002, WA 2001, Tas 2002/2006, NT 2001-2012, ACT most; prose only: fed 2004/2007, NSW 2015 -> Poll
+  Bludger is the source there. Scraper run waits for the rebuild (load_polls reads the wiki table mid-rebuild).
+- 2026-10-13 ~11:30: track A done (`reviews/coverage-results-inventory-2026-10-13.md`): first preferences and 2CP for
+  nearly every election since 2001 already on disk in AE's clone (`analysis/Archived/elections/results_*.csv`, 74
+  files, unread by our code; checked). Real gap: preference distributions (none for NSW 2003/2007, Vic 2002, Qld
+  2001-2015; NSW and Qld were optional preferential). Harness blockers: NSW/SA need a seat-file fallback (anchor seat
+  files 2019+), Vic hard-codes the previous transfers file. Order: vic2010, qld2017/2015/2012, sa2018/2014/2010,
+  nsw2015, fed2004, nsw2011, then 2000-2009. Decisions put to Pete: flows where no distribution exists; features
+  missing before 2016 (census 2016/2021 only, leaders file 2019+).
 - 2026-10-13 ~11:15: track C done (`reviews/scoping-tas-nt-act-2026-10-13.md`): recommends NT first (fits the
   single-member path; polls very thin), then one Hare-Clark engine for ACT (every-ballot files) and Tas (best polls,
   weakest historical data). Dates and seat history partly from memory; NTEC site blocked the fetcher.
