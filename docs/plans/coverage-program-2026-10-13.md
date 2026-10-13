@@ -37,6 +37,12 @@ Qld 2001-2017 (7); SA 2002-2018 (5); Tas, NT, ACT (none). Poll sources: `docs/PO
 - Inputs missing before ~2016 (census 2006/2011, older leaders): **complete the data**, so old elections run the full
   published model.
 
+- **Naming and source rule (Pete, later 2026-10-13):** AEF = AE Forecasts (modelling site; moving off it), AEC =
+  Australian Electoral Commission (official). Results come from the commissions first (AEC, NSWEC, VEC, ECQ, ECSA,
+  WAEC); the AEF archive (`external/elections/archive/`) is a cross-check and a flagged last-resort filler only.
+  Federal flows: the AEC's official two-party flow tables replace AEF's `preference-estimates.csv`. States: the
+  commission's distributions where published, else the estimate from official results.
+
 ## Wave 2a: data gathering (launched 2026-10-13 ~11:35, Sonnet, new files only while the rebuild runs)
 
 | agent | output |

@@ -7,7 +7,18 @@
 # load_preference_flows(): flow_alp, exhaust).
 #
 # Check codes: FR1 source choice and seat accounting, FR2 answer-key integrity,
-# FR3 estimator dry run, FR4 validation, FR5 bar. ("FR" is unused elsewhere.)
+# FR3 estimator dry run, FR4 validation, FR5 bar, FR6 answer key vs the AEC's official
+# federal flows, FR7 that check failing on a deliberately broken key, FR8 which seats
+# the key covers. ("FR" is unused elsewhere.)
+#
+# 2026-10-13 REVISION (docs/reviews/flow-estimation-validation-2026-10-13.md, section
+# "Revalidation on a corrected key"): the answer key is now rebuilt by
+# scripts/flow_key_reconstruction.R (a tilted choice model instead of the proportional
+# pile rule, federal elections tracked by candidate over ALL seats from the AEC
+# distribution-of-preferences files), calibrated to reproduce the AEC's official
+# federal flows (output/aec-tpp-flows.csv, built by scripts/build_aec_tpp_flows.R).
+# The estimator, its constants and the pass bar are UNCHANGED. The review file is
+# no longer overwritten: this run replaces only its "Revalidation" section.
 #
 # Run:  powershell.exe -Command 'Rscript "scripts/estimate_flows_from_results.R"'
 #       add --dry to stop after the fed2022 / nsw2023 dry run.
@@ -28,6 +39,7 @@ options(auspol.root = normalizePath("."))
 suppressMessages(library(data.table))
 suppressMessages(devtools::load_all(quiet = TRUE))
 suppressMessages(library(quadprog))
+source("scripts/flow_key_reconstruction.R")
 
 ARGS    <- commandArgs(trailingOnly = TRUE)
 DRY     <- "--dry" %in% ARGS
@@ -137,60 +149,9 @@ build_seats <- function(L, election) {
   list(S = S, n_fp_seats = nrow(Fw), n_final_other = nrow(other))
 }
 
-# ---- answer key: follow every minor vote to ALP / LNP / exhausted -------------
-# Transfers files give, per exclusion, how the excluded candidate's pile split by
-# party class of the recipient (exhausted votes are not recorded). A pile is a
-# mix of ORIGINS (the party class whose first preference it started as). We
-# carry that mix: class buckets hold origin-mass vectors; an exclusion of class
-# f moves a pile with the bucket's composition to its recipients. Pile size:
-#  * compulsory: the sum of the transfers (nothing exhausts);
-#  * optional: the excluded candidate's own first preferences (smallest
-#    remaining candidate of that class) plus an equal share of the class's
-#    received votes, and never less than what was transferred. Anything not
-#    transferred exhausts. THIS PILE SIZE IS AN APPROXIMATION (the files do not
-#    carry it); it is checked against the NSW 2011 detail file in FR2.
-# Exclusions of ALP or LNP candidates (second candidate of the same class) are
-# skipped: they hold almost no minor-party origin mass.
-track_seat <- function(fpseat, tr, optional) {
-  K <- MINORS
-  unit <- function(k) { v <- setNames(numeric(length(K)), K); v[k] <- 1; v }
-  zero <- setNames(numeric(length(K)), K)
-  F <- sapply(K, function(k) sum(fpseat$votes[fpseat$party == k]))
-  classes <- unique(c("ALP", "LNP", K, tr$to, tr$from))
-  R <- setNames(lapply(classes, function(.) zero), classes)
-  own <- setNames(lapply(classes, function(.) numeric(0)), classes)
-  for (k in K) own[[k]] <- sort(fpseat$votes[fpseat$party == k])
-  skipped <- 0L
-  tr <- tr[order(tr$round)]
-  for (r in unique(tr$round)) {
-    rr <- tr[tr$round == r]
-    for (f in unique(rr$from)) {
-      g <- rr[rr$from == f]
-      if (!f %in% K) { skipped <- skipped + 1L; next }
-      t_by <- tapply(g$votes, g$to, sum); t <- sum(t_by)
-      if (t <= 0) next
-      if (!optional) {
-        mvec <- sum(own[[f]]) * unit(f) + R[[f]]
-        sm <- sum(mvec)
-        if (sm <= 0) { mvec <- unit(f) * t; sm <- t }
-        phi <- min(1, t / sm)
-        pile_vec <- mvec * phi
-        denom <- sum(pile_vec)                       # distribute exactly the pile
-        own[[f]] <- own[[f]] * (1 - phi); R[[f]] <- R[[f]] * (1 - phi)
-      } else {
-        n <- max(1L, length(own[[f]]))
-        o <- if (length(own[[f]])) min(own[[f]]) else 0
-        pile_vec <- o * unit(f) + R[[f]] / n
-        denom <- max(sum(pile_vec), t)
-        if (length(own[[f]])) own[[f]] <- own[[f]][-which.min(own[[f]])]
-        R[[f]] <- R[[f]] * (1 - 1 / n)
-      }
-      if (sum(pile_vec) <= 0) next
-      for (d in names(t_by)) R[[d]] <- R[[d]] + pile_vec * (t_by[[d]] / denom)
-    }
-  }
-  list(F = F, toALP = R[["ALP"]], toLNP = R[["LNP"]], skipped = skipped)
-}
+# ---- answer key -----------------------------------------------------------------------------
+# The tracker (class_track_seat / fed_track_year), the tilted choice model that replaced the
+# proportional pile rule, and its calibration are in scripts/flow_key_reconstruction.R.
 
 key_for_election <- function(S, tr_el, fp, optional) {
   seats <- intersect(S[used == TRUE]$seat, unique(tr_el$seat))
@@ -210,8 +171,8 @@ key_for_election <- function(S, tr_el, fp, optional) {
   dropped <- sum(!keep)
   seats <- Sk0$seat[keep]
   if (!length(seats)) return(NULL)
-  res <- lapply(seats, function(s)
-    track_seat(fp[fp$seat == s], tr_el[tr_el$seat == s], optional))
+  tk <- class_track_set(fp, tr_el, seats, optional, MINORS)
+  res <- tk$res
   F  <- Reduce(`+`, lapply(res, `[[`, "F"))
   A  <- Reduce(`+`, lapply(res, `[[`, "toALP"))
   Lw <- Reduce(`+`, lapply(res, `[[`, "toLNP"))
@@ -307,7 +268,11 @@ for (i in seq_len(nrow(ELS))) {
   S <- sb$S
   LOAD[[el]] <- L; SEATS[[el]] <- S
   tr_el <- TX[TX$election == el]
-  k <- if (nrow(tr_el)) key_for_election(S, tr_el, L$fp, op) else NULL
+  # federal 2004-2025: candidate-level tracking over all seats from the AEC distribution of
+  # preferences (the scope of the AEC's official flow table); everything else: class-level
+  # transfer files over seats whose final two are Labor and the Coalition
+  k <- if (rg == "fed" && yr >= 2004) fed_key_object(yr)
+       else if (nrow(tr_el)) key_for_election(S, tr_el, L$fp, op) else NULL
   if (!is.null(k)) KEYS[[el]] <- k
   LOG[[el]] <- data.table(election = el, source = L$src, seats_fp = sb$n_fp_seats,
     final_alp_lnp = nrow(S), final_other = sb$n_final_other, used = sum(S$used),
@@ -347,6 +312,58 @@ if ("nsw2011" %in% names(KEYS)) {
   say("FR2  NSW 2011, %d key seats: exhausted votes published in the distributions %s; implied by final counts %s; tracked %s",
       length(ks), format(pub, big.mark = ","), format(round(imp), big.mark = ","), format(round(trk), big.mark = ","))
 }
+
+
+# ---- FR6: the federal answer key against the AEC's official two-party flows -----------------------
+# output/aec-tpp-flows.csv is built by scripts/build_aec_tpp_flows.R from the AEC's own
+# tables; it covers every first preference in every seat (notional counts included).
+AECF <- fread("output/aec-tpp-flows.csv")[row_type == "national_class"]
+stopifnot(nrow(AECF) > 0, all(c("GRN", "ONP") %in% AECF$party_class))
+FED_CLASSES <- c("GRN", "ONP", "OTH", "OTH_RIGHT", "IND")
+FEDY <- sort(unique(AECF$year))
+fr6_gap <- function(keytab, yy, classes = FED_CLASSES) {
+  a <- AECF[year == yy & party_class %in% classes, .(party = party_class, aec = flow_alp, aec_votes = alp_votes + lnp_votes)]
+  kk <- data.table(party = keytab$party, key_pct = 100 * keytab$a, key_votes = keytab$F_votes)   # not `key =`: data.table() has its own key argument
+  m <- merge(kk, a, by = "party"); m[, gap := key_pct - aec]; m
+}
+FR6 <- rbindlist(lapply(FEDY, function(yy) {
+  m <- fr6_gap(KEYS[[paste0("fed", yy)]]$key, yy); m[, year := yy]; m }))
+FR6[, within1 := abs(gap) <= 1]
+cat("\nFR6  Answer key vs the AEC's official national flow to Labor, percent of the class's first preferences.\n")
+cat("     gap = key minus AEC, points; closer to zero is better; within1 = |gap| <= 1.\n")
+print(FR6[, .(year, party, key_votes = round(key_votes), aec_votes, key = round(key_pct, 1), aec = round(aec, 1),
+              gap = round(gap, 1), within1)], nrows = 100)
+FR6b <- FR6[party %in% c("GRN", "ONP"), .(cells = .N, within1 = sum(within1), mean_abs_gap = mean(abs(gap)),
+                                         max_abs_gap = max(abs(gap))), by = party]
+print(FR6b)
+
+# FR7: a check that cannot fail proves nothing. Swap the Labor and Coalition labels in the 2022
+# distribution (the mistake a column-order bug makes) and demand that FR6 FAILS on it.
+bad <- fed_key_table(fed_track_year(2022, swap_major = TRUE, passes = 0L))
+bad_gap <- fr6_gap(bad, 2022)
+FR7 <- bad_gap[party %in% c("GRN", "ONP")]
+say("FR7  deliberately broken key (Labor/Coalition labels swapped), fed2022: Greens key %.1f vs AEC %.1f (gap %.1f), One Nation %.1f vs %.1f (gap %.1f) -> FR6 %s",
+    FR7[party == "GRN"]$key_pct, FR7[party == "GRN"]$aec, FR7[party == "GRN"]$gap,
+    FR7[party == "ONP"]$key_pct, FR7[party == "ONP"]$aec, FR7[party == "ONP"]$gap,
+    if (all(abs(FR7$gap) > 1)) "FAILS as it must" else "DID NOT FAIL: THE CHECK IS BLIND")
+stopifnot(all(abs(FR7$gap) > 10))
+
+# FR8: what explains the gap. Greens gap to the AEC (points) under four keys, same tilt constant:
+#   prop_alplnp: proportional pile rule, only seats whose real final two were Labor v Coalition (the old key's scope)
+#   prop_all   : proportional pile rule, all seats (notional counts settled from the AEC division totals)
+#   tilt_alplnp: tilted choice model, Labor v Coalition seats only
+#   tilt_all   : the key used (tilted, all seats)
+FR8 <- rbindlist(lapply(FEDY, function(yy) {
+  tilt <- KEYS[[paste0("fed", yy)]]
+  pr <- fed_track_year(yy, lambda_max = 0, passes = 0L)
+  g <- function(kt, cls) fr6_gap(kt, yy, cls)$gap
+  rbindlist(lapply(c("GRN", "ONP"), function(cls)
+    data.table(year = yy, party = cls, prop_alplnp = g(fed_key_table(pr, TRUE), cls), prop_all = g(fed_key_table(pr), cls),
+               tilt_alplnp = g(tilt$key_alplnp, cls), tilt_all = g(tilt$key, cls),
+               diverged_seats = tilt$n_diverged)))
+}))
+cat("\nFR8  Gap to the AEC (points) by key construction; closer to zero is better.\n")
+print(FR8[, lapply(.SD, function(x) if (is.numeric(x)) round(x, 1) else x)], nrows = 50)
 
 # ---- priors ----------------------------------------------------------------------
 KEYTAB <- rbindlist(lapply(names(KEYS), function(el) {
@@ -473,6 +490,7 @@ BAR <- function(d) {
   b <- d[in_bar_class == TRUE & !is.na(berr_a)]
   data.table(cells = nrow(b), est_MAE = mean(abs(b$err_a)), borrow_MAE = mean(abs(b$berr_a)),
              raw_MAE = mean(abs(b$raw_err_a)),
+             blend_MAE = mean(abs(0.5 * b$err_a + 0.5 * b$berr_a)),   # fixed 50/50 average of estimate and borrow
              GRN_est = mean(abs(b[party == "GRN"]$err_a)), GRN_borrow = mean(abs(b[party == "GRN"]$berr_a)),
              ONP_est = mean(abs(b[party == "ONP"]$err_a)), ONP_borrow = mean(abs(b[party == "ONP"]$berr_a)),
              nGRN = sum(b$party == "GRN"), nONP = sum(b$party == "ONP"))
@@ -527,67 +545,103 @@ if (!is.null(AE)) {
                 borrow = mean(abs(borrow_err), na.rm = TRUE))])
 }
 
-# ---- write the review tables ------------------------------------------------------------
+# ---- the federal elections against the AEC's OFFICIAL flows (not the reconstruction) ---------------
+FEDOFF <- rbindlist(lapply(FEDY, function(yy) {
+  el <- paste0("fed", yy)
+  if (!el %in% names(RES)) return(NULL)
+  tt <- RES[[el]]$tab[party %in% FED_CLASSES]
+  ac <- AECF[year == yy & party_class %in% FED_CLASSES, .(party = party_class, aec = flow_alp, aec_votes = alp_votes + lnp_votes)]
+  prev <- FEDY[FEDY < yy]
+  bb <- if (length(prev)) AECF[year == max(prev) & party_class %in% FED_CLASSES, .(party = party_class, borrow_aec = flow_alp)]
+        else data.table(party = character(), borrow_aec = numeric())
+  m <- merge(merge(tt[, .(party, est = 100 * a, raw = 100 * raw_a, w = wa)], ac, by = "party"), bb, by = "party", all.x = TRUE)
+  m[, `:=`(year = yy, err = est - aec, berr = borrow_aec - aec)]
+  m
+}))
+FEDOFF_BAR <- function(d) {
+  b <- d[party %in% c("GRN", "ONP") & aec_votes >= KEY_MIN_VOTES]
+  bs <- b[!is.na(b$berr)]
+  data.table(cells = nrow(b), est_MAE = mean(abs(b$err)), GRN_est = mean(abs(b[party == "GRN"]$err)),
+             ONP_est = mean(abs(b[party == "ONP"]$err)),
+             borrow_cells = nrow(bs), est_MAE_same_cells = mean(abs(bs$err)), borrow_MAE = mean(abs(bs$berr)),
+             blend_MAE = mean(abs(0.5 * bs$err + 0.5 * bs$berr)),
+             GRN_borrow = mean(abs(bs[party == "GRN"]$berr)), ONP_borrow = mean(abs(bs[party == "ONP"]$berr)))
+}
+fo_bar <- FEDOFF_BAR(FEDOFF)
+cat("\nFR5  Federal estimator against the AEC's OFFICIAL national flows (Greens and One Nation, >= 20,000 votes).\n")
+cat("     Points; lower is better. borrow = the previous election's official flows (2010 onward).\n")
+print(FEDOFF[, .(year, party, aec_votes, aec = round(aec, 1), est = round(est, 1), err = round(err, 1),
+                 borrow = round(borrow_aec, 1), berr = round(berr, 1), w = round(w, 2))], nrows = 100)
+print(fo_bar)
+
+# ---- write the review section ----------------------------------------------------------------
+HEAD <- "## Revalidation on a corrected key (2026-10-13)"
 md <- character()
 add <- function(fmt, ...) md <<- c(md, if (...length()) sprintf(fmt, ...) else fmt)
 tbl <- function(d) { d <- as.data.frame(d); c(paste0("| ", paste(names(d), collapse = " | "), " |"),
   paste0("|", paste(rep("---", ncol(d)), collapse = "|"), "|"),
   apply(d, 1, function(r) paste0("| ", paste(trimws(r), collapse = " | "), " |"))) }
-add("# Flow estimation from results: validation (2026-10-13)\n")
-add("Script: `scripts/estimate_flows_from_results.R` (check codes FR1-FR5). Spec: `docs/plans/flow-estimation-from-results-2026-10-13.md`. Output: `output/flows-estimated.csv`. Run with %d bootstrap replicates, seed 20261013.\n", B_BOOT)
-add("## Result in one line\n")
-add("**%s.** Greens and One Nation cells in the plan's test set: estimator mean absolute error %s points on %d cells (Greens %d, One Nation %d), borrowing the nearest earlier election's actual flows %s points. Bar: under %d points and no worse than borrowing.\n",
+fmt_tab <- function(d, dig = 2) as.data.table(d)[, lapply(.SD, function(x)
+  if (is.numeric(x) && all(x == round(x), na.rm = TRUE)) as.character(round(x)) else if (is.numeric(x)) pt(x, dig) else x)]
+b_fed <- BAR(VAL[in_spec == TRUE & grepl("^fed", election)])
+b_st  <- BAR(VAL[in_spec == TRUE & !grepl("^fed", election)])
+add(HEAD)
+add("")
+add("Script: `scripts/estimate_flows_from_results.R` (check codes FR1-FR8), answer key rebuilt in `scripts/flow_key_reconstruction.R`, official federal flows from `scripts/build_aec_tpp_flows.R` (`output/aec-tpp-flows.csv`). Estimator, constants and pass bar unchanged from the first run; %d bootstrap replicates, seed 20261013. Tilt constants: exponent %.2f, evidence half-point %s first preferences (calibrated on the federal Greens/One Nation gap to the AEC only; see FR6).\n",
+    B_BOOT, KEY_LAMBDA_MAX, format(KEY_KAPPA, big.mark = ",", scientific = FALSE))
+add("### Result in one line\n")
+add("**%s on the corrected key.** Plan test set, Greens and One Nation cells: estimator mean absolute error %s points on %d cells (Greens %d, One Nation %d), borrowing the nearest earlier election's actual flows %s points. Bar: under %d points and no worse than borrowing. First run (biased key) was 9.02 against 4.85.\n",
     if (pass1 && pass2) "PASS" else "FAIL", pt(b_spec$est_MAE, 2), b_spec$cells, b_spec$nGRN, b_spec$nONP, pt(b_spec$borrow_MAE, 2), BAR_MAE)
-add("## Seat accounting and sources (FR1)\n")
-add("What the numbers are: counts of seats; `final_alp_lnp` seats whose final two are Labor and Coalition, `used` those with a count taken, `no_count` decided on first preferences, `key_seats` used seats that also have transfers (answer key). Higher `used` means more evidence.\n")
+add("### FR6 Answer key against the AEC's official federal flows\n")
+add("What the numbers are: percent of a party class's first-preference ballots that end with Labor rather than the Coalition, national, from the key we reconstruct and from the AEC's official table; gap = key minus AEC, in points, zero is perfect; within1 marks |gap| <= 1.\n")
+add(tbl(FR6[, .(year, party, key_votes = format(round(key_votes), big.mark = ","), key = pt(key_pct), aec = pt(aec), gap = pt(gap), within1)][order(year, party)]))
+add("\nWhat the numbers are: summary of the gap over years for the two bar classes; lower is better.\n")
+add(tbl(fmt_tab(FR6b)))
+add("\n### FR7 The check fails on a deliberately broken key\n")
+add("What the numbers are: the same comparison with the Labor and Coalition labels swapped in the 2022 distribution (the mistake a column-order error makes). Gap should be huge, so the check must fail here; points.\n")
+add(tbl(fmt_tab(FR7[, .(party, key_swapped = key_pct, aec, gap)], 1)))
+add("\n### FR8 What explains the gap\n")
+add("What the numbers are: gap to the AEC in points (zero is perfect) for four constructions of the key. prop = old proportional pile rule, tilt = choice model used now; alplnp = only seats whose real final two were Labor v Coalition (the first key's scope), all = every seat, with notional counts settled from the AEC division totals. diverged_seats = seats where the real count excluded Labor or the Coalition before the end.\n")
+add(tbl(fmt_tab(FR8, 1)))
+add("\n### Seat accounting and sources (FR1)\n")
+add("What the numbers are: counts of seats; `final_alp_lnp` seats whose final two are Labor and Coalition, `used` those with a count taken, `no_count` decided on first preferences, `key_seats` seats in the answer key (federal 2004-2025: all seats; others: used seats that have transfers and pass the integrity rule).\n")
 add(tbl(LOG[, .(election, final_alp_lnp, final_other, used, no_count, key_seats, source)]))
-add("\n## Answer-key integrity (FR2)\n")
-add("What the numbers are: votes the tracker sends to Labor (or the Coalition) divided by the votes the seat counts say they gained, summed over key seats; 1.000 is exact.\n")
+add("\n### Answer-key integrity (FR2)\n")
+add("What the numbers are: votes the tracker sends to Labor (or the Coalition) divided by the votes the seat counts say they gained, summed over key seats (federal: seats where the real count ended Labor v Coalition); 1.000 is exact.\n")
 add(tbl(CHK))
-add("\n## Per election and class (FR4)\n")
-add("What the numbers are: percent of the class's first preferences ending with Labor. `key` is read from the published distributions, `est` is the shrunk estimate from results only, `raw` the unshrunk fit, `borrow` the nearest earlier election's actual flow, `err` = estimate minus key (closer to zero is better), `cov` whether the key lies inside the 90% interval, `w` the weight on the data (1 = all data, 0 = all prior).\n")
-add(tbl(VAL[in_spec == TRUE | TRUE, .(election, party, seats = key_seats, key_a = pt(100 * key_a), est_a = pt(100 * a),
+add("\n### Per election and class (FR4)\n")
+add("What the numbers are: percent of the class's first preferences ending with Labor. `key` is the corrected key, `est` the shrunk estimate from results only, `raw` the unshrunk fit, `borrow` the nearest earlier election's key, `err` = estimate minus key (closer to zero is better), `cov` whether the key lies inside the 90% interval, `w` the weight on the data (1 = all data, 0 = all prior).\n")
+add(tbl(VAL[, .(election, party, seats = key_seats, key_a = pt(100 * key_a), est_a = pt(100 * a),
         raw_a = pt(100 * raw_a), borrow_a = pt(100 * borrow_a), err_a = pt(err_a), berr_a = pt(berr_a),
         key_e = pt(100 * key_e), est_e = pt(100 * e), cov = cov_a, w = pt(wa, 2), prior = prior)]))
-add("\n## Pass bar (FR5)\n")
-add("What the numbers are: mean absolute error of the Labor-flow share, in points; lower is better. Bar cells are Greens and One Nation with at least %d key seats and %s key first preferences.\n", KEY_MIN_SEATS, format(KEY_MIN_VOTES, big.mark = ","))
-add(tbl(rbind(cbind(set = "plan test set", b_spec), cbind(set = "plus WA (supplementary)", b_all))[, lapply(.SD, function(x) if (is.numeric(x)) pt(x, 2) else x)]))
+add("\n### Pass bar (FR5)\n")
+add("What the numbers are: mean absolute error of the Labor-flow share, in points; lower is better; blend_MAE is a fixed 50/50 average of estimate and borrow (not tuned). Bar cells are Greens and One Nation with at least %d key seats and %s key first preferences. Federal rows use the reconstructed key; the next table scores federal against the AEC's official flows.\n", KEY_MIN_SEATS, format(KEY_MIN_VOTES, big.mark = ","))
+add(tbl(fmt_tab(rbind(cbind(set = "plan test set", b_spec), cbind(set = "  federal only (2004-2025)", b_fed),
+                      cbind(set = "  states only (NSW, Vic, Qld, SA)", b_st), cbind(set = "plus WA (supplementary)", b_all)))))
 add("\nEstimator below %d points: **%s**. Estimator no worse than borrowing: **%s**.\n", BAR_MAE, pass1, pass2)
-add("## Interval coverage (FR4)\n")
+add("What the numbers are: federal estimator error against the AEC's OFFICIAL national flows, points; lower is better; borrow = previous election's official flows (2010 onward), est_MAE_same_cells is the estimator on those same cells, blend_MAE a fixed 50/50 average of estimate and borrow (not tuned).\n")
+add(tbl(fmt_tab(fo_bar)))
+add("\nWhat the numbers are: the per-year cells behind that row, percent to Labor; err = estimate minus AEC, berr = borrow minus AEC (zero is perfect).\n")
+add(tbl(FEDOFF[party %in% c("GRN", "ONP", "OTH", "OTH_RIGHT", "IND"), .(year, party, aec_votes = format(aec_votes, big.mark = ","), aec = pt(aec), est = pt(est),
+                 err = pt(err), borrow_aec = pt(borrow_aec), berr = pt(berr), w = pt(w, 2))][order(year, party)]))
+add("\n### Interval coverage (FR4)\n")
 add("What the numbers are: share of class cells where the key lies inside the 90% interval; 0.90 is calibrated, lower means over-confident. `bootstrap_shrunk` is the percentile interval of the shrunk bootstrap draws (the spec's interval); `posterior` is estimate +/- 1.645 sqrt(w) se (secondary).\n")
 add(tbl(CV[, .(set, cells, cover_bootstrap_shrunk = pt(cover_bootstrap_shrunk, 2), cover_posterior = pt(cover_posterior, 2), n_w_lt_0.1, n_w_gt_0.9)]))
-add("\n## Per-election error, all classes with at least 20,000 key first preferences (FR4)\n")
+add("\n### Per-election error, all classes with at least 20,000 key first preferences (FR4)\n")
 add("What the numbers are: mean absolute error of the Labor-flow share across classes, points; lower is better.\n")
 add(tbl(PE[, .(election, classes, prior, est_MAE = pt(est_MAE), borrow_MAE = pt(borrow_MAE))]))
-add("\n## Exhaust on optional-preferential elections (FR4)\n")
+add("\n### Exhaust on optional-preferential elections (FR4)\n")
 add("What the numbers are: mean absolute error of the exhaust share, points; lower is better. Cells: %d (borrow available on %d).\n", nrow(EXs), sum(!is.na(EXs$berr_e)))
 add(tbl(data.table(est = pt(mean(abs(EXs$err_e))), borrow = pt(mean(abs(EXs$berr_e), na.rm = TRUE)))))
 if (!is.null(AEC)) {
-  add("\n## AE's estimates as a second reference (FR4)\n")
-  add("What the numbers are: mean absolute error against the key on cells where AE published a value, points; lower is better.\n")
+  add("\n### AE's estimates as a second reference (FR4)\n")
+  add("What the numbers are: mean absolute error against the corrected key on cells where AE published a value, points; lower is better.\n")
   add(tbl(AEC[, .(cells = .N, AE = pt(mean(abs(ae_err))), estimator = pt(mean(abs(est_err))), borrow = pt(mean(abs(borrow_err), na.rm = TRUE)))]))
 }
-add("\n## Dry run\n")
-add("The dry run (fed2022, nsw2023) is printed at the top of the script's log as FR3; see the dry-run section below.\n")
 
-add("
-## Reading the result (written after the run; numbers are from this run)
-")
-add("- **Fail on both clauses of the bar.** Mean absolute error 9.0 points against a 5-point bar, and borrowing the nearest earlier election's actual flows is better (4.9). The unshrunk fit alone is worse still (11.0), so shrinkage helped but could not rescue it. The bar, the method and the constants were not changed after seeing results.")
-add("- **The error is systematic, not noise.** Federal Greens are over-estimated in nearly every election (2004 +10, 2007 +6, 2013 +6, 2019 +8, 2022 +11, 2025 +16) and One Nation under-estimated (2022 -15, 2025 -20). Intervals cover the key in 38% of cells (16% on the bar cells) against a nominal 90%: the bootstrap measures sampling noise over seats, and the error here is bias that more seats would not remove. Likely cause (not tested): flows differ between seats (Greens voters in inner-city Labor seats send more to Labor than elsewhere), and with five correlated minor-party shares a single set of constant flows cannot separate them.")
-add("- **Where it looks fine, it is mostly the prior.** Victoria 2006-2018 and WA 2005 have pool weight 0 (the election-level spread estimate came out at zero), so the estimate equals the borrowed flows exactly; those rows say nothing about the estimator.")
-add("- **Small samples fail badly.** SA 2026 has 12 key seats (13 used): estimates sit on the 0 and 100 boundaries (Greens 99, Others 15 against key 83 and 61) and the bootstrap spread collapses there, so the shrinkage weight is high (0.96) when it should be low. The bootstrap SE is not trustworthy at a boundary.")
-add("- **Exhaust (NSW, optional preferential)**: mean absolute error 9.9 points against 14.6 for borrowing, on 17 cells; here the estimator beats borrowing, mainly because the NSW 2011 prior is federal (exhaust 0). This is not part of the bar.")
-add("- **AE comparison**: AE's hand-made numbers are 11.1 points from the key on 44 cells, the estimator 7.6, borrowing 4.2. AE's federal Greens figures run 79-86% (2013-2025) against a key of 77-80%, and AE's federal One Nation 26-40% (2019-2025) against a key of 34-42%, so key and AE disagree by a few points for a reason I have not resolved (see below).")
-add("
-## What is unverified
-")
-add("- **The answer key is my construction, not a published number.** The transfers files record each exclusion split by recipient party class, with exhausted votes left out. I follow each first preference through later exclusions assuming a class's pile has the composition of that class's bucket (own first preferences plus everything received). For compulsory elections the pile size is the sum transferred; for NSW and pre-2017 Queensland it is the smallest remaining candidate's votes plus an equal share of the class's received votes, never less than what was transferred. Checks that passed: tracked votes reaching Labor and the Coalition are within 2% of the seat counts for federal and within 0.5% for WA, Qld and Vic, but 2-13% off for nsw2019 and nsw2023 (the Coalition side); NSW 2011 exhausted votes tracked 146,489 against 142,597 published (2.7% high). Not checked: that the per-class attribution is right, only the totals.")
-add("- **The key disagrees with the commonly cited figures.** It puts the Greens at 77-80% to Labor in every federal election, where the plan quotes about 86% and AE 79-86%. One Nation is 34-54% in the key (34-42% from 2019), against AE's 26-40%. I could not find which is wrong; the key keeps votes that went to other minor parties first and then to the Coalition, which lowers Greens-to-Labor, and AE may count only the final transfer. If the key is biased, the 9.0 is too large; the Greens error then shrinks but the sign pattern would reverse.")
-add("- **Key integrity rule added before validation, not tuned on it.** A seat enters the key only if transfers to Labor and to the Coalition are each within max(5%, 300 votes) of that candidate's change in the seat count. I first tried 3%/100 votes, saw from raw files that ordinary rounding disagreement is about 200 votes, and loosened it. This drops many seats (`seats_dropped_incomplete` in the integrity table: for example fed2019 98, fed2016 70, fed2010 67, vic2022 30); the estimator uses every counted seat but the key only the kept ones, so the two are not computed on identical seats.")
-add("- **Seats with two Coalition (or two Labor) candidates** sit in one class; exclusions of the second candidate are skipped by the tracker (zero such skips in the final key seats except WA 2021: 2). Leakage from those candidates is not in the key.")
-add("- **Prior fallback**: when no earlier same-state election has a distribution, the prior is the federal election in the most recent strictly earlier year, not the same year as the plan says (same-year federal would be leakage for any election held after it, and the dated check was not worth the risk). A class the prior lacks, or holds on fewer than 3 seats, gets the vote-weighted mean of the prior's classes (flagged `(class mean)` in `prior_source`).")
-add("- **Source choice**: federal elections use the official AEC files (first preferences and final counts agree with the archive copy on all but 1-6 seats per election by more than 0.5%); every other election uses the uniform archive files, because the official state files are one row per party class and the optional-preferential tracker needs candidate rows. SA 2026 uses the official first preferences with final counts replayed from its transfers (no final-count file on disk). Qld 2017 and SA 2018/2022 are in the plan's test set but have no distribution on disk, so they are scored nowhere; Vic 2002, NSW 2003/2007, Qld 2001-2015 and SA 2002-2014 have estimates but no key. WA is reported separately (not in the plan's list) and is not in the pass-bar line.")
-add("- **Not run**: a rerun with a different seed (bootstrap size 300 only); an alternative estimator with seat-level heterogeneity, which the plan does not specify and which I did not add.")
-writeLines(md, REVIEW)
-say("wrote %s", REVIEW)
+old <- if (file.exists(REVIEW)) readLines(REVIEW, warn = FALSE) else character()
+stopifnot(any(grepl("^## Addendum \\(orchestrator, 2026-10-13\\)", old)))   # the first run's text must still be there
+cut <- which(startsWith(old, HEAD))
+if (length(cut)) old <- old[seq_len(cut[1] - 1L)]
+writeLines(c(old, "", md), REVIEW)
+say("wrote the Revalidation section of %s (%d lines; earlier text kept)", REVIEW, length(md))
