@@ -481,6 +481,10 @@ CLASSIFY <- list(
   AUSPOL_DEFECT_BY_LEVEL = paste(
     "SHIPPED 2026-10-05 (mode 2: federal targets get their own shrunk sitting-member defector carry). Read inside",
     "R/candidate_returns.R (line ~1240), so every harness and fit_seats_full.R get it through that function; the grep cannot see it."),
+  AUSPOL_POOL_BY_JURISDICTION = paste(
+    "BUILT 2026-10-13, OFF, not measured across all pairs (docs/reviews/pooled-fits-inventory-2026-10-13.md). Gate is",
+    "pool_by_jurisdiction_on() in R/pool_hierarchical.R, called from fit_defector_discount(), fit_minor_defector_discount() and",
+    "fit_sitting_minor_level() in R/candidate_returns.R, so it reaches every harness and fit_seats_full.R; not a gap."),
   AUSPOL_DEFECTOR_STATE = paste(
     "PREREG PENDING, OFF (built 2026-10-06; docs/reviews/state-defectors-2026-10-06.md). Gate is .defstate_on() in R/defector_state.R,",
     "called from R/candidate_returns.R, so it would reach every harness and fit_seats_full.R if turned on; not a gap."),
