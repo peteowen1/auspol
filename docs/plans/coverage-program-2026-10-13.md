@@ -142,3 +142,10 @@ Qld 2001-2017 (7); SA 2002-2018 (5); Tas, NT, ACT (none). Poll sources: `docs/PO
   candidacies (no votes) were added: fixed (728f083). **OPEN, pre-existing:** fit_mp_slope.R is leave-one-election-out,
   not time-forward (CLAUDE.md: LOO trains older targets on later elections); it feeds the shipped dev_slope tier.
   Make it time-forward and re-measure, as its own step.
+- 2026-10-13 18:20: **vic2010 bundle PUBLISHED** (shipped-models, manifest git 94fde0c; dev pushed). vic2010 scored
+  (88 seats, accuracy 0.898, log loss 0.216) but kept out of training (AUSPOL_TRAIN_SKIP_PAIRS=vic2010): as training
+  data it made later elections worse (per person, AEF-7 +0.0043 beyond 1 SE). Versus the 11:00 publish, per person:
+  AEF-7 -0.0016, 2010+ +0.0017 (both within noise); pre-2010 +0.0029 = census look-ahead removed. Scoring is now per
+  person (Pete); training weights (decay + completeness) are the next build (`plans/weighting-design-2026-10-13.md`).
+  Also today: DemosAU federal MRP (150 seats) parsed; fed2028 forecast scoped and decided (provisional publish,
+  trained federal flows, May 2028, MRP as seat polls); next-five-pairs checklist; flow blend; Hare-Clark prototype.
