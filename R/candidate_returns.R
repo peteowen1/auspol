@@ -1700,7 +1700,7 @@ fit_minor_defector_conserve <- function(target_election, corpus = NULL, pairs = 
   # AUSPOL_CONSERVE_TF (2026-10-13; "0" = the shipped leave-target-out behaviour): "1" trains on elections dated
   # BEFORE the target only. The comment below said time-forward, but only the target itself was ever dropped,
   # so every later election trained the earlier targets (docs/reviews/pooled-fits-inventory-2026-10-13.md).
-  if (identical(Sys.getenv("AUSPOL_CONSERVE_TF", "0"), "1")) pairs <- fit_pairs_for(target_election, pairs)
+  if (!identical(Sys.getenv("AUSPOL_CONSERVE_TF", "1"), "0")) pairs <- fit_pairs_for(target_election, pairs)   # shipped "1" 2026-10-14
   ST <- C[, list(v = sum(votes, na.rm = TRUE)), by = list(election, party)][, share := 100 * v / sum(v), by = election]
   cs <- function(el, s, p) { v <- C[C$election == el & C$seat == s & C$party == p, sum(pcv, na.rm = TRUE)]; if (length(v)) v else 0 }
   rows <- data.table::rbindlist(lapply(pairs, function(pr) {

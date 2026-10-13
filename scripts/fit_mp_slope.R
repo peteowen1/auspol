@@ -232,9 +232,8 @@ g_targets <- sort(unique(panel$target))
 g_classes <- sort(unique(panel[same_mp %in% TRUE]$party))
 # AUSPOL_MP_SLOPE_TF (2026-10-13): "1" fits each target's slopes on elections dated strictly BEFORE it
 # (time-forward), not on every other election -- the leave-one-out table trained fed2007's slope on 2022 data.
-# Written to output/mp-slope-by-target-tf.csv (an arm file, read via AUSPOL_MP_SLOPE_FILE) so the shipped
-# table is untouched until the measured switch flips.
-.mp_tf <- identical(Sys.getenv("AUSPOL_MP_SLOPE_TF", "0"), "1")
+# Shipped 2026-10-14 (Pete) after the 35-election screen: seat log loss unchanged, share error +3% (the honest figure).
+.mp_tf <- !identical(Sys.getenv("AUSPOL_MP_SLOPE_TF", "1"), "0")   # SHIPPED "1" 2026-10-14 (Pete); "0" = the old leave-one-out table
 .train_mask <- function(tg) if (.mp_tf) elections_before(panel$target, tg) else panel$target != tg
 cat(sprintf("MP6t training rows per target: %s
 ", if (.mp_tf) "elections dated BEFORE the target (time-forward)" else "every other election (leave-one-out)"))
@@ -270,5 +269,5 @@ print(dcast(grid, target ~ party, value.var = "member"))
 
 fwrite(loo, "output/mp-slope-loo.csv")
 fwrite(byc, "output/mp-slope-by-class.csv")
-fwrite(grid, if (.mp_tf) "output/mp-slope-by-target-tf.csv" else "output/mp-slope-by-target.csv")
+fwrite(grid, "output/mp-slope-by-target.csv")   # the canonical table the harnesses read; time-forward unless AUSPOL_MP_SLOPE_TF=0
 cat("\nMP4  wrote output/mp-slope-loo.csv\n")

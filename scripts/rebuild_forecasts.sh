@@ -214,6 +214,8 @@ fi
 # table is parsed from the raw XML on disk before anything else (no fetch; refetch by hand with --fetch=).
 if [ "${AUSPOL_POLL_BT:-1}" = "1" ]; then
   Rscript scripts/build_bludgertrack_polls.R > "$LOG/s0_bludgertrack.log" 2>&1 || { echo "!! build_bludgertrack_polls.R failed -- see $LOG/s0_bludgertrack.log"; exit 1; }
+  # MP slopes (time-forward since 2026-10-14) were refitted only by hand, so a new pair or a fix left the table stale.
+  Rscript scripts/fit_mp_slope.R > "$LOG/s0_mp_slope.log" 2>&1 || { echo "!! fit_mp_slope.R failed -- see $LOG/s0_mp_slope.log"; exit 1; }
 fi
 # ENDORSEMENT FEATURES (AUSPOL_XGB_ENDORSE): only when the switch is on.
 if at_least 3 && [ "${AUSPOL_XGB_ENDORSE:-0}" = "1" ]; then
