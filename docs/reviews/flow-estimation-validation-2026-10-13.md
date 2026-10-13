@@ -765,3 +765,101 @@ What the numbers are: mean absolute error against the corrected key on cells whe
 - **One federal fix is sample-specific**: the Greens and One Nation targets are the AEC's national class totals; the AEC's own state-by-party tables (also in `output/aec-tpp-flows.csv`) were not used to check the key state by state.
 - **Estimator unchanged and still trained on Labor v Coalition seats only**, while the federal key now covers all seats (as the AEC does). FR8 says the scope difference is worth under 1.4 points for the Greens, so the estimator's own over-estimate of the Greens (3 to 7 points in 2019-2025) is not a key artefact.
 - **Priors changed with the key**: `output/flows-estimated.csv` was rewritten by this run, so estimates for elections without a published distribution now borrow from the corrected keys. Federal 2001 and Qld/NSW/SA/WA keys use the class-level tracker; fed2001 has no AEC table to check.
+
+
+
+## Time-forward blend (2026-10-13)
+
+Script: `scripts/build_state_flow_blend.R` (check codes ZB1-ZB6). Output: `output/flows-state-blend.csv`; answer keys cached in `output/flows-key-table.csv`. Federal elections 2007 onward use the AEC's official table as the key (and are not blended); every other key is the corrected reconstruction.
+
+Rule, fixed before the backtest was looked at: blend = borrow + w * (estimate - borrow). For a target election dated year T, w minimises sqrt(key first preferences)-weighted squared error over cells (election x party class, at least 5 key seats and 20,000 key first preferences) from elections dated STRICTLY EARLIER than T, ridge-shrunk toward 0.5 with a prior strength of 10 pseudo-cells (a pseudo-cell is one average cell's worth of evidence), clipped to 0..1; with no earlier key, w = 0.5. Borrow is the nearest earlier published flows in the same state, else the nearest strictly earlier federal election. The same w is applied to exhaust.
+
+Pooled or per class: pooled. Per-class weights (shrunk toward the pooled weight with 5 pseudo-cells) were compared out of sample on the same backtest; they were adopted only if they beat the pooled weight by 0.25 points of mean error. Result: per-class 4.36 vs pooled 4.22, so pooled weights are used (the evidence for class-specific weights is thin: a few dozen cells per class, few elections).
+
+### Out-of-sample backtest
+
+What the numbers are: mean absolute error of the Labor-flow share in points (lower is better) on keyed elections, each scored with a weight fitted only on strictly earlier keys. est = results-only estimate, borrow = nearest earlier published flows, blend50 = fixed 50/50, blend_tf = pooled time-forward blend, blend_tf_class = per-class time-forward blend, mean_w = average weight on the estimate.
+
+| set | cells | elections | est_MAE | borrow_MAE | blend50_MAE | blend_tf_MAE | blend_tf_class_MAE | mean_w |
+|---|---|---|---|---|---|---|---|---|
+| all keyed elections | 101 | 26 | 5.15 | 5.38 | 4.11 | 4.22 | 4.36 | 0.71 |
+| ... with >= 1 earlier key | 96 | 25 | 5.19 | 5.22 | 4.16 | 4.27 | 4.42 | 0.72 |
+| federal (AEC official key 2007+) | 40 | 8 | 2.99 | 3.96 | 2.42 | 2.49 | 2.47 | 0.69 |
+| states (reconstructed key) | 61 | 18 | 6.57 | 6.31 | 5.22 | 5.35 | 5.60 | 0.72 |
+| states, >= 1 earlier key | 61 | 18 | 6.57 | 6.31 | 5.22 | 5.35 | 5.60 | 0.72 |
+| Greens and One Nation only | 41 | 26 | 5.83 | 5.91 | 4.13 | 4.28 | 4.60 | 0.70 |
+| Greens and One Nation, states | 25 | 18 | 7.28 | 7.43 | 5.54 | 5.60 | 6.11 | 0.71 |
+
+Election-level difference in mean error (blend_tf minus borrow): mean -0.93, se 1.12, blend better in 15 of 26 elections. Blend_tf minus estimate: mean -1.00, se 0.47, blend better in 17 of 26 elections. The election is the independent unit.
+
+What the numbers are: exhaust (share of the class's ballots reaching neither major party) on optional-preferential elections, mean absolute error in points, lower is better.
+
+| cells | est_MAE | borrow_MAE | blend_tf_MAE |
+|---|---|---|---|
+| 17 | 9.63 | 14.69 | 8.86 |
+
+Per election: mean absolute error in points over the bar-sized cells (lower is better); w = weight on the estimate fitted from earlier keys; n_keys = earlier keyed elections.
+
+| election | cells | n_keys | w | est | borrow | blend_tf |
+|---|---|---|---|---|---|---|
+| fed2004 | 5 | 0 | 0.50 | 4.39 | 8.43 | 3.14 |
+| fed2007 | 5 | 3 | 0.62 | 3.27 | 2.84 | 3.10 |
+| fed2010 | 5 | 5 | 0.65 | 1.27 | 1.97 | 1.34 |
+| fed2013 | 5 | 8 | 0.76 | 2.69 | 5.61 | 2.86 |
+| fed2016 | 5 | 12 | 0.77 | 2.03 | 2.66 | 1.64 |
+| fed2019 | 5 | 15 | 0.76 | 2.16 | 4.27 | 2.22 |
+| fed2022 | 5 | 19 | 0.74 | 3.46 | 2.28 | 2.79 |
+| fed2025 | 5 | 23 | 0.70 | 4.69 | 3.60 | 2.82 |
+| nsw2011 | 3 | 7 | 0.67 | 5.27 | 31.28 | 8.62 |
+| nsw2015 | 4 | 11 | 0.79 | 7.52 | 5.87 | 5.89 |
+| nsw2019 | 5 | 15 | 0.76 | 6.56 | 5.89 | 3.52 |
+| nsw2023 | 5 | 21 | 0.72 | 7.39 | 2.97 | 5.53 |
+| qld2020 | 5 | 17 | 0.74 | 3.38 | 5.95 | 3.91 |
+| qld2024 | 5 | 22 | 0.71 | 3.64 | 3.01 | 2.24 |
+| sa2026 | 2 | 25 | 0.64 | 30.15 | 3.92 | 19.36 |
+| vic2006 | 2 | 2 | 0.60 | 5.44 | 5.45 | 5.44 |
+| vic2010 | 2 | 5 | 0.65 | 5.16 | 5.16 | 5.16 |
+| vic2014 | 3 | 10 | 0.79 | 2.51 | 2.51 | 2.51 |
+| vic2018 | 3 | 14 | 0.75 | 3.58 | 3.58 | 3.58 |
+| vic2022 | 4 | 19 | 0.74 | 4.43 | 5.81 | 2.41 |
+| wa2005 | 2 | 1 | 0.58 | 7.78 | 7.79 | 7.79 |
+| wa2008 | 2 | 4 | 0.64 | 2.48 | 1.40 | 2.09 |
+| wa2013 | 3 | 8 | 0.76 | 2.54 | 6.46 | 3.47 |
+| wa2017 | 4 | 13 | 0.77 | 12.15 | 9.96 | 10.44 |
+| wa2021 | 3 | 18 | 0.74 | 3.16 | 2.00 | 2.15 |
+| wa2025 | 4 | 23 | 0.70 | 11.56 | 6.14 | 8.68 |
+
+### Weights for the unkeyed state elections
+
+What the numbers are: w = share of the estimate in the blend (1 = estimate only, 0 = borrow only), fitted on keyed elections dated strictly earlier; n_prior_keys = number of those elections; borrow_source = the election whose flows are borrowed.
+
+| election | region | year | w | n_prior_keys | borrow_source | estimate_only |
+|---|---|---|---|---|---|---|
+| qld2001 | qld | 2001 | 0.50 | 0 | NA | TRUE |
+| wa2001 | wa | 2001 | 0.50 | 0 | NA | TRUE |
+| sa2002 | sa | 2002 | 0.50 | 0 | fed2001 | FALSE |
+| vic2002 | vic | 2002 | 0.50 | 0 | fed2001 | FALSE |
+| nsw2003 | nsw | 2003 | 0.50 | 0 | fed2001 | FALSE |
+| qld2004 | qld | 2004 | 0.50 | 0 | fed2001 | FALSE |
+| qld2006 | qld | 2006 | 0.60 | 2 | fed2004 | FALSE |
+| sa2006 | sa | 2006 | 0.60 | 2 | fed2004 | FALSE |
+| nsw2007 | nsw | 2007 | 0.62 | 3 | fed2004 | FALSE |
+| qld2009 | qld | 2009 | 0.65 | 5 | fed2007 | FALSE |
+| sa2010 | sa | 2010 | 0.65 | 5 | fed2007 | FALSE |
+| qld2012 | qld | 2012 | 0.76 | 8 | fed2010 | FALSE |
+| sa2014 | sa | 2014 | 0.79 | 10 | fed2013 | FALSE |
+| qld2015 | qld | 2015 | 0.79 | 11 | fed2013 | FALSE |
+| qld2017 | qld | 2017 | 0.77 | 13 | fed2016 | FALSE |
+| sa2018 | sa | 2018 | 0.75 | 14 | fed2016 | FALSE |
+| sa2022 | sa | 2022 | 0.74 | 19 | fed2019 | FALSE |
+
+| period | elections | mean_w | min_w | max_w |
+|---|---|---|---|---|
+| 2001-2008 | 9 | 0.54 | 0.50 | 0.62 |
+| 2009-2014 | 4 | 0.71 | 0.65 | 0.79 |
+| 2015-2026 | 4 | 0.77 | 0.74 | 0.79 |
+
+Latest fit on all keys to date (for elections after 2026): pooled w = 0.58 from 101 cells.
+
+Limits: (1) the state keys are reconstructions, calibrated only on the federal Greens and One Nation, so for state targets the weight is fitted to a key whose bias is unmeasured; (2) the estimate already shrinks toward the same borrow (its own pool weight), so the blend weight is a second layer on the same prior; (3) early weights rest on few keys (see n_prior_keys), and the first keyed years have w = 0.5 by default; (4) Qld 2001 and any election with no earlier flows get the estimate alone (source column); (5) the standard errors combine the estimate's own bootstrap se with the borrow's out-of-sample error from earlier keys (5 points where fewer than 6 earlier cells) and assume the two errors are independent, which they are not (both lean on the same prior).
+
