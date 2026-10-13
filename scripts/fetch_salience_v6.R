@@ -154,7 +154,37 @@ ELS <- list(
   wa2021  = list(poll = "2021-03-13", geo = "AU-WA", prev = "wa2017",
                  anchor = "Mark McGowan"),
   wa2025  = list(poll = "2025-03-08", geo = "AU-WA", prev = "wa2021",
-                 anchor = "Roger Cook"))
+                 anchor = "Roger Cook"),
+
+  # ADDED 2026-10-13: the coverage-program pairs. Each anchor is the head of
+  # government on the day before polling day (the end of the Trends window),
+  # in that geography, and is not a candidate in the seats being ranked.
+  # Premier/Chief Minister at the time: Keneally (to 28 Mar 2011), Bligh (to
+  # 26 Mar 2012), Newman (to 14 Feb 2015 -- election 31 Jan), Rann (to 21 Oct
+  # 2011), Weatherill (to 18 Mar 2018), Giles (to 31 Aug 2016), Gunner (to 13
+  # May 2022), Lawler (CM from 20 Dec 2023 to 28 Aug 2024).
+  nsw2011 = list(poll = "2011-03-26", geo = "AU-NSW", prev = "nsw2007",
+                 anchor = "Kristina Keneally"),
+  nsw2015 = list(poll = "2015-03-28", geo = "AU-NSW", prev = "nsw2011",
+                 anchor = "Mike Baird"),
+  qld2012 = list(poll = "2012-03-24", geo = "AU-QLD", prev = "qld2009",
+                 anchor = "Anna Bligh"),
+  qld2015 = list(poll = "2015-01-31", geo = "AU-QLD", prev = "qld2012",
+                 anchor = "Campbell Newman"),
+  qld2017 = list(poll = "2017-11-25", geo = "AU-QLD", prev = "qld2015",
+                 anchor = "Annastacia Palaszczuk"),
+  sa2010  = list(poll = "2010-03-20", geo = "AU-SA", prev = "sa2006",
+                 anchor = "Mike Rann"),
+  sa2014  = list(poll = "2014-03-15", geo = "AU-SA", prev = "sa2010",
+                 anchor = "Jay Weatherill"),
+  sa2018  = list(poll = "2018-03-17", geo = "AU-SA", prev = "sa2014",
+                 anchor = "Jay Weatherill"),
+  nt2016  = list(poll = "2016-08-27", geo = "AU-NT", prev = "nt2012",
+                 anchor = "Adam Giles"),
+  nt2020  = list(poll = "2020-08-22", geo = "AU-NT", prev = "nt2016",
+                 anchor = "Michael Gunner"),
+  nt2024  = list(poll = "2024-08-24", geo = "AU-NT", prev = "nt2020",
+                 anchor = "Eva Lawler"))
 WANT <- Sys.getenv("AUSPOL_SALIENCE_ELECTION", "")
 if (nzchar(WANT)) ELS <- ELS[intersect(strsplit(WANT, ",")[[1]], names(ELS))]
 
@@ -430,8 +460,10 @@ for (el in names(ELS)) {
   # the previous election's results -- the Victorian run wiped South
   # Australia's), just applied after each election instead of after all of
   # them.
-  f <- "output/salience-v6.csv"
-  prev <- if (file.exists(f)) fread(f, showProgress = FALSE) else NULL
+  # AUSPOL_SALIENCE_OUT lets a side run (a worktree, a new-pairs batch) write to its own
+  # file; the same merge-never-overwrite logic applies to whichever file is named.
+  f <- Sys.getenv("AUSPOL_SALIENCE_OUT", "output/salience-v6.csv")
+  prev <-if (file.exists(f)) fread(f, showProgress = FALSE) else NULL
   keep <- if (!is.null(prev)) prev[election != el] else NULL
   OUT <- if (!is.null(keep) && nrow(keep)) rbindlist(list(keep, all_rows[[el]]), fill = TRUE) else all_rows[[el]]
   fwrite(OUT, f)
