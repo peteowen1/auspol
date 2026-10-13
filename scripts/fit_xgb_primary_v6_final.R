@@ -54,7 +54,7 @@ add_departed_side(ALL, c("pair", "seat"))   # AUSPOL_XGB_DEPARTED_SIDE
 # order, or the matrix columns silently misalign with what the model was
 # trained on. Same fixed party/region levels as v1/v5's final scripts.
 party_levels <- c("ALP","GRN","IND","LNP","NAT","ONP","OTH","OTH_RIGHT")
-region_levels <- c("fed","nsw","qld","sa","vic","wa")
+region_levels <- c("fed","nsw","nt","qld","sa","vic","wa")   # nt added 2026-10-13 (NT pairs scored); must match the as-at list fit_xgb_primary_v6.R derives from the data
 stopifnot(all(sort(unique(ALL$party)) %in% party_levels))
 stopifnot(all(sort(unique(ALL$region)) %in% region_levels))
 for (p in party_levels) ALL[[paste0("party_", p)]] <- as.integer(ALL$party == p)
