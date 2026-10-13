@@ -12,16 +12,29 @@ cannot pass as a working one.
 
 | file | size |
 |---|---:|
+| `aec-fed-2001-firstprefs.csv` | 21 KB |
+| `aec-fed-2001-tcp.csv` | 8 KB |
+| `aec-fed-2001-transfers.csv` | 86 KB |
 | `aec-fed-firstprefs.csv` | 176 KB |
 | `aec-fed-tcp.csv` | 63 KB |
 | `aec-fed-transfers.csv` | 610 KB |
 | `aec-fed-winners.csv` | 25 KB |
+| `ecq-2004-qld-firstprefs.csv` | 7 KB |
+| `ecq-2004-qld-tcp.csv` | 3 KB |
+| `ecq-2006-qld-firstprefs.csv` | 7 KB |
+| `ecq-2009-qld-firstprefs.csv` | 8 KB |
+| `ecq-2012-qld-firstprefs.csv` | 9 KB |
+| `ecq-2012-qld-tcp.csv` | 4 KB |
+| `ecq-2015-qld-firstprefs.csv` | 8 KB |
 | `ecq-2017-qld-firstprefs.csv` | 8 KB |
 | `ecq-2017-qld-winners.csv` | 2 KB |
 | `ecq-2020-qld-firstprefs.csv` | 11 KB |
 | `ecq-2024-qld-firstprefs.csv` | 10 KB |
 | `ecq-qld-transfers.csv` | 97 KB |
 | `ecq-qld-winners.csv` | 4 KB |
+| `ecsa-2010-2014-sa-page-inventory.csv` | 20 KB |
+| `ecsa-2010-sa-firstprefs-tcp.csv` | 22 KB |
+| `ecsa-2014-sa-firstprefs-tcp.csv` | 13 KB |
 | `ecsa-2022-sa-firstprefs.csv` | 4 KB |
 | `ecsa-2026-sa-firstprefs.csv` | 6 KB |
 | `ecsa-2026-sa-onp-shares.csv` | 1 KB |
@@ -32,11 +45,25 @@ cannot pass as a working one.
 | `fed-swing-transposed.csv` | 43 KB |
 | `federal-transposed-to-state.csv` | 178 KB |
 | `MANIFEST.csv` | 787 B |
+| `nswec-2011-nsw-candidates.csv` | 39 KB |
+| `nswec-2011-nsw-checks.csv` | 15 KB |
+| `nswec-2011-nsw-countsheets.csv` | 82 KB |
+| `nswec-2011-nsw-transfers-detail.csv` | 69 KB |
+| `nswec-2011-nsw-transfers.csv` | 18 KB |
 | `nswec-2015-nsw-firstprefs.csv` | 10 KB |
 | `nswec-2019-nsw-firstprefs.csv` | 10 KB |
 | `nswec-2023-nsw-firstprefs.csv` | 10 KB |
 | `nswec-nsw-transfers.csv` | 131 KB |
 | `nswec-nsw-winners.csv` | 7 KB |
+| `vec-2002-vic-tcp.csv` | 4 KB |
+| `vec-2006-vic-candidates.csv` | 36 KB |
+| `vec-2006-vic-checks.csv` | 6 KB |
+| `vec-2006-vic-firstprefs-detail.csv` | 36 KB |
+| `vec-2006-vic-firstprefs.csv` | 9 KB |
+| `vec-2006-vic-tcp-detail.csv` | 29 KB |
+| `vec-2006-vic-tcp.csv` | 4 KB |
+| `vec-2006-vic-transfers-detail.csv` | 125 KB |
+| `vec-2006-vic-transfers.csv` | 18 KB |
 | `vec-2010-vic-firstprefs.csv` | 9 KB |
 | `vec-2010-vic-transfers.csv` | 22 KB |
 | `vec-2010-vic-winners.csv` | 3 KB |
@@ -65,15 +92,15 @@ cannot pass as a working one.
 
 ## Raw commission downloads (`external/reference/`)
 
-- **aec/** -- 1192 files, 870.6 MB
+- **aec/** -- 1214 files, 893.5 MB
   - e.g. booths/fed2016-NSW.csv, booths/fed2016-QLD.csv, booths/fed2016-VIC.csv, booths/fed2019-QLD.csv
-- **vec/** -- 2429 files, 73.5 MB
+- **vec/** -- 2608 files, 76.5 MB
   - e.g. 2006/vc/fpv-albertpark.html, 2006/vc/fpv-altona.html, 2006/vc/fpv-ballarateast.html, 2006/vc/fpv-ballaratwest.html
 - **nsw/** -- 5889 files, 81.0 MB
   - e.g. byelections/SB1602-orange-fp.html, byelections/SB1801-wagga-wagga-fp.html, council/2008/lgeindex.html, council/2008/pages/result.Albury.html
-- **ecsa/** -- 378 files, 61.2 MB. **1 ZERO-BYTE: ha-2018-03-17.json**
+- **ecsa/** -- 469 files, 72.5 MB. **1 ZERO-BYTE: ha-2018-03-17.json**
   - e.g. 2018/Adelaide.html, 2018/Adelaide2.html, 2018/Badcoe.html, 2018/Badcoe2.html
-- **ecq/** -- 1624 files, 101.8 MB
+- **ecq/** -- 1650 files, 137.3 MB
   - e.g. council/2008/aurukunshire/councillor_summary.html, council/2008/aurukunshire/mayoral_summary.html, council/2008/balonneshire/councillor_summary.html, council/2008/balonneshire/mayoral_summary.html
 - **waec/** -- 1916 files, 49.0 MB
   - e.g. app.html, app.min.js, config-loader.js, config.json
@@ -87,7 +114,7 @@ cannot pass as a working one.
   - e.g. abs-sed/CG_CED_2016_CED_2021.csv, abs-sed/CG_SED_2016_SED_2021.csv, abs-sed/CG_SED_2021_SED_2022.csv, abs-sed/CG_SED_2022_SED_2024.csv
 - **aef/** -- 17 files, 4.8 MB
   - e.g. 2022fed-results.json, 2022fed-summary.json, 2022sa-results.json, 2022sa-summary.json
-- **polls/** -- 1494 files, 226.4 MB. **1 ZERO-BYTE: crosstabs-ambiguous.txt**
+- **polls/** -- 4013 files, 476.7 MB. **1 ZERO-BYTE: crosstabs-ambiguous.txt**
   - e.g. demosau/crosstabs-ambiguous.txt, demosau/crosstabs.csv, demosau/raw/fed-2026-01.pdf, demosau/raw/fed-2026-01b.pdf
 
 ## Candidate-level corpus (`output/candidacies.csv`)

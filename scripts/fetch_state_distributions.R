@@ -502,7 +502,7 @@ run_nswec <- function() {
     }
     out_chk[[d]] <- data.table(seat = seat, n_cand = nrow(cd), counts = K, n_excluded = nrow(ex), n_transfer_rows = length(tx),
       fp_ok = c1, elected_ok = elected_ok, elected = p$foot_name, elected_cell_agrees = marker_agrees, partial_distribution = p$partial, final = paste(fin$cand, last[alive], sep = " ", collapse = " v "),
-      tcp_note = tcp_note, tcp_max_abs_diff = tcp_diff, problems = paste(prob, collapse = "; "))
+      tcp_note = tcp_note, tcp_max_abs_diff = tcp_diff, problems = if (length(prob)) paste(prob, collapse = "; ") else "none")
     if (length(tx)) out_tx[[d]] <- rbindlist(tx)
     cc <- p$cells[, .(id, kind, count, v)]
     cc <- merge(cc, cd[, .(id, candidate = cand, party, class)], by = "id")
@@ -530,8 +530,8 @@ run_nswec <- function() {
               sum(chk$tcp_note == "compared"), max(chk$tcp_max_abs_diff, na.rm = TRUE),
               sum(chk$tcp_max_abs_diff > 50, na.rm = TRUE), sum(grepl("suspended", chk$tcp_note)),
               sum(grepl("differs", chk$tcp_note))))
-  cat(sprintf("DQ22 districts with arithmetic or identity problems: %d\n", sum(nzchar(chk$problems))))
-  print(chk[nzchar(problems), .(seat, problems)])
+  cat(sprintf("DQ22 districts with arithmetic or identity problems: %d\n", sum(chk$problems != "none")))
+  print(chk[problems != "none", .(seat, problems)])
   print(chk[tcp_max_abs_diff > 50, .(seat, final, tcp_max_abs_diff)])
   print(agg[, .(votes = sum(votes)), by = from][order(-votes)])
   invisible(chk)
