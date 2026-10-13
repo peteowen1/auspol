@@ -507,3 +507,20 @@ outright on sa2026, vic2022 and nsw2023.
 | `prior_max` in `new_ind_cells()` | 10 share points | **INHERITED from `docs/reviews/vic-ind-overcall-2026-10-06.md`** (its "departed class leader, class prior 10 or more" row is a different population with its own, refused, rule). A cell definition cut, not a fitted value; the data could set it (n of departed-leader cells is 12, too few to fit). |
 | the factor | fitted per target | **FROM DATA**: ratio of sums of actual to base_pred over earlier new-independent cells, partially pooled by jurisdiction (DerSimonian-Laird tau^2), bounded [0, 1]. No constant. |
 | design effect for a one-election jurisdiction | measured | **FROM DATA**: clustered SE / cell-level SE on the all-jurisdiction fit. |
+
+## Hare-Clark party-seat path (Tasmania, ACT; `R/hare_clark.R`, added 2026-10-13)
+
+A separate scored path (`scripts/backtest_hare_clark.R`), not in the published single-member forecast.
+Every SD and rate below is fitted time-forward (election pairs dated before the target only); the numbers in
+the table are the PRIORS each one is shrunk toward, which bind only when few earlier pairs exist.
+
+| constant | value | status |
+|---|---|---|
+| `prior_sd`, `n0` in `hc_noise_sd()` | 3 points, 5 pseudo-deviations | **PRIOR**; the per-class electorate SD is fitted from earlier electorate deviations from uniform swing (25 to 70 deviations per class by 2016) and dominates once n > 5. |
+| `prior_sd`, `n0` in `hc_state_sd()` | 5 points, 3 pseudo-changes | **PRIOR** for the statewide spread used only by the previous-result FALLBACK (no polls); fitted from earlier statewide changes, both regions pooled. |
+| `prior_new`, `prior_sdlog`, `n0` in `hc_unit_priors()` | 1.5 points, 0.5, 5 | **PRIORS**: a new minor ticket's expected first-preference share and the log-share spread of a returning one; fitted from earlier elections (100+ new tickets by 2020). |
+| `prior_n` in `hc_flows_from_ballots()` / `hc_leak_from_ballots()` | 50 pseudo-ballots | **CHOSEN** shrinkage toward the pooled row; rows carry 25,000 to 100,000 ballots, so it binds only on an empty class. |
+| `exh` in `hc_flows_prior()` | 0.3 | **SENSITIVITY ARM ONLY** (`--flows=prior`); never the default. |
+| naive hit-rate prior | 0.6 with 20 pseudo-cells | **PRIOR** for the naive baseline's probability on "same seats as last time"; fitted from earlier pairs. |
+| floor on simulated shares | 0.05 points | **COMPUTATIONAL** (keeps a contesting class alive before renormalising). |
+| Tasmanian transfer rates | the latest ACT ballot file before polling day | **BORROWED**: Tasmania publishes no ballot files. The TEC 2024/2025 count exports (stored) would allow a Tasmanian estimate for 2025 onward; not built. |
