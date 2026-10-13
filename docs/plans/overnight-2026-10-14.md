@@ -35,3 +35,8 @@ something, save it for the morning". Trust does not extend to merges to main, de
   0.601 vs fallback 0.776 vs naive 0.974; tas2021 worse with polls. Sent back to use the thin-cycle estimate for tas2010
   and the ACT, and to diagnose tas2021. Branch worktree-agent-a9cee86a0d479a556, merge after the rebuild.
 - Poll Bludger old-WA/fed2007 agent running; inputs agent (retirements/census/Trends) running.
+- 01:25 Poll Bludger old-WA/fed2007 pass: 9 new WA polls, 0 federal (posts hold no more as text; wa2001 predates the
+  blog). Real blocker: older WA posts give one combined Coalition figure; loader keeps LIB/NAT apart. Agent sent back to
+  build AUSPOL_PB_COALITION_COMBINED (off) + measure. Branch worktree-agent-a8315975f4a90c716.
+- 01:30 Hare-Clark with thin-cycle polls (96a0478, branch a9cee86a): pooled 0.525 vs prev-only 0.776 vs naive 0.974;
+  tas2021 Clark miss = Ogilvie (sitting member changed label), Hare-Clark has no defector handling -> morning item.
