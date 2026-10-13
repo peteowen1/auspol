@@ -43,14 +43,20 @@ wp <- "https://en.wikipedia.org/wiki/"
 
 # ---- page list ---------------------------------------------------------------
 state_names <- c(vic = "Victorian", nsw = "New South Wales", qld = "Queensland",
-                 wa = "Western Australian", sa = "South Australian")
+                 wa = "Western Australian", sa = "South Australian", tas = "Tasmanian")
+# Territories hold "general elections" (2026-10-13 coverage program: every election since 2000, all nine
+# jurisdictions; pages found by docs/reviews/wiki-poll-pages-2026-10-13.md).
+territory_names <- c(nt = "Northern Territory", act = "Australian Capital Territory")
 elections <- list(
-  fed = c(2007, 2010, 2013, 2016, 2019, 2022, 2025, 2028),
-  vic = c(2010, 2014, 2018, 2022, 2026),
-  nsw = c(2011, 2015, 2019, 2023, 2027),
-  qld = c(2012, 2015, 2017, 2020, 2024, 2028),
+  fed = c(2001, 2004, 2007, 2010, 2013, 2016, 2019, 2022, 2025, 2028),
+  vic = c(2002, 2006, 2010, 2014, 2018, 2022, 2026),
+  nsw = c(2003, 2007, 2011, 2015, 2019, 2023, 2027),
+  qld = c(2001, 2004, 2006, 2009, 2012, 2015, 2017, 2020, 2024, 2028),
   wa  = c(2001, 2005, 2008, 2013, 2017, 2021, 2025),
-  sa  = c(2010, 2014, 2018, 2022, 2026)
+  sa  = c(2002, 2006, 2010, 2014, 2018, 2022, 2026),
+  tas = c(2002, 2006, 2010, 2014, 2018, 2021, 2024, 2025),
+  nt  = c(2001, 2005, 2008, 2012, 2016, 2020, 2024),
+  act = c(2001, 2004, 2008, 2012, 2016, 2020, 2024)
 )
 pg <- list()
 for (rg in names(elections)) for (yr in elections[[rg]]) {
@@ -59,6 +65,9 @@ for (rg in names(elections)) for (yr in elections[[rg]]) {
     op   <- if (yr == 2028) "Opinion_polling_for_the_next_Australian_federal_election"
             else sprintf("Opinion_polling_for_the_%d_Australian_federal_election", yr)
     main <- if (yr == 2028) NA_character_ else sprintf("%d_Australian_federal_election", yr)
+  } else if (rg %in% names(territory_names)) {
+    op   <- sprintf("Opinion_polling_for_the_%d_%s_general_election", yr, gsub(" ", "_", territory_names[[rg]]))
+    main <- sprintf("%d_%s_general_election", yr, gsub(" ", "_", territory_names[[rg]]))
   } else {
     op   <- sprintf("Opinion_polling_for_the_%d_%s_state_election", yr, gsub(" ", "_", state_names[[rg]]))
     main <- sprintf("%d_%s_state_election", yr, gsub(" ", "_", state_names[[rg]]))
@@ -73,19 +82,27 @@ pg[[length(pg) + 1]] <- data.table(page_key = "fed2028_leaders", region = "fed",
                                    title = "Leadership_approval_opinion_polling_for_the_next_Australian_federal_election")
 pages <- rbindlist(pg)
 # Election dates (polling day). 2028 federal is a placeholder: it is only used as an upper bound.
+# Pre-2010 state dates and Tas/NT/ACT added 2026-10-13 (from memory; to be checked against the commissions with
+# the move into R/election_dates.R).
 elec_dates <- rbindlist(list(
-  data.table(region = "fed", year = c(2007, 2010, 2013, 2016, 2019, 2022, 2025, 2028),
-             election_date = as.Date(c("2007-11-24", "2010-08-21", "2013-09-07", "2016-07-02", "2019-05-18", "2022-05-21", "2025-05-03", "2028-12-31"))),
-  data.table(region = "vic", year = c(2010, 2014, 2018, 2022, 2026),
-             election_date = as.Date(c("2010-11-27", "2014-11-29", "2018-11-24", "2022-11-26", "2026-11-28"))),
-  data.table(region = "nsw", year = c(2011, 2015, 2019, 2023, 2027),
-             election_date = as.Date(c("2011-03-26", "2015-03-28", "2019-03-23", "2023-03-25", "2027-03-27"))),
-  data.table(region = "qld", year = c(2012, 2015, 2017, 2020, 2024, 2028),
-             election_date = as.Date(c("2012-03-24", "2015-01-31", "2017-11-25", "2020-10-31", "2024-10-26", "2028-10-28"))),
+  data.table(region = "fed", year = c(2001, 2004, 2007, 2010, 2013, 2016, 2019, 2022, 2025, 2028),
+             election_date = as.Date(c("2001-11-10", "2004-10-09", "2007-11-24", "2010-08-21", "2013-09-07", "2016-07-02", "2019-05-18", "2022-05-21", "2025-05-03", "2028-12-31"))),
+  data.table(region = "vic", year = c(2002, 2006, 2010, 2014, 2018, 2022, 2026),
+             election_date = as.Date(c("2002-11-30", "2006-11-25", "2010-11-27", "2014-11-29", "2018-11-24", "2022-11-26", "2026-11-28"))),
+  data.table(region = "nsw", year = c(2003, 2007, 2011, 2015, 2019, 2023, 2027),
+             election_date = as.Date(c("2003-03-22", "2007-03-24", "2011-03-26", "2015-03-28", "2019-03-23", "2023-03-25", "2027-03-27"))),
+  data.table(region = "qld", year = c(2001, 2004, 2006, 2009, 2012, 2015, 2017, 2020, 2024, 2028),
+             election_date = as.Date(c("2001-02-17", "2004-02-07", "2006-09-09", "2009-03-21", "2012-03-24", "2015-01-31", "2017-11-25", "2020-10-31", "2024-10-26", "2028-10-28"))),
   data.table(region = "wa", year = c(2001, 2005, 2008, 2013, 2017, 2021, 2025),
              election_date = as.Date(c("2001-02-10", "2005-02-26", "2008-09-06", "2013-03-09", "2017-03-11", "2021-03-13", "2025-03-08"))),
-  data.table(region = "sa", year = c(2010, 2014, 2018, 2022, 2026),
-             election_date = as.Date(c("2010-03-20", "2014-03-15", "2018-03-17", "2022-03-19", "2026-03-21")))
+  data.table(region = "sa", year = c(2002, 2006, 2010, 2014, 2018, 2022, 2026),
+             election_date = as.Date(c("2002-02-09", "2006-03-18", "2010-03-20", "2014-03-15", "2018-03-17", "2022-03-19", "2026-03-21"))),
+  data.table(region = "tas", year = c(2002, 2006, 2010, 2014, 2018, 2021, 2024, 2025),
+             election_date = as.Date(c("2002-07-20", "2006-03-18", "2010-03-20", "2014-03-15", "2018-03-03", "2021-05-01", "2024-03-23", "2025-07-19"))),
+  data.table(region = "nt", year = c(2001, 2005, 2008, 2012, 2016, 2020, 2024),
+             election_date = as.Date(c("2001-08-18", "2005-06-18", "2008-08-09", "2012-08-25", "2016-08-27", "2020-08-22", "2024-08-24"))),
+  data.table(region = "act", year = c(2001, 2004, 2008, 2012, 2016, 2020, 2024),
+             election_date = as.Date(c("2001-10-20", "2004-10-16", "2008-10-18", "2012-10-20", "2016-10-15", "2020-10-17", "2024-10-19")))
 ))
 elec_dates[, election := paste0(region, year)]
 fwrite(elec_dates, file.path(base_dir, "election_dates.csv"))
@@ -278,6 +295,27 @@ role_of <- function(g) {
   else if (grepl("2pp|tpp|2cp|tcp|two.party|two.candidate", g)) "tpp"
   else "other"
 }
+# Pollster (or commissioning outlet) names looked for where a table has no firm column (2026-10-13). The
+# first one found in the text wins; NA when there is none. Used only for tables the older fallbacks
+# (footer, "Source:" row) did not name, so it never touches a page that has a firm column.
+firm_names <- c("Newspoll", "Roy Morgan", "Morgan Poll", "ReachTEL", "EMRS", "uComms", "MediaReach", "Galaxy", "Lonergan",
+                "Redbridge", "Resolve", "YouGov", "Ipsos", "Essential", "Auspoll", "Fieldworks", "JWS Research", "Painted Dog",
+                "DemosAU", "Compass", "Utting", "ACNielsen", "Nielsen", "Westpoll", "Patterson Research", "Colmar Brunton",
+                "Dynata", "Omnipoll", "Statistica", "Insightfully", "Quantum", "Spectre", "Territory Insights", "Market Facts",
+                "Mackerras", "NT News", "Northern Territory News", "Canberra Times", "Hobart Mercury", "Mercury")
+firm_names_re <- paste0("\\b(?:", paste(gsub(" ", "\\\\s+", firm_names), collapse = "|"), ")\\b")
+find_firm <- function(x) {
+  if (length(x) != 1L || is.na(x) || !nzchar(x)) return(NA_character_)
+  m <- regmatches(x, regexpr(firm_names_re, x, perl = TRUE))
+  if (length(m)) clean_ws(m) else NA_character_
+}
+stopifnot(identical(find_firm("South Australian state voting intention (Roy Morgan)"), "Roy Morgan"),
+          identical(find_firm("House of Assembly (lower house) polling"), NA_character_),
+          identical(find_firm("Newspoll polling was conducted via random telephone"), "Newspoll"))
+# The all-elections extension (2026-10-13) changed two rules, and both apply to every page. On the 34 pages parsed
+# before it: fed2010_opinion table 4 gains 4 Roy Morgan polls (blank-first-header-cell rule), and 66 seat or
+# sub-state rows are retyped "seat" (wiki_polls() already dropped them by section name, so no poll reaching the
+# trend changed). Checked by diffing both outputs; deciding-runs/statewide_polls_wiki-frozen.csv is the before copy.
 coalition_names <- c("L/NP", "LNP", "Coalition", "L/NP*", "LIB/NAT", "LIB+NAT", "C")
 # Every table's fate is logged in tbl_log: outcome is "parsed", a DELIBERATE refusal ("refused_nonvoting",
 # "skipped_small", "no_date_header") or a LOSS ("lost", "parse_error"). The run fails at the end on any loss.
@@ -321,12 +359,39 @@ parse_poll_table <- function(tab, page_key, region, election, kind, url, tidx, s
       }
     }
   }
-  if (is.na(r0)) return(refuse("no_date_header"))
+  # Older / Tasmanian layouts (added 2026-10-13): the date column has NO header text at all. The first header
+  # cell is blank and the row names a column group other than "Primary vote" ("Political parties" on the
+  # Tasmanian pages, "Firm" on tas2018/tas2021). It is a poll table only if its first column then holds
+  # month-year dates, so a results / pendulum / preferred-premier table (no such group row, no dates) still
+  # falls through to the refusal below.
+  if (is.na(r0)) {
+    grp_re <-"^(political part|two.party|firm$|pollster)"
+    for (r in seq_len(min(4L, nrow(raw)))) {
+      cl <- strip_fn(as.character(raw[r, ]))
+      if (r >= nrow(raw) || nzchar(cl[1]) || !any(grepl(grp_re, cl, ignore.case = TRUE))) next
+      below <- strip_fn(raw[seq.int(r + 1L, nrow(raw)), 1])
+      if (sum(grepl("[A-Za-z]{3,9}\\.? *(19|20)[0-9]{2}", below)) >= 2L) { raw[r, 1] <- "Date"; r0 <- r; break }
+    }
+  }
+  if (is.na(r0)) {
+    # A refusal always says why (found 2026-10-13: a bare "no_date_header" hid whether a table was a poll).
+    cap0 <- tryCatch(clean_ws(html_text2(html_element(tab, "caption"))), error = function(e) "")
+    if (length(cap0) != 1L || is.na(cap0)) cap0 <- ""
+    hdr_txt <- paste(unlist(raw[seq_len(min(3L, nrow(raw))), ]), collapse = " ")
+    why <- if (grepl("votes|seats|swing|margin|member|pendulum|endorse|electorate|party|candidate|affiliation", hdr_txt, ignore.case = TRUE) &&
+               !grepl("primary vote|2pp|tpp|political part", hdr_txt, ignore.case = TRUE))
+             "election result, seat, pendulum or endorsement table: not a poll"
+           else if (grepl("prefer|better|approval|satisf|leader|net", paste(cap0, section, hdr_txt), ignore.case = TRUE))
+             "leader preference / approval table: no voting intention"
+           else "no Date header cell and no party-group header row above a month-year date column: not a voting-intention poll table"
+    return(refuse("no_date_header", why))
+  }
   # wa2008: the "Date" label sits on the PARTY row and the "Primary vote | 2PP vote" group row is
   # above it with a blank first cell. Promote the group row to be the header (Date is relabelled).
   if (r0 > 1L) {
     pr <- strip_fn(as.character(raw[r0 - 1L, ]))
-    if (!nzchar(pr[1]) && any(grepl("^(primary vote|2pp vote|tpp vote)", pr, ignore.case = TRUE))) {
+    # (the "political part|two party" group labels of the Tasmanian / Queensland 2009 layouts were added 2026-10-13)
+    if (!nzchar(pr[1]) && any(grepl("^(primary vote|2pp vote|tpp vote|political part|two party)", pr, ignore.case = TRUE))) {
       raw[r0 - 1L, 1] <- "Date"; r0 <- r0 - 1L
     }
   }
@@ -356,11 +421,37 @@ parse_poll_table <- function(tab, page_key, region, election, kind, url, tidx, s
     mm <- Filter(function(x) length(x) == 2, mm)
     if (length(mm)) firm_default <- trimws(mm[[1]][2])
   }
-  if (!"date" %in% roles) return(refuse("lost", "date header but no date role"))
+  firm_default_from <- "table_footer"
+  # Older pages (added 2026-10-13) name the pollster elsewhere than a column or a "Polling conducted by" footer.
+  # Tried in order, the table's own text first: a "Source: Newspoll/The Australian" row, a caption such as
+  # "(Roy Morgan)", the paragraph just above the table. A per-row footnote naming the pollster is the last
+  # resort and is applied row by row below.
   if (!"firm" %in% roles && is.na(firm_default)) {
-    # A voting-intention table with no firm anywhere is a LOSS; a ratings/approval table is not.
-    if (any(roles %in% c("pv", "tpp"))) return(refuse("lost", "voting-intention table with no firm column or footer"))
-    return(refuse("refused_nonvoting", "no firm column or footer; no primary/2PP columns"))
+    tail_cells <- strip_fn(unlist(raw[max(1L, nrow(raw) - 2L):nrow(raw), ], use.names = FALSE))
+    src <- sub("^Source:?\\s*", "", tail_cells[grepl("^Source:?\\s*\\S", tail_cells)])
+    if (length(src)) {
+      firm_default <- trimws(strsplit(src[1], "\\s*/\\s*|\\s+and\\s+|\\s+[–—-]\\s+|\\s*[¹²³]", perl = TRUE)[[1]][1]); firm_default_from <- "table_source_row"   # "Roy Morgan Research – ¹ Post-election ..." is a legend, not the firm; firm_default_from <- "table_source_row"
+    }
+  }
+  if (!"firm" %in% roles && is.na(firm_default)) {
+    cap_f <- tryCatch(clean_ws(strip_fn(html_text2(html_element(tab, "caption")))), error = function(e) NA_character_)
+    kf <- find_firm(cap_f)
+    if (!is.na(kf)) { firm_default <- kf; firm_default_from <- "table_caption" }
+  }
+  if (!"firm" %in% roles && is.na(firm_default)) {
+    prev_p <- xml_find_all(tab, "preceding-sibling::*[position()<=2]")
+    prev_p <- prev_p[xml_name(prev_p) == "p"]
+    kf <- if (length(prev_p)) find_firm(clean_ws(strip_fn(html_text2(prev_p[[length(prev_p)]])))) else NA_character_
+    if (!is.na(kf)) { firm_default <- kf; firm_default_from <- "preceding_paragraph" }
+  }
+  if (!"date" %in% roles) return(refuse("lost", "date header but no date role"))
+  firm_unstated <- FALSE
+  if (!"firm" %in% roles && is.na(firm_default)) {
+    # A ratings/approval table is not a poll of voting intention. A voting-intention table whose pollster the
+    # page never names IS a poll: kept, with firm NA and firm_from "not_stated" (rows may still pick the pollster
+    # from their own footnote below). Before 2026-10-13 this was a hard "lost" that stopped the run.
+    if (!any(roles %in% c("pv", "tpp"))) return(refuse("refused_nonvoting", "no firm column or footer; no primary/2PP columns"))
+    firm_unstated <- TRUE
   }
   roles[duplicated(roles) & roles %in% c("date", "firm", "client", "sample", "mode", "seat")] <- "other"
   col_date <- which(roles == "date")[1]; col_firm <- which(roles == "firm")[1]
@@ -368,6 +459,12 @@ parse_poll_table <- function(tab, page_key, region, election, kind, url, tidx, s
   col_mode <- which(roles == "mode")[1]; col_seat <- which(roles == "seat")[1]
   has_pv <- any(roles == "pv"); has_tpp <- any(roles == "tpp")
   table_type <- if (!is.na(col_seat)) "seat" else if (has_pv) "primary" else if (has_tpp) "tpp_only" else "other"
+  # A seat-by-seat or region-by-region table (NT 2016 has seven, under "By region") is sub-state, never statewide:
+  # typed "seat" so the statewide join cannot pick it up, whatever columns it carries.
+  cap_s <- tryCatch(clean_ws(html_text2(html_element(tab, "caption"))), error = function(e) "")
+  if (table_type %in% c("primary", "tpp_only") &&
+      grepl("by region|regional|by seat|seat polling|by electorate|electorate polling|seat-by-seat", paste(section, cap_s), ignore.case = TRUE))
+    table_type <- "seat"
   # name the party / value columns
   cname <- function(j) {
     lab <- if (nzchar(s[j])) s[j] else g[j]
@@ -384,6 +481,11 @@ parse_poll_table <- function(tab, page_key, region, election, kind, url, tidx, s
   for (i in seq_len(nrow(data))) {
     cells <- as.character(data[i, ])
     dt_v <- cells[col_date]; fm_v <- if (is.na(col_firm)) firm_default else cells[col_firm]
+    ff <- if (is.na(col_firm)) firm_default_from else "column"
+    if (firm_unstated) {
+      rf <- find_firm(paste(cells, collapse = " "))   # the date cell too: that is where the row's footnote usually sits
+      if (!is.na(rf)) { fm_v <- rf; ff <- "row_footnote" } else ff <- "not_stated"
+    }
     nonblank <- cells[-col_date][nzchar(cells[-col_date])]
     # spacer / year separator / dated EVENT row ("Albanese replaces Shorten": one cell spanning
     # every column but the date): everything except the date is one repeated string or blank.
@@ -395,12 +497,13 @@ parse_poll_table <- function(tab, page_key, region, election, kind, url, tidx, s
     # scripts/audit_ae_missing.R).
     row_type <- if (grepl("election", strip_fn(fm_v), ignore.case = TRUE) || grepl("election", strip_fn(dt_v), ignore.case = TRUE) ||
                     any(grepl("^(20|19)[0-9]{2} election$", strip_fn(cells)))) "result" else "poll"
-    pdts <- parse_dates(dt_v)
+    # a footnote number typed straight after the year ("27–29 Jul 20161") is not part of the year
+    pdts <- parse_dates(sub("([A-Za-z]\\.? *(?:19|20)[0-9]{2})[0-9]{1,2}$", "\\1", dt_v, perl = TRUE))
     r <- data.table(
       page_key = page_key, region = region, election = election, page_kind = kind, source_url = url,
       table_idx = tidx, section = section, table_type = table_type, row_in_table = i, row_type = row_type,
       date_raw = strip_fn(dt_v), firm_raw = strip_fn(fm_v),
-      firm_from = if (is.na(col_firm)) "table_footer" else "column",
+      firm_from = ff,
       firm = trimws(gsub("\\s*\\[[^]]*\\]", "", strip_fn(fm_v))),
       client_raw = if (!is.na(col_cli)) strip_fn(cells[col_cli]) else NA_character_,
       sample_raw = if (!is.na(col_smp)) strip_fn(cells[col_smp]) else NA_character_,
@@ -417,8 +520,11 @@ parse_poll_table <- function(tab, page_key, region, election, kind, url, tidx, s
     rows[[length(rows) + 1]] <- r
   }
   if (!length(rows)) return(refuse("lost", "no row survived the spacer/event filters"))
-  note_tbl(page_key, tidx, "parsed")
-  rbindlist(rows, fill = TRUE)
+  out <- rbindlist(rows, fill = TRUE)
+  note_tbl(page_key, tidx, "parsed",
+           if (firm_unstated) sprintf("pollster not named in the table: %d of %d rows from their own footnote, the rest firm_from = not_stated",
+                                      sum(out$firm_from == "row_footnote"), nrow(out)) else "")
+  out
 }
 
 # ---- self-test of the table shapes added 2026-10-11 (known table in, known rows out) ------
@@ -441,7 +547,16 @@ local({
             identical(a$row_type, c("result", "poll", "poll")), a$table_type[1] == "primary")
   b <- go(c(hdr_b, body, foot))
   stopifnot(!is.null(b), nrow(b) == 3, identical(b$row_type, c("result", "poll", "poll")), b$table_type[1] == "primary")
-  stopifnot(is.null(go(c(hdr_a, body))), is.null(go(c(hdr_b, body))))   # no footer, no firm: refused
+  # no footer, no firm anywhere: since 2026-10-13 the poll is KEPT (it is a poll) but flagged, never given a firm
+  stopifnot(!is.null(go(c(hdr_a, body))), all(is.na(go(c(hdr_a, body))$firm)), all(go(c(hdr_a, body))$firm_from == "not_stated"),
+            !is.null(go(c(hdr_b, body))), all(go(c(hdr_b, body))$firm_from == "not_stated"))
+  # a "Source:" row names the firm (vic2006 / sa2006 layout) and a caption "(Roy Morgan)" names it for a table with neither
+  src_row <- tr(rep("Source: Newspoll/The Australian", 6))
+  stopifnot(all(go(c(hdr_a, body, src_row))$firm == "Newspoll"), all(go(c(hdr_a, body, src_row))$firm_from == "table_source_row"))
+  cap_tbl <- rvest::html_element(rvest::minimal_html(paste0("<table><caption>State voting intention (Roy Morgan)</caption>",
+                                                            paste(c(hdr_a, body), collapse = ""), "</table>")), "table")
+  cp <- parse_poll_table(cap_tbl, "t_c", "wa", "wa2013", "main", "u", 1L, "Polling")
+  stopifnot(all(cp$firm == "Roy Morgan"), all(cp$firm_from == "table_caption"))
 })
 
 # Pages that resolve to the same canonical article (a "state election" opinion title that

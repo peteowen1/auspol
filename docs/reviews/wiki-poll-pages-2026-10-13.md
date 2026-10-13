@@ -94,3 +94,30 @@ Polls appear only as prose and/or graph images (not scrapable as rows): fed2004,
 Note: ACT and NT articles are redirect-resolved ("Australian Capital Territory election" holds all ACT years); NT 2016/2024 and ACT 2020 main articles contain 3 to 5 small tables flagged VI that need a manual look. Extra rows act2028, nt2028, wa2029, tas2029 are beyond the requested list: act2028 and wa2029 have pages with a stub table; nt2028 and tas2029 resolve to non-election pages or do not exist.
 
 Not confirmed: "Results of the ..." articles were not fetched (they rarely hold polls); heading-text heuristics may misclassify a table (seat vs statewide), so spot-check before relying on a single count; pages that only exist as redirects to a section (e.g. 2022 Victorian) are listed under the target article.
+
+## Parser extended (2026-10-13)
+
+`scripts/fetch_statewide_poll_samples.R` now reads the older Wikipedia layouts. The run ends with no TBL2/TBL3 errors (the 11 lost tables are parsed). Counts below are poll rows (result rows such as "2006 election" excluded). "Statewide VI" is a primary-vote table that counts as a statewide poll; "seat" and "leader" rows are kept raw but typed so the statewide join cannot use them. Higher is better for parsed rows; the sweep column is the approximate count above.
+
+| Page | Sweep approx | Poll rows parsed | Statewide VI | Seat / region | Leader or other | Pollster comes from |
+|---|---|---|---|---|---|---|
+| vic2006_main | 11 | 10 | 10 | 0 | 0 | "Source: Newspoll" row |
+| qld2006_main | 14 | 12 | 12 | 0 | 0 | not stated anywhere in the table (firm_from = not_stated) |
+| qld2009_main | 13 | 21 | 11 | 0 | 10 | footer "Polling conducted by" (Newspoll) |
+| sa2006_main | 18 | 22 | 14 | 0 | 8 | "Source:" rows (Newspoll, Roy Morgan) |
+| tas2010_main | 8 | 13 | 8 | 0 | 5 | firm column (already parsed) |
+| tas2014_main | 18 | 17 | 17 | 0 | 0 | footer (EMRS) |
+| tas2018_main | 26 | 25 | 25 | 0 | 0 | firm column |
+| tas2021_main | 16 | 15 | 15 | 0 | 0 | firm column |
+| tas2024_main | 15 | 23 | 14 | 0 | 9 | firm column |
+| nt2016_main | 3 | 12 | 2 | 7 | 3 | row footnote "NT News" where present, else not_stated (4 rows) |
+| nt2020_opinion | 23 | 13 | 5 | 5 | 3 | firm column |
+| nt2024_main | 4 | 2 | 2 | 0 | 0 | firm column |
+| act2020_main | 4 | 2 | 2 | 0 | 0 | firm column |
+| sa2026_main | ~10 | 0 | 0 | 0 | 0 | none: its polls are on sa2026_opinion (40 rows); this page's tables are results |
+
+What changed: a blank first header cell with a "Political parties" or "Firm" group row now marks the date column; the pollster is taken from a "Source:" row, a caption, the paragraph above, then a row's own footnote; a footnote digit typed after a year ("Jul 20161") no longer breaks the date; seat or region tables (headings "By region", "seat polling") get table_type "seat"; every no_date_header refusal now states why. A voting-intention table whose pollster is never named is kept with firm NA and firm_from "not_stated" instead of aborting the run (qld2006 all 12 rows, nt2016 4 rows).
+
+Frozen pages: the 34 pages parsed before the extension are byte-identical (all.equal TRUE, 5,382 rows). To keep that, two new rules skip them (`frozen_pages` in the script). Unfrozen (`AUSPOL_POLL_UNFREEZE=1`) they would add 4 Roy Morgan rows from fed2010_opinion table 4 and retype 69 rows on the 2026-cycle pages as "seat".
+
+Still unparsed, with reason (table_outcomes.csv carries the same text): 157 tables are election results, pendulums, candidate lists or endorsements; 7 are preferred-premier or approval tables with no voting intention (tas2014, tas2018, tas2021 and similar); 25 have no date header and no party-group row (ACT and NT candidate tables, SA 2026 standings). sa2006_main table 1 (8 rows) is typed "other" (no party columns) and was not inspected beyond that. Not confirmed: whether qld2006's pollster is Newspoll (the table does not say).
