@@ -21,6 +21,7 @@ election_dates <- function(labels = NULL) {
     fed2004 = "2004-10-09", fed2007 = "2007-11-24", fed2010 = "2010-08-21",
     fed2013 = "2013-09-07", fed2016 = "2016-07-02", fed2019 = "2019-05-18",
     fed2022 = "2022-05-21", fed2025 = "2025-05-03",
+    nsw2007 = "2007-03-24",   # 2026-10-13: previous election of the new nsw2011 pair
     nsw2011 = "2011-03-26",   # 2026-10-13: previous election of the new nsw2015 pair
     nsw2015 = "2015-03-28", nsw2019 = "2019-03-23", nsw2023 = "2023-03-25",
     # Brought forward from the fixed-term 27 March to avoid Easter: NSWEC Bulletin

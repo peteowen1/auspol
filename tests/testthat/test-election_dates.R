@@ -35,4 +35,9 @@ test_that("nsw2015 is a pair on nsw2011 with a redistribution notional entry", {
   expect_equal(p[[1]]$prev, "nsw2011")
   expect_equal(unname(election_dates("nsw2011")), as.Date("2011-03-26"))
   expect_true("nsw2015" %in% names(STATE_REDISTRIBUTIONS))
+  # nsw2011 (prev nsw2007) was fought on the same 93 districts: no notional entry
+  p11 <- Filter(function(p) p$election == "nsw2011", all_election_pairs())
+  expect_equal(p11[[1]]$prev, "nsw2007")
+  expect_equal(unname(election_dates("nsw2007")), as.Date("2007-03-24"))
+  expect_false("nsw2011" %in% names(STATE_REDISTRIBUTIONS))
 })

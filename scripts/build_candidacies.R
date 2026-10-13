@@ -471,6 +471,21 @@ if (file.exists(.n11) && file.exists(.n11s)) {
   cat(sprintf("BC3  nsw2011: %d candidates in %d seats\n", nrow(n11), uniqueN(n11$seat)))
 } else cat("BC3  nsw2011: candidate file or Penrith supplement MISSING (run scripts/parse_booths_nsw2011.py)\n")
 
+# ---- NEW SOUTH WALES 2007 (added 2026-10-13) --------------------------------
+# Previous election of the new nsw2011 pair. No NSWEC source is scriptable; scripts/parse_nsw2007.py builds the file from
+# Antony Green's ABC final pages (web.archive.org captures), cross-checked vote-for-vote against Wikipedia. Names are
+# converted to "SURNAME Given" (last token = surname; multi-word surnames may be split wrongly). `class` is already a
+# classify_party() class.
+.n07 <- file.path(election_data_path(), "nswec-2007-nsw-candidates.csv")
+if (file.exists(.n07)) {
+  n07 <- fread(.n07, showProgress = FALSE)
+  n07 <- n07[, .(seat, name = candidate, party_raw = party_full, votes = as.numeric(first_pref), party = class)]
+  n07[, `:=`(surname = NA_character_, given = NA_character_, elected = NA,
+             election = "nsw2007", region = "nsw", year = 2007)]
+  parts[["nsw2007"]] <- n07
+  cat(sprintf("BC3  nsw2007: %d candidates in %d seats\n", nrow(n07), uniqueN(n07$seat)))
+} else cat("BC3  nsw2007: candidate file MISSING (run scripts/parse_nsw2007.py)\n")
+
 # ---- VICTORIA 2022 ----------------------------------------------------------
 # Already extracted to candidate level by an earlier fetch.
 vf <- file.path(election_data_path(), "vec-2022-vic-candidates.csv")
@@ -909,10 +924,11 @@ for (y in c(2010L, 2014L, 2018L, 2022L)) {
   WV[[length(WV) + 1L]] <- w[, .(election = sprintf("vic%d", y), seat, winner)]
 }
 # nsw2011 winners (2026-10-13): the NSWEC ELECTED cell, from scripts/parse_booths_nsw2011.py.
-n11w <- file.path(election_data_path(), "nswec-2011-nsw-winners.csv")
-if (file.exists(n11w)) {
-  w <- fread(n11w, showProgress = FALSE)
-  WV[[length(WV) + 1L]] <- w[, .(election, seat, winner)]
+for (n11w in file.path(election_data_path(), c("nswec-2007-nsw-winners.csv", "nswec-2011-nsw-winners.csv"))) {
+  if (file.exists(n11w)) {
+    w <- fread(n11w, showProgress = FALSE)
+    WV[[length(WV) + 1L]] <- w[, .(election, seat, winner)]
+  }
 }
 # sa2018 winners come from Wikipedia (see BC2b above), not ECSA -- a separate
 # file so a rerun of fetch_sa2022_and_winners.R (which OVERWRITES

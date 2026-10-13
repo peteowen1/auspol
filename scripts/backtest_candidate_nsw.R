@@ -318,6 +318,9 @@ PREF   <- election_data_path()
 # by by-elections and carries the anchor's party classes rather than ours, so
 # it is a printed disagreement count and never the truth.
 NSW_PAIRS <- list(
+  # 2011 added 2026-10-13: previous election nsw2007 (Antony Green/ABC final pages; no NSWEC source), same 93 districts so
+  # no notional; no published 2007 distribution, so flows come from fed2010; seat spread falls back to 2023nsw.txt.
+  "2011" = list(to = 2011L, from = 2007L, next_seats = 2019L, flow_from = "fed2010"),
   # 2015 added 2026-10-13 (coverage program). Previous election nsw2011 on the pre-2013-redistribution
   # boundaries; the prior is the booth-respread notional on the 2015 boundaries (STATE_REDISTRIBUTIONS,
   # scripts/parse_booths_nsw2011.py then scripts/build_state_notionals.py). No 2015nsw.txt seat file exists.
@@ -379,14 +382,29 @@ if (!PRV %in% tx$election && file.exists(.tx_extra)) {
 # filtered to nsw2019 contains no nsw2023 rows is true by construction and
 # proves only that `==` works -- the "guard that cannot fail" shape CLAUDE.md
 # warns about, in the one place this script claims leakage safety.
-stopifnot("the transfer file must contain both elections to be filterable" =
-            all(c(PRV, TGT) %in% tx$election))
-# PRV_ not PRV inside the brackets: `election` is a column of tx, and a bare
-# symbol on either side of `==` there binds to the column. That is this repo's
-# most-repeated fault, eight times recorded.
-PRV_ <- PRV
-tx_prev <- tx[election == PRV_]
-stopifnot(nrow(tx_prev) > 0, nrow(tx_prev) < nrow(tx))
+if (is.null(PAIR$flow_from)) {
+  stopifnot("the transfer file must contain both elections to be filterable" =
+              all(c(PRV, TGT) %in% tx$election))
+  # PRV_ not PRV inside the brackets: `election` is a column of tx, and a bare
+  # symbol on either side of `==` there binds to the column. That is this repo's
+  # most-repeated fault, eight times recorded.
+  PRV_ <- PRV
+  tx_prev <- tx[election == PRV_]
+  stopifnot(nrow(tx_prev) > 0, nrow(tx_prev) < nrow(tx))
+} else {
+  # nsw2011 (added 2026-10-13): the NSWEC published no 2007 distribution of preferences, and nsw2011's own would be a
+  # leak, so the flows come from the latest FEDERAL election before polling day (the qld2020 precedent). Federal
+  # flows are compulsory-preferential, so they ignore NSW's optional-preferential exhaust: announced, not absorbed.
+  fx <- fread(file.path(PREF, "aec-fed-transfers.csv"))
+  FLOW_FROM_ <- PAIR$flow_from
+  stopifnot("flow election must precede the target" =
+              as.Date(unname(election_dates(FLOW_FROM_))) < as.Date(unname(election_dates(TGT))),
+            "flow election absent from the federal transfers file" = FLOW_FROM_ %in% fx$election)
+  tx_prev <- fx[election == FLOW_FROM_]
+  stopifnot(nrow(tx_prev) > 0)
+  cat(sprintf("BT0f! no published %s distribution: flows borrowed from %s (federal, compulsory preferential; NSW exhaust not modelled)\n",
+              PRV, FLOW_FROM_))
+}
 cat(sprintf("\nBT0  flow matrix from %d transfers, elections: %s\n",
             nrow(tx_prev), paste(unique(tx_prev$election), collapse = ", ")))
 # NEW SOUTH WALES IS OPTIONAL PREFERENTIAL AND MUST NOT TAKE QUEENSLAND'S
@@ -419,7 +437,7 @@ mat <- 100 * mat / rowSums(mat)
 state_prev <- fp_prev[, .(v = sum(votes)), by = party][, setNames(100 * v / sum(v), party)]
 state_tgt <- fp_tgt[, .(v = sum(votes)), by = party][, setNames(100 * v / sum(v), party)]
 # AUSPOL_FORECAST_MODE=1: predicted statewide, not the oracle (R/forecast_statewide.R).
-state_tgt <- forecast_statewide_or_oracle("nsw", TO, c("2015" = "2015-03-28", "2019" = "2019-03-23", "2023" = "2023-03-25")[[as.character(TO)]],
+state_tgt <- forecast_statewide_or_oracle("nsw", TO, c("2011" = "2011-03-26", "2015" = "2015-03-28", "2019" = "2019-03-23", "2023" = "2023-03-25")[[as.character(TO)]],
                                           names(state_tgt), state_prev, state_tgt,
                                           code = "BN0", n_sims = N_SIMS, seed = as.integer(Sys.getenv("AUSPOL_SEED", "42")))
 # RE-ENTRY PRIOR, docs/plans/prereg-reentry-prior-2026-09-07.md. A class
@@ -454,6 +472,12 @@ print(.bt1[order(-get(sprintf("y%d", TO)))])
 # being checked.
 TGT_ <- TGT
 win <- fread(file.path(PREF, "nswec-nsw-winners.csv"))[election == TGT_]
+# nsw2011 winners live in their own file (scripts/parse_booths_nsw2011.py), as the Victorian per-election files do.
+.win_own <- file.path(PREF, sprintf("nswec-%d-nsw-winners.csv", TO))
+if (!nrow(win) && file.exists(.win_own)) {
+  win <- fread(.win_own)[election == TGT_]
+  cat(sprintf("BT2w winners for %s read from %s\n", TGT, basename(.win_own)))
+}
 stopifnot(nrow(win) == 93L)
 truth <- setNames(win$winner, win$seat)
 cat(sprintf("
