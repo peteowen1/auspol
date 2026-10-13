@@ -7,13 +7,13 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30.
 
 ## 2026-10-14 HANDOFF (READ FIRST) -- overnight log: `plans/overnight-2026-10-14.md`
 
-**Awaiting Pete (morning):**
-- OPEN **Publish.** The release still holds the 18:20 (13 Oct) models; dev has 35 elections + P4 + both leak fixes.
-  Publish needs Pete (denied unattended as a production deploy). State to publish: the final full-inputs rebuild if
-  it finished clean (`deciding-runs/rebuild-20261014-inputs.log`), else snapshot
-  `output/snapshots/20261014-0250-ecc1bb3-from4` (`bash scripts/restore_snapshot.sh <dir>`), then
-  `AUSPOL_PUBLISH=1 AUSPOL_REBUILD_FROM=9 bash scripts/rebuild_forecasts.sh`. The 06:00 AEST daily run on 14 Oct ran
-  dev's new code against the OLD release -- check its result (`gh run list --workflow forecast.yaml --limit 2`).
+**Done 14 Oct morning:** PUBLISHED the full-inputs rebuild (AEF-7 0.2657 vs AEF 0.2825) and republished with the
+nsw2027 tables (`AUSPOL_PUBLISH_NSW2027="1"` now in published_flags.R, 6f2be85: the daily NSW step had run on 10 Oct
+tables). dev pushed. 15 merged agent worktrees removed (links into external/ unlinked first; external/ 31,925 files
+before and after); one unmerged scraper piece saved to `output/archive/worktree-patches/`. 10,058 old backtest files
+moved to `output/archive/2026-10-14/` (scoreboard re-pooled identical). breakout_mix one-hots nt (switch off).
+
+**Awaiting Pete:**
 - OPEN **Kill-by-name incident ~01:50**: an agent ran `taskkill /IM Rscript.exe` (PIDs 42792, 56328, owners unknown).
   Check other verses' overnight jobs (pannaverse) for an unexplained death around 01:30-01:50.
 - OPEN decisions: `AUSPOL_THIN_CYCLE="1"` (published by the NT agent, confirm); census LOOKAHEAD rows (214 rows from a
@@ -22,10 +22,13 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30.
   `AUSPOL_PB_COALITION_COMBINED` (frees 4 WA polls; recommend leave off).
 
 **State:** 35 scored single-member elections (vic2010, wa2021, nsw2011/2015, qld2012/2015/2017, sa2010/2014/2018,
-nt2016/2020/2024 new). AEF-7 seat log loss 0.2644 vs AEF 0.2825. Tas/ACT on the Hare-Clark path with polls: pooled
+nt2016/2020/2024 new). AEF-7 seat log loss 0.2657 (published) vs AEF 0.2825. Tas/ACT on the Hare-Clark path with polls: pooled
 0.525 vs naive 0.974. Training rule P4; scoring each election x sqrt(votes). Leak fixes shipped (conserve, MP slopes).
 
 **Open work, in order:**
+- OPEN daily run of 14 Oct: not fired by 10:00 AEDT (GitHub schedule lands 3-6 h late); check it ran on the new release.
+- OPEN sa2018 +0.025 from the new inputs: LNP -0.3 pts broadly where IND/GRN rose; which input not isolated (screen
+  sa2018 with salience off). nsw2019's +0.026 is Barwon alone (SEAT-REGISTRY).
 - OPEN wa2017 +0.079 and wa2013 +0.040 after the 35-election merge (WA defector carry; WA's own earlier cases carry
   0.693). Trace seat by seat with `scripts/biggest_misses.R --pairs=wa2017,wa2013`.
 - OPEN NT seat layer weak even on the true statewide (log loss 0.82-1.55); new parties start at zero share.
