@@ -9,7 +9,7 @@
 # existing national ones are not touched). The raw zips are kept too.
 # Names come from the ABS boundary .dbf for that vintage; seat = name with the
 # upper-house suffix stripped (NT has none; the strip is harmless).
-# Emits CN* codes.
+# Emits CNT* codes.
 options(auspol.root = normalizePath("."))
 suppressMessages(library(data.table))
 CEN <- file.path("external", "reference", "census")
@@ -54,7 +54,7 @@ for (v in c("2016", "2021")) {
     utils::download.file(url, zip, quiet = TRUE, mode = "wb")
     stopifnot(verify_zip(zip))
   }
-  cat(sprintf("CN1  %s NT pack %.1f MB, verified\n", v, file.size(zip) / 1e6))
+  cat(sprintf("CNT1 %s NT pack %.1f MB, verified\n", v, file.size(zip) / 1e6))
   ls_ <- utils::unzip(zip, list = TRUE)
   f <- grep("G01_NT_SED\\.csv$", ls_$Name, value = TRUE); stopifnot(length(f) == 1)
   con <- unz(zip, f); g1 <- fread(text = readLines(con, warn = FALSE), showProgress = FALSE); close(con)
@@ -70,10 +70,10 @@ for (v in c("2016", "2021")) {
   cen <- merge(g1, look, by = "sed_code", all.x = TRUE)
   cen[, seat := trimws(sub("\\s*\\(.*\\)\\s*$", "", sed_name))]
   cen[, state := "NT"]
-  cat(sprintf("CN2  %s: %d rows, %d unnamed (non-geographic codes)\n", v, nrow(cen), sum(is.na(cen$seat))))
+  cat(sprintf("CNT2 %s: %d rows, %d unnamed (non-geographic codes)\n", v, nrow(cen), sum(is.na(cen$seat))))
   named <- cen[!is.na(seat)]
   stopifnot(!anyDuplicated(named$seat), "Tot_P_P" %in% names(named))
-  cat(sprintf("CN3  %s NT divisions: %d; summed Tot_P_P %s; names: %s\n", v, nrow(named),
+  cat(sprintf("CNT3 %s NT divisions: %d; summed Tot_P_P %s; names: %s\n", v, nrow(named),
               format(sum(named$Tot_P_P), big.mark = ","), paste(sort(named$seat), collapse = ", ")))
   fwrite(named, file.path(CEN, sprintf("census-sed-%s-nt.csv", v)))
 }
