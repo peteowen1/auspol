@@ -25,6 +25,7 @@ election_dates <- function(labels = NULL) {
     # Brought forward from the fixed-term 27 March to avoid Easter: NSWEC Bulletin
     # No. 2 (27 May 2026), Electoral Legislation Amendment (Elections) Act 2026.
     nsw2027 = "2027-03-13",
+    qld2012 = "2012-03-24", qld2015 = "2015-01-31",   # dates read from the ECQ results files (election date attribute)
     qld2017 = "2017-11-25", qld2020 = "2020-10-31", qld2024 = "2024-10-26",
     sa2018  = "2018-03-17", sa2022  = "2022-03-19", sa2026  = "2026-03-21",
     vic2006 = "2006-11-25",   # 2026-10-13: previous election of the new vic2010 pair (Wikipedia infobox checked)

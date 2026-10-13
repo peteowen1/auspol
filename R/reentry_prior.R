@@ -892,6 +892,8 @@ all_election_pairs <- function() {
     # (docs/reviews/xgb-primary-circularity-2026-09-13.md).
     list(election = "sa2022",  prev = "sa2018"),
     list(election = "sa2026",  prev = "sa2022"),
+    list(election = "qld2015", prev = "qld2012"),   # added 2026-10-13 (coverage program)
+    list(election = "qld2017", prev = "qld2015"),
     list(election = "qld2020", prev = "qld2017"),
     list(election = "qld2024", prev = "qld2020"),
     list(election = "wa2001",  prev = "wa1996"),

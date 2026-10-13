@@ -54,6 +54,8 @@ PAIRS <- list(
   list(election = "fed2025", prev = "fed2022", region = "fed"),
   list(election = "nsw2019", prev = "nsw2015", region = "nsw"),
   list(election = "nsw2023", prev = "nsw2019", region = "nsw"),
+  list(election = "qld2015", prev = "qld2012", region = "qld"),   # added 2026-10-13 (coverage program)
+  list(election = "qld2017", prev = "qld2015", region = "qld"),
   list(election = "qld2020", prev = "qld2017", region = "qld"),
   list(election = "qld2024", prev = "qld2020", region = "qld"),
   # sa2022 added 2026-09-12. It was scored by the backtest but absent from this

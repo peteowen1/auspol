@@ -40,6 +40,10 @@ QLD_TYPE = {"PB": "ordinary", "EV": "prepoll", "PO": "postal", "PP": "prepoll ab
             "DV2": "in person declaration", "AB1": "absent", "AB2": "absent early"}
 
 
+QLD_SRC = {2015: "external/reference/ecq/raw/2015/publicResults.xml"}
+OLD_SCHEMA = (2015, 2017)
+
+
 def norm(s):
     return re.sub(r"[^a-z0-9]", "", str(s).lower())
 
@@ -79,11 +83,12 @@ def venue_dir(year):
 
 
 def parse_qld(year, coords):
-    src = f"external/reference/ecq/qld{year}.xml"
+    # 2015 and 2017 share the old results-site schema (scripts/parse_booths_qld2015.py runs 2015)
+    src = QLD_SRC.get(year, f"external/reference/ecq/qld{year}.xml")
     root = ET.parse(ROOT / src).getroot()
     fp, tcp = [], []
     informal = 0
-    if year == 2017:
+    if year in OLD_SCHEMA:
         districts = root.find("districts")
     else:
         elec = [e for e in root.findall("election")
@@ -99,7 +104,7 @@ def parse_qld(year, coords):
         by_name.append({norm(v[0]): (v[1], v[2]) for v in c.values() if cnt[norm(v[0])] == 1})
 
     def ll(bid, name):
-        if year == 2017:
+        if year in OLD_SCHEMA:
             for m in by_name:
                 if norm(name) in m:
                     return m[norm(name)]
@@ -109,7 +114,7 @@ def parse_qld(year, coords):
 
     for d in districts:
         dname = d.get("name") or d.get("districtName")
-        if year == 2017:
+        if year in OLD_SCHEMA:
             cands = {c.get("ballotOrderNumber"): (c.get("ballotName"), c.get("party") or "")
                      for c in d.find("candidates")}
             for b in d.find("booths"):
