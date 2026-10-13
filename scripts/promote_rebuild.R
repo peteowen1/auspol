@@ -129,7 +129,10 @@ invisible(withr::with_envvar(c(AUSPOL_DEMO_RESID = "2"), demographic_residual_ap
 # them (pastvtr.elections.nsw.gov.au serves the GitHub runner a non-workbook,
 # forecast.yaml "Fetch election results"), so they travel on the release.
 .nsw_tables <- character(0)
-if (identical(Sys.getenv("AUSPOL_PUBLISH_NSW2027", "0"), "1")) {
+# Read through .flag(), so a plain publish follows published_flags.R: the daily
+# job's NSW step is gated on the repository variable of the same name, and a
+# publish that skipped these tables left that step on 2026-10-10's (found 2026-10-14).
+if (identical(.flag("AUSPOL_PUBLISH_NSW2027"), "1")) {
   invisible(seat_swing_port_table("nsw2027", write = TRUE))
   invisible(seat_poll_blend_table("nsw2027", write = TRUE))
   invisible(leader_seat_table("nsw2027", write = TRUE))
