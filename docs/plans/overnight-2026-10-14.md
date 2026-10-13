@@ -108,3 +108,5 @@ something, save it for the morning". Trust does not extend to merges to main, de
 - 05:00 Registries regenerated (poll registry: 2,965 polls, AEF's numbers on 712; final 30 days 286, AEF's on 20).
   Data dictionary failed on NT 2012's empty tcp column -> fixed at the source.
 - 05:15 Worst seats in the regressed elections recorded in SEAT-REGISTRY (Churchlands measured).
+- 05:35 Full CI on merged HEAD 851d5f7: 1968 passed, R CMD check 0 errors / 0 warnings. dev push-ready (held until
+  publish).
