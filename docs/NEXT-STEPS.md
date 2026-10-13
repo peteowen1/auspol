@@ -5,6 +5,36 @@ it stood before this rewrite: `backlog/journal-2026-09-19-hub-snapshot.md`).
 Decisions: `docs/DECISIONS.md`. Every seat verdict: `docs/SEAT-REGISTRY.md`.
 Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30.
 
+## 2026-10-14 HANDOFF (READ FIRST) -- overnight log: `plans/overnight-2026-10-14.md`
+
+**Awaiting Pete (morning):**
+- OPEN **Publish.** The release still holds the 18:20 (13 Oct) models; dev has 35 elections + P4 + both leak fixes.
+  Publish needs Pete (denied unattended as a production deploy). State to publish: the final full-inputs rebuild if
+  it finished clean (`deciding-runs/rebuild-20261014-inputs.log`), else snapshot
+  `output/snapshots/20261014-0250-ecc1bb3-from4` (`bash scripts/restore_snapshot.sh <dir>`), then
+  `AUSPOL_PUBLISH=1 AUSPOL_REBUILD_FROM=9 bash scripts/rebuild_forecasts.sh`. The 06:00 AEST daily run on 14 Oct ran
+  dev's new code against the OLD release -- check its result (`gh run list --workflow forecast.yaml --limit 2`).
+- OPEN **Kill-by-name incident ~01:50**: an agent ran `taskkill /IM Rscript.exe` (PIDs 42792, 56328, owners unknown).
+  Check other verses' overnight jobs (pannaverse) for an unexplained death around 01:30-01:50.
+- OPEN decisions: `AUSPOL_THIN_CYCLE="1"` (published by the NT agent, confirm); census LOOKAHEAD rows (214 rows from a
+  later census on renamed seats: keep or drop); `AUSPOL_HC_DEFECTOR` (Hare-Clark pooled 0.525 -> 0.496, act2024
+  worse); `AUSPOL_POLL_ARCHIVE` (fed2007 AEF polls 185 -> 66; scored effect unmeasured);
+  `AUSPOL_PB_COALITION_COMBINED` (frees 4 WA polls; recommend leave off).
+
+**State:** 35 scored single-member elections (vic2010, wa2021, nsw2011/2015, qld2012/2015/2017, sa2010/2014/2018,
+nt2016/2020/2024 new). AEF-7 seat log loss 0.2644 vs AEF 0.2825. Tas/ACT on the Hare-Clark path with polls: pooled
+0.525 vs naive 0.974. Training rule P4; scoring each election x sqrt(votes). Leak fixes shipped (conserve, MP slopes).
+
+**Open work, in order:**
+- OPEN wa2017 +0.079 and wa2013 +0.040 after the 35-election merge (WA defector carry; WA's own earlier cases carry
+  0.693). Trace seat by seat with `scripts/biggest_misses.R --pairs=wa2017,wa2013`.
+- OPEN NT seat layer weak even on the true statewide (log loss 0.82-1.55); new parties start at zero share.
+- OPEN qld2017: One Nation / Katter seats given ~0 (emergence); qld2012 Katter polled inside Others.
+- OPEN Hare-Clark candidate-level count loses on zero-probability new independents (needs a heavier tail).
+- OPEN fed2007 Newspoll gaps (Jul 2005-Apr 2006, Jul-Sep 2006, Jul-Nov 2007) and Nielsen/Galaxy archives.
+- OPEN fed2028 live forecast build (decided 13 Oct; 8-11 days).
+- OPEN registries regenerated after the final rebuild (DATA/MODEL/POLL); SEAT-REGISTRY entries for the new worst seats.
+
 ## 2026-10-12 HANDOFF (READ FIRST)
 
 **Morning 2026-10-12 (Pete):**
