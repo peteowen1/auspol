@@ -46,3 +46,8 @@ Each arm is a rebuild from stage 4 (as-at and production vote-share models refit
 
 Unacceptable regardless of score: an arm that changes any pre-2010 election (they cannot see vic2010; a change there
 means the switch leaked into something else).
+
+## Amendment 2026-10-13 (added before any arm's result was read; the clauses above are unedited)
+
+The deciding weight in criterion 1 changes from per person to each election x sqrt(formal votes) (Pete,
+`plans/weighting-design-2026-10-13.md` revision). Per person is still printed and reported beside it.

@@ -85,3 +85,13 @@ Build: (a) training row weights (decay + completeness) in the time-forward fits,
 models where vic2010's harm entered; (b) the new scorer in `scripts/compare_rebuild_scores.R` (election-equal mean,
 AEF-7 and 2010+ views, better/worse counts, voter-weighted view). Then rebuild with vic2010 in training under the new
 weights and compare to 0.3195 (bundle without vic2010) under the new scorer.
+
+## Revision 2026-10-13 evening (Pete): scoring weight is each election x sqrt(formal votes)
+
+Per person put federal at 69% of the AEF-7 score and vic2022 (the published forecast's own state) at 2.7%, so a
+Victoria-only fix barely registered. Shares of the AEF-7 score going to federal, by scheme: election-equal 29%,
+seat-equal 44%, seat x log(votes) 47% (log squashes 110k vs 45k voters to 11.6 vs 10.7, so it is seat-equal in
+practice), election x sqrt(votes) 49%, per person 69%. Pete chose sqrt: bigger elections still count more (4x the
+voters = 2x the weight). `scripts/compare_rebuild_scores.R` KX4 decides on it; per person and election-equal printed
+beside it. Poll count is a TRAINING question, not a scoring one: scoring by it would down-weight exactly the elections
+we forecast worst for lack of data, and Victoria 2026 still has to be forecast.
