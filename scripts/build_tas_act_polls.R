@@ -56,9 +56,10 @@ build_region <- function(D, label) {
   rest <- setdiff(grep("^pv_", names(D), value = TRUE), named)
   oth <- colsum(D, rest)
   tot <- ifelse(is.finite(alp), alp, 0) + ifelse(is.finite(lnp), lnp, 0) + ifelse(is.finite(grn), grn, 0) + oth
-  # undecided divided out: the published undecided share where given, otherwise
-  # whatever the reported primaries leave short of 100
-  scale <- ifelse(und > 0, 100 / (100 - und), ifelse(tot > 0, 100 / tot, 1))
+  # undecided divided out by rescaling the reported primaries to 100. Not 100 / (100 - undecided):
+  # the source figures are rounded, so primaries + undecided land at 97-102 and that form left
+  # seven EMRS rows (2008-2012) summing to 97.4-101.3 (2026-10-14, test-tas-act-polls.R).
+  scale <- ifelse(tot > 0, 100 / tot, 1)
   for (i in which(is.finite(alp) & abs(scale - 1) > 0.005))
     cat(sprintf("TA0u %s %s %s: primaries rescaled x%.3f (undecided %s)\n", label, D$firm_raw[i], D$date_raw[i], scale[i],
                 if (und[i] > 0) sprintf("%.1f published", und[i]) else sprintf("%.1f implied by a %.1f total", 100 - tot[i], tot[i])))

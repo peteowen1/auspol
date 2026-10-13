@@ -27,6 +27,19 @@ suppressMessages(devtools::load_all(quiet = TRUE))
 
 empty <- file.path(tempdir(), "auspol-no-anchor")
 dir.create(empty, showWarnings = FALSE, recursive = TRUE)
+# ...but not EMPTIER than CI. The runner's checkout carries every git-tracked file,
+# including the tracked part of external/ (anchor supplements, reference tables), so
+# tests guarded on those run there. An empty root hid them here, and pkg_root() (which
+# needs a DESCRIPTION) fell back to tests/testthat: test-tas-act-polls.R failed on CI
+# from 2026-10-13 while this script reported clean. So the root is the tracked set,
+# working-copy versions (uncommitted edits included), and nothing untracked.
+unlink(empty, recursive = TRUE); dir.create(empty, recursive = TRUE)
+tracked <- system2("git", c("ls-files"), stdout = TRUE)
+for (d in unique(dirname(tracked))) dir.create(file.path(empty, d), showWarnings = FALSE, recursive = TRUE)
+ok <- file.copy(tracked, file.path(empty, tracked), overwrite = TRUE)
+cat(sprintf("LCI0 copied %d of %d git-tracked files into the no-anchor root (what the CI checkout has; %d under external/)\n",
+            sum(ok), length(tracked), sum(startsWith(tracked, "external/"))))
+if (!all(ok[file.exists(tracked)])) stop("could not copy every tracked file into the no-anchor root")
 options(auspol.root = empty)
 
 cat("=== running the suite with NO anchor data ===\n")
