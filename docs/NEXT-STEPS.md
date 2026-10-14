@@ -16,13 +16,15 @@ git-tracked tree so it sees what CI sees (8d7b36d). Cleanup: 15 worktrees remove
 Defector line CLOSED (reviews/defector-overcarry-2026-10-14.md). Seat-size spread (`AUSPOL_SIZE_SD`) SHIPPED and
 published 07:35 UTC: pooled 0.3418 -> 0.3337, AEF-7 0.2662 vs AEF 0.2825 (reviews/seat-size-spread-2026-10-14.md).
 
-**Awaiting Pete:**
-- OPEN **Kill-by-name incident ~01:50**: an agent ran `taskkill /IM Rscript.exe` (PIDs 42792, 56328, owners unknown).
-  Check other verses' overnight jobs (pannaverse) for an unexplained death around 01:30-01:50.
-- OPEN decisions: `AUSPOL_THIN_CYCLE="1"` (published by the NT agent, confirm); census LOOKAHEAD rows (214 rows from a
-  later census on renamed seats: keep or drop); `AUSPOL_HC_DEFECTOR` (Hare-Clark pooled 0.525 -> 0.496, act2024
-  worse); `AUSPOL_POLL_ARCHIVE` (fed2007 AEF polls 185 -> 66; scored effect unmeasured);
-  `AUSPOL_PB_COALITION_COMBINED` (frees 4 WA polls; recommend leave off).
+**Resolved with Pete 14 Oct evening:** kill-by-name incident -- the cross-repo runtime log shows every R command
+from 14:20 to 15:40 UTC belonged to auspol (this session's agents and its rebuild); pannaverse only ran `gh` CI
+watches, so no other repo's job is known to have died (commands under 30 s are not logged). Decisions: thin-cycle
+CONFIRMED; HC defector SHIPPED; post-election census rows BLANKED (214 backtest rows); pollster archive screened
+(fed2007 0.3339 -> 0.3338) and SHIPPED. Census and archive reach the scoreboard on the next full rebuild.
+- OPEN Hare-Clark harness (backtest_hare_clark.R) does not source harness_defaults.R: only AUSPOL_HC_DEFECTOR reads
+  its published value; every other switch runs at its inline default there.
+- OPEN next FULL rebuild (stages 1-9, ~3 h) to carry the census blanking and pollster archive into the published
+  models and scoreboard.
 
 **State:** 35 scored single-member elections (vic2010, wa2021, nsw2011/2015, qld2012/2015/2017, sa2010/2014/2018,
 nt2016/2020/2024 new). AEF-7 seat log loss 0.2662 (published 14 Oct, size spread on) vs AEF 0.2825. Tas/ACT on the Hare-Clark path with polls: pooled
