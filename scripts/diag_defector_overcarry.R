@@ -14,7 +14,7 @@ suppressMessages(devtools::load_all(quiet = TRUE))
 suppressMessages(library(data.table))
 C  <- fread(file.path("output", "candidacies.csv"), showProgress = FALSE)
 FC <- fread(file.path("output", "forecasts.csv"), showProgress = FALSE)
-cat(sprintf("DO0  candidacies %d rows, %d elections; forecasts %d rows, %d elections\n",
+cat(sprintf("DFO0  candidacies %d rows, %d elections; forecasts %d rows, %d elections\n",
             nrow(C), uniqueN(C$election), nrow(FC), uniqueN(FC$election)))
 MAJ <- c("ALP", "LNP", "NAT")
 kk <- function(d) match_key(surname_of(if ("surname" %in% names(d)) d$surname else NA_character_,
@@ -40,7 +40,7 @@ cases <- rbindlist(lapply(all_election_pairs(), function(pr) {
   m[, list(election, seat, name, old_party, new_party, was_mp, prior, now)]
 }), fill = TRUE)
 cases <- unique(cases, by = c("election", "seat", "name"))
-cat(sprintf("DO1  %d defector cases over %d elections (%d sitting members)\n",
+cat(sprintf("DFO1  %d defector cases over %d elections (%d sitting members)\n",
             nrow(cases), uniqueN(cases$election), sum(cases$was_mp)))
 FC[, .s := normalise_seat(seat)]; cases[, .s := normalise_seat(seat)]
 # the defector's own row: same election, seat, class (the new label)
@@ -52,18 +52,18 @@ M <- M[n_in_class == 1L]
 opr <- FC[, list(election, .s, old_party = party, old_pred = xgb_pred, old_act = actual_share)]
 opr <- unique(opr, by = c("election", ".s", "old_party"))
 M <- merge(M, opr, by = c("election", ".s", "old_party"), all.x = TRUE)
-cat(sprintf("DO2  %d of %d cases scored (forecasts row for the defector's class, sole candidate in it); dropped: %s\n",
+cat(sprintf("DFO2  %d of %d cases scored (forecasts row for the defector's class, sole candidate in it); dropped: %s\n",
             nrow(M), nrow(cases), paste(setdiff(cases[, paste(election, seat)], M[, paste(election, seat)]), collapse = ", ")))
 M[, `:=`(over = pred - act, over_base = base - act, old_over = old_pred - old_act)]
 setorder(M, -over)
 print(M[, list(election, seat, name, old_party, new_party, was_mp, prior = round(prior, 1), base = round(base, 1),
                pred = round(pred, 1), act = round(act, 1), over = round(over, 1), old_over = round(old_over, 1))], nrows = 200)
 s <- function(x, lab) {
-  cat(sprintf("DO3  %-16s n=%2d  over-call mean %+.2f (se %.2f), median %+.2f, over-called %d; base mean %+.2f; old party mean %+.2f\n",
+  cat(sprintf("DFO3  %-16s n=%2d  over-call mean %+.2f (se %.2f), median %+.2f, over-called %d; base mean %+.2f; old party mean %+.2f\n",
               lab, nrow(x), mean(x$over), sd(x$over) / sqrt(nrow(x)), median(x$over), sum(x$over > 0),
               mean(x$over_base), mean(x$old_over, na.rm = TRUE)))
 }
 s(M, "all"); s(M[was_mp == TRUE], "sitting members"); s(M[was_mp == FALSE], "losing candidates")
 s(M[startsWith(election, "fed")], "federal"); s(M[!startsWith(election, "fed")], "state")
 fwrite(M, file.path("output", "defector-overcarry.csv"))
-cat("DO4  wrote output/defector-overcarry.csv\n")
+cat("DFO4  wrote output/defector-overcarry.csv\n")

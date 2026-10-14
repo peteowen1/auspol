@@ -9,7 +9,7 @@ suppressMessages(devtools::load_all(quiet = TRUE))
 suppressMessages(library(data.table))
 M <- fread(file.path("output", "defector-overcarry.csv"))
 C <- fread(file.path("output", "candidacies.csv"), showProgress = FALSE)
-cat(sprintf("DH0  %d defector cases; candidacies %d rows\n", nrow(M), nrow(C)))
+cat(sprintf("DFH0  %d defector cases; candidacies %d rows\n", nrow(M), nrow(C)))
 prs <- rbindlist(lapply(all_election_pairs(), function(p) data.table(election = p$election, prev = p$prev)))
 M <- merge(M, prs, by = "election", all.x = TRUE)
 # times elected before, from the previous election's row for this person (surname match within seat)
@@ -19,7 +19,7 @@ M[, sur2 := toupper(trimws(sub("^([A-Z'-]+)[ ,].*$", "\\1", name)))]
 pv <- C[party %in% c("ALP", "LNP", "NAT"), list(prev = election, .s, sur, hist = suppressWarnings(as.numeric(historic_elected)))]
 M <- merge(M, unique(pv, by = c("prev", ".s", "sur")), by.x = c("prev", ".s", "sur"), by.y = c("prev", ".s", "sur"), all.x = TRUE)
 M[is.na(hist), hist := pv[match(paste(M$prev[is.na(M$hist)], M$.s[is.na(M$hist)], M$sur2[is.na(M$hist)]), paste(prev, .s, sur)), hist]]
-cat(sprintf("DH1  times-elected matched for %d of %d (%s)\n", sum(!is.na(M$hist)), nrow(M),
+cat(sprintf("DFH1  times-elected matched for %d of %d (%s)\n", sum(!is.na(M$hist)), nrow(M),
             paste(M[is.na(hist), paste(election, seat)], collapse = ", ")))
 M[, `:=`(ret = act / prior, region = sub("[0-9]+$", "", election), level = fifelse(startsWith(election, "fed"), "fed", "state"))]
 grp <- function(by) M[, list(n = .N, ret_median = round(median(ret), 2), act_mean = round(mean(act), 1),
@@ -40,7 +40,7 @@ m_reg <- M$region; m_s <- M$.s; m_sur <- M$sur; m_sur2 <- M$sur2; m_yr <- M$yr
 M[, hist := vapply(seq_len(nrow(M)), function(i) {
   keep <- won$reg == m_reg[i] & won$.s == m_s[i] & won$sur %in% c(m_sur[i], m_sur2[i]) & won$yr < m_yr[i]
   as.numeric(sum(keep)) }, numeric(1))]
-cat(sprintf("DH1b terms counted from the corpus: sitting members with 0 found %d of %d (name-key misses)\n",
+cat(sprintf("DFH1b terms counted from the corpus: sitting members with 0 found %d of %d (name-key misses)\n",
             M[was_mp == TRUE & hist == 0, .N], M[was_mp == TRUE, .N]))
 M[, terms := fcase(hist == 0, "0 found", hist <= 1, "1", hist <= 2, "2", default = "3+")]
 cat("\n-- by times elected before (sitting members only)\n"); print(M[was_mp == TRUE, list(n = .N, ret_median = round(median(ret), 2),
@@ -51,7 +51,7 @@ sc <- function(x, y) suppressWarnings(stats::cor(x, y, method = "spearman", use 
 cat(sprintf("\nDH2  Spearman, retention vs previous share %.2f, vs times elected %.2f; over-call vs previous share %.2f, vs times elected %.2f\n",
             sc(M$ret, M$prior), sc(M$ret, M$hist), sc(M$over, M$prior), sc(M$over, M$hist)))
 fwrite(M, file.path("output", "defector-holders.csv"))
-cat("DH3  wrote output/defector-holders.csv\n")
+cat("DFH3  wrote output/defector-holders.csv\n")
 # Electorate size: formal votes in the seat at the PREVIOUS election (knowable before polling day).
 sz <- C[, list(formal = sum(as.numeric(votes), na.rm = TRUE)), by = list(prev = election, .s)]
 M <- merge(M, sz, by = c("prev", ".s"), all.x = TRUE)
