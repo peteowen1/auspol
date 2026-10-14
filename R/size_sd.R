@@ -29,14 +29,18 @@ size_sd_apply <- function(sd_override, shares, target, level_sd, level_mult = NU
   f <- file.path(out_path(), "spread-by-size.csv")
   if (!file.exists(f)) stop("AUSPOL_SIZE_SD=1 but output/spread-by-size.csv is missing -- run scripts/fit_spread_by_size.R")
   tab <- data.table::fread(f, showProgress = FALSE)
-  row <- tab[tab$target == target]
+  # the argument is copied to a different name: inside tab[...] a bare `target` binds to tab's own column
+  # (the data.table NSE trap; this line hit it on its first screen, 2026-10-14)
+  tgt_label <- target
+  row <- tab[tab$target %in% tgt_label]
   if (nrow(row) != 1L) stop("AUSPOL_SIZE_SD=1 but output/spread-by-size.csv has no row for ", target)
   if (is.null(prev)) {
     pr <- Filter(function(p) identical(p$election, target), all_election_pairs())
     prev <- if (length(pr)) pr[[1]]$prev else NA_character_
   }
   C <- data.table::fread(file.path(out_path(), "candidacies.csv"), showProgress = FALSE)
-  fm <- C[C$election == prev, list(formal = sum(as.numeric(votes), na.rm = TRUE)), by = list(s = normalise_seat(seat))]
+  prev_label <- prev
+  fm <- C[C$election %in% prev_label, list(formal = sum(as.numeric(votes), na.rm = TRUE)), by = list(s = normalise_seat(seat))]
   rn <- seat_rename_map()
   fm2 <- fm[fm$s %in% names(rn)]
   if (nrow(fm2)) fm <- rbind(fm, data.table::data.table(s = unname(rn[fm2$s]), formal = fm2$formal))
