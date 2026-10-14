@@ -21,13 +21,15 @@ from 14:20 to 15:40 UTC belonged to auspol (this session's agents and its rebuil
 watches, so no other repo's job is known to have died (commands under 30 s are not logged). Decisions: thin-cycle
 CONFIRMED; HC defector SHIPPED; post-election census rows BLANKED (214 backtest rows); pollster archive screened
 (fed2007 0.3339 -> 0.3338) and SHIPPED. Census and archive reach the scoreboard on the next full rebuild.
-- OPEN Hare-Clark harness (backtest_hare_clark.R) does not source harness_defaults.R: only AUSPOL_HC_DEFECTOR reads
-  its published value; every other switch runs at its inline default there.
+- DONE 15 Oct: Hare-Clark harness sources harness_defaults.R (see the WA/NT entry below; score unchanged).
 - OPEN (review gate, non-blocking) nsw2011/nsw2015 and sa2014/sa2018 seat-spread fall back to a LATER election's
   prev_swing (2023nsw.txt, 2022sa.txt; printed BN0s / BS1s!): a post-polling-day input, small; same compromise as Qld.
-- IN FLIGHT 15 Oct: WA/NT never wired screened_slopes() (ran conditional-only, printing BW1c!/BNT1c!), which is why
-  AUSPOL_HONOUR_DEPARTED and AUSPOL_DEPARTED_SUCCESSOR never reached them. Ported on branch wa-nt-screened-slopes
-  (plans/overnight-2026-10-15.md). AUSPOL_PARTY_COR stays out of WA by design (cor(ALP, IND) flips sign there,
+- ON DEV 15 Oct (74da3d6, reviewed, check_like_ci clean, pushed): WA/NT never wired screened_slopes() (ran
+  conditional-only, printing BW1c!/BNT1c!), which is why AUSPOL_HONOUR_DEPARTED and AUSPOL_DEPARTED_SUCCESSOR never
+  reached them. Smoke run: BW1s wa2017 screened (236 permit rows), BNT1s nt2024 screened (26); HONOUR_DEPARTED=0 now
+  moves 8 cells there. Effect on the scores: second full rebuild, `deciding-runs/rebuild-20261015-wa-nt-screened.log`,
+  against snapshot 20261015-0157. Same merge: Hare-Clark harness sources harness_defaults.R (187 switches now at
+  published values; pooled 0.496 vs naive 0.974, unchanged); PPV1! test noise removed; BNT5p. AUSPOL_PARTY_COR stays out of WA by design (cor(ALP, IND) flips sign there,
   MODEL-REGISTRY); for NT it is unexplained. NT prints BNT4/BNT5 twice.
 - DONE 15 Oct (verified): mp-slope-by-class.csv is time-forward for the live targets -- scripts/fit_mp_slope.R:42
   keeps only elections with counted votes, so vic2026/nsw2027 never enter it.
