@@ -34,6 +34,11 @@ size_sd_apply <- function(sd_override, shares, target, level_sd, level_mult = NU
   tgt_label <- target
   row <- tab[tab$target %in% tgt_label]
   if (nrow(row) != 1L) stop("AUSPOL_SIZE_SD=1 but output/spread-by-size.csv has no row for ", target)
+  # no earlier elections to fit on (wa2001, wa2005, fed2007): slope 0 and no median size, so nothing widens
+  if (!is.finite(row$slope) || row$slope == 0 || !is.finite(row$w) || row$w == 0 || !is.finite(row$f_median)) {
+    cat(sprintf("SZD1 %s: no seat-size slope fitted (%d earlier elections); spread unchanged\n", target, as.integer(row$n_pairs)))
+    return(sd_override)
+  }
   if (is.null(prev)) {
     pr <- Filter(function(p) identical(p$election, target), all_election_pairs())
     prev <- if (length(pr)) pr[[1]]$prev else NA_character_
