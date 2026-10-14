@@ -122,3 +122,30 @@ Test (`scripts/diag_defector_reason.R`): over-call (final predicted share minus 
   switch and screen it as in part 3; fails -> the defector line closes, recorded here.
 - **Unacceptable win:** any coded row whose source is dated on/after polling day, or more than 10 unclear: then the
   result is not reportable until fixed. Spot-check 5 random rows' sources by hand before reading the test.
+
+**Amendment 1 (written after coding, BEFORE the test was run or any over-call was joined to a reason):** 20 of 52
+came back unclear, over the 10-row bar. They are 18 of the 18 losing candidates and 2 of the 34 sitting members
+(Speirs sa2026, Johnson wa2017). "Why they left the party" barely applies to a former candidate who stands again as
+an independent, and such people rarely have a pre-election page. So the primary test runs on SITTING MEMBERS only
+(32 coded, 2 unclear, inside the bar). The original clause above is left as written; under it the full-52 result is
+not reportable. Wayback captures were unreachable through WebFetch, so no news archive was used.
+
+**Result (sitting members, n=34; `scripts/diag_defector_reason.R`, `external/reference/defectors/defector-exit-reasons.csv`):**
+
+| reason | n | mean over-call (SE) | median retention |
+|---|---|---|---|
+| scandal | 12 | +1.7 (3.5) | 0.44 |
+| principled | 13 | +1.7 (2.8) | 0.54 |
+| preselection | 5 | -4.0 (3.1) | 0.70 |
+| other | 2 | -11.4 (13.8) | 0.97 |
+| unclear | 2 | +6.2 (1.1) | 0.29 |
+
+PRIMARY: scandal minus principled over-call -0.1 (SE 4.5) => **FAILS.** Scandal does retain less (0.44 vs 0.54),
+but the model's miss is the same size for both, and each group spans +24 to -19 (scandal: Ryan +23.6, Turner
+-18.7, Ward -12.4, Bell -11.0; principled: Lee +17.9, Purick -16.5, Cregan -15.7). Preselection losers lean under-called
+(-4.0, n=5), too few to act on. Source checks: 32 of 32 coded sources dated before polling day; 2 of 5 sampled
+quotes re-fetched and confirmed (Dickson, McBride; McBride's 2025 assault charges noted on his row).
+
+**The defector line closes here** (pre-registered decision). Tried, all on the full outcome table: overall carry
+bias (none), electorate size (arm built, refused), old-party share (total already right; the miss is the split),
+tenure, previous share, exit reason (none separate). What remains is person-level variance the data does not explain.
