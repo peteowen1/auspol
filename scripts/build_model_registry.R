@@ -142,6 +142,14 @@ for (sw in names(COMMENT_ONLY)) {
 # row; update this when a gap is fixed or a new one is found by rerunning
 # this script and diffing its output.
 CLASSIFY <- list(
+  AUSPOL_SIZE_SD = paste(
+    "SHIPPED 2026-10-14 (1), wired EVERYWHERE through R/size_sd.R: all seven harnesses and fit_seats_full.R pass",
+    "sd_override = size_sd_apply(...) to simulate_seat_contests(), which reads the switch inside R/. The 'NO' cells",
+    "are this generator only grepping the harness files. reviews/seat-size-spread-2026-10-14.md"),
+  AUSPOL_DEFECT_SIZE = paste(
+    "OFF, REFUSED 2026-10-14 (nt2016 +0.19 on screen). Read inside R/candidate_returns.R (fit_defector_discount()",
+    "and personal_prior_vote()), so it reaches every harness's base_pred when on; 'NO' in the harness columns is",
+    "the grep, not a gap. reviews/defector-overcarry-2026-10-14.md"),
   AUSPOL_NOTIONAL = paste(
     "SHIPPED (2) and FEDERAL-BACKTEST-ONLY by design: the redistribution-adjusted (notional) prior only exists",
     "where build_notional_baselines.R has a table (federal). State harnesses have no notional table to read, so",
