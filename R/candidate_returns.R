@@ -886,7 +886,9 @@ personal_prior_vote <- function(election_from, election_to, corpus = NULL,
         .hit <- which(out$def_was_mp %in% TRUE & is.finite(out$.formal) & out$.formal > 0)
         if (length(.hit)) {
           .r0 <- out$.rate[.hit]
-          .r1 <- pmin(1, .r0 * exp(.sf$slope * (log(out$.formal[.hit]) - .sf$center)))
+          # no extrapolation: a seat outside the fitted size range takes the nearest edge's scaling
+          .lf <- pmin(pmax(log(out$.formal[.hit]), .sf$lo), .sf$hi)
+          .r1 <- pmin(1, .r0 * exp(.sf$slope * (.lf - .sf$center)))
           data.table::set(out, i = .hit, j = ".rate", value = .r1)
           # report only the cells the rate reaches (a non-major cell with no own record of its own, below);
           # def_was_mp is also TRUE on every returning major-party member, whose rate is never used
@@ -1361,7 +1363,10 @@ fit_defector_discount <- function(target_election, corpus = NULL, min_n = 5L, pa
   w <- if (is.finite(b) && is.finite(se) && b != 0) max(0, 1 - se^2 / b^2) else 0
   cat(sprintf("DSZ1 %s: carry-vs-size slope %.3f (se %.3f, n=%d) shrunk x%.2f -> %.3f per log formal vote; centre %.0f formal votes\n",
               target_election, b, se, nrow(R), w, w * b, exp(ctr)))
-  list(slope = w * b, center = ctr, raw = b, se = se, w = w, n = nrow(R))
+  # The slope is only evidence inside the sizes it was fitted on: the first screen (2026-10-14) applied a
+  # slope fitted on 10k+ seats to 4.5k-vote NT seats, tripling the carry (nt2016 log loss +0.30).
+  list(slope = w * b, center = ctr, raw = b, se = se, w = w, n = nrow(R),
+       lo = min(log(R$formal)), hi = max(log(R$formal)))
 }
 
 #' The vote share a sitting non-major member typically holds at their next election

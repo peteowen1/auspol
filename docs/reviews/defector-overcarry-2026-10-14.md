@@ -66,3 +66,25 @@ Retention = actual share / previous share. Over-call as above. Pre-election fact
 Candidate change, NOT built: let the sitting-member carry fall with electorate size (a slope on log formal votes,
 shrunk toward the current flat rate), which would address the federal +6.8 and the NT -8.3 together. Needs Pete to
 walk the rows first.
+
+## Part 3: the AUSPOL_DEFECT_SIZE arm, screened and REFUSED (2026-10-14)
+
+Built behind `AUSPOL_DEFECT_SIZE` (off; R/candidate_returns.R `.defect_size_slope()`, applied in
+`personal_prior_vote()`, so base_pred in every harness). Screened with `scripts/quick_arm.R` at 1,000 sims on the 19
+elections that have a sitting-member defector (1,719 seats).
+
+| run | pooled seat log loss (lower is better) | share sq. error on changed cells |
+|---|---|---|
+| as built, 19 elections | 0.3284 -> 0.3299 (+0.0015, SE 0.0056) | +54% |
+| clamped to the fitted size range, 4 moved elections | 0.5075 -> 0.5065 (-0.0010, SE 0.0324) | +89% |
+
+fed2010 improves (Ryan, -0.037 both times); nt2016 is the damage (+0.30, clamped +0.19). Every nt2016 seat (2.5-4.4k
+votes) is smaller than any earlier case, so it takes the edge rate, 0.80 against the flat 0.42; actual retention
+there was 0.20-0.88 (median 0.60). The arm then makes the defector favourite in all five seats, and because the
+carried vote is taken out of the old party, the CLP falls to 3-5% where it actually polled 20-36%.
+
+**Refused.** What it was given: the full 52-case outcome table, the shipped carry machinery, a shrunk and clamped
+slope. What it was not given: any NT case before nt2016 (none exist), and a model of the old party keeping part of a
+defector's vote. That second point is the more promising lead: in nt2016 the defector and the old party together
+polled MORE than the old party's previous share in four of five seats, so a "carry" taken out of the old party is the
+wrong shape there. Switch stays in the code, off.
