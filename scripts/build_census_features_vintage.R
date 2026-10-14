@@ -57,6 +57,11 @@ OUT <- "output"; CEN <- "external/reference/census"
 RAW <- "external/reference/abs/raw"
 CENSUS_DATE <- c("2006" = "2006-08-08", "2011" = "2011-08-09",
                  "2016" = "2016-08-09", "2021" = "2021-08-10")
+# PUBLICATION dates (Pete 2026-10-14: only a census PUBLISHED before polling day may be used). First release of the
+# General Community Profile tables these features come from. UNVERIFIED -- entered from memory, not from the ABS
+# release calendar; check before relying on an election within a few weeks of one of these dates.
+CENSUS_RELEASE <- c("2006" = "2007-06-27", "2011" = "2012-06-21",
+                    "2016" = "2017-06-27", "2021" = "2022-06-28")
 FEATS <- c("yr12_pct", "born_aus_pct", "indig_pct", "over55_pct",
            "under35_pct", "lang_other_pct", "edu_25plus_pct")
 # Name a pair here to force its census year (character, e.g. c(fed2016 = "2016")).
@@ -260,8 +265,10 @@ ED <- c(election_dates(setdiff(PAIRS, names(NEW_DATES))),
 region_of_pair <- sub("[0-9]{4}$", "", PAIRS); names(region_of_pair) <- PAIRS
 pref_census <- function(p) {
   if (p %in% names(PREF_OVERRIDE)) return(list(y = PREF_OVERRIDE[[p]], why = "override"))
-  before <- names(CENSUS_DATE)[as.Date(CENSUS_DATE) < ED[[p]]]
-  if (length(before)) list(y = max(before), why = "latest census taken before polling day")
+  # PUBLISHED before polling day, not merely taken (generalises the nt2016 / qld2012 overrides; flips fed2022 and
+  # sa2022 to 2016 and wa2017 to 2011 under CENSUS_RELEASE as entered)
+  before <- names(CENSUS_RELEASE)[as.Date(CENSUS_RELEASE) < ED[[p]]]
+  if (length(before)) list(y = max(before), why = "latest census published before polling day")
   else list(y = "2006", why = "no census before polling day on disk (2001 not fetched)")
 }
 note_la <- function(y, p) if (as.Date(CENSUS_DATE[[y]]) > ED[[p]]) "LOOKAHEAD: " else ""

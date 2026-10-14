@@ -33,9 +33,10 @@ CONFIRMED; HC defector SHIPPED; post-election census rows BLANKED (214 backtest 
   the previous run's table (time-forward, a one-run lag; matters only when shares changed). Move the fit before stage 6.
 - OPEN (review gate) fit_xgb_primary_asat.R checkpoints by rewriting the predictions file mid-run; a killed stage 4
   then resumed from 5/6 would use a mix of new and old models. Write to .partial and rename at the end.
-- OPEN for Pete: census RELEASE dates. Today's fix blanked censuses TAKEN after polling day; several pairs use a census
-  taken before but PUBLISHED after (fed2022 and sa2022 -> 2021 census, published June 2022; wa2017 -> 2016 census,
-  published June 2017). The vintage builder's comment says Pete's rule is "released before polling day".
+- OPEN census PUBLICATION rule (Pete 14 Oct: "use the previously published census"): coded in
+  build_census_features_vintage.R (CENSUS_RELEASE, dates UNVERIFIED from memory) -- moves fed2022 and sa2022 to the
+  2016 census and wa2017 to 2011 (qld2012, nt2016 already overridden). NOT yet applied to output/census-features.csv:
+  regenerate it (the builder's AUSPOL_CENSUS_VINTAGE_BASE note explains the swap) before the next full rebuild.
 - OPEN next FULL rebuild (stages 1-9, ~3 h) to carry the census blanking and pollster archive into the published
   models and scoreboard.
 
