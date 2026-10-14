@@ -29,6 +29,13 @@ CONFIRMED; HC defector SHIPPED; post-election census rows BLANKED (214 backtest 
   harness; the reason is not written down. NT prints BNT4/BNT5 twice.
 - OPEN (review gate) fit_seats_full.R reads mp-slope-by-class.csv, which AUSPOL_MP_SLOPE_TF does not cover: check it is
   time-forward for the live target.
+- OPEN (review gate) spread-by-size.csv is refitted at stage 7 but read at stage 6, so backtest seat probabilities use
+  the previous run's table (time-forward, a one-run lag; matters only when shares changed). Move the fit before stage 6.
+- OPEN (review gate) fit_xgb_primary_asat.R checkpoints by rewriting the predictions file mid-run; a killed stage 4
+  then resumed from 5/6 would use a mix of new and old models. Write to .partial and rename at the end.
+- OPEN for Pete: census RELEASE dates. Today's fix blanked censuses TAKEN after polling day; several pairs use a census
+  taken before but PUBLISHED after (fed2022 and sa2022 -> 2021 census, published June 2022; wa2017 -> 2016 census,
+  published June 2017). The vintage builder's comment says Pete's rule is "released before polling day".
 - OPEN next FULL rebuild (stages 1-9, ~3 h) to carry the census blanking and pollster archive into the published
   models and scoreboard.
 

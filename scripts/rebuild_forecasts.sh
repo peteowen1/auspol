@@ -73,7 +73,7 @@ fi
 # meant to run: every name must be one of the six, comma-separated, no spaces.
 if [ -n "${AUSPOL_REBUILD_ONLY:-}" ]; then
   for _h in ${AUSPOL_REBUILD_ONLY//,/ }; do
-    case "$_h" in fed|wa|vic|nsw|qld|sa) ;; *) echo "!! AUSPOL_REBUILD_ONLY: '$_h' is not one of fed,wa,vic,nsw,qld,sa"; exit 1 ;; esac
+    case "$_h" in fed|wa|vic|nsw|qld|sa|nt) ;; *) echo "!! AUSPOL_REBUILD_ONLY: '$_h' is not one of fed,wa,vic,nsw,qld,sa,nt"; exit 1 ;; esac
   done
   case "$AUSPOL_REBUILD_ONLY" in *" "*) echo "!! AUSPOL_REBUILD_ONLY: no spaces, e.g. nsw,qld"; exit 1 ;; esac
 fi
@@ -214,7 +214,11 @@ fi
 # table is parsed from the raw XML on disk before anything else (no fetch; refetch by hand with --fetch=).
 if [ "${AUSPOL_POLL_BT:-1}" = "1" ]; then
   Rscript scripts/build_bludgertrack_polls.R > "$LOG/s0_bludgertrack.log" 2>&1 || { echo "!! build_bludgertrack_polls.R failed -- see $LOG/s0_bludgertrack.log"; exit 1; }
-  # MP slopes (time-forward since 2026-10-14) were refitted only by hand, so a new pair or a fix left the table stale.
+fi
+# MP slopes (time-forward since 2026-10-14) were refitted only by hand, so a new pair or a fix left the table stale.
+# Full rebuilds only: a resume (FROM >= 2) reuses stage 1-5 outputs built with the existing table, and refitting
+# here would mix the two (review 2026-10-14); and it no longer depends on the Poll Bludger switch.
+if at_least 1; then
   Rscript scripts/fit_mp_slope.R > "$LOG/s0_mp_slope.log" 2>&1 || { echo "!! fit_mp_slope.R failed -- see $LOG/s0_mp_slope.log"; exit 1; }
 fi
 # ENDORSEMENT FEATURES (AUSPOL_XGB_ENDORSE): only when the switch is on.
