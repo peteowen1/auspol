@@ -1,3 +1,11 @@
+# auspol 0.4.101
+
+- **35 scored elections** (was 22): vic2010, wa2021, nsw2011/2015, qld2012/2015/2017, sa2010/2014/2018, nt2016/2020/2024, scored each election x sqrt(formal votes); training rule P4 (demean + decay); leak fixes to the conserve fit and MP slopes.
+- **Seat-size spread** (`AUSPOL_SIZE_SD`): small seats get a wider per-cell sd, fitted time-forward on seat size. 20k deciding run, 35 elections: seat log loss 0.3319 -> 0.3249 (SE 0.0039); NT favourites had been called 0.945 and won 8 of 19.
+- **Own poll sources**: Poll Bludger and BludgerTrack layers, pollster archives for fed2007 (`AUSPOL_POLL_ARCHIVE`), and a thin-cycle statewide estimate in place of the 8-poll cliff (`AUSPOL_THIN_CYCLE`).
+- **Tasmania and the ACT** on a Hare-Clark path (`R/hare_clark.R`), pooled log loss 0.496 against a naive 0.974, with ticket-changers carrying part of their vote (`AUSPOL_HC_DEFECTOR`).
+- Census rows dated after polling day are blanked; an unnamed pollster no longer crashes the daily forecast.
+
 # auspol 0.4.100
 
 - **The poll trend reads our own poll source**, our Wikipedia scrape layered over AE Forecasts' file (`AUSPOL_POLL_SOURCE=layered`, Pete's call). It corrects AE's swapped rows (RedBridge Victoria 2-8 Oct 2026 had the Greens and One Nation swapped) and adds polls AE lacks (Resolve 6-10 Oct). Each scraped row is checked against its own published two-party figure. Over 22 elections seat log loss is unchanged within noise (0.3171 -> 0.3173, SE 0.0028). The daily job refetches the live Victorian, NSW and federal pages. Moving off AE entirely is the next step.
