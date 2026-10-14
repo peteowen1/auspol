@@ -36,3 +36,12 @@ share-level criterion is not assessable by design.
 
 Next: screen the other 25 elections; then the 20k deciding run on all 35; the rebuild and publish need
 fit_spread_by_size.R in rebuild_forecasts.sh and spread-by-size.csv shipped before it can go live.
+
+## Deciding run (20,000 sims, all 35 elections, `deciding-runs/20261014-1453-size-sd/`, code 9e329f8, DONE)
+
+Seat-winner log loss, lower is better: **0.3319 -> 0.3249 (-0.0070, SE 0.0039, 1.8 SE)** over 2,931 seats; AEF-7
+0.2657 -> 0.2662 (+0.0005, SE 0.0010). 22 of 35 elections changed: 13 better (nt2024 -0.332, nt2016 -0.190,
+nt2020 -0.159, wa2017 -0.035, wa2013 -0.033, wa2008 -0.016, sa2018 -0.013, qld2017 -0.010, smaller: sa2010,
+wa2025, qld2012, vic2014, qld2024), 8 worse (sa2014 +0.020, sa2026 +0.012, vic2010 +0.009, qld2020 +0.006,
+sa2022 +0.004, wa2021 +0.004, qld2015 +0.003, vic2022 +0.0005), vic2018 flat; 13 federal/unchanged. Election-equal
+mean change about -0.021. No predicted share moved (spread only). Ship decision: Pete's.
