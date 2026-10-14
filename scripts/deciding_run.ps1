@@ -1,4 +1,4 @@
-# DECIDING RUN: the full-size (default 20,000 simulations, all 22 elections) paired
+# DECIDING RUN: the full-size (default 20,000 simulations, all elections) paired
 # arm-vs-baseline run for a SHIPPING decision, as a process that outlives the Claude
 # Code session. It is scripts/quick_arm.R at --pairs=all --slots=1 --no-reuse, run by a
 # one-shot Windows Scheduled Task (so its parent is the Task Scheduler service, not the
@@ -9,7 +9,7 @@
 #   powershell.exe -File scripts\deciding_run.ps1 -Arm "AUSPOL_X=1" -Label my-idea -At 22:30
 #   ... -Base "AUSPOL_FOO=1"   extra switches for the baseline (default: shipped config)
 #   ... -Sims 20000            simulations per run (default 20000)
-#   ... -Pairs vic2022,nsw2023 restrict to some elections (default all 22; for proofs)
+#   ... -Pairs vic2022,nsw2023 restrict to some elections (default all; for proofs)
 #   ... -At HH:MM              start then (today, or tomorrow if already past); default now
 #
 # Output lives in deciding-runs/<YYYYMMDD-HHMM>-<label>/ (gitignored; never output/):
@@ -70,7 +70,10 @@ if ($Worker) {
     $i = ($all | Select-String -Pattern "^Q0" | Select-Object -First 1).LineNumber
     # The election count scored must be the one asked for: quick_arm's own default is AEF-7, and a
     # silently narrower run was the review's first blocker.
-    $want = if ($p.Pairs -eq "all") { 22 } else { @($p.Pairs -split ",").Count }
+    # "all" is read from quick_arm's own header ("at N simulations, K election(s)"), not a constant:
+    # a hard-coded 22 refused every run after the corpus grew to 35 elections (2026-10-14).
+    $hdrK = ($all | Select-String -Pattern "simulations, (\d+) election" | Select-Object -First 1)
+    $want = if ($p.Pairs -eq "all") { if ($hdrK) { [int]$hdrK.Matches[0].Groups[1].Value } else { -2 } } else { @($p.Pairs -split ",").Count }
     $got = if ($i -and $all[$i - 1] -match "in (\d+) election") { [int]$Matches[1] } else { -1 }
     if ($code -eq 0 -and $i -and $got -eq $want) {
       $hdr = @($all | Select-String -Pattern "^quick_arm: arm \{" | Select-Object -First 1 | ForEach-Object { $_.Line })
@@ -133,7 +136,7 @@ $quickDir = Join-Path $work "scratch"
    TaskName = $task; QuickDir = $quickDir; Code = $snap; Repo = $repo } | ConvertTo-Json | Set-Content (Join-Path $RunDir "params.json")
 
 Write-Host "deciding run: arm {$Arm} vs baseline {$(if ($Base) { $Base } else { 'shipped' })}"
-Write-Host "  sims $Sims, pairs $(if ($Pairs -eq 'all') { 'all 22' } else { $Pairs }), slots 1, baseline reuse OFF"
+Write-Host "  sims $Sims, pairs $(if ($Pairs -eq 'all') { 'all' } else { $Pairs }), slots 1, baseline reuse OFF"
 Write-Host "  code $sha, snapshot $snap (edits to this checkout cannot reach the run)"
 Write-Host "  folder $RunDir"
 
