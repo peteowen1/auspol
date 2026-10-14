@@ -924,7 +924,7 @@ R <- rbindlist(res_all)
 fwrite(R, file.path("output", sprintf("backtest-nt%s.csv", CAL_TAG)))
 .nt_ap <- rbindlist(ap_all, fill = TRUE)
 fwrite(.nt_ap, file.path("output", sprintf("backtest-nt-allprobs%s.csv", CAL_TAG)))
-cat(sprintf("BNT5  wrote the full probability table: %d rows over %d pair(s)
+cat(sprintf("BNT5p wrote the full probability table: %d rows over %d pair(s)
 ",
             nrow(.nt_ap), uniqueN(.nt_ap$pair)))
 # xgb_primary_on RECORDS WHETHER pred_share BELOW IS CIRCULAR -- see
