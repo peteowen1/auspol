@@ -28,11 +28,11 @@ nt2016/2020/2024 new). AEF-7 seat log loss 0.2657 (published) vs AEF 0.2825. Tas
 0.525 vs naive 0.974. Training rule P4; scoring each election x sqrt(votes). Leak fixes shipped (conserve, MP slopes).
 
 **Open work, in order:**
-- OPEN `AUSPOL_SIZE_SD` (built off, reviews/seat-size-spread-2026-10-14.md): NT favourites stated 0.945 won 8/19;
-  small seats' spread fitted time-forward. Screen, 35 elections: NT -0.16 to -0.29 each, 12 better / 10 worse
-  (sa2014 +0.024) / 13 unchanged. 20k DECIDING RUN in flight: `deciding-runs/20261014-1453-size-sd/` (check DONE
-  or FAILED). If it agrees -> ship decision to Pete, then rebuild + publish (plumbing in place, 32cac5d).
-- OPEN confirm the dispatched forecast run 38514019777 published (`gh run view 38514019777`).
+- DONE `AUSPOL_SIZE_SD` SHIPPED 14 Oct (Pete): 20k deciding run -0.0070 (SE 0.0039) over 35 elections; rebuild
+  snapshot `output/snapshots/20261014-1833-12a0471-from6`, published 07:35 UTC with spread-by-size.csv; pooled
+  0.3418 -> 0.3337, AEF-7 0.2662 vs AEF 0.2825. Dispatched forecast run 38514019777 succeeded (pre-switch code).
+- OPEN check the 15 Oct daily run uses the spread (look for SZD1 in its log) and succeeds.
+- OPEN two NON-blocking daily-run validation failures: fit_federal.R `abs(agg_after) < 1`, fit_nsw.R `!e$at_bound`.
 - OPEN sa2018 +0.025 from the new inputs: LNP -0.3 pts broadly where IND/GRN rose; which input not isolated (screen
   sa2018 with salience off). nsw2019's +0.026 is Barwon alone (SEAT-REGISTRY).
 - DONE (closed) defector carry, 14 Oct: no overall bias (52 cases); electorate-size arm built OFF and refused
