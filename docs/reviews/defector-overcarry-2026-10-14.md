@@ -109,3 +109,16 @@ Combined = (defector now + old party now) / defector's previous share; above 1 m
 - So a "don't subtract the carry" switch would fix the total where it is already right. **Not built.** The split is
   person-level, and the one candidate explanation left is why the member left (part 2), which needs hand-coding
   from pre-election sources. That is Pete's call.
+
+## Part 5: exit reason (PRE-REGISTERED 2026-10-14, before any coded row was seen)
+
+Pete chose to code why each of the 52 left (scandal / preselection / principled / other / unclear), from Wikipedia
+revisions or archive captures dated BEFORE polling day only; coders get no results. Four Sonnet agents, 13 cases each.
+
+Test (`scripts/diag_defector_reason.R`): over-call (final predicted share minus actual) and retention by reason.
+- **Primary:** mean over-call, scandal minus principled. A real effect is a difference of at least 2 SE (Welch, per
+  case), in the direction scandal over-called. Expected from the part-2 reading: scandal over, principled under.
+- **Decision:** passes -> build a reason-conditioned carry (rate per reason, shrunk toward the pooled rate) behind a
+  switch and screen it as in part 3; fails -> the defector line closes, recorded here.
+- **Unacceptable win:** any coded row whose source is dated on/after polling day, or more than 10 unclear: then the
+  result is not reportable until fixed. Spot-check 5 random rows' sources by hand before reading the test.
