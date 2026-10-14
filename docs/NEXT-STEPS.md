@@ -9,11 +9,12 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30.
 
 **Done 14 Oct:** PUBLISHED the full-inputs rebuild (AEF-7 0.2657 vs AEF 0.2825) + nsw2027 tables (6f2be85).
 Daily forecast of 13 Oct 23:39 UTC CRASHED (fit_scorecard.R: unnamed pollster from qld2006_main table 6 broke
-pollster_lean()); fixed c6dd914, re-run dispatched by Pete's OK (run 38514019777). Same log has two NON-blocking
+pollster_lean()); fixed c6dd914, re-run dispatched by Pete's OK (run 38514019777, SUCCEEDED). Same log has two NON-blocking
 validation failures, not investigated: fit_federal.R `abs(agg_after) < 1`, fit_nsw.R `!e$at_bound`.
 CI red twice from my pushes, both fixed (Tas poll sums; duplicate check code); check_like_ci.R now copies the
 git-tracked tree so it sees what CI sees (8d7b36d). Cleanup: 15 worktrees removed, 10,058 old backtests archived.
-Defector line CLOSED (reviews/defector-overcarry-2026-10-14.md). Seat-size spread built OFF, deciding run in flight.
+Defector line CLOSED (reviews/defector-overcarry-2026-10-14.md). Seat-size spread (`AUSPOL_SIZE_SD`) SHIPPED and
+published 07:35 UTC: pooled 0.3418 -> 0.3337, AEF-7 0.2662 vs AEF 0.2825 (reviews/seat-size-spread-2026-10-14.md).
 
 **Awaiting Pete:**
 - OPEN **Kill-by-name incident ~01:50**: an agent ran `taskkill /IM Rscript.exe` (PIDs 42792, 56328, owners unknown).
@@ -24,22 +25,21 @@ Defector line CLOSED (reviews/defector-overcarry-2026-10-14.md). Seat-size sprea
   `AUSPOL_PB_COALITION_COMBINED` (frees 4 WA polls; recommend leave off).
 
 **State:** 35 scored single-member elections (vic2010, wa2021, nsw2011/2015, qld2012/2015/2017, sa2010/2014/2018,
-nt2016/2020/2024 new). AEF-7 seat log loss 0.2657 (published) vs AEF 0.2825. Tas/ACT on the Hare-Clark path with polls: pooled
+nt2016/2020/2024 new). AEF-7 seat log loss 0.2662 (published 14 Oct, size spread on) vs AEF 0.2825. Tas/ACT on the Hare-Clark path with polls: pooled
 0.525 vs naive 0.974. Training rule P4; scoring each election x sqrt(votes). Leak fixes shipped (conserve, MP slopes).
 
 **Open work, in order:**
-- DONE `AUSPOL_SIZE_SD` SHIPPED 14 Oct (Pete): 20k deciding run -0.0070 (SE 0.0039) over 35 elections; rebuild
-  snapshot `output/snapshots/20261014-1833-12a0471-from6`, published 07:35 UTC with spread-by-size.csv; pooled
-  0.3418 -> 0.3337, AEF-7 0.2662 vs AEF 0.2825. Dispatched forecast run 38514019777 succeeded (pre-switch code).
+- OPEN dev is 140 commits ahead of main, all unreviewed for main (the daily job runs from dev). A dev -> main PR
+  needs the review gate; a stack (gh-stack) is the way to review that much.
 - OPEN check the 15 Oct daily run uses the spread (look for SZD1 in its log) and succeeds.
 - OPEN two NON-blocking daily-run validation failures: fit_federal.R `abs(agg_after) < 1`, fit_nsw.R `!e$at_bound`.
 - OPEN sa2018 +0.025 from the new inputs: LNP -0.3 pts broadly where IND/GRN rose; which input not isolated (screen
   sa2018 with salience off). nsw2019's +0.026 is Barwon alone (SEAT-REGISTRY).
-- DONE (closed) defector carry, 14 Oct: no overall bias (52 cases); electorate-size arm built OFF and refused
-  (nt2016 +0.19); exit reason hand-coded and tested, fails (-0.1, SE 4.5). reviews/defector-overcarry-2026-10-14.md.
-- OPEN wa2017 +0.079 and wa2013 +0.040 after the 35-election merge (WA defector carry; WA's own earlier cases carry
-  0.693). Trace seat by seat with `scripts/biggest_misses.R --pairs=wa2017,wa2013`.
-- OPEN NT seat layer weak even on the true statewide (log loss 0.82-1.55); new parties start at zero share.
+- OPEN wa2017 / wa2013 regressions: the size spread recovered -0.035 / -0.033 of them; Hillarys (defector
+  over-carry) and Churchlands (retired IND) are traced in SEAT-REGISTRY, and the defector carry line is closed.
+  Remaining: the WA 2017 swing seats (Murray-Wellington, Pilbara, Jandakot, Southern River, Kingsley).
+- OPEN NT seat layer: over-confidence fixed by the size spread (20k: nt2016 0.80, nt2020 0.65, nt2024 1.07, from
+  0.99/0.81/1.41); still weak, and new parties start at zero share.
 - OPEN qld2017: One Nation / Katter seats given ~0 (emergence); qld2012 Katter polled inside Others.
 - OPEN Hare-Clark candidate-level count loses on zero-probability new independents (needs a heavier tail).
 - OPEN fed2007 Newspoll gaps (Jul 2005-Apr 2006, Jul-Sep 2006, Jul-Nov 2007) and Nielsen/Galaxy archives.
