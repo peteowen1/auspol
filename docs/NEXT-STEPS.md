@@ -29,14 +29,18 @@ CONFIRMED; HC defector SHIPPED; post-election census rows BLANKED (214 backtest 
   harness; the reason is not written down. NT prints BNT4/BNT5 twice.
 - OPEN (review gate) fit_seats_full.R reads mp-slope-by-class.csv, which AUSPOL_MP_SLOPE_TF does not cover: check it is
   time-forward for the live target.
-- OPEN (review gate) spread-by-size.csv is refitted at stage 7 but read at stage 6, so backtest seat probabilities use
-  the previous run's table (time-forward, a one-run lag; matters only when shares changed). Move the fit before stage 6.
-- OPEN (review gate) fit_xgb_primary_asat.R checkpoints by rewriting the predictions file mid-run; a killed stage 4
-  then resumed from 5/6 would use a mix of new and old models. Write to .partial and rename at the end.
-- OPEN census PUBLICATION rule (Pete 14 Oct: "use the previously published census"): coded in
-  build_census_features_vintage.R (CENSUS_RELEASE, dates UNVERIFIED from memory) -- moves fed2022 and sa2022 to the
-  2016 census and wa2017 to 2011 (qld2012, nt2016 already overridden). NOT yet applied to output/census-features.csv:
-  regenerate it (the builder's AUSPOL_CENSUS_VINTAGE_BASE note explains the swap) before the next full rebuild.
+- DONE 15 Oct (code; first exercised by the 15 Oct rebuild): spread-table lag -- it cannot be fitted before stage 6
+  (it is fitted on stage 6's own shares), so stage 7 compares the refit with the table stage 6 read
+  (scripts/compare_spread_tables.R, SPZ2) and reruns stages 6-7 once if any scored target's factor moved > 0.02 (Pete).
+  As-at checkpoints now go to .partial files, renamed at the end.
+- DONE 15 Oct: census PUBLICATION rule applied to output/census-features.csv. 2021 release date confirmed by the ABS;
+  2016/2011 days unconfirmed, but no election sits within a month of either June date. LOOKAHEAD now means
+  published after polling day (also blanks 9 fed2022, 4 wa2017, 2 nt2016, 8 qld2012 rows). Changed pairs exactly
+  fed2022, sa2022, wa2017, nt2016, qld2012; everything else byte-identical.
+- OPEN census builder traps found doing it: (1) build_census_features.R stops on NT (CF2!); the regeneration used a
+  scratch copy that drops NT before the check. (2) Run without a base, the vintage builder's source B labels
+  qld2017/sa2018 rows from ANOTHER election's reaggregation as "on election boundaries"; their previous
+  name-matched rows were kept. Fix both before the next census regeneration.
 - OPEN next FULL rebuild (stages 1-9, ~3 h) to carry the census blanking and pollster archive into the published
   models and scoreboard.
 

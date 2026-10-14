@@ -112,6 +112,13 @@ they ever look load-bearing: `window = 30` decides which poll counts as a
 firm's last, and the `G3` tolerance decides how far the adopted estimator may
 fall behind before someone is told.
 
+`AUSPOL_SPREAD_RERUN_TOL` = 0.02 (`scripts/compare_spread_tables.R`, added
+2026-10-14) is **CHOSEN**: how far any scored target's seat-size widening
+factor (at 2k/5k/10k/20k formal votes) may move between the table stage 6 read
+and stage 7's refit before `rebuild_forecasts.sh` reruns stages 6-7. A 2%
+change in a seat's sd is well inside simulation noise on a seat probability;
+the cost of a lower bound is a 57-minute rerun, not accuracy.
+
 ## 4b. The candidate-level seat path (added 2026-08-18)
 
 These live in `scripts/fit_seats_full.R` and the three functions it calls. The

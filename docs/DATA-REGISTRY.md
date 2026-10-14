@@ -1,6 +1,6 @@
 # Data registry
 
-**Generated 2026-10-14 by `scripts/build_data_registry.R`. Do not hand-edit** --
+**Generated 2026-10-15 by `scripts/build_data_registry.R`. Do not hand-edit** --
 rerun the script instead. Regenerate it whenever you add or fetch data.
 
 This file exists because the same data has been declared missing three
@@ -73,7 +73,7 @@ cannot pass as a working one.
 | `nswec-2023-nsw-firstprefs.csv` | 10 KB |
 | `nswec-nsw-transfers.csv` | 131 KB |
 | `nswec-nsw-winners.csv` | 7 KB |
-| `ntec-2012-nt-candidates.csv` | 7 KB |
+| `ntec-2012-nt-candidates.csv` | 6 KB |
 | `ntec-2012-nt-firstprefs.csv` | 1 KB |
 | `ntec-2016-nt-candidates.csv` | 9 KB |
 | `ntec-2016-nt-firstprefs.csv` | 2 KB |
