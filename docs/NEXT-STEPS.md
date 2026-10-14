@@ -7,11 +7,13 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30.
 
 ## 2026-10-14 HANDOFF (READ FIRST) -- overnight log: `plans/overnight-2026-10-14.md`
 
-**Done 14 Oct morning:** PUBLISHED the full-inputs rebuild (AEF-7 0.2657 vs AEF 0.2825) and republished with the
-nsw2027 tables (`AUSPOL_PUBLISH_NSW2027="1"` now in published_flags.R, 6f2be85: the daily NSW step had run on 10 Oct
-tables). dev pushed. 15 merged agent worktrees removed (links into external/ unlinked first; external/ 31,925 files
-before and after); one unmerged scraper piece saved to `output/archive/worktree-patches/`. 10,058 old backtest files
-moved to `output/archive/2026-10-14/` (scoreboard re-pooled identical). breakout_mix one-hots nt (switch off).
+**Done 14 Oct:** PUBLISHED the full-inputs rebuild (AEF-7 0.2657 vs AEF 0.2825) + nsw2027 tables (6f2be85).
+Daily forecast of 13 Oct 23:39 UTC CRASHED (fit_scorecard.R: unnamed pollster from qld2006_main table 6 broke
+pollster_lean()); fixed c6dd914, re-run dispatched by Pete's OK (run 38514019777). Same log has two NON-blocking
+validation failures, not investigated: fit_federal.R `abs(agg_after) < 1`, fit_nsw.R `!e$at_bound`.
+CI red twice from my pushes, both fixed (Tas poll sums; duplicate check code); check_like_ci.R now copies the
+git-tracked tree so it sees what CI sees (8d7b36d). Cleanup: 15 worktrees removed, 10,058 old backtests archived.
+Defector line CLOSED (reviews/defector-overcarry-2026-10-14.md). Seat-size spread built OFF, deciding run in flight.
 
 **Awaiting Pete:**
 - OPEN **Kill-by-name incident ~01:50**: an agent ran `taskkill /IM Rscript.exe` (PIDs 42792, 56328, owners unknown).
@@ -26,7 +28,11 @@ nt2016/2020/2024 new). AEF-7 seat log loss 0.2657 (published) vs AEF 0.2825. Tas
 0.525 vs naive 0.974. Training rule P4; scoring each election x sqrt(votes). Leak fixes shipped (conserve, MP slopes).
 
 **Open work, in order:**
-- OPEN daily run of 14 Oct: not fired by 10:00 AEDT (GitHub schedule lands 3-6 h late); check it ran on the new release.
+- OPEN `AUSPOL_SIZE_SD` (built off, reviews/seat-size-spread-2026-10-14.md): NT favourites stated 0.945 won 8/19;
+  small seats' spread fitted time-forward. Screen, 35 elections: NT -0.16 to -0.29 each, 12 better / 10 worse
+  (sa2014 +0.024) / 13 unchanged. 20k DECIDING RUN in flight: `deciding-runs/20261014-1453-size-sd/` (check DONE
+  or FAILED). If it agrees -> ship decision to Pete, then rebuild + publish (plumbing in place, 32cac5d).
+- OPEN confirm the dispatched forecast run 38514019777 published (`gh run view 38514019777`).
 - OPEN sa2018 +0.025 from the new inputs: LNP -0.3 pts broadly where IND/GRN rose; which input not isolated (screen
   sa2018 with salience off). nsw2019's +0.026 is Barwon alone (SEAT-REGISTRY).
 - DONE (closed) defector carry, 14 Oct: no overall bias (52 cases); electorate-size arm built OFF and refused

@@ -120,3 +120,9 @@ something, save it for the morning". Trust does not extend to merges to main, de
 - 05:15 Worst seats in the regressed elections recorded in SEAT-REGISTRY (Churchlands measured).
 - 05:35 Full CI on merged HEAD 851d5f7: 1968 passed, R CMD check 0 errors / 0 warnings. dev push-ready (held until
   publish).
+
+## AFTERNOON (14 Oct) -- final state
+- Daily forecast 13 Oct 23:39 UTC crashed (fit_scorecard.R, unnamed pollster); fixed c6dd914; re-run dispatched
+  with Pete's OK (run 38514019777).
+- Defector line closed; seat-size spread (AUSPOL_SIZE_SD) built off, 35-election screen positive, 20k deciding run
+  in flight. Details: NEXT-STEPS 2026-10-14 HANDOFF.
