@@ -799,7 +799,7 @@ for (K in PAIRS) {
   .bo <- breakout_mix_args(el_to, shares)
   .imx <- ind_mixture_surge(el_to, rownames(shares), surge_arg, surge_mu_arg, surge_sd_arg, surge_party_arg, code = "BNT1N")
   surge_arg <- .imx$surge_h; surge_mu_arg <- .imx$surge_mu; surge_sd_arg <- .imx$surge_sd; surge_party_arg <- .imx$surge_party
-  sim <- simulate_seat_contests(level_sd = .level_sd, sd_override = SD_OVR, level_mult = .lm(shares), shares, fm, party_sd = psd,
+  sim <- simulate_seat_contests(level_sd = .level_sd, sd_override = size_sd_apply(SD_OVR, shares, el_to, .level_sd, .lm(shares)), level_mult = .lm(shares), shares, fm, party_sd = psd,
                                 seat_sd = sd_used * SEAT_SD_MULT,
                                 breakout_p = .bo$p, breakout_q = .bo$q,
                                 n_sims = N_SIMS, smooth = SMOOTH, seed = SEED,

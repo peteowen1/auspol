@@ -976,7 +976,7 @@ for (K in PAIRS) {
       fmr <- build_flow_matrix(tx2, min_n = 3L)
       .imx <- ind_mixture_surge(sprintf("vic%d", K$to), rownames(shares), surge_arg, surge_mu_arg, surge_sd_arg, surge_party_arg, code = "BV1N")
       surge_arg <- .imx$surge_h; surge_mu_arg <- .imx$surge_mu; surge_sd_arg <- .imx$surge_sd; surge_party_arg <- .imx$surge_party
-      s1 <- simulate_seat_contests(level_sd = .level_sd, sd_override = SD_OVR, level_mult = .lm(shares), shares, fmr, party_sd = psd,
+      s1 <- simulate_seat_contests(level_sd = .level_sd, sd_override = size_sd_apply(SD_OVR, shares, .eb, .level_sd, .lm(shares)), level_mult = .lm(shares), shares, fmr, party_sd = psd,
                                    seat_sd = sp$sd_within * SEAT_SD_MULT, n_sims = per,
                                    breakout_p = .bo$p, breakout_q = .bo$q,
                                    smooth = SMOOTH, seed = SEED + r, shrink = SHRINK,
@@ -1026,7 +1026,7 @@ for (K in PAIRS) {
       error = function(e) { cat(sprintf("HTV9! how-to-vote override FAILED, flow rows unchanged: %s\n", conditionMessage(e))); .xgb_flow_ov }) else .xgb_flow_ov
     .imx <- ind_mixture_surge(sprintf("vic%d", K$to), rownames(shares), surge_arg, surge_mu_arg, surge_sd_arg, surge_party_arg, code = "BV1N")
     surge_arg <- .imx$surge_h; surge_mu_arg <- .imx$surge_mu; surge_sd_arg <- .imx$surge_sd; surge_party_arg <- .imx$surge_party
-    sim <- simulate_seat_contests(level_sd = .level_sd, sd_override = SD_OVR, level_mult = .lm(shares), shares, fm, party_sd = psd,
+    sim <- simulate_seat_contests(level_sd = .level_sd, sd_override = size_sd_apply(SD_OVR, shares, .eb, .level_sd, .lm(shares)), level_mult = .lm(shares), shares, fm, party_sd = psd,
                                   seat_sd = sp$sd_within * SEAT_SD_MULT, n_sims = N_SIMS,
                                   breakout_p = .bo$p, breakout_q = .bo$q,
                                   smooth = SMOOTH, seed = SEED, party_cor = PARTY_COR,
