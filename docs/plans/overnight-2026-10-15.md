@@ -14,6 +14,13 @@ something, save it for the morning and move onto something else". Nothing merges
   session scratchpad only.
 - FULL REBUILD running (no publish), started 00:07: `deciding-runs/rebuild-20261015-census-archive.log`. Carries the
   census blanking + publication rule, the pollster archive, and the BludgerTrack/section re-scores.
+- REBUILD DONE 01:58, EXIT=0, not published (log above; snapshot `output/snapshots/20261015-0157-03c3d2b-from1`).
+  The new spread check fired as designed: 13 of 35 targets' factors moved (largest sa2014 0.0585 > 0.02), stages
+  6-7 reran (+31 min), the second check found 0 moved. Seat log loss, lower is better, against the published
+  14 Oct run (snapshot 20261014-1833-12a0471-from6): all 35 elections 0.3337 -> 0.3340 (2,931 seats, +0.0003,
+  flat); AEF-7 0.2662 -> 0.2646 vs AEF 0.2825 (681 seats). Best: nt2024 -0.017, wa2025 -0.008, vic2018 -0.006.
+  Worst: qld2017 +0.014, wa2017 +0.009, nsw2019 +0.007, sa2018 +0.005. Primary RMSE like for like 4.713 vs AEF
+  5.711.
 - 9b6aeb5 on dev: NEXT-STEPS 12 Oct block collapsed (121 -> 91 items); 36 merged local branches deleted (plus
   af6920, whose commits are all on dev by patch id).
 - Branch `wa-nt-screened-slopes` (worktree .claude/worktrees/wa-nt-screened), NOT yet on dev:

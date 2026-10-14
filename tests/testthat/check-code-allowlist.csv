@@ -225,3 +225,7 @@
 "XS9","scripts/backtest_candidate_vic.R","same_meaning","same check printed from more than one entry point (the six backtest harnesses and/or fit_seats_full.R, or a library function and its caller)"
 "XS9","scripts/backtest_candidate_wa.R","same_meaning","same check printed from more than one entry point (the six backtest harnesses and/or fit_seats_full.R, or a library function and its caller)"
 "XS9","scripts/backtest_candidate_nt.R","same_meaning","same check printed from more than one entry point (the six backtest harnesses and/or fit_seats_full.R, or a library function and its caller)"
+"BH0","scripts/backtest_candidate_nt.R","same_meaning","same check printed from more than one entry point (the six backtest harnesses and/or fit_seats_full.R, or a library function and its caller)"
+"BH0","scripts/backtest_candidate_wa.R","same_meaning","same check printed from more than one entry point (the six backtest harnesses and/or fit_seats_full.R, or a library function and its caller)"
+"DSR1","scripts/backtest_candidate_nt.R","same_meaning","same check printed from more than one entry point (the six backtest harnesses and/or fit_seats_full.R, or a library function and its caller)"
+"DSR1","scripts/backtest_candidate_wa.R","same_meaning","same check printed from more than one entry point (the six backtest harnesses and/or fit_seats_full.R, or a library function and its caller)"
