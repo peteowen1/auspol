@@ -25,10 +25,12 @@ CONFIRMED; HC defector SHIPPED; post-election census rows BLANKED (214 backtest 
   its published value; every other switch runs at its inline default there.
 - OPEN (review gate, non-blocking) nsw2011/nsw2015 and sa2014/sa2018 seat-spread fall back to a LATER election's
   prev_swing (2023nsw.txt, 2022sa.txt; printed BN0s / BS1s!): a post-polling-day input, small; same compromise as Qld.
-- OPEN (review gate) AUSPOL_HONOUR_DEPARTED, AUSPOL_PARTY_COR, AUSPOL_DEPARTED_SUCCESSOR reach neither the WA nor the NT
-  harness; the reason is not written down. NT prints BNT4/BNT5 twice.
-- OPEN (review gate) fit_seats_full.R reads mp-slope-by-class.csv, which AUSPOL_MP_SLOPE_TF does not cover: check it is
-  time-forward for the live target.
+- IN FLIGHT 15 Oct: WA/NT never wired screened_slopes() (ran conditional-only, printing BW1c!/BNT1c!), which is why
+  AUSPOL_HONOUR_DEPARTED and AUSPOL_DEPARTED_SUCCESSOR never reached them. Ported on branch wa-nt-screened-slopes
+  (plans/overnight-2026-10-15.md). AUSPOL_PARTY_COR stays out of WA by design (cor(ALP, IND) flips sign there,
+  MODEL-REGISTRY); for NT it is unexplained. NT prints BNT4/BNT5 twice.
+- DONE 15 Oct (verified): mp-slope-by-class.csv is time-forward for the live targets -- scripts/fit_mp_slope.R:42
+  keeps only elections with counted votes, so vic2026/nsw2027 never enter it.
 - DONE 15 Oct (code; first exercised by the 15 Oct rebuild): spread-table lag -- it cannot be fitted before stage 6
   (it is fitted on stage 6's own shares), so stage 7 compares the refit with the table stage 6 read
   (scripts/compare_spread_tables.R, SPZ2) and reruns stages 6-7 once if any scored target's factor moved > 0.02 (Pete).
