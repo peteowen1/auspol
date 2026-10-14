@@ -382,6 +382,9 @@ same <- chg[, Reduce(`&`, lapply(FEATS, function(f) abs(get(f) - get(paste0(f, "
 cat(sprintf("CW7  rows whose census year changed but whose features are byte-equal to the old row: %d (expect 0)\n", sum(same, na.rm = TRUE)))
 
 OUTCOLS <- c("pair", "seat", "vintage", "exact", FEATS, "vintage_note")
+# No census taken after polling day reaches the model (Pete, 2026-10-14): LOOKAHEAD rows are blanked.
+source(file.path("scripts", "blank_census_lookahead.R"))
+R <- blank_census_lookahead(R, "this build")
 # AFTER THE SWAP, output/census-features.csv IS the vintage file, so OLD above is no longer
 # the pre-vintage file and source B (reaggregated rows) would re-derive the existing pairs
 # from already-vintaged rows. AUSPOL_CENSUS_VINTAGE_BASE names a copy of the vintage file

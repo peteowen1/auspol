@@ -23,6 +23,10 @@
 # CHECK CODES: HCB1 inputs, HCB2 base covers every electorate, HCB3 probabilities sum to 1, HCS1 statewide source.
 
 suppressPackageStartupMessages({ library(data.table); devtools::load_all(quiet = TRUE) })
+# Published value of one switch, read without applying the rest (this harness runs every other switch at its own
+# default; NEXT-STEPS: the Hare-Clark harness does not use harness_defaults.R).
+.hc_published <- function(n) { e <- new.env(); sys.source(file.path("scripts", "published_flags.R"), envir = e)
+  v <- e$PUBLISHED_FLAGS[[n]]; if (is.null(v)) "0" else as.character(v) }
 
 args <- commandArgs(trailingOnly = TRUE)
 arg <- function(name, default) {
@@ -153,11 +157,14 @@ run_one <- function(rg, yr) {
       cand[[e]] <- list(ballots = bl, split = sp, sdlog = spri$sdlog)
     }
   }
-  # AUSPOL_HC_DEFECTOR (default "0", published "0"): a sitting member standing for another party takes
+  # AUSPOL_HC_DEFECTOR (published "1" since 2026-10-14): a sitting member standing for another party takes
   # rate x previous personal vote with them. The cases are listed either way (HCM2) so "0" shows what "1" would do.
+  # The default is the PUBLISHED value: this harness does not source harness_defaults.R, so a plain "0" default
+  # would have left the shipped switch unreached here.
   dfx <- hc_defector_moves(cands_all, rg, yr, py)
-  if (!identical(Sys.getenv("AUSPOL_HC_DEFECTOR", "0"), "1")) dfx <- NULL
-  cat(sprintf("HCM2  %s%d AUSPOL_HC_DEFECTOR = %s\n", rg, yr, Sys.getenv("AUSPOL_HC_DEFECTOR", "0")))
+  .hcd <- Sys.getenv("AUSPOL_HC_DEFECTOR", .hc_published("AUSPOL_HC_DEFECTOR"))
+  if (!identical(.hcd, "1")) dfx <- NULL
+  cat(sprintf("HCM2  %s%d AUSPOL_HC_DEFECTOR = %s\n", rg, yr, .hcd))
   pr <- hc_simulate(target, base, unit_prev, sw$draws, prev_state, nsd, upri, fl, leak = lk, seed = seed + 1L, cand = cand, defect = dfx)
   ps <- aggregate(pr$prob, pr[, c("electorate", "cls")], sum)
   stopifnot(all(abs(ps$x - 1) < 1e-9))
