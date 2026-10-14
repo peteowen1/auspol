@@ -16,7 +16,7 @@ git-tracked tree so it sees what CI sees (8d7b36d). Cleanup: 15 worktrees remove
 Defector line CLOSED (reviews/defector-overcarry-2026-10-14.md). Seat-size spread (`AUSPOL_SIZE_SD`) SHIPPED and
 published 07:35 UTC: pooled 0.3418 -> 0.3337, AEF-7 0.2662 vs AEF 0.2825 (reviews/seat-size-spread-2026-10-14.md).
 
-**Resolved with Pete 14 Oct evening:** kill-by-name incident -- the cross-repo runtime log shows every R command
+**Resolved with Pete 14 Oct evening:** dev -> main merged (PR #125, four Sonnet reviewers, no blocking findings; CI pass). kill-by-name incident -- the cross-repo runtime log shows every R command
 from 14:20 to 15:40 UTC belonged to auspol (this session's agents and its rebuild); pannaverse only ran `gh` CI
 watches, so no other repo's job is known to have died (commands under 30 s are not logged). Decisions: thin-cycle
 CONFIRMED; HC defector SHIPPED; post-election census rows BLANKED (214 backtest rows); pollster archive screened
@@ -45,8 +45,6 @@ nt2016/2020/2024 new). AEF-7 seat log loss 0.2662 (published 14 Oct, size spread
 0.525 vs naive 0.974. Training rule P4; scoring each election x sqrt(votes). Leak fixes shipped (conserve, MP slopes).
 
 **Open work, in order:**
-- OPEN dev is 140 commits ahead of main, all unreviewed for main (the daily job runs from dev). A dev -> main PR
-  needs the review gate; a stack (gh-stack) is the way to review that much.
 - OPEN check the 15 Oct daily run uses the spread (look for SZD1 in its log) and succeeds.
 - OPEN two NON-blocking daily-run validation failures: fit_federal.R `abs(agg_after) < 1`, fit_nsw.R `!e$at_bound`.
 - OPEN sa2018 +0.025 from the new inputs: LNP -0.3 pts broadly where IND/GRN rose; which input not isolated (screen
