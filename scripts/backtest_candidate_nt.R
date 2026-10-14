@@ -894,10 +894,10 @@ for (K in PAIRS) {
 }
 
 if (!length(res_all)) {
-  # EVERY PAIR SKIPPED IN FORECAST MODE is the expected outcome while the NT
-  # cycles carry 2-4 polls (BNT0n lines): exit cleanly, write NOTHING, and say so
-  # -- a rebuild must not die on it (rebuild_forecasts.sh lists the NT pairs in
-  # AUSPOL_SKIP_PAIRS), and no file means no stale score can be pooled. Outside
+  # EVERY PAIR SKIPPED IN FORECAST MODE: since AUSPOL_THIN_CYCLE shipped (2026-10-13)
+  # the NT cycles get a thin-cycle statewide and are scored, so this branch should not
+  # fire; if it does, exit cleanly, write NOTHING, and say so -- a rebuild must not die
+  # on it, and no file means no stale score can be pooled. Outside
   # forecast mode a pair always has a statewide, so an empty run is a real failure.
   if (identical(Sys.getenv("AUSPOL_FORECAST_MODE", "1"), "1")) {
     cat("BNT4! no NT pair scored: every pair was skipped (no fittable poll trend). Nothing written.\n")

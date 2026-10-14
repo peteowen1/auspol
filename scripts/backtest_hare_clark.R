@@ -26,7 +26,7 @@ suppressPackageStartupMessages({ library(data.table); devtools::load_all(quiet =
 # Published value of one switch, read without applying the rest (this harness runs every other switch at its own
 # default; NEXT-STEPS: the Hare-Clark harness does not use harness_defaults.R).
 .hc_published <- function(n) { e <- new.env(); sys.source(file.path("scripts", "published_flags.R"), envir = e)
-  v <- e$PUBLISHED_FLAGS[[n]]; if (is.null(v)) "0" else as.character(v) }
+  v <- unname(e$PUBLISHED_FLAGS[n]); if (is.na(v)) "0" else as.character(v) }   # single bracket: [[ throws on a missing name
 
 args <- commandArgs(trailingOnly = TRUE)
 arg <- function(name, default) {

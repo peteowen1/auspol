@@ -194,8 +194,9 @@ jobs:
           # AUSPOL_DEPARTED_SUCCESSOR (published "1"): fit_seats_full.R stops without the rate
           # table, and running with the switch off would trip its published-filename guard,
           # so a missing table fails here, loudly, and yesterday's forecast stays live.
-          # AUSPOL_SIZE_SD (R/size_sd.R): fit_seats_full.R stops without this table only when the switch is on.
-          gh release download shipped-models -p spread-by-size.csv -D output --clobber || echo "::warning::shipped-models has no spread-by-size.csv -- fine while AUSPOL_SIZE_SD is off"
+          # AUSPOL_SIZE_SD (published "1" since 2026-10-14, R/size_sd.R): fit_seats_full.R stops without this table,
+          # so a missing file fails here, loudly, and yesterday's forecast stays live.
+          gh release download shipped-models -p spread-by-size.csv -D output --clobber || { echo "::error::shipped-models has no spread-by-size.csv -- publish the rebuild (stage 9) before this runs"; exit 1; }
           gh release download shipped-models -p departed-successor-rates.csv -D output --clobber || { echo "::error::shipped-models has no departed-successor-rates.csv -- promote_rebuild.R uploads it at stage 9; publish the rebuild before this runs"; exit 1; }
           gh release download shipped-models -p endorsement-features.csv -D output --clobber || echo "::warning::shipped-models has no endorsement-features.csv -- a model trained with AUSPOL_XGB_ENDORSE=1 gets all-zero endorsement features"
           # AUSPOL_LEVEL_RECENT (published "1", R/level_recent.R): the blend constant is fitted on this table.

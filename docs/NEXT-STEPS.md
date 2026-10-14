@@ -23,6 +23,12 @@ CONFIRMED; HC defector SHIPPED; post-election census rows BLANKED (214 backtest 
 (fed2007 0.3339 -> 0.3338) and SHIPPED. Census and archive reach the scoreboard on the next full rebuild.
 - OPEN Hare-Clark harness (backtest_hare_clark.R) does not source harness_defaults.R: only AUSPOL_HC_DEFECTOR reads
   its published value; every other switch runs at its inline default there.
+- OPEN (review gate, non-blocking) nsw2011/nsw2015 and sa2014/sa2018 seat-spread fall back to a LATER election's
+  prev_swing (2023nsw.txt, 2022sa.txt; printed BN0s / BS1s!): a post-polling-day input, small; same compromise as Qld.
+- OPEN (review gate) AUSPOL_HONOUR_DEPARTED, AUSPOL_PARTY_COR, AUSPOL_DEPARTED_SUCCESSOR reach neither the WA nor the NT
+  harness; the reason is not written down. NT prints BNT4/BNT5 twice.
+- OPEN (review gate) fit_seats_full.R reads mp-slope-by-class.csv, which AUSPOL_MP_SLOPE_TF does not cover: check it is
+  time-forward for the live target.
 - OPEN next FULL rebuild (stages 1-9, ~3 h) to carry the census blanking and pollster archive into the published
   models and scoreboard.
 
