@@ -257,7 +257,10 @@ if at_least 6 && [ "${AUSPOL_UPSET_FLOOR:-0}" = "1" ]; then
   grep -E "^UF9" "$LOG/s6b_upset.log"
 fi
 if at_least 7; then stage "7-pool-and-forecasts";  Rscript scripts/pool_backtests.R        > "$LOG/s7_pool.log" 2>&1
-                               Rscript scripts/build_forecasts_table.R > "$LOG/s7_forecasts.log" 2>&1; done_stage "7-pool-and-forecasts"; fi
+                               Rscript scripts/build_forecasts_table.R > "$LOG/s7_forecasts.log" 2>&1
+                               # seat-size spread table (AUSPOL_SIZE_SD): refitted from this run's published errors; the
+                               # spread never moves a predicted share, so this run's table is the one it would have read
+                               Rscript scripts/fit_spread_by_size.R    > "$LOG/s7_spread_size.log" 2>&1; done_stage "7-pool-and-forecasts"; fi
 if at_least 8; then stage "8-ledger";              Rscript scripts/build_aef_comparison.R  > "$LOG/s8_comp.log" 2>&1   # aef-comparison-full.csv, the ledger's seat-probability input -- was missing from the first draft, so the ledger's log loss came out identical to the run before (2026-09-18)
                                Rscript scripts/build_aef7_tcp_actual.R > "$LOG/s8_tcp.log" 2>&1
                                Rscript scripts/build_aef7_ledger_data.R > "$LOG/s8_ledger.log" 2>&1
