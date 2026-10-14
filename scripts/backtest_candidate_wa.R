@@ -99,9 +99,9 @@ if (!is.finite(SEAT_SD_MULT) || SEAT_SD_MULT <= 0)
 # reason -- that stopped being true once WA's candidacies rows carried
 # names (see the AUSPOL_WA_TRANSFER block below); leaving the stale claim
 # here would have hidden that WA's true remaining parity gap is narrower
-# than this paragraph once said. Until the salience corpus covers WA, this
-# harness runs conditional-only slopes with a disclosed BW1c! line (below)
-# rather than silently claiming "screened."
+# than this paragraph once said. The salience corpus now covers wa2005-wa2025,
+# and since 2026-10-15 this harness runs screened slopes there (BW1s says which
+# path each election took); wa2001 stays conditional-only.
 # PORTED FROM THE FEDERAL HARNESS 2026-09-06: simulate_seat_contests() computes
 # sd_cell from `level_sd` and IGNORES seat_sd whenever level_sd is given, and
 # level_sd is on by default, so `seat_sd * SEAT_SD_MULT` at the call site was
