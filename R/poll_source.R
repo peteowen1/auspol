@@ -567,6 +567,10 @@ poll_layer <- function(ae, region, path = NULL, window = 4L) {
       m <- which(ae$canon == extra$canon[i]); if (!length(m)) return(extra$firm_raw[i])
       ae$firm[m[which.min(abs(as.integer(ae$date[m] - extra$date[i])))]]
     }, "")
+    # A Wikipedia table with no pollster column (qld2006_main table 6, 12 polls 2004-06) gives an empty
+    # firm; "Unnamed" is the label scripts/build_tas_act_polls.R already uses. An empty name broke
+    # pollster_lean() and stopped the daily forecast on 2026-10-13.
+    lab[is.na(lab) | !nzchar(trimws(lab))] <- "Unnamed"
     add <- data.table::data.table(date = extra$date, firm = lab, tpp_published = extra$tpp_published)
     for (p in parties) add[[p]] <- extra[[p]]
     add$.prov <- ifelse(is.finite(extra$OTH) | !("OTH" %in% parties), "ours_only", "ours_only_oth_blank")
