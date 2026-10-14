@@ -39,6 +39,9 @@ CONFIRMED; HC defector SHIPPED; post-election census rows BLANKED (214 backtest 
   2016/2011 days unconfirmed, but no election sits within a month of either June date. LOOKAHEAD now means
   published after polling day (also blanks 9 fed2022, 4 wa2017, 2 nt2016, 8 qld2012 rows). Changed pairs exactly
   fed2022, sa2022, wa2017, nt2016, qld2012; everything else byte-identical.
+- OPEN same one-run lag, older: the seat-poll weight is fitted on the PREVIOUS rebuild's output/forecasts.csv
+  (R/seat_poll_blend.R:67; DECISIONS 2026-09-29), so stage 6 uses last run's predictions to weight seat polls. The
+  spread fix's compare-and-rerun pattern (scripts/compare_spread_tables.R) could cover it too.
 - OPEN census builder traps found doing it: (1) build_census_features.R stops on NT (CF2!); the regeneration used a
   scratch copy that drops NT before the check. (2) Run without a base, the vintage builder's source B labels
   qld2017/sa2018 rows from ANOTHER election's reaggregation as "on election boundaries"; their previous
