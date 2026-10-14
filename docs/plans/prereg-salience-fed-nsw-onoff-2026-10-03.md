@@ -82,3 +82,10 @@ contaminate the ledger inputs). No `AUSPOL_PUBLISH`.
 
 ## Result
 (not run)
+
+
+## Moved from DECISIONS.md (2026-10-13)
+
+Full original entry, kept verbatim when DECISIONS.md was shortened:
+
+- **2026-10-04 Salience arm C for fed/nsw: dropped, everything scores at the published 0 (Pete: merge OFF everywhere).** Measured under a pre-registration: federal ON-OFF -0.0096 (SE 0.0074, carried by fed2010), nsw about 0, per-class bias guard fails in all three. The 2026-09-09 scoping never fired in the rebuild or ledger (it exported the published 0 first). Merged `fix-harness-salience-defaults` (the four override lines are gone; comments, published_flags note and model registry updated). Verified: a bare fed2022 and nsw2019 run now equals the scored late arm in 0 cells. [prereg](plans/prereg-salience-fed-nsw-onoff-2026-10-03.md)

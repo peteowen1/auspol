@@ -31,6 +31,13 @@ suppressMessages(library(xgboost))
 OUT <- "output"
 ALL <- fread(file.path(OUT, "xgb-primary-features-v6.csv"), showProgress = FALSE)
 ALL <- ALL[is.finite(level_prev) & is.finite(level_pred)]
+# AUSPOL_TRAIN_SKIP_PAIRS (2026-10-13, Pete): pairs scored in the backtests but never used as training rows (same list
+# as fit_xgb_primary_asat.R), until the decay + completeness weights exist.
+.train_skip <- trimws(strsplit(Sys.getenv("AUSPOL_TRAIN_SKIP_PAIRS", ""), ",")[[1]]); .train_skip <- .train_skip[nzchar(.train_skip)]
+if (length(.train_skip)) {
+  cat(sprintf("XF0t AUSPOL_TRAIN_SKIP_PAIRS: dropping %d training row(s) of %s\n", sum(ALL$pair %in% .train_skip), paste(.train_skip, collapse = ", ")))
+  ALL <- ALL[!pair %in% .train_skip]
+}
 
 ALL[, same_i := as.integer(same)]
 ALL[, same_mp_i := as.integer(same_mp)]
@@ -47,7 +54,7 @@ add_departed_side(ALL, c("pair", "seat"))   # AUSPOL_XGB_DEPARTED_SIDE
 # order, or the matrix columns silently misalign with what the model was
 # trained on. Same fixed party/region levels as v1/v5's final scripts.
 party_levels <- c("ALP","GRN","IND","LNP","NAT","ONP","OTH","OTH_RIGHT")
-region_levels <- c("fed","nsw","qld","sa","vic","wa")
+region_levels <- c("fed","nsw","nt","qld","sa","vic","wa")   # nt added 2026-10-13 (NT pairs scored); must match the as-at list fit_xgb_primary_v6.R derives from the data
 stopifnot(all(sort(unique(ALL$party)) %in% party_levels))
 stopifnot(all(sort(unique(ALL$region)) %in% region_levels))
 for (p in party_levels) ALL[[paste0("party_", p)]] <- as.integer(ALL$party == p)
@@ -98,6 +105,20 @@ cat(sprintf("FXP1  production features = the as-at list: %d columns
 ", length(feat_cols)))
 X <- as.matrix(ALL[, ..feat_cols])
 y <- ALL$actual_share
+# Same training-row weights and labels as fit_xgb_primary_asat.R (plans/prereg-training-weights-2026-10-13.md), with
+# the cutoff at today: the production model serves the live elections.
+.decay_h <- suppressWarnings(as.numeric(Sys.getenv("AUSPOL_TRAIN_DECAY_H", "Inf"))); if (is.na(.decay_h) || .decay_h <= 0) .decay_h <- Inf
+.compl_on <- identical(Sys.getenv("AUSPOL_TRAIN_COMPLETENESS", "0"), "1")
+.demean_on <- identical(Sys.getenv("AUSPOL_TRAIN_DEMEAN", "0"), "1")
+if (.demean_on) y <- y - stats::ave(ALL$actual_share - ALL$base_pred, ALL$pair, ALL$party)
+.wfin <- rep(1, nrow(ALL))
+if (is.finite(.decay_h)) {
+  .age <- as.numeric(Sys.Date() - as.Date(election_dates(unique(ALL$pair))[ALL$pair])) / 365.25
+  .wfin <- .wfin * 0.5^(.age / .decay_h)
+}
+if (.compl_on) { .cmp <- rowMeans(!is.na(X)); .wfin <- .wfin * pmin(1, .cmp / stats::quantile(.cmp, 0.9)) }
+cat(sprintf("FXPw training weights: decay half-life %s years, completeness %s, demean %s | weight range %.2f-%.2f\n",
+            format(.decay_h), if (.compl_on) "ON" else "off", if (.demean_on) "ON" else "off", min(.wfin), max(.wfin)))
 
 params <- list(objective = "reg:squarederror", eta = 0.05, max_depth = 4,
                 subsample = 0.8, colsample_bytree = 0.8, min_child_weight = 5)
@@ -110,6 +131,7 @@ params <- list(objective = "reg:squarederror", eta = 0.05, max_depth = 4,
 pairs <- sort(unique(ALL$pair))
 fold_id <- match(ALL$pair, pairs)
 dtrain <- xgb.DMatrix(data = X, label = y, missing = NA)
+if (is.finite(.decay_h) || .compl_on) xgboost::setinfo(dtrain, "weight", .wfin)
 # MUST MATCH fit_xgb_primary_v6.R's AUSPOL_XGB_BASE_MARGIN (shipped 2026-09-17
 # at "2" -- base_margin set AND base_pred kept as a feature, both already true
 # of feat_cols above). Training this FINAL model without base_margin while the

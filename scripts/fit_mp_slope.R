@@ -36,6 +36,13 @@ CAND <- fread("output/candidacies.csv", showProgress = FALSE)
 # without anyone remembering to add it.
 CAND[, juris := sub("[0-9]+$", "", election)]
 CAND[, yr := as.integer(sub("^[a-z]+", "", election))]
+# Live elections (vic2026, nsw2027) carry candidates but no votes yet: their shares are NaN, so they are
+# not pairs to fit on (found 2026-10-13: the script had stopped on all(is.finite(dev_now)) since live
+# candidacies were added, and output/mp-slope-by-target.csv had gone stale without anyone noticing).
+.counted <- CAND[, .(v = sum(votes, na.rm = TRUE)), by = election][v > 0, election]
+cat(sprintf("MP0e elections without counted votes, left out: %s\n",
+            paste(setdiff(unique(CAND$election), .counted), collapse = ", ")))
+CAND <- CAND[election %in% .counted]
 pairs <- rbindlist(lapply(split(unique(CAND[, .(juris, yr, election)]), by = "juris"), function(d) {
   d <- d[order(yr)]
   if (nrow(d) < 2L) return(NULL)
@@ -223,16 +230,38 @@ MIN_N <- 8L
 # loop variables are copied into differently-named plain vectors first.
 g_targets <- sort(unique(panel$target))
 g_classes <- sort(unique(panel[same_mp %in% TRUE]$party))
+# AUSPOL_MP_SLOPE_TF (2026-10-13): "1" fits each target's slopes on elections dated strictly BEFORE it
+# (time-forward), not on every other election -- the leave-one-out table trained fed2007's slope on 2022 data.
+# Shipped 2026-10-14 (Pete) after the 35-election screen: seat log loss unchanged, share error +3% (the honest figure).
+.mp_tf <- !identical(Sys.getenv("AUSPOL_MP_SLOPE_TF", "1"), "0")   # SHIPPED "1" 2026-10-14 (Pete); "0" = the old leave-one-out table
+.train_mask <- function(tg) if (.mp_tf) elections_before(panel$target, tg) else panel$target != tg
+cat(sprintf("MP6t training rows per target: %s
+", if (.mp_tf) "elections dated BEFORE the target (time-forward)" else "every other election (leave-one-out)"))
 grid <- rbindlist(lapply(g_targets, function(tg) rbindlist(lapply(g_classes, function(cl) {
-  d  <- panel[panel$target != tg & panel$party == cl, ]
+  d  <- panel[.train_mask(tg) & panel$party == cl, ]
   dm <- d[d$same_mp %in% TRUE, ]
+  if (.mp_tf) {
+    # Time-forward leaves early targets with a handful of earlier rows (wa2001: none), and a slope through
+    # the origin on four rows is noise (fed2007 also-ran -0.39). So no MIN_N cliff here: each class's
+    # slope is shrunk toward the all-class slope on the same earlier rows, which is shrunk toward a
+    # structural prior (member 1.0: a sitting member keeps their relative standing; also-ran 0.5), each
+    # step with weight n / (n + K). Zero earlier rows = the prior exactly. Constants: docs/CONSTANTS.md.
+    K <- 10; PRIOR_MEMBER <- 1.0; PRIOR_ALSO <- 0.5
+    shr <- function(est, n, toward) if (is.finite(est) && n > 0) toward + n / (n + K) * (est - toward) else toward
+    D_all <- panel[.train_mask(tg), ]
+    all_m <- D_all[D_all$same_mp %in% TRUE, ]; all_a <- D_all[!(D_all$same_mp %in% TRUE), ]
+    top_m <- shr(fit(all_m), nrow(all_m), PRIOR_MEMBER); top_a <- shr(fit(all_a), nrow(all_a), PRIOR_ALSO)
+    da <- d[!(d$same_mp %in% TRUE), ]
+    return(data.table(target = tg, party = cl, n_member = nrow(dm),
+                      member = shr(fit(dm), nrow(dm), top_m), also_ran = shr(fit(da), nrow(da), top_a)))
+  }
   data.table(target = tg, party = cl, n_member = nrow(dm),
              member   = if (nrow(dm) >= MIN_N) fit(dm) else NA_real_,
              also_ran = fit(d[!(d$same_mp %in% TRUE), ]))
 }))))
 # Prove the held-out election really left: if any fold used every row, the
 # subset did not filter and the whole table is in-sample.
-stopifnot(all(vapply(g_targets, function(tg) sum(panel$target != tg) < nrow(panel), logical(1))))
+stopifnot(all(vapply(g_targets, function(tg) sum(.train_mask(tg)) < nrow(panel), logical(1))))
 cat(sprintf("
 MP7  leak-free lookup table (min n=%d for a member slope)
 ", MIN_N))
@@ -240,5 +269,5 @@ print(dcast(grid, target ~ party, value.var = "member"))
 
 fwrite(loo, "output/mp-slope-loo.csv")
 fwrite(byc, "output/mp-slope-by-class.csv")
-fwrite(grid, "output/mp-slope-by-target.csv")
+fwrite(grid, "output/mp-slope-by-target.csv")   # the canonical table the harnesses read; time-forward unless AUSPOL_MP_SLOPE_TF=0
 cat("\nMP4  wrote output/mp-slope-loo.csv\n")

@@ -1,6 +1,6 @@
 # Model registry
 
-**Generated 2026-10-12 by `scripts/build_model_registry.R`. Do not hand-edit** --
+**Generated 2026-10-14 by `scripts/build_model_registry.R`. Do not hand-edit** --
 rerun the script instead. Regenerate whenever a switch is added to
 `published_flags.R` or a harness's wiring changes.
 
@@ -31,7 +31,7 @@ All seven share one `R/` package core (`simulate_seat_contests()`,
 in which switches each one WIRES and which data source each reads, not in
 separate model code.
 
-## Switch parity (177 switches from `published_flags.R`, 7 entry points)
+## Switch parity (198 switches from `published_flags.R`, 7 entry points)
 
 | switch | fit_seats (published) | fed | nsw | qld | sa | vic | wa |
 |---|---|---|---|---|---|---|---|
@@ -47,7 +47,9 @@ separate model code.
 | `AUSPOL_BYELECTION_FILL` | NO | NO | NO | NO | NO | NO | NO |
 | `AUSPOL_BYELECTION_MP` | NO | NO | NO | NO | NO | NO | NO |
 | `AUSPOL_BYELECTION_PRIOR` | yes | yes | yes | yes | yes | yes | yes |
+| `AUSPOL_CENSUS_FILE` | NO | NO | NO | NO | NO | NO | NO |
 | `AUSPOL_CLOSE_PROPORTIONAL` | yes | NO | NO | NO | NO | NO | NO |
+| `AUSPOL_CONSERVE_TF` | NO | NO | NO | NO | NO | NO | NO |
 | `AUSPOL_COUNCIL_EXTRA` | NO | NO | NO | NO | NO | NO | NO |
 | `AUSPOL_COV_LOO` | NO | NO | NO | NO | NO | NO | NO |
 | `AUSPOL_CROSS_SEAT_VOTE` | yes | yes | yes | yes | yes | yes | yes |
@@ -55,6 +57,7 @@ separate model code.
 | `AUSPOL_DEFECT_CONSERVE` | NO | NO | NO | NO | NO | NO | NO |
 | `AUSPOL_DEFECT_DISCOUNT` | yes | yes | yes | yes | yes | yes | yes |
 | `AUSPOL_DEFECT_POOLED` | NO | NO | NO | NO | NO | NO | NO |
+| `AUSPOL_DEFECT_SIZE` | NO | NO | NO | NO | NO | NO | NO |
 | `AUSPOL_DEFECTOR_STATE` | NO | NO | NO | NO | NO | NO | NO |
 | `AUSPOL_DEMO_RESID` | yes | yes | yes | yes | yes | yes | yes |
 | `AUSPOL_DEMO_RESID_SHUFFLE` | NO | yes | yes | yes | yes | yes | yes |
@@ -85,8 +88,10 @@ separate model code.
 | `AUSPOL_FORECAST_MODE` | NO | yes | yes | yes | yes | yes | yes |
 | `AUSPOL_FP_SD_MODE` | yes | NO | NO | NO | NO | NO | NO |
 | `AUSPOL_FUND_TIME_FORWARD` | NO | yes | NO | NO | NO | NO | NO |
+| `AUSPOL_HC_DEFECTOR` | NO | NO | NO | NO | NO | NO | NO |
 | `AUSPOL_HISTORIC_ELECTED_BACKFILL` | NO | NO | NO | NO | NO | NO | NO |
 | `AUSPOL_HONOUR_DEPARTED` | yes | yes | yes | yes | yes | yes | NO |
+| `AUSPOL_HTV_EXCLUDE` | NO | NO | NO | NO | NO | NO | NO |
 | `AUSPOL_HTV_FLOW` | yes | yes | yes | yes | yes | yes | yes |
 | `AUSPOL_IND_MIXTURE` | NO | yes | yes | yes | yes | yes | yes |
 | `AUSPOL_IND_PERSON` | yes | yes | yes | yes | yes | yes | yes |
@@ -97,6 +102,7 @@ separate model code.
 | `AUSPOL_IND_TYPICAL_STAT` | NO | NO | NO | NO | NO | NO | NO |
 | `AUSPOL_INSURGENCY_SHRINK` | yes | yes | NO | NO | NO | NO | NO |
 | `AUSPOL_LEADER_SEAT` | yes | yes | yes | yes | yes | yes | yes |
+| `AUSPOL_LEADERS_SUPPLEMENT` | NO | NO | NO | NO | NO | NO | NO |
 | `AUSPOL_LEVEL_FED_GAP_HL` | NO | NO | NO | NO | NO | NO | NO |
 | `AUSPOL_LEVEL_FED_R` | NO | NO | NO | NO | NO | NO | NO |
 | `AUSPOL_LEVEL_MODE` | NO | NO | NO | NO | NO | NO | NO |
@@ -114,6 +120,8 @@ separate model code.
 | `AUSPOL_MINOR_DEFECT_BASE_PRED` | yes | yes | yes | yes | yes | yes | yes |
 | `AUSPOL_MINOR_DEFECT_CONSERVE` | NO | NO | NO | NO | NO | NO | NO |
 | `AUSPOL_MP_SLOPE` | yes | yes | yes | yes | yes | yes | yes |
+| `AUSPOL_MP_SLOPE_FILE` | NO | yes | yes | yes | yes | yes | yes |
+| `AUSPOL_MP_SLOPE_TF` | NO | NO | NO | NO | NO | NO | NO |
 | `AUSPOL_N_SIMS` | yes | yes | yes | yes | yes | yes | yes |
 | `AUSPOL_NB_TARGET` | NO | NO | NO | NO | NO | NO | NO |
 | `AUSPOL_NEW_IND_SHRINK` | yes | yes | yes | yes | yes | yes | yes |
@@ -129,6 +137,13 @@ separate model code.
 | `AUSPOL_ONP_ORDER` | yes | NO | yes | yes | yes | NO | NO |
 | `AUSPOL_OTHERS_SCALE` | NO | NO | NO | NO | NO | NO | NO |
 | `AUSPOL_PARTY_COR` | yes | yes | yes | yes | yes | yes | NO |
+| `AUSPOL_PB_COALITION_COMBINED` | NO | NO | NO | NO | NO | NO | NO |
+| `AUSPOL_POLL_ARCHIVE` | NO | NO | NO | NO | NO | NO | NO |
+| `AUSPOL_POLL_BT` | NO | NO | NO | NO | NO | NO | NO |
+| `AUSPOL_POLL_PB` | NO | NO | NO | NO | NO | NO | NO |
+| `AUSPOL_POLL_SOURCE` | NO | NO | NO | NO | NO | NO | NO |
+| `AUSPOL_POOL_BY_JURISDICTION` | NO | NO | NO | NO | NO | NO | NO |
+| `AUSPOL_PUBLISH_NSW2027` | NO | NO | NO | NO | NO | NO | NO |
 | `AUSPOL_QLD_CUTOFF` | NO | yes | NO | yes | yes | yes | NO |
 | `AUSPOL_QLD_FLOWS` | yes | yes | NO | yes | yes | yes | NO |
 | `AUSPOL_REENTRY` | yes | yes | yes | yes | yes | yes | yes |
@@ -171,6 +186,7 @@ separate model code.
 | `AUSPOL_SHRINK` | yes | yes | yes | yes | yes | yes | yes |
 | `AUSPOL_SIM_ENGINE` | NO | NO | NO | NO | NO | NO | NO |
 | `AUSPOL_SITTING_MEMBER_ADJ` | NO | NO | NO | NO | NO | NO | NO |
+| `AUSPOL_SIZE_SD` | NO | NO | NO | NO | NO | NO | NO |
 | `AUSPOL_SLOPE_SHRINK` | NO | NO | NO | NO | NO | NO | NO |
 | `AUSPOL_SPLIT_SLOPE` | NO | yes | yes | yes | yes | yes | yes |
 | `AUSPOL_STATE_DEV` | NO | yes | NO | NO | NO | NO | NO |
@@ -182,7 +198,12 @@ separate model code.
 | `AUSPOL_SURGE_H` | yes | yes | yes | yes | yes | yes | yes |
 | `AUSPOL_SURGE_RECIPIENT` | yes | yes | yes | yes | yes | yes | yes |
 | `AUSPOL_SURGE_SCALE` | yes | yes | yes | yes | yes | yes | yes |
+| `AUSPOL_THIN_CYCLE` | NO | NO | NO | NO | NO | NO | NO |
 | `AUSPOL_TIME_FORWARD_FITS` | NO | NO | NO | NO | NO | NO | NO |
+| `AUSPOL_TRAIN_COMPLETENESS` | NO | NO | NO | NO | NO | NO | NO |
+| `AUSPOL_TRAIN_DECAY_H` | NO | NO | NO | NO | NO | NO | NO |
+| `AUSPOL_TRAIN_DEMEAN` | NO | NO | NO | NO | NO | NO | NO |
+| `AUSPOL_TRAIN_SKIP_PAIRS` | NO | NO | NO | NO | NO | NO | NO |
 | `AUSPOL_TREND_RW_MULT` | NO | NO | NO | NO | NO | NO | NO |
 | `AUSPOL_TREND_SIGMAS` | NO | NO | NO | NO | NO | NO | NO |
 | `AUSPOL_TREND_SZC` | NO | NO | NO | NO | NO | NO | NO |
@@ -225,12 +246,15 @@ separate model code.
 - **`AUSPOL_BYELEC_LEVEL`** (**adopted, shared-function wiring**): SHIPPED 2026-10-05 (Pete override of the 2-SE clause). Read in R/candidate_returns.R (a non-major by-election winner is credited the median next-election share); R/cross_seat_vote.R carries a comment that this switch owns those rows. Reaches every harness and fit_seats_full.R through candidate_returns().
 - **`AUSPOL_BYELECTION_FILL`** (intentional / dead experiment): REFUSED 2026-09-30 (docs/plans/prereg-byelection-fill-2026-09-30.md): only Lyne improved, xgb error +0.01. Default 0, read only as an argument default in R/byelection_prior.R, so a refused experiment with no reason to be wired anywhere.
 - **`AUSPOL_BYELECTION_MP`** (**adopted, shared-function wiring**): SHIPPED 2026-09-19 (plans/prereg-byelection-mp-2026-09-19.md). Read inside R/candidate_returns.R at the top of candidate_returns(): a by-election winner (external/reference/byelections/byelection-winners.csv) is the sitting member for every identity test. Reaches all six harnesses and fit_seats_full.R through that function.
+- **`AUSPOL_CENSUS_FILE`** (intentional / dead experiment): DIAGNOSTIC 2026-10-13: alternative census-features table via census_features_path() (R/demographic_residual.R), read by every demographic correction -- universal in practice; published empty.
 - **`AUSPOL_CLOSE_PROPORTIONAL`** (intentional / dead experiment): ARM, not shipped (default 0; plans/prereg-close-proportional-2026-09-28.md). Read in R/forecast_mode.R (federal harness path) and fit_seats_full.R (the live LL1 step). Off, so the four state harnesses not reaching it changes nothing.
+- **`AUSPOL_CONSERVE_TF`** (**UNEXPLAINED -- audit this**): no classification recorded -- add one to CLASSIFY in scripts/build_model_registry.R
 - **`AUSPOL_COUNCIL_EXTRA`** (**shipped, fitting-time switch (reaches harnesses via the artifact)**): FITTING-TIME, default 0, TESTING (plans/prereg-council-extra-2026-10-02.md). Read only by scripts/build_council_history.py, which builds the council-history input that the xgb council features (AUSPOL_XGB_COUNCIL) read; no R/ or harness call site.
 - **`AUSPOL_COV_LOO`** (intentional / dead experiment): Read inside R/statewide_cor.R, not per-harness -- universal in practice, absent from every harness script by design.
 - **`AUSPOL_DEFECT_BY_LEVEL`** (**adopted, shared-function wiring**): SHIPPED 2026-10-05 (mode 2: federal targets get their own shrunk sitting-member defector carry). Read inside R/candidate_returns.R (line ~1240), so every harness and fit_seats_full.R get it through that function; the grep cannot see it.
 - **`AUSPOL_DEFECT_CONSERVE`** (**adopted, shared-function wiring**): SHIPPED (default 1) and read inside R/candidate_returns.R's personal_prior_vote(), not by any harness directly, so the registry's grep sees it nowhere: a major-party defector's unclaimed vote stays with the origin class instead of vanishing. Reaches every harness and fit_seats_full.R through that one function. scripts/prereg_major_defector_verify.R proves =0 is byte-identical to the pre-switch behaviour.
 - **`AUSPOL_DEFECT_POOLED`** (**adopted, shared-function wiring**): ADOPTED 2026-09-09 at "2" (docs/plans/prereg-defector-two-rate- 2026-09-09.md), by Pete on mechanism -- the arm missed its own primary bar (t -2.04 vs 2.08) but every directional indicator was favourable and R4 confirmed the published Victorian forecast is byte-identical (Victoria fields no major-party defector standing as a minor this cycle, so the mechanism does not fire there). Reaches fit_seats_full.R correctly: personal_prior_vote() self-resolves both rates from Sys.getenv() when the caller passes NULL, exactly so this did not need a seventh call site wired by hand -- the mistake that made the first pooled-arm run VOID earlier the same day.
+- **`AUSPOL_DEFECT_SIZE`** (intentional / dead experiment): OFF, REFUSED 2026-10-14 (nt2016 +0.19 on screen). Read inside R/candidate_returns.R (fit_defector_discount() and personal_prior_vote()), so it reaches every harness's base_pred when on; 'NO' in the harness columns is the grep, not a gap. reviews/defector-overcarry-2026-10-14.md
 - **`AUSPOL_DEFECTOR_STATE`** (intentional / dead experiment): PREREG PENDING, OFF (built 2026-10-06; docs/reviews/state-defectors-2026-10-06.md). Gate is .defstate_on() in R/defector_state.R, called from R/candidate_returns.R, so it would reach every harness and fit_seats_full.R if turned on; not a gap.
 - **`AUSPOL_DEMO_RESID_SHUFFLE`** (intentional / dead experiment): Control, not an arm. Permutes which seat gets which seat's demographics within each election, at fit and at apply both, so every marginal and the whole procedure survive and only the seat-to-demographics link dies. Absent from fit_seats_full.R for the same reason its arm is: a control has no business in the published forecast. Calibrated on sa2026 -- 8 draws give mean 0.3576 against a 0.3577 baseline, sd 0.0013, so the null manufactures nothing and the real effect sits 8.9 sds out.
 - **`AUSPOL_DEPARTED_FED`** (intentional / dead experiment): REFUSED 2026-09-30 (both '1' and 'gap': qld2020 and sa2026 worse; plans/prereg-departed-fed-gap-2026-09-30.md). Wired into the nsw/qld/sa/vic harnesses and fit_seats_full.R. The fed and wa 'NO' cells are by design: commit 2ff6bf8 says fed and wa have no booth map (the booth-to-federal-district join only exists for state elections with transposed federal swing).
@@ -252,8 +276,10 @@ separate model code.
 - **`AUSPOL_FORECAST_MODE`** (**OPEN GAP**): OPEN GAP, and the most consequential one in this table. 1 = the statewide the seats swing toward is PREDICTED from polls rather than read off the election being scored. Implemented in backtest_candidate_fed.R and _sa.R ONLY; nsw/qld/vic/wa still use the actual result, so their numbers answer a different question from federal's and are not comparable to a forecast. Default 0 because flipping it today would mean two different things across the six harnesses, NOT because the oracle statewide is endorsed -- Pete's ruling 2026-09-11 is that a forecast must be predictive throughout. Cost where measured: federal +0.0047 pooled seat log loss.
 - **`AUSPOL_FP_SD_MODE`** (intentional / dead experiment): Published-forecast-only (fit_seats_full.R -- first-preference spread mode for the live Victorian projection); backtests use realised historical first preferences, not a projected spread.
 - **`AUSPOL_FUND_TIME_FORWARD`** (**adopted, shared-function wiring**): SHIPPED as a leak fix (ledger v51, 2026-09-29). Read in R/forecast_statewide.R (reached by every harness and fit_seats_full.R), scripts/backtest_candidate_fed.R and scripts/build_level_pred.R. 'No' in the other harness columns is the grep missing the R/ read.
+- **`AUSPOL_HC_DEFECTOR`** (**UNEXPLAINED -- audit this**): no classification recorded -- add one to CLASSIFY in scripts/build_model_registry.R
 - **`AUSPOL_HISTORIC_ELECTED_BACKFILL`** (**adopted, shared-function wiring**): SHIPPED 2026-09-15 on judgement (costs 0.0141 pooled RMSE in the backtest, but vic2026 is never a training pair so the 62 returning members can only move the live forecast, which the backtest cannot see). Read ONCE at build time by scripts/build_candidacies.R and baked into output/candidacies.csv, so no harness reads it at runtime; reversible by rebuilding candidacies with the flag off.
 - **`AUSPOL_HONOUR_DEPARTED`** (**adopted, shared-function wiring**): SHIPPED 2026-09-18 (flipped 0->1). A departed non-major class leader's vote base decays toward a measured 0.38 retention rate, gated on prior_leader_returns==FALSE (not candidate_returns()'s `same`, which is any() across every candidate in the class and can read TRUE even when the actual leader departed -- Morwell/vic2022, an unrelated minor candidate persisting) AND the salience screen not independently permitting a new emergence. Wired into R/dev_slope.R's screened_slopes(), read by all five harnesses that call it (fed/nsw/qld/sa/vic; backtest_candidate_wa.R has no screened_slopes() wiring at all, a separate pre-existing gap) and by fit_seats_full.R. 2026-09-06's refusal was a federal two-seat wash (New England vs Wentworth) that conflated departure with 'no new emergence' as one mechanism; re-measured on the fuller 593-case corpus. Isolated in base_pred: pooled log loss 0.2810->0.2801 (5 harnesses, n=1751), Morwell 3.049->1.877. Reaches the published Victoria forecast immediately via fit_seats_full.R's xgb_primary_predict_live() (base_margin set fresh each run from the current shares matrix) with no retrain needed -- but the BACKTEST harnesses' AUSPOL_XGB_PRIMARY path (xgb_primary_override(), a static cached OOF file) needs the 4-step non-circular retrain to reflect it in a pooled backtest comparison. See docs/reviews/departed-leader-honour-fix-2026-09-18.md and docs/reviews/departed-leader-retention-2026-09-15.md.
+- **`AUSPOL_HTV_EXCLUDE`** (intentional / dead experiment): DIAGNOSTIC 2026-10-13: leaves named transfer files out of the how-to-vote fit (R/htv_flow.R) to attribute a new file's effect; published empty. Read inside R/ via htv_flow_override() -- universal in practice.
 - **`AUSPOL_IND_MIXTURE`** (intentional / dead experiment): ARM, REFUSED 2026-10-09 (seat log loss +0.0332 over 22 pairs), off. In all six harnesses; NOT in fit_seats_full.R by design: a refused arm is not wired into the published forecast.
 - **`AUSPOL_IND_PERSON_CARRY`** (**adopted, shared-function wiring**): SHIPPED 'linear' 2026-10-10 with AUSPOL_IND_PERSON (Pete's override, plans/prereg-ind-person-2026-10-10.md). Read inside R/ind_person.R, which all six harnesses and fit_seats_full.R call, so the harness grep cannot see it.
 - **`AUSPOL_IND_PERSON_DIR`** (**adopted, shared-function wiring**): SHIPPED 'lower' 2026-10-10 with AUSPOL_IND_PERSON. Read inside R/ind_person.R (all six harnesses and fit_seats_full.R).
@@ -261,6 +287,7 @@ separate model code.
 - **`AUSPOL_IND_TYPICAL`** (intentional / dead experiment): ARM, REFUSED 2026-10-09 (plans/prereg-ind-typical-2026-10-09.md), off. In all six harnesses; NOT in fit_seats_full.R by design: a refused arm is not wired into the published forecast.
 - **`AUSPOL_IND_TYPICAL_STAT`** (intentional / dead experiment): Sub-setting of the refused AUSPOL_IND_TYPICAL, read inside R/ind_typical.R; harness-only like its parent.
 - **`AUSPOL_INSURGENCY_SHRINK`** (intentional / dead experiment): Per-seat shrink experiment, REFUSED 2026-09-06 (worse than the scalar shrink on 5 of 6 federal pairs) -- see docs/NEXT-STEPS.md. Fed/fit_seats-only because that is as far as the experiment got before being set aside. Not adopted.
+- **`AUSPOL_LEADERS_SUPPLEMENT`** (intentional / dead experiment): DIAGNOSTIC 2026-10-13: 0 drops leaders-supplement.csv in read_leaders() (R/leader_seat.R) -- universal in practice; published 1.
 - **`AUSPOL_LEVEL_FED_GAP_HL`** (intentional / dead experiment): Same prereg; only read when AUSPOL_LEVEL_FED_R > 0. Read inside R/level_recent.R -- universal in practice.
 - **`AUSPOL_LEVEL_FED_R`** (**adopted, shared-function wiring**): SHIPPED 0.15 2026-10-12 (Pete; plans/prereg-federal-breakdowns-in-blend-2026-10-12.md). Read inside R/level_recent.R, which every harness and fit_seats_full.R reach through the level blend -- universal in practice.
 - **`AUSPOL_LEVEL_MODE`** (intentional / dead experiment): Read by scripts/fit_xgb_primary_v6.R when the model is FITTED, not by any harness or by fit_seats_full.R at run time -- the choice is baked into the oof file and the saved model, so it shows as absent everywhere while governing every row of both. 'pred' (default) trains on a poll-based statewide projection; 'now' trains on the target election's actual result and is LEAKAGE, kept only so the cost stays measurable. The live path has always used a prediction (R/xgb_primary_override.R fills level_now from state_mean), so this made training match serving.
@@ -270,6 +297,8 @@ separate model code.
 - **`AUSPOL_LIVE_DRAW_BUCKET`** (**adopted, shared-function wiring**): SHIPPED 2026-09-28 as a parity fix, LIVE-ONLY by design: read only in fit_seats_full.R, where the live statewide draws split the unpolled bucket by its 2022 ratio. The harnesses use candidate_bucket_ratio() (AUSPOL_BUCKET_SPLIT) instead.
 - **`AUSPOL_LIVE_LEVEL_ANCHOR`** (intentional / dead experiment): OFF since 2026-09-30 (v56), LIVE-ONLY by design: read only in fit_seats_full.R. The un-anchored level scored better over all 22 elections, and published_flags.R says backtests and live now both use the un-anchored recipe (AUSPOL_LEVEL_RECIPE='live').
 - **`AUSPOL_MINOR_DEFECT_CONSERVE`** (**adopted, shared-function wiring**): SHIPPED 2026-09-19 (plans/prereg-minor-defector-conserve-2026-09-19.md). Read inside personal_prior_vote() in R/candidate_returns.R: a minor-to-minor defector's origin class keeps a fitted share (~0.38) of the vote. Reaches every harness and fit_seats_full.R through that function, not by a direct harness read.
+- **`AUSPOL_MP_SLOPE_FILE`** (intentional / dead experiment): DIAGNOSTIC 2026-10-13: path of the sitting-member slope table; read in all six harnesses (published default output/mp-slope-by-target.csv).
+- **`AUSPOL_MP_SLOPE_TF`** (**UNEXPLAINED -- audit this**): no classification recorded -- add one to CLASSIFY in scripts/build_model_registry.R
 - **`AUSPOL_NB_TARGET`** (intentional / dead experiment): NOT A MODEL SWITCH: an argument to scripts/build_notional_baselines.R (which federal election year to build notional post-redistribution baselines for). Reads NO everywhere by construction; listed in published_flags.R only as documentation of how to rebuild the notional table.
 - **`AUSPOL_NEW_IND_SHRINK_CAP`** (**adopted, shared-function wiring**): SHIPPED (default 1 = cap the new-independent factor at 1); the '0' arm is pending. Read inside R/new_ind_shrink.R, which all six harnesses and fit_seats_full.R call, so the harness grep cannot see it.
 - **`AUSPOL_NOM_LIVE`** (**adopted, shared-function wiring**): SHIPPED v61, LIVE-ONLY by design: the published Victorian forecast zeroes non-standing parties only when set to '1' by hand once the VEC final list is loaded (R/nomination_zero.R, fit_seats_full.R). The six harnesses use AUSPOL_NOM_ZERO instead.
@@ -283,6 +312,13 @@ separate model code.
 - **`AUSPOL_ONP_ORDER`** (intentional / dead experiment): Published-forecast-only (fit_seats_full.R -- One Nation allocation ordering for the live Victorian projection).
 - **`AUSPOL_OTHERS_SCALE`** (intentional / dead experiment): ARM, REFUSED 2026-09-28 (plans/prereg-others-bucket-size-2026-09-27.md). Backtest path only (R/forecast_mode.R, R/others_bucket.R); published_flags.R says the live script is deliberately not wired because it did not pass.
 - **`AUSPOL_PARTY_COR`** (intentional / dead experiment): WA deliberately excluded from the statewide party-correlation matrix -- cor(ALP, IND) flips sign there (docs/reviews/statewide-cov-loo-2026-09-07.md). Intentional, not a gap.
+- **`AUSPOL_PB_COALITION_COMBINED`** (**UNEXPLAINED -- audit this**): no classification recorded -- add one to CLASSIFY in scripts/build_model_registry.R
+- **`AUSPOL_POLL_ARCHIVE`** (intentional / dead experiment): 2026-10-14 (not shipped): pollster-archive polls (Morgan, Newspoll; fed 2004-2007) join the layered source. Read inside poll_layer() (R/poll_source.R) via load_polls() -- universal in practice.
+- **`AUSPOL_POLL_BT`** (intentional / dead experiment): 2026-10-13 (Pete: go): BludgerTrack poll tables join the layered source. Read inside poll_layer() (R/poll_source.R) via load_polls() -- universal in practice.
+- **`AUSPOL_POLL_PB`** (intentional / dead experiment): 2026-10-13 (Pete: go): Poll Bludger posts (model-read, stated figures) replace AE's numbers where they agree. Read inside poll_layer() (R/poll_source.R) via load_polls() -- universal in practice.
+- **`AUSPOL_POLL_SOURCE`** (**adopted, shared-function wiring**): SHIPPED layered 2026-10-13 (Pete; plans/prereg-own-poll-source-step2-2026-10-12.md). Read inside load_polls() (R/load_polls.R), which every harness and fit_seats_full.R call -- universal in practice.
+- **`AUSPOL_POOL_BY_JURISDICTION`** (intentional / dead experiment): BUILT 2026-10-13, OFF, not measured across all pairs (docs/reviews/pooled-fits-inventory-2026-10-13.md). Gate is pool_by_jurisdiction_on() in R/pool_hierarchical.R, called from fit_defector_discount(), fit_minor_defector_discount() and fit_sitting_minor_level() in R/candidate_returns.R, so it reaches every harness and fit_seats_full.R; not a gap.
+- **`AUSPOL_PUBLISH_NSW2027`** (**UNEXPLAINED -- audit this**): no classification recorded -- add one to CLASSIFY in scripts/build_model_registry.R
 - **`AUSPOL_QLD_CUTOFF`** (intentional / dead experiment): Read inside R/external_flows.R (pool_configured_flows), not per-harness -- universal in practice (added to published_flags.R 2026-10-08 at its code default).
 - **`AUSPOL_QLD_FLOWS`** (intentional / dead experiment): Self-referential no-op in the QLD harness itself ("use Queensland's own flows" is trivially true there) -- disclosed via its own `.inert` list. Genuinely absent from WA (uses AUSPOL_WA_FLOWS instead).
 - **`AUSPOL_REENTRY_GAP`** (intentional / dead experiment): Read inside R/reentry_prior.R, not per-harness -- universal in practice (added to published_flags.R 2026-10-08 at its code default).
@@ -319,6 +355,7 @@ separate model code.
 - **`AUSPOL_SHIP_TIME_FORWARD`** (**adopted, shared-function wiring**): SHIPPED as a leak fix (ledger v51, 2026-09-29). Read in R/split_slope.R, which the six harnesses use for the minor-slope tiers; fit_seats_full.R does not name split_slope (function-name grep), so the published path is not shown to read it. Not traced further.
 - **`AUSPOL_SIM_ENGINE`** (intentional / dead experiment): Read inside R/seat_sim.R's simulate_seat_contests(), not per-harness -- universal in practice.
 - **`AUSPOL_SITTING_MEMBER_ADJ`** (intentional / dead experiment): ARM, not shipped (default 0; plans/prereg-sitting-member-baseline-2026-09-28.md). Read in R/xgb_primary_override.R and scripts/fit_xgb_primary_v6.R, i.e. at xgb training and in the override, not in a harness.
+- **`AUSPOL_SIZE_SD`** (**adopted, shared-function wiring**): SHIPPED 2026-10-14 (1), wired EVERYWHERE through R/size_sd.R: all seven harnesses and fit_seats_full.R pass sd_override = size_sd_apply(...) to simulate_seat_contests(), which reads the switch inside R/. The 'NO' cells are this generator only grepping the harness files. reviews/seat-size-spread-2026-10-14.md
 - **`AUSPOL_SLOPE_SHRINK`** (intentional / dead experiment): ARM, not shipped (default 0; plans/prereg-slope-shrinkage-2026-09-28.md). Read through .slope_shrink_on() in R/split_slope.R, which the six harnesses call; if adopted it needs a published-forecast check since fit_seats_full.R does not name split_slope.
 - **`AUSPOL_SPLIT_SLOPE`** (intentional / dead experiment): REFUSED 2026-09-09, and harmfully so (docs/plans/ prereg-partial-return-split-slope-2026-09-09.md): it discarded the existing conditional-slope system instead of refining it. Harness-only by design, same reasoning as AUSPOL_FIT_SLOPES.
 - **`AUSPOL_STATE_DEV`** (**adopted, shared-function wiring**): ADOPTED 2026-09-15 and FEDERAL ONLY, which is a design fact rather than the all-harnesses rule outstanding: a state election has no deviation from a national swing to correct, so the other five harnesses have nothing to honour. Corrects a federal seat's primaries for how its STATE moves against the national swing -- WA 2022 swung to Labor far harder than the country (mean ALP per-seat primary error +6.43 over 15 seats, positive in 14). Federal pooled seat log loss 0.2584 -> 0.2539 over 1,052 seat-elections, 0 of 10 permutation-control draws beating it. fit_seats_full.R reads NO for the same reason the state harnesses do; the published Victorian forecast is unaffected. docs/plans/prereg-state-deviation-2026-09-15.md
@@ -327,7 +364,12 @@ separate model code.
 - **`AUSPOL_STATE_POLL_EXTRA`** (**shipped, fitting-time switch (reaches harnesses via the artifact)**): FITTING-TIME, TESTING (default 0; plans/prereg-state-polls-extra-2026-10-02.md). Read only in scripts/build_state_deviation_features.R, which builds the state-deviation features the xgb model trains on.
 - **`AUSPOL_STATE_POLL_POOL`** (**adopted, shared-function wiring**): SHIPPED v60 2026-10-02 (Pete overrode the prereg clause). FEDERAL-HARNESS-ONLY by design: pools a state signal from seat polls before the seat-poll blend (R/state_poll_pool.R); published_flags.R states 'federal harness only'. Only backtest_candidate_fed.R calls it.
 - **`AUSPOL_SURGE_FROM_ZERO`** (intentional / dead experiment): WA has no candidate-level salience corpus -- same exclusion as AUSPOL_SALIENCE_EXPECTED, intentional.
+- **`AUSPOL_THIN_CYCLE`** (**UNEXPLAINED -- audit this**): no classification recorded -- add one to CLASSIFY in scripts/build_model_registry.R
 - **`AUSPOL_TIME_FORWARD_FITS`** (**adopted, shared-function wiring**): SHIPPED as a leak fix (2026-09-28): every constant fitted inside base_pred learns only from earlier elections. Read in R/time_forward.R and R/fundamentals_tf.R (also part of cache keys), below the harness grep; reaches every entry point.
+- **`AUSPOL_TRAIN_COMPLETENESS`** (**UNEXPLAINED -- audit this**): no classification recorded -- add one to CLASSIFY in scripts/build_model_registry.R
+- **`AUSPOL_TRAIN_DECAY_H`** (**UNEXPLAINED -- audit this**): no classification recorded -- add one to CLASSIFY in scripts/build_model_registry.R
+- **`AUSPOL_TRAIN_DEMEAN`** (**UNEXPLAINED -- audit this**): no classification recorded -- add one to CLASSIFY in scripts/build_model_registry.R
+- **`AUSPOL_TRAIN_SKIP_PAIRS`** (intentional / dead experiment): 2026-10-13 (Pete): pairs scored but kept out of the vote-share models' training rows; read by fit_xgb_primary_asat.R and fit_xgb_primary_v6_final.R (rebuild stages 4 and 5), not by the harnesses or fit_seats_full.R directly. Published vic2010.
 - **`AUSPOL_TREND_RW_MULT`** (intentional / dead experiment): REFUSED ARM 2026-10-12, same prereg, off at "1". Read inside R/forecast_mode.R -- universal in practice.
 - **`AUSPOL_TREND_SIGMAS`** (intentional / dead experiment): REFUSED ARM 2026-10-12 (plans/prereg-responsive-trend-2026-10-12.md), off at "default". Read inside R/forecast_mode.R (the statewide forecast every harness and fit_seats_full.R call), not per-harness -- universal in practice.
 - **`AUSPOL_TREND_SZC`** (intentional / dead experiment): REFUSED ARM 2026-10-12, same prereg (T3), off at "polls". Read inside R/trend.R, so it reaches every trend fit -- universal in practice.
@@ -390,4 +432,4 @@ MR3  no harness forces a switch away from its published value.
 
 ## Coverage check
 
-MR2  every non-universal switch (140 of 177) has a recorded classification.
+**MR2! 9 switch(es) have a non-universal row with NO recorded classification: AUSPOL_CONSERVE_TF, AUSPOL_HC_DEFECTOR, AUSPOL_MP_SLOPE_TF, AUSPOL_PB_COALITION_COMBINED, AUSPOL_PUBLISH_NSW2027, AUSPOL_THIN_CYCLE, AUSPOL_TRAIN_COMPLETENESS, AUSPOL_TRAIN_DECAY_H, AUSPOL_TRAIN_DEMEAN.** Add them to CLASSIFY in scripts/build_model_registry.R before trusting this table.

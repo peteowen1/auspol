@@ -43,6 +43,12 @@ number without anything failing.
 | `AUSPOL_SEAT_POLL_PRIOR_SD` | `seat_poll_blend.R` | 0.25: sd of that prior ("weak"). One earlier election at se 0.35 moves the weight about a third of the way to its own slope. | **CHOSEN** (2026-10-09) to make Pete's "weak prior" a number. ESTIMABLE in principle from the spread of per-election slopes once more polled elections exist (six now). |
 | `SEAT_POLL_HALFLIFE_PRIOR` | `seat_poll_blend.R` | 60 days: prior half-life of a seat poll's recency weight under `AUSPOL_SEAT_POLL_DECAY` (replaces the 90-day hard window). | **CHOSEN BY PETE 2026-10-09** as a prior; the half-life itself is **ESTIMATED** time-forward (`seat_poll_decay_params()`, SPD line): fed2025 54 days, sa2026/vic2026 34. |
 | `SEAT_POLL_HALFLIFE_LOGSD` | `seat_poll_blend.R` | 0.7: prior sd of log(half-life); 2-sd range 15-245 days. | **CHOSEN** (2026-10-09) to make the prior weak. |
+| poll-match window | `poll_source.R` (`poll_layer(window = 4L)`, `.ps_merge_own()`) | 4 days: two rows of one firm whose fieldwork midpoints are this close may be the same poll (closest midpoint, then closest numbers, wins). | **CHOSEN** 2026-10-12 (own-poll-source prereg): weekly pollsters publish 7 days apart. Not estimated. Added to this file 2026-10-13 (missing since the ship). |
+| same-poll far window | `poll_source.R` (`.ps_same_poll_far()`) | 31 days, primaries within 0.5 point: one firm's rows with the same Labor, Coalition (and Greens / One Nation where both report) figures are one poll dated differently. | **CHOSEN** 2026-10-13 after Resolve's two-month Victorian polls sat 14-29 days apart across sources (counted twice). Two real polls of one firm with identical primaries inside 31 days merge into one: accepted cost. |
+| Poll Bludger confirm window | `poll_source.R` (`.ps_pb_confirm()`) | post 1 day before to 45 days after the poll's midpoint, every major party within 2 points: a post confirms an AE-only poll and its numbers replace AE's. | **CHOSEN** 2026-10-13: Newspoll's state polls pool two or three months, so the post comes long after the midpoint; 2 points matches the dispute threshold below. Measured: 232 rows switch, 6 disagree. |
+| dispute threshold | `poll_source.R` (`poll_layer()`) | 2 points on any major party: our row and AE's disagree; the one fitting the poll's own two-party figure by at least 1 point more wins. | **CHOSEN** 2026-10-12 (prereg Amendment 1). |
+| implied two-party weights | `poll_source.R` (`.ps_implied()`) | ALP + 0.83 GRN + 0.35 ONP + 0.45 rest: rough national flows used only to tell two copies of one poll apart, never a forecast input. | **CHOSEN** from typical federal flows; the per-election fitted flows exist (`flows_for()`) but are not needed to separate a swapped row. |
+| self-check limits | `poll_source.R` (`wiki_polls()`, `bludgertrack_polls()`) | swap back when e_swapped < 1.5 and e_as_read > 5 with One Nation < 10; "suspect" when e_as_read > 5. | **CHOSEN** 2026-10-12 from the RedBridge Vic (ON 24) false swap. |
 | `SEAT_POLL_FLOOR_PRIOR` | `seat_poll_blend.R` | 16 points^2 (sd 4): non-sampling error variance of a seat poll before any data. | **CHOSEN**; the floors per group (mrp/direct/sponsored) are **ESTIMATED** time-forward and shrunk toward it (vic2026: 5.4 / 5.1 / 6.5 sd). |
 | `SEAT_POLL_FLOOR_K` | `seat_poll_blend.R` | 10 pseudo seat-elections pulling each group's floor toward the pooled floor. | **CHOSEN** (2026-10-09). ESTIMABLE as a between-group variance once groups are larger. |
 | `SEAT_POLL_N_FALLBACK` | `seat_poll_blend.R` | 600: seat sample size for a direct poll with none recorded, only when no earlier direct poll records one (otherwise the earlier median, ~750-800). | **CHOSEN**; overridden by data from fed2019 on. |
@@ -494,6 +500,16 @@ outright on sa2026, vic2022 and nsw2023.
 | `.DEFSTATE_K` | 3 | **CHOSEN prior strength** (the review measured it: carry bias +0.16 -> +0.05): the target level's sitting-member median is shrunk toward the all-level median by n / (n + 3) pseudo-cases. Replaces the min_n = 5 cliff. Not fitted; K could be estimated once there are enough cases per level to size between-level variance. |
 | cross-seat guards | sitting members only; same jurisdiction (federal: same state); full first name equal or one a prefix of the other; key unique among the previous election's major candidates and the target's candidates | **RULES**, not constants; every refusal is printed (`DFS2!`). |
 
+### Jurisdiction pooling (`AUSPOL_POOL_BY_JURISDICTION`, published `"0"`)
+
+`R/pool_hierarchical.R`, `pool_by_group()`; inventory in `docs/reviews/pooled-fits-inventory-2026-10-13.md`. Inert at the published `"0"`.
+
+| constant | value | status |
+|---|---|---|
+| `prior_df` | 3 pseudo-degrees of freedom | **CHOSEN prior strength** (same 3 as `.DEFSTATE_K`): each jurisdiction's own spread is moderated toward the pooled within-jurisdiction spread, s_g^2 = (SS_g + 3 s^2) / (n_g - 1 + 3). Not fitted; with 1-9 cases per jurisdiction the variance of the variances cannot be estimated. `Inf` gives one common spread. |
+| `1.2533` | sqrt(pi/2) | **MATHEMATICAL**: large-sample standard error of a median relative to a mean under normal noise. |
+| between-jurisdiction variance tau^2 | fitted per call | **FITTED** (DerSimonian-Laird method of moments, floored at 0). |
+
 ## New-independent shrink (AUSPOL_NEW_IND_SHRINK, OFF, prereg pending)
 
 | constant | value | status |
@@ -501,3 +517,23 @@ outright on sa2026, vic2022 and nsw2023.
 | `prior_max` in `new_ind_cells()` | 10 share points | **INHERITED from `docs/reviews/vic-ind-overcall-2026-10-06.md`** (its "departed class leader, class prior 10 or more" row is a different population with its own, refused, rule). A cell definition cut, not a fitted value; the data could set it (n of departed-leader cells is 12, too few to fit). |
 | the factor | fitted per target | **FROM DATA**: ratio of sums of actual to base_pred over earlier new-independent cells, partially pooled by jurisdiction (DerSimonian-Laird tau^2), bounded [0, 1]. No constant. |
 | design effect for a one-election jurisdiction | measured | **FROM DATA**: clustered SE / cell-level SE on the all-jurisdiction fit. |
+
+## Hare-Clark party-seat path (Tasmania, ACT; `R/hare_clark.R`, added 2026-10-13)
+
+A separate scored path (`scripts/backtest_hare_clark.R`), not in the published single-member forecast.
+Every SD and rate below is fitted time-forward (election pairs dated before the target only); the numbers in
+the table are the PRIORS each one is shrunk toward, which bind only when few earlier pairs exist.
+
+| constant | value | status |
+|---|---|---|
+| `prior_sd`, `n0` in `hc_noise_sd()` | 3 points, 5 pseudo-deviations | **PRIOR**; the per-class electorate SD is fitted from earlier electorate deviations from uniform swing (25 to 70 deviations per class by 2016) and dominates once n > 5. |
+| `prior_sd`, `n0` in `hc_state_sd()` | 5 points, 3 pseudo-changes | **PRIOR** for the statewide spread used only by the previous-result FALLBACK (no polls); fitted from earlier statewide changes, both regions pooled. |
+| `prior_new`, `prior_sdlog`, `n0` in `hc_unit_priors()` | 1.5 points, 0.5, 5 | **PRIORS**: a new minor ticket's expected first-preference share and the log-share spread of a returning one; fitted from earlier elections (100+ new tickets by 2020). |
+| `prior_n` in `hc_flows_from_ballots()` / `hc_leak_from_ballots()` | 50 pseudo-ballots | **CHOSEN** shrinkage toward the pooled row; rows carry 25,000 to 100,000 ballots, so it binds only on an empty class. |
+| `exh` in `hc_flows_prior()` | 0.3 | **SENSITIVITY ARM ONLY** (`--flows=prior`); never the default. |
+| naive hit-rate prior | 0.6 with 20 pseudo-cells | **PRIOR** for the naive baseline's probability on "same seats as last time"; fitted from earlier pairs. |
+| floor on simulated shares | 0.05 points | **COMPUTATIONAL** (keeps a contesting class alive before renormalising). |
+| Tasmanian transfer rates | the latest ACT ballot file before polling day | **BORROWED**: Tasmania publishes no ballot files. The TEC 2024/2025 count exports (stored) would allow a Tasmanian estimate for 2025 onward; not built. |
+| `lambda0`, `sdlog0`, `n0` in `hc_split_priors()` | 0.7, 0.4, 20 | **PRIORS** for the within-ticket split (shrink toward equal; log-share noise); both fitted time-forward over every ticket that stood twice. |
+| synthetic ballot depth | two transfers, then exhausted | **CHOSEN** structure for Tasmania's synthetic ballots (no ballot files); the Tasmanian count exports could fit it. |
+| ballot slot depth | 20 preferences | **CHOSEN** cut in `scripts/build_hare_clark_ballots.R`. |

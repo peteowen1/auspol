@@ -83,3 +83,10 @@ Unexplained: Casey fed2022 LNP 34.9 -> 23.5 (actual 36.5), a single-candidate cl
 1. Bugs 1-4, in parallel, each measured on its own target cells and on all six harnesses.
 2. Rebuild the as-at forecasts and re-rank the worst rows: the list above changes once the bugs go.
 3. Person-history table, designed on Orange 2019 with Pete, then prereg, then build.
+
+
+## Moved from DECISIONS.md (2026-10-13)
+
+Full original entry, kept verbatim when DECISIONS.md was shortened:
+
+- **2026-10-05 Four primary-vote bugs fixed (Pete: fix all four now).** Class leader chosen from prior history, not the target result (look-ahead); WA party abbreviations classified by full name (wa2001 One Nation restored; 760 class disagreements with the results files -> 0); one salience permit per class leader, not row order; v61 zeroing in the as-at forecasts table with the harnesses' own flows. Measured by two full rebuilds: whole-table primary RMSE 3.901 -> 3.848, ledger log loss 0.2796 -> 0.2874; the leak had hidden the defector over-carry (Dobell 2013, Monash 2025). [plan](plans/primary-miss-fixes-2026-10-05.md)

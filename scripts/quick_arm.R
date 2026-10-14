@@ -5,7 +5,7 @@
 #   Rscript scripts/quick_arm.R "AUSPOL_NEW_IND_SHRINK=0" --pairs=vic2022,vic2018
 #   Rscript scripts/quick_arm.R "AUSPOL_DEFECTOR_STATE=1" --base="AUSPOL_FOO=1" --sims=2000
 #
-# Flags: --pairs=a,b (default the AEF-7 elections; --pairs=all for all 22; names like vic2022, fed2019, wa2017)
+# Flags: --pairs=a,b (default the AEF-7 elections; --pairs=all for every election; names like vic2022, fed2019, wa2017)
 #        --sims=N    (default 1000; baseline and arm run the SAME seed at the SAME N)
 #        --base="ENV" extra switches for the BASELINE (default: the shipped configuration)
 #        --slots=N   concurrent harness processes (default 2, the machine's limit)
@@ -221,7 +221,7 @@ roots <- vapply(seq_len(slots), ensure_root, "")
 # ---- which runs are needed -----------------------------------------------------
 U <- quick_units()
 # Default is the AEF-7 set (Pete 2026-10-11): iterate on the seven elections AE Forecasts
-# also forecast; the ship decision needs all 22 (--pairs=all), run overnight as a detached job.
+# also forecast; the ship decision needs every election (--pairs=all), run overnight as a detached job.
 AEF7 <- c("fed2022", "fed2025", "nsw2023", "qld2024", "sa2026", "vic2022", "wa2025")
 want <- flag("pairs", paste(AEF7, collapse = ","))
 if (identical(want, "all")) want <- ""
@@ -257,7 +257,7 @@ run_unit <- function(task) {
   out <- file.path(root, "output")
   t0 <- Sys.time(); dir.create(task$dir, recursive = TRUE, showWarnings = FALSE)
   logf <- file.path(task$dir, "run.log")
-  env <- c(task$env, AUSPOL_XGB_PRIMARY = "1", AUSPOL_SKIP_PAIRS = "wa2021", AUSPOL_N_SIMS = as.character(task$sims))
+  env <- c(task$env, AUSPOL_XGB_PRIMARY = "1", AUSPOL_SKIP_PAIRS = "", AUSPOL_N_SIMS = as.character(task$sims))
   env[task$var] <- task$val
   old_wd <- setwd(root)
   # A CLEAN SLATE EVERY RUN: this worker process runs many tasks in turn and a child

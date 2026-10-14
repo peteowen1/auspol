@@ -9,7 +9,7 @@ education_residual_b(
   exclude_pair,
   feature = "yr12_pct",
   oof = out_path("xgb-primary-v6-oof-predictions.csv"),
-  census = out_path("census-features.csv"),
+  census = census_features_path(),
   shuffle = 0L
 )
 }

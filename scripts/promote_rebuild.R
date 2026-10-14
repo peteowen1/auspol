@@ -96,6 +96,11 @@ if (identical(.flag("AUSPOL_UPSET_FLOOR"), "1")) {
   if (!file.exists(file.path(OUT, "upset-floor-eps.csv"))) stop("AUSPOL_UPSET_FLOOR=1 but output/upset-floor-eps.csv is missing")
   .arm_tables <- c(.arm_tables, "upset-floor-eps.csv")
 }
+# And the seat-size spread table (AUSPOL_SIZE_SD=1, R/size_sd.R): fit_seats_full.R stops without it.
+if (identical(.flag("AUSPOL_SIZE_SD"), "1")) {
+  if (!file.exists(file.path(OUT, "spread-by-size.csv"))) stop("AUSPOL_SIZE_SD=1 but output/spread-by-size.csv is missing -- run scripts/fit_spread_by_size.R")
+  .arm_tables <- c(.arm_tables, "spread-by-size.csv")
+}
 # And the booth features (AUSPOL_XGB_BOOTH=1): Victoria 2026's slice.
 if (identical(.flag("AUSPOL_XGB_BOOTH"), "1")) {
   .bt <- data.table::fread(file.path(OUT, "booth-features.csv"), showProgress = FALSE)
@@ -129,7 +134,10 @@ invisible(withr::with_envvar(c(AUSPOL_DEMO_RESID = "2"), demographic_residual_ap
 # them (pastvtr.elections.nsw.gov.au serves the GitHub runner a non-workbook,
 # forecast.yaml "Fetch election results"), so they travel on the release.
 .nsw_tables <- character(0)
-if (identical(Sys.getenv("AUSPOL_PUBLISH_NSW2027", "0"), "1")) {
+# Read through .flag(), so a plain publish follows published_flags.R: the daily
+# job's NSW step is gated on the repository variable of the same name, and a
+# publish that skipped these tables left that step on 2026-10-10's (found 2026-10-14).
+if (identical(.flag("AUSPOL_PUBLISH_NSW2027"), "1")) {
   invisible(seat_swing_port_table("nsw2027", write = TRUE))
   invisible(seat_poll_blend_table("nsw2027", write = TRUE))
   invisible(leader_seat_table("nsw2027", write = TRUE))
@@ -169,9 +177,11 @@ if (file.mtime(pb_f) < newest_model)
 per <- fread(pb_f, showProgress = FALSE)
 known <- vapply(all_election_pairs(), `[[`, character(1), "election")
 missing <- setdiff(known, per$pair)
-# Pairs the rebuild skips ON PURPOSE (AUSPOL_SKIP_PAIRS, default wa2021: no
-# fittable poll trend) are not missing; the driver exports the same list.
-skip <- trimws(strsplit(Sys.getenv("AUSPOL_SKIP_PAIRS", "wa2021"), ",")[[1]])
+# Pairs the rebuild skips ON PURPOSE (AUSPOL_SKIP_PAIRS, default none since
+# 2026-10-13; wa2021 was the one with no fittable poll trend) are not missing;
+# the driver exports the same list.
+skip <- trimws(strsplit(Sys.getenv("AUSPOL_SKIP_PAIRS", ""), ",")[[1]])
+skip <- skip[nzchar(skip)]
 if (length(intersect(missing, skip)))
   cat(sprintf("PA0  skipped by design (AUSPOL_SKIP_PAIRS), not required: %s\n",
               paste(intersect(missing, skip), collapse = ", ")))

@@ -359,5 +359,13 @@ seat_rename_map <- function() {
     # seats table: Ngadjuri had ZERO candidacies.csv rows for sa2022, which
     # read as a brand-new electorate with no incumbent and no personal-vote
     # history at all, when in fact its sitting member simply moved with it.
-    frome = "ngadjuri")
+    frome = "ngadjuri",
+    # Northern Territory, 2019 redistribution (for nt2020): Mulka replaced
+    # Nhulunbuy and Gwoja replaced Stuart (Wikipedia: "created ... replacing the
+    # electoral division of ..."). Same candidate-continuity test: Yingiya Mark
+    # Guyula held Nhulunbuy (IND, nt2016, elected) and held Mulka in nt2020.
+    # Every caller keeps BOTH spellings of the previous seat, so South
+    # Australia's own district of Stuart only gains an extra key ("gwoja") that
+    # no SA seat carries -- it cannot lose a match.
+    nhulunbuy = "mulka", stuart = "gwoja")
 }

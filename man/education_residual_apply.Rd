@@ -9,7 +9,7 @@ education_residual_apply(
   pair,
   classes = c("ONP", "OTH_RIGHT", "GRN"),
   feature = "yr12_pct",
-  census = out_path("census-features.csv"),
+  census = census_features_path(),
   shuffle = 0L
 )
 }

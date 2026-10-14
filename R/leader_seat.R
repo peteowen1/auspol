@@ -1,3 +1,36 @@
+#' Read the leaders table: `leaders.csv` plus the hand-kept supplement
+#'
+#' `leaders.csv` is regenerated from Wikipedia by `scripts/fetch_leaders.R`
+#' and would overwrite hand-added rows, so older elections it lacks live in
+#' `leaders-supplement.csv` (same columns plus `source_url`, `source_date`,
+#' `note`). Supplement rows are appended only for elections absent from
+#' `leaders.csv`; `leaders.csv` wins on any overlap. A supplement missing any
+#' `leaders.csv` column or any of the three source columns stops the run.
+#'
+#' @return data.table with the `leaders.csv` columns.
+#' @export
+read_leaders <- function() {
+  d <- file.path(pkg_root(), "external", "reference", "leaders")
+  f <- file.path(d, "leaders.csv")
+  if (!file.exists(f)) stop("leader_seats needs ", f, " (scripts/fetch_leaders.R)")
+  L <- data.table::fread(f, showProgress = FALSE)
+  g <- file.path(d, "leaders-supplement.csv")
+  # AUSPOL_LEADERS_SUPPLEMENT=0 (diagnostic, 2026-10-13): leaders.csv only, to attribute the supplement's effect
+  if (!file.exists(g) || identical(Sys.getenv("AUSPOL_LEADERS_SUPPLEMENT", "1"), "0")) return(L)
+  S <- data.table::fread(g, showProgress = FALSE)
+  need <- c(names(L), "source_url", "source_date", "note")
+  if (!setequal(names(S), need))
+    stop("leaders-supplement.csv columns differ from leaders.csv + source_url/source_date/note: missing ",
+         paste(setdiff(need, names(S)), collapse = ","), "; extra ", paste(setdiff(names(S), need), collapse = ","))
+  S <- S[!S$election %in% L$election, names(L), with = FALSE]
+  coerce_to <- function(x, cls) switch(cls, integer = as.integer(x), numeric = as.numeric(x), logical = as.logical(x),
+                                       character = as.character(x), as.character(x))
+  for (cn in names(L)) if (!identical(class(S[[cn]]), class(L[[cn]]))) data.table::set(S, j = cn, value = coerce_to(S[[cn]], class(L[[cn]])[1]))
+  cat(sprintf("LS2  leaders-supplement.csv: %d rows used for %d elections absent from leaders.csv\n",
+              nrow(S), length(unique(S$election))))
+  rbind(L, S)
+}
+
 #' Party leaders' own seats, per election, with each leader's role
 #'
 #' From `external/reference/leaders/leaders.csv` (`scripts/fetch_leaders.R`,
@@ -8,12 +41,14 @@
 #' twice) carry no signal and their class is shared with the Liberal leader.
 #' "Liberals for Forests" (wa2001) is not the Liberal Party.
 #'
+#' Elections `leaders.csv` lacks (2001-2018 backfill) come from the hand-kept
+#' `leaders-supplement.csv` beside it, which `scripts/fetch_leaders.R` never
+#' writes; see [read_leaders()].
+#'
 #' @return data.table `pair`, `seat`, `party` (model class), `leader`, `role`.
 #' @export
 leader_seats <- function() {
-  f <- file.path(pkg_root(), "external", "reference", "leaders", "leaders.csv")
-  if (!file.exists(f)) stop("leader_seats needs ", f, " (scripts/fetch_leaders.R)")
-  L <- data.table::fread(f, showProgress = FALSE)
+  L <- read_leaders()
   L <- L[is.finite(L$slot) & nzchar(L$leader_clean) & !grepl("No leader|N/A", L$leader_clean)]
   p <- L$party_clean
   cls <- ifelse(grepl("Labor", p), "ALP",

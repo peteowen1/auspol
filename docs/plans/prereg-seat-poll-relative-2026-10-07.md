@@ -86,3 +86,10 @@ What the two leave open: our model beat the fed2025 seat polls per seat
 (3.55 against 5.31) while the time-forward blend weight, fitted mostly on
 fed2022 where polls were good, trusted them. That is a per-election weight
 question, not a poll-level one.
+
+
+## Moved from DECISIONS.md (2026-10-13)
+
+Full original entry, kept verbatim when DECISIONS.md was shortened:
+
+- **2026-10-07 Seat polls: public-only sources REFUSED; release-relative blend REFUSED before screening.** McMahon fed2025 (published Labor 34.7, xgb 46.7, actual 45.5) is pulled by a Compass direct poll (ALP 19, IND 41). Dropping campaign polls: AEF-7 ledger +0.0093 (SE 0.0087), fed2022 +0.0389 (teal signal lost). Release-relative: release Labor offsets vs our level only -0.85 to +1.84, fed2025 MRP RMSE 5.31 -> 5.12 against our xgb 3.55, and the fed2022 IND offset cut the teals. Open: per-election blend weight. [public](plans/prereg-seat-poll-public-screen-2026-10-07.md), [relative](plans/prereg-seat-poll-relative-2026-10-07.md)

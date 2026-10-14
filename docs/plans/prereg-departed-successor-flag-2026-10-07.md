@@ -207,3 +207,10 @@ from two seats" disqualifier FIRES**: New England and Lyne fed2013 are 82% of th
 other 163 seats are -114 (net better; Waite and Mount Gambier improve, Warringah 2019 worsens).
 By the decision rule the switch stays off. **Pete overrode the clause** (quiz, 2026-10-07): the
 deciding 20,000-sim run goes ahead and decides on criteria 1-4. Recorded here, not edited above.
+
+
+## Moved from DECISIONS.md (2026-10-13)
+
+Full original entry, kept verbatim when DECISIONS.md was shortened:
+
+- **2026-10-07 Time-forward departed-independent rate SHIPPED (`AUSPOL_DEPARTED_SUCCESSOR=1`, Pete overrode the two-seat clause).** Replaces the leaked corpus-wide 0.38 (15 cases, not the 305 its review claimed) with a rate fitted on earlier elections only, held through renormalisation. Deciding 20k rebuild: ledger 0.2741 -> 0.2739, RMSE 5.121 -> 5.113; New England + Lyne 2013 are 82% of the gain. Local `dev` ad079e1, unpushed at wrap-up. [prereg](plans/prereg-departed-successor-flag-2026-10-07.md) (Amendment 3), [provenance](reviews/departed-rate-provenance-2026-10-07.md)

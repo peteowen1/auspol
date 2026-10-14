@@ -94,6 +94,32 @@ targets <- names(sort(dates))
 params <- list(objective = "reg:squarederror", eta = 0.05, max_depth = 4,
                subsample = 0.8, colsample_bytree = 0.8, min_child_weight = 5)
 
+# TRAINING-ROW WEIGHTS AND LABELS (plans/prereg-training-weights-2026-10-13.md; all off by default):
+#   AUSPOL_TRAIN_DECAY_H       half-life in years: a row from an election `age` years before the target counts 0.5^(age/h)
+#   AUSPOL_TRAIN_COMPLETENESS  "1": also scale by the row's share of non-missing features (relative to the training
+#                              set's 90th percentile, capped at 1)
+#   AUSPOL_TRAIN_DEMEAN        "1": subtract each training election's mean residual (actual - base_pred) per party
+#                              class from the label, so the model learns within-election structure, not that election's
+#                              statewide miss (vic2010 taught "Greens -4.4, Coalition +3.1"; vic2018 was the opposite)
+.decay_h <- suppressWarnings(as.numeric(Sys.getenv("AUSPOL_TRAIN_DECAY_H", "Inf"))); if (is.na(.decay_h) || .decay_h <= 0) .decay_h <- Inf
+.compl_on <- identical(Sys.getenv("AUSPOL_TRAIN_COMPLETENESS", "0"), "1")
+.demean_on <- identical(Sys.getenv("AUSPOL_TRAIN_DEMEAN", "0"), "1")
+cat(sprintf("XA0w training weights: decay half-life %s years, completeness %s, per-election demean %s\n",
+            format(.decay_h), if (.compl_on) "ON" else "off", if (.demean_on) "ON" else "off"))
+train_w <- function(D, cutoff) {
+  age <- as.numeric(as.Date(cutoff) - as.Date(D$.date)) / 365.25
+  w <- if (is.finite(.decay_h)) 0.5^(age / .decay_h) else rep(1, nrow(D))
+  if (.compl_on) {
+    cmp <- rowMeans(!is.na(as.matrix(D[, feat_cols, with = FALSE])))
+    w <- w * pmin(1, cmp / stats::quantile(cmp, 0.9))
+  }
+  w
+}
+train_label <- function(D) {
+  if (!.demean_on) return(D$actual_share)
+  r <- D$actual_share - D$base_pred
+  D$actual_share - stats::ave(r, D$pair, D$party)
+}
 git_hash <- tryCatch(system2("git", c("rev-parse", "--short", "HEAD"), stdout = TRUE), error = function(e) NA_character_)
 built_at <- format(Sys.time(), "%Y-%m-%d %H:%M:%S")
 
@@ -110,10 +136,16 @@ if (!is.null(OLDM) && !"input_key" %in% names(OLDM)) OLDM <- NULL
 .force <- identical(Sys.getenv("AUSPOL_ASAT_FORCE", "0"), "1")
 n_cached <- 0L
 preds <- list(); manifest <- list()
+.train_skip <- trimws(strsplit(Sys.getenv("AUSPOL_TRAIN_SKIP_PAIRS", ""), ",")[[1]]); .train_skip <- .train_skip[nzchar(.train_skip)]
+if (length(.train_skip)) cat(sprintf("XA0t AUSPOL_TRAIN_SKIP_PAIRS: %s scored but never used as training rows\n", paste(.train_skip, collapse = ", ")))
 for (tg in targets) {
   t0 <- Sys.time()
   cutoff <- dates[[tg]]
   train_pairs <- names(dates)[dates < cutoff]
+  # AUSPOL_TRAIN_SKIP_PAIRS (2026-10-13, Pete): pairs SCORED but kept out of every target's training rows, until the
+  # decay + completeness weights exist (docs/plans/weighting-design-2026-10-13.md; vic2010 as training data made later
+  # elections worse per person, AEF-7 +0.0043 beyond 1 SE).
+  train_pairs <- setdiff(train_pairs, .train_skip)
   if (length(train_pairs) < MIN_PRIOR_PAIRS) {
     cat(sprintf("XA1! %s (%s): only %d prior pair(s) (< %d) -- NO model, harness keeps base_pred\n",
                 tg, cutoff, length(train_pairs), MIN_PRIOR_PAIRS))
@@ -130,7 +162,7 @@ for (tg in targets) {
   # AUSPOL_XGB_SEED silently reused the previous seed's models (2026-10-02,
   # the noise-floor measurement's seed-99 run returned seed 7's predictions).
   key <- digest::digest(list(params, feat_cols, .base_margin_mode, Sys.getenv("AUSPOL_XGB_SEED", "42"),
-                             Sys.getenv("AUSPOL_XGB_ENSEMBLE", "1"),
+                             Sys.getenv("AUSPOL_XGB_ENSEMBLE", "1"), .decay_h, .compl_on, .demean_on,
                              as.data.frame(TR[, c(id_cols, feat_cols), with = FALSE]),
                              as.data.frame(TE[, c(id_cols, feat_cols), with = FALSE])))
   mf <- file.path(MDIR, paste0(tg, ".ubj"))
@@ -143,10 +175,12 @@ for (tg in targets) {
                 substr(key, 1, 8), manifest[[tg]]$rmse_base, manifest[[tg]]$rmse_asat))
     next
   }
-  Xtr <- as.matrix(TR[, ..feat_cols]); ytr <- TR$actual_share
+  Xtr <- as.matrix(TR[, ..feat_cols]); ytr <- train_label(TR)
   Xte <- as.matrix(TE[, ..feat_cols])
   dtr <- xgb.DMatrix(data = Xtr, label = ytr, missing = NA)
   setinfo(dtr, "base_margin", TR$base_pred)
+  .wtr <- train_w(TR, cutoff)
+  if (is.finite(.decay_h) || .compl_on) setinfo(dtr, "weight", .wtr)
   # nrounds by grouped CV within the TRAINING set only -- the target never
   # touches the early-stopping decision either.
   fold_id <- match(TR$pair, sort(unique(TR$pair)))
@@ -184,6 +218,13 @@ for (tg in targets) {
                                nrounds = nr, n_features = length(feat_cols),
                                rmse_base = rb, rmse_asat = ra,
                                model_file = mf, git_hash = git_hash, built_at = built_at, input_key = key)
+  # CHECKPOINT after every trained target (2026-10-14): the run is ~25 min at 35 elections and wrote only at the
+  # end, so a kill at nsw2023 (01:34 that night) lost every target before it. Targets done so far, plus the previous
+  # files' rows for targets not reached yet, are written now; a rerun WITHOUT AUSPOL_ASAT_FORCE then reuses each
+  # finished target by its input key and trains only the rest.
+  .ck <- function(new, old, idcol) data.table::rbindlist(c(new, if (!is.null(old)) list(old[!old[[idcol]] %in% names(new)])), fill = TRUE)
+  fwrite(.ck(preds, OLDP, "pair"), pred_f, na = "NA")
+  fwrite(.ck(manifest, OLDM, "target"), man_f, na = "NA")
 }
 writeLines(feat_cols, file.path(MDIR, "feat_cols.txt"))
 saveRDS(params, file.path(MDIR, "params.rds"))

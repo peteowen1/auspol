@@ -97,14 +97,21 @@ pollster_lean <- function(fits_by_cycle, party = "ALP") {
   if (!length(rows)) return(data.table::data.table())
   d <- data.table::rbindlist(rows)
   d <- d[which(d$firm != "(other firms)"), ]
+  # An unnamed firm ("" or NA) has no lean to report. It also broke this function: split() keeps ""
+  # as a group but by_firm[[""]] is NULL, so that row came out with 3 columns and rbindlist stopped
+  # the daily forecast (2026-10-13 23:44 UTC). Dropped and counted, and the loop walks the list itself.
+  unnamed <- is.na(d$firm) | !nzchar(trimws(d$firm))
+  if (any(unnamed))
+    message(sprintf("SCL1! pollster_lean: %d house-effect row(s) with no firm name dropped (%d polls)",
+                    sum(unnamed), sum(d$n_polls[unnamed])))
+  d <- d[!unnamed]
   by_firm <- split(d, d$firm)
-  data.table::rbindlist(lapply(names(by_firm), function(fm) {
-    x <- by_firm[[fm]]
+  data.table::rbindlist(Map(function(fm, x) {
     data.table::data.table(
       firm = fm,
       lean_pts = sum(x$effect_pts * x$n_polls) / sum(x$n_polls),
       n_polls = sum(x$n_polls), n_cycles = nrow(x))
-  }))[order(-abs(lean_pts))]
+  }, names(by_firm), by_firm))[order(-abs(lean_pts))]
 }
 
 #' Does a firm's estimated lean predict which way it missed?

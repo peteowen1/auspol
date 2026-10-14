@@ -471,3 +471,10 @@ measured.) About 0.25 MB per file for B (section 6), engine output in memory.
 - Earlier (2026-10-03): a LIVE slider, not a precomputed grid; the scoping's recommended path A' (seat-share
   matrices at 2.5-point knots from the real R pipeline plus a JS port of the seat simulation in the browser)
   is the one that gives a live slider without a server. Still NOT started: about 40-50 hours (a guess).
+
+
+## Moved from DECISIONS.md (2026-10-13)
+
+Full original entry, kept verbatim when DECISIONS.md was shortened:
+
+- **2026-10-08 What-if slider SHIPPED on ITG (PRs #100-#102, #106; blog #858).** Two readings, both kept as a toggle (Pete): "gets exactly X" (`AUSPOL_FORCE_FP_RULE=draws`, party held at X in every draw) and "is polling X" (`draws-polled`, spread kept; equals the headline at today's level, checked every run). Others give way by regression on the model's own statewide draws (each ONP point costs the Coalition 0.53, Labor 0.17). 72 precomputed scenarios per election at 2.5-point steps, interpolated; the in-browser simulator (scoping stage 2, ~40 h) DROPPED because the knots already feel live. [scoping](plans/scenario-tool-scoping-2026-10-03.md)

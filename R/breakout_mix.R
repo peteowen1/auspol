@@ -30,7 +30,7 @@
 # out here: output/census-features.csv carries a 2016 or 2021 vintage for
 # elections back to 2007, which is look-ahead, and blanking the late ones would
 # make the column a label for the era (the constant-within-subgroup trap).
-# So this runs on the 47 remaining features.
+# So this runs on the 48 remaining features (47 before reg_nt, 2026-10-14).
 
 .BO_CLASSES   <- c("IND", "OTH", "OTH_RIGHT", "ONP")  # GRN excluded: a different phenomenon (review s.2)
 .BO_HARD      <- 15    # only rows the model predicts under this get the mixture
@@ -116,7 +116,7 @@ clear_breakout_cache <- function() {
     structure  = c("margin", "retirement_i", "ballot_pos_min", "n_cand_now", "n_cand_prev", "level_pred",
                    "level_prev", "ltm", "rank_in_seat", "dev_prev", "prev_swing"),
     context    = c("cls_IND", "cls_ONP", "cls_OTH_RIGHT",
-                   "reg_fed", "reg_nsw", "reg_qld", "reg_sa", "reg_vic", "reg_wa"))
+                   "reg_fed", "reg_nsw", "reg_nt", "reg_qld", "reg_sa", "reg_vic", "reg_wa"))
 }
 
 # Seat-poll class primaries within 120 days before each election, one row per
@@ -182,7 +182,8 @@ clear_breakout_cache <- function() {
   D[, own_prev_pcv0 := data.table::fifelse(is.na(own_prev_pcv), 0, own_prev_pcv)]
   for (cc in c("IND", "ONP", "OTH_RIGHT")) data.table::set(D, NULL, paste0("cls_", cc), as.integer(D$party == cc))
   reg_now <- sub("[0-9]+$", "", D$election)
-  for (r in c("fed", "nsw", "qld", "sa", "vic", "wa")) data.table::set(D, NULL, paste0("reg_", r), as.integer(reg_now == r))
+  # nt added 2026-10-14 (the 35-election corpus): without it NT rows read as the dropped baseline region.
+  for (r in c("fed", "nsw", "nt", "qld", "sa", "vic", "wa")) data.table::set(D, NULL, paste0("reg_", r), as.integer(reg_now == r))
   D[, `:=`(lxp = log1p(pmax(xgb_pred, 0)), lbp = log1p(pmax(base_pred, 0)))]
   D[, lxp2 := lxp^2]
   D[, lpoll := log1p(pmax(poll_fp, 0))]
@@ -199,7 +200,7 @@ clear_breakout_cache <- function() {
 #' Build the breakout classifier's training frame from disk
 #'
 #' One row per (election, seat, class) for every election with an as-at
-#' primary forecast, with the classifier's 47 time-forward-safe features, the
+#' primary forecast, with the classifier's 48 time-forward-safe features, the
 #' outcome `y` (actual primary at least 20) and whether the class actually
 #' stood (`named`: a candidacy exists). Every input is pre-election
 #' information except `actual_share` / `y`, which are the label.

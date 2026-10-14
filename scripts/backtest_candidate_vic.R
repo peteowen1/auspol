@@ -256,7 +256,11 @@ P <- election_data_path()
 # Legislative Council. The 2013 redistribution renamed 15 of the 88 districts,
 # so 2010 -> 2014 scores 73 seats, and the harness reports that coverage the
 # same way it does for the 2021 redistribution.
+# FOUR PAIRS since 2026-10-13: 2006 -> 2010 added (coverage program; official VEC 2006
+# first preferences and distributions, scripts/fetch_official_results_2000s.R and
+# fetch_state_distributions.R). 2006 and 2010 used the same 88 districts.
 PAIRS <- list(
+  list(from = 2006, to = 2010),
   list(from = 2010, to = 2014),
   list(from = 2014, to = 2018),
   list(from = 2018, to = 2022))
@@ -284,7 +288,7 @@ if (nzchar(.vic_pair_sel)) {
 # `if (K$to == 2018L) ... else ...`, which silently gave any third pair the
 # 2022 date -- a leakage bug the moment a pair was added, and one that nothing
 # downstream would have reported.
-VIC_DATE <- c("2014" = "2014-11-29", "2018" = "2018-11-24", "2022" = "2022-11-26")
+VIC_DATE <- c("2010" = "2010-11-27", "2014" = "2014-11-29", "2018" = "2018-11-24", "2022" = "2022-11-26")
 
 share_of <- function(f) {
   d <- fread(file.path(P, f), showProgress = FALSE)
@@ -474,7 +478,7 @@ for (K in PAIRS) {
     # is real -- the member/also-ran gap is positive in 18 of 18 folds -- but three
     # of those four numbers were wrong, and ONP's was the also-ran slope written
     # into the member row over ZERO member observations.
-    .mpf <- "output/mp-slope-by-target.csv"
+    .mpf <- Sys.getenv("AUSPOL_MP_SLOPE_FILE", "output/mp-slope-by-target.csv")
     if (!file.exists(.mpf))
       stop("AUSPOL_MP_SLOPE=1 needs ", .mpf, " -- run scripts/fit_mp_slope.R")
     .mpt <- data.table::fread(.mpf, showProgress = FALSE)
@@ -972,7 +976,7 @@ for (K in PAIRS) {
       fmr <- build_flow_matrix(tx2, min_n = 3L)
       .imx <- ind_mixture_surge(sprintf("vic%d", K$to), rownames(shares), surge_arg, surge_mu_arg, surge_sd_arg, surge_party_arg, code = "BV1N")
       surge_arg <- .imx$surge_h; surge_mu_arg <- .imx$surge_mu; surge_sd_arg <- .imx$surge_sd; surge_party_arg <- .imx$surge_party
-      s1 <- simulate_seat_contests(level_sd = .level_sd, sd_override = SD_OVR, level_mult = .lm(shares), shares, fmr, party_sd = psd,
+      s1 <- simulate_seat_contests(level_sd = .level_sd, sd_override = size_sd_apply(SD_OVR, shares, .eb, .level_sd, .lm(shares)), level_mult = .lm(shares), shares, fmr, party_sd = psd,
                                    seat_sd = sp$sd_within * SEAT_SD_MULT, n_sims = per,
                                    breakout_p = .bo$p, breakout_q = .bo$q,
                                    smooth = SMOOTH, seed = SEED + r, shrink = SHRINK,
@@ -1022,7 +1026,7 @@ for (K in PAIRS) {
       error = function(e) { cat(sprintf("HTV9! how-to-vote override FAILED, flow rows unchanged: %s\n", conditionMessage(e))); .xgb_flow_ov }) else .xgb_flow_ov
     .imx <- ind_mixture_surge(sprintf("vic%d", K$to), rownames(shares), surge_arg, surge_mu_arg, surge_sd_arg, surge_party_arg, code = "BV1N")
     surge_arg <- .imx$surge_h; surge_mu_arg <- .imx$surge_mu; surge_sd_arg <- .imx$surge_sd; surge_party_arg <- .imx$surge_party
-    sim <- simulate_seat_contests(level_sd = .level_sd, sd_override = SD_OVR, level_mult = .lm(shares), shares, fm, party_sd = psd,
+    sim <- simulate_seat_contests(level_sd = .level_sd, sd_override = size_sd_apply(SD_OVR, shares, .eb, .level_sd, .lm(shares)), level_mult = .lm(shares), shares, fm, party_sd = psd,
                                   seat_sd = sp$sd_within * SEAT_SD_MULT, n_sims = N_SIMS,
                                   breakout_p = .bo$p, breakout_q = .bo$q,
                                   smooth = SMOOTH, seed = SEED, party_cor = PARTY_COR,

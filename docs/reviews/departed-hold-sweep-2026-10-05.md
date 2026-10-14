@@ -75,3 +75,10 @@ successors kept 0.16 (Lyne), 0.33 (New England), 0.43 (Kavel), 0.59 (Mount Gambi
 average holds but the spread is wide and nothing the model sees tells the cases apart.
 
 By the prereg's rule arm B is also refused. Both arms stay off; the decision goes to Pete.
+
+
+## Moved from DECISIONS.md (2026-10-13)
+
+Full original entry, kept verbatim when DECISIONS.md was shortened:
+
+- **2026-10-05 Departed-hold REFUSED, both arms, switch stays off (Pete: accept the refusal).** The 0.38 departed rate was measured on final shares but applied before renormalisation, so New England and Lyne 2013 end at 0.69 and 0.60, not 0.38. Holding the cell fixed passes the primary (-0.053 points, 2.1 SE) over 16 pairs but fails weighted RMSE (+1.4 SE) and the IND win-probability disqualifier; the 15%-prior arm B fixes the RMSE but its primary is 0.8 SE and win probability still falls in two SA seats (successors of retiring sitting independents kept 0.16 to 0.59; nothing tells them apart). [sweep](reviews/departed-hold-sweep-2026-10-05.md), [prereg](plans/prereg-departed-hold-fixed-2026-10-04.md)

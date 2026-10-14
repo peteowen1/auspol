@@ -21,12 +21,25 @@ election_dates <- function(labels = NULL) {
     fed2004 = "2004-10-09", fed2007 = "2007-11-24", fed2010 = "2010-08-21",
     fed2013 = "2013-09-07", fed2016 = "2016-07-02", fed2019 = "2019-05-18",
     fed2022 = "2022-05-21", fed2025 = "2025-05-03",
+    nsw2007 = "2007-03-24",   # 2026-10-13: previous election of the new nsw2011 pair
+    nsw2011 = "2011-03-26",   # 2026-10-13: previous election of the new nsw2015 pair
     nsw2015 = "2015-03-28", nsw2019 = "2019-03-23", nsw2023 = "2023-03-25",
     # Brought forward from the fixed-term 27 March to avoid Easter: NSWEC Bulletin
     # No. 2 (27 May 2026), Electoral Legislation Amendment (Elections) Act 2026.
     nsw2027 = "2027-03-13",
+    qld2009 = "2009-03-21", qld2012 = "2012-03-24", qld2015 = "2015-01-31",   # dates read from the ECQ results files (election date attribute)
+    # 2026-10-13: Northern Territory (pairs nt2016, nt2020, nt2024). 2012 from the
+    # NTEC results book's title page; 2016-2024 from Wikipedia's election articles.
+    nt2012  = "2012-08-25", nt2016  = "2016-08-27", nt2020  = "2020-08-22", nt2024  = "2024-08-24",
+    # 2026-10-14: Tasmania and the ACT (Hare-Clark), from the statewide-samples election_dates.csv
+    tas2006 = "2006-03-18", tas2010 = "2010-03-20", tas2014 = "2014-03-15", tas2018 = "2018-03-03",
+    tas2021 = "2021-05-01", tas2024 = "2024-03-23", tas2025 = "2025-07-19",
+    act2008 = "2008-10-18", act2012 = "2012-10-20", act2016 = "2016-10-15", act2020 = "2020-10-17",
+    act2024 = "2024-10-19",
     qld2017 = "2017-11-25", qld2020 = "2020-10-31", qld2024 = "2024-10-26",
     sa2018  = "2018-03-17", sa2022  = "2022-03-19", sa2026  = "2026-03-21",
+    sa2006  = "2006-03-18", sa2010  = "2010-03-20", sa2014  = "2014-03-15",   # 2026-10-13: sa2014 and sa2018 backtest pairs (ECSA past-results pages)
+    vic2006 = "2006-11-25",   # 2026-10-13: previous election of the new vic2010 pair (Wikipedia infobox checked)
     vic2010 = "2010-11-27", vic2014 = "2014-11-29", vic2018 = "2018-11-24",
     vic2022 = "2022-11-26", vic2026 = "2026-11-28",
     wa1996  = "1996-12-14", wa2001  = "2001-02-10", wa2005  = "2005-02-26",

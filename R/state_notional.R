@@ -49,7 +49,9 @@ state_notional_prior <- function(region, from, to, mode = Sys.getenv("AUSPOL_STA
 STATE_REDISTRIBUTIONS <- c(
   vic2014 = "2013 Victorian redivision",
   vic2022 = "2021 Victorian redivision",
+  nsw2015 = "2013 NSW redistribution",   # 2026-10-13; the commission's year is from memory, not checked against the report
   nsw2023 = "2021 NSW redistribution",
+  qld2017 = "2017 Queensland redistribution (89 to 93 districts)",
   sa2022  = "2020 SA redistribution",
   sa2026  = "2024 SA redistribution",
   wa2008  = "2007 WA redistribution (one vote one value)",

@@ -41,6 +41,9 @@ htv_order_table <- function(path = file.path("external", "reference", "htv", "li
 #' @export
 htv_observed_splits <- function(dir = file.path("external", "elections")) {
   fs <- list.files(dir, pattern = "-transfers[.]csv$", full.names = TRUE)
+  # AUSPOL_HTV_EXCLUDE: comma-separated transfer files to leave out (diagnostic; attribution of a new file's effect)
+  ex <- strsplit(Sys.getenv("AUSPOL_HTV_EXCLUDE", ""), ",")[[1]]
+  if (length(ex)) fs <- fs[!basename(fs) %in% trimws(ex)]
   if (!length(fs)) return(NULL)
   tx <- data.table::rbindlist(lapply(fs, function(f) {
     d <- data.table::fread(f, showProgress = FALSE)
@@ -57,11 +60,14 @@ htv_observed_splits <- function(dir = file.path("external", "elections")) {
 
 #' Fit the two Liberal-to-ALP shares the card order selects between
 #'
-#' Leave-target-out mean of the observed splits with the same label, seat-
-#' weighted. Elections with fewer than `min_seats` qualifying seats are
-#' dropped as too thin to label.
+#' Time-forward mean of the observed splits with the same label, seat-
+#' weighted: only elections before `target_election` count (line below,
+#' `elections_before()`). Elections with fewer than `min_seats` qualifying
+#' seats are dropped as too thin to label. Every `*-transfers.csv` in `dir`
+#' is read, so adding an older election's transfer file adds training data
+#' for every later target (2026-10-13: vec-2006, nswec-2011, aec-fed-2001).
 #'
-#' @param target_election Election excluded from the fit.
+#' @param target_election Election whose splits are fitted from earlier elections.
 #' @param dir,min_seats See [htv_observed_splits()].
 #' @return list(greens_above = ALP share, labor_above = ALP share, n = table).
 #' @export

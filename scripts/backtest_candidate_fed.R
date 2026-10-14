@@ -913,7 +913,7 @@ for (K in PAIRS) {
   # filled with a number that was never measured.
   .MP_SLOPE <- NULL
   if (identical(Sys.getenv("AUSPOL_MP_SLOPE", "0"), "1")) {
-    .mpf <- "output/mp-slope-by-target.csv"
+    .mpf <- Sys.getenv("AUSPOL_MP_SLOPE_FILE", "output/mp-slope-by-target.csv")
     if (!file.exists(.mpf))
       stop("AUSPOL_MP_SLOPE=1 needs ", .mpf, " -- run scripts/fit_mp_slope.R")
     .mpt <- fread(.mpf, showProgress = FALSE)
@@ -1868,7 +1868,7 @@ for (X in out_all) {
   .bo <- breakout_mix_args(sprintf("fed%d", K$to), X$shares)
   .imx <- ind_mixture_surge(sprintf("fed%d", K$to), rownames(X$shares), surge_arg, surge_mu_arg, surge_sd_arg, surge_party_arg, code = "BF1N")
   surge_arg <- .imx$surge_h; surge_mu_arg <- .imx$surge_mu; surge_sd_arg <- .imx$surge_sd; surge_party_arg <- .imx$surge_party
-  sim <- simulate_seat_contests(level_sd = .level_sd, sd_override = SD_OVR, level_mult = .lm(X$shares), X$shares, X$fm, party_sd = psd, seat_sd = sd_w * SEAT_SD_MULT,
+  sim <- simulate_seat_contests(level_sd = .level_sd, sd_override = size_sd_apply(SD_OVR, X$shares, sprintf("fed%d", K$to), .level_sd, .lm(X$shares)), level_mult = .lm(X$shares), X$shares, X$fm, party_sd = psd, seat_sd = sd_w * SEAT_SD_MULT,
                                 n_sims = N_SIMS, smooth = SMOOTH, seed = SEED,
                                 shrink = shrink_arg, surge_h = surge_arg, surge_party = surge_party_arg,
                                 surge_from_zero = identical(Sys.getenv("AUSPOL_SURGE_FROM_ZERO", "0"), "1"),

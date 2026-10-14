@@ -159,3 +159,10 @@ R3: PASS - 0 counted flip(s) (rule: refuse if >= 8 and a two-sided binomial test
 SUMMARY: R7 PASS (reached here). 1 flag(s): R2: bias grew > 2 SE for ALP,GRN
 Not scored here: C1 (direction only per the addendum), R4 (port shape, needs the SP2 log line), R5, R6, and the decision itself (see the prereg decision rule; clause refusals go to Pete).
 ```
+
+
+## Moved from DECISIONS.md (2026-10-13)
+
+Full original entry, kept verbatim when DECISIONS.md was shortened:
+
+- **2026-10-04 Zero-order LATE SHIPPED (`AUSPOL_NOM_ZERO_ORDER=late`, Pete, overriding the R2 refusal).** All 22 pairs: every clause passed except R2 (ALP +0.0045, GRN +0.0020 points of bias on a paired SE of ~0.002); fixes Narracan ALP and Giles IND (0.645 and 0.43 -> 0), nothing else moves by more than 0.05 points, 13.6% of cells differ by tiny amounts. Verified: a bare vic run reproduces the scored late arm in 1,672 of 1,672 cells. The as-at xgb models were trained on the early order (stage-6 only measured; a stage-1 refit is a separate, untested step). [result](reviews/zero-order-22pair-2026-10-04.md)

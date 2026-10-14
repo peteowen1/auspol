@@ -405,6 +405,79 @@ if (!file.exists(sa18f)) {
   cat(sprintf("BC2b sa2018: %d candidates in %d seats\n", nrow(sa18), uniqueN(sa18$seat)))
 }
 
+# ---- SOUTH AUSTRALIA 2010 and 2014 (ECSA past-results pages, 2026-10-13) --------
+# Candidate-level files built by scripts/build_sa_2010_2014_results.R (the shared
+# external/elections/ecsa-20{10,14}-sa-firstprefs-tcp.csv are long-format, party-code
+# only and incomplete; that script completes and classifies them). Names are ECSA's own:
+# 2010 "SURNAME, Given" (comma), 2014 "SURNAME Given" (no comma, ALL-CAPS surname) --
+# neither is sa2018's given-first form, and .key()/surname_of() read both. Leave
+# surname/given NA like sa2022 so every consumer reads the combined `name`.
+for (.y in c(2006L, 2010L, 2014L)) {
+  .f <- file.path("external", "reference", "ecsa", "sa-backtest", sprintf("ecsa-%d-sa-candidates.csv", .y))
+  if (!file.exists(.f)) { cat(sprintf("BC2c sa%d: MISSING %s -- run scripts/build_sa_2010_2014_results.R\n", .y, .f)); next }
+  .d <- fread(.f, showProgress = FALSE)
+  if (uniqueN(.d$seat) != 47L) stop(sprintf("sa%d: %d seats in %s, not 47", .y, uniqueN(.d$seat), .f))
+  if (anyNA(.d$votes) || anyDuplicated(.d[, .(seat, name)])) stop(sprintf("sa%d: missing votes or duplicate candidate in %s", .y, .f))
+  # sa2006 names are "SURNAME, INITIALS" (a fourth format, see build_sa_2010_2014_results.R).
+  # A sitting member re-standing under the ballot's PREFERRED name changes the first initial
+  # (Such RB -> Bob, Thompson MG -> Gay, Koutsantonis A -> Tom), which the surname + first
+  # initial key reads as a different person. So for each 2006 WINNER whose surname is the only
+  # one of that spelling in the same seat's 2010 field, with a different first initial, the 2010
+  # given name's initial is put first. Identity resolution of a sitting member, not an outcome.
+  if (.y == 2006L) {
+    .f10 <- file.path("external", "reference", "ecsa", "sa-backtest", "ecsa-2010-sa-candidates.csv")
+    .w6 <- fread(file.path("external", "reference", "ecsa", "sa-backtest", "ecsa-2006-sa-winners.csv"), showProgress = FALSE)
+    if (file.exists(.f10)) {
+      .c10 <- fread(.f10, showProgress = FALSE)
+      .sn <- function(x) tolower(gsub("[^A-Za-z]", "", sub(",.*$", "", x)))
+      .in <- function(x) toupper(substr(gsub("[^A-Za-z]", "", sub("^[^,]*,", "", x)), 1, 1))
+      .top <- .d[order(.d$seat, -.d$votes)]
+      .top <- merge(.top, .w6[, .(seat, winner)], by = "seat")[party == winner]
+      .top <- .top[!duplicated(seat)]
+      .fix <- character(0)
+      for (.i in seq_len(nrow(.top))) {
+        .s <- .top$seat[.i]; .cc <- .c10[.c10$seat == .s, ]
+        .m <- .cc[.sn(.cc$name) == .sn(.top$name[.i]), ]
+        if (nrow(.m) == 1L && .in(.m$name) != .in(.top$name[.i])) {
+          .old <- .top$name[.i]
+          .ini <- trimws(sub("^[^,]*,", "", .old))
+          .new <- sprintf("%s, %s%s", sub(",.*$", "", .old), .in(.m$name), sub(.in(.m$name), "", .ini, fixed = TRUE))
+          .d[.d$seat == .s & .d$name == .old, "name" := .new]
+          .fix <- c(.fix, sprintf("%s -> %s (2010: %s)", .old, .new, .m$name))
+        }
+      }
+      cat(sprintf("BC2e sa2006: %d sitting member(s) re-stood under a different first initial; initials reordered: %s\n",
+                  length(.fix), paste(.fix, collapse = "; ")))
+    }
+  }
+  .d[, `:=`(surname = NA_character_, given = NA_character_, elected = NA,
+            election = sprintf("sa%d", .y), region = "sa", year = .y)]
+  parts[[sprintf("sa%d", .y)]] <- .d[, .(seat, surname, given, party_raw, votes, elected,
+                                         party, election, region, year, name)]
+  cat(sprintf("BC2c sa%d: %d candidates in %d seats\n", .y, nrow(.d), uniqueN(.d$seat)))
+}
+# RETURNER CHECK for the sa2006 -> sa2010 name bridge ("SURNAME, INITIALS" vs "SURNAME, Given"):
+# how many sa2006 WINNERS' surnames recur among sa2010 candidates (the real count of sitting MPs
+# who re-contested, up to namesakes), against how many the production person key actually joins.
+if (all(c("sa2006", "sa2010") %in% names(parts))) {
+  .w6 <- fread(file.path("external", "reference", "ecsa", "sa-backtest", "ecsa-2006-sa-winners.csv"), showProgress = FALSE)
+  .p6 <- parts[["sa2006"]]; .p10 <- parts[["sa2010"]]
+  .k <- function(d, rule) match_key(surname_of(rep(NA_character_, nrow(d)), d$name), given_of(rep(NA_character_, nrow(d)), d$name), rule)
+  .win6 <- .p6[.p6$votes > 0, ]
+  .win6 <- .win6[order(.win6$seat, -.win6$votes), ]
+  .win6 <- .win6[!duplicated(paste(.win6$seat, .win6$party)), ]
+  .win6 <- merge(.win6, .w6[, .(seat, winner)], by = "seat")
+  .win6 <- .win6[.win6$party == .win6$winner, ]
+  .win6 <- .win6[!duplicated(.win6$seat), ]
+  .s_hit <- .k(.win6, "surname") %in% .k(.p10, "surname")
+  .i_hit <- .k(.win6, "initial") %in% .k(.p10, "initial")
+  cat(sprintf("BC2d sa2006 -> sa2010: %d sitting members' surnames recur among the 2010 candidates (the real re-contesting count, up to namesakes); the surname+first-initial key joins %d of them\n",
+              sum(.s_hit), sum(.i_hit)))
+  if (sum(.s_hit) > sum(.i_hit))
+    cat(sprintf("BC2d! initial key misses (nickname or preferred-name initial): %s\n",
+                paste(.win6$name[.s_hit & !.i_hit], collapse = "; ")))
+}
+
 # ---- NEW SOUTH WALES 2019, 2023 ---------------------------------------------
 # The NSWEC workbook's "Data" sheet is one row per candidate PER VENUE, so it
 # must be aggregated to candidate level. Informal rows carry no candidate and
@@ -450,6 +523,42 @@ for (E in nsw_files) {
               uniqueN(agg$seat)))
 }
 
+# ---- NEW SOUTH WALES 2011 (added 2026-10-13, coverage program) ---------------
+# Previous election of the new nsw2015 pair. Source: the NSWEC tally-room pages parsed by
+# scripts/parse_booths_nsw2011.py (candidate totals validated against the Grand Total rows) plus
+# nswec-2011-nsw-candidates.csv ("SURNAME Given" names, 92 districts). Penrith is absent from that
+# file and comes from the parser's supplement (surname only). `class` is already a classify_party()
+# class. Names are "SURNAME Given", the same form as nsw2015 above.
+.n11 <- file.path(election_data_path(), "nswec-2011-nsw-candidates.csv")
+.n11s <- file.path(election_data_path(), "nswec-2011-nsw-candidates-supplement.csv")
+if (file.exists(.n11) && file.exists(.n11s)) {
+  n11 <- fread(.n11, showProgress = FALSE)
+  n11s <- fread(.n11s, showProgress = FALSE)
+  n11 <- rbind(n11[, .(seat, name = candidate, party_raw = ifelse(nzchar(party), party, "Independent"),
+                       votes = as.numeric(first_pref), party = class)],
+               n11s[, .(seat, name = candidate, party_raw = party_code, votes = as.numeric(first_pref),
+                        party = class)])
+  n11[, `:=`(surname = NA_character_, given = NA_character_, elected = NA,
+             election = "nsw2011", region = "nsw", year = 2011)]
+  parts[["nsw2011"]] <- n11
+  cat(sprintf("BC3  nsw2011: %d candidates in %d seats\n", nrow(n11), uniqueN(n11$seat)))
+} else cat("BC3  nsw2011: candidate file or Penrith supplement MISSING (run scripts/parse_booths_nsw2011.py)\n")
+
+# ---- NEW SOUTH WALES 2007 (added 2026-10-13) --------------------------------
+# Previous election of the new nsw2011 pair. No NSWEC source is scriptable; scripts/parse_nsw2007.py builds the file from
+# Antony Green's ABC final pages (web.archive.org captures), cross-checked vote-for-vote against Wikipedia. Names are
+# converted to "SURNAME Given" (last token = surname; multi-word surnames may be split wrongly). `class` is already a
+# classify_party() class.
+.n07 <- file.path(election_data_path(), "nswec-2007-nsw-candidates.csv")
+if (file.exists(.n07)) {
+  n07 <- fread(.n07, showProgress = FALSE)
+  n07 <- n07[, .(seat, name = candidate, party_raw = party_full, votes = as.numeric(first_pref), party = class)]
+  n07[, `:=`(surname = NA_character_, given = NA_character_, elected = NA,
+             election = "nsw2007", region = "nsw", year = 2007)]
+  parts[["nsw2007"]] <- n07
+  cat(sprintf("BC3  nsw2007: %d candidates in %d seats\n", nrow(n07), uniqueN(n07$seat)))
+} else cat("BC3  nsw2007: candidate file MISSING (run scripts/parse_nsw2007.py)\n")
+
 # ---- VICTORIA 2022 ----------------------------------------------------------
 # Already extracted to candidate level by an earlier fetch.
 vf <- file.path(election_data_path(), "vec-2022-vic-candidates.csv")
@@ -472,6 +581,23 @@ if (file.exists(vf)) {
     cat(sprintf("BC4  vic2022: %d candidates in %d seats\n", nrow(v), uniqueN(v$seat)))
   } else cat("BC4  vic2022: unexpected columns; skipped\n")
 } else cat(sprintf("BC4  vic2022: MISSING %s\n", vf))
+
+# ---- VICTORIA 2006 (added 2026-10-13, coverage program) ----------------------
+# Official VEC 2006 first preferences, parsed from the distribution pages by
+# scripts/fetch_official_results_2000s.R into vec-2006-vic-candidates.csv
+# (seat, candidate "SURNAME, Given", party_code, party_name, fp, class). `class`
+# is already a classify_party() class. Previous election of the new vic2010 pair.
+vf6 <- file.path(election_data_path(), "vec-2006-vic-candidates.csv")
+if (file.exists(vf6)) {
+  v6 <- fread(vf6, showProgress = FALSE)
+  if (all(c("seat", "candidate", "party_name", "fp", "class") %in% names(v6))) {
+    v6 <- v6[, .(seat, name = candidate, party_raw = ifelse(nzchar(party_name), party_name, "Independent"),
+                 votes = as.numeric(fp), party = class, surname = NA_character_, given = NA_character_,
+                 elected = NA, election = "vic2006", region = "vic", year = 2006)]
+    parts[["vic2006"]] <- v6
+    cat(sprintf("BC4  vic2006: %d candidates in %d seats\n", nrow(v6), uniqueN(v6$seat)))
+  } else cat("BC4! vic2006 candidate file has unexpected columns; skipped\n")
+} else cat(sprintf("BC4  vic2006: MISSING %s\n", vf6))
 
 # ---- WESTERN AUSTRALIA 1996-2025 --------------------------------------------
 # One JSON per seat per election, already on disk: sg{YEAR}-{CODE}.json, with
@@ -698,6 +824,38 @@ if (!file.exists(q17f) || file.info(q17f)$size < 1e6) {
   }
 }
 
+# ---- QUEENSLAND 2009, 2012, 2015 ---------------------------------------------------
+# Previous elections of the qld2015 and qld2017 pairs. Read from the per-candidate table already
+# parsed from the commission's own results file (external/reference/ecq/raw/<year>/candidates.csv:
+# ballot name, party code, first-preference votes, and the declared member). ZZZ is an independent,
+# as in 2017 above. Party names come from the codes: the 2012 file names Katter's party "The
+# Australian Party", which classify_party() files under OTH where every other year files it
+# OTH_RIGHT, so the name is written out in full here (same fix as scripts/build_qld_2012_2015_inputs.R).
+QLD_CODE_NAME <- c(ALP = "Australian Labor Party", LNP = "Liberal National Party",
+                   GRN = "The Greens", ONP = "One Nation", KAP = "Katter's Australian Party",
+                   FFP = "Family First Party", PUP = "Palmer United Party", DSQ = "DS4SEQ", ZZZ = "Independent")
+for (yq in c(2009L, 2012L, 2015L)) {
+  fq <- file.path(ECQ, "raw", yq, "candidates.csv")
+  if (!file.exists(fq)) { cat(sprintf("BC6  qld%d: MISSING %s\n", yq, fq)); next }
+  cq <- fread(fq, showProgress = FALSE)
+  badq <- setdiff(unique(cq$code), names(QLD_CODE_NAME))
+  if (length(badq)) stop("qld", yq, " party code(s) with no name: ", paste(badq, collapse = ", "),
+                         ". Classifying them without a name would silently make them IND.")
+  if (cq[is.na(votes), .N]) stop("qld", yq, ": candidates with no primary vote count")
+  if (uniqueN(cq$seat) != 89L) stop("qld", yq, ": parsed ", uniqueN(cq$seat), " districts, not 89")
+  if (cq[ballot_name == declared, .N] != 89L) stop("qld", yq, ": declared members not 89")
+  cq <- cq[, .(seat, name = ballot_name, party_ab = code, votes = as.numeric(votes),
+               elected = ballot_name == declared)]
+  cq[, party_raw := unname(QLD_CODE_NAME[party_ab])]
+  cq[, `:=`(party = classify_party(party_raw, ifelse(party_ab == "ZZZ", "", party_ab)),
+            surname = NA_character_, given = NA_character_,
+            election = sprintf("qld%d", yq), region = "qld", year = yq)]
+  parts[[sprintf("qld%d", yq)]] <- cq[, .(seat, name, party_raw, votes, party, surname, given,
+                                          elected, election, region, year)]
+  cat(sprintf("BC6  qld%d: %d candidates in %d seats | classes %s\n", yq, nrow(cq), uniqueN(cq$seat),
+              paste(names(table(cq$party)), table(cq$party), sep = "=", collapse = " ")))
+}
+
 # ---- VICTORIA 2014, 2018 ----------------------------------------------------
 # One HTML page per district, already on disk. Each carries several tables; the
 # one wanted has columns Candidate / Party / 1st pref votes.
@@ -816,6 +974,28 @@ for (y in c(2010, 2014, 2018)) {
               y, nrow(v), uniqueN(v$seat), skipped))
 }
 
+# ---- NORTHERN TERRITORY 2012-2024 (added 2026-10-13) -------------------------
+# Official NTEC first preferences, parsed by scripts/fetch_results_nt.R into
+# ntec-<year>-nt-candidates.csv (seat, candidate "Given SURNAME", surname,
+# given, party_code, party_name, fp, class, elected, tcp). `class` is already a
+# classify_party() class and `elected` comes from the NTEC page's own "elected"
+# line (2016-2024) or the results book's Table 4 (2012), so the state winners
+# fill below leaves these rows alone. Pairs nt2016, nt2020, nt2024.
+for (y in c(2012L, 2016L, 2020L, 2024L)) {
+  nf <- file.path(election_data_path(), sprintf("ntec-%d-nt-candidates.csv", y))
+  if (!file.exists(nf)) { cat(sprintf("BC4  nt%d: MISSING %s (scripts/fetch_results_nt.R)\n", y, nf)); next }
+  nt <- fread(nf, showProgress = FALSE)
+  if (!all(c("seat", "candidate", "party_name", "fp", "class", "elected") %in% names(nt))) {
+    cat(sprintf("BC4! nt%d candidate file has unexpected columns; skipped\n", y)); next
+  }
+  nt <- nt[, .(seat, name = candidate, surname = toupper(surname), given, party_raw = party_name,
+               votes = as.numeric(fp), party = class, elected = as.logical(elected),
+               election = sprintf("nt%d", y), region = "nt", year = y)]
+  if (any(nt[, sum(elected), by = seat]$V1 != 1L)) stop("BC4! nt", y, ": a division without exactly one winner")
+  parts[[sprintf("nt%d", y)]] <- nt
+  cat(sprintf("BC4  nt%d: %d candidates in %d seats\n", y, nrow(nt), uniqueN(nt$seat)))
+}
+
 # ---- assemble ---------------------------------------------------------------
 if (!length(parts)) stop("no candidacy source produced rows")
 C <- rbindlist(parts, fill = TRUE)
@@ -861,11 +1041,21 @@ for (rg in names(WINF)) {
 # 2022 included since 2026-08-27: derived from the VEC's own transfer file by
 # scripts/derive_vic2022_winners.R, replacing the 2026-seat-file proxy the
 # Victorian harness had been using. Victoria is the live target.
-for (y in c(2014L, 2018L, 2022L)) {
+# 2010 added 2026-10-13 (vic2010 pair; the file existed but was never loaded, so
+# vic2010 carried no elected flags; loading it also gives vic2014's returners
+# their 2010 incumbency).
+for (y in c(2010L, 2014L, 2018L, 2022L)) {
   f <- file.path(election_data_path(), sprintf("vec-%d-vic-winners.csv", y))
   if (!file.exists(f)) next
   w <- fread(f, showProgress = FALSE)
   WV[[length(WV) + 1L]] <- w[, .(election = sprintf("vic%d", y), seat, winner)]
+}
+# nsw2011 winners (2026-10-13): the NSWEC ELECTED cell, from scripts/parse_booths_nsw2011.py.
+for (n11w in file.path(election_data_path(), c("nswec-2007-nsw-winners.csv", "nswec-2011-nsw-winners.csv"))) {
+  if (file.exists(n11w)) {
+    w <- fread(n11w, showProgress = FALSE)
+    WV[[length(WV) + 1L]] <- w[, .(election, seat, winner)]
+  }
 }
 # sa2018 winners come from Wikipedia (see BC2b above), not ECSA -- a separate
 # file so a rerun of fetch_sa2022_and_winners.R (which OVERWRITES
@@ -874,6 +1064,11 @@ sa18w <- file.path(election_data_path(), "wikipedia-2018-sa-winners.csv")
 if (file.exists(sa18w)) {
   w <- fread(sa18w, showProgress = FALSE)
   WV[[length(WV) + 1L]] <- w[, .(election, seat, winner)]
+}
+# sa2010 / sa2014 winners: from each district's own TCP table (scripts/build_sa_2010_2014_results.R)
+for (.y in c(2006L, 2010L, 2014L)) {
+  .wf <- file.path("external", "reference", "ecsa", "sa-backtest", sprintf("ecsa-%d-sa-winners.csv", .y))
+  if (file.exists(.wf)) WV[[length(WV) + 1L]] <- fread(.wf, showProgress = FALSE)[, .(election, seat, winner)]
 }
 if (length(WV)) {
   W <- unique(rbindlist(WV, fill = TRUE))

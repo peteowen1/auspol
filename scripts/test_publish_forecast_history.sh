@@ -47,4 +47,22 @@ HISTORY_PUBLIC_BASE=http://127.0.0.1:$PORT FORECAST=$T/f1.json PAGEDATA=$T/p1.js
 kill $SRV 2>/dev/null
 check "HTTP 500 read aborts" '[ $rc -ne 0 ] && grep -q "not a 404" $T/log'
 
+# --- ELECTION=nsw2027: own index, own keys, Vic untouched ---
+N=$T/rn; NL=$N
+nrun() { ELECTION=nsw2027 HISTORY_LOCAL_DIR=$NL FORECAST=$1 PAGEDATA=$2 bash "$S" >"$T/log" 2>&1; }
+nrun $T/f1.json $T/p1.json; rc=$?
+check "nsw: first run starts nsw index" '[ $rc -eq 0 ] && [ "$(jq ".forecast|length" $NL/$H/index-nsw2027.json)" = 1 ] && [ -f $NL/$H/index-nsw2027.backup.json ]'
+check "nsw: dated forecast key" '[ "$(jq -r ".forecast[0].key" $NL/$H/index-nsw2027.json)" = "auspol/history/forecast-nsw2027-2026-10-06.json" ] && [ -f $NL/$H/forecast-nsw2027-2026-10-06.json ]'
+check "nsw: dated page-data key" '[ "$(jq -r ".page_data[0].key" $NL/$H/index-nsw2027.json)" = "auspol/history/nsw2027-page-data-2026-10-06.json" ] && [ -f $NL/$H/nsw2027-page-data-2026-10-06.json ]'
+check "nsw: index entry shape" '[ "$(jq -c ".forecast[0]|keys" $NL/$H/index-nsw2027.json)" = "[\"as_at\",\"built_at\",\"git_sha\",\"key\",\"n_seats\"]" ]'
+nrun $T/f2.json $T/p2.json; check "nsw: next day appends, forecast and page_data days match" '[ "$(jq -c "[.forecast[].as_at]" $NL/$H/index-nsw2027.json)" = "$(jq -c "[.page_data[].as_at]" $NL/$H/index-nsw2027.json)" ] && [ "$(jq ".forecast|length" $NL/$H/index-nsw2027.json)" = 2 ]'
+check "nsw: wrote no vic keys" '[ -z "$(ls $NL/$H | grep -E "vic")" ]'
+check "vic default: still vic keys only" '[ -z "$(ls $L/$H | grep nsw)" ] && [ -f $L/$H/vic-page-data-2026-10-06.json ]'
+# default FORECAST/PAGEDATA paths follow ELECTION (no overrides given)
+mkdir -p $T/wd/output; cp $T/f1.json $T/wd/output/forecast-nsw2027.json; cp $T/p1.json $T/wd/output/nsw2027-page-data.json
+( cd $T/wd && ELECTION=nsw2027 HISTORY_LOCAL_DIR=$T/rd bash "$S" >"$T/log" 2>&1 ); check "nsw: default input paths" '[ -f $T/rd/$H/nsw2027-page-data-2026-10-06.json ]'
+# a corrupt NSW index aborts (guard still on)
+echo '{"forecast":"oops"}' > $NL/$H/index-nsw2027.json
+nrun $T/f2.json $T/p2.json; rc=$?; check "nsw: corrupt index aborts" '[ $rc -ne 0 ] && grep -q "not a valid index" $T/log'
+
 [ $fail -eq 0 ] && echo "ALL PASS" || { echo "SOME FAILED"; exit 1; }

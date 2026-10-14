@@ -280,7 +280,8 @@ xgb_primary_predict_live <- function(shares, mat22, a22, state_mean, returns,
   # `level_from_polls` says whether that statewide came from real polling. A
   # live forecast always has polls -- it could not have produced state_mean
   # otherwise -- so it is 1 here. In the training data it is 0 for the one pair
-  # (wa2021) whose cycle is too thin to fit a trend. Both models carry the same
+  # (wa2021, until its trend became fittable on 2026-10-13; the stored training
+  # rows still carry 0 there until they are rebuilt). Both models carry the same
   # feature set; a column present in one and absent in the other is exactly the
   # mismatch being removed.
   rows[, level_from_polls := 1L]
@@ -526,7 +527,7 @@ xgb_primary_predict_live <- function(shares, mat22, a22, state_mean, returns,
   }
 
   party_levels <- c("ALP","GRN","IND","LNP","NAT","ONP","OTH","OTH_RIGHT")
-  region_levels <- c("fed","nsw","qld","sa","vic","wa")
+  region_levels <- c("fed","nsw","nt","qld","sa","vic","wa")   # nt 2026-10-13: a model trained with region_nt and a predictor without it skips silently
   for (p in party_levels) rows[[paste0("party_", p)]] <- as.integer(rows$party == p)
   for (r in region_levels) rows[[paste0("region_", r)]] <- as.integer(region == r)
 

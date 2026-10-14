@@ -46,9 +46,13 @@ PAGES <- c(
   nsw2019 = "2019 New South Wales state election",
   nsw2023 = "2023 New South Wales state election",
   `nsw2023-candidates` = "Candidates of the 2023 New South Wales state election",
+  qld2012 = "2012 Queensland state election",   # added 2026-10-13 (coverage program); NOT yet fetched
+  qld2015 = "2015 Queensland state election",   # added 2026-10-13 (coverage program); NOT yet fetched
   qld2017 = "2017 Queensland state election",
   qld2020 = "2020 Queensland state election",
   qld2024 = "2024 Queensland state election",
+  sa2010  = "2010 South Australian state election",   # added 2026-10-13, not yet fetched
+  sa2014  = "2014 South Australian state election",   # added 2026-10-13, not yet fetched
   sa2018  = "2018 South Australian state election",
   sa2022  = "2022 South Australian state election",
   sa2026  = "2026 South Australian state election",
@@ -65,6 +69,18 @@ PAGES <- c(
   wa2017  = "2017 Western Australian state election",
   wa2021  = "2021 Western Australian state election",
   wa2025  = "2025 Western Australian state election",
+
+  # ----------------------------------------------------- NEW PAIRS 2026-10-13 --
+  # Scored backtests added after the list above was built. vic2010, nsw2015,
+  # qld2017, sa2018, wa2021 were already covered.
+  nsw2011 = "2011 New South Wales state election",
+  qld2012 = "2012 Queensland state election",
+  qld2015 = "2015 Queensland state election",
+  sa2010  = "2010 South Australian state election",
+  sa2014  = "2014 South Australian state election",
+  nt2016  = "2016 Northern Territory general election",
+  nt2020  = "2020 Northern Territory general election",
+  nt2024  = "2024 Northern Territory general election",
 
   # -------------------------------------------------------------- GAP FILL --
   # Eight elections (fed2004, fed2007, fed2010, sa2022, wa1996, wa2001,
@@ -135,7 +151,9 @@ for (k in names(PAGES)) {
 
 HEADING_CANDIDATES <- c(
   "^Retiring members$", "^Retiring MPs$", "^Retiring MPs and senators$",
-  "^Candidates and retiring MPs$"
+  "^Candidates and retiring MPs$",
+  # added 2026-10-13: SA 2010 ("Retiring", an h3) and the NT articles
+  "^Retiring MLAs$", "^Retiring$"
 )
 
 find_heading <- function(doc) {
@@ -468,12 +486,43 @@ gap_fill[source_url == "CANDWA1996", source_url := CANDWA1996]
 stopifnot(nrow(gap_fill) == 100, uniqueN(gap_fill$election) == 8)
 parsed[["gap_fill_8_elections"]] <- gap_fill
 
+# nsw2011's list is headed by chamber, not party: drop the five MLCs (upper house,
+# seat model is lower-house only) and give the 25 Assembly members their party.
+# Parties from the 2007 winners in output/candidacies.csv (all ALP except the
+# seven LNP below; Wikipedia's own party sub-headings are absent on that page).
+if (!is.null(parsed[["nsw2011"]])) {
+  n11 <- parsed[["nsw2011"]][party != "Legislative Council"]
+  n11[, party := fifelse(member %in% c("John Turner", "Russell Turner"), "Nationals",
+                  fifelse(member %in% c("Peter Debnam", "Judy Hopwood", "Malcolm Kerr",
+                                         "Wayne Merton", "Michael Richardson"), "Liberal", "Labor"))]
+  stopifnot(nrow(n11) == 25)
+  parsed[["nsw2011"]] <- n11
+}
 all_rows <- rbindlist(parsed, use.names = TRUE, fill = TRUE)
 all_rows <- unique(all_rows, by = c("election", "seat", "member"))
 setorder(all_rows, election, seat)
 
 dir.create(dirname(OUT_CSV), recursive = TRUE, showWarnings = FALSE)
-fwrite(all_rows, OUT_CSV)
+# APPEND-ONLY once retirements.csv exists (2026-10-13). Rewriting it from a
+# re-parse could silently change the rows 30 elections already depend on, so
+# only elections ABSENT from the file are appended, as text, after its last
+# line; every existing byte is untouched. The appended rows are also written
+# on their own to retirements-new-pairs.csv. Set AUSPOL_RETIRE_REWRITE=1 to
+# force the old whole-file rewrite.
+NEW_CSV <- file.path(dirname(OUT_CSV), "retirements-new-pairs.csv")
+if (file.exists(OUT_CSV) && !nzchar(Sys.getenv("AUSPOL_RETIRE_REWRITE"))) {
+  have <- unique(fread(OUT_CSV, showProgress = FALSE)$election)
+  add <- all_rows[!election %in% have]
+  if (nrow(add)) {
+    fwrite(add, NEW_CSV)
+    tail_byte <- readBin(OUT_CSV, "raw", file.info(OUT_CSV)$size)
+    if (tail_byte[length(tail_byte)] != as.raw(10L)) cat("
+", file = OUT_CSV, append = TRUE)
+    fwrite(add, OUT_CSV, append = TRUE, col.names = FALSE)
+    message(sprintf("appended %d rows for %s", nrow(add), paste(unique(add$election), collapse = ", ")))
+  } else message("retirements.csv already has every election parsed; nothing appended")
+  all_rows <- fread(OUT_CSV, showProgress = FALSE)
+} else fwrite(all_rows, OUT_CSV)
 
 message()
 message(sprintf("wrote %s: %d rows across %d elections", OUT_CSV, nrow(all_rows), uniqueN(all_rows$election)))

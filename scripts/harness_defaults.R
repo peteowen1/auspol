@@ -1,6 +1,6 @@
 # PUBLISHED DEFAULTS FOR THE FIVE BACKTEST HARNESSES.
 #
-# Sourced by scripts/backtest_candidate_{fed,vic,nsw,sa,wa}.R immediately after
+# Sourced by scripts/backtest_candidate_{fed,vic,nsw,qld,sa,wa,nt}.R immediately after
 # load_all() and before the first Sys.getenv("AUSPOL_...") read. Every switch
 # the caller has NOT set takes the value in scripts/published_flags.R, so a
 # harness launched with no environment measures the configuration that ships.

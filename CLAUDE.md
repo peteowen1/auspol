@@ -115,7 +115,7 @@ not apply. Recorded with worked examples under "Recurring hazards" in
 Specific traps, all of which have bitten:
 
 - **data.table NSE**: a function argument or local variable sharing a name with
-  a column, used bare inside `dt[...]`, binds to the column. **Nine times** (the ninth 2026-10-09: `cycles$year == year` in `poll_sigmas_time_forward()`, caught on its first run).
+  a column, used bare inside `dt[...]`, binds to the column. **Eleven times** (the ninth 2026-10-09: `cycles$year == year` in `poll_sigmas_time_forward()`; the tenth and eleventh 2026-10-14, `won$.s == .s[i]` in a diagnostic and `tab$target == target` in `size_sd_apply()`; all three caught on their first run).
   data.table scopes the table's columns into the WHOLE `i` expression, so
   `raw[raw$election == election]` became `raw$election == raw$election`, always
   TRUE, and was caught only by a test querying a label that cannot exist. Fix:

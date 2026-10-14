@@ -581,16 +581,21 @@ test_that("fit_defector_discount's below-min_n return always has discount_mp/dis
   expect_null(r$discount_loser)
 })
 
-test_that("fit_minor_defector_conserve measures the origin class's kept share, leave-target-out", {
+test_that("fit_minor_defector_conserve measures the origin class's kept share, time-forward", {
   corpus <- data.table::data.table(
     election = c("qld2020", "qld2020", "qld2020", "qld2024", "qld2024", "qld2024"), seat = "X",
     surname = c("ANDREW", "SMITH", "JONES", "ANDREW", "BROWN", "JONES"), given = c("Stephen", "A", "B", "Stephen", "C", "B"),
     name = NA_character_, party = c("ONP", "ALP", "LNP", "OTH_RIGHT", "ONP", "LNP"),
     pcv = c(30, 40, 30, 25, 12, 63), votes = c(300, 400, 300, 250, 120, 630), tot = 1000, elected = c(TRUE, FALSE, FALSE, FALSE, FALSE, TRUE))
   pairs <- list(list(election = "qld2024", prev = "qld2020"))
-  f <- fit_minor_defector_conserve("vic2022", corpus = corpus, pairs = pairs, min_n = 1L)
+  f <- fit_minor_defector_conserve("vic2026", corpus = corpus, pairs = pairs, min_n = 1L)
   expect_equal(f$n, 1L); expect_equal(f$frac, 12 / 30, tolerance = 1e-6)   # ONP statewide 30 -> 12 is the class itself: expected 0 + kept 12
   expect_null(fit_minor_defector_conserve("qld2024", corpus = corpus, pairs = pairs, min_n = 1L)$frac)
+  # Time-forward (AUSPOL_CONSERVE_TF, shipped 2026-10-14): vic2022 is dated BEFORE qld2024, so qld2024 cannot train it.
+  expect_null(fit_minor_defector_conserve("vic2022", corpus = corpus, pairs = pairs, min_n = 1L)$frac)
+  # ...and the old leave-target-out behaviour is still there behind the switch.
+  old <- withr::with_envvar(c(AUSPOL_CONSERVE_TF = "0"), fit_minor_defector_conserve("vic2022", corpus = corpus, pairs = pairs, min_n = 1L))
+  expect_equal(old$frac, 12 / 30, tolerance = 1e-6)
 })
 
 test_that("defector carry by level: federal targets get their own rate, state targets keep the pooled one", {

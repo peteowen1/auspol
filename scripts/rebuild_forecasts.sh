@@ -43,11 +43,10 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 export AUSPOL_N_SIMS="${AUSPOL_N_SIMS:-20000}"
 export AUSPOL_POOL_MIN_SIMS="${AUSPOL_POOL_MIN_SIMS:-$AUSPOL_N_SIMS}"
-# Pairs no harness can score under the published flags: wa2021 has no fittable
-# poll trend, so forecast mode (published 1 since 2026-09-19) skips it and the
-# pooling stages must not fall back to a stale file. Remove it from this default
-# when WA 2017-2021 polling reaches the anchor.
-export AUSPOL_SKIP_PAIRS="${AUSPOL_SKIP_PAIRS:-wa2021}"
+# Pairs to skip on purpose. Default none since 2026-10-13: wa2021 fits with our own poll layers, and the NT pairs
+# (and any cycle with too few polls for the trend) score through the thin-cycle estimate (AUSPOL_THIN_CYCLE,
+# R/thin_cycle.R). Pete, 2026-10-13: every new election joins the scoreboard and the pooled fits.
+export AUSPOL_SKIP_PAIRS="${AUSPOL_SKIP_PAIRS:-}"
 # EVERY STAGE SEES THE PUBLISHED CONFIGURATION. Unset switches take their
 # scripts/published_flags.R value here, once, so the fit scripts (which read only
 # the environment) cannot fall back to a code default that differs from what
@@ -74,7 +73,7 @@ fi
 # meant to run: every name must be one of the six, comma-separated, no spaces.
 if [ -n "${AUSPOL_REBUILD_ONLY:-}" ]; then
   for _h in ${AUSPOL_REBUILD_ONLY//,/ }; do
-    case "$_h" in fed|wa|vic|nsw|qld|sa) ;; *) echo "!! AUSPOL_REBUILD_ONLY: '$_h' is not one of fed,wa,vic,nsw,qld,sa"; exit 1 ;; esac
+    case "$_h" in fed|wa|vic|nsw|qld|sa|nt) ;; *) echo "!! AUSPOL_REBUILD_ONLY: '$_h' is not one of fed,wa,vic,nsw,qld,sa,nt"; exit 1 ;; esac
   done
   case "$AUSPOL_REBUILD_ONLY" in *" "*) echo "!! AUSPOL_REBUILD_ONLY: no spaces, e.g. nsw,qld"; exit 1 ;; esac
 fi
@@ -128,14 +127,19 @@ run6() {  # $1 = XGB_PRIMARY value, $2 = log tag -- all 23 pairs across the six 
   case "${AUSPOL_REBUILD_SLOTS:-}" in ""|*[!0-9]*|0) ;; *) [ "$AUSPOL_REBUILD_SLOTS" -lt "$slots" ] && slots=$AUSPOL_REBUILD_SLOTS ;; esac   # 0 or non-numeric: ignored (0 would hang run_queue)
   echo "   ${fg}GB free -- ${slots} harness slots"
   local specs=(fed wa vic nsw:AUSPOL_NSW_PAIR=2023 qld:AUSPOL_QLD_PAIR=2024 sa:AUSPOL_SA_PAIR=2026
-               qld:AUSPOL_QLD_PAIR=2020 nsw:AUSPOL_NSW_PAIR=2019 sa:AUSPOL_SA_PAIR=2022)
+               qld:AUSPOL_QLD_PAIR=2020 nsw:AUSPOL_NSW_PAIR=2019 sa:AUSPOL_SA_PAIR=2022
+               sa:AUSPOL_SA_PAIR=2018 sa:AUSPOL_SA_PAIR=2014 sa:AUSPOL_SA_PAIR=2010
+               nsw:AUSPOL_NSW_PAIR=2015 nsw:AUSPOL_NSW_PAIR=2011
+               qld:AUSPOL_QLD_PAIR=2017 qld:AUSPOL_QLD_PAIR=2015 qld:AUSPOL_QLD_PAIR=2012
+               nt)   # 2026-10-13 coverage program: sa2010-2018, nsw2011/2015, qld2012-2017, and nt (all three NT pairs in one run, like wa)
+  local n_specs=${#specs[@]}
   if [ -n "${AUSPOL_REBUILD_ONLY:-}" ] && [ "$2" = "s6" ]; then
     local keep=() s
     for s in "${specs[@]}"; do
       if [[ ",${AUSPOL_REBUILD_ONLY}," == *",${s%%:*},"* ]]; then keep+=("$s"); else reuse_check "$s"; fi
     done
     specs=("${keep[@]}")
-    echo "   AUSPOL_REBUILD_ONLY=${AUSPOL_REBUILD_ONLY}: running ${#specs[@]} of 9 backtest runs, reusing the rest"
+    echo "   AUSPOL_REBUILD_ONLY=${AUSPOL_REBUILD_ONLY}: running ${#specs[@]} of ${n_specs} backtest runs, reusing the rest"
   fi
   run_queue "$1" "$2" "$slots" "${specs[@]}"
 }
@@ -206,6 +210,17 @@ run_queue() {  # $1 = XGB_PRIMARY, $2 = log tag, $3 = slots, then "harness:ENV=v
 if at_least 1; then
   python scripts/build_state_notionals.py > "$LOG/s1_notionals.log" 2>&1 || { echo "!! build_state_notionals.py failed its checks -- see $LOG/s1_notionals.log"; exit 1; }
 fi
+# BLUDGERTRACK POLL TABLES (AUSPOL_POLL_BT, 2026-10-13): every stage reads polls through load_polls(), so the
+# table is parsed from the raw XML on disk before anything else (no fetch; refetch by hand with --fetch=).
+if [ "${AUSPOL_POLL_BT:-1}" = "1" ]; then
+  Rscript scripts/build_bludgertrack_polls.R > "$LOG/s0_bludgertrack.log" 2>&1 || { echo "!! build_bludgertrack_polls.R failed -- see $LOG/s0_bludgertrack.log"; exit 1; }
+fi
+# MP slopes (time-forward since 2026-10-14) were refitted only by hand, so a new pair or a fix left the table stale.
+# Full rebuilds only: a resume (FROM >= 2) reuses stage 1-5 outputs built with the existing table, and refitting
+# here would mix the two (review 2026-10-14); and it no longer depends on the Poll Bludger switch.
+if at_least 1; then
+  Rscript scripts/fit_mp_slope.R > "$LOG/s0_mp_slope.log" 2>&1 || { echo "!! fit_mp_slope.R failed -- see $LOG/s0_mp_slope.log"; exit 1; }
+fi
 # ENDORSEMENT FEATURES (AUSPOL_XGB_ENDORSE): only when the switch is on.
 if at_least 3 && [ "${AUSPOL_XGB_ENDORSE:-0}" = "1" ]; then
   python scripts/build_endorsement_features.py > "$LOG/s3_endorse.log" 2>&1 || { echo "!! build_endorsement_features.py failed -- see $LOG/s3_endorse.log"; exit 1; }
@@ -246,7 +261,10 @@ if at_least 6 && [ "${AUSPOL_UPSET_FLOOR:-0}" = "1" ]; then
   grep -E "^UF9" "$LOG/s6b_upset.log"
 fi
 if at_least 7; then stage "7-pool-and-forecasts";  Rscript scripts/pool_backtests.R        > "$LOG/s7_pool.log" 2>&1
-                               Rscript scripts/build_forecasts_table.R > "$LOG/s7_forecasts.log" 2>&1; done_stage "7-pool-and-forecasts"; fi
+                               Rscript scripts/build_forecasts_table.R > "$LOG/s7_forecasts.log" 2>&1
+                               # seat-size spread table (AUSPOL_SIZE_SD): refitted from this run's published errors; the
+                               # spread never moves a predicted share, so this run's table is the one it would have read
+                               Rscript scripts/fit_spread_by_size.R    > "$LOG/s7_spread_size.log" 2>&1; done_stage "7-pool-and-forecasts"; fi
 if at_least 8; then stage "8-ledger";              Rscript scripts/build_aef_comparison.R  > "$LOG/s8_comp.log" 2>&1   # aef-comparison-full.csv, the ledger's seat-probability input -- was missing from the first draft, so the ledger's log loss came out identical to the run before (2026-09-18)
                                Rscript scripts/build_aef7_tcp_actual.R > "$LOG/s8_tcp.log" 2>&1
                                Rscript scripts/build_aef7_ledger_data.R > "$LOG/s8_ledger.log" 2>&1

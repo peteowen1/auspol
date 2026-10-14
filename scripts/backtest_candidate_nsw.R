@@ -318,6 +318,13 @@ PREF   <- election_data_path()
 # by by-elections and carries the anchor's party classes rather than ours, so
 # it is a printed disagreement count and never the truth.
 NSW_PAIRS <- list(
+  # 2011 added 2026-10-13: previous election nsw2007 (Antony Green/ABC final pages; no NSWEC source), same 93 districts so
+  # no notional; no published 2007 distribution, so flows come from fed2010; seat spread falls back to 2023nsw.txt.
+  "2011" = list(to = 2011L, from = 2007L, next_seats = 2019L, flow_from = "fed2010"),
+  # 2015 added 2026-10-13 (coverage program). Previous election nsw2011 on the pre-2013-redistribution
+  # boundaries; the prior is the booth-respread notional on the 2015 boundaries (STATE_REDISTRIBUTIONS,
+  # scripts/parse_booths_nsw2011.py then scripts/build_state_notionals.py). No 2015nsw.txt seat file exists.
+  "2015" = list(to = 2015L, from = 2011L, next_seats = 2019L),
   "2019" = list(to = 2019L, from = 2015L, next_seats = 2023L),
   "2023" = list(to = 2023L, from = 2019L, next_seats = 2027L))
 .k <- Sys.getenv("AUSPOL_NSW_PAIR", "2023")
@@ -354,6 +361,19 @@ fp_tgt  <- fread(file.path(PREF, sprintf("nswec-%d-nsw-firstprefs.csv", TO)))
 # redistribution the prior is rebuilt on the target's boundaries from booth results.
 .snp <- state_notional_prior("nsw", FROM, TO); if (!is.null(.snp)) fp_prev <- .snp
 tx      <- fread(file.path(PREF, "nswec-nsw-transfers.csv"))
+# The nsw2011 published distribution lives in its own file (nswec-2011-nsw-transfers.csv, the
+# NSWEC's SGE2011 pages) rather than the shared file, so it is appended HERE and only for a pair
+# that needs it: appending it to the shared file would also change the as-at flow models of
+# the later pairs (fit_xgb_flows_v1.R reads that file). Only PRV's rows are ever used below.
+.tx_extra <- file.path(PREF, sprintf("nswec-%d-nsw-transfers.csv", FROM))
+if (!PRV %in% tx$election && file.exists(.tx_extra)) {
+  .tx2 <- fread(.tx_extra)
+  stopifnot("extra transfer file has other columns" = identical(names(.tx2), names(tx)),
+            "extra transfer file is not the previous election" = all(.tx2$election == PRV))
+  tx <- rbind(tx, .tx2)
+  cat(sprintf("BT0e %d %s transfer rows appended from %s (not in the shared transfers file)\n",
+              nrow(.tx2), PRV, basename(.tx_extra)))
+}
 
 # LEAKAGE GUARD. The whole point of using NSW is that the flow matrix predates
 # the election being scored. Asserted, not assumed -- three leaks have entered
@@ -362,14 +382,29 @@ tx      <- fread(file.path(PREF, "nswec-nsw-transfers.csv"))
 # filtered to nsw2019 contains no nsw2023 rows is true by construction and
 # proves only that `==` works -- the "guard that cannot fail" shape CLAUDE.md
 # warns about, in the one place this script claims leakage safety.
-stopifnot("the transfer file must contain both elections to be filterable" =
-            all(c(PRV, TGT) %in% tx$election))
-# PRV_ not PRV inside the brackets: `election` is a column of tx, and a bare
-# symbol on either side of `==` there binds to the column. That is this repo's
-# most-repeated fault, eight times recorded.
-PRV_ <- PRV
-tx_prev <- tx[election == PRV_]
-stopifnot(nrow(tx_prev) > 0, nrow(tx_prev) < nrow(tx))
+if (is.null(PAIR$flow_from)) {
+  stopifnot("the transfer file must contain both elections to be filterable" =
+              all(c(PRV, TGT) %in% tx$election))
+  # PRV_ not PRV inside the brackets: `election` is a column of tx, and a bare
+  # symbol on either side of `==` there binds to the column. That is this repo's
+  # most-repeated fault, eight times recorded.
+  PRV_ <- PRV
+  tx_prev <- tx[election == PRV_]
+  stopifnot(nrow(tx_prev) > 0, nrow(tx_prev) < nrow(tx))
+} else {
+  # nsw2011 (added 2026-10-13): the NSWEC published no 2007 distribution of preferences, and nsw2011's own would be a
+  # leak, so the flows come from the latest FEDERAL election before polling day (the qld2020 precedent). Federal
+  # flows are compulsory-preferential, so they ignore NSW's optional-preferential exhaust: announced, not absorbed.
+  fx <- fread(file.path(PREF, "aec-fed-transfers.csv"))
+  FLOW_FROM_ <- PAIR$flow_from
+  stopifnot("flow election must precede the target" =
+              as.Date(unname(election_dates(FLOW_FROM_))) < as.Date(unname(election_dates(TGT))),
+            "flow election absent from the federal transfers file" = FLOW_FROM_ %in% fx$election)
+  tx_prev <- fx[election == FLOW_FROM_]
+  stopifnot(nrow(tx_prev) > 0)
+  cat(sprintf("BT0f! no published %s distribution: flows borrowed from %s (federal, compulsory preferential; NSW exhaust not modelled)\n",
+              PRV, FLOW_FROM_))
+}
 cat(sprintf("\nBT0  flow matrix from %d transfers, elections: %s\n",
             nrow(tx_prev), paste(unique(tx_prev$election), collapse = ", ")))
 # NEW SOUTH WALES IS OPTIONAL PREFERENTIAL AND MUST NOT TAKE QUEENSLAND'S
@@ -384,7 +419,15 @@ cat(sprintf("\nBT0  flow matrix from %d transfers, elections: %s\n",
 # finding about Queensland, it is this mistake showing up as data.
 fm <- build_flow_matrix(tx_prev, min_n = 3L)
 
-seats <- as.data.table(load_seats(TO, "nsw"))
+# SEAT FILE for the seat spread (seat_swing_spread: region and prev_swing only). The anchor ships no
+# 2015nsw.txt, so nsw2015 falls back to 2023nsw.txt, whose prev_swing is the 2019 swing. NOT 2019nsw.txt:
+# its prev_swing is the 2015 swing, i.e. the target election's own seat-level result. It is a variance
+# hyperparameter from a LATER election (the compromise the Queensland harness makes); announced, not absorbed.
+seats <- tryCatch(as.data.table(load_seats(TO, "nsw")), error = function(e) NULL)
+if (is.null(seats)) {
+  seats <- as.data.table(load_seats(2023L, "nsw"))
+  cat(sprintf("BN0s no %dnsw.txt seat file: seat spread taken from 2023nsw.txt (a later election, prev_swing = the 2019 swing)\n", TO))
+}
 
 # Per-seat 2019 shares as a matrix.
 w_prev <- dcast(fp_prev, seat ~ party, value.var = "votes", fill = 0)
@@ -394,7 +437,7 @@ mat <- 100 * mat / rowSums(mat)
 state_prev <- fp_prev[, .(v = sum(votes)), by = party][, setNames(100 * v / sum(v), party)]
 state_tgt <- fp_tgt[, .(v = sum(votes)), by = party][, setNames(100 * v / sum(v), party)]
 # AUSPOL_FORECAST_MODE=1: predicted statewide, not the oracle (R/forecast_statewide.R).
-state_tgt <- forecast_statewide_or_oracle("nsw", TO, c("2019" = "2019-03-23", "2023" = "2023-03-25")[[as.character(TO)]],
+state_tgt <- forecast_statewide_or_oracle("nsw", TO, c("2011" = "2011-03-26", "2015" = "2015-03-28", "2019" = "2019-03-23", "2023" = "2023-03-25")[[as.character(TO)]],
                                           names(state_tgt), state_prev, state_tgt,
                                           code = "BN0", n_sims = N_SIMS, seed = as.integer(Sys.getenv("AUSPOL_SEED", "42")))
 # RE-ENTRY PRIOR, docs/plans/prereg-reentry-prior-2026-09-07.md. A class
@@ -429,6 +472,12 @@ print(.bt1[order(-get(sprintf("y%d", TO)))])
 # being checked.
 TGT_ <- TGT
 win <- fread(file.path(PREF, "nswec-nsw-winners.csv"))[election == TGT_]
+# nsw2011 winners live in their own file (scripts/parse_booths_nsw2011.py), as the Victorian per-election files do.
+.win_own <- file.path(PREF, sprintf("nswec-%d-nsw-winners.csv", TO))
+if (!nrow(win) && file.exists(.win_own)) {
+  win <- fread(.win_own)[election == TGT_]
+  cat(sprintf("BT2w winners for %s read from %s\n", TGT, basename(.win_own)))
+}
 stopifnot(nrow(win) == 93L)
 truth <- setNames(win$winner, win$seat)
 cat(sprintf("
@@ -508,7 +557,7 @@ if (identical(Sys.getenv("AUSPOL_MP_SLOPE", "0"), "1")) {
   # is real -- the member/also-ran gap is positive in 18 of 18 folds -- but three
   # of those four numbers were wrong, and ONP's was the also-ran slope written
   # into the member row over ZERO member observations.
-  .mpf <- "output/mp-slope-by-target.csv"
+  .mpf <- Sys.getenv("AUSPOL_MP_SLOPE_FILE", "output/mp-slope-by-target.csv")
   if (!file.exists(.mpf))
     stop("AUSPOL_MP_SLOPE=1 needs ", .mpf, " -- run scripts/fit_mp_slope.R")
   .mpt <- data.table::fread(.mpf, showProgress = FALSE)
@@ -1104,7 +1153,7 @@ if (.exhaust_on) {
 .bo <- breakout_mix_args(TGT, shares)
 .imx <- ind_mixture_surge(TGT, rownames(shares), surge_arg, surge_mu_arg, surge_sd_arg, surge_party_arg, code = "BT1N")
 surge_arg <- .imx$surge_h; surge_mu_arg <- .imx$surge_mu; surge_sd_arg <- .imx$surge_sd; surge_party_arg <- .imx$surge_party
-sim <- simulate_seat_contests(level_sd = .level_sd, sd_override = SD_OVR, level_mult = .lm(shares), shares, fm, party_sd = psd, seat_sd = sp$sd_within * SEAT_SD_MULT,
+sim <- simulate_seat_contests(level_sd = .level_sd, sd_override = size_sd_apply(SD_OVR, shares, TGT, .level_sd, .lm(shares)), level_mult = .lm(shares), shares, fm, party_sd = psd, seat_sd = sp$sd_within * SEAT_SD_MULT,
                               breakout_p = .bo$p, breakout_q = .bo$q,
                               n_sims = N_SIMS, smooth = SMOOTH, seed = SEED, party_cor = PARTY_COR,
                               shrink = SHRINK, conditional_override = .htv_ov, conditional_override_sd = attr(.htv_ov, "sd"),

@@ -180,6 +180,56 @@ Dug 2026-10-09 from run 0cbaa82 (`scripts/biggest_misses.R --pairs=vic2018`). Th
   the flow is right and the miss is primaries (IND 37.2 vs 33.9) plus the
   scenario conditioning. Teal pattern, **PARKED**.
 
+## wa2013
+
+- **Churchlands** -- **OPEN** (2026-10-14, overnight). Liz Constable (IND, 67.3% in 2008) RETIRED in 2013 (recorded:
+  retirements.csv; retirement-derived wa2013 Churchlands = 1). Predicted vs actual share: LNP 25.5 vs 59.0, IND 30.4 vs
+  16.3, ALP 25.7 vs 15.6, GRN 15.7 vs 7.7 (`backtest-wa-sharedetail-...-g4e03af5.csv`). The Liberals did NOT contest
+  Churchlands in 2008, so they re-enter with no seat history (re-entry prior), and the retired independent's vote is kept
+  largely in the IND class (three unrelated new independents: Monks 8.1, Re 4.7, Bivoltsis 3.5) and spread to ALP/GRN,
+  when it went to the returning Liberal. Two mechanisms: re-entry level for a major that sat out, and where a retired
+  independent's vote goes. UNVERIFIED which dominates; IND favourite 0.93, LNP won at p 0.028.
+  STAGE (output/forecasts.csv, wa2013): the miss is entirely in base_pred (LNP 27.6, IND 29.3, ALP 26.7, GRN 16.4);
+  the xgb layer moves each class < 1.2 pts. base_pred keeps 43% of the retired independent's 67.3 in the IND class.
+  LEAD, UNVERIFIED (from memory): Constable was a Liberal before sitting as an independent -- the case
+  fit_departed_origin_return() (switch off) exists for; the corpus starts 2001, so her origin party may need hand-coding
+  from a pre-election source.
+- **Albany** -- **OPEN** (2026-10-14). ALP won (Peter Watson, sitting) at p 0.016, LNP favourite 0.984. Not investigated.
+- **Kimberley** -- **OPEN** (2026-10-14). ALP won at p 0.019; the sitting Labor member (Carol Martin) retired.
+  Not investigated.
+
+## wa2017
+
+- **Hillarys** -- **OPEN** (2026-10-14). LNP won at p 0.004 (ALP favourite 0.50); Rob Johnson, the sitting member who
+  left the Liberals, stood as IND. The defector carry (state rate 0.42-0.44 at this target) is the known lever; WA's own
+  earlier cases carry 0.693 (`reviews/pooled-fits-inventory-2026-10-13.md`). Seat-level trace not yet done.
+  TRACED 2026-10-14 (`output/forecasts.csv`, run 4e03af5): the miss is in base_pred, and it is OVER-carry, not under.
+  base_pred Johnson (IND) 28.5 vs actual 20.1, Liberal (Katsambanis) 25.6 vs 39.6; xgb moves the Liberal DOWN to 22.6.
+  Final shares IND 28.4, LNP 24.6. So WA's higher own-carry 0.693 would make Hillarys worse; the Liberal kept far more
+  of Johnson's old vote than the model lets a party keep from a departing member. Same shape as wa2013 Churchlands. Across all 52 defector cases there is NO overall over-carry (mean -0.35, SE 1.49; reviews/defector-overcarry-2026-10-14.md): Hillarys is a tail case.
+- **Murray-Wellington**, **Pilbara**, **Jandakot**, **Southern River**, **Kingsley** -- **OPEN** (2026-10-14). ALP gains
+  called LNP at p 0.07-0.17: the size of the 2017 Labor swing under-called. Not traced to level vs seat swing.
+
+## nsw2019
+
+- **Barwon** -- **OPEN** (2026-10-13). Shooters (OTH_RIGHT) won; the 2026-10-13 baseline rebuild gave them 0 of
+  20,000 simulations (LNP favourite 0.972), scored at the 1e-6 floor (13.82), which alone carries nsw2019's +0.042 move
+  against the 11:00 publish (pooled +0.0029). Not caused by the Poll Bludger layer (nsw2019 0.2500 with, 0.2525 without)
+  nor the new NSW 2011 transfers (0 change, AUSPOL_HTV_EXCLUDE). An emergence the model cannot see; Murray (Shooters,
+  p 0.04) is the same pattern. Still 13.82 in the 2026-10-14 35-election rebuild; Murray now 7.96 (p ~0.0003). `deciding-runs/rebuild-20261013-baseline-today-from5.log`, `output/biggest-misses.csv`.
+  2026-10-14: Barwon ALONE is nsw2019's +0.026 from the new-election inputs. Snapshot `20261014-0250-ecc1bb3-from4` gave
+  the Shooters 5e-05 (ll 9.9); `20261014-0448-4e03af5-from1` gave 0 (no allprobs row; floor 13.82), +0.042 over 93
+  seats. The other 92 seats improved, mean ll 0.2160 -> 0.1995 (-0.017).
+
+## sa2018
+
+- **Davenport**, **Adelaide**, **Elder**, **Morphett**, **Hartley** -- **OPEN** (2026-10-14). LNP won each; sa2018's
+  +0.025 from the new-election inputs (40 seats, mean ll 0.3146 -> 0.3393) is spread over these: predicted LNP share
+  fell 0.3 pts on average statewide on top of an existing 1.6-pt LNP under-call, most where IND or GRN rose (Davenport
+  IND +4.3 / LNP -2.8, Adelaide GRN +1.8 / LNP -1.6, Hartley IND +1.9 / LNP -1.5). Which input (salience, census,
+  retirements) is not isolated: a sa2018 screen with salience off waits on memory. Morphett (LNP p 0.06, IND fav 0.75)
+  and Newland/Elder/Colton are LNP under-calls already present before the inputs. Snapshots as nsw2019 above.
+
 ## nsw2023
 
 - **Bankstown** -- **OPEN** (traced 2026-10-10). Dib (ALP) 59.4 actual vs

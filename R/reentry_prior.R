@@ -873,11 +873,25 @@ all_election_pairs <- function() {
     list(election = "fed2019", prev = "fed2016"),
     list(election = "fed2022", prev = "fed2019"),
     list(election = "fed2025", prev = "fed2022"),
+    # vic2010 added 2026-10-13 (coverage program; official VEC 2006 first preferences and
+    # distributions). It becomes training data for every later election's time-forward fits.
+    list(election = "vic2010", prev = "vic2006"),
     list(election = "vic2014", prev = "vic2010"),
     list(election = "vic2018", prev = "vic2014"),
     list(election = "vic2022", prev = "vic2018"),
+    # nsw2011 added 2026-10-13 (previous election nsw2007, same 93 districts).
+    list(election = "nsw2011", prev = "nsw2007"),
+    # nsw2015 added 2026-10-13 (coverage program; previous election nsw2011, notional prior on the 2015 boundaries).
+    list(election = "nsw2015", prev = "nsw2011"),
     list(election = "nsw2019", prev = "nsw2015"),
     list(election = "nsw2023", prev = "nsw2019"),
+    # sa2014 and sa2018 added 2026-10-13 (coverage program; ECSA past-results pages and
+    # Wikipedia for 2018, scripts/build_sa_2010_2014_results.R). Each follows a redistribution
+    # and is scored on its name-matched districts only. They become training data for every
+    # LATER election's time-forward fits, so the pairs dated after 2014-03-15 move.
+    list(election = "sa2010",  prev = "sa2006"),
+    list(election = "sa2014",  prev = "sa2010"),
+    list(election = "sa2018",  prev = "sa2014"),
     # sa2022 added 2026-09-13. Scored by backtest_candidate_sa.R since the
     # candidate-name fix (docs/reviews/sa2022-missing-from-the-model-2026-
     # 09-12.md) but absent from this list -- the fifth place that gap lived.
@@ -889,6 +903,9 @@ all_election_pairs <- function() {
     # (docs/reviews/xgb-primary-circularity-2026-09-13.md).
     list(election = "sa2022",  prev = "sa2018"),
     list(election = "sa2026",  prev = "sa2022"),
+    list(election = "qld2012", prev = "qld2009"),   # added 2026-10-13 (coverage program)
+    list(election = "qld2015", prev = "qld2012"),
+    list(election = "qld2017", prev = "qld2015"),
     list(election = "qld2020", prev = "qld2017"),
     list(election = "qld2024", prev = "qld2020"),
     list(election = "wa2001",  prev = "wa1996"),
@@ -897,7 +914,15 @@ all_election_pairs <- function() {
     list(election = "wa2013",  prev = "wa2008"),
     list(election = "wa2017",  prev = "wa2013"),
     list(election = "wa2021",  prev = "wa2017"),
-    list(election = "wa2025",  prev = "wa2021"))
+    list(election = "wa2025",  prev = "wa2021"),
+    # Northern Territory added 2026-10-13 (scripts/backtest_candidate_nt.R; NTEC
+    # results via scripts/fetch_results_nt.R). Not scored in forecast mode yet --
+    # 2-4 polls per cycle, no fittable trend -- so rebuild_forecasts.sh lists all
+    # three in AUSPOL_SKIP_PAIRS, as it does wa2021. Their candidacies still
+    # enter every later election's time-forward pooled fits from here on.
+    list(election = "nt2016",  prev = "nt2012"),
+    list(election = "nt2020",  prev = "nt2016"),
+    list(election = "nt2024",  prev = "nt2020"))
 }
 
 #' Major-party candidates on the provisional live list, for the majors re-entry carry

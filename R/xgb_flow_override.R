@@ -171,7 +171,7 @@ xgb_flow_conditional_for <- function(target_election, prev_election, region, min
       for (i in seq_len(nrow(st))) if (st$party[i] %in% CLASSES) state_share[[st$party[i]]] <- 100 * st$v[i] / tot
     }
   }
-  region_levels <- c("fed","nsw","qld","sa","vic","wa")
+  region_levels <- c("fed","nsw","nt","qld","sa","vic","wa")   # nt 2026-10-13: a model trained with region_nt and a predictor without it skips silently
 
   out <- list()
   for (k in seq_len(nrow(key_rates))) {
@@ -337,7 +337,7 @@ xgb_flow_conditional_override_for <- function(shares, target_election, prev_elec
   } else {
     key_rates[, `:=`(cond_rate = rate, cond_n = n_cell, pool_rate = rate, pool_n = n_cell)]
   }
-  region_levels <- c("fed","nsw","qld","sa","vic","wa")
+  region_levels <- c("fed","nsw","nt","qld","sa","vic","wa")   # nt 2026-10-13: a model trained with region_nt and a predictor without it skips silently
 
   seats <- rownames(shares)
   if (is.null(seats)) { cat("XF9! shares has no rownames -- cannot build per-seat override\n"); return(NULL) }

@@ -282,17 +282,62 @@ P <- election_data_path()
 #         because both are COMPULSORY preferential -- which is exactly the test
 #         New South Wales fails, where ~12% of ballots exhaust and CLAUDE.md
 #         records pooling Queensland into NSW costing 0.194 of log score.
+#
+# THE 2015 AND 2017 PAIRS (added 2026-10-13) have no published Queensland
+# distribution of preferences before them, so their flows are the nearest
+# EARLIER federal election's event rows (`flow_from`: the structure) with each
+# class's Labor-versus-Coalition split tilted to the PREVIOUS Queensland
+# election's blended estimate (`flow_est_from`, output/flows-state-blend.csv;
+# R/flow_estimate.R). `flow_est_from` must equal the pair's own previous
+# election: the target's row is built from the results being predicted.
+#   2012  prev qld2009. As 2015: optional preferential, 89 districts at both ends (the 2008
+#         redistribution preceded 2009), flows from federal 2010 tilted to the qld2009 estimate.
+#   2015  prev qld2012. Optional preferential, so the estimate's exhaust is
+#         discarded (this harness has no exhaust path) and the conditional
+#         Labor share is used. 89 districts at both ends, no redistribution.
+#   2017  prev qld2015. 89 -> 93 districts after the 2017 redistribution:
+#         the prior is the NOTIONAL result on the 2017 boundaries when
+#         external/elections/notional/qld-2017-from-2015-firstprefs.csv exists
+#         (scripts/build_state_notionals.py), else the seats whose name is in both
+#         years are scored and the rest are LOGGED as unscored (partial_ok).
+# `fa`/`fb`/`win_files` are relative to the election data directory;
+# "../reference/ecq/..." reaches the files built by
+# scripts/build_qld_2012_2015_inputs.R (the 2012 file there files Katter's party
+# under OTH_RIGHT like every other Queensland year; the older file files it as OTH).
 QLD_PAIRS <- list(
+  "2012" = list(to = 2012L, from = 2009L,
+                fa = "ecq-2009-qld-firstprefs.csv",
+                fb = "../reference/ecq/ecq-2012-qld-firstprefs-kapfix.csv",
+                flow_file = "aec-fed-transfers.csv", flow_from = "fed2010",
+                flow_est_from = "qld2009",
+                win_files = "../reference/ecq/ecq-qld-winners-2012-2015.csv",
+                partial_ok = FALSE, asof = "2012-03-24"),
+  "2015" = list(to = 2015L, from = 2012L,
+                fa = "../reference/ecq/ecq-2012-qld-firstprefs-kapfix.csv",
+                fb = "ecq-2015-qld-firstprefs.csv",
+                flow_file = "aec-fed-transfers.csv", flow_from = "fed2013",
+                flow_est_from = "qld2012",
+                win_files = "../reference/ecq/ecq-qld-winners-2012-2015.csv",
+                partial_ok = FALSE, asof = "2015-01-31"),
+  "2017" = list(to = 2017L, from = 2015L,
+                fa = "ecq-2015-qld-firstprefs.csv",
+                fb = "ecq-2017-qld-firstprefs.csv",
+                flow_file = "aec-fed-transfers.csv", flow_from = "fed2016",
+                flow_est_from = "qld2015",
+                win_files = "ecq-2017-qld-winners.csv",
+                partial_ok = TRUE, asof = "2017-11-25"),
   "2020" = list(to = 2020L, from = 2017L,
                 fa = "ecq-2017-qld-firstprefs.csv",
                 fb = "ecq-2020-qld-firstprefs.csv",
                 flow_file = "aec-fed-transfers.csv", flow_from = "fed2019",
-                asof = "2020-10-31"),
+                win_files = "ecq-qld-winners.csv",
+                partial_ok = FALSE, asof = "2020-10-31"),
   "2024" = list(to = 2024L, from = 2020L,
                 fa = "ecq-2020-qld-firstprefs.csv",
                 fb = "ecq-2024-qld-firstprefs.csv",
                 flow_file = "ecq-qld-transfers.csv", flow_from = "qld2020",
-                asof = "2024-10-26"))
+                win_files = "ecq-qld-winners.csv",
+                partial_ok = FALSE, asof = "2024-10-26"))
 .k <- Sys.getenv("AUSPOL_QLD_PAIR", "2024")
 if (!.k %in% names(QLD_PAIRS))
   stop("AUSPOL_QLD_PAIR must be one of ", paste(names(QLD_PAIRS), collapse = ", "),
@@ -318,7 +363,7 @@ if (nzchar(Sys.getenv("AUSPOL_PARTY_COR", ""))) {
               attr(PARTY_COR, "cor_source")))
 }
 
-need <- c(PAIR$fa, PAIR$fb, "ecq-qld-winners.csv", PAIR$flow_file)
+need <- c(PAIR$fa, PAIR$fb, PAIR$win_files, PAIR$flow_file)
 miss <- need[!file.exists(file.path(P, need))]
 if (length(miss)) {
   stop("Missing ", paste(miss, collapse = ", "), ". Run ",
@@ -336,15 +381,26 @@ fb <- fread(file.path(P, PAIR$fb), showProgress = FALSE)
 # and a bare symbol on either side of == binds to the column, which is this
 # repo's most-repeated fault.
 TGT_ <- TGT
-win <- fread(file.path(P, "ecq-qld-winners.csv"),
-             showProgress = FALSE)[election == TGT_, .(seat, winner)]
-if (!nrow(win)) stop("No winners recorded for ", TGT, " in ecq-qld-winners.csv")
+win <- rbindlist(lapply(file.path(P, PAIR$win_files), fread, showProgress = FALSE))[
+  election == TGT_, .(seat, winner)]
+if (!nrow(win)) stop("No winners recorded for ", TGT, " in ", paste(PAIR$win_files, collapse = ", "))
+stopifnot(!anyDuplicated(win$seat))
 FLOW_FROM_ <- FLOW_FROM
 tx <- fread(file.path(P, PAIR$flow_file),
             showProgress = FALSE)[election == FLOW_FROM_]
 # Guard on the row count as well as the id: all() over an empty table is TRUE,
 # which is the guard-that-cannot-fail pattern CLAUDE.md records.
 stopifnot(nrow(tx) > 100L, all(tx$election == FLOW_FROM))
+# Pairs with no Queensland distribution: tilt the earlier federal rows' Labor-versus-
+# Coalition split to the PREVIOUS Queensland election's blended estimate (R/flow_estimate.R).
+if (!is.null(PAIR$flow_est_from)) {
+  # the estimate row must be this pair's own previous election -- never the target's
+  stopifnot(identical(PAIR$flow_est_from, PRV))
+  EST_FLOW <- state_blend_flows(PAIR$flow_est_from, target = TGT)
+  cat(sprintf("BQ1f flows: %s event rows tilted to the %s blended estimate (%d classes)\n",
+              FLOW_FROM, PAIR$flow_est_from, nrow(EST_FLOW)))
+  tx <- flows_tilt_to_estimate(tx, EST_FLOW, code = "BQ1f")
+}
 # NEITHER PAIR POOLS. For the 2024 pair tx already IS Queensland's own
 # transfers, and AUSPOL_QLD_FLOWS=1 (published) would pool qld2020 into itself.
 # For the 2020 pair tx is federal 2019 and pooling would draw qld2020 in --
@@ -455,7 +511,7 @@ if (.cond && !is.null(.returns))
     # is real -- the member/also-ran gap is positive in 18 of 18 folds -- but three
     # of those four numbers were wrong, and ONP's was the also-ran slope written
     # into the member row over ZERO member observations.
-    .mpf <- "output/mp-slope-by-target.csv"
+    .mpf <- Sys.getenv("AUSPOL_MP_SLOPE_FILE", "output/mp-slope-by-target.csv")
     if (!file.exists(.mpf))
       stop("AUSPOL_MP_SLOPE=1 needs ", .mpf, " -- run scripts/fit_mp_slope.R")
     .mpt <- data.table::fread(.mpf, showProgress = FALSE)
@@ -773,12 +829,20 @@ if (ELASTIC > 0 && any(pinned)) {
 keep <- intersect(rownames(shares), win$seat)
 shares <- shares[keep, , drop = FALSE]
 truth <- setNames(win$winner, win$seat)[keep]
-N_DISTRICTS <- 93L   # Queensland's Legislative Assembly, unchanged 2017 -> 2024
+# Per pair: the districts the TARGET election was fought in (89 until 2015, 93 from 2017).
+N_DISTRICTS <- nrow(win)
 if (length(keep) != N_DISTRICTS) {
-  stop("Only ", length(keep), " of ", N_DISTRICTS, " districts matched between the ", FROM, " first ",
-       "preferences and the 2024 winners. ",
-       "Unmatched: ",
-       paste(setdiff(win$seat, rownames(shares)), collapse = ", "))
+  .unmatched <- setdiff(win$seat, rownames(shares))
+  if (!isTRUE(PAIR$partial_ok)) {
+    stop("Only ", length(keep), " of ", N_DISTRICTS, " districts matched between the ", FROM, " first ",
+         "preferences and the ", TO, " winners. Unmatched: ", paste(.unmatched, collapse = ", "))
+  }
+  # Redistribution pair with no notional prior: score the districts present at both ends and SAY
+  # what was left out (the Victorian harness's rule), so a smaller scored set is never silent.
+  cat(sprintf("BQ1x! %s -> %s: %d of %d %s districts scored (prior has no row for: %s)\n",
+              PRV, TGT, length(keep), N_DISTRICTS, TO, paste(.unmatched, collapse = ", ")))
+} else if (isTRUE(PAIR$partial_ok)) {
+  cat(sprintf("BQ1x  %s -> %s: all %d %s districts scored\n", PRV, TGT, N_DISTRICTS, TO))
 }
 
 # ---- seat-swing port, third testable election ------------------------------
@@ -1074,7 +1138,7 @@ if (identical(Sys.getenv("AUSPOL_XGB_SURGE", "0"), "1")) {
 .bo <- breakout_mix_args(TGT, shares)
 .imx <- ind_mixture_surge(TGT, rownames(shares), surge_arg, surge_mu_arg, surge_sd_arg, surge_party_arg, code = "BQ1N")
 surge_arg <- .imx$surge_h; surge_mu_arg <- .imx$surge_mu; surge_sd_arg <- .imx$surge_sd; surge_party_arg <- .imx$surge_party
-sim <- simulate_seat_contests(level_sd = .level_sd, sd_override = SD_OVR, level_mult = .lm(shares), shares, fm, party_sd = psd, seat_sd = sp$sd_within * SEAT_SD_MULT,
+sim <- simulate_seat_contests(level_sd = .level_sd, sd_override = size_sd_apply(SD_OVR, shares, TGT, .level_sd, .lm(shares)), level_mult = .lm(shares), shares, fm, party_sd = psd, seat_sd = sp$sd_within * SEAT_SD_MULT,
                               breakout_p = .bo$p, breakout_q = .bo$q,
                               n_sims = N_SIMS, smooth = SMOOTH, seed = SEED,
                               shrink = SHRINK, party_cor = PARTY_COR, conditional_override = .htv_ov, conditional_override_sd = attr(.htv_ov, "sd"),

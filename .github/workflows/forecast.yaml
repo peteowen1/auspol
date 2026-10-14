@@ -194,6 +194,9 @@ jobs:
           # AUSPOL_DEPARTED_SUCCESSOR (published "1"): fit_seats_full.R stops without the rate
           # table, and running with the switch off would trip its published-filename guard,
           # so a missing table fails here, loudly, and yesterday's forecast stays live.
+          # AUSPOL_SIZE_SD (published "1" since 2026-10-14, R/size_sd.R): fit_seats_full.R stops without this table,
+          # so a missing file fails here, loudly, and yesterday's forecast stays live.
+          gh release download shipped-models -p spread-by-size.csv -D output --clobber || { echo "::error::shipped-models has no spread-by-size.csv -- publish the rebuild (stage 9) before this runs"; exit 1; }
           gh release download shipped-models -p departed-successor-rates.csv -D output --clobber || { echo "::error::shipped-models has no departed-successor-rates.csv -- promote_rebuild.R uploads it at stage 9; publish the rebuild before this runs"; exit 1; }
           gh release download shipped-models -p endorsement-features.csv -D output --clobber || echo "::warning::shipped-models has no endorsement-features.csv -- a model trained with AUSPOL_XGB_ENDORSE=1 gets all-zero endorsement features"
           # AUSPOL_LEVEL_RECENT (published "1", R/level_recent.R): the blend constant is fitted on this table.
@@ -224,6 +227,20 @@ jobs:
           else
             echo "::warning::live poll pages not refreshed -- the forecast reads the published poll table (as of the last publish) plus AE's file"
             tail -n 20 "$LT/fetch.log" "$LT/merge.log" 2>/dev/null || true
+          fi
+          # The Poll Bludger's poll tables (AUSPOL_POLL_BT, 2026-10-13): the published table is required (load_polls()
+          # stops without it); the two live cycles are then refetched and swapped in, fed2025 kept from the release.
+          gh release download shipped-models -p bludgertrack_polls.csv -p pb_llm_polls.csv -D output/polls-wiki --clobber || { echo "::error::shipped-models has no bludgertrack_polls.csv / pb_llm_polls.csv -- publish the rebuild (stage 9) before this runs"; exit 1; }
+          test -s output/polls-wiki/bludgertrack_polls.csv && test -s output/polls-wiki/pb_llm_polls.csv || { echo "::error::a Poll Bludger table downloaded empty"; exit 1; }
+          BT=""
+          if BT=$(mktemp -d) && AUSPOL_BT_RAW="$BT" AUSPOL_BT_OUT="$BT/bludgertrack_polls.csv" Rscript scripts/build_bludgertrack_polls.R --fetch=fed2028,vic2026 --keep=output/polls-wiki/bludgertrack_polls.csv > "$BT/build.log" 2>&1 \
+             && test -s "$BT/bludgertrack_polls.csv"; then
+            mv "$BT/bludgertrack_polls.csv" output/polls-wiki/bludgertrack_polls.csv
+            grep -E "^BK" "$BT/build.log" || true
+            if grep -q "^BK2!" "$BT/build.log"; then echo "::warning::$(grep '^BK2!' "$BT/build.log" | head -1)"; fi
+          else
+            echo "::warning::BludgerTrack tables not refreshed -- the forecast reads the published table (as of the last publish)"
+            tail -n 20 "$BT/build.log" 2>/dev/null || true
           fi
           # Daily leader refresh: rebuild the live pages' leader rows from the fetch above; every other election
           # keeps the published rows. Display only, so never fatal: on any failure the pages use the published
@@ -530,6 +547,24 @@ jobs:
           done
           # The forecast is out; now raise the alarm if the chart was not (R2 still holds the previous day's).
           if [ -f output/.nsw-trend-failed ]; then echo "::error::NSW poll-trend page data failed; the page shows the previous chart"; exit 1; fi
+      - name: Keep a dated copy of the NSW 2027 forecast on R2 (as-at history)
+        # Same script and rules as the Victorian step above, ELECTION=nsw2027:
+        # auspol/history/forecast-nsw2027-<date>.json, nsw2027-page-data-<date>.json,
+        # index-nsw2027.json. After the live NSW files are published; non-fatal.
+        if: success() && vars.AUSPOL_PUBLISH_NSW2027 == '1'
+        continue-on-error: true
+        shell: bash
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_R2_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          ELECTION: nsw2027
+        run: |
+          if [ -z "$CLOUDFLARE_API_TOKEN" ] || [ -z "$CLOUDFLARE_ACCOUNT_ID" ]; then
+            echo "::warning::R2 secrets not set -- NSW forecast history skipped"
+            exit 0
+          fi
+          command -v wrangler >/dev/null || npm install -g wrangler@4.135.0 >/dev/null 2>&1
+          bash scripts/publish_forecast_history.sh || { echo "::warning::NSW forecast history step failed; the live forecast is unaffected"; exit 1; }
       - name: Upload outputs
         if: always()
         uses: actions/upload-artifact@v4

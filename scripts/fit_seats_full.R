@@ -1724,7 +1724,7 @@ if (identical(Sys.getenv("AUSPOL_XGB_FLOWS", "1"), "1")) {
 # BREAKOUT MIXTURE (AUSPOL_BREAKOUT_MIX, R/breakout_mix.R): NULLs when off.
 # Live, the classifier reads the feature rows xgb_primary_predict_live() built.
 .bo <- breakout_mix_args(TGT, shares)
-sim <- simulate_seat_contests(level_sd = .level_sd, level_mult = .lm(shares), shares, fm, party_sd = psd, seat_sd = SEAT_SD, shrink = SHRINK,
+sim <- simulate_seat_contests(level_sd = .level_sd, sd_override = size_sd_apply(NULL, shares, TGT, .level_sd, .lm(shares), prev = PREV), level_mult = .lm(shares), shares, fm, party_sd = psd, seat_sd = SEAT_SD, shrink = SHRINK,
                               breakout_p = .bo$p, breakout_q = .bo$q,
                               n_sims = N_SIMS, smooth = SMOOTH, seed = SEED,
                               conditional_override = .htv_ov, conditional_override_sd = attr(.htv_ov, "sd"),

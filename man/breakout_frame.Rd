@@ -20,7 +20,7 @@ A data.table.
 }
 \description{
 One row per (election, seat, class) for every election with an as-at
-primary forecast, with the classifier's 47 time-forward-safe features, the
+primary forecast, with the classifier's 48 time-forward-safe features, the
 outcome \code{y} (actual primary at least 20) and whether the class actually
 stood (\code{named}: a candidacy exists). Every input is pre-election
 information except \code{actual_share} / \code{y}, which are the label.

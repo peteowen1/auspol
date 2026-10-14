@@ -69,6 +69,10 @@ classify_party <- function(name, code = NULL) {
   # opposite sides of politics under one acronym. So this matches on the name,
   # and it must come BEFORE the "labor" rule below, which would otherwise be
   # reached first by nothing here but would be by a future variant.
+  # "1 Territory Party" (NT 2016) is a minor right party formed by ex-CLP
+  # members, not the CLP: without this line the "territory party" rule below
+  # files it as the Coalition. Added 2026-10-13 with the NT pairs.
+  set(grepl("^1 territory|one territory", n), "OTH_RIGHT")
   set(grepl("country liberal", n), "LNP")
   set(n %in% c("nt clp", "c.l.p.", "clp"), "LNP")
   # AND THE SPELLINGS THE AEC ACTUALLY USED. The list above is an EXACT match,

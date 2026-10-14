@@ -142,6 +142,14 @@ for (sw in names(COMMENT_ONLY)) {
 # row; update this when a gap is fixed or a new one is found by rerunning
 # this script and diffing its output.
 CLASSIFY <- list(
+  AUSPOL_SIZE_SD = paste(
+    "SHIPPED 2026-10-14 (1), wired EVERYWHERE through R/size_sd.R: all seven harnesses and fit_seats_full.R pass",
+    "sd_override = size_sd_apply(...) to simulate_seat_contests(), which reads the switch inside R/. The 'NO' cells",
+    "are this generator only grepping the harness files. reviews/seat-size-spread-2026-10-14.md"),
+  AUSPOL_DEFECT_SIZE = paste(
+    "OFF, REFUSED 2026-10-14 (nt2016 +0.19 on screen). Read inside R/candidate_returns.R (fit_defector_discount()",
+    "and personal_prior_vote()), so it reaches every harness's base_pred when on; 'NO' in the harness columns is",
+    "the grep, not a gap. reviews/defector-overcarry-2026-10-14.md"),
   AUSPOL_NOTIONAL = paste(
     "SHIPPED (2) and FEDERAL-BACKTEST-ONLY by design: the redistribution-adjusted (notional) prior only exists",
     "where build_notional_baselines.R has a table (federal). State harnesses have no notional table to read, so",
@@ -374,6 +382,15 @@ CLASSIFY <- list(
   AUSPOL_TREND_SZC = "REFUSED ARM 2026-10-12, same prereg (T3), off at \"polls\". Read inside R/trend.R, so it reaches every trend fit -- universal in practice.",
   AUSPOL_LEVEL_FED_R = "SHIPPED 0.15 2026-10-12 (Pete; plans/prereg-federal-breakdowns-in-blend-2026-10-12.md). Read inside R/level_recent.R, which every harness and fit_seats_full.R reach through the level blend -- universal in practice.",
   AUSPOL_LEVEL_FED_GAP_HL = "Same prereg; only read when AUSPOL_LEVEL_FED_R > 0. Read inside R/level_recent.R -- universal in practice.",
+  AUSPOL_POLL_SOURCE = "SHIPPED layered 2026-10-13 (Pete; plans/prereg-own-poll-source-step2-2026-10-12.md). Read inside load_polls() (R/load_polls.R), which every harness and fit_seats_full.R call -- universal in practice.",
+  AUSPOL_POLL_BT = "2026-10-13 (Pete: go): BludgerTrack poll tables join the layered source. Read inside poll_layer() (R/poll_source.R) via load_polls() -- universal in practice.",
+  AUSPOL_POLL_ARCHIVE = "2026-10-14 (not shipped): pollster-archive polls (Morgan, Newspoll; fed 2004-2007) join the layered source. Read inside poll_layer() (R/poll_source.R) via load_polls() -- universal in practice.",
+  AUSPOL_TRAIN_SKIP_PAIRS = "2026-10-13 (Pete): pairs scored but kept out of the vote-share models' training rows; read by fit_xgb_primary_asat.R and fit_xgb_primary_v6_final.R (rebuild stages 4 and 5), not by the harnesses or fit_seats_full.R directly. Published vic2010.",
+  AUSPOL_CENSUS_FILE = "DIAGNOSTIC 2026-10-13: alternative census-features table via census_features_path() (R/demographic_residual.R), read by every demographic correction -- universal in practice; published empty.",
+  AUSPOL_MP_SLOPE_FILE = "DIAGNOSTIC 2026-10-13: path of the sitting-member slope table; read in all six harnesses (published default output/mp-slope-by-target.csv).",
+  AUSPOL_LEADERS_SUPPLEMENT = "DIAGNOSTIC 2026-10-13: 0 drops leaders-supplement.csv in read_leaders() (R/leader_seat.R) -- universal in practice; published 1.",
+  AUSPOL_HTV_EXCLUDE = "DIAGNOSTIC 2026-10-13: leaves named transfer files out of the how-to-vote fit (R/htv_flow.R) to attribute a new file's effect; published empty. Read inside R/ via htv_flow_override() -- universal in practice.",
+  AUSPOL_POLL_PB = "2026-10-13 (Pete: go): Poll Bludger posts (model-read, stated figures) replace AE's numbers where they agree. Read inside poll_layer() (R/poll_source.R) via load_polls() -- universal in practice.",
   AUSPOL_FLOW_TF = "SHIPPED \"1\" 2026-10-12 (Pete). Read inside R/xgb_flow_override.R (every harness and fit_seats_full.R reach it through the flow override); validated at startup by validate_flow_arm() in published_flags.R.",
   AUSPOL_FLOW_RATE_HL = "SHIPPED \"2\" 2026-10-12 with AUSPOL_FLOW_TF. Read inside R/xgb_flow_override.R; must equal the tagged models' trained half-life.",
   AUSPOL_REENTRY_SPLIT = "Read inside R/reentry_prior.R, not per-harness -- universal in practice (added to published_flags.R 2026-10-08 at its code default).",
@@ -473,6 +490,10 @@ CLASSIFY <- list(
   AUSPOL_DEFECT_BY_LEVEL = paste(
     "SHIPPED 2026-10-05 (mode 2: federal targets get their own shrunk sitting-member defector carry). Read inside",
     "R/candidate_returns.R (line ~1240), so every harness and fit_seats_full.R get it through that function; the grep cannot see it."),
+  AUSPOL_POOL_BY_JURISDICTION = paste(
+    "BUILT 2026-10-13, OFF, not measured across all pairs (docs/reviews/pooled-fits-inventory-2026-10-13.md). Gate is",
+    "pool_by_jurisdiction_on() in R/pool_hierarchical.R, called from fit_defector_discount(), fit_minor_defector_discount() and",
+    "fit_sitting_minor_level() in R/candidate_returns.R, so it reaches every harness and fit_seats_full.R; not a gap."),
   AUSPOL_DEFECTOR_STATE = paste(
     "PREREG PENDING, OFF (built 2026-10-06; docs/reviews/state-defectors-2026-10-06.md). Gate is .defstate_on() in R/defector_state.R,",
     "called from R/candidate_returns.R, so it would reach every harness and fit_seats_full.R if turned on; not a gap."),
