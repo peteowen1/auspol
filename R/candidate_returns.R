@@ -560,6 +560,7 @@ personal_prior_vote <- function(election_from, election_to, corpus = NULL,
     if (!is.null(.fd) && !is.null(.fd$discount_loser) && is.finite(.fd$discount_loser)) {
       loser_discount <- .fd$discount_loser
       if (!is.null(.fd$discount_mp) && is.finite(.fd$discount_mp)) major_discount <- .fd$discount_mp
+      .size_fit <- .fd$size
       cat(sprintf("DF2  two-rate defector: member %.3f, loser %.3f
 ",
                   major_discount, loser_discount))
@@ -876,6 +877,25 @@ personal_prior_vote <- function(election_from, election_to, corpus = NULL,
       if (!is.null(loser_discount) && is.finite(loser_discount) && "def_was_mp" %in% names(out)) {
         out[def_was_mp %in% FALSE, .rate := loser_discount]
       }
+      # AUSPOL_DEFECT_SIZE: a sitting member's rate scaled by electorate size (slope fitted and shrunk in
+      # .defect_size_slope()); capped at 1 so no member carries more than they had. Off: nothing changes.
+      .sf <- if (exists(".size_fit", inherits = FALSE)) .size_fit else NULL
+      if (.defect_size_on() && !is.null(.sf) && is.finite(.sf$slope) && .sf$slope != 0 && is.finite(.sf$center)) {
+        .fm_now <- PREVT[, list(.formal = if ("votes" %in% names(PREVT)) sum(as.numeric(votes), na.rm = TRUE) else NA_real_), by = .s]
+        out <- merge(out, .fm_now, by = ".s", all.x = TRUE)
+        .hit <- which(out$def_was_mp %in% TRUE & is.finite(out$.formal) & out$.formal > 0)
+        if (length(.hit)) {
+          .r0 <- out$.rate[.hit]
+          .r1 <- pmin(1, .r0 * exp(.sf$slope * (log(out$.formal[.hit]) - .sf$center)))
+          data.table::set(out, i = .hit, j = ".rate", value = .r1)
+          # report only the cells the rate reaches (a non-major cell with no own record of its own, below);
+          # def_was_mp is also TRUE on every returning major-party member, whose rate is never used
+          .dd <- unique(out[.hit][!is.na(def_pcv) & !party %in% MAJ & is.na(own_prev_pcv)], by = ".s")
+          cat(sprintf("DSZ2 %s -> %s: sitting-member carry scaled by size in %d seat(s): %s\n", election_from, election_to,
+                      nrow(.dd), paste(sprintf("%s %.0f votes %.3f", .dd$.s, .dd$.formal, .dd$.rate), collapse = ", ")))
+        }
+        out[, .formal := NULL]
+      }
       # `transfer` HERE IS THE DISCOUNTED AMOUNT by default, and a few lines
       # up the minor-to-minor path deliberately uses the UNDISCOUNTED one.
       #
@@ -1188,8 +1208,11 @@ fit_defector_discount <- function(target_election, corpus = NULL, min_n = 5L, pa
     a <- PREVT[nzchar(.k) & party %in% MAJ & (pooled | elected %in% TRUE) & pcv >= min_prior,
                .(.s, .s_renamed, .k, prior_pcv = pcv, was_mp = elected %in% TRUE)][
                  , .SD[which.max(prior_pcv)], by = .(.s, .k)]
-    a <- unique(rbind(a[, .(.s, .k, prior_pcv, was_mp)],
-                      a[, .(.s = .s_renamed, .k, prior_pcv, was_mp)]))
+    # electorate size (formal votes in the old seat at the previous election), for AUSPOL_DEFECT_SIZE
+    .fm <- PREVT[, list(formal = if ("votes" %in% names(PREVT)) sum(as.numeric(votes), na.rm = TRUE) else NA_real_), by = .s]
+    a <- merge(a, .fm, by = ".s", all.x = TRUE)
+    a <- unique(rbind(a[, .(.s, .k, prior_pcv, was_mp, formal)],
+                      a[, .(.s = .s_renamed, .k, prior_pcv, was_mp, formal)]))
     b <- NOWT[nzchar(.k) & !party %in% MAJ, .(.s, .k, target_pcv = pcv)][
       , .SD[which.max(target_pcv)], by = .(.s, .k)]
     m <- merge(a, b, by = c(".s", ".k"))
@@ -1197,10 +1220,10 @@ fit_defector_discount <- function(target_election, corpus = NULL, min_n = 5L, pa
       # AUSPOL_DEFECTOR_STATE: the same person in a DIFFERENT seat of the same jurisdiction is a
       # case too (Bowler, D'Orazio), under the same guards the application uses.
       xs <- .defector_cross_seat_cases(PREVT, NOWT, pr$election, pooled, MAJ, min_prior)
-      if (nrow(xs)) m <- rbind(m, xs[, list(.s = .s_new, .k, prior_pcv, was_mp, target_pcv)], fill = TRUE)
+      if (nrow(xs)) m <- rbind(m, xs[, list(.s = .s_new, .k, prior_pcv, was_mp, target_pcv, formal = NA_real_)], fill = TRUE)
     }
     if (!nrow(m)) return(NULL)
-    m[, .(pair = pr$election, ratio = target_pcv / prior_pcv, was_mp,
+    m[, .(pair = pr$election, ratio = target_pcv / prior_pcv, was_mp, formal,
           level = if (startsWith(pr$election, "fed")) "fed" else "state")]
   }), fill = TRUE)
 
@@ -1216,6 +1239,7 @@ fit_defector_discount <- function(target_election, corpus = NULL, min_n = 5L, pa
     return(list(discount = NULL, discount_mp = NULL, discount_loser = NULL,
                 n = if (is.null(ratios)) 0L else nrow(ratios), cases = ratios))
   }
+  .size <- .defect_size_slope(ratios, target_election)
   # TWO-RATE MODE (AUSPOL_DEFECT_POOLED=2),
   # docs/plans/prereg-defector-two-rate-2026-09-09.md. `discount` stays the
   # rate for prior sitting members; `discount_loser` is the losing group's own
@@ -1278,7 +1302,7 @@ fit_defector_discount <- function(target_election, corpus = NULL, min_n = 5L, pa
                 discount_mp    = if (is.finite(p_mp$estimate)) p_mp$estimate else mp,
                 discount_loser = if (is.finite(p_lo$estimate)) p_lo$estimate else disc_loser,
                 n = nrow(ratios), cases = ratios, by_level = NULL,
-                by_jurisdiction = list(mp = p_mp, loser = p_lo, all = p_all)))
+                by_jurisdiction = list(mp = p_mp, loser = p_lo, all = p_all), size = .size))
   }
   if (!.dstate && .dbl %in% c("1", "2")) {
     R <- ratios[was_mp %in% TRUE & is.finite(ratio)]
@@ -1302,12 +1326,42 @@ fit_defector_discount <- function(target_election, corpus = NULL, min_n = 5L, pa
     if (!is.finite(mp)) { mp <- stats::median(ratios$ratio[is.finite(ratios$ratio)])
       cat(sprintf("DFS1! %s: no sitting-member case; all-case median %.3f used for members\n", target_election, mp)) }
     return(list(discount = med(ratios$ratio), discount_mp = mp, discount_loser = disc_loser,
-                n = nrow(ratios), cases = ratios, by_level = NULL, defector_state = dst))
+                n = nrow(ratios), cases = ratios, by_level = NULL, defector_state = dst, size = .size))
   }
   list(discount       = med(ratios$ratio),
        discount_mp    = mp,
        discount_loser = med(ratios$ratio[ratios$was_mp %in% FALSE]),
-       n = nrow(ratios), cases = ratios, by_level = by_level)
+       n = nrow(ratios), cases = ratios, by_level = by_level, size = .size)
+}
+
+# AUSPOL_DEFECT_SIZE (default "0" = off; docs/reviews/defector-overcarry-2026-10-14.md): a sitting member's
+# carry falls with electorate size. Fitted on the EARLIER sitting-member cases in `ratios` (already
+# time-forward): log(retention) ~ log(formal votes in the old seat), centred on the cases' median log size.
+# Shrunk toward a flat rate (slope 0) by positive-part James-Stein, w = max(0, 1 - se^2 / b^2): a slope
+# no bigger than its own standard error contributes nothing, a well-measured one almost all of itself.
+# Fewer than 4 usable cases gives slope 0 (the flat rate) rather than a fit on noise.
+#' @noRd
+.defect_size_on <- function() identical(Sys.getenv("AUSPOL_DEFECT_SIZE", "0"), "1")
+#' @noRd
+.defect_size_slope <- function(ratios, target_election) {
+  none <- list(slope = 0, center = NA_real_, raw = NA_real_, se = NA_real_, w = 0, n = 0L)
+  if (!.defect_size_on()) return(none)
+  if (is.null(ratios) || !"formal" %in% names(ratios)) {
+    cat(sprintf("DSZ1! %s: no case table with electorate size; flat carry kept\n", target_election)); return(none) }
+  R <- ratios[ratios$was_mp %in% TRUE & is.finite(ratios$ratio) & ratios$ratio > 0 &
+                is.finite(ratios$formal) & ratios$formal > 0]
+  if (nrow(R) < 4L) {
+    cat(sprintf("DSZ1! %s: %d earlier sitting-member case(s) with a size; flat carry kept\n", target_election, nrow(R)))
+    return(modifyList(none, list(n = nrow(R))))
+  }
+  ctr <- stats::median(log(R$formal))
+  x <- log(R$formal) - ctr; y <- log(R$ratio)
+  f <- stats::lm(y ~ x)
+  b <- unname(stats::coef(f)[2]); se <- unname(sqrt(diag(stats::vcov(f)))[2])
+  w <- if (is.finite(b) && is.finite(se) && b != 0) max(0, 1 - se^2 / b^2) else 0
+  cat(sprintf("DSZ1 %s: carry-vs-size slope %.3f (se %.3f, n=%d) shrunk x%.2f -> %.3f per log formal vote; centre %.0f formal votes\n",
+              target_election, b, se, nrow(R), w, w * b, exp(ctr)))
+  list(slope = w * b, center = ctr, raw = b, se = se, w = w, n = nrow(R))
 }
 
 #' The vote share a sitting non-major member typically holds at their next election
