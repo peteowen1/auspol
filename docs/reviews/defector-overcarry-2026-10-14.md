@@ -88,3 +88,24 @@ slope. What it was not given: any NT case before nt2016 (none exist), and a mode
 defector's vote. That second point is the more promising lead: in nt2016 the defector and the old party together
 polled MORE than the old party's previous share in four of five seats, so a "carry" taken out of the old party is the
 wrong shape there. Switch stays in the code, off.
+
+## Part 4: does the old party keep more? Mostly no: the miss is the SPLIT (2026-10-14, `scripts/diag_defector_oldparty.R`)
+
+Combined = (defector now + old party now) / defector's previous share; above 1 means the pair grew.
+
+| slice | n | actual combined (median) | predicted combined (median) | old-party over-call mean (SE) |
+|---|---|---|---|---|
+| all | 52 | 1.18 (above 1 in 43) | 1.16 | -1.4 (1.3) |
+| sitting members | 34 | 1.12 | 1.08 | -1.8 (1.6) |
+| federal | 6 | 1.08 | 1.08 | -7.3 (4.6) |
+| NT | 8 | 1.16 | 1.02 | +4.5 (2.7) |
+| SA | 9 | 1.33 | 1.05 | -0.9 (2.3) |
+
+- **The model already gets the pair's TOTAL right** (median 1.16 predicted vs 1.18 actual). The NT 2016 pattern
+  (pair grew, old party kept far more) does not generalise beyond NT and SA.
+- **The error is who gets the vote, not how much there is.** Defector and old-party over-calls correlate -0.75
+  (n=52); each has sd ~10 points, their sum sd 7.2. When we over-call a defector we under-call their old party by
+  nearly the same amount (Ryan +23.6 / -28.6, Hillarys +7.3 / -17.1, Kiama -12.4 / +14.7).
+- So a "don't subtract the carry" switch would fix the total where it is already right. **Not built.** The split is
+  person-level, and the one candidate explanation left is why the member left (part 2), which needs hand-coding
+  from pre-election sources. That is Pete's call.
