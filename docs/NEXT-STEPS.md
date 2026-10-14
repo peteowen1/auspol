@@ -29,6 +29,9 @@ nt2016/2020/2024 new). AEF-7 seat log loss 0.2657 (published) vs AEF 0.2825. Tas
 - OPEN daily run of 14 Oct: not fired by 10:00 AEDT (GitHub schedule lands 3-6 h late); check it ran on the new release.
 - OPEN sa2018 +0.025 from the new inputs: LNP -0.3 pts broadly where IND/GRN rose; which input not isolated (screen
   sa2018 with salience off). nsw2019's +0.026 is Barwon alone (SEAT-REGISTRY).
+- OPEN `AUSPOL_DEFECT_SIZE` arm (built off, 6f08b74): defector carry falls with electorate size. Over-call vs size
+  rho +0.37 (p 0.007, n=52; reviews/defector-overcarry-2026-10-14.md). Screen on the 19 elections with a
+  sitting-member defector, then walk the rows with Pete before any ship.
 - OPEN wa2017 +0.079 and wa2013 +0.040 after the 35-election merge (WA defector carry; WA's own earlier cases carry
   0.693). Trace seat by seat with `scripts/biggest_misses.R --pairs=wa2017,wa2013`.
 - OPEN NT seat layer weak even on the true statewide (log loss 0.82-1.55); new parties start at zero share.
