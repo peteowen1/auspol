@@ -288,6 +288,8 @@ if at_least 7; then run_stage7
       if [ "$rc" -eq 3 ]; then echo "!! SPZ2! spread table moved again after the rerun -- the fit is not share-only; nothing published"; exit 1; fi
       if [ "$rc" -ne 0 ]; then echo "!! compare_spread_tables.R failed -- see $LOG/s7_spread_compare2.log"; exit 1; fi
     elif [ "$rc" -ne 0 ]; then echo "!! compare_spread_tables.R failed -- see $LOG/s7_spread_compare.log"; exit 1; fi
+  else
+    echo "   SPZ2  spread-table comparison skipped: stage 6 did not run in this invocation (AUSPOL_REBUILD_FROM=$FROM)"
   fi
 fi
 if at_least 8; then stage "8-ledger";              Rscript scripts/build_aef_comparison.R  > "$LOG/s8_comp.log" 2>&1   # aef-comparison-full.csv, the ledger's seat-probability input -- was missing from the first draft, so the ledger's log loss came out identical to the run before (2026-09-18)
