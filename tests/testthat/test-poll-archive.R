@@ -1,6 +1,6 @@
-test_that("AUSPOL_POLL_ARCHIVE defaults off and rejects junk", {
-  withr::with_envvar(c(AUSPOL_POLL_ARCHIVE = NA), expect_false(poll_archive_on()))
-  withr::with_envvar(c(AUSPOL_POLL_ARCHIVE = "1"), expect_true(poll_archive_on()))
+test_that("AUSPOL_POLL_ARCHIVE defaults on (shipped 2026-10-14), turns off, and rejects junk", {
+  withr::with_envvar(c(AUSPOL_POLL_ARCHIVE = NA), expect_true(poll_archive_on()))
+  withr::with_envvar(c(AUSPOL_POLL_ARCHIVE = "0"), expect_false(poll_archive_on()))
   withr::with_envvar(c(AUSPOL_POLL_ARCHIVE = "yes"), expect_error(poll_archive_on(), "must be"))
 })
 

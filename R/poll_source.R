@@ -376,11 +376,11 @@ poll_pb_combined_on <- function() {
   list(ae = ae, log = n0)
 }
 
-#' Whether pollsters' own archived tables join the layered source (AUSPOL_POLL_ARCHIVE, default "0")
+#' Whether pollsters' own archived tables join the layered source (AUSPOL_POLL_ARCHIVE, default "1", shipped 2026-10-14)
 #' @return logical.
 #' @export
 poll_archive_on <- function() {
-  v <- Sys.getenv("AUSPOL_POLL_ARCHIVE", "0")
+  v <- Sys.getenv("AUSPOL_POLL_ARCHIVE", "1")
   if (!v %in% c("0", "1")) stop("AUSPOL_POLL_ARCHIVE must be \"0\" or \"1\", not ", v)
   identical(v, "1")
 }

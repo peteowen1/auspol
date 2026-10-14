@@ -2,7 +2,7 @@
 % Please edit documentation in R/poll_source.R
 \name{poll_archive_on}
 \alias{poll_archive_on}
-\title{Whether pollsters' own archived tables join the layered source (AUSPOL_POLL_ARCHIVE, default "0")}
+\title{Whether pollsters' own archived tables join the layered source (AUSPOL_POLL_ARCHIVE, default "1", shipped 2026-10-14)}
 \usage{
 poll_archive_on()
 }
@@ -10,5 +10,5 @@ poll_archive_on()
 logical.
 }
 \description{
-Whether pollsters' own archived tables join the layered source (AUSPOL_POLL_ARCHIVE, default "0")
+Whether pollsters' own archived tables join the layered source (AUSPOL_POLL_ARCHIVE, default "1", shipped 2026-10-14)
 }

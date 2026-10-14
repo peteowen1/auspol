@@ -1,4 +1,4 @@
-# Seat-size spread (AUSPOL_SIZE_SD, default "0" = off). 2026-10-14: the published path's share errors are
+# Seat-size spread (AUSPOL_SIZE_SD, default "1" = shipped 2026-10-14; "0" = off). 2026-10-14: the published path's share errors are
 # about twice the simulation's own per-cell sd in seats under 15,000 formal votes and about right above
 # 40,000 (scripts/diag_spread_by_size.R), so small-seat favourites are called far too confidently (NT:
 # favourites stated 0.945 won 8 of 19). The widening factor is fitted time-forward per target by
@@ -6,7 +6,7 @@
 # into the sd override with combine_sd_override()'s pmax).
 
 #' @noRd
-size_sd_on <- function() identical(Sys.getenv("AUSPOL_SIZE_SD", "0"), "1")
+size_sd_on <- function() identical(Sys.getenv("AUSPOL_SIZE_SD", "1"), "1")
 
 #' Widen the per-cell sd of small seats (AUSPOL_SIZE_SD)
 #'
