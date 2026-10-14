@@ -4,6 +4,7 @@ One line each: the decision, the one fact behind it, a link. Newest first.
 Created 2026-09-19 (the verse convention; auspol had none). Older decisions
 live in the plans they came from (`docs/plans/prereg-*.md` RESULT sections).
 
+- **2026-10-14 Defector carry line closed (Pete chose to code exit reasons).** No overall bias across 52 cases; `AUSPOL_DEFECT_SIZE` built off and refused on screen; exit reason (scandal vs principled) does not separate the miss. [review](reviews/defector-overcarry-2026-10-14.md)
 - **2026-10-14 Both leak fixes SHIPPED (Pete).** fit_minor_defector_conserve() and the MP slopes are time-forward (slopes shrunk to a structural prior); 35-election screen: seat log loss 0.3262 -> 0.3264 (noise), share squared error +3% beyond 2 SE = the leak removed. Rebuild stage 0 now refits the slope table (c5f76ac).
 - **2026-10-13 Jurisdiction-level pooling built, kept OFF.** `AUSPOL_POOL_BY_JURISDICTION`: between-jurisdiction variance estimates at ~0, wa2017 0.3976 -> 0.3968, and it raises the federal defector carry (fed2025 0.181 -> 0.283). NT was not what raised wa2017 (NT median 0.566 < WA 0.693) (`reviews/pooled-fits-inventory-2026-10-13.md`).
 - **2026-10-13 New elections join the scoreboard AND the pooled fits (Pete: "more signal is better").** 35 scored elections; on the original 23 the merge is noise (AEF-7 +0.0008, SE 0.0024); wa2017 +0.079, wa2013 +0.040 to explain. AEF-7 0.2644 vs AEF 0.2825.
