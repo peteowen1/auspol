@@ -1,3 +1,8 @@
+# The minor-to-minor conserve fit needs a `votes` column these synthetic corpora do not carry, so with it on
+# every candidate_returns() call here printed "PPV1! ... object 'votes' not found" (6 per run), noise that could
+# hide a real PPV1 failure. Off for this file; fit_minor_defector_conserve() has its own test below.
+withr::local_envvar(AUSPOL_MINOR_DEFECT_CONSERVE = "0")
+
 mk <- function() data.table::data.table(
   election = c(rep("e1", 4), rep("e2", 5)),
   seat  = c("A", "A", "B", "B",  "A", "A", "B", "B", "C"),
