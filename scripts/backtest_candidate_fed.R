@@ -1599,7 +1599,12 @@ for (K in PAIRS) {
                                           # the last would widen the wrong
                                           # pair's re-entry cells, silently,
                                           # with a plausible non-zero count.
-                                          REENTRY_CELLS = REENTRY_CELLS)
+                                          REENTRY_CELLS = REENTRY_CELLS,
+                                          # Carried per pair: the simulation loop used to read the global PARTY_COR,
+                                          # i.e. the LAST projection-iteration (fed2025) matrix for every pair
+                                          # (docs/reviews/party-cor-loop-leak-2026-10-03.md). Dormant at published
+                                          # flags (sw_draws is fed), live under AUSPOL_PARTY_COR.
+                                          PARTY_COR = PARTY_COR)
 }
 
 # THE FALLBACK IS TAKEN OVER EVERY PAIR, NOT JUST THE ONES IN THIS RUN.
@@ -1881,7 +1886,7 @@ for (X in out_all) {
                                 shrink = shrink_arg, surge_h = surge_arg, surge_party = surge_party_arg,
                                 surge_from_zero = identical(Sys.getenv("AUSPOL_SURGE_FROM_ZERO", "0"), "1"),
                                 surge_mu = surge_mu_arg, surge_sd = surge_sd_arg,
-                                party_cor = PARTY_COR, statewide_draws = X$sw_draws, conditional_override = .htv_ov, conditional_override_sd = attr(.htv_ov, "sd"),
+                                party_cor = X$PARTY_COR, statewide_draws = X$sw_draws, conditional_override = .htv_ov, conditional_override_sd = attr(.htv_ov, "sd"),
                                 fallback_smooth = FB_SMOOTH, shrink_k = SHRINK_K, flow_sd = FLOW_SD,
                                 breakout_p = .bo$p, breakout_q = .bo$q)
   # OUR OWN final-two scenario frequencies -- see tcp_scenarios(). Uses
