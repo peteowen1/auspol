@@ -116,6 +116,13 @@ classify_party <- function(name, code = NULL) {
   set(grepl("liberals for climate", n), "OTH")
   # Liberal Democrats are not the Liberal Party; checked before "liberal".
   set(grepl("liberal democrat|libertarian", n), "OTH_RIGHT")
+  # Two more the bare "liberal|national" rule caught (audit of every party name
+  # filed LNP, 2026-10-16): Fraser Anning's Conservative National Party, 48
+  # fed2019 candidates at 1.7% each, made fed2019 look like 48 three-cornered
+  # contests and inflated the Coalition class; and Liberals for Forests, an
+  # environmental micro-party, 7 fed2004 candidates.
+  set(grepl("conservative national|anning", n), "OTH_RIGHT")
+  set(grepl("liberals for forests", n), "OTH")
   set(grepl("liberal|national", n), "LNP")
   # "Outdoor Recreation Party (Stop The Greens)" (fed2016 Forrest) is AGAINST the
   # Greens and contains the word. Caught 2026-10-05; the only such name among the
