@@ -45,3 +45,31 @@ test_that("the region argument filters, and is not shadowed by the region column
   s2 <- party_swing("yy", 2020L, 2024L, d)
   expect_equal(s2[party == "ONP"]$swing, 0)
 })
+
+test_that("AUSPOL_SURGE_SOURCE: actual counts a collapse, forecast counts only forecast rises, none is empty", {
+  d <- mk()   # actual: ONP 10 -> 40 (+30), ALP 90 -> 60 (-30)
+  lv <- data.table::data.table(pair = "xx2024", party = c("ALP", "ONP"),
+                               level_pred = c(88, 12))   # forecast: neither moves 5
+  # the leaking rule flags both, the fall included
+  expect_setequal(surging_parties("xx", 2020L, 2024L, corpus = d, source = "actual"),
+                  c("ALP", "ONP"))
+  # forecast ignores the actual result entirely
+  expect_length(surging_parties("xx", 2020L, 2024L, corpus = d, source = "forecast",
+                                levels = lv), 0L)
+  lv2 <- data.table::data.table(pair = "xx2024", party = c("ALP", "ONP"),
+                                level_pred = c(70, 25))  # ALP -20 forecast, ONP +15
+  expect_identical(surging_parties("xx", 2020L, 2024L, corpus = d, source = "forecast",
+                                   levels = lv2), "ONP")
+  # a class with no forecast row is not surging
+  expect_length(surging_parties("xx", 2020L, 2024L, corpus = d, source = "forecast",
+                                levels = lv2[party == "ALP"]), 0L)
+  expect_length(surging_parties("xx", 2020L, 2024L, corpus = d, source = "none"), 0L)
+})
+
+test_that("AUSPOL_SURGE_SOURCE refuses a missing target and an unknown value", {
+  lv <- data.table::data.table(pair = "xx2028", party = "ONP", level_pred = 30)
+  expect_error(surging_parties("xx", 2020L, 2024L, corpus = mk(), source = "forecast",
+                               levels = lv), "no level_pred rows for xx2024")
+  expect_error(surging_parties("xx", 2020L, 2024L, corpus = mk(), source = "polls"),
+               "must be")
+})

@@ -172,6 +172,11 @@ CLASSIFY <- list(
     "concentration mechanism, and fit_seats_full.R has its own live ONP path; a gap only if One Nation's",
     "Victorian seat spread is ever driven from this switch (the VIC2022 IND-coupling regression is the reason it",
     "is not: docs/reviews/sa2026-onp-base-pred-diagnosis-2026-09-14.md)."),
+  AUSPOL_SURGE_SOURCE = paste(
+    "UNIVERSAL via R/: read inside surging_parties() (R/party_surge.R), which every harness reaches through",
+    "salience_permit_for() and fit_xgb_primary_v4/v6.R reach directly, so the per-harness greps cannot see it.",
+    "Published \"actual\" LEAKS and is being replaced (plans/prereg-surge-flag-time-forward-2026-10-15.md);",
+    "fit_seats_full.R already behaves as \"none\" because vic2026 has no votes."),
   AUSPOL_SD_DEPARTED = paste(
     "UNDER TEST, default 0, not adopted: widens the per-cell sd for major-party cells whose previous winner is",
     "off the ballot. Read inside R/xgb_primary_sd_override.R, reached by the fed and nsw harnesses that call it;",

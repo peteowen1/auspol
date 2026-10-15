@@ -56,13 +56,53 @@ party_swing <- function(region, year_from, year_to, corpus = NULL) {
 #' major parties move 1 to 4 points in a typical cycle — and well below South
 #' Australian One Nation's 19.9.
 #'
+#' WHICH swing is read is set by `AUSPOL_SURGE_SOURCE`
+#' (`docs/plans/prereg-surge-flag-time-forward-2026-10-15.md`):
+#' \describe{
+#'   \item{`"actual"`}{`abs()` of the ACTUAL swing at `year_to`. Leaks: it reads
+#'     the result of the election being predicted, and counts a collapse as a
+#'     surge (`docs/reviews/surge-flag-leak-2026-10-15.md`). Kept only as the
+#'     arm that measures what the leak was worth.}
+#'   \item{`"none"`}{no class is surging -- what the live forecast already got,
+#'     because `year_to` has no votes yet.}
+#'   \item{`"forecast"`}{RISES only, `level_pred - prev >= threshold`, from the
+#'     time-forward statewide forecast in `output/level-pred.csv`. A class with
+#'     no forecast row is not surging. A target with no rows at all is an error.}
+#' }
+#'
 #' @inheritParams party_swing
 #' @param threshold Statewide swing, in points, above which a class counts as
 #'   surging.
+#' @param source `"actual"`, `"none"` or `"forecast"`; defaults to
+#'   `AUSPOL_SURGE_SOURCE`.
+#' @param levels For `"forecast"`: a table of `pair`, `party`, `level_pred`;
+#'   `NULL` reads `output/level-pred.csv`.
 #' @return Character vector of party classes.
 #' @export
 surging_parties <- function(region, year_from, year_to, threshold = 5,
-                            corpus = NULL) {
+                            corpus = NULL,
+                            source = Sys.getenv("AUSPOL_SURGE_SOURCE", "actual"),
+                            levels = NULL) {
+  if (!source %in% c("actual", "none", "forecast"))
+    stop("AUSPOL_SURGE_SOURCE must be \"actual\", \"none\" or \"forecast\", not \"",
+         source, "\"", call. = FALSE)
+  if (identical(source, "none")) return(character(0))
   s <- party_swing(region, year_from, year_to, corpus)
-  s[abs(swing) >= threshold, party]
+  if (identical(source, "actual")) return(s[abs(swing) >= threshold, party])
+  if (is.null(levels)) {
+    f <- file.path("output", "level-pred.csv")
+    if (!file.exists(f)) stop("AUSPOL_SURGE_SOURCE=forecast needs ", f, call. = FALSE)
+    levels <- data.table::fread(f, showProgress = FALSE)
+  }
+  levels <- data.table::as.data.table(levels)
+  target <- paste0(region, year_to)
+  lp <- levels[levels$pair == target, list(party, level_pred)]
+  if (!nrow(lp)) stop("no level_pred rows for ", target, call. = FALSE)
+  # `prev` (the previous election's result) is known before polling day;
+  # `now` and `swing` are not, and are dropped here so nothing below can read them.
+  m <- merge(s[, list(party, prev)], lp, by = "party")
+  m[, swing_fc := level_pred - prev]
+  out <- m[!is.na(swing_fc) & swing_fc >= threshold, party]
+  stopifnot(all(m[party %in% out]$swing_fc > 0))   # a fall is never a surge
+  out
 }

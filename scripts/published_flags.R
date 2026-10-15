@@ -60,7 +60,8 @@ PUBLISHED_FLAGS <- c(
   AUSPOL_SALIENCE_SURGE_V2   = "1",          # per-seat emergence hazard from the salience corpus
   AUSPOL_SURGE_SCALE         = "1",          # multiplier on that hazard, capped at 1; docs/plans/prereg-surge-hazard-scale-2026-09-06.md
   AUSPOL_SURGE_RECIPIENT     = "1",          # the surge goes to the class the hazard was fitted for; shipped 2026-09-07 (prereg-surge-recipient-2026-09-06.md, stage 2)
-  AUSPOL_SURGE_FROM_ZERO     = "0",          # 1 = a named recipient surges from zero share; docs/plans/prereg-recipient-at-zero-2026-09-07.md
+  AUSPOL_SURGE_SOURCE        = "actual",     # LEAKS, being replaced: which swing makes a class "surging" in the salience screen (and the xgb permit/governed features). "actual" = abs() of the target election's own result (reviews/surge-flag-leak-2026-10-15.md); "none" / "forecast" are the leak-free arms of plans/prereg-surge-flag-time-forward-2026-10-15.md. The live forecast already runs as "none" (no vic2026 votes).
+  AUSPOL_SURGE_FROM_ZERO     = "0",         # 1 = a named recipient surges from zero share; docs/plans/prereg-recipient-at-zero-2026-09-07.md
   AUSPOL_SALIENCE_SMOOTH     = "1",          # exp_pcv/exp_sd from a monotone cubic on log(1-pctile), not six unequal bins; 0 = the old bands
   AUSPOL_SALIENCE_EXP_SD     = "0",          # 1 = a governed candidate's deviation sd is their salience band's, not level_sd; prereg-salience-expected-and-variance-2026-09-07.md
                                              # (both switches run at 0 in every harness; see the note below.)
