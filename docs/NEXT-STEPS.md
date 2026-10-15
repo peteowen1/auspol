@@ -5,7 +5,22 @@ it stood before this rewrite: `backlog/journal-2026-09-19-hub-snapshot.md`).
 Decisions: `docs/DECISIONS.md`. Every seat verdict: `docs/SEAT-REGISTRY.md`.
 Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30.
 
-## 2026-10-14 HANDOFF (READ FIRST) -- overnight log: `plans/overnight-2026-10-14.md`
+## 2026-10-15 afternoon (READ FIRST)
+
+- PUBLISHED 15:33 the full rebuild with census blanking + pollster archive + WA/NT screened port
+  (snapshot `20261015-1317-20697de-from1`; publish log `deciding-runs/publish-20261015-1317.log`). AEF-7 0.2669 vs AEF
+  0.2825. The port cost +0.0007 pooled (0.3340 -> 0.3347, 35 pairs / 2,931 seats), all from NT: nt2020 0.648 -> 0.826,
+  nt2016 and nt2024 improved (-0.062, -0.075); non-WA/NT +0.0002. Pete chose to ship it for parity.
+- OPEN nt2020 +0.18 under the screened port: not traced. Walk its worst seats before any NT change.
+- DONE (on dev 629fc35, reviewed): the daily run's validation failures. NSW and Vic tracking checks compared the
+  fitted Others with RAW polls (folded parties still inside); now `polls_corrected`, NSW 2023 3.86 -> 1.08. The
+  fold correction imputes each firm's house effect, and a fitted One Nation unprompted discount (FFD1: 0.163,
+  SE 0.072) closes the federal FF1 gap (-1.57 -> -0.36). All three fit scripts exit 0 locally.
+- OPEN check tonight's daily run concludes clean (no "Run finished with problems") and reads the new release.
+- OPEN FFD1 is fitted on the gap FF1 checks (passes by construction; Pete's call, 15 Oct). Validate it when a
+  second federal cycle has firms that both name and fold One Nation.
+
+## 2026-10-14 HANDOFF -- overnight log: `plans/overnight-2026-10-14.md` -- overnight log: `plans/overnight-2026-10-14.md`
 
 **Done 14 Oct:** PUBLISHED the full-inputs rebuild (AEF-7 0.2657 vs AEF 0.2825) + nsw2027 tables (6f2be85).
 Daily forecast of 13 Oct 23:39 UTC CRASHED (fit_scorecard.R: unnamed pollster from qld2006_main table 6 broke
@@ -48,24 +63,12 @@ CONFIRMED; HC defector SHIPPED; post-election census rows BLANKED (214 backtest 
   scratch copy that drops NT before the check. (2) Run without a base, the vintage builder's source B labels
   qld2017/sa2018 rows from ANOTHER election's reaggregation as "on election boundaries"; their previous
   name-matched rows were kept. Fix both before the next census regeneration.
-- OPEN next FULL rebuild (stages 1-9, ~3 h) to carry the census blanking and pollster archive into the published
-  models and scoreboard.
 
 **State:** 35 scored single-member elections (vic2010, wa2021, nsw2011/2015, qld2012/2015/2017, sa2010/2014/2018,
 nt2016/2020/2024 new). AEF-7 seat log loss 0.2662 (published 14 Oct, size spread on) vs AEF 0.2825. Tas/ACT on the Hare-Clark path with polls: pooled
 0.525 vs naive 0.974. Training rule P4; scoring each election x sqrt(votes). Leak fixes shipped (conserve, MP slopes).
 
 **Open work, in order:**
-- OPEN check the 15 Oct daily run uses the spread (look for SZD1 in its log) and succeeds.
-- OPEN, NEEDS PETE (diagnosed 15 Oct): two daily-run validation failures. Neither script's outputs are read by
-  anything (grep of R/, scripts/, workflows), so no forecast is affected, but every run has ended "with problems"
-  since 8 Oct, which hides a new failure. NSW (`fit_nsw.R:149`, failing since 13 Oct; NL3 before that): the pooled
-  walk for GRN (0.015 pts) and SFF (0.0005) hits its lower bound -- their NSW polls barely move; the same file
-  already accepts a bound hit for thin parties because shrinkage makes it safe. Federal (`fit_federal.R:399`, since
-  13 Oct, the own poll source): poll-weighted folded-ONP gap -1.57 vs |.| < 1, driven by Freshwater 2025 (-2.16),
-  whose side of the comparison is 4 named polls (SE ~1.1) that only exist in our source; Essential dropped out.
-  Recommendation: state both tolerances in standard errors (visible amendment, original clause kept), and treat a
-  bound hit as shrink-toward-default as fit_nsw.R's thin-party path already does.
 - OPEN sa2018 +0.025 from the new inputs: LNP -0.3 pts broadly where IND/GRN rose; which input not isolated (screen
   sa2018 with salience off). nsw2019's +0.026 is Barwon alone (SEAT-REGISTRY).
 - OPEN wa2017 / wa2013 regressions: the size spread recovered -0.035 / -0.033 of them; Hillarys (defector
