@@ -1,6 +1,6 @@
 # Data registry
 
-**Generated 2026-10-15 by `scripts/build_data_registry.R`. Do not hand-edit** --
+**Generated 2026-10-16 by `scripts/build_data_registry.R`. Do not hand-edit** --
 rerun the script instead. Regenerate it whenever you add or fetch data.
 
 This file exists because the same data has been declared missing three
@@ -55,7 +55,7 @@ cannot pass as a working one.
 | `fed-booth-map.csv` | 513 KB |
 | `fed-swing-transposed-wa.csv` | 15 KB |
 | `fed-swing-transposed.csv` | 43 KB |
-| `federal-transposed-to-state.csv` | 178 KB |
+| `federal-transposed-to-state.csv` | 179 KB |
 | `MANIFEST.csv` | 787 B |
 | `nswec-2007-nsw-candidates.csv` | 24 KB |
 | `nswec-2007-nsw-firstprefs.csv` | 9 KB |

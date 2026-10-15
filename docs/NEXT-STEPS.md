@@ -30,8 +30,16 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30.
 
 ## Still open from 14-15 Oct (collapsed 15 Oct evening; history in DECISIONS and `plans/overnight-2026-10-14.md`)
 
-- OPEN (review gate, non-blocking) nsw2011/nsw2015 and sa2014/sa2018 seat-spread fall back to a LATER election's
-  prev_swing (2023nsw.txt, 2022sa.txt; printed BN0s / BS1s!): a post-polling-day input, small; same compromise as Qld.
+- OPEN (LEAK, wider than first logged; traced 2026-10-16, `scratchpad leak-seat-spread.md` summary here) the seat
+  spread `sd_within` (`seat_swing_spread()`, R/seats.R:113-130; reaches EVERY seat as `seat_sd`) is measured from a
+  later anchor seat file's `prev_swing` in 5 harnesses: nsw2011/15 (`2023nsw`, nsw:426-430), sa2010/14/18 (`2022sa`,
+  sa:1116-1122; **sa2018 = its own result**), qld2012-2020 (`2024qld`, qld:939-948), **vic ALL pairs from
+  `2026vic` with no announcement (vic:840; vic2022 = its own result)**, fed2010-16 (median of 2019/22/25 files,
+  fed:1607). WA clean; published `fit_seats_full.R:107` uses a flat 3.5. No earlier seat file ever existed in the
+  anchor's history. sd_within by file: 2019nsw 6.61, 2023nsw 3.72, 2027nsw 4.42, 2022sa 3.19, 2026sa 3.33,
+  2024qld 2.43, 2022vic 3.34, 2026vic 3.49. Fix options (Pete): derive prev_swing from our own results
+  (`build_seat_context.R` PHASE 2 has `prev_swing_est`, filled only for nsw2023/sa2026/qld2024) vs flat 3.5 like
+  production. Size unmeasured (guess: NSW 0.02-0.05, others <0.02).
 - OPEN small: `AUSPOL_PARTY_COR` is out of NT with no recorded reason (out of WA by design: cor(ALP, IND) flips sign
   there, MODEL-REGISTRY); NT prints BNT4/BNT5 twice.
 - OPEN same one-run lag, older: the seat-poll weight is fitted on the PREVIOUS rebuild's output/forecasts.csv
@@ -85,7 +93,17 @@ person rule, statewide poll weighting by track record, seat-poll precision blend
 - OPEN re-score Richmond/Footscray/Brunswick/Preston/Pascoe Vale 2022 after AUSPOL_LEVEL_RECENT; shrink the
   person-rule slope toward the ratio carry (Pete, 2026-10-11).
 - OPEN miss-table seats traced but not fixed: Malvern 2022 (O'Brien under-called in base_pred), Bankstown 2023 (xgb
-  cut ALP 55.8 -> 49.8); Parkes, New England, Dawson 2022, Traeger 2024, McMahon 2025 not yet traced.
+  cut ALP 55.8 -> 49.8). Traced 2026-10-16 (Sonnet, read-only, hand-reproduced not replayed): **4 of 5 are the
+  seat-poll blend** (`seat_poll_blend_apply`, R/seat_poll_blend.R:556) pulling ONE poll at a fitted weight ~0.87
+  while the xgb layer was within ~2 pts: Parkes 2022 (YouGov MRP, LNP 47.3 -> 36.9, actual 49.3), New England 2022
+  (53.8 -> 46.4, actual 52.5), Dawson 2022 (45.9 -> 34.8, actual 43.3), McMahon 2025 (Compass poll summing to 80,
+  IND 4.9 -> 28.4 at IND-direct weight 0.864; P(Bowen) 0.254). Poll "Others" lumps land in one class
+  (`.seat_poll_known_class_map` ~:895 splits only when ONP/OTH_RIGHT >= half the lump). Traeger 2024 is separate:
+  Katter's falling own-seat trend (66 -> 59 -> 49) carried flat in base_pred, xgb nudged up, leader bonus +3.0
+  (n 7). Already tried and refused: public-only sources (DECISIONS 2026-10-07, fed2022 +0.0389, teal signal
+  lost) and precision-scaled blend (2026-10-09, +0.0000). Untried: splitting a poll's "Others" lump by our own
+  class expectations instead of the >= half rule; a weight per election rather than one pooled weight (DECISIONS
+  2026-10-07 "open"). Note renormalising McMahon's 80-sum poll would make IND worse (41/80 = 51), not better.
 - OPEN speed (`reviews/fast-iter-profile-2026-10-11.md`): read-set cache keys for defectors, personal prior vote,
   departed slope, salience (~25 s of a 54 s vic run); seat-poll memo keys on every switch.
 - OPEN small: test fixtures print `PPV1! minor-to-minor conserve fit FAILED ... object 'votes' not found` 6 times per
