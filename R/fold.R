@@ -62,6 +62,10 @@ folded_rows <- function(polls, party, sum_range = c(97, 103), oth = "OTH") {
 #' @param house_adjust Impute the trend PLUS the polling firm's own fitted
 #'   house effect for the party (0 for a firm that never named it), rather
 #'   than the all-firm trend alone.
+#' @param discount Optional named numeric, one value per party in (-1, 1):
+#'   the fraction of the party's share NOT found inside Others when a poll
+#'   does not name it (an unprompted-mention effect). The imputed share is
+#'   multiplied by `1 - discount`. Parties not named get 0.
 #' @return A copy of `polls` with `oth` corrected, carrying attributes
 #'   `folded` (what was subtracted where, including `house_shift`) and
 #'   `fold_skipped` (rows that looked folded but fell outside the observed
@@ -69,7 +73,7 @@ folded_rows <- function(polls, party, sum_range = c(97, 103), oth = "OTH") {
 #' @export
 unfold_others <- function(polls, fits, parties = NULL, oth = "OTH",
                           min_oth = 0.5, buffer_days = 60,
-                          house_adjust = TRUE) {
+                          house_adjust = TRUE, discount = NULL) {
   out <- data.table::copy(polls)
   majors <- c("ALP", "LNP", "LIB", "NAT")
   if (is.null(parties)) {
@@ -144,6 +148,13 @@ unfold_others <- function(polls, fits, parties = NULL, oth = "OTH",
       house_shift <- ifelse(is.na(own), 0, he$effect_pts[own])
     }
     imputed <- imputed + house_shift
+    # Unprompted discount: when a firm does not offer the party by name, fewer
+    # respondents volunteer it, so less than its named share sits inside
+    # Others. Fitted by the caller from within-firm gaps (fit_federal.R FFD1);
+    # 0 when not supplied.
+    disc <- if (is.null(discount) || is.na(discount[p])) 0 else unname(discount[p])
+    stopifnot(is.finite(disc), disc > -1, disc < 1)
+    imputed <- imputed * (1 - disc)
     ok <- !is.na(imputed)
     idx <- which(hit)[ok]
     imputed <- pmax(imputed[ok], 0)
@@ -163,7 +174,7 @@ unfold_others <- function(polls, fits, parties = NULL, oth = "OTH",
     log[[p]] <- data.table::data.table(
       party = p, date = out$date[idx], firm = out$firm[idx],
       oth_before = before, imputed = imputed, house_shift = house_shift,
-      oth_after = after
+      discount = disc, oth_after = after
     )
   }
   for (a in c("parties", "region", "cycle_year", "cycle_start", "cycle_end")) {
@@ -187,13 +198,14 @@ unfold_others <- function(polls, fits, parties = NULL, oth = "OTH",
 #'   value between iterations, in percentage points.
 #' @param max_iter Iteration cap.
 #' @param verbose Report each iteration's movement.
-#' @param house_adjust Passed to [unfold_others()].
+#' @param house_adjust,discount Passed to [unfold_others()].
 #' @return As [fit_cycle_trends_guarded()], with attributes `polls_corrected`
 #'   (the adjusted polls), `folded` (what was subtracted) and `iterations`.
 #' @export
 fit_cycle_unfolded <- function(polls, parties = NULL, priors = NULL,
                                overrides = list(), tol = 0.05, max_iter = 10L,
-                               verbose = TRUE, house_adjust = TRUE, ...) {
+                               verbose = TRUE, house_adjust = TRUE,
+                               discount = NULL, ...) {
   cur <- polls
   fits <- fit_cycle_trends_guarded(cur, parties, priors, overrides,
                                    verbose = verbose, ...)
@@ -201,7 +213,8 @@ fit_cycle_unfolded <- function(polls, parties = NULL, priors = NULL,
   iter <- 0L
   for (i in seq_len(max_iter)) {
     iter <- i
-    cur <- unfold_others(polls, fits, house_adjust = house_adjust)  # always from the ORIGINAL
+    cur <- unfold_others(polls, fits, house_adjust = house_adjust,  # always from the ORIGINAL
+                         discount = discount)
     delta <- if (is.null(prev_oth)) Inf else max(abs(cur$OTH - prev_oth), na.rm = TRUE)
     prev_oth <- cur$OTH
     fits <- fit_cycle_trends_guarded(cur, parties, priors, overrides,

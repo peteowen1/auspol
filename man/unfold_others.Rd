@@ -11,7 +11,8 @@ unfold_others(
   oth = "OTH",
   min_oth = 0.5,
   buffer_days = 60,
-  house_adjust = TRUE
+  house_adjust = TRUE,
+  discount = NULL
 )
 }
 \arguments{
@@ -35,6 +36,11 @@ correction may still be applied.}
 \item{house_adjust}{Impute the trend PLUS the polling firm's own fitted
 house effect for the party (0 for a firm that never named it), rather
 than the all-firm trend alone.}
+
+\item{discount}{Optional named numeric, one value per party in (-1, 1):
+the fraction of the party's share NOT found inside Others when a poll
+does not name it (an unprompted-mention effect). The imputed share is
+multiplied by \code{1 - discount}. Parties not named get 0.}
 }
 \value{
 A copy of \code{polls} with \code{oth} corrected, carrying attributes

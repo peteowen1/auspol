@@ -544,3 +544,13 @@ the table are the PRIORS each one is shrunk toward, which bind only when few ear
 | `lambda0`, `sdlog0`, `n0` in `hc_split_priors()` | 0.7, 0.4, 20 | **PRIORS** for the within-ticket split (shrink toward equal; log-share noise); both fitted time-forward over every ticket that stood twice. |
 | synthetic ballot depth | two transfers, then exhausted | **CHOSEN** structure for Tasmania's synthetic ballots (no ballot files); the Tasmanian count exports could fit it. |
 | ballot slot depth | 20 preferences | **CHOSEN** cut in `scripts/build_hare_clark_ballots.R`. |
+
+## Fold correction in the fuller trend scripts (`R/fold.R`, `scripts/fit_federal.R`, added 2026-10-15)
+
+These reach only `fit_federal.R` / `fit_nsw.R` / `fit_vic.R`, whose outputs the published forecast does not read (it uses `trend_as_at()`).
+
+| Constant | Value | Status |
+|---|---|---|
+| `house_adjust` in `unfold_others()` | TRUE | **CHOSEN** structure: impute the firm's own fitted house effect (shrunk by the trend model's `sigma_house_pts` prior), not the all-firm trend. |
+| One Nation unprompted `discount` | fitted each run (FFD1) | **ESTIMATED**, inverse-variance pooled over every firm-cycle that both names and folds One Nation (2 firms, 2025 cycle, as of 2026-10-15). Fitted on the same within-firm gap FF1 checks, so FF1 cannot validate it until a second cycle has such firms. |
+| `FD_ITER`, `FD_TOL` in `fit_federal.R` | 4 iterations, 0.002 | **COMPUTATIONAL**: the discount is re-estimated after a refit until the pooled increment is below 0.2% of the imputed share; failing to converge stops the script. |

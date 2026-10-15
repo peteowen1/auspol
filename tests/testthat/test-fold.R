@@ -96,6 +96,15 @@ test_that("unfold_others imputes each firm's own house effect, pooled or zero", 
   log0 <- attr(unfold_others(d, fits, house_adjust = FALSE), "folded")
   expect_equal(log0$imputed, rep(10, 6))
   expect_equal(log0$house_shift, rep(0, 6))
+
+  # An unprompted discount scales the imputed share (house effect included)
+  logd <- attr(unfold_others(d, fits, discount = c(ONP = 0.2)), "folded")
+  expect_equal(logd$imputed, 0.8 * c(9, 9, 10.5, 10.5, 10, 10))
+  expect_equal(logd$discount, rep(0.2, 6))
+  # A discount for a different party leaves ONP alone
+  expect_equal(attr(unfold_others(d, fits, discount = c(UAP = 0.5)), "folded")$imputed,
+               c(9, 9, 10.5, 10.5, 10, 10))
+  expect_error(unfold_others(d, fits, discount = c(ONP = 1)))
 })
 
 test_that("unfold_others logs what it changed and leaves other columns alone", {
