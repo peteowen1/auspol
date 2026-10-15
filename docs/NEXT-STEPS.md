@@ -19,50 +19,16 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30.
   stays "actual"). IN FLIGHT from 16:49: `deciding-runs/rebuild-20261015-surge-{none,forecast}.log`, then
   `...-surge-restore.log` puts snapshots 1317 + 1533 back. Score per the prereg (15 targeted elections primary, all
   35 guard, Nelson IND < 45%); nt2020 smoke under forecast: 0.8482 -> 0.6709.
-- DONE (on dev 629fc35, reviewed): the daily run's validation failures. NSW and Vic tracking checks compared the
-  fitted Others with RAW polls (folded parties still inside); now `polls_corrected`, NSW 2023 3.86 -> 1.08. The
-  fold correction imputes each firm's house effect, and a fitted One Nation unprompted discount (FFD1: 0.163,
-  SE 0.072) closes the federal FF1 gap (-1.57 -> -0.36). All three fit scripts exit 0 locally.
-- OPEN check tonight's daily run concludes clean (no "Run finished with problems") and reads the new release.
+- OPEN check tonight's daily run (first with 629fc35's validation-check fixes; DECISIONS 2026-10-15) concludes clean (no "Run finished with problems") and reads the new release.
 - OPEN FFD1 is fitted on the gap FF1 checks (passes by construction; Pete's call, 15 Oct). Validate it when a
   second federal cycle has firms that both name and fold One Nation.
 
-## 2026-10-14 HANDOFF -- overnight log: `plans/overnight-2026-10-14.md` -- overnight log: `plans/overnight-2026-10-14.md`
+## Still open from 14-15 Oct (collapsed 15 Oct evening; history in DECISIONS and `plans/overnight-2026-10-14.md`)
 
-**Done 14 Oct:** PUBLISHED the full-inputs rebuild (AEF-7 0.2657 vs AEF 0.2825) + nsw2027 tables (6f2be85).
-Daily forecast of 13 Oct 23:39 UTC CRASHED (fit_scorecard.R: unnamed pollster from qld2006_main table 6 broke
-pollster_lean()); fixed c6dd914, re-run dispatched by Pete's OK (run 38514019777, SUCCEEDED). Same log has two NON-blocking
-validation failures, not investigated: fit_federal.R `abs(agg_after) < 1`, fit_nsw.R `!e$at_bound`.
-CI red twice from my pushes, both fixed (Tas poll sums; duplicate check code); check_like_ci.R now copies the
-git-tracked tree so it sees what CI sees (8d7b36d). Cleanup: 15 worktrees removed, 10,058 old backtests archived.
-Defector line CLOSED (reviews/defector-overcarry-2026-10-14.md). Seat-size spread (`AUSPOL_SIZE_SD`) SHIPPED and
-published 07:35 UTC: pooled 0.3418 -> 0.3337, AEF-7 0.2662 vs AEF 0.2825 (reviews/seat-size-spread-2026-10-14.md).
-
-**Resolved with Pete 14 Oct evening:** dev -> main merged (PR #125, four Sonnet reviewers, no blocking findings; CI pass). kill-by-name incident -- the cross-repo runtime log shows every R command
-from 14:20 to 15:40 UTC belonged to auspol (this session's agents and its rebuild); pannaverse only ran `gh` CI
-watches, so no other repo's job is known to have died (commands under 30 s are not logged). Decisions: thin-cycle
-CONFIRMED; HC defector SHIPPED; post-election census rows BLANKED (214 backtest rows); pollster archive screened
-(fed2007 0.3339 -> 0.3338) and SHIPPED. Census and archive reach the scoreboard on the next full rebuild.
-- DONE 15 Oct: Hare-Clark harness sources harness_defaults.R (see the WA/NT entry below; score unchanged).
 - OPEN (review gate, non-blocking) nsw2011/nsw2015 and sa2014/sa2018 seat-spread fall back to a LATER election's
   prev_swing (2023nsw.txt, 2022sa.txt; printed BN0s / BS1s!): a post-polling-day input, small; same compromise as Qld.
-- ON DEV 15 Oct (74da3d6, reviewed, check_like_ci clean, pushed): WA/NT never wired screened_slopes() (ran
-  conditional-only, printing BW1c!/BNT1c!), which is why AUSPOL_HONOUR_DEPARTED and AUSPOL_DEPARTED_SUCCESSOR never
-  reached them. Smoke run: BW1s wa2017 screened (236 permit rows), BNT1s nt2024 screened (26); HONOUR_DEPARTED=0 now
-  moves 8 cells there. Effect on the scores: second full rebuild, `deciding-runs/rebuild-20261015-wa-nt-screened.log`,
-  against snapshot 20261015-0157. Same merge: Hare-Clark harness sources harness_defaults.R (187 switches now at
-  published values; pooled 0.496 vs naive 0.974, unchanged); PPV1! test noise removed; BNT5p. AUSPOL_PARTY_COR stays out of WA by design (cor(ALP, IND) flips sign there,
-  MODEL-REGISTRY); for NT it is unexplained. NT prints BNT4/BNT5 twice.
-- DONE 15 Oct (verified): mp-slope-by-class.csv is time-forward for the live targets -- scripts/fit_mp_slope.R:42
-  keeps only elections with counted votes, so vic2026/nsw2027 never enter it.
-- DONE 15 Oct (code; first exercised by the 15 Oct rebuild): spread-table lag -- it cannot be fitted before stage 6
-  (it is fitted on stage 6's own shares), so stage 7 compares the refit with the table stage 6 read
-  (scripts/compare_spread_tables.R, SPZ2) and reruns stages 6-7 once if any scored target's factor moved > 0.02 (Pete).
-  As-at checkpoints now go to .partial files, renamed at the end.
-- DONE 15 Oct: census PUBLICATION rule applied to output/census-features.csv. 2021 release date confirmed by the ABS;
-  2016/2011 days unconfirmed, but no election sits within a month of either June date. LOOKAHEAD now means
-  published after polling day (also blanks 9 fed2022, 4 wa2017, 2 nt2016, 8 qld2012 rows). Changed pairs exactly
-  fed2022, sa2022, wa2017, nt2016, qld2012; everything else byte-identical.
+- OPEN small: `AUSPOL_PARTY_COR` is out of NT with no recorded reason (out of WA by design: cor(ALP, IND) flips sign
+  there, MODEL-REGISTRY); NT prints BNT4/BNT5 twice.
 - OPEN same one-run lag, older: the seat-poll weight is fitted on the PREVIOUS rebuild's output/forecasts.csv
   (R/seat_poll_blend.R:67; DECISIONS 2026-09-29), so stage 6 uses last run's predictions to weight seat polls. The
   spread fix's compare-and-rerun pattern (scripts/compare_spread_tables.R) could cover it too.
@@ -71,13 +37,14 @@ CONFIRMED; HC defector SHIPPED; post-election census rows BLANKED (214 backtest 
   qld2017/sa2018 rows from ANOTHER election's reaggregation as "on election boundaries"; their previous
   name-matched rows were kept. Fix both before the next census regeneration.
 
-**State:** 35 scored single-member elections (vic2010, wa2021, nsw2011/2015, qld2012/2015/2017, sa2010/2014/2018,
-nt2016/2020/2024 new). AEF-7 seat log loss 0.2662 (published 14 Oct, size spread on) vs AEF 0.2825. Tas/ACT on the Hare-Clark path with polls: pooled
-0.525 vs naive 0.974. Training rule P4; scoring each election x sqrt(votes). Leak fixes shipped (conserve, MP slopes).
+**State:** 35 scored single-member elections. AEF-7 seat log loss 0.2669 (published 15 Oct 15:33) vs AEF 0.2825;
+pooled 0.3347 over 2,931 seats. Tas/ACT on the Hare-Clark path: pooled 0.496 vs naive 0.974. Training rule P4;
+scoring each election x sqrt(votes). Leak fixes shipped: conserve, MP slopes, census publication date.
 
 **Open work, in order:**
 - OPEN sa2018 +0.025 from the new inputs: LNP -0.3 pts broadly where IND/GRN rose; which input not isolated (screen
-  sa2018 with salience off). nsw2019's +0.026 is Barwon alone (SEAT-REGISTRY).
+  sa2018 with salience off). nsw2019's +0.026 is Barwon alone (SEAT-REGISTRY). Lead (15 Oct): under the leaking
+  surge flag, sa2018 IND (SA-Best, +13.9 actual) was "surging" from its own result; read the surge arms first.
 - OPEN wa2017 / wa2013 regressions: the size spread recovered -0.035 / -0.033 of them; Hillarys (defector
   over-carry) and Churchlands (retired IND) are traced in SEAT-REGISTRY, and the defector carry line is closed.
   Remaining: the WA 2017 swing seats (Murray-Wellington, Pilbara, Jandakot, Southern River, Kingsley).
@@ -102,8 +69,7 @@ person rule, statewide poll weighting by track record, seat-poll precision blend
 - OPEN poll weighting (Pete wants "a LOT better"): what the blend can still carry is sample size and the federal
   breakdowns; the trend arms cannot move a blend at weight 0.89-1.00. `reviews/poll-weighting-inventory-2026-10-12.md`.
 - OPEN move off AE (`reviews/ae-dependence-audit-2026-10-13.md`): (b) language-model extraction of the Poll Bludger
-  posts, the stronger version, not tried. (c) re-scoring sa2026, vic2014, qld2020, fed2022 is carried by the 15 Oct
-  full rebuild.
+  posts, the stronger version, not tried.
 - OPEN leader ratings: drift from months out needs horizon scoring; the blog chart was briefed to
   inthegame-blog-86 (not confirmed taken).
 - OPEN local `fetch_statewide_poll_samples.R` never refetches a cached page; the federal breakdown page is refetched
@@ -149,7 +115,6 @@ Verbatim in `backlog/journal-2026-10-07-to-10-08.md`. Still OPEN from them:
 Verbatim in `backlog/journal-2026-09-27-to-10-05.md` (newest first; handover detail in `HANDOVER-2026-10-05.md`).
 Everything still open from them is folded into the standing sections below; nothing live is left only in the journal.
 - 2026-10-05 handover: departed-hold refused; Pete's open asks are item 8 above.
-- 2026-10-04 morning and overnight: salience arm C dropped, zero-order LATE shipped, PR #89 merged, candidacies.csv uploaded. Live: branches `departed-rate-refit` and `fed-timing-resume-fixed` unmerged (Model open, Hygiene); scenario tool build not started (Model open).
 - 2026-10-03 evening and 01:40: v61 zeroing, v59/v60 shipped. Live: re-entry prior undecided, overcalled independents, simulation-noise revival of zeroed cells (all Model open).
 - 2026-09-30 (five sections, v53 to v56) and 2026-09-29 (five sections, v47 to v52): ledger version history and refused arms. Live: seat polls PARKED, no leader bonus for early WA/fed2007-10 (Model open); corrections learn from the previous rebuild (Hygiene).
 - 2026-09-28 (three sections, v44 to v46) and 2026-09-27: statewide-level arms refused. Live: `min_n` cliffs and seat context phase 2 (Model open); ITG page items (Data and infra).
