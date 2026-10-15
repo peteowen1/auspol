@@ -527,7 +527,7 @@ for (pr in SAL_PAIRS) {
   # Under AUSPOL_SURGE_SOURCE=forecast a failure stops: a silent character(0) would
   # train arm T on arm N's features (prereg-surge-flag-time-forward-2026-10-15.md).
   sp <- tryCatch(surging_parties(pr$region, py, yr), error = function(e) {
-    if (identical(Sys.getenv("AUSPOL_SURGE_SOURCE", "actual"), "forecast")) stop(e)
+    if (identical(Sys.getenv("AUSPOL_SURGE_SOURCE", "none"), "forecast")) stop(e)
     character(0)
   })
   if (!length(sp)) next

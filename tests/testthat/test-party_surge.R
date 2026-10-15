@@ -15,8 +15,8 @@ test_that("a surging class is flagged and a stable one is not", {
   d <- mk()
   d[year == 2024L & party == "ONP", votes := 12]
   d[year == 2024L & party == "ALP", votes := 88]
-  expect_length(surging_parties("xx", 2020L, 2024L, threshold = 5, corpus = d), 0L)
-  expect_true("ONP" %in% surging_parties("xx", 2020L, 2024L, threshold = 1, corpus = d))
+  expect_length(surging_parties("xx", 2020L, 2024L, threshold = 5, corpus = d, source = "actual"), 0L)
+  expect_true("ONP" %in% surging_parties("xx", 2020L, 2024L, threshold = 1, corpus = d, source = "actual"))
 })
 
 test_that("a class absent at one election reads as zero, not NA", {

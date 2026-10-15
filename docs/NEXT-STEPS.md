@@ -11,14 +11,11 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30.
   (snapshot `20261015-1317-20697de-from1`; publish log `deciding-runs/publish-20261015-1317.log`). AEF-7 0.2669 vs AEF
   0.2825. The port cost +0.0007 pooled (0.3340 -> 0.3347, 35 pairs / 2,931 seats), all from NT: nt2020 0.648 -> 0.826,
   nt2016 and nt2024 improved (-0.062, -0.075); non-WA/NT +0.0002. Pete chose to ship it for parity.
-- OPEN (LIVE LEAK) nt2020 +0.18 traced to Nelson: the salience screen's "surging" flag reads each election's
-  ACTUAL result and counts falls (`abs()`), so a collapsing class is permitted a full carry; 598 permits in 15
-  elections, and the production as-at xgb models train on the leaked `permit`/`governed`
-  (`reviews/surge-flag-leak-2026-10-15.md`). Prereg committed: `plans/prereg-surge-flag-time-forward-2026-10-15.md`
-  (arms N and T, full rebuild each). Switch `AUSPOL_SURGE_SOURCE` built and reviewed (28e5068, dc07630; published
-  stays "actual"). IN FLIGHT from 16:49: `deciding-runs/rebuild-20261015-surge-{none,forecast}.log`, then
-  `...-surge-restore.log` puts snapshots 1317 + 1533 back. Score per the prereg (15 targeted elections primary, all
-  35 guard, Nelson IND < 45%); nt2020 smoke under forecast: 0.8482 -> 0.6709.
+- NEEDS PETE (surge flag, leak FIXED 2026-10-16): arms scored (`reviews/surge-flag-arms-2026-10-16.md`). Primary
+  T-N -0.0030, SE 0.0031 (within 1 SE -> N); T refused anyway (qld2017 is 102% of its targeted gain); but the
+  all-35 guard FAILS for N (T better by 0.0028, SE 0.0021, mostly fed2013 via xgb retraining). Nelson IND passes
+  under both (N 37.7, T 38.4). Shipped "none" per the rules' outcome (published flag + inline defaults). Pete:
+  keep N (recommended) or take T on the guard?
 - MERGED 2026-10-16 (6a04b3d; not yet in the published forecast) the live vic2026 bug: unheld vic2026 votes read
   as 0 flagged ALP/LNP/GRN/IND/OTH_RIGHT as surging. Live, same inputs and seed, old -> new: `surging: none`;
   20 seat-party cells in 8 seats move > 0.05 pts, largest Narracan ONP 76.4 -> 67.6 (LNP 23.6 -> 32.4), Pakenham
@@ -66,10 +63,63 @@ scoring each election x sqrt(votes). Leak fixes shipped: conserve, MP slopes, ce
   surge flag, sa2018 IND (SA-Best, +13.9 actual) was "surging" from its own result; read the surge arms first.
 - OPEN wa2017 / wa2013 regressions: the size spread recovered -0.035 / -0.033 of them; Hillarys (defector
   over-carry) and Churchlands (retired IND) are traced in SEAT-REGISTRY, and the defector carry line is closed.
-  Remaining: the WA 2017 swing seats (Murray-Wellington, Pilbara, Jandakot, Southern River, Kingsley).
+  Remaining: the WA 2017 swing seats (Murray-Wellington, Pilbara, Jandakot, Southern River, Kingsley). TRACED 16
+  Oct (Sonnet, read-only; scratchpad `wa2017/`): all five won by ALP at our P 0.09-0.19, 10.4 of wa2017's 25.1
+  nats; all five sitting LNP members who lost. Statewide: level-pred ALP 36.4 vs actual 42.2, but published seat
+  mean ALP 41.2 (right) and LNP 40.2 vs 36.9 (3.3 high; the 36.4 -> 41.2 lift not traced). A 2-pt TPP level fix
+  would take ~3 of the 10.4 nats (rough arithmetic, not simulated). Seat-specific: metro Southern River (ALP
+  swing +20.7 vs ours +8.3, z 2.3), Jandakot (xgb adds +2.6 LNP); base_pred is the main stage, xgb nudges LNP up
+  in all five. **Structural lead: Pilbara and Murray-Wellington had Liberal AND National candidates against each
+  other, merged into one LNP class (n_cands 2)**, so a fragmented right (Grylls 27.3 + Alchin 15.3, ONP 11.4,
+  SFF 9.6) reads as LNP 55.9 TPP while ALP won on 31.0. SIZED 16 Oct (Sonnet, published-predictions.csv, 35
+  pairs): 191 Lib-v-Nat seats (WA 99) = 6.5% of seats, 9.7% of seat log loss; mean 0.499 vs 0.323 elsewhere
+  (paired by election +0.136, SE 0.092); Coalition-lost ones 1.03 (n 74). "Pilbara pattern" (Coalition lost
+  though Lib+Nat primary beat the winner's) 32 seats, 22 WA, 4.9% of loss (incl. wa2008 Kalgoorlie IND at the
+  1e-6 floor, 13.8). Ceiling ~5% of pooled loss. Next if pursued: three-cornered flag + Lib/Nat primary split as
+  features, screened on WA/fed/Vic with quick_arm.
 - OPEN NT seat layer: over-confidence fixed by the size spread (20k: nt2016 0.80, nt2020 0.65, nt2024 1.07, from
   0.99/0.81/1.41); still weak, and new parties start at zero share.
 - OPEN qld2017: One Nation / Katter seats given ~0 (emergence); qld2012 Katter polled inside Others.
+- OPEN (LIVE LEAK, found 2026-10-16, needs Pete's design call) the backtest statewide party correlation is
+  LEAVE-ONE-OUT, not time-forward: `statewide_cor(TGT)` returns `by_target` from `scripts/estimate_statewide_cov.R:319`
+  (all 15 pairs but the target; `AUSPOL_COV_LOO="1"`), and vic/nsw/qld/sa pass it to `simulate_seat_contests()`
+  with no `statewide_draws`, so `R/seat_sim.R:1115` shift_mode 2 draws through it. Fed is dormant (forecast mode
+  feeds `sw_draws`; its every-pair-gets-fed2025 matrix bug, 10-03 review, also dormant). Live forecast clean
+  (`statewide_cor(NULL)`). Size (Sonnet, scratchpad `partycor/tf.R`; LOO / time-forward): ONP-LNP nsw2019 -0.38 /
+  +0.02, qld2020 -0.37 / +0.07, vic2018 -0.40 / +0.02 (the -0.38 is mostly sa2026's +20 ONP); max element diff
+  0.31-0.88. Log-loss effect unmeasured. Decision: fed2007-13 have < 3 earlier pairs -- independent draws there, or
+  shrink toward independence by pair count (no cliff)? Recommendation: shrink with weight n/(n + k) on the
+  time-forward correlation, k fixed in advance, so early targets fall smoothly to independence. BUILT that way and
+  REVIEWED (no blockers), OFF, unmerged: branch `cov-tf` (2f350d2, c44b064, bc85251; worktree
+  `.claude/worktrees/agent-aed05f6924c0664ff`): `AUSPOL_COV_TF` ("0" shipped), w = 0.5 n/(n+5), identity below 3
+  pairs; also carries each fed pair's own matrix (dormant bug). e.g. nsw2019 ONP-LNP -0.38 -> +0.01. Needs
+  `scripts/estimate_statewide_cov.R` rerun (outside the rebuild; `output/statewide-cov.rds` is from 19 Sep and
+  already stale against current inputs, LOO cells move up to 0.024), then a measured arm.
+- OPEN (hazard for arms, not live) pooled-fits audit 2026-10-16 (Sonnet, read-only) beyond
+  `reviews/pooled-fits-inventory-2026-10-13.md`: only the statewide correlation above is live. LEAVE-ONE-OUT but
+  OFF at published flags, so any arm switching them on measures a leaked number: `fit_xgb_primary_sd.R:108`
+  (`AUSPOL_XGB_PRIMARY_SD`), `fit_flow_drift.R` model (`AUSPOL_FLOW_CELL_SD`), `fit_insurgency_risk.R:33`
+  (`AUSPOL_INSURGENCY_SHRINK`), `party_positions(exclude=)` in `R/reentry_prior.R:288` (non-"majors" re-entry),
+  `xgb-primary-v6-oof-predictions.csv` (static-cache arm). `state_swing_adjustment()` (R/state_swing_prior.R:73,
+  LOO) has no caller: dead code. Checked clean: projection mix + fundamentals (TF via `AUSPOL_FUND_TIME_FORWARD`,
+  fed:975), shrink 0.01.
+- OPEN (BUILT, reviewed, blocker fixed in 97381e4, unmerged) party-class and live candidate-list errors, branch `party-class-fix`
+  (worktree in the session scratchpad `wt-party`): audit of every party name per class found Fraser Anning's
+  Conservative National Party (48 fed2019 candidates, 1.7% each) and Liberals for Forests (7, fed2004) filed LNP,
+  Progressive Labour (2, fed2004) filed ALP (5db80c1, f959dac; sa2010 "CLP" = Country Labor, correct). Live:
+  vic2026 Ripon had a third Coalition row "Jo Armstrong (N)Megan Read" from the Wikipedia parser; nsw2027 Castle
+  Hill had sitting Liberal Hodges presumed beside announced Liberal Gangemi (9b8cbfc). After merge: regenerate
+  `external/reference/wikipedia/vic2026-candidates.csv`, rerun `build_candidacies.R` (NOT in the rebuild), measure.
+  Lib-vs-Nat contests are one LNP class in the simulator (`R/parties.R:35`), 290 seat-elections with 2+
+  Coalition-class candidates of which ~48 were Anning's party (so ~240 real; WA 16-20 a cycle); see the WA 2017 item.
+- OPEN (lead, NOT a result) sitting non-major members (Sonnet, 16 Oct; scratchpad `minor-mp/`): published-path
+  signed error (actual - ours) +0.36 pts, SE 1.11 (clustered on election), n 84 sitting minor/IND members in 29
+  elections: no overall over-call. Traeger/Hill/Maiwar 2024 (-11.8/-9.2/-11.4) are tail cases; Hill and Maiwar
+  were rising, not falling. Hints only: falling own vote -3.8 (SE 3.9, n 9); trend slope +0.26 (SE 0.17, n 35,
+  ex-WA); **leader-seat bonus on a sitting minor member -7.8 (SE 4.1, n 4: Buderim qld2017 +7.87 bonus -> -16.0,
+  Traeger +3.01 -> -11.8, Melbourne 2022 +3.1, 2025 -6.4)**. One feature only (trend), exact-name matching, so per
+  CLAUDE.md this is a to-do, not a refusal. If pursued: shrunk "falling own vote" term, and re-check the leader
+  bonus for minor-role leaders (n 7, se 3.4 in the qld2024 table).
 - OPEN Hare-Clark candidate-level count loses on zero-probability new independents (needs a heavier tail).
 - OPEN fed2007 Newspoll gaps (Jul 2005-Apr 2006, Jul-Sep 2006, Jul-Nov 2007) and Nielsen/Galaxy archives.
 - OPEN fed2028 live forecast build (decided 13 Oct; 8-11 days).
@@ -116,7 +166,6 @@ person rule, statewide poll weighting by track record, seat-poll precision blend
   cases: no fit, full transfer), against the shrinkage rule; and its call site (:1005) catches EVERY error and keeps
   the full transfer, so a real failure reads like a thin fit. (The old PPV1! fixture noise is gone: 0 lines in the
   whole local suite and in CI run 38720936369, checked 2026-10-16.)
-- OPEN `docs/DECISIONS.md` is 42,305 chars, past 40,000 (load `hub-slimming`).
 - Needs Pete: three built, OFF, never-pre-registered experiment branches from 2026-10-06:
   `worktree-agent-a6d092f16127ab44a` (`AUSPOL_XGB_CLASS_JUR_CAL`), `worktree-agent-a9cb9eebe64bafa28`
   (`AUSPOL_OTHERS_SCALE_JUR`), `worktree-agent-ad78f1dffe2279a6a` (`AUSPOL_SALIENCE_STATE`, 785 lines): prereg and

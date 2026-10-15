@@ -10,7 +10,7 @@ surging_parties(
   year_to,
   threshold = 5,
   corpus = NULL,
-  source = Sys.getenv("AUSPOL_SURGE_SOURCE", "actual"),
+  source = Sys.getenv("AUSPOL_SURGE_SOURCE", "none"),
   levels = NULL
 )
 }

@@ -92,7 +92,7 @@ party_swing <- function(region, year_from, year_to, corpus = NULL) {
 #' @export
 surging_parties <- function(region, year_from, year_to, threshold = 5,
                             corpus = NULL,
-                            source = Sys.getenv("AUSPOL_SURGE_SOURCE", "actual"),
+                            source = Sys.getenv("AUSPOL_SURGE_SOURCE", "none"),
                             levels = NULL) {
   if (!source %in% c("actual", "none", "forecast"))
     stop("AUSPOL_SURGE_SOURCE must be \"actual\", \"none\" or \"forecast\", not \"",

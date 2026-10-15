@@ -206,7 +206,7 @@ governed_population <- function(election, prev_election, region,
   # numbers to show it (prereg-surge-flag-time-forward-2026-10-15.md).
   surging <- tryCatch(surging_parties(region, py, yr, surge_threshold, levels = surge_levels),
                       error = function(e) {
-                        if (identical(Sys.getenv("AUSPOL_SURGE_SOURCE", "actual"), "forecast")) stop(e)
+                        if (identical(Sys.getenv("AUSPOL_SURGE_SOURCE", "none"), "forecast")) stop(e)
                         message("salience screen: surging_parties() failed for ",
                                 election, " -- treating no party as surging (",
                                 conditionMessage(e), ")")
