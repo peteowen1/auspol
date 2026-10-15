@@ -1474,7 +1474,11 @@ if (file.exists(.nw)) {
   .wing <- function(cls, raw) ifelse(cls == "LNP" & grepl("national", tolower(raw)), "NAT", cls)
   .p_w <- paste(normalise_seat(W2$seat), .wing(W2$party, W2$party_raw))
   .p_s <- paste(normalise_seat(S2$seat), .wing(S2$party, S2$party_raw))
-  .pre <- .p_s %in% .p_w
+  # Only parties that preselect ONE candidate per seat: a second independent (or
+  # One Nation, Family First...) beside a sitting independent is a challenger,
+  # not a replacement (review 2026-10-16: Wakehurst's Regan would otherwise go
+  # the day Wikipedia lists another independent there).
+  .pre <- .p_s %in% .p_w & S2$party %in% c("ALP", "LNP", "GRN")
   cat(sprintf("BC12 presumed member dropped, party already announced another candidate: %s\n",
               if (any(.pre)) paste(sprintf("%s (%s)", S2$seat[.pre], S2$name[.pre]), collapse = ", ") else "none"))
   S2 <- S2[!.pre]

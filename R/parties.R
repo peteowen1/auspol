@@ -125,7 +125,7 @@ classify_party <- function(name, code = NULL) {
   # fed2019 candidates at 1.7% each, made fed2019 look like 48 three-cornered
   # contests and inflated the Coalition class; and Liberals for Forests, an
   # environmental micro-party, 7 fed2004 candidates.
-  set(grepl("conservative national|anning", n), "OTH_RIGHT")
+  set(grepl("conservative national|\\banning\\b", n), "OTH_RIGHT")
   set(grepl("liberals for forests", n), "OTH")
   set(grepl("liberal|national", n), "LNP")
   # "Outdoor Recreation Party (Stop The Greens)" (fed2016 Forrest) is AGAINST the

@@ -128,6 +128,8 @@ test_that("a party is not made Coalition by the word liberal in its name", {
   expect_equal(classify_party("FRASER ANNING'S CONSERVATIVE NATIONAL PARTY", "FACN"), "OTH_RIGHT")
   expect_equal(classify_party("liberals for forests", "LFF"), "OTH")
   expect_equal(classify_party("Progressive Labour Party", "PLP"), "OTH")
+  # "anning" is matched as a word, so "planning" does not make a party right-wing.
+  expect_false(identical(classify_party("Planning Reform Party"), "OTH_RIGHT"))
   expect_equal(classify_party("Country Labor Party"), "ALP")
   expect_equal(classify_party("National Party of Australia - NSW"), "LNP")
   expect_equal(classify_party("The Nationals", "NP"), "LNP")
