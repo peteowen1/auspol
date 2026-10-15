@@ -144,6 +144,12 @@ surging_parties <- function(region, year_from, year_to, threshold = 5,
   m[, swing_fc := level_pred - prev]
   out <- m[!is.na(swing_fc) & swing_fc >= threshold, party]
   stopifnot(all(m[party %in% out]$swing_fc > 0))   # a fall is never a surge
+  # PRINTED AT THE POINT OF USE for the live target (the prereg's live clause):
+  # the level each class was compared with, not just the verdict.
+  if ("oth_absorbs_missing" %in% names(levels))
+    cat(sprintf("SG1  %s surge flag (forecast, threshold %g): %s -> surging: %s\n", target, threshold,
+                paste(sprintf("%s %.2f->%.2f", m$party, m$prev, m$level_pred), collapse = ", "),
+                if (length(out)) paste(out, collapse = ",") else "none"))
   out
 }
 
