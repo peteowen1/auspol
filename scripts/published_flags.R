@@ -478,6 +478,12 @@ PUBLISHED_FLAGS <- c(
   AUSPOL_IND_SALIENCE        = "0",          # v1 national salience ratio -- NOT shipped
   AUSPOL_INSURGENCY_SHRINK   = "0",          # per-seat shrink -- measured and refused 2026-09-06
   AUSPOL_SEAT_SD_MULT        = "1",
+  AUSPOL_SEAT_SPREAD_SRC     = "derived",   # harness-only: where seat_sd comes from. "derived" = the seat-level swing AT the
+                                             # pair's PREVIOUS election, from our archived results (R/prev_seat_swing.R).
+                                             # "anchor" = the old anchor seat file for the target election or a LATER one,
+                                             # which leaked (nsw2011/15, sa2010/14/18, qld2012-20, vic all, fed2010-16;
+                                             # vic2022 and sa2018 read their own result). Fixed 2026-10-16; "anchor" only
+                                             # reproduces old numbers. fit_seats_full.R uses a flat 3.5 and ignores it.
   AUSPOL_FLOW_SD             = "0",
   AUSPOL_FALLBACK_SMOOTH     = "0",
   AUSPOL_XGB_PRIMARY         = "1",          # harness-only: 1 = replace every seat's primaries with the challenger's

@@ -1108,20 +1108,11 @@ if (identical(Sys.getenv("AUSPOL_XGB_PRIMARY", "0"), "1")) shares <- leader_seat
 # Departed member toward the same booths' federal vote (AUSPOL_DEPARTED_FED, plans/prereg-departed-fed-booths-2026-09-30.md); xgb layer only.
 if (identical(Sys.getenv("AUSPOL_XGB_PRIMARY", "0"), "1")) shares <- departed_fed_apply(shares, TGT)
 
-# Per-seat spread from the seat file of the election being predicted.
-# THE SEAT FILE OF THE ELECTION BEING PREDICTED, where one exists. The anchor ships
-# 2022sa.txt and 2026sa.txt only, so sa2014 and sa2018 fall back to the EARLIEST file
-# (2022): a later election, which is the same compromise the Queensland harness makes
-# (BQ1s!) -- the spread is a variance hyperparameter, not a prediction, and it is announced.
-.sf <- tryCatch(as.data.table(load_seats(TO, "sa")), error = function(e) NULL)
-if (is.null(.sf)) {
-  .sf <- tryCatch(as.data.table(load_seats(2022L, "sa")), error = function(e) NULL)
-  if (is.null(.sf)) stop("No South Australian seat file for ", TO, " and none for 2022 either, so ",
-                         "there is no measured seat-swing spread to fall back on.")
-  cat(sprintf("BS1s! no %dsa.txt: seat-swing spread taken from the 2022 file\n", TO))
-}
-sp <- seat_swing_spread(.sf,
-                        unname(st_b[["ALP"]] - st_a[["ALP"]]))
+# SEAT SPREAD (seat_sd) from AUSPOL_SEAT_SPREAD_SRC (R/prev_seat_swing.R, 2026-10-16).
+# "derived" (published): the seat-level swing AT the previous election (FROM), from our archived results.
+# "anchor": the old behaviour, 2022sa.txt when there is no seat file for TO, a LATER election, which LEAKS.
+sp <- harness_seat_spread("sa", FROM, TO, unname(st_b[["ALP"]] - st_a[["ALP"]]),
+                          anchor_fallback_year = 2022L)
 # STATEWIDE UNCERTAINTY. 1.5 was hardcoded in all four harnesses; the realised
 # statewide first-preference error over 139 party-cycles is sd 2.33, so the
 # harnesses were 1.6x over-confident BEFORE any seat-level modelling. That is

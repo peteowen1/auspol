@@ -446,12 +446,20 @@ WIN <- fread(file.path(P, "aec-fed-winners.csv"), showProgress = FALSE)
 # match a predicted party.
 coal <- function(x) fifelse(x %in% c("NAT", "LIB", "LNP", "CLP"), "LNP", x)
 
-# Per-seat idiosyncratic spread. Taken from the seat file of the election being
-# predicted where one exists (2019, 2022, 2025); the earlier pairs have no
-# federal seat file, so they use the MEDIAN of those that do rather than a
-# number invented here. It is a variance parameter, not a prediction, and it is
-# reported per pair so a pair running on the fallback is visible.
-spread_for <- function(yr, swing) {
+# Per-seat idiosyncratic spread (seat_sd), from AUSPOL_SEAT_SPREAD_SRC (R/prev_seat_swing.R, 2026-10-16).
+# "derived" (published): the seat-level swing AT the pair's previous election, from our archived results,
+# for EVERY pair (no fallback: a pair that cannot be measured stops the run).
+# "anchor": the old behaviour. The seat file of the election being predicted where one exists (2019, 2022,
+# 2025); the earlier pairs have no federal seat file and used the MEDIAN of those that do, a LATER
+# election's spread, which LEAKS. Reported per pair (BF2) so a pair running on the fallback is visible.
+# `quiet` silences the SSP1 line when the call is only building the fallback.
+spread_for <- function(yr, swing, quiet = FALSE) {
+  if (identical(seat_spread_src(), "derived")) {
+    k <- Filter(function(k) k$to == yr, PAIRS_ALL)
+    if (length(k) != 1L) stop("SSP2! no unique pair ending ", yr, " for the derived seat spread")
+    f <- function() harness_seat_spread("fed", k[[1]]$from, yr, swing)$sd_within
+    return(if (quiet) { v <- NULL; utils::capture.output(v <- f()); v } else f())
+  }
   s <- tryCatch(as.data.table(load_seats(yr, "fed")), error = function(e) NULL)
   if (is.null(s)) return(NA_real_)
   tryCatch(seat_swing_spread(s, swing)$sd_within, error = function(e) NA_real_)
@@ -1604,7 +1612,7 @@ for (K in PAIRS) {
 # (The fallback for those pairs is a median over LATER elections' spreads. That
 # is the same value the full run has always used; it is a seat-sd
 # hyperparameter with no pre-2010 seat file to draw on, and is noted, not fixed.)
-seat_sds_all <- vapply(PAIRS_ALL, function(k) spread_for(k$to, 0), numeric(1))
+seat_sds_all <- vapply(PAIRS_ALL, function(k) spread_for(k$to, 0, quiet = TRUE), numeric(1))
 fallback <- stats::median(seat_sds_all, na.rm = TRUE)
 if (!is.finite(fallback)) {
   stop("No federal seat file yielded a within-region seat-swing spread, so ",

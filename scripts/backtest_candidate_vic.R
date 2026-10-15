@@ -837,8 +837,12 @@ for (K in PAIRS) {
          "changed.")
   }
 
-  sp <- seat_swing_spread(as.data.table(load_seats(2026, "vic")),
-                          unname(sb[["ALP"]] - sa[["ALP"]]))
+  # SEAT SPREAD (seat_sd) from AUSPOL_SEAT_SPREAD_SRC (R/prev_seat_swing.R, 2026-10-16).
+  # "derived" (published): the seat-level swing AT the previous election (K$from), from our archived results.
+  # "anchor": the old behaviour, 2026vic.txt for EVERY pair, which LEAKS (2026vic.txt carries the 2022
+  # result, vic2022's own outcome, and the later swings are not knowable before the earlier pairs).
+  sp <- harness_seat_spread("vic", K$from, K$to, unname(sb[["ALP"]] - sa[["ALP"]]),
+                            anchor_year = 2026L)
   # STATEWIDE UNCERTAINTY, MEASURED. All four harnesses hardcoded 1.5 with no
   # derivation. The realised statewide first-preference error over 139
   # party-cycles (33 independent cycles) is sd 2.33, so the harnesses were 1.6x
