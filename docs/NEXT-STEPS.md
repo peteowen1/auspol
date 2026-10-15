@@ -19,11 +19,11 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30.
   stays "actual"). IN FLIGHT from 16:49: `deciding-runs/rebuild-20261015-surge-{none,forecast}.log`, then
   `...-surge-restore.log` puts snapshots 1317 + 1533 back. Score per the prereg (15 targeted elections primary, all
   35 guard, Nelson IND < 45%); nt2020 smoke under forecast: 0.8482 -> 0.6709.
-- OPEN (LIVE BUG, fix reviewed, unmerged) the published vic2026 forecast flags ALP/LNP/GRN/IND/OTH_RIGHT as
-  "surging" because vic2026's votes are NA and `party_swing()` read them as 0: 6 wrong permits (4 OTH_RIGHT, 2 IND).
-  Branch `surge-live` (90a85a2, 97c5a71, cd91caa; worktree in the session scratchpad) fixes it and wires arm T's
-  live level. Merge AFTER the surge arms finish (it edits R/ and scripts/), run `check_like_ci.R`, then measure the
-  live seat-probability shift. Prereg addendum records it.
+- MERGED 2026-10-16 (6a04b3d; not yet in the published forecast) the live vic2026 bug: unheld vic2026 votes read
+  as 0 flagged ALP/LNP/GRN/IND/OTH_RIGHT as surging. Live, same inputs and seed, old -> new: `surging: none`;
+  20 seat-party cells in 8 seats move > 0.05 pts, largest Narracan ONP 76.4 -> 67.6 (LNP 23.6 -> 32.4), Pakenham
+  ONP 79.0 -> 77.5, Box Hill ALP 83.8 -> 82.6; expected seats LNP +0.11, ONP -0.11; P(LNP majority) 0.086 ->
+  0.088, P(ALP majority) 0.028 unchanged. Reaches the site with the next daily run (cron 20:00 UTC, runs `dev`).
 - OPEN check tonight's daily run (first with 629fc35's validation-check fixes; DECISIONS 2026-10-15) concludes clean (no "Run finished with problems") and reads the new release.
 - OPEN FFD1 is fitted on the gap FF1 checks (passes by construction; Pete's call, 15 Oct). Validate it when a
   second federal cycle has firms that both name and fold One Nation.
@@ -37,9 +37,15 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30.
   `2026vic` with no announcement (vic:840; vic2022 = its own result)**, fed2010-16 (median of 2019/22/25 files,
   fed:1607). WA clean; published `fit_seats_full.R:107` uses a flat 3.5. No earlier seat file ever existed in the
   anchor's history. sd_within by file: 2019nsw 6.61, 2023nsw 3.72, 2027nsw 4.42, 2022sa 3.19, 2026sa 3.33,
-  2024qld 2.43, 2022vic 3.34, 2026vic 3.49. Fix options (Pete): derive prev_swing from our own results
-  (`build_seat_context.R` PHASE 2 has `prev_swing_est`, filled only for nsw2023/sa2026/qld2024) vs flat 3.5 like
-  production. Size unmeasured (guess: NSW 0.02-0.05, others <0.02).
+  2024qld 2.43, 2022vic 3.34, 2026vic 3.49. Pete chose "derive from our results" (16 Oct). BUILT and REVIEWED
+  (no blockers), NOT MERGED: branch `seat-spread-tf` (de1076c, f667b0c; worktree
+  `.claude/worktrees/agent-a7e42b05226bb2717`, holds COPIES of external/ dirs, no junctions). `prev_seat_swing()`
+  (R/prev_seat_swing.R) reads the P election's ALP-v-Coalition TCP swing from `external/elections/archive/`;
+  switch `AUSPOL_SEAT_SPREAD_SRC` ("derived" shipped / "anchor" old); `SSP1` per pair;
+  `scripts/compare_seat_spread_sources.R`. Validated on right-vintage files: corr 0.91-1.00, sd within 2.3%
+  except 2019nsw (anchor Goulburn "swing" 43.4 is a vote share; archive 20.2). New sd_within e.g. vic2022
+  3.49 -> 3.21, nsw2015 3.72 -> 4.84, vic2010 3.49 -> 2.02 (21 of 79 seats unlabelled). Next: merge after the
+  surge arms, measure with a full rebuild (unmeasured; guess NSW 0.02-0.05).
 - OPEN small: `AUSPOL_PARTY_COR` is out of NT with no recorded reason (out of WA by design: cor(ALP, IND) flips sign
   there, MODEL-REGISTRY); NT prints BNT4/BNT5 twice.
 - OPEN same one-run lag, older: the seat-poll weight is fitted on the PREVIOUS rebuild's output/forecasts.csv
@@ -106,8 +112,10 @@ person rule, statewide poll weighting by track record, seat-poll precision blend
   2026-10-07 "open"). Note renormalising McMahon's 80-sum poll would make IND worse (41/80 = 51), not better.
 - OPEN speed (`reviews/fast-iter-profile-2026-10-11.md`): read-set cache keys for defectors, personal prior vote,
   departed slope, salience (~25 s of a 54 s vic run); seat-poll memo keys on every switch.
-- OPEN small: test fixtures print `PPV1! minor-to-minor conserve fit FAILED ... object 'votes' not found` 6 times per
-  test run (synthetic corpus lacks `votes`; R/candidate_returns.R:984); noise that could hide a real PPV1 failure.
+- OPEN small: `fit_minor_defector_conserve()` (R/candidate_returns.R:1750) has a hard `min_n = 8L` cliff (below 8
+  cases: no fit, full transfer), against the shrinkage rule; and its call site (:1005) catches EVERY error and keeps
+  the full transfer, so a real failure reads like a thin fit. (The old PPV1! fixture noise is gone: 0 lines in the
+  whole local suite and in CI run 38720936369, checked 2026-10-16.)
 - OPEN `docs/DECISIONS.md` is 42,305 chars, past 40,000 (load `hub-slimming`).
 - Needs Pete: three built, OFF, never-pre-registered experiment branches from 2026-10-06:
   `worktree-agent-a6d092f16127ab44a` (`AUSPOL_XGB_CLASS_JUR_CAL`), `worktree-agent-a9cb9eebe64bafa28`

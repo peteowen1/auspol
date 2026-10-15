@@ -147,7 +147,7 @@ surging_parties <- function(region, year_from, year_to, threshold = 5,
   # PRINTED AT THE POINT OF USE for the live target (the prereg's live clause):
   # the level each class was compared with, not just the verdict.
   if ("oth_absorbs_missing" %in% names(levels))
-    cat(sprintf("SG1  %s surge flag (forecast, threshold %g): %s -> surging: %s\n", target, threshold,
+    cat(sprintf("SFL1 %s surge flag (forecast, threshold %g): %s -> surging: %s\n", target, threshold,
                 paste(sprintf("%s %.2f->%.2f", m$party, m$prev, m$level_pred), collapse = ", "),
                 if (length(out)) paste(out, collapse = ",") else "none"))
   out

@@ -81,7 +81,7 @@ inside it, in which case rule 1 picks N.
   changes.
 - **The live clause is met by construction on `surge-live`, not by a
   `level-pred.csv` row.** The live run passes its own `state_mean`
-  (`surge_levels_live()`) and prints it (`SG1`, cd91caa). Its OTH is
+  (`surge_levels_live()`) and prints it (`SG1`, cd91caa; renamed `SFL1` 2026-10-16, SG1 was taken). Its OTH is
   the whole minor field, so it is compared with last time's OTH + OTH_RIGHT +
   IND (97c5a71, review finding). Live vic2026 under T: `ONP 0.22->21.45, OTH
   16.87->11.48 -> surging: ONP`; 37 of 43 permits.
