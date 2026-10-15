@@ -117,7 +117,8 @@ statewide_cor <- function(target = NULL, mode = c("shrunk", "raw"),
     e <- co$by_target_tf[[target]]
     # a target outside the fit (WA, earlier state pairs) is computed on the fly
     # from the saved changes, still using only strictly earlier pairs
-    if (is.null(e)) e <- cov_time_forward(co$change, target, lambda = co$lambda)
+    if (is.null(e)) e <- cov_time_forward(co$change, target, lambda = co$lambda,
+                                          K = if (is.null(co$cov_tf_k)) 5 else co$cov_tf_k)
     out <- pick(e)
     attr(out, "cor_source") <- sprintf(
       "time-forward, %d earlier pairs, w=%.3f (%s)", e$n_pairs, e$w, target)
