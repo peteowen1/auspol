@@ -10,7 +10,8 @@ unfold_others(
   parties = NULL,
   oth = "OTH",
   min_oth = 0.5,
-  buffer_days = 60
+  buffer_days = 60,
+  house_adjust = TRUE
 )
 }
 \arguments{
@@ -30,11 +31,16 @@ failure rather than something to silently clamp — it warns.}
 
 \item{buffer_days}{How far outside a party's observed date range the
 correction may still be applied.}
+
+\item{house_adjust}{Impute the trend PLUS the polling firm's own fitted
+house effect for the party (0 for a firm that never named it), rather
+than the all-firm trend alone.}
 }
 \value{
 A copy of \code{polls} with \code{oth} corrected, carrying attributes
-\code{folded} (what was subtracted where) and \code{fold_skipped} (rows that looked
-folded but fell outside the observed window).
+\code{folded} (what was subtracted where, including \code{house_shift}) and
+\code{fold_skipped} (rows that looked folded but fell outside the observed
+window).
 }
 \description{
 Subtract a folded party's imputed share from "Others"

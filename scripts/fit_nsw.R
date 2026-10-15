@@ -432,7 +432,11 @@ cat(sprintf("NL3a endpoint FP sums (reported, not asserted): %s\n",
 NSW_YEARS <- c(2023, 2027)
 nsw_track <- lapply(NSW_YEARS, function(yr) {
   r <- get(paste0("res", yr))
-  x <- poll_tracking_check(r$polls, r$fits)
+  # Against the polls the trends were FITTED on: OTH is fitted with folded
+  # parties subtracted, so raw Others overstates it by the folded share
+  # (2023: 3.86 points raw vs 1.08 corrected, 2026-10-15).
+  pc <- if (is.null(r$polls_corrected)) r$polls else r$polls_corrected
+  x <- poll_tracking_check(pc, r$fits)
   report_poll_tracking(x, sprintf("NL3  %d", yr))
   x
 })

@@ -12,6 +12,7 @@ fit_cycle_unfolded(
   tol = 0.05,
   max_iter = 10L,
   verbose = TRUE,
+  house_adjust = TRUE,
   ...
 )
 }
@@ -32,6 +33,8 @@ value between iterations, in percentage points.}
 \item{max_iter}{Iteration cap.}
 
 \item{verbose}{Report each iteration's movement.}
+
+\item{house_adjust}{Passed to \code{\link[=unfold_others]{unfold_others()}}.}
 
 \item{...}{Passed to \code{\link[=fit_trend]{fit_trend()}} for every party.}
 }

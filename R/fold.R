@@ -59,12 +59,17 @@ folded_rows <- function(polls, party, sum_range = c(97, 103), oth = "OTH") {
 #'   failure rather than something to silently clamp — it warns.
 #' @param buffer_days How far outside a party's observed date range the
 #'   correction may still be applied.
+#' @param house_adjust Impute the trend PLUS the polling firm's own fitted
+#'   house effect for the party (0 for a firm that never named it), rather
+#'   than the all-firm trend alone.
 #' @return A copy of `polls` with `oth` corrected, carrying attributes
-#'   `folded` (what was subtracted where) and `fold_skipped` (rows that looked
-#'   folded but fell outside the observed window).
+#'   `folded` (what was subtracted where, including `house_shift`) and
+#'   `fold_skipped` (rows that looked folded but fell outside the observed
+#'   window).
 #' @export
 unfold_others <- function(polls, fits, parties = NULL, oth = "OTH",
-                          min_oth = 0.5, buffer_days = 60) {
+                          min_oth = 0.5, buffer_days = 60,
+                          house_adjust = TRUE) {
   out <- data.table::copy(polls)
   majors <- c("ALP", "LNP", "LIB", "NAT")
   if (is.null(parties)) {
@@ -119,9 +124,30 @@ unfold_others <- function(polls, fits, parties = NULL, oth = "OTH",
     # is the bug this function exists to fix.
     d <- pmin(pmax(out$date[hit], min(tr$date)), max(tr$date))
     imputed <- tr$mean[match(d, tr$date)]
+    # The trend is the all-firm average; a firm that reads the party low also
+    # holds less of it inside its Others. Add the firm's own fitted house
+    # effect, which the trend model already shrinks (prior sd
+    # sigma_house_pts) -- Freshwater 2025 reads One Nation ~0.7 below the
+    # trend on 4 named polls, and imputing the plain trend over-corrected its
+    # 18 folded polls (fit_federal.R FF1, 2026-10-15). A firm that never named
+    # the party carries no information about its house effect and gets 0; one
+    # that did but was pooled into "(other firms)" gets that pooled effect.
+    house_shift <- numeric(sum(hit))
+    he <- fits[[p]]$house_effects
+    if (house_adjust && !is.null(he) && nrow(he) && "effect_pts" %in% names(he)) {
+      hit_firm <- out$firm[hit]
+      named_firms <- unique(fits[[p]]$residuals$firm)
+      own <- match(hit_firm, he$firm)
+      pooled_row <- match("(other firms)", he$firm)
+      use_pooled <- is.na(own) & hit_firm %in% named_firms & !is.na(pooled_row)
+      own[use_pooled] <- pooled_row
+      house_shift <- ifelse(is.na(own), 0, he$effect_pts[own])
+    }
+    imputed <- imputed + house_shift
     ok <- !is.na(imputed)
     idx <- which(hit)[ok]
-    imputed <- imputed[ok]
+    imputed <- pmax(imputed[ok], 0)
+    house_shift <- house_shift[ok]
     if (!length(idx)) next
 
     before <- out[[oth]][idx]
@@ -136,7 +162,8 @@ unfold_others <- function(polls, fits, parties = NULL, oth = "OTH",
     out[[oth]][idx] <- after
     log[[p]] <- data.table::data.table(
       party = p, date = out$date[idx], firm = out$firm[idx],
-      oth_before = before, imputed = imputed, oth_after = after
+      oth_before = before, imputed = imputed, house_shift = house_shift,
+      oth_after = after
     )
   }
   for (a in c("parties", "region", "cycle_year", "cycle_start", "cycle_end")) {
@@ -160,12 +187,13 @@ unfold_others <- function(polls, fits, parties = NULL, oth = "OTH",
 #'   value between iterations, in percentage points.
 #' @param max_iter Iteration cap.
 #' @param verbose Report each iteration's movement.
+#' @param house_adjust Passed to [unfold_others()].
 #' @return As [fit_cycle_trends_guarded()], with attributes `polls_corrected`
 #'   (the adjusted polls), `folded` (what was subtracted) and `iterations`.
 #' @export
 fit_cycle_unfolded <- function(polls, parties = NULL, priors = NULL,
                                overrides = list(), tol = 0.05, max_iter = 10L,
-                               verbose = TRUE, ...) {
+                               verbose = TRUE, house_adjust = TRUE, ...) {
   cur <- polls
   fits <- fit_cycle_trends_guarded(cur, parties, priors, overrides,
                                    verbose = verbose, ...)
@@ -173,7 +201,7 @@ fit_cycle_unfolded <- function(polls, parties = NULL, priors = NULL,
   iter <- 0L
   for (i in seq_len(max_iter)) {
     iter <- i
-    cur <- unfold_others(polls, fits)     # always correct from the ORIGINAL
+    cur <- unfold_others(polls, fits, house_adjust = house_adjust)  # always from the ORIGINAL
     delta <- if (is.null(prev_oth)) Inf else max(abs(cur$OTH - prev_oth), na.rm = TRUE)
     prev_oth <- cur$OTH
     fits <- fit_cycle_trends_guarded(cur, parties, priors, overrides,
