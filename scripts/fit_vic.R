@@ -328,8 +328,8 @@ vic_track <- lapply(ALL_CYCLES, function(y) {
   # Against the polls the trends were FITTED on: OTH is fitted with folded
   # parties subtracted, so raw Others overstates it by the folded share
   # (NSW 2023: 3.86 points raw vs 1.08 corrected, 2026-10-15).
-  pc <- if (is.null(r$polls_corrected)) r$polls else r$polls_corrected
-  x <- poll_tracking_check(pc, r$fits)
+  stopifnot(!is.null(r$polls_corrected))   # raw polls would re-open the false OTH breach
+  x <- poll_tracking_check(r$polls_corrected, r$fits)
   report_poll_tracking(x, sprintf("L3  %d", y))
   x
 })
