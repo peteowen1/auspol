@@ -109,6 +109,10 @@ classify_party <- function(name, code = NULL) {
   # checking this classifier against the Victorian 2010 party labels.
   set(grepl("democratic lab(o|ou)r|lab(o|ou)r dlp|\\bdlp\\b|d[.]l[.]p[.]", n),
       "OTH_RIGHT")
+  # Progressive Labour Party (fed2004 Cunningham and Newcastle, 2.4% each, against
+  # the Labor candidate) is a left micro-party, not Labor; found 2026-10-16 by the
+  # same audit that caught Anning's party in the LNP rule below.
+  set(grepl("progressive labou?r", n), "OTH")
   set(grepl("labor|labour", n), "ALP")
   # "Liberals For Climate" is a micro-party that ran against the Liberals in
   # two WA seats in 2021, and the "liberal" rule below would file it as LNP.

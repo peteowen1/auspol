@@ -127,6 +127,8 @@ test_that("a party is not made Coalition by the word liberal in its name", {
   # Both were filed LNP until 2026-10-16 (the corpus's exact strings and codes).
   expect_equal(classify_party("FRASER ANNING'S CONSERVATIVE NATIONAL PARTY", "FACN"), "OTH_RIGHT")
   expect_equal(classify_party("liberals for forests", "LFF"), "OTH")
+  expect_equal(classify_party("Progressive Labour Party", "PLP"), "OTH")
+  expect_equal(classify_party("Country Labor Party"), "ALP")
   expect_equal(classify_party("National Party of Australia - NSW"), "LNP")
   expect_equal(classify_party("The Nationals", "NP"), "LNP")
   # Call to Australia is Fred Nile's party, which became the Christian
