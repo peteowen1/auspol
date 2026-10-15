@@ -197,8 +197,12 @@ governed_population <- function(election, prev_election, region,
   # surge calculation broke" must not print the same thing. The fallback is
   # kept because the empty-population case is legitimate (test corpora carry
   # no region/year), but the reason is said.
+  # Under AUSPOL_SURGE_SOURCE=forecast a failure is NOT caught: falling back to
+  # "no party surging" there would score arm T as arm N with nothing in the
+  # numbers to show it (prereg-surge-flag-time-forward-2026-10-15.md).
   surging <- tryCatch(surging_parties(region, py, yr, surge_threshold),
                       error = function(e) {
+                        if (identical(Sys.getenv("AUSPOL_SURGE_SOURCE", "actual"), "forecast")) stop(e)
                         message("salience screen: surging_parties() failed for ",
                                 election, " -- treating no party as surging (",
                                 conditionMessage(e), ")")

@@ -73,3 +73,15 @@ test_that("AUSPOL_SURGE_SOURCE refuses a missing target and an unknown value", {
   expect_error(surging_parties("xx", 2020L, 2024L, corpus = mk(), source = "polls"),
                "must be")
 })
+
+test_that("forecast mode never reads the target election's rows", {
+  d <- mk()[year == 2020L]   # the live case: the target has no votes at all
+  lv <- data.table::data.table(pair = "xx2024", party = c("ALP", "ONP", "NEW"),
+                               level_pred = c(70, 22, 8))
+  # ONP 10 -> 22 rises; ALP 90 -> 70 falls; NEW never stood before, starts at 0
+  expect_setequal(surging_parties("xx", 2020L, 2024L, corpus = d, source = "forecast",
+                                  levels = lv), c("ONP", "NEW"))
+  # identical answer whatever the target's actual result was
+  expect_setequal(surging_parties("xx", 2020L, 2024L, corpus = mk(), source = "forecast",
+                                  levels = lv), c("ONP", "NEW"))
+})
