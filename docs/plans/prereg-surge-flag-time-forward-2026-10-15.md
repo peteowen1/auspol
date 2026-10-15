@@ -70,6 +70,24 @@ inside it, in which case rule 1 picks N.
   after; actual 29.6). If not, something else permits it and the fix is
   incomplete.
 
+## ADDENDUM 2026-10-15 19:45, before either arm finished (original clauses above unedited)
+
+- **Arm N's "what the live forecast already runs" was wrong.** `candidacies.csv`
+  carries vic2026 and nsw2027 with every vote NA; `party_swing()` filled the NA
+  shares with 0, so live under S flagged ALP, LNP, GRN, IND and OTH_RIGHT as
+  surging and granted 6 permits (4 OTH_RIGHT, 2 IND; 42 of 43 vs 36 under N).
+  Fixed on branch `surge-live` (90a85a2): an unheld election is an error, and
+  live S now equals N. No backtest pair has an NA vote, so neither arm's score
+  changes.
+- **The live clause is met by construction on `surge-live`, not by a
+  `level-pred.csv` row.** The live run passes its own `state_mean`
+  (`surge_levels_live()`) and prints it (`SG1`, cd91caa). Its OTH is
+  the whole minor field, so it is compared with last time's OTH + OTH_RIGHT +
+  IND (97c5a71, review finding). Live vic2026 under T: `ONP 0.22->21.45, OTH
+  16.87->11.48 -> surging: ONP`; 37 of 43 permits.
+- This favours T only by letting the clause be tested at all; the decision
+  rules 1-2 and the other refusal clauses are unchanged.
+
 ## What this cannot see
 
 - A new party with no forecast row (Territory Alliance 2020) is never surging

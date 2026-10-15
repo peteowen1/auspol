@@ -19,6 +19,11 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30.
   stays "actual"). IN FLIGHT from 16:49: `deciding-runs/rebuild-20261015-surge-{none,forecast}.log`, then
   `...-surge-restore.log` puts snapshots 1317 + 1533 back. Score per the prereg (15 targeted elections primary, all
   35 guard, Nelson IND < 45%); nt2020 smoke under forecast: 0.8482 -> 0.6709.
+- OPEN (LIVE BUG, fix reviewed, unmerged) the published vic2026 forecast flags ALP/LNP/GRN/IND/OTH_RIGHT as
+  "surging" because vic2026's votes are NA and `party_swing()` read them as 0: 6 wrong permits (4 OTH_RIGHT, 2 IND).
+  Branch `surge-live` (90a85a2, 97c5a71, cd91caa; worktree in the session scratchpad) fixes it and wires arm T's
+  live level. Merge AFTER the surge arms finish (it edits R/ and scripts/), run `check_like_ci.R`, then measure the
+  live seat-probability shift. Prereg addendum records it.
 - OPEN check tonight's daily run (first with 629fc35's validation-check fixes; DECISIONS 2026-10-15) concludes clean (no "Run finished with problems") and reads the new release.
 - OPEN FFD1 is fitted on the gap FF1 checks (passes by construction; Pete's call, 15 Oct). Validate it when a
   second federal cycle has firms that both name and fold One Nation.
