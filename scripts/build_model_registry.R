@@ -39,7 +39,7 @@ switches <- switches[nzchar(switches)]
 # gaps everywhere, which is not what "gap" means for this table. Verified by
 # reading R/*.R directly (see docs/MODEL-REGISTRY.md's own notes section for
 # citations); update this list if a switch moves between the two styles.
-SHARED_FN <- c("AUSPOL_COV_LOO", "AUSPOL_SALIENCE_SMOOTH", "AUSPOL_SIM_ENGINE", "AUSPOL_DEFECT_POOLED")
+SHARED_FN <- c("AUSPOL_COV_LOO", "AUSPOL_COV_TF", "AUSPOL_SALIENCE_SMOOTH", "AUSPOL_SIM_ENGINE", "AUSPOL_DEFECT_POOLED")
 
 present <- function(sw, file) {
   if (!file.exists(file)) return(NA)
@@ -403,6 +403,7 @@ CLASSIFY <- list(
   AUSPOL_REENTRY_LINK = "Read inside R/reentry_prior.R, not per-harness -- universal in practice (added to published_flags.R 2026-10-08 at its code default).",
   AUSPOL_REENTRY_WINSOR = "Read inside R/reentry_prior.R, not per-harness -- universal in practice (added to published_flags.R 2026-10-08 at its code default).",
   AUSPOL_COV_LOO = "Read inside R/statewide_cor.R, not per-harness -- universal in practice, absent from every harness script by design.",
+  AUSPOL_COV_TF = "Read inside R/statewide_cor.R, not per-harness -- same as AUSPOL_COV_LOO; default 0 (OFF).",
   AUSPOL_SALIENCE_SMOOTH = "Read inside R/salience_surge.R, not per-harness -- universal in practice.",
   AUSPOL_SIM_ENGINE = "Read inside R/seat_sim.R's simulate_seat_contests(), not per-harness -- universal in practice.",
   AUSPOL_FLOW_SHIFT = "Published-forecast-only (fit_seats_full.R shifts the statewide TPP fundamentals blend for the live Victorian projection); backtests inject real historical first preferences directly and have no fundamentals blend to shift. NOT federal-specific -- fit_seats_full.R is the Victorian forecast; corrected 2026-09-09, this comment previously said \"federal\" for every switch fit_seats_full.R alone reads, which is wrong for all six in this group.",
