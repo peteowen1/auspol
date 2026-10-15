@@ -15,7 +15,10 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30.
   ACTUAL result and counts falls (`abs()`), so a collapsing class is permitted a full carry; 598 permits in 15
   elections, and the production as-at xgb models train on the leaked `permit`/`governed`
   (`reviews/surge-flag-leak-2026-10-15.md`). Prereg committed: `plans/prereg-surge-flag-time-forward-2026-10-15.md`
-  (arms N and T, full rebuild each). Next: build `AUSPOL_SURGE_SOURCE`, then the two rebuilds.
+  (arms N and T, full rebuild each). Switch `AUSPOL_SURGE_SOURCE` built and reviewed (28e5068, dc07630; published
+  stays "actual"). IN FLIGHT from 16:49: `deciding-runs/rebuild-20261015-surge-{none,forecast}.log`, then
+  `...-surge-restore.log` puts snapshots 1317 + 1533 back. Score per the prereg (15 targeted elections primary, all
+  35 guard, Nelson IND < 45%); nt2020 smoke under forecast: 0.8482 -> 0.6709.
 - DONE (on dev 629fc35, reviewed): the daily run's validation failures. NSW and Vic tracking checks compared the
   fitted Others with RAW polls (folded parties still inside); now `polls_corrected`, NSW 2023 3.86 -> 1.08. The
   fold correction imputes each firm's house effect, and a fitted One Nation unprompted discount (FFD1: 0.163,
