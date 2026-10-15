@@ -464,7 +464,8 @@ xgb_primary_predict_live <- function(shares, mat22, a22, state_mean, returns,
   # change needed -- see this function's own docstring for what that means
   # for the degeneracy fix specifically.
   rows[, `:=`(jump = 0, governed = 0L, permit = 1L, surge_h = 0, is_recipient = 0L)]
-  sal <- tryCatch(governed_population(target_election, prev_election, region),
+  sal <- tryCatch(governed_population(target_election, prev_election, region,
+                                      surge_levels = surge_levels_live(target_election, state_mean)),
                    error = function(e) {
                      cat(sprintf("XG5! governed_population() FAILED for %s (not just \"no corpus yet\"): %s\n",
                                  target_election, conditionMessage(e)))

@@ -888,14 +888,17 @@ if (.succ_on) { cat(sprintf("DSR1 departed successor rates (%s): %d seat(s) for 
 .reason <- function(name) if (exists(name, envir = .why)) sprintf(" (%s)", get(name, envir = .why)) else ""
 .returns <- if (.cond) .try("returns", candidate_returns(PREV, TGT)) else NULL
 .permit  <- if (.screened && !is.null(.returns))
-              .try("permit", salience_permit_for(TGT, PREV, REGION)) else NULL
+              .try("permit", salience_permit_for(TGT, PREV, REGION,
+                                                 surge_levels = surge_levels_live(TGT, state_mean))) else NULL
 if (.cond && is.null(.returns)) {
   cat(sprintf(sub("@T", TGT, "DS2  arm CS requested but @T has no candidate list yet -- FALLING BACK to uniform swing%s\n", fixed = TRUE),
               .reason("returns")))
 } else if (.cond) {
   cat(sprintf("DS2  arm C ON: %d of %d seat-classes have the same candidate returning%s\n",
               sum(.returns$same), nrow(.returns),
-              if (.screened && !is.null(.permit)) "" else " | screen: no salience data, arm C only"))
+              # the reason is printed: a permit call that FAILED (e.g. no surge level under
+              # AUSPOL_SURGE_SOURCE=forecast) must not read as "no salience data yet"
+              if (.screened && !is.null(.permit)) "" else paste0(" | screen: no salience data, arm C only", .reason("permit"))))
 }
 # SITTING-MEMBER SLOPE TIER and DEFECTOR DISCOUNT, wired into the PUBLISHED
 # forecast 2026-09-06. Both were validated in the backtest harnesses and then

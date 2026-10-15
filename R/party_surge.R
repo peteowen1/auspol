@@ -36,6 +36,15 @@ party_swing <- function(region, year_from, year_to, corpus = NULL) {
   share <- function(y) {
     d <- C[C$region == region_arg & C$year == y]
     if (!nrow(d)) stop("no rows for ", region_arg, y, call. = FALSE)
+    # AN ELECTION NOT YET HELD HAS NO SWING. The corpus carries vic2026 and
+    # nsw2027 with every `votes` NA; summed, they became NA shares, the
+    # `is.na(now) := 0` below read those as "polled nothing", and every class
+    # above 5% "collapsed" -- so the published vic2026 forecast flagged ALP,
+    # LNP, GRN, IND and OTH_RIGHT as surging and granted 6 seat-class permits
+    # on it (2026-10-15). A missing vote is an error, never a zero.
+    if (anyNA(d$votes))
+      stop(sprintf("%d of %d rows for %s%d have no votes -- an election not yet held has no swing",
+                   sum(is.na(d$votes)), nrow(d), region_arg, y), call. = FALSE)
     t <- d[, list(v = sum(votes)), by = party]
     t[, list(party, pct = 100 * v / sum(v))]
   }
@@ -63,10 +72,12 @@ party_swing <- function(region, year_from, year_to, corpus = NULL) {
 #'     the result of the election being predicted, and counts a collapse as a
 #'     surge (`docs/reviews/surge-flag-leak-2026-10-15.md`). Kept only as the
 #'     arm that measures what the leak was worth.}
-#'   \item{`"none"`}{no class is surging -- what the live forecast already got,
-#'     because `year_to` has no votes yet.}
+#'   \item{`"none"`}{no class is surging. (The live forecast did NOT already
+#'     get this: until 2026-10-15 a not-yet-held `year_to` read as every class
+#'     collapsing. It is now an error, see [party_swing()].)}
 #'   \item{`"forecast"`}{RISES only, `level_pred - prev >= threshold`, from the
-#'     time-forward statewide forecast in `output/level-pred.csv`. A class with
+#'     time-forward statewide forecast: `levels` when given (the live run passes
+#'     its own statewide forecast), else `output/level-pred.csv`. A class with
 #'     no forecast row is not surging. A target with no rows at all is an error.}
 #' }
 #'
@@ -76,7 +87,7 @@ party_swing <- function(region, year_from, year_to, corpus = NULL) {
 #' @param source `"actual"`, `"none"` or `"forecast"`; defaults to
 #'   `AUSPOL_SURGE_SOURCE`.
 #' @param levels For `"forecast"`: a table of `pair`, `party`, `level_pred`;
-#'   `NULL` reads `output/level-pred.csv`.
+#'   `NULL` reads `output/level-pred.csv`. Ignored by the other sources.
 #' @return Character vector of party classes.
 #' @export
 surging_parties <- function(region, year_from, year_to, threshold = 5,
@@ -120,4 +131,28 @@ surging_parties <- function(region, year_from, year_to, threshold = 5,
   out <- m[!is.na(swing_fc) & swing_fc >= threshold, party]
   stopifnot(all(m[party %in% out]$swing_fc > 0))   # a fall is never a surge
   out
+}
+
+#' The live run's statewide forecast, in the shape `surging_parties(levels=)` reads
+#'
+#' `output/level-pred.csv` holds only elections already held, so the live
+#' target has to bring its own level: the same `state_mean` the seat model is
+#' simulating around, in percentage points.
+#'
+#' @param election The target label, e.g. `"vic2026"`.
+#' @param state_mean Named numeric vector of statewide first-preference shares
+#'   in points, one per class.
+#' @return A `data.table` of `pair`, `party`, `level_pred`.
+#' @keywords internal
+surge_levels_live <- function(election, state_mean) {
+  nm <- names(state_mean)
+  if (is.null(nm) || anyNA(nm) || any(!nzchar(nm)) || anyDuplicated(nm))
+    stop("surge_levels_live(): state_mean needs unique, non-empty class names", call. = FALSE)
+  if (!all(is.finite(state_mean)))
+    stop("surge_levels_live(): state_mean has a non-finite share", call. = FALSE)
+  # points, not proportions: a 0.21 One Nation would never clear a 5-point threshold
+  if (abs(sum(state_mean) - 100) > 1)
+    stop(sprintf("surge_levels_live(): state_mean sums to %.2f, not 100 -- not percentage points",
+                 sum(state_mean)), call. = FALSE)
+  data.table::data.table(pair = election, party = nm, level_pred = unname(state_mean))
 }
