@@ -109,6 +109,9 @@ for (pr in PAIRS) {
   surging_rows[[pr$election]] <- data.table(pair = pr$election, party = sp, surging = 1L)
 }
 SURGING <- rbindlist(surging_rows, fill = TRUE)
+# No pair with a surging class (AUSPOL_SURGE_SOURCE=none) leaves a table with no
+# columns, which merge() refuses; keep the shape so every row reads surging = 0.
+if (!nrow(SURGING)) SURGING <- data.table(pair = character(), party = character(), surging = integer())
 ALL <- merge(ALL, SURGING, by = c("pair","party"), all.x = TRUE)
 ALL[, surging := ifelse(is.na(surging), 0L, surging)]
 
