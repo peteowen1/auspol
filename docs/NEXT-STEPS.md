@@ -11,7 +11,11 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30.
   (snapshot `20261015-1317-20697de-from1`; publish log `deciding-runs/publish-20261015-1317.log`). AEF-7 0.2669 vs AEF
   0.2825. The port cost +0.0007 pooled (0.3340 -> 0.3347, 35 pairs / 2,931 seats), all from NT: nt2020 0.648 -> 0.826,
   nt2016 and nt2024 improved (-0.062, -0.075); non-WA/NT +0.0002. Pete chose to ship it for parity.
-- OPEN nt2020 +0.18 under the screened port: not traced. Walk its worst seats before any NT change.
+- OPEN (LIVE LEAK) nt2020 +0.18 traced to Nelson: the salience screen's "surging" flag reads each election's
+  ACTUAL result and counts falls (`abs()`), so a collapsing class is permitted a full carry; 598 permits in 15
+  elections, and the production as-at xgb models train on the leaked `permit`/`governed`
+  (`reviews/surge-flag-leak-2026-10-15.md`). Prereg committed: `plans/prereg-surge-flag-time-forward-2026-10-15.md`
+  (arms N and T, full rebuild each). Next: build `AUSPOL_SURGE_SOURCE`, then the two rebuilds.
 - DONE (on dev 629fc35, reviewed): the daily run's validation failures. NSW and Vic tracking checks compared the
   fitted Others with RAW polls (folded parties still inside); now `polls_corrected`, NSW 2023 3.86 -> 1.08. The
   fold correction imputes each firm's house effect, and a fitted One Nation unprompted discount (FFD1: 0.163,
