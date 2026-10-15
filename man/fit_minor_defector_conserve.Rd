@@ -17,10 +17,13 @@ fit_minor_defector_conserve(
 
 \item{corpus, pairs}{As in \code{\link[=fit_defector_discount]{fit_defector_discount()}}.}
 
-\item{min_pcv, min_n}{Minimum prior vote per case; minimum cases to fit.}
+\item{min_pcv, min_n}{Minimum prior vote per case; minimum cases to fit
+(\code{min_n} is ignored when \code{AUSPOL_CONSERVE_SHRINK_K} is set).}
 }
 \value{
-list(frac, n, cases); \code{frac} NULL below \code{min_n}.
+list(frac, n, cases); \code{frac} NULL below \code{min_n}. With
+\code{AUSPOL_CONSERVE_SHRINK_K} set, \code{frac} is the median times \code{w = n / (n + K)}
+at any \code{n >= 1}, and the list also carries \code{w} and the unshrunk median \code{raw}.
 }
 \description{
 Leave-target-out over every other pair. For each candidate who stood

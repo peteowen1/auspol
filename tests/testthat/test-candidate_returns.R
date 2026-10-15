@@ -606,7 +606,9 @@ test_that("fit_minor_defector_conserve measures the origin class's kept share, t
   expect_null(fit_minor_defector_conserve("vic2026", corpus = corpus, pairs = pairs)$frac)
   s <- withr::with_envvar(c(AUSPOL_CONSERVE_SHRINK_K = "3"), fit_minor_defector_conserve("vic2026", corpus = corpus, pairs = pairs))
   expect_equal(s$w, 0.25); expect_equal(s$frac, 0.25 * 12 / 30, tolerance = 1e-6)
-  expect_error(withr::with_envvar(c(AUSPOL_CONSERVE_SHRINK_K = "0"), fit_minor_defector_conserve("vic2026", corpus = corpus, pairs = pairs)), "> 0")
+  for (bad in c("0", "-1", "three", "Inf"))
+    expect_error(withr::with_envvar(c(AUSPOL_CONSERVE_SHRINK_K = bad), fit_minor_defector_conserve("vic2026", corpus = corpus, pairs = pairs)),
+                 "positive number")
 })
 
 test_that("defector carry by level: federal targets get their own rate, state targets keep the pooled one", {
