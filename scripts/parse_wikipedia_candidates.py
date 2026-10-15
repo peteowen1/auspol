@@ -151,10 +151,17 @@ for r in table.split("\n|-"):
         add(re.sub(r"\s*\([^)]*\)\s*$", "", nm), COLNAME[key], bold)
 
     # Coalition: "Brad Battin (L)" / "Andrew Lethlean (N)"
+    # A three-cornered seat lists BOTH, run together once <br> is stripped:
+    # "Jo Armstrong (N)Megan Read (L)" (Ripon 2026). Matching only one code at
+    # the end of the cell made that ONE Liberal named "Jo Armstrong (N)Megan
+    # Read", beside the two correct ABC rows (found 2026-10-16). Split on each
+    # code, as the Other column does; the bare "Liberal" default is only for a
+    # cell with no code at all.
     nm, bold = vals[3]
-    m = re.match(r"^(.*?)\s*\(([LN])\)\s*$", nm)
-    if m:
-        add(m.group(1), CODE[m.group(2)], bold)
+    coal = list(re.finditer(r"([^()]+?)\s*\(([LN])\)", nm))
+    if coal:
+        for m in coal:
+            add(m.group(1), CODE[m.group(2)], bold)
     elif nm:
         add(nm, "Liberal", bold)
 

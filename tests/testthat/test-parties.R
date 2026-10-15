@@ -124,6 +124,15 @@ test_that("a party is not made Coalition by the word liberal in its name", {
   expect_equal(classify_party("Liberals For Climate"), "OTH")
   expect_equal(classify_party("Liberal Party"), "LNP")
   expect_equal(classify_party("Liberal Democrats"), "OTH_RIGHT")
+  # Both were filed LNP until 2026-10-16 (the corpus's exact strings and codes).
+  expect_equal(classify_party("FRASER ANNING'S CONSERVATIVE NATIONAL PARTY", "FACN"), "OTH_RIGHT")
+  expect_equal(classify_party("liberals for forests", "LFF"), "OTH")
+  expect_equal(classify_party("Progressive Labour Party", "PLP"), "OTH")
+  # "anning" is matched as a word, so "planning" does not make a party right-wing.
+  expect_false(identical(classify_party("Planning Reform Party"), "OTH_RIGHT"))
+  expect_equal(classify_party("Country Labor Party"), "ALP")
+  expect_equal(classify_party("National Party of Australia - NSW"), "LNP")
+  expect_equal(classify_party("The Nationals", "NP"), "LNP")
   # Call to Australia is Fred Nile's party, which became the Christian
   # Democrats; nothing in its name said so, so it read as OTH.
   expect_equal(classify_party("Call To Australia (WA)"), "OTH_RIGHT")

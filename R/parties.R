@@ -109,6 +109,10 @@ classify_party <- function(name, code = NULL) {
   # checking this classifier against the Victorian 2010 party labels.
   set(grepl("democratic lab(o|ou)r|lab(o|ou)r dlp|\\bdlp\\b|d[.]l[.]p[.]", n),
       "OTH_RIGHT")
+  # Progressive Labour Party (fed2004 Cunningham and Newcastle, 2.4% each, against
+  # the Labor candidate) is a left micro-party, not Labor; found 2026-10-16 by the
+  # same audit that caught Anning's party in the LNP rule below.
+  set(grepl("progressive labou?r", n), "OTH")
   set(grepl("labor|labour", n), "ALP")
   # "Liberals For Climate" is a micro-party that ran against the Liberals in
   # two WA seats in 2021, and the "liberal" rule below would file it as LNP.
@@ -116,6 +120,13 @@ classify_party <- function(name, code = NULL) {
   set(grepl("liberals for climate", n), "OTH")
   # Liberal Democrats are not the Liberal Party; checked before "liberal".
   set(grepl("liberal democrat|libertarian", n), "OTH_RIGHT")
+  # Two more the bare "liberal|national" rule caught (audit of every party name
+  # filed LNP, 2026-10-16): Fraser Anning's Conservative National Party, 48
+  # fed2019 candidates at 1.7% each, made fed2019 look like 48 three-cornered
+  # contests and inflated the Coalition class; and Liberals for Forests, an
+  # environmental micro-party, 7 fed2004 candidates.
+  set(grepl("conservative national|\\banning\\b", n), "OTH_RIGHT")
+  set(grepl("liberals for forests", n), "OTH")
   set(grepl("liberal|national", n), "LNP")
   # "Outdoor Recreation Party (Stop The Greens)" (fed2016 Forrest) is AGAINST the
   # Greens and contains the word. Caught 2026-10-05; the only such name among the
