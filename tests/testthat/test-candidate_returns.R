@@ -601,6 +601,12 @@ test_that("fit_minor_defector_conserve measures the origin class's kept share, t
   # ...and the old leave-target-out behaviour is still there behind the switch.
   old <- withr::with_envvar(c(AUSPOL_CONSERVE_TF = "0"), fit_minor_defector_conserve("vic2022", corpus = corpus, pairs = pairs, min_n = 1L))
   expect_equal(old$frac, 12 / 30, tolerance = 1e-6)
+  # AUSPOL_CONSERVE_SHRINK_K: no cliff. One case is below the default min_n = 8, so the cliff returns NULL;
+  # the shrunk fit keeps it at weight 1 / (1 + 3).
+  expect_null(fit_minor_defector_conserve("vic2026", corpus = corpus, pairs = pairs)$frac)
+  s <- withr::with_envvar(c(AUSPOL_CONSERVE_SHRINK_K = "3"), fit_minor_defector_conserve("vic2026", corpus = corpus, pairs = pairs))
+  expect_equal(s$w, 0.25); expect_equal(s$frac, 0.25 * 12 / 30, tolerance = 1e-6)
+  expect_error(withr::with_envvar(c(AUSPOL_CONSERVE_SHRINK_K = "0"), fit_minor_defector_conserve("vic2026", corpus = corpus, pairs = pairs)), "> 0")
 })
 
 test_that("defector carry by level: federal targets get their own rate, state targets keep the pooled one", {

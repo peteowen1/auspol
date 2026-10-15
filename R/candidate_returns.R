@@ -1006,7 +1006,8 @@ personal_prior_vote <- function(election_from, election_to, corpus = NULL,
                       error = function(e) { cat(sprintf("PPV1! minor-to-minor conserve fit FAILED, full transfer kept: %s\n", conditionMessage(e))); NULL })
       if (!is.null(.fc) && !is.null(.fc$frac) && is.finite(.fc$frac)) {
         out[.mm, transfer := transfer * (1 - .fc$frac)]
-        cat(sprintf("PPV1 minor-to-minor conserve: origin keeps %.2f of the defector's vote (n=%d, target excluded), %d row(s)\n", .fc$frac, .fc$n, sum(.mm)))
+        cat(sprintf("PPV1 minor-to-minor conserve: origin keeps %.2f of the defector's vote (n=%d%s, target excluded), %d row(s)\n", .fc$frac, .fc$n,
+                    if (!is.null(.fc$w)) sprintf(", median %.2f shrunk by w=%.2f", .fc$raw, .fc$w) else "", sum(.mm)))
       } else if (!is.null(.fc)) cat(sprintf("PPV1! minor-to-minor conserve: only %d case(s) to fit from (need 8) -- full transfer kept\n", .fc$n))
     }
   }
@@ -1782,6 +1783,16 @@ fit_minor_defector_conserve <- function(target_election, corpus = NULL, pairs = 
   if (!nrow(rows)) return(list(frac = NULL, n = 0L, cases = rows))
   rows[, kept := origin_now - (origin_cls_prev - prev_pcv) * ratio]
   rows[, frac := pmin(1, pmax(0, kept / prev_pcv))]
+  # AUSPOL_CONSERVE_SHRINK_K (2026-10-16; "" = the min_n cliff): shrink the median toward 0 (the
+  # no-conserve behaviour) by w = n / (n + K) instead of discarding it below min_n. Under time-forward
+  # fitting the cliff dropped nsw2015's 7 cases (median 0.35) outright and believed fed2016's 8 (0.51)
+  # outright; CLAUDE.md "Fit constants with SHRINKAGE, never a hard min_n cliff".
+  k <- suppressWarnings(as.numeric(Sys.getenv("AUSPOL_CONSERVE_SHRINK_K", "")))
+  if (is.finite(k)) {
+    if (k <= 0) stop("AUSPOL_CONSERVE_SHRINK_K must be > 0, not ", k, call. = FALSE)
+    n <- nrow(rows); w <- n / (n + k)
+    return(list(frac = w * stats::median(rows$frac), n = n, cases = rows, w = w, raw = stats::median(rows$frac)))
+  }
   if (nrow(rows) < min_n) return(list(frac = NULL, n = nrow(rows), cases = rows))
   list(frac = stats::median(rows$frac), n = nrow(rows), cases = rows)
 }
