@@ -27,7 +27,7 @@ surging.}
 \code{AUSPOL_SURGE_SOURCE}.}
 
 \item{levels}{For \code{"forecast"}: a table of \code{pair}, \code{party}, \code{level_pred};
-\code{NULL} reads \code{output/level-pred.csv}.}
+\code{NULL} reads \code{output/level-pred.csv}. Ignored by the other sources.}
 }
 \value{
 Character vector of party classes.
@@ -49,10 +49,12 @@ WHICH swing is read is set by \code{AUSPOL_SURGE_SOURCE}
 the result of the election being predicted, and counts a collapse as a
 surge (\verb{docs/reviews/surge-flag-leak-2026-10-15.md}). Kept only as the
 arm that measures what the leak was worth.}
-\item{\code{"none"}}{no class is surging -- what the live forecast already got,
-because \code{year_to} has no votes yet.}
+\item{\code{"none"}}{no class is surging. (The live forecast did NOT already
+get this: until 2026-10-15 a not-yet-held \code{year_to} read as every class
+collapsing. It is now an error, see \code{\link[=party_swing]{party_swing()}}.)}
 \item{\code{"forecast"}}{RISES only, \code{level_pred - prev >= threshold}, from the
-time-forward statewide forecast in \code{output/level-pred.csv}. A class with
+time-forward statewide forecast: \code{levels} when given (the live run passes
+its own statewide forecast), else \code{output/level-pred.csv}. A class with
 no forecast row is not surging. A target with no rows at all is an error.}
 }
 }

@@ -4,7 +4,13 @@
 \alias{governed_population}
 \title{The governed population for one election, built once and shared}
 \usage{
-governed_population(election, prev_election, region, surge_threshold = 5)
+governed_population(
+  election,
+  prev_election,
+  region,
+  surge_threshold = 5,
+  surge_levels = NULL
+)
 }
 \arguments{
 \item{election, prev_election}{Election labels as used in
@@ -14,6 +20,11 @@ governed_population(election, prev_election, region, surge_threshold = 5)
 \code{\link[=surging_parties]{surging_parties()}}.}
 
 \item{surge_threshold}{Passed to \code{\link[=surging_parties]{surging_parties()}}.}
+
+\item{surge_levels}{Passed to \code{\link[=surging_parties]{surging_parties()}} as \code{levels}: the statewide
+forecast \code{AUSPOL_SURGE_SOURCE=forecast} reads. The live forecast passes its
+own, because \code{output/level-pred.csv} holds only elections already held;
+\code{NULL} reads that file.}
 }
 \value{
 A \code{data.table} of \code{seat}, \code{party}, \code{keyword}, \code{jump}, \code{prev_party},

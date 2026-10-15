@@ -122,6 +122,10 @@ salience_registration <- function(jump) {
 #' @param region The region code (`"fed"`, `"vic"`, `"sa"`, `"nsw"`), for
 #'   [surging_parties()].
 #' @param surge_threshold Passed to [surging_parties()].
+#' @param surge_levels Passed to [surging_parties()] as `levels`: the statewide
+#'   forecast `AUSPOL_SURGE_SOURCE=forecast` reads. The live forecast passes its
+#'   own, because `output/level-pred.csv` holds only elections already held;
+#'   `NULL` reads that file.
 #' @return A `data.table` of `seat`, `party`, `keyword`, `jump`, `prev_party`,
 #'   `elected`, `pcv`, `governed`, or `NULL` if `output/salience-v6.csv` has no
 #'   rows for `election`.
@@ -133,7 +137,7 @@ salience_registration <- function(jump) {
 #'   near zero -- known, disclosed gap, not silently assumed complete.
 #' @export
 governed_population <- function(election, prev_election, region,
-                                surge_threshold = 5) {
+                                surge_threshold = 5, surge_levels = NULL) {
   sf <- file.path("output", "salience-v6.csv")
   if (!file.exists(sf)) return(NULL)
   # NOT a bare `election` inside `[`: `raw` has a column of that name, and
@@ -200,7 +204,7 @@ governed_population <- function(election, prev_election, region,
   # Under AUSPOL_SURGE_SOURCE=forecast a failure is NOT caught: falling back to
   # "no party surging" there would score arm T as arm N with nothing in the
   # numbers to show it (prereg-surge-flag-time-forward-2026-10-15.md).
-  surging <- tryCatch(surging_parties(region, py, yr, surge_threshold),
+  surging <- tryCatch(surging_parties(region, py, yr, surge_threshold, levels = surge_levels),
                       error = function(e) {
                         if (identical(Sys.getenv("AUSPOL_SURGE_SOURCE", "actual"), "forecast")) stop(e)
                         message("salience screen: surging_parties() failed for ",
@@ -380,8 +384,9 @@ governed_population <- function(election, prev_election, region,
 #'   `output/salience-v6.csv` has no rows for `election`.
 #' @export
 salience_permit_for <- function(election, prev_election, region,
-                                surge_threshold = 5) {
-  SAL <- governed_population(election, prev_election, region, surge_threshold)
+                                surge_threshold = 5, surge_levels = NULL) {
+  SAL <- governed_population(election, prev_election, region, surge_threshold,
+                             surge_levels = surge_levels)
   if (is.null(SAL)) return(NULL)
   surging <- attr(SAL, "surging")
   SAL[, permit := salience_screen(jump, governed)]
