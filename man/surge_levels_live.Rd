@@ -13,11 +13,14 @@ surge_levels_live(election, state_mean)
 in points, one per class.}
 }
 \value{
-A \code{data.table} of \code{pair}, \code{party}, \code{level_pred}.
+A \code{data.table} of \code{pair}, \code{party}, \code{level_pred}, \code{oth_absorbs_missing}.
 }
 \description{
 \code{output/level-pred.csv} holds only elections already held, so the live
 target has to bring its own level: the same \code{state_mean} the seat model is
-simulating around, in percentage points.
+simulating around, in percentage points. Its OTH is the whole minor field
+(the live run scales every class it does not model into it), so the table
+says so, and \code{\link[=surging_parties]{surging_parties()}} compares it with the previous election's
+unlisted classes added together.
 }
 \keyword{internal}

@@ -125,6 +125,20 @@ surging_parties <- function(region, year_from, year_to, threshold = 5,
   target <- paste0(region, year_to)
   lp <- levels[levels$pair == target, list(party, level_pred)]
   if (!nrow(lp)) stop("no level_pred rows for ", target, call. = FALSE)
+  # LIKE WITH LIKE. The live forecast models five classes and its OTH is the
+  # whole minor field: fit_seats_full.R scales every class it does not model
+  # (OTH_RIGHT, IND) into that one total. Compared with last time's OTH alone,
+  # vic2026 read 11.47 against 4.82 -- a 6.65-point "surge" in a minor field
+  # forecast to FALL from 16.87 (review of surge-live, 2026-10-15). So when the
+  # levels say so, last time's classes with no level row are added into OTH's.
+  # output/level-pred.csv carries no such column and keeps its classes separate.
+  if ("oth_absorbs_missing" %in% names(levels) && any(levels$oth_absorbs_missing %in% TRUE)) {
+    if (!"OTH" %in% lp$party)
+      stop("levels for ", target, " fold the minor field into OTH but have no OTH row", call. = FALSE)
+    s <- data.table::copy(s)
+    s[!s$party %in% lp$party, party := "OTH"]
+    s <- s[, list(prev = sum(prev)), by = party]
+  }
   m <- merge(s, lp, by = "party", all.y = TRUE)
   m[is.na(prev), prev := 0]
   m[, swing_fc := level_pred - prev]
@@ -137,12 +151,15 @@ surging_parties <- function(region, year_from, year_to, threshold = 5,
 #'
 #' `output/level-pred.csv` holds only elections already held, so the live
 #' target has to bring its own level: the same `state_mean` the seat model is
-#' simulating around, in percentage points.
+#' simulating around, in percentage points. Its OTH is the whole minor field
+#' (the live run scales every class it does not model into it), so the table
+#' says so, and [surging_parties()] compares it with the previous election's
+#' unlisted classes added together.
 #'
 #' @param election The target label, e.g. `"vic2026"`.
 #' @param state_mean Named numeric vector of statewide first-preference shares
 #'   in points, one per class.
-#' @return A `data.table` of `pair`, `party`, `level_pred`.
+#' @return A `data.table` of `pair`, `party`, `level_pred`, `oth_absorbs_missing`.
 #' @keywords internal
 surge_levels_live <- function(election, state_mean) {
   nm <- names(state_mean)
@@ -154,5 +171,6 @@ surge_levels_live <- function(election, state_mean) {
   if (abs(sum(state_mean) - 100) > 1)
     stop(sprintf("surge_levels_live(): state_mean sums to %.2f, not 100 -- not percentage points",
                  sum(state_mean)), call. = FALSE)
-  data.table::data.table(pair = election, party = nm, level_pred = unname(state_mean))
+  data.table::data.table(pair = election, party = nm, level_pred = unname(state_mean),
+                         oth_absorbs_missing = TRUE)
 }
