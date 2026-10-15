@@ -929,25 +929,11 @@ if (identical(Sys.getenv("AUSPOL_XGB_PRIMARY", "0"), "1")) shares <- leader_seat
 # Departed member toward the same booths' federal vote (AUSPOL_DEPARTED_FED, plans/prereg-departed-fed-booths-2026-09-30.md); xgb layer only.
 if (identical(Sys.getenv("AUSPOL_XGB_PRIMARY", "0"), "1")) shares <- departed_fed_apply(shares, TGT)
 
-# Per-seat spread from the seat file of the election being predicted.
-# THE SEAT FILE OF THE ELECTION BEING PREDICTED, where one exists. The anchor
-# ships 2024qld.txt and no 2020qld.txt, so the 2020 pair falls back to the
-# spread measured on the only Queensland file there is. That is a LATER
-# election, which is the same compromise the federal harness makes for its
-# pre-2010 pairs -- it is a variance hyperparameter rather than a prediction,
-# and it is announced rather than absorbed.
-.sf <- tryCatch(as.data.table(load_seats(TO, "qld")), error = function(e) NULL)
-.sf_fallback <- is.null(.sf)
-if (.sf_fallback) {
-  .sf <- tryCatch(as.data.table(load_seats(2024L, "qld")), error = function(e) NULL)
-  if (is.null(.sf))
-    stop("No Queensland seat file for ", TO, " and none for 2024 either, so 
-there is no measured seat-swing spread to fall back on.")
-  cat(sprintf("BQ1s! no %dqld.txt: seat-swing spread taken from the 2024 file
-", TO))
-}
-sp <- seat_swing_spread(.sf,
-                        unname(st_b[["ALP"]] - st_a[["ALP"]]))
+# SEAT SPREAD (seat_sd) from AUSPOL_SEAT_SPREAD_SRC (R/prev_seat_swing.R, 2026-10-16).
+# "derived" (published): the seat-level swing AT the previous election (FROM), from our archived results.
+# "anchor": the old behaviour, 2024qld.txt when there is no seat file for TO, a LATER election, which LEAKS.
+sp <- harness_seat_spread("qld", FROM, TO, unname(st_b[["ALP"]] - st_a[["ALP"]]),
+                          anchor_fallback_year = 2024L)
 # STATEWIDE UNCERTAINTY. 1.5 was hardcoded in all four harnesses; the realised
 # statewide first-preference error over 139 party-cycles is sd 2.33, so the
 # harnesses were 1.6x over-confident BEFORE any seat-level modelling. That is

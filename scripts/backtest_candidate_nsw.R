@@ -419,15 +419,10 @@ cat(sprintf("\nBT0  flow matrix from %d transfers, elections: %s\n",
 # finding about Queensland, it is this mistake showing up as data.
 fm <- build_flow_matrix(tx_prev, min_n = 3L)
 
-# SEAT FILE for the seat spread (seat_swing_spread: region and prev_swing only). The anchor ships no
-# 2015nsw.txt, so nsw2015 falls back to 2023nsw.txt, whose prev_swing is the 2019 swing. NOT 2019nsw.txt:
-# its prev_swing is the 2015 swing, i.e. the target election's own seat-level result. It is a variance
-# hyperparameter from a LATER election (the compromise the Queensland harness makes); announced, not absorbed.
-seats <- tryCatch(as.data.table(load_seats(TO, "nsw")), error = function(e) NULL)
-if (is.null(seats)) {
-  seats <- as.data.table(load_seats(2023L, "nsw"))
-  cat(sprintf("BN0s no %dnsw.txt seat file: seat spread taken from 2023nsw.txt (a later election, prev_swing = the 2019 swing)\n", TO))
-}
+# SEAT SPREAD (seat_sd) comes from AUSPOL_SEAT_SPREAD_SRC, resolved where it is used (harness_seat_spread()).
+# "derived" (published) = the seat-level swing AT the previous election, from our own archived results.
+# "anchor" = the old behaviour: the anchor seat file for TO, else 2023nsw.txt, a LATER election, which LEAKS
+# (nsw2011/nsw2015). R/prev_seat_swing.R, 2026-10-16.
 
 # Per-seat 2019 shares as a matrix.
 w_prev <- dcast(fp_prev, seat ~ party, value.var = "votes", fill = 0)
@@ -949,7 +944,8 @@ if (identical(Sys.getenv("AUSPOL_XGB_PRIMARY", "0"), "1")) shares <- leader_seat
 # Departed member toward the same booths' federal vote (AUSPOL_DEPARTED_FED, plans/prereg-departed-fed-booths-2026-09-30.md); xgb layer only.
 if (identical(Sys.getenv("AUSPOL_XGB_PRIMARY", "0"), "1")) shares <- departed_fed_apply(shares, TGT)
 
-sp <- seat_swing_spread(seats, unname(state_tgt[["ALP"]] - state_prev[["ALP"]]))
+sp <- harness_seat_spread("nsw", FROM, TO, unname(state_tgt[["ALP"]] - state_prev[["ALP"]]),
+                          anchor_fallback_year = 2023L)
 cat(sprintf("\nBT3  seat spread: within %.2f, between %.2f\n", sp$sd_within, sp$sd_between))
 
 set.seed(SEED)
