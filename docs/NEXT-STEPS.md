@@ -77,8 +77,18 @@ scoring each election x sqrt(votes). Leak fixes shipped: conserve, MP slopes, ce
   (pass), Bass fed2019 0.083 -> 0.026 (FAIL, limit 0.01). Cause: a seat with no earlier split gets the pooled
   junior fraction 0.27; Bass's National took 1.4%. Pete: amend. Amendment 1 (ridge predictor of the split from
   pre-election facts, 33c031c): Bass 0.083 -> 0.053, FAIL again; no pre-election fact separates Bass (1.4%) from
-  Lyons (15.7%). Pete OVERRODE the Bass clause 17 Oct (prereg "Override 1"). NEXT: 1k screen on the elections
-  with split seats, then the 20k deciding run, unchanged criterion.
+  Lyons (15.7%). Pete OVERRODE the Bass clause 17 Oct (prereg "Override 1"). 1k screens (23 elections, 191 split seats,
+  `reviews/lib-nat-plumbing-2026-10-16.md`): S -0.0521 (SE 0.0273), S2 (f by state, Amendment 2, Pete's pick)
+  -0.0578 (SE 0.0277); every refusal passes; Victoria's 18 split seats WORSE under both (+0.18 to +0.21, ~1.6 SE).
+  Live Ripon (only vic2026 split seat) Coalition 0.145 -> 0.079 under S2 (limit 15 pts, passes). IN FLIGHT: 20k
+  deciding run on S2 (`deciding-runs/*-coalition-split-state/`). OPEN for Pete after it: ship despite Victoria?
+- OPEN (finding 17 Oct, not acted on): WA's Coalition over-call is a statewide LEVEL miss, not seat-level. Mean
+  Coalition primary error (ours - actual) in one-candidate seats: NT +3.61 (SE 1.08), WA +2.46 (0.34), Qld +0.98,
+  NSW +0.45, fed +0.05, SA -0.82, Vic -0.87; WA by election 6 of 7 positive (wa2005 +4.68, wa2001 +3.42, wa2017
+  +3.27). A jurisdiction bias in the level model is the lead; `screen_level_share.R` first.
+- OPEN cleanup, needs Pete's OK (deletes): 5 leftover worktrees, all fully merged into dev, no uncommitted files,
+  no junctions: `.claude/worktrees/agent-a7e42b05226bb2717` (seat-spread-tf), `agent-aed05f6924c0664ff` (cov-tf),
+  scratchpad `wt-conserve`, `wt-party`, `wt-surge-live`. Recommend `git worktree remove` each + delete branches.
 - OPEN NT seat layer: over-confidence fixed by the size spread (20k: nt2016 0.80, nt2020 0.65, nt2024 1.07, from
   0.99/0.81/1.41); still weak, and new parties start at zero share.
 - OPEN qld2017: One Nation / Katter seats given ~0 (emergence); qld2012 Katter polled inside Others.
