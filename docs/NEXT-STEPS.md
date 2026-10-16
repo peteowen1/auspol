@@ -69,21 +69,17 @@ scoring each election x sqrt(votes). Leak fixes shipped: conserve, MP slopes, ce
 - OPEN NT seat layer: over-confidence fixed by the size spread (20k: nt2016 0.80, nt2020 0.65, nt2024 1.07, from
   0.99/0.81/1.41); still weak, and new parties start at zero share.
 - OPEN qld2017: One Nation / Katter seats given ~0 (emergence); qld2012 Katter polled inside Others.
-- OPEN (LIVE LEAK, found 2026-10-16, needs Pete's design call) the backtest statewide party correlation is
-  LEAVE-ONE-OUT, not time-forward: `statewide_cor(TGT)` returns `by_target` from `scripts/estimate_statewide_cov.R:319`
-  (all 15 pairs but the target; `AUSPOL_COV_LOO="1"`), and vic/nsw/qld/sa pass it to `simulate_seat_contests()`
-  with no `statewide_draws`, so `R/seat_sim.R:1115` shift_mode 2 draws through it. Fed is dormant (forecast mode
-  feeds `sw_draws`; its every-pair-gets-fed2025 matrix bug, 10-03 review, also dormant). Live forecast clean
-  (`statewide_cor(NULL)`). Size (Sonnet, scratchpad `partycor/tf.R`; LOO / time-forward): ONP-LNP nsw2019 -0.38 /
-  +0.02, qld2020 -0.37 / +0.07, vic2018 -0.40 / +0.02 (the -0.38 is mostly sa2026's +20 ONP); max element diff
-  0.31-0.88. Log-loss effect unmeasured. Decision: fed2007-13 have < 3 earlier pairs -- independent draws there, or
-  shrink toward independence by pair count (no cliff)? Recommendation: shrink with weight n/(n + k) on the
-  time-forward correlation, k fixed in advance, so early targets fall smoothly to independence. BUILT that way and
-  REVIEWED (no blockers), OFF, unmerged: branch `cov-tf` (2f350d2, c44b064, bc85251; worktree
-  `.claude/worktrees/agent-aed05f6924c0664ff`): `AUSPOL_COV_TF` ("0" shipped), w = 0.5 n/(n+5), identity below 3
-  pairs; also carries each fed pair's own matrix (dormant bug). e.g. nsw2019 ONP-LNP -0.38 -> +0.01. Needs
-  `scripts/estimate_statewide_cov.R` rerun (outside the rebuild; `output/statewide-cov.rds` is from 19 Sep and
-  already stale against current inputs, LOO cells move up to 0.024), then a measured arm.
+- IN FLIGHT (LIVE LEAK, found 2026-10-16) the backtest statewide party correlation is leave-one-out, so it trains
+  on LATER elections (nsw2019 cor(ONP, LNP) -0.38, mostly from sa2026). Goes regardless; prereg
+  `plans/prereg-party-cor-time-forward-2026-10-16.md` (33e2c4a) decides its replacement: no correlation (I) vs
+  time-forward `AUSPOL_COV_TF=1` (T; merged b969b07, w = 0.5 n/(n+5), identity below 3 pairs). Widening to 25
+  non-WA pairs refused on its dry run (cor(ALP, IND) +0.43 -> -0.12, six sign flips). Prerequisites done: harnesses
+  now honour `AUSPOL_PARTY_COR=off` (d6d40d2; they ran correlated before); `output/statewide-cov.rds` rebuilt
+  16 Oct with `by_target_tf` (old copy in the session scratchpad). SCREEN (1,000 sims, 18 elections, 1,408 seats,
+  `deciding-runs/quickarm-20261016-cor-T-vs-I-all18.log`): T - I -0.0009 (SE 0.0007) but qld2015 is 68% of the
+  gain -> one-election clause refuses T -> I. DECIDING RUN (20,000 sims, decides per the prereg) RUNNING:
+  `deciding-runs/20261016-1323-cor-T-vs-I` (detached scheduled task). Then: confirm its `COV` lines read
+  time-forward, apply the clauses, ship I or T, and report L - winner (the leak's worth).
 - OPEN (hazard for arms, not live) pooled-fits audit 2026-10-16 (Sonnet, read-only) beyond
   `reviews/pooled-fits-inventory-2026-10-13.md`: only the statewide correlation above is live. LEAVE-ONE-OUT but
   OFF at published flags, so any arm switching them on measures a leaked number: `fit_xgb_primary_sd.R:108`
