@@ -45,6 +45,6 @@ one-election clause, so `AUSPOL_SURGE_SOURCE` ships as `"none"` (published flag 
 defaults). Live is unchanged: live already ran as N (surge-live). The guard failure is
 recorded here, not overridden.
 
-**OPEN for Pete:** take T instead, on the all-35 guard (1.3 SE)? Recommendation: N. T's gain is
+**DECIDED 2026-10-16: Pete, "Keep N".** The question was: take T instead, on the all-35 guard (1.3 SE)? Recommendation: N. T's gain is
 qld2017 plus a retraining shift on elections the flag does not touch, which is the shape the
 one-election clause exists to refuse.

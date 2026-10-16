@@ -11,11 +11,8 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30.
   (snapshot `20261015-1317-20697de-from1`; publish log `deciding-runs/publish-20261015-1317.log`). AEF-7 0.2669 vs AEF
   0.2825. The port cost +0.0007 pooled (0.3340 -> 0.3347, 35 pairs / 2,931 seats), all from NT: nt2020 0.648 -> 0.826,
   nt2016 and nt2024 improved (-0.062, -0.075); non-WA/NT +0.0002. Pete chose to ship it for parity.
-- NEEDS PETE (surge flag, leak FIXED 2026-10-16): arms scored (`reviews/surge-flag-arms-2026-10-16.md`). Primary
-  T-N -0.0030, SE 0.0031 (within 1 SE -> N); T refused anyway (qld2017 is 102% of its targeted gain); but the
-  all-35 guard FAILS for N (T better by 0.0028, SE 0.0021, mostly fed2013 via xgb retraining). Nelson IND passes
-  under both (N 37.7, T 38.4). Shipped "none" per the rules' outcome (published flag + inline defaults). Pete:
-  keep N (recommended) or take T on the guard?
+- DONE 2026-10-16 surge flag leak: `AUSPOL_SURGE_SOURCE="none"` shipped, Pete confirmed "Keep N" (DECISIONS;
+  `reviews/surge-flag-arms-2026-10-16.md`). Revisit T only with more elections where a forecast rise is real.
 - MERGED 2026-10-16 (6a04b3d; not yet in the published forecast) the live vic2026 bug: unheld vic2026 votes read
   as 0 flagged ALP/LNP/GRN/IND/OTH_RIGHT as surging. Live, same inputs and seed, old -> new: `surging: none`;
   20 seat-party cells in 8 seats move > 0.05 pts, largest Narracan ONP 76.4 -> 67.6 (LNP 23.6 -> 32.4), Pakenham
