@@ -15,7 +15,7 @@ eps <- if (n_sims >= 20000) 1e-6 else 0.5 / n_sims
 els <- intersect(list.dirs(base_dir, full.names = FALSE, recursive = FALSE),
                  list.dirs(arm_dir, full.names = FALSE, recursive = FALSE))
 els <- els[file.exists(file.path(base_dir, els, "allprobs.csv")) & file.exists(file.path(arm_dir, els, "allprobs.csv"))]
-cat(sprintf("SC0 %d elections in both folders; floor eps %.1e\n", length(els), eps))
+cat(sprintf("LX0 %d elections in both folders; floor eps %.1e\n", length(els), eps))
 cd <- fread(out_path("candidacies.csv"))
 
 ll <- function(f) {
@@ -58,11 +58,11 @@ pr <- function(lab, x) {
   invisible(r)
 }
 sp <- rows[rows$split == TRUE]
-cat(sprintf("SC1 split seats scored: %d (Coalition won %d, lost %d)\n", nrow(sp), sum(sp$coal_won, na.rm = TRUE),
+cat(sprintf("LX1 split seats scored: %d (Coalition won %d, lost %d)\n", nrow(sp), sum(sp$coal_won, na.rm = TRUE),
             sum(!sp$coal_won, na.rm = TRUE)))
 moved_non <- rows[rows$split == FALSE & rows$d != 0]
-cat(sprintf("SC2 non-split seats whose log loss moved: %d (must be 0)\n", nrow(moved_non)))
-cat("SC3 seat-winner log loss (lower is better), S minus A, SE clustered on election:\n")
+cat(sprintf("LX2 non-split seats whose log loss moved: %d (must be 0)\n", nrow(moved_non)))
+cat("LX3 seat-winner log loss (lower is better), S minus A, SE clustered on election:\n")
 r1 <- pr("PRIMARY: split seats", sp)
 pr("GUARD: every seat in these elections", rows)
 pr("non-WA split seats", sp[sp$jur != "wa"])
@@ -72,19 +72,19 @@ for (j in sort(unique(sp$jur))) pr(paste0("  ", j), sp[sp$jur == j])
 aef7 <- c("fed2022", "fed2025", "nsw2023", "qld2024", "sa2026", "vic2022", "wa2025")
 pr("AEF-7 elections, all seats", rows[rows$election %in% aef7])
 
-cat("SC4 per election, split seats: summed S-A (negative = S better), and share of the net gain\n")
+cat("LX4 per election, split seats: summed S-A (negative = S better), and share of the net gain\n")
 pe <- sp[, list(seats = .N, sum_d = sum(get("d"))), by = "election"][order(get("sum_d"))]
 net <- sum(sp$d)
 pe[, "share_of_gain" := if (net < 0) pe$sum_d / net else NA_real_]
 print(pe[, list(election, seats, sum_d = round(sum_d, 3), share_of_gain = round(share_of_gain, 2))], nrows = 50)
 top <- if (net < 0) max(pe$share_of_gain) else NA
-cat(sprintf("SC5 REFUSAL one election > half the gain: largest share %.2f -> %s\n", top,
+cat(sprintf("LX5 REFUSAL one election > half the gain: largest share %.2f -> %s\n", top,
             if (is.na(top)) "no net gain" else if (top > 0.5) "REFUSED" else "passes"))
 nw <- cl(sp[sp$jur != "wa"])
-cat(sprintf("SC6 REFUSAL non-WA split seats worse by > 1 SE: %+.4f (SE %.4f) -> %s\n", nw["d"], nw["se"],
+cat(sprintf("LX6 REFUSAL non-WA split seats worse by > 1 SE: %+.4f (SE %.4f) -> %s\n", nw["d"], nw["se"],
             if (is.finite(nw["se"]) && nw["d"] > nw["se"]) "REFUSED" else "passes"))
 won <- sp[sp$coal_won %in% TRUE]; lost <- sp[sp$coal_won %in% FALSE]
-cat(sprintf("SC7 won seats got worse by %.3f seat-units, lost seats improved by %.3f (reported)\n",
+cat(sprintf("LX7 won seats got worse by %.3f seat-units, lost seats improved by %.3f (reported)\n",
             sum(won$d), -sum(lost$d)))
-cat(sprintf("SC8 VERDICT on the primary: %s\n",
+cat(sprintf("LX8 VERDICT on the primary: %s\n",
             if (is.finite(r1["se"]) && r1["d"] < -r1["se"]) "S better than A by more than 1 SE" else "S NOT better by more than 1 SE"))

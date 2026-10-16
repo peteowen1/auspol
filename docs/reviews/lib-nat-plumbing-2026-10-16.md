@@ -68,3 +68,30 @@ knowing in advance that the National would be a token candidate.
 | Eden-Monaro | 0.175 | 0.036 |
 
 OPEN, for Pete: override the Bass clause (recorded as an override) and score on the unchanged criterion, or stop.
+
+## 1,000-sim screens after Override 1 (2026-10-17): S and S2 on the 23 elections with split seats
+
+`scripts/score_coalition_split.R` (the prereg's clauses; dry-run first on wa2013 + fed2019, where it reproduced
+quick_arm's pooled 0.2721 -> 0.2523 and caught an `ifelse` bug in the gain shares). Seat-winner log loss, lower
+is better, S minus A, SE clustered on election; floor 5e-4 (1,000 sims). Logs and scores:
+`deciding-runs/quickarm-20261017-coalition-split*.log`, `deciding-runs/score-20261017-coalition-split*-1k.txt`.
+
+| Set (seats, elections) | A | S (pooled f) | S2 (f by state) |
+|---|---|---|---|
+| PRIMARY: split seats (191, 23) | 0.4314 | 0.3793 (-0.0521, SE 0.0273) | 0.3736 (-0.0578, SE 0.0277) |
+| Every seat in those elections (2,081) | 0.2950 | 0.2902 | 0.2897 |
+| Non-WA split seats (92) | 0.3123 | 0.3410 (+0.029, SE 0.035) | 0.3361 (+0.024, SE 0.032) |
+| Coalition won (117) | 0.1585 | 0.2735 | 0.2722 |
+| Coalition lost (72) | 0.6757 | 0.3507 | 0.3378 |
+| WA (99) | 0.5422 | 0.4149 | 0.4085 |
+| fed (57) | 0.2664 | 0.2401 | 0.2402 |
+| Vic (18) | 0.6102 | 0.8193 (+0.209, SE 0.127) | 0.7940 (+0.184, SE 0.116) |
+| SA (15) | 0.1665 | 0.1899 | 0.1899 |
+
+Every refusal clause passes at 1,000 sims for both (largest one-election share of the gain 0.36 / 0.37, wa2013).
+Non-split seats: 0 moved. S2 is lower on the primary, so under Amendment 2 S2 goes to the 20k deciding run.
+
+**Victoria gets worse under both.** vic2022: the Nationals won Mildura, Morwell and Shepparton (the model already
+had them at 0.15-0.31; the split takes them to 0.06-0.14); vic2014 Ripon (Liberal held on a combined 51)
+0.60 -> 0.25. Ripon is the one live vic2026 split seat. Victoria's own rate is 0.80, but on 17-22 exclusions it
+only gets weight 0.26-0.59 against the pooled 0.71.
