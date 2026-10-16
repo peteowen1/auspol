@@ -17,7 +17,7 @@ coalition_split_args(target_election, seat_names, ...)
 \code{NULL}, or a list \code{r}, \code{sd} (named by seat, \code{NA} for no split) and \code{f}.
 }
 \description{
-Reads \code{AUSPOL_COALITION_SPLIT}: anything but \code{"1"} returns \code{NULL}, the
-one-candidate count. Prints, per election, the number of split seats, \code{f}
+Reads \code{AUSPOL_COALITION_SPLIT} (default \code{"1"}, shipped 2026-10-17):
+anything but \code{"1"} returns \code{NULL}, the one-candidate count. Prints, per election, the number of split seats, \code{f}
 and the mean centre \code{r} applied (the prereg's plumbing line, code \code{LN1}).
 }

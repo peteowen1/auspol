@@ -151,7 +151,7 @@ coalition_split_fit <- function(target_election, cand = NULL, transfers = NULL) 
   empty$n_events <- nrow(ev)
   # Fewer than 5 earlier rows cannot be cross-validated (COMPUTATIONAL).
   if (nrow(hist) < 5L || nrow(ev) == 0L) return(empty)
-  f <- coalition_f(ev, .rg(tgt_el), Sys.getenv("AUSPOL_COALITION_SPLIT_F", "pooled"))
+  f <- coalition_f(ev, .rg(tgt_el), Sys.getenv("AUSPOL_COALITION_SPLIT_F", "state"))
 
   xcols <- c("x_state_fn", "x_nat_own", "x_nat_stood", "x_lib_own", "x_lib_stood",
              "x_nat_sitting", "x_lib_sitting", "x_prev_split", "x_prev_fn")
@@ -231,8 +231,8 @@ coalition_f <- function(ev, jur, mode = c("pooled", "state")) {
 
 #' The `coalition_split` argument for one election's simulation
 #'
-#' Reads `AUSPOL_COALITION_SPLIT`: anything but `"1"` returns `NULL`, the
-#' one-candidate count. Prints, per election, the number of split seats, `f`
+#' Reads `AUSPOL_COALITION_SPLIT` (default `"1"`, shipped 2026-10-17):
+#' anything but `"1"` returns `NULL`, the one-candidate count. Prints, per election, the number of split seats, `f`
 #' and the mean centre `r` applied (the prereg's plumbing line, code `LN1`).
 #'
 #' @param target_election Election label.
@@ -241,12 +241,12 @@ coalition_f <- function(ev, jur, mode = c("pooled", "state")) {
 #' @return `NULL`, or a list `r`, `sd` (named by seat, `NA` for no split) and `f`.
 #' @export
 coalition_split_args <- function(target_election, seat_names, ...) {
-  if (!identical(Sys.getenv("AUSPOL_COALITION_SPLIT", "0"), "1")) return(NULL)
+  if (!identical(Sys.getenv("AUSPOL_COALITION_SPLIT", "1"), "1")) return(NULL)
   # Cached per election for a call with no inputs supplied: the Victorian
   # harness simulates in a loop, and the fit reads two corpora each time.
   # Keyed on the files' modification times too, so a rebuilt corpus refits.
   dots <- list(...)
-  key <- paste(target_election, Sys.getenv("AUSPOL_COALITION_SPLIT_F", "pooled"),
+  key <- paste(target_election, Sys.getenv("AUSPOL_COALITION_SPLIT_F", "state"),
                file.mtime(out_path("candidacies.csv")),
                max(file.mtime(list.files(file.path("external", "elections"), "transfers[.]csv$",
                                          full.names = TRUE))))

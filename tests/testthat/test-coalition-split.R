@@ -103,7 +103,7 @@ test_that("coalition_split_fit uses only earlier years", {
   tx <- data.table::data.table(election = c("wa2008", "wa2008", "wa2013", "wa2013"), seat = "A", round = 1L,
                                from = "LNP", to = c("LNP", "ALP", "LNP", "ALP"), votes = c(70, 30, 10, 90))
   fit <- coalition_split_fit("wa2013", cand = cand, transfers = tx)
-  expect_equal(fit$f, 0.7)
+  expect_equal(as.numeric(fit$f), 0.7)   # "state" (the shipped default) carries raw/n/w attributes
   expect_equal(fit$n_hist, 8L)
   expect_equal(fit$seats$seat, "A")
   expect_true(fit$seats$has_prev)

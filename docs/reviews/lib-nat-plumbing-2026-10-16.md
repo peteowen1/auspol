@@ -117,6 +117,7 @@ Scored by `scripts/score_coalition_split.R` (floor 1e-6): `prereg-score.txt` in 
 Reported: fed 57 seats -0.0243 (SE 0.0234); WA 99 -0.1291 (SE 0.0258); **Victoria 18 seats +0.1937 (SE 0.1174)**
 (vic2022 +2.38 and vic2014 +0.97 seat-units); SA 15 +0.0308 (SE 0.0122); AEF-7 all seats +0.0004 (SE 0.0062).
 
+**SHIPPED 2026-10-17: Pete chose "Ship now" with the Victoria result in front of him.** Original note:
 **Not shipped yet: Pete's call in the morning.** The prereg says ship. Against it: Victoria is the live target and
 its split seats get worse (about 1.65 SE), and the flag reaches the daily refresh from dev. To ship:
 `AUSPOL_COALITION_SPLIT = "1"`, `AUSPOL_COALITION_SPLIT_F = "state"` in `published_flags.R` (and the inline

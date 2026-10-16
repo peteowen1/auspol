@@ -180,10 +180,10 @@ CLASSIFY <- list(
   AUSPOL_COALITION_SPLIT = paste(
     "UNIVERSAL via R/: read inside coalition_split_args() (R/coalition_split.R), which every harness (six + NT)",
     "and fit_seats_full.R call at their simulate_seat_contests() site, so the per-harness greps cannot see it.",
-    "OFF (0); stopped at the prereg's plumbing check 2026-10-16 (reviews/lib-nat-plumbing-2026-10-16.md)."),
+    "SHIPPED (1) 2026-10-17 on Pete's call; 20k deciding run passed every clause (reviews/lib-nat-plumbing-2026-10-16.md)."),
   AUSPOL_COALITION_SPLIT_F = paste(
     "UNIVERSAL via R/: read inside coalition_f() (R/coalition_split.R) through coalition_split_args(), which",
-    "every harness (six + NT) and fit_seats_full.R call; inert unless AUSPOL_COALITION_SPLIT=1. Prereg amendment 2."),
+    "every harness (six + NT) and fit_seats_full.R call; inert unless AUSPOL_COALITION_SPLIT=1. Prereg amendment 2. SHIPPED (state) 2026-10-17."),
   AUSPOL_SD_DEPARTED = paste(
     "UNDER TEST, default 0, not adopted: widens the per-cell sd for major-party cells whose previous winner is",
     "off the ballot. Read inside R/xgb_primary_sd_override.R, reached by the fed and nsw harnesses that call it;",
