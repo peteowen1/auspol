@@ -29,7 +29,7 @@ clustered on election. 18 elections, 1,408 seats.
 | Refusal: one election > half the gain | T's net gain is -0.41 seat-units; qld2017 alone is -0.46 (110%) | **T refused** |
 | Refusal: gain only through One Nation | qld2017 + qld2020 + sa2026 = 92% of the gain | **T refused** |
 | Live: any vic2026 median moves > 2 | none moves (below) | passes |
-| 3. Reported: L - I (the leak's worth) | deciding run `deciding-runs/20261016-1532-cor-L-vs-I` | see below |
+| 3. Reported: L - I (the leak's worth) | `deciding-runs/20261016-1532-cor-L-vs-I` (20k, code 81aa560): I 0.2963, L 0.2957, L - I -0.0006 (SE 0.0007); qld2017 -0.0099 is again more than all of it. L - T is about -0.0003 | the leaked matrix was worth ~0.0006 over none, within 1 SE, and it bought that with later elections' One Nation correlations |
 
 Per election, T minus I, seat log loss (negative is T better), and the seat count:
 

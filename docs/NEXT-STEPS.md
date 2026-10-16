@@ -69,10 +69,8 @@ scoring each election x sqrt(votes). Leak fixes shipped: conserve, MP slopes, ce
 - OPEN NT seat layer: over-confidence fixed by the size spread (20k: nt2016 0.80, nt2020 0.65, nt2024 1.07, from
   0.99/0.81/1.41); still weak, and new parties start at zero share.
 - OPEN qld2017: One Nation / Katter seats given ~0 (emergence); qld2012 Katter polled inside Others.
-- DONE 2026-10-16 statewide party correlation leak: SHIPPED OFF (`AUSPOL_PARTY_COR="off"`, see DECISIONS).
-  IN FLIGHT only the reported number: L - I (what the leak was worth), `deciding-runs/20261016-1532-cor-L-vs-I`
-  (20k, detached); fill it into `reviews/party-cor-time-forward-2026-10-16.md` clause 3. Then the next full
-  rebuild publishes the scoreboard at the new flag.
+- DONE 2026-10-16 statewide party correlation leak: SHIPPED OFF (`AUSPOL_PARTY_COR="off"`, see DECISIONS; the
+  leak was worth L - I -0.0006, SE 0.0007). OPEN: the next full rebuild publishes the scoreboard at the new flag.
 - OPEN (hazard for arms, not live) pooled-fits audit 2026-10-16 (Sonnet, read-only) beyond
   `reviews/pooled-fits-inventory-2026-10-13.md`: the statewide correlation above was the only live one (now off). LEAVE-ONE-OUT but
   OFF at published flags, so any arm switching them on measures a leaked number: `fit_xgb_primary_sd.R:108`
