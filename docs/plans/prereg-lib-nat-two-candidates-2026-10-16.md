@@ -90,3 +90,33 @@ cannot see.
   transferred. NSW has 2 split seats, so this barely matters.
 - Seats where the two Coalition candidates are the final two (Labor excluded earlier). S makes a Coalition win
   certain there, as A did.
+
+## Amendment 1 (2026-10-16, after the plumbing check failed; Pete chose "amend")
+
+Added after seeing one plumbing result, so it is visible here and the clauses above are unedited. What failed:
+Bass fed2019 moved 0.083 -> 0.026 against the 0.01 limit (`docs/reviews/lib-nat-plumbing-2026-10-16.md`). Cause:
+a seat with no previous split took the pooled junior fraction (0.27), so a 1.4% token National was simulated at
+about 11 points. The junior's share is two-humped (token candidate or real contest; 33% of federal split
+seat-elections have the junior under 0.10), and arm S's centre could not tell them apart.
+
+**What changes: only the centre and spread of the division (S step 2).** Everything else in S, every plumbing
+check, the criterion and every refusal clause stand as written. Bass's limit stays 0.01.
+
+The Nationals' fraction of the Coalition vote in the seat, `fn = NAT / (LIB + NAT)`, is predicted from facts
+known before the election, by a ridge regression on `logit(fn)` (`glmnet`, alpha 0, lambda by cross-validation
+`lambda.min`, folds = min(10, n)), fitted on split seat-elections from EARLIER years only. Features:
+
+1. **The junior party's earlier vote in that state**: the Nationals' fraction of all Liberal + National votes in
+   the same state at that jurisdiction's previous election (federal seats by their state).
+2. **Each candidate's own previous vote**: the National's and the Liberal's own primary share at that
+   jurisdiction's previous election (same name, any seat), 0 with an indicator when they did not stand.
+3. **Sitting member**: whether the National, or the Liberal, won this seat at the previous election (by name).
+4. **The seat's last split**: `fn` at the previous election when both stood, with an indicator (0 otherwise).
+
+The junior fraction `r = min(fn_hat, 1 - fn_hat)`. Spread: a Beta around `r` with sd = the sd of the
+out-of-fold residuals `fn - fn_hat` from that same cross-validation (one number per election). `fn` is clamped to
+[0.005, 0.995] before the logit. Elections with fewer than 5 earlier split seat-elections get no split (as
+before, an election with no earlier data is the one-candidate count). `f` is unchanged.
+
+Not done, named so it is not mistaken for an oversight: no seat-type, region or demographic features; no
+mixture for the two humps (a ridge centre plus Beta spread first, because it is the smaller change).
