@@ -119,3 +119,18 @@ test_that("coalition_split_fit uses only earlier years", {
   coalition_split_fit("wa2013", cand = cand, transfers = tx)
   expect_identical(.Random.seed, before)
 })
+
+test_that("coalition_f shrinks a jurisdiction's rate toward the pooled one", {
+  ev <- data.table::data.table(election = rep(c("vic2010", "wa2013", "fed2016"), c(20, 40, 40)),
+                               tot = 100, to_lnp = c(rep(85, 20), rep(65, 40), rep(70, 40)) + rep(c(-5, 5), 50))
+  fp <- coalition_f(ev, "vic", "pooled")
+  expect_equal(fp, sum(ev$to_lnp) / sum(ev$tot))
+  fv <- coalition_f(ev, "vic", "state")
+  expect_true(fv > fp && fv < 0.85)                  # between pooled and its own rate
+  expect_equal(attr(fv, "raw"), 0.85)
+  expect_equal(as.numeric(coalition_f(ev, "sa", "state")), fp)   # no earlier exclusion: pooled
+  # identical rates everywhere: nothing to shrink toward, weight 0
+  ev2 <- data.table::data.table(election = rep(c("vic2010", "wa2013"), each = 10), tot = 100, to_lnp = 70 + rep(c(-5, 5), 10))
+  expect_equal(attr(coalition_f(ev2, "vic", "state"), "w"), 0)
+  expect_error(coalition_f(ev, "vic", "bogus"))
+})

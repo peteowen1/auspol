@@ -151,7 +151,7 @@ coalition_split_fit <- function(target_election, cand = NULL, transfers = NULL) 
   empty$n_events <- nrow(ev)
   # Fewer than 5 earlier rows cannot be cross-validated (COMPUTATIONAL).
   if (nrow(hist) < 5L || nrow(ev) == 0L) return(empty)
-  f <- sum(ev$to_lnp) / sum(ev$tot)
+  f <- coalition_f(ev, .rg(tgt_el), Sys.getenv("AUSPOL_COALITION_SPLIT_F", "pooled"))
 
   xcols <- c("x_state_fn", "x_nat_own", "x_nat_stood", "x_lib_own", "x_lib_stood",
              "x_nat_sitting", "x_lib_sitting", "x_prev_split", "x_prev_fn")
@@ -194,6 +194,41 @@ coalition_split_fit <- function(target_election, cand = NULL, transfers = NULL) 
        n_hist = nrow(hist), n_events = nrow(ev), n_target = nrow(tgt))
 }
 
+#' The Coalition-to-Coalition rate for one jurisdiction
+#'
+#' Prereg amendment 2. `"pooled"`: every earlier exclusion's votes pooled.
+#' `"state"`: the jurisdiction's own rate shrunk toward the pooled one by
+#' `w = tau^2 / (tau^2 + s^2 / n_J)` (`s^2` the variance of the per-exclusion
+#' fraction over all exclusions, `tau^2` between jurisdictions by
+#' DerSimonian-Laird, floored at 0).
+#'
+#' @param ev Exclusions: `election`, `tot`, `to_lnp` (earlier years only).
+#' @param jur The target's jurisdiction (`"vic"`, `"fed"`, ...).
+#' @param mode `"pooled"` or `"state"`.
+#' @return The rate, with attributes `raw`, `n` and `w` under `"state"`.
+#' @export
+coalition_f <- function(ev, jur, mode = c("pooled", "state")) {
+  mode <- match.arg(mode)
+  fp <- sum(ev$to_lnp) / sum(ev$tot)
+  if (mode == "pooled") return(fp)
+  j <- sub("[0-9]+$", "", ev$election)
+  fe <- ev$to_lnp / ev$tot
+  s2 <- if (length(fe) > 1L) stats::var(fe) else 0
+  g <- split(seq_along(j), j)
+  n <- vapply(g, length, 0L)
+  raw <- vapply(g, function(i) sum(ev$to_lnp[i]) / sum(ev$tot[i]), 0)
+  tau2 <- 0
+  if (length(g) > 1L && s2 > 0) {
+    wi <- n / s2
+    mu <- sum(wi * raw) / sum(wi)
+    Q <- sum(wi * (raw - mu)^2)
+    tau2 <- max(0, (Q - (length(g) - 1)) / (sum(wi) - sum(wi^2) / sum(wi)))
+  }
+  if (!jur %in% names(raw)) return(structure(fp, raw = NA_real_, n = 0L, w = 0))
+  w <- if (tau2 > 0) tau2 / (tau2 + s2 / n[[jur]]) else 0
+  structure(fp + w * (raw[[jur]] - fp), raw = raw[[jur]], n = n[[jur]], w = w)
+}
+
 #' The `coalition_split` argument for one election's simulation
 #'
 #' Reads `AUSPOL_COALITION_SPLIT`: anything but `"1"` returns `NULL`, the
@@ -211,7 +246,8 @@ coalition_split_args <- function(target_election, seat_names, ...) {
   # harness simulates in a loop, and the fit reads two corpora each time.
   # Keyed on the files' modification times too, so a rebuilt corpus refits.
   dots <- list(...)
-  key <- paste(target_election, file.mtime(out_path("candidacies.csv")),
+  key <- paste(target_election, Sys.getenv("AUSPOL_COALITION_SPLIT_F", "pooled"),
+               file.mtime(out_path("candidacies.csv")),
                max(file.mtime(list.files(file.path("external", "elections"), "transfers[.]csv$",
                                          full.names = TRUE))))
   fit <- if (!length(dots) && !is.null(.cs_cache[[key]])) .cs_cache[[key]] else {
@@ -226,11 +262,12 @@ coalition_split_args <- function(target_election, seat_names, ...) {
   sdv[hit] <- fit$seats$sd[match(hit, fit$seats$seat)]
   miss <- setdiff(fit$seats$seat, seat_names)
   cat(sprintf(paste0("LN1 coalition split %s: %d split seat(s) applied of %d nominated",
-                     "%s; f=%.3f (%d earlier exclusions); mean r=%.3f; ridge on %d earlier split seats,",
+                     "%s; f=%.3f (%s; %d earlier exclusions); mean r=%.3f; ridge on %d earlier split seats,",
                      " lambda=%.3g, out-of-fold sd=%.3f (training mean junior %.3f)\n"),
               target_election, length(hit), fit$n_target,
               if (length(miss)) paste0(" (not in the simulation: ", paste(miss, collapse = ", "), ")") else "",
-              fit$f, fit$n_events, if (length(hit)) mean(r[hit]) else NA_real_,
+              fit$f, if (is.null(attr(fit$f, "w"))) "pooled" else sprintf("state: raw %.3f on %d, weight %.2f", attr(fit$f, "raw"), attr(fit$f, "n"), attr(fit$f, "w")),
+              fit$n_events, if (length(hit)) mean(r[hit]) else NA_real_,
               fit$n_hist, fit$lambda, fit$s, fit$mu))
   if (!length(hit) || !is.finite(fit$f)) return(NULL)
   list(r = r, sd = sdv, f = fit$f)
