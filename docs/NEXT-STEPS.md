@@ -70,7 +70,9 @@ scoring each election x sqrt(votes). Leak fixes shipped: conserve, MP slopes, ce
   6-10 point Coalition over-call in the 4 walked seats was SELECTION (they were picked as the worst losses). Mean
   Coalition primary error (ours - actual) split seats +0.13 to +0.62 vs +0.42 in one-candidate seats (2,656), all
   within SE; so the split problem is the count (Nat->Lib leakage), not the primary. Side lead: WA over-calls the
-  Coalition everywhere (+2.49 in 284 one-candidate seats). NEXT: split cells + fitted Nat->Lib flow.
+  Coalition everywhere (+2.49 in 284 one-candidate seats). PREREG committed:
+  `plans/prereg-lib-nat-two-candidates-2026-10-16.md` (`AUSPOL_COALITION_SPLIT`; f = 71.2% pooled time-forward).
+  NEXT: build it in seat_sim + all six harnesses + fit_seats_full.R, plumbing checks first.
 - OPEN NT seat layer: over-confidence fixed by the size spread (20k: nt2016 0.80, nt2020 0.65, nt2024 1.07, from
   0.99/0.81/1.41); still weak, and new parties start at zero share.
 - OPEN qld2017: One Nation / Katter seats given ~0 (emergence); qld2012 Katter polled inside Others.
