@@ -130,3 +130,21 @@ separates Bass from Lyons (fed2016: no National stood in Tasmania; fed2019 from 
 The clause above is left as written. The other plumbing checks passed. Everything else stands unchanged: the
 criterion (log loss on the split seats, better by more than 1 SE), the guard, and every refusal clause. This
 favours the later answer, which is why it is Pete's call and recorded here, not a quiet amendment.
+
+## Amendment 2 (2026-10-17, after the 1,000-sim screen; Pete chose "per-state f first")
+
+Added after seeing the screen (`deciding-runs/score-20261017-coalition-split-1k.txt`): every clause passed (split
+seats S - A -0.0521, SE 0.0273), carried by WA, while Victoria's 18 split seats got worse (+0.209, SE 0.127).
+Coalition-to-Coalition rates differ by jurisdiction (all years: Victoria 0.80 on 22 exclusions, federal 0.70 on
+103, WA 0.70 on 78), and the pooled f is close to the WA and federal rate. This is the arm S step 3 named as later.
+
+**Arm S2 = S with `f` by jurisdiction** (`AUSPOL_COALITION_SPLIT_F=state`; default `pooled` = S). Earlier years'
+exclusions only, as before. Each jurisdiction's rate is shrunk toward the pooled rate:
+`f_J = f_P + w (raw_J - f_P)`, `w = tau^2 / (tau^2 + s^2 / n_J)`, where `s^2` is the variance of the per-exclusion
+Coalition-to-Coalition fraction over all earlier exclusions, `n_J` the jurisdiction's earlier exclusions, and
+`tau^2` the between-jurisdiction variance by DerSimonian-Laird (0 when the estimate is negative, which gives the
+pooled rate). A jurisdiction with no earlier exclusion takes the pooled rate.
+
+**Decision path:** S2 is screened at 1,000 sims on the same 23 elections. Whichever of S and S2 has the lower
+split-seat log loss at 1,000 sims goes to the single 20,000-sim deciding run against A. The criterion, guard and
+every refusal clause are unchanged and are judged on that run only. Override 1 (Bass) stands.
