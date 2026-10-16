@@ -65,12 +65,22 @@ scoring each election x sqrt(votes). Leak fixes shipped: conserve, MP slopes, ce
   (paired by election +0.136, SE 0.092); Coalition-lost ones 1.03 (n 74). "Pilbara pattern" (Coalition lost
   though Lib+Nat primary beat the winner's) 32 seats, 22 WA, 4.9% of loss (incl. wa2008 Kalgoorlie IND at the
   1e-6 floor, 13.8). Ceiling ~5% of pooled loss. Next if pursued: three-cornered flag + Lib/Nat primary split as
-  features, screened on WA/fed/Vic with quick_arm.
+  features, screened on WA/fed/Vic with quick_arm. DECIDED 16 Oct (Pete, after walking 5 seats): **two candidates**,
+  not a feature (PETE-ASKED-FOR 2026-10-16). Step 1 DONE (scratchpad libnat2.R, published-predictions.csv): the
+  6-10 point Coalition over-call in the 4 walked seats was SELECTION (they were picked as the worst losses). Mean
+  Coalition primary error (ours - actual) split seats +0.13 to +0.62 vs +0.42 in one-candidate seats (2,656), all
+  within SE; so the split problem is the count (Nat->Lib leakage), not the primary. Side lead: WA over-calls the
+  Coalition everywhere (+2.49 in 284 one-candidate seats). NEXT: split cells + fitted Nat->Lib flow.
 - OPEN NT seat layer: over-confidence fixed by the size spread (20k: nt2016 0.80, nt2020 0.65, nt2024 1.07, from
   0.99/0.81/1.41); still weak, and new parties start at zero share.
 - OPEN qld2017: One Nation / Katter seats given ~0 (emergence); qld2012 Katter polled inside Others.
 - DONE 2026-10-16 statewide party correlation leak: SHIPPED OFF (`AUSPOL_PARTY_COR="off"`, see DECISIONS; the
-  leak was worth L - I -0.0006, SE 0.0007). OPEN: the next full rebuild publishes the scoreboard at the new flag.
+  leak was worth L - I -0.0006, SE 0.0007). REBUILT (not published) at d7e2883 with K=3 + correlation off:
+  snapshot `20261016-1846-d7e2883-from1` vs `20261016-1102-f9197a6-from1`: 35 elections, 2,931 seats, 0.3372 ->
+  0.3356 (-0.0016, SE 0.0014); AEF-7 -0.0001 (SE 0.0004); none worse by 0.02 (worst nt2016 +0.0125). nsw2019
+  -0.0439 is ONE seat: Barwon (SFF won) 0 -> 1 sim in 20,000, i.e. off the 1e-6 floor (-3.91 log units); without
+  it pooled is about -0.0003, so the bundle is neutral. NEEDS PETE: publish it (`AUSPOL_PUBLISH=1`, releases the
+  shipped models the daily job downloads).
 - OPEN (hazard for arms, not live) pooled-fits audit 2026-10-16 (Sonnet, read-only) beyond
   `reviews/pooled-fits-inventory-2026-10-13.md`: the statewide correlation above was the only live one (now off). LEAVE-ONE-OUT but
   OFF at published flags, so any arm switching them on measures a leaked number: `fit_xgb_primary_sd.R:108`

@@ -26,6 +26,12 @@ not a commit, not a plan file — that it is not happening and why.
 
 ---
 
+## 2026-10-16
+
+| Request | Status |
+|---|---|
+| Liberal and National against each other: model them as **two candidates** (Pete chose this over an xgb feature, after walking Albany/Kimberley/Pilbara/Murray-Wellington 2013-17) | **NOT DONE.** Plan: separate Lib and Nat cells in the seat simulation, a fitted Nat->Lib preference flow (not 100%), scaled by the junior partner's share (a 1.4% token National, fed2019 Bass, must change nothing). First check the separate problem the rows showed: the combined Coalition primary is over-predicted by 6-10 points in 4 of the 5 seats walked. 191 seats, 74 Coalition losses (WA 44). |
+
 ## 2026-10-12
 
 | Request | Status |
