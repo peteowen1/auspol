@@ -79,8 +79,9 @@ scoring each election x sqrt(votes). Leak fixes shipped: conserve, MP slopes, ce
   snapshot `20261016-1846-d7e2883-from1` vs `20261016-1102-f9197a6-from1`: 35 elections, 2,931 seats, 0.3372 ->
   0.3356 (-0.0016, SE 0.0014); AEF-7 -0.0001 (SE 0.0004); none worse by 0.02 (worst nt2016 +0.0125). nsw2019
   -0.0439 is ONE seat: Barwon (SFF won) 0 -> 1 sim in 20,000, i.e. off the 1e-6 floor (-3.91 log units); without
-  it pooled is about -0.0003, so the bundle is neutral. NEEDS PETE: publish it (`AUSPOL_PUBLISH=1`, releases the
-  shipped models the daily job downloads).
+  it pooled is about -0.0003, so the bundle is neutral. PUBLISHED 16 Oct 19:02 by Pete (`shipped-models` assets
+  08:02Z; `deciding-runs/publish-20261016-1846.log`): PA5 0.3356, AEF-7 ours 0.2657 vs AEF 0.2825. OPEN: read the
+  next daily Forecast refresh's conclusion.
 - OPEN (hazard for arms, not live) pooled-fits audit 2026-10-16 (Sonnet, read-only) beyond
   `reviews/pooled-fits-inventory-2026-10-13.md`: the statewide correlation above was the only live one (now off). LEAVE-ONE-OUT but
   OFF at published flags, so any arm switching them on measures a leaked number: `fit_xgb_primary_sd.R:108`
