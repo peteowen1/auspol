@@ -557,3 +557,15 @@ These reach only `fit_federal.R` / `fit_nsw.R` / `fit_vic.R`, whose outputs the 
 | `house_adjust` in `unfold_others()` | TRUE | **CHOSEN** structure: impute the firm's own fitted house effect (shrunk by the trend model's `sigma_house_pts` prior), not the all-firm trend. |
 | One Nation unprompted `discount` | fitted each run (FFD1) | **ESTIMATED**, inverse-variance pooled over every firm-cycle that both names and folds One Nation (2 firms, 2025 cycle, as of 2026-10-15). Fitted on the same within-firm gap FF1 checks, so FF1 cannot validate it until a second cycle has such firms. |
 | `FD_ITER`, `FD_TOL` in `fit_federal.R` | 4 iterations, 0.002 | **COMPUTATIONAL**: the discount is re-estimated after a refit until the pooled increment is below 0.2% of the imputed share; failing to converge stops the script. |
+
+## Coalition split (`AUSPOL_COALITION_SPLIT`, built 2026-10-16, OFF; `R/coalition_split.R`)
+
+A Liberal and a National in one seat counted as two candidates. Prereg: `plans/prereg-lib-nat-two-candidates-2026-10-16.md`.
+
+| Constant | Value | Status |
+|---|---|---|
+| `f`, Coalition-to-Coalition share of an excluded Coalition candidate's votes | fitted each election (0.70-0.76) | **ESTIMATED** time-forward: pooled over every earlier year's exclusion with another Coalition candidate surviving (transfer files). |
+| junior fraction centre, `mu`, `tau`, `s` | fitted each election | **ESTIMATED** time-forward; the seat's previous split shrunk toward `mu` by `tau^2/(tau^2+s^2)`. A seat with no previous split takes `mu`, spread `tau` (not in the prereg, which gave no spread for that case). |
+| Beta sd cap | 0.95 x sqrt(r(1-r)) | **COMPUTATIONAL**: a Beta with mean r cannot have sd at or above sqrt(r(1-r)). |
+| junior fraction clamp | [1e-9, 1 - 1e-9] | **COMPUTATIONAL**. |
+| side-stream seed | `(seed * 7919 + 104729) mod 2^31-1` | **COMPUTATIONAL**: keeps the split's draws off the count's stream so unsplit seats are byte-identical. |

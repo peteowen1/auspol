@@ -39,7 +39,10 @@ List seat_sim_core(NumericMatrix shares, int n_sims, int shift_mode,
                    bool keep_fp = false,
                    bool has_bo = false,
                    NumericMatrix bo_p = NumericMatrix(0, 0),
-                   NumericVector bo_q = NumericVector::create()) {
+                   NumericVector bo_q = NumericVector::create(),
+                   bool has_split = false, int split_lnp = 0,
+                   NumericMatrix split_r = NumericMatrix(0, 0),
+                   double split_f = 0) {
   const int nseat = shares.nrow(), K = shares.ncol();
   // PER-SEAT CONDITIONAL OVERRIDE, sparse. The shared cell_mat is dense over
   // the key space but has no seat dimension; a per-seat dense table would be
@@ -82,6 +85,60 @@ List seat_sim_core(NumericMatrix shares, int n_sims, int shift_mode,
   std::vector<double> shift(K), z(K), v(K), base(K), sdc(K), p, w;
   std::vector<int> alive, cand, bo_hit;
   alive.reserve(K); cand.reserve(K); p.reserve(K); w.reserve(K);
+
+  // One transfer's destination shares over `tgt`, into `p`: the same lookup,
+  // smoothing and noise as the elimination loop below, as R/seat_sim.R's
+  // .split_flow(). Used only by the coalition-split count.
+  auto split_flow = [&](int i, int from, const std::vector<int>& tgt) {
+    const size_t na = tgt.size();
+    p.resize(na); w.resize(na);
+    if (na == 0) return;
+    double mask = 0.0;
+    for (size_t t = 0; t < na; ++t) mask += std::ldexp(1.0, tgt[t]);
+    const int ki = (int) ((from + 1) * pow2K + mask);
+    const double* row = nullptr;
+    int stride = 0;
+    bool got_cell = false;
+    double ov_hit_sd = 0.0;
+    if (has_ov) {
+      std::unordered_map<long long, int>::const_iterator it =
+        ov_idx.find((long long) i * KEYSPACE + (long long) ki);
+      if (it != ov_idx.end()) {
+        got_cell = true;
+        row = &ov_mat(it->second, 0);
+        stride = ov_mat.nrow();
+        if (ov_sd.size() > it->second) ov_hit_sd = ov_sd[it->second];
+      }
+    }
+    if (!got_cell) {
+      got_cell = cell_has[ki];
+      if (got_cell) { row = &cell_mat(ki, 0); stride = cell_mat.nrow(); }
+      else {
+        ++n_fb;
+        if (ss_has[ki]) { row = &ss_mat(ki, 0); stride = ss_mat.nrow(); }
+        else if (has_pw) { row = &pw_mat(from, 0); stride = pw_mat.nrow(); }
+        else { row = &pool_mat(from, 0); stride = pool_mat.nrow(); }
+      }
+    }
+    ++n_tx;
+    long double ts = 0.0L;
+    for (size_t t = 0; t < na; ++t) { w[t] = row[(size_t) tgt[t] * stride]; ts += w[t]; }
+    const double tot = (double) ts;
+    const double u = 1.0 / (double) na;
+    const double sm = (!got_cell) ? std::max(smooth, fallback_smooth) : smooth;
+    if (tot <= 0) { for (size_t t = 0; t < na; ++t) p[t] = u; }
+    else { for (size_t t = 0; t < na; ++t) p[t] = (1.0 - sm) * (w[t] / tot) + sm * u; }
+    const double fsd = (ov_hit_sd > 0) ? ov_hit_sd
+                       : ((!got_cell) ? std::max(flow_sd_by[from], fallback_flow_sd) : flow_sd_by[from]);
+    if (fsd > 0 && na > 1) {
+      for (size_t t = 0; t < na; ++t) { const double e = R::rnorm(0.0, fsd / 100.0); const double q = p[t] + e; p[t] = q > 0 ? q : 0; }
+      long double ps = 0.0L;
+      for (size_t t = 0; t < na; ++t) ps += p[t];
+      const double psd = (double) ps;
+      if (psd > 0) { for (size_t t = 0; t < na; ++t) p[t] = p[t] / psd; }
+      else { for (size_t t = 0; t < na; ++t) p[t] = u; }
+    }
+  };
 
   RNGScope scope;
   Function matprod("%*%");
@@ -172,6 +229,79 @@ List seat_sim_core(NumericMatrix shares, int n_sims, int shift_mode,
         const double fsum = (double) fs;
         if (fsum > 0) for (int k = 0; k < K; ++k)
           fp[(R_xlen_t) s + (R_xlen_t) n_sims * ((R_xlen_t) i + (R_xlen_t) nseat * k)] = 100.0 * v[k] / fsum;
+      }
+      // ---- coalition split (R/seat_sim.R, same order and arithmetic) ----
+      // The junior Coalition candidate holds jv, outside the class vector; the
+      // LNP slot always holds a live Coalition candidate. split_lnp is 1-based.
+      if (has_split && split_r(s, i) > 0 && v[split_lnp - 1] > 0) {
+        const int L = split_lnp - 1;
+        double jv = split_r(s, i) * v[L];
+        v[L] = v[L] - jv;
+        bool jal = true;
+        alive.clear();
+        for (int k = 0; k < K; ++k) if (v[k] > 0) alive.push_back(k);
+        const size_t n0 = alive.size();
+        std::vector<int> others;
+        while (alive.size() + (jal ? 1 : 0) > 2) {
+          int from_pos = 0;
+          for (size_t t = 1; t < alive.size(); ++t) if (v[alive[t]] < v[alive[from_pos]]) from_pos = t;
+          const int from = alive[from_pos];
+          if (jal && jv < v[from]) {
+            const double pot = jv;
+            jv = 0; jal = false;
+            others.clear();
+            for (size_t t = 0; t < alive.size(); ++t) if (alive[t] != L) others.push_back(alive[t]);
+            split_flow(i, L, others);
+            v[L] = v[L] + split_f * pot;
+            for (size_t t = 0; t < others.size(); ++t) v[others[t]] = v[others[t]] + ((1 - split_f) * pot) * p[t];
+          } else if (jal && from == L) {
+            const double pot = v[L];
+            others.clear();
+            for (size_t t = 0; t < alive.size(); ++t) if (alive[t] != L) others.push_back(alive[t]);
+            split_flow(i, L, others);
+            for (size_t t = 0; t < others.size(); ++t) v[others[t]] = v[others[t]] + ((1 - split_f) * pot) * p[t];
+            v[L] = jv + split_f * pot;
+            jv = 0; jal = false;
+          } else {
+            const double pot = v[from];
+            alive.erase(alive.begin() + from_pos);
+            split_flow(i, from, alive);
+            std::vector<double> add(alive.size());
+            for (size_t t = 0; t < alive.size(); ++t) add[t] = pot * p[t];
+            if (jal) {
+              size_t li = 0;
+              for (size_t t = 0; t < alive.size(); ++t) if (alive[t] == L) li = t;
+              const double fr_j = jv / (v[L] + jv);
+              jv = jv + add[li] * fr_j;
+              add[li] = add[li] * (1 - fr_j);
+            }
+            for (size_t t = 0; t < alive.size(); ++t) v[alive[t]] = v[alive[t]] + add[t];
+            v[from] = 0;
+          }
+        }
+        int wk; int fin0, fin1;
+        if (jal) {
+          wk = L; fin0 = L; fin1 = L;
+          tcp_w(s, i) = L + 1; tcp_r(s, i) = L + 1;
+          tcp_share(s, i) = std::max(v[L], jv) / (v[L] + jv);
+        } else {
+          int wpos = 0;
+          for (size_t t = 1; t < alive.size(); ++t) if (v[alive[t]] > v[alive[wpos]]) wpos = t;
+          wk = alive[wpos];
+          fin0 = alive.size() > 0 ? alive[0] : wk; fin1 = alive.size() > 1 ? alive[1] : wk;
+          if (alive.size() == 2) {
+            tcp_w(s, i) = wk + 1;
+            tcp_r(s, i) = alive[1 - wpos] + 1;
+            tcp_share(s, i) = v[wk] / ld_sum(v, alive);
+          }
+        }
+        if (shrink[i] > 0 && n0 > 1 && R::runif(0.0, 1.0) < shrink[i]) {
+          const int pick = (int) R_unif_index(2.0);
+          wk = pick == 0 ? fin0 : fin1;
+        }
+        wins(i, wk) += 1;
+        totals(s, wk) += 1;
+        continue;
       }
       // ---- eliminations ----
       alive.clear();

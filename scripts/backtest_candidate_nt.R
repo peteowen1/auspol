@@ -816,7 +816,7 @@ for (K in PAIRS) {
   surge_arg <- .imx$surge_h; surge_mu_arg <- .imx$surge_mu; surge_sd_arg <- .imx$surge_sd; surge_party_arg <- .imx$surge_party
   sim <- simulate_seat_contests(level_sd = .level_sd, sd_override = size_sd_apply(SD_OVR, shares, el_to, .level_sd, .lm(shares)), level_mult = .lm(shares), shares, fm, party_sd = psd,
                                 seat_sd = sd_used * SEAT_SD_MULT,
-                                breakout_p = .bo$p, breakout_q = .bo$q,
+                                breakout_p = .bo$p, breakout_q = .bo$q, coalition_split = coalition_split_args(el_to, rownames(shares)),
                                 n_sims = N_SIMS, smooth = SMOOTH, seed = SEED,
                                 shrink = SHRINK, fallback_smooth = FB_SMOOTH, shrink_k = SHRINK_K,
                                 conditional_override = .htv_ov, conditional_override_sd = attr(.htv_ov, "sd"),

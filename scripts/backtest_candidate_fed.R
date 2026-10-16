@@ -1888,7 +1888,7 @@ for (X in out_all) {
                                 surge_mu = surge_mu_arg, surge_sd = surge_sd_arg,
                                 party_cor = X$PARTY_COR, statewide_draws = X$sw_draws, conditional_override = .htv_ov, conditional_override_sd = attr(.htv_ov, "sd"),
                                 fallback_smooth = FB_SMOOTH, shrink_k = SHRINK_K, flow_sd = FLOW_SD,
-                                breakout_p = .bo$p, breakout_q = .bo$q)
+                                breakout_p = .bo$p, breakout_q = .bo$q, coalition_split = coalition_split_args(sprintf("fed%d", K$to), rownames(X$shares)))
   # OUR OWN final-two scenario frequencies -- see tcp_scenarios(). Uses
   # sprintf("fed%d", K$to) rather than `eb` to match how this harness names
   # the pair at its own write sites further down.

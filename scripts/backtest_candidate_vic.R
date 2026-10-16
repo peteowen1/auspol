@@ -982,7 +982,7 @@ for (K in PAIRS) {
       surge_arg <- .imx$surge_h; surge_mu_arg <- .imx$surge_mu; surge_sd_arg <- .imx$surge_sd; surge_party_arg <- .imx$surge_party
       s1 <- simulate_seat_contests(level_sd = .level_sd, sd_override = size_sd_apply(SD_OVR, shares, .eb, .level_sd, .lm(shares)), level_mult = .lm(shares), shares, fmr, party_sd = psd,
                                    seat_sd = sp$sd_within * SEAT_SD_MULT, n_sims = per,
-                                   breakout_p = .bo$p, breakout_q = .bo$q,
+                                   breakout_p = .bo$p, breakout_q = .bo$q, coalition_split = coalition_split_args(.eb, rownames(shares)),
                                    smooth = SMOOTH, seed = SEED + r, shrink = SHRINK,
                                    fallback_smooth = FB_SMOOTH, shrink_k = SHRINK_K, flow_sd = FLOW_SD,
                                 surge_h = surge_arg, surge_party = surge_party_arg,
@@ -1032,7 +1032,7 @@ for (K in PAIRS) {
     surge_arg <- .imx$surge_h; surge_mu_arg <- .imx$surge_mu; surge_sd_arg <- .imx$surge_sd; surge_party_arg <- .imx$surge_party
     sim <- simulate_seat_contests(level_sd = .level_sd, sd_override = size_sd_apply(SD_OVR, shares, .eb, .level_sd, .lm(shares)), level_mult = .lm(shares), shares, fm, party_sd = psd,
                                   seat_sd = sp$sd_within * SEAT_SD_MULT, n_sims = N_SIMS,
-                                  breakout_p = .bo$p, breakout_q = .bo$q,
+                                  breakout_p = .bo$p, breakout_q = .bo$q, coalition_split = coalition_split_args(.eb, rownames(shares)),
                                   smooth = SMOOTH, seed = SEED, party_cor = PARTY_COR,
                                   shrink = SHRINK, conditional_override = .htv_ov, conditional_override_sd = attr(.htv_ov, "sd"),
                                   fallback_smooth = FB_SMOOTH, shrink_k = SHRINK_K, flow_sd = FLOW_SD,

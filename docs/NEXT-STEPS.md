@@ -72,7 +72,11 @@ scoring each election x sqrt(votes). Leak fixes shipped: conserve, MP slopes, ce
   within SE; so the split problem is the count (Nat->Lib leakage), not the primary. Side lead: WA over-calls the
   Coalition everywhere (+2.49 in 284 one-candidate seats). PREREG committed:
   `plans/prereg-lib-nat-two-candidates-2026-10-16.md` (`AUSPOL_COALITION_SPLIT`; f = 71.2% pooled time-forward).
-  NEXT: build it in seat_sim + all six harnesses + fit_seats_full.R, plumbing checks first.
+  BUILT 16 Oct (default off; six harnesses, NT, live; tests pass). PLUMBING FAILED -> STOPPED, nothing scored
+  (`reviews/lib-nat-plumbing-2026-10-16.md`): unsplit seats byte-identical (pass), Albany wa2013 0.975 -> 0.868
+  (pass), Bass fed2019 0.083 -> 0.026 (FAIL, limit 0.01). Cause: a seat with no earlier split gets the pooled
+  junior fraction 0.27; Bass's National took 1.4%. OPEN, needs Pete: amend (predict the junior's share from
+  pre-election facts) or stop.
 - OPEN NT seat layer: over-confidence fixed by the size spread (20k: nt2016 0.80, nt2020 0.65, nt2024 1.07, from
   0.99/0.81/1.41); still weak, and new parties start at zero share.
 - OPEN qld2017: One Nation / Katter seats given ~0 (emergence); qld2012 Katter polled inside Others.
