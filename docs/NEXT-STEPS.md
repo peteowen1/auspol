@@ -18,7 +18,7 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30.
   20 seat-party cells in 8 seats move > 0.05 pts, largest Narracan ONP 76.4 -> 67.6 (LNP 23.6 -> 32.4), Pakenham
   ONP 79.0 -> 77.5, Box Hill ALP 83.8 -> 82.6; expected seats LNP +0.11, ONP -0.11; P(LNP majority) 0.086 ->
   0.088, P(ALP majority) 0.028 unchanged. Reaches the site with the next daily run (cron 20:00 UTC, runs `dev`).
-- OPEN check tonight's daily run (first with 629fc35's validation-check fixes; DECISIONS 2026-10-15) concludes clean (no "Run finished with problems") and reads the new release.
+- DONE 2026-10-17: the 15 Oct daily run (38820531552) concluded success with no "Run finished with problems". OPEN: the 17 Oct run is the first after the 16 Oct publish; read its conclusion.
 - OPEN FFD1 is fitted on the gap FF1 checks (passes by construction; Pete's call, 15 Oct). Validate it when a
   second federal cycle has firms that both name and fold One Nation.
 
@@ -165,7 +165,7 @@ person rule, statewide poll weighting by track record, seat-poll precision blend
   2026-10-07 "open"). Note renormalising McMahon's 80-sum poll would make IND worse (41/80 = 51), not better.
 - OPEN speed (`reviews/fast-iter-profile-2026-10-11.md`): read-set cache keys for defectors, personal prior vote,
   departed slope, salience (~25 s of a 54 s vic run); seat-poll memo keys on every switch.
-- OPEN small: `fit_minor_defector_conserve()` (R/candidate_returns.R:1750) has a hard `min_n = 8L` cliff (below 8
+- DONE 2026-10-16/17 (cliff replaced by `AUSPOL_CONSERVE_SHRINK_K` n/(n+3), shipped; a fit failure now prints `PPV1! ... FAILED` at R/candidate_returns.R:1007): `fit_minor_defector_conserve()` had a hard `min_n = 8L` cliff (below 8
   cases: no fit, full transfer), against the shrinkage rule; and its call site (:1005) catches EVERY error and keeps
   the full transfer, so a real failure reads like a thin fit. (The old PPV1! fixture noise is gone: 0 lines in the
   whole local suite and in CI run 38720936369, checked 2026-10-16.)

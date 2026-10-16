@@ -1,6 +1,6 @@
 # Data dictionary
 
-**Generated 2026-10-16 by `scripts/build_data_dictionary.R`. Do not hand-edit.**
+**Generated 2026-10-17 by `scripts/build_data_dictionary.R`. Do not hand-edit.**
 
 Companion to `docs/DATA-REGISTRY.md`. The registry answers *do we have this
 file*; this answers *do we have this field*. Four wrong "we don't have it"
@@ -329,5 +329,5 @@ processed extract. Every one is recoverable without a new fetch.
 | `booths-vic2018.csv` | 13,353 | `district`, `booth`, `booth_type`, `candidate`, `party`, `votes` |
 | `booths-vic2022-2cp.csv` | 4,328 | `district`, `booth`, `booth_type`, `candidate`, `party`, `votes` |
 
-_(924 `backtest-*.csv` arm outputs omitted; they share one shape.)_
+_(1659 `backtest-*.csv` arm outputs omitted; they share one shape.)_
 

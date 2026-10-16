@@ -1,6 +1,6 @@
 # Data registry
 
-**Generated 2026-10-16 by `scripts/build_data_registry.R`. Do not hand-edit** --
+**Generated 2026-10-17 by `scripts/build_data_registry.R`. Do not hand-edit** --
 rerun the script instead. Regenerate it whenever you add or fetch data.
 
 This file exists because the same data has been declared missing three
