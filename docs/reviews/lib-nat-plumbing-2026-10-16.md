@@ -95,3 +95,34 @@ Non-split seats: 0 moved. S2 is lower on the primary, so under Amendment 2 S2 go
 had them at 0.15-0.31; the split takes them to 0.06-0.14); vic2014 Ripon (Liberal held on a combined 51)
 0.60 -> 0.25. Ripon is the one live vic2026 split seat. Victoria's own rate is 0.80, but on 17-22 exclusions it
 only gets weight 0.26-0.59 against the pooled 0.71.
+
+## The 20,000-sim deciding run (2026-10-17): S2 PASSES every pre-registered clause
+
+`deciding-runs/20261017-0146-coalition-split-state/` (code f553cfc, 23 elections, slots 1, no reuse; DONE).
+The cache copy missed the sa2026 arm (the run deleted its scratch seconds after the last election); it was
+rerun at 20k from d586206 (harness code unchanged): the rerun's sa2026 BASELINE is byte-identical to the deciding
+run's, so its arm stands in. `deciding_run.ps1` now keeps every election's files (d586206).
+Scored by `scripts/score_coalition_split.R` (floor 1e-6): `prereg-score.txt` in that folder.
+
+| Clause | Numbers | Verdict |
+|---|---|---|
+| Primary: split seats (191, 23 elections) | A 0.4946, S2 0.4412, -0.0533 (SE 0.0273) | **better by > 1 SE** |
+| Guard | every seat in the 23: -0.0049 (SE 0.0031); the other 12 elections have no split seat, so the code path is the one-candidate count | passes |
+| One election > half the gain | largest wa2013, 0.39 | passes |
+| Non-WA split seats worse by > 1 SE | +0.0281 (SE 0.0329) | passes |
+| Won traded for lost (reported) | won seats +13.7 seat-units worse, lost seats 23.9 better | primary passes anyway |
+| Live: Ripon moves > 15 points | Coalition 0.145 -> 0.079 (6.6) | passes |
+| Non-split seats moved | 0 | plumbing holds at 20k |
+
+Reported: fed 57 seats -0.0243 (SE 0.0234); WA 99 -0.1291 (SE 0.0258); **Victoria 18 seats +0.1937 (SE 0.1174)**
+(vic2022 +2.38 and vic2014 +0.97 seat-units); SA 15 +0.0308 (SE 0.0122); AEF-7 all seats +0.0004 (SE 0.0062).
+
+**Not shipped yet: Pete's call in the morning.** The prereg says ship. Against it: Victoria is the live target and
+its split seats get worse (about 1.65 SE), and the flag reaches the daily refresh from dev. To ship:
+`AUSPOL_COALITION_SPLIT = "1"`, `AUSPOL_COALITION_SPLIT_F = "state"` in `published_flags.R` (and the inline
+defaults), then a rebuild from stage 6 and Pete's publish.
+
+Why Victoria loses (read-only, vic2022 transfer files): the real Coalition-to-Coalition rate in the seats that
+got worse was Bass 68.8%, Shepparton 76.5%, Mildura 77.1%, Euroa 87.0%, Morwell 88.7% (S2 used 0.728). So f is
+part of it, not all: Mildura, Shepparton and Morwell were three-way contests against a sitting or departing
+independent that the model already rated poorly (Coalition 0.15-0.31), and any leak pushes them further down.

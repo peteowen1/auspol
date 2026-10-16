@@ -80,8 +80,9 @@ scoring each election x sqrt(votes). Leak fixes shipped: conserve, MP slopes, ce
   Lyons (15.7%). Pete OVERRODE the Bass clause 17 Oct (prereg "Override 1"). 1k screens (23 elections, 191 split seats,
   `reviews/lib-nat-plumbing-2026-10-16.md`): S -0.0521 (SE 0.0273), S2 (f by state, Amendment 2, Pete's pick)
   -0.0578 (SE 0.0277); every refusal passes; Victoria's 18 split seats WORSE under both (+0.18 to +0.21, ~1.6 SE).
-  Live Ripon (only vic2026 split seat) Coalition 0.145 -> 0.079 under S2 (limit 15 pts, passes). IN FLIGHT: 20k
-  deciding run on S2 (`deciding-runs/*-coalition-split-state/`). OPEN for Pete after it: ship despite Victoria?
+  Live Ripon (only vic2026 split seat) Coalition 0.145 -> 0.079 under S2 (limit 15 pts, passes). 20k DECIDING RUN
+  DONE (`deciding-runs/20261017-0146-coalition-split-state/`): S2 passes every clause, split seats -0.0533
+  (SE 0.0273), Victoria +0.19 (SE 0.12). OPEN, NEEDS PETE: ship S2 (prereg says yes) despite Victoria?
 - OPEN (finding 17 Oct, not acted on): WA's Coalition over-call is a statewide LEVEL miss, not seat-level. Mean
   Coalition primary error (ours - actual) in one-candidate seats: NT +3.61 (SE 1.08), WA +2.46 (0.34), Qld +0.98,
   NSW +0.45, fed +0.05, SA -0.82, Vic -0.87; WA by election 6 of 7 positive (wa2005 +4.68, wa2001 +3.42, wa2017
