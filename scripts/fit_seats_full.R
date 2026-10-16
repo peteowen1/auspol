@@ -252,7 +252,7 @@ if (identical(Sys.getenv("AUSPOL_QLD_FLOWS", "1"), "0")) {
 # Same condition as the read site far below, deliberately duplicated rather
 # than hoisted: AUSPOL_PARTY_COR=off is a real arm of
 # docs/plans/prereg-statewide-covariance.md and must not require the file.
-.cor_mode <- Sys.getenv("AUSPOL_PARTY_COR", "shrunk")
+.cor_mode <- Sys.getenv("AUSPOL_PARTY_COR", "off")
 if (!identical(.cor_mode, "off") && nzchar(.cor_mode)) {
   hard["output/statewide-cov.rds"] <- "scripts/estimate_statewide_cov.R"
 }
@@ -1464,7 +1464,7 @@ psd <- vapply(parties, function(p) if (is.na(state_sd[p])) 1.5 else state_sd[[p]
 # comparison ran the correlated branch while claiming to be the baseline.
 # See docs/plans/prereg-statewide-covariance.md and
 # scripts/estimate_statewide_cov.R.
-COR_MODE <- Sys.getenv("AUSPOL_PARTY_COR", "shrunk")
+COR_MODE <- Sys.getenv("AUSPOL_PARTY_COR", "off")
 sw_cor <- NULL
 if (!identical(COR_MODE, "off") && nzchar(COR_MODE)) {
   # NULL TARGET ON PURPOSE: this is the live forecast. Victoria 2026 has not

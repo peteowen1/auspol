@@ -26,7 +26,7 @@ PUBLISHED_FLAGS <- c(
   # the seat model
   AUSPOL_SHRINK              = "0.01",       # calibration coin toss; a CAP on every seat, lowest the evidence allows
   AUSPOL_COV_LOO             = "1",          # statewide correlation held out of its own target; 0 = the in-sample matrix
-  AUSPOL_COV_TF              = "0",          # time-forward statewide correlation: only pairs strictly BEFORE the target, shrunk by w=LAMBDA*n/(n+K). OFF pending Pete. Leave-one-out (COV_LOO) still trains on LATER elections: nsw2019 got an ONP-LNP correlation (-0.38) learned mostly from sa2026. Reaches the vic/nsw/qld/sa harnesses via statewide_cor(); needs output/statewide-cov.rds rebuilt (by_target_tf).
+  AUSPOL_COV_TF              = "0",          # time-forward statewide correlation: only pairs strictly BEFORE the target, shrunk by w=LAMBDA*n/(n+K). Only read when AUSPOL_PARTY_COR is on, which it is not (2026-10-16). Leave-one-out (COV_LOO) still trains on LATER elections: nsw2019 got an ONP-LNP correlation (-0.38) learned mostly from sa2026. Reaches the vic/nsw/qld/sa harnesses via statewide_cor(); needs output/statewide-cov.rds rebuilt (by_target_tf).
   AUSPOL_LEVEL_SD            = "1.10,8.67",  # level-dependent seat variance, a + b*sqrt(p(1-p))
   AUSPOL_DEV_SLOPE_MODE      = "screened",   # candidate-conditional slopes + salience screen (arm CS)
   AUSPOL_HONOUR_DEPARTED     = "1",          # a departed class leader's base decays toward the measured 0.38 retention rate, independent of whether the screen separately permits a new emergence (0.907/1.0 previously applied even when the "same" candidate was an unrelated minor figure, e.g. Morwell/Tracie Lund masking Russell Northe's real departure). 2026-09-06's refusal conflated "departure" with "no new emergence" as one mechanism; re-measured 2026-09-18 on the fuller 593-case corpus -- docs/reviews/departed-leader-retention-2026-09-15.md, docs/reviews/departed-leader-honour-fix-2026-09-18.md. Isolated in base_pred: pooled log loss 0.2810->0.2801 (5 harnesses, n=1751), vic2022 alone 0.2789->0.2587, Morwell 3.049->1.877.
@@ -78,7 +78,7 @@ PUBLISHED_FLAGS <- c(
                                              # docs/plans/prereg-salience-fed-nsw-onoff-2026-10-03.md. An explicit
                                              # AUSPOL_SALIENCE_EXPECTED=1 AUSPOL_SALIENCE_EXP_SD=1 still selects arm C
                                              # in any harness.
-  AUSPOL_PARTY_COR           = "shrunk",     # correlated statewide deviations
+  AUSPOL_PARTY_COR           = "off",        # independent statewide deviations. OFF 2026-10-16 (prereg-party-cor-time-forward): the time-forward correlation scored 0.2963 -> 0.2960 on 18 elections at 20k sims (SE 0.0003, within 1 SE) and qld2017 alone was more than its gain; vic2026 medians identical either way. "shrunk"/"raw" restore it.
   AUSPOL_LEVEL_MULT_IND      = "1",          # per-class multiplier on level_sd (IND); prereg-class-specific-variance, refused, stays 1
   AUSPOL_LEVEL_MULT_OTH      = "1",          # per-class multiplier on level_sd (other non-majors)
   AUSPOL_DEV_SLOPE           = "",           # explicit per-class slope table; empty = uniform swing, the base under screened mode
