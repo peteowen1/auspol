@@ -224,7 +224,7 @@ if (FORECAST_MODE) {
 # using its own statewide swing. See
 # docs/plans/prereg-statewide-cov-loo-2026-09-07.md.
 PARTY_COR <- NULL
-COR_MODE <- if (!nzchar(Sys.getenv("AUSPOL_PARTY_COR", ""))) NULL else
+COR_MODE <- if (Sys.getenv("AUSPOL_PARTY_COR", "") %in% c("", "off")) NULL else
   if (identical(Sys.getenv("AUSPOL_PARTY_COR"), "raw")) "raw" else "shrunk"
 
 # THE HARNESS HAS NEVER PASSED `shrink`. fit_seats_full.R passes SHRINK = 0.10 --
@@ -403,7 +403,7 @@ CAL_TAG <- paste0(
   # used a correlation -- a file whose name says one arm and whose
   # contents are another, which is the fingerprint failure this tag exists
   # to prevent.
-  if (nzchar(Sys.getenv("AUSPOL_PARTY_COR", "")))
+  if (!Sys.getenv("AUSPOL_PARTY_COR", "") %in% c("", "off"))
     (if (identical(Sys.getenv("AUSPOL_PARTY_COR"), "raw")) "-corraw" else "-cor")
   else "",
   if (identical(Sys.getenv("AUSPOL_QLD_FLOWS", "0"), "1")) "-qld" else "",
@@ -489,7 +489,7 @@ for (K in PAIRS) {
   # different input from the one its log implies.
   PARTY_COR <- if (is.null(COR_MODE)) NULL else
     statewide_cor(sprintf("fed%d", K$to), mode = COR_MODE)
-  if (nzchar(Sys.getenv("AUSPOL_PARTY_COR", "")))
+  if (!Sys.getenv("AUSPOL_PARTY_COR", "") %in% c("", "off"))
     cat(sprintf("COV  fed%d party correlation (%s): cor(ONP,LNP) = %+.2f | %s\n",
                 K$to, COR_MODE, PARTY_COR["ONP", "LNP"],
                 attr(PARTY_COR, "cor_source")))

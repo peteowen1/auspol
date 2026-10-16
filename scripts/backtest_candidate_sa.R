@@ -264,7 +264,7 @@ PARTY_COR <- NULL
 # used a correlation -- a file whose name says one arm and whose
 # contents are another, which is the fingerprint failure this tag exists
 # to prevent.
-if (nzchar(Sys.getenv("AUSPOL_PARTY_COR", ""))) {
+if (!Sys.getenv("AUSPOL_PARTY_COR", "") %in% c("", "off")) {
   PARTY_COR <- statewide_cor(TGT,
                              mode = if (identical(Sys.getenv("AUSPOL_PARTY_COR"), "raw")) "raw" else "shrunk")
   cat(sprintf("COV  party correlation ON (%s): cor(ONP,LNP) = %+.2f | %s
@@ -367,7 +367,7 @@ CAL_TAG <- paste0(
   # "-corraw" and "-cor" are DIFFERENT correlation matrices. Both used to tag
   # "-cor", so running the raw arm and then the shrunk one wrote the second
   # over the first and a before/after comparison compared an arm with itself.
-  if (nzchar(Sys.getenv("AUSPOL_PARTY_COR", "")))
+  if (!Sys.getenv("AUSPOL_PARTY_COR", "") %in% c("", "off"))
     (if (identical(Sys.getenv("AUSPOL_PARTY_COR"), "raw")) "-corraw" else "-cor")
   else "",
   if (N_SIMS != 20000L) sprintf("-n%d", N_SIMS) else "",

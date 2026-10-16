@@ -241,7 +241,7 @@ CAL_TAG <- paste0(
   # used a correlation -- a file whose name says one arm and whose
   # contents are another, which is the fingerprint failure this tag exists
   # to prevent.
-  if (nzchar(Sys.getenv("AUSPOL_PARTY_COR", "")))
+  if (!Sys.getenv("AUSPOL_PARTY_COR", "") %in% c("", "off"))
     (if (identical(Sys.getenv("AUSPOL_PARTY_COR"), "raw")) "-corraw" else "-cor")
   else "",
   if (N_SIMS != 20000L) sprintf("-n%d", N_SIMS) else "",
@@ -355,7 +355,7 @@ cat(sprintf("BQ0p pair %s -> %s | flows from %s (%s)
 # The correlation matrix for THIS target. The source is printed because a
 # silent fallback is the failure this repo keeps finding: a run using a
 # different input from the one its log implies.
-if (nzchar(Sys.getenv("AUSPOL_PARTY_COR", ""))) {
+if (!Sys.getenv("AUSPOL_PARTY_COR", "") %in% c("", "off")) {
   PARTY_COR <- statewide_cor(TGT,
                              mode = if (identical(Sys.getenv("AUSPOL_PARTY_COR"), "raw")) "raw" else "shrunk")
   cat(sprintf("COV  party correlation ON (%s): cor(ONP,LNP) = %+.2f | %s\n",
