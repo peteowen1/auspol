@@ -27,22 +27,14 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30.
 
 ## Still open from 14-15 Oct (collapsed 15 Oct evening; history in DECISIONS and `plans/overnight-2026-10-14.md`)
 
-- OPEN (LEAK, wider than first logged; traced 2026-10-16, `scratchpad leak-seat-spread.md` summary here) the seat
-  spread `sd_within` (`seat_swing_spread()`, R/seats.R:113-130; reaches EVERY seat as `seat_sd`) is measured from a
-  later anchor seat file's `prev_swing` in 5 harnesses: nsw2011/15 (`2023nsw`, nsw:426-430), sa2010/14/18 (`2022sa`,
-  sa:1116-1122; **sa2018 = its own result**), qld2012-2020 (`2024qld`, qld:939-948), **vic ALL pairs from
-  `2026vic` with no announcement (vic:840; vic2022 = its own result)**, fed2010-16 (median of 2019/22/25 files,
-  fed:1607). WA clean; published `fit_seats_full.R:107` uses a flat 3.5. No earlier seat file ever existed in the
-  anchor's history. sd_within by file: 2019nsw 6.61, 2023nsw 3.72, 2027nsw 4.42, 2022sa 3.19, 2026sa 3.33,
-  2024qld 2.43, 2022vic 3.34, 2026vic 3.49. Pete chose "derive from our results" (16 Oct). BUILT and REVIEWED
-  (no blockers), NOT MERGED: branch `seat-spread-tf` (de1076c, f667b0c; worktree
-  `.claude/worktrees/agent-a7e42b05226bb2717`, holds COPIES of external/ dirs, no junctions). `prev_seat_swing()`
-  (R/prev_seat_swing.R) reads the P election's ALP-v-Coalition TCP swing from `external/elections/archive/`;
-  switch `AUSPOL_SEAT_SPREAD_SRC` ("derived" shipped / "anchor" old); `SSP1` per pair;
-  `scripts/compare_seat_spread_sources.R`. Validated on right-vintage files: corr 0.91-1.00, sd within 2.3%
-  except 2019nsw (anchor Goulburn "swing" 43.4 is a vote share; archive 20.2). New sd_within e.g. vic2022
-  3.49 -> 3.21, nsw2015 3.72 -> 4.84, vic2010 3.49 -> 2.02 (21 of 79 seats unlabelled). Next: merge after the
-  surge arms, measure with a full rebuild (unmeasured; guess NSW 0.02-0.05).
+- DONE 2026-10-16 (INERT, no score moved) the seat-spread leak: `sd_within` was read from a later anchor seat file
+  in 5 harnesses (vic2022 and sa2018 read their own result). Fixed by merging `seat-spread-tf` (3b73f5d;
+  `AUSPOL_SEAT_SPREAD_SRC="derived"`, `prev_seat_swing()` from our archive TCP swings, `SSP1` per pair). Measured
+  by full rebuild: anchor (snapshot `20261016-0932-f9197a6-from1`) vs derived (`20261016-1102-f9197a6-from1`)
+  are byte-identical on all 35 elections, though `SSP1` shows each run read its own source. Reason:
+  `simulate_seat_contests()` ignores `seat_sd` whenever `level_sd` is given, and level_sd is on by default
+  (`backtest_candidate_nsw.R:123`). The leak never reached a score; the fix stays so it cannot if level_sd is
+  ever switched off. `seat_sd` is dead in the shipped config: a candidate for removal, not tuning.
 - OPEN small: `AUSPOL_PARTY_COR` is out of NT with no recorded reason (out of WA by design: cor(ALP, IND) flips sign
   there, MODEL-REGISTRY); NT prints BNT4/BNT5 twice.
 - OPEN same one-run lag, older: the seat-poll weight is fitted on the PREVIOUS rebuild's output/forecasts.csv
@@ -103,15 +95,13 @@ scoring each election x sqrt(votes). Leak fixes shipped: conserve, MP slopes, ce
   `xgb-primary-v6-oof-predictions.csv` (static-cache arm). `state_swing_adjustment()` (R/state_swing_prior.R:73,
   LOO) has no caller: dead code. Checked clean: projection mix + fundamentals (TF via `AUSPOL_FUND_TIME_FORWARD`,
   fed:975), shrink 0.01.
-- OPEN (BUILT, reviewed, blocker fixed in 97381e4, unmerged) party-class and live candidate-list errors, branch `party-class-fix`
-  (worktree in the session scratchpad `wt-party`): audit of every party name per class found Fraser Anning's
-  Conservative National Party (48 fed2019 candidates, 1.7% each) and Liberals for Forests (7, fed2004) filed LNP,
-  Progressive Labour (2, fed2004) filed ALP (5db80c1, f959dac; sa2010 "CLP" = Country Labor, correct). Live:
-  vic2026 Ripon had a third Coalition row "Jo Armstrong (N)Megan Read" from the Wikipedia parser; nsw2027 Castle
-  Hill had sitting Liberal Hodges presumed beside announced Liberal Gangemi (9b8cbfc). After merge: regenerate
-  `external/reference/wikipedia/vic2026-candidates.csv`, rerun `build_candidacies.R` (NOT in the rebuild), measure.
-  Lib-vs-Nat contests are one LNP class in the simulator (`R/parties.R:35`), 290 seat-elections with 2+
-  Coalition-class candidates of which ~48 were Anning's party (so ~240 real; WA 16-20 a cycle); see the WA 2017 item.
+- DONE 2026-10-16 party-class and live candidate-list errors (merged 28421e9; candidacies rebuilt f9197a6):
+  Anning's Conservative National Party (48 fed2019), Liberals for Forests (7 fed2004) were LNP, Progressive
+  Labour (2 fed2004) was ALP; vic2026 Ripon's garbled third Coalition row split; nsw2027 Castle Hill's presumed
+  Hodges dropped. Full rebuild vs arm N: seat log loss 0.3377 -> 0.3372 (-0.0004, SE 0.0006), 35 elections.
+  fed2019 +0.0071: the mislabel had added 0.27 pts of LNP per seat in a year the Coalition beat its polls
+  (Longman 0.39 of the +1.08 seat-sum). Correctness fix, kept. Still open from it: Lib-vs-Nat contests are one
+  LNP class in the simulator (`R/parties.R:35`), ~240 real seat-elections; see the WA 2017 item.
 - OPEN (lead, NOT a result) sitting non-major members (Sonnet, 16 Oct; scratchpad `minor-mp/`): published-path
   signed error (actual - ours) +0.36 pts, SE 1.11 (clustered on election), n 84 sitting minor/IND members in 29
   elections: no overall over-call. Traeger/Hill/Maiwar 2024 (-11.8/-9.2/-11.4) are tail cases; Hill and Maiwar
