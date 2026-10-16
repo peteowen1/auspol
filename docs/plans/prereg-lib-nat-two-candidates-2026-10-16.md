@@ -120,3 +120,13 @@ before, an election with no earlier data is the one-candidate count). `f` is unc
 
 Not done, named so it is not mistaken for an oversight: no seat-type, region or demographic features; no
 mixture for the two humps (a ridge centre plus Beta spread first, because it is the smaller change).
+
+## Override 1 (2026-10-17, Pete): the Bass plumbing clause
+
+The Bass clause ("moves by less than 0.01") failed twice: 0.057 under arm S as written, 0.030 under Amendment 1
+(`docs/reviews/lib-nat-plumbing-2026-10-16.md`). **Pete overrode it** after seeing that no pre-election fact
+separates Bass from Lyons (fed2016: no National stood in Tasmania; fed2019 from that position: Bass 1.4%, Braddon
+2.4%, Lyons 15.7%), so the clause required knowing in advance that the National would be a token candidate.
+The clause above is left as written. The other plumbing checks passed. Everything else stands unchanged: the
+criterion (log loss on the split seats, better by more than 1 SE), the guard, and every refusal clause. This
+favours the later answer, which is why it is Pete's call and recorded here, not a quiet amendment.

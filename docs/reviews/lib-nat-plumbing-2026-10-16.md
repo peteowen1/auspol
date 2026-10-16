@@ -47,3 +47,24 @@ that leaked past the Liberal. Nothing in the prereg's predictor separates a toke
 `simulate_seat_contests(coalition_split=)` in both engines (byte-identical R vs compiled, tests in
 `tests/testthat/test-coalition-split.R`), `R/coalition_split.R` (time-forward fit), wired into the six
 harnesses, NT and `fit_seats_full.R`. `AUSPOL_COALITION_SPLIT = "0"`.
+
+## Amendment 1 rerun (ridge predictor of the split; prereg Amendment 1, 33c031c)
+
+Same run, same checks. Unsplit seats byte-identical (pass; every moved seat is a split seat). Albany 0.975 ->
+0.867 (pass). **Bass 0.083 -> 0.053 (moved 0.030; FAIL again).** Bass's junior centre fell 0.27 -> 0.15, but
+with an out-of-fold sd of 0.19 the draws still put a real National in Bass a fair share of the time.
+
+Why no pre-election predictor can pass it: at fed2016 the Nationals stood in no Tasmanian seat. At fed2019 three
+stood from that identical position: Bass 1.4%, Braddon 2.4%, Lyons 15.7% (the Liberal was disendorsed
+mid-campaign). Every feature in the amendment is the same for Bass and Lyons. A 0.01 limit on Bass requires
+knowing in advance that the National would be a token candidate.
+
+| fed2019 seat | Coalition win probability, base | amended split |
+|---|---|---|
+| Bass | 0.083 | 0.053 |
+| Braddon | 0.300 | 0.222 |
+| Lyons | 0.158 | 0.095 |
+| Gilmore | 0.561 | 0.221 |
+| Eden-Monaro | 0.175 | 0.036 |
+
+OPEN, for Pete: override the Bass clause (recorded as an override) and score on the unchanged criterion, or stop.

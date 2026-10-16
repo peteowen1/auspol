@@ -75,8 +75,10 @@ scoring each election x sqrt(votes). Leak fixes shipped: conserve, MP slopes, ce
   BUILT 16 Oct (default off; six harnesses, NT, live; tests pass). PLUMBING FAILED -> STOPPED, nothing scored
   (`reviews/lib-nat-plumbing-2026-10-16.md`): unsplit seats byte-identical (pass), Albany wa2013 0.975 -> 0.868
   (pass), Bass fed2019 0.083 -> 0.026 (FAIL, limit 0.01). Cause: a seat with no earlier split gets the pooled
-  junior fraction 0.27; Bass's National took 1.4%. OPEN, needs Pete: amend (predict the junior's share from
-  pre-election facts) or stop.
+  junior fraction 0.27; Bass's National took 1.4%. Pete: amend. Amendment 1 (ridge predictor of the split from
+  pre-election facts, 33c031c): Bass 0.083 -> 0.053, FAIL again; no pre-election fact separates Bass (1.4%) from
+  Lyons (15.7%). Pete OVERRODE the Bass clause 17 Oct (prereg "Override 1"). NEXT: 1k screen on the elections
+  with split seats, then the 20k deciding run, unchanged criterion.
 - OPEN NT seat layer: over-confidence fixed by the size spread (20k: nt2016 0.80, nt2020 0.65, nt2024 1.07, from
   0.99/0.81/1.41); still weak, and new parties start at zero share.
 - OPEN qld2017: One Nation / Katter seats given ~0 (emergence); qld2012 Katter polled inside Others.

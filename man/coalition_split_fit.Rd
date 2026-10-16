@@ -16,11 +16,19 @@ from \verb{external/elections/*-transfers.csv}; read if \code{NULL}.}
 }
 \value{
 A list: \code{seats} (data.frame: \code{seat}, \code{r} junior fraction centre,
-\code{sd}, \code{has_prev}), \code{f}, \code{mu}, \code{tau}, \code{s}, \code{n_hist} (earlier split
-seat-elections), \code{n_pairs} (consecutive pairs), \code{n_events} (earlier
-Coalition-to-Coalition exclusions). \code{seats} is empty, and \code{f} \code{NA}, when
-no earlier election supplies the data -- the split is then not applied.
+\code{sd}, \code{has_prev}, \code{fn_hat}), \code{f}, \code{mu} (mean junior fraction of the
+training rows), \code{s} (sd of the out-of-fold residuals), \code{lambda}, \code{n_hist}
+(earlier split seat-elections), \code{n_events} (earlier Coalition-to-Coalition
+exclusions), \code{n_target}. \code{seats} is empty, and \code{f} \code{NA}, when no earlier
+election supplies the data -- the split is then not applied.
 }
 \description{
-Fit the Coalition split for one election, time-forward
+Prereg amendment 1: the Nationals' fraction of the Coalition vote in a seat,
+\code{fn = NAT / (LIB + NAT)}, predicted by a ridge regression on \code{logit(fn)}
+over split seat-elections from EARLIER years, on facts known before the
+election: the Nationals' fraction of the Coalition vote across the same state
+at the previous election, each candidate's own previous primary share, which
+of them (if either) won the seat last time, and the seat's previous split.
+The junior fraction is \code{min(fn, 1 - fn)}; its spread is the sd of the
+out-of-fold residuals.
 }

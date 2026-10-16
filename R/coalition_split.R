@@ -29,60 +29,111 @@ coalition_side <- function(party_raw) {
 
 #' Fit the Coalition split for one election, time-forward
 #'
+#' Prereg amendment 1: the Nationals' fraction of the Coalition vote in a seat,
+#' `fn = NAT / (LIB + NAT)`, predicted by a ridge regression on `logit(fn)`
+#' over split seat-elections from EARLIER years, on facts known before the
+#' election: the Nationals' fraction of the Coalition vote across the same state
+#' at the previous election, each candidate's own previous primary share, which
+#' of them (if either) won the seat last time, and the seat's previous split.
+#' The junior fraction is `min(fn, 1 - fn)`; its spread is the sd of the
+#' out-of-fold residuals.
+#'
 #' @param target_election Election label, e.g. `"wa2013"`.
 #' @param cand The candidacy corpus (`output/candidacies.csv`); read if `NULL`.
 #' @param transfers Transfer rows (`election, seat, round, from, to, votes`)
 #'   from `external/elections/*-transfers.csv`; read if `NULL`.
 #' @return A list: `seats` (data.frame: `seat`, `r` junior fraction centre,
-#'   `sd`, `has_prev`), `f`, `mu`, `tau`, `s`, `n_hist` (earlier split
-#'   seat-elections), `n_pairs` (consecutive pairs), `n_events` (earlier
-#'   Coalition-to-Coalition exclusions). `seats` is empty, and `f` `NA`, when
-#'   no earlier election supplies the data -- the split is then not applied.
+#'   `sd`, `has_prev`, `fn_hat`), `f`, `mu` (mean junior fraction of the
+#'   training rows), `s` (sd of the out-of-fold residuals), `lambda`, `n_hist`
+#'   (earlier split seat-elections), `n_events` (earlier Coalition-to-Coalition
+#'   exclusions), `n_target`. `seats` is empty, and `f` `NA`, when no earlier
+#'   election supplies the data -- the split is then not applied.
 #' @export
 coalition_split_fit <- function(target_election, cand = NULL, transfers = NULL) {
   if (is.null(cand)) cand <- data.table::fread(out_path("candidacies.csv"))
   cand <- data.table::as.data.table(cand)
   tgt_el <- as.character(target_election)
   tgt_year <- as.integer(sub("^[a-z]+", "", tgt_el))
-  tgt_region <- sub("[0-9]+$", "", tgt_el)
-  co <- cand[cand$party == "LNP", c("election", "seat", "party_raw", "pcv"), with = FALSE]
-  co[, "side" := coalition_side(get("party_raw"))]
-  co <- co[!is.na(get("side"))]
-  co[, "region" := sub("[0-9]+$", "", get("election"))]
-  co[, "year" := as.integer(sub("^[a-z]+", "", get("election")))]
-  by_seat <- co[, list(n_lib = sum(get("side") == "LIB"), n_nat = sum(get("side") == "NAT"),
-                       lib = sum(get("pcv")[get("side") == "LIB"], na.rm = TRUE),
-                       nat = sum(get("pcv")[get("side") == "NAT"], na.rm = TRUE)),
-                by = c("election", "region", "year", "seat")]
-  by_seat <- by_seat[get("n_lib") > 0 & get("n_nat") > 0]
-  # Target split seats come from NOMINATIONS only; their votes are never read.
-  tgt_seats <- unique(by_seat$seat[by_seat$election == tgt_el])
-
-  hist <- by_seat[get("year") < tgt_year & (get("lib") + get("nat")) > 0]
-  hist[, "fn" := get("nat") / (get("lib") + get("nat"))]
-  hist[, "j" := pmin(get("fn"), 1 - get("fn"))]
-  empty <- list(seats = data.frame(seat = character(0), r = numeric(0), sd = numeric(0),
-                                   has_prev = logical(0)),
-                f = NA_real_, mu = NA_real_, tau = NA_real_, s = NA_real_,
-                n_hist = nrow(hist), n_pairs = 0L, n_events = 0L, n_target = length(tgt_seats))
+  .yr <- function(e) as.integer(sub("^[a-z]+", "", e))
+  .rg <- function(e) sub("[0-9]+$", "", e)
+  .nm <- function(x) toupper(trimws(gsub("[[:space:]]+", " ", as.character(x))))
 
   # Each region's elections in order, to find "the previous election".
-  els <- unique(cand[, c("election"), with = FALSE])$election
-  el_tab <- data.frame(election = els, region = sub("[0-9]+$", "", els),
-                       year = as.integer(sub("^[a-z]+", "", els)), stringsAsFactors = FALSE)
+  els <- unique(as.character(cand$election))
+  el_tab <- data.frame(election = els, region = .rg(els), year = .yr(els), stringsAsFactors = FALSE)
   el_tab <- el_tab[order(el_tab$region, el_tab$year), ]
   el_tab$prev <- stats::ave(el_tab$election, el_tab$region,
                             FUN = function(x) c(NA_character_, utils::head(x, -1)))
   prev_of <- stats::setNames(el_tab$prev, el_tab$election)
 
-  # Consecutive pairs: the same seat split at an election and at the region's
-  # previous one, both before the target year.
-  hp <- data.table::copy(hist)
-  hp[, "prev_el" := unname(prev_of[get("election")])]
-  prv <- hist[, c("election", "seat", "fn"), with = FALSE]
-  data.table::setnames(prv, c("prev_el", "seat", "fn_prev"))
-  pairs <- merge(hp, prv, by = c("prev_el", "seat"))
-  d <- pairs$fn - pairs$fn_prev
+  nr <- nrow(cand)
+  .col <- function(nm, default) if (nm %in% names(cand)) cand[[nm]] else rep(default, nr)
+  co <- data.table::data.table(election = as.character(cand$election), seat = as.character(cand$seat),
+                               party = as.character(cand$party), side = coalition_side(cand$party_raw),
+                               name = .nm(.col("name", NA_character_)), pcv = as.numeric(cand$pcv),
+                               votes = as.numeric(.col("votes", NA_real_)),
+                               state = as.character(.col("state", NA_character_)),
+                               elected = as.logical(.col("elected", NA)))
+  co[, "region" := .rg(get("election"))]
+  # A state election's state is its jurisdiction; a federal seat carries its own.
+  st <- co$state
+  use_region <- co$region != "fed" | is.na(st) | !nzchar(st)
+  st[use_region] <- co$region[use_region]
+  co[, "state" := toupper(st)]
+  winners <- co[co$elected %in% TRUE, c("election", "seat", "name"), with = FALSE]
+  cs <- co[co$party == "LNP" & !is.na(co$side)]
+
+  # Nationals' fraction of the Coalition vote across each state at each election.
+  cs[, "w" := ifelse(is.na(get("votes")), get("pcv"), get("votes"))]
+  sv <- cs[, list(nat = sum(get("w")[get("side") == "NAT"], na.rm = TRUE),
+                  all = sum(get("w"), na.rm = TRUE)), by = c("election", "state")]
+  sv <- sv[sv$all > 0]
+  state_fn <- stats::setNames(sv$nat / sv$all, paste(sv$election, sv$state))
+  # Each candidate's own primary share, by (election, name).
+  own <- stats::setNames(co$pcv, paste(co$election, co$name))
+  own <- own[!duplicated(names(own))]
+
+  # One row per split seat-election (by nominations).
+  by_seat <- cs[, list(n_lib = sum(get("side") == "LIB"), n_nat = sum(get("side") == "NAT"),
+                       lib = sum(get("pcv")[get("side") == "LIB"], na.rm = TRUE),
+                       nat = sum(get("pcv")[get("side") == "NAT"], na.rm = TRUE),
+                       st = get("state")[1],
+                       lib_name = get("name")[get("side") == "LIB"][1],
+                       nat_name = get("name")[get("side") == "NAT"][1]),
+                by = c("election", "region", "seat")]
+  by_seat <- by_seat[by_seat$n_lib > 0 & by_seat$n_nat > 0]
+  by_seat[, "year" := .yr(get("election"))]
+  by_seat <- by_seat[by_seat$year <= tgt_year]
+  by_seat[, "prev_el" := unname(prev_of[get("election")])]
+  tot_c <- by_seat$lib + by_seat$nat
+  by_seat[, "fn" := ifelse(tot_c > 0, by_seat$nat / tot_c, NA_real_)]
+
+  # Features: every one is read from the PREVIOUS election.
+  by_seat[, "x_state_fn" := unname(state_fn[paste(by_seat$prev_el, by_seat$st)])]
+  on <- unname(own[paste(by_seat$prev_el, by_seat$nat_name)])
+  ol <- unname(own[paste(by_seat$prev_el, by_seat$lib_name)])
+  by_seat[, "x_nat_own" := ifelse(is.na(on), 0, on)]
+  by_seat[, "x_nat_stood" := as.numeric(!is.na(on))]
+  by_seat[, "x_lib_own" := ifelse(is.na(ol), 0, ol)]
+  by_seat[, "x_lib_stood" := as.numeric(!is.na(ol))]
+  wk <- stats::setNames(winners$name, paste(winners$election, winners$seat))
+  wk <- wk[!duplicated(names(wk))]
+  wprev <- unname(wk[paste(by_seat$prev_el, by_seat$seat)])
+  by_seat[, "x_nat_sitting" := as.numeric(!is.na(wprev) & wprev == by_seat$nat_name)]
+  by_seat[, "x_lib_sitting" := as.numeric(!is.na(wprev) & wprev == by_seat$lib_name)]
+  fprev <- stats::setNames(by_seat$fn, paste(by_seat$election, by_seat$seat))
+  fp <- unname(fprev[paste(by_seat$prev_el, by_seat$seat)])
+  by_seat[, "x_prev_split" := as.numeric(!is.na(fp))]
+  by_seat[, "x_prev_fn" := ifelse(is.na(fp), 0, fp)]
+
+  # Target split seats come from NOMINATIONS only; their votes are never read.
+  tgt <- by_seat[by_seat$election == tgt_el]
+  hist <- by_seat[by_seat$year < tgt_year & !is.na(by_seat$fn)]
+
+  empty <- list(seats = data.frame(seat = character(0), r = numeric(0), sd = numeric(0),
+                                   has_prev = logical(0), fn_hat = numeric(0)),
+                f = NA_real_, mu = NA_real_, s = NA_real_, lambda = NA_real_,
+                n_hist = nrow(hist), n_events = 0L, n_target = nrow(tgt))
 
   # Coalition-to-Coalition rate from earlier elections' exclusions.
   if (is.null(transfers)) {
@@ -93,32 +144,54 @@ coalition_split_fit <- function(target_election, cand = NULL, transfers = NULL) 
     }), fill = TRUE)
   }
   tx <- data.table::as.data.table(transfers)
-  tx <- tx[as.integer(sub("^[a-z]+", "", tx$election)) < tgt_year & tx$from == "LNP"]
+  tx <- tx[.yr(tx$election) < tgt_year & tx$from == "LNP"]
   ev <- tx[, list(tot = sum(get("votes")), to_lnp = sum(get("votes")[get("to") == "LNP"])),
            by = c("election", "seat", "round")]
-  ev <- ev[get("to_lnp") > 0]
-
-  if (nrow(hist) < 2L || length(d) < 2L || nrow(ev) == 0L) {
-    empty$n_pairs <- length(d); empty$n_events <- nrow(ev)
-    return(empty)
-  }
-  mu <- mean(hist$j); tau2 <- stats::var(hist$j); s <- stats::sd(d)
-  w <- tau2 / (tau2 + s^2)
+  ev <- ev[ev$to_lnp > 0]
+  empty$n_events <- nrow(ev)
+  # Fewer than 5 earlier rows cannot be cross-validated (COMPUTATIONAL).
+  if (nrow(hist) < 5L || nrow(ev) == 0L) return(empty)
   f <- sum(ev$to_lnp) / sum(ev$tot)
 
-  pe <- unname(prev_of[tgt_el])
-  prev_row <- if (is.na(pe)) hist[0] else hist[hist$election == pe]
-  pj <- stats::setNames(prev_row$j, prev_row$seat)
-  has_prev <- tgt_seats %in% names(pj)
-  r <- ifelse(has_prev, mu + w * (unname(pj[tgt_seats]) - mu), mu)
-  # A seat with no earlier split is a draw from the population of split seats
-  # (sd tau); one with an earlier split moves from it by the change (sd s).
-  sdv <- ifelse(has_prev, s, sqrt(tau2))
-  list(seats = data.frame(seat = tgt_seats, r = r, sd = sdv, has_prev = has_prev,
+  xcols <- c("x_state_fn", "x_nat_own", "x_nat_stood", "x_lib_own", "x_lib_stood",
+             "x_nat_sitting", "x_lib_sitting", "x_prev_split", "x_prev_fn")
+  # A state with no Coalition votes at the previous election (or no previous
+  # election) has no reading: the training mean, not zero (zero would claim the
+  # Nationals took nothing there).
+  fill <- mean(hist$x_state_fn, na.rm = TRUE)
+  if (!is.finite(fill)) fill <- mean(hist$fn)
+  .X <- function(d) {
+    m <- as.matrix(d[, xcols, with = FALSE])
+    m[is.na(m[, "x_state_fn"]), "x_state_fn"] <- fill
+    m
+  }
+  X <- .X(hist)
+  y <- stats::qlogis(pmin(pmax(hist$fn, 0.005), 0.995))
+  nf <- min(10L, nrow(hist))
+  # Folds fixed by row order, not drawn, so the fit draws no random number.
+  foldid <- rep_len(seq_len(nf), nrow(hist))
+  keep <- apply(X, 2, function(v) stats::var(v) > 0)
+  if (sum(keep) < 2L) {
+    # glmnet needs two columns; with fewer, the training mean.
+    m0 <- stats::plogis(mean(y))
+    pred_fn <- function(Z) rep(m0, nrow(Z))
+    oof <- vapply(seq_len(nf), function(k) stats::plogis(mean(y[foldid != k])), 0)[foldid]
+    lam <- NA_real_
+  } else {
+    cv <- glmnet::cv.glmnet(X[, keep, drop = FALSE], y, alpha = 0, foldid = foldid,
+                            keep = TRUE, grouped = FALSE)
+    lam <- cv$lambda.min
+    pred_fn <- function(Z) stats::plogis(as.numeric(stats::predict(cv, Z[, keep, drop = FALSE], s = "lambda.min")))
+    oof <- stats::plogis(cv$fit.preval[, match(lam, cv$lambda)])
+  }
+  s <- stats::sd(hist$fn - oof)
+  fn_hat <- if (nrow(tgt)) pred_fn(.X(tgt)) else numeric(0)
+  r <- pmin(fn_hat, 1 - fn_hat)
+  list(seats = data.frame(seat = tgt$seat, r = r, sd = rep(s, length(r)),
+                          has_prev = tgt$x_prev_split == 1, fn_hat = fn_hat,
                           stringsAsFactors = FALSE),
-       f = f, mu = mu, tau = sqrt(tau2), s = s,
-       n_hist = nrow(hist), n_pairs = length(d), n_events = nrow(ev),
-       n_target = length(tgt_seats))
+       f = f, mu = mean(pmin(hist$fn, 1 - hist$fn)), s = s, lambda = lam,
+       n_hist = nrow(hist), n_events = nrow(ev), n_target = nrow(tgt))
 }
 
 #' The `coalition_split` argument for one election's simulation
@@ -153,12 +226,12 @@ coalition_split_args <- function(target_election, seat_names, ...) {
   sdv[hit] <- fit$seats$sd[match(hit, fit$seats$seat)]
   miss <- setdiff(fit$seats$seat, seat_names)
   cat(sprintf(paste0("LN1 coalition split %s: %d split seat(s) applied of %d nominated",
-                     "%s; f=%.3f (%d earlier exclusions); mean r=%.3f; mu=%.3f tau=%.3f s=%.3f",
-                     " (%d earlier split seats, %d pairs)\n"),
+                     "%s; f=%.3f (%d earlier exclusions); mean r=%.3f; ridge on %d earlier split seats,",
+                     " lambda=%.3g, out-of-fold sd=%.3f (training mean junior %.3f)\n"),
               target_election, length(hit), fit$n_target,
               if (length(miss)) paste0(" (not in the simulation: ", paste(miss, collapse = ", "), ")") else "",
               fit$f, fit$n_events, if (length(hit)) mean(r[hit]) else NA_real_,
-              fit$mu, fit$tau, fit$s, fit$n_hist, fit$n_pairs))
+              fit$n_hist, fit$lambda, fit$s, fit$mu))
   if (!length(hit) || !is.finite(fit$f)) return(NULL)
   list(r = r, sd = sdv, f = fit$f)
 }

@@ -92,21 +92,30 @@ test_that("coalition_side reads the raw labels", {
 
 test_that("coalition_split_fit uses only earlier years", {
   mk <- function(el, seat, lib, nat) data.table::data.table(
-    election = el, seat = seat, party = "LNP", party_raw = c("Liberal", "The Nationals"), pcv = c(lib, nat))
-  cand <- data.table::rbindlist(list(
-    mk("wa2005", "A", 30, 10), mk("wa2005", "B", 25, 20),
-    mk("wa2008", "A", 32, 12), mk("wa2008", "B", 20, 22),
-    mk("wa2013", "A", 5, 45)))   # the target's own votes must not be read
+    election = el, seat = seat, party = "LNP", party_raw = c("Liberal", "The Nationals"),
+    name = paste(seat, c("Lib", "Nat")), pcv = c(lib, nat), votes = 1000 * c(lib, nat),
+    elected = c(lib > nat, nat > lib))
+  seats <- c("A", "B", "C", "D")
+  cand <- data.table::rbindlist(c(
+    Map(mk, "wa2005", seats, c(30, 25, 35, 20), c(10, 20, 3, 25)),
+    Map(mk, "wa2008", seats, c(32, 20, 36, 18), c(12, 22, 2, 28)),
+    list(mk("wa2013", "A", 5, 45))))   # the target's own votes must not be read
   tx <- data.table::data.table(election = c("wa2008", "wa2008", "wa2013", "wa2013"), seat = "A", round = 1L,
                                from = "LNP", to = c("LNP", "ALP", "LNP", "ALP"), votes = c(70, 30, 10, 90))
   fit <- coalition_split_fit("wa2013", cand = cand, transfers = tx)
   expect_equal(fit$f, 0.7)
+  expect_equal(fit$n_hist, 8L)
   expect_equal(fit$seats$seat, "A")
   expect_true(fit$seats$has_prev)
-  j <- c(10 / 40, 20 / 45, 12 / 44, 20 / 42)
-  expect_equal(fit$mu, mean(j))
-  # centre lies between the pooled mean and the seat's own last split (12/44)
-  expect_true(fit$seats$r >= min(fit$mu, 12 / 44) && fit$seats$r <= max(fit$mu, 12 / 44))
+  expect_true(fit$seats$r > 0 && fit$seats$r < 0.5)
+  # the target's own votes do not move the prediction
+  cand2 <- data.table::copy(cand); cand2[cand2$election == "wa2013", "pcv" := c(40, 2)]
+  expect_identical(coalition_split_fit("wa2013", cand = cand2, transfers = tx)$seats,
+                   fit$seats)
   # with nothing earlier, nothing is applied
   expect_true(is.na(coalition_split_fit("wa2005", cand = cand, transfers = tx)$f))
+  # the fit runs inside the simulator call, after its seed: it must draw nothing
+  set.seed(9); before <- .Random.seed
+  coalition_split_fit("wa2013", cand = cand, transfers = tx)
+  expect_identical(.Random.seed, before)
 })
