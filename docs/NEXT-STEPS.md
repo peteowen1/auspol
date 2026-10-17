@@ -178,6 +178,15 @@ person rule, statewide poll weighting by track record, seat-poll precision blend
   older than AUSPOL_POLL_MAX_AGE_H (20 h); a failed refresh keeps the old copy; PLV1 counts them. Tested on a scratch
   copy: a 48 h vic2026 page refreshed and parsed (240 rows), then left alone when fresh. Still by hand: the federal
   breakdown page (FK3! warns past 45 days).
+- OPEN (lead, 18 Oct, Pete asked why fed2025 loses to AEF: 0.377 vs 0.303): base_pred applies minor-party growth
+  as FLAT points, not in proportion to the base. fed2025 One Nation miss by previous ONP share: prev 0-1 -3.7 (3 seats),
+  1-3 -2.9 (43), 3-6 -1.5 (59), 6-10 -0.9 (37), 10+ +0.2 (7); xgb trims about a third. Melbourne: notional ALP 25.2 ->
+  our base 22.2 (actual 31.3) because ONP went 0.8 -> 6.1 and IND 1.0 -> 6.7 out of ALP/GRN; we gave Labor 0.008, AEF
+  0.12 (AEF ALP 26.2). Across all elections the pattern is weaker/mixed (321 cells with a notional base). Next: trace
+  how dev_slope() applies a statewide minor swing; prereg a proportional (logit) swing for minors, tested in base_pred
+  AND xgb (CLAUDE.md). Other fed2025 losses: 15 Labor wins called Coalition (Labor primary under-called ~10 pts in
+  the marginals: Bennelong 32.9 vs 45.4), 4 independents favoured who lost (Wannon, Monash, McMahon, Cowper).
+  fed2025 drifted 0.318 (30 Sep) -> 0.377 across many changes; a snapshot bisect would separate leak-fix costs.
 - OPEN statewide flow shocks, GENERAL (17 Oct, scratchpad flowvar.R, 13 transfers files, 32 elections): the count
   draws every flow's noise per seat, but on a logit scale 0.32-0.59 of the variation in the flows that decide seats
   is BETWEEN elections (moves every seat at once): LNP->ONP 0.59 (6 el), ONP->LNP 0.42 (18), GRN->ALP 0.39 (32),
