@@ -44,7 +44,9 @@ List seat_sim_core(NumericMatrix shares, int n_sims, int shift_mode,
                    NumericMatrix split_r = NumericMatrix(0, 0),
                    double split_f = 0,
                    bool has_eq = false,
-                   NumericMatrix eq = NumericMatrix(0, 0)) {
+                   NumericMatrix eq = NumericMatrix(0, 0),
+                   bool za = false,
+                   LogicalMatrix absent = LogicalMatrix(0, 0)) {
   const int nseat = shares.nrow(), K = shares.ncol();
   // PER-SEAT CONDITIONAL OVERRIDE, sparse. The shared cell_mat is dense over
   // the key space but has no seat dimension; a per-seat dense table would be
@@ -184,6 +186,7 @@ List seat_sim_core(NumericMatrix shares, int n_sims, int shift_mode,
         }
         v[k] = base[k] + shift[k] + e;
         if (v[k] < 0) v[k] = 0;
+        if (za && absent(i, k)) v[k] = 0;   // not standing (R/seat_sim.R absent_m)
       }
       // ---- breakout mixture (R/seat_sim.R, same RNG order and arithmetic) ----
       // RNG order: one uniform per eligible cell in column order, THEN one more

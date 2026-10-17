@@ -31,7 +31,7 @@ All seven share one `R/` package core (`simulate_seat_contests()`,
 in which switches each one WIRES and which data source each reads, not in
 separate model code.
 
-## Switch parity (206 switches from `published_flags.R`, 7 entry points)
+## Switch parity (207 switches from `published_flags.R`, 7 entry points)
 
 | switch | fit_seats (published) | fed | nsw | qld | sa | vic | wa |
 |---|---|---|---|---|---|---|---|
@@ -241,6 +241,7 @@ separate model code.
 | `AUSPOL_XGB_SENATE` | NO | NO | NO | NO | NO | NO | NO |
 | `AUSPOL_XGB_SURGE` | NO | yes | yes | yes | yes | yes | yes |
 | `AUSPOL_XGB_SURGE_SRC` | NO | NO | NO | NO | NO | NO | NO |
+| `AUSPOL_ZERO_ABSENT` | NO | NO | NO | NO | NO | NO | NO |
 
 ## Every non-universal switch, explained
 
@@ -409,6 +410,7 @@ separate model code.
 - **`AUSPOL_XGB_SENATE`** (intentional / dead experiment): OFF, REFUSED 2026-10-01 (three arms: all parties, minor only, geography only) -- each cost Victorian Labor or lost the gains. Read only in fit_xgb_primary_v6.R and xgb_primary_override.R, so 'no' in the harness columns is by design. plans/prereg-xgb-senate-2026-10-01.md
 - **`AUSPOL_XGB_SURGE`** (intentional / dead experiment): Harness-only and wired into backtest_candidate_sa.R ALONE, which is this file's own 'a fix to one harness is a fix to all of them' rule outstanding rather than satisfied. Built, measured, NOT shipped: the hazard is much better than the salience one it would replace (out-of-fold AUC 0.936 against 0.751) but it failed its pre-registered bar and a calibration check says it is now over-dispersed. Its live path is an unimplemented stub, so fit_seats_full.R cannot honour it even if asked. docs/plans/prereg-xgb-surge-parameters-2026-09-11.md
 - **`AUSPOL_XGB_SURGE_SRC`** (intentional / dead experiment): Companion of AUSPOL_XGB_SURGE (which emergence model file to read: v5 candidate-level); read only inside R/xgb_surge_override.R, so it reaches exactly the harnesses that honour AUSPOL_XGB_SURGE.
+- **`AUSPOL_ZERO_ABSENT`** (intentional / dead experiment): ARM (0), UNIVERSAL via R/: the default of simulate_seat_contests(zero_absent = zero_absent_on()), so every harness, NT and fit_seats_full.R honour it with no call-site argument. plans/prereg-zero-absent-2026-10-17.md
 
 ## Gaps the switch-presence matrix cannot see
 
@@ -444,4 +446,4 @@ MR3  no harness forces a switch away from its published value.
 
 ## Coverage check
 
-MR2  every non-universal switch (165 of 206) has a recorded classification.
+MR2  every non-universal switch (166 of 207) has a recorded classification.

@@ -38,7 +38,8 @@ simulate_seat_contests(
   breakout_p = NULL,
   breakout_q = NULL,
   coalition_split = NULL,
-  error_q = NULL
+  error_q = NULL,
+  zero_absent = zero_absent_on()
 )
 }
 \arguments{
@@ -416,6 +417,10 @@ columns, at least two nondecreasing columns), under \code{AUSPOL_ERROR_DIST=1} (
 \code{\link[=error_dist_args]{error_dist_args()}}). Each cell's noise becomes \code{sd_cell * z}, \code{z} drawn by one uniform per
 cell and linear interpolation between that class's quantiles, instead of \code{rnorm}. \code{NULL}
 (the default) is the previous behaviour exactly.}
+
+\item{zero_absent}{Logical. \code{TRUE} sets a cell whose predicted share is 0 (the class is not standing) back
+to 0 after its draw, so it takes no votes; the draw is still made, so every other cell is unchanged.
+Defaults to the \code{AUSPOL_ZERO_ABSENT} switch (\code{\link[=zero_absent_on]{zero_absent_on()}}); \code{FALSE} is the previous behaviour.}
 }
 \value{
 List: \code{win_prob} (data.frame, one row per seat and party with a

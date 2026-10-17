@@ -26,12 +26,14 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30.
   (not standing) gets |N(0, 1.10)| in half its draws (`R/seat_sim.R:1407`). Measure how often a non-standing class
   takes votes or changes a count; if it matters, zero non-standing classes after the draw (all harnesses + live).
   MEASURED 17 Oct (toy sim, 4 elections, same seed): no seat moves > 0.05, but no-phantoms is better in all four
-  (seat log loss -0.001 to -0.004; fed2022 ALP -0.28 expected seats). Worth an arm after the error distribution.
+  (seat log loss -0.001 to -0.004; fed2022 ALP -0.28 expected seats). BUILT 17 Oct (`AUSPOL_ZERO_ABSENT`, off;
+  `plans/prereg-zero-absent-2026-10-17.md`). Screen at 5,000 sims, not 1,000: no common random numbers after the first count.
 - OPEN data bug, root cause found 17 Oct: `scripts/fetch_preferences_vic_historical.R:162` skips
   `identical(to, from)`, so vec-2014/2018 drop every Nationals-to-Liberal (LNP->LNP) transfer (vic2010/2022
   fetchers keep them). Readers: the vic harness's flows for vic2018/vic2022 (`backtest_candidate_vic.R:340`),
   `estimate_flows_from_results.R`, the reentry prior, the split's f. Fix: keep same-class rows, refetch 2014/2018,
   regenerate registries, re-screen vic2018 + vic2022. NOT while a screen runs (it reads external/elections).
+  CODE FIXED 17 Oct (kept same-class rows); refetch + re-screen still to do.
 - PUBLISHED 15:33 the full rebuild with census blanking + pollster archive + WA/NT screened port
   (snapshot `20261015-1317-20697de-from1`; publish log `deciding-runs/publish-20261015-1317.log`). AEF-7 0.2669 vs AEF
   0.2825. The port cost +0.0007 pooled (0.3340 -> 0.3347, 35 pairs / 2,931 seats), all from NT: nt2020 0.648 -> 0.826,
@@ -112,9 +114,7 @@ scoring each election x sqrt(votes). Leak fixes shipped: conserve, MP slopes, ce
   Coalition primary error (ours - actual) in one-candidate seats: NT +3.61 (SE 1.08), WA +2.46 (0.34), Qld +0.98,
   NSW +0.45, fed +0.05, SA -0.82, Vic -0.87; WA by election 6 of 7 positive (wa2005 +4.68, wa2001 +3.42, wa2017
   +3.27). A jurisdiction bias in the level model is the lead; `screen_level_share.R` first.
-- OPEN cleanup, needs Pete's OK (deletes): 5 leftover worktrees, all fully merged into dev, no uncommitted files,
-  no junctions: `.claude/worktrees/agent-a7e42b05226bb2717` (seat-spread-tf), `agent-aed05f6924c0664ff` (cov-tf),
-  scratchpad `wt-conserve`, `wt-party`, `wt-surge-live`. Recommend `git worktree remove` each + delete branches.
+- DONE 17 Oct (Pete: remove): the 5 merged worktrees, junctions checked first; external/elections intact.
 - OPEN NT seat layer: over-confidence fixed by the size spread (20k: nt2016 0.80, nt2020 0.65, nt2024 1.07, from
   0.99/0.81/1.41); still weak, and new parties start at zero share.
 - OPEN qld2017: One Nation / Katter seats given ~0 (emergence); qld2012 Katter polled inside Others.

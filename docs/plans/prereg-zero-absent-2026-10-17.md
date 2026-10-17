@@ -42,3 +42,11 @@ Screen at 1,000 sims (`deciding_run.ps1 -Sims 1000`, all 35), then 20,000 before
 
 - A class at a tiny positive share (0 < s < 1) that is standing but negligible still draws noise; this arm
   only removes classes that are not there at all.
+
+## Amendment 1 (2026-10-17, while building, before any run)
+
+The Arm text says Z "differs from A only through the zeroed cells" and the random stream is unchanged. That holds
+only up to the first count: a phantom candidate's exclusion used to consume flow-noise draws, so once one is
+gone, later draws come from a different part of the stream. Z and A are therefore NOT common-random-number
+twins after the first affected seat, and the screen compares them at ordinary Monte Carlo noise. No criterion
+changes; the 20k deciding run was already required.

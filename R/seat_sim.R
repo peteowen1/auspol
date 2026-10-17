@@ -332,6 +332,9 @@
 #'   on an evenly spaced probability grid from 0 to 1 (length at least 2,
 #'   non-decreasing, each in `[0, 100)`); a breakout draws a uniform and
 #'   interpolates linearly. Required when `breakout_p` has any cell above 0.
+#' @param zero_absent Logical. `TRUE` sets a cell whose predicted share is 0 (the class is not standing) back
+#'   to 0 after its draw, so it takes no votes; the draw is still made, so every other cell is unchanged.
+#'   Defaults to the `AUSPOL_ZERO_ABSENT` switch ([zero_absent_on()]); `FALSE` is the previous behaviour.
 #' @param error_q Optional classes x quantiles matrix (rows in the order of `shares`'
 #'   columns, at least two nondecreasing columns), under `AUSPOL_ERROR_DIST=1` (built by
 #'   [error_dist_args()]). Each cell's noise becomes `sd_cell * z`, `z` drawn by one uniform per
@@ -395,7 +398,8 @@ simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
                                    engine = c("auto", "cpp", "r"),
                                    keep_fp = FALSE,
                                    breakout_p = NULL, breakout_q = NULL,
-                                   coalition_split = NULL, error_q = NULL) {
+                                   coalition_split = NULL, error_q = NULL,
+                                   zero_absent = zero_absent_on()) {
   engine <- match.arg(engine)
   # SHRINK MAY BE PER-SEAT. A scalar applies the same rate everywhere and caps
   # EVERY seat at 1 - shrink/2 -- 0.9598 at shrink = 0.10, with no seat above
@@ -1119,6 +1123,10 @@ simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
     a <- eq[cbind(seq_len(K), i0 + 1)]; b <- eq[cbind(seq_len(K), i1 + 1)]
     a + fr * (b - a)
   }
+  # NOT-STANDING CLASSES AT ZERO (AUSPOL_ZERO_ABSENT, R/zero_absent.R): resolved once from the predicted
+  # shares. Same rule, same place in the draw, as seat_sim_core.cpp.
+  za <- isTRUE(zero_absent)
+  absent_m <- if (za) unname(as.matrix(shares) <= 0) else base::matrix(FALSE, 0L, 0L)
   has_split <- FALSE; split_lnp <- 0L; split_f <- 0
   split_r <- base::matrix(0, 0L, 0L)
   split_info <- NULL
@@ -1334,7 +1342,7 @@ simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
                           as.numeric(fallback_flow_sd), as.numeric(ov_sd), isTRUE(keep_fp),
                           has_bo, bo_p, bo_q,
                           has_split, as.integer(split_lnp), split_r, as.numeric(split_f),
-                          has_eq, eq)
+                          has_eq, eq, za, absent_m)
     wins[] <- core$wins; totals[] <- core$totals
     tcp_winner[] <- parties[core$tcp_w]; tcp_runnerup[] <- parties[core$tcp_r]
     tcp_share[] <- core$tcp_share
@@ -1432,6 +1440,7 @@ simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
       }
       v <- base_v + shift + if (has_eq) sd_cell * .eq_z(stats::runif(K)) else stats::rnorm(K, 0, sd_cell)
       v[v < 0] <- 0
+      if (za) v[absent_m[i, ]] <- 0
       # BREAKOUT MIXTURE: with probability p this cell's share comes from the
       # breakout distribution, the rest of the seat scaled by one factor so the
       # total is unchanged. Same arithmetic, same order, as seat_sim_core.cpp.
@@ -1719,7 +1728,8 @@ simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
        fp_draws = fp_draws,
        breakout_draws = n_bo,
        coalition_split = split_info,
-       error_dist = has_eq)
+       error_dist = has_eq,
+       zero_absent = za)
 }
 
 #' Per-class slope multipliers for [simulate_seat_contests()]
