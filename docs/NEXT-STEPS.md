@@ -184,7 +184,17 @@ person rule, statewide poll weighting by track record, seat-poll precision blend
   our base 22.2 (actual 31.3) because ONP went 0.8 -> 6.1 and IND 1.0 -> 6.7 out of ALP/GRN; we gave Labor 0.008, AEF
   0.12 (AEF ALP 26.2). Across all elections the pattern is weaker/mixed (321 cells with a notional base). Next: trace
   how dev_slope() applies a statewide minor swing; prereg a proportional (logit) swing for minors, tested in base_pred
-  AND xgb (CLAUDE.md). Other fed2025 losses: 15 Labor wins called Coalition (Labor primary under-called ~10 pts in
+  AND xgb (CLAUDE.md).
+  TESTED 18 Oct overnight (scratchpad alloc.R; actual statewide level fed in, slopes time-forward, 32 elections,
+  15,562 cells): REFUTED as general. Seat RMSE uniform 5.37, linear slope (shipped dev_slope form) 4.99, logit slope
+  5.35; logit worse for EVERY class (ONP 3.79 vs 3.45, GRN 3.34 vs 2.73) and in 28 of 32 elections. It fixes
+  Melbourne (ALP 29.6 vs 26.4, actual 31.3) but under-calls ONP where it is strong (10+ band 10.0 vs actual 12.9).
+  So not the root cause; the fed2025 ONP pattern looks like GEOGRAPHY (regional growth, inner-city none). Lead:
+  a seat-type term on the minor deviation slope (urban/regional, already a census feature), time-forward.
+  TESTED: + census degree share (edu_25plus_pct) on the seat deviation, fitted time-forward per class: helps GRN
+  (2.70 -> 2.61), ONP (3.64 -> 3.52), OTH_RIGHT (4.30 -> 4.25), hurts ALP/LNP/IND; all classes within noise
+  (+0.40 MSE, SE 0.35, 16 of 29 elections better). Small; a precision-shrunk g per class is the principled form.
+  Lead only, not a prereg; the xgb layer already sees census features. Other fed2025 losses: 15 Labor wins called Coalition (Labor primary under-called ~10 pts in
   the marginals: Bennelong 32.9 vs 45.4), 4 independents favoured who lost (Wannon, Monash, McMahon, Cowper).
   fed2025 drifted 0.318 (30 Sep) -> 0.377 across many changes; a snapshot bisect would separate leak-fix costs.
 - OPEN statewide flow shocks, GENERAL (17 Oct, scratchpad flowvar.R, 13 transfers files, 32 elections): the count
