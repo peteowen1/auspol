@@ -63,3 +63,9 @@ weak signals, so this one must need no per-seat breakout prediction.)
 Every seat -0.0004 (SE 0.0017) against C's -0.0021. Fatter tails at fixed width rescue the 21 floor seats
 (-0.275) but squeeze the core: the 324 contested upsets get worse by +0.059 (SE 0.011). The two failures
 together say IND seats need more width AND fatter tails; neither arm alone does both.
+
+## CE (C + E) deciding run at 20k: REFUSED by the one-election clause
+
+Every seat -0.0043 (SE 0.0034), but qld2017 is 65% of it; without qld2017 -0.0015 (SE 0.0020), within noise.
+The width-plus-tails idea works where the model gave surge winners nothing (Queensland 2012/2017) and is
+noise elsewhere, with a small, consistent cost to safe favourites. `plans/prereg-error-distribution-2026-10-17.md`.

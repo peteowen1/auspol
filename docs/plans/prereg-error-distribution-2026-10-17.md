@@ -115,3 +115,13 @@ seats CE's tails are somewhat wider than measured; and C still widens non-standi
 Decided now: CE is screened at 1,000 sims on all 35 (same baseline). **CE goes to a 20k deciding run only if its
 every-seat gain is larger than C's (-0.0021) AND better than A by more than 1 SE, with the one-election and floor
 clauses above applied to it.** Otherwise C goes to its own 20k deciding run, as Pete chose in the same answer.
+
+## RESULT, arm CE at 20k (2026-10-17, `deciding-runs/20261017-1914-ce-deciding-20k/`, code 56f9d6a) -- REFUSED by a clause
+
+Baseline 0.3321 (the published scoreboard exactly). Every seat 0.3321 -> 0.3278, -0.0043 (SE 0.0034): better by
+more than 1 SE. **Refused: qld2017 supplies 0.65 of the gain** (-8.24 of -12.64; 0.42 at the 1k screen, the 1e-6
+floor weighs its near-zero emergence seats more). Without qld2017 -0.0015 (SE 0.0020), and qld2012 is then 0.64
+of what is left; without both -0.0006 (SE 0.0017). Floor seats under half (4.09 of 12.64). Contested winners
+(A 0.01-0.5, 326) +0.0235 (SE 0.0128); favourites 0.90+ who won +0.0024 (SE 0.0005); AEF-7 +0.0016 (SE 0.0020);
+Victoria -0.0056 (SE 0.0039, 4 elections). The gain is the Queensland surge elections; elsewhere noise plus a
+cost to safe calls. Goes to Pete as a clause refusal.
