@@ -103,3 +103,15 @@ Refused on the primary, on one election (share 2.8 of the net gain) and on the f
 < 1e-4 carry more than all of it; without them +0.0003). Why: at fixed RMS, fatter tails squeeze the core, so
 contested seats are called more confidently and wrongly (+0.059 on the 324). Shape alone cannot help; width (C)
 and tails together is the open question. Switch stays "0".
+
+## Amendment 2 (2026-10-17, after E's refusal; Pete: "Screen C and E together")
+
+The refusal above stands. Both failures point the same way: C adds width in independent seats (-0.0021, but
+taxes safe favourites), E adds tails at fixed width (rescues floor seats, squeezes contested ones). **Arm CE** =
+`AUSPOL_COMPOSITION_SD=1 AUSPOL_ERROR_DIST=1`, both tables exactly as already built (no refit, no tuning).
+Known imperfection, stated now: E's z were standardised by the shipped sd, not C's widened one, so in widened
+seats CE's tails are somewhat wider than measured; and C still widens non-standing classes (composition prereg 1b).
+
+Decided now: CE is screened at 1,000 sims on all 35 (same baseline). **CE goes to a 20k deciding run only if its
+every-seat gain is larger than C's (-0.0021) AND better than A by more than 1 SE, with the one-election and floor
+clauses above applied to it.** Otherwise C goes to its own 20k deciding run, as Pete chose in the same answer.
