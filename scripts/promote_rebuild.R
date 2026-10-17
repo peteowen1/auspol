@@ -163,6 +163,19 @@ if (identical(.flag("AUSPOL_PUBLISH_NSW2027"), "1")) {
   }
   cat(sprintf("PA7  nsw2027 tables: %s\n", paste(.nsw_tables, collapse = ", ")))
 }
+# The Lib/Nat split's Coalition-to-Coalition rate is fitted from every earlier
+# exclusion, and the runner fetches only some transfers files (its f came from
+# 5 Victorian exclusions, not 204, on 2026-10-17). Ship the rows; the workflow
+# puts them in external/elections/, where they are the only source.
+if (identical(.flag("AUSPOL_COALITION_SPLIT"), "1")) {
+  .cse <- coalition_split_transfers()
+  if (!grepl("transfers files$", attr(.cse, "src")) || nrow(.cse) == 0L)
+    stop("coalition-split-events.csv must be built from the local transfers files, got: ", attr(.cse, "src"))
+  data.table::fwrite(.cse, file.path(OUT, "coalition-split-events.csv"))
+  cat(sprintf("PA8  coalition-split-events.csv: %d rows from %s, %d elections\n", nrow(.cse), attr(.cse, "src"),
+              data.table::uniqueN(.cse$election)))
+  .arm_tables <- c(.arm_tables, "coalition-split-events.csv")
+}
 models <- c(trained, "candidacies.csv", "seat-swing-port-vic2026.csv", "seat-poll-blend-vic2026.csv",
             "leader-seat-vic2026.csv", "demo-resid-vic2026.csv", .arm_tables, .nsw_tables)
 mf <- file.path(OUT, models)

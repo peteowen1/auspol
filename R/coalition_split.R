@@ -136,13 +136,7 @@ coalition_split_fit <- function(target_election, cand = NULL, transfers = NULL) 
                 n_hist = nrow(hist), n_events = 0L, n_target = nrow(tgt))
 
   # Coalition-to-Coalition rate from earlier elections' exclusions.
-  if (is.null(transfers)) {
-    fs <- list.files(file.path("external", "elections"), "transfers[.]csv$", full.names = TRUE)
-    transfers <- data.table::rbindlist(lapply(fs, function(f) {
-      x <- data.table::fread(f)
-      x[, c("election", "seat", "round", "from", "to", "votes"), with = FALSE]
-    }), fill = TRUE)
-  }
+  if (is.null(transfers)) transfers <- coalition_split_transfers()
   tx <- data.table::as.data.table(transfers)
   tx <- tx[.yr(tx$election) < tgt_year & tx$from == "LNP"]
   ev <- tx[, list(tot = sum(get("votes")), to_lnp = sum(get("votes")[get("to") == "LNP"])),
@@ -191,7 +185,40 @@ coalition_split_fit <- function(target_election, cand = NULL, transfers = NULL) 
                           has_prev = tgt$x_prev_split == 1, fn_hat = fn_hat,
                           stringsAsFactors = FALSE),
        f = f, mu = mean(pmin(hist$fn, 1 - hist$fn)), s = s, lambda = lam,
-       n_hist = nrow(hist), n_events = nrow(ev), n_target = nrow(tgt))
+       n_hist = nrow(hist), n_events = nrow(ev), n_target = nrow(tgt),
+       transfers_src = attr(transfers, "src"))
+}
+
+#' Every Coalition exclusion the split's `f` is fitted from
+#'
+#' Locally: every `external/elections/*transfers.csv`. The daily forecast's
+#' runner fetches only some of those files, so its `f` came from 5 Victorian
+#' exclusions where the backtests used 204 (2026-10-17). `promote_rebuild.R`
+#' therefore ships the rows as one table, `coalition-split-events.csv`, and the
+#' workflow puts it in `external/elections/`; when that file is present it is
+#' the ONLY source, so a partial set of fetched files cannot leak in beside it.
+#'
+#' @param dir The elections directory.
+#' @return A data.table `election, seat, round, from, to, votes` (rows from
+#'   `LNP` only), with attribute `src` naming where it came from.
+#' @export
+coalition_split_transfers <- function(dir = file.path("external", "elections")) {
+  cols <- c("election", "seat", "round", "from", "to", "votes")
+  bundle <- file.path(dir, "coalition-split-events.csv")
+  if (file.exists(bundle)) {
+    x <- data.table::fread(bundle)
+    if (!all(cols %in% names(x))) stop("coalition-split-events.csv lacks columns: ", paste(setdiff(cols, names(x)), collapse = ", "))
+    x <- x[, cols, with = FALSE]
+    data.table::setattr(x, "src", sprintf("bundle %s", basename(bundle)))
+    return(x)
+  }
+  fs <- list.files(dir, "transfers[.]csv$", full.names = TRUE)
+  x <- data.table::rbindlist(lapply(fs, function(f) {
+    y <- data.table::fread(f)
+    y[y$from == "LNP", cols, with = FALSE]
+  }), fill = TRUE)
+  data.table::setattr(x, "src", sprintf("%d transfers files", length(fs)))
+  x
 }
 
 #' The Coalition-to-Coalition rate for one jurisdiction
@@ -248,7 +275,7 @@ coalition_split_args <- function(target_election, seat_names, ...) {
   dots <- list(...)
   key <- paste(target_election, Sys.getenv("AUSPOL_COALITION_SPLIT_F", "state"),
                file.mtime(out_path("candidacies.csv")),
-               max(file.mtime(list.files(file.path("external", "elections"), "transfers[.]csv$",
+               max(file.mtime(list.files(file.path("external", "elections"), "transfers[.]csv$|^coalition-split-events[.]csv$",
                                          full.names = TRUE))))
   fit <- if (!length(dots) && !is.null(.cs_cache[[key]])) .cs_cache[[key]] else {
     x <- coalition_split_fit(target_election, ...)
@@ -262,12 +289,13 @@ coalition_split_args <- function(target_election, seat_names, ...) {
   sdv[hit] <- fit$seats$sd[match(hit, fit$seats$seat)]
   miss <- setdiff(fit$seats$seat, seat_names)
   cat(sprintf(paste0("LN1 coalition split %s: %d split seat(s) applied of %d nominated",
-                     "%s; f=%.3f (%s; %d earlier exclusions); mean r=%.3f; ridge on %d earlier split seats,",
+                     "%s; f=%.3f (%s; %d earlier exclusions from %s); mean r=%.3f; ridge on %d earlier split seats,",
                      " lambda=%.3g, out-of-fold sd=%.3f (training mean junior %.3f)\n"),
               target_election, length(hit), fit$n_target,
               if (length(miss)) paste0(" (not in the simulation: ", paste(miss, collapse = ", "), ")") else "",
               fit$f, if (is.null(attr(fit$f, "w"))) "pooled" else sprintf("state: raw %.3f on %d, weight %.2f", attr(fit$f, "raw"), attr(fit$f, "n"), attr(fit$f, "w")),
-              fit$n_events, if (length(hit)) mean(r[hit]) else NA_real_,
+              fit$n_events, if (is.null(fit$transfers_src)) "supplied rows" else fit$transfers_src,
+              if (length(hit)) mean(r[hit]) else NA_real_,
               fit$n_hist, fit$lambda, fit$s, fit$mu))
   if (!length(hit) || !is.finite(fit$f)) return(NULL)
   list(r = r, sd = sdv, f = fit$f)

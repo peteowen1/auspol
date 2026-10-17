@@ -203,6 +203,10 @@ jobs:
           # Without it fit_seats_full.R would print FSLR!! and quietly publish the unblended level once polls
           # land in the final 28 days, so a missing table fails here and yesterday's forecast stays live.
           gh release download shipped-models -p level-recent.csv -D output --clobber || { echo "::error::shipped-models has no level-recent.csv -- publish the rebuild (stage 9) before this runs"; exit 1; }
+          # AUSPOL_COALITION_SPLIT (published "1", 2026-10-17, R/coalition_split.R): f is fitted from every earlier
+          # Coalition exclusion. This runner fetches only some transfers files (f came from 5 Victorian exclusions,
+          # not 204, on 2026-10-17), so the rows ship as one table; in external/elections/ it is the only source.
+          gh release download shipped-models -p coalition-split-events.csv -D external/elections --clobber || { echo "::error::shipped-models has no coalition-split-events.csv -- publish the rebuild (stage 9) before this runs"; exit 1; }
           # AUSPOL_LEVEL_FED_R (published 0.15, 2026-10-12): the blend adds federal polls' state breakdowns from
           # this file and stops without it, so a missing file fails here and yesterday's forecast stays live.
           gh release download shipped-models -p fed-state-breakdowns.csv -D output --clobber || { echo "::error::shipped-models has no fed-state-breakdowns.csv -- publish the rebuild (stage 9) before this runs"; exit 1; }

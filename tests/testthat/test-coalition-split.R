@@ -134,3 +134,19 @@ test_that("coalition_f shrinks a jurisdiction's rate toward the pooled one", {
   expect_equal(attr(coalition_f(ev2, "vic", "state"), "w"), 0)
   expect_error(coalition_f(ev, "vic", "bogus"))
 })
+
+test_that("coalition-split-events.csv, when present, is the only source of exclusions", {
+  d <- withr::local_tempdir()
+  row <- function(el, to, v) data.table::data.table(election = el, seat = "A", round = 1L, from = c("LNP", "GRN"),
+                                                     to = to, votes = v)
+  data.table::fwrite(row("vic2022", "LNP", c(70, 5)), file.path(d, "vec-2022-vic-transfers.csv"))
+  data.table::fwrite(row("wa2021", "ALP", c(30, 5)), file.path(d, "waec-wa-transfers.csv"))
+  x <- coalition_split_transfers(d)
+  expect_equal(sort(x$election), c("vic2022", "wa2021"))        # both files, LNP rows only
+  expect_true(all(x$from == "LNP"))
+  expect_equal(attr(x, "src"), "2 transfers files")
+  data.table::fwrite(row("fed2019", "NAT", c(9, 1))[1], file.path(d, "coalition-split-events.csv"))
+  y <- coalition_split_transfers(d)
+  expect_equal(y$election, "fed2019")                           # the fetched files are NOT read beside it
+  expect_match(attr(y, "src"), "^bundle")
+})
