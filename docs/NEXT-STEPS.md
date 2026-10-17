@@ -28,15 +28,16 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30.
   MEASURED 17 Oct (toy sim, 4 elections, same seed): no seat moves > 0.05, but no-phantoms is better in all four
   (seat log loss -0.001 to -0.004; fed2022 ALP -0.28 expected seats). BUILT 17 Oct (`AUSPOL_ZERO_ABSENT`, off;
   `plans/prereg-zero-absent-2026-10-17.md`). Screen at 5,000 sims, not 1,000: no common random numbers after the first count.
-- OPEN data bug, root cause found 17 Oct: `scripts/fetch_preferences_vic_historical.R:162` skips
+- DONE data bug, root cause found 17 Oct: `scripts/fetch_preferences_vic_historical.R:162` skipped
   `identical(to, from)`, so vec-2014/2018 drop every Nationals-to-Liberal (LNP->LNP) transfer (vic2010/2022
   fetchers keep them). Readers: the vic harness's flows for vic2018/vic2022 (`backtest_candidate_vic.R:340`),
   `estimate_flows_from_results.R`, the reentry prior, the split's f. Fix: keep same-class rows, refetch 2014/2018,
   regenerate registries, re-screen vic2018 + vic2022. NOT while a screen runs (it reads external/elections).
   FIXED + RE-PARSED 17 Oct (cached VEC pages; firstprefs and winners byte-identical): 2014 768 -> 857 rows,
   2018 601 -> 667, incl. 6 Coalition-to-Coalition (Ripon 2014: 6,242 to the Liberal, 2,768 to Labor).
-  STILL TO DO: re-screen vic2018 + vic2022 on the new files; the release's coalition-split-events.csv lacks
-  the 6 new events until the next publish (CI's f differs from local by those until then).
+  DONE 18 Oct: no re-screen needed. CE's deciding baseline (new files) vs the 09:40 rebuild (old files): no
+  election moves more than 0.0001 (vic2018/vic2022 included); the flow builder already ignores same-class rows,
+  so the rows reach only the Lib/Nat split's f. Published 17 Oct (live f 0.736 on 210 exclusions).
 - PUBLISHED 15:33 the full rebuild with census blanking + pollster archive + WA/NT screened port
   (snapshot `20261015-1317-20697de-from1`; publish log `deciding-runs/publish-20261015-1317.log`). AEF-7 0.2669 vs AEF
   0.2825. The port cost +0.0007 pooled (0.3340 -> 0.3347, 35 pairs / 2,931 seats), all from NT: nt2020 0.648 -> 0.826,
