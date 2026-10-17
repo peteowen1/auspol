@@ -5,7 +5,24 @@ it stood before this rewrite: `backlog/journal-2026-09-19-hub-snapshot.md`).
 Decisions: `docs/DECISIONS.md`. Every seat verdict: `docs/SEAT-REGISTRY.md`.
 Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30.
 
-## 2026-10-15 afternoon (READ FIRST)
+## 2026-10-17 (READ FIRST)
+
+- SHIPPED + PUBLISHED the Lib/Nat split (`AUSPOL_COALITION_SPLIT=1`, `_F=state`; DECISIONS). CI fix b35394a:
+  the runner fitted f from 5 exclusions, now `coalition-split-events.csv` on the release; rerun 38986342020 green.
+- IN FLIGHT composition spread (`plans/prereg-composition-spread-2026-10-17.md`, `reviews/composition-spread-2026-10-17.md`).
+  Pete: fix the root cause for everything, not Victoria only. Arm C (`AUSPOL_COMPOSITION_SD=1`, every class in an
+  IND seat) screened: primary -0.030 (SE 0.016), guard -0.0021, but NSW +0.041 and favourites +0.0023. Amendment 1:
+  C2 (`=own`, only each non-major class's own cell; IND sd x1.8-2.3) screening in
+  `deciding-runs/20261017-1403-composition-own-screen-1k/`. NEXT: score with `scripts/score_composition_spread.R
+  <base> <arm> 1000`, apply amendment 1's C-vs-C2 rule, 20k deciding run on the winner. Before shipping either:
+  workflow download of its table, and the stage-7 stale-table check (`compare_spread_tables.R`) for it.
+- OPEN, bigger than either arm: errors are HEAVY-TAILED everywhere (0.57% of non-IND-seat cells miss by 4+ sim
+  sds, ~100x a bell curve; kurtosis 20). A fat-tailed per-cell error (fitted time-forward) is the general fix for
+  floor seats; prereg after the composition decision.
+- OPEN data gap: vec-2014/2018 transfers files carry no Coalition-to-Coalition rows (Ripon 2014: only the 2,768
+  to ALP of the National's ~7,000). The split's f drops those events, so unbiased but thinner; refetch.
+
+## 2026-10-15 afternoon
 
 - PUBLISHED 15:33 the full rebuild with census blanking + pollster archive + WA/NT screened port
   (snapshot `20261015-1317-20697de-from1`; publish log `deciding-runs/publish-20261015-1317.log`). AEF-7 0.2669 vs AEF
@@ -18,7 +35,7 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30.
   20 seat-party cells in 8 seats move > 0.05 pts, largest Narracan ONP 76.4 -> 67.6 (LNP 23.6 -> 32.4), Pakenham
   ONP 79.0 -> 77.5, Box Hill ALP 83.8 -> 82.6; expected seats LNP +0.11, ONP -0.11; P(LNP majority) 0.086 ->
   0.088, P(ALP majority) 0.028 unchanged. Reaches the site with the next daily run (cron 20:00 UTC, runs `dev`).
-- DONE 2026-10-17: the 15 Oct daily run (38820531552) concluded success with no "Run finished with problems". OPEN: the 17 Oct run is the first after the 16 Oct publish; read its conclusion.
+- DONE 2026-10-17: the 15 Oct daily run (38820531552) concluded success with no "Run finished with problems". DONE 17 Oct: that run (38977209386) failed at publish-scenarios (CSC7, the split's f); fixed b35394a, rerun green.
 - OPEN FFD1 is fitted on the gap FF1 checks (passes by construction; Pete's call, 15 Oct). Validate it when a
   second federal cycle has firms that both name and fold One Nation.
 
