@@ -27,7 +27,7 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30.
   takes votes or changes a count; if it matters, zero non-standing classes after the draw (all harnesses + live).
   MEASURED 17 Oct (toy sim, 4 elections, same seed): no seat moves > 0.05, but no-phantoms is better in all four
   (seat log loss -0.001 to -0.004; fed2022 ALP -0.28 expected seats). BUILT 17 Oct (`AUSPOL_ZERO_ABSENT`, off;
-  `plans/prereg-zero-absent-2026-10-17.md`). Screen at 5,000 sims, not 1,000: no common random numbers after the first count.
+  `plans/prereg-zero-absent-2026-10-17.md`). REFUSED 18 Oct: 5k screen every seat +0.0000 (SE 0.0003); off.
 - DONE data bug, root cause found 17 Oct: `scripts/fetch_preferences_vic_historical.R:162` skipped
   `identical(to, from)`, so vec-2014/2018 drop every Nationals-to-Liberal (LNP->LNP) transfer (vic2010/2022
   fetchers keep them). Readers: the vic harness's flows for vic2018/vic2022 (`backtest_candidate_vic.R:340`),

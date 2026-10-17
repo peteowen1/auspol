@@ -50,3 +50,9 @@ only up to the first count: a phantom candidate's exclusion used to consume flow
 gone, later draws come from a different part of the stream. Z and A are therefore NOT common-random-number
 twins after the first affected seat, and the screen compares them at ordinary Monte Carlo noise. No criterion
 changes; the 20k deciding run was already required.
+
+## RESULT (2026-10-18, 5k screen `deciding-runs/20261018-0036-zero-absent-screen-5k/`, code fa5b557) -- REFUSED
+
+Applied (every election differs; largest win-probability change 0.027), but every seat 0.3152 -> 0.3152,
++0.0000 (SE 0.0003); AEF-7 -0.0002 (SE 0.0003). Not better by more than 1 SE: refused, switch stays "0". The toy
+check's -0.001 to -0.004 did not survive the full model: the phantom shares are small and mostly excluded first.
