@@ -255,6 +255,11 @@ Verbatim in `backlog/journal-2026-10-07-to-10-08.md`. Still OPEN from them:
 - OPEN: scenario-job straggler (one matrix job per run crawls on the runner's network). Pete 2026-10-09: leave open. Untried: per-step timeout plus re-run; fewer, fatter jobs.
 - DONE 17 Oct: `AUSPOL_UPSET_FLOOR`'s registry gap is explained (REFUSED 2026-10-02, classified in MODEL-REGISTRY). Audit sentinel drift goes to issue #109.
 - OPEN: fed2025 seat polls deserved weight ~0.13 and got 0.55; no pre-election signal found yet.
+  Worst case found 18 Oct (Pete asked why independents ran high): McMahon, Camenzuli (IND) published 29.0, actual 9.8;
+  base_pred 6.0 and xgb 4.9 were both UNDER, so the 29 is the seat-poll step (AUSPOL_SEAT_POLL_IND_MAP). Otherwise
+  fed2025 independents were called well (Wannon 32.9 vs 32.1, Cowper 28.4 vs 30.2, Monash 23.9 vs 27.3: losses came
+  from preferences/opponents); calibration mildly over-confident (0.7-0.9 band: expected 8.6 wins, 6 won); small
+  INDs median 1.7-2.2 pts high.
 - OPEN: 120 `AUSPOL_*` names read in code but unregistered, classified 2026-10-12 (`reviews/unregistered-switches-2026-10-12.md`):
   33 MODEL / 24 RUN / 18 DIAG / 45 DEAD. Act on: live vs backtest MP-slope tier differs (live keeps a party only at
   n_member >= 8, harnesses keep any); ~20 harness-only model switches to register or delete.
