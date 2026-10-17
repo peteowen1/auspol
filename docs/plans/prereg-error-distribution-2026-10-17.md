@@ -125,3 +125,10 @@ of what is left; without both -0.0006 (SE 0.0017). Floor seats under half (4.09 
 (A 0.01-0.5, 326) +0.0235 (SE 0.0128); favourites 0.90+ who won +0.0024 (SE 0.0005); AEF-7 +0.0016 (SE 0.0020);
 Victoria -0.0056 (SE 0.0039, 4 elections). The gain is the Queensland surge elections; elsewhere noise plus a
 cost to safe calls. Goes to Pete as a clause refusal.
+
+## Override 1 (2026-10-17): Pete chose "Override and ship" with the refusal in front of him
+
+The clause stands as written and fired: qld2017 supplies 0.65 of the gain; without it -0.0015 (SE 0.0020). Pete
+ships CE anyway (`AUSPOL_COMPOSITION_SD=1`, `AUSPOL_ERROR_DIST=1`), with the split shown: Victoria -0.0056
+(SE 0.0039), safe favourites +0.0024 (SE 0.0005), the composition spread still widening non-standing classes.
+This is his decision, recorded as his, not a pass.

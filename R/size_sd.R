@@ -5,7 +5,7 @@
 # scripts/fit_spread_by_size.R into output/spread-by-size.csv, and only ever widens (factor >= 1, merged
 # into the sd override with combine_sd_override()'s pmax).
 #
-# Seat-composition spread (AUSPOL_COMPOSITION_SD, default "0" = off; prereg-composition-spread-2026-10-17.md).
+# Seat-composition spread (AUSPOL_COMPOSITION_SD, default "1" = shipped 2026-10-17 with AUSPOL_ERROR_DIST, Pete's override; "0" = off; prereg-composition-spread-2026-10-17.md).
 # A candidate's personal vote does not behave like a party vote: share errors grow with the seat's predicted
 # independent share in every size band, on every class's cells. Fitted time-forward per target and class by
 # scripts/fit_spread_by_composition.R into output/spread-by-composition.csv; a seat's factor is
@@ -17,7 +17,7 @@ size_sd_on <- function() identical(Sys.getenv("AUSPOL_SIZE_SD", "1"), "1")
 
 #' @noRd
 composition_sd_mode <- function() {
-  m <- Sys.getenv("AUSPOL_COMPOSITION_SD", "0")
+  m <- Sys.getenv("AUSPOL_COMPOSITION_SD", "1")
   if (!m %in% c("0", "1", "own")) stop("AUSPOL_COMPOSITION_SD must be \"0\", \"1\" or \"own\", got \"", m, "\"")
   m
 }

@@ -1,4 +1,4 @@
-# Empirical error distribution (AUSPOL_ERROR_DIST, default "0" = off;
+# Empirical error distribution (AUSPOL_ERROR_DIST, default "1" = shipped 2026-10-17 on Pete's override; "0" = rnorm;
 # docs/plans/prereg-error-distribution-2026-10-17.md). The simulator draws each cell's noise as
 # sd_cell * rnorm; under "1" it draws sd_cell * z, z from the earlier elections' standardised errors for that
 # class (scripts/fit_error_distribution.R -> output/error-quantiles.csv): heavy tails everywhere, a right skew
@@ -6,7 +6,7 @@
 
 #' @noRd
 error_dist_on <- function() {
-  m <- Sys.getenv("AUSPOL_ERROR_DIST", "0")
+  m <- Sys.getenv("AUSPOL_ERROR_DIST", "1")
   if (!m %in% c("0", "1")) stop("AUSPOL_ERROR_DIST must be \"0\" or \"1\", got \"", m, "\"")
   identical(m, "1")
 }

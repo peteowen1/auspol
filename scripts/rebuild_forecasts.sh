@@ -255,6 +255,8 @@ if at_least 5; then Rscript scripts/build_leader_ratings.R > "$LOG/s5b_leader_ra
 run_stage6() {
   # the seat-size spread table this pass reads, kept so stage 7's refit can be compared against it
   [ -f output/spread-by-size.csv ] && cp output/spread-by-size.csv "$LOG/spread-by-size-read-by-s6.csv"
+  # ...and the composition spread and error quantiles (shipped 2026-10-17), which have the same lag
+  for _t in spread-by-composition error-quantiles; do rm -f "$LOG/$_t-read-by-s6.csv"; [ -f "output/$_t.csv" ] && cp "output/$_t.csv" "$LOG/$_t-read-by-s6.csv"; done
   export AUSPOL_STAGE6_START=$(date +%s); rm -rf output/upset-floor-raw; stage "6-harnesses-shipped";   run6 1 s6; done_stage "6-harnesses-shipped"
   # 6b UPSET INSURANCE (AUSPOL_UPSET_FLOOR=1, R/upset_floor.R): mixes THIS run's
   # stage-6 win probabilities with a time-forward-fitted floor for minor
@@ -281,14 +283,27 @@ if at_least 7; then run_stage7
   # run's. The spread never moves a share, so if the refit matches what stage 6 read, stage 6 was exact; if it moved
   # (by more than AUSPOL_SPREAD_RERUN_TOL in any scored target's widening factor), stages 6-7 run once more on the
   # refitted table. The second refit sees the same shares, so it cannot move again. Costs ~57 min only when it moves.
+  # The composition spread and error quantiles (2026-10-17) are compared byte for byte: a refit on the same
+  # shares writes the same file, so any difference means stage 6 read a stale table.
+  other_moved() {
+    local _m=""
+    for _t in spread-by-composition error-quantiles; do
+      if [ -f "$LOG/$_t-read-by-s6.csv" ] && ! cmp -s "$LOG/$_t-read-by-s6.csv" "output/$_t.csv"; then _m="$_m $_t"; fi
+      if [ ! -f "$LOG/$_t-read-by-s6.csv" ] && [ -f "output/$_t.csv" ]; then _m="$_m $_t(new)"; fi
+    done
+    echo "$_m"
+  }
   if at_least 6 && [ -f "$LOG/spread-by-size-read-by-s6.csv" ]; then
     rc=0; Rscript scripts/compare_spread_tables.R "$LOG/spread-by-size-read-by-s6.csv" output/spread-by-size.csv > "$LOG/s7_spread_compare.log" 2>&1 || rc=$?
     cat "$LOG/s7_spread_compare.log"
-    if [ "$rc" -eq 3 ]; then
-      echo "   spread table moved -- rerunning stages 6-7 on the refitted table"
+    om=$(other_moved); echo "   SPZ3  composition/error tables moved since stage 6 read them:${om:- none}"
+    if [ "$rc" -eq 3 ] || [ -n "$om" ]; then
+      echo "   spread table(s) moved -- rerunning stages 6-7 on the refitted tables"
       run_stage6; run_stage7
       rc=0; Rscript scripts/compare_spread_tables.R "$LOG/spread-by-size-read-by-s6.csv" output/spread-by-size.csv > "$LOG/s7_spread_compare2.log" 2>&1 || rc=$?
       cat "$LOG/s7_spread_compare2.log"
+      om=$(other_moved); echo "   SPZ3  after the rerun, moved:${om:- none}"
+      if [ -n "$om" ]; then echo "!! SPZ3! composition/error table moved again after the rerun:$om -- the fit is not share-only; nothing published"; exit 1; fi
       if [ "$rc" -eq 3 ]; then echo "!! SPZ2! spread table moved again after the rerun -- the fit is not share-only; nothing published"; exit 1; fi
       if [ "$rc" -ne 0 ]; then echo "!! compare_spread_tables.R failed -- see $LOG/s7_spread_compare2.log"; exit 1; fi
     elif [ "$rc" -ne 0 ]; then echo "!! compare_spread_tables.R failed -- see $LOG/s7_spread_compare.log"; exit 1; fi

@@ -570,7 +570,7 @@ A Liberal and a National in one seat counted as two candidates. Prereg: `plans/p
 | junior fraction clamp | [1e-9, 1 - 1e-9] | **COMPUTATIONAL**. |
 | side-stream seed | `(seed * 7919 + 104729) mod 2^31-1` | **COMPUTATIONAL**: keeps the split's draws off the count's stream so unsplit seats are byte-identical. |
 
-## Seat-composition spread (`AUSPOL_COMPOSITION_SD`, built 2026-10-17, OFF pending `plans/prereg-composition-spread-2026-10-17.md`; `R/size_sd.R`)
+## Seat-composition spread (`AUSPOL_COMPOSITION_SD`, built 2026-10-17, SHIPPED 2026-10-17 with the error distribution on Pete's override; `plans/prereg-composition-spread-2026-10-17.md`; `R/size_sd.R`)
 
 | Constant | Where | Value | Status |
 |---|---|---|---|
@@ -580,7 +580,7 @@ A Liberal and a National in one seat counted as two candidates. Prereg: `plans/p
 | floor at 1 | `composition_sd_factor()` | only widens | **CHOSEN** (prereg; Greens narrowing is a separate question) |
 | minimum training | `fit_spread_by_composition.R` | 3 earlier elections and 500 cells, else factor 1 | **COMPUTATIONAL**: the clustered SE needs several elections |
 
-## Empirical error distribution (`AUSPOL_ERROR_DIST`, built 2026-10-17, OFF pending `plans/prereg-error-distribution-2026-10-17.md`; `R/error_dist.R`)
+## Empirical error distribution (`AUSPOL_ERROR_DIST`, built 2026-10-17, SHIPPED 2026-10-17 on Pete's override; `plans/prereg-error-distribution-2026-10-17.md`; `R/error_dist.R`)
 
 | Constant | Where | Value | Status |
 |---|---|---|---|
