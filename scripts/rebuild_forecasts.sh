@@ -269,6 +269,8 @@ run_stage7() {
                                  Rscript scripts/build_forecasts_table.R > "$LOG/s7_forecasts.log" 2>&1
                                  # seat-size spread table (AUSPOL_SIZE_SD): refitted from this run's published shares
                                  Rscript scripts/fit_spread_by_size.R    > "$LOG/s7_spread_size.log" 2>&1 || { echo "!! fit_spread_by_size.R failed -- see $LOG/s7_spread_size.log"; exit 1; }
+                                 # seat-composition spread table (AUSPOL_COMPOSITION_SD): same inputs, same lag rule as the size table
+                                 Rscript scripts/fit_spread_by_composition.R > "$LOG/s7_spread_comp.log" 2>&1 || { echo "!! fit_spread_by_composition.R failed -- see $LOG/s7_spread_comp.log"; exit 1; }
                                  done_stage "7-pool-and-forecasts"
 }
 if at_least 6; then run_stage6; fi

@@ -101,6 +101,11 @@ if (identical(.flag("AUSPOL_SIZE_SD"), "1")) {
   if (!file.exists(file.path(OUT, "spread-by-size.csv"))) stop("AUSPOL_SIZE_SD=1 but output/spread-by-size.csv is missing -- run scripts/fit_spread_by_size.R")
   .arm_tables <- c(.arm_tables, "spread-by-size.csv")
 }
+# And the seat-composition spread table (AUSPOL_COMPOSITION_SD=1): size_sd_apply() stops without it.
+if (identical(.flag("AUSPOL_COMPOSITION_SD"), "1")) {
+  if (!file.exists(file.path(OUT, "spread-by-composition.csv"))) stop("AUSPOL_COMPOSITION_SD=1 but output/spread-by-composition.csv is missing -- run scripts/fit_spread_by_composition.R")
+  .arm_tables <- c(.arm_tables, "spread-by-composition.csv")
+}
 # And the booth features (AUSPOL_XGB_BOOTH=1): Victoria 2026's slice.
 if (identical(.flag("AUSPOL_XGB_BOOTH"), "1")) {
   .bt <- data.table::fread(file.path(OUT, "booth-features.csv"), showProgress = FALSE)

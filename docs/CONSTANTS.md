@@ -569,3 +569,13 @@ A Liberal and a National in one seat counted as two candidates. Prereg: `plans/p
 | Beta sd cap | 0.95 x sqrt(r(1-r)) | **COMPUTATIONAL**: a Beta with mean r cannot have sd at or above sqrt(r(1-r)). |
 | junior fraction clamp | [1e-9, 1 - 1e-9] | **COMPUTATIONAL**. |
 | side-stream seed | `(seed * 7919 + 104729) mod 2^31-1` | **COMPUTATIONAL**: keeps the split's draws off the count's stream so unsplit seats are byte-identical. |
+
+## Seat-composition spread (`AUSPOL_COMPOSITION_SD`, built 2026-10-17, OFF pending `plans/prereg-composition-spread-2026-10-17.md`; `R/size_sd.R`)
+
+| Constant | Where | Value | Status |
+|---|---|---|---|
+| per-class coefficient `b_c`, weight `w_c` | `scripts/fit_spread_by_composition.R` -> `output/spread-by-composition.csv` | fitted per target, time-forward; vic2026 IND sd x1.124 per 10 points, GRN/ONP/OTH/OTH_RIGHT shrunk to 1 | **ESTIMATED** (Gamma GLM, SE clustered on election, `w = max(0, 1 - se^2/b^2)`) |
+| classes | `composition_sd_classes()` | GRN, IND, ONP, OTH, OTH_RIGHT (majors the reference) | **CHOSEN**: every non-major class; the data pick which widen |
+| `/ 10` share unit, `/ 2` sd from variance | `composition_sd_factor()` | scale only | **DEFINITIONAL** |
+| floor at 1 | `composition_sd_factor()` | only widens | **CHOSEN** (prereg; Greens narrowing is a separate question) |
+| minimum training | `fit_spread_by_composition.R` | 3 earlier elections and 500 cells, else factor 1 | **COMPUTATIONAL**: the clustered SE needs several elections |

@@ -31,7 +31,7 @@ All seven share one `R/` package core (`simulate_seat_contests()`,
 in which switches each one WIRES and which data source each reads, not in
 separate model code.
 
-## Switch parity (204 switches from `published_flags.R`, 7 entry points)
+## Switch parity (205 switches from `published_flags.R`, 7 entry points)
 
 | switch | fit_seats (published) | fed | nsw | qld | sa | vic | wa |
 |---|---|---|---|---|---|---|---|
@@ -51,6 +51,7 @@ separate model code.
 | `AUSPOL_CLOSE_PROPORTIONAL` | yes | NO | NO | NO | NO | NO | NO |
 | `AUSPOL_COALITION_SPLIT` | NO | NO | NO | NO | NO | NO | NO |
 | `AUSPOL_COALITION_SPLIT_F` | NO | NO | NO | NO | NO | NO | NO |
+| `AUSPOL_COMPOSITION_SD` | NO | NO | NO | NO | NO | NO | NO |
 | `AUSPOL_CONSERVE_SHRINK_K` | NO | NO | NO | NO | NO | NO | NO |
 | `AUSPOL_CONSERVE_TF` | NO | NO | NO | NO | NO | NO | NO |
 | `AUSPOL_COUNCIL_EXTRA` | NO | NO | NO | NO | NO | NO | NO |
@@ -256,6 +257,7 @@ separate model code.
 - **`AUSPOL_CLOSE_PROPORTIONAL`** (intentional / dead experiment): ARM, not shipped (default 0; plans/prereg-close-proportional-2026-09-28.md). Read in R/forecast_mode.R (federal harness path) and fit_seats_full.R (the live LL1 step). Off, so the four state harnesses not reaching it changes nothing.
 - **`AUSPOL_COALITION_SPLIT`** (intentional / dead experiment): UNIVERSAL via R/: read inside coalition_split_args() (R/coalition_split.R), which every harness (six + NT) and fit_seats_full.R call at their simulate_seat_contests() site, so the per-harness greps cannot see it. SHIPPED (1) 2026-10-17 on Pete's call; 20k deciding run passed every clause (reviews/lib-nat-plumbing-2026-10-16.md).
 - **`AUSPOL_COALITION_SPLIT_F`** (intentional / dead experiment): UNIVERSAL via R/: read inside coalition_f() (R/coalition_split.R) through coalition_split_args(), which every harness (six + NT) and fit_seats_full.R call; inert unless AUSPOL_COALITION_SPLIT=1. Prereg amendment 2. SHIPPED (state) 2026-10-17.
+- **`AUSPOL_COMPOSITION_SD`** (intentional / dead experiment): ARM (0), wired EVERYWHERE through R/size_sd.R like AUSPOL_SIZE_SD: size_sd_apply() multiplies in the composition factor, so all seven harnesses and fit_seats_full.R honour it. plans/prereg-composition-spread-2026-10-17.md
 - **`AUSPOL_CONSERVE_SHRINK_K`** (**UNEXPLAINED -- audit this**): no classification recorded -- add one to CLASSIFY in scripts/build_model_registry.R
 - **`AUSPOL_CONSERVE_TF`** (**UNEXPLAINED -- audit this**): no classification recorded -- add one to CLASSIFY in scripts/build_model_registry.R
 - **`AUSPOL_COUNCIL_EXTRA`** (**shipped, fitting-time switch (reaches harnesses via the artifact)**): FITTING-TIME, default 0, TESTING (plans/prereg-council-extra-2026-10-02.md). Read only by scripts/build_council_history.py, which builds the council-history input that the xgb council features (AUSPOL_XGB_COUNCIL) read; no R/ or harness call site.

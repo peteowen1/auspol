@@ -146,6 +146,9 @@ CLASSIFY <- list(
     "SHIPPED 2026-10-14 (1), wired EVERYWHERE through R/size_sd.R: all seven harnesses and fit_seats_full.R pass",
     "sd_override = size_sd_apply(...) to simulate_seat_contests(), which reads the switch inside R/. The 'NO' cells",
     "are this generator only grepping the harness files. reviews/seat-size-spread-2026-10-14.md"),
+  AUSPOL_COMPOSITION_SD = paste(
+    "ARM (0), wired EVERYWHERE through R/size_sd.R like AUSPOL_SIZE_SD: size_sd_apply() multiplies in the",
+    "composition factor, so all seven harnesses and fit_seats_full.R honour it. plans/prereg-composition-spread-2026-10-17.md"),
   AUSPOL_DEFECT_SIZE = paste(
     "OFF, REFUSED 2026-10-14 (nt2016 +0.19 on screen). Read inside R/candidate_returns.R (fit_defector_discount()",
     "and personal_prior_vote()), so it reaches every harness's base_pred when on; 'NO' in the harness columns is",
