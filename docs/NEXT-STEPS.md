@@ -16,19 +16,22 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30.
 - OPEN, bigger than either arm: errors are HEAVY-TAILED everywhere (0.57% of non-IND-seat cells miss by 4+ sim
   sds, ~100x a bell curve; kurtosis 20). A fat-tailed per-cell error (fitted time-forward) is the general fix for
   floor seats; prereg after the composition decision.
-- OPEN per-class bias on the published path (found 17 Oct building AUSPOL_ERROR_DIST): mean standardised error
-  over earlier elections GRN -0.29, OTH -0.17, ALP -0.11 to -0.25 (over-predicted), OTH_RIGHT +0.28, ONP +0.13 to
-  +0.21 (under). About -1.5 / +1.4 points at a 30% share. A level fix: test in base_pred AND the xgb layer.
+- MEASURED, PARKED per-class level bias (17 Oct, scratchpad levelcorr.R): the statewide level over-predicts the
+  Greens in 23 of 35 elections (formal-weighted -0.73; vic2010 -4.5 ... vic2022 -1.0), and statewide equals the
+  seat average, so it is the LEVEL, not the seat allocation; it sits in base_pred and xgb does not fix it. But a
+  time-forward shrunk correction (prereg-poll-level-centring arm C, never run) helps only GRN (abs miss -0.11,
+  SE 0.10, 20 of 32 better) and makes every other class worse (misses swing), so all-class it loses (1.402 ->
+  1.426). Revisit GRN alone when more elections are in; not a prereg now.
 - OPEN phantom votes: `simulate_seat_contests()` draws `rnorm(K, 0, sd_cell)` for EVERY class, so a class at 0%
   (not standing) gets |N(0, 1.10)| in half its draws (`R/seat_sim.R:1407`). Measure how often a non-standing class
   takes votes or changes a count; if it matters, zero non-standing classes after the draw (all harnesses + live).
   MEASURED 17 Oct (toy sim, 4 elections, same seed): no seat moves > 0.05, but no-phantoms is better in all four
   (seat log loss -0.001 to -0.004; fed2022 ALP -0.28 expected seats). Worth an arm after the error distribution.
-- OPEN data gap: vec-2014/2018 transfers files carry no Coalition-to-Coalition rows (Ripon 2014: only the 2,768
-  to ALP of the National's ~7,000). The split's f drops those events, so unbiased but thinner; refetch.
-
-## 2026-10-15 afternoon
-
+- OPEN data bug, root cause found 17 Oct: `scripts/fetch_preferences_vic_historical.R:162` skips
+  `identical(to, from)`, so vec-2014/2018 drop every Nationals-to-Liberal (LNP->LNP) transfer (vic2010/2022
+  fetchers keep them). Readers: the vic harness's flows for vic2018/vic2022 (`backtest_candidate_vic.R:340`),
+  `estimate_flows_from_results.R`, the reentry prior, the split's f. Fix: keep same-class rows, refetch 2014/2018,
+  regenerate registries, re-screen vic2018 + vic2022. NOT while a screen runs (it reads external/elections).
 - PUBLISHED 15:33 the full rebuild with census blanking + pollster archive + WA/NT screened port
   (snapshot `20261015-1317-20697de-from1`; publish log `deciding-runs/publish-20261015-1317.log`). AEF-7 0.2669 vs AEF
   0.2825. The port cost +0.0007 pooled (0.3340 -> 0.3347, 35 pairs / 2,931 seats), all from NT: nt2020 0.648 -> 0.826,

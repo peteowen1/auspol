@@ -146,6 +146,39 @@ CLASSIFY <- list(
     "SHIPPED 2026-10-14 (1), wired EVERYWHERE through R/size_sd.R: all seven harnesses and fit_seats_full.R pass",
     "sd_override = size_sd_apply(...) to simulate_seat_contests(), which reads the switch inside R/. The 'NO' cells",
     "are this generator only grepping the harness files. reviews/seat-size-spread-2026-10-14.md"),
+  AUSPOL_CONSERVE_SHRINK_K = paste(
+    "SHIPPED (3) 2026-10-16, UNIVERSAL via R/: read inside fit_minor_defector_conserve() (R/candidate_returns.R),",
+    "which every harness and fit_seats_full.R reach through candidate_returns(), so the per-harness greps cannot see it."),
+  AUSPOL_CONSERVE_TF = paste(
+    "SHIPPED (1) 2026-10-14, UNIVERSAL via R/: read inside fit_minor_defector_conserve() (R/candidate_returns.R);",
+    "trains on elections before the target. Same reach as AUSPOL_CONSERVE_SHRINK_K."),
+  AUSPOL_HC_DEFECTOR = paste(
+    "SHIPPED (1) 2026-10-14, Hare-Clark ONLY: read in scripts/backtest_hare_clark.R (Tasmania, ACT). The six",
+    "single-member harnesses and Victoria's live forecast are not Hare-Clark, so the gaps are intentional."),
+  AUSPOL_MP_SLOPE_TF = paste(
+    "SHIPPED (1) 2026-10-14, FIT-TIME: read by scripts/fit_mp_slope.R, which writes output/mp-slope-by-target.csv",
+    "(rebuild stage 0); harnesses and live read the table, not the switch."),
+  AUSPOL_PB_COALITION_COMBINED = paste(
+    "OFF (0), UNIVERSAL via R/: read inside R/poll_source.R's WA Poll Bludger merge; off is today's behaviour exactly.",
+    "Only WA polls carry combined-only Coalition rows."),
+  AUSPOL_PUBLISH_NSW2027 = paste(
+    "PUBLISH-TIME (1): read by scripts/promote_rebuild.R to ship the nsw2027 tables, matching the repository variable",
+    "the daily job gates on. Not a model switch, so no harness reads it."),
+  AUSPOL_SEAT_SPREAD_SRC = paste(
+    "SHIPPED (derived), UNIVERSAL via R/: read inside R/prev_seat_swing.R, which the harnesses call for seat_sd;",
+    "harness-only by its own comment (live seat_sd comes from the fitted spread)."),
+  AUSPOL_THIN_CYCLE = paste(
+    "CONFIRMED (1) 2026-10-14, UNIVERSAL via R/: read inside R/forecast_statewide.R and R/hare_clark.R",
+    "(thin_cycle_statewide() for cycles the trend cannot fit)."),
+  AUSPOL_TRAIN_COMPLETENESS = paste(
+    "ARM (0), FIT-TIME: read by fit_xgb_primary_asat.R and fit_xgb_primary_v6_final.R (rebuild stages 4-5);",
+    "harnesses and live load the trained models. plans/prereg-training-weights-2026-10-13.md"),
+  AUSPOL_TRAIN_DECAY_H = paste(
+    "SHIPPED (8) 2026-10-13, FIT-TIME: read by fit_xgb_primary_asat.R and fit_xgb_primary_v6_final.R (rebuild",
+    "stages 4-5); harnesses and live load the trained models. plans/prereg-training-weights-2026-10-13.md"),
+  AUSPOL_TRAIN_DEMEAN = paste(
+    "SHIPPED (1) 2026-10-13, FIT-TIME: read by fit_xgb_primary_asat.R and fit_xgb_primary_v6_final.R (rebuild",
+    "stages 4-5); harnesses and live load the trained models. plans/prereg-training-weights-2026-10-13.md"),
   AUSPOL_ERROR_DIST = paste(
     "ARM (0), UNIVERSAL via R/: error_dist_args() (R/error_dist.R) is called at every simulate_seat_contests() site",
     "(six harnesses, NT, fit_seats_full.R) and reads the switch inside R/. plans/prereg-error-distribution-2026-10-17.md"),
