@@ -128,3 +128,9 @@ stopped by hand, marked FAILED, and nothing from it was scored.
 Arm C carries the same defect (it widens every cell in the seat, standing or not) and is NOT changed after
 its screen; if the choice rule sends C to the deciding run, that goes to Pete first. Separately, the SHIPPED
 model already draws noise (sd 1.10) for classes at 0% in every seat: a pre-existing phantom-vote issue, queued.
+
+## RESULT (2026-10-17): C passes the screen, C2 does not; C PARKED as a benchmark (Pete)
+
+`reviews/composition-spread-2026-10-17.md`. C2 lost the choice rule. C would go to the deciding run, but the
+diagnosis shows the IND error is skewed (most independents come in under, a few surge), so a symmetric spread
+is the wrong shape; Pete chose the error-distribution fix instead. Neither arm ships; the switch stays "0".

@@ -9,19 +9,19 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30.
 
 - SHIPPED + PUBLISHED the Lib/Nat split (`AUSPOL_COALITION_SPLIT=1`, `_F=state`; DECISIONS). CI fix b35394a:
   the runner fitted f from 5 exclusions, now `coalition-split-events.csv` on the release; rerun 38986342020 green.
-- IN FLIGHT composition spread (`plans/prereg-composition-spread-2026-10-17.md`, `reviews/composition-spread-2026-10-17.md`).
-  Pete: fix the root cause for everything, not Victoria only. Arm C (`AUSPOL_COMPOSITION_SD=1`, every class in an
-  IND seat) screened: primary -0.030 (SE 0.016), guard -0.0021, but NSW +0.041 and favourites +0.0023. Amendment 1:
-  C2 (`=own`, only each non-major class's own cell; IND sd x1.8-2.3) screening in
-  `deciding-runs/20261017-1403-composition-own-screen-1k/`. NEXT: score with `scripts/score_composition_spread.R
-  <base> <arm> 1000`, apply amendment 1's C-vs-C2 rule, 20k deciding run on the winner. Before shipping either:
-  workflow download of its table, and the stage-7 stale-table check (`compare_spread_tables.R`) for it.
+- PARKED composition spread (`reviews/composition-spread-2026-10-17.md`): C passed its 1k screen (all seats -0.0021,
+  SE 0.0013) but taxes NSW and favourites; C2 lost. Pete: go to the error-distribution fix; C is its benchmark.
+- IN FLIGHT error distribution (`plans/prereg-error-distribution-2026-10-17.md`, `AUSPOL_ERROR_DIST`): draw each
+  cell's z from earlier elections' empirical standardised errors (per class, shrunk to pooled, RMS 1) instead of
+  rnorm. Must beat A by >1 SE and C's -0.0021. NEXT: build (R + cpp, byte-identical off), screen 1k, 20k.
 - OPEN, bigger than either arm: errors are HEAVY-TAILED everywhere (0.57% of non-IND-seat cells miss by 4+ sim
   sds, ~100x a bell curve; kurtosis 20). A fat-tailed per-cell error (fitted time-forward) is the general fix for
   floor seats; prereg after the composition decision.
 - OPEN phantom votes: `simulate_seat_contests()` draws `rnorm(K, 0, sd_cell)` for EVERY class, so a class at 0%
   (not standing) gets |N(0, 1.10)| in half its draws (`R/seat_sim.R:1407`). Measure how often a non-standing class
   takes votes or changes a count; if it matters, zero non-standing classes after the draw (all harnesses + live).
+  MEASURED 17 Oct (toy sim, 4 elections, same seed): no seat moves > 0.05, but no-phantoms is better in all four
+  (seat log loss -0.001 to -0.004; fed2022 ALP -0.28 expected seats). Worth an arm after the error distribution.
 - OPEN data gap: vec-2014/2018 transfers files carry no Coalition-to-Coalition rows (Ripon 2014: only the 2,768
   to ALP of the National's ~7,000). The split's f drops those events, so unbiased but thinner; refetch.
 

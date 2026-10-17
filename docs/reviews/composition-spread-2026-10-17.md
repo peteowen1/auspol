@@ -36,3 +36,24 @@ favourites worse by >1 SE (reported). Victorian split seats: Shepparton winner 0
   bell curve.
 - Not incumbency: sitting independents (80 seats) are as over-confident as challengers (278): ratio 1.37 vs
   1.49, log loss 0.639 vs 0.550.
+
+## C2 screen (amendment 1/1b, `deciding-runs/20261017-1417-composition-own-screen-1k-b/`, same baseline byte for byte)
+
+| Scope | C | C2 (own cell only) |
+|---|---|---|
+| PRIMARY (C's 213 seats) | -0.0304 (0.0157) | -0.0043 (0.0117) |
+| GUARD (2,931) | -0.0021 (0.0013) | -0.0023 (0.0017) |
+| NSW primary | +0.041 | +0.062 |
+| favourites A 0.90+ who won | +0.0023 | +0.0038 |
+| one election > half the gain | 0.34 passes | 1.30 REFUSED |
+
+The choice rule sends C, not C2. The hypothesis behind C2 was wrong, and this is why: IND errors are
+**skewed, not just wide**. Median miss (actual - predicted) is -0.4 to -2.6 points in every band below 30
+(56-67% of independents come in UNDER), while the mean is near 0: most fizzle a little, a few surge far over.
+A symmetric widening of the IND cell mostly hands imaginary independent wins to safe seats. C helps only by
+spreading the seat's uncertainty across every class.
+
+**Decision (Pete, 2026-10-17): C is parked as the benchmark, not run at 20k.** The next fix is the error
+distribution itself: heavy tails everywhere and skew for candidates who can break out, fitted time-forward,
+and it must beat C's all-seat -0.0021. (The classifier-driven breakout mixture was refused 2026-10-06 for
+weak signals, so this one must need no per-seat breakout prediction.)
