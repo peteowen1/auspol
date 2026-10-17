@@ -175,7 +175,14 @@ person rule, statewide poll weighting by track record, seat-poll precision blend
   inthegame-blog-86 (not confirmed taken).
 - OPEN local `fetch_statewide_poll_samples.R` never refetches a cached page; the federal breakdown page is refetched
   by hand (FK3! warns past 45 days).
-- OPEN Liberal <-> One Nation flows (`reviews/lnp-onp-flows-by-election-2026-10-11.md`): (b) Lib->ON varies 54-85% by
+- OPEN statewide flow shocks, GENERAL (17 Oct, scratchpad flowvar.R, 13 transfers files, 32 elections): the count
+  draws every flow's noise per seat, but on a logit scale 0.32-0.59 of the variation in the flows that decide seats
+  is BETWEEN elections (moves every seat at once): LNP->ONP 0.59 (6 el), ONP->LNP 0.42 (18), GRN->ALP 0.39 (32),
+  OTH_RIGHT->LNP 0.32 (28); IND 0.12, OTH 0.07. Against a naive time-forward predictor (mean of earlier elections)
+  the statewide share of the MISS stays 0.33-0.38: ONP->LNP ~6.9 pts (15 el), GRN->ALP ~5.1 (29), OTH_RIGHT->LNP
+  ~9.0 (26). An upper bound. NEXT (needs memory; after the CE deciding run): per-event residuals against the SHIPPED
+  flow model (extend scripts/score_flows_oracle.R to write them), then prereg one shared draw per simulation per
+  flow, sized time-forward and shrunk. Supersedes the Lib<->ON item: (b) Lib->ON varies 54-85% by
   election and moves statewide together; draw it once per simulation, not per seat. (c) no past Liberal card orders
   for ON vs ALP on disk; collect only if (b) leaves a gap.
 - OPEN re-score Richmond/Footscray/Brunswick/Preston/Pascoe Vale 2022 after AUSPOL_LEVEL_RECENT; shrink the
@@ -215,7 +222,7 @@ Tools: misses via `scripts/biggest_misses.R` / skill `biggest-misses` (never `fo
 Verbatim in `backlog/journal-2026-10-07-to-10-08.md`. Still OPEN from them:
 - OPEN: NSW 2027 page, blog side: seat pages need an election switch in ITG's `seat.qmd` (data on R2 since PR #107). Owned by the `inthegame-blog` session.
 - OPEN: scenario-job straggler (one matrix job per run crawls on the runner's network). Pete 2026-10-09: leave open. Untried: per-step timeout plus re-run; fewer, fatter jobs.
-- OPEN: `AUSPOL_UPSET_FLOOR` is the one switch with an unexplained registry gap. Audit sentinel drift goes to issue #109.
+- DONE 17 Oct: `AUSPOL_UPSET_FLOOR`'s registry gap is explained (REFUSED 2026-10-02, classified in MODEL-REGISTRY). Audit sentinel drift goes to issue #109.
 - OPEN: fed2025 seat polls deserved weight ~0.13 and got 0.55; no pre-election signal found yet.
 - OPEN: 120 `AUSPOL_*` names read in code but unregistered, classified 2026-10-12 (`reviews/unregistered-switches-2026-10-12.md`):
   33 MODEL / 24 RUN / 18 DIAG / 45 DEAD. Act on: live vs backtest MP-slope tier differs (live keeps a party only at
