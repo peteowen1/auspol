@@ -173,8 +173,10 @@ person rule, statewide poll weighting by track record, seat-poll precision blend
   posts, the stronger version, not tried.
 - OPEN leader ratings: drift from months out needs horizon scoring; the blog chart was briefed to
   inthegame-blog-86 (not confirmed taken).
-- OPEN local `fetch_statewide_poll_samples.R` never refetches a cached page; the federal breakdown page is refetched
-  by hand (FK3! warns past 45 days).
+- DONE 17 Oct: `fetch_statewide_poll_samples.R` refetches LIVE pages (no election date yet, or a future one) once
+  older than AUSPOL_POLL_MAX_AGE_H (20 h); a failed refresh keeps the old copy; PLV1 counts them. Tested on a scratch
+  copy: a 48 h vic2026 page refreshed and parsed (240 rows), then left alone when fresh. Still by hand: the federal
+  breakdown page (FK3! warns past 45 days).
 - OPEN statewide flow shocks, GENERAL (17 Oct, scratchpad flowvar.R, 13 transfers files, 32 elections): the count
   draws every flow's noise per seat, but on a logit scale 0.32-0.59 of the variation in the flows that decide seats
   is BETWEEN elections (moves every seat at once): LNP->ONP 0.59 (6 el), ONP->LNP 0.42 (18), GRN->ALP 0.39 (32),
