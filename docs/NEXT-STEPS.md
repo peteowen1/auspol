@@ -33,7 +33,10 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30.
   fetchers keep them). Readers: the vic harness's flows for vic2018/vic2022 (`backtest_candidate_vic.R:340`),
   `estimate_flows_from_results.R`, the reentry prior, the split's f. Fix: keep same-class rows, refetch 2014/2018,
   regenerate registries, re-screen vic2018 + vic2022. NOT while a screen runs (it reads external/elections).
-  CODE FIXED 17 Oct (kept same-class rows); refetch + re-screen still to do.
+  FIXED + RE-PARSED 17 Oct (cached VEC pages; firstprefs and winners byte-identical): 2014 768 -> 857 rows,
+  2018 601 -> 667, incl. 6 Coalition-to-Coalition (Ripon 2014: 6,242 to the Liberal, 2,768 to Labor).
+  STILL TO DO: re-screen vic2018 + vic2022 on the new files; the release's coalition-split-events.csv lacks
+  the 6 new events until the next publish (CI's f differs from local by those until then).
 - PUBLISHED 15:33 the full rebuild with census blanking + pollster archive + WA/NT screened port
   (snapshot `20261015-1317-20697de-from1`; publish log `deciding-runs/publish-20261015-1317.log`). AEF-7 0.2669 vs AEF
   0.2825. The port cost +0.0007 pooled (0.3340 -> 0.3347, 35 pairs / 2,931 seats), all from NT: nt2020 0.648 -> 0.826,

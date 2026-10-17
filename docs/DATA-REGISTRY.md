@@ -98,10 +98,10 @@ cannot pass as a working one.
 | `vec-2010-vic-transfers.csv` | 22 KB |
 | `vec-2010-vic-winners.csv` | 3 KB |
 | `vec-2014-vic-firstprefs.csv` | 9 KB |
-| `vec-2014-vic-transfers.csv` | 27 KB |
+| `vec-2014-vic-transfers.csv` | 30 KB |
 | `vec-2014-vic-winners.csv` | 1 KB |
 | `vec-2018-vic-firstprefs.csv` | 8 KB |
-| `vec-2018-vic-transfers.csv` | 20 KB |
+| `vec-2018-vic-transfers.csv` | 22 KB |
 | `vec-2018-vic-winners.csv` | 1 KB |
 | `vec-2022-vic-candidates.csv` | 41 KB |
 | `vec-2022-vic-firstprefs.csv` | 10 KB |

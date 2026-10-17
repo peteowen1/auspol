@@ -98,10 +98,10 @@ column does not exist.**
 | `vec-2010-vic-transfers.csv` | 625 | `election`, `seat`, `round`, `from`, `to`, `votes` |
 | `vec-2010-vic-winners.csv` | 88 | `election`, `seat`, `winner`, `winner_name` |
 | `vec-2014-vic-firstprefs.csv` | 430 | `seat`, `party`, `votes` |
-| `vec-2014-vic-transfers.csv` | 767 | `election`, `seat`, `round`, `from`, `to`, `votes` |
+| `vec-2014-vic-transfers.csv` | 856 | `election`, `seat`, `round`, `from`, `to`, `votes` |
 | `vec-2014-vic-winners.csv` | 88 | `seat`, `winner` |
 | `vec-2018-vic-firstprefs.csv` | 403 | `seat`, `party`, `votes` |
-| `vec-2018-vic-transfers.csv` | 600 | `election`, `seat`, `round`, `from`, `to`, `votes` |
+| `vec-2018-vic-transfers.csv` | 666 | `election`, `seat`, `round`, `from`, `to`, `votes` |
 | `vec-2018-vic-winners.csv` | 88 | `seat`, `winner` |
 | `vec-2022-vic-candidates.csv` | 731 | `seat`, `cand`, `party`, `party_raw`, `fp_votes` |
 | `vec-2022-vic-firstprefs.csv` | 508 | `seat`, `party`, `votes` |
@@ -329,5 +329,5 @@ processed extract. Every one is recoverable without a new fetch.
 | `booths-vic2018.csv` | 13,353 | `district`, `booth`, `booth_type`, `candidate`, `party`, `votes` |
 | `booths-vic2022-2cp.csv` | 4,328 | `district`, `booth`, `booth_type`, `candidate`, `party`, `votes` |
 
-_(1659 `backtest-*.csv` arm outputs omitted; they share one shape.)_
+_(1764 `backtest-*.csv` arm outputs omitted; they share one shape.)_
 
