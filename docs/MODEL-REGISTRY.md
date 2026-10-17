@@ -1,6 +1,6 @@
 # Model registry
 
-**Generated 2026-10-17 by `scripts/build_model_registry.R`. Do not hand-edit** --
+**Generated 2026-10-18 by `scripts/build_model_registry.R`. Do not hand-edit** --
 rerun the script instead. Regenerate whenever a switch is added to
 `published_flags.R` or a harness's wiring changes.
 
@@ -31,7 +31,7 @@ All seven share one `R/` package core (`simulate_seat_contests()`,
 in which switches each one WIRES and which data source each reads, not in
 separate model code.
 
-## Switch parity (207 switches from `published_flags.R`, 7 entry points)
+## Switch parity (208 switches from `published_flags.R`, 7 entry points)
 
 | switch | fit_seats (published) | fed | nsw | qld | sa | vic | wa |
 |---|---|---|---|---|---|---|---|
@@ -236,6 +236,7 @@ separate model code.
 | `AUSPOL_XGB_PRIMARY_SD` | NO | yes | yes | yes | yes | yes | yes |
 | `AUSPOL_XGB_PRIMARY_SD_CLASSES` | NO | NO | NO | NO | NO | NO | NO |
 | `AUSPOL_XGB_PRIMARY_SD_SRC` | NO | NO | NO | NO | NO | NO | NO |
+| `AUSPOL_XGB_RATIO_FEATS` | NO | NO | NO | NO | NO | NO | NO |
 | `AUSPOL_XGB_SEATPREV_NAFILL` | NO | NO | NO | NO | NO | NO | NO |
 | `AUSPOL_XGB_SEED` | NO | NO | NO | NO | NO | NO | NO |
 | `AUSPOL_XGB_SENATE` | NO | NO | NO | NO | NO | NO | NO |
@@ -405,6 +406,7 @@ separate model code.
 - **`AUSPOL_XGB_PRIMARY_SD`** (intentional / dead experiment): OFF (0). The xgb spread model's per-cell sd, read in R/xgb_primary_sd_override.R and wired into fed and nsw only. With the switch off nothing reaches any output, so the four unwired harnesses are not a live parity gap; if it is ever adopted the wiring must be ported to all six in the same commit (CLAUDE.md rule).
 - **`AUSPOL_XGB_PRIMARY_SD_CLASSES`** (intentional / dead experiment): Companion of AUSPOL_XGB_PRIMARY_SD (which classes it widens); read only inside R/xgb_primary_sd_override.R, so inert wherever that switch is off. Same wiring status as its parent.
 - **`AUSPOL_XGB_PRIMARY_SD_SRC`** (intentional / dead experiment): Companion of AUSPOL_XGB_PRIMARY_SD (the OOF file it reads); read only inside R/xgb_primary_sd_override.R. Same wiring status as its parent.
+- **`AUSPOL_XGB_RATIO_FEATS`** (intentional / dead experiment): ARM (0), FIT-TIME + LIVE: read by fit_xgb_primary_v6.R (training features; the as-at and final models inherit them) and R/xgb_primary_override.R (live). Harnesses read the as-at predictions file. plans/prereg-growth-ratio-features-2026-10-18.md
 - **`AUSPOL_XGB_SEATPREV_NAFILL`** (**adopted, shared-function wiring**): SHIPPED 2026-09-13/18: seat_outperf and seat_prev_pcv NA cells are filled with 0 at feature-build time (scripts/fit_xgb_primary_v6.R), so the switch is baked into the trained model artifact; no harness reads it.
 - **`AUSPOL_XGB_SEED`** (**shipped, fitting-time switch (reaches harnesses via the artifact)**): FITTING-TIME: the xgb training seed (fit_xgb_primary_*, fit_xgb_flows_asat.R). Varied only to measure how much an equally valid refit moves the metrics (plans/noise-floor-2026-10-02.md); no harness or live read.
 - **`AUSPOL_XGB_SENATE`** (intentional / dead experiment): OFF, REFUSED 2026-10-01 (three arms: all parties, minor only, geography only) -- each cost Victorian Labor or lost the gains. Read only in fit_xgb_primary_v6.R and xgb_primary_override.R, so 'no' in the harness columns is by design. plans/prereg-xgb-senate-2026-10-01.md
@@ -446,4 +448,4 @@ MR3  no harness forces a switch away from its published value.
 
 ## Coverage check
 
-MR2  every non-universal switch (166 of 207) has a recorded classification.
+MR2  every non-universal switch (167 of 208) has a recorded classification.

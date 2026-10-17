@@ -286,6 +286,12 @@ xgb_primary_predict_live <- function(shares, mat22, a22, state_mean, returns,
   # mismatch being removed.
   rows[, level_from_polls := 1L]
   rows[, dev_prev    := seat_prev_pcv - level_prev]
+  # AUSPOL_XGB_RATIO_FEATS: the same two columns, same formula, as fit_xgb_primary_v6.R builds for training
+  # (prereg-growth-ratio-features-2026-10-18.md). Only when on, as there.
+  if (identical(Sys.getenv("AUSPOL_XGB_RATIO_FEATS", "0"), "1")) {
+    rows[, growth_ratio := (level_pred + 0.5) / (level_prev + 0.5)]
+    rows[, ratio_dev := (growth_ratio - 1) * dev_prev]
+  }
   # KEY-MATCHED, NOT merge()-THEN-POSITIONAL, throughout this function.
   # data.table::merge() defaults to sort=TRUE, which returns its result
   # re-sorted by the join key -- NOT in `rows`'s original CJ(sorted=FALSE)

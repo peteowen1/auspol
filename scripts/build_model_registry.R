@@ -179,6 +179,9 @@ CLASSIFY <- list(
   AUSPOL_TRAIN_DEMEAN = paste(
     "SHIPPED (1) 2026-10-13, FIT-TIME: read by fit_xgb_primary_asat.R and fit_xgb_primary_v6_final.R (rebuild",
     "stages 4-5); harnesses and live load the trained models. plans/prereg-training-weights-2026-10-13.md"),
+  AUSPOL_XGB_RATIO_FEATS = paste(
+    "ARM (0), FIT-TIME + LIVE: read by fit_xgb_primary_v6.R (training features; the as-at and final models",
+    "inherit them) and R/xgb_primary_override.R (live). Harnesses read the as-at predictions file. plans/prereg-growth-ratio-features-2026-10-18.md"),
   AUSPOL_ZERO_ABSENT = paste(
     "ARM (0), UNIVERSAL via R/: the default of simulate_seat_contests(zero_absent = zero_absent_on()), so every",
     "harness, NT and fit_seats_full.R honour it with no call-site argument. plans/prereg-zero-absent-2026-10-17.md"),
