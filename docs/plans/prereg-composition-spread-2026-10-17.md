@@ -118,3 +118,13 @@ fitted on small shares, gives x9 to x94 at 30 points. So the class's share is ca
 predicted share in that target's training cells (`s_max`, stored in the table) before the slope is applied:
 no factor is read beyond the data that fitted it. IND, the class the amendment is for, is unaffected
 (x1.8-2.3 at 10-30 points before and after).
+
+**Amendment 1b (2026-10-17, C2's first screen stopped before any result):** the screen showed CMP4 widening
+the IND cell in all 150 fed2010 seats, because the intercept applied to cells at 0% (no independent standing)
+and the simulator draws noise for every class, so the widening put phantom independent votes in seats with no
+independent. The fit trains only on predicted shares of 2+, so by 1a's own rule (no factor read beyond the data
+that fitted it) a cell under 2 gets no widening. That screen (`20261017-1403-composition-own-screen-1k`) was
+stopped by hand, marked FAILED, and nothing from it was scored.
+Arm C carries the same defect (it widens every cell in the seat, standing or not) and is NOT changed after
+its screen; if the choice rule sends C to the deciding run, that goes to Pete first. Separately, the SHIPPED
+model already draws noise (sd 1.10) for classes at 0% in every seat: a pre-existing phantom-vote issue, queued.

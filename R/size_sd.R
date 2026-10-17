@@ -25,6 +25,10 @@ composition_sd_mode <- function() {
 #' @noRd
 composition_sd_on <- function() composition_sd_mode() != "0"
 
+#' The smallest predicted share the own-cell spread is fitted on, and so applied to (percent)
+#' @noRd
+COMPOSITION_OWN_MIN_SHARE <- 2
+
 #' The own-cell widening factor (AUSPOL_COMPOSITION_SD=own, prereg amendment 1)
 #'
 #' Each non-major class's own cell is widened by `max(1, exp((w_a a + w_b b min(s, s_max) / 10) / 2))` on its
@@ -42,6 +46,10 @@ composition_own_factor <- function(shares, coef) {
     s <- pmin(pmax(as.numeric(shares[, k]), 0), sm)
     z <- coef$w_a[i] * coef$a[i] + coef$w_b[i] * coef$b[i] * s / 10
     z[!is.finite(z)] <- 0
+    # only cells inside the fit's own data: it trains on predicted shares of 2+ (fit_spread_by_composition.R), so
+    # a class at 0 (not standing) or under 2 gets nothing -- else the intercept puts phantom votes on candidates
+    # who are not there (amendment 1b, 2026-10-17)
+    z[as.numeric(shares[, k]) < COMPOSITION_OWN_MIN_SHARE] <- 0
     out[, k] <- pmax(1, exp(z / 2))
   }
   out

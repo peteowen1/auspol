@@ -47,13 +47,17 @@ test_that("own mode widens only the non-major class's own cell, capped at s_max"
                                s_max = c(40, 20, 10, 10, 10), n_pairs = 10L)
   fm <- composition_own_factor(sh, co)
   expect_equal(unname(fm["indseat", "IND"]), exp((0.8 + 0.2 * 20 / 10) / 2))   # 30 capped at s_max 20
-  expect_equal(unname(fm["plain", "IND"]), exp(0.8 / 2))                         # a zero share still gets the intercept
+  expect_equal(unname(fm["plain", "IND"]), 1)                                     # not standing (0): nothing, no phantom votes
   expect_true(all(fm[, c("ALP", "LNP", "GRN")] == 1))
   data.table::fwrite(co, file.path(d, "spread-by-class-own.csv"))
   o <- size_sd_apply(NULL, sh, "vic2026", c(1.1, 8.67))
   expect_true(all(is.na(o[, c("ALP", "LNP", "GRN")])))                           # majors and GRN untouched
   p <- sh["indseat", "IND"] / 100
   expect_equal(unname(o["indseat", "IND"]), (1.1 + 8.67 * sqrt(p * (1 - p))) * exp((0.8 + 0.4) / 2))
+  sh2 <- sh; sh2["plain", "IND"] <- 1.5; sh2["plain", "ALP"] <- 43.5
+  expect_equal(unname(composition_own_factor(sh2, co)["plain", "IND"]), 1)        # under the 2-point training floor
+  sh2["plain", "IND"] <- 2; sh2["plain", "ALP"] <- 43
+  expect_equal(unname(composition_own_factor(sh2, co)["plain", "IND"]), exp((0.8 + 0.2 * 0.2) / 2))
   withr::local_envvar(AUSPOL_COMPOSITION_SD = "bogus")
   expect_error(size_sd_apply(NULL, sh, "vic2026", c(1.1, 8.67)), "must be")
 })

@@ -19,6 +19,9 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30.
 - OPEN, bigger than either arm: errors are HEAVY-TAILED everywhere (0.57% of non-IND-seat cells miss by 4+ sim
   sds, ~100x a bell curve; kurtosis 20). A fat-tailed per-cell error (fitted time-forward) is the general fix for
   floor seats; prereg after the composition decision.
+- OPEN phantom votes: `simulate_seat_contests()` draws `rnorm(K, 0, sd_cell)` for EVERY class, so a class at 0%
+  (not standing) gets |N(0, 1.10)| in half its draws (`R/seat_sim.R:1407`). Measure how often a non-standing class
+  takes votes or changes a count; if it matters, zero non-standing classes after the draw (all harnesses + live).
 - OPEN data gap: vec-2014/2018 transfers files carry no Coalition-to-Coalition rows (Ripon 2014: only the 2,768
   to ALP of the National's ~7,000). The split's f drops those events, so unbiased but thinner; refetch.
 
