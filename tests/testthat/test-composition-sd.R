@@ -33,3 +33,27 @@ test_that("size_sd_apply: composition off leaves the override alone; on widens e
   expect_equal(unname(o["indseat", ]), unname((1.1 + 8.67 * sqrt(p * (1 - p))) * exp(0.25 * 3 / 2)))
   expect_error(size_sd_apply(NULL, sh, "nsw2027", c(1.1, 8.67)), "no rows for nsw2027")
 })
+
+test_that("own mode widens only the non-major class's own cell, capped at s_max", {
+  r <- withr::local_tempdir()
+  writeLines("Package: x", file.path(r, "DESCRIPTION"))
+  d <- file.path(r, "output"); dir.create(d)
+  withr::local_options(auspol.root = r)
+  withr::local_envvar(AUSPOL_SIZE_SD = "0", AUSPOL_COMPOSITION_SD = "own")
+  sh <- matrix(c(45, 45, 10, 0,  30, 30, 10, 30), nrow = 2, byrow = TRUE,
+               dimnames = list(c("plain", "indseat"), c("ALP", "LNP", "GRN", "IND")))
+  co <- data.table::data.table(target = "vic2026", class = composition_sd_classes(),
+                               a = c(0, 0.8, 0, 0, 0), w_a = c(0, 1, 0, 0, 0), b = c(0, 0.2, 0, 0, 0), w_b = c(0, 1, 0, 0, 0),
+                               s_max = c(40, 20, 10, 10, 10), n_pairs = 10L)
+  fm <- composition_own_factor(sh, co)
+  expect_equal(unname(fm["indseat", "IND"]), exp((0.8 + 0.2 * 20 / 10) / 2))   # 30 capped at s_max 20
+  expect_equal(unname(fm["plain", "IND"]), exp(0.8 / 2))                         # a zero share still gets the intercept
+  expect_true(all(fm[, c("ALP", "LNP", "GRN")] == 1))
+  data.table::fwrite(co, file.path(d, "spread-by-class-own.csv"))
+  o <- size_sd_apply(NULL, sh, "vic2026", c(1.1, 8.67))
+  expect_true(all(is.na(o[, c("ALP", "LNP", "GRN")])))                           # majors and GRN untouched
+  p <- sh["indseat", "IND"] / 100
+  expect_equal(unname(o["indseat", "IND"]), (1.1 + 8.67 * sqrt(p * (1 - p))) * exp((0.8 + 0.4) / 2))
+  withr::local_envvar(AUSPOL_COMPOSITION_SD = "bogus")
+  expect_error(size_sd_apply(NULL, sh, "vic2026", c(1.1, 8.67)), "must be")
+})

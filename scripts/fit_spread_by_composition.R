@@ -76,3 +76,55 @@ show <- dcast(res[, list(target, n_pairs, class, f = round(exp(pmax(0, w * b) / 
 print(show[order(n_pairs)], nrows = 60)
 fwrite(res, file.path(OUT, "spread-by-composition.csv"))
 cat(sprintf("CMP2  wrote output/spread-by-composition.csv (%d targets x %d classes)\n", uniqueN(res$target), length(CLS)))
+
+# ---- Arm C2 (AUSPOL_COMPOSITION_SD=own; prereg amendment 1): each non-major class's OWN cells only ----------
+# Gamma GLM of e2 on class-c cells: offset log sdm^2, centred log size, and the class's own share per 10 points.
+# Intercept a and slope b each shrunk by its own w. Cell factor max(1, exp((w_a a + w_b b min(s, s_max)/10) / 2)),
+# s_max the class's 99th-percentile predicted share in the training cells.
+S[, own := pred_share / 10]
+.own_failed <- character(0)
+fit_own <- function(tr, k) {
+  x <- copy(tr[tr$party == k])
+  if (nrow(x) < 50L || uniqueN(x$pair) < 3L) return(data.table(class = k, a = 0, se_a = NA_real_, w_a = 0, b = 0, se_b = NA_real_, w_b = 0, n_cls = nrow(x), s_max = NA_real_))
+  x[, lfc := lf - stats::median(tr$lf)]
+  # started at the class's overall error ratio with both slopes 0: from the default start IRLS overflows on
+  # some targets (qld2012 IND, fed2019 IND and OTH_RIGHT, 2026-10-17). A fit that still fails is NOT dropped
+  # silently: it widens nothing and is counted in CMP3.
+  f <- tryCatch(stats::glm(e2 ~ lfc + own + offset(log(sdm2)), family = stats::Gamma(link = "log"), data = x,
+                           start = c(log(mean(x$e2 / x$sdm2)), 0, 0), control = stats::glm.control(maxit = 100)),
+                error = function(e) NULL)
+  if (is.null(f) || !isTRUE(f$converged)) {
+    .own_failed <<- c(.own_failed, k)
+    return(data.table(class = k, a = 0, se_a = NA_real_, w_a = 0, b = 0, se_b = NA_real_, w_b = 0, n_cls = nrow(x), s_max = NA_real_))
+  }
+  X <- stats::model.matrix(f); r <- stats::residuals(f, type = "working") * f$weights
+  bread <- solve(crossprod(X * sqrt(f$weights)))
+  meat <- Reduce(`+`, lapply(split(seq_len(nrow(X)), x$pair), function(i) tcrossprod(colSums(X[i, , drop = FALSE] * r[i]))))
+  G <- uniqueN(x$pair)
+  V <- bread %*% meat %*% bread * G / (G - 1)
+  cf_all <- stats::coef(f); se_all <- sqrt(diag(V))
+  sh <- function(v, s) if (is.finite(v) && is.finite(s) && v != 0) max(0, 1 - s^2 / v^2) else 0
+  av <- unname(cf_all["(Intercept)"]); bv <- unname(cf_all["own"]); sa <- unname(se_all["(Intercept)"]); sb <- unname(se_all["own"])
+  data.table(class = k, a = ifelse(is.finite(av), av, 0), se_a = sa, w_a = sh(av, sa),
+             b = ifelse(is.finite(bv), bv, 0), se_b = sb, w_b = sh(bv, sb), n_cls = nrow(x),
+             s_max = unname(stats::quantile(x$pred_share, 0.99)))
+}
+own <- rbindlist(lapply(targets, function(tg) {
+  tday <- as.Date(unname(ed[tg])); if (is.na(tday)) return(NULL)
+  tr <- S[S$day < tday]
+  o <- if (uniqueN(tr$pair) < 3L || nrow(tr) < 500L)
+    data.table(class = CLS, a = 0, se_a = NA_real_, w_a = 0, b = 0, se_b = NA_real_, w_b = 0, n_cls = 0L, s_max = NA_real_)
+  else rbindlist(lapply(CLS, function(k) fit_own(tr, k)))
+  o[, `:=`(target = tg, n_cells = nrow(tr), n_pairs = uniqueN(tr$pair))]
+  setcolorder(o, c("target", "class"))
+  o
+}))
+# The own-cell sd factor at 10 and 30 points of the class's own share, after shrinkage.
+# the share is capped at the class's 99th-percentile training share: an exponential slope fitted on small
+# shares must not be extrapolated (OTH ran to x94 at 30 points uncapped, 2026-10-17)
+own[, f10 := pmax(1, exp((w_a * a + w_b * b * pmin(1, s_max / 10)) / 2))][, f30 := pmax(1, exp((w_a * a + w_b * b * pmin(3, s_max / 10)) / 2))]
+print(dcast(own[, list(target, n_pairs, class, v = sprintf("%.2f/%.2f", f10, f30))], target + n_pairs ~ class, value.var = "v")[order(n_pairs)], nrows = 60)
+fwrite(own[, !c("f10", "f30")], file.path(OUT, "spread-by-class-own.csv"))
+cat(sprintf("CMP3  wrote output/spread-by-class-own.csv (%d targets x %d classes; cells shown as factor at 10/30 points); %d target-class fit(s) did not converge and widen nothing%s\n",
+            uniqueN(own$target), length(CLS), length(.own_failed),
+            if (length(.own_failed)) paste0(": ", paste(names(table(.own_failed)), table(.own_failed), sep = " x", collapse = ", ")) else ""))

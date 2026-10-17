@@ -112,3 +112,9 @@ defines it, so neither arm picks its own seats). C2 goes to the 20k deciding run
 1,000-sim screen, (i) its guard (all 2,931 seats) is no worse than C's and (ii) its primary gain is within
 1 SE of C's or larger. Otherwise C goes. The deciding run's criterion and every refusal clause are the
 original ones, applied to whichever arm goes. NSW and the favourites line are reported for both.
+
+**Amendment 1a (2026-10-17, from the C2 table, before C2 runs):** the uncapped fit extrapolates: OTH's slope,
+fitted on small shares, gives x9 to x94 at 30 points. So the class's share is capped at its 99th-percentile
+predicted share in that target's training cells (`s_max`, stored in the table) before the slope is applied:
+no factor is read beyond the data that fitted it. IND, the class the amendment is for, is unaffected
+(x1.8-2.3 at 10-30 points before and after).

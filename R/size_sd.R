@@ -16,7 +16,36 @@
 size_sd_on <- function() identical(Sys.getenv("AUSPOL_SIZE_SD", "1"), "1")
 
 #' @noRd
-composition_sd_on <- function() identical(Sys.getenv("AUSPOL_COMPOSITION_SD", "0"), "1")
+composition_sd_mode <- function() {
+  m <- Sys.getenv("AUSPOL_COMPOSITION_SD", "0")
+  if (!m %in% c("0", "1", "own")) stop("AUSPOL_COMPOSITION_SD must be \"0\", \"1\" or \"own\", got \"", m, "\"")
+  m
+}
+
+#' @noRd
+composition_sd_on <- function() composition_sd_mode() != "0"
+
+#' The own-cell widening factor (AUSPOL_COMPOSITION_SD=own, prereg amendment 1)
+#'
+#' Each non-major class's own cell is widened by `max(1, exp((w_a a + w_b b min(s, s_max) / 10) / 2))` on its
+#' own predicted share `s`; every other cell gets 1.
+#' @param shares Seats x classes predicted shares (percent).
+#' @param coef A table with `class`, `a`, `w_a`, `b`, `w_b`, `s_max` for one target
+#'   (from `output/spread-by-class-own.csv`).
+#' @return A seats x classes matrix of factors, `>= 1`.
+#' @export
+composition_own_factor <- function(shares, coef) {
+  out <- matrix(1, nrow(shares), ncol(shares), dimnames = dimnames(shares))
+  for (k in intersect(coef$class, colnames(shares))) {
+    i <- match(k, coef$class)
+    sm <- if (is.finite(coef$s_max[i])) coef$s_max[i] else 0
+    s <- pmin(pmax(as.numeric(shares[, k]), 0), sm)
+    z <- coef$w_a[i] * coef$a[i] + coef$w_b[i] * coef$b[i] * s / 10
+    z[!is.finite(z)] <- 0
+    out[, k] <- pmax(1, exp(z / 2))
+  }
+  out
+}
 
 #' The non-major classes the seat-composition spread is fitted on
 #'
@@ -73,7 +102,19 @@ size_sd_apply <- function(sd_override, shares, target, level_sd, level_mult = NU
     sf <- .size_factor(shares, target, tgt_label, prev)
     if (!is.null(sf)) { fac <- fac * sf; build <- TRUE }
   }
-  if (composition_sd_on()) {
+  cellf <- NULL
+  if (identical(composition_sd_mode(), "own")) {
+    f <- file.path(out_path(), "spread-by-class-own.csv")
+    if (!file.exists(f)) stop("AUSPOL_COMPOSITION_SD=own but output/spread-by-class-own.csv is missing -- run scripts/fit_spread_by_composition.R")
+    tab <- data.table::fread(f, showProgress = FALSE)
+    co <- tab[tab$target %in% tgt_label]
+    if (!nrow(co)) stop("AUSPOL_COMPOSITION_SD=own but output/spread-by-class-own.csv has no rows for ", target)
+    cellf <- composition_own_factor(shares, co)
+    wid <- colSums(cellf > 1)
+    cat(sprintf("CMP4 %s: own-cell spread (%d earlier elections): %s; factor max %.2f\n", target, as.integer(co$n_pairs[1]),
+                paste(sprintf("%s %d cells", names(wid)[wid > 0], wid[wid > 0]), collapse = ", "), max(cellf)))
+    if (any(cellf > 1)) build <- TRUE
+  } else if (composition_sd_on()) {
     f <- file.path(out_path(), "spread-by-composition.csv")
     if (!file.exists(f)) stop("AUSPOL_COMPOSITION_SD=1 but output/spread-by-composition.csv is missing -- run scripts/fit_spread_by_composition.R")
     tab <- data.table::fread(f, showProgress = FALSE)
@@ -94,7 +135,13 @@ size_sd_apply <- function(sd_override, shares, target, level_sd, level_mult = NU
   ppm <- pmin(pmax(unname(as.matrix(shares)), 0), 100) / 100
   base <- level_sd[1L] + level_sd[2L] * matrix(lm_vec, nrow(ppm), K, byrow = TRUE) * sqrt(ppm * (1 - ppm))
   out <- matrix(base * fac, nrow(ppm), K, dimnames = dimnames(shares))
-  out[fac <= 1, ] <- NA_real_
+  if (is.null(cellf)) {
+    out[fac <= 1, ] <- NA_real_
+  } else {
+    tot <- matrix(fac, nrow(ppm), K) * cellf
+    out <- out * cellf
+    out[tot <= 1] <- NA_real_
+  }
   combine_sd_override(sd_override, out)
 }
 
