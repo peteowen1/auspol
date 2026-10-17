@@ -579,3 +579,13 @@ A Liberal and a National in one seat counted as two candidates. Prereg: `plans/p
 | `/ 10` share unit, `/ 2` sd from variance | `composition_sd_factor()` | scale only | **DEFINITIONAL** |
 | floor at 1 | `composition_sd_factor()` | only widens | **CHOSEN** (prereg; Greens narrowing is a separate question) |
 | minimum training | `fit_spread_by_composition.R` | 3 earlier elections and 500 cells, else factor 1 | **COMPUTATIONAL**: the clustered SE needs several elections |
+
+## Empirical error distribution (`AUSPOL_ERROR_DIST`, built 2026-10-17, OFF pending `plans/prereg-error-distribution-2026-10-17.md`; `R/error_dist.R`)
+
+| Constant | Where | Value | Status |
+|---|---|---|---|
+| per-class quantiles of standardised error | `scripts/fit_error_distribution.R` -> `output/error-quantiles.csv` | 201 (0.5% steps), earlier elections only | **ESTIMATED** |
+| shrinkage toward pooled | same | `w = n / (n + 200)` | **CHOSEN** (k = 200: a class needs a few hundred cells before its own tails dominate) |
+| width | same | each class rescaled to RMS 1 (exact for the interpolated draw) | **CHOSEN** (prereg: shape, not width) |
+| training floor | same | cells predicted 2+ | **CHOSEN** (matches the spread fits) |
+| minimum training | same | 3 earlier elections and 2,000 cells, else rnorm | **COMPUTATIONAL** |

@@ -332,6 +332,11 @@
 #'   on an evenly spaced probability grid from 0 to 1 (length at least 2,
 #'   non-decreasing, each in `[0, 100)`); a breakout draws a uniform and
 #'   interpolates linearly. Required when `breakout_p` has any cell above 0.
+#' @param error_q Optional classes x quantiles matrix (rows in the order of `shares`'
+#'   columns, at least two nondecreasing columns), under `AUSPOL_ERROR_DIST=1` (built by
+#'   [error_dist_args()]). Each cell's noise becomes `sd_cell * z`, `z` drawn by one uniform per
+#'   cell and linear interpolation between that class's quantiles, instead of `rnorm`. `NULL`
+#'   (the default) is the previous behaviour exactly.
 #' @param coalition_split Optional list with elements `r`, `sd` and `f`, under
 #'   `AUSPOL_COALITION_SPLIT=1` (built by [coalition_split_args()]). `NULL` (the
 #'   default) is the previous behaviour exactly. In a seat where a Liberal and a
@@ -390,7 +395,7 @@ simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
                                    engine = c("auto", "cpp", "r"),
                                    keep_fp = FALSE,
                                    breakout_p = NULL, breakout_q = NULL,
-                                   coalition_split = NULL) {
+                                   coalition_split = NULL, error_q = NULL) {
   engine <- match.arg(engine)
   # SHRINK MAY BE PER-SEAT. A scalar applies the same rate everywhere and caps
   # EVERY seat at 1 - shrink/2 -- 0.9598 at shrink = 0.10, with no seat above
@@ -1094,6 +1099,26 @@ simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
   # COALITION SPLIT (AUSPOL_COALITION_SPLIT). Resolved to an n_sims x nseat
   # matrix of junior fractions, 0 where a seat has no split, drawn here from a
   # SEPARATE stream so the count's own stream is the one-candidate run's.
+  # EMPIRICAL ERROR DISTRIBUTION (AUSPOL_ERROR_DIST, R/error_dist.R). A classes x quantiles matrix:
+  # each cell's noise is sd_cell * z with z interpolated from its class's quantiles at one uniform,
+  # in place of rnorm. Same arithmetic, same order, as seat_sim_core.cpp. NULL is the old run.
+  has_eq <- !is.null(error_q)
+  eq <- base::matrix(0, 0L, 0L)
+  if (has_eq) {
+    eq <- as.matrix(error_q)
+    if (nrow(eq) != K) stop("error_q must have one row per class (", K, "), got ", nrow(eq))
+    if (!is.null(rownames(eq)) && !identical(rownames(eq), colnames(shares)))
+      stop("error_q's row names must match shares' classes, in the same order")
+    if (ncol(eq) < 2L || any(!is.finite(eq))) stop("error_q needs at least two finite quantile columns")
+    if (any(eq[, -1L, drop = FALSE] < eq[, -ncol(eq), drop = FALSE])) stop("error_q's quantiles must be nondecreasing")
+    eq <- unname(eq); storage.mode(eq) <- "double"
+  }
+  .eq_z <- function(u) {
+    Q <- ncol(eq); pos <- u * (Q - 1); i0 <- floor(pos); fr <- pos - i0
+    i0 <- pmin(i0, Q - 1); i1 <- pmin(i0 + 1, Q - 1)
+    a <- eq[cbind(seq_len(K), i0 + 1)]; b <- eq[cbind(seq_len(K), i1 + 1)]
+    a + fr * (b - a)
+  }
   has_split <- FALSE; split_lnp <- 0L; split_f <- 0
   split_r <- base::matrix(0, 0L, 0L)
   split_info <- NULL
@@ -1308,7 +1333,8 @@ simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
                           as.numeric(shrink), ov_seat, ov_key, ov_mat,
                           as.numeric(fallback_flow_sd), as.numeric(ov_sd), isTRUE(keep_fp),
                           has_bo, bo_p, bo_q,
-                          has_split, as.integer(split_lnp), split_r, as.numeric(split_f))
+                          has_split, as.integer(split_lnp), split_r, as.numeric(split_f),
+                          has_eq, eq)
     wins[] <- core$wins; totals[] <- core$totals
     tcp_winner[] <- parties[core$tcp_w]; tcp_runnerup[] <- parties[core$tcp_r]
     tcp_share[] <- core$tcp_share
@@ -1404,7 +1430,7 @@ simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
         pp <- pmin(pmax(base_v, 0), 100) / 100
         level_sd[1L] + level_sd[2L] * level_mult_vec * sqrt(pp * (1 - pp))
       }
-      v <- base_v + shift + stats::rnorm(K, 0, sd_cell)
+      v <- base_v + shift + if (has_eq) sd_cell * .eq_z(stats::runif(K)) else stats::rnorm(K, 0, sd_cell)
       v[v < 0] <- 0
       # BREAKOUT MIXTURE: with probability p this cell's share comes from the
       # breakout distribution, the rest of the seat scaled by one factor so the
@@ -1692,7 +1718,8 @@ simulate_seat_contests <- function(shares, matrix, party_sd, seat_sd = 3.5,
        engine = engine,
        fp_draws = fp_draws,
        breakout_draws = n_bo,
-       coalition_split = split_info)
+       coalition_split = split_info,
+       error_dist = has_eq)
 }
 
 #' Per-class slope multipliers for [simulate_seat_contests()]

@@ -42,7 +42,9 @@ List seat_sim_core(NumericMatrix shares, int n_sims, int shift_mode,
                    NumericVector bo_q = NumericVector::create(),
                    bool has_split = false, int split_lnp = 0,
                    NumericMatrix split_r = NumericMatrix(0, 0),
-                   double split_f = 0) {
+                   double split_f = 0,
+                   bool has_eq = false,
+                   NumericMatrix eq = NumericMatrix(0, 0)) {
   const int nseat = shares.nrow(), K = shares.ncol();
   // PER-SEAT CONDITIONAL OVERRIDE, sparse. The shared cell_mat is dense over
   // the key space but has no seat dimension; a per-seat dense table would be
@@ -165,7 +167,21 @@ List seat_sim_core(NumericMatrix shares, int n_sims, int shift_mode,
       if (!has_level) { for (int k = 0; k < K; ++k) sdc[k] = seat_sd_vec[k]; }
       else { for (int k = 0; k < K; ++k) sdc[k] = sd_cell_pre(i, k); }
       for (int k = 0; k < K; ++k) {
-        const double e = R::rnorm(0.0, sdc[k]);
+        // empirical error distribution (R/seat_sim.R .eq_z): one uniform, linear interpolation
+        double e;
+        if (has_eq) {
+          const int Q = eq.ncol();
+          const double u = R::runif(0.0, 1.0);
+          const double pos = u * (Q - 1);
+          double i0d = std::floor(pos);
+          const double fr = pos - i0d;
+          int i0 = (int) i0d; if (i0 > Q - 1) i0 = Q - 1;
+          const int i1 = i0 + 1 > Q - 1 ? Q - 1 : i0 + 1;
+          const double a = eq(k, i0), b = eq(k, i1);
+          e = sdc[k] * (a + fr * (b - a));
+        } else {
+          e = R::rnorm(0.0, sdc[k]);
+        }
         v[k] = base[k] + shift[k] + e;
         if (v[k] < 0) v[k] = 0;
       }

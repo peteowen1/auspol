@@ -37,7 +37,8 @@ simulate_seat_contests(
   keep_fp = FALSE,
   breakout_p = NULL,
   breakout_q = NULL,
-  coalition_split = NULL
+  coalition_split = NULL,
+  error_q = NULL
 )
 }
 \arguments{
@@ -409,6 +410,12 @@ published setting) every seat WITHOUT a split is byte-identical to the run
 without this argument. With flow noise on, the split seat's count takes a
 different number of draws and later seats' streams move.
 docs/plans/prereg-lib-nat-two-candidates-2026-10-16.md.}
+
+\item{error_q}{Optional classes x quantiles matrix (rows in the order of \code{shares}'
+columns, at least two nondecreasing columns), under \code{AUSPOL_ERROR_DIST=1} (built by
+\code{\link[=error_dist_args]{error_dist_args()}}). Each cell's noise becomes \code{sd_cell * z}, \code{z} drawn by one uniform per
+cell and linear interpolation between that class's quantiles, instead of \code{rnorm}. \code{NULL}
+(the default) is the previous behaviour exactly.}
 }
 \value{
 List: \code{win_prob} (data.frame, one row per seat and party with a

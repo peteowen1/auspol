@@ -271,6 +271,8 @@ run_stage7() {
                                  Rscript scripts/fit_spread_by_size.R    > "$LOG/s7_spread_size.log" 2>&1 || { echo "!! fit_spread_by_size.R failed -- see $LOG/s7_spread_size.log"; exit 1; }
                                  # seat-composition spread table (AUSPOL_COMPOSITION_SD): same inputs, same lag rule as the size table
                                  Rscript scripts/fit_spread_by_composition.R > "$LOG/s7_spread_comp.log" 2>&1 || { echo "!! fit_spread_by_composition.R failed -- see $LOG/s7_spread_comp.log"; exit 1; }
+                                 # empirical error quantiles (AUSPOL_ERROR_DIST): same inputs, same lag rule as the spread tables
+                                 Rscript scripts/fit_error_distribution.R > "$LOG/s7_error_dist.log" 2>&1 || { echo "!! fit_error_distribution.R failed -- see $LOG/s7_error_dist.log"; exit 1; }
                                  done_stage "7-pool-and-forecasts"
 }
 if at_least 6; then run_stage6; fi
