@@ -6,7 +6,7 @@
 # For each target, from EARLIER elections' published cells predicted 2+:
 #   z = (actual - pred) / (sdm x the size factor that pair applied),  sdm = 1.10 + 8.67 sqrt(p(1-p))
 # 201 quantiles (0.5% steps) per class, shrunk toward the pooled quantiles by w = n / (n + 200), then rescaled
-# so each class's distribution has RMS 1 (the rnorm it replaces). Fewer than 3 earlier elections or 2,000
+# so each class's distribution has mean 0 and RMS 1 (the rnorm it replaces). Fewer than 3 earlier elections or 2,000
 # cells: no row (the simulator keeps rnorm).
 # Writes output/error-quantiles.csv: target, class, n, w, then q000..q200.
 #   Rscript scripts/fit_error_distribution.R
@@ -44,7 +44,13 @@ K_SHRINK <- 200
 # Exact RMS of the distribution the simulator draws (linear interpolation between quantiles, u uniform): on each
 # 0.5% segment from a to b the mean of the square is (a^2 + ab + b^2) / 3. A plain mean of the 201 points would
 # give the min and max a full 0.5% each instead of half that.
+# Centred first (amendment 1): the raw quantiles carry each class's historical MEAN error (GRN -0.29 sd, OTH_RIGHT
+# +0.28 at vic2026), which would move every seat's centre -- a level correction inside a shape-only arm. The mean
+# of the interpolated draw is the mean of the segment midpoints; subtracting it keeps the skew (the median stays
+# off zero) and makes the mean exactly 0, as rnorm's is.
 rms1 <- function(q) {
+  a <- q[-length(q)]; b <- q[-1L]
+  q <- q - mean((a + b) / 2)
   a <- q[-length(q)]; b <- q[-1L]
   r <- sqrt(mean((a^2 + a * b + b^2) / 3))
   if (r > 0) q / r else q

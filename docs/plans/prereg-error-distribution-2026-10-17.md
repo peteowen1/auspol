@@ -75,3 +75,15 @@ floors at 5e-4, so **the deciding run is 20,000 sims** before any ship, and ship
 - Conditioning on share band beyond the per-class groups (a 30%+ independent's errors are right-skewed, a
   5% one's left): one shape per class here.
 - Width: unchanged by design (RMS 1). C showed width matters for IND seats; a combined arm comes after.
+
+## Amendment 1 (2026-10-17, first screen stopped before any result)
+
+The original text above stands. The first screen (`20261017-1616-error-dist-screen-1k`) printed ERD1 medians
+that led to a check of each class's MEAN z in the table: GRN -0.29, OTH_RIGHT +0.28, ALP -0.11 to -0.25,
+ONP +0.13 to +0.21 (about -1.5 to +1.4 points at a 30% share). The quantiles carried each class's historical
+bias, so E would also have moved every seat's centre: a level correction inside an arm defined as "shape, not
+width", and one that belongs in base_pred and the xgb layer (CLAUDE.md), not the simulator. "E keeps each
+class's mean error" above meant the shipped draw's mean (0). Fix: each class's quantiles are CENTRED to mean 0
+(exact for the interpolated draw) before the RMS-1 rescaling; the skew stays (medians off zero). The screen was
+stopped by PID, marked FAILED, nothing from it scored. Queued separately: the per-class mean errors are a
+finding in their own right (Greens over-predicted by ~0.3 sd everywhere).

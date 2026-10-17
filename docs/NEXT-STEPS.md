@@ -17,6 +17,9 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30.
 - OPEN, bigger than either arm: errors are HEAVY-TAILED everywhere (0.57% of non-IND-seat cells miss by 4+ sim
   sds, ~100x a bell curve; kurtosis 20). A fat-tailed per-cell error (fitted time-forward) is the general fix for
   floor seats; prereg after the composition decision.
+- OPEN per-class bias on the published path (found 17 Oct building AUSPOL_ERROR_DIST): mean standardised error
+  over earlier elections GRN -0.29, OTH -0.17, ALP -0.11 to -0.25 (over-predicted), OTH_RIGHT +0.28, ONP +0.13 to
+  +0.21 (under). About -1.5 / +1.4 points at a 30% share. A level fix: test in base_pred AND the xgb layer.
 - OPEN phantom votes: `simulate_seat_contests()` draws `rnorm(K, 0, sd_cell)` for EVERY class, so a class at 0%
   (not standing) gets |N(0, 1.10)| in half its draws (`R/seat_sim.R:1407`). Measure how often a non-standing class
   takes votes or changes a count; if it matters, zero non-standing classes after the draw (all harnesses + live).
