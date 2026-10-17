@@ -87,3 +87,19 @@ class's mean error" above meant the shipped draw's mean (0). Fix: each class's q
 (exact for the interpolated draw) before the RMS-1 rescaling; the skew stays (medians off zero). The screen was
 stopped by PID, marked FAILED, nothing from it scored. Queued separately: the per-class mean errors are a
 finding in their own right (Greens over-predicted by ~0.3 sd everywhere).
+
+## RESULT (2026-10-17, 1k screen `deciding-runs/20261017-1628-error-dist-screen-1k-b/`, same baseline as C's byte for byte) -- REFUSED
+
+| Scope | Seats | E - A (SE) |
+|---|---|---|
+| PRIMARY: every seat | 2,931 | -0.0004 (0.0017), within 1 SE: FAILS |
+| C - A (benchmark) | 2,931 | -0.0021 (0.0013) |
+| winners A gave < 0.01 | 21 | -0.275 (0.159) |
+| winners A gave 0.01-0.5 | 324 | **+0.059 (0.011)** |
+| winners A gave 0.5+ | 2,586 | -0.0057 (0.0007) |
+| favourites 0.90+ who won | 1,772 | +0.0008 (0.0003) |
+
+Refused on the primary, on one election (share 2.8 of the net gain) and on the floor clause (13 seats A gave
+< 1e-4 carry more than all of it; without them +0.0003). Why: at fixed RMS, fatter tails squeeze the core, so
+contested seats are called more confidently and wrongly (+0.059 on the 324). Shape alone cannot help; width (C)
+and tails together is the open question. Switch stays "0".

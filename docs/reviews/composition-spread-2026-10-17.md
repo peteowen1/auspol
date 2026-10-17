@@ -57,3 +57,9 @@ spreading the seat's uncertainty across every class.
 distribution itself: heavy tails everywhere and skew for candidates who can break out, fitted time-forward,
 and it must beat C's all-seat -0.0021. (The classifier-driven breakout mixture was refused 2026-10-06 for
 weak signals, so this one must need no per-seat breakout prediction.)
+
+## Error-distribution arm E (`plans/prereg-error-distribution-2026-10-17.md`): REFUSED
+
+Every seat -0.0004 (SE 0.0017) against C's -0.0021. Fatter tails at fixed width rescue the 21 floor seats
+(-0.275) but squeeze the core: the 324 contested upsets get worse by +0.059 (SE 0.011). The two failures
+together say IND seats need more width AND fatter tails; neither arm alone does both.

@@ -11,9 +11,8 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30.
   the runner fitted f from 5 exclusions, now `coalition-split-events.csv` on the release; rerun 38986342020 green.
 - PARKED composition spread (`reviews/composition-spread-2026-10-17.md`): C passed its 1k screen (all seats -0.0021,
   SE 0.0013) but taxes NSW and favourites; C2 lost. Pete: go to the error-distribution fix; C is its benchmark.
-- IN FLIGHT error distribution (`plans/prereg-error-distribution-2026-10-17.md`, `AUSPOL_ERROR_DIST`): draw each
-  cell's z from earlier elections' empirical standardised errors (per class, shrunk to pooled, RMS 1) instead of
-  rnorm. Must beat A by >1 SE and C's -0.0021. NEXT: build (R + cpp, byte-identical off), screen 1k, 20k.
+- REFUSED error distribution E (`AUSPOL_ERROR_DIST`, prereg RESULT): every seat -0.0004 (SE 0.0017); floor seats
+  gain, contested seats +0.059 worse (fat tails at fixed width squeeze the core). Open: width (C) + tails together.
 - OPEN, bigger than either arm: errors are HEAVY-TAILED everywhere (0.57% of non-IND-seat cells miss by 4+ sim
   sds, ~100x a bell curve; kurtosis 20). A fat-tailed per-cell error (fitted time-forward) is the general fix for
   floor seats; prereg after the composition decision.

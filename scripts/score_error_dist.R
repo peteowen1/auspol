@@ -74,7 +74,7 @@ fl <- rows$p_a < 1e-4
 cat(sprintf("EZ6 FLOOR: gain from seats A gave < 1e-4 (%d seats): %.3f of net %.3f -> %s; without them: ", sum(fl), -sum(rows$d_ea[fl]), -net,
             if (net < 0 && sum(rows$d_ea[fl]) / net > 0.5) "MORE THAN HALF, to Pete as a split result" else "under half"))
 nf <- cl(rows[!fl], rows$d_ea[!fl]); cat(sprintf("%+.4f (SE %.4f)\n", nf["d"], nf["se"]))
-beats_c <- if (hasc) r1["d"] <= rc["d"] else NA
+beats_c <- if (hasc) unname(r1["d"] <= rc["d"]) else NA
 cat(sprintf("EZ7 VERDICT: primary %s; point gain %s C's (%s)\n",
             if (is.finite(r1["se"]) && r1["d"] < -r1["se"]) "E better than A by more than 1 SE" else "E NOT better by more than 1 SE",
             if (isTRUE(beats_c)) "at least" else if (identical(beats_c, FALSE)) "SMALLER than" else "not compared with",
