@@ -89,3 +89,26 @@ tails, which a 1,000-sim screen floors at 5e-4, so **the deciding run is 20,000 
 - The large primary misses behind the worst seats (Ryan fed2010 defector carry, Kimberley
   wa2001) are centre errors. C can only stop them reaching the floor, not fix them.
 - Whether the Greens' narrowing helps: separate, after this.
+
+## Amendment 1 (2026-10-17, after the screen; Pete: "Amend: add an independent-only arm")
+
+The original clauses above stand unedited. Screen result (`reviews/composition-spread-2026-10-17.md`): C
+passes the primary (-0.030, SE 0.016) and the guard, but NSW's primary seats get worse (+0.041, SE 0.016) and
+the favourites clause reports a cost (+0.0023, SE 0.0005). The diagnosis there: the independent's OWN share is
+about twice too narrow and bell-shaped (robust sd 2.15), while the majors in the same seats are right in a
+typical seat (0.96) and heavy-tailed. C widens every class in the seat, so it taxes the majors' clear calls.
+This amendment favours a different arm, not a looser bar, and C stays in.
+
+**Arm C2** (`AUSPOL_COMPOSITION_SD=own`): each NON-MAJOR class's own cell is widened as a function of its own
+predicted share; the majors and every other cell are untouched (the draw renormalises, so a wider IND moves
+the majors only when it moves). Fitted per target and class, time-forward, on that class's cells only: Gamma
+GLM of the squared error, offset log sdm^2, with the centred log-size control and the class's own share per
+10 points; intercept a_c and slope b_c each shrunk by its own w = max(0, 1 - se^2/b^2), SE clustered on
+election. Cell factor `max(1, exp((w_a a_c + w_b b_c s_c / 10) / 2))`, multiplying the size factor. Same
+table rules as C (3 earlier elections, 500 cells), written to `output/spread-by-class-own.csv`.
+
+**Choice between C and C2, decided now:** both scored on C's 213 primary seats (the same set; C's factor
+defines it, so neither arm picks its own seats). C2 goes to the 20k deciding run in C's place if, on the
+1,000-sim screen, (i) its guard (all 2,931 seats) is no worse than C's and (ii) its primary gain is within
+1 SE of C's or larger. Otherwise C goes. The deciding run's criterion and every refusal clause are the
+original ones, applied to whichever arm goes. NSW and the favourites line are reported for both.
