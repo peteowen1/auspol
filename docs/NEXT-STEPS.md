@@ -194,7 +194,16 @@ person rule, statewide poll weighting by track record, seat-poll precision blend
   TESTED: + census degree share (edu_25plus_pct) on the seat deviation, fitted time-forward per class: helps GRN
   (2.70 -> 2.61), ONP (3.64 -> 3.52), OTH_RIGHT (4.30 -> 4.25), hurts ALP/LNP/IND; all classes within noise
   (+0.40 MSE, SE 0.35, 16 of 29 elections better). Small; a precision-shrunk g per class is the principled form.
-  Lead only, not a prereg; the xgb layer already sees census features. Other fed2025 losses: 15 Labor wins called Coalition (Labor primary under-called ~10 pts in
+  Lead only, not a prereg; the xgb layer already sees census features.
+  PETE 18 Oct: "this is big we need to fix this" (gain/fall where expected, every class; universal, not one seat).
+  MEASURED overnight (scratchpad alloc2.R, ratio.R; actual level fed in, time-forward, stood-both-times cells):
+  shipped linear slope 4.99-5.09 RMSE beats uniform 5.27, proportional 6.40 (worse 30/32 el), logit slope 5.35,
+  growth-ratio slope 5.52 (worse 26/29); flat+proportional blend 4.99 (noise). ROOT: minor classes' realised
+  slope swings election to election (ONP 0.19 wa2021 .. 1.95 wa2025, sd 0.64; IND sd 0.26; majors sd 0.12-0.15)
+  and tracks growth in hindsight (surges keep strongholds ahead, collapses converge), but time-forward fits only
+  saw the collapse years. fed2025 ONP truth was near-UNIFORM (+1-2 pts everywhere), not proportional. Strongest
+  remaining version: give the xgb layer the inputs to learn it (predicted growth ratio, ratio x deviation, stood
+  last time); needs a stage-1 rebuild. Other fed2025 losses: 15 Labor wins called Coalition (Labor primary under-called ~10 pts in
   the marginals: Bennelong 32.9 vs 45.4), 4 independents favoured who lost (Wannon, Monash, McMahon, Cowper).
   fed2025 drifted 0.318 (30 Sep) -> 0.377 across many changes; a snapshot bisect would separate leak-fix costs.
 - OPEN statewide flow shocks, GENERAL (17 Oct, scratchpad flowvar.R, 13 transfers files, 32 elections): the count
