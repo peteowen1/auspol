@@ -143,6 +143,17 @@ pl <- rbindlist(lapply(c("ALP", "LNP", "GRN", "ONP", "OTH"), function(p) {
   data.table(party = p, date = as.character(v$date), firm = v$firm,
              v = round(v$v, 1))
 }))
+# The ten most recent polls the trend above is fitted on (Pete, 2026-10-17: "There should be a list of 10 most
+# recent polls on the website"), newest first, by fieldwork midpoint. Same `cp` as the chart, so the list and the
+# forecast cannot disagree about which polls exist. Labor two-party is the pollster's own published figure.
+rp <- cp[order(-as.numeric(date))][seq_len(min(10L, nrow(cp)))]
+recent <- lapply(seq_len(nrow(rp)), function(i) {
+  # NA, never NULL: this page's toJSON() writes NULL as {} (truthy in the page's JS) and NA as null
+  g <- function(k) if (k %in% names(rp) && is.finite(rp[[k]][i])) round(rp[[k]][i], 1) else NA
+  list(date = as.character(rp$date[i]), firm = rp$firm[i], LNP = g("LNP"), ALP = g("ALP"), GRN = g("GRN"),
+       ONP = g("ONP"), OTH = g("OTH"), tpp = g("tpp_published"))
+})
+cat(sprintf("PG9 recent polls table: %d polls, %s to %s\n", length(recent), as.character(min(rp$date)), as.character(max(rp$date))))
 
 # --- projection + seats ---
 mix <- fread("output/projection-mix.csv")
@@ -442,7 +453,7 @@ out <- list(
              trend_fit = round(flow_hat, 1), z = round(flow_z, 2),
              method = onp_est$model, years = onp_est$years,
              se = round(onp_est$se, 2)),
-  trend = series, polls = pl,
+  trend = series, polls = pl, recent = recent,
   # Every party's fit against its own recent polls, so the page can say which
   # party is worst-tracked and by how much without anyone retyping it.
   track = {

@@ -310,6 +310,18 @@ footer{padding:2.5rem 0 0;border-top:1px solid var(--rule);font-size:.8rem;
 
 <section>
   <div class="col">
+    <span class="eyebrow">Polls</span>
+    <h2 style="margin-top:.5rem">The latest polls</h2>
+    <p class="lede" style="margin-top:.9rem">The ten most recent Victorian polls, newest
+    first, dated by the middle of their fieldwork. These are the polls the forecast above
+    is built on. First preferences are percentages; <em>Labor 2PP</em> is the
+    pollster&rsquo;s own two-party figure, blank where it published none.</p>
+  </div>
+  <div class="tbl"><table id="recenttbl"></table></div>
+</section>
+
+<section>
+  <div class="col">
     <span class="eyebrow">Pollsters</span>
     <h2 style="margin-top:.5rem">Who leans which way</h2>
     <p class="lede" style="margin-top:.9rem">Every firm here has a nonzero lean by
@@ -769,6 +781,16 @@ draw('accuracy table','mixtbl',function(){
 
 });
 
+draw('recent polls','recenttbl',function(){
+  const v = x => has(x) ? (Number.isInteger(x) ? x.toFixed(0) : x.toFixed(1)) : '—';
+  document.getElementById('recenttbl').innerHTML =
+    `<thead><tr><th>Fieldwork</th><th>Pollster</th><th>Coalition</th><th>Labor</th><th>Greens</th>
+     <th>One Nation</th><th>Others</th><th>Labor 2PP</th></tr></thead><tbody>`+
+    (D.recent||[]).map(r=>
+      `<tr><td>${r.date}</td><td>${r.firm}</td><td class="num">${v(r.LNP)}</td><td class="num">${v(r.ALP)}</td>
+        <td class="num">${v(r.GRN)}</td><td class="num">${v(r.ONP)}</td><td class="num">${v(r.OTH)}</td>
+        <td class="num">${v(r.tpp)}</td></tr>`).join('')+`</tbody>`;
+});
 draw('pollster table','cardtbl',function(){
   document.getElementById('cardtbl').innerHTML =
     `<thead><tr><th>Pollster</th><th>Polls</th><th>Lean</th><th>Variability</th>
