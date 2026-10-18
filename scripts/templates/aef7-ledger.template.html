@@ -697,7 +697,9 @@ a.seatjump{color:inherit;text-decoration:underline dotted;text-underline-offset:
     <div class="field"><label for="f-grp">Failure group</label>
       <select id="f-grp"><option value="">Any</option><option value="*">Any grouped seat</option></select></div>
     <div class="field"><label for="f-q">Seat</label>
-      <input type="search" id="f-q" placeholder="Search name"></div>
+      <input type="search" id="f-q" placeholder="Seat name"></div>
+    <div class="field cand-only" hidden><label for="f-cand">Candidate</label>
+      <input type="search" id="f-cand" placeholder="Candidate name"></div>
     <div class="field"><label>Show</label>
       <div class="chips">
         <button class="toggle" id="t-wrong" aria-pressed="false">We called it wrong</button>
@@ -847,7 +849,7 @@ const key = r => r.pair + "__" + r.seat.replace(/[^A-Za-z0-9]+/g, "-");
 SEATS.forEach(r => BYKEY.set(key(r), r));
 
 let sortKey = "dll", sortDir = -1;
-const F = {pair:"", party:"", win:"", fav:"", grp:"", q:"", wrong:false, beat:false, noted:false};
+const F = {pair:"", party:"", win:"", fav:"", grp:"", q:"", cand:"", wrong:false, beat:false, noted:false};
 
 /* ---------- overall pooled stats ---------- */
 function overall(){
@@ -984,6 +986,7 @@ function render(){
     e.preventDefault();
     F.pair = a.dataset.pair; document.getElementById("f-pair").value = F.pair;
     F.q = a.dataset.seat.toLowerCase(); document.getElementById("f-q").value = a.dataset.seat;
+    F.cand = ""; document.getElementById("f-cand").value = "";
     setView("cand");
   }));
 }
@@ -1013,7 +1016,8 @@ function cvisible(){
       (!F.win   || s.winner===F.win) &&
       (!F.fav   || s.fav===F.fav) &&
       (!F.grp   || (F.grp==="*" ? !!s.grp : s.grp===F.grp)) &&
-      (!F.q     || c.seat.toLowerCase().includes(F.q) || (c.candidate||"").toLowerCase().includes(F.q)) &&
+      (!F.q     || c.seat.toLowerCase().includes(F.q)) &&
+      (!F.cand  || (c.candidate||"").toLowerCase().includes(F.cand)) &&
       (!F.wrong || s.correct===false) &&
       (!F.beat  || (c.d_abs!=null && c.d_abs>0)) &&
       (!F.noted || (notes.get(key(c))||"").trim().length>0);
@@ -1111,6 +1115,7 @@ document.getElementById("v-cand").addEventListener("click",()=>setView("cand"));
 document.getElementById("f-win").addEventListener("change",e=>{F.win=e.target.value; refresh();});
 document.getElementById("f-fav").addEventListener("change",e=>{F.fav=e.target.value; refresh();});
 document.getElementById("f-q").addEventListener("input",e=>{F.q=e.target.value.trim().toLowerCase(); refresh();});
+document.getElementById("f-cand").addEventListener("input",e=>{F.cand=e.target.value.trim().toLowerCase(); refresh();});
 [["t-wrong","wrong"],["t-beat","beat"],["t-noted","noted"]].forEach(([id,f])=>{
   document.getElementById(id).addEventListener("click",e=>{
     F[f]=!F[f]; e.currentTarget.setAttribute("aria-pressed",String(F[f])); refresh();
