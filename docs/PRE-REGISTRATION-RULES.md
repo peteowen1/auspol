@@ -160,3 +160,12 @@ make it a **visible addition with the original clause left unedited**, and check
 whether it favours the answer found later — if it does, it is not an amendment,
 it is a rationalisation. The one amendment made so far picked the value
 pre-registered *first*, which is the only reason it was allowed to stand.
+
+## A large gain in one election is not a reason to refuse (Pete, 2026-10-18)
+
+Do not write "one election supplies more than half the gain -> refused". It refuses an arm for being very good
+somewhere while no worse elsewhere (seat-poll arm G: fed2022 72% of the gain, fed2025 neutral). With few elections
+holding most of the relevant seats (seat polls: fed2022 151 and fed2025 150 of 312), it is a coin flip anyway. The
+real worry is a gain that is one election's quirk, so test THAT: **leave-one-election-out** (the arm must stay better
+by more than 1 SE with each election dropped) and **no election materially worse** on its own. Report each election's
+share of the gain as information, never as a refusal.

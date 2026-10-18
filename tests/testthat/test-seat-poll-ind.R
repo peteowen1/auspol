@@ -41,6 +41,7 @@ test_that("IND map moves a big OTH to IND only where the poll leaves IND blank a
 })
 
 test_that("IND map leaves a seat alone when a known non-major class already explains the OTH (Katter in Kennedy)", {
+  withr::local_envvar(AUSPOL_SEAT_POLL_SPLIT_ALL = "0")   # the shipped-before-H rule this test checks; SPLIT_ALL=1 ships since 2026-10-18
   fake_root(preds = data.table::data.table(election = "fedT", seat = c("Aaa", "Bbb"), party = "OTH_RIGHT",
                                            xgb_pred_seat = c(40, 4), actual_share = c(45, 3)))
   s <- rbind(polls("Aaa", "a", c("ALP", "LNP", "OTH"), c(30, 30, 40)),

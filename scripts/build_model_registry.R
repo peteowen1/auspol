@@ -180,34 +180,34 @@ CLASSIFY <- list(
     "SHIPPED (1) 2026-10-13, FIT-TIME: read by fit_xgb_primary_asat.R and fit_xgb_primary_v6_final.R (rebuild",
     "stages 4-5); harnesses and live load the trained models. plans/prereg-training-weights-2026-10-13.md"),
   AUSPOL_SEAT_POLL_SIZEVAR = paste(
-    "ARM (0), UNIVERSAL via R/: read inside R/seat_poll_blend.R (the seat-poll blend every harness and fit_seats_full.R",
+    "SHIPPED 2026-10-18 as arm H (deciding-runs/20261018-2009-seatpoll-H). ARM (0), UNIVERSAL via R/: read inside R/seat_poll_blend.R (the seat-poll blend every harness and fit_seats_full.R",
     "reach). plans/prereg-seat-poll-method-weights-2026-10-18.md amendment 2"),
   AUSPOL_SEAT_POLL_ALLPOLLS = paste(
-    "ARM (0), UNIVERSAL via R/: read inside R/seat_poll_blend.R (the seat-poll blend every harness and fit_seats_full.R",
+    "SHIPPED 2026-10-18 as arm H (deciding-runs/20261018-2009-seatpoll-H). ARM (0), UNIVERSAL via R/: read inside R/seat_poll_blend.R (the seat-poll blend every harness and fit_seats_full.R",
     "reach). plans/prereg-seat-poll-method-weights-2026-10-18.md amendment 2"),
   AUSPOL_SEAT_POLL_SPLIT_ALL = paste(
-    "ARM (0), UNIVERSAL via R/: read inside R/seat_poll_blend.R (the seat-poll blend every harness and fit_seats_full.R",
+    "SHIPPED 2026-10-18 as arm H (deciding-runs/20261018-2009-seatpoll-H). ARM (0), UNIVERSAL via R/: read inside R/seat_poll_blend.R (the seat-poll blend every harness and fit_seats_full.R",
     "reach). plans/prereg-seat-poll-method-weights-2026-10-18.md amendment 2"),
   AUSPOL_SEAT_POLL_ELECTION_ERR = paste(
-    "ARM (0), UNIVERSAL via R/: read inside R/seat_poll_blend.R (the seat-poll blend every harness and fit_seats_full.R",
+    "SHIPPED 2026-10-18 as arm H (deciding-runs/20261018-2009-seatpoll-H). ARM (0), UNIVERSAL via R/: read inside R/seat_poll_blend.R (the seat-poll blend every harness and fit_seats_full.R",
     "reach). plans/prereg-seat-poll-method-weights-2026-10-18.md amendment 8"),
   AUSPOL_SEAT_POLL_FIRM_SHARED = paste(
-    "ARM (0), UNIVERSAL via R/: read inside R/seat_poll_blend.R (the seat-poll blend every harness and fit_seats_full.R",
+    "SHIPPED 2026-10-18 as arm H (deciding-runs/20261018-2009-seatpoll-H). ARM (0), UNIVERSAL via R/: read inside R/seat_poll_blend.R (the seat-poll blend every harness and fit_seats_full.R",
     "reach). plans/prereg-seat-poll-method-weights-2026-10-18.md amendment 7"),
   AUSPOL_SEAT_POLL_IND_DIRECT = paste(
-    "ARM (0), UNIVERSAL via R/: read inside R/seat_poll_blend.R (the seat-poll blend every harness and fit_seats_full.R",
+    "SHIPPED 2026-10-18 as arm H (deciding-runs/20261018-2009-seatpoll-H). ARM (0), UNIVERSAL via R/: read inside R/seat_poll_blend.R (the seat-poll blend every harness and fit_seats_full.R",
     "reach). plans/prereg-seat-poll-method-weights-2026-10-18.md amendment 6"),
   AUSPOL_SEAT_POLL_NAMED_ONLY = paste(
-    "ARM (0), UNIVERSAL via R/: read inside R/seat_poll_blend.R (the seat-poll blend every harness and fit_seats_full.R",
+    "SHIPPED 2026-10-18 as arm H (deciding-runs/20261018-2009-seatpoll-H). ARM (0), UNIVERSAL via R/: read inside R/seat_poll_blend.R (the seat-poll blend every harness and fit_seats_full.R",
     "reach). plans/prereg-seat-poll-method-weights-2026-10-18.md"),
   AUSPOL_SEAT_POLL_MODELVAR_ALL = paste(
-    "ARM (0), UNIVERSAL via R/: read inside R/seat_poll_blend.R (the seat-poll blend every harness and fit_seats_full.R",
+    "SHIPPED 2026-10-18 as arm H (deciding-runs/20261018-2009-seatpoll-H). ARM (0), UNIVERSAL via R/: read inside R/seat_poll_blend.R (the seat-poll blend every harness and fit_seats_full.R",
     "reach). plans/prereg-seat-poll-method-weights-2026-10-18.md"),
   AUSPOL_SEAT_POLL_SALIENCE_VAR = paste(
-    "ARM (0), UNIVERSAL via R/: read inside R/seat_poll_blend.R (the seat-poll blend every harness and fit_seats_full.R",
+    "SHIPPED 2026-10-18 as arm H (deciding-runs/20261018-2009-seatpoll-H). ARM (0), UNIVERSAL via R/: read inside R/seat_poll_blend.R (the seat-poll blend every harness and fit_seats_full.R",
     "reach). plans/prereg-seat-poll-method-weights-2026-10-18.md"),
   AUSPOL_SEAT_POLL_GROUPS = paste(
-    "ARM (0), UNIVERSAL via R/: read inside seat_poll_shares() and seat_poll_decay_params() (R/seat_poll_blend.R),",
+    "SHIPPED 2026-10-18 as arm H (deciding-runs/20261018-2009-seatpoll-H). ARM (0), UNIVERSAL via R/: read inside seat_poll_shares() and seat_poll_decay_params() (R/seat_poll_blend.R),",
     "which every harness and fit_seats_full.R reach through the seat-poll blend. plans/prereg-seat-poll-method-weights-2026-10-18.md"),
   AUSPOL_XGB_RATIO_FEATS = paste(
     "ARM (0), FIT-TIME + LIVE: read by fit_xgb_primary_v6.R (training features; the as-at and final models",
@@ -661,7 +661,7 @@ CLASSIFY <- list(
     "SHIPPED 2026-10-09 with DECAY and PRIOR (data fix: an MRP release under 20 seats named MRP). Read in seat_poll_shares() in",
     "R/seat_poll_blend.R; reaches every entry point through the blend."),
   AUSPOL_SEAT_POLL_PRECISION_BLEND = paste(
-    "ARM, off: did not clear 2026-10-09 (+0.0000, SE 0.0037). Read in seat_poll_blend_apply() and seat_poll_blend_table() in",
+    "SHIPPED 2026-10-18 as arm H (deciding-runs/20261018-2009-seatpoll-H). ARM, off: did not clear 2026-10-09 (+0.0000, SE 0.0037). Read in seat_poll_blend_apply() and seat_poll_blend_table() in",
     "R/seat_poll_blend.R; needs AUSPOL_SEAT_POLL_DECAY=1."),
   AUSPOL_SEAT_POLL_PRIOR = paste(
     "SHIPPED 2026-10-09 at 0.75 (Pete's prior, same full run). Read in seat_poll_weight() via .seat_poll_prior() in R/seat_poll_blend.R,",

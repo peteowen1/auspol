@@ -193,7 +193,7 @@ seat_poll_shares <- function(election, days = 90, by_type = FALSE, by_poll = FAL
   v == "1"
 }
 .seat_poll_precision_on <- function() {
-  v <- Sys.getenv("AUSPOL_SEAT_POLL_PRECISION_BLEND", "0")
+  v <- Sys.getenv("AUSPOL_SEAT_POLL_PRECISION_BLEND", "1")
   if (!v %in% c("0", "1")) stop("AUSPOL_SEAT_POLL_PRECISION_BLEND must be \"0\" or \"1\", not ", v)
   v == "1"
 }
@@ -208,12 +208,12 @@ seat_poll_shares <- function(election, days = 90, by_type = FALSE, by_poll = FAL
 # prior of 225 (an opt-in poll misses by ~15 points until its record says otherwise; amendment 1); "method0" = the
 # same groups with no opt-in prior.
 .seat_poll_groups_mode <- function() {
-  v <- Sys.getenv("AUSPOL_SEAT_POLL_GROUPS", "0")
+  v <- Sys.getenv("AUSPOL_SEAT_POLL_GROUPS", "method")
   if (!v %in% c("0", "method", "method0")) stop("AUSPOL_SEAT_POLL_GROUPS must be \"0\", \"method\" or \"method0\", not ", v)
   v
 }
-.seat_poll_onoff <- function(name) {
-  v <- Sys.getenv(name, "0")
+.seat_poll_onoff <- function(name, default = "1") {   # every switch below ships "1" (arm H, 2026-10-18)
+  v <- Sys.getenv(name, default)
   if (!v %in% c("0", "1")) stop(name, " must be \"0\" or \"1\", not ", v)
   v == "1"
 }
@@ -262,7 +262,7 @@ seat_poll_shares <- function(election, days = 90, by_type = FALSE, by_poll = FAL
   # second independent sits in its others 12), so it measures that candidate even when the class has others standing.
   # The part-named rule is for an MRP's party columns (Kennedy 2022: UAP named, Katter in others).
   direct <- if ("is_mrp" %in% names(s)) !(s$is_mrp %in% TRUE) else rep(FALSE, nrow(s))
-  idm <- Sys.getenv("AUSPOL_SEAT_POLL_IND_DIRECT", "0")
+  idm <- Sys.getenv("AUSPOL_SEAT_POLL_IND_DIRECT", "ind")
   if (!idm %in% c("0", "ind", "pooled", "listed"))
     stop("AUSPOL_SEAT_POLL_IND_DIRECT must be \"0\", \"ind\", \"pooled\" or \"listed\", not ", idm)
   listed <- rep(FALSE, nrow(s))
@@ -463,6 +463,14 @@ SEAT_POLL_N_FALLBACK <- 600        # seat sample when no earlier direct poll rec
     fl <- fl * m
   }
   list(r = 0.5^(pp$days / p$H), sv = sv, fl = fl)
+}
+
+# named numeric vector <-> "a=1;b=2" in one CSV cell (the frozen blend table)
+.kv_write <- function(x) if (is.null(x) || !length(x)) "" else paste(sprintf("%s=%.8g", names(x), x), collapse = ";")
+.kv_read <- function(s) {
+  if (is.na(s) || !nzchar(s)) return(stats::setNames(numeric(0), character(0)))
+  kv <- strsplit(strsplit(s, ";", fixed = TRUE)[[1]], "=", fixed = TRUE)
+  stats::setNames(as.numeric(vapply(kv, `[`, "", 2)), vapply(kv, `[`, "", 1))
 }
 
 .seat_poll_firm_shared_on <- function() .seat_poll_onoff("AUSPOL_SEAT_POLL_FIRM_SHARED")   # amendment 7
@@ -753,7 +761,13 @@ seat_poll_blend_table <- function(target_election, write = FALSE) {
     w <- seat_poll_weight(target_election)
     sw <- seat_poll_weights_split(target_election)
     w$w_direct <- sw$direct$w; w$w_mrp <- sw$mrp$w
-    if (.seat_poll_precision_on()) w$vm <- seat_poll_model_var(target_election)
+    if (.seat_poll_precision_on()) {
+      w$vm <- seat_poll_model_var(target_election)
+      # everything the precision blend fits, so the frozen table the daily run reads (no seat predictions there,
+      # pipeline-overwrite-audit F17) carries it too: election-wide error and the target's independents' salience
+      if (.seat_poll_election_err_on()) w$te <- seat_poll_election_err(target_election)
+      if (.seat_poll_salience_var_on()) w$si <- .seat_poll_ind_salience(target_election)
+    }
     ind_on <- .ind_weight_on()
     if (ind_on) { wi <- seat_poll_ind_weight(target_election); w$w_ind <- wi$w; w$w_ind_raw <- wi$raw; w$w_ind_se <- wi$se; w$w_ind_n <- wi$n }
     tb <- seat_poll_shares(target_election, by_type = TRUE)
@@ -764,7 +778,13 @@ seat_poll_blend_table <- function(target_election, write = FALSE) {
                                                     wsum = if (.seat_poll_decay_on()) NA_real_ else NULL)
       out$w <- w$w; out$w_raw <- w$raw; out$w_se <- w$se; out$w_n <- w$n; out$w_k <- w$k
       out$w_direct <- w$w_direct; out$w_mrp <- w$w_mrp
-      if (!is.null(w$vm)) out$vm <- paste(sprintf("%s=%.6f", names(w$vm), w$vm), collapse = ";")
+      if (!is.null(w$vm)) {
+        out$vm <- .kv_write(w$vm)
+        out$vm_ref <- .kv_write(attr(w$vm, "ref"))
+        out$vm_par <- .kv_write(c(g = attr(w$vm, "g"), sal_b = attr(w$vm, "sal_b"), sal_mean = attr(w$vm, "sal_mean")))
+      }
+      if (!is.null(w$te)) out$te <- .kv_write(w$te)
+      if (!is.null(w$si)) out$sal <- if (nrow(w$si)) .kv_write(stats::setNames(w$si$jump, w$si$sk)) else ""
       if (ind_on) { out$w_ind <- w$w_ind; out$w_ind_raw <- w$w_ind_raw; out$w_ind_se <- w$w_ind_se; out$w_ind_n <- w$w_ind_n }
       data.table::fwrite(out, cache)
     }
@@ -775,8 +795,17 @@ seat_poll_blend_table <- function(target_election, write = FALSE) {
               w_direct = raw$w_direct[1], w_mrp = raw$w_mrp[1])
     if (.seat_poll_precision_on()) {
       if (!"vm" %in% names(raw)) stop(basename(cache), " was written without the model variance (vm) but AUSPOL_SEAT_POLL_PRECISION_BLEND=1: re-promote it")
-      kv <- strsplit(strsplit(raw$vm[1], ";")[[1]], "=")
-      w$vm <- stats::setNames(as.numeric(vapply(kv, `[`, "", 2)), vapply(kv, `[`, "", 1))
+      w$vm <- .kv_read(raw$vm[1])
+      need <- c(vm_ref = .seat_poll_sizevar_on() || .seat_poll_salience_var_on(), vm_par = .seat_poll_sizevar_on() || .seat_poll_salience_var_on(),
+                te = .seat_poll_election_err_on(), sal = .seat_poll_salience_var_on())
+      miss <- names(need)[need & !names(need) %in% names(raw)]
+      if (length(miss)) stop(basename(cache), " was written without ", paste(miss, collapse = ", "),
+                             " but the seat-poll switches need them: re-promote it (scripts/promote_rebuild.R)")
+      if ("vm_ref" %in% names(raw)) attr(w$vm, "ref") <- .kv_read(raw$vm_ref[1])
+      if ("vm_par" %in% names(raw)) { pp <- .kv_read(raw$vm_par[1])
+        attr(w$vm, "g") <- pp[["g"]]; attr(w$vm, "sal_b") <- pp[["sal_b"]]; attr(w$vm, "sal_mean") <- pp[["sal_mean"]] }
+      if ("te" %in% names(raw)) w$te <- .kv_read(raw$te[1])
+      if ("sal" %in% names(raw)) { sv <- .kv_read(raw$sal[1]); w$si <- data.table::data.table(sk = names(sv), jump = unname(sv)) }
     }
     if (.ind_weight_on()) {
       if (!"w_ind" %in% names(raw)) {
@@ -889,7 +918,7 @@ seat_poll_blend_apply <- function(shares, target_election) {
     }
     if (.seat_poll_salience_var_on()) {
       sb <- attr(vm, "sal_b"); if (is.null(sb)) stop("AUSPOL_SEAT_POLL_SALIENCE_VAR=1 but the model variance carries no salience term")
-      si <- .seat_poll_ind_salience(target_election)
+      si <- if (!is.null(w$si)) w$si else .seat_poll_ind_salience(target_election)
       ji <- si$jump[match(normalise_seat(tb$seat), si$sk)]
       mult <- ifelse(tb$class == "IND" & is.finite(ji), exp(sb * (log(pmax(ji, 0) + 0.01) - attr(vm, "sal_mean"))), 1)
       v <- v * mult
@@ -902,7 +931,7 @@ seat_poll_blend_apply <- function(shares, target_election) {
     }
     t2 <- 0
     if (.seat_poll_election_err_on()) {
-      te <- seat_poll_election_err(target_election)
+      te <- if (!is.null(w$te)) w$te else seat_poll_election_err(target_election)
       t2 <- unname(te[tb$class]); t2[!is.finite(t2)] <- te[["pooled"]]
       cat(sprintf("SPEE %s: election-wide poll error added to every cell (%d earlier elections): %s\n", target_election,
                   if (is.null(attr(te, "n_elections"))) 0L else attr(te, "n_elections"),
