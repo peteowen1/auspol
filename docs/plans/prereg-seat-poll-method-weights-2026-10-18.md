@@ -231,3 +231,20 @@ fitted per poll (a conservative choice: a floor fitted on single polls, applied 
 
 **Arms:** G = F + FIRM_SHARED; G minus SALIENCE_VAR. Same metrics, clauses, scorer and named seats; plus Aston, Ryan,
 Dickson (fed2025). Dry-run first: Aston's ALP pull under F and G.
+
+## Amendment 8 (2026-10-18 19:20, before anything is built or run; Pete: "go")
+
+The original text and amendments 1-7 stand. The shared firm floor (amendment 7) cut Aston's ALP pull only 0.84 -> 0.75:
+fed2025's seat polls missed Labor together (Aston's averaged ALP 30.0, actual 37.3), and an error every poll in an
+election shares cannot be averaged away by more polls or more firms. The shipped fixed weight, fitted on outcomes,
+already carries it; the precision blend's per-poll floors do not.
+
+**`AUSPOL_SEAT_POLL_ELECTION_ERR=1` (new):** every cell's poll variance gains an election-wide term `tau2_c`, so its pull
+is `v / (v + 1/P + tau2_c)`. `tau2_c` is fitted on EARLIER elections only: for each earlier election with polled
+cells and class c, `d_ec` = the mean over its polled cells of (cell poll average - actual), with its sampling noise
+`s2_ec` = var of those differences / number of cells; `tau2_c = mean_e max(0, d_ec^2 - s2_ec)`, shrunk toward the
+pooled-over-classes value by K = SEAT_POLL_FLOOR_K pseudo-elections, and the pool toward a prior of 4 (sd 2 points).
+Not modelled: that the model's own error may share part of the same miss (the statewide polls missed too).
+
+**Arms:** H = G + ELECTION_ERR (G = F + FIRM_SHARED); H minus FIRM_SHARED. Same metrics, clauses, scorer and named
+seats, plus Aston, Ryan, Dickson. Dry run first: `tau2` per class at fed2022 and fed2025, and Aston's ALP pull.
