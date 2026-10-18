@@ -7,6 +7,10 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30.
 
 ## NEEDS PETE (19 Oct morning)
 
+- F7 screen (demographic correction in full, `AUSPOL_DEMO_RESID_FULL=1`, built b6e1acc, off) NOT RUN: the memory
+  watchdog stopped it at ~04:10 (machine low on memory with nothing of this session running). Rerun when free:
+  `Rscript scripts/quick_arm.R "AUSPOL_DEMO_RESID_FULL=1" --pairs=all --sims=1000 --slots=1 --no-reuse`, then the
+  scratchpad scorer score_f7.R on its two cache keys (prereg-demo-resid-full-2026-10-19.md).
 - surge_h leak fix (`AUSPOL_SURGE_H_TF=1`, on dev only): neutral overall (35 elections +0.0005, SE 0.0009) but
   qld2012, qld2020 and fed2013 are each worse by just over 2 SE of their own seats (fed2019 better by 4 SE).
   Recommendation: keep it (a leak fix; ~0.7 of 31 elections cross 2 SE by chance). `plans/prereg-surge-h-time-forward-2026-10-18.md`.
