@@ -215,3 +215,19 @@ Named seats: P(actual winner). No arm is better than shipped by more than 1 SE; 
 E family loses on fed2025 major-party cells (Aston ALP 31.5 -> 30.2, actual 37.3; Ryan LNP 33.7 -> 35.7, actual 34.6):
 the precision blend gives MRP major-party columns more pull than the shipped fixed weight. Warringah 2019's only poll
 (GetUp, IND 22.3, actual 44.7) under-called Steggall itself; no poll weight recovers it.
+
+## Amendment 7 (2026-10-18 19:05, before anything is built or run; Pete: "fix major-party pull, rescreen")
+
+The original text and amendments 1-6 stand. The amendment 3-6 arms lose on fed2025's major-party cells (Aston, Ryan,
+Dickson): the precision blend sums every poll's precision as independent, but a poll's non-sampling floor (its
+method and house error) is shared by every release from the same firm, so seven MRP waves from two firms counted as
+seven independent measurements and pulled ~0.8 where the shipped fixed weight pulled ~0.46.
+
+**`AUSPOL_SEAT_POLL_FIRM_SHARED=1` (new):** within a cell, a firm's polls form ONE measurement: its estimate is their
+recency-and-precision-weighted mean (as now); its variance is the floor ONCE, divided by the recency of its newest
+poll, plus their combined sampling variance (`1 / sum(1/sv_i)`, which does average out). The cell's precision is the
+sum over FIRMS. Firms are `pollster_clean` (method file) or the pollster label. Nothing is refitted: the floors stay as
+fitted per poll (a conservative choice: a floor fitted on single polls, applied per firm).
+
+**Arms:** G = F + FIRM_SHARED; G minus SALIENCE_VAR. Same metrics, clauses, scorer and named seats; plus Aston, Ryan,
+Dickson (fed2025). Dry-run first: Aston's ALP pull under F and G.
