@@ -18,7 +18,7 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30.
   `PRE-REGISTRATION-RULES.md` (1 SE + leave-one-election-out + no election worse by >2 SE of its own seats; shares,
   directions and other metrics reported, not voted). No past refusal rested on a silly clause alone: breakout-mix,
   uncapped new-IND shrink and reentry-majors also failed primary or guard; departed-successor and CE were overridden.
-- OPEN (seat-poll data check, found 18 Oct): Wikipedia's RedBridge 29 Oct-20 Nov 2024 Melbourne row reads GRN 27, ALP 21,
+- DONE 18 Oct (row corrected via seat_poll_corrections.csv; report-only check scripts/check_seat_poll_tcp_consistency.R, 1 real error in 1,017 polls, 5 legitimate flags) (seat-poll data check, found 18 Oct): Wikipedia's RedBridge 29 Oct-20 Nov 2024 Melbourne row reads GRN 27, ALP 21,
   LIB 44 with its own 2CP GRN 55 / ALP 45 (a GRN-ALP final two, impossible with LIB on 44; result LIB 19.8). Our scrape
   matches the page (raw/fed2025.html), so the source has GRN/LIB swapped. General check to build: drop, loudly, a poll
   whose primaries contradict its own 2CP pairing (the two 2CP parties must be the top two on primaries, or close).
