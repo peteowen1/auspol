@@ -8,11 +8,14 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30.
 ## NEEDS PETE
 
 - OPEN: the publish for arm H: `AUSPOL_PUBLISH=1 AUSPOL_REBUILD_FROM=9 bash scripts/rebuild_forecasts.sh`.
-- OPEN, IN FLIGHT 19 Oct (Pete: "run it now"): F7 screen (demographic correction in full, `AUSPOL_DEMO_RESID_FULL=1`,
+- OPEN (the command; see the second-stop line below): F7 screen (demographic correction in full, `AUSPOL_DEMO_RESID_FULL=1`,
   off). `Rscript scripts/quick_arm.R "AUSPOL_DEMO_RESID_FULL=1" --pairs=all --sims=1000 --slots=1 --no-reuse`, then
   the scratchpad scorer score_f7.R on its two cache keys (`plans/prereg-demo-resid-full-2026-10-19.md`). The 18 Oct
   attempt was stopped by the memory watchdog.
-- DONE 19 Oct (Pete: keep): surge_h leak fix stays on (`AUSPOL_SURGE_H_TF=1`); goes to main with the next PR.
+- DONE 19 Oct (Pete: keep): surge_h leak fix stays on (`AUSPOL_SURGE_H_TF=1`); merged in PR #128 with F11, the
+  seat-poll corrections and the review fixes. Live after the publish above.
+- OPEN: F7 screen stopped by the memory watchdog a SECOND time 19 Oct (~07:45, at the compile step; a citiusverse
+  export held ~5 GB). Not restarted; rerun only on Pete's word, with the machine otherwise idle.
 - DONE 19 Oct (Pete: delete): the four isolated copies removed.
 
 ## 2026-10-18 pipeline audit (READ FIRST; `reviews/pipeline-overwrite-audit-2026-10-18.md`, Sonnet, read-only)
