@@ -265,7 +265,20 @@ a.seatjump{color:inherit;text-decoration:underline dotted;text-underline-offset:
   </details>
 
   <details class="provlog">
-    <summary>Provenance &amp; changelog <span class="n">(48 updates)</span></summary>
+    <summary>Provenance &amp; changelog <span class="n">(49 updates)</span></summary>
+    <p class="sub prov"><b>v63, 12-17 Oct 2026: our own polls, honest fits, and two new parts of the count.</b>
+       <b>Polls:</b> the trend now reads our own Wikipedia poll scrape layered over AE Forecasts' file (theirs had
+       RedBridge's Greens and One Nation figures swapped and lacked Resolve 6-10 Oct), plus Poll Bludger's tables and
+       the Roy Morgan and Newspoll archives. <b>Fits that learn only from earlier elections:</b> the preference-flow
+       trees, the defector-carry rate, sitting members' slopes and the statewide party correlation all stopped
+       learning from later elections (the correlation is off: its honest version added nothing), and recent
+       elections now count more in training (seat log loss -0.012 on this page at the time). <b>35 elections</b> are now
+       scored and pooled, including NT and the 2010-2019 state elections. <b>Small seats</b> get a wider spread (NT
+       favourites had been called far too confidently). <b>A Liberal and a National in one seat</b> are now counted
+       as two candidates, so a National's preferences can leak to Labor (Albany 2013); 191 such seats improved, WA
+       most. <b>Seats with a strong independent</b> get more width and a heavier-tailed error, on Pete's override of
+       a refusal (the gain over 35 elections is mostly Queensland 2012/2017; this page moves +0.0016, within noise).
+       Seat log loss 0.2682 to <b>0.2676</b> against AE Forecasts' 0.2825; primary-vote error 4.73 (AEF 5.71).</p>
     <p class="sub prov"><b>v62, 11 Oct 2026: the day-before level follows the late polls.</b>
        The statewide trend lagged late movement: Victoria 2022 had the Coalition at 31.4 the day before, while the
        polls of the final four weeks averaged 34.1 and the result was 34.5. Every Liberal primary was under-called,
