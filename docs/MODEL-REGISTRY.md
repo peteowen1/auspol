@@ -31,7 +31,7 @@ All seven share one `R/` package core (`simulate_seat_contests()`,
 in which switches each one WIRES and which data source each reads, not in
 separate model code.
 
-## Switch parity (221 switches from `published_flags.R`, 7 entry points)
+## Switch parity (222 switches from `published_flags.R`, 7 entry points)
 
 | switch | fit_seats (published) | fed | nsw | qld | sa | vic | wa |
 |---|---|---|---|---|---|---|---|
@@ -180,6 +180,7 @@ separate model code.
 | `AUSPOL_SEAT_POLL_FIRM_SHARED` | NO | NO | NO | NO | NO | NO | NO |
 | `AUSPOL_SEAT_POLL_GROUPS` | NO | NO | NO | NO | NO | NO | NO |
 | `AUSPOL_SEAT_POLL_HANDKEYED` | NO | NO | NO | NO | NO | NO | NO |
+| `AUSPOL_SEAT_POLL_HEAVY_TAIL` | NO | NO | NO | NO | NO | NO | NO |
 | `AUSPOL_SEAT_POLL_IND_DIRECT` | NO | NO | NO | NO | NO | NO | NO |
 | `AUSPOL_SEAT_POLL_IND_MAP` | NO | NO | NO | NO | NO | NO | NO |
 | `AUSPOL_SEAT_POLL_IND_WEIGHT` | NO | NO | NO | NO | NO | NO | NO |
@@ -372,6 +373,7 @@ separate model code.
 - **`AUSPOL_SEAT_POLL_FIRM_SHARED`** (**adopted, shared-function wiring**): SHIPPED 2026-10-18 as arm H (deciding-runs/20261018-2009-seatpoll-H). ARM (0), UNIVERSAL via R/: read inside R/seat_poll_blend.R (the seat-poll blend every harness and fit_seats_full.R reach). plans/prereg-seat-poll-method-weights-2026-10-18.md amendment 7
 - **`AUSPOL_SEAT_POLL_GROUPS`** (**adopted, shared-function wiring**): SHIPPED 2026-10-18 as arm H (deciding-runs/20261018-2009-seatpoll-H). ARM (0), UNIVERSAL via R/: read inside seat_poll_shares() and seat_poll_decay_params() (R/seat_poll_blend.R), which every harness and fit_seats_full.R reach through the seat-poll blend. plans/prereg-seat-poll-method-weights-2026-10-18.md
 - **`AUSPOL_SEAT_POLL_HANDKEYED`** (**adopted, shared-function wiring**): SHIPPED 2026-10-06 (Pete override). Read in .read_seat_polls_file() in R/seat_poll_blend.R; reaches every entry point through the blend.
+- **`AUSPOL_SEAT_POLL_HEAVY_TAIL`** (intentional / dead experiment): ARM (0), UNIVERSAL via R/: read inside R/seat_poll_blend.R (the seat-poll blend every harness and fit_seats_full.R reach). plans/prereg-seat-poll-heavy-tail-2026-10-18.md
 - **`AUSPOL_SEAT_POLL_IND_DIRECT`** (**adopted, shared-function wiring**): SHIPPED 2026-10-18 as arm H (deciding-runs/20261018-2009-seatpoll-H). ARM (0), UNIVERSAL via R/: read inside R/seat_poll_blend.R (the seat-poll blend every harness and fit_seats_full.R reach). plans/prereg-seat-poll-method-weights-2026-10-18.md amendment 6
 - **`AUSPOL_SEAT_POLL_IND_MAP`** (**adopted, shared-function wiring**): SHIPPED 2026-10-06 (Pete override). Read in seat_poll_shares() in R/seat_poll_blend.R; reaches every entry point through the blend.
 - **`AUSPOL_SEAT_POLL_IND_WEIGHT`** (**adopted, shared-function wiring**): SHIPPED 2026-10-06 (Pete override). Read in R/seat_poll_blend.R (.ind_weight_on(), seat_poll_blend_apply()); reaches every entry point through the blend. It errors if combined with AUSPOL_SEAT_POLL_MATCH=perpoll.
@@ -480,4 +482,4 @@ A forced value is not automatically a bug, but it must be recorded in `published
 
 ## Coverage check
 
-MR2  every non-universal switch (180 of 221) has a recorded classification.
+MR2  every non-universal switch (181 of 222) has a recorded classification.
