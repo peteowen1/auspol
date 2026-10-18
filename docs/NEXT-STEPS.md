@@ -14,6 +14,10 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30.
 - OPEN F3 (live): `fit_seats_full.R:932` hardcodes the defector discount 0.282; every harness fits it time-forward.
 - OPEN F4 (scores): six harnesses use a flat `PARTY_SD` 1.5 and no `statewide_draws` (vic :853); only fed and live
   pass statewide_draws, so 16 of 23 pairs are scored on a different statewide spread than ships.
+- DONE 18 Oct: rules review (`reviews/rules-review-2026-10-18.md`, Pete asked). Standard decision rule now heads
+  `PRE-REGISTRATION-RULES.md` (1 SE + leave-one-election-out + no election worse by >2 SE of its own seats; shares,
+  directions and other metrics reported, not voted). No past refusal rested on a silly clause alone: breakout-mix,
+  uncapped new-IND shrink and reentry-majors also failed primary or guard; departed-successor and CE were overridden.
 - OPEN, NEXT after arm H ships (seat polls, heavy-tailed model error): under arm H a first-time teal the model has at
   4-5% gets a Gaussian compromise with good polls at 30+: Goldstein 2022 model 4.3, 3 polls 33.8, model sd 7.3, poll sd
   4.2 + election-wide 2.6, pull 0.69 -> 24.5 (actual 34.5); North Sydney 2022 model 5.2, polls 19.1, pull 0.80 -> 16.4

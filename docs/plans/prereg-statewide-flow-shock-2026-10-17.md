@@ -67,3 +67,10 @@ Screen at 5,000 sims (the totals need more draws than one seat's winner), decidi
 
 - Shocks shared across classes (a year when every minor's preferences lean right together); one per class.
 - Flows between the minors themselves (only the Labor-vs-Coalition tilt is shocked).
+
+## Amendment (2026-10-18, before anything is run): the standard decision rule replaces the one-election clause
+
+Pete, 2026-10-18: refusing an arm because one election supplies most of its gain is wrong when no election is worse.
+The clause "one election supplies more than half the primary gain -> refused" above is kept as text but is now REPORTED
+only; it is replaced by standard rules 3 and 4 in `docs/PRE-REGISTRATION-RULES.md` (leave-one-election-out: still
+better by more than 1 SE with each election dropped; no election worse by more than 2 SE of its own seats).
