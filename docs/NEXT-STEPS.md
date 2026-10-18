@@ -24,7 +24,7 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30.
   whose primaries contradict its own 2CP pairing (the two 2CP parties must be the top two on primaries, or close).
   Melbourne 2025: YouGov's three MRPs had ALP 28-31 (actual 31.3), RedBridge 21-22, Advance-paid Insightfully GRN 50;
   the pollster track-record switch AUSPOL_SEAT_POLL_FIRM_FLOOR (off) is the other lever there.
-- IN PROGRESS 18-19 Oct (built f726303, screening `deciding-runs/heavytail-screen/`), was NEXT after arm H ships (seat polls, heavy-tailed model error): under arm H a first-time teal the model has at
+- REFUSED 19 Oct (heavy-tail arm T: polled -0.0004, SE 0.0052; Goldstein 2022 fixed 0.49 -> 0.69 but Warringah 2019, Mayo 2016, North Sydney worse; prereg RESULT). Was NEXT after arm H ships (seat polls, heavy-tailed model error): under arm H a first-time teal the model has at
   4-5% gets a Gaussian compromise with good polls at 30+: Goldstein 2022 model 4.3, 3 polls 33.8, model sd 7.3, poll sd
   4.2 + election-wide 2.6, pull 0.69 -> 24.5 (actual 34.5); North Sydney 2022 model 5.2, polls 19.1, pull 0.80 -> 16.4
   (actual 25.2). A 30-point gap is ~4 sd: evidence the model missed a surge. Fix: a mixture/heavy tail on the model's

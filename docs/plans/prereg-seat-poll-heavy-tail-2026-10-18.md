@@ -69,3 +69,15 @@ size scaling, as arm H), per class: zero-mean two-component normal by EM, ordina
 (prior 100) would give a 2% candidate the same "badly wrong" spread as a 40% one; `v` already scales with size.
 `pi` shrunk toward the pool over classes by `SEAT_POLL_FLOOR_K` units and the pool toward 0.02; `k` floored at 1.5.
 Everything else as written.
+
+## RESULT (2026-10-19 00:15; quick_arm 5,000 sims, 7 polled elections, deciding-runs/heavytail-screen/) -- REFUSED
+
+Fit (fed2025): independents ordinary scale 0.20 with 17.9% badly-wrong weight at 17x the variance; ALP 2.9%, x7.2.
+Seat-winner log loss, T minus shipped H (lower is better), SE clustered on election: polled seats (314) -0.0004
+(SE 0.0052), every seat (801) -0.0002 (SE 0.0021); leave-one-election-out never better by >1 SE; fed2025 -0.0091,
+fed2022 +0.0015. P(actual winner) H -> T: Goldstein 2022 0.488 -> 0.687 (target), Curtin 2022 0.528 -> 0.582, Ryan 2025
+0.648 -> 0.678; North Sydney 2022 0.205 -> 0.190, Warringah 2019 0.146 -> 0.093, Mayo 2016 0.078 -> 0.047; McMahon 2025
+0.919 -> 0.921 and Mayo 2025 0.965 -> 0.964 (must-not-break, held). Not better than H: the switch stays "0".
+The mixture follows polls harder when they are far from the model, which is right when the polls are good (Goldstein)
+and wrong when the only poll is itself low (Warringah 2019, GetUp IND 22.3, actual 44.7; Mayo 2016). The lever left is
+the polls' own error in a surge, not the model's.
