@@ -63,7 +63,7 @@ seat_poll_shares <- function(election, days = 90, by_type = FALSE, by_poll = FAL
 .seat_poll_memo_key <- function(election, days, by_type, by_poll, .raw, extra = character(0)) {
   env <- Sys.getenv(); env <- env[startsWith(names(env), "AUSPOL_")]
   sp <- file.path(pkg_root(), "external", "reference", "polls", "seat-polls")
-  files <- c(file.path(sp, c("seat_polls.csv", "hand_keyed_primaries.csv", "poll_methods.csv", "mrp_candidates.csv")),
+  files <- c(file.path(sp, c("seat_polls.csv", "hand_keyed_primaries.csv", "poll_methods.csv", "mrp_candidates.csv", "seat_poll_corrections.csv")),
              out_path(c("candidacies.csv", "endorsement-features.csv", "xgb-primary-asat-predictions.csv", "forecasts.csv")),
              extra)
   fi <- file.info(files, extra_cols = FALSE)
@@ -363,6 +363,10 @@ seat_poll_model_var <- function(target_election) {
     out <- c(pooled = SEAT_POLL_MODEL_VAR_PRIOR)
     attr(out, "ref") <- c(pooled = 1); attr(out, "g") <- 0; attr(out, "g_raw") <- NA_real_; attr(out, "g_se") <- NA_real_
     attr(out, "sal_b") <- 0; attr(out, "sal_mean") <- 0; attr(out, "sal_se") <- NA_real_; attr(out, "sal_n") <- 0L   # (review 2026-10-18)
+    if (.seat_poll_heavy_tail_on()) {   # the mixture's prior (.seat_poll_em2 on too few cells) (review 2026-10-19)
+      p0 <- .seat_poll_em2(numeric(0))
+      attr(out, "ht_pi") <- c(pooled = p0[["pi"]]); attr(out, "ht_s1") <- c(pooled = p0[["s1"]]); attr(out, "ht_k") <- c(pooled = p0[["k"]])
+    }
     return(out)
   }
   e2 <- (rows$actual - rows$pred)^2
@@ -390,6 +394,22 @@ seat_poll_model_var <- function(target_election) {
   # in search interest. x = log(jump + 0.01) centred on the earlier independent cells that have salience; b from
   # their log squared error after the size term, shrunk toward 0 by its SE. Cells with no salience take no part.
   attr(out, "sal_b") <- 0; attr(out, "sal_mean") <- 0; attr(out, "sal_se") <- NA_real_; attr(out, "sal_n") <- 0L
+  # AUSPOL_SEAT_POLL_HEAVY_TAIL (prereg-seat-poll-heavy-tail-2026-10-18.md): the model's error is a two-part mixture.
+  # Fitted per class on the same earlier cells' errors standardised by each cell's own variance (class v x the size
+  # scaling), zero-mean, by EM: ordinary scale s1, "badly wrong" scale k * s1 with weight pi.
+  if (.seat_poll_heavy_tail_on()) {
+    vrow <- v[rows$class] * ((rows$pred + 1) / (ref[rows$class] + 1))^(wg * g)
+    z2 <- e2 / vrow
+    fits <- lapply(c(cls, "pooled"), function(cl) .seat_poll_em2(if (cl == "pooled") z2 else z2[rows$class == cl]))
+    names(fits) <- c(cls, "pooled")
+    pr_pi <- 0.02; Kp <- SEAT_POLL_FLOOR_K
+    npool <- length(z2); pi_pool <- (npool * fits$pooled[["pi"]] + Kp * pr_pi) / (npool + Kp)
+    ht_pi <- vapply(c(cls, "pooled"), function(cl) { n <- if (cl == "pooled") npool else sum(rows$class == cl)
+      if (cl == "pooled") pi_pool else (n * fits[[cl]][["pi"]] + Kp * pi_pool) / (n + Kp) }, numeric(1))
+    attr(out, "ht_pi") <- ht_pi
+    attr(out, "ht_s1") <- vapply(fits, function(x) x[["s1"]], numeric(1))
+    attr(out, "ht_k") <- vapply(fits, function(x) x[["k"]], numeric(1))
+  }
   if (.seat_poll_salience_var_on()) {
     ind <- which(rows$class == "IND")
     sl <- data.table::rbindlist(lapply(unique(sub(" .*", "", rows$unit[ind])), function(e)
@@ -477,6 +497,26 @@ SEAT_POLL_N_FALLBACK <- 600        # seat sample when no earlier direct poll rec
 }
 
 .seat_poll_firm_shared_on <- function() .seat_poll_onoff("AUSPOL_SEAT_POLL_FIRM_SHARED")   # amendment 7
+.seat_poll_heavy_tail_on <- function() .seat_poll_onoff("AUSPOL_SEAT_POLL_HEAVY_TAIL", "0")   # prereg-seat-poll-heavy-tail (ARM)
+
+# Zero-mean two-component normal mixture on squared standardised errors z2, by EM: weight pi on the wide component,
+# scales s1 and k * s1 (k >= 1.5). Returns c(pi, s1, k).
+.seat_poll_em2 <- function(z2) {
+  z2 <- z2[is.finite(z2)]
+  if (length(z2) < 20L) return(c(pi = 0.02, s1 = 1, k = 9))
+  p <- 0.05; s1 <- stats::median(z2) / 0.455; k <- 9   # 0.455 = median of a chi-square(1)
+  for (it in seq_len(200L)) {
+    d1 <- (1 - p) * exp(-z2 / (2 * s1)) / sqrt(s1)
+    d2 <- p * exp(-z2 / (2 * s1 * k)) / sqrt(s1 * k)
+    r <- d2 / (d1 + d2); r[!is.finite(r)] <- 1
+    p_new <- mean(r); s1_new <- sum((1 - r) * z2) / sum(1 - r)
+    k_new <- max(1.5, sum(r * z2) / max(sum(r), 1e-9) / s1_new)
+    done <- abs(p_new - p) < 1e-7 && abs(k_new - k) < 1e-6
+    p <- p_new; s1 <- s1_new; k <- k_new
+    if (done) break
+  }
+  c(pi = p, s1 = s1, k = k)
+}
 .seat_poll_election_err_on <- function() .seat_poll_onoff("AUSPOL_SEAT_POLL_ELECTION_ERR") # amendment 8
 SEAT_POLL_ELECTION_ERR_PRIOR <- 4   # sd 2 points: the prior for an election-wide seat-poll miss (amendment 8)
 
@@ -788,6 +828,11 @@ seat_poll_blend_table <- function(target_election, write = FALSE) {
         out$vm_par <- .kv_write(unlist(attributes(w$vm)[intersect(c("g", "g_raw", "g_se", "sal_b", "sal_b_raw", "sal_mean", "sal_se", "sal_n"),
                                                                     names(attributes(w$vm)))]))
       }
+      if (!is.null(attr(w$vm, "ht_pi"))) {
+        ht <- c(attr(w$vm, "ht_pi"), attr(w$vm, "ht_s1"), attr(w$vm, "ht_k"))
+        names(ht) <- c(paste0("pi.", names(attr(w$vm, "ht_pi"))), paste0("s1.", names(attr(w$vm, "ht_s1"))), paste0("k.", names(attr(w$vm, "ht_k"))))
+        out$vm_ht <- .kv_write(ht)
+      }
       if (!is.null(w$te)) out$te <- .kv_write(w$te)
       if (!is.null(w$si)) out$sal <- if (nrow(w$si)) .kv_write(stats::setNames(w$si$jump, w$si$sk)) else ""
       if (ind_on) { out$w_ind <- w$w_ind; out$w_ind_raw <- w$w_ind_raw; out$w_ind_se <- w$w_ind_se; out$w_ind_n <- w$w_ind_n }
@@ -802,7 +847,7 @@ seat_poll_blend_table <- function(target_election, write = FALSE) {
       if (!"vm" %in% names(raw)) stop(basename(cache), " was written without the model variance (vm) but AUSPOL_SEAT_POLL_PRECISION_BLEND=1: re-promote it")
       w$vm <- .kv_read(raw$vm[1])
       need <- c(vm_ref = .seat_poll_sizevar_on() || .seat_poll_salience_var_on(), vm_par = .seat_poll_sizevar_on() || .seat_poll_salience_var_on(),
-                te = .seat_poll_election_err_on(), sal = .seat_poll_salience_var_on())
+                te = .seat_poll_election_err_on(), sal = .seat_poll_salience_var_on(), vm_ht = .seat_poll_heavy_tail_on())
       miss <- names(need)[need & !names(need) %in% names(raw)]
       if (length(miss)) stop(basename(cache), " was written without ", paste(miss, collapse = ", "),
                              " but the seat-poll switches need them: re-promote it (scripts/promote_rebuild.R)")
@@ -810,6 +855,11 @@ seat_poll_blend_table <- function(target_election, write = FALSE) {
       if ("vm_par" %in% names(raw)) { pp <- .kv_read(raw$vm_par[1])
         for (a in names(pp)) attr(w$vm, a) <- pp[[a]]
         for (a in c("g", "sal_b", "sal_mean")) if (is.null(attr(w$vm, a))) attr(w$vm, a) <- 0 }
+      if ("vm_ht" %in% names(raw)) {
+        ht <- .kv_read(raw$vm_ht[1])
+        for (pre in c("pi", "s1", "k")) { x <- ht[startsWith(names(ht), paste0(pre, "."))]; names(x) <- sub("^[a-z0-9]+[.]", "", names(x))
+          attr(w$vm, paste0("ht_", pre)) <- x }
+      }
       if ("te" %in% names(raw)) w$te <- .kv_read(raw$te[1])
       if ("sal" %in% names(raw)) { sv <- .kv_read(raw$sal[1]); w$si <- data.table::data.table(sk = names(sv), jump = unname(sv)) }
     }
@@ -944,6 +994,24 @@ seat_poll_blend_apply <- function(shares, target_election) {
                   paste(sprintf("%s sd %.1f", names(te), sqrt(te)), collapse = ", ")))
     }
     wvec <- v / (v + 1 / tb$wsum + t2)
+    if (.seat_poll_heavy_tail_on()) {
+      hp <- attr(vm, "ht_pi"); hs <- attr(vm, "ht_s1"); hk <- attr(vm, "ht_k")
+      if (is.null(hp) || is.null(hs) || is.null(hk)) stop("AUSPOL_SEAT_POLL_HEAVY_TAIL=1 but the model variance carries no mixture (re-promote the blend table)")
+      pick <- function(x) { y <- unname(x[tb$class]); y[!is.finite(y)] <- x[["pooled"]]; y }
+      pi_c <- pick(hp); s1_c <- pick(hs); k_c <- pick(hk)
+      rs <- match(normalise_seat(tb$seat), normalise_seat(rownames(shares))); cs <- match(tb$class, colnames(shares))
+      pred <- ifelse(is.na(rs) | is.na(cs), NA_real_, shares[cbind(ifelse(is.na(rs), 1L, rs), ifelse(is.na(cs), 1L, cs))])
+      gap <- tb$poll - pred; pv <- 1 / tb$wsum + t2
+      v1 <- v * s1_c; v2 <- v * s1_c * k_c
+      l1 <- (1 - pi_c) * stats::dnorm(gap, 0, sqrt(v1 + pv)); l2 <- pi_c * stats::dnorm(gap, 0, sqrt(v2 + pv))
+      wb <- l2 / (l1 + l2); wb[!is.finite(wb)] <- 0
+      wvec <- ifelse(is.finite(gap), (1 - wb) * v1 / (v1 + pv) + wb * v2 / (v2 + pv), wvec)
+      cat(sprintf("SPHT %s: heavy-tailed model error, badly-wrong weight %s; posterior weight on it > 0.5 in %d of %d cells\n",
+                  target_election, paste(sprintf("%s %.3f (x%.1f)", names(hp), hp, hk), collapse = ", "), sum(wb > 0.5), length(wb)))
+      for (r in which(tb$class == "IND" & normalise_seat(tb$seat) %in% c("goldstein", "northsydney", "curtin", "warringah", "mcmahon", "mayo")))
+        cat(sprintf("SPHT   %s %s IND: model %.1f, polls %.1f, badly-wrong weight %.2f, pull %.2f -> %.1f\n",
+                    target_election, tb$seat[r], pred[r], tb$poll[r], wb[r], wvec[r], pred[r] + wvec[r] * gap[r]))
+    }
     cat(sprintf("SPPB %s: precision blend, pull median %.2f (range %.2f-%.2f) over %d cells; model sd by class %s\n",
                 target_election, stats::median(wvec), min(wvec), max(wvec), nrow(tb),
                 paste(sprintf("%s %.1f", names(vm), sqrt(vm)), collapse = ", ")))
@@ -1084,13 +1152,13 @@ seat_poll_weights_split <- function(target_election) {
   # `f` and its hand-keyed sibling are stamped themselves: a caller may pass
   # any file (a test's tempfile), not only the repo copy (review, 2026-10-10).
   key <- paste("FILE", f, .seat_poll_memo_key("", 0, FALSE, FALSE, FALSE,
-               extra = c(f, file.path(dirname(f), "hand_keyed_primaries.csv"))), sep = "#")
+               extra = c(f, file.path(dirname(f), c("hand_keyed_primaries.csv", "seat_poll_corrections.csv")))), sep = "#")
   .seat_poll_memoised(key, function() .read_seat_polls_file_impl(f))
 }
 
 #' @keywords internal
 .read_seat_polls_file_impl <- function(f) {
-  s <- .seat_poll_coalition_dedup(data.table::fread(f, showProgress = FALSE))
+  s <- .seat_poll_coalition_dedup(.seat_poll_apply_corrections(data.table::fread(f, showProgress = FALSE), f))
   v <- Sys.getenv("AUSPOL_SEAT_POLL_HANDKEYED", "1")
   if (!v %in% c("0", "1")) stop("AUSPOL_SEAT_POLL_HANDKEYED must be \"0\" or \"1\", not ", v)
   if (v == "0") return(s)
@@ -1102,6 +1170,42 @@ seat_poll_weights_split <- function(target_election) {
               paste(unique(paste(h$election, h$seat_name)), collapse = ", ")))
   h$source <- NULL
   data.table::rbindlist(list(s, h), use.names = TRUE, fill = TRUE)
+}
+
+#' Correct seat-poll figures the source page got wrong (seat_poll_corrections.csv)
+#'
+#' One row per wrong figure: the poll (election, seat_name, pollster,
+#' fieldwork_end), the party label as scraped, the value the scrape holds
+#' (`fp_wrong`), the value the pollster published (`fp_right`) and where that
+#' was read. Applied after every scrape, so a refetch cannot bring the error
+#' back. A correction whose `fp_wrong` is not found exactly once stops the run:
+#' a silently unmatched correction is a fix that quietly stopped applying.
+#' First case: Wikipedia's RedBridge Melbourne Nov 2024 row had the three
+#' major figures in the wrong columns (Accent Research's PDF, 2026-10-18).
+#' Prints SPCX. `AUSPOL_SEAT_POLL_CORRECTIONS` ("1"; "0" off).
+#' @keywords internal
+.seat_poll_apply_corrections <- function(s, f) {
+  v <- Sys.getenv("AUSPOL_SEAT_POLL_CORRECTIONS", "1")
+  if (!v %in% c("0", "1")) stop("AUSPOL_SEAT_POLL_CORRECTIONS must be \"0\" or \"1\", not ", v)
+  cf <- file.path(dirname(f), "seat_poll_corrections.csv")
+  if (v == "0" || !file.exists(cf)) return(s)
+  cx <- data.table::fread(cf, showProgress = FALSE, colClasses = list(character = c("fieldwork_end")))
+  if (!nrow(cx)) return(s)
+  if (any(!nzchar(cx$source))) stop(basename(cf), ": every correction needs a source")
+  fpn <- suppressWarnings(as.numeric(s$fp))
+  for (i in seq_len(nrow(cx))) {
+    hit <- which(s$election == cx$election[i] & s$seat_name == cx$seat_name[i] & s$pollster == cx$pollster[i] &
+                 as.character(s$fieldwork_end) == cx$fieldwork_end[i] & s$party == cx$party[i] & s$row_type == "poll" &
+                 is.finite(fpn) & abs(fpn - cx$fp_wrong[i]) < 1e-9)
+    if (length(hit) != 1L)
+      stop(sprintf("SPCX! correction %d (%s %s %s %s %s %s -> %s) matched %d rows, not 1: the scrape changed; check %s",
+                   i, cx$election[i], cx$seat_name[i], cx$pollster[i], cx$fieldwork_end[i], cx$party[i],
+                   cx$fp_wrong[i], cx$fp_right[i], length(hit), basename(cf)))
+    s$fp[hit] <- if (is.character(s$fp)) as.character(cx$fp_right[i]) else cx$fp_right[i]
+  }
+  cat(sprintf("SPCX %d seat-poll figure(s) corrected from %s: %s\n", nrow(cx), basename(cf),
+              paste(unique(paste(cx$election, cx$seat_name, cx$pollster, cx$fieldwork_end)), collapse = "; ")))
+  s
 }
 
 # A complete poll's primaries sum to 100 within this many points (rounding).

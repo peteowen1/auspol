@@ -229,8 +229,7 @@ demographic_residual_apply <- function(shares, pair,
       i <- match(tb$seat, rownames(shares)); j <- match(tb$class, colnames(shares))
       ok <- !is.na(i) & !is.na(j)
       shares[cbind(i[ok], j[ok])] <- pmax(0, shares[cbind(i[ok], j[ok])] + tb$adj[ok])
-      rs <- rowSums(shares); keep <- rs > 0
-      shares[keep, ] <- shares[keep, ] * (tot[keep] / rs[keep])
+      shares <- .demo_rebalance(shares, tot, unique(tb$class[ok]))
       cat(sprintf("DR1  demographic correction ON for %s from %s (%d of %d rows matched)\n",
                   pair, basename(cache), sum(ok), nrow(tb)))
       return(shares)
@@ -311,9 +310,7 @@ demographic_residual_apply <- function(shares, pair,
     cat(sprintf("DR1! no class could be fitted for %s; correction SKIPPED\n", pair))
     return(shares)
   }
-  rs <- rowSums(shares)
-  keep <- rs > 0
-  shares[keep, ] <- shares[keep, ] * (tot[keep] / rs[keep])
+  shares <- .demo_rebalance(shares, tot, intersect(classes, colnames(shares)))
   if (isTRUE(write_table)) {
     data.table::fwrite(data.table::rbindlist(shipped), cache)
     cat(sprintf("DR1  wrote %s (%d rows)\n", basename(cache), sum(vapply(shipped, nrow, 1L))))
@@ -325,5 +322,28 @@ demographic_residual_apply <- function(shares, pair,
               if (identical(as.integer(shuffle), 0L)) "" else
                 sprintf(", SHUFFLED CONTROL seed=%s", shuffle)))
   for (a in applied) cat(sprintf("DR1    %s\n", a))
+  shares
+}
+
+# Put each row back to its original total after the corrections were added. Default: rescale the whole row, which
+# keeps only part of each correction (~60% of an ALP cell near 40; audit F7). AUSPOL_DEMO_RESID_FULL=1: the adjusted
+# classes keep their corrections in full and the other classes give up the difference in proportion (the
+# .shift_cell() rule); a row whose other classes cannot absorb it falls back to the rescale, counted (DRF1).
+# docs/plans/prereg-demo-resid-full-2026-10-19.md.
+.demo_rebalance <- function(shares, tot, adj_cols) {
+  v <- Sys.getenv("AUSPOL_DEMO_RESID_FULL", "0")
+  if (!v %in% c("0", "1")) stop("AUSPOL_DEMO_RESID_FULL must be \"0\" or \"1\", not ", v)
+  rs <- rowSums(shares); keep <- rs > 0
+  if (v == "0") { shares[keep, ] <- shares[keep, ] * (tot[keep] / rs[keep]); return(shares) }
+  oth <- setdiff(colnames(shares), adj_cols)
+  fallback <- 0L
+  for (r in which(keep)) {
+    excess <- rs[r] - tot[r]
+    rest <- sum(shares[r, oth])
+    if (length(oth) && rest > excess && rest > 0) shares[r, oth] <- shares[r, oth] * (rest - excess) / rest
+    else { shares[r, ] <- shares[r, ] * (tot[r] / rs[r]); fallback <- fallback + 1L }
+  }
+  cat(sprintf("DRF1 demographic corrections delivered in full on %d seats (others absorb them); %d fell back to the row rescale\n",
+              sum(keep) - fallback, fallback))
   shares
 }

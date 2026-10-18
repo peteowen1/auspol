@@ -552,11 +552,22 @@ ALL <- merge(ALL, SURGING, by = c("pair","party"), all.x = TRUE)
 ALL[, surging := ifelse(is.na(surging), 0L, surging)]
 
 surge_rows <- list()
+# AUSPOL_SURGE_H_TF=1 (plans/prereg-surge-h-time-forward-2026-10-18.md): every election with salience gets surge_h
+# from the canon elections strictly BEFORE it. "0" is the old recipe: leave-one-out over SURGE_CANON (fed2016 learned
+# from fed2022 and sa2026), and every non-canon election (fed2025) left at 0. The harnesses and the live forecast were
+# already time-forward, so "0" also trained on a feature built differently from the one served.
+SURGE_H_TF <- identical(Sys.getenv("AUSPOL_SURGE_H_TF", "1"), "1")
+canon_el <- vapply(SURGE_CANON, `[[`, character(1), "election")
 for (pr in SAL_PAIRS) {
   in_canon <- any(vapply(SURGE_CANON, function(p) identical(p$election, pr$election), TRUE))
-  if (!in_canon) next
-  train_pairs <- Filter(function(p) !identical(p$election, pr$election), SURGE_CANON)
-  hz <- tryCatch(surge_hazard_for(pr$election, pr$prev, pr$region, train_pairs), error = function(e) NULL)
+  if (!SURGE_H_TF && !in_canon) next
+  train_pairs <- if (SURGE_H_TF) SURGE_CANON[elections_before(canon_el, pr$election)] else
+    Filter(function(p) !identical(p$election, pr$election), SURGE_CANON)
+  if (!length(train_pairs)) { cat(sprintf("SGH0 %s: no earlier canon election, surge_h stays 0\n", pr$election)); next }
+  hz <- tryCatch(surge_hazard_for(pr$election, pr$prev, pr$region, train_pairs), error = function(e) {
+    cat(sprintf("SGH1! %s: surge hazard fit failed (%s); surge_h stays 0\n", pr$election, conditionMessage(e)))
+    NULL
+  })
   if (is.null(hz)) next
   sh <- hz$seat_hazard[, .(pair = pr$election, seat, surge_h)]
   rc <- hz$seat_recipient[, .(pair = pr$election, seat, recipient_party = party)]

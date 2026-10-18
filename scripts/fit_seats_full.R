@@ -1011,6 +1011,11 @@ cat(sprintf("CAL  MP tier: %s | defector discount: %s | minor-defector discount:
 # THE VOTE MOVES WITH THE PERSON: .own_x() below substitutes a returning
 # candidate's own prior vote into their new class; this takes it out of the
 # class it came from. No-op until vic2026 nominations exist.
+# The prior-election matrix as the xgb layer was TRAINED on it (fit_xgb_primary_v6.R:172: raw class totals at the
+# previous election), kept before the by-election blend, the transferred-vote removal and the reshaping below edit
+# mat22 for the base model. Served to xgb_primary_predict_live() as seat_prev_pcv's source. Audit F11
+# (reviews/pipeline-overwrite-audit-2026-10-18.md); AUSPOL_LIVE_SEATPREV_RAW, live-only by design.
+.mat22_raw <- mat22
 # BY-ELECTION AS THE SEAT BASELINE (AUSPOL_BYELECTION_PRIOR=1): a by-election between the two
 # general elections where both majors stood replaces the seat's prior row (R/byelection_prior.R,
 # external/reference/byelections/byelection-results.csv). docs/plans/prereg-byelection-prior-2026-09-18.md
@@ -1370,7 +1375,12 @@ if (identical(Sys.getenv("AUSPOL_LIVE_LEVEL_SPLIT", "1"), "1") && "OTH" %in% nam
   cat(sprintf("XG0s the xgb layer's level_pred, others bucket split as in training: %s (sum %.2f = state OTH %.2f)\n",
               paste(sprintf("%s %.2f", .bk, .level_split[.bk]), collapse = ", "), sum(.level_split[.bk]), state_mean[["OTH"]]))
 }
-shares_x <- .try("xgb_live", xgb_primary_predict_live(shares, mat22, a22, state_mean, .returns,
+.mat22_xgb <- if (identical(Sys.getenv("AUSPOL_LIVE_SEATPREV_RAW", "1"), "1")) .mat22_raw else mat22
+cat(sprintf("XG0p seat_prev_pcv served from the %s prior-election matrix (%d cells differ from the edited one by > 0.05)\n",
+            if (identical(.mat22_xgb, .mat22_raw)) "raw (as trained)" else "edited",
+            { .cc <- intersect(colnames(mat22), colnames(.mat22_raw)); .rr <- intersect(rownames(mat22), rownames(.mat22_raw))
+              sum(abs(.mat22_raw[.rr, .cc, drop = FALSE] - mat22[.rr, .cc, drop = FALSE]) > 0.05, na.rm = TRUE) }))
+shares_x <- .try("xgb_live", xgb_primary_predict_live(shares, .mat22_xgb, a22, state_mean, .returns,
                                                         level_split = .level_split,
                                                         own_prev = .own_prev_xgb, region = REGION,
                                                         year = YEAR, prev_year = as.integer(sub("^[a-z]+", "", PREV))))

@@ -127,8 +127,9 @@ clear_breakout_cache <- function() {
     cat(sprintf("BO2! seat-poll file %s missing -- poll features NA for every row\n", poll_file))
     return(NULL)
   }
-  # Same Lib/Nat merged-cell fix every other reader gets (.read_seat_polls_file()).
-  S <- .seat_poll_coalition_dedup(data.table::fread(poll_file, showProgress = FALSE, na.strings = c("", "NA")))
+  # Same corrections and Lib/Nat merged-cell fix every other reader gets (.read_seat_polls_file()).
+  S <- .seat_poll_coalition_dedup(.seat_poll_apply_corrections(
+    data.table::fread(poll_file, showProgress = FALSE, na.strings = c("", "NA")), poll_file))
   S <- S[S$row_type == "poll" & is.finite(S$fp) & !is.na(S$fieldwork_end)]
   pu <- toupper(trimws(S$party))
   S[, cls := data.table::fifelse(pu == "ALP", "ALP",

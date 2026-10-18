@@ -191,6 +191,18 @@ CLASSIFY <- list(
   AUSPOL_SEAT_POLL_ELECTION_ERR = paste(
     "SHIPPED 2026-10-18 as arm H (deciding-runs/20261018-2009-seatpoll-H). ARM (0), UNIVERSAL via R/: read inside R/seat_poll_blend.R (the seat-poll blend every harness and fit_seats_full.R",
     "reach). plans/prereg-seat-poll-method-weights-2026-10-18.md amendment 8"),
+  AUSPOL_DEMO_RESID_FULL = paste(
+    "ARM (0), UNIVERSAL via R/: read inside R/demographic_residual.R (the demographic correction every harness and",
+    "fit_seats_full.R reach). plans/prereg-demo-resid-full-2026-10-19.md"),
+  AUSPOL_SURGE_H_TF = paste(
+    "SHIPPED 2026-10-18 as a leak fix, TRAINING-ONLY by design: read in scripts/fit_xgb_primary_v6.R, which builds the xgb",
+    "training features (stage 3). Harnesses and fit_seats_full.R were already time-forward."),
+  AUSPOL_SEAT_POLL_HEAVY_TAIL = paste(
+    "ARM (0), UNIVERSAL via R/: read inside R/seat_poll_blend.R (the seat-poll blend every harness and fit_seats_full.R",
+    "reach). plans/prereg-seat-poll-heavy-tail-2026-10-18.md"),
+  AUSPOL_SEAT_POLL_CORRECTIONS = paste(
+    "SHIPPED 2026-10-18 (data fix), UNIVERSAL via R/: read inside R/seat_poll_blend.R's seat-poll reader, which every harness",
+    "and fit_seats_full.R reach."),
   AUSPOL_SEAT_POLL_FIRM_SHARED = paste(
     "SHIPPED 2026-10-18 as arm H (deciding-runs/20261018-2009-seatpoll-H). ARM (0), UNIVERSAL via R/: read inside R/seat_poll_blend.R (the seat-poll blend every harness and fit_seats_full.R",
     "reach). plans/prereg-seat-poll-method-weights-2026-10-18.md amendment 7"),
@@ -598,6 +610,9 @@ CLASSIFY <- list(
   AUSPOL_LIVE_DEFECT_FIT = paste(
     "SHIPPED 2026-10-18 as a train/serve fix, LIVE-ONLY by design: read only in fit_seats_full.R, which now fits the",
     "major-defector discount as every harness does (fit_defector_discount) instead of the frozen 0.282."),
+  AUSPOL_LIVE_SEATPREV_RAW = paste(
+    "SHIPPED 2026-10-19 as a train/serve fix, LIVE-ONLY by design: read only in fit_seats_full.R, which serves the xgb layer",
+    "seat_prev_pcv from the raw prior-election matrix, as fit_xgb_primary_v6.R trains it."),
   AUSPOL_LIVE_LEVEL_SPLIT = paste(
     "SHIPPED 2026-10-18 as a train/serve fix, LIVE-ONLY by design: read only in fit_seats_full.R, which serves the xgb layer a",
     "level_pred split by bucket_split_ratio(). The harnesses read level_pred from output/level-pred.csv, built by the same function."),
