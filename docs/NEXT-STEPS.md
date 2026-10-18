@@ -14,6 +14,15 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30.
 - OPEN F3 (live): `fit_seats_full.R:932` hardcodes the defector discount 0.282; every harness fits it time-forward.
 - OPEN F4 (scores): six harnesses use a flat `PARTY_SD` 1.5 and no `statewide_draws` (vic :853); only fed and live
   pass statewide_draws, so 16 of 23 pairs are scored on a different statewide spread than ships.
+- OPEN, NEXT after arm H ships (seat polls, heavy-tailed model error): under arm H a first-time teal the model has at
+  4-5% gets a Gaussian compromise with good polls at 30+: Goldstein 2022 model 4.3, 3 polls 33.8, model sd 7.3, poll sd
+  4.2 + election-wide 2.6, pull 0.69 -> 24.5 (actual 34.5); North Sydney 2022 model 5.2, polls 19.1, pull 0.80 -> 16.4
+  (actual 25.2). A 30-point gap is ~4 sd: evidence the model missed a surge. Fix: a mixture/heavy tail on the model's
+  error (a 'model badly wrong' component whose probability is set by salience, fitted time-forward on past surges),
+  so several good polls win a big disagreement and a lone opt-in poll does not (McMahon: one Compass SMS link, salience
+  0.014 vs Daniel 0.092). Prereg amendment 9; named targets Goldstein 2022, North Sydney 2022, Warringah 2019, Curtin
+  2022; McMahon 2025 and Mayo 2025 as must-not-break.
+- IN PROGRESS: arm H deciding run (20k, all elections), `deciding-runs/20261018-2009-seatpoll-H/`, started 20:30 18 Oct.
 - OPEN F21 (found 18 Oct): `surge_h` is a filler 0 on all 1,050 fed2025 xgb rows (`fit_xgb_primary_v6.R:567`): the hazard
   loop (:555-565) runs only for SURGE_CANON (:119-129), and fed2025 is not in it, though its salience (`jump`) is cached
   for 613 candidates (`output/salience-v6.csv`). A constant within one election is a label for it (CLAUDE.md). Fix:
