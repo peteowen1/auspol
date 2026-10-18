@@ -1002,12 +1002,14 @@ personal_prior_vote <- function(election_from, election_to, corpus = NULL,
     .mm <- !is.na(out$own_prev_pcv) & !is.na(out$prev_party) & !out$prev_party %in% MAJ &
            !out$party %in% MAJ & out$prev_party != out$party & is.finite(out$transfer)
     if (any(.mm)) {
+      .conserve_shrink_k()   # a bad K stops the run here, outside the tryCatch that would turn conserve off
       .fc <- tryCatch(fit_minor_defector_conserve(election_to, corpus = C),
                       error = function(e) { cat(sprintf("PPV1! minor-to-minor conserve fit FAILED, full transfer kept: %s\n", conditionMessage(e))); NULL })
       if (!is.null(.fc) && !is.null(.fc$frac) && is.finite(.fc$frac)) {
         out[.mm, transfer := transfer * (1 - .fc$frac)]
-        cat(sprintf("PPV1 minor-to-minor conserve: origin keeps %.2f of the defector's vote (n=%d, target excluded), %d row(s)\n", .fc$frac, .fc$n, sum(.mm)))
-      } else if (!is.null(.fc)) cat(sprintf("PPV1! minor-to-minor conserve: only %d case(s) to fit from (need 8) -- full transfer kept\n", .fc$n))
+        cat(sprintf("PPV1 minor-to-minor conserve: origin keeps %.2f of the defector's vote (n=%d%s, target excluded), %d row(s)\n", .fc$frac, .fc$n,
+                    if (!is.null(.fc$w)) sprintf(", median %.2f shrunk by w=%.2f", .fc$raw, .fc$w) else "", sum(.mm)))
+      } else if (!is.null(.fc)) cat(sprintf("PPV1! minor-to-minor conserve: only %d case(s) to fit from (need 1, or 8 with AUSPOL_CONSERVE_SHRINK_K=off) -- full transfer kept\n", .fc$n))
     }
   }
   out[is.na(prev_party) | prev_party == party, `:=`(transfer = NA_real_, prev_party = NA_character_)]
@@ -1731,6 +1733,18 @@ route_departed_origin <- function(mat, election_from, election_to, frac, corpus 
   mat
 }
 
+# AUSPOL_CONSERVE_SHRINK_K: a positive number (shipped 3, 2026-10-16; unset means 3), or "off" for the
+# old min_n cliff (NA here). Anything else stops, so a typo cannot silently mean "cliff" or switch the
+# conserve step off.
+.conserve_shrink_k <- function() {
+  raw <- Sys.getenv("AUSPOL_CONSERVE_SHRINK_K", "3")
+  if (!nzchar(raw) || identical(tolower(raw), "off")) return(NA_real_)
+  k <- suppressWarnings(as.numeric(raw))
+  if (!is.finite(k) || k <= 0)
+    stop("AUSPOL_CONSERVE_SHRINK_K must be a positive number or unset, not \"", raw, "\"", call. = FALSE)
+  k
+}
+
 #' Fit how much of a minor-to-minor defector's vote stays with the origin party
 #'
 #' Leave-target-out over every other pair. For each candidate who stood
@@ -1744,8 +1758,11 @@ route_departed_origin <- function(mat, election_from, election_to, frac, corpus 
 #'
 #' @param target_election Pair excluded from the fit.
 #' @param corpus,pairs As in [fit_defector_discount()].
-#' @param min_pcv,min_n Minimum prior vote per case; minimum cases to fit.
-#' @return list(frac, n, cases); `frac` NULL below `min_n`.
+#' @param min_pcv,min_n Minimum prior vote per case; minimum cases to fit
+#'   (`min_n` is used only when `AUSPOL_CONSERVE_SHRINK_K="off"`).
+#' @return list(frac, n, cases). By default (`AUSPOL_CONSERVE_SHRINK_K`, shipped 3)
+#'   `frac` is the median times `w = n / (n + K)` at any `n >= 1`, and the list also
+#'   carries `w` and the unshrunk median `raw`. With `"off"`, `frac` is NULL below `min_n`.
 #' @export
 fit_minor_defector_conserve <- function(target_election, corpus = NULL, pairs = NULL, min_pcv = 5, min_n = 8L) {
   C <- .corpus_or_load(corpus, "fit_minor_defector_conserve")
@@ -1782,6 +1799,15 @@ fit_minor_defector_conserve <- function(target_election, corpus = NULL, pairs = 
   if (!nrow(rows)) return(list(frac = NULL, n = 0L, cases = rows))
   rows[, kept := origin_now - (origin_cls_prev - prev_pcv) * ratio]
   rows[, frac := pmin(1, pmax(0, kept / prev_pcv))]
+  # AUSPOL_CONSERVE_SHRINK_K (2026-10-16; "" = the min_n cliff): shrink the median toward 0 (the
+  # no-conserve behaviour) by w = n / (n + K) instead of discarding it below min_n. Under time-forward
+  # fitting the cliff dropped nsw2015's 7 cases (median 0.35) outright and believed fed2016's 8 (0.51)
+  # outright; CLAUDE.md "Fit constants with SHRINKAGE, never a hard min_n cliff".
+  k <- .conserve_shrink_k()
+  if (!is.na(k)) {
+    n <- nrow(rows); w <- n / (n + k)
+    return(list(frac = w * stats::median(rows$frac), n = n, cases = rows, w = w, raw = stats::median(rows$frac)))
+  }
   if (nrow(rows) < min_n) return(list(frac = NULL, n = nrow(rows), cases = rows))
   list(frac = stats::median(rows$frac), n = nrow(rows), cases = rows)
 }

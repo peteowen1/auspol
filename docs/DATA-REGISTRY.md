@@ -1,6 +1,6 @@
 # Data registry
 
-**Generated 2026-10-14 by `scripts/build_data_registry.R`. Do not hand-edit** --
+**Generated 2026-10-17 by `scripts/build_data_registry.R`. Do not hand-edit** --
 rerun the script instead. Regenerate it whenever you add or fetch data.
 
 This file exists because the same data has been declared missing three
@@ -55,7 +55,7 @@ cannot pass as a working one.
 | `fed-booth-map.csv` | 513 KB |
 | `fed-swing-transposed-wa.csv` | 15 KB |
 | `fed-swing-transposed.csv` | 43 KB |
-| `federal-transposed-to-state.csv` | 178 KB |
+| `federal-transposed-to-state.csv` | 179 KB |
 | `MANIFEST.csv` | 787 B |
 | `nswec-2007-nsw-candidates.csv` | 24 KB |
 | `nswec-2007-nsw-firstprefs.csv` | 9 KB |
@@ -73,7 +73,7 @@ cannot pass as a working one.
 | `nswec-2023-nsw-firstprefs.csv` | 10 KB |
 | `nswec-nsw-transfers.csv` | 131 KB |
 | `nswec-nsw-winners.csv` | 7 KB |
-| `ntec-2012-nt-candidates.csv` | 7 KB |
+| `ntec-2012-nt-candidates.csv` | 6 KB |
 | `ntec-2012-nt-firstprefs.csv` | 1 KB |
 | `ntec-2016-nt-candidates.csv` | 9 KB |
 | `ntec-2016-nt-firstprefs.csv` | 2 KB |
@@ -98,10 +98,10 @@ cannot pass as a working one.
 | `vec-2010-vic-transfers.csv` | 22 KB |
 | `vec-2010-vic-winners.csv` | 3 KB |
 | `vec-2014-vic-firstprefs.csv` | 9 KB |
-| `vec-2014-vic-transfers.csv` | 27 KB |
+| `vec-2014-vic-transfers.csv` | 30 KB |
 | `vec-2014-vic-winners.csv` | 1 KB |
 | `vec-2018-vic-firstprefs.csv` | 8 KB |
-| `vec-2018-vic-transfers.csv` | 20 KB |
+| `vec-2018-vic-transfers.csv` | 22 KB |
 | `vec-2018-vic-winners.csv` | 1 KB |
 | `vec-2022-vic-candidates.csv` | 41 KB |
 | `vec-2022-vic-firstprefs.csv` | 10 KB |
@@ -167,7 +167,7 @@ NAMES live -- the per-seat results files carry `seat, party, votes` only.
 | nsw2015 | 93 | 540 | 59 | 11 |
 | nsw2019 | 93 | 568 | 52 | 15 |
 | nsw2023 | 93 | 562 | 68 | 19 |
-| nsw2027 | 92 | 194 | 28 | NA |
+| nsw2027 | 92 | 193 | 28 | NA |
 | nt2012 | 25 | 86 | 13 | 2 |
 | nt2016 | 25 | 115 | 40 | 7 |
 | nt2020 | 25 | 111 | 25 | 9 |
@@ -189,7 +189,7 @@ NAMES live -- the per-seat results files carry `seat, party, votes` only.
 | vic2014 | 88 | 545 | 91 | 9 |
 | vic2018 | 88 | 507 | 102 | 9 |
 | vic2022 | 87 | 731 | 119 | 13 |
-| vic2026 | 88 | 501 | 32 | NA |
+| vic2026 | 88 | 500 | 32 | NA |
 | wa1996 | 57 | 232 | 36 | 7 |
 | wa2001 | 57 | 366 | 89 | 12 |
 | wa2005 | 57 | 375 | 42 | 3 |
@@ -199,7 +199,7 @@ NAMES live -- the per-seat results files carry `seat, party, votes` only.
 | wa2021 | 59 | 463 | 17 | 0 |
 | wa2025 | 59 | 398 | 29 | 6 |
 
-**Total: 22360 candidacies, 44 elections, NA non-major breakouts.**
+**Total: 22358 candidacies, 44 elections, NA non-major breakouts.**
 
 ## State booth results (`output/booths/`)
 

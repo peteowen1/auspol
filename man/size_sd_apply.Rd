@@ -2,7 +2,7 @@
 % Please edit documentation in R/size_sd.R
 \name{size_sd_apply}
 \alias{size_sd_apply}
-\title{Widen the per-cell sd of small seats (AUSPOL_SIZE_SD)}
+\title{Widen the per-cell sd of small seats (AUSPOL_SIZE_SD) and of personal-vote seats (AUSPOL_COMPOSITION_SD)}
 \usage{
 size_sd_apply(
   sd_override,
@@ -30,9 +30,10 @@ size_sd_apply(
 The merged sd override (or \code{sd_override} unchanged).
 }
 \description{
-Builds the level-sd matrix (\code{a + b * level_mult * sqrt(p(1-p))}) times each seat's size factor from
-\code{output/spread-by-size.csv}, and merges it into \code{sd_override} with \code{\link[=combine_sd_override]{combine_sd_override()}}. A seat's size
-is its formal votes at the PREVIOUS election (known before polling day); a seat with no match there is
-left unchanged and counted in the log. With the switch off, or no \code{level_sd}, \code{sd_override} is returned
-unchanged.
+Builds the level-sd matrix (\code{a + b * level_mult * sqrt(p(1-p))}) times each seat's factor, and merges it
+into \code{sd_override} with \code{\link[=combine_sd_override]{combine_sd_override()}}. The factor is the size factor from
+\code{output/spread-by-size.csv} (a seat's size is its formal votes at the PREVIOUS election, known before
+polling day; a seat with no match there gets 1, counted in the log) times the composition factor from
+\code{output/spread-by-composition.csv} (\code{\link[=composition_sd_factor]{composition_sd_factor()}} on the predicted shares). Either switch can
+be off on its own. With both off, or no \code{level_sd}, \code{sd_override} is returned unchanged.
 }

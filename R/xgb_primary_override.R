@@ -174,6 +174,9 @@ xgb_primary_override <- function(shares, pair_label, enabled = NULL) {
 #' @param a22 Named numeric vector, 2022 STATEWIDE class shares.
 #' @param state_mean Named numeric vector, the forecast's statewide class
 #'   shares this cycle.
+#' @param level_split The same statewide with the others bucket split by
+#'   [bucket_split_ratio()], as the training rows' `level_pred` is; used for
+#'   `level_pred` only. `NULL` keeps `state_mean` (classes it lacks get 0).
 #' @param returns `candidate_returns()` output, or `NULL` before vic2026
 #'   nominations close (then same/same_mp default FALSE for every seat).
 #' @param own_prev `personal_prior_vote()` output, or `NULL` before vic2026
@@ -202,7 +205,7 @@ xgb_primary_override <- function(shares, pair_label, enabled = NULL) {
 xgb_primary_predict_live <- function(shares, mat22, a22, state_mean, returns,
                                       own_prev = NULL, region = "vic",
                                       year = 2026L, prev_year = 2022L,
-                                      enabled = NULL) {
+                                      enabled = NULL, level_split = NULL) {
   if (is.null(enabled)) enabled <- identical(Sys.getenv("AUSPOL_XGB_PRIMARY_LIVE", "1"), "1")
   if (!isTRUE(enabled)) return(shares)
   model_f <- out_path("xgb-primary-v6-final.model")
@@ -268,7 +271,8 @@ xgb_primary_predict_live <- function(shares, mat22, a22, state_mean, returns,
   .seatprev_absent <- if (.seatprev_nafill) NA_real_ else 0
   rows[, seat_prev_pcv  := mapply(function(s, p) if (p %in% colnames(mat22)) mat22[s, p] else .seatprev_absent, seat, party)]
   rows[, level_prev  := vapply(party, function(p) if (p %in% names(a22)) unname(a22[[p]]) else 0, numeric(1))]
-  rows[, level_pred  := vapply(party, function(p) if (p %in% names(state_mean)) unname(state_mean[[p]]) else 0, numeric(1))]
+  lvl <- if (is.null(level_split)) state_mean else level_split
+  rows[, level_pred  := vapply(party, function(p) if (p %in% names(lvl)) unname(lvl[[p]]) else 0, numeric(1))]
   # `level_pred` above is `state_mean` -- the forecast's OWN projected statewide,
   # never a result, because the election has not happened. That was already true
   # before 2026-09-11 and is why the published forecast never leaked on this
@@ -286,6 +290,12 @@ xgb_primary_predict_live <- function(shares, mat22, a22, state_mean, returns,
   # mismatch being removed.
   rows[, level_from_polls := 1L]
   rows[, dev_prev    := seat_prev_pcv - level_prev]
+  # AUSPOL_XGB_RATIO_FEATS: the same two columns, same formula, as fit_xgb_primary_v6.R builds for training
+  # (prereg-growth-ratio-features-2026-10-18.md). Only when on, as there.
+  if (identical(Sys.getenv("AUSPOL_XGB_RATIO_FEATS", "0"), "1")) {
+    rows[, growth_ratio := (level_pred + 0.5) / (level_prev + 0.5)]
+    rows[, ratio_dev := (growth_ratio - 1) * dev_prev]
+  }
   # KEY-MATCHED, NOT merge()-THEN-POSITIONAL, throughout this function.
   # data.table::merge() defaults to sort=TRUE, which returns its result
   # re-sorted by the join key -- NOT in `rows`'s original CJ(sorted=FALSE)
@@ -464,7 +474,8 @@ xgb_primary_predict_live <- function(shares, mat22, a22, state_mean, returns,
   # change needed -- see this function's own docstring for what that means
   # for the degeneracy fix specifically.
   rows[, `:=`(jump = 0, governed = 0L, permit = 1L, surge_h = 0, is_recipient = 0L)]
-  sal <- tryCatch(governed_population(target_election, prev_election, region),
+  sal <- tryCatch(governed_population(target_election, prev_election, region,
+                                      surge_levels = surge_levels_live(target_election, state_mean)),
                    error = function(e) {
                      cat(sprintf("XG5! governed_population() FAILED for %s (not just \"no corpus yet\"): %s\n",
                                  target_election, conditionMessage(e)))

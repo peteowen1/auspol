@@ -271,7 +271,9 @@ pref_census <- function(p) {
   if (length(before)) list(y = max(before), why = "latest census published before polling day")
   else list(y = "2006", why = "no census before polling day on disk (2001 not fetched)")
 }
-note_la <- function(y, p) if (as.Date(CENSUS_DATE[[y]]) > ED[[p]]) "LOOKAHEAD: " else ""
+# LOOKAHEAD (and so blanked by blank_census_lookahead.R) when the census was PUBLISHED after polling day, not only
+# taken after it: a later census matched by name for fed2022 (2021, published June 2022) was otherwise kept.
+note_la <- function(y, p) if (as.Date(CENSUS_RELEASE[[y]]) > ED[[p]]) "LOOKAHEAD: " else ""
 
 res <- list()
 for (p in PAIRS) {

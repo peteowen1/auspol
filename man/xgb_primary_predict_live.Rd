@@ -14,7 +14,8 @@ xgb_primary_predict_live(
   region = "vic",
   year = 2026L,
   prev_year = 2022L,
-  enabled = NULL
+  enabled = NULL,
+  level_split = NULL
 )
 }
 \arguments{
@@ -55,6 +56,10 @@ note at the assignment.}
 candidacy row counts.}
 
 \item{enabled}{Logical; defaults to \code{AUSPOL_XGB_PRIMARY_LIVE} env var == "1".}
+
+\item{level_split}{The same statewide with the others bucket split by
+\code{\link[=bucket_split_ratio]{bucket_split_ratio()}}, as the training rows' \code{level_pred} is; used for
+\code{level_pred} only. \code{NULL} keeps \code{state_mean} (classes it lacks get 0).}
 }
 \value{
 The overridden shares matrix, or \code{shares} unchanged if not

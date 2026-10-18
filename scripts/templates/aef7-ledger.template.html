@@ -265,7 +265,20 @@ a.seatjump{color:inherit;text-decoration:underline dotted;text-underline-offset:
   </details>
 
   <details class="provlog">
-    <summary>Provenance &amp; changelog <span class="n">(48 updates)</span></summary>
+    <summary>Provenance &amp; changelog <span class="n">(49 updates)</span></summary>
+    <p class="sub prov"><b>v63, 12-17 Oct 2026: our own polls, honest fits, and two new parts of the count.</b>
+       <b>Polls:</b> the trend now reads our own Wikipedia poll scrape layered over AE Forecasts' file (theirs had
+       RedBridge's Greens and One Nation figures swapped and lacked Resolve 6-10 Oct), plus Poll Bludger's tables and
+       the Roy Morgan and Newspoll archives. <b>Fits that learn only from earlier elections:</b> the preference-flow
+       trees, the defector-carry rate, sitting members' slopes and the statewide party correlation all stopped
+       learning from later elections (the correlation is off: its honest version added nothing), and recent
+       elections now count more in training (seat log loss -0.012 on this page at the time). <b>35 elections</b> are now
+       scored and pooled, including NT and the 2010-2019 state elections. <b>Small seats</b> get a wider spread (NT
+       favourites had been called far too confidently). <b>A Liberal and a National in one seat</b> are now counted
+       as two candidates, so a National's preferences can leak to Labor (Albany 2013); 191 such seats improved, WA
+       most. <b>Seats with a strong independent</b> get more width and a heavier-tailed error, on Pete's override of
+       a refusal (the gain over 35 elections is mostly Queensland 2012/2017; this page moves +0.0016, within noise).
+       Seat log loss 0.2682 to <b>0.2676</b> against AE Forecasts' 0.2825; primary-vote error 4.73 (AEF 5.71).</p>
     <p class="sub prov"><b>v62, 11 Oct 2026: the day-before level follows the late polls.</b>
        The statewide trend lagged late movement: Victoria 2022 had the Coalition at 31.4 the day before, while the
        polls of the final four weeks averaged 34.1 and the result was 34.5. Every Liberal primary was under-called,
@@ -684,7 +697,9 @@ a.seatjump{color:inherit;text-decoration:underline dotted;text-underline-offset:
     <div class="field"><label for="f-grp">Failure group</label>
       <select id="f-grp"><option value="">Any</option><option value="*">Any grouped seat</option></select></div>
     <div class="field"><label for="f-q">Seat</label>
-      <input type="search" id="f-q" placeholder="Search name"></div>
+      <input type="search" id="f-q" placeholder="Seat name"></div>
+    <div class="field cand-only" hidden><label for="f-cand">Candidate</label>
+      <input type="search" id="f-cand" placeholder="Candidate name"></div>
     <div class="field"><label>Show</label>
       <div class="chips">
         <button class="toggle" id="t-wrong" aria-pressed="false">We called it wrong</button>
@@ -702,7 +717,7 @@ a.seatjump{color:inherit;text-decoration:underline dotted;text-underline-offset:
       miss minus AEF's: negative means we were closer. AEF folds One Nation and minor-right into "other" in some
       elections, so those rows show no AEF figure. Click a seat in the one-per-seat view to jump here.</p>
     </details>
-    <span class="csvline"><code>published-predictions.csv</code>, all 22 elections:
+    <span class="csvline"><code>published-predictions.csv</code>, every scored election:
       <button class="toggle" id="dl-csv" type="button" hidden>Save the CSV</button>
       <span id="dl-alt">on the <a href="https://github.com/peteowen1/auspol/releases/tag/shipped-models" target="_blank" rel="noopener">shipped-models release</a></span><span id="dl-msg" role="status"></span></span>
   </div>
@@ -748,8 +763,9 @@ CANDS.forEach(c => {
 const CCOLS = [
   {k:"pair", t:"Election"}, {k:"seat", t:"Seat"}, {k:"party", t:"Party", pill:true},
   {k:"candidate", t:"Candidate"}, {k:"won", t:"Won"},
-  {k:"p_win", t:"Ours P(win)", num:true, dp:3},
+  {k:"p_win", t:"Ours P(win)", num:true, dp:3}, {k:"aef_p_win", t:"AEF P(win)", num:true, dp:3},
   {k:"actual", t:"Actual %", num:true, dp:1}, {k:"ours", t:"Ours %", num:true, dp:1}, {k:"aef", t:"AEF %", num:true, dp:1},
+  {k:"prev_share", t:"Last time %", num:true, dp:1}, {k:"prev_candidate", t:"Last time candidate"},
   {k:"miss", t:"Our miss", num:true, dp:1, miss:true}, {k:"aef_miss", t:"AEF miss", num:true, dp:1, miss:true},
   {k:"abs_miss", t:"|Our miss|", num:true, dp:1}, {k:"d_abs", t:"Δ |miss|", num:true, dp:1, delta:true}
 ];
@@ -834,7 +850,7 @@ const key = r => r.pair + "__" + r.seat.replace(/[^A-Za-z0-9]+/g, "-");
 SEATS.forEach(r => BYKEY.set(key(r), r));
 
 let sortKey = "dll", sortDir = -1;
-const F = {pair:"", party:"", win:"", fav:"", grp:"", q:"", wrong:false, beat:false, noted:false};
+const F = {pair:"", party:"", win:"", fav:"", grp:"", q:"", cand:"", wrong:false, beat:false, noted:false};
 
 /* ---------- overall pooled stats ---------- */
 function overall(){
@@ -971,6 +987,7 @@ function render(){
     e.preventDefault();
     F.pair = a.dataset.pair; document.getElementById("f-pair").value = F.pair;
     F.q = a.dataset.seat.toLowerCase(); document.getElementById("f-q").value = a.dataset.seat;
+    F.cand = ""; document.getElementById("f-cand").value = "";
     setView("cand");
   }));
 }
@@ -1000,7 +1017,8 @@ function cvisible(){
       (!F.win   || s.winner===F.win) &&
       (!F.fav   || s.fav===F.fav) &&
       (!F.grp   || (F.grp==="*" ? !!s.grp : s.grp===F.grp)) &&
-      (!F.q     || c.seat.toLowerCase().includes(F.q) || (c.candidate||"").toLowerCase().includes(F.q)) &&
+      (!F.q     || c.seat.toLowerCase().includes(F.q)) &&
+      (!F.cand  || (c.candidate||"").toLowerCase().includes(F.cand)) &&
       (!F.wrong || s.correct===false) &&
       (!F.beat  || (c.d_abs!=null && c.d_abs>0)) &&
       (!F.noted || (notes.get(key(c))||"").trim().length>0);
@@ -1098,6 +1116,7 @@ document.getElementById("v-cand").addEventListener("click",()=>setView("cand"));
 document.getElementById("f-win").addEventListener("change",e=>{F.win=e.target.value; refresh();});
 document.getElementById("f-fav").addEventListener("change",e=>{F.fav=e.target.value; refresh();});
 document.getElementById("f-q").addEventListener("input",e=>{F.q=e.target.value.trim().toLowerCase(); refresh();});
+document.getElementById("f-cand").addEventListener("input",e=>{F.cand=e.target.value.trim().toLowerCase(); refresh();});
 [["t-wrong","wrong"],["t-beat","beat"],["t-noted","noted"]].forEach(([id,f])=>{
   document.getElementById(id).addEventListener("click",e=>{
     F[f]=!F[f]; e.currentTarget.setAttribute("aria-pressed",String(F[f])); refresh();

@@ -1,6 +1,6 @@
 # Data dictionary
 
-**Generated 2026-10-14 by `scripts/build_data_dictionary.R`. Do not hand-edit.**
+**Generated 2026-10-17 by `scripts/build_data_dictionary.R`. Do not hand-edit.**
 
 Companion to `docs/DATA-REGISTRY.md`. The registry answers *do we have this
 file*; this answers *do we have this field*. Four wrong "we don't have it"
@@ -15,9 +15,9 @@ column does not exist.**
 | `aec-fed-2001-firstprefs.csv` | 797 | `seat`, `party`, `votes`, `election` |
 | `aec-fed-2001-tcp.csv` | 300 | `election`, `seat`, `party`, `votes` |
 | `aec-fed-2001-transfers.csv` | 2,807 | `election`, `seat`, `round`, `from`, `to`, `votes` |
-| `aec-fed-firstprefs.csv` | 6,572 | `seat`, `party`, `votes`, `election` |
+| `aec-fed-firstprefs.csv` | 6,573 | `seat`, `party`, `votes`, `election` |
 | `aec-fed-tcp.csv` | 2,404 | `election`, `seat`, `party`, `votes` |
-| `aec-fed-transfers.csv` | 18,227 | `election`, `seat`, `round`, `from`, `to`, `votes` |
+| `aec-fed-transfers.csv` | 18,228 | `election`, `seat`, `round`, `from`, `to`, `votes` |
 | `aec-fed-winners.csv` | 1,202 | `election`, `seat`, `winner` |
 | `ecq-2001-qld-firstprefs-detail.csv` | 365 | `seat`, `party_code`, `party_name`, `party_class`, `votes`, `formal_votes`, `informal_votes`, `tcp_winner_votes`, `tcp_loser_votes`, `tcp_winner_pct`, `tcp_winner_code` |
 | `ecq-2001-qld-firstprefs.csv` | 330 | `seat`, `party`, `votes` |
@@ -47,15 +47,15 @@ column does not exist.**
 | `ecsa-2010-2014-sa-page-inventory.csv` | 89 | `year`, `district`, `fetched`, `n_tables`, `headers`, `looks_like_distribution` |
 | `ecsa-2010-sa-firstprefs-tcp.csv` | 420 | `year`, `district`, `table`, `candidate`, `party`, `votes` |
 | `ecsa-2014-sa-firstprefs-tcp.csv` | 272 | `year`, `district`, `table`, `candidate`, `party`, `votes` |
-| `ecsa-2022-sa-firstprefs.csv` | 219 | `seat`, `party`, `votes` |
+| `ecsa-2022-sa-firstprefs.csv` | 220 | `seat`, `party`, `votes` |
 | `ecsa-2026-sa-firstprefs.csv` | 298 | `seat`, `party`, `votes` |
 | `ecsa-2026-sa-onp-shares.csv` | 47 | `seat`, `pct` |
-| `ecsa-2026-sa-transfers.csv` | 1,321 | `election`, `seat`, `round`, `from`, `to`, `votes`, `to_n` |
+| `ecsa-2026-sa-transfers.csv` | 1,319 | `election`, `seat`, `round`, `from`, `to`, `votes`, `to_n` |
 | `ecsa-sa-winners.csv` | 94 | `election`, `seat`, `winner` |
 | `fed-booth-map.csv` | 17,688 | `region`, `cycle`, `fed`, `district`, `place_id` |
 | `fed-swing-transposed-wa.csv` | 295 | `seat`, `fed_swing`, `booths`, `votes`, `region`, `cycle`, `fed` |
 | `fed-swing-transposed.csv` | 870 | `seat`, `fed_swing`, `booths`, `votes`, `region`, `cycle`, `fed` |
-| `federal-transposed-to-state.csv` | 3,565 | `seat`, `party`, `votes`, `pct`, `region`, `cycle`, `fed_election` |
+| `federal-transposed-to-state.csv` | 3,582 | `seat`, `party`, `votes`, `pct`, `region`, `cycle`, `fed_election` |
 | `MANIFEST.csv` | 5 | `source`, `dataset`, `url`, `rows`, `fetched_at` |
 | `nswec-2007-nsw-candidates.csv` | 537 | `seat`, `candidate`, `party`, `party_code`, `party_full`, `class`, `first_pref` |
 | `nswec-2007-nsw-firstprefs.csv` | 464 | `seat`, `party`, `votes` |
@@ -98,10 +98,10 @@ column does not exist.**
 | `vec-2010-vic-transfers.csv` | 625 | `election`, `seat`, `round`, `from`, `to`, `votes` |
 | `vec-2010-vic-winners.csv` | 88 | `election`, `seat`, `winner`, `winner_name` |
 | `vec-2014-vic-firstprefs.csv` | 430 | `seat`, `party`, `votes` |
-| `vec-2014-vic-transfers.csv` | 767 | `election`, `seat`, `round`, `from`, `to`, `votes` |
+| `vec-2014-vic-transfers.csv` | 856 | `election`, `seat`, `round`, `from`, `to`, `votes` |
 | `vec-2014-vic-winners.csv` | 88 | `seat`, `winner` |
 | `vec-2018-vic-firstprefs.csv` | 403 | `seat`, `party`, `votes` |
-| `vec-2018-vic-transfers.csv` | 600 | `election`, `seat`, `round`, `from`, `to`, `votes` |
+| `vec-2018-vic-transfers.csv` | 666 | `election`, `seat`, `round`, `from`, `to`, `votes` |
 | `vec-2018-vic-winners.csv` | 88 | `seat`, `winner` |
 | `vec-2022-vic-candidates.csv` | 731 | `seat`, `cand`, `party`, `party_raw`, `fp_votes` |
 | `vec-2022-vic-firstprefs.csv` | 508 | `seat`, `party`, `votes` |
@@ -321,7 +321,7 @@ processed extract. Every one is recoverable without a new fetch.
 | `aef7-tcp-truth-table.csv` | 660 | `pair`, `seat`, `official_f1`, `official_f2`, `official_f2cp`, `official_fsrc`, `aef_tcp_f1`, `aef_tcp_pct`, `aef_tcp_freq`, `itg_tcp_f1`, `itg_tcp_f2`, `itg_tcp_pct`, `itg_tcp_freq`, `abc_tcp_f1`, `abc_tcp_f2`, `abc_tcp_pct` |
 | `aef7-tcp.csv` | 681 | `pair`, `seat`, `aef_tcp_f1`, `aef_tcp_f2`, `aef_tcp_pct`, `aef_tcp_scenario_freq`, `aef_tcp_p05`, `aef_tcp_p95` |
 | `anchor-k.csv` | 834 | `region`, `year`, `K`, `party`, `fitted`, `actual`, `prior`, `polls30`, `err`, `cyc` |
-| `biggest-misses.csv` | 297 | `metric`, `pair`, `seat`, `party`, `candidate`, `ours`, `actual`, `err` |
+| `biggest-misses.csv` | 74 | `metric`, `pair`, `seat`, `party`, `candidate`, `ours`, `actual`, `err` |
 | `bludgertrack-vs-layered.csv` | 541 | `region`, `bt_id`, `bt_cycle`, `date`, `firm`, `pollster_bt`, `mode_bt`, `sample_bt`, `source`, `und_bt`, `ALP_bt`, `ALP_layered`, `LNP_bt`, `LNP_layered`, `GRN_bt`, `GRN_layered`, `ONP_bt`, `ONP_layered`, `ALP_d`, `LNP_d`, `GRN_d`, `ONP_d` |
 | `booth-rehearsal2-vic2022.csv` | 15 | `frac_of_night_vote`, `estimator`, `leader_correct`, `n`, `major_mae`, `major_rmse` |
 | `booth-replay-vic2022.csv` | 5 | `frac_of_night_vote`, `mean_counted_share_of_all`, `fp_leader_correct`, `n`, `major_share_mae`, `major_share_rmse` |
@@ -329,5 +329,5 @@ processed extract. Every one is recoverable without a new fetch.
 | `booths-vic2018.csv` | 13,353 | `district`, `booth`, `booth_type`, `candidate`, `party`, `votes` |
 | `booths-vic2022-2cp.csv` | 4,328 | `district`, `booth`, `booth_type`, `candidate`, `party`, `votes` |
 
-_(10165 `backtest-*.csv` arm outputs omitted; they share one shape.)_
+_(1764 `backtest-*.csv` arm outputs omitted; they share one shape.)_
 

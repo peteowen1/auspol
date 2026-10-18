@@ -4,7 +4,15 @@
 \alias{surging_parties}
 \title{Is this candidate's lack of prior vote a PARTY story rather than a personal one?}
 \usage{
-surging_parties(region, year_from, year_to, threshold = 5, corpus = NULL)
+surging_parties(
+  region,
+  year_from,
+  year_to,
+  threshold = 5,
+  corpus = NULL,
+  source = Sys.getenv("AUSPOL_SURGE_SOURCE", "none"),
+  levels = NULL
+)
 }
 \arguments{
 \item{region, year_from, year_to}{Election identifiers as used in
@@ -14,6 +22,12 @@ surging_parties(region, year_from, year_to, threshold = 5, corpus = NULL)
 surging.}
 
 \item{corpus}{Optional pre-read candidacy table.}
+
+\item{source}{\code{"actual"}, \code{"none"} or \code{"forecast"}; defaults to
+\code{AUSPOL_SURGE_SOURCE}.}
+
+\item{levels}{For \code{"forecast"}: a table of \code{pair}, \code{party}, \code{level_pred};
+\code{NULL} reads \code{output/level-pred.csv}. Ignored by the other sources.}
 }
 \value{
 Character vector of party classes.
@@ -27,4 +41,20 @@ emerging personally, and the salience screen makes no claim about them.
 The default of 5 points is above ordinary election-to-election movement — the
 major parties move 1 to 4 points in a typical cycle — and well below South
 Australian One Nation's 19.9.
+
+WHICH swing is read is set by \code{AUSPOL_SURGE_SOURCE}
+(\verb{docs/plans/prereg-surge-flag-time-forward-2026-10-15.md}):
+\describe{
+\item{\code{"actual"}}{\code{abs()} of the ACTUAL swing at \code{year_to}. Leaks: it reads
+the result of the election being predicted, and counts a collapse as a
+surge (\verb{docs/reviews/surge-flag-leak-2026-10-15.md}). Kept only as the
+arm that measures what the leak was worth.}
+\item{\code{"none"}}{no class is surging. (The live forecast did NOT already
+get this: until 2026-10-15 a not-yet-held \code{year_to} read as every class
+collapsing. It is now an error, see \code{\link[=party_swing]{party_swing()}}.)}
+\item{\code{"forecast"}}{RISES only, \code{level_pred - prev >= threshold}, from the
+time-forward statewide forecast: \code{levels} when given (the live run passes
+its own statewide forecast), else \code{output/level-pred.csv}. A class with
+no forecast row is not surging. A target with no rows at all is an error.}
+}
 }

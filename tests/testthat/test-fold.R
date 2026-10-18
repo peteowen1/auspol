@@ -64,6 +64,49 @@ test_that("unfold_others restores the residual line to its true level", {
   expect_equal(corrected$OTH[corrected$firm == "A"], d$OTH[d$firm == "A"])
 })
 
+test_that("unfold_others imputes each firm's own house effect, pooled or zero", {
+  # Hand-built fits so each case is exact. ONP trend flat at 10. Firm A named
+  # ONP and reads it 1 point low; C named it too rarely and was pooled into
+  # "(other firms)" (+0.5); D never named it, so it carries no house effect.
+  dates <- as.Date("2025-03-01") + 0:5
+  d <- data.table::data.table(
+    date = dates, firm = c("A", "A", "C", "C", "D", "D"), tpp_published = NA_real_,
+    ALP = 35, LNP = 33, ONP = NA_real_, OTH = 32
+  )
+  for (a in c("region", "cycle_year", "cycle_start", "cycle_end")) {
+    data.table::setattr(d, a, list(region = "test", cycle_year = 2026,
+                                   cycle_start = as.Date("2025-01-01"),
+                                   cycle_end = as.Date("2025-12-31"))[[a]])
+  }
+  data.table::setattr(d, "parties", c("ALP", "LNP", "ONP", "OTH"))
+  fits <- list(ONP = list(
+    trend = data.table::data.table(date = as.Date("2025-01-01") + 0:364, mean = 10),
+    house_effects = data.table::data.table(firm = c("A", "(other firms)"),
+                                           effect_pts = c(-1, 0.5)),
+    residuals = data.table::data.table(date = dates, firm = c("A", "C", "A", "C", "A", "C"))
+  ))
+
+  log <- attr(unfold_others(d, fits), "folded")
+  expect_equal(nrow(log), 6L)
+  expect_equal(log$house_shift, c(-1, -1, 0.5, 0.5, 0, 0))
+  expect_equal(log$imputed, c(9, 9, 10.5, 10.5, 10, 10))
+  expect_equal(log$oth_after, 32 - c(9, 9, 10.5, 10.5, 10, 10))
+
+  # house_adjust = FALSE restores the plain all-firm trend
+  log0 <- attr(unfold_others(d, fits, house_adjust = FALSE), "folded")
+  expect_equal(log0$imputed, rep(10, 6))
+  expect_equal(log0$house_shift, rep(0, 6))
+
+  # An unprompted discount scales the imputed share (house effect included)
+  logd <- attr(unfold_others(d, fits, discount = c(ONP = 0.2)), "folded")
+  expect_equal(logd$imputed, 0.8 * c(9, 9, 10.5, 10.5, 10, 10))
+  expect_equal(logd$discount, rep(0.2, 6))
+  # A discount for a different party leaves ONP alone
+  expect_equal(attr(unfold_others(d, fits, discount = c(UAP = 0.5)), "folded")$imputed,
+               c(9, 9, 10.5, 10.5, 10, 10))
+  expect_error(unfold_others(d, fits, discount = c(ONP = 1)))
+})
+
 test_that("unfold_others logs what it changed and leaves other columns alone", {
   d <- make_folded()
   fits <- fit_cycle_trends(d, parties = c("ALP", "LNP", "GRN", "ONP", "OTH"),

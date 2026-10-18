@@ -117,7 +117,7 @@ N_SIMS <- as.integer(Sys.getenv("AUSPOL_N_SIMS", "20000"))
 # using its own statewide swing. See
 # docs/plans/prereg-statewide-cov-loo-2026-09-07.md.
 PARTY_COR <- NULL
-COR_MODE <- if (!nzchar(Sys.getenv("AUSPOL_PARTY_COR", ""))) NULL else
+COR_MODE <- if (Sys.getenv("AUSPOL_PARTY_COR", "") %in% c("", "off")) NULL else
   if (identical(Sys.getenv("AUSPOL_PARTY_COR"), "raw")) "raw" else "shrunk"
 
 # THE FLOW FIXES, PORTED. `fallback_smooth` and `flow_sd` were added to the
@@ -224,7 +224,7 @@ CAL_TAG <- paste0(
   # used a correlation -- a file whose name says one arm and whose
   # contents are another, which is the fingerprint failure this tag exists
   # to prevent.
-  if (nzchar(Sys.getenv("AUSPOL_PARTY_COR", "")))
+  if (!Sys.getenv("AUSPOL_PARTY_COR", "") %in% c("", "off"))
     (if (identical(Sys.getenv("AUSPOL_PARTY_COR"), "raw")) "-corraw" else "-cor")
   else "",
   if (identical(Sys.getenv("AUSPOL_QLD_FLOWS", "0"), "1")) "-qld" else "",
@@ -306,7 +306,7 @@ for (K in PAIRS) {
   # different input from the one its log implies.
   PARTY_COR <- if (is.null(COR_MODE)) NULL else
     statewide_cor(sprintf("vic%d", K$to), mode = COR_MODE)
-  if (nzchar(Sys.getenv("AUSPOL_PARTY_COR", "")))
+  if (!Sys.getenv("AUSPOL_PARTY_COR", "") %in% c("", "off"))
     cat(sprintf("COV  vic%d party correlation (%s): cor(ONP,LNP) = %+.2f | %s\n",
                 K$to, COR_MODE, PARTY_COR["ONP", "LNP"],
                 attr(PARTY_COR, "cor_source")))
@@ -837,8 +837,12 @@ for (K in PAIRS) {
          "changed.")
   }
 
-  sp <- seat_swing_spread(as.data.table(load_seats(2026, "vic")),
-                          unname(sb[["ALP"]] - sa[["ALP"]]))
+  # SEAT SPREAD (seat_sd) from AUSPOL_SEAT_SPREAD_SRC (R/prev_seat_swing.R, 2026-10-16).
+  # "derived" (published): the seat-level swing AT the previous election (K$from), from our archived results.
+  # "anchor": the old behaviour, 2026vic.txt for EVERY pair, which LEAKS (2026vic.txt carries the 2022
+  # result, vic2022's own outcome, and the later swings are not knowable before the earlier pairs).
+  sp <- harness_seat_spread("vic", K$from, K$to, unname(sb[["ALP"]] - sa[["ALP"]]),
+                            anchor_year = 2026L)
   # STATEWIDE UNCERTAINTY, MEASURED. All four harnesses hardcoded 1.5 with no
   # derivation. The realised statewide first-preference error over 139
   # party-cycles (33 independent cycles) is sd 2.33, so the harnesses were 1.6x
@@ -978,7 +982,7 @@ for (K in PAIRS) {
       surge_arg <- .imx$surge_h; surge_mu_arg <- .imx$surge_mu; surge_sd_arg <- .imx$surge_sd; surge_party_arg <- .imx$surge_party
       s1 <- simulate_seat_contests(level_sd = .level_sd, sd_override = size_sd_apply(SD_OVR, shares, .eb, .level_sd, .lm(shares)), level_mult = .lm(shares), shares, fmr, party_sd = psd,
                                    seat_sd = sp$sd_within * SEAT_SD_MULT, n_sims = per,
-                                   breakout_p = .bo$p, breakout_q = .bo$q,
+                                   breakout_p = .bo$p, breakout_q = .bo$q, coalition_split = coalition_split_args(.eb, rownames(shares)), error_q = error_dist_args(.eb, colnames(shares)),
                                    smooth = SMOOTH, seed = SEED + r, shrink = SHRINK,
                                    fallback_smooth = FB_SMOOTH, shrink_k = SHRINK_K, flow_sd = FLOW_SD,
                                 surge_h = surge_arg, surge_party = surge_party_arg,
@@ -1028,7 +1032,7 @@ for (K in PAIRS) {
     surge_arg <- .imx$surge_h; surge_mu_arg <- .imx$surge_mu; surge_sd_arg <- .imx$surge_sd; surge_party_arg <- .imx$surge_party
     sim <- simulate_seat_contests(level_sd = .level_sd, sd_override = size_sd_apply(SD_OVR, shares, .eb, .level_sd, .lm(shares)), level_mult = .lm(shares), shares, fm, party_sd = psd,
                                   seat_sd = sp$sd_within * SEAT_SD_MULT, n_sims = N_SIMS,
-                                  breakout_p = .bo$p, breakout_q = .bo$q,
+                                  breakout_p = .bo$p, breakout_q = .bo$q, coalition_split = coalition_split_args(.eb, rownames(shares)), error_q = error_dist_args(.eb, colnames(shares)),
                                   smooth = SMOOTH, seed = SEED, party_cor = PARTY_COR,
                                   shrink = SHRINK, conditional_override = .htv_ov, conditional_override_sd = attr(.htv_ov, "sd"),
                                   fallback_smooth = FB_SMOOTH, shrink_k = SHRINK_K, flow_sd = FLOW_SD,

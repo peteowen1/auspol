@@ -270,7 +270,7 @@ CAL_TAG <- paste0(
   # used a correlation -- a file whose name says one arm and whose
   # contents are another, which is the fingerprint failure this tag exists
   # to prevent.
-  if (nzchar(Sys.getenv("AUSPOL_PARTY_COR", "")))
+  if (!Sys.getenv("AUSPOL_PARTY_COR", "") %in% c("", "off"))
     (if (identical(Sys.getenv("AUSPOL_PARTY_COR"), "raw")) "-corraw" else "-cor")
   else "",
   # No -qld or -wa suffix: neither is admissible here, so an arm carrying
@@ -344,7 +344,7 @@ cat(sprintf("BT0p pair %s -> %s | flows from %s | seat file %dnsw.txt
 # The correlation matrix for THIS target. The source is printed because a
 # silent fallback is the failure this repo keeps finding: a run using a
 # different input from the one its log implies.
-if (nzchar(Sys.getenv("AUSPOL_PARTY_COR", ""))) {
+if (!Sys.getenv("AUSPOL_PARTY_COR", "") %in% c("", "off")) {
   PARTY_COR <- statewide_cor(TGT,
                              mode = if (identical(Sys.getenv("AUSPOL_PARTY_COR"), "raw")) "raw" else "shrunk")
   cat(sprintf("COV  party correlation ON (%s): cor(ONP,LNP) = %+.2f | %s\n",
@@ -419,15 +419,10 @@ cat(sprintf("\nBT0  flow matrix from %d transfers, elections: %s\n",
 # finding about Queensland, it is this mistake showing up as data.
 fm <- build_flow_matrix(tx_prev, min_n = 3L)
 
-# SEAT FILE for the seat spread (seat_swing_spread: region and prev_swing only). The anchor ships no
-# 2015nsw.txt, so nsw2015 falls back to 2023nsw.txt, whose prev_swing is the 2019 swing. NOT 2019nsw.txt:
-# its prev_swing is the 2015 swing, i.e. the target election's own seat-level result. It is a variance
-# hyperparameter from a LATER election (the compromise the Queensland harness makes); announced, not absorbed.
-seats <- tryCatch(as.data.table(load_seats(TO, "nsw")), error = function(e) NULL)
-if (is.null(seats)) {
-  seats <- as.data.table(load_seats(2023L, "nsw"))
-  cat(sprintf("BN0s no %dnsw.txt seat file: seat spread taken from 2023nsw.txt (a later election, prev_swing = the 2019 swing)\n", TO))
-}
+# SEAT SPREAD (seat_sd) comes from AUSPOL_SEAT_SPREAD_SRC, resolved where it is used (harness_seat_spread()).
+# "derived" (published) = the seat-level swing AT the previous election, from our own archived results.
+# "anchor" = the old behaviour: the anchor seat file for TO, else 2023nsw.txt, a LATER election, which LEAKS
+# (nsw2011/nsw2015). R/prev_seat_swing.R, 2026-10-16.
 
 # Per-seat 2019 shares as a matrix.
 w_prev <- dcast(fp_prev, seat ~ party, value.var = "votes", fill = 0)
@@ -949,7 +944,8 @@ if (identical(Sys.getenv("AUSPOL_XGB_PRIMARY", "0"), "1")) shares <- leader_seat
 # Departed member toward the same booths' federal vote (AUSPOL_DEPARTED_FED, plans/prereg-departed-fed-booths-2026-09-30.md); xgb layer only.
 if (identical(Sys.getenv("AUSPOL_XGB_PRIMARY", "0"), "1")) shares <- departed_fed_apply(shares, TGT)
 
-sp <- seat_swing_spread(seats, unname(state_tgt[["ALP"]] - state_prev[["ALP"]]))
+sp <- harness_seat_spread("nsw", FROM, TO, unname(state_tgt[["ALP"]] - state_prev[["ALP"]]),
+                          anchor_fallback_year = 2023L)
 cat(sprintf("\nBT3  seat spread: within %.2f, between %.2f\n", sp$sd_within, sp$sd_between))
 
 set.seed(SEED)
@@ -1154,7 +1150,7 @@ if (.exhaust_on) {
 .imx <- ind_mixture_surge(TGT, rownames(shares), surge_arg, surge_mu_arg, surge_sd_arg, surge_party_arg, code = "BT1N")
 surge_arg <- .imx$surge_h; surge_mu_arg <- .imx$surge_mu; surge_sd_arg <- .imx$surge_sd; surge_party_arg <- .imx$surge_party
 sim <- simulate_seat_contests(level_sd = .level_sd, sd_override = size_sd_apply(SD_OVR, shares, TGT, .level_sd, .lm(shares)), level_mult = .lm(shares), shares, fm, party_sd = psd, seat_sd = sp$sd_within * SEAT_SD_MULT,
-                              breakout_p = .bo$p, breakout_q = .bo$q,
+                              breakout_p = .bo$p, breakout_q = .bo$q, coalition_split = coalition_split_args(TGT, rownames(shares)), error_q = error_dist_args(TGT, colnames(shares)),
                               n_sims = N_SIMS, smooth = SMOOTH, seed = SEED, party_cor = PARTY_COR,
                               shrink = SHRINK, conditional_override = .htv_ov, conditional_override_sd = attr(.htv_ov, "sd"),
                               fallback_smooth = FB_SMOOTH, shrink_k = SHRINK_K, flow_sd = FLOW_SD,

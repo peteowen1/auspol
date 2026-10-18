@@ -224,7 +224,7 @@ if (FORECAST_MODE) {
 # using its own statewide swing. See
 # docs/plans/prereg-statewide-cov-loo-2026-09-07.md.
 PARTY_COR <- NULL
-COR_MODE <- if (!nzchar(Sys.getenv("AUSPOL_PARTY_COR", ""))) NULL else
+COR_MODE <- if (Sys.getenv("AUSPOL_PARTY_COR", "") %in% c("", "off")) NULL else
   if (identical(Sys.getenv("AUSPOL_PARTY_COR"), "raw")) "raw" else "shrunk"
 
 # THE HARNESS HAS NEVER PASSED `shrink`. fit_seats_full.R passes SHRINK = 0.10 --
@@ -403,7 +403,7 @@ CAL_TAG <- paste0(
   # used a correlation -- a file whose name says one arm and whose
   # contents are another, which is the fingerprint failure this tag exists
   # to prevent.
-  if (nzchar(Sys.getenv("AUSPOL_PARTY_COR", "")))
+  if (!Sys.getenv("AUSPOL_PARTY_COR", "") %in% c("", "off"))
     (if (identical(Sys.getenv("AUSPOL_PARTY_COR"), "raw")) "-corraw" else "-cor")
   else "",
   if (identical(Sys.getenv("AUSPOL_QLD_FLOWS", "0"), "1")) "-qld" else "",
@@ -446,12 +446,20 @@ WIN <- fread(file.path(P, "aec-fed-winners.csv"), showProgress = FALSE)
 # match a predicted party.
 coal <- function(x) fifelse(x %in% c("NAT", "LIB", "LNP", "CLP"), "LNP", x)
 
-# Per-seat idiosyncratic spread. Taken from the seat file of the election being
-# predicted where one exists (2019, 2022, 2025); the earlier pairs have no
-# federal seat file, so they use the MEDIAN of those that do rather than a
-# number invented here. It is a variance parameter, not a prediction, and it is
-# reported per pair so a pair running on the fallback is visible.
-spread_for <- function(yr, swing) {
+# Per-seat idiosyncratic spread (seat_sd), from AUSPOL_SEAT_SPREAD_SRC (R/prev_seat_swing.R, 2026-10-16).
+# "derived" (published): the seat-level swing AT the pair's previous election, from our archived results,
+# for EVERY pair (no fallback: a pair that cannot be measured stops the run).
+# "anchor": the old behaviour. The seat file of the election being predicted where one exists (2019, 2022,
+# 2025); the earlier pairs have no federal seat file and used the MEDIAN of those that do, a LATER
+# election's spread, which LEAKS. Reported per pair (BF2) so a pair running on the fallback is visible.
+# `quiet` silences the SSP1 line when the call is only building the fallback.
+spread_for <- function(yr, swing, quiet = FALSE) {
+  if (identical(seat_spread_src(), "derived")) {
+    k <- Filter(function(k) k$to == yr, PAIRS_ALL)
+    if (length(k) != 1L) stop("SSP2! no unique pair ending ", yr, " for the derived seat spread")
+    f <- function() harness_seat_spread("fed", k[[1]]$from, yr, swing)$sd_within
+    return(if (quiet) { v <- NULL; utils::capture.output(v <- f()); v } else f())
+  }
   s <- tryCatch(as.data.table(load_seats(yr, "fed")), error = function(e) NULL)
   if (is.null(s)) return(NA_real_)
   tryCatch(seat_swing_spread(s, swing)$sd_within, error = function(e) NA_real_)
@@ -481,7 +489,7 @@ for (K in PAIRS) {
   # different input from the one its log implies.
   PARTY_COR <- if (is.null(COR_MODE)) NULL else
     statewide_cor(sprintf("fed%d", K$to), mode = COR_MODE)
-  if (nzchar(Sys.getenv("AUSPOL_PARTY_COR", "")))
+  if (!Sys.getenv("AUSPOL_PARTY_COR", "") %in% c("", "off"))
     cat(sprintf("COV  fed%d party correlation (%s): cor(ONP,LNP) = %+.2f | %s\n",
                 K$to, COR_MODE, PARTY_COR["ONP", "LNP"],
                 attr(PARTY_COR, "cor_source")))
@@ -1591,7 +1599,12 @@ for (K in PAIRS) {
                                           # the last would widen the wrong
                                           # pair's re-entry cells, silently,
                                           # with a plausible non-zero count.
-                                          REENTRY_CELLS = REENTRY_CELLS)
+                                          REENTRY_CELLS = REENTRY_CELLS,
+                                          # Carried per pair: the simulation loop used to read the global PARTY_COR,
+                                          # i.e. the LAST projection-iteration (fed2025) matrix for every pair
+                                          # (docs/reviews/party-cor-loop-leak-2026-10-03.md). Dormant at published
+                                          # flags (sw_draws is fed), live under AUSPOL_PARTY_COR.
+                                          PARTY_COR = PARTY_COR)
 }
 
 # THE FALLBACK IS TAKEN OVER EVERY PAIR, NOT JUST THE ONES IN THIS RUN.
@@ -1604,7 +1617,7 @@ for (K in PAIRS) {
 # (The fallback for those pairs is a median over LATER elections' spreads. That
 # is the same value the full run has always used; it is a seat-sd
 # hyperparameter with no pre-2010 seat file to draw on, and is noted, not fixed.)
-seat_sds_all <- vapply(PAIRS_ALL, function(k) spread_for(k$to, 0), numeric(1))
+seat_sds_all <- vapply(PAIRS_ALL, function(k) spread_for(k$to, 0, quiet = TRUE), numeric(1))
 fallback <- stats::median(seat_sds_all, na.rm = TRUE)
 if (!is.finite(fallback)) {
   stop("No federal seat file yielded a within-region seat-swing spread, so ",
@@ -1873,9 +1886,9 @@ for (X in out_all) {
                                 shrink = shrink_arg, surge_h = surge_arg, surge_party = surge_party_arg,
                                 surge_from_zero = identical(Sys.getenv("AUSPOL_SURGE_FROM_ZERO", "0"), "1"),
                                 surge_mu = surge_mu_arg, surge_sd = surge_sd_arg,
-                                party_cor = PARTY_COR, statewide_draws = X$sw_draws, conditional_override = .htv_ov, conditional_override_sd = attr(.htv_ov, "sd"),
+                                party_cor = X$PARTY_COR, statewide_draws = X$sw_draws, conditional_override = .htv_ov, conditional_override_sd = attr(.htv_ov, "sd"),
                                 fallback_smooth = FB_SMOOTH, shrink_k = SHRINK_K, flow_sd = FLOW_SD,
-                                breakout_p = .bo$p, breakout_q = .bo$q)
+                                breakout_p = .bo$p, breakout_q = .bo$q, coalition_split = coalition_split_args(sprintf("fed%d", K$to), rownames(X$shares)), error_q = error_dist_args(sprintf("fed%d", K$to), colnames(X$shares)))
   # OUR OWN final-two scenario frequencies -- see tcp_scenarios(). Uses
   # sprintf("fed%d", K$to) rather than `eb` to match how this harness names
   # the pair at its own write sites further down.

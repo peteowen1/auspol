@@ -23,10 +23,10 @@
 # CHECK CODES: HCB1 inputs, HCB2 base covers every electorate, HCB3 probabilities sum to 1, HCS1 statewide source.
 
 suppressPackageStartupMessages({ library(data.table); devtools::load_all(quiet = TRUE) })
-# Published value of one switch, read without applying the rest (this harness runs every other switch at its own
-# default; NEXT-STEPS: the Hare-Clark harness does not use harness_defaults.R).
-.hc_published <- function(n) { e <- new.env(); sys.source(file.path("scripts", "published_flags.R"), envir = e)
-  v <- unname(e$PUBLISHED_FLAGS[n]); if (is.na(v)) "0" else as.character(v) }   # single bracket: [[ throws on a missing name
+# PUBLISHED DEFAULTS (2026-10-15), as in the seven single-member harnesses: every switch the caller left unset
+# takes its published_flags.R value, including the ones read inside R/ by the poll and trend code this harness
+# calls. Until then only AUSPOL_HC_DEFECTOR read its published value and everything else ran at inline defaults.
+source("scripts/harness_defaults.R")
 
 args <- commandArgs(trailingOnly = TRUE)
 arg <- function(name, default) {
@@ -159,10 +159,9 @@ run_one <- function(rg, yr) {
   }
   # AUSPOL_HC_DEFECTOR (published "1" since 2026-10-14): a sitting member standing for another party takes
   # rate x previous personal vote with them. The cases are listed either way (HCM2) so "0" shows what "1" would do.
-  # The default is the PUBLISHED value: this harness does not source harness_defaults.R, so a plain "0" default
-  # would have left the shipped switch unreached here.
+  # harness_defaults.R (sourced at the top) has already set it to the published value when the caller did not.
   dfx <- hc_defector_moves(cands_all, rg, yr, py)
-  .hcd <- Sys.getenv("AUSPOL_HC_DEFECTOR", .hc_published("AUSPOL_HC_DEFECTOR"))
+  .hcd <- Sys.getenv("AUSPOL_HC_DEFECTOR", "0")
   if (!identical(.hcd, "1")) dfx <- NULL
   cat(sprintf("HCM2  %s%d AUSPOL_HC_DEFECTOR = %s\n", rg, yr, .hcd))
   pr <- hc_simulate(target, base, unit_prev, sw$draws, prev_state, nsd, upri, fl, leak = lk, seed = seed + 1L, cand = cand, defect = dfx)

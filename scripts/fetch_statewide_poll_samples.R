@@ -110,15 +110,35 @@ pages[, url := paste0(wp, title)]
 
 # ---- download once -----------------------------------------------------------
 pages[, status := NA_character_]
+pages[, refresh := NA_character_]
 # A page is on disk only if it ends properly (closing </html>); HTTP 404/410 are remembered in a
 # marker, anything else is "fetch_failed" and retried next run. See scripts/fetch_page_lib.R.
 source(file.path(dirname(sub("^--file=", "", grep("^--file=", commandArgs(FALSE), value = TRUE)[1])), "fetch_page_lib.R"))
 only_keys <- Sys.getenv("AUSPOL_POLL_ONLY", "")   # test hook: restrict to these page keys
+# LIVE pages are refetched once older than AUSPOL_POLL_MAX_AGE_H hours (default 20). A page for an election
+# that has not happened yet (no date in elec_dates, or a date from today on) keeps gaining polls, and "download
+# once" left a local run reading whatever was cached on the day it first ran (NEXT-STEPS, 2026-10-17). Past
+# elections' pages are still never refetched. fetch_page() replaces the file only on a complete download, so a
+# failed refetch keeps the old copy and says so.
+max_age_h <- as.numeric(Sys.getenv("AUSPOL_POLL_MAX_AGE_H", "20"))
+if (!is.finite(max_age_h) || max_age_h < 0) stop("AUSPOL_POLL_MAX_AGE_H must be a non-negative number of hours")
+.edate <- stats::setNames(elec_dates$election_date, elec_dates$election)
+page_live <- function(el) { d <- .edate[el]; is.na(d) || d >= Sys.Date() }
 for (i in seq_len(nrow(pages))) {
   f  <- file.path(raw_dir, paste0(pages$page_key[i], ".html"))
   nf <- file.path(raw_dir, paste0(pages$page_key[i], ".notfound"))
   if (nzchar(only_keys) && !pages$page_key[i] %in% strsplit(only_keys, ",")[[1]]) { pages$status[i] <- "skipped_test"; next }
-  if (page_complete(f)) {
+  age_h <- if (file.exists(f)) as.numeric(difftime(Sys.time(), file.mtime(f), units = "hours")) else NA_real_
+  if (page_complete(f) && page_live(pages$election[i]) && age_h > max_age_h) {
+    message(sprintf("Refreshing live page: %s (%.0f h old)", pages$page_key[i], age_h))
+    r <- fetch_page(pages$url[i], f, ua)
+    # status stays "on_disk" either way: the parser below reads only pages whose status is exactly "on_disk",
+    # and a refreshed or kept page is on disk. What happened goes in `refresh` (and the manifest).
+    pages$status[i] <- "on_disk"
+    pages$refresh[i] <- if (r$status == "on_disk") "refreshed" else "stale_kept"
+    if (r$status != "on_disk") message("  REFRESH FAILED (status ", r$code, "): ", pages$page_key[i], " -- keeping the ", round(age_h), " h old copy")
+    Sys.sleep(1)
+  } else if (page_complete(f)) {
     pages$status[i] <- "on_disk"
   } else if (file.exists(nf) && grepl("^status=(404|410) ", readLines(nf, n = 1, warn = FALSE))) {
     pages$status[i] <- "not_found"
@@ -741,7 +761,10 @@ meta <- c("page_key", "region", "election", "page_kind", "source_url", "table_id
           "sample_raw", "sample_n", "mode_raw", "seat_raw", "footnote_raw", "alp_fp", "lnp_fp", "lib_fp", "nat_fp", "alp_tpp")
 setcolorder(wiki, c(meta, setdiff(names(wiki), meta)))
 fwrite(wiki, out_csv)
-fwrite(pages[, .(page_key, region, election, kind, title, url, status, n_tables, n_datelike, n_tables_parsed, n_poll_rows)], man_csv)
+fwrite(pages[, .(page_key, region, election, kind, title, url, status, refresh, n_tables, n_datelike, n_tables_parsed, n_poll_rows)], man_csv)
+cat(sprintf("PLV1 live pages: %d refreshed, %d kept stale after a failed refresh, %d live and fresh enough (max age %.0f h)\n",
+            sum(pages$refresh %in% "refreshed"), sum(pages$refresh %in% "stale_kept"),
+            sum(is.na(pages$refresh) & pages$status == "on_disk" & vapply(pages$election, page_live, TRUE)), max_age_h))
 tl <- rbindlist(tbl_log, fill = TRUE)
 fwrite(tl, file.path(base_dir, "table_outcomes.csv"))
 # ---- LOUD FAILURES: nothing may be lost silently (written AFTER the outputs so they can be inspected) ----

@@ -325,7 +325,11 @@ cat(sprintf("L3a endpoint FP sums (reported, not asserted): %s\n",
                   collapse = "  ")))
 vic_track <- lapply(ALL_CYCLES, function(y) {
   r <- res[[as.character(y)]]
-  x <- poll_tracking_check(r$polls, r$fits)
+  # Against the polls the trends were FITTED on: OTH is fitted with folded
+  # parties subtracted, so raw Others overstates it by the folded share
+  # (NSW 2023: 3.86 points raw vs 1.08 corrected, 2026-10-15).
+  stopifnot(!is.null(r$polls_corrected))   # raw polls would re-open the false OTH breach
+  x <- poll_tracking_check(r$polls_corrected, r$fits)
   report_poll_tracking(x, sprintf("L3  %d", y))
   x
 })

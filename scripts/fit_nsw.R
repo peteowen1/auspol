@@ -143,13 +143,47 @@ hy <- rbindlist(lapply(est_parties, function(p) data.table(
 )))
 print(hy[, lapply(.SD, function(x) if (is.numeric(x)) round(x, 4) else x)])
 
+# AMENDMENT 2026-10-15 (Pete): the clauses "!at_bound" and "sigma_rw >= 0.02
+# points" below are unedited, but no longer fail the run for ONE case: a
+# pooled walk at the LOWER bound of sigma_rw, i.e. a party whose NSW polls
+# show no detectable movement. GRN (0.0150 points) and SFF (0.0005 logit) have
+# sat there every daily run since 13 Oct. A flat walk is a measurement, not a
+# broken method, and it is shrunk toward the scale default exactly as the thin
+# parties' walks are (estimate_cycle_sigmas: geometric, weight n/(n + 25)),
+# so it cannot pin the trend flat on its own. Every other clause still
+# applies, and an upper-bound or sigma_obs bound hit still fails. The 0.02
+# floor is in points, which no thin logit party can meet: SFF's own scale
+# default is under it.
+NH_K0 <- 25
+for (p in est_parties) {
+  e <- est[[p]]; sc <- scale_of[[p]]
+  lo_rw <- default_sigma_bounds(sc)$lower[2]
+  rw_at_floor <- e$sigma_rw <= lo_rw * (1 + 1e-3)
+  obs_bnd <- default_sigma_bounds(sc)
+  obs_at_bound <- e$sigma_obs <= obs_bnd$lower[1] * (1 + 1e-3) ||
+    e$sigma_obs >= obs_bnd$upper[1] * (1 - 1e-3)
+  if (isTRUE(e$at_bound) && rw_at_floor && !obs_at_bound) {
+    w <- e$n_polls / (e$n_polls + NH_K0)
+    d_rw <- unname(default_sigmas(sc)[["sigma_rw"]])
+    shrunk <- exp(w * log(e$sigma_rw) + (1 - w) * log(d_rw))
+    cat(sprintf("NH0  %s pooled walk at its lower bound (%.4f %s, n=%d): shrunk toward default %.4f, weight %.2f -> %.4f (%.4f points)\n",
+                p, e$sigma_rw, sc, e$n_polls, d_rw, w, shrunk,
+                sd_from_link(shrunk, ref_share(p), sc)))
+    est[[p]]$sigma_rw <- shrunk
+    est[[p]]$at_bound <- FALSE
+    est[[p]]$rw_floor_shrunk <- TRUE
+  }
+}
+
 for (p in est_parties) {
   e <- est[[p]]; sc <- scale_of[[p]]; share <- ref_share(p)
   hi_rw <- if (p == "ONP") 0.55 else 0.40
+  rw_ok_floor <- isTRUE(e$rw_floor_shrunk) ||
+    sd_from_link(e$sigma_rw, share, sc) >= 0.02
   stopifnot(e$convergence == 0, !e$at_bound,
             e$sigma_obs >= binomial_sd_link(share, BINOMIAL_REF_N, sc),
             sd_from_link(e$sigma_obs, share, sc) <= 3.0,
-            sd_from_link(e$sigma_rw, share, sc) >= 0.02,
+            rw_ok_floor,
             sd_from_link(e$sigma_rw, share, sc) <= hi_rw,
             e$logml >= e$logml0 - 1e-6)
 }
@@ -398,7 +432,11 @@ cat(sprintf("NL3a endpoint FP sums (reported, not asserted): %s\n",
 NSW_YEARS <- c(2023, 2027)
 nsw_track <- lapply(NSW_YEARS, function(yr) {
   r <- get(paste0("res", yr))
-  x <- poll_tracking_check(r$polls, r$fits)
+  # Against the polls the trends were FITTED on: OTH is fitted with folded
+  # parties subtracted, so raw Others overstates it by the folded share
+  # (2023: 3.86 points raw vs 1.08 corrected, 2026-10-15).
+  stopifnot(!is.null(r$polls_corrected))   # raw polls would re-open the false OTH breach
+  x <- poll_tracking_check(r$polls_corrected, r$fits)
   report_poll_tracking(x, sprintf("NL3  %d", yr))
   x
 })

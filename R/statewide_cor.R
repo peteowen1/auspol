@@ -1,3 +1,54 @@
+#' Time-forward statewide correlation for one target election
+#'
+#' Leave-one-out (`by_target` in `output/statewide-cov.rds`) still trains on
+#' every election AFTER the target, so nsw2019 is scored with a One Nation
+#' correlation learned mostly from sa2026. This builds the matrix from only the
+#' pairs whose second election is strictly before the target's polling day, and
+#' shrinks it toward independence with a weight that grows smoothly with how
+#' many pairs there are: `w_n = lambda * n / (n + K)`. No cliff: a target with
+#' few earlier pairs gets nearly independent draws.
+#'
+#' For `n < 3` the correlation is undefined, so the matrix is the identity.
+#' That is the `w -> 0` limit of the same formula, not a separate rule.
+#' A party column with zero variance among the earlier pairs gets correlation 0
+#' with every other party (listed in `$zero_var`).
+#'
+#' @param D Matrix of statewide first-preference changes, one row per pair,
+#'   rows named by the pair's second election (`"nsw2019"`).
+#' @param target Election label being predicted.
+#' @param dates Named `Date` vector of polling days (default `election_dates()`).
+#' @param lambda Maximum shrink weight toward the sample correlation.
+#' @param K Pairs at which the weight reaches half of `lambda`.
+#' @return List: `cor`, `cor_shrunk`, `n_pairs`, `w` (weight actually applied),
+#'   `w_n` (the formula's value), `earlier` (pair names used), `zero_var`.
+#' @noRd
+cov_time_forward <- function(D, target, dates = election_dates(),
+                             lambda = 0.5, K = 5) {
+  if (is.null(rownames(D))) stop("cov_time_forward(): D needs rownames")
+  td <- dates[target]
+  pd <- dates[rownames(D)]
+  if (is.na(td) || anyNA(pd))
+    stop("cov_time_forward(): no polling day for ",
+         paste(c(target, rownames(D))[is.na(c(td, pd))], collapse = ", "))
+  earlier <- rownames(D)[unname(pd) < unname(td)]
+  n <- length(earlier)
+  w_n <- lambda * n / (n + K)
+  id <- diag(ncol(D)); dimnames(id) <- list(colnames(D), colnames(D))
+  zero_var <- character(0)
+  if (n < 3L) {
+    cm <- id; w <- 0
+  } else {
+    Dm <- D[earlier, , drop = FALSE]
+    zero_var <- colnames(D)[apply(Dm, 2, stats::sd) == 0]
+    cm <- suppressWarnings(stats::cor(Dm))
+    cm[is.na(cm)] <- 0
+    diag(cm) <- 1
+    w <- w_n
+  }
+  list(cor = cm, cor_shrunk = w * cm + (1 - w) * id, n_pairs = n, w = w,
+       w_n = w_n, earlier = earlier, zero_var = zero_var)
+}
+
 #' The statewide party-correlation matrix for one election
 #'
 #' `scripts/estimate_statewide_cov.R` writes both an all-pairs correlation of
@@ -54,6 +105,26 @@ statewide_cor <- function(target = NULL, mode = c("shrunk", "raw"),
   # gets the leakage-free matrix. Reading the environment inside a package
   # function is unusual here; it is done because all seven callers would
   # otherwise have to thread the same flag through.
+  # AUSPOL_COV_TF=1: time-forward matrix (only pairs strictly before the target,
+  # shrunk by n). Leave-one-out still trains on LATER elections; this does not.
+  # Default "0" leaves everything below untouched. Takes precedence over
+  # AUSPOL_COV_LOO for a non-NULL target; the live forecast (NULL) is unchanged.
+  if (identical(Sys.getenv("AUSPOL_COV_TF", "0"), "1") && !is.null(target)) {
+    if (is.null(co$by_target_tf)) {
+      stop(path, " has no time-forward matrices. Re-run ",
+           "scripts/estimate_statewide_cov.R (AUSPOL_COV_TF=1 needs them).")
+    }
+    e <- co$by_target_tf[[target]]
+    # a target outside the fit (WA, earlier state pairs) is computed on the fly
+    # from the saved changes, still using only strictly earlier pairs
+    if (is.null(e)) e <- cov_time_forward(co$change, target, lambda = co$lambda,
+                                          K = if (is.null(co$cov_tf_k)) 5 else co$cov_tf_k)
+    out <- pick(e)
+    attr(out, "cor_source") <- sprintf(
+      "time-forward, %d earlier pairs, w=%.3f (%s)", e$n_pairs, e$w, target)
+    return(out)
+  }
+
   if (identical(Sys.getenv("AUSPOL_COV_LOO", "1"), "0")) {
     out <- pick(co)
     attr(out, "cor_source") <- sprintf(

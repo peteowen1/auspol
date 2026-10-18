@@ -130,8 +130,14 @@ built_at <- format(Sys.time(), "%Y-%m-%d %H:%M:%S")
 # ~15 s xgb.cv + train. A rebuild that changes one election's base_pred then
 # retrains only the targets dated after it. AUSPOL_ASAT_FORCE=1 retrains all.
 man_f <- file.path(OUT, "xgb-primary-asat-manifest.csv"); pred_f <- file.path(OUT, "xgb-primary-asat-predictions.csv")
-OLDM <- if (file.exists(man_f)) fread(man_f, showProgress = FALSE) else NULL
-OLDP <- if (file.exists(pred_f)) fread(pred_f, showProgress = FALSE) else NULL
+# Checkpoints go to .partial copies, renamed over the real files only when every target is done, so a killed run
+# never leaves a half-new predictions file for a resume from stage 5 or 6 to read. A rerun of this stage resumes
+# from the .partial pair when both exist (they hold the finished targets plus the previous files' other rows).
+man_part <- paste0(man_f, ".partial"); pred_part <- paste0(pred_f, ".partial")
+.resume <- file.exists(man_part) && file.exists(pred_part)
+if (.resume) cat(sprintf("XA0p resuming from %s and %s (a previous run of this stage was killed)\n", man_part, pred_part))
+OLDM <- if (.resume) fread(man_part, showProgress = FALSE) else if (file.exists(man_f)) fread(man_f, showProgress = FALSE) else NULL
+OLDP <- if (.resume) fread(pred_part, showProgress = FALSE) else if (file.exists(pred_f)) fread(pred_f, showProgress = FALSE) else NULL
 if (!is.null(OLDM) && !"input_key" %in% names(OLDM)) OLDM <- NULL
 .force <- identical(Sys.getenv("AUSPOL_ASAT_FORCE", "0"), "1")
 n_cached <- 0L
@@ -220,11 +226,11 @@ for (tg in targets) {
                                model_file = mf, git_hash = git_hash, built_at = built_at, input_key = key)
   # CHECKPOINT after every trained target (2026-10-14): the run is ~25 min at 35 elections and wrote only at the
   # end, so a kill at nsw2023 (01:34 that night) lost every target before it. Targets done so far, plus the previous
-  # files' rows for targets not reached yet, are written now; a rerun WITHOUT AUSPOL_ASAT_FORCE then reuses each
-  # finished target by its input key and trains only the rest.
+  # files' rows for targets not reached yet, are written now to the .partial pair; a rerun WITHOUT AUSPOL_ASAT_FORCE
+  # then reuses each finished target by its input key and trains only the rest. The real files change only at the end.
   .ck <- function(new, old, idcol) data.table::rbindlist(c(new, if (!is.null(old)) list(old[!old[[idcol]] %in% names(new)])), fill = TRUE)
-  fwrite(.ck(preds, OLDP, "pair"), pred_f, na = "NA")
-  fwrite(.ck(manifest, OLDM, "target"), man_f, na = "NA")
+  fwrite(.ck(preds, OLDP, "pair"), pred_part, na = "NA")
+  fwrite(.ck(manifest, OLDM, "target"), man_part, na = "NA")
 }
 writeLines(feat_cols, file.path(MDIR, "feat_cols.txt"))
 saveRDS(params, file.path(MDIR, "params.rds"))
@@ -234,6 +240,7 @@ cat(sprintf("XA3  %d of %d targets reused from cache (AUSPOL_ASAT_FORCE=1 to ret
 P <- rbindlist(preds); M <- rbindlist(manifest)
 fwrite(P, file.path(OUT, "xgb-primary-asat-predictions.csv"), na = "NA")
 fwrite(M, file.path(OUT, "xgb-primary-asat-manifest.csv"), na = "NA")
+unlink(c(pred_part, man_part))
 cat(sprintf("\nXA3  wrote %s (%d rows, %d targets with a model)\n",
             file.path(OUT, "xgb-primary-asat-predictions.csv"), nrow(P), sum(!is.na(M$nrounds))))
 cat(sprintf("XA3  wrote %s and %d model file(s) under %s\n", file.path(OUT, "xgb-primary-asat-manifest.csv"),

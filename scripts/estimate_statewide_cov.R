@@ -334,7 +334,27 @@ cat(sprintf("CV6  max |move| in a target's own shrunk matrix: %.3f (%s); median 
 ",
             max(mv), names(which.max(mv)), stats::median(mv)))
 
+# ---- TIME-FORWARD (AUSPOL_COV_TF) ------------------------------------------
+# Leave-one-out above still fits on elections AFTER the target (nsw2019's ONP-LNP
+# correlation is learned mostly from sa2026). by_target_tf uses only pairs whose
+# second election is strictly before the target, shrunk by w_n = LAMBDA*n/(n+K).
+# For n < 3 cor is undefined -> identity, which is the w -> 0 limit, not a cliff.
+# Logic lives in cov_time_forward() (R/statewide_cor.R) so tests can reach it.
+# K is documented in docs/CONSTANTS.md.
+COV_TF_K <- 5
+by_target_tf <- lapply(stats::setNames(nm = rownames(D)), function(t)
+  cov_time_forward(D, t, lambda = LAMBDA, K = COV_TF_K))
+cat("\nCVT1 time-forward matrices (AUSPOL_COV_TF): K =", COV_TF_K, "\n")
+for (t in names(by_target_tf)) {
+  e <- by_target_tf[[t]]
+  cat(sprintf("CVT1 %-8s n=%2d  w_n=%.3f  applied=%.3f%s%s\n", t, e$n_pairs, e$w_n, e$w,
+              if (e$n_pairs < 3L) "  (identity: n < 3)" else "",
+              if (length(e$zero_var)) paste0("  zero-variance cols -> 0: ",
+                                             paste(e$zero_var, collapse = ",")) else ""))
+}
+
 saveRDS(list(change = D, cor = CO, cor_shrunk = SH, by_target = by_target,
+             by_target_tf = by_target_tf, cov_tf_k = COV_TF_K,
              lambda = LAMBDA, parties = PARTIES),
         file.path("output", "statewide-cov.rds"))
 cat("

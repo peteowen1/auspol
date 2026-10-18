@@ -112,6 +112,13 @@ they ever look load-bearing: `window = 30` decides which poll counts as a
 firm's last, and the `G3` tolerance decides how far the adopted estimator may
 fall behind before someone is told.
 
+`AUSPOL_SPREAD_RERUN_TOL` = 0.02 (`scripts/compare_spread_tables.R`, added
+2026-10-14) is **CHOSEN**: how far any scored target's seat-size widening
+factor (at 2k/5k/10k/20k formal votes) may move between the table stage 6 read
+and stage 7's refit before `rebuild_forecasts.sh` reruns stages 6-7. A 2%
+change in a seat's sd is well inside simulation noise on a seat probability;
+the cost of a lower bound is a 57-minute rerun, not accuracy.
+
 ## 4b. The candidate-level seat path (added 2026-08-18)
 
 These live in `scripts/fit_seats_full.R` and the three functions it calls. The
@@ -215,7 +222,8 @@ individual number below.
 | Constant | Where | What it does | Status |
 |---|---|---|---|
 | `SHRINK = 0.01` | `fit_seats_full.R` | Per-draw calibration shrink toward a coin toss in close seats. Added 2026-08-21 at 0.10; **lowered to 0.02 on 2026-09-06**. A scalar shrink caps every seat at `1 - shrink/2`, so 0.10 meant no seat could be called above 0.95 — measured max p was 0.9505 with 19 of 150 federal seats against that ceiling, costing ~0.006 of mean log loss on the cap alone. Swept on fed2025: 0.10→0.3042, 0.05→0.2933, **0.02→0.2891**, 0.00→0.2914. Three seeds at 0.02 mean 0.2886 against AE Forecasts' 0.3025. Validated election-wide before shipping: federal mean log 0.4154→0.4047 (better in 5 of 6 pairs, Brier in 6 of 6), Victoria 0.3020→0.2997, NSW 0.4062→0.3822, SA 0.3976→0.3857, WA accuracy 87.0%→87.3%. **Lowered again to 0.01 on 2026-09-06**: six federal pairs give mean log loss 0.10=0.4154, 0.02=0.4047, 0.01=0.4096, 0.00=0.4282, and 0.02's edge over 0.01 is one seed and not established as significant while 0.01 has the best mean Brier (0.0982). Stays NON-ZERO because 0.00 costs 0.0235 of mean log loss against 0.02, concentrated in fed2013 (+0.0975) and fed2022 (+0.0243) — a risk invisible on fed2025 alone. Expected to be superseded by the per-seat `AUSPOL_INSURGENCY_SHRINK`. | **ESTIMATED** — swept on held-out log loss, then checked election-wide as a do-no-harm guard. |
-| `LAMBDA = 0.5` | `estimate_statewide_cov.R:215` | Shrinks the statewide party-correlation matrix toward independence. Written to `cor_shrunk`, which `R/statewide_cor.R:48` reads for `fit_seats_full.R` **by default**, so it shapes the published joint distribution over party votes. | **FIXED, pre-registered.** Half weight on a correlation estimated from few cycles; the alternative was to estimate the shrinkage from the same small sample that produced the correlation. |
+| `LAMBDA = 0.5` | `estimate_statewide_cov.R:215` | Shrinks the statewide party-correlation matrix toward independence. Written to `cor_shrunk`, which `R/statewide_cor.R:48` reads for `fit_seats_full.R` when `AUSPOL_PARTY_COR` is on. **Unread at published flags since 2026-10-16** (`AUSPOL_PARTY_COR="off"`, `reviews/party-cor-time-forward-2026-10-16.md`). | **FIXED, pre-registered.** Half weight on a correlation estimated from few cycles; the alternative was to estimate the shrinkage from the same small sample that produced the correlation. |
+| `COV_TF_K = 5` | `estimate_statewide_cov.R` (`cov_time_forward()`, `R/statewide_cor.R`) | Pairs at which the time-forward correlation reaches half of LAMBDA: `w_n = LAMBDA * n / (n + K)`. Only read under `AUSPOL_COV_TF=1` (default 0, OFF). For n < 3 the matrix is the identity (the w -> 0 limit). | **CHOSEN**, not fitted: a smooth replacement for a min-pairs cliff. ESTIMABLE by held-out seat log loss across the 22 pairs; not yet done. |
 | `1.96` | `trend.R:423,424`, `projection.R:526`, `fit_seats_full.R:545,552` | The Gaussian 95% quantile, used to build the published bands and to turn a band back into a simulation sd. | **FIXED, and worth flagging**: §6c records that the model deliberately does *not* assume the error distribution is normal, yet this constant assumes it at five sites. A correctness matter, sized before it is worth changing. |
 | `SA_RESPONSE` (6 coefficients) | `fit_seats_full.R:630` | Where a party's statewide gain or loss comes from, fitted on South Australia 2026. `LNP −0.846, ALP −0.123, IND −0.086, OTH_RIGHT −0.074, GRN 0.063, OTH 0.065`. Reached only under `AUSPOL_FORCE_FP`, so **not on the default publish path**. | **ESTIMATED** from one election, which is its weakness. |
 | `ANCHOR_K = 0` | `trend.R:82` | Weight on the previous election result as an anchor for the trend, defaulting `trend_anchor()` and `fit_trend()` — both on the published path. | **FIXED at 0.** Built and refused on a wrong theory; see `reviews/poll-lag-2026-08-19.md`. Same tested-and-kept shape as `sigma_house_pts` in §6b. |
@@ -468,6 +476,7 @@ outright on sa2026, vic2022 and nsw2023.
 | Candidate-conditional slope defaults (`same` / `new` per class) | `R/dev_slope.R:138-140` | IND 0.907 / 0.326, OTH_RIGHT 0.891 / 0.325, others per the table in the roxygen | **ESTIMATED once, then frozen in code -- the fitting script now EXISTS.** `fit_conditional_slopes()` (`R/split_slope.R`), built 2026-09-09, refits all eight leave-one-election-out and checked each against its own definition: IND is fine (0.374 vs 0.326, 0.882 vs 0.907), but OTH_RIGHT is wrong in OPPOSITE directions (0.442 vs 0.325, +3.1 SE; 0.766 vs 0.891, -3.8 SE) and ONP "same" is off on 51 observations (-2.7 SE). The arm to REPLACE these frozen constants with the fit was pre-registered, run, and **REFUSED** (`docs/plans/prereg-fit-conditional-slopes-2026-09-09.md`: pooled log loss FAIL, panel FAIL) -- root cause was fed2013's OTH_RIGHT surge (Palmer United's debut), where the frozen `0.325` correctly shrinks hard toward the statewide level for a class with no local history, and the fit's `0.442` does not. So the CONSTANTS remain frozen, correctly, pending a slope that also conditions on surge status -- not for want of a fitting script anymore. The sitting-member tier (`AUSPOL_MP_SLOPE=1`, `output/mp-slope-by-*.csv`) overrides these for sitting members only. |
 | Sitting-member slope tier (`output/mp-slope-by-class.csv`) | `scripts/fit_seats_full.R:879`, via `AUSPOL_MP_SLOPE=1` | IND 0.943 (n=53), GRN 1.034 (n=21, excluded — indistinguishable from its also-ran slope), OTH_RIGHT 0.959 (n=14), ONP/OTH excluded by the n>=8 floor | **FITTED, and the only `output/` file tracked in git.** Produced by `scripts/fit_mp_slope.R` from `output/candidacies.csv`; all-data per class, which is leak-free here because vic2026 has not happened (a backtest must instead use the target-keyed `mp-slope-by-target.csv`). Committed copy fit 2026-09-13. **Tracked because of a CI deadlock, not because a generated file belongs in git**: `fit_seats_full.R` hard-stops without it under the published default, but CI cannot build it (needs `candidacies.csv` -> `build_candidacies.R` -> `external/reference/` dirs CI never populates), and it cannot be switched off either, because `fit_seats_full.R` refuses to write published filenames under a non-published config. That took the nightly Forecast refresh down for six runs, 2026-09-10 to 09-14. **REFIT (`Rscript scripts/fit_mp_slope.R`) whenever `candidacies.csv` changes**, and drop the `.gitignore` exception once `build_candidacies.R` runs in CI. |
 | `AUSPOL_SEAT_SD_MULT` | all five `scripts/backtest_candidate_*.R` | default 1 | **FIXED** — a diagnostic multiplier on whichever seat spread is in force (`level_sd` when on, else `seat_sd`), for the pre-registered calibration arm B. Not read by `fit_seats_full.R`. Inert in four harnesses from 2026-08-27 to 2026-09-06 while printing "applied"; the arm B sweeps in that window measured nothing. |
+| `AUSPOL_SEAT_SPREAD_SRC` | all five `scripts/backtest_candidate_*.R` | `derived` | **FIXED** (2026-10-16) -- where the harnesses get `seat_sd`. `derived` = within-region SD of the seat-level ALP-v-Coalition swing AT the pair's previous election, from `external/elections/archive` (`R/prev_seat_swing.R`); `anchor` = the old anchor seat file for the target election or a LATER one, which leaked (nsw2011/15, sa2010/14/18, qld2012-20, every vic pair, fed2010-16 via a median). Not read by `fit_seats_full.R` (flat `SEAT_SD` 3.5). `scripts/compare_seat_spread_sources.R` prints old vs new per pair. |
 | `departed_rate = c(IND = 0.38)` (`AUSPOL_HONOUR_DEPARTED`) | `R/dev_slope.R` `screened_slopes()` | 0.38 | **ESTIMATED**, from `docs/reviews/departed-leader-retention-2026-09-15.md`: n=305 departing-non-major cases retain 0.38 of their prior class base vs n=288 recontesting cases retaining 1.01. Fires only when the prior top candidate of the class does NOT return (`prior_leader_returns == FALSE`) AND the salience screen does not independently permit a new emergence — decoupled from `candidate_returns()`'s `same` column, which aggregates `any()` across every candidate in the class and can read `TRUE` even when the actual leader departed (Morwell/vic2022: `same=TRUE` from an unrelated minor candidate, `prior_leader_returns=FALSE` from Russell Northe's real retirement). Shipped 2026-09-18 after re-measurement on the fuller corpus superseded the 2026-09-06 two-seat refusal — see `docs/reviews/departed-leader-honour-fix-2026-09-18.md`. |
 | `AUSPOL_NOM_ZERO` | `R/nomination_zero.R`, `scripts/published_flags.R` | `"2"` | **SHIPPED v61 2026-10-03.** 0 off, 1 freed share proportional, 2 freed share by preference flows. Chosen by backtest, `plans/prereg-nomination-zero-2026-10-03.md`. |
 | `AUSPOL_NOM_ZERO_ORDER` | `R/nomination_zero.R` (`nom_zero_order()`), six `scripts/backtest_candidate_*.R`, `scripts/published_flags.R` | `"late"` | **SHIPPED 2026-10-04 (Pete overrode the R2 refusal), not a fitted number; was `"early"` while testing.** A position switch for the six harnesses only: `early` zeroes right after the xgb override (what v61 was measured on), `late` zeroes after the last step that can revive a zero (the published forecast already does). Cannot come from data; decided on the prereg's 22-pair result (every clause passed except R2, bias shifts of 0.0045 and 0.0020 points), `docs/reviews/zero-order-22pair-2026-10-04.md`. `plans/prereg-zero-order-2026-10-03.md`. |
@@ -506,6 +515,7 @@ outright on sa2026, vic2022 and nsw2023.
 
 | constant | value | status |
 |---|---|---|
+| `AUSPOL_CONSERVE_SHRINK_K` (was `min_n` = 8) | K = 3 pseudo-cases | `fit_minor_defector_conserve()`: **CHOSEN prior strength** (same 3 as `.DEFSTATE_K`), shipped 2026-10-16. The median kept share is shrunk toward 0 by n / (n + 3); replaces a cliff that ignored 7 cases and believed 8. Not fitted. `"off"` restores the cliff. Screen: seat log loss unchanged (+0.0001, SE 0.0001). |
 | `prior_df` | 3 pseudo-degrees of freedom | **CHOSEN prior strength** (same 3 as `.DEFSTATE_K`): each jurisdiction's own spread is moderated toward the pooled within-jurisdiction spread, s_g^2 = (SS_g + 3 s^2) / (n_g - 1 + 3). Not fitted; with 1-9 cases per jurisdiction the variance of the variances cannot be estimated. `Inf` gives one common spread. |
 | `1.2533` | sqrt(pi/2) | **MATHEMATICAL**: large-sample standard error of a median relative to a mean under normal noise. |
 | between-jurisdiction variance tau^2 | fitted per call | **FITTED** (DerSimonian-Laird method of moments, floored at 0). |
@@ -537,3 +547,45 @@ the table are the PRIORS each one is shrunk toward, which bind only when few ear
 | `lambda0`, `sdlog0`, `n0` in `hc_split_priors()` | 0.7, 0.4, 20 | **PRIORS** for the within-ticket split (shrink toward equal; log-share noise); both fitted time-forward over every ticket that stood twice. |
 | synthetic ballot depth | two transfers, then exhausted | **CHOSEN** structure for Tasmania's synthetic ballots (no ballot files); the Tasmanian count exports could fit it. |
 | ballot slot depth | 20 preferences | **CHOSEN** cut in `scripts/build_hare_clark_ballots.R`. |
+
+## Fold correction in the fuller trend scripts (`R/fold.R`, `scripts/fit_federal.R`, added 2026-10-15)
+
+These reach only `fit_federal.R` / `fit_nsw.R` / `fit_vic.R`, whose outputs the published forecast does not read (it uses `trend_as_at()`).
+
+| Constant | Value | Status |
+|---|---|---|
+| `house_adjust` in `unfold_others()` | TRUE | **CHOSEN** structure: impute the firm's own fitted house effect (shrunk by the trend model's `sigma_house_pts` prior), not the all-firm trend. |
+| One Nation unprompted `discount` | fitted each run (FFD1) | **ESTIMATED**, inverse-variance pooled over every firm-cycle that both names and folds One Nation (2 firms, 2025 cycle, as of 2026-10-15). Fitted on the same within-firm gap FF1 checks, so FF1 cannot validate it until a second cycle has such firms. |
+| `FD_ITER`, `FD_TOL` in `fit_federal.R` | 4 iterations, 0.002 | **COMPUTATIONAL**: the discount is re-estimated after a refit until the pooled increment is below 0.2% of the imputed share; failing to converge stops the script. |
+
+## Coalition split (`AUSPOL_COALITION_SPLIT`, built 2026-10-16, SHIPPED 2026-10-17 with `_F=state`; `R/coalition_split.R`)
+
+A Liberal and a National in one seat counted as two candidates. Prereg: `plans/prereg-lib-nat-two-candidates-2026-10-16.md`.
+
+| Constant | Value | Status |
+|---|---|---|
+| `f`, Coalition-to-Coalition share of an excluded Coalition candidate's votes | fitted each election (0.70-0.76) | **ESTIMATED** time-forward: pooled over every earlier year's exclusion with another Coalition candidate surviving (transfer files). |
+| junior fraction centre, `mu`, `tau`, `s` | fitted each election | **ESTIMATED** time-forward; the seat's previous split shrunk toward `mu` by `tau^2/(tau^2+s^2)`. A seat with no previous split takes `mu`, spread `tau` (not in the prereg, which gave no spread for that case). |
+| Beta sd cap | 0.95 x sqrt(r(1-r)) | **COMPUTATIONAL**: a Beta with mean r cannot have sd at or above sqrt(r(1-r)). |
+| junior fraction clamp | [1e-9, 1 - 1e-9] | **COMPUTATIONAL**. |
+| side-stream seed | `(seed * 7919 + 104729) mod 2^31-1` | **COMPUTATIONAL**: keeps the split's draws off the count's stream so unsplit seats are byte-identical. |
+
+## Seat-composition spread (`AUSPOL_COMPOSITION_SD`, built 2026-10-17, SHIPPED 2026-10-17 with the error distribution on Pete's override; `plans/prereg-composition-spread-2026-10-17.md`; `R/size_sd.R`)
+
+| Constant | Where | Value | Status |
+|---|---|---|---|
+| per-class coefficient `b_c`, weight `w_c` | `scripts/fit_spread_by_composition.R` -> `output/spread-by-composition.csv` | fitted per target, time-forward; vic2026 IND sd x1.124 per 10 points, GRN/ONP/OTH/OTH_RIGHT shrunk to 1 | **ESTIMATED** (Gamma GLM, SE clustered on election, `w = max(0, 1 - se^2/b^2)`) |
+| classes | `composition_sd_classes()` | GRN, IND, ONP, OTH, OTH_RIGHT (majors the reference) | **CHOSEN**: every non-major class; the data pick which widen |
+| `/ 10` share unit, `/ 2` sd from variance | `composition_sd_factor()` | scale only | **DEFINITIONAL** |
+| floor at 1 | `composition_sd_factor()` | only widens | **CHOSEN** (prereg; Greens narrowing is a separate question) |
+| minimum training | `fit_spread_by_composition.R` | 3 earlier elections and 500 cells, else factor 1 | **COMPUTATIONAL**: the clustered SE needs several elections |
+
+## Empirical error distribution (`AUSPOL_ERROR_DIST`, built 2026-10-17, SHIPPED 2026-10-17 on Pete's override; `plans/prereg-error-distribution-2026-10-17.md`; `R/error_dist.R`)
+
+| Constant | Where | Value | Status |
+|---|---|---|---|
+| per-class quantiles of standardised error | `scripts/fit_error_distribution.R` -> `output/error-quantiles.csv` | 201 (0.5% steps), earlier elections only | **ESTIMATED** |
+| shrinkage toward pooled | same | `w = n / (n + 200)` | **CHOSEN** (k = 200: a class needs a few hundred cells before its own tails dominate) |
+| width | same | each class rescaled to RMS 1 (exact for the interpolated draw) | **CHOSEN** (prereg: shape, not width) |
+| training floor | same | cells predicted 2+ | **CHOSEN** (matches the spread fits) |
+| minimum training | same | 3 earlier elections and 2,000 cells, else rnorm | **COMPUTATIONAL** |

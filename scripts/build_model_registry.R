@@ -39,7 +39,7 @@ switches <- switches[nzchar(switches)]
 # gaps everywhere, which is not what "gap" means for this table. Verified by
 # reading R/*.R directly (see docs/MODEL-REGISTRY.md's own notes section for
 # citations); update this list if a switch moves between the two styles.
-SHARED_FN <- c("AUSPOL_COV_LOO", "AUSPOL_SALIENCE_SMOOTH", "AUSPOL_SIM_ENGINE", "AUSPOL_DEFECT_POOLED")
+SHARED_FN <- c("AUSPOL_COV_LOO", "AUSPOL_COV_TF", "AUSPOL_SALIENCE_SMOOTH", "AUSPOL_SIM_ENGINE", "AUSPOL_DEFECT_POOLED")
 
 present <- function(sw, file) {
   if (!file.exists(file)) return(NA)
@@ -146,6 +146,81 @@ CLASSIFY <- list(
     "SHIPPED 2026-10-14 (1), wired EVERYWHERE through R/size_sd.R: all seven harnesses and fit_seats_full.R pass",
     "sd_override = size_sd_apply(...) to simulate_seat_contests(), which reads the switch inside R/. The 'NO' cells",
     "are this generator only grepping the harness files. reviews/seat-size-spread-2026-10-14.md"),
+  AUSPOL_CONSERVE_SHRINK_K = paste(
+    "SHIPPED (3) 2026-10-16, UNIVERSAL via R/: read inside fit_minor_defector_conserve() (R/candidate_returns.R),",
+    "which every harness and fit_seats_full.R reach through candidate_returns(), so the per-harness greps cannot see it."),
+  AUSPOL_CONSERVE_TF = paste(
+    "SHIPPED (1) 2026-10-14, UNIVERSAL via R/: read inside fit_minor_defector_conserve() (R/candidate_returns.R);",
+    "trains on elections before the target. Same reach as AUSPOL_CONSERVE_SHRINK_K."),
+  AUSPOL_HC_DEFECTOR = paste(
+    "SHIPPED (1) 2026-10-14, Hare-Clark ONLY: read in scripts/backtest_hare_clark.R (Tasmania, ACT). The six",
+    "single-member harnesses and Victoria's live forecast are not Hare-Clark, so the gaps are intentional."),
+  AUSPOL_MP_SLOPE_TF = paste(
+    "SHIPPED (1) 2026-10-14, FIT-TIME: read by scripts/fit_mp_slope.R, which writes output/mp-slope-by-target.csv",
+    "(rebuild stage 0); harnesses and live read the table, not the switch."),
+  AUSPOL_PB_COALITION_COMBINED = paste(
+    "OFF (0), UNIVERSAL via R/: read inside R/poll_source.R's WA Poll Bludger merge; off is today's behaviour exactly.",
+    "Only WA polls carry combined-only Coalition rows."),
+  AUSPOL_PUBLISH_NSW2027 = paste(
+    "PUBLISH-TIME (1): read by scripts/promote_rebuild.R to ship the nsw2027 tables, matching the repository variable",
+    "the daily job gates on. Not a model switch, so no harness reads it."),
+  AUSPOL_SEAT_SPREAD_SRC = paste(
+    "SHIPPED (derived), UNIVERSAL via R/: read inside R/prev_seat_swing.R, which the harnesses call for seat_sd;",
+    "harness-only by its own comment (live seat_sd comes from the fitted spread)."),
+  AUSPOL_THIN_CYCLE = paste(
+    "CONFIRMED (1) 2026-10-14, UNIVERSAL via R/: read inside R/forecast_statewide.R and R/hare_clark.R",
+    "(thin_cycle_statewide() for cycles the trend cannot fit)."),
+  AUSPOL_TRAIN_COMPLETENESS = paste(
+    "ARM (0), FIT-TIME: read by fit_xgb_primary_asat.R and fit_xgb_primary_v6_final.R (rebuild stages 4-5);",
+    "harnesses and live load the trained models. plans/prereg-training-weights-2026-10-13.md"),
+  AUSPOL_TRAIN_DECAY_H = paste(
+    "SHIPPED (8) 2026-10-13, FIT-TIME: read by fit_xgb_primary_asat.R and fit_xgb_primary_v6_final.R (rebuild",
+    "stages 4-5); harnesses and live load the trained models. plans/prereg-training-weights-2026-10-13.md"),
+  AUSPOL_TRAIN_DEMEAN = paste(
+    "SHIPPED (1) 2026-10-13, FIT-TIME: read by fit_xgb_primary_asat.R and fit_xgb_primary_v6_final.R (rebuild",
+    "stages 4-5); harnesses and live load the trained models. plans/prereg-training-weights-2026-10-13.md"),
+  AUSPOL_SEAT_POLL_SIZEVAR = paste(
+    "SHIPPED 2026-10-18 as arm H (deciding-runs/20261018-2009-seatpoll-H). ARM (0), UNIVERSAL via R/: read inside R/seat_poll_blend.R (the seat-poll blend every harness and fit_seats_full.R",
+    "reach). plans/prereg-seat-poll-method-weights-2026-10-18.md amendment 2"),
+  AUSPOL_SEAT_POLL_ALLPOLLS = paste(
+    "SHIPPED 2026-10-18 as arm H (deciding-runs/20261018-2009-seatpoll-H). ARM (0), UNIVERSAL via R/: read inside R/seat_poll_blend.R (the seat-poll blend every harness and fit_seats_full.R",
+    "reach). plans/prereg-seat-poll-method-weights-2026-10-18.md amendment 2"),
+  AUSPOL_SEAT_POLL_SPLIT_ALL = paste(
+    "SHIPPED 2026-10-18 as arm H (deciding-runs/20261018-2009-seatpoll-H). ARM (0), UNIVERSAL via R/: read inside R/seat_poll_blend.R (the seat-poll blend every harness and fit_seats_full.R",
+    "reach). plans/prereg-seat-poll-method-weights-2026-10-18.md amendment 2"),
+  AUSPOL_SEAT_POLL_ELECTION_ERR = paste(
+    "SHIPPED 2026-10-18 as arm H (deciding-runs/20261018-2009-seatpoll-H). ARM (0), UNIVERSAL via R/: read inside R/seat_poll_blend.R (the seat-poll blend every harness and fit_seats_full.R",
+    "reach). plans/prereg-seat-poll-method-weights-2026-10-18.md amendment 8"),
+  AUSPOL_SEAT_POLL_FIRM_SHARED = paste(
+    "SHIPPED 2026-10-18 as arm H (deciding-runs/20261018-2009-seatpoll-H). ARM (0), UNIVERSAL via R/: read inside R/seat_poll_blend.R (the seat-poll blend every harness and fit_seats_full.R",
+    "reach). plans/prereg-seat-poll-method-weights-2026-10-18.md amendment 7"),
+  AUSPOL_SEAT_POLL_IND_DIRECT = paste(
+    "SHIPPED 2026-10-18 as arm H (deciding-runs/20261018-2009-seatpoll-H). ARM (0), UNIVERSAL via R/: read inside R/seat_poll_blend.R (the seat-poll blend every harness and fit_seats_full.R",
+    "reach). plans/prereg-seat-poll-method-weights-2026-10-18.md amendment 6"),
+  AUSPOL_SEAT_POLL_NAMED_ONLY = paste(
+    "SHIPPED 2026-10-18 as arm H (deciding-runs/20261018-2009-seatpoll-H). ARM (0), UNIVERSAL via R/: read inside R/seat_poll_blend.R (the seat-poll blend every harness and fit_seats_full.R",
+    "reach). plans/prereg-seat-poll-method-weights-2026-10-18.md"),
+  AUSPOL_SEAT_POLL_MODELVAR_ALL = paste(
+    "SHIPPED 2026-10-18 as arm H (deciding-runs/20261018-2009-seatpoll-H). ARM (0), UNIVERSAL via R/: read inside R/seat_poll_blend.R (the seat-poll blend every harness and fit_seats_full.R",
+    "reach). plans/prereg-seat-poll-method-weights-2026-10-18.md"),
+  AUSPOL_SEAT_POLL_SALIENCE_VAR = paste(
+    "SHIPPED 2026-10-18 as arm H (deciding-runs/20261018-2009-seatpoll-H). ARM (0), UNIVERSAL via R/: read inside R/seat_poll_blend.R (the seat-poll blend every harness and fit_seats_full.R",
+    "reach). plans/prereg-seat-poll-method-weights-2026-10-18.md"),
+  AUSPOL_SEAT_POLL_GROUPS = paste(
+    "SHIPPED 2026-10-18 as arm H (deciding-runs/20261018-2009-seatpoll-H). ARM (0), UNIVERSAL via R/: read inside seat_poll_shares() and seat_poll_decay_params() (R/seat_poll_blend.R),",
+    "which every harness and fit_seats_full.R reach through the seat-poll blend. plans/prereg-seat-poll-method-weights-2026-10-18.md"),
+  AUSPOL_XGB_RATIO_FEATS = paste(
+    "ARM (0), FIT-TIME + LIVE: read by fit_xgb_primary_v6.R (training features; the as-at and final models",
+    "inherit them) and R/xgb_primary_override.R (live). Harnesses read the as-at predictions file. plans/prereg-growth-ratio-features-2026-10-18.md"),
+  AUSPOL_ZERO_ABSENT = paste(
+    "ARM (0), UNIVERSAL via R/: the default of simulate_seat_contests(zero_absent = zero_absent_on()), so every",
+    "harness, NT and fit_seats_full.R honour it with no call-site argument. plans/prereg-zero-absent-2026-10-17.md"),
+  AUSPOL_ERROR_DIST = paste(
+    "SHIPPED (1) 2026-10-17 on Pete's override (with AUSPOL_COMPOSITION_SD), UNIVERSAL via R/: error_dist_args() (R/error_dist.R) is called at every simulate_seat_contests() site",
+    "(six harnesses, NT, fit_seats_full.R) and reads the switch inside R/. plans/prereg-error-distribution-2026-10-17.md"),
+  AUSPOL_COMPOSITION_SD = paste(
+    "SHIPPED (1) 2026-10-17 on Pete's override (with AUSPOL_ERROR_DIST), wired EVERYWHERE through R/size_sd.R like AUSPOL_SIZE_SD: size_sd_apply() multiplies in the",
+    "composition factor, so all seven harnesses and fit_seats_full.R honour it. plans/prereg-composition-spread-2026-10-17.md"),
   AUSPOL_DEFECT_SIZE = paste(
     "OFF, REFUSED 2026-10-14 (nt2016 +0.19 on screen). Read inside R/candidate_returns.R (fit_defector_discount()",
     "and personal_prior_vote()), so it reaches every harness's base_pred when on; 'NO' in the harness columns is",
@@ -172,6 +247,18 @@ CLASSIFY <- list(
     "concentration mechanism, and fit_seats_full.R has its own live ONP path; a gap only if One Nation's",
     "Victorian seat spread is ever driven from this switch (the VIC2022 IND-coupling regression is the reason it",
     "is not: docs/reviews/sa2026-onp-base-pred-diagnosis-2026-09-14.md)."),
+  AUSPOL_SURGE_SOURCE = paste(
+    "UNIVERSAL via R/: read inside surging_parties() (R/party_surge.R), which every harness reaches through",
+    "salience_permit_for() and fit_xgb_primary_v4/v6.R reach directly, so the per-harness greps cannot see it.",
+    "Published \"actual\" LEAKS and is being replaced (plans/prereg-surge-flag-time-forward-2026-10-15.md);",
+    "fit_seats_full.R already behaves as \"none\" because vic2026 has no votes."),
+  AUSPOL_COALITION_SPLIT = paste(
+    "UNIVERSAL via R/: read inside coalition_split_args() (R/coalition_split.R), which every harness (six + NT)",
+    "and fit_seats_full.R call at their simulate_seat_contests() site, so the per-harness greps cannot see it.",
+    "SHIPPED (1) 2026-10-17 on Pete's call; 20k deciding run passed every clause (reviews/lib-nat-plumbing-2026-10-16.md)."),
+  AUSPOL_COALITION_SPLIT_F = paste(
+    "UNIVERSAL via R/: read inside coalition_f() (R/coalition_split.R) through coalition_split_args(), which",
+    "every harness (six + NT) and fit_seats_full.R call; inert unless AUSPOL_COALITION_SPLIT=1. Prereg amendment 2. SHIPPED (state) 2026-10-17."),
   AUSPOL_SD_DEPARTED = paste(
     "UNDER TEST, default 0, not adopted: widens the per-cell sd for major-party cells whose previous winner is",
     "off the ballot. Read inside R/xgb_primary_sd_override.R, reached by the fed and nsw harnesses that call it;",
@@ -224,27 +311,27 @@ CLASSIFY <- list(
   AUSPOL_DEPARTED_HOLD = paste(
     "REFUSED 2026-10-05, switch kept OFF. Holds a departed leader's decayed class cell fixed through the",
     "final renormalisation (the 0.38 was measured on final shares but applied before renormalising, so the",
-    "effective retention was 0.6-0.7). Wired in fed/nsw/qld/sa/vic and fit_seats_full.R; WA is not wired for",
-    "the same reason as AUSPOL_HONOUR_DEPARTED (backtest_candidate_wa.R has no screened_slopes() call).",
+    "effective retention was 0.6-0.7). Wired in all seven single-member harnesses and fit_seats_full.R (WA and",
+    "NT since 2026-10-15, when their screened_slopes() wiring was added).",
     "docs/plans/prereg-departed-hold-fixed-2026-10-04.md, docs/reviews/departed-hold-sweep-2026-10-05.md."),
   AUSPOL_DEPARTED_SUCCESSOR = paste(
     "UNDER TEST 2026-10-07, OFF. The departed-independent rate per seat, split by a hand-coded pre-election",
     "successor flag (endorsed, local office, community group, former staffer) and fitted time-forward with",
     "shrinkage; those cells held through renormalisation. Read via departed_successor_rates() (R/), so the",
-    "grep may show it UNEXPLAINED where it is wired. WA not wired (no screened_slopes() call).",
+    "grep may show it UNEXPLAINED where it is wired. WA and NT wired 2026-10-15 (screened_slopes() added).",
     "docs/plans/prereg-departed-successor-flag-2026-10-07.md."),
   AUSPOL_DEPARTED_HOLD_MIN_PRIOR = paste(
     "Arm B of AUSPOL_DEPARTED_HOLD (post hoc, Amendment 1): hold only classes whose prior seat share is at",
     "least this many points (15 = the retention review's population). Also refused; default 0 = arm A.",
-    "WA not wired, as for AUSPOL_DEPARTED_HOLD."),
+    "Wired wherever AUSPOL_DEPARTED_HOLD is."),
   AUSPOL_HONOUR_DEPARTED = paste(
     "SHIPPED 2026-09-18 (flipped 0->1). A departed non-major class leader's vote base decays toward a",
     "measured 0.38 retention rate, gated on prior_leader_returns==FALSE (not candidate_returns()'s `same`,",
     "which is any() across every candidate in the class and can read TRUE even when the actual leader",
     "departed -- Morwell/vic2022, an unrelated minor candidate persisting) AND the salience screen not",
     "independently permitting a new emergence. Wired into R/dev_slope.R's screened_slopes(), read by all",
-    "five harnesses that call it (fed/nsw/qld/sa/vic; backtest_candidate_wa.R has no screened_slopes()",
-    "wiring at all, a separate pre-existing gap) and by fit_seats_full.R. 2026-09-06's refusal was a",
+    "seven single-member harnesses (WA and NT since 2026-10-15; before that they had no screened_slopes()",
+    "wiring) and by fit_seats_full.R. 2026-09-06's refusal was a",
     "federal two-seat wash (New England vs Wentworth) that conflated departure with 'no new emergence' as",
     "one mechanism; re-measured on the fuller 593-case corpus. Isolated in base_pred: pooled log loss",
     "0.2810->0.2801 (5 harnesses, n=1751), Morwell 3.049->1.877. Reaches the published Victoria forecast",
@@ -398,6 +485,7 @@ CLASSIFY <- list(
   AUSPOL_REENTRY_LINK = "Read inside R/reentry_prior.R, not per-harness -- universal in practice (added to published_flags.R 2026-10-08 at its code default).",
   AUSPOL_REENTRY_WINSOR = "Read inside R/reentry_prior.R, not per-harness -- universal in practice (added to published_flags.R 2026-10-08 at its code default).",
   AUSPOL_COV_LOO = "Read inside R/statewide_cor.R, not per-harness -- universal in practice, absent from every harness script by design.",
+  AUSPOL_COV_TF = "Read inside R/statewide_cor.R, not per-harness -- same as AUSPOL_COV_LOO; default 0 (OFF).",
   AUSPOL_SALIENCE_SMOOTH = "Read inside R/salience_surge.R, not per-harness -- universal in practice.",
   AUSPOL_SIM_ENGINE = "Read inside R/seat_sim.R's simulate_seat_contests(), not per-harness -- universal in practice.",
   AUSPOL_FLOW_SHIFT = "Published-forecast-only (fit_seats_full.R shifts the statewide TPP fundamentals blend for the live Victorian projection); backtests inject real historical first preferences directly and have no fundamentals blend to shift. NOT federal-specific -- fit_seats_full.R is the Victorian forecast; corrected 2026-09-09, this comment previously said \"federal\" for every switch fit_seats_full.R alone reads, which is wrong for all six in this group.",
@@ -507,6 +595,12 @@ CLASSIFY <- list(
   AUSPOL_LEVEL_RECIPE = paste(
     "SHIPPED 2026-09-30 as v56 ('live'). Wired everywhere: ",
     "read in R/forecast_mode.R (statewide_draws_as_at()), which every harness and fit_seats_full.R reach: the five state harnesses and fit_seats_full.R through forecast_statewide_or_oracle() -> forecast_statewide_for() (R/forecast_statewide.R:81), the federal harness directly. \"No\" cells are the harness grep missing the R/ read, not drift (corrected 2026-10-09 after review)."),
+  AUSPOL_LIVE_DEFECT_FIT = paste(
+    "SHIPPED 2026-10-18 as a train/serve fix, LIVE-ONLY by design: read only in fit_seats_full.R, which now fits the",
+    "major-defector discount as every harness does (fit_defector_discount) instead of the frozen 0.282."),
+  AUSPOL_LIVE_LEVEL_SPLIT = paste(
+    "SHIPPED 2026-10-18 as a train/serve fix, LIVE-ONLY by design: read only in fit_seats_full.R, which serves the xgb layer a",
+    "level_pred split by bucket_split_ratio(). The harnesses read level_pred from output/level-pred.csv, built by the same function."),
   AUSPOL_LIVE_DRAW_BUCKET = paste(
     "SHIPPED 2026-09-28 as a parity fix, LIVE-ONLY by design: read only in fit_seats_full.R, where the live statewide draws split the",
     "unpolled bucket by its 2022 ratio. The harnesses use candidate_bucket_ratio() (AUSPOL_BUCKET_SPLIT) instead."),
@@ -567,7 +661,7 @@ CLASSIFY <- list(
     "SHIPPED 2026-10-09 with DECAY and PRIOR (data fix: an MRP release under 20 seats named MRP). Read in seat_poll_shares() in",
     "R/seat_poll_blend.R; reaches every entry point through the blend."),
   AUSPOL_SEAT_POLL_PRECISION_BLEND = paste(
-    "ARM, off: did not clear 2026-10-09 (+0.0000, SE 0.0037). Read in seat_poll_blend_apply() and seat_poll_blend_table() in",
+    "SHIPPED 2026-10-18 as arm H (deciding-runs/20261018-2009-seatpoll-H). ARM, off: did not clear 2026-10-09 (+0.0000, SE 0.0037). Read in seat_poll_blend_apply() and seat_poll_blend_table() in",
     "R/seat_poll_blend.R; needs AUSPOL_SEAT_POLL_DECAY=1."),
   AUSPOL_SEAT_POLL_PRIOR = paste(
     "SHIPPED 2026-10-09 at 0.75 (Pete's prior, same full run). Read in seat_poll_weight() via .seat_poll_prior() in R/seat_poll_blend.R,",
@@ -736,12 +830,12 @@ L <- c(L,
        "VALUE it's set to is fully honoured. Hand-maintained because there is no",
        "mechanical test for \"is this harness doing the whole thing the switch",
        "asks for\":\n",
-       "- **`AUSPOL_DEV_SLOPE_MODE=screened` is only half-honoured in WA.** The",
-       "  switch functionally reads and WA does apply the conditional-slopes",
-       "  half; it has no `salience_permit_for()`/`screened_slopes()` wiring at",
-       "  all, so the salience-screen half of \"screened\" never fires there.",
-       "  Disclosed at runtime (`BW1c!`) since 2026-09-08. Open, not fixed --",
-       "  see `docs/NEXT-STEPS.md`.\n",
+       "- **`AUSPOL_DEV_SLOPE_MODE=screened` was only half-honoured in WA and NT**",
+       "  until 2026-10-15: conditional slopes only, no `salience_permit_for()`/",
+       "  `screened_slopes()`. Now wired as in Victoria (`BW1s`/`BNT1s` print the",
+       "  path taken). One difference kept: WA/NT zero IND before the hold-aware",
+       "  renormalisation, so a hold survives IND zeroing there; Victoria's plain",
+       "  renormalisation after zeroing undoes it.\n",
        "## Fixed this session (2026-09-08/09), for history\n",
        "- WA's `SEED` was a hardcoded literal (`20260825L`), ignoring",
        "  `AUSPOL_SEED` entirely -- every WA run before 2026-09-09 used one fixed",

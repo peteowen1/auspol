@@ -35,6 +35,7 @@ aef_party <- function(pairs) {
   stats::setNames(v, as.character(k))
 }
 
+PP <- list()   # every party's AEF win probability per seat (2026-10-18: the ledger's every-candidate view)
 score_one <- function(code) {
   fs <- file.path(RAW, sprintf("%s-summary.json", code))
   fr <- file.path(RAW, sprintf("%s-results.json", code))
@@ -64,6 +65,7 @@ score_one <- function(code) {
     # a class can appear twice (named and generic); its probability is the sum
     agg <- tapply(pct[keep], cls[keep], sum)
     prob_actual <- if (actual %in% names(agg)) unname(agg[[actual]]) / 100 else 0
+    PP[[length(PP) + 1L]] <<- data.table(election = code, seat = nm, party = names(agg), aef_p_win = as.numeric(agg) / 100)
     pred <- names(agg)[which.max(agg)]
     rows[[length(rows) + 1L]] <- data.table(
       election = code, seat = nm, actual = actual, pred = pred,
@@ -103,4 +105,9 @@ cat(sprintf("AE2  pooled slope %.2f\n", suppressWarnings(stats::coef(stats::glm(
   y ~ lo, data = zz, family = stats::binomial()))[["lo"]])))
 
 fwrite(all, file.path("output", "aef-seat-scores.csv"))
+PPd <- rbindlist(PP)
+fwrite(PPd, file.path("output", "aef-seat-party-probs.csv"))
+cat(sprintf("AE4  wrote output/aef-seat-party-probs.csv (%d rows, %d seats; each seat sums to %.3f-%.3f)\n", nrow(PPd),
+            uniqueN(PPd[, paste(election, seat)]), min(PPd[, sum(aef_p_win), by = .(election, seat)]$V1),
+            max(PPd[, sum(aef_p_win), by = .(election, seat)]$V1)))
 cat(sprintf("\nAE3  wrote output/aef-seat-scores.csv (%d rows)\n", nrow(all)))

@@ -252,7 +252,7 @@ if (identical(Sys.getenv("AUSPOL_QLD_FLOWS", "1"), "0")) {
 # Same condition as the read site far below, deliberately duplicated rather
 # than hoisted: AUSPOL_PARTY_COR=off is a real arm of
 # docs/plans/prereg-statewide-covariance.md and must not require the file.
-.cor_mode <- Sys.getenv("AUSPOL_PARTY_COR", "shrunk")
+.cor_mode <- Sys.getenv("AUSPOL_PARTY_COR", "off")
 if (!identical(.cor_mode, "off") && nzchar(.cor_mode)) {
   hard["output/statewide-cov.rds"] <- "scripts/estimate_statewide_cov.R"
 }
@@ -888,14 +888,17 @@ if (.succ_on) { cat(sprintf("DSR1 departed successor rates (%s): %d seat(s) for 
 .reason <- function(name) if (exists(name, envir = .why)) sprintf(" (%s)", get(name, envir = .why)) else ""
 .returns <- if (.cond) .try("returns", candidate_returns(PREV, TGT)) else NULL
 .permit  <- if (.screened && !is.null(.returns))
-              .try("permit", salience_permit_for(TGT, PREV, REGION)) else NULL
+              .try("permit", salience_permit_for(TGT, PREV, REGION,
+                                                 surge_levels = surge_levels_live(TGT, state_mean))) else NULL
 if (.cond && is.null(.returns)) {
   cat(sprintf(sub("@T", TGT, "DS2  arm CS requested but @T has no candidate list yet -- FALLING BACK to uniform swing%s\n", fixed = TRUE),
               .reason("returns")))
 } else if (.cond) {
   cat(sprintf("DS2  arm C ON: %d of %d seat-classes have the same candidate returning%s\n",
               sum(.returns$same), nrow(.returns),
-              if (.screened && !is.null(.permit)) "" else " | screen: no salience data, arm C only"))
+              # the reason is printed: a permit call that FAILED (e.g. no surge level under
+              # AUSPOL_SURGE_SOURCE=forecast) must not read as "no salience data yet"
+              if (.screened && !is.null(.permit)) "" else paste0(" | screen: no salience data, arm C only", .reason("permit"))))
 }
 # SITTING-MEMBER SLOPE TIER and DEFECTOR DISCOUNT, wired into the PUBLISHED
 # forecast 2026-09-06. Both were validated in the backtest harnesses and then
@@ -926,7 +929,21 @@ if (!identical(Sys.getenv("AUSPOL_MP_SLOPE", "1"), "0")) {
                   .mpc$party != "GRN", ]
   if (nrow(.keep)) .MP_SLOPE <- stats::setNames(as.numeric(.keep$member), .keep$party)
 }
-if (!identical(Sys.getenv("AUSPOL_DEFECT_DISCOUNT", "1"), "0")) .defect <- 0.282
+# FITTED, as every harness does (backtest_candidate_vic.R:500-514, fit_defector_discount() on elections before the
+# target), not the 0.282 frozen here when the fit replaced it (R/candidate_returns.R). The audit's F3
+# (reviews/pipeline-overwrite-audit-2026-10-18.md); AUSPOL_LIVE_DEFECT_FIT=0 restores the constant for a diff.
+if (!identical(Sys.getenv("AUSPOL_DEFECT_DISCOUNT", "1"), "0")) {
+  .defect <- 0.282
+  if (identical(Sys.getenv("AUSPOL_LIVE_DEFECT_FIT", "1"), "1")) {
+    .fd <- tryCatch(fit_defector_discount(TGT), error = function(e) {
+      cat(sprintf("CAL! defector-discount fit FAILED, the frozen 0.282 is used: %s\n", conditionMessage(e))); NULL })
+    if (!is.null(.fd) && !is.null(.fd$discount) && is.finite(.fd$discount)) {
+      .defect <- .fd$discount
+      cat(sprintf("CAL  defector discount %.3f fitted from %d cases (elections before %s), as the harnesses fit it\n",
+                  .defect, .fd$n, TGT))
+    } else if (!is.null(.fd)) cat(sprintf("CAL! defector discount not fit (n=%s); the frozen 0.282 is used\n", .fd$n))
+  }
+}
 
 # MINOR-TO-MINOR DEFECTOR DISCOUNT, same AUSPOL_MINOR_DEFECT switch and same
 # fit_minor_defector_discount() call fit_xgb_primary_v6.R:271 uses to build
@@ -971,14 +988,16 @@ cat(sprintf("CAL  MP tier: %s | defector discount: %s | minor-defector discount:
 
 # THE BASE VALUE, not just the slope -- see personal_prior_vote()'s docs. Same
 # candidate-list gating as .returns above: NULL until vic2026 nominations close.
-# THIS ONE FEEDS mat22 (the base_pred blend) ONLY -- major_discount matches
-# the six harnesses' own base_pred convention. It deliberately carries NO
-# minor_discount: AUSPOL_MINOR_DEFECT_BASE_PRED (that arm, not this one) was
-# measured and REFUSED for base_pred 2026-09-16 (helped Mirani, made the
-# pooled aggregate worse), so base_pred stays byte-identical to before this
-# fix regardless of AUSPOL_MINOR_DEFECT.
+# THIS ONE FEEDS mat22 (the base_pred blend) ONLY -- the same call every harness makes for its base_pred
+# (backtest_candidate_vic.R:555): major_discount, plus the minor-to-minor discount under
+# AUSPOL_MINOR_DEFECT_BASE_PRED. That switch was refused 2026-09-16 and SHIPPED 2026-09-18 (published_flags.R),
+# but this script kept the refusal's comment and never applied it, so live base_pred lacked a discount every
+# backtest scored with. The audit's F2 (reviews/pipeline-overwrite-audit-2026-10-18.md).
+.bp_minor <- if (identical(Sys.getenv("AUSPOL_MINOR_DEFECT_BASE_PRED", "1"), "1")) .minor_disc else NULL
+.bp_minor_loser <- if (identical(Sys.getenv("AUSPOL_MINOR_DEFECT_BASE_PRED", "1"), "1")) .minor_disc_loser else NULL
 .own_prev <- if (.cond && !is.null(.returns))
-  .try("own_prev", personal_prior_vote(PREV, TGT, major_discount = .defect)) else NULL
+  .try("own_prev", personal_prior_vote(PREV, TGT, major_discount = .defect, minor_discount = .bp_minor,
+                                       minor_discount_loser = .bp_minor_loser)) else NULL
 # THIS ONE FEEDS xgb_primary_predict_live()'s own_prev_pcv FEATURE ONLY --
 # mirrors fit_xgb_primary_v6.R:271's TRAINING call exactly: minor_discount,
 # and deliberately NO major_discount (training's xgb feature never gets one
@@ -1327,7 +1346,32 @@ if (.departed_hold) {
 if (!is.null(.nis)) shares <- .nis else if (!identical(new_ind_mode(), "0"))
   cat(sprintf("BV1n!! new_ind_shrink_apply() FAILED%s -- the new-independent shrink is NOT applied to this forecast\n",
               .reason("new_ind")))
+# The trees were TRAINED on a per-class statewide level (scripts/build_level_pred.R -> forecast_statewide_for(),
+# which splits the unpolled bucket with bucket_split_ratio()), but were served `state_mean`, which carries only the
+# classes the polls report: IND and OTH_RIGHT got level_pred 0 and OTH the whole bucket (vic2026: 0 / 0 / 11.47
+# where the split is 3.73 / 4.53 / 3.22). Serve the same split, by the same function.
+# reviews/pipeline-overwrite-audit-2026-10-18.md, F1. AUSPOL_LIVE_LEVEL_SPLIT; live-only by design (the harnesses
+# read level_pred from output/level-pred.csv, already split).
+.level_split <- NULL
+if (identical(Sys.getenv("AUSPOL_LIVE_LEVEL_SPLIT", "1"), "1") && "OTH" %in% names(state_mean)) {
+  .bk <- c(setdiff(intersect(parties, c(unmodelled, "OTH")), "OTH"), "OTH")
+  # The daily CI run has no output/minor-class-shares-v2.csv (forecast.yaml does not fetch it), and
+  # candidate_bucket_ratio() stops without it; the prior-election ratio is what bucket_split_ratio() itself falls back
+  # to when the candidate model has no row for the target (vic2026 has none), so use it, and say so (review 2026-10-18).
+  .rt <- tryCatch(bucket_split_ratio(paste0(REGION, YEAR), .bk, a22), error = function(e) {
+    cat(sprintf("XG0s! candidate-model bucket split unavailable (%s): prior-election ratio used\n", conditionMessage(e)))
+    .old <- Sys.getenv("AUSPOL_BUCKET_SPLIT", NA); Sys.setenv(AUSPOL_BUCKET_SPLIT = "prior")
+    on.exit(if (is.na(.old)) Sys.unsetenv("AUSPOL_BUCKET_SPLIT") else Sys.setenv(AUSPOL_BUCKET_SPLIT = .old), add = TRUE)
+    bucket_split_ratio(paste0(REGION, YEAR), .bk, a22)
+  })
+  .level_split <- state_mean[setdiff(names(state_mean), "OTH")]
+  .level_split[.bk] <- state_mean[["OTH"]] * .rt[.bk]
+  if (abs(sum(.level_split) - sum(state_mean)) > 1e-6) stop("XG0s: split level does not keep the statewide total")
+  cat(sprintf("XG0s the xgb layer's level_pred, others bucket split as in training: %s (sum %.2f = state OTH %.2f)\n",
+              paste(sprintf("%s %.2f", .bk, .level_split[.bk]), collapse = ", "), sum(.level_split[.bk]), state_mean[["OTH"]]))
+}
 shares_x <- .try("xgb_live", xgb_primary_predict_live(shares, mat22, a22, state_mean, .returns,
+                                                        level_split = .level_split,
                                                         own_prev = .own_prev_xgb, region = REGION,
                                                         year = YEAR, prev_year = as.integer(sub("^[a-z]+", "", PREV))))
 if (!is.null(shares_x)) {
@@ -1461,7 +1505,7 @@ psd <- vapply(parties, function(p) if (is.na(state_sd[p])) 1.5 else state_sd[[p]
 # comparison ran the correlated branch while claiming to be the baseline.
 # See docs/plans/prereg-statewide-covariance.md and
 # scripts/estimate_statewide_cov.R.
-COR_MODE <- Sys.getenv("AUSPOL_PARTY_COR", "shrunk")
+COR_MODE <- Sys.getenv("AUSPOL_PARTY_COR", "off")
 sw_cor <- NULL
 if (!identical(COR_MODE, "off") && nzchar(COR_MODE)) {
   # NULL TARGET ON PURPOSE: this is the live forecast. Victoria 2026 has not
@@ -1725,7 +1769,7 @@ if (identical(Sys.getenv("AUSPOL_XGB_FLOWS", "1"), "1")) {
 # Live, the classifier reads the feature rows xgb_primary_predict_live() built.
 .bo <- breakout_mix_args(TGT, shares)
 sim <- simulate_seat_contests(level_sd = .level_sd, sd_override = size_sd_apply(NULL, shares, TGT, .level_sd, .lm(shares), prev = PREV), level_mult = .lm(shares), shares, fm, party_sd = psd, seat_sd = SEAT_SD, shrink = SHRINK,
-                              breakout_p = .bo$p, breakout_q = .bo$q,
+                              breakout_p = .bo$p, breakout_q = .bo$q, coalition_split = coalition_split_args(TGT, rownames(shares)), error_q = error_dist_args(TGT, colnames(shares)),
                               n_sims = N_SIMS, smooth = SMOOTH, seed = SEED,
                               conditional_override = .htv_ov, conditional_override_sd = attr(.htv_ov, "sd"),
                               statewide_draws = sw_draws,

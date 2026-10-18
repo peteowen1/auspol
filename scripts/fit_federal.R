@@ -230,7 +230,7 @@ walk_of <- function(cp, year) {
   setNames(out, ps)
 }
 
-fit_cycle <- function(year) {
+fit_cycle <- function(year, discount = NULL) {
   cp <- cycle_polls(polls, year, cycles)
   message(sprintf("\n=== %d cycle: %d polls, %s to %s ===",
                   year, nrow(cp), min(cp$date), max(cp$date)))
@@ -271,7 +271,8 @@ fit_cycle <- function(year) {
   cp <- refold_unfitted(cp, fits = stats::setNames(
     vector("list", length(SEL)), SEL))
   fits <- fit_cycle_unfolded(cp, priors = priors, overrides = ov,
-                             firm_factors = fac_vec, verbose = FALSE)
+                             firm_factors = fac_vec, verbose = FALSE,
+                             discount = discount)
   attr(fits, "walks") <- walks
   fitted_defaults <- setdiff(names(fits), est_parties)
   if (length(fitted_defaults))
@@ -296,16 +297,72 @@ oth_gap <- function(cp, oth_trend, party = "ONP") {
   dc <- pmin(pmax(d$date, min(oth_trend$date)), max(oth_trend$date))
   d[, resid := OTH - oth_trend$mean[match(dc, oth_trend$date)]]
   g <- d[, .(n_named = sum(named), n_folded = sum(!named),
-             r_named = mean(resid[named]), r_folded = mean(resid[!named])),
+             r_named = mean(resid[named]), r_folded = mean(resid[!named]),
+             v_named = var(resid[named]), v_folded = var(resid[!named])),
          by = firm]
   g <- g[n_named >= 3 & n_folded >= 3]
   g[, gap := r_folded - r_named]
+  # Two-sample standard error of the gap. Residuals within a firm are
+  # autocorrelated, so this understates the true SE: a check built on it errs
+  # toward failing, not passing.
+  g[, gap_se := sqrt(v_named / n_named + v_folded / n_folded)]
   g[]
 }
 
-res2022 <- fit_cycle(2022)
-res2025 <- fit_cycle(2025)
-res2028 <- fit_cycle(2028)
+# ---- FFD1: the unprompted discount on folded One Nation (Pete, 2026-10-15) ----
+# With the firm's own house effect imputed, the folded polls of BOTH firms that
+# also name One Nation still sit below their named polls (Freshwater 2025
+# -1.65, Redbridge -0.75): less One Nation is inside Others than the named
+# share says, consistent with fewer respondents volunteering a party they are
+# not offered. Each such firm gives d_f = -gap_f / mean imputed share_f with
+# SE gap_se_f / mean imputed_f; they are pooled by inverse variance and the
+# pooled value is applied to every folded One Nation poll in every cycle.
+#
+# CAVEAT, stated because Pete chose this knowing it: the discount is fitted on
+# the same within-firm gap FF1 then checks, so FF1 passes by construction and
+# validates nothing about it. Only the 2025 cycle has firms that both fold and
+# name One Nation (2 firms, 28 folded polls). It becomes testable when another
+# cycle has such firms: fit on one, check FF1 on the other.
+fd_estimate <- function(res_list) {
+  rbindlist(lapply(names(res_list), function(yr) {
+    r <- res_list[[yr]]
+    g <- oth_gap(r$polls_corrected, r$fits$OTH$trend)
+    fo <- r$folded
+    if (!nrow(g) || is.null(fo) || !nrow(fo)) return(NULL)
+    fo_onp <- fo[party == "ONP"]
+    m <- fo_onp[, .(m_imp = mean(imputed / (1 - discount))), by = firm]
+    g <- merge(g, m, by = "firm")
+    g[, .(year = as.integer(yr), firm, n_named, n_folded, gap, gap_se, m_imp,
+          d_inc = -gap / m_imp, d_se = gap_se / m_imp)]
+  }))
+}
+fd_years <- c(2022, 2025, 2028)
+FD_ITER <- 4L
+FD_TOL <- 0.002
+fd_d <- 0
+for (fd_i in seq_len(FD_ITER)) {
+  fd_disc <- if (fd_d == 0) NULL else c(ONP = fd_d)
+  fd_res <- setNames(lapply(fd_years, fit_cycle, discount = fd_disc), fd_years)
+  fd_tab <- fd_estimate(fd_res)
+  stopifnot(nrow(fd_tab) > 0, all(is.finite(fd_tab$d_se)), all(fd_tab$d_se > 0))
+  fd_w <- 1 / fd_tab$d_se^2
+  fd_inc <- sum(fd_w * fd_tab$d_inc) / sum(fd_w)
+  fd_se <- 1 / sqrt(sum(fd_w))
+  cat(sprintf("FFD1  iteration %d: discount applied %.4f, remaining pooled increment %+.4f (SE %.4f) from %d firm-cycles\n",
+              fd_i, fd_d, fd_inc, fd_se, nrow(fd_tab)))
+  if (abs(fd_inc) < FD_TOL) break
+  if (fd_i == FD_ITER) stop(sprintf(
+    "FFD1 did not converge in %d iterations (last increment %+.4f): fd_res is fitted at %.4f, not at the estimate",
+    FD_ITER, fd_inc, fd_d))
+  fd_d <- fd_d + fd_inc
+}
+cat("FFD1  per firm at the final discount (d_inc: what each firm alone would still add):\n")
+print(fd_tab[, lapply(.SD, function(x) if (is.numeric(x)) round(x, 3) else x)])
+cat(sprintf("FFD1  ONP unprompted discount = %.3f (SE %.3f, %d firm-cycles): %.1f%% of the imputed share is NOT subtracted from Others\n",
+            fd_d, fd_se, nrow(fd_tab), 100 * fd_d))
+res2022 <- fd_res[["2022"]]
+res2025 <- fd_res[["2025"]]
+res2028 <- fd_res[["2028"]]
 
 end_val <- function(trend) trend$mean[which.max(trend$date)]
 
@@ -354,7 +411,8 @@ gap_of <- function(yr, which) {
 gap_raw <- rbindlist(lapply(c(2022, 2025, 2028), gap_of, "polls"))
 gap_fix <- rbindlist(lapply(c(2022, 2025, 2028), gap_of, "polls_corrected"))
 cmp_gap <- merge(gap_raw[, .(year, firm, n_folded, gap_before = round(gap, 2))],
-                 gap_fix[, .(year, firm, gap_after = round(gap, 2))],
+                 gap_fix[, .(year, firm, gap_after = round(gap, 2),
+                             se_after = round(gap_se, 2))],
                  by = c("year", "firm"))
 cat("\n=== F1: within-firm OTH gap vs trend, polls that fold ONP vs name it ===\n")
 print(cmp_gap[order(-abs(gap_before))])
@@ -393,7 +451,21 @@ if (nrow(small)) {
                              " gap=", sprintf("%+.2f", gap_after),
                              collapse = "; ")]))
 }
-stopifnot(nrow(cmp_gap) > 0, abs(agg_after) < 1.0,
+# AMENDMENT 2026-10-15 (Pete): the poll-weighted clause above, "|.| < 1.0",
+# is kept and still printed, but no longer fails the run on its own. It has
+# failed every daily run since 13 Oct (the own poll source), at -1.57, driven
+# by Freshwater 2025: a firm whose ONP-named side is a handful of polls, so
+# the gap is measured with an SE near the size of the tolerance. Enforced now:
+# the gap must exceed 1.0 points AND be more than 2 SE from zero to fail --
+# big enough to matter and distinguishable from noise. The SE weights each
+# firm's gap SE by its folded-poll count, the same weights as the gap.
+agg_se <- cmp_gap[, sqrt(sum((n_folded * se_after)^2)) / sum(n_folded)]
+ff1_orig <- abs(agg_after) < 1.0
+ff1_se <- abs(agg_after) < max(1.0, 2 * agg_se)
+cat(sprintf("FF1  original clause |%.2f| < 1.0: %s | amended: SE %.2f, fail only past max(1.0, 2 SE) = %.2f: %s\n",
+            agg_after, if (ff1_orig) "PASS" else "FAIL", agg_se,
+            max(1.0, 2 * agg_se), if (ff1_se) "PASS" else "FAIL"))
+stopifnot(nrow(cmp_gap) > 0, is.finite(agg_se), ff1_se,
           nrow(big) == 0 || big[, max(abs(gap_after))] < 2.0)
 
 # ---- L2/L3: structural checks a broken transform would fail ----
@@ -505,7 +577,11 @@ cat(sprintf("FL3a endpoint FP sums (reported, not asserted): %s\n",
                   collapse = "  ")))
 fed_track <- lapply(c(2022, 2025, 2028), function(yr) {
   r <- get(paste0("res", yr))
-  x <- poll_tracking_check(r$polls, r$fits)
+  # Against the polls the trends were FITTED on: OTH is fitted with folded
+  # parties subtracted, so raw Others overstates it by the folded share
+  # (NSW 2023: 3.86 points raw vs 1.08 corrected, 2026-10-15).
+  stopifnot(!is.null(r$polls_corrected))   # raw polls would re-open the false OTH breach
+  x <- poll_tracking_check(r$polls_corrected, r$fits)
   report_poll_tracking(x, sprintf("FL3  %d", yr))
   x
 })

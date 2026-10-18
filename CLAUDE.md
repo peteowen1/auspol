@@ -279,8 +279,8 @@ shrunk = mu + w * (est_i - mu)
 ```
 
 so a thin cell degrades gracefully toward the prior rather than falling off a
-cliff. `AUSPOL_PARTY_COR="shrunk"` already does this for the statewide
-correlation; the fitted constants should too.
+cliff. `AUSPOL_CONSERVE_SHRINK_K` (n/(n+3)) is a shipped example; the
+fitted constants should all work this way.
 
 **The reason this matters most is not tidiness — it is that shrinkage makes a
 weak signal safe to INCLUDE rather than refuse.** A term with three clusters

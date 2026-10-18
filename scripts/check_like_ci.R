@@ -35,6 +35,10 @@ dir.create(empty, showWarnings = FALSE, recursive = TRUE)
 # working-copy versions (uncommitted edits included), and nothing untracked.
 unlink(empty, recursive = TRUE); dir.create(empty, recursive = TRUE)
 tracked <- system2("git", c("ls-files"), stdout = TRUE)
+# ...plus NEW files not yet added (untracked, not ignored): they are what the next commit adds and CI's checkout
+# will have. Without them a new script was never in the copy the suite ran on (nor in the skip fingerprint
+# below), so e.g. a new script's check codes missed the collision test until CI (found 2026-10-18).
+tracked <- unique(c(tracked, system2("git", c("ls-files", "--others", "--exclude-standard"), stdout = TRUE)))
 for (d in unique(dirname(tracked))) dir.create(file.path(empty, d), showWarnings = FALSE, recursive = TRUE)
 ok <- file.copy(tracked, file.path(empty, tracked), overwrite = TRUE)
 cat(sprintf("LCI0 copied %d of %d git-tracked files into the no-anchor root (what the CI checkout has; %d under external/)\n",
@@ -42,6 +46,23 @@ cat(sprintf("LCI0 copied %d of %d git-tracked files into the no-anchor root (wha
 if (!all(ok[file.exists(tracked)])) stop("could not copy every tracked file into the no-anchor root")
 options(auspol.root = empty)
 
+# TESTS SKIPPED WHEN NOTHING THEY CAN SEE HAS CHANGED (2026-10-18; 31 minutes of this script in one day, most of
+# it re-running the suite after docs-only commits). The suite runs on the copy above -- exactly the git-tracked
+# files, as CI's checkout -- so its result is fixed by those files and the R version. Fingerprint: every tracked
+# file except docs/ and top-level *.md (no test reads them), plus R.version.string. Same fingerprint as the last
+# clean run, same result. --force-tests always runs it.
+.args0 <- commandArgs(trailingOnly = TRUE)
+.tnd <- tracked[file.exists(tracked) & !grepl("^docs/|^[^/]+[.]md$", tracked)]
+.tfp_tf <- tempfile(); writeLines(c(R.version.string, paste(.tnd, unname(tools::md5sum(.tnd)))), .tfp_tf)
+.tfp <- unname(tools::md5sum(.tfp_tf)); unlink(.tfp_tf)
+.tfp_file <- file.path("output", ".check-like-ci-last-tests.txt")
+.tlast <- if (file.exists(.tfp_file)) readLines(.tfp_file, warn = FALSE) else character(0)
+.skip_tests <- !"--force-tests" %in% .args0 && length(.tlast) > 0 && identical(.tlast[1], .tfp)
+if (.skip_tests) {
+  cat(sprintf("=== tests SKIPPED: the %d tracked non-doc files are byte-identical to the last clean run (%s, %s). --force-tests runs them anyway. ===\n",
+              length(.tnd), substr(.tfp, 1, 10), if (length(.tlast) > 1) .tlast[2] else "?"))
+  cat("OK: nothing depends on anchor data that should not (unchanged since the last clean run).\n")
+} else {
 cat("=== running the suite with NO anchor data ===\n")
 cat("auspol.root =", empty, "\n\n")
 
@@ -74,6 +95,10 @@ if (n_pass < 100) {
 }
 
 cat("OK: nothing depends on anchor data that should not.\n")
+# Only a clean run is recorded: every failure above has already stopped the script.
+dir.create(dirname(.tfp_file), showWarnings = FALSE)
+writeLines(c(.tfp, format(Sys.time(), "%Y-%m-%d %H:%M")), .tfp_file)
+}
 
 # ---- Half one-and-a-half: a script's own default vs what ships --------------
 #

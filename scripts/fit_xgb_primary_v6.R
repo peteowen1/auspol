@@ -490,6 +490,17 @@ ALL[, fund_level_raw := ifelse(is.na(fund_level_raw), .lvl_fallback, fund_level_
 ALL[, n_cand_prev := ifelse(is.na(n_cand_prev), 0L, n_cand_prev)]
 ALL[, n_cand_now  := ifelse(is.na(n_cand_now), 1L, n_cand_now)]
 ALL[, dev_prev := seat_prev_pcv - level_prev]
+# AUSPOL_XGB_RATIO_FEATS (prereg-growth-ratio-features-2026-10-18.md): a minor class's seat deviations persist
+# or grow when it surges and shrink when it collapses, which a tree cannot build out of splits on level_prev,
+# level_pred and dev_prev. Columns exist ONLY when the switch is on: fit_xgb_primary_asat.R trains on every
+# non-id column of this file, so an always-present column would change the switch-off models.
+if (identical(Sys.getenv("AUSPOL_XGB_RATIO_FEATS", "0"), "1")) {
+  ALL[, growth_ratio := (level_pred + 0.5) / (level_prev + 0.5)]
+  ALL[, ratio_dev := (growth_ratio - 1) * dev_prev]
+  cat(sprintf("XRF1 growth-ratio features ON: growth_ratio median %.2f (range %.2f-%.2f), ratio_dev sd %.2f\n",
+              stats::median(ALL$growth_ratio, na.rm = TRUE), min(ALL$growth_ratio, na.rm = TRUE),
+              max(ALL$growth_ratio, na.rm = TRUE), stats::sd(ALL$ratio_dev, na.rm = TRUE)))
+}
 ALL[, same := ifelse(is.na(same), FALSE, same)]
 ALL[, same_mp := ifelse(is.na(same_mp), FALSE, same_mp)]
 ALL[, is_major := party %in% c("ALP", "LNP", "NAT")]
@@ -524,11 +535,19 @@ ALL[, permit := ifelse(is.na(permit), 1L, permit)]
 surging_rows <- list()
 for (pr in SAL_PAIRS) {
   py <- as.integer(sub("^[a-z]+", "", pr$prev)); yr <- as.integer(sub("^[a-z]+", "", pr$election))
-  sp <- tryCatch(surging_parties(pr$region, py, yr), error = function(e) character(0))
+  # Under AUSPOL_SURGE_SOURCE=forecast a failure stops: a silent character(0) would
+  # train arm T on arm N's features (prereg-surge-flag-time-forward-2026-10-15.md).
+  sp <- tryCatch(surging_parties(pr$region, py, yr), error = function(e) {
+    if (identical(Sys.getenv("AUSPOL_SURGE_SOURCE", "none"), "forecast")) stop(e)
+    character(0)
+  })
   if (!length(sp)) next
   surging_rows[[pr$election]] <- data.table(pair = pr$election, party = sp, surging = 1L)
 }
 SURGING <- rbindlist(surging_rows, fill = TRUE)
+# No pair with a surging class (AUSPOL_SURGE_SOURCE=none) leaves a table with no
+# columns, which merge() refuses; keep the shape so every row reads surging = 0.
+if (!nrow(SURGING)) SURGING <- data.table(pair = character(), party = character(), surging = integer())
 ALL <- merge(ALL, SURGING, by = c("pair","party"), all.x = TRUE)
 ALL[, surging := ifelse(is.na(surging), 0L, surging)]
 
@@ -728,6 +747,7 @@ feat_cols <- c("base_pred", "seat_prev_pcv", "seat_outperf", "level_prev",
                # which is the train/serve consistency this change exists for.
                if (!.raw_level && identical(.lvl_mode, "pred")) "level_from_polls",
                "dev_prev",
+               if (identical(Sys.getenv("AUSPOL_XGB_RATIO_FEATS", "0"), "1")) c("growth_ratio", "ratio_dev"),
                # x_notional_adj (see its own comment above, where it's built):
                # only included when AUSPOL_XGB_NOTIONAL=1. The column exists
                # unconditionally (0 when off) so feat_cols can name it without

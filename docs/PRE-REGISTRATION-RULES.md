@@ -7,6 +7,31 @@ below is edited from the original; `CLAUDE.md` keeps a one-line pointer per
 rule. See it for the still-active headline list; this file is where the full
 evidence lives.
 
+## The standard decision rule (2026-10-18; start every prereg from this)
+
+Written after Pete asked for every rule to be checked for ones that refuse for the wrong reason
+(`reviews/rules-review-2026-10-18.md`). A prereg uses these clauses unless it says why it departs from them. All
+tolerances are in SE, clustered on election (the independent unit), never fixed point values.
+
+1. **Primary:** the metric scoped to the change (its targets, below), better than shipped by more than 1 SE. A
+   stricter bar (2 SE) must say why, with the metric's MDE computed in the plan; a bar the MDE cannot clear only refuses.
+2. **Guard:** seat log loss on every seat of every scored election, not worse by more than 1 SE.
+3. **Not one election's quirk:** leave-one-election-out. The primary stays better by more than 1 SE with each
+   election dropped in turn. Each election's share of the gain is REPORTED, never a refusal: a big gain in one election
+   is not a fault when no election is worse.
+4. **No election materially worse:** no single election worse on the guard metric by more than 2 SE of ITS OWN paired
+   seat differences (SE from that election's seats). One definition for every jurisdiction, so a small state is not
+   held to a federal-sized point cutoff, and no fixed "+0.01 / +0.02" floors.
+5. **Not one seat's quirk:** for a targeted fix, the gain keeps its sign with the two largest-gain seats removed, and
+   the other seats are not worse by more than 1 SE. Not "more than half the gain from two seats -> refused".
+6. **Direction is information:** a fix to a systematic bias moves most rows one way; report the count, and refuse only
+   when the realised outcomes contradict that direction (the moved rows score worse).
+7. **One decisive metric:** seat log loss decides (then Brier, then reliability by band); other metrics are reported,
+   never counted as votes, because they are correlated.
+8. **Name what would make an apparent win unacceptable, in advance** (below), in these terms. A clause that would
+   refuse for being too good somewhere is not one.
+9. **A clause that refuses a result otherwise passing goes to Pete** with the split shown.
+
 ## Constants
 
 Every one is inventoried in `docs/CONSTANTS.md` with whether it can come from
@@ -33,7 +58,9 @@ was written down after the first and **not applied to the second**, so it is
 here rather than in a plan file.
 
 So every plan needs a refusal section naming, in advance: the directional side
-effects that would disqualify a winner, and what the criterion cannot see. If
+effects that would disqualify a winner, and what the criterion cannot see.
+(2026-10-18, visible addition: "directional side effect" means a direction the OUTCOMES contradict, standard rule 6
+above; a correct bias fix moves most rows one way, and that alone is not a disqualifier.) If
 that section is hard to write, the criterion is probably measuring the wrong
 thing — which was true both times.
 
@@ -160,3 +187,12 @@ make it a **visible addition with the original clause left unedited**, and check
 whether it favours the answer found later — if it does, it is not an amendment,
 it is a rationalisation. The one amendment made so far picked the value
 pre-registered *first*, which is the only reason it was allowed to stand.
+
+## A large gain in one election is not a reason to refuse (Pete, 2026-10-18)
+
+Do not write "one election supplies more than half the gain -> refused". It refuses an arm for being very good
+somewhere while no worse elsewhere (seat-poll arm G: fed2022 72% of the gain, fed2025 neutral). With few elections
+holding most of the relevant seats (seat polls: fed2022 151 and fed2025 150 of 312), it is a coin flip anyway. The
+real worry is a gain that is one election's quirk, so test THAT: **leave-one-election-out** (the arm must stay better
+by more than 1 SE with each election dropped) and **no election materially worse** on its own. Report each election's
+share of the gain as information, never as a refusal.

@@ -159,7 +159,11 @@ for (YR in YEARS) {
       for (k in seq_along(names_row)) {
         if (k > length(vals) || !is.finite(vals[k]) || vals[k] <= 0) next
         to <- unname(lut[names_row[k]])
-        if (is.na(to) || identical(to, from)) next
+        # Same-class transfers are KEPT (a National's votes reaching the Liberal are LNP -> LNP), as the 2010 and
+        # 2022 fetchers keep them. Skipping `identical(to, from)` here dropped every Coalition-to-Coalition
+        # transfer of 2014 and 2018 (Ripon 2014: only the 2,768 to Labor of the National's ~7,000 survived),
+        # which the Lib/Nat split's f and the vic flows read (found 2026-10-17).
+        if (is.na(to)) next
         tx_all[[length(tx_all) + 1L]] <- data.table(
           election = sprintf("vic%d", YR), seat = dname, round = rnd,
           from = from, to = to, votes = vals[k])

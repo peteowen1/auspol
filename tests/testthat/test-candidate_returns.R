@@ -1,3 +1,8 @@
+# The minor-to-minor conserve fit needs a `votes` column these synthetic corpora do not carry, so with it on
+# every candidate_returns() call here printed "PPV1! ... object 'votes' not found" (6 per run), noise that could
+# hide a real PPV1 failure. Off for this file; fit_minor_defector_conserve() has its own test below.
+withr::local_envvar(AUSPOL_MINOR_DEFECT_CONSERVE = "0")
+
 mk <- function() data.table::data.table(
   election = c(rep("e1", 4), rep("e2", 5)),
   seat  = c("A", "A", "B", "B",  "A", "A", "B", "B", "C"),
@@ -588,6 +593,7 @@ test_that("fit_minor_defector_conserve measures the origin class's kept share, t
     name = NA_character_, party = c("ONP", "ALP", "LNP", "OTH_RIGHT", "ONP", "LNP"),
     pcv = c(30, 40, 30, 25, 12, 63), votes = c(300, 400, 300, 250, 120, 630), tot = 1000, elected = c(TRUE, FALSE, FALSE, FALSE, FALSE, TRUE))
   pairs <- list(list(election = "qld2024", prev = "qld2020"))
+  withr::local_envvar(AUSPOL_CONSERVE_SHRINK_K = "off")   # the min_n cliff; shrinkage (shipped K = 3) is tested below
   f <- fit_minor_defector_conserve("vic2026", corpus = corpus, pairs = pairs, min_n = 1L)
   expect_equal(f$n, 1L); expect_equal(f$frac, 12 / 30, tolerance = 1e-6)   # ONP statewide 30 -> 12 is the class itself: expected 0 + kept 12
   expect_null(fit_minor_defector_conserve("qld2024", corpus = corpus, pairs = pairs, min_n = 1L)$frac)
@@ -596,6 +602,17 @@ test_that("fit_minor_defector_conserve measures the origin class's kept share, t
   # ...and the old leave-target-out behaviour is still there behind the switch.
   old <- withr::with_envvar(c(AUSPOL_CONSERVE_TF = "0"), fit_minor_defector_conserve("vic2022", corpus = corpus, pairs = pairs, min_n = 1L))
   expect_equal(old$frac, 12 / 30, tolerance = 1e-6)
+  # AUSPOL_CONSERVE_SHRINK_K: no cliff. One case is below the default min_n = 8, so the cliff returns NULL;
+  # the shrunk fit keeps it at weight 1 / (1 + 3).
+  expect_null(fit_minor_defector_conserve("vic2026", corpus = corpus, pairs = pairs)$frac)
+  s <- withr::with_envvar(c(AUSPOL_CONSERVE_SHRINK_K = "3"), fit_minor_defector_conserve("vic2026", corpus = corpus, pairs = pairs))
+  expect_equal(s$w, 0.25); expect_equal(s$frac, 0.25 * 12 / 30, tolerance = 1e-6)
+  # Unset means the shipped K = 3 (2026-10-16), not the cliff.
+  d <- withr::with_envvar(c(AUSPOL_CONSERVE_SHRINK_K = NA), fit_minor_defector_conserve("vic2026", corpus = corpus, pairs = pairs))
+  expect_equal(d$w, 0.25)
+  for (bad in c("0", "-1", "three", "Inf"))
+    expect_error(withr::with_envvar(c(AUSPOL_CONSERVE_SHRINK_K = bad), fit_minor_defector_conserve("vic2026", corpus = corpus, pairs = pairs)),
+                 "positive number")
 })
 
 test_that("defector carry by level: federal targets get their own rate, state targets keep the pooled one", {

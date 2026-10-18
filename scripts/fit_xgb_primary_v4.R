@@ -99,11 +99,19 @@ ALL[, permit := ifelse(is.na(permit), 1L, permit)]
 surging_rows <- list()
 for (pr in PAIRS) {
   py <- as.integer(sub("^[a-z]+", "", pr$prev)); yr <- as.integer(sub("^[a-z]+", "", pr$election))
-  sp <- tryCatch(surging_parties(pr$region, py, yr), error = function(e) character(0))
+  # Under AUSPOL_SURGE_SOURCE=forecast a failure stops: a silent character(0) would
+  # train arm T on arm N's features (prereg-surge-flag-time-forward-2026-10-15.md).
+  sp <- tryCatch(surging_parties(pr$region, py, yr), error = function(e) {
+    if (identical(Sys.getenv("AUSPOL_SURGE_SOURCE", "none"), "forecast")) stop(e)
+    character(0)
+  })
   if (!length(sp)) next
   surging_rows[[pr$election]] <- data.table(pair = pr$election, party = sp, surging = 1L)
 }
 SURGING <- rbindlist(surging_rows, fill = TRUE)
+# No pair with a surging class (AUSPOL_SURGE_SOURCE=none) leaves a table with no
+# columns, which merge() refuses; keep the shape so every row reads surging = 0.
+if (!nrow(SURGING)) SURGING <- data.table(pair = character(), party = character(), surging = integer())
 ALL <- merge(ALL, SURGING, by = c("pair","party"), all.x = TRUE)
 ALL[, surging := ifelse(is.na(surging), 0L, surging)]
 

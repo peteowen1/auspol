@@ -36,7 +36,10 @@ simulate_seat_contests(
   engine = c("auto", "cpp", "r"),
   keep_fp = FALSE,
   breakout_p = NULL,
-  breakout_q = NULL
+  breakout_q = NULL,
+  coalition_split = NULL,
+  error_q = NULL,
+  zero_absent = zero_absent_on()
 )
 }
 \arguments{
@@ -385,6 +388,39 @@ A MIXTURE, not a mean shift: docs/reviews/breakout-risk-design-2026-10-05.md.}
 on an evenly spaced probability grid from 0 to 1 (length at least 2,
 non-decreasing, each in \verb{[0, 100)}); a breakout draws a uniform and
 interpolates linearly. Required when \code{breakout_p} has any cell above 0.}
+
+\item{coalition_split}{Optional list with elements \code{r}, \code{sd} and \code{f}, under
+\code{AUSPOL_COALITION_SPLIT=1} (built by \code{\link[=coalition_split_args]{coalition_split_args()}}). \code{NULL} (the
+default) is the previous behaviour exactly. In a seat where a Liberal and a
+National both stand, the \code{LNP} share is ONE combined Coalition vote; this
+divides it between two candidates in each draw and counts them separately.
+\code{r}: per seat (named by seat, or in seat order), the predicted centre of the
+junior candidate's fraction of the Coalition vote, \code{NA} for a seat without
+both. \code{sd}: the spread of that fraction (a Beta draw around \code{r}). \code{f}: the
+fraction of an excluded Coalition candidate's votes that go to the other
+Coalition candidate while both are in the count; the rest follows the \code{LNP}
+flow row over the other survivors. A transfer from anyone else that the
+flow row sends to \code{LNP} is divided between the two Coalition candidates in
+proportion to their current tallies. A win by either is an \code{LNP} win.
+
+The fractions are drawn BEFORE the count from a separate random stream
+(the caller's stream is saved and restored), and the split seat's count
+draws the shrink toss exactly as the one-candidate count would. So at zero
+flow noise (\code{flow_sd}, \code{fallback_flow_sd} and per-cell sds all 0, the
+published setting) every seat WITHOUT a split is byte-identical to the run
+without this argument. With flow noise on, the split seat's count takes a
+different number of draws and later seats' streams move.
+docs/plans/prereg-lib-nat-two-candidates-2026-10-16.md.}
+
+\item{error_q}{Optional classes x quantiles matrix (rows in the order of \code{shares}'
+columns, at least two nondecreasing columns), under \code{AUSPOL_ERROR_DIST=1} (built by
+\code{\link[=error_dist_args]{error_dist_args()}}). Each cell's noise becomes \code{sd_cell * z}, \code{z} drawn by one uniform per
+cell and linear interpolation between that class's quantiles, instead of \code{rnorm}. \code{NULL}
+(the default) is the previous behaviour exactly.}
+
+\item{zero_absent}{Logical. \code{TRUE} sets a cell whose predicted share is 0 (the class is not standing) back
+to 0 after its draw, so it takes no votes; the draw is still made, so every other cell is unchanged.
+Defaults to the \code{AUSPOL_ZERO_ABSENT} switch (\code{\link[=zero_absent_on]{zero_absent_on()}}); \code{FALSE} is the previous behaviour.}
 }
 \value{
 List: \code{win_prob} (data.frame, one row per seat and party with a

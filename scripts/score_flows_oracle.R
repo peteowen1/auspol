@@ -34,6 +34,18 @@ CONFIGS <- list(
   tf0       = c(AUSPOL_FLOW_TF = "1", AUSPOL_FLOW_MODEL_TAG = "tf0", AUSPOL_FLOW_RATE_HL = "0"),
   tf2       = c(AUSPOL_FLOW_TF = "1", AUSPOL_FLOW_MODEL_TAG = "tf2", AUSPOL_FLOW_RATE_HL = "2"))
 SMOOTH <- 0.15
+# AUSPOL_FLOW_ORACLE_CONFIGS=tf2 scores only the named configurations (comma-separated) and then writes
+# output/flow-oracle-score-<names>.csv, so the full table above is never overwritten by a partial run. Every
+# event's predicted and actual split for the SHIPPED configuration (tf2) goes to output/flow-event-residuals.csv
+# (pair, seat key, excluded class, survivors, destination, predicted, actual, event votes): the input for
+# measuring how much of the flow miss is statewide (NEXT-STEPS, statewide flow shocks, 2026-10-17).
+.only <- Sys.getenv("AUSPOL_FLOW_ORACLE_CONFIGS", "")
+if (nzchar(.only)) {
+  .keep <- trimws(strsplit(.only, ",")[[1]])
+  if (!all(.keep %in% names(CONFIGS))) stop("AUSPOL_FLOW_ORACLE_CONFIGS names unknown configuration(s): ", paste(setdiff(.keep, names(CONFIGS)), collapse = ", "))
+  CONFIGS <- CONFIGS[.keep]
+}
+EV_OUT <- list()
 
 SD <- fread("output/pooled-sharedetail.csv", showProgress = FALSE)
 pairs <- sort(unique(SD$pair))
@@ -116,6 +128,9 @@ for (e in pairs) {
         y <- setNames(act$votes / evs$event_votes[k], act$to)
         y_full <- setNames(rep(0, length(surv)), surv); y_full[names(y)] <- y
         err <- err + evs$event_votes[k] * sum(abs(p - y_full)) / 2
+        if (cf == "tf2") EV_OUT[[length(EV_OUT) + 1L]] <- data.table(pair = e, sk = sk, from = evs$from[k], surv = evs$surv[k],
+                                                                       to = names(p), pred = unname(p), actual = unname(y_full[names(p)]),
+                                                                       event_votes = evs$event_votes[k])
         wsum <- wsum + evs$event_votes[k]
       }
       eerr <- 100 * err / wsum; n_ev <- nrow(evs)
@@ -136,7 +151,13 @@ for (e in pairs) {
   cat(sprintf("%-8s done (prev %s, %d seats with a recorded winner)\n", e, pe, nrow(win_e)))
 }
 R <- rbindlist(res)
-fwrite(R, "output/flow-oracle-score.csv")
+fwrite(R, if (nzchar(.only)) sprintf("output/flow-oracle-score-%s.csv", gsub(",", "-", .only)) else "output/flow-oracle-score.csv")
+if (length(EV_OUT)) {
+  EV <- rbindlist(EV_OUT)
+  fwrite(EV, "output/flow-event-residuals.csv")
+  cat(sprintf("FOE1 wrote output/flow-event-residuals.csv: %d rows, %d events, %d elections (shipped tf2 flows)\n",
+              nrow(EV), uniqueN(EV[, paste(pair, sk, from, surv, event_votes)]), uniqueN(EV$pair)))
+}
 cat("\nE = vote-weighted absolute error of the predicted split at each real exclusion, points (lower is better)\n")
 cat("W = seats whose actual winner comes out of ACTUAL primaries + these flows (higher is better)\n")
 wideE <- dcast(R, pair ~ config, value.var = "event_err"); wideW <- dcast(R, pair ~ config, value.var = "winners_right")

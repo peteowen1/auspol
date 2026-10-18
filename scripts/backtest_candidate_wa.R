@@ -99,9 +99,9 @@ if (!is.finite(SEAT_SD_MULT) || SEAT_SD_MULT <= 0)
 # reason -- that stopped being true once WA's candidacies rows carried
 # names (see the AUSPOL_WA_TRANSFER block below); leaving the stale claim
 # here would have hidden that WA's true remaining parity gap is narrower
-# than this paragraph once said. Until the salience corpus covers WA, this
-# harness runs conditional-only slopes with a disclosed BW1c! line (below)
-# rather than silently claiming "screened."
+# than this paragraph once said. The salience corpus now covers wa2005-wa2025,
+# and since 2026-10-15 this harness runs screened slopes there (BW1s says which
+# path each election took); wa2001 stays conditional-only.
 # PORTED FROM THE FEDERAL HARNESS 2026-09-06: simulate_seat_contests() computes
 # sd_cell from `level_sd` and IGNORES seat_sd whenever level_sd is given, and
 # level_sd is on by default, so `seat_sd * SEAT_SD_MULT` at the call site was
@@ -356,18 +356,19 @@ for (K in PAIRS) {
   # model from the rest of the pooled table. Nothing errored; candidate_returns()
   # was still called and its result then discarded. Found 2026-09-07.
   .cond <- Sys.getenv("AUSPOL_DEV_SLOPE_MODE", "") %in% c("conditional", "screened")
-  # "screened" MODE IS HALF-HONOURED HERE, AND SAYS SO. The other five
-  # harnesses pair conditional slopes with salience_permit_for()/
-  # screened_slopes(), which protects a governed-silent candidate from the
-  # harsh new-candidate slope. WA has neither wired in at all -- a bare
-  # published-default run (AUSPOL_DEV_SLOPE_MODE="screened") silently ran
-  # conditional-only here with nothing in the log to say the salience screen
-  # never fired, the same shape as the missing-SA-shrink incident CLAUDE.md
-  # records: a harness silently can't act on a switch it was handed.
-  if (identical(Sys.getenv("AUSPOL_DEV_SLOPE_MODE", ""), "screened")) {
-    cat("BW1c! screened mode requested but WA has no salience_permit_for()/",
-        "screened_slopes() wiring; running conditional-only\n", sep = "")
-  }
+  # "screened" MODE, WIRED 2026-10-15. Until then this harness printed BW1c! and ran conditional-only: no
+  # salience screen, and so neither AUSPOL_HONOUR_DEPARTED nor AUSPOL_DEPARTED_SUCCESSOR (both act inside
+  # screened_slopes()) ever reached WA, though salience-v6.csv carries wa2005-wa2025. Same wiring as the
+  # Victorian harness: screened_slopes() where a permit table exists, conditional_slopes() where it does not
+  # (wa2001 has no salience rows).
+  .screened <- identical(Sys.getenv("AUSPOL_DEV_SLOPE_MODE", ""), "screened")
+  .honour_departed <- Sys.getenv("AUSPOL_HONOUR_DEPARTED", "0") %in% c("1", "TRUE", "true")
+  .departed_hold <- Sys.getenv("AUSPOL_DEPARTED_HOLD", "0") %in% c("1", "TRUE", "true")   # docs/plans/prereg-departed-hold-fixed-2026-10-04.md
+  .succ_on <- departed_successor_mode() != "0"   # docs/plans/prereg-departed-successor-flag-2026-10-07.md
+  if (.succ_on && .departed_hold) stop("AUSPOL_DEPARTED_SUCCESSOR holds its own cells; do not combine it with AUSPOL_DEPARTED_HOLD", call. = FALSE)
+  .hold_min <- as.numeric(Sys.getenv("AUSPOL_DEPARTED_HOLD_MIN_PRIOR", "0"))
+  .SUCC_RATE <- departed_successor_rates(el_to)   # NULL when off
+  if (.succ_on) { cat(sprintf("DSR1 departed successor rates (%s): %d seat(s) for %s, held through renormalisation\n", departed_successor_mode(), length(.SUCC_RATE), el_to)); .departed_hold <- TRUE }
   # DECOUPLED FOR MEASUREMENT. .cond gates TWO independent mechanisms at once --
   # candidate-conditional dev slopes (.returns, below) and the personal-vote
   # transfer (.own_prev) -- so a single flag flip changes both together and
@@ -550,10 +551,21 @@ for (K in PAIRS) {
   # Shared with every harness and fit_seats_full.R: own_prev_substitute() (R/candidate_returns.R).
   # A cross-seat credit (AUSPOL_CROSS_SEAT_VOTE) can only RAISE the class base, never lower it.
   .own_x <- function(p, seats, x) own_prev_substitute(.own_prev, p, seats, x)
+  .permit <- if (.screened && .cond && !is.null(.returns)) salience_permit_for(el_to, el_from, "wa") else NULL
+  cat(sprintf("BW1s  %s slopes: %s\n", el_to, if (!is.null(.permit)) sprintf("screened (%d permit rows)", nrow(.permit))
+              else if (.cond && !is.null(.returns)) "conditional (no salience permit table)" else "plain"))
+  HELD <- matrix(FALSE, nrow(mat), ncol(mat), dimnames = dimnames(mat))
   for (p in parties) {
     from_pc <- if (p %in% names(sa)) sa[[p]] else 0
     to_pc   <- if (p %in% names(sb)) sb[[p]] else 0
-    .sl <- if (.cond && !is.null(.returns)) conditional_slopes(p, rownames(mat), .returns, same_mp = .MP_SLOPE, major_departed = .MAJDEP, major_present = .MAJPRES, same = if (is.null(.fitsl)) formals(conditional_slopes)$same else .fitsl$same, new = if (is.null(.fitsl)) formals(conditional_slopes)$new else .fitsl$new) else DEV_SLOPE[[p]]
+    .sl <- if (!is.null(.permit)) {
+      pm <- unname(.permit_lut(.permit[.permit$party == p, ])[rownames(mat)])   # a missing permit row is NOT a permit
+      screened_slopes(p, rownames(mat), .returns, pm, same_mp = .MP_SLOPE, major_departed = .MAJDEP, major_present = .MAJPRES,
+                      honour_departed = .honour_departed, with_flags = .departed_hold, successor_rate = .SUCC_RATE,
+                      same = if (is.null(.fitsl)) formals(screened_slopes)$same else .fitsl$same,
+                      new = if (is.null(.fitsl)) formals(screened_slopes)$new else .fitsl$new)
+    } else if (.cond && !is.null(.returns)) conditional_slopes(p, rownames(mat), .returns, same_mp = .MP_SLOPE, major_departed = .MAJDEP, major_present = .MAJPRES, same = if (is.null(.fitsl)) formals(conditional_slopes)$same else .fitsl$same, new = if (is.null(.fitsl)) formals(conditional_slopes)$new else .fitsl$new) else DEV_SLOPE[[p]]
+    .hd <- attr(.sl, "departed"); if (.departed_hold && !is.null(.hd)) HELD[, p] <- ((.hd %in% TRUE) & (mat[, p] >= .hold_min)) %in% TRUE
     mat[, p] <- if (is.null(.split)) dev_slope(.own_x(p, rownames(mat), mat[, p]), from_pc, to_pc, .sl) else
       split_dev_slope(.own_x(p, rownames(mat), mat[, p]), .split$frac(p, rownames(mat)), from_pc, to_pc, .split$s_ret, .split$s_dep)
   }
@@ -589,7 +601,12 @@ for (K in PAIRS) {
                   el_to, length(zeroed), paste(sort(zeroed), collapse = ", ")))
     }
   }
-  shares <- 100 * mat / rowSums(mat)
+  if (.departed_hold) {
+    shares <- renorm_hold(mat, HELD)
+    cat(sprintf("BH0  departed hold: %d cell(s) held in %d seat(s)%s\n", sum(HELD), sum(rowSums(HELD) > 0),
+                if (length(attr(shares, "skipped"))) paste0(" | not held (others zero or hold >= 100): ", paste(attr(shares, "skipped"), collapse = ", ")) else ""))
+    attr(shares, "skipped") <- NULL
+  } else shares <- 100 * mat / rowSums(mat)
   # AUSPOL_NEW_IND_SHRINK (POST-XGB, shipped "1"; "0" makes this line a no-op): a nameless
   # first-time sole independent is over-called at base. R/new_ind_shrink.R.
   shares <- new_ind_shrink_apply(shares, el_to, code = "BW1n")
@@ -769,7 +786,7 @@ for (K in PAIRS) {
   surge_arg <- .imx$surge_h; surge_mu_arg <- .imx$surge_mu; surge_sd_arg <- .imx$surge_sd; surge_party_arg <- .imx$surge_party
   sim <- simulate_seat_contests(level_sd = .level_sd, sd_override = size_sd_apply(SD_OVR, shares, el_to, .level_sd, .lm(shares)), level_mult = .lm(shares), shares, fm, party_sd = psd,
                                 seat_sd = sd_used * SEAT_SD_MULT,
-                                breakout_p = .bo$p, breakout_q = .bo$q,
+                                breakout_p = .bo$p, breakout_q = .bo$q, coalition_split = coalition_split_args(el_to, rownames(shares)), error_q = error_dist_args(el_to, colnames(shares)),
                                 n_sims = N_SIMS, smooth = SMOOTH, seed = SEED,
                                 shrink = SHRINK, fallback_smooth = FB_SMOOTH, shrink_k = SHRINK_K,
                                 conditional_override = .htv_ov, conditional_override_sd = attr(.htv_ov, "sd"),
