@@ -5,6 +5,19 @@ it stood before this rewrite: `backlog/journal-2026-09-19-hub-snapshot.md`).
 Decisions: `docs/DECISIONS.md`. Every seat verdict: `docs/SEAT-REGISTRY.md`.
 Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30.
 
+## 2026-10-18 pipeline audit (READ FIRST; `reviews/pipeline-overwrite-audit-2026-10-18.md`, Sonnet, read-only)
+
+20 findings where work is overwritten, doubled or ignored, or live and backtest diverge. Spot-checked in code 18 Oct:
+- OPEN F1 (live, now): `R/xgb_primary_override.R:271` serves level_pred = 0 for IND and OTH_RIGHT (state_mean has only
+  ALP/LNP/GRN/ONP/OTH) and the whole others bucket to OTH; training used per-class levels. Train/serve mismatch.
+- OPEN F2 (live): `AUSPOL_MINOR_DEFECT_BASE_PRED="1"` ships but `fit_seats_full.R` never applies it (comment only, :979).
+- OPEN F3 (live): `fit_seats_full.R:932` hardcodes the defector discount 0.282; every harness fits it time-forward.
+- OPEN F4 (scores): six harnesses use a flat `PARTY_SD` 1.5 and no `statewide_draws` (vic :853); only fed and live
+  pass statewide_draws, so 16 of 23 pairs are scored on a different statewide spread than ships.
+- OPEN F5-F20: salience/nomination zeroing applied twice in harnesses, demographic correction rescaled away (~60%
+  delivered), post-xgb tables fitted on residuals the shares no longer carry, IND override (being fixed: seat-poll
+  prereg), CE error z standardised without the composition factor, HTV overwriting xgb flows, registry greps comments.
+
 ## 2026-10-17 (READ FIRST)
 
 - SHIPPED + PUBLISHED the Lib/Nat split (`AUSPOL_COALITION_SPLIT=1`, `_F=state`; DECISIONS). CI fix b35394a:
