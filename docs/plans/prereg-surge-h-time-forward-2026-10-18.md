@@ -42,5 +42,8 @@ Warringah 0.190, McMahon 0.036; qld2024 gets values for the first time.
 - Per election (seat-winner log loss, z = change / that election's own seat SE): worse by >2 SE: qld2012 +0.0026 (z 2.22),
   qld2020 +0.0084 (2.14), fed2013 +0.0051 (2.14); better: fed2019 -0.0076 (z -4.06), wa2013 -0.0130 (-1.92).
   With 31 scored elections ~0.7 would cross 2 SE by chance.
+
+**PETE'S DECISION (2026-10-19): KEEP.** The clause is overridden on his call; the switch stays "1" and ships with the
+next PR to main.
 **The no-election-worse clause fires on three, so this goes to Pete.** The switch stays "1" on dev (a leak fix should not
 be reverted for its score); not merged to main, not published, until he decides.

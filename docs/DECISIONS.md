@@ -4,6 +4,8 @@ One line each: the decision, the one fact behind it, a link. Newest first.
 Created 2026-09-19 (the verse convention; auspol had none). Older decisions
 live in the plans they came from (`docs/plans/prereg-*.md` RESULT sections).
 
+- **2026-10-19 surge_h leak fix KEPT (Pete: "Keep"), over the no-election-worse clause.** `AUSPOL_SURGE_H_TF=1` trains the xgb salience feature on earlier elections only. 35 elections +0.0005 (SE 0.0009); qld2012, qld2020, fed2013 just over 2 SE worse, fed2019 4 SE better; ~0.7 of 31 cross 2 SE by chance (`plans/prereg-surge-h-time-forward-2026-10-18.md`).
+
 - **2026-10-18 Seat-poll blend arm H SHIPPED (Pete: "Ship H now"), merged in PR #127; live after the next publish.** Eleven `AUSPOL_SEAT_POLL_*` switches. 20k, 35 elections: polled seats -0.0136 (SE 0.0021), all seats 0.3190 -> 0.3176 (SE 0.0008), AEF-7 0.2676 -> 0.2622; leave-one-election-out passes. McMahon 2025 P(Labor) 0.27 -> 0.92 (`plans/prereg-seat-poll-method-weights-2026-10-18.md`).
 
 - **2026-10-18 Live train/serve fixes F1-F3 SHIPPED (Pete: "go"):** live xgb gets the per-class level it trained on (`AUSPOL_LIVE_LEVEL_SPLIT`), live base gets the minor-defector discount, the major-defector discount is fitted (0.313, was 0.282). Live diffs small (Werribee ONP 0.47 -> 0.41) (`reviews/pipeline-overwrite-audit-2026-10-18.md`).

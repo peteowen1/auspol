@@ -5,17 +5,15 @@ it stood before this rewrite: `backlog/journal-2026-09-19-hub-snapshot.md`).
 Decisions: `docs/DECISIONS.md`. Every seat verdict: `docs/SEAT-REGISTRY.md`.
 Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30.
 
-## NEEDS PETE (19 Oct morning)
+## NEEDS PETE
 
-- F7 screen (demographic correction in full, `AUSPOL_DEMO_RESID_FULL=1`, built b6e1acc, off) NOT RUN: the memory
-  watchdog stopped it at ~04:10 (machine low on memory with nothing of this session running). Rerun when free:
-  `Rscript scripts/quick_arm.R "AUSPOL_DEMO_RESID_FULL=1" --pairs=all --sims=1000 --slots=1 --no-reuse`, then the
-  scratchpad scorer score_f7.R on its two cache keys (prereg-demo-resid-full-2026-10-19.md).
-- surge_h leak fix (`AUSPOL_SURGE_H_TF=1`, on dev only): neutral overall (35 elections +0.0005, SE 0.0009) but
-  qld2012, qld2020 and fed2013 are each worse by just over 2 SE of their own seats (fed2019 better by 4 SE).
-  Recommendation: keep it (a leak fix; ~0.7 of 31 elections cross 2 SE by chance). `plans/prereg-surge-h-time-forward-2026-10-18.md`.
-- The publish for arm H: `AUSPOL_PUBLISH=1 AUSPOL_REBUILD_FROM=9 bash scripts/rebuild_forecasts.sh`.
-- Delete the isolated copies (16 GB each, no junctions): C:\devuspol-iso-ratio, -iso-base, -iso-stf-arm, -iso-stf-base.
+- OPEN: the publish for arm H: `AUSPOL_PUBLISH=1 AUSPOL_REBUILD_FROM=9 bash scripts/rebuild_forecasts.sh`.
+- OPEN, IN FLIGHT 19 Oct (Pete: "run it now"): F7 screen (demographic correction in full, `AUSPOL_DEMO_RESID_FULL=1`,
+  off). `Rscript scripts/quick_arm.R "AUSPOL_DEMO_RESID_FULL=1" --pairs=all --sims=1000 --slots=1 --no-reuse`, then
+  the scratchpad scorer score_f7.R on its two cache keys (`plans/prereg-demo-resid-full-2026-10-19.md`). The 18 Oct
+  attempt was stopped by the memory watchdog.
+- DONE 19 Oct (Pete: keep): surge_h leak fix stays on (`AUSPOL_SURGE_H_TF=1`); goes to main with the next PR.
+- DONE 19 Oct (Pete: delete): the four isolated copies removed.
 
 ## 2026-10-18 pipeline audit (READ FIRST; `reviews/pipeline-overwrite-audit-2026-10-18.md`, Sonnet, read-only)
 
@@ -45,7 +43,7 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30.
   0.014 vs Daniel 0.092). Prereg amendment 9; named targets Goldstein 2022, North Sydney 2022, Warringah 2019, Curtin
   2022; McMahon 2025 and Mayo 2025 as must-not-break.
 - DONE 18 Oct: arm H deciding run passed; SHIPPED and merged (PR #127). NEEDS PETE: the publish, `AUSPOL_PUBLISH=1 AUSPOL_REBUILD_FROM=9 bash scripts/rebuild_forecasts.sh`.
-- OPEN F21 (found 18 Oct): `surge_h` is a filler 0 on all 1,050 fed2025 xgb rows (`fit_xgb_primary_v6.R:567`): the hazard
+- DONE 19 Oct (fixed by `AUSPOL_SURGE_H_TF=1`, kept by Pete) F21 (found 18 Oct): `surge_h` is a filler 0 on all 1,050 fed2025 xgb rows (`fit_xgb_primary_v6.R:567`): the hazard
   loop (:555-565) runs only for SURGE_CANON (:119-129), and fed2025 is not in it, though its salience (`jump`) is cached
   for 613 candidates (`output/salience-v6.csv`). A constant within one election is a label for it (CLAUDE.md). Fix:
   score fed2025 (and every later election) with the hazard, without adding it to the training pairs.
