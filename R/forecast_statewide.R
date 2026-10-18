@@ -101,24 +101,7 @@ forecast_statewide_for <- function(region, year, election_date, parties, st_a,
     # folded and did not stand in vic2018: ONP came back NA and the whole
     # statewide with it. Treat an absent prior as zero share, and if the entire
     # bucket is absent fall back to an equal split rather than dividing by nil.
-    prior <- vapply(bucket, function(p) {
-      v <- st_a[p]
-      if (length(v) != 1L || !is.finite(v)) 0 else unname(v)
-    }, numeric(1))
-    base_share <- sum(prior)
-    ratio <- stats::setNames(
-      if (isTRUE(base_share > 0)) prior / base_share
-      else rep(1 / length(bucket), length(bucket)),
-      bucket)
-    # AUSPOL_BUCKET_SPLIT = cand_resid / cand_naive: split the bucket by the
-    # per-candidate model's predicted class shares for THIS election instead of
-    # the previous election's mix (the bucket's total is unchanged). Each share
-    # comes from a model fitted on earlier elections only
-    # (scripts/fit_minor_candidates.R, MC2). Any bucket class without a
-    # prediction falls back to the prior-ratio split for the whole pair.
-    # docs/plans/prereg-bucket-split-candidates-2026-09-28.md.
-    cr <- candidate_bucket_ratio(paste0(region, year), bucket)
-    if (!is.null(cr)) ratio <- cr
+    ratio <- bucket_split_ratio(paste0(region, year), bucket, st_a)
     # EVERY DRAW, not just the point estimate. simulate_seat_contests() requires
     # statewide_draws to cover every column in `parties` or it errors, so an
     # unmodelled class needs its own draw column. There is no genuine trend draw
@@ -161,6 +144,49 @@ forecast_statewide_for <- function(region, year, election_date, parties, st_a,
   list(st_fc = st_fc, draws = sw_draws, folded = FC$folded, n_polls = FC$n_polls,
        tpp = FC$tpp, fund = fr, anchor_mean = FC$anchor$mean,
        implied_tpp = FC$implied_tpp)
+}
+
+#' How the unpolled "others" bucket divides among its classes
+#'
+#' The one rule for splitting the statewide others total into the classes the
+#' polls do not report (IND, OTH_RIGHT, ...) and OTH itself. Used by
+#' [forecast_statewide_for()] (every harness, and `scripts/build_level_pred.R`,
+#' i.e. what the xgb layer is TRAINED on) and by the live forecast
+#' (`scripts/fit_seats_full.R`), so training and serving cannot drift
+#' (pipeline-overwrite-audit 2026-10-18, F1: live served IND and OTH_RIGHT a
+#' level of 0 and OTH the whole bucket).
+#'
+#' The per-candidate model's ratio ([candidate_bucket_ratio()]) when it has a
+#' share for every bucket class; otherwise the previous election's ratio. A
+#' class absent from the previous election counts as 0 (`[` on a named vector
+#' gives NA for a missing name, which would make the whole statewide NA), and
+#' if the whole bucket is absent, an equal split.
+#'
+#' @param election Label such as `"vic2026"`.
+#' @param bucket Class names in the bucket, OTH included.
+#' @param st_a Previous election's statewide shares, named by class.
+#' @return Named ratios over `bucket`, summing to 1.
+#' @keywords internal
+bucket_split_ratio <- function(election, bucket, st_a) {
+  prior <- vapply(bucket, function(p) {
+    v <- st_a[p]
+    if (length(v) != 1L || !is.finite(v)) 0 else unname(v)
+  }, numeric(1))
+  base_share <- sum(prior)
+  ratio <- stats::setNames(
+    if (isTRUE(base_share > 0)) prior / base_share
+    else rep(1 / length(bucket), length(bucket)),
+    bucket)
+  # AUSPOL_BUCKET_SPLIT = cand_resid / cand_naive: split the bucket by the
+  # per-candidate model's predicted class shares for THIS election instead of
+  # the previous election's mix (the bucket's total is unchanged). Each share
+  # comes from a model fitted on earlier elections only
+  # (scripts/fit_minor_candidates.R, MC2). Any bucket class without a
+  # prediction falls back to the prior-ratio split for the whole pair.
+  # docs/plans/prereg-bucket-split-candidates-2026-09-28.md.
+  cr <- candidate_bucket_ratio(election, bucket)
+  if (!is.null(cr)) ratio <- cr
+  ratio
 }
 
 #' Split ratios for the unpolled bucket from the per-candidate model

@@ -1330,7 +1330,24 @@ if (.departed_hold) {
 if (!is.null(.nis)) shares <- .nis else if (!identical(new_ind_mode(), "0"))
   cat(sprintf("BV1n!! new_ind_shrink_apply() FAILED%s -- the new-independent shrink is NOT applied to this forecast\n",
               .reason("new_ind")))
+# The trees were TRAINED on a per-class statewide level (scripts/build_level_pred.R -> forecast_statewide_for(),
+# which splits the unpolled bucket with bucket_split_ratio()), but were served `state_mean`, which carries only the
+# classes the polls report: IND and OTH_RIGHT got level_pred 0 and OTH the whole bucket (vic2026: 0 / 0 / 11.47
+# where the split is 3.73 / 4.53 / 3.22). Serve the same split, by the same function.
+# reviews/pipeline-overwrite-audit-2026-10-18.md, F1. AUSPOL_LIVE_LEVEL_SPLIT; live-only by design (the harnesses
+# read level_pred from output/level-pred.csv, already split).
+.level_split <- NULL
+if (identical(Sys.getenv("AUSPOL_LIVE_LEVEL_SPLIT", "1"), "1") && "OTH" %in% names(state_mean)) {
+  .bk <- c(setdiff(intersect(parties, c(unmodelled, "OTH")), "OTH"), "OTH")
+  .rt <- bucket_split_ratio(paste0(REGION, YEAR), .bk, a22)
+  .level_split <- state_mean[setdiff(names(state_mean), "OTH")]
+  .level_split[.bk] <- state_mean[["OTH"]] * .rt[.bk]
+  if (abs(sum(.level_split) - sum(state_mean)) > 1e-6) stop("XG0s: split level does not keep the statewide total")
+  cat(sprintf("XG0s the xgb layer's level_pred, others bucket split as in training: %s (sum %.2f = state OTH %.2f)\n",
+              paste(sprintf("%s %.2f", .bk, .level_split[.bk]), collapse = ", "), sum(.level_split[.bk]), state_mean[["OTH"]]))
+}
 shares_x <- .try("xgb_live", xgb_primary_predict_live(shares, mat22, a22, state_mean, .returns,
+                                                        level_split = .level_split,
                                                         own_prev = .own_prev_xgb, region = REGION,
                                                         year = YEAR, prev_year = as.integer(sub("^[a-z]+", "", PREV))))
 if (!is.null(shares_x)) {

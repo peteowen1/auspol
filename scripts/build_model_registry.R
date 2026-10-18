@@ -577,6 +577,9 @@ CLASSIFY <- list(
   AUSPOL_LEVEL_RECIPE = paste(
     "SHIPPED 2026-09-30 as v56 ('live'). Wired everywhere: ",
     "read in R/forecast_mode.R (statewide_draws_as_at()), which every harness and fit_seats_full.R reach: the five state harnesses and fit_seats_full.R through forecast_statewide_or_oracle() -> forecast_statewide_for() (R/forecast_statewide.R:81), the federal harness directly. \"No\" cells are the harness grep missing the R/ read, not drift (corrected 2026-10-09 after review)."),
+  AUSPOL_LIVE_LEVEL_SPLIT = paste(
+    "SHIPPED 2026-10-18 as a train/serve fix, LIVE-ONLY by design: read only in fit_seats_full.R, which serves the xgb layer a",
+    "level_pred split by bucket_split_ratio(). The harnesses read level_pred from output/level-pred.csv, built by the same function."),
   AUSPOL_LIVE_DRAW_BUCKET = paste(
     "SHIPPED 2026-09-28 as a parity fix, LIVE-ONLY by design: read only in fit_seats_full.R, where the live statewide draws split the",
     "unpolled bucket by its 2022 ratio. The harnesses use candidate_bucket_ratio() (AUSPOL_BUCKET_SPLIT) instead."),

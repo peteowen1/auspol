@@ -31,7 +31,7 @@ All seven share one `R/` package core (`simulate_seat_contests()`,
 in which switches each one WIRES and which data source each reads, not in
 separate model code.
 
-## Switch parity (212 switches from `published_flags.R`, 7 entry points)
+## Switch parity (213 switches from `published_flags.R`, 7 entry points)
 
 | switch | fit_seats (published) | fed | nsw | qld | sa | vic | wa |
 |---|---|---|---|---|---|---|---|
@@ -120,6 +120,7 @@ separate model code.
 | `AUSPOL_LEVEL_SD` | yes | yes | yes | yes | yes | yes | yes |
 | `AUSPOL_LIVE_DRAW_BUCKET` | yes | NO | NO | NO | NO | NO | NO |
 | `AUSPOL_LIVE_LEVEL_ANCHOR` | yes | NO | NO | NO | NO | NO | NO |
+| `AUSPOL_LIVE_LEVEL_SPLIT` | yes | NO | NO | NO | NO | NO | NO |
 | `AUSPOL_MAJOR_DEPARTED` | yes | yes | yes | yes | yes | yes | yes |
 | `AUSPOL_MAJOR_SLOPE` | yes | yes | yes | yes | yes | yes | yes |
 | `AUSPOL_MINOR_DEFECT` | yes | yes | yes | yes | yes | yes | yes |
@@ -312,6 +313,7 @@ separate model code.
 - **`AUSPOL_LEVEL_RECIPE`** (**adopted, shared-function wiring**): SHIPPED 2026-09-30 as v56 ('live'). Wired everywhere:  read in R/forecast_mode.R (statewide_draws_as_at()), which every harness and fit_seats_full.R reach: the five state harnesses and fit_seats_full.R through forecast_statewide_or_oracle() -> forecast_statewide_for() (R/forecast_statewide.R:81), the federal harness directly. "No" cells are the harness grep missing the R/ read, not drift (corrected 2026-10-09 after review).
 - **`AUSPOL_LIVE_DRAW_BUCKET`** (**adopted, shared-function wiring**): SHIPPED 2026-09-28 as a parity fix, LIVE-ONLY by design: read only in fit_seats_full.R, where the live statewide draws split the unpolled bucket by its 2022 ratio. The harnesses use candidate_bucket_ratio() (AUSPOL_BUCKET_SPLIT) instead.
 - **`AUSPOL_LIVE_LEVEL_ANCHOR`** (intentional / dead experiment): OFF since 2026-09-30 (v56), LIVE-ONLY by design: read only in fit_seats_full.R. The un-anchored level scored better over all 22 elections, and published_flags.R says backtests and live now both use the un-anchored recipe (AUSPOL_LEVEL_RECIPE='live').
+- **`AUSPOL_LIVE_LEVEL_SPLIT`** (**adopted, shared-function wiring**): SHIPPED 2026-10-18 as a train/serve fix, LIVE-ONLY by design: read only in fit_seats_full.R, which serves the xgb layer a level_pred split by bucket_split_ratio(). The harnesses read level_pred from output/level-pred.csv, built by the same function.
 - **`AUSPOL_MINOR_DEFECT_CONSERVE`** (**adopted, shared-function wiring**): SHIPPED 2026-09-19 (plans/prereg-minor-defector-conserve-2026-09-19.md). Read inside personal_prior_vote() in R/candidate_returns.R: a minor-to-minor defector's origin class keeps a fitted share (~0.38) of the vote. Reaches every harness and fit_seats_full.R through that function, not by a direct harness read.
 - **`AUSPOL_MP_SLOPE_FILE`** (intentional / dead experiment): DIAGNOSTIC 2026-10-13: path of the sitting-member slope table; read in all six harnesses (published default output/mp-slope-by-target.csv).
 - **`AUSPOL_MP_SLOPE_TF`** (**adopted, shared-function wiring**): SHIPPED (1) 2026-10-14, FIT-TIME: read by scripts/fit_mp_slope.R, which writes output/mp-slope-by-target.csv (rebuild stage 0); harnesses and live read the table, not the switch.
@@ -456,4 +458,4 @@ MR3  no harness forces a switch away from its published value.
 
 ## Coverage check
 
-MR2  every non-universal switch (171 of 212) has a recorded classification.
+MR2  every non-universal switch (172 of 213) has a recorded classification.

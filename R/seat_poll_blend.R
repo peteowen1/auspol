@@ -260,7 +260,13 @@ seat_poll_model_var <- function(target_election) {
     m
   }), fill = TRUE)
   K <- SEAT_POLL_FLOOR_K
-  if (!nrow(rows)) return(c(pooled = SEAT_POLL_MODEL_VAR_PRIOR))
+  if (!nrow(rows)) {
+    # no earlier polled cells (fed2016, the first election with seat polls): the prior variance, and the size
+    # exponent at its prior 0 (no size scaling), so AUSPOL_SEAT_POLL_SIZEVAR has nothing to scale by
+    out <- c(pooled = SEAT_POLL_MODEL_VAR_PRIOR)
+    attr(out, "ref") <- c(pooled = 1); attr(out, "g") <- 0; attr(out, "g_raw") <- NA_real_; attr(out, "g_se") <- NA_real_
+    return(out)
+  }
   e2 <- (rows$actual - rows$pred)^2
   U <- length(unique(rows$unit))
   pooled <- (U * mean(e2) + K * SEAT_POLL_MODEL_VAR_PRIOR) / (U + K)
