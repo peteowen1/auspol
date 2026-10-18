@@ -31,7 +31,7 @@ All seven share one `R/` package core (`simulate_seat_contests()`,
 in which switches each one WIRES and which data source each reads, not in
 separate model code.
 
-## Switch parity (220 switches from `published_flags.R`, 7 entry points)
+## Switch parity (221 switches from `published_flags.R`, 7 entry points)
 
 | switch | fit_seats (published) | fed | nsw | qld | sa | vic | wa |
 |---|---|---|---|---|---|---|---|
@@ -40,7 +40,7 @@ separate model code.
 | `AUSPOL_ASAT_MIN_PAIRS` | NO | NO | NO | NO | NO | NO | NO |
 | `AUSPOL_BREAKOUT_MIX` | yes | yes | yes | yes | yes | yes | yes |
 | `AUSPOL_BREAKOUT_MIX_MIN_P` | NO | NO | NO | NO | NO | NO | NO |
-| `AUSPOL_BUCKET_SPLIT` | NO | yes | NO | NO | NO | NO | NO |
+| `AUSPOL_BUCKET_SPLIT` | yes | yes | NO | NO | NO | NO | NO |
 | `AUSPOL_BUCKET_TOTAL` | NO | NO | NO | NO | NO | NO | NO |
 | `AUSPOL_BYELEC_DEPARTED` | NO | NO | NO | NO | NO | NO | NO |
 | `AUSPOL_BYELEC_LEVEL` | NO | NO | NO | NO | NO | NO | NO |
@@ -173,6 +173,7 @@ separate model code.
 | `AUSPOL_SEAT_POLL_ALLPOLLS` | NO | NO | NO | NO | NO | NO | NO |
 | `AUSPOL_SEAT_POLL_BLEND` | yes | yes | yes | yes | yes | yes | yes |
 | `AUSPOL_SEAT_POLL_COALITION_DEDUP` | NO | NO | NO | NO | NO | NO | NO |
+| `AUSPOL_SEAT_POLL_CORRECTIONS` | NO | NO | NO | NO | NO | NO | NO |
 | `AUSPOL_SEAT_POLL_DECAY` | NO | NO | NO | NO | NO | NO | NO |
 | `AUSPOL_SEAT_POLL_ELECTION_ERR` | NO | NO | NO | NO | NO | NO | NO |
 | `AUSPOL_SEAT_POLL_FIRM_FLOOR` | NO | NO | NO | NO | NO | NO | NO |
@@ -364,6 +365,7 @@ separate model code.
 - **`AUSPOL_SEAT_CONTEXT_MARGIN`** (intentional / dead experiment): ARM, not shipped (default 0; phase 2 of plans/prereg-seat-context-complete-2026-09-28.md). Read in scripts/fit_xgb_primary_v6.R (training) and R/xgb_primary_override.R (the 'all' mode, live). Off, so nothing differs by entry point.
 - **`AUSPOL_SEAT_POLL_ALLPOLLS`** (**adopted, shared-function wiring**): SHIPPED 2026-10-18 as arm H (deciding-runs/20261018-2009-seatpoll-H). ARM (0), UNIVERSAL via R/: read inside R/seat_poll_blend.R (the seat-poll blend every harness and fit_seats_full.R reach). plans/prereg-seat-poll-method-weights-2026-10-18.md amendment 2
 - **`AUSPOL_SEAT_POLL_COALITION_DEDUP`** (**adopted, shared-function wiring**): SHIPPED 2026-10-07 (data fix). Read in .read_seat_polls_file() in R/seat_poll_blend.R, which all six harnesses and fit_seats_full.R reach through the seat-poll blend; the weight fit and the blend see the same polls.
+- **`AUSPOL_SEAT_POLL_CORRECTIONS`** (**adopted, shared-function wiring**): SHIPPED 2026-10-18 (data fix), UNIVERSAL via R/: read inside R/seat_poll_blend.R's seat-poll reader, which every harness and fit_seats_full.R reach.
 - **`AUSPOL_SEAT_POLL_DECAY`** (**adopted, shared-function wiring**): SHIPPED 2026-10-09 (full 20k run with PRIOR and MRP_NAME: 0.2705 -> 0.2675 on the 6 polled elections). Read in seat_poll_shares() in R/seat_poll_blend.R (.seat_poll_decay_on()), which every entry point reaches through the blend; the harness grep cannot see it.
 - **`AUSPOL_SEAT_POLL_ELECTION_ERR`** (**adopted, shared-function wiring**): SHIPPED 2026-10-18 as arm H (deciding-runs/20261018-2009-seatpoll-H). ARM (0), UNIVERSAL via R/: read inside R/seat_poll_blend.R (the seat-poll blend every harness and fit_seats_full.R reach). plans/prereg-seat-poll-method-weights-2026-10-18.md amendment 8
 - **`AUSPOL_SEAT_POLL_FIRM_FLOOR`** (intentional / dead experiment): ARM, off: did not clear 2026-10-09 (moves 1 cell alone). Read in .seat_poll_cell_weights() and seat_poll_decay_params() in R/seat_poll_blend.R; reaches every entry point through the blend.
@@ -468,8 +470,14 @@ asks for":
 
 Honouring a switch and running at its published value are different questions, and this table asked only the first until 2026-09-14. A harness that reads a switch and then `Sys.setenv()`s it scores a clean "yes" above while measuring a configuration the forecast does not ship. Detected mechanically below, so it cannot go stale.
 
-MR3  no harness forces a switch away from its published value.
+**MR3! 1 harness/switch pair(s) run at a non-published value.** Any figure that pools these harnesses with the others compares two configurations.
+
+| switch | harness | forced to | published |
+|---|---|---|---|
+| `AUSPOL_BUCKET_SPLIT` | `fit_seats (published)` | **prior** | cand_naive |
+
+A forced value is not automatically a bug, but it must be recorded in `published_flags.R` and weighed whenever figures from these harnesses are pooled. (History: until 2026-10-03 `fed` and `nsw` forced `AUSPOL_SALIENCE_EXPECTED` and `AUSPOL_SALIENCE_EXP_SD` to 1 on purpose, commit `01c8e1c`; that was removed, see `docs/reviews/fed-nsw-snapshot-gap-2026-10-03.md`.)
 
 ## Coverage check
 
-MR2  every non-universal switch (179 of 220) has a recorded classification.
+MR2  every non-universal switch (180 of 221) has a recorded classification.

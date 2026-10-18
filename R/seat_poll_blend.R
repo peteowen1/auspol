@@ -63,7 +63,7 @@ seat_poll_shares <- function(election, days = 90, by_type = FALSE, by_poll = FAL
 .seat_poll_memo_key <- function(election, days, by_type, by_poll, .raw, extra = character(0)) {
   env <- Sys.getenv(); env <- env[startsWith(names(env), "AUSPOL_")]
   sp <- file.path(pkg_root(), "external", "reference", "polls", "seat-polls")
-  files <- c(file.path(sp, c("seat_polls.csv", "hand_keyed_primaries.csv", "poll_methods.csv", "mrp_candidates.csv")),
+  files <- c(file.path(sp, c("seat_polls.csv", "hand_keyed_primaries.csv", "poll_methods.csv", "mrp_candidates.csv", "seat_poll_corrections.csv")),
              out_path(c("candidacies.csv", "endorsement-features.csv", "xgb-primary-asat-predictions.csv", "forecasts.csv")),
              extra)
   fi <- file.info(files, extra_cols = FALSE)
@@ -1084,13 +1084,13 @@ seat_poll_weights_split <- function(target_election) {
   # `f` and its hand-keyed sibling are stamped themselves: a caller may pass
   # any file (a test's tempfile), not only the repo copy (review, 2026-10-10).
   key <- paste("FILE", f, .seat_poll_memo_key("", 0, FALSE, FALSE, FALSE,
-               extra = c(f, file.path(dirname(f), "hand_keyed_primaries.csv"))), sep = "#")
+               extra = c(f, file.path(dirname(f), c("hand_keyed_primaries.csv", "seat_poll_corrections.csv")))), sep = "#")
   .seat_poll_memoised(key, function() .read_seat_polls_file_impl(f))
 }
 
 #' @keywords internal
 .read_seat_polls_file_impl <- function(f) {
-  s <- .seat_poll_coalition_dedup(data.table::fread(f, showProgress = FALSE))
+  s <- .seat_poll_coalition_dedup(.seat_poll_apply_corrections(data.table::fread(f, showProgress = FALSE), f))
   v <- Sys.getenv("AUSPOL_SEAT_POLL_HANDKEYED", "1")
   if (!v %in% c("0", "1")) stop("AUSPOL_SEAT_POLL_HANDKEYED must be \"0\" or \"1\", not ", v)
   if (v == "0") return(s)
@@ -1102,6 +1102,42 @@ seat_poll_weights_split <- function(target_election) {
               paste(unique(paste(h$election, h$seat_name)), collapse = ", ")))
   h$source <- NULL
   data.table::rbindlist(list(s, h), use.names = TRUE, fill = TRUE)
+}
+
+#' Correct seat-poll figures the source page got wrong (seat_poll_corrections.csv)
+#'
+#' One row per wrong figure: the poll (election, seat_name, pollster,
+#' fieldwork_end), the party label as scraped, the value the scrape holds
+#' (`fp_wrong`), the value the pollster published (`fp_right`) and where that
+#' was read. Applied after every scrape, so a refetch cannot bring the error
+#' back. A correction whose `fp_wrong` is not found exactly once stops the run:
+#' a silently unmatched correction is a fix that quietly stopped applying.
+#' First case: Wikipedia's RedBridge Melbourne Nov 2024 row had the three
+#' major figures in the wrong columns (Accent Research's PDF, 2026-10-18).
+#' Prints SPCX. `AUSPOL_SEAT_POLL_CORRECTIONS` ("1"; "0" off).
+#' @keywords internal
+.seat_poll_apply_corrections <- function(s, f) {
+  v <- Sys.getenv("AUSPOL_SEAT_POLL_CORRECTIONS", "1")
+  if (!v %in% c("0", "1")) stop("AUSPOL_SEAT_POLL_CORRECTIONS must be \"0\" or \"1\", not ", v)
+  cf <- file.path(dirname(f), "seat_poll_corrections.csv")
+  if (v == "0" || !file.exists(cf)) return(s)
+  cx <- data.table::fread(cf, showProgress = FALSE, colClasses = list(character = c("fieldwork_end")))
+  if (!nrow(cx)) return(s)
+  if (any(!nzchar(cx$source))) stop(basename(cf), ": every correction needs a source")
+  fpn <- suppressWarnings(as.numeric(s$fp))
+  for (i in seq_len(nrow(cx))) {
+    hit <- which(s$election == cx$election[i] & s$seat_name == cx$seat_name[i] & s$pollster == cx$pollster[i] &
+                 as.character(s$fieldwork_end) == cx$fieldwork_end[i] & s$party == cx$party[i] & s$row_type == "poll" &
+                 is.finite(fpn) & abs(fpn - cx$fp_wrong[i]) < 1e-9)
+    if (length(hit) != 1L)
+      stop(sprintf("SPCX! correction %d (%s %s %s %s %s %s -> %s) matched %d rows, not 1: the scrape changed; check %s",
+                   i, cx$election[i], cx$seat_name[i], cx$pollster[i], cx$fieldwork_end[i], cx$party[i],
+                   cx$fp_wrong[i], cx$fp_right[i], length(hit), basename(cf)))
+    s$fp[hit] <- if (is.character(s$fp)) as.character(cx$fp_right[i]) else cx$fp_right[i]
+  }
+  cat(sprintf("SPCX %d seat-poll figure(s) corrected from %s: %s\n", nrow(cx), basename(cf),
+              paste(unique(paste(cx$election, cx$seat_name, cx$pollster, cx$fieldwork_end)), collapse = "; ")))
+  s
 }
 
 # A complete poll's primaries sum to 100 within this many points (rounding).
