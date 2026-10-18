@@ -466,6 +466,44 @@ SEAT_POLL_N_FALLBACK <- 600        # seat sample when no earlier direct poll rec
 }
 
 .seat_poll_firm_shared_on <- function() .seat_poll_onoff("AUSPOL_SEAT_POLL_FIRM_SHARED")   # amendment 7
+.seat_poll_election_err_on <- function() .seat_poll_onoff("AUSPOL_SEAT_POLL_ELECTION_ERR") # amendment 8
+SEAT_POLL_ELECTION_ERR_PRIOR <- 4   # sd 2 points: the prior for an election-wide seat-poll miss (amendment 8)
+
+#' Election-wide seat-poll error variance per class (AUSPOL_SEAT_POLL_ELECTION_ERR)
+#'
+#' An error every seat poll in an election shares (fed2025's all under-called
+#' Labor) cannot be averaged away by more polls or firms. For each EARLIER
+#' election with polled cells: `d` = mean over its polled cells of (cell poll
+#' average - actual), `s2` = the variance of those differences / cells;
+#' `tau2_c = mean over elections of max(0, d^2 - s2)`, shrunk toward the pool
+#' over classes by `SEAT_POLL_FLOOR_K` pseudo-elections and the pool toward
+#' `SEAT_POLL_ELECTION_ERR_PRIOR`. prereg-seat-poll-method-weights amendment 8.
+#' @keywords internal
+seat_poll_election_err <- function(target_election) {
+  f <- current_seat_predictions()
+  els <- if (is.null(f)) character(0) else unique(f$election)
+  els <- els[elections_before(els, target_election)]
+  d <- data.table::rbindlist(lapply(els, function(e) {
+    sp <- NULL; utils::capture.output(sp <- seat_poll_shares(e))
+    if (is.null(sp) || !nrow(sp)) return(NULL)
+    fe <- f[f$election == e, list(seat = normalise_seat(seat), class = party, actual = actual_share)]
+    sp$seat <- normalise_seat(sp$seat)
+    m <- merge(sp[, list(seat, class, poll)], fe, by = c("seat", "class"))[is.finite(actual)]
+    if (!nrow(m)) return(NULL)
+    m[, list(d = mean(poll - actual), s2 = if (.N > 1) stats::var(poll - actual) / .N else NA_real_, n = .N, election = e), by = class]
+  }), fill = TRUE)
+  K <- SEAT_POLL_FLOOR_K; pr <- SEAT_POLL_ELECTION_ERR_PRIOR
+  if (!nrow(d)) return(c(pooled = pr))
+  d <- d[is.finite(s2)]
+  if (!nrow(d)) return(c(pooled = pr))
+  d$t2 <- pmax(0, d$d^2 - d$s2)
+  E <- length(unique(d$election))
+  pooled <- (E * mean(d$t2) + K * pr) / (E + K)
+  cls <- sort(unique(d$class))
+  v <- vapply(cls, function(cl) { x <- d$t2[d$class == cl]; (length(x) * mean(x) + K * pooled) / (length(x) + K) }, numeric(1))
+  out <- c(v, pooled = pooled); attr(out, "n_elections") <- E
+  out
+}
 
 # AUSPOL_SEAT_POLL_FIRM_SHARED: a firm's polls in a cell are ONE measurement. The floor (method and house error) is
 # shared by every release from that firm, so it counts once, divided by the recency of the firm's newest poll; only
@@ -862,7 +900,15 @@ seat_poll_blend_apply <- function(shares, target_election) {
       for (r in which(tb$class == "IND" & mult != 1 & normalise_seat(tb$seat) %in% c("mcmahon", "curtin", "warringah", "mayo", "goldstein")))
         cat(sprintf("SPSL   %s %s: salience %.3f, multiplier %.2f, model sd %.1f\n", target_election, tb$seat[r], ji[r], mult[r], sqrt(v[r])))
     }
-    wvec <- v / (v + 1 / tb$wsum)
+    t2 <- 0
+    if (.seat_poll_election_err_on()) {
+      te <- seat_poll_election_err(target_election)
+      t2 <- unname(te[tb$class]); t2[!is.finite(t2)] <- te[["pooled"]]
+      cat(sprintf("SPEE %s: election-wide poll error added to every cell (%d earlier elections): %s\n", target_election,
+                  if (is.null(attr(te, "n_elections"))) 0L else attr(te, "n_elections"),
+                  paste(sprintf("%s sd %.1f", names(te), sqrt(te)), collapse = ", ")))
+    }
+    wvec <- v / (v + 1 / tb$wsum + t2)
     cat(sprintf("SPPB %s: precision blend, pull median %.2f (range %.2f-%.2f) over %d cells; model sd by class %s\n",
                 target_election, stats::median(wvec), min(wvec), max(wvec), nrow(tb),
                 paste(sprintf("%s %.1f", names(vm), sqrt(vm)), collapse = ", ")))
