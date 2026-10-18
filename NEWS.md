@@ -1,3 +1,10 @@
+# auspol 0.4.103
+
+- **The surge feature no longer learns from future elections** (`AUSPOL_SURGE_H_TF`): each election's search-interest surge chance comes from earlier elections only, and fed2025 gets real values instead of a filler 0. Overall neutral (35 elections +0.0005, SE 0.0009); kept on Pete's call.
+- **The live xgb layer reads the prior-election votes it was trained on** (`AUSPOL_LIVE_SEATPREV_RAW`, audit F11). No live win probability moves by more than 0.05.
+- **Seat-poll corrections file**: Wikipedia's Melbourne RedBridge 2024 row had its three figures in the wrong columns; the published figures replace it, and a self-contradiction check found no other real error in 1,017 polls.
+- Built and off: heavy-tailed seat-poll error (refused), the demographic correction delivered in full (not yet screened).
+
 # auspol 0.4.102
 
 - **Seat polls weighed by how good they are** (arm H, eleven `AUSPOL_SEAT_POLL_*` switches): each poll by its own quality, recency and sample (opt-in polls start near zero), a firm's releases share one floor, every election's polls carry a shared miss, a poll only counts for parties or candidates it names, independents are measured by direct seat polls, and a candidate's rise in search interest gives them more room. 20k deciding run, 35 elections: polled seats -0.0136 (SE 0.0021), all seats 0.3190 -> 0.3176 (SE 0.0008), AEF-7 0.2676 -> 0.2622. McMahon 2025, where one opt-in poll had the independent at 41: Labor 0.27 -> 0.92 to win.
