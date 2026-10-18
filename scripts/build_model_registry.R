@@ -610,6 +610,9 @@ CLASSIFY <- list(
   AUSPOL_LIVE_DEFECT_FIT = paste(
     "SHIPPED 2026-10-18 as a train/serve fix, LIVE-ONLY by design: read only in fit_seats_full.R, which now fits the",
     "major-defector discount as every harness does (fit_defector_discount) instead of the frozen 0.282."),
+  AUSPOL_LIVE_SEATPREV_RAW = paste(
+    "SHIPPED 2026-10-19 as a train/serve fix, LIVE-ONLY by design: read only in fit_seats_full.R, which serves the xgb layer",
+    "seat_prev_pcv from the raw prior-election matrix, as fit_xgb_primary_v6.R trains it."),
   AUSPOL_LIVE_LEVEL_SPLIT = paste(
     "SHIPPED 2026-10-18 as a train/serve fix, LIVE-ONLY by design: read only in fit_seats_full.R, which serves the xgb layer a",
     "level_pred split by bucket_split_ratio(). The harnesses read level_pred from output/level-pred.csv, built by the same function."),
