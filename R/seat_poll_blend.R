@@ -999,13 +999,19 @@ SEAT_POLL_IND_MAP_KNOWN_FRAC <- 0.5
     fs <- fe[fe$seat == normalise_seat(s$seat_name[r_oth])]
     if (!nrow(fs)) next
     if (split_all) {
-      # every class standing here (our prediction above 0) that this poll does NOT name gets a share of its OTH, in
-      # proportion to what we expect of it; a class the poll names keeps its own figure and takes none of OTH
-      nm <- unique(s$class[s$poll_id == id & is.finite(s$fp) & s$class != "OTH"])
-      lump_k <- setdiff(unique(fs$party[is.finite(fs$xgb_pred_seat) & fs$xgb_pred_seat > 0]), c(nm, "OTH"))
-      lump_k <- c(lump_k, "OTH")
+      # every class standing here (our prediction above 0) gets a share of the poll's OTH in proportion to what we
+      # expect of it BEYOND what the poll already reports for that class (the shipped rule's residual, extended from
+      # OTH_RIGHT/ONP/OTH to every class). A named class is NOT excluded: Kennedy 2022's poll names the UAP (our
+      # OTH_RIGHT) at 6 while Katter (also OTH_RIGHT, expected 44.7) sits in its OTH 43; excluding named classes gave
+      # Katter none of it (P(win) 0.994 -> 0.067 in the first screen). But a class that runs ONE candidate (ALP, LNP,
+      # GRN, ONP) and is named is fully reported, so the poll's OTH holds none of it: only the classes that pool several
+      # candidates (IND, OTH_RIGHT, OTH) keep a residual claim once named.
+      nm1 <- intersect(unique(s$class[s$poll_id == id & is.finite(s$fp)]), c("ALP", "LNP", "GRN", "ONP"))
+      lump_k <- c(setdiff(unique(fs$party[is.finite(fs$xgb_pred_seat) & fs$xgb_pred_seat > 0]), c(nm1, "OTH")), "OTH")
       pred <- vapply(lump_k, function(k) sum(fs$xgb_pred_seat[fs$party == k], na.rm = TRUE), numeric(1))
-      resid <- pmax(pred, 0)
+      named <- vapply(lump_k, function(k) if (k == "OTH") 0 else
+        sum(s$fp[s$poll_id == id & s$class == k & is.finite(s$fp)]), numeric(1))
+      resid <- pmax(pred - named, 0)
       if (sum(resid) <= 0) next
       part <- oth_fig * resid / sum(resid)
       cat(sprintf("SPIM %s %s | %s | OTH %.1f split over every unnamed class: %s\n", el, s$seat_name[r_oth], id, oth_fig,

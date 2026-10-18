@@ -254,3 +254,34 @@ Impact is on the published Vic forecast first, then on backtest scores. "Verifie
 3. F4: decide which spread is the intended one, then give all seven harnesses the published construction (`statewide_draws_as_at`) and rescore AEF-7.
 4. F5: gate `blend_salience_shares` and nomination zeroing by `XGB_PRIMARY` like the other post steps, or add them to `post_xgb_switches()`; then check stage-1 `base_pred` no longer contains them.
 5. F7: replace the whole-row rescale in `demographic_residual_apply` with the `.shift_cell` approach.
+
+## Verification (2026-10-18, after the audit; Sonnet read-only agents per batch, Opus spot-checks)
+
+Three Haiku-high verifiers died of autocompact thrashing on the large R files; reruns on Sonnet (40-line read cap).
+Opus spot-checked F1-F4, F7, F10, F17, F20 in code. Line numbers above have drifted 10-20 lines in
+`R/seat_poll_blend.R` and `scripts/fit_seats_full.R` since the audit.
+
+| ID | Verdict | Size where readable | Status |
+|---|---|---|---|
+| F1 | REAL | live level_pred IND 0 / OTH_RIGHT 0 / OTH 10.35 vs split 3.36 / 4.08 / 2.90 | FIXED 04b4180 (AUSPOL_LIVE_LEVEL_SPLIT) |
+| F2 | REAL | unmeasured | OPEN, live |
+| F3 | REAL | live 0.282 hardcoded vs fitted in every harness | OPEN, live |
+| F4 | REAL | 16 of 23 pairs scored with flat PARTY_SD 1.5 | OPEN, scoring |
+| F5 | REAL | inert for vic2026 until a salience corpus exists | OPEN, harness |
+| F6 | OVERSTATED | IND override real but no Vic IND cell; Vic: Hawthorn LNP, one Liberal-paid Aug 2025 poll, w 0.461 | IN PROGRESS (seat-poll prereg) |
+| F7 | REAL | demo adj ALP mean 0.47 (max 1.42), GRN 0.39 (max 2.38); ~60% delivered on an ALP 40 cell | OPEN |
+| F8 | REAL | structural; unmeasured | OPEN |
+| F9 | REAL | structural; unmeasured | OPEN |
+| F10 | REAL | live MP slopes IND 0.939 / OTH_RIGHT 0.960 vs harness vic2022 0.946 / 1.000 | OPEN, small |
+| F11 | REAL | unmeasured | OPEN |
+| F12 | REAL | training level_pred has no level_recent blend; live does (20-day decay) | OPEN |
+| F13 | REAL, narrower | HTV override inert for Vic today (no cards) | OPEN |
+| F14 | REAL | structural note (only draw spread reaches seats) | NOTE |
+| F15 | REAL | design note | NOTE |
+| F16 | REAL | one Vic cell | with F6 |
+| F17 | REAL | CI reads tables frozen at last publish (0-2 days old now) | NOTE |
+| F18 | REAL, narrower | backtest harness only | OPEN |
+| F19 | REAL | federal harness only; double-count unmeasured | OPEN |
+| F20 | REAL | registry matches names in comments (`build_model_registry.R:46`) | OPEN, tooling |
+
+Also: `published_flags.R:731` comment says the level decay is 10-day; 20 days ships and was decided (DECISIONS 2026-10-12).

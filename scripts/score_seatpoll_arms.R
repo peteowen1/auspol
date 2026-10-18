@@ -10,8 +10,12 @@ base_dir <- a[1]; arm_dir <- a[2]; n_sims <- as.numeric(a[3]); lab <- if (length
 eps <- if (n_sims >= 20000) 1e-6 else 0.5 / n_sims
 els <- intersect(list.dirs(base_dir, full.names = FALSE, recursive = FALSE), list.dirs(arm_dir, full.names = FALSE, recursive = FALSE))
 els <- els[file.exists(file.path(base_dir, els, "allprobs.csv")) & file.exists(file.path(arm_dir, els, "allprobs.csv"))]
-sp <- fread("external/reference/polls/seat-polls/seat_polls.csv")[row_type == "poll"]
-polled <- unique(sp[, .(election, seat)])[, polled := TRUE]
+# a seat counts as polled only where a poll carries a PRIMARY figure (fed2016's 268 polls are all two-party only,
+# so the primary blend cannot use them); keyed on seat_name, since `seat` carries a state suffix ("Adelaide (SA)")
+sp <- fread("external/reference/polls/seat-polls/seat_polls.csv")[row_type == "poll" & is.finite(suppressWarnings(as.numeric(fp)))]
+hk <- "external/reference/polls/seat-polls/hand_keyed_primaries.csv"
+if (file.exists(hk)) sp <- rbind(sp[, .(election, seat_name)], fread(hk)[, .(election, seat_name = if ("seat_name" %in% names(fread(hk, nrows = 1))) seat_name else seat)])
+polled <- unique(sp[, .(election, seat = seat_name)])[, polled := TRUE]
 norm <- function(x) tolower(gsub("[^a-z]", "", tolower(x)))
 polled[, sk := norm(seat)]
 cat(sprintf("SPA0 %s: %d elections; floor eps %.1e; %d polled seat-elections on file\n", lab, length(els), eps, nrow(polled)))

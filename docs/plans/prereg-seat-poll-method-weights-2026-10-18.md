@@ -103,3 +103,14 @@ with the existing precision blend. Three causes, all general:
 refusal clauses above apply to B; the leave-one-out arms are REPORTED, so any piece that adds nothing can be dropped
 before the deciding run (a piece whose removal does not worsen B by more than 1 SE is dropped: fewer moving parts).
 McMahon's end-to-end independent share and win probability are reported for every arm.
+
+### Amendment 2 bug fix (2026-10-18 14:50; no criterion, grid or decision rule changed)
+
+The first arm-B screen showed SPLIT_ALL excluding every class a poll names. Kennedy 2022's poll names the UAP (our
+OTH_RIGHT) at 6 while Katter (also OTH_RIGHT) sits in its OTH 43, so Katter got none of it: P(actual winner)
+0.994 -> 0.067. Fixed before any arm was read for a decision. A named single-candidate class (ALP, LNP, GRN, ONP)
+takes none of OTH; a named pooled class (IND, OTH_RIGHT, OTH) keeps a claim on its expected share beyond what the poll
+reports (the shipped rule's residual). Kennedy OTH_RIGHT now 45.8 (actual 46.1). Also: nsw2015 and nsw2019 have no
+seat polls, and fed2016's 268 are two-party only, so the primary metric's polled seats are fed2019 9, fed2022 151,
+fed2025 150, nsw2023 1, fed2016 1 (Mayo, hand-keyed); the scorer now counts only polls with a primary figure.
+All arms rerun on the fixed code.
