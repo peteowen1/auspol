@@ -63,7 +63,7 @@ seat_poll_shares <- function(election, days = 90, by_type = FALSE, by_poll = FAL
 .seat_poll_memo_key <- function(election, days, by_type, by_poll, .raw, extra = character(0)) {
   env <- Sys.getenv(); env <- env[startsWith(names(env), "AUSPOL_")]
   sp <- file.path(pkg_root(), "external", "reference", "polls", "seat-polls")
-  files <- c(file.path(sp, c("seat_polls.csv", "hand_keyed_primaries.csv", "poll_methods.csv")),
+  files <- c(file.path(sp, c("seat_polls.csv", "hand_keyed_primaries.csv", "poll_methods.csv", "mrp_candidates.csv")),
              out_path(c("candidacies.csv", "endorsement-features.csv", "xgb-primary-asat-predictions.csv", "forecasts.csv")),
              extra)
   fi <- file.info(files, extra_cols = FALSE)
@@ -261,22 +261,36 @@ seat_poll_shares <- function(election, days = 90, by_type = FALSE, by_poll = FAL
   # second independent sits in its others 12), so it measures that candidate even when the class has others standing.
   # The part-named rule is for an MRP's party columns (Kennedy 2022: UAP named, Katter in others).
   direct <- if ("is_mrp" %in% names(s)) !(s$is_mrp %in% TRUE) else rep(FALSE, nrow(s))
-  full <- single | direct | n_named >= n_cand | !(oth_p > 0)
+  idm <- Sys.getenv("AUSPOL_SEAT_POLL_IND_DIRECT", "0")
+  if (!idm %in% c("0", "ind", "pooled", "listed"))
+    stop("AUSPOL_SEAT_POLL_IND_DIRECT must be \"0\", \"ind\", \"pooled\" or \"listed\", not ", idm)
+  listed <- rep(FALSE, nrow(s))
+  if (idm == "listed") {
+    # "listed": an MRP's IND column counts as the seat's independent only where mrp_candidates.csv says that release
+    # modelled them (YouGov 2025 Warringah yes, Mayo no; agent research 2026-10-18, inferred from column sizes, not
+    # stated by the pollster). Such a row is a named candidate, like a direct poll's.
+    mf <- file.path(pkg_root(), "external", "reference", "polls", "seat-polls", "mrp_candidates.csv")
+    if (!file.exists(mf)) stop("AUSPOL_SEAT_POLL_IND_DIRECT=listed needs ", mf)
+    mc <- data.table::fread(mf, showProgress = FALSE)
+    yes <- paste(mc$election, mc$pollster, as.character(mc$release_date), normalise_seat(mc$seat))[mc$modelled == "yes"]
+    listed <- s$class == "IND" & paste(el, s$pollster, as.character(as.Date(s$fieldwork_end)), normalise_seat(s$seat_name)) %in% yes
+  }
+  full <- single | direct | listed | n_named >= n_cand | !(oth_p > 0)
   keep <- !bucket & full
   # AUSPOL_SEAT_POLL_IND_DIRECT (amendment 6): an MRP's IND / OTH_RIGHT / OTH columns are party columns, not
   # candidates, so a label cannot say whether its IND is the independent standing (YouGov Mayo 2025: IND 1.9,
   # Sharkie inside OTH). "ind": MRPs never vote on an independent's cell; "pooled": nor on OTH_RIGHT or OTH.
-  idm <- Sys.getenv("AUSPOL_SEAT_POLL_IND_DIRECT", "0")
-  if (!idm %in% c("0", "ind", "pooled")) stop("AUSPOL_SEAT_POLL_IND_DIRECT must be \"0\", \"ind\" or \"pooled\", not ", idm)
   n_mrp_drop <- 0L
   if (idm != "0") {
     if (!"is_mrp" %in% names(s)) stop(".seat_poll_named_only(): AUSPOL_SEAT_POLL_IND_DIRECT needs the is_mrp column")
     dcls <- if (idm == "ind") "IND" else c("IND", "OTH_RIGHT", "OTH")
     mrp_drop <- keep & (s$is_mrp %in% TRUE) & s$class %in% dcls
+    mrp_drop <- mrp_drop & !listed
     n_mrp_drop <- sum(mrp_drop); keep <- keep & !mrp_drop
   }
   if (idm != "0") cat(sprintf("SPN2 %s: MRPs do not vote on %s (%d rows), direct polls only\n", el,
-                              if (idm == "ind") "independents" else "IND / OTH_RIGHT / OTH", n_mrp_drop))
+                              switch(idm, ind = "independents", listed = "independents they are not listed as modelling",
+                                     "IND / OTH_RIGHT / OTH"), n_mrp_drop))
   cat(sprintf("SPN1 %s named-only: %d of %d poll rows kept; dropped %d built from \"others\" and %d of a pooled class the poll named only in part\n",
               el, sum(keep), length(keep), sum(bucket), sum(!bucket & !full)))
   s[keep]

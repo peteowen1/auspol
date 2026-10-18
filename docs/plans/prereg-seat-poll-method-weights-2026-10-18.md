@@ -185,3 +185,13 @@ independent it names.
 
 **Arms (replacing amendment 5's list; C was read, D was not):** E = C + IND_DIRECT; F = E + SALIENCE_VAR. Same metrics,
 clauses, scorer and named seats (adding Mayo 2025 and Warringah 2025).
+
+### Amendment 6a (2026-10-18 17:55, before any arm ran; Pete: "test how it works with just seat polls with candidate compared to including mrp")
+
+Added arms, same criteria: E-pooled (`IND_DIRECT=pooled`, MRPs vote on no pooled class) and E-listed (`IND_DIRECT=listed`:
+an MRP votes on an independent only where `external/reference/polls/seat-polls/mrp_candidates.csv` marks that release as
+modelling the seat's independent; agent research, `reviews/mrp-candidate-methods-2026-10-18.md`: no release names
+candidates; "yes" is inferred from the poll's own columns, YouGov 2025 seats with IND >= 10 and small OTH, 43 rows).
+A direct poll's named independent votes even when a second independent stands (Freshwater Warringah 2025). Arm C (MRPs
+vote on IND by label) is the "including MRP" comparison already read. Dry run fed2025: Warringah 33 (E) / 40.5 (listed),
+actual 39.7; Goldstein 28.9 / 37.8, actual 30.7; Curtin 31.2 / 31.3, actual 32.2; McMahon only Compass 41 (opt-in).
