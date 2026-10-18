@@ -257,8 +257,26 @@ seat_poll_shares <- function(election, days = 90, by_type = FALSE, by_poll = FAL
   n_cand[is.na(n_cand)] <- 0L
   oth_p <- oth$oth[match(s$poll_id, oth$poll_id)]
   single <- s$class %in% c("ALP", "LNP", "GRN", "ONP")
-  full <- single | n_named >= n_cand | !(oth_p > 0)
+  # A DIRECT poll's named entry is the candidate it asked about (Freshwater Warringah 2025: IND 33 is Steggall, a
+  # second independent sits in its others 12), so it measures that candidate even when the class has others standing.
+  # The part-named rule is for an MRP's party columns (Kennedy 2022: UAP named, Katter in others).
+  direct <- if ("is_mrp" %in% names(s)) !(s$is_mrp %in% TRUE) else rep(FALSE, nrow(s))
+  full <- single | direct | n_named >= n_cand | !(oth_p > 0)
   keep <- !bucket & full
+  # AUSPOL_SEAT_POLL_IND_DIRECT (amendment 6): an MRP's IND / OTH_RIGHT / OTH columns are party columns, not
+  # candidates, so a label cannot say whether its IND is the independent standing (YouGov Mayo 2025: IND 1.9,
+  # Sharkie inside OTH). "ind": MRPs never vote on an independent's cell; "pooled": nor on OTH_RIGHT or OTH.
+  idm <- Sys.getenv("AUSPOL_SEAT_POLL_IND_DIRECT", "0")
+  if (!idm %in% c("0", "ind", "pooled")) stop("AUSPOL_SEAT_POLL_IND_DIRECT must be \"0\", \"ind\" or \"pooled\", not ", idm)
+  n_mrp_drop <- 0L
+  if (idm != "0") {
+    if (!"is_mrp" %in% names(s)) stop(".seat_poll_named_only(): AUSPOL_SEAT_POLL_IND_DIRECT needs the is_mrp column")
+    dcls <- if (idm == "ind") "IND" else c("IND", "OTH_RIGHT", "OTH")
+    mrp_drop <- keep & (s$is_mrp %in% TRUE) & s$class %in% dcls
+    n_mrp_drop <- sum(mrp_drop); keep <- keep & !mrp_drop
+  }
+  if (idm != "0") cat(sprintf("SPN2 %s: MRPs do not vote on %s (%d rows), direct polls only\n", el,
+                              if (idm == "ind") "independents" else "IND / OTH_RIGHT / OTH", n_mrp_drop))
   cat(sprintf("SPN1 %s named-only: %d of %d poll rows kept; dropped %d built from \"others\" and %d of a pooled class the poll named only in part\n",
               el, sum(keep), length(keep), sum(bucket), sum(!bucket & !full)))
   s[keep]

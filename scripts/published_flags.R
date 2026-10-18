@@ -684,6 +684,7 @@ PUBLISHED_FLAGS <- c(
   AUSPOL_SEAT_POLL_SIZEVAR   = "0",        # ARM (prereg-seat-poll-method-weights amendment 2): under the precision blend, the model's error variance for a cell scales with our predicted share ((pred+1)/(ref+1))^g, g fitted time-forward and shrunk by its SE (SPSV line).
   AUSPOL_SEAT_POLL_ALLPOLLS  = "0",        # ARM (same amendment): no direct-only override of the independent cell; every poll (MRP and direct) votes with its own weight (SPAP line).
   AUSPOL_SEAT_POLL_SPLIT_ALL = "0",        # ARM (same amendment): a poll's "others" is split over EVERY class standing that the poll does not name (independent and Greens included), in proportion to our as-at expectation.
+  AUSPOL_SEAT_POLL_IND_DIRECT = "0",       # ARM (amendment 6): "ind" = an MRP never votes on an independent's cell, direct polls do by precision; "pooled" = nor on OTH_RIGHT / OTH (SPN2).
   AUSPOL_SEAT_POLL_NAMED_ONLY = "0",       # ARM (prereg-seat-poll-method-weights amendment 3): a poll votes only on classes it names fully; cells built from its "others" never vote (SPN1).
   AUSPOL_SEAT_POLL_MODELVAR_ALL = "0",     # ARM (amendment 5): the precision blend's model variance from every earlier seat-class cell, not only polled ones.
   AUSPOL_SEAT_POLL_SALIENCE_VAR = "0",     # ARM (amendment 4): an independent's model variance x exp(b * log campaign rise in search interest), b fitted time-forward (SPSL).

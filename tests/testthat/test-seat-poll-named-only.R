@@ -21,3 +21,14 @@ test_that("a part-named pooled class is measured when the poll's others is zero"
   out <- NULL; utils::capture.output(out <- .seat_poll_named_only(s, "fed2022", cand))
   expect_setequal(out$class, c("IND", "LNP"))
 })
+test_that("a direct poll's named independent votes though another independent stands; an MRP's does not under IND_DIRECT", {
+  withr::local_envvar(AUSPOL_SEAT_POLL_IND_DIRECT = "ind")
+  cand <- data.table::data.table(election = "fed2025", seat = "Warringah", party = c("IND", "IND", "LNP"))
+  s <- data.table::data.table(poll_id = c("d", "d", "d", "m", "m", "m"), seat_name = "Warringah",
+                              class = c("IND", "LNP", "OTH", "IND", "LNP", "OTH"), fp = c(33, 41, 12, 40, 30, 1),
+                              .bucket = c(FALSE, FALSE, TRUE, FALSE, FALSE, TRUE), is_mrp = c(FALSE, FALSE, FALSE, TRUE, TRUE, TRUE))
+  out <- NULL; utils::capture.output(out <- .seat_poll_named_only(s, "fed2025", cand))
+  expect_equal(nrow(out[class == "IND"]), 1L)
+  expect_equal(out[class == "IND", poll_id], "d")
+  expect_setequal(out[poll_id == "m", class], "LNP")
+})
