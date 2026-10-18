@@ -60,3 +60,12 @@ the nine-election list). Deciding run (20k, all 35 elections) only if the screen
 
 - A surge with no poll at all (Warringah 2019's only poll had Steggall at 22.3, actual 44.7): no blend can recover it.
 - Whether "badly wrong" should depend on salience: deliberately left out of this arm (one change at a time).
+
+## Amendment 1 (2026-10-18, before anything is built or run)
+
+The mixture is fitted on STANDARDISED errors, `z = (actual - pred) / sqrt(v_cell)` (`v_cell` the class variance with the
+size scaling, as arm H), per class: zero-mean two-component normal by EM, ordinary scale `s1` and "badly wrong" scale
+`k * s1` with weight `pi`. In the blend the components are `v * s1` and `v * s1 * k`. Reason: a fixed absolute `vbig`
+(prior 100) would give a 2% candidate the same "badly wrong" spread as a 40% one; `v` already scales with size.
+`pi` shrunk toward the pool over classes by `SEAT_POLL_FLOOR_K` units and the pool toward 0.02; `k` floored at 1.5.
+Everything else as written.
