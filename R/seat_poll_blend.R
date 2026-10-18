@@ -99,6 +99,9 @@ seat_poll_shares <- function(election, days = 90, by_type = FALSE, by_poll = FAL
              ifelse(p == "IND" | grepl("\\(IND\\)$", p), "IND",
              ifelse(p %in% c("UAP", "KAP"), "OTH_RIGHT", "OTH"))))))
   s$poll_id <- paste(s$seat_name, s$pollster, s$date_raw)
+  # a poll's "others" lump, as against a party or candidate it NAMES -- tagged before any remap or split moves the
+  # lump into a class (AUSPOL_SEAT_POLL_NAMED_ONLY, .seat_poll_named_only())
+  s$.bucket <- p == "OTH"
   if (identical(Sys.getenv("AUSPOL_SEAT_POLL_IND_MAP", "1"), "1")) s <- .seat_poll_ind_map(s, el_arg)
   # MRP by STRUCTURE: YouGov's 2022 MRP is labelled plain "YouGov".
   s$release <- paste(s$pollster, s$date_raw)
@@ -122,6 +125,10 @@ seat_poll_shares <- function(election, days = 90, by_type = FALSE, by_poll = FAL
     n_all <- data.table::uniqueN(s$poll_id)
     s <- s[which(keep_src)]
     cat(sprintf("SPB0 %s: public pollsters only, %d of %d polls kept\n", el_arg, data.table::uniqueN(s$poll_id), n_all))
+    if (!nrow(s)) return(empty)
+  }
+  if (.seat_poll_namedonly_on()) {
+    s <- .seat_poll_named_only(s, el_arg)
     if (!nrow(s)) return(empty)
   }
   if (by_poll) {
@@ -213,6 +220,50 @@ seat_poll_shares <- function(election, days = 90, by_type = FALSE, by_poll = FAL
 .seat_poll_sizevar_on  <- function() .seat_poll_onoff("AUSPOL_SEAT_POLL_SIZEVAR")   # model variance depends on predicted size
 .seat_poll_allpolls_on <- function() .seat_poll_onoff("AUSPOL_SEAT_POLL_ALLPOLLS")  # no direct-only override of the IND cell
 .seat_poll_splitall_on <- function() .seat_poll_onoff("AUSPOL_SEAT_POLL_SPLIT_ALL") # "others" over every unnamed class standing
+.seat_poll_namedonly_on   <- function() .seat_poll_onoff("AUSPOL_SEAT_POLL_NAMED_ONLY")    # amendment 3
+.seat_poll_modelvar_all_on <- function() .seat_poll_onoff("AUSPOL_SEAT_POLL_MODELVAR_ALL") # amendment 5
+.seat_poll_salience_var_on <- function() .seat_poll_onoff("AUSPOL_SEAT_POLL_SALIENCE_VAR") # amendment 4
+
+#' Keep only the poll figures that measure a class (AUSPOL_SEAT_POLL_NAMED_ONLY)
+#'
+#' A poll measures a seat-class cell only if it names EVERY candidate of that
+#' class standing in the seat, or its "others" figure is zero. ALP, LNP, GRN
+#' and ONP run one candidate each, so naming them is enough. A pooled class
+#' (IND, OTH_RIGHT, OTH) with candidates the poll did not name hides part of
+#' its vote in "others", so the poll's figure is not its measurement (Kennedy
+#' 2022: the UAP named at 6, Katter in "others"). Every row built from the
+#' "others" lump (the endorsed-independent remap, the known-class split,
+#' SPLIT_ALL) is dropped: a number carved out of "others" is not the
+#' pollster's measurement of anyone (Curtin 2022: YouGov never modelled
+#' Chaney; its others 14 voted as her figure). A cell no poll measures keeps
+#' our own prediction. Candidates per class from `output/candidacies.csv`
+#' (the ballot, known before polling day). Prints SPN1.
+#' docs/plans/prereg-seat-poll-method-weights-2026-10-18.md, amendment 3.
+#' @keywords internal
+.seat_poll_named_only <- function(s, el, cand = NULL) {
+  if (!".bucket" %in% names(s)) stop(".seat_poll_named_only(): rows carry no .bucket tag")
+  cf <- out_path("candidacies.csv")
+  cd <- if (!is.null(cand)) data.table::as.data.table(cand) else if (file.exists(cf))
+    data.table::fread(cf, select = c("election", "seat", "party"), showProgress = FALSE) else NULL
+  el_c <- el   # never the bare argument inside `[` (data.table NSE, CLAUDE.md)
+  nc <- if (is.null(cd)) data.table::data.table(sk = character(0), class = character(0), n_cand = integer(0)) else
+    cd[cd$election == el_c, list(n_cand = .N), by = list(sk = normalise_seat(seat), class = party)]
+  bucket <- s$.bucket %in% TRUE
+  nm <- s[!bucket, list(n_named = .N), by = list(poll_id, class)]
+  oth <- s[, list(oth = sum(fp[.bucket %in% TRUE])), by = poll_id]
+  n_named <- nm$n_named[match(paste(s$poll_id, s$class), paste(nm$poll_id, nm$class))]
+  n_named[is.na(n_named)] <- 0L
+  n_cand <- nc$n_cand[match(paste(normalise_seat(s$seat_name), s$class), paste(nc$sk, nc$class))]
+  n_cand[is.na(n_cand)] <- 0L
+  oth_p <- oth$oth[match(s$poll_id, oth$poll_id)]
+  single <- s$class %in% c("ALP", "LNP", "GRN", "ONP")
+  full <- single | n_named >= n_cand | !(oth_p > 0)
+  keep <- !bucket & full
+  cat(sprintf("SPN1 %s named-only: %d of %d poll rows kept; dropped %d built from \"others\" and %d of a pooled class the poll named only in part\n",
+              el, sum(keep), length(keep), sum(bucket), sum(!bucket & !full)))
+  s[keep]
+}
+
 SEAT_POLL_OPTIN_FLOOR_PRIOR <- 225   # points^2 (sd 15): CHOSEN prior for opt-in seat polls (amendment 1)
 .seat_poll_method_table <- function() {
   f <- file.path(pkg_root(), "external", "reference", "polls", "seat-polls", "poll_methods.csv")
@@ -247,7 +298,18 @@ seat_poll_model_var <- function(target_election) {
   f <- current_seat_predictions()
   els <- if (is.null(f)) character(0) else unique(f$election)
   els <- els[elections_before(els, target_election)]
+  all_cells <- .seat_poll_modelvar_all_on()
   rows <- data.table::rbindlist(lapply(els, function(e) {
+    if (all_cells) {
+      # AUSPOL_SEAT_POLL_MODELVAR_ALL (amendment 5): the model's own error needs no poll to be measured, so every
+      # earlier seat-class cell with a prediction and a result counts, not only the polled ones (almost none before
+      # fed2022, which left independents at the prior sd 5 against a true model error of ~15)
+      fe <- f[f$election == e, list(seat = normalise_seat(seat), class = party, pred = xgb_pred_seat, actual = actual_share)]
+      fe <- fe[is.finite(pred) & is.finite(actual) & pred > 0]
+      if (!nrow(fe)) return(NULL)
+      fe$unit <- paste(e, fe$seat)
+      return(fe)
+    }
     sp <- NULL
     utils::capture.output(sp <- seat_poll_shares(e))
     if (is.null(sp) || !nrow(sp)) return(NULL)
@@ -288,7 +350,44 @@ seat_poll_model_var <- function(target_election) {
   wg <- if (is.finite(g) && is.finite(se) && g != 0) max(0, 1 - se^2 / g^2) else 0
   attr(out, "ref") <- c(ref, pooled = stats::median(rows$pred)); attr(out, "g") <- wg * g
   attr(out, "g_raw") <- g; attr(out, "g_se") <- se
+  # AUSPOL_SEAT_POLL_SALIENCE_VAR (amendment 4): how much an independent's model error grows with the campaign rise
+  # in search interest. x = log(jump + 0.01) centred on the earlier independent cells that have salience; b from
+  # their log squared error after the size term, shrunk toward 0 by its SE. Cells with no salience take no part.
+  attr(out, "sal_b") <- 0; attr(out, "sal_mean") <- 0; attr(out, "sal_se") <- NA_real_; attr(out, "sal_n") <- 0L
+  if (.seat_poll_salience_var_on()) {
+    ind <- which(rows$class == "IND")
+    sl <- data.table::rbindlist(lapply(unique(sub(" .*", "", rows$unit[ind])), function(e)
+      .seat_poll_ind_salience(e)[, election := e]), fill = TRUE)
+    if (nrow(sl)) {
+      j <- sl$jump[match(paste(sub(" .*", "", rows$unit[ind]), rows$seat[ind]), paste(sl$election, sl$sk))]
+      ok <- is.finite(j)
+      if (sum(ok) >= 3L) {
+        x <- log(pmax(j[ok], 0) + 0.01); mx <- mean(x); x <- x - mx
+        yr <- (ly - g * lx)[ind][ok]; yr <- yr - mean(yr)
+        b <- if (sum(x^2) > 0) sum(x * yr) / sum(x^2) else 0
+        bse <- sqrt(sum((yr - b * x)^2) / max(1, length(x) - 1) / sum(x^2))
+        wb <- if (is.finite(b) && is.finite(bse) && b != 0) max(0, 1 - bse^2 / b^2) else 0
+        attr(out, "sal_b") <- wb * b; attr(out, "sal_mean") <- mx; attr(out, "sal_se") <- bse; attr(out, "sal_n") <- sum(ok)
+        attr(out, "sal_b_raw") <- b
+      }
+    }
+  }
   out
+}
+
+#' Campaign rise in search interest for a seat's independents (max over them)
+#'
+#' From `output/salience-v6.csv` (`jump`, fetch_salience_v6.R). One row per
+#' seat with an independent that has salience; for AUSPOL_SEAT_POLL_SALIENCE_VAR.
+#' @keywords internal
+.seat_poll_ind_salience <- function(election) {
+  sf <- out_path("salience-v6.csv")
+  if (!file.exists(sf)) return(data.table::data.table(sk = character(0), jump = numeric(0)))
+  sv <- data.table::fread(sf, select = c("election", "seat", "party", "jump"), showProgress = FALSE)
+  el_s <- election
+  sv <- sv[sv$election == el_s & sv$party == "IND" & is.finite(sv$jump)]
+  if (!nrow(sv)) return(data.table::data.table(sk = character(0), jump = numeric(0)))
+  sv[, list(jump = max(jump)), by = list(sk = normalise_seat(seat))]
 }
 
 .seat_poll_mrp_name_on <- function() {
@@ -695,6 +794,19 @@ seat_poll_blend_apply <- function(shares, target_election) {
       v <- v * ((pmax(pr, 0) + 1) / (rf + 1))^g
       cat(sprintf("SPSV %s: model variance scales with predicted size, exponent %.2f (raw %.2f, se %.2f); cell sd %.1f-%.1f\n",
                   target_election, g, attr(vm, "g_raw"), attr(vm, "g_se"), sqrt(min(v)), sqrt(max(v))))
+    }
+    if (.seat_poll_salience_var_on()) {
+      sb <- attr(vm, "sal_b"); if (is.null(sb)) stop("AUSPOL_SEAT_POLL_SALIENCE_VAR=1 but the model variance carries no salience term")
+      si <- .seat_poll_ind_salience(target_election)
+      ji <- si$jump[match(normalise_seat(tb$seat), si$sk)]
+      mult <- ifelse(tb$class == "IND" & is.finite(ji), exp(sb * (log(pmax(ji, 0) + 0.01) - attr(vm, "sal_mean"))), 1)
+      v <- v * mult
+      cat(sprintf("SPSL %s: independent model variance x exp(b * salience), b %.2f (raw %.2f, se %.2f, %d earlier cells); %d cells scaled, multiplier %.2f-%.2f\n",
+                  target_election, sb, if (is.null(attr(vm, "sal_b_raw"))) NA_real_ else attr(vm, "sal_b_raw"),
+                  attr(vm, "sal_se"), attr(vm, "sal_n"), sum(mult != 1),
+                  if (any(mult != 1)) min(mult[mult != 1]) else 1, if (any(mult != 1)) max(mult[mult != 1]) else 1))
+      for (r in which(tb$class == "IND" & mult != 1 & normalise_seat(tb$seat) %in% c("mcmahon", "curtin", "warringah", "mayo", "goldstein")))
+        cat(sprintf("SPSL   %s %s: salience %.3f, multiplier %.2f, model sd %.1f\n", target_election, tb$seat[r], ji[r], mult[r], sqrt(v[r])))
     }
     wvec <- v / (v + 1 / tb$wsum)
     cat(sprintf("SPPB %s: precision blend, pull median %.2f (range %.2f-%.2f) over %d cells; model sd by class %s\n",

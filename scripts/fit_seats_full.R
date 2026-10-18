@@ -929,7 +929,21 @@ if (!identical(Sys.getenv("AUSPOL_MP_SLOPE", "1"), "0")) {
                   .mpc$party != "GRN", ]
   if (nrow(.keep)) .MP_SLOPE <- stats::setNames(as.numeric(.keep$member), .keep$party)
 }
-if (!identical(Sys.getenv("AUSPOL_DEFECT_DISCOUNT", "1"), "0")) .defect <- 0.282
+# FITTED, as every harness does (backtest_candidate_vic.R:500-514, fit_defector_discount() on elections before the
+# target), not the 0.282 frozen here when the fit replaced it (R/candidate_returns.R). The audit's F3
+# (reviews/pipeline-overwrite-audit-2026-10-18.md); AUSPOL_LIVE_DEFECT_FIT=0 restores the constant for a diff.
+if (!identical(Sys.getenv("AUSPOL_DEFECT_DISCOUNT", "1"), "0")) {
+  .defect <- 0.282
+  if (identical(Sys.getenv("AUSPOL_LIVE_DEFECT_FIT", "1"), "1")) {
+    .fd <- tryCatch(fit_defector_discount(TGT), error = function(e) {
+      cat(sprintf("CAL! defector-discount fit FAILED, the frozen 0.282 is used: %s\n", conditionMessage(e))); NULL })
+    if (!is.null(.fd) && !is.null(.fd$discount) && is.finite(.fd$discount)) {
+      .defect <- .fd$discount
+      cat(sprintf("CAL  defector discount %.3f fitted from %d cases (elections before %s), as the harnesses fit it\n",
+                  .defect, .fd$n, TGT))
+    } else if (!is.null(.fd)) cat(sprintf("CAL! defector discount not fit (n=%s); the frozen 0.282 is used\n", .fd$n))
+  }
+}
 
 # MINOR-TO-MINOR DEFECTOR DISCOUNT, same AUSPOL_MINOR_DEFECT switch and same
 # fit_minor_defector_discount() call fit_xgb_primary_v6.R:271 uses to build
@@ -974,14 +988,16 @@ cat(sprintf("CAL  MP tier: %s | defector discount: %s | minor-defector discount:
 
 # THE BASE VALUE, not just the slope -- see personal_prior_vote()'s docs. Same
 # candidate-list gating as .returns above: NULL until vic2026 nominations close.
-# THIS ONE FEEDS mat22 (the base_pred blend) ONLY -- major_discount matches
-# the six harnesses' own base_pred convention. It deliberately carries NO
-# minor_discount: AUSPOL_MINOR_DEFECT_BASE_PRED (that arm, not this one) was
-# measured and REFUSED for base_pred 2026-09-16 (helped Mirani, made the
-# pooled aggregate worse), so base_pred stays byte-identical to before this
-# fix regardless of AUSPOL_MINOR_DEFECT.
+# THIS ONE FEEDS mat22 (the base_pred blend) ONLY -- the same call every harness makes for its base_pred
+# (backtest_candidate_vic.R:555): major_discount, plus the minor-to-minor discount under
+# AUSPOL_MINOR_DEFECT_BASE_PRED. That switch was refused 2026-09-16 and SHIPPED 2026-09-18 (published_flags.R),
+# but this script kept the refusal's comment and never applied it, so live base_pred lacked a discount every
+# backtest scored with. The audit's F2 (reviews/pipeline-overwrite-audit-2026-10-18.md).
+.bp_minor <- if (identical(Sys.getenv("AUSPOL_MINOR_DEFECT_BASE_PRED", "1"), "1")) .minor_disc else NULL
+.bp_minor_loser <- if (identical(Sys.getenv("AUSPOL_MINOR_DEFECT_BASE_PRED", "1"), "1")) .minor_disc_loser else NULL
 .own_prev <- if (.cond && !is.null(.returns))
-  .try("own_prev", personal_prior_vote(PREV, TGT, major_discount = .defect)) else NULL
+  .try("own_prev", personal_prior_vote(PREV, TGT, major_discount = .defect, minor_discount = .bp_minor,
+                                       minor_discount_loser = .bp_minor_loser)) else NULL
 # THIS ONE FEEDS xgb_primary_predict_live()'s own_prev_pcv FEATURE ONLY --
 # mirrors fit_xgb_primary_v6.R:271's TRAINING call exactly: minor_discount,
 # and deliberately NO major_discount (training's xgb feature never gets one

@@ -188,6 +188,15 @@ CLASSIFY <- list(
   AUSPOL_SEAT_POLL_SPLIT_ALL = paste(
     "ARM (0), UNIVERSAL via R/: read inside R/seat_poll_blend.R (the seat-poll blend every harness and fit_seats_full.R",
     "reach). plans/prereg-seat-poll-method-weights-2026-10-18.md amendment 2"),
+  AUSPOL_SEAT_POLL_NAMED_ONLY = paste(
+    "ARM (0), UNIVERSAL via R/: read inside R/seat_poll_blend.R (the seat-poll blend every harness and fit_seats_full.R",
+    "reach). plans/prereg-seat-poll-method-weights-2026-10-18.md"),
+  AUSPOL_SEAT_POLL_MODELVAR_ALL = paste(
+    "ARM (0), UNIVERSAL via R/: read inside R/seat_poll_blend.R (the seat-poll blend every harness and fit_seats_full.R",
+    "reach). plans/prereg-seat-poll-method-weights-2026-10-18.md"),
+  AUSPOL_SEAT_POLL_SALIENCE_VAR = paste(
+    "ARM (0), UNIVERSAL via R/: read inside R/seat_poll_blend.R (the seat-poll blend every harness and fit_seats_full.R",
+    "reach). plans/prereg-seat-poll-method-weights-2026-10-18.md"),
   AUSPOL_SEAT_POLL_GROUPS = paste(
     "ARM (0), UNIVERSAL via R/: read inside seat_poll_shares() and seat_poll_decay_params() (R/seat_poll_blend.R),",
     "which every harness and fit_seats_full.R reach through the seat-poll blend. plans/prereg-seat-poll-method-weights-2026-10-18.md"),
@@ -577,6 +586,9 @@ CLASSIFY <- list(
   AUSPOL_LEVEL_RECIPE = paste(
     "SHIPPED 2026-09-30 as v56 ('live'). Wired everywhere: ",
     "read in R/forecast_mode.R (statewide_draws_as_at()), which every harness and fit_seats_full.R reach: the five state harnesses and fit_seats_full.R through forecast_statewide_or_oracle() -> forecast_statewide_for() (R/forecast_statewide.R:81), the federal harness directly. \"No\" cells are the harness grep missing the R/ read, not drift (corrected 2026-10-09 after review)."),
+  AUSPOL_LIVE_DEFECT_FIT = paste(
+    "SHIPPED 2026-10-18 as a train/serve fix, LIVE-ONLY by design: read only in fit_seats_full.R, which now fits the",
+    "major-defector discount as every harness does (fit_defector_discount) instead of the frozen 0.282."),
   AUSPOL_LIVE_LEVEL_SPLIT = paste(
     "SHIPPED 2026-10-18 as a train/serve fix, LIVE-ONLY by design: read only in fit_seats_full.R, which serves the xgb layer a",
     "level_pred split by bucket_split_ratio(). The harnesses read level_pred from output/level-pred.csv, built by the same function."),

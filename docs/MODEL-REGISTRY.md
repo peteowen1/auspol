@@ -31,7 +31,7 @@ All seven share one `R/` package core (`simulate_seat_contests()`,
 in which switches each one WIRES and which data source each reads, not in
 separate model code.
 
-## Switch parity (213 switches from `published_flags.R`, 7 entry points)
+## Switch parity (217 switches from `published_flags.R`, 7 entry points)
 
 | switch | fit_seats (published) | fed | nsw | qld | sa | vic | wa |
 |---|---|---|---|---|---|---|---|
@@ -118,6 +118,7 @@ separate model code.
 | `AUSPOL_LEVEL_RECENT_HALFLIFE` | NO | NO | NO | NO | NO | NO | NO |
 | `AUSPOL_LEVEL_RECIPE` | NO | NO | NO | NO | NO | NO | NO |
 | `AUSPOL_LEVEL_SD` | yes | yes | yes | yes | yes | yes | yes |
+| `AUSPOL_LIVE_DEFECT_FIT` | yes | NO | NO | NO | NO | NO | NO |
 | `AUSPOL_LIVE_DRAW_BUCKET` | yes | NO | NO | NO | NO | NO | NO |
 | `AUSPOL_LIVE_LEVEL_ANCHOR` | yes | NO | NO | NO | NO | NO | NO |
 | `AUSPOL_LIVE_LEVEL_SPLIT` | yes | NO | NO | NO | NO | NO | NO |
@@ -179,10 +180,13 @@ separate model code.
 | `AUSPOL_SEAT_POLL_IND_MAP` | NO | NO | NO | NO | NO | NO | NO |
 | `AUSPOL_SEAT_POLL_IND_WEIGHT` | NO | NO | NO | NO | NO | NO | NO |
 | `AUSPOL_SEAT_POLL_MATCH` | NO | NO | NO | NO | NO | NO | NO |
+| `AUSPOL_SEAT_POLL_MODELVAR_ALL` | NO | NO | NO | NO | NO | NO | NO |
 | `AUSPOL_SEAT_POLL_MRP_NAME` | NO | NO | NO | NO | NO | NO | NO |
+| `AUSPOL_SEAT_POLL_NAMED_ONLY` | NO | NO | NO | NO | NO | NO | NO |
 | `AUSPOL_SEAT_POLL_PRECISION_BLEND` | NO | NO | NO | NO | NO | NO | NO |
 | `AUSPOL_SEAT_POLL_PRIOR` | NO | NO | NO | NO | NO | NO | NO |
 | `AUSPOL_SEAT_POLL_PRIOR_SD` | NO | NO | NO | NO | NO | NO | NO |
+| `AUSPOL_SEAT_POLL_SALIENCE_VAR` | NO | NO | NO | NO | NO | NO | NO |
 | `AUSPOL_SEAT_POLL_SIZEVAR` | NO | NO | NO | NO | NO | NO | NO |
 | `AUSPOL_SEAT_POLL_SOURCES` | NO | NO | NO | NO | NO | NO | NO |
 | `AUSPOL_SEAT_POLL_SPLIT_ALL` | NO | NO | NO | NO | NO | NO | NO |
@@ -311,6 +315,7 @@ separate model code.
 - **`AUSPOL_LEVEL_RECENT`** (**adopted, shared-function wiring**): SHIPPED 2026-10-11 on Pete's override (plans/prereg-level-recent-blend-2026-10-10.md). Read inside R/level_recent.R, called from forecast_statewide_or_oracle() (five harnesses), the federal harness (BF0r) and fit_seats_full.R (FSLR).
 - **`AUSPOL_LEVEL_RECENT_HALFLIFE`** (**adopted, shared-function wiring**): SHIPPED "20" 2026-10-11 with AUSPOL_LEVEL_RECENT=decay (Pete's override). Read inside R/level_recent.R, called from the five state harnesses, the federal harness (BF0r) and fit_seats_full.R (FSLR).
 - **`AUSPOL_LEVEL_RECIPE`** (**adopted, shared-function wiring**): SHIPPED 2026-09-30 as v56 ('live'). Wired everywhere:  read in R/forecast_mode.R (statewide_draws_as_at()), which every harness and fit_seats_full.R reach: the five state harnesses and fit_seats_full.R through forecast_statewide_or_oracle() -> forecast_statewide_for() (R/forecast_statewide.R:81), the federal harness directly. "No" cells are the harness grep missing the R/ read, not drift (corrected 2026-10-09 after review).
+- **`AUSPOL_LIVE_DEFECT_FIT`** (**adopted, shared-function wiring**): SHIPPED 2026-10-18 as a train/serve fix, LIVE-ONLY by design: read only in fit_seats_full.R, which now fits the major-defector discount as every harness does (fit_defector_discount) instead of the frozen 0.282.
 - **`AUSPOL_LIVE_DRAW_BUCKET`** (**adopted, shared-function wiring**): SHIPPED 2026-09-28 as a parity fix, LIVE-ONLY by design: read only in fit_seats_full.R, where the live statewide draws split the unpolled bucket by its 2022 ratio. The harnesses use candidate_bucket_ratio() (AUSPOL_BUCKET_SPLIT) instead.
 - **`AUSPOL_LIVE_LEVEL_ANCHOR`** (intentional / dead experiment): OFF since 2026-09-30 (v56), LIVE-ONLY by design: read only in fit_seats_full.R. The un-anchored level scored better over all 22 elections, and published_flags.R says backtests and live now both use the un-anchored recipe (AUSPOL_LEVEL_RECIPE='live').
 - **`AUSPOL_LIVE_LEVEL_SPLIT`** (**adopted, shared-function wiring**): SHIPPED 2026-10-18 as a train/serve fix, LIVE-ONLY by design: read only in fit_seats_full.R, which serves the xgb layer a level_pred split by bucket_split_ratio(). The harnesses read level_pred from output/level-pred.csv, built by the same function.
@@ -363,10 +368,13 @@ separate model code.
 - **`AUSPOL_SEAT_POLL_IND_MAP`** (**adopted, shared-function wiring**): SHIPPED 2026-10-06 (Pete override). Read in seat_poll_shares() in R/seat_poll_blend.R; reaches every entry point through the blend.
 - **`AUSPOL_SEAT_POLL_IND_WEIGHT`** (**adopted, shared-function wiring**): SHIPPED 2026-10-06 (Pete override). Read in R/seat_poll_blend.R (.ind_weight_on(), seat_poll_blend_apply()); reaches every entry point through the blend. It errors if combined with AUSPOL_SEAT_POLL_MATCH=perpoll.
 - **`AUSPOL_SEAT_POLL_MATCH`** (intentional / dead experiment): TESTING, default 'class' (plans/prereg-seat-poll-per-poll-match-2026-09-29.md). Read in R/seat_poll_blend.R; 'perpoll' is built for blend mode 1 only and backtests only until shipped, so no live wiring is expected.
+- **`AUSPOL_SEAT_POLL_MODELVAR_ALL`** (intentional / dead experiment): ARM (0), UNIVERSAL via R/: read inside R/seat_poll_blend.R (the seat-poll blend every harness and fit_seats_full.R reach). plans/prereg-seat-poll-method-weights-2026-10-18.md
 - **`AUSPOL_SEAT_POLL_MRP_NAME`** (**adopted, shared-function wiring**): SHIPPED 2026-10-09 with DECAY and PRIOR (data fix: an MRP release under 20 seats named MRP). Read in seat_poll_shares() in R/seat_poll_blend.R; reaches every entry point through the blend.
+- **`AUSPOL_SEAT_POLL_NAMED_ONLY`** (intentional / dead experiment): ARM (0), UNIVERSAL via R/: read inside R/seat_poll_blend.R (the seat-poll blend every harness and fit_seats_full.R reach). plans/prereg-seat-poll-method-weights-2026-10-18.md
 - **`AUSPOL_SEAT_POLL_PRECISION_BLEND`** (intentional / dead experiment): ARM, off: did not clear 2026-10-09 (+0.0000, SE 0.0037). Read in seat_poll_blend_apply() and seat_poll_blend_table() in R/seat_poll_blend.R; needs AUSPOL_SEAT_POLL_DECAY=1.
 - **`AUSPOL_SEAT_POLL_PRIOR`** (**adopted, shared-function wiring**): SHIPPED 2026-10-09 at 0.75 (Pete's prior, same full run). Read in seat_poll_weight() via .seat_poll_prior() in R/seat_poll_blend.R, which every entry point reaches through the blend.
 - **`AUSPOL_SEAT_POLL_PRIOR_SD`** (**adopted, shared-function wiring**): SHIPPED 2026-10-09 at 0.25, the prior's sd; read with AUSPOL_SEAT_POLL_PRIOR in .seat_poll_prior().
+- **`AUSPOL_SEAT_POLL_SALIENCE_VAR`** (intentional / dead experiment): ARM (0), UNIVERSAL via R/: read inside R/seat_poll_blend.R (the seat-poll blend every harness and fit_seats_full.R reach). plans/prereg-seat-poll-method-weights-2026-10-18.md
 - **`AUSPOL_SEAT_POLL_SIZEVAR`** (intentional / dead experiment): ARM (0), UNIVERSAL via R/: read inside R/seat_poll_blend.R (the seat-poll blend every harness and fit_seats_full.R reach). plans/prereg-seat-poll-method-weights-2026-10-18.md amendment 2
 - **`AUSPOL_SEAT_POLL_SOURCES`** (intentional / dead experiment): TESTING, default 'all' (plans/prereg-seat-poll-public-only-2026-09-29.md). Read in seat_poll_shares() in R/seat_poll_blend.R, which every entry point reaches; the harness grep cannot see it.
 - **`AUSPOL_SEAT_POLL_SPLIT_ALL`** (intentional / dead experiment): ARM (0), UNIVERSAL via R/: read inside R/seat_poll_blend.R (the seat-poll blend every harness and fit_seats_full.R reach). plans/prereg-seat-poll-method-weights-2026-10-18.md amendment 2
@@ -458,4 +466,4 @@ MR3  no harness forces a switch away from its published value.
 
 ## Coverage check
 
-MR2  every non-universal switch (172 of 213) has a recorded classification.
+MR2  every non-universal switch (176 of 217) has a recorded classification.
