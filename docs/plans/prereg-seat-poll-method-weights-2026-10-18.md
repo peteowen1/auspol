@@ -152,3 +152,19 @@ by its SE. High search-interest rise means a less certain model, so a poll moves
 
 **Arms (with C and C-minus-SIZEVAR from amendment 3):** D = C + SALIENCE_VAR; D minus SIZEVAR. Same metrics, clauses and
 scorer. Dry-run before scoring: print the multiplier for Warringah 2019, Curtin 2022, Mayo 2016, McMahon 2025.
+
+## Amendment 5 (2026-10-18 16:30, before anything is built or run; Pete: "go")
+
+The original text and amendments 1-4 stand. The leave-one-out arms located Warringah 2019 (P(win) 0.235 -> 0.121) and
+Mayo 2016 (0.084 -> 0.037): unchanged without SIZEVAR or GROUPS, restored only without PRECISION_BLEND. The precision
+pull `v / (v + 1/P)` uses a model variance `v` fitted on earlier elections' POLLED cells only; before fed2022 there are
+almost none, so `v` sits at its prior 25 (sd 5) for every class, including independents (true model error sd ~15), and
+one decent poll gets a pull of ~0.44 where the shipped rule gave 0.891.
+
+**`AUSPOL_SEAT_POLL_MODELVAR_ALL=1` (new):** `v` (per class, and the size exponent) is fitted on EVERY earlier
+election's seat-class cells with a prediction and a result (`current_seat_predictions()`, time-forward), not only the
+polled ones. The model's own error does not need a poll to be measured. Same shrinkage, same K.
+
+**Arms (replacing amendment 3-4's list; nothing was run under it):** C = B + NAMED_ONLY + MODELVAR_ALL; C minus
+MODELVAR_ALL; D = C + SALIENCE_VAR. Same metrics, clauses, scorer and named seats. Dry-run before scoring: print `v` for
+IND at fed2016 and fed2019 under both settings.

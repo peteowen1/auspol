@@ -18,8 +18,12 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30.
   loop (:555-565) runs only for SURGE_CANON (:119-129), and fed2025 is not in it, though its salience (`jump`) is cached
   for 613 candidates (`output/salience-v6.csv`). A constant within one election is a label for it (CLAUDE.md). Fix:
   score fed2025 (and every later election) with the hazard, without adding it to the training pairs.
-- IN PROGRESS: vic2026 salience fill (410 of 501 candidates missing), `scripts/fetch_salience_vic2026_full.R`,
-  `deciding-runs/20261018-salience-vic2026/`; then `scripts/build_vic2026_salience_corpus.R`.
+- OPEN, DATED (from ~2 Nov, weekly; final snapshot 25-27 Nov): vic2026 salience snapshots. All 500 candidates fetched
+  18 Oct (window to 6 Oct), but that is before the campaign: nobody's search interest is rising yet (Premier 1.1 in the
+  last 8 weeks vs 9.3 before), so batches cannot be linked and `jump` is not comparable with the backtests' polling-day
+  values. Each refresh: `AUSPOL_SALIENCE_TO=<date> Rscript scripts/fetch_salience_vic2026_full.R` (~100 requests,
+  resumable; anchor now Jacinta Allan, was Daniel Andrews), then `scripts/build_vic2026_salience_jump.R`
+  (output/vic2026-salience-jump.csv). Not yet wired into the live forecast.
 - OPEN F5-F20: salience/nomination zeroing applied twice in harnesses, demographic correction rescaled away (~60%
   delivered), post-xgb tables fitted on residuals the shares no longer carry, IND override (being fixed: seat-poll
   prereg), CE error z standardised without the composition factor, HTV overwriting xgb flows, registry greps comments.

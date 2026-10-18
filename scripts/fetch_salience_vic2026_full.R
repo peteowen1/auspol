@@ -11,7 +11,10 @@
 options(auspol.root = normalizePath("."))
 suppressMessages(devtools::load_all(quiet = TRUE))
 suppressMessages(library(data.table)); suppressMessages(library(gtrendsR))
-MAXKW <- 5L; SPAN <- 400L; GEO <- "AU-VIC"; ANCHOR <- "Daniel Andrews"
+# ANCHOR: the head of government (fetch_salience_v6.R's rule: high, stable volume, never a candidate being ranked).
+# Was "Daniel Andrews", who left office in 2023; his search interest falls across the window, so his rise is <= 0
+# and no batch could be linked (build_vic2026_salience_jump.R VJ2, 2026-10-18). Jacinta Allan is Premier.
+MAXKW <- 5L; SPAN <- 400L; GEO <- "AU-VIC"; ANCHOR <- Sys.getenv("AUSPOL_SALIENCE_ANCHOR", "Jacinta Allan")
 SLEEP <- as.numeric(Sys.getenv("AUSPOL_SALIENCE_SLEEP", "4")); STOP_AFTER <- 3L
 CACHE <- file.path("external", "reference", "trends")
 # The window END is pinned (AUSPOL_SALIENCE_TO, default the first snapshot's date
@@ -24,6 +27,7 @@ st <- new.env(); st$consec <- 0L; st$total <- 0L; st$failed <- character()
 qry <- function(kw) {
   key <- gsub("[^A-Za-z0-9]", "_", sprintf("v6-%s-%s-%s-%s", GEO, FROM, TO, paste(kw, collapse = "-")))
   f <- file.path(CACHE, paste0(substr(key, 1, 150), ".rds"))
+  st$hit <- file.exists(f)   # a cache hit made no request, so the caller does not sleep after it
   if (file.exists(f)) { z <- readRDS(f); return(if (isTRUE(z$empty)) NULL else z$series) }
   for (att in 1:3) {
     msg <- NULL
@@ -79,14 +83,14 @@ for (p in names(pools)) {
     for (k in take) kw_batch[[k]] <- paste(take, collapse = "|")
     if (!is.null(s)) { m <- s[date > TO - 56, .(r = mean(hits)), by = keyword]; reps <- c(reps, m[which.max(r), keyword]) }
     if (bid %% 10 == 0) cat(sprintf("VF2 [%s] batch %d, %d/%d keywords\n", p, bid, min(i + MAXKW - 1L, length(kws)), length(kws)))
-    Sys.sleep(SLEEP * 2^min(st$consec, 5))
+    if (!isTRUE(st$hit)) Sys.sleep(SLEEP * 2^min(st$consec, 5))   # only after a real request (101 cached batches slept ~13 min)
   }
 }
 reps <- setdiff(unique(reps), ANCHOR)
 cat(sprintf("VF3 linking %d batch representatives against %s\n", length(reps), ANCHOR))
 for (i in seq(1L, length(reps), by = MAXKW - 1L)) {
   take <- reps[i:min(i + MAXKW - 2L, length(reps))]
-  qry(c(ANCHOR, take)); Sys.sleep(SLEEP)
+  qry(c(ANCHOR, take)); if (!isTRUE(st$hit)) Sys.sleep(SLEEP)
 }
 write_manifest()
 cat(sprintf("VF9 throttle signals this run: %d; failed batches: %d\n", st$total, length(st$failed)))
