@@ -270,6 +270,13 @@ Verbatim in `backlog/journal-2026-10-07-to-10-08.md`. Still OPEN from them:
   "intended federal vote" question with candidates named, BUT an opt-in SMS-link survey Compass calls "campaign-level
   sentiment", not formal polling; Camenzuli's name was first and appeared preselected in the drop-down; self-funded
   (their claim). So a third piece for the fix: record a poll's METHOD (opt-in vs panel/phone) where known.
+  DONE 18 Oct (Pete asked; Sonnet agent): every seat poll classified, external/reference/polls/seat-polls/poll_methods.csv
+  (1,210 polls: 940 MRP, 82 robopoll, 32 mixed, 13 online panel, 2 opt-in, 141 unknown; sponsor known on 1,124;
+  reviews/seat-poll-methods-2026-10-18.md). Error by group (poll minus actual, MAE pts): media-paid direct 4.42, stake-
+  holder-paid 5.74 (IND 7.81 vs 6.02), party-paid majors 15.5 (n=4), opt-in 12.4 (IND 20.4, n=2), MRP 5.33. NEXT:
+  prereg seat-poll weights by method and sponsor, time-forward, shrunk by group size, scored on seat-poll seats.
+  Dirty pollster labels to fix in the scraper: sponsors in the pollster column (Climate 200, Sky News, Industry
+  Association, Internal polling), 56 unnamed fed2016 polls, "44%" (a duplicated uComms Brisbane row), "YouGo (MRP)".
 - OPEN: 120 `AUSPOL_*` names read in code but unregistered, classified 2026-10-12 (`reviews/unregistered-switches-2026-10-12.md`):
   33 MODEL / 24 RUN / 18 DIAG / 45 DEAD. Act on: live vs backtest MP-slope tier differs (live keeps a party only at
   n_member >= 8, harnesses keep any); ~20 harness-only model switches to register or delete.
