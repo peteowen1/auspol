@@ -35,6 +35,10 @@ dir.create(empty, showWarnings = FALSE, recursive = TRUE)
 # working-copy versions (uncommitted edits included), and nothing untracked.
 unlink(empty, recursive = TRUE); dir.create(empty, recursive = TRUE)
 tracked <- system2("git", c("ls-files"), stdout = TRUE)
+# ...plus NEW files not yet added (untracked, not ignored): they are what the next commit adds and CI's checkout
+# will have. Without them a new script was never in the copy the suite ran on (nor in the skip fingerprint
+# below), so e.g. a new script's check codes missed the collision test until CI (found 2026-10-18).
+tracked <- unique(c(tracked, system2("git", c("ls-files", "--others", "--exclude-standard"), stdout = TRUE)))
 for (d in unique(dirname(tracked))) dir.create(file.path(empty, d), showWarnings = FALSE, recursive = TRUE)
 ok <- file.copy(tracked, file.path(empty, tracked), overwrite = TRUE)
 cat(sprintf("LCI0 copied %d of %d git-tracked files into the no-anchor root (what the CI checkout has; %d under external/)\n",
