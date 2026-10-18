@@ -564,7 +564,10 @@ for (pr in SAL_PAIRS) {
   train_pairs <- if (SURGE_H_TF) SURGE_CANON[elections_before(canon_el, pr$election)] else
     Filter(function(p) !identical(p$election, pr$election), SURGE_CANON)
   if (!length(train_pairs)) { cat(sprintf("SGH0 %s: no earlier canon election, surge_h stays 0\n", pr$election)); next }
-  hz <- tryCatch(surge_hazard_for(pr$election, pr$prev, pr$region, train_pairs), error = function(e) NULL)
+  hz <- tryCatch(surge_hazard_for(pr$election, pr$prev, pr$region, train_pairs), error = function(e) {
+    cat(sprintf("SGH1! %s: surge hazard fit failed (%s); surge_h stays 0\n", pr$election, conditionMessage(e)))
+    NULL
+  })
   if (is.null(hz)) next
   sh <- hz$seat_hazard[, .(pair = pr$election, seat, surge_h)]
   rc <- hz$seat_recipient[, .(pair = pr$election, seat, recipient_party = party)]
