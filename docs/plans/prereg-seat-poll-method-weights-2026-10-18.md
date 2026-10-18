@@ -114,3 +114,24 @@ reports (the shipped rule's residual). Kennedy OTH_RIGHT now 45.8 (actual 46.1).
 seat polls, and fed2016's 268 are two-party only, so the primary metric's polled seats are fed2019 9, fed2022 151,
 fed2025 150, nsw2023 1, fed2016 1 (Mayo, hand-keyed); the scorer now counts only polls with a primary figure.
 All arms rerun on the fixed code.
+
+## Amendment 3 (2026-10-18 15:45, before anything is built or run; Pete: "go")
+
+The original text and amendments 1-2 stand. Arm B's first full screen (primary -0.0059, SE 0.0040; refused by the
+one-election clause, fed2022 89% of the gain) lost on real independents. Traced end to end: Curtin 2022's YouGov MRP
+never modelled Chaney; her vote sits in its "others" 14, which the endorsed-independent remap (SPIM `OTH -> IND`) files
+as an IND figure, and under ALLPOLLS that derived 14 voted with an MRP's weight: Chaney 25.5 -> 22.6 (actual 29.5).
+Pete: polls that name the candidate should do the work and a bad poll should have no influence; a figure carved out of
+a poll's "others" is not the pollster's measurement of anyone.
+
+**`AUSPOL_SEAT_POLL_NAMED_ONLY=1` (new):** a poll votes on a seat-class cell only if it names EVERY candidate of that
+class standing in the seat (candidates per class from `output/candidacies.csv`, poll entries per class counted BEFORE
+any remap or split), or its "others" figure is zero. Single-candidate classes (ALP, LNP, GRN, ONP) are fully named
+whenever they appear. Cells built from "others" (the IND remap, the known-class split, SPLIT_ALL) never vote. A cell no
+poll measures keeps our own prediction. Kennedy 2022 (UAP named, Katter in others): OTH_RIGHT is not fully named, so
+the poll does not vote on it and the model's 44.7 stands (actual 46.1). McMahon: YouGov names the independent (3.9-6.6)
+and votes; RedBridge (independent in others) does not.
+
+**Arms:** C = B + NAMED_ONLY; C minus SIZEVAR (the size rule is the other suspect for Warringah 2019 and Mayo 2016,
+whose only polls were GetUp-paid). Same metrics, clauses and scorer as B. Reported per arm: McMahon, Curtin, Warringah
+2019, Mayo 2016, Goldstein 2025, Kennedy 2022.
