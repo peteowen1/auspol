@@ -24,7 +24,7 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30.
   whose primaries contradict its own 2CP pairing (the two 2CP parties must be the top two on primaries, or close).
   Melbourne 2025: YouGov's three MRPs had ALP 28-31 (actual 31.3), RedBridge 21-22, Advance-paid Insightfully GRN 50;
   the pollster track-record switch AUSPOL_SEAT_POLL_FIRM_FLOOR (off) is the other lever there.
-- OPEN, NEXT after arm H ships (seat polls, heavy-tailed model error): under arm H a first-time teal the model has at
+- IN PROGRESS 18-19 Oct (built f726303, screening `deciding-runs/heavytail-screen/`), was NEXT after arm H ships (seat polls, heavy-tailed model error): under arm H a first-time teal the model has at
   4-5% gets a Gaussian compromise with good polls at 30+: Goldstein 2022 model 4.3, 3 polls 33.8, model sd 7.3, poll sd
   4.2 + election-wide 2.6, pull 0.69 -> 24.5 (actual 34.5); North Sydney 2022 model 5.2, polls 19.1, pull 0.80 -> 16.4
   (actual 25.2). A 30-point gap is ~4 sd: evidence the model missed a surge. Fix: a mixture/heavy tail on the model's
@@ -32,7 +32,7 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30.
   so several good polls win a big disagreement and a lone opt-in poll does not (McMahon: one Compass SMS link, salience
   0.014 vs Daniel 0.092). Prereg amendment 9; named targets Goldstein 2022, North Sydney 2022, Warringah 2019, Curtin
   2022; McMahon 2025 and Mayo 2025 as must-not-break.
-- IN PROGRESS: arm H deciding run (20k, all elections), `deciding-runs/20261018-2009-seatpoll-H/`, started 20:30 18 Oct.
+- DONE 18 Oct: arm H deciding run passed; SHIPPED and merged (PR #127). NEEDS PETE: the publish, `AUSPOL_PUBLISH=1 AUSPOL_REBUILD_FROM=9 bash scripts/rebuild_forecasts.sh`.
 - OPEN F21 (found 18 Oct): `surge_h` is a filler 0 on all 1,050 fed2025 xgb rows (`fit_xgb_primary_v6.R:567`): the hazard
   loop (:555-565) runs only for SURGE_CANON (:119-129), and fed2025 is not in it, though its salience (`jump`) is cached
   for 613 candidates (`output/salience-v6.csv`). A constant within one election is a label for it (CLAUDE.md). Fix:

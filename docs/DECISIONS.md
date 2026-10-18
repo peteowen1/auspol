@@ -4,6 +4,16 @@ One line each: the decision, the one fact behind it, a link. Newest first.
 Created 2026-09-19 (the verse convention; auspol had none). Older decisions
 live in the plans they came from (`docs/plans/prereg-*.md` RESULT sections).
 
+- **2026-10-18 Seat-poll blend arm H SHIPPED (Pete: "Ship H now"), merged in PR #127; live after the next publish.** Eleven `AUSPOL_SEAT_POLL_*` switches. 20k, 35 elections: polled seats -0.0136 (SE 0.0021), all seats 0.3190 -> 0.3176 (SE 0.0008), AEF-7 0.2676 -> 0.2622; leave-one-election-out passes. McMahon 2025 P(Labor) 0.27 -> 0.92 (`plans/prereg-seat-poll-method-weights-2026-10-18.md`).
+
+- **2026-10-18 Live train/serve fixes F1-F3 SHIPPED (Pete: "go"):** live xgb gets the per-class level it trained on (`AUSPOL_LIVE_LEVEL_SPLIT`), live base gets the minor-defector discount, the major-defector discount is fitted (0.313, was 0.282). Live diffs small (Werribee ONP 0.47 -> 0.41) (`reviews/pipeline-overwrite-audit-2026-10-18.md`).
+
+- **2026-10-18 No "one election supplies half the gain" refusals (Pete: "refusing an arm ... cause it's too good seems stupid").** Standard decision rule heads `PRE-REGISTRATION-RULES.md`: 1 SE + leave-one-election-out + no election worse by >2 SE of its own seats (`reviews/rules-review-2026-10-18.md`).
+
+- **2026-10-18 Seat-poll data corrections file (Melbourne RedBridge Nov 2024 restored from Accent's PDF: GRN 44, ALP 27, COAL 21).** Wikipedia had the three figures in the wrong columns; the Wikipedia edit is Pete's (Daily Eight, 21 Oct). Effect on Melbourne: none visible (Labor 0.7%).
+
+- **2026-10-18 Growth-ratio xgb features REFUSED.** Minor-class seat RMSE +0.031 (SE 0.012), seat log loss +0.0042 (SE 0.0014) (`plans/prereg-growth-ratio-features-2026-10-18.md`).
+
 - **2026-10-17 Width + tails (CE) SHIPPED on Pete's override ("Override and ship").** `AUSPOL_COMPOSITION_SD=1` + `AUSPOL_ERROR_DIST=1`. 20k: every seat 0.3321 -> 0.3278 (-0.0043, SE 0.0034), but REFUSED by the one-election clause: qld2017 is 65% of the gain; without it -0.0015 (SE 0.0020). Victoria -0.0056 (SE 0.0039); safe favourites +0.0024. `plans/prereg-error-distribution-2026-10-17.md` Override 1. PUBLISHED 17 Oct, rebuild `20261017-2242-c0e3b37-from6`: 35 elections 0.3321 -> 0.3278, AEF-7 ours 0.2676 vs AEF 0.2825 (AEF-7 +0.0015, SE 0.0018, 6 of 7 slightly worse). Live from the next forecast run.
 
 - **2026-10-17 Composition spread PARKED as a benchmark (Pete: "Go to the skew/fat-tail fix").** Arm C (`AUSPOL_COMPOSITION_SD=1`) passed its 1k screen (213 primary seats -0.030 SE 0.016; all seats -0.0021 SE 0.0013) but taxes NSW (+0.041) and safe favourites; C2 (own cell only) lost (-0.004). Independents' errors are skewed (most come in 1-2.5 under, a few surge), so a symmetric spread is the wrong shape. Next: the per-cell error distribution itself, fitted time-forward, must beat -0.0021. `reviews/composition-spread-2026-10-17.md`.
