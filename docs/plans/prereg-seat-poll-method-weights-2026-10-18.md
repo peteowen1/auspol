@@ -274,3 +274,21 @@ the worry it exists for: a gain that is one election's quirk rather than general
 the primary metric dropping each election in turn; the arm must stay better than shipped by more than 1 SE every time,
 and must not be worse than shipped on either of fed2022 or fed2025 alone. For the deciding run of H the decision is
 reported under both rules; where they disagree, the split goes to Pete.
+
+## RESULT, arm H deciding run (2026-10-18 21:24; 20,000 sims, all 35 elections, code 358bb56;
+## deciding-runs/20261018-2009-seatpoll-H/) -- PASSES; ship decision is Pete's
+
+Timing, stated plainly: the run's DONE marker is 21:24:40 and amendment 9 was committed 21:25:51, 71 seconds later.
+It was written before any result was read, but not before the result existed; the original clause is reported below.
+
+Seat-winner log loss, H minus shipped (lower is better), SE clustered on election:
+- PRIMARY, 314 polled seats: -0.0136 (SE 0.0021), better by >1 SE (about 6 SE). Without McMahon: -0.0097 (SE 0.0034).
+- GUARD, all 2,931 seats in 35 elections: 0.3190 -> 0.3176, -0.0015 (SE 0.0008), better by >1 SE. AEF-7 (681 seats):
+  0.2676 -> 0.2622, -0.0055 (SE 0.0026). Share squared error on the 1,792 changed cells -17% (PASS). 28 elections
+  byte-identical (no seat polls).
+- One-election clause (original): largest share 0.44 -> passes.
+- Leave-one-election-out (amendment 9): better by >1 SE with each election dropped (without fed2022 -0.0157, SE 0.0045;
+  without fed2025 -0.0145, SE 0.0046); fed2022 alone -0.0112, fed2025 alone -0.0125 -> passes.
+- McMahon fed2025 P(actual winner) 0.269 -> 0.917.
+Known losses (queued, heavy-tail fix in NEXT-STEPS): first-time independents the model had at 4-5% with good polls far
+above (Goldstein 2022, North Sydney 2022, Curtin 2022, Warringah 2019).
