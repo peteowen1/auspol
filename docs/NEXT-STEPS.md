@@ -18,6 +18,12 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30.
   `PRE-REGISTRATION-RULES.md` (1 SE + leave-one-election-out + no election worse by >2 SE of its own seats; shares,
   directions and other metrics reported, not voted). No past refusal rested on a silly clause alone: breakout-mix,
   uncapped new-IND shrink and reentry-majors also failed primary or guard; departed-successor and CE were overridden.
+- OPEN (seat-poll data check, found 18 Oct): Wikipedia's RedBridge 29 Oct-20 Nov 2024 Melbourne row reads GRN 27, ALP 21,
+  LIB 44 with its own 2CP GRN 55 / ALP 45 (a GRN-ALP final two, impossible with LIB on 44; result LIB 19.8). Our scrape
+  matches the page (raw/fed2025.html), so the source has GRN/LIB swapped. General check to build: drop, loudly, a poll
+  whose primaries contradict its own 2CP pairing (the two 2CP parties must be the top two on primaries, or close).
+  Melbourne 2025: YouGov's three MRPs had ALP 28-31 (actual 31.3), RedBridge 21-22, Advance-paid Insightfully GRN 50;
+  the pollster track-record switch AUSPOL_SEAT_POLL_FIRM_FLOOR (off) is the other lever there.
 - OPEN, NEXT after arm H ships (seat polls, heavy-tailed model error): under arm H a first-time teal the model has at
   4-5% gets a Gaussian compromise with good polls at 30+: Goldstein 2022 model 4.3, 3 polls 33.8, model sd 7.3, poll sd
   4.2 + election-wide 2.6, pull 0.69 -> 24.5 (actual 34.5); North Sydney 2022 model 5.2, polls 19.1, pull 0.80 -> 16.4

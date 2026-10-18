@@ -1355,7 +1355,15 @@ if (!is.null(.nis)) shares <- .nis else if (!identical(new_ind_mode(), "0"))
 .level_split <- NULL
 if (identical(Sys.getenv("AUSPOL_LIVE_LEVEL_SPLIT", "1"), "1") && "OTH" %in% names(state_mean)) {
   .bk <- c(setdiff(intersect(parties, c(unmodelled, "OTH")), "OTH"), "OTH")
-  .rt <- bucket_split_ratio(paste0(REGION, YEAR), .bk, a22)
+  # The daily CI run has no output/minor-class-shares-v2.csv (forecast.yaml does not fetch it), and
+  # candidate_bucket_ratio() stops without it; the prior-election ratio is what bucket_split_ratio() itself falls back
+  # to when the candidate model has no row for the target (vic2026 has none), so use it, and say so (review 2026-10-18).
+  .rt <- tryCatch(bucket_split_ratio(paste0(REGION, YEAR), .bk, a22), error = function(e) {
+    cat(sprintf("XG0s! candidate-model bucket split unavailable (%s): prior-election ratio used\n", conditionMessage(e)))
+    .old <- Sys.getenv("AUSPOL_BUCKET_SPLIT", NA); Sys.setenv(AUSPOL_BUCKET_SPLIT = "prior")
+    on.exit(if (is.na(.old)) Sys.unsetenv("AUSPOL_BUCKET_SPLIT") else Sys.setenv(AUSPOL_BUCKET_SPLIT = .old), add = TRUE)
+    bucket_split_ratio(paste0(REGION, YEAR), .bk, a22)
+  })
   .level_split <- state_mean[setdiff(names(state_mean), "OTH")]
   .level_split[.bk] <- state_mean[["OTH"]] * .rt[.bk]
   if (abs(sum(.level_split) - sum(state_mean)) > 1e-6) stop("XG0s: split level does not keep the statewide total")

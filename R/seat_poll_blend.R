@@ -249,6 +249,8 @@ seat_poll_shares <- function(election, days = 90, by_type = FALSE, by_poll = FAL
   el_c <- el   # never the bare argument inside `[` (data.table NSE, CLAUDE.md)
   nc <- if (is.null(cd)) data.table::data.table(sk = character(0), class = character(0), n_cand = integer(0)) else
     cd[cd$election == el_c, list(n_cand = .N), by = list(sk = normalise_seat(seat), class = party)]
+  if (!nrow(nc)) cat(sprintf("SPN1! %s: no candidacies rows, so a pooled class cannot be checked for unnamed candidates (every named row counts)
+", el))
   bucket <- s$.bucket %in% TRUE
   nm <- s[!bucket, list(n_named = .N), by = list(poll_id, class)]
   oth <- s[, list(oth = sum(fp[.bucket %in% TRUE])), by = poll_id]
@@ -360,6 +362,7 @@ seat_poll_model_var <- function(target_election) {
     # exponent at its prior 0 (no size scaling), so AUSPOL_SEAT_POLL_SIZEVAR has nothing to scale by
     out <- c(pooled = SEAT_POLL_MODEL_VAR_PRIOR)
     attr(out, "ref") <- c(pooled = 1); attr(out, "g") <- 0; attr(out, "g_raw") <- NA_real_; attr(out, "g_se") <- NA_real_
+    attr(out, "sal_b") <- 0; attr(out, "sal_mean") <- 0; attr(out, "sal_se") <- NA_real_; attr(out, "sal_n") <- 0L   # (review 2026-10-18)
     return(out)
   }
   e2 <- (rows$actual - rows$pred)^2
@@ -781,7 +784,9 @@ seat_poll_blend_table <- function(target_election, write = FALSE) {
       if (!is.null(w$vm)) {
         out$vm <- .kv_write(w$vm)
         out$vm_ref <- .kv_write(attr(w$vm, "ref"))
-        out$vm_par <- .kv_write(c(g = attr(w$vm, "g"), sal_b = attr(w$vm, "sal_b"), sal_mean = attr(w$vm, "sal_mean")))
+        # the fitted values AND the ones only the log lines print (SPSV, SPSL), so the daily run's log matches the rebuild's
+        out$vm_par <- .kv_write(unlist(attributes(w$vm)[intersect(c("g", "g_raw", "g_se", "sal_b", "sal_b_raw", "sal_mean", "sal_se", "sal_n"),
+                                                                    names(attributes(w$vm)))]))
       }
       if (!is.null(w$te)) out$te <- .kv_write(w$te)
       if (!is.null(w$si)) out$sal <- if (nrow(w$si)) .kv_write(stats::setNames(w$si$jump, w$si$sk)) else ""
@@ -803,7 +808,8 @@ seat_poll_blend_table <- function(target_election, write = FALSE) {
                              " but the seat-poll switches need them: re-promote it (scripts/promote_rebuild.R)")
       if ("vm_ref" %in% names(raw)) attr(w$vm, "ref") <- .kv_read(raw$vm_ref[1])
       if ("vm_par" %in% names(raw)) { pp <- .kv_read(raw$vm_par[1])
-        attr(w$vm, "g") <- pp[["g"]]; attr(w$vm, "sal_b") <- pp[["sal_b"]]; attr(w$vm, "sal_mean") <- pp[["sal_mean"]] }
+        for (a in names(pp)) attr(w$vm, a) <- pp[[a]]
+        for (a in c("g", "sal_b", "sal_mean")) if (is.null(attr(w$vm, a))) attr(w$vm, a) <- 0 }
       if ("te" %in% names(raw)) w$te <- .kv_read(raw$te[1])
       if ("sal" %in% names(raw)) { sv <- .kv_read(raw$sal[1]); w$si <- data.table::data.table(sk = names(sv), jump = unname(sv)) }
     }
