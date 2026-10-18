@@ -188,6 +188,9 @@ CLASSIFY <- list(
   AUSPOL_SEAT_POLL_SPLIT_ALL = paste(
     "ARM (0), UNIVERSAL via R/: read inside R/seat_poll_blend.R (the seat-poll blend every harness and fit_seats_full.R",
     "reach). plans/prereg-seat-poll-method-weights-2026-10-18.md amendment 2"),
+  AUSPOL_SEAT_POLL_FIRM_SHARED = paste(
+    "ARM (0), UNIVERSAL via R/: read inside R/seat_poll_blend.R (the seat-poll blend every harness and fit_seats_full.R",
+    "reach). plans/prereg-seat-poll-method-weights-2026-10-18.md amendment 7"),
   AUSPOL_SEAT_POLL_IND_DIRECT = paste(
     "ARM (0), UNIVERSAL via R/: read inside R/seat_poll_blend.R (the seat-poll blend every harness and fit_seats_full.R",
     "reach). plans/prereg-seat-poll-method-weights-2026-10-18.md amendment 6"),

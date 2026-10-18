@@ -183,6 +183,7 @@ seat_poll_shares <- function(election, days = 90, by_type = FALSE, by_poll = FAL
   per_poll$wt <- .seat_poll_cell_weights(per_poll, seat_poll_decay_params(el_arg))
   per_poll$type <- ifelse(per_poll$mrp, "mrp", "direct")
   by_cols <- if (by_type) c("seat", "class", "type") else c("seat", "class")
+  if (.seat_poll_firm_shared_on()) return(.seat_poll_firm_shared_cells(per_poll, seat_poll_decay_params(el_arg), by_cols))
   per_poll[, list(poll = sum(wt * fp) / sum(wt), n_polls = .N, n_mrp = sum(mrp), wsum = sum(wt)), by = by_cols]
 }
 
@@ -445,6 +446,12 @@ SEAT_POLL_N_FALLBACK <- 600        # seat sample when no earlier direct poll rec
 #' `sponsored`). A direct poll without a recorded sample takes `p$n_fill`.
 #' @keywords internal
 .seat_poll_cell_weights <- function(pp, p) {
+  w <- .seat_poll_cell_weight_parts(pp, p)
+  w$r / (w$sv + w$fl)
+}
+
+# The three parts of a poll's weight: recency r, sampling variance sv, non-sampling floor fl.
+.seat_poll_cell_weight_parts <- function(pp, p) {
   n <- pp$n_seat
   n[!pp$mrp & !is.finite(n)] <- p$n_fill
   sv <- ifelse(pp$mrp, 0, pp$fp * (100 - pp$fp) / n)
@@ -455,7 +462,22 @@ SEAT_POLL_N_FALLBACK <- 600        # seat sample when no earlier direct poll rec
     m <- unname(p$firm_mult[pp$firm]); m[!is.finite(m)] <- 1
     fl <- fl * m
   }
-  0.5^(pp$days / p$H) / (sv + fl)
+  list(r = 0.5^(pp$days / p$H), sv = sv, fl = fl)
+}
+
+.seat_poll_firm_shared_on <- function() .seat_poll_onoff("AUSPOL_SEAT_POLL_FIRM_SHARED")   # amendment 7
+
+# AUSPOL_SEAT_POLL_FIRM_SHARED: a firm's polls in a cell are ONE measurement. The floor (method and house error) is
+# shared by every release from that firm, so it counts once, divided by the recency of the firm's newest poll; only
+# sampling variance averages out across its polls. The cell's precision sums over firms. (Seven MRP waves from two
+# firms had counted as seven independent measurements: Aston fed2025, amendment 7.)
+.seat_poll_firm_shared_cells <- function(per_poll, p, by_cols) {
+  w <- .seat_poll_cell_weight_parts(per_poll, p)
+  pp <- data.table::copy(per_poll); pp$.r <- w$r; pp$.sv <- w$sv; pp$.fl <- w$fl
+  fm <- pp[, list(fp = sum(wt * fp) / sum(wt), n = .N, n_mrp = sum(mrp),
+                  prec = 1 / (.fl[which.max(.r)] / max(.r) + if (any(.sv <= 0)) 0 else 1 / sum(1 / .sv))),
+           by = c(by_cols, "firm")]
+  fm[, list(poll = sum(prec * fp) / sum(prec), n_polls = sum(n), n_mrp = sum(n_mrp), wsum = sum(prec)), by = by_cols]
 }
 
 .seat_poll_decay_cache <- new.env(parent = emptyenv())

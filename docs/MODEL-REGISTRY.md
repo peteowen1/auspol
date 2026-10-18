@@ -31,7 +31,7 @@ All seven share one `R/` package core (`simulate_seat_contests()`,
 in which switches each one WIRES and which data source each reads, not in
 separate model code.
 
-## Switch parity (218 switches from `published_flags.R`, 7 entry points)
+## Switch parity (219 switches from `published_flags.R`, 7 entry points)
 
 | switch | fit_seats (published) | fed | nsw | qld | sa | vic | wa |
 |---|---|---|---|---|---|---|---|
@@ -175,6 +175,7 @@ separate model code.
 | `AUSPOL_SEAT_POLL_COALITION_DEDUP` | NO | NO | NO | NO | NO | NO | NO |
 | `AUSPOL_SEAT_POLL_DECAY` | NO | NO | NO | NO | NO | NO | NO |
 | `AUSPOL_SEAT_POLL_FIRM_FLOOR` | NO | NO | NO | NO | NO | NO | NO |
+| `AUSPOL_SEAT_POLL_FIRM_SHARED` | NO | NO | NO | NO | NO | NO | NO |
 | `AUSPOL_SEAT_POLL_GROUPS` | NO | NO | NO | NO | NO | NO | NO |
 | `AUSPOL_SEAT_POLL_HANDKEYED` | NO | NO | NO | NO | NO | NO | NO |
 | `AUSPOL_SEAT_POLL_IND_DIRECT` | NO | NO | NO | NO | NO | NO | NO |
@@ -364,6 +365,7 @@ separate model code.
 - **`AUSPOL_SEAT_POLL_COALITION_DEDUP`** (**adopted, shared-function wiring**): SHIPPED 2026-10-07 (data fix). Read in .read_seat_polls_file() in R/seat_poll_blend.R, which all six harnesses and fit_seats_full.R reach through the seat-poll blend; the weight fit and the blend see the same polls.
 - **`AUSPOL_SEAT_POLL_DECAY`** (**adopted, shared-function wiring**): SHIPPED 2026-10-09 (full 20k run with PRIOR and MRP_NAME: 0.2705 -> 0.2675 on the 6 polled elections). Read in seat_poll_shares() in R/seat_poll_blend.R (.seat_poll_decay_on()), which every entry point reaches through the blend; the harness grep cannot see it.
 - **`AUSPOL_SEAT_POLL_FIRM_FLOOR`** (intentional / dead experiment): ARM, off: did not clear 2026-10-09 (moves 1 cell alone). Read in .seat_poll_cell_weights() and seat_poll_decay_params() in R/seat_poll_blend.R; reaches every entry point through the blend.
+- **`AUSPOL_SEAT_POLL_FIRM_SHARED`** (intentional / dead experiment): ARM (0), UNIVERSAL via R/: read inside R/seat_poll_blend.R (the seat-poll blend every harness and fit_seats_full.R reach). plans/prereg-seat-poll-method-weights-2026-10-18.md amendment 7
 - **`AUSPOL_SEAT_POLL_GROUPS`** (intentional / dead experiment): ARM (0), UNIVERSAL via R/: read inside seat_poll_shares() and seat_poll_decay_params() (R/seat_poll_blend.R), which every harness and fit_seats_full.R reach through the seat-poll blend. plans/prereg-seat-poll-method-weights-2026-10-18.md
 - **`AUSPOL_SEAT_POLL_HANDKEYED`** (**adopted, shared-function wiring**): SHIPPED 2026-10-06 (Pete override). Read in .read_seat_polls_file() in R/seat_poll_blend.R; reaches every entry point through the blend.
 - **`AUSPOL_SEAT_POLL_IND_DIRECT`** (intentional / dead experiment): ARM (0), UNIVERSAL via R/: read inside R/seat_poll_blend.R (the seat-poll blend every harness and fit_seats_full.R reach). plans/prereg-seat-poll-method-weights-2026-10-18.md amendment 6
@@ -468,4 +470,4 @@ MR3  no harness forces a switch away from its published value.
 
 ## Coverage check
 
-MR2  every non-universal switch (177 of 218) has a recorded classification.
+MR2  every non-universal switch (178 of 219) has a recorded classification.
