@@ -261,3 +261,16 @@ H, P(actual winner) vs shipped: McMahon 0.273 -> 0.919, Mayo 2025 0.947 -> 0.965
 Aston 0.321 -> 0.331; losers Curtin 2022 0.652 -> 0.528, Warringah 2019 0.235 -> 0.146, Ryan 2025 0.755 -> 0.648.
 Next: the deciding run, H at 20,000 sims on all elections (CLAUDE.md), then Pete's ship decision. (G-salience ran while
 R/seat_poll_blend.R gained the ELECTION_ERR code behind its off switch; with it off the code is value-identical.)
+
+## Amendment 9 (2026-10-18 21:00, BEFORE the arm H deciding run reports; Pete: "go") -- an added check, original kept
+
+The one-election clause ("one election supplies more than half the primary gain -> refused") stays, unedited, and is
+still reported. It is badly calibrated for this data: two elections hold 301 of the 312 polled seats (fed2022 151,
+fed2025 150), so an arm that helps every polled seat equally lands at ~48% from one of them, and which side of 50% it
+falls on is noise (H 0.48 passes; H minus FIRM_SHARED 0.56 fails, a difference within its SE). It also does not test
+the worry it exists for: a gain that is one election's quirk rather than general.
+
+**Added check (reported beside it, for this prereg and proposed for future ones):** leave-one-election-out. Recompute
+the primary metric dropping each election in turn; the arm must stay better than shipped by more than 1 SE every time,
+and must not be worse than shipped on either of fed2022 or fed2025 alone. For the deciding run of H the decision is
+reported under both rules; where they disagree, the split goes to Pete.
