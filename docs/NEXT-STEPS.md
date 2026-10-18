@@ -5,6 +5,14 @@ it stood before this rewrite: `backlog/journal-2026-09-19-hub-snapshot.md`).
 Decisions: `docs/DECISIONS.md`. Every seat verdict: `docs/SEAT-REGISTRY.md`.
 Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30.
 
+## NEEDS PETE (19 Oct morning)
+
+- surge_h leak fix (`AUSPOL_SURGE_H_TF=1`, on dev only): neutral overall (35 elections +0.0005, SE 0.0009) but
+  qld2012, qld2020 and fed2013 are each worse by just over 2 SE of their own seats (fed2019 better by 4 SE).
+  Recommendation: keep it (a leak fix; ~0.7 of 31 elections cross 2 SE by chance). `plans/prereg-surge-h-time-forward-2026-10-18.md`.
+- The publish for arm H: `AUSPOL_PUBLISH=1 AUSPOL_REBUILD_FROM=9 bash scripts/rebuild_forecasts.sh`.
+- Delete the isolated copies (16 GB each, no junctions): C:\devuspol-iso-ratio, -iso-base, -iso-stf-arm, -iso-stf-base.
+
 ## 2026-10-18 pipeline audit (READ FIRST; `reviews/pipeline-overwrite-audit-2026-10-18.md`, Sonnet, read-only)
 
 20 findings where work is overwritten, doubled or ignored, or live and backtest diverge. Spot-checked in code 18 Oct:
