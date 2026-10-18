@@ -328,7 +328,7 @@ demographic_residual_apply <- function(shares, pair,
 # Put each row back to its original total after the corrections were added. Default: rescale the whole row, which
 # keeps only part of each correction (~60% of an ALP cell near 40; audit F7). AUSPOL_DEMO_RESID_FULL=1: the adjusted
 # classes keep their corrections in full and the other classes give up the difference in proportion (the
-# .shift_cell() rule); a row whose other classes cannot absorb it falls back to the rescale, counted (DR2).
+# .shift_cell() rule); a row whose other classes cannot absorb it falls back to the rescale, counted (DRF1).
 # docs/plans/prereg-demo-resid-full-2026-10-19.md.
 .demo_rebalance <- function(shares, tot, adj_cols) {
   v <- Sys.getenv("AUSPOL_DEMO_RESID_FULL", "0")
@@ -343,7 +343,7 @@ demographic_residual_apply <- function(shares, pair,
     if (length(oth) && rest > excess && rest > 0) shares[r, oth] <- shares[r, oth] * (rest - excess) / rest
     else { shares[r, ] <- shares[r, ] * (tot[r] / rs[r]); fallback <- fallback + 1L }
   }
-  cat(sprintf("DR2  demographic corrections delivered in full on %d seats (others absorb them); %d fell back to the row rescale\n",
+  cat(sprintf("DRF1 demographic corrections delivered in full on %d seats (others absorb them); %d fell back to the row rescale\n",
               sum(keep) - fallback, fallback))
   shares
 }
