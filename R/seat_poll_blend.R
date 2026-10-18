@@ -63,7 +63,7 @@ seat_poll_shares <- function(election, days = 90, by_type = FALSE, by_poll = FAL
 .seat_poll_memo_key <- function(election, days, by_type, by_poll, .raw, extra = character(0)) {
   env <- Sys.getenv(); env <- env[startsWith(names(env), "AUSPOL_")]
   sp <- file.path(pkg_root(), "external", "reference", "polls", "seat-polls")
-  files <- c(file.path(sp, c("seat_polls.csv", "hand_keyed_primaries.csv")),
+  files <- c(file.path(sp, c("seat_polls.csv", "hand_keyed_primaries.csv", "poll_methods.csv")),
              out_path(c("candidacies.csv", "endorsement-features.csv", "xgb-primary-asat-predictions.csv", "forecasts.csv")),
              extra)
   fi <- file.info(files, extra_cols = FALSE)
@@ -146,11 +146,32 @@ seat_poll_shares <- function(election, days = 90, by_type = FALSE, by_poll = FAL
   pf <- s[, list(days = as.numeric(ed - as.Date(fieldwork_end[1])),
                  n_seat = suppressWarnings(as.numeric(sample_n[1])),
                  sponsored = !is.na(client[1]) & nzchar(trimws(client[1])),
-                 firm = .seat_poll_firm_key(pollster[1])), by = poll_id]
+                 firm = .seat_poll_firm_key(pollster[1]),
+                 .pollster = pollster[1], .fw = as.character(fieldwork_end[1]), .seat0 = seat[1],
+                 .n0 = suppressWarnings(as.numeric(sample_n[1]))), by = poll_id]
   per_poll <- merge(per_poll, pf, by = "poll_id")
   # MRP sample sizes are the NATIONAL survey (YouGov fed2025: 10,822), not the seat's.
   per_poll$n_seat[per_poll$mrp] <- NA_real_
   per_poll$group <- ifelse(per_poll$mrp, "mrp", ifelse(per_poll$sponsored, "sponsored", "direct"))
+  if (.seat_poll_groups_mode() != "0") {
+    M <- .seat_poll_method_table()
+    el_lab <- el_arg
+    M <- M[M$election %in% el_lab]
+    k_pp <- paste(per_poll$.seat0, per_poll$.pollster, per_poll$.fw, per_poll$.n0)
+    k_m <- paste(M$seat, M$pollster, M$fieldwork_end, M$sample_n)
+    hit <- match(k_pp, k_m)
+    old <- ifelse(per_poll$mrp, "mrp", ifelse(per_poll$sponsored, "direct_stake", "direct_indep"))
+    per_poll$group <- ifelse(is.na(hit), old, M$mgroup[hit])
+    per_poll$group[per_poll$mrp] <- "mrp"          # MRP by structure stays MRP whatever the file says
+    if (.seat_poll_firm_on()) {
+      pc <- M$pollster_clean[hit]
+      per_poll$firm <- ifelse(is.na(hit) | !nzchar(pc) | pc == "unknown", per_poll$firm, .seat_poll_firm_key(pc))
+    }
+    up <- unique(per_poll[, c("poll_id", "group"), with = FALSE])
+    cat(sprintf("SPG1 %s seat-poll groups (%s): %s; %d of %d polls matched the method file\n", el_arg, .seat_poll_groups_mode(),
+                paste(sprintf("%s %d", names(table(up$group)), as.integer(table(up$group))), collapse = ", "),
+                sum(!is.na(unique(data.table::data.table(id = per_poll$poll_id, h = hit))$h)), length(unique(per_poll$poll_id))))
+  }
   if (.raw) return(per_poll)
   per_poll$wt <- .seat_poll_cell_weights(per_poll, seat_poll_decay_params(el_arg))
   per_poll$type <- ifelse(per_poll$mrp, "mrp", "direct")
@@ -173,6 +194,38 @@ seat_poll_shares <- function(election, days = 90, by_type = FALSE, by_poll = FAL
   if (!v %in% c("0", "1")) stop("AUSPOL_SEAT_POLL_FIRM_FLOOR must be \"0\" or \"1\", not ", v)
   v == "1"
 }
+# AUSPOL_SEAT_POLL_GROUPS (prereg-seat-poll-method-weights-2026-10-18.md): "0" = groups mrp / direct / sponsored
+# (sponsored from the client column, filled for ~35 of 1,210 polls); "method" = groups from
+# external/reference/polls/seat-polls/poll_methods.csv (mrp, direct_indep, direct_stake, optin) with an opt-in floor
+# prior of 225 (an opt-in poll misses by ~15 points until its record says otherwise; amendment 1); "method0" = the
+# same groups with no opt-in prior.
+.seat_poll_groups_mode <- function() {
+  v <- Sys.getenv("AUSPOL_SEAT_POLL_GROUPS", "0")
+  if (!v %in% c("0", "method", "method0")) stop("AUSPOL_SEAT_POLL_GROUPS must be \"0\", \"method\" or \"method0\", not ", v)
+  v
+}
+.seat_poll_onoff <- function(name) {
+  v <- Sys.getenv(name, "0")
+  if (!v %in% c("0", "1")) stop(name, " must be \"0\" or \"1\", not ", v)
+  v == "1"
+}
+# prereg-seat-poll-method-weights-2026-10-18.md amendment 2 (the one Bayesian blend):
+.seat_poll_sizevar_on  <- function() .seat_poll_onoff("AUSPOL_SEAT_POLL_SIZEVAR")   # model variance depends on predicted size
+.seat_poll_allpolls_on <- function() .seat_poll_onoff("AUSPOL_SEAT_POLL_ALLPOLLS")  # no direct-only override of the IND cell
+.seat_poll_splitall_on <- function() .seat_poll_onoff("AUSPOL_SEAT_POLL_SPLIT_ALL") # "others" over every unnamed class standing
+SEAT_POLL_OPTIN_FLOOR_PRIOR <- 225   # points^2 (sd 15): CHOSEN prior for opt-in seat polls (amendment 1)
+.seat_poll_method_table <- function() {
+  f <- file.path(pkg_root(), "external", "reference", "polls", "seat-polls", "poll_methods.csv")
+  if (!file.exists(f)) stop("AUSPOL_SEAT_POLL_GROUPS is on but ", f, " is missing")
+  m <- data.table::fread(f, showProgress = FALSE, colClasses = list(character = c("fieldwork_end")))
+  m$sample_n <- suppressWarnings(as.numeric(m$sample_n))
+  stake <- c("party", "union", "advocacy_group", "industry_lobby", "candidate_campaign")
+  m$mgroup <- ifelse(m$method == "mrp", "mrp", ifelse(m$method == "optin_link", "optin",
+                     ifelse(m$sponsor_type %in% stake, "direct_stake", "direct_indep")))
+  unique(m, by = c("election", "seat", "pollster", "fieldwork_end", "sample_n"))
+}
+.seat_poll_group_names <- function() if (.seat_poll_groups_mode() == "0") c("mrp", "direct", "sponsored") else c("mrp", "direct_indep", "direct_stake", "optin")
+.seat_poll_group_prior <- function(g, pool) if (identical(g, "optin") && .seat_poll_groups_mode() == "method") SEAT_POLL_OPTIN_FLOOR_PRIOR else pool
 .seat_poll_firm_key <- function(x) {
   k <- tolower(trimws(gsub("\\([^)]*\\)", "", x)))
   k[is.na(k)] <- ""
@@ -217,7 +270,19 @@ seat_poll_model_var <- function(target_election) {
     n <- length(unique(rows$unit[i]))
     (n * mean(e2[i]) + K * pooled) / (n + K)
   }, numeric(1))
-  c(v, pooled = pooled)
+  out <- c(v, pooled = pooled)
+  # AUSPOL_SEAT_POLL_SIZEVAR: one exponent g on (pred + 1) relative to each class's median prediction, from
+  # log squared error on the same earlier cells (class-demeaned), shrunk toward 0 by its SE. A 5% independent then
+  # carries far less model uncertainty than a 35% one, instead of the class-pooled sd for every independent.
+  ref <- vapply(cls, function(cl) stats::median(rows$pred[rows$class == cl]), numeric(1))
+  ly <- log(pmax(e2, 0.25)); lx <- log(rows$pred + 1) - log(ref[rows$class] + 1)
+  ly <- ly - stats::ave(ly, rows$class); lx <- lx - stats::ave(lx, rows$class)
+  g <- if (sum(lx^2) > 0) sum(lx * ly) / sum(lx^2) else 0
+  res <- ly - g * lx; se <- sqrt(sum(res^2) / max(1, length(ly) - 1) / sum(lx^2))
+  wg <- if (is.finite(g) && is.finite(se) && g != 0) max(0, 1 - se^2 / g^2) else 0
+  attr(out, "ref") <- c(ref, pooled = stats::median(rows$pred)); attr(out, "g") <- wg * g
+  attr(out, "g_raw") <- g; attr(out, "g_se") <- se
+  out
 }
 
 .seat_poll_mrp_name_on <- function() {
@@ -274,12 +339,13 @@ SEAT_POLL_N_FALLBACK <- 600        # seat sample when no earlier direct poll rec
 #' @return list `H`, `floor` (named by group), `n_fill`, `n_units`, `n_polls`.
 #' @export
 seat_poll_decay_params <- function(target_election) {
-  key <- paste(target_election, Sys.getenv("AUSPOL_SEAT_POLL_SOURCES", "all"), Sys.getenv("AUSPOL_SEAT_POLL_IND_MAP", "1"),
-               Sys.getenv("AUSPOL_SEAT_POLL_HANDKEYED", "1"), Sys.getenv("AUSPOL_SEAT_POLL_MRP_NAME", "1"),
-               Sys.getenv("AUSPOL_SEAT_POLL_FIRM_FLOOR", "0"), Sys.getenv("AUSPOL_SEAT_POLL_COALITION_DEDUP", "1"))
+  # keyed on EVERYTHING it reads (every AUSPOL_* variable and every input file's stamp, via the shares memo key):
+  # a hand-picked list of switches went stale as soon as GROUPS / SPLIT_ALL were added (2026-10-18)
+  key <- paste("DECAY", .seat_poll_memo_key(target_election, 0, FALSE, FALSE, TRUE))
   if (!is.null(.seat_poll_decay_cache[[key]])) return(.seat_poll_decay_cache[[key]])
-  grp <- c("mrp", "direct", "sponsored")
-  prior <- list(H = SEAT_POLL_HALFLIFE_PRIOR, floor = stats::setNames(rep(SEAT_POLL_FLOOR_PRIOR, 3), grp),
+  grp <- .seat_poll_group_names()
+  prior <- list(H = SEAT_POLL_HALFLIFE_PRIOR,
+                floor = stats::setNames(vapply(grp, function(g) .seat_poll_group_prior(g, SEAT_POLL_FLOOR_PRIOR), numeric(1)), grp),
                 n_fill = SEAT_POLL_N_FALLBACK, n_units = 0L, n_polls = 0L, firm_mult = numeric(0))
   f <- current_seat_predictions()
   els <- if (is.null(f)) character(0) else unique(f$election)
@@ -312,11 +378,13 @@ seat_poll_decay_params <- function(target_election) {
       pool_n <- U
       pool <- (pool_n * max(1, sum(rec * r2) / sum(rec)) + SEAT_POLL_FLOOR_K * SEAT_POLL_FLOOR_PRIOR) / (pool_n + SEAT_POLL_FLOOR_K)
       fl <- vapply(grp, function(g) {
+        # each group shrinks toward ITS OWN prior: the pool, except opt-in under "method" (amendment 1)
+        pg <- .seat_poll_group_prior(g, pool)
         i <- rows$group == g
-        if (!any(i)) return(pool)
+        if (!any(i)) return(pg)
         ng <- length(unique(rows$unit[i]))
         raw <- max(1, sum(rec[i] * r2[i]) / sum(rec[i]))
-        (ng * raw + SEAT_POLL_FLOOR_K * pool) / (ng + SEAT_POLL_FLOOR_K)
+        (ng * raw + SEAT_POLL_FLOOR_K * pg) / (ng + SEAT_POLL_FLOOR_K)
       }, numeric(1))
       obj <- vapply(grid, function(h) {
         w <- 0.5^(rows$days / h) / (sv + fl[rows$group])
@@ -345,8 +413,8 @@ seat_poll_decay_params <- function(target_election) {
       cat(sprintf("SPF  %s pollster floor multipliers (1 = its group's floor): %s\n", target_election,
                   paste(sprintf("%s %.2f", names(fm), fm), collapse = ", ")))
   }
-  cat(sprintf("SPD  %s seat-poll decay: half-life %.0f days, floor sd mrp %.2f / direct %.2f / sponsored %.2f points, n fill %.0f (%d earlier polls, %d seat-elections%s)\n",
-              target_election, out$H, sqrt(out$floor[["mrp"]]), sqrt(out$floor[["direct"]]), sqrt(out$floor[["sponsored"]]),
+  cat(sprintf("SPD  %s seat-poll decay: half-life %.0f days, floor sd %s points, n fill %.0f (%d earlier polls, %d seat-elections%s)\n",
+              target_election, out$H, paste(sprintf("%s %.2f", names(out$floor), sqrt(out$floor)), collapse = " / "),
               out$n_fill, out$n_polls, out$n_units, if (out$n_units == 0L) "; priors only" else ""))
   .seat_poll_decay_cache[[key]] <- out
   out
@@ -588,7 +656,9 @@ seat_poll_blend_apply <- function(shares, target_election) {
     cat(sprintf("SPB1 %s: per-poll match, %d implied cells\n", target_election, nrow(tb)))
   }
   wvec <- rep(w$w, nrow(tb))
-  if (ind_on && nrow(tb)) {
+  if (ind_on && nrow(tb) && .seat_poll_allpolls_on())
+    cat(sprintf("SPAP %s: every poll votes on the independent cell (no direct-only override; MRP and direct by their own weights)\n", target_election))
+  if (ind_on && nrow(tb) && !.seat_poll_allpolls_on()) {
     ik <- .ind_direct_cells(tb, tb_type)
     tb$poll[ik$row] <- ik$poll
     wvec[ik$row] <- w$w_ind
@@ -609,6 +679,17 @@ seat_poll_blend_apply <- function(shares, target_election) {
     # a precision in 1/points^2), which would size every pull wrongly.
     if (!"wsum" %in% names(tb_type)) stop("AUSPOL_SEAT_POLL_PRECISION_BLEND=1 needs a seat-poll table with decay weights (wsum): re-promote it")
     v <- unname(vm[tb$class]); v[!is.finite(v)] <- vm[["pooled"]]
+    if (.seat_poll_sizevar_on()) {
+      g <- attr(vm, "g"); ref <- attr(vm, "ref")
+      if (is.null(g) || is.null(ref)) stop("AUSPOL_SEAT_POLL_SIZEVAR=1 but the model variance carries no size exponent")
+      rf <- unname(ref[tb$class]); rf[!is.finite(rf)] <- ref[["pooled"]]
+      rs <- match(normalise_seat(tb$seat), normalise_seat(rownames(shares)))
+      cs <- match(tb$class, colnames(shares))
+      pr <- ifelse(is.na(rs) | is.na(cs), rf, shares[cbind(ifelse(is.na(rs), 1L, rs), ifelse(is.na(cs), 1L, cs))])
+      v <- v * ((pmax(pr, 0) + 1) / (rf + 1))^g
+      cat(sprintf("SPSV %s: model variance scales with predicted size, exponent %.2f (raw %.2f, se %.2f); cell sd %.1f-%.1f\n",
+                  target_election, g, attr(vm, "g_raw"), attr(vm, "g_se"), sqrt(min(v)), sqrt(max(v))))
+    }
     wvec <- v / (v + 1 / tb$wsum)
     cat(sprintf("SPPB %s: precision blend, pull median %.2f (range %.2f-%.2f) over %d cells; model sd by class %s\n",
                 target_election, stats::median(wvec), min(wvec), max(wvec), nrow(tb),
@@ -899,8 +980,9 @@ SEAT_POLL_IND_MAP_KNOWN_FRAC <- 0.5
 # As-at predictions only (current_seat_predictions()), so nothing from the result.
 .seat_poll_known_class_map <- function(s, el, f = current_seat_predictions()) {
   if (is.null(f) || !any(f$election == el)) return(s)
+  split_all <- .seat_poll_splitall_on()
   lump <- c("OTH_RIGHT", "ONP", "OTH")
-  fe <- f[f$election == el & f$party %in% lump]
+  fe <- f[f$election == el & (split_all | f$party %in% lump)]
   if (!nrow(fe)) return(s)
   fe$seat <- normalise_seat(fe$seat)
   add <- list(); drop <- integer(0)
@@ -910,6 +992,19 @@ SEAT_POLL_IND_MAP_KNOWN_FRAC <- 0.5
     oth_fig <- s$fp[r_oth]
     fs <- fe[fe$seat == normalise_seat(s$seat_name[r_oth])]
     if (!nrow(fs)) next
+    if (split_all) {
+      # every class standing here (our prediction above 0) that this poll does NOT name gets a share of its OTH, in
+      # proportion to what we expect of it; a class the poll names keeps its own figure and takes none of OTH
+      nm <- unique(s$class[s$poll_id == id & is.finite(s$fp) & s$class != "OTH"])
+      lump_k <- setdiff(unique(fs$party[is.finite(fs$xgb_pred_seat) & fs$xgb_pred_seat > 0]), c(nm, "OTH"))
+      lump_k <- c(lump_k, "OTH")
+      pred <- vapply(lump_k, function(k) sum(fs$xgb_pred_seat[fs$party == k], na.rm = TRUE), numeric(1))
+      resid <- pmax(pred, 0)
+      if (sum(resid) <= 0) next
+      part <- oth_fig * resid / sum(resid)
+      cat(sprintf("SPIM %s %s | %s | OTH %.1f split over every unnamed class: %s\n", el, s$seat_name[r_oth], id, oth_fig,
+                  paste(sprintf("%s %.1f", names(part), part), collapse = ", ")))
+    } else {
     pred <- vapply(lump, function(k) sum(fs$xgb_pred_seat[fs$party == k], na.rm = TRUE), numeric(1))
     named <- vapply(lump, function(k) if (k == "OTH") 0 else
       sum(s$fp[s$poll_id == id & s$class == k & is.finite(s$fp)]), numeric(1))
@@ -918,7 +1013,8 @@ SEAT_POLL_IND_MAP_KNOWN_FRAC <- 0.5
     part <- oth_fig * resid / sum(resid)
     cat(sprintf("SPIM %s %s | %s | OTH %.1f split by as-at expectation: OTH_RIGHT %.1f, ONP %.1f, OTH %.1f\n",
                 el, s$seat_name[r_oth], id, oth_fig, part[["OTH_RIGHT"]], part[["ONP"]], part[["OTH"]]))
-    for (k in lump[part > 0]) {
+    }
+    for (k in names(part)[part > 0]) {
       row <- s[r_oth]; row$class <- k; row$fp <- part[[k]]
       add[[length(add) + 1L]] <- row
     }

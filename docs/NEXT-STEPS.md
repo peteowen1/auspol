@@ -203,7 +203,9 @@ person rule, statewide poll weighting by track record, seat-poll precision blend
   and tracks growth in hindsight (surges keep strongholds ahead, collapses converge), but time-forward fits only
   saw the collapse years. fed2025 ONP truth was near-UNIFORM (+1-2 pts everywhere), not proportional. Strongest
   remaining version: give the xgb layer the inputs to learn it (predicted growth ratio, ratio x deviation, stood
-  last time); needs a stage-1 rebuild. Other fed2025 losses: 15 Labor wins called Coalition (Labor primary under-called ~10 pts in
+  last time); needs a stage-1 rebuild.
+  REFUSED 18 Oct (prereg-growth-ratio-features RESULT): minor seat RMSE +0.031 (SE 0.012), seat log loss +0.0042
+  (SE 0.0014). Closed. Isolated copies C:\devuspol-iso-ratio and -iso-base (16 GB each, no junctions) await removal. Other fed2025 losses: 15 Labor wins called Coalition (Labor primary under-called ~10 pts in
   the marginals: Bennelong 32.9 vs 45.4), 4 independents favoured who lost (Wannon, Monash, McMahon, Cowper).
   fed2025 drifted 0.318 (30 Sep) -> 0.377 across many changes; a snapshot bisect would separate leak-fix costs.
 - OPEN statewide flow shocks, GENERAL (17 Oct, scratchpad flowvar.R, 13 transfers files, 32 elections): the count

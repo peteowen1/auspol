@@ -179,6 +179,18 @@ CLASSIFY <- list(
   AUSPOL_TRAIN_DEMEAN = paste(
     "SHIPPED (1) 2026-10-13, FIT-TIME: read by fit_xgb_primary_asat.R and fit_xgb_primary_v6_final.R (rebuild",
     "stages 4-5); harnesses and live load the trained models. plans/prereg-training-weights-2026-10-13.md"),
+  AUSPOL_SEAT_POLL_SIZEVAR = paste(
+    "ARM (0), UNIVERSAL via R/: read inside R/seat_poll_blend.R (the seat-poll blend every harness and fit_seats_full.R",
+    "reach). plans/prereg-seat-poll-method-weights-2026-10-18.md amendment 2"),
+  AUSPOL_SEAT_POLL_ALLPOLLS = paste(
+    "ARM (0), UNIVERSAL via R/: read inside R/seat_poll_blend.R (the seat-poll blend every harness and fit_seats_full.R",
+    "reach). plans/prereg-seat-poll-method-weights-2026-10-18.md amendment 2"),
+  AUSPOL_SEAT_POLL_SPLIT_ALL = paste(
+    "ARM (0), UNIVERSAL via R/: read inside R/seat_poll_blend.R (the seat-poll blend every harness and fit_seats_full.R",
+    "reach). plans/prereg-seat-poll-method-weights-2026-10-18.md amendment 2"),
+  AUSPOL_SEAT_POLL_GROUPS = paste(
+    "ARM (0), UNIVERSAL via R/: read inside seat_poll_shares() and seat_poll_decay_params() (R/seat_poll_blend.R),",
+    "which every harness and fit_seats_full.R reach through the seat-poll blend. plans/prereg-seat-poll-method-weights-2026-10-18.md"),
   AUSPOL_XGB_RATIO_FEATS = paste(
     "ARM (0), FIT-TIME + LIVE: read by fit_xgb_primary_v6.R (training features; the as-at and final models",
     "inherit them) and R/xgb_primary_override.R (live). Harnesses read the as-at predictions file. plans/prereg-growth-ratio-features-2026-10-18.md"),

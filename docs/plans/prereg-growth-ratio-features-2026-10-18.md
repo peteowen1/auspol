@@ -57,3 +57,13 @@ Shipping is Pete's call on the result.
 - A seat's own pre-election signal of growth (local campaign, candidate) beyond what the features already carry.
 - Independents' over-call (Melbourne 1.0 -> 6.7, fed2025 Wannon/Monash/McMahon/Cowper favoured and lost) is a
   separate question: next, once this one is scored.
+
+## RESULT (2026-10-18; isolated rebuilds from stage 3, arm C:\dev\auspol-iso-ratio vs baseline C:\dev\auspol-iso-base,
+## same inputs, code fed3386; scripts/score_ratio_feats.R) -- REFUSED
+
+Baseline reproduced the published scoreboard exactly (0.3278), so the comparison is clean. Primary, minor-class seat
+share RMSE: 3.544 -> 3.575, +0.031 (SE 0.012): WORSE by more than 1 SE (IND, OTH_RIGHT, OTH, GRN each worse by >1 SE;
+ONP +0.038, SE 0.048). Guard, seat log loss over 35 elections: 0.3278 -> 0.3320, +0.0042 (SE 0.0014): FAILS. Surge
+elections +0.060 (SE 0.078); collapse elections -0.002 (SE 0.002). fed2025 One Nation by previous share barely moves
+(0-1%: 3.5 -> 3.4, actual 1.8). The features let the trees fit noise; the switch stays "0". In the published path the
+fed2025 low-One-Nation over-call is 1-2 points, not base_pred's 3-4: the xgb layer and blend already correct part of it.
