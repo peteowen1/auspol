@@ -1,3 +1,10 @@
+# auspol 0.4.102
+
+- **Seat polls weighed by how good they are** (arm H, eleven `AUSPOL_SEAT_POLL_*` switches): each poll by its own quality, recency and sample (opt-in polls start near zero), a firm's releases share one floor, every election's polls carry a shared miss, a poll only counts for parties or candidates it names, independents are measured by direct seat polls, and a candidate's rise in search interest gives them more room. 20k deciding run, 35 elections: polled seats -0.0136 (SE 0.0021), all seats 0.3190 -> 0.3176 (SE 0.0008), AEF-7 0.2676 -> 0.2622. McMahon 2025, where one opt-in poll had the independent at 41: Labor 0.27 -> 0.92 to win.
+- **The live forecast now matches what was trained and scored** (pipeline audit F1-F3): the xgb layer gets a per-class statewide level, the live base gets the minor-defector discount, and the major-defector discount is fitted rather than fixed at 0.282.
+- **Liberal and National counted as two candidates** where both stand; **seats with a strong independent** get a wider, heavier-tailed spread; a list of the 10 latest polls on the site.
+- Pre-registration rules: one standard decision rule; a large gain in one election is no longer a reason to refuse.
+
 # auspol 0.4.101
 
 - **35 scored elections** (was 22): vic2010, wa2021, nsw2011/2015, qld2012/2015/2017, sa2010/2014/2018, nt2016/2020/2024, scored each election x sqrt(formal votes); training rule P4 (demean + decay); leak fixes to the conserve fit and MP slopes.
