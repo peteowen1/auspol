@@ -135,3 +135,20 @@ and votes; RedBridge (independent in others) does not.
 **Arms:** C = B + NAMED_ONLY; C minus SIZEVAR (the size rule is the other suspect for Warringah 2019 and Mayo 2016,
 whose only polls were GetUp-paid). Same metrics, clauses and scorer as B. Reported per arm: McMahon, Curtin, Warringah
 2019, Mayo 2016, Goldstein 2025, Kennedy 2022.
+
+## Amendment 4 (2026-10-18 16:00, before anything is built or run; Pete: "lets try this")
+
+The original text and amendments 1-3 stand. Pete: use salience to tell a real independent surge (Steggall 2019, Chaney
+2022, Sharkie 2016: polls right, model low) from a lone bad poll (McMahon 2025). Campaign rise in search interest
+(`jump`, `output/salience-v6.csv`): Steggall 2019 0.772, Sharkie 2016 0.390, Daniel 2022 0.092, Chaney 2022 0.052,
+Camenzuli 2025 0.014. fed2025 is cached (613 candidates); its xgb `surge_h` is a filler 0 (NEXT-STEPS F21), which this
+arm does not use.
+
+**`AUSPOL_SEAT_POLL_SALIENCE_VAR=1` (new):** under the precision blend, an independent cell's model variance is
+multiplied by `exp(b * x)`, `x = log(jump + 0.01)` minus its mean over the earlier elections' polled independent cells,
+`b` fitted on those cells (least squares on log squared error, the same cells as the size exponent), shrunk toward 0
+by its SE. High search-interest rise means a less certain model, so a poll moves it more. No salience row: `x = 0`
+(multiplier 1, the class's ordinary variance). Reported: `b`, its SE, and the multiplier for the six named seats.
+
+**Arms (with C and C-minus-SIZEVAR from amendment 3):** D = C + SALIENCE_VAR; D minus SIZEVAR. Same metrics, clauses and
+scorer. Dry-run before scoring: print the multiplier for Warringah 2019, Curtin 2022, Mayo 2016, McMahon 2025.

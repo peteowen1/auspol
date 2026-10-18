@@ -14,6 +14,12 @@ Pete's requests: `docs/PETE-ASKED-FOR.md`. Rewritten 2026-09-19 21:30.
 - OPEN F3 (live): `fit_seats_full.R:932` hardcodes the defector discount 0.282; every harness fits it time-forward.
 - OPEN F4 (scores): six harnesses use a flat `PARTY_SD` 1.5 and no `statewide_draws` (vic :853); only fed and live
   pass statewide_draws, so 16 of 23 pairs are scored on a different statewide spread than ships.
+- OPEN F21 (found 18 Oct): `surge_h` is a filler 0 on all 1,050 fed2025 xgb rows (`fit_xgb_primary_v6.R:567`): the hazard
+  loop (:555-565) runs only for SURGE_CANON (:119-129), and fed2025 is not in it, though its salience (`jump`) is cached
+  for 613 candidates (`output/salience-v6.csv`). A constant within one election is a label for it (CLAUDE.md). Fix:
+  score fed2025 (and every later election) with the hazard, without adding it to the training pairs.
+- IN PROGRESS: vic2026 salience fill (410 of 501 candidates missing), `scripts/fetch_salience_vic2026_full.R`,
+  `deciding-runs/20261018-salience-vic2026/`; then `scripts/build_vic2026_salience_corpus.R`.
 - OPEN F5-F20: salience/nomination zeroing applied twice in harnesses, demographic correction rescaled away (~60%
   delivered), post-xgb tables fitted on residuals the shares no longer carry, IND override (being fixed: seat-poll
   prereg), CE error z standardised without the composition factor, HTV overwriting xgb flows, registry greps comments.
