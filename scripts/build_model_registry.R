@@ -191,6 +191,9 @@ CLASSIFY <- list(
   AUSPOL_SEAT_POLL_ELECTION_ERR = paste(
     "SHIPPED 2026-10-18 as arm H (deciding-runs/20261018-2009-seatpoll-H). ARM (0), UNIVERSAL via R/: read inside R/seat_poll_blend.R (the seat-poll blend every harness and fit_seats_full.R",
     "reach). plans/prereg-seat-poll-method-weights-2026-10-18.md amendment 8"),
+  AUSPOL_DEMO_RESID_FULL = paste(
+    "ARM (0), UNIVERSAL via R/: read inside R/demographic_residual.R (the demographic correction every harness and",
+    "fit_seats_full.R reach). plans/prereg-demo-resid-full-2026-10-19.md"),
   AUSPOL_SURGE_H_TF = paste(
     "SHIPPED 2026-10-18 as a leak fix, TRAINING-ONLY by design: read in scripts/fit_xgb_primary_v6.R, which builds the xgb",
     "training features (stage 3). Harnesses and fit_seats_full.R were already time-forward."),
