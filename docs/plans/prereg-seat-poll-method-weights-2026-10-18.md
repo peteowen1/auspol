@@ -248,3 +248,16 @@ Not modelled: that the model's own error may share part of the same miss (the st
 
 **Arms:** H = G + ELECTION_ERR (G = F + FIRM_SHARED); H minus FIRM_SHARED. Same metrics, clauses, scorer and named
 seats, plus Aston, Ryan, Dickson. Dry run first: `tau2` per class at fed2022 and fed2025, and Aston's ALP pull.
+
+## RESULT, amendments 7-8 screens (2026-10-18 20:10; quick_arm 5,000 sims, nine elections)
+
+| Arm | Polled seats (SE) | Every seat (SE) | One election's share | Without McMahon (SE) | Verdict |
+|---|---|---|---|---|---|
+| G = F + FIRM_SHARED | -0.0101 (0.0057) | -0.0029 (0.0020) | fed2022 0.72 | -0.0063 (0.0087) | refused (clause) |
+| G minus salience | -0.0073 (0.0047) | -0.0021 (0.0018) | 0.88 | -0.0034 (0.0076) | refused (clause) |
+| H = G + ELECTION_ERR | **-0.0135 (0.0021)** | **-0.0039 (0.0021)** | fed2025 0.48 | **-0.0097 (0.0031)** | **passes every clause** |
+
+H, P(actual winner) vs shipped: McMahon 0.273 -> 0.919, Mayo 2025 0.947 -> 0.965, Goldstein 2025 0.293 -> 0.322,
+Aston 0.321 -> 0.331; losers Curtin 2022 0.652 -> 0.528, Warringah 2019 0.235 -> 0.146, Ryan 2025 0.755 -> 0.648.
+Next: the deciding run, H at 20,000 sims on all elections (CLAUDE.md), then Pete's ship decision. (G-salience ran while
+R/seat_poll_blend.R gained the ELECTION_ERR code behind its off switch; with it off the code is value-identical.)
