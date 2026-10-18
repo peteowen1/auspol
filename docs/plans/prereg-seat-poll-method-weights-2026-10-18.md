@@ -60,3 +60,46 @@ nsw2023 qld2017 qld2020, 5,000 sims), then a 20,000-sim deciding run on the best
 - 141 direct polls have no known method and 86 no known sponsor; they keep `direct_indep`.
 - Method labels for non-MRP polls are mostly the agent's inference from each firm's usual practice (medium/low
   confidence); only sponsor labels backed by a "commissioned by" footnote are high confidence.
+
+## Amendment 1 (2026-10-18, before anything is built; Pete: "maybe the assumption is weight is 0 until proven otherwise
+## and this type of poll stays at weight near 0 ... not being hacky but being bayesian")
+
+The original text stands. The opt-in prior changes from "4x the pooled floor" to an explicit error-size prior:
+**an opt-in seat poll is assumed to miss by about 15 points (floor prior 225 = 15^2)** until its own record says
+otherwise. CHOSEN, and stated as an error size so it can be read and argued with: at that floor its weight is roughly
+a tenth of a typical direct poll's, i.e. near zero, as Pete asked. It is shrunk toward the group's observed floor by
+the same `SEAT_POLL_FLOOR_K` pseudo seat-elections as every other group, so only accumulated evidence moves it.
+Every other group keeps the existing prior (the pooled floor), so the rule is one rule for all groups with one
+documented prior per group, not a special case. G0 (no opt-in prior) is still reported, so the prior's effect is
+visible on its own.
+
+## Amendment 2 (2026-10-18, before anything is built or run; Pete: "One Bayesian blend")
+
+The original text and amendment 1 stand. Tracing McMahon end to end in the SHIPPED blend (scratchpad `mcmtrace.R`,
+our pre-blend shares fed in) showed the groups alone cannot fix it: IND 4.9 -> 28.3 shipped, 27.5 with arm G, 29.6
+with the existing precision blend. Three causes, all general:
+1. **One model uncertainty per class.** `seat_poll_model_var()` gives every independent sd 14.8 points, so any poll
+   outvotes the model on a 5% independent.
+2. **The independent cell is overwritten by the direct-poll figure alone** (`.ind_direct_cells()`), so McMahon's
+   MRPs (independent 3.9-6.6) never vote on it, and a lone direct poll is never weighed against anything.
+3. **"Others" in a poll is split only over OTH_RIGHT / ONP / OTH**, so McMahon's RedBridge MRP others (17-19)
+   went wholly to One Nation (actual 8.7) and none to the independent.
+
+**Arm B (one Bayesian blend)** = all of these together, each behind its own switch so its contribution is measured:
+- `AUSPOL_SEAT_POLL_PRECISION_BLEND=1` (built, off): each cell's pull is `v / (v + 1/P)`, P the summed per-poll
+  precisions.
+- `AUSPOL_SEAT_POLL_SIZEVAR=1` (new): the model's error variance `v` for a cell depends on the class AND our
+  predicted share: per class, `v = v_c * ((pred + 1) / (ref_c + 1))^g`, `v_c` and `ref_c` the class's shrunk
+  variance and median prediction on earlier elections' polled cells (as now), `g` one exponent fitted on the same
+  earlier cells (least squares on log squared error), shrunk toward 0 by its SE (`w = max(0, 1 - se^2/g^2)`).
+- `AUSPOL_SEAT_POLL_ALLPOLLS=1` (new): no direct-only override of the independent cell; every poll (MRP and direct)
+  enters the cell with its own floor-and-recency weight.
+- `AUSPOL_SEAT_POLL_GROUPS=method` (built): group floors from the method file, opt-in prior 225.
+- `AUSPOL_SEAT_POLL_SPLIT_ALL=1` (new): a poll's "others" is split over EVERY class standing in the seat that the
+  poll does not name (independent and Greens included), in proportion to our as-at expectation; the existing
+  endorsed/sitting OTH-to-IND rule is unchanged.
+
+**Arms screened:** A (shipped); B (all five); and B minus each one in turn (five arms). The primary, guard and
+refusal clauses above apply to B; the leave-one-out arms are REPORTED, so any piece that adds nothing can be dropped
+before the deciding run (a piece whose removal does not worsen B by more than 1 SE is dropped: fewer moving parts).
+McMahon's end-to-end independent share and win probability are reported for every arm.
