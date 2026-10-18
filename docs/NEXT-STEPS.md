@@ -260,6 +260,16 @@ Verbatim in `backlog/journal-2026-10-07-to-10-08.md`. Still OPEN from them:
   fed2025 independents were called well (Wannon 32.9 vs 32.1, Cowper 28.4 vs 30.2, Monash 23.9 vs 27.3: losses came
   from preferences/opponents); calibration mildly over-confident (0.7-0.9 band: expected 8.6 wins, 6 won); small
   INDs median 1.7-2.2 pts high.
+  TRACED 18 Oct (Pete): the McMahon 29 is ONE poll, Compass Polling 8 Apr 2025, n=1,003, IND 41 (actual 9.8, miss
+  +31.2; client not recorded); YouGov MRPs of 10,217 and 10,822 had 5.2 and 3.9. Compass's record: North Sydney
+  2022 IND -11.6, Wentworth 2025 -9.7; mean |IND miss| 17.5, second worst of all pollsters (YouGov MRP 5.9 on 349).
+  ROOT: the seat-poll weight uses age, sample size and kind, NOT the pollster's own record or agreement with other
+  polls in the seat. General fix to prereg: per-pollster seat-poll reliability, time-forward, shrunk by n; and a
+  consensus down-weight. Data hygiene: one row's pollster reads "YouGo (MRP)".
+  The poll itself (Media Watch inquiry, Compass's replies of 24-25 Apr 2025, Wikipedia ref [32]): a genuine
+  "intended federal vote" question with candidates named, BUT an opt-in SMS-link survey Compass calls "campaign-level
+  sentiment", not formal polling; Camenzuli's name was first and appeared preselected in the drop-down; self-funded
+  (their claim). So a third piece for the fix: record a poll's METHOD (opt-in vs panel/phone) where known.
 - OPEN: 120 `AUSPOL_*` names read in code but unregistered, classified 2026-10-12 (`reviews/unregistered-switches-2026-10-12.md`):
   33 MODEL / 24 RUN / 18 DIAG / 45 DEAD. Act on: live vs backtest MP-slope tier differs (live keeps a party only at
   n_member >= 8, harnesses keep any); ~20 harness-only model switches to register or delete.

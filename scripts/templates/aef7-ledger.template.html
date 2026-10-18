@@ -717,7 +717,7 @@ a.seatjump{color:inherit;text-decoration:underline dotted;text-underline-offset:
       miss minus AEF's: negative means we were closer. AEF folds One Nation and minor-right into "other" in some
       elections, so those rows show no AEF figure. Click a seat in the one-per-seat view to jump here.</p>
     </details>
-    <span class="csvline"><code>published-predictions.csv</code>, all 22 elections:
+    <span class="csvline"><code>published-predictions.csv</code>, every scored election:
       <button class="toggle" id="dl-csv" type="button" hidden>Save the CSV</button>
       <span id="dl-alt">on the <a href="https://github.com/peteowen1/auspol/releases/tag/shipped-models" target="_blank" rel="noopener">shipped-models release</a></span><span id="dl-msg" role="status"></span></span>
   </div>
@@ -763,8 +763,9 @@ CANDS.forEach(c => {
 const CCOLS = [
   {k:"pair", t:"Election"}, {k:"seat", t:"Seat"}, {k:"party", t:"Party", pill:true},
   {k:"candidate", t:"Candidate"}, {k:"won", t:"Won"},
-  {k:"p_win", t:"Ours P(win)", num:true, dp:3},
+  {k:"p_win", t:"Ours P(win)", num:true, dp:3}, {k:"aef_p_win", t:"AEF P(win)", num:true, dp:3},
   {k:"actual", t:"Actual %", num:true, dp:1}, {k:"ours", t:"Ours %", num:true, dp:1}, {k:"aef", t:"AEF %", num:true, dp:1},
+  {k:"prev_share", t:"Last time %", num:true, dp:1}, {k:"prev_candidate", t:"Last time candidate"},
   {k:"miss", t:"Our miss", num:true, dp:1, miss:true}, {k:"aef_miss", t:"AEF miss", num:true, dp:1, miss:true},
   {k:"abs_miss", t:"|Our miss|", num:true, dp:1}, {k:"d_abs", t:"Δ |miss|", num:true, dp:1, delta:true}
 ];

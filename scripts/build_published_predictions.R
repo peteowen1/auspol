@@ -66,7 +66,39 @@ P <- merge(P, cands, by = c("pair", "seat", "party"), all.x = TRUE)
 aef <- fread(file.path(OUT, "aef7-fptrend.csv"), showProgress = FALSE)
 P <- merge(P, aef[, list(pair, seat, party, aef = aef_fp_pred)], by = c("pair", "seat", "party"), all.x = TRUE)
 P[, `:=`(miss = actual - ours, aef_miss = actual - aef)]
-setcolorder(P, c("pair", "seat", "party", "candidate", "n_cands", "ours", "actual", "miss", "p_win", "won", "aef", "aef_miss"))
+
+# Three context columns for the ledger's every-candidate view (Pete, 2026-10-18: "show candidate last election and
+# party last election ... to see what went wrong", and "add aef prob to win"):
+#   prev_share     the class's share in this seat at the PREVIOUS election: the notional figure on the new boundaries
+#                  where the seat was redrawn (what the model actually started from), else the same-named seat
+#   prev_candidate the class's leading candidate there last time ("+k" when it ran more), same-named seat only
+#   aef_p_win      AE Forecasts' win probability for this class (scripts/score_aeforecasts.R, AEF-7 pairs only)
+suppressMessages(devtools::load_all(quiet = TRUE))
+.prs <- all_election_pairs()
+.prev <- stats::setNames(vapply(.prs, function(x) x$prev, ""), vapply(.prs, function(x) x$election, ""))
+C2 <- fread(file.path(OUT, "candidacies.csv"), select = c("election", "seat", "name", "party", "pcv"),
+            showProgress = FALSE, encoding = "UTF-8")
+PS <- C2[, list(prev_share_same = sum(pcv, na.rm = TRUE)), by = list(prev_el = election, seat, party)]
+PC <- C2[order(-pcv)][, list(prev_candidate = name[1L], .n = .N), by = list(prev_el = election, seat, party)]
+PC[.n > 1L, prev_candidate := sprintf("%s +%d", prev_candidate, .n - 1L)][, .n := NULL]
+P[, prev_el := unname(.prev[pair])]
+P <- merge(P, PS, by = c("prev_el", "seat", "party"), all.x = TRUE)
+P <- merge(P, PC, by = c("prev_el", "seat", "party"), all.x = TRUE)
+NB <- fread(file.path(OUT, "notional-baselines.csv"), showProgress = FALSE)[, list(pair = election, seat, party, prev_share_notional = pcv)]
+NBseats <- unique(NB[, list(pair, seat)])[, has_notional := TRUE]
+P <- merge(P, NB, by = c("pair", "seat", "party"), all.x = TRUE)
+P <- merge(P, NBseats, by = c("pair", "seat"), all.x = TRUE)
+# a redrawn seat takes its notional share (0 where the class had none on the new boundaries); otherwise the same seat
+P[, prev_share := ifelse(has_notional %in% TRUE, ifelse(is.na(prev_share_notional), 0, prev_share_notional), prev_share_same)]
+P[, c("prev_share_same", "prev_share_notional", "has_notional", "prev_el") := NULL]
+AP <- fread(file.path(OUT, "aef-seat-party-probs.csv"), showProgress = FALSE)
+AP[, pair := paste0(sub("^[0-9]{4}", "", election), substr(election, 1, 4))][, election := NULL]
+P <- merge(P, AP[, list(pair, seat, party, aef_p_win)], by = c("pair", "seat", "party"), all.x = TRUE)
+P[pair %in% AEF7 & is.na(aef_p_win) & !is.na(aef), aef_p_win := 0]
+cat(sprintf("PP7 context columns: prev_share on %d of %d rows, prev_candidate on %d, aef_p_win on %d of %d AEF-7 rows\n",
+            sum(!is.na(P$prev_share)), nrow(P), sum(!is.na(P$prev_candidate)), sum(!is.na(P$aef_p_win)), sum(P$pair %in% AEF7)))
+setcolorder(P, c("pair", "seat", "party", "candidate", "n_cands", "ours", "actual", "miss", "p_win", "won", "aef", "aef_miss",
+                 "aef_p_win", "prev_share", "prev_candidate"))
 setorder(P, pair, seat, -actual)
 
 # Coverage, not presence (global CLAUDE.md): every column, and the checks
@@ -93,11 +125,12 @@ no1 <- won_n[w != 1L]
 if (nrow(no1)) cat(sprintf("PP4! %d seat(s) without exactly one winning class in allprobs: %s\n", nrow(no1),
                            paste(sprintf("%s %s (%d)", no1$pair, no1$seat, no1$w), collapse = ", ")))
 
-num <- c("ours", "actual", "miss", "p_win", "aef", "aef_miss")
+num <- c("ours", "actual", "miss", "p_win", "aef", "aef_miss", "aef_p_win", "prev_share")
 P[, (num) := lapply(.SD, function(v) round(v, 4)), .SDcols = num]
 fwrite(P, file.path(OUT, "published-predictions.csv"))
 A <- P[pair %in% AEF7, list(pair, seat, party, candidate, ours = round(ours, 2), actual = round(actual, 2),
-                            p_win = round(p_win, 4), won, aef = round(aef, 2))]
+                            p_win = round(p_win, 4), won, aef = round(aef, 2), aef_p_win = round(aef_p_win, 4),
+                            prev_share = round(prev_share, 2), prev_candidate)]
 writeLines(jsonlite::toJSON(A, dataframe = "rows", na = "null", auto_unbox = TRUE), file.path(OUT, "published-predictions-aef7.json"))
 cat(sprintf("PP6  wrote output/published-predictions.csv (%d rows, %.0f KB) and the AEF-7 subset (%d rows)\n",
             nrow(P), file.size(file.path(OUT, "published-predictions.csv")) / 1024, nrow(A)))
