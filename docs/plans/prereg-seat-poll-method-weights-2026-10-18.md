@@ -168,3 +168,20 @@ polled ones. The model's own error does not need a poll to be measured. Same shr
 **Arms (replacing amendment 3-4's list; nothing was run under it):** C = B + NAMED_ONLY + MODELVAR_ALL; C minus
 MODELVAR_ALL; D = C + SALIENCE_VAR. Same metrics, clauses, scorer and named seats. Dry-run before scoring: print `v` for
 IND at fed2016 and fed2019 under both settings.
+
+## Amendment 6 (2026-10-18 17:35, before anything is built or run; Pete: "build direct polls only for now")
+
+The original text and amendments 1-5 stand. Arm C (amendment 5) did not pass (polled seats +0.0007, SE 0.0131) and broke
+Mayo 2025: YouGov's MRP lists a generic "IND" 1.9-2.1 that is not Sharkie (she sits in its OTH 31-44); with one
+independent on the ballot, NAMED_ONLY read that label as naming her, and the 1.9 voted: Sharkie 31.1 -> 8.5 (actual 29.9),
+P(win) 0.947 -> 0.102. An MRP's party columns are not candidates, so a label cannot say whether its IND is the
+independent standing. Arm D (C + salience) was stopped unread for the same flaw.
+
+**`AUSPOL_SEAT_POLL_IND_DIRECT=1` (new, with NAMED_ONLY):** an MRP never votes on an independent's cell; direct seat
+polls (which ask about the actual candidates) do, each by its own precision (floor by method group, recency, sample),
+not by the fixed IND weight. MRPs keep voting on ALP, LNP, GRN and ONP. Pete's longer-term fix, queued: a table of which
+named candidates each MRP release modelled (agent research under way, `mrp_candidates.csv`), so an MRP votes on an
+independent it names.
+
+**Arms (replacing amendment 5's list; C was read, D was not):** E = C + IND_DIRECT; F = E + SALIENCE_VAR. Same metrics,
+clauses, scorer and named seats (adding Mayo 2025 and Warringah 2025).
