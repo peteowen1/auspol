@@ -195,3 +195,23 @@ candidates; "yes" is inferred from the poll's own columns, YouGov 2025 seats wit
 A direct poll's named independent votes even when a second independent stands (Freshwater Warringah 2025). Arm C (MRPs
 vote on IND by label) is the "including MRP" comparison already read. Dry run fed2025: Warringah 33 (E) / 40.5 (listed),
 actual 39.7; Goldstein 28.9 / 37.8, actual 30.7; Curtin 31.2 / 31.3, actual 32.2; McMahon only Compass 41 (opt-in).
+
+## RESULT, amendments 3-6 screens (2026-10-18 18:50; quick_arm 5,000 sims, nine elections, scripts/score_seatpoll_arms.R)
+
+Seat-winner log loss, arm minus shipped (lower is better), SE clustered on election; primary = 312 polled seats.
+
+| Arm | Polled seats | Every seat | fed2025 polled | McMahon | Curtin 22 | Warringah 19 | Mayo 16 | Mayo 25 | Goldstein 25 |
+|---|---|---|---|---|---|---|---|---|---|
+| shipped | 0 | 0 | 0 | 0.273 | 0.652 | 0.235 | 0.084 | 0.947 | 0.293 |
+| B | -0.0059 (0.0040) | -0.0017 | -0.0055 | 0.914 | 0.455 | 0.121 | 0.037 | n/a | 0.122 |
+| C (MRP IND by label) | +0.0007 (0.0131) | +0.0002 | +0.0179 | 0.918 | 0.593 | 0.109 | 0.058 | 0.102 | 0.132 |
+| E (IND direct only) | -0.0039 (0.0093) | -0.0011 | +0.0082 | 0.913 | 0.592 | 0.109 | 0.058 | 0.965 | 0.289 |
+| E-listed | -0.0046 (0.0087) | -0.0013 | +0.0065 | 0.914 | 0.591 | 0.109 | 0.058 | 0.965 | 0.135 |
+| E-pooled | -0.0045 (0.0088) | -0.0013 | +0.0067 | 0.914 | 0.591 | 0.109 | 0.058 | 0.965 | 0.290 |
+| F (E + salience) | -0.0065 (0.0102) | -0.0019 | +0.0086 | 0.911 | 0.615 | 0.141 | 0.081 | 0.965 | 0.294 |
+
+Named seats: P(actual winner). No arm is better than shipped by more than 1 SE; none ships. Salience (F) behaves as meant
+(b 0.20, SE 0.06; Warringah 2019 multiplier 1.93, McMahon 1.08) and is the best arm, but within noise. What remains: the
+E family loses on fed2025 major-party cells (Aston ALP 31.5 -> 30.2, actual 37.3; Ryan LNP 33.7 -> 35.7, actual 34.6):
+the precision blend gives MRP major-party columns more pull than the shipped fixed weight. Warringah 2019's only poll
+(GetUp, IND 22.3, actual 44.7) under-called Steggall itself; no poll weight recovers it.
