@@ -363,6 +363,10 @@ seat_poll_model_var <- function(target_election) {
     out <- c(pooled = SEAT_POLL_MODEL_VAR_PRIOR)
     attr(out, "ref") <- c(pooled = 1); attr(out, "g") <- 0; attr(out, "g_raw") <- NA_real_; attr(out, "g_se") <- NA_real_
     attr(out, "sal_b") <- 0; attr(out, "sal_mean") <- 0; attr(out, "sal_se") <- NA_real_; attr(out, "sal_n") <- 0L   # (review 2026-10-18)
+    if (.seat_poll_heavy_tail_on()) {   # the mixture's prior (.seat_poll_em2 on too few cells) (review 2026-10-19)
+      p0 <- .seat_poll_em2(numeric(0))
+      attr(out, "ht_pi") <- c(pooled = p0[["pi"]]); attr(out, "ht_s1") <- c(pooled = p0[["s1"]]); attr(out, "ht_k") <- c(pooled = p0[["k"]])
+    }
     return(out)
   }
   e2 <- (rows$actual - rows$pred)^2
