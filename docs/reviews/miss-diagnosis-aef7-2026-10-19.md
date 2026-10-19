@@ -372,3 +372,16 @@ Cause A is two different things, not "one missing ONP level":
   contested seats; and ONP not modelled as its own class in low-level elections, possibly counted under OTH_RIGHT).
   General, not ONP-only: any minor party standing in a subset of seats is exposed (Victoria 2026: Legalise Cannabis,
   Family First, Libertarians).
+
+## Trace of the partial-contest gap (main session, 19 Oct, late)
+
+Two mechanisms, both losing a minor class's statewide level in the seats where it stands:
+1. **Zeroing does not re-concentrate (CONFIRMED in code).** `zero_unnominated()` (`R/nomination_zero.R:41-90`) zeroes
+   a class wherever it has no candidate and gives the freed share to that seat's other classes (by flows, lines
+   64-86). Nothing returns the class's lost total to its contested seats. nsw2023 Cessnock: ONP stood, given 2.24,
+   polled 15.27; statewide level 1.84 (actual 1.80) spread over 93 seats, 76 then zeroed.
+2. **No previous candidate, zero start (shown in data, path NOT yet traced).** sa2022 Chaffey: ONP stood, predicted
+   exactly 0, polled 9.88; likewise all 19 sa2022 and all 12 nsw2019 ONP seats, none with an ONP candidate at the
+   previous election. Yet nsw2023 Cessnock (no 2019 ONP candidate) got 2.24, so some path spreads the level in some
+   harnesses and not others. Next: find it.
+Live exposure: vic2022 had ONP in 5 seats. Check the published vic2026 ONP cells against `level-pred` for vic2026 now.
