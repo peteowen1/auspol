@@ -40,6 +40,18 @@ TCP-consistency check, arm H shipped, heavy-tail arm T REFUSED 19 Oct, F21 surge
   PUBLISHED 19 Oct 17:25 (rebuild from 6, `deciding-runs/publish-20261019-1700.log`): pooled 0.3267 -> 0.3242 (2,931
   seat-elections), AEF-7 0.2635 -> 0.2614 (AEF 0.2825); net-out applied in all 32 elections with draws. OPEN: read the
   next daily Forecast run's conclusion (first live run with AUSPOL_SW_NET_LIVE=1).
+- OPEN F5 deciding run in flight: `deciding-runs/20261019-2303-f5-once` (`AUSPOL_SALIENCE_BLEND_ONCE=1`); screen
+  target seats -0.0009 (SE 0.0009), LOO failed at 1k. Score with `scripts/score_quick_targets.R` (prereg
+  `plans/prereg-salience-blend-once-2026-10-19.md`).
+- OPEN, NEW 19 Oct, high value for Vic: partial-contest concentration. A minor party standing in k of n seats does
+  not get its statewide level concentrated onto those k (nsw2023 One Nation 17/93: level right at 1.84, seats given
+  ~2-5 against 5-15; sa2022 and nsw2019 exactly 0 in every contested seat). Mechanism not traced; trace, then
+  prereg for EVERY class (Vic 2026: Legalise Cannabis, Family First, Libertarians). `reviews/miss-diagnosis-aef7-2026-10-19.md`.
+- OPEN, from the same diagnosis: Greens over-called in high-Greens seats by the trees (Melbourne, Griffith, Northcote);
+  first-term Labor members +4.0 (SE 0.7, n 39); retiring Labor members about -2.0 (n 34); Dickson's published stage
+  moved a correct tree LNP figure +5.5.
+- OPEN (Pete): the 28 old notes in the ledger page's notes store now duplicate `docs/aef7-seat-notes.csv` under "Your
+  notes"; clear them only on his yes.
 - DONE F9, REFUSED 19 Oct: `AUSPOL_ERROR_DIST_COMP=1` at 20k -0.0001 (SE 0.0001), within 1 SE; screen at 1k had
   said -0.0005 (tail arm, floor artefact). Switch stays "0". Result in `plans/prereg-error-dist-composition-2026-10-19.md`.
 - OPEN F5 (verified live 19 Oct, backtests only): salience blend in the xgb training base and again after the trees;
