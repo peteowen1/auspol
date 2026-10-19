@@ -207,7 +207,7 @@ a factor fitted on earlier elections for small seats (`AUSPOL_SIZE_SD`, `R/size_
 seats with large non-major shares (`AUSPOL_COMPOSITION_SD`). Then, because `level_sd` was
 fitted net of a flat 1.5-point statewide piece while the live draws are about 2.6 points for
 the majors, the statewide miss was counted about twice. `harness_sw_net_sd()`
-(`R/forecast_statewide.R:491`, called at `fit_seats_full.R:1790`, `AUSPOL_SW_NET_LIVE = "1"`,
+(`R/forecast_statewide.R:491`, called at `fit_seats_full.R:1803`, `AUSPOL_SW_NET_LIVE = "1"`,
 shipped 2026-10-19) lowers each cell's sd so the total is what `level_sd` was fitted to,
 never below half the original sd. The state and federal harnesses do the same
 (`AUSPOL_HARNESS_SW_DRAWS = "net"`, so a backtest scores the spread the live forecast ships).
