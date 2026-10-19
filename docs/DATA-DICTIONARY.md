@@ -1,6 +1,6 @@
 # Data dictionary
 
-**Generated 2026-10-17 by `scripts/build_data_dictionary.R`. Do not hand-edit.**
+**Generated 2026-10-19 by `scripts/build_data_dictionary.R`. Do not hand-edit.**
 
 Companion to `docs/DATA-REGISTRY.md`. The registry answers *do we have this
 file*; this answers *do we have this field*. Four wrong "we don't have it"
@@ -262,6 +262,9 @@ The originals, before any aggregation. **This is where dropped columns live.**
 | `pollbludger/post_index.csv` | 4,935 | `V1`, `V2`, `V3`, `V4`, `V5` |
 | `pollbludger/posts.csv` | 72,378 | `post_id`, `url`, `title`, `posted`, `categories`, `text`, `day_file`, `date` |
 | `seat-polls/hand_keyed_primaries.csv` | 9 | `election`, `seat`, `pollster`, `client`, `fieldwork_start`, `fieldwork_end`, `date_raw`, `published`, `sample_n`, `party`, `fp`, `tcp_party_a`, `tcp_party_b`, `tcp_a`, `source_url`, `row_type`, `seat_name`, `source` |
+| `seat-polls/mrp_candidates.csv` | 122 | `election`, `pollster`, `release_date`, `seat`, `label_in_file`, `named_candidate`, `modelled`, `method_note`, `source_url`, `source_date` |
+| `seat-polls/poll_methods.csv` | 1,210 | `election`, `seat`, `pollster`, `fieldwork_end`, `sample_n`, `pollster_clean`, `method`, `sponsor_type`, `sponsor_name`, `evidence`, `evidence_url`, `confidence`, `sponsor_confidence` |
+| `seat-polls/seat_poll_corrections.csv` | 3 | `election`, `seat_name`, `pollster`, `fieldwork_end`, `party`, `fp_wrong`, `fp_right`, `source`, `note` |
 | `seat-polls/seat_polls.csv` | 7,244 | `V1`, `V2`, `V3`, `V4`, `V5`, `V6`, `V7`, `V8`, `V9`, `V10`, `V11`, `V12`, `V13`, `V14`, `V15`, `V16`, `V17` |
 | `state-federal/state-federal-polls.csv` | 1,095 | `election`, `pollster`, `fieldwork_start`, `fieldwork_end`, `scope`, `state`, `seat`, `sample_n`, `alp_tpp`, `alp_fp`, `lnp_fp`, `grn_fp`, `oth_fp`, `source_url`, `verified`, `extra_fp` |
 | `state-regional-splits/regional_splits.csv` | 266 | `V1`, `V2`, `V3`, `V4`, `V5`, `V6`, `V7`, `V8`, `V9`, `V10`, `V11`, `V12`, `V13` |
@@ -306,6 +309,7 @@ processed extract. Every one is recoverable without a new fetch.
 | `aec-tpp-flows.csv` | 989 | `year`, `state`, `party_ab`, `party_name`, `party_class`, `row_type`, `alp_votes`, `lnp_votes`, `flow_alp`, `event`, `alp_pct_published`, `lnp_pct_published`, `source_file`, `file_header`, `n_states` |
 | `aef-comparison-full.csv` | 681 | `seat`, `actual`, `our_pred`, `our_p`, `seeds`, `aef_pred`, `aef_p`, `aef_p_fav`, `delta`, `our_primary`, `actual_primary`, `aef_primary`, `pair`, `our_pe`, `aef_pe`, `prim_gap`, `why` |
 | `aef-primary-all.csv` | 3,671 | `seat`, `party`, `aef_pcv`, `election` |
+| `aef-seat-party-probs.csv` | 3,697 | `election`, `seat`, `party`, `aef_p_win` |
 | `aef-seat-scores.csv` | 728 | `election`, `seat`, `actual`, `pred`, `pred_p`, `prob`, `tpp_actual` |
 | `aef-worst-seats-full.csv` | 659 | `seat`, `actual`, `our_pred`, `our_p`, `aef_pred`, `aef_p`, `delta`, `our_primary_actual`, `actual_primary`, `aef_primary_actual`, `pair` |
 | `aef7-artifact-current.csv` | 660 | `pair`, `seat`, `winner`, `fav`, `correct`, `our_p_win`, `our_p_fav`, `aef_p_win`, `aef_p_fav`, `our_fp_win`, `aef_fp_win`, `act_fp_win`, `miss`, `ll`, `aef_ll`, `grp`, `f1`, `f2`, `f2cp`, `fsrc`, `our_fp_fav`, `aef_fp_fav`, `act_fp_fav` |
@@ -327,7 +331,6 @@ processed extract. Every one is recoverable without a new fetch.
 | `booth-replay-vic2022.csv` | 5 | `frac_of_night_vote`, `mean_counted_share_of_all`, `fp_leader_correct`, `n`, `major_share_mae`, `major_share_rmse` |
 | `booths-vic2018-2cp.csv` | 4,820 | `district`, `booth`, `booth_type`, `candidate`, `party`, `votes` |
 | `booths-vic2018.csv` | 13,353 | `district`, `booth`, `booth_type`, `candidate`, `party`, `votes` |
-| `booths-vic2022-2cp.csv` | 4,328 | `district`, `booth`, `booth_type`, `candidate`, `party`, `votes` |
 
-_(1764 `backtest-*.csv` arm outputs omitted; they share one shape.)_
+_(2184 `backtest-*.csv` arm outputs omitted; they share one shape.)_
 
