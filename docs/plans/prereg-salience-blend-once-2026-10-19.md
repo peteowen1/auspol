@@ -66,3 +66,16 @@ twice by the memory watchdog and resumed from its cache (70 runs, every one cach
   only at rounding; guard -0.0005 (SE 0.0004) PASS; leave-one-out FAILS (10 of 18 drops); no election worse by 2 SE;
   not-one-seat PASS. fed2025 carries 61% of the gain; fed2022 +0.0038 and nsw2015 +0.0028 are the worst.
 - Direction: 2,615 cells down, 3,006 up (removing the pull lowers the salience cells; renormalisation lifts the rest).
+
+## RESULT: deciding run (2026-10-20, 20,000 sims, all 35 elections, code 9dbe77a) - REFUSED
+
+`deciding-runs/20261019-2303-f5-once` (DONE, 4,627 s). `AUSPOL_SALIENCE_BLEND_ONCE` stays "0".
+- All seats (guard): 0.3165 -> 0.3166, +0.0001 (SE 0.0006, 2,931 seats). AEF-7 -0.0012 (SE 0.0018).
+- `score_quick_targets.R`, 1,528 target seats in 18 elections: primary +0.0002 (SE 0.0012) => within 1 SE, clause 1
+  fails; at a 1e-4 floor -0.0007 (SE 0.0009), still within 1 SE. Leave-one-out 0 of 18 drops. Clause 4 passes (worst
+  nsw2019 +0.0140, SE 0.0150). Clause 5 fails: without fed2025 Flinders and sa2022 Finniss the sign flips.
+- Named in advance (b), governed winners: the arm under-calls the 2022 teals it was meant to protect - Mackellar 0.291
+  -> 0.233, North Sydney 0.213 -> 0.168, Curtin 0.528 -> 0.452 (p_win of the actual winner). sa2026 (One Nation) -0.0003.
+- The 1k screen's primary -0.0009 became +0.0002 at 20k: second time in two days a 1k screen overstated an arm.
+- Reading: the double count is real in the code, but the trees have learned around it; taking the second pull out
+  removes signal they rely on. Not pursued further without a stage-1 retrain arm.
