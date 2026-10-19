@@ -465,7 +465,7 @@ salience_blend_once <- function() {
 #' @export
 blend_salience_post_xgb <- function(shares, hz, surge_mu, expected = FALSE, label = "", code = "SBW1") {
   out <- blend_salience_shares(shares, hz, surge_mu, expected = expected)
-  if (!salience_blend_once() || !identical(Sys.getenv("AUSPOL_XGB_PRIMARY", "0"), "1")) return(out)
+  if (!salience_blend_once() || !identical(Sys.getenv("AUSPOL_XGB_PRIMARY", "1"), "1")) return(out)
   mv <- max(abs(out - shares), 0)
   cat(sprintf("%s %s: salience blend after the trees SKIPPED (AUSPOL_SALIENCE_BLEND_ONCE=1; the trees' base already holds it): %d cell(s) would have moved, by up to %.2f points\n",
               code, label, as.integer(attr(out, "cells")), mv))
