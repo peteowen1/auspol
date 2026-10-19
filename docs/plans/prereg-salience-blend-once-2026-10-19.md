@@ -55,3 +55,14 @@ have partly learned away, so candidates who did surge (sa2026's One Nation winne
 under-called. List every target seat the governed candidate won with p_win base and arm; a loss there is shown to
 Pete even if the rule passes. (c) Live: vic2026 cannot be walked until its corpus lands (~9 Nov); the first run with a
 corpus is walked with and without the switch and shown to Pete before it publishes.
+
+## RESULT: screen (2026-10-19, 1,000 sims, all 35 elections, code 1866c58)
+
+Not WORSE, so the deciding run went ahead (`deciding-runs/20261019-2303-f5-once`, 20,000 sims). The screen was killed
+twice by the memory watchdog and resumed from its cache (70 runs, every one cached once).
+- 5,621 of 19,616 cells moved in 24 elections (the post-tree blend removed, rows renormalised); squared share error on
+  them +636.9 (+1%, SE 825.6).
+- `score_quick_targets.R`: 1,528 target seats in 18 elections; primary -0.0009 (SE 0.0009), better by more than 1 SE
+  only at rounding; guard -0.0005 (SE 0.0004) PASS; leave-one-out FAILS (10 of 18 drops); no election worse by 2 SE;
+  not-one-seat PASS. fed2025 carries 61% of the gain; fed2022 +0.0038 and nsw2015 +0.0028 are the worst.
+- Direction: 2,615 cells down, 3,006 up (removing the pull lowers the salience cells; renormalisation lifts the rest).
