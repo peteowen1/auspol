@@ -501,6 +501,19 @@ if (identical(Sys.getenv("AUSPOL_XGB_RATIO_FEATS", "0"), "1")) {
               stats::median(ALL$growth_ratio, na.rm = TRUE), min(ALL$growth_ratio, na.rm = TRUE),
               max(ALL$growth_ratio, na.rm = TRUE), stats::sd(ALL$ratio_dev, na.rm = TRUE)))
 }
+# AUSPOL_XGB_CONTEST (prereg-contest-features-2026-10-20.md): tell the trees who is standing. n_cand_now is 1
+# where nobody stands, so 4,202 uncontested rows labelled ~0 look like contested ones and drag new-to-seat
+# minor cells down (nsw2023 One Nation: trees 3.29, actual 9.67). Same columns, same rule as
+# contest_features() in R/xgb_primary_override.R; only when on, as above.
+if (identical(Sys.getenv("AUSPOL_XGB_CONTEST", "0"), "1")) {
+  .cf <- contest_features(ALL$pair, ALL$seat, ALL$party, ALL$level_pred,
+                          paste(C$election, C$seat, C$party), C$election, C$seat)
+  ALL[, stands_i := .cf$stands_i]
+  ALL[, level_contested := .cf$level_contested]
+  cat(sprintf("XCT1 contest features ON: %d of %d rows stand (%d seats with no candidacy treated as standing); level_contested median %.2f (level_pred %.2f)\n",
+              sum(ALL$stands_i), nrow(ALL), attr(.cf, "unknown_seats"), stats::median(ALL$level_contested, na.rm = TRUE),
+              stats::median(ALL$level_pred, na.rm = TRUE)))
+}
 ALL[, same := ifelse(is.na(same), FALSE, same)]
 ALL[, same_mp := ifelse(is.na(same_mp), FALSE, same_mp)]
 ALL[, is_major := party %in% c("ALP", "LNP", "NAT")]
@@ -759,6 +772,7 @@ feat_cols <- c("base_pred", "seat_prev_pcv", "seat_outperf", "level_prev",
                if (!.raw_level && identical(.lvl_mode, "pred")) "level_from_polls",
                "dev_prev",
                if (identical(Sys.getenv("AUSPOL_XGB_RATIO_FEATS", "0"), "1")) c("growth_ratio", "ratio_dev"),
+               if (identical(Sys.getenv("AUSPOL_XGB_CONTEST", "0"), "1")) c("stands_i", "level_contested"),
                # x_notional_adj (see its own comment above, where it's built):
                # only included when AUSPOL_XGB_NOTIONAL=1. The column exists
                # unconditionally (0 when off) so feat_cols can name it without

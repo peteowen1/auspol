@@ -242,6 +242,10 @@ CLASSIFY <- list(
   AUSPOL_XGB_RATIO_FEATS = paste(
     "ARM (0), FIT-TIME + LIVE: read by fit_xgb_primary_v6.R (training features; the as-at and final models",
     "inherit them) and R/xgb_primary_override.R (live). Harnesses read the as-at predictions file. plans/prereg-growth-ratio-features-2026-10-18.md"),
+  AUSPOL_XGB_CONTEST = paste(
+    "ARM (0), FIT-TIME + LIVE: read by fit_xgb_primary_v6.R (training features stands_i, level_contested; the as-at and",
+    "final models inherit them) and R/xgb_primary_override.R (live, from the confirmed nomination list). Harnesses read the",
+    "as-at predictions file. plans/prereg-contest-features-2026-10-20.md"),
   AUSPOL_ZERO_ABSENT = paste(
     "ARM (0), UNIVERSAL via R/: the default of simulate_seat_contests(zero_absent = zero_absent_on()), so every",
     "harness, NT and fit_seats_full.R honour it with no call-site argument. plans/prereg-zero-absent-2026-10-17.md"),

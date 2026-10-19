@@ -316,6 +316,27 @@ xgb_primary_predict_live <- function(shares, mat22, a22, state_mean, returns,
     rows[, n_cand_prev := ifelse(is.na(idx), 0L, n_prev$N[idx])]
   }
   rows[, n_cand_now := 1L]   # unknown pre-nomination; matches the backtest fallback
+  # AUSPOL_XGB_CONTEST: who stands, from the confirmed nomination list (AUSPOL_NOM_LIVE=1, the list the zeroing
+  # uses). Before it loads, every class is assumed to stand everywhere (stands_i 1, level_contested = level_pred),
+  # which is what the live forecast assumes today. prereg-contest-features-2026-10-20.md.
+  if (identical(Sys.getenv("AUSPOL_XGB_CONTEST", "0"), "1")) {
+    nom <- if (identical(Sys.getenv("AUSPOL_NOM_LIVE", "auto"), "1"))
+      live_nominations(seats, election = target_election, prior = prev_election)$target else NULL
+    if (is.null(nom) || !nrow(nom)) {
+      rows[, stands_i := 1L]
+      rows[, level_contested := level_pred]
+      cat(sprintf("XCT2 %s: contest features ON, no confirmed nomination list: every class assumed to stand in every seat\n",
+                  target_election))
+    } else {
+      ns <- normalise_seat(nom$seat)
+      cf <- contest_features(rep(target_election, nrow(rows)), normalise_seat(rows$seat), rows$party, rows$level_pred,
+                             paste(target_election, ns, nom$party), rep(target_election, nrow(nom)), ns)
+      rows[, stands_i := cf$stands_i]
+      rows[, level_contested := cf$level_contested]
+      cat(sprintf("XCT2 %s: contest features ON from the nomination list: %d of %d seat-classes stand (%d seats with no candidacy treated as standing)\n",
+                  target_election, sum(cf$stands_i), nrow(rows), attr(cf, "unknown_seats")))
+    }
+  }
   rows[, same_i := 0L]; rows[, same_mp_i := 0L]
   if (!is.null(returns)) {
     R <- data.table::as.data.table(returns)
@@ -641,5 +662,31 @@ xgb_primary_predict_live <- function(shares, mat22, a22, state_mean, returns,
   }
   out <- 100 * out / rowSums(out)
   cat(sprintf("XG4  LIVE xgb v6 primary prediction ON for %s: %d seat-classes overridden\n", region, nrow(rows)))
+  out
+}
+
+#' Who is standing, as two xgb features (`AUSPOL_XGB_CONTEST`)
+#'
+#' `stands_i` is 1 where the class has a candidacy in the seat, else 0; a seat with no candidacy at all in the
+#' list (vic2022 Narracan's deferred election) is unknown and counts as standing everywhere, as the live zeroing
+#' leaves such seats untouched. `level_contested` is the class's level where it stands:
+#' `level_pred * n_seats / max(n_contesting, 1)`, counted per election. One row per (pair, seat, party) is
+#' required. Used by `scripts/fit_xgb_primary_v6.R` (training) and [xgb_primary_predict_live()] (serving).
+#' docs/plans/prereg-contest-features-2026-10-20.md.
+#' @param pair,seat,party,level_pred The feature rows.
+#' @param cand_key `paste(election, seat, party)` of every candidacy.
+#' @param cand_election,cand_seat The candidacies' election and seat.
+#' @return data.frame(stands_i, level_contested), attribute `unknown_seats`.
+#' @noRd
+contest_features <- function(pair, seat, party, level_pred, cand_key, cand_election, cand_seat) {
+  rk <- paste(pair, seat, party)
+  if (anyDuplicated(rk)) stop("contest_features: duplicate (pair, seat, party) rows, e.g. ", rk[anyDuplicated(rk)])
+  stands <- rk %in% cand_key
+  covered <- paste(pair, seat) %in% paste(cand_election, cand_seat)
+  stands[!covered] <- TRUE
+  n_seats <- stats::ave(seq_along(seat), pair, FUN = function(i) length(unique(seat[i])))
+  n_cont <- stats::ave(as.numeric(stands), pair, party, FUN = sum)
+  out <- data.frame(stands_i = as.integer(stands), level_contested = level_pred * n_seats / pmax(n_cont, 1))
+  attr(out, "unknown_seats") <- length(unique(paste(pair, seat)[!covered]))
   out
 }

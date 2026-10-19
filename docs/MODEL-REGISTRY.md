@@ -1,6 +1,6 @@
 # Model registry
 
-**Generated 2026-10-19 by `scripts/build_model_registry.R`. Do not hand-edit** --
+**Generated 2026-10-20 by `scripts/build_model_registry.R`. Do not hand-edit** --
 rerun the script instead. Regenerate whenever a switch is added to
 `published_flags.R` or a harness's wiring changes.
 
@@ -31,7 +31,7 @@ All seven share one `R/` package core (`simulate_seat_contests()`,
 in which switches each one WIRES and which data source each reads, not in
 separate model code.
 
-## Switch parity (231 switches from `published_flags.R`, 7 entry points)
+## Switch parity (232 switches from `published_flags.R`, 7 entry points)
 
 | switch | fit_seats (published) | fed | nsw | qld | sa | vic | wa |
 |---|---|---|---|---|---|---|---|
@@ -248,6 +248,7 @@ separate model code.
 | `AUSPOL_XGB_BASE_MARGIN` | NO | NO | NO | NO | NO | NO | NO |
 | `AUSPOL_XGB_BASE_RECORD` | NO | NO | NO | NO | NO | NO | NO |
 | `AUSPOL_XGB_BOOTH` | NO | NO | NO | NO | NO | NO | NO |
+| `AUSPOL_XGB_CONTEST` | NO | NO | NO | NO | NO | NO | NO |
 | `AUSPOL_XGB_COUNCIL` | NO | NO | NO | NO | NO | NO | NO |
 | `AUSPOL_XGB_DEPARTED_SIDE` | NO | NO | NO | NO | NO | NO | NO |
 | `AUSPOL_XGB_ENDORSE` | NO | NO | NO | NO | NO | NO | NO |
@@ -443,6 +444,7 @@ separate model code.
 - **`AUSPOL_XGB_BASE_MARGIN`** (intentional / dead experiment): Training-time switch for the XGBoost primary models (fit_xgb_primary_v6.R, _v6_final.R, _asat.R), not a harness or forecast switch -- which is why no harness row reads it. 2 (shipped 2026-09-17) = base_pred set as the training DMatrix's base_margin AND kept as a feature, so every tree boosts on the residual to the shipped model's own prediction; 1 = offset only; 0 = plain feature. xgb_primary_predict_live() must set the same base_margin at predict time, and does. Classified 2026-09-18; it had sat UNEXPLAINED in this table since it shipped.
 - **`AUSPOL_XGB_BASE_RECORD`** (intentional / dead experiment): Measurement plumbing, not a model change (default 0): scripts/rebuild_forecasts.sh sets it for stage 1 so the disabled override writes the reference shares AUSPOL_XGB_BASE_DELTA compares against. Read in R/xgb_primary_override.R only.
 - **`AUSPOL_XGB_BOOTH`** (**shipped, fitting-time switch (reaches harnesses via the artifact)**): FITTING-TIME, TESTING (default 0; plans/prereg-booth-features-2026-10-02.md). Booth spread / early-vote gap xgb features; read in scripts/fit_xgb_primary_v6.R and scripts/promote_rebuild.R, baked into the trained model.
+- **`AUSPOL_XGB_CONTEST`** (intentional / dead experiment): ARM (0), FIT-TIME + LIVE: read by fit_xgb_primary_v6.R (training features stands_i, level_contested; the as-at and final models inherit them) and R/xgb_primary_override.R (live, from the confirmed nomination list). Harnesses read the as-at predictions file. plans/prereg-contest-features-2026-10-20.md
 - **`AUSPOL_XGB_COUNCIL`** (**shipped, fitting-time switch (reaches harnesses via the artifact)**): FITTING-TIME. SHIPPED v58 2026-10-02: council-history xgb features, read in scripts/fit_xgb_primary_v6.R and scripts/promote_rebuild.R; baked into the trained model artifact, so no harness reads it.
 - **`AUSPOL_XGB_DEPARTED_SIDE`** (**shipped, fitting-time switch (reaches harnesses via the artifact)**): FITTING-TIME, ARM (default 0; plans/prereg-departed-member-sides-2026-09-28.md). Adds own_departed_i / opp_departed_i xgb features via add_departed_side() (R/departed_side.R), called from fit_xgb_primary_v6.R and _v6_final.R; baked into the trained model.
 - **`AUSPOL_XGB_ENDORSE`** (**shipped, fitting-time switch (reaches harnesses via the artifact)**): FITTING-TIME. SHIPPED v59 2026-10-02: Climate 200 / Voices endorsement xgb features, read in scripts/fit_xgb_primary_v6.R and scripts/promote_rebuild.R; baked into the trained model.
@@ -500,4 +502,4 @@ A forced value is not automatically a bug, but it must be recorded in `published
 
 ## Coverage check
 
-MR2  every non-universal switch (190 of 231) has a recorded classification.
+MR2  every non-universal switch (191 of 232) has a recorded classification.
