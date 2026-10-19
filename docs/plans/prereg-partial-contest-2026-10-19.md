@@ -53,3 +53,11 @@ the wrong numbers. (c) Live: before shipping, a vic2026 walk with a simulated no
 the 20 seats where it polled least in 2022) shown to Pete, since the live effect only appears after 9 Nov.
 Known blind spot: arm A conserves the PREDICTED level; if the level itself is wrong (sa2026 20.4 vs 23.0, wa2025
 1.94 vs 4.03) it conserves the wrong total. That is a level question, separate from this.
+
+## Amendment 1 (before any build or run, 19 Oct): which classes are conserved
+
+Arm A conserves only classes that are ONE party statewide: ALP, LNP, GRN, ONP. IND, OTH and OTH_RIGHT are buckets of
+unrelated candidates (an independent in one seat gains nothing because no independent stood in another), so their
+zeroed share keeps going to that seat's other classes, as now. Exact list printed by the arm. One pass suffices: the
+scaled class cells are held and only the row's other cells absorb the difference, so no iteration is needed (the
+0.01-point iteration above is dropped); a row whose conserved cells would exceed its total is left unscaled and named.
