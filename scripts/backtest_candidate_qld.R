@@ -1028,7 +1028,7 @@ if (identical(Sys.getenv("AUSPOL_SALIENCE_SURGE_V2", "0"), "1")) {
     # candidate would have been blended federally.
     .exp_mode <- suppressWarnings(as.integer(Sys.getenv("AUSPOL_SALIENCE_EXPECTED", "0")))
     if (is.na(.exp_mode)) .exp_mode <- 0L
-    shares <- blend_salience_shares(shares, hz, surge_mu_arg[1], expected = .exp_mode > 0L)
+    shares <- blend_salience_post_xgb(shares, hz, surge_mu_arg[1], expected = .exp_mode > 0L, label = TGT, code = "SBQ1")
     # ARM B, docs/plans/prereg-salience-expected-and-variance-2026-09-07.md.
     # level_sd is binomial-shaped and gives a major on 30% MORE uncertainty
     # than a top-percentile insurgent on 13.9%; the salience band has

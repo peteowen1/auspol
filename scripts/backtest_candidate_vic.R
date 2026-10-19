@@ -899,7 +899,7 @@ for (K in PAIRS) {
       # candidate would have been blended federally.
       .exp_mode <- suppressWarnings(as.integer(Sys.getenv("AUSPOL_SALIENCE_EXPECTED", "0")))
       if (is.na(.exp_mode)) .exp_mode <- 0L
-      shares <- blend_salience_shares(shares, hz, surge_mu_arg[1], expected = .exp_mode > 0L)
+      shares <- blend_salience_post_xgb(shares, hz, surge_mu_arg[1], expected = .exp_mode > 0L, label = sprintf("vic%d", K$to), code = "SBV1")
       # THE VARIANCE, not just the point estimate. level_sd is binomial-shaped
       # and gives a major on 30% more uncertainty than a top-percentile
       # insurgent on 13.9%; the salience band has measured the latter at 12.6.

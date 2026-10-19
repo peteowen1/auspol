@@ -442,6 +442,37 @@ blend_salience_shares <- function(shares, hz, surge_mu, expected = FALSE) {
   shares
 }
 
+#' @noRd
+salience_blend_once <- function() {
+  m <- Sys.getenv("AUSPOL_SALIENCE_BLEND_ONCE", "0")
+  if (!m %in% c("0", "1")) stop("AUSPOL_SALIENCE_BLEND_ONCE must be \"0\" or \"1\", got \"", m, "\"")
+  identical(m, "1")
+}
+
+#' The harnesses' salience blend, applied once (audit F5)
+#'
+#' The harnesses blend AFTER the xgb override. At stage 1 (`AUSPOL_XGB_PRIMARY=0`) that blend lands in the
+#' sharedetail that becomes `base_pred`, so the trees train on a base that already holds the pull; at stage 6 the
+#' cached tree prediction carries it and the harness blends again. Under `AUSPOL_SALIENCE_BLEND_ONCE="1"` the
+#' stage-6 blend is skipped, so the pull counts once, inside the trees' base (fit_seats_full.R does the same live:
+#' blend before the trees, none after). Stage 1 is unchanged either way. Prints what it skipped.
+#' Plan: docs/plans/prereg-salience-blend-once-2026-10-19.md.
+#'
+#' @inheritParams blend_salience_shares
+#' @param label Election label, for the printed line.
+#' @param code Check code for the printed line.
+#' @return As [blend_salience_shares()].
+#' @export
+blend_salience_post_xgb <- function(shares, hz, surge_mu, expected = FALSE, label = "", code = "SB1") {
+  out <- blend_salience_shares(shares, hz, surge_mu, expected = expected)
+  if (!salience_blend_once() || !identical(Sys.getenv("AUSPOL_XGB_PRIMARY", "0"), "1")) return(out)
+  mv <- max(abs(out - shares), 0)
+  cat(sprintf("%s %s: salience blend after the trees SKIPPED (AUSPOL_SALIENCE_BLEND_ONCE=1; the trees' base already holds it): %d cell(s) would have moved, by up to %.2f points\n",
+              code, label, as.integer(attr(out, "cells")), mv))
+  attr(shares, "cells") <- 0L
+  shares
+}
+
 #' Per-cell deviation sd from a candidate's salience band
 #'
 #' Builds the matrix [simulate_seat_contests()] takes as `sd_override`: the

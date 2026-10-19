@@ -1380,6 +1380,19 @@ cat(sprintf("XG0p seat_prev_pcv served from the %s prior-election matrix (%d cel
             if (identical(.mat22_xgb, .mat22_raw)) "raw (as trained)" else "edited",
             { .cc <- intersect(colnames(mat22), colnames(.mat22_raw)); .rr <- intersect(rownames(mat22), rownames(.mat22_raw))
               sum(abs(.mat22_raw[.rr, .cc, drop = FALSE] - mat22[.rr, .cc, drop = FALSE]) > 0.05, na.rm = TRUE) }))
+# AUSPOL_SALIENCE_BLEND_ONCE="1" (audit F5, plans/prereg-salience-blend-once-2026-10-19.md): the trees trained on a
+# base_pred that already held the salience pull (the harnesses blend at stage 1), so serve them the pulled base here
+# and skip the blend after the trees (DS3b below). Default "0": the pull is applied once, after the trees, as before.
+# A no-op until vic2026 has a salience corpus (.hz NULL).
+.sb_once <- salience_blend_once()
+if (.sb_once) {
+  .exp_mode0 <- suppressWarnings(as.integer(Sys.getenv("AUSPOL_SALIENCE_EXPECTED", "0")))
+  if (is.na(.exp_mode0)) .exp_mode0 <- 0L
+  shares <- blend_salience_shares(shares, if (exists(".hz")) .hz else NULL, surge_mu_arg[1], expected = .exp_mode0 > 0L)
+  cat(sprintf("SBL1 salience point estimate applied BEFORE the trees (AUSPOL_SALIENCE_BLEND_ONCE=1) to %d (seat,party) cells%s\n",
+              attr(shares, "cells"), if (is.null(if (exists(".hz")) .hz else NULL)) sprintf(" (no corpus for %s yet)", TGT) else ""))
+  attr(shares, "cells") <- NULL
+}
 shares_x <- .try("xgb_live", xgb_primary_predict_live(shares, .mat22_xgb, a22, state_mean, .returns,
                                                         level_split = .level_split,
                                                         own_prev = .own_prev_xgb, region = REGION,
@@ -1449,10 +1462,10 @@ if (!is.null(.shares_f)) {
 # (.hz is NULL before nominations close), which is why this could sit unnoticed.
 .exp_mode <- suppressWarnings(as.integer(Sys.getenv("AUSPOL_SALIENCE_EXPECTED", "0")))
 if (is.na(.exp_mode)) .exp_mode <- 0L
-shares <- blend_salience_shares(shares, if (exists(".hz")) .hz else NULL, surge_mu_arg[1],
-                                expected = .exp_mode > 0L)
-cat(sprintf("DS3b salience point estimate applied to %d (seat,party) cells%s\n",
-            attr(shares, "cells"),
+if (!.sb_once) shares <- blend_salience_shares(shares, if (exists(".hz")) .hz else NULL, surge_mu_arg[1],
+                                expected = .exp_mode > 0L) else attr(shares, "cells") <- 0L
+cat(sprintf("DS3b salience point estimate applied to %d (seat,party) cells%s%s\n",
+            attr(shares, "cells"), if (.sb_once) " after the trees (AUSPOL_SALIENCE_BLEND_ONCE=1: applied before them, SBL1)" else "",
             if (is.null(if (exists(".hz")) .hz else NULL)) sub("@T", TGT, " (no corpus for @T yet)", fixed = TRUE) else ""))
 # v61 NOMINATION ZEROING, AFTER every step that can add share to a cell, with the
 # live flow matrix `fm`. Read from the function bodies 2026-10-03:
