@@ -409,5 +409,48 @@ forecast_statewide_or_oracle <- function(region, year, election_date, parties, s
               code, region, year, mean(abs(out - st_b[keep]), na.rm = TRUE), length(out),
               paste(sprintf("%s %.1f(%.1f)", keep, out, st_b[keep]), collapse = " ")))
   attr(out, "oracle") <- st_b[keep]
+  # the draws behind st_fc, for harness_sw_draws() (AUSPOL_HARNESS_SW_DRAWS); read straight after the call
+  attr(out, "draws") <- fc$draws
   out
+}
+
+#' Statewide draws for a state harness's seat simulation (audit F4)
+#'
+#' `AUSPOL_HARNESS_SW_DRAWS` (default "0"): the state harnesses pass the seat
+#' simulator the statewide draws `forecast_statewide_or_oracle()` built (its
+#' `draws` attribute) instead of a flat `PARTY_SD` with parties independent, so
+#' a backtest scores the statewide spread the live forecast ships
+#' (`plans/prereg-harness-sw-draws-2026-10-19.md`). Any pair without usable
+#' draws prints `SW0!` and returns NULL, so the caller keeps the flat spread.
+#'
+#' @param draws The `draws` attribute, read straight after the call (later
+#'   subsetting drops attributes).
+#' @param parties The share columns the simulator will get.
+#' @param n Rows wanted (the simulator's `n_sims`).
+#' @param pair,code Label and log prefix.
+#' @param from First row to take (Victoria's flow ensemble takes one block per replicate).
+#' @param quiet Skip the applied-spread line (every replicate after the first).
+#' @return A matrix `n` x `parties`, or NULL.
+#' @noRd
+harness_sw_draws <- function(draws, parties, n, pair, code = "SW", from = 1L, quiet = FALSE) {
+  v <- Sys.getenv("AUSPOL_HARNESS_SW_DRAWS", "0")
+  if (!v %in% c("0", "1")) stop("AUSPOL_HARNESS_SW_DRAWS must be \"0\" or \"1\", not ", v)
+  if (v == "0") return(NULL)
+  if (!Sys.getenv("AUSPOL_PARTY_COR", "off") %in% c("", "off", "0"))
+    stop("AUSPOL_HARNESS_SW_DRAWS=1 with AUSPOL_PARTY_COR set: the correlation is a no-op once draws are supplied")
+  why <- if (is.null(draws)) "no draws (thin cycle or oracle level)"
+         else if (length(miss <- setdiff(parties, colnames(draws)))) paste("draws lack", paste(miss, collapse = ", "))
+         else if (nrow(draws) < from + n - 1L) sprintf("%d draws, %d needed", nrow(draws), from + n - 1L)
+  if (!is.null(why)) {
+    cat(sprintf("%s0! %s: %s -- flat PARTY_SD kept for this pair\n", code, pair, why))
+    return(NULL)
+  }
+  d <- draws[seq.int(from, length.out = n), parties, drop = FALSE]
+  if (!quiet) {
+    s <- apply(d, 2, stats::sd)
+    two <- if (all(c("ALP", "LNP") %in% parties)) stats::sd(d[, "ALP"] - d[, "LNP"]) else NA_real_
+    cat(sprintf("%s1 %s: statewide draws applied (%d x %d), per-party sd %s; sd(ALP - LNP) %.2f (flat 1.5 independent gives %.2f)\n",
+                code, pair, nrow(d), ncol(d), paste(sprintf("%s %.2f", names(s), s), collapse = " "), two, sqrt(2) * 1.5))
+  }
+  d
 }

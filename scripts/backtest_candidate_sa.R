@@ -488,6 +488,8 @@ st_b <- fb[, .(v = sum(votes)), by = party][, setNames(100 * v / sum(v), party)]
 # Since 2026-09-19 the block lives once in R/forecast_statewide.R for all six harnesses.
 st_b <- forecast_statewide_or_oracle("sa", PAIR$to, PAIR$flow_before, colnames(mat), st_a, st_b,
                                      code = "BS0", n_sims = N_SIMS, seed = as.integer(Sys.getenv("AUSPOL_SEED", "42")))
+# audit F4 (AUSPOL_HARNESS_SW_DRAWS, R/forecast_statewide.R): the statewide draws behind sb, read before anything drops attributes
+SWD <- attr(st_b, "draws")
 # RE-ENTRY PRIOR, docs/plans/prereg-reentry-prior-2026-09-07.md. A class
 # contesting this seat but not the last one has no prior share, so swinging
 # zero forward leaves approximately zero -- 1,418 seat-class rows across the
@@ -1307,7 +1309,7 @@ if (identical(Sys.getenv("AUSPOL_XGB_SURGE", "0"), "1")) {
 .bo <- breakout_mix_args(TGT, shares)
 .imx <- ind_mixture_surge(TGT, rownames(shares), surge_arg, surge_mu_arg, surge_sd_arg, surge_party_arg, code = "BS1N")
 surge_arg <- .imx$surge_h; surge_mu_arg <- .imx$surge_mu; surge_sd_arg <- .imx$surge_sd; surge_party_arg <- .imx$surge_party
-sim <- simulate_seat_contests(level_sd = .level_sd, sd_override = size_sd_apply(SD_OVR, shares, TGT, .level_sd, .lm(shares)), level_mult = .lm(shares), shares, fm, party_sd = psd, seat_sd = sp$sd_within * SEAT_SD_MULT,
+sim <- simulate_seat_contests(level_sd = .level_sd, sd_override = size_sd_apply(SD_OVR, shares, TGT, .level_sd, .lm(shares)), level_mult = .lm(shares), shares, fm, party_sd = psd, statewide_draws = harness_sw_draws(SWD, colnames(shares), N_SIMS, TGT, "BSW"), seat_sd = sp$sd_within * SEAT_SD_MULT,
                               breakout_p = .bo$p, breakout_q = .bo$q, coalition_split = coalition_split_args(TGT, rownames(shares)), error_q = error_dist_args(TGT, colnames(shares)),
                               n_sims = N_SIMS, smooth = SMOOTH, seed = SEED,
                               shrink = SHRINK, party_cor = PARTY_COR,

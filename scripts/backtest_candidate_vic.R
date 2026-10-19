@@ -416,6 +416,8 @@ for (K in PAIRS) {
   sb <- forecast_statewide_or_oracle("vic", K$to, VIC_DATE[[as.character(K$to)]], colnames(mat), sa, sb,
                                      code = "BV0", n_sims = N_SIMS, seed = as.integer(Sys.getenv("AUSPOL_SEED", "42")), on_fail = "skip")
   if (is.null(sb)) next   # thin cycle: no forecast statewide, pair not scored in forecast mode
+  # audit F4 (AUSPOL_HARNESS_SW_DRAWS, R/forecast_statewide.R): the statewide draws behind sb, read before anything drops attributes
+  SWD <- attr(sb, "draws")
   # RE-ENTRY PRIOR, docs/plans/prereg-reentry-prior-2026-09-07.md. A class
   # contesting this seat but not the last one has no prior share, so swinging
   # zero forward leaves approximately zero -- 1,418 seat-class rows across the
@@ -980,7 +982,7 @@ for (K in PAIRS) {
       fmr <- build_flow_matrix(tx2, min_n = 3L)
       .imx <- ind_mixture_surge(sprintf("vic%d", K$to), rownames(shares), surge_arg, surge_mu_arg, surge_sd_arg, surge_party_arg, code = "BV1N")
       surge_arg <- .imx$surge_h; surge_mu_arg <- .imx$surge_mu; surge_sd_arg <- .imx$surge_sd; surge_party_arg <- .imx$surge_party
-      s1 <- simulate_seat_contests(level_sd = .level_sd, sd_override = size_sd_apply(SD_OVR, shares, .eb, .level_sd, .lm(shares)), level_mult = .lm(shares), shares, fmr, party_sd = psd,
+      s1 <- simulate_seat_contests(level_sd = .level_sd, sd_override = size_sd_apply(SD_OVR, shares, .eb, .level_sd, .lm(shares)), level_mult = .lm(shares), shares, fmr, party_sd = psd, statewide_draws = harness_sw_draws(SWD, colnames(shares), per, sprintf("vic%d", K$to), "BVW", from = (r - 1L) * per + 1L, quiet = r > 1L),
                                    seat_sd = sp$sd_within * SEAT_SD_MULT, n_sims = per,
                                    breakout_p = .bo$p, breakout_q = .bo$q, coalition_split = coalition_split_args(.eb, rownames(shares)), error_q = error_dist_args(.eb, colnames(shares)),
                                    smooth = SMOOTH, seed = SEED + r, shrink = SHRINK,
@@ -1030,7 +1032,7 @@ for (K in PAIRS) {
       error = function(e) { cat(sprintf("HTV9! how-to-vote override FAILED, flow rows unchanged: %s\n", conditionMessage(e))); .xgb_flow_ov }) else .xgb_flow_ov
     .imx <- ind_mixture_surge(sprintf("vic%d", K$to), rownames(shares), surge_arg, surge_mu_arg, surge_sd_arg, surge_party_arg, code = "BV1N")
     surge_arg <- .imx$surge_h; surge_mu_arg <- .imx$surge_mu; surge_sd_arg <- .imx$surge_sd; surge_party_arg <- .imx$surge_party
-    sim <- simulate_seat_contests(level_sd = .level_sd, sd_override = size_sd_apply(SD_OVR, shares, .eb, .level_sd, .lm(shares)), level_mult = .lm(shares), shares, fm, party_sd = psd,
+    sim <- simulate_seat_contests(level_sd = .level_sd, sd_override = size_sd_apply(SD_OVR, shares, .eb, .level_sd, .lm(shares)), level_mult = .lm(shares), shares, fm, party_sd = psd, statewide_draws = harness_sw_draws(SWD, colnames(shares), N_SIMS, sprintf("vic%d", K$to), "BVW"),
                                   seat_sd = sp$sd_within * SEAT_SD_MULT, n_sims = N_SIMS,
                                   breakout_p = .bo$p, breakout_q = .bo$q, coalition_split = coalition_split_args(.eb, rownames(shares)), error_q = error_dist_args(.eb, colnames(shares)),
                                   smooth = SMOOTH, seed = SEED, party_cor = PARTY_COR,
