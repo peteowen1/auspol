@@ -31,7 +31,10 @@ TCP-consistency check, arm H shipped, heavy-tail arm T REFUSED 19 Oct, F21 surge
   sd(ALP-LNP) 3.68 vic2022 / 4.24 wa2025 vs 2.12 flat). Screen REFUSED 19 Oct: targeted 25 elections +0.0017 (SE
   0.0014), all seats +0.0011 (SE 0.0009, WORSE), worse in 18 of 25; switch stays "0". OPEN for Pete: live forecast uses
   the wide draws, so either state backtests flatter what ships or FP_EXTRA_SD 2.419 is too wide for states
-  (`plans/prereg-harness-sw-draws-2026-10-19.md` RESULT).
+  (`plans/prereg-harness-sw-draws-2026-10-19.md` RESULT). Amendment 1 arm B (`=net`, seat sd net of the draws' variance)
+  screened -0.0006 (SE 0.0008) on 32 elections, fed -0.0016 (SE 0.0011), state -0.0000: the double count is what cost
+  +0.0017, and the LIVE forecast still carries it (draws + full seat sd). OPEN for Pete: 20k deciding run and live port.
+  Width arms A0/A1 (`AUSPOL_FP_EXTRA_SD` 0 / 1.2) pre-registered, not yet run.
 - OPEN, DATED (from ~2 Nov, weekly; final snapshot 25-27 Nov): vic2026 salience snapshots. All 500 candidates fetched
   18 Oct (window to 6 Oct), but that is before the campaign: nobody's search interest is rising yet (Premier 1.1 in the
   last 8 weeks vs 9.3 before), so batches cannot be linked and `jump` is not comparable with the backtests' polling-day

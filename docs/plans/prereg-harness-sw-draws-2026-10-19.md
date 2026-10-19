@@ -107,3 +107,26 @@ rule arm B's net-out reaches `backtest_candidate_fed.R` too (`BFWN1`). Under arm
 TARGETED, not controls; they stay controls (must score 0) under the A arms only if those leave fed untouched, which
 they do not (`AUSPOL_FP_EXTRA_SD` reaches fed as well). Primary for B: all 32 changed elections; fed and state
 reported separately beside it.
+
+## RESULT, arm B (2026-10-19, screen; appended)
+
+`quick_arm.R "AUSPOL_HARNESS_SW_DRAWS=net" --pairs=all --reuse`, 1,000 sims, log `deciding-runs/quickarm-20261019-f4-net.log`
+(baselines reused only where a per-harness canary re-ran byte-identical; OFF also proven identical on vic2022, wa2025,
+fed2025 directly). Seat-winner log loss change, lower is better, SE clustered on election:
+
+| scope | elections | seats | change | SE | worse in |
+|---|---|---|---|---|---|
+| all changed (primary, amendment 2) | 32 | 2,857 | -0.0006 | 0.0008 | 17 |
+| federal | 7 | 1,051 | -0.0016 | 0.0011 | 2 |
+| state | 25 | 1,806 | -0.0000 | 0.0010 | 15 |
+| all seats (guard) | 35 | 2,931 | -0.0006 | 0.0007 | |
+| AEF-7 subset (reported) | 7 | 681 | -0.0019 | 0.0018 | |
+
+Leave-one-election-out: -0.0008 to -0.0003. Worst sa2014 +0.0084, sa2010 +0.0077, wa2005 +0.0074; best qld2024 -0.0101,
+wa2008 -0.0096, qld2017 -0.0067. Floor (clause a of the net-out): 0 cells in most elections, at most 90 of 1,057 (fed2019).
+nt2016/2020/2024 unchanged (no draws).
+
+Reading: within 1 SE on the primary, so the screen does not clear B and does not stop it. With the first screen this
+says: draws on top of the full seat spread (what `fit_seats_full.R` publishes today) +0.0017 worse on the states; draws
+with the statewide variance netted out of the seat spread back to baseline, and better on the federal pairs, which are
+the one harness that already ran the published configuration. Next decision is Pete's (deciding run, and the live port).
