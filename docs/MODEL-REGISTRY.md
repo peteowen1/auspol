@@ -31,7 +31,7 @@ All seven share one `R/` package core (`simulate_seat_contests()`,
 in which switches each one WIRES and which data source each reads, not in
 separate model code.
 
-## Switch parity (228 switches from `published_flags.R`, 7 entry points)
+## Switch parity (229 switches from `published_flags.R`, 7 entry points)
 
 | switch | fit_seats (published) | fed | nsw | qld | sa | vic | wa |
 |---|---|---|---|---|---|---|---|
@@ -79,6 +79,7 @@ separate model code.
 | `AUSPOL_EDU_RESID_FEATURE` | NO | yes | yes | yes | yes | yes | yes |
 | `AUSPOL_EDU_RESID_SHUFFLE` | NO | yes | yes | yes | yes | yes | yes |
 | `AUSPOL_ERROR_DIST` | NO | NO | NO | NO | NO | NO | NO |
+| `AUSPOL_ERROR_DIST_COMP` | NO | NO | NO | NO | NO | NO | NO |
 | `AUSPOL_FALLBACK_SMOOTH` | yes | yes | yes | yes | yes | yes | yes |
 | `AUSPOL_FIT_SLOPES` | yes | yes | yes | yes | yes | yes | yes |
 | `AUSPOL_FLOW_ASAT` | NO | NO | NO | NO | NO | NO | NO |
@@ -298,6 +299,7 @@ separate model code.
 - **`AUSPOL_EDU_RESID_FEATURE`** (intentional / dead experiment): Which census column AUSPOL_EDU_RESID uses. born_aus_pct was pre-registered as the PLACEBO and was not one: r(yr12_pct, born_aus_pct) = -0.706 over 1,989 seats, so both columns read a single class-and-urbanity axis from opposite ends. It recovered 71% of the pooled gain and 100% of it on qld2024, which is what refused the mechanism. The lesson is in AUSPOL_DEMO_RESID_SHUFFLE: with correlated features the control must break the link, not swap the variable.
 - **`AUSPOL_EDU_RESID_SHUFFLE`** (intentional / dead experiment): The permutation control retrofitted to the refused single-feature arm, and the instrument that showed its signal was REAL (8.9 sds) even though the arm was refused. Same mechanism as AUSPOL_DEMO_RESID_SHUFFLE; absent from fit_seats_full.R because a control does not belong in the published forecast.
 - **`AUSPOL_ERROR_DIST`** (**adopted, shared-function wiring**): SHIPPED (1) 2026-10-17 on Pete's override (with AUSPOL_COMPOSITION_SD), UNIVERSAL via R/: error_dist_args() (R/error_dist.R) is called at every simulate_seat_contests() site (six harnesses, NT, fit_seats_full.R) and reads the switch inside R/. plans/prereg-error-distribution-2026-10-17.md
+- **`AUSPOL_ERROR_DIST_COMP`** (intentional / dead experiment): ARM (0), UNIVERSAL via R/: read by error_dist_file() in R/error_dist.R, which error_dist_args() (every harness and fit_seats_full.R) calls; also read by scripts/fit_error_distribution.R. plans/prereg-error-dist-composition-2026-10-19.md
 - **`AUSPOL_FLOW_ASAT`** (**adopted, shared-function wiring**): SHIPPED 2026-09-18 and read inside R/xgb_flow_override.R (.flow_asat_model()), never by a harness directly: the per-election flow model is the as-at file output/xgb-flows-v1-asat-<election>.model when one exists, the all-data model for a future election (vic2026), and skipped only if a LATER election's as-at model exists. Reaches all six harnesses and fit_seats_full.R through that function.
 - **`AUSPOL_FLOW_CELL_SD`** (intentional / dead experiment): Read inside R/xgb_flow_override.R, not per-harness -- universal in practice (added to published_flags.R 2026-10-08 at its code default).
 - **`AUSPOL_FLOW_FRAG`** (**shipped, fitting-time switch (reaches harnesses via the artifact)**): SHIPPED 2026-09-15 and reads NO everywhere by construction: it is a FITTING-TIME switch, not a runtime one. Only scripts/fit_xgb_flows_v1.R reads it, where it decides whether lead_primary (the seat's leading first-preference share) enters feat_cols and so whether the column is baked into output/xgb-flows-v1-final-cols.json. Every harness and fit_seats_full.R then reads that JSON, never the environment, so the feature reaches them through the ARTIFACT. The parity question for this switch is therefore not 'does each harness honour it' but 'was the artifact refit with it', which the cols JSON answers: 40 features, lead_primary present. scripts/fit_xgb_flows_loo.R inherits the same list, so the 25 leave-one-election-out models must be refit in the same breath or a harness loads a 39-feature model against a 40-column matrix. Both were refit 2026-09-15. docs/plans/prereg-flow-fragmentation-2026-09-15.md
@@ -494,4 +496,4 @@ A forced value is not automatically a bug, but it must be recorded in `published
 
 ## Coverage check
 
-MR2  every non-universal switch (187 of 228) has a recorded classification.
+MR2  every non-universal switch (188 of 229) has a recorded classification.

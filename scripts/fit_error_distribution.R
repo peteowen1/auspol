@@ -31,8 +31,34 @@ sf <- rbindlist(lapply(unique(S$pair), function(pr) {
   data.table(pair = pr, seat = seats, size_f = if (is.null(f)) 1 else f)
 }))
 S <- merge(S, sf, by = c("pair", "seat"))
+# AUSPOL_ERROR_DIST_COMP (default "0"; audit F9, plans/prereg-error-dist-composition-2026-10-19.md): "1" also divides
+# by the composition factor each pair's own run applied (composition_sd_factor() on its predicted shares and its own
+# time-forward row of spread-by-composition.csv), so seats widened for composition do not also fatten the shared
+# shape, and writes error-quantiles-comp.csv instead of the shipped table.
+COMP <- Sys.getenv("AUSPOL_ERROR_DIST_COMP", "0")
+if (!COMP %in% c("0", "1")) stop("AUSPOL_ERROR_DIST_COMP must be \"0\" or \"1\", got \"", COMP, "\"")
+COMP <- identical(COMP, "1")
+if (COMP) {
+  if (!identical(Sys.getenv("AUSPOL_COMPOSITION_SD", "1"), "1")) stop("AUSPOL_ERROR_DIST_COMP=1 needs AUSPOL_COMPOSITION_SD=1 (the shipped mode)")
+  ctab <- fread(file.path(OUT, "spread-by-composition.csv"))
+  cfv <- rbindlist(lapply(unique(S$pair), function(pr_i) {
+    d <- S[S$pair == pr_i]
+    w <- dcast(d, seat ~ party, value.var = "pred_share", fill = 0, fun.aggregate = sum)
+    m <- as.matrix(w[, -1L, with = FALSE]); rownames(m) <- w$seat
+    co <- ctab[ctab$target %in% pr_i]
+    f <- if (nrow(co)) composition_sd_factor(m, co) else rep(1, nrow(m))
+    data.table(pair = pr_i, seat = rownames(m), comp_f = f)
+  }))
+  S <- merge(S, cfv, by = c("pair", "seat"))
+} else S[, comp_f := 1]
 S <- S[S$pred_share >= 2]
-S[, p := pred_share / 100][, z := (actual_share - pred_share) / ((1.10 + 8.67 * sqrt(p * (1 - p))) * size_f)]
+S[, p := pred_share / 100][, z := (actual_share - pred_share) / ((1.10 + 8.67 * sqrt(p * (1 - p))) * size_f * comp_f)]
+if (COMP) {
+  z0 <- S$z * S$comp_f
+  cat(sprintf("ERC1  composition-standardised: %d of %d cells with comp_f > 1 (max %.2f); pooled z RMS %.2f -> %.2f, robust sd %.2f -> %.2f, beyond 4: %.2f%% -> %.2f%%\n",
+              sum(S$comp_f > 1), nrow(S), max(S$comp_f), sqrt(mean(z0^2)), sqrt(mean(S$z^2)),
+              1.4826 * stats::median(abs(z0)), 1.4826 * stats::median(abs(S$z)), 100 * mean(abs(z0) > 4), 100 * mean(abs(S$z) > 4)))
+}
 ed <- election_dates()
 S[, day := as.Date(unname(ed[pair]))]
 if (anyNA(S$day)) stop("ERF0! no election date for: ", paste(unique(S$pair[is.na(S$day)]), collapse = ", "))
@@ -69,10 +95,11 @@ res <- rbindlist(lapply(targets, function(tg) {
     as.data.table(c(list(target = tg, class = k, n = n, w = round(w, 4), n_pairs = uniqueN(tr$pair)), stats::setNames(as.list(q), QN)))
   }))
 }))
-fwrite(res, file.path(OUT, "error-quantiles.csv"))
+QFILE <- if (COMP) "error-quantiles-comp.csv" else "error-quantiles.csv"
+fwrite(res, file.path(OUT, QFILE))
 show <- res[res$target %in% c("fed2016", "vic2022", "vic2026"),
             list(target, class, n, w, median = round(q100, 2), p01 = round(q002, 2), p99 = round(q198, 2),
                  p0.5 = round(q001, 2), p99.5 = round(q199, 2))]
 cat("ERF2  per class after shrinkage and RMS-1 rescaling (a bell curve: median 0, p01 -2.33, p99 +2.33):\n")
 print(show, nrows = 40)
-cat(sprintf("ERF3  wrote output/error-quantiles.csv (%d targets x %d classes, %d quantiles)\n", uniqueN(res$target), length(CLASSES), length(PR)))
+cat(sprintf("ERF3  wrote output/%s (%d targets x %d classes, %d quantiles)\n", QFILE, uniqueN(res$target), length(CLASSES), length(PR)))
