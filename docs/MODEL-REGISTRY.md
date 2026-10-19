@@ -31,7 +31,7 @@ All seven share one `R/` package core (`simulate_seat_contests()`,
 in which switches each one WIRES and which data source each reads, not in
 separate model code.
 
-## Switch parity (230 switches from `published_flags.R`, 7 entry points)
+## Switch parity (231 switches from `published_flags.R`, 7 entry points)
 
 | switch | fit_seats (published) | fed | nsw | qld | sa | vic | wa |
 |---|---|---|---|---|---|---|---|
@@ -48,6 +48,7 @@ separate model code.
 | `AUSPOL_BYELECTION_MP` | NO | NO | NO | NO | NO | NO | NO |
 | `AUSPOL_BYELECTION_PRIOR` | yes | yes | yes | yes | yes | yes | yes |
 | `AUSPOL_CENSUS_FILE` | NO | NO | NO | NO | NO | NO | NO |
+| `AUSPOL_CLASS_CONSERVE` | NO | NO | NO | NO | NO | NO | NO |
 | `AUSPOL_CLOSE_PROPORTIONAL` | yes | NO | NO | NO | NO | NO | NO |
 | `AUSPOL_COALITION_SPLIT` | NO | NO | NO | NO | NO | NO | NO |
 | `AUSPOL_COALITION_SPLIT_F` | NO | NO | NO | NO | NO | NO | NO |
@@ -279,6 +280,7 @@ separate model code.
 - **`AUSPOL_BYELECTION_FILL`** (intentional / dead experiment): REFUSED 2026-09-30 (docs/plans/prereg-byelection-fill-2026-09-30.md): only Lyne improved, xgb error +0.01. Default 0, read only as an argument default in R/byelection_prior.R, so a refused experiment with no reason to be wired anywhere.
 - **`AUSPOL_BYELECTION_MP`** (**adopted, shared-function wiring**): SHIPPED 2026-09-19 (plans/prereg-byelection-mp-2026-09-19.md). Read inside R/candidate_returns.R at the top of candidate_returns(): a by-election winner (external/reference/byelections/byelection-winners.csv) is the sitting member for every identity test. Reaches all six harnesses and fit_seats_full.R through that function.
 - **`AUSPOL_CENSUS_FILE`** (intentional / dead experiment): DIAGNOSTIC 2026-10-13: alternative census-features table via census_features_path() (R/demographic_residual.R), read by every demographic correction -- universal in practice; published empty.
+- **`AUSPOL_CLASS_CONSERVE`** (intentional / dead experiment): ARM (0), UNIVERSAL via R/: read by class_conserve_on() inside zero_unnominated() (R/nomination_zero.R), which every harness and fit_seats_full.R (zero_unnominated_live) reach. plans/prereg-partial-contest-2026-10-19.md
 - **`AUSPOL_CLOSE_PROPORTIONAL`** (intentional / dead experiment): ARM, not shipped (default 0; plans/prereg-close-proportional-2026-09-28.md). Read in R/forecast_mode.R (federal harness path) and fit_seats_full.R (the live LL1 step). Off, so the four state harnesses not reaching it changes nothing.
 - **`AUSPOL_COALITION_SPLIT`** (intentional / dead experiment): UNIVERSAL via R/: read inside coalition_split_args() (R/coalition_split.R), which every harness (six + NT) and fit_seats_full.R call at their simulate_seat_contests() site, so the per-harness greps cannot see it. SHIPPED (1) 2026-10-17 on Pete's call; 20k deciding run passed every clause (reviews/lib-nat-plumbing-2026-10-16.md).
 - **`AUSPOL_COALITION_SPLIT_F`** (intentional / dead experiment): UNIVERSAL via R/: read inside coalition_f() (R/coalition_split.R) through coalition_split_args(), which every harness (six + NT) and fit_seats_full.R call; inert unless AUSPOL_COALITION_SPLIT=1. Prereg amendment 2. SHIPPED (state) 2026-10-17.
@@ -498,4 +500,4 @@ A forced value is not automatically a bug, but it must be recorded in `published
 
 ## Coverage check
 
-MR2  every non-universal switch (189 of 230) has a recorded classification.
+MR2  every non-universal switch (190 of 231) has a recorded classification.

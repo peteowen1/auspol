@@ -36,6 +36,7 @@ zero_unnominated <- function(shares, target, label, code = "NZ1", flows = NULL) 
   classes_known <- unique(tg$party)
   rk <- normalise_seat(rownames(shares))
   tot <- rowSums(shares)
+  orig <- shares
   n0 <- 0L; mass <- 0; worst <- character(0); how <- c(conditional = 0L, pooled = 0L, proportional = 0L)
   zcells <- list()
   for (cl in intersect(colnames(shares), classes_known)) {
@@ -88,6 +89,7 @@ zero_unnominated <- function(shares, target, label, code = "NZ1", flows = NULL) 
     rs <- rowSums(shares); k <- rs > 0
     shares[k, ] <- 100 * shares[k, , drop = FALSE] / rs[k]
   }
+  shares <- class_conserve(shares, orig, rk %in% seats_known, names(zcells), tot, label, code)
   skipped <- setdiff(colnames(shares), classes_known)
   cat(sprintf("%s  %s: zeroed %d cell(s) with no candidate standing (%.1f points of share in total)%s%s%s\n",
               code, label, n0, mass,
@@ -97,6 +99,56 @@ zero_unnominated <- function(shares, target, label, code = "NZ1", flows = NULL) 
   shares
 }
 
+
+# Classes that are ONE party statewide, so a seat it skips is vote it keeps elsewhere (plans/prereg-partial-contest
+# amendment 1). IND, OTH and OTH_RIGHT are buckets of unrelated candidates and are never conserved.
+CONSERVE_CLASSES <- c("ALP", "LNP", "GRN", "ONP")
+
+#' @noRd
+class_conserve_on <- function() {
+  m <- Sys.getenv("AUSPOL_CLASS_CONSERVE", "0")
+  if (!m %in% c("0", "1")) stop("AUSPOL_CLASS_CONSERVE must be \"0\" or \"1\", got \"", m, "\"")
+  identical(m, "1")
+}
+
+#' Keep a party's statewide total in the seats it contests (AUSPOL_CLASS_CONSERVE, arm A)
+#'
+#' After nomination zeroing, a single-party class that skipped seats has lost that share to the skipped seats'
+#' other classes. Under `AUSPOL_CLASS_CONSERVE=1` its contested cells are scaled so its seat-mean total over the
+#' nominated seats equals the pre-zeroing one, and each such row's other cells absorb the difference in proportion
+#' to their size. A row whose
+#' conserved cells would exceed its total is left as it was and named. plans/prereg-partial-contest-2026-10-19.md.
+#' @param shares Zeroed shares. @param orig Shares before zeroing. @param rows Logical, the nominated seats.
+#' @param classes Classes that had cells zeroed. @param tot Row totals to keep. @return `shares`.
+#' @noRd
+class_conserve <- function(shares, orig, rows, classes, tot, label, code) {
+  if (!class_conserve_on()) return(shares)
+  cl_c <- intersect(classes, CONSERVE_CLASSES)
+  if (!length(cl_c) || !any(rows)) {
+    cat(sprintf("%sC %s: AUSPOL_CLASS_CONSERVE=1, no single-party class skipped a seat\n", code, label)); return(shares)
+  }
+  scale <- setNames(rep(1, length(cl_c)), cl_c); msg <- character(0)
+  for (cl in cl_c) {
+    before <- mean(orig[rows, cl]); after <- mean(shares[rows, cl]); k <- sum(rows & shares[, cl] > 0)
+    if (k == 0L || after <= 0) { msg <- c(msg, sprintf("%s stood nowhere, nothing to conserve", cl)); next }
+    scale[[cl]] <- before / after
+    msg <- c(msg, sprintf("%s in %d of %d seats, seat-mean %.2f -> %.2f restored (x%.2f)", cl, k, sum(rows), before, after, before / after))
+  }
+  bad <- character(0)
+  for (i in which(rows)) {
+    hit <- cl_c[shares[i, cl_c] > 0 & scale[cl_c] != 1]
+    if (!length(hit)) next
+    new_c <- shares[i, hit] * scale[hit]
+    others <- setdiff(colnames(shares)[shares[i, ] > 0], hit)   # every other class in the row gives up share proportionally
+    room <- tot[i] - sum(new_c)
+    if (!length(others) || room <= 0) { bad <- c(bad, rownames(shares)[i]); next }
+    shares[i, others] <- shares[i, others] * room / sum(shares[i, others])
+    shares[i, hit] <- new_c
+  }
+  cat(sprintf("%sC %s: AUSPOL_CLASS_CONSERVE=1: %s%s\n", code, label, paste(msg, collapse = "; "),
+              if (length(bad)) paste0(" | rows left unscaled (no room): ", paste(bad, collapse = ", ")) else ""))
+  shares
+}
 
 # Nominations close at noon on 9 November 2026. WARNING-ONLY: AUSPOL_NOM_LIVE=1
 # set before this date logs a loud warning; it never blocks.

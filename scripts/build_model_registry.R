@@ -209,6 +209,9 @@ CLASSIFY <- list(
   AUSPOL_ERROR_DIST_COMP = paste(
     "ARM (0), UNIVERSAL via R/: read by error_dist_file() in R/error_dist.R, which error_dist_args() (every harness and",
     "fit_seats_full.R) calls; also read by scripts/fit_error_distribution.R. plans/prereg-error-dist-composition-2026-10-19.md"),
+  AUSPOL_CLASS_CONSERVE = paste(
+    "ARM (0), UNIVERSAL via R/: read by class_conserve_on() inside zero_unnominated() (R/nomination_zero.R), which every",
+    "harness and fit_seats_full.R (zero_unnominated_live) reach. plans/prereg-partial-contest-2026-10-19.md"),
   AUSPOL_SALIENCE_BLEND_ONCE = paste(
     "ARM (0), UNIVERSAL via R/: read by salience_blend_once() in R/salience_surge.R, through blend_salience_post_xgb() in the",
     "fed/nsw/qld/sa/vic harnesses and directly in fit_seats_full.R. WA and NT have no salience blend. plans/prereg-salience-blend-once-2026-10-19.md"),
