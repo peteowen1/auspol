@@ -76,3 +76,26 @@ The switch stays at "0". Named blind spot applies: SHRINK, seat_sd and slopes we
 this says "the shipped statewide spread, dropped unretuned into the state harnesses, scores worse", not that the
 narrow spread is right. Open question for Pete: the live forecast DOES use the wide draws, so either the state
 backtests are optimistic about what ships, or the live statewide spread (FP_EXTRA_SD 2.419) is too wide for states.
+
+## AMENDMENT 1 (2026-10-19, after the screen above; Pete chose "sweep the width", then "add a net-out arm")
+
+Why: the seat-level spread `1.10 + 8.67 sqrt(p(1-p))` is the total seat residual `1.68 + 7.85 sqrt(p(1-p))` with a
+statewide piece of ~1.3-1.6 points removed in variance (`R/seat_sim.R:65-68`), i.e. the flat `party_sd` 1.5. The
+draws carry ~2.5-2.9 for the majors, calibrated against real statewide misses (`reviews/statewide-spread-2026-10-06.md`,
+RMS z 0.96 over 44 major party-elections). Draws on top of an unchanged seat spread count the statewide miss about
+twice for the majors. The live forecast (`fit_seats_full.R:1781-1785`) does exactly that today.
+
+Arms, each against the same flat-spread baseline, `quick_arm.R --pairs=all`, 1,000 sims:
+- **B (primary hypothesis)** `AUSPOL_HARNESS_SW_DRAWS=net`: the draws as in the original arm, and each cell's seat sd
+  (after the size and composition factors) re-derived so the total is unchanged:
+  `sd_new = sqrt(max(sd^2 - (V_k - party_sd_k^2), (0.5 sd)^2))`, `V_k` the draws' variance for class k. Minor classes
+  whose draws are narrower than 1.5 get a WIDER seat sd by the same identity. The 0.5 floor is a guard, not a fit; the
+  count of floored cells is printed (`SWN1`), and a result carried by floored cells is reported as such.
+- **A0, A1 (diagnostic)** `AUSPOL_HARNESS_SW_DRAWS=1` with `AUSPOL_FP_EXTRA_SD` 0 and 1.2 (2.419 is the screen above).
+  A new switch, default "2.419", read by `statewide_draws_as_at()` and `fit_seats_full.R`; byte-identical at default.
+
+Decision: the standard rule, B against baseline. If B passes the screen, the 20k deciding run follows
+(`deciding_run.ps1 -Arm "AUSPOL_HARNESS_SW_DRAWS=net" -Label f4-net`), and if that passes, the same net-out goes into
+`fit_seats_full.R` as its own switch and change, walked on the live Victorian forecast before shipping. If only an A arm
+wins, it goes to Pete with the 6 Oct calibration table beside it: a narrower width would make the statewide level
+over-confident against real misses, so it is not shipped on seat log loss alone. Clauses (a)-(c) above apply to every arm.
