@@ -140,3 +140,29 @@ mean seat sd 3.75 -> 3.32. Seat totals unchanged (ALP median 30, 90% 16-42; LNP 
 Favourite unchanged in 88 of 88 seats; favourite probability +1.3 points on average, at most +3.3 (Melton ONP
 0.612 -> 0.645); seats at 90%+ 24 -> 25. Deciding run (harness arm, 20k) scheduled 22:00:
 `deciding-runs/20261019-1414-f4-net`. Shipping is Pete's call with that result.
+
+## RESULT, arm B deciding run (2026-10-19 14:49-16:19, 20,000 sims, all 35 elections; appended)
+
+`deciding-runs/20261019-1414-f4-net` (DONE; code 4051ca9, no baseline reuse). Seat-winner log loss, lower is better,
+SE clustered on election:
+
+| scope | elections | seats | change | SE |
+|---|---|---|---|---|
+| all seats (quick_arm, floor 2.5e-5) | 35 | 2,931 | -0.0014 | 0.0006 |
+| primary: changed elections | 31 | 2,810 | -0.0014 | 0.0006 |
+| federal | 7 | 1,051 | -0.0011 | 0.0011 |
+| state | 24 | 1,759 | -0.0017 | 0.0007 |
+| AEF-7 subset | 7 | 681 | -0.0021 | 0.0011 |
+| recomputed at floor 1e-6 / 1e-4 | 32 | | -0.0012 / -0.0009 | 0.0005 / 0.0005 |
+
+1. Primary better by more than 1 SE: PASS (-0.0014, SE 0.0006).
+2. Guard, all seats: PASS.
+3. Leave-one-election-out: PASS (least favourable drop, fed2022, still -0.0012 at 2.1 SE).
+4. No election worse by more than 2 SE of its own seats: FAILS on sa2014 (+0.0043, own SE 0.0012) and wa2021
+   (+0.0024, SE 0.0008); at the 1e-4 floor nsw2019 also (+0.0023, SE 0.0008).
+Clause (a), floor artefact: no (holds at 1e-4; 1 seat under 1e-4 in base and arm alike).
+
+Both refusing elections lose broadly, not in one seat: correct calls made a little less certain (sa2014 Ashford ALP
+0.741 -> 0.722, Mawson 0.822 -> 0.804; wa2021 Nedlands ALP 0.875 -> 0.855, Carine 0.693 -> 0.678), the expected cost
+of a wider, calibrated statewide spread in elections whose statewide polls were close. Verdict under the rule:
+REFUSED by clause 4; per `clause-refusals-go-to-pete`, the split goes to Pete for an override decision.
