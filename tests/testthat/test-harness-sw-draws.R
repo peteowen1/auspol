@@ -39,3 +39,43 @@ test_that("on: a correlation arm cannot silently do nothing, and a bad value sto
   withr::local_envvar(AUSPOL_HARNESS_SW_DRAWS = "yes", AUSPOL_PARTY_COR = "off")
   expect_error(harness_sw_draws(.swd_fixture(), "ALP", 10L, "vic2022"), "must be")
 })
+
+test_that("net: the seat sd gives back exactly the draws' extra variance, with the floor counted", {
+  withr::local_envvar(AUSPOL_HARNESS_SW_DRAWS = "net", AUSPOL_PARTY_COR = "off")
+  shares <- matrix(c(40, 35, 10, 45, 30, 2), 2, 3, byrow = TRUE, dimnames = list(c("A", "B"), c("ALP", "LNP", "GRN")))
+  set.seed(2)
+  dr <- cbind(ALP = stats::rnorm(4000, 0, 3), LNP = stats::rnorm(4000, 0, 3), GRN = stats::rnorm(4000, 0, 1))
+  lsd <- c(1.10, 8.67)
+  txt <- utils::capture.output(out <- harness_sw_net_sd(NULL, dr, shares, lsd, NULL, 1.5, "vic2022", "BVW"))
+  base <- lsd[1] + lsd[2] * sqrt(shares / 100 * (1 - shares / 100))
+  V <- apply(dr, 2, stats::var)
+  # total variance (seat + statewide) is what it was under the flat 1.5, cell by cell, wherever the floor does not bind
+  tot_new <- sweep(out^2, 2, V, `+`); tot_old <- base^2 + 1.5^2
+  expect_equal(unname(tot_new[, c("ALP", "LNP")]), unname(tot_old[, c("ALP", "LNP")]), tolerance = 1e-10)
+  # the Greens' draws are NARROWER than 1.5, so their seat sd widens
+  expect_true(all(out[, "GRN"] > base[, "GRN"]))
+  expect_match(txt, "^BVWN1 vic2022: seat sd net of the draws")
+  # a cell where the identity would go below half its sd is floored there, and counted
+  big <- dr; big[, "ALP"] <- big[, "ALP"] * 4
+  txt2 <- utils::capture.output(o2 <- harness_sw_net_sd(NULL, big, shares, lsd, NULL, 1.5, "vic2022", "BVW"))
+  expect_equal(unname(o2[, "ALP"]), unname(0.5 * base[, "ALP"]))
+  expect_match(txt2, "2 of 6 cells at the 0.5 floor")
+  # an existing override (size factor) is what gets netted, not the bare level sd
+  so <- matrix(NA_real_, 2, 3, dimnames = dimnames(shares)); so["A", "ALP"] <- 9
+  utils::capture.output(o3 <- harness_sw_net_sd(so, dr, shares, lsd, NULL, 1.5, "x", "BVW"))
+  expect_equal(o3["A", "ALP"], sqrt(81 - (V[["ALP"]] - 2.25)))
+})
+
+test_that("net off, or no draws, leaves the override untouched; the width switch reads and validates", {
+  withr::local_envvar(AUSPOL_HARNESS_SW_DRAWS = "1")
+  so <- matrix(1, 1, 1)
+  expect_identical(harness_sw_net_sd(so, matrix(0, 2, 1, dimnames = list(NULL, "ALP")), so, c(1, 1), NULL, 1.5, "x"), so)
+  withr::local_envvar(AUSPOL_HARNESS_SW_DRAWS = "net")
+  expect_identical(harness_sw_net_sd(so, NULL, so, c(1, 1), NULL, 1.5, "x"), so)
+  withr::local_envvar(AUSPOL_FP_EXTRA_SD = NA)
+  expect_identical(fp_extra_sd_env(), 2.419)
+  withr::local_envvar(AUSPOL_FP_EXTRA_SD = "1.2")
+  expect_identical(fp_extra_sd_env(), 1.2)
+  withr::local_envvar(AUSPOL_FP_EXTRA_SD = "-1")
+  expect_error(fp_extra_sd_env(), "must be one number")
+})

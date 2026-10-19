@@ -786,7 +786,8 @@ for (K in PAIRS) {
   .bo <- breakout_mix_args(el_to, shares)
   .imx <- ind_mixture_surge(el_to, rownames(shares), surge_arg, surge_mu_arg, surge_sd_arg, surge_party_arg, code = "BW1N")
   surge_arg <- .imx$surge_h; surge_mu_arg <- .imx$surge_mu; surge_sd_arg <- .imx$surge_sd; surge_party_arg <- .imx$surge_party
-  sim <- simulate_seat_contests(level_sd = .level_sd, sd_override = size_sd_apply(SD_OVR, shares, el_to, .level_sd, .lm(shares)), level_mult = .lm(shares), shares, fm, party_sd = psd, statewide_draws = harness_sw_draws(SWD, colnames(shares), N_SIMS, el_to, "BWW"),
+  .swd <- harness_sw_draws(SWD, colnames(shares), N_SIMS, el_to, "BWW")
+  sim <- simulate_seat_contests(level_sd = .level_sd, sd_override = harness_sw_net_sd(size_sd_apply(SD_OVR, shares, el_to, .level_sd, .lm(shares)), .swd, shares, .level_sd, .lm(shares), psd, el_to, "BWW"), level_mult = .lm(shares), shares, fm, party_sd = psd, statewide_draws = .swd,
                                 seat_sd = sd_used * SEAT_SD_MULT,
                                 breakout_p = .bo$p, breakout_q = .bo$q, coalition_split = coalition_split_args(el_to, rownames(shares)), error_q = error_dist_args(el_to, colnames(shares)),
                                 n_sims = N_SIMS, smooth = SMOOTH, seed = SEED,

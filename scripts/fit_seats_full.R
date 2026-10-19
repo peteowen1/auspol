@@ -160,7 +160,7 @@ if (SEAT_SD_MULT != 1) {
 # its probability of winning at least one seat FALLS, 0.926 -> 0.897. Stable
 # across seeds 42/101/202.
 FP_SD_MODE  <- Sys.getenv("AUSPOL_FP_SD_MODE", "additive")
-FP_EXTRA_SD <- 2.419   # adopted factor A; docs/reviews/fp-widening-choice-*.md
+FP_EXTRA_SD <- fp_extra_sd_env()   # AUSPOL_FP_EXTRA_SD, default 2.419: adopted factor A; docs/reviews/fp-widening-choice-*.md
 OUT_SUFFIX  <- Sys.getenv("AUSPOL_OUT_SUFFIX", "")
 # Overridable ONLY so a change can be checked for stability across seeds. A
 # difference that flips sign with the seed is Monte Carlo noise, which this

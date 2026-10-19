@@ -99,3 +99,11 @@ Decision: the standard rule, B against baseline. If B passes the screen, the 20k
 `fit_seats_full.R` as its own switch and change, walked on the live Victorian forecast before shipping. If only an A arm
 wins, it goes to Pete with the 6 Oct calibration table beside it: a narrower width would make the statewide level
 over-confident against real misses, so it is not shipped on seat log loss alone. Clauses (a)-(c) above apply to every arm.
+
+## AMENDMENT 2 (2026-10-19, before arm B ran)
+
+The federal harness already passes statewide draws, so it carries the same double count; by the one-harness-is-all
+rule arm B's net-out reaches `backtest_candidate_fed.R` too (`BFWN1`). Under arm B the federal pairs are therefore
+TARGETED, not controls; they stay controls (must score 0) under the A arms only if those leave fed untouched, which
+they do not (`AUSPOL_FP_EXTRA_SD` reaches fed as well). Primary for B: all 32 changed elections; fed and state
+reported separately beside it.

@@ -31,7 +31,7 @@ All seven share one `R/` package core (`simulate_seat_contests()`,
 in which switches each one WIRES and which data source each reads, not in
 separate model code.
 
-## Switch parity (226 switches from `published_flags.R`, 7 entry points)
+## Switch parity (227 switches from `published_flags.R`, 7 entry points)
 
 | switch | fit_seats (published) | fed | nsw | qld | sa | vic | wa |
 |---|---|---|---|---|---|---|---|
@@ -93,6 +93,7 @@ separate model code.
 | `AUSPOL_FORCE_FP` | yes | NO | NO | NO | NO | NO | NO |
 | `AUSPOL_FORCE_FP_RULE` | yes | NO | NO | NO | NO | NO | NO |
 | `AUSPOL_FORECAST_MODE` | NO | yes | yes | yes | yes | yes | yes |
+| `AUSPOL_FP_EXTRA_SD` | yes | NO | NO | NO | NO | NO | NO |
 | `AUSPOL_FP_SD_MODE` | yes | NO | NO | NO | NO | NO | NO |
 | `AUSPOL_FUND_TIME_FORWARD` | NO | yes | NO | NO | NO | NO | NO |
 | `AUSPOL_HARNESS_SW_DRAWS` | NO | NO | yes | yes | yes | yes | yes |
@@ -306,6 +307,7 @@ separate model code.
 - **`AUSPOL_FORCE_FP`** (intentional / dead experiment): Published-forecast-only (fit_seats_full.R -- forces a first-preference override for the live Victorian forecast); no analogue in a backtest scored against real historical results.
 - **`AUSPOL_FORCE_FP_RULE`** (intentional / dead experiment): Published-forecast-only (fit_seats_full.R -- how the other parties give way under AUSPOL_FORCE_FP); a what-if switch with no analogue in a backtest.
 - **`AUSPOL_FORECAST_MODE`** (**OPEN GAP**): OPEN GAP, and the most consequential one in this table. 1 = the statewide the seats swing toward is PREDICTED from polls rather than read off the election being scored. Implemented in backtest_candidate_fed.R and _sa.R ONLY; nsw/qld/vic/wa still use the actual result, so their numbers answer a different question from federal's and are not comparable to a forecast. Default 0 because flipping it today would mean two different things across the six harnesses, NOT because the oracle statewide is endorsed -- Pete's ruling 2026-09-11 is that a forecast must be predictive throughout. Cost where measured: federal +0.0047 pooled seat log loss.
+- **`AUSPOL_FP_EXTRA_SD`** (intentional / dead experiment): UNIVERSAL via R/: read by fp_extra_sd_env() in R/forecast_statewide.R, which forecast_statewide_for() (the five state harnesses and nt), backtest_candidate_fed.R and fit_seats_full.R all call. Default 2.419 is the adopted value.
 - **`AUSPOL_FP_SD_MODE`** (intentional / dead experiment): Published-forecast-only (fit_seats_full.R -- first-preference spread mode for the live Victorian projection); backtests use realised historical first preferences, not a projected spread.
 - **`AUSPOL_FUND_TIME_FORWARD`** (**adopted, shared-function wiring**): SHIPPED as a leak fix (ledger v51, 2026-09-29). Read in R/forecast_statewide.R (reached by every harness and fit_seats_full.R), scripts/backtest_candidate_fed.R and scripts/build_level_pred.R. 'No' in the other harness columns is the grep missing the R/ read.
 - **`AUSPOL_HARNESS_SW_DRAWS`** (intentional / dead experiment): ARM (0), HARNESS-ONLY by design: the six state harnesses read it via harness_sw_draws() in R/forecast_statewide.R. fit_seats_full.R and the federal harness already pass statewide draws. plans/prereg-harness-sw-draws-2026-10-19.md
@@ -490,4 +492,4 @@ A forced value is not automatically a bug, but it must be recorded in `published
 
 ## Coverage check
 
-MR2  every non-universal switch (185 of 226) has a recorded classification.
+MR2  every non-universal switch (186 of 227) has a recorded classification.

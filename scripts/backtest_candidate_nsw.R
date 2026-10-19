@@ -1151,7 +1151,8 @@ if (.exhaust_on) {
 .bo <- breakout_mix_args(TGT, shares)
 .imx <- ind_mixture_surge(TGT, rownames(shares), surge_arg, surge_mu_arg, surge_sd_arg, surge_party_arg, code = "BT1N")
 surge_arg <- .imx$surge_h; surge_mu_arg <- .imx$surge_mu; surge_sd_arg <- .imx$surge_sd; surge_party_arg <- .imx$surge_party
-sim <- simulate_seat_contests(level_sd = .level_sd, sd_override = size_sd_apply(SD_OVR, shares, TGT, .level_sd, .lm(shares)), level_mult = .lm(shares), shares, fm, party_sd = psd, statewide_draws = harness_sw_draws(SWD, colnames(shares), N_SIMS, TGT, "BNW"), seat_sd = sp$sd_within * SEAT_SD_MULT,
+.swd <- harness_sw_draws(SWD, colnames(shares), N_SIMS, TGT, "BNW")
+sim <- simulate_seat_contests(level_sd = .level_sd, sd_override = harness_sw_net_sd(size_sd_apply(SD_OVR, shares, TGT, .level_sd, .lm(shares)), .swd, shares, .level_sd, .lm(shares), psd, TGT, "BNW"), level_mult = .lm(shares), shares, fm, party_sd = psd, statewide_draws = .swd, seat_sd = sp$sd_within * SEAT_SD_MULT,
                               breakout_p = .bo$p, breakout_q = .bo$q, coalition_split = coalition_split_args(TGT, rownames(shares)), error_q = error_dist_args(TGT, colnames(shares)),
                               n_sims = N_SIMS, smooth = SMOOTH, seed = SEED, party_cor = PARTY_COR,
                               shrink = SHRINK, conditional_override = .htv_ov, conditional_override_sd = attr(.htv_ov, "sd"),
