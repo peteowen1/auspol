@@ -198,13 +198,13 @@ CLASSIFY <- list(
     "SHIPPED 2026-10-18 as a leak fix, TRAINING-ONLY by design: read in scripts/fit_xgb_primary_v6.R, which builds the xgb",
     "training features (stage 3). Harnesses and fit_seats_full.R were already time-forward."),
   AUSPOL_HARNESS_SW_DRAWS = paste(
-    "ARM (0), HARNESS-ONLY by design: the six state harnesses read it via harness_sw_draws() in R/forecast_statewide.R.",
+    "SHIPPED 2026-10-19 as net (Pete override). HARNESS-ONLY by design: the six state harnesses read it via harness_sw_draws() in R/forecast_statewide.R.",
     "fit_seats_full.R and the federal harness already pass statewide draws. plans/prereg-harness-sw-draws-2026-10-19.md"),
   AUSPOL_FP_EXTRA_SD = paste(
     "UNIVERSAL via R/: read by fp_extra_sd_env() in R/forecast_statewide.R, which forecast_statewide_for() (the five state",
     "harnesses and nt), backtest_candidate_fed.R and fit_seats_full.R all call. Default 2.419 is the adopted value."),
   AUSPOL_SW_NET_LIVE = paste(
-    "ARM (0), PUBLISHED-ONLY by design: the live counterpart of AUSPOL_HARNESS_SW_DRAWS=net, read in fit_seats_full.R;",
+    "SHIPPED 2026-10-19 (Pete override). PUBLISHED-ONLY by design: the live counterpart of AUSPOL_HARNESS_SW_DRAWS=net, read in fit_seats_full.R;",
     "the harnesses are measured with the harness switch. plans/prereg-harness-sw-draws-2026-10-19.md amendment 1"),
   AUSPOL_ERROR_DIST_COMP = paste(
     "ARM (0), UNIVERSAL via R/: read by error_dist_file() in R/error_dist.R, which error_dist_args() (every harness and",

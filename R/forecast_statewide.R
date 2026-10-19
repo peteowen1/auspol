@@ -416,7 +416,7 @@ forecast_statewide_or_oracle <- function(region, year, election_date, parties, s
 
 #' Statewide draws for a state harness's seat simulation (audit F4)
 #'
-#' `AUSPOL_HARNESS_SW_DRAWS` (default "0"; "1" and "net" both pass draws, "net" also
+#' `AUSPOL_HARNESS_SW_DRAWS` (default "net", shipped 2026-10-19 on Pete's override; "0" = flat PARTY_SD; "1" and "net" both pass draws, "net" also
 #' re-derives the seat spread, see [harness_sw_net_sd()]): the state harnesses pass the seat
 #' simulator the statewide draws `forecast_statewide_or_oracle()` built (its
 #' `draws` attribute) instead of a flat `PARTY_SD` with parties independent, so
@@ -434,7 +434,7 @@ forecast_statewide_or_oracle <- function(region, year, election_date, parties, s
 #' @return A matrix `n` x `parties`, or NULL.
 #' @noRd
 harness_sw_draws <- function(draws, parties, n, pair, code = "SW", from = 1L, quiet = FALSE) {
-  v <- Sys.getenv("AUSPOL_HARNESS_SW_DRAWS", "0")
+  v <- Sys.getenv("AUSPOL_HARNESS_SW_DRAWS", "net")
   if (!v %in% c("0", "1", "net")) stop("AUSPOL_HARNESS_SW_DRAWS must be \"0\", \"1\" or \"net\", not ", v)
   if (v == "0") return(NULL)
   if (!Sys.getenv("AUSPOL_PARTY_COR", "off") %in% c("", "off", "0"))
@@ -490,7 +490,7 @@ fp_extra_sd_env <- function() {
 #' @noRd
 harness_sw_net_sd <- function(sd_override, draws, shares, level_sd, level_mult, party_sd, pair, code = "SW", quiet = FALSE,
                               force = FALSE) {
-  if (!(force || identical(Sys.getenv("AUSPOL_HARNESS_SW_DRAWS", "0"), "net")) || is.null(draws)) return(sd_override)
+  if (!(force || identical(Sys.getenv("AUSPOL_HARNESS_SW_DRAWS", "net"), "net")) || is.null(draws)) return(sd_override)
   if (is.null(level_sd)) stop("AUSPOL_HARNESS_SW_DRAWS=net needs level_sd: there is no per-cell seat spread to net out")
   cls <- colnames(shares); K <- length(cls)
   lm_vec <- rep(1, K)

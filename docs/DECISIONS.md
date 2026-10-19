@@ -4,6 +4,8 @@ One line each: the decision, the one fact behind it, a link. Newest first.
 Created 2026-09-19 (the verse convention; auspol had none). Older decisions
 live in the plans they came from (`docs/plans/prereg-*.md` RESULT sections).
 
+- **2026-10-19 Statewide draws with the seat spread netted out SHIPPED (Pete: "Override and ship"), over the no-election-worse clause.** `AUSPOL_HARNESS_SW_DRAWS="net"` (state + federal harnesses) and `AUSPOL_SW_NET_LIVE="1"` (published forecast): the live forecast had counted the statewide miss about twice (2.6-point draws on a seat spread fitted net of a flat 1.5). 20k, 31 elections -0.0014 (SE 0.0006), leave-one-out holds, AEF-7 -0.0021 (SE 0.0011), holds at a 1e-4 floor; clause 4 refused on sa2014 (+0.0043) and wa2021 (+0.0024), broad small losses on correct calls. Draws without the net-out were REFUSED (+0.0017). vic2026: favourites unchanged in 88/88 (`plans/prereg-harness-sw-draws-2026-10-19.md`).
+
 - **2026-10-19 surge_h leak fix KEPT (Pete: "Keep"), over the no-election-worse clause.** `AUSPOL_SURGE_H_TF=1` trains the xgb salience feature on earlier elections only. 35 elections +0.0005 (SE 0.0009); qld2012, qld2020, fed2013 just over 2 SE worse, fed2019 4 SE better; ~0.7 of 31 cross 2 SE by chance (`plans/prereg-surge-h-time-forward-2026-10-18.md`).
 
 - **2026-10-18 Seat-poll blend arm H SHIPPED (Pete: "Ship H now"), merged in PR #127; live after the next publish.** Eleven `AUSPOL_SEAT_POLL_*` switches. 20k, 35 elections: polled seats -0.0136 (SE 0.0021), all seats 0.3190 -> 0.3176 (SE 0.0008), AEF-7 0.2676 -> 0.2622; leave-one-election-out passes. McMahon 2025 P(Labor) 0.27 -> 0.92 (`plans/prereg-seat-poll-method-weights-2026-10-18.md`).

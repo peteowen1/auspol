@@ -6,9 +6,12 @@
   d
 }
 
-test_that("off (the default) returns NULL whatever it is given", {
-  withr::local_envvar(AUSPOL_HARNESS_SW_DRAWS = NA)
+test_that("off returns NULL whatever it is given; the shipped default (net) passes draws", {
+  withr::local_envvar(AUSPOL_HARNESS_SW_DRAWS = "0")
   expect_null(harness_sw_draws(.swd_fixture(), c("ALP", "LNP"), 10L, "vic2022"))
+  withr::local_envvar(AUSPOL_HARNESS_SW_DRAWS = NA, AUSPOL_PARTY_COR = "off")
+  utils::capture.output(d <- harness_sw_draws(.swd_fixture(), c("ALP", "LNP"), 10L, "vic2022"))
+  expect_identical(dim(d), c(10L, 2L))
 })
 
 test_that("on: the first n rows of exactly the simulator's columns, in its order, and the spread is printed", {
@@ -67,7 +70,7 @@ test_that("net: the seat sd gives back exactly the draws' extra variance, with t
 })
 
 test_that("net off, or no draws, leaves the override untouched; the width switch reads and validates", {
-  withr::local_envvar(AUSPOL_HARNESS_SW_DRAWS = "1")
+  withr::local_envvar(AUSPOL_HARNESS_SW_DRAWS = "1")  # draws without the net-out
   so <- matrix(1, 1, 1)
   expect_identical(harness_sw_net_sd(so, matrix(0, 2, 1, dimnames = list(NULL, "ALP")), so, c(1, 1), NULL, 1.5, "x"), so)
   withr::local_envvar(AUSPOL_HARNESS_SW_DRAWS = "net")

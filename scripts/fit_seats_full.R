@@ -1778,12 +1778,12 @@ if (identical(Sys.getenv("AUSPOL_XGB_FLOWS", "1"), "1")) {
 # BREAKOUT MIXTURE (AUSPOL_BREAKOUT_MIX, R/breakout_mix.R): NULLs when off.
 # Live, the classifier reads the feature rows xgb_primary_predict_live() built.
 .bo <- breakout_mix_args(TGT, shares)
-# SEAT SPREAD NET OF THE STATEWIDE DRAWS (AUSPOL_SW_NET_LIVE, default "0"; plans/prereg-harness-sw-draws-2026-10-19.md
+# SEAT SPREAD NET OF THE STATEWIDE DRAWS (AUSPOL_SW_NET_LIVE, default "1" = SHIPPED 2026-10-19 on Pete's override; plans/prereg-harness-sw-draws-2026-10-19.md
 # amendment 1, audit F4). level_sd is the total seat residual with a FLAT 1.5-point statewide piece removed, but this
 # script adds draws of ~2.6 for the majors on top, so the statewide miss counts about twice. "1" re-derives each cell's
 # seat sd so the total is what level_sd was fitted to (harness_sw_net_sd(), R/forecast_statewide.R; prints SWLN1).
 # The reference is the flat 1.5, NOT psd (psd is the draws' own sd here, which would net out nothing).
-.sw_net_live <- Sys.getenv("AUSPOL_SW_NET_LIVE", "0")
+.sw_net_live <- Sys.getenv("AUSPOL_SW_NET_LIVE", "1")
 if (!.sw_net_live %in% c("0", "1")) stop("AUSPOL_SW_NET_LIVE must be \"0\" or \"1\", not ", .sw_net_live)
 .sd_ov <- size_sd_apply(NULL, shares, TGT, .level_sd, .lm(shares), prev = PREV)
 if (identical(.sw_net_live, "1"))
