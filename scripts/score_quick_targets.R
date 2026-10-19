@@ -39,7 +39,7 @@ seat_rows <- rbindlist(lapply(els, function(e) {
 }))
 ll <- function(p, eps) -log(pmax(p, eps))
 seat_rows[, d := ll(p_b, EPS) - ll(p_a, EPS)][, d4 := ll(p_b, 1e-4) - ll(p_a, 1e-4)]
-cat(sprintf("ST0 %d seats in %d elections; floor %.1e (0.5/%g); target threshold %.2f points\n",
+cat(sprintf("QT0 %d seats in %d elections; floor %.1e (0.5/%g); target threshold %.2f points\n",
             nrow(seat_rows), length(els), EPS, nsims, thr))
 
 # mean paired change with SE clustered on election
@@ -51,33 +51,33 @@ csum <- function(dt, col) {
 }
 verdict <- function(s) if (!is.finite(s["se"])) "NOT ASSESSABLE" else if (s["mean"] < -s["se"]) "BETTER by more than 1 SE" else if (s["mean"] > s["se"]) "WORSE by more than 1 SE" else "within 1 SE"
 T <- seat_rows[seat_rows$target]
-cat(sprintf("ST1 targets: %d seats in %d elections; cells moved down %d, up %d (direction); squared share error on moved cells %+.1f\n",
+cat(sprintf("QT1 targets: %d seats in %d elections; cells moved down %d, up %d (direction); squared share error on moved cells %+.1f\n",
             nrow(T), uniqueN(T$election), sum(T$n_down), sum(T$n_up), sum(T$sq_change)))
-if (nrow(T) < 5L) { cat("ST2 PRIMARY => NOT ASSESSABLE (fewer than 5 target seats): counts as FAIL\n"); quit(save = "no") }
+if (nrow(T) < 5L) { cat("QT2 PRIMARY => NOT ASSESSABLE (fewer than 5 target seats): counts as FAIL\n"); quit(save = "no") }
 p <- csum(T, "d"); p4 <- csum(T, "d4")
-cat(sprintf("ST2 PRIMARY (clause 1) target-seat log loss change %+.4f (SE %.4f, %d seats, %d elections) => %s\n",
+cat(sprintf("QT2 PRIMARY (clause 1) target-seat log loss change %+.4f (SE %.4f, %d seats, %d elections) => %s\n",
             p["mean"], p["se"], p["n"], p["g"], verdict(p)))
 cat(sprintf("    at a 1e-4 floor: %+.4f (SE %.4f) => %s\n", p4["mean"], p4["se"], verdict(p4)))
 g <- csum(seat_rows, "d")
-cat(sprintf("ST3 GUARD (clause 2) all-seat log loss change %+.4f (SE %.4f, %d seats) => %s\n", g["mean"], g["se"], g["n"],
+cat(sprintf("QT3 GUARD (clause 2) all-seat log loss change %+.4f (SE %.4f, %d seats) => %s\n", g["mean"], g["se"], g["n"],
             if (g["mean"] > g["se"]) "FAIL (worse by more than 1 SE)" else "PASS"))
 loo <- rbindlist(lapply(unique(T$election), function(e) { s <- csum(T[T$election != e], "d")
   data.table(dropped = e, change = s["mean"], se = s["se"], holds = isTRUE(s["mean"] < -s["se"])) }))
-cat(sprintf("ST4 LEAVE-ONE-ELECTION-OUT (clause 3): primary better by more than 1 SE in %d of %d drops => %s\n",
+cat(sprintf("QT4 LEAVE-ONE-ELECTION-OUT (clause 3): primary better by more than 1 SE in %d of %d drops => %s\n",
             sum(loo$holds), nrow(loo), if (all(loo$holds)) "PASS" else "FAIL"))
 share <- T[, list(seats = .N, sum_change = sum(d)), by = election][, share_of_gain := round(sum_change / sum(T$d), 2)][order(sum_change)]
 print(share, row.names = FALSE)
 pe <- seat_rows[, list(seats = .N, change = mean(d), se_own = if (.N > 1L) sd(d) / sqrt(.N) else NA_real_), by = election]
 pe[, worse_2se := is.finite(se_own) & se_own > 0 & change > 2 * se_own]
-cat(sprintf("ST5 NO ELECTION WORSE (clause 4): %d election(s) worse by more than 2 SE of their own seats => %s\n",
+cat(sprintf("QT5 NO ELECTION WORSE (clause 4): %d election(s) worse by more than 2 SE of their own seats => %s\n",
             sum(pe$worse_2se), if (any(pe$worse_2se)) paste("FAIL:", paste(pe$election[pe$worse_2se], collapse = ", ")) else "PASS"))
 print(pe[order(-change)][1:min(6, .N), list(election, seats, change = round(change, 4), se_own = round(se_own, 4), worse_2se)], row.names = FALSE)
 top2 <- T[order(d)][seq_len(min(2L, .N))]
 rest <- T[!(paste(T$election, T$seat) %in% paste(top2$election, top2$seat))]
 nt <- csum(seat_rows[!seat_rows$target], "d")
-cat(sprintf("ST6 NOT ONE SEAT (clause 5): without the two largest gains (%s) the target change is %+.4f => %s; non-target seats %+.4f (SE %.4f) => %s\n",
+cat(sprintf("QT6 NOT ONE SEAT (clause 5): without the two largest gains (%s) the target change is %+.4f => %s; non-target seats %+.4f (SE %.4f) => %s\n",
             paste(top2$election, top2$seat, collapse = "; "), mean(rest$d), if (mean(rest$d) < 0) "sign kept" else "FAIL (sign lost)",
             nt["mean"], nt["se"], if (is.finite(nt["se"]) && nt["mean"] > nt["se"]) "FAIL (worse by more than 1 SE)" else "PASS"))
-cat("ST7 largest seat moves (log loss change, lower is better; p_win of the actual winner):\n")
+cat("QT7 largest seat moves (log loss change, lower is better; p_win of the actual winner):\n")
 print(T[order(d)][unique(c(seq_len(min(5L, .N)), max(1L, .N - 4L):.N)),
         list(election, seat, p_base = round(p_a, 3), p_arm = round(p_b, 3), change = round(d, 4), max_move = round(max_move, 2))], row.names = FALSE)

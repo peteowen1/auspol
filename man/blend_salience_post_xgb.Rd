@@ -10,7 +10,7 @@ blend_salience_post_xgb(
   surge_mu,
   expected = FALSE,
   label = "",
-  code = "SB1"
+  code = "SBW1"
 )
 }
 \arguments{
