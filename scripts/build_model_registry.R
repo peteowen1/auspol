@@ -203,6 +203,9 @@ CLASSIFY <- list(
   AUSPOL_FP_EXTRA_SD = paste(
     "UNIVERSAL via R/: read by fp_extra_sd_env() in R/forecast_statewide.R, which forecast_statewide_for() (the five state",
     "harnesses and nt), backtest_candidate_fed.R and fit_seats_full.R all call. Default 2.419 is the adopted value."),
+  AUSPOL_SW_NET_LIVE = paste(
+    "ARM (0), PUBLISHED-ONLY by design: the live counterpart of AUSPOL_HARNESS_SW_DRAWS=net, read in fit_seats_full.R;",
+    "the harnesses are measured with the harness switch. plans/prereg-harness-sw-draws-2026-10-19.md amendment 1"),
   AUSPOL_SEAT_POLL_HEAVY_TAIL = paste(
     "ARM (0), UNIVERSAL via R/: read inside R/seat_poll_blend.R (the seat-poll blend every harness and fit_seats_full.R",
     "reach). plans/prereg-seat-poll-heavy-tail-2026-10-18.md"),

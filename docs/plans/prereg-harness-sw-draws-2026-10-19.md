@@ -130,3 +130,13 @@ Reading: within 1 SE on the primary, so the screen does not clear B and does not
 says: draws on top of the full seat spread (what `fit_seats_full.R` publishes today) +0.0017 worse on the states; draws
 with the statewide variance netted out of the seat spread back to baseline, and better on the federal pairs, which are
 the one harness that already ran the published configuration. Next decision is Pete's (deciding run, and the live port).
+
+## LIVE PORT AND WALK (2026-10-19; Pete: "port to live, then decide")
+
+`AUSPOL_SW_NET_LIVE` (default "0") in `fit_seats_full.R`: the same net-out, reference the flat 1.5 (live `psd` is the
+draws' own sd and would net out nothing). Walk on vic2026, both runs in the quick_arm scratch folder (never `output/`):
+SWLN1 moved seat variance ALP -7.67, LNP -6.66, GRN -3.57, ONP -3.48 (IND/OTH_RIGHT +0.2); 6 of 616 cells at the floor;
+mean seat sd 3.75 -> 3.32. Seat totals unchanged (ALP median 30, 90% 16-42; LNP 30, 19-46 vs 20-46; ONP 21, 11-32).
+Favourite unchanged in 88 of 88 seats; favourite probability +1.3 points on average, at most +3.3 (Melton ONP
+0.612 -> 0.645); seats at 90%+ 24 -> 25. Deciding run (harness arm, 20k) scheduled 22:00:
+`deciding-runs/20261019-1414-f4-net`. Shipping is Pete's call with that result.

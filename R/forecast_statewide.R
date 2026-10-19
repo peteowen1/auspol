@@ -483,10 +483,14 @@ fp_extra_sd_env <- function() {
 #' @param party_sd As passed to [simulate_seat_contests()]: one number, or named per class (missing = 0).
 #' @param pair,code Label and log prefix.
 #' @param quiet Skip the SWN1 line.
+#' @param force Apply whatever AUSPOL_HARNESS_SW_DRAWS says: the published forecast's own switch
+#'   (AUSPOL_SW_NET_LIVE in `scripts/fit_seats_full.R`) decides there. `party_sd` must then be the FLAT
+#'   reference the seat spread was netted for (1.5), not the live draws' own sd.
 #' @return A full seats x classes sd matrix, or `sd_override` unchanged.
 #' @noRd
-harness_sw_net_sd <- function(sd_override, draws, shares, level_sd, level_mult, party_sd, pair, code = "SW", quiet = FALSE) {
-  if (!identical(Sys.getenv("AUSPOL_HARNESS_SW_DRAWS", "0"), "net") || is.null(draws)) return(sd_override)
+harness_sw_net_sd <- function(sd_override, draws, shares, level_sd, level_mult, party_sd, pair, code = "SW", quiet = FALSE,
+                              force = FALSE) {
+  if (!(force || identical(Sys.getenv("AUSPOL_HARNESS_SW_DRAWS", "0"), "net")) || is.null(draws)) return(sd_override)
   if (is.null(level_sd)) stop("AUSPOL_HARNESS_SW_DRAWS=net needs level_sd: there is no per-cell seat spread to net out")
   cls <- colnames(shares); K <- length(cls)
   lm_vec <- rep(1, K)

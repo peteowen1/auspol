@@ -31,7 +31,7 @@ All seven share one `R/` package core (`simulate_seat_contests()`,
 in which switches each one WIRES and which data source each reads, not in
 separate model code.
 
-## Switch parity (227 switches from `published_flags.R`, 7 entry points)
+## Switch parity (228 switches from `published_flags.R`, 7 entry points)
 
 | switch | fit_seats (published) | fed | nsw | qld | sa | vic | wa |
 |---|---|---|---|---|---|---|---|
@@ -225,6 +225,7 @@ separate model code.
 | `AUSPOL_SURGE_RECIPIENT` | yes | yes | yes | yes | yes | yes | yes |
 | `AUSPOL_SURGE_SCALE` | yes | yes | yes | yes | yes | yes | yes |
 | `AUSPOL_SURGE_SOURCE` | yes | NO | NO | NO | NO | NO | NO |
+| `AUSPOL_SW_NET_LIVE` | yes | NO | NO | NO | NO | NO | NO |
 | `AUSPOL_THIN_CYCLE` | NO | NO | NO | NO | NO | NO | NO |
 | `AUSPOL_TIME_FORWARD_FITS` | NO | NO | NO | NO | NO | NO | NO |
 | `AUSPOL_TRAIN_COMPLETENESS` | NO | NO | NO | NO | NO | NO | NO |
@@ -416,6 +417,7 @@ separate model code.
 - **`AUSPOL_SURGE_FROM_ZERO`** (intentional / dead experiment): WA has no candidate-level salience corpus -- same exclusion as AUSPOL_SALIENCE_EXPECTED, intentional.
 - **`AUSPOL_SURGE_H_TF`** (**adopted, shared-function wiring**): SHIPPED 2026-10-18 as a leak fix, TRAINING-ONLY by design: read in scripts/fit_xgb_primary_v6.R, which builds the xgb training features (stage 3). Harnesses and fit_seats_full.R were already time-forward.
 - **`AUSPOL_SURGE_SOURCE`** (intentional / dead experiment): UNIVERSAL via R/: read inside surging_parties() (R/party_surge.R), which every harness reaches through salience_permit_for() and fit_xgb_primary_v4/v6.R reach directly, so the per-harness greps cannot see it. Published "actual" LEAKS and is being replaced (plans/prereg-surge-flag-time-forward-2026-10-15.md); fit_seats_full.R already behaves as "none" because vic2026 has no votes.
+- **`AUSPOL_SW_NET_LIVE`** (intentional / dead experiment): ARM (0), PUBLISHED-ONLY by design: the live counterpart of AUSPOL_HARNESS_SW_DRAWS=net, read in fit_seats_full.R; the harnesses are measured with the harness switch. plans/prereg-harness-sw-draws-2026-10-19.md amendment 1
 - **`AUSPOL_THIN_CYCLE`** (intentional / dead experiment): CONFIRMED (1) 2026-10-14, UNIVERSAL via R/: read inside R/forecast_statewide.R and R/hare_clark.R (thin_cycle_statewide() for cycles the trend cannot fit).
 - **`AUSPOL_TIME_FORWARD_FITS`** (**adopted, shared-function wiring**): SHIPPED as a leak fix (2026-09-28): every constant fitted inside base_pred learns only from earlier elections. Read in R/time_forward.R and R/fundamentals_tf.R (also part of cache keys), below the harness grep; reaches every entry point.
 - **`AUSPOL_TRAIN_COMPLETENESS`** (intentional / dead experiment): ARM (0), FIT-TIME: read by fit_xgb_primary_asat.R and fit_xgb_primary_v6_final.R (rebuild stages 4-5); harnesses and live load the trained models. plans/prereg-training-weights-2026-10-13.md
@@ -492,4 +494,4 @@ A forced value is not automatically a bug, but it must be recorded in `published
 
 ## Coverage check
 
-MR2  every non-universal switch (186 of 227) has a recorded classification.
+MR2  every non-universal switch (187 of 228) has a recorded classification.

@@ -79,3 +79,12 @@ test_that("net off, or no draws, leaves the override untouched; the width switch
   withr::local_envvar(AUSPOL_FP_EXTRA_SD = "-1")
   expect_error(fp_extra_sd_env(), "must be one number")
 })
+
+test_that("force applies the net-out whatever the harness switch says (the published forecast's own switch decides)", {
+  withr::local_envvar(AUSPOL_HARNESS_SW_DRAWS = "0")
+  shares <- matrix(c(40, 35), 1, 2, dimnames = list("A", c("ALP", "LNP")))
+  set.seed(3); dr <- cbind(ALP = stats::rnorm(2000, 0, 3), LNP = stats::rnorm(2000, 0, 3))
+  expect_null(harness_sw_net_sd(NULL, dr, shares, c(1.10, 8.67), NULL, 1.5, "vic2026", "SWL"))
+  utils::capture.output(o <- harness_sw_net_sd(NULL, dr, shares, c(1.10, 8.67), NULL, 1.5, "vic2026", "SWL", force = TRUE))
+  expect_true(all(o < 1.10 + 8.67 * sqrt(shares / 100 * (1 - shares / 100))))
+})
