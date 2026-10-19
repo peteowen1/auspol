@@ -385,3 +385,39 @@ Two mechanisms, both losing a minor class's statewide level in the seats where i
    previous election. Yet nsw2023 Cessnock (no 2019 ONP candidate) got 2.24, so some path spreads the level in some
    harnesses and not others. Next: find it.
 Live exposure: vic2022 had ONP in 5 seats. Check the published vic2026 ONP cells against `level-pred` for vic2026 now.
+
+## Partial contests, traced to the row (2026-10-20, after arm A was refused)
+
+Arm A (conserve the class total at zeroing) never touched nsw2023: by the time the zeroing step runs, the 76
+uncontested One Nation cells already hold 0 in `base_pred` (mean 0.00) and 0.11 after the trees. Nothing drains at
+zeroing. The under-call is in the contested cells themselves, and it is a NEW-TO-SEAT effect.
+
+nsw2023 One Nation, from `output/xgb-primary-v6-features.csv` + `-oof-predictions.csv`:
+- 17 seats contested of 93; statewide 1.78 over 93 seats = 9.71 per contested seat.
+- Returning seats (stood in 2019, 6 seats): base 6.84, actual 9.78. New-to-seat (11 seats): base 1.68, trees 3.29,
+  actual 9.67 (Cessnock base 1.31 -> actual 15.27, Wyong 2.54 -> 14.56).
+- The trees get `level_pred` 1.84, the average over all 93 seats, and nothing that says only 17 contest:
+  **`n_cand_now` is >= 1 on every row, including 4,212 cells with no candidate** (nsw2023 One Nation: 1 in all 93).
+
+Across all 19,071 training rows, minor-class cells that stood (mean shares, percent):
+
+| class | new to seat? | cells | base | trees | actual |
+|---|---|---|---|---|---|
+| IND | yes | 652 | 4.42 | 6.90 | 7.24 |
+| OTH_RIGHT | yes | 471 | 3.01 | 5.13 | 5.81 |
+| ONP | yes | 341 | 5.58 | 6.80 | 8.82 |
+| ONP | no | 542 | 8.57 | 7.95 | 7.17 |
+| GRN | yes | 146 | 8.31 | 8.31 | 9.45 |
+
+The trees repair most of the new-to-seat gap for IND and OTH_RIGHT but not One Nation, whose misses sit in its
+return waves: fed2016 (12 cells, trees 1.90 vs 13.31), nsw2023 (11, 3.29 vs 9.67), qld2017 (53, 14.05 vs 20.11),
+fed2019 (46, 4.19 vs 6.80), sa2026 (29, 16.43 vs 20.26). Over-calls too: qld2020 (7.08 vs 4.66), wa2021, fed2013.
+
+Unverified: whether `n_cand_now` is meant to count candidates in the class (then the floor of 1 on uncontested
+cells is a bug) or something else; read its builder in `scripts/fit_xgb_primary_v6.R` before using it.
+
+Resolved: `n_cand_now` is filled with 1 where no candidate stands, on purpose for train/serve parity:
+`scripts/fit_xgb_primary_v6.R:491` (NA -> 1) and the live path `R/xgb_primary_override.R:318`
+(`n_cand_now := 1L  # unknown pre-nomination`). `R/ind_typical.R:61` already notes it (78 of 147 fed2022 IND rows).
+So the trees are never told who stands, in training or live. Nominations close about 9 Nov for vic2026, so for the
+last ~3 weeks the live forecast could know it.
