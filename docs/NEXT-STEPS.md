@@ -27,7 +27,7 @@ TCP-consistency check, arm H shipped, heavy-tail arm T REFUSED 19 Oct, F21 surge
   ALP/LNP/GRN/ONP/OTH) and the whole others bucket to OTH; training used per-class levels. Train/serve mismatch.
 - OPEN F2 (live): `AUSPOL_MINOR_DEFECT_BASE_PRED="1"` ships but `fit_seats_full.R` never applies it (comment only, :979).
 - OPEN F3 (live): `fit_seats_full.R:932` hardcodes the defector discount 0.282; every harness fits it time-forward.
-- OPEN F4 (scores): switch `AUSPOL_HARNESS_SW_DRAWS` built (304b662; OFF byte-identical on vic2022/wa2025, ON
+- DONE F4 (scores): switch `AUSPOL_HARNESS_SW_DRAWS` built (304b662; OFF byte-identical on vic2022/wa2025, ON
   sd(ALP-LNP) 3.68 vic2022 / 4.24 wa2025 vs 2.12 flat). Screen REFUSED 19 Oct: targeted 25 elections +0.0017 (SE
   0.0014), all seats +0.0011 (SE 0.0009, WORSE), worse in 18 of 25; switch stays "0". OPEN for Pete: live forecast uses
   the wide draws, so either state backtests flatter what ships or FP_EXTRA_SD 2.419 is too wide for states
@@ -36,7 +36,14 @@ TCP-consistency check, arm H shipped, heavy-tail arm T REFUSED 19 Oct, F21 surge
   +0.0017, and the LIVE forecast still carries it (draws + full seat sd). Live port built OFF (`AUSPOL_SW_NET_LIVE`, 08af39d; vic2026 walk:
   totals unchanged, favourites 88/88 unchanged, favourite prob +1.3 pts mean). 20k deciding run DONE 19 Oct 16:19
   (`deciding-runs/20261019-1414-f4-net`): -0.0014 (SE 0.0006) over 31 elections, LOO holds, AEF-7 -0.0021; clause 4
-  refuses (sa2014 +0.0043, wa2021 +0.0024, each >2 own SE). OPEN for Pete: override and ship both switches, or not.
+  refuses (sa2014 +0.0043, wa2021 +0.0024, each >2 own SE). SHIPPED on Pete's override, PR #129 merged 19 Oct;
+  IN FLIGHT: rebuild from 6 + publish, log `deciding-runs/publish-20261019-1700.log`.
+- OPEN F9 (built, off): `AUSPOL_ERROR_DIST_COMP` (0bb998c, prereg `plans/prereg-error-dist-composition-2026-10-19.md`).
+  Next: `Rscript scripts/quick_arm.R "AUSPOL_ERROR_DIST_COMP=1" --pairs=all` once the rebuild is done; needs
+  `output/error-quantiles-comp.csv` regenerated from the new stage-6 shares (`AUSPOL_ERROR_DIST_COMP=1 Rscript
+  scripts/fit_error_distribution.R`) first.
+- OPEN F5 (verified live 19 Oct, backtests only): salience blend in the xgb training base and again after the trees;
+  fix design in the 19 Oct agent report, not yet pre-registered. Matters for Vic from ~9 Nov.
   Width arms A0/A1 (`AUSPOL_FP_EXTRA_SD` 0 / 1.2) pre-registered, not yet run.
 - OPEN, DATED (from ~2 Nov, weekly; final snapshot 25-27 Nov): vic2026 salience snapshots. All 500 candidates fetched
   18 Oct (window to 6 Oct), but that is before the campaign: nobody's search interest is rising yet (Premier 1.1 in the
